@@ -6,6 +6,7 @@
 # which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
 #
 # Written by Russ Allbery <eagle@eyrie.org>
+# Copyright 2019 Russ Allbery <eagle@eyrie.org>
 # Copyright 2013-2014
 #     The Board of Trustees of the Leland Stanford Junior University
 #
@@ -29,15 +30,16 @@
 #
 # SPDX-License-Identifier: MIT
 
-use 5.006;
+use 5.008;
 use strict;
 use warnings;
 
 use lib 't/lib';
 
-use Test::More;
 use Test::RRA qw(skip_unless_automated use_prereq);
 use Test::RRA::Config qw($MINIMUM_VERSION);
+
+use Test::More;
 
 # Skip for normal user installs since this doesn't affect functionality.
 skip_unless_automated('Minimum version tests');

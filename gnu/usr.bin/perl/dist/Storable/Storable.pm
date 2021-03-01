@@ -8,7 +8,7 @@
 #  in the README file that comes with the distribution.
 #
 
-require XSLoader;
+BEGIN { require XSLoader }
 require Exporter;
 package Storable;
 
@@ -27,7 +27,9 @@ our @EXPORT_OK = qw(
 
 our ($canonical, $forgive_me);
 
-our $VERSION = '3.15';
+BEGIN {
+  our $VERSION = '3.21';
+}
 
 our $recursion_limit;
 our $recursion_limit_hash;
@@ -104,13 +106,11 @@ $Storable::flags = FLAGS_COMPAT;
 $Storable::downgrade_restricted = 1;
 $Storable::accept_future_minor = 1;
 
-XSLoader::load('Storable');
+BEGIN { XSLoader::load('Storable') };
 
 #
 # Determine whether locking is possible, but only when needed.
 #
-
-sub CAN_FLOCK; # TEMPLATE - replaced by Storable.pm.PL
 
 sub show_file_magic {
     print <<EOM;
@@ -266,7 +266,7 @@ sub _store {
     local *FILE;
     if ($use_locking) {
         open(FILE, ">>", $file) || logcroak "can't write into $file: $!";
-        unless (&CAN_FLOCK) {
+        unless (CAN_FLOCK) {
             logcarp
               "Storable::lock_store: fcntl/flock emulation broken on $^O";
             return undef;
@@ -410,7 +410,7 @@ sub _retrieve {
     my $self;
     my $da = $@;			# Could be from exception handler
     if ($use_locking) {
-        unless (&CAN_FLOCK) {
+        unless (CAN_FLOCK) {
             logcarp
               "Storable::lock_store: fcntl/flock emulation broken on $^O";
             return undef;
@@ -986,6 +986,9 @@ modifying C<$Storable::recursion_limit> and
 C<$Storable::recursion_limit_hash> respectively.  Either can be set to
 C<-1> to prevent any depth checks, though this isn't recommended.
 
+If you want to test what the limits are, the F<stacksize> tool is
+included in the C<Storable> distribution.
+
 =item *
 
 You can create endless loops if the things you serialize via freeze()
@@ -1224,9 +1227,9 @@ See CVE-2015-1592 and its metasploit module.
 If your application requires accepting data from untrusted sources,
 you are best off with a less powerful and more-likely safe
 serialization format and implementation. If your data is sufficiently
-simple, Cpanel::JSON::XS, Data::MessagePack or Serial are the best
-choices and offers maximum interoperability, but note that Serial is
-unsafe by default.
+simple, L<Cpanel::JSON::XS>, L<Data::MessagePack> or L<Sereal> are the best
+choices and offer maximum interoperability, but note that Sereal is
+L<unsafe by default|Sereal::Decoder/ROBUSTNESS>.
 
 =head1 WARNING
 

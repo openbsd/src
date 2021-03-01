@@ -12,7 +12,7 @@ use warnings;
 
 # mro.pm versions < 1.00 reserved for MRO::Compat
 #  for partial back-compat to 5.[68].x
-our $VERSION = '1.22';
+our $VERSION = '1.23';
 
 require XSLoader;
 XSLoader::load('mro');
@@ -276,7 +276,7 @@ The problem exists because the anonymous subroutine being assigned to the
 C<*Foo::foo> glob will show up in the call stack as being called
 C<__ANON__> and not C<foo> as you might expect. Since C<next::method> uses
 C<caller> to find the name of the method it was called in, it will fail in
-this case. 
+this case.
 
 But fear not, there's a simple solution. The module C<Sub::Name> will
 reach into the perl internals and assign a name to an anonymous subroutine
@@ -312,27 +312,11 @@ works (like C<goto &maybe::next::method>);
 
 =back
 
-=head2 Pugs
-
-The Pugs prototype Perl 6 Object Model uses C3
-
-=head2 Parrot
-
-Parrot now uses C3
+=head2 Python 2.3 MRO
 
 =over 4
 
-=item L<http://use.perl.org/~autrijus/journal/25768>
-
-=back
-
-=head2 Python 2.3 MRO related links
-
-=over 4
-
-=item L<http://www.python.org/2.3/mro.html>
-
-=item L<http://www.python.org/2.2.2/descrintro.html#mro>
+=item L<https://www.python.org/download/releases/2.3/mro/>
 
 =back
 

@@ -24,7 +24,7 @@
  *                      !op_slabbed.
  *	op_savefree	on savestack via SAVEFREEOP
  *	op_folded	Result/remainder of a constant fold operation.
- *	op_moresib	this op is is not the last sibling
+ *	op_moresib	this op is not the last sibling
  *	op_spare	One spare bit
  *	op_flags	Flags common to all operations.  See OPf_* below.
  *	op_private	Flags peculiar to a particular operation (BUT,
@@ -85,7 +85,7 @@ Deprecated.  Use C<GIMME_V> instead.
 =cut
 */
 
-#define GIMME_V		OP_GIMME(PL_op, block_gimme())
+#define GIMME_V		Perl_gimme_V(aTHX)
 
 /* Public flags */
 
@@ -146,6 +146,7 @@ Deprecated.  Use C<GIMME_V> instead.
                                 /*  On OP_PADRANGE, push @_ */
                                 /*  On OP_DUMP, has no label */
                                 /*  On OP_UNSTACK, in a C-style for loop */
+                                /*  On OP_READLINE, it's for <<>>, not <> */
 /* There is no room in op_flags for this one, so it has its own bit-
    field member (op_folded) instead.  The flag is only used to tell
    op_convert_list to set op_folded.  */
@@ -169,8 +170,9 @@ Deprecated.  Use C<GIMME_V> instead.
  *       from data in regen/op_private */
 
 
-#define OPpTRANS_ALL	(OPpTRANS_FROM_UTF|OPpTRANS_TO_UTF|OPpTRANS_IDENTICAL|OPpTRANS_SQUASH|OPpTRANS_COMPLEMENT|OPpTRANS_GROWS|OPpTRANS_DELETE)
-
+#define OPpTRANS_ALL	(OPpTRANS_USE_SVOP|OPpTRANS_CAN_FORCE_UTF8|OPpTRANS_IDENTICAL|OPpTRANS_SQUASH|OPpTRANS_COMPLEMENT|OPpTRANS_GROWS|OPpTRANS_DELETE)
+#define OPpTRANS_FROM_UTF   OPpTRANS_USE_SVOP
+#define OPpTRANS_TO_UTF     OPpTRANS_CAN_FORCE_UTF8
 
 
 /* Mask for OP_ENTERSUB flags, the absence of which must be propagated
@@ -179,7 +181,7 @@ Deprecated.  Use C<GIMME_V> instead.
 
 
 /* things that can be elements of op_aux */
-typedef union  {
+typedef union {
     PADOFFSET pad_offset;
     SV        *sv;
     IV        iv;
@@ -327,48 +329,52 @@ struct pmop {
 
 /* Set by the parser if it discovers an error, so the regex shouldn't be
  * compiled */
-#define PMf_HAS_ERROR	(1U<<(PMf_BASE_SHIFT+4))
+#define PMf_HAS_ERROR	(1U<<(PMf_BASE_SHIFT+3))
 
 /* 'use re "taint"' in scope: taint $1 etc. if target tainted */
-#define PMf_RETAINT	(1U<<(PMf_BASE_SHIFT+5))
+#define PMf_RETAINT	(1U<<(PMf_BASE_SHIFT+4))
 
 /* match successfully only once per reset, with related flag RXf_USED in
  * re->extflags holding state.  This is used only for ?? matches, and only on
  * OP_MATCH and OP_QR */
-#define PMf_ONCE	(1U<<(PMf_BASE_SHIFT+6))
+#define PMf_ONCE	(1U<<(PMf_BASE_SHIFT+5))
 
 /* PMf_ONCE, i.e. ?pat?, has matched successfully.  Not used under threading. */
-#define PMf_USED        (1U<<(PMf_BASE_SHIFT+7))
+#define PMf_USED        (1U<<(PMf_BASE_SHIFT+6))
 
 /* subst replacement is constant */
-#define PMf_CONST	(1U<<(PMf_BASE_SHIFT+8))
+#define PMf_CONST	(1U<<(PMf_BASE_SHIFT+7))
 
 /* keep 1st runtime pattern forever */
-#define PMf_KEEP	(1U<<(PMf_BASE_SHIFT+9))
+#define PMf_KEEP	(1U<<(PMf_BASE_SHIFT+8))
 
-#define PMf_GLOBAL	(1U<<(PMf_BASE_SHIFT+10)) /* pattern had a g modifier */
+#define PMf_GLOBAL	(1U<<(PMf_BASE_SHIFT+9)) /* pattern had a g modifier */
 
 /* don't reset pos() if //g fails */
-#define PMf_CONTINUE	(1U<<(PMf_BASE_SHIFT+11))
+#define PMf_CONTINUE	(1U<<(PMf_BASE_SHIFT+10))
 
 /* evaluating replacement as expr */
-#define PMf_EVAL	(1U<<(PMf_BASE_SHIFT+12))
+#define PMf_EVAL	(1U<<(PMf_BASE_SHIFT+11))
 
 /* Return substituted string instead of modifying it. */
-#define PMf_NONDESTRUCT	(1U<<(PMf_BASE_SHIFT+13))
+#define PMf_NONDESTRUCT	(1U<<(PMf_BASE_SHIFT+12))
 
 /* the pattern has a CV attached (currently only under qr/...(?{}).../) */
-#define PMf_HAS_CV	(1U<<(PMf_BASE_SHIFT+14))
+#define PMf_HAS_CV	(1U<<(PMf_BASE_SHIFT+13))
 
 /* op_code_list is private; don't free it etc. It may well point to
  * code within another sub, with different pad etc */
-#define PMf_CODELIST_PRIVATE	(1U<<(PMf_BASE_SHIFT+15))
+#define PMf_CODELIST_PRIVATE	(1U<<(PMf_BASE_SHIFT+14))
 
 /* the PMOP is a QR (we should be able to detect that from the op type,
  * but the regex compilation API passes just the pm flags, not the op
  * itself */
-#define PMf_IS_QR	(1U<<(PMf_BASE_SHIFT+16))
-#define PMf_USE_RE_EVAL	(1U<<(PMf_BASE_SHIFT+17)) /* use re'eval' in scope */
+#define PMf_IS_QR	(1U<<(PMf_BASE_SHIFT+15))
+#define PMf_USE_RE_EVAL	(1U<<(PMf_BASE_SHIFT+16)) /* use re'eval' in scope */
+
+/* Means that this is a subpattern being compiled while processing a \p{}
+ * wildcard.  This isn't called from op.c, but it is passed as a pm flag. */
+#define PMf_WILDCARD    (1U<<(PMf_BASE_SHIFT+17))
 
 /* See comments at the beginning of these defines about adding bits.  The
  * highest bit position should be used, so that if PMf_BASE_SHIFT gets
@@ -689,20 +695,27 @@ least an C<UNOP>.
 
 #ifdef PERL_CORE
 struct opslot {
-    /* keep opslot_next first */
-    OPSLOT *	opslot_next;		/* next slot */
-    OPSLAB *	opslot_slab;		/* owner */
+    U16         opslot_size;        /* size of this slot (in pointers) */
+    U16         opslot_offset;      /* offset from start of slab (in ptr units) */
     OP		opslot_op;		/* the op itself */
 };
 
 struct opslab {
-    OPSLOT *	opslab_first;		/* first op in this slab */
     OPSLAB *	opslab_next;		/* next slab */
-    OP *	opslab_freed;		/* chain of freed ops */
-    size_t	opslab_refcnt;		/* number of ops */
+    OPSLAB *	opslab_head;		/* first slab in chain */
+    OP **	opslab_freed;		/* array of sized chains of freed ops (head only)*/
+    size_t	opslab_refcnt;		/* number of ops (head slab only) */
+    U16         opslab_freed_size;      /* allocated size of opslab_freed */
+    U16		opslab_size;		/* size of slab in pointers,
+                                           including header */
+    U16         opslab_free_space;	/* space available in this slab
+                                           for allocating new ops (in ptr
+                                           units) */
 # ifdef PERL_DEBUG_READONLY_OPS
-    U16		opslab_size;		/* size of slab in pointers */
     bool	opslab_readonly;
+    U8          opslab_padding;         /* padding to ensure that opslab_slots is always */
+# else
+    U16         opslab_padding;         /* located at an offset with 32-bit alignment */
 # endif
     OPSLOT	opslab_slots;		/* slots begin here */
 };
@@ -711,7 +724,11 @@ struct opslab {
 # define OPSLOT_HEADER_P	(OPSLOT_HEADER/sizeof(I32 *))
 # define OpSLOT(o)		(assert_(o->op_slabbed) \
 				 (OPSLOT *)(((char *)o)-OPSLOT_HEADER))
-# define OpSLAB(o)		OpSLOT(o)->opslot_slab
+
+/* the first (head) opslab of the chain in which this op is allocated */
+# define OpSLAB(o) \
+    (((OPSLAB*)( (I32**)OpSLOT(o) - OpSLOT(o)->opslot_offset))->opslab_head)
+
 # define OpslabREFCNT_dec(slab)      \
 	(((slab)->opslab_refcnt == 1) \
 	 ? opslab_free_nopad(slab)     \
@@ -737,29 +754,29 @@ struct block_hooks {
 =for apidoc mx|U32|BhkFLAGS|BHK *hk
 Return the BHK's flags.
 
-=for apidoc mx|void *|BhkENTRY|BHK *hk|which
+=for apidoc mxu|void *|BhkENTRY|BHK *hk|which
 Return an entry from the BHK structure.  C<which> is a preprocessor token
 indicating which entry to return.  If the appropriate flag is not set
 this will return C<NULL>.  The type of the return value depends on which
 entry you ask for.
 
-=for apidoc Amx|void|BhkENTRY_set|BHK *hk|which|void *ptr
+=for apidoc Amxu|void|BhkENTRY_set|BHK *hk|which|void *ptr
 Set an entry in the BHK structure, and set the flags to indicate it is
 valid.  C<which> is a preprocessing token indicating which entry to set.
 The type of C<ptr> depends on the entry.
 
-=for apidoc Amx|void|BhkDISABLE|BHK *hk|which
+=for apidoc Amxu|void|BhkDISABLE|BHK *hk|which
 Temporarily disable an entry in this BHK structure, by clearing the
 appropriate flag.  C<which> is a preprocessor token indicating which
 entry to disable.
 
-=for apidoc Amx|void|BhkENABLE|BHK *hk|which
+=for apidoc Amxu|void|BhkENABLE|BHK *hk|which
 Re-enable an entry in this BHK structure, by setting the appropriate
 flag.  C<which> is a preprocessor token indicating which entry to enable.
 This will assert (under -DDEBUGGING) if the entry doesn't contain a valid
 pointer.
 
-=for apidoc mx|void|CALL_BLOCK_HOOKS|which|arg
+=for apidoc mxu|void|CALL_BLOCK_HOOKS|which|arg
 Call all the registered block hooks for type C<which>.  C<which> is a
 preprocessing token; the type of C<arg> depends on C<which>.
 
@@ -1021,14 +1038,16 @@ C<sib> is non-null. For a higher-level interface, see C<L</op_sibling_splice>>.
 #define OP_TYPE_ISNT_AND_WASNT(o, type) \
     ( (o) && OP_TYPE_ISNT_AND_WASNT_NN(o, type) )
 
+/* should match anything that uses ck_ftst in regen/opcodes */
+#define OP_IS_STAT(op) (OP_IS_FILETEST(op) || (op) == OP_LSTAT || (op) == OP_STAT)
 
-#  define OpHAS_SIBLING(o)	(cBOOL((o)->op_moresib))
-#  define OpSIBLING(o)		(0 + (o)->op_moresib ? (o)->op_sibparent : NULL)
-#  define OpMORESIB_set(o, sib) ((o)->op_moresib = 1, (o)->op_sibparent = (sib))
-#  define OpLASTSIB_set(o, parent) \
-       ((o)->op_moresib = 0, (o)->op_sibparent = (parent))
-#  define OpMAYBESIB_set(o, sib, parent) \
-       ((o)->op_sibparent = ((o)->op_moresib = cBOOL(sib)) ? (sib) : (parent))
+#define OpHAS_SIBLING(o)	(cBOOL((o)->op_moresib))
+#define OpSIBLING(o)		(0 + (o)->op_moresib ? (o)->op_sibparent : NULL)
+#define OpMORESIB_set(o, sib) ((o)->op_moresib = 1, (o)->op_sibparent = (sib))
+#define OpLASTSIB_set(o, parent) \
+    ((o)->op_moresib = 0, (o)->op_sibparent = (parent))
+#define OpMAYBESIB_set(o, sib, parent) \
+    ((o)->op_sibparent = ((o)->op_moresib = cBOOL(sib)) ? (sib) : (parent))
 
 #if !defined(PERL_CORE) && !defined(PERL_EXT)
 /* for backwards compatibility only */
@@ -1098,11 +1117,27 @@ C<sib> is non-null. For a higher-level interface, see C<L</op_sibling_splice>>.
 #   define FATAL_ABOVE_FF_MSG                                       \
       "Use of strings with code points over 0xFF as arguments to "  \
       "%s operator is not allowed"
-#  define DEPRECATED_ABOVE_FF_MSG                                   \
-      "Use of strings with code points over 0xFF as arguments to "  \
-      "%s operator is deprecated. This will be a fatal error in "   \
-      "Perl 5.32"
 #endif
+#if defined(PERL_IN_OP_C) || defined(PERL_IN_DOOP_C) || defined(PERL_IN_PERL_C)
+#  define TR_UNMAPPED           (UV)-1
+#  define TR_DELETE             (UV)-2
+#  define TR_R_EMPTY            (UV)-3  /* rhs (replacement) is empty */
+#  define TR_OOB                (UV)-4  /* Something that isn't one of the others */
+#  define TR_SPECIAL_HANDLING   TR_DELETE /* Can occupy same value */
+#  define TR_UNLISTED           TR_UNMAPPED /* A synonym whose name is clearer
+                                               at times */
+#endif
+#if defined(PERL_IN_OP_C) || defined(PERL_IN_TOKE_C)
+#define RANGE_INDICATOR  ILLEGAL_UTF8_BYTE
+#endif
+
+/* stuff for OP_ARGCHECK */
+
+struct op_argcheck_aux {
+    UV   params;     /* number of positional parameters */
+    UV   opt_params; /* number of optional positional parameters */
+    char slurpy;     /* presence of slurpy: may be '\0', '@' or '%' */
+};
 
 
 /*

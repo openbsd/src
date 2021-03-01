@@ -18,7 +18,7 @@ use vars qw(
 );
 
 @ISA = ('Pod::Simple::BlackBox');
-$VERSION = '3.35';
+$VERSION = '3.40';
 
 @Known_formatting_codes = qw(I B C L E F S X Z); 
 %Known_formatting_codes = map(($_=>1), @Known_formatting_codes);
@@ -74,6 +74,9 @@ else { # EBCDIC on early Perl.  We know what the values are for the code
 #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 __PACKAGE__->_accessorize(
+  '_output_is_for_JustPod', # For use only by Pod::Simple::JustPod,
+                       # If non-zero, don't expand Z<> E<> S<> L<>,
+                       # and count how many brackets in format codes
   'nbsp_for_S',        # Whether to map S<...>'s to \xA0 characters
   'source_filename',   # Filename of the source, for use in warnings
   'source_dead',       # Whether to consider this parser's source dead
@@ -103,6 +106,8 @@ __PACKAGE__->_accessorize(
 
   'preserve_whitespace', # whether to try to keep whitespace as-is
   'strip_verbatim_indent', # What indent to strip from verbatim
+  'expand_verbatim_tabs',  # 0: preserve tabs in verbatim blocks
+                           # n: expand tabs to stops every n columns
 
   'parse_characters',  # Whether parser should expect chars rather than octets
 
@@ -168,6 +173,7 @@ sub encoding {
 BEGIN {
   *pretty        = \&Pod::Simple::BlackBox::pretty;
   *stringify_lol = \&Pod::Simple::BlackBox::stringify_lol;
+  *my_qr         = \&Pod::Simple::BlackBox::my_qr;
 }
 
 #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -219,11 +225,14 @@ sub new {
   my $class = ref($_[0]) || $_[0];
   #Carp::croak(__PACKAGE__ . " is a virtual base class -- see perldoc "
   #  . __PACKAGE__ );
-  return bless {
+  my $obj = bless {
     'accept_codes'      => { map( ($_=>$_), @Known_formatting_codes ) },
     'accept_directives' => { %Known_directives },
     'accept_targets'    => {},
   }, $class;
+
+  $obj->expand_verbatim_tabs(8);
+  return $obj;
 }
 
 
@@ -339,10 +348,9 @@ sub unaccept_targets {
 
 # XXX Probably it is an error that the digit '9' is excluded from these re's.
 # Broken for early Perls on EBCDIC
-my $xml_name_re = eval "qr/[^-.0-8:A-Z_a-z[:^ascii:]]/";
-if (! defined $xml_name_re) {
-    $xml_name_re = qr/[\x00-\x2C\x2F\x39\x3B-\x40\x5B-\x5E\x60\x7B-\x7F]/;
-}
+my $xml_name_re = my_qr('[^-.0-8:A-Z_a-z[:^ascii:]]', '9');
+$xml_name_re = qr/[\x00-\x2C\x2F\x39\x3B-\x40\x5B-\x5E\x60\x7B-\x7F]/
+                                                            unless $xml_name_re;
 
 sub accept_code { shift->accept_codes(@_) } # alias
 
@@ -652,12 +660,13 @@ sub _make_treelet {
     $treelet = $self->_treelet_from_formatting_codes(@_);
   }
   
-  if( $self->_remap_sequences($treelet) ) {
+  if( ! $self->{'_output_is_for_JustPod'}   # Retain these as-is for pod output
+     && $self->_remap_sequences($treelet) )
+  {
     $self->_treat_Zs($treelet);  # Might as well nix these first
     $self->_treat_Ls($treelet);  # L has to precede E and S
     $self->_treat_Es($treelet);
     $self->_treat_Ss($treelet);  # S has to come after E
-
     $self->_wrap_up($treelet); # Nix X's and merge texties
     
   } else {
@@ -1080,9 +1089,14 @@ sub _treat_Ls {  # Process our dear dear friends, the L<...> sequences
       
       # By here, $treelet->[$i] is definitely an L node
       my $ell = $treelet->[$i];
-      DEBUG > 1 and print STDERR "Ogling L node $ell\n";
+      DEBUG > 1 and print STDERR "Ogling L node " . pretty($ell) . "\n";
         
-      # bitch if it's empty
+      # bitch if it's empty or is just '/'
+      if (@{$ell} == 3 and $ell->[2] =~ m!\A\s*/\s*\z!) {
+        $self->whine( $start_line, "L<> contains only '/'" );
+        $treelet->[$i] = 'L</>';  # just make it a text node
+        next;  # and move on
+      }
       if(  @{$ell} == 2
        or (@{$ell} == 3 and $ell->[2] eq '')
       ) {
@@ -1289,6 +1303,7 @@ sub _treat_Ls {  # Process our dear dear friends, the L<...> sequences
         $section_name = [splice @ell_content];
         $section_name->[ 0] =~ s/^\"//s;
         $section_name->[-1] =~ s/\"$//s;
+        $ell->[1]{'~tolerated'} = 1;
       }
 
       # Turn L<Foo Bar> into L</Foo Bar>.
@@ -1296,8 +1311,8 @@ sub _treat_Ls {  # Process our dear dear friends, the L<...> sequences
          and grep !ref($_) && m/ /s, @ell_content
       ) {
         $section_name = [splice @ell_content];
+        $ell->[1]{'~deprecated'} = 1;
         # That's support for the now-deprecated syntax.
-        # (Maybe generate a warning eventually?)
         # Note that it deliberately won't work on L<...|Foo Bar>
       }
 
@@ -1347,7 +1362,7 @@ sub _treat_Ls {  # Process our dear dear friends, the L<...> sequences
       # And update children to be the link-text:
       @$ell = (@$ell[0,1], defined($link_text) ? splice(@$link_text) : '');
       
-      DEBUG > 2 and print STDERR "End of L-parsing for this node $treelet->[$i]\n";
+      DEBUG > 2 and print STDERR "End of L-parsing for this node " . pretty($treelet->[$i]) . "\n";
 
       unshift @stack, $treelet->[$i]; # might as well recurse
     }
@@ -1507,6 +1522,7 @@ sub _accessorize {  # A simple-minded method-maker
       $Carp::CarpLevel = 1,  Carp::croak(
        "Accessor usage: \$obj->$attrname() or \$obj->$attrname(\$new_value)"
       ) unless (@_ == 1 or @_ == 2) and ref $_[0];
+
       (@_ == 1) ?  $_[0]->{$attrname}
                 : ($_[0]->{$attrname} = $_[1]);
     };

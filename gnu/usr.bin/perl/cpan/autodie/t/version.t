@@ -5,6 +5,11 @@ use Test::More;
 if (not $ENV{RELEASE_TESTING}) {
     plan( skip_all => 'Release test.  Set $ENV{RELEASE_TESTING} to true to run.');
 }
+
+if( $ENV{AUTOMATED_TESTING} ) {
+    plan( skip_all => 'This test requires dzil and that is not supported on github actions');
+}
+
 plan tests => 8;
 
 # For the moment, we'd like all our versions to be the same.
@@ -17,6 +22,8 @@ require autodie;
 require autodie::hints;
 require autodie::exception;
 require autodie::exception::system;
+
+diag(explain(\%ENV));
 
 ok(defined($autodie::VERSION), 'autodie has a version');
 ok(defined($autodie::exception::VERSION), 'autodie::exception has a version');

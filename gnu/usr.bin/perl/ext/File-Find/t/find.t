@@ -281,7 +281,9 @@ my %tb = map { $_ => 1 } @testing_basenames;
     {
         find(
             {
-                wanted => sub { ++$::count_tb if $tb{$_}; },
+                wanted => sub { s#\.$## if ($^O eq 'VMS' && $_ ne '.');
+                                ++$::count_tb if $tb{$_};
+                              },
                 $bad_option => undef,
             },
             File::Spec->curdir
@@ -296,7 +298,9 @@ my %tb = map { $_ => 1 } @testing_basenames;
     {
         finddepth(
             {
-                wanted => sub { ++$::count_tb if $tb{$_}; },
+                wanted => sub { s#\.$## if ($^O eq 'VMS' && $_ ne '.');
+                                ++$::count_tb if $tb{$_};
+                              },
                 $bad_option => undef,
                 $second_bad_option => undef,
             },
@@ -1026,46 +1030,49 @@ if ($^O eq 'MSWin32') {
         }
     }
     closedir $ROOT_DIR;
-    my $created_file;
-    unless (defined $expected_first_file) {
-        $expected_first_file = '__perl_File_Find_test.tmp';
-        open(F, ">", "/$expected_first_file") && close(F)
-            or die "cannot create file in root directory: $!\n";
-        $created_file = 1;
-    }
+  SKIP:
+    {
+        my $created_file;
+        unless (defined $expected_first_file) {
+            $expected_first_file = '__perl_File_Find_test.tmp';
+            open(F, ">", "/$expected_first_file") && close(F)
+                or skip "cannot create file in root directory: $!", 8;
+            $created_file = 1;
+        }
 
-    # Run F:F:f with/without no_chdir for each possible style of root path.
-    # NB. If HOME were "/", then an inadvertent chdir('') would fluke the
-    # expected result, so ensure it is something else:
-    local $ENV{HOME} = $orig_dir;
-    foreach my $no_chdir (0, 1) {
-        foreach my $root_dir ("/", "\\", "$drive/", "$drive\\") {
-            eval {
-                File::Find::find({
-                    'no_chdir' => $no_chdir,
-                    'preprocess' => sub { return sort @_ },
-                    'wanted' => sub {
-                        -f or return; # the first call is for $root_dir itself.
-                        my $got = $File::Find::name;
-                        my $exp = "$root_dir$expected_first_file";
-                        print "# no_chdir=$no_chdir $root_dir '$got'\n";
-                        is($got, $exp,
-                            "Win32: Run 'find' with 'no_chdir' set to $no_chdir" );
-                        die "done"; # do not process the entire drive!
-                    },
-                }, $root_dir);
-            };
-            # If F:F:f did not die "done" then it did not Check() either.
-            unless ($@ and $@ =~ /done/) {
-                print "# no_chdir=$no_chdir $root_dir ",
-                    ($@ ? "error: $@" : "no files found"), "\n";
-                ok(0, "Win32: 0");
+        # Run F:F:f with/without no_chdir for each possible style of root path.
+        # NB. If HOME were "/", then an inadvertent chdir('') would fluke the
+        # expected result, so ensure it is something else:
+        local $ENV{HOME} = $orig_dir;
+        foreach my $no_chdir (0, 1) {
+            foreach my $root_dir ("/", "\\", "$drive/", "$drive\\") {
+                eval {
+                    File::Find::find({
+                        'no_chdir' => $no_chdir,
+                            'preprocess' => sub { return sort @_ },
+                            'wanted' => sub {
+                                -f or return; # the first call is for $root_dir itself.
+                                my $got = $File::Find::name;
+                                my $exp = "$root_dir$expected_first_file";
+                                print "# no_chdir=$no_chdir $root_dir '$got'\n";
+                                is($got, $exp,
+                                   "Win32: Run 'find' with 'no_chdir' set to $no_chdir" );
+                                die "done"; # do not process the entire drive!
+                        },
+                    }, $root_dir);
+                };
+                # If F:F:f did not die "done" then it did not Check() either.
+                unless ($@ and $@ =~ /done/) {
+                    print "# no_chdir=$no_chdir $root_dir ",
+                        ($@ ? "error: $@" : "no files found"), "\n";
+                    ok(0, "Win32: 0");
+                }
             }
         }
-    }
-    if ($created_file) {
-        unlink("/$expected_first_file")
-            or warn "can't unlink /$expected_first_file: $!\n";
+        if ($created_file) {
+            unlink("/$expected_first_file")
+                or warn "can't unlink /$expected_first_file: $!\n";
+        }
     }
 }
 

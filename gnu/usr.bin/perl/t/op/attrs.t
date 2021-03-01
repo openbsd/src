@@ -507,4 +507,7 @@ BEGIN failed--compilation aborted at - line 1.
 EOS
               "attribute on our hash with sub of same name");
 
+fresh_perl_is('$_ = ""; s/^/ { my $x : shared = 1; } /e;', "", {},
+              "attributes in sub-parse");
+
 done_testing();

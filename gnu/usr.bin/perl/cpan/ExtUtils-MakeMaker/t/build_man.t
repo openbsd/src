@@ -7,7 +7,7 @@ BEGIN {
 }
 
 use strict;
-use Test::More tests => 46;
+use Test::More tests => 50;
 
 use File::Spec;
 use File::Temp qw[tempdir];
@@ -44,10 +44,21 @@ ok((my $stdout = tie *STDOUT, 'TieOut'), 'tie stdout');
 
 {
     local $Config{installman3dir} = File::Spec->catdir(qw(t lib));
-    my $mm = WriteMakefile(
-        NAME            => 'Big::Dummy',
-        VERSION_FROM    => 'lib/Big/Dummy.pm',
-    );
+    my $mm;
+    {
+        # suppress noisy & unnecessary "WARNING: Older versions of ExtUtils::MakeMaker may errantly install README.pod..."
+        my @warnings = ();
+        local $SIG{__WARN__} = sub { push @warnings, shift; };
+        $mm = WriteMakefile(
+            NAME            => 'Big::Dummy',
+            VERSION_FROM    => 'lib/Big/Dummy.pm',
+        );
+        # verify that suppressed warnings are present
+        isnt (scalar(@warnings), 0);
+        if (scalar(@warnings)) {
+            note (sprintf('suppressed warnings: [ "%s" ]', do { my $s = join(q/" , "/, @warnings); $s =~ s/([^[:print:]])/sprintf('\x{%x}', ord($1))/egmsx; $s; }));
+        }
+    }
     my %got = %{ $mm->{MAN3PODS} };
     # because value too OS-specific
     my $delete_key = $^O eq 'VMS' ? '[.lib.Big]Dummy.pm' : 'lib/Big/Dummy.pm';
@@ -56,29 +67,62 @@ ok((my $stdout = tie *STDOUT, 'TieOut'), 'tie stdout');
 }
 
 {
-    my $mm = WriteMakefile(
-        NAME            => 'Big::Dummy',
-        VERSION_FROM    => 'lib/Big/Dummy.pm',
-        INSTALLMAN3DIR  => 'none'
-    );
+    my $mm;
+    {
+        # suppress noisy & unnecessary "WARNING: Older versions of ExtUtils::MakeMaker may errantly install README.pod..."
+        my @warnings = ();
+        local $SIG{__WARN__} = sub { push @warnings, shift; };
+        $mm = WriteMakefile(
+            NAME            => 'Big::Dummy',
+            VERSION_FROM    => 'lib/Big/Dummy.pm',
+            INSTALLMAN3DIR  => 'none'
+        );
+        # verify that suppressed warnings are present
+        isnt (scalar(@warnings), 0);
+        if (scalar(@warnings)) {
+            note (sprintf('suppressed warnings: [ "%s" ]', do { my $s = join(q/" , "/, @warnings); $s =~ s/([^[:print:]])/sprintf('\x{%x}', ord($1))/egmsx; $s; }));
+        }
+    }
     is_deeply $mm->{MAN3PODS}, {}, 'suppress man3pod with "none"';
 }
 
 {
-    my $mm = WriteMakefile(
-        NAME            => 'Big::Dummy',
-        VERSION_FROM    => 'lib/Big/Dummy.pm',
-        MAN3PODS        => {}
-    );
+    my $mm;
+    {
+        # suppress noisy & unnecessary "WARNING: Older versions of ExtUtils::MakeMaker may errantly install README.pod..."
+        my @warnings = ();
+        local $SIG{__WARN__} = sub { push @warnings, shift; };
+        $mm = WriteMakefile(
+            NAME            => 'Big::Dummy',
+            VERSION_FROM    => 'lib/Big/Dummy.pm',
+            MAN3PODS        => {}
+        );
+        # verify that suppressed warnings are present
+        isnt (scalar(@warnings), 0);
+        if (scalar(@warnings)) {
+            note (sprintf('suppressed warnings: [ "%s" ]', do { my $s = join(q/" , "/, @warnings); $s =~ s/([^[:print:]])/sprintf('\x{%x}', ord($1))/egmsx; $s; }));
+        }
+    }
     is_deeply $mm->{MAN3PODS}, {}, 'suppress man3pod with {}';
 }
 
 {
-    my $mm = WriteMakefile(
-        NAME            => 'Big::Dummy',
-        VERSION_FROM    => 'lib/Big/Dummy.pm',
-        MAN3PODS        => { "Foo.pm" => "Foo.1" }
-    );
+    my $mm;
+    {
+        # suppress noisy & unnecessary "WARNING: Older versions of ExtUtils::MakeMaker may errantly install README.pod..."
+        my @warnings = ();
+        local $SIG{__WARN__} = sub { push @warnings, shift; };
+        $mm = WriteMakefile(
+            NAME            => 'Big::Dummy',
+            VERSION_FROM    => 'lib/Big/Dummy.pm',
+            MAN3PODS        => { "Foo.pm" => "Foo.1" }
+        );
+        # verify that suppressed warnings are present
+        isnt (scalar(@warnings), 0);
+        if (scalar(@warnings)) {
+            note (sprintf('suppressed warnings: [ "%s" ]', do { my $s = join(q/" , "/, @warnings); $s =~ s/([^[:print:]])/sprintf('\x{%x}', ord($1))/egmsx; $s; }));
+        }
+    }
     is_deeply $mm->{MAN3PODS}, { "Foo.pm" => "Foo.1" }, 'override man3pod';
 }
 
@@ -172,10 +216,10 @@ unlink $README;
             INSTALLDIRS  => $INSTALLDIRS,
         );
 
-        my $makefile = slurp('Makefile');
+        my $makefile = slurp($mm->{MAKEFILE});
 
-        like $makefile, qr/^\QMAN1SECTION = 1pm\E$/xms, "Set MAN1SECTION";
-        like $makefile, qr/^\QMAN3SECTION = 3pm\E$/xms, "Set MAN3SECTION";
+        like $makefile, qr/\QMAN1SECTION = 1pm\E/xms, "Set MAN1SECTION";
+        like $makefile, qr/\QMAN3SECTION = 3pm\E/xms, "Set MAN3SECTION";
 
         like $makefile, qr/\Q$(POD2MAN) --section=$(MAN1SECTION) \E/,
             "Set POD2MAN section to \$(MAN1SECTION)";
@@ -183,4 +227,3 @@ unlink $README;
             "Set POD2MAN section to \$(MAN3SECTION)";
     }
 }
-

@@ -7,10 +7,10 @@ perlmodinstall - Installing CPAN Modules
 You can think of a module as the fundamental unit of reusable Perl
 code; see L<perlmod> for details.  Whenever anyone creates a chunk of
 Perl code that they think will be useful to the world, they register
-as a Perl developer at L<http://www.cpan.org/modules/04pause.html>
+as a Perl developer at L<https://www.cpan.org/modules/04pause.html>
 so that they can then upload their code to the CPAN.  The CPAN is the
 Comprehensive Perl Archive Network and can be accessed at
-L<http://www.cpan.org/> , and searched at L<http://search.cpan.org/> .
+L<https://www.cpan.org/> , and searched at L<https://metacpan.org/> .
 
 This documentation is for people who want to download CPAN modules
 and install them on their own computer.
@@ -68,7 +68,7 @@ directory) and use this approach.
 B<If you're on a Unix or Unix-like system,>
 
 You can use Andreas Koenig's CPAN module
-( L<http://www.cpan.org/modules/by-module/CPAN> )
+( L<https://metacpan.org/release/CPAN> )
 to automate the following steps, from DECOMPRESS through INSTALL.
 
 A. DECOMPRESS
@@ -79,11 +79,11 @@ You can get gzip from L<ftp://prep.ai.mit.edu/pub/gnu/>
 
 Or, you can combine this step with the next to save disk space:
 
-     gzip -dc yourmodule.tar.gz | tar -xf -
+     gzip -dc yourmodule.tar.gz | tar -xof -
 
 B. UNPACK
 
-Unpack the result with C<tar -xf yourmodule.tar>
+Unpack the result with C<tar -xof yourmodule.tar>
 
 C. BUILD
 
@@ -128,7 +128,9 @@ steps below.
 
    A. DECOMPRESS
 
-You can use the shareware Winzip ( L<http://www.winzip.com> ) to
+You can use the
+open source 7-zip ( L<https://www.7-zip.org/> )
+or the shareware Winzip ( L<https://www.winzip.com> ) to
 decompress and unpack modules.
 
    B. UNPACK
@@ -197,8 +199,8 @@ You will need the packages mentioned in F<README.dos> in the Perl distribution.
 
 B<If you're on OS/2,>
 
-Get the EMX development suite and gzip/tar, from either Hobbes (
-L<http://hobbes.nmsu.edu> ) or Leo ( L<http://www.leo.org> ), and then follow
+Get the EMX development suite and gzip/tar from Hobbes (
+L<http://hobbes.nmsu.edu/h-browse.php?dir=/pub/os2/dev/emx/v0.9d> ), and then follow
 the instructions for Unix.
 
 =item *
@@ -333,7 +335,7 @@ not a module will work under your platform.  If the module you want
 isn't listed there, you can test it yourself and let CPAN Testers know,
 you can join CPAN Testers, or you can request it be tested.
 
-    http://testers.cpan.org/
+    https://cpantesters.org/
 
 
 =head1 HEY
@@ -343,7 +345,7 @@ don't send me mail asking for help on how to install your modules.
 There are too many modules, and too few Orwants, for me to be able to
 answer or even acknowledge all your questions.  Contact the module
 author instead, ask someone familiar with Perl on your operating
-system, or if all else fails, file a ticket at L<http://rt.cpan.org/>.
+system, or if all else fails, file a ticket at L<https://rt.cpan.org/>.
 
 =head1 AUTHOR
 

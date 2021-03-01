@@ -5,7 +5,7 @@
 #  define VXS_CLASS "version"
 #  define VXSp(name) XS_##name
 /* VXSXSDP = XSUB Details Proto */
-#  define VXSXSDP(x) x
+#  define VXSXSDP(x) x, 0
 #else
 #  define VXS_CLASS "version::vxs"
 #  define VXSp(name) VXS_##name

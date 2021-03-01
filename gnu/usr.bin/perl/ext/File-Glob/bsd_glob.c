@@ -457,7 +457,7 @@ globtilde(const Char *pattern, Char *patbuf, size_t patbuf_len, glob_t *pglob)
 		 * first and then trying the password file
 		 * or $USERPROFILE on DOSISH systems
 		 */
-		if ((h = getenv("HOME")) == NULL) {
+		if ((h = PerlEnv_getenv("HOME")) == NULL) {
 #ifdef HAS_PASSWD
 			struct passwd *pwd;
 			if ((pwd = getpwuid(getuid())) == NULL)
@@ -469,7 +469,7 @@ globtilde(const Char *pattern, Char *patbuf, size_t patbuf_len, glob_t *pglob)
 			 * When no passwd file, fallback to the USERPROFILE
 			 * environment variable on DOSish systems.
 			 */
-			if ((h = getenv("USERPROFILE")) == NULL) {
+			if ((h = PerlEnv_getenv("USERPROFILE")) == NULL) {
 			    return pattern;
 			}
 #else

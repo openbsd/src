@@ -1,6 +1,14 @@
+#!./perl
+
+BEGIN {
+    chdir 't' if -d 't';
+    @INC = '../lib';
+    require './test.pl';
+}
+
+plan( tests => 3);
 use warnings;
 use strict;
-use Test::Simple tests => 3;
 
 package Foo;
 use overload

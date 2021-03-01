@@ -34,10 +34,10 @@ foreach (@{(setup_embed())[0]}) {
   next if @$_ < 2;
   next unless $_->[2]  =~ /warn|(?<!ov)err|(\b|_)die|croak/i;
   # The flag p means that this function may have a 'Perl_' prefix
-  # The flag s means that this function may have a 'S_' prefix
+  # The flag S means that this function may have a 'S_' prefix
   push @functions, $_->[2];
   push @functions, 'Perl_' . $_->[2] if $_->[0] =~ /p/;
-  push @functions, 'S_' . $_->[2] if $_->[0] =~ /s/;
+  push @functions, 'S_' . $_->[2] if $_->[0] =~ /S/;
 };
 push @functions, 'Perl_mess';
 
@@ -164,7 +164,7 @@ foreach my $cur_entry ( keys %entries) {
     if (! exists $entries{$cur_entry}{severity}
 
             # If there is no first line, it was two =items in a row, so the
-            # second one is the one with with text, not this one.
+            # second one is the one with text, not this one.
         && exists $entries{$cur_entry}{first_line}
 
             # If the first line refers to another message, no need for severity

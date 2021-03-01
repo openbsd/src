@@ -159,7 +159,7 @@ PerlIOWin32_open(pTHX_ PerlIO_funcs *self, PerlIO_list_t *layers, IV n, const ch
   {
    /* fd open */
    h = INVALID_HANDLE_VALUE;
-   if (fd >= 0 && fd <= max_open_fd)
+   if (inRANGE(fd, 0, max_open_fd))
     {
      PerlIOWin32 *s = fdtable[fd];
      if (s)

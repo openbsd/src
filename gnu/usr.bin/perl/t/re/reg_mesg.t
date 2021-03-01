@@ -200,11 +200,11 @@ my @death =
  '/[\x{X]/' => 'Missing right brace on \x{} {#} m/[\x{{#}X]/',
  '/[\x{A]/' => 'Missing right brace on \x{} {#} m/[\x{A{#}]/',
 
- '/\o{1/' => 'Missing right brace on \o{ {#} m/\o{1{#}/',
- '/\o{X/' => 'Missing right brace on \o{ {#} m/\o{{#}X/',
+ '/\o{1/' => 'Missing right brace on \o{} {#} m/\o{1{#}/',
+ '/\o{X/' => 'Missing right brace on \o{} {#} m/\o{{#}X/',
 
- '/[\o{X]/' => 'Missing right brace on \o{ {#} m/[\o{{#}X]/',
- '/[\o{7]/' => 'Missing right brace on \o{ {#} m/[\o{7{#}]/',
+ '/[\o{X]/' => 'Missing right brace on \o{} {#} m/[\o{{#}X]/',
+ '/[\o{7]/' => 'Missing right brace on \o{} {#} m/[\o{7{#}]/',
 
  '/[[:barf:]]/' => 'POSIX class [:barf:] unknown {#} m/[[:barf:]{#}]/',
 
@@ -260,13 +260,13 @@ my @death =
  'm/(?[[\w-x]])/' => 'False [] range "\w-" {#} m/(?[[\w-{#}x]])/',
  'm/(?[[a-\pM]])/' => 'False [] range "a-\pM" {#} m/(?[[a-\pM{#}]])/',
  'm/(?[[\pM-x]])/' => 'False [] range "\pM-" {#} m/(?[[\pM-{#}x]])/',
- 'm/(?[[^\N{LATIN CAPITAL LETTER A WITH MACRON AND GRAVE}]])/' => '\N{} in inverted character class or as a range end-point is restricted to one character {#} m/(?[[^\N{U+100.300{#}}]])/',
+ 'm/(?[[^\N{LATIN CAPITAL LETTER A WITH MACRON AND GRAVE}]])/' => '\N{} here is restricted to one character {#} m/(?[[^\N{U+100.300{#}}]])/',
  'm/(?[ \p{Digit} & (?^(?[ \p{Thai} | \p{Lao} ]))])/' => 'Sequence (?^(...) not recognized {#} m/(?[ \p{Digit} & (?^({#}?[ \p{Thai} | \p{Lao} ]))])/',
  'm/(?[ \p{Digit} & (?(?[ \p{Thai} | \p{Lao} ]))])/' => 'Unexpected character {#} m/(?[ \p{Digit} & (?{#}(?[ \p{Thai} | \p{Lao} ]))])/',
- 'm/\o{/' => 'Missing right brace on \o{ {#} m/\o{{#}/',
+ 'm/\o{/' => 'Missing right brace on \o{} {#} m/\o{{#}/',
  'm/\o/' => 'Missing braces on \o{} {#} m/\o{#}/',
  'm/\o{}/' => 'Empty \o{} {#} m/\o{}{#}/',
- 'm/[\o{]/' => 'Missing right brace on \o{ {#} m/[\o{{#}]/',
+ 'm/[\o{]/' => 'Missing right brace on \o{} {#} m/[\o{{#}]/',
  'm/[\o]/' => 'Missing braces on \o{} {#} m/[\o{#}]/',
  'm/[\o{}]/' => 'Empty \o{} {#} m/[\o{}{#}]/',
  'm/(?^-i:foo)/' => 'Sequence (?^-...) not recognized {#} m/(?^-{#}i:foo)/',
@@ -283,7 +283,6 @@ my @death =
  "m/(?('/" => "Sequence (?('... not terminated {#} m/(?('{#}/",
  'm/\g{/'  => 'Sequence \g{... not terminated {#} m/\g{{#}/',
  'm/\k</'  => 'Sequence \k<... not terminated {#} m/\k<{#}/',
- 'm/\cß/' => "Character following \"\\c\" must be printable ASCII",
  '/((?# This is a comment in the middle of a token)?:foo)/' => 'In \'(?...)\', the \'(\' and \'?\' must be adjacent {#} m/((?# This is a comment in the middle of a token)?{#}:foo)/',
  '/((?# This is a comment in the middle of a token)*FAIL)/' => 'In \'(*VERB...)\', the \'(\' and \'*\' must be adjacent {#} m/((?# This is a comment in the middle of a token)*{#}FAIL)/',
  '/((?# This is a comment in the middle of a token)*script_run:foo)/' => 'In \'(*...)\', the \'(\' and \'*\' must be adjacent {#} m/((?# This is a comment in the middle of a token)*{#}script_run:foo)/',
@@ -312,13 +311,27 @@ my @death =
  '/\p{Latin}{,4 }/' => 'Unescaped left brace in regex is illegal here {#} m/\p{Latin}{{#},4 }/',
  '/(?<=/' => 'Sequence (?... not terminated {#} m/(?<={#}/',                        # [perl #128170]
  '/\p{vertical  tab}/' => 'Can\'t find Unicode property definition "vertical  tab" {#} m/\\p{vertical  tab}{#}/', # [perl #132055]
- "/$bug133423/" => "Operand with no preceding operator {#} m/(?[(?^:(?[\\ ]))\\{#}] |2[^^]\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80])R.\\670/",
+ "/$bug133423/" => "Unexpected ']' with no following ')' in (?[... {#} m/(?[(?^:(?[\\ ]))\\]{#} |2[^^]\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80])R.\\670/",
  '/[^/' => 'Unmatched [ {#} m/[{#}^/', # [perl #133767]
  '/\p{Is_Other_Alphabetic=F}/ ' => 'Can\'t find Unicode property definition "Is_Other_Alphabetic=F" {#} m/\p{Is_Other_Alphabetic=F}{#}/',
  '/\p{Is_Other_Alphabetic=F}/ ' => 'Can\'t find Unicode property definition "Is_Other_Alphabetic=F" {#} m/\p{Is_Other_Alphabetic=F}{#}/',
  '/\x{100}(?(/' => 'Unknown switch condition (?(...)) {#} m/\\x{100}(?({#}/', # [perl #133896]
- '/(?[\N{KEYCAP DIGIT NINE}/' => '\N{} in inverted character class or as a range end-point is restricted to one character {#} m/(?[\\N{U+39.FE0F.20E3{#}}/', # [perl #133988]
+ '/(?[\N{KEYCAP DIGIT NINE}/' => '\N{} here is restricted to one character {#} m/(?[\\N{U+39.FE0F.20E3{#}}/', # [perl #133988]
  '/0000000000000000[\N{U+0.00}0000/' => 'Unmatched [ {#} m/0000000000000000[{#}\N{U+0.00}0000/', # [perl #134059]
+ '/\p{nv=\b5\b}/' => 'Can\'t find Unicode property definition "nv=\\b5\\b" {#} m/\\p{nv=\\b5\\b}{#}/',
+ '/\p{nv=:(?g)10:}/' => 'Use of modifier \'g\' is not allowed in Unicode property wildcard subpatterns {#} m/(?g{#})10/',
+ '/\p{gc=:L*:}/' => 'Use of quantifier \'*\' is not allowed in Unicode property wildcard subpatterns {#} m/L*{#}/',
+ '/\p{gc=:L\G:}/' => 'Use of \'\G\' is not allowed in Unicode property wildcard subpatterns {#} m/L\G{#}/',
+ '/\p{gc=:(?a)L:}/' => 'Use of modifier \'a\' is not allowed in Unicode property wildcard subpatterns {#} m/(?a){#}L/',
+ '/\p{gc=:(?u)L:}/' => 'Use of modifier \'u\' is not allowed in Unicode property wildcard subpatterns {#} m/(?u){#}L/',
+ '/\p{gc=:(?d)L:}/' => 'Use of modifier \'d\' is not allowed in Unicode property wildcard subpatterns {#} m/(?d){#}L/',
+ '/\p{gc=:(?l)L:}/' => 'Use of modifier \'l\' is not allowed in Unicode property wildcard subpatterns {#} m/(?l){#}L/',
+ '/\p{gc=:(?-m)L:}/' => 'Use of modifier \'-m\' is not allowed in Unicode property wildcard subpatterns {#} m/(?-m{#})L/',
+ '/\p{gc=:\pS:}/' => 'Use of \'\\pS\' is not allowed in Unicode property wildcard subpatterns {#} m/\\pS{#}/',
+ '/\p{gc=:\PS:}/' => 'Use of \'\\PS\' is not allowed in Unicode property wildcard subpatterns {#} m/\\PS{#}/',
+ '/\p{gc=:[\pS]:}/' => 'Use of \'\\pS\' is not allowed in Unicode property wildcard subpatterns {#} m/[\\pS{#}]/',
+ '/\p{gc=:[\PS]:}/' => 'Use of \'\\PS\' is not allowed in Unicode property wildcard subpatterns {#} m/[\\PS{#}]/',
+ '/(?[\p{name=KATAKANA LETTER AINU P}])/' => 'Unicode string properties are not implemented in (?[...]) {#} m/(?[\p{name=KATAKANA LETTER AINU P}{#}])/',
 );
 
 # These are messages that are death under 'use re "strict"', and may or may
@@ -332,25 +345,23 @@ my @death_only_under_strict = (
     'm/[\xABC]/' => "",
                  => 'Use \x{...} for more than two hex characters {#} m/[\xABC{#}]/',
 
-    # XXX This is a confusing error message.  The G isn't ignored; it just
-    # terminates the \x.  Also some messages below are missing the <-- HERE,
-    # aren't all category 'regexp'.  (Hence we have to turn off 'digit'
-    # messages as well below)
-    'm/\xAG/' => 'Illegal hexadecimal digit \'G\' ignored',
+    # some messages below aren't all category 'regexp'.  (Hence we have to
+    # turn off 'digit' messages as well below)
+    'm/\xAG/' => 'Non-hex character \'G\' terminates \x early.  Resolved as "\x0AG" {#} m/\xA{#}G/',
               => 'Non-hex character {#} m/\xAG{#}/',
-    'm/[\xAG]/' => 'Illegal hexadecimal digit \'G\' ignored',
+    'm/[\xAG]/' => 'Non-hex character \'G\' terminates \x early.  Resolved as "\x0AG" {#} m/[\xA{#}G]/',
                 => 'Non-hex character {#} m/[\xAG{#}]/',
-    'm/\o{789}/' => 'Non-octal character \'8\'.  Resolved as "\o{7}"',
+    'm/\o{789}/' => 'Non-octal character \'8\' terminates \o early.  Resolved as "\o{007}" {#} m/\o{789}{#}/',
                  => 'Non-octal character {#} m/\o{78{#}9}/',
-    'm/[\o{789}]/' => 'Non-octal character \'8\'.  Resolved as "\o{7}"',
+    'm/[\o{789}]/' => 'Non-octal character \'8\' terminates \o early.  Resolved as "\o{007}" {#} m/[\o{789}{#}]/',
                    => 'Non-octal character {#} m/[\o{78{#}9}]/',
     'm/\x{}/' => "",
               => 'Empty \x{} {#} m/\x{}{#}/',
     'm/[\x{}]/' => "",
                 => 'Empty \x{} {#} m/[\x{}{#}]/',
-    'm/\x{ABCDEFG}/' => 'Illegal hexadecimal digit \'G\' ignored',
+    'm/\x{ABCDEFG}/' => 'Non-hex character \'G\' terminates \x early.  Resolved as "\x{ABCDEF}" {#} m/\x{ABCDEFG}{#}/',
                      => 'Non-hex character {#} m/\x{ABCDEFG{#}}/',
-    'm/[\x{ABCDEFG}]/' => 'Illegal hexadecimal digit \'G\' ignored',
+    'm/[\x{ABCDEFG}]/' => 'Non-hex character \'G\' terminates \x early.  Resolved as "\x{ABCDEF}" {#} m/[\x{ABCDEFG}{#}]/',
                        => 'Non-hex character {#} m/[\x{ABCDEFG{#}}]/',
     "m'[\\y]\\x{100}'" => 'Unrecognized escape \y in character class passed through {#} m/[\y{#}]\x{100}/',
                        => 'Unrecognized escape \y in character class {#} m/[\y{#}]\x{100}/',
@@ -363,14 +374,14 @@ my @death_only_under_strict = (
     'm/[\pM-x]\x{100}/' => 'False [] range "\pM-" {#} m/[\pM-{#}x]\x{100}/',
                         => 'False [] range "\pM-" {#} m/[\pM-{#}x]\x{100}/',
     'm/[^\N{LATIN CAPITAL LETTER A WITH MACRON AND GRAVE}]/' => 'Using just the first character returned by \N{} in character class {#} m/[^\N{U+100.300}{#}]/',
-                                       => '\N{} in inverted character class or as a range end-point is restricted to one character {#} m/[^\N{U+100.300{#}}]/',
+                                       => '\N{} here is restricted to one character {#} m/[^\N{U+100.300{#}}]/',
     'm/[\x03-\N{LATIN CAPITAL LETTER A WITH MACRON AND GRAVE}]/' => 'Using just the first character returned by \N{} in character class {#} m/[\x03-\N{U+100.300}{#}]/',
-                                            => '\N{} in inverted character class or as a range end-point is restricted to one character {#} m/[\x03-\N{U+100.300{#}}]/',
+                                            => '\N{} here is restricted to one character {#} m/[\x03-\N{U+100.300{#}}]/',
     'm/[\N{LATIN CAPITAL LETTER A WITH MACRON AND GRAVE}-\x{10FFFF}]/' => 'Using just the first character returned by \N{} in character class {#} m/[\N{U+100.300}{#}-\x{10FFFF}]/',
-                                                  => '\N{} in inverted character class or as a range end-point is restricted to one character {#} m/[\N{U+100.300{#}}-\x{10FFFF}]/',
-    '/[\08]/'   => '\'\08\' resolved to \'\o{0}8\' {#} m/[\08{#}]/',
+                                                  => '\N{} here is restricted to one character {#} m/[\N{U+100.300{#}}-\x{10FFFF}]/',
+    '/[\08]/'   => 'Non-octal character \'8\' terminates \0 early.  Resolved as "\0008" {#} m/[\08{#}]/',
                 => 'Need exactly 3 octal digits {#} m/[\08{#}]/',
-    '/[\018]/'  => '\'\018\' resolved to \'\o{1}8\' {#} m/[\018{#}]/',
+    '/[\018]/'  => 'Non-octal character \'8\' terminates \0 early.  Resolved as "\0018" {#} m/[\018{#}]/',
                 => 'Need exactly 3 octal digits {#} m/[\018{#}]/',
     '/[\_\0]/'  => "",
                 => 'Need exactly 3 octal digits {#} m/[\_\0]{#}/',
@@ -465,7 +476,7 @@ my @death_utf8 = mark_as_utf8(
  '/ネ[\x{ネ]ネ/' => 'Missing right brace on \x{} {#} m/ネ[\x{{#}ネ]ネ/',
  '/ネ[\x{ネ]/' => 'Missing right brace on \x{} {#} m/ネ[\x{{#}ネ]/',
 
- '/ネ\o{ネ/' => 'Missing right brace on \o{ {#} m/ネ\o{{#}ネ/',
+ '/ネ\o{ネ/' => 'Missing right brace on \o{} {#} m/ネ\o{{#}ネ/',
 
  '/[ネ-a]ネ/' => 'Invalid [] range "ネ-a" {#} m/[ネ-a{#}]ネ/',
 
@@ -490,7 +501,8 @@ my @death_utf8 = mark_as_utf8(
  '/(?[ \t + \e # ネ This was supposed to be a comment ])/' =>
     "Syntax error in (?[...]) {#} m/(?[ \\t + \\e # ネ This was supposed to be a comment ]){#}/",
  'm/(*ネ)ネ/' => q<Unknown '(*...)' construct 'ネ' {#} m/(*ネ){#}ネ/>,
- '/\cネ/' => "Character following \"\\c\" must be printable ASCII",
+ '/\cネ/' => "Character following \"\\c\" must be printable ASCII {#} m/\\cネ{#}/",
+ '/[\cネ]/' => "Character following \"\\c\" must be printable ASCII {#} m/[\\cネ{#}]/",
  '/\b{ネ}/' => "'ネ' is an unknown bound type {#} m/\\b{ネ{#}}/",
  '/\B{ネ}/' => "'ネ' is an unknown bound type {#} m/\\B{ネ{#}}/",
 );
@@ -534,8 +546,9 @@ my @warning = (
     'm/(?[[:word]])\x{100}/' => "Assuming NOT a POSIX class since there is no terminating ':' {#} m/(?[[:word{#}]])\\x{100}/",
     "m'\\y\\x{100}'"     => 'Unrecognized escape \y passed through {#} m/\y{#}\x{100}/',
     '/x{3,1}/'   => 'Quantifier {n,m} with n > m can\'t match {#} m/x{3,1}{#}/',
-    '/\08/' => '\'\08\' resolved to \'\o{0}8\' {#} m/\08{#}/',
-    '/\018/' => '\'\018\' resolved to \'\o{1}8\' {#} m/\018{#}/',
+    '/\08/' => 'Non-octal character \'8\' terminates \0 early.  Resolved as "\0008" {#} m/\08{#}/',
+
+    '/\018/' => 'Non-octal character \'8\' terminates \0 early.  Resolved as "\0018" {#} m/\018{#}/',
     '/(?=a)*/' => '(?=a)* matches null string many times {#} m/(?=a)*{#}/',
     'my $x = \'\m\'; qr/a$x/' => 'Unrecognized escape \m passed through {#} m/a\m{#}/',
     '/\q/' => 'Unrecognized escape \q passed through {#} m/\q{#}/',
@@ -663,7 +676,6 @@ my @warning_only_under_strict = (
     '/[a-\N{U+FF}]\x{100}/' => 'Ranges of ASCII printables should be some subset of "0-9", "A-Z", or "a-z" {#} m/[a-\N{U+FF}{#}]\x{100}/',
     '/[\N{U+00}-\a]\x{100}/' => "",
     '/[\a-\N{U+FF}]\x{100}/' => "",
-    '/[\N{U+FF}-\x{100}]/' => 'Both or neither range ends should be Unicode {#} m/[\N{U+FF}-\x{100}{#}]/',
     '/[\N{U+100}-\x{101}]/' => "",
     "/[%-%]/" => "",
     "/[:-\\x$colon_hex]\\x{100}/" => "\":-\\x$colon_hex\" is more clearly written simply as \":\" {#} m/[:-\\x$colon_hex\{#}]\\x{100}/",
@@ -697,17 +709,19 @@ my @experimental_regex_sets = (
     '/noutf8 ネ (?[ [\tネ] ])/' => 'The regex_sets feature is experimental {#} m/noutf8 ネ (?[{#} [\tネ] ])/',
 );
 
-my @experimental_script_run = (
-    '/(*script_run:paypal.com)/' => 'The script_run feature is experimental {#} m/(*script_run:{#}paypal.com)/',
-    'use utf8; /utf8 ネ (*script_run:ネ)/' => do { use utf8; 'The script_run feature is experimental {#} m/utf8 ネ (*script_run:{#}ネ)/' },
-    '/noutf8 ネ (*script_run:ネ)/' => 'The script_run feature is experimental {#} m/noutf8 ネ (*script_run:{#}ネ)/',
+my @wildcard = (
+    'm!(?[\p{name=/KATAKANA/}])$!' =>
+    [
+     'The regex_sets feature is experimental {#} m/(?[{#}\p{name=/KATAKANA/}])$/',
+     'The Unicode property wildcards feature is experimental',
+     'Using just the single character results returned by \p{} in (?[...]) {#} m/(?[\p{name=/KATAKANA/}{#}])$/'
+    ], # [GH #17732] Null pointer deref
 );
 
 my @deprecated = (
  '/^{/'          => "",
  '/foo|{/'       => "",
  '/foo|^{/'      => "",
- '/foo({bar)/'   => 'Unescaped left brace in regex is deprecated here (and will be fatal in Perl 5.32), passed through {#} m/foo({{#}bar)/',
  '/foo(:?{bar)/' => "",
  '/\s*{/'        => "",
  '/a{3,4}{/'     => "",
@@ -738,9 +752,8 @@ for my $strict ("", "use re 'strict';") {
         }
         else {
             no warnings 'experimental::regex_sets';
-            no warnings 'experimental::script_run';
             no warnings 'experimental::re_strict';
-            no warnings 'experimental::alpha_assertions';
+            no warnings 'experimental::uniprop_wildcards';
 
             warning_is(sub {
                     my $meaning_of_life;
@@ -794,7 +807,7 @@ for my $strict ("",  "no warnings 'experimental::re_strict'; use re 'strict';") 
 
     foreach my $ref (\@warning_tests,
                      \@experimental_regex_sets,
-                     \@experimental_script_run,
+                     \@wildcard,
                      \@deprecated)
     {
         my $warning_type;
@@ -802,8 +815,7 @@ for my $strict ("",  "no warnings 'experimental::re_strict'; use re 'strict';") 
         my $default_on;
         if ($ref == \@warning_tests) {
             $warning_type = 'regexp, digit';
-            $turn_off_warnings = "no warnings 'experimental::regex_sets';"
-                               . "no warnings 'experimental::script_run';";
+            $turn_off_warnings = "no warnings 'experimental::regex_sets';";
             $default_on = $strict;
         }
         elsif ($ref == \@deprecated) {
@@ -814,8 +826,8 @@ for my $strict ("",  "no warnings 'experimental::re_strict'; use re 'strict';") 
             $warning_type = 'experimental::regex_sets';
             $default_on = 1;
         }
-        elsif ($ref == \@experimental_script_run) {
-            $warning_type = 'experimental::script_run';
+        elsif ($ref == \@wildcard) {
+            $warning_type = 'experimental::regex_sets, experimental::uniprop_wildcards';
             $default_on = 1;
         }
         else {
@@ -884,8 +896,10 @@ for my $strict ("",  "no warnings 'experimental::re_strict'; use re 'strict';") 
                         if ($this_default_on || grep { $_ =~ /\Q(?[/ } @expect ) {
                            ok @warns > 0, "... and the warning is on by default";
                         }
-                        else {
-                         ok @warns == 0, "... and the warning is off by default";
+                        elsif (! (ok @warns == 0,
+                                     "... and the warning is off by default"))
+                        {
+                               diag("GOT\n" . join "\n", @warns);
                         }
                     }
                 }

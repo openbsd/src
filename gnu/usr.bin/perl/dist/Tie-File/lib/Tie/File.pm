@@ -1,13 +1,17 @@
-
 package Tie::File;
+
 require 5.005;
+
+use strict;
+use warnings;
+
 use Carp ':DEFAULT', 'confess';
 use POSIX 'SEEK_SET';
 use Fcntl 'O_CREAT', 'O_RDWR', 'LOCK_EX', 'LOCK_SH', 'O_WRONLY', 'O_RDONLY';
 sub O_ACCMODE () { O_RDONLY | O_RDWR | O_WRONLY }
 
 
-$VERSION = "1.02";
+our $VERSION = "1.06";
 my $DEFAULT_MEMORY_SIZE = 1<<21;    # 2 megabytes
 my $DEFAULT_AUTODEFER_THRESHHOLD = 3; # 3 records
 my $DEFAULT_AUTODEFER_FILELEN_THRESHHOLD = 65536; # 16 disk blocksful
@@ -15,6 +19,10 @@ my $DEFAULT_AUTODEFER_FILELEN_THRESHHOLD = 65536; # 16 disk blocksful
 my %good_opt = map {$_ => 1, "-$_" => 1}
                  qw(memory dw_size mode recsep discipline 
                     autodefer autochomp autodefer_threshhold concurrent);
+
+our $DIAGNOSTIC = 0;
+our @OFF; # used as a temporary alias in some subroutines.
+our @H; # used as a temporary alias in _annotate_ad_history
 
 sub TIEARRAY {
   if (@_ % 2 != 0) {
@@ -747,7 +755,6 @@ sub _oadjust {
   my $delta = 0;
   my $delta_recs = 0;
   my $prev_end = -1;
-  my %newkeys;
 
   for (@_) {
     my ($pos, $nrecs, @data) = @$_;
@@ -757,7 +764,6 @@ sub _oadjust {
     # to the first new one of this batch
     for my $i ($prev_end+2 .. $pos - 1) {
       $self->{offsets}[$i] += $delta;
-      $newkey{$i} = $i + $delta_recs;
     }
 
     $prev_end = $pos + @data - 1; # last record moved on this pass 
@@ -776,16 +782,6 @@ sub _oadjust {
       my $oldlen = $self->{offsets}[$i+1] - $self->{offsets}[$i];
       $delta -= $oldlen;
     }
-
-#    # also this data has changed, so update it in the cache
-#    for (0 .. $#data) {
-#      $self->{cache}->update($pos + $_, $data[$_]);
-#    }
-#    if ($delta_recs) {
-#      my @oldkeys = grep $_ >= $pos + @data, $self->{cache}->ckeys;
-#      my @newkeys = map $_ + $delta_recs, @oldkeys;
-#      $self->{cache}->rekey(\@oldkeys, \@newkeys);
-#    }
 
     # replace old offsets with new
     splice @{$self->{offsets}}, $pos, $nrecs+1, @newoff;
@@ -2003,7 +1999,7 @@ sub _nodes {
   ($self->[$i], $self->_nodes($i*2), $self->_nodes($i*2+1));
 }
 
-"Cogito, ergo sum.";  # don't forget to return a true value from the file
+1;
 
 __END__
 
@@ -2013,13 +2009,13 @@ Tie::File - Access the lines of a disk file via a Perl array
 
 =head1 SYNOPSIS
 
- # This file documents Tie::File version 0.98
  use Tie::File;
 
  tie @array, 'Tie::File', filename or die ...;
 
- $array[13] = 'blah';     # line 13 of the file is now 'blah'
- print $array[42];        # display line 42 of the file
+ $array[0] = 'blah';      # first line of the file is now 'blah'
+                            # (line numbering starts at 0)
+ print $array[42];        # display line 43 of the file
 
  $n_recs = @array;        # how many records are in the file?
  $#array -= 2;            # chop two records off the end
@@ -2323,6 +2319,11 @@ internally.  If you passed it a filehandle as above, you "own" the
 filehandle, and are responsible for closing it after you have untied
 the @array.
 
+Tie::File calls C<binmode> on filehandles that it opens internally, 
+but not on filehandles passed in by the user. For consistency,
+especially if using the tied files cross-platform, you may wish to
+call C<binmode> on the filehandle prior to tying the file. 
+
 =head1 Deferred Writing
 
 (This is an advanced feature.  Skip this section on first reading.)
@@ -2365,7 +2366,7 @@ will be rewritten in a single pass.
 (Actually, the preceding discussion is something of a fib.  You don't
 need to enable deferred writing to get good performance for this
 common case, because C<Tie::File> will do it for you automatically
-unless you specifically tell it not to.  See L<"Autodeferring">,
+unless you specifically tell it not to.  See L</Autodeferring>,
 below.)
 
 Calling C<-E<gt>flush> returns the array to immediate-write mode.  If
@@ -2517,7 +2518,7 @@ People sometimes point out that L<DB_File> will do something similar,
 and ask why C<Tie::File> module is necessary.
 
 There are a number of reasons that you might prefer C<Tie::File>.
-A list is available at C<http://perl.plover.com/TieFile/why-not-DB_File>.
+A list is available at C<L<http://perl.plover.com/TieFile/why-not-DB_File>>.
 
 =head1 AUTHOR
 

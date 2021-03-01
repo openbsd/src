@@ -402,6 +402,7 @@ S_category_name(const int category)
  * known at compile time; "do_setlocale_r", not known until run time  */
 #  define do_setlocale_c(cat, locale) my_setlocale(cat, locale)
 #  define do_setlocale_r(cat, locale) my_setlocale(cat, locale)
+#  define FIX_GLIBC_LC_MESSAGES_BUG(i)
 
 #else   /* Below uses POSIX 2008 */
 
@@ -414,6 +415,22 @@ S_category_name(const int category)
 #  define do_setlocale_c(cat, locale)                                       \
                         emulate_setlocale(cat, locale, cat ## _INDEX, TRUE)
 #  define do_setlocale_r(cat, locale) emulate_setlocale(cat, locale, 0, FALSE)
+
+#  if ! defined(__GLIBC__) || ! defined(USE_LOCALE_MESSAGES)
+
+#    define FIX_GLIBC_LC_MESSAGES_BUG(i)
+
+#  else /* Invalidate glibc cache of loaded translations, see [perl #134264] */
+
+#    include <libintl.h>
+#    define FIX_GLIBC_LC_MESSAGES_BUG(i)                                        \
+        STMT_START {                                                        \
+            if ((i) == LC_MESSAGES_INDEX) {                                 \
+                textdomain(textdomain(NULL));                               \
+            }                                                               \
+        } STMT_END
+
+#  endif
 
 /* A third array, parallel to the ones above to map from category to its
  * equivalent mask */
@@ -739,7 +756,7 @@ S_emulate_setlocale(const int category,
 
 #  endif
 
-    }
+    }   /* End of this being setlocale(LC_foo, NULL) */
 
     /* Here, we are switching locales. */
 
@@ -773,16 +790,6 @@ S_emulate_setlocale(const int category,
 
             if (! default_name || strEQ(default_name, "")) {
                 default_name = "C";
-            }
-            else if (PL_scopestack_ix != 0) {
-                /* To minimize other threads messing with the environment,
-                 * we copy the variable, making it a temporary.  But this
-                 * doesn't work upon program initialization before any
-                 * scopes are created, and at this time, there's nothing
-                 * else going on that would interfere.  So skip the copy
-                 * in that case */
-                default_name = savepv(default_name);
-                SAVEFREEPV(default_name);
             }
 
             if (category != LC_ALL) {
@@ -818,22 +825,19 @@ S_emulate_setlocale(const int category,
 
                 for (i = 0; i < LC_ALL_INDEX; i++) {
                     const char * const env_override
-                                    = savepv(PerlEnv_getenv(category_names[i]));
+                                            = PerlEnv_getenv(category_names[i]);
                     const char * this_locale = (   env_override
                                                 && strNE(env_override, ""))
                                                ? env_override
                                                : default_name;
                     if (! emulate_setlocale(categories[i], this_locale, i, TRUE))
                     {
-                        Safefree(env_override);
                         return NULL;
                     }
 
                     if (strNE(this_locale, default_name)) {
                         did_override = TRUE;
                     }
-
-                    Safefree(env_override);
                 }
 
                 /* If all the categories are the same, we can set LC_ALL to
@@ -855,7 +859,7 @@ S_emulate_setlocale(const int category,
                 }
             }
         }
-    }
+    }   /* End of this being setlocale(LC_foo, "") */
     else if (strchr(locale, ';')) {
 
         /* LC_ALL may actually incude a conglomeration of various categories.
@@ -952,7 +956,8 @@ S_emulate_setlocale(const int category,
         assert(category == LC_ALL);
 
         return do_setlocale_c(LC_ALL, NULL);
-    }
+    }   /* End of this being setlocale(LC_ALL,
+           "LC_CTYPE=foo;LC_NUMERIC=bar;...") */
 
   ready_to_set: ;
 
@@ -1006,7 +1011,9 @@ S_emulate_setlocale(const int category,
 
 #  endif
 
-    /* If we are switching to the LC_ALL C locale, it already exists.  Use
+    /* If this call is to switch to the LC_ALL C locale, it already exists, and
+     * in fact, we already have switched to it (in preparation for what
+     * normally is to come).  But since we're already there, continue to use
      * it instead of trying to create a new locale */
     if (mask == LC_ALL_MASK && isNAME_C_OR_POSIX(locale)) {
 
@@ -1155,6 +1162,8 @@ S_emulate_setlocale(const int category,
             Safefree(PL_curlocales[i]);
             PL_curlocales[i] = savepv(locale);
         }
+
+        FIX_GLIBC_LC_MESSAGES_BUG(LC_MESSAGES_INDEX);
     }
     else {
 
@@ -1169,6 +1178,8 @@ S_emulate_setlocale(const int category,
         /* Then update the category's record */
         Safefree(PL_curlocales[index]);
         PL_curlocales[index] = savepv(locale);
+
+        FIX_GLIBC_LC_MESSAGES_BUG(index);
     }
 
 #  endif
@@ -1235,7 +1246,7 @@ S_locking_setlocale(pTHX_
      * ones.  This is because as described earlier.  If we know on input the
      * index corresponding to the category into the array where we store the
      * current locales, we don't have to calculate it.  If the caller knows at
-     * compile time what the index is, it it can pass it, setting
+     * compile time what the index is, it can pass it, setting
      * 'is_index_valid' to TRUE; otherwise the index parameter is ignored.
      *
      */
@@ -1702,13 +1713,13 @@ S_new_ctype(pTHX_ const char *newctype)
                                           "isxdigit('%s') unexpectedly is %d\n",
                                           name, cBOOL(isxdigit(i))));
                 }
-                if (UNLIKELY(tolower(i) != (int) toLOWER_A(i)))  {
+                if (UNLIKELY(tolower(i) != (int) toLOWER_A(i))) {
                     is_bad = TRUE;
                     DEBUG_L(PerlIO_printf(Perl_debug_log,
                             "tolower('%s')=0x%x instead of the expected 0x%x\n",
                             name, tolower(i), (int) toLOWER_A(i)));
                 }
-                if (UNLIKELY(toupper(i) != (int) toUPPER_A(i)))  {
+                if (UNLIKELY(toupper(i) != (int) toUPPER_A(i))) {
                     is_bad = TRUE;
                     DEBUG_L(PerlIO_printf(Perl_debug_log,
                             "toupper('%s')=0x%x instead of the expected 0x%x\n",
@@ -3286,7 +3297,7 @@ Perl_init_i18nl10n(pTHX_ int printwarn)
 #else  /* USE_LOCALE */
 #  ifdef __GLIBC__
 
-    const char * const language   = savepv(PerlEnv_getenv("LANGUAGE"));
+    const char * const language = PerlEnv_getenv("LANGUAGE");
 
 #  endif
 
@@ -3296,8 +3307,8 @@ Perl_init_i18nl10n(pTHX_ int printwarn)
                                         : "";
     const char* trial_locales[5];   /* 5 = 1 each for "", LC_ALL, LANG, "", C */
     unsigned int trial_locales_count;
-    const char * const lc_all     = savepv(PerlEnv_getenv("LC_ALL"));
-    const char * const lang       = savepv(PerlEnv_getenv("LANG"));
+    const char * const lc_all     = PerlEnv_getenv("LC_ALL");
+    const char * const lang       = PerlEnv_getenv("LANG");
     bool setlocale_failure = FALSE;
     unsigned int i;
 
@@ -3436,6 +3447,18 @@ Perl_init_i18nl10n(pTHX_ int printwarn)
 #      endif
 #    endif
 #  endif    /* DEBUGGING */
+
+    /* Initialize the per-thread mbrFOO() state variables.  See POSIX.xs for
+     * why these particular incantations are used. */
+#ifdef HAS_MBRLEN
+    memzero(&PL_mbrlen_ps, sizeof(PL_mbrlen_ps));
+#endif
+#ifdef HAS_MBRTOWC
+    memzero(&PL_mbrtowc_ps, sizeof(PL_mbrtowc_ps));
+#endif
+#ifdef HAS_WCTOMBR
+    wcrtomb(NULL, L'\0', &PL_wcrtomb_ps);
+#endif
 
     /* Initialize the cache of the program's UTF-8ness for the always known
      * locales C and POSIX */
@@ -3873,15 +3896,6 @@ Perl_init_i18nl10n(pTHX_ int printwarn)
     }
 
 #  endif
-#  ifdef __GLIBC__
-
-    Safefree(language);
-
-#  endif
-
-    Safefree(lc_all);
-    Safefree(lang);
-
 #endif /* USE_LOCALE */
 #ifdef DEBUGGING
 
@@ -4405,11 +4419,6 @@ Perl__mem_collxfrm(pTHX_ const char *input_string,
     return xbuf;
 
   bad:
-    Safefree(xbuf);
-    if (s != input_string) {
-        Safefree(s);
-    }
-    *xlen = 0;
 
 #  ifdef DEBUGGING
 
@@ -4418,6 +4427,12 @@ Perl__mem_collxfrm(pTHX_ const char *input_string,
     }
 
 #  endif
+
+    Safefree(xbuf);
+    if (s != input_string) {
+        Safefree(s);
+    }
+    *xlen = 0;
 
     return NULL;
 }
@@ -4533,7 +4548,7 @@ S_switch_category_locale_to_template(pTHX_ const int switch_category, const int 
         Safefree(restore_to_locale);
 
         DEBUG_Lv(PerlIO_printf(Perl_debug_log, "%s locale unchanged as %s\n",
-                            category_name(switch_category), restore_to_locale));
+                            category_name(switch_category), template_locale));
 
         return NULL;
     }
@@ -5111,9 +5126,7 @@ Perl__is_cur_LC_category_utf8(pTHX_ int category)
         Copy(delimited, utf8ness_cache, input_name_len_with_overhead - 1, char);
         utf8ness_cache[input_name_len_with_overhead - 1] = is_utf8 + '0';
 
-        if ((PL_locale_utf8ness[strlen(PL_locale_utf8ness)-1]
-                                                & (PERL_UINTMAX_T) ~1) != '0')
-        {
+        if ((PL_locale_utf8ness[strlen(PL_locale_utf8ness)-1] & ~1) != '0') {
             Perl_croak(aTHX_
              "panic: %s: %d: Corrupt utf8ness_cache=%s\nlen=%zu,"
              " inserted_name=%s, its_len=%zu\n",
@@ -5143,6 +5156,7 @@ Perl__is_cur_LC_category_utf8(pTHX_ int category)
             s++;
             e = strchr(s, UTF8NESS_PREFIX[0]);
             if (! e) {
+                e = PL_locale_utf8ness + strlen(PL_locale_utf8ness);
                 Perl_croak(aTHX_
                            "panic: %s: %d: Corrupt utf8ness_cache: missing"
                            " separator %.*s<-- HERE %s\n",
@@ -5250,9 +5264,9 @@ Perl_my_strerror(pTHX_ const int errnum)
         Safefree(save_locale);
     }
 
-#  elif defined(HAS_POSIX_2008_LOCALE)                      \
-     && defined(HAS_STRERROR_L)                             \
-     && defined(HAS_DUPLOCALE)
+#  elif   defined(USE_POSIX_2008_LOCALE)                      \
+     &&   defined(HAS_STRERROR_L)                             \
+     &&   defined(HAS_DUPLOCALE)
 
     /* This function is also trivial if we don't have to worry about thread
      * safety and have strerror_l(), as it handles the switch of locales so we

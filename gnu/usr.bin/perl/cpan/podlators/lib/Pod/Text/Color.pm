@@ -12,7 +12,7 @@
 
 package Pod::Text::Color;
 
-use 5.006;
+use 5.008;
 use strict;
 use warnings;
 
@@ -23,7 +23,7 @@ use vars qw(@ISA $VERSION);
 
 @ISA = qw(Pod::Text);
 
-$VERSION = '4.11';
+$VERSION = '4.14';
 
 ##############################################################################
 # Overrides
@@ -97,9 +97,6 @@ sub wrap {
     # $shortchar matches some sequence of $char ending in codes followed by
     # whitespace or the end of the string.  $longchar matches exactly $width
     # $chars, used when we have to truncate and hard wrap.
-    #
-    # $shortchar and $longchar are created in a slightly odd way because the
-    # construct ${char}{0,$width} didn't do the right thing until Perl 5.8.x.
     my $code = '(?:\e\[[\d;]+m)';
     my $char = "(?>$code*[^\\n])";
     my $shortchar = '^(' . $char . "{0,$width}(?>$code*)" . ')(?:\s+|\z)';
@@ -185,7 +182,7 @@ Russ Allbery <rra@cpan.org>.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 1999, 2001, 2004, 2006, 2008, 2009, 2018 Russ Allbery
+Copyright 1999, 2001, 2004, 2006, 2008, 2009, 2018-2019 Russ Allbery
 <rra@cpan.org>
 
 This program is free software; you may redistribute it and/or modify it

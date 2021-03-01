@@ -212,8 +212,9 @@ S_mul128(pTHX_ SV *sv, U8 m)
 
 /* Explosives and implosives. */
 
-#define ISUUCHAR(ch)    (NATIVE_TO_LATIN1(ch) >= NATIVE_TO_LATIN1(' ')  \
-                      && NATIVE_TO_LATIN1(ch) <  NATIVE_TO_LATIN1('a'))
+#define ISUUCHAR(ch)    inRANGE(NATIVE_TO_LATIN1(ch),               \
+                                NATIVE_TO_LATIN1(' '),              \
+                                NATIVE_TO_LATIN1('a') - 1)
 
 /* type modifiers */
 #define TYPE_IS_SHRIEKING	0x100
@@ -1779,9 +1780,9 @@ S_unpack_rec(pTHX_ tempsym_t* symptr, const char *s, const char *strbeg, const c
 	} /* End of switch */
 
 	if (checksum) {
-	    if (strchr("fFdD", TYPE_NO_MODIFIERS(datumtype)) ||
+	    if (memCHRs("fFdD", TYPE_NO_MODIFIERS(datumtype)) ||
 	      (checksum > bits_in_uv &&
-	       strchr("cCsSiIlLnNUWvVqQjJ", TYPE_NO_MODIFIERS(datumtype))) ) {
+	       memCHRs("cCsSiIlLnNUWvVqQjJ", TYPE_NO_MODIFIERS(datumtype))) ) {
 		NV trouble, anv;
 
                 anv = (NV) (1 << (checksum & 15));
@@ -2135,7 +2136,7 @@ S_pack_rec(pTHX_ SV *cat, tempsym_t* symptr, SV **beglist, SV **endlist )
 
         switch (howlen) {
 	  case e_star:
-	    len = strchr("@Xxu", TYPE_NO_MODIFIERS(datumtype)) ?
+	    len = memCHRs("@Xxu", TYPE_NO_MODIFIERS(datumtype)) ?
 		0 : items;
 	    break;
 	  default:
@@ -2160,7 +2161,7 @@ S_pack_rec(pTHX_ SV *cat, tempsym_t* symptr, SV **beglist, SV **endlist )
 	if (symptr->flags & FLAG_SLASH) {
 	    IV count;
 	    if (!found) Perl_croak(aTHX_ "Code missing after '/' in pack");
-	    if (strchr("aAZ", lookahead.code)) {
+	    if (memCHRs("aAZ", lookahead.code)) {
 		if (lookahead.howlen == e_number) count = lookahead.length;
 		else {
 		    if (items > 0) {

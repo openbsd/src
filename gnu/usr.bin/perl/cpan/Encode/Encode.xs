@@ -1,5 +1,5 @@
 /*
- $Id: Encode.xs,v 2.47 2019/03/13 00:26:18 dankogai Exp dankogai $
+ $Id: Encode.xs,v 2.48 2020/03/02 04:34:34 dankogai Exp $
  */
 
 #define PERL_NO_GET_CONTEXT
@@ -231,7 +231,7 @@ encode_method(pTHX_ const encode_t * enc, const encpage_t * dir, SV * src, U8 * 
         if (dir == enc->f_utf8) {
         STRLEN clen;
         UV ch =
-            utf8n_to_uvuni(s+slen, (tlen-sdone-slen),
+            utf8n_to_uvchr(s+slen, (tlen-sdone-slen),
                    &clen, UTF8_ALLOW_ANY|UTF8_CHECK_ONLY);
         /* if non-representable multibyte prefix at end of current buffer - break*/
         if (clen > tlen - sdone - slen) break;
@@ -982,6 +982,7 @@ ALIAS:
 PREINIT:
     SV *obj;
 INIT:
+    PERL_UNUSED_VAR(ix);
     SvGETMAGIC(encoding);
 CODE:
     if (!SvOK(encoding))
@@ -1003,6 +1004,7 @@ ALIAS:
 PREINIT:
     SV *obj;
 INIT:
+    PERL_UNUSED_VAR(ix);
     SvGETMAGIC(encoding);
 CODE:
     if (!SvOK(encoding))

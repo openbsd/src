@@ -64,6 +64,7 @@
 #include <float.h>
 #include <time.h>
 #include <sys/utime.h>
+#include <wchar.h>
 
 #ifdef __GNUC__
 /* Mingw32 defaults to globing command line
@@ -1348,7 +1349,7 @@ get_hwnd_delay(pTHX, long child, DWORD tries)
      * caching reasons, and the child thread was attached to a different CPU
      * therefore there is no workload on that CPU and Sleep(0) returns control
      * without yielding the time slot.
-     * https://rt.perl.org/rt3/Ticket/Display.html?id=88840
+     * https://github.com/Perl/perl5/issues/11267
      */
     Sleep(0);
     win32_async_check(aTHX);
@@ -1722,7 +1723,7 @@ wstr_to_str(const wchar_t* wstr)
  * then it will convert the short name instead.
  *
  * The buffer to the ansi pathname must be freed with win32_free() when it
- * it no longer needed.
+ * is no longer needed.
  *
  * The argument to win32_ansipath() must exist before this function is
  * called; otherwise there is no way to determine the short path name.
@@ -2657,7 +2658,7 @@ win32_strerror(int e)
 	 * additionally map them to corresponding Windows (sockets) error codes
 	 * first to avoid getting the wrong system message.
 	 */
-	else if (e >= EADDRINUSE && e <= EWOULDBLOCK) {
+	else if (inRANGE(e, EADDRINUSE, EWOULDBLOCK)) {
 	    e = convert_errno_to_wsa_error(e);
 	}
 #endif
@@ -2911,9 +2912,17 @@ win32_rewind(FILE *pf)
 DllExport int
 win32_tmpfd(void)
 {
+    return win32_tmpfd_mode(0);
+}
+
+DllExport int
+win32_tmpfd_mode(int mode)
+{
     char prefix[MAX_PATH+1];
     char filename[MAX_PATH+1];
     DWORD len = GetTempPath(MAX_PATH, prefix);
+    mode &= ~( O_ACCMODE | O_CREAT | O_EXCL );
+    mode |= O_RDWR;
     if (len && len < MAX_PATH) {
 	if (GetTempFileName(prefix, "plx", 0, filename)) {
 	    HANDLE fh = CreateFile(filename,
@@ -2925,7 +2934,7 @@ win32_tmpfd(void)
 				   | FILE_FLAG_DELETE_ON_CLOSE,
 				   NULL);
 	    if (fh != INVALID_HANDLE_VALUE) {
-		int fd = win32_open_osfhandle((intptr_t)fh, 0);
+		int fd = win32_open_osfhandle((intptr_t)fh, mode);
 		if (fd >= 0) {
 		    PERL_DEB(dTHX;)
 		    DEBUG_p(PerlIO_printf(Perl_debug_log,
@@ -3904,7 +3913,7 @@ RETRY:
 	w32_child_pids[w32_num_children] = (DWORD)ret;
 	++w32_num_children;
     }
-    else  {
+    else {
 	DWORD status;
 	win32_msgwait(aTHX_ 1, &ProcessInformation.hProcess, INFINITE, NULL);
 	/* FIXME: if msgwait returned due to message perhaps forward the
@@ -4544,6 +4553,7 @@ Perl_win32_term(void)
     PERLIO_TERM;
     MALLOC_TERM;
     LOCALE_TERM;
+    ENV_TERM;
 #ifndef WIN32_NO_REGISTRY
     /* handles might be NULL, RegCloseKey then returns ERROR_INVALID_HANDLE
        but no point of checking and we can't die() at this point */

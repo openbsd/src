@@ -18,7 +18,7 @@ which is a trimmed-down Linux system enhanced with several tools for
 managing the NAS. There are several flavours of hardware: Marvell
 Armada (ARMv5tel, ARMv7l), Intel Atom (i686, x86_64), Freescale QorIQ
 (PPC), and more. For a full list see the
-L<Synology FAQ|http://forum.synology.com/wiki/index.php/What_kind_of_CPU_does_my_NAS_have>.
+L<Synology FAQ|https://forum.synology.com/wiki/index.php/What_kind_of_CPU_does_my_NAS_have>.
 
 Since it is based on Linux, the NAS can run many popular Linux
 software packages, including Perl. In fact, Synology provides a
@@ -42,7 +42,7 @@ H.Merijn Brand (DS213, ARMv5tel and RS815, Intel Atom x64).
 As DSM is a trimmed-down Linux system, it lacks many of the tools and
 libraries commonly found on Linux. The basic tools like sh, cp, rm,
 etc. are implemented using
-L<BusyBox|http://en.wikipedia.org/wiki/BusyBox>.
+L<BusyBox|https://en.wikipedia.org/wiki/BusyBox>.
 
 =over 4
 
@@ -59,7 +59,7 @@ If you want to smoke test Perl, install C<Perl>.
 
 In Settings, add the following Package Sources:
 
-  http://www.cphub.net
+  https://www.cphub.net
   http://packages.quadrat4.de
 
 =item *
@@ -139,7 +139,7 @@ L<Install Entware-ng on Synology NAS|https://github.com/Entware-ng/Entware-ng/wi
 
 That sadly does not (yet) work on QorIQ. At the moment of writing, the
 supported architectures are armv5, armv7, mipsel, wl500g, x86_32, and x86_64.
-Check L<here|http://pkg.entware.net/binaries/> for supported platforms.
+Check L<here|https://pkg.entware.net/binaries/> for supported platforms.
 
 Entware-ng comes with a precompiled 5.24.1 (June 2017) that allowes
 building shared XS code. Note that this installation does B<not> use

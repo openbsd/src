@@ -364,15 +364,15 @@ filenames.
 
 Don't assume C<< > >> won't be the first character of a filename.
 Always use the three-arg version of
-L<C<open>|perlfunc/open FILEHANDLE,EXPR>:
+L<C<open>|perlfunc/open FILEHANDLE,MODE,EXPR>:
 
     open my $fh, '<', $existing_file) or die $!;
 
-Two-arg L<C<open>|perlfunc/open FILEHANDLE,EXPR> is magic and can
+Two-arg L<C<open>|perlfunc/open FILEHANDLE,MODE,EXPR> is magic and can
 translate characters like C<< > >>, C<< < >>, and C<|> in filenames,
 which is usually the wrong thing to do.
 L<C<sysopen>|perlfunc/sysopen FILEHANDLE,FILENAME,MODE> and three-arg
-L<C<open>|perlfunc/open FILEHANDLE,EXPR> don't have this problem.
+L<C<open>|perlfunc/open FILEHANDLE,MODE,EXPR> don't have this problem.
 
 Don't use C<:> as a part of a filename since many systems use that for
 their own semantics (Mac OS Classic for separating pathname components,
@@ -413,7 +413,7 @@ L<C<close>|perlfunc/close FILEHANDLE> files when you are done with them.
 Don't L<C<unlink>|perlfunc/unlink LIST> or
 L<C<rename>|perlfunc/rename OLDNAME,NEWNAME> an open file.  Don't
 L<C<tie>|perlfunc/tie VARIABLE,CLASSNAME,LIST> or
-L<C<open>|perlfunc/open FILEHANDLE,EXPR> a file already tied or opened;
+L<C<open>|perlfunc/open FILEHANDLE,MODE,EXPR> a file already tied or opened;
 L<C<untie>|perlfunc/untie VARIABLE> or
 L<C<close>|perlfunc/close FILEHANDLE> it first.
 
@@ -561,7 +561,7 @@ portable.  That means, no L<C<system>|perlfunc/system LIST>,
 L<C<exec>|perlfunc/exec LIST>, L<C<fork>|perlfunc/fork>,
 L<C<pipe>|perlfunc/pipe READHANDLE,WRITEHANDLE>,
 L<C<``> or C<qxE<sol>E<sol>>|perlop/C<qxE<sol>I<STRING>E<sol>>>,
-L<C<open>|perlfunc/open FILEHANDLE,EXPR> with a C<|>, nor any of the other
+L<C<open>|perlfunc/open FILEHANDLE,MODE,EXPR> with a C<|>, nor any of the other
 things that makes being a Perl hacker worth being.
 
 Commands that launch external processes are generally supported on
@@ -670,7 +670,7 @@ When calculating specific times, such as for tests in time or date modules,
 it may be appropriate to calculate an offset for the epoch.
 
     use Time::Local qw(timegm);
-    my $offset = timegm(0, 0, 0, 1, 0, 70);
+    my $offset = timegm(0, 0, 0, 1, 0, 1970);
 
 The value for C<$offset> in Unix will be C<0>, but in Mac OS Classic
 will be some large number.  C<$offset> can then be added to a Unix time
@@ -827,7 +827,7 @@ Mailing list: cpan-testers-discuss@perl.org
 
 =item *
 
-Testing results: L<http://www.cpantesters.org/>
+Testing results: L<https://www.cpantesters.org/>
 
 =back
 
@@ -917,7 +917,7 @@ The DOS FAT filesystem can accommodate only "8.3" style filenames.  Under
 the "case-insensitive, but case-preserving" HPFS (OS/2) and NTFS (NT)
 filesystems you may have to be careful about case returned with functions
 like L<C<readdir>|perlfunc/readdir DIRHANDLE> or used with functions like
-L<C<open>|perlfunc/open FILEHANDLE,EXPR> or
+L<C<open>|perlfunc/open FILEHANDLE,MODE,EXPR> or
 L<C<opendir>|perlfunc/opendir DIRHANDLE,EXPR>.
 
 DOS also treats several filenames as special, such as F<AUX>, F<PRN>,
@@ -1032,12 +1032,12 @@ The C<Win32::*> modules in L<Win32>.
 
 =item *
 
-The ActiveState Pages, L<http://www.activestate.com/>
+The ActiveState Pages, L<https://www.activestate.com/>
 
 =item *
 
 The Cygwin environment for Win32; F<README.cygwin> (installed
-as L<perlcygwin>), L<http://www.cygwin.com/>
+as L<perlcygwin>), L<https://www.cygwin.com/>
 
 =item *
 
@@ -1378,7 +1378,7 @@ expand system variables in filenames if enclosed in angle brackets, so
 C<< <System$Dir>.Modules >> would look for the file
 S<C<$ENV{'System$Dir'} . 'Modules'>>.  The obvious implication of this is
 that B<fully qualified filenames can start with C<< <> >>> and the
-three-argument form of L<C<open>|perlfunc/open FILEHANDLE,EXPR> should
+three-argument form of L<C<open>|perlfunc/open FILEHANDLE,MODE,EXPR> should
 always be used.
 
 Because C<.> was in use as a directory separator and filenames could not
@@ -2277,7 +2277,7 @@ Some tests are known to fail:
 =item *
 
 F<ext/XS-APItest/t/call_checker.t> - see
-L<https://rt.perl.org/Ticket/Display.html?id=78502>
+L<https://github.com/Perl/perl5/issues/10750>
 
 =item *
 
@@ -2534,7 +2534,7 @@ L<http://www.cpan.org/ports/index.html> for binary distributions.
 =head1 SEE ALSO
 
 L<perlaix>, L<perlamiga>, L<perlbs2000>,
-L<perlce>, L<perlcygwin>, L<perldos>,
+L<perlcygwin>, L<perldos>,
 L<perlebcdic>, L<perlfreebsd>, L<perlhurd>, L<perlhpux>, L<perlirix>,
 L<perlmacos>, L<perlmacosx>,
 L<perlnetware>, L<perlos2>, L<perlos390>, L<perlos400>,

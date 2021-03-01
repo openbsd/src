@@ -186,7 +186,7 @@ use 5.009001;
 use Carp;
 $Carp::Internal{__PACKAGE__.""}++;
 
-our $VERSION = '1.36';
+our $VERSION = '1.37';
 our $DEBUG;
 our $VERBOSE;
 our $PRETTY;
@@ -265,6 +265,8 @@ if (eof(POD_DIAG)) {
     'lt'	=>	'<',	#   left chevron, less-than
     'gt'	=>	'>',	#   right chevron, greater-than
     'quot'	=>	'"',	#   double quote
+    'sol'	=>	'/',	#   forward slash / solidus
+    'verbar'    =>	'|',	#   vertical bar
 
     "Aacute"	=>	"A\\*'",	#   capital A, acute accent
     # etc
@@ -276,6 +278,8 @@ if (eof(POD_DIAG)) {
     'lt'	=>	'<',	#   left chevron, less-than
     'gt'	=>	'>',	#   right chevron, greater-than
     'quot'	=>	'"',	#   double quote
+    'sol'	=>	'/',	#   Forward slash / solidus
+    'verbar'    =>	'|',	#   vertical bar
 
     "Aacute"	=>	"\xC1"	#   capital A, acute accent
 
@@ -287,6 +291,8 @@ if (eof(POD_DIAG)) {
     'lt'	=>	'<',	#   left chevron, less-than
     'gt'	=>	'>',	#   right chevron, greater-than
     'quot'	=>	'"',	#   double quote
+    'sol'	=>	'/',	#   Forward slash / solidus
+    'verbar'    =>	'|',	#   vertical bar
 
     "Aacute"	=>	"A"	#   capital A, acute accent
     # etc

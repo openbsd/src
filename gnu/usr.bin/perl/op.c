@@ -164,50 +164,13 @@ recursive, but it's recursive on basic blocks, not on tree nodes.
 #include "keywords.h"
 #include "feature.h"
 #include "regcomp.h"
+#include "invlist_inline.h"
 
 #define CALL_PEEP(o) PL_peepp(aTHX_ o)
 #define CALL_RPEEP(o) PL_rpeepp(aTHX_ o)
 #define CALL_OPFREEHOOK(o) if (PL_opfreehook) PL_opfreehook(aTHX_ o)
 
 static const char array_passed_to_stat[] = "Array passed to stat will be coerced to a scalar";
-
-/* Used to avoid recursion through the op tree in scalarvoid() and
-   op_free()
-*/
-
-#define dDEFER_OP  \
-    SSize_t defer_stack_alloc = 0; \
-    SSize_t defer_ix = -1; \
-    OP **defer_stack = NULL;
-#define DEFER_OP_CLEANUP Safefree(defer_stack)
-#define DEFERRED_OP_STEP 100
-#define DEFER_OP(o) \
-  STMT_START { \
-    if (UNLIKELY(defer_ix == (defer_stack_alloc-1))) {    \
-        defer_stack_alloc += DEFERRED_OP_STEP; \
-        assert(defer_stack_alloc > 0); \
-        Renew(defer_stack, defer_stack_alloc, OP *); \
-    } \
-    defer_stack[++defer_ix] = o; \
-  } STMT_END
-#define DEFER_REVERSE(count)                            \
-    STMT_START {                                        \
-        UV cnt = (count);                               \
-        if (cnt > 1) {                                  \
-            OP **top = defer_stack + defer_ix;          \
-            /* top - (cnt) + 1 isn't safe here */       \
-            OP **bottom = top - (cnt - 1);              \
-            OP *tmp;                                    \
-            assert(bottom >= defer_stack);              \
-            while (top > bottom) {                      \
-                tmp = *top;                             \
-                *top-- = *bottom;                       \
-                *bottom++ = tmp;                        \
-            }                                           \
-        }                                               \
-    } STMT_END;
-
-#define POP_DEFERRED_OP() (defer_ix >= 0 ? defer_stack[defer_ix--] : (OP *)NULL)
 
 /* remove any leading "empty" ops from the op_next chain whose first
  * node's address is stored in op_p. Store the updated address of the
@@ -246,13 +209,26 @@ S_prune_chain_head(OP** op_p)
 #define SIZE_TO_PSIZE(x)	(((x) + sizeof(I32 *) - 1)/sizeof(I32 *))
 #define DIFF(o,p)		((size_t)((I32 **)(p) - (I32**)(o)))
 
-/* malloc a new op slab (suitable for attaching to PL_compcv) */
+/* requires double parens and aTHX_ */
+#define DEBUG_S_warn(args)					       \
+    DEBUG_S( 								\
+	PerlIO_printf(Perl_debug_log, "%s", SvPVx_nolen(Perl_mess args)) \
+    )
+
+
+/* malloc a new op slab (suitable for attaching to PL_compcv).
+ * sz is in units of pointers */
 
 static OPSLAB *
-S_new_slab(pTHX_ size_t sz)
+S_new_slab(pTHX_ OPSLAB *head, size_t sz)
 {
+    OPSLAB *slab;
+
+    /* opslot_offset is only U16 */
+    assert(sz  < U16_MAX);
+
 #ifdef PERL_DEBUG_READONLY_OPS
-    OPSLAB *slab = (OPSLAB *) mmap(0, sz * sizeof(I32 *),
+    slab = (OPSLAB *) mmap(0, sz * sizeof(I32 *),
 				   PROT_READ|PROT_WRITE,
 				   MAP_ANON|MAP_PRIVATE, -1, 0);
     DEBUG_m(PerlIO_printf(Perl_debug_log, "mapped %lu at %p\n",
@@ -261,23 +237,63 @@ S_new_slab(pTHX_ size_t sz)
 	perror("mmap failed");
 	abort();
     }
-    slab->opslab_size = (U16)sz;
 #else
-    OPSLAB *slab = (OPSLAB *)PerlMemShared_calloc(sz, sizeof(I32 *));
+    slab = (OPSLAB *)PerlMemShared_calloc(sz, sizeof(I32 *));
 #endif
+    slab->opslab_size = (U16)sz;
+
 #ifndef WIN32
     /* The context is unused in non-Windows */
     PERL_UNUSED_CONTEXT;
 #endif
-    slab->opslab_first = (OPSLOT *)((I32 **)slab + sz - 1);
+    slab->opslab_free_space = sz - DIFF(slab, &slab->opslab_slots);
+    slab->opslab_head = head ? head : slab;
+    DEBUG_S_warn((aTHX_ "allocated new op slab sz 0x%x, %p, head slab %p",
+        (unsigned int)slab->opslab_size, (void*)slab,
+        (void*)(slab->opslab_head)));
     return slab;
 }
 
-/* requires double parens and aTHX_ */
-#define DEBUG_S_warn(args)					       \
-    DEBUG_S( 								\
-	PerlIO_printf(Perl_debug_log, "%s", SvPVx_nolen(Perl_mess args)) \
-    )
+/* opslot_size includes the size of the slot header, and an op can't be smaller than BASEOP */
+#define OPSLOT_SIZE_BASE (SIZE_TO_PSIZE(sizeof(OP)) + OPSLOT_HEADER_P)
+#define OPSLOT_SIZE_TO_INDEX(sz) ((sz) - OPSLOT_SIZE_BASE)
+
+#define link_freed_op(slab, o) S_link_freed_op(aTHX_ slab, o)
+static void
+S_link_freed_op(pTHX_ OPSLAB *slab, OP *o) {
+    U16 sz = OpSLOT(o)->opslot_size;
+    U16 index = OPSLOT_SIZE_TO_INDEX(sz);
+
+    assert(sz >= OPSLOT_SIZE_BASE);
+    /* make sure the array is large enough to include ops this large */
+    if (!slab->opslab_freed) {
+        /* we don't have a free list array yet, make a new one */
+        slab->opslab_freed_size = index+1;
+        slab->opslab_freed = (OP**)PerlMemShared_calloc((slab->opslab_freed_size), sizeof(OP*));
+
+        if (!slab->opslab_freed)
+            croak_no_mem();
+    }
+    else if (index >= slab->opslab_freed_size) {
+        /* It's probably not worth doing exponential expansion here, the number of op sizes
+           is small.
+        */
+        /* We already have a list that isn't large enough, expand it */
+        size_t newsize = index+1;
+        OP **p = (OP **)PerlMemShared_realloc(slab->opslab_freed, newsize * sizeof(OP*));
+
+        if (!p)
+            croak_no_mem();
+
+        Zero(p+slab->opslab_freed_size, newsize - slab->opslab_freed_size, OP *);
+
+        slab->opslab_freed = p;
+        slab->opslab_freed_size = newsize;
+    }
+
+    o->op_next = slab->opslab_freed[index];
+    slab->opslab_freed[index] = o;
+}
 
 /* Returns a sz-sized block of memory (suitable for holding an op) from
  * a free slot in the chain of op slabs attached to PL_compcv.
@@ -288,11 +304,11 @@ S_new_slab(pTHX_ size_t sz)
 void *
 Perl_Slab_Alloc(pTHX_ size_t sz)
 {
-    OPSLAB *slab;
+    OPSLAB *head_slab; /* first slab in the chain */
     OPSLAB *slab2;
     OPSLOT *slot;
     OP *o;
-    size_t opsz, space;
+    size_t opsz;
 
     /* We only allocate ops from the slab during subroutine compilation.
        We find the slab via PL_compcv, hence that must be non-NULL. It could
@@ -315,77 +331,81 @@ Perl_Slab_Alloc(pTHX_ size_t sz)
        details.  */
     if (!CvSTART(PL_compcv)) {
 	CvSTART(PL_compcv) =
-	    (OP *)(slab = S_new_slab(aTHX_ PERL_SLAB_SIZE));
+	    (OP *)(head_slab = S_new_slab(aTHX_ NULL, PERL_SLAB_SIZE));
 	CvSLABBED_on(PL_compcv);
-	slab->opslab_refcnt = 2; /* one for the CV; one for the new OP */
+	head_slab->opslab_refcnt = 2; /* one for the CV; one for the new OP */
     }
-    else ++(slab = (OPSLAB *)CvSTART(PL_compcv))->opslab_refcnt;
+    else ++(head_slab = (OPSLAB *)CvSTART(PL_compcv))->opslab_refcnt;
 
     opsz = SIZE_TO_PSIZE(sz);
     sz = opsz + OPSLOT_HEADER_P;
 
-    /* The slabs maintain a free list of OPs. In particular, constant folding
+    /* The head slab for each CV maintains a free list of OPs. In particular, constant folding
        will free up OPs, so it makes sense to re-use them where possible. A
        freed up slot is used in preference to a new allocation.  */
-    if (slab->opslab_freed) {
-	OP **too = &slab->opslab_freed;
-	o = *too;
-	DEBUG_S_warn((aTHX_ "found free op at %p, slab %p", (void*)o, (void*)slab));
-	while (o && DIFF(OpSLOT(o), OpSLOT(o)->opslot_next) < sz) {
-	    DEBUG_S_warn((aTHX_ "Alas! too small"));
-	    o = *(too = &o->op_next);
-	    if (o) { DEBUG_S_warn((aTHX_ "found another free op at %p", (void*)o)); }
-	}
-	if (o) {
-	    *too = o->op_next;
+    if (head_slab->opslab_freed &&
+        OPSLOT_SIZE_TO_INDEX(sz) < head_slab->opslab_freed_size) {
+        U16 base_index;
+
+        /* look for a large enough size with any freed ops */
+        for (base_index = OPSLOT_SIZE_TO_INDEX(sz);
+             base_index < head_slab->opslab_freed_size && !head_slab->opslab_freed[base_index];
+             ++base_index) {
+        }
+
+        if (base_index < head_slab->opslab_freed_size) {
+            /* found a freed op */
+            o = head_slab->opslab_freed[base_index];
+
+            DEBUG_S_warn((aTHX_ "realloced  op at %p, slab %p, head slab %p",
+                (void*)o,
+                (I32**)OpSLOT(o) - OpSLOT(o)->opslot_offset,
+                (void*)head_slab));
+	    head_slab->opslab_freed[base_index] = o->op_next;
 	    Zero(o, opsz, I32 *);
 	    o->op_slabbed = 1;
 	    goto gotit;
 	}
     }
 
-#define INIT_OPSLOT \
-	    slot->opslot_slab = slab;			\
-	    slot->opslot_next = slab2->opslab_first;	\
-	    slab2->opslab_first = slot;			\
+#define INIT_OPSLOT(s) \
+	    slot->opslot_offset = DIFF(slab2, slot) ;	\
+	    slot->opslot_size = s;                      \
+	    slab2->opslab_free_space -= s;		\
 	    o = &slot->opslot_op;			\
 	    o->op_slabbed = 1
 
     /* The partially-filled slab is next in the chain. */
-    slab2 = slab->opslab_next ? slab->opslab_next : slab;
-    if ((space = DIFF(&slab2->opslab_slots, slab2->opslab_first)) < sz) {
+    slab2 = head_slab->opslab_next ? head_slab->opslab_next : head_slab;
+    if (slab2->opslab_free_space  < sz) {
 	/* Remaining space is too small. */
-
 	/* If we can fit a BASEOP, add it to the free chain, so as not
 	   to waste it. */
-	if (space >= SIZE_TO_PSIZE(sizeof(OP)) + OPSLOT_HEADER_P) {
+	if (slab2->opslab_free_space >= SIZE_TO_PSIZE(sizeof(OP)) + OPSLOT_HEADER_P) {
 	    slot = &slab2->opslab_slots;
-	    INIT_OPSLOT;
+	    INIT_OPSLOT(slab2->opslab_free_space);
 	    o->op_type = OP_FREED;
-	    o->op_next = slab->opslab_freed;
-	    slab->opslab_freed = o;
+            link_freed_op(head_slab, o);
 	}
 
 	/* Create a new slab.  Make this one twice as big. */
-	slot = slab2->opslab_first;
-	while (slot->opslot_next) slot = slot->opslot_next;
-	slab2 = S_new_slab(aTHX_
-			    (DIFF(slab2, slot)+1)*2 > PERL_MAX_SLAB_SIZE
-					? PERL_MAX_SLAB_SIZE
-					: (DIFF(slab2, slot)+1)*2);
-	slab2->opslab_next = slab->opslab_next;
-	slab->opslab_next = slab2;
+	slab2 = S_new_slab(aTHX_ head_slab,
+			    slab2->opslab_size  > PERL_MAX_SLAB_SIZE / 2
+                                ? PERL_MAX_SLAB_SIZE
+                                : slab2->opslab_size * 2);
+	slab2->opslab_next = head_slab->opslab_next;
+	head_slab->opslab_next = slab2;
     }
-    assert(DIFF(&slab2->opslab_slots, slab2->opslab_first) >= sz);
+    assert(slab2->opslab_size >= sz);
 
     /* Create a new op slot */
-    slot = (OPSLOT *)((I32 **)slab2->opslab_first - sz);
+    slot = (OPSLOT *)
+                ((I32 **)&slab2->opslab_slots
+                                + slab2->opslab_free_space - sz);
     assert(slot >= &slab2->opslab_slots);
-    if (DIFF(&slab2->opslab_slots, slot)
-	 < SIZE_TO_PSIZE(sizeof(OP)) + OPSLOT_HEADER_P)
-	slot = &slab2->opslab_slots;
-    INIT_OPSLOT;
-    DEBUG_S_warn((aTHX_ "allocating op at %p, slab %p", (void*)o, (void*)slab));
+    INIT_OPSLOT(sz);
+    DEBUG_S_warn((aTHX_ "allocating op at %p, slab %p, head slab %p",
+        (void*)o, (void*)slab2, (void*)head_slab));
 
   gotit:
     /* moresib == 0, op_sibling == 0 implies a solitary unattached op */
@@ -482,9 +502,11 @@ Perl_Slab_Free(pTHX_ void *op)
     /* If this op is already freed, our refcount will get screwy. */
     assert(o->op_type != OP_FREED);
     o->op_type = OP_FREED;
-    o->op_next = slab->opslab_freed;
-    slab->opslab_freed = o;
-    DEBUG_S_warn((aTHX_ "free op at %p, recorded in slab %p", (void*)o, (void*)slab));
+    link_freed_op(slab, o);
+    DEBUG_S_warn((aTHX_ "freeing    op at %p, slab %p, head slab %p",
+        (void*)o,
+        (I32**)OpSLOT(o) - OpSLOT(o)->opslot_offset,
+        (void*)slab));
     OpslabREFCNT_dec_padok(slab);
 }
 
@@ -519,6 +541,7 @@ Perl_opslab_free(pTHX_ OPSLAB *slab)
     PERL_UNUSED_CONTEXT;
     DEBUG_S_warn((aTHX_ "freeing slab %p", (void*)slab));
     assert(slab->opslab_refcnt == 1);
+    PerlMemShared_free(slab->opslab_freed);
     do {
 	slab2 = slab->opslab_next;
 #ifdef DEBUGGING
@@ -552,10 +575,13 @@ Perl_opslab_force_free(pTHX_ OPSLAB *slab)
     PERL_ARGS_ASSERT_OPSLAB_FORCE_FREE;
     slab2 = slab;
     do {
-        OPSLOT *slot;
-	for (slot = slab2->opslab_first;
-	     slot->opslot_next;
-	     slot = slot->opslot_next) {
+        OPSLOT *slot = (OPSLOT*)
+                    ((I32**)&slab2->opslab_slots + slab2->opslab_free_space);
+        OPSLOT *end  = (OPSLOT*)
+                        ((I32**)slab2 + slab2->opslab_size);
+	for (; slot < end;
+                slot = (OPSLOT*) ((I32**)slot + slot->opslot_size) )
+        {
 	    if (slot->opslot_op.op_type != OP_FREED
 	     && !(slot->opslot_op.op_savefree
 #ifdef DEBUGGING
@@ -654,7 +680,7 @@ S_too_few_arguments_pv(pTHX_ OP *o, const char* name, U32 flags)
     yyerror_pv(Perl_form(aTHX_ "Not enough arguments for %s", name), flags);
     return o;
 }
- 
+
 STATIC OP *
 S_too_many_arguments_pv(pTHX_ OP *o, const char *name, U32 flags)
 {
@@ -673,14 +699,12 @@ S_bad_type_pv(pTHX_ I32 n, const char *t, const OP *o, const OP *kid)
 		 (int)n, PL_op_desc[(o)->op_type], t, OP_DESC(kid)), 0);
 }
 
-/* remove flags var, its unused in all callers, move to to right end since gv
-  and kid are always the same */
 STATIC void
 S_bad_type_gv(pTHX_ I32 n, GV *gv, const OP *kid, const char *t)
 {
     SV * const namesv = cv_name((CV *)gv, NULL, 0);
     PERL_ARGS_ASSERT_BAD_TYPE_GV;
- 
+
     yyerror_pv(Perl_form(aTHX_ "Type of arg %d to %" SVf " must be %s (not %s)",
 		 (int)n, SVfARG(namesv), t, OP_DESC(kid)), SvUTF8(namesv));
 }
@@ -718,16 +742,22 @@ Perl_allocmy(pTHX_ const char *const name, const STRLEN len, const U32 flags)
                 && isIDFIRST_utf8_safe((U8 *)name+1, name + len))
             || (name[1] == '_' && len > 2)))
     {
+        const char * const type =
+              PL_parser->in_my == KEY_sigvar ? "subroutine signature" :
+              PL_parser->in_my == KEY_state  ? "\"state\""     : "\"my\"";
+
 	if (!(flags & SVf_UTF8 && UTF8_IS_START(name[1]))
 	 && isASCII(name[1])
-	 && (!isPRINT(name[1]) || strchr("\t\n\r\f", name[1]))) {
-	    /* diag_listed_as: Can't use global %s in "%s" */
-	    yyerror(Perl_form(aTHX_ "Can't use global %c^%c%.*s in \"%s\"",
-			      name[0], toCTRL(name[1]), (int)(len - 2), name + 2,
-			      PL_parser->in_my == KEY_state ? "state" : "my"));
+	 && (!isPRINT(name[1]) || memCHRs("\t\n\r\f", name[1]))) {
+	    /* diag_listed_as: Can't use global %s in %s */
+	    yyerror(Perl_form(aTHX_ "Can't use global %c^%c%.*s in %s",
+			      name[0], toCTRL(name[1]),
+                              (int)(len - 2), name + 2,
+			      type));
 	} else {
-	    yyerror_pv(Perl_form(aTHX_ "Can't use global %.*s in \"%s\"", (int) len, name,
-			      PL_parser->in_my == KEY_state ? "state" : "my"), flags & SVf_UTF8);
+	    yyerror_pv(Perl_form(aTHX_ "Can't use global %.*s in %s",
+                              (int) len, name,
+			      type), flags & SVf_UTF8);
 	}
     }
 
@@ -805,10 +835,10 @@ S_op_destroy(pTHX_ OP *o)
 /* Destructor */
 
 /*
-=for apidoc Am|void|op_free|OP *o
+=for apidoc op_free
 
-Free an op.  Only use this when an op is no longer linked to from any
-optree.
+Free an op and its children. Only use this when an op is no longer linked
+to from any optree.
 
 =cut
 */
@@ -818,13 +848,68 @@ Perl_op_free(pTHX_ OP *o)
 {
     dVAR;
     OPCODE type;
-    dDEFER_OP;
+    OP *top_op = o;
+    OP *next_op = o;
+    bool went_up = FALSE; /* whether we reached the current node by
+                            following the parent pointer from a child, and
+                            so have already seen this node */
 
-    do {
+    if (!o || o->op_type == OP_FREED)
+        return;
+
+    if (o->op_private & OPpREFCOUNTED) {
+        /* if base of tree is refcounted, just decrement */
+        switch (o->op_type) {
+        case OP_LEAVESUB:
+        case OP_LEAVESUBLV:
+        case OP_LEAVEEVAL:
+        case OP_LEAVE:
+        case OP_SCOPE:
+        case OP_LEAVEWRITE:
+            {
+                PADOFFSET refcnt;
+                OP_REFCNT_LOCK;
+                refcnt = OpREFCNT_dec(o);
+                OP_REFCNT_UNLOCK;
+                if (refcnt) {
+                    /* Need to find and remove any pattern match ops from
+                     * the list we maintain for reset().  */
+                    find_and_forget_pmops(o);
+                    return;
+                }
+            }
+            break;
+        default:
+            break;
+        }
+    }
+
+    while (next_op) {
+        o = next_op;
+
+        /* free child ops before ourself, (then free ourself "on the
+         * way back up") */
+
+        if (!went_up && o->op_flags & OPf_KIDS) {
+            next_op = cUNOPo->op_first;
+            continue;
+        }
+
+        /* find the next node to visit, *then* free the current node
+         * (can't rely on o->op_* fields being valid after o has been
+         * freed) */
+
+        /* The next node to visit will be either the sibling, or the
+         * parent if no siblings left, or NULL if we've worked our way
+         * back up to the top node in the tree */
+        next_op = (o == top_op) ? NULL : o->op_sibparent;
+        went_up = cBOOL(!OpHAS_SIBLING(o)); /* parents are already visited */
+
+        /* Now process the current node */
 
         /* Though ops may be freed twice, freeing the op after its slab is a
            big no-no. */
-        assert(!o || !o->op_slabbed || OpSLAB(o)->opslab_refcnt != ~(size_t)0);
+        assert(!o->op_slabbed || OpSLAB(o)->opslab_refcnt != ~(size_t)0);
         /* During the forced freeing of ops after compilation failure, kidops
            may be freed before their parents. */
         if (!o || o->op_type == OP_FREED)
@@ -843,7 +928,7 @@ Perl_op_free(pTHX_ OP *o)
          *     we can't spot faults in the main code, only
          *     evaled/required code */
 #ifdef DEBUGGING
-        if (   o->op_ppaddr == PL_ppaddr[o->op_type]
+        if (   o->op_ppaddr == PL_ppaddr[type]
             && PL_parser
             && !PL_parser->error_count)
         {
@@ -851,54 +936,12 @@ Perl_op_free(pTHX_ OP *o)
         }
 #endif
 
-        if (o->op_private & OPpREFCOUNTED) {
-            switch (type) {
-            case OP_LEAVESUB:
-            case OP_LEAVESUBLV:
-            case OP_LEAVEEVAL:
-            case OP_LEAVE:
-            case OP_SCOPE:
-            case OP_LEAVEWRITE:
-                {
-                PADOFFSET refcnt;
-                OP_REFCNT_LOCK;
-                refcnt = OpREFCNT_dec(o);
-                OP_REFCNT_UNLOCK;
-                if (refcnt) {
-                    /* Need to find and remove any pattern match ops from the list
-                       we maintain for reset().  */
-                    find_and_forget_pmops(o);
-                    continue;
-                }
-                }
-                break;
-            default:
-                break;
-            }
-        }
 
         /* Call the op_free hook if it has been set. Do it now so that it's called
          * at the right time for refcounted ops, but still before all of the kids
          * are freed. */
         CALL_OPFREEHOOK(o);
 
-        if (o->op_flags & OPf_KIDS) {
-            OP *kid, *nextkid;
-            assert(cUNOPo->op_first); /* OPf_KIDS implies op_first non-null */
-            for (kid = cUNOPo->op_first; kid; kid = nextkid) {
-                nextkid = OpSIBLING(kid); /* Get before next freeing kid */
-                if (kid->op_type == OP_FREED)
-                    /* During the forced freeing of ops after
-                       compilation failure, kidops may be freed before
-                       their parents. */
-                    continue;
-                if (!(kid->op_flags & OPf_KIDS))
-                    /* If it has no kids, just free it now */
-                    op_free(kid);
-                else
-                    DEFER_OP(kid);
-            }
-        }
         if (type == OP_NULL)
             type = (OPCODE)o->op_targ;
 
@@ -915,10 +958,9 @@ Perl_op_free(pTHX_ OP *o)
         FreeOp(o);
         if (PL_op == o)
             PL_op = NULL;
-    } while ( (o = POP_DEFERRED_OP()) );
-
-    DEFER_OP_CLEANUP;
+    }
 }
+
 
 /* S_op_clear_gv(): free a GV attached to an OP */
 
@@ -991,8 +1033,7 @@ Perl_op_clear(pTHX_ OP *o)
 	o->op_targ = 0;
 	break;
     default:
-	if (!(o->op_flags & OPf_REF)
-	    || (PL_check[o->op_type] != Perl_ck_ftst))
+	if (!(o->op_flags & OPf_REF) || !OP_IS_STAT(o->op_type))
 	    break;
 	/* FALLTHROUGH */
     case OP_GVSV:
@@ -1035,7 +1076,7 @@ Perl_op_clear(pTHX_ OP *o)
 	/** Bug #15654
 	  Even if op_clear does a pad_free for the target of the op,
 	  pad_free doesn't actually remove the sv that exists in the pad;
-	  instead it lives on. This results in that it could be reused as 
+	  instead it lives on. This results in that it could be reused as
 	  a target later on when the pad was reallocated.
 	**/
         if(o->op_targ) {
@@ -1055,7 +1096,7 @@ Perl_op_clear(pTHX_ OP *o)
     case OP_TRANS:
     case OP_TRANSR:
 	if (   (o->op_type == OP_TRANS || o->op_type == OP_TRANSR)
-            && (o->op_private & (OPpTRANS_FROM_UTF|OPpTRANS_TO_UTF)))
+            && (o->op_private & OPpTRANS_USE_SVOP))
         {
 #ifdef USE_ITHREADS
 	    if (cPADOPo->op_padix > 0) {
@@ -1298,33 +1339,47 @@ S_forget_pmop(pTHX_ PMOP *const o)
 	    }
 	}
     }
-    if (PL_curpm == o) 
+    if (PL_curpm == o)
 	PL_curpm = NULL;
 }
+
 
 STATIC void
 S_find_and_forget_pmops(pTHX_ OP *o)
 {
+    OP* top_op = o;
+
     PERL_ARGS_ASSERT_FIND_AND_FORGET_PMOPS;
 
-    if (o->op_flags & OPf_KIDS) {
-        OP *kid = cUNOPo->op_first;
-	while (kid) {
-	    switch (kid->op_type) {
-	    case OP_SUBST:
-	    case OP_SPLIT:
-	    case OP_MATCH:
-	    case OP_QR:
-		forget_pmop((PMOP*)kid);
-	    }
-	    find_and_forget_pmops(kid);
-	    kid = OpSIBLING(kid);
-	}
+    while (1) {
+        switch (o->op_type) {
+        case OP_SUBST:
+        case OP_SPLIT:
+        case OP_MATCH:
+        case OP_QR:
+            forget_pmop((PMOP*)o);
+        }
+
+        if (o->op_flags & OPf_KIDS) {
+            o = cUNOPo->op_first;
+            continue;
+        }
+
+        while (1) {
+            if (o == top_op)
+                return; /* at top; no parents/siblings to try */
+            if (OpHAS_SIBLING(o)) {
+                o = o->op_sibparent; /* process next sibling */
+                break;
+            }
+            o = o->op_sibparent; /*try parent's next sibling */
+        }
     }
 }
 
+
 /*
-=for apidoc Am|void|op_null|OP *o
+=for apidoc op_null
 
 Neutralizes an op when it is no longer needed, but is still linked to from
 other ops.
@@ -1377,7 +1432,7 @@ op_sibling nodes.  By analogy with the perl-level C<splice()> function, allows
 you to delete zero or more sequential nodes, replacing them with zero or
 more different nodes.  Performs the necessary op_first/op_last
 housekeeping on the parent node and op_sibling manipulation on the
-children.  The last deleted node will be marked as as the last node by
+children.  The last deleted node will be marked as the last node by
 updating the op_sibling/op_sibparent or op_moresib field as appropriate.
 
 Note that op_next is not manipulated, and nodes are not freed; that is the
@@ -1594,7 +1649,7 @@ Perl_alloc_LOGOP(pTHX_ I32 type, OP *first, OP* other)
 /* Contextualizers */
 
 /*
-=for apidoc Am|OP *|op_contextualize|OP *o|I32 context
+=for apidoc op_contextualize
 
 Applies a syntactic context to an op tree representing an expression.
 C<o> is the op tree, and C<context> must be C<G_SCALAR>, C<G_ARRAY>,
@@ -1620,45 +1675,64 @@ Perl_op_contextualize(pTHX_ OP *o, I32 context)
 
 /*
 
-=for apidoc Am|OP*|op_linklist|OP *o
+=for apidoc op_linklist
 This function is the implementation of the L</LINKLIST> macro.  It should
 not be called directly.
 
 =cut
 */
 
+
 OP *
 Perl_op_linklist(pTHX_ OP *o)
 {
-    OP *first;
+
+    OP **prevp;
+    OP *kid;
+    OP * top_op = o;
 
     PERL_ARGS_ASSERT_OP_LINKLIST;
 
-    if (o->op_next)
-	return o->op_next;
+    while (1) {
+        /* Descend down the tree looking for any unprocessed subtrees to
+         * do first */
+        if (!o->op_next) {
+            if (o->op_flags & OPf_KIDS) {
+                o = cUNOPo->op_first;
+                continue;
+            }
+            o->op_next = o; /* leaf node; link to self initially */
+        }
 
-    /* establish postfix order */
-    first = cUNOPo->op_first;
-    if (first) {
-        OP *kid;
-	o->op_next = LINKLIST(first);
-	kid = first;
-	for (;;) {
-            OP *sibl = OpSIBLING(kid);
-            if (sibl) {
-                kid->op_next = LINKLIST(sibl);
-                kid = sibl;
-	    } else {
-		kid->op_next = o;
-		break;
-	    }
-	}
+        /* if we're at the top level, there either weren't any children
+         * to process, or we've worked our way back to the top. */
+        if (o == top_op)
+            return o->op_next;
+
+        /* o is now processed. Next, process any sibling subtrees */
+
+        if (OpHAS_SIBLING(o)) {
+            o = OpSIBLING(o);
+            continue;
+        }
+
+        /* Done all the subtrees at this level. Go back up a level and
+         * link the parent in with all its (processed) children.
+         */
+
+        o = o->op_sibparent;
+        assert(!o->op_next);
+        prevp = &(o->op_next);
+        kid   = (o->op_flags & OPf_KIDS) ? cUNOPo->op_first : NULL;
+        while (kid) {
+            *prevp = kid->op_next;
+            prevp = &(kid->op_next);
+            kid = OpSIBLING(kid);
+        }
+        *prevp = o;
     }
-    else
-	o->op_next = o;
-
-    return o->op_next;
 }
+
 
 static OP *
 S_scalarkids(pTHX_ OP *o)
@@ -1816,121 +1890,180 @@ S_scalar_slice_warning(pTHX_ const OP *o)
 		    SVfARG(name), lbrack, SVfARG(keysv), rbrack);
 }
 
+
+
+/* apply scalar context to the o subtree */
+
 OP *
 Perl_scalar(pTHX_ OP *o)
 {
-    OP *kid;
+    OP * top_op = o;
 
-    /* assumes no premature commitment */
-    if (!o || (PL_parser && PL_parser->error_count)
-	 || (o->op_flags & OPf_WANT)
-	 || o->op_type == OP_RETURN)
-    {
-	return o;
-    }
+    while (1) {
+        OP *next_kid = NULL; /* what op (if any) to process next */
+        OP *kid;
 
-    o->op_flags = (o->op_flags & ~OPf_WANT) | OPf_WANT_SCALAR;
+        /* assumes no premature commitment */
+        if (!o || (PL_parser && PL_parser->error_count)
+             || (o->op_flags & OPf_WANT)
+             || o->op_type == OP_RETURN)
+        {
+            goto do_next;
+        }
 
-    switch (o->op_type) {
-    case OP_REPEAT:
-	scalar(cBINOPo->op_first);
-	if (o->op_private & OPpREPEAT_DOLIST) {
-	    kid = cLISTOPx(cUNOPo->op_first)->op_first;
-	    assert(kid->op_type == OP_PUSHMARK);
-	    if (OpHAS_SIBLING(kid) && !OpHAS_SIBLING(OpSIBLING(kid))) {
-		op_null(cLISTOPx(cUNOPo->op_first)->op_first);
-		o->op_private &=~ OPpREPEAT_DOLIST;
-	    }
-	}
-	break;
-    case OP_OR:
-    case OP_AND:
-    case OP_COND_EXPR:
-	for (kid = OpSIBLING(cUNOPo->op_first); kid; kid = OpSIBLING(kid))
-	    scalar(kid);
-	break;
-	/* FALLTHROUGH */
-    case OP_SPLIT:
-    case OP_MATCH:
-    case OP_QR:
-    case OP_SUBST:
-    case OP_NULL:
-    default:
-	if (o->op_flags & OPf_KIDS) {
-	    for (kid = cUNOPo->op_first; kid; kid = OpSIBLING(kid))
-		scalar(kid);
-	}
-	break;
-    case OP_LEAVE:
-    case OP_LEAVETRY:
-	kid = cLISTOPo->op_first;
-	scalar(kid);
-	kid = OpSIBLING(kid);
-    do_kids:
-	while (kid) {
-	    OP *sib = OpSIBLING(kid);
-	    if (sib && kid->op_type != OP_LEAVEWHEN
-	     && (  OpHAS_SIBLING(sib) || sib->op_type != OP_NULL
-		|| (  sib->op_targ != OP_NEXTSTATE
-		   && sib->op_targ != OP_DBSTATE  )))
-		scalarvoid(kid);
-	    else
-		scalar(kid);
-	    kid = sib;
-	}
-	PL_curcop = &PL_compiling;
-	break;
-    case OP_SCOPE:
-    case OP_LINESEQ:
-    case OP_LIST:
-	kid = cLISTOPo->op_first;
-	goto do_kids;
-    case OP_SORT:
-	Perl_ck_warner(aTHX_ packWARN(WARN_VOID), "Useless use of sort in scalar context");
-	break;
-    case OP_KVHSLICE:
-    case OP_KVASLICE:
-    {
-	/* Warn about scalar context */
-	const char lbrack = o->op_type == OP_KVHSLICE ? '{' : '[';
-	const char rbrack = o->op_type == OP_KVHSLICE ? '}' : ']';
-	SV *name;
-	SV *keysv;
-	const char *key = NULL;
+        o->op_flags = (o->op_flags & ~OPf_WANT) | OPf_WANT_SCALAR;
 
-	/* This warning can be nonsensical when there is a syntax error. */
-	if (PL_parser && PL_parser->error_count)
-	    break;
+        switch (o->op_type) {
+        case OP_REPEAT:
+            scalar(cBINOPo->op_first);
+            /* convert what initially looked like a list repeat into a
+             * scalar repeat, e.g. $s = (1) x $n
+             */
+            if (o->op_private & OPpREPEAT_DOLIST) {
+                kid = cLISTOPx(cUNOPo->op_first)->op_first;
+                assert(kid->op_type == OP_PUSHMARK);
+                if (OpHAS_SIBLING(kid) && !OpHAS_SIBLING(OpSIBLING(kid))) {
+                    op_null(cLISTOPx(cUNOPo->op_first)->op_first);
+                    o->op_private &=~ OPpREPEAT_DOLIST;
+                }
+            }
+            break;
 
-	if (!ckWARN(WARN_SYNTAX)) break;
+        case OP_OR:
+        case OP_AND:
+        case OP_COND_EXPR:
+            /* impose scalar context on everything except the condition */
+            next_kid = OpSIBLING(cUNOPo->op_first);
+            break;
 
-	kid = cLISTOPo->op_first;
-	kid = OpSIBLING(kid); /* get past pushmark */
-	assert(OpSIBLING(kid));
-	name = S_op_varname(aTHX_ OpSIBLING(kid));
-	if (!name) /* XS module fiddling with the op tree */
-	    break;
-	S_op_pretty(aTHX_ kid, &keysv, &key);
-	assert(SvPOK(name));
-	sv_chop(name,SvPVX(name)+1);
-	if (key)
-  /* diag_listed_as: %%s[%s] in scalar context better written as $%s[%s] */
-	    Perl_warner(aTHX_ packWARN(WARN_SYNTAX),
-		       "%%%" SVf "%c%s%c in scalar context better written "
-		       "as $%" SVf "%c%s%c",
-			SVfARG(name), lbrack, key, rbrack, SVfARG(name),
-			lbrack, key, rbrack);
-	else
-  /* diag_listed_as: %%s[%s] in scalar context better written as $%s[%s] */
-	    Perl_warner(aTHX_ packWARN(WARN_SYNTAX),
-		       "%%%" SVf "%c%" SVf "%c in scalar context better "
-		       "written as $%" SVf "%c%" SVf "%c",
-			SVfARG(name), lbrack, SVfARG(keysv), rbrack,
-			SVfARG(name), lbrack, SVfARG(keysv), rbrack);
-    }
-    }
-    return o;
+        default:
+            if (o->op_flags & OPf_KIDS)
+                next_kid = cUNOPo->op_first; /* do all kids */
+            break;
+
+        /* the children of these ops are usually a list of statements,
+         * except the leaves, whose first child is a corresponding enter
+         */
+        case OP_SCOPE:
+        case OP_LINESEQ:
+        case OP_LIST:
+            kid = cLISTOPo->op_first;
+            goto do_kids;
+        case OP_LEAVE:
+        case OP_LEAVETRY:
+            kid = cLISTOPo->op_first;
+            scalar(kid);
+            kid = OpSIBLING(kid);
+        do_kids:
+            while (kid) {
+                OP *sib = OpSIBLING(kid);
+                /* Apply void context to all kids except the last, which
+                 * is scalar (ignoring a trailing ex-nextstate in determining
+                 * if it's the last kid). E.g.
+                 *      $scalar = do { void; void; scalar }
+                 * Except that 'when's are always scalar, e.g.
+                 *      $scalar = do { given(..) {
+                    *                 when (..) { scalar }
+                    *                 when (..) { scalar }
+                    *                 ...
+                    *                }}
+                    */
+                if (!sib
+                     || (  !OpHAS_SIBLING(sib)
+                         && sib->op_type == OP_NULL
+                         && (   sib->op_targ == OP_NEXTSTATE
+                             || sib->op_targ == OP_DBSTATE  )
+                        )
+                )
+                {
+                    /* tail call optimise calling scalar() on the last kid */
+                    next_kid = kid;
+                    goto do_next;
+                }
+                else if (kid->op_type == OP_LEAVEWHEN)
+                    scalar(kid);
+                else
+                    scalarvoid(kid);
+                kid = sib;
+            }
+            NOT_REACHED; /* NOTREACHED */
+            break;
+
+        case OP_SORT:
+            Perl_ck_warner(aTHX_ packWARN(WARN_VOID), "Useless use of sort in scalar context");
+            break;
+
+        case OP_KVHSLICE:
+        case OP_KVASLICE:
+        {
+            /* Warn about scalar context */
+            const char lbrack = o->op_type == OP_KVHSLICE ? '{' : '[';
+            const char rbrack = o->op_type == OP_KVHSLICE ? '}' : ']';
+            SV *name;
+            SV *keysv;
+            const char *key = NULL;
+
+            /* This warning can be nonsensical when there is a syntax error. */
+            if (PL_parser && PL_parser->error_count)
+                break;
+
+            if (!ckWARN(WARN_SYNTAX)) break;
+
+            kid = cLISTOPo->op_first;
+            kid = OpSIBLING(kid); /* get past pushmark */
+            assert(OpSIBLING(kid));
+            name = S_op_varname(aTHX_ OpSIBLING(kid));
+            if (!name) /* XS module fiddling with the op tree */
+                break;
+            S_op_pretty(aTHX_ kid, &keysv, &key);
+            assert(SvPOK(name));
+            sv_chop(name,SvPVX(name)+1);
+            if (key)
+      /* diag_listed_as: %%s[%s] in scalar context better written as $%s[%s] */
+                Perl_warner(aTHX_ packWARN(WARN_SYNTAX),
+                           "%%%" SVf "%c%s%c in scalar context better written "
+                           "as $%" SVf "%c%s%c",
+                            SVfARG(name), lbrack, key, rbrack, SVfARG(name),
+                            lbrack, key, rbrack);
+            else
+      /* diag_listed_as: %%s[%s] in scalar context better written as $%s[%s] */
+                Perl_warner(aTHX_ packWARN(WARN_SYNTAX),
+                           "%%%" SVf "%c%" SVf "%c in scalar context better "
+                           "written as $%" SVf "%c%" SVf "%c",
+                            SVfARG(name), lbrack, SVfARG(keysv), rbrack,
+                            SVfARG(name), lbrack, SVfARG(keysv), rbrack);
+        }
+        } /* switch */
+
+        /* If next_kid is set, someone in the code above wanted us to process
+         * that kid and all its remaining siblings.  Otherwise, work our way
+         * back up the tree */
+      do_next:
+        while (!next_kid) {
+            if (o == top_op)
+                return top_op; /* at top; no parents/siblings to try */
+            if (OpHAS_SIBLING(o))
+                next_kid = o->op_sibparent;
+            else {
+                o = o->op_sibparent; /*try parent's next sibling */
+                switch (o->op_type) {
+                case OP_SCOPE:
+                case OP_LINESEQ:
+                case OP_LIST:
+                case OP_LEAVE:
+                case OP_LEAVETRY:
+                    /* should really restore PL_curcop to its old value, but
+                     * setting it to PL_compiling is better than do nothing */
+                    PL_curcop = &PL_compiling;
+                }
+            }
+        }
+        o = next_kid;
+    } /* while */
 }
+
+
+/* apply void context to the optree arg */
 
 OP *
 Perl_scalarvoid(pTHX_ OP *arg)
@@ -1939,14 +2072,14 @@ Perl_scalarvoid(pTHX_ OP *arg)
     OP *kid;
     SV* sv;
     OP *o = arg;
-    dDEFER_OP;
 
     PERL_ARGS_ASSERT_SCALARVOID;
 
-    do {
+    while (1) {
         U8 want;
         SV *useless_sv = NULL;
         const char* useless = NULL;
+        OP * next_kid = NULL;
 
         if (o->op_type == OP_NEXTSTATE
             || o->op_type == OP_DBSTATE
@@ -1960,7 +2093,7 @@ Perl_scalarvoid(pTHX_ OP *arg)
             || (PL_parser && PL_parser->error_count)
             || o->op_type == OP_RETURN || o->op_type == OP_REQUIRE || o->op_type == OP_LEAVEWHEN)
         {
-            continue;
+            goto get_next_op;
         }
 
         if ((o->op_private & OPpTARGET_MY)
@@ -1968,7 +2101,7 @@ Perl_scalarvoid(pTHX_ OP *arg)
         {
             /* newASSIGNOP has already applied scalar context, which we
                leave, as if this op is inside SASSIGN.  */
-            continue;
+            goto get_next_op;
         }
 
         o->op_flags = (o->op_flags & ~OPf_WANT) | OPf_WANT_VOID;
@@ -2227,11 +2360,7 @@ Perl_scalarvoid(pTHX_ OP *arg)
         case OP_COND_EXPR:
         case OP_ENTERGIVEN:
         case OP_ENTERWHEN:
-            for (kid = OpSIBLING(cUNOPo->op_first); kid; kid = OpSIBLING(kid))
-                if (!(kid->op_flags & OPf_KIDS))
-                    scalarvoid(kid);
-                else
-                    DEFER_OP(kid);
+            next_kid = OpSIBLING(cUNOPo->op_first);
         break;
 
         case OP_NULL:
@@ -2253,11 +2382,7 @@ Perl_scalarvoid(pTHX_ OP *arg)
         case OP_LEAVEGIVEN:
         case OP_LEAVEWHEN:
         kids:
-            for (kid = cLISTOPo->op_first; kid; kid = OpSIBLING(kid))
-                if (!(kid->op_flags & OPf_KIDS))
-                    scalarvoid(kid);
-                else
-                    DEFER_OP(kid);
+            next_kid = cLISTOPo->op_first;
             break;
         case OP_LIST:
             /* If the first kid after pushmark is something that the padrange
@@ -2298,12 +2423,26 @@ Perl_scalarvoid(pTHX_ OP *arg)
                            "Useless use of %s in void context",
                            useless);
         }
-    } while ( (o = POP_DEFERRED_OP()) );
 
-    DEFER_OP_CLEANUP;
+      get_next_op:
+        /* if a kid hasn't been nominated to process, continue with the
+         * next sibling, or if no siblings left, go back to the parent's
+         * siblings and so on
+         */
+        while (!next_kid) {
+            if (o == arg)
+                return arg; /* at top; no parents/siblings to try */
+            if (OpHAS_SIBLING(o))
+                next_kid = o->op_sibparent;
+            else
+                o = o->op_sibparent; /*try parent's next sibling */
+        }
+        o = next_kid;
+    }
 
     return arg;
 }
+
 
 static OP *
 S_listkids(pTHX_ OP *o)
@@ -2316,96 +2455,152 @@ S_listkids(pTHX_ OP *o)
     return o;
 }
 
+
+/* apply list context to the o subtree */
+
 OP *
 Perl_list(pTHX_ OP *o)
 {
-    OP *kid;
+    OP * top_op = o;
 
-    /* assumes no premature commitment */
-    if (!o || (o->op_flags & OPf_WANT)
-	 || (PL_parser && PL_parser->error_count)
-	 || o->op_type == OP_RETURN)
-    {
-	return o;
-    }
+    while (1) {
+        OP *next_kid = NULL; /* what op (if any) to process next */
 
-    if ((o->op_private & OPpTARGET_MY)
-	&& (PL_opargs[o->op_type] & OA_TARGLEX))/* OPp share the meaning */
-    {
-	return o;				/* As if inside SASSIGN */
-    }
+        OP *kid;
 
-    o->op_flags = (o->op_flags & ~OPf_WANT) | OPf_WANT_LIST;
+        /* assumes no premature commitment */
+        if (!o || (o->op_flags & OPf_WANT)
+             || (PL_parser && PL_parser->error_count)
+             || o->op_type == OP_RETURN)
+        {
+            goto do_next;
+        }
 
-    switch (o->op_type) {
-    case OP_FLOP:
-	list(cBINOPo->op_first);
-	break;
-    case OP_REPEAT:
-	if (o->op_private & OPpREPEAT_DOLIST
-	 && !(o->op_flags & OPf_STACKED))
-	{
-	    list(cBINOPo->op_first);
-	    kid = cBINOPo->op_last;
-	    if (kid->op_type == OP_CONST && SvIOK(kSVOP_sv)
-	     && SvIVX(kSVOP_sv) == 1)
-	    {
-		op_null(o); /* repeat */
-		op_null(cUNOPx(cBINOPo->op_first)->op_first);/* pushmark */
-		/* const (rhs): */
-		op_free(op_sibling_splice(o, cBINOPo->op_first, 1, NULL));
-	    }
-	}
-	break;
-    case OP_OR:
-    case OP_AND:
-    case OP_COND_EXPR:
-	for (kid = OpSIBLING(cUNOPo->op_first); kid; kid = OpSIBLING(kid))
-	    list(kid);
-	break;
-    default:
-    case OP_MATCH:
-    case OP_QR:
-    case OP_SUBST:
-    case OP_NULL:
-	if (!(o->op_flags & OPf_KIDS))
-	    break;
-	if (!o->op_next && cUNOPo->op_first->op_type == OP_FLOP) {
-	    list(cBINOPo->op_first);
-	    return gen_constant_list(o);
-	}
-	listkids(o);
-	break;
-    case OP_LIST:
-	listkids(o);
-	if (cLISTOPo->op_first->op_type == OP_PUSHMARK) {
-	    op_null(cUNOPo->op_first); /* NULL the pushmark */
-	    op_null(o); /* NULL the list */
-	}
-	break;
-    case OP_LEAVE:
-    case OP_LEAVETRY:
-	kid = cLISTOPo->op_first;
-	list(kid);
-	kid = OpSIBLING(kid);
-    do_kids:
-	while (kid) {
-	    OP *sib = OpSIBLING(kid);
-	    if (sib && kid->op_type != OP_LEAVEWHEN)
-		scalarvoid(kid);
-	    else
-		list(kid);
-	    kid = sib;
-	}
-	PL_curcop = &PL_compiling;
-	break;
-    case OP_SCOPE:
-    case OP_LINESEQ:
-	kid = cLISTOPo->op_first;
-	goto do_kids;
-    }
-    return o;
+        if ((o->op_private & OPpTARGET_MY)
+            && (PL_opargs[o->op_type] & OA_TARGLEX))/* OPp share the meaning */
+        {
+            goto do_next;				/* As if inside SASSIGN */
+        }
+
+        o->op_flags = (o->op_flags & ~OPf_WANT) | OPf_WANT_LIST;
+
+        switch (o->op_type) {
+        case OP_REPEAT:
+            if (o->op_private & OPpREPEAT_DOLIST
+             && !(o->op_flags & OPf_STACKED))
+            {
+                list(cBINOPo->op_first);
+                kid = cBINOPo->op_last;
+                /* optimise away (.....) x 1 */
+                if (kid->op_type == OP_CONST && SvIOK(kSVOP_sv)
+                 && SvIVX(kSVOP_sv) == 1)
+                {
+                    op_null(o); /* repeat */
+                    op_null(cUNOPx(cBINOPo->op_first)->op_first);/* pushmark */
+                    /* const (rhs): */
+                    op_free(op_sibling_splice(o, cBINOPo->op_first, 1, NULL));
+                }
+            }
+            break;
+
+        case OP_OR:
+        case OP_AND:
+        case OP_COND_EXPR:
+            /* impose list context on everything except the condition */
+            next_kid = OpSIBLING(cUNOPo->op_first);
+            break;
+
+        default:
+            if (!(o->op_flags & OPf_KIDS))
+                break;
+            /* possibly flatten 1..10 into a constant array */
+            if (!o->op_next && cUNOPo->op_first->op_type == OP_FLOP) {
+                list(cBINOPo->op_first);
+                gen_constant_list(o);
+                goto do_next;
+            }
+            next_kid = cUNOPo->op_first; /* do all kids */
+            break;
+
+        case OP_LIST:
+            if (cLISTOPo->op_first->op_type == OP_PUSHMARK) {
+                op_null(cUNOPo->op_first); /* NULL the pushmark */
+                op_null(o); /* NULL the list */
+            }
+            if (o->op_flags & OPf_KIDS)
+                next_kid = cUNOPo->op_first; /* do all kids */
+            break;
+
+        /* the children of these ops are usually a list of statements,
+         * except the leaves, whose first child is a corresponding enter
+         */
+        case OP_SCOPE:
+        case OP_LINESEQ:
+            kid = cLISTOPo->op_first;
+            goto do_kids;
+        case OP_LEAVE:
+        case OP_LEAVETRY:
+            kid = cLISTOPo->op_first;
+            list(kid);
+            kid = OpSIBLING(kid);
+        do_kids:
+            while (kid) {
+                OP *sib = OpSIBLING(kid);
+                /* Apply void context to all kids except the last, which
+                 * is list. E.g.
+                 *      @a = do { void; void; list }
+                 * Except that 'when's are always list context, e.g.
+                 *      @a = do { given(..) {
+                    *                 when (..) { list }
+                    *                 when (..) { list }
+                    *                 ...
+                    *                }}
+                    */
+                if (!sib) {
+                    /* tail call optimise calling list() on the last kid */
+                    next_kid = kid;
+                    goto do_next;
+                }
+                else if (kid->op_type == OP_LEAVEWHEN)
+                    list(kid);
+                else
+                    scalarvoid(kid);
+                kid = sib;
+            }
+            NOT_REACHED; /* NOTREACHED */
+            break;
+
+        }
+
+        /* If next_kid is set, someone in the code above wanted us to process
+         * that kid and all its remaining siblings.  Otherwise, work our way
+         * back up the tree */
+      do_next:
+        while (!next_kid) {
+            if (o == top_op)
+                return top_op; /* at top; no parents/siblings to try */
+            if (OpHAS_SIBLING(o))
+                next_kid = o->op_sibparent;
+            else {
+                o = o->op_sibparent; /*try parent's next sibling */
+                switch (o->op_type) {
+                case OP_SCOPE:
+                case OP_LINESEQ:
+                case OP_LIST:
+                case OP_LEAVE:
+                case OP_LEAVETRY:
+                    /* should really restore PL_curcop to its old value, but
+                     * setting it to PL_compiling is better than do nothing */
+                    PL_curcop = &PL_compiling;
+                }
+            }
+
+
+        }
+        o = next_kid;
+    } /* while */
 }
+
 
 static OP *
 S_scalarseq(pTHX_ OP *o)
@@ -2757,6 +2952,18 @@ S_maybe_multiconcat(pTHX_ OP *o)
         targetop = OpSIBLING(topop);
         if (!targetop) /* probably some sort of syntax error */
             return;
+
+        /* don't optimise away assign in 'local $foo = ....' */
+        if (   (targetop->op_private & OPpLVAL_INTRO)
+            /* these are the common ops which do 'local', but
+             * not all */
+            && (   targetop->op_type == OP_GVSV
+                || targetop->op_type == OP_RV2SV
+                || targetop->op_type == OP_AELEM
+                || targetop->op_type == OP_HELEM
+                )
+        )
+            return;
     }
     else if (   topop->op_type == OP_CONCAT
              && (topop->op_flags & OPf_STACKED)
@@ -2782,7 +2989,7 @@ S_maybe_multiconcat(pTHX_ OP *o)
     }
 
     if (targetop) {
-        /* Can targetop (the LHS) if it's a padsv, be be optimised
+        /* Can targetop (the LHS) if it's a padsv, be optimised
          * away and use OPpTARGET_MY instead?
          */
         if (    (targetop->op_type == OP_PADSV)
@@ -2961,6 +3168,8 @@ S_maybe_multiconcat(pTHX_ OP *o)
             && (SvPOK(sv) || SvIOK(sv))
             && (!SvGMAGICAL(sv))
         ) {
+            if (argop->op_private & OPpCONST_STRICT)
+                no_bareword_allowed(argop);
             argp++->p = sv;
             utf8   |= cBOOL(SvUTF8(sv));
             nconst++;
@@ -3028,7 +3237,7 @@ S_maybe_multiconcat(pTHX_ OP *o)
      *  X .= Y
      *
      * otherwise we could be doing something like $x = "foo", which
-     * if treated as as a concat, would fail to COW.
+     * if treated as a concat, would fail to COW.
      */
     if (nargs + nconst + cBOOL(private_flags & OPpMULTICONCAT_APPEND) < 2)
         return;
@@ -3100,7 +3309,7 @@ S_maybe_multiconcat(pTHX_ OP *o)
             sv_utf8_upgrade_nomg(sv);
         argp->p = SvPV_nomg(sv, argp->len);
         total_len += argp->len;
-        
+
         /* see if any strings would grow if converted to utf8 */
         if (!utf8) {
             variant += variant_under_utf8_count((U8 *) argp->p,
@@ -3339,7 +3548,7 @@ S_maybe_multiconcat(pTHX_ OP *o)
             lastkidop = pmop;
     }
 
-    /* Optimise 
+    /* Optimise
      *    target  = A.B.C...
      *    target .= A.B.C...
      */
@@ -3493,17 +3702,20 @@ Perl_optimize_optree(pTHX_ OP* o)
 }
 
 
-/* helper for optimize_optree() which optimises on op then recurses
+/* helper for optimize_optree() which optimises one op then recurses
  * to optimise any children.
  */
 
 STATIC void
 S_optimize_op(pTHX_ OP* o)
 {
-    dDEFER_OP;
+    OP *top_op = o;
 
     PERL_ARGS_ASSERT_OPTIMIZE_OP;
-    do {
+
+    while (1) {
+        OP * next_kid = NULL;
+
         assert(o->op_type != OP_FREED);
 
         switch (o->op_type) {
@@ -3521,26 +3733,44 @@ S_optimize_op(pTHX_ OP* o)
             break;
 
         case OP_SUBST:
-            if (cPMOPo->op_pmreplrootu.op_pmreplroot)
-                DEFER_OP(cPMOPo->op_pmreplrootu.op_pmreplroot);
+            if (cPMOPo->op_pmreplrootu.op_pmreplroot) {
+                /* we can't assume that op_pmreplroot->op_sibparent == o
+                 * and that it is thus possible to walk back up the tree
+                 * past op_pmreplroot. So, although we try to avoid
+                 * recursing through op trees, do it here. After all,
+                 * there are unlikely to be many nested s///e's within
+                 * the replacement part of a s///e.
+                 */
+                optimize_op(cPMOPo->op_pmreplrootu.op_pmreplroot);
+            }
             break;
 
         default:
             break;
         }
 
-        if (o->op_flags & OPf_KIDS) {
-            OP *kid;
-            IV child_count = 0;
-            for (kid = cUNOPo->op_first; kid; kid = OpSIBLING(kid)) {
-                DEFER_OP(kid);
-                ++child_count;
-            }
-            DEFER_REVERSE(child_count);
-        }
-    } while ( ( o = POP_DEFERRED_OP() ) );
+        if (o->op_flags & OPf_KIDS)
+            next_kid = cUNOPo->op_first;
 
-    DEFER_OP_CLEANUP;
+        /* if a kid hasn't been nominated to process, continue with the
+         * next sibling, or if no siblings left, go back to the parent's
+         * siblings and so on
+         */
+        while (!next_kid) {
+            if (o == top_op)
+                return; /* at top; no parents/siblings to try */
+            if (OpHAS_SIBLING(o))
+                next_kid = o->op_sibparent;
+            else
+                o = o->op_sibparent; /*try parent's next sibling */
+        }
+
+      /* this label not yet used. Goto here if any code above sets
+       * next-kid
+       get_next_op:
+       */
+        o = next_kid;
+    }
 }
 
 
@@ -3588,7 +3818,7 @@ S_op_relocate_sv(pTHX_ SV** svp, PADOFFSET* targp)
 #endif
 
 /*
-=for apidoc s|OP*|traverse_op_tree|OP* top|OP* o
+=for apidoc traverse_op_tree
 
 Return the next op in a depth-first traversal of the op tree,
 returning NULL when the traversal is complete.
@@ -3800,25 +4030,6 @@ S_finalize_op(pTHX_ OP* o)
     } while (( o = traverse_op_tree(top, o)) != NULL);
 }
 
-/*
-=for apidoc Amx|OP *|op_lvalue|OP *o|I32 type
-
-Propagate lvalue ("modifiable") context to an op and its children.
-C<type> represents the context type, roughly based on the type of op that
-would do the modifying, although C<local()> is represented by C<OP_NULL>,
-because it has no op type of its own (it is signalled by a flag on
-the lvalue op).
-
-This function detects things that can't be modified, such as C<$x+1>, and
-generates errors for them.  For example, C<$x+1 = 2> would cause it to be
-called with an op of type C<OP_ADD> and a C<type> argument of C<OP_SASSIGN>.
-
-It also flags things that need to behave specially in an lvalue context,
-such as C<$$x = 5> which might have to vivify a reference in C<$x>.
-
-=cut
-*/
-
 static void
 S_mark_padname_lvalue(pTHX_ PADNAME *pn)
 {
@@ -3856,125 +4067,159 @@ S_vivifies(const OPCODE type)
     return 0;
 }
 
+
+/* apply lvalue reference (aliasing) context to the optree o.
+ * E.g. in
+ *     \($x,$y) = (...)
+ * o would be the list ($x,$y) and type would be OP_AASSIGN.
+ * It may descend and apply this to children too, for example in
+ * \( $cond ? $x, $y) = (...)
+ */
+
 static void
 S_lvref(pTHX_ OP *o, I32 type)
 {
     dVAR;
     OP *kid;
-    switch (o->op_type) {
-    case OP_COND_EXPR:
-	for (kid = OpSIBLING(cUNOPo->op_first); kid;
-	     kid = OpSIBLING(kid))
-	    S_lvref(aTHX_ kid, type);
-	/* FALLTHROUGH */
-    case OP_PUSHMARK:
-	return;
-    case OP_RV2AV:
-	if (cUNOPo->op_first->op_type != OP_GV) goto badref;
-	o->op_flags |= OPf_STACKED;
-	if (o->op_flags & OPf_PARENS) {
-	    if (o->op_private & OPpLVAL_INTRO) {
-		 yyerror(Perl_form(aTHX_ "Can't modify reference to "
-		      "localized parenthesized array in list assignment"));
-		return;
-	    }
-	  slurpy:
-            OpTYPE_set(o, OP_LVAVREF);
-	    o->op_private &= OPpLVAL_INTRO|OPpPAD_STATE;
-	    o->op_flags |= OPf_MOD|OPf_REF;
-	    return;
-	}
-	o->op_private |= OPpLVREF_AV;
-	goto checkgv;
-    case OP_RV2CV:
-	kid = cUNOPo->op_first;
-	if (kid->op_type == OP_NULL)
-	    kid = cUNOPx(OpSIBLING(kUNOP->op_first))
-		->op_first;
-	o->op_private = OPpLVREF_CV;
-	if (kid->op_type == OP_GV)
-	    o->op_flags |= OPf_STACKED;
-	else if (kid->op_type == OP_PADCV) {
-	    o->op_targ = kid->op_targ;
-	    kid->op_targ = 0;
-	    op_free(cUNOPo->op_first);
-	    cUNOPo->op_first = NULL;
-	    o->op_flags &=~ OPf_KIDS;
-	}
-	else goto badref;
-	break;
-    case OP_RV2HV:
-	if (o->op_flags & OPf_PARENS) {
-	  parenhash:
-	    yyerror(Perl_form(aTHX_ "Can't modify reference to "
-				 "parenthesized hash in list assignment"));
-		return;
-	}
-	o->op_private |= OPpLVREF_HV;
-	/* FALLTHROUGH */
-    case OP_RV2SV:
-      checkgv:
-	if (cUNOPo->op_first->op_type != OP_GV) goto badref;
-	o->op_flags |= OPf_STACKED;
-	break;
-    case OP_PADHV:
-	if (o->op_flags & OPf_PARENS) goto parenhash;
-	o->op_private |= OPpLVREF_HV;
-	/* FALLTHROUGH */
-    case OP_PADSV:
-	PAD_COMPNAME_GEN_set(o->op_targ, PERL_INT_MAX);
-	break;
-    case OP_PADAV:
-	PAD_COMPNAME_GEN_set(o->op_targ, PERL_INT_MAX);
-	if (o->op_flags & OPf_PARENS) goto slurpy;
-	o->op_private |= OPpLVREF_AV;
-	break;
-    case OP_AELEM:
-    case OP_HELEM:
-	o->op_private |= OPpLVREF_ELEM;
-	o->op_flags   |= OPf_STACKED;
-	break;
-    case OP_ASLICE:
-    case OP_HSLICE:
-        OpTYPE_set(o, OP_LVREFSLICE);
-	o->op_private &= OPpLVAL_INTRO;
-	return;
-    case OP_NULL:
-	if (o->op_flags & OPf_SPECIAL)		/* do BLOCK */
-	    goto badref;
-	else if (!(o->op_flags & OPf_KIDS))
-	    return;
-	if (o->op_targ != OP_LIST) {
-	    S_lvref(aTHX_ cBINOPo->op_first, type);
-	    return;
-	}
-	/* FALLTHROUGH */
-    case OP_LIST:
-	for (kid = cLISTOPo->op_first; kid; kid = OpSIBLING(kid)) {
-	    assert((kid->op_flags & OPf_WANT) != OPf_WANT_VOID);
-	    S_lvref(aTHX_ kid, type);
-	}
-	return;
-    case OP_STUB:
-	if (o->op_flags & OPf_PARENS)
-	    return;
-	/* FALLTHROUGH */
-    default:
-      badref:
-	/* diag_listed_as: Can't modify reference to %s in %s assignment */
-	yyerror(Perl_form(aTHX_ "Can't modify reference to %s in %s",
-		     o->op_type == OP_NULL && o->op_flags & OPf_SPECIAL
-		      ? "do block"
-		      : OP_DESC(o),
-		     PL_op_desc[type]));
-	return;
-    }
-    OpTYPE_set(o, OP_LVREF);
-    o->op_private &=
-	OPpLVAL_INTRO|OPpLVREF_ELEM|OPpLVREF_TYPE|OPpPAD_STATE;
-    if (type == OP_ENTERLOOP)
-	o->op_private |= OPpLVREF_ITER;
+    OP * top_op = o;
+
+    while (1) {
+        switch (o->op_type) {
+        case OP_COND_EXPR:
+            o = OpSIBLING(cUNOPo->op_first);
+            continue;
+
+        case OP_PUSHMARK:
+            goto do_next;
+
+        case OP_RV2AV:
+            if (cUNOPo->op_first->op_type != OP_GV) goto badref;
+            o->op_flags |= OPf_STACKED;
+            if (o->op_flags & OPf_PARENS) {
+                if (o->op_private & OPpLVAL_INTRO) {
+                     yyerror(Perl_form(aTHX_ "Can't modify reference to "
+                          "localized parenthesized array in list assignment"));
+                    goto do_next;
+                }
+              slurpy:
+                OpTYPE_set(o, OP_LVAVREF);
+                o->op_private &= OPpLVAL_INTRO|OPpPAD_STATE;
+                o->op_flags |= OPf_MOD|OPf_REF;
+                goto do_next;
+            }
+            o->op_private |= OPpLVREF_AV;
+            goto checkgv;
+
+        case OP_RV2CV:
+            kid = cUNOPo->op_first;
+            if (kid->op_type == OP_NULL)
+                kid = cUNOPx(OpSIBLING(kUNOP->op_first))
+                    ->op_first;
+            o->op_private = OPpLVREF_CV;
+            if (kid->op_type == OP_GV)
+                o->op_flags |= OPf_STACKED;
+            else if (kid->op_type == OP_PADCV) {
+                o->op_targ = kid->op_targ;
+                kid->op_targ = 0;
+                op_free(cUNOPo->op_first);
+                cUNOPo->op_first = NULL;
+                o->op_flags &=~ OPf_KIDS;
+            }
+            else goto badref;
+            break;
+
+        case OP_RV2HV:
+            if (o->op_flags & OPf_PARENS) {
+              parenhash:
+                yyerror(Perl_form(aTHX_ "Can't modify reference to "
+                                     "parenthesized hash in list assignment"));
+                    goto do_next;
+            }
+            o->op_private |= OPpLVREF_HV;
+            /* FALLTHROUGH */
+        case OP_RV2SV:
+          checkgv:
+            if (cUNOPo->op_first->op_type != OP_GV) goto badref;
+            o->op_flags |= OPf_STACKED;
+            break;
+
+        case OP_PADHV:
+            if (o->op_flags & OPf_PARENS) goto parenhash;
+            o->op_private |= OPpLVREF_HV;
+            /* FALLTHROUGH */
+        case OP_PADSV:
+            PAD_COMPNAME_GEN_set(o->op_targ, PERL_INT_MAX);
+            break;
+
+        case OP_PADAV:
+            PAD_COMPNAME_GEN_set(o->op_targ, PERL_INT_MAX);
+            if (o->op_flags & OPf_PARENS) goto slurpy;
+            o->op_private |= OPpLVREF_AV;
+            break;
+
+        case OP_AELEM:
+        case OP_HELEM:
+            o->op_private |= OPpLVREF_ELEM;
+            o->op_flags   |= OPf_STACKED;
+            break;
+
+        case OP_ASLICE:
+        case OP_HSLICE:
+            OpTYPE_set(o, OP_LVREFSLICE);
+            o->op_private &= OPpLVAL_INTRO;
+            goto do_next;
+
+        case OP_NULL:
+            if (o->op_flags & OPf_SPECIAL)		/* do BLOCK */
+                goto badref;
+            else if (!(o->op_flags & OPf_KIDS))
+                goto do_next;
+
+            /* the code formerly only recursed into the first child of
+             * a non ex-list OP_NULL. if we ever encounter such a null op with
+             * more than one child, need to decide whether its ok to process
+             * *all* its kids or not */
+            assert(o->op_targ == OP_LIST
+                    || !(OpHAS_SIBLING(cBINOPo->op_first)));
+            /* FALLTHROUGH */
+        case OP_LIST:
+            o = cLISTOPo->op_first;
+            continue;
+
+        case OP_STUB:
+            if (o->op_flags & OPf_PARENS)
+                goto do_next;
+            /* FALLTHROUGH */
+        default:
+          badref:
+            /* diag_listed_as: Can't modify reference to %s in %s assignment */
+            yyerror(Perl_form(aTHX_ "Can't modify reference to %s in %s",
+                         o->op_type == OP_NULL && o->op_flags & OPf_SPECIAL
+                          ? "do block"
+                          : OP_DESC(o),
+                         PL_op_desc[type]));
+            goto do_next;
+        }
+
+        OpTYPE_set(o, OP_LVREF);
+        o->op_private &=
+            OPpLVAL_INTRO|OPpLVREF_ELEM|OPpLVREF_TYPE|OPpPAD_STATE;
+        if (type == OP_ENTERLOOP)
+            o->op_private |= OPpLVREF_ITER;
+
+      do_next:
+        while (1) {
+            if (o == top_op)
+                return; /* at top; no parents/siblings to try */
+            if (OpHAS_SIBLING(o)) {
+                o = o->op_sibparent;
+                break;
+            }
+            o = o->op_sibparent; /*try parent's next sibling */
+        }
+    } /* while */
 }
+
 
 PERL_STATIC_INLINE bool
 S_potential_mod_type(I32 type)
@@ -3984,35 +4229,69 @@ S_potential_mod_type(I32 type)
 	|| type == OP_REFGEN    || type == OP_LEAVESUBLV;
 }
 
+
+/*
+=for apidoc op_lvalue
+
+Propagate lvalue ("modifiable") context to an op and its children.
+C<type> represents the context type, roughly based on the type of op that
+would do the modifying, although C<local()> is represented by C<OP_NULL>,
+because it has no op type of its own (it is signalled by a flag on
+the lvalue op).
+
+This function detects things that can't be modified, such as C<$x+1>, and
+generates errors for them.  For example, C<$x+1 = 2> would cause it to be
+called with an op of type C<OP_ADD> and a C<type> argument of C<OP_SASSIGN>.
+
+It also flags things that need to behave specially in an lvalue context,
+such as C<$$x = 5> which might have to vivify a reference in C<$x>.
+
+=cut
+
+Perl_op_lvalue_flags() is a non-API lower-level interface to
+op_lvalue().  The flags param has these bits:
+    OP_LVALUE_NO_CROAK:  return rather than croaking on error
+
+*/
+
 OP *
 Perl_op_lvalue_flags(pTHX_ OP *o, I32 type, U32 flags)
 {
     dVAR;
-    OP *kid;
-    /* -1 = error on localize, 0 = ignore localize, 1 = ok to localize */
-    int localize = -1;
+    OP *top_op = o;
 
     if (!o || (PL_parser && PL_parser->error_count))
 	return o;
 
+    while (1) {
+    OP *kid;
+    /* -1 = error on localize, 0 = ignore localize, 1 = ok to localize */
+    int localize = -1;
+    OP *next_kid = NULL;
+
     if ((o->op_private & OPpTARGET_MY)
 	&& (PL_opargs[o->op_type] & OA_TARGLEX))/* OPp share the meaning */
     {
-	return o;
+	goto do_next;
     }
 
-    assert( (o->op_flags & OPf_WANT) != OPf_WANT_VOID );
+    /* elements of a list might be in void context because the list is
+       in scalar context or because they are attribute sub calls */
+    if ((o->op_flags & OPf_WANT) == OPf_WANT_VOID)
+        goto do_next;
 
     if (type == OP_PRTF || type == OP_SPRINTF) type = OP_ENTERSUB;
 
     switch (o->op_type) {
     case OP_UNDEF:
 	PL_modcount++;
-	return o;
+	goto do_next;
+
     case OP_STUB:
 	if ((o->op_flags & OPf_PARENS))
 	    break;
 	goto nomod;
+
     case OP_ENTERSUB:
 	if ((type == OP_UNDEF || type == OP_REFGEN || type == OP_LOCK) &&
 	    !(o->op_flags & OPf_STACKED)) {
@@ -4078,7 +4357,7 @@ Perl_op_lvalue_flags(pTHX_ OP *o, I32 type, U32 flags)
                                      "subroutine call of &%" SVf " in %s",
                                      SVfARG(namesv), PL_op_desc[type]),
                            SvUTF8(namesv));
-                return o;
+                goto do_next;
 	    }
 	}
 	/* FALLTHROUGH */
@@ -4093,7 +4372,7 @@ Perl_op_lvalue_flags(pTHX_ OP *o, I32 type, U32 flags)
 		      ? "do block"
 		      : OP_DESC(o)),
 		     type ? PL_op_desc[type] : "local"));
-	return o;
+	goto do_next;
 
     case OP_PREINC:
     case OP_PREDEC:
@@ -4128,6 +4407,12 @@ Perl_op_lvalue_flags(pTHX_ OP *o, I32 type, U32 flags)
 	    goto nomod;
 	else {
 	    const I32 mods = PL_modcount;
+            /* we recurse rather than iterate here because we need to
+             * calculate and use the delta applied to PL_modcount by the
+             * first child. So in something like
+             *     ($x, ($y) x 3) = split;
+             * split knows that 4 elements are wanted
+             */
 	    modkids(cBINOPo->op_first, type);
 	    if (type != OP_AASSIGN)
 		goto nomod;
@@ -4145,8 +4430,7 @@ Perl_op_lvalue_flags(pTHX_ OP *o, I32 type, U32 flags)
 
     case OP_COND_EXPR:
 	localize = 1;
-	for (kid = OpSIBLING(cUNOPo->op_first); kid; kid = OpSIBLING(kid))
-	    op_lvalue(kid, type);
+        next_kid = OpSIBLING(cUNOPo->op_first);
 	break;
 
     case OP_RV2AV:
@@ -4156,7 +4440,7 @@ Perl_op_lvalue_flags(pTHX_ OP *o, I32 type, U32 flags)
            /* Treat \(@foo) like ordinary list, but still mark it as modi-
               fiable since some contexts need to know.  */
            o->op_flags |= OPf_MOD;
-           return o;
+           goto do_next;
 	}
 	/* FALLTHROUGH */
     case OP_RV2GV:
@@ -4180,23 +4464,27 @@ Perl_op_lvalue_flags(pTHX_ OP *o, I32 type, U32 flags)
     case OP_DBSTATE:
        PL_modcount = RETURN_UNLIMITED_NUMBER;
 	break;
+
     case OP_KVHSLICE:
     case OP_KVASLICE:
     case OP_AKEYS:
 	if (type == OP_LEAVESUBLV)
 	    o->op_private |= OPpMAYBE_LVSUB;
         goto nomod;
+
     case OP_AVHVSWITCH:
 	if (type == OP_LEAVESUBLV
 	 && (o->op_private & OPpAVHVSWITCH_MASK) + OP_EACH == OP_KEYS)
 	    o->op_private |= OPpMAYBE_LVSUB;
         goto nomod;
+
     case OP_AV2ARYLEN:
 	PL_hints |= HINT_BLOCK_SCOPE;
 	if (type == OP_LEAVESUBLV)
 	    o->op_private |= OPpMAYBE_LVSUB;
 	PL_modcount++;
 	break;
+
     case OP_RV2SV:
 	ref(cUNOPo->op_first, o->op_type);
 	localize = 1;
@@ -4225,7 +4513,7 @@ Perl_op_lvalue_flags(pTHX_ OP *o, I32 type, U32 flags)
            /* Treat \(@foo) like ordinary list, but still mark it as modi-
               fiable since some contexts need to know.  */
 	    o->op_flags |= OPf_MOD;
-	    return o;
+	    goto do_next;
 	}
 	if (scalar_mod_type(o, type))
 	    goto nomod;
@@ -4262,6 +4550,9 @@ Perl_op_lvalue_flags(pTHX_ OP *o, I32 type, U32 flags)
 	if (type == OP_LEAVESUBLV)
 	    o->op_private |= OPpMAYBE_LVSUB;
 	if (o->op_flags & OPf_KIDS && OpHAS_SIBLING(cBINOPo->op_first)) {
+            /* we recurse rather than iterate here because the child
+             * needs to be processed with a different 'type' parameter */
+
 	    /* substr and vec */
 	    /* If this op is in merely potential (non-fatal) modifiable
 	       context, then apply OP_ENTERSUB context to
@@ -4296,7 +4587,7 @@ Perl_op_lvalue_flags(pTHX_ OP *o, I32 type, U32 flags)
     case OP_LINESEQ:
 	localize = 0;
 	if (o->op_flags & OPf_KIDS)
-	    op_lvalue(cLISTOPo->op_last, type);
+	    next_kid = cLISTOPo->op_last;
 	break;
 
     case OP_NULL:
@@ -4329,30 +4620,31 @@ Perl_op_lvalue_flags(pTHX_ OP *o, I32 type, U32 flags)
                 /* this should trigger a "Can't modify transliteration" err */
                 op_lvalue(sib, type);
             }
-            op_lvalue(cBINOPo->op_first, type);
+            next_kid = cBINOPo->op_first;
+            /* we assume OP_NULLs which aren't ex-list have no more than 2
+             * children. If this assumption is wrong, increase the scan
+             * limit below */
+            assert(   !OpHAS_SIBLING(next_kid)
+                   || !OpHAS_SIBLING(OpSIBLING(next_kid)));
             break;
 	}
 	/* FALLTHROUGH */
     case OP_LIST:
 	localize = 0;
-	for (kid = cLISTOPo->op_first; kid; kid = OpSIBLING(kid))
-	    /* elements might be in void context because the list is
-	       in scalar context or because they are attribute sub calls */
-	    if ( (kid->op_flags & OPf_WANT) != OPf_WANT_VOID )
-		op_lvalue(kid, type);
+	next_kid = cLISTOPo->op_first;
 	break;
 
     case OP_COREARGS:
-	return o;
+	goto do_next;
 
     case OP_AND:
     case OP_OR:
 	if (type == OP_LEAVESUBLV
 	 || !S_vivifies(cLOGOPo->op_first->op_type))
-	    op_lvalue(cLOGOPo->op_first, type);
-	if (type == OP_LEAVESUBLV
+	    next_kid = cLOGOPo->op_first;
+	else if (type == OP_LEAVESUBLV
 	 || !S_vivifies(OpSIBLING(cLOGOPo->op_first)->op_type))
-	    op_lvalue(OpSIBLING(cLOGOPo->op_first), type);
+	    next_kid = OpSIBLING(cLOGOPo->op_first);
 	goto nomod;
 
     case OP_SREFGEN:
@@ -4364,8 +4656,8 @@ Perl_op_lvalue_flags(pTHX_ OP *o, I32 type, U32 flags)
 	    Perl_ck_warner_d(aTHX_
 		     packWARN(WARN_EXPERIMENTAL__DECLARED_REFS),
 		    "Declaring references is experimental");
-	    op_lvalue(cUNOPo->op_first, OP_NULL);
-	    return o;
+	    next_kid = cUNOPo->op_first;
+	    goto do_next;
 	}
 	if (type != OP_AASSIGN && type != OP_SASSIGN
 	 && type != OP_ENTERLOOP)
@@ -4395,7 +4687,7 @@ Perl_op_lvalue_flags(pTHX_ OP *o, I32 type, U32 flags)
 	if (o->op_type == OP_REFGEN)
 	    op_null(cUNOPx(cUNOPo->op_first)->op_first); /* pushmark */
 	op_null(o);
-	return o;
+	goto do_next;
 
     case OP_SPLIT:
         if ((o->op_private & OPpSPLIT_ASSIGN)) {
@@ -4413,9 +4705,8 @@ Perl_op_lvalue_flags(pTHX_ OP *o, I32 type, U32 flags)
     /* [20011101.069 (#7861)] File test operators interpret OPf_REF to mean that
        their argument is a filehandle; thus \stat(".") should not set
        it. AMS 20011102 */
-    if (type == OP_REFGEN &&
-        PL_check[o->op_type] == Perl_ck_ftst)
-        return o;
+    if (type == OP_REFGEN && OP_IS_STAT(o->op_type))
+        goto do_next;
 
     if (type != OP_LEAVESUBLV)
         o->op_flags |= OPf_MOD;
@@ -4440,8 +4731,39 @@ Perl_op_lvalue_flags(pTHX_ OP *o, I32 type, U32 flags)
     else if (type != OP_GREPSTART && type != OP_ENTERSUB
              && type != OP_LEAVESUBLV && o->op_type != OP_ENTERSUB)
 	o->op_flags |= OPf_REF;
-    return o;
+
+  do_next:
+    while (!next_kid) {
+        if (o == top_op)
+            return top_op; /* at top; no parents/siblings to try */
+        if (OpHAS_SIBLING(o)) {
+            next_kid = o->op_sibparent;
+            if (!OpHAS_SIBLING(next_kid)) {
+                /* a few node types don't recurse into their second child */
+                OP *parent = next_kid->op_sibparent;
+                I32 ptype  = parent->op_type;
+                if (   (ptype == OP_NULL && parent->op_targ != OP_LIST)
+                    || (   (ptype == OP_AND || ptype == OP_OR)
+                        && (type != OP_LEAVESUBLV 
+                            && S_vivifies(next_kid->op_type))
+                       )
+                )  {
+                    /*try parent's next sibling */
+                    o = parent;
+                    next_kid =  NULL;
+                }
+            }
+        }
+        else
+            o = o->op_sibparent; /*try parent's next sibling */
+
+    }
+    o = next_kid;
+
+    } /* while */
+
 }
+
 
 STATIC bool
 S_scalar_mod_type(const OP *o, I32 type)
@@ -4537,103 +4859,142 @@ S_refkids(pTHX_ OP *o, I32 type)
     return o;
 }
 
+
+/* Apply reference (autovivification) context to the subtree at o.
+ * For example in
+ *     push @{expression}, ....;
+ * o will be the head of 'expression' and type will be OP_RV2AV.
+ * It marks the op o (or a suitable child) as autovivifying, e.g. by
+ * setting  OPf_MOD.
+ * For OP_RV2AV/OP_PADAV and OP_RV2HV/OP_PADHV sets OPf_REF too if
+ * set_op_ref is true.
+ *
+ * Also calls scalar(o).
+ */
+
 OP *
 Perl_doref(pTHX_ OP *o, I32 type, bool set_op_ref)
 {
     dVAR;
-    OP *kid;
+    OP * top_op = o;
 
     PERL_ARGS_ASSERT_DOREF;
 
     if (PL_parser && PL_parser->error_count)
 	return o;
 
-    switch (o->op_type) {
-    case OP_ENTERSUB:
-	if ((type == OP_EXISTS || type == OP_DEFINED) &&
-	    !(o->op_flags & OPf_STACKED)) {
-            OpTYPE_set(o, OP_RV2CV);             /* entersub => rv2cv */
-	    assert(cUNOPo->op_first->op_type == OP_NULL);
-	    op_null(((LISTOP*)cUNOPo->op_first)->op_first);	/* disable pushmark */
-	    o->op_flags |= OPf_SPECIAL;
-	}
-	else if (type == OP_RV2SV || type == OP_RV2AV || type == OP_RV2HV){
-	    o->op_private |= (type == OP_RV2AV ? OPpDEREF_AV
-			      : type == OP_RV2HV ? OPpDEREF_HV
-			      : OPpDEREF_SV);
-	    o->op_flags |= OPf_MOD;
-	}
+    while (1) {
+        switch (o->op_type) {
+        case OP_ENTERSUB:
+            if ((type == OP_EXISTS || type == OP_DEFINED) &&
+                !(o->op_flags & OPf_STACKED)) {
+                OpTYPE_set(o, OP_RV2CV);             /* entersub => rv2cv */
+                assert(cUNOPo->op_first->op_type == OP_NULL);
+                /* disable pushmark */
+                op_null(((LISTOP*)cUNOPo->op_first)->op_first);
+                o->op_flags |= OPf_SPECIAL;
+            }
+            else if (type == OP_RV2SV || type == OP_RV2AV || type == OP_RV2HV){
+                o->op_private |= (type == OP_RV2AV ? OPpDEREF_AV
+                                  : type == OP_RV2HV ? OPpDEREF_HV
+                                  : OPpDEREF_SV);
+                o->op_flags |= OPf_MOD;
+            }
 
-	break;
+            break;
 
-    case OP_COND_EXPR:
-	for (kid = OpSIBLING(cUNOPo->op_first); kid; kid = OpSIBLING(kid))
-	    doref(kid, type, set_op_ref);
-	break;
-    case OP_RV2SV:
-	if (type == OP_DEFINED)
-	    o->op_flags |= OPf_SPECIAL;		/* don't create GV */
-	doref(cUNOPo->op_first, o->op_type, set_op_ref);
-	/* FALLTHROUGH */
-    case OP_PADSV:
-	if (type == OP_RV2SV || type == OP_RV2AV || type == OP_RV2HV) {
-	    o->op_private |= (type == OP_RV2AV ? OPpDEREF_AV
-			      : type == OP_RV2HV ? OPpDEREF_HV
-			      : OPpDEREF_SV);
-	    o->op_flags |= OPf_MOD;
-	}
-	break;
+        case OP_COND_EXPR:
+            o = OpSIBLING(cUNOPo->op_first);
+            continue;
 
-    case OP_RV2AV:
-    case OP_RV2HV:
-	if (set_op_ref)
-	    o->op_flags |= OPf_REF;
-	/* FALLTHROUGH */
-    case OP_RV2GV:
-	if (type == OP_DEFINED)
-	    o->op_flags |= OPf_SPECIAL;		/* don't create GV */
-	doref(cUNOPo->op_first, o->op_type, set_op_ref);
-	break;
+        case OP_RV2SV:
+            if (type == OP_DEFINED)
+                o->op_flags |= OPf_SPECIAL;		/* don't create GV */
+            /* FALLTHROUGH */
+        case OP_PADSV:
+            if (type == OP_RV2SV || type == OP_RV2AV || type == OP_RV2HV) {
+                o->op_private |= (type == OP_RV2AV ? OPpDEREF_AV
+                                  : type == OP_RV2HV ? OPpDEREF_HV
+                                  : OPpDEREF_SV);
+                o->op_flags |= OPf_MOD;
+            }
+            if (o->op_flags & OPf_KIDS) {
+                type = o->op_type;
+                o = cUNOPo->op_first;
+                continue;
+            }
+            break;
 
-    case OP_PADAV:
-    case OP_PADHV:
-	if (set_op_ref)
-	    o->op_flags |= OPf_REF;
-	break;
+        case OP_RV2AV:
+        case OP_RV2HV:
+            if (set_op_ref)
+                o->op_flags |= OPf_REF;
+            /* FALLTHROUGH */
+        case OP_RV2GV:
+            if (type == OP_DEFINED)
+                o->op_flags |= OPf_SPECIAL;		/* don't create GV */
+            type = o->op_type;
+            o = cUNOPo->op_first;
+            continue;
 
-    case OP_SCALAR:
-    case OP_NULL:
-	if (!(o->op_flags & OPf_KIDS) || type == OP_DEFINED)
-	    break;
-	doref(cBINOPo->op_first, type, set_op_ref);
-	break;
-    case OP_AELEM:
-    case OP_HELEM:
-	doref(cBINOPo->op_first, o->op_type, set_op_ref);
-	if (type == OP_RV2SV || type == OP_RV2AV || type == OP_RV2HV) {
-	    o->op_private |= (type == OP_RV2AV ? OPpDEREF_AV
-			      : type == OP_RV2HV ? OPpDEREF_HV
-			      : OPpDEREF_SV);
-	    o->op_flags |= OPf_MOD;
-	}
-	break;
+        case OP_PADAV:
+        case OP_PADHV:
+            if (set_op_ref)
+                o->op_flags |= OPf_REF;
+            break;
 
-    case OP_SCOPE:
-    case OP_LEAVE:
-	set_op_ref = FALSE;
-	/* FALLTHROUGH */
-    case OP_ENTER:
-    case OP_LIST:
-	if (!(o->op_flags & OPf_KIDS))
-	    break;
-	doref(cLISTOPo->op_last, type, set_op_ref);
-	break;
-    default:
-	break;
-    }
-    return scalar(o);
+        case OP_SCALAR:
+        case OP_NULL:
+            if (!(o->op_flags & OPf_KIDS) || type == OP_DEFINED)
+                break;
+             o = cBINOPo->op_first;
+            continue;
 
+        case OP_AELEM:
+        case OP_HELEM:
+            if (type == OP_RV2SV || type == OP_RV2AV || type == OP_RV2HV) {
+                o->op_private |= (type == OP_RV2AV ? OPpDEREF_AV
+                                  : type == OP_RV2HV ? OPpDEREF_HV
+                                  : OPpDEREF_SV);
+                o->op_flags |= OPf_MOD;
+            }
+            type = o->op_type;
+            o = cBINOPo->op_first;
+            continue;;
+
+        case OP_SCOPE:
+        case OP_LEAVE:
+            set_op_ref = FALSE;
+            /* FALLTHROUGH */
+        case OP_ENTER:
+        case OP_LIST:
+            if (!(o->op_flags & OPf_KIDS))
+                break;
+            o = cLISTOPo->op_last;
+            continue;
+
+        default:
+            break;
+        } /* switch */
+
+        while (1) {
+            if (o == top_op)
+                return scalar(top_op); /* at top; no parents/siblings to try */
+            if (OpHAS_SIBLING(o)) {
+                o = o->op_sibparent;
+                /* Normally skip all siblings and go straight to the parent;
+                 * the only op that requires two children to be processed
+                 * is OP_COND_EXPR */
+                if (!OpHAS_SIBLING(o)
+                        && o->op_sibparent->op_type == OP_COND_EXPR)
+                    break;
+                continue;
+            }
+            o = o->op_sibparent; /*try parent's next sibling */
+        }
+    } /* while */
 }
+
 
 STATIC OP *
 S_dup_attrlist(pTHX_ OP *o)
@@ -5014,7 +5375,7 @@ Perl_my_attrs(pTHX_ OP *o, OP *attrs)
 	    /* The listop in rops might have a pushmark at the beginning,
 	       which will mess up list assignment. */
 	    LISTOP * const lrops = (LISTOP *)rops; /* for brevity */
-	    if (rops->op_type == OP_LIST && 
+	    if (rops->op_type == OP_LIST &&
 	        lrops->op_first && lrops->op_first->op_type == OP_PUSHMARK)
 	    {
 		OP * const pushmark = lrops->op_first;
@@ -5136,8 +5497,126 @@ Perl_invert(pTHX_ OP *o)
     return newUNOP(OP_NOT, OPf_SPECIAL, scalar(o));
 }
 
+OP *
+Perl_cmpchain_start(pTHX_ I32 type, OP *left, OP *right)
+{
+    dVAR;
+    BINOP *bop;
+    OP *op;
+
+    if (!left)
+	left = newOP(OP_NULL, 0);
+    if (!right)
+	right = newOP(OP_NULL, 0);
+    scalar(left);
+    scalar(right);
+    NewOp(0, bop, 1, BINOP);
+    op = (OP*)bop;
+    ASSUME((PL_opargs[type] & OA_CLASS_MASK) == OA_BINOP);
+    OpTYPE_set(op, type);
+    cBINOPx(op)->op_flags = OPf_KIDS;
+    cBINOPx(op)->op_private = 2;
+    cBINOPx(op)->op_first = left;
+    cBINOPx(op)->op_last = right;
+    OpMORESIB_set(left, right);
+    OpLASTSIB_set(right, op);
+    return op;
+}
+
+OP *
+Perl_cmpchain_extend(pTHX_ I32 type, OP *ch, OP *right)
+{
+    dVAR;
+    BINOP *bop;
+    OP *op;
+
+    PERL_ARGS_ASSERT_CMPCHAIN_EXTEND;
+    if (!right)
+	right = newOP(OP_NULL, 0);
+    scalar(right);
+    NewOp(0, bop, 1, BINOP);
+    op = (OP*)bop;
+    ASSUME((PL_opargs[type] & OA_CLASS_MASK) == OA_BINOP);
+    OpTYPE_set(op, type);
+    if (ch->op_type != OP_NULL) {
+	UNOP *lch;
+	OP *nch, *cleft, *cright;
+	NewOp(0, lch, 1, UNOP);
+	nch = (OP*)lch;
+	OpTYPE_set(nch, OP_NULL);
+	nch->op_flags = OPf_KIDS;
+	cleft = cBINOPx(ch)->op_first;
+	cright = cBINOPx(ch)->op_last;
+	cBINOPx(ch)->op_first = NULL;
+	cBINOPx(ch)->op_last = NULL;
+	cBINOPx(ch)->op_private = 0;
+	cBINOPx(ch)->op_flags = 0;
+	cUNOPx(nch)->op_first = cright;
+	OpMORESIB_set(cright, ch);
+	OpMORESIB_set(ch, cleft);
+	OpLASTSIB_set(cleft, nch);
+	ch = nch;
+    }
+    OpMORESIB_set(right, op);
+    OpMORESIB_set(op, cUNOPx(ch)->op_first);
+    cUNOPx(ch)->op_first = right;
+    return ch;
+}
+
+OP *
+Perl_cmpchain_finish(pTHX_ OP *ch)
+{
+    dVAR;
+
+    PERL_ARGS_ASSERT_CMPCHAIN_FINISH;
+    if (ch->op_type != OP_NULL) {
+	OPCODE cmpoptype = ch->op_type;
+	ch = CHECKOP(cmpoptype, ch);
+	if(!ch->op_next && ch->op_type == cmpoptype)
+	    ch = fold_constants(op_integerize(op_std_init(ch)));
+	return ch;
+    } else {
+	OP *condop = NULL;
+	OP *rightarg = cUNOPx(ch)->op_first;
+	cUNOPx(ch)->op_first = OpSIBLING(rightarg);
+	OpLASTSIB_set(rightarg, NULL);
+	while (1) {
+	    OP *cmpop = cUNOPx(ch)->op_first;
+	    OP *leftarg = OpSIBLING(cmpop);
+	    OPCODE cmpoptype = cmpop->op_type;
+	    OP *nextrightarg;
+	    bool is_last;
+	    is_last = !(cUNOPx(ch)->op_first = OpSIBLING(leftarg));
+	    OpLASTSIB_set(cmpop, NULL);
+	    OpLASTSIB_set(leftarg, NULL);
+	    if (is_last) {
+		ch->op_flags = 0;
+		op_free(ch);
+		nextrightarg = NULL;
+	    } else {
+		nextrightarg = newUNOP(OP_CMPCHAIN_DUP, 0, leftarg);
+		leftarg = newOP(OP_NULL, 0);
+	    }
+	    cBINOPx(cmpop)->op_first = leftarg;
+	    cBINOPx(cmpop)->op_last = rightarg;
+	    OpMORESIB_set(leftarg, rightarg);
+	    OpLASTSIB_set(rightarg, cmpop);
+	    cmpop->op_flags = OPf_KIDS;
+	    cmpop->op_private = 2;
+	    cmpop = CHECKOP(cmpoptype, cmpop);
+	    if(!cmpop->op_next && cmpop->op_type == cmpoptype)
+		cmpop = op_integerize(op_std_init(cmpop));
+	    condop = condop ? newLOGOP(OP_CMPCHAIN_AND, 0, cmpop, condop) :
+			cmpop;
+	    if (!nextrightarg)
+		return condop;
+	    rightarg = nextrightarg;
+	}
+    }
+}
+
 /*
-=for apidoc Amx|OP *|op_scope|OP *o
+=for apidoc op_scope
 
 Wraps up an op tree with some additional ops so that at runtime a dynamic
 scope will be created.  The original ops run in the new dynamic scope,
@@ -5156,7 +5635,8 @@ Perl_op_scope(pTHX_ OP *o)
     dVAR;
     if (o) {
 	if (o->op_flags & OPf_PARENS || PERLDB_NOOPT || TAINTING_get) {
-	    o = op_prepend_elem(OP_LINESEQ, newOP(OP_ENTER, 0), o);
+	    o = op_prepend_elem(OP_LINESEQ,
+                    newOP(OP_ENTER, (o->op_flags & OPf_WANT)), o);
             OpTYPE_set(o, OP_LEAVE);
 	}
 	else if (o->op_type == OP_LINESEQ) {
@@ -5192,7 +5672,7 @@ Perl_op_unscope(pTHX_ OP *o)
 }
 
 /*
-=for apidoc Am|int|block_start|int full
+=for apidoc block_start
 
 Handles compile-time scope entry.
 Arranges for hints to be restored on block
@@ -5223,7 +5703,7 @@ Perl_block_start(pTHX_ int full)
 }
 
 /*
-=for apidoc Am|OP *|block_end|I32 floor|OP *seq
+=for apidoc block_end
 
 Handles compile-time scope exit.  C<floor>
 is the savestack index returned by
@@ -5322,7 +5802,7 @@ Perl_block_end(pTHX_ I32 floor, OP *seq)
 /*
 =head1 Compile-time scope hooks
 
-=for apidoc Aox||blockhook_register
+=for apidoc blockhook_register
 
 Register a set of hooks to be called when the Perl lexical scope changes
 at compile time.  See L<perlguts/"Compile-time scope hooks">.
@@ -5453,18 +5933,18 @@ Perl_localize(pTHX_ OP *o, I32 lex)
 	    bool sigil = FALSE;
 
 	    /* some heuristics to detect a potential error */
-	    while (*s && (strchr(", \t\n", *s)))
+	    while (*s && (memCHRs(", \t\n", *s)))
 		s++;
 
 	    while (1) {
-		if (*s && (strchr("@$%", *s) || (!lex && *s == '*'))
+		if (*s && (memCHRs("@$%", *s) || (!lex && *s == '*'))
 		       && *++s
 		       && (isWORDCHAR(*s) || UTF8_IS_CONTINUED(*s))) {
 		    s++;
 		    sigil = TRUE;
 		    while (*s && (isWORDCHAR(*s) || UTF8_IS_CONTINUED(*s)))
 			s++;
-		    while (*s && (strchr(", \t\n", *s)))
+		    while (*s && (memCHRs(", \t\n", *s)))
 			s++;
 		}
 		else
@@ -5542,9 +6022,10 @@ S_op_integerize(pTHX_ OP *o)
 }
 
 /* This function exists solely to provide a scope to limit
-   setjmp/longjmp() messing with auto variables.
+   setjmp/longjmp() messing with auto variables.  It cannot be inlined because
+   it uses setjmp
  */
-PERL_STATIC_INLINE int
+STATIC int
 S_fold_constants_eval(pTHX) {
     int ret = 0;
     dJMPENV;
@@ -5746,7 +6227,11 @@ S_fold_constants(pTHX_ OP *const o)
     return o;
 }
 
-static OP *
+/* convert a constant range in list context into an OP_RV2AV, OP_CONST pair;
+ * the constant value being an AV holding the flattened range.
+ */
+
+static void
 S_gen_constant_list(pTHX_ OP *o)
 {
     dVAR;
@@ -5765,7 +6250,7 @@ S_gen_constant_list(pTHX_ OP *o)
 
     list(o);
     if (PL_parser && PL_parser->error_count)
-	return o;		/* Don't attempt to run with errors */
+	return;		/* Don't attempt to run with errors */
 
     curop = LINKLIST(o);
     old_next = o->op_next;
@@ -5832,7 +6317,7 @@ S_gen_constant_list(pTHX_ OP *o)
         delete_eval_scope();
     }
     if (ret)
-	return o;
+	return;
 
     OpTYPE_set(o, OP_RV2AV);
     o->op_flags &= ~OPf_REF;	/* treat \(1..2) like an ordinary list */
@@ -5852,7 +6337,8 @@ S_gen_constant_list(pTHX_ OP *o)
 	    SvREADONLY_on(*svp);
 	}
     LINKLIST(o);
-    return list(o);
+    list(o);
+    return;
 }
 
 /*
@@ -5862,7 +6348,7 @@ S_gen_constant_list(pTHX_ OP *o)
 /* List constructors */
 
 /*
-=for apidoc Am|OP *|op_append_elem|I32 optype|OP *first|OP *last
+=for apidoc op_append_elem
 
 Append an item to the list of ops contained directly within a list-type
 op, returning the lengthened list.  C<first> is the list-type op,
@@ -5895,7 +6381,7 @@ Perl_op_append_elem(pTHX_ I32 type, OP *first, OP *last)
 }
 
 /*
-=for apidoc Am|OP *|op_append_list|I32 optype|OP *first|OP *last
+=for apidoc op_append_list
 
 Concatenate the lists of ops contained directly within two list-type ops,
 returning the combined list.  C<first> and C<last> are the list-type ops
@@ -5933,7 +6419,7 @@ Perl_op_append_list(pTHX_ I32 type, OP *first, OP *last)
 }
 
 /*
-=for apidoc Am|OP *|op_prepend_elem|I32 optype|OP *first|OP *last
+=for apidoc op_prepend_elem
 
 Prepend an item to the list of ops contained directly within a list-type
 op, returning the lengthened list.  C<first> is the op to prepend to the
@@ -5971,7 +6457,7 @@ Perl_op_prepend_elem(pTHX_ I32 type, OP *first, OP *last)
 }
 
 /*
-=for apidoc Am|OP *|op_convert_list|I32 type|I32 flags|OP *o
+=for apidoc op_convert_list
 
 Converts C<o> into a list op if it is not one already, and then converts it
 into the specified C<type>, calling its check function, allocating a target if
@@ -6031,7 +6517,7 @@ Perl_op_convert_list(pTHX_ I32 type, I32 flags, OP *o)
 /*
 =head1 Optree construction
 
-=for apidoc Am|OP *|newNULLLIST
+=for apidoc newNULLLIST
 
 Constructs, checks, and returns a new C<stub> op, which represents an
 empty list expression.
@@ -6078,7 +6564,7 @@ S_force_list(pTHX_ OP *o, bool nullit)
 }
 
 /*
-=for apidoc Am|OP *|newLISTOP|I32 type|I32 flags|OP *first|OP *last
+=for apidoc newLISTOP
 
 Constructs, checks, and returns an op of any list type.  C<type> is
 the opcode.  C<flags> gives the eight bits of C<op_flags>, except that
@@ -6138,7 +6624,7 @@ Perl_newLISTOP(pTHX_ I32 type, I32 flags, OP *first, OP *last)
 }
 
 /*
-=for apidoc Am|OP *|newOP|I32 type|I32 flags
+=for apidoc newOP
 
 Constructs, checks, and returns an op of any base type (any type that
 has no extra fields).  C<type> is the opcode.  C<flags> gives the
@@ -6178,7 +6664,7 @@ Perl_newOP(pTHX_ I32 type, I32 flags)
 }
 
 /*
-=for apidoc Am|OP *|newUNOP|I32 type|I32 flags|OP *first
+=for apidoc newUNOP
 
 Constructs, checks, and returns an op of any unary type.  C<type> is
 the opcode.  C<flags> gives the eight bits of C<op_flags>, except that
@@ -6187,6 +6673,8 @@ bits, the eight bits of C<op_private>, except that the bit with value 1
 is automatically set.  C<first> supplies an optional op to be the direct
 child of the unary op; it is consumed by this function and become part
 of the constructed op tree.
+
+=for apidoc Amnh||OPf_KIDS
 
 =cut
 */
@@ -6267,7 +6755,7 @@ Perl_newUNOP_AUX(pTHX_ I32 type, I32 flags, OP *first, UNOP_AUX_item *aux)
 }
 
 /*
-=for apidoc Am|OP *|newMETHOP|I32 type|I32 flags|OP *first
+=for apidoc newMETHOP
 
 Constructs, checks, and returns an op of method type with a method name
 evaluated at runtime.  C<type> is the opcode.  C<flags> gives the eight
@@ -6324,7 +6812,7 @@ Perl_newMETHOP (pTHX_ I32 type, I32 flags, OP* dynamic_meth) {
 }
 
 /*
-=for apidoc Am|OP *|newMETHOP_named|I32 type|I32 flags|SV *const_meth
+=for apidoc newMETHOP_named
 
 Constructs, checks, and returns an op of method type with a constant
 method name.  C<type> is the opcode.  C<flags> gives the eight bits of
@@ -6343,7 +6831,7 @@ Perl_newMETHOP_named (pTHX_ I32 type, I32 flags, SV* const_meth) {
 }
 
 /*
-=for apidoc Am|OP *|newBINOP|I32 type|I32 flags|OP *first|OP *last
+=for apidoc newBINOP
 
 Constructs, checks, and returns an op of any binary type.  C<type>
 is the opcode.  C<flags> gives the eight bits of C<op_flags>, except
@@ -6396,25 +6884,44 @@ Perl_newBINOP(pTHX_ I32 type, I32 flags, OP *first, OP *last)
     return fold_constants(op_integerize(op_std_init((OP *)binop)));
 }
 
-/* Helper function for S_pmtrans(): comparison function to sort an array
- * of codepoint range pairs. Sorts by start point, or if equal, by end
- * point */
-
-static int uvcompare(const void *a, const void *b)
-    __attribute__nonnull__(1)
-    __attribute__nonnull__(2)
-    __attribute__pure__;
-static int uvcompare(const void *a, const void *b)
+void
+Perl_invmap_dump(pTHX_ SV* invlist, UV *map)
 {
-    if (*((const UV *)a) < (*(const UV *)b))
-	return -1;
-    if (*((const UV *)a) > (*(const UV *)b))
-	return 1;
-    if (*((const UV *)a+1) < (*(const UV *)b+1))
-	return -1;
-    if (*((const UV *)a+1) > (*(const UV *)b+1))
-	return 1;
-    return 0;
+    const char indent[] = "    ";
+
+    UV len = _invlist_len(invlist);
+    UV * array = invlist_array(invlist);
+    UV i;
+
+    PERL_ARGS_ASSERT_INVMAP_DUMP;
+
+    for (i = 0; i < len; i++) {
+        UV start = array[i];
+        UV end   = (i + 1 < len) ? array[i+1] - 1 : IV_MAX;
+
+        PerlIO_printf(Perl_debug_log, "%s[%" UVuf "] 0x%04" UVXf, indent, i, start);
+        if (end == IV_MAX) {
+            PerlIO_printf(Perl_debug_log, " .. INFTY");
+	}
+	else if (end != start) {
+            PerlIO_printf(Perl_debug_log, " .. 0x%04" UVXf, end);
+	}
+        else {
+            PerlIO_printf(Perl_debug_log, "            ");
+        }
+
+        PerlIO_printf(Perl_debug_log, "\t");
+
+        if (map[i] == TR_UNLISTED) {
+            PerlIO_printf(Perl_debug_log, "TR_UNLISTED\n");
+        }
+        else if (map[i] == TR_SPECIAL_HANDLING) {
+            PerlIO_printf(Perl_debug_log, "TR_SPECIAL_HANDLING\n");
+        }
+        else {
+            PerlIO_printf(Perl_debug_log, "0x%04" UVXf "\n", map[i]);
+        }
+    }
 }
 
 /* Given an OP_TRANS / OP_TRANSR op o, plus OP_CONST ops expr and repl
@@ -6426,8 +6933,8 @@ static int uvcompare(const void *a, const void *b)
  *   OPpTRANS_SQUASH
  *   OPpTRANS_DELETE
  * flags as appropriate; this function may add
- *   OPpTRANS_FROM_UTF
- *   OPpTRANS_TO_UTF
+ *   OPpTRANS_USE_SVOP
+ *   OPpTRANS_CAN_FORCE_UTF8
  *   OPpTRANS_IDENTICAL
  *   OPpTRANS_GROWS
  * flags
@@ -6436,340 +6943,1101 @@ static int uvcompare(const void *a, const void *b)
 static OP *
 S_pmtrans(pTHX_ OP *o, OP *expr, OP *repl)
 {
+    /* This function compiles a tr///, from data gathered from toke.c, into a
+     * form suitable for use by do_trans() in doop.c at runtime.
+     *
+     * It first normalizes the data, while discarding extraneous inputs; then
+     * writes out the compiled data.  The normalization allows for complete
+     * analysis, and avoids some false negatives and positives earlier versions
+     * of this code had.
+     *
+     * The normalization form is an inversion map (described below in detail).
+     * This is essentially the compiled form for tr///'s that require UTF-8,
+     * and its easy to use it to write the 257-byte table for tr///'s that
+     * don't need UTF-8.  That table is identical to what's been in use for
+     * many perl versions, except that it doesn't handle some edge cases that
+     * it used to, involving code points above 255.  The UTF-8 form now handles
+     * these.  (This could be changed with extra coding should it shown to be
+     * desirable.)
+     *
+     * If the complement (/c) option is specified, the lhs string (tstr) is
+     * parsed into an inversion list.  Complementing these is trivial.  Then a
+     * complemented tstr is built from that, and used thenceforth.  This hides
+     * the fact that it was complemented from almost all successive code.
+     *
+     * One of the important characteristics to know about the input is whether
+     * the transliteration may be done in place, or does a temporary need to be
+     * allocated, then copied.  If the replacement for every character in every
+     * possible string takes up no more bytes than the character it
+     * replaces, then it can be edited in place.  Otherwise the replacement
+     * could overwrite a byte we are about to read, depending on the strings
+     * being processed.  The comments and variable names here refer to this as
+     * "growing".  Some inputs won't grow, and might even shrink under /d, but
+     * some inputs could grow, so we have to assume any given one might grow.
+     * On very long inputs, the temporary could eat up a lot of memory, so we
+     * want to avoid it if possible.  For non-UTF-8 inputs, everything is
+     * single-byte, so can be edited in place, unless there is something in the
+     * pattern that could force it into UTF-8.  The inversion map makes it
+     * feasible to determine this.  Previous versions of this code pretty much
+     * punted on determining if UTF-8 could be edited in place.  Now, this code
+     * is rigorous in making that determination.
+     *
+     * Another characteristic we need to know is whether the lhs and rhs are
+     * identical.  If so, and no other flags are present, the only effect of
+     * the tr/// is to count the characters present in the input that are
+     * mentioned in the lhs string.  The implementation of that is easier and
+     * runs faster than the more general case.  Normalizing here allows for
+     * accurate determination of this.  Previously there were false negatives
+     * possible.
+     *
+     * Instead of 'transliterated', the comments here use 'unmapped' for the
+     * characters that are left unchanged by the operation; otherwise they are
+     * 'mapped'
+     *
+     * The lhs of the tr/// is here referred to as the t side.
+     * The rhs of the tr/// is here referred to as the r side.
+     */
+
     SV * const tstr = ((SVOP*)expr)->op_sv;
     SV * const rstr = ((SVOP*)repl)->op_sv;
     STRLEN tlen;
     STRLEN rlen;
-    const U8 *t = (U8*)SvPV_const(tstr, tlen);
-    const U8 *r = (U8*)SvPV_const(rstr, rlen);
-    Size_t i, j;
-    bool grows = FALSE;
-    OPtrans_map *tbl;
-    SSize_t struct_size; /* malloced size of table struct */
+    const U8 * t0 = (U8*)SvPV_const(tstr, tlen);
+    const U8 * r0 = (U8*)SvPV_const(rstr, rlen);
+    const U8 * t = t0;
+    const U8 * r = r0;
+    UV t_count = 0, r_count = 0;  /* Number of characters in search and
+                                         replacement lists */
 
+    /* khw thinks some of the private flags for this op are quaintly named.
+     * OPpTRANS_GROWS for example is TRUE if the replacement for some lhs
+     * character when represented in UTF-8 is longer than the original
+     * character's UTF-8 representation */
     const bool complement = cBOOL(o->op_private & OPpTRANS_COMPLEMENT);
     const bool squash     = cBOOL(o->op_private & OPpTRANS_SQUASH);
     const bool del        = cBOOL(o->op_private & OPpTRANS_DELETE);
-    SV* swash;
+
+    /* Set to true if there is some character < 256 in the lhs that maps to
+     * above 255.  If so, a non-UTF-8 match string can be forced into being in
+     * UTF-8 by a tr/// operation. */
+    bool can_force_utf8 = FALSE;
+
+    /* What is the maximum expansion factor in UTF-8 transliterations.  If a
+     * 2-byte UTF-8 encoded character is to be replaced by a 3-byte one, its
+     * expansion factor is 1.5.  This number is used at runtime to calculate
+     * how much space to allocate for non-inplace transliterations.  Without
+     * this number, the worst case is 14, which is extremely unlikely to happen
+     * in real life, and could require significant memory overhead. */
+    NV max_expansion = 1.;
+
+    UV t_range_count, r_range_count, min_range_count;
+    UV* t_array;
+    SV* t_invlist;
+    UV* r_map;
+    UV r_cp, t_cp;
+    UV t_cp_end = (UV) -1;
+    UV r_cp_end;
+    Size_t len;
+    AV* invmap;
+    UV final_map = TR_UNLISTED;    /* The final character in the replacement
+                                      list, updated as we go along.  Initialize
+                                      to something illegal */
+
+    bool rstr_utf8 = cBOOL(SvUTF8(rstr));
+    bool tstr_utf8 = cBOOL(SvUTF8(tstr));
+
+    const U8* tend = t + tlen;
+    const U8* rend = r + rlen;
+
+    SV * inverted_tstr = NULL;
+
+    Size_t i;
+    unsigned int pass2;
+
+    /* This routine implements detection of a transliteration having a longer
+     * UTF-8 representation than its source, by partitioning all the possible
+     * code points of the platform into equivalence classes of the same UTF-8
+     * byte length in the first pass.  As it constructs the mappings, it carves
+     * these up into smaller chunks, but doesn't merge any together.  This
+     * makes it easy to find the instances it's looking for.  A second pass is
+     * done after this has been determined which merges things together to
+     * shrink the table for runtime.  The table below is used for both ASCII
+     * and EBCDIC platforms.  On EBCDIC, the byte length is not monotonically
+     * increasing for code points below 256.  To correct for that, the macro
+     * CP_ADJUST defined below converts those code points to ASCII in the first
+     * pass, and we use the ASCII partition values.  That works because the
+     * growth factor will be unaffected, which is all that is calculated during
+     * the first pass. */
+    UV PL_partition_by_byte_length[] = {
+        0,
+        0x80,   /* Below this is 1 byte representations */
+        (32 * (1UL << (    UTF_ACCUMULATION_SHIFT))),   /* 2 bytes below this */
+        (16 * (1UL << (2 * UTF_ACCUMULATION_SHIFT))),   /* 3 bytes below this */
+        ( 8 * (1UL << (3 * UTF_ACCUMULATION_SHIFT))),   /* 4 bytes below this */
+        ( 4 * (1UL << (4 * UTF_ACCUMULATION_SHIFT))),   /* 5 bytes below this */
+        ( 2 * (1UL << (5 * UTF_ACCUMULATION_SHIFT)))    /* 6 bytes below this */
+
+#  ifdef UV_IS_QUAD
+                                                    ,
+        ( ((UV) 1U << (6 * UTF_ACCUMULATION_SHIFT)))    /* 7 bytes below this */
+#  endif
+
+    };
 
     PERL_ARGS_ASSERT_PMTRANS;
 
     PL_hints |= HINT_BLOCK_SCOPE;
 
-    if (SvUTF8(tstr))
-        o->op_private |= OPpTRANS_FROM_UTF;
+    /* If /c, the search list is sorted and complemented.  This is now done by
+     * creating an inversion list from it, and then trivially inverting that.
+     * The previous implementation used qsort, but creating the list
+     * automatically keeps it sorted as we go along */
+    if (complement) {
+        UV start, end;
+        SV * inverted_tlist = _new_invlist(tlen);
+        Size_t temp_len;
 
-    if (SvUTF8(rstr))
-        o->op_private |= OPpTRANS_TO_UTF;
+        DEBUG_y(PerlIO_printf(Perl_debug_log,
+                    "%s: %d: tstr before inversion=\n%s\n",
+                    __FILE__, __LINE__, _byte_dump_string(t, tend - t, 0)));
 
-    if (o->op_private & (OPpTRANS_FROM_UTF|OPpTRANS_TO_UTF)) {
+        while (t < tend) {
 
-        /* for utf8 translations, op_sv will be set to point to a swash
-         * containing codepoint ranges. This is done by first assembling
-         * a textual representation of the ranges in listsv then compiling
-         * it using swash_init(). For more details of the textual format,
-         * see L<perlunicode.pod/"User-Defined Character Properties"> .
-         */
+            /* Non-utf8 strings don't have ranges, so each character is listed
+             * out */
+            if (! tstr_utf8) {
+                inverted_tlist = add_cp_to_invlist(inverted_tlist, *t);
+                t++;
+            }
+            else {  /* But UTF-8 strings have been parsed in toke.c to have
+                 * ranges if appropriate. */
+                UV t_cp;
+                Size_t t_char_len;
 
-	SV* const listsv = newSVpvs("# comment\n");
-	SV* transv = NULL;
-	const U8* tend = t + tlen;
-	const U8* rend = r + rlen;
-	STRLEN ulen;
-	UV tfirst = 1;
-	UV tlast = 0;
-	IV tdiff;
-	STRLEN tcount = 0;
-	UV rfirst = 1;
-	UV rlast = 0;
-	IV rdiff;
-	STRLEN rcount = 0;
-	IV diff;
-	I32 none = 0;
-	U32 max = 0;
-	I32 bits;
-	I32 havefinal = 0;
-	U32 final = 0;
-	const I32 from_utf  = o->op_private & OPpTRANS_FROM_UTF;
-	const I32 to_utf    = o->op_private & OPpTRANS_TO_UTF;
-	U8* tsave = NULL;
-	U8* rsave = NULL;
-	const U32 flags = UTF8_ALLOW_DEFAULT;
+                /* Get the first character */
+                t_cp = valid_utf8_to_uvchr(t, &t_char_len);
+                t += t_char_len;
 
-	if (!from_utf) {
-	    STRLEN len = tlen;
-	    t = tsave = bytes_to_utf8(t, &len);
-	    tend = t + len;
-	}
-	if (!to_utf && rlen) {
-	    STRLEN len = rlen;
-	    r = rsave = bytes_to_utf8(r, &len);
-	    rend = r + len;
-	}
+                /* If the next byte indicates that this wasn't the first
+                 * element of a range, the range is just this one */
+                if (t >= tend || *t != RANGE_INDICATOR) {
+                    inverted_tlist = add_cp_to_invlist(inverted_tlist, t_cp);
+                }
+                else { /* Otherwise, ignore the indicator byte, and get the
+                          final element, and add the whole range */
+                    t++;
+                    t_cp_end = valid_utf8_to_uvchr(t, &t_char_len);
+                    t += t_char_len;
 
-/* There is a snag with this code on EBCDIC: scan_const() in toke.c has
- * encoded chars in native encoding which makes ranges in the EBCDIC 0..255
- * odd.  */
+                    inverted_tlist = _add_range_to_invlist(inverted_tlist,
+                                                      t_cp, t_cp_end);
+                }
+            }
+        } /* End of parse through tstr */
 
-	if (complement) {
-            /* utf8 and /c:
-             * replace t/tlen/tend with a version that has the ranges
-             * complemented
-             */
-	    U8 tmpbuf[UTF8_MAXBYTES+1];
-	    UV *cp;
-	    UV nextmin = 0;
-	    Newx(cp, 2*tlen, UV);
-	    i = 0;
-	    transv = newSVpvs("");
+        /* The inversion list is done; now invert it */
+        _invlist_invert(inverted_tlist);
 
-            /* convert search string into array of (start,end) range
-             * codepoint pairs stored in cp[]. Most "ranges" will start
-             * and end at the same char */
-	    while (t < tend) {
-		cp[2*i] = utf8n_to_uvchr(t, tend-t, &ulen, flags);
-		t += ulen;
-                /* the toker converts X-Y into (X, ILLEGAL_UTF8_BYTE, Y) */
-		if (t < tend && *t == ILLEGAL_UTF8_BYTE) {
-		    t++;
-		    cp[2*i+1] = utf8n_to_uvchr(t, tend-t, &ulen, flags);
-		    t += ulen;
-		}
-		else {
-		 cp[2*i+1] = cp[2*i];
-		}
-		i++;
-	    }
+        /* Now go through the inverted list and create a new tstr for the rest
+         * of the routine to use.  Since the UTF-8 version can have ranges, and
+         * can be much more compact than the non-UTF-8 version, we create the
+         * string in UTF-8 even if not necessary.  (This is just an intermediate
+         * value that gets thrown away anyway.) */
+        invlist_iterinit(inverted_tlist);
+        inverted_tstr = newSVpvs("");
+        while (invlist_iternext(inverted_tlist, &start, &end)) {
+            U8 temp[UTF8_MAXBYTES];
+            U8 * temp_end_pos;
 
-            /* sort the ranges */
-	    qsort(cp, i, 2*sizeof(UV), uvcompare);
+            /* IV_MAX keeps things from going out of bounds */
+            start = MIN(IV_MAX, start);
+            end   = MIN(IV_MAX, end);
 
-            /* Create a utf8 string containing the complement of the
-             * codepoint ranges. For example if cp[] contains [A,B], [C,D],
-             * then transv will contain the equivalent of:
-             * join '', map chr, 0,     ILLEGAL_UTF8_BYTE, A - 1,
-             *                   B + 1, ILLEGAL_UTF8_BYTE, C - 1,
-             *                   D + 1, ILLEGAL_UTF8_BYTE, 0x7fffffff;
-             * A range of a single char skips the ILLEGAL_UTF8_BYTE and
-             * end cp.
-             */
-	    for (j = 0; j < i; j++) {
-		UV  val = cp[2*j];
-		diff = val - nextmin;
-		if (diff > 0) {
-		    t = uvchr_to_utf8(tmpbuf,nextmin);
-		    sv_catpvn(transv, (char*)tmpbuf, t - tmpbuf);
-		    if (diff > 1) {
-			U8  range_mark = ILLEGAL_UTF8_BYTE;
-			t = uvchr_to_utf8(tmpbuf, val - 1);
-			sv_catpvn(transv, (char *)&range_mark, 1);
-			sv_catpvn(transv, (char*)tmpbuf, t - tmpbuf);
-		    }
-	        }
-		val = cp[2*j+1];
-		if (val >= nextmin)
-		    nextmin = val + 1;
-	    }
+            temp_end_pos = uvchr_to_utf8(temp, start);
+            sv_catpvn(inverted_tstr, (char *) temp, temp_end_pos - temp);
 
-	    t = uvchr_to_utf8(tmpbuf,nextmin);
-	    sv_catpvn(transv, (char*)tmpbuf, t - tmpbuf);
-	    {
-		U8 range_mark = ILLEGAL_UTF8_BYTE;
-		sv_catpvn(transv, (char *)&range_mark, 1);
-	    }
-	    t = uvchr_to_utf8(tmpbuf, 0x7fffffff);
-	    sv_catpvn(transv, (char*)tmpbuf, t - tmpbuf);
-	    t = (const U8*)SvPVX_const(transv);
-	    tlen = SvCUR(transv);
-	    tend = t + tlen;
-	    Safefree(cp);
-	}
-	else if (!rlen && !del) {
-	    r = t; rlen = tlen; rend = tend;
-	}
+            if (start != end) {
+                Perl_sv_catpvf(aTHX_ inverted_tstr, "%c", RANGE_INDICATOR);
+                temp_end_pos = uvchr_to_utf8(temp, end);
+                sv_catpvn(inverted_tstr, (char *) temp, temp_end_pos - temp);
+            }
+        }
 
-	if (!squash) {
-		if ((!rlen && !del) || t == r ||
-		    (tlen == rlen && memEQ((char *)t, (char *)r, tlen)))
-		{
-		    o->op_private |= OPpTRANS_IDENTICAL;
-		}
-	}
+        /* Set up so the remainder of the routine uses this complement, instead
+         * of the actual input */
+        t0 = t = (U8*)SvPV_const(inverted_tstr, temp_len);
+        tend = t0 + temp_len;
+        tstr_utf8 = TRUE;
 
-        /* extract char ranges from t and r and append them to listsv */
-
-	while (t < tend || tfirst <= tlast) {
-	    /* see if we need more "t" chars */
-	    if (tfirst > tlast) {
-		tfirst = (I32)utf8n_to_uvchr(t, tend - t, &ulen, flags);
-		t += ulen;
-		if (t < tend && *t == ILLEGAL_UTF8_BYTE) {	/* illegal utf8 val indicates range */
-		    t++;
-		    tlast = (I32)utf8n_to_uvchr(t, tend - t, &ulen, flags);
-		    t += ulen;
-		}
-		else
-		    tlast = tfirst;
-	    }
-
-	    /* now see if we need more "r" chars */
-	    if (rfirst > rlast) {
-		if (r < rend) {
-		    rfirst = (I32)utf8n_to_uvchr(r, rend - r, &ulen, flags);
-		    r += ulen;
-		    if (r < rend && *r == ILLEGAL_UTF8_BYTE) {	/* illegal utf8 val indicates range */
-			r++;
-			rlast = (I32)utf8n_to_uvchr(r, rend - r, &ulen, flags);
-			r += ulen;
-		    }
-		    else
-			rlast = rfirst;
-		}
-		else {
-		    if (!havefinal++)
-			final = rlast;
-		    rfirst = rlast = 0xffffffff;
-		}
-	    }
-
-	    /* now see which range will peter out first, if either. */
-	    tdiff = tlast - tfirst;
-	    rdiff = rlast - rfirst;
-	    tcount += tdiff + 1;
-	    rcount += rdiff + 1;
-
-	    if (tdiff <= rdiff)
-		diff = tdiff;
-	    else
-		diff = rdiff;
-
-	    if (rfirst == 0xffffffff) {
-		diff = tdiff;	/* oops, pretend rdiff is infinite */
-		if (diff > 0)
-		    Perl_sv_catpvf(aTHX_ listsv, "%04lx\t%04lx\tXXXX\n",
-				   (long)tfirst, (long)tlast);
-		else
-		    Perl_sv_catpvf(aTHX_ listsv, "%04lx\t\tXXXX\n", (long)tfirst);
-	    }
-	    else {
-		if (diff > 0)
-		    Perl_sv_catpvf(aTHX_ listsv, "%04lx\t%04lx\t%04lx\n",
-				   (long)tfirst, (long)(tfirst + diff),
-				   (long)rfirst);
-		else
-		    Perl_sv_catpvf(aTHX_ listsv, "%04lx\t\t%04lx\n",
-				   (long)tfirst, (long)rfirst);
-
-		if (rfirst + diff > max)
-		    max = rfirst + diff;
-		if (!grows)
-		    grows = (tfirst < rfirst &&
-			     UVCHR_SKIP(tfirst) < UVCHR_SKIP(rfirst + diff));
-		rfirst += diff + 1;
-	    }
-	    tfirst += diff + 1;
-	}
-
-        /* compile listsv into a swash and attach to o */
-
-	none = ++max;
-	if (del)
-	    ++max;
-
-	if (max > 0xffff)
-	    bits = 32;
-	else if (max > 0xff)
-	    bits = 16;
-	else
-	    bits = 8;
-
-	swash = MUTABLE_SV(swash_init("utf8", "", listsv, bits, none));
-#ifdef USE_ITHREADS
-	cPADOPo->op_padix = pad_alloc(OP_TRANS, SVf_READONLY);
-	SvREFCNT_dec(PAD_SVl(cPADOPo->op_padix));
-	PAD_SETSV(cPADOPo->op_padix, swash);
-	SvPADTMP_on(swash);
-	SvREADONLY_on(swash);
-#else
-	cSVOPo->op_sv = swash;
-#endif
-	SvREFCNT_dec(listsv);
-	SvREFCNT_dec(transv);
-
-	if (!del && havefinal && rlen)
-	    (void)hv_store(MUTABLE_HV(SvRV(swash)), "FINAL", 5,
-			   newSVuv((UV)final), 0);
-
-	Safefree(tsave);
-	Safefree(rsave);
-
-	tlen = tcount;
-	rlen = rcount;
-	if (r < rend)
-	    rlen++;
-	else if (rlast == 0xffffffff)
-	    rlen = 0;
-
-	goto warnins;
+        SvREFCNT_dec_NN(inverted_tlist);
     }
 
-    /* Non-utf8 case: set o->op_pv to point to a simple 256+ entry lookup
-     * table. Entries with the value -1 indicate chars not to be
-     * translated, while -2 indicates a search char without a
-     * corresponding replacement char under /d.
-     *
-     * Normally, the table has 256 slots. However, in the presence of
-     * /c, the search charlist has an implicit \x{100}-\x{7fffffff}
-     * added, and if there are enough replacement chars to start pairing
-     * with the \x{100},... search chars, then a larger (> 256) table
-     * is allocated.
-     *
-     * In addition, regardless of whether under /c, an extra slot at the
-     * end is used to store the final repeating char, or -3 under an empty
-     * replacement list, or -2 under /d; which makes the runtime code
-     * easier.
-     *
-     * The toker will have already expanded char ranges in t and r.
-     */
+    /* For non-/d, an empty rhs means to use the lhs */
+    if (rlen == 0 && ! del) {
+        r0 = t0;
+        rend = tend;
+        rstr_utf8  = tstr_utf8;
+    }
 
-    /* Initially allocate 257-slot table: 256 for basic (non /c) usage,
-     * plus final slot for repeat/-2/-3. Later we realloc if excess > * 0.
-     * The OPtrans_map struct already contains one slot; hence the -1.
-     */
-    struct_size = sizeof(OPtrans_map) + (256 - 1 + 1)*sizeof(short);
-    tbl = (OPtrans_map*)PerlMemShared_calloc(struct_size, 1);
-    tbl->size = 256;
-    cPVOPo->op_pv = (char*)tbl;
+    t_invlist = _new_invlist(1);
 
-    if (complement) {
-        Size_t excess;
+    /* Initialize to a single range */
+    t_invlist = _add_range_to_invlist(t_invlist, 0, UV_MAX);
 
-        /* in this branch, j is a count of 'consumed' (i.e. paired off
-         * with a search char) replacement chars (so j <= rlen always)
+    /* For the first pass, the lhs is partitioned such that the
+     * number of UTF-8 bytes required to represent a code point in each
+     * partition is the same as the number for any other code point in
+     * that partion.  We copy the pre-compiled partion. */
+    len = C_ARRAY_LENGTH(PL_partition_by_byte_length);
+    invlist_extend(t_invlist, len);
+    t_array = invlist_array(t_invlist);
+    Copy(PL_partition_by_byte_length, t_array, len, UV);
+    invlist_set_len(t_invlist, len, *(get_invlist_offset_addr(t_invlist)));
+    Newx(r_map, len + 1, UV);
+
+    /* Parse the (potentially adjusted) input, creating the inversion map.
+     * This is done in two passes.  The first pass is to determine if the
+     * transliteration can be done in place.  The inversion map it creates
+     * could be used, but generally would be larger and slower to run than the
+     * output of the second pass, which starts with a more compact table and
+     * allows more ranges to be merged */
+    for (pass2 = 0; pass2 < 2; pass2++) {
+        if (pass2) {
+            /* Initialize to a single range */
+            t_invlist = _add_range_to_invlist(t_invlist, 0, UV_MAX);
+
+            /* In the second pass, we just have the single range */
+            len = 1;
+            t_array = invlist_array(t_invlist);
+        }
+
+/* As noted earlier, we convert EBCDIC code points to Unicode in the first pass
+ * so as to get the well-behaved length 1 vs length 2 boundary.  Only code
+ * points below 256 differ between the two character sets in this regard.  For
+ * these, we also can't have any ranges, as they have to be individually
+ * converted. */
+#ifdef EBCDIC
+#  define CP_ADJUST(x)          ((pass2) ? (x) : NATIVE_TO_UNI(x))
+#  define FORCE_RANGE_LEN_1(x)  ((pass2) ? 0 : ((x) < 256))
+#  define CP_SKIP(x)            ((pass2) ? UVCHR_SKIP(x) : OFFUNISKIP(x))
+#else
+#  define CP_ADJUST(x)          (x)
+#  define FORCE_RANGE_LEN_1(x)  0
+#  define CP_SKIP(x)            UVCHR_SKIP(x)
+#endif
+
+        /* And the mapping of each of the ranges is initialized.  Initially,
+         * everything is TR_UNLISTED. */
+        for (i = 0; i < len; i++) {
+            r_map[i] = TR_UNLISTED;
+        }
+
+        t = t0;
+        t_count = 0;
+        r = r0;
+        r_count = 0;
+        t_range_count = r_range_count = 0;
+
+        DEBUG_y(PerlIO_printf(Perl_debug_log, "%s: %d:\ntstr=%s\n",
+                    __FILE__, __LINE__, _byte_dump_string(t, tend - t, 0)));
+        DEBUG_y(PerlIO_printf(Perl_debug_log, "rstr=%s\n",
+                                        _byte_dump_string(r, rend - r, 0)));
+        DEBUG_y(PerlIO_printf(Perl_debug_log, "/c=%d; /s=%d; /d=%d\n",
+                                                  complement, squash, del));
+        DEBUG_y(invmap_dump(t_invlist, r_map));
+
+        /* Now go through the search list constructing an inversion map.  The
+         * input is not necessarily in any particular order.  Making it an
+         * inversion map orders it, potentially simplifying, and makes it easy
+         * to deal with at run time.  This is the only place in core that
+         * generates an inversion map; if others were introduced, it might be
+         * better to create general purpose routines to handle them.
+         * (Inversion maps are created in perl in other places.)
+         *
+         * An inversion map consists of two parallel arrays.  One is
+         * essentially an inversion list: an ordered list of code points such
+         * that each element gives the first code point of a range of
+         * consecutive code points that map to the element in the other array
+         * that has the same index as this one (in other words, the
+         * corresponding element).  Thus the range extends up to (but not
+         * including) the code point given by the next higher element.  In a
+         * true inversion map, the corresponding element in the other array
+         * gives the mapping of the first code point in the range, with the
+         * understanding that the next higher code point in the inversion
+         * list's range will map to the next higher code point in the map.
+         *
+         * So if at element [i], let's say we have:
+         *
+         *     t_invlist  r_map
+         * [i]    A         a
+         *
+         * This means that A => a, B => b, C => c....  Let's say that the
+         * situation is such that:
+         *
+         * [i+1]  L        -1
+         *
+         * This means the sequence that started at [i] stops at K => k.  This
+         * illustrates that you need to look at the next element to find where
+         * a sequence stops.  Except, the highest element in the inversion list
+         * begins a range that is understood to extend to the platform's
+         * infinity.
+         *
+         * This routine modifies traditional inversion maps to reserve two
+         * mappings:
+         *
+         *  TR_UNLISTED (or -1) indicates that no code point in the range
+         *      is listed in the tr/// searchlist.  At runtime, these are
+         *      always passed through unchanged.  In the inversion map, all
+         *      points in the range are mapped to -1, instead of increasing,
+         *      like the 'L' in the example above.
+         *
+         *      We start the parse with every code point mapped to this, and as
+         *      we parse and find ones that are listed in the search list, we
+         *      carve out ranges as we go along that override that.
+         *
+         *  TR_SPECIAL_HANDLING (or -2) indicates that every code point in the
+         *      range needs special handling.  Again, all code points in the
+         *      range are mapped to -2, instead of increasing.
+         *
+         *      Under /d this value means the code point should be deleted from
+         *      the transliteration when encountered.
+         *
+         *      Otherwise, it marks that every code point in the range is to
+         *      map to the final character in the replacement list.  This
+         *      happens only when the replacement list is shorter than the
+         *      search one, so there are things in the search list that have no
+         *      correspondence in the replacement list.  For example, in
+         *      tr/a-z/A/, 'A' is the final value, and the inversion map
+         *      generated for this would be like this:
+         *          \0  =>  -1
+         *          a   =>   A
+         *          b-z =>  -2
+         *          z+1 =>  -1
+         *      'A' appears once, then the remainder of the range maps to -2.
+         *      The use of -2 isn't strictly necessary, as an inversion map is
+         *      capable of representing this situation, but not nearly so
+         *      compactly, and this is actually quite commonly encountered.
+         *      Indeed, the original design of this code used a full inversion
+         *      map for this.  But things like
+         *          tr/\0-\x{FFFF}/A/
+         *      generated huge data structures, slowly, and the execution was
+         *      also slow.  So the current scheme was implemented.
+         *
+         *  So, if the next element in our example is:
+         *
+         * [i+2]  Q        q
+         *
+         * Then all of L, M, N, O, and P map to TR_UNLISTED.  If the next
+         * elements are
+         *
+         * [i+3]  R        z
+         * [i+4]  S       TR_UNLISTED
+         *
+         * Then Q => q; R => z; and S => TR_UNLISTED.  If [i+4] (the 'S') is
+         * the final element in the arrays, every code point from S to infinity
+         * maps to TR_UNLISTED.
+         *
          */
-	for (i = 0; i < tlen; i++)
-	    tbl->map[t[i]] = -1;
+                           /* Finish up range started in what otherwise would
+                            * have been the final iteration */
+        while (t < tend || t_range_count > 0) {
+            bool adjacent_to_range_above = FALSE;
+            bool adjacent_to_range_below = FALSE;
 
-	for (i = 0, j = 0; i < 256; i++) {
-	    if (!tbl->map[i]) {
-		if (j == rlen) {
-		    if (del)
-			tbl->map[i] = -2;
-		    else if (rlen)
-			tbl->map[i] = r[j-1];
-		    else
-			tbl->map[i] = (short)i;
-		}
-		else {
-		    tbl->map[i] = r[j++];
-		}
-                if (   tbl->map[i] >= 0
-                    &&  UVCHR_IS_INVARIANT((UV)i)
-                    && !UVCHR_IS_INVARIANT((UV)(tbl->map[i]))
-                )
-                    grows = TRUE;
-	    }
-	}
+            bool merge_with_range_above = FALSE;
+            bool merge_with_range_below = FALSE;
+
+            UV span, invmap_range_length_remaining;
+            SSize_t j;
+            Size_t i;
+
+            /* If we are in the middle of processing a range in the 'target'
+             * side, the previous iteration has set us up.  Otherwise, look at
+             * the next character in the search list */
+            if (t_range_count <= 0) {
+                if (! tstr_utf8) {
+
+                    /* Here, not in the middle of a range, and not UTF-8.  The
+                     * next code point is the single byte where we're at */
+                    t_cp = CP_ADJUST(*t);
+                    t_range_count = 1;
+                    t++;
+                }
+                else {
+                    Size_t t_char_len;
+
+                    /* Here, not in the middle of a range, and is UTF-8.  The
+                     * next code point is the next UTF-8 char in the input.  We
+                     * know the input is valid, because the toker constructed
+                     * it */
+                    t_cp = CP_ADJUST(valid_utf8_to_uvchr(t, &t_char_len));
+                    t += t_char_len;
+
+                    /* UTF-8 strings (only) have been parsed in toke.c to have
+                     * ranges.  See if the next byte indicates that this was
+                     * the first element of a range.  If so, get the final
+                     * element and calculate the range size.  If not, the range
+                     * size is 1 */
+                    if (   t < tend && *t == RANGE_INDICATOR
+                        && ! FORCE_RANGE_LEN_1(t_cp))
+                    {
+                        t++;
+                        t_range_count = valid_utf8_to_uvchr(t, &t_char_len)
+                                      - t_cp + 1;
+                        t += t_char_len;
+                    }
+                    else {
+                        t_range_count = 1;
+                    }
+                }
+
+                /* Count the total number of listed code points * */
+                t_count += t_range_count;
+            }
+
+            /* Similarly, get the next character in the replacement list */
+            if (r_range_count <= 0) {
+                if (r >= rend) {
+
+                    /* But if we've exhausted the rhs, there is nothing to map
+                     * to, except the special handling one, and we make the
+                     * range the same size as the lhs one. */
+                    r_cp = TR_SPECIAL_HANDLING;
+                    r_range_count = t_range_count;
+
+                    if (! del) {
+                        DEBUG_yv(PerlIO_printf(Perl_debug_log,
+                                        "final_map =%" UVXf "\n", final_map));
+                    }
+                }
+                else {
+                    if (! rstr_utf8) {
+                        r_cp = CP_ADJUST(*r);
+                        r_range_count = 1;
+                        r++;
+                    }
+                    else {
+                        Size_t r_char_len;
+
+                        r_cp = CP_ADJUST(valid_utf8_to_uvchr(r, &r_char_len));
+                        r += r_char_len;
+                        if (   r < rend && *r == RANGE_INDICATOR
+                            && ! FORCE_RANGE_LEN_1(r_cp))
+                        {
+                            r++;
+                            r_range_count = valid_utf8_to_uvchr(r,
+                                                    &r_char_len) - r_cp + 1;
+                            r += r_char_len;
+                        }
+                        else {
+                            r_range_count = 1;
+                        }
+                    }
+
+                    if (r_cp == TR_SPECIAL_HANDLING) {
+                        r_range_count = t_range_count;
+                    }
+
+                    /* This is the final character so far */
+                    final_map = r_cp + r_range_count - 1;
+
+                    r_count += r_range_count;
+                }
+            }
+
+            /* Here, we have the next things ready in both sides.  They are
+             * potentially ranges.  We try to process as big a chunk as
+             * possible at once, but the lhs and rhs must be synchronized, so
+             * things like tr/A-Z/a-ij-z/ will need to be processed in 2 chunks
+             * */
+            min_range_count = MIN(t_range_count, r_range_count);
+
+            /* Search the inversion list for the entry that contains the input
+             * code point <cp>.  The inversion map was initialized to cover the
+             * entire range of possible inputs, so this should not fail.  So
+             * the return value is the index into the list's array of the range
+             * that contains <cp>, that is, 'i' such that array[i] <= cp <
+             * array[i+1] */
+            j = _invlist_search(t_invlist, t_cp);
+            assert(j >= 0);
+            i = j;
+
+            /* Here, the data structure might look like:
+             *
+             * index    t   r     Meaning
+             * [i-1]    J   j   # J-L => j-l
+             * [i]      M  -1   # M => default; as do N, O, P, Q
+             * [i+1]    R   x   # R => x, S => x+1, T => x+2
+             * [i+2]    U   y   # U => y, V => y+1, ...
+             * ...
+             * [-1]     Z  -1   # Z => default; as do Z+1, ... infinity
+             *
+             * where 'x' and 'y' above are not to be taken literally.
+             *
+             * The maximum chunk we can handle in this loop iteration, is the
+             * smallest of the three components: the lhs 't_', the rhs 'r_',
+             * and the remainder of the range in element [i].  (In pass 1, that
+             * range will have everything in it be of the same class; we can't
+             * cross into another class.)  'min_range_count' already contains
+             * the smallest of the first two values.  The final one is
+             * irrelevant if the map is to the special indicator */
+
+            invmap_range_length_remaining = (i + 1 < len)
+                                            ? t_array[i+1] - t_cp
+                                            : IV_MAX - t_cp;
+            span = MAX(1, MIN(min_range_count, invmap_range_length_remaining));
+
+            /* The end point of this chunk is where we are, plus the span, but
+             * never larger than the platform's infinity */
+            t_cp_end = MIN(IV_MAX, t_cp + span - 1);
+
+            if (r_cp == TR_SPECIAL_HANDLING) {
+
+                /* If unmatched lhs code points map to the final map, use that
+                 * value.  This being set to TR_SPECIAL_HANDLING indicates that
+                 * we don't have a final map: unmatched lhs code points are
+                 * simply deleted */
+                r_cp_end = (del) ? TR_SPECIAL_HANDLING : final_map;
+            }
+            else {
+                r_cp_end = MIN(IV_MAX, r_cp + span - 1);
+
+                /* If something on the lhs is below 256, and something on the
+                 * rhs is above, there is a potential mapping here across that
+                 * boundary.  Indeed the only way there isn't is if both sides
+                 * start at the same point.  That means they both cross at the
+                 * same time.  But otherwise one crosses before the other */
+                if (t_cp < 256 && r_cp_end > 255 && r_cp != t_cp) {
+                    can_force_utf8 = TRUE;
+                }
+            }
+
+            /* If a character appears in the search list more than once, the
+             * 2nd and succeeding occurrences are ignored, so only do this
+             * range if haven't already processed this character.  (The range
+             * has been set up so that all members in it will be of the same
+             * ilk) */
+            if (r_map[i] == TR_UNLISTED) {
+                DEBUG_yv(PerlIO_printf(Perl_debug_log,
+                    "Processing %" UVxf "-%" UVxf " => %" UVxf "-%" UVxf "\n",
+                    t_cp, t_cp_end, r_cp, r_cp_end));
+
+                /* This is the first definition for this chunk, hence is valid
+                 * and needs to be processed.  Here and in the comments below,
+                 * we use the above sample data.  The t_cp chunk must be any
+                 * contiguous subset of M, N, O, P, and/or Q.
+                 *
+                 * In the first pass, calculate if there is any possible input
+                 * string that has a character whose transliteration will be
+                 * longer than it.  If none, the transliteration may be done
+                 * in-place, as it can't write over a so-far unread byte.
+                 * Otherwise, a copy must first be made.  This could be
+                 * expensive for long inputs.
+                 *
+                 * In the first pass, the t_invlist has been partitioned so
+                 * that all elements in any single range have the same number
+                 * of bytes in their UTF-8 representations.  And the r space is
+                 * either a single byte, or a range of strictly monotonically
+                 * increasing code points.  So the final element in the range
+                 * will be represented by no fewer bytes than the initial one.
+                 * That means that if the final code point in the t range has
+                 * at least as many bytes as the final code point in the r,
+                 * then all code points in the t range have at least as many
+                 * bytes as their corresponding r range element.  But if that's
+                 * not true, the transliteration of at least the final code
+                 * point grows in length.  As an example, suppose we had
+                 *      tr/\x{fff0}-\x{fff1}/\x{ffff}-\x{10000}/
+                 * The UTF-8 for all but 10000 occupies 3 bytes on ASCII
+                 * platforms.  We have deliberately set up the data structure
+                 * so that any range in the lhs gets split into chunks for
+                 * processing, such that every code point in a chunk has the
+                 * same number of UTF-8 bytes.  We only have to check the final
+                 * code point in the rhs against any code point in the lhs. */
+                if ( ! pass2
+                    && r_cp_end != TR_SPECIAL_HANDLING
+                    && CP_SKIP(t_cp_end) < CP_SKIP(r_cp_end))
+                {
+                    /* Here, we will need to make a copy of the input string
+                     * before doing the transliteration.  The worst possible
+                     * case is an expansion ratio of 14:1. This is rare, and
+                     * we'd rather allocate only the necessary amount of extra
+                     * memory for that copy.  We can calculate the worst case
+                     * for this particular transliteration is by keeping track
+                     * of the expansion factor for each range.
+                     *
+                     * Consider tr/\xCB/\X{E000}/.  The maximum expansion
+                     * factor is 1 byte going to 3 if the target string is not
+                     * UTF-8, but 2 bytes going to 3 if it is in UTF-8.  We
+                     * could pass two different values so doop could choose
+                     * based on the UTF-8ness of the target.  But khw thinks
+                     * (perhaps wrongly) that is overkill.  It is used only to
+                     * make sure we malloc enough space.
+                     *
+                     * If no target string can force the result to be UTF-8,
+                     * then we don't have to worry about the case of the target
+                     * string not being UTF-8 */
+                    NV t_size = (can_force_utf8 && t_cp < 256)
+                                ? 1
+                                : CP_SKIP(t_cp_end);
+                    NV ratio = CP_SKIP(r_cp_end) / t_size;
+
+                    o->op_private |= OPpTRANS_GROWS;
+
+                    /* Now that we know it grows, we can keep track of the
+                     * largest ratio */
+                    if (ratio > max_expansion) {
+                        max_expansion = ratio;
+                        DEBUG_y(PerlIO_printf(Perl_debug_log,
+                                        "New expansion factor: %" NVgf "\n",
+                                        max_expansion));
+                    }
+                }
+
+                /* The very first range is marked as adjacent to the
+                 * non-existent range below it, as it causes things to "just
+                 * work" (TradeMark)
+                 *
+                 * If the lowest code point in this chunk is M, it adjoins the
+                 * J-L range */
+                if (t_cp == t_array[i]) {
+                    adjacent_to_range_below = TRUE;
+
+                    /* And if the map has the same offset from the beginning of
+                     * the range as does this new code point (or both are for
+                     * TR_SPECIAL_HANDLING), this chunk can be completely
+                     * merged with the range below.  EXCEPT, in the first pass,
+                     * we don't merge ranges whose UTF-8 byte representations
+                     * have different lengths, so that we can more easily
+                     * detect if a replacement is longer than the source, that
+                     * is if it 'grows'.  But in the 2nd pass, there's no
+                     * reason to not merge */
+                    if (   (i > 0 && (   pass2
+                                      || CP_SKIP(t_array[i-1])
+                                                            == CP_SKIP(t_cp)))
+                        && (   (   r_cp == TR_SPECIAL_HANDLING
+                                && r_map[i-1] == TR_SPECIAL_HANDLING)
+                            || (   r_cp != TR_SPECIAL_HANDLING
+                                && r_cp - r_map[i-1] == t_cp - t_array[i-1])))
+                    {
+                        merge_with_range_below = TRUE;
+                    }
+                }
+
+                /* Similarly, if the highest code point in this chunk is 'Q',
+                 * it adjoins the range above, and if the map is suitable, can
+                 * be merged with it */
+                if (    t_cp_end >= IV_MAX - 1
+                    || (   i + 1 < len
+                        && t_cp_end + 1 == t_array[i+1]))
+                {
+                    adjacent_to_range_above = TRUE;
+                    if (i + 1 < len)
+                    if (    (   pass2
+                             || CP_SKIP(t_cp) == CP_SKIP(t_array[i+1]))
+                        && (   (   r_cp == TR_SPECIAL_HANDLING
+                                && r_map[i+1] == (UV) TR_SPECIAL_HANDLING)
+                            || (   r_cp != TR_SPECIAL_HANDLING
+                                && r_cp_end == r_map[i+1] - 1)))
+                    {
+                        merge_with_range_above = TRUE;
+                    }
+                }
+
+                if (merge_with_range_below && merge_with_range_above) {
+
+                    /* Here the new chunk looks like M => m, ... Q => q; and
+                     * the range above is like R => r, ....  Thus, the [i-1]
+                     * and [i+1] ranges should be seamlessly melded so the
+                     * result looks like
+                     *
+                     * [i-1]    J   j   # J-T => j-t
+                     * [i]      U   y   # U => y, V => y+1, ...
+                     * ...
+                     * [-1]     Z  -1   # Z => default; as do Z+1, ... infinity
+                     */
+                    Move(t_array + i + 2, t_array + i, len - i - 2, UV);
+                    Move(r_map   + i + 2, r_map   + i, len - i - 2, UV);
+                    len -= 2;
+                    invlist_set_len(t_invlist,
+                                    len,
+                                    *(get_invlist_offset_addr(t_invlist)));
+                }
+                else if (merge_with_range_below) {
+
+                    /* Here the new chunk looks like M => m, .... But either
+                     * (or both) it doesn't extend all the way up through Q; or
+                     * the range above doesn't start with R => r. */
+                    if (! adjacent_to_range_above) {
+
+                        /* In the first case, let's say the new chunk extends
+                         * through O.  We then want:
+                         *
+                         * [i-1]    J   j   # J-O => j-o
+                         * [i]      P  -1   # P => -1, Q => -1
+                         * [i+1]    R   x   # R => x, S => x+1, T => x+2
+                         * [i+2]    U   y   # U => y, V => y+1, ...
+                         * ...
+                         * [-1]     Z  -1   # Z => default; as do Z+1, ...
+                         *                                            infinity
+                         */
+                        t_array[i] = t_cp_end + 1;
+                        r_map[i] = TR_UNLISTED;
+                    }
+                    else { /* Adjoins the range above, but can't merge with it
+                              (because 'x' is not the next map after q) */
+                        /*
+                         * [i-1]    J   j   # J-Q => j-q
+                         * [i]      R   x   # R => x, S => x+1, T => x+2
+                         * [i+1]    U   y   # U => y, V => y+1, ...
+                         * ...
+                         * [-1]     Z  -1   # Z => default; as do Z+1, ...
+                         *                                          infinity
+                         */
+
+                        Move(t_array + i + 1, t_array + i, len - i - 1, UV);
+                        Move(r_map + i + 1, r_map + i, len - i - 1, UV);
+                        len--;
+                        invlist_set_len(t_invlist, len,
+                                        *(get_invlist_offset_addr(t_invlist)));
+                    }
+                }
+                else if (merge_with_range_above) {
+
+                    /* Here the new chunk ends with Q => q, and the range above
+                     * must start with R => r, so the two can be merged. But
+                     * either (or both) the new chunk doesn't extend all the
+                     * way down to M; or the mapping of the final code point
+                     * range below isn't m */
+                    if (! adjacent_to_range_below) {
+
+                        /* In the first case, let's assume the new chunk starts
+                         * with P => p.  Then, because it's merge-able with the
+                         * range above, that range must be R => r.  We want:
+                         *
+                         * [i-1]    J   j   # J-L => j-l
+                         * [i]      M  -1   # M => -1, N => -1
+                         * [i+1]    P   p   # P-T => p-t
+                         * [i+2]    U   y   # U => y, V => y+1, ...
+                         * ...
+                         * [-1]     Z  -1   # Z => default; as do Z+1, ...
+                         *                                          infinity
+                         */
+                        t_array[i+1] = t_cp;
+                        r_map[i+1] = r_cp;
+                    }
+                    else { /* Adjoins the range below, but can't merge with it
+                            */
+                        /*
+                         * [i-1]    J   j   # J-L => j-l
+                         * [i]      M   x   # M-T => x-5 .. x+2
+                         * [i+1]    U   y   # U => y, V => y+1, ...
+                         * ...
+                         * [-1]     Z  -1   # Z => default; as do Z+1, ...
+                         *                                          infinity
+                         */
+                        Move(t_array + i + 1, t_array + i, len - i - 1, UV);
+                        Move(r_map   + i + 1, r_map   + i, len - i - 1, UV);
+                        len--;
+                        t_array[i] = t_cp;
+                        r_map[i] = r_cp;
+                        invlist_set_len(t_invlist, len,
+                                        *(get_invlist_offset_addr(t_invlist)));
+                    }
+                }
+                else if (adjacent_to_range_below && adjacent_to_range_above) {
+                    /* The new chunk completely fills the gap between the
+                     * ranges on either side, but can't merge with either of
+                     * them.
+                     *
+                     * [i-1]    J   j   # J-L => j-l
+                     * [i]      M   z   # M => z, N => z+1 ... Q => z+4
+                     * [i+1]    R   x   # R => x, S => x+1, T => x+2
+                     * [i+2]    U   y   # U => y, V => y+1, ...
+                     * ...
+                     * [-1]     Z  -1   # Z => default; as do Z+1, ... infinity
+                     */
+                    r_map[i] = r_cp;
+                }
+                else if (adjacent_to_range_below) {
+                    /* The new chunk adjoins the range below, but not the range
+                     * above, and can't merge.  Let's assume the chunk ends at
+                     * O.
+                     *
+                     * [i-1]    J   j   # J-L => j-l
+                     * [i]      M   z   # M => z, N => z+1, O => z+2
+                     * [i+1]    P   -1  # P => -1, Q => -1
+                     * [i+2]    R   x   # R => x, S => x+1, T => x+2
+                     * [i+3]    U   y   # U => y, V => y+1, ...
+                     * ...
+                     * [-w]     Z  -1   # Z => default; as do Z+1, ... infinity
+                     */
+                    invlist_extend(t_invlist, len + 1);
+                    t_array = invlist_array(t_invlist);
+                    Renew(r_map, len + 1, UV);
+
+                    Move(t_array + i + 1, t_array + i + 2, len - i - 1, UV);
+                    Move(r_map + i + 1,   r_map   + i + 2, len - i - 1, UV);
+                    r_map[i] = r_cp;
+                    t_array[i+1] = t_cp_end + 1;
+                    r_map[i+1] = TR_UNLISTED;
+                    len++;
+                    invlist_set_len(t_invlist, len,
+                                    *(get_invlist_offset_addr(t_invlist)));
+                }
+                else if (adjacent_to_range_above) {
+                    /* The new chunk adjoins the range above, but not the range
+                     * below, and can't merge.  Let's assume the new chunk
+                     * starts at O
+                     *
+                     * [i-1]    J   j   # J-L => j-l
+                     * [i]      M  -1   # M => default, N => default
+                     * [i+1]    O   z   # O => z, P => z+1, Q => z+2
+                     * [i+2]    R   x   # R => x, S => x+1, T => x+2
+                     * [i+3]    U   y   # U => y, V => y+1, ...
+                     * ...
+                     * [-1]     Z  -1   # Z => default; as do Z+1, ... infinity
+                     */
+                    invlist_extend(t_invlist, len + 1);
+                    t_array = invlist_array(t_invlist);
+                    Renew(r_map, len + 1, UV);
+
+                    Move(t_array + i + 1, t_array + i + 2, len - i - 1, UV);
+                    Move(r_map   + i + 1, r_map   + i + 2, len - i - 1, UV);
+                    t_array[i+1] = t_cp;
+                    r_map[i+1] = r_cp;
+                    len++;
+                    invlist_set_len(t_invlist, len,
+                                    *(get_invlist_offset_addr(t_invlist)));
+                }
+                else {
+                    /* The new chunk adjoins neither the range above, nor the
+                     * range below.  Lets assume it is N..P => n..p
+                     *
+                     * [i-1]    J   j   # J-L => j-l
+                     * [i]      M  -1   # M => default
+                     * [i+1]    N   n   # N..P => n..p
+                     * [i+2]    Q  -1   # Q => default
+                     * [i+3]    R   x   # R => x, S => x+1, T => x+2
+                     * [i+4]    U   y   # U => y, V => y+1, ...
+                     * ...
+                     * [-1]     Z  -1   # Z => default; as do Z+1, ... infinity
+                     */
+
+                    DEBUG_yv(PerlIO_printf(Perl_debug_log,
+                                        "Before fixing up: len=%d, i=%d\n",
+                                        (int) len, (int) i));
+                    DEBUG_yv(invmap_dump(t_invlist, r_map));
+
+                    invlist_extend(t_invlist, len + 2);
+                    t_array = invlist_array(t_invlist);
+                    Renew(r_map, len + 2, UV);
+
+                    Move(t_array + i + 1,
+                         t_array + i + 2 + 1, len - i - (2 - 1), UV);
+                    Move(r_map   + i + 1,
+                         r_map   + i + 2 + 1, len - i - (2 - 1), UV);
+
+                    len += 2;
+                    invlist_set_len(t_invlist, len,
+                                    *(get_invlist_offset_addr(t_invlist)));
+
+                    t_array[i+1] = t_cp;
+                    r_map[i+1] = r_cp;
+
+                    t_array[i+2] = t_cp_end + 1;
+                    r_map[i+2] = TR_UNLISTED;
+                }
+                DEBUG_yv(PerlIO_printf(Perl_debug_log,
+                          "After iteration: span=%" UVuf ", t_range_count=%"
+                          UVuf " r_range_count=%" UVuf "\n",
+                          span, t_range_count, r_range_count));
+                DEBUG_yv(invmap_dump(t_invlist, r_map));
+            } /* End of this chunk needs to be processed */
+
+            /* Done with this chunk. */
+            t_cp += span;
+            if (t_cp >= IV_MAX) {
+                break;
+            }
+            t_range_count -= span;
+            if (r_cp != TR_SPECIAL_HANDLING) {
+                r_cp += span;
+                r_range_count -= span;
+            }
+            else {
+                r_range_count = 0;
+            }
+
+        } /* End of loop through the search list */
+
+        /* We don't need an exact count, but we do need to know if there is
+         * anything left over in the replacement list.  So, just assume it's
+         * one byte per character */
+        if (rend > r) {
+            r_count++;
+        }
+    } /* End of passes */
+
+    SvREFCNT_dec(inverted_tstr);
+
+    DEBUG_y(PerlIO_printf(Perl_debug_log, "After everything: \n"));
+    DEBUG_y(invmap_dump(t_invlist, r_map));
+
+    /* We now have normalized the input into an inversion map.
+     *
+     * See if the lhs and rhs are equivalent.  If so, this tr/// is a no-op
+     * except for the count, and streamlined runtime code can be used */
+    if (!del && !squash) {
+
+        /* They are identical if they point to same address, or if everything
+         * maps to UNLISTED or to itself.  This catches things that not looking
+         * at the normalized inversion map doesn't catch, like tr/aa/ab/ or
+         * tr/\x{100}-\x{104}/\x{100}-\x{102}\x{103}-\x{104}  */
+        if (r0 != t0) {
+            for (i = 0; i < len; i++) {
+                if (r_map[i] != TR_UNLISTED && r_map[i] != t_array[i]) {
+                    goto done_identical_check;
+                }
+            }
+        }
+
+        /* Here have gone through entire list, and didn't find any
+         * non-identical mappings */
+        o->op_private |= OPpTRANS_IDENTICAL;
+
+      done_identical_check: ;
+    }
+
+    t_array = invlist_array(t_invlist);
+
+    /* If has components above 255, we generally need to use the inversion map
+     * implementation */
+    if (   can_force_utf8
+        || (   len > 0
+            && t_array[len-1] > 255
+                 /* If the final range is 0x100-INFINITY and is a special
+                  * mapping, the table implementation can handle it */
+            && ! (   t_array[len-1] == 256
+                  && (   r_map[len-1] == TR_UNLISTED
+                      || r_map[len-1] == TR_SPECIAL_HANDLING))))
+    {
+        SV* r_map_sv;
+
+        /* A UTF-8 op is generated, indicated by this flag.  This op is an
+         * sv_op */
+        o->op_private |= OPpTRANS_USE_SVOP;
+
+        if (can_force_utf8) {
+            o->op_private |= OPpTRANS_CAN_FORCE_UTF8;
+        }
+
+        /* The inversion map is pushed; first the list. */
+	invmap = MUTABLE_AV(newAV());
+        av_push(invmap, t_invlist);
+
+        /* 2nd is the mapping */
+        r_map_sv = newSVpvn((char *) r_map, len * sizeof(UV));
+        av_push(invmap, r_map_sv);
+
+        /* 3rd is the max possible expansion factor */
+        av_push(invmap, newSVnv(max_expansion));
+
+        /* Characters that are in the search list, but not in the replacement
+         * list are mapped to the final character in the replacement list */
+        if (! del && r_count < t_count) {
+            av_push(invmap, newSVuv(final_map));
+        }
+
+#ifdef USE_ITHREADS
+        cPADOPo->op_padix = pad_alloc(OP_TRANS, SVf_READONLY);
+        SvREFCNT_dec(PAD_SVl(cPADOPo->op_padix));
+        PAD_SETSV(cPADOPo->op_padix, (SV *) invmap);
+        SvPADTMP_on(invmap);
+        SvREADONLY_on(invmap);
+#else
+        cSVOPo->op_sv = (SV *) invmap;
+#endif
+
+    }
+    else {
+        OPtrans_map *tbl;
+        unsigned short i;
+
+        /* The OPtrans_map struct already contains one slot; hence the -1. */
+        SSize_t struct_size = sizeof(OPtrans_map)
+                            + (256 - 1 + 1)*sizeof(short);
+
+        /* Non-utf8 case: set o->op_pv to point to a simple 256+ entry lookup
+        * table. Entries with the value TR_UNMAPPED indicate chars not to be
+        * translated, while TR_DELETE indicates a search char without a
+        * corresponding replacement char under /d.
+        *
+        * In addition, an extra slot at the end is used to store the final
+        * repeating char, or TR_R_EMPTY under an empty replacement list, or
+        * TR_DELETE under /d; which makes the runtime code easier.
+        */
+
+        /* Indicate this is an op_pv */
+        o->op_private &= ~OPpTRANS_USE_SVOP;
+
+        tbl = (OPtrans_map*)PerlMemShared_calloc(struct_size, 1);
+        tbl->size = 256;
+        cPVOPo->op_pv = (char*)tbl;
+
+        for (i = 0; i < len; i++) {
+            STATIC_ASSERT_DECL(TR_SPECIAL_HANDLING == TR_DELETE);
+            short upper = i >= len - 1 ? 256 : (short) t_array[i+1];
+            short to = (short) r_map[i];
+            short j;
+            bool do_increment = TRUE;
+
+            /* Any code points above our limit should be irrelevant */
+            if (t_array[i] >= tbl->size) break;
+
+            /* Set up the map */
+            if (to == (short) TR_SPECIAL_HANDLING && ! del) {
+                to = (short) final_map;
+                do_increment = FALSE;
+            }
+            else if (to < 0) {
+                do_increment = FALSE;
+            }
+
+            /* Create a map for everything in this range.  The value increases
+             * except for the special cases */
+            for (j = (short) t_array[i]; j < upper; j++) {
+                tbl->map[j] = to;
+                if (do_increment) to++;
+            }
+        }
+
+        tbl->map[tbl->size] = del
+                              ? (short) TR_DELETE
+                              : (short) rlen
+                                ? (short) final_map
+                                : (short) TR_R_EMPTY;
+        DEBUG_y(PerlIO_printf(Perl_debug_log,"%s: %d\n", __FILE__, __LINE__));
+        for (i = 0; i < tbl->size; i++) {
+            if (tbl->map[i] < 0) {
+                DEBUG_y(PerlIO_printf(Perl_debug_log," %02x=>%d",
+                                                (unsigned) i, tbl->map[i]));
+            }
+            else {
+                DEBUG_y(PerlIO_printf(Perl_debug_log," %02x=>%02x",
+                                                (unsigned) i, tbl->map[i]));
+            }
+            if ((i+1) % 8 == 0 || i + 1 == (short) tbl->size) {
+                DEBUG_y(PerlIO_printf(Perl_debug_log,"\n"));
+            }
+        }
+        DEBUG_y(PerlIO_printf(Perl_debug_log,"Final map 0x%x=>%02x\n",
+                                (unsigned) tbl->size, tbl->map[tbl->size]));
+
+        SvREFCNT_dec(t_invlist);
+
+#if 0   /* code that added excess above-255 chars at the end of the table, in
+           case we ever want to not use the inversion map implementation for
+           this */
 
         ASSUME(j <= rlen);
         excess = rlen - j;
@@ -6790,54 +8058,29 @@ S_pmtrans(pTHX_ OP *o, OP *expr, OP *repl)
         }
         else {
             /* no more replacement chars than search chars */
-            if (!rlen && !del && !squash)
-                o->op_private |= OPpTRANS_IDENTICAL;
         }
+#endif
 
-        tbl->map[tbl->size] = del ? -2 : rlen ? r[rlen - 1] : -3;
-    }
-    else {
-	if (!rlen && !del) {
-	    r = t; rlen = tlen;
-	    if (!squash)
-		o->op_private |= OPpTRANS_IDENTICAL;
-	}
-	else if (!squash && rlen == tlen && memEQ((char*)t, (char*)r, tlen)) {
-	    o->op_private |= OPpTRANS_IDENTICAL;
-	}
-
-	for (i = 0; i < 256; i++)
-	    tbl->map[i] = -1;
-	for (i = 0, j = 0; i < tlen; i++,j++) {
-	    if (j >= rlen) {
-		if (del) {
-		    if (tbl->map[t[i]] == -1)
-			tbl->map[t[i]] = -2;
-		    continue;
-		}
-		--j;
-	    }
-	    if (tbl->map[t[i]] == -1) {
-                if (     UVCHR_IS_INVARIANT(t[i])
-                    && ! UVCHR_IS_INVARIANT(r[j]))
-		    grows = TRUE;
-		tbl->map[t[i]] = r[j];
-	    }
-	}
-        tbl->map[tbl->size] = del ? -1 : rlen ? -1 : -3;
     }
 
-    /* both non-utf8 and utf8 code paths end up here */
+    DEBUG_y(PerlIO_printf(Perl_debug_log,
+            "/d=%d, /s=%d, /c=%d, identical=%d, grows=%d,"
+            " use_svop=%d, can_force_utf8=%d,\nexpansion=%" NVgf "\n",
+            del, squash, complement,
+            cBOOL(o->op_private & OPpTRANS_IDENTICAL),
+            cBOOL(o->op_private & OPpTRANS_USE_SVOP),
+            cBOOL(o->op_private & OPpTRANS_GROWS),
+            cBOOL(o->op_private & OPpTRANS_CAN_FORCE_UTF8),
+            max_expansion));
 
-  warnins:
-    if(del && rlen == tlen) {
-	Perl_ck_warner(aTHX_ packWARN(WARN_MISC), "Useless use of /d modifier in transliteration operator"); 
-    } else if(rlen > tlen && !complement) {
+    Safefree(r_map);
+
+    if(del && rlen != 0 && r_count == t_count) {
+	Perl_ck_warner(aTHX_ packWARN(WARN_MISC), "Useless use of /d modifier in transliteration operator");
+    } else if(r_count > t_count) {
 	Perl_ck_warner(aTHX_ packWARN(WARN_MISC), "Replacement list is longer than search list");
     }
 
-    if (grows)
-	o->op_private |= OPpTRANS_GROWS;
     op_free(expr);
     op_free(repl);
 
@@ -6846,7 +8089,7 @@ S_pmtrans(pTHX_ OP *o, OP *expr, OP *repl)
 
 
 /*
-=for apidoc Am|OP *|newPMOP|I32 type|I32 flags
+=for apidoc newPMOP
 
 Constructs, checks, and returns an op of any pattern matching type.
 C<type> is the opcode.  C<flags> gives the eight bits of C<op_flags>
@@ -6944,14 +8187,16 @@ S_set_haseval(pTHX)
  *
  * Flags currently has 2 bits of meaning:
  * 1: isreg indicates that the pattern is part of a regex construct, eg
- * $x =~ /pattern/ or split /pattern/, as opposed to $x =~ $pattern or
- * split "pattern", which aren't. In the former case, expr will be a list
- * if the pattern contains more than one term (eg /a$b/).
+ *      $x =~ /pattern/ or split /pattern/, as opposed to $x =~ $pattern or
+ *      split "pattern", which aren't. In the former case, expr will be a list
+ *      if the pattern contains more than one term (eg /a$b/).
  * 2: The pattern is for a split.
  *
  * When the pattern has been compiled within a new anon CV (for
  * qr/(?{...})/ ), then floor indicates the savestack level just before
  * the new sub was created
+ *
+ * tr/// is also handled.
  */
 
 OP *
@@ -6981,24 +8226,24 @@ Perl_pmruntime(pTHX_ OP *o, OP *expr, OP *repl, UV flags, I32 floor)
     is_compiletime = 1;
     has_code = 0;
     if (expr->op_type == OP_LIST) {
-	OP *o;
-	for (o = cLISTOPx(expr)->op_first; o; o = OpSIBLING(o)) {
-	    if (o->op_type == OP_NULL && (o->op_flags & OPf_SPECIAL)) {
-		has_code = 1;
-		assert(!o->op_next);
-		if (UNLIKELY(!OpHAS_SIBLING(o))) {
-		    assert(PL_parser && PL_parser->error_count);
-		    /* This can happen with qr/ (?{(^{})/.  Just fake up
-		       the op we were expecting to see, to avoid crashing
-		       elsewhere.  */
-		    op_sibling_splice(expr, o, 0,
-				      newSVOP(OP_CONST, 0, &PL_sv_no));
-		}
-		o->op_next = OpSIBLING(o);
-	    }
-	    else if (o->op_type != OP_CONST && o->op_type != OP_PUSHMARK)
-		is_compiletime = 0;
-	}
+        OP *child;
+        for (child = cLISTOPx(expr)->op_first; child; child = OpSIBLING(child)) {
+            if (child->op_type == OP_NULL && (child->op_flags & OPf_SPECIAL)) {
+                has_code = 1;
+                assert(!child->op_next);
+                if (UNLIKELY(!OpHAS_SIBLING(child))) {
+                    assert(PL_parser && PL_parser->error_count);
+                    /* This can happen with qr/ (?{(^{})/.  Just fake up
+                       the op we were expecting to see, to avoid crashing
+                       elsewhere.  */
+                    op_sibling_splice(expr, child, 0,
+                              newSVOP(OP_CONST, 0, &PL_sv_no));
+                }
+                child->op_next = OpSIBLING(child);
+            }
+            else if (child->op_type != OP_CONST && child->op_type != OP_PUSHMARK)
+            is_compiletime = 0;
+        }
     }
     else if (expr->op_type != OP_CONST)
 	is_compiletime = 0;
@@ -7009,42 +8254,42 @@ Perl_pmruntime(pTHX_ OP *o, OP *expr, OP *repl, UV flags, I32 floor)
      * also, mark any arrays as LIST/REF */
 
     if (expr->op_type == OP_LIST) {
-	OP *o;
-	for (o = cLISTOPx(expr)->op_first; o; o = OpSIBLING(o)) {
+        OP *child;
+        for (child = cLISTOPx(expr)->op_first; child; child = OpSIBLING(child)) {
 
-            if (o->op_type == OP_PADAV || o->op_type == OP_RV2AV) {
-                assert( !(o->op_flags  & OPf_WANT));
+            if (child->op_type == OP_PADAV || child->op_type == OP_RV2AV) {
+                assert( !(child->op_flags  & OPf_WANT));
                 /* push the array rather than its contents. The regex
                  * engine will retrieve and join the elements later */
-                o->op_flags |= (OPf_WANT_LIST | OPf_REF);
+                child->op_flags |= (OPf_WANT_LIST | OPf_REF);
                 continue;
             }
 
-	    if (!(o->op_type == OP_NULL && (o->op_flags & OPf_SPECIAL)))
-		continue;
-	    o->op_next = NULL; /* undo temporary hack from above */
-	    scalar(o);
-	    LINKLIST(o);
-	    if (cLISTOPo->op_first->op_type == OP_LEAVE) {
-		LISTOP *leaveop = cLISTOPx(cLISTOPo->op_first);
-		/* skip ENTER */
-		assert(leaveop->op_first->op_type == OP_ENTER);
-		assert(OpHAS_SIBLING(leaveop->op_first));
-		o->op_next = OpSIBLING(leaveop->op_first);
-		/* skip leave */
-		assert(leaveop->op_flags & OPf_KIDS);
-		assert(leaveop->op_last->op_next == (OP*)leaveop);
-		leaveop->op_next = NULL; /* stop on last op */
-		op_null((OP*)leaveop);
-	    }
-	    else {
-		/* skip SCOPE */
-		OP *scope = cLISTOPo->op_first;
-		assert(scope->op_type == OP_SCOPE);
-		assert(scope->op_flags & OPf_KIDS);
-		scope->op_next = NULL; /* stop on last op */
-		op_null(scope);
-	    }
+            if (!(child->op_type == OP_NULL && (child->op_flags & OPf_SPECIAL)))
+                continue;
+            child->op_next = NULL; /* undo temporary hack from above */
+            scalar(child);
+            LINKLIST(child);
+            if (cLISTOPx(child)->op_first->op_type == OP_LEAVE) {
+                LISTOP *leaveop = cLISTOPx(cLISTOPx(child)->op_first);
+                /* skip ENTER */
+                assert(leaveop->op_first->op_type == OP_ENTER);
+                assert(OpHAS_SIBLING(leaveop->op_first));
+                child->op_next = OpSIBLING(leaveop->op_first);
+                /* skip leave */
+                assert(leaveop->op_flags & OPf_KIDS);
+                assert(leaveop->op_last->op_next == (OP*)leaveop);
+                leaveop->op_next = NULL; /* stop on last op */
+                op_null((OP*)leaveop);
+            }
+            else {
+                /* skip SCOPE */
+                OP *scope = cLISTOPx(child)->op_first;
+                assert(scope->op_type == OP_SCOPE);
+                assert(scope->op_flags & OPf_KIDS);
+                scope->op_next = NULL; /* stop on last op */
+                op_null(scope);
+            }
 
             /* XXX optimize_optree() must be called on o before
              * CALL_PEEP(), as currently S_maybe_multiconcat() can't
@@ -7054,16 +8299,16 @@ Perl_pmruntime(pTHX_ OP *o, OP *expr, OP *repl, UV flags, I32 floor)
              * to the same optree later (where hopefully it won't do any
              * harm as it can't convert an op to multiconcat if it's
              * already been converted */
-            optimize_optree(o);
+            optimize_optree(child);
 
-	    /* have to peep the DOs individually as we've removed it from
-	     * the op_next chain */
-	    CALL_PEEP(o);
-            S_prune_chain_head(&(o->op_next));
-	    if (is_compiletime)
-		/* runtime finalizes as part of finalizing whole tree */
-		finalize_optree(o);
-	}
+            /* have to peep the DOs individually as we've removed it from
+             * the op_next chain */
+            CALL_PEEP(child);
+            S_prune_chain_head(&(child->op_next));
+            if (is_compiletime)
+                /* runtime finalizes as part of finalizing whole tree */
+                finalize_optree(child);
+        }
     }
     else if (expr->op_type == OP_PADAV || expr->op_type == OP_RV2AV) {
         assert( !(expr->op_flags  & OPf_WANT));
@@ -7330,7 +8575,7 @@ Perl_pmruntime(pTHX_ OP *o, OP *expr, OP *repl, UV flags, I32 floor)
 }
 
 /*
-=for apidoc Am|OP *|newSVOP|I32 type|I32 flags|SV *sv
+=for apidoc newSVOP
 
 Constructs, checks, and returns an op of any type that involves an
 embedded SV.  C<type> is the opcode.  C<flags> gives the eight bits
@@ -7367,7 +8612,7 @@ Perl_newSVOP(pTHX_ I32 type, I32 flags, SV *sv)
 }
 
 /*
-=for apidoc Am|OP *|newDEFSVOP|
+=for apidoc newDEFSVOP
 
 Constructs and returns an op to access C<$_>.
 
@@ -7383,7 +8628,7 @@ Perl_newDEFSVOP(pTHX)
 #ifdef USE_ITHREADS
 
 /*
-=for apidoc Am|OP *|newPADOP|I32 type|I32 flags|SV *sv
+=for apidoc newPADOP
 
 Constructs, checks, and returns an op of any type that involves a
 reference to a pad element.  C<type> is the opcode.  C<flags> gives the
@@ -7428,7 +8673,7 @@ Perl_newPADOP(pTHX_ I32 type, I32 flags, SV *sv)
 #endif /* USE_ITHREADS */
 
 /*
-=for apidoc Am|OP *|newGVOP|I32 type|I32 flags|GV *gv
+=for apidoc newGVOP
 
 Constructs, checks, and returns an op of any type that involves an
 embedded reference to a GV.  C<type> is the opcode.  C<flags> gives the
@@ -7452,7 +8697,7 @@ Perl_newGVOP(pTHX_ I32 type, I32 flags, GV *gv)
 }
 
 /*
-=for apidoc Am|OP *|newPVOP|I32 type|I32 flags|char *pv
+=for apidoc newPVOP
 
 Constructs, checks, and returns an op of any type that involves an
 embedded C-level pointer (PV).  C<type> is the opcode.  C<flags> gives
@@ -7678,6 +8923,10 @@ decremented. In addition, the C<name> argument is modified.
 If C<PERL_LOADMOD_DENY> is set, the module is loaded as if with C<no> rather
 than C<use>.
 
+=for apidoc Amnh||PERL_LOADMOD_DENY
+=for apidoc Amnh||PERL_LOADMOD_NOIMPORT
+=for apidoc Amnh||PERL_LOADMOD_IMPORT_OPS
+
 =cut */
 
 void
@@ -7787,7 +9036,7 @@ Perl_dofile(pTHX_ OP *term, I32 force_builtin)
 /*
 =head1 Optree construction
 
-=for apidoc Am|OP *|newSLICEOP|I32 flags|OP *subscript|OP *listval
+=for apidoc newSLICEOP
 
 Constructs, checks, and returns an C<lslice> (list slice) op.  C<flags>
 gives the eight bits of C<op_flags>, except that C<OPf_KIDS> will
@@ -7808,8 +9057,15 @@ Perl_newSLICEOP(pTHX_ I32 flags, OP *subscript, OP *listval)
 	    list(force_list(listval,   1)) );
 }
 
+#define ASSIGN_SCALAR 0
 #define ASSIGN_LIST   1
 #define ASSIGN_REF    2
+
+/* given the optree o on the LHS of an assignment, determine whether its:
+ *  ASSIGN_SCALAR   $x  = ...
+ *  ASSIGN_LIST    ($x) = ...
+ *  ASSIGN_REF     \$x  = ...
+ */
 
 STATIC I32
 S_assignment_type(pTHX_ const OP *o)
@@ -7819,7 +9075,7 @@ S_assignment_type(pTHX_ const OP *o)
     U8 ret;
 
     if (!o)
-	return TRUE;
+	return ASSIGN_LIST;
 
     if (o->op_type == OP_SREFGEN)
     {
@@ -7836,7 +9092,7 @@ S_assignment_type(pTHX_ const OP *o)
 	    o = cUNOPo->op_first;
 	flags = o->op_flags;
 	type = o->op_type;
-	ret = 0;
+	ret = ASSIGN_SCALAR;
     }
 
     if (type == OP_COND_EXPR) {
@@ -7848,7 +9104,7 @@ S_assignment_type(pTHX_ const OP *o)
 	    return ASSIGN_LIST;
 	if ((t == ASSIGN_LIST) ^ (f == ASSIGN_LIST))
 	    yyerror("Assignment to both a list and a scalar");
-	return FALSE;
+	return ASSIGN_SCALAR;
     }
 
     if (type == OP_LIST &&
@@ -7860,10 +9116,10 @@ S_assignment_type(pTHX_ const OP *o)
 	type == OP_RV2AV || type == OP_RV2HV ||
 	type == OP_ASLICE || type == OP_HSLICE ||
         type == OP_KVASLICE || type == OP_KVHSLICE || type == OP_REFGEN)
-	return TRUE;
+	return ASSIGN_LIST;
 
     if (type == OP_PADAV || type == OP_PADHV)
-	return TRUE;
+	return ASSIGN_LIST;
 
     if (type == OP_RV2SV)
 	return ret;
@@ -7901,7 +9157,7 @@ S_newONCEOP(pTHX_ OP *initop, OP *padop)
 }
 
 /*
-=for apidoc Am|OP *|newASSIGNOP|I32 flags|OP *left|I32 optype|OP *right
+=for apidoc newASSIGNOP
 
 Constructs, checks, and returns an assignment op.  C<left> and C<right>
 supply the parameters of the assignment; they are consumed by this
@@ -8118,7 +9374,7 @@ Perl_newASSIGNOP(pTHX_ I32 flags, OP *left, I32 optype, OP *right)
 }
 
 /*
-=for apidoc Am|OP *|newSTATEOP|I32 flags|char *label|OP *o
+=for apidoc newSTATEOP
 
 Constructs a state op (COP).  The state op is normally a C<nextstate> op,
 but will be a C<dbstate> op if debugging is enabled for currently-compiled
@@ -8209,7 +9465,7 @@ Perl_newSTATEOP(pTHX_ I32 flags, char *label, OP *o)
 }
 
 /*
-=for apidoc Am|OP *|newLOGOP|I32 type|I32 flags|OP *first|OP *other
+=for apidoc newLOGOP
 
 Constructs, checks, and returns a logical (flow control) op.  C<type>
 is the opcode.  C<flags> gives the eight bits of C<op_flags>, except
@@ -8230,17 +9486,26 @@ Perl_newLOGOP(pTHX_ I32 type, I32 flags, OP *first, OP *other)
     return new_logop(type, flags, &first, &other);
 }
 
+
+/* See if the optree o contains a single OP_CONST (plus possibly
+ * surrounding enter/nextstate/null etc). If so, return it, else return
+ * NULL.
+ */
+
 STATIC OP *
 S_search_const(pTHX_ OP *o)
 {
     PERL_ARGS_ASSERT_SEARCH_CONST;
 
+  redo:
     switch (o->op_type) {
 	case OP_CONST:
 	    return o;
 	case OP_NULL:
-	    if (o->op_flags & OPf_KIDS)
-		return search_const(cUNOPo->op_first);
+	    if (o->op_flags & OPf_KIDS) {
+		o = cUNOPo->op_first;
+                goto redo;
+            }
 	    break;
 	case OP_LEAVE:
 	case OP_SCOPE:
@@ -8250,6 +9515,7 @@ S_search_const(pTHX_ OP *o)
 	    if (!(o->op_flags & OPf_KIDS))
 		return NULL;
 	    kid = cLISTOPo->op_first;
+
 	    do {
 		switch (kid->op_type) {
 		    case OP_ENTER:
@@ -8263,15 +9529,18 @@ S_search_const(pTHX_ OP *o)
 			goto last;
 		}
 	    } while (kid);
+
 	    if (!kid)
 		kid = cLISTOPo->op_last;
           last:
-	    return search_const(kid);
+	     o = kid;
+             goto redo;
 	}
     }
 
     return NULL;
 }
+
 
 STATIC OP *
 S_new_logop(pTHX_ I32 type, I32 flags, OP** firstp, OP** otherp)
@@ -8472,7 +9741,7 @@ S_new_logop(pTHX_ I32 type, I32 flags, OP** firstp, OP** otherp)
 }
 
 /*
-=for apidoc Am|OP *|newCONDOP|I32 flags|OP *first|OP *trueop|OP *falseop
+=for apidoc newCONDOP
 
 Constructs, checks, and returns a conditional-expression (C<cond_expr>)
 op.  C<flags> gives the eight bits of C<op_flags>, except that C<OPf_KIDS>
@@ -8547,7 +9816,7 @@ Perl_newCONDOP(pTHX_ I32 flags, OP *first, OP *trueop, OP *falseop)
 }
 
 /*
-=for apidoc Am|OP *|newRANGE|I32 flags|OP *left|OP *right
+=for apidoc newRANGE
 
 Constructs and returns a C<range> op, with subordinate C<flip> and
 C<flop> ops.  C<flags> gives the eight bits of C<op_flags> for the
@@ -8614,7 +9883,7 @@ Perl_newRANGE(pTHX_ I32 flags, OP *left, OP *right)
 }
 
 /*
-=for apidoc Am|OP *|newLOOPOP|I32 flags|I32 debuggable|OP *expr|OP *block
+=for apidoc newLOOPOP
 
 Constructs, checks, and returns an op tree expressing a loop.  This is
 only a loop in the control flow through the op tree; it does not have
@@ -8715,7 +9984,7 @@ Perl_newLOOPOP(pTHX_ I32 flags, I32 debuggable, OP *expr, OP *block)
 }
 
 /*
-=for apidoc Am|OP *|newWHILEOP|I32 flags|I32 debuggable|LOOP *loop|OP *expr|OP *block|OP *cont|I32 has_my
+=for apidoc newWHILEOP
 
 Constructs, checks, and returns an op tree expressing a C<while> loop.
 This is a heavyweight loop, with structure that allows exiting the loop
@@ -8841,7 +10110,7 @@ Perl_newWHILEOP(pTHX_ I32 flags, I32 debuggable, LOOP *loop,
 }
 
 /*
-=for apidoc Am|OP *|newFOROP|I32 flags|OP *sv|OP *expr|OP *block|OP *cont
+=for apidoc newFOROP
 
 Constructs, checks, and returns an op tree expressing a C<foreach>
 loop (iteration through a list of values).  This is a heavyweight loop,
@@ -8959,10 +10228,14 @@ Perl_newFOROP(pTHX_ I32 flags, OP *sv, OP *expr, OP *block, OP *cont)
     /* for my  $x () sets OPpLVAL_INTRO;
      * for our $x () sets OPpOUR_INTRO */
     loop->op_private = (U8)iterpflags;
+
+    /* upgrade loop from a LISTOP to a LOOPOP;
+     * keep it in-place if there's space */
     if (loop->op_slabbed
-     && DIFF(loop, OpSLOT(loop)->opslot_next)
-	 < SIZE_TO_PSIZE(sizeof(LOOP)))
+        &&    OpSLOT(loop)->opslot_size
+            < SIZE_TO_PSIZE(sizeof(LOOP)) + OPSLOT_HEADER_P)
     {
+        /* no space; allocate new op */
 	LOOP *tmp;
 	NewOp(1234,tmp,1,LOOP);
 	Copy(loop,tmp,1,LISTOP);
@@ -8973,6 +10246,7 @@ Perl_newFOROP(pTHX_ I32 flags, OP *sv, OP *expr, OP *block, OP *cont)
     }
     else if (!loop->op_slabbed)
     {
+        /* loop was malloc()ed */
 	loop = (LOOP*)PerlMemShared_realloc(loop, sizeof(LOOP));
         OpLASTSIB_set(loop->op_last, (OP*)loop);
     }
@@ -8982,7 +10256,7 @@ Perl_newFOROP(pTHX_ I32 flags, OP *sv, OP *expr, OP *block, OP *cont)
 }
 
 /*
-=for apidoc Am|OP *|newLOOPEX|I32 type|OP *label
+=for apidoc newLOOPEX
 
 Constructs, checks, and returns a loop-exiting op (such as C<goto>
 or C<last>).  C<type> is the opcode.  C<label> supplies the parameter
@@ -9027,7 +10301,7 @@ Perl_newLOOPEX(pTHX_ I32 type, OP *label)
 				SvPV_nolen_const(((SVOP*)label)->op_sv)));
 	    }
     }
-    
+
     /* If we have already created an op, we do not need the label. */
     if (o)
 		op_free(label);
@@ -9122,7 +10396,10 @@ S_newGIVWHENOP(pTHX_ OP *cond, OP *block,
     return o;
 }
 
-/* Does this look like a boolean operation? For these purposes
+
+/* For the purposes of 'when(implied_smartmatch)'
+ *              versus 'when(boolean_expression)',
+ * does this look like a boolean operation? For these purposes
    a boolean operation is:
      - a subroutine call [*]
      - a logical connective
@@ -9130,7 +10407,7 @@ S_newGIVWHENOP(pTHX_ OP *cond, OP *block,
      - a filetest operator, with the exception of -s -M -A -C
      - defined(), exists() or eof()
      - /$re/ or $foo =~ /$re/
-   
+
    [*] possibly surprising
  */
 STATIC bool
@@ -9170,9 +10447,9 @@ S_looks_like_bool(pTHX_ const OP *o)
 
 	case OP_SEQ:	case OP_SNE:	case OP_SLT:
 	case OP_SGT:	case OP_SLE:	case OP_SGE:
-	
+
 	case OP_SMARTMATCH:
-	
+
 	case OP_FTRREAD:  case OP_FTRWRITE: case OP_FTREXEC:
 	case OP_FTEREAD:  case OP_FTEWRITE: case OP_FTEEXEC:
 	case OP_FTIS:     case OP_FTEOWNED: case OP_FTROWNED:
@@ -9181,7 +10458,7 @@ S_looks_like_bool(pTHX_ const OP *o)
 	case OP_FTPIPE:   case OP_FTLINK:   case OP_FTSUID:
 	case OP_FTSGID:   case OP_FTSVTX:   case OP_FTTTY:
 	case OP_FTTEXT:   case OP_FTBINARY:
-	
+
 	case OP_DEFINED: case OP_EXISTS:
 	case OP_MATCH:	 case OP_EOF:
 
@@ -9195,12 +10472,12 @@ S_looks_like_bool(pTHX_ const OP *o)
             if (o->op_private & OPpTRUEBOOL)
                 return TRUE;
             return FALSE;
-	
+
 	case OP_CONST:
 	    /* Detect comparisons that have been optimized away */
 	    if (cSVOPo->op_sv == &PL_sv_yes
 	    ||  cSVOPo->op_sv == &PL_sv_no)
-	    
+
 		return TRUE;
 	    else
 		return FALSE;
@@ -9210,8 +10487,9 @@ S_looks_like_bool(pTHX_ const OP *o)
     }
 }
 
+
 /*
-=for apidoc Am|OP *|newGIVENOP|OP *cond|OP *block|PADOFFSET defsv_off
+=for apidoc newGIVENOP
 
 Constructs, checks, and returns an op tree expressing a C<given> block.
 C<cond> supplies the expression to whose value C<$_> will be locally
@@ -9237,7 +10515,7 @@ Perl_newGIVENOP(pTHX_ OP *cond, OP *block, PADOFFSET defsv_off)
 }
 
 /*
-=for apidoc Am|OP *|newWHENOP|OP *cond|OP *block
+=for apidoc newWHENOP
 
 Constructs, checks, and returns an op tree expressing a C<when> block.
 C<cond> supplies the test expression, and C<block> supplies the block
@@ -9264,7 +10542,7 @@ Perl_newWHENOP(pTHX_ OP *cond, OP *block)
 		newDEFSVOP(),
 		scalar(ref_array_or_hash(cond)));
     }
-    
+
     return newGIVWHENOP(cond_op, block, OP_ENTERWHEN, OP_LEAVEWHEN, 0);
 }
 
@@ -9676,7 +10954,7 @@ Perl_newMYSUB(pTHX_ I32 floor, OP *o, OP *proto, OP *attrs, OP *block)
        age sub (my sub foo; sub bar { sub foo { ... } }), outcv points to
        the package sub.  So check PadnameOUTER(name) too.
      */
-    if (outcv == CvOUTSIDE(compcv) && !PadnameOUTER(name)) { 
+    if (outcv == CvOUTSIDE(compcv) && !PadnameOUTER(name)) {
 	assert(!CvWEAKOUTSIDE(compcv));
 	SvREFCNT_dec(CvOUTSIDE(compcv));
 	CvWEAKOUTSIDE_on(compcv);
@@ -9855,7 +11133,7 @@ Perl_newMYSUB(pTHX_ I32 floor, OP *o, OP *proto, OP *attrs, OP *block)
 }
 
 /*
-=for apidoc m|CV *|newATTRSUB_x|I32 floor|OP *o|OP *proto|OP *attrs|OP *block|bool o_is_gv
+=for apidoc newATTRSUB_x
 
 Construct a Perl subroutine, also performing some surrounding jobs.
 
@@ -10478,7 +11756,7 @@ S_process_special_blocks(pTHX_ I32 floor, const char *const fullname,
 	    return FALSE;
     } else {
 	if (*name == 'E') {
-	    if strEQ(name, "END") {
+	    if (strEQ(name, "END")) {
 		DEBUG_x( dump_sub(gv) );
 		Perl_av_create_and_unshift_one(aTHX_ &PL_endav, MUTABLE_SV(cv));
 	    } else
@@ -10520,7 +11798,7 @@ S_process_special_blocks(pTHX_ I32 floor, const char *const fullname,
 }
 
 /*
-=for apidoc Am|CV *|newCONSTSUB|HV *stash|const char *name|SV *sv
+=for apidoc newCONSTSUB
 
 Behaves like L</newCONSTSUB_flags>, except that C<name> is nul-terminated
 rather than of counted length, and no flags are set.  (This means that
@@ -10536,7 +11814,7 @@ Perl_newCONSTSUB(pTHX_ HV *stash, const char *name, SV *sv)
 }
 
 /*
-=for apidoc Am|CV *|newCONSTSUB_flags|HV *stash|const char *name|STRLEN len|U32 flags|SV *sv
+=for apidoc newCONSTSUB_flags
 
 Construct a constant subroutine, also performing some surrounding
 jobs.  A scalar constant-valued subroutine is eligible for inlining
@@ -10658,7 +11936,7 @@ Perl_newCONSTSUB_flags(pTHX_ HV *stash, const char *name, STRLEN len,
 }
 
 /*
-=for apidoc U||newXS
+=for apidoc newXS
 
 Used by C<xsubpp> to hook up XSUBs as Perl subs.  C<filename> needs to be
 static storage, as it is used directly as CvFILE(), without a copy being made.
@@ -10696,7 +11974,7 @@ Perl_newXS_deffile(pTHX_ const char *name, XSUBADDR_t subaddr)
 }
 
 /*
-=for apidoc m|CV *|newXS_len_flags|const char *name|STRLEN len|XSUBADDR_t subaddr|const char *const filename|const char *const proto|SV **const_svp|U32 flags
+=for apidoc newXS_len_flags
 
 Construct an XS subroutine, also performing some surrounding jobs.
 
@@ -10808,7 +12086,7 @@ Perl_newXS_len_flags(pTHX_ const char *name, STRLEN len,
                 cv = NULL;
             }
         }
-    
+
         if (cv)				/* must reuse cv if autoloaded */
             cv_undef(cv);
         else {
@@ -10968,7 +12246,7 @@ OP *
 Perl_newANONATTRSUB(pTHX_ I32 floor, OP *proto, OP *attrs, OP *block)
 {
     SV * const cv = MUTABLE_SV(newATTRSUB(floor, 0, proto, attrs, block));
-    OP * anoncode = 
+    OP * anoncode =
 	newSVOP(OP_ANONCODE, 0,
 		cv);
     if (CvANONCONST(cv))
@@ -11507,8 +12785,10 @@ Perl_ck_eval(pTHX_ OP *o)
     if ((PL_hints & HINT_LOCALIZE_HH) != 0
      && !(o->op_private & OPpEVAL_COPHH) && GvHV(PL_hintgv)) {
 	/* Store a copy of %^H that pp_entereval can pick up. */
-	OP *hhop = newSVOP(OP_HINTSEVAL, 0,
-			   MUTABLE_SV(hv_copy_hints_hv(GvHV(PL_hintgv))));
+        HV *hh = hv_copy_hints_hv(GvHV(PL_hintgv));
+	OP *hhop;
+        STOREFEATUREBITSHH(hh);
+        hhop = newSVOP(OP_HINTSEVAL, 0, MUTABLE_SV(hh));
         /* append hhop to only child  */
         op_sibling_splice(o, cUNOPo->op_first, 0, hhop);
 
@@ -11696,9 +12976,8 @@ Perl_ck_ftst(pTHX_ OP *o)
 	scalar((OP *) kid);
 	if ((PL_hints & HINT_FILETEST_ACCESS) && OP_IS_FILETEST_ACCESS(o->op_type))
 	    o->op_private |= OPpFT_ACCESS;
-	if (type != OP_STAT && type != OP_LSTAT
-            && PL_check[kidtype] == Perl_ck_ftst
-            && kidtype != OP_STAT && kidtype != OP_LSTAT
+	if (OP_IS_FILETEST(type)
+            && OP_IS_FILETEST(kidtype)
         ) {
 	    o->op_private |= OPpFT_STACKED;
 	    kid->op_private |= OPpFT_STACKING;
@@ -11795,7 +13074,7 @@ Perl_ck_fun(pTHX_ OP *o)
 				   PL_op_desc[type]);
 
 		if (kid->op_type == OP_CONST
-		      && (  !SvROK(cSVOPx_sv(kid)) 
+		      && (  !SvROK(cSVOPx_sv(kid))
 		         || SvTYPE(SvRV(cSVOPx_sv(kid))) != SVt_PVAV  )
 		        )
 		    bad_type_pv(numargs, "array", o, kid);
@@ -12209,7 +13488,7 @@ Perl_ck_smartmatch(pTHX_ OP *o)
     if (0 == (o->op_flags & OPf_SPECIAL)) {
 	OP *first  = cBINOPo->op_first;
 	OP *second = OpSIBLING(first);
-	
+
 	/* Implicitly take a reference to an array or hash */
 
         /* remove the original two siblings, then add back the
@@ -12221,7 +13500,7 @@ Perl_ck_smartmatch(pTHX_ OP *o)
 	second = ref_array_or_hash(second);
         op_sibling_splice(o, NULL, 0, second);
         op_sibling_splice(o, NULL, 0, first);
-	
+
 	/* Implicitly take a reference to a regular expression */
 	if (first->op_type == OP_MATCH && !(first->op_flags & OPf_STACKED)) {
             OpTYPE_set(first, OP_QR);
@@ -12230,7 +13509,7 @@ Perl_ck_smartmatch(pTHX_ OP *o)
             OpTYPE_set(second, OP_QR);
         }
     }
-    
+
     return o;
 }
 
@@ -12466,7 +13745,16 @@ Perl_ck_refassign(pTHX_ OP *o)
 	OP * const kid = cUNOPx(kidparent)->op_first;
 	o->op_private |= OPpLVREF_CV;
 	if (kid->op_type == OP_GV) {
+            SV *sv = (SV*)cGVOPx_gv(kid);
 	    varop = kidparent;
+            if (SvROK(sv) && SvTYPE(SvRV(sv)) == SVt_PVCV) {
+                /* a CVREF here confuses pp_refassign, so make sure
+                   it gets a GV */
+                CV *const cv = (CV*)SvRV(sv);
+                SV *name_sv = sv_2mortal(newSVhek(CvNAME_HEK(cv)));
+                (void)gv_init_sv((GV*)sv, CvSTASH(cv), name_sv, 0);
+                assert(SvTYPE(sv) == SVt_PVGV);
+            }
 	    goto detach_and_stack;
 	}
 	if (kid->op_type != OP_PADCV)	goto bad;
@@ -12547,8 +13835,9 @@ Perl_ck_require(pTHX_ OP *o)
             HEK *hek;
 
 	    if (was_readonly) {
-		    SvREADONLY_off(sv);
-	    }   
+                SvREADONLY_off(sv);
+            }
+
 	    if (SvIsCOW(sv)) sv_force_normal_flags(sv, 0);
 
 	    s = SvPVX(sv);
@@ -12976,7 +14265,7 @@ Perl_ck_stringify(pTHX_ OP *o)
     }
     return ck_fun(o);
 }
-	
+
 OP *
 Perl_ck_join(pTHX_ OP *o)
 {
@@ -13017,7 +14306,7 @@ Perl_ck_join(pTHX_ OP *o)
 }
 
 /*
-=for apidoc Am|CV *|rv2cv_op_cv|OP *cvop|U32 flags
+=for apidoc rv2cv_op_cv
 
 Examines an op, which is expected to identify a subroutine at runtime,
 and attempts to determine at compile time which subroutine it identifies.
@@ -13051,6 +14340,11 @@ Normally this is just the C<CvGV> of the subroutine, but for an anonymous
 referencing GV.  The resulting C<GV*> is cast to C<CV*> to be returned.
 A null pointer is returned as usual if there is no statically-determinable
 subroutine.
+
+=for apidoc Amnh||OPpEARLY_CV
+=for apidoc Amnh||OPpENTERSUB_AMPER
+=for apidoc Amnh||RV2CVOPCV_MARK_EARLY
+=for apidoc Amnh||RV2CVOPCV_RETURN_NAME_GV
 
 =cut
 */
@@ -13145,7 +14439,7 @@ Perl_rv2cv_op_cv(pTHX_ OP *cvop, U32 flags)
 }
 
 /*
-=for apidoc Am|OP *|ck_entersub_args_list|OP *entersubop
+=for apidoc ck_entersub_args_list
 
 Performs the default fixup of the arguments part of an C<entersub>
 op tree.  This consists of applying list context to each of the
@@ -13182,7 +14476,7 @@ Perl_ck_entersub_args_list(pTHX_ OP *entersubop)
 }
 
 /*
-=for apidoc Am|OP *|ck_entersub_args_proto|OP *entersubop|GV *namegv|SV *protosv
+=for apidoc ck_entersub_args_proto
 
 Performs the fixup of the arguments part of an C<entersub> op tree
 based on a subroutine prototype.  This makes various modifications to
@@ -13255,7 +14549,7 @@ Perl_ck_entersub_args_proto(pTHX_ OP *entersubop, GV *namegv, SV *protosv)
 		continue;
 	    case '_':
 		/* _ must be at the end */
-		if (proto[1] && !strchr(";@%", proto[1]))
+		if (proto[1] && !memCHRs(";@%", proto[1]))
 		    goto oops;
                 /* FALLTHROUGH */
 	    case '$':
@@ -13430,7 +14724,7 @@ Perl_ck_entersub_args_proto(pTHX_ OP *entersubop, GV *namegv, SV *protosv)
 }
 
 /*
-=for apidoc Am|OP *|ck_entersub_args_proto_or_list|OP *entersubop|GV *namegv|SV *protosv
+=for apidoc ck_entersub_args_proto_or_list
 
 Performs the fixup of the arguments part of an C<entersub> op tree either
 based on a subroutine prototype or using default list-context processing.
@@ -13487,7 +14781,7 @@ Perl_ck_entersub_args_core(pTHX_ OP *entersubop, GV *namegv, SV *protosv)
 	    yyerror_pv(Perl_form(aTHX_ "Too many arguments for %" SVf,
 		SVfARG(namesv)), SvUTF8(namesv));
 	}
-	
+
 	op_free(entersubop);
 	switch(cvflags >> 16) {
 	case 'F': return newSVOP(OP_CONST, 0,
@@ -13516,7 +14810,7 @@ Perl_ck_entersub_args_core(pTHX_ OP *entersubop, GV *namegv, SV *protosv)
             parent = aop;
 	    aop = cUNOPx(aop)->op_first;
         }
-	
+
 	first = prev = aop;
 	aop = OpSIBLING(aop);
         /* find last sibling */
@@ -13544,7 +14838,7 @@ Perl_ck_entersub_args_core(pTHX_ OP *entersubop, GV *namegv, SV *protosv)
 
 	if (cvflags == (OP_ENTEREVAL | (1<<16)))
 	    flags |= OPpEVAL_BYTES <<8;
-	
+
 	switch (PL_opargs[opnum] & OA_CLASS_MASK) {
 	case OA_UNOP:
 	case OA_BASEOP_OR_UNOP:
@@ -13582,7 +14876,7 @@ Perl_ck_entersub_args_core(pTHX_ OP *entersubop, GV *namegv, SV *protosv)
 }
 
 /*
-=for apidoc Am|void|cv_get_call_checker_flags|CV *cv|U32 gflags|Perl_call_checker *ckfun_p|SV **ckobj_p|U32 *ckflags_p
+=for apidoc cv_get_call_checker_flags
 
 Retrieves the function that will be used to fix up a call to C<cv>.
 Specifically, the function is applied to an C<entersub> op tree for a
@@ -13628,7 +14922,9 @@ C<gflags> is a bitset passed into C<cv_get_call_checker_flags>, in which
 only the C<CALL_CHECKER_REQUIRE_GV> bit currently has a defined meaning
 (for which see above).  All other bits should be clear.
 
-=for apidoc Am|void|cv_get_call_checker|CV *cv|Perl_call_checker *ckfun_p|SV **ckobj_p
+=for apidoc Amnh||CALL_CHECKER_REQUIRE_GV
+
+=for apidoc cv_get_call_checker
 
 The original form of L</cv_get_call_checker_flags>, which does not return
 checker flags.  When using a checker function returned by this function,
@@ -13667,7 +14963,7 @@ Perl_cv_get_call_checker(pTHX_ CV *cv, Perl_call_checker *ckfun_p, SV **ckobj_p)
 }
 
 /*
-=for apidoc Am|void|cv_set_call_checker_flags|CV *cv|Perl_call_checker ckfun|SV *ckobj|U32 ckflags
+=for apidoc cv_set_call_checker_flags
 
 Sets the function that will be used to fix up a call to C<cv>.
 Specifically, the function is applied to an C<entersub> op tree for a
@@ -13703,7 +14999,7 @@ bits should be clear.
 The current setting for a particular CV can be retrieved by
 L</cv_get_call_checker_flags>.
 
-=for apidoc Am|void|cv_set_call_checker|CV *cv|Perl_call_checker ckfun|SV *ckobj
+=for apidoc cv_set_call_checker
 
 The original form of L</cv_set_call_checker_flags>, which passes it the
 C<CALL_CHECKER_REQUIRE_GV> flag for backward-compatibility.  The effect
@@ -13830,7 +15126,7 @@ Perl_ck_subr(pTHX_ OP *o)
 	if (CvISXSUB(cv) || !CvROOT(cv))
 	    S_entersub_alloc_targ(aTHX_ o);
 	if (!namegv) {
-	    /* The original call checker API guarantees that a GV will be
+	    /* The original call checker API guarantees that a GV will
 	       be provided with the right name.  So, if the old API was
 	       used (or the REQUIRE_GV flag was passed), we have to reify
 	       the CV’s GV, unless this is an anonymous sub.  This is not
@@ -14014,10 +15310,26 @@ Perl_ck_length(pTHX_ OP *o)
 }
 
 
+OP *
+Perl_ck_isa(pTHX_ OP *o)
+{
+    OP *classop = cBINOPo->op_last;
 
-/* 
+    PERL_ARGS_ASSERT_CK_ISA;
+
+    /* Convert barename into PV */
+    if(classop->op_type == OP_CONST && classop->op_private & OPpCONST_BARE) {
+        /* TODO: Optionally convert package to raw HV here */
+        classop->op_private &= ~(OPpCONST_BARE|OPpCONST_STRICT);
+    }
+
+    return o;
+}
+
+
+/*
    ---------------------------------------------------------
- 
+
    Common vars in list assignment
 
    There now follows some enums and static functions for detecting
@@ -14027,43 +15339,43 @@ Perl_ck_length(pTHX_ OP *o)
    ----
 
    First some random observations:
-   
+
    * If a lexical var is an alias of something else, e.g.
        for my $x ($lex, $pkg, $a[0]) {...}
      then the act of aliasing will increase the reference count of the SV
-   
+
    * If a package var is an alias of something else, it may still have a
      reference count of 1, depending on how the alias was created, e.g.
      in *a = *b, $a may have a refcount of 1 since the GP is shared
      with a single GvSV pointer to the SV. So If it's an alias of another
      package var, then RC may be 1; if it's an alias of another scalar, e.g.
      a lexical var or an array element, then it will have RC > 1.
-   
+
    * There are many ways to create a package alias; ultimately, XS code
      may quite legally do GvSV(gv) = SvREFCNT_inc(sv) for example, so
      run-time tracing mechanisms are unlikely to be able to catch all cases.
-   
+
    * When the LHS is all my declarations, the same vars can't appear directly
      on the RHS, but they can indirectly via closures, aliasing and lvalue
      subs. But those techniques all involve an increase in the lexical
      scalar's ref count.
-   
+
    * When the LHS is all lexical vars (but not necessarily my declarations),
      it is possible for the same lexicals to appear directly on the RHS, and
      without an increased ref count, since the stack isn't refcounted.
      This case can be detected at compile time by scanning for common lex
      vars with PL_generation.
-   
+
    * lvalue subs defeat common var detection, but they do at least
      return vars with a temporary ref count increment. Also, you can't
      tell at compile time whether a sub call is lvalue.
-   
-    
+
+
    So...
-         
+
    A: There are a few circumstances where there definitely can't be any
      commonality:
-   
+
        LHS empty:  () = (...);
        RHS empty:  (....) = ();
        RHS contains only constants or other 'can't possibly be shared'
@@ -14076,165 +15388,165 @@ Perl_ck_length(pTHX_ OP *o)
        RHS contains a single element with no aggregate on LHS: e.g.
            ($a,$b,$c)  = ($x); again, once $a has been modified, its value
            won't be used again.
-   
+
    B: If LHS are all 'my' lexical var declarations (or safe ops, which
      we can ignore):
-   
+
        my ($a, $b, @c) = ...;
-   
+
        Due to closure and goto tricks, these vars may already have content.
        For the same reason, an element on the RHS may be a lexical or package
        alias of one of the vars on the left, or share common elements, for
        example:
-   
+
            my ($x,$y) = f(); # $x and $y on both sides
            sub f : lvalue { ($x,$y) = (1,2); $y, $x }
-   
+
        and
-   
+
            my $ra = f();
            my @a = @$ra;  # elements of @a on both sides
            sub f { @a = 1..4; \@a }
-   
-   
+
+
        First, just consider scalar vars on LHS:
-   
+
            RHS is safe only if (A), or in addition,
                * contains only lexical *scalar* vars, where neither side's
-                 lexicals have been flagged as aliases 
-   
+                 lexicals have been flagged as aliases
+
            If RHS is not safe, then it's always legal to check LHS vars for
            RC==1, since the only RHS aliases will always be associated
            with an RC bump.
-   
+
            Note that in particular, RHS is not safe if:
-   
+
                * it contains package scalar vars; e.g.:
-   
+
                    f();
                    my ($x, $y) = (2, $x_alias);
                    sub f { $x = 1; *x_alias = \$x; }
-   
+
                * It contains other general elements, such as flattened or
                * spliced or single array or hash elements, e.g.
-   
+
                    f();
-                   my ($x,$y) = @a; # or $a[0] or @a{@b} etc 
-   
+                   my ($x,$y) = @a; # or $a[0] or @a{@b} etc
+
                    sub f {
                        ($x, $y) = (1,2);
                        use feature 'refaliasing';
                        \($a[0], $a[1]) = \($y,$x);
                    }
-   
+
                  It doesn't matter if the array/hash is lexical or package.
-   
+
                * it contains a function call that happens to be an lvalue
                  sub which returns one or more of the above, e.g.
-   
+
                    f();
                    my ($x,$y) = f();
-   
+
                    sub f : lvalue {
                        ($x, $y) = (1,2);
                        *x1 = \$x;
                        $y, $x1;
                    }
-   
+
                    (so a sub call on the RHS should be treated the same
                    as having a package var on the RHS).
-   
+
                * any other "dangerous" thing, such an op or built-in that
                  returns one of the above, e.g. pp_preinc
-   
-   
+
+
            If RHS is not safe, what we can do however is at compile time flag
            that the LHS are all my declarations, and at run time check whether
            all the LHS have RC == 1, and if so skip the full scan.
-   
+
        Now consider array and hash vars on LHS: e.g. my (...,@a) = ...;
-   
+
            Here the issue is whether there can be elements of @a on the RHS
            which will get prematurely freed when @a is cleared prior to
            assignment. This is only a problem if the aliasing mechanism
            is one which doesn't increase the refcount - only if RC == 1
            will the RHS element be prematurely freed.
-   
+
            Because the array/hash is being INTROed, it or its elements
            can't directly appear on the RHS:
-   
+
                my (@a) = ($a[0], @a, etc) # NOT POSSIBLE
-   
+
            but can indirectly, e.g.:
-   
+
                my $r = f();
                my (@a) = @$r;
                sub f { @a = 1..3; \@a }
-   
+
            So if the RHS isn't safe as defined by (A), we must always
            mortalise and bump the ref count of any remaining RHS elements
            when assigning to a non-empty LHS aggregate.
-   
+
            Lexical scalars on the RHS aren't safe if they've been involved in
            aliasing, e.g.
-   
+
                use feature 'refaliasing';
-   
+
                f();
                \(my $lex) = \$pkg;
                my @a = ($lex,3); # equivalent to ($a[0],3)
-   
+
                sub f {
                    @a = (1,2);
                    \$pkg = \$a[0];
                }
-   
+
            Similarly with lexical arrays and hashes on the RHS:
-   
+
                f();
                my @b;
                my @a = (@b);
-   
+
                sub f {
                    @a = (1,2);
                    \$b[0] = \$a[1];
                    \$b[1] = \$a[0];
                }
-   
-   
-   
+
+
+
    C: As (B), but in addition the LHS may contain non-intro lexicals, e.g.
        my $a; ($a, my $b) = (....);
-   
+
        The difference between (B) and (C) is that it is now physically
        possible for the LHS vars to appear on the RHS too, where they
        are not reference counted; but in this case, the compile-time
        PL_generation sweep will detect such common vars.
-   
+
        So the rules for (C) differ from (B) in that if common vars are
        detected, the runtime "test RC==1" optimisation can no longer be used,
        and a full mark and sweep is required
-   
+
    D: As (C), but in addition the LHS may contain package vars.
-   
+
        Since package vars can be aliased without a corresponding refcount
        increase, all bets are off. It's only safe if (A). E.g.
-   
+
            my ($x, $y) = (1,2);
-   
+
            for $x_alias ($x) {
                ($x_alias, $y) = (3, $x); # whoops
            }
-   
+
        Ditto for LHS aggregate package vars.
-   
+
    E: Any other dangerous ops on LHS, e.g.
            (f(), $a[0], @$r) = (...);
-   
+
        this is similar to (E) in that all bets are off. In addition, it's
        impossible to determine at compile time whether the LHS
        contains a scalar or an aggregate, e.g.
-   
+
            sub f : lvalue { @a }
            (f()) = 1..3;
 
@@ -14290,7 +15602,6 @@ S_aassign_padcheck(pTHX_ OP* o, bool rhs)
   'rhs' indicates whether we're scanning the LHS or RHS. If the former, we
   set PL_generation on lexical vars; if the latter, we see if
   PL_generation matches.
-  'top' indicates whether we're recursing or at the top level.
   'scalars_p' is a pointer to a counter of the number of scalar SVs seen.
   This fn will increment it by the number seen. It's not intended to
   be an accurate count (especially as many ops can push a variable
@@ -14299,10 +15610,16 @@ S_aassign_padcheck(pTHX_ OP* o, bool rhs)
 */
 
 static int
-S_aassign_scan(pTHX_ OP* o, bool rhs, bool top, int *scalars_p)
+S_aassign_scan(pTHX_ OP* o, bool rhs, int *scalars_p)
 {
+    OP *top_op           = o;
+    OP *effective_top_op = o;
+    int all_flags = 0;
+
+    while (1) {
+    bool top = o == effective_top_op;
     int flags = 0;
-    bool kid_top = FALSE;
+    OP* next_kid = NULL;
 
     /* first, look for a solitary @_ on the RHS */
     if (   rhs
@@ -14323,50 +15640,58 @@ S_aassign_scan(pTHX_ OP* o, bool rhs, bool top, int *scalars_p)
             && kid->op_type == OP_GV
             && cGVOPx_gv(kid) == PL_defgv
         )
-            flags |= AAS_DEFAV;
+            flags = AAS_DEFAV;
     }
 
     switch (o->op_type) {
     case OP_GVSV:
         (*scalars_p)++;
-        return AAS_PKG_SCALAR;
+        all_flags |= AAS_PKG_SCALAR;
+        goto do_next;
 
     case OP_PADAV:
     case OP_PADHV:
         (*scalars_p) += 2;
         /* if !top, could be e.g. @a[0,1] */
-        if (top && (o->op_flags & OPf_REF))
-            return (o->op_private & OPpLVAL_INTRO)
-                ? AAS_MY_AGG : AAS_LEX_AGG;
-        return AAS_DANGEROUS;
+        all_flags |=  (top && (o->op_flags & OPf_REF))
+                        ? ((o->op_private & OPpLVAL_INTRO)
+                            ? AAS_MY_AGG : AAS_LEX_AGG)
+                        : AAS_DANGEROUS;
+        goto do_next;
 
     case OP_PADSV:
         {
             int comm = S_aassign_padcheck(aTHX_ o, rhs)
                         ?  AAS_LEX_SCALAR_COMM : 0;
             (*scalars_p)++;
-            return (o->op_private & OPpLVAL_INTRO)
+            all_flags |= (o->op_private & OPpLVAL_INTRO)
                 ? (AAS_MY_SCALAR|comm) : (AAS_LEX_SCALAR|comm);
+            goto do_next;
+
         }
 
     case OP_RV2AV:
     case OP_RV2HV:
         (*scalars_p) += 2;
         if (cUNOPx(o)->op_first->op_type != OP_GV)
-            return AAS_DANGEROUS; /* @{expr}, %{expr} */
+            all_flags |= AAS_DANGEROUS; /* @{expr}, %{expr} */
         /* @pkg, %pkg */
         /* if !top, could be e.g. @a[0,1] */
-        if (top && (o->op_flags & OPf_REF))
-            return AAS_PKG_AGG;
-        return AAS_DANGEROUS;
+        else if (top && (o->op_flags & OPf_REF))
+            all_flags |= AAS_PKG_AGG;
+        else
+            all_flags |= AAS_DANGEROUS;
+        goto do_next;
 
     case OP_RV2SV:
         (*scalars_p)++;
         if (cUNOPx(o)->op_first->op_type != OP_GV) {
             (*scalars_p) += 2;
-            return AAS_DANGEROUS; /* ${expr} */
+            all_flags |= AAS_DANGEROUS; /* ${expr} */
         }
-        return AAS_PKG_SCALAR; /* $pkg */
+        else
+            all_flags |= AAS_PKG_SCALAR; /* $pkg */
+        goto do_next;
 
     case OP_SPLIT:
         if (o->op_private & OPpSPLIT_ASSIGN) {
@@ -14378,30 +15703,36 @@ S_aassign_scan(pTHX_ OP* o, bool rhs, bool top, int *scalars_p)
              *    ... = @a;
              */
 
-            if (o->op_flags & OPf_STACKED)
+            if (o->op_flags & OPf_STACKED) {
                 /* @{expr} = split() - the array expression is tacked
                  * on as an extra child to split - process kid */
-                return S_aassign_scan(aTHX_ cLISTOPo->op_last, rhs,
-                                        top, scalars_p);
+                next_kid = cLISTOPo->op_last;
+                goto do_next;
+            }
 
             /* ... else array is directly attached to split op */
             (*scalars_p) += 2;
-            if (PL_op->op_private & OPpSPLIT_LEX)
-                return (o->op_private & OPpLVAL_INTRO)
-                    ? AAS_MY_AGG : AAS_LEX_AGG;
-            else
-                return AAS_PKG_AGG;
+            all_flags |= (PL_op->op_private & OPpSPLIT_LEX)
+                            ? ((o->op_private & OPpLVAL_INTRO)
+                                ? AAS_MY_AGG : AAS_LEX_AGG)
+                            : AAS_PKG_AGG;
+            goto do_next;
         }
         (*scalars_p)++;
         /* other args of split can't be returned */
-        return AAS_SAFE_SCALAR;
+        all_flags |= AAS_SAFE_SCALAR;
+        goto do_next;
 
     case OP_UNDEF:
-        /* undef counts as a scalar on the RHS:
-         *   (undef, $x) = ...;         # only 1 scalar on LHS: always safe
+        /* undef on LHS following a var is significant, e.g.
+         *    my $x = 1;
+         *    @a = (($x, undef) = (2 => $x));
+         *    # @a shoul be (2,1) not (2,2)
+         *
+         * undef on RHS counts as a scalar:
          *   ($x, $y)    = (undef, $x); # 2 scalars on RHS: unsafe
          */
-        if (rhs)
+        if ((!rhs && *scalars_p) || rhs)
             (*scalars_p)++;
         flags = AAS_SAFE_SCALAR;
         break;
@@ -14411,16 +15742,14 @@ S_aassign_scan(pTHX_ OP* o, bool rhs, bool top, int *scalars_p)
         /* these are all no-ops; they don't push a potentially common SV
          * onto the stack, so they are neither AAS_DANGEROUS nor
          * AAS_SAFE_SCALAR */
-        return 0;
+        goto do_next;
 
     case OP_PADRANGE: /* Ignore padrange; checking its siblings is enough */
         break;
 
     case OP_NULL:
     case OP_LIST:
-        /* these do nothing but may have children; but their children
-         * should also be treated as top-level */
-        kid_top = top;
+        /* these do nothing, but may have children */
         break;
 
     default:
@@ -14434,28 +15763,58 @@ S_aassign_scan(pTHX_ OP* o, bool rhs, bool top, int *scalars_p)
             && (o->op_private & OPpTARGET_MY))
         {
             (*scalars_p)++;
-            return S_aassign_padcheck(aTHX_ o, rhs)
-                ? AAS_LEX_SCALAR_COMM : AAS_LEX_SCALAR;
+            all_flags |= S_aassign_padcheck(aTHX_ o, rhs)
+                            ? AAS_LEX_SCALAR_COMM : AAS_LEX_SCALAR;
+            goto do_next;
         }
 
         /* if its an unrecognised, non-dangerous op, assume that it
-         * it the cause of at least one safe scalar */
+         * is the cause of at least one safe scalar */
         (*scalars_p)++;
         flags = AAS_SAFE_SCALAR;
         break;
     }
 
-    /* XXX this assumes that all other ops are "transparent" - i.e. that
+    all_flags |= flags;
+
+    /* by default, process all kids next
+     * XXX this assumes that all other ops are "transparent" - i.e. that
      * they can return some of their children. While this true for e.g.
      * sort and grep, it's not true for e.g. map. We really need a
      * 'transparent' flag added to regen/opcodes
      */
     if (o->op_flags & OPf_KIDS) {
-        OP *kid;
-        for (kid = cUNOPo->op_first; kid; kid = OpSIBLING(kid))
-            flags |= S_aassign_scan(aTHX_ kid, rhs, kid_top, scalars_p);
+        next_kid = cUNOPo->op_first;
+        /* these ops do nothing but may have children; but their
+         * children should also be treated as top-level */
+        if (   o == effective_top_op
+            && (o->op_type == OP_NULL || o->op_type == OP_LIST)
+        )
+            effective_top_op = next_kid;
     }
-    return flags;
+
+
+    /* If next_kid is set, someone in the code above wanted us to process
+     * that kid and all its remaining siblings.  Otherwise, work our way
+     * back up the tree */
+  do_next:
+    while (!next_kid) {
+        if (o == top_op)
+            return all_flags; /* at top; no parents/siblings to try */
+        if (OpHAS_SIBLING(o)) {
+            next_kid = o->op_sibparent;
+            if (o == effective_top_op)
+                effective_top_op = next_kid;
+        }
+        else
+            if (o == effective_top_op)
+                effective_top_op = o->op_sibparent;
+            o = o->op_sibparent; /* try parent's next sibling */
+
+    }
+    o = next_kid;
+    } /* while */
+
 }
 
 
@@ -14592,12 +15951,11 @@ S_maybe_multideref(pTHX_ OP *start, OP *orig_o, UV orig_action, U8 hints)
         bool next_is_hash    = FALSE; /* is the next lookup to be a hash? */
         bool is_last         = FALSE; /* no more derefs to follow */
         bool maybe_aelemfast = FALSE; /* we can replace with aelemfast? */
+        UV action_word       = 0;     /* all actions so far */
         UNOP_AUX_item *arg     = arg_buf;
         UNOP_AUX_item *action_ptr = arg_buf;
 
-        if (pass)
-            action_ptr->uv = 0;
-        arg++;
+        arg++; /* reserve slot for first action word */
 
         switch (action) {
         case MDEREF_HV_gvsv_vivify_rv2hv_helem:
@@ -14988,22 +16346,28 @@ S_maybe_multideref(pTHX_ OP *start, OP *orig_o, UV orig_action, U8 hints)
                     arg--;
             }
 
-            if (pass)
-                action_ptr->uv |= (action << (action_ix * MDEREF_SHIFT));
+            action_word |= (action << (action_ix * MDEREF_SHIFT));
             action_ix++;
             action_count++;
-            /* if there's no space for the next action, create a new slot
+            /* if there's no space for the next action, reserve a new slot
              * for it *before* we start adding args for that action */
             if ((action_ix + 1) * MDEREF_SHIFT > UVSIZE*8) {
-                action_ptr = arg;
                 if (pass)
-                    arg->uv = 0;
+                    action_ptr->uv = action_word;
+                action_word = 0;
+                action_ptr = arg;
                 arg++;
                 action_ix = 0;
             }
         } /* while !is_last */
 
         /* success! */
+
+        if (!action_ix)
+            /* slot reserved for next action word not now needed */
+            arg--;
+        else if (pass)
+            action_ptr->uv = action_word;
 
         if (pass) {
             OP *mderef;
@@ -15702,8 +17066,17 @@ Perl_rpeep(pTHX_ OP *o)
 	       this optimisation if the first NEXTSTATE has a label.  */
 	    if (!CopLABEL((COP*)o) && !PERLDB_NOOPT) {
 		OP *nextop = o->op_next;
-		while (nextop && nextop->op_type == OP_NULL)
-		    nextop = nextop->op_next;
+		while (nextop) {
+                    switch (nextop->op_type) {
+                        case OP_NULL:
+                        case OP_SCALAR:
+                        case OP_LINESEQ:
+                        case OP_SCOPE:
+                            nextop = nextop->op_next;
+                            continue;
+                    }
+                    break;
+                }
 
 		if (nextop && (nextop->op_type == OP_NEXTSTATE)) {
 		    op_null(o);
@@ -16191,13 +17564,14 @@ Perl_rpeep(pTHX_ OP *o)
 	    }
 
 	    break;
-        
+
         case OP_NOT:
             break;
 
         case OP_AND:
 	case OP_OR:
 	case OP_DOR:
+	case OP_CMPCHAIN_AND:
 	    while (cLOGOP->op_other->op_type == OP_NULL)
 		cLOGOP->op_other = cLOGOP->op_other->op_next;
 	    while (o->op_next && (   o->op_type == o->op_next->op_type
@@ -16221,7 +17595,7 @@ Perl_rpeep(pTHX_ OP *o)
 	    DEFER(cLOGOP->op_other);
 	    o->op_opt = 1;
 	    break;
-	
+
 	case OP_GREPWHILE:
             if ((o->op_flags & OPf_WANT) == OPf_WANT_SCALAR)
                 S_check_for_bool_cxt(o, 1, OPpTRUEBOOL, 0);
@@ -16365,7 +17739,7 @@ Perl_rpeep(pTHX_ OP *o)
 	    iter = enter->op_next;
 	    if (!iter || iter->op_type != OP_ITER)
 		break;
-	    
+
 	    expushmark = enter->op_first;
 	    if (!expushmark || expushmark->op_type != OP_NULL
 		|| expushmark->op_targ != OP_PUSHMARK)
@@ -16518,10 +17892,10 @@ Perl_rpeep(pTHX_ OP *o)
             PL_generation++;
             /* scan LHS */
             lscalars = 0;
-            l = S_aassign_scan(aTHX_ cLISTOPo->op_last,  FALSE, 1, &lscalars);
+            l = S_aassign_scan(aTHX_ cLISTOPo->op_last,  FALSE, &lscalars);
             /* scan RHS */
             rscalars = 0;
-            r = S_aassign_scan(aTHX_ cLISTOPo->op_first, TRUE, 1, &rscalars);
+            r = S_aassign_scan(aTHX_ cLISTOPo->op_first, TRUE, &rscalars);
             lr = (l|r);
 
 
@@ -16621,13 +17995,13 @@ Perl_rpeep(pTHX_ OP *o)
             break;
 
 	case OP_CUSTOM: {
-	    Perl_cpeep_t cpeep = 
+	    Perl_cpeep_t cpeep =
 		XopENTRYCUSTOM(o, xop_peep);
 	    if (cpeep)
 		cpeep(aTHX_ o, oldop);
 	    break;
 	}
-	    
+
 	}
         /* did we just null the current op? If so, re-process it to handle
          * eliding "empty" ops from the chain */
@@ -16652,7 +18026,7 @@ Perl_peep(pTHX_ OP *o)
 /*
 =head1 Custom Operators
 
-=for apidoc Ao||custom_op_xop
+=for apidoc Perl_custom_op_xop
 Return the XOP structure for a given custom op.  This macro should be
 considered internal to C<OP_NAME> and the other access macros: use them instead.
 This macro does call a function.  Prior
@@ -16809,7 +18183,7 @@ Perl_custom_op_get_field(pTHX_ const OP *o, const xop_flags_enum field)
 }
 
 /*
-=for apidoc Ao||custom_op_register
+=for apidoc custom_op_register
 Register a custom op.  See L<perlguts/"Custom Operators">.
 
 =cut
@@ -17063,7 +18437,7 @@ hook variables.
 */
 
 /*
-=for apidoc Am|void|wrap_op_checker|Optype opcode|Perl_check_t new_checker|Perl_check_t *old_checker_p
+=for apidoc wrap_op_checker
 
 Puts a C function into the chain of check functions for a specified op
 type.  This is the preferred way to manipulate the L</PL_check> array.

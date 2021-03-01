@@ -35,6 +35,8 @@ my %feature = (
     unicode_strings => 'unicode',
     fc              => 'fc',
     signatures      => 'signatures',
+    isa             => 'isa',
+    indirect        => 'indirect',
 );
 
 # NOTE: If a feature is ever enabled in a non-contiguous range of Perl
@@ -44,27 +46,29 @@ my %feature = (
 # 5.odd implies the next 5.even, but an explicit 5.even can override it.
 my %feature_bundle = (
      all     => [ keys %feature ],
-     default =>	[qw()],
-    "5.9.5"  =>	[qw(say state switch)],
-    "5.10"   =>	[qw(say state switch)],
-    "5.11"   =>	[qw(say state switch unicode_strings)],
-    "5.13"   =>	[qw(say state switch unicode_strings)],
+     default =>	[qw(indirect)],
+    "5.9.5"  =>	[qw(say state switch indirect)],
+    "5.10"   =>	[qw(say state switch indirect)],
+    "5.11"   =>	[qw(say state switch unicode_strings indirect)],
+    "5.13"   =>	[qw(say state switch unicode_strings indirect)],
     "5.15"   =>	[qw(say state switch unicode_strings unicode_eval
-		    evalbytes current_sub fc)],
+		    evalbytes current_sub fc indirect)],
     "5.17"   =>	[qw(say state switch unicode_strings unicode_eval
-		    evalbytes current_sub fc)],
+		    evalbytes current_sub fc indirect)],
     "5.19"   =>	[qw(say state switch unicode_strings unicode_eval
-		    evalbytes current_sub fc)],
+		    evalbytes current_sub fc indirect)],
     "5.21"   =>	[qw(say state switch unicode_strings unicode_eval
-		    evalbytes current_sub fc)],
+		    evalbytes current_sub fc indirect)],
     "5.23"   =>	[qw(say state switch unicode_strings unicode_eval
-		    evalbytes current_sub fc postderef_qq)],
+		    evalbytes current_sub fc postderef_qq indirect)],
     "5.25"   =>	[qw(say state switch unicode_strings unicode_eval
-		    evalbytes current_sub fc postderef_qq)],
+		    evalbytes current_sub fc postderef_qq indirect)],
     "5.27"   =>	[qw(say state switch unicode_strings unicode_eval
-		    evalbytes current_sub fc postderef_qq bitwise)],
+		    evalbytes current_sub fc postderef_qq bitwise indirect)],
     "5.29"   =>	[qw(say state switch unicode_strings unicode_eval
-		    evalbytes current_sub fc postderef_qq bitwise)],
+		    evalbytes current_sub fc postderef_qq bitwise indirect)],
+    "5.31"   =>	[qw(say state switch unicode_strings unicode_eval
+		    evalbytes current_sub fc postderef_qq bitwise indirect)],
 );
 
 my @noops = qw( postderef lexical_subs );
@@ -73,6 +77,17 @@ my @removed = qw( array_base );
 
 ###########################################################################
 # More data generated from the above
+
+if (keys %feature > 32) {
+    die "cop_features only has room for 32 features";
+}
+
+my %feature_bits;
+my $mask = 1;
+for my $feature (sort keys %feature) {
+    $feature_bits{$feature} = $mask;
+    $mask <<= 1;
+}
 
 for (keys %feature_bundle) {
     next unless /^5\.(\d*[13579])\z/;
@@ -177,11 +192,11 @@ for(sort { length $a <=> length $b || $a cmp $b } keys %feature) {
 print $pm ");\n\n";
 
 print $pm "our %feature_bundle = (\n";
-$width = length longest values %UniqueBundles;
+my $bund_width = length longest values %UniqueBundles;
 for( sort { $UniqueBundles{$a} cmp $UniqueBundles{$b} }
           keys %UniqueBundles ) {
     my $bund = $UniqueBundles{$_};
-    print $pm qq'    "$bund"' . " "x($width-length $bund)
+    print $pm qq'    "$bund"' . " "x($bund_width-length $bund)
 	    . qq' => [qw($_)],\n';
 }
 print $pm ");\n\n";
@@ -251,6 +266,12 @@ print $h <<EOH;
 
 EOH
 
+for (sort keys %feature_bits) {
+    printf $h "#define FEATURE_%s_BIT%*s %#06x\n", uc($feature{$_}),
+      $width-length($feature{$_}), "", $feature_bits{$_};
+}
+print $h "\n";
+
 my $count;
 for (@HintedBundles) {
     (my $key = uc) =~ y/.//d;
@@ -265,12 +286,10 @@ print $h <<'EOH';
 #define CURRENT_FEATURE_BUNDLE \
     ((CURRENT_HINTS & HINT_FEATURE_MASK) >> HINT_FEATURE_SHIFT)
 
-/* Avoid using ... && Perl_feature_is_enabled(...) as that triggers a bug in
-   the HP-UX cc on PA-RISC */
-#define FEATURE_IS_ENABLED(name)				        \
-	((CURRENT_HINTS							 \
-	   & HINT_LOCALIZE_HH)						  \
-	    ? Perl_feature_is_enabled(aTHX_ STR_WITH_LEN(name)) : FALSE)
+#define FEATURE_IS_ENABLED_MASK(mask)                   \
+  ((CURRENT_HINTS & HINT_LOCALIZE_HH)                \
+    ? (PL_curcop->cop_features & (mask)) : FALSE)
+
 /* The longest string we pass in.  */
 EOH
 
@@ -289,44 +308,44 @@ for (
     my $NAME = uc $name;
     if ($last && $first eq 'DEFAULT') { #  '>= DEFAULT' warns
 	print $h <<EOI;
-#define FEATURE_$NAME\_IS_ENABLED \\
+#define FEATURE_${NAME}_IS_ENABLED \\
     ( \\
 	CURRENT_FEATURE_BUNDLE <= FEATURE_BUNDLE_$last \\
      || (CURRENT_FEATURE_BUNDLE == FEATURE_BUNDLE_CUSTOM && \\
-	 FEATURE_IS_ENABLED("$name")) \\
+	 FEATURE_IS_ENABLED_MASK(FEATURE_${NAME}_BIT)) \\
     )
 
 EOI
     }
     elsif ($last) {
 	print $h <<EOH3;
-#define FEATURE_$NAME\_IS_ENABLED \\
+#define FEATURE_${NAME}_IS_ENABLED \\
     ( \\
 	(CURRENT_FEATURE_BUNDLE >= FEATURE_BUNDLE_$first && \\
 	 CURRENT_FEATURE_BUNDLE <= FEATURE_BUNDLE_$last) \\
      || (CURRENT_FEATURE_BUNDLE == FEATURE_BUNDLE_CUSTOM && \\
-	 FEATURE_IS_ENABLED("$name")) \\
+	 FEATURE_IS_ENABLED_MASK(FEATURE_${NAME}_BIT)) \\
     )
 
 EOH3
     }
     elsif ($first) {
 	print $h <<EOH4;
-#define FEATURE_$NAME\_IS_ENABLED \\
+#define FEATURE_${NAME}_IS_ENABLED \\
     ( \\
 	CURRENT_FEATURE_BUNDLE == FEATURE_BUNDLE_$first \\
      || (CURRENT_FEATURE_BUNDLE == FEATURE_BUNDLE_CUSTOM && \\
-	 FEATURE_IS_ENABLED("$name")) \\
+	 FEATURE_IS_ENABLED_MASK(FEATURE_${NAME}_BIT)) \\
     )
 
 EOH4
     }
     else {
 	print $h <<EOH5;
-#define FEATURE_$NAME\_IS_ENABLED \\
+#define FEATURE_${NAME}_IS_ENABLED \\
     ( \\
 	CURRENT_FEATURE_BUNDLE == FEATURE_BUNDLE_CUSTOM && \\
-	 FEATURE_IS_ENABLED("$name") \\
+	 FEATURE_IS_ENABLED_MASK(FEATURE_${NAME}_BIT) \\
     )
 
 EOH5
@@ -334,6 +353,19 @@ EOH5
 }
 
 print $h <<EOH;
+
+#define SAVEFEATUREBITS() SAVEI32(PL_compiling.cop_features)
+
+#define CLEARFEATUREBITS() (PL_compiling.cop_features = 0)
+
+#define STOREFEATUREBITSHH(hh) \\
+  (hv_stores((hh), "feature/bits", newSVuv(PL_compiling.cop_features)))
+
+#define FETCHFEATUREBITSHH(hh)                              \\
+  STMT_START {                                              \\
+      SV **fbsv = hv_fetchs((hh), "feature/bits", FALSE);   \\
+      PL_compiling.cop_features = fbsv ? SvUV(*fbsv) : 0;   \\
+  } STMT_END
 
 #endif /* PERL_CORE or PERL_EXT */
 
@@ -368,6 +400,63 @@ print $h <<EOJ;
 }
 #endif /* PERL_IN_OP_C */
 
+#ifdef PERL_IN_MG_C
+
+#define magic_sethint_feature(keysv, keypv, keylen, valsv, valbool) \\
+    S_magic_sethint_feature(aTHX_ (keysv), (keypv), (keylen), (valsv), (valbool))
+PERL_STATIC_INLINE void
+S_magic_sethint_feature(pTHX_ SV *keysv, const char *keypv, STRLEN keylen,
+                        SV *valsv, bool valbool) {
+    if (keysv)
+      keypv = SvPV_const(keysv, keylen);
+
+    if (memBEGINs(keypv, keylen, "feature_")) {
+        const char *subf = keypv + (sizeof("feature_")-1);
+        U32 mask = 0;
+        switch (*subf) {
+EOJ
+
+my %pref;
+for my $key (sort values %feature) {
+    push @{$pref{substr($key, 0, 1)}}, $key;
+}
+
+for my $pref (sort keys %pref) {
+    print $h <<EOS;
+        case '$pref':
+EOS
+    my $first = 1;
+    for my $subkey (@{$pref{$pref}}) {
+        my $rest = substr($subkey, 1);
+        my $if = $first ? "if" : "else if";
+        print $h <<EOJ;
+            $if (keylen == sizeof("feature_$subkey")-1
+                 && memcmp(subf+1, "$rest", keylen - sizeof("feature_")) == 0) {
+                mask = FEATURE_\U${subkey}\E_BIT;
+                break;
+            }
+EOJ
+
+        $first = 0;
+    }
+    print $h <<EOS;
+            return;
+
+EOS
+}
+
+print $h <<EOJ;
+        default:
+            return;
+        }
+        if (valsv ? SvTRUE(valsv) : valbool)
+            PL_compiling.cop_features |= mask;
+        else
+            PL_compiling.cop_features &= ~mask;
+    }
+}
+#endif /* PERL_IN_MG_C */
+
 #endif /* PERL_FEATURE_H_ */
 EOJ
 
@@ -380,7 +469,7 @@ read_only_bottom_close_and_rename($h);
 __END__
 package feature;
 
-our $VERSION = '1.54';
+our $VERSION = '1.58';
 
 FEATURES
 
@@ -665,6 +754,26 @@ Reference to a Variable> for examples.
 
 This feature is available from Perl 5.26 onwards.
 
+=head2 The 'isa' feature
+
+This allows the use of the C<isa> infix operator, which tests whether the
+scalar given by the left operand is an object of the class given by the
+right operand. See L<perlop/Class Instance Operator> for more details.
+
+This feature is available from Perl 5.32 onwards.
+
+=head2 The 'indirect' feature
+
+This feature allows the use of L<indirect object
+syntax|perlobj/Indirect Object Syntax> for method calls, e.g.  C<new
+Foo 1, 2;>. It is enabled by default, but can be turned off to
+disallow indirect object syntax.
+
+This feature is available under this name from Perl 5.32 onwards. In
+previous versions, it was simply on all the time.  To disallow (or
+warn on) indirect object syntax on older Perls, see the L<indirect>
+CPAN module.
+
 =head1 FEATURE BUNDLES
 
 It's possible to load multiple features together, using
@@ -761,7 +870,7 @@ sub __common {
     my $import = shift;
     my $bundle_number = $^H & $hint_mask;
     my $features = $bundle_number != $hint_mask
-	&& $feature_bundle{$hint_bundles[$bundle_number >> $hint_shift]};
+      && $feature_bundle{$hint_bundles[$bundle_number >> $hint_shift]};
     if ($features) {
 	# Features are enabled implicitly via bundle hints.
 	# Delete any keys that may be left over from last time.

@@ -53,7 +53,7 @@ if( $Has_Version ) {
     $versions{q[$VERSION = v1.2.3]} = 'v1.2.3';
 }
 
-if( $] >= 5.011001 ) {
+if( "$]" >= 5.011001 ) {
     $versions{'package Foo 1.23;'         } = '1.23';
     $versions{'package Foo::Bar 1.23;'    } = '1.23';
     $versions{'package Foo v1.2.3;'       } = 'v1.2.3';
@@ -81,7 +81,7 @@ our $VERSION = 2.34;
 END
 }
 
-if( $] >= 5.014 ) {
+if( "$]" >= 5.014 ) {
     $versions{'package Foo 1.23 { }'         } = '1.23';
     $versions{'package Foo::Bar 1.23 { }'    } = '1.23';
     $versions{'package Foo v1.2.3 { }'       } = 'v1.2.3';
@@ -110,7 +110,7 @@ our $VERSION = 2.34;
 END
 }
 
-if ( $] > 5.009 && $] < 5.012 ) {
+if ( "$]" < 5.012 ) {
   delete $versions{'$VERSION = -1.0'};
 }
 

@@ -2007,7 +2007,7 @@ do xa for my $a;
 do xa for my @a;
 EXPECT
 ########
-# TODO [perl #125493
+# [perl #125493
 use warnings;
 $_="3.14159";
 tr/0-9/\x{6F0}-\x{6F9}/;
@@ -2021,3 +2021,45 @@ $a.$b.$c;
 EXPECT
 Useless use of concatenation (.) or string in void context at - line 4.
 Useless use of concatenation (.) or string in void context at - line 5.
+########
+# PL_curcop tracked correctly in Perl_scalar()
+use warnings;
+my $scalar = do {
+    no warnings 'void';
+    1,2,3,4,5;
+};
+EXPECT
+########
+# PL_curcop tracked correctly in Perl_list()
+use warnings;
+my @array = do {
+    no warnings 'void';
+    1,2,3,4,5;
+};
+EXPECT
+########
+# TODO PL_curcop restored correctly in Perl_scalar()
+use warnings;
+my $scalar = do {
+    my $x = 1;
+    11,12,
+    do {
+        no warnings 'void';
+        my $x = 2;
+        21,22,
+    },
+    31,32,
+    do {
+        my $x = 3;
+        41,42,
+    },
+    51,52
+};
+EXPECT
+Useless use of a constant (11) in void context at - line 5.
+Useless use of a constant (12) in void context at - line 5.
+Useless use of a constant (31) in void context at - line 11.
+Useless use of a constant (32) in void context at - line 11.
+Useless use of a constant (41) in void context at - line 14.
+Useless use of a constant (42) in void context at - line 14.
+Useless use of a constant (51) in void context at - line 16.

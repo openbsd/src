@@ -73,8 +73,13 @@ PERLVARI(G, sig_trapped, int,	0)
 /* If Perl has to ignore SIGPFE, this is its saved state.
  * See perl.h macros PERL_FPU_INIT and PERL_FPU_{PRE,POST}_EXEC. */
 PERLVAR(G, sigfpe_saved, Sighandler_t)
-PERLVARI(G, csighandlerp, Sighandler_t, Perl_csighandler)
-					/* Pointer to C-level sighandler */
+
+/* these ptrs to functions are to avoid linkage problems; see
+ * perl-5.8.0-2193-g5c1546dc48
+ */
+PERLVARI(G, csighandlerp,  Sighandler_t,  Perl_csighandler)
+PERLVARI(G, csighandler1p, Sighandler1_t, Perl_csighandler1)
+PERLVARI(G, csighandler3p, Sighandler3_t, Perl_csighandler3)
 #endif
 
 /* This is constant on most architectures, a global on OS/2 */
@@ -99,6 +104,7 @@ PERLVARI(G, mmap_page_size, IV, 0)
 
 #if defined(USE_ITHREADS)
 PERLVAR(G, hints_mutex, perl_mutex)    /* Mutex for refcounted he refcounting */
+PERLVAR(G, env_mutex, perl_mutex)      /* Mutex for accessing ENV */
 #  if ! defined(USE_THREAD_SAFE_LOCALE) || defined(TS_W32_BROKEN_LOCALECONV)
 PERLVAR(G, locale_mutex, perl_mutex)   /* Mutex for setlocale() changing */
 #  endif
@@ -114,7 +120,7 @@ PERLVAR(G, C_locale_obj, locale_t)
 PERLVARI(G, watch_pvx,	char *, NULL)
 
 /*
-=for apidoc AmU|Perl_check_t *|PL_check
+=for apidoc AmnU|Perl_check_t *|PL_check
 
 Array, indexed by opcode, of functions that will be called for the "check"
 phase of optree building during compilation of Perl code.  For most (but
@@ -141,6 +147,24 @@ with the core's base checker at the end.
 
 For thread safety, modules should not write directly to this array.
 Instead, use the function L</wrap_op_checker>.
+
+=for apidoc Amn|enum perl_phase|PL_phase
+
+A value that indicates the current Perl interpreter's phase. Possible values
+include C<PERL_PHASE_CONSTRUCT>, C<PERL_PHASE_START>, C<PERL_PHASE_CHECK>,
+C<PERL_PHASE_INIT>, C<PERL_PHASE_RUN>, C<PERL_PHASE_END>, and
+C<PERL_PHASE_DESTRUCT>.
+
+For example, the following determines whether the interpreter is in
+global destruction:
+
+    if (PL_phase == PERL_PHASE_DESTRUCT) {
+        // we are in global destruction
+    }
+
+C<PL_phase> was introduced in Perl 5.14; in prior perls you can use
+C<PL_dirty> (boolean) to determine whether the interpreter is in global
+destruction. (Use of C<PL_dirty> is discouraged since 5.14.)
 
 =cut
 */
@@ -176,7 +200,7 @@ PERLVARI(G, my_cxt_index, int,	0)
 PERLVARI(G, veto_cleanup, int, FALSE)	/* exit without cleanup */
 
 /*
-=for apidoc AmUx|Perl_keyword_plugin_t|PL_keyword_plugin
+=for apidoc AmnUx|Perl_keyword_plugin_t|PL_keyword_plugin
 
 Function pointer, pointing at a function used to handle extended keywords.
 The function should be declared as
@@ -255,9 +279,9 @@ PERLVAR(G, malloc_mutex, perl_mutex)	/* Mutex for malloc */
 #endif
 
 PERLVARI(G, hash_seed_set, bool, FALSE)	/* perl.c */
-PERLVARA(G, hash_seed_w, PERL_HASH_SEED_WORDS, __PERL_HASH_WORD_TYPE) /* perl.c and hv.h */
+PERLVARA(G, hash_seed, PERL_HASH_SEED_BYTES, unsigned char) /* perl.c and hv.h */
 #if defined(PERL_HASH_STATE_BYTES)
-PERLVARA(G, hash_state_w, PERL_HASH_STATE_WORDS, __PERL_HASH_WORD_TYPE) /* perl.c and hv.h */
+PERLVARA(G, hash_state, PERL_HASH_STATE_BYTES, unsigned char) /* perl.c and hv.h */
 #endif
 #if defined(PERL_USE_SINGLE_CHAR_HASH_CACHE)
 PERLVARA(G, hash_chars, (1+256) * sizeof(U32), unsigned char) /* perl.c and hv.h */
@@ -270,42 +294,6 @@ PERLVARA(G, hash_chars, (1+256) * sizeof(U32), unsigned char) /* perl.c and hv.h
 PERLVAR(G, perllib_sep, char)
 #endif
 
-PERLVAR(G, AboveLatin1,	SV *)
-PERLVAR(G, Assigned_invlist, SV *)
-PERLVAR(G, GCB_invlist, SV *)
-PERLVAR(G, HasMultiCharFold,   SV *)
-PERLVAR(G, InMultiCharFold,   SV *)
-PERLVAR(G, Latin1,	SV *)
-PERLVAR(G, LB_invlist, SV *)
-PERLVAR(G, NonFinalFold,   SV *)
-PERLVAR(G, SB_invlist, SV *)
-PERLVAR(G, SCX_invlist, SV *)
-PERLVAR(G, UpperLatin1,	SV *)   /* Code points 128 - 255 */
-
-/* List of characters that participate in any fold defined by Unicode */
-PERLVAR(G, in_some_fold, SV *)
-
-PERLVAR(G, utf8_idcont,	SV *)
-PERLVAR(G, utf8_idstart, SV *)
-PERLVAR(G, utf8_perl_idcont, SV *)
-PERLVAR(G, utf8_perl_idstart, SV *)
-PERLVAR(G, utf8_xidcont, SV *)
-PERLVAR(G, utf8_xidstart, SV *)
-PERLVAR(G, WB_invlist, SV *)
-PERLVARA(G, XPosix_ptrs, POSIX_CC_COUNT, SV *)
-PERLVARA(G,  Posix_ptrs, POSIX_CC_COUNT, SV *)
-PERLVAR(G, utf8_toupper, SV *)
-PERLVAR(G, utf8_totitle, SV *)
-PERLVAR(G, utf8_tolower, SV *)
-PERLVAR(G, utf8_tofold,	SV *)
-PERLVAR(G, utf8_tosimplefold,	SV *)
-PERLVAR(G, utf8_charname_begin, SV *)
-PERLVAR(G, utf8_charname_continue, SV *)
-PERLVAR(G, utf8_mark,	SV *)
-PERLVARI(G, InBitmap,	SV *, NULL)
-PERLVAR(G, CCC_non0_non230,	SV *)
-PERLVAR(G, Private_Use,	SV *)
-
 /* Definitions of user-defined \p{} properties, as the subs that define them
  * are only called once */
 PERLVARI(G, user_def_props,	HV *, NULL)
@@ -317,11 +305,7 @@ PERLVAR(G, user_prop_mutex, perl_mutex)    /* Mutex for manipulating
                                               PL_user_defined_properties */
 #endif
 
-/* Everything that folds to a given character, for case insensitivity regex
- * matching */
-PERLVAR(G, utf8_foldclosures, SV *)
-
-/* these record the best way to to perform certain IO operations while
+/* these record the best way to perform certain IO operations while
  * atomically setting FD_CLOEXEC. On the first call, a probe is done
  * and the result recorded for use by subsequent calls.
  * In theory these variables aren't thread-safe, but the worst that can

@@ -152,6 +152,13 @@ that is, it disregards case, whitespace, and underscores:
 
  "\N{euro sign}"                        # :loose (from v5.16)
 
+Starting in v5.32, you can also use
+
+ qr/\p{name=euro sign}/
+
+to get official Unicode named characters in regular expressions.  Loose
+matching is always done for these.
+
 =head2 ℞ 9: Unicode named sequences
 
 These look just like character names but return multiple codepoints.

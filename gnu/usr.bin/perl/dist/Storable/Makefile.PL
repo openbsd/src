@@ -10,42 +10,47 @@ use strict;
 use warnings;
 use ExtUtils::MakeMaker 6.31;
 use Config;
-use File::Copy qw(move copy);
-use File::Spec;
-
-my $pm = { 'Storable.pm' => '$(INST_ARCHLIB)/Storable.pm' };
 
 WriteMakefile(
     NAME                => 'Storable',
     AUTHOR              => 'Perl 5 Porters',
     LICENSE             => 'perl',
     DISTNAME            => "Storable",
-# We now ship this in t/
-#    PREREQ_PM           => { 'Test::More' => '0.41' },
-    PL_FILES        => { }, # prevent default behaviour
-    PM              => $pm,
-    PREREQ_PM           => { XSLoader => 0 },
+    PREREQ_PM           =>
+      {
+          XSLoader => 0,
+      },
+    ( $ExtUtils::MakeMaker::VERSION >= 6.64 ?
+        (
+            CONFIGURE_REQUIRES => {
+                'ExtUtils::MakeMaker' => '6.31',
+            },
+            BUILD_REQUIRES => {
+                'ExtUtils::MakeMaker' => '6.31',
+            },
+            TEST_REQUIRES => {
+                'Test::More' => '0.41',
+            },
+           )
+        : () ),
     INSTALLDIRS => ($] >= 5.007 && $] < 5.012) ? 'perl' : 'site',
-    VERSION_FROM    => '__Storable__.pm',
-    ABSTRACT_FROM   => '__Storable__.pm',
+    VERSION_FROM    => 'Storable.pm',
+    ABSTRACT_FROM   => 'Storable.pm',
     ($ExtUtils::MakeMaker::VERSION > 6.45 ?
      (META_MERGE        => { resources =>
-                               { bugtracker => 'http://rt.perl.org/perlbug/' },
+                               { bugtracker => 'https://github.com/Perl/perl5/issues' },
                             provides    => {
                                 'Storable'  => {
-                                    file        => '__Storable__.pm',
-                                    version     => MM->parse_version('__Storable__.pm'),
+                                    file        => 'Storable.pm',
+                                    version     => MM->parse_version('Storable.pm'),
                                 },
                             },
 
                            },
     ) : ()),
     dist                => { SUFFIX => 'gz', COMPRESS => 'gzip -f' },
-    clean               => { FILES => 'Storable-* Storable.pm lib' },
+    clean               => { FILES => 'Storable-*' },
 );
-
-# Unlink the .pm file included with the distribution
-1 while unlink "Storable.pm";
 
 my $ivtype = $Config{ivtype};
 
@@ -67,15 +72,7 @@ in the Storable documentation for instructions on how to read your data.
 EOM
 }
 
-# compute the maximum stacksize, before and after linking
 package MY;
-
-# FORCE finish of INST_DYNAMIC, avoid loading the old Storable (failed XS_VERSION check)
-sub xlinkext {
-    my $s = shift->SUPER::linkext(@_);
-    $s =~ s|( :: .*)| $1 FORCE stacksize|;
-    $s
-}
 
 sub depend {
     "
@@ -86,14 +83,4 @@ release : dist
 	git push
 	git push --tags
 "
-}
-
-sub postamble {
-'
-all :: Storable.pm
-	$(NOECHO) $(NOOP)
-
-Storable.pm :: Storable.pm.PL __Storable__.pm
-	$(PERLRUN) Storable.pm.PL
-'
 }

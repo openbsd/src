@@ -18,18 +18,18 @@ $s = undef; # SvTYPE($s) is SVt_RV, but SvROK($s) is false
 
 my $t;
 my @test = (
- [ undef, 1,		'number'	],
- [ undef, 'A',		'string'	],
- [ HASH   => {},	'HASH ref'	],
- [ ARRAY  => [],	'ARRAY ref'	],
- [ SCALAR => \$t,	'SCALAR ref'	],
- [ SCALAR => \$s,	'SCALAR ref (but SVt_RV)' ],
- [ REF    => \(\$t),	'REF ref'	],
- [ GLOB   => \*F,	'tied GLOB ref'	],
- [ GLOB   => gensym,	'GLOB ref'	],
- [ CODE   => sub {},	'CODE ref'	],
- [ IO     => *STDIN{IO},'IO ref'        ],
- [ $RE    => qr/x/,     'REGEEXP'       ],
+  [ undef, 1,             'number' ],
+  [ undef, 'A',           'string' ],
+  [ HASH   => {},         'HASH ref' ],
+  [ ARRAY  => [],         'ARRAY ref' ],
+  [ SCALAR => \$t,        'SCALAR ref' ],
+  [ SCALAR => \$s,        'SCALAR ref (but SVt_RV)' ],
+  [ REF    => \(\$t),     'REF ref' ],
+  [ GLOB   => \*F,        'tied GLOB ref' ],
+  [ GLOB   => gensym,     'GLOB ref' ],
+  [ CODE   => sub {},     'CODE ref' ],
+  [ IO     => *STDIN{IO}, 'IO ref' ],
+  [ $RE    => qr/x/,      'REGEEXP' ],
 );
 
 foreach my $test (@test) {

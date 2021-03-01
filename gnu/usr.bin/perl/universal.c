@@ -38,8 +38,13 @@
  * The main guts of traverse_isa was actually copied from gv_fetchmeth
  */
 
+#define PERL_ARGS_ASSERT_ISA_LOOKUP \
+    assert(stash); \
+    assert(namesv || name)
+
+
 STATIC bool
-S_isa_lookup(pTHX_ HV *stash, const char * const name, STRLEN len, U32 flags)
+S_isa_lookup(pTHX_ HV *stash, SV *namesv, const char * name, STRLEN len, U32 flags)
 {
     const struct mro_meta *const meta = HvMROMETA(stash);
     HV *isa = meta->isa;
@@ -52,7 +57,7 @@ S_isa_lookup(pTHX_ HV *stash, const char * const name, STRLEN len, U32 flags)
 	isa = meta->isa;
     }
 
-    if (hv_common(isa, NULL, name, len, ( flags & SVf_UTF8 ? HVhek_UTF8 : 0),
+    if (hv_common(isa, namesv, name, len, ( flags & SVf_UTF8 ? HVhek_UTF8 : 0),
 		  HV_FETCH_ISEXISTS, NULL, 0)) {
 	/* Direct name lookup worked.  */
 	return TRUE;
@@ -61,7 +66,7 @@ S_isa_lookup(pTHX_ HV *stash, const char * const name, STRLEN len, U32 flags)
     /* A stash/class can go by many names (ie. User == main::User), so 
        we use the HvENAME in the stash itself, which is canonical, falling
        back to HvNAME if necessary.  */
-    our_stash = gv_stashpvn(name, len, flags);
+    our_stash = gv_stashsvpvn_cached(namesv, name, len, flags);
 
     if (our_stash) {
 	HEK *canon_name = HvENAME_HEK(our_stash);
@@ -75,6 +80,43 @@ S_isa_lookup(pTHX_ HV *stash, const char * const name, STRLEN len, U32 flags)
     }
 
     return FALSE;
+}
+
+#define PERL_ARGS_ASSERT_SV_DERIVED_FROM_SVPVN \
+    assert(sv); \
+    assert(namesv || name)
+
+STATIC bool
+S_sv_derived_from_svpvn(pTHX_ SV *sv, SV *namesv, const char * name, const STRLEN len, U32 flags)
+{
+    HV* stash;
+
+    PERL_ARGS_ASSERT_SV_DERIVED_FROM_SVPVN;
+    SvGETMAGIC(sv);
+
+    if (SvROK(sv)) {
+        const char *type;
+        sv = SvRV(sv);
+        type = sv_reftype(sv,0);
+        if (type) {
+            if (namesv)
+                name = SvPV_nolen(namesv);
+            if (strEQ(name, type))
+                return TRUE;
+        }
+        if (!SvOBJECT(sv))
+            return FALSE;
+        stash = SvSTASH(sv);
+    }
+    else {
+        stash = gv_stashsv(sv, 0);
+    }
+
+    if (stash && isa_lookup(stash, namesv, name, len, flags))
+        return TRUE;
+
+    stash = gv_stashpvs("UNIVERSAL", 0);
+    return stash && isa_lookup(stash, namesv, name, len, flags);
 }
 
 /*
@@ -93,7 +135,7 @@ Currently, the only significant value for C<flags> is SVf_UTF8.
 =for apidoc sv_derived_from_sv
 
 Exactly like L</sv_derived_from_pvn>, but takes the name string in the form
-of an SV instead of a string/length pair.
+of an SV instead of a string/length pair. This is the advised form.
 
 =cut
 
@@ -102,13 +144,8 @@ of an SV instead of a string/length pair.
 bool
 Perl_sv_derived_from_sv(pTHX_ SV *sv, SV *namesv, U32 flags)
 {
-    char *namepv;
-    STRLEN namelen;
     PERL_ARGS_ASSERT_SV_DERIVED_FROM_SV;
-    namepv = SvPV(namesv, namelen);
-    if (SvUTF8(namesv))
-       flags |= SVf_UTF8;
-    return sv_derived_from_pvn(sv, namepv, namelen, flags);
+    return sv_derived_from_svpvn(sv, namesv, NULL, 0, flags);
 }
 
 /*
@@ -123,7 +160,7 @@ bool
 Perl_sv_derived_from(pTHX_ SV *sv, const char *const name)
 {
     PERL_ARGS_ASSERT_SV_DERIVED_FROM;
-    return sv_derived_from_pvn(sv, name, strlen(name), 0);
+    return sv_derived_from_svpvn(sv, NULL, name, strlen(name), 0);
 }
 
 /*
@@ -140,37 +177,84 @@ bool
 Perl_sv_derived_from_pv(pTHX_ SV *sv, const char *const name, U32 flags)
 {
     PERL_ARGS_ASSERT_SV_DERIVED_FROM_PV;
-    return sv_derived_from_pvn(sv, name, strlen(name), flags);
+    return sv_derived_from_svpvn(sv, NULL, name, strlen(name), flags);
 }
 
 bool
 Perl_sv_derived_from_pvn(pTHX_ SV *sv, const char *const name, const STRLEN len, U32 flags)
 {
-    HV *stash;
-
     PERL_ARGS_ASSERT_SV_DERIVED_FROM_PVN;
+    return sv_derived_from_svpvn(sv, NULL, name, len, flags);
+}
 
-    SvGETMAGIC(sv);
+/*
+=for apidoc sv_isa_sv
 
-    if (SvROK(sv)) {
-	const char *type;
-        sv = SvRV(sv);
-        type = sv_reftype(sv,0);
-	if (type && strEQ(type,name))
-	    return TRUE;
-        if (!SvOBJECT(sv))
-            return FALSE;
-	stash = SvSTASH(sv);
+Returns a boolean indicating whether the SV is an object reference and is
+derived from the specified class, respecting any C<isa()> method overloading
+it may have. Returns false if C<sv> is not a reference to an object, or is
+not derived from the specified class.
+
+This is the function used to implement the behaviour of the C<isa> operator.
+
+Does not invoke magic on C<sv>.
+
+Not to be confused with the older C<sv_isa> function, which does not use an
+overloaded C<isa()> method, nor will check subclassing.
+
+=cut
+
+*/
+
+bool
+Perl_sv_isa_sv(pTHX_ SV *sv, SV *namesv)
+{
+    GV *isagv;
+
+    PERL_ARGS_ASSERT_SV_ISA_SV;
+
+    if(!SvROK(sv) || !SvOBJECT(SvRV(sv)))
+        return FALSE;
+
+    /* This abuse of gv_fetchmeth_pv() with level = 1 skips the UNIVERSAL
+     * lookup
+     * TODO: Consider if we want a NOUNIVERSAL flag for requesting this in a
+     * more obvious way
+     */
+    isagv = gv_fetchmeth_pvn(SvSTASH(SvRV(sv)), "isa", 3, 1, 0);
+    if(isagv) {
+        dSP;
+        CV *isacv = isGV(isagv) ? GvCV(isagv) : (CV *)isagv;
+        SV *retsv;
+        bool ret;
+
+        PUTBACK;
+
+        ENTER;
+        SAVETMPS;
+
+        EXTEND(SP, 2);
+        PUSHMARK(SP);
+        PUSHs(sv);
+        PUSHs(namesv);
+        PUTBACK;
+
+        call_sv((SV *)isacv, G_SCALAR);
+
+        SPAGAIN;
+        retsv = POPs;
+        ret = SvTRUE(retsv);
+        PUTBACK;
+
+        FREETMPS;
+        LEAVE;
+
+        return ret;
     }
-    else {
-        stash = gv_stashsv(sv, 0);
-    }
 
-    if (stash && isa_lookup(stash, name, len, flags))
-        return TRUE;
+    /* TODO: Support namesv being an HV ref to the stash directly? */
 
-    stash = gv_stashpvs("UNIVERSAL", 0);
-    return stash && isa_lookup(stash, name, len, flags);
+    return sv_derived_from_sv(sv, namesv, 0);
 }
 
 /*
@@ -1005,6 +1089,161 @@ XS(XS_Internals_getcwd)
 
 #endif
 
+XS(XS_NamedCapture_tie_it)
+{
+    dXSARGS;
+
+    if (items != 1)
+        croak_xs_usage(cv,  "sv");
+    {
+        SV *sv = ST(0);
+        GV * const gv = (GV *)sv;
+        HV * const hv = GvHVn(gv);
+        SV *rv = newSV_type(SVt_IV);
+        const char *gv_name = GvNAME(gv);
+
+        SvRV_set(rv, newSVuv(
+            strEQ(gv_name, "-") || strEQ(gv_name, "\003APTURE_ALL")
+            ? RXapif_ALL : RXapif_ONE));
+        SvROK_on(rv);
+        sv_bless(rv, GvSTASH(CvGV(cv)));
+
+        sv_unmagic((SV *)hv, PERL_MAGIC_tied);
+        sv_magic((SV *)hv, rv, PERL_MAGIC_tied, NULL, 0);
+        SvREFCNT_dec(rv); /* As sv_magic increased it by one.  */
+    }
+    XSRETURN_EMPTY;
+}
+
+XS(XS_NamedCapture_TIEHASH)
+{
+    dVAR; dXSARGS;
+    if (items < 1)
+       croak_xs_usage(cv,  "package, ...");
+    {
+	const char *	package = (const char *)SvPV_nolen(ST(0));
+	UV flag = RXapif_ONE;
+	mark += 2;
+	while(mark < sp) {
+	    STRLEN len;
+	    const char *p = SvPV_const(*mark, len);
+	    if(memEQs(p, len, "all"))
+		flag = SvTRUE(mark[1]) ? RXapif_ALL : RXapif_ONE;
+	    mark += 2;
+	}
+	ST(0) = sv_2mortal(newSV_type(SVt_IV));
+	sv_setuv(newSVrv(ST(0), package), flag);
+    }
+    XSRETURN(1);
+}
+
+/* These are tightly coupled to the RXapif_* flags defined in regexp.h  */
+#define UNDEF_FATAL  0x80000
+#define DISCARD      0x40000
+#define EXPECT_SHIFT 24
+#define ACTION_MASK  0x000FF
+
+#define FETCH_ALIAS  (RXapif_FETCH  | (2 << EXPECT_SHIFT))
+#define STORE_ALIAS  (RXapif_STORE  | (3 << EXPECT_SHIFT) | UNDEF_FATAL | DISCARD)
+#define DELETE_ALIAS (RXapif_DELETE | (2 << EXPECT_SHIFT) | UNDEF_FATAL)
+#define CLEAR_ALIAS  (RXapif_CLEAR  | (1 << EXPECT_SHIFT) | UNDEF_FATAL | DISCARD)
+#define EXISTS_ALIAS (RXapif_EXISTS | (2 << EXPECT_SHIFT))
+#define SCALAR_ALIAS (RXapif_SCALAR | (1 << EXPECT_SHIFT))
+
+XS(XS_NamedCapture_FETCH)
+{
+    dVAR; dXSARGS;
+    dXSI32;
+    PERL_UNUSED_VAR(cv); /* -W */
+    PERL_UNUSED_VAR(ax); /* -Wall */
+    SP -= items;
+    {
+	REGEXP *const rx = PL_curpm ? PM_GETRE(PL_curpm) : NULL;
+	U32 flags;
+	SV *ret;
+	const U32 action = ix & ACTION_MASK;
+	const int expect = ix >> EXPECT_SHIFT;
+	if (items != expect)
+	    croak_xs_usage(cv, expect == 2 ? "$key"
+				           : (expect == 3 ? "$key, $value"
+							  : ""));
+
+	if (!rx || !SvROK(ST(0))) {
+	    if (ix & UNDEF_FATAL)
+		Perl_croak_no_modify();
+	    else
+		XSRETURN_UNDEF;
+	}
+
+	flags = (U32)SvUV(SvRV(MUTABLE_SV(ST(0))));
+
+	PUTBACK;
+	ret = RX_ENGINE(rx)->named_buff(aTHX_ (rx), expect >= 2 ? ST(1) : NULL,
+				    expect >= 3 ? ST(2) : NULL, flags | action);
+	SPAGAIN;
+
+	if (ix & DISCARD) {
+	    /* Called with G_DISCARD, so our return stack state is thrown away.
+	       Hence if we were returned anything, free it immediately.  */
+	    SvREFCNT_dec(ret);
+	} else {
+	    PUSHs(ret ? sv_2mortal(ret) : &PL_sv_undef);
+	}
+	PUTBACK;
+	return;
+    }
+}
+
+
+XS(XS_NamedCapture_FIRSTKEY)
+{
+    dVAR; dXSARGS;
+    dXSI32;
+    PERL_UNUSED_VAR(cv); /* -W */
+    PERL_UNUSED_VAR(ax); /* -Wall */
+    SP -= items;
+    {
+	REGEXP *const rx = PL_curpm ? PM_GETRE(PL_curpm) : NULL;
+	U32 flags;
+	SV *ret;
+	const int expect = ix ? 2 : 1;
+	const U32 action = ix ? RXapif_NEXTKEY : RXapif_FIRSTKEY;
+	if (items != expect)
+	    croak_xs_usage(cv, expect == 2 ? "$lastkey" : "");
+
+	if (!rx || !SvROK(ST(0)))
+	    XSRETURN_UNDEF;
+
+	flags = (U32)SvUV(SvRV(MUTABLE_SV(ST(0))));
+
+	PUTBACK;
+	ret = RX_ENGINE(rx)->named_buff_iter(aTHX_ (rx),
+					     expect >= 2 ? ST(1) : NULL,
+					     flags | action);
+	SPAGAIN;
+
+	PUSHs(ret ? sv_2mortal(ret) : &PL_sv_undef);
+	PUTBACK;
+	return;
+    }
+}
+
+/* is this still needed? */
+XS(XS_NamedCapture_flags)
+{
+    dVAR; dXSARGS;
+    PERL_UNUSED_VAR(cv); /* -W */
+    PERL_UNUSED_VAR(ax); /* -Wall */
+    SP -= items;
+    {
+	EXTEND(SP, 2);
+	mPUSHu(RXapif_ONE);
+	mPUSHu(RXapif_ALL);
+	PUTBACK;
+	return;
+    }
+}
+
 #include "vutil.h"
 #include "vxs.inc"
 
@@ -1012,36 +1251,48 @@ struct xsub_details {
     const char *name;
     XSUBADDR_t xsub;
     const char *proto;
+    int ix;
 };
 
 static const struct xsub_details these_details[] = {
-    {"UNIVERSAL::isa", XS_UNIVERSAL_isa, NULL},
-    {"UNIVERSAL::can", XS_UNIVERSAL_can, NULL},
-    {"UNIVERSAL::DOES", XS_UNIVERSAL_DOES, NULL},
+    {"UNIVERSAL::isa", XS_UNIVERSAL_isa, NULL, 0 },
+    {"UNIVERSAL::can", XS_UNIVERSAL_can, NULL, 0 },
+    {"UNIVERSAL::DOES", XS_UNIVERSAL_DOES, NULL, 0 },
 #define VXS_XSUB_DETAILS
 #include "vxs.inc"
 #undef VXS_XSUB_DETAILS
-    {"utf8::is_utf8", XS_utf8_is_utf8, NULL},
-    {"utf8::valid", XS_utf8_valid, NULL},
-    {"utf8::encode", XS_utf8_encode, NULL},
-    {"utf8::decode", XS_utf8_decode, NULL},
-    {"utf8::upgrade", XS_utf8_upgrade, NULL},
-    {"utf8::downgrade", XS_utf8_downgrade, NULL},
-    {"utf8::native_to_unicode", XS_utf8_native_to_unicode, NULL},
-    {"utf8::unicode_to_native", XS_utf8_unicode_to_native, NULL},
-    {"Internals::SvREADONLY", XS_Internals_SvREADONLY, "\\[$%@];$"},
-    {"Internals::SvREFCNT", XS_Internals_SvREFCNT, "\\[$%@];$"},
-    {"Internals::hv_clear_placeholders", XS_Internals_hv_clear_placehold, "\\%"},
-    {"constant::_make_const", XS_constant__make_const, "\\[$@]"},
-    {"PerlIO::get_layers", XS_PerlIO_get_layers, "*;@"},
-    {"re::is_regexp", XS_re_is_regexp, "$"},
-    {"re::regname", XS_re_regname, ";$$"},
-    {"re::regnames", XS_re_regnames, ";$"},
-    {"re::regnames_count", XS_re_regnames_count, ""},
-    {"re::regexp_pattern", XS_re_regexp_pattern, "$"},
+    {"utf8::is_utf8", XS_utf8_is_utf8, NULL, 0 },
+    {"utf8::valid", XS_utf8_valid, NULL, 0 },
+    {"utf8::encode", XS_utf8_encode, NULL, 0 },
+    {"utf8::decode", XS_utf8_decode, NULL, 0 },
+    {"utf8::upgrade", XS_utf8_upgrade, NULL, 0 },
+    {"utf8::downgrade", XS_utf8_downgrade, NULL, 0 },
+    {"utf8::native_to_unicode", XS_utf8_native_to_unicode, NULL, 0 },
+    {"utf8::unicode_to_native", XS_utf8_unicode_to_native, NULL, 0 },
+    {"Internals::SvREADONLY", XS_Internals_SvREADONLY, "\\[$%@];$", 0 },
+    {"Internals::SvREFCNT", XS_Internals_SvREFCNT, "\\[$%@];$", 0 },
+    {"Internals::hv_clear_placeholders", XS_Internals_hv_clear_placehold, "\\%", 0 },
+    {"constant::_make_const", XS_constant__make_const, "\\[$@]", 0 },
+    {"PerlIO::get_layers", XS_PerlIO_get_layers, "*;@", 0 },
+    {"re::is_regexp", XS_re_is_regexp, "$", 0 },
+    {"re::regname", XS_re_regname, ";$$", 0 },
+    {"re::regnames", XS_re_regnames, ";$", 0 },
+    {"re::regnames_count", XS_re_regnames_count, "", 0 },
+    {"re::regexp_pattern", XS_re_regexp_pattern, "$", 0 },
 #ifdef HAS_GETCWD
-    {"Internals::getcwd", XS_Internals_getcwd, ""},
+    {"Internals::getcwd", XS_Internals_getcwd, "", 0 },
 #endif
+    {"Tie::Hash::NamedCapture::_tie_it", XS_NamedCapture_tie_it, NULL, 0 },
+    {"Tie::Hash::NamedCapture::TIEHASH", XS_NamedCapture_TIEHASH, NULL, 0 },
+    {"Tie::Hash::NamedCapture::FETCH", XS_NamedCapture_FETCH, NULL, FETCH_ALIAS },
+    {"Tie::Hash::NamedCapture::STORE", XS_NamedCapture_FETCH, NULL, STORE_ALIAS },
+    {"Tie::Hash::NamedCapture::DELETE", XS_NamedCapture_FETCH, NULL, DELETE_ALIAS },
+    {"Tie::Hash::NamedCapture::CLEAR", XS_NamedCapture_FETCH, NULL, CLEAR_ALIAS },
+    {"Tie::Hash::NamedCapture::EXISTS", XS_NamedCapture_FETCH, NULL, EXISTS_ALIAS },
+    {"Tie::Hash::NamedCapture::SCALAR", XS_NamedCapture_FETCH, NULL, SCALAR_ALIAS },
+    {"Tie::Hash::NamedCapture::FIRSTKEY", XS_NamedCapture_FIRSTKEY, NULL, 0 },
+    {"Tie::Hash::NamedCapture::NEXTKEY", XS_NamedCapture_FIRSTKEY, NULL, 1 },
+    {"Tie::Hash::NamedCapture::flags", XS_NamedCapture_flags, NULL, 0 },
 };
 
 STATIC OP*
@@ -1101,7 +1352,8 @@ Perl_boot_core_UNIVERSAL(pTHX)
     const struct xsub_details *end = C_ARRAY_END(these_details);
 
     do {
-	newXS_flags(xsub->name, xsub->xsub, file, xsub->proto, 0);
+        CV *cv = newXS_flags(xsub->name, xsub->xsub, file, xsub->proto, 0);
+        XSANY.any_i32 = xsub->ix;
     } while (++xsub < end);
 
 #ifndef EBCDIC

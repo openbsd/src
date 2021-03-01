@@ -15,8 +15,8 @@ BEGIN {
 
 use File::Basename;
 
-our $VERSION = '7.34';
-$VERSION = eval $VERSION;
+our $VERSION = '7.44';
+$VERSION =~ tr/_//d;
 
 require ExtUtils::MM_Any;
 require ExtUtils::MM_Unix;
@@ -38,7 +38,7 @@ ExtUtils::MM_VMS - methods to override UN*X behaviour in ExtUtils::MakeMaker
 
 =head1 DESCRIPTION
 
-See ExtUtils::MM_Unix for a documentation of the methods provided
+See L<ExtUtils::MM_Unix> for a documentation of the methods provided
 there. This package overrides the implementation of these methods, not
 the semantics.
 
@@ -87,7 +87,7 @@ sub ext {
 Those methods which override default MM_Unix methods are marked
 "(override)", while methods unique to MM_VMS are marked "(specific)".
 For overridden methods, documentation is limited to an explanation
-of why this method overrides the MM_Unix method; see the ExtUtils::MM_Unix
+of why this method overrides the MM_Unix method; see the L<ExtUtils::MM_Unix>
 documentation for more details.
 
 =over 4
@@ -251,7 +251,8 @@ sub find_perl {
 
 =item _fixin_replace_shebang (override)
 
-Helper routine for MM->fixin(), overridden because there's no such thing as an
+Helper routine for L<< MM->fixin()|ExtUtils::MM_Unix/fixin >>, overridden
+because there's no such thing as an
 actual shebang line that will be interpreted by the shell, so we just prepend
 $Config{startperl} and preserve the shebang line argument for any switches it
 may contain.
@@ -587,9 +588,10 @@ sub constants {
     # Cleanup paths for directories in MMS macros.
     foreach my $macro ( qw [
             INST_BIN INST_SCRIPT INST_LIB INST_ARCHLIB
-            PERL_LIB PERL_ARCHLIB
+            PERL_LIB PERL_ARCHLIB PERL_ARCHLIBDEP
             PERL_INC PERL_SRC ],
-                        (map { 'INSTALL'.$_ } $self->installvars)
+                        (map { 'INSTALL'.$_ } $self->installvars),
+                        (map { 'DESTINSTALL'.$_ } $self->installvars)
                       )
     {
         next unless defined $self->{$macro};
@@ -1487,8 +1489,8 @@ uninstall_from_vendordirs ::
 =item perldepend (override)
 
 Use VMS-style syntax for files; it's cheaper to just do it directly here
-than to have the MM_Unix method call C<catfile> repeatedly.  Also, if
-we have to rebuild Config.pm, use MM[SK] to do it.
+than to have the L<MM_Unix|ExtUtils::MM_Unix> method call C<catfile>
+repeatedly.  Also, if we have to rebuild Config.pm, use MM[SK] to do it.
 
 =cut
 
@@ -2081,7 +2083,7 @@ sub init_linker {
 
 Eliminate the macros in the output to the MMS/MMK file.
 
-(File::Spec::VMS used to do this for us, but it's being removed)
+(L<File::Spec::VMS> used to do this for us, but it's being removed)
 
 =cut
 
@@ -2120,7 +2122,7 @@ identically named elements of C<%$self>, and returns the result
 as a file specification in Unix syntax.
 
 NOTE:  This is the canonical version of the method.  The version in
-File::Spec::VMS is deprecated.
+L<File::Spec::VMS> is deprecated.
 
 =cut
 
@@ -2182,7 +2184,7 @@ force fixpath() to consider the path to be a directory or false to force
 it to be a file.
 
 NOTE:  This is the canonical version of the method.  The version in
-File::Spec::VMS is deprecated.
+L<File::Spec::VMS> is deprecated.
 
 =cut
 

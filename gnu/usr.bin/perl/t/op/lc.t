@@ -421,7 +421,7 @@ SKIP: {
     is (lc "${filler}I\x{307}\x{300}$filler", "${filler_lc}i\x{300}$filler_lc",
         "lc in Turkic locale with DOT ABOVE followed by ABOVE");
     is (lc "${filler}I\x{300}\x{307}$filler", "$filler_lc\x{131}\x{300}\x{307}$filler_lc",
-        "lc in Turkic locale with with other ABOVE before DOT ABOVE");
+        "lc in Turkic locale with other ABOVE before DOT ABOVE");
     is (lcfirst "IIIIIII$filler", "\x{131}IIIIII$filler",
         "lcfirst in Turkic locale, only first I changed");
     is (lcfirst "I\x{307}$filler", "i$filler",
@@ -434,7 +434,7 @@ SKIP: {
     is (lcfirst "I\x{307}\x{300}IIIIII$filler", "i\x{300}IIIIII$filler",
         "lcfirst in Turkic locale with DOT ABOVE followed by ABOVE");
     is (lcfirst "I\x{300}\x{307}IIIIII$filler", "\x{131}\x{300}\x{307}IIIIII$filler",
-        "lcfirst in Turkic locale with with other ABOVE before DOT ABOVE");
+        "lcfirst in Turkic locale with other ABOVE before DOT ABOVE");
     is (uc "${filler}i$filler", "$filler_uc\x{130}$filler_uc", "long string uc in Turkic locale");
     is (ucfirst "ii$filler", "\x{130}i$filler", "long string ucfirst in Turkic locale; only first char changes");
 }

@@ -557,7 +557,7 @@ is "@a", '1 2 3', 'assignment to split-to-array (stacked)';
     is $c, 2, "run-time re-eval count";
 }
 
-# check that that my/local @array = split works
+# check that my/local @array = split works
 
 {
     my $s = "a:b:c";

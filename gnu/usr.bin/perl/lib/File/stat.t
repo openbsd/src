@@ -133,6 +133,9 @@ SKIP: {
     test_X_ops($^X, "for $^X", qr/A/);
 }
 
+# open early so atime is consistent with the name based call
+local *STAT;
+my $canopen = open(STAT, '<', $file);
 
 my $stat = File::stat::stat($file);
 isa_ok($stat, 'File::stat', 'should build a stat object');
@@ -143,8 +146,7 @@ for (split //, "tTB") {
 }
 
 SKIP: {
-	local *STAT;
-	skip("Could not open file: $!", 2) unless open(STAT, '<', $file);
+	skip("Could not open file: $!", 2) unless $canopen;
 	isa_ok(File::stat::stat('STAT'), 'File::stat',
 	       '... should be able to find filehandle');
 

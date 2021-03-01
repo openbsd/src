@@ -56,6 +56,7 @@ extern void*	my_regdupe (pTHX_ REGEXP * const r, CLONE_PARAMS *param);
 #endif
 
 EXTERN_C const struct regexp_engine my_reg_engine;
+EXTERN_C const struct regexp_engine wild_reg_engine;
 
 END_EXTERN_C
 
@@ -73,6 +74,28 @@ const struct regexp_engine my_reg_engine = {
         my_reg_qr_package,
 #if defined(USE_ITHREADS)
         my_regdupe,
+#endif
+        my_re_op_compile,
+};
+
+/* For use with Unicode property wildcards, when we want to see the compilation
+ * of the wildcard subpattern, but don't want to see the matching process.  All
+ * but the compilation are the regcomp.c/regexec.c functions which aren't
+ * subject to 'use re' */
+const struct regexp_engine wild_reg_engine = {
+        my_re_compile,
+        Perl_regexec_flags,
+        Perl_re_intuit_start,
+        Perl_re_intuit_string,
+        Perl_regfree_internal,
+        Perl_reg_numbered_buff_fetch,
+        Perl_reg_numbered_buff_store,
+        Perl_reg_numbered_buff_length,
+        Perl_reg_named_buff,
+        Perl_reg_named_buff_iter,
+        Perl_reg_qr_package,
+#if defined(USE_ITHREADS)
+        Perl_regdupe_internal,
 #endif
         my_re_op_compile,
 };
@@ -96,7 +119,8 @@ PPCODE:
 {
     if ((re = SvRX(sv)) /* assign deliberate */
        /* only for re engines we know about */
-       && (RX_ENGINE(re) == &my_reg_engine
+       && (   RX_ENGINE(re) == &my_reg_engine
+           || RX_ENGINE(re) == &wild_reg_engine
            || RX_ENGINE(re) == &PL_core_reg_engine))
     {
         SV *an = &PL_sv_no;

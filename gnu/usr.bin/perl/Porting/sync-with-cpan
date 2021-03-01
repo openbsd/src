@@ -589,7 +589,7 @@ unlink "cpan/$new_file" unless $tarball;
 
 #
 # Run the tests. First the test belonging to the module, followed by the
-# the tests in t/porting
+# tests in t/porting
 #
 chdir "t";
 say "Running module tests";

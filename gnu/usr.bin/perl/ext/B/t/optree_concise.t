@@ -217,7 +217,7 @@ checkOptree ( name => 'cmdline invoke -basic works',
 	      strip_open_hints => 1,
 	      expect	=> <<'EOT_EOT', expect_nt => <<'EONT_EONT');
 # 7  <@> leave[1 ref] vKP/REFC ->(end)
-# 1     <0> enter ->2
+# 1     <0> enter v ->2
 # 2     <;> nextstate(main 1 -e:1) v:>,<,%,{ ->3
 # 6     <@> sort vK ->7
 # 3        <0> pushmark s ->4
@@ -225,7 +225,7 @@ checkOptree ( name => 'cmdline invoke -basic works',
 # 4           <#> gv[*a] s ->5
 EOT_EOT
 # 7  <@> leave[1 ref] vKP/REFC ->(end)
-# 1     <0> enter ->2
+# 1     <0> enter v ->2
 # 2     <;> nextstate(main 1 -e:1) v:>,<,%,{ ->3
 # 6     <@> sort vK ->7
 # 3        <0> pushmark s ->4
@@ -241,7 +241,7 @@ checkOptree ( name => 'cmdline invoke -exec works',
 	      bcopts => '-exec',
 	      strip_open_hints => 1,
 	      expect => <<'EOT_EOT', expect_nt => <<'EONT_EONT');
-1  <0> enter 
+1  <0> enter v
 2  <;> nextstate(main 1 -e:1) v:>,<,%,{
 3  <0> pushmark s
 4  <#> gv[*a] s
@@ -249,7 +249,7 @@ checkOptree ( name => 'cmdline invoke -exec works',
 6  <@> sort vK
 7  <@> leave[1 ref] vKP/REFC
 EOT_EOT
-# 1  <0> enter 
+# 1  <0> enter v
 # 2  <;> nextstate(main 1 -e:1) v:>,<,%,{
 # 3  <0> pushmark s
 # 4  <$> gv(*a) s
@@ -290,7 +290,7 @@ checkOptree
       errs	=> ['Useless use of sort in void context at -e line 1.'],
       strip_open_hints => 1,
       expect	=> <<'EOT_EOT', expect_nt => <<'EONT_EONT');
-# 1  <0> enter 
+# 1  <0> enter v
 # 2  <;> nextstate(main 2 -e:1) v:>,<,%,{
 # 3  <0> pushmark s
 # 4  <#> gv[*a] s
@@ -298,7 +298,7 @@ checkOptree
 # 6  <@> sort vK
 # 7  <@> leave[1 ref] vKP/REFC
 EOT_EOT
-# 1  <0> enter 
+# 1  <0> enter v
 # 2  <;> nextstate(main 2 -e:1) v:>,<,%,{
 # 3  <0> pushmark s
 # 4  <$> gv(*a) s

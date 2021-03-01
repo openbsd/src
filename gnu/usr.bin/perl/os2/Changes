@@ -187,7 +187,7 @@ after 5.005_53:
 	New function OS2::Error(do_harderror,do_exception).  Returns
 		undef if it was not called yet, otherwise bit 1 is
 		set if on previous call do_harderror was enabled, bit
-		2 is set if if on previous call do_exception was enabled.
+		2 is set if on previous call do_exception was enabled.
 	This function enables/disables error popups associated with 
 		hardware errors (Disk not ready etc.) and software exceptions.
 

@@ -12,7 +12,7 @@
 
 package Pod::Text::Termcap;
 
-use 5.006;
+use 5.008;
 use strict;
 use warnings;
 
@@ -24,7 +24,7 @@ use vars qw(@ISA $VERSION);
 
 @ISA = qw(Pod::Text);
 
-$VERSION = '4.11';
+$VERSION = '4.14';
 
 ##############################################################################
 # Overrides
@@ -35,14 +35,6 @@ $VERSION = '4.11';
 sub new {
     my ($self, %args) = @_;
     my ($ospeed, $term, $termios);
-
-    # $ENV{HOME} is usually not set on Windows.  The default Term::Cap path
-    # may not work on Solaris.
-    unless (exists $ENV{TERMPATH}) {
-        my $home = exists $ENV{HOME} ? "$ENV{HOME}/.termcap:" : '';
-        $ENV{TERMPATH} =
-          "${home}/etc/termcap:/usr/share/misc/termcap:/usr/share/lib/termcap";
-    }
 
     # Fall back on a hard-coded terminal speed if POSIX::Termios isn't
     # available (such as on VMS).
@@ -80,10 +72,12 @@ sub new {
     # Initialize Pod::Text.
     $self = $self->SUPER::new (%args);
 
-    # Fall back on the ANSI escape sequences if Term::Cap doesn't work.
-    $$self{BOLD} = $bold || "\e[1m";
-    $$self{UNDL} = $undl || "\e[4m";
-    $$self{NORM} = $norm || "\e[m";
+    # If we were unable to get any of the formatting sequences, don't attempt
+    # that type of formatting.  This will do weird things if bold or underline
+    # were available but normal wasn't, but hopefully that will never happen.
+    $$self{BOLD} = $bold || q{};
+    $$self{UNDL} = $undl || q{};
+    $$self{NORM} = $norm || q{};
 
     return $self;
 }
@@ -106,11 +100,19 @@ sub cmd_head2 {
 sub cmd_b { my $self = shift; return "$$self{BOLD}$_[1]$$self{NORM}" }
 sub cmd_i { my $self = shift; return "$$self{UNDL}$_[1]$$self{NORM}" }
 
+# Return a regex that matches a formatting sequence.  This will only be valid
+# if we were able to get at least some termcap information.
+sub format_regex {
+    my ($self) = @_;
+    my @codes = ($self->{BOLD}, $self->{UNDL}, $self->{NORM});
+    return join(q{|}, map { $_ eq q{} ? () : "\Q$_\E" } @codes);
+}
+
 # Analyze a single line and return any formatting codes in effect at the end
 # of that line.
 sub end_format {
     my ($self, $line) = @_;
-    my $pattern = "(\Q$$self{BOLD}\E|\Q$$self{UNDL}\E|\Q$$self{NORM}\E)";
+    my $pattern = "(" . $self->format_regex() . ")";
     my $current;
     while ($line =~ /$pattern/g) {
         my $code = $1;
@@ -147,15 +149,17 @@ sub wrap {
     my $spaces = ' ' x $$self{MARGIN};
     my $width = $$self{opt_width} - $$self{MARGIN};
 
+    # If we were unable to find any termcap sequences, use Pod::Text wrapping.
+    if ($self->{BOLD} eq q{} && $self->{UNDL} eq q{} && $self->{NORM} eq q{}) {
+        return $self->SUPER::wrap($_);
+    }
+
     # $code matches a single special sequence.  $char matches any number of
     # special sequences preceding a single character other than a newline.
     # $shortchar matches some sequence of $char ending in codes followed by
     # whitespace or the end of the string.  $longchar matches exactly $width
     # $chars, used when we have to truncate and hard wrap.
-    #
-    # $shortchar and $longchar are created in a slightly odd way because the
-    # construct ${char}{0,$width} didn't do the right thing until Perl 5.8.x.
-    my $code = "(?:\Q$$self{BOLD}\E|\Q$$self{UNDL}\E|\Q$$self{NORM}\E)";
+    my $code = "(?:" . $self->format_regex() . ")";
     my $char = "(?>$code*[^\\n])";
     my $shortchar = '^(' . $char . "{0,$width}(?>$code*)" . ')(?:\s+|\z)';
     my $longchar = '^(' . $char . "{$width})";
@@ -225,34 +229,20 @@ text using the correct termcap escape sequences for the current terminal.
 Apart from the format codes, it in all ways functions like Pod::Text.  See
 L<Pod::Text> for details and available options.
 
-=head1 ENVIRONMENT
-
-This module sets the TERMPATH environment variable globally to:
-
-    $HOME/.termcap:/etc/termcap:/usr/share/misc/termcap:/usr/share/lib/termcap
-
-if it isn't already set.  (The first entry is omitted if the HOME
-environment variable isn't set.)  This is a (very old) workaround for
-problems finding termcap information on older versions of Solaris, and is
-not good module behavior.  Please do not rely on this behavior; it may be
-dropped in a future release.
-
-=head1 NOTES
-
-This module uses Term::Cap to retrieve the formatting escape sequences for
-the current terminal, and falls back on the ECMA-48 (the same in this
-regard as ANSI X3.64 and ISO 6429, the escape codes also used by DEC VT100
-terminals) if the bold, underline, and reset codes aren't set in the
-termcap information.
+This module uses L<Term::Cap> to find the correct terminal settings.  See the
+documentation of that module for how it finds terminal database information
+and how to override that behavior if necessary.  If unable to find control
+strings for bold and underscore formatting, that formatting is skipped,
+resulting in the same output as Pod::Text.
 
 =head1 AUTHOR
 
-Russ Allbery <rra@cpan.org>.
+Russ Allbery <rra@cpan.org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 1999, 2001-2002, 2004, 2006, 2008-2009, 2014-2015, 2018 Russ Allbery
-<rra@cpan.org>
+Copyright 1999, 2001-2002, 2004, 2006, 2008-2009, 2014-2015, 2018-2019 Russ
+Allbery <rra@cpan.org>
 
 This program is free software; you may redistribute it and/or modify it
 under the same terms as Perl itself.

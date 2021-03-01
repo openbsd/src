@@ -9,7 +9,7 @@ require 5.006;
 our $Debug = 0;
 our $ExportLevel = 0;
 our $Verbose ||= 0;
-our $VERSION = '5.73';
+our $VERSION = '5.74';
 our (%Cache);
 
 sub as_heavy {

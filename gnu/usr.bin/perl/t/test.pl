@@ -169,12 +169,21 @@ sub skip_all_without_config {
 sub skip_all_without_unicode_tables { # (but only under miniperl)
     if (is_miniperl()) {
         skip_all_if_miniperl("Unicode tables not built yet")
-            unless eval 'require "unicore/Heavy.pl"';
+            unless eval 'require "unicore/UCD.pl"';
     }
 }
 
 sub find_git_or_skip {
     my ($source_dir, $reason);
+
+    if ( $ENV{CONTINUOUS_INTEGRATION} && $ENV{WORKSPACE} ) {
+        $source_dir = $ENV{WORKSPACE};
+        if ( -d "${source_dir}/.git" ) {
+            $ENV{GIT_DIR} = "${source_dir}/.git";
+            return $source_dir;
+        }
+    }
+
     if (-d '.git') {
 	$source_dir = '.';
     } elsif (-l 'MANIFEST' && -l 'AUTHORS') {
@@ -310,27 +319,17 @@ sub display {
                     $y = $y . sprintf "\\x{%x}", $c;
                 } elsif ($backslash_escape{$c}) {
                     $y = $y . $backslash_escape{$c};
-                } else {
-                    my $z = chr $c; # Maybe we can get away with a literal...
-
-                    if ($z !~ /[^[:^print:][:^ascii:]]/) {
-                        # The pattern above is equivalent (by de Morgan's
-                        # laws) to:
-                        #     $z !~ /(?[ [:print:] & [:ascii:] ])/
-                        # or, $z is not an ascii printable character
-
-                        # Use octal for characters with small ordinals that
-                        # are traditionally expressed as octal: the controls
-                        # below space, which on EBCDIC are almost all the
-                        # controls, but on ASCII don't include DEL nor the C1
-                        # controls.
-                        if ($c < ord " ") {
-                            $z = sprintf "\\%03o", $c;
-                        } else {
-                            $z = sprintf "\\x{%x}", $c;
-                        }
-                    }
-                    $y = $y . $z;
+                } elsif ($c < ord " ") {
+                    # Use octal for characters with small ordinals that are
+                    # traditionally expressed as octal: the controls below
+                    # space, which on EBCDIC are almost all the controls, but
+                    # on ASCII don't include DEL nor the C1 controls.
+                    $y = $y . sprintf "\\%03o", $c;
+                } elsif (chr $c =~ /[[:print:]]/a) {
+                    $y = $y . chr $c;
+                }
+                else {
+                    $y = $y . sprintf "\\x%02X", $c;
                 }
             }
             $x = $y;
@@ -754,6 +753,8 @@ sub _create_runperl { # Create the string to qx in runperl().
 }
 
 # sub run_perl {} is alias to below
+# Since this uses backticks to run, it is subject to the rules of the shell.
+# Locale settings may pose a problem, depending on the program being run.
 sub runperl {
     die "test.pl:runperl() does not take a hashref"
 	if ref $_[0] and ref $_[0] eq 'HASH';
@@ -966,8 +967,10 @@ sub fresh_perl {
     # arguments in the hash referred to by '$runperl_args'.  The results are
     # returned, with $? set to the exit code.  Unless overridden, stderr is
     # redirected to stdout.
+    #
+    # Placing the program in a file bypasses various sh vagaries
 
-    die sprintf "Third argument to fresh_perl_.* must be hashref of args to fresh_perl (or {})"
+    die sprintf "Second argument to fresh_perl_.* must be hashref of args to fresh_perl (or {})"
         unless !(defined $runperl_args) || ref($runperl_args) eq 'HASH';
 
     # Given the choice of the mis-parsable {}
@@ -1098,6 +1101,7 @@ sub fresh_perl_like {
 #   regex - the expected output is a regular expression
 #   random - all lines match but in any order
 #   fatal - the code will fail fatally (croak, die)
+#   nonfatal - the code is not expected to fail fatally
 #
 # If the actual output contains a line "SKIPPED" the test will be
 # skipped.
@@ -1302,7 +1306,7 @@ sub run_multiple_progs {
 	my $option_regex = 0;
 	my $option_random = 0;
 	my $fatal = $FATAL;
-	if ($expected =~ s/^OPTIONS? (.+)\n//) {
+	if ($expected =~ s/^OPTIONS? (.+)(?:\n|\Z)//) {
 	    foreach my $option (split(' ', $1)) {
 		if ($option eq 'regex') { # allow regular expressions
 		    $option_regex = 1;
@@ -1313,6 +1317,10 @@ sub run_multiple_progs {
 		elsif ($option eq 'fatal') { # perl should fail
 		    $fatal = 1;
 		}
+                elsif ($option eq 'nonfatal') {
+                    # used to turn off default fatal
+                    $fatal = 0;
+                }
 		else {
 		    die "$0: Unknown OPTION '$option'\n";
 		}

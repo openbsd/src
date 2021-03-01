@@ -3,8 +3,8 @@ use strict;
 BEGIN {
     require Time::HiRes;
     unless(&Time::HiRes::d_usleep) {
-	require Test::More;
-	Test::More::plan(skip_all => "no usleep()");
+        require Test::More;
+        Test::More::plan(skip_all => "no usleep()");
     }
 }
 
@@ -14,7 +14,7 @@ use t::Watchdog;
 
 eval { Time::HiRes::usleep(-2) };
 like $@, qr/::usleep\(-2\): negative time not invented yet/,
-	"negative time error";
+        "negative time error";
 
 my $limit = 0.25; # 25% is acceptable slosh for testing timers
 
@@ -59,8 +59,8 @@ SKIP: {
     $msg = "$td went by while sleeping $sleep, ratio $ratio.\n";
 
     SKIP: {
-	skip $msg, 1 unless $td < $sleep * (1 + $limit);
-	ok $a < $limit or print("# $msg\n");
+        skip $msg, 1 unless $td < $sleep * (1 + $limit);
+        ok $a < $limit or print("# $msg\n");
     }
 
     $t0 = Time::HiRes::gettimeofday();
@@ -71,8 +71,8 @@ SKIP: {
     $msg = "$td went by while sleeping $sleep, ratio $ratio.\n";
 
     SKIP: {
-	skip $msg, 1 unless $td < $sleep * (1 + $limit);
-	ok $a < $limit or print("# $msg\n");
+        skip $msg, 1 unless $td < $sleep * (1 + $limit);
+        ok $a < $limit or print("# $msg\n");
     }
 }
 

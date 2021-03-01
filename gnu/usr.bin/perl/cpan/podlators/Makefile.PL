@@ -4,7 +4,7 @@
 # which only supports that build method, and because it is a dependency of
 # other build systems like Module::Build.
 #
-# Copyright 1999-2001, 2008, 2010, 2012, 2014-2016, 2018
+# Copyright 1999-2001, 2008, 2010, 2012, 2014-2016, 2018-2019
 #     Russ Allbery <rra@cpan.org>
 #
 # This program is free software; you may redistribute it and/or modify it
@@ -12,7 +12,7 @@
 #
 # SPDX-License-Identifier: GPL-1.0-or-later OR Artistic-1.0-Perl
 
-use 5.006;
+use 5.008;
 use strict;
 use warnings;
 
@@ -89,7 +89,7 @@ my %metadata     = (
     LICENSE          => 'perl_5',
     EXE_FILES        => [scripts('pod2text', 'pod2man')],
     VERSION_FROM     => 'lib/Pod/Man.pm',
-    MIN_PERL_VERSION => '5.006',
+    MIN_PERL_VERSION => '5.008',
 
     # Use *.PL files to generate the driver scripts so that we get the correct
     # invocation of Perl on non-UNIX platforms.
@@ -111,10 +111,7 @@ my %metadata     = (
     realclean => { FILES => scalar(scripts('pod2text', 'pod2man')) },
 
     # Dependencies on other modules.
-    PREREQ_PM => {
-        'Encode'      => 0,
-        'Pod::Simple' => 3.06,
-    },
+    PREREQ_PM => { 'Pod::Simple' => 3.06 },
 
     # Older versions of ExtUtils::MakeMaker don't pick up nested test
     # directories by default.

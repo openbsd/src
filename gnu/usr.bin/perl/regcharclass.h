@@ -240,7 +240,7 @@
 /*
 	MULTI_CHAR_FOLD: multi-char strings that are folded to by a single character
 
-	&regcharclass_multi_char_folds::multi_char_folds(1)
+	&regcharclass_multi_char_folds::multi_char_folds('u', 'a')
 */
 /*** GENERATED CODE ***/
 #define is_MULTI_CHAR_FOLD_utf8_safe_part0(s,e)                             \
@@ -459,7 +459,7 @@
 /*
 	MULTI_CHAR_FOLD: multi-char strings that are folded to by a single character
 
-	&regcharclass_multi_char_folds::multi_char_folds(0)
+	&regcharclass_multi_char_folds::multi_char_folds('l', 'a')
 */
 /*** GENERATED CODE ***/
 #define is_MULTI_CHAR_FOLD_latin1_safe(s,e)                                 \
@@ -473,6 +473,122 @@
     ( ( ( ((const U8*)s)[0] & 0xDF ) == 0x46 ) ?                            \
 	( ( ( ( ((const U8*)s)[1] & 0xDF ) == 0x46 ) || ( ( ((const U8*)s)[1] & 0xDF ) == 0x49 ) || ( ( ((const U8*)s)[1] & 0xDF ) == 0x4C ) ) ? 2 : 0 )\
     : ( ( ( ((const U8*)s)[0] & 0xDF ) == 0x53 ) && ( inRANGE(((const U8*)s)[1], 0x53, 0x54 ) || inRANGE(((const U8*)s)[1], 0x73, 0x74 ) ) ) ? 2 : 0 )\
+: 0 )
+
+/*
+	THREE_CHAR_FOLD: A three-character multi-char fold
+
+	&regcharclass_multi_char_folds::multi_char_folds('u', '3')
+*/
+/*** GENERATED CODE ***/
+#define is_THREE_CHAR_FOLD_utf8_safe(s,e)                                   \
+( ((e)-(s) > 5) ?                                                           \
+    ( ( 0x66 == ((const U8*)s)[0] ) ?                                       \
+	( ( ( 0x66 == ((const U8*)s)[1] ) && ( 0x69 == ((const U8*)s)[2] || 0x6C == ((const U8*)s)[2] ) ) ? 3 : 0 )\
+    : ( 0xCE == ((const U8*)s)[0] ) ?                                       \
+	( ( 0xB1 == ((const U8*)s)[1] || 0xB7 == ((const U8*)s)[1] ) ?      \
+	    ( ( ( ( ( 0xCD == ((const U8*)s)[2] ) && ( 0x82 == ((const U8*)s)[3] ) ) && ( 0xCE == ((const U8*)s)[4] ) ) && ( 0xB9 == ((const U8*)s)[5] ) ) ? 6 : 0 )\
+	: ( ( ( 0xB9 == ((const U8*)s)[1] ) && ( 0xCC == ((const U8*)s)[2] ) ) && ( 0x88 == ((const U8*)s)[3] ) ) ? ( ( 0xCC == ((const U8*)s)[4] ) ?\
+			( ( inRANGE(((const U8*)s)[5], 0x80, 0x81 ) ) ? 6 : 0 )\
+		    : ( ( 0xCD == ((const U8*)s)[4] ) && ( 0x82 == ((const U8*)s)[5] ) ) ? 6 : 0 ) : 0 )\
+    : ( 0xCF == ((const U8*)s)[0] ) ?                                       \
+	( ( 0x85 == ((const U8*)s)[1] ) ?                                   \
+	    ( ( ( 0xCC == ((const U8*)s)[2] ) && ( 0x88 == ((const U8*)s)[3] || 0x93 == ((const U8*)s)[3] ) ) ? ( ( 0xCC == ((const U8*)s)[4] ) ?\
+			( ( inRANGE(((const U8*)s)[5], 0x80, 0x81 ) ) ? 6 : 0 )\
+		    : ( ( 0xCD == ((const U8*)s)[4] ) && ( 0x82 == ((const U8*)s)[5] ) ) ? 6 : 0 ) : 0 )\
+	: ( ( ( ( ( 0x89 == ((const U8*)s)[1] ) && ( 0xCD == ((const U8*)s)[2] ) ) && ( 0x82 == ((const U8*)s)[3] ) ) && ( 0xCE == ((const U8*)s)[4] ) ) && ( 0xB9 == ((const U8*)s)[5] ) ) ? 6 : 0 )\
+    : 0 )                                                                   \
+: ( ( ( ((e)-(s) > 2) && ( 0x66 == ((const U8*)s)[0] ) ) && ( 0x66 == ((const U8*)s)[1] ) ) && ( 0x69 == ((const U8*)s)[2] || 0x6C == ((const U8*)s)[2] ) ) ? 3 : 0 )
+
+/*
+	THREE_CHAR_FOLD: A three-character multi-char fold
+
+	&regcharclass_multi_char_folds::multi_char_folds('l', '3')
+*/
+/*** GENERATED CODE ***/
+#define is_THREE_CHAR_FOLD_latin1_safe(s,e)                                 \
+( ( ( ( ( ((e) - (s)) >= 3 ) && ( ( ((const U8*)s)[0] & 0xDF ) == 0x46 ) ) && ( ( ((const U8*)s)[1] & 0xDF ) == 0x46 ) ) && ( ( ( ((const U8*)s)[2] & 0xDF ) == 0x49 ) || ( ( ((const U8*)s)[2] & 0xDF ) == 0x4C ) ) ) ? 3 : 0 )
+
+/*
+	THREE_CHAR_FOLD_HEAD: The first two of three-character multi-char folds
+
+	&regcharclass_multi_char_folds::multi_char_folds('u', 'h')
+*/
+/*** GENERATED CODE ***/
+#define is_THREE_CHAR_FOLD_HEAD_utf8_safe(s,e)                              \
+( ((e)-(s) > 3) ?                                                           \
+    ( ( 0x61 == ((const U8*)s)[0] || inRANGE(((const U8*)s)[0], 0x68, 0x6A ) || inRANGE(((const U8*)s)[0], 0x73, 0x74 ) || 0x77 == ((const U8*)s)[0] || 0x79 == ((const U8*)s)[0] ) ? 1\
+    : ( 0x66 == ((const U8*)s)[0] ) ?                                       \
+	( ( 0x66 == ((const U8*)s)[1] ) ? 2 : 1 )                           \
+    : ( 0xCA == ((const U8*)s)[0] ) ?                                       \
+	( ( 0xBC == ((const U8*)s)[1] ) ? 2 : 0 )                           \
+    : ( 0xCE == ((const U8*)s)[0] ) ?                                       \
+	( ( ( ((const U8*)s)[1] & 0xFD ) == 0xAC ) ? 2                      \
+	: ( 0xB1 == ((const U8*)s)[1] || 0xB7 == ((const U8*)s)[1] ) ?      \
+	    ( ( ( 0xCD == ((const U8*)s)[2] ) && ( 0x82 == ((const U8*)s)[3] ) ) ? 4 : 2 )\
+	: ( 0xB9 == ((const U8*)s)[1] ) ?                                   \
+	    ( ( ( 0xCC == ((const U8*)s)[2] ) && ( 0x88 == ((const U8*)s)[3] ) ) ? 4 : 2 )\
+	: 0 )                                                               \
+    : ( 0xCF == ((const U8*)s)[0] ) ?                                       \
+	( ( 0x81 == ((const U8*)s)[1] || 0x8E == ((const U8*)s)[1] ) ? 2    \
+	: ( 0x85 == ((const U8*)s)[1] ) ?                                   \
+	    ( ( ( 0xCC == ((const U8*)s)[2] ) && ( 0x88 == ((const U8*)s)[3] || 0x93 == ((const U8*)s)[3] ) ) ? 4 : 2 )\
+	: ( 0x89 == ((const U8*)s)[1] ) ?                                   \
+	    ( ( ( 0xCD == ((const U8*)s)[2] ) && ( 0x82 == ((const U8*)s)[3] ) ) ? 4 : 2 )\
+	: 0 )                                                               \
+    : ( 0xD5 == ((const U8*)s)[0] ) ?                                       \
+	( ( 0xA5 == ((const U8*)s)[1] || 0xB4 == ((const U8*)s)[1] || 0xBE == ((const U8*)s)[1] ) ? 2 : 0 )\
+    : ( 0xE1 == ((const U8*)s)[0] ) ?                                       \
+	( ( 0xBC == ((const U8*)s)[1] ) ?                                   \
+	    ( ( ( ((const U8*)s)[2] & 0xD8 ) == 0x80 ) ? 3 : 0 )            \
+	: ( ( 0xBD == ((const U8*)s)[1] ) && ( ( ( ((const U8*)s)[2] & 0xF8 ) == 0xA0 ) || ( ( ((const U8*)s)[2] & 0xFB ) == 0xB0 ) || ((const U8*)s)[2] == 0xBC ) ) ? 3 : 0 )\
+    : 0 )                                                                   \
+: ((e)-(s) > 2) ?                                                           \
+    ( ( 0x61 == ((const U8*)s)[0] || inRANGE(((const U8*)s)[0], 0x68, 0x6A ) || inRANGE(((const U8*)s)[0], 0x73, 0x74 ) || 0x77 == ((const U8*)s)[0] || 0x79 == ((const U8*)s)[0] ) ? 1\
+    : ( 0x66 == ((const U8*)s)[0] ) ?                                       \
+	( ( 0x66 == ((const U8*)s)[1] ) ? 2 : 1 )                           \
+    : ( 0xCA == ((const U8*)s)[0] ) ?                                       \
+	( ( 0xBC == ((const U8*)s)[1] ) ? 2 : 0 )                           \
+    : ( 0xCE == ((const U8*)s)[0] ) ?                                       \
+	( ( ( ( ((const U8*)s)[1] & 0xFD ) == 0xAC ) || ( ( ((const U8*)s)[1] & 0xF7 ) == 0xB1 ) || ((const U8*)s)[1] == 0xB7 ) ? 2 : 0 )\
+    : ( 0xCF == ((const U8*)s)[0] ) ?                                       \
+	( ( ( ( ((const U8*)s)[1] & 0xFB ) == 0x81 ) || ((const U8*)s)[1] == 0x89 || ((const U8*)s)[1] == 0x8E ) ? 2 : 0 )\
+    : ( 0xD5 == ((const U8*)s)[0] ) ?                                       \
+	( ( 0xA5 == ((const U8*)s)[1] || 0xB4 == ((const U8*)s)[1] || 0xBE == ((const U8*)s)[1] ) ? 2 : 0 )\
+    : ( 0xE1 == ((const U8*)s)[0] ) ?                                       \
+	( ( 0xBC == ((const U8*)s)[1] ) ?                                   \
+	    ( ( ( ((const U8*)s)[2] & 0xD8 ) == 0x80 ) ? 3 : 0 )            \
+	: ( ( 0xBD == ((const U8*)s)[1] ) && ( ( ( ((const U8*)s)[2] & 0xF8 ) == 0xA0 ) || ( ( ((const U8*)s)[2] & 0xFB ) == 0xB0 ) || ((const U8*)s)[2] == 0xBC ) ) ? 3 : 0 )\
+    : 0 )                                                                   \
+: ((e)-(s) > 1) ?                                                           \
+    ( ( 0x61 == ((const U8*)s)[0] || inRANGE(((const U8*)s)[0], 0x68, 0x6A ) || inRANGE(((const U8*)s)[0], 0x73, 0x74 ) || 0x77 == ((const U8*)s)[0] || 0x79 == ((const U8*)s)[0] ) ? 1\
+    : ( 0x66 == ((const U8*)s)[0] ) ?                                       \
+	( ( 0x66 == ((const U8*)s)[1] ) ? 2 : 1 )                           \
+    : ( 0xCA == ((const U8*)s)[0] ) ?                                       \
+	( ( 0xBC == ((const U8*)s)[1] ) ? 2 : 0 )                           \
+    : ( 0xCE == ((const U8*)s)[0] ) ?                                       \
+	( ( ( ( ((const U8*)s)[1] & 0xFD ) == 0xAC ) || ( ( ((const U8*)s)[1] & 0xF7 ) == 0xB1 ) || ((const U8*)s)[1] == 0xB7 ) ? 2 : 0 )\
+    : ( 0xCF == ((const U8*)s)[0] ) ?                                       \
+	( ( ( ( ((const U8*)s)[1] & 0xFB ) == 0x81 ) || ((const U8*)s)[1] == 0x89 || ((const U8*)s)[1] == 0x8E ) ? 2 : 0 )\
+    : ( ( 0xD5 == ((const U8*)s)[0] ) && ( 0xA5 == ((const U8*)s)[1] || 0xB4 == ((const U8*)s)[1] || 0xBE == ((const U8*)s)[1] ) ) ? 2 : 0 )\
+: ((e)-(s) > 0) ?                                                           \
+    ( 0x61 == ((const U8*)s)[0] || 0x66 == ((const U8*)s)[0] || inRANGE(((const U8*)s)[0], 0x68, 0x6A ) || inRANGE(((const U8*)s)[0], 0x73, 0x74 ) || 0x77 == ((const U8*)s)[0] || 0x79 == ((const U8*)s)[0] )\
+: 0 )
+
+/*
+	THREE_CHAR_FOLD_HEAD: The first two of three-character multi-char folds
+
+	&regcharclass_multi_char_folds::multi_char_folds('l', 'h')
+*/
+/*** GENERATED CODE ***/
+#define is_THREE_CHAR_FOLD_HEAD_latin1_safe(s,e)                            \
+( ((e)-(s) > 1) ?                                                           \
+    ( ( ( ( ((const U8*)s)[0] & 0xDF ) == 0x41 ) || ( ( ((const U8*)s)[0] & 0xDE ) == 0x48 ) || ( ( ((const U8*)s)[0] & 0xDF ) == 0x4A ) || ( ( ((const U8*)s)[0] & 0xDB ) == 0x53 ) || ( ( ((const U8*)s)[0] & 0xDF ) == 0x54 ) || ( ( ((const U8*)s)[0] & 0xDF ) == 0x59 ) ) ? 1\
+    : ( ( ((const U8*)s)[0] & 0xDF ) == 0x46 ) ?                            \
+	( ( ( ((const U8*)s)[1] & 0xDF ) == 0x46 ) ? 2 : 1 )                \
+    : 0 )                                                                   \
+: ((e)-(s) > 0) ?                                                           \
+    ( ( ( ((const U8*)s)[0] & 0xDF ) == 0x41 ) || ( ( ((const U8*)s)[0] & 0xDF ) == 0x46 ) || ( ( ((const U8*)s)[0] & 0xDE ) == 0x48 ) || ( ( ((const U8*)s)[0] & 0xDF ) == 0x4A ) || ( ( ((const U8*)s)[0] & 0xDB ) == 0x53 ) || ( ( ((const U8*)s)[0] & 0xDF ) == 0x54 ) || ( ( ((const U8*)s)[0] & 0xDF ) == 0x59 ) )\
 : 0 )
 
 /*
@@ -858,7 +974,7 @@
 /*
 	MULTI_CHAR_FOLD: multi-char strings that are folded to by a single character
 
-	&regcharclass_multi_char_folds::multi_char_folds(1)
+	&regcharclass_multi_char_folds::multi_char_folds('u', 'a')
 */
 /*** GENERATED CODE ***/
 #define is_MULTI_CHAR_FOLD_utf8_safe_part0(s,e)                             \
@@ -1075,7 +1191,7 @@
 /*
 	MULTI_CHAR_FOLD: multi-char strings that are folded to by a single character
 
-	&regcharclass_multi_char_folds::multi_char_folds(0)
+	&regcharclass_multi_char_folds::multi_char_folds('l', 'a')
 */
 /*** GENERATED CODE ***/
 #define is_MULTI_CHAR_FOLD_latin1_safe(s,e)                                 \
@@ -1089,6 +1205,120 @@
     ( ( ( ((const U8*)s)[0] & 0xBF ) == 0x86 ) ?                            \
 	( ( ( ( ((const U8*)s)[1] & 0xBF ) == 0x86 ) || ( ( ((const U8*)s)[1] & 0xBF ) == 0x89 ) || ( ( ((const U8*)s)[1] & 0xBF ) == 0x93 ) ) ? 2 : 0 )\
     : ( ( ( ((const U8*)s)[0] & 0xBF ) == 0xA2 ) && ( ( ((const U8*)s)[1] & 0xBE ) == 0xA2 ) ) ? 2 : 0 )\
+: 0 )
+
+/*
+	THREE_CHAR_FOLD: A three-character multi-char fold
+
+	&regcharclass_multi_char_folds::multi_char_folds('u', '3')
+*/
+/*** GENERATED CODE ***/
+#define is_THREE_CHAR_FOLD_utf8_safe(s,e)                                   \
+( ((e)-(s) > 5) ?                                                           \
+    ( ( 0x86 == ((const U8*)s)[0] ) ?                                       \
+	( ( ( 0x86 == ((const U8*)s)[1] ) && ( 0x89 == ((const U8*)s)[2] || 0x93 == ((const U8*)s)[2] ) ) ? 3 : 0 )\
+    : ( 0xB4 == ((const U8*)s)[0] ) ?                                       \
+	( ( 0x58 == ((const U8*)s)[1] || 0x66 == ((const U8*)s)[1] ) ?      \
+	    ( ( ( ( ( 0xB1 == ((const U8*)s)[2] ) && ( 0x43 == ((const U8*)s)[3] ) ) && ( 0xB4 == ((const U8*)s)[4] ) ) && ( 0x68 == ((const U8*)s)[5] ) ) ? 6 : 0 )\
+	: ( ( ( 0x68 == ((const U8*)s)[1] ) && ( 0xAF == ((const U8*)s)[2] ) ) && ( 0x49 == ((const U8*)s)[3] ) ) ? ( ( 0xAF == ((const U8*)s)[4] ) ?\
+			( ( inRANGE(((const U8*)s)[5], 0x41, 0x42 ) ) ? 6 : 0 )\
+		    : ( ( 0xB1 == ((const U8*)s)[4] ) && ( 0x43 == ((const U8*)s)[5] ) ) ? 6 : 0 ) : 0 )\
+    : ( 0xB5 == ((const U8*)s)[0] ) ?                                       \
+	( ( 0x46 == ((const U8*)s)[1] ) ?                                   \
+	    ( ( ( 0xAF == ((const U8*)s)[2] ) && ( 0x49 == ((const U8*)s)[3] || 0x62 == ((const U8*)s)[3] ) ) ? ( ( 0xAF == ((const U8*)s)[4] ) ?\
+			( ( inRANGE(((const U8*)s)[5], 0x41, 0x42 ) ) ? 6 : 0 )\
+		    : ( ( 0xB1 == ((const U8*)s)[4] ) && ( 0x43 == ((const U8*)s)[5] ) ) ? 6 : 0 ) : 0 )\
+	: ( ( ( ( ( 0x4A == ((const U8*)s)[1] ) && ( 0xB1 == ((const U8*)s)[2] ) ) && ( 0x43 == ((const U8*)s)[3] ) ) && ( 0xB4 == ((const U8*)s)[4] ) ) && ( 0x68 == ((const U8*)s)[5] ) ) ? 6 : 0 )\
+    : 0 )                                                                   \
+: ( ( ( ((e)-(s) > 2) && ( 0x86 == ((const U8*)s)[0] ) ) && ( 0x86 == ((const U8*)s)[1] ) ) && ( 0x89 == ((const U8*)s)[2] || 0x93 == ((const U8*)s)[2] ) ) ? 3 : 0 )
+
+/*
+	THREE_CHAR_FOLD: A three-character multi-char fold
+
+	&regcharclass_multi_char_folds::multi_char_folds('l', '3')
+*/
+/*** GENERATED CODE ***/
+#define is_THREE_CHAR_FOLD_latin1_safe(s,e)                                 \
+( ( ( ( ( ((e) - (s)) >= 3 ) && ( ( ((const U8*)s)[0] & 0xBF ) == 0x86 ) ) && ( ( ((const U8*)s)[1] & 0xBF ) == 0x86 ) ) && ( ( ( ((const U8*)s)[2] & 0xBF ) == 0x89 ) || ( ( ((const U8*)s)[2] & 0xBF ) == 0x93 ) ) ) ? 3 : 0 )
+
+/*
+	THREE_CHAR_FOLD_HEAD: The first two of three-character multi-char folds
+
+	&regcharclass_multi_char_folds::multi_char_folds('u', 'h')
+*/
+/*** GENERATED CODE ***/
+#define is_THREE_CHAR_FOLD_HEAD_utf8_safe(s,e)                              \
+( ((e)-(s) > 3) ?                                                           \
+    ( ( ( ( ((const U8*)s)[0] & 0xEF ) == 0x81 ) || ( ( ((const U8*)s)[0] & 0xFE ) == 0x88 ) || ( ( ((const U8*)s)[0] & 0xFE ) == 0xA2 ) || ((const U8*)s)[0] == 0xA6 || ((const U8*)s)[0] == 0xA8 ) ? 1\
+    : ( 0x86 == ((const U8*)s)[0] ) ?                                       \
+	( ( 0x86 == ((const U8*)s)[1] ) ? 2 : 1 )                           \
+    : ( 0xAB == ((const U8*)s)[0] ) ?                                       \
+	( ( 0x70 == ((const U8*)s)[1] ) ? 2 : 0 )                           \
+    : ( 0xB4 == ((const U8*)s)[0] ) ?                                       \
+	( ( 0x53 == ((const U8*)s)[1] || 0x55 == ((const U8*)s)[1] ) ? 2    \
+	: ( 0x58 == ((const U8*)s)[1] || 0x66 == ((const U8*)s)[1] ) ?      \
+	    ( ( ( 0xB1 == ((const U8*)s)[2] ) && ( 0x43 == ((const U8*)s)[3] ) ) ? 4 : 2 )\
+	: ( 0x68 == ((const U8*)s)[1] ) ?                                   \
+	    ( ( ( 0xAF == ((const U8*)s)[2] ) && ( 0x49 == ((const U8*)s)[3] ) ) ? 4 : 2 )\
+	: 0 )                                                               \
+    : ( 0xB5 == ((const U8*)s)[0] ) ?                                       \
+	( ( 0x42 == ((const U8*)s)[1] || 0x55 == ((const U8*)s)[1] ) ? 2    \
+	: ( 0x46 == ((const U8*)s)[1] ) ?                                   \
+	    ( ( ( 0xAF == ((const U8*)s)[2] ) && ( 0x49 == ((const U8*)s)[3] || 0x62 == ((const U8*)s)[3] ) ) ? 4 : 2 )\
+	: ( 0x4A == ((const U8*)s)[1] ) ?                                   \
+	    ( ( ( 0xB1 == ((const U8*)s)[2] ) && ( 0x43 == ((const U8*)s)[3] ) ) ? 4 : 2 )\
+	: 0 )                                                               \
+    : ( 0xB8 == ((const U8*)s)[0] ) ?                                       \
+	( ( ( 0x52 == ((const U8*)s)[1] ) && ( 0x46 == ((const U8*)s)[2] || 0x63 == ((const U8*)s)[2] || 0x72 == ((const U8*)s)[2] ) ) ? 3 : 0 )\
+    : ( 0xBF == ((const U8*)s)[0] ) ?                                       \
+	( ( inRANGE(((const U8*)s)[1], 0x67, 0x68 ) ) ?                     \
+	    ( ( inRANGE(((const U8*)s)[2], 0x41, 0x48 ) ) ? 3 : 0 )         \
+	: ( ( 0x6A == ((const U8*)s)[1] ) && ( inRANGE(((const U8*)s)[2], 0x41, 0x48 ) || 0x57 == ((const U8*)s)[2] || 0x63 == ((const U8*)s)[2] || 0x70 == ((const U8*)s)[2] ) ) ? 3 : 0 )\
+    : 0 )                                                                   \
+: ((e)-(s) > 2) ?                                                           \
+    ( ( ( ( ((const U8*)s)[0] & 0xEF ) == 0x81 ) || ( ( ((const U8*)s)[0] & 0xFE ) == 0x88 ) || ( ( ((const U8*)s)[0] & 0xFE ) == 0xA2 ) || ((const U8*)s)[0] == 0xA6 || ((const U8*)s)[0] == 0xA8 ) ? 1\
+    : ( 0x86 == ((const U8*)s)[0] ) ?                                       \
+	( ( 0x86 == ((const U8*)s)[1] ) ? 2 : 1 )                           \
+    : ( 0xAB == ((const U8*)s)[0] ) ?                                       \
+	( ( 0x70 == ((const U8*)s)[1] ) ? 2 : 0 )                           \
+    : ( 0xB4 == ((const U8*)s)[0] ) ?                                       \
+	( ( 0x53 == ((const U8*)s)[1] || 0x55 == ((const U8*)s)[1] || 0x58 == ((const U8*)s)[1] || 0x66 == ((const U8*)s)[1] || 0x68 == ((const U8*)s)[1] ) ? 2 : 0 )\
+    : ( 0xB5 == ((const U8*)s)[0] ) ?                                       \
+	( ( ( ( ((const U8*)s)[1] & 0xFB ) == 0x42 ) || ((const U8*)s)[1] == 0x4A || ((const U8*)s)[1] == 0x55 ) ? 2 : 0 )\
+    : ( 0xB8 == ((const U8*)s)[0] ) ?                                       \
+	( ( ( 0x52 == ((const U8*)s)[1] ) && ( 0x46 == ((const U8*)s)[2] || 0x63 == ((const U8*)s)[2] || 0x72 == ((const U8*)s)[2] ) ) ? 3 : 0 )\
+    : ( 0xBF == ((const U8*)s)[0] ) ?                                       \
+	( ( inRANGE(((const U8*)s)[1], 0x67, 0x68 ) ) ?                     \
+	    ( ( inRANGE(((const U8*)s)[2], 0x41, 0x48 ) ) ? 3 : 0 )         \
+	: ( ( 0x6A == ((const U8*)s)[1] ) && ( inRANGE(((const U8*)s)[2], 0x41, 0x48 ) || 0x57 == ((const U8*)s)[2] || 0x63 == ((const U8*)s)[2] || 0x70 == ((const U8*)s)[2] ) ) ? 3 : 0 )\
+    : 0 )                                                                   \
+: ((e)-(s) > 1) ?                                                           \
+    ( ( ( ( ((const U8*)s)[0] & 0xEF ) == 0x81 ) || ( ( ((const U8*)s)[0] & 0xFE ) == 0x88 ) || ( ( ((const U8*)s)[0] & 0xFE ) == 0xA2 ) || ((const U8*)s)[0] == 0xA6 || ((const U8*)s)[0] == 0xA8 ) ? 1\
+    : ( 0x86 == ((const U8*)s)[0] ) ?                                       \
+	( ( 0x86 == ((const U8*)s)[1] ) ? 2 : 1 )                           \
+    : ( 0xAB == ((const U8*)s)[0] ) ?                                       \
+	( ( 0x70 == ((const U8*)s)[1] ) ? 2 : 0 )                           \
+    : ( 0xB4 == ((const U8*)s)[0] ) ?                                       \
+	( ( 0x53 == ((const U8*)s)[1] || 0x55 == ((const U8*)s)[1] || 0x58 == ((const U8*)s)[1] || 0x66 == ((const U8*)s)[1] || 0x68 == ((const U8*)s)[1] ) ? 2 : 0 )\
+    : ( ( 0xB5 == ((const U8*)s)[0] ) && ( ( ( ((const U8*)s)[1] & 0xFB ) == 0x42 ) || ((const U8*)s)[1] == 0x4A || ((const U8*)s)[1] == 0x55 ) ) ? 2 : 0 )\
+: ((e)-(s) > 0) ?                                                           \
+    ( ( ( ((const U8*)s)[0] & 0xEF ) == 0x81 ) || ( ( ((const U8*)s)[0] & 0xDF ) == 0x86 ) || ( ( ((const U8*)s)[0] & 0xFE ) == 0x88 ) || ( ( ((const U8*)s)[0] & 0xFE ) == 0xA2 ) || ((const U8*)s)[0] == 0xA8 )\
+: 0 )
+
+/*
+	THREE_CHAR_FOLD_HEAD: The first two of three-character multi-char folds
+
+	&regcharclass_multi_char_folds::multi_char_folds('l', 'h')
+*/
+/*** GENERATED CODE ***/
+#define is_THREE_CHAR_FOLD_HEAD_latin1_safe(s,e)                            \
+( ((e)-(s) > 1) ?                                                           \
+    ( ( ( ( ((const U8*)s)[0] & 0xAF ) == 0x81 ) || ( ( ((const U8*)s)[0] & 0xBE ) == 0x88 ) || ( ( ((const U8*)s)[0] & 0xBE ) == 0xA2 ) || ( ( ((const U8*)s)[0] & 0xBF ) == 0xA6 ) || ( ( ((const U8*)s)[0] & 0xBF ) == 0xA8 ) ) ? 1\
+    : ( ( ((const U8*)s)[0] & 0xBF ) == 0x86 ) ?                            \
+	( ( ( ((const U8*)s)[1] & 0xBF ) == 0x86 ) ? 2 : 1 )                \
+    : 0 )                                                                   \
+: ((e)-(s) > 0) ?                                                           \
+    ( ( ( ((const U8*)s)[0] & 0xAF ) == 0x81 ) || ( ( ((const U8*)s)[0] & 0x9F ) == 0x86 ) || ( ( ((const U8*)s)[0] & 0xBE ) == 0x88 ) || ( ( ((const U8*)s)[0] & 0xBE ) == 0xA2 ) || ( ( ((const U8*)s)[0] & 0xBF ) == 0xA8 ) )\
 : 0 )
 
 /*
@@ -1475,7 +1705,7 @@
 /*
 	MULTI_CHAR_FOLD: multi-char strings that are folded to by a single character
 
-	&regcharclass_multi_char_folds::multi_char_folds(1)
+	&regcharclass_multi_char_folds::multi_char_folds('u', 'a')
 */
 /*** GENERATED CODE ***/
 #define is_MULTI_CHAR_FOLD_utf8_safe_part0(s,e)                             \
@@ -1692,7 +1922,7 @@
 /*
 	MULTI_CHAR_FOLD: multi-char strings that are folded to by a single character
 
-	&regcharclass_multi_char_folds::multi_char_folds(0)
+	&regcharclass_multi_char_folds::multi_char_folds('l', 'a')
 */
 /*** GENERATED CODE ***/
 #define is_MULTI_CHAR_FOLD_latin1_safe(s,e)                                 \
@@ -1706,6 +1936,120 @@
     ( ( ( ((const U8*)s)[0] & 0xBF ) == 0x86 ) ?                            \
 	( ( ( ( ((const U8*)s)[1] & 0xBF ) == 0x86 ) || ( ( ((const U8*)s)[1] & 0xBF ) == 0x89 ) || ( ( ((const U8*)s)[1] & 0xBF ) == 0x93 ) ) ? 2 : 0 )\
     : ( ( ( ((const U8*)s)[0] & 0xBF ) == 0xA2 ) && ( ( ((const U8*)s)[1] & 0xBE ) == 0xA2 ) ) ? 2 : 0 )\
+: 0 )
+
+/*
+	THREE_CHAR_FOLD: A three-character multi-char fold
+
+	&regcharclass_multi_char_folds::multi_char_folds('u', '3')
+*/
+/*** GENERATED CODE ***/
+#define is_THREE_CHAR_FOLD_utf8_safe(s,e)                                   \
+( ((e)-(s) > 5) ?                                                           \
+    ( ( 0x86 == ((const U8*)s)[0] ) ?                                       \
+	( ( ( 0x86 == ((const U8*)s)[1] ) && ( 0x89 == ((const U8*)s)[2] || 0x93 == ((const U8*)s)[2] ) ) ? 3 : 0 )\
+    : ( 0xB3 == ((const U8*)s)[0] ) ?                                       \
+	( ( 0x58 == ((const U8*)s)[1] || 0x65 == ((const U8*)s)[1] ) ?      \
+	    ( ( ( ( ( 0xAF == ((const U8*)s)[2] ) && ( 0x43 == ((const U8*)s)[3] ) ) && ( 0xB3 == ((const U8*)s)[4] ) ) && ( 0x67 == ((const U8*)s)[5] ) ) ? 6 : 0 )\
+	: ( ( ( 0x67 == ((const U8*)s)[1] ) && ( 0xAD == ((const U8*)s)[2] ) ) && ( 0x49 == ((const U8*)s)[3] ) ) ? ( ( 0xAD == ((const U8*)s)[4] ) ?\
+			( ( inRANGE(((const U8*)s)[5], 0x41, 0x42 ) ) ? 6 : 0 )\
+		    : ( ( 0xAF == ((const U8*)s)[4] ) && ( 0x43 == ((const U8*)s)[5] ) ) ? 6 : 0 ) : 0 )\
+    : ( 0xB4 == ((const U8*)s)[0] ) ?                                       \
+	( ( 0x46 == ((const U8*)s)[1] ) ?                                   \
+	    ( ( ( 0xAD == ((const U8*)s)[2] ) && ( 0x49 == ((const U8*)s)[3] || 0x5F == ((const U8*)s)[3] ) ) ? ( ( 0xAD == ((const U8*)s)[4] ) ?\
+			( ( inRANGE(((const U8*)s)[5], 0x41, 0x42 ) ) ? 6 : 0 )\
+		    : ( ( 0xAF == ((const U8*)s)[4] ) && ( 0x43 == ((const U8*)s)[5] ) ) ? 6 : 0 ) : 0 )\
+	: ( ( ( ( ( 0x4A == ((const U8*)s)[1] ) && ( 0xAF == ((const U8*)s)[2] ) ) && ( 0x43 == ((const U8*)s)[3] ) ) && ( 0xB3 == ((const U8*)s)[4] ) ) && ( 0x67 == ((const U8*)s)[5] ) ) ? 6 : 0 )\
+    : 0 )                                                                   \
+: ( ( ( ((e)-(s) > 2) && ( 0x86 == ((const U8*)s)[0] ) ) && ( 0x86 == ((const U8*)s)[1] ) ) && ( 0x89 == ((const U8*)s)[2] || 0x93 == ((const U8*)s)[2] ) ) ? 3 : 0 )
+
+/*
+	THREE_CHAR_FOLD: A three-character multi-char fold
+
+	&regcharclass_multi_char_folds::multi_char_folds('l', '3')
+*/
+/*** GENERATED CODE ***/
+#define is_THREE_CHAR_FOLD_latin1_safe(s,e)                                 \
+( ( ( ( ( ((e) - (s)) >= 3 ) && ( ( ((const U8*)s)[0] & 0xBF ) == 0x86 ) ) && ( ( ((const U8*)s)[1] & 0xBF ) == 0x86 ) ) && ( ( ( ((const U8*)s)[2] & 0xBF ) == 0x89 ) || ( ( ((const U8*)s)[2] & 0xBF ) == 0x93 ) ) ) ? 3 : 0 )
+
+/*
+	THREE_CHAR_FOLD_HEAD: The first two of three-character multi-char folds
+
+	&regcharclass_multi_char_folds::multi_char_folds('u', 'h')
+*/
+/*** GENERATED CODE ***/
+#define is_THREE_CHAR_FOLD_HEAD_utf8_safe(s,e)                              \
+( ((e)-(s) > 3) ?                                                           \
+    ( ( ( ( ((const U8*)s)[0] & 0xEF ) == 0x81 ) || ( ( ((const U8*)s)[0] & 0xFE ) == 0x88 ) || ( ( ((const U8*)s)[0] & 0xFE ) == 0xA2 ) || ((const U8*)s)[0] == 0xA6 || ((const U8*)s)[0] == 0xA8 ) ? 1\
+    : ( 0x86 == ((const U8*)s)[0] ) ?                                       \
+	( ( 0x86 == ((const U8*)s)[1] ) ? 2 : 1 )                           \
+    : ( 0xAA == ((const U8*)s)[0] ) ?                                       \
+	( ( 0x6A == ((const U8*)s)[1] ) ? 2 : 0 )                           \
+    : ( 0xB3 == ((const U8*)s)[0] ) ?                                       \
+	( ( 0x53 == ((const U8*)s)[1] || 0x55 == ((const U8*)s)[1] ) ? 2    \
+	: ( 0x58 == ((const U8*)s)[1] || 0x65 == ((const U8*)s)[1] ) ?      \
+	    ( ( ( 0xAF == ((const U8*)s)[2] ) && ( 0x43 == ((const U8*)s)[3] ) ) ? 4 : 2 )\
+	: ( 0x67 == ((const U8*)s)[1] ) ?                                   \
+	    ( ( ( 0xAD == ((const U8*)s)[2] ) && ( 0x49 == ((const U8*)s)[3] ) ) ? 4 : 2 )\
+	: 0 )                                                               \
+    : ( 0xB4 == ((const U8*)s)[0] ) ?                                       \
+	( ( 0x42 == ((const U8*)s)[1] || 0x55 == ((const U8*)s)[1] ) ? 2    \
+	: ( 0x46 == ((const U8*)s)[1] ) ?                                   \
+	    ( ( ( 0xAD == ((const U8*)s)[2] ) && ( 0x49 == ((const U8*)s)[3] || 0x5F == ((const U8*)s)[3] ) ) ? 4 : 2 )\
+	: ( 0x4A == ((const U8*)s)[1] ) ?                                   \
+	    ( ( ( 0xAF == ((const U8*)s)[2] ) && ( 0x43 == ((const U8*)s)[3] ) ) ? 4 : 2 )\
+	: 0 )                                                               \
+    : ( 0xB7 == ((const U8*)s)[0] ) ?                                       \
+	( ( ( 0x52 == ((const U8*)s)[1] ) && ( 0x46 == ((const U8*)s)[2] || 0x62 == ((const U8*)s)[2] || 0x71 == ((const U8*)s)[2] ) ) ? 3 : 0 )\
+    : ( 0xBF == ((const U8*)s)[0] ) ?                                       \
+	( ( inRANGE(((const U8*)s)[1], 0x66, 0x67 ) ) ?                     \
+	    ( ( inRANGE(((const U8*)s)[2], 0x41, 0x48 ) ) ? 3 : 0 )         \
+	: ( ( 0x69 == ((const U8*)s)[1] ) && ( inRANGE(((const U8*)s)[2], 0x41, 0x48 ) || 0x57 == ((const U8*)s)[2] || 0x62 == ((const U8*)s)[2] || 0x6A == ((const U8*)s)[2] ) ) ? 3 : 0 )\
+    : 0 )                                                                   \
+: ((e)-(s) > 2) ?                                                           \
+    ( ( ( ( ((const U8*)s)[0] & 0xEF ) == 0x81 ) || ( ( ((const U8*)s)[0] & 0xFE ) == 0x88 ) || ( ( ((const U8*)s)[0] & 0xFE ) == 0xA2 ) || ((const U8*)s)[0] == 0xA6 || ((const U8*)s)[0] == 0xA8 ) ? 1\
+    : ( 0x86 == ((const U8*)s)[0] ) ?                                       \
+	( ( 0x86 == ((const U8*)s)[1] ) ? 2 : 1 )                           \
+    : ( 0xAA == ((const U8*)s)[0] ) ?                                       \
+	( ( 0x6A == ((const U8*)s)[1] ) ? 2 : 0 )                           \
+    : ( 0xB3 == ((const U8*)s)[0] ) ?                                       \
+	( ( ((const U8*)s)[1] == 0x53 || ((const U8*)s)[1] == 0x55 || ((const U8*)s)[1] == 0x58 || ( ( ((const U8*)s)[1] & 0xFD ) == 0x65 ) ) ? 2 : 0 )\
+    : ( 0xB4 == ((const U8*)s)[0] ) ?                                       \
+	( ( ( ( ((const U8*)s)[1] & 0xFB ) == 0x42 ) || ((const U8*)s)[1] == 0x4A || ((const U8*)s)[1] == 0x55 ) ? 2 : 0 )\
+    : ( 0xB7 == ((const U8*)s)[0] ) ?                                       \
+	( ( ( 0x52 == ((const U8*)s)[1] ) && ( 0x46 == ((const U8*)s)[2] || 0x62 == ((const U8*)s)[2] || 0x71 == ((const U8*)s)[2] ) ) ? 3 : 0 )\
+    : ( 0xBF == ((const U8*)s)[0] ) ?                                       \
+	( ( inRANGE(((const U8*)s)[1], 0x66, 0x67 ) ) ?                     \
+	    ( ( inRANGE(((const U8*)s)[2], 0x41, 0x48 ) ) ? 3 : 0 )         \
+	: ( ( 0x69 == ((const U8*)s)[1] ) && ( inRANGE(((const U8*)s)[2], 0x41, 0x48 ) || 0x57 == ((const U8*)s)[2] || 0x62 == ((const U8*)s)[2] || 0x6A == ((const U8*)s)[2] ) ) ? 3 : 0 )\
+    : 0 )                                                                   \
+: ((e)-(s) > 1) ?                                                           \
+    ( ( ( ( ((const U8*)s)[0] & 0xEF ) == 0x81 ) || ( ( ((const U8*)s)[0] & 0xFE ) == 0x88 ) || ( ( ((const U8*)s)[0] & 0xFE ) == 0xA2 ) || ((const U8*)s)[0] == 0xA6 || ((const U8*)s)[0] == 0xA8 ) ? 1\
+    : ( 0x86 == ((const U8*)s)[0] ) ?                                       \
+	( ( 0x86 == ((const U8*)s)[1] ) ? 2 : 1 )                           \
+    : ( 0xAA == ((const U8*)s)[0] ) ?                                       \
+	( ( 0x6A == ((const U8*)s)[1] ) ? 2 : 0 )                           \
+    : ( 0xB3 == ((const U8*)s)[0] ) ?                                       \
+	( ( ((const U8*)s)[1] == 0x53 || ((const U8*)s)[1] == 0x55 || ((const U8*)s)[1] == 0x58 || ( ( ((const U8*)s)[1] & 0xFD ) == 0x65 ) ) ? 2 : 0 )\
+    : ( ( 0xB4 == ((const U8*)s)[0] ) && ( ( ( ((const U8*)s)[1] & 0xFB ) == 0x42 ) || ((const U8*)s)[1] == 0x4A || ((const U8*)s)[1] == 0x55 ) ) ? 2 : 0 )\
+: ((e)-(s) > 0) ?                                                           \
+    ( ( ( ((const U8*)s)[0] & 0xEF ) == 0x81 ) || ( ( ((const U8*)s)[0] & 0xDF ) == 0x86 ) || ( ( ((const U8*)s)[0] & 0xFE ) == 0x88 ) || ( ( ((const U8*)s)[0] & 0xFE ) == 0xA2 ) || ((const U8*)s)[0] == 0xA8 )\
+: 0 )
+
+/*
+	THREE_CHAR_FOLD_HEAD: The first two of three-character multi-char folds
+
+	&regcharclass_multi_char_folds::multi_char_folds('l', 'h')
+*/
+/*** GENERATED CODE ***/
+#define is_THREE_CHAR_FOLD_HEAD_latin1_safe(s,e)                            \
+( ((e)-(s) > 1) ?                                                           \
+    ( ( ( ( ((const U8*)s)[0] & 0xAF ) == 0x81 ) || ( ( ((const U8*)s)[0] & 0xBE ) == 0x88 ) || ( ( ((const U8*)s)[0] & 0xBE ) == 0xA2 ) || ( ( ((const U8*)s)[0] & 0xBF ) == 0xA6 ) || ( ( ((const U8*)s)[0] & 0xBF ) == 0xA8 ) ) ? 1\
+    : ( ( ((const U8*)s)[0] & 0xBF ) == 0x86 ) ?                            \
+	( ( ( ((const U8*)s)[1] & 0xBF ) == 0x86 ) ? 2 : 1 )                \
+    : 0 )                                                                   \
+: ((e)-(s) > 0) ?                                                           \
+    ( ( ( ((const U8*)s)[0] & 0xAF ) == 0x81 ) || ( ( ((const U8*)s)[0] & 0x9F ) == 0x86 ) || ( ( ((const U8*)s)[0] & 0xBE ) == 0x88 ) || ( ( ((const U8*)s)[0] & 0xBE ) == 0xA2 ) || ( ( ((const U8*)s)[0] & 0xBF ) == 0xA8 ) )\
 : 0 )
 
 /*
@@ -1855,55 +2199,57 @@
 #endif /* PERL_REGCHARCLASS_H_ */
 
 /* Generated from:
- * d34c77b7e7a94986cc82056919f4ffc1503b73091561e16bd8ef145ac0fd04c5 lib/Unicode/UCD.pm
- * 5e91b649379ec79af7cfb6b09410a24557cba4c6d733cd0a2b8a78a1448736d2 lib/unicore/ArabicShaping.txt
- * f5feb19cd084b2b1568fbc0f94f4b4b54941406e7fb36c7570f8352fd5022dbe lib/unicore/BidiBrackets.txt
- * e6cbd8ffe94f2e0fbfa6695d6c06c1e72eef7d3aa93cb6329d111285198b5e62 lib/unicore/BidiMirroring.txt
- * a28b205afe8625fffdb6544a5fe14cf02b91493d9900f07820fa2102a17548f7 lib/unicore/Blocks.txt
- * 9c772627c6ee77eea6a17b42927b8ee28ca05dc65d6a511062104baaf3d12294 lib/unicore/CaseFolding.txt
- * abc8394c5bde62453118b00c1c5842160a04d7fffb2e829ee5426b846596d081 lib/unicore/CompositionExclusions.txt
- * 2fc081011d8fabaf7cf4937732dd5a6d6a57e492c43f3adfeded513387ee0ec3 lib/unicore/DAge.txt
- * a6eb7a8671fb532fbd88c37fd7b20b5b2e7dbfc8b121f74c14abe2947db0da68 lib/unicore/DCoreProperties.txt
- * 92dcdda84142194a1596f22180fcdf8c0e7f86897f09cc9203c7dc636c549f5f lib/unicore/DNormalizationProps.txt
- * 904500178b2e752635bef27aaed3a2a3718a100bce35ff96b3890be7a8315d8f lib/unicore/EastAsianWidth.txt
- * 1989b03d93023d8f5cc33eebf0d2ea80c8bd8f8c97843059ea039acb582c2078 lib/unicore/EmojiData.txt
- * d7930c2a7318e66b4ba756d5e5b41fbc586c2ad43d450ae9d320a758510bae2e lib/unicore/EquivalentUnifiedIdeograph.txt
- * 8606af08712a8c18fe268d418e2e5a87eddee6e190cce4c2d5a76b4fadf035e8 lib/unicore/HangulSyllableType.txt
- * 49a1bf18b048454154881f6a8a605b5e2fc73e85fcc4df1cb26d52e8c2aeb9bf lib/unicore/IndicPositionalCategory.txt
- * 1b6f3ef6e00e5b2e2a93d2d3c954ca1cce368599c5f11874cd0f0ce222d4637b lib/unicore/IndicSyllabicCategory.txt
- * 285c5c1ae458bc3ccd6a1398a94d2d67ce6bc1d7fc0f098762836050345e9434 lib/unicore/Jamo.txt
- * 961f842fc70b5afd1d82c6645e68c10d1f701382aed38ae38cb2ff27f671903c lib/unicore/LineBreak.txt
- * ff61a0687d2f32c0dd1094254b8bde967883b43c2d4d50fd17531d498e41ab2c lib/unicore/NameAliases.txt
- * d3eb9a288ebeaf9de1237989f490705e287b6f610b59d2459fb1b7c2d8e39c39 lib/unicore/NamedSequences.txt
- * d30d3ee430cf3527449d024954f053e419fa4aa2246eb59e5cd8d621af0c4b3f lib/unicore/PropList.txt
- * efce54f7c715a332c19b3d14c6a0eea30c6cde91caf6ff0d21c755be933736f4 lib/unicore/PropValueAliases.txt
- * d3cc3f9f0b6a8f0b7ef1d6ef202675426c28f4a75de01fc69ed977a93a00982b lib/unicore/PropertyAliases.txt
- * 3746848c181b5dbc1e614dfac9b8a5e3568e6525c693ac14e692ac55dec57e91 lib/unicore/ScriptExtensions.txt
- * e6313a8edfd24f36c7a006fbcf1d1b7245b5dd009c6dde80441f0da08b822c43 lib/unicore/Scripts.txt
- * 817ce2e9edca8e075a153f54b8f3b020345e37652cd2bda9b1495c366af17e7e lib/unicore/SpecialCasing.txt
- * 93ab1acd8fd9d450463b50ae77eab151a7cda48f98b25b56baed8070f80fc936 lib/unicore/UnicodeData.txt
- * ec5ba64af58297a46de17848eb984d2b231adb304de92e9d0d3befdbf9dc2551 lib/unicore/VerticalOrientation.txt
- * 95bd55cf803b93eb0b4990cf0e1d70ede263b36412d9c6921fd6f15cef058961 lib/unicore/auxiliary/GCBTest.txt
- * 39d73448fd257e6082f83ddf4c8bf6feb191e85dc8fc56b1a8512482de5e3dea lib/unicore/auxiliary/GraphemeBreakProperty.txt
- * f385e70f79f5959ae66d64b00f4bda39db6cef78e5363a0cdd88db46eafc6c8f lib/unicore/auxiliary/LBTest.txt
- * 7d6c909af97d0ab545a132d412f6e4e65c7eb5158514a7feb9bf00bcd05875f9 lib/unicore/auxiliary/SBTest.txt
- * c47d674ef4170c46185bf56f7a4c6627f65f012295e0994f7dc4aea51f8fd8cf lib/unicore/auxiliary/SentenceBreakProperty.txt
- * 3e3320bbbe775de7f1a0b9a30021eb949116a9b05cb461c90596c5ecf1743831 lib/unicore/auxiliary/WBTest.txt
- * f221f89fe3bb3becc00de726d5694c4b7f464c316baff6d339b2ff3900bcb96c lib/unicore/auxiliary/WordBreakProperty.txt
- * db2c41c618bab54b00e58223ad11cec550f9b9fd1a471de236e660da92fe4870 lib/unicore/extracted/DBidiClass.txt
- * fecd8a1c49935d794c4c1012f4158aa536a13049a4c10d01aaf7b5f90f3b2cbc lib/unicore/extracted/DBinaryProperties.txt
- * db6f38fb4aa8b9181b5e6a9f320de9d5c2c9b5687116a619b3cb90138b025e0b lib/unicore/extracted/DCombiningClass.txt
- * 2524f69c175831fd84bfbaf13ea37992f41db167d728c51b1d0002c1d0b130b0 lib/unicore/extracted/DDecompositionType.txt
- * 16852301d54ae59b5cfe0daa6b8e17fb688ed055d59b2a5a11eaafc650cc9d30 lib/unicore/extracted/DEastAsianWidth.txt
- * 78f898b988049a5bea5039cea6ffe87a92596859ac660a6c438519b512fe2ee6 lib/unicore/extracted/DGeneralCategory.txt
- * 33441692403901287c834f96bd33b671133a6f74e2732c61a497608b9e434932 lib/unicore/extracted/DJoinGroup.txt
- * a792ac5ef602e3bace679cc96d7491701dcdb73d81c782253de88fdcc5e70e50 lib/unicore/extracted/DJoinType.txt
- * 78e2600e24fa7d5ab62117de50b382f8b31b08401c37a0782c38dacb340b64e7 lib/unicore/extracted/DLineBreak.txt
- * 1bde4ad73e271c6349fbd1972e54f38bba5cc1900c28f678e79b9e8909b31793 lib/unicore/extracted/DNumType.txt
- * 6278722699123f3890e4b1cc42011e96d8960e4958a3b93484361530983d2611 lib/unicore/extracted/DNumValues.txt
- * b3d90fc23817ea4e33e9a90107c0a6c7b23314efd5712905ed172624d5524693 lib/unicore/mktables
- * a712c758275b460d18fa77a26ed3589689bb3f69dcc1ea99b913e32db92a5cd2 lib/unicore/version
+ * d60b1a3dffe16c4aaaf3f00d21993bb320d05e9828b106182214764d4c69935c lib/Unicode/UCD.pm
+ * ce96627d4fc91b4fd886c409caeb9b76cf7bd345e12f05c6701add7f233f6437 lib/unicore/ArabicShaping.txt
+ * 0e69eef3da722cc104522d8372e86d5b86bb7afcc761b0c991e39e832294946d lib/unicore/BidiBrackets.txt
+ * a00d9d21585106a52113fb7b1d3d0373a5835be72e76862fb559ebddd474d70e lib/unicore/BidiMirroring.txt
+ * 81a82b6a9fcf1a9c12f588d7a1decd73a9afdc4cac95b0eb7e576e7942d6c19f lib/unicore/Blocks.txt
+ * 99d231d7c91688bbe8ca8ccebcc2f46b5b222f844babe4827295bae11e2abe5f lib/unicore/CaseFolding.txt
+ * 38badafd818d8405324fe298c0676be0c95186368c84b5368375fd871a645144 lib/unicore/CompositionExclusions.txt
+ * e779a443d3aa2a3166a15becaa2b737c922480e32c0453d5956093633555078f lib/unicore/DAge.txt
+ * a5d45f59b39deaab3c72ce8c1a2e212a5e086dff11b1f9d5bb0e352642e82248 lib/unicore/DCoreProperties.txt
+ * 3ac44e11c84bdaf6b207d2c2c20eed857ae17052393fc7f71b0fe951186ba906 lib/unicore/DNormalizationProps.txt
+ * 4f822ec7a9ebbb3138ad29bade8b9688d25b39c7a3c0b7431f01e7229e4fcb6e lib/unicore/EastAsianWidth.txt
+ * fc535aa1047a70105ab9a22c2b4c3f363a2ff02fe48ebbc5eeb9873b2752ff0b lib/unicore/EquivalentUnifiedIdeograph.txt
+ * b9c5158ce944d2fec57e0e4ecb716bdabfc3bdde73525f1772fe03f61a30d473 lib/unicore/HangulSyllableType.txt
+ * 36c1b2a626ff1fb23b8b21e6ea8712698f8ce668dded1cb48b8ddf6a6a1b04e9 lib/unicore/IdStatus.txt
+ * 4857c4ffa3898e6128b2d46b0a02e499a663fb91464a69ef3611096f01293acc lib/unicore/IdType.txt
+ * 69197b019fa5f2fb0d8c6ed1ed8acb9f2e8b5b8f45a947953ffa652f3bf54983 lib/unicore/IndicPositionalCategory.txt
+ * 6604e2f0fde7428675364aa0006bc686b79488dcc60ae8cb29800af2be3352e8 lib/unicore/IndicSyllabicCategory.txt
+ * 84ead63924aaa74b988b2eaf254a8733276ed108633ce2ef77a9ee1de7818162 lib/unicore/Jamo.txt
+ * d5abcd8f54c8a2aa912924c485ccf7f968ad98feaa303d8e9a29ad89172f1faf lib/unicore/LineBreak.txt
+ * 985128e8c8b2540233331d9b27d897d2c23bd5bcf1d05da960befce6efc59542 lib/unicore/NameAliases.txt
+ * 27282b8aa01d4d0c44aef436cb74195ae8639ffa187aeee4e6247af76febea76 lib/unicore/NamedSequences.txt
+ * 485b5a3ed25dbf1f94dfa5a9b69d8b4550ffd0c33045ccc55ccfd7c80b2a40cf lib/unicore/PropList.txt
+ * 6b3902e9268cd843fe65cbdea992108c9528343ec0679f800b96f356bb553e5a lib/unicore/PropValueAliases.txt
+ * 2bd5777847e3d6add3c7e5c0d1393ddcab89e5a0ac3ff498cb0c53041f0b86e4 lib/unicore/PropertyAliases.txt
+ * 03a61dc89422e44cc2b73e8e893321007880ab69e2a4d281c0f1bc29c602b9d0 lib/unicore/ScriptExtensions.txt
+ * 9a5ed1ec9b5f0d7147e9371ad792ab39203611af7637cff2aa4a5c663b172cde lib/unicore/Scripts.txt
+ * 6424312f1dc39b22e0ff9c0ffb13dfad424d9b03e6a6dc6bca941f6bf5ef1ffd lib/unicore/SpecialCasing.txt
+ * bdbffbbfc8ad4d3a6d01b5891510458f3d36f7170422af4ea2bed3211a73e8bb lib/unicore/UnicodeData.txt
+ * 160f41816234addb511901d5f21febd69574578dd93de6ef8153e35693325575 lib/unicore/VerticalOrientation.txt
+ * 32dfb37d21db530529a6ec3dc13d96f21f8e7c7faf7ff3db8a9760cd76cec81d lib/unicore/auxiliary/GCBTest.txt
+ * 2bd3c5e2d62701ff81fb3ec318e179a4618cabb1493b1e0dd2b4e7e56c5437c4 lib/unicore/auxiliary/GraphemeBreakProperty.txt
+ * c51fbebfa82a0f36473b44bfd71d5ef6cb6a1f81fb313375dc9a1910d79bb2b6 lib/unicore/auxiliary/LBTest.txt
+ * 80b0107750818d8f370bd120b6fe56b6855b60581f72affe8b60409a469b4b65 lib/unicore/auxiliary/SBTest.txt
+ * 09e3166ebab166ac630a227f77f4e794ebd433271abd5588f5a67e7f199c71ee lib/unicore/auxiliary/SentenceBreakProperty.txt
+ * bf5373ce28a5df06796c93dc159dd15a997bb2950c92704b40ae8190cfc3716d lib/unicore/auxiliary/WBTest.txt
+ * a2b7373cf2fe3fa3b26dbb53405ca849985f771ff47f1c61743978003ff80499 lib/unicore/auxiliary/WordBreakProperty.txt
+ * d2686f400a638c80775d7c662556fb8fa8dd3bbe4aa548d9d31624264c6e1bb1 lib/unicore/emoji/emoji.txt
+ * b827ae5da8c2b08947cc9a120a7b7fd2f1676fb160b508df78075381635b127c lib/unicore/extracted/DBidiClass.txt
+ * 6fdc5b5ef40444a8f0c772e6b67c00498d4216fe0c0fdf76744ce338f2ad3810 lib/unicore/extracted/DBinaryProperties.txt
+ * e14928a5bf6ad5958a80332bd42e96e14420080a95c660e5da29384e496755d0 lib/unicore/extracted/DCombiningClass.txt
+ * 579a03281fbe87b78d5d9a8523de4d255edd7e4ca6eab0e4c7729de97e9b89b1 lib/unicore/extracted/DDecompositionType.txt
+ * ad83c59b257e9d480ffd3001d4ac240c5fed7cb1919453e1c4e8877035256bcd lib/unicore/extracted/DEastAsianWidth.txt
+ * 4502f0969e4e6558c4b4c6ca4c23dad70b863d61dd3d5eed1a62a6c3c99fd570 lib/unicore/extracted/DGeneralCategory.txt
+ * 00bb88b89e2adb646f3177f9444e2d3192386b81a5de9556104b338274b253e1 lib/unicore/extracted/DJoinGroup.txt
+ * ac835b6e11a60c9820d3cf2d1cb0558dd68efb8f53f404a51632e4726690a6d7 lib/unicore/extracted/DJoinType.txt
+ * baba9dfc133e3cb770a89aaf0973b1341fa61c2da6c176baf6428898b3b568d8 lib/unicore/extracted/DLineBreak.txt
+ * 6d4a8c945dd7db83ed617cbb7d937de7f4ecf016ff22970d846e996a7c9a2a5d lib/unicore/extracted/DNumType.txt
+ * 5b7c14380d5cceeaffcfbc18db1ed936391d2af2d51f5a41f1a17b692c77e59b lib/unicore/extracted/DNumValues.txt
+ * ee0dd174fd5b158d82dfea95d7d822ca0bfcd490182669353dca3ab39a8ee807 lib/unicore/mktables
+ * 50b85a67451145545a65cea370dab8d3444fbfe07e9c34cef560c5b7da9d3eef lib/unicore/version
  * 2680b9254eb236c5c090f11b149605043e8c8433661b96efc4a42fb4709342a5 regen/charset_translations.pl
- * 830144f6afdd047b009754ffa06134397268f6638837fe85283483eb0cfdd558 regen/regcharclass.pl
- * c6b0b0b7e4ac4f5a57d203e84194749987477ea55b2366e3b343aadf8cc7d6b5 regen/regcharclass_multi_char_folds.pl
+ * f9a393e7add8c7c2728356473ce5b52246d51295b2da0c48fb6f0aa21799e2bb regen/regcharclass.pl
+ * b549b9989c6987563dad8f8ad6b984c8026cdc283d60ea34457959c5d4b4ade0 regen/regcharclass_multi_char_folds.pl
  * ex: set ro: */

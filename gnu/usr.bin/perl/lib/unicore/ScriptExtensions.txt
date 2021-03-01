@@ -1,6 +1,6 @@
-# ScriptExtensions-12.1.0.txt
-# Date: 2019-04-01, 09:10:42 GMT
-# © 2019 Unicode®, Inc.
+# ScriptExtensions-13.0.0.txt
+# Date: 2020-01-22, 00:07:43 GMT
+# © 2020 Unicode®, Inc.
 # Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 #
@@ -147,19 +147,10 @@
 
 # Script_Extensions=Arab Thaa
 
-0660..0669    ; Arab Thaa # Nd  [10] ARABIC-INDIC DIGIT ZERO..ARABIC-INDIC DIGIT NINE
 FDF2          ; Arab Thaa # Lo       ARABIC LIGATURE ALLAH ISOLATED FORM
 FDFD          ; Arab Thaa # So       ARABIC LIGATURE BISMILLAH AR-RAHMAN AR-RAHEEM
 
-# Total code points: 12
-
-# ================================================
-
-# Script_Extensions=Armn Geor
-
-0589          ; Armn Geor # Po       ARMENIAN FULL STOP
-
-# Total code points: 1
+# Total code points: 2
 
 # ================================================
 
@@ -224,6 +215,14 @@ A66F          ; Cyrl Glag # Mn       COMBINING CYRILLIC VZMET
 # Script_Extensions=Cyrl Perm
 
 0483          ; Cyrl Perm # Mn       COMBINING CYRILLIC TITLO
+
+# Total code points: 1
+
+# ================================================
+
+# Script_Extensions=Cyrl Syrc
+
+1DF8          ; Cyrl Syrc # Mn       COMBINING DOT ABOVE LEFT
 
 # Total code points: 1
 
@@ -305,6 +304,14 @@ A8F3          ; Deva Taml # Lo       DEVANAGARI SIGN CANDRABINDU VIRAMA
 
 # ================================================
 
+# Script_Extensions=Hani Latn
+
+A700..A707    ; Hani Latn # Sk   [8] MODIFIER LETTER CHINESE TONE YIN PING..MODIFIER LETTER CHINESE TONE YANG RU
+
+# Total code points: 8
+
+# ================================================
+
 # Script_Extensions=Hira Kana
 
 3031..3035    ; Hira Kana # Lm   [5] VERTICAL KANA REPEAT MARK..VERTICAL KANA REPEAT MARK LOWER HALF
@@ -349,6 +356,14 @@ FF9E..FF9F    ; Hira Kana # Lm   [2] HALFWIDTH KATAKANA VOICED SOUND MARK..HALFW
 061C          ; Arab Syrc Thaa # Cf       ARABIC LETTER MARK
 
 # Total code points: 1
+
+# ================================================
+
+# Script_Extensions=Arab Thaa Yezi
+
+0660..0669    ; Arab Thaa Yezi # Nd  [10] ARABIC-INDIC DIGIT ZERO..ARABIC-INDIC DIGIT NINE
+
+# Total code points: 10
 
 # ================================================
 
@@ -409,16 +424,6 @@ A92E          ; Kali Latn Mymr # Po       KAYAH LI SIGN CWI
 
 # ================================================
 
-# Script_Extensions=Arab Rohg Syrc Thaa
-
-060C          ; Arab Rohg Syrc Thaa # Po       ARABIC COMMA
-061B          ; Arab Rohg Syrc Thaa # Po       ARABIC SEMICOLON
-061F          ; Arab Rohg Syrc Thaa # Po       ARABIC QUESTION MARK
-
-# Total code points: 3
-
-# ================================================
-
 # Script_Extensions=Beng Deva Gran Knda
 
 1CD0          ; Beng Deva Gran Knda # Mn       VEDIC TONE KARSHANA
@@ -441,6 +446,16 @@ A92E          ; Kali Latn Mymr # Po       KAYAH LI SIGN CWI
 0966..096F    ; Deva Dogr Kthi Mahj # Nd  [10] DEVANAGARI DIGIT ZERO..DEVANAGARI DIGIT NINE
 
 # Total code points: 10
+
+# ================================================
+
+# Script_Extensions=Arab Rohg Syrc Thaa Yezi
+
+060C          ; Arab Rohg Syrc Thaa Yezi # Po       ARABIC COMMA
+061B          ; Arab Rohg Syrc Thaa Yezi # Po       ARABIC SEMICOLON
+061F          ; Arab Rohg Syrc Thaa Yezi # Po       ARABIC QUESTION MARK
+
+# Total code points: 3
 
 # ================================================
 

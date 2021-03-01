@@ -8,9 +8,9 @@ perlandroid - Perl under Android
 
 =head1 SYNOPSIS
 
-The first portions of this documents contains instructions
+The first portions of this document contains instructions
 to cross-compile Perl for Android 2.0 and later, using the
-binaries provided by Google.  The latter portion describes how to build
+binaries provided by Google.  The latter portions describe how to build
 perl native using one of the toolchains available on the Play Store.
 
 =head1 DESCRIPTION
@@ -181,10 +181,13 @@ itself off once, and then back on again.
 =head1 Native Builds
 
 While Google doesn't provide a native toolchain for Android,
-you can still get one from the Play Store; for example, there's the CCTools
-app which you can get for free.
-Keep in mind that you want a full
-toolchain; some apps tend to default to installing only a barebones
+you can still get one from the Play Store.
+
+=head2 CCTools
+
+You may be able to get the CCTools app, which is free.
+Keep in mind that you want a full toolchain;
+some apps tend to default to installing only a barebones
 version without some important utilities, like ar or nm.
 
 Once you have the toolchain set up properly, the only
@@ -196,6 +199,17 @@ compiling perl is little more than:
  export SYSROOT=<location of the native toolchain>
  export LD_LIBRARY_PATH="$SYSROOT/lib:`pwd`:`pwd`/lib:`pwd`/lib/auto:$LD_LIBRARY_PATH"
  sh Configure -des -Dsysroot=$SYSROOT -Alibpth="/system/lib /vendor/lib"
+
+=head2 Termux
+
+L<Termux|https://termux.com/> provides an Android terminal emulator and Linux environment.
+It comes with a cross-compiled perl already installed.
+
+Natively compiling perl 5.30 or later should be as straightforward as:
+
+ sh Configure -des -Alibpth="/system/lib /vendor/lib"
+
+This certainly works on Android 8.1 (Oreo) at least...
 
 =head1 AUTHOR
 

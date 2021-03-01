@@ -770,7 +770,7 @@ seen on github.com it must be a local branch whose first name
 component is precisely C<smoke-me>.
 
 The procedure for doing this is roughly as follows (using the example of
-of tonyc's smoke-me branch called win32stat):
+tonyc's smoke-me branch called win32stat):
 
 First, make a local branch and switch to it:
 

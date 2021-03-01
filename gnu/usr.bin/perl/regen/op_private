@@ -88,8 +88,8 @@ F<regen/opcodes> based on various criteria. These are:
 which respectively return a list of op names where:
 
     field 3 of regen/opcodes specifies 'ck_foo' as the check function;
-    field 4 of of regen/opcodes has flag or type 'X' set;
-    argument field N of of regen/opcodes matches 'XYZ';
+    field 4 of regen/opcodes has flag or type 'X' set;
+    argument field N of regen/opcodes matches 'XYZ';
 
 For example
 
@@ -513,8 +513,12 @@ addbits('sassign',
 
 for (qw(trans transr)) {
     addbits($_,
-        0 => qw(OPpTRANS_FROM_UTF   <UTF),    # search chars are utf8
-        1 => qw(OPpTRANS_TO_UTF     >UTF),    # replacement chars are utf8
+        # There is a character in the lhs representable not using UTF-8 whose
+        # replacement requires UTF-8.
+        0 => qw(OPpTRANS_CAN_FORCE_UTF8 CAN_FORCE_UTF8),
+
+        1 => qw(OPpTRANS_USE_SVOP   USE_SVOP),# This is implemented as an svop
+                                              # vs pvop
         2 => qw(OPpTRANS_IDENTICAL  IDENT),   # right side is same as left
         3 => qw(OPpTRANS_SQUASH     SQUASH),  # /s
         # 4 is used for OPpTARGET_MY

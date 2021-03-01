@@ -20,7 +20,7 @@ BEGIN {
 use warnings;
 use strict;
 
-plan 2582;
+plan 2583;
 
 use B ();
 
@@ -662,4 +662,16 @@ test_opcount(0, "multiconcat: 4 adjacent consts",
                     multiconcat => 1,
                     concat      => 0,
                     sassign     => 0,
+                });
+
+# multiconcat shouldn't include the assign if the LHS has 'local'
+
+test_opcount(0, "multiconcat: local assign",
+                sub { our $global; local $global = "$global-X" },
+                {
+                    const       => 0,
+                    gvsv        => 2,
+                    multiconcat => 1,
+                    concat      => 0,
+                    sassign     => 1,
                 });

@@ -65,13 +65,16 @@ is $@, '', "push an 'encode' filter (default to utf-8)" ;
 
 }
 
-VerifyData(\%h1,
+{
+    local $TODO = "Currently broken on EBCDIC" if $::IS_EBCDIC;
+    VerifyData(\%h1,
 	{
 		'alpha'	=> "\N{alpha}",
 		"beta"	=> "\N{beta}",
 		"\N{gamma}"=> "gamma",
 		""		=> "",
 	});
+}
 
 eval { $db1->Filter_Pop() };
 is $@, '', "pop the 'utf8' filter" ;

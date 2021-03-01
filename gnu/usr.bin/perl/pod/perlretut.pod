@@ -939,7 +939,7 @@ prints
 Even if there are no groupings in a regexp, it is still possible to
 find out what exactly matched in a string.  If you use them, Perl
 will set C<$`> to the part of the string before the match, will set C<$&>
-to the part of the string that matched, and will set C<'$'> to the part
+to the part of the string that matched, and will set C<$'> to the part
 of the string after the match.  An example:
 
     $x = "the cat caught the mouse";
@@ -951,7 +951,7 @@ first character position in the string and stopped; it never saw the
 second "the".
 
 If your code is to run on Perl versions earlier than
-5.20, it is worthwhile to note that using C<$`> and C<'$'>
+5.20, it is worthwhile to note that using C<$`> and C<$'>
 slows down regexp matching quite a bit, while C<$&> slows it down to a
 lesser extent, because if they are used in one regexp in a program,
 they are generated for I<all> regexps in the program.  So if raw
@@ -968,7 +968,7 @@ variables may be used.  These are only set if the C</p> modifier is
 present.  Consequently they do not penalize the rest of the program.  In
 Perl 5.20, C<${^PREMATCH}>, C<${^MATCH}> and C<${^POSTMATCH}> are available
 whether the C</p> has been used or not (the modifier is ignored), and
-C<$`>, C<'$'> and C<$&> do not cause any speed difference.
+C<$`>, C<$'> and C<$&> do not cause any speed difference.
 
 =head2 Non-capturing groupings
 
@@ -1609,7 +1609,7 @@ C<'m'> delimiters act like quotes.  If the regexp evaluates to the empty string,
 the regexp in the I<last successful match> is used instead.  So we have
 
     "dog" =~ /d/;  # 'd' matches
-    "dogbert =~ //;  # this matches the 'd' regexp used before
+    "dogbert" =~ //;  # this matches the 'd' regexp used before
 
 
 =head3 Global matching
@@ -1927,7 +1927,7 @@ terminated by C<\E> or thrown over by another C<\U> or C<\L>:
 
     $x = "This word is in lower case:\L SHOUT\E";
     $x =~ /shout/;       # matches
-    $x = "I STILL KEYPUNCH CARDS FOR MY 360"
+    $x = "I STILL KEYPUNCH CARDS FOR MY 360";
     $x =~ /\Ukeypunch/;  # matches punch card string
 
 If there is no C<\E>, case is converted until the end of the
@@ -2001,9 +2001,20 @@ L<charnames> pragma:
     print "\N{sigma} is Greek sigma\n";
 
 An index of character names is available on-line from the Unicode
-Consortium, L<http://www.unicode.org/charts/charindex.html>; explanatory
+Consortium, L<https://www.unicode.org/charts/charindex.html>; explanatory
 material with links to other resources at
-L<http://www.unicode.org/standard/where>.
+L<https://www.unicode.org/standard/where>.
+
+Starting in Perl v5.32, an alternative to C<\N{...}> for full names is
+available, and that is to say
+
+ /\p{Name=greek small letter sigma}/
+
+The casing of the character name is irrelevant when used in C<\p{}>, as
+are most spaces, underscores and hyphens.  (A few outlier characters
+cause problems with ignoring all of them always.  The details (which you
+can look up when you get more proficient, and if ever needed) are in
+L<https://www.unicode.org/reports/tr44/tr44-24.html#UAX44-LM2>).
 
 The answer to requirement 2) is that a regexp (mostly)
 uses Unicode characters.  The "mostly" is for messy backward
@@ -2070,7 +2081,7 @@ RING>" is a grapheme cluster with base character "A" and combining character
 as in the word E<Aring>ngstrom.
 
 For the full and latest information about Unicode see the latest
-Unicode standard, or the Unicode Consortium's website L<http://www.unicode.org>
+Unicode standard, or the Unicode Consortium's website L<https://www.unicode.org>
 
 As if all those classes weren't enough, Perl also defines POSIX-style
 character classes.  These have the form C<[:I<name>:]>, with I<name> the
@@ -2321,11 +2332,15 @@ characters on either side differ in their "word-ness".
 The lookahead and lookbehind assertions are generalizations of the
 anchor concept.  Lookahead and lookbehind are zero-width assertions
 that let us specify which characters we want to test for.  The
-lookahead assertion is denoted by C<(?=regexp)> and the lookbehind
-assertion is denoted by C<< (?<=fixed-regexp) >>.  Some examples are
+lookahead assertion is denoted by C<(?=regexp)> or (starting in 5.32,
+experimentally in 5.28) C<(*pla:regexp)> or
+C<(*positive_lookahead:regexp)>; and the lookbehind assertion is denoted
+by C<< (?<=fixed-regexp) >> or (starting in 5.32, experimentally in
+5.28) C<(*plb:fixed-regexp)> or C<(*positive_lookbehind:fixed-regexp)>.
+Some examples are
 
     $x = "I catch the housecat 'Tom-cat' with catnip";
-    $x =~ /cat(?=\s)/;   # matches 'cat' in 'housecat'
+    $x =~ /cat(*pla:\s)/;   # matches 'cat' in 'housecat'
     @catwords = ($x =~ /(?<=\s)cat\w+/g);  # matches,
                                            # $catwords[0] = 'catch'
                                            # $catwords[1] = 'catnip'
@@ -2333,15 +2348,19 @@ assertion is denoted by C<< (?<=fixed-regexp) >>.  Some examples are
     $x =~ /(?<=\s)cat(?=\s)/; # doesn't match; no isolated 'cat' in
                               # middle of $x
 
-Note that the parentheses in C<(?=regexp)> and C<< (?<=regexp) >> are
+Note that the parentheses in these are
 non-capturing, since these are zero-width assertions.  Thus in the
 second regexp, the substrings captured are those of the whole regexp
-itself.  Lookahead C<(?=regexp)> can match arbitrary regexps, but
-lookbehind C<< (?<=fixed-regexp) >> only works for regexps of fixed
-width, I<i.e.>, a fixed number of characters long.  Thus
-C<< (?<=(ab|bc)) >> is fine, but C<< (?<=(ab)*) >> is not.  The
-negated versions of the lookahead and lookbehind assertions are
+itself.  Lookahead can match arbitrary regexps, but
+lookbehind prior to 5.30 C<< (?<=fixed-regexp) >> only works for regexps
+of fixed width, I<i.e.>, a fixed number of characters long.  Thus
+C<< (?<=(ab|bc)) >> is fine, but C<< (?<=(ab)*) >> prior to 5.30 is not.
+
+The negated versions of the lookahead and lookbehind assertions are
 denoted by C<(?!regexp)> and C<< (?<!fixed-regexp) >> respectively.
+Or, starting in 5.32 (experimentally in 5.28), C<(*nla:regexp)>,
+C<(*negative_lookahead:regexp)>, C<(*nlb:regexp)>, or
+C<(*negative_lookbehind:regexp)>.
 They evaluate true if the regexps do I<not> match:
 
     $x = "foobar";
@@ -2361,27 +2380,16 @@ by looking ahead and behind:
                   | (?<=-)  (?=\S)   # a '-' followed by any non-space
                   /x, $str;          # @toks = qw(one two - - - 6 - 8)
 
-Starting in Perl 5.28, experimentally, alphabetic equivalents to these
-assertions are added, so you can use whichever is most memorable for
-your tastes.
-
- (?=...)        (*pla:...) or (*positive_lookahead:...)
- (?!...)        (*nla:...) or (*negative_lookahead:...)
- (?<=...)       (*plb:...) or (*positive_lookbehind:...)
- (?<!...)       (*nlb:...) or (*negative_lookbehind:...)
- (?>...)        (*atomic:...)
-
-Using any of these will raise (unless turned off) a warning in the
-C<experimental::alpha_assertions> category.
-
 =head2 Using independent subexpressions to prevent backtracking
 
-I<Independent subexpressions> are regular expressions, in the
-context of a larger regular expression, that function independently of
-the larger regular expression.  That is, they consume as much or as
-little of the string as they wish without regard for the ability of
-the larger regexp to match.  Independent subexpressions are represented
-by C<< (?>regexp) >>.  We can illustrate their behavior by first
+I<Independent subexpressions> (or atomic subexpressions) are regular
+expressions, in the context of a larger regular expression, that
+function independently of the larger regular expression.  That is, they
+consume as much or as little of the string as they wish without regard
+for the ability of the larger regexp to match.  Independent
+subexpressions are represented by
+C<< (?>regexp) >> or (starting in 5.32, experimentally in 5.28)
+C<(*atomic:regexp)>.  We can illustrate their behavior by first
 considering an ordinary regexp:
 
     $x = "ab";

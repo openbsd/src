@@ -482,7 +482,7 @@ our(@ISA, @EXPORT, @EXPORT_OK, %EXPORT_TAGS, $VERSION);
 	      clearcache clearallcache disablecache enablecache);
 %EXPORT_TAGS=( all => [ @EXPORT, @EXPORT_OK ] ) ;
 
-$VERSION = 1.22;
+$VERSION = 1.23;
 
 # --- ':hireswallclock' special handling
 
@@ -796,7 +796,7 @@ sub countit {
 	if ( $tc <= 0 and $n > 1024 ) {
 	    my $d = timediff($t1, $t0);
 	    # note that $d is the total CPU time taken to call timeit(),
-	    # while $tc is is difference in CPU secs between the empty run
+	    # while $tc is the difference in CPU secs between the empty run
 	    # and the code run. If the code is trivial, its possible
 	    # for $d to get large while $tc is still zero (or slightly
 	    # negative). Bail out once timeit() starts taking more than a

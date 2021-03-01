@@ -1751,7 +1751,7 @@ target matched string was in UTF-8.
 Narrow the filename check in F<strict.pm> and F<warnings.pm>. Previously,
 it assumed that if the filename (without the F<.pmc?> extension) differed
 from the package name, if was a misspelled use statement (i.e. C<use Strict>
-instead of C<use strict>). We now check whether there's really a 
+instead of C<use strict>). We now check whether there's really a
 miscapitalization happening, and not some other issue.
 
 =item *
@@ -1761,7 +1761,7 @@ regexes. [perl #127599]
 
 =item *
 
-Correctly raise an error when trying to compile patterns with 
+Correctly raise an error when trying to compile patterns with
 unterminated character classes while there are trailing backslashes.
 [perl #126141].
 
@@ -1794,7 +1794,7 @@ complains about the unterminated here-doc.  [perl #125540]
 =item *
 
 C<untie()> would sometimes return the last value returned by the C<UNTIE()>
-handler as well as it's normal value, messing up the stack.  [perl
+handler as well as its normal value, messing up the stack.  [perl
 #126621]
 
 =item *
@@ -2045,7 +2045,7 @@ Warning fatality is now ignored when rewinding the stack.  This
 prevents infinite recursion when the now fatal error also causes
 rewinding of the stack.  [perl #123398]
 
-=item * 
+=item *
 
 In perl v5.22.0, the logic changed when parsing a numeric parameter to the -C
 option, such that the successfully parsed number was not saved as the option

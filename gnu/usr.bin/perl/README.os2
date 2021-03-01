@@ -300,7 +300,7 @@ with
 	perl ../../blah/foo.cmd arg1 arg2 arg3
 
 (note that the argument C<-my_opts> is taken care of by the C<extproc> line
-in your script, see L<C<extproc> on the first line>).
+in your script, see L</C<extproc> on the first line>).
 
 To understand what the above I<magic> does, read perl docs about C<-S>
 switch - see L<perlrun>, and cmdref about C<extproc>:
@@ -436,7 +436,7 @@ managed to goof.  C<;-)>
 =item *
 
 Did you run your programs with C<-w> switch? See 
-L<Starting OSE<sol>2 (and DOS) programs under Perl>.
+L</Starting OSE<sol>2 (and DOS) programs under Perl>.
 
 =item *
 
@@ -619,7 +619,7 @@ C<set PERLLIB_PREFIX> in F<Config.sys>, see L</"C<PERLLIB_PREFIX>">.
 
 =item Additional Perl modules
 
-  unzip perl_ste.zip -d f:/perllib/lib/site_perl/5.30.3/
+  unzip perl_ste.zip -d f:/perllib/lib/site_perl/5.32.1/
 
 Same remark as above applies.  Additionally, if this directory is not
 one of directories on @INC (and @INC is influenced by C<PERLLIB_PREFIX>), you
@@ -1225,7 +1225,7 @@ necessary external C libraries from F<.lib> format to F<.a> format: run one of
   emximp -o foo.a foo.lib
 
 whichever is appropriate.)  Also, make sure that the DLLs for external
-libraries are usable with with executables compiled without C<-Zmtd> options.
+libraries are usable with executables compiled without C<-Zmtd> options.
 
 When you are sure that only a few subdirectories
 lead to failures, you may want to add C<-j4> option to C<make> to speed up
@@ -2666,8 +2666,8 @@ I will include it into distribution. I have no need for such a module, so
 cannot test it.
 
 For the details of the current situation with calling external programs,
-see L<Starting OSE<sol>2 (and DOS) programs under Perl>.  Set us mention a couple
-of features:
+see L</Starting OSE<sol>2 (and DOS) programs under Perl>.  Set us
+mention a couple of features:
 
 =over 4
 

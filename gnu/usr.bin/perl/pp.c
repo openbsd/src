@@ -1268,16 +1268,10 @@ PP(pp_multiply)
             NV nr = SvNVX(svr);
             NV result;
 
-            if (
-#if defined(NAN_COMPARE_BROKEN) && defined(Perl_isnan)
-                !Perl_isnan(nl) && nl == (NV)(il = (IV)nl)
-                && !Perl_isnan(nr) && nr == (NV)(ir = (IV)nr)
-#else
-                nl == (NV)(il = (IV)nl) && nr == (NV)(ir = (IV)nr)
-#endif
-                )
+            if (lossless_NV_to_IV(nl, &il) && lossless_NV_to_IV(nr, &ir)) {
                 /* nothing was lost by converting to IVs */
                 goto do_iv;
+            }
             SP--;
             result = nl * nr;
 #  if defined(__sgi) && defined(USE_LONG_DOUBLE) && LONG_DOUBLEKIND == LONG_DOUBLE_IS_DOUBLEDOUBLE_128_BIT_BE_BE && NVSIZE == 16
@@ -1849,16 +1843,10 @@ PP(pp_subtract)
             NV nl = SvNVX(svl);
             NV nr = SvNVX(svr);
 
-            if (
-#if defined(NAN_COMPARE_BROKEN) && defined(Perl_isnan)
-                !Perl_isnan(nl) && nl == (NV)(il = (IV)nl)
-                && !Perl_isnan(nr) && nr == (NV)(ir = (IV)nr)
-#else
-                nl == (NV)(il = (IV)nl) && nr == (NV)(ir = (IV)nr)
-#endif
-                )
+            if (lossless_NV_to_IV(nl, &il) && lossless_NV_to_IV(nr, &ir)) {
                 /* nothing was lost by converting to IVs */
                 goto do_iv;
+            }
             SP--;
             TARGn(nl - nr, 0); /* args not GMG, so can't be tainted */
             SETs(TARG);
@@ -1991,7 +1979,7 @@ static UV S_uv_shift(UV uv, int shift, bool left)
        shift = -shift;
        left = !left;
    }
-   if (shift >= IV_BITS) {
+   if (UNLIKELY(shift >= IV_BITS)) {
        return 0;
    }
    return left ? uv << shift : uv >> shift;
@@ -1999,14 +1987,34 @@ static UV S_uv_shift(UV uv, int shift, bool left)
 
 static IV S_iv_shift(IV iv, int shift, bool left)
 {
-   if (shift < 0) {
-       shift = -shift;
-       left = !left;
-   }
-   if (shift >= IV_BITS) {
-       return iv < 0 && !left ? -1 : 0;
-   }
-   return left ? iv << shift : iv >> shift;
+    if (shift < 0) {
+        shift = -shift;
+        left = !left;
+    }
+
+    if (UNLIKELY(shift >= IV_BITS)) {
+        return iv < 0 && !left ? -1 : 0;
+    }
+
+    /* For left shifts, perl 5 has chosen to treat the value as unsigned for
+     * the * purposes of shifting, then cast back to signed.  This is very
+     * different from Raku:
+     *
+     * $ raku -e 'say -2 +< 5'
+     * -64
+     *
+     * $ ./perl -le 'print -2 << 5'
+     * 18446744073709551552
+     * */
+    if (left) {
+        if (iv == IV_MIN) { /* Casting this to a UV is undefined behavior */
+            return 0;
+        }
+        return (IV) (((UV) iv) << shift);
+    }
+
+    /* Here is right shift */
+    return iv >> shift;
 }
 
 #define UV_LEFT_SHIFT(uv, shift) S_uv_shift(uv, shift, TRUE)
@@ -2535,23 +2543,22 @@ S_scomplement(pTHX_ SV *targ, SV *sv)
             if (len && ! utf8_to_bytes(tmps, &len)) {
                 Perl_croak(aTHX_ FATAL_ABOVE_FF_MSG, PL_op_desc[PL_op->op_type]);
             }
-            SvCUR(TARG) = len;
+            SvCUR_set(TARG, len);
             SvUTF8_off(TARG);
         }
 
 	anum = len;
 
-#ifdef LIBERAL
 	{
 	    long *tmpl;
-	    for ( ; anum && (unsigned long)tmps % sizeof(long); anum--, tmps++)
+	    for ( ; anum && PTR2nat(tmps) % sizeof(long); anum--, tmps++)
 		*tmps = ~*tmps;
 	    tmpl = (long*)tmps;
 	    for ( ; anum >= (I32)sizeof(long); anum -= (I32)sizeof(long), tmpl++)
 		*tmpl = ~*tmpl;
 	    tmps = (U8*)tmpl;
 	}
-#endif
+
 	for ( ; anum > 0; anum--, tmps++)
 	    *tmps = ~*tmps;
 }
@@ -2647,7 +2654,6 @@ PP(pp_i_divide)
 
 PP(pp_i_modulo)
 {
-     /* This is the vanilla old i_modulo. */
      dSP; dATARGET;
      tryAMAGICbin_MG(modulo_amg, AMGf_assign);
      {
@@ -2662,30 +2668,6 @@ PP(pp_i_modulo)
 	  RETURN;
      }
 }
-
-#if defined(__GLIBC__) && IVSIZE == 8 \
-    && ( __GLIBC__ < 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ < 8))
-
-PP(pp_i_modulo_glibc_bugfix)
-{
-     /* This is the i_modulo with the workaround for the _moddi3 bug
-      * in (at least) glibc 2.2.5 (the PERL_ABS() the workaround).
-      * See below for pp_i_modulo. */
-     dSP; dATARGET;
-     tryAMAGICbin_MG(modulo_amg, AMGf_assign);
-     {
-	  dPOPTOPiirl_nomg;
-	  if (!right)
-	       DIE(aTHX_ "Illegal modulus zero");
-	  /* avoid FPE_INTOVF on some platforms when left is IV_MIN */
-	  if (right == -1)
-	      SETi( 0 );
-	  else
-	      SETi( left % PERL_ABS(right) );
-	  RETURN;
-     }
-}
-#endif
 
 PP(pp_i_add)
 {
@@ -2944,13 +2926,12 @@ PP(pp_srand)
                              "Integer overflow in srand");
             anum = UV_MAX;
         }
-        (void)srand48_deterministic((Rand_seed_t)anum);
     }
     else {
         anum = seed();
-        (void)seedDrand01((Rand_seed_t)anum);
     }
 
+    (void)seedDrand01((Rand_seed_t)anum);
     PL_srand_called = TRUE;
     if (anum)
 	XPUSHu(anum);
@@ -3078,11 +3059,16 @@ PP(pp_oct)
     if (*tmps == '0')
         tmps++, len--;
     if (isALPHA_FOLD_EQ(*tmps, 'x')) {
+        tmps++, len--;
+        flags |= PERL_SCAN_DISALLOW_PREFIX;
     hex:
         result_uv = grok_hex (tmps, &len, &flags, &result_nv);
     }
-    else if (isALPHA_FOLD_EQ(*tmps, 'b'))
+    else if (isALPHA_FOLD_EQ(*tmps, 'b')) {
+        tmps++, len--;
+        flags |= PERL_SCAN_DISALLOW_PREFIX;
         result_uv = grok_bin (tmps, &len, &flags, &result_nv);
+    }
     else
         result_uv = grok_oct (tmps, &len, &flags, &result_nv);
 
@@ -3534,11 +3520,16 @@ PP(pp_index)
   push_result:
     /* OPpTRUEBOOL indicates an '== -1' has been optimised away */
     if (PL_op->op_private & OPpTRUEBOOL) {
-        PUSHs( ((retval != -1) ^ cBOOL(PL_op->op_private & OPpINDEX_BOOLNEG))
-                    ? &PL_sv_yes : &PL_sv_no);
-        if (PL_op->op_private & OPpTARGET_MY)
+        SV *result = ((retval != -1) ^ cBOOL(PL_op->op_private & OPpINDEX_BOOLNEG))
+            ? &PL_sv_yes : &PL_sv_no;
+        if (PL_op->op_private & OPpTARGET_MY) {
             /* $lex = (index() == -1) */
-            sv_setsv(TARG, TOPs);
+            sv_setsv_mg(TARG, result);
+            PUSHs(TARG);
+        }
+        else {
+            PUSHs(result);
+        }
     }
     else
         PUSHi(retval);
@@ -3646,33 +3637,28 @@ PP(pp_crypt)
 	 sv_utf8_downgrade(tsv, FALSE);
 	 tmps = SvPV_const(tsv, len);
     }
-#   ifdef USE_ITHREADS
-#     ifdef HAS_CRYPT_R
+#  ifdef USE_ITHREADS
+#    ifdef HAS_CRYPT_R
     if (!PL_reentrant_buffer->_crypt_struct_buffer) {
       /* This should be threadsafe because in ithreads there is only
        * one thread per interpreter.  If this would not be true,
        * we would need a mutex to protect this malloc. */
         PL_reentrant_buffer->_crypt_struct_buffer =
 	  (struct crypt_data *)safemalloc(sizeof(struct crypt_data));
-#if defined(__GLIBC__) || defined(__EMX__)
+#      if defined(__GLIBC__) || defined(__EMX__)
 	if (PL_reentrant_buffer->_crypt_struct_buffer) {
 	    PL_reentrant_buffer->_crypt_struct_buffer->initialized = 0;
-#if (defined(__GLIBC__) && __GLIBC__ == 2) && \
-    (defined(__GLIBC_MINOR__) && __GLIBC_MINOR__ >= 2 && __GLIBC_MINOR__ < 4)
-	    /* work around glibc-2.2.5 bug, has been fixed at some
-	     * time in glibc-2.3.X */
-	    PL_reentrant_buffer->_crypt_struct_buffer->current_saltbits = 0;
-#endif
 	}
-#endif
+#      endif
     }
-#     endif /* HAS_CRYPT_R */
-#   endif /* USE_ITHREADS */
-#   ifdef FCRYPT
+#    endif /* HAS_CRYPT_R */
+#  endif /* USE_ITHREADS */
+
+#  ifdef FCRYPT
     sv_setpv(TARG, fcrypt(tmps, SvPV_nolen_const(right)));
-#   else
+#  else
     sv_setpv(TARG, PerlProc_crypt(tmps, SvPV_nolen_const(right)));
-#   endif
+#  endif
     SvUTF8_off(TARG);
     SETTARG;
     RETURN;
@@ -3741,6 +3727,7 @@ PP(pp_ucfirst)
     else if (DO_UTF8(source)) {	/* Is the source utf8? */
 	doing_utf8 = TRUE;
         ulen = UTF8SKIP(s);
+
         if (op_type == OP_UCFIRST) {
 #ifdef USE_LOCALE_CTYPE
 	    _toTITLE_utf8_flags(s, s +slen, tmpbuf, &tculen, IN_LC_RUNTIME(LC_CTYPE));
@@ -5916,6 +5903,7 @@ PP(pp_reverse)
 	    sv_setsv(TARG, DEFSV);
 	    XPUSHs(TARG);
 	}
+        SvSETMAGIC(TARG); /* remove any utf8 length magic */
 
 	up = SvPV_force(TARG, len);
 	if (len > 1) {
@@ -6450,11 +6438,11 @@ PP(unimplemented_op)
        Secondly, as the three ops we "panic" on are padmy, mapstart and custom,
        if we get here for a custom op then that means that the custom op didn't
        have an implementation. Given that OP_NAME() looks up the custom op
-       by its pp_addr, likely it will return NULL, unless someone (unhelpfully)
-       registers &PL_unimplemented_op as the address of their custom op.
+       by its op_ppaddr, likely it will return NULL, unless someone (unhelpfully)
+       registers &Perl_unimplemented_op as the address of their custom op.
        NULL doesn't generate a useful error message. "custom" does. */
     const char *const name = op_type >= OP_max
-	? "[out of range]" : PL_op_name[PL_op->op_type];
+	? "[out of range]" : PL_op_name[op_type];
     if(OP_IS_SOCKET(op_type))
 	DIE(aTHX_ PL_no_sock_func, name);
     DIE(aTHX_ "panic: unimplemented op %s (#%d) called", name,	op_type);
@@ -7102,7 +7090,7 @@ S_find_runcv_name(void)
     return sv;
 }
 
-/* Check a  a subs arguments - i.e. that it has the correct number of args
+/* Check a sub's arguments - i.e. that it has the correct number of args
  * (and anything else we might think of in future). Typically used with
  * signatured subs.
  */
@@ -7110,16 +7098,16 @@ S_find_runcv_name(void)
 PP(pp_argcheck)
 {
     OP * const o       = PL_op;
-    UNOP_AUX_item *aux = cUNOP_AUXo->op_aux;
-    IV   params        = aux[0].iv;
-    IV   opt_params    = aux[1].iv;
-    char slurpy        = (char)(aux[2].iv);
+    struct op_argcheck_aux *aux = (struct op_argcheck_aux *)cUNOP_AUXo->op_aux;
+    UV   params        = aux->params;
+    UV   opt_params    = aux->opt_params;
+    char slurpy        = aux->slurpy;
     AV  *defav         = GvAV(PL_defgv); /* @_ */
-    IV   argc;
+    UV   argc;
     bool too_few;
 
     assert(!SvMAGICAL(defav));
-    argc = (AvFILLp(defav) + 1);
+    argc = (UV)(AvFILLp(defav) + 1);
     too_few = (argc < (params - opt_params));
 
     if (UNLIKELY(too_few || (!slurpy && argc > params)))
@@ -7134,6 +7122,42 @@ PP(pp_argcheck)
                           S_find_runcv_name());
 
     return NORMAL;
+}
+
+PP(pp_isa)
+{
+    dSP;
+    SV *left, *right;
+
+    right = POPs;
+    left  = TOPs;
+
+    SETs(boolSV(sv_isa_sv(left, right)));
+    RETURN;
+}
+
+PP(pp_cmpchain_and)
+{
+    dSP;
+    SV *result = POPs;
+    PUTBACK;
+    if (SvTRUE_NN(result)) {
+	return cLOGOP->op_other;
+    } else {
+	TOPs = result;
+	return NORMAL;
+    }
+}
+
+PP(pp_cmpchain_dup)
+{
+    dSP;
+    SV *right = TOPs;
+    SV *left = TOPm1s;
+    TOPm1s = right;
+    TOPs = left;
+    XPUSHs(right);
+    RETURN;
 }
 
 /*

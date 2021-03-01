@@ -2,7 +2,7 @@ use strict;
 
 package Test::Tester::Capture;
 
-our $VERSION = '1.302162';
+our $VERSION = '1.302175';
 
 
 use Test::Builder;
@@ -13,14 +13,8 @@ use vars qw( @ISA );
 # Make Test::Tester::Capture thread-safe for ithreads.
 BEGIN {
 	use Config;
-	if( $] >= 5.008 && $Config{useithreads} ) {
-		require threads::shared;
-		threads::shared->import;
-	}
-	else {
-		*share = sub { 0 };
-		*lock  = sub { 0 };
-	}
+	*share = sub { 0 };
+	*lock  = sub { 0 };
 }
 
 my $Curr_Test = 0;      share($Curr_Test);
@@ -30,7 +24,7 @@ my $Prem_Diag = {diag => ""};	 share($Curr_Test);
 sub new
 {
   # Test::Tester::Capgture::new used to just return __PACKAGE__
-  # because Test::Builder::new enforced it's singleton nature by
+  # because Test::Builder::new enforced its singleton nature by
   # return __PACKAGE__. That has since changed, Test::Builder::new now
   # returns a blessed has and around version 0.78, Test::Builder::todo
   # started wanting to modify $self. To cope with this, we now return
@@ -229,7 +223,7 @@ Test::Tester::Capture - Help testing test modules built with Test::Builder
 =head1 DESCRIPTION
 
 This is a subclass of Test::Builder that overrides many of the methods so
-that they don't output anything. It also keeps track of it's own set of test
+that they don't output anything. It also keeps track of its own set of test
 results so that you can use Test::Builder based modules to perform tests on
 other Test::Builder based modules.
 

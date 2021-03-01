@@ -25,7 +25,7 @@ BEGIN
         if eval { require Test::NoWarnings ;  import Test::NoWarnings; 1 };
 
 
-    my $VERSION = '2.084';
+    my $VERSION = '2.093';
     my @NAMES = qw(
 			Compress::Raw::Bzip2
 			Compress::Raw::Zlib
@@ -60,8 +60,7 @@ BEGIN
 
 			);
 
-    my @OPT = qw(
-			
+    my @OPT = qw(			
 			);
 
     plan tests => 1 + 2 + @NAMES + @OPT + $extra ;

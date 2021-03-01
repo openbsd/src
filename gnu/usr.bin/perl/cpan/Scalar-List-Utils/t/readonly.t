@@ -6,26 +6,26 @@ use warnings;
 use Scalar::Util qw(readonly);
 use Test::More tests => 11;
 
-ok( readonly(1),	'number constant');
+ok( readonly(1), 'number constant');
 
 my $var = 2;
 
-ok( !readonly($var),	'number variable');
-is( $var,	2,	'no change to number variable');
+ok( !readonly($var), 'number variable');
+is( $var, 2, 'no change to number variable');
 
-ok( readonly("fred"),	'string constant');
+ok( readonly("fred"), 'string constant');
 
 $var = "fred";
 
-ok( !readonly($var),	'string variable');
-is( $var,	'fred',	'no change to string variable');
+ok( !readonly($var),  'string variable');
+is( $var, 'fred', 'no change to string variable');
 
 $var = \2;
 
-ok( !readonly($var),	'reference to constant');
-ok( readonly($$var),	'de-reference to constant');
+ok( !readonly($var), 'reference to constant');
+ok( readonly($$var), 'de-reference to constant');
 
-ok( !readonly(*STDOUT),	'glob');
+ok( !readonly(*STDOUT), 'glob');
 
 sub try
 {

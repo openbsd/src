@@ -1,8 +1,8 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 #
 # Test Pod::Man UTF-8 handling, with and without PerlIO.
 #
-# Copyright 2002, 2004, 2006, 2008-2010, 2012, 2014-2015, 2018
+# Copyright 2002, 2004, 2006, 2008-2010, 2012, 2014-2015, 2018-2020
 #     Russ Allbery <rra@cpan.org>
 #
 # This program is free software; you may redistribute it and/or modify it
@@ -10,23 +10,14 @@
 #
 # SPDX-License-Identifier: GPL-1.0-or-later OR Artistic-1.0-Perl
 
-use 5.006;
+use 5.008;
 use strict;
 use warnings;
 
 use lib 't/lib';
 
-use Test::More;
+use Test::More tests => 13;
 use Test::Podlators qw(test_snippet_with_io);
-
-# UTF-8 support requires Perl 5.8 or later.
-BEGIN {
-    if ($] < 5.008) {
-        plan skip_all => 'Perl 5.8 required for UTF-8 support';
-    } else {
-        plan tests => 13;
-    }
-}
 
 # Load the module.
 BEGIN {

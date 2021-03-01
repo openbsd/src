@@ -7,7 +7,7 @@ use Test::Builder;
 require Exporter;
 our @ISA = qw(Exporter);
 
-our $VERSION = '1.302162';
+our $VERSION = '1.302175';
 
 
 =head1 NAME
@@ -171,5 +171,12 @@ call C<builder()> inside each function rather than store it in a global.
 sub builder {
     return Test::Builder->new;
 }
+
+=head1 SEE ALSO
+
+L<< Test2::Manual::Tooling::TestBuilder >> describes the improved
+options for writing testing modules provided by L<< Test2 >>.
+
+=cut
 
 1;

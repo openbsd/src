@@ -6,7 +6,7 @@ use vars qw($VERSION);
 
 use if $] < 5.008 => 'IO::Scalar';
 
-$VERSION = '1.672';
+$VERSION = '1.675';
 
 =head1 NAME
 
@@ -414,13 +414,13 @@ sub _process_options
 
 	# if no arguments, just drop into the shell
 	if( 0 == @ARGV ) { CPAN::shell(); exit 0 }
-	else
+	elsif (Getopt::Std::getopts(
+		  join( '', @option_order ), \%options ))
 		{
-		Getopt::Std::getopts(
-		  join( '', @option_order ), \%options );
 		 \%options;
 		}
-	}
+	else { exit 1 }
+}
 
 sub _process_setup_options
 	{
@@ -431,8 +431,7 @@ sub _process_setup_options
 		$Method_table{j}[ $Method_table_index{code} ]->( $options->{j} );
 		delete $options->{j};
 		}
-	else
-		{
+	elsif ( ! $options->{h} ) { # h "ignores all of the other options and arguments"
 		# this is what CPAN.pm would do otherwise
 		local $CPAN::Be_Silent = 1;
 		CPAN::HandleConfig->load(
@@ -542,15 +541,23 @@ sub run
 	return $return_value;
 	}
 
+my $LEVEL;
 {
 package
   Local::Null::Logger; # hide from PAUSE
 
+my @LOGLEVELS = qw(TRACE DEBUG INFO WARN ERROR FATAL);
+$LEVEL        = uc($ENV{CPANSCRIPT_LOGLEVEL} || 'INFO');
+my %LL        = map { $LOGLEVELS[$_] => $_ } 0..$#LOGLEVELS;
+unless (defined $LL{$LEVEL}){
+	warn "Unsupported loglevel '$LEVEL', setting to INFO";
+	$LEVEL = 'INFO';
+}
 sub new { bless \ my $x, $_[0] }
 sub AUTOLOAD {
     my $autoload = our $AUTOLOAD;
     $autoload =~ s/.*://;
-    return if $autoload =~ /^(debug|trace)$/;
+    return if $LL{uc $autoload} < $LL{$LEVEL};
     $CPAN::Frontend->mywarn(">($autoload): $_\n")
         for split /[\r\n]+/, $_[1];
 }
@@ -578,8 +585,6 @@ sub _init_logger
         $logger = Local::Null::Logger->new;
         return $logger;
         }
-
-	my $LEVEL = $ENV{CPANSCRIPT_LOGLEVEL} || 'INFO';
 
 	Log::Log4perl::init( \ <<"HERE" );
 log4perl.rootLogger=$LEVEL, A1
@@ -676,7 +681,7 @@ sub _hook_into_CPANpm_report
 
 	*CPAN::Shell::myprint = sub {
 		my($self,$what) = @_;
-		$scalar .= $what;
+		$scalar .= $what if defined $what;
 		$self->print_ornamented($what,
 			$CPAN::Config->{colorize_print}||'bold blue on_white',
 			);
@@ -794,7 +799,14 @@ sub _turn_off_testing {
 sub _print_help
 	{
 	$logger->info( "Use perldoc to read the documentation" );
-	exec "perldoc $0";
+	my $HAVE_PERLDOC = eval { require Pod::Perldoc; 1; };
+	if ($HAVE_PERLDOC) {
+		system qq{"$^X" -e "require Pod::Perldoc; Pod::Perldoc->run()" $0};
+		exit;
+	} else {
+		warn "Please install Pod::Perldoc, maybe try 'cpan -i Pod::Perldoc'\n";
+		return HEY_IT_WORKED;
+	}
 	}
 
 sub _print_version # -v
@@ -1698,3 +1710,10 @@ Copyright (c) 2001-2018, brian d foy, All Rights Reserved.
 You may redistribute this under the same terms as Perl itself.
 
 =cut
+
+# Local Variables:
+# mode: cperl
+# indent-tabs-mode: t
+# cperl-indent-level: 8
+# cperl-continued-statement-offset: 8
+# End:

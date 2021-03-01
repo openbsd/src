@@ -79,6 +79,25 @@ typedef int socklen_t;
 
 #endif
 
+/*
+ *  Under Windows, sockaddr_un is defined in afunix.h. Unfortunately
+ *  MinGW and SDKs older than 10.0.17063.0 don't have it, so we have to
+ *  define it here. Don't worry, it's portable. Windows has ironclad ABI
+ *  stability guarantees which means that the definitions will *never*
+ *  change.
+ */
+#ifndef UNIX_PATH_MAX
+
+#define UNIX_PATH_MAX 108
+
+struct sockaddr_un
+{
+     USHORT sun_family;
+     char sun_path[UNIX_PATH_MAX];
+};
+
+#endif
+
 static int inet_pton(int af, const char *src, void *dst)
 {
   struct sockaddr_storage ss;
@@ -813,7 +832,7 @@ pack_sockaddr_un(pathname)
 	SV *	pathname
 	CODE:
 	{
-#ifdef I_SYS_UN
+#if defined(I_SYS_UN) || defined(WIN32)
 	struct sockaddr_un sun_ad; /* fear using sun */
 	STRLEN len;
 	char * pathname_pv;
@@ -883,7 +902,7 @@ unpack_sockaddr_un(sun_sv)
 	SV *	sun_sv
 	CODE:
 	{
-#ifdef I_SYS_UN
+#if defined(I_SYS_UN) || defined(WIN32)
 	struct sockaddr_un addr;
 	STRLEN sockaddrlen;
 	char * sun_ad;

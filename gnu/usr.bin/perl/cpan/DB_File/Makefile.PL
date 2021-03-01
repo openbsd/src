@@ -46,14 +46,14 @@ my $WALL = '' ;
 my $CORE = $ENV{PERL_CORE} ? '' : '-D_NOT_CORE';
 
 WriteMakefile(
-	NAME 		=> 'DB_File',
-	LIBS 		=> ["-L${LIB_DIR} $LIBS"],
-	INC		=> "-I$INC_DIR",
-    VERSION_FROM	=> 'DB_File.pm',
-	XS_VERSION      => eval MM->parse_version('DB_File.pm'),
-	XSPROTOARG	=> '-noprototypes',
-	DEFINE		=> "$CORE $OS2 $VER_INFO $COMPAT185 $WALL",
-	OBJECT		=> 'version$(OBJ_EXT) DB_File$(OBJ_EXT)',
+        NAME            => 'DB_File',
+        LIBS            => ["-L${LIB_DIR} $LIBS"],
+        INC             => "-I$INC_DIR",
+        VERSION_FROM    => 'DB_File.pm',
+        XS_VERSION      => eval MM->parse_version('DB_File.pm'),
+        XSPROTOARG      => '-noprototypes',
+        DEFINE          => "$CORE $OS2 $VER_INFO $COMPAT185 $WALL",
+        OBJECT          => 'version$(OBJ_EXT) DB_File$(OBJ_EXT)',
     ((ExtUtils::MakeMaker->VERSION() gt '6.30') 
         ?  ('LICENSE'  => 'perl')         
         : ()
@@ -69,46 +69,72 @@ WriteMakefile(
         ? (INSTALLDIRS => 'site') 
         : (INSTALLDIRS => 'perl'),
 
-	#OPTIMIZE	=> '-g',
-	'depend'	=> { 'Makefile'          => 'config.in',
+        #OPTIMIZE       => '-g',
+        'depend'        => { 'Makefile'          => 'config.in',
                              'version$(OBJ_EXT)' => 'version.c'},
-	'clean'		=> { FILES => 'constants.h constants.xs DB_File.pm.bak t/db-btree.t.bak t/db-hash.t.bak t/db-recno.t.bak t/pod.t.bak' },
-	'macro'		=> { my_files => "@files" },
+        'clean'         => { FILES => 'constants.h constants.xs DB_File.pm.bak t/db-btree.t.bak t/db-hash.t.bak t/db-recno.t.bak t/pod.t.bak' },
+        'macro'         => { my_files => "@files" },
         'dist'          => { COMPRESS => 'gzip', SUFFIX => 'gz',
-			     DIST_DEFAULT => 'MyDoubleCheck tardist'},    
-	);
+                             DIST_DEFAULT => 'MyDoubleCheck tardist'},
+
+     ( eval { ExtUtils::MakeMaker->VERSION(6.46) }  
+        ? ( META_MERGE  => {
+    
+                "meta-spec" => { version => 2 },
+                
+                resources   => {
+                
+                    bugtracker  => {
+                        web     => 'https://github.com/pmqs/DB_File/issues'
+                    },
+
+                    homepage    => 'https://github.com/pmqs/DB_File',
+
+                    repository  => {
+                        type    => 'git',
+                        url     => 'git://github.com/pmqs/DB_File.git',
+                        web     => 'https://github.com/pmqs/DB_File',
+                    },        
+                },
+            } 
+            ) 
+        : ()
+    ),
+
+
+        );
 
 
 my @names = qw(
-	BTREEMAGIC
-	BTREEVERSION
-	DB_LOCK
-	DB_SHMEM
-	DB_TXN
-	HASHMAGIC
-	HASHVERSION
-	MAX_PAGE_NUMBER
-	MAX_PAGE_OFFSET
-	MAX_REC_NUMBER
-	RET_ERROR
-	RET_SPECIAL
-	RET_SUCCESS
-	R_CURSOR
-	R_DUP
-	R_FIRST
-	R_FIXEDLEN
-	R_IAFTER
-	R_IBEFORE
-	R_LAST
-	R_NEXT
-	R_NOKEY
-	R_NOOVERWRITE
-	R_PREV
-	R_RECNOSYNC
-	R_SETCURSOR
-	R_SNAPSHOT
-	__R_UNUSED
-	);
+        BTREEMAGIC
+        BTREEVERSION
+        DB_LOCK
+        DB_SHMEM
+        DB_TXN
+        HASHMAGIC
+        HASHVERSION
+        MAX_PAGE_NUMBER
+        MAX_PAGE_OFFSET
+        MAX_REC_NUMBER
+        RET_ERROR
+        RET_SPECIAL
+        RET_SUCCESS
+        R_CURSOR
+        R_DUP
+        R_FIRST
+        R_FIXEDLEN
+        R_IAFTER
+        R_IBEFORE
+        R_LAST
+        R_NEXT
+        R_NOKEY
+        R_NOOVERWRITE
+        R_PREV
+        R_RECNOSYNC
+        R_SETCURSOR
+        R_SNAPSHOT
+        __R_UNUSED
+        );
 
 if (eval {require ExtUtils::Constant; 1}) {
     # Check the constants above all appear in @EXPORT in DB_File.pm
@@ -171,9 +197,9 @@ sub MY::postamble { <<'EOM' } ;
 
 MyDoubleCheck:
 	@echo Checking config.in is setup for a release
-	@(grep "^LIB.*/usr/local/BerkeleyDB" config.in && 	\
-	grep "^INCLUDE.*/usr/local/BerkeleyDB" config.in &&	\
-	grep "^#DBNAME.*" config.in) >/dev/null ||		\
+	@(grep "^LIB.*/usr/local/BerkeleyDB" config.in &&       \
+	grep "^INCLUDE.*/usr/local/BerkeleyDB" config.in &&     \
+	grep "^#DBNAME.*" config.in) >/dev/null ||              \
 	    (echo config.in needs fixing ; exit 1)
 	@echo config.in is ok
 	@echo 
@@ -183,16 +209,16 @@ MyDoubleCheck:
 	@echo DB_File.xs is ok
 	@echo 
 	@echo Checking for $$^W in files: $(my_files)
-	@perl -ne '						\
-	    exit 1 if /^\s*local\s*\(\s*\$$\^W\s*\)/;' $(my_files) ||	\
-	  (echo found unexpected $$^W ; exit 1)
+	@perl -ne '                                             \
+	    exit 1 if /^\s*local\s*\(\s*\$$\^W\s*\)/;' $(my_files) ||   \
+	    (echo found unexpected $$^W ; exit 1)
 	@echo No $$^W found.
 	@echo 
 	@echo Checking for 'use vars' in files: $(my_files)
-	@perl -ne '						\
-	    exit 0 if /^__(DATA|END)__/;               	\
-	    exit 1 if /^\s*use\s+vars/;' $(my_files) ||	\
-	  (echo found unexpected "use vars"; exit 1)
+	@perl -ne '                                             \
+	    exit 0 if /^__(DATA|END)__/;                \
+	    exit 1 if /^\s*use\s+vars/;' $(my_files) || \
+	    (echo found unexpected "use vars"; exit 1)
 	@echo No 'use vars' found.
 	@echo 
 	@echo All files are OK for a release.
@@ -223,24 +249,24 @@ sub ParseCONFIG
 
     open(F, "$CONFIG") or die "Cannot open file $CONFIG: $!\n" ;
     while (<F>) {
-	s/^\s*|\s*$//g ;
-	next if /^\s*$/ or /^\s*#/ ;
-	s/\s*#\s*$// ;
+        s/^\s*|\s*$//g ;
+        next if /^\s*$/ or /^\s*#/ ;
+        s/\s*#\s*$// ;
 
-	($k, $v) = split(/\s+=\s+/, $_, 2) ;
-	$k = uc $k ;
-	if ($ValidOption{$k}) {
-	    delete $Parsed{$k} ;
-	    $Info{$k} = $v ;
-	}
-	else {
-	    push(@badkey, $k) ;
-	}
+        ($k, $v) = split(/\s+=\s+/, $_, 2) ;
+        $k = uc $k ;
+        if ($ValidOption{$k}) {
+            delete $Parsed{$k} ;
+            $Info{$k} = $v ;
+        }
+        else {
+            push(@badkey, $k) ;
+        }
     }
     close F ;
 
     print "Unknown keys in $CONFIG ignored [@badkey]\n"
-	if @badkey ;
+        if @badkey ;
 
     # check parsed values
     my @missing = () ;
@@ -252,18 +278,18 @@ sub ParseCONFIG
     $DB_NAME = $ENV{'DB_FILE_NAME'} || $Info{'DBNAME'} ;
     $COMPAT185 = "-DCOMPAT185 -DDB_LIBRARY_COMPATIBILITY_API" 
         if (defined $ENV{'DB_FILE_COMPAT185'} && 
-		$ENV{'DB_FILE_COMPAT185'} =~ /^\s*(on|true|1)\s*$/i) ||
-		$Info{'COMPAT185'} =~ /^\s*(on|true|1)\s*$/i ; 
+                $ENV{'DB_FILE_COMPAT185'} =~ /^\s*(on|true|1)\s*$/i) ||
+                $Info{'COMPAT185'} =~ /^\s*(on|true|1)\s*$/i ; 
     my $PREFIX  = $Info{'PREFIX'} ;
     my $HASH    = $Info{'HASH'} ;
 
     $VER_INFO = "-DmDB_Prefix_t=${PREFIX} -DmDB_Hash_t=${HASH}" ;
 
     print <<EOM if 0 ;
-    INCLUDE	[$INC_DIR]
-    LIB		[$LIB_DIR]
-    HASH	[$HASH]
-    PREFIX	[$PREFIX]
+    INCLUDE     [$INC_DIR]
+    LIB         [$LIB_DIR]
+    HASH        [$HASH]
+    PREFIX      [$PREFIX]
     DBNAME      [$DB_NAME]
 
 EOM
@@ -295,10 +321,10 @@ sub UpDowngrade
         # From: warnings::warnif(x,y);
         # To:   $^W && carp(y); # warnif -- x
         $warn_sub = sub {
-	    s/^(\s*)(no\s+warnings)/${1}local (\$^W) = 0; #$2/ ;
-	    s/^(\s*)(use\s+warnings)/${1}local (\$^W) = 1; #$2/ ;
+            s/^(\s*)(no\s+warnings)/${1}local (\$^W) = 0; #$2/ ;
+            s/^(\s*)(use\s+warnings)/${1}local (\$^W) = 1; #$2/ ;
 
-	    s/^(\s*)warnings::warnif\s*\((.*?)\s*,\s*(.*?)\)\s*;/${1}\$^W && carp($3); # warnif - $2/ ;
+            s/^(\s*)warnings::warnif\s*\((.*?)\s*,\s*(.*?)\)\s*;/${1}\$^W && carp($3); # warnif - $2/ ;
           };
     }
     else {
@@ -310,14 +336,14 @@ sub UpDowngrade
         # From: $^W && carp(y); # warnif -- x
         # To:   warnings::warnif(x,y);
         $warn_sub = sub {
-	    s/^(\s*)local\s*\(\$\^W\)\s*=\s*\d+\s*;\s*#\s*((no|use)\s+warnings.*)/$1$2/ ;
-	    s/^(\s*)\$\^W\s+\&\&\s*carp\s*\((.*?)\)\s*;\s*#\s*warnif\s*-\s*(.*)/${1}warnings::warnif($3, $2);/ ;
+            s/^(\s*)local\s*\(\$\^W\)\s*=\s*\d+\s*;\s*#\s*((no|use)\s+warnings.*)/$1$2/ ;
+            s/^(\s*)\$\^W\s+\&\&\s*carp\s*\((.*?)\)\s*;\s*#\s*warnif\s*-\s*(.*)/${1}warnings::warnif($3, $2);/ ;
           };
     }
 
     if ($] < 5.006000) {
         $our_sub = sub {
-	    if ( /^(\s*)our\s+\(\s*([^)]+\s*)\)/ ) {
+            if ( /^(\s*)our\s+\(\s*([^)]+\s*)\)/ ) {
                 my $indent = $1;
                 my $vars = join ' ', split /\s*,\s*/, $2;
                 $_ = "${indent}use vars qw($vars);\n";
@@ -326,7 +352,7 @@ sub UpDowngrade
     }
     else {
         $our_sub = sub {
-	    if ( /^(\s*)use\s+vars\s+qw\((.*?)\)/ ) {
+            if ( /^(\s*)use\s+vars\s+qw\((.*?)\)/ ) {
                 my $indent = $1;
                 my $vars = join ', ', split ' ', $2;
                 $_ = "${indent}our ($vars);\n";
@@ -349,11 +375,11 @@ sub doUpDown
 
     while (<>)
     {
-	print, last if /^__(END|DATA)__/ ;
+        print, last if /^__(END|DATA)__/ ;
 
-	&{ $our_sub }();
-	&{ $warn_sub }();
-	print ;
+        &{ $our_sub }();
+        &{ $warn_sub }();
+        print ;
     }
 
     return if eof ;

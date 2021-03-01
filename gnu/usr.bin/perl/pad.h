@@ -179,79 +179,79 @@ C<my>)
 save C<PL_comppad> and C<PL_curpad>
 
 
-=for apidoc Amx|PAD **|PadlistARRAY|PADLIST padlist
+=for apidoc Amx|PAD **|PadlistARRAY|PADLIST * padlist
 The C array of a padlist, containing the pads.  Only subscript it with
 numbers >= 1, as the 0th entry is not guaranteed to remain usable.
 
-=for apidoc Amx|SSize_t|PadlistMAX|PADLIST padlist
+=for apidoc Amx|SSize_t|PadlistMAX|PADLIST * padlist
 The index of the last allocated space in the padlist.  Note that the last
 pad may be in an earlier slot.  Any entries following it will be C<NULL> in
 that case.
 
-=for apidoc Amx|PADNAMELIST *|PadlistNAMES|PADLIST padlist
+=for apidoc Amx|PADNAMELIST *|PadlistNAMES|PADLIST * padlist
 The names associated with pad entries.
 
-=for apidoc Amx|PADNAME **|PadlistNAMESARRAY|PADLIST padlist
+=for apidoc Amx|PADNAME **|PadlistNAMESARRAY|PADLIST * padlist
 The C array of pad names.
 
-=for apidoc Amx|SSize_t|PadlistNAMESMAX|PADLIST padlist
+=for apidoc Amx|SSize_t|PadlistNAMESMAX|PADLIST * padlist
 The index of the last pad name.
 
-=for apidoc Amx|U32|PadlistREFCNT|PADLIST padlist
+=for apidoc Amx|U32|PadlistREFCNT|PADLIST * padlist
 The reference count of the padlist.  Currently this is always 1.
 
-=for apidoc Amx|PADNAME **|PadnamelistARRAY|PADNAMELIST pnl
+=for apidoc Amx|PADNAME **|PadnamelistARRAY|PADNAMELIST * pnl
 The C array of pad names.
 
-=for apidoc Amx|SSize_t|PadnamelistMAX|PADNAMELIST pnl
+=for apidoc Amx|SSize_t|PadnamelistMAX|PADNAMELIST * pnl
 The index of the last pad name.
 
-=for apidoc Amx|SSize_t|PadnamelistREFCNT|PADNAMELIST pnl
+=for apidoc Amx|SSize_t|PadnamelistREFCNT|PADNAMELIST * pnl
 The reference count of the pad name list.
 
-=for apidoc Amx|void|PadnamelistREFCNT_dec|PADNAMELIST pnl
+=for apidoc Amx|void|PadnamelistREFCNT_dec|PADNAMELIST * pnl
 Lowers the reference count of the pad name list.
 
-=for apidoc Amx|SV **|PadARRAY|PAD pad
+=for apidoc Amx|SV **|PadARRAY|PAD * pad
 The C array of pad entries.
 
-=for apidoc Amx|SSize_t|PadMAX|PAD pad
+=for apidoc Amx|SSize_t|PadMAX|PAD * pad
 The index of the last pad entry.
 
-=for apidoc Amx|char *|PadnamePV|PADNAME pn	
+=for apidoc Amx|char *|PadnamePV|PADNAME * pn
 The name stored in the pad name struct.  This returns C<NULL> for a target
 slot.
 
-=for apidoc Amx|STRLEN|PadnameLEN|PADNAME pn	
+=for apidoc Amx|STRLEN|PadnameLEN|PADNAME * pn
 The length of the name.
 
-=for apidoc Amx|bool|PadnameUTF8|PADNAME pn
+=for apidoc Amx|bool|PadnameUTF8|PADNAME * pn
 Whether PadnamePV is in UTF-8.  Currently, this is always true.
 
-=for apidoc Amx|SV *|PadnameSV|PADNAME pn
+=for apidoc Amx|SV *|PadnameSV|PADNAME * pn
 Returns the pad name as a mortal SV.
 
-=for apidoc m|bool|PadnameIsOUR|PADNAME pn
+=for apidoc m|bool|PadnameIsOUR|PADNAME * pn
 Whether this is an "our" variable.
 
 =for apidoc m|HV *|PadnameOURSTASH
 The stash in which this "our" variable was declared.
 
-=for apidoc m|bool|PadnameOUTER|PADNAME pn
+=for apidoc m|bool|PadnameOUTER|PADNAME * pn
 Whether this entry belongs to an outer pad.  Entries for which this is true
 are often referred to as 'fake'.
 
-=for apidoc m|bool|PadnameIsSTATE|PADNAME pn
+=for apidoc m|bool|PadnameIsSTATE|PADNAME * pn
 Whether this is a "state" variable.
 
-=for apidoc m|HV *|PadnameTYPE|PADNAME pn
+=for apidoc m|HV *|PadnameTYPE|PADNAME * pn
 The stash associated with a typed lexical.  This returns the C<%Foo::> hash
 for C<my Foo $bar>.
 
-=for apidoc Amx|SSize_t|PadnameREFCNT|PADNAME pn
+=for apidoc Amx|SSize_t|PadnameREFCNT|PADNAME * pn
 The reference count of the pad name.
 
-=for apidoc Amx|void|PadnameREFCNT_dec|PADNAME pn
+=for apidoc Amx|void|PadnameREFCNT_dec|PADNAME * pn
 Lowers the reference count of the pad name.
 
 
@@ -492,7 +492,7 @@ Clone the state variables associated with running and compiling pads.
     PL_cop_seqmax		= proto_perl->Icop_seqmax;
 
 /*
-=for apidoc Am|PADOFFSET|pad_add_name_pvs|"literal string" name|U32 flags|HV *typestash|HV *ourstash
+=for apidoc Am|PADOFFSET|pad_add_name_pvs|"name"|U32 flags|HV *typestash|HV *ourstash
 
 Exactly like L</pad_add_name_pvn>, but takes a literal string
 instead of a string/length pair.
@@ -504,7 +504,7 @@ instead of a string/length pair.
     Perl_pad_add_name_pvn(aTHX_ STR_WITH_LEN(name), flags, typestash, ourstash)
 
 /*
-=for apidoc Am|PADOFFSET|pad_findmy_pvs|"literal string" name|U32 flags
+=for apidoc Am|PADOFFSET|pad_findmy_pvs|"name"|U32 flags
 
 Exactly like L</pad_findmy_pvn>, but takes a literal string
 instead of a string/length pair.

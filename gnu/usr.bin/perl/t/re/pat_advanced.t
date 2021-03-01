@@ -934,6 +934,9 @@ sub run_tests {
         my $name = "foo\xDF";
         my $result = eval "'A${name}B'  =~ /^A\\N{$name}B\$/";
         ok !$@ && $result,  "Passthrough charname of non-ASCII, Latin1";
+        eval "qr/\\p{name=foo}/";
+        like($@, qr/Can't find Unicode property definition "name=foo"/,
+                '\p{name=} doesn\'t see a cumstom charnames translator');
         #
         # Why doesn't must_warn work here?
         #
@@ -2152,7 +2155,7 @@ EOP
         "Check TRIE does not overwrite EXACT following NOTHING at start - RT #111842";
 
     {
-        my $single = ":";
+        my $single = "z";
         my $upper = "\x{390}";  # Fold is 3 chars.
         my $multi = CORE::fc($upper);
 
@@ -2387,7 +2390,7 @@ EOF
     TODO: {   # Was looping
         todo_skip('Triggers thread clone SEGV. See #86550')
 	  if $::running_as_thread && $::running_as_thread;
-        watchdog(10);   # Use a bigger value for busy systems
+        watchdog(10 * ($ENV{PERL_TEST_TIME_OUT_FACTOR} || 1));
         like("\x{00DF}", qr/[\x{1E9E}_]*/i, "\"\\x{00DF}\" =~ /[\\x{1E9E}_]*/i was looping");
     }
 
@@ -2424,7 +2427,7 @@ EOF
             like(chr(0x7FFF_FFFF_FFFF_FFFF), qr/^\p{Is_Portable_Super}$/,
                     "chr(0x7FFF_FFFF_FFFF_FFFF) can match a Unicode property");
 
-            my $p = qr/^[\x{7FFF_FFFF_FFFF_FFFF}]$/;
+            my $p = eval 'qr/^\x{7FFF_FFFF_FFFF_FFFF}$/';
             like(chr(0x7FFF_FFFF_FFFF_FFFF), qr/$p/,
                     "chr(0x7FFF_FFFF_FFFF_FFFF) can match itself in a [class]");
             like(chr(0x7FFF_FFFF_FFFF_FFFF), qr/$p/, # Tests any caching
@@ -2522,6 +2525,55 @@ EOF
     {   # [perl #134034]    Previously assertion failure
         fresh_perl_is('use utf8; q!Ȧिम한글💣΢ყაოსაა!=~/(?li)\b{wb}\B(*COMMIT)0/;',
                       "", {}, "*COMMIT caused positioning beyond EOS");
+    }
+
+    {   # [GH #17486]    Previously assertion failure
+        fresh_perl_is('0=~/(?iaa)ss\337(?0)|/',
+                      "", {}, "EXACTFUP node isn't changed into something else");
+    }
+
+    {   # [GH #17593]
+        fresh_perl_is('qr/((?+2147483647))/',
+                      "Invalid reference to group in regex; marked by <--"
+                    . " HERE in m/((?+2147483647) <-- HERE )/ at - line 1.",
+                      {}, "integer overflow, undefined behavior in ASAN");
+        fresh_perl_is('qr/((?-2147483647))/',
+                      "Reference to nonexistent group in regex; marked by <--"
+                    . " HERE in m/((?-2147483647) <-- HERE )/ at - line 1.",
+                      {}, "Large negative relative capture group");
+        fresh_perl_is('qr/((?+18446744073709551615))/',
+                      "Invalid reference to group in regex; marked by <--"
+                    . " HERE in m/((?+18446744073709551615 <-- HERE ))/ at -"
+                    . " line 1.",
+                      {}, "Too large relative group number");
+        fresh_perl_is('qr/((?-18446744073709551615))/',
+                      "Invalid reference to group in regex; marked by <--"
+                    . " HERE in m/((?-18446744073709551615 <-- HERE ))/ at -"
+                    . " line 1.",
+                      {}, "Too large negative relative group number");
+    }
+
+    {   # GH #17734, ASAN use after free
+        fresh_perl_like('no warnings "experimental::uniprop_wildcards";
+                         my $re = q<[[\p{name=/[Y-]+Z/}]]>;
+                         eval { "\N{BYZANTINE MUSICAL SYMBOL PSILI}"
+                                =~ /$re/ }; print $@ if $@; print "Done\n";',
+                         qr/Done/,
+                         {}, "GH #17734");
+    }
+
+    {   # GH $17278 assertion fails
+        fresh_perl_is('use locale;
+                       my $A_grave = "\N{LATIN CAPITAL LETTER A WITH GRAVE}";
+                       utf8::encode($A_grave);
+                       my $a_grave = "\N{LATIN SMALL LETTER A WITH GRAVE}";
+                       utf8::encode($a_grave);
+
+                       my $z="q!$a_grave! =~ m!(?^i)[$A_grave]!";
+                       utf8::decode($z);
+                       print eval $z, "\n";',
+                       1,
+                       {}, "GH #17278");
     }
 
 

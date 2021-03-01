@@ -486,7 +486,7 @@ Natively 64-bit systems need neither -Duse64bitint nor -Duse64bitall.
 On these systems, it might be the default compilation mode, and there
 is currently no guarantee that passing no use64bitall option to the
 Configure process will build a 32bit perl. Implementing -Duse32bit*
-options would be nice for perl 5.26.0.
+options would be nice for perl 5.32.1.
 
 =head2 Profile Perl - am I hot or not?
 
@@ -507,12 +507,6 @@ want to determine what ops I<really> are the most commonly used. And in turn
 suggest evictions and promotions to achieve a better F<pp_hot.c>.
 
 One piece of Perl code that might make a good testbed is F<installman>.
-
-=head2 Improve win32/wince.c
-
-Currently, numerous functions look virtually, if not completely,
-identical in both F<win32/wince.c> and F<win32/win32.c> files, which can't
-be good.
 
 =head2 Use secure CRT functions when building with VC8 on Win32
 
@@ -545,7 +539,7 @@ read-only attribute).
 
 Furthermore, POSIX::access() behaves differently for directories having the
 read-only attribute set depending on what CRT library is being used. For
-example, the _access() function in the VC6 and VC7 CRTs (wrongly) claim that
+example, the _access() function in the VC7 CRT (wrongly) claims that
 such directories are not writable, whereas in fact all directories are writable
 unless access is denied by DACLs. (In the case of directories, the read-only
 attribute actually only means that the directory cannot be deleted.) This CRT
@@ -952,26 +946,15 @@ Logically all lexicals used only once should warn, if the user asks for
 warnings.  An unworked RT ticket (#5087) has been open for almost seven
 years for this discrepancy.
 
-=head2 UTF-8 revamp
-
-The handling of Unicode is unclean in many places.  In the regex engine
-there are especially many problems.  The swash data structure could be
-replaced my something better.  Inversion lists and maps are likely
-candidates.  The whole Unicode database could be placed in-core for a
-huge speed-up.  Only minimal work was done on the optimizer when utf8
-was added, with the result that the synthetic start class often will
-fail to narrow down the possible choices when given non-Latin1 input.
-Karl Williamson has been working on this - talk to him.
-
 =head2 state variable initialization in list context
 
 Currently this is illegal:
 
     state ($a, $b) = foo(); 
 
-In Perl 6, C<state ($a) = foo();> and C<(state $a) = foo();> have different
+In Raku, C<state ($a) = foo();> and C<(state $a) = foo();> have different
 semantics, which is tricky to implement in Perl 5 as currently they produce
-the same opcode trees. The Perl 6 design is firm, so it would be good to
+the same opcode trees. The Raku design is firm, so it would be good to
 implement the necessary code in Perl 5. There are comments in
 C<Perl_newASSIGNOP()> that show the code paths taken by various assignment
 constructions involving state variables.
@@ -1206,7 +1189,7 @@ L<http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/2013-01/msg00339.html>
 =head1 Big projects
 
 Tasks that will get your name mentioned in the description of the "Highlights
-of 5.26.0"
+of 5.32.1"
 
 =head2 make ithreads more robust
 

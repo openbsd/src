@@ -200,8 +200,10 @@ EOH
 	$mg_order{(uc $byte) . $byte} = $name;
     }
     my @rows;
+    my @names;
     foreach (sort keys %mg_order) {
 	my $name = $mg_order{$_};
+        push @names, $name;
 	my $data = $mg{$name};
 	my $i = ord $data->{char};
 	unless ($data->{unknown_to_sv_magic}) {
@@ -272,7 +274,10 @@ EOH
 	    printf $format, $type, $vtbl, $desc;
 	    printf $format, '', '', $_ foreach @cont;
 	}
-	print "\n";
+	print "\n\n";
+
+        print "=for apidoc Amnh||PERL_MAGIC_$_\n" for @names;
+        print "\n";
 
 	while (<$oldguts>) {
 	    last if /^=for mg_vtable.pl end/;

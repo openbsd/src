@@ -93,7 +93,7 @@ sub run_test {
   local $_;
   SKIP: {
     skip "No vstring test <5.8", 2
-      if $] < 5.008 && $pkg eq 'BareV2String' && $descrip =~ m!^2-part!;
+      if "$]" < 5.008 && $pkg eq 'BareV2String' && $descrip =~ m!^2-part!;
     my $warnings;
     eval { $warnings = capture_make("Fake::$pkg" => $version); };
     is($@, '', "$descrip not fatal") or skip "$descrip WM failed", 1;

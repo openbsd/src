@@ -13,18 +13,18 @@
 /*
 =head1 Stack Manipulation Macros
 
-=for apidoc AmU||SP
+=for apidoc AmnU||SP
 Stack pointer.  This is usually handled by C<xsubpp>.  See C<L</dSP>> and
 C<SPAGAIN>.
 
-=for apidoc AmU||MARK
+=for apidoc AmnU||MARK
 Stack marker variable for the XSUB.  See C<L</dMARK>>.
 
 =for apidoc Am|void|PUSHMARK|SP
 Opening bracket for arguments on a callback.  See C<L</PUTBACK>> and
 L<perlcall>.
 
-=for apidoc Ams||dSP
+=for apidoc Amns||dSP
 Declares a local copy of perl's stack pointer for the XSUB, available via
 the C<SP> macro.  See C<L</SP>>.
 
@@ -35,17 +35,17 @@ a local copy of perl's stack pointer, available via the C<SP> macro.
 See C<L<perlapi/SP>>.  (Available for backward source code compatibility with
 the old (Perl 5.005) thread model.)
 
-=for apidoc Ams||dMARK
+=for apidoc Amns||dMARK
 Declare a stack marker variable, C<mark>, for the XSUB.  See C<L</MARK>> and
 C<L</dORIGMARK>>.
 
-=for apidoc Ams||dORIGMARK
+=for apidoc Amns||dORIGMARK
 Saves the original stack mark for the XSUB.  See C<L</ORIGMARK>>.
 
-=for apidoc AmU||ORIGMARK
+=for apidoc AmnU||ORIGMARK
 The original stack mark for the XSUB.  See C<L</dORIGMARK>>.
 
-=for apidoc Ams||SPAGAIN
+=for apidoc Amns||SPAGAIN
 Refetch the stack pointer.  Used after a callback.  See L<perlcall>.
 
 =cut */
@@ -67,8 +67,8 @@ Refetch the stack pointer.  Used after a callback.  See L<perlcall>.
                 PL_markstack_ptr, (IV)*mark_stack_entry)));           \
     } STMT_END
 
-#define TOPMARK S_TOPMARK(aTHX)
-#define POPMARK S_POPMARK(aTHX)
+#define TOPMARK Perl_TOPMARK(aTHX)
+#define POPMARK Perl_POPMARK(aTHX)
 
 #define INCMARK \
     STMT_START {                                                      \
@@ -102,7 +102,7 @@ Refetch the stack pointer.  Used after a callback.  See L<perlcall>.
 #define DIE return Perl_die
 
 /*
-=for apidoc Ams||PUTBACK
+=for apidoc Amns||PUTBACK
 Closing bracket for XSUB arguments.  This is usually handled by C<xsubpp>.
 See C<L</PUSHMARK>> and L<perlcall> for other uses.
 
@@ -243,7 +243,7 @@ Push an SV onto the stack and mortalizes the SV.  The stack must have room
 for this element.  Does not use C<TARG>.  See also C<L</PUSHs>> and
 C<L</mXPUSHs>>.
 
-=for apidoc Am|void|PUSHmortal
+=for apidoc Amn|void|PUSHmortal
 Push a new mortal SV onto the stack.  The stack must have room for this
 element.  Does not use C<TARG>.  See also C<L</PUSHs>>, C<L</XPUSHmortal>> and
 C<L</XPUSHs>>.
@@ -270,7 +270,7 @@ C<L</XPUSHu>>.
 Push an SV onto the stack, extending the stack if necessary and mortalizes
 the SV.  Does not use C<TARG>.  See also C<L</XPUSHs>> and C<L</mPUSHs>>.
 
-=for apidoc Am|void|XPUSHmortal
+=for apidoc Amn|void|XPUSHmortal
 Push a new mortal SV onto the stack, extending the stack if necessary.
 Does not use C<TARG>.  See also C<L</XPUSHs>>, C<L</PUSHmortal>> and
 C<L</PUSHs>>.
@@ -356,7 +356,7 @@ Does not use C<TARG>.  See also C<L</XPUSHu>>, C<L</mPUSHu>> and C<L</PUSHu>>.
 
 /* EXTEND_SKIP(): used for where you would normally call EXTEND(), but
  * you know for sure that a previous op will have already extended the
- * stack sufficiently.  For example pp_enteriter ensures that that there
+ * stack sufficiently.  For example pp_enteriter ensures that there
  * is always at least 1 free slot, so pp_iter can return &PL_sv_yes/no
  * without checking each time. Calling EXTEND_SKIP() defeats the HWM
  * debugging mechanism which would otherwise whine
@@ -638,7 +638,7 @@ Does not use C<TARG>.  See also C<L</XPUSHu>>, C<L</mPUSHu>> and C<L</PUSHu>>.
 #define opASSIGN (PL_op->op_flags & OPf_STACKED)
 
 /*
-=for apidoc mU||LVRET
+=for apidoc mnU||LVRET
 True if this op will be the return value of an lvalue subroutine
 
 =cut */

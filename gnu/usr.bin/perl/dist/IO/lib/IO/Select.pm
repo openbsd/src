@@ -10,7 +10,7 @@ use     strict;
 use warnings::register;
 require Exporter;
 
-our $VERSION = "1.40";
+our $VERSION = "1.42";
 
 our @ISA = qw(Exporter); # This is only so we can do version checking
 
@@ -57,7 +57,21 @@ sub _fileno
  my($self, $f) = @_;
  return unless defined $f;
  $f = $f->[0] if ref($f) eq 'ARRAY';
- ($f =~ /^\d+$/) ? $f : fileno($f);
+ if($f =~ /^[0-9]+$/) { # plain file number
+  return $f;
+ }
+ elsif(defined(my $fd = fileno($f))) {
+  return $fd;
+ }
+ else {
+  # Neither a plain file number nor an opened filehandle; but maybe it was
+  # previously registered and has since been closed. ->remove still wants to
+  # know what fileno it had
+  foreach my $i ( FIRST_FD .. $#$self ) {
+   return $i - FIRST_FD if $self->[$i] == $f;
+  }
+  return undef;
+ }
 }
 
 sub _update

@@ -11,7 +11,7 @@ use strict;
 
 BEGIN {
     require '../../t/test.pl';
-    plan(527);
+    plan(538);
     use_ok('XS::APItest')
 };
 
@@ -223,7 +223,34 @@ is(eval_pv('d()', 0), undef, "eval_pv('d()', 0)");
 is($@, "its_dead_jim\n", "eval_pv('d()', 0) - \$@");
 is(eval { eval_pv('d()', 1) } , undef, "eval { eval_pv('d()', 1) }");
 is($@, "its_dead_jim\n", "eval { eval_pv('d()', 1) } - \$@");
+is(eval { eval_pv(q/die $obj/, 1) }, undef,
+   "eval_pv die of an object");
+ok(ref $@, "object thrown");
+is($@, $obj, "check object rethrown");
 
+package False {
+    use overload
+      bool => sub { 0 },
+      '""' => sub { "Foo" };
+    sub new { bless {}, shift }
+};
+my $false = False->new;
+ok(!$false, "our false object is actually false");
+is(eval { eval_pv(q/die $false;/, 1); 1 }, undef,
+   "check false objects are rethrown");
+is(overload::StrVal($@), overload::StrVal($false),
+   "check we got the expected object");
+
+is(eval { eval_sv(q/die $false/, G_RETHROW); 1 }, undef,
+   "check G_RETHROW for thrown object");
+is(overload::StrVal($@), overload::StrVal($false),
+   "check we got the expected object");
+is(eval { eval_sv(q/"unterminated/, G_RETHROW); 1 }, undef,
+   "check G_RETHROW for syntax error");
+like($@, qr/Can't find string terminator/,
+     "check error rethrown");
+ok(eq_array([ eval { eval_sv(q/"working code"/, G_RETHROW) } ], [ "working code", 1 ]),
+   "check for spurious rethrow");
 
 # #3719 - check that the eval call variants handle exceptions correctly,
 # and do the right thing with $@, both with and without G_KEEPERR set.

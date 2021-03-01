@@ -32,6 +32,7 @@ B::Lint
 B::Lint::Debug
 B::Utils
 basename(1)
+bc(1)
 Benchmark::Perl::Formance
 bind(2)
 BSD::Resource
@@ -53,6 +54,10 @@ Class::Tiny::Antlers
 Classic::Perl
 clearerr(3)
 clock(3)
+clock_getres(3)
+clock_gettime(2)
+clock_nanosleep(3)
+clock_settime(2)
 Clone
 closedir(2)
 connect(2)
@@ -60,6 +65,7 @@ Coro
 cpan2dist(1)
 CPAN::Changes::Spec
 CPAN::Uploader
+Cpanel::JSON::XS
 cpanp(1)
 CPANPLUS
 crypt(3)
@@ -71,6 +77,7 @@ Data::Alias
 Data::Dump::Streamer
 Data::Entropy
 Data::Float
+Data::MessagePack
 Data::Structure::Util
 Data::Types
 Data::Util
@@ -101,6 +108,8 @@ Encode::Detect
 Encode::Locale
 Eval::WithLexicals
 execvp(3)
+exit(3)
+Expect
 Exporter::Easy
 ExtUtils::Constant::ProxySubs
 fchdir(2)
@@ -109,6 +118,8 @@ fchown(2)
 fcntl(2)
 fdopen(3)
 fetch(1)
+FFI::Platypus
+FFI::Raw
 fgrep(1)
 File::chdir
 File::Copy::Recursive
@@ -130,6 +141,7 @@ futimes(2)
 Future
 gcc(1)
 gdbm(3)
+getitimer(2)
 Getopt::Std
 getpgrp(2)
 getpriority(2)
@@ -142,8 +154,11 @@ HTML::StripScripts
 HTTP::Lite
 iconv(1)
 iconv(3)
+indirect
 inetd(8)
 invoker
+IO::Compress
+IO::Pty
 IO::Socket::IP
 ioctl(2)
 IPC::Run
@@ -188,6 +203,8 @@ Math::BigInt::Pari
 Math::Random::MT::Perl
 Math::Random::Secure
 Math::TrulyRandom
+mbrlen(3)
+mbrtowc(3)
 md5sum(1)
 Method::Signatures
 mmap(2)
@@ -229,6 +246,7 @@ PerlIO::via::Base64
 PerlIO::via::StripHTML
 perllexwarn(1)
 perlthanks
+pipe(2)
 POD2::FR
 POD2::IT
 pod2ipf(1)
@@ -238,6 +256,7 @@ Pod::HTML2Pod
 Pod::LaTeX
 Pod::Plainer
 Pod::PXML
+podlators
 poll(2)
 prctl(2)
 printenv(1)
@@ -268,6 +287,9 @@ sendmail(1)
 sendmsg(2)
 sendmsg(3)
 sendto(2)
+Sereal
+Sereal::Decoder
+setenv(3)
 setitimer(2)
 setlocale(3)
 setpgid(2)
@@ -277,17 +299,22 @@ sha1sum(1)
 shadow(3)
 Shell
 Shell::Command
+signal(2)
+sleep(3)
 sock_init(3)
 Socket
 socketpair(3)
 SOM
+sort(1)
 splain
 sprintf(3)
 stat(2)
+strchr(3)
 strftime(3)
 strictures
 String::Base
 String::Scanf
+strstr(3)
 strtol(3)
 Switch
 tar(1)
@@ -311,6 +338,7 @@ touch(1)
 tr(1)
 TryCatch
 tty(1)
+ualarm(3)
 umask(2)
 Unicode::CaseFold
 Unicode::Casing
@@ -328,6 +356,7 @@ wait4(2)
 waitpid(2)
 waitpid(3)
 Want
+wcrtomb(3)
 wget(1)
 Win32::Locale
 write(2)
@@ -354,8 +383,7 @@ install	? Should you be using F<...> or maybe L<...> instead of	1
 pod/perl.pod	Verbatim line length including indents exceeds 79 by	8
 pod/perlandroid.pod	Verbatim line length including indents exceeds 79 by	3
 pod/perlbook.pod	Verbatim line length including indents exceeds 79 by	1
-pod/perlce.pod	Verbatim line length including indents exceeds 79 by	3
-pod/perldebguts.pod	Verbatim line length including indents exceeds 79 by	27
+pod/perldebguts.pod	Verbatim line length including indents exceeds 79 by	-1
 pod/perldebtut.pod	Verbatim line length including indents exceeds 79 by	3
 pod/perldtrace.pod	Verbatim line length including indents exceeds 79 by	7
 pod/perlgit.pod	? Should you be using F<...> or maybe L<...> instead of	1
@@ -371,7 +399,7 @@ pod/perlmacosx.pod	Verbatim line length including indents exceeds 79 by	3
 pod/perlmroapi.pod	? Should you be using L<...> instead of	1
 pod/perlos2.pod	? Should you be using L<...> instead of	2
 pod/perlos2.pod	Verbatim line length including indents exceeds 79 by	5
-pod/perlos390.pod	Verbatim line length including indents exceeds 79 by	2
+pod/perlos390.pod	Verbatim line length including indents exceeds 79 by	3
 pod/perlperf.pod	Verbatim line length including indents exceeds 79 by	114
 pod/perlport.pod	? Should you be using L<...> instead of	1
 pod/perlrun.pod	Verbatim line length including indents exceeds 79 by	3

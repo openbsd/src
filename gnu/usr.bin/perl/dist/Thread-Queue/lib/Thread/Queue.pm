@@ -3,7 +3,7 @@ package Thread::Queue;
 use strict;
 use warnings;
 
-our $VERSION = '3.13';
+our $VERSION = '3.14';          # remember to update version in POD!
 $VERSION = eval $VERSION;
 
 use threads::shared 1.21;
@@ -318,7 +318,7 @@ Thread::Queue - Thread-safe queues
 
 =head1 VERSION
 
-This document describes Thread::Queue version 3.13
+This document describes Thread::Queue version 3.14
 
 =head1 SYNOPSIS
 
@@ -547,7 +547,7 @@ VARIABLE"> the queue inside a local block:
 =item ->peek(INDEX)
 
 Returns an item from the queue without dequeuing anything.  Defaults to the
-the head of queue (at index position 0) if no index is specified.  Negative
+head of queue (at index position 0) if no index is specified.  Negative
 index values are supported as with L<arrays|perldata/"Subscripts"> (i.e., -1
 is the end of the queue, -2 is next to last, and so on).
 

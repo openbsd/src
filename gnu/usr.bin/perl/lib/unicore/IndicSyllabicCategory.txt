@@ -1,5 +1,5 @@
-# IndicSyllabicCategory-12.1.0.txt
-# Date: 2019-03-08, 23:59:00 GMT [KW, RP]
+# IndicSyllabicCategory-13.0.0.txt
+# Date: 2019-07-22, 19:55:00 GMT [KW, RP]
 # © 2019 Unicode®, Inc.
 # Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
@@ -36,14 +36,15 @@
 # Indic_Syllabic_Category are the following:
 #
 # Ahom, Balinese, Batak, Bengali, Bhaiksuki, Brahmi, Buginese, Buhid,
-# Chakma, Cham, Devanagari, Dogra, Grantha, Gujarati, Gunjala Gondi,
-# Gurmukhi, Hanunoo, Javanese, Kaithi, Kannada, Kayah Li, Kharoshthi,
-# Khmer, Khojki, Khudawadi, Lao, Lepcha, Limbu, Mahajani, Makasar,
-# Malayalam, Marchen, Masaram Gondi, Meetei Mayek, Modi, Multani,
-# Myanmar, Nandinagari, Newa, New Tai Lue, Oriya, Phags-pa, Rejang,
-# Saurashtra, Sharada, Siddham, Sinhala, Soyombo, Sundanese, Syloti
-# Nagri, Tagalog, Tagbanwa, Tai Le, Tai Tham, Tai Viet, Takri, Tamil,
-# Telugu, Thai, Tibetan, Tirhuta, and Zanabazar Square.
+# Chakma, Cham, Devanagari, Dives Akuru, Dogra, Grantha, Gujarati,
+# Gunjala Gondi, Gurmukhi, Hanunoo, Javanese, Kaithi, Kannada,
+# Kayah Li, Kharoshthi, Khmer, Khojki, Khudawadi, Lao, Lepcha, Limbu,
+# Mahajani, Makasar, Malayalam, Marchen, Masaram Gondi, Meetei Mayek,
+# Modi, Multani, Myanmar, Nandinagari, Newa, New Tai Lue, Oriya,
+# Phags-pa, Rejang, Saurashtra, Sharada, Siddham, Sinhala, Soyombo,
+# Sundanese, Syloti Nagri, Tagalog, Tagbanwa, Tai Le, Tai Tham,
+# Tai Viet, Takri, Tamil, Telugu, Thai, Tibetan, Tirhuta, and
+# Zanabazar Square.
 #
 # All characters for all other scripts not in that list
 # take the default value for this property, unless they
@@ -85,6 +86,8 @@
 0C82          ; Bindu # Mc       KANNADA SIGN ANUSVARA
 0D00..0D01    ; Bindu # Mn   [2] MALAYALAM SIGN COMBINING ANUSVARA ABOVE..MALAYALAM SIGN CANDRABINDU
 0D02          ; Bindu # Mc       MALAYALAM SIGN ANUSVARA
+0D04          ; Bindu # Lo       MALAYALAM LETTER VEDIC ANUSVARA
+0D81          ; Bindu # Mn       SINHALA SIGN CANDRABINDU
 0D82          ; Bindu # Mc       SINHALA SIGN ANUSVARAYA
 0E4D          ; Bindu # Mn       THAI CHARACTER NIKHAHIT
 0ECD          ; Bindu # Mn       LAO NIGGAHITA
@@ -109,6 +112,7 @@ A980..A981    ; Bindu # Mn   [2] JAVANESE SIGN PANYANGGA..JAVANESE SIGN CECAK
 11080..11081  ; Bindu # Mn   [2] KAITHI SIGN CANDRABINDU..KAITHI SIGN ANUSVARA
 11100..11101  ; Bindu # Mn   [2] CHAKMA SIGN CANDRABINDU..CHAKMA SIGN ANUSVARA
 11180..11181  ; Bindu # Mn   [2] SHARADA SIGN CANDRABINDU..SHARADA SIGN ANUSVARA
+111CF         ; Bindu # Mn       SHARADA SIGN INVERTED CANDRABINDU
 11234         ; Bindu # Mn       KHOJKI SIGN ANUSVARA
 112DF         ; Bindu # Mn       KHUDAWADI SIGN ANUSVARA
 11300..11301  ; Bindu # Mn   [2] GRANTHA SIGN COMBINING ANUSVARA ABOVE..GRANTHA SIGN CANDRABINDU
@@ -121,6 +125,7 @@ A980..A981    ; Bindu # Mn   [2] JAVANESE SIGN PANYANGGA..JAVANESE SIGN CECAK
 1163D         ; Bindu # Mn       MODI SIGN ANUSVARA
 116AB         ; Bindu # Mn       TAKRI SIGN ANUSVARA
 11837         ; Bindu # Mn       DOGRA SIGN ANUSVARA
+1193B..1193C  ; Bindu # Mn   [2] DIVES AKURU SIGN ANUSVARA..DIVES AKURU SIGN CANDRABINDU
 119DE         ; Bindu # Mc       NANDINAGARI SIGN ANUSVARA
 11A35..11A38  ; Bindu # Mn   [4] ZANABAZAR SQUARE SIGN CANDRABINDU..ZANABAZAR SQUARE SIGN ANUSVARA
 11A96         ; Bindu # Mn       SOYOMBO SIGN ANUSVARA
@@ -238,6 +243,7 @@ A9B3          ; Nukta # Mn       JAVANESE SIGN CECAK TELU
 115C0         ; Nukta # Mn       SIDDHAM SIGN NUKTA
 116B7         ; Nukta # Mn       TAKRI SIGN NUKTA
 1183A         ; Nukta # Mn       DOGRA SIGN NUKTA
+11943         ; Nukta # Mn       DIVES AKURU SIGN NUKTA
 11D42         ; Nukta # Mn       MASARAM GONDI SIGN NUKTA
 
 # ================================================
@@ -302,11 +308,13 @@ A9C0          ; Virama # Mc       JAVANESE PANGKON
 1A7A          ; Pure_Killer # Mn       TAI THAM SIGN RA HAAM
 1BAA          ; Pure_Killer # Mc       SUNDANESE SIGN PAMAAEH
 1BF2..1BF3    ; Pure_Killer # Mc   [2] BATAK PANGOLAT..BATAK PANONGONAN
+A82C          ; Pure_Killer # Mn       SYLOTI NAGRI SIGN ALTERNATE HASANTA
 A953          ; Pure_Killer # Mc       REJANG VIRAMA
 ABED          ; Pure_Killer # Mn       MEETEI MAYEK APUN IYEK
 11134         ; Pure_Killer # Mn       CHAKMA MAAYYAA
 112EA         ; Pure_Killer # Mn       KHUDAWADI SIGN VIRAMA
 1172B         ; Pure_Killer # Mn       AHOM SIGN KILLER
+1193D         ; Pure_Killer # Mc       DIVES AKURU SIGN HALANTA
 11A34         ; Pure_Killer # Mn       ZANABAZAR SQUARE SIGN VIRAMA
 11D44         ; Pure_Killer # Mn       MASARAM GONDI SIGN HALANTA
 
@@ -330,6 +338,7 @@ ABED          ; Pure_Killer # Mn       MEETEI MAYEK APUN IYEK
 AAF6          ; Invisible_Stacker # Mn       MEETEI MAYEK VIRAMA
 10A3F         ; Invisible_Stacker # Mn       KHAROSHTHI VIRAMA
 11133         ; Invisible_Stacker # Mn       CHAKMA VIRAMA
+1193E         ; Invisible_Stacker # Mn       DIVES AKURU VIRAMA
 11A47         ; Invisible_Stacker # Mn       ZANABAZAR SQUARE SUBJOINER
 11A99         ; Invisible_Stacker # Mn       SOYOMBO SUBJOINER
 11D45         ; Invisible_Stacker # Mn       MASARAM GONDI VIRAMA
@@ -416,6 +425,8 @@ ABD1          ; Vowel_Independent # Lo       MEETEI MAYEK LETTER ATIYA
 11600..1160D  ; Vowel_Independent # Lo  [14] MODI LETTER A..MODI LETTER AU
 11680..11689  ; Vowel_Independent # Lo  [10] TAKRI LETTER A..TAKRI LETTER AU
 11800..11809  ; Vowel_Independent # Lo  [10] DOGRA LETTER A..DOGRA LETTER AU
+11900..11906  ; Vowel_Independent # Lo   [7] DIVES AKURU LETTER A..DIVES AKURU LETTER E
+11909         ; Vowel_Independent # Lo       DIVES AKURU LETTER O
 119A0..119A7  ; Vowel_Independent # Lo   [8] NANDINAGARI LETTER A..NANDINAGARI LETTER VOCALIC RR
 119AA..119AD  ; Vowel_Independent # Lo   [4] NANDINAGARI LETTER E..NANDINAGARI LETTER AU
 11A00         ; Vowel_Independent # Lo       ZANABAZAR SQUARE LETTER A
@@ -470,7 +481,7 @@ ABD1          ; Vowel_Independent # Lo       MEETEI MAYEK LETTER ATIYA
 0B41..0B44    ; Vowel_Dependent # Mn   [4] ORIYA VOWEL SIGN U..ORIYA VOWEL SIGN VOCALIC RR
 0B47..0B48    ; Vowel_Dependent # Mc   [2] ORIYA VOWEL SIGN E..ORIYA VOWEL SIGN AI
 0B4B..0B4C    ; Vowel_Dependent # Mc   [2] ORIYA VOWEL SIGN O..ORIYA VOWEL SIGN AU
-0B56          ; Vowel_Dependent # Mn       ORIYA AI LENGTH MARK
+0B55..0B56    ; Vowel_Dependent # Mn   [2] ORIYA SIGN OVERLINE..ORIYA AI LENGTH MARK
 0B57          ; Vowel_Dependent # Mc       ORIYA AU LENGTH MARK
 0B62..0B63    ; Vowel_Dependent # Mn   [2] ORIYA VOWEL SIGN VOCALIC L..ORIYA VOWEL SIGN VOCALIC LL
 0BBE..0BBF    ; Vowel_Dependent # Mc   [2] TAMIL VOWEL SIGN AA..TAMIL VOWEL SIGN I
@@ -617,6 +628,7 @@ ABE9..ABEA    ; Vowel_Dependent # Mc   [2] MEETEI MAYEK VOWEL SIGN CHEINAP..MEET
 111B6..111BE  ; Vowel_Dependent # Mn   [9] SHARADA VOWEL SIGN U..SHARADA VOWEL SIGN O
 111BF         ; Vowel_Dependent # Mc       SHARADA VOWEL SIGN AU
 111CB..111CC  ; Vowel_Dependent # Mn   [2] SHARADA VOWEL MODIFIER MARK..SHARADA EXTRA SHORT VOWEL MARK
+111CE         ; Vowel_Dependent # Mc       SHARADA VOWEL SIGN PRISHTHAMATRA E
 1122C..1122E  ; Vowel_Dependent # Mc   [3] KHOJKI VOWEL SIGN AA..KHOJKI VOWEL SIGN II
 1122F..11231  ; Vowel_Dependent # Mn   [3] KHOJKI VOWEL SIGN U..KHOJKI VOWEL SIGN AI
 11232..11233  ; Vowel_Dependent # Mc   [2] KHOJKI VOWEL SIGN O..KHOJKI VOWEL SIGN AU
@@ -654,6 +666,8 @@ ABE9..ABEA    ; Vowel_Dependent # Mc   [2] MEETEI MAYEK VOWEL SIGN CHEINAP..MEET
 11727..1172A  ; Vowel_Dependent # Mn   [4] AHOM VOWEL SIGN AW..AHOM VOWEL SIGN AM
 1182C..1182E  ; Vowel_Dependent # Mc   [3] DOGRA VOWEL SIGN AA..DOGRA VOWEL SIGN II
 1182F..11836  ; Vowel_Dependent # Mn   [8] DOGRA VOWEL SIGN U..DOGRA VOWEL SIGN AU
+11930..11935  ; Vowel_Dependent # Mc   [6] DIVES AKURU VOWEL SIGN AA..DIVES AKURU VOWEL SIGN E
+11937..11938  ; Vowel_Dependent # Mc   [2] DIVES AKURU VOWEL SIGN AI..DIVES AKURU VOWEL SIGN O
 119D1..119D3  ; Vowel_Dependent # Mc   [3] NANDINAGARI VOWEL SIGN AA..NANDINAGARI VOWEL SIGN II
 119D4..119D7  ; Vowel_Dependent # Mn   [4] NANDINAGARI VOWEL SIGN U..NANDINAGARI VOWEL SIGN VOCALIC RR
 119DA..119DB  ; Vowel_Dependent # Mn   [2] NANDINAGARI VOWEL SIGN E..NANDINAGARI VOWEL SIGN AI
@@ -852,6 +866,7 @@ ABD2..ABDA    ; Consonant # Lo   [9] MEETEI MAYEK LETTER GOK..MEETEI MAYEK LETTE
 1108D..110AF  ; Consonant # Lo  [35] KAITHI LETTER KA..KAITHI LETTER HA
 11107..11126  ; Consonant # Lo  [32] CHAKMA LETTER KAA..CHAKMA LETTER HAA
 11144         ; Consonant # Lo       CHAKMA LETTER LHAA
+11147         ; Consonant # Lo       CHAKMA LETTER VAA
 11155..11172  ; Consonant # Lo  [30] MAHAJANI LETTER KA..MAHAJANI LETTER RRA
 11191..111B2  ; Consonant # Lo  [34] SHARADA LETTER KA..SHARADA LETTER HA
 11208..11211  ; Consonant # Lo  [10] KHOJKI LETTER KA..KHOJKI LETTER JJA
@@ -874,6 +889,9 @@ ABD2..ABDA    ; Consonant # Lo   [9] MEETEI MAYEK LETTER GOK..MEETEI MAYEK LETTE
 116B8         ; Consonant # Lo       TAKRI LETTER ARCHAIC KHA
 11700..1171A  ; Consonant # Lo  [27] AHOM LETTER KA..AHOM LETTER ALTERNATE BA
 1180A..1182B  ; Consonant # Lo  [34] DOGRA LETTER KA..DOGRA LETTER RRA
+1190C..11913  ; Consonant # Lo   [8] DIVES AKURU LETTER KA..DIVES AKURU LETTER JA
+11915..11916  ; Consonant # Lo   [2] DIVES AKURU LETTER NYA..DIVES AKURU LETTER TTA
+11918..1192F  ; Consonant # Lo  [24] DIVES AKURU LETTER DDA..DIVES AKURU LETTER ZA
 119AE..119D0  ; Consonant # Lo  [35] NANDINAGARI LETTER KA..NANDINAGARI LETTER RRA
 11A0B..11A32  ; Consonant # Lo  [40] ZANABAZAR SQUARE LETTER KA..ZANABAZAR SQUARE LETTER KSSA
 11A5C..11A83  ; Consonant # Lo  [40] SOYOMBO LETTER KA..SOYOMBO LETTER KSSA
@@ -908,6 +926,7 @@ ABD2..ABDA    ; Consonant # Lo   [9] MEETEI MAYEK LETTER GOK..MEETEI MAYEK LETTE
 0CF1..0CF2    ; Consonant_With_Stacker # Lo   [2] KANNADA SIGN JIHVAMULIYA..KANNADA SIGN UPADHMANIYA
 1CF5..1CF6    ; Consonant_With_Stacker # Lo   [2] VEDIC SIGN JIHVAMULIYA..VEDIC SIGN UPADHMANIYA
 11003..11004  ; Consonant_With_Stacker # Lo   [2] BRAHMI SIGN JIHVAMULIYA..BRAHMI SIGN UPADHMANIYA
+11460..11461  ; Consonant_With_Stacker # Lo   [2] NEWA SIGN JIHVAMULIYA..NEWA SIGN UPADHMANIYA
 
 # ================================================
 
@@ -918,6 +937,7 @@ ABD2..ABDA    ; Consonant # Lo   [9] MEETEI MAYEK LETTER GOK..MEETEI MAYEK LETTE
 # [Not derivable]
 
 111C2..111C3  ; Consonant_Prefixed # Lo   [2] SHARADA SIGN JIHVAMULIYA..SHARADA SIGN UPADHMANIYA
+1193F         ; Consonant_Prefixed # Lo       DIVES AKURU PREFIXED NASAL SIGN
 11A3A         ; Consonant_Prefixed # Lo       ZANABAZAR SQUARE CLUSTER-INITIAL LETTER RA
 11A84..11A89  ; Consonant_Prefixed # Lo   [6] SOYOMBO SIGN JIHVAMULIYA..SOYOMBO CLUSTER-INITIAL LETTER SA
 
@@ -931,6 +951,7 @@ ABD2..ABDA    ; Consonant # Lo   [9] MEETEI MAYEK LETTER GOK..MEETEI MAYEK LETTE
 # [Not derivable]
 
 0D4E          ; Consonant_Preceding_Repha # Lo       MALAYALAM LETTER DOT REPH
+11941         ; Consonant_Preceding_Repha # Lo       DIVES AKURU INITIAL RA
 11D46         ; Consonant_Preceding_Repha # Lo       MASARAM GONDI REPHA
 
 # ================================================
@@ -1004,6 +1025,8 @@ A9BE..A9BF    ; Consonant_Medial # Mc   [2] JAVANESE CONSONANT SIGN PENGKAL..JAV
 AA33..AA34    ; Consonant_Medial # Mc   [2] CHAM CONSONANT SIGN YA..CHAM CONSONANT SIGN RA
 AA35..AA36    ; Consonant_Medial # Mn   [2] CHAM CONSONANT SIGN LA..CHAM CONSONANT SIGN WA
 1171D..1171F  ; Consonant_Medial # Mn   [3] AHOM CONSONANT SIGN MEDIAL LA..AHOM CONSONANT SIGN MEDIAL LIGATING RA
+11940         ; Consonant_Medial # Mc       DIVES AKURU MEDIAL YA
+11942         ; Consonant_Medial # Mc       DIVES AKURU MEDIAL RA
 11A3B..11A3E  ; Consonant_Medial # Mn   [4] ZANABAZAR SQUARE CLUSTER-FINAL LETTER YA..ZANABAZAR SQUARE CLUSTER-FINAL LETTER VA
 11D47         ; Consonant_Medial # Mn       MASARAM GONDI RA-KARA
 
@@ -1266,6 +1289,7 @@ ABF0..ABF9    ; Number # Nd  [10] MEETEI MAYEK DIGIT ZERO..MEETEI MAYEK DIGIT NI
 116C0..116C9  ; Number # Nd  [10] TAKRI DIGIT ZERO..TAKRI DIGIT NINE
 11730..11739  ; Number # Nd  [10] AHOM DIGIT ZERO..AHOM DIGIT NINE
 1173A..1173B  ; Number # No   [2] AHOM NUMBER TEN..AHOM NUMBER TWENTY
+11950..11959  ; Number # Nd  [10] DIVES AKURU DIGIT ZERO..DIVES AKURU DIGIT NINE
 11C50..11C59  ; Number # Nd  [10] BHAIKSUKI DIGIT ZERO..BHAIKSUKI DIGIT NINE
 11C5A..11C6C  ; Number # No  [19] BHAIKSUKI NUMBER ONE..BHAIKSUKI HUNDREDS UNIT MARK
 11D50..11D59  ; Number # Nd  [10] MASARAM GONDI DIGIT ZERO..MASARAM GONDI DIGIT NINE

@@ -141,23 +141,17 @@ Andreas' email address at:
 
     https://pause.perl.org/pause/query?ACTION=pause_04imprint
 
-=head3 GitHub issue management access
-
-Make sure you have permission to close tickets on L<https://github.com/Perl/perl5/issues>
-so you can respond to bug reports as necessary during your stint.  If you
-don't, make a GitHub account (if you don't have one) and contact the pumpking
-with your username to get ticket-closing permission.
-
-=head3 git checkout and commit bit
+=head3 GitHub access
 
 You will need a working C<git> installation, checkout of the perl
 git repository and perl commit bit.  For information about working
 with perl and git, see F<pod/perlgit.pod>.
 
 If you are not yet a perl committer, you won't be able to make a
-release.  Have a chat with whichever evil perl porter tried to talk
-you into the idea in the first place to figure out the best way to
-resolve the issue.
+release.  You will need to have a GitHub account (if you don't have one)
+and contact the pumpking with your username to get membership of the L<<
+Perl-Release-Managers|https://github.com/orgs/Perl/teams/perl-release-managers
+>> team.
 
 =head3 web-based file share
 
@@ -165,10 +159,6 @@ You will need to be able to share tarballs with #p5p members for
 pre-release testing, and you may wish to upload to PAUSE via URL.
 Make sure you have a way of sharing files, such as a web server or
 file-sharing service.
-
-Porters have access to the "dromedary" server (users.perl5.git.perl.org),
-which has a F<public_html> directory to share files with.
-(L<http://users.perl5.git.perl.org/~username/perl-5.xx.y.tar.gz>)
 
 If you use Dropbox, you can append "raw=1" as a parameter to their usual
 sharing link to allow direct download (albeit with redirects).
@@ -374,6 +364,10 @@ the raw reports.
 Similarly, monitor the smoking of perl for compiler warnings, and try to
 fix.
 
+Additionally both L<Travis CI|https://travis-ci.org/Perl/perl5> and
+L<GitHub Actions|https://github.com/Perl/perl5/actions> smokers run
+automatically.
+
 =for checklist skip BLEAD-POINT
 
 =head3 monitor CPAN testers for failures
@@ -387,14 +381,6 @@ That page accepts a query parameter, C<pair> that takes a pair of
 colon-delimited versions to use for comparison.  For example:
 
 L<http://analysis.cpantesters.org/beforemaintrelease?pair=5.20.2:5.22.0%20RC1>
-
-=head3 Monitor Continuous Integration smokers
-
-Currently both "Travis CI" and "GitHub Actions" smokers are setup.
-Their current status is available at:
-
-L<https://github.com/Perl/perl5/actions>
-L<https://travis-ci.org/Perl/perl5>
 
 =head3 update perldelta
 
@@ -507,6 +493,33 @@ For BLEAD-POINT releases, it needs to refer to the previous BLEAD-POINT
 release (so for 5.15.3 this would be 5.15.2).  If the last release manager
 followed instructions, this should have already been done after the last
 blead release, so you may find nothing to do here.
+
+=head3 update AUTHORS
+
+The AUTHORS file can be updated by running C<Porting/checkAUTHORS.pl --update>
+The script detects missing authors or committers since the last release using
+a known tag provided by the C<--from=v5.X.Y> argument, and will add missing
+entries to the AUTHORS file.
+
+    $ perl Porting/checkAUTHORS.pl --update --from=v5.X.Y
+
+For MAINT and BLEAD-FINAL releases, C<v5.X.Y> needs to refer to the last
+release in the previous development cycle (so for example, for a 5.14.x
+release, this would be 5.13.11).
+
+For BLEAD-POINT releases, it needs to refer to the previous BLEAD-POINT
+release (so for 5.15.3 this would be 5.15.2).
+
+Note: It should not be harmful to use a wider range.
+
+Note: If you have uncommitted changes this could cause some warnings,
+and you might like to use the addtional argument C<--to=upstream/blead>
+to use the last known git commit by GitHub.
+
+Review the changes to the AUTHORS file, be sure you are not adding duplicate
+entries or removing any entries, then commit your changes.
+
+    $ git commit -a AUTHORS -m 'Update AUTHORS list for 5.x.y'
 
 =head3 Check copyright years
 
@@ -1148,11 +1161,6 @@ new release from wherever you put it for testers to find it.  This will
 eliminate anxious gnashing of teeth while you wait to see if your
 15 megabyte HTTP upload successfully completes across your slow, twitchy
 cable modem.
-
-You can make use of your home directory on dromedary for
-this purpose: F<http://users.perl5.git.perl.org/~USERNAME> maps to
-F</home/USERNAME/public_html>, where F<USERNAME> is your login account
-on dromedary.
 
 I<Remember>: if your upload is partially successful, you
 may need to contact a PAUSE administrator or even bump the version of perl.

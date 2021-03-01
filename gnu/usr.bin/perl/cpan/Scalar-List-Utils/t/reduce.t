@@ -5,25 +5,25 @@ use warnings;
 
 use List::Util qw(reduce min);
 use Test::More;
-plan tests => 30 + ($::PERL_ONLY ? 0 : 2);
+plan tests => 33;
 
 my $v = reduce {};
 
-is( $v,	undef,	'no args');
+is( $v, undef, 'no args');
 
 $v = reduce { $a / $b } 756,3,7,4;
-is( $v,	9,	'4-arg divide');
+is( $v, 9, '4-arg divide');
 
 $v = reduce { $a / $b } 6;
-is( $v,	6,	'one arg');
+is( $v, 6, 'one arg');
 
 my @a = map { rand } 0 .. 20;
 $v = reduce { $a < $b ? $a : $b } @a;
-is( $v,	min(@a),	'min');
+is( $v, min(@a), 'min');
 
 @a = map { pack("C", int(rand(256))) } 0 .. 20;
 $v = reduce { $a . $b } @a;
-is( $v,	join("",@a),	'concat');
+is( $v, join("",@a), 'concat');
 
 sub add {
   my($aa, $bb) = @_;
@@ -31,26 +31,26 @@ sub add {
 }
 
 $v = reduce { my $t="$a $b\n"; 0+add($a, $b) } 3, 2, 1;
-is( $v,	6,	'call sub');
+is( $v, 6, 'call sub');
 
 # Check that eval{} inside the block works correctly
 $v = reduce { eval { die }; $a + $b } 0,1,2,3,4;
-is( $v,	10,	'use eval{}');
+is( $v, 10, 'use eval{}');
 
 $v = !defined eval { reduce { die if $b > 2; $a + $b } 0,1,2,3,4 };
 ok($v, 'die');
 
 sub foobar { reduce { (defined(wantarray) && !wantarray) ? $a+1 : 0 } 0,1,2,3 }
 ($v) = foobar();
-is( $v,	3,	'scalar context');
+is( $v, 3, 'scalar context');
 
 sub add2 { $a + $b }
 
 $v = reduce \&add2, 1,2,3;
-is( $v,	6,	'sub reference');
+is( $v, 6, 'sub reference');
 
 $v = reduce { add2() } 3,4,5;
-is( $v, 12,	'call sub');
+is( $v, 12, 'call sub');
 
 
 $v = reduce { eval "$a + $b" } 1,2,3;
@@ -125,11 +125,9 @@ SKIP: {
   is($ok, '', 'Not a subroutine reference');
 }
 
-# The remainder of the tests are only relevant for the XS
-# implementation. The Perl-only implementation behaves differently
-# (and more flexibly) in a way that we can't emulate from XS.
-if (!$::PERL_ONLY) { SKIP: {
-
+# These tests are only relevant for the real multicall implementation. The
+# psuedo-multicall implementation behaves differently.
+SKIP: {
     $List::Util::REAL_MULTICALL ||= 0; # Avoid use only once
     skip("Poor man's MULTICALL can't cope", 2)
       if !$List::Util::REAL_MULTICALL;
@@ -141,8 +139,12 @@ if (!$::PERL_ONLY) { SKIP: {
     # Can we goto a subroutine?
     eval {()=reduce{goto sub{}} 1,2;};
     like($@, qr/^Can't goto subroutine from a sort sub/, "goto sub");
+}
 
-} }
+{
+  my @ret = reduce { $a + $b } 1 .. 5;
+  is_deeply( \@ret, [ 15 ], 'reduce in list context yields only final answer' );
+}
 
 # XSUB callback
 use constant XSUBC => 42;
@@ -162,4 +164,4 @@ ok($@ =~ /^Not a subroutine reference/, 'check for code reference');
 
 my @names = ("a\x{100}c", "d\x{101}efgh", 'ijk');
 my $longest = reduce { length($a) > length($b) ? $a : $b } @names;
-is( length($longest),	6,	'missing SMG rt#121992');
+is( length($longest), 6, 'missing SMG rt#121992');

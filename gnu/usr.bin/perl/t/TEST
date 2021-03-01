@@ -421,9 +421,33 @@ sub _tests_from_manifest {
 		my $t = $1;
 		my $extension = $2;
 
-		# XXX Generates way too many error lines currently.  Skip for
-		# v5.22
-		next if $t =~ /^cpan/ && ord("A") != 65;
+		next if ord "A" != 65
+		     && defined $extension
+		     && $extension =~ m! \b (?:
+						Archive-Tar/
+					      | Config-Perl-V/
+				              | CPAN-Meta/
+					      | CPAN-Meta-YAML/
+					      | Digest-SHA/
+					      | ExtUtils-MakeMaker/
+					      | HTTP-Tiny/
+					      | IO-Compress/
+					      | JSON-PP/
+					      | libnet/
+					      | MIME-Base64/
+					      | podlators/
+					      | Pod-Simple/
+					      | Pod-Checker/
+					      | Digest-MD5/
+					      | Test-Harness/
+					      | IPC-Cmd/
+					      | Encode/
+					      | Socket/
+					      | ExtUtils-Manifest/
+					      | Module-Metadata/
+					      | PerlIO-via-QuotedPrint/
+					    )
+				       !x;
 
 		if (!$::core || $t =~ m!^lib/[a-z]!) {
 		    if (defined $extension) {
@@ -461,7 +485,7 @@ unless (@ARGV) {
     }
     # Config.pm may be broken for make minitest. And this is only a refinement
     # for skipping tests on non-default builds, so it is allowed to fail.
-    # What we want to to is make a list of extensions which we did not build.
+    # What we want to do is make a list of extensions which we did not build.
     my $configsh = '../config.sh';
     my ($extensions, $known_extensions);
     if (-f $configsh) {

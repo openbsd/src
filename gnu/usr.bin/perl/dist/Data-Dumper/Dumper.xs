@@ -808,12 +808,13 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 	    sv_catpvs(retval, "( ");
             if (style->indent >= 2) {
 		blesspad = apad;
-		apad = newSVsv(apad);
+		apad = sv_2mortal(newSVsv(apad));
 		sv_x(aTHX_ apad, " ", 1, blesslen+2);
 	    }
 	}
 
         ipad = sv_x(aTHX_ Nullsv, SvPVX_const(style->xpad), SvCUR(style->xpad), level+1);
+        sv_2mortal(ipad);
 
         if (is_regex) 
         {
@@ -878,7 +879,7 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 		realtype <= SVt_PVMG
 #endif
 	) {			     /* scalar ref */
-	    SV * const namesv = newSVpvs("${");
+	    SV * const namesv = sv_2mortal(newSVpvs("${"));
 	    sv_catpvn(namesv, name, namelen);
 	    sv_catpvs(namesv, "}");
 	    if (realpack) {				     /* blessed */
@@ -892,7 +893,6 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 		DD_dump(aTHX_ ival, SvPVX_const(namesv), SvCUR(namesv), retval, seenhv,
 			postav, level+1, apad, style);
 	    }
-	    SvREFCNT_dec(namesv);
 	}
 	else if (realtype == SVt_PVGV) {		     /* glob ref */
 	    SV * const namesv = newSVpvs("*{");
@@ -908,9 +908,10 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 	    SSize_t ix = 0;
 	    const SSize_t ixmax = av_len((AV *)ival);
 	
-	    SV * const ixsv = newSViv(0);
+	    SV * const ixsv = sv_2mortal(newSViv(0));
 	    /* allowing for a 24 char wide array index */
 	    New(0, iname, namelen+28, char);
+            SAVEFREEPV(iname);
 	    (void) strlcpy(iname, name, namelen+28);
 	    inamelen = namelen;
 	    if (name[0] == '@') {
@@ -940,7 +941,7 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 		iname[inamelen++] = '-'; iname[inamelen++] = '>';
 	    }
 	    iname[inamelen++] = '['; iname[inamelen] = '\0';
-            totpad = newSVsv(style->sep);
+            totpad = sv_2mortal(newSVsv(style->sep));
             sv_catsv(totpad, style->pad);
 	    sv_catsv(totpad, apad);
 
@@ -970,8 +971,12 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 		}
 		sv_catsv(retval, totpad);
 		sv_catsv(retval, ipad);
+                ENTER;
+                SAVETMPS;
 		DD_dump(aTHX_ elem, iname, ilen, retval, seenhv, postav,
 			level+1, apad, style);
+                FREETMPS;
+                LEAVE;
 		if (ix < ixmax || (style->trailingcomma && style->indent >= 1))
 		    sv_catpvs(retval, ",");
 	    }
@@ -985,9 +990,6 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 		sv_catpvs(retval, ")");
 	    else
 		sv_catpvs(retval, "]");
-	    SvREFCNT_dec(ixsv);
-	    SvREFCNT_dec(totpad);
-	    Safefree(iname);
 	}
 	else if (realtype == SVt_PVHV) {
 	    SV *totpad, *newapad;
@@ -997,7 +999,7 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 	    SV *hval;
 	    AV *keys = NULL;
 	
-	    SV * const iname = newSVpvn(name, namelen);
+	    SV * const iname = newSVpvn_flags(name, namelen, SVs_TEMP);
 	    if (name[0] == '%') {
 		sv_catpvs(retval, "(");
 		(SvPVX(iname))[0] = '$';
@@ -1021,7 +1023,7 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 		sv_catpvs(iname, "->");
 	    }
 	    sv_catpvs(iname, "{");
-            totpad = newSVsv(style->sep);
+            totpad = sv_2mortal(newSVsv(style->sep));
             sv_catsv(totpad, style->pad);
 	    sv_catsv(totpad, apad);
 	
@@ -1117,6 +1119,10 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 
                 sv_catsv(retval, totpad);
                 sv_catsv(retval, ipad);
+
+                ENTER;
+                SAVETMPS;
+
                 /* The (very)
                    old logic was first to check utf8 flag, and if utf8 always
                    call esc_q_utf8.  This caused test to break under -Mutf8,
@@ -1143,6 +1149,7 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
                     else {
 		        nticks = num_q(key, klen);
 			New(0, nkey_buffer, klen+nticks+3, char);
+                        SAVEFREEPV(nkey_buffer);
                         nkey = nkey_buffer;
 			nkey[0] = '\'';
 			if (nticks)
@@ -1160,7 +1167,8 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
                     nlen = klen;
                     sv_catpvn(retval, nkey, klen);
 		}
-                sname = newSVsv(iname);
+
+                sname = sv_2mortal(newSVsv(iname));
                 sv_catpvn(sname, nkey, nlen);
                 sv_catpvs(sname, "}");
 
@@ -1168,7 +1176,7 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
                 if (style->indent >= 2) {
 		    char *extra;
                     STRLEN elen = 0;
-		    newapad = newSVsv(apad);
+		    newapad = sv_2mortal(newSVsv(apad));
 		    New(0, extra, klen+4+1, char);
 		    while (elen < (klen+4))
 			extra[elen++] = ' ';
@@ -1181,10 +1189,9 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 
 		DD_dump(aTHX_ hval, SvPVX_const(sname), SvCUR(sname), retval, seenhv,
 			postav, level+1, newapad, style);
-		SvREFCNT_dec(sname);
-		Safefree(nkey_buffer);
-                if (style->indent >= 2)
-		    SvREFCNT_dec(newapad);
+
+                FREETMPS;
+                LEAVE;
 	    }
 	    if (i) {
                 SV *opad = sv_x(aTHX_ Nullsv, SvPVX_const(style->xpad),
@@ -1199,8 +1206,6 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 		sv_catpvs(retval, ")");
 	    else
 		sv_catpvs(retval, "}");
-	    SvREFCNT_dec(iname);
-	    SvREFCNT_dec(totpad);
 	}
 	else if (realtype == SVt_PVCV) {
             if (style->deparse) {
@@ -1247,7 +1252,6 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
             STRLEN plen, pticks;
 
             if (style->indent >= 2) {
-		SvREFCNT_dec(apad);
 		apad = blesspad;
 	    }
 	    sv_catpvs(retval, ", '");
@@ -1276,7 +1280,6 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 		sv_catpvs(retval, "()");
 	    }
 	}
-	SvREFCNT_dec(ipad);
     }
     else {
 	STRLEN i;
@@ -1541,7 +1544,7 @@ Data_Dumper_Dumpxs(href, ...)
 	    seenhv = NULL;
 	    name = sv_newmortal();
 	
-	    retval = newSVpvs("");
+	    retval = newSVpvs_flags("", SVs_TEMP);
 	    if (SvROK(href)
 		&& (hv = (HV*)SvRV((SV*)href))
 		&& SvTYPE(hv) == SVt_PVHV)		{
@@ -1613,12 +1616,13 @@ Data_Dumper_Dumpxs(href, ...)
                         style.sortkeys = &PL_sv_yes;
 		}
 		postav = newAV();
+                sv_2mortal((SV*)postav);
 
 		if (todumpav)
 		    imax = av_len(todumpav);
 		else
 		    imax = -1;
-		valstr = newSVpvs("");
+		valstr = newSVpvs_flags("", SVs_TEMP);
 		for (i = 0; i <= imax; ++i) {
 		    SV *newapad;
 		
@@ -1670,20 +1674,21 @@ Data_Dumper_Dumpxs(href, ...)
 		
                     if (style.indent >= 2 && !terse) {
 			SV * const tmpsv = sv_x(aTHX_ NULL, " ", 1, SvCUR(name)+3);
-			newapad = newSVsv(apad);
+			newapad = sv_2mortal(newSVsv(apad));
 			sv_catsv(newapad, tmpsv);
 			SvREFCNT_dec(tmpsv);
 		    }
 		    else
 			newapad = apad;
 		
+                    ENTER;
+                    SAVETMPS;
 		    PUTBACK;
 		    DD_dump(aTHX_ val, SvPVX_const(name), SvCUR(name), valstr, seenhv,
                             postav, 0, newapad, &style);
 		    SPAGAIN;
-
-                    if (style.indent >= 2 && !terse)
-			SvREFCNT_dec(newapad);
+                    FREETMPS;
+                    LEAVE;
 
 		    postlen = av_len(postav);
 		    if (postlen >= 0 || !terse) {
@@ -1714,13 +1719,11 @@ Data_Dumper_Dumpxs(href, ...)
 		    }
 		    SvPVCLEAR(valstr);
 		    if (gimme == G_ARRAY) {
-			XPUSHs(sv_2mortal(retval));
+			XPUSHs(retval);
 			if (i < imax)	/* not the last time thro ? */
-			    retval = newSVpvs("");
+			    retval = newSVpvs_flags("", SVs_TEMP);
 		    }
 		}
-		SvREFCNT_dec(postav);
-		SvREFCNT_dec(valstr);
 
                 /* we defer croaking until here so that temporary SVs and
                  * buffers won't be leaked */
@@ -1732,7 +1735,7 @@ Data_Dumper_Dumpxs(href, ...)
 	    else
 		croak("Call to new() method failed to return HASH ref");
 	    if (gimme != G_ARRAY)
-		XPUSHs(sv_2mortal(retval));
+		XPUSHs(retval);
 	}
 
 SV *

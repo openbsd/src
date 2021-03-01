@@ -5,7 +5,7 @@ perltrap - Perl traps for the unwary
 =head1 DESCRIPTION
 
 The biggest trap of all is forgetting to C<use warnings> or use the B<-w>
-switch; see L<warnings> and L<perlrun>. The second biggest trap is not
+switch; see L<warnings> and L<perlrun/-w>. The second biggest trap is not
 making your entire program runnable under C<use strict>.  The third biggest
 trap is not reading the list of changes in this version of Perl; see
 L<perldelta>.

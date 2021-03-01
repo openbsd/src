@@ -70,11 +70,6 @@
 #    define __int64 long long
 #  endif
 #  define Win32_Winsock
-#ifdef __cplusplus
-/* Mingw32 gcc -xc++ objects to __attribute((unused)) at least */
-#undef  PERL_UNUSED_DECL
-#define PERL_UNUSED_DECL
-#endif
 #endif
 
 
@@ -85,7 +80,7 @@
 
 /* now even GCC supports __declspec() */
 /* miniperl has no reason to export anything */
-#if defined(PERL_IS_MINIPERL) && !defined(UNDER_CE)
+#if defined(PERL_IS_MINIPERL)
 #  define DllExport
 #else
 #  if defined(PERLDLL)
@@ -144,6 +139,8 @@
 #ifdef _MSC_VER
 #  define PERL_STATIC_NO_RET __declspec(noreturn) static
 #  define PERL_STATIC_INLINE_NO_RET __declspec(noreturn) PERL_STATIC_INLINE
+#  define PERL_STATIC_FORCE_INLINE __forceinline static
+#  define PERL_STATIC_FORCE_INLINE_NO_RET __declspec(noreturn) __forceinline static
 #endif
 
 #define  WIN32_LEAN_AND_MEAN
@@ -259,23 +256,18 @@ struct utsname {
 
 /* VC uses non-standard way to determine the size and alignment if bit-fields */
 /* MinGW will compile with -mms-bitfields, so should use the same types */
-#define PERL_BITFIELD8  unsigned char
-#define PERL_BITFIELD16 unsigned short
-#define PERL_BITFIELD32 unsigned int
+#define PERL_BITFIELD8  U8
+#define PERL_BITFIELD16 U16
+#define PERL_BITFIELD32 U32
 
 #ifdef _MSC_VER			/* Microsoft Visual C++ */
 
-#ifndef UNDER_CE
 typedef long		uid_t;
 typedef long		gid_t;
 typedef unsigned short	mode_t;
-#endif
 
 #if _MSC_VER < 1800
 #define isnan		_isnan	/* Defined already in VC++ 12.0 */
-#endif
-#ifdef UNDER_CE /* revisit what function this becomes celib vs corelibc, prv warning here*/
-#  undef snprintf
 #endif
 #define snprintf	_snprintf
 #define vsnprintf	_vsnprintf
@@ -735,16 +727,13 @@ EXTERN_C _CRTIMP ioinfo* __pioinfo[];
 DllExport void *win32_signal_context(void);
 #define PERL_GET_SIG_CONTEXT win32_signal_context()
 
-#ifdef UNDER_CE
-#define Win_GetModuleHandle   XCEGetModuleHandleA
-#define Win_GetProcAddress    XCEGetProcAddressA
-#define Win_GetModuleFileName XCEGetModuleFileNameA
-#define Win_CreateSemaphore   CreateSemaphoreW
-#else
 #define Win_GetModuleHandle   GetModuleHandle
 #define Win_GetProcAddress    GetProcAddress
 #define Win_GetModuleFileName GetModuleFileName
 #define Win_CreateSemaphore   CreateSemaphore
+
+#if defined(PERL_CORE) && !defined(O_ACCMODE)
+#  define O_ACCMODE (O_RDWR | O_WRONLY | O_RDONLY)
 #endif
 
 #endif /* _INC_WIN32_PERL5 */

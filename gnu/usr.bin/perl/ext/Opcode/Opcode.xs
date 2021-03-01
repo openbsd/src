@@ -360,7 +360,7 @@ CODE:
 	bitmap[len] = ~bitmap[len];
     /* take care of extra bits beyond PL_maxo in last byte	*/
     if (PL_maxo & 07)
-	bitmap[opset_len-1] &= ~(0xFF << (PL_maxo & 0x07));
+	bitmap[opset_len-1] &= ~(char)(0xFF << (PL_maxo & 0x07));
     }
     ST(0) = opset;
 

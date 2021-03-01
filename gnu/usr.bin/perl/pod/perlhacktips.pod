@@ -432,7 +432,7 @@ Mixing declarations and code
 
 That is C99 or C++.  Some C compilers allow that, but you shouldn't.
 
-The gcc option C<-Wdeclaration-after-statements> scans for such
+The gcc option C<-Wdeclaration-after-statement> scans for such
 problems (by default on starting from Perl 5.9.4).
 
 =item *
@@ -648,6 +648,39 @@ you have to pass its length to C<newSVpv>.
 
 =item *
 
+Perl strings are NOT the same as C strings:  They may contain C<NUL>
+characters, whereas a C string is terminated by the first C<NUL>.
+That is why Perl API functions that deal with strings generally take a
+pointer to the first byte and either a length or a pointer to the byte
+just beyond the final one.
+
+And this is the reason that many of the C library string handling
+functions should not be used.  They don't cope with the full generality
+of Perl strings.  It may be that your test cases don't have embedded
+C<NUL>s, and so the tests pass, whereas there may well eventually arise
+real-world cases where they fail.  A lesson here is to include C<NUL>s
+in your tests.  Now it's fairly rare in most real world cases to get
+C<NUL>s, so your code may seem to work, until one day a C<NUL> comes
+along.
+
+Here's an example.  It used to be a common paradigm, for decades, in the
+perl core to use S<C<strchr("list", c)>> to see if the character C<c> is
+any of the ones given in C<"list">, a double-quote-enclosed string of
+the set of characters that we are seeing if C<c> is one of.  As long as
+C<c> isn't a C<NUL>, it works.  But when C<c> is a C<NUL>, C<strchr>
+returns a pointer to the terminating C<NUL> in C<"list">.   This likely
+will result in a segfault or a security issue when the caller uses that
+end pointer as the starting point to read from.
+
+A solution to this and many similar issues is to use the C<mem>I<-foo> C
+library functions instead.  In this case C<memchr> can be used to see if
+C<c> is in C<"list"> and works even if C<c> is C<NUL>.  These functions
+need an additional parameter to give the string length.
+In the case of literal string parameters, perl has defined macros that
+calculate the length for you.  See L<perlapi/Miscellaneous Functions>.
+
+=item *
+
 malloc(0), realloc(0), calloc(0, 0) are non-portable.  To be portable
 allocate at least one byte.  (In general you should rarely need to work
 at this low level, but instead use the various malloc wrappers.)
@@ -744,9 +777,10 @@ program, and to see in which C function we are at (without the debugging
 information we might see only the numerical addresses of the functions,
 which is not very helpful). It will also turn on the C<DEBUGGING>
 compilation symbol which enables all the internal debugging code in Perl.
-There are a whole bunch of things you can debug with this: L<perlrun>
-lists them all, and the best way to find out about them is to play about
-with them.  The most useful options are probably
+There are a whole bunch of things you can debug with this:
+L<perlrun|perlrun/-Dletters> lists them all, and the best way to find out
+about them is to play about with them.  The most useful options are
+probably
 
     l  Context (loop) stack processing
     s  Stack snapshots (with v, displays all stacks)
@@ -1235,19 +1269,23 @@ To get valgrind and for more information see
 
 =head2 AddressSanitizer
 
-AddressSanitizer is a clang and gcc extension, included in clang since
-v3.1 and gcc since v4.8.  It checks illegal heap pointers, global
-pointers, stack pointers and use after free errors, and is fast enough
-that you can easily compile your debugging or optimized perl with it.
-It does not check memory leaks though.  AddressSanitizer is available
-for Linux, Mac OS X and soon on Windows.
+AddressSanitizer ("ASan") consists of a compiler instrumentation module
+and a run-time C<malloc> library. ASan is available for a variety of
+architectures, operating systems, and compilers (see project link below).
+It checks for unsafe memory usage, such as use after free and buffer 
+overflow conditions, and is fast enough that you can easily compile your
+debugging or optimized perl with it. Modern versions of ASan check for
+memory leaks by default on most platforms, otherwise (e.g. x86_64 OS X)
+this feature can be enabled via C<ASAN_OPTIONS=detect_leaks=1>.
+
 
 To build perl with AddressSanitizer, your Configure invocation should
 look like:
 
     sh Configure -des -Dcc=clang \
-       -Accflags=-faddress-sanitizer -Aldflags=-faddress-sanitizer \
-       -Alddlflags=-shared\ -faddress-sanitizer
+       -Accflags=-fsanitize=address -Aldflags=-fsanitize=address \
+       -Alddlflags=-shared\ -fsanitize=address \
+       -fsanitize-blacklist=`pwd`/asan_ignore
 
 where these arguments mean:
 
@@ -1258,25 +1296,31 @@ where these arguments mean:
 This should be replaced by the full path to your clang executable if it
 is not in your path.
 
-=item * -Accflags=-faddress-sanitizer
+=item * -Accflags=-fsanitize=address
 
 Compile perl and extensions sources with AddressSanitizer.
 
-=item * -Aldflags=-faddress-sanitizer
+=item * -Aldflags=-fsanitize=address
 
 Link the perl executable with AddressSanitizer.
 
-=item * -Alddlflags=-shared\ -faddress-sanitizer
+=item * -Alddlflags=-shared\ -fsanitize=address
 
 Link dynamic extensions with AddressSanitizer.  You must manually
 specify C<-shared> because using C<-Alddlflags=-shared> will prevent
 Configure from setting a default value for C<lddlflags>, which usually
 contains C<-shared> (at least on Linux).
 
+=item * -fsanitize-blacklist=`pwd`/asan_ignore
+
+AddressSanitizer will ignore functions listed in the C<asan_ignore>
+file. (This file should contain a short explanation of why each of
+the functions is listed.)
+
 =back
 
 See also
-L<http://code.google.com/p/address-sanitizer/wiki/AddressSanitizer>.
+L<https://github.com/google/sanitizers/wiki/AddressSanitizer>.
 
 
 =head1 PROFILING

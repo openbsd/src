@@ -743,7 +743,7 @@ utf8::upgrade($_); # the original code used a UTF-8 locale (affects STDIN)
 /^([[:digit:]]+)/;
 EXPECT
 ######## [perl #20667] unicode regex vs non-unicode regex
-# SKIP: !defined &DynaLoader::boot_DynaLoader && !eval 'require "unicore/Heavy.pl"'
+# SKIP: !defined &DynaLoader::boot_DynaLoader && !eval 'require "unicore/UCD.pl"'
 # (skip under miniperl if Unicode tables are not built yet)
 $toto = 'Hello';
 $toto =~ /\w/; # this line provokes the problem!

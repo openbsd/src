@@ -137,13 +137,16 @@ Its truth or falsehood determines how the modifier will behave.
 
 C<if> executes the statement once I<if> and only if the condition is
 true.  C<unless> is the opposite, it executes the statement I<unless>
-the condition is true (that is, if the condition is false).
+the condition is true (that is, if the condition is false).  See
+L<perldata/Scalar values> for definitions of true and false.
 
     print "Basset hounds got long ears" if length $ear >= 10;
     go_outside() and play() unless $is_raining;
 
 The C<for(each)> modifier is an iterator: it executes the statement once
 for each item in the LIST (with C<$_> aliased to each item in turn).
+There is no syntax to specify a C-style for loop or a lexically scoped
+iteration variable in this form.
 
     print "Hello $_!\n" for qw(world Dolly nurse);
 
@@ -633,7 +636,7 @@ right), you can say
     use feature "switch";
 
 to enable an experimental switch feature.  This is loosely based on an
-old version of a Perl 6 proposal, but it no longer resembles the Perl 6
+old version of a Raku proposal, but it no longer resembles the Raku
 construct.   You also get the switch feature whenever you declare that your
 code prefers to run under a version of Perl that is 5.10 or later.  For
 example:
@@ -704,7 +707,7 @@ Due to an unfortunate bug in how C<given> was implemented between Perl 5.10
 and 5.16, under those implementations the version of C<$_> governed by
 C<given> is merely a lexically scoped copy of the original, not a
 dynamically scoped alias to the original, as it would be if it were a
-C<foreach> or under both the original and the current Perl 6 language
+C<foreach> or under both the original and the current Raku language
 specification.  This bug was fixed in Perl 5.18 (and lexicalized C<$_> itself
 was removed in Perl 5.24).
 
@@ -1196,13 +1199,13 @@ interested in only the first match alone.
 This doesn't work if you explicitly specify a loop variable, as
 in C<for $item (@array)>.  You have to use the default variable C<$_>.
 
-=head3 Differences from Perl 6
+=head3 Differences from Raku
 
 The Perl 5 smartmatch and C<given>/C<when> constructs are not compatible
-with their Perl 6 analogues.  The most visible difference and least
+with their Raku analogues.  The most visible difference and least
 important difference is that, in Perl 5, parentheses are required around
 the argument to C<given()> and C<when()> (except when this last one is used
-as a statement modifier).  Parentheses in Perl 6 are always optional in a
+as a statement modifier).  Parentheses in Raku are always optional in a
 control construct such as C<if()>, C<while()>, or C<when()>; they can't be
 made optional in Perl 5 without a great deal of potential confusion,
 because Perl 5 would parse the expression
@@ -1230,7 +1233,7 @@ this works in Perl 5:
 
     say "that's all, folks!";
 
-But it doesn't work at all in Perl 6.  Instead, you should
+But it doesn't work at all in Raku.  Instead, you should
 use the (parallelizable) C<any> operator:
 
    if any(@primary) eq "red" {
@@ -1242,11 +1245,11 @@ use the (parallelizable) C<any> operator:
    }
 
 The table of smartmatches in L<perlop/"Smartmatch Operator"> is not
-identical to that proposed by the Perl 6 specification, mainly due to
-differences between Perl 6's and Perl 5's data models, but also because
-the Perl 6 spec has changed since Perl 5 rushed into early adoption.
+identical to that proposed by the Raku specification, mainly due to
+differences between Raku's and Perl 5's data models, but also because
+the Raku spec has changed since Perl 5 rushed into early adoption.
 
-In Perl 6, C<when()> will always do an implicit smartmatch with its
+In Raku, C<when()> will always do an implicit smartmatch with its
 argument, while in Perl 5 it is convenient (albeit potentially confusing) to
 suppress this implicit smartmatch in various rather loosely-defined
 situations, as roughly outlined above.  (The difference is largely because

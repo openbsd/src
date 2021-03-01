@@ -1,5 +1,5 @@
 If you read this file _as_is_, just ignore the funny characters you see.
-It is written in the POD format (see pod/perlpod.pod) which is specially
+It is written in the POD format (see F<pod/perlpod.pod>) which is specially
 designed to be readable as is.
 
 =head1 NAME
@@ -10,7 +10,7 @@ INSTALL - Build and Installation guide for perl 5.
 
 First, make sure you have an up-to-date version of Perl.  If you
 didn't get your Perl source from CPAN, check the latest version at
-http://www.cpan.org/src/.  Perl uses a version scheme where even-numbered
+L<https://www.cpan.org/src/>.  Perl uses a version scheme where even-numbered
 subreleases (like 5.8.x and 5.10.x) are stable maintenance releases and
 odd-numbered subreleases (like 5.7.x and 5.9.x) are unstable
 development releases.  Development releases should not be used in
@@ -28,11 +28,11 @@ the defaults are to run, from a freshly unpacked source tree:
 
 Each of these is explained in further detail below.
 
-The above commands will install Perl to /usr/local (or some other
-platform-specific directory -- see the appropriate file in hints/.)
+The above commands will install Perl to F</usr/local> (or some other
+platform-specific directory -- see the appropriate file in F<hints/>.)
 If that's not okay with you, you can run Configure interactively, by
 just typing "sh Configure" (without the -de args). You can also specify
-any prefix location by adding "-Dprefix='/some/dir'" to Configure's args.
+any prefix location by adding C<"-Dprefix='/some/dir'"> to Configure's args.
 To explicitly name the perl binary, use the command
 "make install PERLNAME=myperl".
 
@@ -44,20 +44,20 @@ rely on anything more than C89.
 These options, and many more, are explained in further detail below.
 
 If you're building perl from a git repository, you should also consult
-the documentation in pod/perlgit.pod for information on that special
+the documentation in F<pod/perlgit.pod> for information on that special
 circumstance.
 
 If you have problems, corrections, or questions, please see
 L<"Reporting Problems"> below.
 
 For information on what's new in this release, see the
-pod/perldelta.pod file.  For more information about how to find more
+F<pod/perldelta.pod> file.  For more information about how to find more
 specific detail about changes, see the Changes file.
 
 =head1 DESCRIPTION
 
 This document is written in pod format as an easy way to indicate its
-structure.  The pod format is described in pod/perlpod.pod, but you can
+structure.  The pod format is described in F<pod/perlpod.pod>, but you can
 read it as is with any pager or editor.  Headings and items are marked
 by lines beginning with '='.  The other mark-up used is
 
@@ -73,24 +73,24 @@ proceeding.
 In addition to this file, check if there is a README file specific to
 your operating system, since it may provide additional or different
 instructions for building Perl.  If there is a hint file for your
-system (in the hints/ directory) you might also want to read it
+system (in the F<hints/> directory) you might also want to read it
 for even more information.
 
 For additional information about porting Perl, see the section on
-L<"Porting information"> below, and look at the files in the Porting/
+L<"Porting information"> below, and look at the files in the F<Porting/>
 directory.
 
 =head1 PRELIMINARIES
 
 =head2 Changes and Incompatibilities
 
-Please see pod/perldelta.pod for a description of the changes and
+Please see F<pod/perldelta.pod> for a description of the changes and
 potential incompatibilities introduced with this release.  A few of
 the most important issues are listed below, but you should refer
-to pod/perldelta.pod for more detailed information.
+to F<pod/perldelta.pod> for more detailed information.
 
 B<WARNING:> This version is not binary compatible with versions of Perl
-earlier than 5.30.0.  If you have built extensions (i.e. modules that
+earlier than 5.32.0.  If you have built extensions (i.e. modules that
 include C code) using an earlier version of Perl, you will need to
 rebuild and reinstall those extensions.
 
@@ -102,7 +102,7 @@ The standard extensions supplied with Perl will be handled automatically.
 
 On a related issue, old modules may possibly be affected by the changes
 in the Perl language in the current release.  Please see
-pod/perldelta.pod for a description of what's changed.  See your
+F<pod/perldelta.pod> for a description of what's changed.  See your
 installed copy of the perllocal.pod file for a (possibly incomplete)
 list of locally installed modules.  Also see the L<CPAN> module's
 C<autobundle> function for one way to make a "bundle" of your currently
@@ -132,7 +132,7 @@ Configure supports a number of useful options.  Run
 
 	Configure -h
 
-to get a listing.  See the Porting/Glossary file for a complete list of
+to get a listing.  See the F<Porting/Glossary> file for a complete list of
 Configure variables you can set and their definitions.
 
 =over 4
@@ -150,32 +150,32 @@ compiler) so that the hints files can set appropriate defaults.
 =item Installation prefix
 
 By default, for most systems, perl will be installed in
-/usr/local/{bin, lib, man}.  (See L<"Installation Directories">
+F</usr/local/>{F<bin>, F<lib>, F<man>}.  (See L<"Installation Directories">
 and L<"Coexistence with earlier versions of perl 5"> below for
 further details.)
 
 You can specify a different 'prefix' for the default installation
 directory when Configure prompts you, or by using the Configure command
-line option -Dprefix='/some/directory', e.g.
+line option C<-Dprefix='/some/directory'>, e.g.
 
 	sh Configure -Dprefix=/opt/perl
 
 If your prefix contains the string "perl", then the suggested
 directory structure is simplified.  For example, if you use
-prefix=/opt/perl, then Configure will suggest /opt/perl/lib instead of
-/opt/perl/lib/perl5/.  Again, see L<"Installation Directories"> below
-for more details.  Do not include a trailing slash, (i.e. /opt/perl/)
+C<prefix=/opt/perl>, then Configure will suggest F</opt/perl/lib> instead of
+F</opt/perl/lib/perl5/>.  Again, see L<"Installation Directories"> below
+for more details.  Do not include a trailing slash, (i.e. F</opt/perl/>)
 or you may experience odd test failures.
 
 NOTE:  You must not specify an installation directory that is the same
 as or below your perl source directory.  If you do, installperl will
 attempt infinite recursion.
 
-=item /usr/bin/perl
+=item F</usr/bin/perl>
 
 It may seem obvious, but Perl is useful only when users can easily
-find it.  It's often a good idea to have both /usr/bin/perl and
-/usr/local/bin/perl be symlinks to the actual binary.  Be especially
+find it.  It's often a good idea to have both F</usr/bin/perl> and
+F</usr/local/bin/perl> be symlinks to the actual binary.  Be especially
 careful, however, not to overwrite a version of perl supplied by your
 vendor unless you are sure you know what you are doing.  If you insist
 on replacing your vendor's perl, useful information on how it was
@@ -187,7 +187,7 @@ configured may be found with
 spaces in arguments to Configure.  For that, you have to look carefully
 at config_arg1, config_arg2, etc.)
 
-By default, Configure will not try to link /usr/bin/perl to the current
+By default, Configure will not try to link F</usr/bin/perl> to the current
 version of perl.  You can turn on that behavior by running
 
 	Configure -Dinstallusrbinperl
@@ -458,7 +458,7 @@ TCP/IP proxy protocol library.  SOCKS is used to give applications
 access to transport layer network proxies.  Perl supports only SOCKS
 Version 5.  The corresponding Configure option is -Dusesocks.
 You can find more about SOCKS from wikipedia at
-L<http://en.wikipedia.org/wiki/SOCKS>.
+L<https://en.wikipedia.org/wiki/SOCKS>.
 
 =head3 Dynamic Loading
 
@@ -584,6 +584,12 @@ variables for C compiler switches etc.">.  You can force an embedded perl
 to use direct manipulation by setting C<PL_use_safe_putenv = 0;> after
 the C<perl_construct()> call.
 
+=head3 External glob
+
+Before File::Glob entered core in 5.6.0 globbing was implemented by shelling
+out. If the environmental variable PERL_EXTERNAL_GLOB is defined and if the
+F<csh> shell is available, perl will still do this the old way.
+
 =head2 Installation Directories
 
 The installation directories can all be changed by answering the
@@ -609,7 +615,7 @@ The directories set up by Configure fall into three broad categories.
 
 =item Directories for the perl distribution
 
-By default, Configure will use the following directories for 5.30.3.
+By default, Configure will use the following directories for 5.32.1.
 $version is the full perl version number, including subversion, e.g.
 5.12.3, and $archname is a string like sun4-sunos,
 determined by Configure.  The full definitions of all Configure
@@ -764,7 +770,7 @@ run-time methods: $PERLLIB, $PERL5LIB, -I, use lib, etc.
 =item default_inc_excludes_dot
 
 Since version 5.26.0, default perl builds no longer includes C<'.'> as the
-last element of @INC. The old behaviour can restored using 
+last element of @INC. The old behaviour can restored using
 
 	sh Configure -Udefault_inc_excludes_dot
 
@@ -1019,7 +1025,7 @@ Removes -g from optimize, and -DDEBUGGING from ccflags.
 =back
 
 If you are using a shared libperl, see the warnings about multiple
-versions of perl under L<Building a shared Perl library>.
+versions of perl under L</Building a shared Perl library>.
 
 Note that a perl built with -DDEBUGGING will be much bigger and will run
 much, much more slowly than a standard perl.
@@ -1040,7 +1046,7 @@ simple D script that uses them:
 =head2 Extensions
 
 Perl ships with a number of standard extensions.  These are contained
-in the ext/ subdirectory.
+in the F<ext/> subdirectory.
 
 By default, Configure will offer to build every extension which appears
 to be supported.  For example, Configure will offer to build GDBM_File
@@ -1415,7 +1421,7 @@ including a glossary of all those config.sh variables, is in the Porting
 subdirectory.  Porting/Glossary should especially come in handy.
 
 Ports for other systems may also be available.  You should check out
-http://www.cpan.org/ports for current information on ports to
+L<https://www.cpan.org/ports> for current information on ports to
 various other operating systems.
 
 If you plan to port Perl to a new architecture, study carefully the
@@ -1659,7 +1665,7 @@ If you still have missing routines or undefined symbols, you probably
 need to add some library or other, make a symbolic link like described
 above, or you need to undefine some feature that Configure thought was
 there but is defective or incomplete.  If you used a hint file, see if
-it has any relevant advice.  You can also look through through config.h
+it has any relevant advice.  You can also look through config.h
 for likely suspects.
 
 =item toke.c
@@ -1806,8 +1812,8 @@ to avoid the BIND.
 
 Perl can be cross-compiled.  It is just not trivial, cross-compilation
 rarely is.  Perl is routinely cross-compiled for several platforms: as of
-January 2014, these include Android, Blackberry 10, PocketPC aka
-WinCE, ARM Linux, and Solaris.  Previous versions of
+June 2019, these include Android, Blackberry 10,
+ARM Linux, and Solaris.  Previous versions of
 Perl also provided support for Open Zaurus, Symbian, and
 the IBM OS/400, but it's unknown if those ports are still functional.
 These platforms are known as the B<target> platforms, while the systems
@@ -1825,10 +1831,6 @@ See the following files for more information about compiling Perl for
 the particular platforms:
 
 =over 4
-
-=item WinCE/PocketPC
-
-L<README.ce or perlce|perlce>
 
 =item Android
 
@@ -1854,11 +1856,11 @@ Packaging and transferring either the core Perl modules or CPAN
 modules to the target platform is also left up to the each
 cross-compilation environment.  Often the cross-compilation target
 platforms are somewhat limited in diskspace: see the section
-L<Minimizing the Perl installation> to learn more of the minimal set
+L</Minimizing the Perl installation> to learn more of the minimal set
 of files required for a functional Perl installation.
 
 For some cross-compilation environments the Configure option
-C<-Dinstallprefix=...> might be handy, see L<Changing the installation
+C<-Dinstallprefix=...> might be handy, see L</Changing the installation
 directory>.
 
 About the cross-compilation support of Configure: There's two forms.
@@ -1866,7 +1868,7 @@ The more common one requires some way of transferring and running
 executables in the target system, such as an ssh connection; this is the
 C<./Configure -Dusecrosscompile -Dtargethost=...> route.  The second
 method doesn't need access to the target system, but requires you to
-provide a config.sh, and and a canned Makefile; the rest of this section
+provide a config.sh, and a canned Makefile; the rest of this section
 describes the former.
 
 This cross-compilation setup of Configure has successfully been used in
@@ -2431,16 +2433,16 @@ for details of how to report the issue.
 
 If you are unsure what makes a good bug report please read "How to
 report Bugs Effectively" by Simon Tatham:
-http://www.chiark.greenend.org.uk/~sgtatham/bugs.html
+L<https://www.chiark.greenend.org.uk/~sgtatham/bugs.html>
 
 =head1 Coexistence with earlier versions of perl 5
 
-Perl 5.30.3 is not binary compatible with versions of Perl earlier than
-5.30.0.
+Perl 5.32.1 is not binary compatible with versions of Perl earlier than
+5.32.0.
 In other words, you will have to recompile your XS modules.
 
-In general, you can usually safely upgrade from one version of Perl
-(e.g.  5.X.Y) to another similar minor version (e.g. 5.X.(Y+1))) without
+In general, you can usually safely upgrade from one stable version of Perl
+(e.g. 5.30.0) to another similar minor version (e.g. 5.30.1) without
 re-compiling all of your extensions.  You can also safely leave the old
 version around in case the new version causes you problems for some
 reason.
@@ -2511,9 +2513,9 @@ won't interfere with another version.  (The defaults guarantee this for
 libraries after 5.6.0, but not for executables. TODO?)  One convenient
 way to do this is by using a separate prefix for each version, such as
 
-	sh Configure -Dprefix=/opt/perl5.30.3
+	sh Configure -Dprefix=/opt/perl5.32.1
 
-and adding /opt/perl5.30.3/bin to the shell PATH variable.  Such users
+and adding /opt/perl5.32.1/bin to the shell PATH variable.  Such users
 may also wish to add a symbolic link /usr/local/bin/perl so that
 scripts can still start with #!/usr/local/bin/perl.
 
@@ -2526,13 +2528,13 @@ seriously consider using a separate directory, since development
 subversions may not have all the compatibility wrinkles ironed out
 yet.
 
-=head2 Upgrading from 5.29.10 or earlier
+=head2 Upgrading from 5.31.11 or earlier
 
-B<Perl 5.30.3 may not be binary compatible with Perl 5.29.10 or
+B<Perl 5.32.1 may not be binary compatible with Perl 5.31.11 or
 earlier Perl releases.>  Perl modules having binary parts
 (meaning that a C compiler is used) will have to be recompiled to be
-used with 5.30.3.  If you find you do need to rebuild an extension with
-5.30.3, you may safely do so without disturbing the older
+used with 5.32.1.  If you find you do need to rebuild an extension with
+5.32.1, you may safely do so without disturbing the older
 installations.  (See L<"Coexistence with earlier versions of perl 5">
 above.)
 
@@ -2565,15 +2567,15 @@ Firstly, the bare minimum to run this script
      print("$f\n");
   }
 
-in Linux with perl-5.30.3 is as follows (under $Config{prefix}):
+in Linux with perl-5.32.1 is as follows (under $Config{prefix}):
 
   ./bin/perl
-  ./lib/perl5/5.30.3/strict.pm
-  ./lib/perl5/5.30.3/warnings.pm
-  ./lib/perl5/5.30.3/i686-linux/File/Glob.pm
-  ./lib/perl5/5.30.3/feature.pm
-  ./lib/perl5/5.30.3/XSLoader.pm
-  ./lib/perl5/5.30.3/i686-linux/auto/File/Glob/Glob.so
+  ./lib/perl5/5.32.1/strict.pm
+  ./lib/perl5/5.32.1/warnings.pm
+  ./lib/perl5/5.32.1/i686-linux/File/Glob.pm
+  ./lib/perl5/5.32.1/feature.pm
+  ./lib/perl5/5.32.1/XSLoader.pm
+  ./lib/perl5/5.32.1/i686-linux/auto/File/Glob/Glob.so
 
 Secondly, for perl-5.10.1, the Debian perl-base package contains 591
 files, (of which 510 are for lib/unicore) totaling about 3.5MB in its
@@ -2694,7 +2696,7 @@ perl will ignore the C<PERL_INTERNAL_RAND_SEED> environment variable.
 =head1 DOCUMENTATION
 
 Read the manual entries before running perl.  The main documentation
-is in the pod/ subdirectory and should have been installed during the
+is in the F<pod/> subdirectory and should have been installed during the
 build process.  Type B<man perl> to get started.  Alternatively, you
 can type B<perldoc perl> to use the supplied perldoc script.  This is
 sometimes useful for finding things in the library modules.

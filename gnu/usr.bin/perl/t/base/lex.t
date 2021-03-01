@@ -396,7 +396,7 @@ for(qw< require goto last next redo CORE::dump >) {
     print "# $@" if $@;
 }
 
-# http://rt.perl.org/rt3/Ticket/Display.html?id=56880
+# https://github.com/Perl/perl5/issues/9415
 my $counter = 0;
 eval 'v23: $counter++; goto v23 unless $counter == 2';
 print "not " unless $counter == 2;

@@ -134,8 +134,8 @@ PerlIOVia_pushed(pTHX_ PerlIO * f, const char *mode, SV * arg,
 {
     IV code = PerlIOBase_pushed(aTHX_ f, mode, Nullsv, tab);
 
-    if (SvTYPE(arg) >= SVt_PVMG
-		&& mg_findext(arg, PERL_MAGIC_ext, &PerlIOVia_tag)) {
+    if (arg && SvTYPE(arg) >= SVt_PVMG
+        && mg_findext(arg, PERL_MAGIC_ext, &PerlIOVia_tag)) {
 	return code;
     }
 

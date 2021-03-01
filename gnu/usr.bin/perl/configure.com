@@ -49,7 +49,7 @@ $ unlink_all_versions = "n"
 $ builder = "MMK"
 $ use_vmsdebug_perl = "n"
 $ use64bitall = "n"
-$ use64bitint = "n"
+$ use64bitint = "y"
 $ uselongdouble = "n"
 $ uselargefiles = "y"
 $ usestdstat = "n"
@@ -3373,7 +3373,6 @@ $   d_fp_classify = "define"
 $   d_hypot = "define"
 $   d_ilogb = "define"
 $   d_isnan = "define"
-$   d_isnanl = "define"
 $   d_isnormal = "define"
 $   d_j0 = "define"
 $   d_lgamma = "define"
@@ -3384,7 +3383,6 @@ $   d_lrint = "define"
 $   d_lrintl = "define"
 $   d_lround = "define"
 $   d_lroundl = "define"
-$   d_nearbyint = "define"
 $   d_nextafter = "define"
 $   d_nexttoward = "define"
 $   d_remainder = "define"
@@ -3417,7 +3415,6 @@ $   d_fp_classify = "undef"
 $   d_hypot = "undef"
 $   d_ilogb = "undef"
 $   d_isnan = "undef"
-$   d_isnanl = "undef"
 $   d_isnormal = "undef"
 $   d_j0 = "undef"
 $   d_lgamma = "undef"
@@ -3428,7 +3425,6 @@ $   d_lrint = "undef"
 $   d_lrintl = "undef"
 $   d_lround = "undef"
 $   d_lroundl = "undef"
-$   d_nearbyint = "undef"
 $   d_nextafter = "undef"
 $   d_nexttoward = "undef"
 $   d_remainder = "undef"
@@ -3898,6 +3894,12 @@ $   d_fd_set="define"
 $   echo4 "Well, your system knows about the normal fd_set typedef..."
 $ ENDIF
 $!
+$! Check for stdint.h
+$!
+$ tmp = "stdint.h"
+$ GOSUB inhdr
+$ i_stdint = tmp
+$!
 $! Check for inttypes.h
 $!
 $ tmp = "inttypes.h"
@@ -3932,6 +3934,23 @@ $ ELSE
 $   d_off64_t = "undef"
 $   echo "You do not have off64_t."
 $ ENDIF
+$!
+$! Check to see if fpclassify exists
+$!
+$ OS
+$ WS "#if defined(__DECC) || defined(__DECCXX)"
+$ WS "#include <stdlib.h>"
+$ WS "#endif"
+$ WS "#include <math.h>"
+$ WS "int main()"
+$ WS "{"
+$ WS "if (fpclassify(0.0) == FP_ZERO) exit(0);"
+$ WS "exit(1);"
+$ WS "}"
+$ CS
+$ tmp = "fpclassify"
+$ GOSUB inlibc
+$ d_fpclassify = tmp
 $!
 $! Check to see if fpos64_t exists
 $!
@@ -4222,6 +4241,170 @@ $   echo4 "Nope, since you don't even have fcntl()."
 $ ENDIF
 $ d_fcntl_can_lock = tmp
 $!
+$! Check to see if isblank exists
+$!
+$ OS
+$ WS "#include <stdlib.h>"
+$ WS "#include <ctype.h>"
+$ WS "int main()"
+$ WS "{"
+$ WS "int c = ' ';"
+$ WS "if(isblank(c))"
+$ WS "    exit(EXIT_SUCCESS);"
+$ WS "else"
+$ WS "    exit(EXIT_FAILURE);"
+$ WS "}"
+$ CS
+$ tmp = "isblank"
+$ GOSUB inlibc
+$ d_isblank = tmp
+$!
+$! Check to see if isless exists
+$!
+$ OS
+$ WS "#include <stdlib.h>"
+$ WS "#include <math.h>"
+$ WS "int main() { return isless(1.0, 2.0) ? EXIT_SUCCESS : EXIT_FAILURE; }"
+$ CS
+$ tmp = "isless"
+$ GOSUB inlibc
+$ d_isless = tmp
+$!
+$! Check to see if pre-C99 isnanl exists
+$!
+$ OS
+$ WS "#include <stdlib.h>"
+$ WS "#include <math.h>"
+$ WS "int main()"
+$ WS "{"
+$ WS "  long double x = NaN;
+$ WS "  return isnanl(x) ? EXIT_SUCCESS : EXIT_FAILURE;
+$ WS "}"
+$ CS
+$ tmp = "isnanl"
+$ GOSUB inlibc
+$ d_isnanl = tmp
+$!
+$! Check to see if llrint exists
+$!
+$ OS
+$ WS "#include <stdlib.h>"
+$ WS "#include <math.h>"
+$ WS "int main()"
+$ WS "{"
+$ WS "  long long x = llrint(1.5);
+$ WS "  return x == 2 ? EXIT_SUCCESS : EXIT_FAILURE;
+$ WS "}"
+$ CS
+$ tmp = "llrint"
+$ GOSUB inlibc
+$ d_llrint = tmp
+$!
+$! Check to see if llrintl exists
+$!
+$ OS
+$ WS "#include <stdlib.h>"
+$ WS "#include <math.h>"
+$ WS "int main()"
+$ WS "{"
+$ WS "  long long x = llrintl(1.5);
+$ WS "  return x == 2 ? EXIT_SUCCESS : EXIT_FAILURE;
+$ WS "}"
+$ CS
+$ tmp = "llrintl"
+$ GOSUB inlibc
+$ d_llrintl = tmp
+$!
+$! Check to see if llround exists
+$!
+$ OS
+$ WS "#include <stdlib.h>"
+$ WS "#include <math.h>"
+$ WS "int main()"
+$ WS "{"
+$ WS "  long long x = llround(1.5);
+$ WS "  return x == 2 ? EXIT_SUCCESS : EXIT_FAILURE;
+$ WS "}"
+$ CS
+$ tmp = "llround"
+$ GOSUB inlibc
+$ d_llround = tmp
+$!
+$! Check to see if llroundl exists
+$!
+$ OS
+$ WS "#include <stdlib.h>"
+$ WS "#include <math.h>"
+$ WS "int main()"
+$ WS "{"
+$ WS "  long long x = llroundl(1.5);
+$ WS "  return x == 2 ? EXIT_SUCCESS : EXIT_FAILURE;
+$ WS "}"
+$ CS
+$ tmp = "llroundl"
+$ GOSUB inlibc
+$ d_llroundl = tmp
+$!
+$! Check to see if nearbyint exists
+$!
+$ OS
+$ WS "#include <stdlib.h>"
+$ WS "#include <math.h>"
+$ WS "int main()"
+$ WS "{"
+$ WS "  double x = llroundl(1.5);
+$ WS "  return x == 2.0 ? EXIT_SUCCESS : EXIT_FAILURE;
+$ WS "}"
+$ CS
+$ tmp = "nearbyint"
+$ GOSUB inlibc
+$ d_nearbyint = tmp
+$!
+$! Check to see if round exists
+$!
+$ OS
+$ WS "#include <stdlib.h>"
+$ WS "#include <math.h>"
+$ WS "int main()"
+$ WS "{"
+$ WS "  double x = round(1.5);
+$ WS "  return x == 2.0 ? EXIT_SUCCESS : EXIT_FAILURE;
+$ WS "}"
+$ CS
+$ tmp = "round"
+$ GOSUB inlibc
+$ d_round = tmp
+$!
+$! Check to see if scalbn exists
+$!
+$ OS
+$ WS "#include <stdlib.h>"
+$ WS "#include <math.h>"
+$ WS "int main()"
+$ WS "{"
+$ WS "  double x = scalbn(1.0, 3);
+$ WS "  return x == 8.0 ? EXIT_SUCCESS : EXIT_FAILURE;
+$ WS "}"
+$ CS
+$ tmp = "scalbn"
+$ GOSUB inlibc
+$ d_scalbn = tmp
+$!
+$! Check to see if scalbnl exists
+$!
+$ OS
+$ WS "#include <stdlib.h>"
+$ WS "#include <math.h>"
+$ WS "int main()"
+$ WS "{"
+$ WS "  long double x = scalbn(1.0, 3);
+$ WS "  return x == 8.0 ? EXIT_SUCCESS : EXIT_FAILURE;
+$ WS "}"
+$ CS
+$ tmp = "scalbnl"
+$ GOSUB inlibc
+$ d_scalbnl = tmp
+$!
 $! Check for memrchr
 $!
 $ OS
@@ -4340,7 +4523,7 @@ $ WS "#include <string.h>"
 $ WS "int main()"
 $ WS "{"
 $ WS "long double result;"
-$ WS "result = strtold(""123123"", NULL, 10);"
+$ WS "result = strtold(""123123"", NULL);"
 $ WS "exit(0);"
 $ WS "}"
 $ CS
@@ -5941,6 +6124,7 @@ $ WC "d_asinh='" + d_asinh + "'"
 $ WC "d_atanh='" + d_atanh + "'"
 $ WC "d_atolf='" + d_atolf + "'"
 $ WC "d_atoll='" + d_atoll + "'"
+$ WC "d_attribute_always_inline='undef'"
 $ WC "d_attribute_format='" + d_attribut + "'"
 $ WC "d_attribute_deprecated='undef'"
 $ WC "d_attribute_malloc='undef'"
@@ -6061,7 +6245,7 @@ $ WC "d_fp_classify='undef'"
 $ WC "d_fp_classl='undef'"
 $ WC "d_fpathconf='" + d_fpathconf + "'"
 $ WC "d_fpclass='undef'"
-$ WC "d_fpclassify='undef'"
+$ WC "d_fpclassify='" + d_fpclassify + "'"
 $ WC "d_fpclassl='undef'"
 $ WC "d_fpgetround='undef'"
 $ WC "d_fpos64_t='" + d_fpos64_t + "'"
@@ -6134,12 +6318,12 @@ $ WC "d_ip_mreq_source='undef'"
 $ WC "d_ipv6_mreq='define'"
 $ WC "d_ipv6_mreq_source='undef'"
 $ WC "d_isascii='define'"
-$ WC "d_isblank='undef'"
+$ WC "d_isblank='" + d_isblank + "'"
 $ WC "d_isfinite='undef'"
 $ WC "d_isfinitel='undef'"
 $ WC "d_isinf='undef'"
 $ WC "d_isinfl='undef'"
-$ WC "d_isless='undef'"
+$ WC "d_isless='" + d_isless + "'"
 $ WC "d_isnan='" + d_isnan + "'"
 $ WC "d_isnanl='" + d_isnanl + "'"
 $ WC "d_isnormal='" + d_isnormal + "'"
@@ -6152,10 +6336,10 @@ $ WC "d_ldexpl='" + d_ldexpl + "'"
 $ WC "d_lgamma='" + d_lgamma + "'"
 $ WC "d_libm_lib_version='undef'"
 $ WC "d_link='" + d_link + "'"
-$ WC "d_llrint='undef'"
-$ WC "d_llrintl='undef'"
-$ WC "d_llround='undef'"
-$ WC "d_llroundl='undef'"
+$ WC "d_llrint='" + d_llrint + "'"
+$ WC "d_llrintl='" + d_llrintl + "'"
+$ WC "d_llround='" + d_llround + "'"
+$ WC "d_llroundl='" + d_llroundl + "'"
 $ WC "d_llseek='undef'"
 $ WC "d_localeconv_l='undef'"
 $ WC "d_localtime64='undef'"
@@ -6220,7 +6404,7 @@ $ WC "d_nan='undef'"
 $ WC "d_nanosleep='" + d_nanosleep + "'"
 $ WC "d_ndbm='undef'"
 $ WC "d_ndbm_h_uses_prototypes='undef'"
-$ WC "d_nearbyint='undef'"
+$ WC "d_nearbyint='" + d_nearbyint + "'"
 $ WC "d_nextafter='" + d_nextafter + "'"
 $ WC "d_nexttoward='" + d_nexttoward + "'"
 $ WC "d_nice='define'"
@@ -6279,10 +6463,10 @@ $ WC "d_rename='define'"
 $ WC "d_rewinddir='define'"
 $ WC "d_rint='" + d_rint + "'"
 $ WC "d_rmdir='define'"
-$ WC "d_round='undef'"
+$ WC "d_round='" + d_round + "'"
 $ WC "d_sbrkproto='define'"
-$ WC "d_scalbn='undef'"
-$ WC "d_scalbnl='undef'"
+$ WC "d_scalbn='" + d_scalbn + "'"
+$ WC "d_scalbnl='" + d_scalbnl + "'"
 $ WC "d_sched_yield='" + d_sched_yield + "'"
 $ WC "d_scm_rights='undef'"
 $ WC "d_seekdir='define'"
@@ -6353,6 +6537,7 @@ $ WC "d_sin6_scope_id='" + d_sin6_scope_id + "'"
 $ WC "d_sitearch='define'"
 $ WC "d_sockaddr_in6='define'"
 $ WC "d_sockaddr_sa_len='" + d_sockaddr_sa_len + "'"
+$ WC "d_sockaddr_storage='undef'"
 $ WC "d_sockatmark='undef'"
 $ WC "d_sockatmarkproto='undef'"
 $ WC "d_socket='" + d_socket + "'"
@@ -6450,6 +6635,7 @@ $ WC "d_voidtty='" + "'"
 $ WC "d_vsnprintf='" + d_vsnprintf + "'"
 $ WC "d_wait4='" + d_wait4 + "'"
 $ WC "d_waitpid='define'"
+$ WC "d_wcrtomb='define'"
 $ WC "d_wcscmp='define'"
 $ WC "d_wcstombs='define'"
 $ WC "d_wcsxfrm='define'"
@@ -6562,7 +6748,7 @@ $   WC "i_stdbool='define'"
 $ ELSE
 $   WC "i_stdbool='undef'"
 $ ENDIF
-$ WC "i_stdint='undef'"
+$ WC "i_stdint='" + i_stdint + "'"
 $ WC "i_stdlib='define'"
 $ WC "i_sunmath='undef'"
 $ WC "i_sysaccess='" + i_sysaccess + "'"

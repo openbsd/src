@@ -8,7 +8,7 @@
 
 package Test::Podlators;
 
-use 5.006;
+use 5.008;
 use strict;
 use warnings;
 
@@ -91,7 +91,6 @@ sub _stderr_restore {
 # For the format, see t/data/snippets/README.
 #
 # $path     - Relative path to read test data from
-# $encoding - Encoding of snippet (UTF-8 if not specified)
 #
 # Returns: Reference to hash of test data with the following keys:
 #            name      - Name of the test for status reporting
@@ -101,20 +100,18 @@ sub _stderr_restore {
 #            errors    - Expected errors
 #            exception - Text of exception (with file and line stripped)
 sub read_snippet {
-    my ($path, $encoding) = @_;
+    my ($path) = @_;
     $path = File::Spec->catfile('t', 'data', 'snippets', $path);
-    $encoding ||= 'UTF-8';
     my %data;
 
     # Read the sections and store them in the %data hash.
     my ($line, $section);
     open(my $fh, '<', $path) or BAIL_OUT("cannot open $path: $!");
     while (defined($line = <$fh>)) {
-        $line = decode($encoding, $line);
         if ($line =~ m{ \A \s* \[ (\S+) \] \s* \z }xms) {
             $section = $1;
+            $data{$section} = q{};
         } elsif ($section) {
-            $data{$section} ||= q{};
             $data{$section} .= $line;
         }
     }
@@ -248,11 +245,17 @@ sub slurp {
 # $class       - Class name of the formatter, as a string
 # $snippet     - Path to the snippet file defining the test
 # $options_ref - Hash of options with the following keys:
-#   encoding - Set to use a non-standard encoding
+#   encoding - Expect the output to be in this non-standard encoding
 sub test_snippet {
     my ($class, $snippet, $options_ref) = @_;
-    my $encoding = defined($options_ref) ? $options_ref->{encoding} : undef;
-    my $data_ref = read_snippet($snippet, $encoding);
+    my $data_ref = read_snippet($snippet);
+
+    # Determine the encoding to expect for the output portion of the snippet.
+    my $encoding;
+    if (defined($options_ref)) {
+        $encoding = $options_ref->{encoding};
+    }
+    $encoding ||= 'UTF-8';
 
     # Create the formatter object.
     my $parser = $class->new(%{ $data_ref->{options} }, name => 'TEST');
@@ -277,9 +280,10 @@ sub test_snippet {
     $got =~ s{ \n\s+ \z }{\n}xms;
 
     # Check the output, errors, and any exception.
-    is($got, $data_ref->{output}, "$data_ref->{name}: output");
-    if ($data_ref->{errors}) {
-        is($stderr, $data_ref->{errors}, "$data_ref->{name}: errors");
+    my $expected = decode($encoding, $data_ref->{output});
+    is($got, $expected, "$data_ref->{name}: output");
+    if ($data_ref->{errors} || $stderr) {
+        is($stderr, $data_ref->{errors} || q{}, "$data_ref->{name}: errors");
     }
     if ($data_ref->{exception} || $exception) {
         if ($exception) {
@@ -299,10 +303,18 @@ sub test_snippet {
 # $class       - Class name of the formatter, as a string
 # $snippet     - Path to the snippet file defining the test
 # $options_ref - Hash of options with the following keys:
+#   encoding    - Expect the snippet to be in this non-standard encoding
 #   perlio_utf8 - Set to 1 to set a PerlIO UTF-8 encoding on the output file
 sub test_snippet_with_io {
     my ($class, $snippet, $options_ref) = @_;
     my $data_ref = read_snippet($snippet);
+
+    # Determine the encoding to expect for the output portion of the snippet.
+    my $encoding;
+    if (defined($options_ref)) {
+        $encoding = $options_ref->{encoding};
+    }
+    $encoding ||= 'UTF-8';
 
     # Create the formatter object.
     my $parser = $class->new(%{ $data_ref->{options} }, name => 'TEST');
@@ -317,7 +329,7 @@ sub test_snippet_with_io {
     my $input_file = File::Spec->catfile('t', 'tmp', "tmp$$.pod");
     open(my $input, '>', $input_file)
       or BAIL_OUT("cannot create $input_file: $!");
-    print {$input} encode('UTF-8', $data_ref->{input})
+    print {$input} $data_ref->{input}
       or BAIL_OUT("cannot write to $input_file: $!");
     close($input) or BAIL_OUT("cannot flush output to $input_file: $!");
 
@@ -336,20 +348,23 @@ sub test_snippet_with_io {
     $parser->parse_from_file($input_file, $output);
     close($output) or BAIL_OUT("cannot flush output to $output_file: $!");
 
-    # Read back in the results, checking to ensure that we didn't output the
-    # accent definitions if we wrote UTF-8 output.
+    # Read back in the results.  For Pod::Man, also ensure that we didn't
+    # output the accent definitions if we wrote UTF-8 output.
     open(my $results, '<', $output_file)
       or BAIL_OUT("cannot open $output_file: $!");
     my ($line, $saw_accents);
-    while (defined($line = <$results>)) {
-        $line = decode('UTF-8', $line);
-        if ($line =~ m{ Accent [ ] mark [ ] definitions }xms) {
-            $saw_accents = 1;
+    if ($class eq 'Pod::Man') {
+        while (defined($line = <$results>)) {
+            $line = decode('UTF-8', $line);
+            if ($line =~ m{ Accent [ ] mark [ ] definitions }xms) {
+                $saw_accents = 1;
+            }
+            last if $line =~ m{ \A [.]nh }xms;
         }
-        last if $line =~ m{ \A [.]nh }xms;
     }
     my $saw = do { local $/ = undef; <$results> };
     $saw = decode('UTF-8', $saw);
+    $saw =~ s{ \n\s+ \z }{\n}xms;
     close($results) or BAIL_OUT("cannot close output file: $!");
 
     # Clean up.
@@ -357,12 +372,18 @@ sub test_snippet_with_io {
 
     # Check the accent definitions and the output.
     my $perlio = $options_ref->{perlio_utf8} ? ' (PerlIO)' : q{};
+    if ($class eq 'Pod::Man') {
+        is(
+            $saw_accents,
+            $data_ref->{options}{utf8} ? undef : 1,
+            "$data_ref->{name}: accent definitions$perlio"
+        );
+    }
     is(
-        $saw_accents,
-        $data_ref->{options}{utf8} ? undef : 1,
-        "$data_ref->{name}: accent definitions$perlio"
+        $saw,
+        decode($encoding, $data_ref->{output}),
+        "$data_ref->{name}: output$perlio"
     );
-    is($saw, $data_ref->{output}, "$data_ref->{name}: output$perlio");
     return;
 }
 
@@ -396,14 +417,11 @@ should be explicitly imported.
 
 =over 4
 
-=item read_snippet(PATH[, ENCODING])
+=item read_snippet(PATH)
 
 Read one test snippet from the provided relative file name and return it.  The
 path should be relative to F<t/data/snippets>.  For the format, see
 F<t/data/snippets/README>.
-
-ENCODING, if present, specifies the encoding of the snippet.  If not given,
-the snippet is assumed to be encoded in C<UTF-8>.
 
 The result will be a hash with the following keys:
 
@@ -489,7 +507,7 @@ it, and checking the results.  Results are reported with Test::More.
 
 OPTIONS, if present, is a reference to a hash of options.  Currently, only
 one key is supported: C<encoding>, which, if set, specifies the encoding of
-the snippet.
+the output portion of the snippet.
 
 =item test_snippet_with_io(CLASS, SNIPPET[, OPTIONS])
 
@@ -509,7 +527,7 @@ Russ Allbery <rra@cpan.org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2015, 2016, 2018 Russ Allbery <rra@cpan.org>
+Copyright 2015-2016, 2018-2020 Russ Allbery <rra@cpan.org>
 
 This program is free software; you may redistribute it and/or modify it
 under the same terms as Perl itself.

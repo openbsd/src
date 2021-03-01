@@ -1,5 +1,5 @@
-# HangulSyllableType-12.1.0.txt
-# Date: 2019-03-08, 23:59:00 GMT
+# HangulSyllableType-13.0.0.txt
+# Date: 2019-09-08, 23:31:10 GMT
 # © 2019 Unicode®, Inc.
 # Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
 # For terms of use, see http://www.unicode.org/terms_of_use.html

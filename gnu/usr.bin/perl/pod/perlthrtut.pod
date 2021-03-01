@@ -1081,19 +1081,19 @@ on your way to becoming a threaded Perl expert.
 =head1 SEE ALSO
 
 Annotated POD for L<threads>:
-L<http://annocpan.org/?mode=search&field=Module&name=threads>
+L<https://web.archive.org/web/20171028020148/http://annocpan.org/?mode=search&field=Module&name=threads>
 
 Latest version of L<threads> on CPAN:
 L<https://metacpan.org/pod/threads>
 
 Annotated POD for L<threads::shared>:
-L<http://annocpan.org/?mode=search&field=Module&name=threads%3A%3Ashared>
+L<https://web.archive.org/web/20171028020148/http://annocpan.org/?mode=search&field=Module&name=threads%3A%3Ashared>
 
 Latest version of L<threads::shared> on CPAN:
 L<https://metacpan.org/pod/threads::shared>
 
 Perl threads mailing list:
-L<http://lists.perl.org/list/ithreads.html>
+L<https://lists.perl.org/list/ithreads.html>
 
 =head1 Bibliography
 
@@ -1104,7 +1104,7 @@ Here's a short bibliography courtesy of Jürgen Christoffel:
 Birrell, Andrew D. An Introduction to Programming with
 Threads. Digital Equipment Corporation, 1989, DEC-SRC Research Report
 #35 online as
-L<ftp://ftp.dec.com/pub/DEC/SRC/research-reports/SRC-035.pdf>
+L<https://www.hpl.hp.com/techreports/Compaq-DEC/SRC-RR-35.pdf>
 (highly recommended)
 
 Robbins, Kay. A., and Steven Robbins. Practical Unix Programming: A

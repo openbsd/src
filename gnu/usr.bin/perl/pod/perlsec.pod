@@ -14,24 +14,14 @@ untrustworthy) programs to accomplish its purposes.
 
 =head1 SECURITY VULNERABILITY CONTACT INFORMATION
 
-If you believe you have found a security vulnerability in Perl, please
-email the details to perl5-security-report@perl.org. This creates a new
-Request Tracker ticket in a special queue which isn't initially publicly
-accessible. The email will also be copied to a closed subscription
-unarchived mailing list which includes all the core committers, who will
-be able to help assess the impact of issues, figure out a resolution, and
-help co-ordinate the release of patches to mitigate or fix the problem
-across all platforms on which Perl is supported. Please only use this
-address for security issues in the Perl core, not for modules
-independently distributed on CPAN.
+If you believe you have found a security vulnerability in the Perl
+interpreter or modules maintained in the core Perl codebase,
+email the details to
+L<perl-security@perl.org|mailto:perl-security@perl.org>.
+This address is a closed membership mailing list monitored by the Perl
+security team.
 
-When sending an initial request to the security email address, please
-don't Cc any other parties, because if they reply to all, the reply will
-generate yet another new ticket. Once you have received an initial reply
-with a C<[perl #NNNNNN]> ticket number in  the headline, it's okay to Cc
-subsequent replies to third parties: all emails to the
-perl5-security-report address with the ticket number in the subject line
-will be added to the ticket; without it, a new ticket will be created.
+See L<perlsecpolicy> for additional information.
 
 =head1 SECURITY MECHANISMS AND CONCERNS
 
@@ -245,14 +235,14 @@ Unix-like environments that support #! and setuid or setgid scripts.)
 
 =head2 Taint mode and @INC
 
-When the taint mode (C<-T>) is in effect, the "." directory is removed
-from C<@INC>, and the environment variables C<PERL5LIB> and C<PERLLIB>
+When the taint mode (C<-T>) is in effect, the environment variables
+C<PERL5LIB> and C<PERLLIB>
 are ignored by Perl.  You can still adjust C<@INC> from outside the
 program by using the C<-I> command line option as explained in
-L<perlrun>.  The two environment variables are ignored because
-they are obscured, and a user running a program could be unaware that
-they are set, whereas the C<-I> option is clearly visible and
-therefore permitted.
+L<perlrun|perlrun/-Idirectory>.  The two environment variables are
+ignored because they are obscured, and a user running a program could
+be unaware that they are set, whereas the C<-I> option is clearly
+visible and therefore permitted.
 
 Another way to modify C<@INC> without modifying the program, is to use
 the C<lib> pragma, e.g.:
@@ -267,6 +257,11 @@ Note that if a tainted string is added to C<@INC>, the following
 problem will be reported:
 
   Insecure dependency in require while running with -T switch
+
+On versions of Perl before 5.26, activating taint mode will also remove
+the current directory (".") from the default value of C<@INC>. Since
+version 5.26, the current directory isn't included in C<@INC> by
+default.
 
 =head2 Cleaning Up Your Path
 
@@ -621,4 +616,5 @@ the issues overlap.
 
 =head1 SEE ALSO
 
-L<perlrun> for its description of cleaning up environment variables.
+L<perlrun/ENVIRONMENT> for its description of cleaning up environment
+variables.

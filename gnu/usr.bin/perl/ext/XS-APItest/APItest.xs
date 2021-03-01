@@ -23,6 +23,12 @@ typedef PerlIO * OutputStream;
 #define croak_fail_nep(h, w) croak("fail %p!=%p at " __FILE__ " line %d", (h), (w), __LINE__)
 #define croak_fail_nei(h, w) croak("fail %d!=%d at " __FILE__ " line %d", (int)(h), (int)(w), __LINE__)
 
+#if IVSIZE == 8
+#  define TEST_64BIT 1
+#else
+#  define TEST_64BIT 0
+#endif
+
 #ifdef EBCDIC
 
 void
@@ -759,6 +765,7 @@ static SV *hintkey_swaplabel_sv, *hintkey_labelconst_sv;
 static SV *hintkey_arrayfullexpr_sv, *hintkey_arraylistexpr_sv;
 static SV *hintkey_arraytermexpr_sv, *hintkey_arrayarithexpr_sv;
 static SV *hintkey_arrayexprflags_sv;
+static SV *hintkey_subsignature_sv;
 static SV *hintkey_DEFSV_sv;
 static SV *hintkey_with_vars_sv;
 static SV *hintkey_join_with_space_sv;
@@ -1051,6 +1058,67 @@ static OP *THX_parse_keyword_arrayexprflags(pTHX)
     return o ? newANONLIST(o) : newANONHASH(newOP(OP_STUB, 0));
 }
 
+#define parse_keyword_subsignature() THX_parse_keyword_subsignature(aTHX)
+static OP *THX_parse_keyword_subsignature(pTHX)
+{
+    OP *retop = NULL, *listop, *sigop = parse_subsignature(0);
+    OP *kid;
+    int seen_nextstate = 0;
+
+    /* We can't yield the optree as is to the caller because it won't be
+     * executable outside of a called sub. We'll have to convert it into
+     * something safe for them to invoke.
+     * sigop should be an OP_NULL above a OP_LINESEQ containing
+     * OP_NEXTSTATE-separated OP_ARGCHECK and OP_ARGELEMs
+     */
+    if(sigop->op_type != OP_NULL)
+	croak("Expected parse_subsignature() to yield an OP_NULL");
+    
+    if(!(sigop->op_flags & OPf_KIDS))
+	croak("Expected parse_subsignature() to yield an OP_NULL with kids");
+    listop = cUNOPx(sigop)->op_first;
+
+    if(listop->op_type != OP_LINESEQ)
+	croak("Expected parse_subsignature() to yield an OP_LINESEQ");
+
+    for(kid = cLISTOPx(listop)->op_first; kid; kid = OpSIBLING(kid)) {
+	switch(kid->op_type) {
+	    case OP_NEXTSTATE:
+		/* Only emit the first one otherwise they get boring */
+		if(seen_nextstate)
+		    break;
+		seen_nextstate++;
+		retop = op_append_list(OP_LIST, retop, newSVOP(OP_CONST, 0,
+		    /* newSVpvf("nextstate:%s:%d", CopFILE(cCOPx(kid)), cCOPx(kid)->cop_line))); */
+		    newSVpvf("nextstate:%u", (unsigned int)cCOPx(kid)->cop_line)));
+		break;
+	    case OP_ARGCHECK: {
+                struct op_argcheck_aux *p =
+                    (struct op_argcheck_aux*)(cUNOP_AUXx(kid)->op_aux);
+		retop = op_append_list(OP_LIST, retop, newSVOP(OP_CONST, 0,
+		    newSVpvf("argcheck:%" UVuf ":%" UVuf ":%c",
+                            p->params, p->opt_params,
+                            p->slurpy ? p->slurpy : '-')));
+		break;
+	    }
+	    case OP_ARGELEM: {
+		PADOFFSET padix = kid->op_targ;
+		PADNAMELIST *names = PadlistNAMES(CvPADLIST(find_runcv(0)));
+		char *namepv = PadnamePV(padnamelist_fetch(names, padix));
+		retop = op_append_list(OP_LIST, retop, newSVOP(OP_CONST, 0,
+		    newSVpvf(kid->op_flags & OPf_KIDS ? "argelem:%s:d" : "argelem:%s", namepv)));
+		break;
+	    }
+	    default:
+		fprintf(stderr, "TODO: examine kid %p (optype=%s)\n", kid, PL_op_name[kid->op_type]);
+		break;
+	}
+    }
+
+    op_free(sigop);
+    return newANONLIST(retop);
+}
+
 #define parse_keyword_DEFSV() THX_parse_keyword_DEFSV(aTHX)
 static OP *THX_parse_keyword_DEFSV(pTHX)
 {
@@ -1246,6 +1314,10 @@ static int my_keyword_plugin(pTHX_
 		    keyword_active(hintkey_join_with_space_sv)) {
 	*op_ptr = parse_join_with_space();
 	return KEYWORD_PLUGIN_EXPR;
+    } else if (memEQs(keyword_ptr, keyword_len, "subsignature") &&
+		    keyword_active(hintkey_subsignature_sv)) {
+	*op_ptr = parse_keyword_subsignature();
+	return KEYWORD_PLUGIN_EXPR;
     } else {
         assert(next_keyword_plugin != my_keyword_plugin);
 	return next_keyword_plugin(aTHX_ keyword_ptr, keyword_len, op_ptr);
@@ -1339,7 +1411,7 @@ my_ck_rv2cv(pTHX_ OP *o)
     {
 	SvGROW(ref, SvCUR(ref)+2);
 	*SvEND(ref) = '_';
-	SvCUR(ref)++;
+	SvCUR(ref)++; /* Not _set, so we don't accidentally break non-PERL_CORE */
 	*SvEND(ref) = '\0';
     }
     return old_ck_rv2cv(aTHX_ o);
@@ -2981,7 +3053,7 @@ utf16_to_utf8 (sv, ...)
         STRLEN len;
 	U8 *source;
 	SV *dest;
-	I32 got; /* Gah, badly thought out APIs */
+	Size_t got;
     CODE:
 	if (ix) (void)SvPV_force_nolen(sv);
 	source = (U8 *)SvPVbyte(sv, len);
@@ -3995,6 +4067,7 @@ BOOT:
     hintkey_arraytermexpr_sv = newSVpvs_share("XS::APItest/arraytermexpr");
     hintkey_arrayarithexpr_sv = newSVpvs_share("XS::APItest/arrayarithexpr");
     hintkey_arrayexprflags_sv = newSVpvs_share("XS::APItest/arrayexprflags");
+    hintkey_subsignature_sv = newSVpvs_share("XS::APItest/subsignature");
     hintkey_DEFSV_sv = newSVpvs_share("XS::APItest/DEFSV");
     hintkey_with_vars_sv = newSVpvs_share("XS::APItest/with_vars");
     hintkey_join_with_space_sv = newSVpvs_share("XS::APItest/join_with_space");
@@ -4161,9 +4234,23 @@ OUTPUT:
     RETVAL
 
 char *
+SvPVbyte_nomg(SV *sv)
+CODE:
+    RETVAL = SvPVbyte_nomg(sv, PL_na);
+OUTPUT:
+    RETVAL
+
+char *
 SvPVutf8(SV *sv)
 CODE:
     RETVAL = SvPVutf8_nolen(sv);
+OUTPUT:
+    RETVAL
+
+char *
+SvPVutf8_nomg(SV *sv)
+CODE:
+    RETVAL = SvPVutf8_nomg(sv, PL_na);
 OUTPUT:
     RETVAL
 
@@ -4418,6 +4505,17 @@ PerlIO_stdin()
 FILE *
 PerlIO_exportFILE(PerlIO *f, const char *mode)
 
+SV *
+test_MAX_types()
+    CODE:
+        /* tests that IV_MAX and UV_MAX have types suitable
+           for the IVdf and UVdf formats.
+           If this warns then don't add casts here.
+        */
+        RETVAL = newSVpvf("iv %" IVdf " uv %" UVuf, IV_MAX, UV_MAX);
+    OUTPUT:
+	RETVAL
+
 MODULE = XS::APItest PACKAGE = XS::APItest::AUTOLOADtest
 
 int
@@ -4595,7 +4693,7 @@ test_isBLANK_utf8(U8 * p, int type)
             RETVAL = isBLANK_utf8_safe(p, e);
         }
         else {
-            RETVAL = isBLANK_utf8(p);
+            RETVAL = 0;
         }
     OUTPUT:
         RETVAL
@@ -4610,7 +4708,7 @@ test_isBLANK_LC_utf8(U8 * p, int type)
             RETVAL = isBLANK_LC_utf8_safe(p, e);
         }
         else {
-            RETVAL = isBLANK_LC_utf8(p);
+            RETVAL = 0;
         }
     OUTPUT:
         RETVAL
@@ -4639,7 +4737,7 @@ test_isVERTWS_utf8(U8 * p, int type)
             RETVAL = isVERTWS_utf8_safe(p, e);
         }
         else {
-            RETVAL = isVERTWS_utf8(p);
+            RETVAL = 0;
         }
     OUTPUT:
         RETVAL
@@ -4703,7 +4801,7 @@ test_isUPPER_utf8(U8 * p, int type)
             RETVAL = isUPPER_utf8_safe(p, e);
         }
         else {
-            RETVAL = isUPPER_utf8(p);
+            RETVAL = 0;
         }
     OUTPUT:
         RETVAL
@@ -4718,7 +4816,7 @@ test_isUPPER_LC_utf8(U8 * p, int type)
             RETVAL = isUPPER_LC_utf8_safe(p, e);
         }
         else {
-            RETVAL = isUPPER_LC_utf8(p);
+            RETVAL = 0;
         }
     OUTPUT:
         RETVAL
@@ -4782,7 +4880,7 @@ test_isLOWER_utf8(U8 * p, int type)
             RETVAL = isLOWER_utf8_safe(p, e);
         }
         else {
-            RETVAL = isLOWER_utf8(p);
+            RETVAL = 0;
         }
     OUTPUT:
         RETVAL
@@ -4797,7 +4895,7 @@ test_isLOWER_LC_utf8(U8 * p, int type)
             RETVAL = isLOWER_LC_utf8_safe(p, e);
         }
         else {
-            RETVAL = isLOWER_LC_utf8(p);
+            RETVAL = 0;
         }
     OUTPUT:
         RETVAL
@@ -4861,7 +4959,7 @@ test_isALPHA_utf8(U8 * p, int type)
             RETVAL = isALPHA_utf8_safe(p, e);
         }
         else {
-            RETVAL = isALPHA_utf8(p);
+            RETVAL = 0;
         }
     OUTPUT:
         RETVAL
@@ -4876,7 +4974,7 @@ test_isALPHA_LC_utf8(U8 * p, int type)
             RETVAL = isALPHA_LC_utf8_safe(p, e);
         }
         else {
-            RETVAL = isALPHA_LC_utf8(p);
+            RETVAL = 0;
         }
     OUTPUT:
         RETVAL
@@ -4940,7 +5038,7 @@ test_isWORDCHAR_utf8(U8 * p, int type)
             RETVAL = isWORDCHAR_utf8_safe(p, e);
         }
         else {
-            RETVAL = isWORDCHAR_utf8(p);
+            RETVAL = 0;
         }
     OUTPUT:
         RETVAL
@@ -4955,7 +5053,7 @@ test_isWORDCHAR_LC_utf8(U8 * p, int type)
             RETVAL = isWORDCHAR_LC_utf8_safe(p, e);
         }
         else {
-            RETVAL = isWORDCHAR_LC_utf8(p);
+            RETVAL = 0;
         }
     OUTPUT:
         RETVAL
@@ -5019,7 +5117,7 @@ test_isALPHANUMERIC_utf8(U8 * p, int type)
             RETVAL = isALPHANUMERIC_utf8_safe(p, e);
         }
         else {
-            RETVAL = isALPHANUMERIC_utf8(p);
+            RETVAL = 0;
         }
     OUTPUT:
         RETVAL
@@ -5034,7 +5132,7 @@ test_isALPHANUMERIC_LC_utf8(U8 * p, int type)
             RETVAL = isALPHANUMERIC_LC_utf8_safe(p, e);
         }
         else {
-            RETVAL = isALPHANUMERIC_LC_utf8(p);
+            RETVAL = 0;
         }
     OUTPUT:
         RETVAL
@@ -5077,7 +5175,7 @@ test_isALNUM_utf8(U8 * p, int type)
             RETVAL = isWORDCHAR_utf8_safe(p, e);
         }
         else {
-            RETVAL = isWORDCHAR_utf8(p);
+            RETVAL = 0;
         }
     OUTPUT:
         RETVAL
@@ -5092,7 +5190,7 @@ test_isALNUM_LC_utf8(U8 * p, int type)
             RETVAL = isWORDCHAR_LC_utf8_safe(p, e);
         }
         else {
-            RETVAL = isWORDCHAR_LC_utf8(p);
+            RETVAL = 0;
         }
     OUTPUT:
         RETVAL
@@ -5128,7 +5226,7 @@ test_isDIGIT_utf8(U8 * p, int type)
             RETVAL = isDIGIT_utf8_safe(p, e);
         }
         else {
-            RETVAL = isDIGIT_utf8(p);
+            RETVAL = 0;
         }
     OUTPUT:
         RETVAL
@@ -5143,7 +5241,7 @@ test_isDIGIT_LC_utf8(U8 * p, int type)
             RETVAL = isDIGIT_LC_utf8_safe(p, e);
         }
         else {
-            RETVAL = isDIGIT_LC_utf8(p);
+            RETVAL = 0;
         }
     OUTPUT:
         RETVAL
@@ -5256,7 +5354,7 @@ test_isIDFIRST_utf8(U8 * p, int type)
             RETVAL = isIDFIRST_utf8_safe(p, e);
         }
         else {
-            RETVAL = isIDFIRST_utf8(p);
+            RETVAL = 0;
         }
     OUTPUT:
         RETVAL
@@ -5271,7 +5369,7 @@ test_isIDFIRST_LC_utf8(U8 * p, int type)
             RETVAL = isIDFIRST_LC_utf8_safe(p, e);
         }
         else {
-            RETVAL = isIDFIRST_LC_utf8(p);
+            RETVAL = 0;
         }
     OUTPUT:
         RETVAL
@@ -5335,7 +5433,7 @@ test_isIDCONT_utf8(U8 * p, int type)
             RETVAL = isIDCONT_utf8_safe(p, e);
         }
         else {
-            RETVAL = isIDCONT_utf8(p);
+            RETVAL = 0;
         }
     OUTPUT:
         RETVAL
@@ -5350,7 +5448,7 @@ test_isIDCONT_LC_utf8(U8 * p, int type)
             RETVAL = isIDCONT_LC_utf8_safe(p, e);
         }
         else {
-            RETVAL = isIDCONT_LC_utf8(p);
+            RETVAL = 0;
         }
     OUTPUT:
         RETVAL
@@ -5414,7 +5512,7 @@ test_isSPACE_utf8(U8 * p, int type)
             RETVAL = isSPACE_utf8_safe(p, e);
         }
         else {
-            RETVAL = isSPACE_utf8(p);
+            RETVAL = 0;
         }
     OUTPUT:
         RETVAL
@@ -5429,7 +5527,7 @@ test_isSPACE_LC_utf8(U8 * p, int type)
             RETVAL = isSPACE_LC_utf8_safe(p, e);
         }
         else {
-            RETVAL = isSPACE_LC_utf8(p);
+            RETVAL = 0;
         }
     OUTPUT:
         RETVAL
@@ -5496,7 +5594,7 @@ test_isASCII_utf8(U8 * p, int type)
             RETVAL = isASCII_utf8_safe(p, e);
         }
         else {
-            RETVAL = isASCII_utf8(p);
+            RETVAL = 0;
         }
     OUTPUT:
         RETVAL
@@ -5514,7 +5612,7 @@ test_isASCII_LC_utf8(U8 * p, int type)
             RETVAL = isASCII_LC_utf8_safe(p, e);
         }
         else {
-            RETVAL = isASCII_LC_utf8(p);
+            RETVAL = 0;
         }
     OUTPUT:
         RETVAL
@@ -5578,7 +5676,7 @@ test_isCNTRL_utf8(U8 * p, int type)
             RETVAL = isCNTRL_utf8_safe(p, e);
         }
         else {
-            RETVAL = isCNTRL_utf8(p);
+            RETVAL = 0;
         }
     OUTPUT:
         RETVAL
@@ -5593,7 +5691,7 @@ test_isCNTRL_LC_utf8(U8 * p, int type)
             RETVAL = isCNTRL_LC_utf8_safe(p, e);
         }
         else {
-            RETVAL = isCNTRL_LC_utf8(p);
+            RETVAL = 0;
         }
     OUTPUT:
         RETVAL
@@ -5657,7 +5755,7 @@ test_isPRINT_utf8(U8 * p, int type)
             RETVAL = isPRINT_utf8_safe(p, e);
         }
         else {
-            RETVAL = isPRINT_utf8(p);
+            RETVAL = 0;
         }
     OUTPUT:
         RETVAL
@@ -5672,7 +5770,7 @@ test_isPRINT_LC_utf8(U8 * p, int type)
             RETVAL = isPRINT_LC_utf8_safe(p, e);
         }
         else {
-            RETVAL = isPRINT_LC_utf8(p);
+            RETVAL = 0;
         }
     OUTPUT:
         RETVAL
@@ -5736,7 +5834,7 @@ test_isGRAPH_utf8(U8 * p, int type)
             RETVAL = isGRAPH_utf8_safe(p, e);
         }
         else {
-            RETVAL = isGRAPH_utf8(p);
+            RETVAL = 0;
         }
     OUTPUT:
         RETVAL
@@ -5751,7 +5849,7 @@ test_isGRAPH_LC_utf8(U8 * p, int type)
             RETVAL = isGRAPH_LC_utf8_safe(p, e);
         }
         else {
-            RETVAL = isGRAPH_LC_utf8(p);
+            RETVAL = 0;
         }
     OUTPUT:
         RETVAL
@@ -5815,7 +5913,7 @@ test_isPUNCT_utf8(U8 * p, int type)
             RETVAL = isPUNCT_utf8_safe(p, e);
         }
         else {
-            RETVAL = isPUNCT_utf8(p);
+            RETVAL = 0;
         }
     OUTPUT:
         RETVAL
@@ -5830,7 +5928,7 @@ test_isPUNCT_LC_utf8(U8 * p, int type)
             RETVAL = isPUNCT_LC_utf8_safe(p, e);
         }
         else {
-            RETVAL = isPUNCT_LC_utf8(p);
+            RETVAL = 0;
         }
     OUTPUT:
         RETVAL
@@ -5894,7 +5992,7 @@ test_isXDIGIT_utf8(U8 * p, int type)
             RETVAL = isXDIGIT_utf8_safe(p, e);
         }
         else {
-            RETVAL = isXDIGIT_utf8(p);
+            RETVAL = 0;
         }
     OUTPUT:
         RETVAL
@@ -5909,7 +6007,7 @@ test_isXDIGIT_LC_utf8(U8 * p, int type)
             RETVAL = isXDIGIT_LC_utf8_safe(p, e);
         }
         else {
-            RETVAL = isXDIGIT_LC_utf8(p);
+            RETVAL = 0;
         }
     OUTPUT:
         RETVAL
@@ -5973,7 +6071,7 @@ test_isPSXSPC_utf8(U8 * p, int type)
             RETVAL = isPSXSPC_utf8_safe(p, e);
         }
         else {
-            RETVAL = isPSXSPC_utf8(p);
+            RETVAL = 0;
         }
     OUTPUT:
         RETVAL
@@ -5988,7 +6086,7 @@ test_isPSXSPC_LC_utf8(U8 * p, int type)
             RETVAL = isPSXSPC_LC_utf8_safe(p, e);
         }
         else {
-            RETVAL = isPSXSPC_LC_utf8(p);
+            RETVAL = 0;
         }
     OUTPUT:
         RETVAL
@@ -6428,23 +6526,18 @@ test_toLOWER_utf8(SV * p, int type)
         if (type >= 0) {
             e = input + UTF8SKIP(input) - type;
             resultant_cp = toLOWER_utf8_safe(input, e, s, &len);
+            av_push(av, newSVuv(resultant_cp));
+
+            utf8 = newSVpvn((char *) s, len);
+            SvUTF8_on(utf8);
+            av_push(av, utf8);
+
+            av_push(av, newSVuv(len));
+            RETVAL = av;
         }
-        else if (type == -1) {
-            resultant_cp = toLOWER_utf8(input, s, &len);
-        }
-#ifndef NO_MATHOMS
         else {
-            resultant_cp = Perl_to_utf8_lower(aTHX_ input, s, &len);
+            RETVAL = 0;
         }
-#endif
-        av_push(av, newSVuv(resultant_cp));
-
-        utf8 = newSVpvn((char *) s, len);
-        SvUTF8_on(utf8);
-        av_push(av, utf8);
-
-        av_push(av, newSVuv(len));
-        RETVAL = av;
     OUTPUT:
         RETVAL
 
@@ -6518,23 +6611,18 @@ test_toFOLD_utf8(SV * p, int type)
         if (type >= 0) {
             e = input + UTF8SKIP(input) - type;
             resultant_cp = toFOLD_utf8_safe(input, e, s, &len);
+            av_push(av, newSVuv(resultant_cp));
+
+            utf8 = newSVpvn((char *) s, len);
+            SvUTF8_on(utf8);
+            av_push(av, utf8);
+
+            av_push(av, newSVuv(len));
+            RETVAL = av;
         }
-        else if (type == -1) {
-            resultant_cp = toFOLD_utf8(input, s, &len);
-        }
-#ifndef NO_MATHOMS
         else {
-            resultant_cp = Perl_to_utf8_fold(aTHX_ input, s, &len);
+            RETVAL = 0;
         }
-#endif
-        av_push(av, newSVuv(resultant_cp));
-
-        utf8 = newSVpvn((char *) s, len);
-        SvUTF8_on(utf8);
-        av_push(av, utf8);
-
-        av_push(av, newSVuv(len));
-        RETVAL = av;
     OUTPUT:
         RETVAL
 
@@ -6608,23 +6696,18 @@ test_toUPPER_utf8(SV * p, int type)
         if (type >= 0) {
             e = input + UTF8SKIP(input) - type;
             resultant_cp = toUPPER_utf8_safe(input, e, s, &len);
+            av_push(av, newSVuv(resultant_cp));
+
+            utf8 = newSVpvn((char *) s, len);
+            SvUTF8_on(utf8);
+            av_push(av, utf8);
+
+            av_push(av, newSVuv(len));
+            RETVAL = av;
         }
-        else if (type == -1) {
-            resultant_cp = toUPPER_utf8(input, s, &len);
-        }
-#ifndef NO_MATHOMS
         else {
-            resultant_cp = Perl_to_utf8_upper(aTHX_ input, s, &len);
+            RETVAL = 0;
         }
-#endif
-        av_push(av, newSVuv(resultant_cp));
-
-        utf8 = newSVpvn((char *) s, len);
-        SvUTF8_on(utf8);
-        av_push(av, utf8);
-
-        av_push(av, newSVuv(len));
-        RETVAL = av;
     OUTPUT:
         RETVAL
 
@@ -6691,23 +6774,18 @@ test_toTITLE_utf8(SV * p, int type)
         if (type >= 0) {
             e = input + UTF8SKIP(input) - type;
             resultant_cp = toTITLE_utf8_safe(input, e, s, &len);
+            av_push(av, newSVuv(resultant_cp));
+
+            utf8 = newSVpvn((char *) s, len);
+            SvUTF8_on(utf8);
+            av_push(av, utf8);
+
+            av_push(av, newSVuv(len));
+            RETVAL = av;
         }
-        else if (type == -1) {
-            resultant_cp = toTITLE_utf8(input, s, &len);
-        }
-#ifndef NO_MATHOMS
         else {
-            resultant_cp = Perl_to_utf8_title(aTHX_ input, s, &len);
+            RETVAL = 0;
         }
-#endif
-        av_push(av, newSVuv(resultant_cp));
-
-        utf8 = newSVpvn((char *) s, len);
-        SvUTF8_on(utf8);
-        av_push(av, utf8);
-
-        av_push(av, newSVuv(len));
-        RETVAL = av;
     OUTPUT:
         RETVAL
 
@@ -6799,3 +6877,584 @@ Comctl32Version()
 #endif
 
 
+MODULE = XS::APItest                PACKAGE = XS::APItest::HvMacro
+
+
+UV
+u8_to_u16_le(SV *sv, STRLEN ofs)
+    ALIAS:
+        u8_to_u32_le = 1
+        u8_to_u64_le = 2
+    CODE:
+    {
+        STRLEN len;
+        char *pv= SvPV(sv,len);
+        STRLEN minlen= 2<<ix;
+        U16 u16;
+        U32 u32;
+        U64 u64;
+        RETVAL= 0; /* silence warnings about uninitialized RETVAL */
+        switch (ix) {
+            case 0:
+                if (ofs+minlen>len) croak("cowardly refusing to read past end of string in u8_to_u16_le");
+                u16= U8TO16_LE(pv+ofs);
+                RETVAL= (UV)u16;
+                break;
+            case 1:
+                if (ofs+minlen>len) croak("cowardly refusing to read past end of string in u8_to_u32_le");
+                u32= U8TO32_LE(pv+ofs);
+                RETVAL= (UV)u32;
+                break;
+            case 2:
+#if TEST_64BIT
+                if (ofs+minlen>len) croak("cowardly refusing to read past end of string in u8_to_u64_le");
+                u64= U8TO64_LE(pv+ofs);
+                RETVAL= (UV)u64;
+#else
+                croak("not a 64 bit perl IVSIZE=%d",IVSIZE);
+#endif
+                break;
+        }
+    }
+    OUTPUT:
+        RETVAL
+
+U32
+rotl32(U32 n, U8 r)
+    CODE:
+    {
+        RETVAL= ROTL32(n,r);
+    }
+    OUTPUT:
+        RETVAL
+
+U32
+rotr32(U32 n, U8 r)
+    CODE:
+    {
+        RETVAL= ROTR32(n,r);
+    }
+    OUTPUT:
+        RETVAL
+
+#if TEST_64BIT
+
+UV
+rotl64(UV n, U8 r)
+    CODE:
+    {
+        RETVAL= ROTL64(n,r);
+    }
+    OUTPUT:
+        RETVAL
+
+UV
+rotr64(UV n, U8 r)
+    CODE:
+    {
+        RETVAL= ROTR64(n,r);
+    }
+    OUTPUT:
+        RETVAL
+
+SV *
+siphash_seed_state(SV *seed_sv)
+    CODE:
+    {
+        U8 state_buf[sizeof(U64)*4];
+        STRLEN seed_len;
+        U8 *seed_pv= (U8*)SvPV(seed_sv,seed_len);
+        if (seed_len<16)  croak("seed should be 16 bytes long");
+        else if (seed_len>16) warn("only using the first 16 bytes of seed");
+        RETVAL= newSV(sizeof(U64)*4+3);
+        S_perl_siphash_seed_state(seed_pv,state_buf);
+        sv_setpvn(RETVAL,(char*)state_buf,sizeof(U64)*4);
+    }
+    OUTPUT:
+        RETVAL
+
+
+UV
+siphash24(SV *state_sv, SV *str_sv)
+    ALIAS:
+        siphash13 = 1
+    CODE:
+    {
+        STRLEN state_len;
+        STRLEN str_len;
+        U8 *str_pv= (U8*)SvPV(str_sv,str_len);
+        /* (U8*)SvPV(state_sv, state_len) return differs between little-endian *
+         * and big-endian. It's the same values, but in a different order.     *
+         * On big-endian architecture, we transpose the values into the same   *
+         * order as for little-endian, so that we can test against the same    *
+         * test vectors.                                                       *
+         * We could alternatively alter the code that produced state_sv to     *
+         * output identical arrangements for big-endian and little-endian.     */
+#if BYTEORDER == 0x1234 || BYTEORDER == 0x12345678
+        U8 *state_pv= (U8*)SvPV(state_sv,state_len);
+        if (state_len!=32) croak("siphash state should be exactly 32 bytes");
+#else
+        U8 *temp_pv = (U8*)SvPV(state_sv, state_len);
+        U8 state_pv[32];
+        int i;
+        if (state_len!=32) croak("siphash state should be exactly 32 bytes");
+        for( i = 0; i < 32; i++ ) { 
+            if     (i <  8) state_pv[ 7 - i] = temp_pv[i];
+            else if(i < 16) state_pv[23 - i] = temp_pv[i];
+            else if(i < 24) state_pv[39 - i] = temp_pv[i];
+            else            state_pv[55 - i] = temp_pv[i];
+        }
+#endif
+        if (ix) {
+            RETVAL= S_perl_hash_siphash_1_3_with_state_64(state_pv,str_pv,str_len);
+        } else {
+            RETVAL= S_perl_hash_siphash_2_4_with_state_64(state_pv,str_pv,str_len);
+        }
+    }
+    OUTPUT:
+        RETVAL
+
+
+UV
+test_siphash24()
+    CODE:
+    {
+        U8 vectors[64][8] = {
+              { 0x31, 0x0e, 0x0e, 0xdd, 0x47, 0xdb, 0x6f, 0x72, },
+              { 0xfd, 0x67, 0xdc, 0x93, 0xc5, 0x39, 0xf8, 0x74, },
+              { 0x5a, 0x4f, 0xa9, 0xd9, 0x09, 0x80, 0x6c, 0x0d, },
+              { 0x2d, 0x7e, 0xfb, 0xd7, 0x96, 0x66, 0x67, 0x85, },
+              { 0xb7, 0x87, 0x71, 0x27, 0xe0, 0x94, 0x27, 0xcf, },
+              { 0x8d, 0xa6, 0x99, 0xcd, 0x64, 0x55, 0x76, 0x18, },
+              { 0xce, 0xe3, 0xfe, 0x58, 0x6e, 0x46, 0xc9, 0xcb, },
+              { 0x37, 0xd1, 0x01, 0x8b, 0xf5, 0x00, 0x02, 0xab, },
+              { 0x62, 0x24, 0x93, 0x9a, 0x79, 0xf5, 0xf5, 0x93, },
+              { 0xb0, 0xe4, 0xa9, 0x0b, 0xdf, 0x82, 0x00, 0x9e, },
+              { 0xf3, 0xb9, 0xdd, 0x94, 0xc5, 0xbb, 0x5d, 0x7a, },
+              { 0xa7, 0xad, 0x6b, 0x22, 0x46, 0x2f, 0xb3, 0xf4, },
+              { 0xfb, 0xe5, 0x0e, 0x86, 0xbc, 0x8f, 0x1e, 0x75, },
+              { 0x90, 0x3d, 0x84, 0xc0, 0x27, 0x56, 0xea, 0x14, },
+              { 0xee, 0xf2, 0x7a, 0x8e, 0x90, 0xca, 0x23, 0xf7, },
+              { 0xe5, 0x45, 0xbe, 0x49, 0x61, 0xca, 0x29, 0xa1, },
+              { 0xdb, 0x9b, 0xc2, 0x57, 0x7f, 0xcc, 0x2a, 0x3f, },
+              { 0x94, 0x47, 0xbe, 0x2c, 0xf5, 0xe9, 0x9a, 0x69, },
+              { 0x9c, 0xd3, 0x8d, 0x96, 0xf0, 0xb3, 0xc1, 0x4b, },
+              { 0xbd, 0x61, 0x79, 0xa7, 0x1d, 0xc9, 0x6d, 0xbb, },
+              { 0x98, 0xee, 0xa2, 0x1a, 0xf2, 0x5c, 0xd6, 0xbe, },
+              { 0xc7, 0x67, 0x3b, 0x2e, 0xb0, 0xcb, 0xf2, 0xd0, },
+              { 0x88, 0x3e, 0xa3, 0xe3, 0x95, 0x67, 0x53, 0x93, },
+              { 0xc8, 0xce, 0x5c, 0xcd, 0x8c, 0x03, 0x0c, 0xa8, },
+              { 0x94, 0xaf, 0x49, 0xf6, 0xc6, 0x50, 0xad, 0xb8, },
+              { 0xea, 0xb8, 0x85, 0x8a, 0xde, 0x92, 0xe1, 0xbc, },
+              { 0xf3, 0x15, 0xbb, 0x5b, 0xb8, 0x35, 0xd8, 0x17, },
+              { 0xad, 0xcf, 0x6b, 0x07, 0x63, 0x61, 0x2e, 0x2f, },
+              { 0xa5, 0xc9, 0x1d, 0xa7, 0xac, 0xaa, 0x4d, 0xde, },
+              { 0x71, 0x65, 0x95, 0x87, 0x66, 0x50, 0xa2, 0xa6, },
+              { 0x28, 0xef, 0x49, 0x5c, 0x53, 0xa3, 0x87, 0xad, },
+              { 0x42, 0xc3, 0x41, 0xd8, 0xfa, 0x92, 0xd8, 0x32, },
+              { 0xce, 0x7c, 0xf2, 0x72, 0x2f, 0x51, 0x27, 0x71, },
+              { 0xe3, 0x78, 0x59, 0xf9, 0x46, 0x23, 0xf3, 0xa7, },
+              { 0x38, 0x12, 0x05, 0xbb, 0x1a, 0xb0, 0xe0, 0x12, },
+              { 0xae, 0x97, 0xa1, 0x0f, 0xd4, 0x34, 0xe0, 0x15, },
+              { 0xb4, 0xa3, 0x15, 0x08, 0xbe, 0xff, 0x4d, 0x31, },
+              { 0x81, 0x39, 0x62, 0x29, 0xf0, 0x90, 0x79, 0x02, },
+              { 0x4d, 0x0c, 0xf4, 0x9e, 0xe5, 0xd4, 0xdc, 0xca, },
+              { 0x5c, 0x73, 0x33, 0x6a, 0x76, 0xd8, 0xbf, 0x9a, },
+              { 0xd0, 0xa7, 0x04, 0x53, 0x6b, 0xa9, 0x3e, 0x0e, },
+              { 0x92, 0x59, 0x58, 0xfc, 0xd6, 0x42, 0x0c, 0xad, },
+              { 0xa9, 0x15, 0xc2, 0x9b, 0xc8, 0x06, 0x73, 0x18, },
+              { 0x95, 0x2b, 0x79, 0xf3, 0xbc, 0x0a, 0xa6, 0xd4, },
+              { 0xf2, 0x1d, 0xf2, 0xe4, 0x1d, 0x45, 0x35, 0xf9, },
+              { 0x87, 0x57, 0x75, 0x19, 0x04, 0x8f, 0x53, 0xa9, },
+              { 0x10, 0xa5, 0x6c, 0xf5, 0xdf, 0xcd, 0x9a, 0xdb, },
+              { 0xeb, 0x75, 0x09, 0x5c, 0xcd, 0x98, 0x6c, 0xd0, },
+              { 0x51, 0xa9, 0xcb, 0x9e, 0xcb, 0xa3, 0x12, 0xe6, },
+              { 0x96, 0xaf, 0xad, 0xfc, 0x2c, 0xe6, 0x66, 0xc7, },
+              { 0x72, 0xfe, 0x52, 0x97, 0x5a, 0x43, 0x64, 0xee, },
+              { 0x5a, 0x16, 0x45, 0xb2, 0x76, 0xd5, 0x92, 0xa1, },
+              { 0xb2, 0x74, 0xcb, 0x8e, 0xbf, 0x87, 0x87, 0x0a, },
+              { 0x6f, 0x9b, 0xb4, 0x20, 0x3d, 0xe7, 0xb3, 0x81, },
+              { 0xea, 0xec, 0xb2, 0xa3, 0x0b, 0x22, 0xa8, 0x7f, },
+              { 0x99, 0x24, 0xa4, 0x3c, 0xc1, 0x31, 0x57, 0x24, },
+              { 0xbd, 0x83, 0x8d, 0x3a, 0xaf, 0xbf, 0x8d, 0xb7, },
+              { 0x0b, 0x1a, 0x2a, 0x32, 0x65, 0xd5, 0x1a, 0xea, },
+              { 0x13, 0x50, 0x79, 0xa3, 0x23, 0x1c, 0xe6, 0x60, },
+              { 0x93, 0x2b, 0x28, 0x46, 0xe4, 0xd7, 0x06, 0x66, },
+              { 0xe1, 0x91, 0x5f, 0x5c, 0xb1, 0xec, 0xa4, 0x6c, },
+              { 0xf3, 0x25, 0x96, 0x5c, 0xa1, 0x6d, 0x62, 0x9f, },
+              { 0x57, 0x5f, 0xf2, 0x8e, 0x60, 0x38, 0x1b, 0xe5, },
+              { 0x72, 0x45, 0x06, 0xeb, 0x4c, 0x32, 0x8a, 0x95, }
+            };
+        U32 vectors_32[64] = {
+            0xaf61d576,
+            0xe7245e38,
+            0xd4c5cf53,
+            0x529c18bb,
+            0xe8561357,
+            0xd5eff3e9,
+            0x9337a5a0,
+            0x2003d1c2,
+            0x0966d11b,
+            0x95a9666f,
+            0xee800236,
+            0xd6d882e1,
+            0xf3106a47,
+            0xd46e6bb7,
+            0x7959387e,
+            0xe8978f84,
+            0x68e857a4,
+            0x4524ae61,
+            0xdd4c606c,
+            0x1c14a8a0,
+            0xa474b26a,
+            0xfec9ac77,
+            0x70f0591d,
+            0x6550cd44,
+            0x4ee4ff52,
+            0x36642a34,
+            0x4c63204b,
+            0x2845aece,
+            0x79506309,
+            0x21373517,
+            0xf1ce4c7b,
+            0xea9951b8,
+            0x03d52de1,
+            0x5eaa5ba5,
+            0xa9e5a222,
+            0x1a41a37a,
+            0x39585c0a,
+            0x2b1ba971,
+            0x5428d8a8,
+            0xf08cab2a,
+            0x5d3a0ebb,
+            0x51541b44,
+            0x83b11361,
+            0x27df2129,
+            0x1dc758ef,
+            0xb026d883,
+            0x2ef668cf,
+            0x8c65ed26,
+            0x78d90a9a,
+            0x3bcb49ba,
+            0x7936bd28,
+            0x13d7c32c,
+            0x844cf30d,
+            0xa1077c52,
+            0xdc1acee1,
+            0x18f31558,
+            0x8d003c12,
+            0xd830cf6e,
+            0xc39f4c30,
+            0x202efc77,
+            0x30fb7d50,
+            0xc3f44852,
+            0x6be96737,
+            0x7e8c773e
+        };
+
+        const U8 MAXLEN= 64;
+        U8 in[64], seed_pv[16], state_pv[32];
+        union {
+            U64 hash;
+            U32 h32[2];
+            U8 bytes[8];
+        } out;
+        int i,j;
+        int failed = 0;
+        U32 hash32;
+        /* S_perl_siphash_seed_state(seed_pv, state_pv) sets state_pv          *
+         * differently between little-endian and big-endian. It's the same     *
+         * values, but in a different order.                                   *
+         * On big-endian architecture, we transpose the values into the same   *
+         * order as for little-endian, so that we can test against the same    *
+         * test vectors.                                                       *
+         * We could alternatively alter the code that produces state_pv to     *
+         * output identical arrangements for big-endian and little-endian.     */
+#if BYTEORDER == 0x1234 || BYTEORDER == 0x12345678
+        for( i = 0; i < 16; ++i ) seed_pv[i] = i;
+        S_perl_siphash_seed_state(seed_pv, state_pv);
+#else
+        U8 temp_pv[32];
+        for( i = 0; i < 16; ++i ) seed_pv[i] = i;
+        S_perl_siphash_seed_state(seed_pv, temp_pv);
+        for( i = 0; i < 32; ++i ) {
+            if     (i <  8) state_pv[ 7 - i] = temp_pv[i];
+            else if(i < 16) state_pv[23 - i] = temp_pv[i];
+            else if(i < 24) state_pv[39 - i] = temp_pv[i];
+            else            state_pv[55 - i] = temp_pv[i];
+        }
+#endif
+        for( i = 0; i < MAXLEN; ++i )
+        {
+            in[i] = i;
+
+            out.hash= S_perl_hash_siphash_2_4_with_state_64( state_pv, in, i );
+
+            hash32= S_perl_hash_siphash_2_4_with_state( state_pv, in, i);
+            /* The test vectors need to reversed here for big-endian architecture   *
+             * Alternatively we could rewrite S_perl_hash_siphash_2_4_with_state_64 *
+             * to produce reversed vectors when run on big-endian architecture      */
+#if BYTEORDER == 0x4321 || BYTEORDER == 0x87654321 /* reverse order of vectors[i] */
+            temp_pv   [0] = vectors[i][0]; /* temp_pv is temporary holder of vectors[i][0] */
+            vectors[i][0] = vectors[i][7];
+            vectors[i][7] = temp_pv[0];
+
+            temp_pv   [0] = vectors[i][1]; /* temp_pv is temporary holder of vectors[i][1] */
+            vectors[i][1] = vectors[i][6];
+            vectors[i][6] = temp_pv[0];
+
+            temp_pv   [0] = vectors[i][2]; /* temp_pv is temporary holder of vectors[i][2] */
+            vectors[i][2] = vectors[i][5];
+            vectors[i][5] = temp_pv[0];
+
+            temp_pv   [0] = vectors[i][3]; /* temp_pv is temporary holder of vectors[i][3] */
+            vectors[i][3] = vectors[i][4];
+            vectors[i][4] = temp_pv[0];
+#endif
+            if ( memcmp( out.bytes, vectors[i], 8 ) )
+            {
+                failed++;
+                printf( "Error in 64 bit result on test vector of length %d for siphash24\n    have: {", i );
+                for (j=0;j<7;j++)
+                    printf( "0x%02x, ", out.bytes[j]);
+                printf( "0x%02x },\n", out.bytes[7]);
+                printf( "    want: {" );
+                for (j=0;j<7;j++)
+                    printf( "0x%02x, ", vectors[i][j]);
+                printf( "0x%02x },\n", vectors[i][7]);
+            }
+            if (hash32 != vectors_32[i]) {
+                failed++;
+                printf( "Error in 32 bit result on test vector of length %d for siphash24\n"
+                        "    have: 0x%08x\n"
+                        "    want: 0x%08x\n",
+                    i, hash32, vectors_32[i]);
+            }
+        }
+        RETVAL= failed;
+    }
+    OUTPUT:
+        RETVAL
+
+UV
+test_siphash13()
+    CODE:
+    {
+        U8 vectors[64][8] = {
+            {0xdc, 0xc4, 0x0f, 0x05, 0x58, 0x01, 0xac, 0xab },
+            {0x93, 0xca, 0x57, 0x7d, 0xf3, 0x9b, 0xf4, 0xc9 },
+            {0x4d, 0xd4, 0xc7, 0x4d, 0x02, 0x9b, 0xcb, 0x82 },
+            {0xfb, 0xf7, 0xdd, 0xe7, 0xb8, 0x0a, 0xf8, 0x8b },
+            {0x28, 0x83, 0xd3, 0x88, 0x60, 0x57, 0x75, 0xcf },
+            {0x67, 0x3b, 0x53, 0x49, 0x2f, 0xd5, 0xf9, 0xde },
+            {0xa7, 0x22, 0x9f, 0xc5, 0x50, 0x2b, 0x0d, 0xc5 },
+            {0x40, 0x11, 0xb1, 0x9b, 0x98, 0x7d, 0x92, 0xd3 },
+            {0x8e, 0x9a, 0x29, 0x8d, 0x11, 0x95, 0x90, 0x36 },
+            {0xe4, 0x3d, 0x06, 0x6c, 0xb3, 0x8e, 0xa4, 0x25 },
+            {0x7f, 0x09, 0xff, 0x92, 0xee, 0x85, 0xde, 0x79 },
+            {0x52, 0xc3, 0x4d, 0xf9, 0xc1, 0x18, 0xc1, 0x70 },
+            {0xa2, 0xd9, 0xb4, 0x57, 0xb1, 0x84, 0xa3, 0x78 },
+            {0xa7, 0xff, 0x29, 0x12, 0x0c, 0x76, 0x6f, 0x30 },
+            {0x34, 0x5d, 0xf9, 0xc0, 0x11, 0xa1, 0x5a, 0x60 },
+            {0x56, 0x99, 0x51, 0x2a, 0x6d, 0xd8, 0x20, 0xd3 },
+            {0x66, 0x8b, 0x90, 0x7d, 0x1a, 0xdd, 0x4f, 0xcc },
+            {0x0c, 0xd8, 0xdb, 0x63, 0x90, 0x68, 0xf2, 0x9c },
+            {0x3e, 0xe6, 0x73, 0xb4, 0x9c, 0x38, 0xfc, 0x8f },
+            {0x1c, 0x7d, 0x29, 0x8d, 0xe5, 0x9d, 0x1f, 0xf2 },
+            {0x40, 0xe0, 0xcc, 0xa6, 0x46, 0x2f, 0xdc, 0xc0 },
+            {0x44, 0xf8, 0x45, 0x2b, 0xfe, 0xab, 0x92, 0xb9 },
+            {0x2e, 0x87, 0x20, 0xa3, 0x9b, 0x7b, 0xfe, 0x7f },
+            {0x23, 0xc1, 0xe6, 0xda, 0x7f, 0x0e, 0x5a, 0x52 },
+            {0x8c, 0x9c, 0x34, 0x67, 0xb2, 0xae, 0x64, 0xf4 },
+            {0x79, 0x09, 0x5b, 0x70, 0x28, 0x59, 0xcd, 0x45 },
+            {0xa5, 0x13, 0x99, 0xca, 0xe3, 0x35, 0x3e, 0x3a },
+            {0x35, 0x3b, 0xde, 0x4a, 0x4e, 0xc7, 0x1d, 0xa9 },
+            {0x0d, 0xd0, 0x6c, 0xef, 0x02, 0xed, 0x0b, 0xfb },
+            {0xf4, 0xe1, 0xb1, 0x4a, 0xb4, 0x3c, 0xd9, 0x88 },
+            {0x63, 0xe6, 0xc5, 0x43, 0xd6, 0x11, 0x0f, 0x54 },
+            {0xbc, 0xd1, 0x21, 0x8c, 0x1f, 0xdd, 0x70, 0x23 },
+            {0x0d, 0xb6, 0xa7, 0x16, 0x6c, 0x7b, 0x15, 0x81 },
+            {0xbf, 0xf9, 0x8f, 0x7a, 0xe5, 0xb9, 0x54, 0x4d },
+            {0x3e, 0x75, 0x2a, 0x1f, 0x78, 0x12, 0x9f, 0x75 },
+            {0x91, 0x6b, 0x18, 0xbf, 0xbe, 0xa3, 0xa1, 0xce },
+            {0x06, 0x62, 0xa2, 0xad, 0xd3, 0x08, 0xf5, 0x2c },
+            {0x57, 0x30, 0xc3, 0xa3, 0x2d, 0x1c, 0x10, 0xb6 },
+            {0xa1, 0x36, 0x3a, 0xae, 0x96, 0x74, 0xf4, 0xb3 },
+            {0x92, 0x83, 0x10, 0x7b, 0x54, 0x57, 0x6b, 0x62 },
+            {0x31, 0x15, 0xe4, 0x99, 0x32, 0x36, 0xd2, 0xc1 },
+            {0x44, 0xd9, 0x1a, 0x3f, 0x92, 0xc1, 0x7c, 0x66 },
+            {0x25, 0x88, 0x13, 0xc8, 0xfe, 0x4f, 0x70, 0x65 },
+            {0xa6, 0x49, 0x89, 0xc2, 0xd1, 0x80, 0xf2, 0x24 },
+            {0x6b, 0x87, 0xf8, 0xfa, 0xed, 0x1c, 0xca, 0xc2 },
+            {0x96, 0x21, 0x04, 0x9f, 0xfc, 0x4b, 0x16, 0xc2 },
+            {0x23, 0xd6, 0xb1, 0x68, 0x93, 0x9c, 0x6e, 0xa1 },
+            {0xfd, 0x14, 0x51, 0x8b, 0x9c, 0x16, 0xfb, 0x49 },
+            {0x46, 0x4c, 0x07, 0xdf, 0xf8, 0x43, 0x31, 0x9f },
+            {0xb3, 0x86, 0xcc, 0x12, 0x24, 0xaf, 0xfd, 0xc6 },
+            {0x8f, 0x09, 0x52, 0x0a, 0xd1, 0x49, 0xaf, 0x7e },
+            {0x9a, 0x2f, 0x29, 0x9d, 0x55, 0x13, 0xf3, 0x1c },
+            {0x12, 0x1f, 0xf4, 0xa2, 0xdd, 0x30, 0x4a, 0xc4 },
+            {0xd0, 0x1e, 0xa7, 0x43, 0x89, 0xe9, 0xfa, 0x36 },
+            {0xe6, 0xbc, 0xf0, 0x73, 0x4c, 0xb3, 0x8f, 0x31 },
+            {0x80, 0xe9, 0xa7, 0x70, 0x36, 0xbf, 0x7a, 0xa2 },
+            {0x75, 0x6d, 0x3c, 0x24, 0xdb, 0xc0, 0xbc, 0xb4 },
+            {0x13, 0x15, 0xb7, 0xfd, 0x52, 0xd8, 0xf8, 0x23 },
+            {0x08, 0x8a, 0x7d, 0xa6, 0x4d, 0x5f, 0x03, 0x8f },
+            {0x48, 0xf1, 0xe8, 0xb7, 0xe5, 0xd0, 0x9c, 0xd8 },
+            {0xee, 0x44, 0xa6, 0xf7, 0xbc, 0xe6, 0xf4, 0xf6 },
+            {0xf2, 0x37, 0x18, 0x0f, 0xd8, 0x9a, 0xc5, 0xae },
+            {0xe0, 0x94, 0x66, 0x4b, 0x15, 0xf6, 0xb2, 0xc3 },
+            {0xa8, 0xb3, 0xbb, 0xb7, 0x62, 0x90, 0x19, 0x9d }
+        };
+        U32 vectors_32[64] = {
+            0xaea3c584,
+            0xb4a35160,
+            0xcf0c4f4f,
+            0x6c25fd43,
+            0x47a6d448,
+            0x97aaee48,
+            0x009209f7,
+            0x48236cd8,
+            0xbbb90f9f,
+            0x49a2b357,
+            0xeb218c91,
+            0x898cdb93,
+            0x2f175d13,
+            0x224689ab,
+            0xa0a3fc25,
+            0xf971413b,
+            0xb1df567c,
+            0xff29b09c,
+            0x3b8fdea2,
+            0x7f36e0f9,
+            0x6610cf06,
+            0x92d753ba,
+            0xdcdefcb5,
+            0x88bccf5c,
+            0x9350323e,
+            0x35965051,
+            0xf0a72646,
+            0xe3c3fc7b,
+            0x14673d0f,
+            0xc268dd40,
+            0x17caf7b5,
+            0xaf510ca3,
+            0x97b2cd61,
+            0x37db405a,
+            0x6ab56746,
+            0x71b9c82f,
+            0x81576ad5,
+            0x15d32c7a,
+            0x1dce4237,
+            0x197bd4c6,
+            0x58362303,
+            0x596618d6,
+            0xad63c7db,
+            0xe67bc977,
+            0x38329b86,
+            0x5d126a6a,
+            0xc9df4ab0,
+            0xc2aa0261,
+            0x40360fbe,
+            0xd4312997,
+            0x74fd405e,
+            0x81da3ccf,
+            0x66be2fcf,
+            0x755df759,
+            0x427f0faa,
+            0xd2dd56b6,
+            0x9080adae,
+            0xde4fcd41,
+            0x297ed545,
+            0x6f7421ad,
+            0x0152a252,
+            0xa1ddad2a,
+            0x88d462f5,
+            0x2aa223ca,
+        };
+
+        const U8 MAXLEN= 64;
+        U8 in[64], seed_pv[16], state_pv[32];
+        union {
+            U64 hash;
+            U32 h32[2];
+            U8 bytes[8];
+        } out;
+        int i,j;
+        int failed = 0;
+        U32 hash32;
+        /* S_perl_siphash_seed_state(seed_pv, state_pv) sets state_pv          *
+         * differently between little-endian and big-endian. It's the same     *
+         * values, but in a different order.                                   *
+         * On big-endian architecture, we transpose the values into the same   *
+         * order as for little-endian, so that we can test against the same    *
+         * test vectors.                                                       *
+         * We could alternatively alter the code that produces state_pv to     *
+         * output identical arrangements for big-endian and little-endian.     */
+#if BYTEORDER == 0x1234 || BYTEORDER == 0x12345678
+        for( i = 0; i < 16; ++i ) seed_pv[i] = i;
+        S_perl_siphash_seed_state(seed_pv, state_pv);
+#else
+        U8 temp_pv[32];
+        for( i = 0; i < 16; ++i ) seed_pv[i] = i;
+        S_perl_siphash_seed_state(seed_pv, temp_pv);
+        for( i = 0; i < 32; ++i ) {
+            if     (i <  8) state_pv[ 7 - i] = temp_pv[i];
+            else if(i < 16) state_pv[23 - i] = temp_pv[i];
+            else if(i < 24) state_pv[39 - i] = temp_pv[i];
+            else            state_pv[55 - i] = temp_pv[i];
+        }
+#endif
+        for( i = 0; i < MAXLEN;  ++i )
+        {
+            in[i] = i;
+
+            out.hash= S_perl_hash_siphash_1_3_with_state_64( state_pv, in, i );
+
+            hash32= S_perl_hash_siphash_1_3_with_state( state_pv, in, i);
+            /* The test vectors need to reversed here for big-endian architecture   *
+             * Alternatively we could rewrite S_perl_hash_siphash_1_3_with_state_64 *
+             * to produce reversed vectors when run on big-endian architecture      */
+#if BYTEORDER == 0x4321 || BYTEORDER == 0x87654321
+            temp_pv   [0] = vectors[i][0]; /* temp_pv is temporary holder of vectors[i][0] */
+            vectors[i][0] = vectors[i][7];
+            vectors[i][7] = temp_pv[0];
+
+            temp_pv   [0] = vectors[i][1]; /* temp_pv is temporary holder of vectors[i][1] */
+            vectors[i][1] = vectors[i][6];
+            vectors[i][6] = temp_pv[0];
+
+            temp_pv   [0] = vectors[i][2]; /* temp_pv is temporary holder of vectors[i][2] */
+            vectors[i][2] = vectors[i][5];
+            vectors[i][5] = temp_pv[0];
+
+            temp_pv   [0] = vectors[i][3]; /* temp_pv is temporary holder of vectors[i][3] */
+            vectors[i][3] = vectors[i][4];
+            vectors[i][4] = temp_pv[0];
+#endif
+            if ( memcmp( out.bytes, vectors[i], 8 ) )
+            {
+                failed++;
+                printf( "Error in 64 bit result on test vector of length %d for siphash13\n    have: {", i );
+                for (j=0;j<7;j++)
+                    printf( "0x%02x, ", out.bytes[j]);
+                printf( "0x%02x },\n", out.bytes[7]);
+                printf( "    want: {" );
+                for (j=0;j<7;j++)
+                    printf( "0x%02x, ", vectors[i][j]);
+                printf( "0x%02x },\n", vectors[i][7]);
+            }
+            if (hash32 != vectors_32[i]) {
+                failed++;
+                printf( "Error in 32 bit result on test vector of length %d for siphash13\n"
+                        "    have: 0x%08x\n"
+                        "    want: 0x%08x\n",
+                    i, hash32, vectors_32[i]);
+            }
+        }
+        RETVAL= failed;
+    }
+    OUTPUT:
+        RETVAL
+
+#endif

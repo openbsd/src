@@ -1,5 +1,5 @@
-# StandardizedVariants-12.1.0.txt
-# Date: 2019-03-05, 23:03:00 GMT [KW, LI, RP]
+# StandardizedVariants-13.0.0.txt
+# Date: 2019-05-21, 17:56:00 GMT [KW, LI, RP]
 # © 2019 Unicode®, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 #
@@ -26,7 +26,7 @@
 #
 # For more information on standardized variation sequences,
 # see Section 23.4, Variation Selectors,
-# in The Unicode Standard, Version 12.0.
+# in The Unicode Standard, Version 13.0.
 #
 # For more information on the Ideographic Variation Database,
 # see http://www.unicode.org/ivd/

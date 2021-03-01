@@ -475,3 +475,11 @@ my $y = !BARE2;
 EXPECT
 Bareword "BARE2" not allowed while "strict subs" in use at - line 3.
 Execution of - aborted due to compilation errors.
+########
+# NAME multiconcat and barewords gh #17254
+use strict;
+sub foo { "foo" }
+print foo() . SLASH . "bar";
+EXPECT
+Bareword "SLASH" not allowed while "strict subs" in use at - line 3.
+Execution of - aborted due to compilation errors.

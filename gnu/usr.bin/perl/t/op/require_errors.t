@@ -9,7 +9,7 @@ BEGIN {
 use strict;
 use warnings;
 
-plan(tests => 54);
+plan(tests => 57);
 
 my $nonfile = tempfile();
 
@@ -271,3 +271,15 @@ eval "require \"$nonsearch\"";
 
 like $@, qr/^Can't locate \Q$nonsearch\E at/,
         "correct error message for require $nonsearch";
+
+{
+    # make sure require doesn't treat a non-PL_sv_undef undef as
+    # success in %INC
+    # GH #17428
+    push @INC, "lib";
+    ok(!eval { require CannotParse; }, "should fail to load");
+    local %INC = %INC; # copies \&PL_sv_undef into a new undef
+    ok(!eval { require CannotParse; },
+       "check the second attempt also fails");
+    like $@, qr/Attempt to reload/, "check we failed for the right reason";
+}

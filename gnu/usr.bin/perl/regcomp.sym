@@ -11,14 +11,39 @@
 # Note that the order in this file is important.
 #
 # Format for first section: 
-# NAME \s+ TYPE, arg-description [num-args] [flags] [longjump] ; DESCRIPTION
+# NAME \s+ TYPE, arg-description [struct regnode suffix] [flags] [longjump] ; DESCRIPTION
+#   arg-description is currently unused
+#   suffix is appended to 'struct_regnode_' giving which one to use.  If empty,
+#       it means plain 'struct regnode'.  If the regnode is a string one, this
+#       should instead refer to the base regnode, without the char[1] element
+#       of the structure
 #   flag <S> means is REGNODE_SIMPLE; flag <V> means is REGNODE_VARIES; <.> is
-#   a placeholder
-#   longjump is 1 if the (first) argument holds the next offset.
-#
+#       a placeholder
+#   longjump is 1 if the (first) argument holds the next offset (instead of the
+#       usual 'next_offset' field
 #
 # run perl regen.pl after editing this file
 
+#                             +- suffix of which struct regnode to use e.g.,
+#                             | +- flags  (S or V)               struct regnode_1
+#                         un- | | +- longjmp (0, blank, or 1)  blank means 0
+# Name        Type       used | | | ; comment
+# --------------------------------------------------------------------------
+# IFMATCH     BRANCHJ,    off 1 . 1 ; Succeeds if the following matches.
+# UNLESSM     BRANCHJ,    off 1 . 1 ; Fails if the following matches.
+# SUSPEND     BRANCHJ,    off 1 V 1 ; "Independent" sub-RE.
+# IFTHEN      BRANCHJ,    off 1 V 1 ; Switch, should be preceded by switcher.
+# GROUPP      GROUPP,     num 1     ; Whether the group matched.
+#
+# If we were to start running out of regnodes, many of the ones that are
+# complements could be combined with their non-complement mates.  For example,
+# POSIXU could have the flags field have the bottom bit mean do we complement
+# or not, and the type be shifted left 1 bit.  Then all that would be needed to
+# extract which to do is a mask for the complement bit, and a right shift for
+# the other, an inconsequential increase in instructions.  It might actually be
+# clearer and slightly faster given the case statement and assignment are
+# removed.  Note that not everything could be collapsed: NPOSIXA, for example,
+# would require special handling for performance.
 
 
 #* Exit points
@@ -45,12 +70,12 @@ GPOS        GPOS,       no        ; Matches where last m//g left off.
 # in regcomp.c uses the enum value of the modifier as an offset from the /d
 # version.  The complements must come after the non-complements.
 # BOUND, POSIX and their complements are affected, as well as EXACTF.
-BOUND       BOUND,      no        ; Like BOUNDA for non-utf8, otherwise match "" between any Unicode \w\W or \W\w
+BOUND       BOUND,      no        ; Like BOUNDA for non-utf8, otherwise like BOUNDU
 BOUNDL      BOUND,      no        ; Like BOUND/BOUNDU, but \w and \W are defined by current locale
 BOUNDU      BOUND,      no        ; Match "" at any boundary of a given type using /u rules.
 BOUNDA      BOUND,      no        ; Match "" at any boundary between \w\W or \W\w, where \w is [_a-zA-Z0-9]
 # All NBOUND nodes are required by code in regexec.c to be greater than all BOUND ones
-NBOUND      NBOUND,     no        ; Like NBOUNDA for non-utf8, otherwise match "" between any Unicode \w\w or \W\W
+NBOUND      NBOUND,     no        ; Like NBOUNDA for non-utf8, otherwise like BOUNDU
 NBOUNDL     NBOUND,     no        ; Like NBOUND/NBOUNDU, but \w and \W are defined by current locale
 NBOUNDU     NBOUND,     no        ; Match "" at any non-boundary of a given type using using /u rules.
 NBOUNDA     NBOUND,     no        ; Match "" betweeen any \w\w or \W\W, where \w is [_a-zA-Z0-9]
@@ -62,9 +87,18 @@ ANYOF       ANYOF,      sv charclass S    ; Match character in (or not in) this 
 ANYOFD      ANYOF,      sv charclass S    ; Like ANYOF, but /d is in effect
 ANYOFL      ANYOF,      sv charclass S    ; Like ANYOF, but /l is in effect
 ANYOFPOSIXL ANYOF,      sv charclass_posixl S    ; Like ANYOFL, but matches [[:posix:]] classes
-ANYOFH      ANYOF,      sv 1 S    ; Like ANYOF, but only has "High" matches, none in the bitmap; non-zero flags "f" means "f" is the first UTF-8 byte shared in common by all code points matched
-ANYOFM      ANYOFM      byte 1 S  ; Like ANYOF, but matches an invariant byte as determined by the mask and arg
-NANYOFM     ANYOFM      byte 1 S  ; complement of ANYOFM
+
+# Must be sequential
+ANYOFH      ANYOF,      sv 1 S    ; Like ANYOF, but only has "High" matches, none in the bitmap; the flags field contains the lowest matchable UTF-8 start byte
+ANYOFHb     ANYOF,      sv 1 S    ; Like ANYOFH, but all matches share the same UTF-8 start byte, given in the flags field
+ANYOFHr     ANYOF,      sv 1 S    ; Like ANYOFH, but the flags field contains packed bounds for all matchable UTF-8 start bytes.
+ANYOFHs     ANYOF,      sv 1 S    ; Like ANYOFHb, but has a string field that gives the leading matchable UTF-8 bytes; flags field is len
+ANYOFR      ANYOFR,     packed 1  S  ; Matches any character in the range given by its packed args: upper 12 bits is the max delta from the base lower 20; the flags field contains the lowest matchable UTF-8 start byte
+ANYOFRb     ANYOFR,     packed 1  S ; Like ANYOFR, but all matches share the same UTF-8 start byte, given in the flags field
+# There is no ANYOFRr because khw doesn't think there are likely to be real-world cases where such a large range is used.
+
+ANYOFM      ANYOFM,     byte 1 S  ; Like ANYOF, but matches an invariant byte as determined by the mask and arg
+NANYOFM     ANYOFM,     byte 1 S  ; complement of ANYOFM
 
 #* POSIX Character Classes:
 # Order of the below is important.  See ordering comment above.
@@ -96,32 +130,42 @@ BRANCH      BRANCH,     node 0 V  ; Match this alternative, or the next...
 #*Literals
 # NOTE: the relative ordering of these types is important do not change it
 
-EXACT       EXACT,      str       ; Match this string (preceded by length).
-EXACTL      EXACT,      str       ; Like EXACT, but /l is in effect (used so locale-related warnings can be checked for).
-EXACTF      EXACT,      str       ; Match this string using /id rules (w/len); (string not UTF-8, not guaranteed to be folded).
-EXACTFL     EXACT,      str       ; Match this string using /il rules (w/len); (string not guaranteed to be folded).
-EXACTFU     EXACT,      str	  ; Match this string using /iu rules (w/len); (string folded iff in UTF-8; non-UTF8 folded length <= unfolded).
-EXACTFAA    EXACT,      str	  ; Match this string using /iaa rules (w/len) (string folded iff in UTF-8; non-UTF8 folded length <= unfolded).
+EXACT       EXACT,      str       ; Match this string (flags field is the length).
+
+#* In a long string node, the U32 argument is the length, and is
+#* immediately followed by the string.
+LEXACT      EXACT,  len:str 1; Match this long string (preceded by length; flags unused).
+EXACTL      EXACT,      str       ; Like EXACT, but /l is in effect (used so locale-related warnings can be checked for)
+EXACTF      EXACT,      str       ; Like EXACT, but match using /id rules; (string not UTF-8, ASCII folded; non-ASCII not)
+EXACTFL     EXACT,      str       ; Like EXACT, but match using /il rules; (string not likely to be folded)
+EXACTFU     EXACT,      str	  ; Like EXACT, but match using /iu rules; (string folded)
+
+# The reason MICRO and SHARP S aren't folded in non-UTF8 patterns is because
+# they would fold to something that requires UTF-8.  SHARP S would normally
+# fold to 'ss', but because of /aa, it instead folds to a pair of LATIN SMALL
+# LETTER LONG S characters (U+017F)
+EXACTFAA    EXACT,      str	  ; Like EXACT, but match using /iaa rules; (string folded except in non-UTF8 patterns: MICRO, SHARP S; folded length <= unfolded)
 
 # End of important relative ordering.
 
-EXACTFUP    EXACT,      str	  ; Match this string using /iu rules (w/len); (string not UTF-8, not guaranteed to be folded; and its Problematic).
+EXACTFUP    EXACT,      str	  ; Like EXACT, but match using /iu rules; (string not UTF-8, folded except MICRO, SHARP S: hence Problematic)
 # In order for a non-UTF-8 EXACTFAA to think the pattern is pre-folded when
 # matching a UTF-8 target string, there would have to be something like an
 # EXACTFAA_MICRO which would not be considered pre-folded for UTF-8 targets,
 # since the fold of the MICRO SIGN would not be done, and would be
 # representable in the UTF-8 target string.
 
-EXACTFLU8   EXACT,      str	  ; Like EXACTFU, but use /il, UTF-8, folded, and everything in it is above 255.
-EXACTFAA_NO_TRIE  EXACT, str	  ; Match this string using /iaa rules (w/len) (string not UTF-8, not guaranteed to be folded, not currently trie-able).
+EXACTFLU8   EXACT,      str	  ; Like EXACTFU, but use /il, UTF-8, (string is folded, and everything in it is above 255
+EXACTFAA_NO_TRIE  EXACT, str	  ; Like EXACT, but match using /iaa rules (string not UTF-8, not guaranteed to be folded, not currently trie-able)
 
 
-EXACT_ONLY8 EXACT,      str       ; Like EXACT, but only UTF-8 encoded targets can match
-EXACTFU_ONLY8 EXACT,    str       ; Like EXACTFU, but only UTF-8 encoded targets can match
-# One could add EXACTFAA8 and and something that has the same effect for /l,
+EXACT_REQ8   EXACT,      str      ; Like EXACT, but only UTF-8 encoded targets can match
+LEXACT_REQ8  EXACT,  len:str 1    ; Like LEXACT, but only UTF-8 encoded targets can match
+EXACTFU_REQ8 EXACT,    str        ; Like EXACTFU, but only UTF-8 encoded targets can match
+# One could add EXACTFAA8 and something that has the same effect for /l,
 # but these would be extremely uncommon
 
-EXACTFU_S_EDGE EXACT,   str       ; /di rules, but nothing in it precludes /ui, except begins and/or ends with [Ss]; (string not UTF-8; compile-time only).
+EXACTFU_S_EDGE EXACT,   str       ; /di rules, but nothing in it precludes /ui, except begins and/or ends with [Ss]; (string not UTF-8; compile-time only)
 
 #*Do nothing types
 
@@ -166,11 +210,11 @@ REFFA       REF,        num 1 V   ; Match already matched string, using /aai rul
 
 #*Named references.  Code in regcomp.c assumes that these all are after
 #*the numbered references
-NREF        REF,        no-sv 1 V ; Match some already matched string
-NREFF       REF,        no-sv 1 V ; Match already matched string, using /di rules.
-NREFFL      REF,        no-sv 1 V ; Match already matched string, using /li rules.
-NREFFU      REF,        num   1 V ; Match already matched string, using /ui rules.
-NREFFA      REF,        num   1 V ; Match already matched string, using /aai rules.
+REFN        REF,        no-sv 1 V ; Match some already matched string
+REFFN       REF,        no-sv 1 V ; Match already matched string, using /di rules.
+REFFLN      REF,        no-sv 1 V ; Match already matched string, using /li rules.
+REFFUN      REF,        num   1 V ; Match already matched string, using /ui rules.
+REFFAN      REF,        num   1 V ; Match already matched string, using /aai rules.
 
 #*Support for long RE
 LONGJMP     LONGJMP,    off 1 . 1 ; Jump far away.
@@ -182,7 +226,6 @@ UNLESSM     BRANCHJ,    off 1 . 1 ; Fails if the following matches; non-zero fla
 SUSPEND     BRANCHJ,    off 1 V 1 ; "Independent" sub-RE.
 IFTHEN      BRANCHJ,    off 1 V 1 ; Switch, should be preceded by switcher.
 GROUPP      GROUPP,     num 1     ; Whether the group matched.
-
 
 #*The heavy worker
 
@@ -214,7 +257,7 @@ AHOCORASICKC    TRIE,trie charclass   ; Same as AHOCORASICK, but with embedded c
 GOSUB       GOSUB,      num/ofs 2L    ; recurse to paren arg1 at (signed) ofs arg2
 
 #*Special conditionals
-NGROUPP     NGROUPP,    no-sv 1   ; Whether the group matched.            
+GROUPPN     GROUPPN,    no-sv 1   ; Whether the group matched.
 INSUBP      INSUBP,     num 1     ; Whether we are in a specific recurse.  
 DEFINEP     DEFINEP,    none 1    ; Never execute directly.               
 
@@ -253,6 +296,8 @@ OPTIMIZED   NOTHING,    off       ; Placeholder for dump.
 #* node cant be optimized. So END implies "unoptimizable" and PSEUDO
 #* mean "not seen anything to optimize yet".
 PSEUDO      PSEUDO,     off       ; Pseudo opcode for internal use.
+
+REGEX_SET   REGEX_SET,  depth p S ; Regex set, temporary node used in pre-optimization compilation
 
 -------------------------------------------------------------------------------
 # Format for second section:

@@ -2,7 +2,7 @@ package Pod::Html;
 use strict;
 require Exporter;
 
-our $VERSION = 1.24;
+our $VERSION = 1.25;
 our @ISA = qw(Exporter);
 our @EXPORT = qw(pod2html htmlify);
 our @EXPORT_OK = qw(anchorify relativize_url);
@@ -766,22 +766,29 @@ sub resolve_pod_page_link {
             push @matches, $modname if $modname =~ /::\Q$to\E\z/;
         }
 
+        # make it look like a path instead of a namespace
+        my $modloc = File::Spec->catfile(split(/::/, $to));
+
         if ($#matches == -1) {
-            warn "Cannot find \"$to\" in podpath: " . 
-                 "cannot find suitable replacement path, cannot resolve link\n"
-                 unless $self->quiet;
+            warn "Cannot find file \"$modloc.*\" directly under podpath, " . 
+                 "cannot find suitable replacement: link remains unresolved.\n"
+                 if $self->verbose;
             return '';
         } elsif ($#matches == 0) {
-            warn "Cannot find \"$to\" in podpath: " .
-                 "using $matches[0] as replacement path to $to\n" 
-                 unless $self->quiet;
             $path = $self->pages->{$matches[0]};
+            my $matchloc = File::Spec->catfile(split(/::/, $path));
+            warn "Cannot find file \"$modloc.*\" directly under podpath, but ".
+                 "I did find \"$matchloc.*\", so I'll assume that is what you ".
+                 "meant to link to.\n"
+                 if $self->verbose;
         } else {
-            warn "Cannot find \"$to\" in podpath: " .
-                 "more than one possible replacement path to $to, " .
-                 "using $matches[-1]\n" unless $self->quiet;
             # Use [-1] so newer (higher numbered) perl PODs are used
+            # XXX currently, @matches isn't sorted so this is not true
             $path = $self->pages->{$matches[-1]};
+            my $matchloc = File::Spec->catfile(split(/::/, $path));
+            warn "Cannot find file \"$modloc.*\" directly under podpath, but ".
+                 "I did find \"$matchloc.*\" (among others), so I'll use that " .
+                 "to resolve the link.\n" if $self->verbose;
         }
     } else {
         $path = $self->pages->{$to};

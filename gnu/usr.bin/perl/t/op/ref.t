@@ -497,7 +497,7 @@ is (runperl(
 
 # using a regex in the destructor for STDOUT segfaulted because the
 # REGEX pad had already been freed (ithreads build only). The
-# object is required to trigger the early freeing of GV refs to to STDOUT
+# object is required to trigger the early freeing of GV refs to STDOUT
 
 TODO: {
     local $TODO = "works but output through pipe is mangled" if $^O eq 'VMS';

@@ -2,7 +2,7 @@ package SelfLoader;
 use 5.008;
 use strict;
 use IO::Handle;
-our $VERSION = "1.25";
+our $VERSION = "1.26";
 
 # The following bit of eval-magic is necessary to make this work on
 # perls < 5.009005.
@@ -428,7 +428,7 @@ You should also have received a copy of the GNU General Public License
 along with this program in the file named "Copying". If not, write to the
 Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston,
 MA 02110-1301, USA or visit their web page on the internet at
-http://www.gnu.org/copyleft/gpl.html.
+L<http://www.gnu.org/copyleft/gpl.html>.
 
 For those of you that choose to use the GNU General Public License,
 my interpretation of the GNU General Public License is that no Perl

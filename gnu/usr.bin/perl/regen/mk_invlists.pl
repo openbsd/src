@@ -13,7 +13,7 @@ use Unicode::UCD qw(prop_aliases
                    );
 require './regen/regen_lib.pl';
 require './regen/charset_translations.pl';
-require './lib/unicore/Heavy.pl';
+require './lib/unicore/UCD.pl';
 use re "/aa";
 
 # This program outputs charclass_invlists.h, which contains various inversion
@@ -61,6 +61,35 @@ my $max_hdr_len = 3;    # In headings, how wide a name is allowed?
 
 print $out_fh "/* See the generating file for comments */\n\n";
 
+print $out_fh <<'EOF';
+/* This gives the number of code points that can be in the bitmap of an ANYOF
+ * node.  The shift number must currently be one of: 8..12.  It can't be less
+ * than 8 (256) because some code relies on it being at least that.  Above 12
+ * (4096), and you start running into warnings that some data structure widths
+ * have been exceeded, though the test suite as of this writing still passes
+ * for up through 16, which is as high as anyone would ever want to go,
+ * encompassing all of the Unicode BMP, and thus including all the economically
+ * important world scripts.  At 12 most of them are: including Arabic,
+ * Cyrillic, Greek, Hebrew, Indian subcontinent, Latin, and Thai; but not Han,
+ * Japanese, nor Korean.  (The regarglen structure in regnodes.h is a U8, and
+ * the trie types TRIEC and AHOCORASICKC are larger than U8 for shift values
+ * above 12.)  Be sure to benchmark before changing, as larger sizes do
+ * significantly slow down the test suite */
+
+EOF
+
+my $num_anyof_code_points = '(1 << 8)';
+
+print $out_fh "#define NUM_ANYOF_CODE_POINTS   $num_anyof_code_points\n\n";
+
+$num_anyof_code_points = eval $num_anyof_code_points;
+
+no warnings 'once';
+print $out_fh <<"EOF";
+/* The precision to use in "%.*e" formats */
+#define PL_E_FORMAT_PRECISION $Unicode::UCD::e_precision
+EOF
+
 # enums that should be made public
 my %public_enums = (
                     _Perl_SCX => 1
@@ -93,8 +122,8 @@ my @a2n;
 my %prop_name_aliases;
 # Invert this hash so that for each canonical name, we get a list of things
 # that map to it (excluding itself)
-foreach my $name (sort keys %utf8::loose_property_name_of) {
-    my $canonical = $utf8::loose_property_name_of{$name};
+foreach my $name (sort keys %Unicode::UCD::loose_property_name_of) {
+    my $canonical = $Unicode::UCD::loose_property_name_of{$name};
     push @{$prop_name_aliases{$canonical}},  $name if $canonical ne $name;
 }
 
@@ -163,6 +192,8 @@ sub uniques {
     return grep { ! $seen{$_}++ } @_;
 }
 
+sub caselessly { lc $a cmp lc $b }
+
 sub a2n($) {
     my $cp = shift;
 
@@ -207,8 +238,10 @@ sub switch_pound_if ($$;$) {
     foreach my $element (@new_pound_if) {
 
         # regcomp.c is arranged so that the tables are not compiled in
-        # re_comp.c */
-        my $no_xsub = 1 if $element =~ / PERL_IN_ (?: REGCOMP ) _C /x;
+        # re_comp.c, but general enums and defines (which take no space) are
+        # compiled */
+        my $no_xsub = 1 if $name !~ /enum|define/
+                        && $element =~ / PERL_IN_ (?: REGCOMP ) _C /x;
         $element = "defined($element)";
         $element = "($element && ! defined(PERL_IN_XSUB_RE))" if $no_xsub;
     }
@@ -371,7 +404,8 @@ sub output_invmap ($$$$$$$) {
     my $name_prefix;
 
     if ($input_format =~ / ^ [as] l? $ /x) {
-        $prop_name = (prop_aliases($prop_name))[1] // $prop_name =~ s/^_Perl_//r; # Get full name
+        $prop_name = (prop_aliases($prop_name))[1]
+     // $prop_name =~ s/^_Perl_//r; # Get full name
         my $short_name = (prop_aliases($prop_name))[0] // $prop_name;
         my @input_enums;
 
@@ -381,7 +415,7 @@ sub output_invmap ($$$$$$$) {
         # expand the sublists first.
         if ($input_format !~ / ^ a /x) {
             if ($input_format ne 'sl') {
-                @input_enums = sort(uniques(@$invmap));
+                @input_enums = sort caselessly uniques(@$invmap);
             }
             else {
                 foreach my $element (@$invmap) {
@@ -392,7 +426,7 @@ sub output_invmap ($$$$$$$) {
                         push @input_enums, $element;
                     }
                 }
-                @input_enums = sort(uniques(@input_enums));
+                @input_enums = sort caselessly uniques(@input_enums);
             }
         }
 
@@ -435,109 +469,141 @@ sub output_invmap ($$$$$$$) {
                 }
             }
 
-            @unused_enums = sort @unused_enums;
+            @unused_enums = sort caselessly @unused_enums;
             $unused_enum_value = @enums;    # All unused have the same value,
                                             # one beyond the final used one
         }
 
+        # These properties have extra tables written out for them that we want
+        # to make as compact and legible as possible.  So we find short names
+        # for their property values.  For non-official ones we will need to
+        # add a legend at the top of the table to say what the abbreviation
+        # stands for.
+        my $property_needs_table_re = qr/ ^  _Perl_ (?: GCB | LB | WB ) $ /x;
+
+        my %short_enum_name;
+        my %need_explanation;   # For non-official abbreviations, we will need
+                                # to explain what the one we come up with
+                                # stands for
+        my $type = lc $prop_name;
+        if ($name =~ $property_needs_table_re) {
+            my @short_names;  # List of already used abbreviations, so we
+                              # don't duplicate
+            for my $enum (@enums) {
+                my $short_enum;
+                my $is_official_name = 0;
+
+                # Special case this wb property value to make the
+                # name more clear
+                if ($enum eq 'Perl_Tailored_HSpace') {
+                    $short_enum = 'hs';
+                }
+                else {
+
+                    # Use the official short name, if found.
+                    ($short_enum) = prop_value_aliases($type, $enum);
+                    if ( defined $short_enum) {
+                        $is_official_name = 1;
+                    }
+                    else {
+                        # But if there is no official name, use the name that
+                        # came from the data (if any).  Otherwise, the name
+                        # had to come from the extras list.  There are two
+                        # types of values in that list.
+                        #
+                        # First are those enums that are not part of the
+                        # property, but are defined by the code in this file.
+                        # By convention these have all-caps names.  We use the
+                        # lowercased name for these.
+                        #
+                        # Second are enums that are needed to get the
+                        # algorithms below to work and/or to get regexec.c to
+                        # compile, but don't exist in all Unicode releases.
+                        # These are handled outside this loop as
+                        # 'unused_enums' (as they are unused they all get
+                        # collapsed into a single column, and their names
+                        # don't matter)
+                        if (grep { $_ eq $enum } @input_enums) {
+                            $short_enum = $enum
+                        }
+                        else {
+                            $short_enum = lc $enum;
+                        }
+                    }
+
+                    # If our short name is too long, or we already know that
+                    # the name is an abbreviation, truncate to make sure it's
+                    # short enough, and remember that we did this so we can
+                    # later add a comment in the generated file
+                    if (length $short_enum > $max_hdr_len) {
+                        # First try using just the uppercase letters of the name;
+                        # if it is something like FooBar, FB is a better
+                        # abbreviation than Foo.  That's not the case if it is
+                        # entirely lowercase.
+                        my $uc = $short_enum;
+                        $uc =~ s/[[:^upper:]]//g;
+                        $short_enum = $uc if length $uc > 1
+                                          && length $uc < length $short_enum;
+
+                        $short_enum = substr($short_enum, 0, $max_hdr_len);
+                        $is_official_name = 0;
+                    }
+                }
+
+                # If the name we are to display conflicts, try another.
+                if (grep { $_ eq $short_enum } @short_names) {
+                    $is_official_name = 0;
+                    do { # The increment operator on strings doesn't work on
+                         # those containing an '_', so get rid of any final
+                         # portion.
+                        $short_enum =~ s/_//g;
+                        $short_enum++;
+                    } while grep { $_ eq $short_enum } @short_names;
+                }
+
+                push @short_names, $short_enum;
+                $short_enum_name{$enum} = $short_enum;
+                $need_explanation{$enum} = $short_enum unless $is_official_name;
+            }
+        } # End of calculating short enum names for certain properties
+
         # Assign a value to each element of the enum type we are creating.
         # The default value always gets 0; the others are arbitrarily
-        # assigned.
+        # assigned, but for the properties which have the extra table, it is
+        # in the order we have computed above so the rows and columns appear
+        # alphabetically by heading abbreviation.
         my $enum_val = 0;
         my $canonical_default = prop_value_aliases($prop_name, $default);
         $default = $canonical_default if defined $canonical_default;
         $enums{$default} = $enum_val++;
 
-        for my $enum (@enums) {
+        for my $enum (sort { ($name =~ $property_needs_table_re)
+                             ?     lc $short_enum_name{$a}  
+                               cmp lc $short_enum_name{$b}  
+                             : lc $a cmp lc $b
+                           } @enums)
+        {
             $enums{$enum} = $enum_val++ unless exists $enums{$enum};
         }
 
-        # Calculate the data for the special tables output for these properties.
-        if ($name =~ / ^  _Perl_ (?: GCB | LB | WB ) $ /x) {
+        # Now calculate the data for the special tables output for these
+        # properties.
+        if ($name =~ $property_needs_table_re) {
 
             # The data includes the hashes %gcb_enums, %lb_enums, etc.
             # Similarly we calculate column headings for the tables.
             #
             # We use string evals to allow the same code to work on
             # all the tables
-            my $type = lc $prop_name;
 
             # Skip if we've already done this code, which populated
             # this hash
             if (eval "! \%${type}_enums") {
 
                 # For each enum in the type ...
-                foreach my $enum (sort keys %enums) {
+                foreach my $enum (keys %enums) {
                     my $value = $enums{$enum};
-                    my $short;
-                    my $abbreviated_from;
-
-                    # Special case this wb property value to make the
-                    # name more clear
-                    if ($enum eq 'Perl_Tailored_HSpace') {
-                        $short = 'hs';
-                        $abbreviated_from = $enum;
-                    }
-                    else {
-
-                        # Use the official short name, if found.
-                        ($short) = prop_value_aliases($type, $enum);
-
-                        if (! defined $short) {
-
-                            # But if there is no official name, use the name
-                            # that came from the data (if any).  Otherwise,
-                            # the name had to come from the extras list.
-                            # There are two types of values in that list.
-                            #
-                            # First are those enums that are not part of the
-                            # property, but are defined by this code.  By
-                            # convention these have all-caps names.  We use
-                            # the lowercased name for these.
-                            #
-                            # Second are enums that are needed to get the
-                            # algorithms below to work and/or to get regexec.c
-                            # to compile, but don't exist in all Unicode
-                            # releases.  These are handled outside this loop
-                            # as 'unused_enums'
-                            if (grep { $_ eq $enum } @input_enums) {
-                                $short = $enum
-                            }
-                            else {
-                                $short = lc $enum;
-                            }
-                        }
-                    }
-
-                    # If our short name is too long, or we already
-                    # know that the name is an abbreviation, truncate
-                    # to make sure it's short enough, and remember
-                    # that we did this so we can later add a comment in the
-                    # generated file
-                    if (   $abbreviated_from
-                        || length $short > $max_hdr_len)
-                        {
-                        $short = substr($short, 0, $max_hdr_len);
-                        $abbreviated_from = $enum
-                                            unless $abbreviated_from;
-                        # If the name we are to display conflicts, try
-                        # another.
-                        while (eval "exists
-                                        \$${type}_abbreviations{$short}")
-                        {
-                            die $@ if $@;
-
-                            # The increment operator on strings doesn't work
-                            # on those containing an '_', so just use the
-                            # final portion.
-                            my @short = split '_', $short;
-                            $short[-1]++;
-                            $short = join "_", @short;
-                        }
-
-                        eval "\$${type}_abbreviations{$short} = '$enum'";
-                        die $@ if $@;
-                    }
+                    my $short_enum = $short_enum_name{$enum};
 
                     # Remember the mapping from the property value
                     # (enum) name to its value.
@@ -547,8 +613,14 @@ sub output_invmap ($$$$$$$) {
                     # Remember the inverse mapping to the short name
                     # so that we can properly label the generated
                     # table's rows and columns
-                    eval "\$${type}_short_enums[$value] = '$short'";
+                    eval "\$${type}_short_enums[$value] = '$short_enum'";
                     die $@ if $@;
+
+                    # And note the abbreviations that need explanation
+                    if ($need_explanation{$enum}) {
+                        eval "\$${type}_abbreviations{$short_enum} = '$enum'";
+                        die $@ if $@;
+                    }
                 }
 
                 # Each unused enum has the same value.  They all are collapsed
@@ -565,10 +637,10 @@ sub output_invmap ($$$$$$$) {
             }
         }
 
-        # The short names tend to be two lower case letters, but it looks
-        # better for those if they are upper. XXX
+        # The short property names tend to be two lower case letters, but it
+        # looks better for those if they are upper. XXX
         $short_name = uc($short_name) if length($short_name) < 3
-                                      || substr($short_name, 0, 1) =~ /[[:lower:]]/;
+                                || substr($short_name, 0, 1) =~ /[[:lower:]]/;
         $name_prefix = "${short_name}_";
 
         # Start the enum definition for this map
@@ -609,7 +681,7 @@ sub output_invmap ($$$$$$$) {
                     $joined = join ",", @$element;
                 }
                 else {
-                    $joined = join ",", sort @$element;
+                    $joined = join ",", sort caselessly @$element;
                 }
                 my $already_found = exists $multiples{$joined};
 
@@ -679,12 +751,19 @@ sub output_invmap ($$$$$$$) {
 
         switch_pound_if($name, $where, $charset);
 
+        # The inversion lists here have to be UV because inversion lists are
+        # capable of storing any code point, and even though the the ones here
+        # are only Unicode ones, which need just 21 bits, they are linked to
+        # directly, rather than copied.  The inversion map and aux tables also
+        # only need be 21 bits, and so we can get away with declaring them
+        # 32-bits to save a little space and memory (on some 64-bit
+        # platforms), as they are copied.
         $invmap_declaration_type = ($input_format =~ /s/)
                                  ? $enum_declaration_type
-                                 : "int";
+                                 : "I32";
         $aux_declaration_type = ($input_format =~ /s/)
                                  ? $enum_declaration_type
-                                 : "unsigned int";
+                                 : "U32";
 
         $output_format = "${name_prefix}%s";
 
@@ -709,10 +788,11 @@ sub output_invmap ($$$$$$$) {
             foreach my $table_number (@sorted_table_list) {
                 my $table = $inverted_mults{$table_number};
                 output_table_header($out_fh,
-                                       $aux_declaration_type,
-                                       "$name_prefix$aux_table_prefix$table_number");
+                                $aux_declaration_type,
+                                "$name_prefix$aux_table_prefix$table_number");
 
-                # Earlier, we joined the elements of this table together with a comma
+                # Earlier, we joined the elements of this table together with
+                # a comma
                 my @elements = split ",", $table;
 
                 $aux_counts[$table_number] = scalar @elements;
@@ -750,8 +830,9 @@ sub output_invmap ($$$$$$$) {
                                    "${name_prefix}${aux_table_prefix}lengths");
             print $out_fh "\t0,\t/* Placeholder */\n";
             for my $i (1 .. @sorted_table_list) {
-                print $out_fh  ",\n" if $i > 1;
-                print $out_fh  "\t$aux_counts[$i]\t/* $name_prefix$aux_table_prefix$i */";
+                print $out_fh ",\n" if $i > 1;
+                print $out_fh
+                    "\t$aux_counts[$i]\t/* $name_prefix$aux_table_prefix$i */";
             }
             print $out_fh "\n";
             output_table_trailer();
@@ -1075,6 +1156,9 @@ sub _Perl_IVCF {
     push @invlist, $sorted_folds[-1] + 1;
     push @invmap, 0;
 
+    push @invlist, 0x110000;
+    push @invmap, 0;
+
     # All Unicode versions have some places where multiple code points map to
     # the same one, so the format always has an 'l'
     return \@invlist, \@invmap, 'al', $default;
@@ -1180,7 +1264,8 @@ sub output_table_common {
         $spacers[$i] = " " x (length($names_ref->[$i]) - $column_width);
     }
 
-    output_table_header($out_fh, $table_type, "${property}_table", undef, $size, $size);
+    output_table_header($out_fh, $table_type, "${property}_table", undef,
+                        $size, $size);
 
     # Calculate the column heading line
     my $header_line = "/* "
@@ -1200,13 +1285,13 @@ sub output_table_common {
     # If we have annotations, output it now.
     if ($has_unused || scalar %$abbreviations_ref) {
         my $text = "";
-        foreach my $abbr (sort keys %$abbreviations_ref) {
+        foreach my $abbr (sort caselessly keys %$abbreviations_ref) {
             $text .= "; " if $text;
             $text .= "'$abbr' stands for '$abbreviations_ref->{$abbr}'";
         }
         if ($has_unused) {
             $text .= "; $unused_table_hdr stands for 'unused in this Unicode"
-                   . " release (and the data in the row or column are garbage)"
+                   . " release (and the data in its row and column are garbage)"
         }
 
         my $indent = " " x 3;
@@ -1298,7 +1383,7 @@ sub output_GCB_table() {
 
     # Post 11.0: GB11  \p{Extended_Pictographic} Extend* ZWJ
     #                                               × \p{Extended_Pictographic}
-    $gcb_table[$gcb_enums{'ZWJ'}][$gcb_enums{'XPG_XX'}] =
+    $gcb_table[$gcb_enums{'ZWJ'}][$gcb_enums{'ExtPict_XX'}] =
                                          $gcb_actions{GCB_Maybe_Emoji_NonBreak};
 
     # This and the rule GB10 obsolete starting with Unicode 11.0, can be left
@@ -1446,8 +1531,10 @@ sub output_LB_table() {
              [$lb_enums{'Regional_Indicator'}] = $lb_actions{'LB_RI_then_RI'};
 
     # LB30 Do not break between letters, numbers, or ordinary symbols and
-    # opening or closing parentheses.
-    # (AL | HL | NU) × OP
+    # non-East-Asian opening punctuation nor non-East-Asian closing
+    # parentheses.
+
+    # (AL | HL | NU) × [OP-[\p{ea=F}\p{ea=W}\p{ea=H}]]
     $lb_table[$lb_enums{'Alphabetic'}][$lb_enums{'Open_Punctuation'}]
                                                 = $lb_actions{'LB_NOBREAK'};
     $lb_table[$lb_enums{'Hebrew_Letter'}][$lb_enums{'Open_Punctuation'}]
@@ -1455,7 +1542,7 @@ sub output_LB_table() {
     $lb_table[$lb_enums{'Numeric'}][$lb_enums{'Open_Punctuation'}]
                                                 = $lb_actions{'LB_NOBREAK'};
 
-    # CP × (AL | HL | NU)
+    # [CP-[\p{ea=F}\p{ea=W}\p{ea=H}]] × (AL | HL | NU)
     $lb_table[$lb_enums{'Close_Parenthesis'}][$lb_enums{'Alphabetic'}]
                                                 = $lb_actions{'LB_NOBREAK'};
     $lb_table[$lb_enums{'Close_Parenthesis'}][$lb_enums{'Hebrew_Letter'}]
@@ -1550,6 +1637,8 @@ sub output_LB_table() {
         # the code we can recover the underlying break value.
     $lb_table[$lb_enums{'Prefix_Numeric'}][$lb_enums{'Open_Punctuation'}]
                                     += $lb_actions{'LB_PR_or_PO_then_OP_or_HY'};
+    $lb_table[$lb_enums{'Prefix_Numeric'}][$lb_enums{'East_Asian_OP'}]
+                                    += $lb_actions{'LB_PR_or_PO_then_OP_or_HY'};
     $lb_table[$lb_enums{'Postfix_Numeric'}][$lb_enums{'Open_Punctuation'}]
                                     += $lb_actions{'LB_PR_or_PO_then_OP_or_HY'};
     $lb_table[$lb_enums{'Prefix_Numeric'}][$lb_enums{'Hyphen'}]
@@ -1559,6 +1648,8 @@ sub output_LB_table() {
 
     # ( OP | HY ) × NU
     $lb_table[$lb_enums{'Open_Punctuation'}][$lb_enums{'Numeric'}]
+                                                = $lb_actions{'LB_NOBREAK'};
+    $lb_table[$lb_enums{'East_Asian_OP'}][$lb_enums{'Numeric'}]
                                                 = $lb_actions{'LB_NOBREAK'};
     $lb_table[$lb_enums{'Hyphen'}][$lb_enums{'Numeric'}]
                                                 = $lb_actions{'LB_NOBREAK'};
@@ -1576,6 +1667,8 @@ sub output_LB_table() {
                                                 = $lb_actions{'LB_NOBREAK'};
     $lb_table[$lb_enums{'Numeric'}][$lb_enums{'Close_Parenthesis'}]
                                                 = $lb_actions{'LB_NOBREAK'};
+    $lb_table[$lb_enums{'Numeric'}][$lb_enums{'East_Asian_CP'}]
+                                                = $lb_actions{'LB_NOBREAK'};
 
         # Like earlier where we have to test in code, we add in the action so
         # that we can recover the underlying values.  This is done in rules
@@ -1592,6 +1685,8 @@ sub output_LB_table() {
                                     += $lb_actions{'LB_SY_or_IS_then_various'};
     $lb_table[$lb_enums{'Break_Symbols'}][$lb_enums{'Close_Parenthesis'}]
                                     += $lb_actions{'LB_SY_or_IS_then_various'};
+    $lb_table[$lb_enums{'Break_Symbols'}][$lb_enums{'East_Asian_CP'}]
+                                    += $lb_actions{'LB_SY_or_IS_then_various'};
     $lb_table[$lb_enums{'Infix_Numeric'}][$lb_enums{'Numeric'}]
                                     += $lb_actions{'LB_SY_or_IS_then_various'};
     $lb_table[$lb_enums{'Infix_Numeric'}][$lb_enums{'Break_Symbols'}]
@@ -1601,6 +1696,8 @@ sub output_LB_table() {
     $lb_table[$lb_enums{'Infix_Numeric'}][$lb_enums{'Close_Punctuation'}]
                                     += $lb_actions{'LB_SY_or_IS_then_various'};
     $lb_table[$lb_enums{'Infix_Numeric'}][$lb_enums{'Close_Parenthesis'}]
+                                    += $lb_actions{'LB_SY_or_IS_then_various'};
+    $lb_table[$lb_enums{'Infix_Numeric'}][$lb_enums{'East_Asian_CP'}]
                                     += $lb_actions{'LB_SY_or_IS_then_various'};
 
     # NU (NU | SY | IS)* (CL | CP)? × (PO | PR)
@@ -1613,6 +1710,8 @@ sub output_LB_table() {
 
     $lb_table[$lb_enums{'Close_Parenthesis'}][$lb_enums{'Postfix_Numeric'}]
                                     += $lb_actions{'LB_various_then_PO_or_PR'};
+    $lb_table[$lb_enums{'East_Asian_CP'}][$lb_enums{'Postfix_Numeric'}]
+                                    += $lb_actions{'LB_various_then_PO_or_PR'};
     $lb_table[$lb_enums{'Close_Punctuation'}][$lb_enums{'Postfix_Numeric'}]
                                     += $lb_actions{'LB_various_then_PO_or_PR'};
     $lb_table[$lb_enums{'Infix_Numeric'}][$lb_enums{'Postfix_Numeric'}]
@@ -1621,6 +1720,8 @@ sub output_LB_table() {
                                     += $lb_actions{'LB_various_then_PO_or_PR'};
 
     $lb_table[$lb_enums{'Close_Parenthesis'}][$lb_enums{'Prefix_Numeric'}]
+                                    += $lb_actions{'LB_various_then_PO_or_PR'};
+    $lb_table[$lb_enums{'East_Asian_CP'}][$lb_enums{'Prefix_Numeric'}]
                                     += $lb_actions{'LB_various_then_PO_or_PR'};
     $lb_table[$lb_enums{'Close_Punctuation'}][$lb_enums{'Prefix_Numeric'}]
                                     += $lb_actions{'LB_various_then_PO_or_PR'};
@@ -1682,33 +1783,10 @@ sub output_LB_table() {
     $lb_table[$lb_enums{'Numeric'}][$lb_enums{'Hebrew_Letter'}]
                                                 = $lb_actions{'LB_NOBREAK'};
 
-    # LB22 Do not break between two ellipses, or between letters, numbers or
-    # exclamations and ellipsis.
-    # (AL | HL) × IN
-    $lb_table[$lb_enums{'Alphabetic'}][$lb_enums{'Inseparable'}]
-                                                = $lb_actions{'LB_NOBREAK'};
-    $lb_table[$lb_enums{'Hebrew_Letter'}][$lb_enums{'Inseparable'}]
-                                                = $lb_actions{'LB_NOBREAK'};
-
-    # Exclamation × IN
-    $lb_table[$lb_enums{'Exclamation'}][$lb_enums{'Inseparable'}]
-                                                = $lb_actions{'LB_NOBREAK'};
-
-    # (ID | EB | EM) × IN
-    $lb_table[$lb_enums{'Ideographic'}][$lb_enums{'Inseparable'}]
-                                                = $lb_actions{'LB_NOBREAK'};
-    $lb_table[$lb_enums{'E_Base'}][$lb_enums{'Inseparable'}]
-                                                = $lb_actions{'LB_NOBREAK'};
-    $lb_table[$lb_enums{'E_Modifier'}][$lb_enums{'Inseparable'}]
-                                                = $lb_actions{'LB_NOBREAK'};
-
-    # IN × IN
-    $lb_table[$lb_enums{'Inseparable'}][$lb_enums{'Inseparable'}]
-                                                = $lb_actions{'LB_NOBREAK'};
-
-    # NU × IN
-    $lb_table[$lb_enums{'Numeric'}][$lb_enums{'Inseparable'}]
-                                                = $lb_actions{'LB_NOBREAK'};
+    # LB22 Do not break before ellipses
+    for my $i (0 .. @lb_table - 1) {
+        $lb_table[$i][$lb_enums{'Inseparable'}] = $lb_actions{'LB_NOBREAK'};
+    }
 
     # LB21b Don’t break between Solidus and Hebrew letters.
     # SY × HL
@@ -1776,17 +1854,23 @@ sub output_LB_table() {
                             = $lb_actions{'LB_NOBREAK_EVEN_WITH_SP_BETWEEN'};
     $lb_table[$lb_enums{'Close_Parenthesis'}][$lb_enums{'Nonstarter'}]
                             = $lb_actions{'LB_NOBREAK_EVEN_WITH_SP_BETWEEN'};
+    $lb_table[$lb_enums{'East_Asian_CP'}][$lb_enums{'Nonstarter'}]
+                            = $lb_actions{'LB_NOBREAK_EVEN_WITH_SP_BETWEEN'};
 
 
     # LB15 Do not break within ‘”[’, even with intervening spaces.
     # QU SP* × OP
     $lb_table[$lb_enums{'Quotation'}][$lb_enums{'Open_Punctuation'}]
                             = $lb_actions{'LB_NOBREAK_EVEN_WITH_SP_BETWEEN'};
+    $lb_table[$lb_enums{'Quotation'}][$lb_enums{'East_Asian_OP'}]
+                            = $lb_actions{'LB_NOBREAK_EVEN_WITH_SP_BETWEEN'};
 
     # LB14 Do not break after ‘[’, even after spaces.
     # OP SP* ×
     for my $i (0 .. @lb_table - 1) {
         $lb_table[$lb_enums{'Open_Punctuation'}][$i]
+                            = $lb_actions{'LB_NOBREAK_EVEN_WITH_SP_BETWEEN'};
+        $lb_table[$lb_enums{'East_Asian_OP'}][$i]
                             = $lb_actions{'LB_NOBREAK_EVEN_WITH_SP_BETWEEN'};
     }
 
@@ -1806,6 +1890,8 @@ sub output_LB_table() {
         $lb_table[$i][$lb_enums{'Close_Punctuation'}]
                             = $lb_actions{'LB_NOBREAK_EVEN_WITH_SP_BETWEEN'};
         $lb_table[$i][$lb_enums{'Close_Parenthesis'}]
+                            = $lb_actions{'LB_NOBREAK_EVEN_WITH_SP_BETWEEN'};
+        $lb_table[$i][$lb_enums{'East_Asian_CP'}]
                             = $lb_actions{'LB_NOBREAK_EVEN_WITH_SP_BETWEEN'};
         $lb_table[$i][$lb_enums{'Infix_Numeric'}]
                             = $lb_actions{'LB_NOBREAK_EVEN_WITH_SP_BETWEEN'};
@@ -2059,7 +2145,7 @@ sub output_WB_table() {
     # WB13b  ExtendNumLet  ×  (ALetter | Hebrew_Letter | Numeric | Katakana)
     $wb_table[$wb_enums{'ExtendNumLet'}][$wb_enums{'ALetter'}]
                                                 = $wb_actions{'WB_NOBREAK'};
-    $wb_table[$wb_enums{'ExtendNumLet'}][$wb_enums{'XPG_LE'}]
+    $wb_table[$wb_enums{'ExtendNumLet'}][$wb_enums{'ExtPict_LE'}]
                                                 = $wb_actions{'WB_NOBREAK'};
     $wb_table[$wb_enums{'ExtendNumLet'}][$wb_enums{'Hebrew_Letter'}]
                                                 = $wb_actions{'WB_NOBREAK'};
@@ -2072,7 +2158,7 @@ sub output_WB_table() {
     #        × ExtendNumLet
     $wb_table[$wb_enums{'ALetter'}][$wb_enums{'ExtendNumLet'}]
                                                 = $wb_actions{'WB_NOBREAK'};
-    $wb_table[$wb_enums{'XPG_LE'}][$wb_enums{'ExtendNumLet'}]
+    $wb_table[$wb_enums{'ExtPict_LE'}][$wb_enums{'ExtendNumLet'}]
                                                 = $wb_actions{'WB_NOBREAK'};
     $wb_table[$wb_enums{'Hebrew_Letter'}][$wb_enums{'ExtendNumLet'}]
                                                 = $wb_actions{'WB_NOBREAK'};
@@ -2110,7 +2196,7 @@ sub output_WB_table() {
     # WB10  Numeric  ×  (ALetter | Hebrew_Letter)
     $wb_table[$wb_enums{'Numeric'}][$wb_enums{'ALetter'}]
                                                 = $wb_actions{'WB_NOBREAK'};
-    $wb_table[$wb_enums{'Numeric'}][$wb_enums{'XPG_LE'}]
+    $wb_table[$wb_enums{'Numeric'}][$wb_enums{'ExtPict_LE'}]
                                                 = $wb_actions{'WB_NOBREAK'};
     $wb_table[$wb_enums{'Numeric'}][$wb_enums{'Hebrew_Letter'}]
                                                 = $wb_actions{'WB_NOBREAK'};
@@ -2118,7 +2204,7 @@ sub output_WB_table() {
     # WB9  (ALetter | Hebrew_Letter)  ×  Numeric
     $wb_table[$wb_enums{'ALetter'}][$wb_enums{'Numeric'}]
                                                 = $wb_actions{'WB_NOBREAK'};
-    $wb_table[$wb_enums{'XPG_LE'}][$wb_enums{'Numeric'}]
+    $wb_table[$wb_enums{'ExtPict_LE'}][$wb_enums{'Numeric'}]
                                                 = $wb_actions{'WB_NOBREAK'};
     $wb_table[$wb_enums{'Hebrew_Letter'}][$wb_enums{'Numeric'}]
                                                 = $wb_actions{'WB_NOBREAK'};
@@ -2144,19 +2230,19 @@ sub output_WB_table() {
     #       × (ALetter | Hebrew_Letter)
     $wb_table[$wb_enums{'MidNumLet'}][$wb_enums{'ALetter'}]
                             += $wb_actions{'WB_MB_or_ML_or_SQ_then_LE_or_HL'};
-    $wb_table[$wb_enums{'MidNumLet'}][$wb_enums{'XPG_LE'}]
+    $wb_table[$wb_enums{'MidNumLet'}][$wb_enums{'ExtPict_LE'}]
                             += $wb_actions{'WB_MB_or_ML_or_SQ_then_LE_or_HL'};
     $wb_table[$wb_enums{'MidNumLet'}][$wb_enums{'Hebrew_Letter'}]
                             += $wb_actions{'WB_MB_or_ML_or_SQ_then_LE_or_HL'};
     $wb_table[$wb_enums{'MidLetter'}][$wb_enums{'ALetter'}]
                             += $wb_actions{'WB_MB_or_ML_or_SQ_then_LE_or_HL'};
-    $wb_table[$wb_enums{'MidLetter'}][$wb_enums{'XPG_LE'}]
+    $wb_table[$wb_enums{'MidLetter'}][$wb_enums{'ExtPict_LE'}]
                             += $wb_actions{'WB_MB_or_ML_or_SQ_then_LE_or_HL'};
     $wb_table[$wb_enums{'MidLetter'}][$wb_enums{'Hebrew_Letter'}]
                             += $wb_actions{'WB_MB_or_ML_or_SQ_then_LE_or_HL'};
     $wb_table[$wb_enums{'Single_Quote'}][$wb_enums{'ALetter'}]
                             += $wb_actions{'WB_MB_or_ML_or_SQ_then_LE_or_HL'};
-    $wb_table[$wb_enums{'Single_Quote'}][$wb_enums{'XPG_LE'}]
+    $wb_table[$wb_enums{'Single_Quote'}][$wb_enums{'ExtPict_LE'}]
                             += $wb_actions{'WB_MB_or_ML_or_SQ_then_LE_or_HL'};
     $wb_table[$wb_enums{'Single_Quote'}][$wb_enums{'Hebrew_Letter'}]
                             += $wb_actions{'WB_MB_or_ML_or_SQ_then_LE_or_HL'};
@@ -2165,19 +2251,19 @@ sub output_WB_table() {
     #       | Single_Quote) (ALetter | Hebrew_Letter)
     $wb_table[$wb_enums{'ALetter'}][$wb_enums{'MidNumLet'}]
                             += $wb_actions{'WB_LE_or_HL_then_MB_or_ML_or_SQ'};
-    $wb_table[$wb_enums{'XPG_LE'}][$wb_enums{'MidNumLet'}]
+    $wb_table[$wb_enums{'ExtPict_LE'}][$wb_enums{'MidNumLet'}]
                             += $wb_actions{'WB_LE_or_HL_then_MB_or_ML_or_SQ'};
     $wb_table[$wb_enums{'Hebrew_Letter'}][$wb_enums{'MidNumLet'}]
                             += $wb_actions{'WB_LE_or_HL_then_MB_or_ML_or_SQ'};
     $wb_table[$wb_enums{'ALetter'}][$wb_enums{'MidLetter'}]
                             += $wb_actions{'WB_LE_or_HL_then_MB_or_ML_or_SQ'};
-    $wb_table[$wb_enums{'XPG_LE'}][$wb_enums{'MidLetter'}]
+    $wb_table[$wb_enums{'ExtPict_LE'}][$wb_enums{'MidLetter'}]
                             += $wb_actions{'WB_LE_or_HL_then_MB_or_ML_or_SQ'};
     $wb_table[$wb_enums{'Hebrew_Letter'}][$wb_enums{'MidLetter'}]
                             += $wb_actions{'WB_LE_or_HL_then_MB_or_ML_or_SQ'};
     $wb_table[$wb_enums{'ALetter'}][$wb_enums{'Single_Quote'}]
                             += $wb_actions{'WB_LE_or_HL_then_MB_or_ML_or_SQ'};
-    $wb_table[$wb_enums{'XPG_LE'}][$wb_enums{'Single_Quote'}]
+    $wb_table[$wb_enums{'ExtPict_LE'}][$wb_enums{'Single_Quote'}]
                             += $wb_actions{'WB_LE_or_HL_then_MB_or_ML_or_SQ'};
     $wb_table[$wb_enums{'Hebrew_Letter'}][$wb_enums{'Single_Quote'}]
                             += $wb_actions{'WB_LE_or_HL_then_MB_or_ML_or_SQ'};
@@ -2186,19 +2272,19 @@ sub output_WB_table() {
     # WB5  (ALetter | Hebrew_Letter)  ×  (ALetter | Hebrew_Letter)
     $wb_table[$wb_enums{'ALetter'}][$wb_enums{'ALetter'}]
                                                     = $wb_actions{'WB_NOBREAK'};
-    $wb_table[$wb_enums{'XPG_LE'}][$wb_enums{'ALetter'}]
+    $wb_table[$wb_enums{'ExtPict_LE'}][$wb_enums{'ALetter'}]
                                                     = $wb_actions{'WB_NOBREAK'};
     $wb_table[$wb_enums{'ALetter'}][$wb_enums{'Hebrew_Letter'}]
                                                     = $wb_actions{'WB_NOBREAK'};
-    $wb_table[$wb_enums{'XPG_LE'}][$wb_enums{'Hebrew_Letter'}]
+    $wb_table[$wb_enums{'ExtPict_LE'}][$wb_enums{'Hebrew_Letter'}]
                                                     = $wb_actions{'WB_NOBREAK'};
     $wb_table[$wb_enums{'Hebrew_Letter'}][$wb_enums{'ALetter'}]
                                                     = $wb_actions{'WB_NOBREAK'};
-    $wb_table[$wb_enums{'Hebrew_Letter'}][$wb_enums{'XPG_LE'}]
+    $wb_table[$wb_enums{'Hebrew_Letter'}][$wb_enums{'ExtPict_LE'}]
                                                     = $wb_actions{'WB_NOBREAK'};
     $wb_table[$wb_enums{'Hebrew_Letter'}][$wb_enums{'Hebrew_Letter'}]
                                                     = $wb_actions{'WB_NOBREAK'};
-    $wb_table[$wb_enums{'XPG_LE'}][$wb_enums{'XPG_LE'}]
+    $wb_table[$wb_enums{'ExtPict_LE'}][$wb_enums{'ExtPict_LE'}]
                                                     = $wb_actions{'WB_NOBREAK'};
 
     # Ignore Format and Extend characters, except after sot, CR, LF, and
@@ -2239,9 +2325,9 @@ sub output_WB_table() {
                                                 = $wb_actions{'WB_NOBREAK'};
     $wb_table[$wb_enums{'ZWJ'}][$wb_enums{'E_Base_GAZ'}]
                                                 = $wb_actions{'WB_NOBREAK'};
-    $wb_table[$wb_enums{'ZWJ'}][$wb_enums{'XPG_XX'}]
+    $wb_table[$wb_enums{'ZWJ'}][$wb_enums{'ExtPict_XX'}]
                                                 = $wb_actions{'WB_NOBREAK'};
-    $wb_table[$wb_enums{'ZWJ'}][$wb_enums{'XPG_LE'}]
+    $wb_table[$wb_enums{'ZWJ'}][$wb_enums{'ExtPict_LE'}]
                                                 = $wb_actions{'WB_NOBREAK'};
 
     # Break before and after newlines
@@ -2307,6 +2393,14 @@ switch_pound_if ('ALL', 'PERL_IN_REGCOMP_C');
 output_invlist("Latin1", [ 0, 256 ]);
 output_invlist("AboveLatin1", [ 256 ]);
 
+if ($num_anyof_code_points == 256) {    # Same as Latin1
+    print $out_fh
+            "\nstatic const UV * const InBitmap_invlist = Latin1_invlist;\n";
+}
+else {
+    output_invlist("InBitmap", [ 0, $num_anyof_code_points ]);
+}
+
 end_file_pound_if;
 
 # We construct lists for all the POSIX and backslash sequence character
@@ -2341,10 +2435,10 @@ no warnings 'qw';
 my @props;
 push @props, sort { prop_name_for_cmp($a) cmp prop_name_for_cmp($b) } qw(
                     &UpperLatin1
-                    _Perl_GCB,EDGE,E_Base,E_Base_GAZ,E_Modifier,Glue_After_Zwj,LV,Prepend,Regional_Indicator,SpacingMark,ZWJ,XPG_XX
-                    _Perl_LB,EDGE,Close_Parenthesis,Hebrew_Letter,Next_Line,Regional_Indicator,ZWJ,Contingent_Break,E_Base,E_Modifier,H2,H3,JL,JT,JV,Word_Joiner
+                    _Perl_GCB,EDGE,E_Base,E_Base_GAZ,E_Modifier,Glue_After_Zwj,LV,Prepend,Regional_Indicator,SpacingMark,ZWJ,ExtPict_XX
+                    _Perl_LB,EDGE,Close_Parenthesis,Hebrew_Letter,Next_Line,Regional_Indicator,ZWJ,Contingent_Break,E_Base,E_Modifier,H2,H3,JL,JT,JV,Word_Joiner,East_Asian_CP,East_Asian_OP
                     _Perl_SB,EDGE,SContinue,CR,Extend,LF
-                    _Perl_WB,Perl_Tailored_HSpace,EDGE,UNKNOWN,CR,Double_Quote,E_Base,E_Base_GAZ,E_Modifier,Extend,Glue_After_Zwj,Hebrew_Letter,LF,MidNumLet,Newline,Regional_Indicator,Single_Quote,ZWJ,XPG_XX,XPG_LE
+                    _Perl_WB,Perl_Tailored_HSpace,EDGE,UNKNOWN,CR,Double_Quote,E_Base,E_Base_GAZ,E_Modifier,Extend,Glue_After_Zwj,Hebrew_Letter,LF,MidNumLet,Newline,Regional_Indicator,Single_Quote,ZWJ,ExtPict_XX,ExtPict_LE
                     _Perl_SCX,Latin,Inherited,Unknown,Kore,Jpan,Hanb,INVALID
                     Lowercase_Mapping
                     Titlecase_Mapping
@@ -2356,9 +2450,29 @@ push @props, sort { prop_name_for_cmp($a) cmp prop_name_for_cmp($b) } qw(
                 );
                 # NOTE that the convention is that extra enum values come
                 # after the property name, separated by commas, with the enums
-                # that aren't ever defined by Unicode coming last, at least 4
-                # all-uppercase characters.  The others are enum names that
-                # are needed by perl, but aren't in all Unicode releases.
+                # that aren't ever defined by Unicode (with some exceptions)
+                # containing at least 4 all-uppercase characters.
+                
+                # Some of the enums are current official property values that
+                # are needed for the rules in constructing certain tables in
+                # this file, and perhaps in regexec.c as well.  They are here
+                # so that things don't crash when compiled on earlier Unicode
+                # releases where they don't exist.  Thus the rules that use
+                # them still get compiled, but no code point actually uses
+                # them, hence they won't get exercized on such Unicode
+                # versions, but the code will still compile and run, though
+                # may not give the precise results that those versions would
+                # expect, but reasonable results nonetheless.
+                #
+                # Other enums are due to the fact that Unicode has in more
+                # recent versions added criteria to the rules in these extra
+                # tables that are based on factors outside the property
+                # values.  And those have to be accounted for, essentially by
+                # here splitting certain enum equivalence classes based on
+                # those extra rules.
+                #
+                # EDGE is supposed to be a boundary between some types of
+                # enums, but khw thinks that isn't valid any more.
 
 my @bin_props;
 my @perl_prop_synonyms;
@@ -2379,12 +2493,12 @@ my $float_e_format = qr/ ^ -? \d \. \d+ e [-+] \d+ $ /x;
 #    'nv=5.00e-01' => 'Nv/1_2',
 #
 # %stricter_to_file_of contains far more than just the rationals.  Instead we
-# use %utf8::nv_floating_to_rational which should have an entry for each
+# use %Unicode::UCD::nv_floating_to_rational which should have an entry for each
 # nv in the former hash.
 my %floating_to_file_of;
-foreach my $key (keys %utf8::nv_floating_to_rational) {
-    my $value = $utf8::nv_floating_to_rational{$key};
-    $floating_to_file_of{$key} = $utf8::stricter_to_file_of{"nv=$value"};
+foreach my $key (keys %Unicode::UCD::nv_floating_to_rational) {
+    my $value = $Unicode::UCD::nv_floating_to_rational{$key};
+    $floating_to_file_of{$key} = $Unicode::UCD::stricter_to_file_of{"nv=$value"};
 }
 
 # Properties that are specified with a prop=value syntax
@@ -2403,16 +2517,16 @@ foreach my $property (sort
          or $a =~ /!/ <=> $b =~ /!/
          or length $a <=> length $b
          or $a cmp $b
-        }   keys %utf8::loose_to_file_of,
-            keys %utf8::stricter_to_file_of,
+        }   keys %Unicode::UCD::loose_to_file_of,
+            keys %Unicode::UCD::stricter_to_file_of,
             keys %floating_to_file_of
 ) {
 
     # These two hashes map properties to values that can be considered to
     # be checksums.  If two properties have the same checksum, they have
     # identical entries.  Otherwise they differ in some way.
-    my $tag = $utf8::loose_to_file_of{$property};
-    $tag = $utf8::stricter_to_file_of{$property} unless defined $tag;
+    my $tag = $Unicode::UCD::loose_to_file_of{$property};
+    $tag = $Unicode::UCD::stricter_to_file_of{$property} unless defined $tag;
     $tag = $floating_to_file_of{$property} unless defined $tag;
 
     # The tag may contain an '!' meaning it is identical to the one formed
@@ -2449,7 +2563,7 @@ foreach my $property (sort
             # stand-alone properties.
             no warnings 'once';
             next if $rhs eq "" &&  grep { $alias eq $_ }
-                                    keys %utf8::loose_property_to_file_of;
+                                    keys %Unicode::UCD::loose_property_to_file_of;
 
             my $new_entry = $alias . $rhs;
             push @this_entries, $new_entry;
@@ -2481,9 +2595,9 @@ foreach my $property (sort
 
         # Some properties are deprecated.  This hash tells us so, and the
         # warning message to raise if they are used.
-        if (exists $utf8::why_deprecated{$tag}) {
+        if (exists $Unicode::UCD::why_deprecated{$tag}) {
             $deprecated_tags{$enums{$tag}} = scalar @deprecated_messages;
-            push @deprecated_messages, $utf8::why_deprecated{$tag};
+            push @deprecated_messages, $Unicode::UCD::why_deprecated{$tag};
         }
 
         # Our sort above should have made sure that we see the
@@ -2515,7 +2629,7 @@ foreach my $property (sort
     }
 }
 
-@bin_props = sort {  exists $keep_together{lc $b} <=> exists $keep_together{lc $a}
+@bin_props = sort { exists $keep_together{lc $b} <=> exists $keep_together{lc $a}
                    or $a cmp $b
                   } @bin_props;
 @perl_prop_synonyms = sort(uniques(@perl_prop_synonyms));
@@ -2542,7 +2656,8 @@ foreach my $prop (@props) {
     $extra_enums = $1 if $prop_name =~ s/, ( .* ) //x;
     my $lookup_prop = $prop_name;
     $prop_name = sanitize_name($prop_name);
-    $prop_name = $table_name_prefix . $prop_name if grep { lc $lookup_prop eq lc $_ } @bin_props;
+    $prop_name = $table_name_prefix . $prop_name
+                                if grep { lc $lookup_prop eq lc $_ } @bin_props;
     my $l1_only = ($lookup_prop =~ s/^L1Posix/XPosix/
                     or $lookup_prop =~ s/^L1//);
     my $nonl1_only = 0;
@@ -2554,10 +2669,10 @@ foreach my $prop (@props) {
 
         my @invlist;
         my @invmap;
-        my $map_format;
+        my $map_format = 0;;
         my $map_default;
-        my $maps_to_code_point;
-        my $to_adjust;
+        my $maps_to_code_point = 0;
+        my $to_adjust = 0;
         my $same_in_all_code_pages;
         if ($is_local_sub) {
             my @return = eval $lookup_prop;
@@ -2598,10 +2713,13 @@ foreach my $prop (@props) {
                     @invmap = @$map_ref;
                     $map_format = $format;
                     $map_default = $default;
-                    $maps_to_code_point = $map_format =~ / a ($ | [^r] ) /x;
-                    $to_adjust = $map_format =~ /a/;
                 }
             }
+        }
+
+        if ($map_format) {
+            $maps_to_code_point = $map_format =~ / a ($ | [^r] ) /x;
+            $to_adjust = $map_format =~ /a/;
         }
 
         # Re-order the Unicode code points to native ones for this platform.
@@ -2694,7 +2812,8 @@ foreach my $prop (@props) {
 
                     # This shouldn't actually happen, as prop_invmap() returns
                     # an extra element at the end that is beyond $upper_limit
-                    die "inversion map (for $prop_name) that extends to infinity is unimplemented" unless @invlist > 1;
+                    die "inversion map (for $prop_name) that extends to"
+                      . " infinity is unimplemented" unless @invlist > 1;
 
                     my $bucket;
 
@@ -2712,8 +2831,8 @@ foreach my $prop (@props) {
                         # Do convert to native for maps to single code points.
                         # There are some properties that have a few outlier
                         # maps that aren't code points, so the above test
-                        # skips those.
-                        $bucket = a2n($invmap[0]);
+                        # skips those.  0 is never remapped.
+                        $bucket = $invmap[0] == 0 ? 0 : a2n($invmap[0]);
                     } else {
                         $bucket = $invmap[0];
                     }
@@ -2775,7 +2894,8 @@ foreach my $prop (@props) {
                     @{$mapped_lists{$bucket}}
                                     = sort{ $a <=> $b} @{$mapped_lists{$bucket}};
                     @{$mapped_lists{$bucket}}
-                     = mk_invlist_from_sorted_cp_list(\@{$mapped_lists{$bucket}});
+                     = mk_invlist_from_sorted_cp_list(
+                                                    \@{$mapped_lists{$bucket}});
 
                     # Add each even-numbered range in the bucket to %xlated;
                     # so that the keys of %xlated become the range start code
@@ -2791,9 +2911,10 @@ foreach my $prop (@props) {
                             # so that later the adjusting doesn't think the
                             # subsequent items can go away because of the
                             # adjusting.
-                            my $range_end = ($to_adjust && $bucket != $map_default)
-                                             ? $mapped_lists{$bucket}->[1] - 1
-                                             : $range_start;
+                            my $range_end = (     $to_adjust
+                                               && $bucket != $map_default)
+                                            ? $mapped_lists{$bucket}->[1] - 1
+                                            : $range_start;
                             for my $i ($range_start .. $range_end) {
                                 $xlated{$i} = $bucket;
                             }
@@ -2836,8 +2957,8 @@ foreach my $prop (@props) {
                     unshift @invmap, $xlated{$start};
                 }
 
-                # Finally prepend the inversion list we have just constructed to the
-                # one that contains anything we didn't process.
+                # Finally prepend the inversion list we have just constructed
+                # to the one that contains anything we didn't process.
                 unshift @invlist, @new_invlist;
             }
         }
@@ -2866,12 +2987,13 @@ foreach my $prop (@props) {
                     # odd-numbered give ones that begin ranges that don't match.
                     # If $i is odd, we are at the first code point above 255 that
                     # doesn't match, which means the range it is ending does
-                    # match, and crosses the 255/256 boundary.  We want to include
-                    # this ending point, so increment $i, so the splice below
-                    # includes it.  Conversely, if $i is even, it is the first
-                    # code point above 255 that matches, which means there was no
-                    # matching range that crossed the boundary, and we don't want
-                    # to include this code point, so splice before it.
+                    # match, and crosses the 255/256 boundary.  We want to
+                    # include this ending point, so increment $i, so the
+                    # splice below includes it.  Conversely, if $i is even, it
+                    # is the first code point above 255 that matches, which
+                    # means there was no matching range that crossed the
+                    # boundary, and we don't want to include this code point,
+                    # so splice before it.
                     $i++ if $i % 2 != 0;
 
                     # Remove everything past this.
@@ -2926,11 +3048,11 @@ foreach my $prop (@props) {
     }
 }
 
-switch_pound_if ('binary_property_tables', 'PERL_IN_REGCOMP_C');
-
 print $out_fh "\nconst char * const deprecated_property_msgs[] = {\n\t";
 print $out_fh join ",\n\t", map { "\"$_\"" } @deprecated_messages;
 print $out_fh "\n};\n";
+
+switch_pound_if ('binary_invlist_enum', 'PERL_IN_REGCOMP_C');
 
 my @enums = sort values %enums;
 
@@ -2962,11 +3084,14 @@ if (scalar keys %deprecated_tags) {
     }
 }
 
-print $out_fh "\ntypedef enum {\n\tPERL_BIN_PLACEHOLDER = 0,  /* So no real value is zero */\n\t";
+print $out_fh "\ntypedef enum {\n\tPERL_BIN_PLACEHOLDER = 0,",
+              " /* So no real value is zero */\n\t";
 print $out_fh join ",\n\t", @enums;
 print $out_fh "\n";
 print $out_fh "} binary_invlist_enum;\n";
 print $out_fh "\n#define MAX_UNI_KEYWORD_INDEX $enums[-1]\n";
+
+switch_pound_if ('binary_property_tables', 'PERL_IN_REGCOMP_C');
 
 output_table_header($out_fh, "UV *", "uni_prop_ptrs");
 print $out_fh "\tNULL,\t/* Placeholder */\n";
@@ -2975,6 +3100,8 @@ print $out_fh join ",\n\t", @invlist_names;
 print $out_fh "\n";
 
 output_table_trailer();
+
+switch_pound_if ('synonym defines', 'PERL_IN_REGCOMP_C');
 
 print $out_fh join "\n", "\n",
                          #'#    ifdef DOINIT',
@@ -3179,7 +3306,7 @@ my $uni_pl = open_new('lib/unicore/uni_keywords.pl', '>',
 		      {style => '*', by => 'regen/mk_invlists.pl',
                       from => "Unicode::UCD"});
 {
-    print $uni_pl "\%utf8::uni_prop_ptrs_indices = (\n";
+    print $uni_pl "\%Unicode::UCD::uni_prop_ptrs_indices = (\n";
     for my $name (sort keys %name_to_index) {
         print $uni_pl "    '$name' => $name_to_index{$name},\n";
     }
@@ -3202,15 +3329,12 @@ my $keywords_fh = open_new('uni_keywords.h', '>',
 		  {style => '*', by => 'regen/mk_invlists.pl',
                   from => "mph.pl"});
 
-no warnings 'once';
-print $keywords_fh <<"EOF";
-/* The precision to use in "%.*e" formats */
-#define PL_E_FORMAT_PRECISION $utf8::e_precision
-
-EOF
-
-my ($second_level, $seed1, $length_all_keys, $smart_blob, $rows) = MinimalPerfectHash::make_mph_from_hash(\%keywords);
-print $keywords_fh MinimalPerfectHash::make_algo($second_level, $seed1, $length_all_keys, $smart_blob, $rows, undef, undef, undef, 'match_uniprop' );
+my ($second_level, $seed1, $length_all_keys, $smart_blob, $rows)
+                        = MinimalPerfectHash::make_mph_from_hash(\%keywords);
+print $keywords_fh MinimalPerfectHash::make_algo($second_level, $seed1,
+                                                 $length_all_keys, $smart_blob,
+                                                 $rows, undef, undef, undef,
+                                                 'match_uniprop' );
 
 push @sources, 'regen/mph.pl';
 read_only_bottom_close_and_rename($keywords_fh, \@sources);

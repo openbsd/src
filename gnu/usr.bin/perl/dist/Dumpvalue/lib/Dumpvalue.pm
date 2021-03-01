@@ -1,7 +1,8 @@
 use 5.006_001;			# for (defined ref) and $#$v and our
 package Dumpvalue;
 use strict;
-our $VERSION = '1.18';
+use warnings;
+our $VERSION = '1.21';
 our(%address, $stab, @stab, %stab, %subs);
 
 sub ASCII { return ord('A') == 65; }
@@ -79,7 +80,7 @@ sub dumpValues {
   my $self = shift;
   local %address;
   local $^W=0;
-  (print "undef\n"), return unless defined $_[0];
+  (print "undef\n"), return if (@_ == 1 and not defined $_[0]);
   $self->unwrap(\@_,0);
 }
 
@@ -101,6 +102,7 @@ sub stringify {
   my $tick = $self->{tick};
 
   return 'undef' unless defined $_ or not $self->{printUndef};
+  $_ = '' if not defined $_;
   return $_ . "" if ref \$_ eq 'GLOB';
   { no strict 'refs';
     $_ = &{'overload::StrVal'}($_)
@@ -176,7 +178,7 @@ sub unwrap {
   my $self = shift;
   return if $DB::signal and $self->{stopDbSignal};
   my ($v) = shift ;
-  my ($s) = shift ;		# extra no of spaces
+  my ($s) = shift || 0;		# extra no of spaces
   my $sp;
   my (%v,@v,$address,$short,$fileno);
 
@@ -254,7 +256,7 @@ sub unwrap {
       if ($#$v >= 0) {
 	$short = $sp . "0..$#{$v}  " .
 	  join(" ", 
-	       map {exists $v->[$_] ? $self->stringify($v->[$_]) : "empty"} (0..$tArrayDepth)
+	       map {defined $v->[$_] ? $self->stringify($v->[$_]) : "empty"} (0..$tArrayDepth)
 	      ) . "$shortmore";
       } else {
 	$short = $sp . "empty array";
@@ -264,7 +266,7 @@ sub unwrap {
     for my $num (0 .. $tArrayDepth) {
       return if $DB::signal and $self->{stopDbSignal};
       print "$sp$num  ";
-      if (exists $v->[$num]) {
+      if (defined $v->[$num]) {
         $self->DumpElem($v->[$num], $s);
       } else {
 	print "empty slot\n";
@@ -390,6 +392,7 @@ sub CvGV_name {
 sub dumpsub {
   my $self = shift;
   my ($off,$sub) = @_;
+  $off ||= 0;
   my $ini = $sub;
   my $s;
   $sub = $1 if $sub =~ /^\{\*(.*)\}$/;
@@ -419,17 +422,17 @@ sub dumpvars {
   my $self = shift;
   my ($package,@vars) = @_;
   local(%address,$^W);
-  my ($key,$val);
   $package .= "::" unless $package =~ /::$/;
   *stab = *main::;
 
   while ($package =~ /(\w+?::)/g) {
-    *stab = $ {stab}{$1};
+    *stab = defined ${stab}{$1} ? ${stab}{$1} : '';
   }
   $self->{TotalStrings} = 0;
   $self->{Strings} = 0;
   $self->{CompleteTotal} = 0;
-  while (($key,$val) = each(%stab)) {
+  for my $k (keys %stab) {
+    my ($key,$val) = ($k, $stab{$k});
     return if $DB::signal and $self->{stopDbSignal};
     next if @vars && !grep( matchvar($key, $_), @vars );
     if ($self->{usageOnly}) {

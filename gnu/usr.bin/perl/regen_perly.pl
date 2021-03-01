@@ -76,10 +76,10 @@ EOF
 
 # Don't change this to add new bison versions without testing that the generated
 # files actually work :-) Win32 in particular may not like them. :-(
-unless ($version =~ /\b(1\.875[a-z]?|2\.[0134567]|3\.[0])\b/) { die <<EOF; }
+unless ($version =~ /\b(1\.875[a-z]?|2\.[0134567]|3\.[0-4])\b/) { die <<EOF; }
 
 You have the wrong version of bison in your path; currently versions
-1.875, 2.0-2.7 or 3.0 are known to work.  Try installing
+1.875, 2.0-2.7 or 3.0-3.4 are known to work.  Try installing
     http://ftp.gnu.org/gnu/bison/bison-2.5.1.tar.gz
 or similar.  Your bison identifies itself as:
 

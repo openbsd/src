@@ -603,6 +603,7 @@ bom	FEFF
 BOMB	1F4A3
 BOOK	1F56E
 Books	1F4D5
+BOOMERANG	1FA83
 Bopomofo Extensions, Chinese	31A0
 Bopomofo, Chinese	3100
 bottom	22A5
@@ -871,6 +872,7 @@ Chinese, Corner Tone Marks for	A700
 CHIPMUNK	1F43F
 choice, dijkstra	2AFE
 choice, n-ary dijkstra	2AFF
+Chorasmian	10FB0
 CHRISTMAS TREE	1F384
 CHRISTMAS, FATHER	1F385
 christogram	2627
@@ -950,6 +952,7 @@ CJK Unified Ideographs Extension C	2A700
 CJK Unified Ideographs Extension D	2B740
 CJK Unified Ideographs Extension E	2B820
 CJK Unified Ideographs Extension F	2CEB0
+CJK Unified Ideographs Extension G	30000
 CLAPPING HANDS SIGN	1F44F
 claudian antisigma	2183
 claudian digamma inversum	2132
@@ -1267,6 +1270,7 @@ COW	1F404
 COW FACE	1F42E
 cr	000D
 CRAB	1F980
+Creative Commons Symbols	1F16D
 CREDIT SIGN, TAMIL	0BF7
 cremated symbol	26B1
 CRESCENT MOON	1F319
@@ -1594,6 +1598,7 @@ DISCONTINUOUS UNDERLINE SYMBOL	2382
 discretionary hyphen	00AD
 disjunction	2228
 DITTO MARK	3003
+Dives Akuru	11900
 DIVIDES	2223
 Divination, Khmer Numeric Symbols for	17F0
 DIVISION SIGN	00F7
@@ -2341,6 +2346,7 @@ GREEK YPOGEGRAMMENI, COMBINING	0345
 Greek, Diacritics for	0342
 Greek, Precomposed Polytonic	1F00
 Gregorian Musical Symbols	1D1D0
+groucho glasses, face with	1F978
 GROUND, EARTH	23DA
 group lock	21F0
 group select (ISO 9995-7)	21E8
@@ -2488,6 +2494,7 @@ Hebrew Letterlike Mathematical Symbols	2135
 Hebrew Points and Punctuation	05B0
 Hebrew Presentation Forms	FB1D
 hedera	2767
+HEDGEHOG	1F994
 HEH WITH YEH ABOVE, ARABIC LETTER	06C0
 HELM SYMBOL	2388
 HELMET WITH WHITE CROSS	26D1
@@ -2631,6 +2638,9 @@ Ideographs Extension A, CJK Unified	3400
 Ideographs Extension B, CJK Unified	20000
 Ideographs Extension C, CJK Unified	2A700
 Ideographs Extension D, CJK Unified	2B740
+Ideographs Extension E, CJK Unified	2B820
+Ideographs Extension F, CJK Unified	2CEB0
+Ideographs Extension G, CJK Unified	30000
 Ideographs Supplement, CJK Compatibility	2F800
 Ideographs, Circled	3280
 Ideographs, CJK Compatibility	F900
@@ -2881,6 +2891,7 @@ KEYCAP, COMBINING ENCLOSING	20E3
 khanda, gurmukhi	262C
 Kharoshthi	10A00
 Kharoshthi Digits	10A40
+Khitan Small Script	18B00
 Khmer	1780
 khmer anusvara	17C6
 Khmer Consonants	1780
@@ -3127,6 +3138,7 @@ LEFTWARDS ARROW	2190
 LEFTWARDS ARROW OVERLAY, COMBINING	20EA
 LEFTWARDS BULLET, BLACK	204C
 LEFTWARDS HARPOON WITH BARB DOWNWARDS, COMBINING	20ED
+Legacy Computing, Symbols for	1FB00
 LENTICULAR BRACKET, LEFT BLACK	3010
 LENTICULAR BRACKET, LEFT WHITE	3016
 LENTICULAR BRACKET, RIGHT BLACK	3011
@@ -3217,6 +3229,7 @@ LIRA SIGN	20A4
 LIRA SIGN, TURKISH	20BA
 lira, italian	00A3
 Lisu	A4D0
+Lisu Supplement	11FB0
 liter	2113
 LIVRE TOURNOIS SIGN	20B6
 LOBSTER	1F99E
@@ -4564,8 +4577,8 @@ rlo	202E
 RNAM BCAD, TIBETAN SIGN	0F7F
 road closed	26D2
 rock in rock, paper, scissors game	270A
-Rohingya, Hanifi	10D00
 rofl	1F923
+Rohingya, Hanifi	10D00
 Role Symbols	1F481
 Role Symbols, Portrait and	1F464
 Role Symbols, Portrait and	1F930
@@ -5399,6 +5412,7 @@ tamil varudam	0BF5
 TAMIL YEAR SIGN	0BF5
 Tangut	17000
 Tangut Components	18800
+Tangut Supplement	18D00
 TAPE DRIVE	2707
 TAPER, CONICAL	2332
 TARGET, ROUND	1F78B
@@ -5540,6 +5554,7 @@ TIMES, SQUARED	22A0
 TINY	29FE
 TIPPI, GURMUKHI	0A70
 Tirhuta	11480
+TIRONIAN SIGN CAPITAL ET	2E52
 TIRONIAN SIGN ET	204A
 TITLO LEFT HALF, COMBINING CYRILLIC	FE2E
 TODO SOFT HYPHEN, MONGOLIAN	1806
@@ -5664,6 +5679,8 @@ TWO DOT LEADER	2025
 TWO DOT PUNCTUATION	205A
 TWO, SUPERSCRIPT	00B2
 TWO-EM DASH	2E3A
+TYPE A ELECTRONICS, SYMBOL FOR	2B97
+type B electronics, symbol for	3036
 Typicon Punctuation	2E44
 Typicon Symbols	1F900
 tyrannosaurus rex	1F996
@@ -6018,6 +6035,7 @@ YAMAKKAN, THAI CHARACTER	0E4E
 YEAR SIGN, TAMIL	0BF5
 YEN SIGN	00A5
 yentamna, armenian	058A
+Yezidi	10E80
 Yi Radicals	A490
 Yi Syllables	A000
 Yiddish Digraphs	05F0

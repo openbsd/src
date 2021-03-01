@@ -165,7 +165,7 @@ foreach (@INC) {
     $INC_total++;
 }
 
-$label = '@INC directoreis exist';
+$label = '@INC directories exist';
 if ($INC_total == $INC_there) {
     print "ok 3 $label\n";
     $pass__total++;

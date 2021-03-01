@@ -3,7 +3,7 @@ package Safe;
 use 5.003_11;
 use Scalar::Util qw(reftype refaddr);
 
-$Safe::VERSION = "2.40";
+$Safe::VERSION = "2.41_01";
 
 # *** Don't declare any lexicals above this point ***
 #
@@ -543,6 +543,13 @@ outside the compartment) placed into the compartment. For example,
 
 =head1 WARNING
 
+The Safe module does not implement an effective sandbox for
+evaluating untrusted code with the perl interpreter.
+
+Bugs in the perl interpreter that could be abused to bypass
+Safe restrictions are not treated as vulnerabilities. See
+L<perlsecpolicy> for additional information.
+
 The authors make B<no warranty>, implied or otherwise, about the
 suitability of this software for safety or security purposes.
 
@@ -753,7 +760,7 @@ any I<further> compilation that the already compiled code may try to perform.
 This is particularly useful when applied to code references returned from reval().
 
 (It also provides a kind of workaround for RT#60374: "Safe.pm sort {} bug with
--Dusethreads". See L<http://rt.perl.org/rt3//Public/Bug/Display.html?id=60374>
+-Dusethreads". See L<https://rt.perl.org/rt3//Public/Bug/Display.html?id=60374>
 for I<much> more detail.)
 
 =head2 wrap_code_refs_within (...)

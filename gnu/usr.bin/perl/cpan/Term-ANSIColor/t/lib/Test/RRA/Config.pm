@@ -4,27 +4,25 @@
 # configuration file to store some package-specific data.  This module loads
 # that configuration and provides the namespace for the configuration
 # settings.
+#
+# SPDX-License-Identifier: MIT
 
 package Test::RRA::Config;
 
-use 5.006;
+use 5.008;
+use base qw(Exporter);
 use strict;
 use warnings;
 
-# For Perl 5.006 compatibility.
-## no critic (ClassHierarchies::ProhibitExplicitISA)
-
-use Exporter;
 use Test::More;
 
 # Declare variables that should be set in BEGIN for robustness.
-our (@EXPORT_OK, @ISA, $VERSION);
+our (@EXPORT_OK, $VERSION);
 
 # Set $VERSION and everything export-related in a BEGIN block for robustness
 # against circular module loading (not that we load any modules, but
 # consistency is good).
 BEGIN {
-    @ISA       = qw(Exporter);
     @EXPORT_OK = qw(
       $COVERAGE_LEVEL @COVERAGE_SKIP_TESTS @CRITIC_IGNORE $LIBRARY_PATH
       $MINIMUM_VERSION %MINIMUM_VERSION @MODULE_VERSION_IGNORE
@@ -34,7 +32,7 @@ BEGIN {
     # This version should match the corresponding rra-c-util release, but with
     # two digits for the minor version, including a leading zero if necessary,
     # so that it will sort properly.
-    $VERSION = '6.02';
+    $VERSION = '8.01';
 }
 
 # If C_TAP_BUILD or C_TAP_SOURCE are set in the environment, look for
@@ -185,9 +183,9 @@ Russ Allbery <eagle@eyrie.org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2015, 2016 Russ Allbery <eagle@eyrie.org>
+Copyright 2015-2016, 2019 Russ Allbery <eagle@eyrie.org>
 
-Copyright 2013, 2014 The Board of Trustees of the Leland Stanford Junior
+Copyright 2013-2014 The Board of Trustees of the Leland Stanford Junior
 University
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -220,3 +218,7 @@ The C TAP Harness test driver and libraries for TAP-based C testing are
 available from L<https://www.eyrie.org/~eagle/software/c-tap-harness/>.
 
 =cut
+
+# Local Variables:
+# copyright-at-end-flag: t
+# End:

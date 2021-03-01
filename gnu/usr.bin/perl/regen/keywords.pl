@@ -46,6 +46,7 @@ my %feature_kw = (
     evalbytes => 'evalbytes',
     __SUB__   => '__SUB__',
     fc        => 'fc',
+    isa       => 'isa',
 );
 
 my %pos = map { ($_ => 1) } @{$by_strength{'+'}};
@@ -217,6 +218,7 @@ __END__
 -index
 -int
 -ioctl
+-isa
 -join
 -keys
 -kill

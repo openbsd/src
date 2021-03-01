@@ -13,20 +13,20 @@ use Unicode::UCD "prop_invmap";
 # Latin1 characters that can fold to the base one are returned.  Thus for
 # 'ss', it would return in addition, 'Ss', 'sS', and 'SS'.  This is because
 # this code is designed to help regcomp.c, and EXACTFish regnodes.  For
-# non-UTF-8 patterns, the strings are not folded, so we need to check for the
-# upper and lower case versions.  For UTF-8 patterns, the strings are folded,
-# except in EXACTFL nodes) so we only need to worry about the fold version.
-# All folded-to characters in non-UTF-8 (Latin1) are members of fold-pairs,
-# at least within Latin1, 'k', and 'K', for example.  So there aren't
-# complications with dealing with unfolded input.  That's not true of UTF-8
-# patterns, where things can get tricky.  Thus for EXACTFL nodes where things
-# aren't all folded, code has to be written specially to handle this, instead
-# of the macros here being extended to try to handle it.
+# non-UTF-8 patterns, the strings are not necessarily folded, so we need to
+# check for the upper and lower case versions.  For UTF-8 patterns, the
+# strings are folded, except in EXACTFL nodes) so we only need to worry about
+# the fold version.  All folded-to characters in non-UTF-8 (Latin1) are
+# members of fold-pairs, at least within Latin1, 'k', and 'K', for example.
+# So there aren't complications with dealing with unfolded input.  That's not
+# true of UTF-8 patterns, where things can get tricky.  Thus for EXACTFL nodes
+# where things aren't all folded, code has to be written specially to handle
+# this, instead of the macros here being extended to try to handle it.
 #
 # There are no non-ASCII Latin1 multi-char folds currently, and none likely to
 # be ever added.  Thus the output is the same as if it were just asking for
 # ASCII characters, not full Latin1.  Hence, it is suitable for generating
-# things that match EXACTFA.  It does check for and croak if there ever were
+# things that match EXACTFAA.  It does check for and croak if there ever were
 # to be an upper Latin1 range multi-character fold.
 #
 # This is designed for input to regen/regcharlass.pl.
@@ -45,7 +45,9 @@ sub gen_combinations ($;) {
     foreach my $j (0 .. @{$fold_ref->[$i]} - 1) {
 
         # Append its representation to what we have currently
-        my $new_string = sprintf "$string\\x{%X}", $fold_ref->[$i][$j];
+        my $new_string = $fold_ref->[$i][$j] =~ /[[:print:]]/
+                         ? ($string . chr $fold_ref->[$i][$j])
+                         : sprintf "$string\\x{%X}", $fold_ref->[$i][$j];
 
         if ($i >=  @$fold_ref - 1) {    # Final level: just return it
             push @ret, "\"$new_string\"";
@@ -58,10 +60,11 @@ sub gen_combinations ($;) {
     return @ret;
 }
 
-sub multi_char_folds ($) {
-    my $all_folds = shift;  # The single parameter is true if wants all
-                            # multi-char folds; false if just the ones that
-                            # are all ascii
+sub multi_char_folds ($$) {
+    my $type = shift;  # 'u' for UTF-8; 'l' for latin1
+    my $range = shift;  # 'a' for all; 'h' for starting 2 bytes; 'm' for ending 2
+    die "[lu] only valid values for first parameter" if $type !~ /[lu]/;
+    die "[aht3] only valid values for 2nd parameter" if $range !~ /[aht3]/;
 
     return () if pack("C*", split /\./, Unicode::UCD::UnicodeVersion()) lt v3.0.1;
 
@@ -69,7 +72,9 @@ sub multi_char_folds ($) {
     die "Could not find inversion map for Case_Folding" unless defined $format;
     die "Incorrect format '$format' for Case_Folding inversion map"
                                                         unless $format eq 'al';
+
     my @folds;
+    my @output_folds;
 
     for my $i (0 .. @$folds_ref - 1) {
         next unless ref $folds_ref->[$i];   # Skip single-char folds
@@ -82,22 +87,38 @@ sub multi_char_folds ($) {
         # isn't there to occupy space and time; instead there is this check.
         die sprintf("regcomp.c can't cope with a latin1 multi-char fold (found in the fold of 0x%X", $cp_ref->[$i]) if grep { $_ < 256 && chr($_) !~ /[[:ascii:]]/ } @{$folds_ref->[$i]};
 
+        @folds = @{$folds_ref->[$i]};
+        if ($range eq '3') {
+            next if @folds < 3;
+        }
+        elsif ($range eq 'h') {
+            pop @folds;
+        }
+        elsif ($range eq 't') {
+            next if @folds < 3;
+            shift @folds;
+        }
+
         # Create a line that looks like "\x{foo}\x{bar}\x{baz}" of the code
-        # points that make up the fold.
-        my $fold = join "", map { sprintf "\\x{%X}", $_ } @{$folds_ref->[$i]};
+        # points that make up the fold (use the actual character if
+        # printable).
+        my $fold = join "", map { chr $_ =~ /[[:print:]]/a
+                                            ? chr $_
+                                            : sprintf "\\x{%X}", $_
+                                } @folds;
         $fold = "\"$fold\"";
 
         # Skip if something else already has this fold
-        next if grep { $_ eq $fold } @folds;
+        next if grep { $_ eq $fold } @output_folds;
 
-        if ($all_folds) {
-            push @folds, $fold
+        if ($type eq 'u') {
+            push @output_folds, $fold;
         }   # Skip if wants only all-ascii folds, and there is a non-ascii
-        elsif (! grep { chr($_) =~ /[^[:ascii:]]/ } @{$folds_ref->[$i]}) {
+        elsif (! grep { chr($_) =~ /[^[:ascii:]]/ } @folds) {
 
             # If the fold is to a cased letter, replace the entry with an
             # array which also includes its upper case.
-            my $this_fold_ref = $folds_ref->[$i];
+            my $this_fold_ref = \@folds;
             for my $j (0 .. @$this_fold_ref - 1) {
                 my $this_ord = $this_fold_ref->[$j];
                 if (chr($this_ord) =~ /\p{Cased}/) {
@@ -108,7 +129,7 @@ sub multi_char_folds ($) {
             }
 
             # Then generate all combinations of upper/lower case of the fold.
-            push @folds, gen_combinations($this_fold_ref);
+            push @output_folds, gen_combinations($this_fold_ref);
 
         }
     }
@@ -133,10 +154,9 @@ sub multi_char_folds ($) {
     #
     # No combinations of this with 's' need be added, as any of these
     # containing 's' are prohibited under /iaa.
-    push @folds, '"\x{17F}\x{17F}"' if $all_folds;
+    push @output_folds, '"\x{17F}\x{17F}"' if $type eq 'u' && $range eq 'a';
 
-
-    return @folds;
+    return @output_folds;
 }
 
 1

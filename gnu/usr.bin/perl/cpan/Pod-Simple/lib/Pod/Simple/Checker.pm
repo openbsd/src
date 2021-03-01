@@ -9,7 +9,7 @@ use Carp ();
 use Pod::Simple::Methody ();
 use Pod::Simple ();
 use vars qw( @ISA $VERSION );
-$VERSION = '3.35';
+$VERSION = '3.40';
 @ISA = ('Pod::Simple::Methody');
 BEGIN { *DEBUG = defined(&Pod::Simple::DEBUG)
           ? \&Pod::Simple::DEBUG
@@ -88,8 +88,10 @@ sub end_item_text   { $_[0]->emit_par(-2) }
 sub emit_par {
   return unless $_[0]{'Errata_seen'};
   my($self, $tweak_indent) = splice(@_,0,2);
-  my $indent = ' ' x ( 2 * $self->{'Indent'} + ($tweak_indent||0) );
+  my $length = 2 * $self->{'Indent'} + ($tweak_indent||0);
+  my $indent = ' ' x ($length > 0 ? $length : 0);
    # Yes, 'STRING' x NEGATIVE gives '', same as 'STRING' x 0
+   # 'Negative repeat count does nothing' since 5.22
 
   $self->{'Thispara'} =~ s/$Pod::Simple::shy//g;
   my $out = Text::Wrap::wrap($indent, $indent, $self->{'Thispara'} .= "\n");

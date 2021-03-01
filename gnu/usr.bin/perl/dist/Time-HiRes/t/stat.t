@@ -3,13 +3,13 @@ use strict;
 BEGIN {
     require Time::HiRes;
     unless(&Time::HiRes::d_hires_stat) {
-	require Test::More;
-	Test::More::plan(skip_all => "no hi-res stat");
+        require Test::More;
+        Test::More::plan(skip_all => "no hi-res stat");
     }
     if($^O =~ /\A(?:cygwin|MSWin)/) {
-	require Test::More;
-	Test::More::plan(skip_all =>
-		"$^O file timestamps not reliable enough for stat test");
+        require Test::More;
+        Test::More::plan(skip_all =>
+                "$^O file timestamps not reliable enough for stat test");
     }
 }
 
@@ -50,18 +50,18 @@ my $mi = 0;
 my $ss = 0;
 for (my $i = 1; $i < @atime; $i++) {
     if ($atime[$i] >= $atime[$i-1]) {
-	$ai++;
+        $ai++;
     }
     if ($atime[$i] > int($atime[$i])) {
-	$ss++;
+        $ss++;
     }
 }
 for (my $i = 1; $i < @mtime; $i++) {
     if ($mtime[$i] >= $mtime[$i-1]) {
-	$mi++;
+        $mi++;
     }
     if ($mtime[$i] > int($mtime[$i])) {
-	$ss++;
+        $ss++;
     }
 }
 print("# ai = $ai, mi = $mi, ss = $ss\n");
@@ -70,7 +70,7 @@ print("# ai = $ai, mi = $mi, ss = $ss\n");
 SKIP: {
     skip "no subsecond timestamps detected", 1 if $ss == 0;
     ok $mi/(@mtime-1) >= 0.75 && $ai/(@atime-1) >= 0.75 &&
-	     $ss/(@mtime+@atime) >= 0.2;
+             $ss/(@mtime+@atime) >= 0.2;
 }
 
 my $targetname = "tgt$$";

@@ -5,28 +5,46 @@
 # by both C packages with Automake and by stand-alone Perl modules.  See
 # Test::RRA::Automake for additional functions specifically for C Automake
 # distributions.
+#
+# SPDX-License-Identifier: MIT
 
 package Test::RRA;
 
-use 5.006;
+use 5.008;
+use base qw(Exporter);
 use strict;
 use warnings;
 
-use Exporter;
+use Carp qw(croak);
 use File::Temp;
-use Test::More;
 
-# For Perl 5.006 compatibility.
-## no critic (ClassHierarchies::ProhibitExplicitISA)
+# Abort if Test::More was loaded before Test::RRA to be sure that we get the
+# benefits of the Test::More probing below.
+if ($INC{'Test/More.pm'}) {
+    croak('Test::More loaded before Test::RRA');
+}
+
+# Red Hat's base perl package doesn't include Test::More (one has to install
+# the perl-core package in addition).  Try to detect this and skip any Perl
+# tests if Test::More is not present.  This relies on Test::RRA being included
+# before Test::More.
+eval {
+    require Test::More;
+    Test::More->import();
+};
+if ($@) {
+    print "1..0 # SKIP Test::More required for test\n"
+      or croak('Cannot write to stdout');
+    exit 0;
+}
 
 # Declare variables that should be set in BEGIN for robustness.
-our (@EXPORT_OK, @ISA, $VERSION);
+our (@EXPORT_OK, $VERSION);
 
 # Set $VERSION and everything export-related in a BEGIN block for robustness
 # against circular module loading (not that we load any modules, but
 # consistency is good).
 BEGIN {
-    @ISA       = qw(Exporter);
     @EXPORT_OK = qw(
       is_file_contents skip_unless_author skip_unless_automated use_prereq
     );
@@ -34,7 +52,7 @@ BEGIN {
     # This version should match the corresponding rra-c-util release, but with
     # two digits for the minor version, including a leading zero if necessary,
     # so that it will sort properly.
-    $VERSION = '6.02';
+    $VERSION = '8.01';
 }
 
 # Compare a string to the contents of a file, similar to the standard is()
@@ -59,22 +77,27 @@ sub is_file_contents {
         return;
     }
 
-    # Otherwise, we show a diff, but only if we have IPC::System::Simple.
-    eval { require IPC::System::Simple };
+    # Otherwise, we show a diff, but only if we have IPC::System::Simple and
+    # diff succeeds.  Otherwise, we fall back on showing the full expected and
+    # seen output.
+    eval {
+        require IPC::System::Simple;
+
+        my $tmp     = File::Temp->new();
+        my $tmpname = $tmp->filename;
+        print {$tmp} $got or BAIL_OUT("Cannot write to $tmpname: $!\n");
+        my @command = ('diff', '-u', $expected, $tmpname);
+        my $diff    = IPC::System::Simple::capturex([0 .. 1], @command);
+        diag($diff);
+    };
     if ($@) {
-        ok(0, $message);
-        return;
+        diag('Expected:');
+        diag($expected);
+        diag('Seen:');
+        diag($data);
     }
 
-    # They're not equal.  Write out what we got so that we can run diff.
-    my $tmp     = File::Temp->new();
-    my $tmpname = $tmp->filename;
-    print {$tmp} $got or BAIL_OUT("Cannot write to $tmpname: $!\n");
-    my @command = ('diff', '-u', $expected, $tmpname);
-    my $diff = IPC::System::Simple::capturex([0 .. 1], @command);
-    diag($diff);
-
-    # Remove the temporary file and report failure.
+    # Report failure.
     ok(0, $message);
     return;
 }
@@ -89,7 +112,7 @@ sub is_file_contents {
 sub skip_unless_author {
     my ($description) = @_;
     if (!$ENV{AUTHOR_TESTING}) {
-        plan skip_all => "$description only run for author";
+        plan(skip_all => "$description only run for author");
     }
     return;
 }
@@ -108,7 +131,7 @@ sub skip_unless_automated {
     for my $env (qw(AUTOMATED_TESTING RELEASE_TESTING AUTHOR_TESTING)) {
         return if $ENV{$env};
     }
-    plan skip_all => "$description normally skipped";
+    plan(skip_all => "$description normally skipped");
     return;
 }
 
@@ -150,14 +173,14 @@ sub use_prereq {
             use $module $version \@imports;
             1;
         };
-        $error = $@;
+        $error  = $@;
         $sigdie = $SIG{__DIE__} || undef;
     }
 
     # If the use failed for any reason, skip the test.
     if (!$result || $error) {
         my $name = length($version) > 0 ? "$module $version" : $module;
-        plan skip_all => "$name required for test";
+        plan(skip_all => "$name required for test");
     }
 
     # If the module set $SIG{__DIE__}, we cleared that via local.  Restore it.
@@ -199,6 +222,14 @@ Test::RRA - Support functions for Perl tests
 This module collects utility functions that are useful for Perl test scripts.
 It assumes Russ Allbery's Perl module layout and test conventions and will
 only be useful for other people if they use the same conventions.
+
+This module B<must> be loaded before Test::More or it will abort during
+import.  It will skip the test (by printing a skip message to standard output
+and exiting with status 0, equivalent to C<plan skip_all>) during import if
+Test::More is not available.  This allows tests written in Perl using this
+module to be skipped if run on a system with Perl but not Test::More, such as
+Red Hat systems with the C<perl> package but not the C<perl-core> package
+installed.
 
 =head1 FUNCTIONS
 
@@ -244,7 +275,9 @@ Russ Allbery <eagle@eyrie.org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2013, 2014 The Board of Trustees of the Leland Stanford Junior
+Copyright 2016, 2018-2019 Russ Allbery <eagle@eyrie.org>
+
+Copyright 2013-2014 The Board of Trustees of the Leland Stanford Junior
 University
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -277,3 +310,7 @@ by the L<Lancaster
 Consensus|https://github.com/Perl-Toolchain-Gang/toolchain-site/blob/master/lancaster-consensus.md>.
 
 =cut
+
+# Local Variables:
+# copyright-at-end-flag: t
+# End:

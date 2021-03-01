@@ -437,12 +437,11 @@ is the subversion / 1e6.  For example, Perl v5.10.1 would be "5.010001".
 This variable can be used to determine whether the Perl interpreter
 executing a script is in the right range of versions:
 
-    warn "No PerlIO!\n" if $] lt '5.008';
+    warn "No PerlIO!\n" if "$]" < 5.008;
 
-When comparing C<$]>, string comparison operators are B<highly
-recommended>.  The inherent limitations of binary floating point
-representation can sometimes lead to incorrect comparisons for some
-numbers on some architectures.
+When comparing C<$]>, numeric comparison operators should be used, but the
+variable should be stringified first to avoid issues where its original
+numeric value is inaccurate.
 
 See also the documentation of C<use VERSION> and C<require VERSION>
 for a convenient way to fail if the running Perl interpreter is too old.
@@ -453,9 +452,10 @@ object, which allows more flexible string comparisons.
 The main advantage of C<$]> over C<$^V> is that it works the same on any
 version of Perl.  The disadvantages are that it can't easily be compared
 to versions in other formats (e.g. literal v-strings, "v1.2.3" or
-version objects) and numeric comparisons can occasionally fail; it's good
-for string literal version checks and bad for comparing to a variable
-that hasn't been sanity-checked.
+version objects) and numeric comparisons are subject to the binary
+floating point representation; it's good for numeric literal version
+checks and bad for comparing to a variable that hasn't been
+sanity-checked.
 
 The C<$OLD_PERL_VERSION> form was added in Perl v5.20.0 for historical
 reasons but its use is discouraged. (If your reason to use C<$]> is to
@@ -483,9 +483,9 @@ time of the C<exec()>.
 X<@F>
 
 The array C<@F> contains the fields of each line read in when autosplit
-mode is turned on.  See L<perlrun> for the B<-a> switch.  This array
-is package-specific, and must be declared or given a full package name
-if not in package main when running under C<strict 'vars'>.
+mode is turned on.  See L<perlrun|perlrun/-a> for the B<-a> switch.  This
+array is package-specific, and must be declared or given a full package
+name if not in package main when running under C<strict 'vars'>.
 
 =item @INC
 X<@INC>
@@ -577,7 +577,7 @@ built, as determined during the configuration process.  For examples
 see L<perlport/PLATFORMS>.
 
 The value is identical to C<$Config{'osname'}>.  See also L<Config>
-and the B<-V> command-line switch documented in L<perlrun>.
+and the B<-V> command-line switch documented in L<perlrun|perlrun/-V>.
 
 In Windows platforms, C<$^O> is not very helpful: since it is always
 C<MSWin32>, it doesn't tell the difference between
@@ -607,7 +607,8 @@ The hash C<%SIG> contains signal handlers for signals.  For example:
 
 Using a value of C<'IGNORE'> usually has the effect of ignoring the
 signal, except for the C<CHLD> signal.  See L<perlipc> for more about
-this special case.
+this special case.  Using an empty string or C<undef> as the value has
+the same effect as C<'DEFAULT'>.
 
 Here are some other examples:
 
@@ -621,6 +622,11 @@ Here are some other examples:
 
 Be sure not to use a bareword as the name of a signal handler,
 lest you inadvertently call it.
+
+Using a string that doesn't correspond to any existing function or a
+glob that doesn't contain a code slot is equivalent to C<'IGNORE'>,
+but a warning is emitted when the handler is being called (the warning
+is not emitted for the internal hooks described below).
 
 If your system has the C<sigaction()> function then signal handlers
 are installed using it.  This means you get reliable signal handling.
@@ -640,8 +646,9 @@ errors, like this:
     local $SIG{__WARN__} = sub { die $_[0] };
     eval $proggie;
 
-As the C<'IGNORE'> hook is not supported by C<__WARN__>, you can
-disable warnings using the empty subroutine:
+As the C<'IGNORE'> hook is not supported by C<__WARN__>, its effect is
+the same as using C<'DEFAULT'>.  You can disable warnings using the
+empty subroutine:
 
     local $SIG{__WARN__} = sub {};
 
@@ -660,6 +667,9 @@ this possible. This used to be deprecated, as it allowed strange action
 at a distance like rewriting a pending exception in C<$@>. Plans to
 rectify this have been scrapped, as users found that rewriting a 
 pending exception is actually a useful feature, and not a bug.
+
+The C<$SIG{__DIE__}> doesn't support C<'IGNORE'>; it has the same
+effect as C<'DEFAULT'>.
 
 C<__DIE__>/C<__WARN__> handlers are very special in one respect: they
 may be called to report (probable) errors found by the parser.  In such
@@ -700,6 +710,14 @@ and B<-C> filetests are based on this value.
 
 =item $^V
 X<$^V> X<$PERL_VERSION>
+
+=for comment
+These are documented in the generated file lib/Config.pod.  This looks
+like as good a place as any to give notice that they are documented.
+
+=for apidoc hAmn|int|PERL_VERSION
+=for apidoc hAmn|int|PERL_REVISION
+=for apidoc hAmn|int|PERL_SUBVERSION
 
 The revision, version, and subversion of the Perl interpreter,
 represented as a L<version> object.
@@ -744,9 +762,8 @@ is considerably faster, especially for files on network drives.
 
 This variable could be set in the F<sitecustomize.pl> file to
 configure the local Perl installation to use "sloppy" C<stat()> by
-default.  See the documentation for B<-f> in
-L<perlrun|perlrun/"Command Switches"> for more information about site
-customization.
+default.  See the documentation for B<-f> in L<perlrun|perlrun/-f>
+for more information about site customization.
 
 This variable was added in Perl v5.10.0.
 
@@ -1418,7 +1435,7 @@ X<ARGVOUT>
 The special filehandle that points to the currently open output file
 when doing edit-in-place processing with B<-i>.  Useful when you have
 to do a lot of inserting and don't want to keep modifying C<$_>.  See
-L<perlrun> for the B<-i> switch.
+L<perlrun|perlrun/-i[extension]> for the B<-i> switch.
 
 =item IO::Handle->output_field_separator( EXPR )
 
@@ -2226,9 +2243,29 @@ This variable was added in Perl v5.6.0.
 =item ${^OPEN}
 X<${^OPEN}>
 
-An internal variable used by PerlIO.  A string in two parts, separated
+An internal variable used by L<PerlIO>.  A string in two parts, separated
 by a C<\0> byte, the first part describes the input layers, the second
 part describes the output layers.
+
+This is the mechanism that applies the lexical effects of the L<open>
+pragma, and the main program scope effects of the C<io> or C<D> options
+for the L<-C command-line switch|perlrun/-C [I<numberE<sol>list>]> and
+L<PERL_UNICODE environment variable|perlrun/PERL_UNICODE>.
+
+The functions C<accept()>, C<open()>, C<pipe()>, C<readpipe()> (as well
+as the related C<qx> and C<`STRING`> operators), C<socket()>,
+C<socketpair()>, and C<sysopen()> are affected by the lexical value of
+this variable.  The implicit L</ARGV> handle opened by C<readline()> (or
+the related C<< <> >> and C<<< <<>> >>> operators) on passed filenames is
+also affected (but not if it opens C<STDIN>).  If this variable is not
+set, these functions will set the default layers as described in
+L<PerlIO/Defaults and how to override them>.
+
+C<open()> ignores this variable (and the default layers) when called with
+3 arguments and explicit layers are specified.  Indirect calls to these
+functions via modules like L<IO::Handle> are not affected as they occur
+in a different lexical scope.  Directory handles such as opened by
+C<opendir()> are not currently affected.
 
 This variable was added in Perl v5.8.0.
 
@@ -2332,9 +2369,9 @@ This variable was added in Perl v5.28.0.
 =item ${^UNICODE}
 X<${^UNICODE}>
 
-Reflects certain Unicode settings of Perl.  See L<perlrun>
-documentation for the C<-C> switch for more information about
-the possible values.
+Reflects certain Unicode settings of Perl.  See
+L<perlrun|perlrun/-C [numberE<sol>list]> documentation for the C<-C>
+switch for more information about the possible values.
 
 This variable is set during Perl startup and is thereafter read-only.
 
@@ -2357,7 +2394,8 @@ X<${^UTF8LOCALE}>
 This variable indicates whether a UTF-8 locale was detected by perl at
 startup.  This information is used by perl when it's in
 adjust-utf8ness-to-locale mode (as when run with the C<-CL> command-line
-switch); see L<perlrun> for more info on this.
+switch); see L<perlrun|perlrun/-C [numberE<sol>list]> for more info on
+this.
 
 This variable was added in Perl v5.8.8.
 

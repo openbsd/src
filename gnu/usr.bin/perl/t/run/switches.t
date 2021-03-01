@@ -423,9 +423,20 @@ __EOF__
     eval { require File::Spec; 1 }
       or skip "Cannot load File::Spec - miniperl?", 20;
 
-    -d "tmpinplace" or mkdir("tmpinplace")
-      or die "Cannot mkdir 'tmpinplace': $!";
-    my $work = File::Spec->catfile("tmpinplace", "foo");
+    my $tmpinplace = tempfile();
+
+    require File::Path;
+    END {
+        File::Path::rmtree($tmpinplace)
+            if $tmpinplace && -d $tmpinplace;
+    }
+
+    # test.pl's tempfile() doesn't create the file so we can
+    # safely mkdir it
+    mkdir $tmpinplace
+      or die "Cannot create $tmpinplace: $!";
+
+    my $work = File::Spec->catfile($tmpinplace, "foo");
 
     # exit or die should leave original content in file
     for my $inplace (qw/-i -i.bak/) {
@@ -475,8 +486,8 @@ __EOF__
               && $Config{ccflags} !~ /-DNO_USE_ATFUNCTIONS\b/;
         my ($osvers) = ($Config{osvers} =~ /^(\d+(?:\.\d+)?)/);
         skip "NetBSD 6 libc defines at functions, but they're incomplete", 3
-            if $^O eq "netbsd" && $osvers < 7;
-        fresh_perl_is(<<'CODE', "ok\n", { },
+          if $^O eq "netbsd" && $osvers < 7;
+        my $code = <<'CODE';
 @ARGV = ("tmpinplace/foo");
 $^I = "";
 while (<>) {
@@ -485,6 +496,8 @@ while (<>) {
 }
 print "ok\n";
 CODE
+        $code =~ s/tmpinplace/$tmpinplace/;
+        fresh_perl_is($code, "ok\n", { },
                        "chdir while in-place editing");
         ok(open(my $fh, "<", $work), "open out file");
         is(scalar <$fh>, "xx\n", "file successfully saved after chdir");
@@ -495,7 +508,8 @@ CODE
     {
         skip "Need threads and full perl", 3
           if !$Config{useithreads} || is_miniperl();
-        fresh_perl_is(<<'CODE', "ok\n", { stderr => 1 },
+
+        my $code = <<'CODE';
 use threads;
 use strict;
 @ARGV = ("tmpinplace/foo");
@@ -506,6 +520,8 @@ while (<>) {
 }
 print "ok\n";
 CODE
+        $code =~ s/tmpinplace/$tmpinplace/;
+        fresh_perl_is($code, "ok\n", { stderr => 1 },
                       "threads while in-place editing");
         ok(open(my $fh, "<", $work), "open out file");
         is(scalar <$fh>, "yy\n", "file successfully saved after chdir");
@@ -521,7 +537,7 @@ CODE
         # it attempts to close the file twice
         print $fh "foo\n";
         close $fh or die "Cannot close $work: $!";
-        fresh_perl_is(<<'CODE', "ok\n", { stderr => 1 },
+        my $code = <<'CODE';
 use strict;
 @ARGV = ("tmpinplace/foo");
 $^I = "";
@@ -538,6 +554,8 @@ while (<>) {
 }
 print "ok\n";
 CODE
+        $code =~ s/tmpinplace/$tmpinplace/;
+        fresh_perl_is($code, "ok\n", { stderr => 1 },
                       "fork while in-place editing");
         ok(open($fh, "<", $work), "open out file");
         is(scalar <$fh>, "yy\n", "file successfully saved after fork");
@@ -556,7 +574,7 @@ CODE
             # make it fail by creating a directory of the backup name
             mkdir "$work.bak" or die "Cannot make mask backup directory: $!";
         }
-        fresh_perl_like(<<'CODE', qr/Can't rename/, { stderr => 1 }, "fail backup rename");
+        my $code = <<'CODE';
 @ARGV = ("tmpinplace/foo");
 $^I = ".bak";
 while (<>) {
@@ -564,6 +582,8 @@ while (<>) {
 }
 print "ok\n";
 CODE
+        $code =~ s/tmpinplace/$tmpinplace/;
+        fresh_perl_like($code, qr/Can't rename/, { stderr => 1 }, "fail backup rename");
         if ($^O eq 'VMS') {
             1 while unlink "$work.bak";
         }
@@ -587,7 +607,7 @@ CODE
 
     # we now use temp files for in-place editing, make sure we didn't leave
     # any behind in the above test
-    opendir my $d, "tmpinplace" or die "Cannot opendir tmpinplace: $!";
+    opendir my $d, $tmpinplace or die "Cannot opendir $tmpinplace: $!";
     my @names = grep !/^\.\.?$/ && $_ ne 'foo' && $_ ne 'foo.', readdir $d;
     closedir $d;
     is(scalar(@names), 0, "no extra files")
@@ -602,14 +622,14 @@ CODE
         # test we handle the rename of the work to the original failing
         # make it fail by removing write perms from the directory
         # but first check that doesn't prevent writing
-        chmod 0500, "tmpinplace";
-        my $check = File::Spec->catfile("tmpinplace", "check");
+        chmod 0500, $tmpinplace;
+        my $check = File::Spec->catfile($tmpinplace, "check");
         my $canwrite = open my $fh, ">", $check;
         unlink $check;
-        chmod 0700, "tmpinplace" or die "Cannot make tmpinplace writable again: $!";
-        skip "Cannot make tmpinplace read only", 1
+        chmod 0700, $tmpinplace or die "Cannot make $tmpinplace writable again: $!";
+        skip "Cannot make $tmpinplace read only", 1
           if $canwrite;
-        fresh_perl_like(<<'CODE', qr/failed to rename/, { stderr => 1 }, "fail final rename");
+        my $code = <<'CODE';
 @ARGV = ("tmpinplace/foo");
 $^I = "";
 while (<>) {
@@ -618,7 +638,9 @@ while (<>) {
 }
 print "ok\n";
 CODE
-        chmod 0700, "tmpinplace" or die "Cannot make tmpinplace writable again: $!";
+        $code =~ s/tmpinplace/$tmpinplace/g;
+        fresh_perl_like($code, qr/failed to rename/, { stderr => 1 }, "fail final rename");
+        chmod 0700, $tmpinplace or die "Cannot make $tmpinplace writable again: $!";
     }
 
   SKIP:
@@ -629,7 +651,7 @@ CODE
               && ($Config{d_dirfd} || $Config{d_dir_dd_fd})
               && $Config{d_linkat}
               && $Config{ccflags} !~ /-DNO_USE_ATFUNCTIONS\b/;
-        fresh_perl_like(<<'CODE', qr/^Cannot complete in-place edit of tmpinplace\/foo: .* - line 5, <> line \d+\./, { },
+        my $code = <<'CODE';
 @ARGV = ("tmpinplace/foo");
 $^I = "";
 while (<>) {
@@ -638,19 +660,22 @@ while (<>) {
 }
 print "ok\n";
 CODE
+        $code =~ s/tmpinplace/$tmpinplace/;
+        fresh_perl_like($code, qr/^Cannot complete in-place edit of \Q$tmpinplace\E\/foo: .* - line 5, <> line \d+\./, { },
                        "chdir while in-place editing (no at-functions)");
     }
 
     unlink $work;
 
-    opendir $d, "tmpinplace" or die "Cannot opendir tmpinplace: $!";
+    opendir $d, $tmpinplace or die "Cannot opendir $tmpinplace: $!";
     @names = grep !/^\.\.?$/ && !/foo$/aai, readdir $d;
     closedir $d;
 
     # clean up in case the above failed
-    unlink map File::Spec->catfile("tmpinplace", $_), @names;
+    unlink map File::Spec->catfile($tmpinplace, $_), @names;
 
-    rmdir "tmpinplace";
+    rmdir $tmpinplace;
+    undef $tmpinplace;
 }
 
 # Tests for -E

@@ -14,6 +14,7 @@
 #endif
 
 #define  WIN32_LEAN_AND_MEAN	/* Tell windows.h to skip much */
+#include <wchar.h>
 #include <windows.h>
 #include <winioctl.h>
 

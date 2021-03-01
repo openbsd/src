@@ -14,7 +14,7 @@ use File::Path;
 use utf8;
 BEGIN {
   plan skip_all => 'Need perlio and perl 5.8+.'
-    if $] < 5.008 or !$Config{useperlio};
+    if "$]" < 5.008 or !$Config{useperlio};
   plan skip_all => 'cross-compiling and make not available'
     if !MM->can_run(make()) && $ENV{PERL_CORE} && $Config{'usecrosscompile'};
 
@@ -76,7 +76,7 @@ END {
 ok( chdir $DIRNAME, "chdir'd to $DIRNAME" ) ||
   diag("chdir failed: $!");
 
-if ($] >= 5.008) {
+if ("$]" >= 5.008) {
   eval { require ExtUtils::MakeMaker::Locale; };
   note "ExtUtils::MakeMaker::Locale vars: $ExtUtils::MakeMaker::Locale::ENCODING_LOCALE;$ExtUtils::MakeMaker::Locale::ENCODING_LOCALE_FS;$ExtUtils::MakeMaker::Locale::ENCODING_CONSOLE_IN;$ExtUtils::MakeMaker::Locale::ENCODING_CONSOLE_OUT\n" unless $@;
   note "Locale env vars: " . join(';', map {

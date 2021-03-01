@@ -283,7 +283,7 @@ Note that some types of arguments/return-values for functions may
 result in XSUB-declarations/typemap-entries which need
 hand-editing. Such may be objects which cannot be converted from/to a
 pointer (like C<long long>), pointers to functions, or arrays.  See
-also the section on L<LIMITATIONS of B<-x>>.
+also the section on L</LIMITATIONS of B<-x>>.
 
 =back
 

@@ -51,7 +51,8 @@
 #  define PERL_SYS_TERM_BODY()                         \
     HINTS_REFCNT_TERM; KEYWORD_PLUGIN_MUTEX_TERM;      \
     OP_CHECK_MUTEX_TERM; OP_REFCNT_TERM; PERLIO_TERM;  \
-    MALLOC_TERM; LOCALE_TERM; USER_PROP_MUTEX_TERM;
+    MALLOC_TERM; LOCALE_TERM; USER_PROP_MUTEX_TERM;    \
+    ENV_TERM;
 #endif
 #define dXSUB_SYS dNOOP
 
@@ -71,8 +72,6 @@
  */
 #if defined(WIN64) || defined(USE_LARGE_FILES)
 #  define Stat_t struct _stati64
-#elif defined(UNDER_CE)
-#  define Stat_t struct xcestat
 #else
 #  define Stat_t struct stat
 #endif

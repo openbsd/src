@@ -303,7 +303,7 @@ for my $i (0x100..0xffff) {
 
 {
     # Bleadperl v5.17.9-109-g3283393 breaks ZEFRAM/Module-Runtime-0.013.tar.gz
-    # https://rt.perl.org/rt3/Public/Bug/Display.html?id=117101
+    # https://github.com/Perl/perl5/issues/12841
     no strict;
 
     local $@;
@@ -336,7 +336,7 @@ EOP
 
 {    
     # bleadperl v5.17.9-109-g3283393 breaks JEREMY/File-Signature-1.009.tar.gz
-    # https://rt.perl.org/rt3/Ticket/Display.html?id=117145
+    # https://github.com/Perl/perl5/issues/12849
     local $@;
     my $var = 10;
     eval ' ${  var  }';

@@ -47,7 +47,7 @@ use vars qw(
              "CPAN/Tarzip.pm",
              "CPAN/Version.pm",
             );
-$VERSION = "5.5008";
+$VERSION = "5.5009";
 # record the initial timestamp for reload.
 $reload = { map {$INC{$_} ? ($_,(stat $INC{$_})[9]) : ()} @relo };
 @CPAN::Shell::ISA = qw(CPAN::Debug);
@@ -1611,9 +1611,10 @@ sub mydie {
 
 # sub CPAN::Shell::colorable_makemaker_prompt ;
 sub colorable_makemaker_prompt {
-    my($foo,$bar) = @_;
+    my($foo,$bar,$ornament) = @_;
+    $ornament ||= "colorize_print";
     if (CPAN::Shell->colorize_output) {
-        my $ornament = $CPAN::Config->{colorize_print}||'bold blue on_white';
+        my $ornament = $CPAN::Config->{$ornament}||'bold blue on_white';
         my $color_on = eval { Term::ANSIColor::color($ornament); } || "";
         print $color_on;
     }
@@ -1867,7 +1868,7 @@ to find objects with matching identifiers.
             }
         }
         if (UNIVERSAL::can($obj, 'called_for')) {
-            $obj->called_for($s);
+            $obj->called_for($s) unless $obj->called_for;
         }
         CPAN->debug(qq{pragma[@pragma]meth[$meth]}.
                     qq{ID[$obj->{ID}]}) if $CPAN::DEBUG;

@@ -12,7 +12,7 @@ BEGIN {
     set_up_inc('../lib');
 }
 
-plan 3;
+plan 4;
 
 # This test is in the file because overload.pm uses concatenation.
 { package o; use overload '""' => sub { $_[0][0] } }
@@ -57,3 +57,19 @@ fresh_perl_is <<'end', "tmp\ntmp\n", {},
  print canonpath(bless {},"Path::Class::Dir"), "\n";
 end
  "recursive concat does not share TARGs";
+
+# don't include the assign as part of the multiconcat if the target
+# includes 'local'. This used to screw up on magic vars because the
+# 'local $~' was done (thus emptying the var) before multiconcat was
+# called.
+
+
+{
+    local $~ = 'FOO';
+    my $s;
+    {
+        local $~ = "$~X";
+        $s = $~;
+    }
+    is($s, 'FOOX', 'local $magic_var = "...."');
+}

@@ -4,8 +4,8 @@
 # Author          : Johan Vromans
 # Created On      : Tue Sep 11 15:00:12 1990
 # Last Modified By: Johan Vromans
-# Last Modified On: Sat May 27 12:11:39 2017
-# Update Count    : 1715
+# Last Modified On: Mon Aug 12 17:05:46 2019
+# Update Count    : 1728
 # Status          : Released
 
 ################ Module Preamble ################
@@ -18,10 +18,10 @@ use warnings;
 package Getopt::Long;
 
 use vars qw($VERSION);
-$VERSION        =  2.50;
+$VERSION        =  2.51;
 # For testing versions only.
 use vars qw($VERSION_STRING);
-$VERSION_STRING = "2.50";
+$VERSION_STRING = "2.51";
 
 use Exporter;
 use vars qw(@ISA @EXPORT @EXPORT_OK);
@@ -303,7 +303,7 @@ sub GetOptionsFromArray(@) {
 	# Avoid some warnings if debugging.
 	local ($^W) = 0;
 	print STDERR
-	  ("Getopt::Long $Getopt::Long::VERSION ",
+	  ("Getopt::Long $Getopt::Long::VERSION_STRING ",
 	   "called from package \"$pkg\".",
 	   "\n  ",
 	   "argv: ",
@@ -769,7 +769,7 @@ sub GetOptionsFromArray(@) {
     }
 
     # Finish.
-    if ( @ret && $order == $PERMUTE ) {
+    if ( @ret && ( $order == $PERMUTE || $passthrough ) ) {
 	#  Push back accumulated arguments
 	print STDERR ("=> restoring \"", join('" "', @ret), "\"\n")
 	    if $debug;
@@ -805,10 +805,8 @@ sub ParseOptionSpec ($$) {
 		   (
 		     # Option name
 		     (?: \w+[-\w]* )
-		     # Alias names, or "?"
-		     (?: \| (?: \? | \w[-\w]* ) )*
 		     # Aliases
-		     (?: \| (?: [^-|!+=:][^|!+=:]* )? )*
+		     (?: \| (?: . [^|!+=:]* )? )*
 		   )?
 		   (
 		     # Either modifiers ...
@@ -1123,6 +1121,12 @@ sub FindOption ($$$$$) {
 	    $optargtype = 3;
 	}
 	if(($optargtype == 0) && !$mand) {
+	    if ( $type eq 'I' ) {
+		# Fake incremental type.
+		my @c = @$ctl;
+		$c[CTL_TYPE] = '+';
+		return (1, $opt, \@c, 1);
+	    }
 	    my $val
 	      = defined($ctl->[CTL_DEFAULT]) ? $ctl->[CTL_DEFAULT]
 	      : $type eq 's'                 ? ''
@@ -1541,7 +1545,7 @@ sub setup_pa_args($@) {
 
 # Sneak way to know what version the user requested.
 sub VERSION {
-    $requested_version = $_[1];
+    $requested_version = $_[1] if @_ > 1;
     shift->SUPER::VERSION(@_);
 }
 
@@ -2269,8 +2273,7 @@ it will set variable C<$stdio>.
 A special option 'name' C<< <> >> can be used to designate a subroutine
 to handle non-option arguments. When GetOptions() encounters an
 argument that does not look like an option, it will immediately call this
-subroutine and passes it one parameter: the argument name. Well, actually
-it is an object that stringifies to the argument name.
+subroutine and passes it one parameter: the argument name.
 
 For example:
 
@@ -2733,8 +2736,10 @@ version 2.13.
     use Getopt::Long;
     GetOptions ("help|?");    # -help and -? will both set $opt_help
 
-Other characters that can't appear in Perl identifiers are also supported
-as aliases with Getopt::Long of at least version 2.39.
+Other characters that can't appear in Perl identifiers are also
+supported in aliases with Getopt::Long of at version 2.39. Note that
+the characters C<!>, C<|>, C<+>, C<=>, and C<:> can only appear as the
+first (or only) character of an alias.
 
 As of version 2.32 Getopt::Long provides auto-help, a quick and easy way
 to add the options --help and -? to your program, and handle them.

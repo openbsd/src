@@ -28,6 +28,7 @@ no_index:
     - dist/ExtUtils-CBuilder
     - dist/ExtUtils-ParseXS
     - dist/Filter-Simple
+    - dist/FindBin
     - dist/I18N-Collate
     - dist/if
     - dist/IO/
@@ -77,12 +78,14 @@ no_index:
     - dist/IO/t/cachepropagate-tcp.t
     - dist/IO/t/cachepropagate-udp.t
     - dist/IO/t/cachepropagate-unix.t
+    - dist/IO/t/gh17447.t
     - dist/IO/t/IO.t
     - dist/IO/t/io_const.t
     - dist/IO/t/io_dir.t
     - dist/IO/t/io_dup.t
     - dist/IO/t/io_file.t
     - dist/IO/t/io_file_export.t
+    - dist/IO/t/io_getline.t
     - dist/IO/t/io_leak.t
     - dist/IO/t/io_linenum.t
     - dist/IO/t/io_multihomed.t
@@ -111,8 +114,8 @@ no_index:
     - vxs.inc
 resources:
   bugtracker: https://github.com/Perl/perl5/issues
-  homepage: http://www.perl.org/
-  license: http://dev.perl.org/licenses/
+  homepage: https://www.perl.org/
+  license: https://dev.perl.org/licenses/
   repository: https://github.com/Perl/perl5
-version: '5.030003'
+version: '5.032001'
 x_serialization_backend: 'CPAN::Meta::YAML version 0.018'

@@ -17,8 +17,8 @@ our @EXPORT_OK = qw(
   dualvar isdual isvstring looks_like_number openhandle readonly set_prototype
   tainted
 );
-our $VERSION    = "1.50";
-$VERSION   = eval $VERSION;
+our $VERSION    = "1.55";
+$VERSION =~ tr/_//d;
 
 require List::Util; # List::Util loads the XS
 List::Util->VERSION( $VERSION ); # Ensure we got the right XS version (RT#100863)
@@ -133,6 +133,11 @@ is returned.
 
     $obj  = bless {}, "Foo";
     $type = reftype $obj;               # HASH
+
+Note that for internal reasons, all precompiled regexps (C<qr/.../>) are
+blessed references; thus C<ref()> returns the package name string C<"Regexp">
+on these but C<reftype()> will return the underlying C structure type of
+C<"REGEXP"> in all capitals.
 
 =head2 weaken
 
@@ -276,8 +281,8 @@ L<perlapi/looks_like_number>.
 
     my $fh = openhandle( $fh );
 
-Returns C<$fh> itself if C<$fh> may be used as a filehandle and is open, or is
-is a tied handle. Otherwise C<undef> is returned.
+Returns C<$fh> itself, if C<$fh> may be used as a filehandle and is open, or if
+it is a tied handle. Otherwise C<undef> is returned.
 
     $fh = openhandle(*STDIN);           # \*STDIN
     $fh = openhandle(\*STDIN);          # \*STDIN

@@ -35,7 +35,7 @@ $EXPORT_TAGS{bsd_glob} = [@{$EXPORT_TAGS{glob}}];
 
 @EXPORT_OK   = (@{$EXPORT_TAGS{'glob'}}, 'csh_glob');
 
-$VERSION = '1.32';
+$VERSION = '1.33';
 
 sub import {
     require Exporter;
@@ -68,13 +68,6 @@ XSLoader::load();
 $DEFAULT_FLAGS = GLOB_CSH();
 if ($^O =~ /^(?:MSWin32|VMS|os2|dos|riscos)$/) {
     $DEFAULT_FLAGS |= GLOB_NOCASE();
-}
-
-# File::Glob::glob() removed in perl-5.30 because its prototype is different
-# from CORE::glob() (use bsd_glob() instead)
-sub glob {
-    die "File::Glob::glob() was removed in perl 5.30. " .
-         "Use File::Glob::bsd_glob() instead. $!";
 }
 
 1;

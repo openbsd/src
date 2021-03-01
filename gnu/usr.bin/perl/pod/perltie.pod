@@ -171,7 +171,7 @@ X<UNTIE>
 
 This method will be triggered when the C<untie> occurs. This can be useful
 if the class needs to know when no further calls will be made. (Except DESTROY
-of course.) See L<The C<untie> Gotcha> below for more details.
+of course.) See L</The C<untie> Gotcha> below for more details.
 
 =item DESTROY this
 X<DESTROY>
@@ -301,7 +301,7 @@ spaces so we have a little more work to do here:
      croak "length of $value is greater than $self->{ELEMSIZE}";
    }
    # fill in the blanks
-   $self->EXTEND( $index ) if $index > $self->FETCHSIZE();
+   $self->STORESIZE( $index ) if $index > $self->FETCHSIZE();
    # right justify to keep element size for smaller elements
    $self->{ARRAY}->[$index] = sprintf "%$self->{ELEMSIZE}s", $value;
  }
@@ -351,15 +351,23 @@ X<EXTEND>
 Informative call that array is likely to grow to have I<count> entries.
 Can be used to optimize allocation. This method need do nothing.
 
-In our example, we want to make sure there are no blank (C<undef>)
-entries, so C<EXTEND> will make use of C<STORESIZE> to fill elements
-as needed:
+In our example there is no reason to implement this method, so we leave
+it as a no-op. This method is only relevant to tied array implementations
+where there is the possibility of having the allocated size of the array
+be larger than is visible to a perl programmer inspecting the size of the
+array. Many tied array implementations will have no reason to implement it.
 
     sub EXTEND {   
       my $self  = shift;
       my $count = shift;
-      $self->STORESIZE( $count );
+      # nothing to see here, move along.
     }
+
+B<NOTE:> It is generally an error to make this equivalent to STORESIZE.
+Perl may from time to time call EXTEND without wanting to actually change
+the array size directly. Any tied array should function correctly if this
+method is a no-op, even if perhaps they might not be as efficient as they
+would if this method was implemented.
 
 =item EXISTS this, key
 X<EXISTS>
@@ -482,7 +490,7 @@ In our example, we'll use a little shortcut if there is a I<LIST>:
 =item UNTIE this
 X<UNTIE>
 
-Will be called when C<untie> happens. (See L<The C<untie> Gotcha> below.)
+Will be called when C<untie> happens. (See L</The C<untie> Gotcha> below.)
 
 =item DESTROY this
 X<DESTROY>
@@ -838,7 +846,7 @@ L<Hash::Util/bucket_ratio> for a backwards compatibility path.
 =item UNTIE this
 X<UNTIE>
 
-This is called when C<untie> occurs.  See L<The C<untie> Gotcha> below.
+This is called when C<untie> occurs.  See L</The C<untie> Gotcha> below.
 
 =item DESTROY this
 X<DESTROY>
@@ -1017,7 +1025,7 @@ X<UNTIE>
 
 As with the other types of ties, this method will be called when C<untie> happens.
 It may be appropriate to "auto CLOSE" when this occurs.  See
-L<The C<untie> Gotcha> below.
+L</The C<untie> Gotcha> below.
 
 =item DESTROY this
 X<DESTROY>
@@ -1042,7 +1050,7 @@ Here's how to use our little example:
 X<UNTIE>
 
 You can define for all tie types an UNTIE method that will be called
-at untie().  See L<The C<untie> Gotcha> below.
+at untie().  See L</The C<untie> Gotcha> below.
 
 =head2 The C<untie> Gotcha
 X<untie>

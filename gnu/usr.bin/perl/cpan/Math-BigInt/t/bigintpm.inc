@@ -68,7 +68,7 @@ while (<DATA>) {
     $try = qq|\$x = $CLASS->new("$args[0]");|;
     if ($f eq "bnorm") {
         $try = qq|\$x = $CLASS->bnorm("$args[0]");|;
-    } elsif ($f =~ /^is_(zero|one|odd|even|negative|positive|nan|int)$/) {
+    } elsif ($f =~ /^is_(zero|one|odd|even|(non_)?(negative|positive)|nan|int)$/) {
         $try .= " \$x->$f() || 0;";
     } elsif ($f eq "is_inf") {
         $try .= qq| \$x->is_inf("$args[1]");|;
@@ -787,17 +787,26 @@ SKIP: {
         my @bl = $LIB->_base_len();
         my $bl = $bl[5];
 
-        $x = '1' x $bl . '0' x $bl . '1' x $bl . '0' x $bl;
+        # Compute the value.
+        $x = ('1' x $bl) . ('0' x $bl) . ('1' x $bl) . ('0' x $bl);
         $y = '1' x (2 * $bl);
         $x = $CLASS->new($x)->bmul($y);
-        # result is 123..$bl .  $bl x (3*bl-1) . $bl...321 . '0' x $bl
+
+        # Build the expected output.
         $y = '';
-        my $d = '';
-        for (my $i = 1; $i <= $bl; $i++) {
-            $y .= $i;
-            $d = $i . $d;
+        if ($bl >= 2) {
+            $y .= '123456790' x int(($bl - 2) / 9);
+            $y .= substr '123456790', 0, ($bl - 2) % 9;
+            $y .= ($bl - 1) % 9;
         }
-        $y .= $bl x (3 * $bl - 1) . $d . '0' x $bl;
+        $y .= ((($bl - 1) % 9) + 1) x ($bl * 3);
+        if ($bl >= 2) {
+            $y .= substr '098765432', -(($bl - 1) % 9);
+            $y .= '098765432' x int(($bl - 2) / 9);
+        }
+        $y .= '1';
+        $y .= '0' x $bl;
+
         is($x, $y, "testing number with a zero-hole of BASE_LEN_SMALL");
 
         #########################################################################
@@ -1076,6 +1085,22 @@ invalid:0
 +inf:1
 -inf:0
 invalid:0
+
+&is_non_negative
+0:1
+-1:0
+1:1
++inf:1
+-inf:0
+NaN:0
+
+&is_non_positive
+0:1
+-1:1
+1:0
++inf:0
+-inf:1
+NaN:0
 
 &is_int
 -inf:0
@@ -2850,9 +2875,9 @@ abc:12:NaN
 -inf:NaN:NaN
 #
 -3:-inf:0
--3:-3:NaN
--3:-2:NaN
--3:-1:NaN
+-3:-3:0
+-3:-2:0
+-3:-1:0
 -3:0:1
 -3:1:-3
 -3:2:9
@@ -2861,9 +2886,9 @@ abc:12:NaN
 -3:NaN:NaN
 #
 -2:-inf:0
--2:-3:NaN
--2:-2:NaN
--2:-1:NaN
+-2:-3:0
+-2:-2:0
+-2:-1:0
 -2:0:1
 -2:1:-2
 -2:2:4
@@ -2905,9 +2930,9 @@ abc:12:NaN
 1:NaN:NaN
 #
 2:-inf:0
-2:-3:NaN
-2:-2:NaN
-2:-1:NaN
+2:-3:0
+2:-2:0
+2:-1:0
 2:0:1
 2:1:2
 2:2:4
@@ -2916,9 +2941,9 @@ abc:12:NaN
 2:NaN:NaN
 #
 3:-inf:0
-3:-3:NaN
-3:-2:NaN
-3:-1:NaN
+3:-3:0
+3:-2:0
+3:-1:0
 3:0:1
 3:1:3
 3:2:9

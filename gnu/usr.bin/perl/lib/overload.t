@@ -3072,7 +3072,7 @@ package RT132827 {
 }
 
 # RT #132793
-# An arg like like "$b" in $overloaded .= "$b" should be stringified
+# An arg like "$b" in $overloaded .= "$b" should be stringified
 # before being passed to the method
 
 package RT132793 {

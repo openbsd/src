@@ -2206,3 +2206,13 @@ use warnings 'uninitialized';
 undef $0;
 EXPECT
 Use of uninitialized value in undef operator at - line 5.
+########
+# RT #134275
+# This was SEGVing due to the multideref code in S_find_uninit_var not
+# handling a GV with a null gp_hv slot.
+use warnings 'uninitialized';
+"" =~ /$foo{a}${*foo=*bar}$x/;
+EXPECT
+Use of uninitialized value in regexp compilation at - line 5.
+Use of uninitialized value in regexp compilation at - line 5.
+Use of uninitialized value $x in regexp compilation at - line 5.

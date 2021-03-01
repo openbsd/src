@@ -23,6 +23,7 @@ ok $x->inc; # make sure inc=1 is the default
 
 use Pod::Simple;
 *pretty = \&Pod::Simple::BlackBox::pretty;
+*pretty = \&Pod::Simple::BlackBox::pretty;  # avoid 'once' warning
 
 my $found = 0;
 $x->callback(sub {

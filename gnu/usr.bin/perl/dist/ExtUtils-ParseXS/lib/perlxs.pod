@@ -79,6 +79,11 @@ Note: For some extensions, Dave Beazley's SWIG system may provide a
 significantly more convenient mechanism for creating the extension
 glue code.  See L<http://www.swig.org/> for more information.
 
+For simple bindings to C libraries as well as other machine code libraries,
+consider instead using the much simpler
+L<libffi|http://sourceware.org/libffi/> interface via CPAN modules like
+L<FFI::Platypus> or L<FFI::Raw>.
+
 =head2 On The Road
 
 Many of the examples which follow will concentrate on creating an interface
@@ -1743,8 +1748,8 @@ example.
         if( sv_isobject($arg) && (SvTYPE(SvRV($arg)) == SVt_PVMG) )
             $var = ($type)SvIV((SV*)SvRV( $arg ));
         else{
-            warn("${Package}::$func_name() -- " .
-                "$var is not a blessed SV reference");
+            warn(\"${Package}::$func_name() -- \"
+                \"$var is not a blessed SV reference\");
             XSRETURN_UNDEF;
         }
 
@@ -1980,6 +1985,8 @@ all the data that needs to be interpreter-local.
 Always place the START_MY_CXT macro directly after the declaration
 of C<my_cxt_t>.
 
+=for apidoc Amnh||START_MY_CXT
+
 =item MY_CXT_INIT
 
 The MY_CXT_INIT macro initializes storage for the C<my_cxt_t> struct.
@@ -1989,10 +1996,14 @@ are maintaining multiple interpreters, it should be called once in each
 interpreter instance, except for interpreters cloned from existing ones.
 (But see L</MY_CXT_CLONE> below.)
 
+=for apidoc Amnh||MY_CXT_INIT
+
 =item dMY_CXT
 
 Use the dMY_CXT macro (a declaration) in all the functions that access
 MY_CXT.
+
+=for apidoc Amnh||dMY_CXT
 
 =item MY_CXT
 
@@ -2013,6 +2024,14 @@ then use this to access the C<index> member
 C<dMY_CXT> may be quite expensive to calculate, and to avoid the overhead
 of invoking it in each function it is possible to pass the declaration
 onto other functions using the C<aMY_CXT>/C<pMY_CXT> macros, eg
+
+=for apidoc Amnh||_aMY_CXT
+=for apidoc Amnh||aMY_CXT
+=for apidoc Amnh||aMY_CXT_
+=for apidoc Amnh||_pMY_CXT
+=for apidoc Amnh||pMY_CXT
+=for apidoc Amnh||pMY_CXT_
+=for apidoc Amnh||MY_CXT
 
     void sub1() {
 	dMY_CXT;
@@ -2035,6 +2054,8 @@ By default, when a new interpreter is created as a copy of an existing one
 my_cxt_t structure. Calling C<MY_CXT_CLONE> (typically via the package's
 C<CLONE()> function), causes a byte-for-byte copy of the structure to be
 taken, and any future dMY_CXT will cause the copy to be accessed instead.
+
+=for apidoc Amnh||MY_CXT_CLONE
 
 =item MY_CXT_INIT_INTERP(my_perl)
 

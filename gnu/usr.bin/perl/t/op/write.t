@@ -1912,7 +1912,7 @@ like $@, qr'Undefined format',
 # This syntax error used to cause a crash, double free, or a least
 # a bad read.
 # See the long-winded explanation at:
-#   https://rt.perl.org/rt3/Ticket/Display.html?id=43425#txn-1144500
+#   https://github.com/Perl/perl5/issues/8953#issuecomment-543978716
 eval q|
 format =
 @

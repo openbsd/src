@@ -21,7 +21,7 @@ CharClass::Matcher -- Generate C macros that match character classes efficiently
 
 =head1 SYNOPSIS
 
-    perl Porting/regcharclass.pl
+    perl regen/regcharclass.pl
 
 =head1 DESCRIPTION
 
@@ -1581,15 +1581,35 @@ QUOTEMETA: Meta-characters that \Q should quote
 
 MULTI_CHAR_FOLD: multi-char strings that are folded to by a single character
 => UTF8 :safe
-
-# 1 => All folds
-&regcharclass_multi_char_folds::multi_char_folds(1)
+&regcharclass_multi_char_folds::multi_char_folds('u', 'a')
 
 MULTI_CHAR_FOLD: multi-char strings that are folded to by a single character
 => LATIN1 : safe
+&regcharclass_multi_char_folds::multi_char_folds('l', 'a')
 
-&regcharclass_multi_char_folds::multi_char_folds(0)
-# 0 => Latin1-only
+THREE_CHAR_FOLD: A three-character multi-char fold
+=> UTF8 :safe
+&regcharclass_multi_char_folds::multi_char_folds('u', '3')
+
+THREE_CHAR_FOLD: A three-character multi-char fold
+=> LATIN1 :safe
+&regcharclass_multi_char_folds::multi_char_folds('l', '3')
+
+THREE_CHAR_FOLD_HEAD: The first two of three-character multi-char folds
+=> UTF8 :safe
+&regcharclass_multi_char_folds::multi_char_folds('u', 'h')
+
+THREE_CHAR_FOLD_HEAD: The first two of three-character multi-char folds
+=> LATIN1 :safe
+&regcharclass_multi_char_folds::multi_char_folds('l', 'h')
+#
+#THREE_CHAR_FOLD_NON_FINAL: The first or middle character of multi-char folds
+#=> UTF8 :safe
+#&regcharclass_multi_char_folds::multi_char_folds('u', 'fm')
+#
+#THREE_CHAR_FOLD_NON_FINAL: The first or middle character of multi-char folds
+#=> LATIN1 :safe
+#&regcharclass_multi_char_folds::multi_char_folds('l', 'fm')
 
 FOLDS_TO_MULTI: characters that fold to multi-char strings
 => UTF8 :fast

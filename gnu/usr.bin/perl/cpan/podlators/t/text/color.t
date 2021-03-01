@@ -2,13 +2,13 @@
 #
 # Test Pod::Text::Color behavior with various snippets.
 #
-# Copyright 2002, 2004, 2006, 2009, 2012-2013, 2018
+# Copyright 2002, 2004, 2006, 2009, 2012-2013, 2018-2019
 #     Russ Allbery <rra@cpan.org>
 #
 # This program is free software; you may redistribute it and/or modify it
 # under the same terms as Perl itself.
 
-use 5.006;
+use 5.008;
 use strict;
 use warnings;
 

@@ -42,7 +42,7 @@ our @EXPORT_OK  = qw(
 BEGIN {
     # make sure all our XS routines are available early so their prototypes
     # are correctly applied in the following code.
-    our $VERSION = '0.22';
+    our $VERSION = '0.23';
     require XSLoader;
     XSLoader::load();
 }
@@ -115,7 +115,7 @@ Hash::Util - A selection of general-utility hash subroutines
   lock_hash  (%hash);
   unlock_hash(%hash);
 
-  my $hashes_are_randomised = hash_seed() != 0;
+  my $hashes_are_randomised = hash_seed() !~ /^\0+$/;
 
   my $int_hash_value = hash_value( 'string' );
 

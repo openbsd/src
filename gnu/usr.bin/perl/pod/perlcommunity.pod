@@ -16,8 +16,8 @@ way to get involved in the community.
 
 =head2 Where to Find the Community
 
-There is a central directory for the Perl community: L<http://perl.org>
-maintained by the Perl Foundation (L<http://www.perlfoundation.org/>),
+There is a central directory for the Perl community: L<https://perl.org>
+maintained by the Perl Foundation (L<https://www.perlfoundation.org/>),
 which tracks and provides services for a variety of other community sites.
 
 =head2 Mailing Lists and Newsgroups
@@ -25,12 +25,12 @@ which tracks and provides services for a variety of other community sites.
 Perl runs on e-mail; there is no doubt about it. The Camel book was originally
 written mostly over e-mail and today Perl's development is co-ordinated through
 mailing lists. The largest repository of Perl mailing lists is located at
-L<http://lists.perl.org>.
+L<https://lists.perl.org>.
 
 Most Perl-related projects set up mailing lists for both users and
 contributors. If you don't see a certain project listed at
-L<http://lists.perl.org>, check the particular website for that project.
-Most mailing lists are archived at L<http://nntp.perl.org/>.
+L<https://lists.perl.org>, check the particular website for that project.
+Most mailing lists are archived at L<https://www.nntp.perl.org/>.
 
 =head2 IRC
 
@@ -38,10 +38,10 @@ The Perl community has a rather large IRC presence. For starters, it has its
 own IRC network, L<irc://irc.perl.org>. General (not help-oriented) chat can be
 found at L<irc://irc.perl.org/#perl>. Many other more specific chats are also
 hosted on the network. Information about irc.perl.org is located on the
-network's website: L<http://www.irc.perl.org>. For a more help-oriented #perl,
-check out L<irc://irc.freenode.net/#perl>. Perl 6 development also has a
-presence in L<irc://irc.freenode.net/#perl6>. Most Perl-related channels will
-be kind enough to point you in the right direction if you ask nicely.
+network's website: L<https://www.irc.perl.org>. For a more help-oriented #perl,
+check out L<irc://irc.freenode.net/#perl>. Raku development also has a
+presence in L<irc://irc.freenode.net/#raku-dev>. Most Perl-related channels
+will be kind enough to point you in the right direction if you ask nicely.
 
 Any large IRC network (Dalnet, EFnet) is also likely to have a #perl channel,
 with varying activity levels.
@@ -56,7 +56,7 @@ websites, so only a few of the community's largest are mentioned here.
 
 =over 4
 
-=item L<http://perl.com/>
+=item L<https://perl.com/>
 
 Originally run by O'Reilly Media (the publisher of L<the Camel Book|perlbook>,
 this site provides quality articles mostly about technical details of Perl.
@@ -75,26 +75,19 @@ Perlsphere is one of several aggregators of Perl-related blog feeds.
 Perl Weekly is a weekly mailing list that keeps you up to date on conferences,
 releases and notable blog posts.
 
-=item L<http://use.perl.org/>
-
-use Perl; used to provide a slashdot-style news/blog website covering all
-things Perl, from minutes of the meetings of the Perl 6 Design team to
-conference announcements with (ir)relevant discussion. It no longer accepts
-updates, but you can still use the site to read old entries and comments.
-
 =back
 
 =head3 Forums
 
 =over 4
 
-=item L<http://www.perlmonks.org/>
+=item L<https://www.perlmonks.org/>
 
 PerlMonks is one of the largest Perl forums, and describes itself as "A place
 for individuals to polish, improve, and showcase their Perl skills." and "A
 community which allows everyone to grow and learn from each other."
 
-=item L<http://stackoverflow.com/>
+=item L<https://stackoverflow.com/>
 
 Stack Overflow is a free question-and-answer site for programmers. It's not
 focussed solely on Perl, but it does have an active group of users who do
@@ -116,7 +109,7 @@ hackathons; and provides a mailing list or other continual contact method for
 its members to keep in touch.
 
 To find your local Perl Mongers (or PM as they're commonly abbreviated) group
-check the international Perl Mongers directory at L<http://www.pm.org/>.
+check the international Perl Mongers directory at L<https://www.pm.org/>.
 
 =head2 Workshops
 
@@ -147,27 +140,42 @@ because someone will forget.
 
 =head2 Conventions
 
-Perl has two major annual conventions: The Perl Conference (now part of OSCON),
+Perl had two major annual conventions: The Perl Conference (now part of OSCON),
 put on by O'Reilly, and Yet Another Perl Conference or YAPC (pronounced
 yap-see), which is localized into several regional YAPCs (North America,
-Europe, Asia) in a stunning grassroots display by the Perl community. For more
-information about either conference, check out their respective web pages:
-OSCON L<http://conferences.oreillynet.com/>; YAPC L<http://www.yapc.org>.
+Europe, Asia) in a stunning grassroots display by the Perl community.
 
-A relatively new conference franchise with a large Perl portion is the
-Open Source Developers Conference or OSDC. First held in Australia it has
-recently also spread to Israel and France. More information can be found at:
-L<http://www.osdc.com.au/> for Australia, L<http://www.osdc.org.il>
-for Israel, and L<http://www.osdc.fr/> for France.
+In 2016, YAPC was rebranded as The Perl Conference again. It is now referred
+to as The Perl and Raku Conference.
+
+OSCON had been discontinued.
+
+For more information about either conference, check out their respective web
+pages:
+
+=over 4
+
+=item * The Perl Conference
+
+L<http://perlconference.us/>.
+
+=item * OSCON
+
+L<https://www.oreilly.com/conferences/>
+
+=back
+
+An additional conference franchise with a large Perl portion was the
+Open Source Developers Conference or OSDC. First held in Australia, it
+also spread to Israel and France. More information can be found at:
+L<http://www.osdc.org.il> for Israel, and L<http://www.osdc.fr/> for France.
 
 =head2 Calendar of Perl Events
 
 The Perl Review, L<http://www.theperlreview.com> maintains a website
-and Google calendar
-(L<http://www.theperlreview.com/community_calendar>) for tracking
-workshops, hackathons, Perl Mongers meetings, and other events. Views
-of this calendar are at L<http://www.perl.org/events.html> and
-L<http://www.yapc.org>.
+and Google calendar for tracking
+workshops, hackathons, Perl Mongers meetings, and other events. A view
+of this calendar is available at L<https://www.perl.org/events.html>.
 
 Not every event or Perl Mongers group is on that calendar, so don't lose
 heart if you don't see yours posted. To have your event or group listed,

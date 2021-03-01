@@ -1400,7 +1400,7 @@ do_spawn3(pTHX_ char *cmd, int execf, int flag)
 	goto doshell;
 
     for (s = cmd; *s; s++) {
-	if (*s != ' ' && !isALPHA(*s) && strchr("$&*(){}[]'\";\\|?<>~`\n",*s)) {
+	if (*s != ' ' && !isALPHA(*s) && memCHRs("$&*(){}[]'\";\\|?<>~`\n",*s)) {
 	    if (*s == '\n' && s[1] == '\0') {
 		*s = '\0';
 		break;

@@ -195,10 +195,8 @@ SKIP: {
         # Going to try to switch away from root.  Might not work.
         my $olduid = $>;
         eval { $> = 1; };
-	skip "Can't test if an admin user in miniperl", 2,
-	  if $Is_Cygwin && is_miniperl();
         skip "Can't test -r or -w meaningfully if you're superuser", 2
-          if ($> == 0);
+          if ($Is_Cygwin ? _ingroup(544, 1) : $> == 0);
 
         SKIP: {
             skip "Can't test -r meaningfully?", 1 if $Is_Dos;
@@ -649,4 +647,18 @@ SKIP: {
 END {
     chmod 0666, $tmpfile;
     unlink_all $tmpfile;
+}
+
+sub _ingroup {
+    my ($gid, $eff)   = @_;
+
+    $^O eq "VMS"    and return $_[0] == $);
+
+    my ($egid, @supp) = split " ", $);
+    my ($rgid)        = split " ", $(;
+
+    $gid == ($eff ? $egid : $rgid)  and return 1;
+    grep $gid == $_, @supp          and return 1;
+
+    return "";
 }

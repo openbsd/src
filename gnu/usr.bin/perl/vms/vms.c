@@ -523,7 +523,7 @@ copy_expand_unix_filename_escape(char *outspec, const char *inspec, int *output_
         /* Don't escape again if following character is 
          * already something we escape.
          */
-        if (strchr(".!#&\'`()+@{},;[]%^=_\\", *(inspec+1))) {
+        if (memCHRs(".!#&\'`()+@{},;[]%^=_\\", *(inspec+1))) {
 	    *outspec = *inspec;
 	    *output_cnt = 1;
 	    return 1;
@@ -3311,7 +3311,7 @@ pipe_tochild1_ast(pPipe p)
             p->shut_on_empty = TRUE;
             b->eof     = TRUE;
             _ckvmssts_noperl(sys$dassgn(p->chan_in));
-        } else  {
+        } else {
             _ckvmssts_noperl(iss);
         }
 
@@ -5013,7 +5013,7 @@ vms_rename_with_acl(pTHX_ const struct dsc$descriptor_s * vms_src_dsc,
 		    const struct dsc$descriptor_s * vms_dst_dsc,
 		    unsigned long flags)
 {
-    /*  VMS and UNIX handle file permissions differently and the
+    /* VMS and UNIX handle file permissions differently and
      * the same ACL trick may be needed for renaming files,
      * especially if they are directories.
      */
@@ -5276,7 +5276,7 @@ Perl_rename(pTHX_ const char *src, const char * dst)
 
     /* Originally the idea was to call the CRTL rename() and only
      * try the lib$rename_file if it failed.
-     * It turns out that there are too many variants in what the
+     * It turns out that there are too many variants in what
      * the CRTL rename might do, so only use lib$rename_file
      */
     retval = -1;
@@ -8799,7 +8799,7 @@ int_tovmsspec(const char *path, char *rslt, int dir_flag, int * utf8_flag)
         /* Don't escape again if following character is 
          * already something we escape.
          */
-        if (strchr("\"`!#%^&()=+\'@[]{}:\\|<>_.", *(cp2+1))) {
+        if (memCHRs("\"`!#%^&()=+\'@[]{}:\\|<>_.", *(cp2+1))) {
 	    *(cp1++) = *(cp2++);
 	    break;
         }
@@ -9755,7 +9755,7 @@ vms_image_init(int *argcp, char ***argvp)
       for (cp = av[i]+1; *cp; cp++) {
         if (*cp == 'T') { will_taint = 1; break; }
         else if ( (*cp == 'd' || *cp == 'V') && *(cp+1) == ':' ||
-                  strchr("DFIiMmx",*cp)) break;
+                  memCHRs("DFIiMmx",*cp)) break;
       }
       if (will_taint) break;
     }
@@ -11800,7 +11800,7 @@ encode_dev (pTHX_ const char *dev)
   enc = 0;
   f = 1;
   i = 0;
-  for (q = dev + strlen(dev); q--; q >= dev) {
+  for (q = dev + strlen(dev); q >= dev; q--) {
     if (*q == ':')
 	break;
     if (isdigit (*q))

@@ -8,7 +8,7 @@ BEGIN {
 use strict;
 use Pod::Simple::Search;
 use Test;
-BEGIN { plan tests => 13 }
+BEGIN { plan tests => 15 }
 
 print "# ", __FILE__,
  ": Testing the scanning of several docroots...\n";
@@ -80,17 +80,17 @@ require $ascii_order;
 {
 print "# won't show any shadows, since we're just looking at the name2where keys\n";
 my $names = join "|", sort ascii_order keys %$name2where;
-skip $^O eq 'VMS' ? '-- case may or may not be preserved' : 0, 
-     $names, 
-     "Blorm|Suzzle|Zonk::Pronk|hinkhonk::Glunk|hinkhonk::Vliff|perlflif|perlthng|perlzuk|squaa|squaa::Glunk|squaa::Vliff|squaa::Wowo|zikzik";
+skip $^O eq 'VMS' ? '-- case may or may not be preserved' : 0,
+     $names,
+     "Blorm|Suzzle|Zonk::Pronk|hinkhonk::Glunk|hinkhonk::Vliff|perlflif|perlthng|perlzoned|perlzuk|squaa|squaa::Glunk|squaa::Vliff|squaa::Wowo|zikzik";
 }
 
 {
 print "# but here we'll see shadowing:\n";
 my $names = join "|", sort ascii_order values %$where2name;
-skip $^O eq 'VMS' ? '-- case may or may not be preserved' : 0, 
-     $names, 
-     "Blorm|Suzzle|Zonk::Pronk|hinkhonk::Glunk|hinkhonk::Glunk|hinkhonk::Vliff|hinkhonk::Vliff|perlflif|perlthng|perlthng|perlzuk|squaa|squaa::Glunk|squaa::Vliff|squaa::Vliff|squaa::Vliff|squaa::Wowo|zikzik";
+skip $^O eq 'VMS' ? '-- case may or may not be preserved' : 0,
+     $names,
+     "Blorm|Suzzle|Zonk::Pronk|hinkhonk::Glunk|hinkhonk::Glunk|hinkhonk::Vliff|hinkhonk::Vliff|perlflif|perlthng|perlthng|perlzoned|perlzuk|squaa|squaa::Glunk|squaa::Vliff|squaa::Vliff|squaa::Vliff|squaa::Wowo|zikzik";
 
 my %count;
 for(values %$where2name) { ++$count{$_} };
@@ -120,7 +120,9 @@ skip $^O eq 'VMS' ? '-- case may or may not be preserved' : 0,
     ($name2where->{'squaa::Wowo'}  || 'huh???'), 
     '/testlib2/';
 
-
+my $in_pods = $x->find('perlzoned', $here2);
+ok $in_pods, qr{^\Q$here2\E};
+ok $in_pods, qr{perlzoned.pod$};
 
 print "# OK, bye from ", __FILE__, "\n";
 ok 1;

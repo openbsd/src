@@ -17,11 +17,122 @@ Consult your favorite dictionary for details.
 
 =head1 EPIGRAPHS
 
+=head2 v5.33.6 - Edward R. Murrow
+
+L<Announced on 2021-01-20 by Richard Leach|https://www.nntp.perl.org/group/perl.perl5.porters/2021/01/msg258843.html>
+
+This instrument can teach, it can illuminate; yes, and it can even
+inspire. But it can do so only to the extent that humans are determined
+to use it to those ends. Otherwise it is merely wires and lights in a box.
+
+=head2 v5.33.5 - Max Weber, (from "Understanding Administration", by Wolfgang Seibel)
+
+L<Announced on 2020-12-20 by Max Maischein|https://www.nntp.perl.org/group/perl.perl5.porters/2020/12/msg258683.html>
+
+Authority is primarily: Administration
+    -- Max Weber
+
+=head2 v5.33.4 - George Eliot, "Adam Bede"
+
+L<Announced on 2020-11-20 by Tom Hukins|https://www.nntp.perl.org/group/perl.perl5.porters/2020/11/msg258597.html>
+
+It was more than two o'clock in the afternoon when Adam came in sight of
+the grey town on the hill-side and looked searchingly towards the green
+valley below, for the first glimpse of the old thatched roof near the
+ugly red mill.
+
+=head2 v5.33.3 - Ludwig van Beethoven, "Heiligenstadt Testament"; translated and quoted in: Maynard Solomon, "Beethoven"
+
+L<Announced on 2020-10-20 by Steve Hay|https://www.nntp.perl.org/group/perl.perl5.porters/2020/10/msg258502.html>
+
+Oh you men who think or say that I am malevolent, stubborn, or
+misanthropic, how greatly do you wrong me.  You do not know the secret
+cause which makes me seem that way to you.  From childhood on, my
+heart and soul have been full of the tender feeling of goodwill, and I
+was ever inclined to accomplish great things.  But, think that for six
+years now I have been hopelessly afflicted, made worse by senseless
+physicians, from year to year deceived with hopes of improvement,
+finally compelled to face the prospect of a lasting malady (whose cure
+will take years or, perhaps, be impossible).  Though born with a
+fiery, active temperament, even susceptible to the diversions of
+society, I was soon compelled to withdraw myself, to live life alone.
+[...] I endured this wretched existence--truly wretched for so
+susceptible a body, which can be thrown by a sudden change from the
+best condition to the very worst.--Patience, they say, is what I must
+now choose for my guide, and I have done so--I hope my determination
+will remain firm to endure until it pleases the inexorable Parcae to
+break the thread. [...] Recommend virtue to your children; it alone,
+not money, can make them happy.  I speak from experience; this was
+what upheld me in time of misery. [...] Do not wholly forget me when I
+am dead; I deserve this from you, for during my lifetime I was
+thinking of you often and of ways to make you happy--please be so--
+
+=head2 v5.33.2 - Elizabeth Warren
+
+L<Announced on 2020-09-20 by Sawyer X|https://www.nntp.perl.org/group/perl.perl5.porters/2020/09/msg258369.html>
+
+  What I've learned is that real change is very, very hard. But I've
+  also learned that change is possible - if you fight for it.
+
+=head2 v5.33.1 - Aleksandr Solzhenitsyn, The Gulag Archipelago 1918-1956 (1973)
+
+L<Announced on 2020-08-20 by Karen Etheridge|https://www.nntp.perl.org/group/perl.perl5.porters/2020/08/msg258282.html>
+
+  If only there were evil people somewhere insidiously committing evil deeds,
+  and it were necessary only to separate them from the rest of us and destroy
+  them. But the line dividing good and evil cuts through the heart of every
+  human being. And who is willing to destroy a piece of his own heart?
+
+=head2 v5.33.0 - Confucius, "Confucius: The Analects"
+
+L<Announed on 2020-07-17 by Sawyer X|https://www.nntp.perl.org/group/perl.perl5.porters/2020/07/msg258033.html>
+
+  The man who moves a mountain begins by carrying away small stones.
+
+=head2 v5.32.1-RC1 - Mikhail Bulgakov, trans. Michael Glenny, "The Heart of a Dog"
+
+L<Announced on 2021-01-09 by Steve Hay|https://www.nntp.perl.org/group/perl.perl5.porters/2021/01/msg258762.html>
+
+Why bother to learn to read when you can smell meat a mile away?  If you
+live in Moscow, though, and if you've got an ounce of brain in your head
+you can't help learning to read - and without going to night-school
+either.  There are forty-thousand dogs in Moscow and I'll bet there's
+not one of them so stupid he can't spell out the word 'sausage'.
+
+=head2 v5.32.0 - Bob Dylan, "The Times They Are A Changing"
+
+L<Announced on 2020-06-20 by Sawyer X|https://www.nntp.perl.org/group/perl.perl5.porters/2020/06/msg257547.html>
+
+    Come gather 'round, people
+    Wherever you roam
+    And admit that the waters
+    Around you have grown
+    And accept it that soon
+    You'll be drenched to the bone
+    If your time to you is worth savin'
+    And you better start swimmin'
+    Or you'll sink like a stone
+    For the times they are a-changin'
+
+=head2 v5.32.0-RC1 - Coretta Scott King
+
+L<Announced on 2020-06-08 by Sawyer X|https://www.nntp.perl.org/group/perl.perl5.porters/2020/06/msg257521.html>
+
+    Struggle is a never ending process. Freedom is never really won,
+    you earn it and win it in every generation.
+
+=head2 v5.32.0-RC0 - Franz Kafka
+
+L<Announced on 2020-05-30 by Sawyer X|https://www.nntp.perl.org/group/perl.perl5.porters/2020/05/msg257486.html>
+
+    There are some things one can only achieve by a deliberate leap
+    in the opposite direction.
+
 =head2 v5.31.11 - John F. Kennedy, National Committee for a Sane Nuclear Policy
 
 L<Announced on 2020-04-28 by Sawyer X|https://www.nntp.perl.org/group/perl.perl5.porters/2020/04/msg257385.html>
 
-Mankind must put an end to war, or war will put an end to mankind.
+    Mankind must put an end to war, or war will put an end to mankind.
 
 =head2 v5.31.10 - Christina Rossetti, "Remember"
 
@@ -243,6 +354,17 @@ L<Announced on 2019-05-24 by Sawyer X|https://www.nntp.perl.org/group/perl.perl5
 
   The secrets inside her mind are like flowers in a garden at
   nighttime, filling the darkness with perfume.
+
+=head2 v5.30.3 - Ben Aaronovitch, "Rivers of London"
+
+L<Announced on 2020-06-01 by Steve Hay|http://www.nntp.perl.org/group/perl.perl5.porters/2020/01/msg257498.html>
+
+Trewsbury Mead [...] According to the Ordnance Survey, this is where the
+Thames first rises 130 straight-line kilometres west of London.  Just to
+the north is the site either of an Iron Age hill fort or a Roman
+encampment, the exact nature of which is awaiting an episode of Time
+Team.  Apparently there is a soggy field, a stone to mark the spot and a
+chance, after a particularly wet winter, that you might see some water.
 
 =head2 v5.30.2 - Francesco Maria Piave, trans. Deutsche Grammophon GmbH, "La traviata", Act II, Scene 2
 
@@ -634,6 +756,16 @@ L<Announced on 2018-07-20 by Steve Hay|https://www.nntp.perl.org/group/perl.perl
 L<Announced on 2018-06-26 by Sawyer X|http://nntp.perl.org/group/perl.perl5.porters/251297>
 
   Courage is the only antidote for danger.
+
+=head2 v5.28.3 - Ben Aaronovitch, "Rivers of London"
+
+L<Announced on 2020-06-01 by Steve Hay|http://www.nntp.perl.org/group/perl.perl5.porters/2020/01/msg257497.html>
+
+The north end of the London Borough of Camden is dominated by two hills,
+Hampstead on the west, Highgate on the east, with the Heath, one of the
+largest parks in London, slung between them like a green saddle.  From
+these heights the land slopes down towards the River Thames and the
+floodplains that lurk below the built-up centre of London.
 
 =head2 v5.28.2 - Edward Lear, ed. Vivien Noakes, "The Complete Nonsense and Other Verse": The Jumblies
 

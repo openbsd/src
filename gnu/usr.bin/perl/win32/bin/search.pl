@@ -1169,7 +1169,7 @@ Note that in the case of these examples, the
 (list whole-words only) option would be useful.
 .PP
 Normally, various kinds of files are automatically removed from consideration.
-If it has has a certain ending (such as ".tar", ".Z", ".o", .etc), or if
+If it has a certain ending (such as ".tar", ".Z", ".o", .etc), or if
 the beginning of the file looks like a binary, it'll be excluded.
 You can control exactly how this works -- see below. One quick way to
 override this is to use the
@@ -1194,7 +1194,7 @@ add
 .fi
 (among others) to exclude those kinds of files (which you probably want to
 skip when searching for text, as is normal).
-Files that look to be be binary will also be excluded.
+Files that look to be binary will also be excluded.
 
 Files ending with "#" and "~" will also be excluded unless the
 .B -x~

@@ -1029,7 +1029,7 @@ use constant {
 
 unless ($Config{useithreads}) {
     # These end up as copies in pads under ithreads, which rather defeats the
-    # the point of what we're trying to test here.
+    # point of what we're trying to test here.
 
     do_test('regular string constant', perl,
 'SV = PV\\($ADDR\\) at $ADDR
@@ -1465,7 +1465,7 @@ dumpindent is 4 at -e line 1.
      REFCNT = 1
      |   
 2    +--enter OP(0xNNN) ===> 3 [nextstate 0xNNN]
-     |   FLAGS = (UNKNOWN,SLABBED,MORESIB)
+     |   FLAGS = (VOID,SLABBED,MORESIB)
      |   
 3    +--nextstate COP(0xNNN) ===> 4 [pushmark 0xNNN]
      |   FLAGS = (VOID,SLABBED,MORESIB)

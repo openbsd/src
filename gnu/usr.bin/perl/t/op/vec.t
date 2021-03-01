@@ -10,6 +10,7 @@ use Config;
 
 plan(tests => 78);
 
+my $exception_134139 = "Use of strings with code points over 0xFF as arguments to vec is forbidden";
 
 is(vec($foo,0,1), 0);
 is(length($foo), undef);
@@ -65,18 +66,14 @@ $x = substr $foo, 1;
 is(vec($x, 0, 8), 255);
 $@ = undef;
 {
-    no warnings 'deprecated';
+    local $@;
     eval { vec($foo, 1, 8) };
-    ok(! $@);
+    like($@, qr/$exception_134139/,
+        "Caught exception: code point over 0xFF used as argument to vec");
     $@ = undef;
     eval { vec($foo, 1, 8) = 13 };
-    ok(! $@);
-    if ($::IS_EBCDIC) {
-        is($foo, "\x8c\x0d\xff\x8a\x69");
-    }
-    else {
-        is($foo, "\xc4\x0d\xc3\xbf\xc3\xbe");
-    }
+    like($@, qr/$exception_134139/,
+        "Caught exception: code point over 0xFF used as argument to vec");
 }
 $foo = "\x{100}" . "\xff\xfe";
 $x = substr $foo, 1;
@@ -243,4 +240,14 @@ like($@, qr/^Modification of a read-only value attempted at /,
     is($v, 0, "RT131083 rval ~0");
     $v = eval { RT131083(1, vec($s, $off, 8)); };
     like($@, qr/Out of memory!/, "RT131083 lval ~0");
+}
+
+{
+    # Adapting test formerly in t/lib/warnings/doop
+
+    local $@;
+    my $foo = "\x{100}" . "\xff\xfe";
+    eval { vec($foo, 1, 8) };
+    like($@, qr/$exception_134139/,
+        "RT 134139: Use of strings with code points over 0xFF as arguments to 'vec' is now forbidden");
 }

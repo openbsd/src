@@ -1,5 +1,5 @@
-# DerivedDecompositionType-12.1.0.txt
-# Date: 2019-04-01, 09:10:21 GMT
+# DerivedDecompositionType-13.0.0.txt
+# Date: 2019-09-08, 23:31:06 GMT
 # © 2019 Unicode®, Inc.
 # Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
@@ -257,11 +257,12 @@ FB46..FB4E    ; Canonical # Lo   [9] HEBREW LETTER TSADI WITH DAGESH..HEBREW LET
 114BB..114BC  ; Canonical # Mc   [2] TIRHUTA VOWEL SIGN AI..TIRHUTA VOWEL SIGN O
 114BE         ; Canonical # Mc       TIRHUTA VOWEL SIGN AU
 115BA..115BB  ; Canonical # Mc   [2] SIDDHAM VOWEL SIGN O..SIDDHAM VOWEL SIGN AU
+11938         ; Canonical # Mc       DIVES AKURU VOWEL SIGN O
 1D15E..1D164  ; Canonical # So   [7] MUSICAL SYMBOL HALF NOTE..MUSICAL SYMBOL ONE HUNDRED TWENTY-EIGHTH NOTE
 1D1BB..1D1C0  ; Canonical # So   [6] MUSICAL SYMBOL MINIMA..MUSICAL SYMBOL FUSA BLACK
 2F800..2FA1D  ; Canonical # Lo [542] CJK COMPATIBILITY IDEOGRAPH-2F800..CJK COMPATIBILITY IDEOGRAPH-2FA1D
 
-# Total code points: 13232
+# Total code points: 13233
 
 # ================================================
 
@@ -438,8 +439,9 @@ FB29          ; Font # Sm       HEBREW LETTER ALTERNATIVE PLUS SIGN
 1EEA1..1EEA3  ; Font # Lo   [3] ARABIC MATHEMATICAL DOUBLE-STRUCK BEH..ARABIC MATHEMATICAL DOUBLE-STRUCK DAL
 1EEA5..1EEA9  ; Font # Lo   [5] ARABIC MATHEMATICAL DOUBLE-STRUCK WAW..ARABIC MATHEMATICAL DOUBLE-STRUCK YEH
 1EEAB..1EEBB  ; Font # Lo  [17] ARABIC MATHEMATICAL DOUBLE-STRUCK LAM..ARABIC MATHEMATICAL DOUBLE-STRUCK GHAIN
+1FBF0..1FBF9  ; Font # Nd  [10] SEGMENTED DIGIT ZERO..SEGMENTED DIGIT NINE
 
-# Total code points: 1184
+# Total code points: 1194
 
 # ================================================
 
@@ -861,9 +863,10 @@ A69C..A69D    ; Super # Lm   [2] MODIFIER LETTER CYRILLIC HARD SIGN..MODIFIER LE
 A770          ; Super # Lm       MODIFIER LETTER US
 A7F8..A7F9    ; Super # Lm   [2] MODIFIER LETTER CAPITAL H WITH STROKE..MODIFIER LETTER SMALL LIGATURE OE
 AB5C..AB5F    ; Super # Lm   [4] MODIFIER LETTER SMALL HENG..MODIFIER LETTER SMALL U WITH LEFT HOOK
+AB69          ; Super # Lm       MODIFIER LETTER SMALL TURNED W
 1F16A..1F16C  ; Super # So   [3] RAISED MC SIGN..RAISED MR SIGN
 
-# Total code points: 153
+# Total code points: 154
 
 # ================================================
 

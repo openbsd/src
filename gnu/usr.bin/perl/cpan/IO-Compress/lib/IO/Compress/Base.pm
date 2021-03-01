@@ -6,7 +6,7 @@ require 5.006 ;
 use strict ;
 use warnings;
 
-use IO::Compress::Base::Common 2.084 ;
+use IO::Compress::Base::Common 2.093 ;
 
 use IO::File (); ;
 use Scalar::Util ();
@@ -20,7 +20,7 @@ use Symbol();
 our (@ISA, $VERSION);
 @ISA    = qw(IO::File Exporter);
 
-$VERSION = '2.084';
+$VERSION = '2.093';
 
 #Can't locate object method "SWASHNEW" via package "utf8" (perhaps you forgot to load "utf8"?) at .../ext/Compress-Zlib/Gzip/blib/lib/Compress/Zlib/Common.pm line 16.
 
@@ -1020,6 +1020,12 @@ IO::Compress::Base - Base Class for IO::Compress modules
 
 This module is not intended for direct use in application code. Its sole
 purpose is to be sub-classed by IO::Compress modules.
+
+=head1 SUPPORT
+
+General feedback/questions/bug reports should be sent to 
+L<https://github.com/pmqs/IO-Compress/issues> (preferred) or
+L<https://rt.cpan.org/Public/Dist/Display.html?Name=IO-Compress>.
 
 =head1 SEE ALSO
 

@@ -10,7 +10,7 @@ use warnings ;
 use bytes ;
 our ($VERSION, $XS_VERSION, @ISA, @EXPORT, %EXPORT_TAGS, @EXPORT_OK, $AUTOLOAD, %DEFLATE_CONSTANTS, @DEFLATE_CONSTANTS);
 
-$VERSION = '2.084';
+$VERSION = '2.093';
 $XS_VERSION = $VERSION; 
 $VERSION = eval $VERSION;
 
@@ -1556,6 +1556,12 @@ C<IO::Compress::RawDeflate>.
 
 All the I<zlib> constants are automatically imported when you make use
 of I<Compress::Raw::Zlib>.
+
+=head1 SUPPORT
+
+General feedback/questions/bug reports should be sent to 
+L<https://github.com/pmqs/Compress-Raw-Zlib/issues> (preferred) or
+L<https://rt.cpan.org/Public/Dist/Display.html?Name=Compress-Raw-Zlib>.
 
 =head1 SEE ALSO
 

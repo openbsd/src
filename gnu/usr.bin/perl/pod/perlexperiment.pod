@@ -26,12 +26,12 @@ Using this feature triggers warnings in the category
 C<experimental::smartmatch>.
 
 The ticket for this feature is
-L<[perl #119317]|https://rt.perl.org/rt3/Ticket/Display.html?id=119317>.
+L<[perl #13173]|https://github.com/Perl/perl5/issues/13173>.
 
 =item Pluggable keywords
 
 The ticket for this feature is
-L<[perl #119455]|https://rt.perl.org/rt3/Ticket/Display.html?id=119455>.
+L<[perl #13199]|https://github.com/Perl/perl5/issues/13199>.
 
 See L<perlapi/PL_keyword_plugin> for the mechanism.
 
@@ -42,7 +42,7 @@ Introduced in Perl 5.11.2
 Introduced in Perl 5.18
 
 The ticket for this feature is
-L<[perl #119451]|https://rt.perl.org/rt3/Ticket/Display.html?id=119451>.
+L<[perl #13197]|https://github.com/Perl/perl5/issues/13197>.
 
 See also: L<perlrecharclass/Extended Bracketed Character Classes>
 
@@ -57,7 +57,7 @@ Using this feature triggers warnings in the category
 C<experimental::signatures>.
 
 The ticket for this feature is
-L<[perl #121481]|https://rt.perl.org/Ticket/Display.html?id=121481>.
+L<[perl #13681]|https://github.com/Perl/perl5/issues/13681>.
 
 =item Aliasing via reference
 
@@ -67,7 +67,7 @@ Using this feature triggers warnings in the category
 C<experimental::refaliasing>.
 
 The ticket for this feature is
-L<[perl #122947]|https://rt.perl.org/rt3/Ticket/Display.html?id=122947>.
+L<[perl #14150]|https://github.com/Perl/perl5/issues/14150>.
 
 See also: L<perlref/Assigning to References>
 
@@ -79,7 +79,7 @@ Using this feature triggers warnings in the category
 C<experimental::const_attr>.
 
 The ticket for this feature is
-L<[perl #123630]|https://rt.perl.org/rt3/Ticket/Display.html?id=123630>.
+L<[perl #14428]|https://github.com/Perl/perl5/issues/14428>.
 
 See also: L<perlsub/Constant Functions>
 
@@ -95,9 +95,9 @@ See L<re/'strict' mode>
 =item The <:win32> IO pseudolayer
 
 The ticket for this feature is
-L<[perl #119453]|https://rt.perl.org/rt3/Ticket/Display.html?id=119453>.
+L<[perl #13198]|https://github.com/Perl/perl5/issues/13198>.
 
-See also L<perlrun>
+See also L<perlrun/PERLIO>
 
 =item Declaring a reference to a variable
 
@@ -107,34 +107,25 @@ Using this feature triggers warnings in the category
 C<experimental::declared_refs>.
 
 The ticket for this feature is
-L<[perl #128654]|https://rt.perl.org/rt3/Ticket/Display.html?id=128654>.
+L<[perl #15458]|https://github.com/Perl/perl5/issues/15458>.
 
 See also: L<perlref/Declaring a Reference to a Variable>
 
 =item There is an C<installhtml> target in the Makefile.
 
 The ticket for this feature is
-L<[perl #116487]|https://rt.perl.org/rt3/Ticket/Display.html?id=116487>.
+L<[perl #12726]|https://github.com/Perl/perl5/issues/12726>.
 
-=item Unicode in Perl on EBCDIC
+=item (Limited) Variable-length look-behind
 
-=item Script runs
-
-Introduced in Perl 5.28.0
-
-Using this feature triggers warnings in the category
-C<experimental::script_run>.
-
-See also: L<perlre/Script Runs>
-
-=item Alphabetic assertions
-
-Introduced in Perl 5.28.0
+Introduced in Perl 5.30.0.  Variability of up to 255 characters is
+handled.
 
 Using this feature triggers warnings in the category
-C<experimental::alpha_assertions>.
+C<experimental::vlb>.
 
-See also: L<perlre/Extended Patterns>.
+See also: L<perlre/(*positive_lookbehind:I<pattern>)> and
+L<perlre/(*negative_lookbehind:I<pattern>)>
 
 =back
 
@@ -232,7 +223,7 @@ Accepted in Perl 5.20.0
 
 =item The <:pop> IO pseudolayer
 
-See also L<perlrun>
+See also L<perlrun/PERLIO>
 
 Accepted in Perl 5.20.0
 
@@ -257,6 +248,18 @@ Accepted in Perl 5.26.0
 Introduced in Perl 5.22.0
 
 Accepted in Perl 5.28.0
+
+=item Alphabetic assertions
+
+Introduced in Perl 5.28.0
+
+Accepted in Perl 5.32.0
+
+=item Script runs
+
+Introduced in Perl 5.28.0
+
+Accepted in Perl 5.32.0
 
 =back
 

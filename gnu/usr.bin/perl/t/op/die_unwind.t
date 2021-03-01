@@ -69,4 +69,8 @@ is($uerr, "t3\n");
 is($val, undef, "undefined return value from 'eval' block with 'die'");
 is($err, "t3\n");
 
+fresh_perl_like(<<'EOS', qr/Custom Message During Global Destruction/, { switches => ['-w'], stderr => 1 } );
+package Foo; sub DESTROY { die "Custom Message During Global Destruction" }; package main; our $wut = bless [], "Foo"
+EOS
+
 done_testing();

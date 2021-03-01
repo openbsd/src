@@ -5,7 +5,7 @@ use strict;
 use Carp ();
 use Pod::Simple ();
 use vars qw( $ATTR_PAD @ISA $VERSION $SORT_ATTRS);
-$VERSION = '3.35';
+$VERSION = '3.40';
 BEGIN {
   @ISA = ('Pod::Simple');
   *DEBUG = \&Pod::Simple::DEBUG unless defined &DEBUG;

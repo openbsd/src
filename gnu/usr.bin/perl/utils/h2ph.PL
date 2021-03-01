@@ -1,5 +1,8 @@
 #!/usr/local/bin/perl
 
+use strict;
+use warnings;
+
 use Config;
 use File::Basename qw(basename dirname);
 use Cwd;
@@ -14,9 +17,9 @@ use Cwd;
 
 # This forces PL files to create target in same directory as PL file.
 # This is so that make depend always knows where to find PL derivatives.
-$origdir = cwd;
+my $origdir = cwd;
 chdir dirname($0);
-$file = basename($0, '.PL');
+my $file = basename($0, '.PL');
 $file .= '.com' if $^O eq 'VMS';
 
 open OUT, '>', $file or die "Can't create $file: $!";
@@ -573,7 +576,7 @@ sub next_line
                 $in =~ s/\?\?</{/g;                         # | ??<|  {|
                 $in =~ s/\?\?>/}/g;                         # | ??>|  }|
             }
-	    if ($in =~ s/^\#ifdef __LANGUAGE_PASCAL__//) {
+	    if ($in =~ /^\#ifdef __LANGUAGE_PASCAL__/) {
 		# Tru64 disassembler.h evilness: mixed C and Pascal.
 		while (<IN>) {
 		    last if /^\#endif/;
@@ -581,8 +584,8 @@ sub next_line
 		$in = "";
 		next READ;
 	    }
-	    # Skip inlined functions in headers
-	    if ($in =~ s/^(extern|static) (__inline__|inline) .*[^;]\s*$//) {
+	    if ($in =~ /^extern inline / && # Inlined assembler.
+		$^O eq 'linux' && $file =~ m!(?:^|/)asm/[^/]+\.h$!) {
 		while (<IN>) {
 		    last if /^}/;
 		}

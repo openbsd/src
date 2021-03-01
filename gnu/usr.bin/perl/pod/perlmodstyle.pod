@@ -182,9 +182,9 @@ been done in Perl, and avoid re-inventing the wheel unless you have a
 good reason.
 
 Good places to look for pre-existing modules include
-L<http://search.cpan.org/> and L<https://metacpan.org>
+L<MetaCPAN|https://metacpan.org> and L<PrePAN|http://prepan.org>
 and asking on C<module-authors@perl.org>
-(L<http://lists.perl.org/list/module-authors.html>).
+(L<https://lists.perl.org/list/module-authors.html>).
 
 If an existing module B<almost> does what you want, consider writing a
 patch, writing a subclass, or otherwise extending the existing module
@@ -255,7 +255,7 @@ developers.
 You should also try to get feedback from people who are already familiar
 with the module's application domain and the CPAN naming system.  Authors
 of similar modules, or modules with similar names, may be a good place to
-start, as are community sites like L<Perl Monks|http://www.perlmonks.org>.
+start, as are community sites like L<Perl Monks|https://www.perlmonks.org>.
 
 =head1 DESIGNING AND WRITING YOUR MODULE
 
@@ -798,7 +798,7 @@ L<ExtUtils::MakeMaker>, L<Module::Build>
 
 L<Test::Simple>, L<Test::Inline>, L<Carp::Assert>, L<Test::More>, L<Test::MockObject>
 
-=item L<http://pause.perl.org/>
+=item L<https://pause.perl.org/>
 
 Perl Authors Upload Server.  Contains links to information for module
 authors.

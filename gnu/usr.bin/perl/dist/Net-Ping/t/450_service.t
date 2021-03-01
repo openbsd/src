@@ -78,8 +78,7 @@ is($p->ping("127.0.0.1"), 1, 'first port is reachable');
 $p->{port_num} = $port2;
 
 {
-    local $TODO;
-    $TODO = "Believed not to work on $^O" if $^O eq 'hpux' || $^O eq 'os390';
+    local $TODO = "Believed not to work on $^O" if $^O =~ /^(?:hpux|os390|freebsd)$/;
     is($p->ping("127.0.0.1"), 1, 'second port is reachable');
 }
 
@@ -127,12 +126,16 @@ $p->service_check(0);
 # Try on the other port
 $p->{port_num} = $port2;
 
-is($p->ping("127.0.0.1"), 1, "send SYN to second port") or diag ("ERRNO: $!");
+SKIP: {
+  skip "no localhost resolver on $^O", 2
+    unless Socket::getaddrinfo('localhost', &Socket::AF_INET);
+  is($p->ping("127.0.0.1"), 1, "send SYN to second port") or diag ("ERRNO: $!");
 
-{
-    local $TODO;
-    $TODO = "Believed not to work on $^O" if $^O eq 'hpux' || $^O eq 'MSWin32' || $^O eq 'os390';
+  {
+    local $TODO = "Believed not to work on $^O"
+      if $^O =~ /^(?:hpux|MSWin32|os390|freebsd)$/;
     is($p->ack(), '127.0.0.1', 'IP should be reachable');
+  }
 }
 is($p->ack(), undef, 'No more sockets');
 

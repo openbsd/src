@@ -94,7 +94,7 @@ use Storable ();
 # Error 2
 #
 # If, for some reason, a STORABLE_attach object is accidentally stored
-# with references, this should be checked and and error should be throw.
+# with references, this should be checked and an error should be thrown.
 
 
 

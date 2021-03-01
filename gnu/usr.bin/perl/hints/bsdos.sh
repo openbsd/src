@@ -125,7 +125,7 @@ $define|true|[yY]*)
 	*)   cat <<EOM >&4
 I did not know that BSD/OS $osvers supports POSIX threads.
 
-Feel free to tell https://github.com/Perl/perl5/issues otherwise.
+Feel free report that at https://github.com/Perl/perl5/issues otherwise.
 EOM
 	    exit 1
 	    ;;

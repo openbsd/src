@@ -66,7 +66,53 @@ perlapio - perl's IO abstraction interface.
                                                     const char *layers);
   int     PerlIO_binmode(PerlIO *f, int ptype, int imode,
                                                     const char *layers);
-  void    PerlIO_debug(const char *fmt,...)
+  void    PerlIO_debug(const char *fmt,...);
+
+=for apidoc Amh|int     |PerlIO_apply_layers|PerlIO *f|const char *mode|const char *layers
+=for apidoc Amh|int     |PerlIO_binmode|PerlIO *f|int ptype|int imode|const char *layers
+=for apidoc ATmh|int    |PerlIO_canset_cnt|PerlIO *f
+=for apidoc Amh|void    |PerlIO_debug|const char *fmt|...
+=for apidoc ATmh|FILE  *|PerlIO_exportFILE|PerlIO *f|const char *mode
+=for apidoc ATmh|int    |PerlIO_fast_gets|PerlIO *f
+=for apidoc ATmh|PerlIO*|PerlIO_fdopen|int fd|const char *mode
+=for apidoc ATmh|FILE  *|PerlIO_findFILE|PerlIO *f
+=for apidoc ATmh|int    |PerlIO_getc|PerlIO *d
+=for apidoc ATmh|int    |PerlIO_getpos|PerlIO *f|SV *save
+=for apidoc ATmh|int    |PerlIO_has_base|PerlIO *f
+=for apidoc ATmh|int    |PerlIO_has_cntptr|PerlIO *f
+=for apidoc ATmh|PerlIO*|PerlIO_importFILE|FILE *stdio|const char *mode
+=for apidoc ATmh|PerlIO*|PerlIO_open|const char *path|const char *mode
+=for apidoc Amh|int     |PerlIO_printf|PerlIO *f|const char *fmt|...
+=for apidoc ATmh|int    |PerlIO_putc|PerlIO *f|int ch
+=for apidoc ATmh|int    |PerlIO_puts|PerlIO *f|const char *string
+=for apidoc ATmh|void   |PerlIO_releaseFILE|PerlIO *f|FILE *stdio
+=for apidoc Amh|PerlIO *|PerlIO_reopen|const char *path|const char *mode|PerlIO *old
+=for apidoc ATmh|void   |PerlIO_rewind|PerlIO *f
+=for apidoc ATmh|int    |PerlIO_setpos|PerlIO *f|SV *saved
+=for apidoc Amh|int     |PerlIO_stdoutf|const char *fmt|...
+=for apidoc ATmh|int    |PerlIO_ungetc|PerlIO *f|int ch
+=for apidoc ATmh|int    |PerlIO_vprintf|PerlIO *f|const char *fmt|va_list args
+
+=for apidoc PerlIO_stdin
+=for apidoc PerlIO_stdout
+=for apidoc PerlIO_stderr
+=for apidoc PerlIO_close
+=for apidoc PerlIO_write
+=for apidoc PerlIO_flush
+=for apidoc PerlIO_eof
+=for apidoc PerlIO_error
+=for apidoc PerlIO_clearerr
+=for apidoc PerlIO_read
+=for apidoc PerlIO_fileno
+=for apidoc PerlIO_setlinebuf
+=for apidoc PerlIO_tell
+=for apidoc PerlIO_seek
+=for apidoc PerlIO_get_cnt
+=for apidoc PerlIO_get_ptr
+=for apidoc PerlIO_set_ptrcnt
+=for apidoc PerlIO_set_cnt
+=for apidoc PerlIO_get_base
+=for apidoc PerlIO_get_bufsiz
 
 =head1 DESCRIPTION
 

@@ -47,7 +47,7 @@ XSUB's aliases was used to invoke it.  See L<perlxs/"The ALIAS: Keyword">.
 =for apidoc Am|SV*|ST|int ix
 Used to access elements on the XSUB's stack.
 
-=for apidoc AmU||XS
+=for apidoc AmnU||XS
 Macro to declare an XSUB and its C parameter list.  This is handled by
 C<xsubpp>.  It is the same as using the more explicit C<XS_EXTERNAL> macro.
 
@@ -56,36 +56,36 @@ Macro to declare an XSUB and its C parameter list without exporting the symbols.
 This is handled by C<xsubpp> and generally preferable over exporting the XSUB
 symbols unnecessarily.
 
-=for apidoc AmU||XS_EXTERNAL
+=for apidoc AmnU||XS_EXTERNAL
 Macro to declare an XSUB and its C parameter list explicitly exporting the symbols.
 
-=for apidoc Ams||dAX
+=for apidoc Amns||dAX
 Sets up the C<ax> variable.
 This is usually handled automatically by C<xsubpp> by calling C<dXSARGS>.
 
-=for apidoc Ams||dAXMARK
+=for apidoc Amns||dAXMARK
 Sets up the C<ax> variable and stack marker variable C<mark>.
 This is usually handled automatically by C<xsubpp> by calling C<dXSARGS>.
 
-=for apidoc Ams||dITEMS
+=for apidoc Amns||dITEMS
 Sets up the C<items> variable.
 This is usually handled automatically by C<xsubpp> by calling C<dXSARGS>.
 
-=for apidoc Ams||dXSARGS
+=for apidoc Amns||dXSARGS
 Sets up stack and mark pointers for an XSUB, calling C<dSP> and C<dMARK>.
 Sets up the C<ax> and C<items> variables by calling C<dAX> and C<dITEMS>.
 This is usually handled automatically by C<xsubpp>.
 
-=for apidoc Ams||dXSI32
+=for apidoc Amns||dXSI32
 Sets up the C<ix> variable for an XSUB which has aliases.  This is usually
 handled automatically by C<xsubpp>.
 
-=for apidoc Ams||dUNDERBAR
+=for apidoc Amns||dUNDERBAR
 Sets up any variable needed by the C<UNDERBAR> macro.  It used to define
 C<padoff_du>, but it is currently a noop.  However, it is strongly advised
 to still use it for ensuring past and future compatibility.
 
-=for apidoc AmU||UNDERBAR
+=for apidoc AmnU||UNDERBAR
 The SV* corresponding to the C<$_> variable.  Works even if there
 is a lexical C<$_> in scope.
 
@@ -217,6 +217,10 @@ is stored in a new mortal SV.
 Place a copy of a string into the specified position C<pos> on the stack. 
 The value is stored in a new mortal SV.
 
+=for apidoc Am|void|XST_mUV|int pos|UV uv
+Place an unsigned integer into the specified position C<pos> on the stack.  The
+value is stored in a new mortal SV.
+
 =for apidoc Am|void|XST_mNO|int pos
 Place C<&PL_sv_no> into the specified position C<pos> on the
 stack.
@@ -245,16 +249,16 @@ Return a double from an XSUB immediately.  Uses C<XST_mNV>.
 =for apidoc Am|void|XSRETURN_PV|char* str
 Return a copy of a string from an XSUB immediately.  Uses C<XST_mPV>.
 
-=for apidoc Ams||XSRETURN_NO
+=for apidoc Amns||XSRETURN_NO
 Return C<&PL_sv_no> from an XSUB immediately.  Uses C<XST_mNO>.
 
-=for apidoc Ams||XSRETURN_YES
+=for apidoc Amns||XSRETURN_YES
 Return C<&PL_sv_yes> from an XSUB immediately.  Uses C<XST_mYES>.
 
-=for apidoc Ams||XSRETURN_UNDEF
+=for apidoc Amns||XSRETURN_UNDEF
 Return C<&PL_sv_undef> from an XSUB immediately.  Uses C<XST_mUNDEF>.
 
-=for apidoc Ams||XSRETURN_EMPTY
+=for apidoc Amns||XSRETURN_EMPTY
 Return an empty list from an XSUB immediately.
 
 =head1 Variables created by C<xsubpp> and C<xsubpp> internal functions
@@ -263,36 +267,36 @@ Return an empty list from an XSUB immediately.
 Used by C<xsubpp> to hook up XSUBs as Perl subs.  Adds Perl prototypes to
 the subs.
 
-=for apidoc AmU||XS_VERSION
+=for apidoc AmnU||XS_VERSION
 The version identifier for an XS module.  This is usually
 handled automatically by C<ExtUtils::MakeMaker>.  See
 C<L</XS_VERSION_BOOTCHECK>>.
 
-=for apidoc Ams||XS_VERSION_BOOTCHECK
+=for apidoc Amns||XS_VERSION_BOOTCHECK
 Macro to verify that a PM module's C<$VERSION> variable matches the XS
 module's C<XS_VERSION> variable.  This is usually handled automatically by
 C<xsubpp>.  See L<perlxs/"The VERSIONCHECK: Keyword">.
 
-=for apidoc Ams||XS_APIVERSION_BOOTCHECK
+=for apidoc Amns||XS_APIVERSION_BOOTCHECK
 Macro to verify that the perl api version an XS module has been compiled against
 matches the api version of the perl interpreter it's being loaded into.
 
 =head1 Exception Handling (simple) Macros
 
-=for apidoc Ams||dXCPT
+=for apidoc Amns||dXCPT
 Set up necessary local variables for exception handling.
 See L<perlguts/"Exception Handling">.
 
-=for apidoc AmU||XCPT_TRY_START
+=for apidoc AmnU||XCPT_TRY_START
 Starts a try block.  See L<perlguts/"Exception Handling">.
 
-=for apidoc AmU||XCPT_TRY_END
+=for apidoc AmnU||XCPT_TRY_END
 Ends a try block.  See L<perlguts/"Exception Handling">.
 
-=for apidoc AmU||XCPT_CATCH
+=for apidoc AmnU||XCPT_CATCH
 Introduces a catch block.  See L<perlguts/"Exception Handling">.
 
-=for apidoc Ams||XCPT_RETHROW
+=for apidoc Amns||XCPT_RETHROW
 Rethrows a previously caught exception.  See L<perlguts/"Exception Handling">.
 
 =cut

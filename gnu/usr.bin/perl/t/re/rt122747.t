@@ -12,7 +12,7 @@ BEGIN {
 }
     if (is_miniperl()) {
         skip_all_if_miniperl("Unicode tables not built yet", 2)
-            unless eval 'require "unicore/Heavy.pl"';
+            unless eval 'require "unicore/UCD.pl"';
     }
 
 plan tests => 3;

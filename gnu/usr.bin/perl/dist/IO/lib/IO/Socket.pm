@@ -23,7 +23,7 @@ require IO::Socket::UNIX if ($^O ne 'epoc' && $^O ne 'symbian');
 
 our @ISA = qw(IO::Handle);
 
-our $VERSION = "1.40";
+our $VERSION = "1.43";
 
 our @EXPORT_OK = qw(sockatmark);
 
@@ -82,7 +82,12 @@ sub socket {
 
     ${*$sock}{'io_socket_domain'} = $domain;
     ${*$sock}{'io_socket_type'}   = $type;
-    ${*$sock}{'io_socket_proto'}  = $protocol;
+
+    # "A value of 0 for protocol will let the system select an
+    # appropriate protocol"
+    # so we need to look up what the system selected,
+    # not cache PF_UNSPEC.
+    ${*$sock}{'io_socket_proto'} = $protocol if $protocol;
 
     $sock;
 }
@@ -179,25 +184,25 @@ sub blocking {
     #
     # which is used to set blocking behaviour.
 
-    # NOTE: 
+    # NOTE:
     # This is a little confusing, the perl keyword for this is
     # 'blocking' but the OS level behaviour is 'non-blocking', probably
     # because sockets are blocking by default.
     # Therefore internally we have to reverse the semantics.
 
     my $orig= !${*$sock}{io_sock_nonblocking};
-        
+
     return $orig unless @_;
 
     my $block = shift;
-    
+
     if ( !$block != !$orig ) {
         ${*$sock}{io_sock_nonblocking} = $block ? 0 : 1;
         ioctl($sock, 0x8004667e, pack("L!",${*$sock}{io_sock_nonblocking}))
             or return undef;
     }
-    
-    return $orig;        
+
+    return $orig;
 }
 
 
@@ -277,14 +282,24 @@ sub send {
     @_ >= 2 && @_ <= 4 or croak 'usage: $sock->send(BUF, [FLAGS, [TO]])';
     my $sock  = $_[0];
     my $flags = $_[2] || 0;
-    my $peer  = $_[3] || $sock->peername;
+    my $peer;
 
-    croak 'send: Cannot determine peer address'
-	 unless(defined $peer);
+    if ($_[3]) {
+        # the caller explicitly requested a TO, so use it
+        # this is non-portable for "connected" UDP sockets
+        $peer = $_[3];
+    }
+    elsif (!defined getpeername($sock)) {
+        # we're not connected, so we require a peer from somewhere
+        $peer = $sock->peername;
 
-    my $r = defined(getpeername($sock))
-	? send($sock, $_[1], $flags)
-	: send($sock, $_[1], $flags, $peer);
+	croak 'send: Cannot determine peer address'
+	    unless(defined $peer);
+    }
+
+    my $r = $peer
+      ? send($sock, $_[1], $flags, $peer)
+      : send($sock, $_[1], $flags);
 
     # remember who we send to, if it was successful
     ${*$sock}{'io_socket_peername'} = $peer
@@ -386,185 +401,504 @@ IO::Socket - Object interface to socket communications
 
 =head1 SYNOPSIS
 
-    use IO::Socket;
+    use strict;
+    use warnings;
+
+    use IO::Socket qw(AF_INET AF_UNIX);
+
+    # create a new AF_INET socket
+    my $sock = IO::Socket->new(Domain => AF_INET);
+    # which is the same as
+    $sock = IO::Socket::INET->new();
+
+    # create a new AF_UNIX socket
+    $sock = IO::Socket->new(Domain => AF_UNIX);
+    # which is the same as
+    $sock = IO::Socket::UNIX->new();
 
 =head1 DESCRIPTION
 
-C<IO::Socket> provides an object interface to creating and using sockets. It
-is built upon the L<IO::Handle> interface and inherits all the methods defined
-by L<IO::Handle>.
+C<IO::Socket> provides an object-oriented, L<IO::Handle>-based interface to
+creating and using sockets via L<Socket>, which provides a near one-to-one
+interface to the C socket library.
 
-C<IO::Socket> only defines methods for those operations which are common to all
-types of socket. Operations which are specified to a socket in a particular 
-domain have methods defined in sub classes of C<IO::Socket>
+C<IO::Socket> is a base class that really only defines methods for those
+operations which are common to all types of sockets. Operations which are
+specific to a particular socket domain have methods defined in subclasses of
+C<IO::Socket>. See L<IO::Socket::INET>, L<IO::Socket::UNIX>, and
+L<IO::Socket::IP> for examples of such a subclass.
 
 C<IO::Socket> will export all functions (and constants) defined by L<Socket>.
 
-=head1 CONSTRUCTOR
+=head1 CONSTRUCTOR ARGUMENTS
 
-=over 4
+Given that C<IO::Socket> doesn't have attributes in the traditional sense, the
+following arguments, rather than attributes, can be passed into the
+constructor.
 
-=item new ( [ARGS] )
+Constructor arguments should be passed in C<< Key => 'Value' >> pairs.
 
-Creates an C<IO::Socket>, which is a reference to a
-newly created symbol (see the C<Symbol> package). C<new>
-optionally takes arguments, these arguments are in key-value pairs.
-C<new> only looks for one key C<Domain> which tells new which domain
-the socket will be in. All other arguments will be passed to the
-configuration method of the package for that domain, See below.
+The only required argument is L<IO::Socket/"Domain">.
 
-B<NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE>
+=head2 Blocking
 
-As of VERSION 1.18 all IO::Socket objects have autoflush turned on
-by default. This was not the case with earlier releases.
+    my $sock = IO::Socket->new(..., Blocking => 1);
+    $sock = IO::Socket->new(..., Blocking => 0);
 
-B<NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE>
+If defined but false, the socket will be set to non-blocking mode. If not
+specified it defaults to C<1> (blocking mode).
 
-=back
+=head2 Domain
+
+    my $sock = IO::Socket->new(Domain => IO::Socket::AF_INET);
+    $sock = IO::Socket->new(Domain => IO::Socket::AF_UNIX);
+
+The socket domain will define which subclass of C<IO::Socket> to use. The two
+options available along with this distribution are C<AF_INET> and C<AF_UNIX>.
+
+C<AF_INET> is for the internet address family of sockets and is handled via
+L<IO::Socket::INET>. C<AF_INET> sockets are bound to an internet address and
+port.
+
+C<AF_UNIX> is for the unix domain socket and is handled via
+L<IO::Socket::UNIX>. C<AF_UNIX> sockets are bound to the file system as their
+address name space.
+
+This argument is B<required>. All other arguments are optional.
+
+=head2 Listen
+
+    my $sock = IO::Socket->new(..., Listen => 5);
+
+Listen should be an integer value or left unset.
+
+If provided, this argument will place the socket into listening mode. New
+connections can then be accepted using the L<IO::Socket/"accept"> method. The
+value given is used as the C<listen(2)> queue size.
+
+If the C<Listen> argument is given, but false, the queue size will be set to
+5.
+
+=head2 Timeout
+
+    my $sock = IO::Socket->new(..., Timeout => 5);
+
+The timeout value, in seconds, for this socket connection. How exactly this
+value is utilized is defined in the socket domain subclasses that make use of
+the value.
+
+=head2 Type
+
+    my $sock = IO::Socket->new(..., Type => IO::Socket::SOCK_STREAM);
+
+The socket type that will be used. These are usually C<SOCK_STREAM>,
+C<SOCK_DGRAM>, or C<SOCK_RAW>. If this argument is left undefined an attempt
+will be made to infer the type from the service name.
+
+For example, you'll usually use C<SOCK_STREAM> with a C<tcp> connection and
+C<SOCK_DGRAM> with a C<udp> connection.
+
+=head1 CONSTRUCTORS
+
+C<IO::Socket> extends the L<IO::Handle> constructor.
+
+=head2 new
+
+    my $sock = IO::Socket->new();
+
+    # get a new IO::Socket::INET instance
+    $sock = IO::Socket->new(Domain => IO::Socket::AF_INET);
+    # get a new IO::Socket::UNIX instance
+    $sock = IO::Socket->new(Domain => IO::Socket::AF_UNIX);
+
+    # Domain is the only required argument
+    $sock = IO::Socket->new(
+        Domain => IO::Socket::AF_INET, # AF_INET, AF_UNIX
+        Type => IO::Socket::SOCK_STREAM, # SOCK_STREAM, SOCK_DGRAM, ...
+        Proto => 'tcp', # 'tcp', 'udp', IPPROTO_TCP, IPPROTO_UDP
+        # and so on...
+    );
+
+Creates an C<IO::Socket>, which is a reference to a newly created symbol (see
+the L<Symbol> package). C<new> optionally takes arguments, these arguments
+are defined in L<IO::Socket/"CONSTRUCTOR ARGUMENTS">.
+
+Any of the L<IO::Socket/"CONSTRUCTOR ARGUMENTS"> may be passed to the
+constructor, but if any arguments are provided, then one of them must be
+the L<IO::Socket/"Domain"> argument. The L<IO::Socket/"Domain"> argument can,
+by default, be either C<AF_INET> or C<AF_UNIX>. Other domains can be used if a
+proper subclass for the domain family is registered. All other arguments will
+be passed to the C<configuration> method of the package for that domain.
 
 =head1 METHODS
 
-See L<perlfunc> for complete descriptions of each of the following
-supported C<IO::Socket> methods, which are just front ends for the
-corresponding built-in functions:
+C<IO::Socket> inherits all methods from L<IO::Handle> and implements the
+following new ones.
 
-    socket
-    socketpair
-    bind
-    listen
-    accept
-    send
-    recv
-    peername (getpeername)
-    sockname (getsockname)
-    shutdown
+=head2 accept
 
-Some methods take slightly different arguments to those defined in L<perlfunc>
-in attempt to make the interface more flexible. These are
+    my $client_sock = $sock->accept();
+    my $inet_sock = $sock->accept('IO::Socket::INET');
 
-=over 4
+The accept method will perform the system call C<accept> on the socket and
+return a new object. The new object will be created in the same class as the
+listen socket, unless a specific package name is specified. This object can be
+used to communicate with the client that was trying to connect.
 
-=item accept([PKG])
+This differs slightly from the C<accept> function in L<perlfunc>.
 
-perform the system call C<accept> on the socket and return a new
-object. The new object will be created in the same class as the listen
-socket, unless C<PKG> is specified. This object can be used to
-communicate with the client that was trying to connect.
-
-In a scalar context the new socket is returned, or undef upon
+In a scalar context the new socket is returned, or C<undef> upon
 failure. In a list context a two-element array is returned containing
-the new socket and the peer address; the list will be empty upon
-failure.
+the new socket and the peer address; the list will be empty upon failure.
 
-The timeout in the [PKG] can be specified as zero to effect a "poll",
-but you shouldn't do that because a new IO::Select object will be
-created behind the scenes just to do the single poll.  This is
-horrendously inefficient.  Use rather true select() with a zero
-timeout on the handle, or non-blocking IO.
+=head2 atmark
 
-=item socketpair(DOMAIN, TYPE, PROTOCOL)
-
-Call C<socketpair> and return a list of two sockets created, or an
-empty list on failure.
-
-=back
-
-Additional methods that are provided are:
-
-=over 4
-
-=item atmark
-
-True if the socket is currently positioned at the urgent data mark,
-false otherwise.
-
-    use IO::Socket;
-
-    my $sock = IO::Socket::INET->new('some_server');
+    my $integer = $sock->atmark();
+    # read in some data on a given socket
+    my $data;
     $sock->read($data, 1024) until $sock->atmark;
 
-Note: this is a reasonably new addition to the family of socket
-functions, so all systems may not support this yet.  If it is
-unsupported by the system, an attempt to use this method will
-abort the program.
+    # or, export the function to use:
+    use IO::Socket 'sockatmark';
+    $sock->read($data, 1024) until sockatmark($sock);
 
-The atmark() functionality is also exportable as sockatmark() function:
+True if the socket is currently positioned at the urgent data mark, false
+otherwise. If your system doesn't yet implement C<sockatmark> this will throw
+an exception.
 
-	use IO::Socket 'sockatmark';
+If your system does not support C<sockatmark>, the C<use> declaration will
+fail at compile time.
 
-This allows for a more traditional use of sockatmark() as a procedural
-socket function.  If your system does not support sockatmark(), the
-C<use> declaration will fail at compile time.
+=head2 autoflush
 
-=item connected
+    # by default, autoflush will be turned on when referenced
+    $sock->autoflush(); # turns on autoflush
+    # turn off autoflush
+    $sock->autoflush(0);
+    # turn on autoflush
+    $sock->autoflush(1);
+
+This attribute isn't overridden from L<IO::Handle>'s implementation. However,
+since we turn it on by default, it's worth mentioning here.
+
+=head2 bind
+
+    use Socket qw(pack_sockaddr_in);
+    my $port = 3000;
+    my $ip_address = '0.0.0.0';
+    my $packed_addr = pack_sockaddr_in($port, $ip_address);
+    $sock->bind($packed_addr);
+
+Binds a network address to a socket, just as C<bind(2)> does. Returns true if
+it succeeded, false otherwise. You should provide a packed address of the
+appropriate type for the socket.
+
+=head2 connected
+
+    my $peer_addr = $sock->connected();
+    if ($peer_addr) {
+        say "We're connected to $peer_addr";
+    }
 
 If the socket is in a connected state, the peer address is returned. If the
-socket is not in a connected state, undef is returned.
+socket is not in a connected state, C<undef> is returned.
 
-Note that connected() considers a half-open TCP socket to be "in a connected
-state".  Specifically, connected() does not distinguish between the
+Note that this method considers a half-open TCP socket to be "in a connected
+state".  Specifically, it does not distinguish between the
 B<ESTABLISHED> and B<CLOSE-WAIT> TCP states; it returns the peer address,
-rather than undef, in either case.  Thus, in general, connected() cannot
+rather than C<undef>, in either case.  Thus, in general, it cannot
 be used to reliably learn whether the peer has initiated a graceful shutdown
 because in most cases (see below) the local TCP state machine remains in
-B<CLOSE-WAIT> until the local application calls shutdown() or close();
-only at that point does connected() return undef.
+B<CLOSE-WAIT> until the local application calls L<IO::Socket/"shutdown"> or
+C<close>. Only at that point does this function return C<undef>.
 
 The "in most cases" hedge is because local TCP state machine behavior may
 depend on the peer's socket options. In particular, if the peer socket has
-SO_LINGER enabled with a zero timeout, then the peer's close() will generate
-a RST segment, upon receipt of which the local TCP transitions immediately to
-B<CLOSED>, and in that state, connected() I<will> return undef.
+C<SO_LINGER> enabled with a zero timeout, then the peer's C<close> will
+generate a C<RST> segment. Upon receipt of that segment, the local TCP
+transitions immediately to B<CLOSED>, and in that state, this method I<will>
+return C<undef>.
 
-=item protocol
+=head2 getsockopt
 
-Returns the numerical number for the protocol being used on the socket, if
-known. If the protocol is unknown, as with an AF_UNIX socket, zero
+    my $value = $sock->getsockopt(SOL_SOCKET, SO_REUSEADDR);
+    my $buf = $socket->getsockopt(SOL_SOCKET, SO_RCVBUF);
+    say "Receive buffer is $buf bytes";
+
+Get an option associated with the socket. Levels other than C<SOL_SOCKET>
+may be specified here. As a convenience, this method will unpack a byte buffer
+of the correct size back into a number.
+
+=head2 listen
+
+    $sock->listen(5);
+
+Does the same thing that the C<listen(2)> system call does. Returns true if it
+succeeded, false otherwise. Listens to a socket with a given queue size.
+
+=head2 peername
+
+    my $sockaddr_in = $sock->peername();
+
+Returns the packed C<sockaddr> address of the other end of the socket
+connection. It calls C<getpeername>.
+
+
+=head2 protocol
+
+    my $proto = $sock->protocol();
+
+Returns the number for the protocol being used on the socket, if
+known. If the protocol is unknown, as with an C<AF_UNIX> socket, zero
 is returned.
 
-=item sockdomain
+=head2 recv
 
-Returns the numerical number for the socket domain type. For example, for
-an AF_INET socket the value of &AF_INET will be returned.
+    my $buffer = "";
+    my $length = 1024;
+    my $flags = 0; # default. optional
+    $sock->recv($buffer, $length);
+    $sock->recv($buffer, $length, $flags);
 
-=item sockopt(OPT [, VAL])
+Similar in functionality to L<perlfunc/recv>.
 
-Unified method to both set and get options in the SOL_SOCKET level. If called
-with one argument then getsockopt is called, otherwise setsockopt is called.
+Receives a message on a socket. Attempts to receive C<$length> characters of
+data into C<$buffer> from the specified socket. C<$buffer> will be grown or
+shrunk to the length actually read. Takes the same flags as the system call of
+the same name. Returns the address of the sender if socket's protocol supports
+this; returns an empty string otherwise. If there's an error, returns
+C<undef>. This call is actually implemented in terms of the C<recvfrom(2)>
+system call.
 
-=item getsockopt(LEVEL, OPT)
+Flags are ORed together values, such as C<MSG_BCAST>, C<MSG_OOB>,
+C<MSG_TRUNC>. The default value for the flags is C<0>.
 
-Get option associated with the socket. Other levels than SOL_SOCKET
-may be specified here.
+The cached value of L<IO::Socket/"peername"> is updated with the result of
+C<recv>.
 
-=item setsockopt(LEVEL, OPT, VAL)
+B<Note:> In Perl v5.30 and newer, if the socket has been marked as C<:utf8>,
+C<recv> will throw an exception. The C<:encoding(...)> layer implicitly
+introduces the C<:utf8> layer. See L<perlfunc/binmode>.
 
-Set option associated with the socket. Other levels than SOL_SOCKET
-may be specified here.
+B<Note:> In Perl versions older than v5.30, depending on the status of the
+socket, either (8-bit) bytes or characters are received. By default all
+sockets operate on bytes, but for example if the socket has been changed
+using L<perlfunc/binmode> to operate with the C<:encoding(UTF-8)> I/O layer
+(see the L<perlfunc/open> pragma), the I/O will operate on UTF8-encoded
+Unicode characters, not bytes. Similarly for the C<:encoding> layer: in
+that case pretty much any characters can be read.
 
-=item socktype
+=head2 send
 
-Returns the numerical number for the socket type. For example, for
-a SOCK_STREAM socket the value of &SOCK_STREAM will be returned.
+    my $message = "Hello, world!";
+    my $flags = 0; # defaults to zero
+    my $to = '0.0.0.0'; # optional destination
+    my $sent = $sock->send($message);
+    $sent = $sock->send($message, $flags);
+    $sent = $sock->send($message, $flags, $to);
 
-=item timeout([VAL])
+Similar in functionality to L<perlfunc/send>.
+
+Sends a message on a socket. Attempts to send the scalar message to the
+socket. Takes the same flags as the system call of the same name. On
+unconnected sockets, you must specify a destination to send to, in which case
+it does a C<sendto(2)> syscall. Returns the number of characters sent, or
+C<undef> on error. The C<sendmsg(2)> syscall is currently unimplemented.
+
+The C<flags> option is optional and defaults to C<0>.
+
+After a successful send with C<$to>, further calls to C<send> on an
+unconnected socket without C<$to> will send to the same address, and C<$to>
+will be used as the result of L<IO::Socket/"peername">.
+
+B<Note:> In Perl v5.30 and newer, if the socket has been marked as C<:utf8>,
+C<send> will throw an exception. The C<:encoding(...)> layer implicitly
+introduces the C<:utf8> layer. See L<perlfunc/binmode>.
+
+B<Note:> In Perl versions older than v5.30, depending on the status of the
+socket, either (8-bit) bytes or characters are sent. By default all
+sockets operate on bytes, but for example if the socket has been changed
+using L<perlfunc/binmode> to operate with the C<:encoding(UTF-8)> I/O layer
+(see the L<perlfunc/open> pragma), the I/O will operate on UTF8-encoded
+Unicode characters, not bytes. Similarly for the C<:encoding> layer: in
+that case pretty much any characters can be sent.
+
+=head2 setsockopt
+
+    $sock->setsockopt(SOL_SOCKET, SO_REUSEADDR, 1);
+    $sock->setsockopt(SOL_SOCKET, SO_RCVBUF, 64*1024);
+
+Set option associated with the socket. Levels other than C<SOL_SOCKET>
+may be specified here. As a convenience, this method will convert a number
+into a packed byte buffer.
+
+=head2 shutdown
+
+    $sock->shutdown(SHUT_RD); # we stopped reading data
+    $sock->shutdown(SHUT_WR); # we stopped writing data
+    $sock->shutdown(SHUT_RDWR); # we stopped using this socket
+
+Shuts down a socket connection in the manner indicated by the value passed in,
+which has the same interpretation as in the syscall of the same name.
+
+This is useful with sockets when you want to tell the other side you're done
+writing but not done reading, or vice versa. It's also a more insistent form
+of C<close> because it also disables the file descriptor in any
+forked copies in other processes.
+
+Returns C<1> for success; on error, returns C<undef> if the socket is
+not a valid filehandle, or returns C<0> and sets C<$!> for any other failure.
+
+=head2 sockdomain
+
+    my $domain = $sock->sockdomain();
+
+Returns the number for the socket domain type. For example, for
+an C<AF_INET> socket the value of C<&AF_INET> will be returned.
+
+=head2 socket
+
+    my $sock = IO::Socket->new(); # no values given
+    # now let's actually get a socket with the socket method
+    # domain, type, and protocol are required
+    $sock = $sock->socket(AF_INET, SOCK_STREAM, 'tcp');
+
+Opens a socket of the specified kind and returns it. Domain, type, and
+protocol are specified the same as for the syscall of the same name.
+
+=head2 socketpair
+
+    my ($r, $w) = $sock->socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC);
+    ($r, $w) = IO::Socket::UNIX
+        ->socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC);
+
+Will return a list of two sockets created (read and write), or an empty list
+on failure.
+
+Differs slightly from C<socketpair> in L<perlfunc> in that the argument list
+is a bit simpler.
+
+=head2 sockname
+
+    my $packed_addr = $sock->sockname();
+
+Returns the packed C<sockaddr> address of this end of the connection. It's the
+same as C<getsockname(2)>.
+
+=head2 sockopt
+
+    my $value = $sock->sockopt(SO_REUSEADDR);
+    $sock->sockopt(SO_REUSEADDR, 1);
+
+Unified method to both set and get options in the C<SOL_SOCKET> level. If
+called with one argument then L<IO::Socket/"getsockopt"> is called, otherwise
+L<IO::Socket/"setsockopt"> is called.
+
+=head2 socktype
+
+    my $type = $sock->socktype();
+
+Returns the number for the socket type. For example, for
+a C<SOCK_STREAM> socket the value of C<&SOCK_STREAM> will be returned.
+
+=head2 timeout
+
+    my $seconds = $sock->timeout();
+    my $old_val = $sock->timeout(5); # set new and return old value
 
 Set or get the timeout value (in seconds) associated with this socket.
 If called without any arguments then the current setting is returned. If
 called with an argument the current setting is changed and the previous
 value returned.
 
-=back
+This method is available to all C<IO::Socket> implementations but may or may
+not be used by the individual domain subclasses.
+
+=head1 EXAMPLES
+
+Let's create a TCP server on C<localhost:3333>.
+
+    use strict;
+    use warnings;
+    use feature 'say';
+
+    use IO::Socket qw(AF_INET AF_UNIX SOCK_STREAM SHUT_WR);
+
+    my $server = IO::Socket->new(
+        Domain => AF_INET,
+        Type => SOCK_STREAM,
+        Proto => 'tcp',
+        LocalHost => '0.0.0.0',
+        LocalPort => 3333,
+        ReusePort => 1,
+        Listen => 5,
+    ) || die "Can't open socket: $@";
+    say "Waiting on 3333";
+
+    while (1) {
+        # waiting for a new client connection
+        my $client = $server->accept();
+
+        # get information about a newly connected client
+        my $client_address = $client->peerhost();
+        my $client_port = $client->peerport();
+        say "Connection from $client_address:$client_port";
+
+        # read up to 1024 characters from the connected client
+        my $data = "";
+        $client->recv($data, 1024);
+        say "received data: $data";
+
+        # write response data to the connected client
+        $data = "ok";
+        $client->send($data);
+
+        # notify client that response has been sent
+        $client->shutdown(SHUT_WR);
+    }
+
+    $server->close();
+
+A client for such a server could be
+
+    use strict;
+    use warnings;
+    use feature 'say';
+
+    use IO::Socket qw(AF_INET AF_UNIX SOCK_STREAM SHUT_WR);
+
+    my $client = IO::Socket->new(
+        Domain => AF_INET,
+        Type => SOCK_STREAM,
+        proto => 'tcp',
+        PeerPort => 3333,
+        PeerHost => '0.0.0.0',
+    ) || die "Can't open socket: $@";
+
+    say "Sending Hello World!";
+    my $size = $client->send("Hello World!");
+    say "Sent data of length: $size";
+
+    $client->shutdown(SHUT_WR);
+
+    my $buffer;
+    $client->recv($buffer, 1024);
+    say "Got back $buffer";
+
+    $client->close();
+
 
 =head1 LIMITATIONS
 
-On some systems, for an IO::Socket object created with new_from_fd(),
-or created with accept() from such an object, the protocol(),
-sockdomain() and socktype() methods may return undef.
+On some systems, for an IO::Socket object created with C<new_from_fd>,
+or created with L<IO::Socket/"accept"> from such an object, the
+L<IO::Socket/"protocol">, L<IO::Socket/"sockdomain"> and
+L<IO::Socket/"socktype"> methods may return C<undef>.
 
 =head1 SEE ALSO
 
-L<Socket>, L<IO::Handle>, L<IO::Socket::INET>, L<IO::Socket::UNIX>
+L<Socket>, L<IO::Handle>, L<IO::Socket::INET>, L<IO::Socket::UNIX>,
+L<IO::Socket::IP>
 
 =head1 AUTHOR
 

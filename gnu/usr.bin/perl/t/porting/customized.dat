@@ -1,8 +1,13 @@
 # Regenerate this file using:
 #     cd t
 #     ./perl -I../lib porting/customized.t --regen
+Config::Perl::V cpan/Config-Perl-V/V.pm 0a0f7207e6505b78ee345a933acb0246a13579f5
 Digest cpan/Digest/Digest.pm 43f7f544cb11842b2f55c73e28930da50774e081
-Digest::MD5 cpan/Digest-MD5/t/files.t f8fe234035918d3b7324eba05f73e7e903a45ca0
+Digest::MD5 cpan/Digest-MD5/Makefile.PL 3bf781444ee671da63f1c6360e0a31f11d9ba520
+Digest::MD5 cpan/Digest-MD5/MD5.pm df5f0663f0f755be7eda6e3d2f008f2629246b19
+Digest::MD5 cpan/Digest-MD5/MD5.xs 249bed648232192ce018f7f894ad127c3a639831
+Digest::MD5 cpan/Digest-MD5/t/files.t e987329d2411ff60ad9a2bdf93fdf5f6943467e8
+Filter::Util::Call pod/perlfilter.pod e9833bf4ebc51087dfee5c553e0f8a5eef67212d
 Locale::Maketext::Simple cpan/Locale-Maketext-Simple/lib/Locale/Maketext/Simple.pm 57ed38905791a17c150210cd6f42ead22a7707b6
 Math::Complex cpan/Math-Complex/lib/Math/Complex.pm 198ea6c6c584f5ea79a0fd7e9d411d0878f3b2af
 Math::Complex cpan/Math-Complex/t/Complex.t 4f307ed6fc59f1e5fb0e6b11103fc631b6bdb335
@@ -10,21 +15,14 @@ Math::Complex cpan/Math-Complex/t/Trig.t 2682526e23a161d54732c2a66393fe4a234d186
 Memoize cpan/Memoize/Memoize.pm 902092ff91cdec9c7b4bd06202eb179e1ce26ca2
 NEXT cpan/NEXT/lib/NEXT.pm 2c83d03ee361816e53ccb931137d314ab878d19f
 NEXT cpan/NEXT/t/next.t 66fd60eb0f75b6f3eea95d1dee745f9a7a348146
-Net::Ping dist/Net-Ping/lib/Net/Ping.pm e2e7053673ead1eff8f3ca8ecdd9b838598c1d8c
-Net::Ping dist/Net-Ping/t/000_load.t deff5dc2ca54dae28cb19d3631427db127279ac2
-Net::Ping dist/Net-Ping/t/500_ping_icmp.t 3eeb60181c01b85f876bd6658644548fdf2e24d4
-Net::Ping dist/Net-Ping/t/501_ping_icmpv6.t 54373de5858f8fb7e078e4998a4b3b8dbca91783
 Pod::Checker cpan/Pod-Checker/t/pod/contains_bad_pod.xr 73538fd80dfe6e19ad561fe034009b44460208f6
 Pod::Checker cpan/Pod-Checker/t/pod/selfcheck.t 8ce3cfd38e4b9bcf5bc7fe7f2a14195e49aed7d8
 Pod::Checker cpan/Pod-Checker/t/pod/testcmp.pl a0cd5c8eca775c7753f4464eee96fa916e3d8a16
 Pod::Checker cpan/Pod-Checker/t/pod/testpchk.pl b2072c7f4379fd050e15424175d7cac5facf5b3b
-Pod::Perldoc cpan/Pod-Perldoc/lib/Pod/Perldoc.pm d97aa26b722e6e3120b19ee0d7cf9af04dfdfb7f
-autodie cpan/autodie/lib/autodie/exception.pm b99e4e35a9ed36de94d54437888822ced4936207
-autodie cpan/autodie/lib/autodie/hints.pm e1998fec61fb4e82fe46585bd82c73200be6f262
-autodie cpan/autodie/t/exceptions.t ad315a208f875e06b0964012ce8d65daa438c036
-autodie cpan/autodie/t/lib/Hints_pod_examples.pm 6944c218e9754b3613c8d0c90a5ae8aceccb5c99
-autodie cpan/autodie/t/mkdir.t 9e70d2282a3cc7d76a78bf8144fccba20fb37dac
-autodie cpan/autodie/t/recv.t 63bea2daa330e44b67714527ddf701c1bf3a6954
+Pod::Perldoc cpan/Pod-Perldoc/lib/Pod/Perldoc.pm 582be34c077c9ff44d99914724a0cc2140bcd48c
+Pod::Usage cpan/Pod-Usage/t/pod/testp2pt.pl d43ea8391bd95aefdb710ab2947771155a88d424
+Win32API::File cpan/Win32API-File/File.pm 8fd212857f821cb26648878b96e57f13bf21b99e
+Win32API::File cpan/Win32API-File/File.xs beb870fed4490d2faa547b4a8576b8d64d1d27c5
 experimental cpan/experimental/t/basic.t cb9da8dd05b854375809872a05dd32637508d5da
 version cpan/version/lib/version.pm 7ef9219d1d5f1d71f08a79f3b0577df138b21b12
-version vutil.c 074fb201e9a20a845764f671eb1021a6020ebea1
+version vutil.c 601cc57bbc0070ae33eab7fd2d667f20efbe15f8

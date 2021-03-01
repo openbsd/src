@@ -2,6 +2,7 @@
 #
 # Tests that have to do with checking whether characters have (or not have)
 # certain Unicode properties; belong (or not belong) to blocks, scripts, etc.
+# including user-defined properties
 #
 
 use strict;
@@ -143,6 +144,7 @@ BEGIN {
         Dash                      => ['-'],
         ASCII_Hex_Digit           => ['!-', 'A'],
         IsAsciiHexAndDash         => ['-', 'A'],
+        InLatin1                  => ['\x{0100}', '!\x{00FF}'],
     );
 
     @USER_CASELESS_PROPERTIES = (
@@ -194,12 +196,6 @@ BEGIN {
     }
 }
 
-# These override the official ones, so if found before defined, the official
-# ones prevail, so can't test deferred definition
-my @OVERRIDING_USER_DEFINED_PROPERTIES = (
-   InLatin1                  => ['\x{0100}', '!\x{00FF}'],
-);
-
 #
 # From the short properties we populate POSIX-like classes.
 #
@@ -249,8 +245,7 @@ while (my ($class, $chars) = each %SHORT_PROPERTIES) {
 
 push @CLASSES => "# Short properties"        => %SHORT_PROPERTIES,
                  "# POSIX like properties"   => %d,
-                 "# User defined properties" => @USER_DEFINED_PROPERTIES,
-                 "# Overriding user defined properties" => @OVERRIDING_USER_DEFINED_PROPERTIES;
+                 "# User defined properties" => @USER_DEFINED_PROPERTIES;
 
 
 #

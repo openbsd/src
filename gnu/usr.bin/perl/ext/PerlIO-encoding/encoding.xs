@@ -361,7 +361,7 @@ PerlIOEncode_fill(pTHX_ PerlIO * f)
 	    if (!SvPOKp(e->dataSV)) (void)SvPV_force_nolen(e->dataSV);
 	    use -= SvCUR(e->dataSV);
 	    PerlIO_set_ptrcnt(n, ptr+use, (avail-use));
-	    /* and as we did not take it it isn't pending */
+	    /* and as we did not take it, it isn't pending */
 	    SvCUR_set(e->dataSV,0);
 	} else {
 	    /* Got nothing - assume partial character so we need some more */

@@ -13,7 +13,7 @@ use strict;
 my $re_taint_bit = 0x00100000;
 my $re_eval_bit = 0x00200000;
 
-use Test::More tests => 15;
+use Test::More tests => 16;
 require_ok( 're' );
 
 # setcolor
@@ -47,6 +47,10 @@ like( $warn, qr/Unknown "re" subpragma/,
 	'... should warn about unknown subpragma' );
 ok( re::bits(0, 'taint') & $re_taint_bit, '... should set taint bits' );
 ok( re::bits(0, 'eval')  & $re_eval_bit, '... should set eval bits' );
+
+undef $warn;
+eval "use re qw(debug ALL)";
+like( $warn, qr/"Debug" not "debug"/, 'debug with debugging type should warn');
 
 local $^H;
 

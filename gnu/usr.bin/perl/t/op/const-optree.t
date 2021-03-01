@@ -8,7 +8,7 @@ BEGIN {
     require './test.pl';
     set_up_inc('../lib');
 }
-plan 168;
+plan 148;
 
 # @tests is an array of hash refs, each of which can have various keys:
 #
@@ -25,6 +25,11 @@ plan 168;
 #   deprecated  - whether the sub returning a code ref will emit a depreca-
 #                 tion warning when called
 #   method      - whether the sub has the :method attribute
+#   exception   - sub now throws an exception (previously threw
+#                 deprecation warning)
+
+my $exception_134138 = 'Constants from lexical variables potentially modified '
+    . 'elsewhere are no longer permitted';
 
 # [perl #63540] Don’t treat sub { if(){.....}; "constant" } as a constant
 sub blonk { ++$blonk_was_called }
@@ -47,11 +52,7 @@ push @tests, {
 push @tests, {
   nickname    => 'sub with simple lexical modified elsewhere',
   generator   => sub { my $x = 5; my $ret = sub(){$x}; $x = 7; $ret },
-  retval      => 5, # change to 7 when the deprecation cycle is over
-  same_retval => 0,
-  inlinable   => 1,
-  deprecated  => 1,
-  method      => 0,
+  exception   => $exception_134138,
 };
 
 push @tests, {
@@ -184,11 +185,7 @@ push @tests, {
     my $sub1 = sub () { $x++ };
     $ret;
   },
-  retval      => 5,
-  same_retval => 0,
-  inlinable   => 1,
-  deprecated  => 1,
-  method      => 0,
+  exception   => $exception_134138,
 };
 push @tests, {
   nickname    => 'complex lexical op tree before an lvalue closure',
@@ -307,11 +304,7 @@ push @tests, {
     eval '$outer++';
     $ret;
   },
-  retval      => 43,
-  same_retval => 0,
-  inlinable   => 1,
-  deprecated  => 1,
-  method      => 0,
+  exception   => $exception_134138,
 };
 push @tests, {
   nickname    => 'sub () { $x } with s///ee in scope',
@@ -322,11 +315,7 @@ push @tests, {
     $dummy =~ s//$dummy/ee;
     $ret;
   },
-  retval      => 43,
-  same_retval => 0,
-  inlinable   => 1,
-  deprecated  => 1,
-  method      => 0,
+  exception   => $exception_134138,
 };
 push @tests, {
   nickname    => 'sub () { $x } with eval not in scope',
@@ -414,11 +403,7 @@ push @tests, {
 push @tests, {
   nickname    => 'sub closing over state var++',
   generator   => sub { state $x++; sub () { $x } },
-  retval      => 1,
-  same_retval => 0,
-  inlinable   => 1,
-  deprecated  => 1,
-  method      => 0,
+  exception   => $exception_134138,
 };
 
 
@@ -426,6 +411,12 @@ use feature 'refaliasing';
 no warnings 'experimental::refaliasing';
 for \%_ (@tests) {
     my $nickname = $_{nickname};
+    if (exists $_{exception} and $_{exception}) {
+        local $@;
+        eval { my $sub = &{$_{generator}}; };
+        like($@, qr/$_{exception}/, "$nickname: now throws exception (RT 134138)");
+        next;
+    }
     my $w;
     local $SIG{__WARN__} = sub { $w = shift };
     my $sub = &{$_{generator}};
@@ -492,3 +483,4 @@ pass("No assertion failure when turning on PADSTALE on lexical shared by"
     $z = &$sub;
     is $z, $y, 'inlinable sub ret vals are not swipable';
 }
+

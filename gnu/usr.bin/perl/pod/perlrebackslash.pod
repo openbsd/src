@@ -446,7 +446,7 @@ Mnemonic: I<g>roup.
 =head3 Relative referencing
 
 C<\g-I<N>> (starting in Perl 5.10.0) is used for relative addressing.  (It can
-be written as C<\g{-I<N>>.)  It refers to the I<N>th group before the
+be written as C<\g{-I<N>}>.)  It refers to the I<N>th group before the
 C<\g{-I<N>}>.
 
 The big advantage of this form is that it makes it much easier to write
@@ -520,11 +520,11 @@ match to the true end of the string under all conditions.
 =item \G
 
 C<\G> is usually used only in combination with the C</g> modifier. If the
-C</g> modifier is used and the match is done in scalar context, Perl 
+C</g> modifier is used and the match is done in scalar context, Perl
 remembers where in the source string the last match ended, and the next time,
 it will start the match from where it ended the previous time.
 
-C<\G> matches the point where the previous match on that string ended, 
+C<\G> matches the point where the previous match on that string ended,
 or the beginning of that string if there was no previous match.
 
 =for later add link to perlremodifiers
@@ -550,11 +550,11 @@ C<\b>
 and C<\B> assume there's a non-word character before the beginning and after
 the end of the source string; so C<\b> will match at the beginning (or end)
 of the source string if the source string begins (or ends) with a word
-character. Otherwise, C<\B> will match.   
+character. Otherwise, C<\B> will match.
 
 Do not use something like C<\b=head\d\b> and expect it to match the
 beginning of a line.  It can't, because for there to be a boundary before
-the non-word "=", there must be a word character immediately previous.  
+the non-word "=", there must be a word character immediately previous.
 All plain C<\b> and C<\B> boundary determinations look for word
 characters alone, not for
 non-word characters nor for string ends.  It may help to understand how
@@ -566,8 +566,8 @@ C<\b> and C<\B> work by equating them as follows:
 In contrast, C<\b{...}> and C<\B{...}> may or may not match at the
 beginning and end of the line, depending on the boundary type.  These
 implement the Unicode default boundaries, specified in
-L<http://www.unicode.org/reports/tr14/> and
-L<http://www.unicode.org/reports/tr29/>.
+L<https://www.unicode.org/reports/tr14/> and
+L<https://www.unicode.org/reports/tr29/>.
 The boundary types are:
 
 =over
@@ -583,9 +583,9 @@ whichever is most convenient for your situation.
 =item C<\b{lb}>
 
 This matches according to the default Unicode Line Breaking Algorithm
-(L<http://www.unicode.org/reports/tr14/>), as customized in that
+(L<https://www.unicode.org/reports/tr14/>), as customized in that
 document
-(L<Example 7 of revision 35|http://www.unicode.org/reports/tr14/tr14-35.html#Example7>)
+(L<Example 7 of revision 35|https://www.unicode.org/reports/tr14/tr14-35.html#Example7>)
 for better handling of numeric expressions.
 
 This is suitable for many purposes, but the L<Unicode::LineBreak> module
@@ -597,7 +597,7 @@ customization.
 This matches a Unicode "Sentence Boundary".  This is an aid to parsing
 natural language sentences.  It gives good, but imperfect results.  For
 example, it thinks that "Mr. Smith" is two sentences.  More details are
-at L<http://www.unicode.org/reports/tr29/>.  Note also that it thinks
+at L<https://www.unicode.org/reports/tr29/>.  Note also that it thinks
 that anything matching L</\R> (except form feed and vertical tab) is a
 sentence boundary.  C<\b{sb}> works with text designed for
 word-processors which wrap lines
@@ -617,7 +617,7 @@ expectations.  This gives better (though not
 perfect) results for natural language processing than plain C<\b>
 (without braces) does.  For example, it understands that apostrophes can
 be in the middle of words and that parentheses aren't (see the examples
-below).  More details are at L<http://www.unicode.org/reports/tr29/>.
+below).  More details are at L<https://www.unicode.org/reports/tr29/>.
 
 The current Unicode definition of a Word Boundary matches between every
 white space character.  Perl tailors this, starting in version 5.24, to

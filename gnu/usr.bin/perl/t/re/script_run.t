@@ -15,8 +15,6 @@ $|=1;
 # later Standards could cause them to not test what they originally were aimed
 # to do.
 
-no warnings "experimental::script_run";
-
 # Since there's so few tests currently, we can afford to try each syntax on
 # all of them
 foreach my $type ('script_run', 'sr', 'atomic_script_run', 'asr') {
@@ -119,8 +117,7 @@ foreach my $type ('script_run', 'sr', 'atomic_script_run', 'asr') {
     like("\x{1d7ce}αβγ", qr/^(*sr:.{4})/,
          "Non-ASCII Common digits work with Greek"); # perl #133547
 
-    fresh_perl_is('no warnings "experimental::script_run";
-                   print scalar "0" =~ m!(((*sr:()|)0)(*sr:)0|)!;',
+    fresh_perl_is('print scalar "0" =~ m!(((*sr:()|)0)(*sr:)0|)!;',
                   1, {}, '[perl #133997]');
 
 done_testing();

@@ -34,6 +34,7 @@
 #include "EXTERN.h"
 #define PERL_IN_PP_HOT_C
 #include "perl.h"
+#include "regcomp.h"
 
 /* Hot code. */
 
@@ -639,7 +640,7 @@ PP(pp_multiconcat)
      *   one set of segment lengths.
      *
      * * If the string has different plain and utf8 representations
-     *   (e.g. "\x80"), then then aux[PERL_MULTICONCAT_IX_PLAIN_PV/LEN]]
+     *   (e.g. "\x80"), then aux[PERL_MULTICONCAT_IX_PLAIN_PV/LEN]]
      *   holds the plain rep, while aux[PERL_MULTICONCAT_IX_UTF8_PV/LEN]
      *   holds the utf8 rep, and there are 2 sets of segment lengths,
      *   with the utf8 set following after the plain set.
@@ -686,7 +687,7 @@ PP(pp_multiconcat)
          * calculate how much extra growth is needed for all the chars
          * which will expand to two utf8 bytes.
          * Also, if the growth is non-zero, negate the length to indicate
-         * that this this is a variant string. Conversely, un-negate the
+         * that this is a variant string. Conversely, un-negate the
          * length on utf8 args (which was only needed to flag non-utf8
          * args in this loop */
         for (svpv_p = svpv_buf; svpv_p < svpv_end; svpv_p++) {
@@ -1435,16 +1436,10 @@ PP(pp_add)
             NV nl = SvNVX(svl);
             NV nr = SvNVX(svr);
 
-            if (
-#if defined(NAN_COMPARE_BROKEN) && defined(Perl_isnan)
-                !Perl_isnan(nl) && nl == (NV)(il = (IV)nl)
-                && !Perl_isnan(nr) && nr == (NV)(ir = (IV)nr)
-#else
-                nl == (NV)(il = (IV)nl) && nr == (NV)(ir = (IV)nr)
-#endif
-                )
+            if (lossless_NV_to_IV(nl, &il) && lossless_NV_to_IV(nr, &ir)) {
                 /* nothing was lost by converting to IVs */
                 goto do_iv;
+            }
             SP--;
             TARGn(nl + nr, 0); /* args not GMG, so can't be tainted */
             SETs(TARG);
@@ -2743,8 +2738,8 @@ PP(pp_aassign)
 	    if (!SvIMMORTAL(lsv)) {
                 sv_set_undef(lsv);
                 SvSETMAGIC(lsv);
-                *relem++ = lsv;
             }
+            *relem++ = lsv;
 	    break;
         } /* switch */
     } /* while */
@@ -2895,6 +2890,47 @@ PP(pp_qr)
     RETURN;
 }
 
+STATIC bool
+S_are_we_in_Debug_EXECUTE_r(pTHX)
+{
+    /* Given a 'use re' is in effect, does it ask for outputting execution
+     * debug info?
+     *
+     * This is separated from the sole place it's called, an inline function,
+     * because it is the large-ish slow portion of the function */
+
+    DECLARE_AND_GET_RE_DEBUG_FLAGS_NON_REGEX;
+
+    return cBOOL(RE_DEBUG_FLAG(RE_DEBUG_EXECUTE_MASK));
+}
+
+PERL_STATIC_INLINE bool
+S_should_we_output_Debug_r(pTHX_ regexp *prog)
+{
+    PERL_ARGS_ASSERT_SHOULD_WE_OUTPUT_DEBUG_R;
+
+    /* pp_match can output regex debugging info.  This function returns a
+     * boolean as to whether or not it should.
+     *
+     * Under -Dr, it should.  Any reasonable compiler will optimize this bit of
+     * code away on non-debugging builds. */
+    if (UNLIKELY(DEBUG_r_TEST)) {
+        return TRUE;
+    }
+
+    /* If the regex engine is using the non-debugging execution routine, then
+     * no debugging should be output.  Same if the field is NULL that pluggable
+     * engines are not supposed to fill. */
+    if (     LIKELY(prog->engine->exec == &Perl_regexec_flags)
+        || UNLIKELY(prog->engine->op_comp == NULL))
+    {
+        return FALSE;
+    }
+
+    /* Otherwise have to check */
+    return S_are_we_in_Debug_EXECUTE_r(aTHX);
+}
+
 PP(pp_match)
 {
     dSP; dTARG;
@@ -2950,7 +2986,9 @@ PP(pp_match)
         pm->op_pmflags & PMf_USED
 #endif
     ) {
-        DEBUG_r(PerlIO_printf(Perl_debug_log, "?? already matched once"));
+        if (UNLIKELY(should_we_output_Debug_r(prog))) {
+            PerlIO_printf(Perl_debug_log, "?? already matched once");
+        }
 	goto nope;
     }
 
@@ -2972,9 +3010,11 @@ PP(pp_match)
     }
 
     if (RXp_MINLEN(prog) >= 0 && (STRLEN)RXp_MINLEN(prog) > len) {
-        DEBUG_r(PerlIO_printf(Perl_debug_log, "String shorter than min possible regex match (%"
-                                              UVuf " < %" IVdf ")\n",
-                                              (UV)len, (IV)RXp_MINLEN(prog)));
+        if (UNLIKELY(should_we_output_Debug_r(prog))) {
+            PerlIO_printf(Perl_debug_log,
+                "String shorter than min possible regex match (%zd < %zd)\n",
+                                                        len, RXp_MINLEN(prog));
+        }
 	goto nope;
     }
 
@@ -3275,9 +3315,9 @@ Perl_do_readline(pTHX)
 	    }
 	    for (t1 = SvPVX_const(sv); *t1; t1++)
 #ifdef __VMS
-		if (strchr("*%?", *t1))
+		if (memCHRs("*%?", *t1))
 #else
-		if (strchr("$&*(){}[]'\";\\|?<>~`", *t1))
+		if (memCHRs("$&*(){}[]'\";\\|?<>~`", *t1))
 #endif
 			break;
 	    if (*t1 && PerlLIO_lstat(SvPVX_const(sv), &statbuf) < 0) {

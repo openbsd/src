@@ -42,9 +42,13 @@ C<ge>.  Starting in v5.26, Perl can handle these reasonably as well,
 depending on the platform's implementation.  However, for earlier
 releases or for better control, use L<Unicode::Collate>.  There are
 actually two slightly different types of UTF-8 locales: one for Turkic
-languages and one for everything else.  Starting in Perl v5.30, Perl
-seamlessly handles both types; previously only the non-Turkic one was
-supported.
+languages and one for everything else.
+
+Starting in Perl v5.30, Perl detects Turkic locales by their
+behaviour, and seamlessly handles both types; previously only the
+non-Turkic one was supported.  The name of the locale is ignored, if
+your system has a C<tr_TR.UTF-8> locale and it doesn't behave like a
+Turkic locale, perl will treat it like a non-Turkic locale.
 
 Perl continues to support the old non UTF-8 locales as well.  There are
 currently no UTF-8 locales for EBCDIC platforms.
@@ -313,7 +317,7 @@ perform a char-by-char comparison, and only returns I<0> (equal) if the
 operands are char-for-char identical.  If you really want to know whether
 two strings--which C<eq> and C<cmp> may consider different--are equal
 as far as collation in the locale is concerned, see the discussion in
-L<Category C<LC_COLLATE>: Collation>.
+L</Category C<LC_COLLATE>: Collation>.
 
 =item *
 
@@ -408,7 +412,10 @@ L<thread|threads>.  The locale will change in all other threads at the
 same time, and should your thread get paused by the operating system,
 and another started, that thread will not have the locale it is
 expecting.  On some platforms, there can be a race leading to segfaults
-if two threads call this function nearly simultaneously.
+if two threads call this function nearly simultaneously.  This warning
+does not apply on unthreaded builds, or on perls where
+C<${^SAFE_LOCALES}> exists and is non-zero; namely Perl 5.28 and later
+unthreaded or compiled to be locale-thread-safe.
 
 You can switch locales as often as you wish at run time with the
 C<POSIX::setlocale()> function:
@@ -477,7 +484,7 @@ be noticed, depending on your system's C library.
 Note that when a form of C<use locale> that doesn't include all
 categories is specified, Perl ignores the excluded categories.
 
-If C<set_locale()> fails for some reason (for example, an attempt to set
+If C<setlocale()> fails for some reason (for example, an attempt to set
 to a locale unknown to the system), the locale for the category is not
 changed, and the function returns C<undef>.
 
@@ -1018,7 +1025,7 @@ should use C<\w> with the C</a> regular expression modifier.  See L</"SECURITY">
 
 =head2 Category C<LC_NUMERIC>: Numeric Formatting
 
-After a proper C<POSIX::setlocale()> call, and within the scope of
+After a proper C<POSIX::setlocale()> call, and within the scope
 of a C<use locale> form that includes numerics, Perl obeys the
 C<LC_NUMERIC> locale information, which controls an application's idea
 of how numbers should be formatted for human readability.
@@ -1465,7 +1472,7 @@ system's implementation of the locale system than by Perl.
 The Unicode CLDR project extracts the POSIX portion of many of its
 locales, available at
 
-  http://unicode.org/Public/cldr/2.0.1/
+  https://unicode.org/Public/cldr/2.0.1/
 
 (Newer versions of CLDR require you to compute the POSIX data yourself.
 See L<http://unicode.org/Public/cldr/latest/>.)
@@ -1526,8 +1533,8 @@ instead use the L<PerlIO::locale> module, or the L<Encode::Locale>
 module, both available from CPAN.  The latter module also has methods to
 ease the handling of C<ARGV> and environment variables, and can be used
 on individual strings.  If you know that all your locales will be
-UTF-8, as many are these days, you can use the L<B<-C>|perlrun/-C>
-command line switch.
+UTF-8, as many are these days, you can use the
+L<B<-C>|perlrun/-C [numberE<sol>list]> command line switch.
 
 This form of the pragma allows essentially seamless handling of locales
 with Unicode.  The collation order will be by Unicode code point order.
@@ -1547,9 +1554,9 @@ multi-byte:
 The only multi-byte (or wide character) locale that Perl is ever likely
 to support is UTF-8.  This is due to the difficulty of implementation,
 the fact that high quality UTF-8 locales are now published for every
-area of the world (L<http://unicode.org/Public/cldr/2.0.1/> for
+area of the world (L<https://unicode.org/Public/cldr/2.0.1/> for
 ones that are already set-up, but from an earlier version;
-L<http://unicode.org/Public/cldr/latest/> for the most up-to-date, but
+L<https://unicode.org/Public/cldr/latest/> for the most up-to-date, but
 you have to extract the POSIX information yourself), and that
 failing all that you can use the L<Encode> module to translate to/from
 your locale.  So, you'll have to do one of those things if you're using
@@ -1603,7 +1610,8 @@ lowercase of U+0178 is itself.
 The same problems ensue if you enable automatic UTF-8-ification of your
 standard file handles, default C<open()> layer, and C<@ARGV> on non-ISO8859-1,
 non-UTF-8 locales (by using either the B<-C> command line switch or the
-C<PERL_UNICODE> environment variable; see L<perlrun>).
+C<PERL_UNICODE> environment variable; see
+L<perlrun|perlrun/-C [numberE<sol>list]>).
 Things are read in as UTF-8, which would normally imply a Unicode
 interpretation, but the presence of a locale causes them to be interpreted
 in that locale instead.  For example, a 0xD7 code point in the Unicode

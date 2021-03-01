@@ -1126,10 +1126,10 @@ syntax error at foo line 8, near "\$\$) "
 EOF
 
 eval "#line 8 foo\nsub t101 (\@_) { }";
-like $@, qr/\ACan't use global \@_ in "my" at foo line 8/;
+like $@, qr/\ACan't use global \@_ in subroutine signature at foo line 8/;
 
 eval "#line 8 foo\nsub t102 (\%_) { }";
-like $@, qr/\ACan't use global \%_ in "my" at foo line 8/;
+like $@, qr/\ACan't use global \%_ in subroutine signature at foo line 8/;
 
 my $t103 = sub ($a) { $a || "z" };
 is prototype($t103), undef;
@@ -1551,6 +1551,42 @@ while(<$kh>) {
     like $errs[0],
         qr/^Subroutine attributes must come before the signature at/,
         "RT 132760 err 0";
+}
+
+# check that warnings come from the correct line
+
+{
+    my @warn;
+    local $SIG{__WARN__} = sub { push @warn, @_};
+    eval q{
+        sub multiline1 (
+            $a,
+            $b = $a + 1,
+            $c = $a + 1)
+        {
+            my $d = $a + 1;
+            my $e = $a + 1;
+        }
+    };
+    multiline1(undef);
+    like $warn[0], qr/line 4,/, 'multiline1: $b';
+    like $warn[1], qr/line 5,/, 'multiline1: $c';
+    like $warn[2], qr/line 7,/, 'multiline1: $d';
+    like $warn[3], qr/line 8,/, 'multiline1: $e';
+}
+
+# check errors for using global vars as params
+
+{
+    eval q{ sub ($_) {} };
+    like $@, qr/Can't use global \$_ in subroutine signature/, 'f($_)';
+    eval q{ sub (@_) {} };
+    like $@, qr/Can't use global \@_ in subroutine signature/, 'f(@_)';
+    eval q{ sub (%_) {} };
+    like $@, qr/Can't use global \%_ in subroutine signature/, 'f(%_)';
+    eval q{ sub ($1) {} };
+    like $@, qr/Illegal operator following parameter in a subroutine signature/,
+            'f($1)';
 }
 
 done_testing;

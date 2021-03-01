@@ -9,7 +9,7 @@ use Config;
 use List::Util qw(sum);
 
 my $v = sum;
-is( $v,	undef,	'no args');
+is( $v, undef, 'no args');
 
 $v = sum(9);
 is( $v, 9, 'one arg');

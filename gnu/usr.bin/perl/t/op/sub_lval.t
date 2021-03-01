@@ -969,7 +969,7 @@ for (
 }
 continue { $suffix = ' (explicit return)' }
 
-# Returning unwritables from nested lvalue sub call in in rvalue context
+# Returning unwritables from nested lvalue sub call in rvalue context
 # First, ensure we are testing what we think we are:
 if (!Internals::SvREADONLY($])) { Internals::SvREADONLY($],1); }
 sub squibble : lvalue { return $] }

@@ -1,8 +1,8 @@
 package ExtUtils::MakeMaker::Locale;
 
 use strict;
-our $VERSION = "7.34";
-$VERSION = eval $VERSION;
+our $VERSION = "7.44";
+$VERSION =~ tr/_//d;
 
 use base 'Exporter';
 our @EXPORT_OK = qw(
@@ -47,7 +47,10 @@ sub _init {
             unless (defined &GetInputCP) {
                 eval {
                     require Win32;
-                    eval { Win32::GetConsoleCP() };
+                    eval {
+                        local $SIG{__WARN__} = sub {} if ( "$]" < 5.014 ); # suppress deprecation warning for inherited AUTOLOAD of Win32::GetConsoleCP()
+                        Win32::GetConsoleCP();
+                    };
                     # manually "import" it since Win32->import refuses
                     *GetInputCP = sub { &Win32::GetConsoleCP } if defined &Win32::GetConsoleCP;
                     *GetOutputCP = sub { &Win32::GetConsoleOutputCP } if defined &Win32::GetConsoleOutputCP;
@@ -95,6 +98,13 @@ sub _init {
 	};
 	$ENCODING_LOCALE ||= $ENCODING_CONSOLE_IN;
     }
+
+    # Workaround of Encode < v2.71 for "cp65000" and "cp65001"
+    # The "cp65000" and "cp65001" aliases were added in [Encode v2.71](https://github.com/dankogai/p5-encode/commit/7874bd95aa10967a3b5dbae333d16bcd703ac6c6)
+    # via commit <https://github.com/dankogai/p5-encode/commit/84b9c1101d5251d37e226f80d1c6781718779047>.
+    # This will avoid test failures for Win32 machines using the UTF-7 or UTF-8 code pages.
+    $ENCODING_LOCALE = 'UTF-7' if $ENCODING_LOCALE && lc($ENCODING_LOCALE) eq "cp65000";
+    $ENCODING_LOCALE = 'utf-8-strict' if $ENCODING_LOCALE && lc($ENCODING_LOCALE) eq "cp65001";
 
     if ($^O eq "darwin") {
 	$ENCODING_LOCALE_FS ||= "UTF-8";

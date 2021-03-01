@@ -172,7 +172,7 @@ else {
 }
 close OPTATTR;
 
-my $incstr = 'PERL,GLOBALS';
+my $incstr = 'perl,globals';
 my (@symfiles, $drvrname);
 
 # Initial hack to permit building of compatible shareable images for a
@@ -180,18 +180,17 @@ my (@symfiles, $drvrname);
 if ($ENV{PERLSHR_USE_GSMATCH}) {
   if ($ENV{PERLSHR_USE_GSMATCH} eq 'INCLUDE_COMPILE_OPTIONS') {
     # Build up a major ID. Since on Alpha it can only be 8 bits, we encode
-    # the version number in the top 5 bits and use the bottom 3 for build
-    # options most likely to cause incompatibilities.  Breaks at Perl 5.32.
+    # the version number in the top 6 bits and use the bottom 2 for build
+    # options most likely to cause incompatibilities.  Breaks at Perl 5.64.
     my ($ver, $sub) = $] =~ /\.(\d\d\d)(\d\d\d)/;
     $ver += 0; $sub += 0;
     my $gsmatch = ($ver % 2 == 1) ? "EQUAL" : "LEQUAL"; # Force an equal match for
 						  # dev, but be more forgiving
 						  # for releases
 
-    $ver <<= 3;
+    $ver <<= 2;
     $ver += 1 if $debugging_enabled;	# If DEBUGGING is set
     $ver += 2 if $use_threads;		# if we're threaded
-    $ver += 4 if $use_mymalloc;		# if we're using perl's malloc
     print OPTBLD "GSMATCH=$gsmatch,$ver,$sub\n";
   }
   else {

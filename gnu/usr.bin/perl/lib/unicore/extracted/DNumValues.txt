@@ -1,5 +1,5 @@
-# DerivedNumericValues-12.1.0.txt
-# Date: 2019-03-10, 10:53:11 GMT
+# DerivedNumericValues-13.0.0.txt
+# Date: 2019-09-08, 23:31:10 GMT
 # © 2019 Unicode®, Inc.
 # Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
@@ -101,6 +101,7 @@ FF10          ; 0.0 ; ; 0 # Nd       FULLWIDTH DIGIT ZERO
 116C0         ; 0.0 ; ; 0 # Nd       TAKRI DIGIT ZERO
 11730         ; 0.0 ; ; 0 # Nd       AHOM DIGIT ZERO
 118E0         ; 0.0 ; ; 0 # Nd       WARANG CITI DIGIT ZERO
+11950         ; 0.0 ; ; 0 # Nd       DIVES AKURU DIGIT ZERO
 11C50         ; 0.0 ; ; 0 # Nd       BHAIKSUKI DIGIT ZERO
 11D50         ; 0.0 ; ; 0 # Nd       MASARAM GONDI DIGIT ZERO
 11DA0         ; 0.0 ; ; 0 # Nd       GUNJALA GONDI DIGIT ZERO
@@ -118,8 +119,9 @@ FF10          ; 0.0 ; ; 0 # Nd       FULLWIDTH DIGIT ZERO
 1E950         ; 0.0 ; ; 0 # Nd       ADLAM DIGIT ZERO
 1F100..1F101  ; 0.0 ; ; 0 # No   [2] DIGIT ZERO FULL STOP..DIGIT ZERO COMMA
 1F10B..1F10C  ; 0.0 ; ; 0 # No   [2] DINGBAT CIRCLED SANS-SERIF DIGIT ZERO..DINGBAT NEGATIVE CIRCLED SANS-SERIF DIGIT ZERO
+1FBF0         ; 0.0 ; ; 0 # Nd       SEGMENTED DIGIT ZERO
 
-# Total code points: 81
+# Total code points: 83
 
 # ================================================
 
@@ -492,6 +494,7 @@ FF11          ; 1.0 ; ; 1 # Nd       FULLWIDTH DIGIT ONE
 10E60         ; 1.0 ; ; 1 # No       RUMI DIGIT ONE
 10F1D         ; 1.0 ; ; 1 # No       OLD SOGDIAN NUMBER ONE
 10F51         ; 1.0 ; ; 1 # No       SOGDIAN NUMBER ONE
+10FC5         ; 1.0 ; ; 1 # No       CHORASMIAN NUMBER ONE
 11052         ; 1.0 ; ; 1 # No       BRAHMI NUMBER ONE
 11067         ; 1.0 ; ; 1 # Nd       BRAHMI DIGIT ONE
 110F1         ; 1.0 ; ; 1 # Nd       SORA SOMPENG DIGIT ONE
@@ -505,6 +508,7 @@ FF11          ; 1.0 ; ; 1 # Nd       FULLWIDTH DIGIT ONE
 116C1         ; 1.0 ; ; 1 # Nd       TAKRI DIGIT ONE
 11731         ; 1.0 ; ; 1 # Nd       AHOM DIGIT ONE
 118E1         ; 1.0 ; ; 1 # Nd       WARANG CITI DIGIT ONE
+11951         ; 1.0 ; ; 1 # Nd       DIVES AKURU DIGIT ONE
 11C51         ; 1.0 ; ; 1 # Nd       BHAIKSUKI DIGIT ONE
 11C5A         ; 1.0 ; ; 1 # No       BHAIKSUKI NUMBER ONE
 11D51         ; 1.0 ; ; 1 # Nd       MASARAM GONDI DIGIT ONE
@@ -537,9 +541,10 @@ FF11          ; 1.0 ; ; 1 # Nd       FULLWIDTH DIGIT ONE
 1ECB1         ; 1.0 ; ; 1 # No       INDIC SIYAQ NUMBER ALTERNATE ONE
 1ED01         ; 1.0 ; ; 1 # No       OTTOMAN SIYAQ NUMBER ONE
 1F102         ; 1.0 ; ; 1 # No       DIGIT ONE COMMA
+1FBF1         ; 1.0 ; ; 1 # Nd       SEGMENTED DIGIT ONE
 2092A         ; 1.0 ; ; 1 # Lo       CJK UNIFIED IDEOGRAPH-2092A
 
-# Total code points: 137
+# Total code points: 140
 
 # ================================================
 
@@ -632,6 +637,7 @@ FF12          ; 2.0 ; ; 2 # Nd       FULLWIDTH DIGIT TWO
 10D32         ; 2.0 ; ; 2 # Nd       HANIFI ROHINGYA DIGIT TWO
 10E61         ; 2.0 ; ; 2 # No       RUMI DIGIT TWO
 10F1E         ; 2.0 ; ; 2 # No       OLD SOGDIAN NUMBER TWO
+10FC6         ; 2.0 ; ; 2 # No       CHORASMIAN NUMBER TWO
 11053         ; 2.0 ; ; 2 # No       BRAHMI NUMBER TWO
 11068         ; 2.0 ; ; 2 # Nd       BRAHMI DIGIT TWO
 110F2         ; 2.0 ; ; 2 # Nd       SORA SOMPENG DIGIT TWO
@@ -645,6 +651,7 @@ FF12          ; 2.0 ; ; 2 # Nd       FULLWIDTH DIGIT TWO
 116C2         ; 2.0 ; ; 2 # Nd       TAKRI DIGIT TWO
 11732         ; 2.0 ; ; 2 # Nd       AHOM DIGIT TWO
 118E2         ; 2.0 ; ; 2 # Nd       WARANG CITI DIGIT TWO
+11952         ; 2.0 ; ; 2 # Nd       DIVES AKURU DIGIT TWO
 11C52         ; 2.0 ; ; 2 # Nd       BHAIKSUKI DIGIT TWO
 11C5B         ; 2.0 ; ; 2 # No       BHAIKSUKI NUMBER TWO
 11D52         ; 2.0 ; ; 2 # Nd       MASARAM GONDI DIGIT TWO
@@ -681,9 +688,10 @@ FF12          ; 2.0 ; ; 2 # Nd       FULLWIDTH DIGIT TWO
 1ED02         ; 2.0 ; ; 2 # No       OTTOMAN SIYAQ NUMBER TWO
 1ED2F         ; 2.0 ; ; 2 # No       OTTOMAN SIYAQ ALTERNATE NUMBER TWO
 1F103         ; 2.0 ; ; 2 # No       DIGIT TWO COMMA
+1FBF2         ; 2.0 ; ; 2 # Nd       SEGMENTED DIGIT TWO
 22390         ; 2.0 ; ; 2 # Lo       CJK UNIFIED IDEOGRAPH-22390
 
-# Total code points: 136
+# Total code points: 139
 
 # ================================================
 
@@ -770,6 +778,7 @@ FF13          ; 3.0 ; ; 3 # Nd       FULLWIDTH DIGIT THREE
 10D33         ; 3.0 ; ; 3 # Nd       HANIFI ROHINGYA DIGIT THREE
 10E62         ; 3.0 ; ; 3 # No       RUMI DIGIT THREE
 10F1F         ; 3.0 ; ; 3 # No       OLD SOGDIAN NUMBER THREE
+10FC7         ; 3.0 ; ; 3 # No       CHORASMIAN NUMBER THREE
 11054         ; 3.0 ; ; 3 # No       BRAHMI NUMBER THREE
 11069         ; 3.0 ; ; 3 # Nd       BRAHMI DIGIT THREE
 110F3         ; 3.0 ; ; 3 # Nd       SORA SOMPENG DIGIT THREE
@@ -783,6 +792,7 @@ FF13          ; 3.0 ; ; 3 # Nd       FULLWIDTH DIGIT THREE
 116C3         ; 3.0 ; ; 3 # Nd       TAKRI DIGIT THREE
 11733         ; 3.0 ; ; 3 # Nd       AHOM DIGIT THREE
 118E3         ; 3.0 ; ; 3 # Nd       WARANG CITI DIGIT THREE
+11953         ; 3.0 ; ; 3 # Nd       DIVES AKURU DIGIT THREE
 11C53         ; 3.0 ; ; 3 # Nd       BHAIKSUKI DIGIT THREE
 11C5C         ; 3.0 ; ; 3 # No       BHAIKSUKI NUMBER THREE
 11D53         ; 3.0 ; ; 3 # Nd       MASARAM GONDI DIGIT THREE
@@ -819,12 +829,13 @@ FF13          ; 3.0 ; ; 3 # Nd       FULLWIDTH DIGIT THREE
 1ED03         ; 3.0 ; ; 3 # No       OTTOMAN SIYAQ NUMBER THREE
 1ED30         ; 3.0 ; ; 3 # No       OTTOMAN SIYAQ ALTERNATE NUMBER THREE
 1F104         ; 3.0 ; ; 3 # No       DIGIT THREE COMMA
+1FBF3         ; 3.0 ; ; 3 # Nd       SEGMENTED DIGIT THREE
 20AFD         ; 3.0 ; ; 3 # Lo       CJK UNIFIED IDEOGRAPH-20AFD
 20B19         ; 3.0 ; ; 3 # Lo       CJK UNIFIED IDEOGRAPH-20B19
 22998         ; 3.0 ; ; 3 # Lo       CJK UNIFIED IDEOGRAPH-22998
 23B1B         ; 3.0 ; ; 3 # Lo       CJK UNIFIED IDEOGRAPH-23B1B
 
-# Total code points: 137
+# Total code points: 140
 
 # ================================================
 
@@ -905,6 +916,7 @@ FF14          ; 4.0 ; ; 4 # Nd       FULLWIDTH DIGIT FOUR
 10D34         ; 4.0 ; ; 4 # Nd       HANIFI ROHINGYA DIGIT FOUR
 10E63         ; 4.0 ; ; 4 # No       RUMI DIGIT FOUR
 10F20         ; 4.0 ; ; 4 # No       OLD SOGDIAN NUMBER FOUR
+10FC8         ; 4.0 ; ; 4 # No       CHORASMIAN NUMBER FOUR
 11055         ; 4.0 ; ; 4 # No       BRAHMI NUMBER FOUR
 1106A         ; 4.0 ; ; 4 # Nd       BRAHMI DIGIT FOUR
 110F4         ; 4.0 ; ; 4 # Nd       SORA SOMPENG DIGIT FOUR
@@ -918,6 +930,7 @@ FF14          ; 4.0 ; ; 4 # Nd       FULLWIDTH DIGIT FOUR
 116C4         ; 4.0 ; ; 4 # Nd       TAKRI DIGIT FOUR
 11734         ; 4.0 ; ; 4 # Nd       AHOM DIGIT FOUR
 118E4         ; 4.0 ; ; 4 # Nd       WARANG CITI DIGIT FOUR
+11954         ; 4.0 ; ; 4 # Nd       DIVES AKURU DIGIT FOUR
 11C54         ; 4.0 ; ; 4 # Nd       BHAIKSUKI DIGIT FOUR
 11C5D         ; 4.0 ; ; 4 # No       BHAIKSUKI NUMBER FOUR
 11D54         ; 4.0 ; ; 4 # Nd       MASARAM GONDI DIGIT FOUR
@@ -954,11 +967,12 @@ FF14          ; 4.0 ; ; 4 # Nd       FULLWIDTH DIGIT FOUR
 1ED04         ; 4.0 ; ; 4 # No       OTTOMAN SIYAQ NUMBER FOUR
 1ED31         ; 4.0 ; ; 4 # No       OTTOMAN SIYAQ ALTERNATE NUMBER FOUR
 1F105         ; 4.0 ; ; 4 # No       DIGIT FOUR COMMA
+1FBF4         ; 4.0 ; ; 4 # Nd       SEGMENTED DIGIT FOUR
 20064         ; 4.0 ; ; 4 # Lo       CJK UNIFIED IDEOGRAPH-20064
 200E2         ; 4.0 ; ; 4 # Lo       CJK UNIFIED IDEOGRAPH-200E2
 2626D         ; 4.0 ; ; 4 # Lo       CJK UNIFIED IDEOGRAPH-2626D
 
-# Total code points: 128
+# Total code points: 131
 
 # ================================================
 
@@ -1057,6 +1071,7 @@ FF15          ; 5.0 ; ; 5 # Nd       FULLWIDTH DIGIT FIVE
 116C5         ; 5.0 ; ; 5 # Nd       TAKRI DIGIT FIVE
 11735         ; 5.0 ; ; 5 # Nd       AHOM DIGIT FIVE
 118E5         ; 5.0 ; ; 5 # Nd       WARANG CITI DIGIT FIVE
+11955         ; 5.0 ; ; 5 # Nd       DIVES AKURU DIGIT FIVE
 11C55         ; 5.0 ; ; 5 # Nd       BHAIKSUKI DIGIT FIVE
 11C5E         ; 5.0 ; ; 5 # No       BHAIKSUKI NUMBER FIVE
 11D55         ; 5.0 ; ; 5 # Nd       MASARAM GONDI DIGIT FIVE
@@ -1093,9 +1108,10 @@ FF15          ; 5.0 ; ; 5 # Nd       FULLWIDTH DIGIT FIVE
 1ED05         ; 5.0 ; ; 5 # No       OTTOMAN SIYAQ NUMBER FIVE
 1ED32         ; 5.0 ; ; 5 # No       OTTOMAN SIYAQ ALTERNATE NUMBER FIVE
 1F106         ; 5.0 ; ; 5 # No       DIGIT FIVE COMMA
+1FBF5         ; 5.0 ; ; 5 # Nd       SEGMENTED DIGIT FIVE
 20121         ; 5.0 ; ; 5 # Lo       CJK UNIFIED IDEOGRAPH-20121
 
-# Total code points: 127
+# Total code points: 129
 
 # ================================================
 
@@ -1184,6 +1200,7 @@ FF16          ; 6.0 ; ; 6 # Nd       FULLWIDTH DIGIT SIX
 116C6         ; 6.0 ; ; 6 # Nd       TAKRI DIGIT SIX
 11736         ; 6.0 ; ; 6 # Nd       AHOM DIGIT SIX
 118E6         ; 6.0 ; ; 6 # Nd       WARANG CITI DIGIT SIX
+11956         ; 6.0 ; ; 6 # Nd       DIVES AKURU DIGIT SIX
 11C56         ; 6.0 ; ; 6 # Nd       BHAIKSUKI DIGIT SIX
 11C5F         ; 6.0 ; ; 6 # No       BHAIKSUKI NUMBER SIX
 11D56         ; 6.0 ; ; 6 # Nd       MASARAM GONDI DIGIT SIX
@@ -1215,9 +1232,10 @@ FF16          ; 6.0 ; ; 6 # Nd       FULLWIDTH DIGIT SIX
 1ED06         ; 6.0 ; ; 6 # No       OTTOMAN SIYAQ NUMBER SIX
 1ED33         ; 6.0 ; ; 6 # No       OTTOMAN SIYAQ ALTERNATE NUMBER SIX
 1F107         ; 6.0 ; ; 6 # No       DIGIT SIX COMMA
+1FBF6         ; 6.0 ; ; 6 # Nd       SEGMENTED DIGIT SIX
 20AEA         ; 6.0 ; ; 6 # Lo       CJK UNIFIED IDEOGRAPH-20AEA
 
-# Total code points: 111
+# Total code points: 113
 
 # ================================================
 
@@ -1304,6 +1322,7 @@ FF17          ; 7.0 ; ; 7 # Nd       FULLWIDTH DIGIT SEVEN
 116C7         ; 7.0 ; ; 7 # Nd       TAKRI DIGIT SEVEN
 11737         ; 7.0 ; ; 7 # Nd       AHOM DIGIT SEVEN
 118E7         ; 7.0 ; ; 7 # Nd       WARANG CITI DIGIT SEVEN
+11957         ; 7.0 ; ; 7 # Nd       DIVES AKURU DIGIT SEVEN
 11C57         ; 7.0 ; ; 7 # Nd       BHAIKSUKI DIGIT SEVEN
 11C60         ; 7.0 ; ; 7 # No       BHAIKSUKI NUMBER SEVEN
 11D57         ; 7.0 ; ; 7 # Nd       MASARAM GONDI DIGIT SEVEN
@@ -1334,9 +1353,10 @@ FF17          ; 7.0 ; ; 7 # Nd       FULLWIDTH DIGIT SEVEN
 1ED07         ; 7.0 ; ; 7 # No       OTTOMAN SIYAQ NUMBER SEVEN
 1ED34         ; 7.0 ; ; 7 # No       OTTOMAN SIYAQ ALTERNATE NUMBER SEVEN
 1F108         ; 7.0 ; ; 7 # No       DIGIT SEVEN COMMA
+1FBF7         ; 7.0 ; ; 7 # Nd       SEGMENTED DIGIT SEVEN
 20001         ; 7.0 ; ; 7 # Lo       CJK UNIFIED IDEOGRAPH-20001
 
-# Total code points: 110
+# Total code points: 112
 
 # ================================================
 
@@ -1421,6 +1441,7 @@ FF18          ; 8.0 ; ; 8 # Nd       FULLWIDTH DIGIT EIGHT
 116C8         ; 8.0 ; ; 8 # Nd       TAKRI DIGIT EIGHT
 11738         ; 8.0 ; ; 8 # Nd       AHOM DIGIT EIGHT
 118E8         ; 8.0 ; ; 8 # Nd       WARANG CITI DIGIT EIGHT
+11958         ; 8.0 ; ; 8 # Nd       DIVES AKURU DIGIT EIGHT
 11C58         ; 8.0 ; ; 8 # Nd       BHAIKSUKI DIGIT EIGHT
 11C61         ; 8.0 ; ; 8 # No       BHAIKSUKI NUMBER EIGHT
 11D58         ; 8.0 ; ; 8 # Nd       MASARAM GONDI DIGIT EIGHT
@@ -1451,8 +1472,9 @@ FF18          ; 8.0 ; ; 8 # Nd       FULLWIDTH DIGIT EIGHT
 1ED08         ; 8.0 ; ; 8 # No       OTTOMAN SIYAQ NUMBER EIGHT
 1ED35         ; 8.0 ; ; 8 # No       OTTOMAN SIYAQ ALTERNATE NUMBER EIGHT
 1F109         ; 8.0 ; ; 8 # No       DIGIT EIGHT COMMA
+1FBF8         ; 8.0 ; ; 8 # Nd       SEGMENTED DIGIT EIGHT
 
-# Total code points: 106
+# Total code points: 108
 
 # ================================================
 
@@ -1538,6 +1560,7 @@ FF19          ; 9.0 ; ; 9 # Nd       FULLWIDTH DIGIT NINE
 116C9         ; 9.0 ; ; 9 # Nd       TAKRI DIGIT NINE
 11739         ; 9.0 ; ; 9 # Nd       AHOM DIGIT NINE
 118E9         ; 9.0 ; ; 9 # Nd       WARANG CITI DIGIT NINE
+11959         ; 9.0 ; ; 9 # Nd       DIVES AKURU DIGIT NINE
 11C59         ; 9.0 ; ; 9 # Nd       BHAIKSUKI DIGIT NINE
 11C62         ; 9.0 ; ; 9 # No       BHAIKSUKI NUMBER NINE
 11D59         ; 9.0 ; ; 9 # Nd       MASARAM GONDI DIGIT NINE
@@ -1568,9 +1591,10 @@ FF19          ; 9.0 ; ; 9 # Nd       FULLWIDTH DIGIT NINE
 1ED09         ; 9.0 ; ; 9 # No       OTTOMAN SIYAQ NUMBER NINE
 1ED36         ; 9.0 ; ; 9 # No       OTTOMAN SIYAQ ALTERNATE NUMBER NINE
 1F10A         ; 9.0 ; ; 9 # No       DIGIT NINE COMMA
+1FBF9         ; 9.0 ; ; 9 # Nd       SEGMENTED DIGIT NINE
 2F890         ; 9.0 ; ; 9 # Lo       CJK COMPATIBILITY IDEOGRAPH-2F890
 
-# Total code points: 110
+# Total code points: 112
 
 # ================================================
 
@@ -1619,6 +1643,7 @@ F9FD          ; 10.0 ; ; 10 # Lo       CJK COMPATIBILITY IDEOGRAPH-F9FD
 10E69         ; 10.0 ; ; 10 # No       RUMI NUMBER TEN
 10F22         ; 10.0 ; ; 10 # No       OLD SOGDIAN NUMBER TEN
 10F52         ; 10.0 ; ; 10 # No       SOGDIAN NUMBER TEN
+10FC9         ; 10.0 ; ; 10 # No       CHORASMIAN NUMBER TEN
 1105B         ; 10.0 ; ; 10 # No       BRAHMI NUMBER TEN
 111EA         ; 10.0 ; ; 10 # No       SINHALA ARCHAIC NUMBER TEN
 1173A         ; 10.0 ; ; 10 # No       AHOM NUMBER TEN
@@ -1632,7 +1657,7 @@ F9FD          ; 10.0 ; ; 10 # Lo       CJK COMPATIBILITY IDEOGRAPH-F9FD
 1ED0A         ; 10.0 ; ; 10 # No       OTTOMAN SIYAQ NUMBER TEN
 1ED37         ; 10.0 ; ; 10 # No       OTTOMAN SIYAQ ALTERNATE NUMBER TEN
 
-# Total code points: 61
+# Total code points: 62
 
 # ================================================
 
@@ -1770,6 +1795,7 @@ F9FD          ; 10.0 ; ; 10 # Lo       CJK COMPATIBILITY IDEOGRAPH-F9FD
 10E6A         ; 20.0 ; ; 20 # No       RUMI NUMBER TWENTY
 10F23         ; 20.0 ; ; 20 # No       OLD SOGDIAN NUMBER TWENTY
 10F53         ; 20.0 ; ; 20 # No       SOGDIAN NUMBER TWENTY
+10FCA         ; 20.0 ; ; 20 # No       CHORASMIAN NUMBER TWENTY
 1105C         ; 20.0 ; ; 20 # No       BRAHMI NUMBER TWENTY
 111EB         ; 20.0 ; ; 20 # No       SINHALA ARCHAIC NUMBER TWENTY
 1173B         ; 20.0 ; ; 20 # No       AHOM NUMBER TWENTY
@@ -1779,7 +1805,7 @@ F9FD          ; 10.0 ; ; 10 # Lo       CJK COMPATIBILITY IDEOGRAPH-F9FD
 1EC7B         ; 20.0 ; ; 20 # No       INDIC SIYAQ NUMBER TWENTY
 1ED0B         ; 20.0 ; ; 20 # No       OTTOMAN SIYAQ NUMBER TWENTY
 
-# Total code points: 35
+# Total code points: 36
 
 # ================================================
 
@@ -2121,6 +2147,7 @@ F9FD          ; 10.0 ; ; 10 # Lo       CJK COMPATIBILITY IDEOGRAPH-F9FD
 10E72         ; 100.0 ; ; 100 # No       RUMI NUMBER ONE HUNDRED
 10F25         ; 100.0 ; ; 100 # No       OLD SOGDIAN NUMBER ONE HUNDRED
 10F54         ; 100.0 ; ; 100 # No       SOGDIAN NUMBER ONE HUNDRED
+10FCB         ; 100.0 ; ; 100 # No       CHORASMIAN NUMBER ONE HUNDRED
 11064         ; 100.0 ; ; 100 # No       BRAHMI NUMBER ONE HUNDRED
 111F3         ; 100.0 ; ; 100 # No       SINHALA ARCHAIC NUMBER ONE HUNDRED
 11C6C         ; 100.0 ; ; 100 # No       BHAIKSUKI HUNDREDS UNIT MARK
@@ -2128,7 +2155,7 @@ F9FD          ; 10.0 ; ; 10 # Lo       CJK COMPATIBILITY IDEOGRAPH-F9FD
 1EC83         ; 100.0 ; ; 100 # No       INDIC SIYAQ NUMBER ONE HUNDRED
 1ED13         ; 100.0 ; ; 100 # No       OTTOMAN SIYAQ NUMBER ONE HUNDRED
 
-# Total code points: 34
+# Total code points: 35
 
 # ================================================
 

@@ -10,7 +10,7 @@ BEGIN {
 
 use warnings;
 use strict;
-plan tests => 124;
+plan tests => 125;
 our $TODO;
 
 my $deprecated = 0;
@@ -884,3 +884,20 @@ eval {
     };
 };
 is $@,'', 'goto the first parameter of a binary expression [perl #132854]';
+
+# v5.31.3-198-gd2cd363728 broke this. goto &XS_sub  wasn't restoring
+# cx->blk_sub.old_cxsubix. Would panic in pp_return
+
+{
+    # isa is an XS sub
+    sub g198 {  goto &UNIVERSAL::isa }
+
+    sub f198 {
+        g198([], 1 );
+        {
+            return 1;
+        }
+    }
+    eval { f198(); };
+    is $@, "", "v5.31.3-198-gd2cd363728";
+}

@@ -4,7 +4,7 @@ package re;
 use strict;
 use warnings;
 
-our $VERSION     = "0.37";
+our $VERSION     = "0.40";
 our @ISA         = qw(Exporter);
 our @EXPORT_OK   = ('regmust',
                     qw(is_regexp regexp_pattern
@@ -54,33 +54,41 @@ sub setcolor {
 }
 
 my %flags = (
-    COMPILE         => 0x0000FF,
-    PARSE           => 0x000001,
-    OPTIMISE        => 0x000002,
-    TRIEC           => 0x000004,
-    DUMP            => 0x000008,
-    FLAGS           => 0x000010,
-    TEST            => 0x000020,
+    COMPILE           => 0x0000FF,
+    PARSE             => 0x000001,
+    OPTIMISE          => 0x000002,
+    TRIEC             => 0x000004,
+    DUMP              => 0x000008,
+    FLAGS             => 0x000010,
+    TEST              => 0x000020,
 
-    EXECUTE         => 0x00FF00,
-    INTUIT          => 0x000100,
-    MATCH           => 0x000200,
-    TRIEE           => 0x000400,
+    EXECUTE           => 0x00FF00,
+    INTUIT            => 0x000100,
+    MATCH             => 0x000200,
+    TRIEE             => 0x000400,
 
-    EXTRA           => 0xFF0000,
-    TRIEM           => 0x010000,
-    OFFSETS         => 0x020000,
-    OFFSETSDBG      => 0x040000,
-    STATE           => 0x080000,
-    OPTIMISEM       => 0x100000,
-    STACK           => 0x280000,
-    BUFFERS         => 0x400000,
-    GPOS            => 0x800000,
+    EXTRA             => 0x3FF0000,
+    TRIEM             => 0x0010000,
+    OFFSETS           => 0x0020000,
+    OFFSETSDBG        => 0x0040000,
+    STATE             => 0x0080000,
+    OPTIMISEM         => 0x0100000,
+    STACK             => 0x0280000,
+    BUFFERS           => 0x0400000,
+    GPOS              => 0x0800000,
+    DUMP_PRE_OPTIMIZE => 0x1000000,
+    WILDCARD          => 0x2000000,
 );
-$flags{ALL} = -1 & ~($flags{OFFSETS}|$flags{OFFSETSDBG}|$flags{BUFFERS});
+$flags{ALL} = -1 & ~($flags{OFFSETS}
+                    |$flags{OFFSETSDBG}
+                    |$flags{BUFFERS}
+                    |$flags{DUMP_PRE_OPTIMIZE}
+                    |$flags{WILDCARD}
+                    );
 $flags{All} = $flags{all} = $flags{DUMP} | $flags{EXECUTE};
 $flags{Extra} = $flags{EXECUTE} | $flags{COMPILE} | $flags{GPOS};
-$flags{More} = $flags{MORE} = $flags{All} | $flags{TRIEC} | $flags{TRIEM} | $flags{STATE};
+$flags{More} = $flags{MORE} =
+                    $flags{All} | $flags{TRIEC} | $flags{TRIEM} | $flags{STATE};
 $flags{State} = $flags{DUMP} | $flags{EXECUTE} | $flags{STATE};
 $flags{TRIE} = $flags{DUMP} | $flags{EXECUTE} | $flags{TRIEC};
 
@@ -113,6 +121,8 @@ sub bits {
     my $on = shift;
     my $bits = 0;
     my $turning_all_off = ! @_ && ! $on;
+    my $seen_Debug = 0;
+    my $seen_debug = 0;
     if ($turning_all_off) {
 
         # Pretend were called with certain parameters, which are best dealt
@@ -126,8 +136,15 @@ sub bits {
     foreach my $idx (0..$#_){
         my $s=$_[$idx];
         if ($s eq 'Debug' or $s eq 'Debugcolor') {
+            if (! $seen_Debug) {
+                $seen_Debug = 1;
+
+                # Reset to nothing, and then add what follows.  $seen_Debug
+                # allows, though unlikely someone would do it, more than one
+                # Debug and flags in the arguments
+                ${^RE_DEBUG_FLAGS} = 0;
+            }
             setcolor() if $s =~/color/i;
-            ${^RE_DEBUG_FLAGS} = 0 unless defined ${^RE_DEBUG_FLAGS};
             for my $idx ($idx+1..$#_) {
                 if ($flags{$_[$idx]}) {
                     if ($on) {
@@ -144,9 +161,13 @@ sub bits {
             _load_unload($on ? 1 : ${^RE_DEBUG_FLAGS});
             last;
         } elsif ($s eq 'debug' or $s eq 'debugcolor') {
+
+            # These default flags should be kept in sync with the same values
+            # in regcomp.h
+            ${^RE_DEBUG_FLAGS} = $flags{'EXECUTE'} | $flags{'DUMP'};
 	    setcolor() if $s =~/color/i;
 	    _load_unload($on);
-	    last;
+            $seen_debug = 1;
         } elsif (exists $bitmask{$s}) {
 	    $bits |= $bitmask{$s};
 	} elsif ($EXPORT_OK{$s}) {
@@ -255,9 +276,15 @@ sub bits {
 	                    : ($^H &= ~$flags_hint);
 	} else {
 	    require Carp;
-	    Carp::carp("Unknown \"re\" subpragma '$s' (known ones are: ",
+            if ($seen_debug && defined $flags{$s}) {
+                Carp::carp("Use \"Debug\" not \"debug\", to list debug types"
+                         . " in \"re\".  \"$s\" ignored");
+            }
+            else {
+                Carp::carp("Unknown \"re\" subpragma '$s' (known ones are: ",
                        join(', ', map {qq('$_')} 'debug', 'debugcolor', sort keys %bitmask),
                        ")");
+            }
 	}
     }
 
@@ -396,7 +423,7 @@ equivalent to
  qr/\x{AB}C/
 
 that is, the character whose code point value is C<0xAB>, followed by the
-letter C<C>.  But since C<C> is a a hex digit, there is a reasonable chance
+letter C<C>.  But since C<C> is a hex digit, there is a reasonable chance
 that the intent was
 
  qr/\x{ABC}/
@@ -510,7 +537,7 @@ purposes. The options are as follows:
 
 =item COMPILE
 
-Turns on all compile related debug options.
+Turns on all non-extra compile related debug options.
 
 =item PARSE
 
@@ -544,7 +571,7 @@ Print output intended for testing the internals of the compile process
 
 =item EXECUTE
 
-Turns on all execute related debug options.
+Turns on all non-extra execute related debug options.
 
 =item MATCH
 
@@ -617,6 +644,36 @@ debug options.
 Almost definitely only useful to people hacking
 on the offsets part of the debug engine.
 
+=item DUMP_PRE_OPTIMIZE
+
+Enable the dumping of the compiled pattern before the optimization phase.
+
+=item WILDCARD
+
+When Perl encounters a wildcard subpattern, (see L<perlunicode/Wildcards in
+Property Values>), it suspends compilation of the main pattern, compiles the
+subpattern, and then matches that against all legal possibilities to determine
+the actual code points the subpattern matches.  After that it adds these to
+the main pattern, and continues its compilation.
+
+You may very well want to see how your subpattern gets compiled, but it is
+likely of less use to you to see how Perl matches that against all the legal
+possibilities, as that is under control of Perl, not you.   Therefore, the
+debugging information of the compilation portion is as specified by the other
+options, but the debugging output of the matching portion is normally
+suppressed.
+
+You can use the WILDCARD option to enable the debugging output of this
+subpattern matching.  Careful!  This can lead to voluminous outputs, and it
+may not make much sense to you what and why Perl is doing what it is.
+But it may be helpful to you to see why things aren't going the way you
+expect.
+
+Note that this option alone doesn't cause any debugging information to be
+output.  What it does is stop the normal suppression of execution-related
+debugging information during the matching portion of the compilation of
+wildcards.  You also have to specify which execution debugging information you
+want, such as by also including the EXECUTE option.
 
 =back
 
@@ -628,14 +685,15 @@ These are useful shortcuts to save on the typing.
 
 =item ALL
 
-Enable all options at once except OFFSETS, OFFSETSDBG and BUFFERS.
+Enable all options at once except OFFSETS, OFFSETSDBG, BUFFERS, WILDCARD, and
+DUMP_PRE_OPTIMIZE.
 (To get every single option without exception, use both ALL and EXTRA, or
 starting in 5.30 on a C<-DDEBUGGING>-enabled perl interpreter, use
 the B<-Drv> command-line switches.)
 
 =item All
 
-Enable DUMP and all execute options. Equivalent to:
+Enable DUMP and all non-extra execute options. Equivalent to:
 
   use re 'debug';
 

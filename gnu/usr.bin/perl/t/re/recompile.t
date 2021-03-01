@@ -147,7 +147,7 @@ comp_n(3, <<'CODE', 'mixed utf8 qr');
 "a" =~ qr/$_/ for "\x{c4}\x{80}",  "\x{100}", "\x{c4}\x{80}";
 CODE
 
-# note that that for runtime code, each pattern is compiled twice; the
+# note that for runtime code, each pattern is compiled twice; the
 # second time to allow the parser to see the code.
 
 comp_n(6, <<'CODE', 'runtime code');

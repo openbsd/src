@@ -3,6 +3,7 @@
 
 use strict;
 use warnings;
+use Encode 'decode';
 use Test::More 0.82;
 use IO::File;
 use File::Spec;
@@ -16,7 +17,7 @@ use GeneratePackage;
 
 my $tmpdir = GeneratePackage::tmpdir();
 
-plan tests => 71;
+plan tests => 72;
 
 require_ok('Module::Metadata');
 
@@ -209,13 +210,15 @@ $VERSION = '0.01';
 package Simple::Ex;
 $VERSION = '0.02';
 
+=encoding UTF-8
+
 =head1 NAME
 
 Simple - It's easy.
 
 =head1 AUTHOR
 
-Simple Simon
+Símple Simon
 
 You can find me on the IRC channel
 #simon on irc.perl.org.
@@ -270,7 +273,7 @@ You can find me on the IRC channel
   my %expected = (
     NAME   => q|Simple - It's easy.|,
     AUTHOR => <<'EXPECTED'
-Simple Simon
+Símple Simon
 
 You can find me on the IRC channel
 #simon on irc.perl.org.
@@ -282,6 +285,13 @@ EXPECTED
   }
   is( $pod{NAME},   $expected{NAME},   'collected NAME pod section' );
   is( $pod{AUTHOR}, $expected{AUTHOR}, 'collected AUTHOR pod section' );
+
+  my $pm_info2 = Module::Metadata->new_from_module(
+               'Simple', inc => [ 'lib', @INC ], collect_pod => 1, decode_pod => 1 );
+  my $author = $pm_info2->pod( 'AUTHOR' );
+  $author =~ s/^\s+//;
+  $author =~ s/\s+$//;
+  is( $author, decode('UTF-8', $expected{AUTHOR} ), 'collected AUTHOR pod section in UTF-8' );
 }
 
 {

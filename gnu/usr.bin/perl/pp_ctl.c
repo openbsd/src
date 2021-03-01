@@ -33,9 +33,15 @@
 #include "EXTERN.h"
 #define PERL_IN_PP_CTL_C
 #include "perl.h"
+#include "feature.h"
 
 #define RUN_PP_CATCHABLY(thispp) \
     STMT_START { if (CATCH_GET) return docatch(thispp); } STMT_END
+
+#define dopopto_cursub() \
+    (PL_curstackinfo->si_cxsubix >= 0        \
+        ? PL_curstackinfo->si_cxsubix        \
+        : dopoptosub_at(cxstack, cxstack_ix))
 
 #define dopoptosub(plop)	dopoptosub_at(cxstack, (plop))
 
@@ -50,7 +56,7 @@ PP(pp_wantarray)
 	if (!(cx = caller_cx(1,NULL))) RETPUSHUNDEF;
     }
     else {
-      cxix = dopoptosub(cxstack_ix);
+      cxix = dopopto_cursub();
       if (cxix < 0)
 	RETPUSHUNDEF;
       cx = &cxstack[cxix];
@@ -256,7 +262,7 @@ PP(pp_substcont)
 		(void)SvPOK_only_UTF8(targ);
 	    }
 
-	    /* update the taint state of various various variables in
+	    /* update the taint state of various variables in
 	     * preparation for final exit.
 	     * See "how taint works" above pp_subst() */
 	    if (TAINTING_get) {
@@ -343,7 +349,7 @@ PP(pp_substcont)
     }
     if (old != rx)
 	(void)ReREFCNT_inc(rx);
-    /* update the taint state of various various variables in preparation
+    /* update the taint state of various variables in preparation
      * for calling the code block.
      * See "how taint works" above pp_subst() */
     if (TAINTING_get) {
@@ -875,15 +881,12 @@ PP(pp_formline)
                 arg &= ~(FORM_NUM_POINT|FORM_NUM_BLANK);
 #ifdef USE_QUADMATH
                 {
-                    const char* qfmt = quadmath_format_single(fmt);
                     int len;
-                    if (!qfmt)
+                    if (!quadmath_format_valid(fmt))
                         Perl_croak_nocontext("panic: quadmath invalid format \"%s\"", fmt);
-                    len = quadmath_snprintf(t, max, qfmt, (int) fieldsize, (int) arg, value);
+                    len = quadmath_snprintf(t, max, fmt, (int) fieldsize, (int) arg, value);
                     if (len == -1)
-                        Perl_croak_nocontext("panic: quadmath_snprintf failed, format \"%s\"", qfmt);
-                    if (qfmt != fmt)
-                        Safefree(fmt);
+                        Perl_croak_nocontext("panic: quadmath_snprintf failed, format \"%s\"", fmt);
                 }
 #else
                 /* we generate fmt ourselves so it is safe */
@@ -1196,14 +1199,18 @@ PP(pp_flip)
 }
 
 /* This code tries to decide if "$left .. $right" should use the
-   magical string increment, or if the range is numeric (we make
-   an exception for .."0" [#18165]). AMS 20021031. */
+   magical string increment, or if the range is numeric. Initially,
+   an exception was made for *any* string beginning with "0" (see
+   [#18165], AMS 20021031), but now that is only applied when the
+   string's length is also >1 - see the rules now documented in
+   perlop [#133695] */
 
 #define RANGE_IS_NUMERIC(left,right) ( \
 	SvNIOKp(left)  || (SvOK(left)  && !SvPOKp(left))  || \
 	SvNIOKp(right) || (SvOK(right) && !SvPOKp(right)) || \
 	(((!SvOK(left) && SvOK(right)) || ((!SvOK(left) || \
-          looks_like_number(left)) && SvPOKp(left) && *SvPVX_const(left) != '0')) \
+          looks_like_number(left)) && SvPOKp(left) \
+          && !(*SvPVX_const(left) == '0' && SvCUR(left)>1 ) )) \
          && (!SvOK(right) || looks_like_number(right))))
 
 PP(pp_flop)
@@ -1380,10 +1387,12 @@ Perl_dowantarray(pTHX)
     return (gimme == G_VOID) ? G_SCALAR : gimme;
 }
 
+/* note that this function has mostly been superseded by Perl_gimme_V */
+
 U8
 Perl_block_gimme(pTHX)
 {
-    const I32 cxix = dopoptosub(cxstack_ix);
+    const I32 cxix = dopopto_cursub();
     U8 gimme;
     if (cxix < 0)
 	return G_VOID;
@@ -1398,7 +1407,7 @@ Perl_block_gimme(pTHX)
 I32
 Perl_is_lvalue_sub(pTHX)
 {
-    const I32 cxix = dopoptosub(cxstack_ix);
+    const I32 cxix = dopopto_cursub();
     assert(cxix >= 0);  /* We should only be called from inside subs */
 
     if (CxLVAL(cxstack + cxix) && CvLVALUE(cxstack[cxix].blk_sub.cv))
@@ -1707,7 +1716,11 @@ Perl_die_unwind(pTHX_ SV *msv)
          * when unlocalising a tied var). So we do a dance with
          * mortalising and SAVEFREEing.
          */
-        sv_2mortal(SvREFCNT_inc_simple_NN(exceptsv));
+        if (PL_phase == PERL_PHASE_DESTRUCT) {
+            exceptsv = sv_mortalcopy(exceptsv);
+        } else {
+            exceptsv = sv_2mortal(SvREFCNT_inc_simple_NN(exceptsv));
+        }
 
 	/*
 	 * Historically, perl used to set ERRSV ($@) early in the die
@@ -1738,9 +1751,13 @@ Perl_die_unwind(pTHX_ SV *msv)
 	 * perls 5.13.{1..7} which had late setting of $@ without this
 	 * early-setting hack.
 	 */
-	if (!(in_eval & EVAL_KEEPERR))
+	if (!(in_eval & EVAL_KEEPERR)) {
+            /* remove any read-only/magic from the SV, so we don't
+               get infinite recursion when setting ERRSV */
+            SANE_ERRSV();
 	    sv_setsv_flags(ERRSV, exceptsv,
                         (SV_GMAGIC|SV_DO_COW_SVSETSV|SV_NOSTEAL));
+        }
 
 	if (in_eval & EVAL_KEEPERR) {
 	    Perl_ck_warner(aTHX_ packWARN(WARN_MISC), "\t(in cleanup) %" SVf,
@@ -1802,8 +1819,10 @@ Perl_die_unwind(pTHX_ SV *msv)
              */
             S_pop_eval_context_maybe_croak(aTHX_ cx, exceptsv, 2);
 
-	    if (!(in_eval & EVAL_KEEPERR))
+	    if (!(in_eval & EVAL_KEEPERR)) {
+                SANE_ERRSV();
 		sv_setsv(ERRSV, exceptsv);
+            }
 	    PL_restartjmpenv = restartjmpenv;
 	    PL_restartop = restartop;
 	    JMPENV_JUMP(3);
@@ -1850,7 +1869,7 @@ frame for the sub call itself.
 const PERL_CONTEXT *
 Perl_caller_cx(pTHX_ I32 count, const PERL_CONTEXT **dbcxp)
 {
-    I32 cxix = dopoptosub(cxstack_ix);
+    I32 cxix = dopopto_cursub();
     const PERL_CONTEXT *cx;
     const PERL_CONTEXT *ccstack = cxstack;
     const PERL_SI *top_si = PL_curstackinfo;
@@ -2452,7 +2471,7 @@ PP(pp_return)
 {
     dSP; dMARK;
     PERL_CONTEXT *cx;
-    const I32 cxix = dopoptosub(cxstack_ix);
+    const I32 cxix = dopopto_cursub();
 
     assert(cxstack_ix >= 0);
     if (cxix < cxstack_ix) {
@@ -2823,7 +2842,7 @@ PP(pp_goto)
 		DIE(aTHX_ "Goto undefined subroutine");
 	    }
 
-	    cxix = dopoptosub(cxstack_ix);
+	    cxix = dopopto_cursub();
             if (cxix < 0) {
                 DIE(aTHX_ "Can't goto subroutine outside a subroutine");
             }
@@ -2945,6 +2964,9 @@ PP(pp_goto)
                  * this is a cx_popblock(), less all the stuff we already did
                  * for cx_topblock() earlier */
                 PL_curcop = cx->blk_oldcop;
+                /* this is cx_popsub, less all the stuff we already did */
+                PL_curstackinfo->si_cxsubix = cx->blk_sub.old_cxsubix;
+
                 CX_POP(cx);
 
 		/* Push a mark for the start of arglist */
@@ -3465,6 +3487,7 @@ S_doeval_compile(pTHX_ U8 gimme, CV* outside, U32 seq, HV *hh)
     if (clear_hints) {
 	PL_hints = 0;
 	hv_clear(GvHV(PL_hintgv));
+        CLEARFEATUREBITS();
     }
     else {
 	PL_hints = saveop->op_private & OPpEVAL_COPHH
@@ -3482,6 +3505,7 @@ S_doeval_compile(pTHX_ U8 gimme, CV* outside, U32 seq, HV *hh)
 	    /* SAVEHINTS created a new HV in PL_hintgv, which we need to GC */
 	    SvREFCNT_dec(GvHV(PL_hintgv));
 	    GvHV(PL_hintgv) = hh;
+            FETCHFEATUREBITSHH(hh);
 	}
     }
     SAVECOMPILEWARNINGS();
@@ -3841,7 +3865,7 @@ S_require_file(pTHX_ SV *sv)
 	if (op_is_require) {
 		/* can optimize to only perform one single lookup */
 		svp_cached = hv_fetch(GvHVn(PL_incgv), (char*) name, len, 0);
-		if ( svp_cached && *svp_cached != &PL_sv_undef ) RETPUSHYES;
+		if ( svp_cached && (SvGETMAGIC(*svp_cached), SvOK(*svp_cached)) ) RETPUSHYES;
 	}
 #endif
 
@@ -3886,7 +3910,10 @@ S_require_file(pTHX_ SV *sv)
 	/* reuse the previous hv_fetch result if possible */
 	SV * const * const svp = svp_cached ? svp_cached : hv_fetch(GvHVn(PL_incgv), unixname, unixlen, 0);
 	if ( svp ) {
-	    if (*svp != &PL_sv_undef)
+            /* we already did a get magic if this was cached */
+            if (!svp_cached)
+                SvGETMAGIC(*svp);
+	    if (SvOK(*svp))
 		RETPUSHYES;
 	    else
 		DIE(aTHX_ "Attempt to reload %s aborted.\n"
@@ -3953,7 +3980,7 @@ S_require_file(pTHX_ SV *sv)
     }
 
     /* ... but if we fail, still search @INC for code references;
-     * these are applied even on on-searchable paths (except
+     * these are applied even on non-searchable paths (except
      * if we got EACESS).
      *
      * For searchable paths, just search @INC normally

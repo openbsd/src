@@ -2,8 +2,8 @@
 # The restriction on having custom as the last op has been removed
 
 # A recapitulation of the format of this file:
-# The file consists of five columns: the name of the op, an English
-# description, the name of the "check" routine used to optimize this
+# The file consists of five tab-separated columns: the name of the op, an
+# English description, the name of the "check" routine used to optimize this
 # operation, some flags, and a description of the operands.
 
 # The flags consist of options followed by a mandatory op class signifier
@@ -397,6 +397,7 @@ getsockname	getsockname		ck_fun		is%	Fs
 getpeername	getpeername		ck_fun		is%	Fs
 
 # Stat calls.  OP_IS_FILETEST wants them consecutive.
+# Also needs to match OP_IS_STAT() in op.h
 
 lstat		lstat			ck_ftst		u-	F?
 stat		stat			ck_ftst		u-	F?
@@ -571,3 +572,8 @@ lvref		lvalue ref assignment	ck_null		d%
 lvrefslice	lvalue ref assignment	ck_null		d@
 lvavref		lvalue array reference	ck_null		d%
 anonconst	anonymous constant	ck_null		ds1
+
+isa		derived class test	ck_isa		s2
+
+cmpchain_and	comparison chaining	ck_null		|
+cmpchain_dup	comparand shuffling	ck_null		1

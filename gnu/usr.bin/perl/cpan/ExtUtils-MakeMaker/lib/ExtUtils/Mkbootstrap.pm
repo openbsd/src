@@ -3,8 +3,8 @@ package ExtUtils::Mkbootstrap;
 # There's just too much Dynaloader incest here to turn on strict vars.
 use strict 'refs';
 
-our $VERSION = '7.34';
-$VERSION = eval $VERSION;
+our $VERSION = '7.44';
+$VERSION =~ tr/_//d;
 
 require Exporter;
 our @ISA = ('Exporter');
@@ -84,7 +84,7 @@ ExtUtils::Mkbootstrap - make a bootstrap file for use by DynaLoader
 
 =head1 SYNOPSIS
 
-C<Mkbootstrap>
+  Mkbootstrap
 
 =head1 DESCRIPTION
 

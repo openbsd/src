@@ -73,6 +73,14 @@
      dlerror the error message will be reset to a null pointer. The
      SaveError function is used to save the error as soon as it happens.
 
+     Note that the POSIX standard does not require a per-thread buffer for
+     the error message, and so on multi-threaded builds, it can be overwritten
+     by another thread before SaveError accomplishes its task.  Some systems do
+     have a per-thread buffer.  The man page on your system should tell you.
+     If your code might be run on a system where this function is not thread
+     safe, you should protect your calls with mutexes.  See "Dealing with Error
+     Messages" below.
+
 
    Return Types
    ============
@@ -100,7 +108,7 @@
    ============================
    In order to make the handling of dynamic linking errors as generic as
    possible you should store any error messages associated with your
-   implementation with the StoreError function.
+   implementation with the SaveError function.
 
    In the case of SunOS the function dlerror returns the error message 
    associated with the last dynamic link error. As the SunOS dynamic 
@@ -113,6 +121,10 @@
 
    Note that SaveError() takes a printf format string. Use a "%s" as
    the first parameter if the error may contain any % characters.
+   dlerror() may not be thread-safe on some systems; if this code is run on
+   any of those, a mutex should be added.  khw (who added this comment) has no
+   idea which systems aren't thread-safe, but consider this possibility when
+   debugging.
 
 */
 

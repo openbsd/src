@@ -27,11 +27,11 @@ use vars qw[$DEBUG $error $VERSION $WARN $FOLLOW_SYMLINK $CHOWN $CHMOD
          ];
 
 @ISA                    = qw[Exporter];
-@EXPORT                 = qw[ COMPRESS_GZIP COMPRESS_BZIP ];
+@EXPORT                 = qw[ COMPRESS_GZIP COMPRESS_BZIP COMPRESS_XZ ];
 $DEBUG                  = 0;
 $WARN                   = 1;
 $FOLLOW_SYMLINK         = 0;
-$VERSION                = "2.32";
+$VERSION                = "2.36";
 $CHOWN                  = 1;
 $CHMOD                  = 1;
 $SAME_PERMISSIONS       = $> == 0 ? 1 : 0;
@@ -76,6 +76,7 @@ Archive::Tar - module for manipulations of tar archives
     $tar->write('files.tar');                   # plain tar
     $tar->write('files.tgz', COMPRESS_GZIP);    # gzip compressed
     $tar->write('files.tbz', COMPRESS_BZIP);    # bzip2 compressed
+    $tar->write('files.txz', COMPRESS_XZ);      # xz compressed
 
 =head1 DESCRIPTION
 
@@ -147,12 +148,13 @@ backwards compatibility. Archive::Tar now looks at the file
 magic to determine what class should be used to open the file
 and will transparently Do The Right Thing.
 
-Archive::Tar will warn if you try to pass a bzip2 compressed file and the
-IO::Zlib / IO::Uncompress::Bunzip2 modules are not available and simply return.
+Archive::Tar will warn if you try to pass a bzip2 / xz compressed file and the
+IO::Uncompress::Bunzip2 / IO::Uncompress::UnXz are not available and simply return.
 
 Note that you can currently B<not> pass a C<gzip> compressed
 filehandle, which is not opened with C<IO::Zlib>, a C<bzip2> compressed
-filehandle, which is not opened with C<IO::Uncompress::Bunzip2>, nor a string
+filehandle, which is not opened with C<IO::Uncompress::Bunzip2>, a C<xz> compressed
+filehandle, which is not opened with C<IO::Uncompress::UnXz>, nor a string
 containing the full archive information (either compressed or
 uncompressed). These are worth while features, but not currently
 implemented. See the C<TODO> section.
@@ -246,16 +248,40 @@ sub _get_handle {
                 return;
             };
 
-            ### read the first 4 bites of the file to figure out which class to
+            ### read the first 6 bytes of the file to figure out which class to
             ### use to open the file.
-            sysread( $tmp, $magic, 4 );
+            sysread( $tmp, $magic, 6 );
             close $tmp;
         }
+
+        ### is it xz?
+        ### if you asked specifically for xz compression, or if we're in
+        ### read mode and the magic numbers add up, use xz
+        if( XZ and (
+               ($compress eq COMPRESS_XZ) or
+               ( MODE_READ->($mode) and $magic =~ XZ_MAGIC_NUM )
+            )
+        ) {
+            if( MODE_READ->($mode) ) {
+                $fh = IO::Uncompress::UnXz->new( $file ) or do {
+                    $self->_error( qq[Could not read '$file': ] .
+                        $IO::Uncompress::UnXz::UnXzError
+                    );
+                    return;
+                };
+            } else {
+                $fh = IO::Compress::Xz->new( $file ) or do {
+                    $self->_error( qq[Could not write to '$file': ] .
+                        $IO::Compress::Xz::XzError
+                    );
+                    return;
+                };
+            }
 
         ### is it bzip?
         ### if you asked specifically for bzip compression, or if we're in
         ### read mode and the magic numbers add up, use bzip
-        if( BZIP and (
+        } elsif( BZIP and (
                 ($compress eq COMPRESS_BZIP) or
                 ( MODE_READ->($mode) and $magic =~ BZIP_MAGIC_NUM )
             )
@@ -1246,8 +1272,8 @@ Write the in-memory archive to disk.  The first argument can either
 be the name of a file or a reference to an already open filehandle (a
 GLOB reference).
 
-The second argument is used to indicate compression. You can either
-compress using C<gzip> or C<bzip2>. If you pass a digit, it's assumed
+The second argument is used to indicate compression. You can
+compress using C<gzip>, C<bzip2> or C<xz>. If you pass a digit, it's assumed
 to be the C<gzip> compression level (between 1 and 9), but the use of
 constants is preferred:
 
@@ -1257,10 +1283,13 @@ constants is preferred:
   # write a bzip compressed file
   $tar->write( 'out.tbz', COMPRESS_BZIP );
 
+  # write a xz compressed file
+  $tar->write( 'out.txz', COMPRESS_XZ );
+
 Note that when you pass in a filehandle, the compression argument
 is ignored, as all files are printed verbatim to your filehandle.
 If you wish to enable compression with filehandles, use an
-C<IO::Zlib> or C<IO::Compress::Bzip2> filehandle instead.
+C<IO::Zlib>, C<IO::Compress::Bzip2> or C<IO::Compress::Xz> filehandle instead.
 
 The third argument is an optional prefix. All files will be tucked
 away in the directory you specify as prefix. So if you have files
@@ -1696,8 +1725,8 @@ Creates a tar file from the list of files provided.  The first
 argument can either be the name of the tar file to create or a
 reference to an open file handle (e.g. a GLOB reference).
 
-The second argument is used to indicate compression. You can either
-compress using C<gzip> or C<bzip2>. If you pass a digit, it's assumed
+The second argument is used to indicate compression. You can
+compress using C<gzip>, C<bzip2> or C<xz>. If you pass a digit, it's assumed
 to be the C<gzip> compression level (between 1 and 9), but the use of
 constants is preferred:
 
@@ -1707,10 +1736,13 @@ constants is preferred:
   # write a bzip compressed file
   Archive::Tar->create_archive( 'out.tbz', COMPRESS_BZIP, @filelist );
 
+  # write a xz compressed file
+  Archive::Tar->create_archive( 'out.txz', COMPRESS_XZ, @filelist );
+
 Note that when you pass in a filehandle, the compression argument
 is ignored, as all files are printed verbatim to your filehandle.
 If you wish to enable compression with filehandles, use an
-C<IO::Zlib> or C<IO::Compress::Bzip2> filehandle instead.
+C<IO::Zlib>, C<IO::Compress::Bzip2> or C<IO::Compress::Xz> filehandle instead.
 
 The remaining arguments list the files to be included in the tar file.
 These files must all exist. Any files which don't exist or can't be
@@ -1915,11 +1947,19 @@ Returns true if C<Archive::Tar> can extract C<bzip2> compressed archives
 
 sub has_bzip2_support { return BZIP }
 
+=head2 $bool = Archive::Tar->has_xz_support
+
+Returns true if C<Archive::Tar> can extract C<xz> compressed archives
+
+=cut
+
+sub has_xz_support { return XZ }
+
 =head2 Archive::Tar->can_handle_compressed_files
 
 A simple checking routine, which will return true if C<Archive::Tar>
-is able to uncompress compressed archives on the fly with C<IO::Zlib>
-and C<IO::Compress::Bzip2> or false if not both are installed.
+is able to uncompress compressed archives on the fly with C<IO::Zlib>,
+C<IO::Compress::Bzip2> and C<IO::Compress::Xz> or false if not both are installed.
 
 You can use this as a shortcut to determine whether C<Archive::Tar>
 will do what you think before passing compressed archives to its

@@ -1,4 +1,4 @@
-# Common tools for test files files to find the locales which exist on the
+# Common tools for test files to find the locales which exist on the
 # system.  Caller should have verified that this isn't miniperl before calling
 # the functions.
 
@@ -340,7 +340,7 @@ sub find_locales ($;$) {
     _trylocale("C", $categories, \@Locale, $allow_incompatible);
     _trylocale("POSIX", $categories, \@Locale, $allow_incompatible);
 
-    if ($Config{d_has_C_UTF8} eq 'true') {
+    if ($Config{d_has_C_UTF8} && $Config{d_has_C_UTF8} eq 'true') {
         _trylocale("C.UTF-8", $categories, \@Locale, $allow_incompatible);
     }
 
@@ -421,9 +421,10 @@ sub find_locales ($;$) {
         }
 
         # The rest of the locales are in this file.
-        push @Data, <DATA>;
+        push @Data, <DATA>; close DATA;
 
         foreach my $line (@Data) {
+            chomp $line;
             my ($locale_name, $language_codes, $country_codes, $encodings) =
                 split /:/, $line;
             _my_diag(__FILE__ . ":" . __LINE__ . ": Unexpected syntax in '$line'")

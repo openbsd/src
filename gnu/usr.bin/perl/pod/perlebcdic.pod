@@ -254,7 +254,7 @@ extensions are constructed to allow encoding of any code point that fits
 in a 64-bit word.
 
 UTF-EBCDIC is defined by
-L<Unicode Technical Report #16|http://www.unicode.org/reports/tr16>
+L<Unicode Technical Report #16|https://www.unicode.org/reports/tr16>
 (often referred to as just TR16).
 It is defined based on CCSID 1047, not allowing for the differences for
 other code pages.  This allows for easy interchange of text between
@@ -1877,9 +1877,9 @@ L<perllocale>, L<perlfunc>, L<perlunicode>, L<utf8>.
 
 L<http://anubis.dkuug.dk/i18n/charmaps>
 
-L<http://www.unicode.org/>
+L<https://www.unicode.org/>
 
-L<http://www.unicode.org/unicode/reports/tr16/>
+L<https://www.unicode.org/unicode/reports/tr16/>
 
 L<http://www.wps.com/projects/codes/>
 B<ASCII: American Standard Code for Information Infiltration> Tom Jennings,

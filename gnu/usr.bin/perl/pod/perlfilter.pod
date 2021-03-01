@@ -294,6 +294,9 @@ becomes M.)
 
    1;
 
+=for apidoc filter_add
+=for apidoc filter_read
+
 All Perl source filters are implemented as Perl classes and have the
 same basic structure as the example above.
 
@@ -567,7 +570,7 @@ code chunks beginning with the division operator C</>. As a workaround
 you must use C<m/.../> or C<m?...?> for such patterns. Also, the presence of
 regexes specified with raw C<?...?> delimiters may cause mysterious
 errors. The workaround is to use C<m?...?> instead.  See
-L<http://search.cpan.org/perldoc?Switch#LIMITATIONS>
+L<https://search.cpan.org/perldoc?Switch#LIMITATIONS>
 
 Currently the content of the C<__DATA__> block is not filtered.
 

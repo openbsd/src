@@ -1726,7 +1726,7 @@ sub grind_print_compact {
         @fields = grep exists $OPTS{fields}{$_}, @fields;
     }
 
-    # calculate the the max width of the test names
+    # calculate the max width of the test names
 
     my $name_width = 0;
     for (@test_names) {

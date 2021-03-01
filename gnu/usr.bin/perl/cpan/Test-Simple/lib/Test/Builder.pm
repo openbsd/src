@@ -4,7 +4,7 @@ use 5.006;
 use strict;
 use warnings;
 
-our $VERSION = '1.302162';
+our $VERSION = '1.302175';
 
 BEGIN {
     if( $] < 5.008 ) {
@@ -63,7 +63,8 @@ sub _add_ts_hooks {
         $todo = ${"$cpkg\::TODO"} if $cpkg;
         $todo = ${"$epkg\::TODO"} if $epkg && !$todo;
 
-        return $e unless defined $todo;
+        return $e unless defined($todo);
+        return $e unless length($todo);
 
         # Turn a diag into a todo diag
         return Test::Builder::TodoDiag->new(%$e) if ref($e) eq 'Test2::Event::Diag';
@@ -390,7 +391,7 @@ sub name {
 sub reset {    ## no critic (Subroutines::ProhibitBuiltinHomonyms)
     my ($self, %params) = @_;
 
-    Test2::API::test2_set_is_end(0);
+    Test2::API::test2_unset_is_end();
 
     # We leave this a global because it has to be localized and localizing
     # hash keys is just asking for pain.  Also, it was documented.
@@ -695,7 +696,7 @@ sub _ok_debug {
     my $self = shift;
     my ($trace, $orig_name) = @_;
 
-    my $is_todo = defined($self->todo);
+    my $is_todo = $self->in_todo;
 
     my $msg = $is_todo ? "Failed (TODO)" : "Failed";
 

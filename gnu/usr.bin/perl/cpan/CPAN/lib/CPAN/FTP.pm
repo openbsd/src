@@ -15,7 +15,7 @@ use vars qw($connect_to_internet_ok $Ua $Thesite $ThesiteURL $Themethod);
 use vars qw(
             $VERSION
 );
-$VERSION = "5.5011";
+$VERSION = "5.5012";
 
 sub _plus_append_open {
     my($fh, $file) = @_;
@@ -23,7 +23,7 @@ sub _plus_append_open {
     mkpath $parent_dir;
     my($cnt);
     until (open $fh, "+>>$file") {
-        next if $! == Errno::EAGAIN; # don't increment on EAGAIN
+        next if exists &Errno::EAGAIN && $! == &Errno::EAGAIN; # don't increment on EAGAIN
         $CPAN::Frontend->mydie("Could not open '$file' after 10000 tries: $!") if ++$cnt > 100000;
         sleep 0.0001;
         mkpath $parent_dir;
@@ -34,6 +34,8 @@ sub _plus_append_open {
 # if they want to rewrite, they need to pass in a filehandle
 sub _ftp_statistics {
     my($self,$fh) = @_;
+    my $ftpstats_size = $CPAN::Config->{ftpstats_size};
+    return if defined $ftpstats_size && $ftpstats_size <= 0;
     my $locktype = $fh ? LOCK_EX : LOCK_SH;
     # XXX On Windows flock() implements mandatory locking, so we can
     # XXX only use shared locking to still allow _yaml_load_file() to
@@ -120,18 +122,23 @@ sub _add_to_statistics {
         my @debug;
         @debug = $time if $sdebug;
         my $fullstats = $self->_ftp_statistics($fh);
-        close $fh;
+        close $fh if $fh && defined(fileno($fh));
         $fullstats->{history} ||= [];
         push @debug, scalar @{$fullstats->{history}} if $sdebug;
         push @debug, time if $sdebug;
         push @{$fullstats->{history}}, $stats;
         # YAML.pm 0.62 is unacceptably slow with 999;
         # YAML::Syck 0.82 has no noticable performance problem with 999;
-        my $ftpstats_size = $CPAN::Config->{ftpstats_size} || 99;
+        my $ftpstats_size = $CPAN::Config->{ftpstats_size};
+        $ftpstats_size = 99 unless defined $ftpstats_size;
         my $ftpstats_period = $CPAN::Config->{ftpstats_period} || 14;
         while (
-               @{$fullstats->{history}} > $ftpstats_size
-               || $time - $fullstats->{history}[0]{start} > 86400*$ftpstats_period
+               @{$fullstats->{history} || []}
+               &&
+               (
+                @{$fullstats->{history}} > $ftpstats_size
+                || $time - $fullstats->{history}[0]{start} > 86400*$ftpstats_period
+               )
               ) {
             shift @{$fullstats->{history}}
         }

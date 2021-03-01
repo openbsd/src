@@ -220,6 +220,12 @@ for my $char ("٠", "٥", "٩") {
         qr/(?[\P{Is0}])/', qr/\QUnknown user-defined property name "Is0"/, {}, "[perl #133889]");
 }
 
+{
+    my $s = qr/(?x:(?[ [ x ] ]))/;
+    like("x", qr/(?[ $s ])/ , "Modifier flags in interpolated set don't"
+                            . " disrupt");
+}
+
 done_testing();
 
 1;

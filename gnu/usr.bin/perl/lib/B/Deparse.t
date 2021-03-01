@@ -20,6 +20,8 @@ my $deparse = B::Deparse->new();
 isa_ok($deparse, 'B::Deparse', 'instantiate a B::Deparse object');
 my %deparse;
 
+sub dummy_sub {42}
+
 $/ = "\n####\n";
 while (<DATA>) {
     chomp;
@@ -565,7 +567,7 @@ is runperl(stderr => 1, switches => [ '-MO=-qq,Deparse', $path ],
 done_testing($tests);
 
 __DATA__
-# TODO [perl #120950] This succeeds when run a 2nd time
+# [perl #120950] Previously on a 2nd instance succeeded
 # y/uni/code/
 tr/\x{345}/\x{370}/;
 ####
@@ -678,6 +680,19 @@ $_ .= readline(ARGV) . readline(ARGV) . readline($foo);
 readline $foo;
 glob $foo;
 glob $foo;
+####
+# more <>
+no warnings;
+no strict;
+my $fh;
+if (dummy_sub < $fh > /bar/g) { 1 }
+>>>>
+no warnings;
+no strict;
+my $fh;
+if (dummy_sub(glob((' ' . $fh . ' ')) / 'bar' / 'g')) {
+    1;
+}
 ####
 # readline
 readline 'FH';
@@ -3062,3 +3077,45 @@ $#{$s;} = 1;
 # TODO doesn't preserve backslash
 my @a;
 my $s = "$a[0]\[1]";
+####
+# GH #17301 aux_list() sometimes returned wrong #args
+my($r, $h);
+$r = $h->{'i'};
+$r = $h->{'i'}{'j'};
+$r = $h->{'i'}{'j'}{'k'};
+$r = $h->{'i'}{'j'}{'k'}{'l'};
+$r = $h->{'i'}{'j'}{'k'}{'l'}{'m'};
+$r = $h->{'i'}{'j'}{'k'}{'l'}{'m'}{'n'};
+$r = $h->{'i'}{'j'}{'k'}{'l'}{'m'}{'n'}{'o'};
+$r = $h->{'i'}{'j'}{'k'}{'l'}{'m'}{'n'}{'o'}{'p'};
+$r = $h->{'i'}{'j'}{'k'}{'l'}{'m'}{'n'}{'o'}{'p'}{'q'};
+$r = $h->{'i'}{'j'}{'k'}{'l'}{'m'}{'n'}{'o'}{'p'}{'q'}{'r'};
+$r = $h->{'i'}{'j'}{'k'}{'l'}{'m'}{'n'}{'o'}{'p'}{'q'}{'r'}{'s'};
+$r = $h->{'i'}{'j'}{'k'}{'l'}{'m'}{'n'}{'o'}{'p'}{'q'}{'r'}{'s'}{'t'};
+####
+# chained comparison
+my($a, $b, $c, $d, $e, $f, $g);
+$a = $b gt $c >= $d;
+$a = $b < $c <= $d > $e;
+$a = $b == $c != $d;
+$a = $b eq $c ne $d == $e;
+$a = $b << $c < $d << $e <= $f << $g;
+$a = int $b < int $c <= int $d;
+$a = ($b < $c) < ($d < $e) <= ($f < $g);
+$a = ($b == $c) < ($d == $e) <= ($f == $g);
+$a = ($b & $c) < ($d & $e) <= ($f & $g);
+$a = $b << $c == $d << $e != $f << $g;
+$a = int $b == int $c != int $d;
+$a = $b < $c == $d < $e != $f < $g;
+$a = ($b == $c) == ($d == $e) != ($f == $g);
+$a = ($b & $c) == ($d & $e) != ($f & $g);
+$a = $b << ($c < $d <= $e);
+$a = int($c < $d <= $e);
+$a = $b < ($c < $d <= $e);
+$a = $b == $c < $d <= $e;
+$a = $b & $c < $d <= $e;
+$a = $b << ($c == $d != $e);
+$a = int($c == $d != $e);
+$a = $b < ($c == $d != $e);
+$a = $b == ($c == $d != $e);
+$a = $b & $c == $d != $e;

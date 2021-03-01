@@ -286,6 +286,9 @@ PERL_CALLCONV SSize_t PerlIO_get_bufsiz(PerlIO *);
 #ifndef PerlIO_tmpfile
 PERL_CALLCONV PerlIO *PerlIO_tmpfile(void);
 #endif
+#ifndef PerlIO_tmpfile_flags
+PERL_CALLCONV PerlIO *PerlIO_tmpfile_flags(int flags);
+#endif
 #ifndef PerlIO_stdin
 PERL_CALLCONV PerlIO *PerlIO_stdin(void);
 #endif

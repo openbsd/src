@@ -100,7 +100,7 @@ is ref \$t2, 'main', 'regexp assignment is not maledictory';
 sub {
     $_[0] = ${qr=crumpets=};
     is ref\$_[0], 'REGEXP', 'PVLVs';
-    # Don’t use like() here, as we would no longer be testing a PVLV.
+    # Don't use like() here, as we would no longer be testing a PVLV.
     ok " crumpets " =~ $_[0], 'using a regexpvlv as regexp';
     my $x = $_[0];
     is ref\$x, 'REGEXP', 'copying a regexpvlv';

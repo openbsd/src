@@ -78,7 +78,7 @@ EOF
 my %opts;
 getopts('csui', \%opts) or usage;
 if ($opts{u}) {
-    @ARGV == 0 or usage('no version version numbers should be specified');
+    @ARGV == 0 or usage('no version numbers should be specified');
     # fake to stop warnings when calculating $oldx etc
     @ARGV = qw(99.99.99 99.99.99);
 }
@@ -195,14 +195,6 @@ my @maps =  (
         sub { $2, "$1$newx.$newy$3" },
         "$oldx.$oldy",
         qr/uconfig/,
-    ],
-
-    # win32/Makefile.ce
-    [
-        qr/(PV\s*=\s*)(\d\d{2})\b$/,
-        sub { $2, "$1$newx$newy" },
-        "$oldx$oldy",
-        qr/Makefile\.ce/,
     ],
 );
 

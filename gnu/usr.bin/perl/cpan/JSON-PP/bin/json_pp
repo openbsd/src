@@ -3,6 +3,7 @@
 BEGIN { pop @INC if $INC[-1] eq '.' }
 use strict;
 use Getopt::Long;
+use Encode ();
 
 use JSON::PP ();
 
@@ -42,10 +43,17 @@ for my $opt (split /,/, $json_opt) {
 my %F = (
    'json' => sub {
       my $json = JSON::PP->new;
+      my $enc =
+         /^\x00\x00\x00/s  ? "utf-32be"
+       : /^\x00.\x00/s     ? "utf-16be"
+       : /^.\x00\x00\x00/s ? "utf-32le"
+       : /^.\x00.\x00/s    ? "utf-16le"
+       :                     "utf-8";
       for my $key (keys %json_opt) {
+        next if $key eq 'utf8';
         $json->$key($json_opt{$key});
       }
-      $json->decode( $_ );
+      $json->decode( Encode::decode($enc, $_) );
    },
    'eval' => sub {
         my $v = eval "no strict;\n#line 1 \"input\"\n$_";
@@ -84,8 +92,11 @@ $F{$opt_from}
 $T{$opt_to}
    or die "$opt_from: not a valid toformat\n";
 
-local $/;
-$_ = <STDIN>;
+{
+  local $/;
+  binmode STDIN;
+  $_ = <STDIN>;
+}
 
 $_ = $F{$opt_from}->();
 $_ = $T{$opt_to}->();
@@ -163,7 +174,7 @@ options to JSON::PP
 Acceptable options are:
 
     ascii latin1 utf8 pretty indent space_before space_after relaxed canonical allow_nonref
-    allow_singlequote allow_barekey allow_bignum loose escape_slash
+    allow_singlequote allow_barekey allow_bignum loose escape_slash indent_length
 
 Multiple options must be separated by commas:
 

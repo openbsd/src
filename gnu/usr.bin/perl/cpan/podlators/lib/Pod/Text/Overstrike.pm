@@ -19,7 +19,7 @@
 
 package Pod::Text::Overstrike;
 
-use 5.006;
+use 5.008;
 use strict;
 use warnings;
 
@@ -29,7 +29,7 @@ use Pod::Text ();
 
 @ISA = qw(Pod::Text);
 
-$VERSION = '4.11';
+$VERSION = '4.14';
 
 ##############################################################################
 # Overrides
@@ -185,7 +185,7 @@ created by Russ Allbery <rra@cpan.org>.  Subsequently updated by Russ Allbery.
 
 Copyright 2000 by Joe Smith <Joe.Smith@inwap.com>
 
-Copyright 2001, 2004, 2008, 2014, 2018 by Russ Allbery <rra@cpan.org>
+Copyright 2001, 2004, 2008, 2014, 2018-2019 by Russ Allbery <rra@cpan.org>
 
 This program is free software; you may redistribute it and/or modify it
 under the same terms as Perl itself.

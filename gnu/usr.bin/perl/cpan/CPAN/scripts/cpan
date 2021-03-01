@@ -4,7 +4,12 @@ BEGIN { pop @INC if $INC[-1] eq '.' }
 use strict;
 use vars qw($VERSION);
 
-use App::Cpan '1.64';
+use App::Cpan;
+use CPAN::Version;
+my $minver = '1.64';
+if ( CPAN::Version->vlt($App::Cpan::VERSION, $minver) ) {
+    warn "WARNING: your version of App::Cpan is $App::Cpan::VERSION while we would expect at least $minver";
+}
 $VERSION = '1.64';
 
 my $rc = App::Cpan->run( @ARGV );

@@ -10,8 +10,8 @@ our @ISA = qw(Exporter);
 
 our @EXPORT  = qw(test_harness pod2man perllocal_install uninstall
                   warn_if_old_packlist test_s cp_nonempty);
-our $VERSION = '7.34';
-$VERSION = eval $VERSION;
+our $VERSION = '7.44';
+$VERSION =~ tr/_//d;
 
 my $Is_VMS = $^O eq 'VMS';
 

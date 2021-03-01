@@ -7,7 +7,8 @@ use File::Compare qw( compare );
 use File::Copy qw( copy );
 use File::Basename qw( dirname );
 
-sub iterdirs(&);
+use feature 'signatures';
+no warnings 'experimental::signatures';
 
 my $rootdir = dirname($0);
 
@@ -37,15 +38,14 @@ unless (@destdirs) {
 
 # Remove all installed ppport.h files
 if ($opt{clean}) {
-  iterdirs {
-    my($dir, $fulldir) = @_;
+  iterdirs( sub ($dir, $fulldir) {
     my $dest = File::Spec->catfile($fulldir, 'ppport.h');
     if (-f $dest) {
       print "removing ppport.h for $dir\n";
       unlink $dest or warn "WARNING: could not remove $dest: $!\n";
       1 while unlink $dest;  # remove any remaining versions
     }
-  };
+  } );
   exit 0;
 }
 
@@ -83,8 +83,7 @@ unless (-e 'ppport.h') {
 }
 
 # Now install the created ppport.h into extension directories
-iterdirs {
-  my($dir, $fulldir) = @_;
+iterdirs( sub ($dir, $fulldir) {
   my $dest = File::Spec->catfile($fulldir, 'ppport.h');
   if (compare('ppport.h', $dest)) {
     print "installing ppport.h for $dir\n";
@@ -93,17 +92,15 @@ iterdirs {
   else {
     print "ppport.h in $dir is up-to-date\n";
   }
-};
+} );
 
 exit 0;
 
 #---------------------------------------
 # Iterate through extension directories
 #---------------------------------------
-sub iterdirs(&)
+sub iterdirs($code)
 {
-  my $code = shift;
-  
   for my $dir (@destdirs) {
     my $fulldir = File::Spec->catdir($absroot, $dir);
     if (-d $fulldir) {
@@ -118,9 +115,8 @@ sub iterdirs(&)
 #----------------------------------------
 # Read the list of extension directories
 #----------------------------------------
-sub readlist
+sub readlist($list)
 {
-  my $list = shift;
   my @dirs;
   open LIST, $list or die "$list: $!\n";
   while (<LIST>) {

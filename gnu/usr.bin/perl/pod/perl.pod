@@ -21,7 +21,7 @@ For more information on these options, you can run C<perldoc perlrun>.
 
 The F<perldoc> program gives you access to all the documentation that comes
 with Perl.  You can get more documentation, tutorials and community support
-online at L<http://www.perl.org/>.
+online at L<https://www.perl.org/>.
 
 If you're new to Perl, you should start by running C<perldoc perlintro>,
 which is a general intro for beginners and provides some background to help
@@ -34,7 +34,7 @@ For ease of access, the Perl manual has been split up into several sections.
 
 # This section is parsed by Porting/pod_lib.pl for use by pod/buildtoc etc
 
-flag =g  perlmodlib perlapi perlintern
+flag =g  perluniprops perlmodlib perlapi perlintern
 flag =go perltoc
 flag =ro perlcn perljp perlko perltw
 flag =   perlvms
@@ -129,6 +129,7 @@ aux h2ph h2xs perlbug pl2pm pod2html pod2man splain xsubpp
     perlebcdic		Considerations for running Perl on EBCDIC platforms
 
     perlsec		Perl security
+    perlsecpolicy	Perl security report handling policy
 
     perlmod		Perl modules: how they work
     perlmodlib		Perl modules: how to write and use
@@ -170,6 +171,7 @@ aux h2ph h2xs perlbug pl2pm pod2html pod2man splain xsubpp
     perlhacktut 	Walk through the creation of a simple C code patch
     perlhacktips	Tips for Perl core C code hacking
     perlpolicy		Perl development policies
+    perlgov		Perl Rules of Governance
     perlgit		Using git with the Perl repository
 
 =head2 Miscellaneous
@@ -181,9 +183,12 @@ aux h2ph h2xs perlbug pl2pm pod2html pod2man splain xsubpp
 
     perlhist		Perl history records
     perldelta		Perl changes since previous version
+    perl5320delta	Perl changes in version 5.32.0
+    perl5303delta	Perl changes in version 5.30.3
     perl5302delta	Perl changes in version 5.30.2
     perl5301delta	Perl changes in version 5.30.1
     perl5300delta	Perl changes in version 5.30.0
+    perl5283delta	Perl changes in version 5.28.3
     perl5282delta	Perl changes in version 5.28.2
     perl5281delta	Perl changes in version 5.28.1
     perl5280delta	Perl changes in version 5.28.0
@@ -261,7 +266,6 @@ aux h2ph h2xs perlbug pl2pm pod2html pod2man splain xsubpp
     perlamiga		Perl notes for AmigaOS
     perlandroid		Perl notes for Android
     perlbs2000		Perl notes for POSIX-BC BS2000
-    perlce		Perl notes for WinCE
     perlcygwin		Perl notes for Cygwin
     perldos		Perl notes for DOS
     perlfreebsd 	Perl notes for FreeBSD
@@ -353,7 +357,7 @@ for a listing.
 
 =head1 ENVIRONMENT
 
-See L<perlrun>.
+See L<perlrun/ENVIRONMENT>.
 
 =head1 AUTHOR
 
@@ -373,10 +377,10 @@ see L<perlvar> for more information.
 
 =head1 SEE ALSO
 
- http://www.perl.org/       the Perl homepage
- http://www.perl.com/       Perl articles (O'Reilly)
- http://www.cpan.org/       the Comprehensive Perl Archive
- http://www.pm.org/         the Perl Mongers
+ https://www.perl.org/       the Perl homepage
+ https://www.perl.com/       Perl articles
+ https://www.cpan.org/       the Comprehensive Perl Archive
+ https://www.pm.org/         the Perl Mongers
 
 =head1 DIAGNOSTICS
 

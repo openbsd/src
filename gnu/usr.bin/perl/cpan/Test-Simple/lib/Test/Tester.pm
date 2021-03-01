@@ -18,7 +18,7 @@ require Exporter;
 
 use vars qw( @ISA @EXPORT );
 
-our $VERSION = '1.302162';
+our $VERSION = '1.302175';
 
 @EXPORT = qw( run_tests check_tests check_test cmp_results show_space );
 @ISA = qw( Exporter );
@@ -393,7 +393,7 @@ The easiest way to test is to do something like
     }
   );
 
-this will execute the is_mystyle_eq test, capturing it's results and
+this will execute the is_mystyle_eq test, capturing its results and
 checking that they are what was expected.
 
 You may need to examine the test results in a more flexible way, for

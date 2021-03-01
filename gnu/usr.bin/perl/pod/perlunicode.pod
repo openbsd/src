@@ -24,7 +24,7 @@ everyone uses Unicode.
 Unicode is a comprehensive standard.  It specifies many things outside
 the scope of Perl, such as how to display sequences of characters.  For
 a full discussion of all aspects of Unicode, see
-L<http://www.unicode.org>.
+L<https://www.unicode.org>.
 
 =head2 Important Caveats
 
@@ -449,7 +449,8 @@ Also, there are typically various synonyms for the values the property
 can be.   For binary properties, C<"True"> has 3 synonyms: C<"T">,
 C<"Yes">, and C<"Y">; and C<"False"> has correspondingly C<"F">,
 C<"No">, and C<"N">.  But be careful.  A short form of a value for one
-property may not mean the same thing as the same short form for another.
+property may not mean the same thing as the short form spelled the same
+for another.
 Thus, for the C<L</General_Category>> property, C<"L"> means
 C<"Letter">, but for the L<C<Bidi_Class>|/Bidirectional Character Types>
 property, C<"L"> means C<"Left">.  A complete list of properties and
@@ -459,15 +460,20 @@ Upper/lower case differences in property names and values are irrelevant;
 thus C<\p{Upper}> means the same thing as C<\p{upper}> or even C<\p{UpPeR}>.
 Similarly, you can add or subtract underscores anywhere in the middle of a
 word, so that these are also equivalent to C<\p{U_p_p_e_r}>.  And white space
-is irrelevant adjacent to non-word characters, such as the braces and the equals
-or colon separators, so C<\p{   Upper  }> and C<\p{ Upper_case : Y }> are
-equivalent to these as well.  In fact, white space and even
-hyphens can usually be added or deleted anywhere.  So even C<\p{ Up-per case = Yes}> is
-equivalent.  All this is called "loose-matching" by Unicode.  The few places
-where stricter matching is used is in the middle of numbers, and in the Perl
-extension properties that begin or end with an underscore.  Stricter matching
-cares about white space (except adjacent to non-word characters),
-hyphens, and non-interior underscores.
+is generally irrelevant adjacent to non-word characters, such as the
+braces and the equals or colon separators, so C<\p{   Upper  }> and
+C<\p{ Upper_case : Y }> are equivalent to these as well.  In fact, white
+space and even hyphens can usually be added or deleted anywhere.  So
+even C<\p{ Up-per case = Yes}> is equivalent.  All this is called
+"loose-matching" by Unicode.  The "name" property has some restrictions
+on this due to a few outlier names.  Full details are given in
+L<https://www.unicode.org/reports/tr44/tr44-24.html#UAX44-LM2>.
+
+The few places where stricter matching is
+used is in the middle of numbers, the "name" property, and in the Perl
+extension properties that begin or end with an underscore.  Stricter
+matching cares about white space (except adjacent to non-word
+characters), hyphens, and non-interior underscores.
 
 You can also use negation in both C<\p{}> and C<\P{}> by introducing a caret
 (C<^>) between the first brace and the property name: C<\p{^Tamil}> is
@@ -499,7 +505,7 @@ matching Unicode properties against non-Unicode code points.
 
 Every Unicode character is assigned a general category, which is the "most
 usual categorization of a character" (from
-L<http://www.unicode.org/reports/tr44>).
+L<https://www.unicode.org/reports/tr44>).
 
 The compound way of writing these is like C<\p{General_Category=Number}>
 (short: C<\p{gc:n}>).  But Perl furnishes shortcuts in which everything up
@@ -598,7 +604,7 @@ property can have more values added in a future Unicode release.  Those
 listed above comprised the complete set for many Unicode releases, but
 others were added in Unicode 6.3; you can always find what the
 current ones are in L<perluniprops>.  And
-L<http://www.unicode.org/reports/tr9/> describes how to use them.
+L<https://www.unicode.org/reports/tr9/> describes how to use them.
 
 =head3 B<Scripts>
 
@@ -675,7 +681,7 @@ used in more than one script, they will be in C<sc=Common>, but only
 if they are used in many scripts should they be in C<scx=Common>.
 
 The explanation above has omitted some detail; refer to UAX#24 "Unicode
-Script Property": L<http://www.unicode.org/reports/tr24>.
+Script Property": L<https://www.unicode.org/reports/tr24>.
 
 A complete list of scripts and their shortcuts is in L<perluniprops>.
 
@@ -703,7 +709,7 @@ those digits are shared across many scripts, and hence are in the
 C<Common> script.
 
 For more about scripts versus blocks, see UAX#24 "Unicode Script Property":
-L<http://www.unicode.org/reports/tr24>
+L<https://www.unicode.org/reports/tr24>
 
 The C<Script_Extensions> or C<Script> properties are likely to be the
 ones you want to use when processing
@@ -751,12 +757,12 @@ Unicode defines all its properties in the compound form, so all single-form
 properties are Perl extensions.  Most of these are just synonyms for the
 Unicode ones, but some are genuine extensions, including several that are in
 the compound form.  And quite a few of these are actually recommended by Unicode
-(in L<http://www.unicode.org/reports/tr18>).
+(in L<https://www.unicode.org/reports/tr18>).
 
 This section gives some details on all extensions that aren't just
 synonyms for compound-form Unicode properties
 (for those properties, you'll have to refer to the
-L<Unicode Standard|http://www.unicode.org/reports/tr44>.
+L<Unicode Standard|https://www.unicode.org/reports/tr44>.
 
 =over
 
@@ -804,7 +810,7 @@ pre-composed character.  An example is the C<"SUPERSCRIPT ONE">.  It is
 somewhat like a regular digit 1, but not exactly; its decomposition into
 the digit 1 is called a "compatible" decomposition, specifically a
 "super" decomposition.  There are several such compatibility
-decompositions (see L<http://www.unicode.org/reports/tr44>), including
+decompositions (see L<https://www.unicode.org/reports/tr44>), including
 one called "compat", which means some miscellaneous type of
 decomposition that doesn't fit into the other decomposition categories
 that Unicode has chosen.
@@ -921,9 +927,59 @@ L<perlrecharclass/POSIX Character Classes>.
 
 =back
 
+=head2 Comparison of C<\N{...}> and C<\p{name=...}>
+
+Starting in Perl 5.32, you can specify a character by its name in
+regular expression patterns using C<\p{name=...}>.  This is in addition
+to the longstanding method of using C<\N{...}>.  The following
+summarizes the differences between these two:
+
+                       \N{...}       \p{Name=...}
+ can interpolate    only with eval       yes            [1]
+ custom names            yes             no             [2]
+ name aliases            yes             yes            [3]
+ named sequences         yes             yes            [4]
+ name value parsing     exact       Unicode loose       [5]
+
+=over
+
+=item [1]
+
+The ability to interpolate means you can do something like
+
+ qr/\p{na=latin capital letter $which}/
+
+and specify C<$which> elsewhere.
+
+=item [2]
+
+You can create your own names for characters, and override official
+ones when using C<\N{...}>.  See L<charnames/CUSTOM ALIASES>.
+
+=item [3]
+
+Some characters have multiple names (synonyms).
+
+=item [4]
+
+Some particular sequences of characters are given a single name, in
+addition to their individual ones.
+
+=item [5]
+
+Exact name value matching means you have to specify case, hyphens,
+underscores, and spaces precisely in the name you want.  Loose matching
+follows the Unicode rules
+L<https://www.unicode.org/reports/tr44/tr44-24.html#UAX44-LM2>,
+where these are mostly irrelevant.  Except for a few outlier character
+names, these are the same rules as are already used for any other
+C<\p{...}> property.
+
+=back
+
 =head2 Wildcards in Property Values
 
-Starting in Perl 5.30, it is possible to do do something like this:
+Starting in Perl 5.30, it is possible to do something like this:
 
  qr!\p{numeric_value=/\A[0-5]\z/}!
 
@@ -957,7 +1013,7 @@ delimits the end of the enclosing C<\p{}>.  Like any pattern, certain
 other delimiters are terminated by their mirror images.  These are
 C<"(">, C<"[>", and C<"E<lt>">.  If the delimiter is any of C<"-">,
 C<"_">, C<"+">, or C<"\">, or is the same delimiter as is used for the
-enclosing pattern, it must be be preceded by a backslash escape, both
+enclosing pattern, it must be preceded by a backslash escape, both
 fore and aft.
 
 Beware of using C<"$"> to indicate to match the end of the string.  It
@@ -967,17 +1023,26 @@ C<$/>.
 No modifiers may follow the final delimiter.  Instead, use
 L<perlre/(?adlupimnsx-imnsx)> and/or
 L<perlre/(?adluimnsx-imnsx:pattern)> to specify modifiers.
+However, certain modifiers are illegal in your wildcard subpattern.
+The only character set modifier specifiable is C</aa>;
+any other character set, and C<-m>, and C<p>, and C<s> are all illegal.
+Specifying modifiers like C<qr/.../gc> that aren't legal in the
+C<(?...)> notation normally raise a warning, but with wildcard
+subpatterns, their use is an error.  The C<m> modifier is ineffective;
+everything that matches will be a single line.
+
+By default, your pattern is matched case-insensitively, as if C</i> had
+been specified.  You can change this by saying C<(?-i)> in your pattern.
+
+There are also certain operations that are illegal.  You can't nest
+C<\p{...}> and C<\P{...}> calls within a wildcard subpattern, and C<\G>
+doesn't make sense, so is also prohibited.
+
+And the C<*> quantifier (or its equivalent C<(0,}>) is illegal.
 
 This feature is not available when the left-hand side is prefixed by
 C<Is_>, nor for any form that is marked as "Discouraged" in
 L<perluniprops/Discouraged>.
-
-Perl wraps your pattern with C<(?iaa: ... )>.  This is because nothing
-outside ASCII can match the Unicode property values available in this
-release, and they should match caselessly.  If your pattern has a syntax
-error, this wrapping will be shown in the error message, even though you
-didn't specify it yourself.  This could be confusing if you don't know
-about this.
 
 This experimental feature has been added to begin to implement
 L<https://www.unicode.org/reports/tr18/#Wildcard_Properties>.  Using it
@@ -997,30 +1062,58 @@ example,
 
 would match the same things.
 
-A warning is issued if none of the legal values for a property are
-matched by your pattern.  It's likely that a future release will raise a
-warning if your pattern ends up causing every possible code point to
-match.
-
 Another example that shows that within C<\p{...}>, C</x> isn't needed to
 have spaces:
 
  qr!\p{scx= /Hebrew|Greek/ }!
 
 To be safe, we should have anchored the above example, to prevent
-matches for something like C<Hebrew_Braile>, but there aren't
-any script names like that.
+matches for something like C<Hebrew_Braille>, but there aren't
+any script names like that, so far.
+A warning is issued if none of the legal values for a property are
+matched by your pattern.  It's likely that a future release will raise a
+warning if your pattern ends up causing every possible code point to
+match.
 
-There are certain properties that it doesn't currently work with.  These
-are:
+Starting in 5.32, the Name, Name Aliases, and Named Sequences properties
+are allowed to be matched.  They are considered to be a single
+combination property, just as has long been the case for C<\N{}>.  Loose
+matching doesn't work in exactly the same way for these as it does for
+the values of other properties.  The rules are given in
+L<https://www.unicode.org/reports/tr44/tr44-24.html#UAX44-LM2>.  As a
+result, Perl doesn't try loose matching for you, like it does in other
+properties.  All letters in names are uppercase, but you can add C<(?i)>
+to your subpattern to ignore case.  If you're uncertain where a blank
+is, you can use C< ?> in your subpattern.  No character name contains an
+underscore, so don't bother trying to match one.  The use of hyphens is
+particularly problematic; refer to the above link.  But note that, as of
+Unicode 13.0, the only script in modern usage which has weirdnesses with
+these is Tibetan; also the two Korean characters U+116C HANGUL JUNGSEONG
+OE and U+1180 HANGUL JUNGSEONG O-E.  Unicode makes no promises to not
+add hyphen-problematic names in the future.
+
+Using wildcards on these is resource intensive, given the hundreds of
+thousands of legal names that must be checked against.
+
+An example of using Name property wildcards is
+
+ qr!\p{name=/(SMILING|GRINNING) FACE/}!
+
+Another is
+
+ qr/(?[ \p{name=\/CJK\/} - \p{ideographic} ])/
+
+which is the 200-ish (as of Unicode 13.0) CJK characters that aren't
+ideographs.
+
+There are certain properties that wildcard subpatterns don't currently
+work with.  These are:
 
  Bidi Mirroring Glyph
  Bidi Paired Bracket
  Case Folding
  Decomposition Mapping
  Equivalent Unified Ideograph
- Name
- Name Alias
  Lowercase Mapping
  NFKC Case Fold
  Titlecase Mapping
@@ -1031,7 +1124,6 @@ Nor is the C<@I<unicode_property>@> form implemented.
 Here's a complete example of matching IPV4 internet protocol addresses
 in any (single) script
 
- no warnings 'experimental::script_run';
  no warnings 'experimental::regex_sets';
  no warnings 'experimental::uniprop_wildcards';
 
@@ -1067,7 +1159,9 @@ You can define your own binary character properties by defining subroutines
 whose names begin with C<"In"> or C<"Is">.  (The experimental feature
 L<perlre/(?[ ])> provides an alternative which allows more complex
 definitions.)  The subroutines can be defined in any
-package.  The user-defined properties can be used in the regular expression
+package.  They override any Unicode properties expressed as the same
+names.  The user-defined properties can be used in the regular
+expression
 C<\p{}> and C<\P{}> constructs; if you are using a user-defined property from a
 package other than the one you are in, you must specify its package in the
 C<\p{}> or C<\P{}> construct.
@@ -1227,7 +1321,7 @@ See L<Encode>.
 The following list of Unicode supported features for regular expressions describes
 all features currently directly supported by core Perl.  The references
 to "Level I<N>" and the section numbers refer to
-L<UTS#18 "Unicode Regular Expressions"|http://www.unicode.org/reports/tr18>,
+L<UTS#18 "Unicode Regular Expressions"|https://www.unicode.org/reports/tr18>,
 version 18, October 2016.
 
 =head3 Level 1 - Basic Unicode Support
@@ -1247,13 +1341,12 @@ version 18, October 2016.
 
 =item [2]
 C<\p{...}> C<\P{...}>.  This requirement is for a minimal list of
-properties.  Perl supports these and all other Unicode character
-properties, as R2.7 asks (see L</"Unicode Character Properties"> above).
+properties.  Perl supports these.  See R2.7 for other properties.
 
 =item [3]
 Perl has C<\d> C<\D> C<\s> C<\S> C<\w> C<\W> C<\X> C<[:I<prop>:]>
 C<[:^I<prop>:]>, plus all the properties specified by
-L<http://www.unicode.org/reports/tr18/#Compatibility_Properties>.  These
+L<https://www.unicode.org/reports/tr18/#Compatibility_Properties>.  These
 are described above in L</Other Properties>
 
 =item [4]
@@ -1319,7 +1412,7 @@ character.
 The reason this is considered to be only partially implemented is that
 Perl has L<C<qrE<sol>\b{lb}E<sol>>|perlrebackslash/\b{lb}> and
 C<L<Unicode::LineBreak>> that are conformant with
-L<UAX#14 "Unicode Line Breaking Algorithm"|http://www.unicode.org/reports/tr14>.
+L<UAX#14 "Unicode Line Breaking Algorithm"|https://www.unicode.org/reports/tr14>.
 The regular expression construct provides default behavior, while the
 heavier-weight module provides customizable line breaking.
 
@@ -1355,69 +1448,50 @@ C<U+10FFFF> but also beyond C<U+10FFFF>
 
  RL2.1   Canonical Equivalents           - Retracted     [9]
                                            by Unicode
- RL2.2   Extended Grapheme Clusters      - Partial       [10]
+ RL2.2   Extended Grapheme Clusters and  - Partial       [10]
+         Character Classes with Strings
  RL2.3   Default Word Boundaries         - Done          [11]
  RL2.4   Default Case Conversion         - Done
  RL2.5   Name Properties                 - Done
  RL2.6   Wildcards in Property Values    - Partial       [12]
- RL2.7   Full Properties                 - Done
+ RL2.7   Full Properties                 - Partial       [13]
+ RL2.8   Optional Properties             - Partial       [14]
 
 =over 4
 
 =item [9]
 Unicode has rewritten this portion of UTS#18 to say that getting
 canonical equivalence (see UAX#15
-L<"Unicode Normalization Forms"|http://www.unicode.org/reports/tr15>)
+L<"Unicode Normalization Forms"|https://www.unicode.org/reports/tr15>)
 is basically to be done at the programmer level.  Use NFD to write
 both your regular expressions and text to match them against (you
 can use L<Unicode::Normalize>).
 
 =item [10]
-Perl has C<\X> and C<\b{gcb}> but we don't have a "Grapheme Cluster Mode".
+Perl has C<\X> and C<\b{gcb}>.  Unicode has retracted their "Grapheme
+Cluster Mode", and recently added string properties, which Perl does not
+yet support.
 
 =item [11] see
-L<UAX#29 "Unicode Text Segmentation"|http://www.unicode.org/reports/tr29>,
+L<UAX#29 "Unicode Text Segmentation"|https://www.unicode.org/reports/tr29>,
 
 =item [12] see
 L</Wildcards in Property Values> above.
+
+=item [13]
+Perl supports all the properties in the Unicode Character Database
+(UCD).  It does not yet support the listed properties that come from
+other Unicode sources.
+
+=item [14]
+The only optional property that Perl supports is Named Sequence.  None
+of these properties are in the UCD.
 
 =back
 
 =head3 Level 3 - Tailored Support
 
- RL3.1   Tailored Punctuation            - Missing
- RL3.2   Tailored Grapheme Clusters      - Missing       [13]
- RL3.3   Tailored Word Boundaries        - Missing
- RL3.4   Tailored Loose Matches          - Retracted by Unicode
- RL3.5   Tailored Ranges                 - Retracted by Unicode
- RL3.6   Context Matching                - Partial       [14]
- RL3.7   Incremental Matches             - Missing
- RL3.8   Unicode Set Sharing             - Retracted by Unicode
- RL3.9   Possible Match Sets             - Missing
- RL3.10  Folded Matching                 - Retracted by Unicode
- RL3.11  Submatchers                     - Partial       [15]
-
-=over 4
-
-=item [13]
-Perl has L<Unicode::Collate>, but it isn't integrated with regular
-expressions.  See
-L<UTS#10 "Unicode Collation Algorithms"|http://www.unicode.org/reports/tr10>.
-
-=item [14]
-Perl has C<(?<=x)> and C<(?=x)>, but this requirement says that it
-should be possible to specify that matches may occur only in a substring
-with the lookaheads and lookbehinds able to see beyond that matchable
-portion.
-
-=item [15]
-Perl has user-defined properties (L</"User-Defined Character
-Properties">) to look at single code points in ways beyond Unicode, and
-it might be possible, though probably not very clean, to use code blocks
-and things like C<(?(DEFINE)...)> (see L<perlre>) to do more specialized
-matching.
-
-=back
+This has been retracted by Unicode.
 
 =head2 Unicode Encodings
 
@@ -1625,7 +1699,7 @@ noncharacter code points from such text, because of the potential
 security issues caused by deleting uninterpreted characters.  (See
 conformance clause C7 in Section 3.2, Conformance Requirements, and
 L<Unicode Technical Report #36, "Unicode Security
-Considerations"|http://www.unicode.org/reports/tr36/#Substituting_for_Ill_Formed_Subsequences>)."
+Considerations"|https://www.unicode.org/reports/tr36/#Substituting_for_Ill_Formed_Subsequences>)."
 
 =back
 
@@ -1776,7 +1850,7 @@ through C<0x10FFFF>.)
 =head2 Security Implications of Unicode
 
 First, read
-L<Unicode Security Considerations|http://www.unicode.org/reports/tr36>.
+L<Unicode Security Considerations|https://www.unicode.org/reports/tr36>.
 
 Also, note the following:
 
@@ -1994,7 +2068,7 @@ In L<< C<split>'s special-case whitespace splitting|perlfunc/split >>.
 
 Starting in Perl 5.28.0, the C<split> function with a pattern specified as
 a string containing a single space handles whitespace characters consistently
-within the scope of of C<unicode_strings>. Prior to that, or outside its scope,
+within the scope of C<unicode_strings>. Prior to that, or outside its scope,
 characters that are whitespace according to Unicode rules but not according to
 ASCII rules were treated as field contents rather than field separators when
 they appear in byte-encoded strings.
@@ -2042,7 +2116,7 @@ v5.20 and v5.22, however, the earliest usable version is Unicode 5.1.
 Perl v5.18 and v5.24 are able to handle all earlier versions.
 
 Download the files in the desired version of Unicode from the Unicode web
-site L<http://www.unicode.org>).  These should replace the existing files in
+site L<https://www.unicode.org>).  These should replace the existing files in
 F<lib/unicore> in the Perl source tree.  Follow the instructions in
 F<README.perl> in that directory to change some of their names, and then build
 perl (see L<INSTALL>).
@@ -2246,6 +2320,6 @@ C<Nd> compared with the 10 ASCII characters matching C<[0-9]>).
 
 L<perlunitut>, L<perluniintro>, L<perluniprops>, L<Encode>, L<open>, L<utf8>, L<bytes>,
 L<perlretut>, L<perlvar/"${^UNICODE}">,
-L<http://www.unicode.org/reports/tr44>).
+L<https://www.unicode.org/reports/tr44>).
 
 =cut

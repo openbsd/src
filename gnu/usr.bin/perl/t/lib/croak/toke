@@ -502,3 +502,74 @@ format=
 EXPECT
 syntax error at - line 4, next token ???
 Execution of - aborted due to compilation errors.
+########
+# NAME [perl #134045] incomplete hex number
+0x x 2;
+0xx 2;
+0x_;
+0b;
+EXPECT
+No digits found for hexadecimal literal at - line 1, near "0x "
+No digits found for hexadecimal literal at - line 2, near "0xx"
+No digits found for hexadecimal literal at - line 3, near "0x_;"
+No digits found for binary literal at - line 4, near "0b;"
+Execution of - aborted due to compilation errors.
+########
+# NAME [perl #130585] close paren in subparse
+qr!@{s{0})(?{!;
+EXPECT
+syntax error at - line 1, near "})"
+Execution of - aborted due to compilation errors.
+########
+# NAME [perl #130585] close paren in subparse - a few more tests
+my ($x, %y, @z);
+qq!$x\U $z[0] $y{a}\E $z[1]!;
+qq!$x\U@{s{0})(?{!;
+EXPECT
+syntax error at - line 3, near ")("
+Execution of - aborted due to compilation errors.
+########
+# NAME [perl #134310] don't confuse S_no_op() with PL_bufptr after s
+0 0x@
+EXPECT
+Number found where operator expected at - line 1, near "0 0x"
+	(Missing operator before  0x?)
+Array found where operator expected at - line 1, near "0x@
+;"
+	(Missing operator before ;?)
+No digits found for hexadecimal literal at - line 1, near "0 0x@"
+syntax error at - line 1, near "0 0x"
+Execution of - aborted due to compilation errors.
+########
+# NAME Forbid illegal \x{} code points
+use Config;
+if ($Config{uvsize} < 8) {
+    my $a = "\x{8000_0000}";
+}
+else {
+    my $a = "\x{8000_0000_0000_0000}";
+}
+EXPECT
+OPTIONS regex
+Use of code point 0x80000000(00000000)? is not allowed; the permissible max is 0x7FFFFFFF(FFFFFFFF)? at - line \d+.
+########
+# NAME Forbid illegal \o{} code points
+use Config;
+if ($Config{uvsize} < 8) {
+    my $b = "\o{20_000_000_000}";
+}
+else {
+    my $b = "\o{1_000_000_000_000_000_000_000}";
+}
+EXPECT
+OPTIONS regex
+Use of code point 0x80000000(00000000)? is not allowed; the permissible max is 0x7FFFFFFF(FFFFFFFF)? at - line \d+.
+########
+# NAME gh-17645: conflict marker detection should not read out of bounds
+m/$0[
+==0/
+EXPECT
+syntax error at - line 2, near "[
+=="
+  (Might be a runaway multi-line // string starting on line 1)
+Execution of - aborted due to compilation errors.

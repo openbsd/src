@@ -12,7 +12,7 @@
  * More info is in utfebcdic.h
  *
  * Some of the tables are adapted from
- *      http://bjoern.hoehrmann.de/utf-8/decoder/dfa/
+ *      https://bjoern.hoehrmann.de/utf-8/decoder/dfa/
  * which requires this copyright notice:
 
 Copyright (c) 2008-2009 Bjoern Hoehrmann <bjoern@hoehrmann.de>
@@ -288,7 +288,7 @@ SOFTWARE.
 
 
 /* The table below is adapted from
- *      http://bjoern.hoehrmann.de/utf-8/decoder/dfa/
+ *      https://bjoern.hoehrmann.de/utf-8/decoder/dfa/
  * See copyright notice at the beginning of this file.
  */
 
@@ -329,7 +329,7 @@ SOFTWARE.
 
 
 /* The table below is adapted from
- *      http://bjoern.hoehrmann.de/utf-8/decoder/dfa/
+ *      https://bjoern.hoehrmann.de/utf-8/decoder/dfa/
  * See copyright notice at the beginning of this file.
  */
 
@@ -368,14 +368,15 @@ SOFTWARE.
 /*N11=253*/  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  0,  0,  0,  0,  0,  0,
 /*N12=276*/  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23,299,
 /*N13=299*/  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,
-/*N14=322*/  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46,299
+/*N14=322*/  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46,345,
+/*N15=345*/  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23,299
 /*           0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18  19  20  21 22*/
 };
 #  endif
 
 
 /* The table below is adapted from
- *      http://bjoern.hoehrmann.de/utf-8/decoder/dfa/
+ *      https://bjoern.hoehrmann.de/utf-8/decoder/dfa/
  * See copyright notice at the beginning of this file.
  */
 
@@ -665,7 +666,7 @@ SOFTWARE.
 
 
 /* The table below is adapted from
- *      http://bjoern.hoehrmann.de/utf-8/decoder/dfa/
+ *      https://bjoern.hoehrmann.de/utf-8/decoder/dfa/
  * See copyright notice at the beginning of this file.
  */
 
@@ -706,7 +707,7 @@ SOFTWARE.
 
 
 /* The table below is adapted from
- *      http://bjoern.hoehrmann.de/utf-8/decoder/dfa/
+ *      https://bjoern.hoehrmann.de/utf-8/decoder/dfa/
  * See copyright notice at the beginning of this file.
  */
 
@@ -745,14 +746,15 @@ SOFTWARE.
 /*N11=253*/  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  0,  0,  0,  0,  0,  0,
 /*N12=276*/  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23,299,
 /*N13=299*/  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,
-/*N14=322*/  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46,299
+/*N14=322*/  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46,345,
+/*N15=345*/  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23,299
 /*           0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18  19  20  21 22*/
 };
 #  endif
 
 
 /* The table below is adapted from
- *      http://bjoern.hoehrmann.de/utf-8/decoder/dfa/
+ *      https://bjoern.hoehrmann.de/utf-8/decoder/dfa/
  * See copyright notice at the beginning of this file.
  */
 

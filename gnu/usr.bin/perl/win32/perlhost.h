@@ -7,16 +7,13 @@
  *    License or the Artistic License, as specified in the README file.
  */
 
-#ifndef UNDER_CE
 #define CHECK_HOST_INTERP
-#endif
 
 #ifndef ___PerlHost_H___
 #define ___PerlHost_H___
 
-#ifndef UNDER_CE
 #include <signal.h>
-#endif
+#include <wchar.h>
 #include "iperlsys.h"
 #include "vmem.h"
 #include "vdir.h"
@@ -829,7 +826,6 @@ PerlStdIOGetOSfhandle(struct IPerlStdIO* piPerl, int filenum)
 FILE*
 PerlStdIOFdupopen(struct IPerlStdIO* piPerl, FILE* pf)
 {
-#ifndef UNDER_CE
     FILE* pfdup;
     fpos_t pos;
     char mode[3];
@@ -861,9 +857,6 @@ PerlStdIOFdupopen(struct IPerlStdIO* piPerl, FILE* pf)
 	fsetpos(pfdup, &pos);
     }
     return pfdup;
-#else
-    return 0;
-#endif
 }
 
 const struct IPerlStdIO perlStdIO =
@@ -2132,10 +2125,6 @@ lookup(const void *arg1, const void *arg2)
 LPSTR*
 CPerlHost::Lookup(LPCSTR lpStr)
 {
-#ifdef UNDER_CE
-    if (!m_lppEnvList || !m_dwEnvCount)
-	return NULL;
-#endif
     if (!lpStr)
 	return NULL;
     return (LPSTR*)bsearch(&lpStr, m_lppEnvList, m_dwEnvCount, sizeof(LPSTR), lookup);

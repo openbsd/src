@@ -1490,7 +1490,9 @@ PerlIO_openn(pTHX_ const char *layers, const char *mode, int fd,
 	     int imode, int perm, PerlIO *f, int narg, SV **args)
 {
     if (!f && narg == 1 && *args == &PL_sv_undef) {
-	if ((f = PerlIO_tmpfile())) {
+        imode = PerlIOUnix_oflags(mode);
+
+	if (imode != -1 && (f = PerlIO_tmpfile_flags(imode))) {
 	    if (!layers || !*layers)
 		layers = Perl_PerlIO_context_layers(aTHX_ mode);
 	    if (layers && *layers)
@@ -2816,6 +2818,7 @@ PerlIOUnix_close(pTHX_ PerlIO *f)
     const int fd = PerlIOSelf(f, PerlIOUnix)->fd;
     int code = 0;
     if (PerlIOBase(f)->flags & PERLIO_F_OPEN) {
+        code = PerlIOBase_close(aTHX_ f);
 	if (PerlIOUnix_refcnt_dec(fd) > 0) {
 	    PerlIOBase(f)->flags &= ~PERLIO_F_OPEN;
 	    return 0;
@@ -3231,13 +3234,7 @@ PerlIOStdio_invalidate_fileno(pTHX_ FILE *f)
     f->_file = -1;
     return 1;
 #  elif defined(WIN32)
-#    if defined(UNDER_CE)
-    /* WIN_CE does not have access to FILE internals, it hardly has FILE
-       structure at all
-     */
-#    else
     PERLIO_FILE_file(f) = -1;
-#    endif
     return 1;
 #  else
 #if 0
@@ -5049,44 +5046,60 @@ PerlIO_stdoutf(const char *fmt, ...)
 PerlIO *
 PerlIO_tmpfile(void)
 {
+    return PerlIO_tmpfile_flags(0);
+}
+
+#define MKOSTEMP_MODES ( O_RDWR | O_CREAT | O_EXCL )
+#define MKOSTEMP_MODE_MASK ( O_ACCMODE | O_CREAT | O_EXCL | O_TRUNC )
+
+PerlIO *
+PerlIO_tmpfile_flags(int imode)
+{
 #ifndef WIN32
      dTHX;
 #endif
      PerlIO *f = NULL;
 #ifdef WIN32
-     const int fd = win32_tmpfd();
+     const int fd = win32_tmpfd_mode(imode);
      if (fd >= 0)
 	  f = PerlIO_fdopen(fd, "w+b");
-#elif ! defined(VMS) && ! defined(OS2)
+#elif ! defined(OS2)
      int fd = -1;
      char tempname[] = "/tmp/PerlIO_XXXXXX";
      const char * const tmpdir = TAINTING_get ? NULL : PerlEnv_getenv("TMPDIR");
      SV * sv = NULL;
      int old_umask = umask(0177);
+     imode &= ~MKOSTEMP_MODE_MASK;
      if (tmpdir && *tmpdir) {
 	 /* if TMPDIR is set and not empty, we try that first */
 	 sv = newSVpv(tmpdir, 0);
 	 sv_catpv(sv, tempname + 4);
-	 fd = Perl_my_mkstemp_cloexec(SvPVX(sv));
+	 fd = Perl_my_mkostemp_cloexec(SvPVX(sv), imode | O_VMS_DELETEONCLOSE);
      }
      if (fd < 0) {
 	 SvREFCNT_dec(sv);
 	 sv = NULL;
 	 /* else we try /tmp */
-	 fd = Perl_my_mkstemp_cloexec(tempname);
+	 fd = Perl_my_mkostemp_cloexec(tempname, imode | O_VMS_DELETEONCLOSE);
      }
      if (fd < 0) {
          /* Try cwd */
          sv = newSVpvs(".");
          sv_catpv(sv, tempname + 4);
-         fd = Perl_my_mkstemp_cloexec(SvPVX(sv));
+         fd = Perl_my_mkostemp_cloexec(SvPVX(sv), imode | O_VMS_DELETEONCLOSE);
      }
      umask(old_umask);
      if (fd >= 0) {
-	  f = PerlIO_fdopen(fd, "w+");
+         /* fdopen() with a numeric mode */
+         char mode[8];
+         int writing = 1;
+         (void)PerlIO_intmode2str(imode | MKOSTEMP_MODES, mode, &writing);
+         f = PerlIO_fdopen(fd, mode);
 	  if (f)
 	       PerlIOBase(f)->flags |= PERLIO_F_TEMP;
+#   ifndef VMS
 	  PerlLIO_unlink(sv ? SvPVX_const(sv) : tempname);
+#   endif
      }
      SvREFCNT_dec(sv);
 #else	/* !HAS_MKSTEMP, fallback to stdio tmpfile(). */

@@ -2,14 +2,14 @@
 #
 # Test Pod::Man with a document that produces only errors.
 #
-# Copyright 2013, 2016, 2018 Russ Allbery <rra@cpan.org>
+# Copyright 2013, 2016, 2018-2019 Russ Allbery <rra@cpan.org>
 #
 # This program is free software; you may redistribute it and/or modify it
 # under the same terms as Perl itself.
 #
 # SPDX-License-Identifier: GPL-1.0-or-later OR Artistic-1.0-Perl
 
-use 5.006;
+use 5.008;
 use strict;
 use warnings;
 

@@ -26,6 +26,9 @@
 void
 Perl_taint_proper(pTHX_ const char *f, const char *const s)
 {
+    /* Output a tainting violation, croaking unless we're just to warn.
+     * '_proper' is just to throw you off the scent */
+
 #if defined(HAS_SETEUID) && defined(DEBUGGING)
     PERL_ARGS_ASSERT_TAINT_PROPER;
 
@@ -60,7 +63,7 @@ Perl_taint_proper(pTHX_ const char *f, const char *const s)
 	    ug = " while running with -T switch";
 
         /* XXX because taint_proper adds extra format args, we can't
-         * get the caller to check properly; o we just silence the warning
+         * get the caller to check properly; so we just silence the warning
          * and hope the callers aren't naughty */
         GCC_DIAG_IGNORE_STMT(-Wformat-nonliteral);
 	if (PL_unsafe || TAINT_WARN_get) {
@@ -167,7 +170,7 @@ Perl_taint_env(pTHX)
 #endif
 	if (t < e && isWORDCHAR(*t))
 	    t++;
-	while (t < e && (isWORDCHAR(*t) || strchr("-_.+", *t)))
+	while (t < e && (isWORDCHAR(*t) || memCHRs("-_.+", *t)))
 	    t++;
 	if (t < e) {
 	    TAINT;

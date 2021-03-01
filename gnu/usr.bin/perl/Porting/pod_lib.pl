@@ -330,6 +330,8 @@ sub pods_to_install {
     # manpages not to be installed
     my %do_not_install = map { ($_ => 1) }
         qw(Pod::Functions XS::APItest XS::Typemap);
+    $do_not_install{"ExtUtils::XSSymSet"} = 1
+        unless $^O eq "VMS";
 
     my (%done, %found);
 

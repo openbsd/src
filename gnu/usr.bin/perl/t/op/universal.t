@@ -244,7 +244,8 @@ like( $@, qr/Can't call method "DOES" on unblessed reference/,
 
 # Tests for can seem to be split between here and method.t
 # Add the verbatim perl code mentioned in the comments of
-# http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/2001-05/msg01710.html
+# Message-ID: E14ufZD-0007kD-00@libra.cus.cam.ac.uk
+# https://www.nntp.perl.org/group/perl.perl5.porters/2001/05/msg35327.html
 # but never actually tested.
 is(UNIVERSAL->can("NoSuchPackage::foo"), undef);
 

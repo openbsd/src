@@ -1223,6 +1223,15 @@ S_adjust_size_and_find_bucket(size_t *nbytes_p)
 	return bucket;
 }
 
+/*
+These have the same interfaces as the C lib ones, so are considered documented
+
+=for apidoc malloc
+=for apidoc calloc
+=for apidoc realloc
+=cut
+*/
+
 Malloc_t
 Perl_malloc(size_t nbytes)
 {
@@ -1321,8 +1330,9 @@ Perl_malloc(size_t nbytes)
 	MALLOC_UNLOCK;
 
 	DEBUG_m(PerlIO_printf(Perl_debug_log,
-			      "0x% "UVxf ": (%05lu) malloc %ld bytes\n",
-			      PTR2UV((Malloc_t)(p + CHUNK_SHIFT)), (unsigned long)(PL_an++),
+			      "%p: (%05lu) malloc %ld bytes\n",
+			      (Malloc_t)(p + CHUNK_SHIFT),
+                              (unsigned long)(PL_an++),
 			      (long)size));
 
 	FILLCHECK_DEADBEEF((unsigned char*)(p + CHUNK_SHIFT),
@@ -1670,7 +1680,8 @@ morecore(int bucket)
 	    /* It's our first time.  Initialize ourselves */
 	    were_called = 1;	/* Avoid a loop */
 	    if (!MallocCfg[MallocCfg_skip_cfg_env]) {
-		char *s = getenv("PERL_MALLOC_OPT"), *t = s, *off;
+		char *s = getenv("PERL_MALLOC_OPT"), *t = s;
+                const char *off;
 		const char *opts = PERL_MALLOC_OPT_CHARS;
 		int changed = 0;
 
@@ -1679,7 +1690,7 @@ morecore(int bucket)
 		    IV val = 0;
 
 		    t += 2;
-		    while (*t <= '9' && *t >= '0')
+		    while (isDIGIT(*t))
 			val = 10*val + *t++ - '0';
 		    if (!*t || *t == ';') {
 			if (MallocCfg[off - opts] != val)
@@ -2251,8 +2262,9 @@ Perl_dump_mstats(pTHX_ const char *s)
   	for (i = MIN_EVEN_REPORT; i <= buffer.topbucket; i += BUCKETS_PER_POW2) {
   		PerlIO_printf(Perl_error_log, 
 			      ((i < 8*BUCKETS_PER_POW2 || i == 10*BUCKETS_PER_POW2)
-			       ? " %5"UVuf 
-			       : ((i < 12*BUCKETS_PER_POW2) ? " %3"UVuf : " %"UVuf)),
+			       ? " %5" UVuf
+			       : ((i < 12*BUCKETS_PER_POW2) ? " %3" UVuf
+                                                            : " %" UVuf)),
 			      buffer.nfree[i]);
   	}
 #ifdef BUCKETS_ROOT2
@@ -2270,8 +2282,8 @@ Perl_dump_mstats(pTHX_ const char *s)
   	for (i = MIN_EVEN_REPORT; i <= buffer.topbucket; i += BUCKETS_PER_POW2) {
   		PerlIO_printf(Perl_error_log, 
 			      ((i < 8*BUCKETS_PER_POW2 || i == 10*BUCKETS_PER_POW2)
-			       ? " %5"IVdf
-			       : ((i < 12*BUCKETS_PER_POW2) ? " %3"IVdf : " %"IVdf)), 
+			       ? " %5" IVdf
+			       : ((i < 12*BUCKETS_PER_POW2) ? " %3" IVdf : " %" IVdf)),
 			      buffer.ntotal[i] - buffer.nfree[i]);
   	}
 #ifdef BUCKETS_ROOT2

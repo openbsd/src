@@ -35,7 +35,11 @@ my $Is_VMS = $^O eq 'VMS';
 my $OLD_CP; # crude but...
 my $w32worked; # or whether we had to fallback to chcp
 if ($^O eq "MSWin32") {
-    eval { require Win32; $w32worked = $OLD_CP = Win32::GetConsoleCP() };
+    eval {
+        require Win32;
+        local $SIG{__WARN__} = sub {} if ( "$]" < 5.014 ); # suppress deprecation warning for inherited AUTOLOAD of Win32::GetConsoleCP()
+        $w32worked = $OLD_CP = Win32::GetConsoleCP();
+    };
     $OLD_CP = $1 if !$w32worked and qx(chcp) =~ /(\d+)$/ and $? == 0;
     if (defined $OLD_CP) {
         if ($w32worked) {
@@ -128,7 +132,7 @@ like( $ppd_html, qr{^\s*<REQUIRE NAME="strict::" />}m,  '  <REQUIRE>' );
 unlike( $ppd_html, qr{^\s*<REQUIRE NAME="warnings::" />}m,  'no <REQUIRE> for build_require' );
 
 my $archname = $Config{archname};
-if( $] >= 5.008 ) {
+if( "$]" >= 5.008 ) {
     # XXX This is a copy of the internal logic, so it's not a great test
     $archname .= "-$Config{PERL_REVISION}.$Config{PERL_VERSION}";
 }

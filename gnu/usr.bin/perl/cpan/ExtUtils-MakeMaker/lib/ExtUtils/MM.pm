@@ -3,8 +3,8 @@ package ExtUtils::MM;
 use strict;
 use ExtUtils::MakeMaker::Config;
 
-our $VERSION = '7.34';
-$VERSION = eval $VERSION;
+our $VERSION = '7.44';
+$VERSION =~ tr/_//d;
 
 require ExtUtils::Liblist;
 require ExtUtils::MakeMaker;
@@ -23,9 +23,9 @@ ExtUtils::MM - OS adjusted ExtUtils::MakeMaker subclass
 
 B<FOR INTERNAL USE ONLY>
 
-ExtUtils::MM is a subclass of ExtUtils::MakeMaker which automatically
+ExtUtils::MM is a subclass of L<ExtUtils::MakeMaker> which automatically
 chooses the appropriate OS specific subclass for you
-(ie. ExtUils::MM_Unix, etc...).
+(ie. L<ExtUtils::MM_Unix>, etc...).
 
 It also provides a convenient alias via the MM class (I didn't want
 MakeMaker modules outside of ExtUtils/).

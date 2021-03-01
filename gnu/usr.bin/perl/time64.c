@@ -115,6 +115,40 @@ static const short safe_years[SOLAR_CYCLE_LENGTH] = {
 #    define TIME64_TRACE3(format, var1, var2, var3) ((void)0)
 #endif
 
+/* Set up the mutexes for this file.  There are no races possible on
+ * non-threaded perls, nor platforms that naturally don't have them.
+ * Otherwise, we need to have mutexes.  If we have reentrant versions of the
+ * functions below, they automatically will be substituted for the
+ * non-reentrant ones.  That solves the problem of the buffers being trashed by
+ * another thread, but not of the environment or locale changing during their
+ * execution.  To do that, we only need a read lock (which prevents writing by
+ * others).  However, if we don't have re-entrant functions, we can gain some
+ * measure of thread-safety by using an exclusive lock during their execution.
+ * That will protect against any other use of the functions that use the
+ * mutexes, which all of core should be using. */
+#ifdef USE_REENTRANT_API  /* This indicates a platform where we need reentrant
+                             versions if have them */
+#  ifdef PERL_REENTR_USING_LOCALTIME_R
+#    define LOCALTIME_LOCK    ENV_LOCALE_READ_LOCK
+#    define LOCALTIME_UNLOCK  ENV_LOCALE_READ_UNLOCK
+#  else
+#    define LOCALTIME_LOCK    ENV_LOCALE_LOCK
+#    define LOCALTIME_UNLOCK  ENV_LOCALE_UNLOCK
+#  endif
+#  ifdef PERL_REENTR_USING_GMTIME_R
+#    define GMTIME_LOCK    ENV_LOCALE_READ_LOCK
+#    define GMTIME_UNLOCK  ENV_LOCALE_READ_UNLOCK
+#  else
+#    define GMTIME_LOCK    ENV_LOCALE_LOCK
+#    define GMTIME_UNLOCK  ENV_LOCALE_UNLOCK
+#  endif
+#else   /* Reentrant not needed, so races not possible */
+#  define LOCALTIME_LOCK    NOOP
+#  define LOCALTIME_UNLOCK  NOOP
+#  define GMTIME_LOCK       NOOP
+#  define GMTIME_UNLOCK     NOOP
+#endif
+
 static int S_is_exception_century(Year year)
 {
     const int is_exception = ((year % 100 == 0) && !(year % 400 == 0));
@@ -289,49 +323,6 @@ static void S_copy_little_tm_to_big_TM(const struct tm *src, struct TM *dest) {
 #endif
 }
 
-
-#ifndef HAS_LOCALTIME_R
-/* Simulate localtime_r() to the best of our ability */
-static struct tm * S_localtime_r(const time_t *clock, struct tm *result) {
-#ifdef __VMS
-    dTHX;    /* the following is defined as Perl_my_localtime(aTHX_ ...) */
-#endif
-    const struct tm * const static_result = localtime(clock);
-
-    assert(result != NULL);
-
-    if( static_result == NULL ) {
-        memset(result, 0, sizeof(*result));
-        return NULL;
-    }
-    else {
-        memcpy(result, static_result, sizeof(*result));
-        return result;
-    }
-}
-#endif
-
-#ifndef HAS_GMTIME_R
-/* Simulate gmtime_r() to the best of our ability */
-static struct tm * S_gmtime_r(const time_t *clock, struct tm *result) {
-#ifdef __VMS
-    dTHX;    /* the following is defined as Perl_my_localtime(aTHX_ ...) */
-#endif
-    const struct tm * const static_result = gmtime(clock);
-
-    assert(result != NULL);
-
-    if( static_result == NULL ) {
-        memset(result, 0, sizeof(*result));
-        return NULL;
-    }
-    else {
-        memcpy(result, static_result, sizeof(*result));
-        return result;
-    }
-}
-#endif
-
 struct TM *Perl_gmtime64_r (const Time64_T *in_time, struct TM *p)
 {
     int v_tm_sec, v_tm_min, v_tm_hour, v_tm_mon, v_tm_wday;
@@ -340,6 +331,7 @@ struct TM *Perl_gmtime64_r (const Time64_T *in_time, struct TM *p)
     Time64_T m;
     Time64_T time = *in_time;
     Year year = 70;
+    dTHX;
 
     assert(p != NULL);
 
@@ -347,9 +339,30 @@ struct TM *Perl_gmtime64_r (const Time64_T *in_time, struct TM *p)
     if( SHOULD_USE_SYSTEM_GMTIME(*in_time) ) {
         time_t safe_time = (time_t)*in_time;
         struct tm safe_date;
-        GMTIME_R(&safe_time, &safe_date);
+        struct tm * result;
 
-        S_copy_little_tm_to_big_TM(&safe_date, p);
+        GMTIME_LOCK;
+
+        /* reentr.h will automatically replace this with a call to gmtime_r()
+         * when appropriate */
+        result = gmtime(&safe_time);
+
+        assert(result != NULL);
+
+#if defined(HAS_GMTIME_R) && defined(USE_REENTRANT_API)
+
+        PERL_UNUSED_VAR(safe_date);
+#else
+        /* Here, no gmtime_r() and is a threaded perl where the result can be
+         * overwritten by a call in another thread.  Copy to a safe place,
+         * hopefully before another gmtime that isn't using the mutexes can
+         * jump in and trash this result. */
+        memcpy(&safe_date, result, sizeof(safe_date));
+        result = &safe_date;
+#endif
+        GMTIME_UNLOCK;
+
+        S_copy_little_tm_to_big_TM(result, p);
         assert(S_check_tm(p));
 
         return p;
@@ -464,85 +477,112 @@ struct TM *Perl_localtime64_r (const Time64_T *time, struct TM *local_tm)
 {
     time_t safe_time;
     struct tm safe_date;
+    const struct tm * result;
     struct TM gm_tm;
     Year orig_year;
     int month_diff;
+    const bool use_system = SHOULD_USE_SYSTEM_LOCALTIME(*time);
+    dTHX;
 
     assert(local_tm != NULL);
 
     /* Use the system localtime() if time_t is small enough */
-    if( SHOULD_USE_SYSTEM_LOCALTIME(*time) ) {
+    if (use_system) {
         safe_time = (time_t)*time;
 
         TIME64_TRACE1("Using system localtime for %lld\n", *time);
+    }
+    else {
+        if (Perl_gmtime64_r(time, &gm_tm) == NULL) {
+            TIME64_TRACE1("gmtime64_r returned null for %lld\n", *time);
+            return NULL;
+        }
 
-        LOCALTIME_R(&safe_time, &safe_date);
+        orig_year = gm_tm.tm_year;
 
-        S_copy_little_tm_to_big_TM(&safe_date, local_tm);
-        assert(S_check_tm(local_tm));
+        if (gm_tm.tm_year > (2037 - 1900) ||
+            gm_tm.tm_year < (1970 - 1900)
+           )
+        {
+            TIME64_TRACE1("Mapping tm_year %lld to safe_year\n",
+                                                        (Year)gm_tm.tm_year);
+            gm_tm.tm_year = S_safe_year((Year)(gm_tm.tm_year + 1900)) - 1900;
+        }
 
-        return local_tm;
+        safe_time = (time_t)S_timegm64(&gm_tm);
     }
 
-    if( Perl_gmtime64_r(time, &gm_tm) == NULL ) {
-        TIME64_TRACE1("gmtime64_r returned null for %lld\n", *time);
+    LOCALTIME_LOCK;
+
+    /* reentr.h will automatically replace this with a call to localtime_r()
+     * when appropriate */
+    result = localtime(&safe_time);
+
+    if(UNLIKELY(result == NULL)) {
+        LOCALTIME_UNLOCK;
+        TIME64_TRACE1("localtime(%d) returned NULL\n", (int)safe_time);
         return NULL;
     }
 
-    orig_year = gm_tm.tm_year;
+#if ! defined(USE_REENTRANT_API) || defined(PERL_REENTR_USING_LOCALTIME_R)
 
-    if (gm_tm.tm_year > (2037 - 1900) ||
-        gm_tm.tm_year < (1970 - 1900)
-       )
-    {
-        TIME64_TRACE1("Mapping tm_year %lld to safe_year\n", (Year)gm_tm.tm_year);
-        gm_tm.tm_year = S_safe_year((Year)(gm_tm.tm_year + 1900)) - 1900;
-    }
+    PERL_UNUSED_VAR(safe_date);
 
-    safe_time = (time_t)S_timegm64(&gm_tm);
-    if( LOCALTIME_R(&safe_time, &safe_date) == NULL ) {
-        TIME64_TRACE1("localtime_r(%d) returned NULL\n", (int)safe_time);
-        return NULL;
-    }
+#else
 
-    S_copy_little_tm_to_big_TM(&safe_date, local_tm);
+    /* Here, would be using localtime_r() if it could, meaning there isn't one,
+     * and is a threaded perl where the result can be overwritten by a call in
+     * another thread.  Copy to a safe place, hopefully before another
+     * localtime that isn't using the mutexes can jump in and trash this
+     * result. */
+    memcpy(&safe_date, result, sizeof(safe_date));
+    result = &safe_date;
 
-    local_tm->tm_year = orig_year;
-    if( local_tm->tm_year != orig_year ) {
-        TIME64_TRACE2("tm_year overflow: tm_year %lld, orig_year %lld\n",
-              (Year)local_tm->tm_year, (Year)orig_year);
+#endif
+
+    LOCALTIME_UNLOCK;
+
+    S_copy_little_tm_to_big_TM(result, local_tm);
+
+    if (! use_system) {
+
+        local_tm->tm_year = orig_year;
+        if( local_tm->tm_year != orig_year ) {
+            TIME64_TRACE2("tm_year overflow: tm_year %lld, orig_year %lld\n",
+                  (Year)local_tm->tm_year, (Year)orig_year);
 
 #ifdef EOVERFLOW
-        errno = EOVERFLOW;
+            errno = EOVERFLOW;
 #endif
-        return NULL;
+            return NULL;
+        }
+
+        month_diff = local_tm->tm_mon - gm_tm.tm_mon;
+
+        /*  When localtime is Dec 31st previous year and
+            gmtime is Jan 1st next year.
+        */
+        if( month_diff == 11 ) {
+            local_tm->tm_year--;
+        }
+
+        /*  When localtime is Jan 1st, next year and
+            gmtime is Dec 31st, previous year.
+        */
+        if( month_diff == -11 ) {
+            local_tm->tm_year++;
+        }
+
+        /* GMT is Jan 1st, xx01 year, but localtime is still Dec 31st
+           in a non-leap xx00.  There is one point in the cycle
+           we can't account for which the safe xx00 year is a leap
+           year.  So we need to correct for Dec 31st coming out as
+           the 366th day of the year.
+        */
+        if( !IS_LEAP(local_tm->tm_year) && local_tm->tm_yday == 365 )
+            local_tm->tm_yday--;
+
     }
-
-
-    month_diff = local_tm->tm_mon - gm_tm.tm_mon;
-
-    /*  When localtime is Dec 31st previous year and
-        gmtime is Jan 1st next year.
-    */
-    if( month_diff == 11 ) {
-        local_tm->tm_year--;
-    }
-
-    /*  When localtime is Jan 1st, next year and
-        gmtime is Dec 31st, previous year.
-    */
-    if( month_diff == -11 ) {
-        local_tm->tm_year++;
-    }
-
-    /* GMT is Jan 1st, xx01 year, but localtime is still Dec 31st
-       in a non-leap xx00.  There is one point in the cycle
-       we can't account for which the safe xx00 year is a leap
-       year.  So we need to correct for Dec 31st coming out as
-       the 366th day of the year.
-    */
-    if( !IS_LEAP(local_tm->tm_year) && local_tm->tm_yday == 365 )
-        local_tm->tm_yday--;
 
     assert(S_check_tm(local_tm));
 

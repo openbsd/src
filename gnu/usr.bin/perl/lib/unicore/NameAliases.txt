@@ -1,5 +1,5 @@
-# NameAliases-12.1.0.txt
-# Date: 2019-03-08, 23:59:00 GMT [KW, LI]
+# NameAliases-13.0.0.txt
+# Date: 2019-09-09, 19:47:00 GMT [KW, LI]
 # © 2019 Unicode®, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 #

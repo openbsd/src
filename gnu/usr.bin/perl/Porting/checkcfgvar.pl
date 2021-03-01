@@ -56,7 +56,6 @@ my @CFG = (
 	   "plan9/config_sh.sample",
 	   "win32/config.gc",
 	   "win32/config.vc",
-	   "win32/config.ce",
 	   "configure.com",
 	   "Porting/config.sh",
 	  );

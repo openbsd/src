@@ -1508,7 +1508,7 @@ C<extract_tagged> returns the complete text up to the point of failure.
 If the string is "PARA", C<extract_tagged> returns only the first paragraph
 after the tag (up to the first line that is either empty or contains
 only whitespace characters).
-If the string is "", the default behaviour (i.e. failure) is reinstated.
+If the string is "", the the default behaviour (i.e. failure) is reinstated.
 
 For example, suppose the start tag "/para" introduces a paragraph, which then
 continues until the next "/endpara" tag or until another "/para" tag is

@@ -1,7 +1,7 @@
 package ExtUtils::MakeMaker::FAQ;
 
-our $VERSION = '7.34';
-$VERSION = eval $VERSION;
+our $VERSION = '7.44';
+$VERSION =~ tr/_//d;
 
 1;
 __END__
@@ -12,7 +12,7 @@ ExtUtils::MakeMaker::FAQ - Frequently Asked Questions About MakeMaker
 
 =head1 DESCRIPTION
 
-FAQs, tricks and tips for C<ExtUtils::MakeMaker>.
+FAQs, tricks and tips for L<ExtUtils::MakeMaker>.
 
 
 =head2 Module Installation
@@ -84,7 +84,8 @@ installation.
 =item How do I keep from installing man pages?
 
 Recent versions of MakeMaker will only install man pages on Unix-like
-operating systems.
+operating systems by default. To generate manpages on non-Unix operating
+systems, make the "manifypods" target.
 
 For an individual module:
 
@@ -568,7 +569,7 @@ What most people need to know (superclasses on top.)
                 |
                MY
 
-The object actually used is of the class MY which allows you to
+The object actually used is of the class L<MY|ExtUtils::MY> which allows you to
 override bits of MakeMaker inside your Makefile.PL by declaring
 MY::foo() methods.
 
@@ -599,24 +600,24 @@ NOTE: Yes, this is a mess.  See
 L<http://archive.develooper.com/makemaker@perl.org/msg00134.html>
 for some history.
 
-NOTE: When ExtUtils::MM is loaded it chooses a superclass for MM from
+NOTE: When L<ExtUtils::MM> is loaded it chooses a superclass for MM from
 amongst the ExtUtils::MM_* modules based on the current operating
 system.
 
 NOTE: ExtUtils::MM_{Current OS} represents one of the ExtUtils::MM_*
-modules except ExtUtils::MM_Any chosen based on your operating system.
+modules except L<ExtUtils::MM_Any> chosen based on your operating system.
 
 NOTE: The main object used by MakeMaker is a PACK### object, *not*
-ExtUtils::MakeMaker.  It is, effectively, a subclass of MY,
-ExtUtils::Makemaker, ExtUtils::Liblist and ExtUtils::MM_{Current OS}
+L<ExtUtils::MakeMaker>.  It is, effectively, a subclass of L<MY|ExtUtils::MY>,
+L<ExtUtils::MakeMaker>, L<ExtUtils::Liblist> and ExtUtils::MM_{Current OS}
 
-NOTE: The methods in MY are simply copied into PACK### rather than
-MY being a superclass of PACK###.  I don't remember the rationale.
+NOTE: The methods in L<MY|ExtUtils::MY> are simply copied into PACK### rather
+than MY being a superclass of PACK###.  I don't remember the rationale.
 
-NOTE: ExtUtils::Liblist should be removed from the inheritance hiearchy
+NOTE: L<ExtUtils::Liblist> should be removed from the inheritance hiearchy
 and simply be called as functions.
 
-NOTE: Modules like File::Spec and Exporter have been omitted for clarity.
+NOTE: Modules like L<File::Spec> and L<Exporter> have been omitted for clarity.
 
 
 =head2 The MM_* hierarchy
@@ -631,12 +632,13 @@ NOTE: Modules like File::Spec and Exporter have been omitted for clarity.
                               |    |
                               MM_Any
 
-NOTE: Each direct MM_Unix subclass is also an MM_Any subclass.  This
+NOTE: Each direct L<MM_Unix|ExtUtils::MM_Unix> subclass is also an
+L<MM_Any|ExtUtils::MM_Any> subclass.  This
 is a temporary hack because MM_Unix overrides some MM_Any methods with
 Unix specific code.  It allows the non-Unix modules to see the
 original MM_Any implementations.
 
-NOTE: Modules like File::Spec and Exporter have been omitted for clarity.
+NOTE: Modules like L<File::Spec> and L<Exporter> have been omitted for clarity.
 
 =head1 PATCHING
 

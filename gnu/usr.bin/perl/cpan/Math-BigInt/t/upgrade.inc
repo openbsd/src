@@ -80,7 +80,7 @@ while (<DATA>) {
     $try = qq|\$x = $CLASS->new("$args[0]");|;
     if ($f eq "bnorm") {
         $try = qq|\$x = $CLASS->bnorm("$args[0]");|;
-    } elsif ($f =~ /^is_(zero|one|odd|even|negative|positive|nan|int)$/) {
+    } elsif ($f =~ /^is_(zero|one|odd|even||(non_)?(negative|positive)|nan|int)$/) {
         $try .= " \$x->$f();";
     } elsif ($f =~ /^(to|as)_(hex|oct|bin)$/) {
         $try .= " \$x->$f();";
@@ -303,6 +303,22 @@ NaNneg:0
 +inf:1
 -inf:0
 NaNneg:0
+
+&is_non_negative
+0:1
+-1:0
+1:1
++inf:1
+-inf:0
+NaN:0
+
+&is_non_positive
+0:1
+-1:1
+1:0
++inf:0
+-inf:1
+NaN:0
 
 &is_odd
 abc:0

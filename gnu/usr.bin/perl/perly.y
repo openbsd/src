@@ -20,7 +20,7 @@
  * to run regen_perly.pl, which re-creates the files perly.h, perly.tab
  * and perly.act which are derived from this.
  *
- * The main job of of this grammar is to call the various newFOO()
+ * The main job of this grammar is to call the various newFOO()
  * functions in op.c to build a syntax tree of OP structs.
  * It relies on the lexer in toke.c to do the tokenizing.
  *
@@ -43,7 +43,7 @@
     GV *gvval;
 }
 
-%token <ival> GRAMPROG GRAMEXPR GRAMBLOCK GRAMBARESTMT GRAMFULLSTMT GRAMSTMTSEQ
+%token <ival> GRAMPROG GRAMEXPR GRAMBLOCK GRAMBARESTMT GRAMFULLSTMT GRAMSTMTSEQ GRAMSUBSIGNATURE
 
 %token <ival> '{' '}' '[' ']' '-' '+' '@' '%' '&' '=' '.'
 
@@ -56,10 +56,11 @@
 %token <ival> GIVEN WHEN DEFAULT
 %token <ival> LOOPEX DOTDOT YADAYADA
 %token <ival> FUNC0 FUNC1 FUNC UNIOP LSTOP
-%token <ival> RELOP EQOP MULOP ADDOP
+%token <ival> MULOP ADDOP
 %token <ival> DOLSHARP DO HASHBRACK NOAMP
 %token <ival> LOCAL MY REQUIRE
 %token <ival> COLONATTR FORMLBRACK FORMRBRACK
+%token <ival> SUBLEXSTART SUBLEXEND
 
 %type <ival> grammar remember mremember
 %type <ival>  startsub startanonsub startformsub
@@ -75,9 +76,10 @@
 %type <opval> refgen_topic formblock
 %type <opval> subattrlist myattrlist myattrterm myterm
 %type <opval> termbinop termunop anonymous termdo
+%type <opval> termrelop relopchain termeqop eqopchain
 %type <ival>  sigslurpsigil
 %type <opval> sigvarname sigdefault sigscalarelem sigslurpelem
-%type <opval> sigelem siglist siglistornull subsignature optsubsignature
+%type <opval> sigelem siglist siglistornull subsigguts subsignature optsubsignature
 %type <opval> subbody optsubbody sigsubbody optsigsubbody
 %type <opval> formstmtseq formline formarg
 
@@ -96,8 +98,8 @@
 %left <ival> ANDAND
 %left <ival> BITOROP
 %left <ival> BITANDOP
-%nonassoc EQOP
-%nonassoc RELOP
+%left <ival> CHEQOP NCEQOP
+%left <ival> CHRELOP NCRELOP
 %nonassoc UNIOP UNIOPSUB
 %nonassoc REQUIRE
 %left <ival> SHIFTOP
@@ -181,6 +183,16 @@ grammar	:	GRAMPROG
                           $<ival>$ = 0;
 			}
 		stmtseq
+			{
+			  PL_eval_root = $3;
+			  $$ = 0;
+			}
+	|	GRAMSUBSIGNATURE
+			{
+			  parser->expect = XSTATE;
+			  $<ival>$ = 0;
+			}
+		subsigguts
 			{
 			  PL_eval_root = $3;
 			  $$ = 0;
@@ -762,7 +774,10 @@ optsubsignature:	/* NULL */
 			{ $$ = $1; }
 
 /* Subroutine signature */
-subsignature:	'('
+subsignature:	'(' subsigguts ')'
+			{ $$ = $2; }
+
+subsigguts:
                         {
                             ENTER;
                             SAVEIV(parser->sig_elems);
@@ -774,10 +789,9 @@ subsignature:	'('
                             parser->in_my        = KEY_sigvar;
                         }
                 siglistornull
-                ')'
 			{
-                            OP            *sigops = $3;
-                            UNOP_AUX_item *aux;
+                            OP            *sigops = $2;
+                            struct op_argcheck_aux *aux;
                             OP            *check;
 
 			    if (!FEATURE_SIGNATURES_IS_ENABLED)
@@ -789,21 +803,32 @@ subsignature:	'('
                                 packWARN(WARN_EXPERIMENTAL__SIGNATURES),
                                 "The signatures feature is experimental");
 
-                            aux = (UNOP_AUX_item*)PerlMemShared_malloc(
-                                sizeof(UNOP_AUX_item) * 3);
-                            aux[0].iv = parser->sig_elems;
-                            aux[1].iv = parser->sig_optelems;
-                            aux[2].iv = parser->sig_slurpy;
-                            check = newUNOP_AUX(OP_ARGCHECK, 0, NULL, aux);
+                            aux = (struct op_argcheck_aux*)
+                                    PerlMemShared_malloc(
+                                        sizeof(struct op_argcheck_aux));
+                            aux->params     = parser->sig_elems;
+                            aux->opt_params = parser->sig_optelems;
+                            aux->slurpy     = parser->sig_slurpy;
+                            check = newUNOP_AUX(OP_ARGCHECK, 0, NULL,
+                                            (UNOP_AUX_item *)aux);
                             sigops = op_prepend_elem(OP_LINESEQ, check, sigops);
                             sigops = op_prepend_elem(OP_LINESEQ,
                                                 newSTATEOP(0, NULL, NULL),
                                                 sigops);
                             /* a nextstate at the end handles context
                              * correctly for an empty sub body */
-                            $$ = op_append_elem(OP_LINESEQ,
+                            sigops = op_append_elem(OP_LINESEQ,
                                                 sigops,
                                                 newSTATEOP(0, NULL, NULL));
+                            /* wrap the list of arg ops in a NULL aux op.
+                              This serves two purposes. First, it makes
+                              the arg list a separate subtree from the
+                              body of the sub, and secondly the null op
+                              may in future be upgraded to an OP_SIGNATURE
+                              when implemented. For now leave it as
+                              ex-argcheck */
+                            $$ = newUNOP_AUX(OP_ARGCHECK, 0, sigops, NULL);
+                            op_null($$);
 
                             parser->in_my = 0;
                             /* tell the toker that attrributes can follow
@@ -909,6 +934,8 @@ listop	:	LSTOP indirob listexpr /* map {...} @args or print $fh @args */
 			{ $$ = op_convert_list($1, 0, $2); }
 	|	FUNC '(' optexpr ')'                 /* print (@args) */
 			{ $$ = op_convert_list($1, 0, $3); }
+	|	FUNC SUBLEXSTART optexpr SUBLEXEND          /* uc($arg) from "\U..." */
+			{ $$ = op_convert_list($1, 0, $3); }
 	|	LSTOPSUB startanonsub block /* sub f(&@);   f { foo } ... */
 			{ SvREFCNT_inc_simple_void(PL_compcv);
 			  $<opval>$ = newANONATTRSUB($2, 0, NULL, $3); }
@@ -1002,10 +1029,10 @@ termbinop:	term ASSIGNOP term                     /* $x = $y, $x += $y */
 			{ $$ = newBINOP($2, 0, scalar($1), scalar($3)); }
 	|	term SHIFTOP term                      /* $x >> $y, $x << $y */
 			{ $$ = newBINOP($2, 0, scalar($1), scalar($3)); }
-	|	term RELOP term                        /* $x > $y, etc. */
-			{ $$ = newBINOP($2, 0, scalar($1), scalar($3)); }
-	|	term EQOP term                         /* $x == $y, $x eq $y */
-			{ $$ = newBINOP($2, 0, scalar($1), scalar($3)); }
+	|	termrelop %prec PREC_LOW               /* $x > $y, etc. */
+			{ $$ = $1; }
+	|	termeqop %prec PREC_LOW                /* $x == $y, $x cmp $y */
+			{ $$ = $1; }
 	|	term BITANDOP term                     /* $x & $y */
 			{ $$ = newBINOP($2, 0, scalar($1), scalar($3)); }
 	|	term BITOROP term                      /* $x | $y */
@@ -1021,6 +1048,38 @@ termbinop:	term ASSIGNOP term                     /* $x = $y, $x += $y */
 	|	term MATCHOP term                      /* $x =~ /$y/ */
 			{ $$ = bind_match($2, $1, $3); }
     ;
+
+termrelop:	relopchain %prec PREC_LOW
+			{ $$ = cmpchain_finish($1); }
+	|	term NCRELOP term
+			{ $$ = newBINOP($2, 0, scalar($1), scalar($3)); }
+	|	termrelop NCRELOP
+			{ yyerror("syntax error"); YYERROR; }
+	|	termrelop CHRELOP
+			{ yyerror("syntax error"); YYERROR; }
+	;
+
+relopchain:	term CHRELOP term
+			{ $$ = cmpchain_start($2, $1, $3); }
+	|	relopchain CHRELOP term
+			{ $$ = cmpchain_extend($2, $1, $3); }
+	;
+
+termeqop:	eqopchain %prec PREC_LOW
+			{ $$ = cmpchain_finish($1); }
+	|	term NCEQOP term
+			{ $$ = newBINOP($2, 0, scalar($1), scalar($3)); }
+	|	termeqop NCEQOP
+			{ yyerror("syntax error"); YYERROR; }
+	|	termeqop CHEQOP
+			{ yyerror("syntax error"); YYERROR; }
+	;
+
+eqopchain:	term CHEQOP term
+			{ $$ = cmpchain_start($2, $1, $3); }
+	|	eqopchain CHEQOP term
+			{ $$ = cmpchain_extend($2, $1, $3); }
+	;
 
 /* Unary operators and terms */
 termunop : '-' term %prec UMINUS                       /* -$x */
@@ -1230,7 +1289,7 @@ term	:	termbinop
 			    } else
 				$<ival>$ = 0;
 			}
-		    '(' listexpr optrepl ')'
+		    SUBLEXSTART listexpr optrepl SUBLEXEND
 			{ $$ = pmruntime($1, $4, $5, 1, $<ival>2); }
 	|	BAREWORD
 	|	listop

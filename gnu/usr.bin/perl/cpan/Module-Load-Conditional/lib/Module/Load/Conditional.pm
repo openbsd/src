@@ -22,7 +22,7 @@ BEGIN {
                         $FIND_VERSION $ERROR $CHECK_INC_HASH $FORCE_SAFE_INC ];
     use Exporter;
     @ISA            = qw[Exporter];
-    $VERSION        = '0.68';
+    $VERSION        = '0.70';
     $VERBOSE        = 0;
     $DEPRECATED     = 0;
     $FIND_VERSION   = 1;
@@ -259,13 +259,19 @@ sub check_install {
             last DIR unless $FIND_VERSION;
 
             ### otherwise, the user wants us to find the version from files
-            my $mod_info = Module::Metadata->new_from_handle( $fh, $filename );
-            my $ver      = $mod_info->version( $args->{module} );
 
-            if( defined $ver ) {
-                $href->{version} = $ver;
+            {
+              local $SIG{__WARN__} = sub {};
+              my $ver = eval {
+                my $mod_info = Module::Metadata->new_from_handle( $fh, $filename );
+                $mod_info->version( $args->{module} );
+              };
 
-                last DIR;
+              if( defined $ver ) {
+                  $href->{version} = $ver;
+
+                  last DIR;
+              }
             }
         }
     }

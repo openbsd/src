@@ -1081,8 +1081,8 @@ returning a list of key/value pairs rather than just values:
     # %removed is now (foo => 3, bar => 8)
     # %h is now (blonk => 2, squink => 5)
 
-However, the result of such a slice cannot be localized or used
-in assignment.  These are otherwise very much consistent with hash slices
+However, the result of such a slice cannot be localized or assigned to.
+These are otherwise very much consistent with hash slices
 using the @ symbol.
 
 =head3 Index/Value Array Slices

@@ -4,7 +4,7 @@ perlfaq8 - System Interaction
 
 =head1 VERSION
 
-version 5.20190126
+version 5.20200523
 
 =head1 DESCRIPTION
 
@@ -1323,7 +1323,7 @@ settings. See the L<ExtUtils::Makemaker> documentation for more details.
 (contributed by brian d foy)
 
 If you know the directory already, you can add it to C<@INC> as you would
-for any other directory. You might <use lib> if you know the directory
+for any other directory. You might C<use lib> if you know the directory
 at compile time:
 
     use lib $directory;
@@ -1399,10 +1399,6 @@ environment variables, run-time switches, and in-code statements:
     use local::lib "~/myown_perllib";
 
 =back
-
-The last is particularly useful because it knows about machine-dependent
-architectures. The C<lib.pm> pragmatic module was first
-included with the 5.002 release of Perl.
 
 =head2 Where are modules installed?
 

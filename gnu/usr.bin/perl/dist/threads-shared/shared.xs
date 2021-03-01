@@ -818,12 +818,19 @@ sharedsv_scalar_store(pTHX_ SV *sv, SV *ssv)
         SV *obj = SvRV(sv);
         SV *sobj = Perl_sharedsv_find(aTHX_ obj);
         if (sobj) {
+            SV* tmpref;
             SHARED_CONTEXT;
-            (void)SvUPGRADE(ssv, SVt_RV);
-            sv_setsv_nomg(ssv, &PL_sv_undef);
+            /* Creating a tmp ref to sobj then assigning it to ssv ensures
+             * that any previous contents of ssv are correctly freed
+             * by sv_setsv(). Not sure if there is a better, API-legal way
+             * to achieve this */
+            tmpref = newSV_type(SVt_RV);
+            SvRV_set(tmpref, sobj);
+            SvROK_on(tmpref);
+            SvREFCNT_inc_simple_NN(sobj);
+            sv_setsv_nomg(ssv, tmpref);
+            SvREFCNT_dec_NN(tmpref);
 
-            SvRV_set(ssv, SvREFCNT_inc(sobj));
-            SvROK_on(ssv);
             if (SvOBJECT(sobj)) {
                 /* Remove any old blessing */
                 SvREFCNT_dec(SvSTASH(sobj));

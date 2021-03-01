@@ -9,12 +9,12 @@ our (@ISA, $VERSION, @EXPORT_OK, %EXPORT_TAGS);
 @ISA    = qw(IO::File Exporter);
 
 
-$VERSION = '2.084';
+$VERSION = '2.093';
 
 use constant G_EOF => 0 ;
 use constant G_ERR => -1 ;
 
-use IO::Compress::Base::Common 2.084 ;
+use IO::Compress::Base::Common 2.093 ;
 
 use IO::File ;
 use Symbol;
@@ -1010,6 +1010,9 @@ sub nextStream
     $status == 1
         or return $status ;
 
+    *$self->{Pending} = ''
+        if $self !~ /IO::Uncompress::RawInflate/ && ! *$self->{MultiStream};
+
     *$self->{TotalInflatedBytesRead} = 0 ;
     *$self->{LineNo} = $. = 0;
 
@@ -1049,6 +1052,10 @@ sub gotoNextStream
             *$self->{EndStream} = 1 ;
             return 0;
         }
+
+        # Not EOF, so Transparent mode kicks in now for trailing data
+        # Reset member name in case anyone calls getHeaderInfo()->{Name}
+        *$self->{Info} = { Name => undef, Type  => 'plain' };
 
         $self->clearError();
         *$self->{Type} = 'plain';
@@ -1526,6 +1533,12 @@ IO::Uncompress::Base - Base Class for IO::Uncompress modules
 
 This module is not intended for direct use in application code. Its sole
 purpose is to be sub-classed by IO::Uncompress modules.
+
+=head1 SUPPORT
+
+General feedback/questions/bug reports should be sent to 
+L<https://github.com/pmqs/IO-Compress/issues> (preferred) or
+L<https://rt.cpan.org/Public/Dist/Display.html?Name=IO-Compress>.
 
 =head1 SEE ALSO
 

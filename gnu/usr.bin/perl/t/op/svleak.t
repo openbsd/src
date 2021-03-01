@@ -43,7 +43,7 @@ sub eleak {
 }
 
 # run some expression N times. The expr is concatenated N times and then
-# evaled, ensuring that that there are no scope exits between executions.
+# evaled, ensuring that there are no scope exits between executions.
 # If the number of SVs at the end of expr N is greater than (N-1)*delta at
 # the end of expr 1, we've got a leak
 #

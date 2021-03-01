@@ -72,7 +72,7 @@ package CPAN::Queue;
 # in CPAN::Distribution::rematein.
 
 use vars qw{ @All $VERSION };
-$VERSION = "5.5002";
+$VERSION = "5.5003";
 
 # CPAN::Queue::queue_item ;
 sub queue_item {
@@ -205,6 +205,17 @@ sub reqtype_of {
         }
     }
     return $best;
+}
+
+sub iterator {
+    my $i = 0;
+    return sub {
+        until ($All[$i] || $i > $#All) {
+            $i++;
+        }
+        return if $i > $#All;
+        return $All[$i++]
+    };
 }
 
 1;

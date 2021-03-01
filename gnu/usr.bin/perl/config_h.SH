@@ -381,7 +381,7 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
 
 /* HAS_REGCOMP:
  *	This symbol, if defined, indicates that the regcomp() routine is
- *	available to do some regular patern matching (usually on POSIX.2
+ *	available to do some regular pattern matching (usually on POSIX.2
  *	conforming systems).
  */
 #$d_regcomp HAS_REGCOMP		/* POSIX.2 */
@@ -1491,6 +1491,10 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
 /* HASATTRIBUTE_WARN_UNUSED_RESULT:
  *	Can we handle GCC attribute for warning on unused results
  */
+/* HASATTRIBUTE_ALWAYS_INLINE:
+ *	Can we handle GCC attribute for functions that should always be
+ *	inlined.
+ */
 #$d_attribute_deprecated HASATTRIBUTE_DEPRECATED	/**/
 #$d_attribute_format HASATTRIBUTE_FORMAT	/**/
 #$d_printf_format_null PRINTF_FORMAT_NULL_OK	/**/
@@ -1500,6 +1504,7 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
 #$d_attribute_pure HASATTRIBUTE_PURE	/**/
 #$d_attribute_unused HASATTRIBUTE_UNUSED	/**/
 #$d_attribute_warn_unused_result HASATTRIBUTE_WARN_UNUSED_RESULT	/**/
+#$d_attribute_always_inline HASATTRIBUTE_ALWAYS_INLINE	/**/
 
 /* HAS_BACKTRACE:
  *	This symbol, if defined, indicates that the backtrace() routine is
@@ -1939,6 +1944,10 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  *	This symbol, if defined, indicates the availability of
  *	struct sockaddr_in6;
  */
+/* HAS_SOCKADDR_STORAGE:
+ *	This symbol, if defined, indicates the availability of
+ *	struct sockaddr_storage;
+ */
 /* HAS_SIN6_SCOPE_ID:
  *	This symbol, if defined, indicates that the struct sockaddr_in6
  *	structure has a member called sin6_scope_id.
@@ -1963,6 +1972,7 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
 #$d_sockpair	HAS_SOCKETPAIR	/**/
 #$d_sockaddr_sa_len	HAS_SOCKADDR_SA_LEN	/**/
 #$d_sockaddr_in6	HAS_SOCKADDR_IN6	/**/
+#$d_sockaddr_storage	HAS_SOCKADDR_STORAGE	/**/
 #$d_sin6_scope_id	HAS_SIN6_SCOPE_ID	/**/
 #$d_ip_mreq	HAS_IP_MREQ	/**/
 #$d_ip_mreq_source	HAS_IP_MREQ_SOURCE	/**/
@@ -4231,11 +4241,11 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
 #$use64bitall	USE_64_BIT_ALL		/**/
 #endif
 
-/* USE_CBACKTRACE:
+/* USE_C_BACKTRACE:
  *	This symbol, if defined, indicates that Perl should
  *	be built with support for backtrace.
  */
-#$usecbacktrace USE_CBACKTRACE		/**/
+#$usecbacktrace USE_C_BACKTRACE		/**/
 
 /* USE_DTRACE:
  *	This symbol, if defined, indicates that Perl should
@@ -5121,6 +5131,12 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  */
 #$d_ttyname_r HAS_TTYNAME_R	/**/
 #define TTYNAME_R_PROTO $ttyname_r_proto	/**/
+
+/* HAS_WCRTOMB:
+ *	This symbol, if defined, indicates that the wcrtomb routine is
+ *	available to convert a wide character into a multi-byte character.
+ */
+#$d_wcrtomb HAS_WCRTOMB	/**/
 
 /* I_MACH_CTHREADS:
  *	This symbol, if defined, indicates to the C program that it should

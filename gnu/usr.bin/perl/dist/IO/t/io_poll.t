@@ -1,10 +1,5 @@
 #!./perl
 
-if ($^O eq 'mpeix') {
-    print "1..0 # Skip: broken on MPE/iX\n";
-    exit 0;
-}
-
 select(STDERR); $| = 1;
 select(STDOUT); $| = 1;
 

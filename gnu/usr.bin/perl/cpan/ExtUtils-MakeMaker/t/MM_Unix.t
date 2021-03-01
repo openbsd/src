@@ -12,7 +12,7 @@ BEGIN {
         plan skip_all => 'Non-Unix platform';
     }
     else {
-        plan tests => 113;
+        plan tests => 114;
     }
 }
 
@@ -150,8 +150,18 @@ is ($t->has_link_code(),1); is ($t->{HAS_LINK_CODE},1);
 ###############################################################################
 # libscan
 
-is ($t->libscan('Readme.pod'),      '', 'libscan excludes base Readme.pod');
-is ($t->libscan('README.pod'),      '', 'libscan excludes base README.pod');
+{
+    # suppress noisy & unnecessary "WARNING: Older versions of ExtUtils::MakeMaker may errantly install README.pod..."
+    my @warnings = ();
+    local $SIG{__WARN__} = sub { push @warnings, shift; };
+    is ($t->libscan('Readme.pod'),      '', 'libscan excludes base Readme.pod');
+    is ($t->libscan('README.pod'),      '', 'libscan excludes base README.pod');
+    # verify that suppressed warnings are present
+    isnt (scalar(@warnings), 0);
+    if (scalar(@warnings)) {
+        note (sprintf('suppressed warnings: [ "%s" ]', do { my $s = join(q/" , "/, @warnings); $s =~ s/([^[:print:]])/sprintf('\x{%x}', ord($1))/egmsx; $s; }));
+    }
+}
 is ($t->libscan('lib/Foo/README.pod'),      'lib/Foo/README.pod', 'libscan accepts README.pod in a subdirectory');
 is ($t->libscan('foo/RCS/bar'),     '', 'libscan on RCS');
 is ($t->libscan('CVS/bar/car'),     '', 'libscan on CVS');

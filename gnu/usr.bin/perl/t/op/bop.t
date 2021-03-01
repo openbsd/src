@@ -18,7 +18,7 @@ BEGIN {
 # If you find tests are failing, please try adding names to tests to track
 # down where the failure is, and supply your new names as a patch.
 # (Just-in-time test naming)
-plan tests => 504;
+plan tests => 502;
 
 # numerics
 ok ((0xdead & 0xbeef) == 0x9ead);
@@ -261,6 +261,35 @@ is(stores($y), 0);
 is(~~$y, "c");
 is(fetches($y), 1);
 is(stores($y), 0);
+
+my $g;
+# Note: if the vec() reads are part of the is() calls it's treated as
+# in lvalue context, so we save it separately
+$g = vec($x, 0, 1);
+is($g, (ord("a") & 0x01), "check vec value");
+is(fetches($x), 1, "fetches for vec read");
+is(stores($x), 0, "stores for vec read");
+# similarly here, and code like:
+#   $g = (vec($x, 0, 1) = 0)
+# results in an extra fetch, since the inner assignment returns the LV
+vec($x, 0, 1) = 0;
+# one fetch in vec() another when the LV is assigned to
+is(fetches($x), 2, "fetches for vec write");
+is(stores($x), 1, "stores for vec write");
+
+{
+    my $a = "a";
+    utf8::upgrade($a);
+    tie $x, "main", $a;
+    $g = vec($x, 0, 1);
+    is($g, (ord("a") & 0x01), "check vec value (utf8)");
+    is(fetches($x), 1, "fetches for vec read (utf8)");
+    is(stores($x), 0, "stores for vec read (utf8)");
+    vec($x, 0, 1) = 0;
+    # one fetch in vec() another when the LV is assigned to
+    is(fetches($x), 2, "fetches for vec write (utf8)");
+    is(stores($x), 1, "stores for vec write (utf8)");
+}
 
 $a = "\0\x{100}"; chop($a);
 ok(utf8::is_utf8($a)); # make sure UTF8 flag is still there
@@ -534,11 +563,11 @@ is $^A, "123", '~v0 clears vstring magic on retval';
         is(-1 << 1, 0xFFFF_FFFF_FFFF_FFFE,
            "neg UV (sic) left shift  = 0xFF..E");
         is(-1 >> 1, 0x7FFF_FFFF_FFFF_FFFF,
-           "neg UV (sic) right right = 0x7F..F");
+           "neg UV (sic) right shift = 0x7F..F");
     } elsif ($w == 32) {
         no warnings "portable";
         is(-1 << 1, 0xFFFF_FFFE, "neg left shift  == 0xFF..E");
-        is(-1 >> 1, 0x7FFF_FFFF, "neg right right == 0x7F..F");
+        is(-1 >> 1, 0x7FFF_FFFF, "neg right shift == 0x7F..F");
     }
 
     {
@@ -613,73 +642,39 @@ foreach my $op_info ([and => "&"], [or => "|"], [xor => "^"]) {
 }
 
 {
-    # Since these are temporary, and it was a pain to make them into loops,
-    # the code is just rolled out.
-    local $SIG{__WARN__} = sub { push @warnings, @_; };
+    # RT 134140 fatalizations
+    my %op_pairs = (
+        and => { low => 'and', high => '&', regex => qr/&/  },
+        or  => { low => 'or',  high => '|', regex => qr/\|/ },
+        xor => { low => 'xor', high => '^', regex => qr/\^/ },
+    );
+    my @combos = (
+        { string  => '"abc" & "abc\x{100}"',  op_pair => $op_pairs{and} },
+        { string  => '"abc" | "abc\x{100}"',  op_pair => $op_pairs{or}  },
+        { string  => '"abc" ^ "abc\x{100}"',  op_pair => $op_pairs{xor} },
+        { string  => '"abc\x{100}" & "abc"',  op_pair => $op_pairs{and} },
+        { string  => '"abc\x{100}" | "abc"',  op_pair => $op_pairs{or}  },
+        { string  => '"abc\x{100}" ^ "abc"',  op_pair => $op_pairs{xor} },
 
-    undef @warnings;
-    is("abc" & "abc\x{100}", "abc", '"abc" & "abc\x{100}" works');
-    if (! is(@warnings, 1, "... but returned a single warning")) {
-        diag join "\n", @warnings;
+    );
+
+    # Use of strings with code points over 0xFF as arguments to %s operator is not allowed
+    for my $h (@combos) {
+        my $s1 = "Use of strings with code points over 0xFF as arguments to bitwise";
+        my $s2 = "operator is not allowed";
+        my $expected  = qr/$s1 $h->{op_pair}->{low} \($h->{op_pair}->{regex}\) $s2/;
+        my $description = "$s1 $h->{op_pair}->{low} ($h->{op_pair}->{high}) operator is not allowed";
+        local $@;
+        eval $h->{string};
+        like $@, $expected, $description;
     }
-    like ($warnings[0], qr /^Use of strings with code points over 0xFF as (?#
-                            )arguments to bitwise and \(&\) operator (?#
-                            )is deprecated/,
-                        "... which is the expected warning");
-    undef @warnings;
-    is("abc" | "abc\x{100}", "abc\x{100}", '"abc" | "abc\x{100}" works');
-    if (! is(@warnings, 1, "... but returned a single warning")) {
-        diag join "\n", @warnings;
-    }
-    like ($warnings[0], qr /^Use of strings with code points over 0xFF as (?#
-                            )arguments to bitwise or \(|\) operator (?#
-                            )is deprecated/,
-                        "... which is the expected warning");
-    undef @warnings;
-    is("abc" ^ "abc\x{100}", "\0\0\0\x{100}", '"abc" ^ "abc\x{100}" works');
-    if (! is(@warnings, 1, "... but returned a single warning")) {
-        diag join "\n", @warnings;
-    }
-    like ($warnings[0], qr /^Use of strings with code points over 0xFF as (?#
-                            )arguments to bitwise xor \(\^\) operator (?#
-                            )is deprecated/,
-                        "... which is the expected warning");
-    undef @warnings;
-    is("abc\x{100}" & "abc", "abc", '"abc\x{100}" & "abc" works');
-    if (! is(@warnings, 1, "... but returned a single warning")) {
-        diag join "\n", @warnings;
-    }
-    like ($warnings[0], qr /^Use of strings with code points over 0xFF as (?#
-                            )arguments to bitwise and \(&\) operator (?#
-                            )is deprecated/,
-                        "... which is the expected warning");
-    undef @warnings;
-    is("abc\x{100}" | "abc", "abc\x{100}", '"abc\x{100}" | "abc" works');
-    if (! is(@warnings, 1, "... but returned a single warning")) {
-        diag join "\n", @warnings;
-    }
-    like ($warnings[0], qr /^Use of strings with code points over 0xFF as (?#
-                            )arguments to bitwise or \(|\) operator (?#
-                            )is deprecated/,
-                        "... which is the expected warning");
-    undef @warnings;
-    is("abc\x{100}" ^ "abc", "\0\0\0\x{100}", '"abc\x{100}" ^ "abc" works');
-    if (! is(@warnings, 1, "... but returned a single warning")) {
-        diag join "\n", @warnings;
-    }
-    like ($warnings[0], qr /^Use of strings with code points over 0xFF as (?#
-                            )arguments to bitwise xor \(\^\) operator (?#
-                            )is deprecated/,
-                        "... which is the expected warning");
-    no warnings 'deprecated';
-    undef @warnings;
-    my $foo = "abc" & "abc\x{100}";
-    $foo = "abc" | "abc\x{100}";
-    $foo = "abc" ^ "abc\x{100}";
-    $foo = "abc\x{100}" & "abc";
-    $foo = "abc\x{100}" | "abc";
-    $foo = "abc\x{100}" ^ "abc";
-    if (! is(@warnings, 0, "... And none of the last 6 main tests warns when 'deprecated' is off")) {
-        diag join "\n", @warnings;
-    }
+}
+
+{
+    # perl #17844 - only visible with valgrind/ASAN
+    fresh_perl_is(<<'EOS',
+formline X000n^\\0,\\0^\\0for\0,0..10
+EOS
+                  '',
+                  {}, "[perl #17844] access beyond end of block");
 }

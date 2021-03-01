@@ -3,9 +3,8 @@
  *
  * This file defines the system level functionality that perl needs.
  *
- * When using C, this definition is in the form of a set of macros
- * that can be #defined to the system-level function (or a wrapper
- * provided elsewhere).
+ * When using C, this definition is in the form of a set of macros that can be
+ * #defined to the system-level function (or a wrapper provided elsewhere).
  *
  * GSAR 21-JUN-98
  */
@@ -19,8 +18,8 @@
  * XXX := functional group
  * YYY := stdlib/OS function name
  *
- * Continuing with the theme of PerlIO, all OS functionality was
- * encapsulated into one of several interfaces.
+ * Continuing with the theme of PerlIO, all OS functionality was encapsulated
+ * into one of several interfaces.
  *
  * PerlIO - stdio
  * PerlLIO - low level I/O
@@ -50,11 +49,14 @@
 */
 #include "perlio.h"
 
+typedef Signal_t (*Sighandler1_t) (int);
+typedef Signal_t (*Sighandler3_t) (int, Siginfo_t*, void*);
+
 #ifndef Sighandler_t
-#  if defined(HAS_SIGACTION) && defined(SA_SIGINFO)
-typedef Signal_t (*Sighandler_t) (int, siginfo_t*, void*);
+#  ifdef PERL_USE_3ARG_SIGHANDLER
+typedef Sighandler3_t Sighandler_t;
 #  else
-typedef Signal_t (*Sighandler_t) (int);
+typedef Sighandler1_t Sighandler_t;
 #  endif
 #endif
 
@@ -63,7 +65,7 @@ typedef Signal_t (*Sighandler_t) (int);
 /* IPerlStdIO		*/
 struct IPerlStdIO;
 struct IPerlStdIOInfo;
-typedef FILE*		(*LPStdin)(struct IPerlStdIO*);
+typedef FILE*           (*LPStdin)(struct IPerlStdIO*);
 typedef FILE*		(*LPStdout)(struct IPerlStdIO*);
 typedef FILE*		(*LPStderr)(struct IPerlStdIO*);
 typedef FILE*		(*LPOpen)(struct IPerlStdIO*, const char*,
@@ -559,10 +561,18 @@ struct IPerlEnvInfo
 	(*PL_Env->pGetChildIO)(PL_Env, ptr)
 #endif
 
-#else	/* PERL_IMPLICIT_SYS */
+#else	/* below is ! PERL_IMPLICIT_SYS */
+#  ifdef USE_ITHREADS
 
-#define PerlEnv_putenv(str)		putenv((str))
-#define PerlEnv_getenv(str)		getenv((str))
+     /* Use the comma operator to return 0/non-zero, while avoiding putting
+      * this in an inline function */
+#    define PerlEnv_putenv(str)	(ENV_LOCK, (putenv(str)                 \
+                                            ? (ENV_UNLOCK, 1)           \
+                                            : (ENV_UNLOCK, 0)))
+#  else
+#    define PerlEnv_putenv(str)		putenv(str)
+#  endif
+#define PerlEnv_getenv(str)		mortal_getenv(str)
 #define PerlEnv_getenv_len(str,l)	getenv_len((str), (l))
 #ifdef HAS_ENVGETENV
 #  define PerlEnv_ENVgetenv(str)	ENVgetenv((str))
@@ -585,7 +595,9 @@ struct IPerlEnvInfo
 #define PerlEnv_get_childdir()		win32_get_childdir()
 #define PerlEnv_free_childdir(d)	win32_free_childdir((d))
 #else
-#define PerlEnv_clearenv()		clearenv()
+#define PerlEnv_clearenv(str)	        (ENV_LOCK, (clearenv(str)           \
+                                                    ? (ENV_UNLOCK, 1)       \
+                                                    : (ENV_UNLOCK, 0)))
 #define PerlEnv_get_childenv()		get_childenv()
 #define PerlEnv_free_childenv(e)	free_childenv((e))
 #define PerlEnv_get_childdir()		get_childdir()

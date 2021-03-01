@@ -161,7 +161,7 @@ you:
 
 If the B<ExtUtils::Embed> module isn't part of your Perl distribution,
 you can retrieve it from
-L<http://www.perl.com/perl/CPAN/modules/by-module/ExtUtils/>
+L<https://metacpan.org/pod/ExtUtils::Embed>
 (If this documentation came from your Perl distribution, then you're
 running 5.004 or better and you already have it.)
 

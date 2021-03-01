@@ -4,7 +4,7 @@
 # required for proper start-up code on non-UNIX platforms, and is used inside
 # Perl core.
 
-use 5.006;
+use 5.008;
 use strict;
 use warnings;
 
@@ -346,7 +346,7 @@ Russ Allbery <rra@cpan.org>.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 1999-2001, 2004, 2006, 2008, 2010, 2012-2018 Russ Allbery
+Copyright 1999-2001, 2004, 2006, 2008, 2010, 2012-2019 Russ Allbery
 <rra@cpan.org>
 
 This program is free software; you may redistribute it and/or modify it

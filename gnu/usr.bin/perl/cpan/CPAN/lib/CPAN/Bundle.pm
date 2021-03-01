@@ -8,7 +8,7 @@ use CPAN::Module;
 use vars qw(
             $VERSION
 );
-$VERSION = "5.5003";
+$VERSION = "5.5005";
 
 sub look {
     my $self = shift;
@@ -87,11 +87,11 @@ sub contains {
         # Try to get at it in the cpan directory
         $self->debug("no inst_file") if $CPAN::DEBUG;
         my $cpan_file;
-        $CPAN::Frontend->mydie("I don't know a bundle with ID $id\n") unless
+        $CPAN::Frontend->mydie("I don't know a bundle with ID '$id'\n") unless
               $cpan_file = $self->cpan_file;
         if ($cpan_file eq "N/A") {
-            $CPAN::Frontend->mydie("Bundle $id not found on disk and not on CPAN.
-  Maybe stale symlink? Maybe removed during session? Giving up.\n");
+            $CPAN::Frontend->mywarn("Bundle '$id' not found on disk and not on CPAN. Maybe stale symlink? Maybe removed during session?\n");
+            return;
         }
         my $dist = $CPAN::META->instance('CPAN::Distribution',
                                          $self->cpan_file);
@@ -103,7 +103,12 @@ sub contains {
         @me = split /::/, $self->id;
         $me[-1] .= ".pm";
         $me = File::Spec->catfile(@me);
-        $from = $self->find_bundle_file($dist->{build_dir},join('/',@me));
+        my $build_dir;
+        unless ($build_dir = $dist->{build_dir}) {
+            $CPAN::Frontend->mywarn("Warning: cannot determine bundle content without a build_dir.\n");
+            return;
+        }
+        $from = $self->find_bundle_file($build_dir,join('/',@me));
         $to = File::Spec->catfile($todir,$me);
         File::Path::mkpath(File::Basename::dirname($to));
         File::Copy::copy($from, $to)
@@ -238,6 +243,7 @@ Going to $meth that.
         $self->debug("type[$type] s[$s]") if $CPAN::DEBUG;
         my $obj = $CPAN::META->instance($type,$s);
         $obj->{reqtype} = $self->{reqtype};
+        $obj->{viabundle} ||= { id => $id, reqtype => $self->{reqtype}, optional => !$self->{mandatory}};
         # $obj->$meth();
         # XXX should optional be based on whether bundle was optional? -- xdg, 2012-04-01
         # A: Sure, what could demand otherwise? --andk, 2013-11-25

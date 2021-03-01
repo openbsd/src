@@ -1,8 +1,8 @@
 package ExtUtils::MM_Any;
 
 use strict;
-our $VERSION = '7.34';
-$VERSION = eval $VERSION;
+our $VERSION = '7.44';
+$VERSION =~ tr/_//d;
 
 use Carp;
 use File::Spec;
@@ -46,7 +46,7 @@ ExtUtils::MM_Any is a superclass for the ExtUtils::MM_* set of
 modules.  It contains methods which are either inherently
 cross-platform or are written in a cross-platform manner.
 
-Subclass off of ExtUtils::MM_Any I<and> ExtUtils::MM_Unix.  This is a
+Subclass off of ExtUtils::MM_Any I<and> L<ExtUtils::MM_Unix>.  This is a
 temporary solution.
 
 B<THIS MAY BE TEMPORARY!>
@@ -195,7 +195,7 @@ sub can_redirect_error {
 
     my $is_dmake = $self->is_make_type('dmake');
 
-Returns true if C<<$self->make>> is the given type; possibilities are:
+Returns true if C<< $self->make >> is the given type; possibilities are:
 
   gmake    GNU make
   dmake
@@ -1167,7 +1167,7 @@ MAKE_FRAG
 
     $mm->_fix_metadata_before_conversion( \%metadata );
 
-Fixes errors in the metadata before it's handed off to CPAN::Meta for
+Fixes errors in the metadata before it's handed off to L<CPAN::Meta> for
 conversion. This hopefully results in something that can be used further
 on, no guarantee is made though.
 
@@ -2214,7 +2214,9 @@ sub init_INSTALL_from_INSTALL_BASE {
             my $key = "INSTALL".$dir.$uc_thing;
 
             $install{$key} ||=
-              $self->catdir('$(INSTALL_BASE)', @{$map{$thing}});
+                ($thing =~ /^man.dir$/ and not $Config{lc $key})
+                ? 'none'
+                : $self->catdir('$(INSTALL_BASE)', @{$map{$thing}});
         }
     }
 
@@ -2416,7 +2418,7 @@ Initializes the macro definitions having to do with compiling and
 linking used by tools_other() and places them in the $MM object.
 
 If there is no description, its the same as the parameter to
-WriteMakefile() documented in ExtUtils::MakeMaker.
+WriteMakefile() documented in L<ExtUtils::MakeMaker>.
 
 =cut
 
@@ -2767,7 +2769,7 @@ END
 
 =head2 File::Spec wrappers
 
-ExtUtils::MM_Any is a subclass of File::Spec.  The methods noted here
+ExtUtils::MM_Any is a subclass of L<File::Spec>.  The methods noted here
 override File::Spec.
 
 
@@ -2908,8 +2910,7 @@ sub libscan {
     my($self,$path) = @_;
 
     if ($path =~ m<^README\.pod$>i) {
-        warn "WARNING: Older versions of ExtUtils::MakeMaker may errantly install $path as part of this distribution. It is recommended to avoid using this path in CPAN modules.\n"
-          unless $ENV{PERL_CORE};
+        warn "WARNING: Older versions of ExtUtils::MakeMaker may errantly install $path as part of this distribution. It is recommended to avoid using this path in CPAN modules.\n";
         return '';
     }
 

@@ -317,7 +317,7 @@ and that every file is listed.
 The y2038 implementation for perl. This is an implementation of POSIX time.h
 which solves the year 2038 bug on systems where time_t is only 32 bits.  It is
 implemented in bog-standard ANSI C. The latest version can be found at
-L<http://y2038.googlecode.com/>.
+L<https://github.com/evalEmpire/y2038>.
 
 =head2 F<release_announcement_template.txt>
 
@@ -338,6 +338,11 @@ Pumpking.
 =head2 F<rt_list_patches>
 
 Shell script to list patches in RT.
+
+=head1 F<security_template.pod>
+
+Template to guide writers of a perl 5 security vulnerability
+announcement.
 
 =head2 F<sort_perldiag.pl>
 

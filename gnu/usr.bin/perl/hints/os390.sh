@@ -32,21 +32,24 @@ esac
 # YYDYNAMIC ensures that the OS/390 yacc generated parser is reentrant.
 # -DEBCDIC should come from Configure and need not be mentioned here.
 # Prepend your favorites with Configure -Dccflags=your_favorites
+ def_os390_cflags='-qlanglvl=extended:extc89:extc99 -qlongname -qxplink -qdll -qfloat=ieee -qexportall -qhaltonmsg=3296:4108'
+ def_os390_cflags="$def_os390_cflags -Wc,XPLINK,dll,EXPORTALL -Wl,XPLINK,dll"
+ def_os390_defs='-DMAXSIG=39 -DOEMVS -D_OE_SOCKETS -D_XOPEN_SOURCE_EXTENDED -D_ALL_SOURCE -DYYDYNAMIC -D_POSIX_SOURCE=1'
 case "$ccflags" in
-'') ccflags='-qlanglvl=extended:extc89:extc99 -qlongname -qxplink -qdll -qfloat=ieee -qhaltonmsg=3296:4108 -DMAXSIG=39 -DOEMVS -D_OE_SOCKETS -D_XOPEN_SOURCE_EXTENDED -D_ALL_SOURCE -DYYDYNAMIC -D_POSIX_SOURCE=1' ;;
-*) ccflags='$ccflags -qlanglvl=extended:extc89:extc99 -qlongname -qxplink -qdll -qfloat=ieee -qhaltonmsg=3296:4108 -DMAXSIG=39 -DOEMVS -D_OE_SOCKETS -D_XOPEN_SOURCE_EXTENDED -D_ALL_SOURCE -DYYDYNAMIC -D_POSIX_SOURCE=1' ;;
+'') ccflags="$def_os390_cflags $def_os390_defs"  ;;
+*)  ccflags="$ccflags $def_os390_cflags $def_os390_defs" ;;
 esac
 
 # Turning on optimization breaks perl.
 # You can override this with Configure -Doptimize='-O' or somesuch.
 case "$optimize" in
-'') optimize='none' ;;
+'') optimize=' ' ;;
 esac
 
 # To link via definition side decks we need the dll option
 # You can override this with Configure -Ucccdlflags or somesuch.
 case "$cccdlflags" in
-'') cccdlflags='-qxplink -qdll' ;;
+'') cccdlflags='-qxplink -qdll -qexportall -Wc,XPLINK,dll,EXPORTALL -Wl,XPLINK,dll' ;;
 esac
 
 case "$so" in
@@ -72,7 +75,11 @@ esac
 # information at the end of the executable (=> smaller binaries).
 # Override this option with -Dldflags='whatever else you wanted'.
 case "$ldflags" in
-'') ldflags='-qxplink -qdll' ;;
+'') ldflags='-qxplink -qdll -Wl,XPLINK,dll' ;;
+esac
+case "$optimize" in
+*-g*) ;;
+*)  ldflags="$ldflags -Wl,EDIT=NO"
 esac
 
 # In order to build with dynamic be sure to specify:
@@ -111,11 +118,11 @@ define)
     esac
     libperl="libperl.$so"
     ccflags="$ccflags -D_SHR_ENVIRON -DPERL_EXTERNAL_GLOB -qexportall -qdll -qxplink"
-    cccdlflags='-c -qexportall -qxplink -qdll'
+    cccdlflags='-c -qexportall -qxplink -qdll -Wc,XPLINK,dll,EXPORTALL -Wl,XPLINK,dll'
     # The following will need to be modified for the installed libperl.x.
     # The modification to Config.pm is done by the installperl script after the build and test.
-    ccdlflags="-qxplink -qdll `pwd`/libperl.x"
-    lddlflags="-qxplink -qdll `pwd`/libperl.x"
+    ccdlflags="-qxplink -qdll -Wl,XPLINK,dll `pwd`/libperl.x"
+    lddlflags="-qxplink -qdll -Wl,XPLINK,dll `pwd`/libperl.x"
     ;;
 esac
 # even on static builds using LIBPATH should be OK.
@@ -224,7 +231,7 @@ d_gethostbyaddr_r='undef'
 d_gethostbyname_r='undef'
 d_gethostent_r='undef'
 
-# The z/OS C compiler compiler supports the attribute keyword, but in a
+# The z/OS C compiler supports the attribute keyword, but in a
 # limited manner.
 #
 # Ideally, Configure's tests should test the attributes as they are expected

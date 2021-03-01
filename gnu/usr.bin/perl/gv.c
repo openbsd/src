@@ -323,6 +323,8 @@ the return value of SvUTF8(sv).  It can also take the
 C<GV_ADDMULTI> flag, which means to pretend that the GV has been
 seen before (i.e., suppress "Used once" warnings).
 
+=for apidoc Amnh||GV_ADDMULTI
+
 =for apidoc gv_init
 
 The old form of C<gv_init_pvn()>.  It does not work with UTF-8 strings, as it
@@ -525,9 +527,10 @@ S_maybe_add_coresub(pTHX_ HV * const stash, GV *gv,
     case KEY_do      : case KEY_dump   : case KEY_else  : case KEY_elsif  :
     case KEY_END     : case KEY_eq     : case KEY_eval  :
     case KEY_for     : case KEY_foreach: case KEY_format: case KEY_ge     :
-    case KEY_given   : case KEY_goto   : case KEY_grep  :
-    case KEY_gt   : case KEY_if: case KEY_INIT: case KEY_last: case KEY_le:
-    case KEY_local: case KEY_lt: case KEY_m   : case KEY_map : case KEY_my:
+    case KEY_given   : case KEY_goto   : case KEY_grep  : case KEY_gt     :
+    case KEY_if      : case KEY_isa    : case KEY_INIT  : case KEY_last   :
+    case KEY_le      : case KEY_local  : case KEY_lt    : case KEY_m      :
+    case KEY_map     : case KEY_my:
     case KEY_ne   : case KEY_next : case KEY_no: case KEY_or: case KEY_our:
     case KEY_package: case KEY_print: case KEY_printf:
     case KEY_q    : case KEY_qq   : case KEY_qr     : case KEY_qw    :
@@ -693,6 +696,8 @@ visible to Perl code.  So when calling C<call_sv>, you should not use
 the GV directly; instead, you should use the method's CV, which can be
 obtained from the GV with the C<GvCV> macro.
 
+=for apidoc Amnh||GV_SUPER
+
 =cut
 */
 
@@ -711,6 +716,7 @@ S_gv_fetchmeth_internal(pTHX_ HV* stash, SV* meth, const char* name, STRLEN len,
     CV* cand_cv = NULL;
     GV* topgv = NULL;
     const char *hvname;
+    STRLEN hvnamelen;
     I32 create = (level >= 0) ? HV_FETCH_LVALUE : 0;
     I32 items;
     U32 topgen_cmp;
@@ -726,6 +732,7 @@ S_gv_fetchmeth_internal(pTHX_ HV* stash, SV* meth, const char* name, STRLEN len,
     assert(stash);
 
     hvname = HvNAME_get(stash);
+    hvnamelen = HvNAMELEN_get(stash);
     if (!hvname)
       Perl_croak(aTHX_ "Can't use anonymous symbol table for method lookup");
 
@@ -795,10 +802,30 @@ S_gv_fetchmeth_internal(pTHX_ HV* stash, SV* meth, const char* name, STRLEN len,
         cstash = gv_stashsv(linear_sv, 0);
 
         if (!cstash) {
-	    Perl_ck_warner(aTHX_ packWARN(WARN_SYNTAX),
-                           "Can't locate package %" SVf " for @%" HEKf "::ISA",
-			   SVfARG(linear_sv),
-                           HEKfARG(HvNAME_HEK(stash)));
+            if ( ckWARN(WARN_SYNTAX)) {
+                if(     /* these are loaded from Perl_Gv_AMupdate() one way or another */
+                           ( len    && name[0] == '(' )  /* overload.pm related, in particular "()" */
+                        || ( memEQs( name, len, "DESTROY") )
+                ) {
+                     Perl_ck_warner(aTHX_ packWARN(WARN_SYNTAX),
+                            "Can't locate package %" SVf " for @%" HEKf "::ISA",
+                            SVfARG(linear_sv),
+                            HEKfARG(HvNAME_HEK(stash)));
+
+                } else if( memEQs( name, len, "AUTOLOAD") ) {
+                    /* gobble this warning */
+                } else {
+                    Perl_ck_warner(aTHX_ packWARN(WARN_SYNTAX),
+                        "While trying to resolve method call %.*s->%.*s()"
+                        " can not locate package \"%" SVf "\" yet it is mentioned in @%.*s::ISA"
+                        " (perhaps you forgot to load \"%" SVf "\"?)",
+                         (int) hvnamelen, hvname,
+                         (int) len, name,
+                        SVfARG(linear_sv),
+                         (int) hvnamelen, hvname,
+                         SVfARG(linear_sv));
+                }
+            }
             continue;
         }
 
@@ -1266,7 +1293,7 @@ Perl_gv_autoload_pvn(pTHX_ HV *stash, const char *name, STRLEN len, U32 flags)
 	    if (SvUTF8(cv))
 		sv_utf8_upgrade_flags_grow(tmpsv, 0, CvPROTOLEN(cv) + 2);
 	    ulen = SvCUR(tmpsv);
-	    SvCUR(tmpsv)++; /* include null in string */
+	    SvCUR_set(tmpsv, SvCUR(tmpsv) + 1); /* include null in string */
 	    sv_catpvn_flags(
 		tmpsv, proto, CvPROTOLEN(cv), SV_CATBYTES*!SvUTF8(cv)
 	    );
@@ -1275,7 +1302,7 @@ Perl_gv_autoload_pvn(pTHX_ HV *stash, const char *name, STRLEN len, U32 flags)
 	    SvTEMP_off(tmpsv);
 	    SvREFCNT_dec_NN(tmpsv);
 	    SvLEN_set(cv, SvCUR(cv) + 1);
-	    SvCUR(cv) = ulen;
+	    SvCUR_set(cv, ulen);
 	}
 	else {
 	  sv_setpvn((SV *)cv, name, len);
@@ -1436,6 +1463,13 @@ The most important of which are probably C<GV_ADD> and C<SVf_UTF8>.
 Note, use of C<gv_stashsv> instead of C<gv_stashpvn> where possible is strongly
 recommended for performance reasons.
 
+=for apidoc Amnh||GV_ADD
+=for apidoc Amnh||GV_NOADD_NOINIT
+=for apidoc Amnh||GV_NOINIT
+=for apidoc Amnh||GV_NOEXPAND
+=for apidoc Amnh||GV_ADDMG
+=for apidoc Amnh||SVf_UTF8
+
 =cut
 */
 
@@ -1502,8 +1536,8 @@ Note the sv interface is strongly preferred for performance reasons.
 #define PERL_ARGS_ASSERT_GV_STASHSVPVN_CACHED \
     assert(namesv || name)
 
-PERL_STATIC_INLINE HV*
-S_gv_stashsvpvn_cached(pTHX_ SV *namesv, const char *name, U32 namelen, I32 flags)
+HV*
+Perl_gv_stashsvpvn_cached(pTHX_ SV *namesv, const char *name, U32 namelen, I32 flags)
 {
     HV* stash;
     HE* he;
@@ -2032,13 +2066,11 @@ S_gv_magicalize(pTHX_ GV *gv, HV *stash, const char *name, STRLEN len,
                     sv_magic(MUTABLE_SV(av), (SV*)n, PERL_MAGIC_regdata, NULL, 0);
                     SvREADONLY_on(av);
 
-                    if (sv_type == SVt_PVHV || sv_type == SVt_PVGV)
-                        require_tie_mod_s(gv, '-', "Tie::Hash::NamedCapture",0);
+                    require_tie_mod_s(gv, '+', "Tie::Hash::NamedCapture",0);
 
                 } else          /* %{^CAPTURE_ALL} */
                 if (memEQs(name, len, "\003APTURE_ALL")) {
-                    if (sv_type == SVt_PVHV || sv_type == SVt_PVGV)
-                        require_tie_mod_s(gv, '+', "Tie::Hash::NamedCapture",0);
+                    require_tie_mod_s(gv, '-', "Tie::Hash::NamedCapture",0);
                 }
 		break;
 	    case '\005':	/* $^ENCODING */

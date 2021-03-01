@@ -18,8 +18,8 @@ no warnings 'digit' ;
 my $a = qr/\o{1238456}\x{100}/;
 my $a = qr/[\o{6548321}]\x{100}/;
 EXPECT
-Non-octal character '8'.  Resolved as "\o{123}" at - line 3.
-Non-octal character '8'.  Resolved as "\o{654}" at - line 4.
+Non-octal character '8' terminates \o early.  Resolved as "\o{123}" in regex; marked by <-- HERE in m/\o{1238456} <-- HERE \x{100}/ at - line 3.
+Non-octal character '8' terminates \o early.  Resolved as "\o{654}" in regex; marked by <-- HERE in m/[\o{6548321} <-- HERE ]\x{100}/ at - line 4.
 ########
 # regcomp.c
 BEGIN {
@@ -35,8 +35,8 @@ no warnings 'syntax';
 $a = qr/\c,/;
 $a = qr/[\c,]/;
 EXPECT
-"\c," is more clearly written simply as "l" at - line 9.
-"\c," is more clearly written simply as "l" at - line 10.
+"\c," is more clearly written simply as "l" in regex; marked by <-- HERE in m/\c, <-- HERE / at - line 9.
+"\c," is more clearly written simply as "l" in regex; marked by <-- HERE in m/[\c, <-- HERE ]/ at - line 10.
 ########
 # This is because currently a different error is output under
 # use re 'strict', so can't go in reg_mesg.t
@@ -113,3 +113,15 @@ my $qr = qr {
 }x;
 EXPECT
 ########
+# NAME Warn on 32-bit code points
+# SKIP ? $Config{uvsize} < 8
+use warnings 'portable';
+qr/\x{8000_0000}/;
+qr/[\x{8000_0000}]/;
+qr/\o{20_000_000_000}/;
+qr/[\o{20_000_000_000}]/;
+EXPECT
+Code point 0x80000000 is not Unicode, requires a Perl extension, and so is not portable in regex; marked by <-- HERE in m/\x{8000_0000} <-- HERE / at - line 2.
+Code point 0x80000000 is not Unicode, requires a Perl extension, and so is not portable in regex; marked by <-- HERE in m/[\x{8000_0000} <-- HERE ]/ at - line 3.
+Code point 0x80000000 is not Unicode, requires a Perl extension, and so is not portable in regex; marked by <-- HERE in m/\o{20_000_000_000} <-- HERE / at - line 4.
+Code point 0x80000000 is not Unicode, requires a Perl extension, and so is not portable in regex; marked by <-- HERE in m/[\o{20_000_000_000} <-- HERE ]/ at - line 5.

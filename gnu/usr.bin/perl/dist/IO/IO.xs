@@ -185,26 +185,6 @@ io_blocking(pTHX_ InputStream f, int block)
 #endif
 }
 
-static OP *
-io_pp_nextstate(pTHX)
-{
-    dVAR;
-    COP *old_curcop = PL_curcop;
-    OP *next = PL_ppaddr[PL_op->op_type](aTHX);
-    PL_curcop = old_curcop;
-    return next;
-}
-
-static OP *
-io_ck_lineseq(pTHX_ OP *o)
-{
-    OP *kid = cBINOPo->op_first;
-    for (; kid; kid = OpSIBLING(kid))
-	if (kid->op_type == OP_NEXTSTATE || kid->op_type == OP_DBSTATE)
-	    kid->op_ppaddr = io_pp_nextstate;
-    return o;
-}
-
 
 MODULE = IO	PACKAGE = IO::Seekable	PREFIX = f
 
@@ -558,16 +538,71 @@ fsync(arg)
     OUTPUT:
 	RETVAL
 
-SV *
-_create_getline_subs(const char *code)
-    CODE:
-	OP *(*io_old_ck_lineseq)(pTHX_ OP *) = PL_check[OP_LINESEQ];
-	PL_check[OP_LINESEQ] = io_ck_lineseq;
-	RETVAL = SvREFCNT_inc(eval_pv(code,FALSE));
-	PL_check[OP_LINESEQ] = io_old_ck_lineseq;
-    OUTPUT:
-	RETVAL
+# To make these two work correctly with the open pragma, the readline op
+# needs to pick up the lexical hints at the method's callsite. This doesn't
+# work in pure Perl, because the hints are read from the most recent nextstate,
+# and the nextstate of the Perl subroutines show *here* hold the lexical state
+# for the IO package.
+#
+# There's no clean way to implement this - this approach, while complex, seems
+# to be the most robust, and avoids manipulating external state (ie op checkers)
+#
+# sub getline {
+#     @_ == 1 or croak 'usage: $io->getline()';
+#     my $this = shift;
+#     return scalar <$this>;
+# }
+#
+# sub getlines {
+#     @_ == 1 or croak 'usage: $io->getlines()';
+#     wantarray or
+# 	croak 'Can\'t call $io->getlines in a scalar context, use $io->getline';
+#     my $this = shift;
+#     return <$this>;
+# }
 
+# If this is deprecated, should it warn, and should it be removed at some point?
+# *gets = \&getline;  # deprecated
+
+void
+getlines(...)
+ALIAS:
+    IO::Handle::getline       =  1
+    IO::Handle::gets          =  2
+INIT:
+    UNOP myop;
+    SV *io;
+    OP *was = PL_op;
+PPCODE:
+    if (items != 1)
+        Perl_croak(aTHX_ "usage: $io->%s()", ix ? "getline" : "getlines");
+    if (!ix && GIMME_V != G_ARRAY)
+        Perl_croak(aTHX_ "Can't call $io->getlines in a scalar context, use $io->getline");
+    Zero(&myop, 1, UNOP);
+    myop.op_flags = (ix ? OPf_WANT_SCALAR : OPf_WANT_LIST ) | OPf_STACKED;
+    myop.op_ppaddr = PL_ppaddr[OP_READLINE];
+    myop.op_type = OP_READLINE;
+    /* I don't know if we need this, but it's correct as far as the control flow
+       goes. However, if we *do* need it, do we need to set anything else up? */
+    myop.op_next = PL_op->op_next;
+    /* Sigh, because pp_readline calls pp_rv2gv, and *it* has this wonderful
+       state check for PL_op->op_type == OP_READLINE */
+    PL_op = (OP *) &myop;
+    io = ST(0);
+    /* Our target (which we need to provide, as we don't have a pad entry.
+       I think that this is only needed for G_SCALAR - maybe we can get away
+       with NULL for list context? */
+    PUSHs(sv_newmortal());
+    XPUSHs(io);
+    PUTBACK;
+    /* And effectively we get away with tail calling pp_readline, as it stacks
+       exactly the return value(s) we need to return. */
+    PL_ppaddr[OP_READLINE](aTHX);
+    PL_op = was;
+    /* And we don't want to reach the line
+       PL_stack_sp = sp;
+       that xsubpp adds after our body becase PL_stack_sp is correct, not sp */
+    return;
 
 MODULE = IO	PACKAGE = IO::Socket
 

@@ -18,7 +18,7 @@ struct xpvcv {
 /*
 =head1 Handy Values
 
-=for apidoc AmU||Nullcv
+=for apidoc ADmnU||Nullcv
 Null CV pointer.
 
 (deprecated - use C<(CV *)NULL> instead)
@@ -49,7 +49,7 @@ See L<perlguts/Autoloading with XSUBs>.
 #define CvROOT(sv)	((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_root_u.xcv_root
 #define CvXSUB(sv)	((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_root_u.xcv_xsub
 #define CvXSUBANY(sv)	((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_start_u.xcv_xsubany
-#define CvGV(sv)	S_CvGV(aTHX_ (CV *)(sv))
+#define CvGV(sv)	Perl_CvGV(aTHX_ (CV *)(sv))
 #define CvGV_set(cv,gv)	Perl_cvgv_set(aTHX_ cv, gv)
 #define CvHASGV(cv)	cBOOL(SvANY(cv)->xcv_gv_u.xcv_gv)
 #define CvFILE(sv)	((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_file
@@ -61,9 +61,9 @@ See L<perlguts/Autoloading with XSUBs>.
     (CvFILE(sv) = CopFILE(cop), CvDYNFILE_off(sv))
 #endif
 #define CvFILEGV(sv)	(gv_fetchfile(CvFILE(sv)))
-#define CvDEPTH(sv)	(*S_CvDEPTHp((const CV *)sv))
+#define CvDEPTH(sv)	(*Perl_CvDEPTH((const CV *)sv))
 /* For use when you only have a XPVCV*, not a real CV*.
-   Must be assert protected as in S_CvDEPTHp before use. */
+   Must be assert protected as in Perl_CvDEPTH before use. */
 #define CvDEPTHunsafe(sv) ((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_depth
 
 /* these CvPADLIST/CvRESERVED asserts can be reverted one day, once stabilized */

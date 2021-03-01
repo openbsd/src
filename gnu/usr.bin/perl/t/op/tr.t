@@ -13,7 +13,7 @@ BEGIN {
 
 use utf8;
 
-plan tests => 301;
+plan tests => 315;
 
 # Test this first before we extend the stack with other operations.
 # This caused an asan failure due to a bad write past the end of the stack.
@@ -45,17 +45,23 @@ like $@,
      qr/Invalid range "\\x\{0101\}-\\x\{0100\}" in transliteration operator/,
      "UTF-8 range with min > max";
 
+$_ = "0123456789";
+tr/10/01/;
+is($_, "1023456789",    'swapping 0 and 1');
+tr/01/10/;
+is($_, "0123456789",    'swapping 0 and 1');
 
 # Test /c and variants, with all the search and replace chars being
 # non-utf8, but with both non-utf8 and utf8 strings.
 
-{
+SKIP: {
     my $all255            = join '', map chr, 0..0xff;
     my $all255_twice      = join '', map chr, map { ($_, $_) } 0..0xff;
-    my $all255_plus       = join '', map chr, 0..0x11f;
-    my $all255_twice_plus = join '', map chr, map { ($_, $_) } 0..0x11f;
+    my $plus              = join '', map chr, 0x100..0x11f;
+    my $plus_twice        = join '', map chr, map { ($_, $_) } 0x100..0x11f;
+    my $all255_plus       = $all255 . $plus;
+    my $all255_twice_plus = $all255_twice . $plus_twice;
     my ($c, $s);
-
 
     # length(replacement) == 0
     # non-utf8 string
@@ -67,7 +73,7 @@ like $@,
 
     $s = $all255;
     $c = $s =~ tr/\x40-\xbf//cd;
-    is $s, join('', map chr, 0x40..0xbf), "/cd  ==0";
+    is $s, join('', map chr, 0x40.. 0xbf), "/cd  ==0";
     is $c, 0x80, "/cd  ==0  count";
 
     $s = $all255_twice;
@@ -443,6 +449,19 @@ like $@,
             ),
         "/csd <U";
     is $c, 0x120, "/csd <U count";
+
+    if ($::IS_EBCDIC) {
+        skip "Not valid only for EBCDIC", 4;
+    }
+    $s = $all255_twice;
+    $c = $s =~ tr/[](){}<>\x00-\xff/[[(({{<</sd;
+    is $s, "(<[{", 'tr/[](){}<>\x00-\xff/[[(({{<</sd';
+    is $c, 512, "count of above";
+
+    $s = $all255_plus;
+    $c = $s =~ tr/[](){}<>\x00-\xff/[[(({{<</sd;
+    is $s, "(<[{" . $plus, 'tr/[](){}<>\x00-\xff/[[(({{<</sd';
+    is $c, 256, "count of above";
 }
 
 {
@@ -645,6 +664,7 @@ else {
 }
 
 
+start:
 {
     my $l = chr(300); my $r = chr(400);
     $x = 200.300.400;
@@ -779,7 +799,7 @@ is((($a = v300.196.172.300.196.172) =~ tr/\x{12c}/\x{12d}/), 2);
 is($a, v301.196.301.301.196.301,    'translit w/complement');
 
 ($a = v300.196.172.300.196.172) =~ tr/\x{12c}/\xc5/c;
-is($a, v300.197.197.300.197.197);
+is($a, v300.197.197.300.197.197, 'more translit w/complement');
 
 
 ($a = v300.196.172.300.196.172) =~ tr/\xc4//d;
@@ -969,8 +989,7 @@ $s = "ABC";
 $s =~ tr/ABC/\x{fffd}-\x{ffff}/;
 is($s, "\x{fffd}\x{fffe}\x{ffff}", "utf8, REPLACEMENTLIST range");
 
-$s = "A\x{ffff}B\x{100}\0\x{fffe}\x{ffff}";
-$i = $s =~ tr/\x{ffff}//;
+$s = "A\x{ffff}B\x{100}\0\x{fffe}\x{ffff}"; $i = $s =~ tr/\x{ffff}//;
 is($i, 2, "utf8, count");
 
 $s = "A\x{ffff}\x{ffff}C";
@@ -1080,7 +1099,7 @@ for ("", nullrocow) {
     my $string = chr utf8::unicode_to_native(0x00e0);
     $string =~ tr/\N{U+00e0}/A/;
     is($string, "A", 'tr// of \N{U+...} works for upper-Latin1');
-    my $string = chr utf8::unicode_to_native(0x00e1);
+    $string = chr utf8::unicode_to_native(0x00e1);
     $string =~ tr/\N{LATIN SMALL LETTER A WITH ACUTE}/A/;
     is($string, "A", 'tr// of \N{name} works for upper-Latin1');
 }
@@ -1143,6 +1162,35 @@ for ("", nullrocow) {
 {
     fresh_perl_like('y/\x{a00}0-\N{}//', qr/Unknown charname/, { },
                     'RT #133880 illegal \N{}');
+}
+
+{
+    my $c;
+    my $x = "\1\0\0\0\0\0\0\0\0\0\0\0\0";
+    $c = $x =~ tr/\x0f\x0e\x0d\x0c\x0b\x0a\x09\x08\x07\x06\x05\x04\x03\x02\x01\x00/FEDCBA9876543210/;
+    is $x, "1000000000000", "Decreasing ranges work with start at \\0";
+    is $c, 13, "Count for above test";
+
+    $x = "\1\0\0\0\0\0\0\0\0\0\0\0\0";
+    $c = $x =~ tr/\x0f\x0e\x0d\x0c\x0b\x0a\x09\x08\x07\x06\x05\x04\x03\x02\x01\x00/\x{FF26}\x{FF25}\x{FF24}\x{FF23}\x{FF22}\x{FF21}\x{FF19}\x{FF18}\x{FF17}\x{FF16}\x{FF15}\x{FF14}\x{FF13}\x{FF12}\x{FF11}\x{FF10}/;
+    is $x, "\x{FF11}\x{FF10}\x{FF10}\x{FF10}\x{FF10}\x{FF10}\x{FF10}\x{FF10}\x{FF10}\x{FF10}\x{FF10}\x{FF10}\x{FF10}", "Decreasing Above ASCII ranges work with start at \\0";
+    is $c, 13, "Count for above test";
+}
+
+{
+    my $c = "\xff";
+    my $d = "\x{104}";
+    eval '$c =~ tr/\x{ff}-\x{104}/\x{100}-\x{105}/';
+    is($@, "", 'tr/\x{ff}-\x{104}/\x{100}-\x{105}/ compiled');
+    is($c, "\x{100}", 'ff -> 100');
+    eval '$d =~ tr/\x{ff}-\x{104}/\x{100}-\x{105}/';
+    is($d, "\x{105}", '104 -> 105');
+}
+
+{
+    my $c = "cb";
+    eval '$c =~ tr{aabc}{d\x{d0000}}';
+    is($c, "\x{d0000}\x{d0000}", "Shouldn't generate valgrind errors");
 }
 
 1;

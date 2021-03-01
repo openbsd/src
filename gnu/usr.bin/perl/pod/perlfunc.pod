@@ -242,7 +242,7 @@ L<C<chroot>|/chroot FILENAME>,
 L<C<fcntl>|/fcntl FILEHANDLE,FUNCTION,SCALAR>, L<C<glob>|/glob EXPR>,
 L<C<ioctl>|/ioctl FILEHANDLE,FUNCTION,SCALAR>,
 L<C<link>|/link OLDFILE,NEWFILE>, L<C<lstat>|/lstat FILEHANDLE>,
-L<C<mkdir>|/mkdir FILENAME,MODE>, L<C<open>|/open FILEHANDLE,EXPR>,
+L<C<mkdir>|/mkdir FILENAME,MODE>, L<C<open>|/open FILEHANDLE,MODE,EXPR>,
 L<C<opendir>|/opendir DIRHANDLE,EXPR>, L<C<readlink>|/readlink EXPR>,
 L<C<rename>|/rename OLDNAME,NEWNAME>, L<C<rmdir>|/rmdir FILENAME>,
 L<C<select>|/select FILEHANDLE>, L<C<stat>|/stat FILEHANDLE>,
@@ -471,7 +471,7 @@ L<C<kill>|/kill SIGNAL, LIST>, L<C<link>|/link OLDFILE,NEWFILE>,
 L<C<lstat>|/lstat FILEHANDLE>, L<C<msgctl>|/msgctl ID,CMD,ARG>,
 L<C<msgget>|/msgget KEY,FLAGS>,
 L<C<msgrcv>|/msgrcv ID,VAR,SIZE,TYPE,FLAGS>,
-L<C<msgsnd>|/msgsnd ID,MSG,FLAGS>, L<C<open>|/open FILEHANDLE,EXPR>,
+L<C<msgsnd>|/msgsnd ID,MSG,FLAGS>, L<C<open>|/open FILEHANDLE,MODE,EXPR>,
 L<C<pipe>|/pipe READHANDLE,WRITEHANDLE>, L<C<readlink>|/readlink EXPR>,
 L<C<rename>|/rename OLDNAME,NEWNAME>,
 L<C<select>|/select RBITS,WBITS,EBITS,TIMEOUT>,
@@ -818,8 +818,8 @@ translation and marking it as bytes (as opposed to Unicode characters).
 Note that, despite what may be implied in I<"Programming Perl"> (the
 Camel, 3rd edition) or elsewhere, C<:raw> is I<not> simply the inverse of C<:crlf>.
 Other layers that would affect the binary nature of the stream are
-I<also> disabled.  See L<PerlIO>, L<perlrun>, and the discussion about the
-PERLIO environment variable.
+I<also> disabled.  See L<PerlIO>, and the discussion about the PERLIO
+environment variable in L<perlrun|perlrun/PERLIO>.
 
 The C<:bytes>, C<:crlf>, C<:utf8>, and any other directives of the
 form C<:...>, are called I/O I<layers>.  The L<open> pragma can be used to
@@ -839,7 +839,7 @@ while C<:encoding(UTF-8)> checks the data for actually being valid
 UTF-8.  More details can be found in L<PerlIO::encoding>.
 
 In general, L<C<binmode>|/binmode FILEHANDLE, LAYER> should be called
-after L<C<open>|/open FILEHANDLE,EXPR> but before any I/O is done on the
+after L<C<open>|/open FILEHANDLE,MODE,EXPR> but before any I/O is done on the
 filehandle.  Calling L<C<binmode>|/binmode FILEHANDLE, LAYER> normally
 flushes any pending buffered output data (and perhaps pending input
 data) on the handle.  An exception to this is the C<:encoding> layer
@@ -946,6 +946,10 @@ list context, caller returns
 
        # 0         1          2
     my ($package, $filename, $line) = caller;
+
+Like L<C<__FILE__>|/__FILE__> and L<C<__LINE__>|/__LINE__>, the filename and
+line number returned here may be altered by the mechanism described at
+L<perlsyn/"Plain Old Comments (Not!)">.
 
 With EXPR, it returns some extra information that the debugger uses to
 print a stack trace.  The value of EXPR indicates how many call frames
@@ -1228,9 +1232,10 @@ change your current working directory, which is unaffected.)  For security
 reasons, this call is restricted to the superuser.  If FILENAME is
 omitted, does a L<C<chroot>|/chroot FILENAME> to L<C<$_>|perlvar/$_>.
 
-B<NOTE:>  It is good security practice to do C<chdir("/")>
+B<NOTE:>  It is mandatory for security to C<chdir("/")>
 (L<C<chdir>|/chdir EXPR> to the root directory) immediately after a
-L<C<chroot>|/chroot FILENAME>.
+L<C<chroot>|/chroot FILENAME>, otherwise the current working directory
+may be outside of the new root.
 
 Portability issues: L<perlport/chroot>.
 
@@ -1248,12 +1253,12 @@ layer.  Closes the currently selected filehandle if the argument is
 omitted.
 
 You don't have to close FILEHANDLE if you are immediately going to do
-another L<C<open>|/open FILEHANDLE,EXPR> on it, because
-L<C<open>|/open FILEHANDLE,EXPR> closes it for you.  (See
-L<C<open>|/open FILEHANDLE,EXPR>.) However, an explicit
+another L<C<open>|/open FILEHANDLE,MODE,EXPR> on it, because
+L<C<open>|/open FILEHANDLE,MODE,EXPR> closes it for you.  (See
+L<C<open>|/open FILEHANDLE,MODE,EXPR>.) However, an explicit
 L<C<close>|/close FILEHANDLE> on an input file resets the line counter
 (L<C<$.>|perlvar/$.>), while the implicit close done by
-L<C<open>|/open FILEHANDLE,EXPR> does not.
+L<C<open>|/open FILEHANDLE,MODE,EXPR> does not.
 
 If the filehandle came from a piped open, L<C<close>|/close FILEHANDLE>
 returns false if one of the other syscalls involved fails or if its
@@ -1476,7 +1481,7 @@ L<C<tie>|/tie VARIABLE,CLASSNAME,LIST> function.]
 
 This binds a L<dbm(3)>, L<ndbm(3)>, L<sdbm(3)>, L<gdbm(3)>, or Berkeley
 DB file to a hash.  HASH is the name of the hash.  (Unlike normal
-L<C<open>|/open FILEHANDLE,EXPR>, the first argument is I<not> a
+L<C<open>|/open FILEHANDLE,MODE,EXPR>, the first argument is I<not> a
 filehandle, even though it looks like one).  DBNAME is the name of the
 database (without the F<.dir> or F<.pag> extension if any).  If the
 database does not exist, it is created with protection specified by MASK
@@ -1908,7 +1913,7 @@ X<dump> X<core> X<undump>
 =for Pod::Functions create an immediate core dump
 
 This function causes an immediate core dump.  See also the B<-u>
-command-line switch in L<perlrun>, which does the same thing.
+command-line switch in L<perlrun|perlrun/-u>, which does the same thing.
 Primarily this is so that you can use the B<undump> program (not
 supplied) to turn your core dump into an executable binary after
 having initialized all your variables at the beginning of the
@@ -2306,7 +2311,7 @@ Examples:
 If you want to trap errors when loading an XS module, some problems with
 the binary interface (such as Perl version skew) may be fatal even with
 C<eval> unless C<$ENV{PERL_DL_NONLAZY}> is set.  See
-L<perlrun>.
+L<perlrun|perlrun/PERL_DL_NONLAZY>.
 
 Using the C<eval {}> form as an exception trap in libraries does have some
 issues.  Due to the current arguably broken state of C<__DIE__> hooks, you
@@ -2620,8 +2625,8 @@ L<Unicode::UCD/B<prop_invmap()>>.
 For further information on casefolding, refer to
 the Unicode Standard, specifically sections 3.13 C<Default Case Operations>,
 4.2 C<Case-Normative>, and 5.18 C<Case Mappings>,
-available at L<http://www.unicode.org/versions/latest/>, as well as the
-Case Charts available at L<http://www.unicode.org/charts/case/>.
+available at L<https://www.unicode.org/versions/latest/>, as well as the
+Case Charts available at L<https://www.unicode.org/charts/case/>.
 
 If EXPR is omitted, uses L<C<$_>|perlvar/$_>.
 
@@ -2700,6 +2705,8 @@ X<__FILE__>
 =for Pod::Functions the name of the current source file
 
 A special token that returns the name of the file in which it occurs.
+It can be altered by the mechanism described at
+L<perlsyn/"Plain Old Comments (Not!)">.
 
 =item fileno FILEHANDLE
 X<fileno>
@@ -2712,7 +2719,7 @@ Returns the file descriptor for a filehandle or directory handle,
 or undefined if the
 filehandle is not open.  If there is no real file descriptor at the OS
 level, as can happen with filehandles connected to memory objects via
-L<C<open>|/open FILEHANDLE,EXPR> with a reference for the third
+L<C<open>|/open FILEHANDLE,MODE,EXPR> with a reference for the third
 argument, -1 is returned.
 
 This is mainly useful for constructing bitmaps for
@@ -3954,6 +3961,8 @@ X<__LINE__>
 =for Pod::Functions the current source line number
 
 A special token that compiles to the current line number.
+It can be altered by the mechanism described at
+L<perlsyn/"Plain Old Comments (Not!)">.
 
 =item link OLDFILE,NEWFILE
 X<link>
@@ -4435,46 +4444,84 @@ Leading white space is ignored without warning, as too are any trailing
 non-digits, such as a decimal point (L<C<oct>|/oct EXPR> only handles
 non-negative integers, not negative integers or floating point).
 
-=item open FILEHANDLE,EXPR
-X<open> X<pipe> X<file, open> X<fopen>
-
 =item open FILEHANDLE,MODE,EXPR
+X<open> X<pipe> X<file, open> X<fopen>
 
 =item open FILEHANDLE,MODE,EXPR,LIST
 
 =item open FILEHANDLE,MODE,REFERENCE
 
+=item open FILEHANDLE,EXPR
+
 =item open FILEHANDLE
 
 =for Pod::Functions open a file, pipe, or descriptor
 
-Opens the file whose filename is given by EXPR, and associates it with
-FILEHANDLE.
+Associates an internal FILEHANDLE with the external file specified by
+EXPR. That filehandle will subsequently allow you to perform
+I/O operations on that file, such as reading from it or writing to it.
 
-Simple examples to open a file for reading:
+Instead of a filename, you may specify an external command
+(plus an optional argument list) or a scalar reference, in order to open
+filehandles on commands or in-memory scalars, respectively.
+
+A thorough reference to C<open> follows. For a gentler introduction to
+the basics of C<open>, see also the L<perlopentut> manual page.
+
+=over
+
+=item Working with files
+
+Most often, C<open> gets invoked with three arguments: the required
+FILEHANDLE (usually an empty scalar variable), followed by MODE (usually
+a literal describing the I/O mode the filehandle will use), and then the
+filename  that the new filehandle will refer to.
+
+=over
+
+=item Simple examples
+
+Reading from a file:
 
     open(my $fh, "<", "input.txt")
-	or die "Can't open < input.txt: $!";
+        or die "Can't open < input.txt: $!";
 
-and for writing:
+    # Process every line in input.txt
+    while (my $line = <$fh>) {
+        #
+        # ... do something interesting with $line here ...
+        #
+    }
+
+or writing to one:
 
     open(my $fh, ">", "output.txt")
-	or die "Can't open > output.txt: $!";
+        or die "Can't open > output.txt: $!";
 
-(The following is a comprehensive reference to
-L<C<open>|/open FILEHANDLE,EXPR>: for a gentler introduction you may
-consider L<perlopentut>.)
+    print $fh "This line gets printed into output.txt.\n";
 
-If FILEHANDLE is an undefined scalar variable (or array or hash element), a
-new filehandle is autovivified, meaning that the variable is assigned a
-reference to a newly allocated anonymous filehandle.  Otherwise if
-FILEHANDLE is an expression, its value is the real filehandle.  (This is
-considered a symbolic reference, so C<use strict "refs"> should I<not> be
-in effect.)
+For a summary of common filehandle operations such as these, see
+L<perlintro/Files and I/O>.
 
-If three (or more) arguments are specified, the open mode (including
-optional encoding) in the second argument are distinct from the filename in
-the third.  If MODE is C<< < >> or nothing, the file is opened for input.
+=item About filehandles
+
+The first argument to C<open>, labeled FILEHANDLE in this reference, is
+usually a scalar variable. (Exceptions exist, described in "Other
+considerations", below.) If the call to C<open> succeeds, then the
+expression provided as FILEHANDLE will get assigned an open
+I<filehandle>. That filehandle provides an internal reference to the
+specified external file, conveniently stored in a Perl variable, and
+ready for I/O operations such as reading and writing.
+
+=item About modes
+
+When calling C<open> with three or more arguments, the second argument
+-- labeled MODE here -- defines the I<open mode>. MODE is usually a
+literal string comprising special characters that define the intended
+I/O role of the filehandle being created: whether it's read-only, or
+read-and-write, and so on.
+
+If MODE is C<< < >>, the file is opened for input (read-only).
 If MODE is C<< > >>, the file is opened for output, with existing files
 first being truncated ("clobbered") and nonexisting files newly created.
 If MODE is C<<< >> >>>, the file is opened for appending, again being
@@ -4485,59 +4532,56 @@ indicate that you want both read and write access to the file; thus
 C<< +< >> is almost always preferred for read/write updates--the
 C<< +> >> mode would clobber the file first.  You can't usually use
 either read-write mode for updating textfiles, since they have
-variable-length records.  See the B<-i> switch in L<perlrun> for a
-better approach.  The file is created with permissions of C<0666>
-modified by the process's L<C<umask>|/umask EXPR> value.
+variable-length records.  See the B<-i> switch in
+L<perlrun|perlrun/-i[extension]> for a better approach.  The file is
+created with permissions of C<0666> modified by the process's
+L<C<umask>|/umask EXPR> value.
 
 These various prefixes correspond to the L<fopen(3)> modes of C<r>,
 C<r+>, C<w>, C<w+>, C<a>, and C<a+>.
 
-In the one- and two-argument forms of the call, the mode and filename
-should be concatenated (in that order), preferably separated by white
-space.  You can--but shouldn't--omit the mode in these forms when that mode
-is C<< < >>.  It is safe to use the two-argument form of
-L<C<open>|/open FILEHANDLE,EXPR> if the filename argument is a known literal.
+More examples of different modes in action:
 
-For three or more arguments if MODE is C<|->, the filename is
-interpreted as a command to which output is to be piped, and if MODE
-is C<-|>, the filename is interpreted as a command that pipes
-output to us.  In the two-argument (and one-argument) form, one should
-replace dash (C<->) with the command.
-See L<perlipc/"Using open() for IPC"> for more examples of this.
-(You are not allowed to L<C<open>|/open FILEHANDLE,EXPR> to a command
-that pipes both in I<and> out, but see L<IPC::Open2>, L<IPC::Open3>, and
-L<perlipc/"Bidirectional Communication with Another Process"> for
-alternatives.)
+ # Open a file for concatenation
+ open(my $log, ">>", "/usr/spool/news/twitlog")
+     or warn "Couldn't open log file; discarding input";
 
-In the form of pipe opens taking three or more arguments, if LIST is specified
-(extra arguments after the command name) then LIST becomes arguments
-to the command invoked if the platform supports it.  The meaning of
-L<C<open>|/open FILEHANDLE,EXPR> with more than three arguments for
-non-pipe modes is not yet defined, but experimental "layers" may give
-extra LIST arguments meaning.
+ # Open a file for reading and writing
+ open(my $dbase, "+<", "dbase.mine")
+     or die "Can't open 'dbase.mine' for update: $!";
 
-In the two-argument (and one-argument) form, opening C<< <- >>
-or C<-> opens STDIN and opening C<< >- >> opens STDOUT.
+=item Checking the return value
 
-You may (and usually should) use the three-argument form of open to specify
-I/O layers (sometimes referred to as "disciplines") to apply to the handle
-that affect how the input and output are processed (see L<open> and
+Open returns nonzero on success, the undefined value otherwise.  If the
+C<open> involved a pipe, the return value happens to be the pid of the
+subprocess.
+
+When opening a file, it's seldom a good idea to continue if the request
+failed, so C<open> is frequently used with L<C<die>|/die LIST>. Even if
+you want your code to do something other than C<die> on a failed open,
+you should still always check the return value from opening a file.
+
+=back
+
+=item Specifying I/O layers in MODE
+
+You can use the three-argument form of open to specify
+I/O layers (sometimes referred to as "disciplines") to apply to the new
+filehandle. These affect how the input and output are processed (see
+L<open> and
 L<PerlIO> for more details).  For example:
 
-  open(my $fh, "<:encoding(UTF-8)", $filename)
-    || die "Can't open UTF-8 encoded $filename: $!";
+    open(my $fh, "<:encoding(UTF-8)", $filename)
+        || die "Can't open UTF-8 encoded $filename: $!";
 
-opens the UTF8-encoded file containing Unicode characters;
+This opens the UTF8-encoded file containing Unicode characters;
 see L<perluniintro>.  Note that if layers are specified in the
-three-argument form, then default layers stored in ${^OPEN} (see L<perlvar>;
-usually set by the L<open> pragma or the switch C<-CioD>) are ignored.
+three-argument form, then default layers stored in
+L<C<${^OPEN}>|perlvar/${^OPEN}>
+(usually set by the L<open> pragma or the switch C<-CioD>) are ignored.
 Those layers will also be ignored if you specify a colon with no name
 following it.  In that case the default layer for the operating system
 (:raw on Unix, :crlf on Windows) is used.
-
-Open returns nonzero on success, the undefined value otherwise.  If
-the L<C<open>|/open FILEHANDLE,EXPR> involved a pipe, the return value
-happens to be the pid of the subprocess.
 
 On some systems (in general, DOS- and Windows-based systems)
 L<C<binmode>|/binmode FILEHANDLE, LAYER> is necessary when you're not
@@ -4546,41 +4590,7 @@ always to use it when appropriate, and never to use it when it isn't
 appropriate.  Also, people can set their I/O to be by default
 UTF8-encoded Unicode, not bytes.
 
-When opening a file, it's seldom a good idea to continue
-if the request failed, so L<C<open>|/open FILEHANDLE,EXPR> is frequently
-used with L<C<die>|/die LIST>.  Even if L<C<die>|/die LIST> won't do
-what you want (say, in a CGI script,
-where you want to format a suitable error message (but there are
-modules that can help with that problem)) always check
-the return value from opening a file.
-
-The filehandle will be closed when its reference count reaches zero.
-If it is a lexically scoped variable declared with L<C<my>|/my VARLIST>,
-that usually
-means the end of the enclosing scope.  However, this automatic close
-does not check for errors, so it is better to explicitly close
-filehandles, especially those used for writing:
-
-    close($handle)
-       || warn "close failed: $!";
-
-An older style is to use a bareword as the filehandle, as
-
-    open(FH, "<", "input.txt")
-       or die "Can't open < input.txt: $!";
-
-Then you can use C<FH> as the filehandle, in C<< close FH >> and C<<
-<FH> >> and so on.  Note that it's a global variable, so this form is
-not recommended in new code.
-
-As a shortcut a one-argument call takes the filename from the global
-scalar variable of the same name as the filehandle:
-
-    $ARTICLE = 100;
-    open(ARTICLE) or die "Can't find article $ARTICLE: $!\n";
-
-Here C<$ARTICLE> must be a global (package) scalar variable - not one
-declared with L<C<my>|/my VARLIST> or L<C<state>|/state VARLIST>.
+=item Using C<undef> for temporary files
 
 As a special case the three-argument form with a read/write mode and the third
 argument being L<C<undef>|/undef EXPR>:
@@ -4592,11 +4602,16 @@ opens a filehandle to a newly created empty anonymous temporary file.
 sensible mode to use.)  You will need to
 L<C<seek>|/seek FILEHANDLE,POSITION,WHENCE> to do the reading.
 
-Perl is built using PerlIO by default.  Unless you've
-changed this (such as building Perl with C<Configure -Uuseperlio>), you can
-open filehandles directly to Perl scalars via:
 
-    open(my $fh, ">", \$variable) || ..
+=item Opening a filehandle into an in-memory scalar
+
+You can open filehandles directly to Perl scalars instead of a file or
+other resource external to the program. To do so, provide a reference to
+that scalar as the third argument to C<open>, like so:
+
+ open(my $memory, ">", \$var)
+     or die "Can't open memory file: $!";
+ print $memory "foo!\n";    # output will appear in $var
 
 To (re)open C<STDOUT> or C<STDERR> as an in-memory file, close it first:
 
@@ -4611,18 +4626,28 @@ any code points over 0xFF.
 Opening in-memory files I<can> fail for a variety of reasons.  As with
 any other C<open>, check the return value for success.
 
+I<Technical note>: This feature works only when Perl is built with
+PerlIO -- the default, except with older (pre-5.16) Perl installations
+that were configured to not include it (e.g. via C<Configure
+-Uuseperlio>). You can see whether your Perl was built with PerlIO by
+running C<perl -V:useperlio>.  If it says C<'define'>, you have PerlIO;
+otherwise you don't.
+
 See L<perliol> for detailed info on PerlIO.
 
-General examples:
+=item Opening a filehandle into a command
 
- open(my $log, ">>", "/usr/spool/news/twitlog");
- # if the open fails, output is discarded
+If MODE is C<|->, then the filename is
+interpreted as a command to which output is to be piped, and if MODE
+is C<-|>, the filename is interpreted as a command that pipes
+output to us.  In the two-argument (and one-argument) form, one should
+replace dash (C<->) with the command.
+See L<perlipc/"Using open() for IPC"> for more examples of this.
+(You are not allowed to L<C<open>|/open FILEHANDLE,MODE,EXPR> to a command
+that pipes both in I<and> out, but see L<IPC::Open2>, L<IPC::Open3>, and
+L<perlipc/"Bidirectional Communication with Another Process"> for
+alternatives.)
 
- open(my $dbase, "+<", "dbase.mine")      # open for update
-     or die "Can't open 'dbase.mine' for update: $!";
-
- open(my $dbase, "+<dbase.mine")          # ditto
-     or die "Can't open 'dbase.mine' for update: $!";
 
  open(my $article_fh, "-|", "caesar <$article")  # decrypt
                                                  # article
@@ -4634,10 +4659,80 @@ General examples:
  open(my $out_fh, "|-", "sort >Tmp$$")    # $$ is our process id
      or die "Can't start sort: $!";
 
- # in-memory files
- open(my $memory, ">", \$var)
-     or die "Can't open memory file: $!";
- print $memory "foo!\n";              # output will appear in $var
+
+In the form of pipe opens taking three or more arguments, if LIST is specified
+(extra arguments after the command name) then LIST becomes arguments
+to the command invoked if the platform supports it.  The meaning of
+L<C<open>|/open FILEHANDLE,MODE,EXPR> with more than three arguments for
+non-pipe modes is not yet defined, but experimental "layers" may give
+extra LIST arguments meaning.
+
+If you open a pipe on the command C<-> (that is, specify either C<|-> or C<-|>
+with the one- or two-argument forms of
+L<C<open>|/open FILEHANDLE,MODE,EXPR>), an implicit L<C<fork>|/fork> is done,
+so L<C<open>|/open FILEHANDLE,MODE,EXPR> returns twice: in the parent process
+it returns the pid
+of the child process, and in the child process it returns (a defined) C<0>.
+Use C<defined($pid)> or C<//> to determine whether the open was successful.
+
+For example, use either
+
+   my $child_pid = open(my $from_kid, "-|")
+        // die "Can't fork: $!";
+
+or
+
+   my $child_pid = open(my $to_kid,   "|-")
+        // die "Can't fork: $!";
+
+followed by
+
+    if ($child_pid) {
+	# am the parent:
+	# either write $to_kid or else read $from_kid
+	...
+       waitpid $child_pid, 0;
+    } else {
+	# am the child; use STDIN/STDOUT normally
+	...
+	exit;
+    }
+
+The filehandle behaves normally for the parent, but I/O to that
+filehandle is piped from/to the STDOUT/STDIN of the child process.
+In the child process, the filehandle isn't opened--I/O happens from/to
+the new STDOUT/STDIN.  Typically this is used like the normal
+piped open when you want to exercise more control over just how the
+pipe command gets executed, such as when running setuid and
+you don't want to have to scan shell commands for metacharacters.
+
+The following blocks are more or less equivalent:
+
+    open(my $fh, "|tr '[a-z]' '[A-Z]'");
+    open(my $fh, "|-", "tr '[a-z]' '[A-Z]'");
+    open(my $fh, "|-") || exec 'tr', '[a-z]', '[A-Z]';
+    open(my $fh, "|-", "tr", '[a-z]', '[A-Z]');
+
+    open(my $fh, "cat -n '$file'|");
+    open(my $fh, "-|", "cat -n '$file'");
+    open(my $fh, "-|") || exec "cat", "-n", $file;
+    open(my $fh, "-|", "cat", "-n", $file);
+
+The last two examples in each block show the pipe as "list form", which
+is not yet supported on all platforms. (If your platform has a real
+L<C<fork>|/fork>, such as Linux and macOS, you can use the list form; it
+also works on Windows with Perl 5.22 or later.) You would want to use
+the list form of the pipe so you can pass literal arguments to the
+command without risk of the shell interpreting any shell metacharacters
+in them. However, this also bars you from opening pipes to commands that
+intentionally contain shell metacharacters, such as:
+
+    open(my $fh, "|cat -n | expand -4 | lpr")
+    	|| die "Can't open pipeline to lpr: $!";
+
+See L<perlipc/"Safe Pipe Opens"> for more examples of this.
+
+=item Duping filehandles
 
 You may also, in the Bourne shell tradition, specify an EXPR beginning
 with C<< >& >>, in which case the rest of the string is interpreted
@@ -4654,11 +4749,15 @@ Here is a script that saves, redirects, and restores C<STDOUT> and
 C<STDERR> using various methods:
 
     #!/usr/bin/perl
-    open(my $oldout, ">&STDOUT")     or die "Can't dup STDOUT: $!";
-    open(OLDERR,     ">&", \*STDERR) or die "Can't dup STDERR: $!";
+    open(my $oldout, ">&STDOUT")
+        or die "Can't dup STDOUT: $!";
+    open(OLDERR,     ">&", \*STDERR)
+        or die "Can't dup STDERR: $!";
 
-    open(STDOUT, '>', "foo.out") or die "Can't redirect STDOUT: $!";
-    open(STDERR, ">&STDOUT")     or die "Can't dup STDOUT: $!";
+    open(STDOUT, '>', "foo.out")
+        or die "Can't redirect STDOUT: $!";
+    open(STDERR, ">&STDOUT")
+        or die "Can't dup STDOUT: $!";
 
     select STDERR; $| = 1;  # make unbuffered
     select STDOUT; $| = 1;  # make unbuffered
@@ -4666,8 +4765,10 @@ C<STDERR> using various methods:
     print STDOUT "stdout 1\n";  # this works for
     print STDERR "stderr 1\n";  # subprocesses too
 
-    open(STDOUT, ">&", $oldout) or die "Can't dup \$oldout: $!";
-    open(STDERR, ">&OLDERR")    or die "Can't dup OLDERR: $!";
+    open(STDOUT, ">&", $oldout)
+        or die "Can't dup \$oldout: $!";
+    open(STDERR, ">&OLDERR")
+        or die "Can't dup OLDERR: $!";
 
     print STDOUT "stdout 2\n";
     print STDERR "stderr 2\n";
@@ -4703,72 +4804,74 @@ L<fdopen(3)> to implement the C<=> functionality.  On many Unix systems,
 L<fdopen(3)> fails when file descriptors exceed a certain value, typically 255.
 For Perls 5.8.0 and later, PerlIO is (most often) the default.
 
-You can see whether your Perl was built with PerlIO by running
-C<perl -V:useperlio>.  If it says C<'define'>, you have PerlIO;
-otherwise you don't.
+=item Legacy usage
 
-If you open a pipe on the command C<-> (that is, specify either C<|-> or C<-|>
-with the one- or two-argument forms of
-L<C<open>|/open FILEHANDLE,EXPR>), an implicit L<C<fork>|/fork> is done,
-so L<C<open>|/open FILEHANDLE,EXPR> returns twice: in the parent process
-it returns the pid
-of the child process, and in the child process it returns (a defined) C<0>.
-Use C<defined($pid)> or C<//> to determine whether the open was successful.
+This section describes ways to call C<open> outside of best practices;
+you may encounter these uses in older code. Perl does not consider their
+use deprecated, exactly, but neither is it recommended in new code, for
+the sake of clarity and readability.
 
-For example, use either
+=over
 
-   my $child_pid = open(my $from_kid, "-|") // die "Can't fork: $!";
+=item Specifying mode and filename as a single argument
 
-or
+In the one- and two-argument forms of the call, the mode and filename
+should be concatenated (in that order), preferably separated by white
+space.  You can--but shouldn't--omit the mode in these forms when that mode
+is C<< < >>.  It is safe to use the two-argument form of
+L<C<open>|/open FILEHANDLE,MODE,EXPR> if the filename argument is a known literal.
 
-   my $child_pid = open(my $to_kid,   "|-") // die "Can't fork: $!";
+ open(my $dbase, "+<dbase.mine")          # ditto
+     or die "Can't open 'dbase.mine' for update: $!";
 
-followed by
+In the two-argument (and one-argument) form, opening C<< <- >>
+or C<-> opens STDIN and opening C<< >- >> opens STDOUT.
 
-    if ($child_pid) {
-	# am the parent:
-	# either write $to_kid or else read $from_kid
-	...
-       waitpid $child_pid, 0;
-    } else {
-	# am the child; use STDIN/STDOUT normally
-	...
-	exit;
-    }
+New code should favor the three-argument form of C<open> over this older
+form. Declaring the mode and the filename as two distinct arguments
+avoids any confusion between the two.
 
-The filehandle behaves normally for the parent, but I/O to that
-filehandle is piped from/to the STDOUT/STDIN of the child process.
-In the child process, the filehandle isn't opened--I/O happens from/to
-the new STDOUT/STDIN.  Typically this is used like the normal
-piped open when you want to exercise more control over just how the
-pipe command gets executed, such as when running setuid and
-you don't want to have to scan shell commands for metacharacters.
+=item Calling C<open> with one argument via global variables
 
-The following blocks are more or less equivalent:
+As a shortcut, a one-argument call takes the filename from the global
+scalar variable of the same name as the filehandle:
 
-    open(my $fh, "|tr '[a-z]' '[A-Z]'");
-    open(my $fh, "|-", "tr '[a-z]' '[A-Z]'");
-    open(my $fh, "|-") || exec 'tr', '[a-z]', '[A-Z]';
-    open(my $fh, "|-", "tr", '[a-z]', '[A-Z]');
+    $ARTICLE = 100;
+    open(ARTICLE)
+        or die "Can't find article $ARTICLE: $!\n";
 
-    open(my $fh, "cat -n '$file'|");
-    open(my $fh, "-|", "cat -n '$file'");
-    open(my $fh, "-|") || exec "cat", "-n", $file;
-    open(my $fh, "-|", "cat", "-n", $file);
+Here C<$ARTICLE> must be a global (package) scalar variable - not one
+declared with L<C<my>|/my VARLIST> or L<C<state>|/state VARLIST>.
 
-The last two examples in each block show the pipe as "list form", which is
-not yet supported on all platforms.  A good rule of thumb is that if
-your platform has a real L<C<fork>|/fork> (in other words, if your platform is
-Unix, including Linux and MacOS X), you can use the list form.  You would
-want to use the list form of the pipe so you can pass literal arguments
-to the command without risk of the shell interpreting any shell metacharacters
-in them.  However, this also bars you from opening pipes to commands
-that intentionally contain shell metacharacters, such as:
+=item Assigning a filehandle to a bareword
 
-    open(my $fh, "|cat -n | expand -4 | lpr")
-	|| die "Can't open pipeline to lpr: $!";
+An older style is to use a bareword as the filehandle, as
 
-See L<perlipc/"Safe Pipe Opens"> for more examples of this.
+    open(FH, "<", "input.txt")
+       or die "Can't open < input.txt: $!";
+
+Then you can use C<FH> as the filehandle, in C<< close FH >> and C<<
+<FH> >> and so on.  Note that it's a global variable, so this form is
+not recommended when dealing with filehandles other than Perl's built-in ones (e.g. STDOUT and STDIN).
+
+=back
+
+=item Other considerations
+
+=over
+
+=item Automatic filehandle closure
+
+The filehandle will be closed when its reference count reaches zero. If
+it is a lexically scoped variable declared with L<C<my>|/my VARLIST>,
+that usually means the end of the enclosing scope.  However, this
+automatic close does not check for errors, so it is better to explicitly
+close filehandles, especially those used for writing:
+
+    close($handle)
+       || warn "close failed: $!";
+
+=item Automatic pipe flushing
 
 Perl will attempt to flush all files opened for
 output before any operation that may do a fork, but this may not be
@@ -4785,30 +4888,42 @@ Closing any piped filehandle causes the parent process to wait for the
 child to finish, then returns the status value in L<C<$?>|perlvar/$?> and
 L<C<${^CHILD_ERROR_NATIVE}>|perlvar/${^CHILD_ERROR_NATIVE}>.
 
+=item Direct versus by-reference assignment of filehandles
+
+If FILEHANDLE -- the first argument in a call to C<open> -- is an
+undefined scalar variable (or array or hash element), a new filehandle
+is autovivified, meaning that the variable is assigned a reference to a
+newly allocated anonymous filehandle.  Otherwise if FILEHANDLE is an
+expression, its value is the real filehandle.  (This is considered a
+symbolic reference, so C<use strict "refs"> should I<not> be in effect.)
+
+=item Whitespace and special characters in the filename argument
+
 The filename passed to the one- and two-argument forms of
-L<C<open>|/open FILEHANDLE,EXPR> will
+L<C<open>|/open FILEHANDLE,MODE,EXPR> will
 have leading and trailing whitespace deleted and normal
 redirection characters honored.  This property, known as "magic open",
 can often be used to good effect.  A user could specify a filename of
 F<"rsh cat file |">, or you could change certain filenames as needed:
 
     $filename =~ s/(.*\.gz)\s*$/gzip -dc < $1|/;
-    open(my $fh, $filename) or die "Can't open $filename: $!";
+    open(my $fh, $filename)
+        or die "Can't open $filename: $!";
 
 Use the three-argument form to open a file with arbitrary weird characters in it,
 
     open(my $fh, "<", $file)
-	|| die "Can't open $file: $!";
+    	|| die "Can't open $file: $!";
 
 otherwise it's necessary to protect any leading and trailing whitespace:
 
     $file =~ s#^(\s)#./$1#;
     open(my $fh, "< $file\0")
-	|| die "Can't open $file: $!";
+    	|| die "Can't open $file: $!";
 
 (this may not work on some bizarre filesystems).  One should
 conscientiously choose between the I<magic> and I<three-argument> form
-of L<C<open>|/open FILEHANDLE,EXPR>:
+of L<C<open>|/open FILEHANDLE,MODE,EXPR>:
 
     open(my $in, $ARGV[0]) || die "Can't open $ARGV[0]: $!";
 
@@ -4816,16 +4931,18 @@ will allow the user to specify an argument of the form C<"rsh cat file |">,
 but will not work on a filename that happens to have a trailing space, while
 
     open(my $in, "<", $ARGV[0])
-	|| die "Can't open $ARGV[0]: $!";
+    	|| die "Can't open $ARGV[0]: $!";
 
 will have exactly the opposite restrictions. (However, some shells
 support the syntax C<< perl your_program.pl <( rsh cat file ) >>, which
 produces a filename that can be opened normally.)
 
+=item Invoking C-style C<open>
+
 If you want a "real" C L<open(2)>, then you should use the
 L<C<sysopen>|/sysopen FILEHANDLE,FILENAME,MODE> function, which involves
 no such magic (but uses different filemodes than Perl
-L<C<open>|/open FILEHANDLE,EXPR>, which corresponds to C L<fopen(3)>).
+L<C<open>|/open FILEHANDLE,MODE,EXPR>, which corresponds to C L<fopen(3)>).
 This is another way to protect your filenames from interpretation.  For
 example:
 
@@ -4840,7 +4957,14 @@ example:
 See L<C<seek>|/seek FILEHANDLE,POSITION,WHENCE> for some details about
 mixing reading and writing.
 
-Portability issues: L<perlport/open>.
+=item Portability issues
+
+See L<perlport/open>.
+
+=back
+
+=back
+
 
 =item opendir DIRHANDLE,EXPR
 X<opendir>
@@ -6036,7 +6160,7 @@ This protects against those locales where characters such as C<"|"> are
 considered to be word characters.
 
 Otherwise, Perl quotes non-ASCII characters using an adaptation from
-Unicode (see L<http://www.unicode.org/reports/tr31/>).
+Unicode (see L<https://www.unicode.org/reports/tr31/>).
 The only code points that are quoted are those that have any of the
 Unicode properties:  Pattern_Syntax, Pattern_White_Space, White_Space,
 Default_Ignorable_Code_Point, or General_Category=Control.
@@ -6127,14 +6251,15 @@ results in the string being padded to the required size with C<"\0">
 bytes before the result of the read is appended.
 
 The call is implemented in terms of either Perl's or your system's native
-L<fread(3)> library function.  To get a true L<read(2)> system call, see
+L<fread(3)> library function, via the L<PerlIO> layers applied to the
+handle.  To get a true L<read(2)> system call, see
 L<sysread|/sysread FILEHANDLE,SCALAR,LENGTH,OFFSET>.
 
 Note the I<characters>: depending on the status of the filehandle,
 either (8-bit) bytes or characters are read.  By default, all
 filehandles operate on bytes, but for example if the filehandle has
 been opened with the C<:utf8> I/O layer (see
-L<C<open>|/open FILEHANDLE,EXPR>, and the L<open>
+L<C<open>|/open FILEHANDLE,MODE,EXPR>, and the L<open>
 pragma), the I/O will operate on UTF8-encoded Unicode
 characters, not bytes.  Similarly for the C<:encoding> layer:
 in that case pretty much any characters can be read.
@@ -6270,7 +6395,7 @@ multi-line) string.  In list context, returns a list of lines
 C<$INPUT_RECORD_SEPARATOR> in L<English>)).
 This is the internal function implementing the C<qx/EXPR/>
 operator, but you can use it directly.  The C<qx/EXPR/>
-operator is discussed in more detail in L<perlop/"I/O Operators">.
+operator is discussed in more detail in L<perlop/"C<qx/I<STRING>/>">.
 If EXPR is omitted, uses L<C<$_>|perlvar/$_>.
 
 =item recv SOCKET,SCALAR,LENGTH,FLAGS
@@ -6682,8 +6807,8 @@ X<return>
 
 Returns from a subroutine, L<C<eval>|/eval EXPR>,
 L<C<do FILE>|/do EXPR>, L<C<sort>|/sort SUBNAME LIST> block or regex
-eval block (but not a L<C<grep>|/grep BLOCK LIST> or
-L<C<map>|/map BLOCK LIST> block) with the value
+eval block (but not a L<C<grep>|/grep BLOCK LIST>,
+L<C<map>|/map BLOCK LIST>, or L<C<do BLOCK>|/do BLOCK> block) with the value
 given in EXPR.  Evaluation of EXPR may be in list, scalar, or void
 context, depending on how the return value will be used, and the context
 may vary from one execution to the next (see
@@ -6789,8 +6914,8 @@ X<say>
 =for Pod::Functions +say output a list to a filehandle, appending a newline
 
 Just like L<C<print>|/print FILEHANDLE LIST>, but implicitly appends a
-newline.  C<say LIST> is simply an abbreviation for
-C<{ local $\ = "\n"; print LIST }>.  To use FILEHANDLE without a LIST to
+newline at the end of the LIST instead of any value L<C<$\>|perlvar/$\>
+might have.  To use FILEHANDLE without a LIST to
 print the contents of L<C<$_>|perlvar/$_> to it, you must use a bareword
 filehandle like C<FH>, not an indirect one like C<$fh>.
 
@@ -8074,8 +8199,8 @@ as supported by the compiler used to build Perl:
                64-bit integers)
    t           interpret integer as C type "ptrdiff_t" on Perl
                5.14 or later
-   z           interpret integer as C type "size_t" on Perl 5.14
-               or later
+   z           interpret integer as C types "size_t" or
+               "ssize_t" on Perl 5.14 or later
 
 As of 5.14, none of these raises an exception if they are not supported on
 your platform.  However, if warnings are enabled, a warning of the
@@ -8626,6 +8751,15 @@ parameters FILENAME, MODE, and PERMS.
 
 Returns true on success and L<C<undef>|/undef EXPR> otherwise.
 
+L<PerlIO> layers will be applied to the handle the same way they would in an
+L<C<open>|/open FILEHANDLE,MODE,EXPR> call that does not specify layers. That is,
+the current value of L<C<${^OPEN}>|perlvar/${^OPEN}> as set by the L<open>
+pragma in a lexical scope, or the C<-C> commandline option or C<PERL_UNICODE>
+environment variable in the main program scope, falling back to the platform
+defaults as described in L<PerlIO/Defaults and how to override them>. If you
+want to remove any layers that may transform the byte stream, use
+L<C<binmode>|/binmode FILEHANDLE, LAYER> after opening it.
+
 The possible values and flag bits of the MODE parameter are
 system-dependent; they are available via the standard module
 L<C<Fcntl>|Fcntl>.  See the documentation of your operating system's
@@ -8645,7 +8779,7 @@ OS/390 and on the Macintosh; you probably don't want to
 use them in new code.
 
 If the file named by FILENAME does not exist and the
-L<C<open>|/open FILEHANDLE,EXPR> call creates
+L<C<open>|/open FILEHANDLE,MODE,EXPR> call creates
 it (typically because MODE includes the C<O_CREAT> flag), then the value of
 PERMS specifies the permissions of the newly created file.  If you omit
 the PERMS argument to L<C<sysopen>|/sysopen FILEHANDLE,FILENAME,MODE>,
@@ -8675,6 +8809,13 @@ L<C<sysopen>|/sysopen FILEHANDLE,FILENAME,MODE>, because
 that takes away the user's option to have a more permissive umask.
 Better to omit it.  See L<C<umask>|/umask EXPR> for more on this.
 
+This function has no direct relation to the usage of
+L<C<sysread>|/sysread FILEHANDLE,SCALAR,LENGTH,OFFSET>,
+L<C<syswrite>|/syswrite FILEHANDLE,SCALAR,LENGTH,OFFSET>,
+or L<C<sysseek>|/sysseek FILEHANDLE,POSITION,WHENCE>.  A handle opened with
+this function can be used with buffered IO just as one opened with
+L<C<open>|/open FILEHANDLE,MODE,EXPR> can be used with unbuffered IO.
+
 Note that under Perls older than 5.8.0,
 L<C<sysopen>|/sysopen FILEHANDLE,FILENAME,MODE> depends on the
 L<fdopen(3)> C library function.  On many Unix systems, L<fdopen(3)> is known
@@ -8695,13 +8836,14 @@ X<sysread>
 =for Pod::Functions fixed-length unbuffered input from a filehandle
 
 Attempts to read LENGTH bytes of data into variable SCALAR from the
-specified FILEHANDLE, using L<read(2)>.  It bypasses
-buffered IO, so mixing this with other kinds of reads,
+specified FILEHANDLE, using L<read(2)>.  It bypasses any L<PerlIO> layers
+including buffered IO (but is affected by the presence of the C<:utf8>
+layer as described later), so mixing this with other kinds of reads,
 L<C<print>|/print FILEHANDLE LIST>, L<C<write>|/write FILEHANDLE>,
 L<C<seek>|/seek FILEHANDLE,POSITION,WHENCE>,
 L<C<tell>|/tell FILEHANDLE>, or L<C<eof>|/eof FILEHANDLE> can cause
 confusion because the
-perlio or stdio layers usually buffer data.  Returns the number of
+C<:perlio> or C<:crlf> layers usually buffer data.  Returns the number of
 bytes actually read, C<0> at end of file, or undef if there was an
 error (in the latter case L<C<$!>|perlvar/$!> is also set).  SCALAR will
 be grown or
@@ -8724,7 +8866,7 @@ Note that if the filehandle has been marked as C<:utf8>, C<sysread> will
 throw an exception.  The C<:encoding(...)> layer implicitly
 introduces the C<:utf8> layer.  See
 L<C<binmode>|/binmode FILEHANDLE, LAYER>,
-L<C<open>|/open FILEHANDLE,EXPR>, and the L<open> pragma.
+L<C<open>|/open FILEHANDLE,MODE,EXPR>, and the L<open> pragma.
 
 =item sysseek FILEHANDLE,POSITION,WHENCE
 X<sysseek> X<lseek>
@@ -8865,12 +9007,14 @@ X<syswrite>
 
 Attempts to write LENGTH bytes of data from variable SCALAR to the
 specified FILEHANDLE, using L<write(2)>.  If LENGTH is
-not specified, writes whole SCALAR.  It bypasses buffered IO, so
+not specified, writes whole SCALAR.  It bypasses any L<PerlIO> layers
+including buffered IO (but is affected by the presence of the C<:utf8>
+layer as described later), so
 mixing this with reads (other than C<sysread)>),
 L<C<print>|/print FILEHANDLE LIST>, L<C<write>|/write FILEHANDLE>,
 L<C<seek>|/seek FILEHANDLE,POSITION,WHENCE>,
 L<C<tell>|/tell FILEHANDLE>, or L<C<eof>|/eof FILEHANDLE> may cause
-confusion because the perlio and stdio layers usually buffer data.
+confusion because the C<:perlio> and C<:crlf> layers usually buffer data.
 Returns the number of bytes actually written, or L<C<undef>|/undef EXPR>
 if there was an error (in this case the errno variable
 L<C<$!>|perlvar/$!> is also set).  If the LENGTH is greater than the
@@ -8887,7 +9031,7 @@ The C<:encoding(...)> layer implicitly introduces the C<:utf8> layer.
 Alternately, if the handle is not marked with an encoding but you
 attempt to write characters with code points over 255, raises an exception.
 See L<C<binmode>|/binmode FILEHANDLE, LAYER>,
-L<C<open>|/open FILEHANDLE,EXPR>, and the L<open> pragma.
+L<C<open>|/open FILEHANDLE,MODE,EXPR>, and the L<open> pragma.
 
 =item tell FILEHANDLE
 X<tell>
@@ -9515,9 +9659,10 @@ I<only> meant to be used to assert that the running Perl is of a earlier
 version than its argument and I<not> to undo the feature-enabling side effects
 of C<use VERSION>.
 
-See L<perlmodlib> for a list of standard modules and pragmas.  See L<perlrun>
-for the C<-M> and C<-m> command-line options to Perl that give
-L<C<use>|/use Module VERSION LIST> functionality from the command-line.
+See L<perlmodlib> for a list of standard modules and pragmas.  See
+L<perlrun|perlrun/-m[-]module> for the C<-M> and C<-m> command-line
+options to Perl that give L<C<use>|/use Module VERSION LIST>
+functionality from the command-line.
 
 =item utime LIST
 X<utime>
@@ -9669,10 +9814,8 @@ to try to write off the beginning of the string (i.e., negative OFFSET).
 If the string happens to be encoded as UTF-8 internally (and thus has
 the UTF8 flag set), L<C<vec>|/vec EXPR,OFFSET,BITS> tries to convert it
 to use a one-byte-per-character internal representation. However, if the
-string contains characters with values of 256 or higher, that conversion
-will fail, and a deprecation message will be raised.  In that situation,
-C<vec> will operate on the underlying buffer regardless, in its internal
-UTF-8 representation.  In Perl 5.32, this will be a fatal error.
+string contains characters with values of 256 or higher, a fatal error
+will occur.
 
 Strings created with L<C<vec>|/vec EXPR,OFFSET,BITS> can also be
 manipulated with the logical

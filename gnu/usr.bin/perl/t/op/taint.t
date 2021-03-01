@@ -17,7 +17,7 @@ BEGIN {
 use strict;
 use Config;
 
-plan tests => 1043;
+plan tests => 1052;
 
 $| = 1;
 
@@ -2912,6 +2912,33 @@ is_tainted("$ovtaint", "overload preserves taint");
     my $c = eval { $v =~ s/(\w+)/$map{$1}/g; };
     is($c, 2, "RT #134409")
         or diag("\$@ = [$@]");
+}
+
+{
+    # check that each param is independent taint-wise.
+    use feature 'signatures';
+    use experimental 'signatures';
+
+    sub taint_sig1($a, $b, $c) {
+        isnt_tainted($a, 'taint_sig1: $a');
+        is_tainted  ($b, 'taint_sig1: $b');
+        isnt_tainted($c, 'taint_sig1: $c');
+    }
+    taint_sig1(1, $TAINT, 3);
+
+    sub taint_sig2($a, $b = $TAINT, $c = 3) {
+        isnt_tainted($a, 'taint_sig2: $a');
+        is_tainted  ($b, 'taint_sig2: $b');
+        isnt_tainted($c, 'taint_sig2: $c');
+    }
+    taint_sig2(1);
+
+    sub taint_sig3($a, $b = 2, $c = $TAINT) {
+        is_tainted  ($a, 'taint_sig3: $a');
+        isnt_tainted($b, 'taint_sig3: $b');
+        is_tainted  ($c, 'taint_sig3: $c');
+    }
+    taint_sig3($TAINT);
 }
 
 

@@ -31,7 +31,9 @@ unless (-d 't' && -f 'MANIFEST') {
     open my $fh, '<', $proto or die "Can't open $proto: $!";
 
     while (<$fh>) {
-	$declared{$1}++ if /^#define\s+(PERL_ARGS_ASSERT[A-Za-z0-9_]+)\s+/;
+        # The trailing '.' distinguishes real from dummy macros that have no
+        # real asserts
+	$declared{$1}++ if /^#define\s+(PERL_ARGS_ASSERT[A-Za-z0-9_]+)\s+./;
     }
 }
 

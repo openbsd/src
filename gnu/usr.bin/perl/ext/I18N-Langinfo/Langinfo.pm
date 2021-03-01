@@ -72,7 +72,7 @@ our @EXPORT_OK = qw(
 	YESSTR
 );
 
-our $VERSION = '0.18';
+our $VERSION = '0.19';
 
 XSLoader::load();
 
@@ -179,6 +179,8 @@ For the eras based on typically some ruler, such as the Japanese Emperor
     ERA ERA_D_FMT ERA_D_T_FMT ERA_T_FMT
 
 =back
+
+=head2 For systems without C<nl_langinfo>
 
 Starting in Perl 5.28, this module is available even on systems that lack a
 native C<nl_langinfo>.  On such systems, it uses various methods to construct

@@ -468,7 +468,7 @@ integer value less than or equal to the numerical argument.
 
 Returns the current floating point rounding mode, one of
 
-  FE_TONEAREST FE_TOWARDZERO FE_UPWARD FE_UPWARD
+  FE_TONEAREST FE_TOWARDZERO FE_UPWARD FE_DOWNWARD
 
 C<FE_TONEAREST> is like L</round>, C<FE_TOWARDZERO> is like L</trunc> [C99].
 
@@ -941,9 +941,11 @@ for creating hard links into files, see L<perlfunc/link>.
 =item C<localeconv>
 
 Get numeric formatting information.  Returns a reference to a hash
-containing the current underlying locale's formatting values.  Users of this function
-should also read L<perllocale>, which provides a comprehensive
-discussion of Perl locale handling, including
+containing the formatting values of the locale that currently underlies
+the program, regardless of whether or not it is called from within the
+scope of a S<C<use locale>>.  Users of this function should also read
+L<perllocale>, which provides a comprehensive discussion of Perl locale
+handling, including
 L<a section devoted to this function|perllocale/The localeconv function>.
 Prior to Perl 5.28, or when operating in a non thread-safe environment,
 it should not be used in a threaded application unless it's certain that
@@ -951,7 +953,7 @@ the underlying locale is C or POSIX.  This is because it otherwise
 changes the locale, which globally affects all threads simultaneously.
 Windows platforms starting with Visual Studio 2005 are mostly
 thread-safe, but use of this function in those prior to Visual Studio
-2015 can interefere with a thread that has called
+2015 can interfere with a thread that has called
 L<perlapi/switch_to_global_locale>.
 
 Here is how to query the database for the B<de> (Deutsch or German) locale.
@@ -1067,25 +1069,64 @@ Not implemented.  C<malloc()> is C-specific.  Perl does memory management transp
 
 =item C<mblen>
 
-This is identical to the C function C<mblen()>.
+This is the same as the C function C<mblen()> on unthreaded perls.  On
+threaded perls, it transparently (almost) substitutes the more
+thread-safe L<C<mbrlen>(3)>, if available, instead of C<mblen>.
 
-Core Perl does not have any support for the wide and multibyte
-characters of the C standards, except under UTF-8 locales, so this might
-be a rather useless function.
+Core Perl does not have any support for wide and multibyte locales,
+except Unicode UTF-8 locales.  This function, in conjunction with
+L</mbtowc> and L</wctomb> may be used to roll your own decoding/encoding
+of other types of multi-byte locales.
 
-However, Perl supports Unicode, see L<perluniintro>.
+Use C<undef> as the first parameter to this function to get the effect
+of passing NULL as the first parameter to C<mblen>.  This resets any
+shift state to its initial value.  The return value is undefined if
+C<mbrlen> was substituted, so you should never rely on it.
 
-=item C<mbstowcs>
+When the first parameter is a scalar containing a value that either is a
+PV string or can be forced into one, the return value is the number of
+bytes occupied by the first character of that string; or 0 if that first
+character is the wide NUL character; or negative if there is an error.
+This is based on the locale that currently underlies the program,
+regardless of whether or not the function is called from Perl code that
+is within the scope of S<C<use locale>>.  Perl makes no attempt at
+hiding from your code any differences in the C<errno> setting between
+C<mblen> and C<mbrlen>.  It does set C<errno> to 0 before calling them.
 
-This is identical to the C function C<mbstowcs()>.
-
-See L</mblen>.
+The optional second parameter is ignored if it is larger than the
+actual length of the first parameter string.
 
 =item C<mbtowc>
 
-This is identical to the C function C<mbtowc()>.
+This is the same as the C function C<mbtowc()> on unthreaded perls.  On
+threaded perls, it transparently (almost) substitutes the more
+thread-safe L<C<mbrtowc>(3)>, if available, instead of C<mbtowc>.
 
-See L</mblen>.
+Core Perl does not have any support for wide and multibyte locales,
+except Unicode UTF-8 locales.  This function, in conjunction with
+L</mblen> and L</wctomb> may be used to roll your own decoding/encoding
+of other types of multi-byte locales.
+
+The first parameter is a scalar into which, upon success, the wide
+character represented by the multi-byte string contained in the second
+parameter is stored.  The optional third parameter is ignored if it is
+larger than the actual length of the second parameter string.
+
+Use C<undef> as the second parameter to this function to get the effect
+of passing NULL as the second parameter to C<mbtowc>.  This resets any
+shift state to its initial value.  The return value is undefined if
+C<mbrtowc> was substituted, so you should never rely on it.
+
+When the second parameter is a scalar containing a value that either is
+a PV string or can be forced into one, the return value is the number of
+bytes occupied by the first character of that string; or 0 if that first
+character is the wide NUL character; or negative if there is an error.
+This is based on the locale that currently underlies the program,
+regardless of whether or not the function is called from Perl code that
+is within the scope of S<C<use locale>>.  Perl makes no attempt at
+hiding from your code any differences in the C<errno> setting between
+C<mbtowc> and C<mbrtowc>.  It does set C<errno> to 0 before calling
+them.
 
 =item C<memchr>
 
@@ -1451,14 +1492,19 @@ see L<perlfunc/eval>.
 
 =item C<setlocale>
 
-WARNING!  Do NOT use this function in a L<thread|threads>.  The locale
-will change in all other threads at the same time, and should your
-thread get paused by the operating system, and another started, that
-thread will not have the locale it is expecting.  On some platforms,
-there can be a race leading to segfaults if two threads call this
-function nearly simultaneously.
+WARNING!  Prior to Perl 5.28 or on a system that does not support
+thread-safe locale operations, do NOT use this function in a
+L<thread|threads>.  The locale will change in all other threads at the
+same time, and should your thread get paused by the operating system,
+and another started, that thread will not have the locale it is
+expecting.  On some platforms, there can be a race leading to segfaults
+if two threads call this function nearly simultaneously.  This warning
+does not apply on unthreaded builds, or on perls where
+C<${^SAFE_LOCALES}> exists and is non-zero; namely Perl 5.28 and later
+compiled to be locale-thread-safe.
 
-Modifies and queries the program's underlying locale.  Users of this
+This function
+modifies and queries the program's underlying locale.  Users of this
 function should read L<perllocale>, whch provides a comprehensive
 discussion of Perl locale handling, knowledge of which is necessary to
 properly use this function.  It contains
@@ -1466,7 +1512,9 @@ L<a section devoted to this function|perllocale/The setlocale function>.
 The discussion here is merely a summary reference for C<setlocale()>.
 Note that Perl itself is almost entirely unaffected by the locale
 except within the scope of S<C<"use locale">>.  (Exceptions are listed
-in L<perllocale/Not within the scope of "use locale">.)
+in L<perllocale/Not within the scope of "use locale">, and
+locale-dependent functions within the POSIX module ARE always affected
+by the current locale.)
 
 The following examples assume
 
@@ -1816,10 +1864,11 @@ POSIX-compliant systems set C<$!> (C<$ERRNO>) to indicate a translation
 error, so clear C<$!> before calling C<strtod>.  However, non-POSIX systems
 may not check for overflow, and therefore will never set C<$!>.
 
-C<strtod> respects any POSIX C<setlocale()> C<LC_TIME> settings,
+C<strtod> respects any POSIX C<setlocale()> C<LC_NUMERIC> settings,
 regardless of whether or not it is called from Perl code that is within
-the scope of S<C<use locale>>.  This means it should not be used in a
-threaded application unless it's certain that the underlying locale is C
+the scope of S<C<use locale>>.  Prior to Perl 5.28, or when operating in
+a non thread-safe environment, it should not be used in a threaded
+application unless it's certain that the underlying locale is C
 or POSIX.  This is because it otherwise changes the locale, which
 globally affects all threads simultaneously.
 
@@ -2004,6 +2053,7 @@ is no longer available; instead use L<File::Temp>.
 
 =item C<tolower>
 
+This function has been removed as of v5.26.
 This is identical to the C function, except that it can apply to a single
 character or to a whole string, and currently operates as if the locale
 always is "C".  Consider using the C<lc()> function, see L<perlfunc/lc>,
@@ -2012,6 +2062,7 @@ strings.
 
 =item C<toupper>
 
+This function has been removed as of v5.26.
 This is similar to the C function, except that it can apply to a single
 character or to a whole string, and currently operates as if the locale
 always is "C".  Consider using the C<uc()> function, see L<perlfunc/uc>,
@@ -2104,17 +2155,34 @@ builtin C<waitpid()> function, see L<perlfunc/waitpid>.
 	$pid = POSIX::waitpid( -1, POSIX::WNOHANG );
 	print "status = ", ($? / 256), "\n";
 
-=item C<wcstombs>
-
-This is identical to the C function C<wcstombs()>.
-
 See L</mblen>.
 
 =item C<wctomb>
 
-This is identical to the C function C<wctomb()>.
+This is the same as the C function C<wctomb()> on unthreaded perls.  On
+threaded perls, it transparently (almost) substitutes the more
+thread-safe L<C<wcrtomb>(3)>, if available, instead of C<wctomb>.
 
-See L</mblen>.
+Core Perl does not have any support for wide and multibyte locales,
+except Unicode UTF-8 locales.  This function, in conjunction with
+L</mblen> and L</mbtowc> may be used to roll your own decoding/encoding
+of other types of multi-byte locales.
+
+Use C<undef> as the first parameter to this function to get the effect
+of passing NULL as the first parameter to C<wctomb>.  This resets any
+shift state to its initial value.  The return value is undefined if
+C<wcrtomb> was substituted, so you should never rely on it.
+
+When the first parameter is a scalar, the code point contained in the
+scalar second parameter is converted into a multi-byte string and stored
+into the first parameter scalar.  This is based on the locale that
+currently underlies the program, regardless of whether or not the
+function is called from Perl code that is within the scope of S<C<use
+locale>>.  The return value is the number of bytes stored; or negative
+if the code point isn't representable in the current locale.  Perl makes
+no attempt at hiding from your code any differences in the C<errno>
+setting between C<wctomb> and C<wcrtomb>.  It does set C<errno> to 0
+before calling them.
 
 =item C<write>
 
@@ -2256,6 +2324,9 @@ Create an empty set.
 Create a set with C<SIGUSR1>.
 
 	$sigset = POSIX::SigSet->new( &POSIX::SIGUSR1 );
+
+Throws an error if any of the signals supplied cannot be added to the
+set.
 
 =item C<addset>
 

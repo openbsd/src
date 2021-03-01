@@ -4,7 +4,7 @@ perlfaq3 - Programming Tools
 
 =head1 VERSION
 
-version 5.20190126
+version 5.20200523
 
 =head1 DESCRIPTION
 
@@ -300,8 +300,8 @@ L<http://www.ddj.com/184404522> , and "Profiling in Perl"
 L<http://www.ddj.com/184404580> .
 
 Perl.com has two interesting articles on profiling: "Profiling Perl",
-by Simon Cozens, L<http://www.perl.com/lpt/a/850> and "Debugging and
-Profiling mod_perl Applications", by Frank Wiles,
+by Simon Cozens, L<https://www.perl.com/pub/2004/06/25/profiling.html/>
+and "Debugging and Profiling mod_perl Applications", by Frank Wiles,
 L<http://www.perl.com/pub/a/2006/02/09/debug_mod_perl.html> .
 
 Randal L. Schwartz writes about profiling in "Speeding up Your Perl
@@ -340,7 +340,7 @@ Put that in your F<.exrc> file (replacing the caret characters
 with control characters) and away you go. In insert mode, ^T is
 for indenting, ^D is for undenting, and ^O is for blockdenting--as
 it were. A more complete example, with comments, can be found at
-L<http://www.cpan.org/authors/id/TOMC/scripts/toms.exrc.gz>
+L<http://www.cpan.org/authors/id/T/TO/TOMC/scripts/toms.exrc.gz>
 
 =head2 Is there an IDE or Windows Perl Editor?
 
@@ -497,7 +497,7 @@ L<http://www.vim.org/>
 
 =item Vile
 
-L<http://dickey.his.com/vile/vile.html>
+L<http://invisible-island.net/vile/vile.html>
 
 =back
 
@@ -558,7 +558,7 @@ are text editors for OS X that have a Perl sensitivity mode
 =head2 Where can I get Perl macros for vi?
 
 For a complete version of Tom Christiansen's vi configuration file,
-see L<http://www.cpan.org/authors/Tom_Christiansen/scripts/toms.exrc.gz> ,
+see L<http://www.cpan.org/authors/id/T/TO/TOMC/scripts/toms.exrc.gz> ,
 the standard benchmark file for vi emulators. The file runs best with nvi,
 the current version of vi out of Berkeley, which incidentally can be built
 with an embedded Perl interpreter--see L<http://www.cpan.org/src/misc/> .
@@ -581,7 +581,7 @@ For CPerlMode, see L<http://www.emacswiki.org/cgi-bin/wiki/CPerlMode>
 
 The Curses module from CPAN provides a dynamically loadable object
 module interface to a curses library. A small demo can be found at the
-directory L<http://www.cpan.org/authors/Tom_Christiansen/scripts/rep.gz> ;
+directory L<http://www.cpan.org/authors/id/T/TO/TOMC/scripts/rep.gz> ;
 this program repeats a command and updates the screen as needed, rendering
 B<rep ps axu> similar to B<top>.
 
@@ -1066,7 +1066,7 @@ guides and references in L<perlfaq9> or in the CGI MetaFAQ:
 
     L<http://www.perl.org/CGI_MetaFAQ.html>
 
-Looking in to L<Plack> and modern Perl web frameworks is highly recommended,
+Looking into L<https://plackperl.org> and modern Perl web frameworks is highly recommended,
 though; web programming in Perl has evolved a long way from the old days of
 simple CGI scripts.
 
@@ -1098,7 +1098,8 @@ XS support files.
 
 Download the ExtUtils::Embed kit from CPAN and run `make test'. If
 the tests pass, read the pods again and again and again. If they
-fail, see L<perlbug> and send a bug report with the output of
+fail, submit a bug report to L<https://github.com/Perl/perl5/issues>
+with the output of
 C<make test TEST_VERBOSE=1> along with C<perl -V>.
 
 =head2 When I tried to run my script, I got this message. What does it mean?

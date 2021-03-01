@@ -23,7 +23,7 @@ https://metacpan.org/pod/release/[AUTHOR]/perl-5.[VERSION.SUBVERSION]/pod/perlde
 [ACKNOWLEDGEMENTS SECTION FROM PERLDELTA]
 
 We expect to release version [NEXT BLEAD VERSION.SUBVERSION] on [FUTURE
-DATE].  The next major stable release of Perl 5, version 30.0, should
-appear in May 2019.
+DATE].  The next major stable release of Perl 5, version 32.0, should
+appear in May 2020.
 
 [YOUR SALUTATION HERE]

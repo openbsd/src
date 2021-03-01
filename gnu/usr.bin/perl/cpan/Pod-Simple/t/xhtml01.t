@@ -18,7 +18,7 @@ isa_ok ($parser, 'Pod::Simple::XHTML');
 
 my $results;
 
-my $PERLDOC = "http://search.cpan.org/perldoc";
+my $PERLDOC = "https://metacpan.org/pod";
 my $MANURL = "http://man.he.net/man";
 
 initialize($parser, $results);
@@ -541,7 +541,7 @@ $parser->parse_string_document(<<'EOPOD');
 A plain paragraph with a L<Newlines>.
 EOPOD
 is($results, <<"EOHTML", "Link entity in a paragraph");
-<p>A plain paragraph with a <a href="$PERLDOC?Newlines">Newlines</a>.</p>
+<p>A plain paragraph with a <a href="$PERLDOC/Newlines">Newlines</a>.</p>
 
 EOHTML
 
@@ -552,7 +552,7 @@ $parser->parse_string_document(<<'EOPOD');
 A plain paragraph with a L<perlport/Newlines>.
 EOPOD
 is($results, <<"EOHTML", "Link entity in a paragraph");
-<p>A plain paragraph with a <a href="$PERLDOC?perlport#Newlines">&quot;Newlines&quot; in perlport</a>.</p>
+<p>A plain paragraph with a <a href="$PERLDOC/perlport#Newlines">&quot;Newlines&quot; in perlport</a>.</p>
 
 EOHTML
 
@@ -742,16 +742,16 @@ like $results, qr{\Q<meta http-equiv="Content-Type" content="text/html; charset=
 
 # Test the link generation methods.
 is $parser->resolve_pod_page_link('Net::Ping', 'INSTALL'),
-    "$PERLDOC?Net::Ping#INSTALL",
+    "$PERLDOC/Net::Ping#INSTALL",
     'POD link with fragment';
 is $parser->resolve_pod_page_link('perlpodspec'),
-    "$PERLDOC?perlpodspec", 'Simple POD link';
+    "$PERLDOC/perlpodspec", 'Simple POD link';
 is $parser->resolve_pod_page_link(undef, 'SYNOPSIS'), '#SYNOPSIS',
     'Simple fragment link';
 is $parser->resolve_pod_page_link(undef, 'this that'), '#this-that',
     'Fragment link with space';
 is $parser->resolve_pod_page_link('perlpod', 'this that'),
-    "$PERLDOC?perlpod#this-that",
+    "$PERLDOC/perlpod#this-that",
     'POD link with fragment with space';
 
 is $parser->resolve_man_page_link('crontab(5)', 'EXAMPLE CRON FILE'),

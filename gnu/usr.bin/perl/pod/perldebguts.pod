@@ -14,9 +14,9 @@ Caveat lector.
 
 Perl has special debugging hooks at compile-time and run-time used
 to create debugging environments.  These hooks are not to be confused
-with the I<perl -Dxxx> command described in L<perlrun>, which is
-usable only if a special Perl is built per the instructions in the
-F<INSTALL> podpage in the Perl source tree.
+with the I<perl -Dxxx> command described in L<perlrun|perlrun/-Dletters>,
+which is usable only if a special Perl is built per the instructions in
+the F<INSTALL> podpage in the Perl source tree.
 
 For example, whenever you call Perl's built-in C<caller> function
 from the package C<DB>, the arguments that the corresponding stack
@@ -562,7 +562,7 @@ will be lost.
 
 =for regcomp.pl begin
 
- # TYPE arg-description [num-args] [longjump-len] DESCRIPTION
+ # TYPE arg-description [regnode-struct-suffix] [longjump-len] DESCRIPTION
 
  # Exit points
 
@@ -582,16 +582,16 @@ will be lost.
  GPOS             no         Matches where last m//g left off.
 
  # Word Boundary Opcodes:
- BOUND            no         Like BOUNDA for non-utf8, otherwise match
-                             "" between any Unicode \w\W or \W\w
+ BOUND            no         Like BOUNDA for non-utf8, otherwise like
+                             BOUNDU
  BOUNDL           no         Like BOUND/BOUNDU, but \w and \W are
                              defined by current locale
  BOUNDU           no         Match "" at any boundary of a given type
                              using /u rules.
  BOUNDA           no         Match "" at any boundary between \w\W or
                              \W\w, where \w is [_a-zA-Z0-9]
- NBOUND           no         Like NBOUNDA for non-utf8, otherwise match
-                             "" between any Unicode \w\w or \W\W
+ NBOUND           no         Like NBOUNDA for non-utf8, otherwise like
+                             BOUNDU
  NBOUNDL          no         Like NBOUND/NBOUNDU, but \w and \W are
                              defined by current locale
  NBOUNDU          no         Match "" at any non-boundary of a given
@@ -611,10 +611,27 @@ will be lost.
  ANYOFPOSIXL      sv         Like ANYOFL, but matches [[:posix:]]
                   charclass_ classes
                   posixl
+
  ANYOFH           sv 1       Like ANYOF, but only has "High" matches,
-                             none in the bitmap; non-zero flags "f"
-                             means "f" is the first UTF-8 byte shared in
-                             common by all code points matched
+                             none in the bitmap; the flags field
+                             contains the lowest matchable UTF-8 start
+                             byte
+ ANYOFHb          sv 1       Like ANYOFH, but all matches share the same
+                             UTF-8 start byte, given in the flags field
+ ANYOFHr          sv 1       Like ANYOFH, but the flags field contains
+                             packed bounds for all matchable UTF-8 start
+                             bytes.
+ ANYOFHs          sv 1       Like ANYOFHb, but has a string field that
+                             gives the leading matchable UTF-8 bytes;
+                             flags field is len
+ ANYOFR           packed 1   Matches any character in the range given by
+                             its packed args: upper 12 bits is the max
+                             delta from the base lower 20; the flags
+                             field contains the lowest matchable UTF-8
+                             start byte
+ ANYOFRb          packed 1   Like ANYOFR, but all matches share the same
+                             UTF-8 start byte, given in the flags field
+
  ANYOFM           byte 1     Like ANYOF, but matches an invariant byte
                              as determined by the mask and arg
  NANYOFM          byte 1     complement of ANYOFM
@@ -651,40 +668,48 @@ will be lost.
 
  # Literals
 
- EXACT            str        Match this string (preceded by length).
+ EXACT            str        Match this string (flags field is the
+                             length).
+
+ # In a long string node, the U32 argument is the length, and is
+ # immediately followed by the string.
+ LEXACT           len:str 1  Match this long string (preceded by length;
+                             flags unused).
  EXACTL           str        Like EXACT, but /l is in effect (used so
-                             locale-related warnings can be checked
-                             for).
- EXACTF           str        Match this string using /id rules (w/len);
-                             (string not UTF-8, not guaranteed to be
-                             folded).
- EXACTFL          str        Match this string using /il rules (w/len);
-                             (string not guaranteed to be folded).
- EXACTFU          str        Match this string using /iu rules (w/len);
-                             (string folded iff in UTF-8; non-UTF8
-                             folded length <= unfolded).
- EXACTFAA         str        Match this string using /iaa rules (w/len)
-                             (string folded iff in UTF-8; non-UTF8
-                             folded length <= unfolded).
+                             locale-related warnings can be checked for)
+ EXACTF           str        Like EXACT, but match using /id rules;
+                             (string not UTF-8, ASCII folded; non-ASCII
+                             not)
+ EXACTFL          str        Like EXACT, but match using /il rules;
+                             (string not likely to be folded)
+ EXACTFU          str        Like EXACT, but match using /iu rules;
+                             (string folded)
 
- EXACTFUP         str        Match this string using /iu rules (w/len);
-                             (string not UTF-8, not guaranteed to be
-                             folded; and its Problematic).
+ EXACTFAA         str        Like EXACT, but match using /iaa rules;
+                             (string folded except in non-UTF8 patterns:
+                             MICRO, SHARP S; folded length <= unfolded)
 
- EXACTFLU8        str        Like EXACTFU, but use /il, UTF-8, folded,
-                             and everything in it is above 255.
- EXACTFAA_NO_TRIE str        Match this string using /iaa rules (w/len)
-                             (string not UTF-8, not guaranteed to be
-                             folded, not currently trie-able).
+ EXACTFUP         str        Like EXACT, but match using /iu rules;
+                             (string not UTF-8, folded except MICRO,
+                             SHARP S: hence Problematic)
 
- EXACT_ONLY8      str        Like EXACT, but only UTF-8 encoded targets
+ EXACTFLU8        str        Like EXACTFU, but use /il, UTF-8, (string
+                             is folded, and everything in it is above
+                             255
+ EXACTFAA_NO_TRIE str        Like EXACT, but match using /iaa rules
+                             (string not UTF-8, not guaranteed to be
+                             folded, not currently trie-able)
+
+ EXACT_REQ8       str        Like EXACT, but only UTF-8 encoded targets
                              can match
- EXACTFU_ONLY8    str        Like EXACTFU, but only UTF-8 encoded
+ LEXACT_REQ8      len:str 1  Like LEXACT, but only UTF-8 encoded targets
+                             can match
+ EXACTFU_REQ8     str        Like EXACTFU, but only UTF-8 encoded
                              targets can match
 
  EXACTFU_S_EDGE   str        /di rules, but nothing in it precludes /ui,
                              except begins and/or ends with [Ss];
-                             (string not UTF-8; compile-time only).
+                             (string not UTF-8; compile-time only)
 
  # Do nothing types
 
@@ -732,14 +757,14 @@ will be lost.
 
  # Named references.  Code in regcomp.c assumes that these all are after
  # the numbered references
- NREF             no-sv 1    Match some already matched string
- NREFF            no-sv 1    Match already matched string, using /di
+ REFN             no-sv 1    Match some already matched string
+ REFFN            no-sv 1    Match already matched string, using /di
                              rules.
- NREFFL           no-sv 1    Match already matched string, using /li
+ REFFLN           no-sv 1    Match already matched string, using /li
                              rules.
- NREFFU           num 1      Match already matched string, using /ui
+ REFFUN           num 1      Match already matched string, using /ui
                              rules.
- NREFFA           num 1      Match already matched string, using /aai
+ REFFAN           num 1      Match already matched string, using /aai
                              rules.
 
  # Support for long RE
@@ -791,7 +816,7 @@ will be lost.
  GOSUB            num/ofs 2L recurse to paren arg1 at (signed) ofs arg2
 
  # Special conditionals
- NGROUPP          no-sv 1    Whether the group matched.
+ GROUPPN          no-sv 1    Whether the group matched.
  INSUBP           num 1      Whether we are in a specific recurse.
  DEFINEP          none 1     Never execute directly.
 
@@ -832,6 +857,9 @@ will be lost.
  # node cant be optimized. So END implies "unoptimizable" and PSEUDO
  # mean "not seen anything to optimize yet".
  PSEUDO           off        Pseudo opcode for internal use.
+
+ REGEX_SET        depth p    Regex set, temporary node used in pre-
+                             optimization compilation
 
 =for regcomp.pl end
 

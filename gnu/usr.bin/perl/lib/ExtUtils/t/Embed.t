@@ -18,6 +18,11 @@ if ( $Config{usecrosscompile} && !can_run($cc) ) {
     print "1..0 # SKIP Cross-compiling and the target doesn't have $cc";
     exit;
 }
+
+if (ord("A") != 65) {
+    print "1..0 # SKIP EBCDIC platform doesn't currently work";
+    exit;
+}
 open(my $fh,">embed_test.c") || die "Cannot open embed_test.c:$!";
 print $fh <DATA>;
 close($fh);

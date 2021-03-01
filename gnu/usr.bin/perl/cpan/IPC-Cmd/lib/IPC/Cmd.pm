@@ -19,7 +19,7 @@ BEGIN {
                         $HAVE_MONOTONIC
                     ];
 
-    $VERSION        = '1.02';
+    $VERSION        = '1.04';
     $VERBOSE        = 0;
     $DEBUG          = 0;
     $WARN           = 1;
@@ -1204,7 +1204,7 @@ sub run_forked {
       # which do setsid theirselves -- can't do anything
       # with those)
 
-      POSIX::setsid() || Carp::confess("Error running setsid: " . $!);
+      POSIX::setsid() == -1 and Carp::confess("Error running setsid: " . $!);
 
       if ($opts->{'child_BEGIN'} && ref($opts->{'child_BEGIN'}) eq 'CODE') {
         $opts->{'child_BEGIN'}->();

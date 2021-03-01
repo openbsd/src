@@ -121,7 +121,7 @@ dlopen(const char *path, int mode)
 	/* Not found. Check for non-FAT name and try truncated name. */
 	/* Don't know if this helps though... */
 	for (beg = dot = path + strlen(path);
-	     beg > path && !strchr(":/\\", *(beg-1));
+	     beg > path && !memCHRs(":/\\", *(beg-1));
 	     beg--)
 		if (*beg == '.')
 			dot = beg;

@@ -14,7 +14,6 @@ cpan/autodie/t/chmod.t
 cpan/CPAN-Meta-YAML/t/tml
 cpan/Test-Harness/t/source_tests/source.sh
 cpan/Test-Harness/t/source_tests/source_args.sh
-dist/Devel-PPPort/devel/mkapidoc.sh
 dist/Devel-PPPort/devel/mktodo
 dist/Devel-PPPort/devel/regenerate
 dist/Devel-PPPort/devel/scanprov

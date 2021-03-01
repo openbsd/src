@@ -154,7 +154,11 @@ And perhaps most importantly, keep the items consistent: either use
 "=item *" for all of them, to produce bullets; or use "=item 1.",
 "=item 2.", etc., to produce numbered lists; or use "=item foo",
 "=item bar", etc.--namely, things that look nothing like bullets or
-numbers.
+numbers.  (If you have a list that contains both: 1) things that don't
+look like bullets nor numbers,  plus 2) things that do, you should
+preface the bullet- or number-like items with C<ZE<lt>E<gt>>.  See
+L<ZE<lt>E<gt>|/ZE<lt>E<gt> -- a null (zero-effect) formatting code>
+below for an example.)
 
 If you start with bullets or numbers, stick with them, as
 formatters use the first "=item" type to decide how to format the
@@ -539,6 +543,41 @@ EE<lt>...E<gt> code sometimes.  For example, instead of
 "C<NZE<lt>E<gt>E<lt>3>" (the "ZE<lt>E<gt>" breaks up the "N" and
 the "E<lt>" so they can't be considered
 the part of a (fictitious) "NE<lt>...E<gt>" code).
+
+Another use is to indicate that I<stuff> in C<=item ZE<lt>E<gt>I<stuff...>>
+is not to be considered to be a bullet or number.  For example,
+without the C<ZE<lt>E<gt>>, the line
+
+ =item Z<>500 Server error
+
+could possibly be parsed as an item in a numbered list when it isn't
+meant to be.
+
+Still another use is to maintain visual space between C<=item> lines.
+If you specify
+
+ =item foo
+
+ =item bar
+
+it will typically get rendered as
+
+ foo
+ bar
+
+That may be what you want, but if what you really want is
+
+ foo
+
+ bar
+
+you can use C<ZE<lt>E<gt>> to accomplish that
+
+ =item foo
+
+ Z<>
+
+ =item bar
 
 =for comment
  This was formerly explained as a "zero-width character".  But it in

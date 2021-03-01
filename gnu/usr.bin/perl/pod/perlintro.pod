@@ -248,8 +248,8 @@ To get at hash elements:
 You can get at lists of keys and values with C<keys()> and
 C<values()>.
 
- my @fruits = keys %fruit_colors;
- my @colors = values %fruit_colors;
+ my @fruits = keys %fruit_color;
+ my @colors = values %fruit_color;
 
 Hashes have no particular internal order, though you can sort the keys
 and loop through them.
@@ -473,7 +473,7 @@ detail.)
 
  =   assignment
  .   string concatenation
- x   string multiplication
+ x   string multiplication (repeats strings)
  ..  range operator (creates a list of numbers or strings)
 
 =back

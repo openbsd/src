@@ -4,30 +4,30 @@ use strict ;
 use warnings;
 use bytes;
 
-use IO::Compress::Base::Common  2.084 qw(:Status );
-use IO::Compress::RawDeflate 2.084 ();
-use IO::Compress::Adapter::Deflate 2.084 ;
-use IO::Compress::Adapter::Identity 2.084 ;
-use IO::Compress::Zlib::Extra 2.084 ;
-use IO::Compress::Zip::Constants 2.084 ;
+use IO::Compress::Base::Common  2.093 qw(:Status );
+use IO::Compress::RawDeflate 2.093 ();
+use IO::Compress::Adapter::Deflate 2.093 ;
+use IO::Compress::Adapter::Identity 2.093 ;
+use IO::Compress::Zlib::Extra 2.093 ;
+use IO::Compress::Zip::Constants 2.093 ;
 
 use File::Spec();
 use Config;
 
-use Compress::Raw::Zlib  2.084 (); 
+use Compress::Raw::Zlib  2.093 (); 
 
 BEGIN
 {
     eval { require IO::Compress::Adapter::Bzip2 ; 
-           import  IO::Compress::Adapter::Bzip2 2.084 ; 
+           import  IO::Compress::Adapter::Bzip2 2.093 ; 
            require IO::Compress::Bzip2 ; 
-           import  IO::Compress::Bzip2 2.084 ; 
+           import  IO::Compress::Bzip2 2.093 ; 
          } ;
          
     eval { require IO::Compress::Adapter::Lzma ; 
-           import  IO::Compress::Adapter::Lzma 2.084 ; 
+           import  IO::Compress::Adapter::Lzma 2.093 ; 
            require IO::Compress::Lzma ; 
-           import  IO::Compress::Lzma 2.084 ; 
+           import  IO::Compress::Lzma 2.093 ; 
          } ;
 }
 
@@ -36,7 +36,7 @@ require Exporter ;
 
 our ($VERSION, @ISA, @EXPORT_OK, %EXPORT_TAGS, %DEFLATE_CONSTANTS, $ZipError);
 
-$VERSION = '2.084';
+$VERSION = '2.093';
 $ZipError = '';
 
 @ISA = qw(IO::Compress::RawDeflate Exporter);
@@ -246,13 +246,17 @@ sub mkHeader
         &{ *$self->{ZipData}{FilterName} }() ;
     }
 
-#    if ( $param->getValue('utf8') ) {
-#        require Encode ;
-#        $filename = Encode::encode_utf8($filename)
-#            if length $filename ;
-#        $comment = Encode::encode_utf8($comment)
-#            if length $comment ;
-#    }
+   if ( $param->getValue('efs') && $] >= 5.008004) {
+        if (length $filename) {
+            utf8::downgrade($filename, 1)
+                or Carp::croak "Wide character in zip filename";
+        }
+
+        if (length $comment) {
+            utf8::downgrade($comment, 1)
+                or Carp::croak "Wide character in zip comment";
+        }
+   }   
 
     my $hdr = '';
 
@@ -325,8 +329,8 @@ sub mkHeader
     $gpFlag |= ZIP_GP_FLAG_LZMA_EOS_PRESENT
         if $method == ZIP_CM_LZMA ;
 
-#    $gpFlag |= ZIP_GP_FLAG_LANGUAGE_ENCODING
-#        if  $param->getValue('utf8') && (length($filename) || length($comment));
+    $gpFlag |= ZIP_GP_FLAG_LANGUAGE_ENCODING
+        if  $param->getValue('efs') && (length($filename) || length($comment));
 
     my $version = $ZIP_CM_MIN_VERSIONS{$method};
     $version = ZIP64_MIN_VERSION
@@ -682,7 +686,7 @@ our %PARAMS = (
             'name'      => [IO::Compress::Base::Common::Parse_any,       ''],
             'filtername'=> [IO::Compress::Base::Common::Parse_code,      undef],
             'canonicalname'=> [IO::Compress::Base::Common::Parse_boolean,   0],
-#            'utf8'      => [IO::Compress::Base::Common::Parse_boolean,   0],
+            'efs'       => [IO::Compress::Base::Common::Parse_boolean,   0],
             'time'      => [IO::Compress::Base::Common::Parse_any,       undef],
             'extime'    => [IO::Compress::Base::Common::Parse_any,       undef],
             'exunix2'   => [IO::Compress::Base::Common::Parse_any,       undef], 
@@ -905,7 +909,6 @@ IO::Compress::Zip - Write zip files/buffers
     binmode $z
     fileno $z
     close $z ;
- 
 
 =head1 DESCRIPTION
 
@@ -916,14 +919,18 @@ The primary purpose of this module is to provide streaming write access to
 zip files and buffers. It is not a general-purpose file archiver. If that
 is what you want, check out C<Archive::Zip> or C<Archive::Zip::SimpleZip>.
 
-At present three compression methods are supported by IO::Compress::Zip,
+At present the following compression methods are supported by IO::Compress::Zip,
 namely Store (no compression at all), Deflate, Bzip2 and LZMA.
 
-Note that to create Bzip2 content, the module C<IO::Compress::Bzip2> must
-be installed.
+B<Note>
 
-Note that to create LZMA content, the module C<IO::Compress::Lzma> must
-be installed.
+=over 5
+
+=item * To use Bzip2 compression, the module C<IO::Compress::Bzip2> must be installed.
+
+=item * To use LZMA compression, the module C<IO::Compress::Lzma> must be installed.
+
+=back
 
 For reading zip files/buffers, see the companion module
 L<IO::Uncompress::Unzip|IO::Uncompress::Unzip>.
@@ -945,7 +952,8 @@ The functional interface needs Perl5.005 or better.
 =head2 zip $input_filename_or_reference => $output_filename_or_reference [, OPTS]
 
 C<zip> expects at least two parameters,
-C<$input_filename_or_reference> and C<$output_filename_or_reference>.
+C<$input_filename_or_reference> and C<$output_filename_or_reference>
+and zero or more optional parameters (see L</Optional Parameters>)
 
 =head3 The C<$input_filename_or_reference> parameter
 
@@ -958,7 +966,7 @@ It can take one of the following forms:
 
 =item A filename
 
-If the <$input_filename_or_reference> parameter is a simple scalar, it is
+If the C<$input_filename_or_reference> parameter is a simple scalar, it is
 assumed to be a filename. This file will be opened for reading and the
 input data will be read from it.
 
@@ -1062,9 +1070,9 @@ in C<$output_filename_or_reference> as a distinct entry.
 
 =head2 Optional Parameters
 
-Unless specified below, the optional parameters for C<zip>,
-C<OPTS>, are the same as those used with the OO interface defined in the
-L</"Constructor Options"> section below.
+The optional parameters for the one-shot function C<zip>
+are (for the most part) identical to those used with the OO interface defined in the
+L</"Constructor Options"> section. The exceptions are listed below
 
 =over 5
 
@@ -1132,6 +1140,50 @@ Defaults to 0.
 
 =head2 Examples
 
+Here are a few example that show the capabilities of the module.
+
+=head3 Streaming
+
+This very simple command line example demonstrates the streaming capabilities of the module.
+The code reads data from STDIN, compresses it, and writes the compressed data to STDOUT.
+
+    $ echo hello world | perl -MIO::Compress::Zip=zip -e 'zip \*STDIN => \*STDOUT' >output.zip
+
+The special filename "-" can be used as a standin for both C<\*STDIN> and C<\*STDOUT>,
+so the above can be rewritten as
+
+    $ echo hello world | perl -MIO::Compress::Zip=zip -e 'zip "-" => "-"' >output.zip
+
+One problem with creating a zip archive directly from STDIN can be demonstrated by looking at
+the contents of the zip file, output.zip, that we have just created.
+
+    $ unzip -l output.zip
+    Archive:  output.zip
+    Length      Date    Time    Name
+    ---------  ---------- -----   ----
+        12  2019-08-16 22:21
+    ---------                     -------
+        12                     1 file
+
+The archive member (filename) used is the empty string.
+
+If that doesn't suit your needs, you can explicitly set the filename used
+in the zip archive by specifying the L<Name|"File Naming Options"> option, like so
+
+    echo hello world | perl -MIO::Compress::Zip=zip -e 'zip "-" => "-", Name => "hello.txt"' >output.zip
+
+Now the contents of the zip file looks like this
+
+    $ unzip -l output.zip
+    Archive:  output.zip
+    Length      Date    Time    Name
+    ---------  ---------- -----   ----
+        12  2019-08-16 22:22   hello.txt
+    ---------                     -------
+        12                     1 file
+
+=head3 Compressing a file from the filesystem
+
 To read the contents of the file C<file1.txt> and write the compressed
 data to the file C<file1.txt.zip>.
 
@@ -1142,6 +1194,8 @@ data to the file C<file1.txt.zip>.
     my $input = "file1.txt";
     zip $input => "$input.zip"
         or die "zip failed: $ZipError\n";
+
+=head3 Reading from a Filehandle and writing to an in-memory buffer
 
 To read from an existing Perl filehandle, C<$input>, and write the
 compressed data to a buffer, C<$buffer>.
@@ -1156,6 +1210,8 @@ compressed data to a buffer, C<$buffer>.
     my $buffer ;
     zip $input => \$buffer
         or die "zip failed: $ZipError\n";
+
+=head3 Compressing multiple files
 
 To create a zip file, C<output.zip>, that contains the compressed contents
 of the files C<alpha.txt> and C<beta.txt>
@@ -1235,7 +1291,7 @@ return undef.
 
 =head2 Constructor Options
 
-C<OPTS> is any combination of the following options:
+C<OPTS> is any combination of zero or more the following options:
 
 =over 5
 
@@ -1278,22 +1334,52 @@ to it.  Otherwise the file pointer will not be moved.
 
 This parameter defaults to 0.
 
+=back
+
+=head3 File Naming Options
+
+A quick bit of zip file terminology -- A zip archive consists of one or more I<archive members>, where each member has an associated 
+filename, known as the I<archive member name>.
+
+The options listed in this section control how the I<archive member name> (or filename) is stored the zip archive.
+
+=over 5
+
 =item C<< Name => $string >>
 
-Stores the contents of C<$string> in the zip filename header field.
+This option is used to explicitly set the I<archive member name> in
+the zip archive to C<$string>.
+Most of the time you don't need to make use of this option.
+By default when adding a filename to the zip archive, the I<archive member name> will match the filename.
 
-If C<Name> is not specified and the C<$input> parameter is a filename, the
-value of C<$input> will be used for the zip filename header field.
+You should only need to use this option if you want the I<archive member name>
+to be different from the uncompressed filename or when the input is a filehandle or a buffer.
 
-If C<Name> is not specified and the C<$input> parameter is not a filename,
-no zip filename field will be created.
+The default behaviour for what I<archive member name> is used when the C<Name> option 
+is I<not> specified depends on the form of the C<$input> parameter:
+
+=over 5
+
+=item *
+
+If the C<$input> parameter is a filename, the
+value of C<$input> will be used for the I<archive member name> .
+
+=item * 
+If the C<$input> parameter is not a filename,
+the I<archive member name> will be an empty string.
+
+=back 
 
 Note that both the C<CanonicalName> and C<FilterName> options
-can modify the value used for the zip filename header field.
+can modify the value used for the I<archive member name>.
+
+Also note that you should set the C<Efs> option to true if you are working
+with UTF8 filenames.
 
 =item C<< CanonicalName => 0|1 >>
 
-This option controls whether the filename field in the zip header is
+This option controls whether the I<archive member name> is
 I<normalized> into Unix format before being written to the zip file.
 
 It is recommended that you enable this option unless you really need
@@ -1313,15 +1399,14 @@ This option defaults to B<false>.
 
 =item C<< FilterName => sub { ... }  >>
 
-This option allow the filename field in the zip header to be modified
+This option allow the I<archive member> name to be modified
 before it is written to the zip file.
 
 This option takes a parameter that must be a reference to a sub.  On entry
 to the sub the C<$_> variable will contain the name to be filtered. If no
 filename is available C<$_> will contain an empty string.
 
-The value of C<$_> when the sub returns will be  stored in the filename
-header field.
+The value of C<$_> when the sub returns will be  used as the I<archive member name>.
 
 Note that if C<CanonicalName> is enabled, a
 normalized filename will be passed to the sub.
@@ -1342,6 +1427,167 @@ filenames before they are stored in C<$zipfile>.
         zip [ <$dir/*.txt> ] => $zipfile,
             FilterName => sub { s[^$dir/][] } ;
     }
+
+=item C<< Efs => 0|1 >>
+
+This option controls setting of the "Language Encoding Flag" (EFS) in the zip
+archive. When set, the filename and comment fields for the zip archive MUST
+be valid UTF-8.
+
+If the string used for the filename and/or comment is not valid UTF-8 when this option
+is true, the script will die with a "wide character" error.
+
+Note that this option only works with Perl 5.8.4 or better.
+
+This option defaults to B<false>.
+
+=back
+
+=head3 Overall Zip Archive Structure
+
+=over 5
+
+=item C<< Minimal => 1|0 >>
+
+If specified, this option will disable the creation of all extra fields
+in the zip local and central headers. So the C<exTime>, C<exUnix2>,
+C<exUnixN>, C<ExtraFieldLocal> and C<ExtraFieldCentral> options will
+be ignored.
+
+This parameter defaults to 0.
+
+=item C<< Stream => 0|1 >>
+
+This option controls whether the zip file/buffer output is created in
+streaming mode.
+
+Note that when outputting to a file with streaming mode disabled (C<Stream>
+is 0), the output file must be seekable.
+
+The default is 1.
+
+=item C<< Zip64 => 0|1 >>
+
+Create a Zip64 zip file/buffer. This option is used if you want
+to store files larger than 4 Gig or store more than 64K files in a single
+zip archive.
+
+C<Zip64> will be automatically set, as needed, if working with the one-shot
+interface when the input is either a filename or a scalar reference.
+
+If you intend to manipulate the Zip64 zip files created with this module
+using an external zip/unzip, make sure that it supports Zip64.
+
+In particular, if you are using Info-Zip you need to have zip version 3.x
+or better to update a Zip64 archive and unzip version 6.x to read a zip64
+archive.
+
+The default is 0.
+
+=back 
+
+=head3 Deflate Compression Options
+
+=over 5
+
+=item -Level
+
+Defines the compression level used by zlib. The value should either be
+a number between 0 and 9 (0 means no compression and 9 is maximum
+compression), or one of the symbolic constants defined below.
+
+   Z_NO_COMPRESSION
+   Z_BEST_SPEED
+   Z_BEST_COMPRESSION
+   Z_DEFAULT_COMPRESSION
+
+The default is Z_DEFAULT_COMPRESSION.
+
+Note, these constants are not imported by C<IO::Compress::Zip> by default.
+
+    use IO::Compress::Zip qw(:strategy);
+    use IO::Compress::Zip qw(:constants);
+    use IO::Compress::Zip qw(:all);
+
+=item -Strategy
+
+Defines the strategy used to tune the compression. Use one of the symbolic
+constants defined below.
+
+   Z_FILTERED
+   Z_HUFFMAN_ONLY
+   Z_RLE
+   Z_FIXED
+   Z_DEFAULT_STRATEGY
+
+The default is Z_DEFAULT_STRATEGY.
+
+=back
+
+=head3 Bzip2 Compression Options
+
+=over 5
+
+=item C<< BlockSize100K => number >>
+
+Specify the number of 100K blocks bzip2 uses during compression.
+
+Valid values are from 1 to 9, where 9 is best compression.
+
+This option is only valid if the C<Method> is ZIP_CM_BZIP2. It is ignored
+otherwise.
+
+The default is 1.
+
+=item C<< WorkFactor => number >>
+
+Specifies how much effort bzip2 should take before resorting to a slower
+fallback compression algorithm.
+
+Valid values range from 0 to 250, where 0 means use the default value 30.
+
+This option is only valid if the C<Method> is ZIP_CM_BZIP2. It is ignored
+otherwise.
+
+The default is 0.
+
+=back
+
+=head3 Lzma Compression Options
+
+=over 5
+
+=item C<< Preset => number >>
+
+Used to choose the LZMA compression preset.
+
+Valid values are 0-9 and C<LZMA_PRESET_DEFAULT>.
+
+0 is the fastest compression with the lowest memory usage and the lowest
+compression.
+
+9 is the slowest compression with the highest memory usage but with the best
+compression.
+
+This option is only valid if the C<Method> is ZIP_CM_LZMA. It is ignored
+otherwise.
+
+Defaults to C<LZMA_PRESET_DEFAULT> (6).
+
+=item C<< Extreme => 0|1 >>
+
+Makes LZMA compression a lot slower, but a small compression gain.
+
+This option is only valid if the C<Method> is ZIP_CM_LZMA. It is ignored
+otherwise.
+
+Defaults to 0.
+
+=back
+
+=head3 Other Options
+
+=over 5
 
 =item C<< Time => $number >>
 
@@ -1424,6 +1670,8 @@ By default no UnixN extra field is created.
 Stores the contents of C<$comment> in the Central File Header of
 the zip file.
 
+Set the C<Efs> option to true if you want to store a UTF8 comment.
+
 By default, no comment field is written to the zip file.
 
 =item C<< ZipComment => $comment >>
@@ -1457,34 +1705,6 @@ be installed. A fatal error will be thrown if you attempt to create Lzma
 content when C<IO::Compress::Lzma> is not available.
 
 The default method is ZIP_CM_DEFLATE.
-
-=item C<< Stream => 0|1 >>
-
-This option controls whether the zip file/buffer output is created in
-streaming mode.
-
-Note that when outputting to a file with streaming mode disabled (C<Stream>
-is 0), the output file must be seekable.
-
-The default is 1.
-
-=item C<< Zip64 => 0|1 >>
-
-Create a Zip64 zip file/buffer. This option is used if you want
-to store files larger than 4 Gig or store more than 64K files in a single
-zip archive.
-
-C<Zip64> will be automatically set, as needed, if working with the one-shot
-interface when the input is either a filename or a scalar reference.
-
-If you intend to manipulate the Zip64 zip files created with this module
-using an external zip/unzip, make sure that it supports Zip64.
-
-In particular, if you are using Info-Zip you need to have zip version 3.x
-or better to update a Zip64 archive and unzip version 6.x to read a zip64
-archive.
-
-The default is 0.
 
 =item C<< TextFlag => 0|1 >>
 
@@ -1545,96 +1765,6 @@ of extra fields.
 If the C<Minimal> option is set to true, this option will be ignored.
 
 The maximum size of an extra field 65535 bytes.
-
-=item C<< Minimal => 1|0 >>
-
-If specified, this option will disable the creation of all extra fields
-in the zip local and central headers. So the C<exTime>, C<exUnix2>,
-C<exUnixN>, C<ExtraFieldLocal> and C<ExtraFieldCentral> options will
-be ignored.
-
-This parameter defaults to 0.
-
-=item C<< BlockSize100K => number >>
-
-Specify the number of 100K blocks bzip2 uses during compression.
-
-Valid values are from 1 to 9, where 9 is best compression.
-
-This option is only valid if the C<Method> is ZIP_CM_BZIP2. It is ignored
-otherwise.
-
-The default is 1.
-
-=item C<< WorkFactor => number >>
-
-Specifies how much effort bzip2 should take before resorting to a slower
-fallback compression algorithm.
-
-Valid values range from 0 to 250, where 0 means use the default value 30.
-
-This option is only valid if the C<Method> is ZIP_CM_BZIP2. It is ignored
-otherwise.
-
-The default is 0.
-
-=item C<< Preset => number >>
-
-Used to choose the LZMA compression preset.
-
-Valid values are 0-9 and C<LZMA_PRESET_DEFAULT>.
-
-0 is the fastest compression with the lowest memory usage and the lowest
-compression.
-
-9 is the slowest compression with the highest memory usage but with the best
-compression.
-
-This option is only valid if the C<Method> is ZIP_CM_LZMA. It is ignored
-otherwise.
-
-Defaults to C<LZMA_PRESET_DEFAULT> (6).
-
-=item C<< Extreme => 0|1 >>
-
-Makes LZMA compression a lot slower, but a small compression gain.
-
-This option is only valid if the C<Method> is ZIP_CM_LZMA. It is ignored
-otherwise.
-
-Defaults to 0.
-
-=item -Level
-
-Defines the compression level used by zlib. The value should either be
-a number between 0 and 9 (0 means no compression and 9 is maximum
-compression), or one of the symbolic constants defined below.
-
-   Z_NO_COMPRESSION
-   Z_BEST_SPEED
-   Z_BEST_COMPRESSION
-   Z_DEFAULT_COMPRESSION
-
-The default is Z_DEFAULT_COMPRESSION.
-
-Note, these constants are not imported by C<IO::Compress::Zip> by default.
-
-    use IO::Compress::Zip qw(:strategy);
-    use IO::Compress::Zip qw(:constants);
-    use IO::Compress::Zip qw(:all);
-
-=item -Strategy
-
-Defines the strategy used to tune the compression. Use one of the symbolic
-constants defined below.
-
-   Z_FILTERED
-   Z_HUFFMAN_ONLY
-   Z_RLE
-   Z_FIXED
-   Z_DEFAULT_STRATEGY
-
-The default is Z_DEFAULT_STRATEGY.
 
 =item C<< Strict => 0|1 >>
 
@@ -1917,6 +2047,12 @@ See L<IO::Compress::FAQ|IO::Compress::FAQ/"Apache::GZip Revisited">
 =head2 Working with Net::FTP
 
 See L<IO::Compress::FAQ|IO::Compress::FAQ/"Compressed files and Net::FTP">
+
+=head1 SUPPORT
+
+General feedback/questions/bug reports should be sent to 
+L<https://github.com/pmqs/IO-Compress/issues> (preferred) or
+L<https://rt.cpan.org/Public/Dist/Display.html?Name=IO-Compress>.
 
 =head1 SEE ALSO
 

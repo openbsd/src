@@ -1,10 +1,11 @@
+#!perl
 BEGIN {
     chdir 't';
     require './test.pl';
     set_up_inc("../lib");
 }
 
-plan 164;
+plan 167;
 
 eval '\$x = \$y';
 like $@, qr/^Experimental aliasing via reference not enabled/,
@@ -291,6 +292,18 @@ package CodeTest {
   my sub bs;
   \(&cs) = expect_list_cx;
   is \&cs, \&ThatSub, '\(&statesub)';
+
+  package main {
+    # this is only a problem in main:: due to 1e2cfe157ca
+    sub sx { "x" }
+    sub sy { "y" }
+    is sx(), "x", "check original";
+    my $temp = \&sx;
+    \&sx = \&sy;
+    is sx(), "y", "aliased";
+    \&sx = $temp;
+    is sx(), "x", "and restored";
+  }
 }
 
 # Mixed List Assignments

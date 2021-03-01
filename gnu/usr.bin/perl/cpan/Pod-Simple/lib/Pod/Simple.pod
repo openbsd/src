@@ -19,7 +19,11 @@ Be sure to read L</ENCODING> if your Pod contains non-ASCII characters.
 Pod formatters can use Pod::Simple to parse Pod documents and render them into
 plain text, HTML, or any number of other formats. Typically, such formatters
 will be subclasses of Pod::Simple, and so they will inherit its methods, like
-C<parse_file>.
+C<parse_file>.  But note that Pod::Simple doesn't understand and
+properly parse Perl itself, so if you have a file which contains a Perl
+program that has a multi-line quoted string which has lines that look
+like pod, Pod::Simple will treat them as pod.  This can be avoided if
+the file makes these into indented here documents instead.
 
 If you're reading this document just because you have a Pod-processing
 subclass that you want to use, this document (plus the documentation for the
@@ -219,6 +223,21 @@ that you don't want I<any> lines indented. You can do something like this:
       return undef;
   });
 
+=item C<< $parser->expand_verbatim_tabs( I<n> ) >>
+
+Default: 8
+
+If after any stripping of indentation in verbatim blocks, there remain
+tabs, this method call indicates what to do with them.  C<0>
+means leave them as tabs, any other number indicates that each tab is to
+be translated so as to have tab stops every C<n> columns.
+
+This is independent of other methods (except that it operates after any
+verbatim input stripping is done).
+
+Like the other methods, the input parameter is not checked for validity.
+C<undef> or containing non-digits has the same effect as 8.
+
 =back
 
 =head1 TERTIARY METHODS
@@ -390,8 +409,8 @@ This module is managed in an open GitHub repository,
 L<https://github.com/perl-pod/pod-simple/>. Feel free to fork and contribute, or
 to clone L<git://github.com/perl-pod/pod-simple.git> and send patches!
 
-Patches against Pod::Simple are welcome. Please send bug reports to
-<bug-pod-simple@rt.cpan.org>.
+Please use L<https://github.com/perl-pod/pod-simple/issues/new> to file a bug
+report.
 
 =head1 COPYRIGHT AND DISCLAIMERS
 
@@ -418,6 +437,8 @@ Pod::Simple is maintained by:
 =item * Hans Dieter Pearcey C<hdp@cpan.org>
 
 =item * David E. Wheeler C<dwheeler@cpan.org>
+
+=item * Karl Williamson C<khw@cpan.org>
 
 =back
 

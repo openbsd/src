@@ -10,7 +10,7 @@ use Fcntl qw( O_RDONLY O_RDWR O_WRONLY O_APPEND O_BINARY O_TEXT );
 use vars qw( $VERSION @ISA );
 use vars qw( @EXPORT @EXPORT_OK @EXPORT_FAIL %EXPORT_TAGS );
 
-$VERSION= '0.1203';
+$VERSION= '0.1203_01';
 
 use base qw( Exporter DynaLoader Tie::Handle IO::File );
 

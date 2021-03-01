@@ -6,7 +6,7 @@ Revision history for the Perl extension Time::HiRes.
  - make utime() available only if we have both fd and name setting
    [RT #133030]
  - Adjutst Makefile.PL for windows: the DEFINE() in Makefile.PL
-   can't be be in sub init() because that sub isn't called on windows
+   can't be in sub init() because that sub isn't called on windows
  - t/itimer.t: avoid race condition.
  - don't truncate nanosec utime
  - fallback/const-c.inc: Avoid compiler warning showing up on darwin.
@@ -985,7 +985,7 @@ Revision history for the Perl extension Time::HiRes.
 	- backward compatibility (pre-5.6.1) tweaks:
 	  - define NV if no NVTYPE
 	  - define IVdf if needed (note: the Devel::PPPort
-	    in 5.8.0 does not try hard hard enough since
+	    in 5.8.0 does not try hard enough since
 	    the IVSIZE might not be defined)
 	  - define NVgf if needed
 	  - grab the typemap from 5.8.0 for the NV stuff

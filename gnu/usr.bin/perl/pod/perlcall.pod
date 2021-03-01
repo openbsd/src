@@ -993,6 +993,8 @@ equivalent of C<$@>.  We use a local temporary, C<err_tmp>, since
 C<ERRSV> is a macro that calls a function, and C<SvTRUE(ERRSV)> would
 end up calling that function multiple times.
 
+=for apidoc Amnh|GV *|PL_errgv
+
 =item 3.
 
 Note that the stack is popped using C<POPs> in the block where

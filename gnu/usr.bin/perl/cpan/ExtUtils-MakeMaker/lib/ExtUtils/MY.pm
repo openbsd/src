@@ -3,8 +3,8 @@ package ExtUtils::MY;
 use strict;
 require ExtUtils::MM;
 
-our $VERSION = '7.34';
-$VERSION = eval $VERSION;
+our $VERSION = '7.44';
+$VERSION =~ tr/_//d;
 our @ISA = qw(ExtUtils::MM);
 
 {
@@ -30,7 +30,7 @@ ExtUtils::MY - ExtUtils::MakeMaker subclass for customization
 
 B<FOR INTERNAL USE ONLY>
 
-ExtUtils::MY is a subclass of ExtUtils::MM.  Its provided in your
+ExtUtils::MY is a subclass of L<ExtUtils::MM>.  Its provided in your
 Makefile.PL for you to add and override MakeMaker functionality.
 
 It also provides a convenient alias via the MY class.

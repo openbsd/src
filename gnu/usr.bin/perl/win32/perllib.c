@@ -44,9 +44,6 @@ xs_init(pTHX)
 
 #ifdef PERL_IMPLICIT_SYS
 
-/* WINCE: include replaced by:
-extern "C" void win32_checkTLS(PerlInterpreter *host_perl);
-*/
 #include "perlhost.h"
 
 void
@@ -55,44 +52,9 @@ win32_checkTLS(PerlInterpreter *host_perl)
     dTHX;
     if (host_perl != my_perl) {
 	int *nowhere = NULL;
-#ifdef UNDER_CE
-	printf(" ... bad in win32_checkTLS\n");
-	printf("  %08X ne %08X\n",host_perl,my_perl);
-#endif
 	abort();
     }
 }
-
-#ifdef UNDER_CE
-int GetLogicalDrives() {
-    return 0; /* no logical drives on CE */
-}
-int GetLogicalDriveStrings(int size, char addr[]) {
-    return 0; /* no logical drives on CE */
-}
-/* TBD */
-DWORD GetFullPathNameA(LPCSTR fn, DWORD blen, LPTSTR buf,  LPSTR *pfile) {
-    return 0;
-}
-/* TBD */
-DWORD GetFullPathNameW(CONST WCHAR *fn, DWORD blen, WCHAR * buf,  WCHAR **pfile) {
-    return 0;
-}
-/* TBD */
-DWORD SetCurrentDirectoryA(LPSTR pPath) {
-    return 0;
-}
-/* TBD */
-DWORD SetCurrentDirectoryW(CONST WCHAR *pPath) {
-    return 0;
-}
-int xcesetuid(uid_t id){return 0;}
-int xceseteuid(uid_t id){  return 0;}
-int xcegetuid() {return 0;}
-int xcegeteuid(){ return 0;}
-#endif
-
-/* WINCE??: include "perlhost.h" */
 
 EXTERN_C void
 perl_get_host_info(struct IPerlMemInfo* perlMemInfo,
@@ -287,9 +249,7 @@ DllMain(HINSTANCE hModule,	/* DLL module handle */
 	 * initialization or a call to LoadLibrary.
 	 */
     case DLL_PROCESS_ATTACH:
-#ifndef UNDER_CE
 	DisableThreadLibraryCalls((HMODULE)hModule);
-#endif
 
 	w32_perldll_handle = hModule;
 	set_w32_module_name();

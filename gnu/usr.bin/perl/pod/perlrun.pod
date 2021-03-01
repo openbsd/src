@@ -28,7 +28,8 @@ places:
 
 =item 1.
 
-Specified line by line via B<-e> or B<-E> switches on the command line.
+Specified line by line via L<-e|/-e commandline> or L<-E|/-E commandline>
+switches on the command line.
 
 =item 2.
 
@@ -45,7 +46,7 @@ must explicitly specify a "-" for the program name.
 =back
 
 With methods 2 and 3, Perl starts parsing the input file from the
-beginning, unless you've specified a B<-x> switch, in which case it
+beginning, unless you've specified a L</-x> switch, in which case it
 scans for the first line starting with C<#!> and containing the word
 "perl", and starts there instead.  This is useful for running a program
 embedded in a larger message.  (In this case you would indicate the end
@@ -55,7 +56,7 @@ The C<#!> line is always examined for switches as the line is being
 parsed.  Thus, if you're on a machine that allows only one argument
 with the C<#!> line, or worse, doesn't even recognize the C<#!> line, you
 still can get consistent switch behaviour regardless of how Perl was
-invoked, even if B<-x> was used to find the beginning of the program.
+invoked, even if L</-x> was used to find the beginning of the program.
 
 Because historically some operating systems silently chopped off
 kernel interpretation of the C<#!> line after 32 characters, some
@@ -65,24 +66,25 @@ You probably want to make sure that all your switches fall either
 before or after that 32-character boundary.  Most switches don't
 actually care if they're processed redundantly, but getting a "-"
 instead of a complete switch could cause Perl to try to execute
-standard input instead of your program.  And a partial B<-I> switch
-could also cause odd results.
+standard input instead of your program.  And a partial L<-I|/-Idirectory>
+switch could also cause odd results.
 
 Some switches do care if they are processed twice, for instance
-combinations of B<-l> and B<-0>.  Either put all the switches after
-the 32-character boundary (if applicable), or replace the use of
-B<-0>I<digits> by C<BEGIN{ $/ = "\0digits"; }>.
+combinations of L<-l|/-l[octnum]> and L<-0|/-0[octalE<sol>hexadecimal]>.
+Either put all the switches after the 32-character boundary (if
+applicable), or replace the use of B<-0>I<digits> by
+C<BEGIN{ $/ = "\0digits"; }>.
 
 Parsing of the C<#!> switches starts wherever "perl" is mentioned in the line.
 The sequences "-*" and "- " are specifically ignored so that you could,
 if you were so inclined, say
 
     #!/bin/sh
-    #! -*-perl-*-
+    #! -*- perl -*- -p
     eval 'exec perl -x -wS $0 ${1+"$@"}'
         if 0;
 
-to let Perl see the B<-p> switch.
+to let Perl see the L</-p> switch.
 
 A similar trick involves the I<env> program, if you have it.
 
@@ -122,7 +124,7 @@ Put
 
     extproc perl -S -your_switches
 
-as the first line in C<*.cmd> file (B<-S> due to a bug in cmd.exe's
+as the first line in C<*.cmd> file (L</-S> due to a bug in cmd.exe's
 `extproc' handling).
 
 =item MS-DOS
@@ -246,16 +248,16 @@ You can also specify the separator character using hexadecimal notation:
 B<-0xI<HHH...>>, where the C<I<H>> are valid hexadecimal digits.  Unlike
 the octal form, this one may be used to specify any Unicode character, even
 those beyond 0xFF.  So if you I<really> want a record separator of 0777,
-specify it as B<-0x1FF>.  (This means that you cannot use the B<-x> option
+specify it as B<-0x1FF>.  (This means that you cannot use the L</-x> option
 with a directory name that consists of hexadecimal digits, or else Perl
 will think you have specified a hex number to B<-0>.)
 
 =item B<-a>
 X<-a> X<autosplit>
 
-turns on autosplit mode when used with a B<-n> or B<-p>.  An implicit
+turns on autosplit mode when used with a L</-n> or L</-p>.  An implicit
 split command to the @F array is done as the first thing inside the
-implicit while loop produced by the B<-n> or B<-p>.
+implicit while loop produced by the L</-n> or L</-p>.
 
     perl -ane 'print pop(@F), "\n";'
 
@@ -266,9 +268,9 @@ is equivalent to
 	print pop(@F), "\n";
     }
 
-An alternate delimiter may be specified using B<-F>.
+An alternate delimiter may be specified using L<-F|/-Fpattern>.
 
-B<-a> implicitly sets B<-n>.
+B<-a> implicitly sets L</-n>.
 
 =item B<-C [I<number/list>]>
 X<-C>
@@ -308,14 +310,15 @@ STDOUT and STDERR.  Repeating letters is just redundant, not cumulative
 nor toggling.
 
 The C<io> options mean that any subsequent open() (or similar I/O
-operations) in the current file scope will have the C<:utf8> PerlIO layer
+operations) in main program scope will have the C<:utf8> PerlIO layer
 implicitly applied to them, in other words, UTF-8 is expected from any
 input stream, and UTF-8 is produced to any output stream.  This is just
-the default, with explicit layers in open() and with binmode() one can
-manipulate streams as usual.
+the default set via L<C<${^OPEN}>|perlvar/${^OPEN}>,
+with explicit layers in open() and with binmode() one can
+manipulate streams as usual.  This has no effect on code run in modules.
 
 B<-C> on its own (not followed by any number or option list), or the
-empty string C<""> for the C<PERL_UNICODE> environment variable, has the
+empty string C<""> for the L</PERL_UNICODE> environment variable, has the
 same effect as B<-CSDL>.  In other words, the standard I/O handles and
 the default C<open()> layer are UTF-8-fied I<but> only if the locale
 environment variables indicate a UTF-8 locale.  This behaviour follows
@@ -366,13 +369,13 @@ X<-d> X<-dt>
 
 runs the program under the control of a debugging, profiling, or tracing
 module installed as C<Devel::I<MOD>>. E.g., B<-d:DProf> executes the
-program using the C<Devel::DProf> profiler.  As with the B<-M> flag, options
-may be passed to the C<Devel::I<MOD>> package where they will be received
-and interpreted by the C<Devel::I<MOD>::import> routine.  Again, like B<-M>,
-use -B<-d:-I<MOD>> to call C<Devel::I<MOD>::unimport> instead of import.  The
-comma-separated list of options must follow a C<=> character.  If B<t> is
-specified, it indicates to the debugger that threads will be used in the
-code being debugged.  See L<perldebug>.
+program using the C<Devel::DProf> profiler.  As with the L<-M|/-M[-]module>
+flag, options may be passed to the C<Devel::I<MOD>> package where they will
+be received and interpreted by the C<Devel::I<MOD>::import> routine.  Again,
+like B<-M>, use -B<-d:-I<MOD>> to call C<Devel::I<MOD>::unimport> instead of
+import.  The comma-separated list of options must follow a C<=> character.
+If B<t> is specified, it indicates to the debugger that threads will be used
+in the code being debugged.  See L<perldebug>.
 
 =item B<-D>I<letters>
 X<-D> X<DEBUGGING> X<-DDEBUGGING>
@@ -428,6 +431,7 @@ B<-D14> is equivalent to B<-Dtls>):
                subject to change
  134217728  i  trace PerlIO layer processing.  Set PERLIO_DEBUG to
                the filename to trace to.
+ 268435456  y  trace y///, tr/// compilation and execution
 
 All these flags require B<-DDEBUGGING> when you compile the Perl
 executable (but see C<:opd> in L<Devel::Peek> or L<re/'debug' mode>
@@ -461,8 +465,9 @@ to use semicolons where you would in a normal program.
 =item B<-E> I<commandline>
 X<-E>
 
-behaves just like B<-e>, except that it implicitly enables all
-optional features (in the main compilation unit). See L<feature>.
+behaves just like L<-e|/-e commandline>, except that it implicitly
+enables all optional features (in the main compilation unit). See
+L<feature>.
 
 =item B<-f>
 X<-f> X<sitecustomize> X<sitecustomize.pl>
@@ -500,11 +505,11 @@ perl, you can check the value of C<$Config{usesitecustomize}>.
 =item B<-F>I<pattern>
 X<-F>
 
-specifies the pattern to split on for B<-a>. The pattern may be
+specifies the pattern to split on for L</-a>. The pattern may be
 surrounded by C<//>, C<"">, or C<''>, otherwise it will be put in single
 quotes. You can't use literal whitespace or NUL characters in the pattern.
 
-B<-F> implicitly sets both B<-a> and B<-n>.
+B<-F> implicitly sets both L</-a> and L</-n>.
 
 =item B<-h>
 X<-h>
@@ -639,7 +644,7 @@ X<-l> X<$/> X<$\>
 
 enables automatic line-ending processing.  It has two separate
 effects.  First, it automatically chomps C<$/> (the input record
-separator) when used with B<-n> or B<-p>.  Second, it assigns C<$\>
+separator) when used with L</-n> or L</-p>.  Second, it assigns C<$\>
 (the output record separator) to have the value of I<octnum> so
 that any print statements will have that separator added back on.
 If I<octnum> is omitted, sets C<$\> to the current value of
@@ -649,7 +654,8 @@ C<$/>.  For instance, to trim lines to 80 columns:
 
 Note that the assignment C<$\ = $/> is done when the switch is processed,
 so the input record separator can be different than the output record
-separator if the B<-l> switch is followed by a B<-0> switch:
+separator if the B<-l> switch is followed by a
+L<-0|/-0[octalE<sol>hexadecimal]> switch:
 
     gnufind / -print0 | perl -ln0e 'print "found $_" if -p'
 
@@ -721,7 +727,8 @@ This is faster than using the B<-exec> switch of I<find> because you don't
 have to start a process on every filename found (but it's not faster
 than using the B<-delete> switch available in newer versions of I<find>.
 It does suffer from the bug of mishandling newlines in pathnames, which
-you can fix if you follow the example under B<-0>.
+you can fix if you follow the example under
+L<-0|/-0[octalE<sol>hexadecimal]>.
 
 C<BEGIN> and C<END> blocks may be used to capture control before or after
 the implicit program loop, just as in I<awk>.
@@ -743,7 +750,7 @@ makes it iterate over filename arguments somewhat like I<sed>:
 If a file named by an argument cannot be opened for some reason, Perl
 warns you about it, and moves on to the next file.  Note that the
 lines are printed automatically.  An error occurring during printing is
-treated as fatal.  To suppress printing use the B<-n> switch.  A B<-p>
+treated as fatal.  To suppress printing use the L</-n> switch.  A B<-p>
 overrides a B<-n> switch.
 
 C<BEGIN> and C<END> blocks may be used to capture control before or after
@@ -770,7 +777,7 @@ warnings.
 =item B<-S>
 X<-S>
 
-makes Perl use the PATH environment variable to search for the
+makes Perl use the L</PATH> environment variable to search for the
 program unless the name of the program contains path separators.
 
 On some platforms, this also makes Perl append suffixes to the
@@ -778,7 +785,8 @@ filename while searching for it.  For example, on Win32 platforms,
 the ".bat" and ".cmd" suffixes are appended if a lookup for the
 original name fails, and if the name does not already end in one
 of those suffixes.  If your Perl was compiled with C<DEBUGGING> turned
-on, using the B<-Dp> switch to Perl shows how the search progresses.
+on, using the L<-Dp|/-Dletters> switch to Perl shows how the search
+progresses.
 
 Typically this is used to emulate C<#!> startup on platforms that don't
 support C<#!>.  It's also convenient when debugging a script that uses C<#!>,
@@ -795,7 +803,7 @@ The system ignores the first line and feeds the program to F</bin/sh>,
 which proceeds to try to execute the Perl program as a shell script.
 The shell executes the second line as a normal shell command, and thus
 starts up the Perl interpreter.  On some systems $0 doesn't always
-contain the full pathname, so the B<-S> tells Perl to search for the
+contain the full pathname, so the L</-S> tells Perl to search for the
 program if necessary.  After Perl locates the program, it parses the
 lines and ignores them because the variable $running_under_some_shell
 is never true.  If the program will be interpreted by csh, you will need
@@ -823,14 +831,14 @@ program will be searched for strictly on the PATH.
 =item B<-t>
 X<-t>
 
-Like B<-T>, but taint checks will issue warnings rather than fatal
+Like L</-T>, but taint checks will issue warnings rather than fatal
 errors.  These warnings can now be controlled normally with C<no warnings
 qw(taint)>.
 
 B<Note: This is not a substitute for C<-T>!> This is meant to be
 used I<only> as a temporary development aid while securing legacy code:
 for real production code and for new secure code written from scratch,
-always use the real B<-T>.
+always use the real L</-T>.
 
 =item B<-T>
 X<-T>
@@ -949,6 +957,8 @@ X<-X>
 Disables all warnings regardless of C<use warnings> or C<$^W>.
 See L<warnings>.
 
+Forbidden in L</C<PERL5OPT>>.
+
 =item B<-x>
 X<-x>
 
@@ -991,12 +1001,12 @@ Used if C<chdir> has no argument.
 =item LOGDIR
 X<LOGDIR>
 
-Used if C<chdir> has no argument and HOME is not set.
+Used if C<chdir> has no argument and L</HOME> is not set.
 
 =item PATH
 X<PATH>
 
-Used in executing subprocesses, and in finding the program if B<-S> is
+Used in executing subprocesses, and in finding the program if L</-S> is
 used.
 
 =item PERL5LIB
@@ -1012,14 +1022,14 @@ matching the entries in C<$Config{inc_version_list}> are added.
 (These typically would be for older compatible perl versions installed
 in the same directory tree.)
 
-If PERL5LIB is not defined, PERLLIB is used.  Directories are separated
+If PERL5LIB is not defined, L</PERLLIB> is used.  Directories are separated
 (like in PATH) by a colon on Unixish platforms and by a semicolon on
 Windows (the proper path separator being given by the command C<perl
 -V:I<path_sep>>).
 
 When running taint checks, either because the program was running setuid or
-setgid, or the B<-T> or B<-t> switch was specified, neither PERL5LIB nor
-PERLLIB is consulted. The program should instead say:
+setgid, or the L</-T> or L</-t> switch was specified, neither PERL5LIB nor
+L</PERLLIB> is consulted. The program should instead say:
 
     use lib "/my/directory";
 
@@ -1029,7 +1039,7 @@ X<PERL5OPT>
 Command-line options (switches).  Switches in this variable are treated
 as if they were on every Perl command line.  Only the B<-[CDIMTUWdmtw]>
 switches are allowed.  When running taint checks (either because the
-program was running setuid or setgid, or because the B<-T> or B<-t>
+program was running setuid or setgid, or because the L</-T> or L</-t>
 switch was used), this variable is ignored.  If PERL5OPT begins with
 B<-T>, tainting will be enabled and subsequent options ignored.  If
 PERL5OPT begins with B<-t>, tainting will be enabled, a writable dot
@@ -1060,27 +1070,12 @@ variable are briefly summarized below. For more details see L<PerlIO>.
 
 =over 8
 
-=item :bytes
-X<:bytes>
-
-A pseudolayer that turns the C<:utf8> flag I<off> for the layer below;
-unlikely to be useful on its own in the global PERLIO environment variable.
-You perhaps were thinking of C<:crlf:bytes> or C<:perlio:bytes>.
-
 =item :crlf
 X<:crlf>
 
 A layer which does CRLF to C<"\n"> translation distinguishing "text" and
-"binary" files in the manner of MS-DOS and similar operating systems.
-(It currently does I<not> mimic MS-DOS as far as treating of Control-Z
-as being an end-of-file marker.)
-
-=item :mmap
-X<:mmap>
-
-A layer that implements "reading" of files by using I<mmap>(2) to
-make an entire file appear in the process's address space, and then
-using that as PerlIO's "buffer".
+"binary" files in the manner of MS-DOS and similar operating systems,
+and also provides buffering similar to C<:perlio> on these architectures.
 
 =item :perlio
 X<:perlio>
@@ -1088,24 +1083,6 @@ X<:perlio>
 This is a re-implementation of stdio-like buffering written as a
 PerlIO layer.  As such it will call whatever layer is below it for
 its operations, typically C<:unix>.
-
-=item :pop
-X<:pop>
-
-An experimental pseudolayer that removes the topmost layer.
-Use with the same care as is reserved for nitroglycerine.
-
-=item :raw
-X<:raw>
-
-A pseudolayer that manipulates other layers.  Applying the C<:raw>
-layer is equivalent to calling C<binmode($fh)>.  It makes the stream
-pass each byte as-is without translation.  In particular, both CRLF
-translation and intuiting C<:utf8> from the locale are disabled.
-
-Unlike in earlier versions of Perl, C<:raw> is I<not>
-just the inverse of C<:crlf>: other layers which would affect the
-binary nature of the stream are also removed or disabled.
 
 =item :stdio
 X<:stdio>
@@ -1121,42 +1098,31 @@ X<:unix>
 
 Low-level layer that calls C<read>, C<write>, C<lseek>, etc.
 
-=item :utf8
-X<:utf8>
-
-A pseudolayer that enables a flag in the layer below to tell Perl
-that output should be in utf8 and that input should be regarded as
-already in valid utf8 form. B<WARNING: It does not check for validity and as such
-should be handled with extreme caution for input, because security violations
-can occur with non-shortest UTF-8 encodings, etc.> Generally C<:encoding(UTF-8)> is
-the best option when reading UTF-8 encoded data.
-
 =item :win32
 X<:win32>
 
 On Win32 platforms this I<experimental> layer uses native "handle" IO
 rather than a Unix-like numeric file descriptor layer. Known to be
-buggy in this release (5.14).
+buggy in this release (5.30).
 
 =back
 
-The default set of layers should give acceptable results on all platforms
+The default set of layers should give acceptable results on all platforms.
 
-For Unix platforms that will be the equivalent of "unix perlio" or "stdio".
-Configure is set up to prefer the "stdio" implementation if the system's library
-provides for fast access to the buffer; otherwise, it uses the "unix perlio"
-implementation.
+For Unix platforms that will be the equivalent of ":unix:perlio" or ":stdio".
+Configure is set up to prefer the ":stdio" implementation if the system's library
+provides for fast access to the buffer (not common on modern architectures);
+otherwise, it uses the ":unix:perlio" implementation.
 
-On Win32 the default in this release (5.14) is "unix crlf". Win32's "stdio"
+On Win32 the default in this release (5.30) is ":unix:crlf". Win32's ":stdio"
 has a number of bugs/mis-features for Perl IO which are somewhat depending
-on the version and vendor of the C compiler. Using our own C<crlf> layer as
-the buffer avoids those issues and makes things more uniform.  The C<crlf>
-layer provides CRLF conversion as well as buffering.
+on the version and vendor of the C compiler. Using our own C<:crlf> layer as
+the buffer avoids those issues and makes things more uniform.
 
-This release (5.14) uses C<unix> as the bottom layer on Win32, and so still
+This release (5.30) uses C<:unix> as the bottom layer on Win32, and so still
 uses the C compiler's numeric file descriptor routines. There is an
-experimental native C<win32> layer, which is expected to be enhanced and
-should eventually become the default under Win32.
+experimental native C<:win32> layer, which is expected to be enhanced and
+may eventually become the default under Win32.
 
 The PERLIO environment variable is completely ignored when Perl
 is run in taint mode.
@@ -1165,8 +1131,8 @@ is run in taint mode.
 X<PERLIO_DEBUG>
 
 If set to the name of a file or device when Perl is run with the
-B<-Di> command-line switch, the logging of certain operations of
-the PerlIO subsystem will be redirected to the specified file rather
+L<-Di|/-Dletters> command-line switch, the logging of certain operations
+of the PerlIO subsystem will be redirected to the specified file rather
 than going to stderr, which is the default. The file is opened in append
 mode. Typical uses are in Unix:
 
@@ -1178,7 +1144,7 @@ and under Win32, the approximately equivalent:
    perl -Di script ...
 
 This functionality is disabled for setuid scripts, for scripts run
-with B<-T>, and for scripts run on a Perl built without C<-DDEBUGGING>
+with L</-T>, and for scripts run on a Perl built without C<-DDEBUGGING>
 support.
 
 =item PERLLIB
@@ -1186,7 +1152,7 @@ X<PERLLIB>
 
 A list of directories in which to look for Perl library
 files before looking in the standard library.
-If PERL5LIB is defined, PERLLIB is not used.
+If L</PERL5LIB> is defined, PERLLIB is not used.
 
 The PERLLIB environment variable is completely ignored when Perl
 is run in taint mode.
@@ -1199,7 +1165,7 @@ The command used to load the debugger code.  The default is:
 	BEGIN { require "perl5db.pl" }
 
 The PERL5DB environment variable is only used when Perl is started with
-a bare B<-d> switch.
+a bare L</-d> switch.
 
 =item PERL5DB_THREADED
 X<PERL5DB_THREADED>
@@ -1257,8 +1223,7 @@ after compilation.
 =item PERL_DESTRUCT_LEVEL
 X<PERL_DESTRUCT_LEVEL>
 
-Relevant only if your Perl executable was built with B<-DDEBUGGING>,
-this controls the behaviour of global destruction of objects and other
+Controls the behaviour of global destruction of objects and other
 references.  See L<perlhacktips/PERL_DESTRUCT_LEVEL> for more information.
 
 =item PERL_DL_NONLAZY
@@ -1300,7 +1265,7 @@ L</PERL_HASH_SEED_DEBUG> for more information.
 X<PERL_PERTURB_KEYS>
 
 (Since Perl 5.18.0)  Set to C<"0"> or C<"NO"> then traversing keys
-will be repeatable from run to run for the same PERL_HASH_SEED.
+will be repeatable from run to run for the same C<PERL_HASH_SEED>.
 Insertion into a hash will not change the order, except to provide
 for more space in the hash. When combined with setting PERL_HASH_SEED
 this mode is as close to pre 5.18 behavior as you can get.
@@ -1337,8 +1302,8 @@ B<Note> that any information about the hash function, especially the hash
 seed is B<sensitive information>: by knowing it, one can craft a denial-of-service
 attack against Perl code, even remotely; see L<perlsec/"Algorithmic Complexity Attacks">
 for more information. B<Do not disclose the hash seed> to people who
-don't need to know it. See also C<hash_seed()> and
-C<key_traversal_mask()> in L<Hash::Util>.
+don't need to know it. See also L<C<hash_seed()>|Hash::Util/hash_seed> and
+L<C<hash_traversal_mask()>|Hash::Util/hash_traversal_mask>.
 
 An example output might be:
 
@@ -1379,12 +1344,12 @@ L<perlipc/"Deferred Signals (Safe Signals)">.
 =item PERL_UNICODE
 X<PERL_UNICODE>
 
-Equivalent to the B<-C> command-line switch.  Note that this is not
-a boolean variable. Setting this to C<"1"> is not the right way to
-"enable Unicode" (whatever that would mean).  You can use C<"0"> to
-"disable Unicode", though (or alternatively unset PERL_UNICODE in
-your shell before starting Perl).  See the description of the B<-C>
-switch for more information.
+Equivalent to the L<-C|/-C [numberE<sol>list]> command-line switch.  Note
+that this is not a boolean variable. Setting this to C<"1"> is not the
+right way to "enable Unicode" (whatever that would mean).  You can use
+C<"0"> to "disable Unicode", though (or alternatively unset PERL_UNICODE
+in your shell before starting Perl).  See the description of the
+L<-C|/-C [numberE<sol>list]> switch for more information.
 
 =item PERL_USE_UNSAFE_INC
 X<PERL_USE_UNSAFE_INC>
@@ -1398,7 +1363,7 @@ C<@INC> and should not be set in the environment for day-to-day use.
 =item SYS$LOGIN (specific to the VMS port)
 X<SYS$LOGIN>
 
-Used if chdir has no argument and HOME and LOGDIR are not set.
+Used if chdir has no argument and L</HOME> and L</LOGDIR> are not set.
 
 =item PERL_INTERNAL_RAND_SEED
 X<PERL_INTERNAL_RAND_SEED>
@@ -1432,3 +1397,116 @@ lines before doing anything else, just to keep people honest:
     $ENV{PATH}  = "/bin:/usr/bin";    # or whatever you need
     $ENV{SHELL} = "/bin/sh" if exists $ENV{SHELL};
     delete @ENV{qw(IFS CDPATH ENV BASH_ENV)};
+
+=head1 ORDER OF APPLICATION
+
+Some options, in particular C<-I>, C<-M>, C<PERL5LIB> and C<PERL5OPT> can
+interact, and the order in which they are applied is important.
+
+Note that this section does not document what I<actually> happens inside the
+perl interpreter, it documents what I<effectively> happens.
+
+=over
+
+=item -I
+
+The effect of multiple C<-I> options is to C<unshift> them onto C<@INC>
+from right to left. So for example:
+
+    perl -I 1 -I 2 -I 3
+
+will first prepend C<3> onto the front of C<@INC>, then prepend C<2>, and
+then prepend C<1>. The result is that C<@INC> begins with:
+
+    qw(1 2 3)
+
+=item -M
+
+Multiple C<-M> options are processed from left to right. So this:
+
+    perl -Mlib=1 -Mlib=2 -Mlib=3
+
+will first use the L<lib> pragma to prepend C<1> to C<@INC>, then
+it will prepend C<2>, then it will prepend C<3>, resulting in an C<@INC>
+that begins with:
+
+    qw(3 2 1)
+
+=item the PERL5LIB environment variable
+
+This contains a list of directories, separated by colons. The entire list
+is prepended to C<@INC> in one go. This:
+
+    PERL5LIB=1:2:3 perl
+
+will result in an C<@INC> that begins with:
+
+    qw(1 2 3)
+
+=item combinations of -I, -M and PERL5LIB
+
+C<PERL5LIB> is applied first, then all the C<-I> arguments, then all the
+C<-M> arguments. This:
+
+    PERL5LIB=e1:e2 perl -I i1 -Mlib=m1 -I i2 -Mlib=m2
+
+will result in an C<@INC> that begins with:
+
+    qw(m2 m1 i1 i2 e1 e2)
+
+=item the PERL5OPT environment variable
+
+This contains a space separated list of switches. We only consider the
+effects of C<-M> and C<-I> in this section.
+
+After normal processing of C<-I> switches from the command line, all
+the C<-I> switches in C<PERL5OPT> are extracted. They are processed from
+left to right instead of from right to left. Also note that while
+whitespace is allowed between a C<-I> and its directory on the command
+line, it is not allowed in C<PERL5OPT>.
+
+After normal processing of C<-M> switches from the command line, all
+the C<-M> switches in C<PERL5OPT> are extracted. They are processed from
+left to right, I<i.e.> the same as those on the command line.
+
+An example may make this clearer:
+
+    export PERL5OPT="-Mlib=optm1 -Iopti1 -Mlib=optm2 -Iopti2"
+    export PERL5LIB=e1:e2
+    perl -I i1 -Mlib=m1 -I i2 -Mlib=m2
+
+will result in an C<@INC> that begins with:
+
+    qw(
+        optm2
+        optm1
+
+        m2
+        m1
+
+        opti2
+        opti1
+
+        i1
+        i2
+
+        e1
+        e2
+    )
+
+=item Other complications
+
+There are some complications that are ignored in the examples above:
+
+=over
+
+=item arch and version subdirs
+
+All of C<-I>, C<PERL5LIB> and C<use lib> will also prepend arch and version
+subdirs if they are present
+
+=item sitecustomize.pl
+
+=back
+
+=back

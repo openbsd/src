@@ -4,7 +4,7 @@ perlfaq4 - Data Manipulation
 
 =head1 VERSION
 
-version 5.20190126
+version 5.20200523
 
 =head1 DESCRIPTION
 
@@ -1422,21 +1422,7 @@ Hearing the word "in" is an I<in>dication that you probably should have
 used a hash, not a list or array, to store your data. Hashes are
 designed to answer this question quickly and efficiently. Arrays aren't.
 
-That being said, there are several ways to approach this. In Perl 5.10
-and later, you can use the smart match operator to check that an item is
-contained in an array or a hash:
-
-    use 5.010;
-
-    if( $item ~~ @array ) {
-        say "The array contains $item"
-    }
-
-    if( $item ~~ %hash ) {
-        say "The hash contains $item"
-    }
-
-With earlier versions of Perl, you have to do a bit more work. If you
+That being said, there are several ways to approach this. If you
 are going to make this query many times over arbitrary string values,
 the fastest way is probably to invert the original array and maintain a
 hash whose keys are the first array's values:
@@ -1472,16 +1458,16 @@ of the original list or array. They only pay off if you have to test
 multiple values against the same array.
 
 If you are testing only once, the standard module L<List::Util> exports
-the function C<first> for this purpose. It works by stopping once it
+the function C<any> for this purpose. It works by stopping once it
 finds the element. It's written in C for speed, and its Perl equivalent
 looks like this subroutine:
 
-    sub first (&@) {
+    sub any (&@) {
         my $code = shift;
         foreach (@_) {
-            return $_ if &{$code}();
+            return 1 if $code->();
         }
-        undef;
+        return 0;
     }
 
 If speed is of little concern, the common idiom uses grep in scalar context
@@ -1513,19 +1499,6 @@ Note that this is the I<symmetric difference>, that is, all elements
 in either A or in B but not in both. Think of it as an xor operation.
 
 =head2 How do I test whether two arrays or hashes are equal?
-
-With Perl 5.10 and later, the smart match operator can give you the answer
-with the least amount of work:
-
-    use 5.010;
-
-    if( @array1 ~~ @array2 ) {
-        say "The arrays are the same";
-    }
-
-    if( %hash1 ~~ %hash2 ) # doesn't check values!  {
-        say "The hash keys are the same";
-    }
 
 The following code works for single-level arrays. It uses a
 stringwise comparison, and does not distinguish defined versus

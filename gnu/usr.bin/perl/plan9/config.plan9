@@ -244,7 +244,7 @@
  *	This symbol, if defined, indicates that the link routine is
  *	available to create hard links.
  */
-/* #define HAS_LINK	/**/
+/* #define HAS_LINK	/ **/
 
 /* HAS_LOCALECONV:
  *	This symbol, if defined, indicates that the localeconv routine is
@@ -262,7 +262,7 @@
  *	This symbol, if defined, indicates that the lstat routine is
  *	available to do file stats on symbolic links.
  */
-/*#define HAS_LSTAT		/**/
+/*#define HAS_LSTAT		/ **/
 
 /* HAS_MBLEN:
  *	This symbol, if defined, indicates that the mblen routine is available
@@ -382,7 +382,7 @@
  *	This symbol, if defined, indicates that the readlink routine is
  *	available to read the value of a symbolic link.
  */
-/*#define HAS_READLINK		/**/
+/*#define HAS_READLINK		/ **/
 
 /* HAS_RENAME:
  *	This symbol, if defined, indicates that the rename routine is available
@@ -434,7 +434,7 @@
  *	This symbol, if defined, indicates that the setpgid(pid, gpid)
  *	routine is available to set process group ID.
  */
-#define HAS_SETPGID	/**/
+#define HAS_SETPGID	/ **/
 
 /* HAS_SETPGRP2:
  *	This symbol, if defined, indicates that the setpgrp2() (as in DG/UX)
@@ -520,7 +520,7 @@
  *	This symbol, if defined, indicates that the symlink routine is available
  *	to create symbolic links.
  */
-/*#define HAS_SYMLINK	/**/
+/*#define HAS_SYMLINK	/ **/
 
 /* HAS_SYSCALL:
  *	This symbol, if defined, indicates that the syscall routine is
@@ -1233,7 +1233,7 @@
  *	This symbol, if defined, indicates that the "fast stdio"
  *	is available to manipulate the stdio buffers directly.
  */
-/*#define HAS_FAST_STDIO		/**/
+/*#define HAS_FAST_STDIO		/ **/
 
 /* HAS_FCHDIR:
  *	This symbol, if defined, indicates that the fchdir routine is
@@ -1754,7 +1754,7 @@
  *	This symbol, if defined, indicates that the ilogbl routine is
  *	available.  If scalbnl is also present we can emulate frexpl.
  */
-/*#define HAS_ILOGBL		/**/
+/*#define HAS_ILOGBL		/ **/
 
 /* HAS_INT64_T:
  *     This symbol will defined if the C compiler supports int64_t.
@@ -2024,7 +2024,7 @@
  *	This symbol, if defined, indicates that the scalbnl routine is
  *	available.  If ilogbl is also present we can emulate frexpl.
  */
-/*#define HAS_SCALBNL		/**/
+/*#define HAS_SCALBNL		/ **/
 
 /* HAS_SENDMSG:
  *	This symbol, if defined, indicates that the sendmsg routine is
@@ -3131,8 +3131,8 @@
  *	This symbol contains the ~name expanded version of PRIVLIB, to be used
  *	in programs that are not prepared to deal with ~ expansion at run-time.
  */
-#define PRIVLIB "/sys/lib/perl/5.30.3"		/**/
-#define PRIVLIB_EXP "/sys/lib/perl/5.30.3"		/**/
+#define PRIVLIB "/sys/lib/perl/5.32.1"		/**/
+#define PRIVLIB_EXP "/sys/lib/perl/5.32.1"		/**/
 
 /* PTRSIZE:
  *	This symbol contains the size of a pointer, so that the C preprocessor
@@ -3259,9 +3259,9 @@
  *	removed.  The elements in inc_version_list (inc_version_list.U) can
  *	be tacked onto this variable to generate a list of directories to search.
  */
-#define SITELIB "/sys/lib/perl/5.30.3/site_perl"		/**/
-#define SITELIB_EXP "/sys/lib/perl/5.30.3/site_perl"		/**/
-#define SITELIB_STEM "/sys/lib/perl/5.30.3/site_perl"		/**/
+#define SITELIB "/sys/lib/perl/5.32.1/site_perl"		/**/
+#define SITELIB_EXP "/sys/lib/perl/5.32.1/site_perl"		/**/
+#define SITELIB_STEM "/sys/lib/perl/5.32.1/site_perl"		/**/
 
 /* Size_t_size:
  *	This symbol holds the size of a Size_t in bytes.
@@ -3549,13 +3549,13 @@
  *	This symbol, if defined, indicates that the copysignl routine is
  *	available.  If aintl is also present we can emulate modfl.
  */
-/*#define HAS_COPYSIGNL		/**/
+/*#define HAS_COPYSIGNL		/ **/
 
 /* USE_CPLUSPLUS:
  *	This symbol, if defined, indicates that a C++ compiler was
  *	used to compiled Perl and will be used to compile extensions.
  */
-/*#define USE_CPLUSPLUS		/**/
+/*#define USE_CPLUSPLUS		/ **/
 
 /* HAS_DBMINIT_PROTO:
  *	This symbol, if defined, indicates that the system provides

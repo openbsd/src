@@ -1086,6 +1086,7 @@ static NV my_rint(NV x)
   }
 #endif
   not_here("rint");
+  NOT_REACHED; /* NOTREACHED */
 }
 #endif
 
@@ -1541,22 +1542,14 @@ END_EXTERN_C
 #define waitpid(a,b,c) not_here("waitpid")
 #endif
 
-#ifndef HAS_MBLEN
-#ifndef mblen
+#if ! defined(HAS_MBLEN) && ! defined(HAS_MBRLEN)
 #define mblen(a,b) not_here("mblen")
 #endif
-#endif
-#ifndef HAS_MBSTOWCS
-#define mbstowcs(s, pwcs, n) not_here("mbstowcs")
-#endif
-#ifndef HAS_MBTOWC
+#if ! defined(HAS_MBTOWC) && ! defined(HAS_MBRTOWC)
 #define mbtowc(pwc, s, n) not_here("mbtowc")
 #endif
-#ifndef HAS_WCSTOMBS
-#define wcstombs(s, pwcs, n) not_here("wcstombs")
-#endif
 #ifndef HAS_WCTOMB
-#define wctomb(s, wchar) not_here("wcstombs")
+#define wctomb(s, wchar) not_here("wctomb")
 #endif
 #if !defined(HAS_MBLEN) && !defined(HAS_MBSTOWCS) && !defined(HAS_MBTOWC) && !defined(HAS_WCSTOMBS) && !defined(HAS_WCTOMB)
 /* If we don't have these functions, then we wouldn't have gotten a typedef
@@ -1758,7 +1751,7 @@ allocate_struct(pTHX_ SV *rv, const STRLEN size, const char *packname) {
  * "write through" environment changes to the process environment.
  *
  * (c) Even the primary Perl interpreter won't update the CRT copy of the
- * the environment, only the Win32API copy (it calls win32_putenv()).
+ * environment, only the Win32API copy (it calls win32_putenv()).
  *
  * As with CPerlHost::Getenv() and CPerlHost::Putenv() themselves, it makes
  * sense to only update the process environment when inside the main
@@ -1843,8 +1836,11 @@ new(packname = "POSIX::SigSet", ...)
 					       sizeof(sigset_t),
 					       packname);
 	    sigemptyset(s);
-	    for (i = 1; i < items; i++)
-		sigaddset(s, SvIV(ST(i)));
+	    for (i = 1; i < items; i++) {
+                IV sig = SvIV(ST(i));
+		if (sigaddset(s, sig) < 0)
+                    croak("POSIX::Sigset->new: failed to add signal %" IVdf, sig);
+            }
 	    XSRETURN(1);
 	}
 
@@ -3052,6 +3048,8 @@ sigaction(sig, optaction, oldaction = 0)
 
 	    /* Remember old disposition if desired. */
 	    if (oldaction) {
+                int safe;
+
 		svp = hv_fetchs(oldaction, "HANDLER", TRUE);
 		if(!svp)
 		    croak("Can't supply an oldaction without a HANDLER");
@@ -3082,24 +3080,55 @@ sigaction(sig, optaction, oldaction = 0)
 		svp = hv_fetchs(oldaction, "FLAGS", TRUE);
 		sv_setiv(*svp, oact.sa_flags);
 
-		/* Get back whether the old handler used safe signals. */
+		/* Get back whether the old handler used safe signals;
+                 * i.e. it used Perl_csighandler[13] rather than
+                 * Perl_sighandler[13]
+                 */
+                safe =
+#ifdef SA_SIGINFO
+                    (oact.sa_flags & SA_SIGINFO)
+                        ? (  oact.sa_sigaction == PL_csighandler3p
+#ifdef PERL_USE_3ARG_SIGHANDLER
+                          || oact.sa_sigaction == PL_csighandlerp
+#endif
+                          )
+                        :
+#endif
+                           (  oact.sa_handler   == PL_csighandler1p
+#ifndef PERL_USE_3ARG_SIGHANDLER
+                          || oact.sa_handler   == PL_csighandlerp
+#endif
+                           );
+
 		svp = hv_fetchs(oldaction, "SAFE", TRUE);
-		sv_setiv(*svp,
-		/* compare incompatible pointers by casting to integer */
-		    PTR2nat(oact.sa_handler) == PTR2nat(PL_csighandlerp));
+		sv_setiv(*svp, safe);
 	    }
 
 	    if (action) {
+                int safe;
+
+		/* Set up any desired flags. */
+		svp = hv_fetchs(action, "FLAGS", FALSE);
+		act.sa_flags = svp ? SvIV(*svp) : 0;
+
 		/* Safe signals use "csighandler", which vectors through the
 		   PL_sighandlerp pointer when it's safe to do so.
 		   (BTW, "csighandler" is very different from "sighandler".) */
 		svp = hv_fetchs(action, "SAFE", FALSE);
-		act.sa_handler =
-			DPTR2FPTR(
-			    void (*)(int),
-			    (*svp && SvTRUE(*svp))
-				? PL_csighandlerp : PL_sighandlerp
-			);
+                safe = *svp && SvTRUE(*svp);
+#ifdef SA_SIGINFO
+                if (act.sa_flags & SA_SIGINFO) {
+                    /* 3-arg handler */
+                    act.sa_sigaction =
+			    safe ? PL_csighandler3p : PL_sighandler3p;
+                }
+                else
+#endif
+                {
+                    /* 1-arg handler */
+                    act.sa_handler =
+			    safe ? PL_csighandler1p : PL_sighandler1p;
+                }
 
 		/* Vector new Perl handler through %SIG.
 		   (The core signal handlers read %SIG to dispatch.) */
@@ -3133,10 +3162,6 @@ sigaction(sig, optaction, oldaction = 0)
 		}
 		else
 		    sigemptyset(& act.sa_mask);
-
-		/* Set up any desired flags. */
-		svp = hv_fetchs(action, "FLAGS", FALSE);
-		act.sa_flags = svp ? SvIV(*svp) : 0;
 
 		/* Don't worry about cleaning up *sigsvp if this fails,
 		 * because that means we tried to disposition a
@@ -3315,70 +3340,155 @@ write(fd, buffer, nbytes)
 void
 abort()
 
-#ifdef I_WCHAR
-#  include <wchar.h>
-#endif
-
-int
-mblen(s, n)
-	char *		s
-	size_t		n
-    PREINIT:
-#if defined(USE_ITHREADS) && defined(HAS_MBRLEN)
-        mbstate_t ps;
-#endif
-    CODE:
-#if defined(USE_ITHREADS) && defined(HAS_MBRLEN)
-        memset(&ps, 0, sizeof(ps)); /* Initialize state */
-        RETVAL = mbrlen(s, n, &ps); /* Prefer reentrant version */
+#if defined(HAS_MBRLEN) && (defined(USE_ITHREADS) || ! defined(HAS_MBLEN))
+#  define USE_MBRLEN
 #else
-        /* This might prevent some races, but locales can be switched out
-         * without locking, so this isn't a cure all */
-        LOCALE_LOCK;
-
-        RETVAL = mblen(s, n);
-        LOCALE_UNLOCK;
+#  undef USE_MBRLEN
 #endif
-    OUTPUT:
-        RETVAL
-
-size_t
-mbstowcs(s, pwcs, n)
-	wchar_t *	s
-	char *		pwcs
-	size_t		n
 
 int
-mbtowc(pwc, s, n)
-	wchar_t *	pwc
-	char *		s
+mblen(s, n = ~0)
+	SV *		s
 	size_t		n
-    PREINIT:
-#if defined(USE_ITHREADS) && defined(HAS_MBRTOWC)
-        mbstate_t ps;
-#endif
     CODE:
-#if defined(USE_ITHREADS) && defined(HAS_MBRTOWC)
-        memset(&ps, 0, sizeof(ps));;
-        PERL_UNUSED_RESULT(mbrtowc(pwc, NULL, 0, &ps));/* Reset any shift state */
         errno = 0;
-        RETVAL = mbrtowc(pwc, s, n, &ps);   /* Prefer reentrant version */
+
+        SvGETMAGIC(s);
+        if (! SvOK(s)) {
+#ifdef USE_MBRLEN
+            /* Initialize the shift state in PL_mbrlen_ps.  The Standard says
+             * that should be all zeros. */
+            memzero(&PL_mbrlen_ps, sizeof(PL_mbrlen_ps));
+            RETVAL = 0;
 #else
-        RETVAL = mbtowc(pwc, s, n);
+            LOCALE_LOCK;
+            RETVAL = mblen(NULL, 0);
+            LOCALE_UNLOCK;
 #endif
+        }
+        else {  /* Not resetting state */
+            SV * byte_s = sv_2mortal(newSVsv_nomg(s));
+            if (! sv_utf8_downgrade_nomg(byte_s, TRUE)) {
+                SETERRNO(EINVAL, LIB_INVARG);
+                RETVAL = -1;
+            }
+            else {
+                size_t len;
+                char * string = SvPV(byte_s, len);
+                if (n < len) len = n;
+#ifdef USE_MBRLEN
+                RETVAL = (SSize_t) mbrlen(string, len, &PL_mbrlen_ps);
+                if (RETVAL < 0) RETVAL = -1;    /* Use mblen() ret code for
+                                                   transparency */
+#else
+                /* Locking prevents races, but locales can be switched out
+                 * without locking, so this isn't a cure all */
+                LOCALE_LOCK;
+                RETVAL = mblen(string, len);
+                LOCALE_UNLOCK;
+#endif
+            }
+        }
     OUTPUT:
         RETVAL
 
+#if defined(HAS_MBRTOWC) && (defined(USE_ITHREADS) || ! defined(HAS_MBTOWC))
+#  define USE_MBRTOWC
+#else
+#  undef USE_MBRTOWC
+#endif
+
 int
-wcstombs(s, pwcs, n)
-	char *		s
-	wchar_t *	pwcs
+mbtowc(pwc, s, n = ~0)
+	SV *	        pwc
+	SV *		s
 	size_t		n
+    CODE:
+        errno = 0;
+        SvGETMAGIC(s);
+        if (! SvOK(s)) { /* Initialize state */
+#ifdef USE_MBRTOWC
+            /* Initialize the shift state to all zeros in PL_mbrtowc_ps. */
+            memzero(&PL_mbrtowc_ps, sizeof(PL_mbrtowc_ps));
+            RETVAL = 0;
+#else
+            LOCALE_LOCK;
+            RETVAL = mbtowc(NULL, NULL, 0);
+            LOCALE_UNLOCK;
+#endif
+        }
+        else {  /* Not resetting state */
+            wchar_t wc;
+            SV * byte_s = sv_2mortal(newSVsv_nomg(s));
+            if (! sv_utf8_downgrade_nomg(byte_s, TRUE)) {
+                SETERRNO(EINVAL, LIB_INVARG);
+                RETVAL = -1;
+            }
+            else {
+                size_t len;
+                char * string = SvPV(byte_s, len);
+                if (n < len) len = n;
+#ifdef USE_MBRTOWC
+                RETVAL = (SSize_t) mbrtowc(&wc, string, len, &PL_mbrtowc_ps);
+#else
+                /* Locking prevents races, but locales can be switched out
+                 * without locking, so this isn't a cure all */
+                LOCALE_LOCK;
+                RETVAL = mbtowc(&wc, string, len);
+                LOCALE_UNLOCK;
+#endif
+                if (RETVAL >= 0) {
+                    sv_setiv_mg(pwc, wc);
+                }
+                else { /* Use mbtowc() ret code for transparency */
+                    RETVAL = -1;
+                }
+            }
+        }
+    OUTPUT:
+        RETVAL
+
+#if defined(HAS_WCRTOMB) && (defined(USE_ITHREADS) || ! defined(HAS_WCTOMB))
+#  define USE_WCRTOMB
+#else
+#  undef USE_WCRTOMB
+#endif
 
 int
 wctomb(s, wchar)
-	char *		s
+	SV *		s
 	wchar_t		wchar
+    CODE:
+        errno = 0;
+        SvGETMAGIC(s);
+        if (s == &PL_sv_undef) {
+#ifdef USE_WCRTOMB
+            /* The man pages khw looked at are in agreement that this works.
+             * But probably memzero would too */
+            RETVAL = wcrtomb(NULL, L'\0', &PL_wcrtomb_ps);
+#else
+            LOCALE_LOCK;
+            RETVAL = wctomb(NULL, L'\0');
+            LOCALE_UNLOCK;
+#endif
+        }
+        else {  /* Not resetting state */
+            char buffer[MB_LEN_MAX];
+#ifdef USE_WCRTOMB
+            RETVAL = wcrtomb(buffer, wchar, &PL_wcrtomb_ps);
+#else
+            /* Locking prevents races, but locales can be switched out without
+             * locking, so this isn't a cure all */
+            LOCALE_LOCK;
+            RETVAL = wctomb(buffer, wchar);
+            LOCALE_UNLOCK;
+#endif
+            if (RETVAL >= 0) {
+                sv_setpvn_mg(s, buffer, RETVAL);
+            }
+        }
+    OUTPUT:
+        RETVAL
 
 int
 strcoll(s1, s2)
@@ -3710,14 +3820,16 @@ char *
 ctermid(s = 0)
 	char *          s = 0;
     CODE:
-#ifdef HAS_CTERMID_R
+#ifdef I_TERMIOS
+        /* On some systems L_ctermid is a #define; but not all; this code works
+         * for all cases (so far...) */
 	s = (char *) safemalloc((size_t) L_ctermid);
 #endif
 	RETVAL = ctermid(s);
     OUTPUT:
 	RETVAL
     CLEANUP:
-#ifdef HAS_CTERMID_R
+#ifdef I_TERMIOS
 	Safefree(s);
 #endif
 

@@ -22,6 +22,7 @@
 #include "EXTERN.h"
 #define PERL_IN_DOOP_C
 #include "perl.h"
+#include "invlist_inline.h"
 
 #ifndef PERL_MICRO
 #include <signal.h>
@@ -29,25 +30,26 @@
 
 
 /* Helper function for do_trans().
- * Handles non-utf8 cases(*) not involving the /c, /d, /s flags,
- * and where search and replacement charlists aren't identical.
- * (*) i.e. where the search and replacement charlists are non-utf8. sv may
- * or may not be utf8.
+ * Handles cases where the search and replacement charlists aren't UTF-8,
+ * aren't identical, and neither the /d nor /s flag is present.
+ *
+ * sv may or may not be utf8.  Note that no code point above 255 can possibly
+ * be in the to-translate set
  */
 
 STATIC Size_t
-S_do_trans_simple(pTHX_ SV * const sv)
+S_do_trans_simple(pTHX_ SV * const sv, const OPtrans_map * const tbl)
 {
     Size_t matches = 0;
     STRLEN len;
     U8 *s = (U8*)SvPV_nomg(sv,len);
     U8 * const send = s+len;
-    const OPtrans_map * const tbl = (OPtrans_map*)cPVOP->op_pv;
 
     PERL_ARGS_ASSERT_DO_TRANS_SIMPLE;
-
-    if (!tbl)
-	Perl_croak(aTHX_ "panic: do_trans_simple line %d",__LINE__);
+    DEBUG_y(PerlIO_printf(Perl_debug_log, "%s: %d: entering do_trans_simple:"
+                                          " input sv:\n",
+                                          __FILE__, __LINE__));
+    DEBUG_y(sv_dump(sv));
 
     /* First, take care of non-UTF-8 input strings, because they're easy */
     if (!SvUTF8(sv)) {
@@ -66,7 +68,10 @@ S_do_trans_simple(pTHX_ SV * const sv)
 	U8 *d;
 	U8 *dstart;
 
-	/* Allow for expansion: $_="a".chr(400); tr/a/\xFE/, FE needs encoding */
+        /* Allow for worst-case expansion: Each input byte can become 2.  For a
+         * given input character, this happens when it occupies a single byte
+         * under UTF-8, but is to be translated to something that occupies two:
+         * $_="a".chr(400); tr/a/\xFE/, FE needs encoding. */
 	if (grows)
 	    Newx(d, len*2+1, U8);
 	else
@@ -100,33 +105,39 @@ S_do_trans_simple(pTHX_ SV * const sv)
 	SvUTF8_on(sv);
 	SvSETMAGIC(sv);
     }
+    DEBUG_y(PerlIO_printf(Perl_debug_log, "%s: %d: returning %zu\n",
+                                          __FILE__, __LINE__, matches));
+    DEBUG_y(sv_dump(sv));
     return matches;
 }
 
 
 /* Helper function for do_trans().
- * Handles non-utf8 cases(*) where search and replacement charlists are
- * identical: so the string isn't modified, and only a count of modifiable
+ * Handles cases where the search and replacement charlists are identical and
+ * non-utf8: so the string isn't modified, and only a count of modifiable
  * chars is needed.
- * Note that it doesn't handle /d or /s, since these modify the string
- * even if the replacement list is empty.
- * (*) i.e. where the search and replacement charlists are non-utf8. sv may
- * or may not be utf8.
+ *
+ * Note that it doesn't handle /d or /s, since these modify the string even if
+ * the replacement list is empty.
+ *
+ * sv may or may not be utf8.  Note that no code point above 255 can possibly
+ * be in the to-translate set
  */
 
 STATIC Size_t
-S_do_trans_count(pTHX_ SV * const sv)
+S_do_trans_count(pTHX_ SV * const sv, const OPtrans_map * const tbl)
 {
     STRLEN len;
     const U8 *s = (const U8*)SvPV_nomg_const(sv, len);
     const U8 * const send = s + len;
     Size_t matches = 0;
-    const OPtrans_map * const tbl = (OPtrans_map*)cPVOP->op_pv;
 
     PERL_ARGS_ASSERT_DO_TRANS_COUNT;
 
-    if (!tbl)
-	Perl_croak(aTHX_ "panic: do_trans_count line %d",__LINE__);
+    DEBUG_y(PerlIO_printf(Perl_debug_log, "%s: %d: entering do_trans_count:"
+                                          " input sv:\n",
+                                          __FILE__, __LINE__));
+    DEBUG_y(sv_dump(sv));
 
     if (!SvUTF8(sv)) {
 	while (s < send) {
@@ -148,62 +159,80 @@ S_do_trans_count(pTHX_ SV * const sv)
 	}
     }
 
+    DEBUG_y(PerlIO_printf(Perl_debug_log, "%s: %d: count returning %zu\n",
+                                          __FILE__, __LINE__, matches));
     return matches;
 }
 
 
 /* Helper function for do_trans().
- * Handles non-utf8 cases(*) involving the /c, /d, /s flags,
- * and where search and replacement charlists aren't identical.
- * (*) i.e. where the search and replacement charlists are non-utf8. sv may
- * or may not be utf8.
+ * Handles cases where the search and replacement charlists aren't identical
+ * and both are non-utf8, and one or both of /d, /s is specified.
+ *
+ * sv may or may not be utf8.  Note that no code point above 255 can possibly
+ * be in the to-translate set
  */
 
 STATIC Size_t
-S_do_trans_complex(pTHX_ SV * const sv)
+S_do_trans_complex(pTHX_ SV * const sv, const OPtrans_map * const tbl)
 {
     STRLEN len;
     U8 *s = (U8*)SvPV_nomg(sv, len);
     U8 * const send = s+len;
     Size_t matches = 0;
-    const OPtrans_map * const tbl = (OPtrans_map*)cPVOP->op_pv;
+    const bool complement = cBOOL(PL_op->op_private & OPpTRANS_COMPLEMENT);
 
     PERL_ARGS_ASSERT_DO_TRANS_COMPLEX;
 
-    if (!tbl)
-	Perl_croak(aTHX_ "panic: do_trans_complex line %d",__LINE__);
+    DEBUG_y(PerlIO_printf(Perl_debug_log, "%s: %d: entering do_trans_complex:"
+                                          " input sv:\n",
+                                          __FILE__, __LINE__));
+    DEBUG_y(sv_dump(sv));
 
     if (!SvUTF8(sv)) {
 	U8 *d = s;
 	U8 * const dstart = d;
 
 	if (PL_op->op_private & OPpTRANS_SQUASH) {
-	    const U8* p = send;
+
+            /* What the mapping of the previous character was to.  If the new
+             * character has the same mapping, it is squashed from the output
+             * (but still is included in the count) */
+            short previous_map = (short) TR_OOB;
+
 	    while (s < send) {
-		const short ch = tbl->map[*s];
-		if (ch >= 0) {
-		    *d = (U8)ch;
-		    matches++;
-		    if (p != d - 1 || *p != *d)
-			p = d++;
+		const short this_map = tbl->map[*s];
+		if (this_map >= 0) {
+                    matches++;
+                    if (this_map != previous_map) {
+                        *d++ = (U8)this_map;
+                        previous_map = this_map;
+                    }
 		}
-		else if (ch == -1)	/* -1 is unmapped character */
-		    *d++ = *s;	
-		else if (ch == -2)	/* -2 is delete character */
-		    matches++;
+		else {
+                    if (this_map == (short) TR_UNMAPPED) {
+                        *d++ = *s;
+                        previous_map = (short) TR_OOB;
+                    }
+                    else {
+                        assert(this_map == (short) TR_DELETE);
+                        matches++;
+                    }
+                }
+
 		s++;
 	    }
 	}
-	else {
+	else {  /* Not to squash */
 	    while (s < send) {
-		const short ch = tbl->map[*s];
-		if (ch >= 0) {
+		const short this_map = tbl->map[*s];
+		if (this_map >= 0) {
 		    matches++;
-		    *d++ = (U8)ch;
+		    *d++ = (U8)this_map;
 		}
-		else if (ch == -1)	/* -1 is unmapped character */
+		else if (this_map == (short) TR_UNMAPPED)
 		    *d++ = *s;
-		else if (ch == -2)      /* -2 is delete character */
+		else if (this_map == (short) TR_DELETE)
 		    matches++;
 		s++;
 	    }
@@ -217,9 +246,17 @@ S_do_trans_complex(pTHX_ SV * const sv)
 	U8 *d;
 	U8 *dstart;
 	Size_t size = tbl->size;
-        UV pch = 0xfeedface;
+
+        /* What the mapping of the previous character was to.  If the new
+         * character has the same mapping, it is squashed from the output (but
+         * still is included in the count) */
+        UV pch = TR_OOB;
 
 	if (grows)
+            /* Allow for worst-case expansion: Each input byte can become 2.
+             * For a given input character, this happens when it occupies a
+             * single byte under UTF-8, but is to be translated to something
+             * that occupies two: */
 	    Newx(d, len*2+1, U8);
 	else
 	    d = s;
@@ -232,7 +269,11 @@ S_do_trans_complex(pTHX_ SV * const sv)
             UV     ch;
             short sch;
 
-            sch = tbl->map[comp >= size ? size : comp];
+            sch = (comp < size)
+                  ? tbl->map[comp]
+                  : (! complement)
+                    ? (short) TR_UNMAPPED
+                    : tbl->map[size];
 
             if (sch >= 0) {
                 ch = (UV)sch;
@@ -245,20 +286,20 @@ S_do_trans_complex(pTHX_ SV * const sv)
                 s += len;
                 continue;
             }
-            else if (sch == -1) {	/* -1 is unmapped character */
+            else if (sch == (short) TR_UNMAPPED) {
                 Move(s, d, len, U8);
                 d += len;
+                pch = TR_OOB;
             }
-            else if (sch == -2)     /* -2 is delete character */
+            else if (sch == (short) TR_DELETE)
                 matches++;
             else {
-                assert(sch == -3);  /* -3 is empty replacement */
+                assert(sch == (short) TR_R_EMPTY);  /* empty replacement */
                 ch = comp;
                 goto replace;
             }
 
             s += len;
-            pch = 0xfeedface;
         }
 
 	if (grows) {
@@ -272,342 +313,277 @@ S_do_trans_complex(pTHX_ SV * const sv)
 	SvUTF8_on(sv);
     }
     SvSETMAGIC(sv);
+    DEBUG_y(PerlIO_printf(Perl_debug_log, "%s: %d: returning %zu\n",
+                                          __FILE__, __LINE__, matches));
+    DEBUG_y(sv_dump(sv));
     return matches;
 }
 
 
 /* Helper function for do_trans().
- * Handles utf8 cases(*) not involving the /c, /d, /s flags,
- * and where search and replacement charlists aren't identical.
- * (*) i.e. where the search or replacement charlists are utf8. sv may
- * or may not be utf8.
+ * Handles cases where an inversion map implementation is to be used and the
+ * search and replacement charlists are identical: so the string isn't
+ * modified, and only a count of modifiable chars is needed.
+ *
+ * Note that it doesn't handle /d nor /s, since these modify the string
+ * even if the replacement charlist is empty.
+ *
+ * sv may or may not be utf8.
  */
 
 STATIC Size_t
-S_do_trans_simple_utf8(pTHX_ SV * const sv)
+S_do_trans_count_invmap(pTHX_ SV * const sv, AV * const invmap)
+{
+    U8 *s;
+    U8 *send;
+    Size_t matches = 0;
+    STRLEN len;
+    SV** const from_invlist_ptr = av_fetch(invmap, 0, TRUE);
+    SV** const to_invmap_ptr = av_fetch(invmap, 1, TRUE);
+    SV* from_invlist = *from_invlist_ptr;
+    SV* to_invmap_sv = *to_invmap_ptr;
+    UV* map = (UV *) SvPVX(to_invmap_sv);
+
+    PERL_ARGS_ASSERT_DO_TRANS_COUNT_INVMAP;
+
+    DEBUG_y(PerlIO_printf(Perl_debug_log, "%s: %d:"
+                                          "entering do_trans_count_invmap:"
+                                          " input sv:\n",
+                                          __FILE__, __LINE__));
+    DEBUG_y(sv_dump(sv));
+    DEBUG_y(PerlIO_printf(Perl_debug_log, "mapping:\n"));
+    DEBUG_y(invmap_dump(from_invlist, (UV *) SvPVX(to_invmap_sv)));
+
+    s = (U8*)SvPV_nomg(sv, len);
+
+    send = s + len;
+
+    while (s < send) {
+        UV from;
+        SSize_t i;
+        STRLEN s_len;
+
+        /* Get the code point of the next character in the string */
+        if (! SvUTF8(sv) || UTF8_IS_INVARIANT(*s)) {
+            from = *s;
+            s_len = 1;
+        }
+        else {
+            from = utf8_to_uvchr_buf(s, send, &s_len);
+            if (from == 0 && *s != '\0') {
+                _force_out_malformed_utf8_message(s, send, 0, /*die*/TRUE);
+            }
+        }
+
+        /* Look the code point up in the data structure for this tr/// to get
+         * what it maps to */
+        i = _invlist_search(from_invlist, from);
+        assert(i >= 0);
+
+        if (map[i] != (UV) TR_UNLISTED) {
+            matches++;
+        }
+
+        s += s_len;
+    }
+
+    DEBUG_y(PerlIO_printf(Perl_debug_log, "%s: %d: returning %zu\n",
+                                          __FILE__, __LINE__, matches));
+    return matches;
+}
+
+/* Helper function for do_trans().
+ * Handles cases where an inversion map implementation is to be used and the
+ * search and replacement charlists are either not identical or flags are
+ * present.
+ *
+ * sv may or may not be utf8.
+ */
+
+STATIC Size_t
+S_do_trans_invmap(pTHX_ SV * const sv, AV * const invmap)
 {
     U8 *s;
     U8 *send;
     U8 *d;
-    U8 *start;
-    U8 *dstart, *dend;
+    U8 *s0;
+    U8 *d0;
     Size_t matches = 0;
-    const bool grows = cBOOL(PL_op->op_private & OPpTRANS_GROWS);
     STRLEN len;
-    SV* const  rv =
-#ifdef USE_ITHREADS
-		    PAD_SVl(cPADOP->op_padix);
-#else
-		    MUTABLE_SV(cSVOP->op_sv);
-#endif
-    HV* const  hv = MUTABLE_HV(SvRV(rv));
-    SV* const * svp = hv_fetchs(hv, "NONE", FALSE);
-    const UV none = svp ? SvUV(*svp) : 0x7fffffff;
-    const UV extra = none + 1;
-    UV final = 0;
-    U8 hibit = 0;
+    SV** const from_invlist_ptr = av_fetch(invmap, 0, TRUE);
+    SV** const to_invmap_ptr = av_fetch(invmap, 1, TRUE);
+    SV** const to_expansion_ptr = av_fetch(invmap, 2, TRUE);
+    NV max_expansion = SvNV(*to_expansion_ptr);
+    SV* from_invlist = *from_invlist_ptr;
+    SV* to_invmap_sv = *to_invmap_ptr;
+    UV* map = (UV *) SvPVX(to_invmap_sv);
+    UV previous_map = TR_OOB;
+    const bool squash         = cBOOL(PL_op->op_private & OPpTRANS_SQUASH);
+    const bool delete_unfound = cBOOL(PL_op->op_private & OPpTRANS_DELETE);
+    bool inplace = ! cBOOL(PL_op->op_private & OPpTRANS_GROWS);
+    const UV* from_array = invlist_array(from_invlist);
+    UV final_map = TR_OOB;
+    bool out_is_utf8 = cBOOL(SvUTF8(sv));
+    STRLEN s_len;
 
-    PERL_ARGS_ASSERT_DO_TRANS_SIMPLE_UTF8;
+    PERL_ARGS_ASSERT_DO_TRANS_INVMAP;
+
+    /* A third element in the array indicates that the replacement list was
+     * shorter than the search list, and this element contains the value to use
+     * for the items that don't correspond */
+    if (av_top_index(invmap) >= 3) {
+        SV** const final_map_ptr = av_fetch(invmap, 3, TRUE);
+        SV*  const final_map_sv = *final_map_ptr;
+        final_map = SvUV(final_map_sv);
+    }
+
+    /* If there is something in the transliteration that could force the input
+     * to be changed to UTF-8, we don't know if we can do it in place, so
+     * assume cannot */
+    if (! out_is_utf8 && (PL_op->op_private & OPpTRANS_CAN_FORCE_UTF8)) {
+        inplace = FALSE;
+        if (max_expansion < 2) {
+            max_expansion = 2;
+        }
+    }
 
     s = (U8*)SvPV_nomg(sv, len);
-    if (!SvUTF8(sv)) {
-        hibit = ! is_utf8_invariant_string(s, len);
-        if (hibit) {
-            s = bytes_to_utf8(s, &len);
-	}
-    }
+    DEBUG_y(PerlIO_printf(Perl_debug_log, "%s: %d: entering do_trans_invmap:"
+                                          " input sv:\n",
+                                          __FILE__, __LINE__));
+    DEBUG_y(sv_dump(sv));
+    DEBUG_y(PerlIO_printf(Perl_debug_log, "mapping:\n"));
+    DEBUG_y(invmap_dump(from_invlist, map));
+
     send = s + len;
-    start = s;
+    s0 = s;
 
-    svp = hv_fetchs(hv, "FINAL", FALSE);
-    if (svp)
-	final = SvUV(*svp);
-
-    if (grows) {
-	/* d needs to be bigger than s, in case e.g. upgrading is required */
-	Newx(d, len * 3 + UTF8_MAXBYTES, U8);
-	dend = d + len * 3;
-	dstart = d;
+    /* We know by now if there are some possible input strings whose
+     * transliterations are longer than the input.  If none can, we just edit
+     * in place. */
+    if (inplace) {
+	d0 = d = s;
     }
     else {
-	dstart = d = s;
-	dend = d + len;
+        /* Here, we can't edit in place.  We have no idea how much, if any,
+         * this particular input string will grow.  However, the compilation
+         * calculated the maximum expansion possible.  Use that to allocate
+         * based on the worst case scenario.  (First +1 is to round up; 2nd is
+         * for \0) */
+	Newx(d, (STRLEN) (len * max_expansion + 1 + 1), U8);
+	d0 = d;
     }
 
+  restart:
+
+    /* Do the actual transliteration */
     while (s < send) {
-	const UV uv = swash_fetch(rv, s, TRUE);
-	if (uv < none) {
-	    s += UTF8SKIP(s);
-	    matches++;
-	    d = uvchr_to_utf8(d, uv);
-	}
-	else if (uv == none) {
-	    const int i = UTF8SKIP(s);
-	    Move(s, d, i, U8);
-	    d += i;
-	    s += i;
-	}
-	else if (uv == extra) {
-	    s += UTF8SKIP(s);
-	    matches++;
-	    d = uvchr_to_utf8(d, final);
-	}
-	else
-	    s += UTF8SKIP(s);
+        UV from;
+        UV to;
+        SSize_t i;
+        STRLEN s_len;
 
-	if (d > dend) {
-	    const STRLEN clen = d - dstart;
-	    const STRLEN nlen = dend - dstart + len + UTF8_MAXBYTES;
-	    if (!grows)
-		Perl_croak(aTHX_ "panic: do_trans_simple_utf8 line %d",__LINE__);
-	    Renew(dstart, nlen + UTF8_MAXBYTES, U8);
-	    d = dstart + clen;
-	    dend = dstart + nlen;
+        /* Get the code point of the next character in the string */
+        if (! SvUTF8(sv) || UTF8_IS_INVARIANT(*s)) {
+            from = *s;
+            s_len = 1;
+        }
+        else {
+            from = utf8_to_uvchr_buf(s, send, &s_len);
+            if (from == 0 && *s != '\0') {
+                _force_out_malformed_utf8_message(s, send, 0, /*die*/TRUE);
+            }
+        }
+
+        /* Look the code point up in the data structure for this tr/// to get
+         * what it maps to */
+        i = _invlist_search(from_invlist, from);
+        assert(i >= 0);
+
+        to = map[i];
+
+        if (to == (UV) TR_UNLISTED) { /* Just copy the unreplaced character */
+            if (UVCHR_IS_INVARIANT(from) || ! out_is_utf8) {
+                *d++ = (U8) from;
+            }
+            else if (SvUTF8(sv)) {
+                Move(s, d, s_len, U8);
+                d += s_len;
+            }
+            else {  /* Convert to UTF-8 */
+                append_utf8_from_native_byte(*s, &d);
+            }
+
+            previous_map = to;
+            s += s_len;
+            continue;
 	}
+
+        /* Everything else is counted as a match */
+        matches++;
+
+        if (to == (UV) TR_SPECIAL_HANDLING) {
+            if (delete_unfound) {
+                s += s_len;
+                continue;
+            }
+
+            /* Use the final character in the replacement list */
+            to = final_map;
+        }
+        else { /* Here the input code point is to be remapped.  The actual
+                  value is offset from the base of this entry */
+            to += from - from_array[i];
+        }
+
+        /* If copying all occurrences, or this is the first occurrence, copy it
+         * to the output */
+        if (! squash || to != previous_map) {
+            if (out_is_utf8) {
+                d = uvchr_to_utf8(d, to);
+            }
+            else {
+                if (to >= 256) {    /* If need to convert to UTF-8, restart */
+                    out_is_utf8 = TRUE;
+                    s = s0;
+                    d = d0;
+                    matches = 0;
+                    goto restart;
+                }
+                *d++ = (U8) to;
+            }
+        }
+
+        previous_map = to;
+        s += s_len;
     }
-    if (grows || hibit) {
-	sv_setpvn(sv, (char*)dstart, d - dstart);
-	Safefree(dstart);
-	if (grows && hibit)
-	    Safefree(start);
+
+    s_len = 0;
+    s += s_len;
+    if (! inplace) {
+	sv_setpvn(sv, (char*)d0, d - d0);
+        Safefree(d0);
     }
     else {
 	*d = '\0';
-	SvCUR_set(sv, d - dstart);
+	SvCUR_set(sv, d - d0);
+    }
+
+    if (! SvUTF8(sv) && out_is_utf8) {
+        SvUTF8_on(sv);
     }
     SvSETMAGIC(sv);
-    SvUTF8_on(sv);
 
+    DEBUG_y(PerlIO_printf(Perl_debug_log, "%s: %d: returning %zu\n",
+                                          __FILE__, __LINE__, matches));
+    DEBUG_y(sv_dump(sv));
     return matches;
 }
-
-
-/* Helper function for do_trans().
- * Handles utf8 cases(*) where search and replacement charlists are
- * identical: so the string isn't modified, and only a count of modifiable
- * chars is needed.
- * Note that it doesn't handle /d or /s, since these modify the string
- * even if the replacement charlist is empty.
- * (*) i.e. where the search or replacement charlists are utf8. sv may
- * or may not be utf8.
- */
-
-STATIC Size_t
-S_do_trans_count_utf8(pTHX_ SV * const sv)
-{
-    const U8 *s;
-    const U8 *start = NULL;
-    const U8 *send;
-    Size_t matches = 0;
-    STRLEN len;
-    SV* const  rv =
-#ifdef USE_ITHREADS
-		    PAD_SVl(cPADOP->op_padix);
-#else
-		    MUTABLE_SV(cSVOP->op_sv);
-#endif
-    HV* const hv = MUTABLE_HV(SvRV(rv));
-    SV* const * const svp = hv_fetchs(hv, "NONE", FALSE);
-    const UV none = svp ? SvUV(*svp) : 0x7fffffff;
-    const UV extra = none + 1;
-    U8 hibit = 0;
-
-    PERL_ARGS_ASSERT_DO_TRANS_COUNT_UTF8;
-
-    s = (const U8*)SvPV_nomg_const(sv, len);
-    if (!SvUTF8(sv)) {
-        hibit = ! is_utf8_invariant_string(s, len);
-        if (hibit) {
-            start = s = bytes_to_utf8(s, &len);
-	}
-    }
-    send = s + len;
-
-    while (s < send) {
-	const UV uv = swash_fetch(rv, s, TRUE);
-	if (uv < none || uv == extra)
-	    matches++;
-	s += UTF8SKIP(s);
-    }
-    if (hibit)
-        Safefree(start);
-
-    return matches;
-}
-
-
-/* Helper function for do_trans().
- * Handles utf8 cases(*) involving the /c, /d, /s flags,
- * and where search and replacement charlists aren't identical.
- * (*) i.e. where the search or replacement charlists are utf8. sv may
- * or may not be utf8.
- */
-
-STATIC Size_t
-S_do_trans_complex_utf8(pTHX_ SV * const sv)
-{
-    U8 *start, *send;
-    U8 *d;
-    Size_t matches = 0;
-    const bool squash   = cBOOL(PL_op->op_private & OPpTRANS_SQUASH);
-    const bool del      = cBOOL(PL_op->op_private & OPpTRANS_DELETE);
-    const bool grows    = cBOOL(PL_op->op_private & OPpTRANS_GROWS);
-    SV* const  rv =
-#ifdef USE_ITHREADS
-		    PAD_SVl(cPADOP->op_padix);
-#else
-		    MUTABLE_SV(cSVOP->op_sv);
-#endif
-    HV * const hv = MUTABLE_HV(SvRV(rv));
-    SV * const *svp = hv_fetchs(hv, "NONE", FALSE);
-    const UV none = svp ? SvUV(*svp) : 0x7fffffff;
-    const UV extra = none + 1;
-    UV final = 0;
-    bool havefinal = FALSE;
-    STRLEN len;
-    U8 *dstart, *dend;
-    U8 hibit = 0;
-    U8 *s = (U8*)SvPV_nomg(sv, len);
-
-    PERL_ARGS_ASSERT_DO_TRANS_COMPLEX_UTF8;
-
-    if (!SvUTF8(sv)) {
-        hibit = ! is_utf8_invariant_string(s, len);
-        if (hibit) {
-            s = bytes_to_utf8(s, &len);
-	}
-    }
-    send = s + len;
-    start = s;
-
-    svp = hv_fetchs(hv, "FINAL", FALSE);
-    if (svp) {
-	final = SvUV(*svp);
-	havefinal = TRUE;
-    }
-
-    if (grows) {
-	/* d needs to be bigger than s, in case e.g. upgrading is required */
-	Newx(d, len * 3 + UTF8_MAXBYTES, U8);
-	dend = d + len * 3;
-	dstart = d;
-    }
-    else {
-	dstart = d = s;
-	dend = d + len;
-    }
-
-    if (squash) {
-	UV puv = 0xfeedface;
-	while (s < send) {
-	    UV uv = swash_fetch(rv, s, TRUE);
-	
-	    if (d > dend) {
-		const STRLEN clen = d - dstart;
-		const STRLEN nlen = dend - dstart + len + UTF8_MAXBYTES;
-		if (!grows)
-		    Perl_croak(aTHX_ "panic: do_trans_complex_utf8 line %d",__LINE__);
-		Renew(dstart, nlen + UTF8_MAXBYTES, U8);
-		d = dstart + clen;
-		dend = dstart + nlen;
-	    }
-	    if (uv < none) {
-		matches++;
-		s += UTF8SKIP(s);
-		if (uv != puv) {
-		    d = uvchr_to_utf8(d, uv);
-		    puv = uv;
-		}
-		continue;
-	    }
-	    else if (uv == none) {	/* "none" is unmapped character */
-		const int i = UTF8SKIP(s);
-		Move(s, d, i, U8);
-		d += i;
-		s += i;
-		puv = 0xfeedface;
-		continue;
-	    }
-	    else if (uv == extra && !del) {
-		matches++;
-		if (havefinal) {
-		    s += UTF8SKIP(s);
-		    if (puv != final) {
-			d = uvchr_to_utf8(d, final);
-			puv = final;
-		    }
-		}
-		else {
-		    STRLEN len;
-		    uv = utf8n_to_uvchr(s, send - s, &len, UTF8_ALLOW_DEFAULT);
-		    if (uv != puv) {
-			Move(s, d, len, U8);
-			d += len;
-			puv = uv;
-		    }
-		    s += len;
-		}
-		continue;
-	    }
-	    matches++;			/* "none+1" is delete character */
-	    s += UTF8SKIP(s);
-	}
-    }
-    else {
-	while (s < send) {
-	    const UV uv = swash_fetch(rv, s, TRUE);
-	    if (d > dend) {
-	        const STRLEN clen = d - dstart;
-		const STRLEN nlen = dend - dstart + len + UTF8_MAXBYTES;
-		if (!grows)
-		    Perl_croak(aTHX_ "panic: do_trans_complex_utf8 line %d",__LINE__);
-		Renew(dstart, nlen + UTF8_MAXBYTES, U8);
-		d = dstart + clen;
-		dend = dstart + nlen;
-	    }
-	    if (uv < none) {
-		matches++;
-		s += UTF8SKIP(s);
-		d = uvchr_to_utf8(d, uv);
-		continue;
-	    }
-	    else if (uv == none) {	/* "none" is unmapped character */
-		const int i = UTF8SKIP(s);
-		Move(s, d, i, U8);
-		d += i;
-		s += i;
-		continue;
-	    }
-	    else if (uv == extra && !del) {
-		matches++;
-		s += UTF8SKIP(s);
-		d = uvchr_to_utf8(d, final);
-		continue;
-	    }
-	    matches++;			/* "none+1" is delete character */
-	    s += UTF8SKIP(s);
-	}
-    }
-    if (grows || hibit) {
-	sv_setpvn(sv, (char*)dstart, d - dstart);
-	Safefree(dstart);
-	if (grows && hibit)
-	    Safefree(start);
-    }
-    else {
-	*d = '\0';
-	SvCUR_set(sv, d - dstart);
-    }
-    SvUTF8_on(sv);
-    SvSETMAGIC(sv);
-
-    return matches;
-}
-
 
 /* Execute a tr//. sv is the value to be translated, while PL_op
  * should be an OP_TRANS or OP_TRANSR op, whose op_pv field contains a
- * translation table or whose op_sv field contains a swash.
+ * translation table or whose op_sv field contains an inversion map.
+ *
  * Returns a count of number of characters translated
  */
 
@@ -616,31 +592,49 @@ Perl_do_trans(pTHX_ SV *sv)
 {
     STRLEN len;
     const U8 flags = PL_op->op_private;
-    const U8 hasutf = flags & (OPpTRANS_FROM_UTF | OPpTRANS_TO_UTF);
+    bool use_utf8_fcns = cBOOL(flags & OPpTRANS_USE_SVOP);
+    bool identical     = cBOOL(flags & OPpTRANS_IDENTICAL);
 
     PERL_ARGS_ASSERT_DO_TRANS;
 
-    if (SvREADONLY(sv) && !(flags & OPpTRANS_IDENTICAL)) {
+    if (SvREADONLY(sv) && ! identical) {
         Perl_croak_no_modify();
     }
     (void)SvPV_const(sv, len);
     if (!len)
 	return 0;
-    if (!(flags & OPpTRANS_IDENTICAL)) {
+    if (! identical) {
 	if (!SvPOKp(sv) || SvTHINKFIRST(sv))
 	    (void)SvPV_force_nomg(sv, len);
 	(void)SvPOK_only_UTF8(sv);
     }
 
-    /* If we use only OPpTRANS_IDENTICAL to bypass the READONLY check,
-     * we must also rely on it to choose the readonly strategy.
-     */
-    if (flags & OPpTRANS_IDENTICAL) {
-        return hasutf ? do_trans_count_utf8(sv) : do_trans_count(sv);
-    } else if (flags & (OPpTRANS_SQUASH|OPpTRANS_DELETE|OPpTRANS_COMPLEMENT)) {
-        return hasutf ? do_trans_complex_utf8(sv) : do_trans_complex(sv);
-    } else {
-        return hasutf ? do_trans_simple_utf8(sv) : do_trans_simple(sv);
+    if (use_utf8_fcns) {
+        SV* const map =
+#ifdef USE_ITHREADS
+                        PAD_SVl(cPADOP->op_padix);
+#else
+                        MUTABLE_SV(cSVOP->op_sv);
+#endif
+
+        if (identical) {
+            return do_trans_count_invmap(sv, (AV *) map);
+        }
+        else {
+            return do_trans_invmap(sv, (AV *) map);
+        }
+    }
+    else {
+        const OPtrans_map * const map = (OPtrans_map*)cPVOP->op_pv;
+
+        if (identical) {
+            return do_trans_count(sv, map);
+        }
+        else if (flags & (OPpTRANS_SQUASH|OPpTRANS_DELETE|OPpTRANS_COMPLEMENT)) {
+            return do_trans_complex(sv, map);
+        }
+        else
+            return do_trans_simple(sv, map);
     }
 }
 
@@ -751,22 +745,19 @@ Perl_do_vecget(pTHX_ SV *sv, STRLEN offset, int size)
     if (!s) {
       s = (unsigned char *)"";
     }
-    
+
     PERL_ARGS_ASSERT_DO_VECGET;
 
     if (size < 1 || (size & (size-1))) /* size < 1 or not a power of two */
 	Perl_croak(aTHX_ "Illegal number of bits in vec");
 
     if (SvUTF8(sv)) {
-	if (Perl_sv_utf8_downgrade(aTHX_ sv, TRUE)) {
+	if (Perl_sv_utf8_downgrade_flags(aTHX_ sv, TRUE, 0)) {
             /* PVX may have changed */
             s = (unsigned char *) SvPV_flags(sv, srclen, svpv_flags);
         }
         else {
-            Perl_ck_warner_d(aTHX_ packWARN(WARN_DEPRECATED),
-                                "Use of strings with code points over 0xFF as"
-                                " arguments to vec is deprecated. This will"
-                                " be a fatal error in Perl 5.32");
+	        Perl_croak(aTHX_ "Use of strings with code points over 0xFF as arguments to vec is forbidden");
         }
     }
 
@@ -934,10 +925,10 @@ Perl_do_vecset(pTHX_ SV *sv)
                                          SV_GMAGIC | SV_UNDEF_RETURNS_NULL);
     if (SvUTF8(targ)) {
 	/* This is handled by the SvPOK_only below...
-	if (!Perl_sv_utf8_downgrade(aTHX_ targ, TRUE))
+	if (!Perl_sv_utf8_downgrade_flags(aTHX_ targ, TRUE, 0))
 	    SvUTF8_off(targ);
 	 */
-	(void) Perl_sv_utf8_downgrade(aTHX_ targ, TRUE);
+	(void) Perl_sv_utf8_downgrade_flags(aTHX_ targ, TRUE, 0);
     }
 
     (void)SvPOK_only(targ);
@@ -1008,11 +999,9 @@ Perl_do_vecset(pTHX_ SV *sv)
 void
 Perl_do_vop(pTHX_ I32 optype, SV *sv, SV *left, SV *right)
 {
-#ifdef LIBERAL
     long *dl;
     long *ll;
     long *rl;
-#endif
     char *dc;
     STRLEN leftlen;
     STRLEN rightlen;
@@ -1087,30 +1076,11 @@ Perl_do_vop(pTHX_ I32 optype, SV *sv, SV *left, SV *right)
      * on zeros without having to do it.  In the case of '&', the result is
      * zero, and the dangling portion is simply discarded.  For '|' and '^', the
      * result is the same as the other operand, so the dangling part is just
-     * appended to the final result, unchanged.  We currently accept above-FF
-     * code points in the dangling portion, as that's how it has long worked,
-     * and code depends on it staying that way.  But it is now fatal for
-     * above-FF to appear in the portion that does get operated on.  Hence, any
-     * above-FF must come only in the longer operand, and only in its dangling
-     * portion.  That means that at least one of the operands has to be
-     * entirely non-UTF-8, and the length of that operand has to be before the
-     * first above-FF in the other */
+     * appended to the final result, unchanged.  As of perl-5.32, we no longer
+     * accept above-FF code points in the dangling portion.
+     */
     if (left_utf8 || right_utf8) {
-        if (left_utf8) {
-            if (right_utf8 || rightlen > leftlen) {
-                Perl_croak(aTHX_ FATAL_ABOVE_FF_MSG, PL_op_desc[optype]);
-            }
-            len = rightlen;
-        }
-        else if (right_utf8) {
-            if (leftlen > rightlen) {
-                Perl_croak(aTHX_ FATAL_ABOVE_FF_MSG, PL_op_desc[optype]);
-            }
-            len = leftlen;
-        }
-
-        Perl_ck_warner_d(aTHX_ packWARN(WARN_DEPRECATED),
-                               DEPRECATED_ABOVE_FF_MSG, PL_op_desc[optype]);
+        Perl_croak(aTHX_ FATAL_ABOVE_FF_MSG, PL_op_desc[optype]);
     }
     else {  /* Neither is UTF-8 */
         len = MIN(leftlen, rightlen);
@@ -1120,7 +1090,6 @@ Perl_do_vop(pTHX_ I32 optype, SV *sv, SV *left, SV *right)
     lsave = lc;
     rsave = rc;
 
-    SvCUR_set(sv, len);
     (void)SvPOK_only(sv);
     if (SvOK(sv) || SvTYPE(sv) > SVt_PVMG) {
 	dc = SvPV_force_nomg_nolen(sv);
@@ -1136,12 +1105,12 @@ Perl_do_vop(pTHX_ I32 optype, SV *sv, SV *left, SV *right)
 	sv_usepvn_flags(sv, dc, needlen, SV_HAS_TRAILING_NUL);
 	dc = SvPVX(sv);		/* sv_usepvn() calls Renew() */
     }
+    SvCUR_set(sv, len);
 
-#ifdef LIBERAL
     if (len >= sizeof(long)*4 &&
-	!((unsigned long)dc % sizeof(long)) &&
-	!((unsigned long)lc % sizeof(long)) &&
-	!((unsigned long)rc % sizeof(long)))	/* It's almost always aligned... */
+	!(PTR2nat(dc) % sizeof(long)) &&
+	!(PTR2nat(lc) % sizeof(long)) &&
+	!(PTR2nat(rc) % sizeof(long)))	/* It's almost always aligned... */
     {
 	const STRLEN remainder = len % (sizeof(long)*4);
 	len /= (sizeof(long)*4);
@@ -1182,7 +1151,7 @@ Perl_do_vop(pTHX_ I32 optype, SV *sv, SV *left, SV *right)
 
 	len = remainder;
     }
-#endif
+
     switch (optype) {
     case OP_BIT_AND:
         while (len--)
@@ -1200,13 +1169,13 @@ Perl_do_vop(pTHX_ I32 optype, SV *sv, SV *left, SV *right)
         len = lensave;
         if (rightlen > len) {
             if (dc == rc)
-                SvCUR(sv) = rightlen;
+                SvCUR_set(sv, rightlen);
             else
                 sv_catpvn_nomg(sv, rsave + len, rightlen - len);
         }
         else if (leftlen > len) {
             if (dc == lc)
-                SvCUR(sv) = leftlen;
+                SvCUR_set(sv, leftlen);
             else
                 sv_catpvn_nomg(sv, lsave + len, leftlen - len);
         }

@@ -1,3 +1,5 @@
+# -*- coding: utf-8-unix -*-
+
 package Math::BigInt;
 
 #
@@ -20,13 +22,11 @@ use warnings;
 
 use Carp qw< carp croak >;
 
-our $VERSION = '1.999816';
+our $VERSION = '1.999818';
 
 require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(objectify bgcd blcm);
-
-my $class = "Math::BigInt";
 
 # Inside overload, the first arg is always an object. If the original code had
 # it reversed (like $x = 2 * $y), then the third parameter is true.
@@ -232,9 +232,7 @@ my $LIB = 'Math::BigInt::Calc';        # module to do the low level math
                                         # default is Calc.pm
 my $IMPORT = 0;                         # was import() called yet?
                                         # used to make require work
-my %WARN;                               # warn only once for low-level libs
 my %CALLBACKS;                          # callbacks to notify on lib loads
-my $EMU_LIB = 'Math/BigInt/CalcEmu.pm'; # emulate low-level math
 
 ##############################################################################
 # the old code had $rnd_mode, so we need to support it, too
@@ -1135,7 +1133,7 @@ sub bpi {
     if (@_ == 1) {
         # called like Math::BigInt::bpi(10);
         $n = $self;
-        $self = $class;
+        $self = __PACKAGE__;
     }
     $self = ref($self) if ref($self);
 
@@ -1232,6 +1230,24 @@ sub is_negative {
     my ($class, $x) = ref($_[0]) ? (undef, $_[0]) : objectify(1, @_);
 
     $x->{sign} =~ /^-/ ? 1 : 0; # -inf is negative, but NaN is not
+}
+
+sub is_non_negative {
+    # Return true if argument is non-negative (>= 0).
+    my ($class, $x) = ref($_[0]) ? (undef,$_[0]) : objectify(1,@_);
+
+    return 1 if $x->{sign} =~ /^\+/;
+    return 1 if $x -> is_zero();
+    return 0;
+}
+
+sub is_non_positive {
+    # Return true if argument is non-positive (<= 0).
+    my ($class, $x) = ref($_[0]) ? (undef,$_[0]) : objectify(1,@_);
+
+    return 1 if $x->{sign} =~ /^\-/;
+    return 1 if $x -> is_zero();
+    return 0;
 }
 
 sub is_odd {
@@ -2354,7 +2370,7 @@ sub bmodpow {
     $num->{value} = $value;
     $num->{sign}  = $sign;
 
-    return $num;
+    return $num -> round(@r);
 }
 
 sub bpow {
@@ -2401,21 +2417,14 @@ sub bpow {
 
     $r[3] = $y;                 # no push!
 
-    # cases 0 ** Y, X ** 0, X ** 1, 1 ** Y are handled by Calc or Emu
+    # 0 ** -y => ( 1 / (0 ** y)) => 1 / 0 => +inf
+    return $x->binf() if $y->is_negative() && $x->is_zero();
 
-    my $new_sign = '+';
-    $new_sign = $y->is_odd() ? '-' : '+' if ($x->{sign} ne '+');
-
-    # 0 ** -7 => ( 1 / (0 ** 7)) => 1 / 0 => +inf
-    return $x->binf()
-      if $y->{sign} eq '-' && $x->{sign} eq '+' && $LIB->_is_zero($x->{value});
     # 1 ** -y => 1 / (1 ** |y|)
-    # so do test for negative $y after above's clause
-    return $x->bnan() if $y->{sign} eq '-' && !$LIB->_is_one($x->{value});
+    return $x->bzero() if $y->is_negative() && !$LIB->_is_one($x->{value});
 
     $x->{value} = $LIB->_pow($x->{value}, $y->{value});
-    $x->{sign} = $new_sign;
-    $x->{sign} = '+' if $LIB->_is_zero($y->{value});
+    $x->{sign}  = $x->is_negative() && $y->is_odd() ? '-' : '+';
     $x->round(@r);
 }
 
@@ -2483,7 +2492,7 @@ sub blog {
         return $x;
     }
 
-    my ($rc, $exact) = $LIB->_log_int($x->{value}, $base->{value});
+    my ($rc) = $LIB->_log_int($x->{value}, $base->{value});
     return $x->bnan() unless defined $rc; # not possible to take log?
     $x->{value} = $rc;
     $x->round(@r);
@@ -2602,6 +2611,126 @@ sub bnok {
     $n->round(@r);
 }
 
+sub buparrow {
+    my $a = shift;
+    my $y = $a -> uparrow(@_);
+    $a -> {value} = $y -> {value};
+    return $a;
+}
+
+sub uparrow {
+    # Knuth's up-arrow notation buparrow(a, n, b)
+    #
+    # The following is a simple, recursive implementation of the up-arrow
+    # notation, just to show the idea. Such implementations cause "Deep
+    # recursion on subroutine ..." warnings, so we use a faster, non-recursive
+    # algorithm below with @_ as a stack.
+    #
+    #   sub buparrow {
+    #       my ($a, $n, $b) = @_;
+    #       return $a ** $b if $n == 1;
+    #       return $a * $b  if $n == 0;
+    #       return 1        if $b == 0;
+    #       return buparrow($a, $n - 1, buparrow($a, $n, $b - 1));
+    #   }
+
+    my ($a, $b, $n) = @_;
+    my $class = ref $a;
+    croak("a must be non-negative") if $a < 0;
+    croak("n must be non-negative") if $n < 0;
+    croak("b must be non-negative") if $b < 0;
+
+    while (@_ >= 3) {
+
+        # return $a ** $b if $n == 1;
+
+        if ($_[-2] == 1) {
+            my ($a, $n, $b) = splice @_, -3;
+            push @_, $a ** $b;
+            next;
+        }
+
+        # return $a * $b if $n == 0;
+
+        if ($_[-2] == 0) {
+            my ($a, $n, $b) = splice @_, -3;
+            push @_, $a * $b;
+            next;
+        }
+
+        # return 1 if $b == 0;
+
+        if ($_[-1] == 0) {
+            splice @_, -3;
+            push @_, $class -> bone();
+            next;
+        }
+
+        # return buparrow($a, $n - 1, buparrow($a, $n, $b - 1));
+
+        my ($a, $n, $b) = splice @_, -3;
+        push @_, ($a, $n - 1,
+                      $a, $n, $b - 1);
+
+    }
+
+    pop @_;
+}
+
+sub backermann {
+    my $m = shift;
+    my $y = $m -> ackermann(@_);
+    $m -> {value} = $y -> {value};
+    return $m;
+}
+
+sub ackermann {
+    # Ackermann's function ackermann(m, n)
+    #
+    # The following is a simple, recursive implementation of the ackermann
+    # function, just to show the idea. Such implementations cause "Deep
+    # recursion on subroutine ..." warnings, so we use a faster, non-recursive
+    # algorithm below with @_ as a stack.
+    #
+    # sub ackermann {
+    #     my ($m, $n) = @_;
+    #     return $n + 1                                  if $m == 0;
+    #     return ackermann($m - 1, 1)                    if $m > 0 && $n == 0;
+    #     return ackermann($m - 1, ackermann($m, $n - 1) if $m > 0 && $n > 0;
+    # }
+
+    my ($m, $n) = @_;
+    my $class = ref $m;
+    croak("m must be non-negative") if $m < 0;
+    croak("n must be non-negative") if $n < 0;
+
+    my $two      = $class -> new("2");
+    my $three    = $class -> new("3");
+    my $thirteen = $class -> new("13");
+
+    $n = pop;
+    $n = $class -> new($n) unless ref($n);
+    while (@_) {
+        my $m = pop;
+        if ($m > $three) {
+            push @_, (--$m) x $n;
+            while (--$m >= $three) {
+                push @_, $m;
+            }
+            $n = $thirteen;
+        } elsif ($m == $three) {
+            $n = $class -> bone() -> blsft($n + $three) -> bsub($three);
+        } elsif ($m == $two) {
+            $n -> bmul($two) -> badd($three);
+        } elsif ($m >= 0) {
+            $n -> badd($m) -> binc();
+        } else {
+            die "negative m!";
+        }
+    }
+    $n;
+}
+
 sub bsin {
     # Calculate sinus(x) to N digits. Unless upgrading is in effect, returns the
     # result truncated to an integer.
@@ -2654,9 +2783,9 @@ sub batan {
     return $upgrade->new($x)->batan(@r) if defined $upgrade;
 
     # calculate the result and truncate it to integer
-    my $t = Math::BigFloat->new($x)->batan(@r);
+    my $tmp = Math::BigFloat->new($x)->batan(@r);
 
-    $x->{value} = $LIB->_new($x->as_int()->bstr());
+    $x->{value} = $LIB->_new($tmp->as_int()->bstr());
     $x->round(@r);
 }
 
@@ -2902,12 +3031,19 @@ sub blsft {
     # (BINT or num_str, BINT or num_str) return BINT
     # compute x << y, base n, y >= 0
 
-    # set up parameters
-    my ($class, $x, $y, $b, @r) = (ref($_[0]), @_);
+    my ($class, $x, $y, $b, @r);
 
-    # objectify is costly, so avoid it
-    if ((!ref($_[0])) || (ref($_[0]) ne ref($_[1]))) {
-        ($class, $x, $y, $b, @r) = objectify(2, @_);
+    # Objectify the base only when it is defined, since an undefined base, as
+    # in $x->blsft(3) or $x->blog(3, undef) means use the default base 2.
+
+    if (!ref($_[0]) && $_[0] =~ /^[A-Za-z]|::/) {
+        # E.g., Math::BigInt->blog(256, 5, 2)
+        ($class, $x, $y, $b, @r) =
+          defined $_[3] ? objectify(3, @_) : objectify(2, @_);
+    } else {
+        # E.g., Math::BigInt::blog(256, 5, 2) or $x->blog(5, 2)
+        ($class, $x, $y, $b, @r) =
+          defined $_[2] ? objectify(3, @_) : objectify(2, @_);
     }
 
     return $x if $x -> modify('blsft');
@@ -2915,7 +3051,15 @@ sub blsft {
                             $y -> {sign} !~ /^[+-]$/);
     return $x -> round(@r) if $y -> is_zero();
 
-    $b = 2 if !defined $b;
+    $b = defined($b) ? $b -> numify() : 2;
+
+    # While some of the libraries support an arbitrarily large base, not all of
+    # them do, so rather than returning an incorrect result in those cases,
+    # disallow bases that don't work with all libraries.
+
+    my $uintmax = ~0;
+    croak("Base is too large.") if $b > $uintmax;
+
     return $x -> bnan() if $b <= 0 || $y -> {sign} eq '-';
 
     $x -> {value} = $LIB -> _lsft($x -> {value}, $y -> {value}, $b);
@@ -3146,7 +3290,7 @@ sub bround {
     # do not return $x->bnorm(), but $x
 
     my $x = shift;
-    $x = $class->new($x) unless ref $x;
+    $x = __PACKAGE__->new($x) unless ref $x;
     my ($scale, $mode) = $x->_scale_a(@_);
     return $x if !defined $scale || $x->modify('bround'); # no-op
 
@@ -3264,7 +3408,7 @@ sub fround {
     # Exists to make life easier for switch between MBF and MBI (should we
     # autoload fxxx() like MBF does for bxxx()?)
     my $x = shift;
-    $x = $class->new($x) unless ref $x;
+    $x = __PACKAGE__->new($x) unless ref $x;
     $x->bround(@_);
 }
 
@@ -3354,6 +3498,31 @@ sub digit {
 
     $n = $n->numify() if ref($n);
     $LIB->_digit($x->{value}, $n || 0);
+}
+
+sub bdigitsum {
+    # like digitsum(), but assigns the result to the invocand
+    my $x = shift;
+
+    return $x           if $x -> is_nan();
+    return $x -> bnan() if $x -> is_inf();
+
+    $x -> {value} = $LIB -> _digitsum($x -> {value});
+    $x -> {sign}  = '+';
+    return $x;
+}
+
+sub digitsum {
+    # compute sum of decimal digits and return it
+    my $x = shift;
+    my $class = ref $x;
+
+    return $class -> bnan() if $x -> is_nan();
+    return $class -> bnan() if $x -> is_inf();
+
+    my $y = $class -> bzero();
+    $y -> {value} = $LIB -> _digitsum($x -> {value});
+    return $y;
 }
 
 sub length {
@@ -3652,7 +3821,7 @@ sub bdstr {
 sub to_hex {
     # return as hex string, with prefixed 0x
     my $x = shift;
-    $x = $class->new($x) if !ref($x);
+    $x = __PACKAGE__->new($x) if !ref($x);
 
     return $x->bstr() if $x->{sign} !~ /^[+-]$/; # inf, nan etc
 
@@ -3663,7 +3832,7 @@ sub to_hex {
 sub to_oct {
     # return as octal string, with prefixed 0
     my $x = shift;
-    $x = $class->new($x) if !ref($x);
+    $x = __PACKAGE__->new($x) if !ref($x);
 
     return $x->bstr() if $x->{sign} !~ /^[+-]$/; # inf, nan etc
 
@@ -3674,7 +3843,7 @@ sub to_oct {
 sub to_bin {
     # return as binary string, with prefixed 0b
     my $x = shift;
-    $x = $class->new($x) if !ref($x);
+    $x = __PACKAGE__->new($x) if !ref($x);
 
     return $x->bstr() if $x->{sign} !~ /^[+-]$/; # inf, nan etc
 
@@ -3685,7 +3854,7 @@ sub to_bin {
 sub to_bytes {
     # return a byte string
     my $x = shift;
-    $x = $class->new($x) if !ref($x);
+    $x = __PACKAGE__->new($x) if !ref($x);
 
     croak("to_bytes() requires a finite, non-negative integer")
         if $x -> is_neg() || ! $x -> is_int();
@@ -3699,13 +3868,13 @@ sub to_bytes {
 sub to_base {
     # return a base anything string
     my $x = shift;
-    $x = $class->new($x) if !ref($x);
+    $x = __PACKAGE__->new($x) if !ref($x);
 
     croak("the value to convert must be a finite, non-negative integer")
       if $x -> is_neg() || !$x -> is_int();
 
     my $base = shift;
-    $base = $class->new($base) unless ref($base);
+    $base = __PACKAGE__->new($base) unless ref($base);
 
     croak("the base must be a finite integer >= 2")
       if $base < 2 || ! $base -> is_int();
@@ -3729,7 +3898,7 @@ sub to_base {
 sub as_hex {
     # return as hex string, with prefixed 0x
     my $x = shift;
-    $x = $class->new($x) if !ref($x);
+    $x = __PACKAGE__->new($x) if !ref($x);
 
     return $x->bstr() if $x->{sign} !~ /^[+-]$/; # inf, nan etc
 
@@ -3740,7 +3909,7 @@ sub as_hex {
 sub as_oct {
     # return as octal string, with prefixed 0
     my $x = shift;
-    $x = $class->new($x) if !ref($x);
+    $x = __PACKAGE__->new($x) if !ref($x);
 
     return $x->bstr() if $x->{sign} !~ /^[+-]$/; # inf, nan etc
 
@@ -3751,7 +3920,7 @@ sub as_oct {
 sub as_bin {
     # return as binary string, with prefixed 0b
     my $x = shift;
-    $x = $class->new($x) if !ref($x);
+    $x = __PACKAGE__->new($x) if !ref($x);
 
     return $x->bstr() if $x->{sign} !~ /^[+-]$/; # inf, nan etc
 
@@ -3768,7 +3937,7 @@ sub as_bin {
 sub numify {
     # Make a Perl scalar number from a Math::BigInt object.
     my $x = shift;
-    $x = $class->new($x) unless ref $x;
+    $x = __PACKAGE__->new($x) unless ref $x;
 
     if ($x -> is_nan()) {
         require Math::Complex;
@@ -3817,7 +3986,7 @@ sub objectify {
     # Check the context.
 
     unless (wantarray) {
-        croak("${class}::objectify() needs list context");
+        croak(__PACKAGE__ . "::objectify() needs list context");
     }
 
     # Get the number of arguments to objectify.
@@ -3935,10 +4104,9 @@ sub objectify {
 sub import {
     my $class = shift;
     $IMPORT++;                  # remember we did import()
-    my @a;
-    my $l = scalar @_;
+    my @a;                      # unrecognized arguments
     my $warn_or_die = 0;        # 0 - no warn, 1 - warn, 2 - die
-    for (my $i = 0; $i < $l ; $i++) {
+    for (my $i = 0; $i <= $#_ ; $i++) {
         if ($_[$i] eq ':constant') {
             # this causes overlord er load to step in
             overload::constant
@@ -3951,7 +4119,9 @@ sub import {
         } elsif ($_[$i] =~ /^(lib|try|only)\z/) {
             # this causes a different low lib to take care...
             $LIB = $_[$i+1] || '';
-            # lib => 1 (warn on fallback), try => 0 (no warn), only => 2 (die on fallback)
+            # try  => 0 (no warn)
+            # lib  => 1 (warn on fallback)
+            # only => 2 (die on fallback)
             $warn_or_die = 1 if $_[$i] eq 'lib';
             $warn_or_die = 2 if $_[$i] eq 'only';
             $i++;
@@ -3968,77 +4138,34 @@ sub import {
     # try to load core math lib
     my @c = split /\s*,\s*/, $LIB;
     foreach (@c) {
-        $_ =~ tr/a-zA-Z0-9://cd; # limit to sane characters
+        tr/a-zA-Z0-9://cd;      # limit to sane characters
     }
     push @c, \'Calc'            # if all fail, try these
       if $warn_or_die < 2;      # but not for "only"
-    $LIB = '';                 # signal error
+    $LIB = '';                  # signal error
     foreach my $l (@c) {
         # fallback libraries are "marked" as \'string', extract string if nec.
         my $lib = $l;
         $lib = $$l if ref($l);
 
-        next if ($lib || '') eq '';
+        next unless defined($lib) && CORE::length($lib);
         $lib = 'Math::BigInt::'.$lib if $lib !~ /^Math::BigInt/i;
         $lib =~ s/\.pm$//;
-        if ($] < 5.006) {
-            # Perl < 5.6.0 dies with "out of memory!" when eval("") and ':constant' is
-            # used in the same script, or eval("") inside import().
-            my @parts = split /::/, $lib; # Math::BigInt => Math BigInt
-            my $file = pop @parts;
-            $file .= '.pm';     # BigInt => BigInt.pm
-            require File::Spec;
-            $file = File::Spec->catfile (@parts, $file);
-            eval {
-                require "$file";
-                $lib->import(@c);
-            }
-        } else {
-            eval "use $lib qw/@c/;";
-        }
+        my @parts = split /::/, $lib;   # Math::BigInt => Math BigInt
+        $parts[-1] .= '.pm';            # BigInt => BigInt.pm
+        require File::Spec;
+        my $file = File::Spec->catfile(@parts);
+        eval { require $file; };
         if ($@ eq '') {
-            my $ok = 1;
-            # loaded it ok, see if the api_version() is high enough
-            if ($lib->can('api_version') && $lib->api_version() >= 1.0) {
-                $ok = 0;
-                # api_version matches, check if it really provides anything we need
-                for my $method (qw/
-                                      one two ten
-                                      str num
-                                      add mul div sub dec inc
-                                      acmp len digit is_one is_zero is_even is_odd
-                                      is_two is_ten
-                                      zeros new copy check
-                                      from_hex from_oct from_bin as_hex as_bin as_oct
-                                      rsft lsft xor and or
-                                      mod sqrt root fac pow modinv modpow log_int gcd
-                                  /) {
-                    if (!$lib->can("_$method")) {
-                        if (($WARN{$lib} || 0) < 2) {
-                            carp("$lib is missing method '_$method'");
-                            $WARN{$lib} = 1; # still warn about the lib
-                        }
-                        $ok++;
-                        last;
-                    }
-                }
+            $lib->import();
+            $LIB = $lib;
+            if ($warn_or_die > 0 && ref($l)) {
+                my $msg = "Math::BigInt: couldn't load specified"
+                        . " math lib(s), fallback to $lib";
+                carp($msg)  if $warn_or_die == 1;
+                croak($msg) if $warn_or_die == 2;
             }
-            if ($ok == 0) {
-                $LIB = $lib;
-                if ($warn_or_die > 0 && ref($l)) {
-                    my $msg = "Math::BigInt: couldn't load specified"
-                            . " math lib(s), fallback to $lib";
-                    carp($msg)  if $warn_or_die == 1;
-                    croak($msg) if $warn_or_die == 2;
-                }
-                last;           # found a usable one, break
-            } else {
-                if (($WARN{$lib} || 0) < 2) {
-                    my $ver = eval "\$$lib\::VERSION" || 'unknown';
-                    carp("Cannot load outdated $lib v$ver, please upgrade");
-                    $WARN{$lib} = 2; # never warn again
-                }
-            }
+            last;               # found a usable one, break
         }
     }
     if ($LIB eq '') {
@@ -4210,7 +4337,7 @@ sub _split {
 sub _trailing_zeros {
     # return the amount of trailing zeros in $x (as scalar)
     my $x = shift;
-    $x = $class->new($x) unless ref $x;
+    $x = __PACKAGE__->new($x) unless ref $x;
 
     return 0 if $x->{sign} !~ /^[+-]$/; # NaN, inf, -inf etc
 
@@ -4423,6 +4550,8 @@ Math::BigInt - Arbitrary size integer/float math package
   $x->blog($base);        # logarithm of $x to base $base (e.g., base 2)
   $x->bexp();             # calculate e ** $x where e is Euler's number
   $x->bnok($y);           # x over y (binomial coefficient n over k)
+  $x->buparrow($n, $y);   # Knuth's up-arrow notation
+  $x->backermann($y);     # the Ackermann function
   $x->bsin();             # sine
   $x->bcos();             # cosine
   $x->batan();            # inverse tangent
@@ -4987,6 +5116,18 @@ neither positive nor negative.
 Returns true if the invocand is negative and false otherwise. A C<NaN> is
 neither positive nor negative.
 
+=item is_non_positive()
+
+    $x->is_non_positive();      # true if <= 0
+
+Returns true if the invocand is negative or zero.
+
+=item is_non_negative()
+
+    $x->is_non_negative();      # true if >= 0
+
+Returns true if the invocand is positive or zero.
+
 =item is_odd()
 
     $x->is_odd();               # true if odd, false for even
@@ -5292,6 +5433,38 @@ pseudo-code:
 The behaviour is identical to the behaviour of the Maple and Mathematica
 function for negative integers n, k.
 
+=item buparrow()
+
+=item uparrow()
+
+    $a -> buparrow($n, $b);         # modifies $a
+    $x = $a -> uparrow($n, $b);     # does not modify $a
+
+This method implements Knuth's up-arrow notation, where $n is a non-negative
+integer representing the number of up-arrows. $n = 0 gives multiplication, $n =
+1 gives exponentiation, $n = 2 gives tetration, $n = 3 gives hexation etc. The
+following illustrates the relation between the first values of $n.
+
+See L<https://en.wikipedia.org/wiki/Knuth%27s_up-arrow_notation>.
+
+=item backermann()
+
+=item ackermann()
+
+    $m -> backermann($n);           # modifies $a
+    $x = $m -> ackermann($n);       # does not modify $a
+
+This method implements the Ackermann function:
+
+             / n + 1              if m = 0
+   A(m, n) = | A(m-1, 1)          if m > 0 and n = 0
+             \ A(m-1, A(m, n-1))  if m > 0 and n > 0
+
+Its value grows rapidly, even for small inputs. For example, A(4, 2) is an
+integer of 19729 decimal digits.
+
+See https://en.wikipedia.org/wiki/Ackermann_function
+
 =item bsin()
 
     my $x = Math::BigInt->new(1);
@@ -5589,6 +5762,18 @@ If you want $x to have a certain sign, use one of the following methods:
     $x->digit($n);       # return the nth digit, counting from right
 
 If C<$n> is negative, returns the digit counting from left.
+
+=item digitsum()
+
+    $x->digitsum();
+
+Computes the sum of the base 10 digits and returns it.
+
+=item bdigitsum()
+
+    $x->bdigitsum();
+
+Computes the sum of the base 10 digits and assigns the result to the invocand.
 
 =item length()
 
@@ -6696,11 +6881,11 @@ L<http://annocpan.org/dist/Math-BigInt>
 
 =item * CPAN Ratings
 
-L<http://cpanratings.perl.org/dist/Math-BigInt>
+L<https://cpanratings.perl.org/dist/Math-BigInt>
 
-=item * Search CPAN
+=item * MetaCPAN
 
-L<http://search.cpan.org/dist/Math-BigInt/>
+L<https://metacpan.org/release/Math-BigInt>
 
 =item * CPAN Testers Matrix
 

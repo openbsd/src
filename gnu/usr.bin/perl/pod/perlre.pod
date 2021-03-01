@@ -465,7 +465,7 @@ Use of C</x> means that if you want real
 whitespace or C<"#"> characters in the pattern (outside a bracketed character
 class, which is unaffected by C</x>), then you'll either have to
 escape them (using backslashes or C<\Q...\E>) or encode them using octal,
-hex, or C<\N{}> escapes.
+hex, or C<\N{}> or C<\p{name=...}> escapes.
 It is ineffective to try to continue a comment onto the next line by
 escaping the C<\n> with a backslash or C<\Q>.
 
@@ -667,7 +667,7 @@ characters.  The C<KELVIN SIGN>, for example matches the letters "k" and
 "K"; and C<LATIN SMALL LIGATURE FF> matches the sequence "ff", which,
 if you're not prepared, might make it look like a hexadecimal constant,
 presenting another potential security issue.  See
-L<http://unicode.org/reports/tr36> for a detailed discussion of Unicode
+L<https://unicode.org/reports/tr36> for a detailed discussion of Unicode
 security issues.
 
 This modifier may be specified to be the default by C<use feature
@@ -1593,9 +1593,6 @@ X<look-ahead, positive> X<lookahead, positive>
 A zero-width positive lookahead assertion.  For example, C</\w+(?=\t)/>
 matches a word followed by a tab, without including the tab in C<$&>.
 
-The alphabetic forms are experimental; using them yields a warning in the
-C<experimental::alpha_assertions> category.
-
 =item C<(?!I<pattern>)>
 
 =item C<(*nla:I<pattern>)>
@@ -1615,9 +1612,6 @@ If you are looking for a "bar" that isn't preceded by a "foo", C</(?!foo)bar/>
 will not do what you want.  That's because the C<(?!foo)> is just saying that
 the next thing cannot be "foo"--and it's not, it's a "bar", so "foobar" will
 match.  Use lookbehind instead (see below).
-
-The alphabetic forms are experimental; using them yields a warning in the
-C<experimental::alpha_assertions> category.
 
 =item C<(?<=I<pattern>)>
 
@@ -1681,9 +1675,6 @@ can be rewritten as the much more efficient
 Use of the non-greedy modifier C<"?"> may not give you the expected
 results if it is within a capturing group within the construct.
 
-The alphabetic forms (not including C<\K> are experimental; using them
-yields a warning in the C<experimental::alpha_assertions> category.
-
 =item C<(?<!I<pattern>)>
 
 =item C<(*nlb:I<pattern>)>
@@ -1723,9 +1714,6 @@ error, as that could match 256 C<"s"> characters in a row.
 
 Use of the non-greedy modifier C<"?"> may not give you the expected
 results if it is within a capturing group within the construct.
-
-The alphabetic forms are experimental; using them yields a warning in the
-C<experimental::alpha_assertions> category.
 
 =back
 
@@ -2327,9 +2315,6 @@ matches, but
 
 does not.
 
-The alphabetic form (C<(*atomic:...)>) is experimental; using it
-yields a warning in the C<experimental::alpha_assertions> category.
-
 =item C<(?[ ])>
 
 See L<perlrecharclass/Extended Bracketed Character Classes>.
@@ -2594,7 +2579,7 @@ you can write either of these:
 
 In Taiwan, Japan, and Korea, it is common for text to have a mixture of
 characters from their native scripts and base Chinese.  Perl follows
-Unicode's UTS 39 (L<http://unicode.org/reports/tr39/>) Unicode Security
+Unicode's UTS 39 (L<https://unicode.org/reports/tr39/>) Unicode Security
 Mechanisms in allowing such mixtures.  For example, the Japanese scripts
 Katakana and Hiragana are commonly mixed together in practice, along
 with some Chinese characters, and hence are treated as being in a single
@@ -2637,12 +2622,8 @@ to capture, if desired.  You will have to do this if you plan to use
 L</(*ACCEPT) (*ACCEPT:arg)> and not have it bypass the script run
 checking.
 
-This feature is experimental, and the exact syntax and details of
-operation are subject to change; using it yields a warning in the
-C<experimental::script_run> category.
-
 The C<Script_Extensions> property as modified by UTS 39
-(L<http://unicode.org/reports/tr39/>) is used as the basis for this
+(L<https://unicode.org/reports/tr39/>) is used as the basis for this
 feature.
 
 To summarize,
@@ -2677,7 +2658,7 @@ All characters in the sequence come from the Common script and/or the
 Inherited script and/or a single other script.
 
 The script of a character is determined by the C<Script_Extensions>
-property as modified by UTS 39 (L<http://unicode.org/reports/tr39/>), as
+property as modified by UTS 39 (L<https://unicode.org/reports/tr39/>), as
 described above.
 
 =item 3
@@ -2848,7 +2829,7 @@ As a shortcut C<(*MARK:I<NAME>)> can be written C<(*:I<NAME>)>.
 
 =item C<(*THEN)> C<(*THEN:I<NAME>)>
 
-This is similar to the "cut group" operator C<::> from Perl 6.  Like
+This is similar to the "cut group" operator C<::> from Raku.  Like
 C<(*PRUNE)>, this verb always matches, and when backtracked into on
 failure, it causes the regex engine to try the next alternation in the
 innermost enclosing group (capturing or otherwise) that has alternations.
@@ -2884,7 +2865,7 @@ backtrack and try I<C>; but the C<(*PRUNE)> verb will simply fail.
 =item C<(*COMMIT)> C<(*COMMIT:I<arg>)>
 X<(*COMMIT)>
 
-This is the Perl 6 "commit pattern" C<< <commit> >> or C<:::>. It's a
+This is the Raku "commit pattern" C<< <commit> >> or C<:::>. It's a
 zero-width pattern similar to C<(*SKIP)>, except that when backtracked
 into on failure it causes the match to fail outright. No further attempts
 to find a valid match by advancing the start pointer will occur again.

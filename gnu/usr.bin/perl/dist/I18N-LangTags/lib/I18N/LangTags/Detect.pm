@@ -11,7 +11,7 @@ our ( $MATCH_SUPERS, $USING_LANGUAGE_TAGS,
 BEGIN { unless(defined &DEBUG) { *DEBUG = sub () {0} } }
  # define the constant 'DEBUG' at compile-time
 
-our $VERSION = "1.07";
+our $VERSION = "1.08";
 our @ISA = ();
 use I18N::LangTags qw(alternate_language_tags locale2language_tag);
 
@@ -203,11 +203,13 @@ C<I18N::LangTags::implicate_supers(...)>, like so:
 
 =head1 ENVIRONMENT
 
-This module looks for several environment variables, including
+This module looks at several environment variables:
 REQUEST_METHOD, HTTP_ACCEPT_LANGUAGE,
 LANGUAGE, LC_ALL, LC_MESSAGES, and LANG.
 
-It will also use the L<Win32::Locale> module, if it's installed.
+It will also use the L<Win32::Locale> module, if it's installed
+and IGNORE_WIN32_LOCALE is not set to a true value in the
+environment.
 
 
 =head1 SEE ALSO

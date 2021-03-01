@@ -189,14 +189,14 @@ if (@ARGV) {
         # directory containing such files should be tested in serial order.
         #
         # Add exceptions to the above rule
-        for (qw(ext/Pod-Html/t cpan/IO-Zlib/t)) {
+        for (qw(ext/Pod-Html/t cpan/IO-Zlib/t ext/File-Find/t)) {
             $serials{$_} = 1;
         }
 
         my @nonexistent_serials = grep { not exists $all_dirs{$_} } keys %serials;
         if (@nonexistent_serials) {
-            die "These directories to be run serially are incorrectly"
-              . " specified:\n" . join "\n", @nonexistent_serials;
+            die "These directories to be run serially don't exist."
+              . "  Check your spelling:\n" . join "\n", @nonexistent_serials;
         }
 
         # Remove the serial testing directories from the list of all

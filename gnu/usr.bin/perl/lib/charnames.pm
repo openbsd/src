@@ -1,7 +1,7 @@
 package charnames;
 use strict;
 use warnings;
-our $VERSION = '1.45';
+our $VERSION = '1.48';
 use unicore::Name;    # mktables-generated algorithmically-defined names
 use _charnames ();    # The submodule for this where most of the work gets done
 
@@ -41,6 +41,7 @@ sub vianame
   # found, undef otherwise.
 
   my $arg = shift;
+  return () unless length $arg;
 
   if ($arg =~ /^U\+([0-9a-fA-F]+)$/) {
 
@@ -70,6 +71,7 @@ sub string_vianame {
   }
 
   my $arg = shift;
+  return () unless length $arg;
 
   if ($arg =~ /^U\+([0-9a-fA-F]+)$/) {
 

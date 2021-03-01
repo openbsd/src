@@ -40,7 +40,19 @@ my $listener = IO::Socket::UNIX->new(Type => SOCK_STREAM,
 ok(defined($listener), 'stream socket created');
 
 my $p = $listener->protocol();
-ok(defined($p), 'protocol defined');
+{
+    # the value of protocol isn't well defined for AF_UNIX, when we
+    # create the socket we supply 0, which leaves it up to the implementation
+    # to select a protocol, so we (now) don't save a 0 protocol during socket
+    # creation.  This test then breaks if the implementation doesn't support
+    # SO_SOCKET (at least on AF_UNIX).
+    # This specifically includes NetBSD, Darwin and cygwin.
+    # This is a TODO instead of a skip so if these ever implement SO_PROTOCOL
+    # we'll be notified about the passing TODO so the test can be updated.
+    local $TODO = "$^O doesn't support SO_PROTOCOL on AF_UNIX"
+        if $^O =~ /^(netbsd|darwin|cygwin|hpux|solaris|dragonfly|os390)$/;
+    ok(defined($p), 'protocol defined');
+}
 my $d = $listener->sockdomain();
 ok(defined($d), 'domain defined');
 my $s = $listener->socktype();
@@ -90,7 +102,12 @@ SKIP: {
     ok(defined($listener), 'datagram socket created');
 
     $p = $listener->protocol();
-    ok(defined($p), 'protocol defined');
+    {
+        # see comment above
+        local $TODO = "$^O doesn't support SO_PROTOCOL on AF_UNIX"
+            if $^O =~ /^(netbsd|darwin|cygwin|hpux|solaris|dragonfly|os390)$/;
+        ok(defined($p), 'protocol defined');
+    }
     $d = $listener->sockdomain();
     ok(defined($d), 'domain defined');
     $s = $listener->socktype();
@@ -103,8 +120,6 @@ SKIP: {
       skip "no Socket::SO_PROTOCOL", 1 if !defined(eval { Socket::SO_PROTOCOL });
       skip "SO_PROTOCOL defined but not implemented", 1
          if !defined $new->sockopt(Socket::SO_PROTOCOL);
-      skip "SO_PROTOCOL returns chosen protocol on OpenBSD"
-         if $^O eq 'openbsd';
       is($new->protocol(), $p, 'protocol match');
     }
     SKIP: {

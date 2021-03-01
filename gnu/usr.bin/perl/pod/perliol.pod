@@ -21,7 +21,7 @@ maintain (source) compatibility.
 
 The aim of the implementation is to provide the PerlIO API in a flexible
 and platform neutral manner. It is also a trial of an "Object Oriented
-C, with vtables" approach which may be applied to Perl 6.
+C, with vtables" approach which may be applied to Raku.
 
 =head2 Basic Structure
 

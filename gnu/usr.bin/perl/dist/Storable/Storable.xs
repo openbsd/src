@@ -104,6 +104,12 @@
 #  define strEQc(s,c) memEQ(s, ("" c ""), sizeof(c))
 #endif
 
+#if defined(HAS_FLOCK) || defined(FCNTL_CAN_LOCK) && defined(HAS_LOCKF)
+#define CAN_FLOCK &PL_sv_yes
+#else
+#define CAN_FLOCK &PL_sv_no
+#endif
+
 #ifdef DEBUGME
 
 #ifndef DASSERT
@@ -726,8 +732,8 @@ static stcxt_t *Context_ptr = NULL;
         STRLEN nsz = (STRLEN) round_mgrow((x)+msiz);            \
         STRLEN offset = mptr - mbase;                           \
         ASSERT(!cxt->membuf_ro, ("mbase is not read-only"));    \
-        TRACEME(("** extending mbase from %ld to %ld bytes (wants %ld new)", \
-                 (long)msiz, nsz, (long)(x)));                  \
+        TRACEME(("** extending mbase from %lu to %lu bytes (wants %lu new)", \
+                 (unsigned long)msiz, (unsigned long)nsz, (unsigned long)(x)));  \
         Renew(mbase, nsz, char);                                \
         msiz = nsz;                                             \
         mptr = mbase + offset;                                  \
@@ -2622,6 +2628,12 @@ static int store_scalar(pTHX_ stcxt_t *cxt, SV *sv)
             /* The macro passes this by address, not value, and a lot of
                called code assumes that it's 32 bits without checking.  */
             const SSize_t len = mg->mg_len;
+            /* we no longer accept vstrings over I32_SIZE-1, so don't emit
+               them, also, older Storables handle them badly.
+            */
+            if (len >= I32_MAX) {
+                CROAK(("vstring too large to freeze"));
+            }
             STORE_PV_LEN((const char *)mg->mg_ptr,
                          len, SX_VSTRING, SX_LVSTRING);
         }
@@ -3079,7 +3091,7 @@ static int store_hash(pTHX_ stcxt_t *cxt, HV *hv)
             len = HEK_LEN(hek);
             if (len == HEf_SVKEY) {
                 /* This is somewhat sick, but the internal APIs are
-                 * such that XS code could put one of these in in
+                 * such that XS code could put one of these in
                  * a regular hash.
                  * Maybe we should be capable of storing one if
                  * found.
@@ -3431,7 +3443,7 @@ static int get_regexp(pTHX_ stcxt_t *cxt, SV* sv, SV **re, SV **flags) {
     count = call_sv((SV*)cv, G_ARRAY);
     SPAGAIN;
     if (count < 2)
-      CROAK(("re::regexp_pattern returned only %d results", count));
+      CROAK(("re::regexp_pattern returned only %d results", (int)count));
     *flags = POPs;
     SvREFCNT_inc(*flags);
     *re = POPs;
@@ -3662,7 +3674,7 @@ static int store_hook(
     SV *ref;
     AV *av;
     SV **ary;
-    int count;			/* really len3 + 1 */
+    IV count;			/* really len3 + 1 */
     unsigned char flags;
     char *pv;
     int i;
@@ -3752,7 +3764,7 @@ static int store_hook(
     SvREFCNT_dec(ref);			/* Reclaim temporary reference */
 
     count = AvFILLp(av) + 1;
-    TRACEME(("store_hook, array holds %d items", count));
+    TRACEME(("store_hook, array holds %" IVdf " items", count));
 
     /*
      * If they return an empty list, it means they wish to ignore the
@@ -3986,7 +3998,7 @@ static int store_hook(
      */
 
     TRACEME(("SX_HOOK (recursed=%d) flags=0x%x "
-             "class=%" IVdf " len=%" IVdf " len2=%" IVdf " len3=%d",
+             "class=%" IVdf " len=%" IVdf " len2=%" IVdf " len3=%" IVdf,
              recursed, flags, (IV)classnum, (IV)len, (IV)len2, count-1));
 
     /* SX_HOOK <flags> [<extra>] */
@@ -5931,15 +5943,22 @@ static SV *retrieve_lvstring(pTHX_ stcxt_t *cxt, const char *cname)
 {
 #ifdef SvVOK
     char *s;
-    I32 len;
+    U32 len;
     SV *sv;
 
     RLEN(len);
-    TRACEME(("retrieve_lvstring (#%d), len = %" IVdf,
-             (int)cxt->tagnum, (IV)len));
+    TRACEME(("retrieve_lvstring (#%d), len = %" UVuf,
+             (int)cxt->tagnum, (UV)len));
+
+    /* Since we'll no longer produce such large vstrings, reject them
+       here too.
+    */
+    if (len >= I32_MAX) {
+        CROAK(("vstring too large to fetch"));
+    }
 
     New(10003, s, len+1, char);
-    SAFEPVREAD(s, len, s);
+    SAFEPVREAD(s, (I32)len, s);
 
     sv = retrieve(aTHX_ cxt, cname);
     if (!sv) {
@@ -6808,8 +6827,7 @@ static SV *retrieve_regexp(pTHX_ stcxt_t *cxt, const char *cname) {
     SV *sv;
     dSP;
     I32 count;
-
-    PERL_UNUSED_ARG(cname);
+    HV *stash;
 
     ENTER;
     SAVETMPS;
@@ -6846,7 +6864,7 @@ static SV *retrieve_regexp(pTHX_ stcxt_t *cxt, const char *cname) {
     SPAGAIN;
 
     if (count != 1)
-        CROAK(("Bad count %d calling _make_re", count));
+        CROAK(("Bad count %d calling _make_re", (int)count));
 
     re_ref = POPs;
 
@@ -6857,6 +6875,8 @@ static SV *retrieve_regexp(pTHX_ stcxt_t *cxt, const char *cname) {
 
     sv = SvRV(re_ref);
     SvREFCNT_inc(sv);
+    stash = cname ? gv_stashpv(cname, GV_ADD) : 0;
+    SEEN_NN(sv, stash, 0);
     
     FREETMPS;
     LEAVE;
@@ -7792,6 +7812,8 @@ BOOT:
     newCONSTSUB(stash, "BIN_MAJOR", newSViv(STORABLE_BIN_MAJOR));
     newCONSTSUB(stash, "BIN_MINOR", newSViv(STORABLE_BIN_MINOR));
     newCONSTSUB(stash, "BIN_WRITE_MINOR", newSViv(STORABLE_BIN_WRITE_MINOR));
+
+    newCONSTSUB(stash, "CAN_FLOCK", CAN_FLOCK);
 
     init_perinterp(aTHX);
     gv_fetchpv("Storable::drop_utf8",   GV_ADDMULTI, SVt_PV);

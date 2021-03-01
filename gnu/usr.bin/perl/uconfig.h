@@ -346,7 +346,7 @@
 
 /* HAS_REGCOMP:
  *	This symbol, if defined, indicates that the regcomp() routine is
- *	available to do some regular patern matching (usually on POSIX.2
+ *	available to do some regular pattern matching (usually on POSIX.2
  *	conforming systems).
  */
 #define HAS_REGCOMP		/* POSIX.2 */
@@ -1229,8 +1229,8 @@
  *	This symbol contains the ~name expanded version of ARCHLIB, to be used
  *	in programs that are not prepared to deal with ~ expansion at run-time.
  */
-/*#define ARCHLIB "/usr/local/lib/perl5/5.30/unknown"		/ **/
-/*#define ARCHLIB_EXP "/usr/local/lib/perl5/5.30/unknown"		/ **/
+/*#define ARCHLIB "/usr/local/lib/perl5/5.32/unknown"		/ **/
+/*#define ARCHLIB_EXP "/usr/local/lib/perl5/5.32/unknown"		/ **/
 
 /* BIN:
  *	This symbol holds the path of the bin directory where the package will
@@ -1283,8 +1283,8 @@
  *	This symbol contains the ~name expanded version of PRIVLIB, to be used
  *	in programs that are not prepared to deal with ~ expansion at run-time.
  */
-#define PRIVLIB "/usr/local/lib/perl5/5.30"		/**/
-#define PRIVLIB_EXP "/usr/local/lib/perl5/5.30"		/**/
+#define PRIVLIB "/usr/local/lib/perl5/5.32"		/**/
+#define PRIVLIB_EXP "/usr/local/lib/perl5/5.32"		/**/
 
 /* SITEARCH:
  *	This symbol contains the name of the private library for this package.
@@ -1301,8 +1301,8 @@
  *	This symbol contains the ~name expanded version of SITEARCH, to be used
  *	in programs that are not prepared to deal with ~ expansion at run-time.
  */
-/*#define SITEARCH "/usr/local/lib/perl5/5.30/unknown"		/ **/
-/*#define SITEARCH_EXP "/usr/local/lib/perl5/5.30/unknown"		/ **/
+/*#define SITEARCH "/usr/local/lib/perl5/5.32/unknown"		/ **/
+/*#define SITEARCH_EXP "/usr/local/lib/perl5/5.32/unknown"		/ **/
 
 /* SITELIB:
  *	This symbol contains the name of the private library for this package.
@@ -1324,8 +1324,8 @@
  *	removed.  The elements in inc_version_list (inc_version_list.U) can
  *	be tacked onto this variable to generate a list of directories to search.
  */
-#define SITELIB "/usr/local/lib/perl5/5.30"		/**/
-#define SITELIB_EXP "/usr/local/lib/perl5/5.30"		/**/
+#define SITELIB "/usr/local/lib/perl5/5.32"		/**/
+#define SITELIB_EXP "/usr/local/lib/perl5/5.32"		/**/
 #define SITELIB_STEM "/usr/local/lib/perl5"		/**/
 
 /* PERL_VENDORARCH:
@@ -1456,6 +1456,10 @@
 /* HASATTRIBUTE_WARN_UNUSED_RESULT:
  *	Can we handle GCC attribute for warning on unused results
  */
+/* HASATTRIBUTE_ALWAYS_INLINE:
+ *	Can we handle GCC attribute for functions that should always be
+ *	inlined.
+ */
 /*#define HASATTRIBUTE_DEPRECATED	/ **/
 /*#define HASATTRIBUTE_FORMAT	/ **/
 /*#define PRINTF_FORMAT_NULL_OK	/ **/
@@ -1465,6 +1469,7 @@
 /*#define HASATTRIBUTE_PURE	/ **/
 /*#define HASATTRIBUTE_UNUSED	/ **/
 /*#define HASATTRIBUTE_WARN_UNUSED_RESULT	/ **/
+/*#define HASATTRIBUTE_ALWAYS_INLINE	/ **/
 
 /* HAS_BACKTRACE:
  *	This symbol, if defined, indicates that the backtrace() routine is
@@ -1904,6 +1909,10 @@
  *	This symbol, if defined, indicates the availability of
  *	struct sockaddr_in6;
  */
+/* HAS_SOCKADDR_STORAGE:
+ *	This symbol, if defined, indicates the availability of
+ *	struct sockaddr_storage;
+ */
 /* HAS_SIN6_SCOPE_ID:
  *	This symbol, if defined, indicates that the struct sockaddr_in6
  *	structure has a member called sin6_scope_id.
@@ -1928,6 +1937,7 @@
 /*#define	HAS_SOCKETPAIR	/ **/
 /*#define	HAS_SOCKADDR_SA_LEN	/ **/
 /*#define	HAS_SOCKADDR_IN6	/ **/
+/*#define	HAS_SOCKADDR_STORAGE	/ **/
 /*#define	HAS_SIN6_SCOPE_ID	/ **/
 /*#define	HAS_IP_MREQ	/ **/
 /*#define	HAS_IP_MREQ_SOURCE	/ **/
@@ -4196,11 +4206,11 @@
 /*#define	USE_64_BIT_ALL		/ **/
 #endif
 
-/* USE_CBACKTRACE:
+/* USE_C_BACKTRACE:
  *	This symbol, if defined, indicates that Perl should
  *	be built with support for backtrace.
  */
-/*#define USE_CBACKTRACE		/ **/
+/*#define USE_C_BACKTRACE		/ **/
 
 /* USE_DTRACE:
  *	This symbol, if defined, indicates that Perl should
@@ -5087,6 +5097,12 @@
 /*#define HAS_TTYNAME_R	/ **/
 #define TTYNAME_R_PROTO 0	/**/
 
+/* HAS_WCRTOMB:
+ *	This symbol, if defined, indicates that the wcrtomb routine is
+ *	available to convert a wide character into a multi-byte character.
+ */
+/*#define HAS_WCRTOMB	/ **/
+
 /* I_MACH_CTHREADS:
  *	This symbol, if defined, indicates to the C program that it should
  *	include <mach/cthreads.h>.
@@ -5244,6 +5260,6 @@
 #endif
 
 /* Generated from:
- * 6608de918c3c876975f74b684da2536ab1ee23459783d691ae02ce2526a497a7 config_h.SH
- * 2aaf18b9277e180fc5e5d60290ecb0c91fcac3531bd8825e5687a212daa586e9 uconfig.sh
+ * 14796a77fb4ae3335f5e589a98445bc6e838b688194f6f112537495f0814f5d5 config_h.SH
+ * 6e8898de349ca5bd5102aa12be91e6884110157cb9267e661f6fc797bbd54649 uconfig.sh
  * ex: set ro: */

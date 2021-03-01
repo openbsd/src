@@ -28,40 +28,52 @@ define) ;;
 esac
 
 # Make sure that we look for libm
-libswanted="$libswanted m"
+libswanted="$libswanted m log"
 
-# Down with locales!
+# Older Androids lack locale support and may need the following undefs
+# uncommenting. This isn't necessary from at least Android 8.1 (Oreo)
 # https://github.com/android/platform_bionic/blob/master/libc/CAVEATS
-d_locconv='undef'
-d_setlocale='undef'
-d_setlocale_r='undef'
-d_lc_monetary_2008='undef'
-i_locale='undef'
+#d_locconv='undef'
+#d_setlocale='undef'
+#d_setlocale_r='undef'
+#d_lc_monetary_2008='undef'
+#i_locale='undef'
+#d_newlocale='undef'
 
 # https://code.google.com/p/android-source-browsing/source/browse/libc/netbsd/net/getservent_r.c?repo=platform--bionic&r=ca6fe7bebe3cc6ed7e2db5a3ede2de0fcddf411d#95
 d_getservent_r='undef'
 
-# Bionic defines several stubs that just warn and return NULL
+# Bionic defines several stubs that warn (in older releases) and return NULL
 # https://gitorious.org/0xdroid/bionic/blobs/70b2ef0ec89a9c9d4c2d4bcab728a0e72bafb18e/libc/bionic/stubs.c
 # https://android.googlesource.com/platform/bionic/+/master/libc/bionic/stubs.cpp
 
-# If they warn with 'FIX' or 'Android', assume they are the stubs
-# we want to avoid.
+# These tests originally looked for 'FIX' or 'Android' warnings, as they
+# indicated stubs to avoid. At some point, Android stopped emitting
+# those warnings; the tests were adapted to check function return values
+# and hopefully now detect stubs on both older and newer Androids.
 
 # These are all stubs as well, but the core doesn't use them:
 # getusershell setusershell endusershell
 
 # This script UU/archname.cbu will get 'called-back' by Configure.
 $cat > UU/archname.cbu <<'EOCBU'
-# egrep pattern to detect a stub warning on Android.
+# original egrep pattern to detect a stub warning on Android.
 # Right now we're checking for:
 # Android 2.x: FIX ME! implement FUNC
 # Android 4.x: FUNC is not implemented on Android
+# Android 8.x: <no warnings; tests now printf a compatible warning>
 android_stub='FIX|Android'
 
 $cat > try.c << 'EOM'
 #include <netdb.h>
-int main() { (void) getnetbyname("foo"); return(0); }
+#include <stdio.h>
+int main() {
+  struct netent* test = getnetbyname("loopback");
+  if (test == NULL) {
+    printf("getnetbyname is still a stub function on Android");
+  }
+  return(0);
+}
 EOM
 $cc $ccflags try.c -o try
 android_warn=`$run ./try 2>&1 | $egrep "$android_stub"`
@@ -71,7 +83,14 @@ fi
 
 $cat > try.c << 'EOM'
 #include <netdb.h>
-int main() { (void) getnetbyaddr((uint32_t)1, AF_INET); return(0); }
+#include <stdio.h>
+int main() {
+  struct netent* test = getnetbyaddr(127, AF_INET);
+  if (test == NULL) {
+    printf("getnetbyaddr is still a stub function on Android");
+  }
+  return(0);
+}
 EOM
 $cc $ccflags try.c -o try
 android_warn=`$run ./try 2>&1 | $egrep "$android_stub"`
@@ -93,7 +112,14 @@ fi
 
 $cat > try.c << 'EOM'
 #include <netdb.h>
-int main() { (void) getprotobyname("foo"); return(0); }
+#include <stdio.h>
+int main() {
+  struct protoent* test = getprotobyname("tcp");
+  if (test == NULL) {
+    printf("getprotobyname is still a stub function on Android");
+  }
+  return(0);
+}
 EOM
 $cc $ccflags try.c -o try
 android_warn=`$run ./try 2>&1 | $egrep "$android_stub"`
@@ -103,7 +129,14 @@ fi
 
 $cat > try.c << 'EOM'
 #include <netdb.h>
-int main() { (void) getprotobynumber(1); return(0); }
+#include <stdio.h>
+int main() {
+  struct protoent* test = getprotobynumber(1);
+  if (test == NULL) {
+    printf("getprotobynumber is still a stub function on Android");
+  }
+  return(0);
+}
 EOM
 $cc $ccflags try.c -o try
 android_warn=`$run ./try 2>&1 | $egrep "$android_stub"`
@@ -124,7 +157,14 @@ fi
 
 $cat > try.c << 'EOM'
 #include <unistd.h>
-int main() { (void) ttyname(STDIN_FILENO); return(0); }
+#include <stdio.h>
+int main() {
+  char *tty = ttyname(STDIN_FILENO);
+  if (tty == NULL) {
+    printf("ttyname is still a stub function on Android");
+  }
+  return(0);
+}
 EOM
 $cc $ccflags try.c -o try
 android_warn=`$run ./try 2>&1 | $egrep "$android_stub"`

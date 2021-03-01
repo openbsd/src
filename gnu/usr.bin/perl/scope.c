@@ -25,6 +25,7 @@
 #include "EXTERN.h"
 #define PERL_IN_SCOPE_C
 #include "perl.h"
+#include "feature.h"
 
 SV**
 Perl_stack_grow(pTHX_ SV **sp, SV **p, SSize_t n)
@@ -82,6 +83,7 @@ Perl_new_stackinfo(pTHX_ I32 stitems, I32 cxitems)
     si->si_next = 0;
     si->si_cxmax = cxitems - 1;
     si->si_cxix = -1;
+    si->si_cxsubix = -1;
     si->si_type = PERLSI_UNDEF;
     Newx(si->si_cxstack, cxitems, PERL_CONTEXT);
     /* Without any kind of initialising CX_PUSHSUBST()
@@ -313,6 +315,9 @@ Perl_save_set_svflags(pTHX_ SV* sv, U32 mask, U32 val)
 }
 
 /*
+
+=head1 GV Functions
+
 =for apidoc save_gp
 
 Saves the current GP of gv on the save stack to be restored on scope exit.
@@ -684,6 +689,7 @@ Perl_save_hints(pTHX)
 	save_pushptri32ptr(oldhh, PL_hints, save_cophh, SAVEt_HINTS);
 	GvHV(PL_hintgv) = NULL; /* in case copying dies */
 	GvHV(PL_hintgv) = hv_copy_hints_hv(oldhh);
+        SAVEFEATUREBITS();
     } else {
 	save_pushi32ptr(PL_hints, save_cophh, SAVEt_HINTS);
     }
@@ -1047,7 +1053,7 @@ Perl_leave_scope(pTHX_ I32 base)
 #ifdef NO_TAINT_SUPPORT
             PERL_UNUSED_VAR(was);
 #else
-	    if (UNLIKELY(a0.any_ptr == &(TAINT_get))) {
+	    if (UNLIKELY(a0.any_ptr == &(PL_tainted))) {
 		/* If we don't update <was>, to reflect what was saved on the
 		 * stack for PL_tainted, then we will overwrite this attempt to
 		 * restore it when we exit this routine.  Note that this won't
@@ -1442,9 +1448,7 @@ Perl_leave_scope(pTHX_ I32 base)
 
 	case SAVEt_COMPILE_WARNINGS:
             a0 = ap[0];
-	    if (!specialWARN(PL_compiling.cop_warnings))
-		PerlMemShared_free(PL_compiling.cop_warnings);
-	    PL_compiling.cop_warnings = (STRLEN*)a0.any_ptr;
+        free_and_set_cop_warnings(&PL_compiling, (STRLEN*) a0.any_ptr);
 	    break;
 
 	case SAVEt_PARSER:

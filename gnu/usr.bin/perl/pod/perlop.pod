@@ -36,7 +36,8 @@ C<(2 + 4) * 5>. So the expression yields C<2 + 20 == 22>, rather than
 C<6 * 5 == 30>.
 
 I<Operator associativity> defines what happens if a sequence of the same
-operators is used one after another: whether they will be grouped at the left
+operators is used one after another:
+usually that they will be grouped at the left
 or the right. For example, in C<9 - 3 - 2>, subtraction is left associative,
 so C<9 - 3> is grouped together as the left-hand operand of the second
 subtraction, rather than C<3 - 2> being grouped together as the right-hand
@@ -59,6 +60,63 @@ special evaluation rules that can result in an operand not being evaluated at
 all; in general, the top-level operator in an expression has control of
 operand evaluation.
 
+Some comparison operators, as their associativity, I<chain> with some
+operators of the same precedence (but never with operators of different
+precedence).  This chaining means that each comparison is performed
+on the two arguments surrounding it, with each interior argument taking
+part in two comparisons, and the comparison results are implicitly ANDed.
+Thus S<C<"$x E<lt> $y E<lt>= $z">> behaves exactly like S<C<"$x E<lt>
+$y && $y E<lt>= $z">>, assuming that C<"$y"> is as simple a scalar as
+it looks.  The ANDing short-circuits just like C<"&&"> does, stopping
+the sequence of comparisons as soon as one yields false.
+
+In a chained comparison, each argument expression is evaluated at most
+once, even if it takes part in two comparisons, but the result of the
+evaluation is fetched for each comparison.  (It is not evaluated
+at all if the short-circuiting means that it's not required for any
+comparisons.)  This matters if the computation of an interior argument
+is expensive or non-deterministic.  For example,
+
+    if($x < expensive_sub() <= $z) { ...
+
+is not entirely like
+
+    if($x < expensive_sub() && expensive_sub() <= $z) { ...
+
+but instead closer to
+
+    my $tmp = expensive_sub();
+    if($x < $tmp && $tmp <= $z) { ...
+
+in that the subroutine is only called once.  However, it's not exactly
+like this latter code either, because the chained comparison doesn't
+actually involve any temporary variable (named or otherwise): there is
+no assignment.  This doesn't make much difference where the expression
+is a call to an ordinary subroutine, but matters more with an lvalue
+subroutine, or if the argument expression yields some unusual kind of
+scalar by other means.  For example, if the argument expression yields
+a tied scalar, then the expression is evaluated to produce that scalar
+at most once, but the value of that scalar may be fetched up to twice,
+once for each comparison in which it is actually used.
+
+In this example, the expression is evaluated only once, and the tied
+scalar (the result of the expression) is fetched for each comparison that
+uses it.
+
+    if ($x < $tied_scalar < $z) { ...
+
+In the next example, the expression is evaluated only once, and the tied
+scalar is fetched once as part of the operation within the expression.
+The result of that operation is fetched for each comparison, which
+normally doesn't matter unless that expression result is also magical due
+to operator overloading.
+
+    if ($x < $tied_scalar + 42 < $z) { ...
+
+Some operators are instead non-associative, meaning that it is a syntax
+error to use a sequence of those operators of the same precedence.
+For example, S<C<"$x .. $y .. $z">> is an error.
+
 Perl operators have the following associativity and precedence,
 listed from highest precedence to lowest.  Operators borrowed from
 C keep the same precedence relationship with each other, even where
@@ -76,8 +134,9 @@ values only, not array values.
     left	+ - .
     left	<< >>
     nonassoc	named unary operators
-    nonassoc	< > <= >= lt gt le ge
-    nonassoc	== != <=> eq ne cmp ~~
+    chained 	< > <= >= lt gt le ge
+    chain/na	== != eq ne <=> cmp ~~
+    nonassoc    isa
     left	&
     left	| ^
     left	&&
@@ -516,6 +575,12 @@ Binary C<"ge"> returns true if the left argument is stringwise greater
 than or equal to the right argument.
 X<< ge >>
 
+A sequence of relational operators, such as S<C<"$x E<lt> $y E<lt>=
+$z">>, performs chained comparisons, in the manner described above in
+the section L</"Operator Precedence and Associativity">.
+Beware that they do not chain with equality operators, which have lower
+precedence.
+
 =head2 Equality Operators
 X<equality> X<equal> X<equals> X<operator, equality>
 
@@ -526,6 +591,20 @@ X<==>
 Binary C<< "!=" >> returns true if the left argument is numerically not equal
 to the right argument.
 X<!=>
+
+Binary C<"eq"> returns true if the left argument is stringwise equal to
+the right argument.
+X<eq>
+
+Binary C<"ne"> returns true if the left argument is stringwise not equal
+to the right argument.
+X<ne>
+
+A sequence of the above equality operators, such as S<C<"$x == $y ==
+$z">>, performs chained comparisons, in the manner described above in
+the section L</"Operator Precedence and Associativity">.
+Beware that they do not chain with relational operators, which have
+higher precedence.
 
 Binary C<< "<=>" >> returns -1, 0, or 1 depending on whether the left
 argument is numerically less than, equal to, or greater than the right
@@ -544,14 +623,6 @@ X<spaceship>
 (Note that the L<bigint>, L<bigrat>, and L<bignum> pragmas all
 support C<"NaN">.)
 
-Binary C<"eq"> returns true if the left argument is stringwise equal to
-the right argument.
-X<eq>
-
-Binary C<"ne"> returns true if the left argument is stringwise not equal
-to the right argument.
-X<ne>
-
 Binary C<"cmp"> returns -1, 0, or 1 depending on whether the left
 argument is stringwise less than, equal to, or greater than the right
 argument.
@@ -560,6 +631,10 @@ X<cmp>
 Binary C<"~~"> does a smartmatch between its arguments.  Smart matching
 is described in the next section.
 X<~~>
+
+The two-sided ordering operators C<"E<lt>=E<gt>"> and C<"cmp">, and the
+smartmatch operator C<"~~">, are non-associative with respect to each
+other and with respect to the equality operators of the same precedence.
 
 C<"lt">, C<"le">, C<"ge">, C<"gt"> and C<"cmp"> use the collation (sort)
 order specified by the current C<LC_COLLATE> locale if a S<C<use
@@ -574,6 +649,25 @@ For case-insensitive comparisons, look at the L<perlfunc/fc> case-folding
 function, available in Perl v5.16 or later:
 
     if ( fc($x) eq fc($y) ) { ... }
+
+=head2 Class Instance Operator
+X<isa operator>
+
+Binary C<isa> evaluates to true when the left argument is an object instance of
+the class (or a subclass derived from that class) given by the right argument.
+If the left argument is not defined, not a blessed object instance, nor does
+not derive from the class given by the right argument, the operator evaluates
+as false. The right argument may give the class either as a bareword or a
+scalar expression that yields a string class name:
+
+    if( $obj isa Some::Class ) { ... }
+
+    if( $obj isa "Different::Class" ) { ... }
+    if( $obj isa $name_of_class ) { ... }
+
+This is an experimental feature and is available from Perl 5.31.6 when enabled
+by C<use feature 'isa'>. It emits a warning in the C<experimental::isa>
+category.
 
 =head2 Smartmatch Operator
 
@@ -1081,9 +1175,68 @@ And now some examples as a list operator:
     @foo = @foo[0 .. $#foo];        # an expensive no-op
     @foo = @foo[$#foo-4 .. $#foo];  # slice last 5 items
 
-The range operator (in list context) makes use of the magical
-auto-increment algorithm if the operands are strings.  You
-can say
+Because each operand is evaluated in integer form, S<C<2.18 .. 3.14>> will
+return two elements in list context.
+
+    @list = (2.18 .. 3.14); # same as @list = (2 .. 3);
+
+The range operator in list context can make use of the magical
+auto-increment algorithm if both operands are strings, subject to the
+following rules:
+
+=over
+
+=item *
+
+With one exception (below), if both strings look like numbers to Perl,
+the magic increment will not be applied, and the strings will be treated
+as numbers (more specifically, integers) instead.
+
+For example, C<"-2".."2"> is the same as C<-2..2>, and
+C<"2.18".."3.14"> produces C<2, 3>.
+
+=item *
+
+The exception to the above rule is when the left-hand string begins with
+C<0> and is longer than one character, in this case the magic increment
+I<will> be applied, even though strings like C<"01"> would normally look
+like a number to Perl.
+
+For example, C<"01".."04"> produces C<"01", "02", "03", "04">, and
+C<"00".."-1"> produces C<"00"> through C<"99"> - this may seem
+surprising, but see the following rules for why it works this way.
+To get dates with leading zeros, you can say:
+
+    @z2 = ("01" .. "31");
+    print $z2[$mday];
+
+If you want to force strings to be interpreted as numbers, you could say
+
+    @numbers = ( 0+$first .. 0+$last );
+
+B<Note:> In Perl versions 5.30 and below, I<any> string on the left-hand
+side beginning with C<"0">, including the string C<"0"> itself, would
+cause the magic string increment behavior. This means that on these Perl
+versions, C<"0".."-1"> would produce C<"0"> through C<"99">, which was
+inconsistent with C<0..-1>, which produces the empty list. This also means
+that C<"0".."9"> now produces a list of integers instead of a list of
+strings.
+
+=item *
+
+If the initial value specified isn't part of a magical increment
+sequence (that is, a non-empty string matching C</^[a-zA-Z]*[0-9]*\z/>),
+only the initial value will be returned.
+
+For example, C<"ax".."az"> produces C<"ax", "ay", "az">, but
+C<"*x".."az"> produces only C<"*x">.
+
+=item *
+
+For other initial values that are strings that do follow the rules of the
+magical increment, the corresponding sequence will be returned.
+
+For example, you can say
 
     @alphabet = ("A" .. "Z");
 
@@ -1091,16 +1244,20 @@ to get all normal letters of the English alphabet, or
 
     $hexdigit = (0 .. 9, "a" .. "f")[$num & 15];
 
-to get a hexadecimal digit, or
+to get a hexadecimal digit.
 
-    @z2 = ("01" .. "31");
-    print $z2[$mday];
-
-to get dates with leading zeros.
+=item *
 
 If the final value specified is not in the sequence that the magical
 increment would produce, the sequence goes until the next value would
-be longer than the final value specified.
+be longer than the final value specified. If the length of the final
+string is shorter than the first, the empty list is returned.
+
+For example, C<"a".."--"> is the same as C<"a".."zz">, C<"0".."xx">
+produces C<"0"> through C<"99">, and C<"aaa".."--"> returns the empty
+list.
+
+=back
 
 As of Perl 5.26, the list-context range operator on strings works as expected
 in the scope of L<< S<C<"use feature 'unicode_strings">>|feature/The
@@ -1108,10 +1265,8 @@ in the scope of L<< S<C<"use feature 'unicode_strings">>|feature/The
 that feature, it exhibits L<perlunicode/The "Unicode Bug">: its behavior
 depends on the internal encoding of the range endpoint.
 
-If the initial value specified isn't part of a magical increment
-sequence (that is, a non-empty string matching C</^[a-zA-Z]*[0-9]*\z/>),
-only the initial value will be returned.  So the following will only
-return an alpha:
+Because the magical increment only works on non-empty strings matching
+C</^[a-zA-Z]*[0-9]*\z/>, the following will only return an alpha:
 
     use charnames "greek";
     my @greek_small =  ("\N{alpha}" .. "\N{omega}");
@@ -1130,11 +1285,6 @@ just those, to match lowercase Greek characters in a regular expression,
 you could use the pattern C</(?:(?=\p{Greek})\p{Lower})+/> (or the
 L<experimental feature|perlrecharclass/Extended Bracketed Character
 Classes> C<S</(?[ \p{Greek} & \p{Lower} ])+/>>).
-
-Because each operand is evaluated in integer form, S<C<2.18 .. 3.14>> will
-return two elements in list context.
-
-    @list = (2.18 .. 3.14); # same as @list = (2 .. 3);
 
 =head2 Conditional Operator
 X<operator, conditional> X<operator, ternary> X<ternary> X<?:>
@@ -1455,7 +1605,7 @@ X<\o{}>
     \b                  backspace         (BS)
     \a                  alarm (bell)      (BEL)
     \e                  escape            (ESC)
-    \x{263A}     [1,8]  hex char          (example: SMILEY)
+    \x{263A}     [1,8]  hex char          (example shown: SMILEY)
     \x1b         [2,8]  restricted range hex char (example: ESC)
     \N{name}     [3]    named Unicode character or character sequence
     \N{U+263D}   [4,8]  Unicode character (example: FIRST QUARTER MOON)
@@ -1660,7 +1810,7 @@ and although they often accept just C<"\012">, they seldom tolerate just
 C<"\015">.  If you get in the habit of using C<"\n"> for networking,
 you may be burned some day.
 X<newline> X<line terminator> X<eol> X<end of line>
-X<\r>
+X<\n> X<\r> X<\r\n>
 
 For constructs that do interpolate, variables beginning with "C<$>"
 or "C<@>" are interpolated.  Subscripted variables such as C<$a[3]> or
@@ -2228,6 +2378,9 @@ to occur that you might want.  Here are two common cases:
     # expand tabs to 8-column spacing
     1 while s/\t+/' ' x (length($&)*8 - length($`)%8)/e;
 
+X</c>While C<s///> accepts the C</c> flag, it has no effect beyond
+producing a warning if warnings are enabled.
+
 =back
 
 =head2 Quote-Like Operators
@@ -2251,7 +2404,7 @@ the delimiter or backslash is interpolated.
 =item C<qq/I<STRING>/>
 X<qq> X<quote, double> X<"> X<"">
 
-=item "I<STRING>"
+=item C<"I<STRING>">
 
 A double-quoted, interpolated string.
 
@@ -2266,13 +2419,16 @@ X<qx> X<`> X<``> X<backtick>
 =item C<`I<STRING>`>
 
 A string which is (possibly) interpolated and then executed as a
-system command with F</bin/sh> or its equivalent.  Shell wildcards,
-pipes, and redirections will be honored.  The collected standard
-output of the command is returned; standard error is unaffected.  In
-scalar context, it comes back as a single (potentially multi-line)
-string, or C<undef> if the command failed.  In list context, returns a
+system command, via F</bin/sh> or its equivalent if required.  Shell
+wildcards, pipes, and redirections will be honored.  Similarly to
+C<system>, if the string contains no shell metacharacters then it will
+executed directly.  The collected standard output of the command is
+returned; standard error is unaffected.  In scalar context, it comes
+back as a single (potentially multi-line) string, or C<undef> if the
+shell (or command) could not be started.  In list context, returns a
 list of lines (however you've defined lines with C<$/> or
-C<$INPUT_RECORD_SEPARATOR>), or an empty list if the command failed.
+C<$INPUT_RECORD_SEPARATOR>), or an empty list if the shell (or command)
+could not be started.
 
 Because backticks do not affect standard error, use shell file descriptor
 syntax (assuming the shell supports this) if you care to address this.

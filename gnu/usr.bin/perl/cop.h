@@ -76,30 +76,31 @@ typedef struct jmpenv JMPENV;
 
 /*
  *   PERL_FLEXIBLE_EXCEPTIONS
- * 
+ *
  * All the flexible exceptions code has been removed.
  * See the following threads for details:
  *
- *   http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/2004-07/msg00378.html
- * 
+ *   Message-Id: 20040713143217.GB1424@plum.flirble.org
+ *   https://www.nntp.perl.org/group/perl.perl5.porters/2004/07/msg93041.html
+ *
  * Joshua's original patches (which weren't applied) and discussion:
- * 
+ *
  *   http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/1998-02/msg01396.html
  *   http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/1998-02/msg01489.html
  *   http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/1998-02/msg01491.html
  *   http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/1998-02/msg01608.html
  *   http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/1998-02/msg02144.html
  *   http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/1998-02/msg02998.html
- * 
+ *
  * Chip's reworked patch and discussion:
- * 
+ *
  *   http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/1999-03/msg00520.html
- * 
+ *
  * The flaw in these patches (which went unnoticed at the time) was
  * that they moved some code that could potentially die() out of the
  * region protected by the setjmp()s.  This caused exceptions within
  * END blocks and such to not be handled by the correct setjmp().
- * 
+ *
  * The original patches that introduces flexible exceptions were:
  *
  * https://github.com/Perl/perl5/commit/312caa8e97f1c7ee342a9895c2f0e749625b4929
@@ -183,6 +184,8 @@ it has not been precomputed.  Returns a mortal scalar copy of the value
 associated with the key, or C<&PL_sv_placeholder> if there is no value
 associated with the key.
 
+=for apidoc Amnh||COPHH_KEY_UTF8
+
 =cut
 */
 
@@ -190,7 +193,7 @@ associated with the key.
     Perl_refcounted_he_fetch_pvn(aTHX_ cophh, keypv, keylen, hash, flags)
 
 /*
-=for apidoc Amx|SV *|cophh_fetch_pvs|const COPHH *cophh|"literal string" key|U32 flags
+=for apidoc Amx|SV *|cophh_fetch_pvs|const COPHH *cophh|"key"|U32 flags
 
 Like L</cophh_fetch_pvn>, but takes a literal string instead
 of a string/length pair, and no precomputed hash.
@@ -296,7 +299,7 @@ be stored with referential integrity, but will be coerced to strings.
     Perl_refcounted_he_new_pvn(aTHX_ cophh, keypv, keylen, hash, value, flags)
 
 /*
-=for apidoc Amx|COPHH *|cophh_store_pvs|const COPHH *cophh|"literal string" key|SV *value|U32 flags
+=for apidoc Amx|COPHH *|cophh_store_pvs|const COPHH *cophh|"key"|SV *value|U32 flags
 
 Like L</cophh_store_pvn>, but takes a literal string instead
 of a string/length pair, and no precomputed hash.
@@ -353,7 +356,7 @@ hash of the key string, or zero if it has not been precomputed.
 	(SV *)NULL, flags)
 
 /*
-=for apidoc Amx|COPHH *|cophh_delete_pvs|const COPHH *cophh|"literal string" key|U32 flags
+=for apidoc Amx|COPHH *|cophh_delete_pvs|const COPHH *cophh|"key"|U32 flags
 
 Like L</cophh_delete_pvn>, but takes a literal string instead
 of a string/length pair, and no precomputed hash.
@@ -412,13 +415,19 @@ struct cop {
     /* compile time state of %^H.  See the comment in op.c for how this is
        used to recreate a hash to return from caller.  */
     COPHH *	cop_hints_hash;
+    /* for now just a bitmask stored here.
+       If we get sufficient features this may become a pointer.
+       How these flags are stored is subject to change without
+       notice.  Use the macros to test for features.
+    */
+    U32		cop_features;
 };
 
 #ifdef USE_ITHREADS
 #  define CopFILE(c)		((c)->cop_file)
 #  define CopFILEGV(c)		(CopFILE(c) \
 				 ? gv_fetchfile(CopFILE(c)) : NULL)
-				 
+
 #  ifdef NETWARE
 #    define CopFILE_set(c,pv)	((c)->cop_file = savepv(pv))
 #    define CopFILE_setn(c,pv,l)  ((c)->cop_file = savepvn((pv),(l)))
@@ -493,7 +502,7 @@ associated with the key.
     cophh_fetch_pvn(CopHINTHASH_get(cop), keypv, keylen, hash, flags)
 
 /*
-=for apidoc Am|SV *|cop_hints_fetch_pvs|const COP *cop|"literal string" key|U32 flags
+=for apidoc Am|SV *|cop_hints_fetch_pvs|const COP *cop|"key"|U32 flags
 
 Like L</cop_hints_fetch_pvn>, but takes a literal string
 instead of a string/length pair, and no precomputed hash.
@@ -541,6 +550,24 @@ be zero.
 #define cop_hints_2hv(cop, flags) \
     cophh_2hv(CopHINTHASH_get(cop), flags)
 
+/*
+=for apidoc Am|const char *|CopLABEL|COP *const cop
+
+Returns the label attached to a cop.
+
+=for apidoc Am|const char *|CopLABEL_len|COP *const cop|STRLEN *len
+
+Returns the label attached to a cop, and stores its length in bytes into
+C<*len>.
+
+=for apidoc Am|const char *|CopLABEL_len_flags|COP *const cop|STRLEN *len|U32 *flags
+
+Returns the label attached to a cop, and stores its length in bytes into
+C<*len>.  Upon return, C<*flags> will be set to either C<SVf_UTF8> or 0.
+
+=cut
+*/
+
 #define CopLABEL(c)  Perl_cop_fetch_label(aTHX_ (c), NULL, NULL)
 #define CopLABEL_len(c,len)  Perl_cop_fetch_label(aTHX_ (c), len, NULL)
 #define CopLABEL_len_flags(c,len,flags)  Perl_cop_fetch_label(aTHX_ (c), len, flags)
@@ -567,6 +594,7 @@ be zero.
 /* subroutine context */
 struct block_sub {
     OP *	retop;	/* op to execute on exit from sub */
+    I32         old_cxsubix;  /* previous value of si_cxsubix */
     /* Above here is the same for sub, format and eval.  */
     PAD		*prevcomppad; /* the caller's PL_comppad */
     CV *	cv;
@@ -579,6 +607,7 @@ struct block_sub {
 /* format context */
 struct block_format {
     OP *	retop;	/* op to execute on exit from sub */
+    I32         old_cxsubix;  /* previous value of si_cxsubix */
     /* Above here is the same for sub, format and eval.  */
     PAD		*prevcomppad; /* the caller's PL_comppad */
     CV *	cv;
@@ -645,6 +674,7 @@ struct block_format {
 /* eval context */
 struct block_eval {
     OP *	retop;	/* op to execute on exit from eval */
+    I32         old_cxsubix;  /* previous value of si_cxsubix */
     /* Above here is the same for sub, format and eval.  */
     SV *	old_namesv;
     OP *	old_eval_root;
@@ -917,32 +947,32 @@ struct context {
 
 #define CXINC (cxstack_ix < cxstack_max ? ++cxstack_ix : (cxstack_ix = cxinc()))
 
-/* 
+/*
 =head1 "Gimme" Values
 */
 
 /*
-=for apidoc AmU||G_SCALAR
+=for apidoc AmnU||G_SCALAR
 Used to indicate scalar context.  See C<L</GIMME_V>>, C<L</GIMME>>, and
 L<perlcall>.
 
-=for apidoc AmU||G_ARRAY
+=for apidoc AmnU||G_ARRAY
 Used to indicate list context.  See C<L</GIMME_V>>, C<L</GIMME>> and
 L<perlcall>.
 
-=for apidoc AmU||G_VOID
+=for apidoc AmnU||G_VOID
 Used to indicate void context.  See C<L</GIMME_V>> and L<perlcall>.
 
-=for apidoc AmU||G_DISCARD
+=for apidoc AmnU||G_DISCARD
 Indicates that arguments returned from a callback should be discarded.  See
 L<perlcall>.
 
-=for apidoc AmU||G_EVAL
+=for apidoc AmnU||G_EVAL
 
 Used to force a Perl C<eval> wrapper around a callback.  See
 L<perlcall>.
 
-=for apidoc AmU||G_NOARGS
+=for apidoc AmnU||G_NOARGS
 
 Indicates that no arguments are being sent to a callback.  See
 L<perlcall>.
@@ -956,23 +986,24 @@ L<perlcall>.
 #define G_WANT		3
 
 /* extra flags for Perl_call_* routines */
-#define G_DISCARD	4	/* Call FREETMPS.
+#define G_DISCARD         0x4	/* Call FREETMPS.
 				   Don't change this without consulting the
 				   hash actions codes defined in hv.h */
-#define G_EVAL		8	/* Assume eval {} around subroutine call. */
-#define G_NOARGS       16	/* Don't construct a @_ array. */
-#define G_KEEPERR      32	/* Warn for errors, don't overwrite $@ */
-#define G_NODEBUG      64	/* Disable debugging at toplevel.  */
-#define G_METHOD      128       /* Calling method. */
-#define G_FAKINGEVAL  256	/* Faking an eval context for call_sv or
+#define G_EVAL	          0x8	/* Assume eval {} around subroutine call. */
+#define G_NOARGS         0x10	/* Don't construct a @_ array. */
+#define G_KEEPERR        0x20	/* Warn for errors, don't overwrite $@ */
+#define G_NODEBUG        0x40	/* Disable debugging at toplevel.  */
+#define G_METHOD         0x80   /* Calling method. */
+#define G_FAKINGEVAL    0x100	/* Faking an eval context for call_sv or
 				   fold_constants. */
-#define G_UNDEF_FILL  512	/* Fill the stack with &PL_sv_undef
+#define G_UNDEF_FILL    0x200	/* Fill the stack with &PL_sv_undef
 				   A special case for UNSHIFT in
 				   Perl_magic_methcall().  */
-#define G_WRITING_TO_STDERR 1024 /* Perl_write_to_stderr() is calling
+#define G_WRITING_TO_STDERR 0x400 /* Perl_write_to_stderr() is calling
 				    Perl_magic_methcall().  */
-#define G_RE_REPARSING 0x800     /* compiling a run-time /(?{..})/ */
-#define G_METHOD_NAMED 4096	/* calling named method, eg without :: or ' */
+#define G_RE_REPARSING  0x800   /* compiling a run-time /(?{..})/ */
+#define G_METHOD_NAMED 0x1000	/* calling named method, eg without :: or ' */
+#define G_RETHROW      0x2000	/* eval_sv(): re-throw any error */
 
 /* flag bits for PL_in_eval */
 #define EVAL_NULL	0	/* not in an eval */
@@ -985,6 +1016,8 @@ L<perlcall>.
 
 /* Support for switching (stack and block) contexts.
  * This ensures magic doesn't invalidate local stack and cx pointers.
+ * Which one to use (or add) is mostly, but not completely arbitrary:  See
+ * http://nntp.perl.org/group/perl.perl5.porters/257169
  */
 
 #define PERLSI_UNKNOWN		-1
@@ -999,6 +1032,7 @@ L<perlcall>.
 #define PERLSI_DIEHOOK		8
 #define PERLSI_REQUIRE		9
 #define PERLSI_MULTICALL       10
+#define PERLSI_REGCOMP         11
 
 struct stackinfo {
     AV *		si_stack;	/* stack for current runlevel */
@@ -1007,6 +1041,7 @@ struct stackinfo {
     struct stackinfo *	si_next;
     I32			si_cxix;	/* current context index */
     I32			si_cxmax;	/* maximum allocated index */
+    I32			si_cxsubix;	/* topmost sub/eval/format */
     I32			si_type;	/* type of runlevel */
     I32			si_markoff;	/* offset where markstack begins for us.
 					 * currently used only with DEBUGGING,
@@ -1053,6 +1088,7 @@ typedef struct stackinfo PERL_SI;
 	}								\
 	next->si_type = type;						\
 	next->si_cxix = -1;						\
+	next->si_cxsubix = -1;						\
         PUSHSTACK_INIT_HWM(next);                                       \
 	AvFILLp(next->si_stack) = 0;					\
 	SWITCHSTACK(PL_curstack,next->si_stack);			\
@@ -1098,17 +1134,17 @@ typedef struct stackinfo PERL_SI;
 /*
 =head1 Multicall Functions
 
-=for apidoc Ams||dMULTICALL
+=for apidoc Amns||dMULTICALL
 Declare local variables for a multicall.  See L<perlcall/LIGHTWEIGHT CALLBACKS>.
 
-=for apidoc Ams||PUSH_MULTICALL
+=for apidoc Ams||PUSH_MULTICALL|CV* the_cv
 Opening bracket for a lightweight callback.
 See L<perlcall/LIGHTWEIGHT CALLBACKS>.
 
-=for apidoc Ams||MULTICALL
+=for apidoc Amns||MULTICALL
 Make a lightweight callback.  See L<perlcall/LIGHTWEIGHT CALLBACKS>.
 
-=for apidoc Ams||POP_MULTICALL
+=for apidoc Amns||POP_MULTICALL
 Closing bracket for a lightweight callback.
 See L<perlcall/LIGHTWEIGHT CALLBACKS>.
 

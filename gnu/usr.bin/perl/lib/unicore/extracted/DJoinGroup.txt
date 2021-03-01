@@ -1,5 +1,5 @@
-# DerivedJoiningGroup-12.1.0.txt
-# Date: 2019-03-10, 10:53:08 GMT
+# DerivedJoiningGroup-13.0.0.txt
+# Date: 2019-09-08, 23:31:07 GMT
 # © 2019 Unicode®, Inc.
 # Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
@@ -23,8 +23,9 @@
 06FC          ; Ain # Lo       ARABIC LETTER GHAIN WITH DOT BELOW
 075D..075F    ; Ain # Lo   [3] ARABIC LETTER AIN WITH TWO DOTS ABOVE..ARABIC LETTER AIN WITH TWO DOTS VERTICALLY ABOVE
 08B3          ; Ain # Lo       ARABIC LETTER AIN WITH THREE DOTS BELOW
+08C3          ; Ain # Lo       ARABIC LETTER GHAIN WITH THREE DOTS ABOVE
 
-# Total code points: 8
+# Total code points: 9
 
 # ================================================
 
@@ -52,8 +53,9 @@
 0750..0756    ; Beh # Lo   [7] ARABIC LETTER BEH WITH THREE DOTS HORIZONTALLY BELOW..ARABIC LETTER BEH WITH SMALL V
 08A0..08A1    ; Beh # Lo   [2] ARABIC LETTER BEH WITH SMALL V BELOW..ARABIC LETTER BEH WITH HAMZA ABOVE
 08B6..08B8    ; Beh # Lo   [3] ARABIC LETTER BEH WITH SMALL MEEM ABOVE..ARABIC LETTER TEH WITH SMALL TEH ABOVE
+08BE..08C0    ; Beh # Lo   [3] ARABIC LETTER PEH WITH SMALL V..ARABIC LETTER TTEH WITH SMALL V
 
-# Total code points: 24
+# Total code points: 27
 
 # ================================================
 
@@ -109,8 +111,9 @@
 06AF..06B4    ; Gaf # Lo   [6] ARABIC LETTER GAF..ARABIC LETTER GAF WITH THREE DOTS ABOVE
 0762..0764    ; Gaf # Lo   [3] ARABIC LETTER KEHEH WITH DOT ABOVE..ARABIC LETTER KEHEH WITH THREE DOTS POINTING UPWARDS BELOW
 08B0          ; Gaf # Lo       ARABIC LETTER GAF WITH INVERTED STROKE
+08C2          ; Gaf # Lo       ARABIC LETTER KEHEH WITH SMALL V
 
-# Total code points: 14
+# Total code points: 15
 
 # ================================================
 
@@ -129,8 +132,10 @@
 0772          ; Hah # Lo       ARABIC LETTER HAH WITH SMALL ARABIC LETTER TAH ABOVE
 077C          ; Hah # Lo       ARABIC LETTER HAH WITH EXTENDED ARABIC-INDIC DIGIT FOUR BELOW
 08A2          ; Hah # Lo       ARABIC LETTER JEEM WITH TWO DOTS ABOVE
+08C1          ; Hah # Lo       ARABIC LETTER TCHEH WITH SMALL V
+08C5..08C6    ; Hah # Lo   [2] ARABIC LETTER JEEM WITH THREE DOTS ABOVE..ARABIC LETTER JEEM WITH THREE DOTS BELOW
 
-# Total code points: 18
+# Total code points: 21
 
 # ================================================
 
@@ -190,8 +195,9 @@
 06B5..06B8    ; Lam # Lo   [4] ARABIC LETTER LAM WITH SMALL V..ARABIC LETTER LAM WITH THREE DOTS BELOW
 076A          ; Lam # Lo       ARABIC LETTER LAM WITH BAR
 08A6          ; Lam # Lo       ARABIC LETTER LAM WITH DOUBLE BAR
+08C7          ; Lam # Lo       ARABIC LETTER LAM WITH SMALL ARABIC LETTER TAH ABOVE
 
-# Total code points: 7
+# Total code points: 8
 
 # ================================================
 
@@ -624,8 +630,9 @@
 # ================================================
 
 08BC          ; African_Qaf # Lo       ARABIC LETTER AFRICAN QAF
+08C4          ; African_Qaf # Lo       ARABIC LETTER AFRICAN QAF WITH THREE DOTS ABOVE
 
-# Total code points: 1
+# Total code points: 2
 
 # ================================================
 

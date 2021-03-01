@@ -17,7 +17,7 @@ sub _carp {
     return warn @_, " at $file line $line\n";
 }
 
-our $VERSION = '1.302162';
+our $VERSION = '1.302175';
 
 use Test::Builder::Module;
 our @ISA    = qw(Test::Builder::Module);
@@ -1402,7 +1402,7 @@ You then know the thing you had todo is done and can remove the
 TODO flag.
 
 The nice part about todo tests, as opposed to simply commenting out a
-block of tests, is it's like having a programmatic todo list.  You know
+block of tests, is that it is like having a programmatic todo list.  You know
 how much work is left to be done, you're aware of what bugs there are,
 and you'll know immediately when they're fixed.
 
@@ -1848,7 +1848,7 @@ might get a "Wide character in print" warning.  Using
 C<< binmode STDOUT, ":utf8" >> will not fix it.
 L<Test::Builder> (which powers
 Test::More) duplicates STDOUT and STDERR.  So any changes to them,
-including changing their output disciplines, will not be seem by
+including changing their output disciplines, will not be seen by
 Test::More.
 
 One work around is to apply encodings to STDOUT and STDERR as early

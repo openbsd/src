@@ -320,7 +320,7 @@ static void caterr(char *s)
 	dMY_CXT;
 	char *p = s;
 
-	while (*p >= '0' && *p <= '9')
+	while (isDIGIT(*p))
 		p++;
 	switch(atoi(s)) {
 	case L_ERROR_TOOMANY:

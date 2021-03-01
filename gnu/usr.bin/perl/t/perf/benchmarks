@@ -158,6 +158,12 @@
         code    => '$x = f(1)',
     },
 
+    'call::sub::scalar' => {
+        desc    => 'sub called in scalar context',
+        setup   => 'my $x; my @a = 1..4; sub f { @a }',
+        code    => '$x = f()',
+    },
+
     'call::goto::empty' => {
         desc    => 'goto &funtion with no args or body',
         setup   => 'sub f { goto &g } sub g {}',

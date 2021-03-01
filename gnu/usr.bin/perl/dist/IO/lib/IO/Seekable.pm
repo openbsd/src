@@ -106,7 +106,7 @@ require Exporter;
 our @EXPORT = qw(SEEK_SET SEEK_CUR SEEK_END);
 our @ISA = qw(Exporter);
 
-our $VERSION = "1.40";
+our $VERSION = "1.41";
 
 sub seek {
     @_ == 3 or croak 'usage: $io->seek(POS, WHENCE)';

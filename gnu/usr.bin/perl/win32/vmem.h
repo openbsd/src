@@ -21,9 +21,7 @@
 #ifndef ___VMEM_H_INC___
 #define ___VMEM_H_INC___
 
-#ifndef UNDER_CE
 #define _USE_MSVCRT_MEM_ALLOC
-#endif
 #define _USE_LINKED_LIST
 
 // #define _USE_BUDDY_BLOCKS

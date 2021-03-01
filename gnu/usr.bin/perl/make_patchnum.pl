@@ -126,9 +126,38 @@ my $unpushed_commits = '    ';
 my ($read, $branch, $snapshot_created, $commit_id, $describe)= ("") x 5;
 my ($changed, $extra_info, $commit_title)= ("") x 3;
 
+my $git_patch_file;
 if (my $patch_file= read_file(".patch")) {
     ($branch, $snapshot_created, $commit_id, $describe) = split /\s+/, $patch_file;
     $extra_info = "git_snapshot_date='$snapshot_created'";
+    $commit_title = "Snapshot of:";
+}
+elsif ($git_patch_file = read_file(".git_patch") and $git_patch_file !~ /\A\$Format:%H/) {
+    chomp $git_patch_file;
+    ($commit_id, my $commit_date, my $names)
+        = split /\|/, $git_patch_file;
+
+    my @names = split /,\s*/, $names;
+
+    ($branch) = map m{^HEAD -> (.*)}, @names;
+    if (!$branch) {
+        ($branch) = map m{^(blead|maint/.*)}, @names;
+    }
+    if (!$branch) {
+        ($branch) = map m{^tag: (.*)}, @names;
+        $describe = $branch;
+    }
+    if (!$branch) {
+        my ($pr) = map m{^refs/pull/([0-9]+)/}, @names;
+        $branch = "pull-request-$pr";
+    }
+    if (!$branch) {
+        $branch = $names[0] || $commit_id;
+    }
+
+    $describe ||= $commit_id;
+    $extra_info = "git_commit_date='$commit_date'\n";
+    $extra_info .= "git_snapshot_date='$commit_date'\n";
     $commit_title = "Snapshot of:";
 }
 elsif (-d "$srcdir/.git") {

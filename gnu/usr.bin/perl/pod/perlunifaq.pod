@@ -277,7 +277,7 @@ but this is considered bad style. Especially C<_utf8_on> can be dangerous, for
 the same reason that C<:utf8> can.
 
 There are some shortcuts for oneliners;
-see L<-C|perlrun/-C [numberE<sol>list]> in L<perlrun>.
+see L<-C in perlrun|perlrun/-C [numberE<sol>list]>.
 
 =head2 What's the difference between C<UTF-8> and C<utf8>?
 

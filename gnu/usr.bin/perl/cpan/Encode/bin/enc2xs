@@ -11,7 +11,7 @@ use warnings;
 use Getopt::Std;
 use Config;
 my @orig_ARGV = @ARGV;
-our $VERSION  = do { my @r = (q$Revision: 2.21 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+our $VERSION  = do { my @r = (q$Revision: 2.23 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 # These may get re-ordered.
 # RAW is a do_now as inserted by &enter
@@ -144,6 +144,7 @@ getopts('CM:SQqOo:f:n:v',\%opt);
 $opt{M} and make_makefile_pl($opt{M}, @ARGV);
 $opt{C} and make_configlocal_pm($opt{C}, @ARGV);
 $opt{v} ||= $ENV{ENC2XS_VERBOSE};
+$opt{q} ||= $ENV{ENC2XS_NO_COMMENTS};
 
 sub verbose {
     print STDERR @_ if $opt{v};
@@ -914,24 +915,7 @@ sub decode_U
 }
 
 my @uname;
-sub char_names
-{
- my $s = do "unicore/Name.pl";
- die "char_names: unicore/Name.pl: $!\n" unless defined $s;
- pos($s) = 0;
- while ($s =~ /\G([0-9a-f]+)\t([0-9a-f]*)\t(.*?)\s*\n/igc)
-  {
-   my $name = $3;
-   my $s = hex($1);
-   last if $s >= 0x10000;
-   my $e = length($2) ? hex($2) : $s;
-   for (my $i = $s; $i <= $e; $i++)
-    {
-     $uname[$i] = $name;
-#    print sprintf("U%04X $name\n",$i);
-    }
-  }
-}
+sub char_names{} # cf. https://rt.cpan.org/Ticket/Display.html?id=132471
 
 sub output_ucm_page
 {

@@ -8,24 +8,67 @@ package Pod::Simple::RTF;
 
 use strict;
 use vars qw($VERSION @ISA %Escape $WRAP %Tagmap);
-$VERSION = '3.35';
+$VERSION = '3.40';
 use Pod::Simple::PullParser ();
 BEGIN {@ISA = ('Pod::Simple::PullParser')}
 
 use Carp ();
 BEGIN { *DEBUG = \&Pod::Simple::DEBUG unless defined &DEBUG }
 
+sub to_uni ($) {    # Convert native code point to Unicode
+    my $x = shift;
+
+    # Broken for early EBCDICs
+    $x = chr utf8::native_to_unicode(ord $x) if $] ge 5.007_003
+                                             && ord("A") != 65;
+    return $x;
+}
+
+# We escape out 'F' so that we can send RTF files thru the mail without the
+# slightest worry that paragraphs beginning with "From" will get munged.
+# We also escape '\', '{', '}', and '_'
+my $map_to_self = ' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEGHIJKLMNOPQRSTUVWXYZ[]^`abcdefghijklmnopqrstuvwxyz|~';
+
 $WRAP = 1 unless defined $WRAP;
+%Escape = (
 
-# These are broken for early Perls on EBCDIC; they could be fixed to work
-# better there, but not worth it.  These are part of a larger [...] class, so
-# are just the strings to substitute into it, as opposed to compiled patterns.
-my $cntrl = '[:cntrl:]';
-$cntrl = '\x00-\x1F\x7F' unless eval "qr/[$cntrl]/";
+  # Start with every character mapping to its hex equivalent
+  map( (chr($_) => sprintf("\\'%02x", $_)), 0 .. 0xFF),
 
-my $not_ascii = '[:^ascii:]';
-$not_ascii = '\x80-\xFF' unless eval "qr/[$not_ascii]/";
+  # Override most ASCII printables with themselves (or on non-ASCII platforms,
+  # their ASCII values.  This is because the output is UTF-16, which is always
+  # based on Unicode code points)
+  map( (   substr($map_to_self, $_, 1)
+        => to_uni(substr($map_to_self, $_, 1))), 0 .. length($map_to_self) - 1),
 
+  # And some refinements:
+  "\r"  => "\n",
+  "\cj"  => "\n",
+  "\n"   => "\n\\line ",
+
+  "\t"   => "\\tab ",     # Tabs (altho theoretically raw \t's are okay)
+  "\f"   => "\n\\page\n", # Formfeed
+  "-"    => "\\_",        # Turn plaintext '-' into a non-breaking hyphen
+  $Pod::Simple::nbsp => "\\~",        # Latin-1 non-breaking space
+  $Pod::Simple::shy => "\\-",        # Latin-1 soft (optional) hyphen
+
+  # CRAZY HACKS:
+  "\n" => "\\line\n",
+  "\r" => "\n",
+  "\cb" => "{\n\\cs21\\lang1024\\noproof ",  # \\cf1
+  "\cc" => "}",
+);
+
+# Generate a string of all the characters in %Escape that don't map to
+# themselves.  First, one without the hyphen, then one with.
+my $escaped_sans_hyphen = "";
+$escaped_sans_hyphen .= $_ for grep { $_ ne $Escape{$_} && $_ ne '-' }
+                                                            sort keys %Escape;
+my $escaped = "-$escaped_sans_hyphen";
+
+# Then convert to patterns
+$escaped_sans_hyphen = qr/[\Q$escaped_sans_hyphen \E]/;
+$escaped= qr/[\Q$escaped\E]/;
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -158,6 +201,13 @@ sub run {
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+# Match something like an identifier.  Prefer XID if available, then plain ID,
+# then just ASCII
+my $id_re = Pod::Simple::BlackBox::my_qr('[\'_\p{XIDS}][\'\p{XIDC}]+', "ab");
+$id_re    = Pod::Simple::BlackBox::my_qr('[\'_\p{IDS}][\'\p{IDC}]+', "ab")
+                                                                  unless $id_re;
+$id_re = qr/['_a-zA-Z]['a-zA-Z0-9_]+/ unless $id_re;
+
 sub do_middle {      # the main work
   my $self = $_[0];
   my $fh = $self->{'output_fh'};
@@ -172,7 +222,7 @@ sub do_middle {      # the main work
     if( ($type = $token->type) eq 'text' ) {
       if( $self->{'rtfverbatim'} ) {
         DEBUG > 1 and print STDERR "  $type " , $token->text, " in verbatim!\n";
-        rtf_esc_codely($scratch = $token->text);
+        rtf_esc(0, $scratch = $token->text); # 0 => Don't escape hyphen
         print $fh $scratch;
         next;
       }
@@ -195,13 +245,13 @@ sub do_middle {      # the main work
           |
           # or starting alpha, but containing anything strange:
           (?:
-           [a-zA-Z'${not_ascii}]+[\$\@\:_<>\(\\\*]\S+
+           ${id_re}[\$\@\:_<>\(\\\*]\S+
           )
          )
         /\cb$1\cc/xsg
       ;
       
-      rtf_esc($scratch);
+      rtf_esc(1, $scratch);     # 1 => escape hyphen
       $scratch =~
          s/(
             [^\r\n]{65}        # Snare 65 characters from a line
@@ -311,7 +361,7 @@ sub do_middle {      # the main work
         print $fh $token->attr('number'), ". \n";
       } elsif ($tagname eq 'item-bullet') {
         print $fh "\\'", ord("_"), "\n";
-        #for funky testing: print $fh '', rtf_esc("\x{4E4B}\x{9053}");
+        #for funky testing: print $fh '', rtf_esc(1, "\x{4E4B}\x{9053}");
       }
 
     } elsif( $type eq 'end' ) {
@@ -465,7 +515,7 @@ sub doc_start {
     # catches the most common case, at least
 
   DEBUG and print STDERR "Title0: <$title>\n";
-  $title = rtf_esc($title);
+  $title = rtf_esc(1, $title);  # 1 => escape hyphen
   DEBUG and print STDERR "Title1: <$title>\n";
   $title = '\lang1024\noproof ' . $title
    if $is_obviously_module_name;
@@ -489,90 +539,69 @@ END
 #-------------------------------------------------------------------------
 
 use integer;
-sub rtf_esc {
-  my $x; # scratch
-  if(!defined wantarray) { # void context: alter in-place!
-    for(@_) {
-      s/([F${cntrl}\-\\\{\}${not_ascii}])/$Escape{$1}/g;  # ESCAPER
-      s/([^\x00-\xFF])/'\\uc1\\u'.((ord($1)<32768)?ord($1):(ord($1)-65536)).'?'/eg;
-    }
-    return;
-  } elsif(wantarray) {  # return an array
-    return map {; ($x = $_) =~
-      s/([F${cntrl}\-\\\{\}${not_ascii}])/$Escape{$1}/g;  # ESCAPER
-      $x =~ s/([^\x00-\xFF])/'\\uc1\\u'.((ord($1)<32768)?ord($1):(ord($1)-65536)).'?'/eg;
-      $x;
-    } @_;
-  } else { # return a single scalar
-    ($x = ((@_ == 1) ? $_[0] : join '', @_)
-    ) =~ s/([F${cntrl}\-\\\{\}${not_ascii}])/$Escape{$1}/g;  # ESCAPER
-             # Escape \, {, }, -, control chars, and 7f-ff.
-    $x =~ s/([^\x00-\xFF])/'\\uc1\\u'.((ord($1)<32768)?ord($1):(ord($1)-65536)).'?'/eg;
+
+my $question_mark_code_points =
+        Pod::Simple::BlackBox::my_qr('([^\x00-\x{D7FF}\x{E000}-\x{10FFFF}])',
+                                     "\x{110000}");
+my $plane0 =
+        Pod::Simple::BlackBox::my_qr('([\x{100}-\x{FFFF}])', "\x{100}");
+my $other_unicode =
+        Pod::Simple::BlackBox::my_qr('([\x{10000}-\x{10FFFF}])', "\x{10000}");
+
+sub esc_uni($) {
+    use if $] le 5.006002, 'utf8';
+
+    my $x = shift;
+
+    # The output is expected to be UTF-16.  Surrogates and above-Unicode get
+    # mapped to '?'
+    $x =~ s/$question_mark_code_points/?/g if $question_mark_code_points;
+
+    # Non-surrogate Plane 0 characters get mapped to their code points.  But
+    # the standard calls for a 16bit SIGNED value.
+    $x =~ s/$plane0/'\\uc1\\u'.((ord($1)<32768)?ord($1):(ord($1)-65536)).'?'/eg
+                                                                    if $plane0;
+
+    # Use surrogate pairs for the rest
+    $x =~ s/$other_unicode/'\\uc1\\u' . ((ord($1) >> 10) + 0xD7C0 - 65536) . '\\u' . (((ord$1) & 0x03FF) + 0xDC00 - 65536) . '?'/eg if $other_unicode;
+
     return $x;
-  }
 }
 
-sub rtf_esc_codely {
-  # Doesn't change "-" to hard-hyphen, nor apply computerese style-smarts.
-  # We don't want to change the "-" to hard-hyphen, because we want to
+sub rtf_esc ($$) {
+  # The parameter is true if we should escape hyphens
+  my $escape_re = ((shift) ? $escaped : $escaped_sans_hyphen);
+
+  # When false, it doesn't change "-" to hard-hyphen.
+  #  We don't want to change the "-" to hard-hyphen, because we want to
   #  be able to paste this into a file and run it without there being
   #  dire screaming about the mysterious hard-hyphen character (which
   #  looks just like a normal dash character).
-  
+  # XXX The comments used to claim that when false it didn't apply computerese
+  #     style-smarts, but khw didn't see this actually
+
   my $x; # scratch
   if(!defined wantarray) { # void context: alter in-place!
     for(@_) {
-      s/([F${cntrl}\\\{\}${not_ascii}])/$Escape{$1}/g;  # ESCAPER
-      s/([^\x00-\xFF])/'\\uc1\\u'.((ord($1)<32768)?ord($1):(ord($1)-65536)).'?'/eg;
+      s/($escape_re)/$Escape{$1}/g;  # ESCAPER
+      $_ = esc_uni($_);
     }
     return;
   } elsif(wantarray) {  # return an array
     return map {; ($x = $_) =~
-      s/([F${cntrl}\\\{\}${not_ascii}])/$Escape{$1}/g;  # ESCAPER
-      $x =~ s/([^\x00-\xFF])/'\\uc1\\u'.((ord($1)<32768)?ord($1):(ord($1)-65536)).'?'/eg;
+      s/($escape_re)/$Escape{$1}/g;  # ESCAPER
+      $x = esc_uni($x);
       $x;
     } @_;
   } else { # return a single scalar
     ($x = ((@_ == 1) ? $_[0] : join '', @_)
-    ) =~ s/([F${cntrl}\\\{\}${not_ascii}])/$Escape{$1}/g;  # ESCAPER
+    ) =~ s/($escape_re)/$Escape{$1}/g;  # ESCAPER
              # Escape \, {, }, -, control chars, and 7f-ff.
-    $x =~ s/([^\x00-\xFF])/'\\uc1\\u'.((ord($1)<32768)?ord($1):(ord($1)-65536)).'?'/eg;
+    $x = esc_uni($x);
     return $x;
   }
 }
 
-%Escape = (
-  (($] lt 5.007_003) # Broken for non-ASCII on early Perls
-   ? (map( (chr($_),chr($_)), # things not apparently needing escaping
-       0x20 .. 0x7E ),
-      map( (chr($_),sprintf("\\'%02x", $_)), # apparently escapeworthy things
-       0x00 .. 0x1F, 0x5c, 0x7b, 0x7d, 0x7f .. 0xFF, 0x46))
-   : (map( (chr(utf8::unicode_to_native($_)),chr(utf8::unicode_to_native($_))),
-       0x20 .. 0x7E ),
-      map( (chr($_),sprintf("\\'%02x", utf8::unicode_to_native($_))),
-       0x00 .. 0x1F, 0x5c, 0x7b, 0x7d, 0x7f .. 0xFF, 0x46))),
-
-  # We get to escape out 'F' so that we can send RTF files thru the mail
-  # without the slightest worry that paragraphs beginning with "From"
-  # will get munged.
-
-  # And some refinements:
-  "\r"  => "\n",
-  "\cj"  => "\n",
-  "\n"   => "\n\\line ",
-
-  "\t"   => "\\tab ",     # Tabs (altho theoretically raw \t's are okay)
-  "\f"   => "\n\\page\n", # Formfeed
-  "-"    => "\\_",        # Turn plaintext '-' into a non-breaking hyphen
-  $Pod::Simple::nbsp => "\\~",        # Latin-1 non-breaking space
-  $Pod::Simple::shy => "\\-",        # Latin-1 soft (optional) hyphen
-
-  # CRAZY HACKS:
-  "\n" => "\\line\n",
-  "\r" => "\n",
-  "\cb" => "{\n\\cs21\\lang1024\\noproof ",  # \\cf1
-  "\cc" => "}",
-);
 1;
 
 __END__

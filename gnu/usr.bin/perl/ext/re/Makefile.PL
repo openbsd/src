@@ -6,8 +6,13 @@ my $object = 're_exec$(OBJ_EXT) re_comp$(OBJ_EXT) re$(OBJ_EXT)';
 
 my $defines = '-DPERL_EXT_RE_BUILD -DPERL_EXT_RE_DEBUG -DPERL_EXT';
 
+my @libs;
+if ($^O eq 'cygwin' && $Config{usequadmath}) {
+    push @libs, qw(quadmath);
+}
 WriteMakefile(
     NAME		=> 're',
+    @libs ? ( 'LIBS' => [ join(" ", map { "-l$_" } @libs) ] ) : (),
     VERSION_FROM	=> 're.pm',
     XSPROTOARG		=> '-noprototypes',
     OBJECT		=> $object,

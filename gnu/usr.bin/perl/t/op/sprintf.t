@@ -133,7 +133,7 @@ for (@tests) {
             if ($cond =~ /^\d/) {
                 # >comment skip: hpux:10.20<
                 my $vsn = $cond;
-                # Only compare on the the first pair of digits, as numeric
+                # Only compare on the first pair of digits, as numeric
                 # compares do not like 2.6.10-3mdksmp or 2.6.8-24.10-default
                 s/^(\d+(\.\d+)?).*/$1/ for $osv, $vsn;
                 $skip = $vsn ? ($osv <= $vsn ? 1 : 0) : 1;

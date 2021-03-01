@@ -4,7 +4,7 @@ use strict;
 use vars qw($VERSION @ISA $BUGHUNTING);
 use CPAN::Debug;
 use File::Basename qw(basename);
-$VERSION = "5.5012";
+$VERSION = "5.5013";
 # module is internal to CPAN.pm
 
 @ISA = qw(CPAN::Debug); ## no critic
@@ -41,6 +41,11 @@ CPAN shell prompt to register it as external program.
     bless $me, $class;
 }
 
+sub _zlib_ok () {
+    $CPAN::META->has_inst("Compress::Zlib") or return;
+    Compress::Zlib->can('gzopen');
+}
+
 sub _my_which {
     my($what) = @_;
     if ($CPAN::Config->{$what}) {
@@ -66,7 +71,7 @@ sub _my_which {
 sub gzip {
     my($self,$read) = @_;
     my $write = $self->{FILE};
-    if ($CPAN::META->has_inst("Compress::Zlib")) {
+    if (_zlib_ok) {
         my($buffer,$fhw);
         $fhw = FileHandle->new($read)
             or $CPAN::Frontend->mydie("Could not open $read: $!");
@@ -89,7 +94,7 @@ sub gzip {
 sub gunzip {
     my($self,$write) = @_;
     my $read = $self->{FILE};
-    if ($CPAN::META->has_inst("Compress::Zlib")) {
+    if (_zlib_ok) {
         my($buffer,$fhw);
         $fhw = FileHandle->new(">$write")
             or $CPAN::Frontend->mydie("Could not open >$write: $!");
@@ -120,7 +125,7 @@ sub gtest {
         my($buffer,$len);
         $len = 0;
         my $gz = Compress::Bzip2::bzopen($read, "rb")
-            or $CPAN::Frontend->mydie(sprintf("Cannot gzopen %s: %s\n",
+            or $CPAN::Frontend->mydie(sprintf("Cannot bzopen %s: %s\n",
                                               $read,
                                               $Compress::Bzip2::bzerrno));
         while ($gz->bzread($buffer) > 0 ) {
@@ -135,7 +140,7 @@ sub gtest {
         }
         $gz->gzclose();
         CPAN->debug("err[$err]success[$success]") if $CPAN::DEBUG;
-    } elsif ( $read=~/\.(?:gz|tgz)$/ && $CPAN::META->has_inst("Compress::Zlib") ) {
+    } elsif ( $read=~/\.(?:gz|tgz)$/ && _zlib_ok ) {
         # After I had reread the documentation in zlib.h, I discovered that
         # uncompressed files do not lead to an gzerror (anymore?).
         my($buffer,$len);
@@ -183,7 +188,7 @@ sub TIEHANDLE {
             $CPAN::Frontend->mydie("Could not bzopen $file");
         $self->{GZ} = $gz;
         $class->debug("via Compress::Bzip2");
-    } elsif ($file =~/\.(?:gz|tgz)$/ && $CPAN::META->has_inst("Compress::Zlib")) {
+    } elsif ($file =~/\.(?:gz|tgz)$/ && _zlib_ok) {
         my $gz = Compress::Zlib::gzopen($file,"rb") or
             $CPAN::Frontend->mydie("Could not gzopen $file");
         $self->{GZ} = $gz;
@@ -260,7 +265,7 @@ sub untar {
     } elsif (
              $CPAN::META->has_usable("Archive::Tar")
              &&
-             $CPAN::META->has_inst("Compress::Zlib") ) {
+             _zlib_ok ) {
         my $prefer_external_tar = $CPAN::Config->{prefer_external_tar};
         unless (defined $prefer_external_tar) {
             if ($^O =~ /(MSWin32|solaris)/) {
@@ -294,7 +299,7 @@ END_WARN
             $foundAT = "nothing";
         }
         my $foundCZ;
-        if ($CPAN::META->has_inst("Compress::Zlib")) {
+        if (_zlib_ok) {
             $foundCZ = sprintf "'%s'", "Compress::Zlib::"->VERSION;
         } elsif ($foundAT) {
             $foundCZ = "nothing";

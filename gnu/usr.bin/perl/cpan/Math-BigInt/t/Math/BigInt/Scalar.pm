@@ -14,8 +14,6 @@ our @ISA = qw(Exporter);
 
 our $VERSION = '0.13';
 
-sub api_version() { 1; }
-
 ##############################################################################
 # global constants, flags and accessory
 

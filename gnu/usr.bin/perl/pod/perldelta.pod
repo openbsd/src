@@ -2,60 +2,19 @@
 
 =head1 NAME
 
-perldelta - what is new for perl v5.30.3
+perldelta - what is new for perl v5.32.1
 
 =head1 DESCRIPTION
 
-This document describes differences between the 5.30.2 release and the 5.30.3
+This document describes differences between the 5.32.0 release and the 5.32.1
 release.
 
-If you are upgrading from an earlier release such as 5.30.1, first read
-L<perl5302delta>, which describes differences between 5.30.1 and 5.30.2.
-
-=head1 Security
-
-=head2 [CVE-2020-10543] Buffer overflow caused by a crafted regular expression
-
-A signed C<size_t> integer overflow in the storage space calculations for
-nested regular expression quantifiers could cause a heap buffer overflow in
-Perl's regular expression compiler that overwrites memory allocated after the
-regular expression storage space with attacker supplied data.
-
-The target system needs a sufficient amount of memory to allocate partial
-expansions of the nested quantifiers prior to the overflow occurring.  This
-requirement is unlikely to be met on 64-bit systems.
-
-Discovered by: ManhND of The Tarantula Team, VinCSS (a member of Vingroup).
-
-=head2 [CVE-2020-10878] Integer overflow via malformed bytecode produced by a crafted regular expression
-
-Integer overflows in the calculation of offsets between instructions for the
-regular expression engine could cause corruption of the intermediate language
-state of a compiled regular expression.  An attacker could abuse this behaviour
-to insert instructions into the compiled form of a Perl regular expression.
-
-Discovered by: Hugo van der Sanden and Slaven Rezic.
-
-=head2 [CVE-2020-12723] Buffer overflow caused by a crafted regular expression
-
-Recursive calls to C<S_study_chunk()> by Perl's regular expression compiler to
-optimize the intermediate language representation of a regular expression could
-cause corruption of the intermediate language state of a compiled regular
-expression.
-
-Discovered by: Sergey Aleynikov.
-
-=head2 Additional Note
-
-An application written in Perl would only be vulnerable to any of the above
-flaws if it evaluates regular expressions supplied by the attacker.  Evaluating
-regular expressions in this fashion is known to be dangerous since the regular
-expression engine does not protect against denial of service attacks in this
-usage scenario.
+If you are upgrading from an earlier release such as 5.31.0, first read
+L<perl5320delta>, which describes differences between 5.31.0 and 5.32.0.
 
 =head1 Incompatible Changes
 
-There are no changes intentionally incompatible with Perl 5.30.2.  If any
+There are no changes intentionally incompatible with Perl 5.32.0.  If any
 exist, they are bugs, and we request that you submit a report.  See
 L</Reporting Bugs> below.
 
@@ -67,7 +26,104 @@ L</Reporting Bugs> below.
 
 =item *
 
-L<Module::CoreList> has been upgraded from version 5.20200314 to 5.20200601_30.
+L<Data::Dumper> has been upgraded from version 2.174 to 2.174_01.
+
+A number of memory leaks have been fixed.
+
+=item *
+
+L<DynaLoader> has been upgraded from version 1.47 to 1.47_01.
+
+=item *
+
+L<Module::CoreList> has been upgraded from version 5.20200620 to 5.20210123.
+
+=item *
+
+L<Opcode> has been upgraded from version 1.47 to 1.48.
+
+A warning has been added about evaluating untrusted code with the perl
+interpreter.
+
+=item *
+
+L<Safe> has been upgraded from version 2.41 to 2.41_01.
+
+A warning has been added about evaluating untrusted code with the perl
+interpreter.
+
+=back
+
+=head1 Documentation
+
+=head2 New Documentation
+
+=head3 L<perlgov>
+
+Documentation of the newly formed rules of governance for Perl.
+
+=head3 L<perlsecpolicy>
+
+Documentation of how the Perl security team operates and how the team evaluates
+new security reports.
+
+=head2 Changes to Existing Documentation
+
+We have attempted to update the documentation to reflect the changes listed in
+this document.  If you find any we have missed, open an issue at
+L<https://github.com/Perl/perl5/issues>.
+
+Additionally, the following selected changes have been made:
+
+=head3 L<perlop>
+
+=over 4
+
+=item *
+
+Document range op behaviour change.
+
+=back
+
+=head1 Diagnostics
+
+The following additions or changes have been made to diagnostic output,
+including warnings and fatal error messages.  For the complete list of
+diagnostic messages, see L<perldiag>.
+
+=head2 Changes to Existing Diagnostics
+
+=over 4
+
+=item *
+
+L<\K not permitted in lookahead/lookbehind in regex; marked by <-- HERE in mE<sol>%sE<sol>|perldiag/"\K not permitted in lookahead/lookbehind in regex; marked by <-- HERE in m/%s/">
+
+This error was incorrectly produced in some cases involving nested lookarounds.
+This has been fixed.
+
+[L<GH #18123|https://github.com/Perl/perl5/issues/18123>]
+
+=back
+
+=head1 Configuration and Compilation
+
+=over 4
+
+=item *
+
+Newer 64-bit versions of the Intel C/C++ compiler are now recognized and have
+the correct flags set.
+
+=item *
+
+We now trap SIGBUS when F<Configure> checks for C<va_copy>.
+
+On several systems the attempt to determine if we need C<va_copy> or similar
+results in a SIGBUS instead of the expected SIGSEGV, which previously caused a
+core dump.
+
+[L<GH #18148|https://github.com/Perl/perl5/issues/18148>]
 
 =back
 
@@ -76,21 +132,89 @@ L<Module::CoreList> has been upgraded from version 5.20200314 to 5.20200601_30.
 Tests were added and changed to reflect the other additions and changes in this
 release.
 
+=head1 Platform Support
+
+=head2 Platform-Specific Notes
+
+=over 4
+
+=item MacOS (Darwin)
+
+The hints file for darwin has been updated to handle future macOS versions
+beyond 10.  Perl can now be built on macOS Big Sur.
+
+[L<GH #17946|https://github.com/Perl/perl5/issues/17946>,
+L<GH #18406|https://github.com/Perl/perl5/issues/18406>]
+
+=item Minix
+
+Build errors on Minix have been fixed.
+
+[L<GH #17908|https://github.com/Perl/perl5/issues/17908>]
+
+=back
+
+=head1 Selected Bug Fixes
+
+=over 4
+
+=item *
+
+Some list assignments involving C<undef> on the left-hand side were
+over-optimized and produced incorrect results.
+
+[L<GH #16685|https://github.com/Perl/perl5/issues/16685>,
+L<GH #17816|https://github.com/Perl/perl5/issues/17816>]
+
+=item *
+
+Fixed a bug in which some regexps with recursive subpatterns matched
+incorrectly.
+
+[L<GH #18096|https://github.com/Perl/perl5/issues/18096>]
+
+=item *
+
+Fixed a deadlock that hung the build when Perl is compiled for debugging memory
+problems and has PERL_MEM_LOG enabled.
+
+[L<GH #18341|https://github.com/Perl/perl5/issues/18341>]
+
+=item *
+
+Fixed a crash in the use of chained comparison operators when run under "no
+warnings 'uninitialized'".
+
+[L<GH #17917|https://github.com/Perl/perl5/issues/17917>,
+L<GH #18380|https://github.com/Perl/perl5/issues/18380>]
+
+=item *
+
+Exceptions thrown from destructors during global destruction are no longer
+swallowed.
+
+[L<GH #18063|https://github.com/Perl/perl5/issues/18063>]
+
+=back
+
 =head1 Acknowledgements
 
-Perl 5.30.3 represents approximately 3 months of development since Perl 5.30.2
-and contains approximately 1,100 lines of changes across 42 files from 7
+Perl 5.32.1 represents approximately 7 months of development since Perl 5.32.0
+and contains approximately 7,000 lines of changes across 80 files from 23
 authors.
 
 Excluding auto-generated files, documentation and release tools, there were
-approximately 350 lines of changes to 8 .pm, .t, .c and .h files.
+approximately 1,300 lines of changes to 23 .pm, .t, .c and .h files.
 
 Perl continues to flourish into its fourth decade thanks to a vibrant community
 of users and developers.  The following people are known to have contributed
-the improvements that became Perl 5.30.3:
+the improvements that became Perl 5.32.1:
 
-Chris 'BinGOs' Williams, Hugo van der Sanden, John Lightsey, Karl Williamson,
-Nicolas R., Sawyer X, Steve Hay.
+Adam Hartley, Andy Dougherty, Dagfinn Ilmari Mannsåker, Dan Book, David
+Mitchell, Graham Knop, Graham Ollis, Hauke D, H.Merijn Brand, Hugo van der
+Sanden, John Lightsey, Karen Etheridge, Karl Williamson, Leon Timmermans, Max
+Maischein, Nicolas R., Ricardo Signes, Richard Leach, Sawyer X, Sevan Janiyan,
+Steve Hay, Tom Hukins, Tony Cook.
 
 The list above is almost certainly incomplete as it is automatically generated
 from version control history.  In particular, it does not include the names of
@@ -108,7 +232,7 @@ the F<AUTHORS> file in the Perl source distribution.
 
 If you find what you think is a bug, you might check the perl bug database at
 L<https://github.com/Perl/perl5/issues>.  There may also be information at
-L<https://www.perl.org/>, the Perl Home Page.
+L<http://www.perl.org/>, the Perl Home Page.
 
 If you believe you have an unreported bug, please open an issue at
 L<https://github.com/Perl/perl5/issues>.  Be sure to trim your bug down to a

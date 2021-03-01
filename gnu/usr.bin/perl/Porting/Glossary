@@ -2097,7 +2097,7 @@ d_random_r (d_random_r.U):
 d_re_comp (d_regcmp.U):
 	This variable conditionally defines the HAS_RECOMP symbol, which
 	indicates to the C program that the re_comp() routine is available
-	for regular patern matching (usally on BSD). If so, it is likely that
+	for regular pattern matching (usually on BSD). If so, it is likely that
 	re_exec() exists.
 
 d_readdir (d_readdir.U):
@@ -2130,12 +2130,12 @@ d_recvmsg (d_recvmsg.U):
 d_regcmp (d_regcmp.U):
 	This variable conditionally defines the HAS_REGCMP symbol, which
 	indicates to the C program that the regcmp() routine is available
-	for regular patern matching (usally on System V).
+	for regular pattern matching (usually on System V).
 
 d_regcomp (d_regcmp.U):
 	This variable conditionally defines the HAS_REGCOMP symbol, which
 	indicates to the C program that the regcomp() routine is available
-	for regular patern matching (usally on POSIX.2 conforming systems).
+	for regular pattern matching (usually on POSIX.2 conforming systems).
 
 d_remainder (d_remainder.U):
 	This variable conditionally defines the HAS_REMAINDER symbol, which
@@ -2762,11 +2762,11 @@ d_times (d_times.U):
 
 d_tm_tm_gmtoff (i_time.U):
 	This variable conditionally defines HAS_TM_TM_GMTOFF, which indicates
-	indicates to the C program that the struct tm has the tm_gmtoff field.
+	to the C program that the struct tm has the tm_gmtoff field.
 
 d_tm_tm_zone (i_time.U):
 	This variable conditionally defines HAS_TM_TM_ZONE, which indicates
-	indicates to the C program that the struct tm has the tm_zone field.
+	to the C program that the struct tm has the tm_zone field.
 
 d_tmpnam_r (d_tmpnam_r.U):
 	This variable conditionally defines the HAS_TMPNAM_R symbol,

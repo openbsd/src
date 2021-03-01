@@ -10,8 +10,8 @@ use Config;
 
 our @ISA = qw(Exporter);
 our @EXPORT = qw(&Mksymlists);
-our $VERSION = '7.34';
-$VERSION = eval $VERSION;
+our $VERSION = '7.44';
+$VERSION =~ tr/_//d;
 
 sub Mksymlists {
     my(%spec) = @_;
@@ -148,7 +148,7 @@ sub _write_win32 {
     # linked to directly from C. GSAR 97-07-10
 
     #bcc dropped in 5.16, so dont create useless extra symbols for export table
-    unless($] >= 5.016) {
+    unless("$]" >= 5.016) {
         if ($Config::Config{'cc'} =~ /^bcc/i) {
             push @syms, "_$_", "$_ = _$_"
                 for (@{$data->{DL_VARS}}, @{$data->{FUNCLIST}});

@@ -226,7 +226,7 @@ The possessive forms (new in Perl 5.10) prevent backtracking: what gets
 matched by a pattern with a possessive quantifier will not be backtracked
 into, even if that causes the whole match to fail.
 
-There is no quantifier C<{,n}>. That's interpreted as a literal string.
+There is no quantifier C<{,n}>. That's currently illegal.
 
 =head2 EXTENDED CONSTRUCTS
 
@@ -234,15 +234,19 @@ There is no quantifier C<{,n}>. That's interpreted as a literal string.
    (?:...)           Groups subexpressions without capturing (cluster)
    (?pimsx-imsx:...) Enable/disable option (as per m// modifiers)
    (?=...)           Zero-width positive lookahead assertion
-   (?*pla:...)       Same; avail experimentally starting in 5.28
+   (*pla:...)        Same, starting in 5.32; experimentally in 5.28
+   (*positive_lookahead:...) Same, same versions as *pla
    (?!...)           Zero-width negative lookahead assertion
-   (?*nla:...)       Same; avail experimentally starting in 5.28
+   (*nla:...)        Same, starting in 5.32; experimentally in 5.28
+   (*negative_lookahead:...) Same, same versions as *nla
    (?<=...)          Zero-width positive lookbehind assertion
-   (?*plb:...)       Same; avail experimentally starting in 5.28
+   (*plb:...)        Same, starting in 5.32; experimentally in 5.28
+   (*positive_lookbehind:...) Same, same versions as *plb
    (?<!...)          Zero-width negative lookbehind assertion
-   (?*nlb:...)       Same; avail experimentally starting in 5.28
+   (*nlb:...)        Same, starting in 5.32; experimentally in 5.28
+   (*negative_lookbehind:...) Same, same versions as *plb
    (?>...)           Grab what we can, prohibit backtracking
-   (?*atomic:...)    Same; avail experimentally starting in 5.28
+   (*atomic:...)     Same, starting in 5.32; experimentally in 5.28
    (?|...)           Branch reset
    (?<name>...)      Named capture
    (?'name'...)      Named capture
@@ -257,10 +261,14 @@ There is no quantifier C<{,n}>. That's interpreted as a literal string.
    (?P>name)         Recurse into a named subpattern (python syntax)
    (?(cond)yes|no)
    (?(cond)yes)      Conditional expression, where "(cond)" can be:
-                     (?=pat)   lookahead
-                     (?!pat)   negative lookahead
-                     (?<=pat)  lookbehind
-                     (?<!pat)  negative lookbehind
+                     (?=pat)   lookahead; also (*pla:pat)
+                               (*positive_lookahead:pat)
+                     (?!pat)   negative lookahead; also (*nla:pat)
+                               (*negative_lookahead:pat)
+                     (?<=pat)  lookbehind; also (*plb:pat)
+                               (*lookbehind:pat)
+                     (?<!pat)  negative lookbehind; also (*nlb:pat)
+                               (*negative_lookbehind:pat)
                      (N)       subpattern N has matched something
                      (<name>)  named subpattern has matched something
                      ('name')  named subpattern has matched something

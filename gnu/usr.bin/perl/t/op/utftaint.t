@@ -143,7 +143,7 @@ for my $ary ([ascii => 'perl'], [latin1 => "\xB6"]) {
 SKIP: {
     if (is_miniperl()) {
         skip_if_miniperl("Unicode tables not built yet", 2)
-            unless eval 'require "unicore/Heavy.pl"';
+            unless eval 'require "unicore/UCD.pl"';
     }
     fresh_perl_is('$a = substr $^X, 0, 0; /\x{100}/i; /$a\x{100}/i || print q,ok,',
 		  'ok', {switches => ["-T", "-l"]},

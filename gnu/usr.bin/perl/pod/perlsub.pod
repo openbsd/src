@@ -224,7 +224,12 @@ X<recursion>
     &foo();		# the same
 
     &foo;		# foo() get current args, like foo(@_) !!
-    foo;		# like foo() IFF sub foo predeclared, else "foo"
+    use strict 'subs';
+    foo;                # like foo() iff sub foo predeclared, else
+                        # a compile-time error
+    no strict 'subs';
+    foo;                # like foo() iff sub foo predeclared, else
+                        # a literal string "foo"
 
 Not only does the C<&> form make the argument list optional, it also
 disables any prototype checking on arguments you do provide.  This

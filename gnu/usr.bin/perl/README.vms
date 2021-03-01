@@ -142,11 +142,11 @@ You may need to set up a foreign symbol for the unpacking utility of
 choice.  Once you have done so, use a command like the following to
 unpack the archive:
 
-    vmstar -xvf perl-5^.30^.3.tar
+    vmstar -xvf perl-5^.32^.1.tar
 
 Then set default to the top-level source directory like so:
 
-    set default [.perl-5^.30^.3]
+    set default [.perl-5^.32^.1]
 
 and proceed with configuration as described in the next section.
 
@@ -540,10 +540,10 @@ messages a week) mailing list.
 
 To subscribe, send a mail message to VMSPERL-SUBSCRIBE@PERL.ORG. The VMSPERL
 mailing list address is VMSPERL@PERL.ORG.  Any mail sent there gets echoed
-to all subscribers of the list.  There is a searchable archive of the list
+to all subscribers of the list.  There is an archive of the list
 on the web at:
 
-    L<http://www.xray.mpe.mpg.de/mailing-lists/vmsperl/>
+    L<https://www.nntp.perl.org/group/perl.vmsperl/>
 
 To unsubscribe from VMSPERL send a message to VMSPERL-UNSUBSCRIBE@PERL.ORG.
 Be sure to do so from the subscribed account that you are canceling.
@@ -553,9 +553,8 @@ Be sure to do so from the subscribed account that you are canceling.
 Vmsperl pages on the web include:
 
     L<http://www.sidhe.org/vmsperl/index.html>
-    L<http://www.cpan.org/modules/by-module/VMS/>
-    L<http://www.xray.mpe.mpg.de/mailing-lists/vmsperl/>
-    L<http://archive.develooper.com/vmsperl@perl.org/>
+    L<https://www.cpan.org/modules/by-module/VMS/>
+    L<https://www.nntp.perl.org/group/perl.vmsperl/>
     L<http://h71000.www7.hp.com/openvms/products/ips/apache/csws_modperl.html>
 
 =head1 SEE ALSO

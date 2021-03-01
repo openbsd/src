@@ -40,6 +40,8 @@ mv NormalizationTest.txt NormTest.txt
 mv DerivedAge.txt DAge.txt
 mv DerivedCoreProperties.txt DCoreProperties.txt
 mv DerivedNormalizationProps.txt DNormalizationProps.txt
+mv IdentifierStatus.txt IdStatus.txt
+mv IdentifierType.txt IdType.txt
 
 # Some early releases don't have the extracted directory, and hence these files
 # should be moved to it.

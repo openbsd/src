@@ -1,5 +1,13 @@
 Revision history for Perl suite Locale::Maketext
 
+2020-01-19
+    * Release 1.29 to CPAN
+    * Replace multiple 'use vars' by 'our'
+    * Sentences ending with a parenthetical phrase that ends
+      with an abbreviation such as 'etc.' still require a period
+      outside of the parentheses.
+    * Add L<> around links in pod
+
 2016-07-25
     * Release of 1.28 to CPAN
     * Fix optional runtime load for CVE-2016-1238
@@ -155,7 +163,7 @@ Revision history for Perl suite Locale::Maketext
     * Release 1.11_01
 
     Fixed perlbug #33938
-    http://rt.perl.org/rt3//Public/Bug/Display.html?id=3393
+    https://github.com/Perl/perl5/issues/2103
 
     Started cleaning up source per Perl::Critic.
 

@@ -1,17 +1,27 @@
 ; charset=UTF-8
-@@@	The Unicode Standard 12.1.0
-@@@+	U12M190408.lst
-	Unicode 12.1.0 names list, third delta.
-	Repertoire synched with UnicodeData-12.1.0d2.txt
-	Second delta of annotation fixes.
-	Added alias for 11FE3.
+@@@	The Unicode Standard 13.0.0
+@@@+	U13M200203.lst
+	Unicode 13.0.0 names list, eighth delta.
+	Repertoire synched with UnicodeData-13.0.0d6.txt
+	Eighth delta of annotation fixes.
+	Added xrefs for 27C7, 27D1, 2227, 2228. Adjusted subhead for 27C7.
+	Updated aliases for 26A5, 26A4, 26A2, 263F.
+	Updated subheads and annotations for 1DF8 through 1DFB.
+	Updated title of UTR #54 in notice at 1800.
+	Added xref to 202F for 0020.
+	Added annotations about abbreviations for 2066 through 2069 for consistency.
+	Separated aliases for 0009 and 000A onto separate lines.
+	Removed superfluous xrefs for 2011.
+	Adjusted subheads for 2028 and 202A.
+	Added notices for the sets of composition exclusions in four Indic scripts.
+	Added xrefs for 029C, 1D34, 1D78, A7F8 and a notice at A7F8.
 	This file is semi-automatically derived from UnicodeData.txt and
 	a set of manually created annotations using a script to select
 	or suppress information from the data file. The rules used
 	for this process are aimed at readability for the human reader,
 	at the expense of some details; therefore, this file should not
 	be parsed for machine-readable information.
-@+		© 2019 Unicode®, Inc.
+@+		© 2020 Unicode®, Inc.
 	For terms of use, see http://www.unicode.org/terms_of_use.html
 @@	0000	C0 Controls and Basic Latin (Basic Latin)	007F
 @@+
@@ -37,10 +47,12 @@
 	= BACKSPACE
 0009	<control>
 	= CHARACTER TABULATION
-	= horizontal tabulation (HT), tab
+	= horizontal tabulation (HT)
+	= tab
 000A	<control>
 	= LINE FEED (LF)
-	= new line (NL), end of line (EOL)
+	= new line (NL)
+	= end of line (EOL)
 000B	<control>
 	= LINE TABULATION
 	= vertical tabulation (VT)
@@ -98,6 +110,7 @@
 	* other space characters: 2000-200A
 	x (no-break space - 00A0)
 	x (zero width space - 200B)
+	x (narrow no-break space - 202F)
 	x (word joiner - 2060)
 	x (ideographic space - 3000)
 	x (zero width no-break space - FEFF)
@@ -491,7 +504,9 @@
 	x (dollar sign - 0024)
 00A5	YEN SIGN
 	= yuan sign
-	* glyph may have one or two crossbars, but official symbol in Japan and China has two
+	* glyph may have one or two crossbars, but the official symbol in Japan and China has two
+	x 5143
+	x 5186
 00A6	BROKEN BAR
 	= broken vertical bar (1.0)
 	= parted rule (in typography)
@@ -505,6 +520,7 @@
 	x (sound recording copyright - 2117)
 	x (circled latin capital letter c - 24B8)
 	x (copyleft symbol - 1F12F)
+	x (mask work symbol - 1F1AD)
 00AA	FEMININE ORDINAL INDICATOR
 	* Spanish
 	# <super> 0061
@@ -801,7 +817,7 @@
 0106	LATIN CAPITAL LETTER C WITH ACUTE
 	: 0043 0301
 0107	LATIN SMALL LETTER C WITH ACUTE
-	* Polish, Croatian, ...
+	* Polish, Croatian, Serbian, ...
 	x (cyrillic small letter tshe - 045B)
 	: 0063 0301
 0108	LATIN CAPITAL LETTER C WITH CIRCUMFLEX
@@ -831,7 +847,7 @@
 	x (latin small letter d with stroke - 0111)
 	x (latin capital letter african d - 0189)
 0111	LATIN SMALL LETTER D WITH STROKE
-	* Croatian, Vietnamese, Sami
+	* Croatian, Serbian, Vietnamese, Sami
 	* an alternate glyph with the stroke through the bowl is used in Americanist orthographies
 	x (latin capital letter d with stroke - 0110)
 	x (cyrillic small letter dje - 0452)
@@ -1377,7 +1393,8 @@
 	* "q" in Zulu orthography
 	x (exclamation mark - 0021)
 	x (latin letter stretched c - 0297)
-@		Croatian digraphs matching Serbian Cyrillic letters
+@		Latin digraphs matching Serbian Cyrillic letters
+@+		These digraphs are for Gaj's Latin alphabet, used in writing Bosnian, Croatian, Serbian, and Montenegrin.
 01C4	LATIN CAPITAL LETTER DZ WITH CARON
 	# 0044 017D
 01C5	LATIN CAPITAL LETTER D WITH SMALL LETTER Z WITH CARON
@@ -1936,6 +1953,7 @@
 	x (logical and - 2227)
 028D	LATIN SMALL LETTER TURNED W
 	* voiceless rounded labiovelar approximant
+	x (modifier letter small turned w - AB69)
 028E	LATIN SMALL LETTER TURNED Y
 	* voiced lateral approximant
 028F	LATIN LETTER SMALL CAPITAL Y
@@ -1988,6 +2006,8 @@
 	* voiced uvular implosive
 029C	LATIN LETTER SMALL CAPITAL H
 	* voiceless epiglottal fricative
+	x (modifier letter capital h - 1D34)
+	x (modifier letter capital h with stroke - A7F8)
 029D	LATIN SMALL LETTER J WITH CROSSED-TAIL
 	* voiced palatal fricative
 	* uppercase is A7B2
@@ -2296,11 +2316,13 @@
 @		Ordinary diacritics
 0300	COMBINING GRAVE ACCENT
 	= Greek varia
+	* Pinyin: marks Mandarin Chinese fourth tone
 	x (grave accent - 0060)
 	x (modifier letter grave accent - 02CB)
 0301	COMBINING ACUTE ACCENT
 	= stress mark
 	= Greek oxia, tonos
+	* Pinyin: marks Mandarin Chinese second tone
 	x (apostrophe - 0027)
 	x (acute accent - 00B4)
 	x (modifier letter prime - 02B9)
@@ -2317,6 +2339,7 @@
 	x (small tilde - 02DC)
 0304	COMBINING MACRON
 	= long
+	* Pinyin: marks Mandarin Chinese first tone
 	* distinguish from the following
 	x (macron - 00AF)
 	x (modifier letter macron - 02C9)
@@ -2353,6 +2376,7 @@
 	x (double acute accent - 02DD)
 030C	COMBINING CARON
 	= hacek, V above
+	* Pinyin: marks Mandarin Chinese third tone
 	x (caron - 02C7)
 030D	COMBINING VERTICAL LINE ABOVE
 	* this is not the Greek tonos
@@ -2388,7 +2412,9 @@
 0316	COMBINING GRAVE ACCENT BELOW
 0317	COMBINING ACUTE ACCENT BELOW
 0318	COMBINING LEFT TACK BELOW
+	x (modifier letter left tack - AB6A)
 0319	COMBINING RIGHT TACK BELOW
+	x (modifier letter right tack - AB6B)
 031A	COMBINING LEFT ANGLE ABOVE
 	* IPA: unreleased stop
 031B	COMBINING HORN
@@ -3854,6 +3880,7 @@
 	* African languages
 065C	ARABIC VOWEL SIGN DOT BELOW
 	* African languages
+	* also used in Quranic text in African and other orthographies
 065D	ARABIC REVERSED DAMMA
 	* African languages
 065E	ARABIC FATHA WITH TWO DOTS
@@ -3938,7 +3965,7 @@
 0683	ARABIC LETTER NYEH
 	* Sindhi
 0684	ARABIC LETTER DYEH
-	* Sindhi
+	* Sindhi, Bosnian
 0685	ARABIC LETTER HAH WITH THREE DOTS ABOVE
 	* Pashto, Khwarazmian
 	* represents the phoneme /ts/ in Pashto
@@ -3951,7 +3978,7 @@
 0689	ARABIC LETTER DAL WITH RING
 	* Pashto
 068A	ARABIC LETTER DAL WITH DOT BELOW
-	* Sindhi, early Persian
+	* Sindhi, early Persian, Pegon, Malagasy
 068B	ARABIC LETTER DAL WITH DOT BELOW AND SMALL TAH
 	* Lahnda
 068C	ARABIC LETTER DAHAL
@@ -4027,7 +4054,7 @@
 	* use for the Jawi gaf is not recommended, although it may be found in some existing text data; recommended character for Jawi gaf is 0762
 	x (arabic letter keheh with dot above - 0762)
 06AD	ARABIC LETTER NG
-	* Uighur, Kazakh, old Malay, early Persian, ...
+	* Uighur, Kazakh, Moroccan Arabic, early Jawi, early Persian, ...
 06AE	ARABIC LETTER KAF WITH THREE DOTS BELOW
 	* Berber, early Persian
 06AF	ARABIC LETTER GAF
@@ -4043,7 +4070,7 @@
 06B4	ARABIC LETTER GAF WITH THREE DOTS ABOVE
 	* not used in Sindhi
 06B5	ARABIC LETTER LAM WITH SMALL V
-	* Kurdish
+	* Kurdish, Bosnian
 06B6	ARABIC LETTER LAM WITH DOT ABOVE
 	* Kurdish
 06B7	ARABIC LETTER LAM WITH THREE DOTS ABOVE
@@ -4058,7 +4085,7 @@
 06BC	ARABIC LETTER NOON WITH RING
 	* Pashto
 06BD	ARABIC LETTER NOON WITH THREE DOTS ABOVE
-	* old Malay
+	* Jawi
 06BE	ARABIC LETTER HEH DOACHASHMEE
 	* forms aspirate digraphs in Urdu and other languages of South Asia
 	* represents the glottal fricative /h/ in Uighur
@@ -4081,13 +4108,13 @@
 06C5	ARABIC LETTER KIRGHIZ OE
 	* Kirghiz
 06C6	ARABIC LETTER OE
-	* Uighur, Kurdish, Kazakh, Azerbaijani
+	* Uighur, Kurdish, Kazakh, Azerbaijani, Bosnian
 06C7	ARABIC LETTER U
 	* Kirghiz, Azerbaijani
 06C8	ARABIC LETTER YU
 	* Uighur
 06C9	ARABIC LETTER KIRGHIZ YU
-	* Kazakh, Kirghiz
+	* Kazakh, Kirghiz, Bosnian
 06CA	ARABIC LETTER WAW WITH TWO DOTS ABOVE
 	* Kurdish
 06CB	ARABIC LETTER VE
@@ -4106,7 +4133,7 @@
 	* Pashto, Uighur
 	* used as the letter bbeh in Sindhi
 06D1	ARABIC LETTER YEH WITH THREE DOTS BELOW
-	* old Malay
+	* Mende languages, Hausa
 06D2	ARABIC LETTER YEH BARREE
 	* Urdu
 06D3	ARABIC LETTER YEH BARREE WITH HAMZA ABOVE
@@ -4152,6 +4179,7 @@
 06EA	ARABIC EMPTY CENTRE LOW STOP
 06EB	ARABIC EMPTY CENTRE HIGH STOP
 06EC	ARABIC ROUNDED HIGH STOP WITH FILLED CENTRE
+	* also used in Quranic text in African and other orthographies to represent wasla, ikhtilas, etc.
 06ED	ARABIC SMALL LOW MEEM
 @		Extended Arabic letters for Parkari
 06EE	ARABIC LETTER DAL WITH INVERTED V
@@ -4706,6 +4734,7 @@
 	* Bashkir, Tatar
 08AE	ARABIC LETTER DAL WITH THREE DOTS BELOW
 	* Belarusian
+	* Pegon alternative for 068A
 08AF	ARABIC LETTER SAD WITH THREE DOTS BELOW
 	* Belarusian
 08B0	ARABIC LETTER GAF WITH INVERTED STROKE
@@ -4733,10 +4762,26 @@
 	* initial and medial forms have one dot above
 	x (arabic letter dotless qaf - 066F)
 	x (arabic letter qaf with dot above - 06A7)
+	x (arabic letter african qaf with three dots above - 08C4)
 08BD	ARABIC LETTER AFRICAN NOON
 	* initial and medial forms have one dot above
 	x (arabic letter noon ghunna - 06BA)
 	x (arabic letter noon - 0646)
+@		Arabic letters for Hindko
+08BE	ARABIC LETTER PEH WITH SMALL V
+08BF	ARABIC LETTER TEH WITH SMALL V
+08C0	ARABIC LETTER TTEH WITH SMALL V
+08C1	ARABIC LETTER TCHEH WITH SMALL V
+08C2	ARABIC LETTER KEHEH WITH SMALL V
+@		Arabic letters for Hausa, Wolof and other African orthographies
+08C3	ARABIC LETTER GHAIN WITH THREE DOTS ABOVE
+08C4	ARABIC LETTER AFRICAN QAF WITH THREE DOTS ABOVE
+	* this letter shows an additional single dot above for the qaf only in initial and medial forms
+	x (arabic letter african qaf - 08BC)
+08C5	ARABIC LETTER JEEM WITH THREE DOTS ABOVE
+08C6	ARABIC LETTER JEEM WITH THREE DOTS BELOW
+@		Arabic letter for Punjabi
+08C7	ARABIC LETTER LAM WITH SMALL ARABIC LETTER TAH ABOVE
 @		Quranic annotation signs
 08D3	ARABIC SMALL LOW WAW
 08D4	ARABIC SMALL HIGH WORD AR-RUB
@@ -4785,10 +4830,12 @@
 	* also used in Philippine languages
 08F7	ARABIC LEFT ARROWHEAD ABOVE
 08F8	ARABIC RIGHT ARROWHEAD ABOVE
+	* also used in Quranic text in African and other orthographies to represent damma
 08F9	ARABIC LEFT ARROWHEAD BELOW
 08FA	ARABIC RIGHT ARROWHEAD BELOW
 08FB	ARABIC DOUBLE RIGHT ARROWHEAD ABOVE
 08FC	ARABIC DOUBLE RIGHT ARROWHEAD ABOVE WITH DOT
+	* also used in Quranic text in African and other orthographies to represent dammatan
 08FD	ARABIC RIGHT ARROWHEAD ABOVE WITH DOT
 @		Extended vowel signs
 08FE	ARABIC DAMMA WITH DOT
@@ -4940,6 +4987,7 @@
 0956	DEVANAGARI VOWEL SIGN UE
 0957	DEVANAGARI VOWEL SIGN UUE
 @		Additional consonants
+@+		These eight consonants with nuktas are listed in CompositionExclusions.txt. That means that they do not recompose during normalization. The NFC form is the same as the decomposed sequence.
 0958	DEVANAGARI LETTER QA
 	: 0915 093C
 0959	DEVANAGARI LETTER KHHA
@@ -5099,6 +5147,7 @@
 @		Sign
 09D7	BENGALI AU LENGTH MARK
 @		Additional consonants
+@+		These three consonants with nuktas are listed in CompositionExclusions.txt. That means that they do not recompose during normalization. The NFC form is the same as the decomposed sequence.
 09DC	BENGALI LETTER RRA
 	: 09A1 09BC
 09DD	BENGALI LETTER RHA
@@ -5214,9 +5263,11 @@
 0A32	GURMUKHI LETTER LA
 0A33	GURMUKHI LETTER LLA
 	: 0A32 0A3C
+@+		This consonant with nukta is listed in CompositionExclusions.txt. That means that it does not recompose during normalization. The NFC form is the same as the decomposed sequence.
 0A35	GURMUKHI LETTER VA
 0A36	GURMUKHI LETTER SHA
 	: 0A38 0A3C
+@+		This consonant with nukta is listed in CompositionExclusions.txt. That means that it does not recompose during normalization. The NFC form is the same as the decomposed sequence.
 0A38	GURMUKHI LETTER SA
 0A39	GURMUKHI LETTER HA
 @		Various signs
@@ -5248,6 +5299,7 @@
 @		Sign
 0A51	GURMUKHI SIGN UDAAT
 @		Additional consonants
+@+		These four consonants with nuktas (not including 0A5C) are listed in CompositionExclusions.txt. That means that they do not recompose during normalization. The NFC form is the same as the decomposed sequence.
 0A59	GURMUKHI LETTER KHHA
 	: 0A16 0A3C
 0A5A	GURMUKHI LETTER GHHA
@@ -5490,9 +5542,12 @@
 @		Virama
 0B4D	ORIYA SIGN VIRAMA
 @		Various signs
+0B55	ORIYA SIGN OVERLINE
+	* Kuvi
 0B56	ORIYA AI LENGTH MARK
 0B57	ORIYA AU LENGTH MARK
 @		Additional consonants
+@+		These two consonants with nuktas (not including 0B5F) are listed in CompositionExclusions.txt. That means that they do not recompose during normalization. The NFC form is the same as the decomposed sequence.
 0B5C	ORIYA LETTER RRA
 	= dda
 	: 0B21 0B3C
@@ -5933,6 +5988,7 @@
 0D02	MALAYALAM SIGN ANUSVARA
 	* used in Prakrit language texts to indicate gemination of the following consonant
 0D03	MALAYALAM SIGN VISARGA
+0D04	MALAYALAM LETTER VEDIC ANUSVARA
 @		Independent vowels
 0D05	MALAYALAM LETTER A
 0D06	MALAYALAM LETTER AA
@@ -5983,7 +6039,7 @@
 	= soft dda
 0D28	MALAYALAM LETTER NA
 0D29	MALAYALAM LETTER NNNA
-	* historic use only
+	* scholarly use only
 0D2A	MALAYALAM LETTER PA
 0D2B	MALAYALAM LETTER PHA
 0D2C	MALAYALAM LETTER BA
@@ -6005,7 +6061,7 @@
 0D38	MALAYALAM LETTER SA
 0D39	MALAYALAM LETTER HA
 0D3A	MALAYALAM LETTER TTTA
-	* historic use only
+	* scholarly use only
 @		Variant shape viramas
 0D3B	MALAYALAM SIGN VERTICAL BAR VIRAMA
 0D3C	MALAYALAM SIGN CIRCULAR VIRAMA
@@ -6046,7 +6102,7 @@
 @		Measurement symbol
 0D4F	MALAYALAM SIGN PARA
 	* used historically to measure rice
-@		Chillu letters
+@		Additional historic chillu letters
 0D54	MALAYALAM LETTER CHILLU M
 0D55	MALAYALAM LETTER CHILLU Y
 0D56	MALAYALAM LETTER CHILLU LLL
@@ -6131,6 +6187,8 @@
 0D7F	MALAYALAM LETTER CHILLU K
 @@	0D80	Sinhala	0DFF
 @		Various signs
+0D81	SINHALA SIGN CANDRABINDU
+	* used in Sanskrit
 0D82	SINHALA SIGN ANUSVARAYA
 	= anusvara
 0D83	SINHALA SIGN VISARGAYA
@@ -9338,6 +9396,7 @@
 17F9	KHMER SYMBOL LEK ATTAK PRAM-BUON
 @@	1800	Mongolian	18AF
 @@+
+@+		A copy of the Mongolian code chart showing glyphs for all Mongolian positional variants and variation sequences can be found in UTR #54, Unicode Mongolian 12.1 Snapshot.
 @		Punctuation
 @+		Additional birgas are encoded in the Mongolian Supplement block at 11660-1167F.
 1800	MONGOLIAN BIRGA
@@ -9378,490 +9437,134 @@
 1819	MONGOLIAN DIGIT NINE
 @		Basic letters
 @+		Cross-references show commonly used Cyrillic transliterations.
-@+		Letters unspecified for distinct positional forms are shown without them. Letters with unspecified positional forms use a squared question mark to indicate the gap. All vowels are expected to have explicit isolate forms. For consonants the isolate first form is the initial first form unless specified otherwise.
 1820	MONGOLIAN LETTER A
 	x (cyrillic small letter a - 0430)
-	~ 1820 ALT1 first form (isolate)
-	~ 1820 ALT1 first form (initial)
-	~ 1820 ALT1 first form (medial)
-	~ 1820 ALT1 first form (final)
-	~ 1820 180B second form (isolate)
-	~ 1820 180B second form (medial)
-	~ 1820 180B second form (final)
-	~ 1820 180C third form (medial)
 1821	MONGOLIAN LETTER E
 	x (cyrillic small letter e - 044D)
-	~ 1821 ALT1 first form (isolate)
-	~ 1821 ALT1 first form (initial)
-	~ 1821 ALT1 first form (medial)
-	~ 1821 ALT1 first form (final)
-	~ 1821 180B second form (initial)
-	~ 1821 180B second form (final)
 1822	MONGOLIAN LETTER I
 	x (cyrillic small letter i - 0438)
-	~ 1822 ALT1 first form (isolate)
-	~ 1822 ALT1 first form (initial)
-	~ 1822 ALT1 first form (medial)
-	~ 1822 ALT1 first form (final)
-	~ 1822 180B second form (medial)
 1823	MONGOLIAN LETTER O
 	x (cyrillic small letter o - 043E)
-	~ 1823 ALT1 first form (isolate)
-	~ 1823 ALT1 first form (initial)
-	~ 1823 ALT1 first form (medial)
-	~ 1823 ALT1 first form (final)
-	~ 1823 180B second form (medial)
-	~ 1823 180B second form (final)
 1824	MONGOLIAN LETTER U
 	x (cyrillic small letter u - 0443)
-	~ 1824 ALT1 first form (isolate)
-	~ 1824 ALT1 first form (initial)
-	~ 1824 ALT1 first form (medial)
-	~ 1824 ALT1 first form (final)
-	~ 1824 180B second form (medial)
 1825	MONGOLIAN LETTER OE
 	x (cyrillic small letter barred o - 04E9)
-	~ 1825 ALT1 first form (isolate)
-	~ 1825 ALT1 first form (initial)
-	~ 1825 ALT1 first form (medial)
-	~ 1825 ALT1 first form (final)
-	~ 1825 180B second form (medial)
-	~ 1825 180B second form (final)
-	~ 1825 180C third form (medial)
 1826	MONGOLIAN LETTER UE
 	x (cyrillic small letter straight u - 04AF)
-	~ 1826 ALT1 first form (isolate)
-	~ 1826 ALT1 first form (initial)
-	~ 1826 ALT1 first form (medial)
-	~ 1826 ALT1 first form (final)
-	~ 1826 180B second form (isolate)
-	~ 1826 180B second form (medial)
-	~ 1826 180B second form (final)
-	~ 1826 180C third form (medial)
 1827	MONGOLIAN LETTER EE
-	~ 1827 ALT1 first form (isolate)
-	~ 1827 ALT1 first form (initial)
-	~ 1827 ALT1 first form (medial)
-	~ 1827 ALT1 first form (final)
 1828	MONGOLIAN LETTER NA
 	x (cyrillic small letter en - 043D)
-	~ 1828 ALT1 first form (initial)
-	~ 1828 ALT1 first form (medial)
-	~ 1828 ALT1 first form (final)
-	~ 1828 180B second form (initial)
-	~ 1828 180B second form (medial)
-	~ 1828 180C third form (medial)
-	~ 1828 180D fourth form (medial)
 1829	MONGOLIAN LETTER ANG
-	~ 1829 ALT1 first form (initial)
-	~ 1829 ALT1 first form (medial)
-	~ 1829 ALT1 first form (final)
 182A	MONGOLIAN LETTER BA
 	x (cyrillic small letter be - 0431)
-	~ 182A ALT1 first form (initial)
-	~ 182A ALT1 first form (medial)
-	~ 182A ALT1 first form (final)
-	~ 182A 180B second form (final)
 182B	MONGOLIAN LETTER PA
 	x (cyrillic small letter pe - 043F)
-	~ 182B ALT1 first form (initial)
-	~ 182B ALT1 first form (medial)
-	~ 182B ALT1 first form (final)
 182C	MONGOLIAN LETTER QA
 	x (cyrillic small letter ha - 0445)
-	~ 182C ALT1 first form (isolate)
-	~ 182C ALT1 first form (initial)
-	~ 182C ALT1 first form (medial)
-	~ 182C ALT1 first form (final)
-	~ 182C 180B second form (isolate)
-	~ 182C 180B second form (initial)
-	~ 182C 180B second form (medial)
-	~ 182C 180C third form (medial)
-	~ 182C 180D fourth form (medial)
 182D	MONGOLIAN LETTER GA
 	x (cyrillic small letter ghe - 0433)
-	~ 182D ALT1 first form (isolate)
-	~ 182D ALT1 first form (initial)
-	~ 182D ALT1 first form (medial)
-	~ 182D ALT1 first form (final)
-	~ 182D 180B second form (initial)
-	~ 182D 180B second form (medial)
-	~ 182D 180B second form (final)
-	~ 182D 180C third form (medial)
-	~ 182D 180D fourth form (medial)
 182E	MONGOLIAN LETTER MA
 	x (cyrillic small letter em - 043C)
-	~ 182E ALT1 first form (initial)
-	~ 182E ALT1 first form (medial)
-	~ 182E ALT1 first form (final)
 182F	MONGOLIAN LETTER LA
 	x (cyrillic small letter el - 043B)
-	~ 182F ALT1 first form (initial)
-	~ 182F ALT1 first form (medial)
-	~ 182F ALT1 first form (final)
 1830	MONGOLIAN LETTER SA
 	x (cyrillic small letter es - 0441)
-	~ 1830 ALT1 first form (initial)
-	~ 1830 ALT1 first form (medial)
-	~ 1830 ALT1 first form (final)
-	~ 1830 180B second form (final)
-	~ 1830 180C third form (final)
 1831	MONGOLIAN LETTER SHA
 	x (cyrillic small letter sha - 0448)
-	~ 1831 ALT1 first form (initial)
-	~ 1831 ALT1 first form (medial)
-	~ 1831 ALT1 first form (final)
 1832	MONGOLIAN LETTER TA
 	x (cyrillic small letter te - 0442)
-	~ 1832 ALT1 first form (initial)
-	~ 1832 ALT1 first form (medial)
-	~ 1832 ALT1 first form (final)
-	~ 1832 180B second form (medial)
 1833	MONGOLIAN LETTER DA
 	x (cyrillic small letter de - 0434)
-	~ 1833 ALT1 first form (initial)
-	~ 1833 ALT1 first form (medial)
-	~ 1833 ALT1 first form (final)
-	~ 1833 180B second form (initial)
-	~ 1833 180B second form (medial)
-	~ 1833 180B second form (final)
 1834	MONGOLIAN LETTER CHA
 	x (cyrillic small letter che - 0447)
-	~ 1834 ALT1 first form (initial)
-	~ 1834 ALT1 first form (medial)
-	~ 1834 ALT1 first form (final)
 1835	MONGOLIAN LETTER JA
 	x (cyrillic small letter zhe - 0436)
-	~ 1835 ALT1 first form (initial)
-	~ 1835 ALT1 first form (medial)
-	~ 1835 ALT1 first form (final)
-	~ 1835 180B second form (medial)
 1836	MONGOLIAN LETTER YA
 	x (cyrillic small letter short i - 0439)
-	~ 1836 ALT1 first form (initial)
-	~ 1836 ALT1 first form (medial)
-	~ 1836 ALT1 first form (final)
-	~ 1836 180B second form (initial)
-	~ 1836 180B second form (medial)
-	~ 1836 180C third form (medial)
 1837	MONGOLIAN LETTER RA
 	x (cyrillic small letter er - 0440)
-	~ 1837 ALT1 first form (initial)
-	~ 1837 ALT1 first form (medial)
-	~ 1837 ALT1 first form (final)
 1838	MONGOLIAN LETTER WA
 	x (cyrillic small letter ve - 0432)
-	~ 1838 ALT1 first form (initial)
-	~ 1838 ALT1 first form (medial)
-	~ 1838 ALT1 first form (final)
-	~ 1838 180B second form (final)
 1839	MONGOLIAN LETTER FA
 	x (cyrillic small letter ef - 0444)
-	~ 1839 ALT1 first form (initial)
-	~ 1839 ALT1 first form (medial)
-	~ 1839 ALT1 first form (final)
 183A	MONGOLIAN LETTER KA
 	x (cyrillic small letter ha - 0445)
-	~ 183A ALT1 first form (initial)
-	~ 183A ALT1 first form (medial)
-	~ 183A ALT1 first form (final)
 183B	MONGOLIAN LETTER KHA
 	x (cyrillic small letter ka - 043A)
-	~ 183B ALT1 first form (initial)
-	~ 183B ALT1 first form (medial)
-	~ 183B ALT1 first form (final)
 183C	MONGOLIAN LETTER TSA
 	x (cyrillic small letter tse - 0446)
-	~ 183C ALT1 first form (initial)
-	~ 183C ALT1 first form (medial)
-	~ 183C ALT1 first form (final)
 183D	MONGOLIAN LETTER ZA
 	x (cyrillic small letter ze - 0437)
-	~ 183D ALT1 first form (initial)
-	~ 183D ALT1 first form (medial)
-	~ 183D ALT1 first form (final)
 183E	MONGOLIAN LETTER HAA
 	x (cyrillic small letter ha - 0445)
-	~ 183E ALT1 first form (initial)
-	~ 183E ALT1 first form (medial)
-	~ 183E ALT1 first form (final)
 183F	MONGOLIAN LETTER ZRA
 	x (cyrillic small letter zhe - 0436)
-	~ 183F ALT1 first form (initial)
-	~ 183F ALT1 first form (medial)
-	~ 183F ALT1 first form (final)
 1840	MONGOLIAN LETTER LHA
-	~ 1840 ALT1 first form (initial)
-	~ 1840 ALT1 first form (medial)
-	~ 1840 ALT1 first form (final)
 1841	MONGOLIAN LETTER ZHI
 1842	MONGOLIAN LETTER CHI
 @		Todo letters
 1843	MONGOLIAN LETTER TODO LONG VOWEL SIGN
-	~ 1843 ALT1 first form (initial)
-	~ 1843 ALT1 first form (medial)
-	~ 1843 ALT1 first form (final)
 1844	MONGOLIAN LETTER TODO E
-	~ 1844 ALT1 first form (isolate)
-	~ 1844 ALT1 first form (initial)
-	~ 1844 ALT1 first form (medial)
-	~ 1844 ALT1 first form (final)
-	~ 1844 180B second form (medial)
 1845	MONGOLIAN LETTER TODO I
-	~ 1845 ALT1 first form (isolate)
-	~ 1845 ALT1 first form (initial)
-	~ 1845 ALT1 first form (medial)
-	~ 1845 ALT1 first form (final)
-	~ 1845 180B second form (medial)
 1846	MONGOLIAN LETTER TODO O
-	~ 1846 ALT1 first form (isolate)
-	~ 1846 ALT1 first form (initial)
-	~ 1846 ALT1 first form (medial)
-	~ 1846 ALT1 first form (final)
-	~ 1846 180B second form (medial)
 1847	MONGOLIAN LETTER TODO U
-	~ 1847 ALT1 first form (isolate)
-	~ 1847 ALT1 first form (initial)
-	~ 1847 ALT1 first form (medial)
-	~ 1847 ALT1 first form (final)
-	~ 1847 180B second form (isolate)
-	~ 1847 180B second form (medial)
-	~ 1847 180B second form (final)
-	~ 1847 180C third form (medial)
 1848	MONGOLIAN LETTER TODO OE
-	~ 1848 ALT1 first form (isolate)
-	~ 1848 ALT1 first form (initial)
-	~ 1848 ALT1 first form (medial)
-	~ 1848 ALT1 first form (final)
-	~ 1848 180B second form (medial)
 1849	MONGOLIAN LETTER TODO UE
-	~ 1849 ALT1 first form (isolate)
-	~ 1849 ALT1 first form (initial)
-	~ 1849 ALT1 first form (medial)
-	~ 1849 ALT1 first form (final)
-	~ 1849 180B second form (isolate)
-	~ 1849 180B second form (medial)
 184A	MONGOLIAN LETTER TODO ANG
-	~ 184A ALT1 first form (initial)
-	~ 184A ALT1 first form (medial)
-	~ 184A ALT1 first form (final)
 184B	MONGOLIAN LETTER TODO BA
-	~ 184B ALT1 first form (initial)
-	~ 184B ALT1 first form (medial)
-	~ 184B ALT1 first form (final)
 184C	MONGOLIAN LETTER TODO PA
-	~ 184C ALT1 first form (initial)
-	~ 184C ALT1 first form (medial)
-	~ 184C ALT1 first form (final)
 184D	MONGOLIAN LETTER TODO QA
-	~ 184D ALT1 first form (initial)
-	~ 184D ALT1 first form (medial)
-	~ 184D ALT1 first form (final)
-	~ 184D 180B second form (initial)
-	~ 184D 180B second form (medial)
 184E	MONGOLIAN LETTER TODO GA
-	~ 184E ALT1 first form (isolate)
-	~ 184E ALT1 first form (initial)
-	~ 184E ALT1 first form (medial)
-	~ 184E ALT1 first form (final)
-	~ 184E 180B second form (medial)
 184F	MONGOLIAN LETTER TODO MA
-	~ 184F ALT1 first form (initial)
-	~ 184F ALT1 first form (medial)
-	~ 184F ALT1 first form (final)
 1850	MONGOLIAN LETTER TODO TA
-	~ 1850 ALT1 first form (initial)
-	~ 1850 ALT1 first form (medial)
-	~ 1850 ALT1 first form (final)
 1851	MONGOLIAN LETTER TODO DA
-	~ 1851 ALT1 first form (initial)
-	~ 1851 ALT1 first form (medial)
-	~ 1851 ALT1 first form (final)
 1852	MONGOLIAN LETTER TODO CHA
-	~ 1852 ALT1 first form (initial)
-	~ 1852 ALT1 first form (medial)
-	~ 1852 ALT1 first form (final)
 1853	MONGOLIAN LETTER TODO JA
-	~ 1853 ALT1 first form (initial)
-	~ 1853 ALT1 first form (medial)
-	~ 1853 ALT1 first form (final)
 1854	MONGOLIAN LETTER TODO TSA
-	~ 1854 ALT1 first form (initial)
-	~ 1854 ALT1 first form (medial)
-	~ 1854 ALT1 first form (final)
 1855	MONGOLIAN LETTER TODO YA
-	~ 1855 ALT1 first form (initial)
-	~ 1855 ALT1 first form (medial)
-	~ 1855 ALT1 first form (final)
 1856	MONGOLIAN LETTER TODO WA
-	~ 1856 ALT1 first form (initial)
-	~ 1856 ALT1 first form (medial)
-	~ 1856 ALT1 first form (final)
 1857	MONGOLIAN LETTER TODO KA
-	~ 1857 ALT1 first form (initial)
-	~ 1857 ALT1 first form (medial)
-	~ 1857 ALT1 first form (final)
 1858	MONGOLIAN LETTER TODO GAA
 1859	MONGOLIAN LETTER TODO HAA
-	~ 1859 ALT1 first form (initial)
-	~ 1859 ALT1 first form (medial)
-	~ 1859 ALT1 first form (final)
 185A	MONGOLIAN LETTER TODO JIA
 185B	MONGOLIAN LETTER TODO NIA
 185C	MONGOLIAN LETTER TODO DZA
-	~ 185C ALT1 first form (initial)
-	~ 185C ALT1 first form (medial)
-	~ 185C ALT1 first form (final)
 @		Sibe letters
 185D	MONGOLIAN LETTER SIBE E
-	~ 185D ALT1 first form (isolate)
-	~ 185D ALT1 first form (initial)
-	~ 185D ALT1 first form (medial)
-	~ 185D ALT1 first form (final)
-	~ 185D 180B second form (medial)
-	~ 185D 180B second form (final)
 185E	MONGOLIAN LETTER SIBE I
-	~ 185E ALT1 first form (isolate)
-	~ 185E ALT1 first form (initial)
-	~ 185E ALT1 first form (medial)
-	~ 185E ALT1 first form (final)
-	~ 185E 180B second form (medial)
-	~ 185E 180B second form (final)
-	~ 185E 180C third form (medial)
-	~ 185E 180C third form (final)
 185F	MONGOLIAN LETTER SIBE IY
-	~ 185F ALT1 first form (initial)
-	~ 185F ALT1 first form (medial)
-	~ 185F ALT1 first form (final)
 1860	MONGOLIAN LETTER SIBE UE
-	~ 1860 ALT1 first form (isolate)
-	~ 1860 ALT1 first form (initial)
-	~ 1860 ALT1 first form (medial)
-	~ 1860 ALT1 first form (final)
-	~ 1860 180B second form (medial)
-	~ 1860 180B second form (final)
 1861	MONGOLIAN LETTER SIBE U
-	~ 1861 ALT1 first form (isolate)
-	~ 1861 ALT1 first form (initial)
-	~ 1861 ALT1 first form (medial)
-	~ 1861 ALT1 first form (final)
 1862	MONGOLIAN LETTER SIBE ANG
-	~ 1862 ALT1 first form (initial)
-	~ 1862 ALT1 first form (medial)
-	~ 1862 ALT1 first form (final)
 1863	MONGOLIAN LETTER SIBE KA
-	~ 1863 ALT1 first form (isolate)
-	~ 1863 ALT1 first form (initial)
-	~ 1863 ALT1 first form (medial)
-	~ 1863 ALT1 first form (final)
-	~ 1863 180B second form (medial)
 1864	MONGOLIAN LETTER SIBE GA
-	~ 1864 ALT1 first form (isolate)
-	~ 1864 ALT1 first form (initial)
-	~ 1864 ALT1 first form (medial)
-	~ 1864 ALT1 first form (final)
 1865	MONGOLIAN LETTER SIBE HA
-	~ 1865 ALT1 first form (isolate)
-	~ 1865 ALT1 first form (initial)
-	~ 1865 ALT1 first form (medial)
-	~ 1865 ALT1 first form (final)
 1866	MONGOLIAN LETTER SIBE PA
-	~ 1866 ALT1 first form (initial)
-	~ 1866 ALT1 first form (medial)
-	~ 1866 ALT1 first form (final)
 1867	MONGOLIAN LETTER SIBE SHA
-	~ 1867 ALT1 first form (initial)
-	~ 1867 ALT1 first form (medial)
-	~ 1867 ALT1 first form (final)
 1868	MONGOLIAN LETTER SIBE TA
-	~ 1868 ALT1 first form (initial)
-	~ 1868 ALT1 first form (medial)
-	~ 1868 ALT1 first form (final)
-	~ 1868 180B second form (initial)
-	~ 1868 180B second form (medial)
-	~ 1868 180C third form (medial)
 1869	MONGOLIAN LETTER SIBE DA
-	~ 1869 ALT1 first form (initial)
-	~ 1869 ALT1 first form (medial)
-	~ 1869 ALT1 first form (final)
-	~ 1869 180B second form (initial)
-	~ 1869 180B second form (medial)
 186A	MONGOLIAN LETTER SIBE JA
-	~ 186A ALT1 first form (initial)
-	~ 186A ALT1 first form (medial)
-	~ 186A ALT1 first form (final)
 186B	MONGOLIAN LETTER SIBE FA
-	~ 186B ALT1 first form (initial)
-	~ 186B ALT1 first form (medial)
-	~ 186B ALT1 first form (final)
 186C	MONGOLIAN LETTER SIBE GAA
 186D	MONGOLIAN LETTER SIBE HAA
 186E	MONGOLIAN LETTER SIBE TSA
-	~ 186E ALT1 first form (initial)
-	~ 186E ALT1 first form (medial)
-	~ 186E ALT1 first form (final)
 186F	MONGOLIAN LETTER SIBE ZA
-	~ 186F ALT1 first form (initial)
-	~ 186F ALT1 first form (medial)
-	~ 186F ALT1 first form (final)
-	~ 186F 180B second form (initial)
-	~ 186F 180B second form (medial)
 1870	MONGOLIAN LETTER SIBE RAA
 1871	MONGOLIAN LETTER SIBE CHA
-	~ 1871 ALT1 first form (initial)
-	~ 1871 ALT1 first form (medial)
-	~ 1871 ALT1 first form (final)
 1872	MONGOLIAN LETTER SIBE ZHA
-	~ 1872 ALT1 first form (initial)
-	~ 1872 ALT1 first form (medial)
-	~ 1872 ALT1 first form (final)
 @		Manchu letters
 1873	MONGOLIAN LETTER MANCHU I
-	~ 1873 ALT1 first form (isolate)
-	~ 1873 ALT1 first form (initial)
-	~ 1873 ALT1 first form (medial)
-	~ 1873 ALT1 first form (final)
-	~ 1873 180B second form (medial)
-	~ 1873 180B second form (final)
-	~ 1873 180C third form (medial)
-	~ 1873 180C third form (final)
-	~ 1873 180D fourth form (medial)
 1874	MONGOLIAN LETTER MANCHU KA
-	~ 1874 ALT1 first form (isolate)
-	~ 1874 ALT1 first form (initial)
-	~ 1874 ALT1 first form (medial)
-	~ 1874 ALT1 first form (final)
-	~ 1874 180B second form (medial)
-	~ 1874 180B second form (final)
-	~ 1874 180C third form (medial)
-	~ 1874 180C third form (final)
-	~ 1874 180D fourth form (medial)
 1875	MONGOLIAN LETTER MANCHU RA
-	~ 1875 ALT1 first form (initial)
-	~ 1875 ALT1 first form (medial)
-	~ 1875 ALT1 first form (final)
 1876	MONGOLIAN LETTER MANCHU FA
-	~ 1876 ALT1 first form (initial)
-	~ 1876 ALT1 first form (medial)
-	~ 1876 ALT1 first form (final)
-	~ 1876 180B second form (initial)
-	~ 1876 180B second form (medial)
 1877	MONGOLIAN LETTER MANCHU ZHA
-	~ 1877 ALT1 first form (initial)
-	~ 1877 ALT1 first form (medial)
-	~ 1877 ALT1 first form (final)
 @		Buryat letter
 1878	MONGOLIAN LETTER CHA WITH TWO DOTS
-	~ 1878 ALT1 first form (initial)
-	~ 1878 ALT1 first form (medial)
-	~ 1878 ALT1 first form (final)
 @		Extensions for Sanskrit and Tibetan
 1880	MONGOLIAN LETTER ALI GALI ANUSVARA ONE
 	x (tibetan sign sna ldan - 0F83)
-	~ 1880 180B second form
 1881	MONGOLIAN LETTER ALI GALI VISARGA ONE
 	x (tibetan sign rnam bcad - 0F7F)
-	~ 1881 180B second form
 1882	MONGOLIAN LETTER ALI GALI DAMARU
 	x (tibetan sign lce tsa can - 0F88)
 1883	MONGOLIAN LETTER ALI GALI UBADAMA
@@ -9871,35 +9574,10 @@
 	x (tibetan mark paluta - 0F85)
 1886	MONGOLIAN LETTER ALI GALI THREE BALUDA
 1887	MONGOLIAN LETTER ALI GALI A
-	~ 1887 ALT1 first form (isolate)
-	~ 1887 ALT1 first form (initial)
-	~ 1887 ALT1 first form (medial)
-	~ 1887 ALT1 first form (final)
-	~ 1887 180B second form (isolate)
-	~ 1887 180B second form (final)
-	~ 1887 180C third form (final)
-	~ 1887 180D fourth form (final)
 1888	MONGOLIAN LETTER ALI GALI I
-	~ 1888 ALT1 first form (isolate)
-	~ 1888 ALT1 first form (initial)
-	~ 1888 ALT1 first form (medial)
-	~ 1888 ALT1 first form (final)
-	~ 1888 180B second form (final)
 1889	MONGOLIAN LETTER ALI GALI KA
-	~ 1889 ALT1 first form (isolate)
-	~ 1889 ALT1 first form (initial)
-	~ 1889 ALT1 first form (medial)
-	~ 1889 ALT1 first form (final)
 188A	MONGOLIAN LETTER ALI GALI NGA
-	~ 188A ALT1 first form (initial)
-	~ 188A ALT1 first form (medial)
-	~ 188A ALT1 first form (final)
-	~ 188A 180B second form (initial)
-	~ 188A 180B second form (medial)
 188B	MONGOLIAN LETTER ALI GALI CA
-	~ 188B ALT1 first form (initial)
-	~ 188B ALT1 first form (medial)
-	~ 188B ALT1 first form (final)
 188C	MONGOLIAN LETTER ALI GALI TTA
 188D	MONGOLIAN LETTER ALI GALI TTHA
 188E	MONGOLIAN LETTER ALI GALI DDA
@@ -9909,72 +9587,28 @@
 1892	MONGOLIAN LETTER ALI GALI PA
 1893	MONGOLIAN LETTER ALI GALI PHA
 1894	MONGOLIAN LETTER ALI GALI SSA
-	~ 1894 ALT1 first form (initial)
-	~ 1894 ALT1 first form (medial)
-	~ 1894 ALT1 first form (final)
 1895	MONGOLIAN LETTER ALI GALI ZHA
 1896	MONGOLIAN LETTER ALI GALI ZA
-	~ 1896 ALT1 first form (initial)
-	~ 1896 ALT1 first form (medial)
-	~ 1896 ALT1 first form (final)
 1897	MONGOLIAN LETTER ALI GALI AH
 1898	MONGOLIAN LETTER TODO ALI GALI TA
 1899	MONGOLIAN LETTER TODO ALI GALI ZHA
 189A	MONGOLIAN LETTER MANCHU ALI GALI GHA
-	~ 189A ALT1 first form (initial)
-	~ 189A ALT1 first form (medial)
-	~ 189A ALT1 first form (final)
 189B	MONGOLIAN LETTER MANCHU ALI GALI NGA
-	~ 189B ALT1 first form (initial)
-	~ 189B ALT1 first form (medial)
-	~ 189B ALT1 first form (final)
 189C	MONGOLIAN LETTER MANCHU ALI GALI CA
-	~ 189C ALT1 first form (initial)
-	~ 189C ALT1 first form (medial)
-	~ 189C ALT1 first form (final)
 189D	MONGOLIAN LETTER MANCHU ALI GALI JHA
-	~ 189D ALT1 first form (initial)
-	~ 189D ALT1 first form (medial)
-	~ 189D ALT1 first form (final)
 189E	MONGOLIAN LETTER MANCHU ALI GALI TTA
-	~ 189E ALT1 first form (initial)
-	~ 189E ALT1 first form (medial)
-	~ 189E ALT1 first form (final)
 189F	MONGOLIAN LETTER MANCHU ALI GALI DDHA
-	~ 189F ALT1 first form (initial)
-	~ 189F ALT1 first form (medial)
-	~ 189F ALT1 first form (final)
 18A0	MONGOLIAN LETTER MANCHU ALI GALI TA
 18A1	MONGOLIAN LETTER MANCHU ALI GALI DHA
-	~ 18A1 ALT1 first form (initial)
-	~ 18A1 ALT1 first form (medial)
-	~ 18A1 ALT1 first form (final)
 18A2	MONGOLIAN LETTER MANCHU ALI GALI SSA
-	~ 18A2 ALT1 first form (initial)
-	~ 18A2 ALT1 first form (medial)
-	~ 18A2 ALT1 first form (final)
 18A3	MONGOLIAN LETTER MANCHU ALI GALI CYA
-	~ 18A3 ALT1 first form (initial)
-	~ 18A3 ALT1 first form (medial)
-	~ 18A3 ALT1 first form (final)
 18A4	MONGOLIAN LETTER MANCHU ALI GALI ZHA
-	~ 18A4 ALT1 first form (initial)
-	~ 18A4 ALT1 first form (medial)
-	~ 18A4 ALT1 first form (final)
 18A5	MONGOLIAN LETTER MANCHU ALI GALI ZA
-	~ 18A5 ALT1 first form (initial)
-	~ 18A5 ALT1 first form (medial)
-	~ 18A5 ALT1 first form (final)
 18A6	MONGOLIAN LETTER ALI GALI HALF U
 18A7	MONGOLIAN LETTER ALI GALI HALF YA
 18A8	MONGOLIAN LETTER MANCHU ALI GALI BHA
 18A9	MONGOLIAN LETTER ALI GALI DAGALGA
 18AA	MONGOLIAN LETTER MANCHU ALI GALI LHA
-	~ 18AA ALT1 first form (initial)
-	~ 18AA ALT1 first form (medial)
-	~ 18AA ALT1 first form (final)
-@@@~	Positional Forms and Standardized Variation Sequences
-@+		Unlike other blocks, these variation sequences use the script-specific variation selectors for Mongolian.
 @@	18B0	Unified Canadian Aboriginal Syllabics Extended	18FF
 @		Syllables for Moose Cree
 18B0	CANADIAN SYLLABICS OY
@@ -10538,6 +10172,11 @@
 1ABE	COMBINING PARENTHESES OVERLAY
 	* intended to surround a base letter
 	* exact placement is font dependent
+@		Used for Scots dialectology
+1ABF	COMBINING LATIN SMALL LETTER W BELOW
+	* indicates voiced labialization
+1AC0	COMBINING LATIN SMALL LETTER TURNED W BELOW
+	* indicates voiceless labialization
 @@	1B00	Balinese	1B7F
 @		Various signs
 1B00	BALINESE SIGN ULU RICEM
@@ -11248,6 +10887,7 @@
 	x (tibetan sign lce tsa can - 0F88)
 	x (brahmi sign jihvamuliya - 11003)
 	x (sharada sign jihvamuliya - 111C2)
+	x (newa sign jihvamuliya - 11460)
 	x (soyombo sign jihvamuliya - 11A84)
 1CF6	VEDIC SIGN UPADHMANIYA
 	* marks a bilabial fricative occurring only before unvoiced labial stops
@@ -11255,6 +10895,7 @@
 	x (tibetan sign mchu can - 0F89)
 	x (brahmi sign upadhmaniya - 11004)
 	x (sharada sign upadhmaniya - 111C3)
+	x (newa sign upadhmaniya - 11461)
 	x (soyombo sign upadhmaniya - 11A85)
 1CF7	VEDIC SIGN ATIKRAMA
 	= vaidika saamagaana atikrama
@@ -11341,6 +10982,8 @@
 1D33	MODIFIER LETTER CAPITAL G
 	# <super> 0047
 1D34	MODIFIER LETTER CAPITAL H
+	x (latin letter small capital h - 029C)
+	x (modifier letter cyrillic en - 1D78)
 	# <super> 0048
 1D35	MODIFIER LETTER CAPITAL I
 	# <super> 0049
@@ -11455,8 +11098,9 @@
 @		Latin letter
 1D6B	LATIN SMALL LETTER UE
 @		Latin letters with middle tilde
-@+		An additional letter with middle tilde is found in another block.
+@+		Additional letters with middle tilde are found in other blocks.
 	x (latin small letter l with middle tilde - 026B)
+	x (latin small letter turned r with middle tilde - AB68)
 1D6C	LATIN SMALL LETTER B WITH MIDDLE TILDE
 1D6D	LATIN SMALL LETTER D WITH MIDDLE TILDE
 1D6E	LATIN SMALL LETTER F WITH MIDDLE TILDE
@@ -11473,6 +11117,7 @@
 	* Georgian transcription
 	x (georgian letter turned gan - 10F9)
 1D78	MODIFIER LETTER CYRILLIC EN
+	x (modifier letter capital h - 1D34)
 	# <super> 043D
 @		Other phonetic symbols
 1D79	LATIN SMALL LETTER INSULAR G
@@ -11709,11 +11354,14 @@
 1DF6	COMBINING KAVYKA ABOVE RIGHT
 1DF7	COMBINING KAVYKA ABOVE LEFT
 	x (combining cyrillic kavyka - A67C)
+@		Miscellaneous marks
 1DF8	COMBINING DOT ABOVE LEFT
+	* used in Syriac as a disambiguation dot
+	* used in Typicon Cyrillic, where the dot may have a square appearance
 	x (combining dot above right - 0358)
 1DF9	COMBINING WIDE INVERTED BRIDGE BELOW
+	* used as a Typicon mark
 	x (combining inverted bridge below - 033A)
-@		Miscellaneous mark
 1DFB	COMBINING DELETION MARK
 	* used for "mhusaa" in Newa scribal tradition
 @		Double diacritic mark for UPA
@@ -12812,8 +12460,6 @@
 	x (hyphen-minus - 002D)
 	x (soft hyphen - 00AD)
 2011	NON-BREAKING HYPHEN
-	x (hyphen-minus - 002D)
-	x (soft hyphen - 00AD)
 	# <noBreak> 2010
 2012	FIGURE DASH
 2013	EN DASH
@@ -12908,11 +12554,12 @@
 	# 002E 002E 002E
 2027	HYPHENATION POINT
 	* visible symbol used to indicate correct positions for word breaking, as in dic·tion·ar·ies
-@		Format characters
+@		Separators
 2028	LINE SEPARATOR
 	* may be used to represent this semantic unambiguously
 2029	PARAGRAPH SEPARATOR
 	* may be used to represent this semantic unambiguously
+@		Format characters
 202A	LEFT-TO-RIGHT EMBEDDING
 	* commonly abbreviated LRE
 202B	RIGHT-TO-LEFT EMBEDDING
@@ -12923,6 +12570,7 @@
 	* commonly abbreviated LRO
 202E	RIGHT-TO-LEFT OVERRIDE
 	* commonly abbreviated RLO
+@		Space
 202F	NARROW NO-BREAK SPACE
 	* commonly abbreviated NNBSP
 	* a narrow form of a no-break space, typically the width of a thin space or a mid space
@@ -13031,6 +12679,7 @@
 204A	TIRONIAN SIGN ET
 	* Irish Gaelic, Old English, ...
 	x (ampersand - 0026)
+	x (tironian sign capital et - 2E52)
 	x (script ligature et ornament - 1F670)
 204B	REVERSED PILCROW SIGN
 	x (pilcrow sign - 00B6)
@@ -13118,9 +12767,13 @@
 	* contiguity operator indicating addition
 @		Format characters
 2066	LEFT-TO-RIGHT ISOLATE
+	* commonly abbreviated LRI
 2067	RIGHT-TO-LEFT ISOLATE
+	* commonly abbreviated RLI
 2068	FIRST STRONG ISOLATE
+	* commonly abbreviated FSI
 2069	POP DIRECTIONAL ISOLATE
+	* commonly abbreviated PDI
 @		Deprecated
 @+		Use of these characters is strongly discouraged.
 206A	INHIBIT SYMMETRIC SWAPPING
@@ -13278,6 +12931,7 @@
 	* Korea
 	* glyph may have one or two crossbars, but the most common form in Korea has only one
 20AA	NEW SHEQEL SIGN
+	= shekel
 	* Israel
 20AB	DONG SIGN
 	* Vietnam
@@ -13412,6 +13066,7 @@
 2100	ACCOUNT OF
 	# 0061 002F 0063
 2101	ADDRESSED TO THE SUBJECT
+	= aux soins (de)
 	x (aktieselskab - 214D)
 	# 0061 002F 0073
 2102	DOUBLE-STRUCK CAPITAL C
@@ -13617,9 +13272,12 @@
 @		Additional letterlike symbols
 2141	TURNED SANS-SERIF CAPITAL G
 	= game
+	x (lisu letter hha - A4E8)
 2142	TURNED SANS-SERIF CAPITAL L
+	x (lisu letter uh - A4F6)
 2143	REVERSED SANS-SERIF CAPITAL L
 2144	TURNED SANS-SERIF CAPITAL Y
+	x (lisu letter yha - 11FB0)
 @		Double-struck italic math symbols
 @+		These stylized mathematical symbols are used in some documents to distinguish special mathematical usages from ordinary variables.
 2145	DOUBLE-STRUCK ITALIC CAPITAL D
@@ -13856,6 +13514,7 @@
 21B0	UPWARDS ARROW WITH TIP LEFTWARDS
 21B1	UPWARDS ARROW WITH TIP RIGHTWARDS
 21B2	DOWNWARDS ARROW WITH TIP LEFTWARDS
+	x (inverse downwards arrow with tip leftwards - 1FBB4)
 21B3	DOWNWARDS ARROW WITH TIP RIGHTWARDS
 @		Keyboard symbols and circle arrows
 21B4	RIGHTWARDS ARROW WITH CORNER DOWNWARDS
@@ -14106,10 +13765,12 @@
 	= wedge, conjunction
 	x (n-ary logical and - 22C0)
 	x (up arrowhead - 2303)
+	x (and with dot - 27D1)
 2228	LOGICAL OR
 	= vee, disjunction
 	x (n-ary logical or - 22C1)
 	x (down arrowhead - 2304)
+	x (or with dot inside - 27C7)
 2229	INTERSECTION
 	= cap, hat
 	x (n-ary intersection - 22C2)
@@ -14351,6 +14012,7 @@
 	x (apl functional symbol circle star - 235F)
 229C	CIRCLED EQUALS
 	= NoDerivatives (symbol used for Creative Commons licenses)
+	x (circled cc - 1F16D)
 	~ 229C FE00 with equal sign touching the circle
 229D	CIRCLED DASH
 229E	SQUARED PLUS
@@ -14361,6 +14023,7 @@
 	x (alchemical symbol for month - 1F771)
 22A1	SQUARED DOT OPERATOR
 	x (alchemical symbol for urine - 1F755)
+	x (right open squared dot - 1FBBC)
 22A2	RIGHT TACK
 	= turnstile
 	= proves, implies, yields
@@ -15307,6 +14970,7 @@
 24C1	CIRCLED LATIN CAPITAL LETTER L
 	# <circle> 004C
 24C2	CIRCLED LATIN CAPITAL LETTER M
+	x (mask work symbol - 1F1AD)
 	# <circle> 004D
 24C3	CIRCLED LATIN CAPITAL LETTER N
 	# <circle> 004E
@@ -15421,6 +15085,7 @@
 @		Light and heavy solid lines
 2500	BOX DRAWINGS LIGHT HORIZONTAL
 	= Videotex Mosaic DG 15
+	x (box drawings light horizontal with vertical stroke - 1FBAF)
 2501	BOX DRAWINGS HEAVY HORIZONTAL
 2502	BOX DRAWINGS LIGHT VERTICAL
 	= Videotex Mosaic DG 14
@@ -15555,6 +15220,7 @@
 256F	BOX DRAWINGS LIGHT ARC UP AND LEFT
 2570	BOX DRAWINGS LIGHT ARC UP AND RIGHT
 @		Character cell diagonals
+@+		For a more extensive set of legacy terminal graphic character cell diagonals, see also 1FBA0-1FBAE in the Symbols for Legacy Computing block.
 2571	BOX DRAWINGS LIGHT DIAGONAL UPPER RIGHT TO LOWER LEFT
 	* not intended for mathematical symbol \diagup
 	x (solidus - 002F)
@@ -15610,6 +15276,7 @@
 	= speckles fill, dotted fill
 	* 50%
 	* used in mapping to cp949
+	x (inverse medium shade - 1FB90)
 2593	DARK SHADE
 	* 75%
 @		Block elements
@@ -15622,15 +15289,17 @@
 2599	QUADRANT UPPER LEFT AND LOWER LEFT AND LOWER RIGHT
 259A	QUADRANT UPPER LEFT AND LOWER RIGHT
 	x (reverse checker board - 1F67F)
+	x (checker board fill - 1FB95)
 259B	QUADRANT UPPER LEFT AND UPPER RIGHT AND LOWER LEFT
 259C	QUADRANT UPPER LEFT AND UPPER RIGHT AND LOWER RIGHT
 259D	QUADRANT UPPER RIGHT
 259E	QUADRANT UPPER RIGHT AND LOWER LEFT
 	x (checker board - 1F67E)
+	x (inverse checker board fill - 1FB96)
 259F	QUADRANT UPPER RIGHT AND LOWER LEFT AND LOWER RIGHT
 @@	25A0	Geometric Shapes	25FF
 @		Geometric shapes
-@+		Other geometric shapes complementing this set are found in the Miscellaneous Symbols and Arrows block.
+@+		Other geometric shapes complementing this set are found in the Miscellaneous Symbols and Arrows block and in the Symbols for Legacy Computing block.
 25A0	BLACK SQUARE
 	= moding mark (in ideographic text)
 	x (full block - 2588)
@@ -15651,7 +15320,9 @@
 25A5	SQUARE WITH VERTICAL FILL
 25A6	SQUARE WITH ORTHOGONAL CROSSHATCH FILL
 25A7	SQUARE WITH UPPER LEFT TO LOWER RIGHT FILL
+	x (upper left to lower right fill - 1FB98)
 25A8	SQUARE WITH UPPER RIGHT TO LOWER LEFT FILL
+	x (upper right to lower left fill - 1FB99)
 25A9	SQUARE WITH DIAGONAL CROSSHATCH FILL
 25AA	BLACK SMALL SQUARE
 	= square bullet
@@ -15727,6 +15398,7 @@
 	x (white concave-sided diamond - 27E1)
 	x (white medium diamond - 2B26)
 	x (alchemical symbol for soap - 1F754)
+	x (box drawings light diagonal diamond - 1FBAE)
 25C8	WHITE DIAMOND CONTAINING BLACK SMALL DIAMOND
 25C9	FISHEYE
 	= tainome (Japanese, a kind of bullet)
@@ -15774,9 +15446,13 @@
 	x (arc - 2312)
 25E1	LOWER HALF CIRCLE
 25E2	BLACK LOWER RIGHT TRIANGLE
+	x (lower right triangular medium shade - 1FB9E)
 25E3	BLACK LOWER LEFT TRIANGLE
+	x (lower left triangular medium shade - 1FB9F)
 25E4	BLACK UPPER LEFT TRIANGLE
+	x (upper left triangular medium shade - 1FB9C)
 25E5	BLACK UPPER RIGHT TRIANGLE
+	x (upper right triangular medium shade - 1FB9D)
 25E6	WHITE BULLET
 	x (bullet - 2022)
 	x (ring operator - 2218)
@@ -15918,6 +15594,7 @@
 261E	WHITE RIGHT POINTING INDEX
 	= fist (typographic term)
 	x (sideways white right pointing index - 1F599)
+	x (left third white right pointing index - 1FBC1)
 261F	WHITE DOWN POINTING INDEX
 	x (white down pointing left hand index - 1F597)
 	x (sideways white down pointing index - 1F59F)
@@ -15999,6 +15676,7 @@
 	x (crescent moon - 1F319)
 263F	MERCURY
 	= alchemical symbol for quicksilver
+	= intersexuality
 2640	FEMALE SIGN
 	= Venus
 	= alchemical symbol for copper
@@ -16215,7 +15893,7 @@
 	x (lightning mood - 1F5F2)
 @		Gender symbols
 26A2	DOUBLED FEMALE SIGN
-	= lesbianism
+	= female homosexuality
 	x (two women holding hands - 1F46D)
 26A3	DOUBLED MALE SIGN
 	* a glyph variant has the two circles on the same line
@@ -16223,9 +15901,9 @@
 	x (two men holding hands - 1F46C)
 26A4	INTERLOCKED FEMALE AND MALE SIGN
 	* a glyph variant has the two circles on the same line
-	= bisexuality
+	= heterosexuality
 26A5	MALE AND FEMALE SIGN
-	= transgender
+	= intersex, androgynous
 	= hermaphrodite (in entomology)
 26A6	MALE WITH STROKE SIGN
 	= transgender
@@ -16500,11 +16178,14 @@
 2713	CHECK MARK
 	x (square root - 221A)
 	x (light check mark - 1F5F8)
+	x (inverse check mark - 1FBB1)
 2714	HEAVY CHECK MARK
 2715	MULTIPLICATION X
 	x (multiplication sign - 00D7)
 	x (box drawings light diagonal cross - 2573)
+	x (thin saltire - 1F7A8)
 2716	HEAVY MULTIPLICATION X
+	x (extremely heavy saltire - 1F7AE)
 2717	BALLOT X
 	x (saltire - 2613)
 	x (ballot script x - 1F5F4)
@@ -16514,6 +16195,7 @@
 2719	OUTLINED GREEK CROSS
 271A	HEAVY GREEK CROSS
 	x (very bold greek cross - 1F7A5)
+	x (voided greek cross - 1FBBB)
 271B	OPEN CENTRE CROSS
 271C	HEAVY OPEN CENTRE CROSS
 271D	LATIN CROSS
@@ -16522,6 +16204,7 @@
 271F	OUTLINED LATIN CROSS
 2720	MALTESE CROSS
 	* historically, the Maltese cross took many forms; the shape shown in the Zapf Dingbats is similar to one known as the Cross Formée
+	x (cross patty with right crossbar - 2E50)
 	x (circled cross formee - 1F902)
 @		Stars and asterisks
 2721	STAR OF DAVID
@@ -16592,9 +16275,12 @@
 	* forms a game tally pair with 2B55
 	x (multiplication sign - 00D7)
 	x (cancellation x - 1F5D9)
+	x (heavy saltire - 1F7AC)
+	x (white heavy saltire with rounded corners - 1FBC0)
 274D	SHADOWED WHITE CIRCLE
 	x (lower right shadowed white circle - 1F53E)
 274E	NEGATIVE SQUARED CROSS MARK
+	x (negative diagonal cross - 1FBBD)
 274F	LOWER RIGHT DROP-SHADOWED WHITE SQUARE
 2750	UPPER RIGHT DROP-SHADOWED WHITE SQUARE
 2751	LOWER RIGHT SHADOWED WHITE SQUARE
@@ -16728,6 +16414,7 @@
 27A3	THREE-D BOTTOM-LIGHTED RIGHTWARDS ARROWHEAD
 27A4	BLACK RIGHTWARDS ARROWHEAD
 	x (black rightwards equilateral arrowhead - 2B9E)
+	x (arrowhead-shaped pointer - 1FBB0)
 27A5	HEAVY BLACK CURVED DOWNWARDS AND RIGHTWARDS ARROW
 	x (black curved downwards and rightwards arrow - 2BA9)
 27A6	HEAVY BLACK CURVED UPWARDS AND RIGHTWARDS ARROW
@@ -16782,8 +16469,12 @@
 @		Paired punctuation
 27C5	LEFT S-SHAPED BAG DELIMITER
 27C6	RIGHT S-SHAPED BAG DELIMITER
-@		Miscellaneous symbols
+@		Operator
 27C7	OR WITH DOT INSIDE
+	x (logical or - 2228)
+	x (multiset multiplication - 228D)
+	x (and with dot - 27D1)
+@		Miscellaneous symbols
 27C8	REVERSE SOLIDUS PRECEDING SUBSET
 27C9	SUPERSET PRECEDING SOLIDUS
 @		Vertical line operator
@@ -16822,6 +16513,7 @@
 @		Operators
 27D1	AND WITH DOT
 	x (logical and - 2227)
+	x (or with dot inside - 27C7)
 	x (intersection with dot - 2A40)
 27D2	ELEMENT OF OPENING UPWARDS
 	x (element of opening downwards - 2AD9)
@@ -17528,6 +17220,7 @@
 	x (bowtie - 22C8)
 29D2	BOWTIE WITH RIGHT HALF BLACK
 29D3	BLACK BOWTIE
+	x (left and right triangular half block - 1FB9B)
 29D4	TIMES WITH LEFT HALF BLACK
 	x (left normal factor semidirect product - 22C9)
 29D5	TIMES WITH RIGHT HALF BLACK
@@ -17537,6 +17230,7 @@
 	= white framus
 	x (hourglass - 231B)
 29D7	BLACK HOURGLASS
+	x (upper and lower triangular half block - 1FB9A)
 @		Fences
 29D8	LEFT WIGGLY FENCE
 	x (presentation form for vertical wavy low line - FE34)
@@ -18335,6 +18029,10 @@
 2B95	RIGHTWARDS BLACK ARROW
 	x (black rightwards arrow - 27A1)
 	x (leftwards black arrow - 2B05)
+@		Miscellaneous symbol
+2B97	SYMBOL FOR TYPE A ELECTRONICS
+	* for type B electronics use 3036
+	x (circled postal mark - 3036)
 @		Arrowheads
 @+		These sets of arrowheads are narrower than the dingbats set.
 2B98	THREE-D TOP-LIGHTED LEFTWARDS EQUILATERAL ARROWHEAD
@@ -18667,6 +18365,7 @@
 	x (greek capital letter heta - 0370)
 	x (turned capital f - 2132)
 	x (roman numeral reversed one hundred - 2183)
+	x (latin capital letter reversed half h - A7F5)
 2C76	LATIN SMALL LETTER HALF H
 	x (greek small letter heta - 0371)
 @		Additions for UPA
@@ -19281,11 +18980,18 @@
 2E4E	PUNCTUS ELEVATUS MARK
 	* indicates a major medial pause where the sense is complete but the meaning is not
 2E4F	CORNISH VERSE DIVIDER
+2E50	CROSS PATTY WITH RIGHT CROSSBAR
+	x (maltese cross - 2720)
+2E51	CROSS PATTY WITH LEFT CROSSBAR
+2E52	TIRONIAN SIGN CAPITAL ET
+	x (tironian sign et - 204A)
 @@	2E80	CJK Radicals Supplement	2EFF
+@+		For the characters in this block whose representative glyph takes up only a portion of the em-box, the placement relative to the em-box is either centered or respects prototypical usage. The placement of the representative glyph is for informational purposes only, and should not be considered a recommendation for implementations.
 @		CJK radicals supplement
 2E80	CJK RADICAL REPEAT
 2E81	CJK RADICAL CLIFF
 	x 5382
+	x 20086
 2E82	CJK RADICAL SECOND ONE
 	x 4E5B
 2E83	CJK RADICAL SECOND TWO
@@ -19299,9 +19005,11 @@
 	x 5182
 2E87	CJK RADICAL TABLE
 	x 51E0
+	x 20628
 2E88	CJK RADICAL KNIFE ONE
 	* form used at top
 	x 5200
+	x 2008A
 2E89	CJK RADICAL KNIFE TWO
 	* form used on right side
 	x 5202
@@ -19317,14 +19025,17 @@
 2E8D	CJK RADICAL SMALL TWO
 	* form used at top
 	x 5C0F
+	x 2D544
 2E8E	CJK RADICAL LAME ONE
 	x 5C22
+	x 5140
 2E8F	CJK RADICAL LAME TWO
 	x 5C23
 2E90	CJK RADICAL LAME THREE
 	x 5C22
 2E91	CJK RADICAL LAME FOUR
 	x 5C23
+	x 21BC2
 2E92	CJK RADICAL SNAKE
 	x 5DF3
 2E93	CJK RADICAL THREAD
@@ -19338,6 +19049,7 @@
 	x 5FC4
 2E97	CJK RADICAL HEART TWO
 	* form used at bottom
+	x 38FA
 	x 5FC3
 2E98	CJK RADICAL HAND
 	* form used on left side
@@ -19348,6 +19060,8 @@
 2E9B	CJK RADICAL CHOKE
 	x 65E1
 2E9C	CJK RADICAL SUN
+	* actually a form of the radical for hat, despite its resemblance in shape to the radical for sun
+	x 5183
 	x 65E5
 2E9D	CJK RADICAL MOON
 	x 6708
@@ -19382,19 +19096,23 @@
 2EA9	CJK RADICAL JADE
 	* form used on left side
 	x 738B
+	x 248E9
 2EAA	CJK RADICAL BOLT OF CLOTH
 	* form used on left side
 	x 758B
+	x 24D14
 2EAB	CJK RADICAL EYE
 	* form used at top
 	x (cjk radical net two - 2EB2)
 	x 76EE
+	x 7F52
 2EAC	CJK RADICAL SPIRIT ONE
 	x 793A
 2EAD	CJK RADICAL SPIRIT TWO
 	x 793B
 2EAE	CJK RADICAL BAMBOO
 	x 7AF9
+	x 25AD7
 2EAF	CJK RADICAL SILK
 	* form used on left side
 	x 7CF9
@@ -19406,9 +19124,12 @@
 2EB2	CJK RADICAL NET TWO
 	x (cjk radical eye - 2EAB)
 	x 7F52
+	x 26270
 2EB3	CJK RADICAL NET THREE
+	x 34C1
 	x 7F51
 2EB4	CJK RADICAL NET FOUR
+	x 34C1
 	x 7F51
 2EB5	CJK RADICAL MESH
 	x 2626B
@@ -19418,8 +19139,10 @@
 2EB7	CJK RADICAL RAM
 	* form used at top
 	x 7F8A
+	x 2634C
 2EB8	CJK RADICAL EWE
 	x 7F8B
+	x 2634B
 2EB9	CJK RADICAL OLD
 	x 8002
 2EBA	CJK RADICAL BRUSH ONE
@@ -19430,6 +19153,7 @@
 	x 8089
 2EBD	CJK RADICAL MORTAR
 	x 81FC
+	x 26951
 2EBE	CJK RADICAL GRASS ONE
 	x 8279
 2EBF	CJK RADICAL GRASS TWO
@@ -19460,6 +19184,7 @@
 2ECA	CJK RADICAL FOOT
 	* form used on left side
 	x 8DB3
+	x 27FB7
 2ECB	CJK RADICAL C-SIMPLIFIED CART
 	x 8F66
 2ECC	CJK RADICAL SIMPLIFIED WALK
@@ -19541,6 +19266,7 @@
 2EEE	CJK RADICAL C-SIMPLIFIED TOOTH
 	x 9F7F
 2EEF	CJK RADICAL J-SIMPLIFIED DRAGON
+	x 7ADC
 	x 9F8D
 2EF0	CJK RADICAL C-SIMPLIFIED DRAGON
 	x 9F99
@@ -19637,6 +19363,7 @@
 2F29	KANGXI RADICAL SMALL
 	# 5C0F
 2F2A	KANGXI RADICAL LAME
+	x 21BC1
 	# 5C22
 2F2B	KANGXI RADICAL CORPSE
 	# 5C38
@@ -20131,8 +19858,9 @@
 3035	VERTICAL KANA REPEAT MARK LOWER HALF
 @		Other CJK symbols
 3036	CIRCLED POSTAL MARK
-	= symbol for type b electronics
+	= symbol for type B electronics
 	* not used as a postal mark
+	x (symbol for type a electronics - 2B97)
 	# 3012 postal mark
 3037	IDEOGRAPHIC TELEGRAPH LINE FEED SEPARATOR SYMBOL
 @		Additional Suzhou numerals
@@ -20756,11 +20484,19 @@
 31B4	BOPOMOFO FINAL LETTER P
 31B5	BOPOMOFO FINAL LETTER T
 31B6	BOPOMOFO FINAL LETTER K
+	* use of 31BB is preferred
 31B7	BOPOMOFO FINAL LETTER H
 @		Extended Bopomofo for Hmu and Ge
 31B8	BOPOMOFO LETTER GH
 31B9	BOPOMOFO LETTER LH
 31BA	BOPOMOFO LETTER ZY
+@		Extended Bopomofo for Minnan and Hakka
+31BB	BOPOMOFO FINAL LETTER G
+@		Extended Bopomofo for Cantonese
+31BC	BOPOMOFO LETTER GW
+31BD	BOPOMOFO LETTER KW
+31BE	BOPOMOFO LETTER OE
+31BF	BOPOMOFO LETTER AH
 @@	31C0	CJK Strokes	31EF
 @		CJK strokes
 31C0	CJK STROKE T
@@ -22041,7 +21777,7 @@
 @		Squared Latin abbreviation
 33FF	SQUARE GAL
 	# <square> 0067 0061 006C
-@@	3400	CJK Unified Ideographs Extension A	4DB5
+@@	3400	CJK Unified Ideographs Extension A	4DBF
 @@	4DC0	Yijing Hexagram Symbols	4DFF
 @		Yijing hexagram symbols
 4DC0	HEXAGRAM FOR THE CREATIVE HEAVEN
@@ -22108,7 +21844,7 @@
 4DFD	HEXAGRAM FOR SMALL PREPONDERANCE
 4DFE	HEXAGRAM FOR AFTER COMPLETION
 4DFF	HEXAGRAM FOR BEFORE COMPLETION
-@@	4E00	CJK Unified Ideographs	9FEF
+@@	4E00	CJK Unified Ideographs	9FFC
 @@	A000	Yi Syllables	A48F
 @@+
 @		Syllables
@@ -24106,9 +23842,9 @@ A762	LATIN CAPITAL LETTER VISIGOTHIC Z
 A763	LATIN SMALL LETTER VISIGOTHIC Z
 A764	LATIN CAPITAL LETTER THORN WITH STROKE
 A765	LATIN SMALL LETTER THORN WITH STROKE
-	* Old Norse, Old English
-	* representative glyph is preferred in Old Norse text
-	* Old English fonts show a more diagonal stroke
+	* Old English, Old Norse
+	* representative glyph is preferred in Old English text
+	* Old Norse fonts show a more horizontal stroke
 A766	LATIN CAPITAL LETTER THORN WITH STROKE THROUGH DESCENDER
 A767	LATIN SMALL LETTER THORN WITH STROKE THROUGH DESCENDER
 A768	LATIN CAPITAL LETTER VEND
@@ -24285,13 +24021,27 @@ A7C5	LATIN CAPITAL LETTER S WITH HOOK
 	* lowercase is 0282
 A7C6	LATIN CAPITAL LETTER Z WITH PALATAL HOOK
 	* lowercase is 1D8E
-@		Additional letter
+@		Additional letters for Gaulish
+A7C7	LATIN CAPITAL LETTER D WITH SHORT STROKE OVERLAY
+A7C8	LATIN SMALL LETTER D WITH SHORT STROKE OVERLAY
+	= tau gallicum
+	* indicates a dental affricate
+A7C9	LATIN CAPITAL LETTER S WITH SHORT STROKE OVERLAY
+A7CA	LATIN SMALL LETTER S WITH SHORT STROKE OVERLAY
+@		Ancient Gaulish and Celtic epigraphic letters
+A7F5	LATIN CAPITAL LETTER REVERSED HALF H
+	= H dimidié
+	* appears in inscriptions from the Roman provinces of Gaul
+	x (latin capital letter half h - 2C75)
+A7F6	LATIN SMALL LETTER REVERSED HALF H
 A7F7	LATIN EPIGRAPHIC LETTER SIDEWAYS I
 	* Celtic inscriptions
 @		Additions for Extended IPA
 A7F8	MODIFIER LETTER CAPITAL H WITH STROKE
-	* faucalized
 	# <super> 0126
+@+		A typographical distinction between a capital form and a small capital form is not distinctive for this IPA usage.
+	* faucalized
+	x (latin letter small capital h - 029C)
 A7F9	MODIFIER LETTER SMALL LIGATURE OE
 	* labialized: open-rounded
 	# <super> 0153
@@ -24355,6 +24105,10 @@ A828	SYLOTI NAGRI POETRY MARK-1
 A829	SYLOTI NAGRI POETRY MARK-2
 A82A	SYLOTI NAGRI POETRY MARK-3
 A82B	SYLOTI NAGRI POETRY MARK-4
+@		Sign
+A82C	SYLOTI NAGRI SIGN ALTERNATE HASANTA
+	= killer
+	* does not form conjuncts
 @@	A830	Common Indic Number Forms	A83F
 @		Number forms
 A830	NORTH INDIC FRACTION ONE QUARTER
@@ -24877,13 +24631,13 @@ A987	JAVANESE LETTER II
 A988	JAVANESE LETTER U
 A989	JAVANESE LETTER PA CEREK
 	= vocalic r
-	* rae in Javanese
+	* rĕ in Javanese
 A98A	JAVANESE LETTER NGA LELET
 	= vocalic l
-	* lae in Javanese
+	* lĕ in Javanese
 A98B	JAVANESE LETTER NGA LELET RASWADI
 	= vocalic ll
-	* loe in Javanese
+	* leu in Javanese
 A98C	JAVANESE LETTER E
 A98D	JAVANESE LETTER AI
 A98E	JAVANESE LETTER O
@@ -24944,8 +24698,9 @@ A9B3	JAVANESE SIGN CECAK TELU
 @		Dependent vowel signs
 A9B4	JAVANESE VOWEL SIGN TARUNG
 	= aa
+	* o in Sundanese, not used alone in Javanese
 A9B5	JAVANESE VOWEL SIGN TOLONG
-	= o
+	* a glyph variant of A9B4
 A9B6	JAVANESE VOWEL SIGN WULU
 	= i
 A9B7	JAVANESE VOWEL SIGN WULU MELIK
@@ -24959,11 +24714,11 @@ A9BA	JAVANESE VOWEL SIGN TALING
 A9BB	JAVANESE VOWEL SIGN DIRGA MURE
 	= ai
 A9BC	JAVANESE VOWEL SIGN PEPET
-	= ae
+	= ĕ
 @		Dependent consonant signs
 A9BD	JAVANESE CONSONANT SIGN KERET
 	= vocalic r
-	* medial rae in Javanese
+	* medial rĕ in Javanese
 A9BE	JAVANESE CONSONANT SIGN PENGKAL
 	= medial ya
 A9BF	JAVANESE CONSONANT SIGN CAKRA
@@ -25440,6 +25195,22 @@ AB67	LATIN SMALL LETTER TS DIGRAPH WITH RETROFLEX HOOK
 	* voiceless retroflex affricate
 	x (latin small letter s with hook - 0282)
 	x (latin small letter ts digraph - 02A6)
+@		Letters for Scots dialectology
+@+		These letters are used in phonetic transcription in Scots dictionaries.
+AB68	LATIN SMALL LETTER TURNED R WITH MIDDLE TILDE
+	* velarized dento-alveolar approximant
+	x (latin small letter r with middle tilde - 1D72)
+AB69	MODIFIER LETTER SMALL TURNED W
+	* voiceless bilabial realization
+	x (combining latin small letter turned w below - 1AC0)
+	# <super> 028D
+AB6A	MODIFIER LETTER LEFT TACK
+	* fronted vocalic realization
+	x (modifier letter up tack - 02D4)
+	x (combining left tack below - 0318)
+AB6B	MODIFIER LETTER RIGHT TACK
+	* backed vocalic realization
+	x (combining right tack below - 0319)
 @@	AB70	Cherokee Supplement	ABBF
 @+		The uppercase Cherokee syllables are encoded in the Cherokee block at 13A0-13FF. Lowercase ye, yi, yo, yu, yv, and mv are encoded in that same block.
 @		Lowercase syllables
@@ -29093,6 +28864,7 @@ FFFD	REPLACEMENT CHARACTER
 	* used to replace an incoming character whose value is unknown or unrepresentable in Unicode
 	* compare the use of 001A as a control character to indicate the substitute function
 	x (uncertainty sign - 2BD1)
+	x (negative squared question mark - 1FBC4)
 @		Noncharacters
 @+		These codes are intended for process-internal uses.
 FFFE	<not a character>
@@ -29521,8 +29293,9 @@ FFFF	<not a character>
 10199	ROMAN DUPONDIUS SIGN
 1019A	ROMAN AS SIGN
 	x (apl functional symbol slash bar - 233F)
-@		Roman military symbol
+@		Other Roman epigraphic symbols
 1019B	ROMAN CENTURIAL SIGN
+1019C	ASCIA SYMBOL
 @		Greek symbol
 101A0	GREEK SYMBOL TAU RHO
 	= rho-cross, staurogram
@@ -32191,6 +31964,60 @@ FFFF	<not a character>
 10E7C	RUMI FRACTION ONE QUARTER
 10E7D	RUMI FRACTION ONE THIRD
 10E7E	RUMI FRACTION TWO THIRDS
+@@	10E80	Yezidi	10EBF
+@		Letters
+10E80	YEZIDI LETTER ELIF
+10E81	YEZIDI LETTER BE
+10E82	YEZIDI LETTER PE
+10E83	YEZIDI LETTER PHE
+10E84	YEZIDI LETTER THE
+10E85	YEZIDI LETTER SE
+10E86	YEZIDI LETTER CIM
+10E87	YEZIDI LETTER CHIM
+10E88	YEZIDI LETTER CHHIM
+10E89	YEZIDI LETTER HHA
+10E8A	YEZIDI LETTER XA
+10E8B	YEZIDI LETTER DAL
+10E8C	YEZIDI LETTER ZAL
+10E8D	YEZIDI LETTER RA
+10E8E	YEZIDI LETTER RHA
+10E8F	YEZIDI LETTER ZA
+10E90	YEZIDI LETTER JA
+10E91	YEZIDI LETTER SIN
+10E92	YEZIDI LETTER SHIN
+10E93	YEZIDI LETTER SAD
+10E94	YEZIDI LETTER DAD
+10E95	YEZIDI LETTER TA
+10E96	YEZIDI LETTER ZE
+10E97	YEZIDI LETTER EYN
+10E98	YEZIDI LETTER XHEYN
+10E99	YEZIDI LETTER FA
+10E9A	YEZIDI LETTER VA
+10E9B	YEZIDI LETTER VA ALTERNATE FORM
+10E9C	YEZIDI LETTER QAF
+10E9D	YEZIDI LETTER KAF
+10E9E	YEZIDI LETTER KHAF
+10E9F	YEZIDI LETTER GAF
+10EA0	YEZIDI LETTER LAM
+10EA1	YEZIDI LETTER MIM
+10EA2	YEZIDI LETTER NUN
+10EA3	YEZIDI LETTER UM
+10EA4	YEZIDI LETTER WAW
+10EA5	YEZIDI LETTER OW
+10EA6	YEZIDI LETTER EW
+10EA7	YEZIDI LETTER HAY
+10EA8	YEZIDI LETTER YOT
+10EA9	YEZIDI LETTER ET
+@		Combining marks
+10EAB	YEZIDI COMBINING HAMZA MARK
+	* denotes a glottal stop
+10EAC	YEZIDI COMBINING MADDA MARK
+	* denotes long /a/ at the beginning of some words
+@		Punctuation
+10EAD	YEZIDI HYPHENATION MARK
+@		Historical letters with diacritics
+10EB0	YEZIDI LETTER LAM WITH DOT ABOVE
+10EB1	YEZIDI LETTER YOT WITH CIRCUMFLEX ABOVE
 @@	10F00	Old Sogdian	10F2F
 @+		This block unifies the scripts used in the Ancient Letters and the Kultobe and Upper Indus inscriptions.
 @		Letters
@@ -32293,6 +32120,38 @@ FFFF	<not a character>
 10F57	SOGDIAN PUNCTUATION CIRCLE WITH DOT
 10F58	SOGDIAN PUNCTUATION TWO CIRCLES WITH DOTS
 10F59	SOGDIAN PUNCTUATION HALF CIRCLE WITH DOT
+@@	10FB0	Chorasmian	10FDF
+@+		This script is also known as 'Khwarezmian', from its classical Persian name xvārazm.
+@		Letters
+10FB0	CHORASMIAN LETTER ALEPH
+10FB1	CHORASMIAN LETTER SMALL ALEPH
+10FB2	CHORASMIAN LETTER BETH
+10FB3	CHORASMIAN LETTER GIMEL
+10FB4	CHORASMIAN LETTER DALETH
+10FB5	CHORASMIAN LETTER HE
+10FB6	CHORASMIAN LETTER WAW
+10FB7	CHORASMIAN LETTER CURLED WAW
+10FB8	CHORASMIAN LETTER ZAYIN
+10FB9	CHORASMIAN LETTER HETH
+10FBA	CHORASMIAN LETTER YODH
+10FBB	CHORASMIAN LETTER KAPH
+10FBC	CHORASMIAN LETTER LAMEDH
+10FBD	CHORASMIAN LETTER MEM
+10FBE	CHORASMIAN LETTER NUN
+10FBF	CHORASMIAN LETTER SAMEKH
+10FC0	CHORASMIAN LETTER AYIN
+10FC1	CHORASMIAN LETTER PE
+10FC2	CHORASMIAN LETTER RESH
+10FC3	CHORASMIAN LETTER SHIN
+10FC4	CHORASMIAN LETTER TAW
+@		Numbers
+10FC5	CHORASMIAN NUMBER ONE
+10FC6	CHORASMIAN NUMBER TWO
+10FC7	CHORASMIAN NUMBER THREE
+10FC8	CHORASMIAN NUMBER FOUR
+10FC9	CHORASMIAN NUMBER TEN
+10FCA	CHORASMIAN NUMBER TWENTY
+10FCB	CHORASMIAN NUMBER ONE HUNDRED
 @@	10FE0	Elymaic	10FFF
 @		Letters
 10FE0	ELYMAIC LETTER ALEPH
@@ -32569,108 +32428,59 @@ FFFF	<not a character>
 @@	11100	Chakma	1114F
 @		Various signs
 11100	CHAKMA SIGN CANDRABINDU
-	= caanaphudaa
 11101	CHAKMA SIGN ANUSVARA
-	= ekaphudaa
 11102	CHAKMA SIGN VISARGA
-	= dviphudaa
 @		Independent vowels
 11103	CHAKMA LETTER AA
-	= pichapujhaa aa
 11104	CHAKMA LETTER I
-	= delabhaangagaa i
 11105	CHAKMA LETTER U
-	= bacacu u
 11106	CHAKMA LETTER E
-	= lejaubaa e
 @		Consonants
 11107	CHAKMA LETTER KAA
-	= cucyaangyaa kaa
 11108	CHAKMA LETTER KHAA
-	= grajaangyaa khaa
 11109	CHAKMA LETTER GAA
-	= caandyaa gaa
 1110A	CHAKMA LETTER GHAA
-	= tinaddaalyaa ghaa
 1110B	CHAKMA LETTER NGAA
-	= cilaama ngaa
 1110C	CHAKMA LETTER CAA
-	= dvibhalyaa caa
 1110D	CHAKMA LETTER CHAA
-	= majaraa chaa
 1110E	CHAKMA LETTER JAA
-	= dvipadalaa jaa
 1110F	CHAKMA LETTER JHAA
-	= uraauraa jhaa
 11110	CHAKMA LETTER NYAA
-	= silaacyaa nyaa
 11111	CHAKMA LETTER TTAA
-	= dviyaadaat ttaa
 11112	CHAKMA LETTER TTHAA
-	= phudaadviyaat tthaa
 11113	CHAKMA LETTER DDAA
-	= aadudaangaat ddaa
 11114	CHAKMA LETTER DDHAA
-	= lejabharaat ddhaa
 11115	CHAKMA LETTER NNAA
-	= pettttuyaa nnaa
 11116	CHAKMA LETTER TAA
-	= ghangadaat taa
 11117	CHAKMA LETTER THAA
-	= jagadaat thaa
 11118	CHAKMA LETTER DAA
-	= dolaniit daa
 11119	CHAKMA LETTER DHAA
-	= talamuyaat dhaa
 1111A	CHAKMA LETTER NAA
-	= phaarabaanyaa naa
 1111B	CHAKMA LETTER PAA
-	= paalyaa paa
 1111C	CHAKMA LETTER PHAA
-	= ubaraphudaa phaa
 1111D	CHAKMA LETTER BAA
-	= ubaramuyaa baa
 1111E	CHAKMA LETTER BHAA
-	= ciraddaalyaa bhaa
 1111F	CHAKMA LETTER MAA
-	= bugatpadalaa maa
 11120	CHAKMA LETTER YYAA
-	= cimayyaa yyaa
 11121	CHAKMA LETTER YAA
-	= jilyaa yaa
 11122	CHAKMA LETTER RAA
-	= dvidaayyaa raa
 11123	CHAKMA LETTER LAA
-	= talamuyaa laa
 11124	CHAKMA LETTER WAA
-	= bajhonyaa waa
 11125	CHAKMA LETTER SAA
-	= bhudibukyaa saa
 11126	CHAKMA LETTER HAA
-	= ubaramuyaa haa
 @		Dependent vowel signs
 11127	CHAKMA VOWEL SIGN A
-	= ubaratulyaa a
 11128	CHAKMA VOWEL SIGN I
-	= bahryaa i
 11129	CHAKMA VOWEL SIGN II
-	= baaniiphadaa ii
 1112A	CHAKMA VOWEL SIGN U
-	= ekattaana u
 1112B	CHAKMA VOWEL SIGN UU
-	= dvittaana uu
 1112C	CHAKMA VOWEL SIGN E
-	= ekaara e
 1112D	CHAKMA VOWEL SIGN AI
-	= delabhaanga ai
 1112E	CHAKMA VOWEL SIGN O
-	= okaara o
 	: 11131 11127
 1112F	CHAKMA VOWEL SIGN AU
-	= aukaara au
 	: 11132 11127
 11130	CHAKMA VOWEL SIGN OI
-	= oikaara oi
 11131	CHAKMA O MARK
 11132	CHAKMA AU MARK
 @		Various signs
@@ -32694,21 +32504,17 @@ FFFF	<not a character>
 1113F	CHAKMA DIGIT NINE
 @		Punctuation
 11140	CHAKMA SECTION MARK
-	= phulacihna
 11141	CHAKMA DANDA
-	= ekacilyaa
 11142	CHAKMA DOUBLE DANDA
-	= dvicilyaa
 11143	CHAKMA QUESTION MARK
-	= pujhaar
 @		Consonant
 11144	CHAKMA LETTER LHAA
-	= fetfada lhaa
 @		Dependent vowel signs
 11145	CHAKMA VOWEL SIGN AA
-	= deildya aa
 11146	CHAKMA VOWEL SIGN EI
-	= dvi adi gadeidya ei
+@		Consonant
+11147	CHAKMA LETTER VAA
+	* used in Pali text
 @@	11150	Mahajani	1117F
 @		Vowels
 11150	MAHAJANI LETTER A
@@ -32851,6 +32657,11 @@ FFFF	<not a character>
 @		Punctuation
 111CD	SHARADA SUTRA MARK
 	* used for indicating the end of a sutra in the Bakhshali manuscript
+@		Historic vowel sign
+111CE	SHARADA VOWEL SIGN PRISHTHAMATRA E
+	x (devanagari vowel sign prishthamatra e - 094E)
+@		Sign
+111CF	SHARADA SIGN INVERTED CANDRABINDU
 @		Digits
 111D0	SHARADA DIGIT ZERO
 111D1	SHARADA DIGIT ONE
@@ -33332,6 +33143,8 @@ FFFF	<not a character>
 	= cyaa
 11459	NEWA DIGIT NINE
 	= gu
+@		Punctuation
+1145A	NEWA DOUBLE COMMA
 @		Various signs
 1145B	NEWA PLACEHOLDER MARK
 	= jaayekaa
@@ -33341,6 +33154,10 @@ FFFF	<not a character>
 	* indicates external sandhi in Sanskrit documents
 	x (bengali sandhi mark - 09FE)
 1145F	NEWA LETTER VEDIC ANUSVARA
+11460	NEWA SIGN JIHVAMULIYA
+	x (vedic sign jihvamuliya - 1CF5)
+11461	NEWA SIGN UPADHMANIYA
+	x (vedic sign upadhmaniya - 1CF6)
 @@	11480	Tirhuta	114DF
 @+		The Tirhuta script is also known by the names Mithilakshara and Maithili.
 @		Sign
@@ -33962,6 +33779,101 @@ FFFF	<not a character>
 118F2	WARANG CITI NUMBER NINETY
 @		Sign
 118FF	WARANG CITI OM
+@@	11900	Dives Akuru	1195F
+@+		This block supports both Evela Akuru and Dives Akuru.
+@		Independent vowels
+11900	DIVES AKURU LETTER A
+11901	DIVES AKURU LETTER AA
+11902	DIVES AKURU LETTER I
+11903	DIVES AKURU LETTER II
+11904	DIVES AKURU LETTER U
+11905	DIVES AKURU LETTER UU
+11906	DIVES AKURU LETTER E
+11909	DIVES AKURU LETTER O
+@		Consonants
+1190C	DIVES AKURU LETTER KA
+1190D	DIVES AKURU LETTER KHA
+1190E	DIVES AKURU LETTER GA
+1190F	DIVES AKURU LETTER GHA
+11910	DIVES AKURU LETTER NGA
+11911	DIVES AKURU LETTER CA
+11912	DIVES AKURU LETTER CHA
+11913	DIVES AKURU LETTER JA
+11915	DIVES AKURU LETTER NYA
+11916	DIVES AKURU LETTER TTA
+11918	DIVES AKURU LETTER DDA
+11919	DIVES AKURU LETTER DDHA
+1191A	DIVES AKURU LETTER NNA
+1191B	DIVES AKURU LETTER TA
+1191C	DIVES AKURU LETTER THA
+1191D	DIVES AKURU LETTER DA
+1191E	DIVES AKURU LETTER DHA
+1191F	DIVES AKURU LETTER NA
+11920	DIVES AKURU LETTER PA
+11921	DIVES AKURU LETTER PHA
+11922	DIVES AKURU LETTER BA
+11923	DIVES AKURU LETTER BHA
+11924	DIVES AKURU LETTER MA
+11925	DIVES AKURU LETTER YA
+	* also used as a vowel carrier
+11926	DIVES AKURU LETTER YYA
+11927	DIVES AKURU LETTER RA
+11928	DIVES AKURU LETTER LA
+11929	DIVES AKURU LETTER VA
+1192A	DIVES AKURU LETTER SHA
+1192B	DIVES AKURU LETTER SSA
+1192C	DIVES AKURU LETTER SA
+1192D	DIVES AKURU LETTER HA
+1192E	DIVES AKURU LETTER LLA
+1192F	DIVES AKURU LETTER ZA
+@		Dependent vowel signs
+11930	DIVES AKURU VOWEL SIGN AA
+11931	DIVES AKURU VOWEL SIGN I
+11932	DIVES AKURU VOWEL SIGN II
+11933	DIVES AKURU VOWEL SIGN U
+11934	DIVES AKURU VOWEL SIGN UU
+11935	DIVES AKURU VOWEL SIGN E
+11937	DIVES AKURU VOWEL SIGN AI
+11938	DIVES AKURU VOWEL SIGN O
+	: 11935 11930
+@		Nasalization signs
+1193B	DIVES AKURU SIGN ANUSVARA
+1193C	DIVES AKURU SIGN CANDRABINDU
+@		Signs
+1193D	DIVES AKURU SIGN HALANTA
+	= sukun
+	* a killer, silences the inherent vowel
+1193E	DIVES AKURU VIRAMA
+	* used for conjunct production
+	* also used for producing a ligature of devowelized consonant and independent vowel letter
+1193F	DIVES AKURU PREFIXED NASAL SIGN
+	* used for cluster-initial homorganic nasal
+@		Conjunct-specific letters
+11940	DIVES AKURU MEDIAL YA
+	* used for non-initial ya in conjuncts
+11941	DIVES AKURU INITIAL RA
+	= repha
+	* used for initial ra in conjuncts
+11942	DIVES AKURU MEDIAL RA
+	* used for non-initial ra in conjuncts
+@		Nukta
+11943	DIVES AKURU SIGN NUKTA
+	* modern diacritic used for extending the alphabet
+@		Punctuation
+11944	DIVES AKURU DOUBLE DANDA
+11945	DIVES AKURU GAP FILLER
+11946	DIVES AKURU END OF TEXT MARK
+@		Digits
+11950	DIVES AKURU DIGIT ZERO
+11951	DIVES AKURU DIGIT ONE
+11952	DIVES AKURU DIGIT TWO
+11953	DIVES AKURU DIGIT THREE
+11954	DIVES AKURU DIGIT FOUR
+11955	DIVES AKURU DIGIT FIVE
+11956	DIVES AKURU DIGIT SIX
+11957	DIVES AKURU DIGIT SEVEN
+11958	DIVES AKURU DIGIT EIGHT
+11959	DIVES AKURU DIGIT NINE
 @@	119A0	Nandinagari	119FF
 @		Independent vowels
 119A0	NANDINAGARI LETTER A
@@ -34705,6 +34617,12 @@ FFFF	<not a character>
 @		Punctuation
 11EF7	MAKASAR PASSIMBANG
 11EF8	MAKASAR END OF SECTION
+@@	11FB0	Lisu Supplement	11FBF
+@		Letter
+11FB0	LISU LETTER YHA
+	* used for the Naxi language
+	x (turned sans-serif capital y - 2144)
+	x (lisu letter ya - A4EC)
 @@	11FC0	Tamil Supplement	11FFF
 @		Fractions
 11FC0	TAMIL FRACTION ONE THREE-HUNDRED-AND-TWENTIETH
@@ -39643,9 +39561,18 @@ FFFF	<not a character>
 16FE3	OLD CHINESE ITERATION MARK
 	x (ideographic iteration mark - 3005)
 	x (vertical ideographic iteration mark - 303B)
+@		Small Khitan format character
+16FE4	KHITAN SMALL SCRIPT FILLER
+@		Combining diacritics for CJK ideographs
+@+		These combining marks indicate alternate readings for Han characters in the Vietnamese tradition.
+16FF0	VIETNAMESE ALTERNATE READING MARK CA
+	x 4E2A
+	x 4E87
+16FF1	VIETNAMESE ALTERNATE READING MARK NHAY
+	x 21FE8
 @@	17000	Tangut	187F7
 @@	18800	Tangut Components	18AFF
-@+		This is a superset of components used in various Tangut sources. Indexes of components (001..755) used for Tangut ideographs are shown in the Tangut block.
+@+		This is a superset of components used in various Tangut sources. Indexes of components (001..768) used for Tangut ideographs are shown in the Tangut block.
 @		One-stroke components
 18800	TANGUT COMPONENT-001
 18801	TANGUT COMPONENT-002
@@ -40415,6 +40342,526 @@ FFFF	<not a character>
 18AF1	TANGUT COMPONENT-754
 @		Sixteen-stroke component
 18AF2	TANGUT COMPONENT-755
+@		Additional components
+18AF3	TANGUT COMPONENT-756
+	* two strokes
+18AF4	TANGUT COMPONENT-757
+	* eight strokes
+18AF5	TANGUT COMPONENT-758
+	* seven strokes
+18AF6	TANGUT COMPONENT-759
+	* eight strokes
+18AF7	TANGUT COMPONENT-760
+	* six strokes
+18AF8	TANGUT COMPONENT-761
+	* seven strokes
+18AF9	TANGUT COMPONENT-762
+	* ten strokes
+18AFA	TANGUT COMPONENT-763
+	* two strokes
+18AFB	TANGUT COMPONENT-764
+	* two strokes
+18AFC	TANGUT COMPONENT-765
+	* three strokes
+18AFD	TANGUT COMPONENT-766
+	* three strokes
+18AFE	TANGUT COMPONENT-767
+	* four strokes
+18AFF	TANGUT COMPONENT-768
+	* four strokes
+@@	18B00	Khitan Small Script	18CFF
+@		Iteration mark
+18B00	KHITAN SMALL SCRIPT CHARACTER-18B00
+@		Radical-01
+18B01	KHITAN SMALL SCRIPT CHARACTER-18B01
+18B02	KHITAN SMALL SCRIPT CHARACTER-18B02
+18B03	KHITAN SMALL SCRIPT CHARACTER-18B03
+18B04	KHITAN SMALL SCRIPT CHARACTER-18B04
+18B05	KHITAN SMALL SCRIPT CHARACTER-18B05
+18B06	KHITAN SMALL SCRIPT CHARACTER-18B06
+18B07	KHITAN SMALL SCRIPT CHARACTER-18B07
+18B08	KHITAN SMALL SCRIPT CHARACTER-18B08
+18B09	KHITAN SMALL SCRIPT CHARACTER-18B09
+18B0A	KHITAN SMALL SCRIPT CHARACTER-18B0A
+18B0B	KHITAN SMALL SCRIPT CHARACTER-18B0B
+18B0C	KHITAN SMALL SCRIPT CHARACTER-18B0C
+18B0D	KHITAN SMALL SCRIPT CHARACTER-18B0D
+18B0E	KHITAN SMALL SCRIPT CHARACTER-18B0E
+18B0F	KHITAN SMALL SCRIPT CHARACTER-18B0F
+18B10	KHITAN SMALL SCRIPT CHARACTER-18B10
+18B11	KHITAN SMALL SCRIPT CHARACTER-18B11
+18B12	KHITAN SMALL SCRIPT CHARACTER-18B12
+18B13	KHITAN SMALL SCRIPT CHARACTER-18B13
+18B14	KHITAN SMALL SCRIPT CHARACTER-18B14
+18B15	KHITAN SMALL SCRIPT CHARACTER-18B15
+18B16	KHITAN SMALL SCRIPT CHARACTER-18B16
+18B17	KHITAN SMALL SCRIPT CHARACTER-18B17
+18B18	KHITAN SMALL SCRIPT CHARACTER-18B18
+18B19	KHITAN SMALL SCRIPT CHARACTER-18B19
+18B1A	KHITAN SMALL SCRIPT CHARACTER-18B1A
+18B1B	KHITAN SMALL SCRIPT CHARACTER-18B1B
+18B1C	KHITAN SMALL SCRIPT CHARACTER-18B1C
+18B1D	KHITAN SMALL SCRIPT CHARACTER-18B1D
+18B1E	KHITAN SMALL SCRIPT CHARACTER-18B1E
+18B1F	KHITAN SMALL SCRIPT CHARACTER-18B1F
+18B20	KHITAN SMALL SCRIPT CHARACTER-18B20
+18B21	KHITAN SMALL SCRIPT CHARACTER-18B21
+18B22	KHITAN SMALL SCRIPT CHARACTER-18B22
+18B23	KHITAN SMALL SCRIPT CHARACTER-18B23
+18B24	KHITAN SMALL SCRIPT CHARACTER-18B24
+18B25	KHITAN SMALL SCRIPT CHARACTER-18B25
+18B26	KHITAN SMALL SCRIPT CHARACTER-18B26
+18B27	KHITAN SMALL SCRIPT CHARACTER-18B27
+18B28	KHITAN SMALL SCRIPT CHARACTER-18B28
+18B29	KHITAN SMALL SCRIPT CHARACTER-18B29
+18B2A	KHITAN SMALL SCRIPT CHARACTER-18B2A
+18B2B	KHITAN SMALL SCRIPT CHARACTER-18B2B
+18B2C	KHITAN SMALL SCRIPT CHARACTER-18B2C
+18B2D	KHITAN SMALL SCRIPT CHARACTER-18B2D
+18B2E	KHITAN SMALL SCRIPT CHARACTER-18B2E
+18B2F	KHITAN SMALL SCRIPT CHARACTER-18B2F
+18B30	KHITAN SMALL SCRIPT CHARACTER-18B30
+18B31	KHITAN SMALL SCRIPT CHARACTER-18B31
+18B32	KHITAN SMALL SCRIPT CHARACTER-18B32
+18B33	KHITAN SMALL SCRIPT CHARACTER-18B33
+18B34	KHITAN SMALL SCRIPT CHARACTER-18B34
+18B35	KHITAN SMALL SCRIPT CHARACTER-18B35
+@		Radical-02
+18B36	KHITAN SMALL SCRIPT CHARACTER-18B36
+18B37	KHITAN SMALL SCRIPT CHARACTER-18B37
+18B38	KHITAN SMALL SCRIPT CHARACTER-18B38
+18B39	KHITAN SMALL SCRIPT CHARACTER-18B39
+18B3A	KHITAN SMALL SCRIPT CHARACTER-18B3A
+18B3B	KHITAN SMALL SCRIPT CHARACTER-18B3B
+18B3C	KHITAN SMALL SCRIPT CHARACTER-18B3C
+18B3D	KHITAN SMALL SCRIPT CHARACTER-18B3D
+18B3E	KHITAN SMALL SCRIPT CHARACTER-18B3E
+18B3F	KHITAN SMALL SCRIPT CHARACTER-18B3F
+18B40	KHITAN SMALL SCRIPT CHARACTER-18B40
+18B41	KHITAN SMALL SCRIPT CHARACTER-18B41
+18B42	KHITAN SMALL SCRIPT CHARACTER-18B42
+18B43	KHITAN SMALL SCRIPT CHARACTER-18B43
+18B44	KHITAN SMALL SCRIPT CHARACTER-18B44
+18B45	KHITAN SMALL SCRIPT CHARACTER-18B45
+18B46	KHITAN SMALL SCRIPT CHARACTER-18B46
+18B47	KHITAN SMALL SCRIPT CHARACTER-18B47
+18B48	KHITAN SMALL SCRIPT CHARACTER-18B48
+18B49	KHITAN SMALL SCRIPT CHARACTER-18B49
+18B4A	KHITAN SMALL SCRIPT CHARACTER-18B4A
+18B4B	KHITAN SMALL SCRIPT CHARACTER-18B4B
+18B4C	KHITAN SMALL SCRIPT CHARACTER-18B4C
+18B4D	KHITAN SMALL SCRIPT CHARACTER-18B4D
+18B4E	KHITAN SMALL SCRIPT CHARACTER-18B4E
+18B4F	KHITAN SMALL SCRIPT CHARACTER-18B4F
+18B50	KHITAN SMALL SCRIPT CHARACTER-18B50
+18B51	KHITAN SMALL SCRIPT CHARACTER-18B51
+18B52	KHITAN SMALL SCRIPT CHARACTER-18B52
+18B53	KHITAN SMALL SCRIPT CHARACTER-18B53
+18B54	KHITAN SMALL SCRIPT CHARACTER-18B54
+18B55	KHITAN SMALL SCRIPT CHARACTER-18B55
+18B56	KHITAN SMALL SCRIPT CHARACTER-18B56
+18B57	KHITAN SMALL SCRIPT CHARACTER-18B57
+18B58	KHITAN SMALL SCRIPT CHARACTER-18B58
+18B59	KHITAN SMALL SCRIPT CHARACTER-18B59
+18B5A	KHITAN SMALL SCRIPT CHARACTER-18B5A
+18B5B	KHITAN SMALL SCRIPT CHARACTER-18B5B
+18B5C	KHITAN SMALL SCRIPT CHARACTER-18B5C
+18B5D	KHITAN SMALL SCRIPT CHARACTER-18B5D
+18B5E	KHITAN SMALL SCRIPT CHARACTER-18B5E
+18B5F	KHITAN SMALL SCRIPT CHARACTER-18B5F
+18B60	KHITAN SMALL SCRIPT CHARACTER-18B60
+18B61	KHITAN SMALL SCRIPT CHARACTER-18B61
+18B62	KHITAN SMALL SCRIPT CHARACTER-18B62
+18B63	KHITAN SMALL SCRIPT CHARACTER-18B63
+18B64	KHITAN SMALL SCRIPT CHARACTER-18B64
+18B65	KHITAN SMALL SCRIPT CHARACTER-18B65
+18B66	KHITAN SMALL SCRIPT CHARACTER-18B66
+18B67	KHITAN SMALL SCRIPT CHARACTER-18B67
+18B68	KHITAN SMALL SCRIPT CHARACTER-18B68
+18B69	KHITAN SMALL SCRIPT CHARACTER-18B69
+@		Radical-03
+18B6A	KHITAN SMALL SCRIPT CHARACTER-18B6A
+18B6B	KHITAN SMALL SCRIPT CHARACTER-18B6B
+18B6C	KHITAN SMALL SCRIPT CHARACTER-18B6C
+18B6D	KHITAN SMALL SCRIPT CHARACTER-18B6D
+18B6E	KHITAN SMALL SCRIPT CHARACTER-18B6E
+18B6F	KHITAN SMALL SCRIPT CHARACTER-18B6F
+18B70	KHITAN SMALL SCRIPT CHARACTER-18B70
+18B71	KHITAN SMALL SCRIPT CHARACTER-18B71
+18B72	KHITAN SMALL SCRIPT CHARACTER-18B72
+18B73	KHITAN SMALL SCRIPT CHARACTER-18B73
+18B74	KHITAN SMALL SCRIPT CHARACTER-18B74
+18B75	KHITAN SMALL SCRIPT CHARACTER-18B75
+18B76	KHITAN SMALL SCRIPT CHARACTER-18B76
+18B77	KHITAN SMALL SCRIPT CHARACTER-18B77
+18B78	KHITAN SMALL SCRIPT CHARACTER-18B78
+18B79	KHITAN SMALL SCRIPT CHARACTER-18B79
+18B7A	KHITAN SMALL SCRIPT CHARACTER-18B7A
+18B7B	KHITAN SMALL SCRIPT CHARACTER-18B7B
+18B7C	KHITAN SMALL SCRIPT CHARACTER-18B7C
+18B7D	KHITAN SMALL SCRIPT CHARACTER-18B7D
+18B7E	KHITAN SMALL SCRIPT CHARACTER-18B7E
+18B7F	KHITAN SMALL SCRIPT CHARACTER-18B7F
+18B80	KHITAN SMALL SCRIPT CHARACTER-18B80
+18B81	KHITAN SMALL SCRIPT CHARACTER-18B81
+18B82	KHITAN SMALL SCRIPT CHARACTER-18B82
+18B83	KHITAN SMALL SCRIPT CHARACTER-18B83
+18B84	KHITAN SMALL SCRIPT CHARACTER-18B84
+18B85	KHITAN SMALL SCRIPT CHARACTER-18B85
+18B86	KHITAN SMALL SCRIPT CHARACTER-18B86
+18B87	KHITAN SMALL SCRIPT CHARACTER-18B87
+18B88	KHITAN SMALL SCRIPT CHARACTER-18B88
+18B89	KHITAN SMALL SCRIPT CHARACTER-18B89
+18B8A	KHITAN SMALL SCRIPT CHARACTER-18B8A
+18B8B	KHITAN SMALL SCRIPT CHARACTER-18B8B
+18B8C	KHITAN SMALL SCRIPT CHARACTER-18B8C
+18B8D	KHITAN SMALL SCRIPT CHARACTER-18B8D
+18B8E	KHITAN SMALL SCRIPT CHARACTER-18B8E
+18B8F	KHITAN SMALL SCRIPT CHARACTER-18B8F
+18B90	KHITAN SMALL SCRIPT CHARACTER-18B90
+18B91	KHITAN SMALL SCRIPT CHARACTER-18B91
+18B92	KHITAN SMALL SCRIPT CHARACTER-18B92
+18B93	KHITAN SMALL SCRIPT CHARACTER-18B93
+@		Radical-04
+18B94	KHITAN SMALL SCRIPT CHARACTER-18B94
+18B95	KHITAN SMALL SCRIPT CHARACTER-18B95
+18B96	KHITAN SMALL SCRIPT CHARACTER-18B96
+18B97	KHITAN SMALL SCRIPT CHARACTER-18B97
+18B98	KHITAN SMALL SCRIPT CHARACTER-18B98
+18B99	KHITAN SMALL SCRIPT CHARACTER-18B99
+18B9A	KHITAN SMALL SCRIPT CHARACTER-18B9A
+18B9B	KHITAN SMALL SCRIPT CHARACTER-18B9B
+18B9C	KHITAN SMALL SCRIPT CHARACTER-18B9C
+18B9D	KHITAN SMALL SCRIPT CHARACTER-18B9D
+18B9E	KHITAN SMALL SCRIPT CHARACTER-18B9E
+18B9F	KHITAN SMALL SCRIPT CHARACTER-18B9F
+18BA0	KHITAN SMALL SCRIPT CHARACTER-18BA0
+18BA1	KHITAN SMALL SCRIPT CHARACTER-18BA1
+18BA2	KHITAN SMALL SCRIPT CHARACTER-18BA2
+18BA3	KHITAN SMALL SCRIPT CHARACTER-18BA3
+18BA4	KHITAN SMALL SCRIPT CHARACTER-18BA4
+18BA5	KHITAN SMALL SCRIPT CHARACTER-18BA5
+18BA6	KHITAN SMALL SCRIPT CHARACTER-18BA6
+18BA7	KHITAN SMALL SCRIPT CHARACTER-18BA7
+18BA8	KHITAN SMALL SCRIPT CHARACTER-18BA8
+18BA9	KHITAN SMALL SCRIPT CHARACTER-18BA9
+18BAA	KHITAN SMALL SCRIPT CHARACTER-18BAA
+18BAB	KHITAN SMALL SCRIPT CHARACTER-18BAB
+18BAC	KHITAN SMALL SCRIPT CHARACTER-18BAC
+@		Radical-05
+18BAD	KHITAN SMALL SCRIPT CHARACTER-18BAD
+18BAE	KHITAN SMALL SCRIPT CHARACTER-18BAE
+18BAF	KHITAN SMALL SCRIPT CHARACTER-18BAF
+18BB0	KHITAN SMALL SCRIPT CHARACTER-18BB0
+18BB1	KHITAN SMALL SCRIPT CHARACTER-18BB1
+18BB2	KHITAN SMALL SCRIPT CHARACTER-18BB2
+18BB3	KHITAN SMALL SCRIPT CHARACTER-18BB3
+18BB4	KHITAN SMALL SCRIPT CHARACTER-18BB4
+18BB5	KHITAN SMALL SCRIPT CHARACTER-18BB5
+18BB6	KHITAN SMALL SCRIPT CHARACTER-18BB6
+18BB7	KHITAN SMALL SCRIPT CHARACTER-18BB7
+18BB8	KHITAN SMALL SCRIPT CHARACTER-18BB8
+18BB9	KHITAN SMALL SCRIPT CHARACTER-18BB9
+18BBA	KHITAN SMALL SCRIPT CHARACTER-18BBA
+18BBB	KHITAN SMALL SCRIPT CHARACTER-18BBB
+18BBC	KHITAN SMALL SCRIPT CHARACTER-18BBC
+18BBD	KHITAN SMALL SCRIPT CHARACTER-18BBD
+18BBE	KHITAN SMALL SCRIPT CHARACTER-18BBE
+18BBF	KHITAN SMALL SCRIPT CHARACTER-18BBF
+18BC0	KHITAN SMALL SCRIPT CHARACTER-18BC0
+18BC1	KHITAN SMALL SCRIPT CHARACTER-18BC1
+18BC2	KHITAN SMALL SCRIPT CHARACTER-18BC2
+18BC3	KHITAN SMALL SCRIPT CHARACTER-18BC3
+18BC4	KHITAN SMALL SCRIPT CHARACTER-18BC4
+18BC5	KHITAN SMALL SCRIPT CHARACTER-18BC5
+18BC6	KHITAN SMALL SCRIPT CHARACTER-18BC6
+18BC7	KHITAN SMALL SCRIPT CHARACTER-18BC7
+18BC8	KHITAN SMALL SCRIPT CHARACTER-18BC8
+18BC9	KHITAN SMALL SCRIPT CHARACTER-18BC9
+18BCA	KHITAN SMALL SCRIPT CHARACTER-18BCA
+18BCB	KHITAN SMALL SCRIPT CHARACTER-18BCB
+18BCC	KHITAN SMALL SCRIPT CHARACTER-18BCC
+18BCD	KHITAN SMALL SCRIPT CHARACTER-18BCD
+18BCE	KHITAN SMALL SCRIPT CHARACTER-18BCE
+18BCF	KHITAN SMALL SCRIPT CHARACTER-18BCF
+18BD0	KHITAN SMALL SCRIPT CHARACTER-18BD0
+18BD1	KHITAN SMALL SCRIPT CHARACTER-18BD1
+@		Radical-06
+18BD2	KHITAN SMALL SCRIPT CHARACTER-18BD2
+18BD3	KHITAN SMALL SCRIPT CHARACTER-18BD3
+18BD4	KHITAN SMALL SCRIPT CHARACTER-18BD4
+18BD5	KHITAN SMALL SCRIPT CHARACTER-18BD5
+18BD6	KHITAN SMALL SCRIPT CHARACTER-18BD6
+18BD7	KHITAN SMALL SCRIPT CHARACTER-18BD7
+18BD8	KHITAN SMALL SCRIPT CHARACTER-18BD8
+18BD9	KHITAN SMALL SCRIPT CHARACTER-18BD9
+18BDA	KHITAN SMALL SCRIPT CHARACTER-18BDA
+18BDB	KHITAN SMALL SCRIPT CHARACTER-18BDB
+18BDC	KHITAN SMALL SCRIPT CHARACTER-18BDC
+18BDD	KHITAN SMALL SCRIPT CHARACTER-18BDD
+18BDE	KHITAN SMALL SCRIPT CHARACTER-18BDE
+18BDF	KHITAN SMALL SCRIPT CHARACTER-18BDF
+18BE0	KHITAN SMALL SCRIPT CHARACTER-18BE0
+18BE1	KHITAN SMALL SCRIPT CHARACTER-18BE1
+18BE2	KHITAN SMALL SCRIPT CHARACTER-18BE2
+18BE3	KHITAN SMALL SCRIPT CHARACTER-18BE3
+18BE4	KHITAN SMALL SCRIPT CHARACTER-18BE4
+18BE5	KHITAN SMALL SCRIPT CHARACTER-18BE5
+18BE6	KHITAN SMALL SCRIPT CHARACTER-18BE6
+18BE7	KHITAN SMALL SCRIPT CHARACTER-18BE7
+18BE8	KHITAN SMALL SCRIPT CHARACTER-18BE8
+18BE9	KHITAN SMALL SCRIPT CHARACTER-18BE9
+18BEA	KHITAN SMALL SCRIPT CHARACTER-18BEA
+18BEB	KHITAN SMALL SCRIPT CHARACTER-18BEB
+18BEC	KHITAN SMALL SCRIPT CHARACTER-18BEC
+18BED	KHITAN SMALL SCRIPT CHARACTER-18BED
+18BEE	KHITAN SMALL SCRIPT CHARACTER-18BEE
+18BEF	KHITAN SMALL SCRIPT CHARACTER-18BEF
+18BF0	KHITAN SMALL SCRIPT CHARACTER-18BF0
+18BF1	KHITAN SMALL SCRIPT CHARACTER-18BF1
+18BF2	KHITAN SMALL SCRIPT CHARACTER-18BF2
+18BF3	KHITAN SMALL SCRIPT CHARACTER-18BF3
+18BF4	KHITAN SMALL SCRIPT CHARACTER-18BF4
+18BF5	KHITAN SMALL SCRIPT CHARACTER-18BF5
+18BF6	KHITAN SMALL SCRIPT CHARACTER-18BF6
+18BF7	KHITAN SMALL SCRIPT CHARACTER-18BF7
+18BF8	KHITAN SMALL SCRIPT CHARACTER-18BF8
+18BF9	KHITAN SMALL SCRIPT CHARACTER-18BF9
+18BFA	KHITAN SMALL SCRIPT CHARACTER-18BFA
+18BFB	KHITAN SMALL SCRIPT CHARACTER-18BFB
+18BFC	KHITAN SMALL SCRIPT CHARACTER-18BFC
+18BFD	KHITAN SMALL SCRIPT CHARACTER-18BFD
+18BFE	KHITAN SMALL SCRIPT CHARACTER-18BFE
+18BFF	KHITAN SMALL SCRIPT CHARACTER-18BFF
+18C00	KHITAN SMALL SCRIPT CHARACTER-18C00
+@		Radical-07
+18C01	KHITAN SMALL SCRIPT CHARACTER-18C01
+18C02	KHITAN SMALL SCRIPT CHARACTER-18C02
+18C03	KHITAN SMALL SCRIPT CHARACTER-18C03
+18C04	KHITAN SMALL SCRIPT CHARACTER-18C04
+18C05	KHITAN SMALL SCRIPT CHARACTER-18C05
+18C06	KHITAN SMALL SCRIPT CHARACTER-18C06
+18C07	KHITAN SMALL SCRIPT CHARACTER-18C07
+18C08	KHITAN SMALL SCRIPT CHARACTER-18C08
+18C09	KHITAN SMALL SCRIPT CHARACTER-18C09
+18C0A	KHITAN SMALL SCRIPT CHARACTER-18C0A
+18C0B	KHITAN SMALL SCRIPT CHARACTER-18C0B
+18C0C	KHITAN SMALL SCRIPT CHARACTER-18C0C
+18C0D	KHITAN SMALL SCRIPT CHARACTER-18C0D
+18C0E	KHITAN SMALL SCRIPT CHARACTER-18C0E
+18C0F	KHITAN SMALL SCRIPT CHARACTER-18C0F
+18C10	KHITAN SMALL SCRIPT CHARACTER-18C10
+18C11	KHITAN SMALL SCRIPT CHARACTER-18C11
+18C12	KHITAN SMALL SCRIPT CHARACTER-18C12
+@		Radical-08
+18C13	KHITAN SMALL SCRIPT CHARACTER-18C13
+18C14	KHITAN SMALL SCRIPT CHARACTER-18C14
+18C15	KHITAN SMALL SCRIPT CHARACTER-18C15
+18C16	KHITAN SMALL SCRIPT CHARACTER-18C16
+18C17	KHITAN SMALL SCRIPT CHARACTER-18C17
+18C18	KHITAN SMALL SCRIPT CHARACTER-18C18
+18C19	KHITAN SMALL SCRIPT CHARACTER-18C19
+18C1A	KHITAN SMALL SCRIPT CHARACTER-18C1A
+18C1B	KHITAN SMALL SCRIPT CHARACTER-18C1B
+18C1C	KHITAN SMALL SCRIPT CHARACTER-18C1C
+18C1D	KHITAN SMALL SCRIPT CHARACTER-18C1D
+18C1E	KHITAN SMALL SCRIPT CHARACTER-18C1E
+18C1F	KHITAN SMALL SCRIPT CHARACTER-18C1F
+18C20	KHITAN SMALL SCRIPT CHARACTER-18C20
+18C21	KHITAN SMALL SCRIPT CHARACTER-18C21
+18C22	KHITAN SMALL SCRIPT CHARACTER-18C22
+18C23	KHITAN SMALL SCRIPT CHARACTER-18C23
+18C24	KHITAN SMALL SCRIPT CHARACTER-18C24
+18C25	KHITAN SMALL SCRIPT CHARACTER-18C25
+18C26	KHITAN SMALL SCRIPT CHARACTER-18C26
+18C27	KHITAN SMALL SCRIPT CHARACTER-18C27
+@		Radical-09
+18C28	KHITAN SMALL SCRIPT CHARACTER-18C28
+18C29	KHITAN SMALL SCRIPT CHARACTER-18C29
+18C2A	KHITAN SMALL SCRIPT CHARACTER-18C2A
+18C2B	KHITAN SMALL SCRIPT CHARACTER-18C2B
+18C2C	KHITAN SMALL SCRIPT CHARACTER-18C2C
+18C2D	KHITAN SMALL SCRIPT CHARACTER-18C2D
+18C2E	KHITAN SMALL SCRIPT CHARACTER-18C2E
+@		Radical-10
+18C2F	KHITAN SMALL SCRIPT CHARACTER-18C2F
+18C30	KHITAN SMALL SCRIPT CHARACTER-18C30
+18C31	KHITAN SMALL SCRIPT CHARACTER-18C31
+18C32	KHITAN SMALL SCRIPT CHARACTER-18C32
+18C33	KHITAN SMALL SCRIPT CHARACTER-18C33
+18C34	KHITAN SMALL SCRIPT CHARACTER-18C34
+18C35	KHITAN SMALL SCRIPT CHARACTER-18C35
+18C36	KHITAN SMALL SCRIPT CHARACTER-18C36
+@		Radical-11
+18C37	KHITAN SMALL SCRIPT CHARACTER-18C37
+18C38	KHITAN SMALL SCRIPT CHARACTER-18C38
+18C39	KHITAN SMALL SCRIPT CHARACTER-18C39
+18C3A	KHITAN SMALL SCRIPT CHARACTER-18C3A
+18C3B	KHITAN SMALL SCRIPT CHARACTER-18C3B
+18C3C	KHITAN SMALL SCRIPT CHARACTER-18C3C
+18C3D	KHITAN SMALL SCRIPT CHARACTER-18C3D
+18C3E	KHITAN SMALL SCRIPT CHARACTER-18C3E
+18C3F	KHITAN SMALL SCRIPT CHARACTER-18C3F
+18C40	KHITAN SMALL SCRIPT CHARACTER-18C40
+18C41	KHITAN SMALL SCRIPT CHARACTER-18C41
+18C42	KHITAN SMALL SCRIPT CHARACTER-18C42
+18C43	KHITAN SMALL SCRIPT CHARACTER-18C43
+18C44	KHITAN SMALL SCRIPT CHARACTER-18C44
+18C45	KHITAN SMALL SCRIPT CHARACTER-18C45
+18C46	KHITAN SMALL SCRIPT CHARACTER-18C46
+18C47	KHITAN SMALL SCRIPT CHARACTER-18C47
+18C48	KHITAN SMALL SCRIPT CHARACTER-18C48
+18C49	KHITAN SMALL SCRIPT CHARACTER-18C49
+18C4A	KHITAN SMALL SCRIPT CHARACTER-18C4A
+18C4B	KHITAN SMALL SCRIPT CHARACTER-18C4B
+@		Radical-12
+18C4C	KHITAN SMALL SCRIPT CHARACTER-18C4C
+18C4D	KHITAN SMALL SCRIPT CHARACTER-18C4D
+18C4E	KHITAN SMALL SCRIPT CHARACTER-18C4E
+18C4F	KHITAN SMALL SCRIPT CHARACTER-18C4F
+18C50	KHITAN SMALL SCRIPT CHARACTER-18C50
+18C51	KHITAN SMALL SCRIPT CHARACTER-18C51
+@		Radical-13
+18C52	KHITAN SMALL SCRIPT CHARACTER-18C52
+18C53	KHITAN SMALL SCRIPT CHARACTER-18C53
+18C54	KHITAN SMALL SCRIPT CHARACTER-18C54
+18C55	KHITAN SMALL SCRIPT CHARACTER-18C55
+18C56	KHITAN SMALL SCRIPT CHARACTER-18C56
+18C57	KHITAN SMALL SCRIPT CHARACTER-18C57
+18C58	KHITAN SMALL SCRIPT CHARACTER-18C58
+18C59	KHITAN SMALL SCRIPT CHARACTER-18C59
+18C5A	KHITAN SMALL SCRIPT CHARACTER-18C5A
+18C5B	KHITAN SMALL SCRIPT CHARACTER-18C5B
+18C5C	KHITAN SMALL SCRIPT CHARACTER-18C5C
+18C5D	KHITAN SMALL SCRIPT CHARACTER-18C5D
+18C5E	KHITAN SMALL SCRIPT CHARACTER-18C5E
+18C5F	KHITAN SMALL SCRIPT CHARACTER-18C5F
+18C60	KHITAN SMALL SCRIPT CHARACTER-18C60
+18C61	KHITAN SMALL SCRIPT CHARACTER-18C61
+18C62	KHITAN SMALL SCRIPT CHARACTER-18C62
+18C63	KHITAN SMALL SCRIPT CHARACTER-18C63
+@		Radical-14
+18C64	KHITAN SMALL SCRIPT CHARACTER-18C64
+18C65	KHITAN SMALL SCRIPT CHARACTER-18C65
+18C66	KHITAN SMALL SCRIPT CHARACTER-18C66
+18C67	KHITAN SMALL SCRIPT CHARACTER-18C67
+18C68	KHITAN SMALL SCRIPT CHARACTER-18C68
+18C69	KHITAN SMALL SCRIPT CHARACTER-18C69
+18C6A	KHITAN SMALL SCRIPT CHARACTER-18C6A
+18C6B	KHITAN SMALL SCRIPT CHARACTER-18C6B
+18C6C	KHITAN SMALL SCRIPT CHARACTER-18C6C
+18C6D	KHITAN SMALL SCRIPT CHARACTER-18C6D
+18C6E	KHITAN SMALL SCRIPT CHARACTER-18C6E
+18C6F	KHITAN SMALL SCRIPT CHARACTER-18C6F
+18C70	KHITAN SMALL SCRIPT CHARACTER-18C70
+18C71	KHITAN SMALL SCRIPT CHARACTER-18C71
+18C72	KHITAN SMALL SCRIPT CHARACTER-18C72
+18C73	KHITAN SMALL SCRIPT CHARACTER-18C73
+18C74	KHITAN SMALL SCRIPT CHARACTER-18C74
+18C75	KHITAN SMALL SCRIPT CHARACTER-18C75
+18C76	KHITAN SMALL SCRIPT CHARACTER-18C76
+18C77	KHITAN SMALL SCRIPT CHARACTER-18C77
+18C78	KHITAN SMALL SCRIPT CHARACTER-18C78
+18C79	KHITAN SMALL SCRIPT CHARACTER-18C79
+18C7A	KHITAN SMALL SCRIPT CHARACTER-18C7A
+18C7B	KHITAN SMALL SCRIPT CHARACTER-18C7B
+18C7C	KHITAN SMALL SCRIPT CHARACTER-18C7C
+18C7D	KHITAN SMALL SCRIPT CHARACTER-18C7D
+18C7E	KHITAN SMALL SCRIPT CHARACTER-18C7E
+@		Radical-15
+18C7F	KHITAN SMALL SCRIPT CHARACTER-18C7F
+18C80	KHITAN SMALL SCRIPT CHARACTER-18C80
+18C81	KHITAN SMALL SCRIPT CHARACTER-18C81
+18C82	KHITAN SMALL SCRIPT CHARACTER-18C82
+18C83	KHITAN SMALL SCRIPT CHARACTER-18C83
+18C84	KHITAN SMALL SCRIPT CHARACTER-18C84
+18C85	KHITAN SMALL SCRIPT CHARACTER-18C85
+18C86	KHITAN SMALL SCRIPT CHARACTER-18C86
+18C87	KHITAN SMALL SCRIPT CHARACTER-18C87
+18C88	KHITAN SMALL SCRIPT CHARACTER-18C88
+18C89	KHITAN SMALL SCRIPT CHARACTER-18C89
+18C8A	KHITAN SMALL SCRIPT CHARACTER-18C8A
+18C8B	KHITAN SMALL SCRIPT CHARACTER-18C8B
+@		Radical-16
+18C8C	KHITAN SMALL SCRIPT CHARACTER-18C8C
+18C8D	KHITAN SMALL SCRIPT CHARACTER-18C8D
+18C8E	KHITAN SMALL SCRIPT CHARACTER-18C8E
+18C8F	KHITAN SMALL SCRIPT CHARACTER-18C8F
+18C90	KHITAN SMALL SCRIPT CHARACTER-18C90
+18C91	KHITAN SMALL SCRIPT CHARACTER-18C91
+18C92	KHITAN SMALL SCRIPT CHARACTER-18C92
+18C93	KHITAN SMALL SCRIPT CHARACTER-18C93
+18C94	KHITAN SMALL SCRIPT CHARACTER-18C94
+@		Radical-17
+18C95	KHITAN SMALL SCRIPT CHARACTER-18C95
+18C96	KHITAN SMALL SCRIPT CHARACTER-18C96
+18C97	KHITAN SMALL SCRIPT CHARACTER-18C97
+18C98	KHITAN SMALL SCRIPT CHARACTER-18C98
+18C99	KHITAN SMALL SCRIPT CHARACTER-18C99
+18C9A	KHITAN SMALL SCRIPT CHARACTER-18C9A
+18C9B	KHITAN SMALL SCRIPT CHARACTER-18C9B
+18C9C	KHITAN SMALL SCRIPT CHARACTER-18C9C
+18C9D	KHITAN SMALL SCRIPT CHARACTER-18C9D
+18C9E	KHITAN SMALL SCRIPT CHARACTER-18C9E
+18C9F	KHITAN SMALL SCRIPT CHARACTER-18C9F
+18CA0	KHITAN SMALL SCRIPT CHARACTER-18CA0
+18CA1	KHITAN SMALL SCRIPT CHARACTER-18CA1
+18CA2	KHITAN SMALL SCRIPT CHARACTER-18CA2
+18CA3	KHITAN SMALL SCRIPT CHARACTER-18CA3
+18CA4	KHITAN SMALL SCRIPT CHARACTER-18CA4
+18CA5	KHITAN SMALL SCRIPT CHARACTER-18CA5
+18CA6	KHITAN SMALL SCRIPT CHARACTER-18CA6
+18CA7	KHITAN SMALL SCRIPT CHARACTER-18CA7
+18CA8	KHITAN SMALL SCRIPT CHARACTER-18CA8
+18CA9	KHITAN SMALL SCRIPT CHARACTER-18CA9
+18CAA	KHITAN SMALL SCRIPT CHARACTER-18CAA
+18CAB	KHITAN SMALL SCRIPT CHARACTER-18CAB
+18CAC	KHITAN SMALL SCRIPT CHARACTER-18CAC
+18CAD	KHITAN SMALL SCRIPT CHARACTER-18CAD
+18CAE	KHITAN SMALL SCRIPT CHARACTER-18CAE
+18CAF	KHITAN SMALL SCRIPT CHARACTER-18CAF
+18CB0	KHITAN SMALL SCRIPT CHARACTER-18CB0
+18CB1	KHITAN SMALL SCRIPT CHARACTER-18CB1
+18CB2	KHITAN SMALL SCRIPT CHARACTER-18CB2
+18CB3	KHITAN SMALL SCRIPT CHARACTER-18CB3
+18CB4	KHITAN SMALL SCRIPT CHARACTER-18CB4
+18CB5	KHITAN SMALL SCRIPT CHARACTER-18CB5
+18CB6	KHITAN SMALL SCRIPT CHARACTER-18CB6
+18CB7	KHITAN SMALL SCRIPT CHARACTER-18CB7
+18CB8	KHITAN SMALL SCRIPT CHARACTER-18CB8
+18CB9	KHITAN SMALL SCRIPT CHARACTER-18CB9
+18CBA	KHITAN SMALL SCRIPT CHARACTER-18CBA
+18CBB	KHITAN SMALL SCRIPT CHARACTER-18CBB
+18CBC	KHITAN SMALL SCRIPT CHARACTER-18CBC
+18CBD	KHITAN SMALL SCRIPT CHARACTER-18CBD
+18CBE	KHITAN SMALL SCRIPT CHARACTER-18CBE
+18CBF	KHITAN SMALL SCRIPT CHARACTER-18CBF
+@		Radical-18
+18CC0	KHITAN SMALL SCRIPT CHARACTER-18CC0
+18CC1	KHITAN SMALL SCRIPT CHARACTER-18CC1
+18CC2	KHITAN SMALL SCRIPT CHARACTER-18CC2
+18CC3	KHITAN SMALL SCRIPT CHARACTER-18CC3
+18CC4	KHITAN SMALL SCRIPT CHARACTER-18CC4
+18CC5	KHITAN SMALL SCRIPT CHARACTER-18CC5
+18CC6	KHITAN SMALL SCRIPT CHARACTER-18CC6
+18CC7	KHITAN SMALL SCRIPT CHARACTER-18CC7
+18CC8	KHITAN SMALL SCRIPT CHARACTER-18CC8
+18CC9	KHITAN SMALL SCRIPT CHARACTER-18CC9
+18CCA	KHITAN SMALL SCRIPT CHARACTER-18CCA
+18CCB	KHITAN SMALL SCRIPT CHARACTER-18CCB
+@		Radical-19
+18CCC	KHITAN SMALL SCRIPT CHARACTER-18CCC
+18CCD	KHITAN SMALL SCRIPT CHARACTER-18CCD
+18CCE	KHITAN SMALL SCRIPT CHARACTER-18CCE
+18CCF	KHITAN SMALL SCRIPT CHARACTER-18CCF
+18CD0	KHITAN SMALL SCRIPT CHARACTER-18CD0
+18CD1	KHITAN SMALL SCRIPT CHARACTER-18CD1
+18CD2	KHITAN SMALL SCRIPT CHARACTER-18CD2
+@		Radical-20
+18CD3	KHITAN SMALL SCRIPT CHARACTER-18CD3
+18CD4	KHITAN SMALL SCRIPT CHARACTER-18CD4
+18CD5	KHITAN SMALL SCRIPT CHARACTER-18CD5
+@@	18D00	Tangut Supplement	18D08
 @@	1B000	Kana Supplement	1B0FF
 @		Historic Katakana
 1B000	KATAKANA LETTER ARCHAIC E
@@ -41550,7 +41997,7 @@ FFFF	<not a character>
 	* Chinook ng
 	* Romanian sign nici
 1BC23	DUPLOYAN LETTER J WITH DOT
-	* Chinook ch 
+	* Chinook ch
 	* Romanian ce, ci
 	* Sloan zh
 	* Chinook, Perrault j
@@ -47061,6 +47508,14 @@ FFFF	<not a character>
 @+		These digits complement the sans-serif digit sets in the Dingbat block ranges 2780-2789 and 278A-2793.
 1F10B	DINGBAT CIRCLED SANS-SERIF DIGIT ZERO
 1F10C	DINGBAT NEGATIVE CIRCLED SANS-SERIF DIGIT ZERO
+@		Creative Commons symbols
+@+		Part of a Creative Commons symbol set also including 229C, 1F16D, 1F16E, and 1F16F.
+1F10D	CIRCLED ZERO WITH SLASH
+	= no rights reserved
+1F10E	CIRCLED ANTICLOCKWISE ARROW
+	= share alike
+1F10F	CIRCLED DOLLAR SIGN WITH OVERLAID BACKSLASH
+	= non commercial
 @		Parenthesized Latin letters
 @+		This set provides uppercase versions of the set starting at 249C. Parenthesized Latin letters do not have case mappings.
 1F110	PARENTHESIZED LATIN CAPITAL LETTER A
@@ -47278,6 +47733,14 @@ FFFF	<not a character>
 	* used primarily in Spanish and Portuguese speaking communities to indicate a registered trademark
 	x (registered sign - 00AE)
 	# <super> 004D 0052
+@		Creative Commons symbols
+1F16D	CIRCLED CC
+	= Creative Commons license
+	x (circled equals - 229C)
+1F16E	CIRCLED C WITH OVERLAID BACKSLASH
+	= public domain
+1F16F	CIRCLED HUMAN FIGURE
+	= attribution, credit
 @		White on black squared Latin letters
 @+		The square edges may be slightly rounded.
 1F170	NEGATIVE SQUARED LATIN CAPITAL LETTER A
@@ -47382,6 +47845,11 @@ FFFF	<not a character>
 	= ultra-high definition
 1F1AC	SQUARED VOD
 	= video on demand
+@		Miscellaneous symbol
+1F1AD	MASK WORK SYMBOL
+	* indicates intellectual property protection for integrated circuit layouts
+	x (copyright sign - 00A9)
+	x (circled latin capital letter m - 24C2)
 @		Regional indicator symbols
 @+		These characters can be used in pairs to represent regional codes. In some emoji implementations, certain pairs may be recognized and displayed by alternate means; for instance, an implementation might recognize F + R and display this combination with a symbol representing the flag of France.
 1F1E6	REGIONAL INDICATOR SYMBOL LETTER A
@@ -47973,6 +48441,7 @@ FFFF	<not a character>
 1F3C2	SNOWBOARDER
 1F3C3	RUNNER
 	= running, marathon, track and fields
+	x (left half running man - 1FBB2)
 1F3C4	SURFER
 	= surfing
 1F3C5	SPORTS MEDAL
@@ -48898,6 +49367,7 @@ FFFF	<not a character>
 1F5C0	FOLDER
 	= directory
 	x (file folder - 1F4C1)
+	x (left half folder - 1FBB9)
 1F5C1	OPEN FOLDER
 	x (open file folder - 1F4C2)
 1F5C2	CARD INDEX DIVIDERS
@@ -49291,9 +49761,11 @@ FFFF	<not a character>
 1F6B9	MENS SYMBOL
 	= man symbol
 	= men's restroom
+	x (stick figure - 1FBC5)
 1F6BA	WOMENS SYMBOL
 	= woman symbol
 	= women's restroom
+	x (stick figure with dress - 1FBC9)
 1F6BB	RESTROOM
 	= man and woman symbol with divider
 	= unisex restroom
@@ -49348,6 +49820,8 @@ FFFF	<not a character>
 1F6D3	STUPA
 1F6D4	PAGODA
 1F6D5	HINDU TEMPLE
+1F6D6	HUT
+1F6D7	ELEVATOR
 @		Miscellaneous symbols
 1F6E0	HAMMER AND WRENCH
 	= tools, repair facility
@@ -49398,6 +49872,8 @@ FFFF	<not a character>
 1F6F9	SKATEBOARD
 1F6FA	AUTO RICKSHAW
 	= tuk-tuk, remorque
+1F6FB	PICKUP TRUCK
+1F6FC	ROLLER SKATE
 @@	1F700	Alchemical Symbols	1F77F
 @		Symbols for Aristotelian elements
 1F700	ALCHEMICAL SYMBOL FOR QUINTESSENCE
@@ -49701,6 +50177,7 @@ FFFF	<not a character>
 1F7A7	EXTREMELY HEAVY GREEK CROSS
 @		Saltires
 1F7A8	THIN SALTIRE
+	x (multiplication x - 2715)
 1F7A9	LIGHT SALTIRE
 	x (saltire - 2613)
 1F7AA	MEDIUM SALTIRE
@@ -49708,6 +50185,7 @@ FFFF	<not a character>
 1F7AC	HEAVY SALTIRE
 1F7AD	VERY HEAVY SALTIRE
 1F7AE	EXTREMELY HEAVY SALTIRE
+	x (heavy multiplication x - 2716)
 @		Five spoked asterisks
 1F7AF	LIGHT FIVE SPOKED ASTERISK
 1F7B0	MEDIUM FIVE SPOKED ASTERISK
@@ -49971,6 +50449,9 @@ FFFF	<not a character>
 @+		The vertical alignment and thickness of this set are compatible with white arrows.
 1F8AC	WHITE ARROW SHAFT WIDTH ONE
 1F8AD	WHITE ARROW SHAFT WIDTH TWO THIRDS
+@		Arrows for legacy computing
+1F8B0	ARROW POINTING UPWARDS THEN NORTH WEST
+1F8B1	ARROW POINTING RIGHTWARDS THEN CURVING SOUTH WEST
 @@	1F900	Supplemental Symbols and Pictographs	1F9FF
 @		Typicon symbols
 1F900	CIRCLED CROSS FORMEE WITH FOUR DOTS
@@ -49986,6 +50467,8 @@ FFFF	<not a character>
 1F909	DOWNWARD FACING NOTCHED HOOK
 1F90A	DOWNWARD FACING HOOK WITH DOT
 1F90B	DOWNWARD FACING NOTCHED HOOK WITH DOT
+@		Hand symbol
+1F90C	PINCHED FINGERS
 @		Colored heart symbols
 @+		For use with emoji. Constitute a set as follows: 2764, 1F499-1F49C, 1F5A4, 1F90D, 1F90E, and 1F9E1.
 1F90D	WHITE HEART
@@ -50145,10 +50628,13 @@ FFFF	<not a character>
 @		Faces
 1F970	SMILING FACE WITH SMILING EYES AND THREE HEARTS
 1F971	YAWNING FACE
+1F972	SMILING FACE WITH TEAR
 1F973	FACE WITH PARTY HORN AND PARTY HAT
 1F974	FACE WITH UNEVEN EYES AND WAVY MOUTH
 1F975	OVERHEATED FACE
 1F976	FREEZING FACE
+1F977	NINJA
+1F978	DISGUISED FACE
 1F97A	FACE WITH PLEADING EYES
 @		Clothing
 1F97B	SARI
@@ -50201,12 +50687,19 @@ FFFF	<not a character>
 	* microorganism, intended to cover bacteria, viruses, amoebas, etc.
 1F9A1	BADGER
 1F9A2	SWAN
+1F9A3	MAMMOTH
+	* indicates great size
+1F9A4	DODO
+	* indicates extinction
 1F9A5	SLOTH
 1F9A6	OTTER
 1F9A7	ORANGUTAN
 1F9A8	SKUNK
 1F9A9	FLAMINGO
 1F9AA	OYSTER
+1F9AB	BEAVER
+1F9AC	BISON
+1F9AD	SEAL
 @		Accessibility symbols
 1F9AE	GUIDE DOG
 1F9AF	PROBING CANE
@@ -50243,6 +50736,7 @@ FFFF	<not a character>
 1F9C8	BUTTER
 1F9C9	MATE DRINK
 1F9CA	ICE CUBE
+1F9CB	BUBBLE TEA
 @		Portrait and accessibility symbols
 1F9CD	STANDING PERSON
 1F9CE	KNEELING PERSON
@@ -50486,6 +50980,7 @@ FFFF	<not a character>
 1FA71	ONE-PIECE SWIMSUIT
 1FA72	BRIEFS
 1FA73	SHORTS
+1FA74	THONG SANDAL
 @		Medical symbols
 1FA78	DROP OF BLOOD
 1FA79	ADHESIVE BANDAGE
@@ -50494,6 +50989,10 @@ FFFF	<not a character>
 1FA80	YO-YO
 1FA81	KITE
 1FA82	PARACHUTE
+1FA83	BOOMERANG
+1FA84	MAGIC WAND
+1FA85	PINATA
+1FA86	NESTING DOLLS
 @		Miscellaneous objects
 1FA90	RINGED PLANET
 1FA91	CHAIR
@@ -50501,12 +51000,362 @@ FFFF	<not a character>
 1FA93	AXE
 1FA94	DIYA LAMP
 1FA95	BANJO
+1FA96	MILITARY HELMET
+1FA97	ACCORDION
+1FA98	LONG DRUM
+1FA99	COIN
+1FA9A	CARPENTRY SAW
+1FA9B	SCREWDRIVER
+1FA9C	LADDER
+1FA9D	HOOK
+1FA9E	MIRROR
+1FA9F	WINDOW
+1FAA0	PLUNGER
+1FAA1	SEWING NEEDLE
+1FAA2	KNOT
+1FAA3	BUCKET
+1FAA4	MOUSE TRAP
+1FAA5	TOOTHBRUSH
+1FAA6	HEADSTONE
+1FAA7	PLACARD
+1FAA8	ROCK
+@		Animals and nature
+1FAB0	FLY
+1FAB1	WORM
+1FAB2	BEETLE
+1FAB3	COCKROACH
+1FAB4	POTTED PLANT
+1FAB5	WOOD
+1FAB6	FEATHER
+@		Body parts
+1FAC0	ANATOMICAL HEART
+1FAC1	LUNGS
+@		People
+1FAC2	PEOPLE HUGGING
+@		Food and drink
+1FAD0	BLUEBERRIES
+1FAD1	BELL PEPPER
+1FAD2	OLIVE
+1FAD3	FLATBREAD
+1FAD4	TAMALE
+1FAD5	FONDUE
+1FAD6	TEAPOT
+@@	1FB00	Symbols for Legacy Computing	1FBFF
+@		Block mosaic terminal graphic characters
+@+		The term "sextant" refers to block mosaics divided into six parts.
+1FB00	BLOCK SEXTANT-1
+1FB01	BLOCK SEXTANT-2
+1FB02	BLOCK SEXTANT-12
+	* upper one third block
+1FB03	BLOCK SEXTANT-3
+1FB04	BLOCK SEXTANT-13
+1FB05	BLOCK SEXTANT-23
+1FB06	BLOCK SEXTANT-123
+1FB07	BLOCK SEXTANT-4
+1FB08	BLOCK SEXTANT-14
+1FB09	BLOCK SEXTANT-24
+1FB0A	BLOCK SEXTANT-124
+1FB0B	BLOCK SEXTANT-34
+	* middle one third block
+1FB0C	BLOCK SEXTANT-134
+1FB0D	BLOCK SEXTANT-234
+1FB0E	BLOCK SEXTANT-1234
+	* upper two thirds block
+1FB0F	BLOCK SEXTANT-5
+1FB10	BLOCK SEXTANT-15
+1FB11	BLOCK SEXTANT-25
+1FB12	BLOCK SEXTANT-125
+1FB13	BLOCK SEXTANT-35
+1FB14	BLOCK SEXTANT-235
+1FB15	BLOCK SEXTANT-1235
+1FB16	BLOCK SEXTANT-45
+1FB17	BLOCK SEXTANT-145
+1FB18	BLOCK SEXTANT-245
+1FB19	BLOCK SEXTANT-1245
+1FB1A	BLOCK SEXTANT-345
+1FB1B	BLOCK SEXTANT-1345
+1FB1C	BLOCK SEXTANT-2345
+1FB1D	BLOCK SEXTANT-12345
+1FB1E	BLOCK SEXTANT-6
+1FB1F	BLOCK SEXTANT-16
+1FB20	BLOCK SEXTANT-26
+1FB21	BLOCK SEXTANT-126
+1FB22	BLOCK SEXTANT-36
+1FB23	BLOCK SEXTANT-136
+1FB24	BLOCK SEXTANT-236
+1FB25	BLOCK SEXTANT-1236
+1FB26	BLOCK SEXTANT-46
+1FB27	BLOCK SEXTANT-146
+1FB28	BLOCK SEXTANT-1246
+1FB29	BLOCK SEXTANT-346
+1FB2A	BLOCK SEXTANT-1346
+1FB2B	BLOCK SEXTANT-2346
+1FB2C	BLOCK SEXTANT-12346
+1FB2D	BLOCK SEXTANT-56
+	* lower one third block
+1FB2E	BLOCK SEXTANT-156
+1FB2F	BLOCK SEXTANT-256
+1FB30	BLOCK SEXTANT-1256
+	* upper and lower one third block
+1FB31	BLOCK SEXTANT-356
+1FB32	BLOCK SEXTANT-1356
+1FB33	BLOCK SEXTANT-2356
+1FB34	BLOCK SEXTANT-12356
+1FB35	BLOCK SEXTANT-456
+1FB36	BLOCK SEXTANT-1456
+1FB37	BLOCK SEXTANT-2456
+1FB38	BLOCK SEXTANT-12456
+1FB39	BLOCK SEXTANT-3456
+	* lower two thirds block
+1FB3A	BLOCK SEXTANT-13456
+1FB3B	BLOCK SEXTANT-23456
+@		Smooth mosaic terminal graphic characters
+1FB3C	LOWER LEFT BLOCK DIAGONAL LOWER MIDDLE LEFT TO LOWER CENTRE
+1FB3D	LOWER LEFT BLOCK DIAGONAL LOWER MIDDLE LEFT TO LOWER RIGHT
+1FB3E	LOWER LEFT BLOCK DIAGONAL UPPER MIDDLE LEFT TO LOWER CENTRE
+1FB3F	LOWER LEFT BLOCK DIAGONAL UPPER MIDDLE LEFT TO LOWER RIGHT
+1FB40	LOWER LEFT BLOCK DIAGONAL UPPER LEFT TO LOWER CENTRE
+1FB41	LOWER RIGHT BLOCK DIAGONAL UPPER MIDDLE LEFT TO UPPER CENTRE
+1FB42	LOWER RIGHT BLOCK DIAGONAL UPPER MIDDLE LEFT TO UPPER RIGHT
+1FB43	LOWER RIGHT BLOCK DIAGONAL LOWER MIDDLE LEFT TO UPPER CENTRE
+1FB44	LOWER RIGHT BLOCK DIAGONAL LOWER MIDDLE LEFT TO UPPER RIGHT
+1FB45	LOWER RIGHT BLOCK DIAGONAL LOWER LEFT TO UPPER CENTRE
+1FB46	LOWER RIGHT BLOCK DIAGONAL LOWER MIDDLE LEFT TO UPPER MIDDLE RIGHT
+1FB47	LOWER RIGHT BLOCK DIAGONAL LOWER CENTRE TO LOWER MIDDLE RIGHT
+1FB48	LOWER RIGHT BLOCK DIAGONAL LOWER LEFT TO LOWER MIDDLE RIGHT
+1FB49	LOWER RIGHT BLOCK DIAGONAL LOWER CENTRE TO UPPER MIDDLE RIGHT
+1FB4A	LOWER RIGHT BLOCK DIAGONAL LOWER LEFT TO UPPER MIDDLE RIGHT
+1FB4B	LOWER RIGHT BLOCK DIAGONAL LOWER CENTRE TO UPPER RIGHT
+1FB4C	LOWER LEFT BLOCK DIAGONAL UPPER CENTRE TO UPPER MIDDLE RIGHT
+1FB4D	LOWER LEFT BLOCK DIAGONAL UPPER LEFT TO UPPER MIDDLE RIGHT
+1FB4E	LOWER LEFT BLOCK DIAGONAL UPPER CENTRE TO LOWER MIDDLE RIGHT
+1FB4F	LOWER LEFT BLOCK DIAGONAL UPPER LEFT TO LOWER MIDDLE RIGHT
+1FB50	LOWER LEFT BLOCK DIAGONAL UPPER CENTRE TO LOWER RIGHT
+1FB51	LOWER LEFT BLOCK DIAGONAL UPPER MIDDLE LEFT TO LOWER MIDDLE RIGHT
+1FB52	UPPER RIGHT BLOCK DIAGONAL LOWER MIDDLE LEFT TO LOWER CENTRE
+1FB53	UPPER RIGHT BLOCK DIAGONAL LOWER MIDDLE LEFT TO LOWER RIGHT
+1FB54	UPPER RIGHT BLOCK DIAGONAL UPPER MIDDLE LEFT TO LOWER CENTRE
+1FB55	UPPER RIGHT BLOCK DIAGONAL UPPER MIDDLE LEFT TO LOWER RIGHT
+1FB56	UPPER RIGHT BLOCK DIAGONAL UPPER LEFT TO LOWER CENTRE
+1FB57	UPPER LEFT BLOCK DIAGONAL UPPER MIDDLE LEFT TO UPPER CENTRE
+1FB58	UPPER LEFT BLOCK DIAGONAL UPPER MIDDLE LEFT TO UPPER RIGHT
+1FB59	UPPER LEFT BLOCK DIAGONAL LOWER MIDDLE LEFT TO UPPER CENTRE
+1FB5A	UPPER LEFT BLOCK DIAGONAL LOWER MIDDLE LEFT TO UPPER RIGHT
+1FB5B	UPPER LEFT BLOCK DIAGONAL LOWER LEFT TO UPPER CENTRE
+1FB5C	UPPER LEFT BLOCK DIAGONAL LOWER MIDDLE LEFT TO UPPER MIDDLE RIGHT
+1FB5D	UPPER LEFT BLOCK DIAGONAL LOWER CENTRE TO LOWER MIDDLE RIGHT
+1FB5E	UPPER LEFT BLOCK DIAGONAL LOWER LEFT TO LOWER MIDDLE RIGHT
+1FB5F	UPPER LEFT BLOCK DIAGONAL LOWER CENTRE TO UPPER MIDDLE RIGHT
+1FB60	UPPER LEFT BLOCK DIAGONAL LOWER LEFT TO UPPER MIDDLE RIGHT
+1FB61	UPPER LEFT BLOCK DIAGONAL LOWER CENTRE TO UPPER RIGHT
+1FB62	UPPER RIGHT BLOCK DIAGONAL UPPER CENTRE TO UPPER MIDDLE RIGHT
+1FB63	UPPER RIGHT BLOCK DIAGONAL UPPER LEFT TO UPPER MIDDLE RIGHT
+1FB64	UPPER RIGHT BLOCK DIAGONAL UPPER CENTRE TO LOWER MIDDLE RIGHT
+1FB65	UPPER RIGHT BLOCK DIAGONAL UPPER LEFT TO LOWER MIDDLE RIGHT
+1FB66	UPPER RIGHT BLOCK DIAGONAL UPPER CENTRE TO LOWER RIGHT
+1FB67	UPPER RIGHT BLOCK DIAGONAL UPPER MIDDLE LEFT TO LOWER MIDDLE RIGHT
+1FB68	UPPER AND RIGHT AND LOWER TRIANGULAR THREE QUARTERS BLOCK
+1FB69	LEFT AND LOWER AND RIGHT TRIANGULAR THREE QUARTERS BLOCK
+1FB6A	UPPER AND LEFT AND LOWER TRIANGULAR THREE QUARTERS BLOCK
+1FB6B	LEFT AND UPPER AND RIGHT TRIANGULAR THREE QUARTERS BLOCK
+1FB6C	LEFT TRIANGULAR ONE QUARTER BLOCK
+1FB6D	UPPER TRIANGULAR ONE QUARTER BLOCK
+1FB6E	RIGHT TRIANGULAR ONE QUARTER BLOCK
+1FB6F	LOWER TRIANGULAR ONE QUARTER BLOCK
+@		Block elements
+1FB70	VERTICAL ONE EIGHTH BLOCK-2
+	x (left one eighth block - 258F)
+1FB71	VERTICAL ONE EIGHTH BLOCK-3
+1FB72	VERTICAL ONE EIGHTH BLOCK-4
+1FB73	VERTICAL ONE EIGHTH BLOCK-5
+1FB74	VERTICAL ONE EIGHTH BLOCK-6
+1FB75	VERTICAL ONE EIGHTH BLOCK-7
+	x (right one eighth block - 2595)
+1FB76	HORIZONTAL ONE EIGHTH BLOCK-2
+	x (upper one eighth block - 2594)
+1FB77	HORIZONTAL ONE EIGHTH BLOCK-3
+1FB78	HORIZONTAL ONE EIGHTH BLOCK-4
+1FB79	HORIZONTAL ONE EIGHTH BLOCK-5
+1FB7A	HORIZONTAL ONE EIGHTH BLOCK-6
+1FB7B	HORIZONTAL ONE EIGHTH BLOCK-7
+	x (lower one eighth block - 2581)
+1FB7C	LEFT AND LOWER ONE EIGHTH BLOCK
+1FB7D	LEFT AND UPPER ONE EIGHTH BLOCK
+1FB7E	RIGHT AND UPPER ONE EIGHTH BLOCK
+1FB7F	RIGHT AND LOWER ONE EIGHTH BLOCK
+1FB80	UPPER AND LOWER ONE EIGHTH BLOCK
+1FB81	HORIZONTAL ONE EIGHTH BLOCK-1358
+1FB82	UPPER ONE QUARTER BLOCK
+	x (lower one quarter block - 2582)
+1FB83	UPPER THREE EIGHTHS BLOCK
+	x (lower three eighths block - 2583)
+1FB84	UPPER FIVE EIGHTHS BLOCK
+	x (lower five eighths block - 2585)
+1FB85	UPPER THREE QUARTERS BLOCK
+	x (lower three quarters block - 2586)
+1FB86	UPPER SEVEN EIGHTHS BLOCK
+	x (lower seven eighths block - 2587)
+1FB87	RIGHT ONE QUARTER BLOCK
+	x (left one quarter block - 258E)
+1FB88	RIGHT THREE EIGHTHS BLOCK
+	x (left three eighths block - 258D)
+1FB89	RIGHT FIVE EIGHTHS BLOCK
+	x (left five eighths block - 258B)
+1FB8A	RIGHT THREE QUARTERS BLOCK
+	x (left three quarters block - 258A)
+1FB8B	RIGHT SEVEN EIGHTHS BLOCK
+	x (left seven eighths block - 2589)
+@		Rectangular shade characters
+1FB8C	LEFT HALF MEDIUM SHADE
+1FB8D	RIGHT HALF MEDIUM SHADE
+1FB8E	UPPER HALF MEDIUM SHADE
+1FB8F	LOWER HALF MEDIUM SHADE
+1FB90	INVERSE MEDIUM SHADE
+	x (medium shade - 2592)
+1FB91	UPPER HALF BLOCK AND LOWER HALF INVERSE MEDIUM SHADE
+1FB92	UPPER HALF INVERSE MEDIUM SHADE AND LOWER HALF BLOCK
+1FB94	LEFT HALF INVERSE MEDIUM SHADE AND RIGHT HALF BLOCK
+@		Fill characters
+1FB95	CHECKER BOARD FILL
+	x (quadrant upper left and lower right - 259A)
+	x (reverse checker board - 1F67F)
+1FB96	INVERSE CHECKER BOARD FILL
+	x (quadrant upper right and lower left - 259E)
+	x (checker board - 1F67E)
+1FB97	HEAVY HORIZONTAL FILL
+	* upper middle and lower one quarter block
+	x (geta mark - 3013)
+1FB98	UPPER LEFT TO LOWER RIGHT FILL
+	x (square with upper left to lower right fill - 25A7)
+1FB99	UPPER RIGHT TO LOWER LEFT FILL
+	x (square with upper right to lower left fill - 25A8)
+@		Smooth mosaic terminal graphic characters
+1FB9A	UPPER AND LOWER TRIANGULAR HALF BLOCK
+	x (black hourglass - 29D7)
+1FB9B	LEFT AND RIGHT TRIANGULAR HALF BLOCK
+	x (black bowtie - 29D3)
+@		Triangular shade characters
+1FB9C	UPPER LEFT TRIANGULAR MEDIUM SHADE
+	x (black upper left triangle - 25E4)
+1FB9D	UPPER RIGHT TRIANGULAR MEDIUM SHADE
+	x (black upper right triangle - 25E5)
+1FB9E	LOWER RIGHT TRIANGULAR MEDIUM SHADE
+	x (black lower right triangle - 25E2)
+1FB9F	LOWER LEFT TRIANGULAR MEDIUM SHADE
+	x (black lower left triangle - 25E3)
+@		Character cell diagonals
+1FBA0	BOX DRAWINGS LIGHT DIAGONAL UPPER CENTRE TO MIDDLE LEFT
+1FBA1	BOX DRAWINGS LIGHT DIAGONAL UPPER CENTRE TO MIDDLE RIGHT
+1FBA2	BOX DRAWINGS LIGHT DIAGONAL MIDDLE LEFT TO LOWER CENTRE
+1FBA3	BOX DRAWINGS LIGHT DIAGONAL MIDDLE RIGHT TO LOWER CENTRE
+1FBA4	BOX DRAWINGS LIGHT DIAGONAL UPPER CENTRE TO MIDDLE LEFT TO LOWER CENTRE
+1FBA5	BOX DRAWINGS LIGHT DIAGONAL UPPER CENTRE TO MIDDLE RIGHT TO LOWER CENTRE
+1FBA6	BOX DRAWINGS LIGHT DIAGONAL MIDDLE LEFT TO LOWER CENTRE TO MIDDLE RIGHT
+1FBA7	BOX DRAWINGS LIGHT DIAGONAL MIDDLE LEFT TO UPPER CENTRE TO MIDDLE RIGHT
+1FBA8	BOX DRAWINGS LIGHT DIAGONAL UPPER CENTRE TO MIDDLE LEFT AND MIDDLE RIGHT TO LOWER CENTRE
+1FBA9	BOX DRAWINGS LIGHT DIAGONAL UPPER CENTRE TO MIDDLE RIGHT AND MIDDLE LEFT TO LOWER CENTRE
+1FBAA	BOX DRAWINGS LIGHT DIAGONAL UPPER CENTRE TO MIDDLE RIGHT TO LOWER CENTRE TO MIDDLE LEFT
+1FBAB	BOX DRAWINGS LIGHT DIAGONAL UPPER CENTRE TO MIDDLE LEFT TO LOWER CENTRE TO MIDDLE RIGHT
+1FBAC	BOX DRAWINGS LIGHT DIAGONAL MIDDLE LEFT TO UPPER CENTRE TO MIDDLE RIGHT TO LOWER CENTRE
+1FBAD	BOX DRAWINGS LIGHT DIAGONAL MIDDLE RIGHT TO UPPER CENTRE TO MIDDLE LEFT TO LOWER CENTRE
+1FBAE	BOX DRAWINGS LIGHT DIAGONAL DIAMOND
+	x (white diamond - 25C7)
+@		Light solid line with stroke
+1FBAF	BOX DRAWINGS LIGHT HORIZONTAL WITH VERTICAL STROKE
+	x (box drawings light horizontal - 2500)
+@		Terminal graphic characters
+1FBB0	ARROWHEAD-SHAPED POINTER
+	x (black rightwards arrowhead - 27A4)
+1FBB1	INVERSE CHECK MARK
+	x (check mark - 2713)
+1FBB2	LEFT HALF RUNNING MAN
+	* paired with 1FBB3, faces to the right
+	* the Apple II documentation refers to these characters as "Running Man"
+	x (runner - 1F3C3)
+1FBB3	RIGHT HALF RUNNING MAN
+@		Arrows
+1FBB4	INVERSE DOWNWARDS ARROW WITH TIP LEFTWARDS
+	x (downwards arrow with tip leftwards - 21B2)
+	x (downwards arrow with corner leftwards - 21B5)
+1FBB5	LEFTWARDS ARROW AND UPPER AND LOWER ONE EIGHTH BLOCK
+1FBB6	RIGHTWARDS ARROW AND UPPER AND LOWER ONE EIGHTH BLOCK
+1FBB7	DOWNWARDS ARROW AND RIGHT ONE EIGHTH BLOCK
+1FBB8	UPWARDS ARROW AND RIGHT ONE EIGHTH BLOCK
+@		Terminal graphic characters
+1FBB9	LEFT HALF FOLDER
+	* paired with 1FBBA
+	x (file folder - 1F4C1)
+	x (folder - 1F5C0)
+1FBBA	RIGHT HALF FOLDER
+1FBBB	VOIDED GREEK CROSS
+	x (number sign - 0023)
+	x (box drawings double vertical and horizontal - 256C)
+	x (outlined greek cross - 2719)
+	x (heavy greek cross - 271A)
+	x (medium greek cross - 1F7A3)
+1FBBC	RIGHT OPEN SQUARED DOT
+	x (squared dot operator - 22A1)
+@		Negative terminal graphic characters
+@+		The glyphs for these "negative" characters do not necessarily extend to the edges of the character cell.
+1FBBD	NEGATIVE DIAGONAL CROSS
+	* diagonals extend past the corners of the box, unlike in 274E
+	x (box drawings light diagonal cross - 2573)
+	x (negative squared cross mark - 274E)
+1FBBE	NEGATIVE DIAGONAL MIDDLE RIGHT TO LOWER CENTRE
+1FBBF	NEGATIVE DIAGONAL DIAMOND
+@		Terminal graphic characters
+1FBC0	WHITE HEAVY SALTIRE WITH ROUNDED CORNERS
+	x (cross mark - 274C)
+	x (cancellation x - 1F5D9)
+	x (heavy saltire - 1F7AC)
+1FBC1	LEFT THIRD WHITE RIGHT POINTING INDEX
+	* glyph part, combined with 1FBC2 and 1FBC3
+	x (white right pointing index - 261E)
+1FBC2	MIDDLE THIRD WHITE RIGHT POINTING INDEX
+1FBC3	RIGHT THIRD WHITE RIGHT POINTING INDEX
+1FBC4	NEGATIVE SQUARED QUESTION MARK
+	* glyph does not necessarily extend to the edges of the character cell
+	x (question mark - 003F)
+	x (uncertainty sign - 2BD1)
+	x (replacement character - FFFD)
+1FBC5	STICK FIGURE
+	x (mens symbol - 1F6B9)
+1FBC6	STICK FIGURE WITH ARMS RAISED
+1FBC7	STICK FIGURE LEANING LEFT
+1FBC8	STICK FIGURE LEANING RIGHT
+1FBC9	STICK FIGURE WITH DRESS
+	x (womens symbol - 1F6BA)
+1FBCA	WHITE UP-POINTING CHEVRON
+	x (upwards white arrow - 21E7)
+	x (house - 2302)
+	x (upwards finger-post arrow - 1F835)
+@		Segmented digits
+1FBF0	SEGMENTED DIGIT ZERO
+	# <font> 0030 digit zero
+1FBF1	SEGMENTED DIGIT ONE
+	# <font> 0031 digit one
+1FBF2	SEGMENTED DIGIT TWO
+	# <font> 0032 digit two
+1FBF3	SEGMENTED DIGIT THREE
+	# <font> 0033 digit three
+1FBF4	SEGMENTED DIGIT FOUR
+	# <font> 0034 digit four
+1FBF5	SEGMENTED DIGIT FIVE
+	# <font> 0035 digit five
+1FBF6	SEGMENTED DIGIT SIX
+	# <font> 0036 digit six
+1FBF7	SEGMENTED DIGIT SEVEN
+	# <font> 0037 digit seven
+1FBF8	SEGMENTED DIGIT EIGHT
+	# <font> 0038 digit eight
+1FBF9	SEGMENTED DIGIT NINE
+	# <font> 0039 digit nine
 @@	1FF80	Unassigned	1FFFF
 @		Noncharacters
 @+		These codes are intended for process-internal uses.
 1FFFE	<not a character>
 1FFFF	<not a character>
-@@	20000	CJK Unified Ideographs Extension B	2A6D6
+@@	20000	CJK Unified Ideographs Extension B	2A6DD
 @@	2A700	CJK Unified Ideographs Extension C	2B734
 @@	2B740	CJK Unified Ideographs Extension D	2B81D
 @@	2B820	CJK Unified Ideographs Extension E	2CEA1
@@ -51614,6 +52463,7 @@ FFFF	<not a character>
 @+		These codes are intended for process-internal uses.
 2FFFE	<not a character>
 2FFFF	<not a character>
+@@	30000	CJK Unified Ideographs Extension G	3134A
 @@	3FF80	Unassigned	3FFFF
 @		Noncharacters
 @+		These codes are intended for process-internal uses.

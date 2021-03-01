@@ -466,7 +466,7 @@ of Perl as "the first postmodern computer language".
 C<Moose> provides a complete, modern OO system. Its biggest influence
 is the Common Lisp Object System, but it also borrows ideas from
 Smalltalk and several other languages. C<Moose> was created by Stevan
-Little, and draws heavily from his work on the Perl 6 OO design.
+Little, and draws heavily from his work on the Raku OO design.
 
 Here is our C<File> class using C<Moose>:
 

@@ -16,6 +16,8 @@ BEGIN {
 
 our ( $foo, @bar, %baz );
 
+use lib ("./t/lib");
+use TieOut;
 use Test::More tests => 88;
 
 use_ok( 'Dumpvalue' );
@@ -278,21 +280,3 @@ is( $out->read, "0  0..0  'two'\n", 'dumpValues worked on array ref' );
 $d->dumpValues('one', 'two');
 is( $out->read, "0..1  'one' 'two'\n", 'dumpValues worked on multiple values' );
 
-
-package TieOut;
-use overload '"' => sub { "overloaded!" };
-
-sub TIEHANDLE {
-	my $class = shift;
-	bless(\( my $ref), $class);
-}
-
-sub PRINT {
-	my $self = shift;
-	$$self .= join('', @_);
-}
-
-sub read {
-	my $self = shift;
-	return substr($$self, 0, length($$self), '');
-}

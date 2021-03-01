@@ -47,14 +47,6 @@ F<pod2usage> will just extract the "USAGE" section; some of
 the utilities will automatically call F<pod2usage> on themselves when
 you call them with C<-help>.
 
-=item L<podselect|podselect>
-
-F<pod2usage> is a special case of F<podselect>, a utility to extract
-named sections from documents written in POD. For instance, while
-utilities have "USAGE" sections, Perl modules usually have "SYNOPSIS"
-sections: C<podselect -s "SYNOPSIS" ...> will extract this section for
-a given file.
-
 =item L<podchecker|podchecker>
 
 If you're writing your own documentation in POD, the F<podchecker>
@@ -228,7 +220,7 @@ validate your packlists and even create a tarball from an installed module.
 =head1 SEE ALSO
 
 L<perldoc|perldoc>, L<pod2man|pod2man>, L<perlpod>,
-L<pod2html|pod2html>, L<pod2usage|pod2usage>, L<podselect|podselect>,
+L<pod2html|pod2html>, L<pod2usage|pod2usage>,
 L<podchecker|podchecker>, L<splain|splain>, L<perldiag>,
 C<roffitall|roffitall>, L<File::Find|File::Find>, L<pl2pm|pl2pm>,
 L<perlbug|perlbug>, L<h2ph|h2ph>, L<h2xs|h2xs>, L<enc2xs>,

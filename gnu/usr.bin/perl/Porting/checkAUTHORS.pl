@@ -1,5 +1,9 @@
 #!/usr/bin/perl -w
 use strict;
+use warnings;
+
+use v5.026;
+
 my ($committer, $patch, $author);
 use utf8;
 use Getopt::Long;
@@ -7,9 +11,10 @@ use Unicode::Collate;
 use Text::Wrap;
 $Text::Wrap::columns = 80;
 
-my ($rank, $ta, $ack, $who, $tap) = (0) x 5;
+my ($rank, $ta, $ack, $who, $tap, $update) = (0) x 6;
 my ($author_file, $percentage, $cumulative, $reverse);
 my (%authors, %untraced, %patchers, %committers, %real_names);
+my ( $from_commit, $to_commit );
 
 my $result = GetOptions (
              # modes
@@ -18,15 +23,25 @@ my $result = GetOptions (
              "thanks-applied" => \$ta,
              "missing"        => \$ack ,
              "tap"            => \$tap,
+             "update"         => \$update,
 
              # modifiers
              "authors=s"      => \$author_file,
              "percentage"     => \$percentage,      # show as %age
              "cumulative"     => \$cumulative,
              "reverse"        => \$reverse,
+             "from=s"           => \$from_commit,
+             "to=s"             => \$to_commit,
+
             );
 
-if (!$result or ( $rank + $ta + $who + $ack + $tap != 1 ) or !@ARGV) {
+
+my $has_from_commit = defined $from_commit ? 1 : 0;
+
+if ( !$result # GetOptions failed
+    or ( $rank + $ta + $who + $ack + $tap + $update != 1 ) # use one and one exactly 'mode'
+    or !( scalar @ARGV + $has_from_commit )  # gitlog provided from --from or stdin
+    ) {
     usage();
 }
 
@@ -34,26 +49,30 @@ $author_file ||= './AUTHORS';
 die "Can't locate '$author_file'. Specify it with '--authors <path>'."
   unless -f $author_file;
 
-my $map = generate_known_author_map();
+my ( $map, $preferred_email_or_github ) = generate_known_author_map();
 
-read_authors_files($author_file);
-
+my $preserve_case = $update ? 1 : 0;
+my $AUTHORS_header = read_authors_file($author_file, $preserve_case);
 
 if ($rank) {
-  parse_commits_from_stdin();
+  parse_commits();
   display_ordered(\%patchers);
 } elsif ($ta) {
-  parse_commits_from_stdin();
+  parse_commits();
   display_ordered(\%committers);
 } elsif ($tap) {
-  parse_commits_from_stdin_authors();
+  parse_commits_authors();
   display_test_output(\%patchers, \%authors, \%real_names);
 } elsif ($ack) {
-  parse_commits_from_stdin();
+  parse_commits();
   display_missing_authors(\%patchers, \%authors, \%real_names);
 } elsif ($who) {
-  parse_commits_from_stdin();
+  parse_commits();
   list_authors(\%patchers, \%authors);
+} elsif ( $update ) {
+  update_authors_files( \%authors, $map, $preferred_email_or_github, $author_file );
+} else {
+    die "unknown mode";
 }
 
 exit(0);
@@ -69,17 +88,33 @@ Modes (use only one):
    --thanks-applied               # ranks committers of others' patches
    --missing                      # display authors not in AUTHORS
    --tap                          # show authors present/missing as TAP
+   --update                       # update the AUTHORS file with missing
 
 Modifiers:
    --authors <authors-file>       # path to authors file (default: ./AUTHORS)
    --percentage                   # show rankings as percentages
    --cumulative                   # show rankings cumulatively
    --reverse                      # show rankings in reverse
+   --from                         # git commit ID used for 'git log' source (use file from STDIN when missing)
+   --to[=HEAD]                    # git commit ID used for 'git log' destination, default to HEAD.
+
+Sample Usages:
+
+  \$ perl Porting/checkAUTHORS.pl --who --from=v5.31.6 --to=v5.31.7
+  \$ perl Porting/checkAUTHORS.pl --rank --percentage --from=v5.31.6
+  \$ perl Porting/checkAUTHORS.pl --thanks-applied --from=v5.31.6
+  \$ perl Porting/checkAUTHORS.pl --missing --from=v5.31.6
+  \$ perl Porting/checkAUTHORS.pl --tap --from=v5.31.6
+  \$ perl Porting/checkAUTHORS.pl --update --from=v5.31.6
+
+or the split int two and generate your own git log output
 
 Generate git-log-output-file with git log --pretty=fuller rev1..rev2
 (or pipe by specifying '-' for stdin).  For example:
-  \$ git log --pretty=fuller v5.12.0..v5.12.1 > gitlog
+  \$ git log --pretty=fuller v5.31.6..v5.31.7 > gitlog
   \$ perl Porting/checkAUTHORS.pl --rank --percentage gitlog
+
+
 EOS
 }
 
@@ -88,12 +123,33 @@ sub list_authors {
     binmode(STDOUT, ":utf8");
     print wrap '', '', join(', ', Unicode::Collate->new(level => 1)->sort(
                       map { $authors->{$_} }
+                      grep { length $_ > 1 } # skip the exception '!' and '?'
                       keys %$patchers)) . ".\n";
 }
 
-sub parse_commits_from_stdin {
-    my @lines = split( /^commit\s*/sm, join( '', <> ) );
-    for (@lines) {
+# use --from [and --to] if provided
+# otherwise fallback to stdin for backward compatibility
+sub _git_log {
+    if ( length $from_commit ) {
+        my ( $from, $to ) = ( $from_commit, $to_commit );
+        $to //= 'HEAD';
+        my $gitlog = [ qx{git log --pretty=fuller $from..$to} ];
+        die "git log failed: $!" unless $? == 0;
+        return $gitlog;
+    }
+
+    return [ <> ];
+}
+
+sub parse_commits {
+    my ( $process ) = @_;
+
+    $process //= \&process; # default processor
+
+    my $git_log = _git_log();
+
+    my @lines = split( /^commit\s*/sm, join( '', $git_log->@* ) );
+    foreach (@lines) {
         next if m/^$/;
         next if m/^(\S*?)^Merge:/ism;    # skip merge commits
         if (m/^(.*?)^Author:\s*(.*?)^AuthorDate:\s*.*?^Commit:\s*(.*?)^(.*)$/gism) {
@@ -104,39 +160,70 @@ sub parse_commits_from_stdin {
             unless ($author) { die $_ }
             chomp($committer);
             unless ($committer) { die $_ }
-            process( $committer, $patch, $author );
+
+            $process->( $committer, $patch, $author );
         } else {
             die "XXX $_ did not match";
         }
     }
 
+    return;
 }
 
-# just grab authors. Quicker than parse_commits_from_stdin
+# just grab authors. Quicker than parse_commits
 
-sub parse_commits_from_stdin_authors {
-    while (<>) {
+sub parse_commits_authors {
+
+    my $git_log = _git_log();
+
+    foreach ($git_log->@*) {
         next unless /^Author:\s*(.*)$/;
-	my $author = $1;
-	$author = _raw_address($author);
-	$patchers{$author}++;
+        my $author = $1;
+        $author = _raw_address($author);
+        $patchers{$author}++;
     }
-}
 
+    return;
+}
 
 sub generate_known_author_map {
     my %map;
 
-    my $prev = "";
+    my %preferred_email_or_github;
+
+    my $previous_name = "";
+    my $previous_preferred_contact = "";
     while (<DATA>) {
+        next if m{^\s*#};
+
         chomp;
         s/\\100/\@/g;
+
         $_ = lc;
-        if ( my ( $correct, $alias ) = /^\s*([^#\s]\S*)\s+(.*\S)/ ) {
-            $correct =~ s/^\\043/#/;
-            if   ( $correct eq '+' ) { $correct = $prev }
-            else                     { $prev    = $correct }
-            $map{$alias} = $correct;
+        if ( my ( $name, $contact ) = /^\s*([^#\s]\S*)\s+(.*\S)/ ) {
+
+            $name =~ s/^\\043/#/;
+            # use the previous stored email if the line starts by a '+'
+            if   ( $name eq '+' ) {
+                $name             = $previous_name;
+            }
+            else {
+                $previous_name              = $name;
+                $previous_preferred_contact = $contact;
+                if ( index($name, '@' ) > 0 ) {
+                    # if name is an email, then this is our preferred email... legacy list
+                    $previous_preferred_contact = $name;
+                }
+            }
+
+            $map{$contact} = $name;
+
+            if ( $contact ne $previous_preferred_contact ) {
+                $preferred_email_or_github{$contact} = $previous_preferred_contact;
+            }
+            if ( $name ne '+' ) {
+                $preferred_email_or_github{$name} = $previous_preferred_contact;
+            }
         }
     }
 
@@ -210,25 +297,34 @@ sub generate_known_author_map {
         "(none)",
         ;
 
-    return \%map;
+    return ( \%map, \%preferred_email_or_github );
 }
 
-sub read_authors_files {
-    my @authors = (@_);
-    return unless (@authors);
+sub read_authors_file {
+    my ( $filename, $preserve_case ) = @_;
+    return unless defined $filename;
+
+    my @headers;
+
     my (%count, %raw);
-    foreach my $filename (@authors) {
-        open FH, '<', $filename or die "Can't open $filename: $!";
-        binmode FH, ':encoding(UTF-8)';
-        while (<FH>) {
+    {
+        open my $fh, '<', $filename or die "Can't open $filename: $!";
+        binmode $fh, ':encoding(UTF-8)';
+        my $in_header = 1;
+        while (<$fh>) {
             next if /^\#/;
-            next if /^-- /;
+            do { $in_header = 0; next } if /^-- /;
             if (/^([^<]+)<([^>]+)>/) {
                 # Easy line.
                 my ($name, $email) = ($1, $2);
                 $name =~ s/\s*\z//;
                 $raw{$email} = $name;
                 $count{$email}++;
+            } elsif ( /^([^@]+)\s+(\@\S+)\s*$/ ) {
+                my ($name, $github) = ($1, $2);
+                $name =~ s/\s*\z//;
+                $raw{$github} = $name;
+                $count{$github}++;
             } elsif (/^([- .'\w]+)[\t\n]/) {
 
                 # Name only
@@ -240,14 +336,167 @@ sub read_authors_files {
                 next;
             }
         }
+        continue {
+            push @headers, $_ if $in_header;
+        }
     }
-    foreach ( keys %raw ) {
-        print "E-mail $_ occurs $count{$_} times\n" if $count{$_} > 1;
-        my $lc = lc $_;
-        $authors{ $map->{$lc} || $lc } = $raw{$_};
+    foreach my $contact ( sort keys %raw ) {
+        print "E-mail $contact occurs $count{$contact} times\n" if $count{$contact} > 1;
+        my $lc = lc $contact;
+        my $key = $preserve_case ? $contact : $lc;
+        $authors{ $map->{$lc} || $key } = $raw{$contact};
     }
     $authors{$_} = $_ for qw(? !);
+
+    push @headers, '-- ', "\n";
+
+    return join( '', @headers );
 }
+
+sub update_authors_files {
+    my ( $authors, $known_authors, $preferred_email_or_github, $author_file ) = @_;
+
+    die qq[Cannot find AUTHORS file '$author_file'] unless -f $author_file;
+    binmode(STDOUT, ":utf8");
+
+    # add missing authors from the recent commits
+    _detect_new_authors_from_recent_commit( $authors, $known_authors );
+
+    my @author_names = sort { $a cmp $b } values %$authors;
+    my $maxlen = length [ sort { length $b <=> length $a } @author_names ]->[0];
+
+    my @list;
+    foreach my $github_or_email ( sort keys %authors ) {
+
+        next if length $github_or_email == 1;
+
+        my $name = $authors{$github_or_email};
+        $name =~ s{\s+$}{};
+
+        #$github_or_email = $known_authors->{ $github_or_email } // $github_or_email;
+        $github_or_email = $preferred_email_or_github->{ $github_or_email } // $github_or_email;
+
+        if ( index( $github_or_email, '@' ) != 0 ) { # preserve '<>' for unicode consortium
+            $github_or_email = '<' . $github_or_email . '>';
+        }
+
+        push @list, sprintf( "%-${maxlen}s %s\n", $name, $github_or_email);
+    }
+
+    # preserve the untraced authors :-) [without email or GitHub account]
+    push @list, map { "$_\n" } keys %untraced;
+
+    {
+        open my $fh, '>', $author_file or die "Can't open $author_file: $!";
+        binmode $fh, ':encoding(UTF-8)';
+
+        print {$fh} $AUTHORS_header;
+
+        map { print {$fh} $_ } sort { lc $a cmp lc $b } @list;
+
+        close $fh;
+
+    }
+
+    return;
+}
+
+# read all recent commits and check if the author email is known
+#   if the email is unknown add the author's GitHub account if possible or his email
+sub _detect_new_authors_from_recent_commit {
+    my ( $authors, $known_authors ) = @_;
+
+    my $check_if_email_known = sub {
+        my ( $email ) = @_;
+
+        my $preferred = $map->{$email} // $map->{lc $email}
+            // $preferred_email_or_github->{$email}
+            // $preferred_email_or_github->{lc $email}
+            // $email;
+
+        return $authors{$preferred} || $authors{ lc $preferred } ? 1 : 0;
+    };
+
+    my $already_checked = {};
+    my $process = sub {
+        my ( $committer, $patch, $author ) = @_;
+
+        foreach my $person ( $author, $committer ) {
+            next unless length $person;
+            next if $already_checked->{$person};
+            $already_checked->{$person} = 1;
+
+            my $is_author = $person eq $author;
+
+            if ( $person =~ m{^(.+)\s+<(.+)>$} ) {
+                my ( $name, $email ) = ( $1, $2 );
+
+                # skip unicode consortium and bad emails
+                if ( index( $email, '@' ) <= 0 ) {
+                    warn "# Skipping new author: $person - bad email";
+                    next;
+                }
+
+                next if $check_if_email_known->( $email );
+
+                # for new users we would prefer using the GitHub account
+                my $github_or_email = _commit_to_github_id( $patch, $is_author ) // $email;
+
+                next if $check_if_email_known->( $github_or_email );
+
+                print "# Detected a new author: $name using email $email [ $github_or_email ]\n";
+                $authors{$github_or_email} = $name; # add it to the list of authors
+            } else {
+                warn "Fail to parse author: $person";
+            }
+        }
+    };
+
+    parse_commits( $process );
+
+    return;
+}
+
+sub _commit_to_github_id {
+    my ( $commit, $is_author ) = @_;
+
+    chomp $commit if defined $commit;
+    return unless length $commit;
+
+    eval { require HTTP::Tiny; 1 } or do {
+        warn "HTTP::Tiny is missing, cannot detect GitHub account from commit id.";
+        no warnings;
+        *_commit_to_github_id = sub {};
+        return;
+    };
+
+    my $github_url_for_commit = q[https://github.com/Perl/perl5/commit/] . $commit;
+    my $response = HTTP::Tiny->new->get( $github_url_for_commit );
+
+    if ( ! $response->{success} ) {
+        warn "HTTP Request Failed: '$github_url_for_commit'";
+        return;
+    }
+
+    my $content = $response->{content} // '';
+
+    # poor man scrapping - probably have to be improved over time
+    # try to parse something like: <a href="/Perl/perl5/commits?author=ThisIsMyGitHubID"
+    my @github_ids; # up to two entries author and committer
+    while ( $content =~ s{\Q<a href="/Perl/perl5/commits?author=\E(.+)"}{} ) {
+        push @github_ids, '@' . $1;
+    }
+
+    warn "Found more than two github ids for $github_url_for_commit" if scalar @github_ids > 2;
+
+    return $github_ids[0] if $is_author;
+    if ( !$is_author && scalar @github_ids >= 2 ) {
+        return $github_ids[1]; # committer is the second entry
+    }
+
+    return $github_ids[0];
+}
+
 
 sub display_test_output {
     my $patchers   = shift;
@@ -255,16 +504,18 @@ sub display_test_output {
     my $real_names = shift;
     my $count = 0;
     printf "1..%d\n", scalar keys %$patchers;
-    foreach ( sort keys %$patchers ) {
-        $count++;
-        if ($authors->{$_}) {
-            print "ok $count - ".$real_names->{$_} ." $_\n";
-        } else {
-            print "not ok $count - Contributor not found in AUTHORS: $_ ".($real_names->{$_} || '???' )."\n";
-            print STDERR ($real_names->{$_} || '???' )." <$_> not found in AUTHORS\n";
-        }
 
+    foreach my $email ( sort keys %$patchers ) {
+        $count++;
+        if ($authors->{$email}) {
+            print "ok $count - ".$real_names->{$email} ." $email\n";
+        } else {
+            print "not ok $count - Contributor not found in AUTHORS: $email ".($real_names->{$email} || '???' )."\n";
+            print STDERR ($real_names->{$email} || '???' )." <$email> not found in AUTHORS\n";
+        }
     }
+
+    return;
 }
 
 sub display_missing_authors {
@@ -286,6 +537,8 @@ sub display_missing_authors {
             print "" . ( $real_names->{$author} || $author ) . "\t\t\t<" . $xauthor . ">\n";
         }
     }
+
+    return;
 }
 
 sub display_ordered {
@@ -315,6 +568,8 @@ sub display_ordered {
         }
         print wrap ( $prefix, "\t", join( " ", sort @{ $sorted[$i] } ), "\n" );
     }
+
+    return;
 }
 
 sub process {
@@ -331,6 +586,8 @@ sub process {
         # separate commit credit only if committing someone else's patch
         $committers{$committer}++;
     }
+
+    return;
 }
 
 sub _raw_address {
@@ -367,6 +624,7 @@ sub _raw_address {
     $addr =~ s/\\100/@/g;    # Sometimes, there are encoded @ signs in the git log.
 
     if ($real_name) { $real_names{$addr} = $real_name }
+
     return $addr;
 }
 
@@ -374,8 +632,8 @@ sub _raw_address {
 __DATA__
 
 #
-# List of mappings. First entry the "correct" email address, as appears
-# in the AUTHORS file. Second is any "alias" mapped to it.
+# List of mappings. First entry the "correct" email address or GitHub account,
+# as appears in the AUTHORS file. Other lines are "alias" mapped to it.
 #
 # If the "correct" email address is a '+', the entry above it is reused;
 # this for addresses with more than one alias.
@@ -386,12 +644,19 @@ __DATA__
 #
 #  Committers.
 #
+adamh                                   \100BytesGuy
++                                       bytesguy\100users.noreply.github.com
++                                       git\100ahartley.com
 adi                                     enache\100rdslink.ro
 alanbur                                 alan.burlison\100sun.com
 +                                       alan.burlison\100uk.sun.com
 +                                       aburlison\100cix.compulink.co.uk
 ams                                     ams\100toroid.org
 +                                       ams\100wiw.org
+atoomic                                 \100atoomic
++                                       atoomic\100cpan.org
++                                       cpan\100atoomic.org
++                                       nicolas\100atoomic.org
 chip                                    chip\100pobox.com
 +                                       chip\100perl.com
 +                                       salzench\100nielsenmedia.com
@@ -399,14 +664,14 @@ chip                                    chip\100pobox.com
 +                                       chip\100rio.atlantic.net
 +                                       salzench\100dun.nielsen.com
 +                                       chip\100ci005.sv2.upperbeyond.com
-craigb                                  craig.berry\100psinetcs.com
+craigb                                  craigberry\100mac.com
 +                                       craig.berry\100metamorgs.com
 +                                       craig.berry\100signaltreesolutions.com
-+                                       craigberry\100mac.com
++                                       craig.berry\100psinetcs.com
 +                                       craig.a.berry\100gmail.com
 +                                       craig a. berry)
-davem                                   davem\100fdgroup.com
-+                                       davem\100iabyn.nospamdeletethisbit.com
+davem                                   davem\100iabyn.nospamdeletethisbit.com
++                                       davem\100fdgroup.com
 +                                       davem\100iabyn.com
 +                                       davem\100fdgroup.co.uk
 +                                       davem\100fdisolutions.com
@@ -430,15 +695,15 @@ gbarr                                   gbarr\100pobox.com
 +                                       gbarr\100ti.com
 +                                       graham.barr\100tiuk.ti.com
 +                                       gbarr\100monty.mutatus.co.uk
-gisle                                   gisle\100activestate.com
-+                                       gisle\100aas.no
+gisle                                   gisle\100aas.no
++                                       gisle\100activestate.com
 +                                       aas\100aas.no
 +                                       aas\100bergen.sn.no
-gsar                                    gsar\100activestate.com
-+                                       gsar\100cpan.org
+gsar                                    gsar\100cpan.org
++                                       gsar\100activestate.com
 +                                       gsar\100engin.umich.edu
-hv                                      hv\100crypt.compulink.co.uk
-+                                       hv\100crypt.org
+hv                                      hv\100crypt.org
++                                       hv\100crypt.compulink.co.uk
 +                                       hv\100iii.co.uk
 jhi                                     jhi\100iki.fi
 +                                       jhietaniemi\100gmail.com
@@ -449,8 +714,8 @@ jhi                                     jhi\100iki.fi
 +                                       jarkko.hietaniemi\100nokia.com
 +                                       jarkko.hietaniemi\100cc.hut.fi
 +                                       jarkko.hietaniemi\100booking.com
-jesse                                   jesse\100bestpractical.com
-+                                       jesse\100fsck.com
+jesse                                   jesse\100fsck.com
++                                       jesse\100bestpractical.com
 +                                       jesse\100perl.org
 merijn                                  h.m.brand\100xs4all.nl
 +                                       h.m.brand\100procura.nl
@@ -458,12 +723,13 @@ merijn                                  h.m.brand\100xs4all.nl
 +                                       h.m.brand\100hccnet.nl
 +                                       merijn\100l1.procura.nl
 +                                       merijn\100a5.(none)
++                                       perl5\100tux.freedom.nl
 mhx                                     mhx-perl\100gmx.net
 +                                       mhx\100r2d2.(none)
 mst                                     mst\100shadowcat.co.uk
 +                                       matthewt\100hercule.scsys.co.uk
-nicholas                                nick\100unfortu.net
-+                                       nick\100ccl4.org
+nicholas                                nick\100ccl4.org
++                                       nick\100unfortu.net
 +                                       nick\100talking.bollo.cx
 +                                       nick\100plum.flirble.org
 +                                       nick\100babyhippo.co.uk
@@ -472,21 +738,21 @@ nicholas                                nick\100unfortu.net
 +                                       nicholas\100dromedary.ams6.corp.booking.com
 +                                       Nicholas Clark (sans From field in mail header)
 pudge                                   pudge\100pobox.com
-rgs                                     rgarciasuarez\100free.fr
+rgs                                     rgs@consttype.org
++                                       rgarciasuarez\100free.fr
 +                                       rgarciasuarez\100mandrakesoft.com
 +                                       rgarciasuarez\100mandriva.com
 +                                       rgarciasuarez\100gmail.com
 +                                       raphel.garcia-suarez\100hexaflux.com
-+                                       rgs@consttype.org
-sky                                     sky\100nanisky.com
-+                                       artur\100contiller.se
+sky                                     artur\100contiller.se
++                                       sky\100nanisky.com
 +                                       arthur\100contiller.se
-smueller                                7k8lrvf02\100sneakemail.com
+smueller                                smueller\100cpan.org
++                                       7k8lrvf02\100sneakemail.com
 +                                       kjx9zthh3001\100sneakemail.com
 +                                       dtr8sin02\100sneakemail.com
 +                                       rt8363b02\100sneakemail.com
 +                                       o6hhmk002\100sneakemail.com
-+                                       smueller\100cpan.org
 +                                       l2ot9pa02\100sneakemail.com
 +                                       wyp3rlx02\100sneakemail.com
 +                                       0mgwtfbbq\100sneakemail.com
@@ -530,7 +796,9 @@ allen\100huarp.harvard.edu              nort\100bottesini.harvard.edu
 allens\100cpan.org                      easmith\100beatrice.rutgers.edu
 +                                       root\100dogberry.rutgers.edu
 ambs\100cpan.org                        hashashin\100gmail.com
-andreas.koenig\100anima.de              andreas.koenig.gmwojprw\100franz.ak.mind.de
+andrea                                  a.koenig@mind.de
++                                       andreas.koenig\100anima.de
++                                       andreas.koenig.gmwojprw\100franz.ak.mind.de
 +                                       andreas.koenig.7os6vvqr\100franz.ak.mind.de
 +                                       a.koenig\100mind.de
 +                                       k\100anna.in-berlin.de
@@ -551,8 +819,8 @@ arnold\100gnu.ai.mit.edu                arnold\100emoryu2.arpa
 arodland\100cpan.org                    andrew\100hbslabs.com
 arussell\100cs.uml.edu                  adam\100adam-pc.(none)
 ash\100cpan.org                         ash_cpan\100firemirror.com
-avarab\100gmail.com                     avar\100cpan.org
-
+avar                                    avar\100cpan.org
++                                       avarab\100gmail.com
 bailey\100newman.upenn.edu              bailey\100hmivax.humgen.upenn.edu
 +                                       bailey\100genetics.upenn.edu
 +                                       bailey.charles\100gmail.com
@@ -575,12 +843,14 @@ bulk88\100hotmail.com                   bulk88
 
 chad.granum\100dreamhost.com            exodist7\100gmail.com
 choroba\100cpan.org                     choroba\100weed.(none)
++                                       choroba\100matfyz.cz
 chromatic\100wgz.org                    chromatic\100rmci.net
 ckuskie\100cadence.com                  colink\100perldreamer.com
 claes\100surfar.nu                      claes\100versed.se
 clintp\100geeksalad.org                 cpierce1\100ford.com
 clkao\100clkao.org                      clkao\100bestpractical.com
 corion\100corion.net                    corion\100cpan.org
++                                       github@corion.net
 cp\100onsitetech.com                    publiustemp-p5p\100yahoo.com
 +                                       publiustemp-p5p3\100yahoo.com
 cpan\100audreyt.org                     autrijus\100egb.elixus.org
@@ -668,9 +938,11 @@ jari.aalto\100poboxes.com               jari.aalto\100cante.net
 jarausch\100numa1.igpm.rwth-aachen.de   helmutjarausch\100unknown
 jasons\100cs.unm.edu                    jasons\100sandy-home.arc.unm.edu
 jbuehler\100hekimian.com                jhpb\100hekimian.com
-jcromie\100100divsol.com                jcromie\100cpan.org
+jcromie\100cpan.org                      jcromie\100100divsol.com
 +                                       jim.cromie\100gmail.com
 jd\100cpanel.net                        lightsey\100debian.org
++                                       john\10004755.net
++                                       john\100nixnuts.net
 jdhedden\100cpan.org                    jerry\100hedden.us
 +                                       jdhedden\1001979.usna.com
 +                                       jdhedden\100gmail.com
@@ -786,7 +1058,7 @@ ilya\100math.berkeley.edu               ilya\100math.ohio-state.edu
 +                                       [9]ilya\100math.ohio-state.edu
 ilya\100martynov.org                    ilya\100juil.nonet
 
-joshua.pritikin\100db.com               joshua\100paloalto.com
+joshua\100paloalto.com                  joshua.pritikin\100db.com
 
 litt\100acm.org                         tlhackque\100yahoo.com
 
@@ -803,7 +1075,9 @@ p5-authors\100crystalflame.net          perl\100crystalflame.net
 +                                       rs\100topsy.com
 paul.green\100stratus.com               paul_greenvos\100vos.stratus.com
 +                                       pgreen\100seussnt.stratus.com
-paul.marquess\100btinternet.com         paul_marquess\100yahoo.co.uk
+pmqs                                    pmqs\100cpan.org
++                                       paul.marquess\100btinternet.com
++                                       paul_marquess\100yahoo.co.uk
 +                                       paul.marquess\100ntlworld.com
 +                                       paul.marquess\100openwave.com
 +                                       pmarquess\100bfsec.bt.co.uk
@@ -820,9 +1094,11 @@ Peter.Dintelmann\100Dresdner-Bank.com   peter.dintelmann\100dresdner-bank.com
 # NOTE: There is an intentional trailing space in the line above
 pfeifer\100wait.de                      pfeifer\100charly.informatik.uni-dortmund.de
 +                                       upf\100de.uu.net
+pjacklam\100online.no                   pjacklam\100gmail.com
 ribasushi@cpan.org			rabbit\100rabbit.us
 +					rabbit+bugs\100rabbit.us
-perl\100aaroncrane.co.uk		arc\100cpan.org
+arc\100cpan.org                         perl\100aaroncrane.co.uk
++                                       arc@users.noreply.github.com
 phil\100perkpartners.com                phil\100finchcomputer.com
 pimlott\100idiomtech.com                andrew\100pimlott.net
 +                                       pimlott\100abel.math.harvard.edu
@@ -838,13 +1114,14 @@ khw\100cpan.org                         khw\100karl.(none)
 radu\100netsoft.ro                      rgreab\100fx.ro
 rajagopa\100pauline.schrodinger.com     rajagopa\100schrodinger.com
 raphael.manfredi\100pobox.com           raphael_manfredi\100grenoble.hp.com
-module@renee-baecker.de                 renee.baecker\100smart-websolutions.de
+module\100renee-baecker.de              renee.baecker\100smart-websolutions.de
 +                                       reneeb\100reneeb-desktop.(none)
-+                                       github@renee-baecker.de
++                                       github\100renee-baecker.de
 +                                       otrs\100ubuntu.(none)
 +                                       perl\100renee-baecker.de
 +                                       reb\100perl-services.de
 +                                       info\100perl-services.de
+rich+perl\100hyphen-dash-hyphen.info    richardleach\100users.noreply.github.com
 richard.foley\100rfi.net                richard.foley\100t-online.de
 +                                       richard.foley\100ubs.com
 +                                       richard.foley\100ubsw.com
@@ -854,6 +1131,7 @@ rick\100consumercontact.com             rick\100bort.ca
 +                                       rick.delaney\100home.com
 rjbs\100cpan.org                        rjbs-perl-p5p\100lists.manxome.org
 +                                       perl.p5p\100rjbs.manxome.org
++                                       rjbs\100semiotic.systems
 rjk\100linguist.dartmouth.edu           rjk\100linguist.thayer.dartmouth.edu
 +                                       rjk-perl-p5p\100tamias.net
 +                                       rjk\100tamias.net
@@ -874,12 +1152,13 @@ roderick\100argon.org                   roderick\100gate.net
 argrath\100ub32.org                     root\100ub32.org
 rootbeer\100teleport.com                rootbeer\100redcat.com
 +                                       tomphoenix\100unknown
-rurban\100x-ray.at                      rurban\100cpan.org
+rra\100stanford.edu                     rra\100cpan.org
+rurban\100cpan.org                      rurban\100x-ray.at
 +                                       rurban\100cpanel.net
 rvtol+news\100isolution.nl              rvtol\100isolution.nl
-sartak\100bestpractical.com             sartak\100gmail.com
+sartak\100gmail.com                     sartak\100bestpractical.com
 +                                       code\100sartak.org
-sadinoff\100olf.com                     danny-cpan\100sadinoff.com
+danny-cpan\100sadinoff.com              sadinoff\100olf.com
 schubiger\100cpan.org                   steven\100accognoscere.org
 +                                       sts\100accognoscere.org
 +                                       schubiger\100gmail.com
@@ -900,11 +1179,12 @@ shlomif\100cpan.org                     shlomif\100vipe.technion.ac.il
 +                                       shlomif\100iglu.org.il
 +                                       shlomif+processed-by-perl\100gmail.com
 +                                       shlomif\100shlomifish.org
-simon\100simon-cozens.org               simon\100pembro4.pmb.ox.ac.uk
+simon\100netthink.co.uk                 simon\100simon-cozens.org
++                                       simon\100pembro4.pmb.ox.ac.uk
 +                                       simon\100brecon.co.uk
 +                                       simon\100othersideofthe.earth.li
 +                                       simon\100cozens.net
-+                                       simon\100netthink.co.uk
++
 sisyphus\100cpan.org                    sisyphus1\100optusnet.com.au
 +                                       sisyphus359\100gmail.com
 lannings\100who.int                     lannings\100gmail.com
@@ -926,7 +1206,7 @@ spider\100orb.nashua.nh.us              spider\100web.zk3.dec.com
 +                                       spidb\100cpan.org
 +                                       spider.boardman\100orb.nashua.nh.us
 +                                       root\100peano.zk3.dec.com
-spiros\100lokku.com			s.denaxas\100gmail.com
+s.denaxas\100gmail.com                  spiros\100lokku.com
 spp\100ds.net                           spp\100psa.pencom.com
 +                                       spp\100psasolar.colltech.com
 +                                       spp\100spotter.yi.org

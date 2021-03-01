@@ -258,6 +258,7 @@ void sendMTFValues ( EState* s )
 
    UInt16* mtfv = s->mtfv;
 
+   ((void)nBytes); /* Silence variable ‘nBytes’ set but not used warning */
    if (s->verbosity >= 3)
       VPrintf3( "      %d in block, %d after MTF & 1-2 coding, "
                 "%d+2 syms in use\n", 

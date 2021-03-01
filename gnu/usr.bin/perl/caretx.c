@@ -77,7 +77,7 @@ Perl_set_caret_X(pTHX) {
     mib[3] = -1;
 
     if (sysctl(mib, 4, NULL, &size, NULL, 0) == 0
-        && size > 0 && size < MAXPATHLEN * MAXPATHLEN) {
+        && inRANGE(size, 1, -1 + MAXPATHLEN * MAXPATHLEN)) {
         sv_grow(caret_x, size);
 
         if (sysctl(mib, 4, SvPVX(caret_x), &size, NULL, 0) == 0

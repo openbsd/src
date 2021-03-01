@@ -12,7 +12,7 @@ BEGIN {
         exit(0);
     }
 
-    # http://lists.alioth.debian.org/pipermail/perl-maintainers/2011-June/002285.html
+    # https://lists.alioth.debian.org/pipermail/perl-maintainers/2011-June/002285.html
     # There _is_ TLS support on m68k, but this stress test is overwhelming
     # for the hardware
     if ($^O eq 'linux' && $Config{archname} =~ /^m68k/) {
@@ -83,7 +83,7 @@ use threads::shared;
         print "# Looping for $busycount iterations should take about 0.025s\n";
     }
 
-    my $TIMEOUT = 600;
+    my $TIMEOUT = 60;
 
     my $mutex = 1;
     share($mutex);
@@ -179,7 +179,7 @@ use threads::shared;
     } elsif ($timeouts) {
         # Frequently fails under MSWin32 due to deadlocking bug in Windows
         # hence test is TODO under MSWin32
-        #   http://rt.perl.org/rt3/Public/Bug/Display.html?id=41574
+        #   https://rt.perl.org/rt3/Public/Bug/Display.html?id=41574
         #   http://support.microsoft.com/kb/175332
         if ($^O eq 'MSWin32') {
             print("not ok 1 # TODO - not reliable under MSWin32\n")

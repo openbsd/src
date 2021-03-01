@@ -529,7 +529,7 @@ BEGIN {
 use vars qw($VERSION $header);
 
 # bump to X.XX in blead, only use X.XX_XX in maint
-$VERSION = '1.55';
+$VERSION = '1.57';
 
 $header = "perl5db.pl version $VERSION";
 
@@ -2293,7 +2293,7 @@ sub _DB__handle_restart_and_rerun_commands {
         # Change directory to the initial current working directory on
         # the script startup, so if the debugged program changed the
         # directory, then we will still be able to find the path to the
-        # the program. (perl 5 RT #121509 ).
+        # program. (perl 5 RT #121509 ).
         chdir ($_initial_cwd);
 
         my @args = ($cmd_cmd eq 'R' ? restart() : rerun($cmd_params));
@@ -5480,6 +5480,9 @@ Display the (nested) parentage of the module or object given.
 sub cmd_i {
     my $cmd  = shift;
     my $line = shift;
+
+    require mro;
+
     foreach my $isa ( split( /\s+/, $line ) ) {
         $evalarg = $isa;
         # The &-call is here to ascertain the mutability of @_.
@@ -9154,7 +9157,7 @@ BEGIN {    # This does not compile, alas. (XXX eh?)
     $db_stop = 0;          # Compiler warning ...
     $db_stop = 1 << 30;    # ... because this is only used in an eval() later.
 
-    # This variable records how many levels we're nested in debugging. Used
+    # This variable records how many levels we're nested in debugging.
     # Used in the debugger prompt, and in determining whether it's all over or
     # not.
     $level = 0;            # Level of recursive debugging

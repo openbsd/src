@@ -14,7 +14,7 @@ require Exporter;
 @ISA = qw(Exporter);
 @EXPORT = qw(struct);
 
-$VERSION = '0.65';
+$VERSION = '0.66';
 
 my $print = 0;
 sub printem {
@@ -375,7 +375,7 @@ on the declared type of the element.
 =item Scalar (C<'$'> or C<'*$'>)
 
 The element is a scalar, and by default is initialized to C<undef>
-(but see L<Initializing with new>).
+(but see L</Initializing with new>).
 
 The accessor's argument, if any, is assigned to the element.
 

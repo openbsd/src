@@ -18,7 +18,7 @@ our @EXPORT_OK = qw(is_language_tag same_language_tag
                );
 our %EXPORT_TAGS = ('ALL' => \@EXPORT_OK);
 
-our $VERSION = "0.43";
+our $VERSION = "0.44";
 our %Panic;
 
 sub uniq { my %seen; return grep(!($seen{$_}++), @_); } # a util function
@@ -844,28 +844,28 @@ language tags with their ASCII characters shifted into Plane 14.
 
 * L<I18N::LangTags::List|I18N::LangTags::List>
 
-* RFC 3066, C<http://www.ietf.org/rfc/rfc3066.txt>, "Tags for the
+* RFC 3066, C<L<http://www.ietf.org/rfc/rfc3066.txt>>, "Tags for the
 Identification of Languages".  (Obsoletes RFC 1766)
 
-* RFC 2277, C<http://www.ietf.org/rfc/rfc2277.txt>, "IETF Policy on
+* RFC 2277, C<L<http://www.ietf.org/rfc/rfc2277.txt>>, "IETF Policy on
 Character Sets and Languages".
 
-* RFC 2231, C<http://www.ietf.org/rfc/rfc2231.txt>, "MIME Parameter
+* RFC 2231, C<L<http://www.ietf.org/rfc/rfc2231.txt>>, "MIME Parameter
 Value and Encoded Word Extensions: Character Sets, Languages, and
 Continuations".
 
-* RFC 2482, C<http://www.ietf.org/rfc/rfc2482.txt>,
+* RFC 2482, C<L<http://www.ietf.org/rfc/rfc2482.txt>>,
 "Language Tagging in Unicode Plain Text".
 
 * Locale::Codes, in
-C<http://www.perl.com/CPAN/modules/by-module/Locale/>
+C<L<http://www.perl.com/CPAN/modules/by-module/Locale/>>
 
 * ISO 639-2, "Codes for the representation of names of languages",
 including two-letter and three-letter codes,
-C<http://www.loc.gov/standards/iso639-2/php/code_list.php>
+C<L<http://www.loc.gov/standards/iso639-2/php/code_list.php>>
 
 * The IANA list of registered languages (hopefully up-to-date),
-C<http://www.iana.org/assignments/language-tags>
+C<L<http://www.iana.org/assignments/language-tags>>
 
 =head1 COPYRIGHT
 

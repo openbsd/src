@@ -9,7 +9,7 @@ BEGIN {
 
 use strict;
 use Test;
-BEGIN { plan tests => 13 };
+BEGIN { plan tests => 14 };
 
 #use Pod::Simple::Debug (10);
 
@@ -136,6 +136,16 @@ ok(
     ),
     "\n<dl>\n<dt><a name=\"howdy\"\n>Foo</a></dt>\n</dl>\n",
 );
+
+{   # Test that strip_verbatim_indent() works.  github issue #i5
+    my $output;
+
+    my $obj = Pod::Simple::HTML->new;
+    $obj->strip_verbatim_indent("  ");
+    $obj->output_string(\$output);
+    $obj->parse_string_document("=pod\n\n  First line\n  2nd line\n");
+    ok($output, qr!<pre>First line\n2nd line</pre>!s);
+}
 
 print "# And one for the road...\n";
 ok 1;

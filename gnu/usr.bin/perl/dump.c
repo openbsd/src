@@ -132,6 +132,16 @@ sequences, whereas C<"%"> is not a particularly common character in patterns.
 
 Returns a pointer to the escaped text as held by C<dsv>.
 
+=for apidoc Amnh||PERL_PV_ESCAPE_ALL
+=for apidoc Amnh||PERL_PV_ESCAPE_FIRSTCHAR
+=for apidoc Amnh||PERL_PV_ESCAPE_NOBACKSLASH
+=for apidoc Amnh||PERL_PV_ESCAPE_NOCLEAR
+=for apidoc Amnh||PERL_PV_ESCAPE_NONASCII
+=for apidoc Amnh||PERL_PV_ESCAPE_QUOTE
+=for apidoc Amnh||PERL_PV_ESCAPE_RE
+=for apidoc Amnh||PERL_PV_ESCAPE_UNI
+=for apidoc Amnh||PERL_PV_ESCAPE_UNI_DETECT
+
 =cut
 */
 #define PV_ESCAPE_OCTBUFSIZE 32
@@ -266,6 +276,10 @@ is non-null then it will be inserted after the escaped text but before
 any quotes or ellipses.
 
 Returns a pointer to the prettified text as held by C<dsv>.
+
+=for apidoc Amnh||PERL_PV_PRETTY_QUOTE
+=for apidoc Amnh||PERL_PV_PRETTY_LTGT
+=for apidoc Amnh||PERL_PV_PRETTY_ELLIPSES
 
 =cut           
 */
@@ -1004,6 +1018,26 @@ S_do_op_dump_bar(pTHX_ I32 level, UV bar, PerlIO *file, const OP *o)
         S_opdump_indent(aTHX_ o, level, bar, file, "PARENT");
         S_opdump_link(aTHX_ o, op_parent((OP*)o), file);
     }
+    else if (!OpHAS_SIBLING(o)) {
+        bool ok = TRUE;
+        OP *p = o->op_sibparent;
+        if (!p || !(p->op_flags & OPf_KIDS))
+            ok = FALSE;
+        else {
+            OP *kid = cUNOPx(p)->op_first;
+            while (kid != o) {
+                kid = OpSIBLING(kid);
+                if (!kid) {
+                    ok = FALSE;
+                    break;
+                }
+            }
+        }
+        if (!ok) {
+            S_opdump_indent(aTHX_ o, level, bar, file,
+                            "*** WILD PARENT 0x%p\n", p);
+        }
+    }
 
     if (o->op_targ && optype != OP_NULL)
 	    S_opdump_indent(aTHX_ o, level, bar, file, "TARG = %ld\n",
@@ -1271,13 +1305,13 @@ S_do_op_dump_bar(pTHX_ I32 level, UV bar, PerlIO *file, const OP *o)
 
     case OP_TRANS:
     case OP_TRANSR:
-        if (o->op_private & (OPpTRANS_FROM_UTF | OPpTRANS_TO_UTF)) {
-            /* utf8: table stored as a swash */
+        if (o->op_private & OPpTRANS_USE_SVOP) {
+            /* utf8: table stored as an inversion map */
 #ifndef USE_ITHREADS
-	/* with ITHREADS, swash is stored in the pad, and the right pad
+	/* with ITHREADS, it is stored in the pad, and the right pad
 	 * may not be active here, so skip */
             S_opdump_indent(aTHX_ o, level, bar, file,
-                            "SWASH = 0x%" UVxf "\n",
+                            "INVMAP = 0x%" UVxf "\n",
                             PTR2UV(MUTABLE_SV(cSVOPo->op_sv)));
 #endif
         }
@@ -2952,11 +2986,10 @@ Perl_op_class(pTHX_ const OP *o)
          * pointer to a table of shorts used to look up translations.
          * Under utf8, however, a simple table isn't practical; instead,
          * the OP is an SVOP (or, under threads, a PADOP),
-         * and the SV is a reference to a swash
-         * (i.e., an RV pointing to an HV).
+         * and the SV is an AV.
          */
 	return (!custom &&
-		   (o->op_private & (OPpTRANS_TO_UTF|OPpTRANS_FROM_UTF))
+		   (o->op_private & OPpTRANS_USE_SVOP)
 	       )
 #if  defined(USE_ITHREADS)
 		? OPclass_PADOP : OPclass_PVOP;

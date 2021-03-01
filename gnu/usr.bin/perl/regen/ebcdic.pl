@@ -51,10 +51,11 @@ sub get_column_headers ($$;$) {
     return $header . "*/\n";
 }
 
-sub output_table_start($$$) {
-    my ($out_fh, $TYPE, $name) = @_;
+sub output_table_start($$$;$) {
+    my ($out_fh, $TYPE, $name, $size) = @_;
 
-    my $declaration = "EXTCONST $TYPE $name\[\]";
+    $size = "" unless defined $size;
+    my $declaration = "EXTCONST $TYPE $name\[$size\]";
     print $out_fh <<EOF;
 #  ifndef DOINIT
     $declaration;
@@ -73,7 +74,7 @@ sub output_table ($$;$) {
 
     # 0 => print in decimal
     # 1 => print in hex (translates code point to code point)
-    # >= 2 => is a dfa table, like http://bjoern.hoehrmann.de/utf-8/decoder/dfa/
+    # >= 2 => is a dfa table, like https://bjoern.hoehrmann.de/utf-8/decoder/dfa/
     #      The number is how many columns in the part after the code point
     #      portion.
     #
@@ -97,7 +98,7 @@ sub output_table ($$;$) {
         print $out_fh <<'EOF';
 
 /* The table below is adapted from
- *      http://bjoern.hoehrmann.de/utf-8/decoder/dfa/
+ *      https://bjoern.hoehrmann.de/utf-8/decoder/dfa/
  * See copyright notice at the beginning of this file.
  */
 
@@ -214,7 +215,7 @@ print $out_fh <<'END';
  * More info is in utfebcdic.h
  *
  * Some of the tables are adapted from
- *      http://bjoern.hoehrmann.de/utf-8/decoder/dfa/
+ *      https://bjoern.hoehrmann.de/utf-8/decoder/dfa/
  * which requires this copyright notice:
 
 Copyright (c) 2008-2009 Bjoern Hoehrmann <bjoern@hoehrmann.de>
@@ -245,6 +246,7 @@ shift @charsets;    # ASCII is the 0th, and we don't deal with that here.
 foreach my $charset (@charsets) {
     # we process the whole array several times, make a copy
     my @a2e = @{get_a2n($charset)};
+    my @e2a;
 
     print $out_fh "\n" . get_conditional_compile_line_start($charset);
     print $out_fh "\n";
@@ -253,7 +255,6 @@ foreach my $charset (@charsets) {
     output_table(\@a2e, "PL_a2e");
 
     { # Construct the inverse
-        my @e2a;
         for my $i (0 .. 255) {
             $e2a[$a2e[$i]] = $i;
         }
@@ -481,6 +482,7 @@ END
 
         my @perl_extended_utf8_dfa;
         my @i8 = (
+                # 0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F
                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, # 00-0F
                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, # 10-1F
                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, # 20-2F
@@ -593,7 +595,7 @@ END
       #        N2
       # N6     Start byte is F[357].  Continuation byte BF transitions to N12;
       #        other continuations to N2
-      # N5     Start byte is F8.  Continuation bytes A[0-7] are illegal
+      # N7     Start byte is F8.  Continuation bytes A[0-7] are illegal
       #        (overlong); continuations A[9BDF] and B[13579BDF] transition to
       #        N14; the other continuations to N3
       # N8     Start byte is F9.  Continuation byte A0 transitions to N3; A1
@@ -606,13 +608,19 @@ END
       #        illegal (non-chars); the other continuations are legal
       # N12    Initial sequence is F[357] BF.  Continuation bytes BF
       #        transitions to N13; the other continuations to N1
-      # N13    Initial sequence is F[1357] BF BF or F8 x BF (where x is
-      #        something that can lead to a non-char.  Continuation bytes BE
-      #        and BF are illegal (non-chars); the other continuations are
+      # N13    Initial sequence is F[1357] BF BF or F8 x y BF (where x and y
+      #        are something that can lead to a non-char.  Continuation bytes
+      #        BE and BF are illegal (non-chars); the other continuations are
       #        legal
       # N14    Initial sequence is F8 A[9BDF]; or F8 B[13579BDF]; or F9 A1.
-      #        Continuation byte BF transitions to N13; the other
+      #        Continuation byte BF transitions to N15; the other
       #        continuations to N2
+      # N15    Initial sequence is F8 A[9BDF] BF; or F8 B[13579BDF] BF; or
+      #        F9 A1 BF.  Continuation byte BF transitions to N16; the other
+      #        continuations to N2
+      # N16    Initial sequence is F8 A[9BDF] BF BF; or F8 B[13579BDF] BF BF;
+      #        or F9 A1 BF BF.  Continuation bytes BE and BF are illegal
+      #        (non-chars); the other continuations are legal
       # 1      Reject.  All transitions not mentioned above (except the single
       #        byte ones (as they are always legal) are to this state.
 
@@ -632,9 +640,11 @@ END
         my $N12 = $N11 + $NUM_CLASSES;
         my $N13 = $N12 + $NUM_CLASSES;
         my $N14 = $N13 + $NUM_CLASSES;
+        my $N15 = $N14 + $NUM_CLASSES;
 
         my @strict_utf8_dfa;
         my @i8 = (
+                # 0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F
                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, # 00-0F
                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, # 10-1F
                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, # 20-2F
@@ -671,7 +681,8 @@ END
             1,1,  1,  1,  1,  1,  1,  1,  1,  1,   1,   1,   1,   1,   1,   1,   1,   0,   0,   0,   0,   0,   0, # N11
             1,1,  1,  1,  1,  1,  1,  1,  1,  1, $N1, $N1, $N1, $N1, $N1, $N1, $N1, $N1, $N1, $N1, $N1, $N1,$N13, # N12
             1,1,  1,  1,  1,  1,  1,  1,  1,  1,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   1,   1, # N13
-            1,1,  1,  1,  1,  1,  1,  1,  1,  1, $N2, $N2, $N2, $N2, $N2, $N2, $N2, $N2, $N2, $N2, $N2, $N2,$N13, # N14
+            1,1,  1,  1,  1,  1,  1,  1,  1,  1, $N2, $N2, $N2, $N2, $N2, $N2, $N2, $N2, $N2, $N2, $N2, $N2,$N15, # N14
+            1,1,  1,  1,  1,  1,  1,  1,  1,  1, $N1, $N1, $N1, $N1, $N1, $N1, $N1, $N1, $N1, $N1, $N1, $N1,$N13, # N15
         );
         output_table(\@strict_utf8_dfa, "PL_strict_utf8_dfa_tab", $NUM_CLASSES);
     }
@@ -733,6 +744,7 @@ END
 
         my @C9_utf8_dfa;
         my @i8 = (
+                # 0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F
                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, # 00-0F
                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, # 10-1F
                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, # 20-2F

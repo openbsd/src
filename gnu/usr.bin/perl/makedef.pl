@@ -59,7 +59,7 @@ BEGIN {
 	    ++$fold;
 	}
     }
-    my @PLATFORM = qw(aix win32 wince os2 netware vms test);
+    my @PLATFORM = qw(aix win32 os2 netware vms test);
     my %PLATFORM;
     @PLATFORM{@PLATFORM} = ();
 
@@ -75,8 +75,7 @@ require "./$ARGS{TARG_DIR}regen/embed_lib.pl";
 # Is the following guard strictly necessary? Added during refactoring
 # to keep the same behaviour when merging other code into here.
 process_cc_flags(@Config{qw(ccflags optimize)})
-    if $ARGS{PLATFORM} ne 'win32' && $ARGS{PLATFORM} ne 'wince'
-    && $ARGS{PLATFORM} ne 'netware';
+    if $ARGS{PLATFORM} ne 'win32' && $ARGS{PLATFORM} ne 'netware';
 
 # Add the compile-time options that miniperl was built with to %define.
 # On Win32 these are not the same options as perl itself will be built
@@ -87,12 +86,9 @@ process_cc_flags(@Config{qw(ccflags optimize)})
 # the user might have chosen to disable because the canned configs are
 # minimal configs that don't include any of those options.
 
-#don't use the host Perl's -V defines for the WinCE Perl
-if($ARGS{PLATFORM} ne 'wince') {
-    my @options = sort(Config::bincompat_options(), Config::non_bincompat_options());
-    print STDERR "Options: (@options)\n" unless $ARGS{PLATFORM} eq 'test';
-    $define{$_} = 1 foreach @options;
-}
+my @options = sort(Config::bincompat_options(), Config::non_bincompat_options());
+print STDERR "Options: (@options)\n" unless $ARGS{PLATFORM} eq 'test';
+$define{$_} = 1 foreach @options;
 
 my %exportperlmalloc =
     (
@@ -144,6 +140,7 @@ if (! $define{NO_LOCALE}) {
     }
 }
 
+# https://en.wikipedia.org/wiki/Microsoft_Visual_C%2B%2B#Internal_version_numbering
 my $cctype = $ARGS{CCTYPE} =~ s/MSVC//r;
 if (! $define{HAS_SETLOCALE} && $define{HAS_POSIX_2008_LOCALE}) {
     $define{USE_POSIX_2008_LOCALE} = 1;
@@ -207,7 +204,7 @@ sub readvar {
     my $file = $ARGS{TARG_DIR} . shift;
     my $hash = shift;
     my $proc = shift;
-    open my $vars, '<', $file or die die "Cannot open $file: $!\n";
+    open my $vars, '<', $file or die "Cannot open $file: $!\n";
 
     while (<$vars>) {
 	# All symbols have a Perl_ prefix because that's what embed.h sticks
@@ -402,6 +399,7 @@ unless ($define{'USE_ITHREADS'}) {
 		    PL_regex_pad
 		    PL_regex_padav
 		    PL_dollarzero_mutex
+		    PL_env_mutex
 		    PL_hints_mutex
 		    PL_locale_mutex
 		    PL_lc_numeric_mutex
@@ -744,6 +742,18 @@ unless ($define{'USE_QUADMATH'}) {
   ++$skip{Perl_quadmath_format_single};
 }
 
+unless ($Config{d_mbrlen}) {
+    ++$skip{PL_mbrlen_ps};
+}
+
+unless ($Config{d_mbrtowc}) {
+    ++$skip{PL_mbrtowc_ps};
+}
+
+unless ($Config{d_wcrtomb}) {
+    ++$skip{PL_wcrtomb_ps};
+}
+
 ###############################################################################
 
 # At this point all skip lists should be completed, as we are about to test
@@ -752,12 +762,12 @@ unless ($define{'USE_QUADMATH'}) {
 {
     my %seen;
     my ($embed) = setup_embed($ARGS{TARG_DIR});
-    my $excludedre = $define{'NO_MATHOMS'} ? qr/[xmib]/ : qr/[xmi]/;
+    my $excludedre = $define{'NO_MATHOMS'} ? qr/[emib]/ : qr/[emi]/;
 
     foreach (@$embed) {
 	my ($flags, $retval, $func, @args) = @$_;
 	next unless $func;
-	if (($flags =~ /[AX]/ && $flags !~ $excludedre)
+	if (($flags =~ /[AXC]/ && $flags !~ $excludedre)
             || (!$define{'NO_MATHOMS'} && $flags =~ /b/))
         {
 	    # public API, so export
@@ -815,174 +825,165 @@ try_symbols(qw(
 
 if ($ARGS{PLATFORM} eq 'win32') {
     try_symbols(qw(
-				 win32_free_childdir
-				 win32_free_childenv
-				 win32_get_childdir
-				 win32_get_childenv
-				 win32_spawnvp
-		 ));
-}
-
-if ($ARGS{PLATFORM} eq 'wince') {
-    ++$skip{'win32_isatty'}; # commit 4342f4d6df is win32-only
-}
-
-if ($ARGS{PLATFORM} =~ /^win(?:32|ce)$/) {
-    try_symbols(qw(
-			    Perl_init_os_extras
-			    Perl_thread_create
-			    Perl_win32_init
-			    Perl_win32_term
-			    RunPerl
-			    win32_async_check
-			    win32_errno
-			    win32_environ
-			    win32_abort
-			    win32_fstat
-			    win32_stat
-			    win32_pipe
-			    win32_popen
-			    win32_pclose
-			    win32_rename
-			    win32_setmode
-			    win32_chsize
-			    win32_lseek
-			    win32_tell
-			    win32_dup
-			    win32_dup2
-			    win32_open
-			    win32_close
-			    win32_eof
-			    win32_isatty
-			    win32_read
-			    win32_write
-			    win32_mkdir
-			    win32_rmdir
-			    win32_chdir
-			    win32_flock
-			    win32_execv
-			    win32_execvp
-			    win32_htons
-			    win32_ntohs
-			    win32_htonl
-			    win32_ntohl
-			    win32_inet_addr
-			    win32_inet_ntoa
-			    win32_socket
-			    win32_bind
-			    win32_listen
-			    win32_accept
-			    win32_connect
-			    win32_send
-			    win32_sendto
-			    win32_recv
-			    win32_recvfrom
-			    win32_shutdown
-			    win32_closesocket
-			    win32_ioctlsocket
-			    win32_setsockopt
-			    win32_getsockopt
-			    win32_getpeername
-			    win32_getsockname
-			    win32_gethostname
-			    win32_gethostbyname
-			    win32_gethostbyaddr
-			    win32_getprotobyname
-			    win32_getprotobynumber
-			    win32_getservbyname
-			    win32_getservbyport
-			    win32_select
-			    win32_endhostent
-			    win32_endnetent
-			    win32_endprotoent
-			    win32_endservent
-			    win32_getnetent
-			    win32_getnetbyname
-			    win32_getnetbyaddr
-			    win32_getprotoent
-			    win32_getservent
-			    win32_sethostent
-			    win32_setnetent
-			    win32_setprotoent
-			    win32_setservent
-			    win32_getenv
-			    win32_putenv
-			    win32_perror
-			    win32_malloc
-			    win32_calloc
-			    win32_realloc
-			    win32_free
-			    win32_sleep
-			    win32_pause
-			    win32_times
-			    win32_access
-			    win32_alarm
-			    win32_chmod
-			    win32_open_osfhandle
-			    win32_get_osfhandle
-			    win32_ioctl
-			    win32_link
-			    win32_unlink
-			    win32_utime
-			    win32_gettimeofday
-			    win32_uname
-			    win32_wait
-			    win32_waitpid
-			    win32_kill
-			    win32_str_os_error
-			    win32_opendir
-			    win32_readdir
-			    win32_telldir
-			    win32_seekdir
-			    win32_rewinddir
-			    win32_closedir
-			    win32_longpath
-			    win32_ansipath
-			    win32_os_id
-			    win32_getpid
-			    win32_crypt
-			    win32_dynaload
-			    win32_clearenv
-			    win32_stdin
-			    win32_stdout
-			    win32_stderr
-			    win32_ferror
-			    win32_feof
-			    win32_strerror
-			    win32_fprintf
-			    win32_printf
-			    win32_vfprintf
-			    win32_vprintf
-			    win32_fread
-			    win32_fwrite
-			    win32_fopen
-			    win32_fdopen
-			    win32_freopen
-			    win32_fclose
-			    win32_fputs
-			    win32_fputc
-			    win32_ungetc
-			    win32_getc
-			    win32_fileno
-			    win32_clearerr
-			    win32_fflush
-			    win32_ftell
-			    win32_fseek
-			    win32_fgetpos
-			    win32_fsetpos
-			    win32_rewind
-			    win32_tmpfile
-			    win32_setbuf
-			    win32_setvbuf
-			    win32_flushall
-			    win32_fcloseall
-			    win32_fgets
-			    win32_gets
-			    win32_fgetc
-			    win32_putc
-			    win32_puts
-			    win32_getchar
-			    win32_putchar
+		    win32_free_childdir
+		    win32_free_childenv
+		    win32_get_childdir
+		    win32_get_childenv
+		    win32_spawnvp
+		    Perl_init_os_extras
+		    Perl_thread_create
+		    Perl_win32_init
+		    Perl_win32_term
+		    RunPerl
+		    win32_async_check
+		    win32_errno
+		    win32_environ
+		    win32_abort
+		    win32_fstat
+		    win32_stat
+		    win32_pipe
+		    win32_popen
+		    win32_pclose
+		    win32_rename
+		    win32_setmode
+		    win32_chsize
+		    win32_lseek
+		    win32_tell
+		    win32_dup
+		    win32_dup2
+		    win32_open
+		    win32_close
+		    win32_eof
+		    win32_isatty
+		    win32_read
+		    win32_write
+		    win32_mkdir
+		    win32_rmdir
+		    win32_chdir
+		    win32_flock
+		    win32_execv
+		    win32_execvp
+		    win32_htons
+		    win32_ntohs
+		    win32_htonl
+		    win32_ntohl
+		    win32_inet_addr
+		    win32_inet_ntoa
+		    win32_socket
+		    win32_bind
+		    win32_listen
+		    win32_accept
+		    win32_connect
+		    win32_send
+		    win32_sendto
+		    win32_recv
+		    win32_recvfrom
+		    win32_shutdown
+		    win32_closesocket
+		    win32_ioctlsocket
+		    win32_setsockopt
+		    win32_getsockopt
+		    win32_getpeername
+		    win32_getsockname
+		    win32_gethostname
+		    win32_gethostbyname
+		    win32_gethostbyaddr
+		    win32_getprotobyname
+		    win32_getprotobynumber
+		    win32_getservbyname
+		    win32_getservbyport
+		    win32_select
+		    win32_endhostent
+		    win32_endnetent
+		    win32_endprotoent
+		    win32_endservent
+		    win32_getnetent
+		    win32_getnetbyname
+		    win32_getnetbyaddr
+		    win32_getprotoent
+		    win32_getservent
+		    win32_sethostent
+		    win32_setnetent
+		    win32_setprotoent
+		    win32_setservent
+		    win32_getenv
+		    win32_putenv
+		    win32_perror
+		    win32_malloc
+		    win32_calloc
+		    win32_realloc
+		    win32_free
+		    win32_sleep
+		    win32_pause
+		    win32_times
+		    win32_access
+		    win32_alarm
+		    win32_chmod
+		    win32_open_osfhandle
+		    win32_get_osfhandle
+		    win32_ioctl
+		    win32_link
+		    win32_unlink
+		    win32_utime
+		    win32_gettimeofday
+		    win32_uname
+		    win32_wait
+		    win32_waitpid
+		    win32_kill
+		    win32_str_os_error
+		    win32_opendir
+		    win32_readdir
+		    win32_telldir
+		    win32_seekdir
+		    win32_rewinddir
+		    win32_closedir
+		    win32_longpath
+		    win32_ansipath
+		    win32_os_id
+		    win32_getpid
+		    win32_crypt
+		    win32_dynaload
+		    win32_clearenv
+		    win32_stdin
+		    win32_stdout
+		    win32_stderr
+		    win32_ferror
+		    win32_feof
+		    win32_strerror
+		    win32_fprintf
+		    win32_printf
+		    win32_vfprintf
+		    win32_vprintf
+		    win32_fread
+		    win32_fwrite
+		    win32_fopen
+		    win32_fdopen
+		    win32_freopen
+		    win32_fclose
+		    win32_fputs
+		    win32_fputc
+		    win32_ungetc
+		    win32_getc
+		    win32_fileno
+		    win32_clearerr
+		    win32_fflush
+		    win32_ftell
+		    win32_fseek
+		    win32_fgetpos
+		    win32_fsetpos
+		    win32_rewind
+		    win32_tmpfile
+		    win32_setbuf
+		    win32_setvbuf
+		    win32_flushall
+		    win32_fcloseall
+		    win32_fgets
+		    win32_gets
+		    win32_fgetc
+		    win32_putc
+		    win32_puts
+		    win32_getchar
+		    win32_putchar
 		 ));
 }
 elsif ($ARGS{PLATFORM} eq 'vms') {
@@ -1278,17 +1279,15 @@ elsif ($ARGS{PLATFORM} eq 'netware') {
 		 ));
 }
 
-# When added this code was only run for Win32 and WinCE
+# When added this code was only run for Win32 (and WinCE at the time)
 # Currently only Win32 links static extensions into the shared library.
-# The WinCE makefile doesn't appear to support static extensions, so this code
-# can't have any effect there.
 # The NetWare Makefile doesn't support static extensions (and hardcodes the
 # list of dynamic extensions, and the rules to build them)
 # For *nix (and presumably OS/2) with a shared libperl, Makefile.SH compiles
 # static extensions with -fPIC, but links them to perl, not libperl.so
 # The VMS build scripts don't yet implement static extensions at all.
 
-if ($ARGS{PLATFORM} =~ /^win(?:32|ce)$/) {
+if ($ARGS{PLATFORM} eq 'win32') {
     # records of type boot_module for statically linked modules (except Dynaloader)
     my $static_ext = $Config{static_ext} // "";
     $static_ext =~ s/\//__/g;
@@ -1315,13 +1314,13 @@ if ($ARGS{PLATFORM} eq 'os2') {
 
 # Start with platform specific headers:
 
-if ($ARGS{PLATFORM} =~ /^win(?:32|ce)$/) {
+if ($ARGS{PLATFORM} eq 'win32') {
     my $dll = $define{PERL_DLL} ? $define{PERL_DLL} =~ s/\.dll$//ir
 	: "perl$Config{api_revision}$Config{api_version}";
     print "LIBRARY $dll\n";
     # The DESCRIPTION module definition file statement is not supported
     # by VC7 onwards.
-    if ($ARGS{CCTYPE} =~ /^(?:MSVC60|GCC)$/) {
+    if ($ARGS{CCTYPE} eq 'GCC') {
 	print "DESCRIPTION 'Perl interpreter'\n";
     }
     print "EXPORTS\n";
@@ -1365,7 +1364,7 @@ elsif ($ARGS{PLATFORM} eq 'netware') {
 
 my @symbols = $fold ? sort {lc $a cmp lc $b} keys %export : sort keys %export;
 foreach my $symbol (@symbols) {
-    if (PLATFORM eq 'win32' || PLATFORM eq 'wince') {
+    if (PLATFORM eq 'win32') {
 	# Remembering the origin file of each symbol is an alternative to PL_ matching
 	if (substr($symbol, 0, 3) eq 'PL_') {
 	    print "\t$symbol DATA\n";

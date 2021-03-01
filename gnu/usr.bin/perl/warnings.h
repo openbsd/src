@@ -127,6 +127,90 @@
 #define WARN_EXPERIMENTAL__UNIPROP_WILDCARDS 71
 #define WARN_EXPERIMENTAL__VLB		 72
 
+/* Warnings Categories added in Perl 5.031 */
+
+#define WARN_EXPERIMENTAL__ISA		 73
+
+
+/*
+=for apidoc Amnh||WARN_ALL
+=for apidoc Amnh||WARN_CLOSURE
+=for apidoc Amnh||WARN_DEPRECATED
+=for apidoc Amnh||WARN_EXITING
+=for apidoc Amnh||WARN_GLOB
+=for apidoc Amnh||WARN_IO
+=for apidoc Amnh||WARN_CLOSED
+=for apidoc Amnh||WARN_EXEC
+=for apidoc Amnh||WARN_LAYER
+=for apidoc Amnh||WARN_NEWLINE
+=for apidoc Amnh||WARN_PIPE
+=for apidoc Amnh||WARN_UNOPENED
+=for apidoc Amnh||WARN_MISC
+=for apidoc Amnh||WARN_NUMERIC
+=for apidoc Amnh||WARN_ONCE
+=for apidoc Amnh||WARN_OVERFLOW
+=for apidoc Amnh||WARN_PACK
+=for apidoc Amnh||WARN_PORTABLE
+=for apidoc Amnh||WARN_RECURSION
+=for apidoc Amnh||WARN_REDEFINE
+=for apidoc Amnh||WARN_REGEXP
+=for apidoc Amnh||WARN_SEVERE
+=for apidoc Amnh||WARN_DEBUGGING
+=for apidoc Amnh||WARN_INPLACE
+=for apidoc Amnh||WARN_INTERNAL
+=for apidoc Amnh||WARN_MALLOC
+=for apidoc Amnh||WARN_SIGNAL
+=for apidoc Amnh||WARN_SUBSTR
+=for apidoc Amnh||WARN_SYNTAX
+=for apidoc Amnh||WARN_AMBIGUOUS
+=for apidoc Amnh||WARN_BAREWORD
+=for apidoc Amnh||WARN_DIGIT
+=for apidoc Amnh||WARN_PARENTHESIS
+=for apidoc Amnh||WARN_PRECEDENCE
+=for apidoc Amnh||WARN_PRINTF
+=for apidoc Amnh||WARN_PROTOTYPE
+=for apidoc Amnh||WARN_QW
+=for apidoc Amnh||WARN_RESERVED
+=for apidoc Amnh||WARN_SEMICOLON
+=for apidoc Amnh||WARN_TAINT
+=for apidoc Amnh||WARN_THREADS
+=for apidoc Amnh||WARN_UNINITIALIZED
+=for apidoc Amnh||WARN_UNPACK
+=for apidoc Amnh||WARN_UNTIE
+=for apidoc Amnh||WARN_UTF8
+=for apidoc Amnh||WARN_VOID
+=for apidoc Amnh||WARN_IMPRECISION
+=for apidoc Amnh||WARN_ILLEGALPROTO
+=for apidoc Amnh||WARN_NON_UNICODE
+=for apidoc Amnh||WARN_NONCHAR
+=for apidoc Amnh||WARN_SURROGATE
+=for apidoc Amnh||WARN_EXPERIMENTAL
+=for apidoc Amnh||WARN_EXPERIMENTAL__LEXICAL_SUBS
+=for apidoc Amnh||WARN_EXPERIMENTAL__REGEX_SETS
+=for apidoc Amnh||WARN_EXPERIMENTAL__SMARTMATCH
+=for apidoc Amnh||WARN_EXPERIMENTAL__POSTDEREF
+=for apidoc Amnh||WARN_EXPERIMENTAL__SIGNATURES
+=for apidoc Amnh||WARN_SYSCALLS
+=for apidoc Amnh||WARN_EXPERIMENTAL__BITWISE
+=for apidoc Amnh||WARN_EXPERIMENTAL__CONST_ATTR
+=for apidoc Amnh||WARN_EXPERIMENTAL__RE_STRICT
+=for apidoc Amnh||WARN_EXPERIMENTAL__REFALIASING
+=for apidoc Amnh||WARN_EXPERIMENTAL__WIN32_PERLIO
+=for apidoc Amnh||WARN_LOCALE
+=for apidoc Amnh||WARN_MISSING
+=for apidoc Amnh||WARN_REDUNDANT
+=for apidoc Amnh||WARN_EXPERIMENTAL__DECLARED_REFS
+=for apidoc Amnh||WARN_EXPERIMENTAL__ALPHA_ASSERTIONS
+=for apidoc Amnh||WARN_EXPERIMENTAL__SCRIPT_RUN
+=for apidoc Amnh||WARN_SHADOW
+=for apidoc Amnh||WARN_EXPERIMENTAL__PRIVATE_USE
+=for apidoc Amnh||WARN_EXPERIMENTAL__UNIPROP_WILDCARDS
+=for apidoc Amnh||WARN_EXPERIMENTAL__VLB
+=for apidoc Amnh||WARN_EXPERIMENTAL__ISA
+
+=cut
+*/
+
 #define WARNsize			 19
 #define WARN_ALLstring			 "\125\125\125\125\125\125\125\125\125\125\125\125\125\125\125\125\125\125\125"
 #define WARN_NONEstring			 "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
@@ -141,9 +225,21 @@
 
 #define DUP_WARNINGS(p) Perl_dup_warnings(aTHX_ p)
 
+#define free_and_set_cop_warnings(cmp,w) STMT_START { \
+  if (!specialWARN((cmp)->cop_warnings)) PerlMemShared_free((cmp)->cop_warnings); \
+  (cmp)->cop_warnings = w; \
+} STMT_END
+
 /*
 
 =head1 Warning and Dieing
+
+In all these calls, the C<U32 wI<n>> parameters are warning category
+constants.  You can see the ones currently available in
+L<warnings/Category Hierarchy>, just capitalize all letters in the names
+and prefix them by C<WARN_>.  So, for example, the category C<void> used in a
+perl program becomes C<WARN_VOID> when used in XS code and passed to one of
+the calls below.
 
 =for apidoc Am|bool|ckWARN|U32 w
 

@@ -1,5 +1,5 @@
 This document is written in pod format hence there are punctuation
-characters in odd places.  Do not worry, you've apparently got the
+characters in odd places.  Do not worry, you have apparently got the
 ASCII->EBCDIC translation worked out correctly.  You can read more
 about pod in pod/perlpod.pod or the short summary in the INSTALL file.
 
@@ -19,7 +19,7 @@ Please submit comments to L<https://github.com/Perl/perl5/issues>.>
 
 This is a fully ported Perl for OS/390 Version 2 Release 3, 5, 6, 7,
 8, and 9.  It may work on other versions or releases, but those are
-the ones we've tested it on.
+the ones we have tested it on.
 
 You may need to carry out some system configuration tasks before
 running the Configure script for Perl.
@@ -52,7 +52,7 @@ If you get lots of errors of the form
 
  tar: FSUM7171 ...: cannot set uid/gid: EDC5139I Operation not permitted
 
-you didn't read the above and tried to use tar instead of pax, you'll
+you did not read the above and tried to use tar instead of pax, you'll
 first have to remove the (now corrupt) perl directory
 
    rm -rf perl-...
@@ -114,24 +114,21 @@ world readable /tmp directory if you have not already done so (see man chmod).
 
 =head2 Configure Perl on OS/390
 
-Once you've unpacked the distribution, run "sh Configure" (see INSTALL
+Once you have unpacked the distribution, run "sh Configure" (see INSTALL
 for a full discussion of the Configure options).  There is a "hints" file
 for os390 that specifies the correct values for most things.  Some things
 to watch out for include:
 
-=over 4
-
-=item *
+=head3 Shell
 
 A message of the form:
 
- (I see you are using the Korn shell.  Some ksh's blow up on
- Configure, mainly on older exotic systems.  If yours does, try the
- Bourne shell instead.)
+ (I see you are using the Korn shell.  Some ksh's blow up on Configure,
+ mainly on older exotic systems.  If yours does, try the Bourne shell instead.)
 
 is nothing to worry about at all.
 
-=item *
+=head3 Samples
 
 Some of the parser default template files in /samples are needed in /etc.
 In particular be sure that you at least copy /samples/yyparse.c to /etc
@@ -143,7 +140,12 @@ misconfigured build root and re-extract the source from the tar ball.
 Then you must ensure that /etc/yyparse.c is properly in place before
 attempting to re-run Configure.
 
-=item *
+=head3 Dynamic loading
+
+Dynamic loading is required if you want to use XS modules from CPAN (like
+DBI (and DBD's), JSON::XS, and Text::CSV_XS) or update CORE modules from
+CPAN with newer versions (like Encode) without rebuilding all of the perl
+binary.
 
 This port will support dynamic loading, but it is not selected by
 default.  If you would like to experiment with dynamic loading then
@@ -162,13 +164,24 @@ then your LIBPATH does not have the location of libperl.x and either
 libperl.dll or libperl.so in it.  Add that directory to your LIBPATH and
 proceed.
 
-=item *
+In hints/os390.sh, selecting -Dusedl will default to *also* select
+-Duseshrplib.  Having a shared plib not only requires LIBPATH to be set to
+the correct location of libperl.so but also makes it close to impossible
+to run more than one different perl that was built this way at the same
+time.
+
+All objects that are involved in -Dusedl builds should be compiled for
+this, probably by adding to all ccflags
+
+ -qexportall -qxplink -qdll -Wc,XPLINK,dll,EXPORTALL -Wl,XPLINK,dll
+
+=head3 Optimizing
 
 Do not turn on the compiler optimization flag "-O".  There is
 a bug in either the optimizer or perl that causes perl to
 not work correctly when the optimizer is on.
 
-=item *
+=head3 Config files
 
 Some of the configuration files in /etc used by the
 networking APIs are either missing or have the wrong
@@ -180,8 +193,6 @@ gethostbyname() works, and make sure that the file
 You may have to look for things like HOSTNAME and DOMAINORIGIN
 in the "//'SYS1.TCPPARMS(TCPDATA)'" PDS member in order to
 properly set up your /etc networking files.
-
-=back
 
 =head2 Build, Test, Install Perl on OS/390
 
@@ -203,6 +214,9 @@ or not you have write access to the directories you specified.
 
 "Out of memory!" messages during the build of Perl are most often fixed
 by re building the GNU make utility for OS/390 from a source code kit.
+
+Building debugging-enabled binaries (with -g or -g3) will increase the
+chance of getting these errors. Prevent -g if possible.
 
 Another memory limiting item to check is your MAXASSIZE parameter in your
 'SYS1.PARMLIB(BPXPRMxx)' data set (note too that as of V2R8 address space
@@ -230,9 +244,7 @@ installation.  You might encounter STDERR messages even during a successful
 run of "make test".  Here is a guide to some of the more commonly seen
 anomalies:
 
-=over 4
-
-=item *
+=head3 Signals
 
 A message of the form:
 
@@ -244,7 +256,7 @@ A message of the form:
 indicates that the t/io/openpid.t test of Perl has passed but done so
 with extraneous messages on stderr from CEE.
 
-=item *
+=head3 File::Temp
 
 A message of the form:
 
@@ -258,13 +270,11 @@ A message of the form:
 indicates a problem with the permissions on your /tmp directory within the HFS.
 To correct that problem issue the command:
 
-     chmod a+t /tmp
+    chmod a+t /tmp
 
 from an account with write access to the directory entry for /tmp.
 
-=item *
-
-Out of Memory!
+=head3 Out of Memory!
 
 Recent perl test suite is quite memory hungry. In addition to the comments
 above on memory limitations it is also worth checking for _CEE_RUNOPTS
@@ -289,9 +299,6 @@ case something like:
   HEAP(8M,500K,ANYWHERE,KEEP,8K,4K)
 
 is needed to get through the test suite.
-
-
-=back
 
 =head2 Installation Anomalies with Perl on OS/390
 
@@ -357,7 +364,7 @@ The problem can be further examined in a roughly equivalent C program:
 
 =head2 Modules and Extensions for Perl on OS/390
 
-Pure pure (that is non xs) modules may be installed via the usual:
+Pure Perl (that is non XS) modules may be installed via the usual:
 
     perl Makefile.PL
     make
@@ -365,11 +372,11 @@ Pure pure (that is non xs) modules may be installed via the usual:
     make install
 
 If you built perl with dynamic loading capability then that would also
-be the way to build xs based extensions.  However, if you built perl with
-the default static linking you can still build xs based extensions for OS/390
+be the way to build XS based extensions.  However, if you built perl with
+the default static linking you can still build XS based extensions for OS/390
 but you will need to follow the instructions in ExtUtils::MakeMaker for
 building statically linked perl binaries.  In the simplest configurations
-building a static perl + xs extension boils down to:
+building a static perl + XS extension boils down to:
 
     perl Makefile.PL
     make
@@ -380,7 +387,7 @@ building a static perl + xs extension boils down to:
 
 In most cases people have reported better results with GNU make rather
 than the system's /bin/make program, whether for plain modules or for
-xs based extensions.
+XS based extensions.
 
 If the make process encounters trouble with either compilation or
 linking then try setting the _C89_CCMODE to 1.  Assuming sh is your
@@ -422,12 +429,11 @@ To subscribe, send an empty message to perl-mvs-subscribe@perl.org.
 
 See also:
 
-    http://lists.perl.org/list/perl-mvs.html
+    https://lists.perl.org/list/perl-mvs.html
 
 There are web archives of the mailing list at:
 
-    http://www.xray.mpe.mpg.de/mailing-lists/perl-mvs/
-    http://archive.develooper.com/perl-mvs@perl.org/
+    https://www.nntp.perl.org/group/perl.mvs/
 
 =head1 HISTORY
 
@@ -436,15 +442,17 @@ release of Perl.
 
 This document was podified for the 5.005_03 release of Perl 11 March 1999.
 
-Updated 28 November 2001 for broken URLs.
-
 Updated 12 November 2000 for the 5.7.1 release of Perl.
 
-Updated 15 January 2001 for the 5.7.1 release of Perl.
+Updated 15 January  2001 for the 5.7.1 release of Perl.
 
-Updated 24 January 2001 to mention dynamic loading.
+Updated 24 January  2001 to mention dynamic loading.
 
-Updated 12 March 2001 to mention //'SYS1.TCPPARMS(TCPDATA)'.
+Updated 12 March    2001 to mention //'SYS1.TCPPARMS(TCPDATA)'.
+
+Updated 28 November 2001 for broken URLs.
+
+Updated 03 October  2019 for perl-5.32.0+
 
 =cut
 

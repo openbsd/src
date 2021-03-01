@@ -258,7 +258,7 @@ cstring(pTHX_ SV *sv, bool perlstyle)
 		sv_catpvs(sstr, "\\@");
 	    else if (*s == '\\')
 	    {
-		if (strchr("nrftax\\",*(s+1)))
+                if (memCHRs("nrftaebx\\",*(s+1)))
 		    sv_catpvn(sstr, s++, 2);
 		else
 		    sv_catpvs(sstr, "\\\\");
@@ -1177,11 +1177,15 @@ string(o, cv)
             break;
 
         case OP_ARGCHECK:
-            ret = Perl_newSVpvf(aTHX_ "%" IVdf ",%" IVdf, aux[0].iv, aux[1].iv);
-            if (aux[2].iv)
-                Perl_sv_catpvf(aTHX_ ret, ",%c", (char)aux[2].iv);
-            ret = sv_2mortal(ret);
-            break;
+            {
+                struct op_argcheck_aux *p = (struct op_argcheck_aux*)aux;
+                ret = Perl_newSVpvf(aTHX_ "%" IVdf ",%" IVdf,
+                                    p->params, p->opt_params);
+                if (p->slurpy)
+                    Perl_sv_catpvf(aTHX_ ret, ",%c", p->slurpy);
+                ret = sv_2mortal(ret);
+                break;
+            }
 
         default:
             ret = sv_2mortal(newSVpvn("", 0));
@@ -1215,12 +1219,16 @@ aux_list(o, cv)
             break;
 
         case OP_ARGCHECK:
-            EXTEND(SP, 3);
-            PUSHs(sv_2mortal(newSViv(aux[0].iv)));
-            PUSHs(sv_2mortal(newSViv(aux[1].iv)));
-            PUSHs(sv_2mortal(aux[2].iv ? Perl_newSVpvf(aTHX_ "%c",
-                                (char)aux[2].iv) : &PL_sv_no));
-            break;
+            {
+                struct op_argcheck_aux *p = (struct op_argcheck_aux*)aux;
+                EXTEND(SP, 3);
+                PUSHs(sv_2mortal(newSViv(p->params)));
+                PUSHs(sv_2mortal(newSViv(p->opt_params)));
+                PUSHs(sv_2mortal(p->slurpy
+                                ? Perl_newSVpvf(aTHX_ "%c", p->slurpy)
+                                : &PL_sv_no));
+                break;
+            }
 
         case OP_MULTICONCAT:
             {

@@ -121,12 +121,14 @@ to be generated in evals, such as
 For state vars, C<SVs_PADSTALE> is overloaded to mean 'not yet initialised',
 but this internal state is stored in a separate pad entry.
 
-=for apidoc AmxU|PADNAMELIST *|PL_comppad_name
+=for apidoc Amnh||SVs_PADSTALE
+
+=for apidoc AmnxU|PADNAMELIST *|PL_comppad_name
 
 During compilation, this points to the array containing the names part
 of the pad for the currently-compiling code.
 
-=for apidoc AmxU|PAD *|PL_comppad
+=for apidoc AmnxU|PAD *|PL_comppad
 
 During compilation, this points to the array containing the values
 part of the pad for the currently-compiling code.  (At runtime a CV may
@@ -134,7 +136,7 @@ have many such value arrays; at compile time just one is constructed.)
 At runtime, this points to the array containing the currently-relevant
 values for the pad for the currently-executing code.
 
-=for apidoc AmxU|SV **|PL_curpad
+=for apidoc AmnxU|SV **|PL_curpad
 
 Points directly to the body of the L</PL_comppad> array.
 (I.e., this is C<PadARRAY(PL_comppad)>.)
@@ -173,7 +175,7 @@ Perl_set_padlist(CV * cv, PADLIST *padlist){
 #endif
 
 /*
-=for apidoc Am|PADLIST *|pad_new|int flags
+=for apidoc pad_new
 
 Create a new padlist, updating the global variables for the
 currently-compiling padlist to point to the new padlist.  The following
@@ -516,7 +518,7 @@ Perl_cv_forget_slab(pTHX_ CV *cv)
 }
 
 /*
-=for apidoc m|PADOFFSET|pad_alloc_name|PADNAME *name|U32 flags|HV *typestash|HV *ourstash
+=for apidoc pad_alloc_name
 
 Allocates a place in the currently-compiling
 pad (via L<perlapi/pad_alloc>) and
@@ -561,7 +563,7 @@ S_pad_alloc_name(pTHX_ PADNAME *name, U32 flags, HV *typestash,
 }
 
 /*
-=for apidoc Am|PADOFFSET|pad_add_name_pvn|const char *namepv|STRLEN namelen|U32 flags|HV *typestash|HV *ourstash
+=for apidoc pad_add_name_pvn
 
 Allocates a place in the currently-compiling pad for a named lexical
 variable.  Stores the name and other metadata in the name part of the
@@ -633,7 +635,7 @@ Perl_pad_add_name_pvn(pTHX_ const char *namepv, STRLEN namelen,
 }
 
 /*
-=for apidoc Am|PADOFFSET|pad_add_name_pv|const char *name|U32 flags|HV *typestash|HV *ourstash
+=for apidoc pad_add_name_pv
 
 Exactly like L</pad_add_name_pvn>, but takes a nul-terminated string
 instead of a string/length pair.
@@ -650,7 +652,7 @@ Perl_pad_add_name_pv(pTHX_ const char *name,
 }
 
 /*
-=for apidoc Am|PADOFFSET|pad_add_name_sv|SV *name|U32 flags|HV *typestash|HV *ourstash
+=for apidoc pad_add_name_sv
 
 Exactly like L</pad_add_name_pvn>, but takes the name string in the form
 of an SV instead of a string/length pair.
@@ -669,7 +671,7 @@ Perl_pad_add_name_sv(pTHX_ SV *name, U32 flags, HV *typestash, HV *ourstash)
 }
 
 /*
-=for apidoc Amx|PADOFFSET|pad_alloc|I32 optype|U32 tmptype
+=for apidoc pad_alloc
 
 Allocates a place in the currently-compiling pad,
 returning the offset of the allocated pad slot.
@@ -769,7 +771,7 @@ Perl_pad_alloc(pTHX_ I32 optype, U32 tmptype)
 }
 
 /*
-=for apidoc Am|PADOFFSET|pad_add_anon|CV *func|I32 optype
+=for apidoc pad_add_anon
 
 Allocates a place in the currently-compiling pad (via L</pad_alloc>)
 for an anonymous function that is lexically scoped inside the
@@ -917,7 +919,7 @@ S_pad_check_dup(pTHX_ PADNAME *name, U32 flags, const HV *ourstash)
 
 
 /*
-=for apidoc Am|PADOFFSET|pad_findmy_pvn|const char *namepv|STRLEN namelen|U32 flags
+=for apidoc pad_findmy_pvn
 
 Given the name of a lexical variable, find its position in the
 currently-compiling pad.
@@ -982,7 +984,7 @@ Perl_pad_findmy_pvn(pTHX_ const char *namepv, STRLEN namelen, U32 flags)
 }
 
 /*
-=for apidoc Am|PADOFFSET|pad_findmy_pv|const char *name|U32 flags
+=for apidoc pad_findmy_pv
 
 Exactly like L</pad_findmy_pvn>, but takes a nul-terminated string
 instead of a string/length pair.
@@ -998,7 +1000,7 @@ Perl_pad_findmy_pv(pTHX_ const char *name, U32 flags)
 }
 
 /*
-=for apidoc Am|PADOFFSET|pad_findmy_sv|SV *name|U32 flags
+=for apidoc pad_findmy_sv
 
 Exactly like L</pad_findmy_pvn>, but takes the name string in the form
 of an SV instead of a string/length pair.
@@ -1017,7 +1019,7 @@ Perl_pad_findmy_sv(pTHX_ SV *name, U32 flags)
 }
 
 /*
-=for apidoc Amp|PADOFFSET|find_rundefsvoffset
+=for apidoc find_rundefsvoffset
 
 Until the lexical C<$_> feature was removed, this function would
 find the position of the lexical C<$_> in the pad of the
@@ -1037,7 +1039,7 @@ Perl_find_rundefsvoffset(pTHX)
 }
 
 /*
-=for apidoc Am|SV *|find_rundefsv
+=for apidoc find_rundefsv
 
 Returns the global variable C<$_>.
 
@@ -1051,7 +1053,7 @@ Perl_find_rundefsv(pTHX)
 }
 
 /*
-=for apidoc m|PADOFFSET|pad_findlex|const char *namepv|STRLEN namelen|U32 flags|const CV* cv|U32 seq|int warn|SV** out_capture|PADNAME** out_name|int *out_flags
+=for apidoc pad_findlex
 
 Find a named lexical anywhere in a chain of nested pads.  Add fake entries
 in the inner pads if it's found in an outer one.
@@ -1086,10 +1088,10 @@ S_unavailable(pTHX_ PADNAME *name)
 {
     /* diag_listed_as: Variable "%s" is not available */
     Perl_ck_warner(aTHX_ packWARN(WARN_CLOSURE),
-			"%se \"%" PNf "\" is not available",
+			"%s \"%" PNf "\" is not available",
 			 *PadnamePV(name) == '&'
-					 ? "Subroutin"
-					 : "Variabl",
+					 ? "Subroutine"
+					 : "Variable",
 			 PNfARG(name));
 }
 
@@ -1205,8 +1207,8 @@ S_pad_findlex(pTHX_ const char *namepv, STRLEN namelen, U32 flags, const CV* cv,
 			/* diag_listed_as: Variable "%s" will not stay
 					   shared */
 			Perl_warner(aTHX_ packWARN(WARN_CLOSURE),
-			    "%se \"%" UTF8f "\" will not stay shared",
-			     *namepv == '&' ? "Subroutin" : "Variabl",
+			    "%s \"%" UTF8f "\" will not stay shared",
+			     *namepv == '&' ? "Subroutine" : "Variable",
 			     UTF8fARG(1, namelen, namepv));
 		    }
 
@@ -1334,7 +1336,7 @@ S_pad_findlex(pTHX_ const char *namepv, STRLEN namelen, U32 flags, const CV* cv,
 #ifdef DEBUGGING
 
 /*
-=for apidoc Am|SV *|pad_sv|PADOFFSET po
+=for apidoc pad_sv
 
 Get the value at offset C<po> in the current (compiling or executing) pad.
 Use macro C<PAD_SV> instead of calling this function directly.
@@ -1357,7 +1359,7 @@ Perl_pad_sv(pTHX_ PADOFFSET po)
 }
 
 /*
-=for apidoc Am|void|pad_setsv|PADOFFSET po|SV *sv
+=for apidoc pad_setsv
 
 Set the value at offset C<po> in the current (compiling or executing) pad.
 Use the macro C<PAD_SETSV()> rather than calling this function directly.
@@ -1382,7 +1384,7 @@ Perl_pad_setsv(pTHX_ PADOFFSET po, SV* sv)
 #endif /* DEBUGGING */
 
 /*
-=for apidoc m|void|pad_block_start|int full
+=for apidoc pad_block_start
 
 Update the pad compilation state variables on entry to a new block.
 
@@ -1415,7 +1417,7 @@ Perl_pad_block_start(pTHX_ int full)
 }
 
 /*
-=for apidoc Am|U32|intro_my
+=for apidoc intro_my
 
 "Introduce" C<my> variables to visible status.  This is called during parsing
 at the end of each statement to make lexical variables visible to subsequent
@@ -1468,7 +1470,7 @@ Perl_intro_my(pTHX)
 }
 
 /*
-=for apidoc m|void|pad_leavemy
+=for apidoc pad_leavemy
 
 Cleanup at end of scope during compilation: set the max seq number for
 lexicals in this scope and warn of any lexicals that never got introduced.
@@ -1524,7 +1526,7 @@ Perl_pad_leavemy(pTHX)
 }
 
 /*
-=for apidoc m|void|pad_swipe|PADOFFSET po|bool refadjust
+=for apidoc pad_swipe
 
 Abandon the tmp in the current pad at offset C<po> and replace with a
 new one.
@@ -1576,7 +1578,7 @@ Perl_pad_swipe(pTHX_ PADOFFSET po, bool refadjust)
 }
 
 /*
-=for apidoc m|void|pad_reset
+=for apidoc pad_reset
 
 Mark all the current temporaries for reuse
 
@@ -1611,7 +1613,7 @@ S_pad_reset(pTHX)
 }
 
 /*
-=for apidoc Amx|void|pad_tidy|padtidy_type type
+=for apidoc pad_tidy
 
 Tidy up a pad at the end of compilation of the code to which it belongs.
 Jobs performed here are: remove most stuff from the pads of anonsub
@@ -1729,7 +1731,7 @@ Perl_pad_tidy(pTHX_ padtidy_type type)
 }
 
 /*
-=for apidoc m|void|pad_free|PADOFFSET po
+=for apidoc pad_free
 
 Free the SV at offset po in the current pad.
 
@@ -1767,7 +1769,7 @@ Perl_pad_free(pTHX_ PADOFFSET po)
 }
 
 /*
-=for apidoc m|void|do_dump_pad|I32 level|PerlIO *file|PADLIST *padlist|int full
+=for apidoc do_dump_pad
 
 Dump the contents of a padlist
 
@@ -1839,7 +1841,7 @@ Perl_do_dump_pad(pTHX_ I32 level, PerlIO *file, PADLIST *padlist, int full)
 #ifdef DEBUGGING
 
 /*
-=for apidoc m|void|cv_dump|CV *cv|const char *title
+=for apidoc cv_dump
 
 dump the contents of a CV
 
@@ -1878,7 +1880,7 @@ S_cv_dump(pTHX_ const CV *cv, const char *title)
 #endif /* DEBUGGING */
 
 /*
-=for apidoc Am|CV *|cv_clone|CV *proto
+=for apidoc cv_clone
 
 Clone a CV, making a lexical closure.  C<proto> supplies the prototype
 of the function: its code, pad structure, and other attributes.
@@ -2127,7 +2129,6 @@ S_cv_clone_pad(pTHX_ CV *proto, CV *cv, CV *outside, HV *cloned,
 	 * from the parent */
 	if (const_sv && SvREFCNT(const_sv) == 2) {
 	    const bool was_method = cBOOL(CvMETHOD(cv));
-	    bool copied = FALSE;
 	    if (outside) {
 		PADNAME * const pn =
 		    PadlistNAMESARRAY(CvPADLIST(outside))
@@ -2156,28 +2157,15 @@ S_cv_clone_pad(pTHX_ CV *proto, CV *cv, CV *outside, HV *cloned,
 			) == o
 		     && !OpSIBLING(o))
 		    {
-			Perl_ck_warner_d(aTHX_
-					  packWARN(WARN_DEPRECATED),
-					 "Constants from lexical "
-					 "variables potentially "
-					 "modified elsewhere are "
-					 "deprecated. This will not "
-                                         "be allowed in Perl 5.32");
-			/* We *copy* the lexical variable, and donate the
-			   copy to newCONSTSUB.  Yes, this is ugly, and
-			   should be killed.  We need to do this for the
-			   time being, however, because turning on SvPADTMP
-			   on a lexical will have observable effects
-			   elsewhere.  */
-			const_sv = newSVsv(const_sv);
-			copied = TRUE;
+                        Perl_croak(aTHX_
+                            "Constants from lexical variables potentially modified "
+                            "elsewhere are no longer permitted");
 		    }
 		    else
 			goto constoff;
 		}
 	    }
-	    if (!copied)
-		SvREFCNT_inc_simple_void_NN(const_sv);
+            SvREFCNT_inc_simple_void_NN(const_sv);
 	    /* If the lexical is not used elsewhere, it is safe to turn on
 	       SvPADTMP, since it is only when it is used in lvalue con-
 	       text that the difference is observable.  */
@@ -2279,6 +2267,8 @@ If C<flags> has the C<CV_NAME_NOTQUAL> bit set, then the package name will not b
 included.  If the first argument is neither a CV nor a GV, this flag is
 ignored (subject to change).
 
+=for apidoc Amnh||CV_NAME_NOTQUAL
+
 =cut
 */
 
@@ -2316,7 +2306,7 @@ Perl_cv_name(pTHX_ CV *cv, SV *sv, U32 flags)
 }
 
 /*
-=for apidoc m|void|pad_fixup_inner_anons|PADLIST *padlist|CV *old_cv|CV *new_cv
+=for apidoc pad_fixup_inner_anons
 
 For any anon CVs in the pad, change C<CvOUTSIDE> of that CV from
 C<old_cv> to C<new_cv> if necessary.  Needed when a newly-compiled CV has to be
@@ -2388,7 +2378,7 @@ Perl_pad_fixup_inner_anons(pTHX_ PADLIST *padlist, CV *old_cv, CV *new_cv)
 }
 
 /*
-=for apidoc m|void|pad_push|PADLIST *padlist|int depth
+=for apidoc pad_push
 
 Push a new pad frame onto the padlist, unless there's already a pad at
 this depth, in which case don't bother creating a new one.  Then give
@@ -2763,6 +2753,8 @@ Constructs and returns a new pad name.  Only use this function for names
 that refer to outer lexicals.  (See also L</newPADNAMEpvn>.)  C<outer> is
 the outer pad name that this one mirrors.  The returned pad name has the
 C<PADNAMEt_OUTER> flag already set.
+
+=for apidoc Amnh||PADNAMEt_OUTER
 
 =cut
 */

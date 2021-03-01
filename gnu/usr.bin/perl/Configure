@@ -28,7 +28,7 @@
 # Porting/pumpkin.pod.
 
 # Generated using [metaconfig 3.5 PL0]
-# (with additional metaconfig patches by perlbug@perl.org)
+# with additional metaconfig patches from https://github.com/Perl/metaconfig
 
 cat >c1$$ <<EOF
 ARGGGHHHH!!!!!
@@ -382,6 +382,7 @@ asctime_r_proto=''
 d_asctime_r=''
 d_asinh=''
 d_atanh=''
+d_attribute_always_inline=''
 d_attribute_deprecated=''
 d_attribute_format=''
 d_attribute_malloc=''
@@ -657,6 +658,7 @@ d_lstat=''
 d_madvise=''
 d_malloc_good_size=''
 d_malloc_size=''
+d_malloc_usable_size=''
 d_mblen=''
 d_mbrlen=''
 d_mbrtowc=''
@@ -831,6 +833,7 @@ d_scm_rights=''
 d_sin6_scope_id=''
 d_sockaddr_in6=''
 d_sockaddr_sa_len=''
+d_sockaddr_storage=''
 d_socket=''
 d_sockpair=''
 sockethdr=''
@@ -932,6 +935,7 @@ d_voidsig=''
 signal_t=''
 d_wait4=''
 d_waitpid=''
+d_wcrtomb=''
 d_wcscmp=''
 d_wcstombs=''
 d_wcsxfrm=''
@@ -1534,7 +1538,7 @@ case "$sh" in
 $me:  Fatal Error:  I can't find a Bourne Shell anywhere.
 
 Usually it's in /bin/sh.  How did you even get this far?
-Please contact me (Perl Maintainers) at https://github.com/Perl/perl5/issues
+Please report this issue at https://github.com/Perl/perl5/issues
 and we'll try to straighten this all out.
 EOM
 	exit 1
@@ -4169,14 +4173,9 @@ EOSC
 
 : determine root of directory hierarchy where package will be installed.
 case "$prefix" in
-'')
-	dflt=`./loc . /usr/local /usr/local /local /opt /usr`
+'')	dflt=`./loc . /usr/local /usr/local /local /opt /usr`
 	;;
-*?/)
-	dflt=`echo "$prefix" | sed 's/.$//'`
-	;;
-*)
-	dflt="$prefix"
+*)	dflt="$prefix"
 	;;
 esac
 $cat <<EOM
@@ -4195,16 +4194,25 @@ rp='Installation prefix to use?'
 . ./getfile
 oldprefix=''
 case "$prefix" in
-'') ;;
-*)
-	case "$ans" in
+'')	;;
+*)	case "$ans" in
 	"$prefix") ;;
 	*) oldprefix="$prefix";;
 	esac
 	;;
 esac
-prefix="$ans"
-prefixexp="$ansexp"
+
+case "$ans" in
+*?/)	prefix=`echo "$ans" | sed 's/.$//'`
+	;;
+*)	prefix="$ans"
+esac
+
+case "$ansexp" in
+*?/)	prefixexp=`echo "$ansexp" | sed 's/.$//'`
+	;;
+*)	prefixexp="$ansexp"
+esac
 
 : allow them to override the AFS root
 case "$afsroot" in
@@ -5481,25 +5489,6 @@ default|recommended)
 	2.[0-8]*) ;;
 	?*)	set strict-aliasing -fno-strict-aliasing
 		eval $checkccflag
-		;;
-	esac
-	case "$gccversion" in
-	1*) ;;
-	2*) ;;
-	?*) 	echo " "
-		echo "Checking if your compiler accepts -fno-delete-null-pointer-checks" 2>&1
-		echo 'int main(void) { return 0; }' > gcctest.c
-		if $cc -O2 -fno-delete-null-pointer-checks -o gcctest gcctest.c; then
-			echo "Yes, it does." 2>&1
-			case "$ccflags" in
-			*delete-null-pointer-checks*)
-				echo "Leaving current flags $ccflags alone." 2>&1
-				;;
-			*) dflt="$dflt -fno-delete-null-pointer-checks" ;;
-			esac
-		else
-			echo "Nope, it doesn't, but that's ok." 2>&1
-		fi
 		;;
 	esac
 	# For gcc, adding -pipe speeds up compilations for some, but apparently
@@ -7275,7 +7264,7 @@ prefixit='case "$3" in
 		none)
 			eval "tp=\"\$$2\"";
 			case "$tp" in
-			""|" ") eval "$1=\"\$$2\"";;
+			""|" "|none) eval "$1=\"\$$2\"";;
 			*) eval "$1=";;
 			esac;;
 		esac;;
@@ -8129,6 +8118,10 @@ while $test 1 ; do
 	$define|true|[yY]*)
 		dflt='y'
 		;;
+	$undef|false|[nN]*)
+		dflt='n'
+		dflt_dtrace=""
+		;;
 	?*)
 		dflt='y'
 		dflt_dtrace=$usedtrace
@@ -8565,7 +8558,7 @@ EOM
 	if $test "X$sysroot" != X; then
 	    case "$gccversion" in
 		'') ;;
-		*)  dflt="$dflt --sysroot $sysroot" ;;
+		*)  dflt="$dflt --sysroot=$sysroot" ;;
 	    esac
 	fi
 
@@ -9626,16 +9619,12 @@ prefixvar=sitescript
 set backtrace d_backtrace
 eval $inlibc
 
-: add flags if using c backtrace
+: Check if C backtrace is actually supported.
 case "$usecbacktrace" in
   "") usecbacktrace=$undef ;;
   [yY]*|true|$define)
     case "$d_backtrace" in
       [yY]*|true|$define)
-        case " $ccflags " in
-	  *" -DUSE_C_BACKTRACE "*) ;; # Already there.
-	  *) ccflags="$ccflags -DUSE_C_BACKTRACE -g" ;;
-	  esac
         ;;
       *)
         echo "This system does not support backtrace" >&4
@@ -10397,15 +10386,15 @@ esac
 $cat >>try.c <<EOP
 #ifdef TRY_gconvert
 #define Gconvert(x,n,t,b) gconvert((x),(n),(t),(b))
-char *myname = "gconvert";
+const char *myname = "gconvert";
 #endif
 #ifdef TRY_gcvt
 #define Gconvert(x,n,t,b) gcvt((x),(n),(b))
-char *myname = "gcvt";
+const char *myname = "gcvt";
 #endif
 #ifdef TRY_qgcvt
 #define Gconvert(x,n,t,b) qgcvt((x),(n),(b))
-char *myname = "qgcvt";
+const char *myname = "qgcvt";
 #define DOUBLETYPE long double
 #endif
 #ifdef TRY_sprintf
@@ -10418,7 +10407,7 @@ char *myname = "qgcvt";
 #else
 #define Gconvert(x,n,t,b) sprintf((b),"%.*g",(n),(x))
 #endif
-char *myname = "sprintf";
+const char *myname = "sprintf";
 #endif
 
 #ifndef DOUBLETYPE
@@ -10437,7 +10426,7 @@ char *myname = "sprintf";
 #endif
 #include <string.h>
 
-int checkit(char *expect, char *got)
+void checkit(const char *expect, char *got)
 {
     if (strcmp(expect, got)) {
 		printf("%s oddity:  Expected %s, got %s\n",
@@ -10586,6 +10575,7 @@ for xxx_convert in $xxx_list; do
 		fi
 	else
 		echo "$xxx_convert NOT found." >&4
+		xxx_convert=''
 	fi
 done
 
@@ -11263,6 +11253,34 @@ set d_attribute_warn_unused_result
 eval $setvar
 $rm -f attrib*
 
+: Look for GCC-style attribute always_inline
+case "$d_attribute_always_inline" in
+'')
+echo " "
+echo "Checking whether your compiler can handle __attribute__((always_inline)) ..." >&4
+$cat >attrib.c <<'EOCP'
+#include <stdio.h>
+static __inline__ __attribute__((always_inline)) int I_will_always_be_inlined(void);
+EOCP
+if $cc $ccflags -c attrib.c >attrib.out 2>&1 ; then
+	if $contains 'warning' attrib.out >/dev/null 2>&1; then
+		echo "Your C compiler doesn't support __attribute__((always_inline))."
+		val="$undef"
+	else
+		echo "Your C compiler supports __attribute__((always_inline))."
+		val="$define"
+	fi
+else
+	echo "Your C compiler doesn't seem to understand __attribute__ at all."
+	val="$undef"
+fi
+;;
+*) val="$d_attribute_always_inline" ;;
+esac
+set d_attribute_always_inline
+eval $setvar
+$rm -f attrib*
+
 : see if getpgrp exists
 set getpgrp d_getpgrp
 eval $inlibc
@@ -11272,6 +11290,7 @@ case "$d_getpgrp" in
 	echo " "
 	echo "Checking to see which flavor of getpgrp is in use..."
 	$cat >try.c <<EOP
+#include <stdio.h>
 #$i_unistd I_UNISTD
 #include <sys/types.h>
 #ifdef I_UNISTD
@@ -11338,6 +11357,7 @@ case "$d_setpgrp" in
 	echo " "
 	echo "Checking to see which flavor of setpgrp is in use..."
 	$cat >try.c <<EOP
+#include <stdio.h>
 #$i_unistd I_UNISTD
 #include <sys/types.h>
 #ifdef I_UNISTD
@@ -11920,7 +11940,6 @@ set socketpair d_sockpair
 eval $inlibc
 
 
-echo " "
 echo "Checking the availability sa_len in the sock struct ..." >&4
 $cat >try.c <<EOF
 #include <sys/types.h>
@@ -11937,7 +11956,6 @@ fi
 set d_sockaddr_sa_len; eval $setvar
 $rm_try
 
-echo " "
 echo "Checking the availability struct sockaddr_in6 ..." >&4
 $cat >try.c <<EOF
 #include <sys/types.h>
@@ -11955,7 +11973,23 @@ fi
 set d_sockaddr_in6; eval $setvar
 $rm_try
 
-echo " "
+echo "Checking the availability struct sockaddr_storage ..." >&4
+$cat >try.c <<EOF
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+int main() {
+struct sockaddr_storage sastor;
+return (sastor.ss_family);
+}
+EOF
+val="$undef"
+set try; if eval $compile; then
+    val="$define"
+fi
+set d_sockaddr_storage; eval $setvar
+$rm_try
+
 echo "Checking the availability sin6_scope_id in struct sockaddr_in6 ..." >&4
 $cat >try.c <<EOF
 #include <sys/types.h>
@@ -11973,7 +12007,6 @@ fi
 set d_sin6_scope_id; eval $setvar
 $rm_try
 
-echo " "
 echo "Checking the availability struct ip_mreq ..." >&4
 $cat >try.c <<EOF
 #include <sys/types.h>
@@ -11991,7 +12024,6 @@ fi
 set d_ip_mreq; eval $setvar
 $rm_try
 
-echo " "
 echo "Checking the availability struct ip_mreq_source ..." >&4
 $cat >try.c <<EOF
 #include <sys/types.h>
@@ -12009,7 +12041,6 @@ fi
 set d_ip_mreq_source; eval $setvar
 $rm_try
 
-echo " "
 echo "Checking the availability struct ipv6_mreq ..." >&4
 $cat >try.c <<EOF
 #include <sys/types.h>
@@ -12027,7 +12058,6 @@ fi
 set d_ipv6_mreq; eval $setvar
 $rm_try
 
-echo " "
 echo "Checking the availability struct ipv6_mreq_source ..." >&4
 $cat >try.c <<EOF
 #include <sys/types.h>
@@ -12045,7 +12075,6 @@ fi
 set d_ipv6_mreq_source; eval $setvar
 $rm_try
 
-echo " "
 echo "Checking the availability of certain socket constants..." >&4
 for ENUM in MSG_CTRUNC MSG_DONTROUTE MSG_OOB MSG_PEEK MSG_PROXY SCM_RIGHTS; do
     enum=`$echo $ENUM|./tr '[A-Z]' '[a-z]'`
@@ -14098,9 +14127,11 @@ echo " "
 echo "Checking if you have a working futimes()" >&4
 $cat >try.c <<EOCP
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/time.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stdlib.h>
 
 int main ()
 {
@@ -15793,7 +15824,7 @@ eval $inlibc
 echo "Checking to see if you have isless..." >&4
 $cat >try.c <<EOCP
 #include <math.h>
-int main() { return isless(0.0); }
+int main() { return isless(2.0, 1.0); }
 EOCP
 set try
 if eval $compile; then
@@ -15886,27 +15917,24 @@ esac
 
 : see if lchown exists
 echo " "
-$cat > try.c <<'EOCP'
-/* System header to define __stub macros and hopefully few prototypes,
-    which can conflict with char lchown(); below.  */
-#include <assert.h>
-/* Override any gcc2 internal prototype to avoid an error.  */
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char lchown();
-int main() {
-    /*  The GNU C library defines this for functions which it implements
-        to always fail with ENOSYS.  Some functions are actually named
-	something starting with __ and the normal name is an alias.  */
-#if defined (__stub_lchown) || defined (__stub___lchown)
-choke me
-#else
-lchown();
+$cat > try.c <<EOCP
+#include <pwd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#$i_unistd	I_UNISTD
+#ifdef I_UNISTD
+#  include <unistd.h>
 #endif
-; return 0; }
+int main(int argc, char *argv[])
+{
+   if (lchown("./try.c", -1, getgid()) == -1) {
+       exit(EXIT_FAILURE);
+   }
+   exit(EXIT_SUCCESS);
+}
 EOCP
 set try
-if eval $compile; then
+if eval $compile && ./try; then
     $echo "lchown() found." >&4
     val="$define"
 else
@@ -15915,6 +15943,7 @@ else
 fi
 set d_lchown
 eval $setvar
+$rm_try
 
 : See if number of significant digits in a double precision number is known
 echo " "
@@ -16157,6 +16186,10 @@ eval $inlibc
 
 : see if malloc_size_good exists
 set malloc_good_size d_malloc_good_size
+eval $inlibc
+
+: see if malloc_usable_size exists
+set malloc_usable_size d_malloc_usable_size
 eval $inlibc
 
 : see if mblen exists
@@ -19085,9 +19118,9 @@ EOM
 #define strtoll _strtoll
 #endif
 #include <stdio.h>
-extern long long int strtoll(char *s, char **, int);
+#include <stdlib.h>
 static int bad = 0;
-int check(char *s, long long ell, int een) {
+void check(const char *s, long long ell, int een) {
 	long long gll;
 	errno = 0;
 	gll = strtoll(s, 0, 10);
@@ -19140,11 +19173,11 @@ case "$d_strtoul" in
 Checking whether your strtoul() works okay...
 EOM
 	$cat >try.c <<'EOCP'
+#include <stdlib.h>
 #include <errno.h>
 #include <stdio.h>
-extern unsigned long int strtoul(char *s, char **, int);
 static int bad = 0;
-void check(char *s, unsigned long eul, int een) {
+void check(const char *s, unsigned long eul, int een) {
 	unsigned long gul;
 	errno = 0;
 	gul = strtoul(s, 0, 10);
@@ -19220,14 +19253,14 @@ case "$d_longlong-$d_strtoull" in
 Checking whether your strtoull() works okay...
 EOM
 	$cat >try.c <<'EOCP'
+#include <stdlib.h>
 #include <errno.h>
 #ifdef __hpux
 #define strtoull __strtoull
 #endif
 #include <stdio.h>
-extern unsigned long long int strtoull(char *s, char **, int);
 static int bad = 0;
-int check(char *s, long long eull, int een) {
+void check(const char *s, long long eull, int een) {
 	long long gull;
 	errno = 0;
 	gull = strtoull(s, 0, 10);
@@ -19277,11 +19310,11 @@ case "$d_strtouq" in
 Checking whether your strtouq() works okay...
 EOM
 	$cat >try.c <<'EOCP'
+#include <stdlib.h>
 #include <errno.h>
 #include <stdio.h>
-extern unsigned long long int strtouq(char *s, char **, int);
 static int bad = 0;
-void check(char *s, unsigned long long eull, int een) {
+void check(const char *s, unsigned long long eull, int een) {
 	unsigned long long gull;
 	errno = 0;
 	gull = strtouq(s, 0, 10);
@@ -19900,6 +19933,10 @@ eval $inlibc
 
 : see if waitpid exists
 set waitpid d_waitpid
+eval $inlibc
+
+: see if wcrtomb exists
+set wcrtomb d_wcrtomb
 eval $inlibc
 
 : look for wcscmp
@@ -20593,9 +20630,9 @@ case "$ccflags" in
 	;;
 esac
 
-randfunc=drand48
-drand01="drand48()"
-seedfunc="srand48"
+randfunc=Perl_drand48
+drand01="Perl_drand48()"
+seedfunc="Perl_drand48_init"
 randbits=48
 randseedtype=U32
 
@@ -21440,7 +21477,9 @@ int
 main(int ac, char **av)
 {
   signal(SIGSEGV, exit);
-  signal(SIGBUS, exit);
+#ifdef SIGBUS
+  signal(SIGBUS,  exit);
+#endif
 
   myprintf("%s%cs all right, then\n", "that", '\'');
   exit(0);
@@ -23009,7 +23048,7 @@ M68000 m68k m88100 m88k M88KBCS_TARGET MACH machine MachTen
 MATH_HAS_NO_SIDE_EFFECTS mc300 mc500 mc68000 mc68010 mc68020
 mc68030 mc68040 mc68060 mc68k mc68k32 mc700 mc88000 mc88100
 merlin mert MiNT mips MIPSEB MIPSEL MIPS_FPSET MIPS_ISA MIPS_SIM
-MIPS_SZINT MIPS_SZLONG MIPS_SZPTR MODERN_C motorola mpeix MSDOS
+MIPS_SZINT MIPS_SZLONG MIPS_SZPTR MODERN_C motorola MSDOS
 MTXINU MULTIMAX MVS mvs M_AMD64 M_ARM M_ARMT M_COFF M_I186 M_I286
 M_I386 M_I8086 M_I86 M_I86SM M_IA64 M_IX86 M_PPC M_SYS3 M_SYS5
 M_SYSIII M_SYSV M_UNIX M_X86 M_XENIX
@@ -23447,7 +23486,6 @@ xs_extensions=''
 find_extensions='
     for xxx in *; do
 	case "$xxx" in
-	    CVS) ;;
 	    DynaLoader|dynaload) ;;
 	    *)
 	    this_ext=`echo "$xxx" | $sed -e s/-/\\\//g`;
@@ -23685,8 +23723,6 @@ esac
 nonxs_ext=''
 for xxx in $nonxs_extensions ; do
 	case "$xxx" in
-	CVS|RCS|SCCS|.svn)
-		;;
 	VMS*)
 		;;
 	*)	nonxs_ext="$nonxs_ext $xxx"
@@ -24056,6 +24092,7 @@ d_asinh='$d_asinh'
 d_atanh='$d_atanh'
 d_atolf='$d_atolf'
 d_atoll='$d_atoll'
+d_attribute_always_inline='$d_attribute_always_inline'
 d_attribute_deprecated='$d_attribute_deprecated'
 d_attribute_format='$d_attribute_format'
 d_attribute_malloc='$d_attribute_malloc'
@@ -24313,6 +24350,7 @@ d_lstat='$d_lstat'
 d_madvise='$d_madvise'
 d_malloc_good_size='$d_malloc_good_size'
 d_malloc_size='$d_malloc_size'
+d_malloc_usable_size='$d_malloc_usable_size'
 d_mblen='$d_mblen'
 d_mbrlen='$d_mbrlen'
 d_mbrtowc='$d_mbrtowc'
@@ -24480,6 +24518,7 @@ d_sitearch='$d_sitearch'
 d_snprintf='$d_snprintf'
 d_sockaddr_in6='$d_sockaddr_in6'
 d_sockaddr_sa_len='$d_sockaddr_sa_len'
+d_sockaddr_storage='$d_sockaddr_storage'
 d_sockatmark='$d_sockatmark'
 d_sockatmarkproto='$d_sockatmarkproto'
 d_socket='$d_socket'
@@ -24572,6 +24611,7 @@ d_voidtty='$d_voidtty'
 d_vsnprintf='$d_vsnprintf'
 d_wait4='$d_wait4'
 d_waitpid='$d_waitpid'
+d_wcrtomb='$d_wcrtomb'
 d_wcscmp='$d_wcscmp'
 d_wcstombs='$d_wcstombs'
 d_wcsxfrm='$d_wcsxfrm'

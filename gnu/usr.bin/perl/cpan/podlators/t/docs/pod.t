@@ -6,6 +6,7 @@
 # which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
 #
 # Written by Russ Allbery <eagle@eyrie.org>
+# Copyright 2019 Russ Allbery <eagle@eyrie.org>
 # Copyright 2012-2014
 #     The Board of Trustees of the Leland Stanford Junior University
 #
@@ -29,14 +30,15 @@
 #
 # SPDX-License-Identifier: MIT
 
-use 5.006;
+use 5.008;
 use strict;
 use warnings;
 
 use lib 't/lib';
 
-use Test::More;
 use Test::RRA qw(skip_unless_automated use_prereq);
+
+use Test::More;
 
 # Skip this test for normal user installs, although pod2man may still fail.
 skip_unless_automated('POD syntax tests');

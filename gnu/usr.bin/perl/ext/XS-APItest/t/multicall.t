@@ -69,7 +69,7 @@ use XS::APItest;
 # these take different code paths.
 # Whenever an explicit 'return' is used, it is followed by '1;' to avoid
 # the return being optimised into a leavesub.
-# Adding a 'for' loop pushes extra junk on the stack, which we we want to
+# Adding a 'for' loop pushes extra junk on the stack, which we want to
 # avoid being interpreted as a return arg.
 
 {

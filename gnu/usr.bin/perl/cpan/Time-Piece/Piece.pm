@@ -19,7 +19,7 @@ our %EXPORT_TAGS = (
     ':override' => 'internal',
     );
 
-our $VERSION = '1.33';
+our $VERSION = '1.3401';
 
 XSLoader::load( 'Time::Piece', $VERSION );
 
@@ -126,6 +126,7 @@ sub _mktime {
     if ($class->_is_time_struct($time)) {
         my @new_time = @$time;
         my @tm_parts = (@new_time[c_sec .. c_mon], $new_time[c_year]+1900);
+
         $new_time[c_epoch] = $islocal ? timelocal(@tm_parts) : timegm(@tm_parts);
 
         return wantarray ? @new_time : bless [@new_time[0..9], $islocal], $class;
@@ -805,8 +806,14 @@ sub use_locale {
     #get locale month/day names from posix strftime (from Piece.xs)
     my $locales = _get_localization();
 
-    $locales->{PM} ||= '';
-    $locales->{AM} ||= '';
+    #If AM and PM are the same, set both to ''
+    if (   !$locales->{PM}
+        || !$locales->{AM}
+        || ( $locales->{PM} eq $locales->{AM} ) )
+    {
+        $locales->{PM} = '';
+        $locales->{AM} = '';
+    }
 
     $locales->{pm} = lc $locales->{PM};
     $locales->{am} = lc $locales->{AM};
@@ -896,7 +903,7 @@ in perlfunc will still return what you expect.
 
 The module actually implements most of an interface described by
 Larry Wall on the perl5-porters mailing list here:
-L<http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/2000-01/msg00241.html>
+L<https://www.nntp.perl.org/group/perl.perl5.porters/2000/01/msg5283.html>
 
 =head1 USAGE
 
@@ -1151,6 +1158,14 @@ module is likely to fail at processing dates beyond the year 2038. There are
 moves afoot to fix that in perl. Alternatively use 64 bit perl. Or if none
 of those are options, use the L<DateTime> module which has support for years
 well into the future and past.
+
+Also, the internal representation of Time::Piece->strftime deviates from the
+standard POSIX implementation in that is uses the epoch (instead of separate
+year, month, day parts). This change was added in version 1.30. If you must
+have a more traditional strftime (which will normally never calculate day
+light saving times correctly), you can pass the date parts from Time::Piece
+into the strftime function provided by the POSIX module
+(see strftime in L<POSIX> ).
 
 =head1 AUTHOR
 

@@ -1,5 +1,5 @@
-# Jamo-12.1.0.txt
-# Date: 2019-03-08, 23:59:00 GMT [KW, LI]
+# Jamo-13.0.0.txt
+# Date: 2019-09-09, 19:46:00 GMT [KW, LI]
 # © 2019 Unicode®, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 #
@@ -8,7 +8,7 @@
 #
 # This file defines the Jamo_Short_Name property.
 #
-# See Section 3.12 of The Unicode Standard, Version 12.0
+# See Section 3.12 of The Unicode Standard, Version 13.0
 # for more information.
 #
 # Each line contains two fields, separated by a semicolon.

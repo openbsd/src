@@ -98,6 +98,9 @@ no C<m/\A=cut/> line.
  it wouldn't be worth the confusion of having perl and pod2whatever
  actually disagree on what can constitute a Pod block.
 
+Note that a parser is not expected to distinguish between something that
+looks like pod, but is in a quoted string, such as a here document.
+
 Within a Pod block, there are B<Pod paragraphs>.  A Pod paragraph
 consists of non-blank lines of text, separated by one or more blank
 lines.
@@ -1229,21 +1232,21 @@ For example:
         'pod',                         # what sort of link
         "/Object Attributes"           # original content
 
-  L<http://www.perl.org/>
+  L<https://www.perl.org/>
     =>  undef,                         # link text
-        "http://www.perl.org/",        # possibly inferred link text
-        "http://www.perl.org/",        # name
+        "https://www.perl.org/",       # possibly inferred link text
+        "https://www.perl.org/",       # name
         undef,                         # section
         'url',                         # what sort of link
-        "http://www.perl.org/"         # original content
+        "https://www.perl.org/"         # original content
 
-  L<Perl.org|http://www.perl.org/>
+  L<Perl.org|https://www.perl.org/>
     =>  "Perl.org",                    # link text
-        "http://www.perl.org/",        # possibly inferred link text
-        "http://www.perl.org/",        # name
+        "https://www.perl.org/",       # possibly inferred link text
+        "https://www.perl.org/",       # name
         undef,                         # section
         'url',                         # what sort of link
-        "Perl.org|http://www.perl.org/" # original content
+        "Perl.org|https://www.perl.org/" # original content
 
 Note that you can distinguish URL-links from anything else by the
 fact that they match C<m/\A\w+:[^:\s]\S*\z/>.  So

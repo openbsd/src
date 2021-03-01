@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 379;
+use Test::More tests => 460;
 
 use Math::BigInt::Calc;
 
@@ -260,6 +260,27 @@ $x = $LIB->_new("6411906467305339182857313397200584952398");
 $y = $LIB->_new("45");
 is($LIB->_str($LIB->_rsft($x, $y, 10)), 0,
    qq|$LIB->_str($LIB->_rsft(\$x, \$y, 10)) = 0|);
+
+# _lsft() with large bases
+
+for my $xstr ("1", "2", "3") {
+    for my $nstr ("1", "2", "3") {
+        for my $bpow (25, 50, 75) {
+            my $bstr = "1" . ("0" x $bpow);
+            my $expected = $xstr . ("0" x ($bpow * $nstr));
+            my $xobj = $LIB->_new($xstr);
+            my $nobj = $LIB->_new($nstr);
+            my $bobj = $LIB->_new($bstr);
+
+            is($LIB->_str($LIB->_lsft($xobj, $nobj, $bobj)), $expected,
+               qq|$LIB->_str($LIB->_lsft($LIB->_new("$xstr"), |
+                                    . qq|$LIB->_new("$nstr"), |
+                                    . qq|$LIB->_new("$bstr")))|);
+            is($LIB->_str($nobj), $nstr, q|$n is unmodified|);
+            is($LIB->_str($bobj), $bstr, q|$b is unmodified|);
+        }
+    }
+}
 
 # _acmp
 

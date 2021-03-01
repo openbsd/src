@@ -1,5 +1,11 @@
 Revision history for Perl extension ExtUtils::CBuilder.
 
+0.280234 - 2020-01-21
+
+  Update:
+
+  - Updated standalone module from blead.
+
 0.280231 - 2019-03-31
 
   Fixed:

@@ -34,7 +34,8 @@ Chris C<BinGOs> Williams, Zefram, Ævar Arnfjörð Bjarmason, Stevan
 Little, Dave Rolsky, Max Maischein, Abigail, Jesse Luehrs, Tony Cook,
 Dominic Hargreaves, Aaron Crane, Aristotle Pagaltzis, Matthew Horsfall,
 Peter Martini, Sawyer X, Chad 'Exodist' Granum, Renee Bäcker, Eric Herman,
-John SJ Anderson, Karen Etheridge, Zak B. Elep, and Tom Hukins.
+John SJ Anderson, Karen Etheridge, Zak B. Elep, Tom Hukins, and Richard
+Leach.
 
 =head2 PUMPKIN?
 
@@ -65,8 +66,8 @@ the strings?).
 =head1 THE RECORDS
 
  Pump-  Release         Date            Notes
- king                                   (by no means
-                                         comprehensive,
+ kin                                    (by no means
+ Holder                                  comprehensive,
                                          see Changes*
                                          for details)
  ======================================================================
@@ -653,6 +654,8 @@ the strings?).
  Steve     5.28.1       2018-Nov-29
  Steve     5.28.2-RC1   2019-Apr-05
  Steve     5.28.2       2019-Apr-19
+ Steve     5.28.3-RC1   2020-May-18
+ Steve     5.28.3       2020-Jun-01
 
  Sawyer X  5.29.0       2018-Jun-26     The 5.29 development track
  Steve     5.29.1       2018-Jul-20
@@ -688,6 +691,20 @@ the strings?).
  Renee     5.31.9       2020-Feb-20
  Sawyer X  5.31.10      2020-Mar-20
  Sawyer X  5.31.11      2020-Apr-28
+
+ Sawyer X  5.32.0-RC0   2020-May-30     The 5.32 maintenance track
+ Sawyer X  5.32.0-RC1   2020-Jun-07
+ Sawyer X  5.32.0       2020-Jun-20
+ Steve     5.32.1-RC1   2021-Jan-09
+ Steve     5.32.1       2021-Jan-23
+
+ Sawyer X  5.33.0       2020-Jul-17     The 5.33 development track
+ Ether     5.33.1       2020-Aug-20
+ Sawyer X  5.33.2       2020-Sep-20
+ Steve     5.33.3       2020-Oct-20
+ Tom H     5.33.4       2020-Nov-20
+ Max M     5.33.5       2020-Dec-20
+ Richard L 5.33.6       2021-Jan-20
 
 =head2 SELECTED RELEASE SIZES
 
@@ -774,6 +791,7 @@ explained below.
  5.26.0         9140 121  24925 1200 40643 3017  10514 2614   7854 211
  5.28.0        13056 128  27267 1230 41745 3130  10952 2715   8185 218
  5.30.0        13535 128  26294 1237 39643 3080  11083 2711   8252 222
+ 5.32.0        14147 127  25562 1255 40869 3098  11334 2734   8407 225
 
 The "core"..."doc" mean the following files from the Perl source code
 distribution.  The glob notation ** means recursively, (.) means
@@ -1119,6 +1137,24 @@ the Perl source distribution for somewhat more selected releases.
  vos           12      7        12      7        12      7
  win32       1313     65      1326     65      1331     65
  x2p            -      -         -      -         -      -
+
+                   5.32.0
+
+ Configure:    588      1
+ Cross    :    126     15
+ djgpp    :     21      7
+ h2pl     :     24     15
+ hints    :    363     86
+ NetWare  :    484     61
+ os2      :    552     70
+ plan9    :    308     17
+ Porting  :   1482     75
+ qnx      :      5      4
+ symbian  :    307     54
+ utils    :    583     52
+ vms      :    527     12
+ vos      :     12      7
+ win32    :   1011     47
 
 =head2 SELECTED PATCH SIZES
 

@@ -4,7 +4,7 @@ perlfaq - Frequently asked questions about Perl
 
 =head1 VERSION
 
-version 5.20190126
+version 5.20200523
 
 =head1 DESCRIPTION
 
@@ -89,11 +89,11 @@ Which version of Perl should I use?
 
 =item *
 
-What are Perl 4, Perl 5, or Perl 6?
+What are Perl 4, Perl 5, or Raku (Perl 6)?
 
 =item *
 
-What is Perl 6?
+What is Raku (Perl 6)?
 
 =item *
 

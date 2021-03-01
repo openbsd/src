@@ -55,8 +55,13 @@ Perl_av_reify(pTHX_ AV *av)
 /*
 =for apidoc av_extend
 
-Pre-extend an array.  The C<key> is the index to which the array should be
-extended.
+Pre-extend an array so that it is capable of storing values at indexes
+C<0..key>. Thus C<av_extend(av,99)> guarantees that the array can store 100
+elements, i.e. that C<av_store(av, 0, sv)> through C<av_store(av, 99, sv)>
+on a plain array will work without any further memory allocation.
+
+If the av argument is a tied array then will call the C<EXTEND> tied
+array method with an argument of C<(key+1)>.
 
 =cut
 */
@@ -72,6 +77,15 @@ Perl_av_extend(pTHX_ AV *av, SSize_t key)
     mg = SvTIED_mg((const SV *)av, PERL_MAGIC_tied);
     if (mg) {
 	SV *arg1 = sv_newmortal();
+        /* NOTE: the API for av_extend() is NOT the same as the tie method EXTEND.
+         *
+         * The C function takes an *index* (assumes 0 indexed arrays) and ensures
+         * that the array is at least as large as the index provided.
+         *
+         * The tied array method EXTEND takes a *count* and ensures that the array
+         * is at least that many elements large. Thus we have to +1 the key when
+         * we call the tied method.
+         */
 	sv_setiv(arg1, (IV)(key + 1));
 	Perl_magic_methcall(aTHX_ MUTABLE_SV(av), mg, SV_CONST(EXTEND), G_DISCARD, 1,
 			    arg1);

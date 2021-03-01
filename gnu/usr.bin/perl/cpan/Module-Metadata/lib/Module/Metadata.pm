@@ -1,6 +1,6 @@
 # -*- mode: cperl; tab-width: 8; indent-tabs-mode: nil; basic-offset: 2 -*-
 # vim:ts=8:sw=2:et:sta:sts=2:tw=78
-package Module::Metadata; # git description: v1.000035-3-gaa51be1
+package Module::Metadata; # git description: v1.000036-4-g435a294
 # ABSTRACT: Gather package and POD information from perl module files
 
 # Adapted from Perl-licensed code originally distributed with
@@ -14,7 +14,7 @@ sub __clean_eval { eval $_[0] }
 use strict;
 use warnings;
 
-our $VERSION = '1.000036';
+our $VERSION = '1.000037';
 
 use Carp qw/croak/;
 use File::Spec;
@@ -383,7 +383,7 @@ sub _init {
 
   my $handle = delete $props{handle};
   my( %valid_props, @valid_props );
-  @valid_props = qw( collect_pod inc );
+  @valid_props = qw( collect_pod inc decode_pod );
   @valid_props{@valid_props} = delete( @props{@valid_props} );
   warn "Unknown properties: @{[keys %props]}\n" if scalar( %props );
 
@@ -542,6 +542,7 @@ sub _parse_fh {
   my $pod_sect = '';
   my $pod_data = '';
   my $in_end = 0;
+  my $encoding = '';
 
   while (defined( my $line = <$fh> )) {
     my $line_num = $.;
@@ -570,6 +571,9 @@ sub _parse_fh {
         $pod_sect = $1;
       }
       elsif ( $self->{collect_pod} ) {
+        if ( $self->{decode_pod} && $line =~ /^=encoding ([\w-]+)/ ) {
+          $encoding = $1;
+        }
         $pod_data .= "$line\n";
       }
       next;
@@ -656,6 +660,11 @@ sub _parse_fh {
 
   if ( $self->{collect_pod} && length($pod_data) ) {
     $pod{$pod_sect} = $pod_data;
+  }
+
+  if ( $self->{decode_pod} && $encoding ) {
+    require Encode;
+    $_ = Encode::decode( $encoding, $_ ) for values %pod;
   }
 
   $self->{versions} = \%vers;
@@ -841,7 +850,7 @@ Module::Metadata - Gather package and POD information from perl module files
 
 =head1 VERSION
 
-version 1.000036
+version 1.000037
 
 =head1 SYNOPSIS
 
@@ -865,7 +874,7 @@ in the CPAN toolchain.
 
 =head1 CLASS METHODS
 
-=head2 C<< new_from_file($filename, collect_pod => 1) >>
+=head2 C<< new_from_file($filename, collect_pod => 1, decode_pod => 1) >>
 
 Constructs a C<Module::Metadata> object given the path to a file.  Returns
 undef if the filename does not exist.
@@ -878,7 +887,10 @@ If the file begins by an UTF-8, UTF-16BE or UTF-16LE byte-order mark, then
 it is skipped before processing, and the content of the file is also decoded
 appropriately starting from perl 5.8.
 
-=head2 C<< new_from_handle($handle, $filename, collect_pod => 1) >>
+Alternatively, if C<decode_pod> is set, it will decode the collected pod
+sections according to the C<=encoding> declaration.
+
+=head2 C<< new_from_handle($handle, $filename, collect_pod => 1, decode_pod => 1) >>
 
 This works just like C<new_from_file>, except that a handle can be provided
 as the first argument.
@@ -891,15 +903,15 @@ mandatory or undef will be returned.
 You are responsible for setting the decoding layers on C<$handle> if
 required.
 
-=head2 C<< new_from_module($module, collect_pod => 1, inc => \@dirs) >>
+=head2 C<< new_from_module($module, collect_pod => 1, inc => \@dirs, decode_pod => 1) >>
 
 Constructs a C<Module::Metadata> object given a module or package name.
 Returns undef if the module cannot be found.
 
-In addition to accepting the C<collect_pod> argument as described above,
-this method accepts a C<inc> argument which is a reference to an array of
-directories to search for the module.  If none are given, the default is
-@INC.
+In addition to accepting the C<collect_pod> and C<decode_pod> arguments as
+described above, this method accepts a C<inc> argument which is a reference to
+an array of directories to search for the module.  If none are given, the
+default is @INC.
 
 If the file that contains the module begins by an UTF-8, UTF-16BE or
 UTF-16LE byte-order mark, then it is skipped before processing, and the
@@ -1070,7 +1082,7 @@ assistance from David Golden (xdg) <dagolden@cpan.org>.
 
 =head1 CONTRIBUTORS
 
-=for stopwords Karen Etheridge David Golden Vincent Pit Matt S Trout Chris Nehren Graham Knop Olivier Mengué Tomas Doran tokuhirom Christian Walde Tatsuhiko Miyagawa Peter Rabbitson Steve Hay Jerry D. Hedden Craig A. Berry Mitchell Steinbrunner Edward Zborowski Gareth Harper James Raspass 'BinGOs' Williams Josh Jore Kent Fredric
+=for stopwords Karen Etheridge David Golden Vincent Pit Matt S Trout Chris Nehren Tomas Doran Olivier Mengué Graham Knop tokuhirom Tatsuhiko Miyagawa Christian Walde Leon Timmermans Peter Rabbitson Steve Hay Jerry D. Hedden Craig A. Berry Mitchell Steinbrunner Edward Zborowski Gareth Harper James Raspass 'BinGOs' Williams Josh Jore Kent Fredric
 
 =over 4
 
@@ -1096,7 +1108,7 @@ Chris Nehren <apeiron@cpan.org>
 
 =item *
 
-Graham Knop <haarg@haarg.org>
+Tomas Doran <bobtfish@bobtfish.net>
 
 =item *
 
@@ -1104,7 +1116,7 @@ Olivier Mengué <dolmen@cpan.org>
 
 =item *
 
-Tomas Doran <bobtfish@bobtfish.net>
+Graham Knop <haarg@haarg.org>
 
 =item *
 
@@ -1112,11 +1124,15 @@ tokuhirom <tokuhirom@gmail.com>
 
 =item *
 
+Tatsuhiko Miyagawa <miyagawa@bulknews.net>
+
+=item *
+
 Christian Walde <walde.christian@googlemail.com>
 
 =item *
 
-Tatsuhiko Miyagawa <miyagawa@bulknews.net>
+Leon Timmermans <fawaka@gmail.com>
 
 =item *
 

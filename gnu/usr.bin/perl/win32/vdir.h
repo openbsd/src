@@ -334,7 +334,7 @@ inline bool IsSpecialFileName(const char* pName)
 		    break;
 		case 'O': /* COMx,  CON, CONIN$ CONOUT$ */
 		    if ((pName[2] & ~0x20) == 'M') {
-			if ((pName[3] >= '1') && (pName[3] <= '9')
+			if (    inRANGE(pName[3], '1', '9')
 			    && !pName[4])
 			    return true;
 		    }
@@ -361,7 +361,7 @@ inline bool IsSpecialFileName(const char* pName)
 	case 'L': /* LPTx */
 	    if (((pName[1] & ~0x20) == 'U')
 		&& ((pName[2] & ~0x20) == 'X')
-		&& (pName[3] >= '1') && (pName[3] <= '9')
+		&&  inRANGE(pName[3], '1', '9')
 		&& !pName[4])
 		    return true;
 	    break;
@@ -566,7 +566,7 @@ inline bool IsSpecialFileName(const WCHAR* pName)
 		    break;
 		case 'O': /* COMx,  CON, CONIN$ CONOUT$ */
 		    if ((pName[2] & ~0x20) == 'M') {
-			if ((pName[3] >= '1') && (pName[3] <= '9')
+		        if (    inRANGE(pName[3], '1', '9')
 			    && !pName[4])
 			    return true;
 		    }
@@ -593,7 +593,7 @@ inline bool IsSpecialFileName(const WCHAR* pName)
 	case 'L': /* LPTx */
 	    if (((pName[1] & ~0x20) == 'U')
 		&& ((pName[2] & ~0x20) == 'X')
-		&& (pName[3] >= '1') && (pName[3] <= '9')
+		&&  inRANGE(pName[3], '1', '9')
 		&& !pName[4])
 		    return true;
 	    break;

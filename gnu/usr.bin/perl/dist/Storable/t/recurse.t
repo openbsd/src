@@ -347,7 +347,7 @@ sub MAX_DEPTH_HASH () { Storable::stack_depth_hash() }
 eval {
     my $t;
     $t = [$t] for 1 .. MAX_DEPTH*2;
-    note 'trying catching recursive aref stack overflow';
+    eval { note('trying catching recursive aref stack overflow') };
     dclone $t;
 };
 like $@, qr/Max\. recursion depth with nested structures exceeded/,
@@ -362,7 +362,7 @@ else {
         my $t;
         # 35.000 will cause appveyor 64bit windows to fail earlier
         $t = {1=>$t} for 1 .. MAX_DEPTH * 2;
-        note 'trying catching recursive href stack overflow';
+        eval { note('trying catching recursive href stack overflow') };
         dclone $t;
     };
     like $@, qr/Max\. recursion depth with nested structures exceeded/,

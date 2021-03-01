@@ -4,7 +4,7 @@ perlfaq1 - General Questions About Perl
 
 =head1 VERSION
 
-version 5.20190126
+version 5.20200523
 
 =head1 DESCRIPTION
 
@@ -123,11 +123,11 @@ current stable release of Perl.
 
 =back
 
-=head2 What are Perl 4, Perl 5, or Perl 6?
+=head2 What are Perl 4, Perl 5, or Raku (Perl 6)?
 
-In short, Perl 4 is the parent to both Perl 5 and Perl 6. Perl 5 is the older
-sibling, and though they are different languages, someone who knows one will
-spot many similarities in the other.
+In short, Perl 4 is the parent to both Perl 5 and Raku (formerly known as
+Perl 6). Perl 5 is the older sibling, and though they are different languages,
+someone who knows one will spot many similarities in the other.
 
 The number after Perl (i.e. the 5 after Perl 5) is the major release
 of the perl interpreter as well as the version of the language. Each
@@ -138,31 +138,30 @@ The current major release of Perl is Perl 5, first released in
 1994. It can run scripts from the previous major release, Perl 4
 (March 1991), but has significant differences.
 
-Perl 6 is a reinvention of Perl, it is a language in the same lineage but
-not compatible. The two are complementary, not mutually exclusive. Perl 6 is
-not meant to replace Perl 5, and vice versa. See L</"What is Perl 6?"> below
-to find out more.
+Raku is a reinvention of Perl, a language in the same lineage but
+not compatible. The two are complementary, not mutually exclusive. Raku is
+not meant to replace Perl, and vice versa. See L</"What is Raku (Perl 6)?">
+below to find out more.
 
 See L<perlhist> for a history of Perl revisions.
 
-=head2 What is Perl 6?
+=head2 What is Raku (Perl 6)?
 
-Perl 6 was I<originally> described as the community's rewrite of Perl 5,
-however as the language evolved, it became clear that it is a separate
-language, but in the same language family as Perl 5.
+Raku (formerly known as Perl 6) was I<originally> described as the community's
+rewrite of Perl, however as the language evolved, it became clear that it is
+a separate language, but in the same language family as Perl.
 
-Perl 6 is not intended primarily as a replacement for Perl 5, but as its
-own thing - and libraries exist to allow you to call Perl 5 code from Perl
-6 programs and vice versa.
+Raku is not intended primarily as a replacement for Perl, but as its
+own thing - and libraries exist to allow you to call Perl code from Raku
+programs and vice versa.
 
-Contrary to popular belief, Perl 6 and Perl 5 peacefully coexist with one
-another. Perl 6 has proven to be a fascinating source of ideas for those
-using Perl 5 (the L<Moose> object system is a well-known example). There is
+Contrary to popular belief, Raku and Perl peacefully coexist with one
+another. Raku has proven to be a fascinating source of ideas for those
+using Perl (the L<Moose> object system is a well-known example). There is
 overlap in the communities, and this overlap fosters the tradition of sharing
 and borrowing that have been instrumental to Perl's success.
 
-If you want to learn more about Perl 6 read the Perl 6 developers
-page at L<http://www.perl6.org/> and get involved.
+For more about Raku see L<https://www.raku.org/>.
 
 "We're really serious about reinventing everything that needs reinventing."
 --Larry Wall

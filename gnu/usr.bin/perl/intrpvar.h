@@ -75,7 +75,7 @@ PERLVAR(I, multideref_pc, UNOP_AUX_item *)
 PERLVAR(I, curpm,	PMOP *)		/* what to do \ interps in REs from */
 PERLVAR(I, curpm_under,        PMOP *)                /* what to do \ interps in REs from */
 
-PERLVAR(I, tainting,	bool)		/* doing taint checks */
+PERLVAR(I, tainting,	bool)		/* ? doing taint checks */
 PERLVARI(I, tainted,	bool, FALSE)	/* using variables controlled by $< */
 
 /* PL_delaymagic is currently used for two purposes: to assure simultaneous
@@ -92,6 +92,14 @@ PERLVARI(I, tainted,	bool, FALSE)	/* using variables controlled by $< */
  * in hot code like pp_push.
  */
 PERLVAR(I, delaymagic,	U16)		/* ($<,$>) = ... */
+
+/*
+=for apidoc Amn|GV *|PL_defgv
+
+The GV representing C<*_>.  Useful for access to C<$_>.
+
+=cut
+*/
 
 PERLVAR(I, localizing,	U8)		/* are we processing a local() list? */
 PERLVAR(I, in_eval,	U8)		/* trap "fatal" errors? */
@@ -117,10 +125,26 @@ PERLVAR(I, dowarn,	U8)
 PERLVARI(I, utf8cache, I8, PERL___I)	/* Is the utf8 caching code enabled? */
 #undef PERL___I
 
+/*
+=for apidoc Amn|HV*|PL_curstash
+
+The stash for the package code will be compiled into.
+
+=cut
+*/
 
 /* Stashes */
 PERLVAR(I, defstash,	HV *)		/* main symbol table */
 PERLVAR(I, curstash,	HV *)		/* symbol table for current package */
+
+/*
+=for apidoc Amn|COP*|PL_curcop
+
+The currently active COP (control op) roughly representing the current
+statement in the source.
+
+=cut
+*/
 
 PERLVAR(I, curcop,	COP *)
 PERLVAR(I, curstack,	AV *)		/* THE STACK */
@@ -181,7 +205,6 @@ PERLVARA(I, sv_immortals, 4, SV)
 PERLVAR(I, padname_undef,	PADNAME)
 PERLVAR(I, padname_const,	PADNAME)
 PERLVAR(I, Sv,		SV *)		/* used to hold temporary values */
-
 PERLVAR(I, parser,	yy_parser *)	/* current parser state */
 
 PERLVAR(I, stashcache,	HV *)		/* Cache to speed up S_method_common */
@@ -256,6 +279,42 @@ PERLVAR(I, efloatsize,	STRLEN)
 
 PERLVARI(I, dumpindent,	U16,	4)	/* number of blanks per dump
 					   indentation level */
+
+/*
+=for apidoc Amn|U8|PL_exit_flags
+
+Contains flags controlling perl's behaviour on exit():
+
+=over
+
+=item * C<PERL_EXIT_DESTRUCT_END>
+
+If set, END blocks are executed when the interpreter is destroyed.
+This is normally set by perl itself after the interpreter is
+constructed.
+
+=item * C<PERL_EXIT_ABORT>
+
+Call C<abort()> on exit.  This is used internally by perl itself to
+abort if exit is called while processing exit.
+
+=item * C<PERL_EXIT_WARN>
+
+Warn on exit.
+
+=item * C<PERL_EXIT_EXPECTED>
+
+Set by the L<perlfunc/exit> operator.
+
+=back
+
+=for apidoc Amnh||PERL_EXIT_EXPECTED
+=for apidoc Amnh||PERL_EXIT_ABORT
+=for apidoc Amnh||PERL_EXIT_DESTRUCT_END
+=for apidoc Amnh||PERL_EXIT_WARN
+
+=cut
+*/
 
 PERLVAR(I, exit_flags,	U8)		/* was exit() unexpected, etc. */
 
@@ -557,13 +616,25 @@ PERLVAR(I, pidstatus,	HV *)		/* pid-to-status mappings for waitpid */
 #endif
 PERLVAR(I, osname,	char *)		/* operating system */
 
-PERLVAR(I, sighandlerp,	Sighandler_t)
+PERLVAR(I, sighandlerp,	 Sighandler_t)
+/* these two are provided only to solve library linkage issues; they
+ * should not be hooked by user code */
+PERLVAR(I, sighandler1p, Sighandler1_t)
+PERLVAR(I, sighandler3p, Sighandler3_t)
 
 PERLVARA(I, body_roots,	PERL_ARENA_ROOTS_SIZE, void*) /* array of body roots */
 
 PERLVAR(I, debug,	volatile U32)	/* flags given to -D switch */
 
 PERLVARI(I, padlist_generation, U32, 1)	/* id to identify padlist clones */
+
+/*
+=for apidoc Amn|runops_proc_t|PL_runops
+
+See L<perlguts/Pluggable runops>.
+
+=cut
+*/
 
 PERLVARI(I, runops,	runops_proc_t, RUNOPS_DEFAULT)
 
@@ -619,8 +690,28 @@ PERLVARI(I, phase,	enum perl_phase, PERL_PHASE_CONSTRUCT)
 
 PERLVARI(I, in_load_module, bool, FALSE)	/* to prevent recursions in PerlIO_find_layer */
 
-/* This value may be set when embedding for full cleanup  */
-/* 0=none, 1=full, 2=full with checks */
+/*
+=for apidoc Amn|signed char|PL_perl_destruct_level
+
+This value may be set when embedding for full cleanup.
+
+Possible values:
+
+=over
+
+=item * 0 - none
+
+=item * 1 - full
+
+=item * 2 or greater - full with checks.
+
+=back
+
+If C<$ENV{PERL_DESTRUCT_LEVEL}> is set to an integer greater than the
+value of C<PL_perl_destruct_level> its value is used instead.
+
+=cut
+*/
 /* mod_perl is special, and also assigns a meaning -1 */
 PERLVARI(I, perl_destruct_level, signed char,	0)
 
@@ -640,15 +731,6 @@ PERLVARI(I, underlying_numeric_obj, locale_t, NULL)
 
 #  endif
 #endif /* !USE_LOCALE_NUMERIC */
-
-/* utf8 character class swashes */
-PERLVAR(I, seen_deprecated_macro, HV *)
-
-PERLVAR(I, last_swash_hv, HV *)
-PERLVAR(I, last_swash_tmps, U8 *)
-PERLVAR(I, last_swash_slen, STRLEN)
-PERLVARA(I, last_swash_key,UTF8_MAXBYTES-1, U8)
-PERLVAR(I, last_swash_klen, U8)		/* Only needs to store 0-12  */
 
 #ifdef FCRYPT
 PERLVARI(I, cryptseen,	bool,	FALSE)	/* has fast crypt() been initialized? */
@@ -711,8 +793,6 @@ PERLVARI(I, known_layers, PerlIO_list_t *, NULL)
 PERLVARI(I, def_layerlist, PerlIO_list_t *, NULL)
 #endif
 
-PERLVAR(I, sort_RealCmp, SVCOMPARE_t)
-
 PERLVARI(I, checkav_save, AV *, NULL)	/* save CHECK{}s when compiling */
 PERLVARI(I, unitcheckav_save, AV *, NULL)
 					/* save UNITCHECK{}s when compiling */
@@ -722,6 +802,8 @@ PERLVARI(I, clocktick,	long,	0)	/* this many times() ticks in a second */
 /* Hooks to shared SVs and locks. */
 PERLVARI(I, sharehook,	share_proc_t, Perl_sv_nosharing)
 PERLVARI(I, lockhook,	share_proc_t, Perl_sv_nosharing)
+
+GCC_DIAG_IGNORE(-Wdeprecated-declarations)
 #ifdef NO_MATHOMS
 #  define PERL_UNLOCK_HOOK Perl_sv_nosharing
 #else
@@ -729,6 +811,8 @@ PERLVARI(I, lockhook,	share_proc_t, Perl_sv_nosharing)
 #  define PERL_UNLOCK_HOOK Perl_sv_nounlocking
 #endif
 PERLVARI(I, unlockhook,	share_proc_t, PERL_UNLOCK_HOOK)
+
+GCC_DIAG_RESTORE
 
 PERLVARI(I, threadhook,	thrhook_proc_t,	Perl_nothreadhook)
 
@@ -814,6 +898,57 @@ PERLVARI(I, dump_re_max_len, STRLEN, 60)
  */
 
 PERLVAR(I, internal_random_state, PL_RANDOM_STATE_TYPE)
+
+PERLVARA(I, TR_SPECIAL_HANDLING_UTF8, UTF8_MAXBYTES, char)
+
+PERLVAR(I, AboveLatin1,	SV *)
+PERLVAR(I, Assigned_invlist, SV *)
+PERLVAR(I, GCB_invlist, SV *)
+PERLVAR(I, HasMultiCharFold,   SV *)
+PERLVAR(I, InMultiCharFold,   SV *)
+PERLVAR(I, Latin1,	SV *)
+PERLVAR(I, LB_invlist, SV *)
+PERLVAR(I, SB_invlist, SV *)
+PERLVAR(I, SCX_invlist, SV *)
+PERLVAR(I, UpperLatin1,	SV *)   /* Code points 128 - 255 */
+
+/* List of characters that participate in any fold defined by Unicode */
+PERLVAR(I, in_some_fold, SV *)
+
+/* Everything that folds to a given character, for case insensitivity regex
+ * matching */
+PERLVAR(I, utf8_foldclosures, SV *)
+
+PERLVAR(I, utf8_idcont,	SV *)
+PERLVAR(I, utf8_idstart, SV *)
+PERLVAR(I, utf8_perl_idcont, SV *)
+PERLVAR(I, utf8_perl_idstart, SV *)
+PERLVAR(I, utf8_xidcont, SV *)
+PERLVAR(I, utf8_xidstart, SV *)
+PERLVAR(I, WB_invlist, SV *)
+PERLVARA(I, XPosix_ptrs, POSIX_CC_COUNT, SV *)
+PERLVARA(I,  Posix_ptrs, POSIX_CC_COUNT, SV *)
+PERLVAR(I, utf8_toupper, SV *)
+PERLVAR(I, utf8_totitle, SV *)
+PERLVAR(I, utf8_tolower, SV *)
+PERLVAR(I, utf8_tofold,	SV *)
+PERLVAR(I, utf8_tosimplefold,	SV *)
+PERLVAR(I, utf8_charname_begin, SV *)
+PERLVAR(I, utf8_charname_continue, SV *)
+PERLVAR(I, utf8_mark,	SV *)
+PERLVARI(I, InBitmap,	SV *, NULL)
+PERLVAR(I, CCC_non0_non230,	SV *)
+PERLVAR(I, Private_Use,	SV *)
+
+#ifdef HAS_MBRLEN
+PERLVAR(I, mbrlen_ps, mbstate_t)
+#endif
+#ifdef HAS_MBRTOWC
+PERLVAR(I, mbrtowc_ps, mbstate_t)
+#endif
+#ifdef HAS_WCRTOMB
+PERLVAR(I, wcrtomb_ps, mbstate_t)
+#endif
 
 /* If you are adding a U8 or U16, check to see if there are 'Space' comments
  * above on where there are gaps which currently will be structure padding.  */

@@ -10,9 +10,9 @@ perlmacosx - Perl under Mac OS X
 
 This document briefly describes Perl under Mac OS X.
 
-  curl -O http://www.cpan.org/src/perl-5.30.3.tar.gz
-  tar -xzf perl-5.30.3.tar.gz
-  cd perl-5.30.3
+  curl -O https://www.cpan.org/src/perl-5.32.1.tar.gz
+  tar -xzf perl-5.32.1.tar.gz
+  cd perl-5.32.1
   ./Configure -des -Dprefix=/usr/local/
   make
   make test
@@ -20,7 +20,7 @@ This document briefly describes Perl under Mac OS X.
 
 =head1 DESCRIPTION
 
-The latest Perl release (5.30.3 as of this writing) builds without changes
+The latest Perl release (5.32.1 as of this writing) builds without changes
 under all versions of Mac OS X from 10.3 "Panther" onwards. 
 
 In order to build your own version of Perl you will need 'make',
@@ -141,8 +141,8 @@ modules (C<Mac::*>), as the required Apple frameworks do not provide PPC64
 support. Similarly, downloads from Fink or Darwinports are unlikely to provide
 64-bit support; the libraries must be rebuilt from source with the appropriate
 compiler and linker flags. For further information, see Apple's
-I<64-Bit Transition Guide> at 
-L<http://developer.apple.com/documentation/Darwin/Conceptual/64bitPorting/index.html>.
+I<64-Bit Transition Guide> at
+L<https://developer.apple.com/library/archive/documentation/Darwin/Conceptual/64bitPorting/transition/transition.html>.
 
 =head2 libperl and Prebinding
 
@@ -223,7 +223,7 @@ access Foundation (i.e. non-GUI) classes and objects.
 An alternative is CamelBones, a framework that allows access to both
 Foundation and AppKit classes and objects, so that full GUI applications
 can be built in Perl. CamelBones can be found on SourceForge, at
-L<http://www.sourceforge.net/projects/camelbones/>.
+L<https://www.sourceforge.net/projects/camelbones/>.
 
 
 =head1 Starting From Scratch
@@ -258,7 +258,7 @@ or rebuild Perl from the source code with C<Configure -Dprefix=/usr
 works much better with Perl 5.8.1 and later, in Perl 5.8.0 the
 settings were not quite right.
 
-"Pacifist" from CharlesSoft (L<http://www.charlessoft.com/>) is a nice
+"Pacifist" from CharlesSoft (L<https://www.charlessoft.com/>) is a nice
 way to extract the Perl binaries from the OS media, without having to
 reinstall the entire OS.
 

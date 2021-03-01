@@ -1,7 +1,7 @@
 package parent;
 use strict;
 
-our $VERSION = '0.237';
+our $VERSION = '0.238';
 
 sub import {
     my $class = shift;
@@ -99,7 +99,15 @@ that had accumulated in it.
 
 =head1 SEE ALSO
 
-L<base>
+=over 4
+
+=item L<base>
+
+=item L<parent::versioned>
+
+A fork of L<parent> that provides version checking in parent class modules.
+
+=back
 
 =head1 AUTHORS AND CONTRIBUTORS
 

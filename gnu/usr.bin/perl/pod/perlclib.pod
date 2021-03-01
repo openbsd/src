@@ -205,9 +205,9 @@ C<toUPPER_uni>, as described in L<perlapi/Character case changing>.)
  atof(s)                     Atof(s)
  atoi(s)                     grok_atoUV(s, &uv, &e)
  atol(s)                     grok_atoUV(s, &uv, &e)
- strtod(s, &p)               my_atof3(s, &nv, &p) is the closest we have
- strtol(s, &p, n)            grok_atoUV(s, &uv, &e)
- strtoul(s, &p, n)           grok_atoUV(s, &uv, &e)
+ strtod(s, &p)               Strtod(s, &p)
+ strtol(s, &p, n)            Strtol(s, &p, b)
+ strtoul(s, &p, n)           Strtoul(s, &p, b)
 
 Typical use is to do range checks on C<uv> before casting:
 

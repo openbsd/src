@@ -2,8 +2,8 @@ package ExtUtils::MM_DOS;
 
 use strict;
 
-our $VERSION = '7.34';
-$VERSION = eval $VERSION;
+our $VERSION = '7.44';
+$VERSION =~ tr/_//d;
 
 require ExtUtils::MM_Any;
 require ExtUtils::MM_Unix;
@@ -21,10 +21,10 @@ ExtUtils::MM_DOS - DOS specific subclass of ExtUtils::MM_Unix
 
 =head1 DESCRIPTION
 
-This is a subclass of ExtUtils::MM_Unix which contains functionality
+This is a subclass of L<ExtUtils::MM_Unix> which contains functionality
 for DOS.
 
-Unless otherwise stated, it works just like ExtUtils::MM_Unix
+Unless otherwise stated, it works just like ExtUtils::MM_Unix.
 
 =head2 Overridden methods
 

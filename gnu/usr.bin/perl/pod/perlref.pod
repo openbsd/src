@@ -56,9 +56,7 @@ X<reference, creation> X<referencing>
 
 References can be created in several ways.
 
-=over 4
-
-=item 1.
+=head3 Backslash Operator
 X<\> X<backslash>
 
 By using the backslash operator on a variable, subroutine, or value.
@@ -80,7 +78,7 @@ reference to a typeglob, which is actually a complete symbol table entry.
 But see the explanation of the C<*foo{THING}> syntax below.  However,
 you can still use type globs and globrefs as though they were IO handles.
 
-=item 2.
+=head3 Square Brackets
 X<array, anonymous> X<[> X<[]> X<square bracket>
 X<bracket, square> X<arrayref> X<array reference> X<reference, array>
 
@@ -107,7 +105,7 @@ of C<@foo>, not a reference to C<@foo> itself.  Likewise for C<%foo>,
 except that the key references are to copies (since the keys are just
 strings rather than full-fledged scalars).
 
-=item 3.
+=head3 Curly Brackets
 X<hash, anonymous> X<{> X<{}> X<curly bracket>
 X<bracket, curly> X<brace> X<hashref> X<hash reference> X<reference, hash>
 
@@ -150,7 +148,7 @@ On the other hand, if you want the other meaning, you can do this:
 The leading C<+{> and C<{;> always serve to disambiguate
 the expression to mean either the HASH reference, or the BLOCK.
 
-=item 4.
+=head3 Anonymous Subroutines
 X<subroutine, anonymous> X<subroutine, reference> X<reference, subroutine>
 X<scope, lexical> X<closure> X<lexical> X<lexical scope>
 
@@ -208,7 +206,7 @@ This applies only to lexical variables, by the way.  Dynamic variables
 continue to work as they have always worked.  Closure is not something
 that most Perl programmers need trouble themselves about to begin with.
 
-=item 5.
+=head3 Constructors
 X<constructor> X<new>
 
 References are often returned by special subroutines called constructors.  Perl
@@ -234,14 +232,14 @@ better to use the direct method invocation approach:
     $menubar = $main->Frame(-relief              => "raised",
                             -borderwidth         => 2)
 
-=item 6.
+=head3 Autovivification
 X<autovivification>
 
 References of the appropriate type can spring into existence if you
 dereference them in a context that assumes they exist.  Because we haven't
 talked about dereferencing yet, we can't show you any examples yet.
 
-=item 7.
+=head3 Typeglob Slots
 X<*foo{THING}> X<*>
 
 A reference can be created by using a special syntax, lovingly known as
@@ -307,8 +305,6 @@ below, there's no risk of that happening.
         return scalar <$fh>;
     }
 
-=back
-
 =head2 Using References
 X<reference, use> X<dereferencing> X<dereference>
 
@@ -316,9 +312,7 @@ That's it for creating references.  By now you're probably dying to
 know how to use references to get back to your long-lost data.  There
 are several basic methods.
 
-=over 4
-
-=item 1.
+=head3 Simple Scalar
 
 Anywhere you'd put an identifier (or chain of identifiers) as part
 of a variable or subroutine name, you can replace the identifier with
@@ -341,7 +335,7 @@ However, a "simple scalar" includes an identifier that itself uses method
     $refrefref = \\\"howdy";
     print $$$$refrefref;
 
-=item 2.
+=head3 Block
 
 Anywhere you'd put an identifier (or chain of identifiers) as part of a
 variable or subroutine name, you can replace the identifier with a
@@ -377,7 +371,7 @@ Case 2 is also deceptive in that you're accessing a variable
 called %hashref, not dereferencing through $hashref to the hash
 it's presumably referencing.  That would be case 3.
 
-=item 3.
+=head3 Arrow Notation
 
 Subroutine calls and lookups of individual array elements arise often
 enough that it gets cumbersome to use method 2.  As a form of
@@ -414,7 +408,7 @@ multidimensional arrays just like C's:
 Well, okay, not entirely like C's arrays, actually.  C doesn't know how
 to grow its arrays on demand.  Perl does.
 
-=item 4.
+=head3 Objects
 
 If a reference happens to be a reference to an object, then there are
 probably methods to access the things referred to, and you should probably
@@ -424,7 +418,7 @@ encapsulation without a very good reason.  Perl does not enforce
 encapsulation.  We are not totalitarians here.  We do expect some basic
 civility though.
 
-=back
+=head3 Miscellaneous Usage
 
 Using a string or number as a reference produces a symbolic reference,
 as explained above.  Using a reference as a number produces an

@@ -3,22 +3,25 @@
 # Test for graceful degradation to non-utf8 output without Encode module.
 #
 # Copyright 2016 Niko Tyni <ntyni@iki.fi>
-# Copyright 2016, 2018 Russ Allbery <rra@cpan.org>
+# Copyright 2016, 2018-2019 Russ Allbery <rra@cpan.org>
 #
 # This program is free software; you may redistribute it and/or modify it
 # under the same terms as Perl itself.
 #
 # SPDX-License-Identifier: GPL-1.0-or-later OR Artistic-1.0-Perl
 
-use 5.006;
+use 5.008;
 use strict;
 use warnings;
 
-use Test::More tests => 6;
+use Test::More tests => 5;
 
-# Force the Encode module to be impossible to import.
+# Remove the record of the Encode module being loaded if it already was (it
+# may have been loaded before the test suite runs), and then make it
+# impossible to load it.  This should be enough to trigger the fallback code
+# in Pod::Man.
 BEGIN {
-    ok(!$INC{'Encode.pm'}, 'Encode is not loaded yet');
+    delete $INC{'Encode.pm'};
     my $reject_encode = sub {
         if ($_[1] eq 'Encode.pm') {
             die "refusing to load Encode\n";

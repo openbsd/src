@@ -10,7 +10,7 @@ if (!$Config{'d_fork'}) {
     skip_all("fork required to pipe");
 }
 else {
-    plan(tests => 25);
+    plan(tests => 27);
 }
 
 my $Perl = which_perl();
@@ -124,6 +124,18 @@ wait;				# Collect from $pid
 
 pipe(READER,WRITER) || die "Can't open pipe";
 close READER;
+
+eval {
+    # one platform at least appears to block SIGPIPE by default (see #122112)
+    # so make sure it's unblocked.
+    # The eval wrapper should ensure this does nothing if these aren't
+    # implemented.
+    require POSIX;
+    my $mask = POSIX::SigSet->new(POSIX::SIGPIPE());
+    my $old = POSIX::SigSet->new();
+    POSIX::sigprocmask(POSIX::SIG_UNBLOCK(), $mask, $old);
+    note "Yes, SIGPIPE was blocked" if $old->ismember(POSIX::SIGPIPE());
+};
 
 $SIG{'PIPE'} = 'broken_pipe';
 
@@ -240,4 +252,22 @@ SKIP: {
   };
 
   is($child, -1, 'child reaped if piped program cannot be executed');
+}
+
+{
+    # [perl #122112] refcnt: fd -1 < 0 when a signal handler dies
+    # while a pipe close is waiting on a child process
+    my $prog = <<PROG;
+\$SIG{ALRM}=sub{die};
+alarm 1;
+\$Perl = "$Perl";
+my \$cmd = qq(\$Perl -e "sleep 3");
+my \$pid = open my \$fh, "|\$cmd" or die "\$!\n";
+close \$fh;
+PROG
+    my $out = fresh_perl($prog, {});
+    cmp_ok($out, '!~', qr/refcnt/, "no exception from PerlIO");
+    # checks that that program did something rather than failing to
+    # compile
+    cmp_ok($out, '=~', qr/Died at/, "but we did get the exception from die");
 }

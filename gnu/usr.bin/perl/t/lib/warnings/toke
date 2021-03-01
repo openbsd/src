@@ -756,7 +756,6 @@ $a = 1_; print "$a\n";
 $a = 01_; print "$a\n";
 $a = 0_; print "$a\n";
 $a = 0x1_; print "$a\n";
-$a = 0x_; print "$a\n";
 $a = 1.2_; print "$a\n";
 $a = 1._2; print "$a\n";
 $a = 1._; print "$a\n";
@@ -768,12 +767,10 @@ Misplaced _ in number at - line 6.
 Misplaced _ in number at - line 7.
 Misplaced _ in number at - line 8.
 Misplaced _ in number at - line 9.
-Misplaced _ in number at - line 10.
 1
 1
 0
 1
-0
 1.2
 1.2
 1
@@ -1371,7 +1368,7 @@ my $a = "\o{";
 my $a = "\o{}";
 EXPECT
 Missing braces on \o{} at - line 3, within string
-Missing right brace on \o{ at - line 4, within string
+Missing right brace on \o{} at - line 4, within string
 Empty \o{} at - line 5, within string
 BEGIN not safe after errors--compilation aborted at - line 6.
 ########
@@ -1381,7 +1378,7 @@ my $a = "\o{1238456}";
 no warnings 'digit' ;
 my $a = "\o{1238456}";
 EXPECT
-Non-octal character '8'.  Resolved as "\o{123}" at - line 3.
+Non-octal character '8' terminates \o early.  Resolved as "\o{123}" at - line 3.
 ########
 # toke.c
 use warnings;
@@ -1425,7 +1422,8 @@ use warnings;
 my $a = "\c{ack}";
 EXPECT
 OPTION fatal
-Use ";" instead of "\c{" at - line 9.
+Use ";" instead of "\c{" at - line 9, within string
+Execution of - aborted due to compilation errors.
 ########
 # toke.c
 BEGIN {
@@ -1438,13 +1436,15 @@ use warnings;
 my $a = "\c{ack}";
 EXPECT
 OPTION fatal
-Sequence "\c{" invalid at - line 9.
+Sequence "\c{" invalid at - line 9, within string
+Execution of - aborted due to compilation errors.
 ########
 # toke.c
 my $a = "\câ";
 EXPECT
 OPTION fatal
-Character following "\c" must be printable ASCII at - line 2.
+Character following "\c" must be printable ASCII at - line 2, within string
+Execution of - aborted due to compilation errors.
 ########
 # toke.c
 use warnings 'syntax' ;
@@ -1528,9 +1528,9 @@ print "aa" =~ m{^a{1,2}$}, "G\n";
 print "aq" =~ m[^a\[a-z\]$], "H\n";
 print "aq" =~ m(^a\(q\)$), "I\n";
 EXPECT
-Illegal hexadecimal digit '\' ignored at - line 5.
-Illegal hexadecimal digit '\' ignored at - line 7.
-Illegal hexadecimal digit '\' ignored at - line 9.
+Non-hex character '\\' terminates \x early.  Resolved as "\x00\\" in regex; marked by <-- HERE in m/^a\x <-- HERE \{61\}$/ at - line 5.
+Non-hex character '\\' terminates \x early.  Resolved as "\x00\\" in regex; marked by <-- HERE in m/^a\\\x <-- HERE \{6F\}$/ at - line 7.
+Non-hex character '\\' terminates \x early.  Resolved as "\x00\\" in regex; marked by <-- HERE in m/^a\\\\\x <-- HERE \{6F\}$/ at - line 9.
 A
 B
 1C
@@ -1691,3 +1691,55 @@ EXPECT
 OPTION regex
 Malformed UTF-8 character: .*non-continuation.*
 The eval did not crash the program
+########
+# NAME [perl #133850] print $fh $1 in s///e expression
+use warnings;
+my $fh = \*STDOUT;
+$_ = "abc";
+s/(x)/ print $fh $1 /e;
+EXPECT
+########
+# NAME [perl #133850] side case
+use warnings;
+my $fh = \*STDOUT;
+my $y = "";
+my $x = "${print $fh $y; \'x'}";
+EXPECT
+########
+# NAME [perl #133850] another case
+use warnings;
+my $time = 1;
+$_ = "";
+s/^/ ${time} /e
+EXPECT
+Ambiguous use of ${time} resolved to $time at - line 4.
+########
+# NAME [perl #133850] another case
+use warnings;
+%x = qw(a b c d);
+$_ = "";
+s/^/ @x {a} /e
+EXPECT
+Scalar value @x{"a"} better written as $x{"a"} at - line 4.
+########
+# NAME Warn on 32-bit code points
+# SKIP ? $Config{uvsize} < 8
+use warnings 'portable';
+my $a = "\x{8000_0000}";
+my $b = "\o{20_000_000_000}";
+EXPECT
+Code point 0x80000000 is not Unicode, requires a Perl extension, and so is not portable at - line 2.
+Code point 0x80000000 is not Unicode, requires a Perl extension, and so is not portable at - line 3.
+########
+# NAME Check that our Multidimensional array heuristic doesn't false positive on function calls
+use warnings;
+my $str= "rst";
+my $substr= "s";
+my @array="A".."C";
+# force a numeric warning, but we should NOT see a Multidimensional warning here
+my $trigger_num_warn= $array[index $str,$substr] + 1;
+# this should trigger a Multidimensional warning
+my $should_warn_multi= $array[0x1,0x2];
+EXPECT
+Multidimensional syntax $array[0x1,0x2] not supported at - line 8.
+Argument "B" isn't numeric in addition (+) at - line 6.

@@ -5,7 +5,7 @@ use strict;
 use warnings;
 use Carp;
 
-our $VERSION = '1.00';
+our $VERSION = '1.09';
 
 require XSLoader;
 
@@ -40,7 +40,7 @@ sub import {
 	}
     }
     foreach (keys %{$exports||{}}) {
-	next unless /\A(?:rpn|calcrpn|stufftest|swaptwostmts|looprest|scopelessblock|stmtasexpr|stmtsasexpr|loopblock|blockasexpr|swaplabel|labelconst|arrayfullexpr|arraylistexpr|arraytermexpr|arrayarithexpr|arrayexprflags|DEFSV|with_vars|join_with_space)\z/;
+	next unless /\A(?:rpn|calcrpn|stufftest|swaptwostmts|looprest|scopelessblock|stmtasexpr|stmtsasexpr|loopblock|blockasexpr|swaplabel|labelconst|arrayfullexpr|arraylistexpr|arraytermexpr|arrayarithexpr|arrayexprflags|subsignature|DEFSV|with_vars|join_with_space)\z/;
 	$^H{"XS::APItest/$_"} = 1;
 	delete $exports->{$_};
     }

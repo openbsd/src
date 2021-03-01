@@ -5,11 +5,13 @@ use strict;
 # selection of names is tested, a higher percentage of regular names is tested
 # than algorithmically-determined names.
 
+my $run_slow_tests = $ENV{PERL_RUN_SLOW_TESTS} || 0;
+
 my $RUN_SLOW_TESTS_EVERY_CODE_POINT = 100;
 
 # If $ENV{PERL_RUN_SLOW_TESTS} is at least 1 and less than the number above,
-# all code points with names are tested.  If it is at least that number, all
-# 1,114,112 Unicode code points are tested.
+# all code points with names are tested, including wildcard search names.  If
+# it is at least that number, all 1,114,112 Unicode code points are tested.
 
 # Because \N{} is compile time, any warnings will get generated before
 # execution, so have to have an array, and arrange things so no warning
@@ -112,6 +114,7 @@ sub get_loose_name ($) { # Modify name to stress the loose tests.
 }
 
 sub test_vianame ($$$) {
+    CORE::state $wildcard_count = 0;
 
     # Run the vianame tests on a code point, both loose and full
 
@@ -124,19 +127,63 @@ sub test_vianame ($$$) {
     # Get a copy of the name modified to stress the loose tests.
     my $loose_name = get_loose_name($name);
 
+    my $right_anchor;
+
     # Switch loose and full in vianame vs string_vianame half the time
     if (rand() < .5) {
         use charnames ":full";
-        $all_pass &= is(charnames::vianame($name), $i, "Verify vianame(\"$name\") is 0x$hex");
+        $all_pass &= is(charnames::vianame($name), $i,
+                        "Verify vianame(\"$name\") is 0x$hex");
         use charnames ":loose";
-        $all_pass &= is(charnames::string_vianame($loose_name), chr($i), "Verify string_vianame(\"$loose_name\") is chr(0x$hex)");
+        $all_pass &= is(charnames::string_vianame($loose_name), chr($i),
+                    "Verify string_vianame(\"$loose_name\") is chr(0x$hex)");
+        $right_anchor = '\\Z';
     }
     else {
         use charnames ":loose";
-        $all_pass &= is(charnames::vianame($loose_name), $i, "Verify vianame(\"$loose_name\") is 0x$hex");
+        $all_pass &= is(charnames::vianame($loose_name), $i,
+                        "Verify vianame(\"$loose_name\") is 0x$hex");
         use charnames ":full";
-        $all_pass &= is(charnames::string_vianame($name), chr($i), "Verify string_vianame(\"$name\") is chr(0x$hex)");
+        $all_pass &= is(charnames::string_vianame($name), chr($i),
+                        "Verify string_vianame(\"$name\") is chr(0x$hex)");
+        $right_anchor = '\\z';
     }
+
+    my $left_anchor = (rand() < .5) ? '^' : '\\A';
+
+    # \p{name=} is always loose matching
+    $all_pass &= like(chr($i), qr/^\p{name=$loose_name}$/,
+                      "Verify /\p{name=$loose_name}/ matches chr(0x$hex)");
+
+    $wildcard_count++;
+
+    # XXX temporary to see if the failure we are occasionally seeing is
+    # confined to this code point.  GH #17671
+    next if $i == 0;
+
+    # Because wildcard name matching is so real-time intensive, do it less
+    # frequently than the others
+    if ($wildcard_count >= 10) {
+        $wildcard_count = 0;
+
+        # A few control characters have anomalous names containing
+        # parentheses, which need to be escaped.
+        my $name_ref = \$name;
+        my $mod_name;
+        if ($i <= 0x85) {   # NEL in ASCII; affected controls are lower than
+                            # this in EBCDIC
+            $mod_name = $name =~ s/([()])/\\$1/gr;
+            $name_ref = \$mod_name;
+        }
+
+        # We anchor the name, randomly with the possible anchors.
+        my $assembled = $left_anchor. $$name_ref . $right_anchor;
+
+        # \p{name=/.../} is always full matching
+        $all_pass &= like(chr($i), qr!^\p{name=/$assembled/}!,
+                          "Verify /\p{name=/$assembled/} matches chr(0x$hex)");
+    }
+
     return $all_pass;
 }
 
@@ -217,6 +264,14 @@ sub test_vianame ($$$) {
     cmp_ok($warning_count, '==', scalar @WARN, "Verify vianame doesn't warn on unknown names");
     ok (! defined charnames::string_vianame("MORE NONE SUCH"), "Verify string_vianame returns undef for an undefined name");
     cmp_ok($warning_count, '==', scalar @WARN, "Verify string_vianame doesn't warn on unknown names");
+    ok (! defined charnames::vianame(""), "Verify vianame returns undef for an empty value");
+    cmp_ok($warning_count, '==', scalar @WARN, "... and no warning is generated");
+    ok (! defined charnames::string_vianame(""), "Verify string_vianame returns undef for an empty value");
+    cmp_ok($warning_count, '==', scalar @WARN, "... and no warning is generated");
+
+    eval "qr/\\p{name=MORE NONE SUCH}/";
+    like($@, qr/Can't find Unicode property definition "name=MORE NONE SUCH"/,
+            '\p{name=} returns an appropriate error message on an undefined name');
 
     use bytes;
     is(charnames::vianame("GOTHIC LETTER AHSA"), 0x10330, "Verify vianame \\N{name} is unaffected by 'use bytes'");
@@ -229,6 +284,8 @@ sub test_vianame ($$$) {
     ok(! defined charnames::string_vianame("GOTHIC LETTER AHSA"), "Verify string_vianame(\"GOTHIC LETTER AHSA\") is undefined under 'use bytes'");
     ok($warning_count == scalar @WARN - 1 && $WARN[-1] =~ /above 0xFF/, "Verify string_vianame gives appropriate warning for previous test");
     $warning_count = @WARN;
+    eval "qr/\\p{name=GOTHIC LETTER AHSA}/";
+    is($@, "", '\p{name=...} is unaffect by "use bytes"');
     is(charnames::string_vianame("U+FF"), chr(utf8::unicode_to_native(0xFF)), "Verify string_vianame(\"U+FF\") is chr(0xFF) under 'use bytes'");
     cmp_ok($warning_count, '==', scalar @WARN, "Verify string_vianame doesn't warn on legal inputs under 'use bytes'");
     is(charnames::string_vianame("LATIN SMALL LETTER Y WITH DIAERESIS"), chr(utf8::unicode_to_native(0xFF)), "Verify string_vianame(\"LATIN SMALL LETTER Y WITH DIAERESIS\") is chr(native 0xFF) under 'use bytes'");
@@ -338,6 +395,13 @@ is(charnames::viacode(0), "NULL", 'Verify charnames::viacode(0) eq "NULL"');
 my $three_quarters = sprintf("%2X", utf8::unicode_to_native(0xBE));
 is(charnames::viacode("$three_quarters"), "VULGAR FRACTION THREE QUARTERS", 'Verify charnames::viacode(native "BE") eq "VULGAR FRACTION THREE QUARTERS"');
 is(charnames::viacode("U+00000000000FEED"), "ARABIC LETTER WAW ISOLATED FORM", 'Verify charnames::viacode("U+00000000000FEED") eq "ARABIC LETTER WAW ISOLATED FORM"');
+
+test_vianame(0x116C, "116C", "HANGUL JUNGSEONG OE");
+test_vianame(0x1180, "1180", "HANGUL JUNGSEONG O-E");
+like(chr(0x59C3), qr/\p{name=\/\ACJK UNIFIED IDEOGRAPH-59C3\z\/}/,
+         'Verify name wildcards delimitters can be escaped');
+like(chr(0xD800), qr!\p{name=/\A\z/}!,
+                                'Verify works on matching an empty name');
 
 {
     no warnings 'deprecated';
@@ -728,7 +792,7 @@ is($_, 'foobar', 'Verify charnames.pm doesnt clobbers $_');
 # SADAHIRO Tomoyuki's suggestion is to ensure that the UTF-8ness of both
 # arguments are identical before calling index.
 # To do this can take advantage of the fact that unicore/Name.pl is 7 bit
-# (or at least should be). So assert that that it's true here.  EBCDIC
+# (or at least should be). So assert that that is true here.  EBCDIC
 # may be a problem (khw).
 
 my $names = do "unicore/Name.pl";
@@ -790,16 +854,28 @@ is("\N{U+1D0C5}", "\N{BYZANTINE MUSICAL SYMBOL FTHORA SKLIRON CHROMA VASIS}", 'V
     is("\N{mychar1}", "e", "Outer block: verify that \\N{mychar1} works");
     is(charnames::vianame("mychar1"), ord("e"), "Outer block: verify that vianame(mychar1) works");
     is(charnames::string_vianame("mychar1"), "e", "Outer block: verify that string_vianame(mychar1) works");
+    eval "qr/\\p{name=mychar1}/";
+    like($@, qr/Can't find Unicode property definition "name=mychar1"/,
+            '\p{name=} returns an appropriate error message on an alias');
     is("\N{mychar2}", "A", "Outer block: verify that \\N{mychar2} works");
     is(charnames::vianame("mychar2"), ord("A"), "Outer block: verify that vianame(mychar2) works");
     is(charnames::string_vianame("mychar2"), "A", "Outer block: verify that string_vianame(mychar2) works");
+    eval "qr/\\p{name=mychar2}/";
+    like($@, qr/Can't find Unicode property definition "name=mychar2"/,
+            '\p{name=} returns an appropriate error message on an alias');
     is("\N{myprivate1}", "\x{E8000}", "Outer block: verify that \\N{myprivate1} works");
     cmp_ok(charnames::vianame("myprivate1"), "==", 0xE8000, "Outer block: verify that vianame(myprivate1) works");
     is(charnames::string_vianame("myprivate1"), chr(0xE8000), "Outer block: verify that string_vianame(myprivate1) works");
+    eval "qr/\\p{name=myprivate1}/";
+    like($@, qr/Can't find Unicode property definition "name=myprivate1"/,
+            '\p{name=} returns an appropriate error message on an alias');
     is(charnames::viacode(0xE8000), "myprivate1", "Outer block: verify that myprivate1 viacode works");
     is("\N{myprivate2}", "\x{100000}", "Outer block: verify that \\N{myprivate2} works");
     cmp_ok(charnames::vianame("myprivate2"), "==", 0x100000, "Outer block: verify that vianame(myprivate2) works");
     is(charnames::string_vianame("myprivate2"), chr(0x100000), "Outer block: verify that string_vianame(myprivate2) works");
+    eval "qr/\\p{name=myprivate2}/";
+    like($@, qr/Can't find Unicode property definition "name=myprivate2"/,
+            '\p{name=} returns an appropriate error message on an alias');
     is(charnames::viacode(0x100000), "myprivate2", "Outer block: verify that myprivate2 viacode works");
     is("\N{BE}", "\N{KATAKANA LETTER BE}", "Outer block: verify that \\N uses the correct script ");
     cmp_ok(charnames::vianame("BE"), "==", ord("\N{KATAKANA LETTER BE}"), "Outer block: verify that vianame uses the correct script");
@@ -807,6 +883,9 @@ is("\N{U+1D0C5}", "\N{BYZANTINE MUSICAL SYMBOL FTHORA SKLIRON CHROMA VASIS}", 'V
     is("\N{Hiragana: BE}", $hiragana_be, "Outer block: verify that :short works with \\N");
     cmp_ok(charnames::vianame("Hiragana: BE"), "==", ord($hiragana_be), "Outer block: verify that :short works with vianame");
     cmp_ok(charnames::string_vianame("Hiragana: BE"), "==", $hiragana_be, "Outer block: verify that :short works with string_vianame");
+    eval "qr/\\p{name=Hiragana: BE}/";
+    like($@, qr/Can't find Unicode property definition "name=Hiragana: BE"/,
+            '\p{name=} returns an appropriate error message on :short attempt');
 
     {
         use charnames ":full",
@@ -960,11 +1039,9 @@ is("\N{U+1D0C5}", "\N{BYZANTINE MUSICAL SYMBOL FTHORA SKLIRON CHROMA VASIS}", 'V
         $seed = srand;
     }
 
-    my $run_slow_tests = $ENV{PERL_RUN_SLOW_TESTS} || 0;
-
     # We will look at the data grouped in "blocks" of the following
     # size.
-    my $block_size_bits = 7;   # above 16 is not sensible
+    my $block_size_bits = 8;   # above 16 is not sensible
     my $block_size = 2**$block_size_bits;
 
     # There are the regular names, like "SPACE", plus the ones
@@ -973,7 +1050,7 @@ is("\N{U+1D0C5}", "\N{BYZANTINE MUSICAL SYMBOL FTHORA SKLIRON CHROMA VASIS}", 'V
     # of the character.  The percentage of each type to test is
     # fuzzily independently settable.  This breaks down when the block size is
     # 1 or is large enough that both types of names occur in the same block
-    my $percentage_of_regular_names = ($run_slow_tests) ? 100 : 13;
+    my $percentage_of_regular_names = ($run_slow_tests) ? 100 : 10;
     my $percentage_of_algorithmic_names = (100 / $block_size); # 1 test/block
 
     # If wants everything tested, do so by changing the block size to 1 so
@@ -1244,6 +1321,9 @@ is("\N{U+1D0C5}", "\N{BYZANTINE MUSICAL SYMBOL FTHORA SKLIRON CHROMA VASIS}", 'V
                         $all_pass &= ok(! defined charnames::vianame("CJK UNIFIED IDEOGRAPH-$hex"), "Verify vianame(\"CJK UNIFIED IDEOGRAPH-$hex\") is undefined");
                     } else {
                         $all_pass &= ok(! defined charnames::string_vianame("CJK UNIFIED IDEOGRAPH-$hex"), "Verify string_vianame(\"CJK UNIFIED IDEOGRAPH-$hex\") is undefined");
+                        eval "qr/\\p{name=CJK UNIFIED IDEOGRAPH-$hex}/";
+                        $all_pass &= like($@, qr/Can't find Unicode property definition "name=CJK UNIFIED IDEOGRAPH-$hex\"/,
+                                                "Verify string_vianame(\"CJK UNIFIED IDEOGRAPH-$hex\") is undefined");
                     }
                 }
             }
@@ -1259,11 +1339,18 @@ is("\N{U+1D0C5}", "\N{BYZANTINE MUSICAL SYMBOL FTHORA SKLIRON CHROMA VASIS}", 'V
             s/^\s*#.*//;
             next unless $_;
             my ($name, $codes) = split ";";
+            $codes =~ s{ \b 00 ( [0-9A-F]{2} ) \b }
+                       { sprintf("%04X", utf8::unicode_to_native(hex $1)) }gxe
+                                                            if ord "A" != 65;
             my $utf8 = pack("W*", map { hex } split " ", $codes);
             is(charnames::string_vianame($name), $utf8, "Verify string_vianame(\"$name\") is the proper utf8");
             my $loose_name = get_loose_name($name);
             use charnames ":loose";
             is(charnames::string_vianame($loose_name), $utf8, "Verify string_vianame(\"$loose_name\") is the proper utf8");
+
+            like($utf8, qr/^\p{name=$name}$/, "Verify /\p{name=$name}\$/ is the proper utf8");
+            like($utf8, qr/^\p{name=$loose_name}$/, "Verify /\p{name=$loose_name}\$/ is the proper utf8");
+            like($utf8, qr!^\p{name=/\A$name\z/}!, "Verify /\p{name=/$\A$name\z/} is the proper utf8");
             #diag("$name, $utf8");
         }
         close $fh;

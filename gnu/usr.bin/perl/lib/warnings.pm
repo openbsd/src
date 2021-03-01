@@ -5,7 +5,7 @@
 
 package warnings;
 
-our $VERSION = "1.44";
+our $VERSION = "1.47";
 
 # Verify that we're called correctly so that warnings will work.
 # Can't use Carp, since Carp uses us!
@@ -106,6 +106,9 @@ our %Offsets = (
     'experimental::private_use'		=> 140,
     'experimental::uniprop_wildcards'	=> 142,
     'experimental::vlb'			=> 144,
+
+    # Warnings Categories added in Perl 5.031
+    'experimental::isa'			=> 146,
 );
 
 our %Bits = (
@@ -119,11 +122,12 @@ our %Bits = (
     'digit'				=> "\x00\x00\x00\x00\x00\x00\x00\x40\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [31]
     'exec'				=> "\x00\x40\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [7]
     'exiting'				=> "\x40\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [3]
-    'experimental'			=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x40\x55\x51\x15\x50\x51\x01", # [51..56,58..62,66..68,70..72]
+    'experimental'			=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x40\x55\x51\x15\x50\x51\x05", # [51..56,58..62,66..68,70..73]
     'experimental::alpha_assertions'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x40\x00\x00", # [67]
     'experimental::bitwise'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10\x00\x00\x00\x00", # [58]
     'experimental::const_attr'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x40\x00\x00\x00\x00", # [59]
     'experimental::declared_refs'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10\x00\x00", # [66]
+    'experimental::isa'			=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04", # [73]
     'experimental::lexical_subs'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00", # [52]
     'experimental::postderef'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x40\x00\x00\x00\x00\x00", # [55]
     'experimental::private_use'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10\x00", # [70]
@@ -195,11 +199,12 @@ our %DeadBits = (
     'digit'				=> "\x00\x00\x00\x00\x00\x00\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [31]
     'exec'				=> "\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [7]
     'exiting'				=> "\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [3]
-    'experimental'			=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80\xaa\xa2\x2a\xa0\xa2\x02", # [51..56,58..62,66..68,70..72]
+    'experimental'			=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80\xaa\xa2\x2a\xa0\xa2\x0a", # [51..56,58..62,66..68,70..73]
     'experimental::alpha_assertions'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80\x00\x00", # [67]
     'experimental::bitwise'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x20\x00\x00\x00\x00", # [58]
     'experimental::const_attr'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80\x00\x00\x00\x00", # [59]
     'experimental::declared_refs'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x20\x00\x00", # [66]
+    'experimental::isa'			=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08", # [73]
     'experimental::lexical_subs'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00", # [52]
     'experimental::postderef'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80\x00\x00\x00\x00\x00", # [55]
     'experimental::private_use'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x20\x00", # [70]
@@ -262,8 +267,8 @@ our %DeadBits = (
 
 # These are used by various things, including our own tests
 our $NONE				=  "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
-our $DEFAULT				=  "\x10\x01\x00\x00\x00\x50\x04\x00\x00\x00\x00\x00\x00\x55\x51\x55\x50\x51\x01", # [2,4,22,23,25,52..56,58..63,66..68,70..72]
-our $LAST_BIT				=  146 ;
+our $DEFAULT				=  "\x10\x01\x00\x00\x00\x50\x04\x00\x00\x00\x00\x00\x00\x55\x51\x55\x50\x51\x05", # [2,4,22,23,25,52..56,58..63,66..68,70..73]
+our $LAST_BIT				=  148 ;
 our $BYTES				=  19 ;
 
 sub Croaker
@@ -684,6 +689,10 @@ disable compile-time warnings you need to rewrite the code like this:
 	 my $b; chop $b;
      }
 
+And note that unlike the first example, this will permanently set C<$^W>
+since it cannot both run during compile-time and be localized to a
+run-time block.
+
 The other big problem with C<$^W> is the way you can inadvertently
 change the warning setting in unexpected places in your code.  For example,
 when the code below is run (without the B<-w> flag), the second call
@@ -719,7 +728,7 @@ X<-w>
 
 This is  the existing flag.  If the lexical warnings pragma is B<not>
 used in any of you code, or any of the modules that you use, this flag
-will enable warnings everywhere.  See L<Backward Compatibility> for
+will enable warnings everywhere.  See L</Backward Compatibility> for
 details of how this flag interacts with lexical warnings.
 
 =item B<-W>
@@ -812,6 +821,8 @@ The current hierarchy is:
          |                 +- experimental::const_attr
          |                 |
          |                 +- experimental::declared_refs
+         |                 |
+         |                 +- experimental::isa
          |                 |
          |                 +- experimental::lexical_subs
          |                 |

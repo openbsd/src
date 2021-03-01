@@ -16,7 +16,7 @@
 #
 # This script is normally invoked from regen.pl.
 
-$VERSION = '1.44';
+$VERSION = '1.47';
 
 BEGIN {
     require './regen/regen_lib.pl';
@@ -117,6 +117,8 @@ my $tree = {
                                     [ 5.029, DEFAULT_ON ],
                                 'experimental::vlb' =>
                                     [ 5.029, DEFAULT_ON ],
+                                'experimental::isa' =>
+                                    [ 5.031, DEFAULT_ON ],
                         }],
 
         'missing'       => [ 5.021, DEFAULT_OFF],
@@ -358,15 +360,21 @@ EOM
 
   my $k ;
   my $last_ver = 0;
+  my @names;
   foreach $k (sort { $a <=> $b } keys %ValueToName) {
       my ($name, $version) = @{ $ValueToName{$k} };
       print $warn "\n/* Warnings Categories added in Perl $version */\n\n"
           if $last_ver != $version ;
       $name =~ y/:/_/;
-      print $warn tab(6, "#define WARN_$name"), " $k\n" ;
+      $name = "WARN_$name";
+      print $warn tab(6, "#define $name"), " $k\n" ;
+      push @names, $name;
       $last_ver = $version ;
   }
-  print $warn "\n" ;
+  print $warn "\n\n/*\n" ;
+
+  print $warn map { "=for apidoc Amnh||$_\n" } @names;
+  print $warn "\n=cut\n*/\n\n" ;
 
   print $warn tab(6, '#define WARNsize'),	" $warn_size\n" ;
   print $warn tab(6, '#define WARN_ALLstring'), ' "', ('\125' x $warn_size) , "\"\n" ;
@@ -384,9 +392,21 @@ EOM
 
 #define DUP_WARNINGS(p) Perl_dup_warnings(aTHX_ p)
 
+#define free_and_set_cop_warnings(cmp,w) STMT_START { \
+  if (!specialWARN((cmp)->cop_warnings)) PerlMemShared_free((cmp)->cop_warnings); \
+  (cmp)->cop_warnings = w; \
+} STMT_END
+
 /*
 
 =head1 Warning and Dieing
+
+In all these calls, the C<U32 wI<n>> parameters are warning category
+constants.  You can see the ones currently available in
+L<warnings/Category Hierarchy>, just capitalize all letters in the names
+and prefix them by C<WARN_>.  So, for example, the category C<void> used in a
+perl program becomes C<WARN_VOID> when used in XS code and passed to one of
+the calls below.
 
 =for apidoc Am|bool|ckWARN|U32 w
 
@@ -992,6 +1012,10 @@ disable compile-time warnings you need to rewrite the code like this:
 	 my $b; chop $b;
      }
 
+And note that unlike the first example, this will permanently set C<$^W>
+since it cannot both run during compile-time and be localized to a
+run-time block.
+
 The other big problem with C<$^W> is the way you can inadvertently
 change the warning setting in unexpected places in your code.  For example,
 when the code below is run (without the B<-w> flag), the second call
@@ -1027,7 +1051,7 @@ X<-w>
 
 This is  the existing flag.  If the lexical warnings pragma is B<not>
 used in any of you code, or any of the modules that you use, this flag
-will enable warnings everywhere.  See L<Backward Compatibility> for
+will enable warnings everywhere.  See L</Backward Compatibility> for
 details of how this flag interacts with lexical warnings.
 
 =item B<-W>

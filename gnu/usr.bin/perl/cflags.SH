@@ -178,11 +178,17 @@ Intel*) ;; # # Is that you, Intel C++?
 # -std=c89 before -ansi
 # -pedantic* before -Werror=d-a-s
 #
-*)  for opt in -std=c89 -ansi $pedantic \
-		-Werror=declaration-after-statement \
-	        -Werror=pointer-arith \
-		-Wextra -W \
-		-Wc++-compat -Wwrite-strings
+*) warns="-std=c89 -ansi $pedantic \
+	-Werror=pointer-arith \
+	-Wextra -W \
+	-Wc++-compat -Wwrite-strings"
+   # declaration after statement is normal in C++ rather than an
+   # extension and compilers complain if we try to warn about it
+   case "$d_cplusplus" in
+   define) ;;
+   *) warns="$warns -Werror=declaration-after-statement" ;;
+   esac
+   for opt in $warns
     do
        case " $ccflags " in
        *" $opt "*) ;; # Skip if already there.

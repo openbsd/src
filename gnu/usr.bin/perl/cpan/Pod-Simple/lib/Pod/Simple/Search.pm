@@ -3,7 +3,7 @@ package Pod::Simple::Search;
 use strict;
 
 use vars qw($VERSION $MAX_VERSION_WITHIN $SLEEPY);
-$VERSION = '3.35';   ## Current version of this package
+$VERSION = '3.40';   ## Current version of this package
 
 BEGIN { *DEBUG = sub () {0} unless defined &DEBUG; }   # set DEBUG level
 use Carp ();
@@ -12,7 +12,6 @@ $SLEEPY = 1 if !defined $SLEEPY and $^O =~ /mswin|mac/i;
   # flag to occasionally sleep for $SLEEPY - 1 seconds.
 
 $MAX_VERSION_WITHIN ||= 60;
-my $IS_CASE_INSENSITIVE = -e uc __FILE__ && -e lc __FILE__;
 
 #############################################################################
 
@@ -26,7 +25,7 @@ use Cwd qw( cwd );
 __PACKAGE__->_accessorize(  # Make my dumb accessor methods
  'callback', 'progress', 'dir_prefix', 'inc', 'laborious', 'limit_glob',
  'limit_re', 'shadows', 'verbose', 'name2path', 'path2name', 'recurse',
- 'ciseen'
+ 'ciseen', 'is_case_insensitive'
 );
 #==========================================================================
 
@@ -42,6 +41,7 @@ sub init {
   $self->inc(1);
   $self->recurse(1);
   $self->verbose(DEBUG);
+  $self->is_case_insensitive(-e uc __FILE__ && -e lc __FILE__);
   return $self;
 }
 
@@ -130,12 +130,12 @@ sub _make_search_callback {
 
   # Put the options in variables, for easy access
   my( $laborious, $verbose, $shadows, $limit_re, $callback, $progress,
-      $path2name, $name2path, $recurse, $ciseen) =
+      $path2name, $name2path, $recurse, $ciseen, $is_case_insensitive) =
     map scalar($self->$_()),
      qw(laborious verbose shadows limit_re callback progress
-        path2name name2path recurse ciseen);
+        path2name name2path recurse ciseen is_case_insensitive);
   my ($seen, $remember, $files_for);
-  if ($IS_CASE_INSENSITIVE) {
+  if ($is_case_insensitive) {
       $seen      = sub { $ciseen->{ lc $_[0] } };
       $remember  = sub { $name2path->{ $_[0] } = $ciseen->{ lc $_[0] } = $_[1]; };
       $files_for = sub { my $n = lc $_[0]; grep { lc $path2name->{$_} eq $n } %{ $path2name } };
@@ -259,7 +259,7 @@ sub _path2modname {
   while(@m
     and defined($x = lc( $m[0] ))
     and(  $x eq 'site_perl'
-       or($x eq 'pod' and @m == 1 and $shortname =~ m{^perl.*\.pod$}s )
+       or($x =~ m/^pods?$/ and @m == 1 and $shortname =~ m{^perl.*\.pod$}s )
        or $x =~ m{\\d+\\.z\\d+([_.]?\\d+)?}  # if looks like a vernum
        or $x eq lc( $Config::Config{'archname'} )
   )) { shift @m }
@@ -546,7 +546,7 @@ sub _limit_glob_to_limit_re {
 sub _actual_filenames {
     my $dir = shift;
     my $fn = lc shift;
-    opendir my $dh, $dir or return;
+    opendir my ($dh), $dir or return;
     return map { File::Spec->catdir($dir, $_) }
         grep { lc $_  eq $fn } readdir $dh;
 }
@@ -588,7 +588,7 @@ sub find {
       my $fullext = $fullname . $ext;
       if ( -f $fullext and $self->contains_pod($fullext) ) {
         print "FOUND: $fullext\n" if $verbose;
-        if (@parts > 1 && lc $parts[0] eq 'pod' && $IS_CASE_INSENSITIVE && $ext eq '.pod') {
+        if (@parts > 1 && lc $parts[0] eq 'pod' && $self->is_case_insensitive() && $ext eq '.pod') {
           # Well, this file could be for a program (perldoc) but we actually
           # want a module (Pod::Perldoc). So see if there is a .pm with the
           # proper casing.
@@ -611,7 +611,7 @@ sub find {
     }
 
     # Case-insensitively Look for ./pod directories and slip them in.
-    for my $subdir ( _actual_filenames($dir, 'pod') ) {
+    for my $subdir ( _actual_filenames($dir, 'pods'), _actual_filenames($dir, 'pod') ) {
       if (-d $subdir) {
         $verbose and print "Noticing $subdir and looking there...\n";
         unshift @search_dirs, $subdir;
@@ -849,6 +849,20 @@ inspected too, and are noted in the pathname2podname return hash.
 This attribute's default value is false; and normally you won't
 need to turn it on.
 
+=item $search->is_case_insensitive( I<true-or-false> );
+
+Pod::Simple::Search will by default internally make an assumption
+based on the underlying filesystem where the class file is found
+whether it is case insensitive or not.
+
+If it is determined to be case insensitive, during survey() it may
+skip pod files/modules that happen to be equal to names it's already
+seen, ignoring case.
+
+However, it's possible to have distinct files in different directories
+that intentionally has the same name, just differing in case, that should
+be reported. Hence, you may force the behavior by setting this to true
+or false.
 
 =item $search->limit_re( I<some-regxp> );
 
@@ -856,7 +870,6 @@ Setting this attribute (to a value that's a regexp) means that you want
 to limit the results just to items whose podnames match the given
 regexp. Normally this option is not needed, and the more efficient
 C<limit_glob> attribute is used instead.
-
 
 =item $search->dir_prefix( I<some-string-value> );
 

@@ -1,6 +1,6 @@
-# NamedSequencesProv-12.1.0.txt
-# Date: 2019-03-08, 23:59:00 GMT [KW, LI]
-# © 2019 Unicode®, Inc.
+# NamedSequencesProv-13.0.0.txt
+# Date: 2020-01-22, 19:32:00 GMT [KW, LI]
+# © 2020 Unicode®, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 #
 # Unicode Character Database
@@ -40,7 +40,34 @@
 
 # Provisional entries for NamedSequences.txt.
 
-# Currently there are no provisional entries.
+# Entries that correspond to Indic characters with nuktas
+# that are also listed in CompositionExclusions.txt.
+# These characters decompose for normalized text, even
+# in NFC. Having named sequences for these helps in
+# certain specifications, including Label Generation Rules (LGR)
+# for Internationalized Domain Names (IDN).
+#
+# Provisional 2020-01-16
+
+DEVANAGARI SEQUENCE FOR LETTER QA; 0915 093C
+DEVANAGARI SEQUENCE FOR LETTER KHHA; 0916 093C
+DEVANAGARI SEQUENCE FOR LETTER GHHA; 0917 093C
+DEVANAGARI SEQUENCE FOR LETTER ZA; 091C 093C
+DEVANAGARI SEQUENCE FOR LETTER DDDHA; 0921 093C
+DEVANAGARI SEQUENCE FOR LETTER RHA; 0922 093C
+DEVANAGARI SEQUENCE FOR LETTER FA; 092B 093C
+DEVANAGARI SEQUENCE FOR LETTER YYA; 092F 093C
+BENGALI SEQUENCE FOR LETTER RRA; 09A1 09BC
+BENGALI SEQUENCE FOR LETTER RHA; 09A2 09BC
+BENGALI SEQUENCE FOR LETTER YYA; 09AF 09BC
+GURMUKHI SEQUENCE FOR LETTER LLA; 0A32 0A3C
+GURMUKHI SEQUENCE FOR LETTER SHA; 0A38 0A3C
+GURMUKHI SEQUENCE FOR LETTER KHHA; 0A16 0A3C
+GURMUKHI SEQUENCE FOR LETTER GHHA; 0A17 0A3C
+GURMUKHI SEQUENCE FOR LETTER ZA; 0A1C 0A3C
+GURMUKHI SEQUENCE FOR LETTER FA; 0A2B 0A3C
+ORIYA SEQUENCE FOR LETTER RRA; 0B21 0B3C
+ORIYA SEQUENCE FOR LETTER RHA; 0B22 0B3C
 
 # ================================================
 

@@ -14,7 +14,7 @@
 
 package Pod::Man;
 
-use 5.006;
+use 5.008;
 use strict;
 use warnings;
 
@@ -24,7 +24,9 @@ use vars qw(@ISA %ESCAPES $PREAMBLE $VERSION);
 use Carp qw(carp croak);
 use Pod::Simple ();
 
-# Conditionally import Encode and set $HAS_ENCODE if it is available.
+# Conditionally import Encode and set $HAS_ENCODE if it is available.  This is
+# required to support building as part of Perl core, since podlators is built
+# before Encode is.
 our $HAS_ENCODE;
 BEGIN {
     $HAS_ENCODE = eval { require Encode };
@@ -32,7 +34,7 @@ BEGIN {
 
 @ISA = qw(Pod::Simple);
 
-$VERSION = '4.11';
+$VERSION = '4.14';
 
 # Set the debugging level.  If someone has inserted a debug function into this
 # class already, use that.  Otherwise, use any Pod::Simple debug function
@@ -245,13 +247,8 @@ sub init_quotes {
 sub init_page {
     my ($self) = @_;
 
-    # We used to try first to get the version number from a local binary, but
-    # we shouldn't need that any more.  Get the version from the running Perl.
-    # Work a little magic to handle subversions correctly under both the
-    # pre-5.6 and the post-5.6 version numbering schemes.
-    my @version = ($] =~ /^(\d+)\.(\d{3})(\d{0,3})$/);
-    $version[2] ||= 0;
-    $version[2] *= 10 ** (3 - length $version[2]);
+    # Get the version from the running Perl.
+    my @version = ($] =~ /^(\d+)\.(\d{3})(\d+)$/);
     for (@version) { $_ += 0 }
     my $version = join ('.', @version);
 
@@ -799,7 +796,7 @@ sub start_document {
         eval {
             my @options = (output => 1, details => 1);
             my @layers = PerlIO::get_layers (*{$$self{output_fh}}, @options);
-            if ($layers[-1] & PerlIO::F_UTF8 ()) {
+            if ($layers[-1] && ($layers[-1] & PerlIO::F_UTF8 ())) {
                 $$self{ENCODE} = 0;
             }
         }
@@ -903,8 +900,6 @@ sub devise_title {
                     $cut = $i + 1;
                     $cut++ if ($dirs[$i + 1] && $dirs[$i + 1] eq 'lib');
                     last;
-                } elsif ($dirs[$i] eq 'lib' && $dirs[$i + 1] && $dirs[0] eq 'ext') {
-                    $cut = $i + 1;
                 }
             }
             if ($cut > 0) {
@@ -1883,7 +1878,9 @@ being the file to write the formatted output to.
 You can also call parse_lines() to parse an array of lines or
 parse_string_document() to parse a document already in memory.  As with
 parse_file(), parse_lines() and parse_string_document() default to sending
-their output to C<STDOUT> unless changed with the output_fh() method.
+their output to C<STDOUT> unless changed with the output_fh() method.  Be
+aware that parse_lines() and parse_string_document() both expect raw bytes,
+not decoded characters.
 
 To put the output from any parse method into a string instead of a file
 handle, call the output_string() method instead of output_fh().
@@ -2014,7 +2011,7 @@ are mine).
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 1999-2010, 2012-2018 Russ Allbery <rra@cpan.org>
+Copyright 1999-2010, 2012-2019 Russ Allbery <rra@cpan.org>
 
 Substantial contributions by Sean Burke <sburke@cpan.org>.
 

@@ -95,3 +95,4 @@ PL_warn_uninit
 PL_WARN_ALL
 PL_WARN_NONE
 PL_watch_pvx
+PL_extended_cp_format

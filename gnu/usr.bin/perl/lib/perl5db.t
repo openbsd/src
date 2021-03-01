@@ -2899,6 +2899,31 @@ SKIP:
     );
 }
 
+{
+    # gh #17660
+    my $wrapper = DebugWrap->new(
+        {
+            cmds =>
+            [
+                'b 13',
+                'c',
+                'i Foo',
+                'q',
+            ],
+            prog => '../lib/perl5db/t/gh-17660',
+        }
+    );
+
+    $wrapper->output_unlike(
+        qr/Undefined subroutine &mro::get_linear_isa/ms,
+        q/mro needs to be loaded/,
+       );
+    $wrapper->output_like(
+        qr/Foo 1.000, Bar 2.000/,
+        q/check for reasonable result/,
+       );
+}
+
 SKIP:
 {
     $Config{usethreads}

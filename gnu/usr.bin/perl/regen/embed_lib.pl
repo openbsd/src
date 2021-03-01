@@ -33,7 +33,8 @@ sub add_level {
 	    @entries = @$funcs;
 	} else {
 	    foreach (@$funcs) {
-		if ($_->[0] =~ /A/) {
+                if ($_->[0] =~ /[AC]/) { # 'C' is like 'A' for our purposes
+                                         # here
 		    push @entries, $_ if $wanted eq 'A';
 		} elsif ($_->[0] =~ /E/) {
 		    push @entries, $_ if $wanted eq 'E';

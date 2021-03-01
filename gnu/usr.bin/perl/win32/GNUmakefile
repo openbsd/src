@@ -1,13 +1,13 @@
 #
 # Makefile to build perl on Windows using GMAKE.
 # Supported compilers:
-#	Microsoft Visual C++ 6.0 or later
+#	Microsoft Visual C++ 7.0 or later
 #	MinGW with gcc-3.4.5 or later with runtime < 3.21
 #	MinGW64 with gcc-4.4.3 or later
 #	Windows SDK 64-bit compiler and tools
 #
 # This is set up to build a perl.exe that runs off a shared library
-# (perl530.dll).  Also makes individual DLLs for the XS extensions.
+# (perl532.dll).  Also makes individual DLLs for the XS extensions.
 #
 # The easiest way to customize the build process is to use parameters like this:
 #
@@ -64,7 +64,7 @@ INST_TOP := $(INST_DRV)\perl
 # versioned installation can be obtained by setting INST_TOP above to a
 # path that includes an arbitrary version string.
 #
-#INST_VER	:= \5.30.3
+#INST_VER	:= \5.32.1
 
 #
 # Comment this out if you DON'T want your perl installation to have
@@ -126,7 +126,6 @@ USE_LARGE_FILES	:= define
 # Uncomment this if you're building a 32-bit perl and want 64-bit integers.
 # (If you're building a 64-bit perl then you will have 64-bit integers whether
 # or not this is uncommented.)
-# Note: This option is not supported in 32-bit MSVC60 builds.
 #
 #USE_64_BIT_INT	:= define
 
@@ -160,8 +159,6 @@ DEFAULT_INC_EXCLUDES_DOT := define
 #
 # uncomment exactly one of the following
 #
-# Visual C++ 6.0 (aka Visual C++ 98)
-#CCTYPE		:= MSVC60
 # Visual C++ .NET 2002/2003 (aka Visual C++ 7.0/7.1) (full version)
 #CCTYPE		:= MSVC70
 # Visual C++ Toolkit 2003 (aka Visual C++ 7.1) (free command-line tools)
@@ -233,7 +230,7 @@ DEFAULT_INC_EXCLUDES_DOT := define
 # set this to additionally provide a statically linked perl-static.exe.
 # Note that dynamic loading will not work with this perl, so you must
 # include required modules statically using the STATIC_EXT or ALL_STATIC
-# variables below. A static library perl530s.lib will also be created.
+# variables below. A static library perl532s.lib will also be created.
 # Ordinary perl.exe is not affected by this option.
 #
 #BUILD_STATIC	:= define
@@ -288,7 +285,7 @@ EXTRALIBDIRS	:=
 
 #
 # set this to your email address (perl will guess a value from
-# from your loginname and your hostname, which may not be right)
+# your loginname and your hostname, which may not be right)
 #
 #EMAIL		:=
 
@@ -394,8 +391,6 @@ endif
 ifeq ($(CCHOME),)
 ifeq ($(CCTYPE),GCC)
 CCHOME		:= C:\MinGW
-else ifeq ($(CCTYPE),MSVC60)
-CCHOME		:= $(MSVCDir)
 else ifeq ($(CCTYPE),MSVC70)
 CCHOME		:= $(MSVCDir)
 else ifeq ($(CCTYPE),MSVC70FREE)
@@ -444,19 +439,6 @@ endif
 
 ifeq ($(WIN64),define)
 USE_64_BIT_INT	= define
-endif
-
-# Treat 64-bit MSVC60 (doesn't really exist) as SDK2003SP1 because
-# both link against MSVCRT.dll (which is part of Windows itself) and
-# not against a compiler specific versioned runtime.
-ifeq ("$(WIN64) $(CCTYPE)","define MSVC60")
-CCTYPE		= SDK2003SP1
-endif
-
-# Disable the 64-bit-int option for (32-bit) MSVC60 builds since that compiler
-# does not support it.
-ifeq ($(CCTYPE),MSVC60)
-USE_64_BIT_INT	= undef
 endif
 
 # Disable the long double option for MSVC builds since that compiler
@@ -588,7 +570,7 @@ GCCVER2   := $(shell for /f "delims=. tokens=1,2,3" %%i in ('gcc -dumpversion') 
 GCCVER3   := $(shell for /f "delims=. tokens=1,2,3" %%i in ('gcc -dumpversion') do echo %%k)
 
 # If you are using GCC, 4.3 or later by default we add the -fwrapv option.
-# See https://rt.perl.org/Ticket/Display.html?id=121505
+# See https://github.com/Perl/perl5/issues/13690
 #
 GCCWRAPV := $(shell if "$(GCCVER1)"=="4" (if "$(GCCVER2)" geq "3" echo define) else if "$(GCCVER1)" geq "5" (echo define))
 
@@ -608,7 +590,7 @@ a = .a
 INCLUDES	= -I.\include -I. -I..
 DEFINES		= -DWIN32
 ifeq ($(WIN64),define)
-DEFINES		+= -DWIN64 -DCONSERVATIVE
+DEFINES		+= -DWIN64
 endif
 LOCDEFS		= -DPERLDLL -DPERL_CORE
 CXX_FLAG	= -xc++
@@ -618,8 +600,9 @@ LIBFILES	= $(LIBC) -lmoldname -lkernel32 -luser32 -lgdi32 -lwinspool \
 	-luuid -lws2_32 -lmpr -lwinmm -lversion -lodbc32 -lodbccp32 -lcomctl32
 
 ifeq ($(CFG),Debug)
-OPTIMIZE	= -g -O2 -DDEBUGGING
+OPTIMIZE	= -g -O2
 LINK_DBG	= -g
+DEFINES		+= -DDEBUGGING
 else
 OPTIMIZE	= -s -O2
 LINK_DBG	= -s
@@ -672,9 +655,7 @@ EMBED_DLL_MANI	= if exist $@.manifest mt -nologo -manifest $@.manifest -outputre
 
 # Most relevant compiler-specific options fall into two groups:
 # either pre-MSVC80 or MSVC80 onwards, so define a macro for this.
-ifeq ($(CCTYPE),MSVC60)
-PREMSVC80	= define
-else ifeq ($(CCTYPE),MSVC70)
+ifeq ($(CCTYPE),MSVC70)
 PREMSVC80	= define
 else ifeq ($(CCTYPE),MSVC70FREE)
 PREMSVC80	= define
@@ -701,6 +682,7 @@ INCLUDES	= -I.\include -I. -I..
 DEFINES		= -DWIN32 -D_CONSOLE -DNO_STRICT
 LOCDEFS		= -DPERLDLL -DPERL_CORE
 CXX_FLAG	= -TP -EHsc
+EXTRACFLAGS	= -nologo -GF -W3
 
 ifeq ($(CCTYPE),MSVC140)
 LIBC		= ucrt.lib
@@ -713,11 +695,14 @@ LIBC		= msvcrt.lib
 endif
 
 ifeq ($(CFG),Debug)
-OPTIMIZE	= -Od -MD -Zi -DDEBUGGING
+OPTIMIZE	= -Od -Zi
 LINK_DBG	= -debug
+DEFINES		+= -DDEBUGGING
+EXTRACFLAGS	+= -MD
 else ifeq ($(CFG),DebugSymbols)
-OPTIMIZE	= -Od -MD -Zi
+OPTIMIZE	= -Od -Zi
 LINK_DBG	= -debug
+EXTRACFLAGS	+= -MD
 else ifeq ($(CFG),DebugFull)
 ifeq ($(CCTYPE),MSVC140)
 LIBC		= ucrtd.lib
@@ -728,29 +713,29 @@ LIBC		= ucrtd.lib
 else
 LIBC		= msvcrtd.lib
 endif
-OPTIMIZE	= -Od -MDd -Zi -D_DEBUG -DDEBUGGING
+OPTIMIZE	= -Od -Zi
 LINK_DBG	= -debug
+DEFINES		+= -D_DEBUG -DDEBUGGING
+EXTRACFLAGS	+= -MDd
+
 else
+# Enable Whole Program Optimizations (WPO) and Link Time Code Generation (LTCG).
 # -O1 yields smaller code, which turns out to be faster than -O2 on x86 and x64
-OPTIMIZE	= -O1 -MD -Zi -DNDEBUG
+OPTIMIZE	= -O1 -Zi -GL
 # we enable debug symbols in release builds also
-LINK_DBG	= -debug -opt:ref,icf
+LINK_DBG	= -debug -opt:ref,icf -ltcg
 # you may want to enable this if you want COFF symbols in the executables
 # in addition to the PDB symbols.  The default Dr. Watson that ships with
-# Windows can use the the former but not latter.  The free WinDbg can be
+# Windows can use the former but not latter.  The free WinDbg can be
 # installed to get better stack traces from just the PDB symbols, so we
 # avoid the bloat of COFF symbols by default.
-#LINK_DBG	= $(LINK_DBG) -debugtype:both
-ifneq ($(CCTYPE),MSVC60)
-# enable Whole Program Optimizations (WPO) and Link Time Code Generation (LTCG)
-OPTIMIZE	+= -GL
-LINK_DBG	+= -ltcg
+#LINK_DBG	+= -debugtype:both
 LIB_FLAGS	= -ltcg
-endif
+EXTRACFLAGS	+= -MD
 endif
 
 ifeq ($(WIN64),define)
-DEFINES		+= -DWIN64 -DCONSERVATIVE
+DEFINES		+= -DWIN64
 OPTIMIZE	+= -fp:precise
 endif
 
@@ -784,7 +769,7 @@ endif
 # backward compatibility.  We define this symbol here for older 32-bit
 # compilers only (which aren't using it at all) for the sole purpose
 # of getting it into $Config{ccflags}.  That way if someone builds
-# Perl itself with e.g. VC6 but later installs an XS module using VC8
+# Perl itself with e.g. VC7 but later installs an XS module using VC8
 # the time_t types will still be compatible.
 ifeq ($(WIN64),undef)
 ifeq ($(PREMSVC80),define)
@@ -835,7 +820,6 @@ endif
 
 LIBFILES	= $(LIBBASEFILES) $(LIBC)
 
-EXTRACFLAGS	= -nologo -GF -W3
 ifeq ($(__ICC),define)
 EXTRACFLAGS	+= -Qstd=c99
 endif
@@ -966,7 +950,7 @@ endif
 UNIDATAFILES	 = ..\lib\unicore\Decomposition.pl ..\lib\unicore\TestProp.pl \
 		   ..\lib\unicore\CombiningClass.pl ..\lib\unicore\Name.pl \
 		   ..\lib\unicore\UCD.pl ..\lib\unicore\Name.pm            \
-		   ..\lib\unicore\Heavy.pl ..\lib\unicore\mktables.lst
+		   ..\lib\unicore\mktables.lst
 
 # Directories of Unicode data files generated by mktables
 UNIDATADIR1	= ..\lib\unicore\To
@@ -1020,9 +1004,9 @@ ifeq ($(CCTYPE),GCC)
 
 CFGSH_TMPL	= config.gc
 CFGH_TMPL	= config_H.gc
-PERLIMPLIB	= $(COREDIR)\libperl530$(a)
-PERLIMPLIBBASE	= libperl530$(a)
-PERLSTATICLIB	= ..\libperl530s$(a)
+PERLIMPLIB	= $(COREDIR)\libperl532$(a)
+PERLIMPLIBBASE	= libperl532$(a)
+PERLSTATICLIB	= ..\libperl532s$(a)
 INT64		= long long
 
 else
@@ -1035,12 +1019,12 @@ endif
 
 # makedef.pl must be updated if this changes, and this should normally
 # only change when there is an incompatible revision of the public API.
-PERLIMPLIB	?= $(COREDIR)\perl530$(a)
-PERLIMPLIBBASE	?= perl530$(a)
-PERLEXPLIB	?= $(COREDIR)\perl530.exp
-PERLSTATICLIB	?= ..\perl530s$(a)
-PERLDLL		= ..\perl530.dll
-PERLDLLBASE	= perl530.dll
+PERLIMPLIB	?= $(COREDIR)\perl532$(a)
+PERLIMPLIBBASE	?= perl532$(a)
+PERLEXPLIB	?= $(COREDIR)\perl532.exp
+PERLSTATICLIB	?= ..\perl532s$(a)
+PERLDLL		= ..\perl532.dll
+PERLDLLBASE	= perl532.dll
 
 # don't let "gmake -n all" try to run "miniperl.exe make_ext.pl"
 PLMAKE		= gmake
@@ -1209,7 +1193,7 @@ CFG_VARS	=					\
 		"archname=$(ARCHNAME)"			\
 		"cc=$(CC)"				\
 		"ld=$(LINK32)"				\
-		"ccflags=$(subst ",\",$(EXTRACFLAGS) $(OPTIMIZE) $(DEFINES) $(BUILDOPT))" \
+		"ccflags=$(subst ",\",$(EXTRACFLAGS) $(DEFINES) $(BUILDOPT))" \
 		"usecplusplus=$(USE_CPLUSPLUS)"		\
 		"cf_email=$(EMAIL)"			\
 		"d_mymalloc=$(PERL_MALLOC)"		\
@@ -1284,9 +1268,9 @@ static: $(PERLEXESTATIC)
 
 $(GLOBEXE) : perlglob.c
 ifeq ($(CCTYPE),GCC)
-	$(LINK32) $(OPTIMIZE) $(BLINK_FLAGS) -mconsole -o $@ perlglob.c $(LIBFILES)
+	$(LINK32) $(EXTRACFLAGS) $(OPTIMIZE) $(BLINK_FLAGS) -mconsole -o $@ perlglob.c $(LIBFILES)
 else
-	$(CC) $(OPTIMIZE) $(PDBOUT) -Fe$@ perlglob.c -link $(BLINK_FLAGS) \
+	$(CC) $(EXTRACFLAGS) $(OPTIMIZE) $(PDBOUT) -Fe$@ perlglob.c -link $(BLINK_FLAGS) \
 	setargv$(o) $(LIBFILES) && $(EMBED_EXE_MANI)
 endif
 
@@ -1542,7 +1526,7 @@ $(MINIWIN32_OBJ) : $(CORE_NOCFG_H)
 	$(CC) -c $(CFLAGS) $(MINIBUILDOPT) -DPERL_IS_MINIPERL $(OBJOUT_FLAG)$@ $(PDBOUT) $(*F).c
 
 # -DPERL_IMPLICIT_SYS needs C++ for perllib.c
-# rules wrapped in .IFs break Win9X build (we end up with unbalanced []s unless
+# rules wrapped in .IFs break Win9X build (we end up with unbalanced []s
 # unless the .IF is true), so instead we use a .ELSE with the default.
 # This is the only file that depends on perlhost.h, vmem.h, and vdir.h
 
@@ -1588,7 +1572,7 @@ ifeq ($(CCTYPE),GCC)
 else
 	$(LINK32) -dll -out:$@ $(BLINK_FLAGS) \
 	    @Extensions_static \
-	    -base:0x28000000 $(DELAYLOAD) $(LIBFILES) \
+	    $(DELAYLOAD) $(LIBFILES) \
 	    $(PERLDLL_RES) $(PERLDLL_OBJ) $(PERLEXPLIB)
 	$(EMBED_DLL_MANI)
 endif
@@ -1733,7 +1717,6 @@ utils: $(HAVEMINIPERL) ..\utils\Makefile
 	copy ..\README.amiga    ..\pod\perlamiga.pod
 	copy ..\README.android  ..\pod\perlandroid.pod
 	copy ..\README.bs2000   ..\pod\perlbs2000.pod
-	copy ..\README.ce       ..\pod\perlce.pod
 	copy ..\README.cn       ..\pod\perlcn.pod
 	copy ..\README.cygwin   ..\pod\perlcygwin.pod
 	copy ..\README.dos      ..\pod\perldos.pod
@@ -1762,7 +1745,7 @@ utils: $(HAVEMINIPERL) ..\utils\Makefile
 	copy ..\README.tw       ..\pod\perltw.pod
 	copy ..\README.vos      ..\pod\perlvos.pod
 	copy ..\README.win32    ..\pod\perlwin32.pod
-	copy ..\pod\perldelta.pod ..\pod\perl5303delta.pod
+	copy ..\pod\perldelta.pod ..\pod\perl5321delta.pod
 	$(MINIPERL) -I..\lib $(PL2BAT) $(UTILS)
 	$(MINIPERL) -I..\lib ..\autodoc.pl ..
 	$(MINIPERL) -I..\lib ..\pod\perlmodlib.PL -q ..
@@ -1834,7 +1817,6 @@ distclean: realclean
 	-if exist $(LIBDIR)\MIME rmdir /s /q $(LIBDIR)\MIME
 	-if exist $(LIBDIR)\Module rmdir /s /q $(LIBDIR)\Module
 	-if exist $(LIBDIR)\Net\FTP rmdir /s /q $(LIBDIR)\Net\FTP
-	-if exist $(LIBDIR)\OpenBSD rmdir /s /q $(LIBDIR)\OpenBSD
 	-if exist $(LIBDIR)\Params rmdir /s /q $(LIBDIR)\Params
 	-if exist $(LIBDIR)\Parse rmdir /s /q $(LIBDIR)\Parse
 	-if exist $(LIBDIR)\Perl rmdir /s /q $(LIBDIR)\Perl
@@ -1861,15 +1843,16 @@ distclean: realclean
 	-if exist $(LIBDIR)\Win32API rmdir /s /q $(LIBDIR)\Win32API
 	-if exist $(LIBDIR)\XS rmdir /s /q $(LIBDIR)\XS
 	-cd $(PODDIR) && del /f *.html *.bat roffitall \
-	    perl5303delta.pod perlaix.pod perlamiga.pod perlandroid.pod \
-	    perlapi.pod perlbs2000.pod perlce.pod perlcn.pod perlcygwin.pod \
+	    perl5321delta.pod perlaix.pod perlamiga.pod perlandroid.pod \
+	    perlapi.pod perlbs2000.pod perlcn.pod perlcygwin.pod \
 	    perldos.pod perlfreebsd.pod perlhaiku.pod perlhpux.pod \
 	    perlhurd.pod perlintern.pod perlirix.pod perljp.pod perlko.pod \
 	    perllinux.pod perlmacos.pod perlmacosx.pod perlmodlib.pod \
 	    perlnetware.pod perlopenbsd.pod perlos2.pod perlos390.pod \
 	    perlos400.pod perlplan9.pod perlqnx.pod perlriscos.pod \
 	    perlsolaris.pod perlsymbian.pod perlsynology.pod perltoc.pod \
-	    perltru64.pod perltw.pod perlvos.pod perlwin32.pod
+	    perltru64.pod perltw.pod perluniprops.pod perlvos.pod \
+	    perlwin32.pod
 	-cd ..\utils && del /f h2ph splain perlbug pl2pm h2xs \
 	    perldoc perlivp libnetcfg enc2xs encguess piconv cpan *.bat \
 	    xsubpp pod2html instmodsh json_pp prove ptar ptardiff ptargrep shasum corelist zipdetails

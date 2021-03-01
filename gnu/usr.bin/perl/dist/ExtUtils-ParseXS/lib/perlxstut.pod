@@ -707,7 +707,7 @@ commands to build it.
 
 =head2 Anatomy of .xs file
 
-The .xs file of L<"EXAMPLE 4"> contained some new elements.  To understand
+The .xs file of L</EXAMPLE 4> contained some new elements.  To understand
 the meaning of these elements, pay attention to the line which reads
 
 	MODULE = Mytest2		PACKAGE = Mytest2
@@ -737,7 +737,7 @@ somewhat of an exception rather than the rule.
 
 =head2 Getting the fat out of XSUBs
 
-In L<"EXAMPLE 4"> the second part of .xs file contained the following
+In L</EXAMPLE 4> the second part of .xs file contained the following
 description of an XSUB:
 
 	double

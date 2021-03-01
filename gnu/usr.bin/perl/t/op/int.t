@@ -7,7 +7,7 @@ BEGIN {
     require Config;
 }
 
-plan 17;
+plan 19;
 
 # compile time evaluation
 
@@ -83,3 +83,6 @@ SKIP:
         cmp_ok($x, "==", int($x), "check $x == int($x)");
     }
 }
+
+is(1+"0x10", 1, "check string '0x' prefix not treated as hex");
+is(1+"0b10", 1, "check string '0b' prefix not treated as binary");

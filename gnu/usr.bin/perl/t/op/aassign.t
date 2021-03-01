@@ -540,7 +540,7 @@ SKIP: {
     }
 
     # undef on LHS uses RHS as lvalue instead
-    # Note this this just codifies existing behaviour - it may not be
+    # Note that this just codifies existing behaviour - it may not be
     # correct. See http://nntp.perl.org/group/perl.perl5.porters/240358.
 
     {
@@ -593,5 +593,23 @@ SKIP: {
     is ($aref, 1, "RT #130132 array 1");
     is ($fill, 2, "RT #130132 array 2");
 }
+
+{
+    # GH #16685
+    # don't use the "1-arg on LHS can't be common" optimisation
+    # when there are undef's there
+    my $x = 1;
+    my @a = (($x, undef) = (2 => $x));
+    is("@a", "2 1", "GH #17816");
+}
+
+{
+    # GH #17816
+    # honour trailing undef's in list context
+    my $x = 1;
+    my @a = (($x, undef, undef) = (1));
+    is(scalar @a, 3, "GH #17816");
+}
+
 
 done_testing();

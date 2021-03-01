@@ -214,7 +214,7 @@ L<http://dtrace.org/guide/preface.html>
 
 =item DTrace: Dynamic Tracing in Oracle Solaris, Mac OS X and FreeBSD
 
-L<http://www.amazon.com/DTrace-Dynamic-Tracing-Solaris-FreeBSD/dp/0132091518/>
+L<https://www.amazon.com/DTrace-Dynamic-Tracing-Solaris-FreeBSD/dp/0132091518/>
 
 =back
 

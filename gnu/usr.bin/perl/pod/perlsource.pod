@@ -197,17 +197,21 @@ patched.
 
 =head2 Build system
 
-The Perl build system starts with the F<Configure> script in the root
-directory.
+The Perl build system on *nix-like systems starts with the F<Configure>
+script in the root directory.
 
 Platform-specific pieces of the build system also live in
 platform-specific directories like F<win32/>, F<vms/>, etc.
+Windows and VMS have their own Configure-like scripts, in their
+respective directories.
 
-The F<Configure> script is ultimately responsible for generating a
-F<Makefile>.
+The F<Configure> script (or a platform-specific similar script) is
+ultimately responsible for generating a F<Makefile> from F<Makefile.SH>.
 
 The build system that Perl uses is called metaconfig. This system is
-maintained separately from the Perl core.
+maintained separately from the Perl core, and knows about the
+platform-specific Configure-like scripts, as well as F<Configure>
+itself.
 
 The metaconfig system has its own git repository. Please see its README
 file in L<https://github.com/Perl/metaconfig> for more details.

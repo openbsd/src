@@ -137,14 +137,14 @@ are also referred to as the "Perl 5 Porters", "p5p" or just the
 "porters".
 
 A searchable archive of the list is available at
-L<http://markmail.org/search/?q=perl5-porters>.  There is also an archive at
-L<http://archive.develooper.com/perl5-porters@perl.org/>.
+L<https://markmail.org/search/?q=perl5-porters>.  There is also an archive at
+L<https://archive.develooper.com/perl5-porters@perl.org/>.
 
 =head2 perl-changes mailing list
 
 The perl5-changes mailing list receives a copy of each patch that gets
 submitted to the maintenance and development branches of the perl
-repository.  See L<http://lists.perl.org/list/perl5-changes.html> for
+repository.  See L<https://lists.perl.org/list/perl5-changes.html> for
 subscription and archive information.
 
 =head2 #p5p on IRC
@@ -527,7 +527,7 @@ consideration.
 Modules in the F<cpan/> directory of the source tree are maintained
 outside of the Perl core.  When the author updates the module, the
 updates are simply copied into the core.  See that module's
-documentation or its listing on L<http://search.cpan.org/> for more
+documentation or its listing on L<https://metacpan.org/> for more
 information on reporting bugs and submitting patches.
 
 In most cases, patches to modules in F<cpan/> should be sent upstream
@@ -684,7 +684,7 @@ still options for the future of prototypes that haven't been addressed.
 
 Good patches (tight code, complete, correct) stand more chance of going
 in.  Sloppy or incorrect patches might be placed on the back burner
-until the pumpking has time to fix, or might be discarded altogether
+until fixes can be made, or they might be discarded altogether
 without further notice.
 
 =head3 Is the implementation generic enough to be portable?
@@ -721,7 +721,7 @@ man's pointless cruft.
 
 =head3 Does it create too much work?
 
-Work for the pumpking, work for Perl programmers, work for module
+Work for the committers, work for Perl programmers, work for module
 authors, ... Perl is supposed to be easy.
 
 =head3 Patches speak louder than words
@@ -751,7 +751,7 @@ L<Test::More>, but avoids loading most modules and uses as few core
 features as possible.
 
 If you write your own test, use the L<Test Anything
-Protocol|http://testanything.org>.
+Protocol|https://testanything.org>.
 
 =over 4
 
@@ -763,18 +763,22 @@ tested.  Tests in F<t/opbasic>, for instance, have been placed there
 rather than in F<t/op> because they test functionality which
 F<t/test.pl> presumes has already been demonstrated to work.
 
-=item * F<t/cmd>, F<t/run>, F<t/io> and F<t/op>
+=item * All other subdirectories of F<t/>
 
 Now that basic require() and subroutines are tested, you can use the
 F<t/test.pl> library.
 
-You can also use certain libraries like Config conditionally, but be
+You can also use certain libraries like L<Config> conditionally, but be
 sure to skip the test gracefully if it's not there.
 
-=item * Everything else
+=item * Test files not found under F<t/>
 
-Now that the core of Perl is tested, L<Test::More> can and should be
-used.  You can also use the full suite of core modules in the tests.
+This category includes F<.t> files underneath directories such as F<dist>,
+F<ext> and F<lib>.  Since the core of Perl has now been tested, L<Test::More>
+can and now should be used.  You can also use the full suite of core modules
+in the tests.  (As noted in L<"Patching a core module"> above, changes to
+F<.t> files found under F<cpan/> should be submitted to the upstream
+maintainers of those modules.)
 
 =back
 
@@ -808,7 +812,7 @@ code point.  This function returns C<"\xC2\xA0"> on an ASCII platform, and
 C<"\x80\x41"> on an EBCDIC 1047 one.
 
 But easiest is, if the character is specifiable as a literal, like
-C<"A"> or C<"%">, to use that; if not so specificable, you can use use
+C<"A"> or C<"%">, to use that; if not so specificable, you can use
 C<\N{}> , if the side effects aren't troublesome.  Simply specify all
 your characters in hex, using C<\N{U+ZZ}> instead of C<\xZZ>.  C<\N{}>
 is the Unicode name, and so it
@@ -858,6 +862,12 @@ basic errors before you submit a patch.
 
 Run F<miniperl> on F<t/base>, F<t/comp>, F<t/cmd>, F<t/run>, F<t/io>,
 F<t/op>, F<t/uni> and F<t/mro> tests.
+
+F<miniperl> is a minimalistic perl built to bootstrap building
+extensions, utilties, documentation etc.  It doesn't support dynamic
+loading and depending on the point in the build process will only have
+access to a limited set of core modules.  F<miniperl> is not intended
+for day to day use.
 
 =item * test.valgrind check.valgrind
 
@@ -1053,7 +1063,7 @@ situation by using the Devel::PatchPerl library from CPAN (not included in the
 core) to bring the source code at that commit to a buildable state.
 
 Here's a real world example, taken from work done to resolve
-L<perl #72414|https://rt.perl.org/Ticket/Display.html?id=72414>.
+L<perl #10118|https://github.com/Perl/perl5/issues/10118>.
 Use of F<Porting/bisect.pl> had identified commit
 C<ba77e4cc9d1ceebf472c9c5c18b2377ee47062e6> as the commit in which a bug was
 corrected.  To confirm, a P5P developer wanted to configure and build perl at
@@ -1134,7 +1144,7 @@ source, and we'll do that later on.
 Gisle Aas's "illustrated perlguts", also known as I<illguts>, has very
 helpful pictures:
 
-L<http://search.cpan.org/dist/illguts/>
+L<https://search.cpan.org/dist/illguts/>
 
 =item * L<perlxstut> and L<perlxs>
 
@@ -1152,18 +1162,18 @@ functions do, as well as the many macros used in the source.
 =item * F<Porting/pumpkin.pod>
 
 This is a collection of words of wisdom for a Perl porter; some of it
-is only useful to the pumpkin holder, but most of it applies to anyone
+is only useful to the pumpkin holders, but most of it applies to anyone
 wanting to go about Perl development.
 
 =back
 
 =head1 CPAN TESTERS AND PERL SMOKERS
 
-The CPAN testers ( L<http://testers.cpan.org/> ) are a group of volunteers
+The CPAN testers ( L<http://cpantesters.org/> ) are a group of volunteers
 who test CPAN modules on a variety of platforms.
 
-Perl Smokers ( L<http://www.nntp.perl.org/group/perl.daily-build/> and
-L<http://www.nntp.perl.org/group/perl.daily-build.reports/> )
+Perl Smokers ( L<https://www.nntp.perl.org/group/perl.daily-build/> and
+L<https://www.nntp.perl.org/group/perl.daily-build.reports/> )
 automatically test Perl source releases on platforms with various
 configurations.
 

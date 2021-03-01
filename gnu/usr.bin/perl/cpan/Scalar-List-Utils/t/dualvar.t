@@ -5,8 +5,8 @@ use warnings;
 
 use Scalar::Util ();
 use Test::More  (grep { /dualvar/ } @Scalar::Util::EXPORT_FAIL)
-			? (skip_all => 'dualvar requires XS version')
-			: (tests => 41);
+    ? (skip_all => 'dualvar requires XS version')
+    : (tests => 41);
 use Config;
 
 Scalar::Util->import('dualvar');
@@ -15,44 +15,44 @@ Scalar::Util->import('isdual');
 my $var;
 $var = dualvar( 2.2,"string");
 
-ok( isdual($var),	'Is a dualvar');
-ok( $var == 2.2,	'Numeric value');
-ok( $var eq "string",	'String value');
+ok( isdual($var), 'Is a dualvar');
+ok( $var == 2.2, 'Numeric value');
+ok( $var eq "string", 'String value');
 
 my $var2 = $var;
 
-ok( isdual($var2),	'Is a dualvar');
-ok( $var2 == 2.2,	'copy Numeric value');
-ok( $var2 eq "string",	'copy String value');
+ok( isdual($var2), 'Is a dualvar');
+ok( $var2 == 2.2, 'copy Numeric value');
+ok( $var2 eq "string", 'copy String value');
 
 $var++;
 
-ok( ! isdual($var),	'No longer dualvar');
-ok( $var == 3.2,	'inc Numeric value');
-ok( $var ne "string",	'inc String value');
+ok( ! isdual($var), 'No longer dualvar');
+ok( $var == 3.2, 'inc Numeric value');
+ok( $var ne "string", 'inc String value');
 
 my $numstr = "10.2";
 my $numtmp = int($numstr); # use $numstr as an int
 
 $var = dualvar($numstr, "");
 
-ok( isdual($var),	'Is a dualvar');
-ok( $var == $numstr,	'NV');
+ok( isdual($var), 'Is a dualvar');
+ok( $var == $numstr, 'NV');
 
 SKIP: {
   skip("dualvar with UV value known to fail with $]",3) if $] < 5.006_001;
   my $bits = ($Config{'use64bitint'}) ? 63 : 31;
   $var = dualvar(1<<$bits, "");
-  ok( isdual($var),		'Is a dualvar');
-  ok( $var == (1<<$bits),	'UV 1');
-  ok( $var > 0,			'UV 2');
+  ok( isdual($var), 'Is a dualvar');
+  ok( $var == (1<<$bits), 'UV 1');
+  ok( $var > 0, 'UV 2');
 }
 
 # Create a dualvar "the old fashioned way"
 $var = "10";
-ok( ! isdual($var),	'Not a dualvar');
+ok( ! isdual($var), 'Not a dualvar');
 my $foo = $var + 0;
-ok( isdual($var),	'Is a dualvar');
+ok( isdual($var), 'Is a dualvar');
 
 {
   package Tied;
@@ -63,9 +63,9 @@ ok( isdual($var),	'Is a dualvar');
 
 tie my $tied, 'Tied';
 $var = dualvar($tied, "ok");
-ok(isdual($var),	'Is a dualvar');
-ok($var == 7.5,		'Tied num');
-ok($var eq 'ok',	'Tied str');
+ok(isdual($var), 'Is a dualvar');
+ok($var == 7.5, 'Tied num');
+ok($var eq 'ok', 'Tied str');
 
 
 SKIP: {

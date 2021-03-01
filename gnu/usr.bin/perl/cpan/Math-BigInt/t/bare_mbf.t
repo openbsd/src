@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 2818;
+use Test::More tests => 2830;
 
 use lib 't';
 

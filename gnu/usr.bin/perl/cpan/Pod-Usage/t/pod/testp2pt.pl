@@ -11,7 +11,7 @@ BEGIN {
    unshift @INC, $THISDIR;
    require "testcmp.pl";
    import TestCompare;
-   $PARENTDIR = dirname $THISDIR;
+   $PARENTDIR = File::Spec->catdir($THISDIR, File::Spec->updir());
    push @INC, map { File::Spec->catfile($_, 'lib') } ($PARENTDIR, $THISDIR);
 }
 

@@ -20,6 +20,8 @@
 #include <stdio.h>
 #include <io.h>
 #include <fcntl.h>
+#include <assert.h>
+#include <limits.h>
 #include <string.h>
 #include <windows.h>
 
@@ -33,6 +35,7 @@ main(int argc, char *argv[])
     char volname[MAX_PATH];
     DWORD serial, maxname, flags;
     BOOL downcase = TRUE;
+    int fd;
 
     /* check out the file system characteristics */
     if (GetFullPathName(".", MAX_PATH, root, &dummy)) {
@@ -45,7 +48,13 @@ main(int argc, char *argv[])
 	}
     }
 
-    setmode(fileno(stdout), O_BINARY);
+    fd = fileno(stdout);
+    /* rare VC linker bug causes uninit global FILE *s
+       fileno() implementation in VC 2003 is 2 blind pointer derefs so it will
+       never return -1 error as POSIX says, to be compliant fail for -1 and
+       for absurdly high FDs which are actually pointers */
+    assert(fd >= 0 && fd < SHRT_MAX);
+    setmode(fd, O_BINARY);
     for (i = 1; i < argc; i++) {
 	len = strlen(argv[i]);
 	if (downcase)

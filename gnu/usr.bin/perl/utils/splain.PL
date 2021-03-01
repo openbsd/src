@@ -1,5 +1,8 @@
 #!/usr/local/bin/perl
 
+use strict;
+use warnings;
+
 use Config;
 use File::Basename qw(&basename &dirname);
 use File::Spec;
@@ -15,13 +18,13 @@ use Cwd;
 
 # This forces PL files to create target in same directory as PL file.
 # This is so that make depend always knows where to find PL derivatives.
-$origdir = cwd;
+my $origdir = cwd;
 chdir dirname($0);
-$file = basename($0, '.PL');
+my $file = basename($0, '.PL');
 $file .= '.com' if $^O eq 'VMS';
 
 # Open input file before creating output file.
-$in = File::Spec->catfile(File::Spec->updir, 'lib', 'diagnostics.pm');
+my $in = File::Spec->catfile(File::Spec->updir, 'lib', 'diagnostics.pm');
 open IN, '<', $in or die "Can't open $in: $!\n";
 
 # Create output file.

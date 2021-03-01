@@ -153,26 +153,26 @@
 /*
 =head1 Callback Functions
 
-=for apidoc Ams||SAVETMPS
+=for apidoc Amns||SAVETMPS
 Opening bracket for temporaries on a callback.  See C<L</FREETMPS>> and
 L<perlcall>.
 
-=for apidoc Ams||FREETMPS
+=for apidoc Amns||FREETMPS
 Closing bracket for temporaries on a callback.  See C<L</SAVETMPS>> and
 L<perlcall>.
 
-=for apidoc Ams||ENTER
+=for apidoc Amns||ENTER
 Opening bracket on a callback.  See C<L</LEAVE>> and L<perlcall>.
 
-=for apidoc Ams||LEAVE
+=for apidoc Amns||LEAVE
 Closing bracket on a callback.  See C<L</ENTER>> and L<perlcall>.
 
-=for apidoc Ams||ENTER_with_name(name)
+=for apidoc Ams||ENTER_with_name|"name"
 
 Same as C<L</ENTER>>, but when debugging is enabled it also associates the
 given literal string with the new scope.
 
-=for apidoc Ams||LEAVE_with_name(name)
+=for apidoc Ams||LEAVE_with_name|"name"
 
 Same as C<L</LEAVE>>, but when debugging is enabled it first checks that the
 scope has the given name. C<name> must be a literal string.

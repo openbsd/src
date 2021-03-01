@@ -5,16 +5,24 @@
 # - Fill in your dependencies in PREREQ_PM
 # Alternatively, you can say the hell with this and use h2xs.
 
+use strict;
+use warnings;
+
 use ExtUtils::MakeMaker;
 use ExtUtils::MM_Unix;
+
 eval 'use ExtUtils::MakeMaker::Coverage';
 
-$PACKAGE = 'XSLoader';
-($PACKAGE_FILE = $PACKAGE) =~ s|::|/|g;
-$LAST_API_CHANGE = 0;
+my $PACKAGE = 'XSLoader';
+(my $PACKAGE_FILE = $PACKAGE) =~ s|::|/|g;
+my $LAST_API_CHANGE = 0;
 
-$CURRENT_VERSION = ${$PACKAGE.'::VERSION'};
-$NEW_VERSION     = ExtUtils::MM_Unix->parse_version("XSLoader_pm.PL");
+my $CURRENT_VERSION;
+{
+    no strict 'refs';
+    $CURRENT_VERSION = ${$PACKAGE.'::VERSION'};
+}
+my $NEW_VERSION     = ExtUtils::MM_Unix->parse_version("XSLoader_pm.PL");
 
 eval "require $PACKAGE";
 

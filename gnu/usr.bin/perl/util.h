@@ -17,7 +17,7 @@
 	(*(f) == '/'							\
 	 || (strchr(f,':')						\
 	     || ((*(f) == '[' || *(f) == '<')				\
-		 && (isWORDCHAR((f)[1]) || strchr("$-_]>",(f)[1])))))
+		 && (isWORDCHAR((f)[1]) || memCHRs("$-_]>",(f)[1])))))
 
 #elif defined(WIN32) || defined(__CYGWIN__)
 #  define PERL_FILE_IS_ABSOLUTE(f) \
@@ -55,9 +55,8 @@ This is a synonym for S<C<(! foldEQ_locale())>>
 /* outside the core, perl.h undefs HAS_QUAD if IV isn't 64-bit
    We can't swap this to HAS_QUAD, because the logic here affects the type of
    perl_drand48_t below, and that is visible outside of the core.  */
-#if defined(U64TYPE) && !defined(USING_MSVC6)
-/* use a faster implementation when quads are available,
- * but not with VC6 on Windows */
+#if defined(U64TYPE)
+/* use a faster implementation when quads are available */
 #    define PERL_DRAND48_QUAD
 #endif
 
@@ -233,12 +232,24 @@ means arg not present, 1 is empty string/null byte */
 #  define HS_CXT cv
 #endif
 
+/*
+=for apidoc instr
+Same as L<strstr(3)>, which finds and returns a pointer to the first occurrence
+of the NUL-terminated substring C<little> in the NUL-terminated string C<big>,
+returning NULL if not found.  The terminating NUL bytes are not compared.
+
+=cut
+*/
+
+
 #define instr(haystack, needle) strstr(haystack, needle)
 
 #ifdef HAS_MEMMEM
 #   define ninstr(big, bigend, little, lend)                                \
             ((char *) memmem((big), (bigend) - (big),                       \
                              (little), (lend) - (little)))
+#else
+#   define ninstr(a,b,c,d) Perl_ninstr(a,b,c,d)
 #endif
 
 #ifdef __Lynx__
@@ -246,6 +257,17 @@ means arg not present, 1 is empty string/null byte */
 int mkstemp(char*);
 #endif
 
+#ifdef PERL_CORE
+#   if defined(VMS)
+/* only useful for calls to our mkostemp() emulation */
+#       define O_VMS_DELETEONCLOSE 0x40000000
+#       ifdef HAS_MKOSTEMP
+#           error 134221 will need a new solution for VMS
+#       endif
+#   else
+#       define O_VMS_DELETEONCLOSE 0
+#   endif
+#endif
 #if defined(HAS_MKOSTEMP) && defined(PERL_CORE)
 #   define Perl_my_mkostemp(templte, flags) mkostemp(templte, flags)
 #endif

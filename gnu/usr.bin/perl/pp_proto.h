@@ -42,6 +42,8 @@ PERL_CALLCONV OP *Perl_pp_chroot(pTHX);
 PERL_CALLCONV OP *Perl_pp_clonecv(pTHX);
 PERL_CALLCONV OP *Perl_pp_close(pTHX);
 PERL_CALLCONV OP *Perl_pp_closedir(pTHX);
+PERL_CALLCONV OP *Perl_pp_cmpchain_and(pTHX);
+PERL_CALLCONV OP *Perl_pp_cmpchain_dup(pTHX);
 PERL_CALLCONV OP *Perl_pp_complement(pTHX);
 PERL_CALLCONV OP *Perl_pp_concat(pTHX);
 PERL_CALLCONV OP *Perl_pp_cond_expr(pTHX);
@@ -126,6 +128,7 @@ PERL_CALLCONV OP *Perl_pp_index(pTHX);
 PERL_CALLCONV OP *Perl_pp_int(pTHX);
 PERL_CALLCONV OP *Perl_pp_introcv(pTHX);
 PERL_CALLCONV OP *Perl_pp_ioctl(pTHX);
+PERL_CALLCONV OP *Perl_pp_isa(pTHX);
 PERL_CALLCONV OP *Perl_pp_iter(pTHX);
 PERL_CALLCONV OP *Perl_pp_join(pTHX);
 PERL_CALLCONV OP *Perl_pp_kvaslice(pTHX);
@@ -296,10 +299,5 @@ PERL_CALLCONV OP *Perl_pp_wantarray(pTHX);
 PERL_CALLCONV OP *Perl_pp_warn(pTHX);
 PERL_CALLCONV OP *Perl_pp_xor(pTHX);
 PERL_CALLCONV OP *Perl_unimplemented_op(pTHX);
-
-/* alternative functions */
-#if defined(__GLIBC__) && IVSIZE == 8  && ( __GLIBC__ < 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ < 8))
-PERL_CALLCONV OP *Perl_pp_i_modulo_glibc_bugfix(pTHX);
-#endif
 
 /* ex: set ro: */

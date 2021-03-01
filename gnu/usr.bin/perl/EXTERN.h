@@ -21,7 +21,7 @@
 
 #  if (defined(WIN32) || defined(__SYMBIAN32__)) && !defined(PERL_STATIC_SYMS)
     /* miniperl should not export anything */
-#    if defined(PERL_IS_MINIPERL) && !defined(UNDER_CE)
+#    if defined(PERL_IS_MINIPERL)
 #      define EXT extern
 #      define dEXT 
 #      define EXTCONST extern const

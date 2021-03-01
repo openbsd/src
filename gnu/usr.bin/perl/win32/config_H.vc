@@ -340,7 +340,7 @@
 
 /* HAS_REGCOMP:
  *	This symbol, if defined, indicates that the regcomp() routine is
- *	available to do some regular patern matching (usually on POSIX.2
+ *	available to do some regular pattern matching (usually on POSIX.2
  *	conforming systems).
  */
 /*#define HAS_REGCOMP		/ * POSIX.2 */
@@ -4107,11 +4107,11 @@
 /*#define	USE_64_BIT_ALL		/ **/
 #endif
 
-/* USE_CBACKTRACE:
+/* USE_C_BACKTRACE:
  *	This symbol, if defined, indicates that Perl should
  *	be built with support for backtrace.
  */
-/*#define USE_CBACKTRACE		/ **/
+/*#define USE_C_BACKTRACE		/ **/
 
 /* USE_DTRACE:
  *	This symbol, if defined, indicates that Perl should

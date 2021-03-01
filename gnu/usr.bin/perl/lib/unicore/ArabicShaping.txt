@@ -1,6 +1,6 @@
-# ArabicShaping-12.1.0.txt
-# Date: 2019-03-08, 23:59:00 GMT [KW, RP]
-# © 2019 Unicode®, Inc.
+# ArabicShaping-13.0.0.txt
+# Date: 2020-01-31, 23:55:00 GMT [KW, RP]
+# © 2020 Unicode®, Inc.
 # Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 #
@@ -8,24 +8,22 @@
 # Unicode Character Database.
 #
 # This file defines the Joining_Type and Joining_Group property
-# values for Arabic, Syriac, N'Ko, Mandaic, Manichaean,
-# Hanifi Rohingya, and Sogdian positional
+# values for Arabic, Syriac, N'Ko, Mandaic, and Manichaean positional
 # shaping, repeating in machine readable form the information
 # exemplified in Tables 9-3, 9-8, 9-9, 9-10, 9-14, 9-15, 9-16, 9-19,
-# 9-20, 10-4, 10-5, 10-6, 10-7, 14-10, 16-16, and 19-5 of The Unicode Standard core
+# 9-20, 10-4, 10-5, 10-6, 10-7, and 19-5 of The Unicode Standard core
 # specification. This file also defines Joining_Type values for
-# Mongolian, Phags-pa, Psalter Pahlavi, and Adlam positional shaping,
+# Mongolian, Phags-pa, Psalter Pahlavi, Sogdian, Chorasmian, and Adlam positional shaping,
+# and Joining_Type and Joining_Group values for Hanifi Rohingya positional shaping,
 # which are not listed in tables in the standard.
 #
-# See Sections 9.2, 9.3, 9.5, 10.5, 10.6, 13.4, 14.3, 14.10, 16.13, 19.4, and 19.9
+# See Sections 9.2, 9.3, 9.5, 10.5, 10.6, 13.4, 14.3, 14.10, 16.14, 19.4, and 19.9
 # of The Unicode Standard core specification for more information.
 #
 # Each line contains four fields, separated by a semicolon.
 #
 # Field 0: the code point, in 4-digit hexadecimal
-#   form, of an Arabic, Syriac, N'Ko, Mandaic, Mongolian,
-#   Phags-pa, Manichaean, Psalter Pahlavi, Hanifi Rohingya, Sogdian,
-#   or other character.
+#   form, of a character.
 #
 # Field 1: gives a short schematic name for that character.
 #   The schematic name is descriptive of the shape, based as
@@ -81,7 +79,7 @@
 # joining group values will be defined only if an explicit proposal
 # to define those values exactly has been approved by the UTC. This
 # is the convention exemplified by the N'Ko, Mandaic, Mongolian,
-# Phags-pa, Psalter Pahlavi, and Sogdian scripts.
+# Phags-pa, Psalter Pahlavi, Sogdian, Chorasmian, and Adlam scripts.
 # Only the Arabic, Manichaean, and Syriac scripts currently have
 # explicit joining group values defined for all characters, including
 # those which have only a single character in a particular Joining_Group
@@ -416,9 +414,9 @@
 0853; MANDAIC AR; D; No_Joining_Group
 0854; MANDAIC ASH; R; No_Joining_Group
 0855; MANDAIC AT; D; No_Joining_Group
-0856; MANDAIC DUSHENNA; U; No_Joining_Group
-0857; MANDAIC KAD; U; No_Joining_Group
-0858; MANDAIC AIN; U; No_Joining_Group
+0856; MANDAIC DUSHENNA; R; No_Joining_Group
+0857; MANDAIC KAD; R; No_Joining_Group
+0858; MANDAIC AIN; R; No_Joining_Group
 
 # Syriac Supplement Characters
 
@@ -465,6 +463,16 @@
 08BB; AFRICAN FEH; D; AFRICAN FEH
 08BC; AFRICAN QAF; D; AFRICAN QAF
 08BD; AFRICAN NOON; D; AFRICAN NOON
+08BE; DOTLESS BEH WITH 3 DOTS BELOW AND V ABOVE; D; BEH
+08BF; DOTLESS BEH WITH 2 DOTS AND V ABOVE; D; BEH
+08C0; DOTLESS BEH WITH TAH AND V ABOVE; D; BEH
+08C1; HAH WITH 3 DOTS BELOW AND V ABOVE; D; HAH
+08C2; KEHEH WITH V ABOVE; D; GAF
+08C3; AIN WITH DIAMOND 4 DOTS ABOVE; D; AIN
+08C4; AFRICAN QAF WITH 3 DOTS ABOVE; D; AFRICAN QAF
+08C5; HAH WITH DOT BELOW AND 3 DOTS ABOVE; D; HAH
+08C6; HAH WITH DIAMOND 4 DOTS BELOW; D; HAH
+08C7; LAM WITH TAH ABOVE; D; LAM
 08E2; ARABIC DISPUTED END OF AYAH; U; No_Joining_Group
 
 # Mongolian Characters
@@ -810,6 +818,37 @@ A873; PHAGS-PA CANDRABINDU; U; No_Joining_Group
 10F52; SOGDIAN TEN; D; No_Joining_Group
 10F53; SOGDIAN TWENTY; D; No_Joining_Group
 10F54; SOGDIAN ONE HUNDRED; R; No_Joining_Group
+
+# Chorasmian Characters
+
+10FB0; CHORASMIAN ALEPH; D; No_Joining_Group
+10FB1; CHORASMIAN SMALL ALEPH; U; No_Joining_Group
+10FB2; CHORASMIAN BETH; D; No_Joining_Group
+10FB3; CHORASMIAN GIMEL; D; No_Joining_Group
+10FB4; CHORASMIAN DALETH; R; No_Joining_Group
+10FB5; CHORASMIAN HE; R; No_Joining_Group
+10FB6; CHORASMIAN WAW; R; No_Joining_Group
+10FB7; CHORASMIAN CURLED WAW; U; No_Joining_Group
+10FB8; CHORASMIAN ZAYIN; D; No_Joining_Group
+10FB9; CHORASMIAN HETH; R; No_Joining_Group
+10FBA; CHORASMIAN YODH; R; No_Joining_Group
+10FBB; CHORASMIAN KAPH; D; No_Joining_Group
+10FBC; CHORASMIAN LAMEDH; D; No_Joining_Group
+10FBD; CHORASMIAN MEM; R; No_Joining_Group
+10FBE; CHORASMIAN NUN; D; No_Joining_Group
+10FBF; CHORASMIAN SAMEKH; D; No_Joining_Group
+10FC0; CHORASMIAN AYIN; U; No_Joining_Group
+10FC1; CHORASMIAN PE; D; No_Joining_Group
+10FC2; CHORASMIAN RESH; R; No_Joining_Group
+10FC3; CHORASMIAN SHIN; R; No_Joining_Group
+10FC4; CHORASMIAN TAW; D; No_Joining_Group
+10FC5; CHORASMIAN ONE; U; No_Joining_Group
+10FC6; CHORASMIAN TWO; U; No_Joining_Group
+10FC7; CHORASMIAN THREE; U; No_Joining_Group
+10FC8; CHORASMIAN FOUR; U; No_Joining_Group
+10FC9; CHORASMIAN TEN; R; No_Joining_Group
+10FCA; CHORASMIAN TWENTY; D; No_Joining_Group
+10FCB; CHORASMIAN ONE HUNDRED; L; No_Joining_Group
 
 # Kaithi Number Signs
 # These are prepended concatenation marks, comparable

@@ -3,16 +3,16 @@
 # In order for MakeMaker to build in the core, nothing can use Fcntl which
 # includes POSIX.  devise_date()'s use of strftime() was replaced.  This tests
 # that it's identical.  It also tests special handling of the POD_MAN_DATE
-# environment variable.
+# and SOURCE_DATE_EPOCH environment variables.
 #
-# Copyright 2009, 2014-2015, 2018 Russ Allbery <rra@cpan.org>
+# Copyright 2009, 2014-2015, 2018-2019 Russ Allbery <rra@cpan.org>
 #
 # This program is free software; you may redistribute it and/or modify it
 # under the same terms as Perl itself.
 #
 # SPDX-License-Identifier: GPL-1.0-or-later OR Artistic-1.0-Perl
 
-use 5.006;
+use 5.008;
 use strict;
 use warnings;
 

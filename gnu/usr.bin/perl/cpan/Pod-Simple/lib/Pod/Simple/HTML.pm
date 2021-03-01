@@ -9,7 +9,7 @@ use vars qw(
   $Doctype_decl  $Content_decl
 );
 @ISA = ('Pod::Simple::PullParser');
-$VERSION = '3.35';
+$VERSION = '3.40';
 BEGIN {
   if(defined &DEBUG) { } # no-op
   elsif( defined &Pod::Simple::DEBUG ) { *DEBUG = \&Pod::Simple::DEBUG }
@@ -29,7 +29,7 @@ $LamePad = '' unless defined $LamePad;
 
 $Linearization_Limit = 120 unless defined $Linearization_Limit;
  # headings/items longer than that won't get an <a name="...">
-$Perldoc_URL_Prefix  = 'http://search.cpan.org/perldoc?'
+$Perldoc_URL_Prefix  = 'https://metacpan.org/pod/'
  unless defined $Perldoc_URL_Prefix;
 $Perldoc_URL_Postfix = ''
  unless defined $Perldoc_URL_Postfix;

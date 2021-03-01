@@ -35,15 +35,13 @@ interested in all the latest developments, you should definitely
 subscribe.  The list is high volume, but generally has a
 fairly low noise level.
 
-Subscribe by sending the message (in the body of your letter)
+To subscribe to perl5-porters, send an email to
 
-	subscribe perl5-porters
-
-to perl5-porters-request@perl.org .
+	perl5-porters-subscribe@perl.org
 
 Archives of the list are held at:
 
-    http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/
+	https://lists.perl.org/list/perl5-porters.html
 
 =head1 How are Perl Releases Numbered?
 
@@ -318,7 +316,8 @@ changes pre-approved by the metaconfig maintainers
 
 =back
 
-Such changes should also be notified to the metaconfig maintainers.
+Such changes should also be notified to the metaconfig maintainers by
+creating an issue at <https://github.com/Perl/metaconfig/issues>.
 
 Alternatively, do consider if the F<*ish.h> files or the hint files might
 be a better place for your changes.
@@ -330,9 +329,9 @@ and F<README_U> files in the metaconfig repository containing Perl's
 metaconfig units:
 
 	# anonymous clone
-	git clone https://github.com/perl5-metaconfig/metaconfig.git
+	git clone https://github.com/Perl/metaconfig.git
 	# or using a registered github.com identity with ssh
-	git clone github.com:perl5-metaconfig/metaconfig metaconfig
+	git clone github.com:Perl/metaconfig.git
 
 Since metaconfig is hard to change, running correction scripts after
 this generation is sometimes needed. Configure gained complexity over
@@ -524,7 +523,7 @@ It is courteous to update that if necessary.
 
 I find the F<makepatch> utility quite handy for making patches.
 You can obtain it from any CPAN archive under
-L<http://www.cpan.org/authors/Johan_Vromans/>.  There are a couple
+L<https://www.cpan.org/authors/id/J/JV/JV/>.  There are a couple
 of differences between my version and the standard one. I have mine do
 a
 
@@ -544,9 +543,9 @@ Here's how I generate a new patch.  I'll use the hypothetical
 5.004_07 to 5.004_08 patch as an example.
 
 	# unpack perl5.004_07/
-	gzip -d -c perl5.004_07.tar.gz | tar -xf -
+	gzip -d -c perl5.004_07.tar.gz | tar -xof -
 	# unpack perl5.004_08/
-	gzip -d -c perl5.004_08.tar.gz | tar -xf -
+	gzip -d -c perl5.004_08.tar.gz | tar -xof -
 	makepatch perl5.004_07 perl5.004_08 > perl5.004_08.pat
 
 Makepatch will automatically generate appropriate B<rm> commands to remove

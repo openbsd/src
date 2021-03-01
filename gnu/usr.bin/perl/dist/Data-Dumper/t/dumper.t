@@ -1784,9 +1784,15 @@ $WANT = change_glob_expectation(<<'EOT');
 EOT
 {
   local $Data::Dumper::Useqq = 1;
-  TEST (q(Data::Dumper->Dump([\@globs], ["globs"])), 'globs: Dump()');
-  TEST (q(Data::Dumper->Dumpxs([\@globs], ["globs"])), 'globs: Dumpxs()')
-    if $XS;
+  if (ord("A") == 65) {
+    TEST (q(Data::Dumper->Dump([\@globs], ["globs"])), 'globs: Dump()');
+    TEST (q(Data::Dumper->Dumpxs([\@globs], ["globs"])), 'globs: Dumpxs()')
+      if $XS;
+  }
+  else {
+    SKIP_TEST "ASCII-dependent test";
+    SKIP_TEST "ASCII-dependent test";
+  }
 }
 #############
 $WANT = change_glob_expectation(<<'EOT');

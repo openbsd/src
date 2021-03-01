@@ -632,7 +632,7 @@ characters that are used in several European languages is in the next
 range, up to 255. After some more Latin extensions we find the character
 sets from languages using non-Roman alphabets, interspersed with a
 variety of symbol sets such as currency symbols, Zapf Dingbats or Braille.
-(You might want to visit L<http://www.unicode.org/> for a look at some of
+(You might want to visit L<https://www.unicode.org/> for a look at some of
 them - my personal favourites are Telugu and Kannada.)
 
 The Unicode character sets associates characters with integers. Encoding
@@ -678,7 +678,8 @@ sequences and generally have a friendlier interface.
 
 The pack code C<w> has been added to support a portable binary data
 encoding scheme that goes way beyond simple integers. (Details can
-be found at L<http://Casbah.org/>, the Scarab project.)  A BER (Binary Encoded
+be found at L<https://github.com/mworks-project/mw_scarab/blob/master/Scarab-0.1.00d19/doc/binary-serialization.txt>,
+the Scarab project.)  A BER (Binary Encoded
 Representation) compressed unsigned integer stores base 128
 digits, most significant digit first, with as few digits as possible.
 Bit eight (the high bit) is set on each byte except the last. There
@@ -868,8 +869,8 @@ a repeat count for a C<()>-group.
 
 Intel HEX is a file format for representing binary data, mostly for
 programming various chips, as a text file. (See
-L<http://en.wikipedia.org/wiki/.hex> for a detailed description, and
-L<http://en.wikipedia.org/wiki/SREC_(file_format)> for the Motorola
+L<https://en.wikipedia.org/wiki/.hex> for a detailed description, and
+L<https://en.wikipedia.org/wiki/SREC_(file_format)> for the Motorola
 S-record format, which can be unravelled using the same technique.)
 Each line begins with a colon (':') and is followed by a sequence of
 hexadecimal characters, specifying a byte count I<n> (8 bit),

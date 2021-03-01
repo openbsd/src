@@ -3,8 +3,8 @@ use strict;
 BEGIN {
     require Time::HiRes;
     unless(&Time::HiRes::d_nanosleep) {
-	require Test::More;
-	Test::More::plan(skip_all => "no nanosleep()");
+        require Test::More;
+        Test::More::plan(skip_all => "no nanosleep()");
     }
 }
 
@@ -14,7 +14,7 @@ use t::Watchdog;
 
 eval { Time::HiRes::nanosleep(-5) };
 like $@, qr/::nanosleep\(-5\): negative time not invented yet/,
-	"negative time error";
+        "negative time error";
 
 my $one = CORE::time;
 Time::HiRes::nanosleep(10_000_000);

@@ -49,12 +49,12 @@ my $distmeta = {
     'repository' => {
       'url' => 'https://github.com/Perl/perl5'
     },
-    'homepage' => 'http://www.perl.org/',
+    'homepage' => 'https://www.perl.org/',
     'bugtracker' => {
       'web' => 'https://github.com/Perl/perl5/issues'
     },
     'license' => [
-      'http://dev.perl.org/licenses/'
+      'https://dev.perl.org/licenses/'
     ],
   },
 };

@@ -69,7 +69,7 @@ BEGIN {
     @INC = qw '../lib ../ext/re';
     if (!defined &DynaLoader::boot_DynaLoader) { # miniperl
 	print("1..0 # Skip Unicode tables not built yet\n"), exit
-	    unless eval 'require "unicore/Heavy.pl"';
+	    unless eval 'require "unicore/UCD.pl"';
     }
 
     # Some of the tests need a locale; which one doesn't much matter, except
@@ -85,29 +85,15 @@ sub _comment {
            map { split /\n/ } @_;
 }
 
-sub convert_from_ascii {
-    my $string = shift;
-
-    #my $save = $string;
-    # Convert \x{...}, \o{...}
-    $string =~ s/ (?<! \\ ) \\x\{ ( .*? ) } / "\\x{" . sprintf("%X", utf8::unicode_to_native(hex $1)) .  "}" /gex;
-    $string =~ s/ (?<! \\ ) \\o\{ ( .*? ) } / "\\o{" . sprintf("%o", utf8::unicode_to_native(oct $1)) .  "}" /gex;
-
-    # Convert \xAB
-    $string =~ s/ (?<! \\ ) \\x ( [A-Fa-f0-9]{2} ) / "\\x" . sprintf("%02X", utf8::unicode_to_native(hex $1)) /gex;
-
-    # Convert \xA
-    $string =~ s/ (?<! \\ ) \\x ( [A-Fa-f0-9] ) (?! [A-Fa-f0-9] ) / "\\x" . sprintf("%X", utf8::unicode_to_native(hex $1)) /gex;
-
-    #print STDERR __LINE__, ": $save\n$string\n" if $save ne $string;
-    return $string;
-}
-
 use strict;
 use warnings FATAL=>"all";
 no warnings 'experimental::vlb';
 our ($bang, $ffff, $nulnul); # used by the tests
 our ($qr, $skip_amp, $qr_embed, $qr_embed_thr, $regex_sets, $alpha_assertions, $no_null); # set by our callers
+
+if ($no_null && ! eval { require XS::APItest }) {
+    print("1..0 # Skip XS::APItest not available\n"), exit
+}
 
 my $expanded_text = "expanded name from original test number";
 my $expanded_text_re = qr/$expanded_text/;
@@ -120,6 +106,38 @@ my @tests = <TESTS>;
 
 close TESTS;
 
+my $test_num = 0;
+
+# Some scenarios add extra tests to those just read in.  For those where there
+# is a character set translation, the added test will already have been
+# translated, so any test number beginning with this one shouldn't be
+# translated again.
+my $first_already_converted_test_num = @tests + 1;
+
+sub convert_from_ascii_guts {
+    my $string_ref = shift;
+
+    return if $test_num >= $first_already_converted_test_num;
+
+    #my $save = $string_ref;
+    # Convert \x{...}, \o{...}
+    $$string_ref =~ s/ (?<! \\ ) \\x\{ ( .*? ) } / "\\x{" . sprintf("%X", utf8::unicode_to_native(hex $1)) .  "}" /gex;
+    $$string_ref =~ s/ (?<! \\ ) \\o\{ ( .*? ) } / "\\o{" . sprintf("%o", utf8::unicode_to_native(oct $1)) .  "}" /gex;
+
+    # Convert \xAB
+    $$string_ref =~ s/ (?<! \\ ) \\x ( [A-Fa-f0-9]{2} ) / "\\x" . sprintf("%02X", utf8::unicode_to_native(hex $1)) /gex;
+
+    # Convert \xA
+    $$string_ref =~ s/ (?<! \\ ) \\x ( [A-Fa-f0-9] ) (?! [A-Fa-f0-9] ) / "\\x" . sprintf("%X", utf8::unicode_to_native(hex $1)) /gex;
+
+    #print STDERR __LINE__, ": $save\n$string_ref\n" if $save ne $string_ref;
+    return;
+}
+
+*convert_from_ascii = (ord("A") == 65)
+                      ? sub { 1; }
+                      : \&convert_from_ascii_guts;
+
 $bang = sprintf "\\%03o", ord "!"; # \41 would not be portable.
 $ffff  = chr(0xff) x 2;
 $nulnul = "\0" x 2;
@@ -127,15 +145,14 @@ my $OP = $qr ? 'qr' : 'm';
 
 $| = 1;
 
-my $test;
 TEST:
 foreach (@tests) {
-    $test++;
+    $test_num++;
     if (!/\S/ || /^\s*#/ || /^__END__$/) {
         chomp;
         my ($not,$comment)= split /\s*#\s*/, $_, 2;
         $comment ||= "(blank line)";
-        print "ok $test # $comment\n";
+        print "ok $test_num # $comment\n";
         next;
     }
     chomp;
@@ -143,26 +160,26 @@ foreach (@tests) {
     my ($pat, $subject, $result, $repl, $expect, $reason, $comment) = split(/\t/,$_,7);
     $comment = "" unless defined $comment;
     if (!defined $subject) {
-        die "Bad test definition on line $test: $_\n";
+        die "Bad test definition on line $test_num: $_\n";
     }
     $reason = '' unless defined $reason;
     my $input = join(':',$pat,$subject,$result,$repl,$expect);
 
     # the double '' below keeps simple syntax highlighters from going crazy
-    $pat = "'$pat'" unless $pat =~ /^[:''\/]/; 
+    $pat = "'$pat'" unless $pat =~ /^[:''\/]/;
     $pat =~ s/(\$\{\w+\})/$1/eeg;
     $pat =~ s/\\n/\n/g unless $regex_sets;
-    $pat = convert_from_ascii($pat) if ord("A") != 65;
+    convert_from_ascii(\$pat);
 
     my $no_null_pat;
     if ($no_null && $pat =~ /^'(.*)'\z/) {
        $no_null_pat = XS::APItest::string_without_null($1);
     }
 
-    $subject = convert_from_ascii($subject) if ord("A") != 65;
+    convert_from_ascii(\$subject);
     $subject = eval qq("$subject"); die $@ if $@;
 
-    $expect = convert_from_ascii($expect) if ord("A") != 65;
+    convert_from_ascii(\$expect);
     $expect  = eval qq("$expect"); die $@ if $@;
     $expect = $repl = '-' if $skip_amp and $input =~ /\$[&\`\']/;
 
@@ -186,7 +203,7 @@ foreach (@tests) {
     $reason = 'skipping $&' if $reason eq  '' && $skip_amp;
     $result =~ s/B//i unless $skip;
     my $todo= $result =~ s/T// ? " # TODO" : "";
-    my $testname= $test;
+    my $testname= $test_num;
     if ($comment) {
         $comment=~s/^\s*(?:#\s*)?//;
         $testname .= " - $comment" if $comment;
@@ -215,7 +232,7 @@ foreach (@tests) {
                 $expanded_pat =~ s//(*negative_lookbehind:/g;
             }
             if ($expanded_pat ne $pat) {
-                $comment .= " $expanded_text $test";
+                $comment .= " $expanded_text $test_num";
                 push @tests, join "\t", $expanded_pat,
                                         $subject // "",
                                         $result // "",
@@ -458,7 +475,6 @@ EOFCODE
 EOFCODE
         }
         $code = "no warnings 'experimental::regex_sets';$code" if $regex_sets;
-        $code = "no warnings 'experimental::alpha_assertions';$code" if $alpha_assertions;
         #$code.=qq[\n\$expect="$expect";\n];
         #use Devel::Peek;
         #die Dump($code) if $pat=~/\\h/ and $subject=~/\x{A0}/;

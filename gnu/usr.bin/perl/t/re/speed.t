@@ -42,7 +42,9 @@ run_tests() unless caller;
 sub run_tests {
 
 
-    watchdog(($::running_as_thread && $::running_as_thread) ? 150 : 540);
+    watchdog(($ENV{PERL_TEST_TIME_OUT_FACTOR} || 1)
+             * (($::running_as_thread && $::running_as_thread)
+                ? 150 : 225));
 
     {
         # [perl #120446]
@@ -153,7 +155,8 @@ PROG
         my $substr= substr( $str, 1 );
         1 while $substr=~m/0/g;
         $elapsed += time;
-        ok( $elapsed <= 2, "should not COW on long string with substr and m//g");
+        ok( $elapsed <= 2, "should not COW on long string with substr and m//g")
+            or diag "elapsed=$elapsed";
     }
 
     # [perl #133185] Infinite loop

@@ -161,7 +161,7 @@ my $max_depth_hash = $n;
 # instead so a user setting of either variable more closely matches
 # the limits the use sees.
 
-# be fairly aggressive in trimming this, smoke testing showed several
+# be fairly aggressive in trimming this, smoke testing showed
 # several apparently random failures here, eg. working in one
 # configuration, but not in a very similar configuration.
 $max_depth = int(0.6 * $max_depth);

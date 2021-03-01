@@ -1,17 +1,17 @@
 # Color screen output using ANSI escape sequences.
 #
-# Copyright 1996, 1997, 1998, 2000, 2001, 2002, 2005, 2006, 2008, 2009, 2010,
-#     2011, 2012, 2013, 2014, 2015, 2016 Russ Allbery <rra@cpan.org>
-# Copyright 1996 Zenin
-# Copyright 2012 Kurt Starsinic <kstarsinic@gmail.com>
+# This module provides utility functions (in two different forms) for coloring
+# output with ANSI escape sequences.
 #
-# This program is free software; you may redistribute it and/or modify it
-# under the same terms as Perl itself.
-#
-# PUSH/POP support submitted 2007 by openmethods.com voice solutions
+# This module is sometimes used in low-memory environments, so avoid use of
+# \d, \w, [:upper:], and similar constructs in the most important functions
+# (color, colored, AUTOLOAD, and the generated constant functions) since
+# loading the Unicode attribute files consumes a lot of memory.
 #
 # Ah, September, when the sysadmins turn colors and fall off the trees....
 #                               -- Dave Van Domelen
+#
+# SPDX-License-Identifier: GPL-1.0-or-later OR Artistic-1.0-Perl
 
 ##############################################################################
 # Modules and declarations
@@ -19,15 +19,15 @@
 
 package Term::ANSIColor;
 
-use 5.006;
+use 5.008;
 use strict;
 use warnings;
 
 # Also uses Carp but loads it on demand to reduce memory usage.
 
-use Exporter ();
+use Exporter;
 
-# use Exporter plus @ISA instead of use base for 5.6 compatibility.
+# use Exporter plus @ISA instead of use base to reduce memory usage.
 ## no critic (ClassHierarchies::ProhibitExplicitISA)
 
 # Declare variables that should be set in BEGIN for robustness.
@@ -41,7 +41,7 @@ our $AUTOLOAD;
 # against circular module loading (not that we load any modules, but
 # consistency is good).
 BEGIN {
-    $VERSION = '4.06';
+    $VERSION = '5.01';
 
     # All of the basic supported constants, used in %EXPORT_TAGS.
     my @colorlist = qw(
@@ -173,7 +173,7 @@ for my $n (0 .. 23) {
 
 # Reverse lookup.  Alphabetically first name for a sequence is preferred.
 our %ATTRIBUTES_R;
-for my $attr (reverse sort keys %ATTRIBUTES) {
+for my $attr (reverse(sort(keys(%ATTRIBUTES)))) {
     $ATTRIBUTES_R{ $ATTRIBUTES{$attr} } = $attr;
 }
 
@@ -188,17 +188,18 @@ for my $code (16 .. 255) {
 
 # Import any custom colors set in the environment.
 our %ALIASES;
-if (exists $ENV{ANSI_COLORS_ALIASES}) {
+if (exists($ENV{ANSI_COLORS_ALIASES})) {
     my $spec = $ENV{ANSI_COLORS_ALIASES};
-    $spec =~ s{\s+}{}xmsg;
+    $spec =~ s{ \A \s+ }{}xms;
+    $spec =~ s{ \s+ \z }{}xms;
 
     # Error reporting here is an interesting question.  Use warn rather than
     # carp because carp would report the line of the use or require, which
     # doesn't help anyone understand what's going on, whereas seeing this code
     # will be more helpful.
     ## no critic (ErrorHandling::RequireCarping)
-    for my $definition (split m{,}xms, $spec) {
-        my ($new, $old) = split m{=}xms, $definition, 2;
+    for my $definition (split(m{\s*,\s*}xms, $spec)) {
+        my ($new, $old) = split(m{\s*=\s*}xms, $definition, 2);
         if (!$new || !$old) {
             warn qq{Bad color mapping "$definition"};
         } else {
@@ -249,10 +250,10 @@ sub croak {
 # called sub against the list of attributes, and if it's an all-caps version
 # of one of them, we define the sub on the fly and then run it.
 #
-# If the environment variable ANSI_COLORS_DISABLED is set to a true value,
-# just return the arguments without adding any escape sequences.  This is to
-# make it easier to write scripts that also work on systems without any ANSI
-# support, like Windows consoles.
+# If the environment variable ANSI_COLORS_DISABLED is set to a true value, or
+# if the variable NO_COLOR is set, just return the arguments without adding
+# any escape sequences.  This is to make it easier to write scripts that also
+# work on systems without any ANSI support, like Windows consoles.
 #
 # Avoid using character classes like [:upper:] and \w here, since they load
 # Unicode character tables and consume a ton of memory.  All of our constants
@@ -274,7 +275,7 @@ sub AUTOLOAD {
 
     # If colors are disabled, just return the input.  Do this without
     # installing a sub for (marginal, unbenchmarked) speed.
-    if ($ENV{ANSI_COLORS_DISABLED}) {
+    if ($ENV{ANSI_COLORS_DISABLED} || defined($ENV{NO_COLOR})) {
         return join(q{}, @_);
     }
 
@@ -296,7 +297,7 @@ sub AUTOLOAD {
     ## no critic (ValuesAndExpressions::ProhibitImplicitNewlines)
     my $eval_result = eval qq{
         sub $AUTOLOAD {
-            if (\$ENV{ANSI_COLORS_DISABLED}) {
+            if (\$ENV{ANSI_COLORS_DISABLED} || defined(\$ENV{NO_COLOR})) {
                 return join(q{}, \@_);
             } elsif (\$AUTOLOCAL && \@_) {
                 return PUSHCOLOR('$escape') . join(q{}, \@_) . POPCOLOR;
@@ -320,7 +321,6 @@ sub AUTOLOAD {
     $@ = $eval_err;
 
     # Dispatch to the newly-created sub.
-    ## no critic (References::ProhibitDoubleSigils)
     goto &$AUTOLOAD;
 }
 ## use critic
@@ -393,25 +393,35 @@ sub LOCALCOLOR {
 #  Throws: Text exception for any invalid attribute
 sub color {
     my (@codes) = @_;
-    @codes = map { split } @codes;
 
     # Return the empty string if colors are disabled.
-    if ($ENV{ANSI_COLORS_DISABLED}) {
+    if ($ENV{ANSI_COLORS_DISABLED} || defined($ENV{NO_COLOR})) {
         return q{};
     }
 
+    # Split on whitespace and expand aliases.
+    @codes = map { split } @codes;
+    @codes = map { defined($ALIASES{$_}) ? @{ $ALIASES{$_} } : $_ } @codes;
+
     # Build the attribute string from semicolon-separated numbers.
+    ## no critic (RegularExpressions::ProhibitEnumeratedClasses)
     my $attribute = q{};
     for my $code (@codes) {
         $code = lc($code);
         if (defined($ATTRIBUTES{$code})) {
             $attribute .= $ATTRIBUTES{$code} . q{;};
-        } elsif (defined($ALIASES{$code})) {
-            $attribute .= $ALIASES{$code} . q{;};
+        } elsif ($code =~ m{ \A (on_)? r([0-9]+) g([0-9]+) b([0-9]+) \z }xms) {
+            my ($r, $g, $b) = ($2 + 0, $3 + 0, $4 + 0);
+            if ($r > 255 || $g > 255 || $b > 255) {
+                croak("Invalid attribute name $code");
+            }
+            my $prefix = $1 ? '48' : '38';
+            $attribute .= "$prefix;2;$r;$g;$b;";
         } else {
             croak("Invalid attribute name $code");
         }
     }
+    ## use critic
 
     # We added one too many semicolons for simplicity.  Remove the last one.
     chop($attribute);
@@ -444,20 +454,38 @@ sub uncolor {
             croak("Bad escape sequence $escape");
         }
 
-        # Pull off 256-color codes (38;5;n or 48;5;n) as a unit.
-        push(@nums, $attrs =~ m{ ( 0*[34]8;0*5;\d+ | \d+ ) (?: ; | \z ) }xmsg);
+        # Pull off 256-color codes (38;5;n or 48;5;n) and true color codes
+        # (38;2;n;n;n or 48;2;n;n;n) as a unit.
+        my $regex = qr{
+            (
+                0*[34]8 ; 0*2 ; \d+ ; \d+ ; \d+
+              | 0*[34]8 ; 0*5 ; \d+
+              | \d+
+            )
+            (?: ; | \z )
+        }xms;
+        push(@nums, $attrs =~ m{$regex}xmsg);
     }
 
     # Now, walk the list of numbers and convert them to attribute names.
     # Strip leading zeroes from any of the numbers.  (xterm, at least, allows
     # leading zeroes to be added to any number in an escape sequence.)
     for my $num (@nums) {
-        $num =~ s{ ( \A | ; ) 0+ (\d) }{$1$2}xmsg;
-        my $name = $ATTRIBUTES_R{$num};
-        if (!defined($name)) {
-            croak("No name for escape sequence $num");
+        if ($num =~ m{ \A 0*([34])8 ; 0*2 ; (\d+) ; (\d+) ; (\d+) \z }xms) {
+            my ($r, $g, $b) = ($2 + 0, $3 + 0, $4 + 0);
+            if ($r > 255 || $g > 255 || $b > 255) {
+                croak("No name for escape sequence $num");
+            }
+            my $prefix = ($1 == 4) ? 'on_' : q{};
+            push(@result, "${prefix}r${r}g${g}b${b}");
+        } else {
+            $num =~ s{ ( \A | ; ) 0+ (\d) }{$1$2}xmsg;
+            my $name = $ATTRIBUTES_R{$num};
+            if (!defined($name)) {
+                croak("No name for escape sequence $num");
+            }
+            push(@result, $name);
         }
-        push(@result, $name);
     }
 
     # Return the attribute names.
@@ -484,7 +512,7 @@ sub colored {
     my ($first, @rest) = @_;
     my ($string, @codes);
     if (ref($first) && ref($first) eq 'ARRAY') {
-        @codes = @{$first};
+        @codes  = @{$first};
         $string = join(q{}, @rest);
     } else {
         $string = $first;
@@ -492,7 +520,7 @@ sub colored {
     }
 
     # Return the string unmolested if colors are disabled.
-    if ($ENV{ANSI_COLORS_DISABLED}) {
+    if ($ENV{ANSI_COLORS_DISABLED} || defined($ENV{NO_COLOR})) {
         return $string;
     }
 
@@ -514,19 +542,20 @@ sub colored {
 # Define a new color alias, or return the value of an existing alias.
 #
 # $alias - The color alias to define
-# $color - The standard color the alias will correspond to (optional)
+# @color - The color attributes the alias will correspond to (optional)
 #
-# Returns: The standard color value of the alias
+# Returns: The standard color value of the alias as a string (may be multiple
+#              attributes separated by spaces)
 #          undef if one argument was given and the alias was not recognized
 #  Throws: Text exceptions for invalid alias names, attempts to use a
 #          standard color name as an alias, or an unknown standard color name
 sub coloralias {
-    my ($alias, $color) = @_;
-    if (!defined($color)) {
-        if (!exists $ALIASES{$alias}) {
-            return;
+    my ($alias, @color) = @_;
+    if (!@color) {
+        if (exists($ALIASES{$alias})) {
+            return join(q{ }, @{ $ALIASES{$alias} });
         } else {
-            return $ATTRIBUTES_R{ $ALIASES{$alias} };
+            return;
         }
     }
 
@@ -538,14 +567,23 @@ sub coloralias {
         croak(qq{Invalid alias name "$alias"});
     } elsif ($ATTRIBUTES{$alias}) {
         croak(qq{Cannot alias standard color "$alias"});
-    } elsif (!exists $ATTRIBUTES{$color}) {
-        croak(qq{Invalid attribute name "$color"});
     }
     ## use critic
 
+    # Split on whitespace and expand aliases.
+    @color = map { split } @color;
+    @color = map { defined($ALIASES{$_}) ? @{ $ALIASES{$_} } : $_ } @color;
+
+    # Check that all of the attributes are valid.
+    for my $attribute (@color) {
+        if (!exists($ATTRIBUTES{$attribute})) {
+            croak(qq{Invalid attribute name "$attribute"});
+        }
+    }
+
     # Set the alias and return.
-    $ALIASES{$alias} = $ATTRIBUTES{$color};
-    return $color;
+    $ALIASES{$alias} = [@color];
+    return join(q{ }, @color);
 }
 
 # Given a string, strip the ANSI color codes out of that string and return the
@@ -574,9 +612,12 @@ sub colorvalid {
     my (@codes) = @_;
     @codes = map { split(q{ }, lc) } @codes;
     for my $code (@codes) {
-        if (!(defined($ATTRIBUTES{$code}) || defined($ALIASES{$code}))) {
-            return;
+        next if defined($ATTRIBUTES{$code});
+        next if defined($ALIASES{$code});
+        if ($code =~ m{ \A (?: on_ )? r (\d+) g (\d+) b (\d+) \z }xms) {
+            next if ($1 <= 255 && $2 <= 255 && $3 <= 255);
         }
+        return;
     }
     return 1;
 }
@@ -599,7 +640,7 @@ command.com NT ESC Delvare SSH OpenSSH aixterm ECMA-048 Fraktur overlining
 Zenin reimplemented Allbery PUSHCOLOR POPCOLOR LOCALCOLOR openmethods.com
 openmethods.com. grey ATTR urxvt mistyped prepending Bareword filehandle
 Cygwin Starsinic aterm rxvt CPAN RGB Solarized Whitespace alphanumerics
-undef
+undef CLICOLOR NNN GGG RRR
 
 =head1 SYNOPSIS
 
@@ -617,8 +658,8 @@ undef
 
     # Map escape sequences back to color names.
     use Term::ANSIColor 1.04 qw(uncolor);
-    my $names = uncolor('01;31');
-    print join(q{ }, @{$names}), "\n";
+    my @names = uncolor('01;31');
+    print join(q{ }, @names), "\n";
 
     # Strip all color escape sequences.
     use Term::ANSIColor 2.01 qw(colorstrip);
@@ -666,16 +707,20 @@ other through constants.  It also offers the utility functions uncolor(),
 colorstrip(), colorvalid(), and coloralias(), which have to be explicitly
 imported to be used (see L</SYNOPSIS>).
 
+If you are using Term::ANSIColor in a console command, consider supporting the
+CLICOLOR standard.  See L</"Supporting CLICOLOR"> for more information.
+
 See L</COMPATIBILITY> for the versions of Term::ANSIColor that introduced
 particular features and the versions of Perl that included them.
 
 =head2 Supported Colors
 
-Terminal emulators that support color divide into three types: ones that
-support only eight colors, ones that support sixteen, and ones that
-support 256.  This module provides the ANSI escape codes for all of them.
-These colors are referred to as ANSI colors 0 through 7 (normal), 8
-through 15 (16-color), and 16 through 255 (256-color).
+Terminal emulators that support color divide into four types: ones that
+support only eight colors, ones that support sixteen, ones that support 256,
+and ones that support 24-bit color.  This module provides the ANSI escape
+codes for all of them.  These colors are referred to as ANSI colors 0 through
+7 (normal), 8 through 15 (16-color), 16 through 255 (256-color), and true
+color (called direct-color by B<xterm>).
 
 Unfortunately, interpretation of colors 0 through 7 often depends on
 whether the emulator supports eight colors or sixteen colors.  Emulators
@@ -698,6 +743,16 @@ C<red> is color 1 and C<bright_red> is color 9.  The same applies for
 background colors: C<on_red> is the normal color and C<on_bright_red> is
 the bright color.  Capitalize these strings for the constant interface.
 
+There is unfortunately no way to know whether the current emulator
+supports more than eight colors, which makes the choice of colors
+difficult.  The most conservative choice is to use only the regular
+colors, which are at least displayed on all emulators.  However, they will
+appear dark in sixteen-color terminal emulators, including most common
+emulators in UNIX X environments.  If you know the display is one of those
+emulators, you may wish to use the bright variants instead.  Even better,
+offer the user a way to configure the colors for a given application to
+fit their terminal emulator.
+
 For 256-color emulators, this module additionally provides C<ansi0>
 through C<ansi15>, which are the same as colors 0 through 15 in
 sixteen-color emulators but use the 256-color escape syntax, C<grey0>
@@ -711,15 +766,12 @@ completely on non-256-color terminals or may be misinterpreted and produce
 random behavior.  Additional attributes such as blink, italic, or bold may
 not work with the 256-color palette.
 
-There is unfortunately no way to know whether the current emulator
-supports more than eight colors, which makes the choice of colors
-difficult.  The most conservative choice is to use only the regular
-colors, which are at least displayed on all emulators.  However, they will
-appear dark in sixteen-color terminal emulators, including most common
-emulators in UNIX X environments.  If you know the display is one of those
-emulators, you may wish to use the bright variants instead.  Even better,
-offer the user a way to configure the colors for a given application to
-fit their terminal emulator.
+For true color emulators, this module supports attributes of the form C<<
+rI<NNN>gI<NNN>bI<NNN> >> and C<< on_rI<NNN>gI<NNN>bI<NNN> >> for all values of
+I<NNN> between 0 and 255.  These represent foreground and background colors,
+respectively, with the RGB values given by the I<NNN> numbers.  These colors
+may be ignored completely on non-true-color terminals or may be misinterpreted
+and produce random behavior.
 
 =head2 Function Interface
 
@@ -766,6 +818,12 @@ C<rgb000> or C<rgb515>.  Similarly, the recognized background colors are:
 
 plus C<on_rgbI<RGB>> for I<R>, I<G>, and I<B> values from 0 to 5.
 
+For true color terminals, the recognized foreground colors are C<<
+rI<RRR>gI<GGG>bI<BBB> >> for I<RRR>, I<GGG>, and I<BBB> values between 0 and
+255.  Similarly, the recognized background colors are C<<
+on_rI<RRR>gI<GGG>bI<BBB> >> for I<RRR>, I<GGG>, and I<BBB> values between 0
+and 255.
+
 For any of the above listed attributes, case is not significant.
 
 Attributes, once set, last until they are unset (by printing the attribute
@@ -808,6 +866,13 @@ default background color for the next line.  Programs like pagers can also
 be confused by attributes that span lines.  Normally you'll want to set
 $Term::ANSIColor::EACHLINE to C<"\n"> to use this feature.
 
+Particularly consider setting $Term::ANSIColor::EACHLINE if you are
+interleaving output to standard output and standard error and you aren't
+flushing standard output (via autoflush() or setting C<$|>).  If you don't,
+the code to reset the color may unexpectedly sit in the standard output buffer
+rather than going to the display, causing standard error output to appear in
+the wrong color.
+
 =item uncolor(ESCAPE)
 
 uncolor() performs the opposite translation as color(), turning escape
@@ -827,17 +892,26 @@ together in scalar context.  Its arguments are not modified.
 colorvalid() takes attribute strings the same as color() and returns true
 if all attributes are known and false otherwise.
 
-=item coloralias(ALIAS[, ATTR])
+=item coloralias(ALIAS[, ATTR ...])
 
-If ATTR is specified, coloralias() sets up an alias of ALIAS for the
-standard color ATTR.  From that point forward, ALIAS can be passed into
-color(), colored(), and colorvalid() and will have the same meaning as
-ATTR.  One possible use of this facility is to give more meaningful names
-to the 256-color RGB colors.  Only ASCII alphanumerics, C<.>, C<_>, and
-C<-> are allowed in alias names.
+If ATTR is specified, it is interpreted as a list of space-separated strings
+naming attributes or existing aliases.  In this case, coloralias() sets up an
+alias of ALIAS for the set of attributes given by ATTR.  From that point
+forward, ALIAS can be passed into color(), colored(), and colorvalid() and
+will have the same meaning as the sequence of attributes given in ATTR.  One
+possible use of this facility is to give more meaningful names to the
+256-color RGB colors.  Only ASCII alphanumerics, C<.>, C<_>, and C<-> are
+allowed in alias names.
 
-If ATTR is not specified, coloralias() returns the standard color name to
-which ALIAS is aliased, if any, or undef if ALIAS does not exist.
+If ATTR includes aliases, those aliases will be expanded at definition time
+and their values will be used to define the new alias.  This means that if you
+define an alias A in terms of another alias B, and then later redefine alias
+B, the value of alias A will not change.
+
+If ATTR is not specified, coloralias() returns the standard attribute or
+attributes to which ALIAS is aliased, if any, or undef if ALIAS does not
+exist.  If it is aliased to multiple attributes, the return value will be a
+single string and the attributes will be separated by spaces.
 
 This is the same facility used by the ANSI_COLORS_ALIASES environment
 variable (see L</ENVIRONMENT> below) but can be used at runtime, not just
@@ -904,6 +978,8 @@ to explicitly import at least C<RESET>, as in:
 
     use Term::ANSIColor 4.00 qw(RESET :constants256);
 
+True color and aliases are not supported by the constant interface.
+
 When using the constants, if you don't want to have to remember to add the
 C<, RESET> at the end of each print line, you can set
 $Term::ANSIColor::AUTORESET to a true value.  Then, the display mode will
@@ -925,13 +1001,14 @@ over $Term::ANSIColor::AUTORESET, and the latter is ignored.
 
 The subroutine interface has the advantage over the constants interface in
 that only two subroutines are exported into your namespace, versus
-thirty-eight in the constants interface.  On the flip side, the constants
-interface has the advantage of better compile time error checking, since
-misspelled names of colors or attributes in calls to color() and colored()
-won't be caught until runtime whereas misspelled names of constants will
-be caught at compile time.  So, pollute your namespace with almost two
-dozen subroutines that you may not even use that often, or risk a silly
-bug by mistyping an attribute.  Your choice, TMTOWTDI after all.
+thirty-eight in the constants interface, and aliases and true color attributes
+are supported.  On the flip side, the constants interface has the advantage of
+better compile time error checking, since misspelled names of colors or
+attributes in calls to color() and colored() won't be caught until runtime
+whereas misspelled names of constants will be caught at compile time.  So,
+pollute your namespace with almost two dozen subroutines that you may not even
+use that often, or risk a silly bug by mistyping an attribute.  Your choice,
+TMTOWTDI after all.
 
 =head2 The Color Stack
 
@@ -970,6 +1047,31 @@ will not, and a subsequent pop won't restore the correct attributes.
 PUSHCOLOR pushes the attributes set by its argument, which is normally a
 string of color constants.  It can't ask the terminal what the current
 attributes are.
+
+=head2 Supporting CLICOLOR
+
+L<https://bixense.com/clicolors/> proposes a standard for enabling and
+disabling color output from console commands using two environment variables,
+CLICOLOR and CLICOLOR_FORCE.  Term::ANSIColor cannot automatically support
+this standard, since the correct action depends on where the output is going
+and Term::ANSIColor may be used in a context where colors should always be
+generated even if CLICOLOR is set in the environment.  But you can use the
+supported environment variable ANSI_COLORS_DISABLED to implement CLICOLOR in
+your own programs with code like this:
+
+    if (exists($ENV{CLICOLOR}) && $ENV{CLICOLOR} == 0) {
+        if (!$ENV{CLICOLOR_FORCE}) {
+            $ENV{ANSI_COLORS_DISABLED} = 1;
+        }
+    }
+
+If you are using the constant interface, be sure to include this code before
+you use any color constants (such as at the very top of your script), since
+this environment variable is only honored the first time a color constant is
+seen.
+
+Be aware that this will export ANSI_COLORS_DISABLED to any child processes of
+your program as well.
 
 =head1 DIAGNOSTICS
 
@@ -1070,9 +1172,10 @@ The format is:
 
     ANSI_COLORS_ALIASES='newcolor1=oldcolor1,newcolor2=oldcolor2'
 
-Whitespace is ignored.
+Whitespace is ignored.  The alias value can be a single attribute or a
+space-separated list of attributes.
 
-For example the L<Solarized|http://ethanschoonover.com/solarized> colors
+For example the L<Solarized|https://ethanschoonover.com/solarized> colors
 can be mapped with:
 
     ANSI_COLORS_ALIASES='\
@@ -1095,11 +1198,20 @@ coloralias() for an equivalent facility that can be used at runtime.
 =item ANSI_COLORS_DISABLED
 
 If this environment variable is set to a true value, all of the functions
-defined by this module (color(), colored(), and all of the constants not
-previously used in the program) will not output any escape sequences and
-instead will just return the empty string or pass through the original
-text as appropriate.  This is intended to support easy use of scripts
-using this module on platforms that don't support ANSI escape sequences.
+defined by this module (color(), colored(), and all of the constants) will not
+output any escape sequences and instead will just return the empty string or
+pass through the original text as appropriate.  This is intended to support
+easy use of scripts using this module on platforms that don't support ANSI
+escape sequences.
+
+=item NO_COLOR
+
+If this environment variable is set to any value, it suppresses generation of
+escape sequences the same as if ANSI_COLORS_DISABLED is set to a true value.
+This implements the L<https://no-color.org/> informal standard.  Programs that
+want to enable color despite NO_COLOR being set will need to unset that
+environment variable before any constant or function provided by this module
+is used.
 
 =back
 
@@ -1135,11 +1247,26 @@ $Term::ANSIColor::AUTOLOCAL was changed to take precedence over
 $Term::ANSIColor::AUTORESET, rather than the other way around, in
 Term::ANSIColor 4.00, included in Perl 5.17.8.
 
-C<ansi16> through C<ansi255>, as aliases for the C<rgb> and C<grey>
-colors, and the corresponding C<on_ansi> names and C<ANSI> and C<ON_ANSI>
-constants, were added in Term::ANSIColor 4.06.
+C<ansi16> through C<ansi255>, as aliases for the C<rgb> and C<grey> colors,
+and the corresponding C<on_ansi> names and C<ANSI> and C<ON_ANSI> constants
+were added in Term::ANSIColor 4.06, included in Perl 5.25.7.
+
+Support for true color (the C<rNNNgNNNbNNN> and C<on_rNNNgNNNbNNN>
+attributes), defining aliases in terms of other aliases, and aliases mapping
+to multiple attributes instead of only a single attribute was added in
+Term::ANSIColor 5.00.
+
+Support for NO_COLOR was added in Term::ANSIColor 5.01.
 
 =head1 RESTRICTIONS
+
+Both colored() and many uses of the color constants will add the reset escape
+sequence after a newline.  If a program mixes colored output to standard
+output with output to standard error, this can result in the standard error
+text having the wrong color because the reset escape sequence hasn't yet been
+flushed to the display (since standard output to a terminal is line-buffered
+by default).  To avoid this, either set autoflush() on STDOUT or set
+$Term::ANSIColor::EACHLINE to C<"\n">.
 
 It would be nice if one could leave off the commas around the constants
 entirely and just say:
@@ -1210,17 +1337,19 @@ table.  It is not believed to be fully supported by any of the terminals
 listed, although it's displayed as green in the Linux console, but it is
 reportedly supported by urxvt.
 
-Note that codes 6 (rapid blink) and 9 (strike-through) are specified in
-ANSI X3.64 and ECMA-048 but are not commonly supported by most displays
-and emulators and therefore aren't supported by this module at the present
-time.  ECMA-048 also specifies a large number of other attributes,
-including a sequence of attributes for font changes, Fraktur characters,
-double-underlining, framing, circling, and overlining.  As none of these
-attributes are widely supported or useful, they also aren't currently
-supported by this module.
+Note that codes 6 (rapid blink) and 9 (strike-through) are specified in ANSI
+X3.64 and ECMA-048 but are not commonly supported by most displays and
+emulators and therefore aren't supported by this module.  ECMA-048 also
+specifies a large number of other attributes, including a sequence of
+attributes for font changes, Fraktur characters, double-underlining, framing,
+circling, and overlining.  As none of these attributes are widely supported or
+useful, they also aren't currently supported by this module.
 
 Most modern X terminal emulators support 256 colors.  Known to not support
 those colors are aterm, rxvt, Terminal.app, and TTY/VC.
+
+For information on true color support in various terminal emulators, see
+L<True Colour support|https://gist.github.com/XVilka/8346728>.
 
 =head1 AUTHORS
 
@@ -1234,10 +1363,10 @@ voice solutions.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 1996 Zenin
+Copyright 1996-1998, 2000-2002, 2005-2006, 2008-2018, 2020 Russ Allbery
+<rra@cpan.org>
 
-Copyright 1996, 1997, 1998, 2000, 2001, 2002, 2005, 2006, 2008, 2009, 2010,
-2011, 2012, 2013, 2014, 2015, 2016 Russ Allbery <rra@cpan.org>
+Copyright 1996 Zenin
 
 Copyright 2012 Kurt Starsinic <kstarsinic@gmail.com>
 
@@ -1254,7 +1383,7 @@ The CPAN module L<Term::Chrome> provides a different interface using
 objects and operator overloading.
 
 ECMA-048 is available on-line (at least at the time of this writing) at
-L<http://www.ecma-international.org/publications/standards/Ecma-048.htm>.
+L<https://www.ecma-international.org/publications/standards/Ecma-048.htm>.
 
 ISO 6429 is available from ISO for a charge; the author of this module
 does not own a copy of it.  Since the source material for ISO 6429 was
@@ -1262,11 +1391,24 @@ ECMA-048 and the latter is available for free, there seems little reason
 to obtain the ISO standard.
 
 The 256-color control sequences are documented at
-L<http://invisible-island.net/xterm/ctlseqs/ctlseqs.html> (search for
+L<https://invisible-island.net/xterm/ctlseqs/ctlseqs.html> (search for
 256-color).
+
+Information about true color support in various terminal emulators and test
+programs you can run to check the true color support in your terminal emulator
+are available at L<https://gist.github.com/XVilka/8346728>.
+
+L<CLICOLORS|https://bixense.com/clicolors/> and
+L<NO_COLOR|https://no-color.org/> are useful standards to be aware of, and
+ideally follow, for any application using color.  Term::ANSIColor complies
+with the latter.
 
 The current version of this module is always available from its web site
 at L<https://www.eyrie.org/~eagle/software/ansicolor/>.  It is also part
 of the Perl core distribution as of 5.6.0.
 
 =cut
+
+# Local Variables:
+# copyright-at-end-flag: t
+# End:

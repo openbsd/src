@@ -25,14 +25,14 @@
  *	getgrgid() routines are available to get group entries.
  *	The getgrent() has a separate definition, HAS_GETGRENT.
  */
-/*#define HAS_GROUP		/**/
+/*#define HAS_GROUP		/ **/
 
 /* HAS_PASSWD
  *	This symbol, if defined, indicates that the getpwnam() and
  *	getpwuid() routines are available to get password entries.
  *	The getpwent() has a separate definition, HAS_GETPWENT.
  */
-/*#define HAS_PASSWD		/**/
+/*#define HAS_PASSWD		/ **/
 
 #define HAS_KILL
 #define HAS_WAIT
@@ -42,7 +42,7 @@
  *	to remove all versions of a file if unlink() is called.  This is
  *	probably only relevant for VMS.
  */
-/* #define UNLINK_ALL_VERSIONS		/**/
+/* #define UNLINK_ALL_VERSIONS		/ **/
 
 /* PLAN9:
  *	This symbol, if defined, indicates that the program is running under
@@ -86,7 +86,7 @@
  *	as the first line of a Perl program designed to be executed directly
  *	by name, instead of the standard Unix #!.  If ALTERNATE_SHEBANG
  *	begins with a character other then #, then Perl will only treat
- *	it as a command line if if finds the string "perl" in the first
+ *	it as a command line if it finds the string "perl" in the first
  *	word; otherwise it's treated as the first line of code in the script.
  *	(IOW, Perl won't hand off to another interpreter via an alternate
  *	shebang sequence that might be legal Perl code.)

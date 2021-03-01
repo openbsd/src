@@ -8,10 +8,11 @@ $::IS_EBCDIC = ord 'A' == 193;
 # the set of 256 characters which is usually called Latin1.  However, they
 # will work properly with any character input, not just Latin1.
 
-sub native_to_uni($) {
+*native_to_uni = ($::IS_ASCII)
+                ? sub { return shift }
+                : sub {
     my $string = shift;
 
-    return $string if $::IS_ASCII;
     my $output = "";
     for my $i (0 .. length($string) - 1) {
         $output .= chr(utf8::native_to_unicode(ord(substr($string, $i, 1))));
@@ -21,12 +22,13 @@ sub native_to_uni($) {
     utf8::upgrade($output) if utf8::is_utf8($string);
 
     return $output;
-}
+};
 
-sub uni_to_native($) {
+*uni_to_native = ($::IS_ASCII)
+                ? sub { return shift }
+                : sub {
     my $string = shift;
 
-    return $string if $::IS_ASCII;
     my $output = "";
     for my $i (0 .. length($string) - 1) {
         $output .= chr(utf8::unicode_to_native(ord(substr($string, $i, 1))));
@@ -36,17 +38,16 @@ sub uni_to_native($) {
     utf8::upgrade($output) if utf8::is_utf8($string);
 
     return $output;
-}
+};
 
-sub byte_utf8a_to_utf8n {
-    # Convert a UTF-8 byte sequence into the platform's native UTF-8
-    # equivalent, currently only UTF-8 and UTF-EBCDIC.
+my @utf8_skip;
 
-    my @utf8_skip = (
-    # This translates a utf-8-encoded byte into how many bytes the full utf8
-    # character occupies.
+if ($::IS_EBCDIC) {
+    @utf8_skip = (
+        # This translates a utf-8-encoded byte into how many bytes the full utf8
+        # character occupies.
 
-      # 0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F
+        # 0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  # 0
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  # 1
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  # 2
@@ -64,11 +65,17 @@ sub byte_utf8a_to_utf8n {
         3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,  # E
         4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 7,13,  # F
     );
+}
+
+*byte_utf8a_to_utf8n = ($::IS_ASCII)
+                ? sub { return shift }
+                : sub {
+    # Convert a UTF-8 byte sequence into the platform's native UTF-8
+    # equivalent, currently only UTF-8 and UTF-EBCDIC.
 
     my $string = shift;
     die "Input to byte_utf8a-to_utf8n() must not be flagged UTF-8"
                                                     if utf8::is_utf8($string);
-    return $string if $::IS_ASCII;
     die "Expecting ASCII or EBCDIC" unless $::IS_EBCDIC;
 
     my $length = length($string);
@@ -137,7 +144,7 @@ sub byte_utf8a_to_utf8n {
     utf8::encode($out); # Turn off utf8 flag.
     #diag($out);
     return $out;
-}
+};
 
 my @i8_to_native = (    # Only code page 1047 so far.
 # _0   _1   _2   _3   _4   _5   _6   _7   _8   _9   _A   _B   _C   _D   _E   _F

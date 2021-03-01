@@ -64,9 +64,10 @@ foreach my $r ({}, \$t, [], \*F, sub {}) {
 
 package FooBar;
 
-use overload  '0+' => sub { 10 },
-		'+' => sub { 10 + $_[1] },
-		'""' => sub { "10" };
+use overload
+    '0+'  => sub { 10 },
+    '+'   => sub { 10 + $_[1] },
+    '""'  => sub { "10" };
 
 package MyTie;
 
@@ -85,21 +86,21 @@ use Scalar::Util qw(refaddr);
 
 sub TIEHASH
 {
-	my $pkg = shift;
-	return bless [ @_ ], $pkg;
+    my $pkg = shift;
+    return bless [ @_ ], $pkg;
 }
 sub FETCH
 {
-	my $self = shift;
-	my $key = shift;
-	my ($underlying) = @$self;
-	return $underlying->{refaddr($key)};
+    my $self = shift;
+    my $key = shift;
+    my ($underlying) = @$self;
+    return $underlying->{refaddr($key)};
 }
 sub STORE
 {
-	my $self = shift;
-	my $key = shift;
-	my $value = shift;
-	my ($underlying) = @$self;
-	return ($underlying->{refaddr($key)} = $key);
+    my $self = shift;
+    my $key = shift;
+    my $value = shift;
+    my ($underlying) = @$self;
+    return ($underlying->{refaddr($key)} = $key);
 }

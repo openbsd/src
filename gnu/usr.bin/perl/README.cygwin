@@ -27,7 +27,7 @@ platforms.  They run thanks to the Cygwin library which provides the UNIX
 system calls and environment these programs expect.  More information
 about this project can be found at:
 
-L<http://www.cygwin.com/>
+L<https://www.cygwin.com/>
 
 A recent net or commercial release of Cygwin is required.
 
@@ -419,13 +419,13 @@ or:
  as parent(0x6FB30000) != 0x6FE60000 46 [main] perl 3488 fork: child
  3588 - died waiting for dll loading, errno11
 
-See L<http://cygwin.com/faq/faq-nochunks.html#faq.using.fixing-fork-failures>
+See L<https://cygwin.com/faq/faq-nochunks.html#faq.using.fixing-fork-failures>
 It helps if not too many DLLs are loaded in memory so the available address space is larger,
 e.g. stopping the MS Internet Explorer might help.
 
 Use the perlrebase or rebase utilities to resolve the conflicting dll addresses.
 The rebase package is included in the Cygwin setup. Use F<setup.exe>
-from L<http://www.cygwin.com/setup.exe> to install it.
+from L<https://cygwin.com/install.html> to install it.
 
 1. kill all perl processes and run C<perlrebase> or
 
@@ -523,7 +523,7 @@ path is mounted in textmode.
 =item C<Cygwin::sync_winenv>
 
 Cygwin does not initialize all original Win32 environment variables.
-See the bottom of this page L<http://cygwin.com/cygwin-ug-net/setup-env.html>
+See the bottom of this page L<https://cygwin.com/cygwin-ug-net/setup-env.html>
 for "Restricted Win32 environment".
 
 Certain Win32 programs called from cygwin programs might need some environment

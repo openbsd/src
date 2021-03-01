@@ -1,5 +1,5 @@
-# PropertyAliases-12.1.0.txt
-# Date: 2019-03-10, 10:53:18 GMT
+# PropertyAliases-13.0.0.txt
+# Date: 2019-10-23, 03:46:32 GMT
 # © 2019 Unicode®, Inc.
 # Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
@@ -89,7 +89,9 @@ cjkIRG_JSource           ; kIRG_JSource
 cjkIRG_KPSource          ; kIRG_KPSource
 cjkIRG_KSource           ; kIRG_KSource
 cjkIRG_MSource           ; kIRG_MSource
+cjkIRG_SSource           ; kIRG_SSource
 cjkIRG_TSource           ; kIRG_TSource
+cjkIRG_UKSource          ; kIRG_UKSource
 cjkIRG_USource           ; kIRG_USource
 cjkIRG_VSource           ; kIRG_VSource
 cjkRSUnicode             ; kRSUnicode                  ; Unicode_Radical_Stroke; URS
@@ -154,7 +156,13 @@ Dash                     ; Dash
 Dep                      ; Deprecated
 DI                       ; Default_Ignorable_Code_Point
 Dia                      ; Diacritic
+EBase                    ; Emoji_Modifier_Base
+EComp                    ; Emoji_Component
+EMod                     ; Emoji_Modifier
+Emoji                    ; Emoji
+EPres                    ; Emoji_Presentation
 Ext                      ; Extender
+ExtPict                  ; Extended_Pictographic
 Gr_Base                  ; Grapheme_Base
 Gr_Ext                   ; Grapheme_Extend
 Gr_Link                  ; Grapheme_Link
@@ -199,6 +207,6 @@ XO_NFKC                  ; Expands_On_NFKC
 XO_NFKD                  ; Expands_On_NFKD
 
 # ================================================
-# Total:    121
+# Total:    129
 
 # EOF

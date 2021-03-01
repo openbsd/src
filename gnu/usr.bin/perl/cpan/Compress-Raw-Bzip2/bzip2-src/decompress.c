@@ -41,6 +41,7 @@ void makeMaps_d ( DState* s )
    { retVal = rrr; goto save_state_and_return; };
 
 #define GET_BITS(lll,vvv,nnn)                     \
+   /* FALLTHROUGH */                              \
    case lll: s->state = lll;                      \
    while (True) {                                 \
       if (s->bsLive >= nnn) {                     \

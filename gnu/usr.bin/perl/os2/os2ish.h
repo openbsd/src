@@ -77,7 +77,7 @@
  *	as the first line of a Perl program designed to be executed directly
  *	by name, instead of the standard Unix #!.  If ALTERNATE_SHEBANG
  *	begins with a character other then #, then Perl will only treat
- *	it as a command line if if finds the string "perl" in the first
+ *	it as a command line if it finds the string "perl" in the first
  *	word; otherwise it's treated as the first line of code in the script.
  *	(IOW, Perl won't hand off to another interpreter via an alternate
  *	shebang sequence that might be legal Perl code.)

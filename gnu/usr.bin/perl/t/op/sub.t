@@ -406,7 +406,7 @@ is ref($main::{rt_129916}), 'CODE', 'simple sub stored as CV in stash (main::)';
 # Calling xsub via ampersand syntax when @_ has holes
 SKIP: {
     skip "no XS::APItest on miniperl" if is_miniperl;
-    require XS::APItest;
+    skip "XS::APItest not available", 1 if ! eval { require XS::APItest };
     local *_;
     $_[1] = 1;
     &XS::APItest::unshift_and_set_defav;

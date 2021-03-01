@@ -4,14 +4,15 @@
    Any changes made here will be lost!
  */
 
-#define PERL_BISON_VERSION  30000
+#define PERL_BISON_VERSION  30003
 
 #ifdef PERL_CORE
-/* A Bison parser, made by GNU Bison 3.0.5.  */
+/* A Bison parser, made by GNU Bison 3.3.2.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015, 2018 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2019 Free Software Foundation,
+   Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -39,6 +40,9 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
+/* Undocumented macros, especially those whose name start with YY_,
+   are private implementation details.  Do not rely on them.  */
+
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -58,82 +62,87 @@ extern int yydebug;
     GRAMBARESTMT = 261,
     GRAMFULLSTMT = 262,
     GRAMSTMTSEQ = 263,
-    BAREWORD = 264,
-    METHOD = 265,
-    FUNCMETH = 266,
-    THING = 267,
-    PMFUNC = 268,
-    PRIVATEREF = 269,
-    QWLIST = 270,
-    FUNC0OP = 271,
-    FUNC0SUB = 272,
-    UNIOPSUB = 273,
-    LSTOPSUB = 274,
-    PLUGEXPR = 275,
-    PLUGSTMT = 276,
-    LABEL = 277,
-    FORMAT = 278,
-    SUB = 279,
-    SIGSUB = 280,
-    ANONSUB = 281,
-    ANON_SIGSUB = 282,
-    PACKAGE = 283,
-    USE = 284,
-    WHILE = 285,
-    UNTIL = 286,
-    IF = 287,
-    UNLESS = 288,
-    ELSE = 289,
-    ELSIF = 290,
-    CONTINUE = 291,
-    FOR = 292,
-    GIVEN = 293,
-    WHEN = 294,
-    DEFAULT = 295,
-    LOOPEX = 296,
-    DOTDOT = 297,
-    YADAYADA = 298,
-    FUNC0 = 299,
-    FUNC1 = 300,
-    FUNC = 301,
-    UNIOP = 302,
-    LSTOP = 303,
-    RELOP = 304,
-    EQOP = 305,
-    MULOP = 306,
-    ADDOP = 307,
-    DOLSHARP = 308,
-    DO = 309,
-    HASHBRACK = 310,
-    NOAMP = 311,
-    LOCAL = 312,
-    MY = 313,
-    REQUIRE = 314,
-    COLONATTR = 315,
-    FORMLBRACK = 316,
-    FORMRBRACK = 317,
-    PREC_LOW = 318,
-    OROP = 319,
-    DOROP = 320,
-    ANDOP = 321,
-    NOTOP = 322,
-    ASSIGNOP = 323,
-    OROR = 324,
-    DORDOR = 325,
-    ANDAND = 326,
-    BITOROP = 327,
-    BITANDOP = 328,
-    SHIFTOP = 329,
-    MATCHOP = 330,
-    UMINUS = 331,
-    REFGEN = 332,
-    POWOP = 333,
-    PREINC = 334,
-    PREDEC = 335,
-    POSTINC = 336,
-    POSTDEC = 337,
-    POSTJOIN = 338,
-    ARROW = 339
+    GRAMSUBSIGNATURE = 264,
+    BAREWORD = 265,
+    METHOD = 266,
+    FUNCMETH = 267,
+    THING = 268,
+    PMFUNC = 269,
+    PRIVATEREF = 270,
+    QWLIST = 271,
+    FUNC0OP = 272,
+    FUNC0SUB = 273,
+    UNIOPSUB = 274,
+    LSTOPSUB = 275,
+    PLUGEXPR = 276,
+    PLUGSTMT = 277,
+    LABEL = 278,
+    FORMAT = 279,
+    SUB = 280,
+    SIGSUB = 281,
+    ANONSUB = 282,
+    ANON_SIGSUB = 283,
+    PACKAGE = 284,
+    USE = 285,
+    WHILE = 286,
+    UNTIL = 287,
+    IF = 288,
+    UNLESS = 289,
+    ELSE = 290,
+    ELSIF = 291,
+    CONTINUE = 292,
+    FOR = 293,
+    GIVEN = 294,
+    WHEN = 295,
+    DEFAULT = 296,
+    LOOPEX = 297,
+    DOTDOT = 298,
+    YADAYADA = 299,
+    FUNC0 = 300,
+    FUNC1 = 301,
+    FUNC = 302,
+    UNIOP = 303,
+    LSTOP = 304,
+    MULOP = 305,
+    ADDOP = 306,
+    DOLSHARP = 307,
+    DO = 308,
+    HASHBRACK = 309,
+    NOAMP = 310,
+    LOCAL = 311,
+    MY = 312,
+    REQUIRE = 313,
+    COLONATTR = 314,
+    FORMLBRACK = 315,
+    FORMRBRACK = 316,
+    SUBLEXSTART = 317,
+    SUBLEXEND = 318,
+    PREC_LOW = 319,
+    OROP = 320,
+    DOROP = 321,
+    ANDOP = 322,
+    NOTOP = 323,
+    ASSIGNOP = 324,
+    OROR = 325,
+    DORDOR = 326,
+    ANDAND = 327,
+    BITOROP = 328,
+    BITANDOP = 329,
+    CHEQOP = 330,
+    NCEQOP = 331,
+    CHRELOP = 332,
+    NCRELOP = 333,
+    SHIFTOP = 334,
+    MATCHOP = 335,
+    UMINUS = 336,
+    REFGEN = 337,
+    POWOP = 338,
+    PREINC = 339,
+    PREDEC = 340,
+    POSTINC = 341,
+    POSTDEC = 342,
+    POSTJOIN = 343,
+    ARROW = 344
   };
 #endif
 
@@ -186,6 +195,6 @@ int yyparse (void);
 
 
 /* Generated from:
- * 7aa97cfabf5b87a95ed263373e76c7af6d7e075e83d12e84ccdca9690c15a68d perly.y
- * b6fae5748f9bef6db4740aa5e122b84ac5181852d42474d0ecad621fa4253306 regen_perly.pl
+ * e5b801fdebce5c77dd8e644fc5a489cbea6af33db180e771dd9d669b12bbe0cf perly.y
+ * 0947213b55d0ed11693554bea04987e886cf285f5c14cf9075fa1e7acc3f4061 regen_perly.pl
  * ex: set ro: */

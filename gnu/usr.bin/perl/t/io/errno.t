@@ -2,7 +2,7 @@
 # vim: ts=4 sts=4 sw=4:
 
 # $! may not be set if EOF was reached without any error.
-# http://rt.perl.org/rt3/Ticket/Display.html?id=39060
+# https://github.com/Perl/perl5/issues/8431
 
 use strict;
 use Config;

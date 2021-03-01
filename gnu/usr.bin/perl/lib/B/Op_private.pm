@@ -118,7 +118,7 @@ package B::Op_private;
 our %bits;
 
 
-our $VERSION = "5.030003";
+our $VERSION = "5.032001";
 
 $bits{$_}{3} = 'OPpENTERSUB_AMPER' for qw(entersub rv2cv);
 $bits{$_}{6} = 'OPpENTERSUB_DB' for qw(entersub rv2cv);
@@ -150,13 +150,13 @@ $bits{$_}{7} = 'OPpPV_IS_UTF8' for qw(dump goto last next redo);
 $bits{$_}{6} = 'OPpREFCOUNTED' for qw(leave leaveeval leavesub leavesublv leavewrite);
 $bits{$_}{2} = 'OPpSLICEWARNING' for qw(aslice hslice padav padhv rv2av rv2hv);
 $bits{$_}{4} = 'OPpTARGET_MY' for qw(abs add atan2 chdir chmod chomp chown chr chroot concat cos crypt divide exec exp flock getpgrp getppid getpriority hex i_add i_divide i_modulo i_multiply i_subtract index int kill left_shift length link log mkdir modulo multiconcat multiply nbit_and nbit_or nbit_xor ncomplement oct ord pow push rand rename right_shift rindex rmdir schomp scomplement setpgrp setpriority sin sleep sqrt srand stringify subtract symlink system time unlink unshift utime wait waitpid);
+$bits{$_}{0} = 'OPpTRANS_CAN_FORCE_UTF8' for qw(trans transr);
 $bits{$_}{5} = 'OPpTRANS_COMPLEMENT' for qw(trans transr);
 $bits{$_}{7} = 'OPpTRANS_DELETE' for qw(trans transr);
-$bits{$_}{0} = 'OPpTRANS_FROM_UTF' for qw(trans transr);
 $bits{$_}{6} = 'OPpTRANS_GROWS' for qw(trans transr);
 $bits{$_}{2} = 'OPpTRANS_IDENTICAL' for qw(trans transr);
 $bits{$_}{3} = 'OPpTRANS_SQUASH' for qw(trans transr);
-$bits{$_}{1} = 'OPpTRANS_TO_UTF' for qw(trans transr);
+$bits{$_}{1} = 'OPpTRANS_USE_SVOP' for qw(trans transr);
 $bits{$_}{5} = 'OPpTRUEBOOL' for qw(grepwhile index length padav padhv pos ref rindex rv2av rv2hv subst);
 
 my @bf = (
@@ -284,6 +284,8 @@ $bits{chr}{0} = $bf[0];
 $bits{chroot}{0} = $bf[0];
 @{$bits{close}}{3,2,1,0} = ($bf[4], $bf[4], $bf[4], $bf[4]);
 $bits{closedir}{0} = $bf[0];
+$bits{cmpchain_and}{0} = $bf[0];
+$bits{cmpchain_dup}{0} = $bf[0];
 $bits{complement}{0} = $bf[0];
 @{$bits{concat}}{6,1,0} = ('OPpCONCAT_NESTED', $bf[1], $bf[1]);
 $bits{cond_expr}{0} = $bf[0];
@@ -399,6 +401,7 @@ $bits{i_preinc}{0} = $bf[0];
 @{$bits{index}}{3,2,1,0} = ($bf[4], $bf[4], $bf[4], $bf[4]);
 $bits{int}{0} = $bf[0];
 @{$bits{ioctl}}{3,2,1,0} = ($bf[4], $bf[4], $bf[4], $bf[4]);
+@{$bits{isa}}{1,0} = ($bf[1], $bf[1]);
 @{$bits{join}}{3,2,1,0} = ($bf[4], $bf[4], $bf[4], $bf[4]);
 $bits{keys}{0} = $bf[0];
 @{$bits{kill}}{3,2,1,0} = ($bf[4], $bf[4], $bf[4], $bf[4]);
@@ -686,13 +689,13 @@ our %defines = (
     OPpSPLIT_LEX             =>   8,
     OPpSUBSTR_REPL_FIRST     =>  16,
     OPpTARGET_MY             =>  16,
+    OPpTRANS_CAN_FORCE_UTF8  =>   1,
     OPpTRANS_COMPLEMENT      =>  32,
     OPpTRANS_DELETE          => 128,
-    OPpTRANS_FROM_UTF        =>   1,
     OPpTRANS_GROWS           =>  64,
     OPpTRANS_IDENTICAL       =>   4,
     OPpTRANS_SQUASH          =>   8,
-    OPpTRANS_TO_UTF          =>   2,
+    OPpTRANS_USE_SVOP        =>   2,
     OPpTRUEBOOL              =>  32,
 );
 
@@ -789,13 +792,13 @@ our %labels = (
     OPpSPLIT_LEX             => 'LEX',
     OPpSUBSTR_REPL_FIRST     => 'REPL1ST',
     OPpTARGET_MY             => 'TARGMY',
+    OPpTRANS_CAN_FORCE_UTF8  => 'CAN_FORCE_UTF8',
     OPpTRANS_COMPLEMENT      => 'COMPL',
     OPpTRANS_DELETE          => 'DEL',
-    OPpTRANS_FROM_UTF        => '<UTF',
     OPpTRANS_GROWS           => 'GROWS',
     OPpTRANS_IDENTICAL       => 'IDENT',
     OPpTRANS_SQUASH          => 'SQUASH',
-    OPpTRANS_TO_UTF          => '>UTF',
+    OPpTRANS_USE_SVOP        => 'USE_SVOP',
     OPpTRUEBOOL              => 'BOOL',
 );
 
@@ -846,7 +849,7 @@ our %ops_using = (
     OPpSPLIT_ASSIGN          => [qw(split)],
     OPpSUBSTR_REPL_FIRST     => [qw(substr)],
     OPpTARGET_MY             => [qw(abs add atan2 chdir chmod chomp chown chr chroot concat cos crypt divide exec exp flock getpgrp getppid getpriority hex i_add i_divide i_modulo i_multiply i_subtract index int kill left_shift length link log mkdir modulo multiconcat multiply nbit_and nbit_or nbit_xor ncomplement oct ord pow push rand rename right_shift rindex rmdir schomp scomplement setpgrp setpriority sin sleep sqrt srand stringify subtract symlink system time unlink unshift utime wait waitpid)],
-    OPpTRANS_COMPLEMENT      => [qw(trans transr)],
+    OPpTRANS_CAN_FORCE_UTF8  => [qw(trans transr)],
     OPpTRUEBOOL              => [qw(grepwhile index length padav padhv pos ref rindex rv2av rv2hv subst)],
 );
 
@@ -887,11 +890,11 @@ $ops_using{OPpSORT_STABLE} = $ops_using{OPpSORT_DESCEND};
 $ops_using{OPpSORT_UNSTABLE} = $ops_using{OPpSORT_DESCEND};
 $ops_using{OPpSPLIT_IMPLIM} = $ops_using{OPpSPLIT_ASSIGN};
 $ops_using{OPpSPLIT_LEX} = $ops_using{OPpSPLIT_ASSIGN};
-$ops_using{OPpTRANS_DELETE} = $ops_using{OPpTRANS_COMPLEMENT};
-$ops_using{OPpTRANS_FROM_UTF} = $ops_using{OPpTRANS_COMPLEMENT};
-$ops_using{OPpTRANS_GROWS} = $ops_using{OPpTRANS_COMPLEMENT};
-$ops_using{OPpTRANS_IDENTICAL} = $ops_using{OPpTRANS_COMPLEMENT};
-$ops_using{OPpTRANS_SQUASH} = $ops_using{OPpTRANS_COMPLEMENT};
-$ops_using{OPpTRANS_TO_UTF} = $ops_using{OPpTRANS_COMPLEMENT};
+$ops_using{OPpTRANS_COMPLEMENT} = $ops_using{OPpTRANS_CAN_FORCE_UTF8};
+$ops_using{OPpTRANS_DELETE} = $ops_using{OPpTRANS_CAN_FORCE_UTF8};
+$ops_using{OPpTRANS_GROWS} = $ops_using{OPpTRANS_CAN_FORCE_UTF8};
+$ops_using{OPpTRANS_IDENTICAL} = $ops_using{OPpTRANS_CAN_FORCE_UTF8};
+$ops_using{OPpTRANS_SQUASH} = $ops_using{OPpTRANS_CAN_FORCE_UTF8};
+$ops_using{OPpTRANS_USE_SVOP} = $ops_using{OPpTRANS_CAN_FORCE_UTF8};
 
 # ex: set ro:

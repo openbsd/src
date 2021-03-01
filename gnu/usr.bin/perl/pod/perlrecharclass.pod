@@ -140,7 +140,7 @@ C<\p{Numeric_Type=Digit}>, and so C<\d> doesn't match them.
 The Tamil digits (U+0BE6 - U+0BEF) can also legally be
 used in old-style Tamil numbers in which they would appear no more than
 one in a row, separated by characters that mean "times 10", "times 100",
-etc.  (See L<http://www.unicode.org/notes/tn21>.)
+etc.  (See L<https://www.unicode.org/notes/tn21>.)
 
 Any character not matched by C<\d> is matched by C<\D>.
 
@@ -366,7 +366,7 @@ it isn't already.
 
 Note that almost all properties are immune to case-insensitive matching.
 That is, adding a C</i> regular expression modifier does not change what
-they match.  There are two sets that are affected.  The first set is
+they match.  But there are two sets that are affected.  The first set is
 C<Uppercase_Letter>,
 C<Lowercase_Letter>,
 and C<Titlecase_Letter>,

@@ -1,4 +1,4 @@
-# $Id: enc_utf8.t,v 2.5 2017/06/10 17:23:50 dankogai Exp $
+# $Id: enc_utf8.t,v 2.6 2019/12/25 09:23:21 dankogai Exp $
 # This is the twin of enc_eucjp.t .
 
 BEGIN {
@@ -8,21 +8,22 @@ BEGIN {
       exit 0;
     }
     unless (find PerlIO::Layer 'perlio') {
-    print "1..0 # Skip: PerlIO was not built\n";
-    exit 0;
+      print "1..0 # Skip: PerlIO was not built\n";
+      exit 0;
     }
     if (ord("A") == 193) {
-    print "1..0 # encoding pragma does not support EBCDIC platforms\n";
-    exit(0);
+      print "1..0 # encoding pragma does not support EBCDIC platforms\n";
+      exit(0);
     }
     if ($] >= 5.025003 and !$Config{usecperl}){
-    print "1..0 # Skip: Perl <=5.25.2 or cperl required\n";
-    exit 0;
+      print "1..0 # Skip: Perl <=5.25.2 or cperl required\n";
+      exit 0;
     }
 }
 
 no warnings "deprecated";
 use encoding 'utf8';
+use warnings;
 
 my @c = (127, 128, 255, 256);
 

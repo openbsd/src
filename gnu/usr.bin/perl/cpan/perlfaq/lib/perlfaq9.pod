@@ -4,7 +4,7 @@ perlfaq9 - Web, Email and Networking
 
 =head1 VERSION
 
-version 5.20190126
+version 5.20200523
 
 =head1 DESCRIPTION
 
@@ -78,7 +78,7 @@ Plack is like Ruby's Rack or Python's Paste for WSGI.
 
 You could build a web site using L<Plack> and your own code,
 but for anything other than a very basic web site, using a web framework
-(that uses L<Plack>) is a better option.
+(that uses L<https://plackperl.org>) is a better option.
 
 =head2 How do I remove HTML from a string?
 
@@ -95,29 +95,30 @@ L<HTML::LinkExtor> or L<HTML::Parser>. You might even use
 L<HTML::SimpleLinkExtor> as an example for something specifically
 suited to your needs.
 
-You can use L<URI::Find> to extract URLs from an arbitrary text document.
+You can use L<URI::Find> or L<URL::Search> to extract URLs from an
+arbitrary text document.
 
 =head2 How do I fetch an HTML file?
 
 (contributed by brian d foy)
 
-Use the libwww-perl distribution. The L<LWP::Simple> module can fetch web
-resources and give their content back to you as a string:
+The core L<HTTP::Tiny> module can fetch web resources and give their
+content back to you as a string:
 
-    use LWP::Simple qw(get);
+    use HTTP::Tiny;
 
-    my $html = get( "http://www.example.com/index.html" );
+    my $ua = HTTP::Tiny->new;
+    my $html = $ua->get( "http://www.example.com/index.html" )->{content};
 
 It can also store the resource directly in a file:
 
-    use LWP::Simple qw(getstore);
+    $ua->mirror( "http://www.example.com/index.html", "foo.html" );
 
-    getstore( "http://www.example.com/index.html", "foo.html" );
-
-If you need to do something more complicated, you can use
-L<LWP::UserAgent> module to create your own user-agent (e.g. browser)
-to get the job done. If you want to simulate an interactive web
-browser, you can use the L<WWW::Mechanize> module.
+If you need to do something more complicated, the L<HTTP::Tiny> object can
+be customized by setting attributes, or you can use L<LWP::UserAgent> from
+the libwww-perl distribution or L<Mojo::UserAgent> from the Mojolicious
+distribution to make common tasks easier. If you want to simulate an
+interactive web browser, you can use the L<WWW::Mechanize> module.
 
 =head2 How do I automate an HTML form submission?
 
@@ -126,25 +127,26 @@ and forms or a web site, you can use L<WWW::Mechanize>. See its
 documentation for all the details.
 
 If you're submitting values using the GET method, create a URL and encode
-the form using the C<query_form> method:
+the form using the C<www_form_urlencode> method from L<HTTP::Tiny>:
 
-    use LWP::Simple;
-    use URI::URL;
+    use HTTP::Tiny;
 
-    my $url = url('L<http://www.perl.com/cgi-bin/cpan_mod')>;
-    $url->query_form(module => 'DB_File', readme => 1);
-    $content = get($url);
+    my $ua = HTTP::Tiny->new;
 
-If you're using the POST method, create your own user agent and encode
-the content appropriately.
+    my $query = $ua->www_form_urlencode([ q => 'DB_File', lucky => 1 ]);
+    my $url = "https://metacpan.org/search?$query";
+    my $content = $ua->get($url)->{content};
 
-    use HTTP::Request::Common qw(POST);
-    use LWP::UserAgent;
+If you're using the POST method, the C<post_form> method will encode the
+content appropriately.
 
-    my $ua = LWP::UserAgent->new();
-    my $req = POST 'L<http://www.perl.com/cgi-bin/cpan_mod'>,
-                   [ module => 'DB_File', readme => 1 ];
-    my $content = $ua->request($req)->as_string;
+    use HTTP::Tiny;
+
+    my $ua = HTTP::Tiny->new;
+
+    my $url = 'https://metacpan.org/search';
+    my $form = [ q => 'DB_File', lucky => 1 ];
+    my $content = $ua->post_form($url, $form)->{content};
 
 =head2 How do I decode or create those %-encodings on the web?
 X<URI> X<URI::Escape> X<RFC 2396>
@@ -287,26 +289,18 @@ your policy says it is. You really are best off asking the user.
 
 =head2 How do I send email?
 
-Use the L<Email::MIME> and L<Email::Sender::Simple> modules, like so:
+Use the L<Email::Stuffer> module, like so:
 
   # first, create your message
-  my $message = Email::MIME->create(
-    header_str => [
-      From    => 'you@example.com',
-      To      => 'friend@example.com',
-      Subject => 'Happy birthday!',
-    ],
-    attributes => {
-      encoding => 'quoted-printable',
-      charset  => 'utf-8',
-    },
-    body_str => "Happy birthday to you!\n",
-  );
+  my $message = Email::Stuffer->from('you@example.com')
+                              ->to('friend@example.com')
+                              ->subject('Happy birthday!')
+                              ->text_body("Happy birthday to you!\n");
 
-  use Email::Sender::Simple qw(sendmail);
-  sendmail($message);
+  $message->send_or_die;
 
-By default, L<Email::Sender::Simple> will try `sendmail` first, if it exists
+By default, L<Email::Sender::Simple> (the C<send> and C<send_or_die> methods
+use this under the hood) will try C<sendmail> first, if it exists
 in your $PATH. This generally isn't the case. If there's a remote mail
 server you use to send mail, consider investigating one of the Transport
 classes. At time of writing, the available transports include:
@@ -326,14 +320,9 @@ uses TLS or SSL and can authenticate to the server via SASL.
 
 =back
 
-Telling L<Email::Sender::Simple> to use your transport is straightforward.
+Telling L<Email::Stuffer> to use your transport is straightforward.
 
-  sendmail(
-    $message,
-    {
-      transport => $email_sender_transport_object,
-    }
-  );
+  $message->transport($email_sender_transport_object)->send_or_die;
 
 =head2 How do I use MIME to make an attachment to a mail message?
 
@@ -341,6 +330,15 @@ L<Email::MIME> directly supports multipart messages. L<Email::MIME>
 objects themselves are parts and can be attached to other L<Email::MIME>
 objects. Consult the L<Email::MIME> documentation for more information,
 including all of the supported methods and examples of their use.
+
+L<Email::Stuffer> uses L<Email::MIME> under the hood to construct
+messages, and wraps the most common attachment tasks with the simple
+C<attach> and C<attach_file> methods.
+
+  Email::Stuffer->to('friend@example.com')
+                ->subject('The file')
+                ->attach_file('stuff.csv')
+                ->send_or_die;
 
 =head2 How do I read email?
 

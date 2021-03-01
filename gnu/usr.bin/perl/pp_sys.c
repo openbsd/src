@@ -498,7 +498,7 @@ PP(pp_die)
 		}
 	    }
 	}
-	else if (SvPOK(errsv) && SvCUR(errsv)) {
+	else if (SvOK(errsv) && (SvPV_nomg(errsv,len), len)) {
 	    exsv = sv_mortalcopy(errsv);
 	    sv_catpvs(exsv, "\t...propagated");
 	}
@@ -2179,9 +2179,9 @@ PP(pp_tell)
     }
 
 #if LSEEKSIZE > IVSIZE
-    PUSHn( do_tell(gv) );
+    PUSHn( (NV)do_tell(gv) );
 #else
-    PUSHi( do_tell(gv) );
+    PUSHi( (IV)do_tell(gv) );
 #endif
     RETURN;
 }
@@ -2763,9 +2763,13 @@ PP(pp_getpeername)
     if (!IoIFP(io))
 	goto nuts;
 
-    sv = sv_2mortal(newSV(257));
-    (void)SvPOK_only(sv);
+#ifdef HAS_SOCKADDR_STORAGE
+    len = sizeof(struct sockaddr_storage);
+#else
     len = 256;
+#endif
+    sv = sv_2mortal(newSV(len+1));
+    (void)SvPOK_only(sv);
     SvCUR_set(sv, len);
     *SvEND(sv) ='\0';
     fd = PerlIO_fileno(IoIFP(io));
@@ -4619,6 +4623,11 @@ PP(pp_setpgrp)
 #endif
 }
 
+/*
+ * The glibc headers typedef __priority_which_t to an enum under C, but
+ * under C++, it keeps it as int. -Wc++-compat doesn't know this, so we
+ * need to explicitly cast it to shut up the warning.
+ */
 #if defined(__GLIBC__) && ((__GLIBC__ == 2 && __GLIBC_MINOR__ >= 3) || (__GLIBC__ > 2))
 #  define PRIORITY_WHICH_T(which) (__priority_which_t)which
 #else
@@ -4661,9 +4670,9 @@ PP(pp_time)
 {
     dSP; dTARGET;
 #ifdef BIG_TIME
-    XPUSHn( time(NULL) );
+    XPUSHn( (NV)time(NULL) );
 #else
-    XPUSHi( time(NULL) );
+    XPUSHu( (UV)time(NULL) );
 #endif
     RETURN;
 }
@@ -4863,7 +4872,7 @@ PP(pp_sleep)
         }
     }
     (void)time(&when);
-    XPUSHi(when - lasttime);
+    XPUSHu((UV)(when - lasttime));
     RETURN;
 }
 
@@ -5279,8 +5288,8 @@ PP(pp_shostent)
 	DIE(aTHX_ PL_no_sock_func, PL_op_desc[PL_op->op_type]);
 #endif
 	break;
-#ifdef HAS_SETNETENT
     case OP_SNETENT:
+#ifdef HAS_SETNETENT
 	PerlSock_setnetent(stayopen);
 #else
 	DIE(aTHX_ PL_no_sock_func, PL_op_desc[PL_op->op_type]);
@@ -5432,7 +5441,7 @@ PP(pp_gpwent)
      * it is only included in special cases.
      *
      * In Digital UNIX/Tru64 if using the getespw*() (which seems to be
-     * be preferred interface, even though also the getprpw*() interface
+     * the preferred interface, even though also the getprpw*() interface
      * is available) one needs to link with -lsecurity -ldb -laud -lm.
      * One also needs to call set_auth_parameters() in main() before
      * doing anything else, whether one is using getespw*() or getprpw*().

@@ -89,7 +89,7 @@ EONT_EONT
 
 my $t = <<'EOT_EOT';
 # 8  <@> leave[1 ref] vKP/REFC ->(end)
-# 1     <0> enter ->2
+# 1     <0> enter v ->2
 # 2     <;> nextstate(main 1 -e:1) v:>,<,%,{ ->3
 # 7     <2> sassign vKS/2 ->8
 # 5        <@> index[t2] sK/2 ->6
@@ -101,7 +101,7 @@ my $t = <<'EOT_EOT';
 EOT_EOT
 my $nt = <<'EONT_EONT';
 # 8  <@> leave[1 ref] vKP/REFC ->(end)
-# 1     <0> enter ->2
+# 1     <0> enter v ->2
 # 2     <;> nextstate(main 1 -e:1) v:>,<,%,{ ->3
 # 7     <2> sassign vKS/2 ->8
 # 5        <@> index[t1] sK/2 ->6

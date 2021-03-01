@@ -20,11 +20,11 @@
 /*
 =head1 Handy Values
 
-=for apidoc AmU||Nullch
+=for apidoc AmnU||Nullch
 Null character pointer.  (No longer available when C<PERL_CORE> is
 defined.)
 
-=for apidoc AmU||Nullsv
+=for apidoc AmnU||Nullsv
 Null SV pointer.  (No longer available when C<PERL_CORE> is defined.)
 
 =cut
@@ -97,10 +97,17 @@ Null SV pointer.  (No longer available when C<PERL_CORE> is defined.)
 # define HAS_BOOL 1
 #endif
 
-/* cast-to-bool.  A simple (bool) cast may not do the right thing: if bool is
- * defined as char for example, then the cast from int is
- * implementation-defined (bool)!!(cbool) in a ternary triggers a bug in xlc on
- * AIX */
+/*
+=for apidoc Am|bool|cBOOL|bool expr
+
+Cast-to-bool.  A simple S<C<(bool) I<expr>>> cast may not do the right thing:
+if C<bool> is defined as C<char>, for example, then the cast from C<int> is
+implementation-defined.
+
+C<(bool)!!(cbool)> in a ternary triggers a bug in xlc on AIX
+
+=cut
+*/
 #define cBOOL(cbool) ((cbool) ? (bool)1 : (bool)0)
 
 /* Try to figure out __func__ or __FUNCTION__ equivalent, if any.
@@ -109,8 +116,7 @@ Null SV pointer.  (No longer available when C<PERL_CORE> is defined.)
  * XXX Similarly, a Configure probe for __FILE__ and __LINE__ is needed. */
 #if (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L) || (defined(__SUNPRO_C)) /* C99 or close enough. */
 #  define FUNCTION__ __func__
-#elif (defined(USING_MSVC6)) || /* MSVC6 has neither __func__ nor __FUNCTION and no good workarounds, either. */ \
-    (defined(__DECC_VER)) /* Tru64 or VMS, and strict C89 being used, but not modern enough cc (in Tur64, -c99 not known, only -std1). */
+#elif (defined(__DECC_VER)) /* Tru64 or VMS, and strict C89 being used, but not modern enough cc (in Tur64, -c99 not known, only -std1). */
 #  define FUNCTION__ ""
 #else
 #  define FUNCTION__ __FUNCTION__ /* Common extension. */
@@ -263,16 +269,22 @@ typedef U64TYPE U64;
 #  define isPOWER_OF_2(n) ((n) && ((n) & ((n)-1)) == 0)
 #endif
 
-/* This is a helper macro to avoid preprocessor issues, replaced by nothing
- * unless under DEBUGGING, where it expands to an assert of its argument,
- * followed by a comma (hence the comma operator).  If we just used a straight
- * assert(), we would get a comma with nothing before it when not DEBUGGING.
- *
- * We also use empty definition under Coverity since the __ASSERT__
- * checks often check for things that Really Cannot Happen, and Coverity
- * detects that and gets all excited. */
+/*
+=for apidoc Am|void|__ASSERT_|bool expr
 
-#if defined(DEBUGGING) && !defined(__COVERITY__)
+This is a helper macro to avoid preprocessor issues, replaced by nothing
+unless under DEBUGGING, where it expands to an assert of its argument,
+followed by a comma (hence the comma operator).  If we just used a straight
+assert(), we would get a comma with nothing before it when not DEBUGGING.
+
+=cut
+
+We also use empty definition under Coverity since the __ASSERT__
+checks often check for things that Really Cannot Happen, and Coverity
+detects that and gets all excited. */
+
+#if   defined(DEBUGGING) && !defined(__COVERITY__)                        \
+ && ! defined(PERL_SMALL_MACRO_BUFFER)
 #   define __ASSERT_(statement)  assert(statement),
 #else
 #   define __ASSERT_(statement)
@@ -281,76 +293,76 @@ typedef U64TYPE U64;
 /*
 =head1 SV Manipulation Functions
 
-=for apidoc Ama|SV*|newSVpvs|"literal string" s
+=for apidoc Ama|SV*|newSVpvs|"literal string"
 Like C<newSVpvn>, but takes a literal string instead of a
 string/length pair.
 
-=for apidoc Ama|SV*|newSVpvs_flags|"literal string" s|U32 flags
+=for apidoc Ama|SV*|newSVpvs_flags|"literal string"|U32 flags
 Like C<newSVpvn_flags>, but takes a literal string instead of
 a string/length pair.
 
-=for apidoc Ama|SV*|newSVpvs_share|"literal string" s
+=for apidoc Ama|SV*|newSVpvs_share|"literal string"
 Like C<newSVpvn_share>, but takes a literal string instead of
 a string/length pair and omits the hash parameter.
 
-=for apidoc Am|void|sv_catpvs_flags|SV* sv|"literal string" s|I32 flags
+=for apidoc Am|void|sv_catpvs_flags|SV* sv|"literal string"|I32 flags
 Like C<sv_catpvn_flags>, but takes a literal string instead
 of a string/length pair.
 
-=for apidoc Am|void|sv_catpvs_nomg|SV* sv|"literal string" s
+=for apidoc Am|void|sv_catpvs_nomg|SV* sv|"literal string"
 Like C<sv_catpvn_nomg>, but takes a literal string instead of
 a string/length pair.
 
-=for apidoc Am|void|sv_catpvs|SV* sv|"literal string" s
+=for apidoc Am|void|sv_catpvs|SV* sv|"literal string"
 Like C<sv_catpvn>, but takes a literal string instead of a
 string/length pair.
 
-=for apidoc Am|void|sv_catpvs_mg|SV* sv|"literal string" s
+=for apidoc Am|void|sv_catpvs_mg|SV* sv|"literal string"
 Like C<sv_catpvn_mg>, but takes a literal string instead of a
 string/length pair.
 
-=for apidoc Am|void|sv_setpvs|SV* sv|"literal string" s
+=for apidoc Am|void|sv_setpvs|SV* sv|"literal string"
 Like C<sv_setpvn>, but takes a literal string instead of a
 string/length pair.
 
-=for apidoc Am|void|sv_setpvs_mg|SV* sv|"literal string" s
+=for apidoc Am|void|sv_setpvs_mg|SV* sv|"literal string"
 Like C<sv_setpvn_mg>, but takes a literal string instead of a
 string/length pair.
 
-=for apidoc Am|SV *|sv_setref_pvs|"literal string" s
+=for apidoc Am|SV *|sv_setref_pvs|SV *const rv|const char *const classname|"literal string"
 Like C<sv_setref_pvn>, but takes a literal string instead of
 a string/length pair.
 
 =head1 Memory Management
 
-=for apidoc Ama|char*|savepvs|"literal string" s
+=for apidoc Ama|char*|savepvs|"literal string"
 Like C<savepvn>, but takes a literal string instead of a
 string/length pair.
 
-=for apidoc Ama|char*|savesharedpvs|"literal string" s
+=for apidoc Ama|char*|savesharedpvs|"literal string"
 A version of C<savepvs()> which allocates the duplicate string in memory
 which is shared between threads.
 
 =head1 GV Functions
 
-=for apidoc Am|HV*|gv_stashpvs|"literal string" name|I32 create
+=for apidoc Am|HV*|gv_stashpvs|"name"|I32 create
 Like C<gv_stashpvn>, but takes a literal string instead of a
 string/length pair.
 
 =head1 Hash Manipulation Functions
 
-=for apidoc Am|SV**|hv_fetchs|HV* tb|"literal string" key|I32 lval
+=for apidoc Am|SV**|hv_fetchs|HV* tb|"key"|I32 lval
 Like C<hv_fetch>, but takes a literal string instead of a
 string/length pair.
 
-=for apidoc Am|SV**|hv_stores|HV* tb|"literal string" key|SV* val
+=for apidoc Am|SV**|hv_stores|HV* tb|"key"|SV* val
 Like C<hv_store>, but takes a literal string instead of a
 string/length pair
 and omits the hash parameter.
 
 =head1 Lexer interface
 
-=for apidoc Amx|void|lex_stuff_pvs|"literal string" pv|U32 flags
+=for apidoc Amx|void|lex_stuff_pvs|"pv"|U32 flags
 
 Like L</lex_stuff_pvn>, but takes a literal string instead of
 a string/length pair.
@@ -358,14 +370,22 @@ a string/length pair.
 =cut
 */
 
-/* concatenating with "" ensures that only literal strings are accepted as
- * argument */
-#define STR_WITH_LEN(s)  ("" s ""), (sizeof(s)-1)
+/*
+=head1 Handy Values
 
-/* note that STR_WITH_LEN() can't be used as argument to macros or functions
- * that under some configurations might be macros, which means that it requires
- * the full Perl_xxx(aTHX_ ...) form for any API calls where it's used.
- */
+=for apidoc Amu|pair|STR_WITH_LEN|"literal string"
+
+Returns two comma separated tokens of the input literal string, and its length.
+This is convenience macro which helps out in some API calls.
+Note that it can't be used as an argument to macros or functions that under
+some configurations might be macros, which means that it requires the full
+Perl_xxx(aTHX_ ...) form for any API calls where it's used.
+
+=cut
+*/
+
+
+#define STR_WITH_LEN(s)  ("" s ""), (sizeof(s)-1)
 
 /* STR_WITH_LEN() shortcuts */
 #define newSVpvs(str) Perl_newSVpvn(aTHX_ STR_WITH_LEN(str))
@@ -443,10 +463,27 @@ Test two buffers (which may contain embedded C<NUL> characters, to see if they
 are equal.  The C<len> parameter indicates the number of bytes to compare.
 Returns zero if equal, or non-zero if non-equal.
 
+=for apidoc Am|bool|memEQs|char* s1|STRLEN l1|"s2"
+Like L</memEQ>, but the second string is a literal enclosed in double quotes,
+C<l1> gives the number of bytes in C<s1>.
+Returns zero if equal, or non-zero if non-equal.
+
 =for apidoc Am|bool|memNE|char* s1|char* s2|STRLEN len
 Test two buffers (which may contain embedded C<NUL> characters, to see if they
 are not equal.  The C<len> parameter indicates the number of bytes to compare.
 Returns zero if non-equal, or non-zero if equal.
+
+=for apidoc Am|bool|memNEs|char* s1|STRLEN l1|"s2"
+Like L</memNE>, but the second string is a literal enclosed in double quotes,
+C<l1> gives the number of bytes in C<s1>.
+Returns zero if non-equal, or zero if non-equal.
+
+=for apidoc Am|bool|memCHRs|"list"|char c
+Returns the position of the first occurence of the byte C<c> in the literal
+string C<"list">, or NULL if C<c> doesn't appear in C<"list">.  All bytes are
+treated as unsigned char.  Thus this macro can be used to determine if C<c> is
+in a set of particular characters.  Unlike L<strchr(3)>, it works even if C<c>
+is C<NUL> (and the set doesn't include C<NUL>).
 
 =cut
 
@@ -467,7 +504,7 @@ based on the underlying C library functions):
   length may be unknown, but can be calculated by C<strlen()>, since it is
   terminated by a NUL, which isn't included in its length.
 
-  The optional 'n' following 'str' means that that there is a third parameter,
+  The optional 'n' following 'str' means that there is a third parameter,
   giving the maximum number of bytes to look at in each string.  Even if both
   strings are longer than the length parameter, those extra bytes will be
   unexamined.
@@ -539,6 +576,8 @@ based on the underlying C library functions):
 #define memGT(s1,s2,l) (memcmp(s1,s2,l) > 0)
 #define memGE(s1,s2,l) (memcmp(s1,s2,l) >= 0)
 
+#define memCHRs(s1,c) ((const char *) memchr("" s1 "" , c, sizeof(s1)-1))
+
 /*
  * Character classes.
  *
@@ -569,9 +608,9 @@ each class.  (Not all macros have all variants; each item below lists the
 ones valid for it.)  None are affected by C<use bytes>, and only the ones
 with C<LC> in the name are affected by the current locale.
 
-The base function, e.g., C<isALPHA()>, takes an octet (either a C<char> or a
-C<U8>) as input and returns a boolean as to whether or not the character
-represented by that octet is (or on non-ASCII platforms, corresponds to) an
+The base function, e.g., C<isALPHA()>, takes any signed or unsigned value,
+treating it as a code point, and returns a boolean as to whether or not the
+character represented by it is (or on non-ASCII platforms, corresponds to) an
 ASCII character in the named class based on platform, Unicode, and Perl rules.
 If the input is a number that doesn't fit in an octet, FALSE is returned.
 
@@ -585,97 +624,109 @@ since ASCII is a subset of Latin-1.  But the non-ASCII code points are treated
 as if they are Latin-1 characters.  For example, C<isWORDCHAR_L1()> will return
 true when called with the code point 0xDF, which is a word character in both
 ASCII and EBCDIC (though it represents different characters in each).
+If the input is a number that doesn't fit in an octet, FALSE is returned.
+(Perl's documentation uses a colloquial definition of Latin-1, to include all
+code points below 256.)
 
-Variant C<isI<FOO>_uvchr> is like the C<isI<FOO>_L1> variant, but accepts any UV code
-point as input.  If the code point is larger than 255, Unicode rules are used
-to determine if it is in the character class.  For example,
+Variant C<isI<FOO>_uvchr> is exactly like the C<isI<FOO>_L1> variant, for
+inputs below 256, but if the code point is larger than 255, Unicode rules are
+used to determine if it is in the character class.  For example,
 C<isWORDCHAR_uvchr(0x100)> returns TRUE, since 0x100 is LATIN CAPITAL LETTER A
 WITH MACRON in Unicode, and is a word character.
 
-Variant C<isI<FOO>_utf8_safe> is like C<isI<FOO>_uvchr>, but is used for UTF-8
-encoded strings.  Each call classifies one character, even if the string
-contains many.  This variant takes two parameters.  The first, C<p>, is a
-pointer to the first byte of the character to be classified.  (Recall that it
-may take more than one byte to represent a character in UTF-8 strings.)  The
-second parameter, C<e>, points to anywhere in the string beyond the first
-character, up to one byte past the end of the entire string.  The suffix
-C<_safe> in the function's name indicates that it will not attempt to read
-beyond S<C<e - 1>>, provided that the constraint S<C<s E<lt> e>> is true (this
-is asserted for in C<-DDEBUGGING> builds).  If the UTF-8 for the input
-character is malformed in some way, the program may croak, or the function may
-return FALSE, at the discretion of the implementation, and subject to change in
-future releases.
+Variants C<isI<FOO>_utf8> and C<isI<FOO>_utf8_safe> are like C<isI<FOO>_uvchr>,
+but are used for UTF-8 encoded strings.  The two forms are different names for
+the same thing.  Each call to one of these classifies the first character of
+the string starting at C<p>.  The second parameter, C<e>, points to anywhere in
+the string beyond the first character, up to one byte past the end of the
+entire string.  Although both variants are identical, the suffix C<_safe> in
+one name emphasizes that it will not attempt to read beyond S<C<e - 1>>,
+provided that the constraint S<C<s E<lt> e>> is true (this is asserted for in
+C<-DDEBUGGING> builds).  If the UTF-8 for the input character is malformed in
+some way, the program may croak, or the function may return FALSE, at the
+discretion of the implementation, and subject to change in future releases.
 
-Variant C<isI<FOO>_utf8> is like C<isI<FOO>_utf8_safe>, but takes just a single
-parameter, C<p>, which has the same meaning as the corresponding parameter does
-in C<isI<FOO>_utf8_safe>.  The function therefore can't check if it is reading
-beyond the end of the string.  Starting in Perl v5.30, it will take a second
-parameter, becoming a synonym for C<isI<FOO>_utf8_safe>.  At that time every
-program that uses it will have to be changed to successfully compile.  In the
-meantime, the first runtime call to C<isI<FOO>_utf8> from each call point in the
-program will raise a deprecation warning, enabled by default.  You can convert
-your program now to use C<isI<FOO>_utf8_safe>, and avoid the warnings, and get an
-extra measure of protection, or you can wait until v5.30, when you'll be forced
-to add the C<e> parameter.
-
-Variant C<isI<FOO>_LC> is like the C<isI<FOO>_A> and C<isI<FOO>_L1> variants, but the
-result is based on the current locale, which is what C<LC> in the name stands
-for.  If Perl can determine that the current locale is a UTF-8 locale, it uses
-the published Unicode rules; otherwise, it uses the C library function that
-gives the named classification.  For example, C<isDIGIT_LC()> when not in a
-UTF-8 locale returns the result of calling C<isdigit()>.  FALSE is always
+Variant C<isI<FOO>_LC> is like the C<isI<FOO>_A> and C<isI<FOO>_L1> variants,
+but the result is based on the current locale, which is what C<LC> in the name
+stands for.  If Perl can determine that the current locale is a UTF-8 locale,
+it uses the published Unicode rules; otherwise, it uses the C library function
+that gives the named classification.  For example, C<isDIGIT_LC()> when not in
+a UTF-8 locale returns the result of calling C<isdigit()>.  FALSE is always
 returned if the input won't fit into an octet.  On some platforms where the C
 library function is known to be defective, Perl changes its result to follow
 the POSIX standard's rules.
 
-Variant C<isI<FOO>_LC_uvchr> is like C<isI<FOO>_LC>, but is defined on any UV.  It
-returns the same as C<isI<FOO>_LC> for input code points less than 256, and
-returns the hard-coded, not-affected-by-locale, Unicode results for larger ones.
+Variant C<isI<FOO>_LC_uvchr> acts exactly like C<isI<FOO>_LC> for inputs less
+than 256, but for larger ones it returns the Unicode classification of the code
+point.
 
-Variant C<isI<FOO>_LC_utf8_safe> is like C<isI<FOO>_LC_uvchr>, but is used for UTF-8
-encoded strings.  Each call classifies one character, even if the string
-contains many.  This variant takes two parameters.  The first, C<p>, is a
-pointer to the first byte of the character to be classified.  (Recall that it
-may take more than one byte to represent a character in UTF-8 strings.) The
-second parameter, C<e>, points to anywhere in the string beyond the first
-character, up to one byte past the end of the entire string.  The suffix
-C<_safe> in the function's name indicates that it will not attempt to read
+Variants C<isI<FOO>_LC_utf8> and C<isI<FOO>_LC_utf8_safe> are like
+C<isI<FOO>_LC_uvchr>, but are used for UTF-8 encoded strings.  The two forms
+are different names for the same thing.  Each call to one of these classifies
+the first character of the string starting at C<p>.  The second parameter,
+C<e>, points to anywhere in the string beyond the first character, up to one
+byte past the end of the entire string.  Although both variants are identical,
+the suffix C<_safe> in one name emphasizes that it will not attempt to read
 beyond S<C<e - 1>>, provided that the constraint S<C<s E<lt> e>> is true (this
 is asserted for in C<-DDEBUGGING> builds).  If the UTF-8 for the input
 character is malformed in some way, the program may croak, or the function may
 return FALSE, at the discretion of the implementation, and subject to change in
 future releases.
 
-Variant C<isI<FOO>_LC_utf8> is like C<isI<FOO>_LC_utf8_safe>, but takes just a single
-parameter, C<p>, which has the same meaning as the corresponding parameter does
-in C<isI<FOO>_LC_utf8_safe>.  The function therefore can't check if it is reading
-beyond the end of the string.  Starting in Perl v5.30, it will take a second
-parameter, becoming a synonym for C<isI<FOO>_LC_utf8_safe>.  At that time every
-program that uses it will have to be changed to successfully compile.  In the
-meantime, the first runtime call to C<isI<FOO>_LC_utf8> from each call point in
-the program will raise a deprecation warning, enabled by default.  You can
-convert your program now to use C<isI<FOO>_LC_utf8_safe>, and avoid the warnings,
-and get an extra measure of protection, or you can wait until v5.30, when
-you'll be forced to add the C<e> parameter.
-
-=for apidoc Am|bool|isALPHA|char ch
-Returns a boolean indicating whether the specified character is an
-alphabetic character, analogous to C<m/[[:alpha:]]/>.
+=for apidoc Am|bool|isALPHA|int ch
+Returns a boolean indicating whether the specified input is one of C<[A-Za-z]>,
+analogous to C<m/[[:alpha:]]/>.
 See the L<top of this section|/Character classification> for an explanation of
 variants
-C<isALPHA_A>, C<isALPHA_L1>, C<isALPHA_uvchr>, C<isALPHA_utf8_safe>,
-C<isALPHA_LC>, C<isALPHA_LC_uvchr>, and C<isALPHA_LC_utf8_safe>.
+C<isALPHA_A>, C<isALPHA_L1>, C<isALPHA_uvchr>, C<isALPHA_utf8>,
+C<isALPHA_utf8_safe>, C<isALPHA_LC>, C<isALPHA_LC_uvchr>, C<isALPHA_LC_utf8>,
+and C<isALPHA_LC_utf8_safe>.
 
-=for apidoc Am|bool|isALPHANUMERIC|char ch
-Returns a boolean indicating whether the specified character is a either an
-alphabetic character or decimal digit, analogous to C<m/[[:alnum:]]/>.
+=cut
+
+Here and below, we add the protoypes of these macros for downstream programs
+that would be interested in them, such as Devel::PPPort
+
+=for apidoc Amh|bool|isALPHA_A|int ch
+=for apidoc Amh|bool|isALPHA_L1|int ch
+=for apidoc Amh|bool|isALPHA_uvchr|int ch
+=for apidoc Amh|bool|isALPHA_utf8_safe|U8 * s|U8 * end
+=for apidoc Amh|bool|isALPHA_utf8|U8 * s|U8 * end
+=for apidoc Amh|bool|isALPHA_LC|int ch
+=for apidoc Amh|bool|isALPHA_LC_uvchr|int ch
+=for apidoc Amh|bool|isALPHA_LC_utf8_safe|U8 * s| U8 *end
+
+=for apidoc Am|bool|isALPHANUMERIC|int ch
+Returns a boolean indicating whether the specified character is one of
+C<[A-Za-z0-9]>, analogous to C<m/[[:alnum:]]/>.
 See the L<top of this section|/Character classification> for an explanation of
 variants
 C<isALPHANUMERIC_A>, C<isALPHANUMERIC_L1>, C<isALPHANUMERIC_uvchr>,
-C<isALPHANUMERIC_utf8_safe>, C<isALPHANUMERIC_LC>, C<isALPHANUMERIC_LC_uvchr>,
-and C<isALPHANUMERIC_LC_utf8_safe>.
+C<isALPHANUMERIC_utf8>, C<isALPHANUMERIC_utf8_safe>, C<isALPHANUMERIC_LC>,
+C<isALPHANUMERIC_LC_uvchr>, C<isALPHANUMERIC_LC_utf8>, and
+C<isALPHANUMERIC_LC_utf8_safe>.
 
-=for apidoc Am|bool|isASCII|char ch
+A (discouraged from use) synonym is C<isALNUMC> (where the C<C> suffix means
+this corresponds to the C language alphanumeric definition).  Also
+there are the variants
+C<isALNUMC_A>, C<isALNUMC_L1>
+C<isALNUMC_LC>, and C<isALNUMC_LC_uvchr>.
+
+=for apidoc Amh|bool|isALPHANUMERIC_A|int ch
+=for apidoc Amh|bool|isALPHANUMERIC_L1|int ch
+=for apidoc Amh|bool|isALPHANUMERIC_uvchr|int ch
+=for apidoc Amh|bool|isALPHANUMERIC_utf8_safe|U8 * s|U8 * end
+=for apidoc Amh|bool|isALPHANUMERIC_utf8|U8 * s|U8 * end
+=for apidoc Amh|bool|isALPHANUMERIC_LC|int ch
+=for apidoc Amh|bool|isALPHANUMERIC_LC_uvchr|int ch
+=for apidoc Amh|bool|isALPHANUMERIC_LC_utf8_safe|U8 * s| U8 *end
+=for apidoc Amh|bool|isALNUMC|int ch
+=for apidoc Amh|bool|isALNUMC_A|int ch
+=for apidoc Amh|bool|isALNUMC_L1|int ch
+=for apidoc Amh|bool|isALNUMC_LC|int ch
+=for apidoc Amh|bool|isALNUMC_LC_uvchr|int ch
+
+=for apidoc Am|bool|isASCII|int ch
 Returns a boolean indicating whether the specified character is one of the 128
 characters in the ASCII character set, analogous to C<m/[[:ascii:]]/>.
 On non-ASCII platforms, it returns TRUE iff this
@@ -683,36 +734,66 @@ character corresponds to an ASCII character.  Variants C<isASCII_A()> and
 C<isASCII_L1()> are identical to C<isASCII()>.
 See the L<top of this section|/Character classification> for an explanation of
 variants
-C<isASCII_uvchr>, C<isASCII_utf8_safe>, C<isASCII_LC>, C<isASCII_LC_uvchr>, and
-C<isASCII_LC_utf8_safe>.  Note, however, that some platforms do not have the C
-library routine C<isascii()>.  In these cases, the variants whose names contain
-C<LC> are the same as the corresponding ones without.
+C<isASCII_uvchr>, C<isASCII_utf8>, C<isASCII_utf8_safe>, C<isASCII_LC>,
+C<isASCII_LC_uvchr>, C<isASCII_LC_utf8>, and C<isASCII_LC_utf8_safe>.
+Note, however, that some platforms do not have the C library routine
+C<isascii()>.  In these cases, the variants whose names contain C<LC> are the
+same as the corresponding ones without.
+
+=for apidoc Amh|bool|isASCII_A|int ch
+=for apidoc Amh|bool|isASCII_L1|int ch
+=for apidoc Amh|bool|isASCII_uvchr|int ch
+=for apidoc Amh|bool|isASCII_utf8_safe|U8 * s|U8 * end
+=for apidoc Amh|bool|isASCII_utf8|U8 * s|U8 * end
+=for apidoc Amh|bool|isASCII_LC|int ch
+=for apidoc Amh|bool|isASCII_LC_uvchr|int ch
+=for apidoc Amh|bool|isASCII_LC_utf8_safe|U8 * s| U8 *end
 
 Also note, that because all ASCII characters are UTF-8 invariant (meaning they
 have the exact same representation (always a single byte) whether encoded in
 UTF-8 or not), C<isASCII> will give the correct results when called with any
-byte in any string encoded or not in UTF-8.  And similarly C<isASCII_utf8_safe>
-will work properly on any string encoded or not in UTF-8.
+byte in any string encoded or not in UTF-8.  And similarly C<isASCII_utf8> and
+C<isASCII_utf8_safe> will work properly on any string encoded or not in UTF-8.
 
 =for apidoc Am|bool|isBLANK|char ch
 Returns a boolean indicating whether the specified character is a
 character considered to be a blank, analogous to C<m/[[:blank:]]/>.
 See the L<top of this section|/Character classification> for an explanation of
 variants
-C<isBLANK_A>, C<isBLANK_L1>, C<isBLANK_uvchr>, C<isBLANK_utf8_safe>,
-C<isBLANK_LC>, C<isBLANK_LC_uvchr>, and C<isBLANK_LC_utf8_safe>.  Note,
+C<isBLANK_A>, C<isBLANK_L1>, C<isBLANK_uvchr>, C<isBLANK_utf8>,
+C<isBLANK_utf8_safe>, C<isBLANK_LC>, C<isBLANK_LC_uvchr>, C<isBLANK_LC_utf8>,
+and C<isBLANK_LC_utf8_safe>.  Note,
 however, that some platforms do not have the C library routine
 C<isblank()>.  In these cases, the variants whose names contain C<LC> are
 the same as the corresponding ones without.
+
+=for apidoc Amh|bool|isBLANK_A|int ch
+=for apidoc Amh|bool|isBLANK_L1|int ch
+=for apidoc Amh|bool|isBLANK_uvchr|int ch
+=for apidoc Amh|bool|isBLANK_utf8_safe|U8 * s|U8 * end
+=for apidoc Amh|bool|isBLANK_utf8|U8 * s|U8 * end
+=for apidoc Amh|bool|isBLANK_LC|int ch
+=for apidoc Amh|bool|isBLANK_LC_uvchr|int ch
+=for apidoc Amh|bool|isBLANK_LC_utf8_safe|U8 * s| U8 *end
 
 =for apidoc Am|bool|isCNTRL|char ch
 Returns a boolean indicating whether the specified character is a
 control character, analogous to C<m/[[:cntrl:]]/>.
 See the L<top of this section|/Character classification> for an explanation of
 variants
-C<isCNTRL_A>, C<isCNTRL_L1>, C<isCNTRL_uvchr>, C<isCNTRL_utf8_safe>,
-C<isCNTRL_LC>, C<isCNTRL_LC_uvchr>, and C<isCNTRL_LC_utf8_safe> On EBCDIC
+C<isCNTRL_A>, C<isCNTRL_L1>, C<isCNTRL_uvchr>, C<isCNTRL_utf8>,
+C<isCNTRL_utf8_safe>, C<isCNTRL_LC>, C<isCNTRL_LC_uvchr>, C<isCNTRL_LC_utf8>
+and C<isCNTRL_LC_utf8_safe>.  On EBCDIC
 platforms, you almost always want to use the C<isCNTRL_L1> variant.
+
+=for apidoc Amh|bool|isCNTRL_A|int ch
+=for apidoc Amh|bool|isCNTRL_L1|int ch
+=for apidoc Amh|bool|isCNTRL_uvchr|int ch
+=for apidoc Amh|bool|isCNTRL_utf8_safe|U8 * s|U8 * end
+=for apidoc Amh|bool|isCNTRL_utf8|U8 * s|U8 * end
+=for apidoc Amh|bool|isCNTRL_LC|int ch
+=for apidoc Amh|bool|isCNTRL_LC_uvchr|int ch
+=for apidoc Amh|bool|isCNTRL_LC_utf8_safe|U8 * s| U8 *end
 
 =for apidoc Am|bool|isDIGIT|char ch
 Returns a boolean indicating whether the specified character is a
@@ -720,29 +801,61 @@ digit, analogous to C<m/[[:digit:]]/>.
 Variants C<isDIGIT_A> and C<isDIGIT_L1> are identical to C<isDIGIT>.
 See the L<top of this section|/Character classification> for an explanation of
 variants
-C<isDIGIT_uvchr>, C<isDIGIT_utf8_safe>, C<isDIGIT_LC>, C<isDIGIT_LC_uvchr>, and
-C<isDIGIT_LC_utf8_safe>.
+C<isDIGIT_uvchr>, C<isDIGIT_utf8>, C<isDIGIT_utf8_safe>, C<isDIGIT_LC>,
+C<isDIGIT_LC_uvchr>, C<isDIGIT_LC_utf8>, and C<isDIGIT_LC_utf8_safe>.
+
+=for apidoc Amh|bool|isDIGIT_A|int ch
+=for apidoc Amh|bool|isDIGIT_L1|int ch
+=for apidoc Amh|bool|isDIGIT_uvchr|int ch
+=for apidoc Amh|bool|isDIGIT_utf8_safe|U8 * s|U8 * end
+=for apidoc Amh|bool|isDIGIT_utf8|U8 * s|U8 * end
+=for apidoc Amh|bool|isDIGIT_LC|int ch
+=for apidoc Amh|bool|isDIGIT_LC_uvchr|int ch
+=for apidoc Amh|bool|isDIGIT_LC_utf8_safe|U8 * s| U8 *end
 
 =for apidoc Am|bool|isGRAPH|char ch
 Returns a boolean indicating whether the specified character is a
 graphic character, analogous to C<m/[[:graph:]]/>.
 See the L<top of this section|/Character classification> for an explanation of
-variants C<isGRAPH_A>, C<isGRAPH_L1>, C<isGRAPH_uvchr>, C<isGRAPH_utf8_safe>,
-C<isGRAPH_LC>, C<isGRAPH_LC_uvchr>, and C<isGRAPH_LC_utf8_safe>.
+variants C<isGRAPH_A>, C<isGRAPH_L1>, C<isGRAPH_uvchr>, C<isGRAPH_utf8>,
+C<isGRAPH_utf8_safe>, C<isGRAPH_LC>, C<isGRAPH_LC_uvchr>,
+C<isGRAPH_LC_utf8_safe>, and C<isGRAPH_LC_utf8_safe>.
+
+=for apidoc Amh|bool|isGRAPH_A|int ch
+=for apidoc Amh|bool|isGRAPH_L1|int ch
+=for apidoc Amh|bool|isGRAPH_uvchr|int ch
+=for apidoc Amh|bool|isGRAPH_utf8_safe|U8 * s|U8 * end
+=for apidoc Amh|bool|isGRAPH_utf8|U8 * s|U8 * end
+=for apidoc Amh|bool|isGRAPH_LC|int ch
+=for apidoc Amh|bool|isGRAPH_LC_uvchr|int ch
+=for apidoc Amh|bool|isGRAPH_LC_utf8_safe|U8 * s| U8 *end
 
 =for apidoc Am|bool|isLOWER|char ch
 Returns a boolean indicating whether the specified character is a
 lowercase character, analogous to C<m/[[:lower:]]/>.
 See the L<top of this section|/Character classification> for an explanation of
 variants
-C<isLOWER_A>, C<isLOWER_L1>, C<isLOWER_uvchr>, C<isLOWER_utf8_safe>,
-C<isLOWER_LC>, C<isLOWER_LC_uvchr>, and C<isLOWER_LC_utf8_safe>.
+C<isLOWER_A>, C<isLOWER_L1>, C<isLOWER_uvchr>, C<isLOWER_utf8>,
+C<isLOWER_utf8_safe>, C<isLOWER_LC>, C<isLOWER_LC_uvchr>, C<isLOWER_LC_utf8>,
+and C<isLOWER_LC_utf8_safe>.
+
+=for apidoc Amh|bool|isLOWER_A|int ch
+=for apidoc Amh|bool|isLOWER_L1|int ch
+=for apidoc Amh|bool|isLOWER_uvchr|int ch
+=for apidoc Amh|bool|isLOWER_utf8_safe|U8 * s|U8 * end
+=for apidoc Amh|bool|isLOWER_utf8|U8 * s|U8 * end
+=for apidoc Amh|bool|isLOWER_LC|int ch
+=for apidoc Amh|bool|isLOWER_LC_uvchr|int ch
+=for apidoc Amh|bool|isLOWER_LC_utf8_safe|U8 * s| U8 *end
 
 =for apidoc Am|bool|isOCTAL|char ch
 Returns a boolean indicating whether the specified character is an
 octal digit, [0-7].
 The only two variants are C<isOCTAL_A> and C<isOCTAL_L1>; each is identical to
 C<isOCTAL>.
+
+=for apidoc Amh|bool|isOCTAL_A|int ch
+=for apidoc Amh|bool|isOCTAL_L1|int ch
 
 =for apidoc Am|bool|isPUNCT|char ch
 Returns a boolean indicating whether the specified character is a
@@ -751,8 +864,18 @@ Note that the definition of what is punctuation isn't as
 straightforward as one might desire.  See L<perlrecharclass/POSIX Character
 Classes> for details.
 See the L<top of this section|/Character classification> for an explanation of
-variants C<isPUNCT_A>, C<isPUNCT_L1>, C<isPUNCT_uvchr>, C<isPUNCT_utf8_safe>,
-C<isPUNCT_LC>, C<isPUNCT_LC_uvchr>, and C<isPUNCT_LC_utf8_safe>.
+variants C<isPUNCT_A>, C<isPUNCT_L1>, C<isPUNCT_uvchr>, C<isPUNCT_utf8>,
+C<isPUNCT_utf8_safe>, C<isPUNCT_LC>, C<isPUNCT_LC_uvchr>, C<isPUNCT_LC_utf8>,
+and C<isPUNCT_LC_utf8_safe>.
+
+=for apidoc Amh|bool|isPUNCT_A|int ch
+=for apidoc Amh|bool|isPUNCT_L1|int ch
+=for apidoc Amh|bool|isPUNCT_uvchr|int ch
+=for apidoc Amh|bool|isPUNCT_utf8_safe|U8 * s|U8 * end
+=for apidoc Amh|bool|isPUNCT_utf8|U8 * s|U8 * end
+=for apidoc Amh|bool|isPUNCT_LC|int ch
+=for apidoc Amh|bool|isPUNCT_LC_uvchr|int ch
+=for apidoc Amh|bool|isPUNCT_LC_utf8_safe|U8 * s| U8 *end
 
 =for apidoc Am|bool|isSPACE|char ch
 Returns a boolean indicating whether the specified character is a
@@ -765,8 +888,18 @@ in the non-locale variants, was that C<isSPACE()> did not match a vertical tab.
 (See L</isPSXSPC> for a macro that matches a vertical tab in all releases.)
 See the L<top of this section|/Character classification> for an explanation of
 variants
-C<isSPACE_A>, C<isSPACE_L1>, C<isSPACE_uvchr>, C<isSPACE_utf8_safe>,
-C<isSPACE_LC>, C<isSPACE_LC_uvchr>, and C<isSPACE_LC_utf8_safe>.
+C<isSPACE_A>, C<isSPACE_L1>, C<isSPACE_uvchr>, C<isSPACE_utf8>,
+C<isSPACE_utf8_safe>, C<isSPACE_LC>, C<isSPACE_LC_uvchr>, C<isSPACE_LC_utf8>,
+and C<isSPACE_LC_utf8_safe>.
+
+=for apidoc Amh|bool|isSPACE_A|int ch
+=for apidoc Amh|bool|isSPACE_L1|int ch
+=for apidoc Amh|bool|isSPACE_uvchr|int ch
+=for apidoc Amh|bool|isSPACE_utf8_safe|U8 * s|U8 * end
+=for apidoc Amh|bool|isSPACE_utf8|U8 * s|U8 * end
+=for apidoc Amh|bool|isSPACE_LC|int ch
+=for apidoc Amh|bool|isSPACE_LC_uvchr|int ch
+=for apidoc Amh|bool|isSPACE_LC_utf8_safe|U8 * s| U8 *end
 
 =for apidoc Am|bool|isPSXSPC|char ch
 (short for Posix Space)
@@ -779,23 +912,53 @@ C<isSPACE()> forms don't match a Vertical Tab, and the C<isPSXSPC()> forms do.
 Otherwise they are identical.  Thus this macro is analogous to what
 C<m/[[:space:]]/> matches in a regular expression.
 See the L<top of this section|/Character classification> for an explanation of
-variants C<isPSXSPC_A>, C<isPSXSPC_L1>, C<isPSXSPC_uvchr>, C<isPSXSPC_utf8_safe>,
-C<isPSXSPC_LC>, C<isPSXSPC_LC_uvchr>, and C<isPSXSPC_LC_utf8_safe>.
+variants C<isPSXSPC_A>, C<isPSXSPC_L1>, C<isPSXSPC_uvchr>, C<isPSXSPC_utf8>,
+C<isPSXSPC_utf8_safe>, C<isPSXSPC_LC>, C<isPSXSPC_LC_uvchr>,
+C<isPSXSPC_LC_utf8>, and C<isPSXSPC_LC_utf8_safe>.
+
+=for apidoc Amh|bool|isPSXSPC_A|int ch
+=for apidoc Amh|bool|isPSXSPC_L1|int ch
+=for apidoc Amh|bool|isPSXSPC_uvchr|int ch
+=for apidoc Amh|bool|isPSXSPC_utf8_safe|U8 * s|U8 * end
+=for apidoc Amh|bool|isPSXSPC_utf8|U8 * s|U8 * end
+=for apidoc Amh|bool|isPSXSPC_LC|int ch
+=for apidoc Amh|bool|isPSXSPC_LC_uvchr|int ch
+=for apidoc Amh|bool|isPSXSPC_LC_utf8_safe|U8 * s| U8 *end
 
 =for apidoc Am|bool|isUPPER|char ch
 Returns a boolean indicating whether the specified character is an
 uppercase character, analogous to C<m/[[:upper:]]/>.
 See the L<top of this section|/Character classification> for an explanation of
-variants C<isUPPER_A>, C<isUPPER_L1>, C<isUPPER_uvchr>, C<isUPPER_utf8_safe>,
-C<isUPPER_LC>, C<isUPPER_LC_uvchr>, and C<isUPPER_LC_utf8_safe>.
+variants C<isUPPER_A>, C<isUPPER_L1>, C<isUPPER_uvchr>, C<isUPPER_utf8>,
+C<isUPPER_utf8_safe>, C<isUPPER_LC>, C<isUPPER_LC_uvchr>, C<isUPPER_LC_utf8>,
+and C<isUPPER_LC_utf8_safe>.
+
+=for apidoc Amh|bool|isUPPER_A|int ch
+=for apidoc Amh|bool|isUPPER_L1|int ch
+=for apidoc Amh|bool|isUPPER_uvchr|int ch
+=for apidoc Amh|bool|isUPPER_utf8_safe|U8 * s|U8 * end
+=for apidoc Amh|bool|isUPPER_utf8|U8 * s|U8 * end
+=for apidoc Amh|bool|isUPPER_LC|int ch
+=for apidoc Amh|bool|isUPPER_LC_uvchr|int ch
+=for apidoc Amh|bool|isUPPER_LC_utf8_safe|U8 * s| U8 *end
 
 =for apidoc Am|bool|isPRINT|char ch
 Returns a boolean indicating whether the specified character is a
 printable character, analogous to C<m/[[:print:]]/>.
 See the L<top of this section|/Character classification> for an explanation of
 variants
-C<isPRINT_A>, C<isPRINT_L1>, C<isPRINT_uvchr>, C<isPRINT_utf8_safe>,
-C<isPRINT_LC>, C<isPRINT_LC_uvchr>, and C<isPRINT_LC_utf8_safe>.
+C<isPRINT_A>, C<isPRINT_L1>, C<isPRINT_uvchr>, C<isPRINT_utf8>,
+C<isPRINT_utf8_safe>, C<isPRINT_LC>, C<isPRINT_LC_uvchr>, C<isPRINT_LC_utf8>,
+and C<isPRINT_LC_utf8_safe>.
+
+=for apidoc Amh|bool|isPRINT_A|int ch
+=for apidoc Amh|bool|isPRINT_L1|int ch
+=for apidoc Amh|bool|isPRINT_uvchr|int ch
+=for apidoc Amh|bool|isPRINT_utf8_safe|U8 * s|U8 * end
+=for apidoc Amh|bool|isPRINT_utf8|U8 * s|U8 * end
+=for apidoc Amh|bool|isPRINT_LC|int ch
+=for apidoc Amh|bool|isPRINT_LC_uvchr|int ch
+=for apidoc Amh|bool|isPRINT_LC_utf8_safe|U8 * s| U8 *end
 
 =for apidoc Am|bool|isWORDCHAR|char ch
 Returns a boolean indicating whether the specified character is a character
@@ -807,10 +970,24 @@ C<isALNUM()> is a synonym provided for backward compatibility, even though a
 word character includes more than the standard C language meaning of
 alphanumeric.
 See the L<top of this section|/Character classification> for an explanation of
-variants C<isWORDCHAR_A>, C<isWORDCHAR_L1>, C<isWORDCHAR_uvchr>, and
-C<isWORDCHAR_utf8_safe>.  C<isWORDCHAR_LC>, C<isWORDCHAR_LC_uvchr>, and
-C<isWORDCHAR_LC_utf8_safe> are also as described there, but additionally
-include the platform's native underscore.
+variants C<isWORDCHAR_A>, C<isWORDCHAR_L1>, C<isWORDCHAR_uvchr>,
+C<isWORDCHAR_utf8>, and C<isWORDCHAR_utf8_safe>.  C<isWORDCHAR_LC>,
+C<isWORDCHAR_LC_uvchr>, C<isWORDCHAR_LC_utf8>, and C<isWORDCHAR_LC_utf8_safe>
+are also as described there, but additionally include the platform's native
+underscore.
+
+=for apidoc Amh|bool|isWORDCHAR_A|int ch
+=for apidoc Amh|bool|isWORDCHAR_L1|int ch
+=for apidoc Amh|bool|isWORDCHAR_uvchr|int ch
+=for apidoc Amh|bool|isWORDCHAR_utf8_safe|U8 * s|U8 * end
+=for apidoc Amh|bool|isWORDCHAR_utf8|U8 * s|U8 * end
+=for apidoc Amh|bool|isWORDCHAR_LC|int ch
+=for apidoc Amh|bool|isWORDCHAR_LC_uvchr|int ch
+=for apidoc Amh|bool|isWORDCHAR_LC_utf8_safe|U8 * s| U8 *end
+=for apidoc Amh|bool|isALNUM|int ch
+=for apidoc Amh|bool|isALNUM_A|int ch
+=for apidoc Amh|bool|isALNUM_LC|int ch
+=for apidoc Amh|bool|isALNUM_LC_uvchr|int ch
 
 =for apidoc Am|bool|isXDIGIT|char ch
 Returns a boolean indicating whether the specified character is a hexadecimal
@@ -818,8 +995,17 @@ digit.  In the ASCII range these are C<[0-9A-Fa-f]>.  Variants C<isXDIGIT_A()>
 and C<isXDIGIT_L1()> are identical to C<isXDIGIT()>.
 See the L<top of this section|/Character classification> for an explanation of
 variants
-C<isXDIGIT_uvchr>, C<isXDIGIT_utf8_safe>, C<isXDIGIT_LC>, C<isXDIGIT_LC_uvchr>,
-and C<isXDIGIT_LC_utf8_safe>.
+C<isXDIGIT_uvchr>, C<isXDIGIT_utf8>, C<isXDIGIT_utf8_safe>, C<isXDIGIT_LC>,
+C<isXDIGIT_LC_uvchr>, C<isXDIGIT_LC_utf8>, and C<isXDIGIT_LC_utf8_safe>.
+
+=for apidoc Amh|bool|isXDIGIT_A|int ch
+=for apidoc Amh|bool|isXDIGIT_L1|int ch
+=for apidoc Amh|bool|isXDIGIT_uvchr|int ch
+=for apidoc Amh|bool|isXDIGIT_utf8_safe|U8 * s|U8 * end
+=for apidoc Amh|bool|isXDIGIT_utf8|U8 * s|U8 * end
+=for apidoc Amh|bool|isXDIGIT_LC|int ch
+=for apidoc Amh|bool|isXDIGIT_LC_uvchr|int ch
+=for apidoc Amh|bool|isXDIGIT_LC_utf8_safe|U8 * s| U8 *end
 
 =for apidoc Am|bool|isIDFIRST|char ch
 Returns a boolean indicating whether the specified character can be the first
@@ -828,8 +1014,18 @@ the official Unicode property C<XID_Start>.  The difference is that this
 returns true only if the input character also matches L</isWORDCHAR>.
 See the L<top of this section|/Character classification> for an explanation of
 variants
-C<isIDFIRST_A>, C<isIDFIRST_L1>, C<isIDFIRST_uvchr>, C<isIDFIRST_utf8_safe>,
-C<isIDFIRST_LC>, C<isIDFIRST_LC_uvchr>, and C<isIDFIRST_LC_utf8_safe>.
+C<isIDFIRST_A>, C<isIDFIRST_L1>, C<isIDFIRST_uvchr>, C<isIDFIRST_utf8>,
+C<isIDFIRST_utf8_safe>, C<isIDFIRST_LC>, C<isIDFIRST_LC_uvchr>,
+C<isIDFIRST_LC_utf8>, and C<isIDFIRST_LC_utf8_safe>.
+
+=for apidoc Amh|bool|isIDFIRST_A|int ch
+=for apidoc Amh|bool|isIDFIRST_L1|int ch
+=for apidoc Amh|bool|isIDFIRST_uvchr|int ch
+=for apidoc Amh|bool|isIDFIRST_utf8_safe|U8 * s|U8 * end
+=for apidoc Amh|bool|isIDFIRST_utf8|U8 * s|U8 * end
+=for apidoc Amh|bool|isIDFIRST_LC|int ch
+=for apidoc Amh|bool|isIDFIRST_LC_uvchr|int ch
+=for apidoc Amh|bool|isIDFIRST_LC_utf8_safe|U8 * s| U8 *end
 
 =for apidoc Am|bool|isIDCONT|char ch
 Returns a boolean indicating whether the specified character can be the
@@ -837,10 +1033,18 @@ second or succeeding character of an identifier.  This is very close to, but
 not quite the same as the official Unicode property C<XID_Continue>.  The
 difference is that this returns true only if the input character also matches
 L</isWORDCHAR>.  See the L<top of this section|/Character classification> for
-an
-explanation of variants C<isIDCONT_A>, C<isIDCONT_L1>, C<isIDCONT_uvchr>,
-C<isIDCONT_utf8_safe>, C<isIDCONT_LC>, C<isIDCONT_LC_uvchr>, and
-C<isIDCONT_LC_utf8_safe>.
+an explanation of variants C<isIDCONT_A>, C<isIDCONT_L1>, C<isIDCONT_uvchr>,
+C<isIDCONT_utf8>, C<isIDCONT_utf8_safe>, C<isIDCONT_LC>, C<isIDCONT_LC_uvchr>,
+C<isIDCONT_LC_utf8>, and C<isIDCONT_LC_utf8_safe>.
+
+=for apidoc Amh|bool|isIDCONT_A|int ch
+=for apidoc Amh|bool|isIDCONT_L1|int ch
+=for apidoc Amh|bool|isIDCONT_uvchr|int ch
+=for apidoc Amh|bool|isIDCONT_utf8_safe|U8 * s|U8 * end
+=for apidoc Amh|bool|isIDCONT_utf8|U8 * s|U8 * end
+=for apidoc Amh|bool|isIDCONT_LC|int ch
+=for apidoc Amh|bool|isIDCONT_LC_uvchr|int ch
+=for apidoc Amh|bool|isIDCONT_LC_utf8_safe|U8 * s| U8 *end
 
 =head1 Miscellaneous Functions
 
@@ -860,7 +1064,7 @@ an API that does allow every possible legal result to be returned.)  Likewise
 no other function that is crippled by not being able to give the correct
 results for the full range of possible inputs has been implemented here.
 
-=for apidoc Am|U8|toUPPER|U8 ch
+=for apidoc Am|U8|toUPPER|int ch
 Converts the specified character to uppercase.  If the input is anything but an
 ASCII lowercase character, that input character itself is returned.  Variant
 C<toUPPER_A> is equivalent.
@@ -876,7 +1080,7 @@ The first code point of the uppercased version is returned
 (but note, as explained at L<the top of this section|/Character case
 changing>, that there may be more.)
 
-=for apidoc Am|UV|toUPPER_utf8_safe|U8* p|U8* e|U8* s|STRLEN* lenp
+=for apidoc Am|UV|toUPPER_utf8|U8* p|U8* e|U8* s|STRLEN* lenp
 Converts the first UTF-8 encoded character in the sequence starting at C<p> and
 extending no further than S<C<e - 1>> to its uppercase version, and
 stores that in UTF-8 in C<s>, and its length in bytes in C<lenp>.  Note
@@ -887,24 +1091,14 @@ The first code point of the uppercased version is returned
 (but note, as explained at L<the top of this section|/Character case
 changing>, that there may be more).
 
-The suffix C<_safe> in the function's name indicates that it will not attempt
-to read beyond S<C<e - 1>>, provided that the constraint S<C<s E<lt> e>> is
-true (this is asserted for in C<-DDEBUGGING> builds).  If the UTF-8 for the
-input character is malformed in some way, the program may croak, or the
-function may return the REPLACEMENT CHARACTER, at the discretion of the
-implementation, and subject to change in future releases.
+It will not attempt to read beyond S<C<e - 1>>, provided that the constraint
+S<C<s E<lt> e>> is true (this is asserted for in C<-DDEBUGGING> builds).  If
+the UTF-8 for the input character is malformed in some way, the program may
+croak, or the function may return the REPLACEMENT CHARACTER, at the discretion
+of the implementation, and subject to change in future releases.
 
-=for apidoc Am|UV|toUPPER_utf8|U8* p|U8* s|STRLEN* lenp
-This is like C<L</toUPPER_utf8_safe>>, but doesn't have the C<e>
-parameter  The function therefore can't check if it is reading
-beyond the end of the string.  Starting in Perl v5.30, it will take the C<e>
-parameter, becoming a synonym for C<toUPPER_utf8_safe>.  At that time every
-program that uses it will have to be changed to successfully compile.  In the
-meantime, the first runtime call to C<toUPPER_utf8> from each call point in the
-program will raise a deprecation warning, enabled by default.  You can convert
-your program now to use C<toUPPER_utf8_safe>, and avoid the warnings, and get an
-extra measure of protection, or you can wait until v5.30, when you'll be forced
-to add the C<e> parameter.
+=for apidoc Am|UV|toUPPER_utf8_safe|U8* p|U8* e|U8* s|STRLEN* lenp
+Same as L</toUPPER_utf8>.
 
 =for apidoc Am|U8|toFOLD|U8 ch
 Converts the specified character to foldcase.  If the input is anything but an
@@ -923,7 +1117,7 @@ The first code point of the foldcased version is returned
 (but note, as explained at L<the top of this section|/Character case
 changing>, that there may be more).
 
-=for apidoc Am|UV|toFOLD_utf8_safe|U8* p|U8* e|U8* s|STRLEN* lenp
+=for apidoc Am|UV|toFOLD_utf8|U8* p|U8* e|U8* s|STRLEN* lenp
 Converts the first UTF-8 encoded character in the sequence starting at C<p> and
 extending no further than S<C<e - 1>> to its foldcase version, and
 stores that in UTF-8 in C<s>, and its length in bytes in C<lenp>.  Note
@@ -934,24 +1128,15 @@ The first code point of the foldcased version is returned
 (but note, as explained at L<the top of this section|/Character case
 changing>, that there may be more).
 
-The suffix C<_safe> in the function's name indicates that it will not attempt
+It will not attempt
 to read beyond S<C<e - 1>>, provided that the constraint S<C<s E<lt> e>> is
 true (this is asserted for in C<-DDEBUGGING> builds).  If the UTF-8 for the
 input character is malformed in some way, the program may croak, or the
 function may return the REPLACEMENT CHARACTER, at the discretion of the
 implementation, and subject to change in future releases.
 
-=for apidoc Am|UV|toFOLD_utf8|U8* p|U8* s|STRLEN* lenp
-This is like C<L</toFOLD_utf8_safe>>, but doesn't have the C<e>
-parameter  The function therefore can't check if it is reading
-beyond the end of the string.  Starting in Perl v5.30, it will take the C<e>
-parameter, becoming a synonym for C<toFOLD_utf8_safe>.  At that time every
-program that uses it will have to be changed to successfully compile.  In the
-meantime, the first runtime call to C<toFOLD_utf8> from each call point in the
-program will raise a deprecation warning, enabled by default.  You can convert
-your program now to use C<toFOLD_utf8_safe>, and avoid the warnings, and get an
-extra measure of protection, or you can wait until v5.30, when you'll be forced
-to add the C<e> parameter.
+=for apidoc Am|UV|toFOLD_utf8_safe|U8* p|U8* e|U8* s|STRLEN* lenp
+Same as L</toFOLD_utf8>.
 
 =for apidoc Am|U8|toLOWER|U8 ch
 Converts the specified character to lowercase.  If the input is anything but an
@@ -977,8 +1162,7 @@ The first code point of the lowercased version is returned
 (but note, as explained at L<the top of this section|/Character case
 changing>, that there may be more).
 
-
-=for apidoc Am|UV|toLOWER_utf8_safe|U8* p|U8* e|U8* s|STRLEN* lenp
+=for apidoc Am|UV|toLOWER_utf8|U8* p|U8* e|U8* s|STRLEN* lenp
 Converts the first UTF-8 encoded character in the sequence starting at C<p> and
 extending no further than S<C<e - 1>> to its lowercase version, and
 stores that in UTF-8 in C<s>, and its length in bytes in C<lenp>.  Note
@@ -988,25 +1172,14 @@ bytes since the lowercase version may be longer than the original character.
 The first code point of the lowercased version is returned
 (but note, as explained at L<the top of this section|/Character case
 changing>, that there may be more).
+It will not attempt to read beyond S<C<e - 1>>, provided that the constraint
+S<C<s E<lt> e>> is true (this is asserted for in C<-DDEBUGGING> builds).  If
+the UTF-8 for the input character is malformed in some way, the program may
+croak, or the function may return the REPLACEMENT CHARACTER, at the discretion
+of the implementation, and subject to change in future releases.
 
-The suffix C<_safe> in the function's name indicates that it will not attempt
-to read beyond S<C<e - 1>>, provided that the constraint S<C<s E<lt> e>> is
-true (this is asserted for in C<-DDEBUGGING> builds).  If the UTF-8 for the
-input character is malformed in some way, the program may croak, or the
-function may return the REPLACEMENT CHARACTER, at the discretion of the
-implementation, and subject to change in future releases.
-
-=for apidoc Am|UV|toLOWER_utf8|U8* p|U8* s|STRLEN* lenp
-This is like C<L</toLOWER_utf8_safe>>, but doesn't have the C<e>
-parameter  The function therefore can't check if it is reading
-beyond the end of the string.  Starting in Perl v5.30, it will take the C<e>
-parameter, becoming a synonym for C<toLOWER_utf8_safe>.  At that time every
-program that uses it will have to be changed to successfully compile.  In the
-meantime, the first runtime call to C<toLOWER_utf8> from each call point in the
-program will raise a deprecation warning, enabled by default.  You can convert
-your program now to use C<toLOWER_utf8_safe>, and avoid the warnings, and get an
-extra measure of protection, or you can wait until v5.30, when you'll be forced
-to add the C<e> parameter.
+=for apidoc Am|UV|toLOWER_utf8_safe|U8* p|U8* e|U8* s|STRLEN* lenp
+Same as L</toLOWER_utf8>.
 
 =for apidoc Am|U8|toTITLE|U8 ch
 Converts the specified character to titlecase.  If the input is anything but an
@@ -1026,7 +1199,7 @@ The first code point of the titlecased version is returned
 (but note, as explained at L<the top of this section|/Character case
 changing>, that there may be more).
 
-=for apidoc Am|UV|toTITLE_utf8_safe|U8* p|U8* e|U8* s|STRLEN* lenp
+=for apidoc Am|UV|toTITLE_utf8|U8* p|U8* e|U8* s|STRLEN* lenp
 Converts the first UTF-8 encoded character in the sequence starting at C<p> and
 extending no further than S<C<e - 1>> to its titlecase version, and
 stores that in UTF-8 in C<s>, and its length in bytes in C<lenp>.  Note
@@ -1037,24 +1210,15 @@ The first code point of the titlecased version is returned
 (but note, as explained at L<the top of this section|/Character case
 changing>, that there may be more).
 
-The suffix C<_safe> in the function's name indicates that it will not attempt
+It will not attempt
 to read beyond S<C<e - 1>>, provided that the constraint S<C<s E<lt> e>> is
 true (this is asserted for in C<-DDEBUGGING> builds).  If the UTF-8 for the
 input character is malformed in some way, the program may croak, or the
 function may return the REPLACEMENT CHARACTER, at the discretion of the
 implementation, and subject to change in future releases.
 
-=for apidoc Am|UV|toTITLE_utf8|U8* p|U8* s|STRLEN* lenp
-This is like C<L</toLOWER_utf8_safe>>, but doesn't have the C<e>
-parameter  The function therefore can't check if it is reading
-beyond the end of the string.  Starting in Perl v5.30, it will take the C<e>
-parameter, becoming a synonym for C<toTITLE_utf8_safe>.  At that time every
-program that uses it will have to be changed to successfully compile.  In the
-meantime, the first runtime call to C<toTITLE_utf8> from each call point in the
-program will raise a deprecation warning, enabled by default.  You can convert
-your program now to use C<toTITLE_utf8_safe>, and avoid the warnings, and get an
-extra measure of protection, or you can wait until v5.30, when you'll be forced
-to add the C<e> parameter.
+=for apidoc Am|UV|toTITLE_utf8_safe|U8* p|U8* e|U8* s|STRLEN* lenp
+Same as L</toTITLE_utf8>.
 
 =cut
 
@@ -1067,7 +1231,22 @@ patched there.  The file as of this writing is cpan/Devel-PPPort/parts/inc/misc
 
 */
 
-/* Specify the widest unsigned type on the platform. */
+/*
+   void below because that's the best fit, and works for Devel::PPPort
+=for apidoc AmnU|void|WIDEST_UTYPE
+
+Yields the widest unsigned integer type on the platform, currently either
+C<U32> or C<64>.  This can be used in declarations such as
+
+ WIDEST_UTYPE my_uv;
+
+or casts
+
+ my_uv = (WIDEST_UTYPE) val;
+
+=cut
+
+*/
 #ifdef QUADKIND
 #   define WIDEST_UTYPE U64
 #else
@@ -1094,27 +1273,23 @@ patched there.  The file as of this writing is cpan/Devel-PPPort/parts/inc/misc
 #define FITS_IN_8_BITS(c) (1)
 #endif
 
+/* Returns true if l <= c <= (l + n), where 'l' and 'n' are non-negative
+ * Written this way so that after optimization, only one conditional test is
+ * needed.  (The NV casts stop any warnings about comparison always being true
+ * if called with an unsigned.  The cast preserves the sign, which is all we
+ * care about.) */
+#define withinCOUNT(c, l, n) (__ASSERT_((NV) (l) >= 0)                         \
+                              __ASSERT_((NV) (n) >= 0)                         \
+   (((WIDEST_UTYPE) (((c)) - ((l) | 0))) <= (((WIDEST_UTYPE) ((n) | 0)))))
+
 /* Returns true if c is in the range l..u, where 'l' is non-negative
  * Written this way so that after optimization, only one conditional test is
- * needed.
- *
- * This isn't fully general, except for the special cased 'signed char' (which
- * should be resolved at compile time):  It won't work if 'c' is negative, and
- * 'l' is larger than the max for that signed type.  Thus if 'c' is a negative
- * int, and 'l' is larger than INT_MAX, it will fail.  To protect agains this
- * happening, there is an assert that will generate a warning if c is larger
- * than e.g.  INT_MAX if it is an 'unsigned int'.  This could be a false
- * positive, but khw couldn't figure out a way to make it better.  It's good
- * enough so far */
-#define inRANGE(c, l, u) (__ASSERT_((l) >= 0) __ASSERT_((u) >= (l))            \
-  ((sizeof(c) == 1)                                                            \
-   ? (((WIDEST_UTYPE) ((((U8) (c))|0) - (l))) <= ((WIDEST_UTYPE) ((u) - (l)))) \
-   : (__ASSERT_(   (((WIDEST_UTYPE) 1) <<  (CHARBITS * sizeof(c) - 1) & (c))   \
-                     /* sign bit of c is 0 */                             == 0 \
-                || (((~ ((WIDEST_UTYPE) 1) << ((CHARBITS * sizeof(c) - 1) - 1))\
-                   /* l not larger than largest value in c's signed type */    \
-                                          & ~ ((WIDEST_UTYPE) 0)) & (l)) == 0) \
-      ((WIDEST_UTYPE) (((c) - (l)) | 0) <= ((WIDEST_UTYPE) ((u) - (l)))))))
+ * needed. */
+#define inRANGE(c, l, u) (__ASSERT_((u) >= (l))                                \
+   (  (sizeof(c) == sizeof(U8))  ? withinCOUNT(((U8)  (c)), (l), ((u) - (l)))  \
+    : (sizeof(c) == sizeof(U32)) ? withinCOUNT(((U32) (c)), (l), ((u) - (l)))  \
+    : (__ASSERT_(sizeof(c) == sizeof(WIDEST_UTYPE))                            \
+                          withinCOUNT(((WIDEST_UTYPE) (c)), (l), ((u) - (l))))))
 
 #ifdef EBCDIC
 #   ifndef _ALL_SOURCE
@@ -1173,9 +1348,6 @@ patched there.  The file as of this writing is cpan/Devel-PPPort/parts/inc/misc
 #  define _CC_GRAPH              8      /* [:graph:] */
 #  define _CC_CASED              9      /* [:lower:] or [:upper:] under /i */
 #  define _CC_SPACE             10      /* \s, [:space:] */
-#  define _CC_PSXSPC            _CC_SPACE   /* XXX Temporary, can be removed
-                                               when the deprecated isFOO_utf8()
-                                               functions are removed */
 #  define _CC_BLANK             11      /* [:blank:] */
 #  define _CC_XDIGIT            12      /* [:xdigit:] */
 #  define _CC_CNTRL             13      /* [:cntrl:] */
@@ -1193,18 +1365,14 @@ patched there.  The file as of this writing is cpan/Devel-PPPort/parts/inc/misc
 #  define _CC_QUOTEMETA                20
 #  define _CC_NON_FINAL_FOLD           21
 #  define _CC_IS_IN_SOME_FOLD          22
-#  define _CC_MNEMONIC_CNTRL           23
-
-#  define _CC_IDCONT 24 /* XXX Temporary, can be removed when the deprecated
-                           isFOO_utf8() functions are removed */
+#  define _CC_BINDIGIT                 23
+#  define _CC_OCTDIGIT                 24
+#  define _CC_MNEMONIC_CNTRL           25
 
 /* This next group is only used on EBCDIC platforms, so theoretically could be
  * shared with something entirely different that's only on ASCII platforms */
-#  define _CC_UTF8_START_BYTE_IS_FOR_AT_LEAST_SURROGATE 28
-#  define _CC_UTF8_IS_START                             29
-#  define _CC_UTF8_IS_DOWNGRADEABLE_START               30
-#  define _CC_UTF8_IS_CONTINUATION                      31
-/* Unused: 24-27
+#  define _CC_UTF8_START_BYTE_IS_FOR_AT_LEAST_SURROGATE 31
+/* Unused: 24-30
  * If more bits are needed, one could add a second word for non-64bit
  * QUAD_IS_INT systems, using some #ifdefs to distinguish between having a 2nd
  * word or not.  The IS_IN_SOME_FOLD bit is the most easily expendable, as it
@@ -1329,8 +1497,11 @@ END_EXTERN_C
                                            _generic_isCC(c, _CC_NON_FINAL_FOLD)
 #   define _IS_IN_SOME_FOLD_ONLY_FOR_USE_BY_REGCOMP_DOT_C(c) \
                                            _generic_isCC(c, _CC_IS_IN_SOME_FOLD)
-#   define _IS_MNEMONIC_CNTRL_ONLY_FOR_USE_BY_REGCOMP_DOT_C(c) \
-                                            _generic_isCC(c, _CC_MNEMONIC_CNTRL)
+
+/* is c a control character for which we have a mnemonic? */
+#  if defined(PERL_CORE) || defined(PERL_EXT)
+#     define isMNEMONIC_CNTRL(c) _generic_isCC(c, _CC_MNEMONIC_CNTRL)
+#  endif
 #else   /* else we don't have perl.h H_PERL */
 
     /* If we don't have perl.h, we are compiling a utility program.  Below we
@@ -1383,7 +1554,7 @@ END_EXTERN_C
                           ||  (c) == '\f' || (c) == '\n' || (c) == '\r'     \
                           ||  (c) == '\t' || (c) == '\v'                    \
                           || inRANGE((c), 1, 3)     /* SOH, STX, ETX */     \
-                          ||  (c) == 7    /* U+7F DEL */                    \
+                          ||  (c) == 7F   /* U+7F DEL */                    \
                           || inRANGE((c), 0x0E, 0x13) /* SO SI DLE          \
                                                          DC[1-3] */         \
                           ||  (c) == 0x18 /* U+18 CAN */                    \
@@ -1717,8 +1888,8 @@ END_EXTERN_C
  * number defined earlier in this file.  _generic_uvchr() is used for POSIX
  * classes where there is a macro or function 'above_latin1' that takes the
  * single argument 'c' and returns the desired value.  These exist for those
- * classes which have simple definitions, avoiding the overhead of a hash
- * lookup or inversion list binary search.  _generic_swash_uvchr() can be used
+ * classes which have simple definitions, avoiding the overhead of an inversion
+ * list binary search.  _generic_invlist_uvchr() can be used
  * for classes where that overhead is faster than a direct lookup.
  * _generic_uvchr() won't compile if 'c' isn't unsigned, as it won't match the
  * 'above_latin1' prototype. _generic_isCC() macro does bounds checking, so
@@ -1729,30 +1900,30 @@ END_EXTERN_C
 #define _generic_uvchr(classnum, above_latin1, c) ((c) < 256                \
                                              ? _generic_isCC(c, classnum)   \
                                              : above_latin1(c))
-#define _generic_swash_uvchr(classnum, c) ((c) < 256                        \
+#define _generic_invlist_uvchr(classnum, c) ((c) < 256                        \
                                              ? _generic_isCC(c, classnum)   \
                                              : _is_uni_FOO(classnum, c))
-#define isALPHA_uvchr(c)      _generic_swash_uvchr(_CC_ALPHA, c)
-#define isALPHANUMERIC_uvchr(c) _generic_swash_uvchr(_CC_ALPHANUMERIC, c)
+#define isALPHA_uvchr(c)      _generic_invlist_uvchr(_CC_ALPHA, c)
+#define isALPHANUMERIC_uvchr(c) _generic_invlist_uvchr(_CC_ALPHANUMERIC, c)
 #define isASCII_uvchr(c)      isASCII(c)
 #define isBLANK_uvchr(c)      _generic_uvchr(_CC_BLANK, is_HORIZWS_cp_high, c)
 #define isCNTRL_uvchr(c)      isCNTRL_L1(c) /* All controls are in Latin1 */
-#define isDIGIT_uvchr(c)      _generic_swash_uvchr(_CC_DIGIT, c)
-#define isGRAPH_uvchr(c)      _generic_swash_uvchr(_CC_GRAPH, c)
+#define isDIGIT_uvchr(c)      _generic_invlist_uvchr(_CC_DIGIT, c)
+#define isGRAPH_uvchr(c)      _generic_invlist_uvchr(_CC_GRAPH, c)
 #define isIDCONT_uvchr(c)                                                   \
                     _generic_uvchr(_CC_WORDCHAR, _is_uni_perl_idcont, c)
 #define isIDFIRST_uvchr(c)                                                  \
                     _generic_uvchr(_CC_IDFIRST, _is_uni_perl_idstart, c)
-#define isLOWER_uvchr(c)      _generic_swash_uvchr(_CC_LOWER, c)
-#define isPRINT_uvchr(c)      _generic_swash_uvchr(_CC_PRINT, c)
+#define isLOWER_uvchr(c)      _generic_invlist_uvchr(_CC_LOWER, c)
+#define isPRINT_uvchr(c)      _generic_invlist_uvchr(_CC_PRINT, c)
 
-#define isPUNCT_uvchr(c)      _generic_swash_uvchr(_CC_PUNCT, c)
+#define isPUNCT_uvchr(c)      _generic_invlist_uvchr(_CC_PUNCT, c)
 #define isSPACE_uvchr(c)      _generic_uvchr(_CC_SPACE, is_XPERLSPACE_cp_high, c)
 #define isPSXSPC_uvchr(c)     isSPACE_uvchr(c)
 
-#define isUPPER_uvchr(c)      _generic_swash_uvchr(_CC_UPPER, c)
+#define isUPPER_uvchr(c)      _generic_invlist_uvchr(_CC_UPPER, c)
 #define isVERTWS_uvchr(c)     _generic_uvchr(_CC_VERTSPACE, is_VERTWS_cp_high, c)
-#define isWORDCHAR_uvchr(c)   _generic_swash_uvchr(_CC_WORDCHAR, c)
+#define isWORDCHAR_uvchr(c)   _generic_invlist_uvchr(_CC_WORDCHAR, c)
 #define isXDIGIT_uvchr(c)     _generic_uvchr(_CC_XDIGIT, is_XDIGIT_cp_high, c)
 
 #define toFOLD_uvchr(c,s,l)	to_uni_fold(c,s,l)
@@ -1792,51 +1963,35 @@ END_EXTERN_C
  * _generic_uvchr, so see it for more info. */
 #define _generic_LC_uvchr(latin1, above_latin1, c)                            \
                                     (c < 256 ? latin1(c) : above_latin1(c))
-#define _generic_LC_swash_uvchr(latin1, classnum, c)                          \
+#define _generic_LC_invlist_uvchr(latin1, classnum, c)                          \
                             (c < 256 ? latin1(c) : _is_uni_FOO(classnum, c))
 
-#define isALPHA_LC_uvchr(c)  _generic_LC_swash_uvchr(isALPHA_LC, _CC_ALPHA, c)
-#define isALPHANUMERIC_LC_uvchr(c)  _generic_LC_swash_uvchr(isALPHANUMERIC_LC, \
+#define isALPHA_LC_uvchr(c)  _generic_LC_invlist_uvchr(isALPHA_LC, _CC_ALPHA, c)
+#define isALPHANUMERIC_LC_uvchr(c)  _generic_LC_invlist_uvchr(isALPHANUMERIC_LC, \
                                                          _CC_ALPHANUMERIC, c)
 #define isASCII_LC_uvchr(c)   isASCII_LC(c)
 #define isBLANK_LC_uvchr(c)  _generic_LC_uvchr(isBLANK_LC,                    \
                                                         is_HORIZWS_cp_high, c)
 #define isCNTRL_LC_uvchr(c)  (c < 256 ? isCNTRL_LC(c) : 0)
-#define isDIGIT_LC_uvchr(c)  _generic_LC_swash_uvchr(isDIGIT_LC, _CC_DIGIT, c)
-#define isGRAPH_LC_uvchr(c)  _generic_LC_swash_uvchr(isGRAPH_LC, _CC_GRAPH, c)
+#define isDIGIT_LC_uvchr(c)  _generic_LC_invlist_uvchr(isDIGIT_LC, _CC_DIGIT, c)
+#define isGRAPH_LC_uvchr(c)  _generic_LC_invlist_uvchr(isGRAPH_LC, _CC_GRAPH, c)
 #define isIDCONT_LC_uvchr(c) _generic_LC_uvchr(isIDCONT_LC,                   \
                                                   _is_uni_perl_idcont, c)
 #define isIDFIRST_LC_uvchr(c) _generic_LC_uvchr(isIDFIRST_LC,                 \
                                                   _is_uni_perl_idstart, c)
-#define isLOWER_LC_uvchr(c)  _generic_LC_swash_uvchr(isLOWER_LC, _CC_LOWER, c)
-#define isPRINT_LC_uvchr(c)  _generic_LC_swash_uvchr(isPRINT_LC, _CC_PRINT, c)
+#define isLOWER_LC_uvchr(c)  _generic_LC_invlist_uvchr(isLOWER_LC, _CC_LOWER, c)
+#define isPRINT_LC_uvchr(c)  _generic_LC_invlist_uvchr(isPRINT_LC, _CC_PRINT, c)
 #define isPSXSPC_LC_uvchr(c)  isSPACE_LC_uvchr(c)
-#define isPUNCT_LC_uvchr(c)  _generic_LC_swash_uvchr(isPUNCT_LC, _CC_PUNCT, c)
+#define isPUNCT_LC_uvchr(c)  _generic_LC_invlist_uvchr(isPUNCT_LC, _CC_PUNCT, c)
 #define isSPACE_LC_uvchr(c)  _generic_LC_uvchr(isSPACE_LC,                    \
                                                     is_XPERLSPACE_cp_high, c)
-#define isUPPER_LC_uvchr(c)  _generic_LC_swash_uvchr(isUPPER_LC, _CC_UPPER, c)
-#define isWORDCHAR_LC_uvchr(c) _generic_LC_swash_uvchr(isWORDCHAR_LC,         \
+#define isUPPER_LC_uvchr(c)  _generic_LC_invlist_uvchr(isUPPER_LC, _CC_UPPER, c)
+#define isWORDCHAR_LC_uvchr(c) _generic_LC_invlist_uvchr(isWORDCHAR_LC,         \
                                                            _CC_WORDCHAR, c)
 #define isXDIGIT_LC_uvchr(c) _generic_LC_uvchr(isXDIGIT_LC,                  \
                                                        is_XDIGIT_cp_high, c)
 
 #define isBLANK_LC_uni(c)    isBLANK_LC_uvchr(UNI_TO_NATIVE(c))
-
-/* For internal core Perl use only: the base macros for defining macros like
- * isALPHA_utf8.  These are like the earlier defined macros, but take an input
- * UTF-8 encoded string 'p'. If the input is in the Latin1 range, use
- * the Latin1 macro 'classnum' on 'p'.  Otherwise use the value given by the
- * 'utf8' parameter.  This relies on the fact that ASCII characters have the
- * same representation whether utf8 or not.  Note that it assumes that the utf8
- * has been validated, and ignores 'use bytes' */
-#define _base_generic_utf8(enum_name, name, p, use_locale )                 \
-    _is_utf8_FOO(CAT2(_CC_, enum_name),                                     \
-                 (const U8 *) p,                                            \
-                 "is" STRINGIFY(name) "_utf8",                              \
-                 "is" STRINGIFY(name) "_utf8_safe",                         \
-                 1, use_locale, __FILE__,__LINE__)
-
-#define _generic_utf8(name, p) _base_generic_utf8(name, name, p, 0)
 
 /* The "_safe" macros make sure that we don't attempt to read beyond 'e', but
  * they don't otherwise go out of their way to look for malformed UTF-8.  If
@@ -1862,8 +2017,9 @@ END_EXTERN_C
 #endif
 
 #define _generic_utf8_safe(classnum, p, e, above_latin1)                    \
-         (__ASSERT_(_utf8_safe_assert(p, e))                                \
-         (UTF8_IS_INVARIANT(*(p)))                                          \
+    ((! _utf8_safe_assert(p, e))                                            \
+      ? (_force_out_malformed_utf8_message((U8 *) (p), (U8 *) (e), 0, 1), 0)\
+      : (UTF8_IS_INVARIANT(*(p)))                                           \
           ? _generic_isCC(*(p), classnum)                                   \
           : (UTF8_IS_DOWNGRADEABLE_START(*(p))                              \
              ? ((LIKELY((e) - (p) > 1 && UTF8_IS_CONTINUATION(*((p)+1))))   \
@@ -1876,7 +2032,7 @@ END_EXTERN_C
  * 'above_latin1' can be a macro */
 #define _generic_func_utf8_safe(classnum, above_latin1, p, e)               \
                     _generic_utf8_safe(classnum, p, e, above_latin1(p, e))
-#define _generic_non_swash_utf8_safe(classnum, above_latin1, p, e)          \
+#define _generic_non_invlist_utf8_safe(classnum, above_latin1, p, e)          \
           _generic_utf8_safe(classnum, p, e,                                \
                              (UNLIKELY((e) - (p) < UTF8SKIP(p))             \
                               ? (_force_out_malformed_utf8_message(         \
@@ -1884,8 +2040,8 @@ END_EXTERN_C
                               : above_latin1(p)))
 /* Like the above, but passes classnum to _isFOO_utf8(), instead of having an
  * 'above_latin1' parameter */
-#define _generic_swash_utf8_safe(classnum, p, e)                            \
-_generic_utf8_safe(classnum, p, e, _is_utf8_FOO_with_len(classnum, p, e))
+#define _generic_invlist_utf8_safe(classnum, p, e)                            \
+            _generic_utf8_safe(classnum, p, e, _is_utf8_FOO(classnum, p, e))
 
 /* Like the above, but should be used only when it is known that there are no
  * characters in the upper-Latin1 range (128-255 on ASCII platforms) which the
@@ -1900,34 +2056,34 @@ _generic_utf8_safe(classnum, p, e, _is_utf8_FOO_with_len(classnum, p, e))
              : above_latin1)
 
 
-#define isALPHA_utf8(p)         _generic_utf8(ALPHA, p)
-#define isALPHANUMERIC_utf8(p)  _generic_utf8(ALPHANUMERIC, p)
-#define isASCII_utf8(p)         _generic_utf8(ASCII, p)
-#define isBLANK_utf8(p)         _generic_utf8(BLANK, p)
-#define isCNTRL_utf8(p)         _generic_utf8(CNTRL, p)
-#define isDIGIT_utf8(p)         _generic_utf8(DIGIT, p)
-#define isGRAPH_utf8(p)         _generic_utf8(GRAPH, p)
-#define isIDCONT_utf8(p)        _generic_utf8(IDCONT, p)
-#define isIDFIRST_utf8(p)       _generic_utf8(IDFIRST, p)
-#define isLOWER_utf8(p)         _generic_utf8(LOWER, p)
-#define isPRINT_utf8(p)         _generic_utf8(PRINT, p)
-#define isPSXSPC_utf8(p)        _generic_utf8(PSXSPC, p)
-#define isPUNCT_utf8(p)         _generic_utf8(PUNCT, p)
-#define isSPACE_utf8(p)         _generic_utf8(SPACE, p)
-#define isUPPER_utf8(p)         _generic_utf8(UPPER, p)
-#define isVERTWS_utf8(p)        _generic_utf8(VERTSPACE, p)
-#define isWORDCHAR_utf8(p)      _generic_utf8(WORDCHAR, p)
-#define isXDIGIT_utf8(p)        _generic_utf8(XDIGIT, p)
+#define isALPHA_utf8(p, e)         isALPHA_utf8_safe(p, e)
+#define isALPHANUMERIC_utf8(p, e)  isALPHANUMERIC_utf8_safe(p, e)
+#define isASCII_utf8(p, e)         isASCII_utf8_safe(p, e)
+#define isBLANK_utf8(p, e)         isBLANK_utf8_safe(p, e)
+#define isCNTRL_utf8(p, e)         isCNTRL_utf8_safe(p, e)
+#define isDIGIT_utf8(p, e)         isDIGIT_utf8_safe(p, e)
+#define isGRAPH_utf8(p, e)         isGRAPH_utf8_safe(p, e)
+#define isIDCONT_utf8(p, e)        isIDCONT_utf8_safe(p, e)
+#define isIDFIRST_utf8(p, e)       isIDFIRST_utf8_safe(p, e)
+#define isLOWER_utf8(p, e)         isLOWER_utf8_safe(p, e)
+#define isPRINT_utf8(p, e)         isPRINT_utf8_safe(p, e)
+#define isPSXSPC_utf8(p, e)        isPSXSPC_utf8_safe(p, e)
+#define isPUNCT_utf8(p, e)         isPUNCT_utf8_safe(p, e)
+#define isSPACE_utf8(p, e)         isSPACE_utf8_safe(p, e)
+#define isUPPER_utf8(p, e)         isUPPER_utf8_safe(p, e)
+#define isVERTWS_utf8(p, e)        isVERTWS_utf8_safe(p, e)
+#define isWORDCHAR_utf8(p, e)      isWORDCHAR_utf8_safe(p, e)
+#define isXDIGIT_utf8(p, e)        isXDIGIT_utf8_safe(p, e)
 
-#define isALPHA_utf8_safe(p, e)  _generic_swash_utf8_safe(_CC_ALPHA, p, e)
+#define isALPHA_utf8_safe(p, e)  _generic_invlist_utf8_safe(_CC_ALPHA, p, e)
 #define isALPHANUMERIC_utf8_safe(p, e)                                      \
-                        _generic_swash_utf8_safe(_CC_ALPHANUMERIC, p, e)
+                        _generic_invlist_utf8_safe(_CC_ALPHANUMERIC, p, e)
 #define isASCII_utf8_safe(p, e)                                             \
     /* Because ASCII is invariant under utf8, the non-utf8 macro            \
     * works */                                                              \
     (__ASSERT_(_utf8_safe_assert(p, e)) isASCII(*(p)))
 #define isBLANK_utf8_safe(p, e)                                             \
-        _generic_non_swash_utf8_safe(_CC_BLANK, is_HORIZWS_high, p, e)
+        _generic_non_invlist_utf8_safe(_CC_BLANK, is_HORIZWS_high, p, e)
 
 #ifdef EBCDIC
     /* Because all controls are UTF-8 invariants in EBCDIC, we can use this
@@ -1940,32 +2096,32 @@ _generic_utf8_safe(classnum, p, e, _is_utf8_FOO_with_len(classnum, p, e))
 
 #define isDIGIT_utf8_safe(p, e)                                             \
             _generic_utf8_safe_no_upper_latin1(_CC_DIGIT, p, e,             \
-                                    _is_utf8_FOO_with_len(_CC_DIGIT, p, e))
-#define isGRAPH_utf8_safe(p, e)    _generic_swash_utf8_safe(_CC_GRAPH, p, e)
+                                            _is_utf8_FOO(_CC_DIGIT, p, e))
+#define isGRAPH_utf8_safe(p, e)    _generic_invlist_utf8_safe(_CC_GRAPH, p, e)
 #define isIDCONT_utf8_safe(p, e)   _generic_func_utf8_safe(_CC_WORDCHAR,    \
-                                     _is_utf8_perl_idcont_with_len, p, e)
+                                                 _is_utf8_perl_idcont, p, e)
 
 /* To prevent S_scan_word in toke.c from hanging, we have to make sure that
  * IDFIRST is an alnum.  See
- * http://rt.perl.org/rt3/Ticket/Display.html?id=74022 for more detail than you
+ * https://github.com/Perl/perl5/issues/10275 for more detail than you
  * ever wanted to know about.  (In the ASCII range, there isn't a difference.)
  * This used to be not the XID version, but we decided to go with the more
  * modern Unicode definition */
 #define isIDFIRST_utf8_safe(p, e)                                           \
     _generic_func_utf8_safe(_CC_IDFIRST,                                    \
-                    _is_utf8_perl_idstart_with_len, (U8 *) (p), (U8 *) (e))
+                            _is_utf8_perl_idstart, (U8 *) (p), (U8 *) (e))
 
-#define isLOWER_utf8_safe(p, e)     _generic_swash_utf8_safe(_CC_LOWER, p, e)
-#define isPRINT_utf8_safe(p, e)     _generic_swash_utf8_safe(_CC_PRINT, p, e)
+#define isLOWER_utf8_safe(p, e)     _generic_invlist_utf8_safe(_CC_LOWER, p, e)
+#define isPRINT_utf8_safe(p, e)     _generic_invlist_utf8_safe(_CC_PRINT, p, e)
 #define isPSXSPC_utf8_safe(p, e)     isSPACE_utf8_safe(p, e)
-#define isPUNCT_utf8_safe(p, e)     _generic_swash_utf8_safe(_CC_PUNCT, p, e)
+#define isPUNCT_utf8_safe(p, e)     _generic_invlist_utf8_safe(_CC_PUNCT, p, e)
 #define isSPACE_utf8_safe(p, e)                                             \
-    _generic_non_swash_utf8_safe(_CC_SPACE, is_XPERLSPACE_high, p, e)
-#define isUPPER_utf8_safe(p, e)  _generic_swash_utf8_safe(_CC_UPPER, p, e)
+    _generic_non_invlist_utf8_safe(_CC_SPACE, is_XPERLSPACE_high, p, e)
+#define isUPPER_utf8_safe(p, e)  _generic_invlist_utf8_safe(_CC_UPPER, p, e)
 #define isVERTWS_utf8_safe(p, e)                                            \
-        _generic_non_swash_utf8_safe(_CC_VERTSPACE, is_VERTWS_high, p, e)
+        _generic_non_invlist_utf8_safe(_CC_VERTSPACE, is_VERTWS_high, p, e)
 #define isWORDCHAR_utf8_safe(p, e)                                          \
-                             _generic_swash_utf8_safe(_CC_WORDCHAR, p, e)
+                             _generic_invlist_utf8_safe(_CC_WORDCHAR, p, e)
 #define isXDIGIT_utf8_safe(p, e)                                            \
                    _generic_utf8_safe_no_upper_latin1(_CC_XDIGIT, p, e,     \
                              (UNLIKELY((e) - (p) < UTF8SKIP(p))             \
@@ -1973,45 +2129,39 @@ _generic_utf8_safe(classnum, p, e, _is_utf8_FOO_with_len(classnum, p, e))
                                       (U8 *) (p), (U8 *) (e), 0, 1), 0)     \
                               : is_XDIGIT_high(p)))
 
-#define toFOLD_utf8(p,s,l)	to_utf8_fold(p,s,l)
-#define toLOWER_utf8(p,s,l)	to_utf8_lower(p,s,l)
-#define toTITLE_utf8(p,s,l)	to_utf8_title(p,s,l)
-#define toUPPER_utf8(p,s,l)	to_utf8_upper(p,s,l)
+#define toFOLD_utf8(p,e,s,l)	toFOLD_utf8_safe(p,e,s,l)
+#define toLOWER_utf8(p,e,s,l)	toLOWER_utf8_safe(p,e,s,l)
+#define toTITLE_utf8(p,e,s,l)	toTITLE_utf8_safe(p,e,s,l)
+#define toUPPER_utf8(p,e,s,l)	toUPPER_utf8_safe(p,e,s,l)
 
 /* For internal core use only, subject to change */
-#define _toFOLD_utf8_flags(p,e,s,l,f)  _to_utf8_fold_flags (p,e,s,l,f, "", 0)
-#define _toLOWER_utf8_flags(p,e,s,l,f) _to_utf8_lower_flags(p,e,s,l,f, "", 0)
-#define _toTITLE_utf8_flags(p,e,s,l,f) _to_utf8_title_flags(p,e,s,l,f, "", 0)
-#define _toUPPER_utf8_flags(p,e,s,l,f) _to_utf8_upper_flags(p,e,s,l,f, "", 0)
+#define _toFOLD_utf8_flags(p,e,s,l,f)  _to_utf8_fold_flags (p,e,s,l,f)
+#define _toLOWER_utf8_flags(p,e,s,l,f) _to_utf8_lower_flags(p,e,s,l,f)
+#define _toTITLE_utf8_flags(p,e,s,l,f) _to_utf8_title_flags(p,e,s,l,f)
+#define _toUPPER_utf8_flags(p,e,s,l,f) _to_utf8_upper_flags(p,e,s,l,f)
 
 #define toFOLD_utf8_safe(p,e,s,l)   _toFOLD_utf8_flags(p,e,s,l, FOLD_FLAGS_FULL)
 #define toLOWER_utf8_safe(p,e,s,l)  _toLOWER_utf8_flags(p,e,s,l, 0)
 #define toTITLE_utf8_safe(p,e,s,l)  _toTITLE_utf8_flags(p,e,s,l, 0)
 #define toUPPER_utf8_safe(p,e,s,l)  _toUPPER_utf8_flags(p,e,s,l, 0)
 
-/* For internal core Perl use only: the base macros for defining macros like
- * isALPHA_LC_utf8.  These are like _generic_utf8, but if the first code point
- * in 'p' is within the 0-255 range, it uses locale rules from the passed-in
- * 'macro' parameter */
-#define _generic_LC_utf8(name, p) _base_generic_utf8(name, name, p, 1)
-
-#define isALPHA_LC_utf8(p)         _generic_LC_utf8(ALPHA, p)
-#define isALPHANUMERIC_LC_utf8(p)  _generic_LC_utf8(ALPHANUMERIC, p)
-#define isASCII_LC_utf8(p)         _generic_LC_utf8(ASCII, p)
-#define isBLANK_LC_utf8(p)         _generic_LC_utf8(BLANK, p)
-#define isCNTRL_LC_utf8(p)         _generic_LC_utf8(CNTRL, p)
-#define isDIGIT_LC_utf8(p)         _generic_LC_utf8(DIGIT, p)
-#define isGRAPH_LC_utf8(p)         _generic_LC_utf8(GRAPH, p)
-#define isIDCONT_LC_utf8(p)        _generic_LC_utf8(IDCONT, p)
-#define isIDFIRST_LC_utf8(p)       _generic_LC_utf8(IDFIRST, p)
-#define isLOWER_LC_utf8(p)         _generic_LC_utf8(LOWER, p)
-#define isPRINT_LC_utf8(p)         _generic_LC_utf8(PRINT, p)
-#define isPSXSPC_LC_utf8(p)        _generic_LC_utf8(PSXSPC, p)
-#define isPUNCT_LC_utf8(p)         _generic_LC_utf8(PUNCT, p)
-#define isSPACE_LC_utf8(p)         _generic_LC_utf8(SPACE, p)
-#define isUPPER_LC_utf8(p)         _generic_LC_utf8(UPPER, p)
-#define isWORDCHAR_LC_utf8(p)      _generic_LC_utf8(WORDCHAR, p)
-#define isXDIGIT_LC_utf8(p)        _generic_LC_utf8(XDIGIT, p)
+#define isALPHA_LC_utf8(p, e)         isALPHA_LC_utf8_safe(p, e)
+#define isALPHANUMERIC_LC_utf8(p, e)  isALPHANUMERIC_LC_utf8_safe(p, e)
+#define isASCII_LC_utf8(p, e)         isASCII_LC_utf8_safe(p, e)
+#define isBLANK_LC_utf8(p, e)         isBLANK_LC_utf8_safe(p, e)
+#define isCNTRL_LC_utf8(p, e)         isCNTRL_LC_utf8_safe(p, e)
+#define isDIGIT_LC_utf8(p, e)         isDIGIT_LC_utf8_safe(p, e)
+#define isGRAPH_LC_utf8(p, e)         isGRAPH_LC_utf8_safe(p, e)
+#define isIDCONT_LC_utf8(p, e)        isIDCONT_LC_utf8_safe(p, e)
+#define isIDFIRST_LC_utf8(p, e)       isIDFIRST_LC_utf8_safe(p, e)
+#define isLOWER_LC_utf8(p, e)         isLOWER_LC_utf8_safe(p, e)
+#define isPRINT_LC_utf8(p, e)         isPRINT_LC_utf8_safe(p, e)
+#define isPSXSPC_LC_utf8(p, e)        isPSXSPC_LC_utf8_safe(p, e)
+#define isPUNCT_LC_utf8(p, e)         isPUNCT_LC_utf8_safe(p, e)
+#define isSPACE_LC_utf8(p, e)         isSPACE_LC_utf8_safe(p, e)
+#define isUPPER_LC_utf8(p, e)         isUPPER_LC_utf8_safe(p, e)
+#define isWORDCHAR_LC_utf8(p, e)      isWORDCHAR_LC_utf8_safe(p, e)
+#define isXDIGIT_LC_utf8(p, e)        isXDIGIT_LC_utf8_safe(p, e)
 
 /* For internal core Perl use only: the base macros for defining macros like
  * isALPHA_LC_utf8_safe.  These are like _generic_utf8, but if the first code
@@ -2028,14 +2178,14 @@ _generic_utf8_safe(classnum, p, e, _is_utf8_FOO_with_len(classnum, p, e))
                                         (U8 *) (p), (U8 *) (e), 0, 1), 0))  \
               : above_latin1))
 
-#define _generic_LC_swash_utf8_safe(macro, classnum, p, e)                  \
+#define _generic_LC_invlist_utf8_safe(macro, classnum, p, e)                  \
             _generic_LC_utf8_safe(macro, p, e,                              \
-                               _is_utf8_FOO_with_len(classnum, p, e))
+                                            _is_utf8_FOO(classnum, p, e))
 
 #define _generic_LC_func_utf8_safe(macro, above_latin1, p, e)               \
             _generic_LC_utf8_safe(macro, p, e, above_latin1(p, e))
 
-#define _generic_LC_non_swash_utf8_safe(classnum, above_latin1, p, e)       \
+#define _generic_LC_non_invlist_utf8_safe(classnum, above_latin1, p, e)       \
           _generic_LC_utf8_safe(classnum, p, e,                             \
                              (UNLIKELY((e) - (p) < UTF8SKIP(p))             \
                               ? (_force_out_malformed_utf8_message(         \
@@ -2043,41 +2193,41 @@ _generic_utf8_safe(classnum, p, e, _is_utf8_FOO_with_len(classnum, p, e))
                               : above_latin1(p)))
 
 #define isALPHANUMERIC_LC_utf8_safe(p, e)                                   \
-            _generic_LC_swash_utf8_safe(isALPHANUMERIC_LC,                  \
+            _generic_LC_invlist_utf8_safe(isALPHANUMERIC_LC,                  \
                                         _CC_ALPHANUMERIC, p, e)
 #define isALPHA_LC_utf8_safe(p, e)                                          \
-            _generic_LC_swash_utf8_safe(isALPHA_LC, _CC_ALPHA, p, e)
+            _generic_LC_invlist_utf8_safe(isALPHA_LC, _CC_ALPHA, p, e)
 #define isASCII_LC_utf8_safe(p, e)                                          \
                     (__ASSERT_(_utf8_safe_assert(p, e)) isASCII_LC(*(p)))
 #define isBLANK_LC_utf8_safe(p, e)                                          \
-        _generic_LC_non_swash_utf8_safe(isBLANK_LC, is_HORIZWS_high, p, e)
+        _generic_LC_non_invlist_utf8_safe(isBLANK_LC, is_HORIZWS_high, p, e)
 #define isCNTRL_LC_utf8_safe(p, e)                                          \
             _generic_LC_utf8_safe(isCNTRL_LC, p, e, 0)
 #define isDIGIT_LC_utf8_safe(p, e)                                          \
-            _generic_LC_swash_utf8_safe(isDIGIT_LC, _CC_DIGIT, p, e)
+            _generic_LC_invlist_utf8_safe(isDIGIT_LC, _CC_DIGIT, p, e)
 #define isGRAPH_LC_utf8_safe(p, e)                                          \
-            _generic_LC_swash_utf8_safe(isGRAPH_LC, _CC_GRAPH, p, e)
+            _generic_LC_invlist_utf8_safe(isGRAPH_LC, _CC_GRAPH, p, e)
 #define isIDCONT_LC_utf8_safe(p, e)                                         \
             _generic_LC_func_utf8_safe(isIDCONT_LC,                         \
-                                _is_utf8_perl_idcont_with_len, p, e)
+                                                _is_utf8_perl_idcont, p, e)
 #define isIDFIRST_LC_utf8_safe(p, e)                                        \
             _generic_LC_func_utf8_safe(isIDFIRST_LC,                        \
-                                _is_utf8_perl_idstart_with_len, p, e)
+                                               _is_utf8_perl_idstart, p, e)
 #define isLOWER_LC_utf8_safe(p, e)                                          \
-            _generic_LC_swash_utf8_safe(isLOWER_LC, _CC_LOWER, p, e)
+            _generic_LC_invlist_utf8_safe(isLOWER_LC, _CC_LOWER, p, e)
 #define isPRINT_LC_utf8_safe(p, e)                                          \
-            _generic_LC_swash_utf8_safe(isPRINT_LC, _CC_PRINT, p, e)
+            _generic_LC_invlist_utf8_safe(isPRINT_LC, _CC_PRINT, p, e)
 #define isPSXSPC_LC_utf8_safe(p, e)    isSPACE_LC_utf8_safe(p, e)
 #define isPUNCT_LC_utf8_safe(p, e)                                          \
-            _generic_LC_swash_utf8_safe(isPUNCT_LC, _CC_PUNCT, p, e)
+            _generic_LC_invlist_utf8_safe(isPUNCT_LC, _CC_PUNCT, p, e)
 #define isSPACE_LC_utf8_safe(p, e)                                          \
-    _generic_LC_non_swash_utf8_safe(isSPACE_LC, is_XPERLSPACE_high, p, e)
+    _generic_LC_non_invlist_utf8_safe(isSPACE_LC, is_XPERLSPACE_high, p, e)
 #define isUPPER_LC_utf8_safe(p, e)                                          \
-            _generic_LC_swash_utf8_safe(isUPPER_LC, _CC_UPPER, p, e)
+            _generic_LC_invlist_utf8_safe(isUPPER_LC, _CC_UPPER, p, e)
 #define isWORDCHAR_LC_utf8_safe(p, e)                                       \
-            _generic_LC_swash_utf8_safe(isWORDCHAR_LC, _CC_WORDCHAR, p, e)
+            _generic_LC_invlist_utf8_safe(isWORDCHAR_LC, _CC_WORDCHAR, p, e)
 #define isXDIGIT_LC_utf8_safe(p, e)                                         \
-        _generic_LC_non_swash_utf8_safe(isXDIGIT_LC, is_XDIGIT_high, p, e)
+        _generic_LC_non_invlist_utf8_safe(isXDIGIT_LC, is_XDIGIT_high, p, e)
 
 /* Macros for backwards compatibility and for completeness when the ASCII and
  * Latin1 values are identical */
@@ -2087,20 +2237,24 @@ _generic_utf8_safe(classnum, p, e, _is_utf8_FOO_with_len(classnum, p, e))
 #define isOCTAL_L1(c)       isOCTAL_A(c)
 #define isXDIGIT_L1(c)      isXDIGIT_A(c)
 #define isALNUM(c)          isWORDCHAR(c)
+#define isALNUM_A(c)        isALNUM(c)
 #define isALNUMU(c)         isWORDCHAR_L1(c)
 #define isALNUM_LC(c)       isWORDCHAR_LC(c)
 #define isALNUM_uni(c)      isWORDCHAR_uni(c)
 #define isALNUM_LC_uvchr(c) isWORDCHAR_LC_uvchr(c)
-#define isALNUM_utf8(p)     isWORDCHAR_utf8(p)
-#define isALNUM_LC_utf8(p)  isWORDCHAR_LC_utf8(p)
+#define isALNUM_utf8(p,e)   isWORDCHAR_utf8(p,e)
+#define isALNUM_utf8_safe(p,e) isWORDCHAR_utf8_safe(p,e)
+#define isALNUM_LC_utf8(p,e)isWORDCHAR_LC_utf8(p,e)
+#define isALNUM_LC_utf8_safe(p,e)isWORDCHAR_LC_utf8_safe(p,e)
 #define isALNUMC_A(c)       isALPHANUMERIC_A(c)      /* Mnemonic: "C's alnum" */
 #define isALNUMC_L1(c)      isALPHANUMERIC_L1(c)
 #define isALNUMC(c)	    isALPHANUMERIC(c)
 #define isALNUMC_LC(c)	    isALPHANUMERIC_LC(c)
 #define isALNUMC_uni(c)     isALPHANUMERIC_uni(c)
 #define isALNUMC_LC_uvchr(c) isALPHANUMERIC_LC_uvchr(c)
-#define isALNUMC_utf8(p)    isALPHANUMERIC_utf8(p)
-#define isALNUMC_LC_utf8(p) isALPHANUMERIC_LC_utf8(p)
+#define isALNUMC_utf8(p,e)  isALPHANUMERIC_utf8(p,e)
+#define isALNUMC_utf8_safe(p,e)  isALPHANUMERIC_utf8_safe(p,e)
+#define isALNUMC_LC_utf8_safe(p,e) isALPHANUMERIC_LC_utf8_safe(p,e)
 
 /* On EBCDIC platforms, CTRL-@ is 0, CTRL-A is 1, etc, just like on ASCII,
  * except that they don't necessarily mean the same characters, e.g. CTRL-D is
@@ -2141,17 +2295,22 @@ typedef U32 line_t;
 	} \
 	return a;
 
-/* Converts a character known to represent a hexadecimal digit (0-9, A-F, or
- * a-f) to its numeric value.  READ_XDIGIT's argument is a string pointer,
- * which is advanced.  The input is validated only by an assert() in DEBUGGING
- * builds.  In both ASCII and EBCDIC the last 4 bits of the digits are 0-9; and
- * the last 4 bits of A-F and a-f are 1-6, so adding 9 yields 10-15 */
-#define XDIGIT_VALUE(c) (__ASSERT_(isXDIGIT(c)) (0xf & (isDIGIT(c)        \
-                                                        ? (c)             \
-                                                        : ((c) + 9))))
-#define READ_XDIGIT(s)  (__ASSERT_(isXDIGIT(*s)) (0xf & (isDIGIT(*(s))     \
-                                                        ? (*(s)++)         \
-                                                        : (*(s)++ + 9))))
+/* Converts a character KNOWN to represent a hexadecimal digit (0-9, A-F, or
+ * a-f) to its numeric value without using any branches.  The input is
+ * validated only by an assert() in DEBUGGING builds.
+ *
+ * It works by right shifting and isolating the bit that is 0 for the digits,
+ * and 1 for at least the alphas A-F, a-f.  The bit is shifted to the ones
+ * position, and then to the eights position.  Both are added together to form
+ * 0 if the input is '0'-'9' and to form 9 if alpha.  This is added to the
+ * final four bits of the input to form the correct value. */
+#define XDIGIT_VALUE(c) (__ASSERT_(isXDIGIT(c))                             \
+           ((NATIVE_TO_LATIN1(c) >> 6) & 1)  /* 1 if alpha; 0 if not */     \
+         + ((NATIVE_TO_LATIN1(c) >> 3) & 8)  /* 8 if alpha; 0 if not */     \
+         + ((c) & 0xF))   /* 0-9 if input valid hex digit */
+
+/* The argument is a string pointer, which is advanced. */
+#define READ_XDIGIT(s)  ((s)++, XDIGIT_VALUE(*((s) - 1)))
 
 /* Converts a character known to represent an octal digit (0-7) to its numeric
  * value.  The input is validated only by an assert() in DEBUGGING builds.  In
@@ -2464,11 +2623,23 @@ void Perl_mem_log_del_sv(const SV *sv, const char *filename, const int linenumbe
 
 #define StructCopy(s,d,t) (*((t*)(d)) = *((t*)(s)))
 
-/* C_ARRAY_LENGTH is the number of elements in the C array (so you
- * want your zero-based indices to be less than but not equal to).
- *
- * C_ARRAY_END is one past the last: half-open/half-closed range,
- * not last-inclusive range. */
+/*
+=head1 Handy Values
+
+=for apidoc Am|STRLEN|C_ARRAY_LENGTH|void *a
+
+Returns the number of elements in the input C array (so you want your
+zero-based indices to be less than but not equal to).
+
+=for apidoc Am|void *|C_ARRAY_END|void *a
+
+Returns a pointer to one element past the final element of the input C array.
+
+=cut
+
+C_ARRAY_END is one past the last: half-open/half-closed range, not
+last-inclusive range.
+*/
 #define C_ARRAY_LENGTH(a)	(sizeof(a)/sizeof((a)[0]))
 #define C_ARRAY_END(a)		((a) + C_ARRAY_LENGTH(a))
 

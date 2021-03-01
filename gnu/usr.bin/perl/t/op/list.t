@@ -6,7 +6,7 @@ BEGIN {
     set_up_inc(qw(. ../lib));
 }
 
-plan( tests => 72 );
+plan( tests => 73 );
 
 @foo = (1, 2, 3, 4);
 cmp_ok($foo[0], '==', 1, 'first elem');
@@ -268,3 +268,10 @@ q[	x
  ];
 }
 EOS
+
+# this used to SEGV due to deep recursion in Perl_list()
+
+{
+    my $e = "1"; $e = "(1,$e)" for 1..100_000; $e = "() = $e"; eval $e;
+    is $@, "", "SEGV in Perl_list";
+}

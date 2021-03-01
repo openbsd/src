@@ -24,7 +24,7 @@
 /*
 =head1 Unicode Support
 
-=for apidoc AmU|placeholder|BOM_UTF8
+=for apidoc AmnU|const char *|BOM_UTF8
 
 This is a macro that evaluates to a string constant of the  UTF-8 bytes that
 define the Unicode BYTE ORDER MARK (U+FEFF) for the platform that perl
@@ -33,7 +33,7 @@ works on both ASCII and EBCDIC platforms.
 S<C<sizeof(BOM_UTF8) - 1>> can be used to get its length in
 bytes.
 
-=for apidoc AmU|placeholder|REPLACEMENT_CHARACTER_UTF8
+=for apidoc AmnU|const char *|REPLACEMENT_CHARACTER_UTF8
 
 This is a macro that evaluates to a string constant of the  UTF-8 bytes that
 define the Unicode REPLACEMENT CHARACTER (U+FFFD) for the platform that perl
@@ -45,8 +45,8 @@ bytes.
 =cut
 */
 
-#define UNICODE_MAJOR_VERSION   12
-#define UNICODE_DOT_VERSION     1
+#define UNICODE_MAJOR_VERSION   13
+#define UNICODE_DOT_VERSION     0
 #define UNICODE_DOT_DOT_VERSION 0
 
 
@@ -177,7 +177,7 @@ bytes.
 #endif	/* EBCDIC 037 */
 
 /* The number of code points not matching \pC */
-#define NON_OTHER_COUNT_FOR_USE_ONLY_BY_REGCOMP_DOT_C  137768
+#define NON_OTHER_COUNT_FOR_USE_ONLY_BY_REGCOMP_DOT_C  143698
 
 /* The highest code point that has any type of case change */
 #define HIGHEST_CASE_CHANGING_CP_FOR_USE_ONLY_BY_UTF8_DOT_C  0x1E943

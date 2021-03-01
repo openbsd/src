@@ -98,7 +98,7 @@ might not actually be any real demand for it out there. If you're unsure
 about the demand your module will have, consider asking the
 C<module-authors@perl.org> mailing list (send an email to
 C<module-authors-subscribe@perl.org> to subscribe; see
-L<http://lists.perl.org/list/module-authors.html> for more information
+L<https://lists.perl.org/list/module-authors.html> for more information
 and a link to the archives).
 
 =item Choose a name

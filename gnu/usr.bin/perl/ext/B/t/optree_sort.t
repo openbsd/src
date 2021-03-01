@@ -46,7 +46,7 @@ checkOptree ( name => 'sort @a',
 	      bcopts => '-exec',
 	      strip_open_hints => 1,
 	      expect => <<'EOT_EOT', expect_nt => <<'EONT_EONT');
-1  <0> enter 
+1  <0> enter v
 2  <;> nextstate(main 1 -e:1) v:>,<,%,{
 3  <0> pushmark s
 4  <#> gv[*a] s
@@ -54,7 +54,7 @@ checkOptree ( name => 'sort @a',
 6  <@> sort vK
 7  <@> leave[1 ref] vKP/REFC
 EOT_EOT
-# 1  <0> enter 
+# 1  <0> enter v
 # 2  <;> nextstate(main 1 -e:1) v:>,<,%,{
 # 3  <0> pushmark s
 # 4  <$> gv(*a) s
@@ -98,7 +98,7 @@ checkOptree ( name	=> '@a = sort @a',
 	      bcopts	=> '-exec',
 	      strip_open_hints => 1,
 	      expect	=> <<'EOT_EOT', expect_nt => <<'EONT_EONT');
-1  <0> enter 
+1  <0> enter v
 2  <;> nextstate(main 1 -e:1) v:>,<,%,{
 3  <0> pushmark s
 4  <0> pushmark s
@@ -107,7 +107,7 @@ checkOptree ( name	=> '@a = sort @a',
 7  <@> sort lK/INPLACE
 8  <@> leave[1 ref] vKP/REFC
 EOT_EOT
-# 1  <0> enter 
+# 1  <0> enter v
 # 2  <;> nextstate(main 1 -e:1) v:>,<,%,{
 # 3  <0> pushmark s
 # 4  <0> pushmark s
@@ -155,7 +155,7 @@ checkOptree ( name	=> '@a = sort @a; reverse @a',
 	      bcopts	=> '-exec',
 	      strip_open_hints => 1,
 	      expect	=> <<'EOT_EOT', expect_nt => <<'EONT_EONT');
-1  <0> enter 
+1  <0> enter v
 2  <;> nextstate(main 1 -e:1) v:>,<,%,{
 3  <0> pushmark s
 4  <0> pushmark s
@@ -169,7 +169,7 @@ b  <1> rv2av[t7] lK/1
 c  <@> reverse[t8] vK/1
 d  <@> leave[1 ref] vKP/REFC
 EOT_EOT
-# 1  <0> enter 
+# 1  <0> enter v
 # 2  <;> nextstate(main 1 -e:1) v:>,<,%,{
 # 3  <0> pushmark s
 # 4  <0> pushmark s
@@ -219,7 +219,7 @@ checkOptree ( name	=> 'my @a; @a = sort @a',
 	      bcopts	=> '-exec',
 	      strip_open_hints => 1,
 	      expect	=> <<'EOT_EOT', expect_nt => <<'EONT_EONT');
-1  <0> enter 
+1  <0> enter v
 2  <;> nextstate(main 1 -e:1) v:>,<,%,{
 3  <0> padav[@a:1,2] vM/LVINTRO
 4  <;> nextstate(main 2 -e:1) v:>,<,%,{
@@ -229,7 +229,7 @@ checkOptree ( name	=> 'my @a; @a = sort @a',
 8  <@> sort lK/INPLACE
 9  <@> leave[1 ref] vKP/REFC
 EOT_EOT
-# 1  <0> enter 
+# 1  <0> enter v
 # 2  <;> nextstate(main 1 -e:1) v:>,<,%,{
 # 3  <0> padav[@a:1,2] vM/LVINTRO
 # 4  <;> nextstate(main 2 -e:1) v:>,<,%,{

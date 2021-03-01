@@ -265,6 +265,21 @@ Perl_my_mkstemp_cloexec(char *templte)
 #endif
 }
 
+int
+Perl_my_mkostemp_cloexec(char *templte, int flags)
+{
+    dVAR;
+    PERL_ARGS_ASSERT_MY_MKOSTEMP_CLOEXEC;
+#if defined(O_CLOEXEC)
+    DO_ONEOPEN_EXPERIMENTING_CLOEXEC(
+        PL_strategy_mkstemp,
+	Perl_my_mkostemp(templte, flags | O_CLOEXEC),
+	Perl_my_mkostemp(templte, flags));
+#else
+    DO_ONEOPEN_THEN_CLOEXEC(Perl_my_mkostemp(templte, flags));
+#endif
+}
+
 #ifdef HAS_PIPE
 int
 Perl_PerlProc_pipe_cloexec(pTHX_ int *pipefd)
@@ -369,7 +384,7 @@ S_openn_setup(pTHX_ GV *gv, char *mode, PerlIO **saveifp, PerlIO **saveofp,
 	else {
             const int old_fd = PerlIO_fileno(IoIFP(io));
 
-            if (old_fd >= 0 && old_fd <= PL_maxsysfd) {
+            if (inRANGE(old_fd, 0, PL_maxsysfd)) {
                 /* This is one of the original STD* handles */
                 *saveifp  = IoIFP(io);
                 *saveofp  = IoOFP(io);
@@ -759,7 +774,7 @@ Perl_do_open6(pTHX_ GV *gv, const char *oname, STRLEN len,
 			Perl_croak(aTHX_ "More than one argument to '>%c' open",IoTYPE_STD);
 		    }
 		}
-		else  {
+		else {
 		    if (num_svs) {
                         fp = PerlIO_openn(aTHX_ type,mode,-1,0,0,NULL,num_svs,svp);
                     }
@@ -1779,7 +1794,17 @@ Perl_io_close(pTHX_ IO *io, GV *gv, bool not_implicit, bool warn_on_fail)
 
     if (IoIFP(io)) {
 	if (IoTYPE(io) == IoTYPE_PIPE) {
-	    const int status = PerlProc_pclose(IoIFP(io));
+            PerlIO *fh = IoIFP(io);
+            int status;
+
+            /* my_pclose() can propagate signals which might bypass any code
+               after the call here if the signal handler throws an exception.
+               This would leave the handle in the IO object and try to close it again
+               when the SV is destroyed on unwind or global destruction.
+               So NULL it early.
+            */
+            IoOFP(io) = IoIFP(io) = NULL;
+	    status = PerlProc_pclose(fh);
 	    if (not_implicit) {
 		STATUS_NATIVE_CHILD_SET(status);
 		retval = (STATUS_UNIX == 0);
@@ -2394,7 +2419,7 @@ Perl_do_exec3(pTHX_ const char *incmd, int fd, int do_report)
 
     for (s = cmd; *s; s++) {
 	if (*s != ' ' && !isALPHA(*s) &&
-	    strchr("$&*(){}[]'\";\\|?<>~`\n",*s)) {
+	    memCHRs("$&*(){}[]'\";\\|?<>~`\n",*s)) {
 	    if (*s == '\n' && !s[1]) {
 		*s = '\0';
 		break;
@@ -2469,7 +2494,7 @@ Perl_apply(pTHX_ I32 type, SV **mark, SV **sp)
     PERL_UNUSED_VAR(what); /* may not be used depending on compile options */
 
     /* Doing this ahead of the switch statement preserves the old behaviour,
-       where attempting to use kill as a taint test test would fail on
+       where attempting to use kill as a taint test would fail on
        platforms where kill was not defined.  */
 #ifndef HAS_KILL
     if (type == OP_KILL)

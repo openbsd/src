@@ -42,7 +42,7 @@ plan(tests => 12);
     object_ok($bar, 'Bar');
     object_ok($bar, 'Foo');    
     
-    # test it working with with Sub::Name
+    # test it working with Sub::Name
     SKIP: {    
         eval 'use Sub::Name';
         skip("Sub::Name is required for this test", 3) if $@;

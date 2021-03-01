@@ -5,7 +5,7 @@ use strict;
 use Cwd ();
 require File::Spec::Unix;
 
-our $VERSION = '3.78';
+our $VERSION = '3.79';
 $VERSION =~ tr/_//d;
 
 our @ISA = qw(File::Spec::Unix);
@@ -84,7 +84,7 @@ sub tmpdir {
 MSWin32 case-tolerance depends on GetVolumeInformation() $ouFsFlags == FS_CASE_SENSITIVE,
 indicating the case significance when comparing file specifications.
 Since XP FS_CASE_SENSITIVE is effectively disabled for the NT subsubsystem.
-See http://cygwin.com/ml/cygwin/2007-07/msg00891.html
+See L<http://cygwin.com/ml/cygwin/2007-07/msg00891.html>
 Default: 1
 
 =cut

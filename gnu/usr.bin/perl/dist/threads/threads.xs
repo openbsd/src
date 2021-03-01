@@ -676,7 +676,7 @@ S_ithread_run(void * arg)
     }
 
     /* At this point, the interpreter may have been freed, so call
-     * free in the the context of of the 'main' interpreter which
+     * free in the context of the 'main' interpreter which
      * can't have been freed due to the veto_cleanup mechanism.
      */
     aTHX = MY_POOL.main_thread.interp;

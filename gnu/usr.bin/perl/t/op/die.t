@@ -6,7 +6,9 @@ BEGIN {
     set_up_inc('../lib');
 }
 
-plan tests => 20;
+plan tests => 21;
+
+use utf8;   # Tell EBCDIC translator to make this UTF-8,
 
 eval {
     eval {
@@ -94,6 +96,10 @@ like($@, qr/\.{3}propagated at/, '... and appends a phrase');
     local $SIG{__WARN__} = sub { $ok = 0 };
     eval { undef $@; die };
     is( $ok, 1, 'no warnings if $@ is undef' );
+
+    eval { $@ = 100; die };
+    like($@."", qr/100\t\.{3}propagated at/,
+         'check non-PVs in $@ are propagated');
 }
 
 TODO: {

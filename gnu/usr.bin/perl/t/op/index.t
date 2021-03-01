@@ -8,7 +8,7 @@ BEGIN {
 }
 
 use strict;
-plan( tests => 412 );
+plan( tests => 414 );
 
 run_tests() unless caller;
 
@@ -330,6 +330,32 @@ sub run_tests {
         is($r, 4,                          "(r = index(a)) == -1 - r value");
 
 
+    }
+
+    {
+        my $store = 100;
+        package MyTie {
+            require Tie::Scalar;
+            our @ISA = qw(Tie::StdScalar);
+            sub STORE {
+                my ($self, $value) = @_;
+
+                $store = $value;
+            }
+        };
+        my $x;
+        tie $x, "MyTie";
+        $x = (index("foo", "o") == -1);
+        ok(!$store, 'magic called on $lexical = (index(...) == -1)');
+    }
+    {
+        is(eval <<'EOS', "a", 'optimized $lex = (index(...) == -1) is an lvalue');
+my $y = "foo";
+my $z = "o";
+my $x;
+($x = (index($y, $z) == -1)) =~ s/^/a/;
+$x;
+EOS
     }
 
 } # end of sub run_tests

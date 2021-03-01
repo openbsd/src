@@ -1281,7 +1281,7 @@ sub run_tests {
     # RT #132772
     #
     # Ensure that optimisation of OP_CONST into OP_MULTICONCAT doesn't
-    # leave any freed ops in the execution path. This is is associated
+    # leave any freed ops in the execution path. This is associated
     # with rpeep() being called before optimize_optree(), which causes
     # gv/rv2sv to be prematurely optimised into gvsv, confusing
     # S_maybe_multiconcat when it tries to reorganise a concat subtree
@@ -1294,11 +1294,11 @@ sub run_tests {
         ok /^a(??{ $b."c" })$/,  "RT #132772 - compile time";
         ok /^$a(??{ $b."c" })$/, "RT #132772 - run time";
         my $qr = qr/^a(??{ $b."c" })$/;
-        ok /$qr/,  "RT #132772 - compile time time qr//";
+        ok /$qr/,  "RT #132772 - compile time qr//";
         $qr = qr/(??{ $b."c" })$/;
-        ok /^a$qr$/,  "RT #132772 -  compile time time qr// compound";
+        ok /^a$qr$/,  "RT #132772 -  compile time qr// compound";
         $qr = qr/$a(??{ $b."c" })$/;
-        ok /^$qr$/,  "RT #132772 -  run time time qr//";
+        ok /^$qr$/,  "RT #132772 -  run time qr//";
     }
 
     # RT #133687

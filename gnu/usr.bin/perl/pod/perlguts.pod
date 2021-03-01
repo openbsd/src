@@ -548,6 +548,8 @@ is only valid for the duration of a single perl process.
 See L</Understanding the Magic of Tied Hashes and Arrays> for more
 information on how to use the hash access functions on tied hashes.
 
+=for apidoc Amh|void|PERL_HASH|U32 hash|char *key|STRLEN klen
+
 =head2 Hash API Extensions
 
 Beginning with version 5.004, the following functions are also supported:
@@ -881,7 +883,7 @@ dynamic scopes: there can be multiple sets of mortal references hanging
 around at the same time, with different death dates.  Internally, the
 actual determinant for when mortal xV references are destroyed depends
 on two macros, SAVETMPS and FREETMPS.  See L<perlcall> and L<perlxs>
-for more details on these macros.
+and L</Temporaries Stack> below for more details on these macros.
 
 Mortal references are mainly used for xVs that are placed on perl's
 main stack.  The stack is problematic for reference tracking, because it
@@ -1285,6 +1287,52 @@ will be lost.
  ~  PERL_MAGIC_ext            (none)         Available for use by
                                              extensions
 
+
+=for apidoc Amnh||PERL_MAGIC_sv
+=for apidoc Amnh||PERL_MAGIC_arylen
+=for apidoc Amnh||PERL_MAGIC_rhash
+=for apidoc Amnh||PERL_MAGIC_debugvar
+=for apidoc Amnh||PERL_MAGIC_pos
+=for apidoc Amnh||PERL_MAGIC_symtab
+=for apidoc Amnh||PERL_MAGIC_backref
+=for apidoc Amnh||PERL_MAGIC_arylen_p
+=for apidoc Amnh||PERL_MAGIC_bm
+=for apidoc Amnh||PERL_MAGIC_overload_table
+=for apidoc Amnh||PERL_MAGIC_regdata
+=for apidoc Amnh||PERL_MAGIC_regdatum
+=for apidoc Amnh||PERL_MAGIC_env
+=for apidoc Amnh||PERL_MAGIC_envelem
+=for apidoc Amnh||PERL_MAGIC_fm
+=for apidoc Amnh||PERL_MAGIC_regex_global
+=for apidoc Amnh||PERL_MAGIC_hints
+=for apidoc Amnh||PERL_MAGIC_hintselem
+=for apidoc Amnh||PERL_MAGIC_isa
+=for apidoc Amnh||PERL_MAGIC_isaelem
+=for apidoc Amnh||PERL_MAGIC_nkeys
+=for apidoc Amnh||PERL_MAGIC_dbfile
+=for apidoc Amnh||PERL_MAGIC_dbline
+=for apidoc Amnh||PERL_MAGIC_shared
+=for apidoc Amnh||PERL_MAGIC_shared_scalar
+=for apidoc Amnh||PERL_MAGIC_collxfrm
+=for apidoc Amnh||PERL_MAGIC_tied
+=for apidoc Amnh||PERL_MAGIC_tiedelem
+=for apidoc Amnh||PERL_MAGIC_tiedscalar
+=for apidoc Amnh||PERL_MAGIC_qr
+=for apidoc Amnh||PERL_MAGIC_sig
+=for apidoc Amnh||PERL_MAGIC_sigelem
+=for apidoc Amnh||PERL_MAGIC_taint
+=for apidoc Amnh||PERL_MAGIC_uvar
+=for apidoc Amnh||PERL_MAGIC_uvar_elem
+=for apidoc Amnh||PERL_MAGIC_vstring
+=for apidoc Amnh||PERL_MAGIC_vec
+=for apidoc Amnh||PERL_MAGIC_utf8
+=for apidoc Amnh||PERL_MAGIC_substr
+=for apidoc Amnh||PERL_MAGIC_nonelem
+=for apidoc Amnh||PERL_MAGIC_defelem
+=for apidoc Amnh||PERL_MAGIC_lvref
+=for apidoc Amnh||PERL_MAGIC_checkcall
+=for apidoc Amnh||PERL_MAGIC_ext
+
 =for mg_vtable.pl end
 
 When an uppercase and lowercase letter both exist in the table, then the
@@ -1606,33 +1654,48 @@ function takes C<int *>.
 
 =item C<SV* save_scalar(GV *gv)>
 
+=for apidoc save_scalar
+
 Equivalent to Perl code C<local $gv>.
 
 =item C<AV* save_ary(GV *gv)>
 
+=for apidoc save_ary
+
 =item C<HV* save_hash(GV *gv)>
+
+=for apidoc save_hash
 
 Similar to C<save_scalar>, but localize C<@gv> and C<%gv>.
 
 =item C<void save_item(SV *item)>
 
-Duplicates the current value of C<SV>, on the exit from the current
-C<ENTER>/C<LEAVE> I<pseudo-block> will restore the value of C<SV>
+=for apidoc save_item
+
+Duplicates the current value of C<SV>. On the exit from the current
+C<ENTER>/C<LEAVE> I<pseudo-block> the value of C<SV> will be restored
 using the stored value.  It doesn't handle magic.  Use C<save_scalar> if
 magic is affected.
 
 =item C<void save_list(SV **sarg, I32 maxsarg)>
+
+=for apidoc save_list
 
 A variant of C<save_item> which takes multiple arguments via an array
 C<sarg> of C<SV*> of length C<maxsarg>.
 
 =item C<SV* save_svref(SV **sptr)>
 
+=for apidoc save_svref
+
 Similar to C<save_scalar>, but will reinstate an C<SV *>.
 
 =item C<void save_aptr(AV **aptr)>
 
 =item C<void save_hptr(HV **hptr)>
+
+=for apidoc save_aptr
+=for apidoc save_hptr
 
 Similar to C<save_svref>, but localize C<AV *> and C<HV *>.
 
@@ -1871,11 +1934,6 @@ All memory meant to be used with the Perl API functions should be manipulated
 using the macros described in this section.  The macros provide the necessary
 transparency between differences in the actual malloc implementation that is
 used within perl.
-
-It is suggested that you enable the version of malloc that is distributed
-with Perl.  It keeps pools of various sizes of unallocated memory in
-order to satisfy allocation requests more quickly.  However, on some
-platforms, it may cause spurious malloc or free errors.
 
 The following three macros are used to initially allocate memory :
 
@@ -2306,6 +2364,8 @@ please see F<miniperlmain.c> for usage details.  You may also need
 to use C<dVAR> in your coding to "declare the global variables"
 when you are using them.  dTHX does this for you automatically.
 
+=for apidoc Amnh||dVAR
+
 To see whether you have non-const data you can use a BSD (or GNU)
 compatible C<nm>:
 
@@ -2367,6 +2427,12 @@ The first character could be 'p' for a B<p>rototype, 'a' for B<a>rgument,
 or 'd' for B<d>eclaration, so we have C<pTHX>, C<aTHX> and C<dTHX>, and
 their variants.
 
+=for apidoc Amnh||aTHX
+=for apidoc Amnh||aTHX_
+=for apidoc Amnh||dTHX
+=for apidoc Amnh||pTHX
+=for apidoc Amnh||pTHX_
+
 When Perl is built without options that set PERL_IMPLICIT_CONTEXT, there is no
 first argument containing the interpreter's context.  The trailing underscore
 in the pTHX_ macro indicates that the macro expansion needs a comma
@@ -2402,7 +2468,7 @@ Perl_warner), or use a context-free version.
 
 The context-free version of Perl_warner is called
 Perl_warner_nocontext, and does not take the extra argument.  Instead
-it does dTHX; to get the context from thread-local storage.  We
+it does C<dTHX;> to get the context from thread-local storage.  We
 C<#define warner Perl_warner_nocontext> so that extensions get source
 compatibility at the expense of performance.  (Passing an arg is
 cheaper than grabbing it from thread-local storage.)
@@ -2412,6 +2478,8 @@ Those are strictly for use within the core.  Extensions and embedders
 need only be aware of [pad]THX.
 
 =head2 So what happened to dTHR?
+
+=for apidoc Amnh||dTHR
 
 C<dTHR> was introduced in perl 5.005 to support the older thread model.
 The older thread model now uses the C<THX> mechanism to pass context
@@ -2599,91 +2667,9 @@ that table:
 
     Apd |SV**   |av_fetch   |AV* ar|I32 key|I32 lval
 
-The second column is the return type, the third column the name.  Columns
-after that are the arguments.  The first column is a set of flags:
-
-=over 3
-
-=item A
-
-This function is a part of the public
-API.  All such functions should also
-have 'd', very few do not.
-
-=item p
-
-This function has a C<Perl_> prefix; i.e. it is defined as
-C<Perl_av_fetch>.
-
-=item d
-
-This function has documentation using the C<apidoc> feature which we'll
-look at in a second.  Some functions have 'd' but not 'A'; docs are good.
-
-=back
-
-Other available flags are:
-
-=over 3
-
-=item s
-
-This is a static function and is defined as C<STATIC S_whatever>, and
-usually called within the sources as C<whatever(...)>.
-
-=item n
-
-This does not need an interpreter context, so the definition has no
-C<pTHX>, and it follows that callers don't use C<aTHX>.  (See
-L</Background and PERL_IMPLICIT_CONTEXT>.)
-
-=item r
-
-This function never returns; C<croak>, C<exit> and friends.
-
-=item f
-
-This function takes a variable number of arguments, C<printf> style.
-The argument list should end with C<...>, like this:
-
-    Afprd   |void   |croak          |const char* pat|...
-
-=item M
-
-This function is part of the experimental development API, and may change
-or disappear without notice.
-
-=item o
-
-This function should not have a compatibility macro to define, say,
-C<Perl_parse> to C<parse>.  It must be called as C<Perl_parse>.
-
-=item x
-
-This function isn't exported out of the Perl core.
-
-=item m
-
-This is implemented as a macro.
-
-=item X
-
-This function is explicitly exported.
-
-=item E
-
-This function is visible to extensions included in the Perl core.
-
-=item b
-
-Binary backward compatibility; this function is a macro but also has
-a C<Perl_> implementation (which is exported).
-
-=item others
-
-See the comments at the top of C<embed.fnc> for others.
-
-=back
+The first column is a set of flags, the second column the return type,
+the third column the name.  Columns after that are the arguments.
+The flags are documented at the top of F<embed.fnc>.
 
 If you edit F<embed.pl> or F<embed.fnc>, you will need to run
 C<make regen_headers> to force a rebuild of F<embed.h> and other
@@ -2703,18 +2689,92 @@ following macros for portability
         NVff            NV %f-like
         NVgf            NV %g-like
 
+=for apidoc Amnh||IVdf
+=for apidoc Amnh||UVuf
+=for apidoc Amnh||UVof
+=for apidoc Amnh||UVxf
+=for apidoc Amnh||NVef
+=for apidoc Amnh||NVff
+=for apidoc Amnh||NVgf
+
 These will take care of 64-bit integers and long doubles.
 For example:
 
-        printf("IV is %"IVdf"\n", iv);
+        printf("IV is %" IVdf "\n", iv);
 
-The IVdf will expand to whatever is the correct format for the IVs.
+The C<IVdf> will expand to whatever is the correct format for the IVs.
+Note that the spaces are required around the format in case the code is
+compiled with C++, to maintain compliance with its standard.
 
 Note that there are different "long doubles": Perl will use
 whatever the compiler has.
 
-If you are printing addresses of pointers, use UVxf combined
-with PTR2UV(), do not use %lx or %p.
+If you are printing addresses of pointers, use %p or UVxf combined
+with PTR2UV().
+
+=head2 Formatted Printing of SVs
+
+The contents of SVs may be printed using the C<SVf> format, like so:
+
+ Perl_croak(aTHX_ "This croaked because: %" SVf "\n", SvfARG(err_msg))
+
+where C<err_msg> is an SV.
+
+=for apidoc Amnh||SVf
+=for apidoc Amh||SVfARG|SV *sv
+
+Not all scalar types are printable.  Simple values certainly are: one of
+IV, UV, NV, or PV.  Also, if the SV is a reference to some value,
+either it will be dereferenced and the value printed, or information
+about the type of that value and its address are displayed.  The results
+of printing any other type of SV are undefined and likely to lead to an
+interpreter crash.  NVs are printed using a C<%g>-ish format.
+
+Note that the spaces are required around the C<SVf> in case the code is
+compiled with C++, to maintain compliance with its standard.
+
+Note that any filehandle being printed to under UTF-8 must be expecting
+UTF-8 in order to get good results and avoid Wide-character warnings.
+One way to do this for typical filehandles is to invoke perl with the
+C<-C>> parameter.  (See L<perlrun/-C [numberE<sol>list]>.
+
+You can use this to concatenate two scalars:
+
+ SV *var1 = get_sv("var1", GV_ADD);
+ SV *var2 = get_sv("var2", GV_ADD);
+ SV *var3 = newSVpvf("var1=%" SVf " and var2=%" SVf,
+                     SVfARG(var1), SVfARG(var2));
+
+=head2 Formatted Printing of Strings
+
+If you just want the bytes printed in a 7bit NUL-terminated string, you can
+just use C<%s> (assuming they are all really only 7bit).  But if there is a
+possibility the value will be encoded as UTF-8 or contains bytes above
+C<0x7F> (and therefore 8bit), you should instead use the C<UTF8f> format.
+And as its parameter, use the C<UTF8fARG()> macro:
+
+ chr * msg;
+
+ /* U+2018: \xE2\x80\x98 LEFT SINGLE QUOTATION MARK
+    U+2019: \xE2\x80\x99 RIGHT SINGLE QUOTATION MARK */
+ if (can_utf8)
+   msg = "\xE2\x80\x98Uses fancy quotes\xE2\x80\x99";
+ else
+   msg = "'Uses simple quotes'";
+
+ Perl_croak(aTHX_ "The message is: %" UTF8f "\n",
+                  UTF8fARG(can_utf8, strlen(msg), msg));
+
+The first parameter to C<UTF8fARG> is a boolean: 1 if the string is in
+UTF-8; 0 if string is in native byte encoding (Latin1).
+The second parameter is the number of bytes in the string to print.
+And the third and final parameter is a pointer to the first byte in the
+string.
+
+Note that any filehandle being printed to under UTF-8 must be expecting
+UTF-8 in order to get good results and avoid Wide-character warnings.
+One way to do this for typical filehandles is to invoke perl with the
+C<-C>> parameter.  (See L<perlrun/-C [numberE<sol>list]>.
 
 =head2 Formatted Printing of C<Size_t> and C<SSize_t>
 
@@ -2723,7 +2783,7 @@ print as in the
 L<previous section|/Formatted Printing of IVs, UVs, and NVs>.
 
 But if you're using C<PerlIO_printf()>, it's less typing and visual
-clutter to use the C<"%z"> length modifier (for I<siZe>):
+clutter to use the C<%z> length modifier (for I<siZe>):
 
         PerlIO_printf("STRLEN is %zu\n", len);
 
@@ -2739,6 +2799,11 @@ use the follow macros to do it right.
         PTR2IV(pointer)
         PTR2NV(pointer)
         INT2PTR(pointertotype, integer)
+
+=for apidoc Amh|void *|INT2PTR|type|int value
+=for apidoc Amh|UV|PTR2UV|void *
+=for apidoc Amh|IV|PTR2IV|void *
+=for apidoc Amh|NV|PTR2NV|void *
 
 For example:
 
@@ -2790,6 +2855,10 @@ automatically produce reference manuals from them -- L<perlapi> is one
 such manual which details all the functions which are available to XS
 writers.  L<perlintern> is the autogenerated manual for the functions
 which are not part of the API and are supposedly for internal use only.
+
+=for comment
+skip apidoc
+The following is an example and shouldn't be read as a real apidoc line
 
 Source documentation is created by putting POD comments into the C
 source, like this:
@@ -3211,6 +3280,240 @@ I<oldop> is the previous OP optimized, whose C<op_next> points to I<o>.
 
 C<B::Generate> directly supports the creation of custom ops by name.
 
+=head1 Stacks
+
+Descriptions above occasionally refer to "the stack", but there are in fact
+many stack-like data structures within the perl interpreter. When otherwise
+unqualified, "the stack" usually refers to the value stack.
+
+The various stacks have different purposes, and operate in slightly different
+ways. Their differences are noted below.
+
+=head2 Value Stack
+
+This stack stores the values that regular perl code is operating on, usually
+intermediate values of expressions within a statement. The stack itself is
+formed of an array of SV pointers.
+
+The base of this stack is pointed to by the interpreter variable
+C<PL_stack_base>, of type C<SV **>.
+
+The head of the stack is C<PL_stack_sp>, and points to the most
+recently-pushed item.
+
+Items are pushed to the stack by using the C<PUSHs()> macro or its variants
+described above; C<XPUSHs()>, C<mPUSHs()>, C<mXPUSHs()> and the typed
+versions. Note carefully that the non-C<X> versions of these macros do not
+check the size of the stack and assume it to be big enough. These must be
+paired with a suitable check of the stack's size, such as the C<EXTEND> macro
+to ensure it is large enough. For example
+
+    EXTEND(SP, 4);
+    mPUSHi(10);
+    mPUSHi(20);
+    mPUSHi(30);
+    mPUSHi(40);
+
+This is slightly more performant than making four separate checks in four
+separate C<mXPUSHi()> calls.
+
+As a further performance optimisation, the various C<PUSH> macros all operate
+using a local variable C<SP>, rather than the interpreter-global variable
+C<PL_stack_sp>. This variable is declared by the C<dSP> macro - though it is
+normally implied by XSUBs and similar so it is rare you have to consider it
+directly. Once declared, the C<PUSH> macros will operate only on this local
+variable, so before invoking any other perl core functions you must use the
+C<PUTBACK> macro to return the value from the local C<SP> variable back to
+the interpreter variable. Similarly, after calling a perl core function which
+may have had reason to move the stack or push/pop values to it, you must use
+the C<SPAGAIN> macro which refreshes the local C<SP> value back from the
+interpreter one.
+
+Items are popped from the stack by using the C<POPs> macro or its typed
+versions, There is also a macro C<TOPs> that inspects the topmost item without
+removing it.
+
+Note specifically that SV pointers on the value stack do not contribute to the
+overall reference count of the xVs being referred to. If newly-created xVs are
+being pushed to the stack you must arrange for them to be destroyed at a
+suitable time; usually by using one of the C<mPUSH*> macros or C<sv_2mortal()>
+to mortalise the xV.
+
+=head2 Mark Stack
+
+The value stack stores individual perl scalar values as temporaries between
+expressions. Some perl expressions operate on entire lists; for that purpose
+we need to know where on the stack each list begins. This is the purpose of the
+mark stack.
+
+The mark stack stores integers as I32 values, which are the height of the
+value stack at the time before the list began; thus the mark itself actually
+points to the value stack entry one before the list. The list itself starts at
+C<mark + 1>.
+
+The base of this stack is pointed to by the interpreter variable
+C<PL_markstack>, of type C<I32 *>.
+
+The head of the stack is C<PL_markstack_ptr>, and points to the most
+recently-pushed item.
+
+Items are pushed to the stack by using the C<PUSHMARK()> macro. Even though
+the stack itself stores (value) stack indices as integers, the C<PUSHMARK>
+macro should be given a stack pointer directly; it will calculate the index
+offset by comparing to the C<PL_stack_sp> variable. Thus almost always the
+code to perform this is
+
+    PUSHMARK(SP);
+
+Items are popped from the stack by the C<POPMARK> macro. There is also a macro
+C<TOPMARK> that inspects the topmost item without removing it. These macros
+return I32 index values directly. There is also the C<dMARK> macro which
+declares a new SV double-pointer variable, called C<mark>, which points at the
+marked stack slot; this is the usual macro that C code will use when operating
+on lists given on the stack.
+
+As noted above, the C<mark> variable itself will point at the most recently
+pushed value on the value stack before the list begins, and so the list itself
+starts at C<mark + 1>. The values of the list may be iterated by code such as
+
+    for(SV **svp = mark + 1; svp <= PL_stack_sp; svp++) {
+      SV *item = *svp;
+      ...
+    }
+
+Note specifically in the case that the list is already empty, C<mark> will
+equal C<PL_stack_sp>.
+
+Because the C<mark> variable is converted to a pointer on the value stack,
+extra care must be taken if C<EXTEND> or any of the C<XPUSH> macros are
+invoked within the function, because the stack may need to be moved to
+extend it and so the existing pointer will now be invalid. If this may be a
+problem, a possible solution is to track the mark offset as an integer and
+track the mark itself later on after the stack had been moved.
+
+    I32 markoff = POPMARK;
+
+    ...
+
+    SP **mark = PL_stack_base + markoff;
+
+=head2 Temporaries Stack
+
+As noted above, xV references on the main value stack do not contribute to the
+reference count of an xV, and so another mechanism is used to track when
+temporary values which live on the stack must be released. This is the job of
+the temporaries stack.
+
+The temporaries stack stores pointers to xVs whose reference counts will be
+decremented soon.
+
+The base of this stack is pointed to by the interpreter variable
+C<PL_tmps_stack>, of type C<SV **>.
+
+The head of the stack is indexed by C<PL_tmps_ix>, an integer which stores the
+index in the array of the most recently-pushed item.
+
+There is no public API to directly push items to the temporaries stack. Instead,
+the API function C<sv_2mortal()> is used to mortalize an xV, adding its
+address to the temporaries stack.
+
+Likewise, there is no public API to read values from the temporaries stack.
+Instead. the macros C<SAVETMPS> and C<FREETPMS> are used. The C<SAVETMPS>
+macro establishes the base levels of the temporaries stack, by capturing the
+current value of C<PL_tmps_ix> into C<PL_tmps_floor> and saving the previous
+value to the save stack. Thereafter, whenever C<FREETMPS> is invoked all of
+the temporaries that have been pushed since that level are reclaimed.
+
+While it is common to see these two macros in pairs within an C<ENTER>/
+C<LEAVE> pair, it is not necessary to match them. It is permitted to invoke
+C<FREETMPS> multiple times since the most recent C<SAVETMPS>; for example in a
+loop iterating over elements of a list. While you can invoke C<SAVETMPS>
+multiple times within a scope pair, it is unlikely to be useful. Subsequent
+invocations will move the temporaries floor further up, thus effectively
+trapping the existing temporaries to only be released at the end of the scope.
+
+=head2 Save Stack
+
+The save stack is used by perl to implement the C<local> keyword and other
+similar behaviours; any cleanup operations that need to be performed when
+leaving the current scope. Items pushed to this stack generally capture the
+current value of some internal variable or state, which will be restored when
+the scope is unwound due to leaving, C<return>, C<die>, C<goto> or other
+reasons.
+
+Whereas other perl internal stacks store individual items all of the same type
+(usually SV pointers or integers), the items pushed to the save stack are
+formed of many different types, having multiple fields to them. For example,
+the C<SAVEt_INT> type needs to store both the address of the C<int> variable
+to restore, and the value to restore it to. This information could have been
+stored using fields of a C<struct>, but would have to be large enough to store
+three pointers in the largest case, which would waste a lot of space in most
+of the smaller cases.
+
+Instead, the stack stores information in a variable-length encoding of C<ANY>
+structures. The final value pushed is stored in the C<UV> field which encodes
+the kind of item held by the preceeding items; the count and types of which
+will depend on what kind of item is being stored. The kind field is pushed
+last because that will be the first field to be popped when unwinding items
+from the stack.
+
+The base of this stack is pointed to by the interpreter variable
+C<PL_savestack>, of type C<ANY *>.
+
+The head of the stack is indexed by C<PL_savestack_ix>, an integer which
+stores the index in the array at which the next item should be pushed. (Note
+that this is different to most other stacks, which reference the most
+recently-pushed item).
+
+Items are pushed to the save stack by using the various C<SAVE...()> macros.
+Many of these macros take a variable and store both its address and current
+value on the save stack, ensuring that value gets restored on scope exit.
+
+    SAVEI8(i8)
+    SAVEI16(i16)
+    SAVEI32(i32)
+    SAVEINT(i)
+    ...
+
+There are also a variety of other special-purpose macros which save particular
+types or values of interest. C<SAVETMPS> has already been mentioned above.
+Others include C<SAVEFREEPV> which arranges for a PV (i.e. a string buffer) to
+be freed, or C<SAVEDESTRUCTOR> which arranges for a given function pointer to
+be invoked on scope exit. A full list of such macros can be found in
+F<scope.h>.
+
+There is no public API for popping individual values or items from the save
+stack. Instead, via the scope stack, the C<ENTER> and C<LEAVE> pair form a way
+to start and stop nested scopes. Leaving a nested scope via C<LEAVE> will
+restore all of the saved values that had been pushed since the most recent
+C<ENTER>.
+
+=head2 Scope Stack
+
+As with the mark stack to the value stack, the scope stack forms a pair with
+the save stack. The scope stack stores the height of the save stack at which
+nested scopes begin, and allows the save stack to be unwound back to that
+point when the scope is left.
+
+When perl is built with debugging enabled, there is a second part to this
+stack storing human-readable string names describing the type of stack
+context. Each push operation saves the name as well as the height of the save
+stack, and each pop operation checks the topmost name with what is expected,
+causing an assertion failure if the name does not match.
+
+The base of this stack is pointed to by the interpreter variable
+C<PL_scopestack>, of type C<I32 *>. If enabled, the scope stack names are
+stored in a separate array pointed to by C<PL_scopestack_name>, of type
+C<const char **>.
+
+The head of the stack is indexed by C<PL_scopestack_ix>, an integer which
+stores the index of the array or arrays at which the next item should be
+pushed. (Note that this is different to most other stacks, which reference the
+most recently-pushed item).
+
+Values are pushed to the scope stack using the C<ENTER> macro, which begins a
+new nested scope. Any items pushed to the save stack are then restored at the
+next nested invocation of the C<LEAVE> macro.
 
 =head1 Dynamic Scope and the Context Stack
 
@@ -3427,7 +3730,7 @@ Here is a typical example of context popping, as found in C<pp_leavesub>
 
 The steps above are in a very specific order, designed to be the reverse
 order of when the context was pushed. The first thing to do is to copy
-and/or protect any any return arguments and free any temps in the current
+and/or protect any return arguments and free any temps in the current
 scope. Scope exits like an rvalue sub normally return a mortal copy of
 their return args (as opposed to lvalue subs). It is important to make
 this copy before the save stack is popped or variables are restored, or

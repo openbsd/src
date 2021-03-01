@@ -1,5 +1,5 @@
-# EmojiSources-12.1.0.txt
-# Date: 2019-03-08, 23:59:00 GMT [MS, KW]
+# EmojiSources-13.0.0.txt
+# Date: 2019-09-09, 19:40:00 GMT [MS, KW]
 # © 2019 Unicode®, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 #

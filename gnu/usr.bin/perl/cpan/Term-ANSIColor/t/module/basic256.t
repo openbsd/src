@@ -3,20 +3,21 @@
 # Tests for 256-color support.
 #
 # Copyright 2012 Kurt Starsinic <kstarsinic@gmail.com>
-# Copyright 2012, 2013, 2016 Russ Allbery <rra@cpan.org>
+# Copyright 2012-2013, 2016, 2020 Russ Allbery <rra@cpan.org>
 #
-# This program is free software; you may redistribute it and/or modify it
-# under the same terms as Perl itself.
+# SPDX-License-Identifier: GPL-1.0-or-later OR Artistic-1.0-Perl
 
+use 5.008;
 use strict;
 use warnings;
 
-use Test::More tests => 94;
+use Test::More tests => 100;
 
 # Load the module.
 BEGIN {
     delete $ENV{ANSI_COLORS_ALIASES};
     delete $ENV{ANSI_COLORS_DISABLED};
+    delete $ENV{NO_COLOR};
     use_ok('Term::ANSIColor', qw(:constants256 color uncolor colorvalid));
 }
 
@@ -97,6 +98,16 @@ is(RGB555, q{}, '...and for RGB555');
 is(GREY0,  q{}, '...and for GREY0');
 is(GREY23, q{}, '...and for GREY23');
 delete $ENV{ANSI_COLORS_DISABLED};
+
+# Do the same with NO_COLOR.
+local $ENV{NO_COLOR} = 0;
+is(ANSI0,  q{}, 'NO_COLOR works for ANSI0');
+is(ANSI15, q{}, '...and for ANSI15');
+is(RGB000, q{}, '...and for RGB000');
+is(RGB555, q{}, '...and for RGB555');
+is(GREY0,  q{}, '...and for GREY0');
+is(GREY23, q{}, '...and for GREY23');
+delete $ENV{NO_COLOR};
 
 # Do the same for AUTORESET.
 $Term::ANSIColor::AUTORESET = 1;

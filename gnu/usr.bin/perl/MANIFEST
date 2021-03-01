@@ -17,7 +17,6 @@ caretx.c		C file to create $^X
 cflags.SH		A script that emits C compilation flags per file
 Changes			Describe how to peruse changes between releases
 charclass_invlists.h	Compiled-in inversion lists
-config.over		Site-specific overrides for Configure defaults
 config_h.SH		Produces config.h
 configpm		Produces lib/Config.pm
 Configure		Portability tool
@@ -117,6 +116,7 @@ cpan/autodie/t/lib/pujHa/ghach.pm	autodie - Like a Klingon
 cpan/autodie/t/lib/pujHa/ghach/Dotlh.pm	autodie - With Klingon honour
 cpan/autodie/t/lib/Some/Module.pm	autodie - blog_hints.t helper
 cpan/autodie/t/mkdir.t			autodie - filesystem tests
+cpan/autodie/t/no-default.t
 cpan/autodie/t/no_carp.t
 cpan/autodie/t/open.t			autodie - Testing open
 cpan/autodie/t/read.t
@@ -633,8 +633,6 @@ cpan/Encode/t/use-Encode-Alias.t
 cpan/Encode/t/utf8ref.t			test script
 cpan/Encode/t/utf8strict.t		test script
 cpan/Encode/t/utf8warnings.t
-cpan/Encode/t/whatwg-aliases.json
-cpan/Encode/t/whatwg-aliases.t
 cpan/Encode/t/xml.t
 cpan/Encode/TW/Makefile.PL		Encode extension
 cpan/Encode/TW/TW.pm			Encode extension
@@ -869,6 +867,7 @@ cpan/ExtUtils-MakeMaker/t/test_boilerplate.t			MakeMaker test
 cpan/ExtUtils-MakeMaker/t/testdata/reallylongdirectoryname/arch1/Config.pm	test data for MakeMaker
 cpan/ExtUtils-MakeMaker/t/testdata/reallylongdirectoryname/arch2/Config.pm	test data for MakeMaker
 cpan/ExtUtils-MakeMaker/t/testlib.t				See if ExtUtils::testlib works
+cpan/ExtUtils-MakeMaker/t/testrules.yml
 cpan/ExtUtils-MakeMaker/t/unicode.t
 cpan/ExtUtils-MakeMaker/t/VERSION_FROM.t			See if MakeMaker's VERSION_FROM works
 cpan/ExtUtils-MakeMaker/t/vstrings.t
@@ -1008,6 +1007,7 @@ cpan/HTTP-Tiny/t/170_keepalive.t
 cpan/HTTP-Tiny/t/BrokenCookieJar.pm
 cpan/HTTP-Tiny/t/SimpleCookieJar.pm
 cpan/HTTP-Tiny/t/Util.pm
+cpan/IO-Compress/bin/streamzip
 cpan/IO-Compress/bin/zipdetails				IO::Compress
 cpan/IO-Compress/lib/Compress/Zlib.pm			IO::Compress
 cpan/IO-Compress/lib/File/GlobMapper.pm			IO::Compress
@@ -1053,6 +1053,7 @@ cpan/IO-Compress/t/002any-zip.t				IO::Compress
 cpan/IO-Compress/t/004gziphdr.t				IO::Compress
 cpan/IO-Compress/t/005defhdr.t				IO::Compress
 cpan/IO-Compress/t/006zip.t				IO::Compress
+cpan/IO-Compress/t/011-streamzip.t
 cpan/IO-Compress/t/01misc.t				IO::Compress
 cpan/IO-Compress/t/020isize.t				IO::Compress
 cpan/IO-Compress/t/050interop-gzip.t			IO::Compress
@@ -1100,6 +1101,7 @@ cpan/IO-Compress/t/107multi-deflate.t			IO::Compress
 cpan/IO-Compress/t/107multi-gzip.t			IO::Compress
 cpan/IO-Compress/t/107multi-rawdeflate.t		IO::Compress
 cpan/IO-Compress/t/107multi-zip.t			IO::Compress
+cpan/IO-Compress/t/107multi-zip-only.t
 cpan/IO-Compress/t/108anyunc-bzip2.t			IO::Compress
 cpan/IO-Compress/t/108anyunc-deflate.t			IO::Compress
 cpan/IO-Compress/t/108anyunc-gzip.t			IO::Compress
@@ -1116,6 +1118,7 @@ cpan/IO-Compress/t/110encode-gzip.t			IO::Compress
 cpan/IO-Compress/t/110encode-rawdeflate.t		IO::Compress
 cpan/IO-Compress/t/110encode-zip.t			IO::Compress
 cpan/IO-Compress/t/111const-deflate.t			IO::Compress
+cpan/IO-Compress/t/112utf8-zip.t
 cpan/IO-Compress/t/999pod.t				IO::Compress
 cpan/IO-Compress/t/compress/any.pl			Compress::Zlib
 cpan/IO-Compress/t/compress/anyunc.pl			Compress::Zlib
@@ -1136,6 +1139,10 @@ cpan/IO-Compress/t/cz-03zlib-v1.t			IO::Compress
 cpan/IO-Compress/t/cz-06gzsetp.t			IO::Compress
 cpan/IO-Compress/t/cz-08encoding.t			IO::Compress
 cpan/IO-Compress/t/cz-14gzopen.t			IO::Compress
+cpan/IO-Compress/t/files/bad-efs.zip
+cpan/IO-Compress/t/files/encrypt-aes.zip
+cpan/IO-Compress/t/files/encrypt-standard.zip
+cpan/IO-Compress/t/files/jar.zip
 cpan/IO-Compress/t/files/meta.xml
 cpan/IO-Compress/t/files/test.ods
 cpan/IO-Compress/t/globmapper.t				IO::Compress
@@ -1292,9 +1299,11 @@ cpan/Math-BigInt/lib/Math/BigInt/Calc.pm	Pure Perl module to support Math::BigIn
 cpan/Math-BigInt/lib/Math/BigInt/Lib.pm
 cpan/Math-BigInt/t/_e_math.t		Helper routine in BigFloat for _e math
 cpan/Math-BigInt/t/alias.inc		Support for BigInt tests
+cpan/Math-BigInt/t/backermann-mbi.t	Test Math::BigInt
 cpan/Math-BigInt/t/bare_mbf.t		Test MBF under Math::BigInt::BareCalc
 cpan/Math-BigInt/t/bare_mbi.t		Test MBI under Math::BigInt::BareCalc
 cpan/Math-BigInt/t/bare_mif.t		Rounding tests under BareCalc
+cpan/Math-BigInt/t/bdigitsum-mbi.t	Test Math::BigInt
 cpan/Math-BigInt/t/bdstr-mbf.t		Test Math::BigInt
 cpan/Math-BigInt/t/bdstr-mbi.t		Test Math::BigInt
 cpan/Math-BigInt/t/bestr-mbf.t		Test Math::BigInt
@@ -1316,6 +1325,7 @@ cpan/Math-BigInt/t/bnstr-mbf.t		Test Math::BigInt
 cpan/Math-BigInt/t/bnstr-mbi.t		Test Math::BigInt
 cpan/Math-BigInt/t/bsstr-mbf.t		Test Math::BigInt
 cpan/Math-BigInt/t/bsstr-mbi.t		Test Math::BigInt
+cpan/Math-BigInt/t/buparrow-mbi.t	Test Math::BigInt
 cpan/Math-BigInt/t/calling.t		Test calling conventions
 cpan/Math-BigInt/t/calling-class-methods.t	Test Math::BigInt
 cpan/Math-BigInt/t/calling-instance-methods.t	Test Math::BigInt
@@ -1332,6 +1342,7 @@ cpan/Math-BigInt/t/from_bin-mbf.t	Test Math::BigInt
 cpan/Math-BigInt/t/from_bin-mbi.t
 cpan/Math-BigInt/t/from_hex-mbf.t	Test Math::BigInt
 cpan/Math-BigInt/t/from_hex-mbi.t
+cpan/Math-BigInt/t/from_ieee754-mbf.t	Test Math::BigInt
 cpan/Math-BigInt/t/from_oct-mbf.t	Test Math::BigInt
 cpan/Math-BigInt/t/from_oct-mbi.t
 cpan/Math-BigInt/t/inf_nan.t		Special tests for inf and *NaN* handling
@@ -1371,6 +1382,7 @@ cpan/Math-BigInt/t/sub_mbf.t		Empty subclass test of BigFloat
 cpan/Math-BigInt/t/sub_mbi.t		Empty subclass test of BigInt
 cpan/Math-BigInt/t/sub_mif.t		Test A & P with subclasses using mbimbf.inc
 cpan/Math-BigInt/t/to_base-mbi.t
+cpan/Math-BigInt/t/to_ieee754-mbf.t	Test Math::BigInt
 cpan/Math-BigInt/t/trap.t		Test whether trap_nan and trap_inf work
 cpan/Math-BigInt/t/upgrade.inc		Actual tests for upgrade.t
 cpan/Math-BigInt/t/upgrade.t		Test if use Math::BigInt(); under upgrade works
@@ -1459,6 +1471,7 @@ cpan/Module-Load-Conditional/t/test_lib/a/X.pm			Module::Conditional tests
 cpan/Module-Load-Conditional/t/test_lib/b/X.pm			Module::Conditional tests
 cpan/Module-Load-Conditional/t/to_load/AutoLoad.pm		Module::Conditional tests
 cpan/Module-Load-Conditional/t/to_load/Commented.pm		Module::Conditional tests
+cpan/Module-Load-Conditional/t/to_load/HereDoc.pm
 cpan/Module-Load-Conditional/t/to_load/InPod.pm			Module::Load::Conditional tests
 cpan/Module-Load-Conditional/t/to_load/LoadIt.pm		Module::Conditional tests
 cpan/Module-Load-Conditional/t/to_load/LoadMe.pl		Module::Conditional tests
@@ -1492,16 +1505,6 @@ cpan/NEXT/t/dynamically_scoped_regex_vars.t	NEXT
 cpan/NEXT/t/next.t		NEXT
 cpan/NEXT/t/stringify.t		NEXT
 cpan/NEXT/t/unseen.t		NEXT
-cpan/OpenBSD-MkTemp/lib/OpenBSD/MkTemp.pm		OpenBSD::MkTemp
-cpan/OpenBSD-MkTemp/MkTemp.xs		OpenBSD::MkTemp
-cpan/OpenBSD-MkTemp/README		OpenBSD::MkTemp Readme
-cpan/OpenBSD-MkTemp/t/OpenBSD-MkTemp.t		OpenBSD::MkTemp test file
-cpan/OpenBSD-Pledge/lib/OpenBSD/Pledge.pm	OpenBSD::Pledge
-cpan/OpenBSD-Pledge/Pledge.xs	OpenBSD::Pledge
-cpan/OpenBSD-Pledge/t/OpenBSD-Pledge.t	OpenBSD::Pledge test file
-cpan/OpenBSD-Unveil/lib/OpenBSD/Unveil.pm	OpenBSD::Unveil
-cpan/OpenBSD-Unveil/t/OpenBSD-Unveil.t	OpenBSD::Unveil test file
-cpan/OpenBSD-Unveil/Unveil.xs	OpenBSD::Unveil
 cpan/Params-Check/lib/Params/Check.pm	Params::Check
 cpan/Params-Check/t/01_Params-Check.t	Params::Check tests
 cpan/parent/lib/parent.pm			Establish an ISA relationship with base classes at compile time
@@ -1550,48 +1553,6 @@ cpan/Pod-Escapes/lib/Pod/Escapes.pm	Pod::Escapes
 cpan/Pod-Escapes/t/01_about_verbose.t	test Pod::Escapes
 cpan/Pod-Escapes/t/10_main.t		test Pod::Escapes
 cpan/Pod-Escapes/t/15_name2charnum.t	test Pod::Escapes
-cpan/Pod-Parser/lib/Pod/Find.pm			find POD documents in directory trees
-cpan/Pod-Parser/lib/Pod/InputObjects.pm		Pod-Parser - define objects for input streams
-cpan/Pod-Parser/lib/Pod/Parser.pm		Pod-Parser - define base class for parsing POD
-cpan/Pod-Parser/lib/Pod/ParseUtils.pm		Pod-Parser - pod utility functions
-cpan/Pod-Parser/lib/Pod/PlainText.pm		Convert POD data to formatted ASCII text
-cpan/Pod-Parser/lib/Pod/Select.pm		Pod-Parser - select portions of POD docs
-cpan/Pod-Parser/scripts/podselect.PL	Pod-Parser - Pod::Select::podselect() CLI
-cpan/Pod-Parser/t/pod/contains_bad_pod.xr	Pod-Parser test file
-cpan/Pod-Parser/t/pod/contains_pod.t		Pod-Parser test
-cpan/Pod-Parser/t/pod/contains_pod.xr		Pod-Parser test file
-cpan/Pod-Parser/t/pod/empty.xr
-cpan/Pod-Parser/t/pod/emptycmd.t		Test empty pod directives
-cpan/Pod-Parser/t/pod/emptycmd.xr		Expected results for emptycmd.t
-cpan/Pod-Parser/t/pod/find.t			See if Pod::Find works
-cpan/Pod-Parser/t/pod/for.t			Test =for directive
-cpan/Pod-Parser/t/pod/for.xr			Expected results for for.t
-cpan/Pod-Parser/t/pod/headings.t		Test =head directives
-cpan/Pod-Parser/t/pod/headings.xr		Expected results for headings.t
-cpan/Pod-Parser/t/pod/include.t			Test =include directive
-cpan/Pod-Parser/t/pod/include.xr		Expected results for include.t
-cpan/Pod-Parser/t/pod/included.t		Test =include directive
-cpan/Pod-Parser/t/pod/included.xr		Expected results for included.t
-cpan/Pod-Parser/t/pod/lref.t			Test L<...> sequences
-cpan/Pod-Parser/t/pod/lref.xr			Expected results for lref.t
-cpan/Pod-Parser/t/pod/multiline_items.t		Test multiline =items
-cpan/Pod-Parser/t/pod/multiline_items.xr	Expected results for multiline_items.t
-cpan/Pod-Parser/t/pod/nested_items.t		Test nested =items
-cpan/Pod-Parser/t/pod/nested_items.xr		Expected results for nested_items.t
-cpan/Pod-Parser/t/pod/nested_seqs.t		Test nested interior sequences
-cpan/Pod-Parser/t/pod/nested_seqs.xr		Expected results for nested_seqs.t
-cpan/Pod-Parser/t/pod/oneline_cmds.t		Test single paragraph ==cmds
-cpan/Pod-Parser/t/pod/oneline_cmds.xr		Expected results for oneline_cmds.t
-cpan/Pod-Parser/t/pod/podselect.t		Test Pod::Select
-cpan/Pod-Parser/t/pod/podselect.xr		Expected results for podselect.t
-cpan/Pod-Parser/t/pod/selfcheck.t
-cpan/Pod-Parser/t/pod/special_seqs.t		Test "special" interior sequences
-cpan/Pod-Parser/t/pod/special_seqs.xr		Expected results for special_seqs.t
-cpan/Pod-Parser/t/pod/testcmp.pl		Module to compare output against expected results
-cpan/Pod-Parser/t/pod/testp2pt.pl		Module to test Pod::PlainText for a given file
-cpan/Pod-Parser/t/pod/testpchk.pl		Module to test Pod::Checker for a given file
-cpan/Pod-Parser/t/pod/testpods/lib/Pod/Stuff.pm	Sample data for t/pod/find.t
-cpan/Pod-Parser/t/pod/twice.t			Test Pod::Parser
 cpan/Pod-Perldoc/corpus/no-head.pod		test file for Pod-Perldoc
 cpan/Pod-Perldoc/corpus/perlfunc.pod		test file for Pod-Perldoc
 cpan/Pod-Perldoc/corpus/utf8.pod		test file for Pod-Perldoc
@@ -1624,6 +1585,7 @@ cpan/Pod-Simple/lib/Pod/Simple/DumpAsXML.pm		turn Pod into XML
 cpan/Pod-Simple/lib/Pod/Simple/HTML.pm			convert Pod to HTML
 cpan/Pod-Simple/lib/Pod/Simple/HTMLBatch.pm		convert several Pod files to several HTML files
 cpan/Pod-Simple/lib/Pod/Simple/HTMLLegacy.pm		Pod::Simple::HTMLLegacy
+cpan/Pod-Simple/lib/Pod/Simple/JustPod.pm
 cpan/Pod-Simple/lib/Pod/Simple/LinkSection.pm		represent "section" attributes of L codes
 cpan/Pod-Simple/lib/Pod/Simple/Methody.pm		turn Pod::Simple events into method calls
 cpan/Pod-Simple/lib/Pod/Simple/Progress.pm		Pod::Simple::Progress
@@ -1655,6 +1617,7 @@ cpan/Pod-Simple/t/begin.t				Pod::Simple test file
 cpan/Pod-Simple/t/cbacks.t				Pod::Simple test file
 cpan/Pod-Simple/t/chunking.t				Pod::Simple test file
 cpan/Pod-Simple/t/closeys.t				Pod::Simple test file
+cpan/Pod-Simple/t/content_seen.t			Pod::Simple test file
 cpan/Pod-Simple/t/corpus.t				Pod::Simple test file
 cpan/Pod-Simple/t/corpus/2202jp.txt			Pod::Simple test file
 cpan/Pod-Simple/t/corpus/2202jp.xml			Pod::Simple test file
@@ -1742,6 +1705,7 @@ cpan/Pod-Simple/t/fcodes_l.t				Pod::Simple test file
 cpan/Pod-Simple/t/fcodes_s.t				Pod::Simple test file
 cpan/Pod-Simple/t/for.t					Pod::Simple test file
 cpan/Pod-Simple/t/fornot.t				Pod::Simple test file
+cpan/Pod-Simple/t/github_issue_79.t
 cpan/Pod-Simple/t/heads.t				Pod::Simple test file
 cpan/Pod-Simple/t/html01.t				Pod::Simple test file
 cpan/Pod-Simple/t/html02.t				Pod::Simple test file
@@ -1754,6 +1718,9 @@ cpan/Pod-Simple/t/junk1.pod				Pod::Simple test file
 cpan/Pod-Simple/t/junk1o.txt				Pod::Simple test file
 cpan/Pod-Simple/t/junk2.pod				Pod::Simple test file
 cpan/Pod-Simple/t/junk2o.txt				Pod::Simple test file
+cpan/Pod-Simple/t/JustPod01.t
+cpan/Pod-Simple/t/JustPod02.t
+cpan/Pod-Simple/t/JustPod_corpus.t
 cpan/Pod-Simple/t/linkclas.t				Pod::Simple test file
 cpan/Pod-Simple/t/output.t				Pod::Simple test file
 cpan/Pod-Simple/t/perlcyg.pod				Pod::Simple test file
@@ -1766,6 +1733,7 @@ cpan/Pod-Simple/t/puller.t				Pod::Simple test file
 cpan/Pod-Simple/t/pulltitl.t				Pod::Simple test file
 cpan/Pod-Simple/t/reinit.t				Pod::Simple test file
 cpan/Pod-Simple/t/render.t				Pod::Simple test file
+cpan/Pod-Simple/t/rtf_utf8.t
 cpan/Pod-Simple/t/search05.t				Pod::Simple test file
 cpan/Pod-Simple/t/search10.t				Pod::Simple test file
 cpan/Pod-Simple/t/search12.t				Pod::Simple test file
@@ -1777,6 +1745,9 @@ cpan/Pod-Simple/t/search27.t				Pod::Simple test file
 cpan/Pod-Simple/t/search28.t				Pod::Simple test file
 cpan/Pod-Simple/t/search29.t				Pod::Simple test file
 cpan/Pod-Simple/t/search50.t				Pod::Simple test file
+cpan/Pod-Simple/t/search60.t				Pod::Simple test file
+cpan/Pod-Simple/t/search60/A/x.pod			Pod::Simple test file
+cpan/Pod-Simple/t/search60/B/X.pod			Pod::Simple test file
 cpan/Pod-Simple/t/stree.t				Pod::Simple test file
 cpan/Pod-Simple/t/strpvbtm.t				Pod::Simple test file
 cpan/Pod-Simple/t/testlib1/Blorm.pm			Pod::Simple test file
@@ -1797,6 +1768,7 @@ cpan/Pod-Simple/t/testlib2/hinkhonk/readme.txt		Pod::Simple test file
 cpan/Pod-Simple/t/testlib2/hinkhonk/Vliff.pm		Pod::Simple test file
 cpan/Pod-Simple/t/testlib2/pod/perlthng.pod		Pod::Simple test file
 cpan/Pod-Simple/t/testlib2/pod/perlzuk.pod		Pod::Simple test file
+cpan/Pod-Simple/t/testlib2/pods/perlzoned.pod		Pod::Simple test file
 cpan/Pod-Simple/t/testlib2/squaa/Vliff.pm		Pod::Simple test file
 cpan/Pod-Simple/t/testlib2/squaa/Wowo.pod		Pod::Simple test file
 cpan/Pod-Simple/t/testlib2/Suzzle.pm			Pod::Simple test file
@@ -1901,19 +1873,46 @@ cpan/podlators/t/data/snippets/man/utf8-nonbreaking
 cpan/podlators/t/data/snippets/man/utf8-verbatim
 cpan/podlators/t/data/snippets/man/x-whitespace
 cpan/podlators/t/data/snippets/man/x-whitespace-entry
+cpan/podlators/t/data/snippets/overstrike/tag-width
+cpan/podlators/t/data/snippets/overstrike/wrapping
 cpan/podlators/t/data/snippets/README			podlators test
 cpan/podlators/t/data/snippets/termcap/escape-wrapping
 cpan/podlators/t/data/snippets/termcap/tag-width
 cpan/podlators/t/data/snippets/termcap/tag-wrapping
+cpan/podlators/t/data/snippets/termcap/term-unknown
 cpan/podlators/t/data/snippets/termcap/width
 cpan/podlators/t/data/snippets/termcap/wrapping
+cpan/podlators/t/data/snippets/text/alt
+cpan/podlators/t/data/snippets/text/c-with-spaces
+cpan/podlators/t/data/snippets/text/code
 cpan/podlators/t/data/snippets/text/cpp			podlators test
+cpan/podlators/t/data/snippets/text/empty
+cpan/podlators/t/data/snippets/text/error-die
+cpan/podlators/t/data/snippets/text/error-none
+cpan/podlators/t/data/snippets/text/error-normal
+cpan/podlators/t/data/snippets/text/error-pod
+cpan/podlators/t/data/snippets/text/error-stderr
+cpan/podlators/t/data/snippets/text/error-stderr-opt
+cpan/podlators/t/data/snippets/text/for
+cpan/podlators/t/data/snippets/text/iso-8859-1
+cpan/podlators/t/data/snippets/text/late-encoding
+cpan/podlators/t/data/snippets/text/link-rt
+cpan/podlators/t/data/snippets/text/link-url
+cpan/podlators/t/data/snippets/text/margin
+cpan/podlators/t/data/snippets/text/nonbreaking-space
+cpan/podlators/t/data/snippets/text/nourls
+cpan/podlators/t/data/snippets/text/periods
+cpan/podlators/t/data/snippets/text/quotes-opt
+cpan/podlators/t/data/snippets/text/s-whitespace
+cpan/podlators/t/data/snippets/text/sentence-spacing
+cpan/podlators/t/data/snippets/text/utf8
+cpan/podlators/t/data/snippets/text/utf8-iso
+cpan/podlators/t/data/snippets/text/verbatim
 cpan/podlators/t/data/termcap			podlators test
 cpan/podlators/t/docs/pod.t			podlators test
 cpan/podlators/t/docs/pod-spelling.t			podlators test
 cpan/podlators/t/docs/spdx-license.t			podlators test
 cpan/podlators/t/docs/synopsis.t			podlators test
-cpan/podlators/t/docs/urls.t			podlators test
 cpan/podlators/t/general/basic.t			podlators test
 cpan/podlators/t/general/filehandle.t			podlators test
 cpan/podlators/t/general/pod-parser.t			podlators test
@@ -1932,16 +1931,15 @@ cpan/podlators/t/man/utf8-io.t			podlators test
 cpan/podlators/t/parselink/basic.t			podlators test
 cpan/podlators/t/style/minimum-version.t			podlators test
 cpan/podlators/t/style/module-version.t			podlators test
+cpan/podlators/t/style/obsolete-strings.t
 cpan/podlators/t/style/strict.t			podlators test
-cpan/podlators/t/text/basic.t			podlators test
 cpan/podlators/t/text/color.t			podlators test
-cpan/podlators/t/text/empty.t			podlators test
-cpan/podlators/t/text/encoding.t			podlators test
-cpan/podlators/t/text/options.t			podlators test
+cpan/podlators/t/text/invalid.t
+cpan/podlators/t/text/iso-8859-1.t
 cpan/podlators/t/text/overstrike.t			podlators test
-cpan/podlators/t/text/perlio.t			podlators test
+cpan/podlators/t/text/snippets.t
 cpan/podlators/t/text/termcap.t			podlators test
-cpan/podlators/t/text/utf8.t			podlators test
+cpan/podlators/t/text/utf8-io.t
 cpan/Scalar-List-Utils/lib/List/Util.pm		List::Util
 cpan/Scalar-List-Utils/lib/List/Util/XS.pm	List::Util
 cpan/Scalar-List-Utils/lib/Scalar/Util.pm	Scalar::Util
@@ -1969,9 +1967,11 @@ cpan/Scalar-List-Utils/t/product.t		List::Util
 cpan/Scalar-List-Utils/t/prototype.t
 cpan/Scalar-List-Utils/t/readonly.t		Scalar::Util
 cpan/Scalar-List-Utils/t/reduce.t		List::Util
+cpan/Scalar-List-Utils/t/reductions.t
 cpan/Scalar-List-Utils/t/refaddr.t		Scalar::Util
 cpan/Scalar-List-Utils/t/reftype.t		Scalar::Util
 cpan/Scalar-List-Utils/t/rt-96343.t		Scalar::Util
+cpan/Scalar-List-Utils/t/sample.t
 cpan/Scalar-List-Utils/t/scalarutil-proto.t
 cpan/Scalar-List-Utils/t/shuffle.t		List::Util
 cpan/Scalar-List-Utils/t/stack-corruption.t	List::Util
@@ -1980,6 +1980,7 @@ cpan/Scalar-List-Utils/t/sum.t			List::Util
 cpan/Scalar-List-Utils/t/sum0.t
 cpan/Scalar-List-Utils/t/tainted.t		Scalar::Util
 cpan/Scalar-List-Utils/t/uniq.t			Scalar::Util
+cpan/Scalar-List-Utils/t/uniqnum.t
 cpan/Scalar-List-Utils/t/weak.t			Scalar::Util
 cpan/Socket/Makefile.PL			Socket extension makefile writer
 cpan/Socket/Socket.pm			Socket extension Perl module
@@ -2000,8 +2001,15 @@ cpan/Sys-Syslog/Syslog.pm		Sys::Syslog extension Perl module
 cpan/Sys-Syslog/Syslog.xs		Sys::Syslog extension external subroutines
 cpan/Sys-Syslog/t/00-load.t		test for Sys::Syslog
 cpan/Sys-Syslog/t/constants.t		test for Sys::Syslog
+cpan/Sys-Syslog/t/cpan-rt-21516.t
+cpan/Sys-Syslog/t/cpan-rt-21866.t
+cpan/Sys-Syslog/t/cpan-rt-25488.t
+cpan/Sys-Syslog/t/cpan-rt-49877.pl
+cpan/Sys-Syslog/t/cpan-rt-55151.t
+cpan/Sys-Syslog/t/cpan-rt-64287.t
 cpan/Sys-Syslog/t/facilities-routing.t	test for Sys::Syslog
 cpan/Sys-Syslog/t/syslog.t		See if Sys::Syslog works
+cpan/Sys-Syslog/t/syslog-inet-udp.t
 cpan/Sys-Syslog/win32/compile.pl	Sys::Syslog extension Win32 related file
 cpan/Sys-Syslog/win32/PerlLog.mc	Sys::Syslog extension Win32 related file
 cpan/Sys-Syslog/win32/PerlLog_dll.uu	Sys::Syslog extension Win32 related file
@@ -2015,20 +2023,10 @@ cpan/Term-ANSIColor/t/module/basic.t
 cpan/Term-ANSIColor/t/module/basic256.t
 cpan/Term-ANSIColor/t/module/eval.t
 cpan/Term-ANSIColor/t/module/stringify.t
+cpan/Term-ANSIColor/t/module/true-color.t
 cpan/Term-ANSIColor/t/taint/basic.t
 cpan/Term-Cap/Cap.pm			Perl module supporting termcap usage
 cpan/Term-Cap/test.pl			See if Term::Cap works
-cpan/Term-ReadKey/Changes			Term::ReadKey
-cpan/Term-ReadKey/Configure.pm			Term::ReadKey
-cpan/Term-ReadKey/example/test.pl		Term::ReadKey
-cpan/Term-ReadKey/genchars.pl			Term::ReadKey
-cpan/Term-ReadKey/Makefile.PL			Term::ReadKey
-cpan/Term-ReadKey/ppport.h			Term::ReadKey
-cpan/Term-ReadKey/ReadKey.xs			Term::ReadKey
-cpan/Term-ReadKey/ReadKey.pm.PL		Term::ReadKey
-cpan/Term-ReadKey/README			Term::ReadKey
-cpan/Term-ReadKey/t/01_basic.t			Term::ReadKey
-cpan/Term-ReadKey/t/02_terminal_functions.t	Term::ReadKey
 cpan/Test-Harness/bin/prove				The prove harness utility
 cpan/Test-Harness/lib/App/Prove.pm			Gubbins for the prove utility
 cpan/Test-Harness/lib/App/Prove/State.pm		Gubbins for the prove utility
@@ -2603,8 +2601,13 @@ cpan/Time-Piece/t/02core_dst.t
 cpan/Time-Piece/t/03compare.t	Test for Time::Piece
 cpan/Time-Piece/t/04mjd.t	Test for Time::Piece
 cpan/Time-Piece/t/05overload.t	Test for Time::Piece
+cpan/Time-Piece/t/06large.t
 cpan/Time-Piece/t/06subclass.t	Test for Time::Piece
 cpan/Time-Piece/t/07arith.t	Test for Time::Piece
+cpan/Time-Piece/t/08truncate.t
+cpan/Time-Piece/t/09locales.t
+cpan/Time-Piece/t/10overload.t
+cpan/Time-Piece/t/99legacy.t
 cpan/Time-Piece/t/lib/Time/Piece/Twin.pm
 cpan/Unicode-Collate/Collate.pm			Unicode::Collate
 cpan/Unicode-Collate/Collate.xs			Unicode::Collate
@@ -3015,7 +3018,8 @@ dist/Devel-PPPort/apicheck_c.PL		Devel::PPPort apicheck generator
 dist/Devel-PPPort/Changes			Devel::PPPort Changes file
 dist/Devel-PPPort/devel/buildperl.pl	Devel::PPPort perl version builder
 dist/Devel-PPPort/devel/devtools.pl	Devel::PPPort development utilities
-dist/Devel-PPPort/devel/mkapidoc.sh	Devel::PPPort apidoc collector
+dist/Devel-PPPort/devel/mkapidoc.pl	Devel::PPPort apidoc collector 
+dist/Devel-PPPort/devel/mkppport_fnc.pl	Devel::PPPort
 dist/Devel-PPPort/devel/mktodo		Devel::PPPort baseline/todo generator
 dist/Devel-PPPort/devel/mktodo.pl	Devel::PPPort baseline/todo generator
 dist/Devel-PPPort/devel/regenerate	Devel::PPPort API re-generator
@@ -3028,18 +3032,18 @@ dist/Devel-PPPort/module2.c		Devel::PPPort test file
 dist/Devel-PPPort/module3.c		Devel::PPPort test file
 dist/Devel-PPPort/parts/apicheck.pl	Devel::PPPort apicheck generator
 dist/Devel-PPPort/parts/apidoc.fnc	Devel::PPPort Perl API listing
-dist/Devel-PPPort/parts/base/5003070	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5003007	Devel::PPPort baseline todo file
 dist/Devel-PPPort/parts/base/5004000	Devel::PPPort baseline todo file
-dist/Devel-PPPort/parts/base/5004010	Devel::PPPort baseline todo file
-dist/Devel-PPPort/parts/base/5004020	Devel::PPPort baseline todo file
-dist/Devel-PPPort/parts/base/5004030	Devel::PPPort baseline todo file
-dist/Devel-PPPort/parts/base/5004040	Devel::PPPort baseline todo file
-dist/Devel-PPPort/parts/base/5004050	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5004001	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5004002	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5004003	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5004004	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5004005	Devel::PPPort baseline todo file
 dist/Devel-PPPort/parts/base/5005000	Devel::PPPort baseline todo file
-dist/Devel-PPPort/parts/base/5005010	Devel::PPPort baseline todo file
-dist/Devel-PPPort/parts/base/5005020	Devel::PPPort baseline todo file
-dist/Devel-PPPort/parts/base/5005030	Devel::PPPort baseline todo file
-dist/Devel-PPPort/parts/base/5005040	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5005001	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5005002	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5005003	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5005004	Devel::PPPort baseline todo file
 dist/Devel-PPPort/parts/base/5006000	Devel::PPPort baseline todo file
 dist/Devel-PPPort/parts/base/5006001	Devel::PPPort baseline todo file
 dist/Devel-PPPort/parts/base/5006002	Devel::PPPort baseline todo file
@@ -3144,6 +3148,7 @@ dist/Devel-PPPort/parts/base/5020003	Devel::PPPort baseline todo file
 dist/Devel-PPPort/parts/base/5021000	Devel::PPPort baseline todo file
 dist/Devel-PPPort/parts/base/5021001	Devel::PPPort baseline todo file
 dist/Devel-PPPort/parts/base/5021002	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5021003	Devel::PPPort baseline todo file
 dist/Devel-PPPort/parts/base/5021004	Devel::PPPort baseline todo file
 dist/Devel-PPPort/parts/base/5021005	Devel::PPPort baseline todo file
 dist/Devel-PPPort/parts/base/5021006	Devel::PPPort baseline todo file
@@ -3154,6 +3159,9 @@ dist/Devel-PPPort/parts/base/5021010	Devel::PPPort baseline todo file
 dist/Devel-PPPort/parts/base/5021011	Devel::PPPort baseline todo file
 dist/Devel-PPPort/parts/base/5022000	Devel::PPPort baseline todo file
 dist/Devel-PPPort/parts/base/5022001	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5022002	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5022003	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5022004	Devel::PPPort baseline todo file
 dist/Devel-PPPort/parts/base/5023000	Devel::PPPort baseline todo file
 dist/Devel-PPPort/parts/base/5023001	Devel::PPPort baseline todo file
 dist/Devel-PPPort/parts/base/5023002	Devel::PPPort baseline todo file
@@ -3165,7 +3173,63 @@ dist/Devel-PPPort/parts/base/5023007	Devel::PPPort baseline todo file
 dist/Devel-PPPort/parts/base/5023008	Devel::PPPort baseline todo file
 dist/Devel-PPPort/parts/base/5023009	Devel::PPPort baseline todo file
 dist/Devel-PPPort/parts/base/5024000	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5024001	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5024002	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5024003	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5024004	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5025000	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5025001	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5025002	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5025003	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5025004	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5025005	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5025006	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5025007	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5025008	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5025009	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5025010	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5025011	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5025012	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5026000	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5026001	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5026002	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5026003	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5027000	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5027001	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5027002	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5027003	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5027004	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5027005	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5027006	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5027007	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5027008	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5027009	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5027010	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5027011	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5028000	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5028001	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5029000	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5029001	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5029002	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5029003	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5029004	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5029005	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5029006	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5029007	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5029008	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5029009	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5029010	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5030000	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5031001	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5031002	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5031003	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5031004	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5031005	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5031006	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5031007	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/base/5031008
 dist/Devel-PPPort/parts/embed.fnc	Devel::PPPort Perl API listing
+dist/Devel-PPPort/parts/inc/01_test	Devel::PPPort include
 dist/Devel-PPPort/parts/inc/call	Devel::PPPort include
 dist/Devel-PPPort/parts/inc/cop		Devel::PPPort include
 dist/Devel-PPPort/parts/inc/exception	Devel::PPPort include
@@ -3173,7 +3237,9 @@ dist/Devel-PPPort/parts/inc/format	Devel::PPPort include
 dist/Devel-PPPort/parts/inc/grok	Devel::PPPort include
 dist/Devel-PPPort/parts/inc/gv		Devel::PPPort include
 dist/Devel-PPPort/parts/inc/HvNAME	Devel::PPPort include
+dist/Devel-PPPort/parts/inc/inctools
 dist/Devel-PPPort/parts/inc/limits	Devel::PPPort include
+dist/Devel-PPPort/parts/inc/locale
 dist/Devel-PPPort/parts/inc/magic	Devel::PPPort include
 dist/Devel-PPPort/parts/inc/magic_defs	Devel::PPPort include
 dist/Devel-PPPort/parts/inc/memory	Devel::PPPort include
@@ -3195,29 +3261,31 @@ dist/Devel-PPPort/parts/inc/shared_pv	Devel::PPPort include
 dist/Devel-PPPort/parts/inc/snprintf	Devel::PPPort include
 dist/Devel-PPPort/parts/inc/sprintf	Devel::PPPort include
 dist/Devel-PPPort/parts/inc/strlfuncs	Devel::PPPort include
+dist/Devel-PPPort/parts/inc/subparse
 dist/Devel-PPPort/parts/inc/Sv_set	Devel::PPPort include
 dist/Devel-PPPort/parts/inc/sv_xpvf	Devel::PPPort include
 dist/Devel-PPPort/parts/inc/SvPV	Devel::PPPort include
 dist/Devel-PPPort/parts/inc/SvREFCNT	Devel::PPPort include
 dist/Devel-PPPort/parts/inc/threads	Devel::PPPort include
+dist/Devel-PPPort/parts/inc/utf8
 dist/Devel-PPPort/parts/inc/uv		Devel::PPPort include
 dist/Devel-PPPort/parts/inc/variables	Devel::PPPort include
 dist/Devel-PPPort/parts/inc/version	Devel::PPPort include
 dist/Devel-PPPort/parts/inc/warn	Devel::PPPort include
 dist/Devel-PPPort/parts/ppport.fnc	Devel::PPPort API listing
 dist/Devel-PPPort/parts/ppptools.pl	Devel::PPPort various utilities
-dist/Devel-PPPort/parts/todo/5003070	Devel::PPPort todo file
+dist/Devel-PPPort/parts/todo/5003007	Devel::PPPort baseline todo file
 dist/Devel-PPPort/parts/todo/5004000	Devel::PPPort todo file
-dist/Devel-PPPort/parts/todo/5004010	Devel::PPPort todo file
-dist/Devel-PPPort/parts/todo/5004020	Devel::PPPort todo file
-dist/Devel-PPPort/parts/todo/5004030	Devel::PPPort todo file
-dist/Devel-PPPort/parts/todo/5004040	Devel::PPPort todo file
-dist/Devel-PPPort/parts/todo/5004050	Devel::PPPort todo file
+dist/Devel-PPPort/parts/todo/5004001	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5004002	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5004003	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5004004	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5004005	Devel::PPPort baseline todo file
 dist/Devel-PPPort/parts/todo/5005000	Devel::PPPort todo file
-dist/Devel-PPPort/parts/todo/5005010	Devel::PPPort todo file
-dist/Devel-PPPort/parts/todo/5005020	Devel::PPPort todo file
-dist/Devel-PPPort/parts/todo/5005030	Devel::PPPort todo file
-dist/Devel-PPPort/parts/todo/5005040	Devel::PPPort todo file
+dist/Devel-PPPort/parts/todo/5005001	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5005002	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5005003	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5005004	Devel::PPPort baseline todo file
 dist/Devel-PPPort/parts/todo/5006000	Devel::PPPort todo file
 dist/Devel-PPPort/parts/todo/5006001	Devel::PPPort todo file
 dist/Devel-PPPort/parts/todo/5006002	Devel::PPPort todo file
@@ -3322,6 +3390,7 @@ dist/Devel-PPPort/parts/todo/5020003	Devel::PPPort todo file
 dist/Devel-PPPort/parts/todo/5021000	Devel::PPPort todo file
 dist/Devel-PPPort/parts/todo/5021001	Devel::PPPort todo file
 dist/Devel-PPPort/parts/todo/5021002	Devel::PPPort todo file
+dist/Devel-PPPort/parts/todo/5021003	Devel::PPPort baseline todo file
 dist/Devel-PPPort/parts/todo/5021004	Devel::PPPort todo file
 dist/Devel-PPPort/parts/todo/5021005	Devel::PPPort todo file
 dist/Devel-PPPort/parts/todo/5021006	Devel::PPPort todo file
@@ -3332,6 +3401,9 @@ dist/Devel-PPPort/parts/todo/5021010	Devel::PPPort todo file
 dist/Devel-PPPort/parts/todo/5021011	Devel::PPPort todo file
 dist/Devel-PPPort/parts/todo/5022000	Devel::PPPort todo file
 dist/Devel-PPPort/parts/todo/5022001	Devel::PPPort todo file
+dist/Devel-PPPort/parts/todo/5022002	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5022003	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5022004	Devel::PPPort baseline todo file
 dist/Devel-PPPort/parts/todo/5023000	Devel::PPPort todo file
 dist/Devel-PPPort/parts/todo/5023001	Devel::PPPort todo file
 dist/Devel-PPPort/parts/todo/5023002	Devel::PPPort todo file
@@ -3343,11 +3415,67 @@ dist/Devel-PPPort/parts/todo/5023007	Devel::PPPort todo file
 dist/Devel-PPPort/parts/todo/5023008	Devel::PPPort todo file
 dist/Devel-PPPort/parts/todo/5023009	Devel::PPPort todo file
 dist/Devel-PPPort/parts/todo/5024000	Devel::PPPort todo file
+dist/Devel-PPPort/parts/todo/5024001	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5024002	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5024003	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5024004	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5025000	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5025001	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5025002	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5025003	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5025004	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5025005	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5025006	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5025007	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5025008	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5025009	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5025010	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5025011	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5025012	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5026000	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5026001	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5026002	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5026003	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5027000	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5027001	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5027002	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5027003	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5027004	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5027005	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5027006	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5027007	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5027008	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5027009	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5027010	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5027011	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5028000	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5028001	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5029000	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5029001	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5029002	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5029003	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5029004	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5029005	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5029006	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5029007	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5029008	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5029009	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5029010	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5030000	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5031001	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5031002	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5031003	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5031004	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5031005	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5031006	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5031007	Devel::PPPort baseline todo file
+dist/Devel-PPPort/parts/todo/5031008
 dist/Devel-PPPort/PPPort.xs		Devel::PPPort dummy PPPort.xs
 dist/Devel-PPPort/ppport_h.PL		Devel::PPPort ppport.h writer
 dist/Devel-PPPort/PPPort_pm.PL		Devel::PPPort PPPort.pm writer
-dist/Devel-PPPort/PPPort_xs.PL		Devel::PPPort RealPPPort.xs writer
+dist/Devel-PPPort/RealPPPort_xs.PL		Devel::PPPort RealPPPort.xs writer
 dist/Devel-PPPort/soak			Devel::PPPort Test Harness to run under various Perls
+dist/Devel-PPPort/t/01_test.t		Devel::PPPort test file
 dist/Devel-PPPort/t/call.t		Devel::PPPort test file
 dist/Devel-PPPort/t/cop.t		Devel::PPPort test file
 dist/Devel-PPPort/t/exception.t		Devel::PPPort test file
@@ -3356,6 +3484,7 @@ dist/Devel-PPPort/t/grok.t		Devel::PPPort test file
 dist/Devel-PPPort/t/gv.t		Devel::PPPort test file
 dist/Devel-PPPort/t/HvNAME.t		Devel::PPPort test file
 dist/Devel-PPPort/t/limits.t		Devel::PPPort test file
+dist/Devel-PPPort/t/locale.t
 dist/Devel-PPPort/t/magic.t		Devel::PPPort test file
 dist/Devel-PPPort/t/memory.t		Devel::PPPort test file
 dist/Devel-PPPort/t/mess.t		Devel::PPPort test file
@@ -3380,14 +3509,19 @@ dist/Devel-PPPort/t/SvPV.t		Devel::PPPort test file
 dist/Devel-PPPort/t/SvREFCNT.t		Devel::PPPort test file
 dist/Devel-PPPort/t/testutil.pl		Devel::PPPort test utilities
 dist/Devel-PPPort/t/threads.t		Devel::PPPort test file
+dist/Devel-PPPort/t/utf8.t
 dist/Devel-PPPort/t/uv.t		Devel::PPPort test file
 dist/Devel-PPPort/t/variables.t		Devel::PPPort test file
 dist/Devel-PPPort/t/warn.t		Devel::PPPort test file
+dist/Devel-PPPort/TODO			Devel::PPPort developer notes
 dist/Devel-PPPort/typemap		Devel::PPPort Typemap
 dist/Devel-SelfStubber/lib/Devel/SelfStubber.pm	Generate stubs for SelfLoader.pm
 dist/Devel-SelfStubber/t/Devel-SelfStubber.t	See if Devel::SelfStubber works
 dist/Dumpvalue/lib/Dumpvalue.pm	Screen dump of perl values
 dist/Dumpvalue/t/Dumpvalue.t	See if Dumpvalue works
+dist/Dumpvalue/t/extend-coverage.t	Extend Dumpvalue's test coverage
+dist/Dumpvalue/t/lib/TieOut.pm	Helper module for Dumpvalue tests
+dist/Dumpvalue/t/rt-134441-dumpvalue.t	See if Dumpvalue works
 dist/encoding-warnings/lib/encoding/warnings.pm	warn on implicit encoding conversions
 dist/encoding-warnings/t/1-warning.t	tests for encoding::warnings
 dist/encoding-warnings/t/2-fatal.t	tests for encoding::warnings
@@ -3496,11 +3630,14 @@ dist/Filter-Simple/t/filter.t					See if Filter::Simple works
 dist/Filter-Simple/t/filter_only.t				See if Filter::Simple works
 dist/Filter-Simple/t/import.t					See if Filter::Simple works
 dist/Filter-Simple/t/lib/Filter/Simple/CodeNoComments.pm	Helper file for Filter::Simple tests
+dist/Filter-Simple/t/lib/Filter/Simple/ExeNoComments.pm		Helper file for Filter::Simple tests
 dist/Filter-Simple/t/lib/Filter/Simple/ExportTest.pm		Helper file for Filter::Simple tests
 dist/Filter-Simple/t/lib/Filter/Simple/FilterOnlyTest.pm	Helper file for Filter::Simple tests
 dist/Filter-Simple/t/lib/Filter/Simple/FilterTest.pm		Helper file for Filter::Simple tests
 dist/Filter-Simple/t/lib/Filter/Simple/ImportTest.pm		Helper file for Filter::Simple tests
 dist/Filter-Simple/t/no.t					See if Filter::Simple works
+dist/FindBin/lib/FindBin.pm			Find name of currently executing program
+dist/FindBin/t/FindBin.t			See if FindBin works
 dist/I18N-Collate/lib/I18N/Collate.pm		Routines to do strxfrm-based collation
 dist/I18N-Collate/t/I18N-Collate.t		See if I18N::Collate works
 dist/I18N-LangTags/ChangeLog			I18N::LangTags
@@ -3543,12 +3680,14 @@ dist/IO/README			IO extension maintenance notice
 dist/IO/t/cachepropagate-tcp.t	See if IO::Socket duplication works
 dist/IO/t/cachepropagate-udp.t	See if IO::Socket duplication works
 dist/IO/t/cachepropagate-unix.t	See if IO::Socket duplication works
+dist/IO/t/gh17447.t		Tests fix for #17447
 dist/IO/t/IO.t			See if IO works
 dist/IO/t/io_const.t		See if constants from IO work
 dist/IO/t/io_dir.t		See if directory-related methods from IO work
 dist/IO/t/io_dup.t		See if dup()-related methods from IO work
 dist/IO/t/io_file.t		See if binmode()-related methods on IO::File work
 dist/IO/t/io_file_export.t	Test IO::File exports
+dist/IO/t/io_getline.t		Test getline and getlines
 dist/IO/t/io_leak.t		See if IO leaks SVs (only run in core)
 dist/IO/t/io_linenum.t		See if I/O line numbers are tracked correctly
 dist/IO/t/io_multihomed.t	See if INET sockets work with multi-homed hosts
@@ -3682,7 +3821,6 @@ dist/SelfLoader/lib/SelfLoader.pm	Load functions only on demand
 dist/SelfLoader/t/01SelfLoader.t	See if SelfLoader works
 dist/SelfLoader/t/02SelfLoader-buggy.t	See if SelfLoader works
 dist/SelfLoader/t/03taint.t		See if SelfLoader works under taint
-dist/Storable/__Storable__.pm	Template to generate Storable.pm
 dist/Storable/ChangeLog			Storable extension
 dist/Storable/hints/gnukfreebsd.pl	Hint for Storable for named architecture
 dist/Storable/hints/gnuknetbsd.pl	Hint for Storable for named architecture
@@ -3692,8 +3830,8 @@ dist/Storable/Makefile.PL		Storable extension
 dist/Storable/MANIFEST			Storable MANIFEST file
 dist/Storable/README			Storable extension
 dist/Storable/stacksize			compute stack sizes
+dist/Storable/Storable.pm		Storable perl module
 dist/Storable/Storable.xs		Storable extension
-dist/Storable/Storable.pm.PL	perl script to generate Storable.pm from template
 dist/Storable/t/attach.t		Check STORABLE_attach doesn't create objects unnecessarily
 dist/Storable/t/attach_errors.t		Trigger and test STORABLE_attach errors
 dist/Storable/t/attach_singleton.t	Test STORABLE_attach for the Singleton pattern
@@ -3835,8 +3973,8 @@ dist/threads-shared/t/sv_simple.t	thread shared variables
 dist/threads-shared/t/utf8.t		Test UTF-8 keys in shared hashes
 dist/threads-shared/t/wait.t		Test cond_wait and cond_timedwait
 dist/threads-shared/t/waithires.t	Test sub-second cond_timedwait
+dist/Tie-File/ChangeLog			Tie::File
 dist/Tie-File/lib/Tie/File.pm		Files as tied arrays
-dist/Tie-File/t/00_version.t		Trivial test for Tie::File
 dist/Tie-File/t/01_gen.t		Generic read/write tests for Tie::File
 dist/Tie-File/t/02_fetchsize.t		File length fetch test for Tie::File
 dist/Tie-File/t/03_longfetch.t		Past-the-end-of-the-array tests for Tie::File
@@ -3874,6 +4012,7 @@ dist/Tie-File/t/33_defer_vs.t		Like 30_defer.t, but with varying-length records
 dist/Tie-File/t/40_abs_cache.t		Unit tests for Tie::File::Cache
 dist/Tie-File/t/41_heap.t		Unit tests for Tie::File::Heap
 dist/Tie-File/t/42_offset.t		Unit tests for the offset method
+dist/Tie-File/t/43_synopsis.t		Demonstrate correctness of Tie::File synopsis
 dist/Time-HiRes/Changes			Time::HiRes extension
 dist/Time-HiRes/fallback/const-c.inc	Time::HiRes extension
 dist/Time-HiRes/fallback/const-xs.inc	Time::HiRes extension
@@ -3932,7 +4071,6 @@ doio.c			I/O operations
 doop.c			Support code for various operations
 dosish.h		Some defines for MS/DOSish machines
 dquote.c		Functions for double quotish contexts
-dquote_inline.h		Inline functions for double quotish contexts
 dump.c			Debugging output
 ebcdic_tables.h		Generated tables included in utfebcdic.h
 embed.fnc		Database used by embed.pl
@@ -3961,6 +4099,7 @@ ext/B/B/Showlex.pm	Compiler Showlex backend
 ext/B/B/Terse.pm	Compiler Terse backend
 ext/B/B/Xref.pm		Compiler Xref backend
 ext/B/hints/darwin.pl	Hints for named architecture
+ext/B/hints/openbsd.pl	Hints for named architecture
 ext/B/Makefile.PL	Compiler backend makefile writer
 ext/B/O.pm		Compiler front-end module (-MO=...)
 ext/B/t/b.t		See if B works
@@ -3980,6 +4119,7 @@ ext/B/t/optree_sort.t		inplace sort optimization regression
 ext/B/t/optree_specials.t	BEGIN, END, etc code
 ext/B/t/optree_varinit.t	my,our,local var init optimization
 ext/B/t/OptreeCheck.pm		optree comparison tool
+ext/B/t/perlstring.t	See if B::perlstring output roundtrips properly
 ext/B/t/pragma.t	See if user pragmas work.
 ext/B/t/showlex.t	See if B::ShowLex works
 ext/B/t/strict.t	See if B works with strict and warnings.
@@ -4263,7 +4403,6 @@ ext/Sys-Hostname/Hostname.pm	Sys::Hostname extension Perl module
 ext/Sys-Hostname/Hostname.xs	Sys::Hostname extension external subroutines
 ext/Sys-Hostname/t/Hostname.t	See if Sys::Hostname works
 ext/Tie-Hash-NamedCapture/NamedCapture.pm	Implements %- and %+ behaviour
-ext/Tie-Hash-NamedCapture/NamedCapture.xs	Implements %- and %+ behaviour
 ext/Tie-Hash-NamedCapture/t/tiehash.t		Tests TIEHASH
 ext/Tie-Memoize/lib/Tie/Memoize.pm	Base class for memoized tied hashes
 ext/Tie-Memoize/t/Tie-Memoize.t		Test for Tie::Memoize
@@ -4339,6 +4478,7 @@ ext/XS-APItest/t/handy08.t	XS::APItest: tests for handy.h
 ext/XS-APItest/t/handy09.t	XS::APItest: tests for handy.h
 ext/XS-APItest/t/handy_base.pl	XS::APItest: tests for handy.h
 ext/XS-APItest/t/hash.t		XS::APItest: tests for hash related APIs
+ext/XS-APItest/t/hv_macro.t	XS::APItest: tests for low level macros used in hashing
 ext/XS-APItest/t/join_with_space.t	test op_convert_list
 ext/XS-APItest/t/keyword_multiline.t	test keyword plugin parsing across lines
 ext/XS-APItest/t/keyword_plugin.t	test keyword plugin mechanism
@@ -4384,6 +4524,7 @@ ext/XS-APItest/t/stmtsasexpr.t	test recursive descent statement-sequence parsing
 ext/XS-APItest/t/stuff_modify_bug.t	test for eval side-effecting source string
 ext/XS-APItest/t/stuff_svcur_bug.t	test for a bug in lex_stuff_pvn
 ext/XS-APItest/t/subcall.t	Test XSUB calls
+ext/XS-APItest/t/subsignature.t	Test parse_subsignature()
 ext/XS-APItest/t/svcat.t	Test sv_catpvn
 ext/XS-APItest/t/svcatpvf.t	Test sv_catpvf argument reordering
 ext/XS-APItest/t/sviscow.t	Test SvIsCOW
@@ -4432,7 +4573,6 @@ fakesdio.h			stdio in terms of PerlIO
 feature.h			Feature header
 form.h				Public declarations for formats
 generate_uudmap.c		Generate uudmap.h, the uuencode decoding map
-git_version.h			Pre-generated git_version.h for OpenBSD
 globals.c			File to declare global symbols (for shared library)
 globvar.sym			Global variables that need hiding when embedded
 gv.c				Glob value code
@@ -4578,7 +4718,6 @@ lib/Class/Struct.t		See if Class::Struct works
 lib/Config.t			See if Config works
 lib/Config/Extensions.pm	Convenient hash lookup for built extensions
 lib/Config/Extensions.t		See if Config::Extensions works
-lib/Config_git.pl		Pre-generated Config_git.pl for OpenBSD
 lib/CORE.pod			document the CORE namespace
 lib/DB.pm			Debugger API (draft)
 lib/DB.t			See if DB works
@@ -4625,8 +4764,6 @@ lib/FileHandle.pm		Backward-compatible front end to IO extension
 lib/FileHandle.t		See if FileHandle works
 lib/filetest.pm			For "use filetest"
 lib/filetest.t			See if filetest works
-lib/FindBin.pm			Find name of currently executing program
-lib/FindBin.t			See if FindBin works
 lib/Getopt/Std.pm		Fetch command options (getopt, getopts)
 lib/Getopt/Std.t		See if Getopt::Std and Getopt::Long work
 lib/h2ph.t			See if h2ph works like it should
@@ -4669,6 +4806,7 @@ lib/perl5db/t/EnableModule.pm	Tests for the Perl debugger
 lib/perl5db/t/eval-line-bug	Tests for the Perl debugger
 lib/perl5db/t/fact		Tests for the Perl debugger
 lib/perl5db/t/filename-line-breakpoint		Tests for the Perl debugger
+lib/perl5db/t/gh-17660		Tests for the Perl debugger
 lib/perl5db/t/load-modules	Tests for the Perl debugger
 lib/perl5db/t/lsub-n		Test script used by perl5db.t
 lib/perl5db/t/lvalue-bug	Tests for the Perl debugger
@@ -4701,10 +4839,7 @@ lib/perl5db/t/uncalled-subroutine	Tests for the Perl debugger
 lib/perl5db/t/with-subroutine		Tests for the Perl debugger
 lib/perlbug.t			Tests for the Perl bug reporter
 lib/PerlIO.pm			PerlIO support module
-lib/Pod/t/InputObjects.t	See if Pod::InputObjects works
-lib/Pod/t/Select.t		See if Pod::Select works
 lib/Pod/t/Usage.t		See if Pod::Usage works
-lib/Pod/t/utils.t		Test for Pod::ParseUtils
 lib/SelectSaver.pm		Enforce proper select scoping
 lib/SelectSaver.t		See if SelectSaver works
 lib/sigtrap.pm			For trapping an abort and giving traceback
@@ -4744,582 +4879,65 @@ lib/Unicode/README		Explanation what happened to lib/unicode.
 lib/Unicode/UCD.pm		Unicode character database
 lib/Unicode/UCD.t		See if Unicode character database works
 lib/unicore/ArabicShaping.txt			Unicode character database
-lib/unicore/auxiliary/GCBTest.txt			Unicode character database
-lib/unicore/auxiliary/GraphemeBreakProperty.txt			Unicode character database
-lib/unicore/auxiliary/LBTest.txt			Unicode character database
-lib/unicore/auxiliary/SBTest.txt			Unicode character database
-lib/unicore/auxiliary/SentenceBreakProperty.txt			Unicode character database
-lib/unicore/auxiliary/WBTest.txt			Unicode character database
-lib/unicore/auxiliary/WordBreakProperty.txt			Unicode character database
+lib/unicore/auxiliary/GCBTest.txt	Unicode character database
+lib/unicore/auxiliary/GraphemeBreakProperty.txt	Unicode character database
+lib/unicore/auxiliary/LBTest.txt	Unicode character database
+lib/unicore/auxiliary/SBTest.txt	Unicode character database
+lib/unicore/auxiliary/SentenceBreakProperty.txt	Unicode character database
+lib/unicore/auxiliary/WBTest.txt	Unicode character database
+lib/unicore/auxiliary/WordBreakProperty.txt	Unicode character database
 lib/unicore/BidiBrackets.txt			Unicode character database
 lib/unicore/BidiMirroring.txt			Unicode character database
 lib/unicore/Blocks.txt				Unicode character database
 lib/unicore/CaseFolding.txt			Unicode character database
 lib/unicore/CJKRadicals.txt			Unicode character database
-lib/unicore/CombiningClass.pl			Unicode character database
-lib/unicore/CompositionExclusions.txt			Unicode character database
+lib/unicore/CompositionExclusions.txt		Unicode character database
 lib/unicore/DAge.txt				Unicode character database
 lib/unicore/DCoreProperties.txt			Unicode character database
-lib/unicore/Decomposition.pl			Unicode character database
-lib/unicore/DNormalizationProps.txt			Unicode character database
+lib/unicore/DNormalizationProps.txt		Unicode character database
 lib/unicore/EastAsianWidth.txt			Unicode character database
-lib/unicore/EmojiData.txt			Unicode character database
+lib/unicore/emoji/emoji.txt			Unicode character database
 lib/unicore/EmojiSources.txt			Unicode character database
-lib/unicore/EquivalentUnifiedIdeograph.txt			Unicode character database
-lib/unicore/extracted/DBidiClass.txt			Unicode character database
-lib/unicore/extracted/DBinaryProperties.txt			Unicode character database
-lib/unicore/extracted/DCombiningClass.txt			Unicode character database
-lib/unicore/extracted/DDecompositionType.txt			Unicode character database
-lib/unicore/extracted/DEastAsianWidth.txt			Unicode character database
-lib/unicore/extracted/DGeneralCategory.txt			Unicode character database
-lib/unicore/extracted/DJoinGroup.txt			Unicode character database
-lib/unicore/extracted/DJoinType.txt			Unicode character database
-lib/unicore/extracted/DLineBreak.txt			Unicode character database
-lib/unicore/extracted/DNumType.txt			Unicode character database
-lib/unicore/extracted/DNumValues.txt			Unicode character database
-lib/unicore/HangulSyllableType.txt			Unicode character database
-lib/unicore/Heavy.pl			Unicode character database
+lib/unicore/EquivalentUnifiedIdeograph.txt	Unicode character database
+lib/unicore/extracted/DBidiClass.txt		Unicode character database
+lib/unicore/extracted/DBinaryProperties.txt	Unicode character database
+lib/unicore/extracted/DCombiningClass.txt	Unicode character database
+lib/unicore/extracted/DDecompositionType.txt	Unicode character database
+lib/unicore/extracted/DEastAsianWidth.txt	Unicode character database
+lib/unicore/extracted/DGeneralCategory.txt	Unicode character database
+lib/unicore/extracted/DJoinGroup.txt		Unicode character database
+lib/unicore/extracted/DJoinType.txt		Unicode character database
+lib/unicore/extracted/DLineBreak.txt		Unicode character database
+lib/unicore/extracted/DNumType.txt		Unicode character database
+lib/unicore/extracted/DNumValues.txt		Unicode character database
+lib/unicore/HangulSyllableType.txt		Unicode character database
+lib/unicore/IdStatus.txt			Unicode UTS 39 database
+lib/unicore/IdType.txt				Unicode UTS 39 database
 lib/unicore/Index.txt				Unicode character database
-lib/unicore/IndicPositionalCategory.txt			Unicode character database
-lib/unicore/IndicSyllabicCategory.txt			Unicode character database
+lib/unicore/IndicPositionalCategory.txt		Unicode character database
+lib/unicore/IndicSyllabicCategory.txt		Unicode character database
 lib/unicore/Jamo.txt				Unicode character database
-lib/unicore/lib/Age/NA.pl			Unicode character database
-lib/unicore/lib/Age/V100.pl			Unicode character database
-lib/unicore/lib/Age/V11.pl			Unicode character database
-lib/unicore/lib/Age/V110.pl			Unicode character database
-lib/unicore/lib/Age/V120.pl			Unicode character database
-lib/unicore/lib/Age/V20.pl			Unicode character database
-lib/unicore/lib/Age/V30.pl			Unicode character database
-lib/unicore/lib/Age/V31.pl			Unicode character database
-lib/unicore/lib/Age/V32.pl			Unicode character database
-lib/unicore/lib/Age/V40.pl			Unicode character database
-lib/unicore/lib/Age/V41.pl			Unicode character database
-lib/unicore/lib/Age/V50.pl			Unicode character database
-lib/unicore/lib/Age/V51.pl			Unicode character database
-lib/unicore/lib/Age/V52.pl			Unicode character database
-lib/unicore/lib/Age/V60.pl			Unicode character database
-lib/unicore/lib/Age/V61.pl			Unicode character database
-lib/unicore/lib/Age/V70.pl			Unicode character database
-lib/unicore/lib/Age/V80.pl			Unicode character database
-lib/unicore/lib/Age/V90.pl			Unicode character database
-lib/unicore/lib/Alpha/Y.pl			Unicode character database
-lib/unicore/lib/Bc/AL.pl			Unicode character database
-lib/unicore/lib/Bc/AN.pl			Unicode character database
-lib/unicore/lib/Bc/B.pl			Unicode character database
-lib/unicore/lib/Bc/BN.pl			Unicode character database
-lib/unicore/lib/Bc/CS.pl			Unicode character database
-lib/unicore/lib/Bc/EN.pl			Unicode character database
-lib/unicore/lib/Bc/ES.pl			Unicode character database
-lib/unicore/lib/Bc/ET.pl			Unicode character database
-lib/unicore/lib/Bc/L.pl			Unicode character database
-lib/unicore/lib/Bc/NSM.pl			Unicode character database
-lib/unicore/lib/Bc/ON.pl			Unicode character database
-lib/unicore/lib/Bc/R.pl			Unicode character database
-lib/unicore/lib/Bc/WS.pl			Unicode character database
-lib/unicore/lib/BidiC/Y.pl			Unicode character database
-lib/unicore/lib/BidiM/Y.pl			Unicode character database
-lib/unicore/lib/Blk/NB.pl			Unicode character database
-lib/unicore/lib/Bpt/C.pl			Unicode character database
-lib/unicore/lib/Bpt/N.pl			Unicode character database
-lib/unicore/lib/Bpt/O.pl			Unicode character database
-lib/unicore/lib/Cased/Y.pl			Unicode character database
-lib/unicore/lib/Ccc/A.pl			Unicode character database
-lib/unicore/lib/Ccc/AL.pl			Unicode character database
-lib/unicore/lib/Ccc/AR.pl			Unicode character database
-lib/unicore/lib/Ccc/ATAR.pl			Unicode character database
-lib/unicore/lib/Ccc/B.pl			Unicode character database
-lib/unicore/lib/Ccc/BR.pl			Unicode character database
-lib/unicore/lib/Ccc/DB.pl			Unicode character database
-lib/unicore/lib/Ccc/NK.pl			Unicode character database
-lib/unicore/lib/Ccc/NR.pl			Unicode character database
-lib/unicore/lib/Ccc/OV.pl			Unicode character database
-lib/unicore/lib/Ccc/VR.pl			Unicode character database
-lib/unicore/lib/CE/Y.pl			Unicode character database
-lib/unicore/lib/CI/Y.pl			Unicode character database
-lib/unicore/lib/CompEx/Y.pl			Unicode character database
-lib/unicore/lib/CWCF/Y.pl			Unicode character database
-lib/unicore/lib/CWCM/Y.pl			Unicode character database
-lib/unicore/lib/CWKCF/Y.pl			Unicode character database
-lib/unicore/lib/CWL/Y.pl			Unicode character database
-lib/unicore/lib/CWT/Y.pl			Unicode character database
-lib/unicore/lib/CWU/Y.pl			Unicode character database
-lib/unicore/lib/Dash/Y.pl			Unicode character database
-lib/unicore/lib/Dep/Y.pl			Unicode character database
-lib/unicore/lib/DI/Y.pl			Unicode character database
-lib/unicore/lib/Dia/Y.pl			Unicode character database
-lib/unicore/lib/Dt/Com.pl			Unicode character database
-lib/unicore/lib/Dt/Enc.pl			Unicode character database
-lib/unicore/lib/Dt/Fin.pl			Unicode character database
-lib/unicore/lib/Dt/Font.pl			Unicode character database
-lib/unicore/lib/Dt/Init.pl			Unicode character database
-lib/unicore/lib/Dt/Iso.pl			Unicode character database
-lib/unicore/lib/Dt/Med.pl			Unicode character database
-lib/unicore/lib/Dt/Nar.pl			Unicode character database
-lib/unicore/lib/Dt/Nb.pl			Unicode character database
-lib/unicore/lib/Dt/NonCanon.pl			Unicode character database
-lib/unicore/lib/Dt/Sqr.pl			Unicode character database
-lib/unicore/lib/Dt/Sub.pl			Unicode character database
-lib/unicore/lib/Dt/Sup.pl			Unicode character database
-lib/unicore/lib/Dt/Vert.pl			Unicode character database
-lib/unicore/lib/Ea/A.pl			Unicode character database
-lib/unicore/lib/Ea/H.pl			Unicode character database
-lib/unicore/lib/Ea/N.pl			Unicode character database
-lib/unicore/lib/Ea/Na.pl			Unicode character database
-lib/unicore/lib/Ea/W.pl			Unicode character database
-lib/unicore/lib/Ext/Y.pl			Unicode character database
-lib/unicore/lib/Gc/C.pl			Unicode character database
-lib/unicore/lib/Gc/Cf.pl			Unicode character database
-lib/unicore/lib/Gc/Cn.pl			Unicode character database
-lib/unicore/lib/Gc/L.pl			Unicode character database
-lib/unicore/lib/Gc/LC.pl			Unicode character database
-lib/unicore/lib/Gc/Ll.pl			Unicode character database
-lib/unicore/lib/Gc/Lm.pl			Unicode character database
-lib/unicore/lib/Gc/Lo.pl			Unicode character database
-lib/unicore/lib/Gc/Lu.pl			Unicode character database
-lib/unicore/lib/Gc/M.pl			Unicode character database
-lib/unicore/lib/Gc/Mc.pl			Unicode character database
-lib/unicore/lib/Gc/Me.pl			Unicode character database
-lib/unicore/lib/Gc/Mn.pl			Unicode character database
-lib/unicore/lib/Gc/N.pl			Unicode character database
-lib/unicore/lib/Gc/Nd.pl			Unicode character database
-lib/unicore/lib/Gc/Nl.pl			Unicode character database
-lib/unicore/lib/Gc/No.pl			Unicode character database
-lib/unicore/lib/Gc/P.pl			Unicode character database
-lib/unicore/lib/Gc/Pc.pl			Unicode character database
-lib/unicore/lib/Gc/Pd.pl			Unicode character database
-lib/unicore/lib/Gc/Pe.pl			Unicode character database
-lib/unicore/lib/Gc/Pf.pl			Unicode character database
-lib/unicore/lib/Gc/Pi.pl			Unicode character database
-lib/unicore/lib/Gc/Po.pl			Unicode character database
-lib/unicore/lib/Gc/Ps.pl			Unicode character database
-lib/unicore/lib/Gc/S.pl			Unicode character database
-lib/unicore/lib/Gc/Sc.pl			Unicode character database
-lib/unicore/lib/Gc/Sk.pl			Unicode character database
-lib/unicore/lib/Gc/Sm.pl			Unicode character database
-lib/unicore/lib/Gc/So.pl			Unicode character database
-lib/unicore/lib/Gc/Z.pl			Unicode character database
-lib/unicore/lib/Gc/Zs.pl			Unicode character database
-lib/unicore/lib/GCB/CN.pl			Unicode character database
-lib/unicore/lib/GCB/EX.pl			Unicode character database
-lib/unicore/lib/GCB/LV.pl			Unicode character database
-lib/unicore/lib/GCB/LVT.pl			Unicode character database
-lib/unicore/lib/GCB/PP.pl			Unicode character database
-lib/unicore/lib/GCB/SM.pl			Unicode character database
-lib/unicore/lib/GCB/XX.pl			Unicode character database
-lib/unicore/lib/GrBase/Y.pl			Unicode character database
-lib/unicore/lib/GrExt/Y.pl			Unicode character database
-lib/unicore/lib/Hex/Y.pl			Unicode character database
-lib/unicore/lib/Hst/NA.pl			Unicode character database
-lib/unicore/lib/Hyphen/T.pl			Unicode character database
-lib/unicore/lib/IDC/Y.pl			Unicode character database
-lib/unicore/lib/Ideo/Y.pl			Unicode character database
-lib/unicore/lib/IDS/Y.pl			Unicode character database
-lib/unicore/lib/In/10_0.pl			Unicode character database
-lib/unicore/lib/In/11_0.pl			Unicode character database
-lib/unicore/lib/In/12_0.pl			Unicode character database
-lib/unicore/lib/In/12_1.pl			Unicode character database
-lib/unicore/lib/In/2_0.pl			Unicode character database
-lib/unicore/lib/In/2_1.pl			Unicode character database
-lib/unicore/lib/In/3_0.pl			Unicode character database
-lib/unicore/lib/In/3_1.pl			Unicode character database
-lib/unicore/lib/In/3_2.pl			Unicode character database
-lib/unicore/lib/In/4_0.pl			Unicode character database
-lib/unicore/lib/In/4_1.pl			Unicode character database
-lib/unicore/lib/In/5_0.pl			Unicode character database
-lib/unicore/lib/In/5_1.pl			Unicode character database
-lib/unicore/lib/In/5_2.pl			Unicode character database
-lib/unicore/lib/In/6_0.pl			Unicode character database
-lib/unicore/lib/In/6_1.pl			Unicode character database
-lib/unicore/lib/In/6_2.pl			Unicode character database
-lib/unicore/lib/In/6_3.pl			Unicode character database
-lib/unicore/lib/In/7_0.pl			Unicode character database
-lib/unicore/lib/In/8_0.pl			Unicode character database
-lib/unicore/lib/In/9_0.pl			Unicode character database
-lib/unicore/lib/InPC/Bottom.pl			Unicode character database
-lib/unicore/lib/InPC/Left.pl			Unicode character database
-lib/unicore/lib/InPC/LeftAndR.pl			Unicode character database
-lib/unicore/lib/InPC/NA.pl			Unicode character database
-lib/unicore/lib/InPC/Overstru.pl			Unicode character database
-lib/unicore/lib/InPC/Right.pl			Unicode character database
-lib/unicore/lib/InPC/Top.pl			Unicode character database
-lib/unicore/lib/InPC/TopAndBo.pl			Unicode character database
-lib/unicore/lib/InPC/TopAndL2.pl			Unicode character database
-lib/unicore/lib/InPC/TopAndLe.pl			Unicode character database
-lib/unicore/lib/InPC/TopAndRi.pl			Unicode character database
-lib/unicore/lib/InPC/VisualOr.pl			Unicode character database
-lib/unicore/lib/InSC/Avagraha.pl			Unicode character database
-lib/unicore/lib/InSC/Bindu.pl			Unicode character database
-lib/unicore/lib/InSC/Cantilla.pl			Unicode character database
-lib/unicore/lib/InSC/Consona2.pl			Unicode character database
-lib/unicore/lib/InSC/Consona3.pl			Unicode character database
-lib/unicore/lib/InSC/Consona4.pl			Unicode character database
-lib/unicore/lib/InSC/Consona5.pl			Unicode character database
-lib/unicore/lib/InSC/Consona6.pl			Unicode character database
-lib/unicore/lib/InSC/Consona7.pl			Unicode character database
-lib/unicore/lib/InSC/Consonan.pl			Unicode character database
-lib/unicore/lib/InSC/Invisibl.pl			Unicode character database
-lib/unicore/lib/InSC/Nukta.pl			Unicode character database
-lib/unicore/lib/InSC/Number.pl			Unicode character database
-lib/unicore/lib/InSC/Other.pl			Unicode character database
-lib/unicore/lib/InSC/PureKill.pl			Unicode character database
-lib/unicore/lib/InSC/Syllable.pl			Unicode character database
-lib/unicore/lib/InSC/ToneMark.pl			Unicode character database
-lib/unicore/lib/InSC/Virama.pl			Unicode character database
-lib/unicore/lib/InSC/Visarga.pl			Unicode character database
-lib/unicore/lib/InSC/Vowel.pl			Unicode character database
-lib/unicore/lib/InSC/VowelDep.pl			Unicode character database
-lib/unicore/lib/InSC/VowelInd.pl			Unicode character database
-lib/unicore/lib/Jg/Ain.pl			Unicode character database
-lib/unicore/lib/Jg/Alef.pl			Unicode character database
-lib/unicore/lib/Jg/Beh.pl			Unicode character database
-lib/unicore/lib/Jg/Dal.pl			Unicode character database
-lib/unicore/lib/Jg/FarsiYeh.pl			Unicode character database
-lib/unicore/lib/Jg/Feh.pl			Unicode character database
-lib/unicore/lib/Jg/Gaf.pl			Unicode character database
-lib/unicore/lib/Jg/Hah.pl			Unicode character database
-lib/unicore/lib/Jg/HanifiRo.pl			Unicode character database
-lib/unicore/lib/Jg/Kaf.pl			Unicode character database
-lib/unicore/lib/Jg/Lam.pl			Unicode character database
-lib/unicore/lib/Jg/NoJoinin.pl			Unicode character database
-lib/unicore/lib/Jg/Qaf.pl			Unicode character database
-lib/unicore/lib/Jg/Reh.pl			Unicode character database
-lib/unicore/lib/Jg/Sad.pl			Unicode character database
-lib/unicore/lib/Jg/Seen.pl			Unicode character database
-lib/unicore/lib/Jg/Waw.pl			Unicode character database
-lib/unicore/lib/Jg/Yeh.pl			Unicode character database
-lib/unicore/lib/Jt/C.pl			Unicode character database
-lib/unicore/lib/Jt/D.pl			Unicode character database
-lib/unicore/lib/Jt/L.pl			Unicode character database
-lib/unicore/lib/Jt/R.pl			Unicode character database
-lib/unicore/lib/Jt/T.pl			Unicode character database
-lib/unicore/lib/Jt/U.pl			Unicode character database
-lib/unicore/lib/Lb/AI.pl			Unicode character database
-lib/unicore/lib/Lb/AL.pl			Unicode character database
-lib/unicore/lib/Lb/BA.pl			Unicode character database
-lib/unicore/lib/Lb/BB.pl			Unicode character database
-lib/unicore/lib/Lb/CJ.pl			Unicode character database
-lib/unicore/lib/Lb/CL.pl			Unicode character database
-lib/unicore/lib/Lb/CM.pl			Unicode character database
-lib/unicore/lib/Lb/EB.pl			Unicode character database
-lib/unicore/lib/Lb/EX.pl			Unicode character database
-lib/unicore/lib/Lb/GL.pl			Unicode character database
-lib/unicore/lib/Lb/ID.pl			Unicode character database
-lib/unicore/lib/Lb/IN.pl			Unicode character database
-lib/unicore/lib/Lb/IS.pl			Unicode character database
-lib/unicore/lib/Lb/NS.pl			Unicode character database
-lib/unicore/lib/Lb/NU.pl			Unicode character database
-lib/unicore/lib/Lb/OP.pl			Unicode character database
-lib/unicore/lib/Lb/PO.pl			Unicode character database
-lib/unicore/lib/Lb/PR.pl			Unicode character database
-lib/unicore/lib/Lb/QU.pl			Unicode character database
-lib/unicore/lib/Lb/SA.pl			Unicode character database
-lib/unicore/lib/Lb/XX.pl			Unicode character database
-lib/unicore/lib/Lower/Y.pl			Unicode character database
-lib/unicore/lib/Math/Y.pl			Unicode character database
-lib/unicore/lib/NFCQC/M.pl			Unicode character database
-lib/unicore/lib/NFCQC/Y.pl			Unicode character database
-lib/unicore/lib/NFDQC/N.pl			Unicode character database
-lib/unicore/lib/NFDQC/Y.pl			Unicode character database
-lib/unicore/lib/NFKCQC/N.pl			Unicode character database
-lib/unicore/lib/NFKCQC/Y.pl			Unicode character database
-lib/unicore/lib/NFKDQC/N.pl			Unicode character database
-lib/unicore/lib/NFKDQC/Y.pl			Unicode character database
-lib/unicore/lib/Nt/Di.pl			Unicode character database
-lib/unicore/lib/Nt/None.pl			Unicode character database
-lib/unicore/lib/Nt/Nu.pl			Unicode character database
-lib/unicore/lib/Nv/0.pl			Unicode character database
-lib/unicore/lib/Nv/1.pl			Unicode character database
-lib/unicore/lib/Nv/10.pl			Unicode character database
-lib/unicore/lib/Nv/100.pl			Unicode character database
-lib/unicore/lib/Nv/1000.pl			Unicode character database
-lib/unicore/lib/Nv/10000.pl			Unicode character database
-lib/unicore/lib/Nv/100000.pl			Unicode character database
-lib/unicore/lib/Nv/11.pl			Unicode character database
-lib/unicore/lib/Nv/12.pl			Unicode character database
-lib/unicore/lib/Nv/13.pl			Unicode character database
-lib/unicore/lib/Nv/14.pl			Unicode character database
-lib/unicore/lib/Nv/15.pl			Unicode character database
-lib/unicore/lib/Nv/16.pl			Unicode character database
-lib/unicore/lib/Nv/17.pl			Unicode character database
-lib/unicore/lib/Nv/18.pl			Unicode character database
-lib/unicore/lib/Nv/19.pl			Unicode character database
-lib/unicore/lib/Nv/1_16.pl			Unicode character database
-lib/unicore/lib/Nv/1_2.pl			Unicode character database
-lib/unicore/lib/Nv/1_3.pl			Unicode character database
-lib/unicore/lib/Nv/1_4.pl			Unicode character database
-lib/unicore/lib/Nv/1_6.pl			Unicode character database
-lib/unicore/lib/Nv/1_8.pl			Unicode character database
-lib/unicore/lib/Nv/2.pl			Unicode character database
-lib/unicore/lib/Nv/20.pl			Unicode character database
-lib/unicore/lib/Nv/200.pl			Unicode character database
-lib/unicore/lib/Nv/2000.pl			Unicode character database
-lib/unicore/lib/Nv/20000.pl			Unicode character database
-lib/unicore/lib/Nv/2_3.pl			Unicode character database
-lib/unicore/lib/Nv/3.pl			Unicode character database
-lib/unicore/lib/Nv/30.pl			Unicode character database
-lib/unicore/lib/Nv/300.pl			Unicode character database
-lib/unicore/lib/Nv/3000.pl			Unicode character database
-lib/unicore/lib/Nv/30000.pl			Unicode character database
-lib/unicore/lib/Nv/3_16.pl			Unicode character database
-lib/unicore/lib/Nv/3_4.pl			Unicode character database
-lib/unicore/lib/Nv/4.pl			Unicode character database
-lib/unicore/lib/Nv/40.pl			Unicode character database
-lib/unicore/lib/Nv/400.pl			Unicode character database
-lib/unicore/lib/Nv/4000.pl			Unicode character database
-lib/unicore/lib/Nv/40000.pl			Unicode character database
-lib/unicore/lib/Nv/5.pl			Unicode character database
-lib/unicore/lib/Nv/50.pl			Unicode character database
-lib/unicore/lib/Nv/500.pl			Unicode character database
-lib/unicore/lib/Nv/5000.pl			Unicode character database
-lib/unicore/lib/Nv/50000.pl			Unicode character database
-lib/unicore/lib/Nv/6.pl			Unicode character database
-lib/unicore/lib/Nv/60.pl			Unicode character database
-lib/unicore/lib/Nv/600.pl			Unicode character database
-lib/unicore/lib/Nv/6000.pl			Unicode character database
-lib/unicore/lib/Nv/60000.pl			Unicode character database
-lib/unicore/lib/Nv/7.pl			Unicode character database
-lib/unicore/lib/Nv/70.pl			Unicode character database
-lib/unicore/lib/Nv/700.pl			Unicode character database
-lib/unicore/lib/Nv/7000.pl			Unicode character database
-lib/unicore/lib/Nv/70000.pl			Unicode character database
-lib/unicore/lib/Nv/8.pl			Unicode character database
-lib/unicore/lib/Nv/80.pl			Unicode character database
-lib/unicore/lib/Nv/800.pl			Unicode character database
-lib/unicore/lib/Nv/8000.pl			Unicode character database
-lib/unicore/lib/Nv/80000.pl			Unicode character database
-lib/unicore/lib/Nv/9.pl			Unicode character database
-lib/unicore/lib/Nv/90.pl			Unicode character database
-lib/unicore/lib/Nv/900.pl			Unicode character database
-lib/unicore/lib/Nv/9000.pl			Unicode character database
-lib/unicore/lib/Nv/90000.pl			Unicode character database
-lib/unicore/lib/PatSyn/Y.pl			Unicode character database
-lib/unicore/lib/PCM/Y.pl			Unicode character database
-lib/unicore/lib/Perl/_PerlAny.pl			Unicode character database
-lib/unicore/lib/Perl/_PerlCh2.pl			Unicode character database
-lib/unicore/lib/Perl/_PerlCha.pl			Unicode character database
-lib/unicore/lib/Perl/_PerlFol.pl			Unicode character database
-lib/unicore/lib/Perl/_PerlIDC.pl			Unicode character database
-lib/unicore/lib/Perl/_PerlIDS.pl			Unicode character database
-lib/unicore/lib/Perl/_PerlIsI.pl			Unicode character database
-lib/unicore/lib/Perl/_PerlNch.pl			Unicode character database
-lib/unicore/lib/Perl/_PerlNon.pl			Unicode character database
-lib/unicore/lib/Perl/_PerlPat.pl			Unicode character database
-lib/unicore/lib/Perl/_PerlPr2.pl			Unicode character database
-lib/unicore/lib/Perl/_PerlPro.pl			Unicode character database
-lib/unicore/lib/Perl/_PerlQuo.pl			Unicode character database
-lib/unicore/lib/Perl/Alnum.pl			Unicode character database
-lib/unicore/lib/Perl/Assigned.pl			Unicode character database
-lib/unicore/lib/Perl/Blank.pl			Unicode character database
-lib/unicore/lib/Perl/Graph.pl			Unicode character database
-lib/unicore/lib/Perl/PerlWord.pl			Unicode character database
-lib/unicore/lib/Perl/PosixPun.pl			Unicode character database
-lib/unicore/lib/Perl/Print.pl			Unicode character database
-lib/unicore/lib/Perl/SpacePer.pl			Unicode character database
-lib/unicore/lib/Perl/Title.pl			Unicode character database
-lib/unicore/lib/Perl/Word.pl			Unicode character database
-lib/unicore/lib/Perl/XPosixPu.pl			Unicode character database
-lib/unicore/lib/QMark/Y.pl			Unicode character database
-lib/unicore/lib/SB/AT.pl			Unicode character database
-lib/unicore/lib/SB/CL.pl			Unicode character database
-lib/unicore/lib/SB/EX.pl			Unicode character database
-lib/unicore/lib/SB/FO.pl			Unicode character database
-lib/unicore/lib/SB/LE.pl			Unicode character database
-lib/unicore/lib/SB/LO.pl			Unicode character database
-lib/unicore/lib/SB/NU.pl			Unicode character database
-lib/unicore/lib/SB/SC.pl			Unicode character database
-lib/unicore/lib/SB/Sp.pl			Unicode character database
-lib/unicore/lib/SB/ST.pl			Unicode character database
-lib/unicore/lib/SB/UP.pl			Unicode character database
-lib/unicore/lib/SB/XX.pl			Unicode character database
-lib/unicore/lib/Sc/Arab.pl			Unicode character database
-lib/unicore/lib/Sc/Armn.pl			Unicode character database
-lib/unicore/lib/Sc/Beng.pl			Unicode character database
-lib/unicore/lib/Sc/Cprt.pl			Unicode character database
-lib/unicore/lib/Sc/Cyrl.pl			Unicode character database
-lib/unicore/lib/Sc/Deva.pl			Unicode character database
-lib/unicore/lib/Sc/Dupl.pl			Unicode character database
-lib/unicore/lib/Sc/Geor.pl			Unicode character database
-lib/unicore/lib/Sc/Glag.pl			Unicode character database
-lib/unicore/lib/Sc/Gong.pl			Unicode character database
-lib/unicore/lib/Sc/Gonm.pl			Unicode character database
-lib/unicore/lib/Sc/Gran.pl			Unicode character database
-lib/unicore/lib/Sc/Grek.pl			Unicode character database
-lib/unicore/lib/Sc/Gujr.pl			Unicode character database
-lib/unicore/lib/Sc/Guru.pl			Unicode character database
-lib/unicore/lib/Sc/Han.pl			Unicode character database
-lib/unicore/lib/Sc/Hang.pl			Unicode character database
-lib/unicore/lib/Sc/Hira.pl			Unicode character database
-lib/unicore/lib/Sc/Kana.pl			Unicode character database
-lib/unicore/lib/Sc/Knda.pl			Unicode character database
-lib/unicore/lib/Sc/Latn.pl			Unicode character database
-lib/unicore/lib/Sc/Limb.pl			Unicode character database
-lib/unicore/lib/Sc/Linb.pl			Unicode character database
-lib/unicore/lib/Sc/Mlym.pl			Unicode character database
-lib/unicore/lib/Sc/Mong.pl			Unicode character database
-lib/unicore/lib/Sc/Mult.pl			Unicode character database
-lib/unicore/lib/Sc/Orya.pl			Unicode character database
-lib/unicore/lib/Sc/Sinh.pl			Unicode character database
-lib/unicore/lib/Sc/Syrc.pl			Unicode character database
-lib/unicore/lib/Sc/Taml.pl			Unicode character database
-lib/unicore/lib/Sc/Telu.pl			Unicode character database
-lib/unicore/lib/Sc/Zinh.pl			Unicode character database
-lib/unicore/lib/Sc/Zyyy.pl			Unicode character database
-lib/unicore/lib/Scx/Adlm.pl			Unicode character database
-lib/unicore/lib/Scx/Arab.pl			Unicode character database
-lib/unicore/lib/Scx/Armn.pl			Unicode character database
-lib/unicore/lib/Scx/Beng.pl			Unicode character database
-lib/unicore/lib/Scx/Bhks.pl			Unicode character database
-lib/unicore/lib/Scx/Bopo.pl			Unicode character database
-lib/unicore/lib/Scx/Cakm.pl			Unicode character database
-lib/unicore/lib/Scx/Cham.pl			Unicode character database
-lib/unicore/lib/Scx/Copt.pl			Unicode character database
-lib/unicore/lib/Scx/Cprt.pl			Unicode character database
-lib/unicore/lib/Scx/Cyrl.pl			Unicode character database
-lib/unicore/lib/Scx/Deva.pl			Unicode character database
-lib/unicore/lib/Scx/Dupl.pl			Unicode character database
-lib/unicore/lib/Scx/Ethi.pl			Unicode character database
-lib/unicore/lib/Scx/Geor.pl			Unicode character database
-lib/unicore/lib/Scx/Glag.pl			Unicode character database
-lib/unicore/lib/Scx/Gong.pl			Unicode character database
-lib/unicore/lib/Scx/Gonm.pl			Unicode character database
-lib/unicore/lib/Scx/Gran.pl			Unicode character database
-lib/unicore/lib/Scx/Grek.pl			Unicode character database
-lib/unicore/lib/Scx/Gujr.pl			Unicode character database
-lib/unicore/lib/Scx/Guru.pl			Unicode character database
-lib/unicore/lib/Scx/Han.pl			Unicode character database
-lib/unicore/lib/Scx/Hang.pl			Unicode character database
-lib/unicore/lib/Scx/Hebr.pl			Unicode character database
-lib/unicore/lib/Scx/Hira.pl			Unicode character database
-lib/unicore/lib/Scx/Hmng.pl			Unicode character database
-lib/unicore/lib/Scx/Hmnp.pl			Unicode character database
-lib/unicore/lib/Scx/Kana.pl			Unicode character database
-lib/unicore/lib/Scx/Khar.pl			Unicode character database
-lib/unicore/lib/Scx/Khmr.pl			Unicode character database
-lib/unicore/lib/Scx/Khoj.pl			Unicode character database
-lib/unicore/lib/Scx/Knda.pl			Unicode character database
-lib/unicore/lib/Scx/Kthi.pl			Unicode character database
-lib/unicore/lib/Scx/Lana.pl			Unicode character database
-lib/unicore/lib/Scx/Lao.pl			Unicode character database
-lib/unicore/lib/Scx/Latn.pl			Unicode character database
-lib/unicore/lib/Scx/Limb.pl			Unicode character database
-lib/unicore/lib/Scx/Lina.pl			Unicode character database
-lib/unicore/lib/Scx/Linb.pl			Unicode character database
-lib/unicore/lib/Scx/Mlym.pl			Unicode character database
-lib/unicore/lib/Scx/Mong.pl			Unicode character database
-lib/unicore/lib/Scx/Mult.pl			Unicode character database
-lib/unicore/lib/Scx/Mymr.pl			Unicode character database
-lib/unicore/lib/Scx/Nand.pl			Unicode character database
-lib/unicore/lib/Scx/Orya.pl			Unicode character database
-lib/unicore/lib/Scx/Phlp.pl			Unicode character database
-lib/unicore/lib/Scx/Rohg.pl			Unicode character database
-lib/unicore/lib/Scx/Shrd.pl			Unicode character database
-lib/unicore/lib/Scx/Sind.pl			Unicode character database
-lib/unicore/lib/Scx/Sinh.pl			Unicode character database
-lib/unicore/lib/Scx/Syrc.pl			Unicode character database
-lib/unicore/lib/Scx/Tagb.pl			Unicode character database
-lib/unicore/lib/Scx/Takr.pl			Unicode character database
-lib/unicore/lib/Scx/Talu.pl			Unicode character database
-lib/unicore/lib/Scx/Taml.pl			Unicode character database
-lib/unicore/lib/Scx/Telu.pl			Unicode character database
-lib/unicore/lib/Scx/Thaa.pl			Unicode character database
-lib/unicore/lib/Scx/Tibt.pl			Unicode character database
-lib/unicore/lib/Scx/Tirh.pl			Unicode character database
-lib/unicore/lib/Scx/Xsux.pl			Unicode character database
-lib/unicore/lib/Scx/Yi.pl			Unicode character database
-lib/unicore/lib/Scx/Zinh.pl			Unicode character database
-lib/unicore/lib/Scx/Zyyy.pl			Unicode character database
-lib/unicore/lib/Scx/Zzzz.pl			Unicode character database
-lib/unicore/lib/SD/Y.pl			Unicode character database
-lib/unicore/lib/STerm/Y.pl			Unicode character database
-lib/unicore/lib/Term/Y.pl			Unicode character database
-lib/unicore/lib/UIdeo/Y.pl			Unicode character database
-lib/unicore/lib/Upper/Y.pl			Unicode character database
-lib/unicore/lib/Vo/R.pl			Unicode character database
-lib/unicore/lib/Vo/Tr.pl			Unicode character database
-lib/unicore/lib/Vo/Tu.pl			Unicode character database
-lib/unicore/lib/Vo/U.pl			Unicode character database
-lib/unicore/lib/WB/EX.pl			Unicode character database
-lib/unicore/lib/WB/Extend.pl			Unicode character database
-lib/unicore/lib/WB/FO.pl			Unicode character database
-lib/unicore/lib/WB/HL.pl			Unicode character database
-lib/unicore/lib/WB/KA.pl			Unicode character database
-lib/unicore/lib/WB/LE.pl			Unicode character database
-lib/unicore/lib/WB/MB.pl			Unicode character database
-lib/unicore/lib/WB/ML.pl			Unicode character database
-lib/unicore/lib/WB/MN.pl			Unicode character database
-lib/unicore/lib/WB/NU.pl			Unicode character database
-lib/unicore/lib/WB/WSegSpac.pl			Unicode character database
-lib/unicore/lib/WB/XX.pl			Unicode character database
-lib/unicore/lib/XIDC/Y.pl			Unicode character database
-lib/unicore/lib/XIDS/Y.pl			Unicode character database
 lib/unicore/LineBreak.txt			Unicode character database
 lib/unicore/Makefile				Unicode character database
 lib/unicore/mktables				Unicode character database generator
-lib/unicore/mktables.lst			Unicode character database
-lib/unicore/Name.pl			Unicode character database
-lib/unicore/Name.pm			Unicode character database
 lib/unicore/NameAliases.txt			Unicode character database
 lib/unicore/NamedSequences.txt			Unicode character database
 lib/unicore/NamedSqProv.txt			Unicode character database
 lib/unicore/NamesList.txt			Unicode character database
-lib/unicore/NormalizationCorrections.txt			Unicode character database
+lib/unicore/NormalizationCorrections.txt	Unicode character database
 lib/unicore/PropertyAliases.txt			Unicode character database
 lib/unicore/PropList.txt			Unicode character database
-lib/unicore/PropValueAliases.txt			Unicode character database
+lib/unicore/PropValueAliases.txt		Unicode character database
 lib/unicore/README.perl				Unicode character database
 lib/unicore/ReadMe.txt				Unicode character database info
-lib/unicore/ScriptExtensions.txt			Unicode character database
+lib/unicore/ScriptExtensions.txt		Unicode character database
 lib/unicore/Scripts.txt				Unicode character database
 lib/unicore/SpecialCasing.txt			Unicode character database
-lib/unicore/StandardizedVariants.txt			Unicode character database
-lib/unicore/TestProp.pl			Unicode character database
-lib/unicore/To/_PerlLB.pl			Unicode character database
-lib/unicore/To/_PerlSCX.pl			Unicode character database
-lib/unicore/To/Age.pl			Unicode character database
-lib/unicore/To/Bc.pl			Unicode character database
-lib/unicore/To/Bmg.pl			Unicode character database
-lib/unicore/To/Bpb.pl			Unicode character database
-lib/unicore/To/Bpt.pl			Unicode character database
-lib/unicore/To/Cf.pl			Unicode character database
-lib/unicore/To/Digit.pl			Unicode character database
-lib/unicore/To/Ea.pl			Unicode character database
-lib/unicore/To/EqUIdeo.pl			Unicode character database
-lib/unicore/To/Fold.pl			Unicode character database
-lib/unicore/To/Gc.pl			Unicode character database
-lib/unicore/To/GCB.pl			Unicode character database
-lib/unicore/To/Hst.pl			Unicode character database
-lib/unicore/To/InPC.pl			Unicode character database
-lib/unicore/To/InSC.pl			Unicode character database
-lib/unicore/To/Isc.pl			Unicode character database
-lib/unicore/To/Jg.pl			Unicode character database
-lib/unicore/To/Jt.pl			Unicode character database
-lib/unicore/To/Lb.pl			Unicode character database
-lib/unicore/To/Lc.pl			Unicode character database
-lib/unicore/To/Lower.pl			Unicode character database
-lib/unicore/To/Na1.pl			Unicode character database
-lib/unicore/To/NameAlia.pl			Unicode character database
-lib/unicore/To/NFCQC.pl			Unicode character database
-lib/unicore/To/NFDQC.pl			Unicode character database
-lib/unicore/To/NFKCCF.pl			Unicode character database
-lib/unicore/To/NFKCQC.pl			Unicode character database
-lib/unicore/To/NFKDQC.pl			Unicode character database
-lib/unicore/To/Nt.pl			Unicode character database
-lib/unicore/To/Nv.pl			Unicode character database
-lib/unicore/To/PerlDeci.pl			Unicode character database
-lib/unicore/To/SB.pl			Unicode character database
-lib/unicore/To/Sc.pl			Unicode character database
-lib/unicore/To/Scx.pl			Unicode character database
-lib/unicore/To/Tc.pl			Unicode character database
-lib/unicore/To/Title.pl			Unicode character database
-lib/unicore/To/Uc.pl			Unicode character database
-lib/unicore/To/Upper.pl			Unicode character database
-lib/unicore/To/Vo.pl			Unicode character database
-lib/unicore/To/WB.pl			Unicode character database
-lib/unicore/UCD.pl			Unicode character database
+lib/unicore/StandardizedVariants.txt		Unicode character database
 lib/unicore/uni_keywords.pl			Indices into array in charclass_invlists.h
 lib/unicore/UnicodeData.txt			Unicode character database
 lib/unicore/version				The version of the Unicode
-lib/unicore/VerticalOrientation.txt			Unicode character database
+lib/unicore/VerticalOrientation.txt		Unicode character database
 lib/UNIVERSAL.pm		Base class for ALL classes
 lib/User/grent.pm		By-name interface to Perl's builtin getgr*
 lib/User/grent.t		See if User::grwent works
@@ -5327,7 +4945,6 @@ lib/User/pwent.pm		By-name interface to Perl's builtin getpw*
 lib/User/pwent.t		See if User::pwent works
 lib/utf8.pm			Pragma to control Unicode support
 lib/utf8.t			See if utf8 operations work
-lib/utf8_heavy.pl		Support routines for utf8 pragma
 lib/vars.pm			Declare pseudo-imported global variables
 lib/vars.t			See if "use vars" works
 lib/vars_carp.t			See if "use vars" doesn't load Carp.pm per default
@@ -5571,9 +5188,12 @@ pod/perl5263delta.pod		Perl changes in version 5.26.3
 pod/perl5280delta.pod		Perl changes in version 5.28.0
 pod/perl5281delta.pod		Perl changes in version 5.28.1
 pod/perl5282delta.pod		Perl changes in version 5.28.2
+pod/perl5283delta.pod		Perl changes in version 5.28.3
 pod/perl5300delta.pod		Perl changes in version 5.30.0
 pod/perl5301delta.pod		Perl changes in version 5.30.1
 pod/perl5302delta.pod		Perl changes in version 5.30.2
+pod/perl5303delta.pod		Perl changes in version 5.30.3
+pod/perl5320delta.pod		Perl changes in version 5.32.0
 pod/perl561delta.pod		Perl changes in version 5.6.1
 pod/perl56delta.pod		Perl changes in version 5.6
 pod/perl581delta.pod		Perl changes in version 5.8.1
@@ -5613,6 +5233,7 @@ pod/perlfork.pod		Perl fork() information
 pod/perlform.pod		Perl formats
 pod/perlfunc.pod		Perl built-in functions
 pod/perlgit.pod			Using git with the Perl repository
+pod/perlgov.pod			Perl Rules of Governance
 pod/perlgpl.pod			GNU General Public License
 pod/perlguts.pod		Perl internal functions for those doing extensions
 pod/perlhack.pod		Perl hackers guide
@@ -5658,6 +5279,7 @@ pod/perlreref.pod		Perl regular expressions quick reference
 pod/perlretut.pod		Perl regular expressions tutorial
 pod/perlrun.pod			Perl execution and options
 pod/perlsec.pod			Perl security
+pod/perlsecpolicy.pod		Perl security report handling policy
 pod/perlsource.pod		Guide to the Perl source tree
 pod/perlstyle.pod		Perl style guide
 pod/perlsub.pod			Perl subroutines
@@ -5672,7 +5294,6 @@ pod/perlunicode.pod		Perl Unicode support
 pod/perlunicook.pod		Perl Unicode cookbook
 pod/perlunifaq.pod		Perl Unicode FAQ
 pod/perluniintro.pod		Perl Unicode introduction
-pod/perluniprops.pod		Index of Unicode properties in Perl
 pod/perlunitut.pod		Perl Unicode tutorial
 pod/perlutil.pod		utilities packaged with the Perl distribution
 pod/perlvar.pod			Perl predefined variables
@@ -5748,6 +5369,7 @@ Porting/release_announcement_template.txt
 Porting/release_managers_guide.pod	Release Manager's Guide
 Porting/release_schedule.pod	Schedule for future releases
 Porting/rt_list_patches		A tool to help you apply patches from RT
+Porting/security_template.pod	Template for vulnerability announcements
 Porting/sort_perldiag.pl	Keep our diagnostics orderly
 Porting/sync-with-cpan		Sync with CPAN
 Porting/timecheck.c		Test program for the 2038 fix
@@ -5771,7 +5393,6 @@ README.aix			Perl notes for AIX
 README.amiga			Perl notes for AmigaOS
 README.android			Perl notes for Android
 README.bs2000			Perl notes for POSIX-BC BS2000
-README.ce			Perl notes for WinCE
 README.cn			Perl for Simplified Chinese (in EUC-CN)
 README.cygwin			Perl notes for Cygwin
 README.dos			Perl notes for DOS
@@ -5843,6 +5464,7 @@ runtests.SH			A script that generates runtests
 sbox32_hash.h			SBox hash code (32 Bit SBOX based hash function)
 scope.c				Scope entry and exit code
 scope.h				Scope entry and exit header
+SECURITY.md			Add Security Policy for GitHub
 stadtx_hash.h			StadtX hash code (64 Bit fast hash function)
 sv.c				Scalar value code
 sv.h				Scalar value header
@@ -5905,7 +5527,7 @@ t/base/rs.t			See if record-read works
 t/base/term.t			See if various terms work
 t/base/translate.t		See if character set translation works
 t/base/while.t			See if while work
-t/benchmark/rt26188-speed-up-keys-on-empty-hash.t	Benchmark if keys on empty hashes is fast enough
+t/benchmark/gh7094-speed-up-keys-on-empty-hash.t	Benchmark if keys on empty hashes is fast enough
 t/bigmem/hash.t			Check hashing too large strings throws an exception
 t/bigmem/index.t		Check that index() handles large offsets
 t/bigmem/pos.t			Check that pos() handles large offsets
@@ -5989,6 +5611,7 @@ t/io/tell.t			See if file seeking works
 t/io/through.t			See if pipe passes data intact
 t/io/utf8.t			See if file seeking works
 t/japh/abigail.t		Obscure tests
+t/lib/CannotParse.pm		For test case in op/require_errors.t
 t/lib/charnames/alias		Tests of "use charnames" with aliases.
 t/lib/Cname.pm			Test charnames in regexes (op/pat.t)
 t/lib/common.pl			Helper for lib/{warnings,feature}.t
@@ -6014,8 +5637,10 @@ t/lib/Devel/nodb.pm		Module for t/run/switchd.t
 t/lib/Devel/switchd.pm		Module for t/run/switchd.t
 t/lib/Devel/switchd_empty.pm	Module for t/run/switchd.t
 t/lib/Devel/switchd_goto.pm	Module for t/run/switchd.t
+t/lib/feature/bits		Tests for feature bit handling
 t/lib/feature/bundle		Tests for feature bundles
 t/lib/feature/implicit		Tests for implicit loading of feature.pm
+t/lib/feature/indirect		Tests for enabling/disabling indirect method calls
 t/lib/feature/nonesuch		Tests for enabling/disabling nonexistent feature
 t/lib/feature/removed		Tests for enabling/disabling removed feature
 t/lib/feature/say		Tests for enabling/disabling say feature
@@ -6051,7 +5676,6 @@ t/lib/warnings/9enabled		Tests warnings
 t/lib/warnings/9uninit		Tests "Use of uninitialized" warnings
 t/lib/warnings/av		Tests for av.c for warnings.t
 t/lib/warnings/doio		Tests for doio.c for warnings.t
-t/lib/warnings/doop		Tests for doop.c for warnings.t
 t/lib/warnings/gv		Tests for gv.c for warnings.t
 t/lib/warnings/hv		Tests for hv.c for warnings.t
 t/lib/warnings/malloc		Tests for malloc.c for warnings.t
@@ -6174,6 +5798,7 @@ t/op/chop.t			See if chop works
 t/op/chr.t			See if chr works
 t/op/closure.t			See if closures work
 t/op/closure_test.pl		Extra file for closure.t
+t/op/cmpchain.t			See if comparison chaining works
 t/op/concat2.t			Tests too complex for concat.t
 t/op/cond.t			See if conditional expressions work
 t/op/const-optree.t		Tests for sub(){...} becoming constant
@@ -6204,7 +5829,7 @@ t/op/exec.t			See if exec, system and qx work
 t/op/exists_sub.t		See if exists(&sub) works
 t/op/exp.t			See if math functions work
 t/op/fh.t			See if filehandles work
-t/op/filehandle.t		Tests for http://rt.perl.org/rt3/Ticket/Display.html?id=72586
+t/op/filehandle.t		Tests for https://github.com/Perl/perl5/issues/10133
 t/op/filetest.t			See if file tests work
 t/op/filetest_stack_ok.t	See if file tests leave their argument on the stack
 t/op/filetest_t.t		See if -t file test works
@@ -6236,6 +5861,7 @@ t/op/index.t			See if index works
 t/op/index_thr.t		See if index works in another thread
 t/op/infnan.t			See if inf/nan work
 t/op/int.t			See if int works
+t/op/isa.t			See if isa works
 t/op/join.t			See if join works
 t/op/kill0.t			See if kill works
 t/op/kill0_child		Process tree script that is kill()ed
@@ -6300,6 +5926,7 @@ t/op/runlevel.t			See if die() works from perl_call_*()
 t/op/select.t			See if 0- and 1-argument select works
 t/op/setpgrpstack.t		See if setpgrp works
 t/op/sigdispatch.t		See if signals are always dispatched
+t/op/signame_canonical.t	See if duplicate signal names always use the canonical name when the handler is invoked.
 t/op/signatures.t		See if sub signatures work
 t/op/sigsystem.t		See if system and SIGCHLD handlers play together nicely
 t/op/sleep.t			See if sleep works
@@ -6414,6 +6041,7 @@ t/porting/test_bootstrap.t	Test that the instructions for test bootstrapping are
 t/porting/utils.t		Check that utility scripts still compile
 t/re/alpha_assertions.t		See if things like '(*postive_lookahed:...) work properly
 t/re/anyof.t			See if bracketed char classes [...] compile properly
+t/re/begin-once.t		Checking that /o freeze a variable in a RegExp
 t/re/bigfuzzy_not_utf8.t	Big and ugly tests not storable as UTF-8
 t/re/charset.t			See if regex modifiers like /d, /u work properly
 t/re/fold_grind.pl		Core file to see if regex case folding works properly
@@ -6531,7 +6159,6 @@ t/test_pl/tempfile.t		Tests for the simple testing library
 t/thread_it.pl			Run regression tests in a new thread
 t/uni/attrs.t			See if Unicode attributes work
 t/uni/bless.t			See if Unicode bless works
-t/uni/cache.t			See if Unicode swash caching works
 t/uni/caller.t			See if Unicode doesn't get mangled in caller()
 t/uni/case.pl			See if Unicode casing works
 t/uni/chomp.t			See if Unicode chomp works
@@ -6610,6 +6237,7 @@ utils/ptardiff.PL		The ptardiff utility
 utils/ptargrep.PL		The ptargrep utility
 utils/shasum.PL			filter for computing SHA digests (analogous to md5sum)
 utils/splain.PL			Stand-alone version of diagnostics.pm
+utils/streamzip.PL
 utils/xsubpp.PL			External subroutine preprocessor
 utils/zipdetails.PL			display the internal structure of zip files
 vms/descrip_mms.template	Template MM[SK] description file for build
@@ -6638,17 +6266,8 @@ win32/bin/perlglob.pl		Win32 globbing
 win32/bin/pl2bat.pl		wrap perl scripts into batch files
 win32/bin/runperl.pl		run perl script via batch file namesake
 win32/bin/search.pl		Win32 port
-win32/ce-helpers/cecopy-lib.pl	WinCE port
-win32/ce-helpers/comp.pl	WinCE port
-win32/ce-helpers/compile.bat	WinCE port
-win32/ce-helpers/compile-all.bat	WinCE port
-win32/ce-helpers/makedist.pl	WinCE port
-win32/ce-helpers/registry.bat	WinCE port
-win32/ce-helpers/sdsdkenv.bat	WinCE port
-win32/config.ce			WinCE port
 win32/config.gc			Win32 base line config.sh (MinGW build)
 win32/config.vc			Win32 base line config.sh (Visual C++ build)
-win32/config_H.ce		WinCE port
 win32/config_H.gc		Win32 config header (MinGW build)
 win32/config_h.PL		Perl code to convert Win32 config.sh to config.h
 win32/config_H.vc		Win32 config header (Visual C++ build)
@@ -6665,32 +6284,24 @@ win32/include/sys/errno2.h	Win32 port
 win32/include/sys/socket.h	Win32 port
 win32/list_static_libs.pl	prints libraries for static linking
 win32/Makefile			Win32 makefile for NMAKE (Visual C++ build)
-win32/Makefile.ce		WinCE port
 win32/makefile.mk		Win32 makefile for DMAKE (BC++, VC++ builds)
-win32/perl.rc			WinCE port
 win32/perlexe.ico		perlexe.ico image file
 win32/perlexe.manifest		Assembly manifest file
 win32/perlexe.rc		associated perl binary with icon
 win32/perlglob.c		Win32 port
 win32/perlhost.h		Perl "host" implementation
 win32/perllib.c			Win32 port
-win32/perlmaince.c		WinCE port
 win32/pod.mak			Win32 port
 win32/runperl.c			Win32 port
-win32/vdir.h			Perl "host" virtual directory manager for CE
-win32/vmem.h			Perl "host" memory manager for CE
+win32/vdir.h			Perl "host" virtual directory manager for Win32
+win32/vmem.h			Perl "host" memory manager for Win32
 win32/win32.c			Win32 port
 win32/win32.h			Win32 port
-win32/win32ceio.c		Win32/WinCE PerlIO layer support
 win32/win32io.c			Win32 PerlIO layer support
 win32/win32iop.h		Win32 port
-win32/win32iop-o.h		WinCE port
 win32/win32sck.c		Win32 port
 win32/win32thread.c		Win32 functions for threads
 win32/win32thread.h		Win32 port mapping to threads
-win32/wince.c			WinCE port
-win32/wince.h			WinCE port
-win32/wincesck.c		WinCE port
 write_buildcustomize.pl		Generate lib/buildcustomize.pl
 XSUB.h				Include file for extension subroutines
 zaphod32_hash.h			Zaphod32 hash code (32 bit fast hash function)

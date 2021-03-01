@@ -411,7 +411,7 @@ charnames alias definitions may not contain trailing white-space; marked by <-- 
 Invalid character in charnames alias definition; marked by <-- HERE in '٤<-- HERE 転車に乗る人'
 Invalid character in charnames alias definition; marked by <-- HERE in '自転車・<-- HERE に乗る人' at - line \d+
 ########
-# NAME Using NBSP in :alias names is deprectated
+# NAME Using NBSP in :alias names is deprecated
 use utf8;
 use open qw( :utf8 :std );
 use charnames ":alias" => { "NBSP SEPARATED SPACE" => "BLACK SMILING FACE" };

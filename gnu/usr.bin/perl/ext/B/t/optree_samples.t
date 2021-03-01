@@ -331,7 +331,7 @@ checkOptree ( name	=> '-exec -e foreach (1..10) {print qq{foo $_}}',
 	      bcopts	=> '-exec',
 	      strip_open_hints => 1,
 	      expect	=> <<'EOT_EOT', expect_nt => <<'EONT_EONT');
-# 1  <0> enter 
+# 1  <0> enter v
 # 2  <;> nextstate(main 2 -e:1) v:>,<,%,{
 # 3  <0> pushmark s
 # 4  <$> const[IV 1] s
@@ -350,7 +350,7 @@ checkOptree ( name	=> '-exec -e foreach (1..10) {print qq{foo $_}}',
 # g  <2> leaveloop vK/2
 # h  <@> leave[1 ref] vKP/REFC
 EOT_EOT
-# 1  <0> enter 
+# 1  <0> enter v
 # 2  <;> nextstate(main 2 -e:1) v:>,<,%,{
 # 3  <0> pushmark s
 # 4  <$> const(IV 1) s
@@ -602,14 +602,14 @@ checkOptree ( name	=> '-e use constant j => qq{junk}; print j',
 	      bcopts	=> '-exec',
 	      strip_open_hints => 1,
 	      expect	=> <<'EOT_EOT', expect_nt => <<'EONT_EONT');
-# 1  <0> enter 
+# 1  <0> enter v
 # 2  <;> nextstate(main 71 -e:1) v:>,<,%,{
 # 3  <0> pushmark s
 # 4  <$> const[PV "junk"] s*/FOLD
 # 5  <@> print vK
 # 6  <@> leave[1 ref] vKP/REFC
 EOT_EOT
-# 1  <0> enter 
+# 1  <0> enter v
 # 2  <;> nextstate(main 71 -e:1) v:>,<,%,{
 # 3  <0> pushmark s
 # 4  <$> const(PV "junk") s*/FOLD

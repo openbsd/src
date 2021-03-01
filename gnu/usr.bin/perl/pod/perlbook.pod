@@ -7,7 +7,7 @@ perlbook - Books about and related to Perl
 There are many books on Perl and Perl-related. A few of these are
 good, some are OK, but many aren't worth your money. There is a list
 of these books, some with extensive reviews, at
-L<http://books.perl.org/> . We list some of the books here, and while
+L<https://www.perl.org/books/library.html> . We list some of the books here, and while
 listing a book implies our
 endorsement, don't think that not including a book means anything.
 
@@ -26,7 +26,7 @@ I<Programming Perl>:
  by Tom Christiansen, brian d foy, Larry Wall with Jon Orwant
  ISBN 978-0-596-00492-7 [4th edition February 2012]
  ISBN 978-1-4493-9890-3 [ebook]
- http://oreilly.com/catalog/9780596004927
+ https://oreilly.com/catalog/9780596004927
 
 =back
 
@@ -41,7 +41,7 @@ accomplish specific tasks:
  with Foreword by Larry Wall
  ISBN 978-0-596-00313-5 [2nd Edition August 2003]
  ISBN 978-0-596-15888-0 [ebook]
- http://oreilly.com/catalog/9780596003135/
+ https://oreilly.com/catalog/9780596003135/
 
 =back
 
@@ -56,7 +56,7 @@ programming:
  by Randal L. Schwartz, Tom Phoenix, and brian d foy
  ISBN 978-1-4493-0358-7 [6th edition June 2011]
  ISBN 978-1-4493-0458-4 [ebook]
- http://www.learning-perl.com/
+ https://www.learning-perl.com/
 
 =back
 
@@ -72,7 +72,7 @@ object-oriented programming, and modules:
          foreword by Damian Conway
  ISBN 978-1-4493-9309-0 [2nd edition August 2012]
  ISBN 978-1-4493-0459-1 [ebook]
- http://www.intermediateperl.com/
+ https://www.intermediateperl.com/
 
 =back
 
@@ -87,21 +87,21 @@ You might want to keep these desktop references close by your keyboard:
  by Johan Vromans
  ISBN 978-1-4493-0370-9 [5th edition July 2011]
  ISBN 978-1-4493-0813-1 [ebook]
- http://oreilly.com/catalog/0636920018476/
+ https://oreilly.com/catalog/0636920018476/
 
 =item I<Perl Debugger Pocket Reference>
 
  by Richard Foley
  ISBN 978-0-596-00503-0 [1st edition January 2004]
  ISBN 978-0-596-55625-9 [ebook]
- http://oreilly.com/catalog/9780596005030/
+ https://oreilly.com/catalog/9780596005030/
 
 =item I<Regular Expression Pocket Reference>
 
  by Tony Stubblebine
  ISBN 978-0-596-51427-3 [2nd edition July 2007]
  ISBN 978-0-596-55782-9 [ebook]
- http://oreilly.com/catalog/9780596514273/
+ https://oreilly.com/catalog/9780596514273/
 
 =back
 
@@ -119,14 +119,14 @@ You might want to keep these desktop references close by your keyboard:
 
  by James Lee
  ISBN 1-59059-391-X [3rd edition April 2010 & ebook]
- http://www.apress.com/9781430227939
+ https://www.apress.com/9781430227939
 
 =item I<Learning Perl> (the "Llama Book")
 
  by Randal L. Schwartz, Tom Phoenix, and brian d foy
  ISBN 978-1-4493-0358-7 [6th edition June 2011]
  ISBN 978-1-4493-0458-4 [ebook]
- http://www.learning-perl.com/
+ https://www.learning-perl.com/
 
 =item I<Intermediate Perl> (the "Alpaca Book")
 
@@ -134,20 +134,20 @@ You might want to keep these desktop references close by your keyboard:
          foreword by Damian Conway
  ISBN 978-1-4493-9309-0 [2nd edition August 2012]
  ISBN 978-1-4493-0459-1 [ebook]
- http://www.intermediateperl.com/
+ https://www.intermediateperl.com/
 
 =item I<Mastering Perl>
 
     by brian d foy
  ISBN 9978-1-4493-9311-3 [2st edition January 2014]
  ISBN 978-1-4493-6487-8 [ebook]
- http://www.masteringperl.org/
+ https://www.masteringperl.org/
 
 =item I<Effective Perl Programming>
 
  by Joseph N. Hall, Joshua A. McAdams, brian d foy
  ISBN 0-321-49694-9 [2nd edition 2010]
- http://www.effectiveperlprogramming.com/
+ https://www.effectiveperlprogramming.com/
 
 =back
 
@@ -159,7 +159,7 @@ You might want to keep these desktop references close by your keyboard:
 
  by Sam Tregar
  ISBN 1-59059-018-X [1st edition August 2002 & ebook]
- http://www.apress.com/9781590590188
+ https://www.apress.com/9781590590188
 
 =item I<The Perl Cookbook>
 
@@ -167,20 +167,20 @@ You might want to keep these desktop references close by your keyboard:
      with Foreword by Larry Wall
  ISBN 978-0-596-00313-5 [2nd Edition August 2003]
  ISBN 978-0-596-15888-0 [ebook]
- http://oreilly.com/catalog/9780596003135/
+ https://oreilly.com/catalog/9780596003135/
 
 =item I<Automating System Administration with Perl>
 
  by David N. Blank-Edelman
  ISBN 978-0-596-00639-6 [2nd edition May 2009]
  ISBN 978-0-596-80251-6 [ebook]
- http://oreilly.com/catalog/9780596006396
+ https://oreilly.com/catalog/9780596006396
 
 =item I<Real World SQL Server Administration with Perl>
 
  by Linchi Shea
  ISBN 1-59059-097-X [1st edition July 2003 & ebook]
- http://www.apress.com/9781590590973
+ https://www.apress.com/9781590590973
 
 =back
 
@@ -193,80 +193,80 @@ You might want to keep these desktop references close by your keyboard:
  by Jan Goyvaerts and Steven Levithan
  ISBN 978-1-4493-1943-4 [2nd edition August 2012]
  ISBN 978-1-4493-2747-7 [ebook]
- http://shop.oreilly.com/product/0636920023630.do
+ https://shop.oreilly.com/product/0636920023630.do
 
 =item I<Programming the Perl DBI>
 
  by Tim Bunce and Alligator Descartes
  ISBN 978-1-56592-699-8 [February 2000]
  ISBN 978-1-4493-8670-2 [ebook]
- http://oreilly.com/catalog/9781565926998
+ https://oreilly.com/catalog/9781565926998
 
 =item I<Perl Best Practices>
 
  by Damian Conway
  ISBN 978-0-596-00173-5 [1st edition July 2005]
  ISBN 978-0-596-15900-9 [ebook]
- http://oreilly.com/catalog/9780596001735
+ https://oreilly.com/catalog/9780596001735
 
 =item I<Higher-Order Perl>
 
  by Mark-Jason Dominus
  ISBN 1-55860-701-3 [1st edition March 2005]
- free ebook http://hop.perl.plover.com/book/
- http://hop.perl.plover.com/
+ free ebook https://hop.perl.plover.com/book/
+ https://hop.perl.plover.com/
 
 =item I<Mastering Regular Expressions>
 
  by Jeffrey E. F. Friedl
  ISBN 978-0-596-52812-6 [3rd edition August 2006]
  ISBN 978-0-596-55899-4 [ebook]
- http://oreilly.com/catalog/9780596528126
+ https://oreilly.com/catalog/9780596528126
 
 =item I<Network Programming with Perl>
 
  by Lincoln Stein
  ISBN 0-201-61571-1 [1st edition 2001]
- http://www.pearsonhighered.com/educator/product/Network-Programming-with-Perl/9780201615715.page
+ https://www.pearsonhighered.com/educator/product/Network-Programming-with-Perl/9780201615715.page
 
 =item I<Perl Template Toolkit>
 
  by Darren Chamberlain, Dave Cross, and Andy Wardley
  ISBN 978-0-596-00476-7 [December 2003]
  ISBN 978-1-4493-8647-4 [ebook]
- http://oreilly.com/catalog/9780596004767
+ https://oreilly.com/catalog/9780596004767
 
 =item I<Object Oriented Perl>
 
  by Damian Conway
      with foreword by Randal L. Schwartz
  ISBN 1-884777-79-1 [1st edition August 1999 & ebook]
- http://www.manning.com/conway/
+ https://www.manning.com/conway/
 
 =item I<Data Munging with Perl>
 
  by Dave Cross
  ISBN 1-930110-00-6 [1st edition 2001 & ebook]
- http://www.manning.com/cross
+ https://www.manning.com/cross
 
 =item I<Mastering Perl/Tk>
 
  by Steve Lidie and Nancy Walsh
  ISBN 978-1-56592-716-2 [1st edition January 2002]
  ISBN 978-0-596-10344-6 [ebook]
- http://oreilly.com/catalog/9781565927162
+ https://oreilly.com/catalog/9781565927162
 
 =item I<Extending and Embedding Perl>
 
  by Tim Jenness and Simon Cozens
  ISBN 1-930110-82-0 [1st edition August 2002 & ebook]
- http://www.manning.com/jenness
+ https://www.manning.com/jenness
 
 =item I<Pro Perl Debugging>
 
  by Richard Foley with Andy Lester
  ISBN 1-59059-454-1 [1st edition July 2005 & ebook]
- http://www.apress.com/9781590594544
+ https://www.apress.com/9781590594544
 
 =back
 
@@ -274,7 +274,7 @@ You might want to keep these desktop references close by your keyboard:
 
 Some of these books are available as free downloads.
 
-I<Higher-Order Perl>: L<http://hop.perl.plover.com/>
+I<Higher-Order Perl>: L<https://hop.perl.plover.com/>
 
 I<Modern Perl>: L<http://onyxneon.com/books/modern_perl/>
 
@@ -304,7 +304,7 @@ Each version of Perl comes with the documentation that was current at
 the time of release. This poses a problem for content such as book
 lists. There are probably very nice books published after this list
 was included in your Perl release, and you can check the latest
-released version at L<http://perldoc.perl.org/perlbook.html> .
+released version at L<https://perldoc.perl.org/perlbook.html> .
 
 Some of the books we've listed appear almost ancient in internet
 scale, but we've included those books because they still describe the

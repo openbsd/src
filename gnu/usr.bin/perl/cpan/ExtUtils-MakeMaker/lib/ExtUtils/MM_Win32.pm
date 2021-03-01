@@ -13,7 +13,7 @@ ExtUtils::MM_Win32 - methods to override UN*X behaviour in ExtUtils::MakeMaker
 
 =head1 DESCRIPTION
 
-See ExtUtils::MM_Unix for a documentation of the methods provided
+See L<ExtUtils::MM_Unix> for a documentation of the methods provided
 there. This package overrides the implementation of these methods, not
 the semantics.
 
@@ -27,8 +27,8 @@ use ExtUtils::MakeMaker qw(neatvalue _sprintf562);
 require ExtUtils::MM_Any;
 require ExtUtils::MM_Unix;
 our @ISA = qw( ExtUtils::MM_Any ExtUtils::MM_Unix );
-our $VERSION = '7.34';
-$VERSION = eval $VERSION;
+our $VERSION = '7.44';
+$VERSION =~ tr/_//d;
 
 $ENV{EMXSHELL} = 'sh'; # to run `commands`
 
@@ -77,7 +77,7 @@ Changes the path separator with .
 
 sub replace_manpage_separator {
     my($self,$man) = @_;
-    $man =~ s,/+,.,g;
+    $man =~ s,[/\\]+,.,g;
     $man;
 }
 
@@ -143,7 +143,7 @@ sub init_tools {
     $self->{DEV_NULL} ||= '> NUL';
 
     $self->{FIXIN}    ||= $self->{PERL_CORE} ?
-      "\$(PERLRUN) $self->{PERL_SRC}\\win32\\bin\\pl2bat.pl" :
+      "\$(PERLRUN) -I$self->{PERL_SRC}\\cpan\\ExtUtils-PL2Bat\\lib $self->{PERL_SRC}\\win32\\bin\\pl2bat.pl" :
       'pl2bat.bat';
 
     $self->SUPER::init_tools;
@@ -506,7 +506,7 @@ sub quote_literal {
     $text =~ s{\\\\"}{\\\\\\\\\\"}g;  # \\" -> \\\\\"
     $text =~ s{(?<!\\)\\"}{\\\\\\"}g; # \"  -> \\\"
     $text =~ s{(?<!\\)"}{\\"}g;       # "   -> \"
-    $text = qq{"$text"} if $text =~ /[ \t]/;
+    $text = qq{"$text"} if $text =~ /[ \t#]/; # hash because gmake 4.2.1
 
     # Apply the Command Prompt parsing rules (cmd.exe)
     my @text = split /("[^"]*")/, $text;
@@ -595,6 +595,16 @@ sub os_flavor {
     return('Win32');
 }
 
+=item dbgoutflag
+
+Returns a CC flag that tells the CC to emit a separate debugging symbol file
+when compiling an object file.
+
+=cut
+
+sub dbgoutflag {
+    $MSVC ? '-Fd$(*).pdb' : '';
+}
 
 =item cflags
 
