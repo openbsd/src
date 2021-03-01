@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.66 2016/10/24 17:18:42 jasper Exp $	*/
+/*	$OpenBSD: echo.c,v 1.67 2021/03/01 10:51:14 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -323,7 +323,7 @@ veread(const char *fp, char *buf, size_t nbuf, int flag, va_list ap)
 			break;
 		case CCHR('Y'): /* yank from kill buffer */
 			i = 0;
-			while ((y = kremove(i++)) >= 0 && y != '\n') {
+			while ((y = kremove(i++)) >= 0 && y != *curbp->b_nlchr) {
 				int t;
 				if (dynbuf && epos + 1 >= nbuf) {
 					void *newp;

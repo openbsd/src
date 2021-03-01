@@ -1,4 +1,4 @@
-/*	$OpenBSD: match.c,v 1.21 2019/07/02 16:25:39 lum Exp $	*/
+/*	$OpenBSD: match.c,v 1.22 2021/03/01 10:51:14 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -99,7 +99,7 @@ balance(void)
 			cbo = llength(clp) + 1;
 		}
 		if (--cbo == llength(clp))
-			c = '\n';		/* end of line		*/
+			c = *curbp->b_nlchr;	/* end of line		*/
 		else
 			c = lgetc(clp, cbo);	/* somewhere in middle	*/
 

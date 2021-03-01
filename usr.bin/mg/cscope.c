@@ -1,4 +1,4 @@
-/*	$OpenBSD: cscope.c,v 1.19 2021/02/28 15:30:35 lum Exp $	*/
+/*	$OpenBSD: cscope.c,v 1.20 2021/03/01 10:51:14 lum Exp $	*/
 
 /*
  * This file is in the public domain.
@@ -215,7 +215,7 @@ cscreatelist(int f, int n)
 	addline(bp, title);
 	addline(bp, "");
 	while ((len = getline(&line, &sz, fpipe)) != -1) {
-		if (line[len - 1] == '\n')
+		if (line[len - 1] == *bp->b_nlchr)
 			line[len - 1] = '\0';
 		addline(bp, line);
 	}
@@ -423,7 +423,7 @@ do_cscope(int i)
 	addline(bp, "");
 	addline(bp, "-------------------------------------------------------------------------------");
 	while ((len = getline(&buf, &sz, fpipe)) != -1) {
-		if (buf[len - 1] == '\n')
+		if (buf[len - 1] == *bp->b_nlchr)
 			buf[len - 1] = '\0';
 		if (addentry(bp, buf) != TRUE) {
 			free(buf);

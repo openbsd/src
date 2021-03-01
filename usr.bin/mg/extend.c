@@ -1,4 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.71 2019/07/18 15:52:11 lum Exp $	*/
+/*	$OpenBSD: extend.c,v 1.72 2021/03/01 10:51:14 lum Exp $	*/
 /* This file is in the public domain. */
 
 /*
@@ -42,7 +42,8 @@ insert(int f, int n)
 	if (inmacro) {
 		while (--n >= 0) {
 			for (count = 0; count < maclcur->l_used; count++) {
-				if ((((c = maclcur->l_text[count]) == '\n')
+				if ((((c = maclcur->l_text[count]) ==
+				    *curbp->b_nlchr)
 				    ? lnewline() : linsert(1, c)) != TRUE)
 					return (FALSE);
 			}
@@ -61,7 +62,8 @@ insert(int f, int n)
 	while (--n >= 0) {
 		cp = buf;
 		while (*cp) {
-			if (((*cp == '\n') ? lnewline() : linsert(1, *cp))
+			if (((*cp == *curbp->b_nlchr) ?
+			    lnewline() : linsert(1, *cp))
 			    != TRUE)
 				return (FALSE);
 			cp++;
@@ -434,7 +436,7 @@ dobindkey(KEYMAP *map, const char *func, const char *str)
 				break;
 			case 'n':
 			case 'N':
-				key.k_chars[i] = '\n';
+				key.k_chars[i] = *curbp->b_nlchr;
 				break;
 			case 'r':
 			case 'R':

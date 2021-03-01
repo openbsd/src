@@ -585,6 +585,8 @@ bnew(const char *bname)
 	bheadp = bp;
 	bp->b_dotline = bp->b_markline = 1;
 	bp->b_lines = 1;
+	bp->b_nlseq = "\n";		/* use unix default */
+	bp->b_nlchr = bp->b_nlseq;
 	if ((bp->b_bname = strdup(bname)) == NULL) {
 		dobeep();
 		ewprintf("Can't get %d bytes", strlen(bname) + 1);
@@ -1010,7 +1012,7 @@ diffbuffer(int f, int n)
 			ttext += llength(lp);
 		}
 		if (lforw(lp) != lpend)		/* no implied \n on last line */
-			*ttext++ = '\n';
+			*ttext++ = *curbp->b_nlchr;
 	}
 
 	bp = bfind("*Diff*", TRUE);

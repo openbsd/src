@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.48 2019/07/11 18:20:18 lum Exp $	*/
+/*	$OpenBSD: grep.c,v 1.49 2021/03/01 10:51:14 lum Exp $	*/
 
 /* This file is in the public domain */
 
@@ -216,7 +216,7 @@ compile_mode(const char *name, const char *command)
 		return (NULL);
 	}
 	while ((len = getline(&buf, &sz, fpipe)) != -1) {
-		if (buf[len - 1] == '\n')
+		if (buf[len - 1] == *bp->b_nlchr)
 			buf[len - 1] = '\0';
 		addline(bp, buf);
 	}

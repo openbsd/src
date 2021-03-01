@@ -1,4 +1,4 @@
-/*	$OpenBSD: region.c,v 1.38 2019/06/17 11:39:26 lum Exp $	*/
+/*	$OpenBSD: region.c,v 1.39 2021/03/01 10:51:14 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -91,7 +91,7 @@ copyregion(int f, int n)
 
 	while (region.r_size--) {
 		if (loffs == llength(linep)) {	/* End of line.		 */
-			if ((s = kinsert('\n', KFORW)) != TRUE)
+			if ((s = kinsert(*curbp->b_nlchr, KFORW)) != TRUE)
 				return (s);
 			linep = lforw(linep);
 			loffs = 0;
@@ -372,7 +372,7 @@ region_get_data(struct region *reg, char *buf, int len)
 			if (lp == curbp->b_headp)
 				break;
 			off = 0;
-			buf[i] = '\n';
+			buf[i] = *curbp->b_nlchr;
 		} else {
 			buf[i] = lgetc(lp, off);
 			off++;
@@ -388,7 +388,7 @@ region_put_data(const char *buf, int len)
 	int i;
 
 	for (i = 0; buf[i] != '\0' && i < len; i++) {
-		if (buf[i] == '\n')
+		if (buf[i] == *curbp->b_nlchr)
 			lnewline();
 		else
 			linsert(1, buf[i]);
@@ -656,7 +656,7 @@ preadin(int fd, struct buffer *bp)
 
 	buf[len] = '\0';
 	p = q = buf;
-	if (leftover[0] != '\0' && ((q = strchr(p, '\n')) != NULL)) {
+	if (leftover[0] != '\0' && ((q = strchr(p, *bp->b_nlchr)) != NULL)) {
 		*q++ = '\0';
 		if (strlcat(leftover, p, sizeof(leftover)) >=
 		    sizeof(leftover)) {
@@ -668,7 +668,7 @@ preadin(int fd, struct buffer *bp)
 		leftover[0] = '\0';
 		p = q;
 	}
-	while ((q = strchr(p, '\n')) != NULL) {
+	while ((q = strchr(p, *bp->b_nlchr)) != NULL) {
 		*q++ = '\0';
 		addline(bp, p);
 		p = q;

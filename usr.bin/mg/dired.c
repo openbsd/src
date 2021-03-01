@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.96 2021/02/26 07:21:23 lum Exp $	*/
+/*	$OpenBSD: dired.c,v 1.97 2021/03/01 10:51:14 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -698,11 +698,12 @@ d_exec(int space, struct buffer *bp, const char *input, const char *cmd, ...)
 		if ((fin = fdopen(fds[0], "r")) == NULL)
 			goto out;
 		while (fgets(buf, sizeof(buf), fin) != NULL) {
-			cp = strrchr(buf, '\n');
+			cp = strrchr(buf, *bp->b_nlchr);
 			if (cp == NULL && !feof(fin)) {	/* too long a line */
 				int c;
 				addlinef(bp, "%*s%s...", space, "", buf);
-				while ((c = getc(fin)) != EOF && c != '\n')
+				while ((c = getc(fin)) != EOF &&
+				    c != *bp->b_nlchr)
 					;
 				continue;
 			} else if (cp)

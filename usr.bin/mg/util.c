@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.42 2019/06/22 15:38:15 lum Exp $	*/
+/*	$OpenBSD: util.c,v 1.43 2021/03/01 10:51:14 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -56,7 +56,7 @@ showcpos(int f, int n)
 			cchar = nchar + curwp->w_doto;
 			if (curwp->w_doto == llength(clp))
 				/* fake a \n at end of line */
-				cbyte = '\n';
+				cbyte = *curbp->b_nlchr;
 			else
 				cbyte = lgetc(clp, curwp->w_doto);
 		}
@@ -64,7 +64,8 @@ showcpos(int f, int n)
 		nchar += llength(clp);
 		clp = lforw(clp);
 		if (clp == curbp->b_headp) {
-			if (cbyte == '\n' && cline == curbp->b_lines) {
+			if (cbyte == *curbp->b_nlchr &&
+			    cline == curbp->b_lines) {
 				/* swap faked \n for EOB msg */
 				cbyte = EOF;
 				msg = "(EOB)";

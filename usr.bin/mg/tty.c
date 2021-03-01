@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.37 2020/02/09 10:13:13 florian Exp $	*/
+/*	$OpenBSD: tty.c,v 1.38 2021/03/01 10:51:14 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -41,7 +41,7 @@ static int	 charcost(const char *);
 
 static int	 cci;
 static int	 insdel;	/* Do we have both insert & delete line? */
-static const char	*scroll_fwd;	/* How to scroll forward. */
+static char	*scroll_fwd;	/* How to scroll forward. */
 
 static void	 winchhandler(int);
 
@@ -78,7 +78,7 @@ ttinit(void)
 		/* this is what GNU Emacs does */
 		scroll_fwd = parm_down_cursor;
 		if (scroll_fwd == NULL || *scroll_fwd == '\0')
-			scroll_fwd = "\n";
+			scroll_fwd = curbp->b_nlchr;
 	}
 
 	if (cursor_address == NULL || cursor_up == NULL)

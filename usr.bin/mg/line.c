@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.62 2020/07/22 13:22:53 tb Exp $	*/
+/*	$OpenBSD: line.c,v 1.63 2021/03/01 10:51:14 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -397,7 +397,7 @@ ldelete(RSIZE n, int kflag)
 			lchange(WFFULL);
 			if (ldelnewline() == FALSE)
 				goto out;
-			end = strlcat(sv, "\n", len + 1);
+			end = strlcat(sv, curbp->b_nlchr, len + 1);
 			--n;
 			continue;
 		}
