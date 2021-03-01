@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkpcie.c,v 1.12 2021/02/25 23:07:49 patrick Exp $	*/
+/*	$OpenBSD: rkpcie.c,v 1.13 2021/03/01 20:49:20 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -33,6 +33,7 @@
 #include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/ofw_gpio.h>
 #include <dev/ofw/ofw_misc.h>
+#include <dev/ofw/ofw_regulator.h>
 #include <dev/ofw/fdt.h>
 
 #define PCIE_CLIENT_BASIC_STRAP_CONF	0x0000
@@ -192,7 +193,7 @@ rkpcie_attach(struct device *parent, struct device *self, void *aux)
 	struct rkpcie_softc *sc = (struct rkpcie_softc *)self;
 	struct fdt_attach_args *faa = aux;
 	struct pcibus_attach_args pba;
-	uint32_t *ep_gpio;
+	uint32_t *ep_gpio = NULL;
 	uint32_t bus_range[2];
 	uint32_t status;
 	uint32_t max_link_speed;
@@ -224,18 +225,24 @@ rkpcie_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	len = OF_getproplen(sc->sc_node, "ep-gpios");
-	if (len < 0)
-		return;
-
-	ep_gpio = malloc(len, M_TEMP, M_WAITOK);
-	OF_getpropintarray(sc->sc_node, "ep-gpios", ep_gpio, len);
+	if (len > 0) {
+		ep_gpio = malloc(len, M_TEMP, M_WAITOK);
+		OF_getpropintarray(sc->sc_node, "ep-gpios", ep_gpio, len);
+	}
 
 	max_link_speed = OF_getpropint(sc->sc_node, "max-link-speed", 1);
 
 	clock_enable_all(sc->sc_node);
 
-	gpio_controller_config_pin(ep_gpio, GPIO_CONFIG_OUTPUT);
-	gpio_controller_set_pin(ep_gpio, 0);
+	regulator_enable(OF_getpropint(sc->sc_node, "vpcie12v-supply", 0));
+	regulator_enable(OF_getpropint(sc->sc_node, "vpcie3v3-supply", 0));
+	regulator_enable(OF_getpropint(sc->sc_node, "vpcie1v8-supply", 0));
+	regulator_enable(OF_getpropint(sc->sc_node, "vpcie0v9-supply", 0));
+
+	if (ep_gpio) {
+		gpio_controller_config_pin(ep_gpio, GPIO_CONFIG_OUTPUT);
+		gpio_controller_set_pin(ep_gpio, 0);
+	}
 
 	reset_assert(sc->sc_node, "aclk");
 	reset_assert(sc->sc_node, "pclk");
@@ -285,8 +292,10 @@ rkpcie_attach(struct device *parent, struct device *self, void *aux)
 
 	/* XXX Advertise power limits? */
 
-	gpio_controller_set_pin(ep_gpio, 1);
-	free(ep_gpio, M_TEMP, len);
+	if (ep_gpio) {
+		gpio_controller_set_pin(ep_gpio, 1);
+		free(ep_gpio, M_TEMP, len);
+	}
 
 	if (rkpcie_link_training_wait(sc)) {
 		printf("%s: link training timeout\n", sc->sc_dev.dv_xname);
@@ -668,6 +677,7 @@ rkpcie_phy_init(struct rkpcie_softc *sc)
 	if (sc->sc_phy_node == 0)
 		return;
 
+	clock_set_assigned(sc->sc_phy_node);
 	clock_enable(sc->sc_phy_node, "refclk");
 	reset_assert(sc->sc_phy_node, "phy");
 }
