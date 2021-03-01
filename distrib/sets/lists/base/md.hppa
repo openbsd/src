@@ -94,7 +94,6 @@
 ./usr/libdata/perl5/hppa-openbsd/CORE/cop.h
 ./usr/libdata/perl5/hppa-openbsd/CORE/cv.h
 ./usr/libdata/perl5/hppa-openbsd/CORE/dosish.h
-./usr/libdata/perl5/hppa-openbsd/CORE/dquote_inline.h
 ./usr/libdata/perl5/hppa-openbsd/CORE/ebcdic_tables.h
 ./usr/libdata/perl5/hppa-openbsd/CORE/embed.h
 ./usr/libdata/perl5/hppa-openbsd/CORE/embedvar.h
@@ -332,9 +331,6 @@
 ./usr/libdata/perl5/hppa-openbsd/Sys/Syslog.pm
 ./usr/libdata/perl5/hppa-openbsd/Term
 ./usr/libdata/perl5/hppa-openbsd/Term/ReadKey.pm
-./usr/libdata/perl5/hppa-openbsd/Tie
-./usr/libdata/perl5/hppa-openbsd/Tie/Hash
-./usr/libdata/perl5/hppa-openbsd/Tie/Hash/NamedCapture.pm
 ./usr/libdata/perl5/hppa-openbsd/Time
 ./usr/libdata/perl5/hppa-openbsd/Time/HiRes.pm
 ./usr/libdata/perl5/hppa-openbsd/Time/Piece.pm
@@ -457,10 +453,6 @@
 ./usr/libdata/perl5/hppa-openbsd/auto/Term
 ./usr/libdata/perl5/hppa-openbsd/auto/Term/ReadKey
 ./usr/libdata/perl5/hppa-openbsd/auto/Term/ReadKey/ReadKey.so
-./usr/libdata/perl5/hppa-openbsd/auto/Tie
-./usr/libdata/perl5/hppa-openbsd/auto/Tie/Hash
-./usr/libdata/perl5/hppa-openbsd/auto/Tie/Hash/NamedCapture
-./usr/libdata/perl5/hppa-openbsd/auto/Tie/Hash/NamedCapture/NamedCapture.so
 ./usr/libdata/perl5/hppa-openbsd/auto/Time
 ./usr/libdata/perl5/hppa-openbsd/auto/Time/HiRes
 ./usr/libdata/perl5/hppa-openbsd/auto/Time/HiRes/HiRes.so

@@ -59,7 +59,6 @@
 ./usr/libdata/perl5/sh-openbsd/CORE/cop.h
 ./usr/libdata/perl5/sh-openbsd/CORE/cv.h
 ./usr/libdata/perl5/sh-openbsd/CORE/dosish.h
-./usr/libdata/perl5/sh-openbsd/CORE/dquote_inline.h
 ./usr/libdata/perl5/sh-openbsd/CORE/ebcdic_tables.h
 ./usr/libdata/perl5/sh-openbsd/CORE/embed.h
 ./usr/libdata/perl5/sh-openbsd/CORE/embedvar.h
@@ -297,9 +296,6 @@
 ./usr/libdata/perl5/sh-openbsd/Sys/Syslog.pm
 ./usr/libdata/perl5/sh-openbsd/Term
 ./usr/libdata/perl5/sh-openbsd/Term/ReadKey.pm
-./usr/libdata/perl5/sh-openbsd/Tie
-./usr/libdata/perl5/sh-openbsd/Tie/Hash
-./usr/libdata/perl5/sh-openbsd/Tie/Hash/NamedCapture.pm
 ./usr/libdata/perl5/sh-openbsd/Time
 ./usr/libdata/perl5/sh-openbsd/Time/HiRes.pm
 ./usr/libdata/perl5/sh-openbsd/Time/Piece.pm
@@ -422,10 +418,6 @@
 ./usr/libdata/perl5/sh-openbsd/auto/Term
 ./usr/libdata/perl5/sh-openbsd/auto/Term/ReadKey
 ./usr/libdata/perl5/sh-openbsd/auto/Term/ReadKey/ReadKey.so
-./usr/libdata/perl5/sh-openbsd/auto/Tie
-./usr/libdata/perl5/sh-openbsd/auto/Tie/Hash
-./usr/libdata/perl5/sh-openbsd/auto/Tie/Hash/NamedCapture
-./usr/libdata/perl5/sh-openbsd/auto/Tie/Hash/NamedCapture/NamedCapture.so
 ./usr/libdata/perl5/sh-openbsd/auto/Time
 ./usr/libdata/perl5/sh-openbsd/auto/Time/HiRes
 ./usr/libdata/perl5/sh-openbsd/auto/Time/HiRes/HiRes.so

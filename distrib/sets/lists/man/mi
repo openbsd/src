@@ -241,10 +241,13 @@
 ./usr/share/man/man1/perl5280delta.1
 ./usr/share/man/man1/perl5281delta.1
 ./usr/share/man/man1/perl5282delta.1
+./usr/share/man/man1/perl5283delta.1
 ./usr/share/man/man1/perl5300delta.1
 ./usr/share/man/man1/perl5301delta.1
 ./usr/share/man/man1/perl5302delta.1
 ./usr/share/man/man1/perl5303delta.1
+./usr/share/man/man1/perl5320delta.1
+./usr/share/man/man1/perl5321delta.1
 ./usr/share/man/man1/perl561delta.1
 ./usr/share/man/man1/perl56delta.1
 ./usr/share/man/man1/perl581delta.1
@@ -294,6 +297,7 @@
 ./usr/share/man/man1/perlfunc.1
 ./usr/share/man/man1/perlgit.1
 ./usr/share/man/man1/perlglossary.1
+./usr/share/man/man1/perlgov.1
 ./usr/share/man/man1/perlguts.1
 ./usr/share/man/man1/perlhack.1
 ./usr/share/man/man1/perlhacktips.1
@@ -341,6 +345,7 @@
 ./usr/share/man/man1/perlretut.1
 ./usr/share/man/man1/perlrun.1
 ./usr/share/man/man1/perlsec.1
+./usr/share/man/man1/perlsecpolicy.1
 ./usr/share/man/man1/perlsource.1
 ./usr/share/man/man1/perlstyle.1
 ./usr/share/man/man1/perlsub.1
@@ -383,7 +388,6 @@
 ./usr/share/man/man1/pod2text.1
 ./usr/share/man/man1/pod2usage.1
 ./usr/share/man/man1/podchecker.1
-./usr/share/man/man1/podselect.1
 ./usr/share/man/man1/port-getpkgpath-helper.1
 ./usr/share/man/man1/port-resolve-lib-helper.1
 ./usr/share/man/man1/port-search-helper.1
@@ -450,6 +454,7 @@
 ./usr/share/man/man1/ssh-keyscan.1
 ./usr/share/man/man1/ssh.1
 ./usr/share/man/man1/stat.1
+./usr/share/man/man1/streamzip.1
 ./usr/share/man/man1/strings.1
 ./usr/share/man/man1/stty.1
 ./usr/share/man/man1/su.1
@@ -832,14 +837,10 @@
 ./usr/share/man/man3p/PerlIO::via::QuotedPrint.3p
 ./usr/share/man/man3p/Pod::Checker.3p
 ./usr/share/man/man3p/Pod::Escapes.3p
-./usr/share/man/man3p/Pod::Find.3p
 ./usr/share/man/man3p/Pod::Functions.3p
 ./usr/share/man/man3p/Pod::Html.3p
-./usr/share/man/man3p/Pod::InputObjects.3p
 ./usr/share/man/man3p/Pod::Man.3p
 ./usr/share/man/man3p/Pod::ParseLink.3p
-./usr/share/man/man3p/Pod::ParseUtils.3p
-./usr/share/man/man3p/Pod::Parser.3p
 ./usr/share/man/man3p/Pod::Perldoc.3p
 ./usr/share/man/man3p/Pod::Perldoc::BaseTo.3p
 ./usr/share/man/man3p/Pod::Perldoc::GetOptsOO.3p
@@ -853,8 +854,6 @@
 ./usr/share/man/man3p/Pod::Perldoc::ToText.3p
 ./usr/share/man/man3p/Pod::Perldoc::ToTk.3p
 ./usr/share/man/man3p/Pod::Perldoc::ToXml.3p
-./usr/share/man/man3p/Pod::PlainText.3p
-./usr/share/man/man3p/Pod::Select.3p
 ./usr/share/man/man3p/Pod::Simple.3p
 ./usr/share/man/man3p/Pod::Simple::Checker.3p
 ./usr/share/man/man3p/Pod::Simple::Debug.3p
@@ -862,6 +861,7 @@
 ./usr/share/man/man3p/Pod::Simple::DumpAsXML.3p
 ./usr/share/man/man3p/Pod::Simple::HTML.3p
 ./usr/share/man/man3p/Pod::Simple::HTMLBatch.3p
+./usr/share/man/man3p/Pod::Simple::JustPod.3p
 ./usr/share/man/man3p/Pod::Simple::LinkSection.3p
 ./usr/share/man/man3p/Pod::Simple::Methody.3p
 ./usr/share/man/man3p/Pod::Simple::PullParser.3p
