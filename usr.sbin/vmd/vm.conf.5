@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.55 2020/09/23 19:18:18 martijn Exp $
+.\" $OpenBSD: vm.conf.5,v 1.56 2021/03/01 14:27:44 kn Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 23 2020 $
+.Dd $Mdocdate: March 1 2021 $
 .Dt VM.CONF 5
 .Os
 .Sh NAME
@@ -376,9 +376,10 @@ Set the owner to the specified group.
 .Sh SWITCH CONFIGURATION
 A virtual switch allows VMs to communicate with other network interfaces on the
 host system via either
-.Xr bridge 4
+.Xr bridge 4 ,
+.Xr switch 4
 or
-.Xr switch 4 .
+.Xr veb 4 .
 The network interface for each virtual switch defined in
 .Nm
 is pre-configured using
@@ -435,9 +436,10 @@ as described in
 .Xr ifconfig 8 .
 .It Cm interface Ar name
 Set the
+.Xr bridge 4 ,
 .Xr switch 4
 or
-.Xr bridge 4
+.Xr veb 4
 network interface of this switch.
 If the type is changed to
 .Ar switch0 ,

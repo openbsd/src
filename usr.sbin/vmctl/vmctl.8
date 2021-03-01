@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.72 2020/02/16 11:03:25 kn Exp $
+.\"	$OpenBSD: vmctl.8,v 1.73 2021/03/01 14:27:44 kn Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 16 2020 $
+.Dd $Mdocdate: March 1 2021 $
 .Dt VMCTL 8
 .Os
 .Sh NAME
@@ -280,7 +280,7 @@ This tap/vio interface mapping
 allows guest network traffic to be manipulated by the host.
 Any valid host-side interface configuration may be performed on these
 tap interfaces, such as bridging (via
-.Xr bridge 4 ) ,
+.Xr veb 4 ) ,
 or using
 .Xr pf 4
 nat-to rules to create private or host-side NATed networks, as desired.
@@ -423,9 +423,9 @@ Terminate VM number 1:
 # vmctl stop 1
 .Ed
 .Sh SEE ALSO
-.Xr bridge 4 ,
 .Xr pf 4 ,
 .Xr tap 4 ,
+.Xr veb 4 ,
 .Xr vio 4 ,
 .Xr vmm 4 ,
 .Xr vm.conf 5 ,
