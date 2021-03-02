@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.12 2021/02/26 01:57:20 dlg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.13 2021/03/02 23:40:06 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -1794,8 +1794,9 @@ veb_p_ioctl(struct ifnet *ifp0, u_long cmd, caddr_t data)
 	KASSERTMSG(eb != NULL,
 	    "%s: %s called without an ether_brport set",
 	    ifp0->if_xname, __func__);
-	KASSERTMSG(eb->eb_input == veb_port_input,
-	    "%s: %s called, but eb_input seems wrong (%p != veb_port_input())",
+	KASSERTMSG((eb->eb_input == veb_port_input) ||
+	    (eb->eb_input == veb_span_input),
+	    "%s called %s, but eb_input (%p) seems wrong",
 	    ifp0->if_xname, __func__, eb->eb_input);
 
 	p = eb->eb_port;
