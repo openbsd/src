@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.106 2021/02/27 08:59:29 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.107 2021/03/02 09:08:59 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -92,7 +92,7 @@ RB_PROTOTYPE(filepath_tree, filepath, entry, filepathcmp);
 
 static struct filepath_tree	fpt = RB_INITIALIZER(&fpt);
 static struct msgbuf		procq, rsyncq;
-static int			cachefd;
+static int			cachefd, outdirfd;
 
 const char	*bird_tablename = "ROAS";
 
@@ -695,16 +695,12 @@ add_to_del(char **del, size_t *dsz, char *file)
 }
 
 static size_t
-repo_cleanup(int dirfd)
+repo_cleanup(void)
 {
 	size_t i, delsz = 0;
 	char *argv[2], **del = NULL;
 	FTS *fts;
 	FTSENT *e;
-
-	/* change working directory to the cache directory */
-	if (fchdir(dirfd) == -1)
-		err(1, "fchdir");
 
 	for (i = 0; i < rt.reposz; i++) {
 		if (asprintf(&argv[0], "%s", rt.repos[i].local) == -1)
@@ -781,8 +777,8 @@ main(int argc, char *argv[])
 	struct roa	**out = NULL;
 	char		*rsync_prog = "openrsync";
 	char		*bind_addr = NULL;
-	const char	*cachedir = NULL, *errs;
-	const char	*tals[TALSZ_MAX];
+	const char	*cachedir = NULL, *outputdir = NULL;
+	const char	*tals[TALSZ_MAX], *errs;
 	struct vrp_tree	 v = RB_INITIALIZER(&v);
 	struct rusage	ru;
 	struct timeval	start_time, now_time;
@@ -879,6 +875,8 @@ main(int argc, char *argv[])
 
 	if ((cachefd = open(cachedir, O_RDONLY, 0)) == -1)
 		err(1, "cache directory %s", cachedir);
+	if ((outdirfd = open(outputdir, O_RDONLY, 0)) == -1)
+		err(1, "output directory %s", outputdir);
 
 	if (outformats == 0)
 		outformats = FORMAT_OPENBGPD;
@@ -889,6 +887,10 @@ main(int argc, char *argv[])
 		err(1, "no TAL files found in %s", "/etc/rpki");
 
 	TAILQ_INIT(&q);
+
+	/* change working directory to the cache directory */
+	if (fchdir(cachefd) == -1)
+		err(1, "fchdir");
 
 	/*
 	 * Create the file reader as a jailed child process.
@@ -904,12 +906,8 @@ main(int argc, char *argv[])
 	if (procpid == 0) {
 		close(fd[1]);
 
-		/* change working directory to the cache directory */
-		if (fchdir(cachefd) == -1)
-			err(1, "fchdir");
-
 		/* Only allow access to the cache directory. */
-		if (unveil(cachedir, "r") == -1)
+		if (unveil(".", "r") == -1)
 			err(1, "%s: unveil", cachedir);
 		if (pledge("stdio rpath", NULL) == -1)
 			err(1, "pledge");
@@ -936,10 +934,6 @@ main(int argc, char *argv[])
 		if (rsyncpid == 0) {
 			close(proc);
 			close(fd[1]);
-
-			/* change working directory to the cache directory */
-			if (fchdir(cachefd) == -1)
-				err(1, "fchdir");
 
 			if (pledge("stdio rpath proc exec unveil", NULL) == -1)
 				err(1, "pledge");
@@ -1087,6 +1081,9 @@ main(int argc, char *argv[])
 			rc = 1;
 		}
 	}
+
+	stats.del_files = repo_cleanup();
+
 	gettimeofday(&now_time, NULL);
 	timersub(&now_time, &start_time, &stats.elapsed_time);
 	if (getrusage(RUSAGE_SELF, &ru) == 0) {
@@ -1098,10 +1095,13 @@ main(int argc, char *argv[])
 		timeradd(&stats.system_time, &ru.ru_stime, &stats.system_time);
 	}
 
+	/* change working directory to the cache directory */
+	if (fchdir(outdirfd) == -1)
+		err(1, "fchdir output dir");
+
 	if (outputfiles(&v, &stats))
 		rc = 1;
 
-	stats.del_files = repo_cleanup(cachefd);
 
 	logx("Route Origin Authorizations: %zu (%zu failed parse, %zu invalid)",
 	    stats.roas, stats.roas_fail, stats.roas_invalid);

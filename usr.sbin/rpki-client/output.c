@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.20 2021/02/18 10:10:20 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.21 2021/03/02 09:08:59 claudio Exp $ */
 /*
  * Copyright (c) 2019 Theo de Raadt <deraadt@openbsd.org>
  *
@@ -56,7 +56,6 @@
 
 #include "extern.h"
 
-char		*outputdir;
 int		 outformats;
 
 static char	 output_tmpname[PATH_MAX];
@@ -126,9 +125,8 @@ output_createtmp(char *name)
 	FILE *f;
 	int fd, r;
 
-	r = snprintf(output_name, sizeof output_name,
-	    "%s/%s", outputdir, name);
-	if (r < 0 || r > (int)sizeof(output_name))
+	if (strlcpy(output_name, name, sizeof output_name) >=
+	    sizeof output_name)
 		err(1, "path too long");
 	r = snprintf(output_tmpname, sizeof output_tmpname,
 	    "%s.XXXXXXXXXXX", output_name);
