@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.1 2021/02/26 16:16:37 florian Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.2 2021/03/02 19:20:13 florian Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -145,13 +145,6 @@ get_bpf_sock(const char *name)
 	if (sz != BPFLEN)
 		fatal("BIOCSBLEN, expected %u, got %u", BPFLEN, sz);
 
-	strlcpy(ifr.ifr_name, name, IFNAMSIZ);
-	if (ioctl(bpffd, BIOCSETIF, &ifr) == -1) {
-		log_warn("BIOCSETIF"); /* interface might have disappeared */
-		close(bpffd);
-		return -1;
-	}
-
 	/*
 	 * Set immediate mode so that reads return as soon as a packet
 	 * comes in, rather than waiting for the input buffer to fill
@@ -179,6 +172,13 @@ get_bpf_sock(const char *name)
 
 	if (ioctl(bpffd, BIOCSETWF, &p) == -1)
 		fatal("BIOCSETWF");
+
+	strlcpy(ifr.ifr_name, name, IFNAMSIZ);
+	if (ioctl(bpffd, BIOCSETIF, &ifr) == -1) {
+		log_warn("BIOCSETIF"); /* interface might have disappeared */
+		close(bpffd);
+		return -1;
+	}
 
 	if (ioctl(bpffd, BIOCLOCK, NULL) == -1)
 		fatal("BIOCLOCK");
