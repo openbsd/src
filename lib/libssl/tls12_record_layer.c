@@ -1,4 +1,4 @@
-/* $OpenBSD: tls12_record_layer.c,v 1.19 2021/02/27 14:20:50 jsing Exp $ */
+/* $OpenBSD: tls12_record_layer.c,v 1.20 2021/03/02 17:16:44 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -28,13 +28,13 @@ struct tls12_record_protection {
 
 	SSL_AEAD_CTX *aead_ctx;
 
+	EVP_CIPHER_CTX *cipher_ctx;
+	EVP_MD_CTX *hash_ctx;
+
 	int stream_mac;
 
 	uint8_t *mac_key;
 	size_t mac_key_len;
-
-	EVP_CIPHER_CTX *cipher_ctx;
-	EVP_MD_CTX *hash_ctx;
 };
 
 static struct tls12_record_protection *
@@ -80,6 +80,13 @@ static int
 tls12_record_protection_engaged(struct tls12_record_protection *rp)
 {
 	return rp->aead_ctx != NULL || rp->cipher_ctx != NULL;
+}
+
+static int
+tls12_record_protection_unused(struct tls12_record_protection *rp)
+{
+	return rp->aead_ctx == NULL && rp->cipher_ctx == NULL &&
+	    rp->hash_ctx == NULL && rp->mac_key == NULL;
 }
 
 static int
@@ -363,6 +370,9 @@ tls12_record_layer_ccs_aead(struct tls12_record_layer *rl,
 {
 	size_t aead_nonce_len = EVP_AEAD_nonce_length(rl->aead);
 
+	if (!tls12_record_protection_unused(rp))
+		return 0;
+
 	if ((rp->aead_ctx = calloc(1, sizeof(*rp->aead_ctx))) == NULL)
 		return 0;
 
@@ -413,6 +423,9 @@ tls12_record_layer_ccs_cipher(struct tls12_record_layer *rl,
 	int gost_param_nid;
 	int mac_type;
 	int ret = 0;
+
+	if (!tls12_record_protection_unused(rp))
+		return 0;
 
 	mac_type = EVP_PKEY_HMAC;
 	rp->stream_mac = 0;
@@ -479,10 +492,6 @@ tls12_record_layer_change_cipher_state(struct tls12_record_layer *rl,
     size_t mac_key_len, const uint8_t *key, size_t key_len, const uint8_t *iv,
     size_t iv_len)
 {
-	/* Require unused record protection. */
-	if (rp->cipher_ctx != NULL || rp->aead_ctx != NULL)
-		return 0;
-
 	if (mac_key_len > INT_MAX || key_len > INT_MAX || iv_len > INT_MAX)
 		return 0;
 
