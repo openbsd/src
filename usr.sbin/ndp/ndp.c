@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.102 2021/01/24 08:57:10 florian Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.103 2021/03/02 05:34:20 jsg Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -132,7 +132,6 @@ int rtmsg(int);
 int rtget(struct sockaddr_in6 **, struct sockaddr_dl **);
 void ifinfo(const char *);
 static char *sec2str(time_t);
-static void ts_print(const struct timeval *);
 static int rdomain;
 
 int
