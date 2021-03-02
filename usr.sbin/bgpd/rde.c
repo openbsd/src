@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.515 2021/02/16 08:29:16 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.516 2021/03/02 09:45:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2875,8 +2875,17 @@ rde_send_kroute(struct rib *rib, struct prefix *new, struct prefix *old)
 /*
  * update specific functions
  */
+static int rde_eval_all;
+
+int
+rde_evaluate_all(void)
+{
+	return rde_eval_all;
+}
+
 void
-rde_generate_updates(struct rib *rib, struct prefix *new, struct prefix *old)
+rde_generate_updates(struct rib *rib, struct prefix *new, struct prefix *old,
+    int eval_all)
 {
 	struct rde_peer	*peer;
 	u_int8_t	 aid;
@@ -2889,7 +2898,7 @@ rde_generate_updates(struct rib *rib, struct prefix *new, struct prefix *old)
 	if (old == NULL && new == NULL)
 		return;
 
-	if ((rib->flags & F_RIB_NOFIB) == 0)
+	if (!eval_all && (rib->flags & F_RIB_NOFIB) == 0)
 		rde_send_kroute(rib, new, old);
 
 	if (new)
@@ -2897,12 +2906,21 @@ rde_generate_updates(struct rib *rib, struct prefix *new, struct prefix *old)
 	else
 		aid = old->pt->aid;
 
+	rde_eval_all = 0;
 	LIST_FOREACH(peer, &peerlist, peer_l) {
-		if (peer->conf.id == 0)
-			continue;
-		if (peer->loc_rib_id != rib->id)
+		/* skip ourself */
+		if (peer == peerself)
 			continue;
 		if (peer->state != PEER_UP)
+			continue;
+		/* handle evaluate all, keep track if it is needed */
+		if (peer->conf.flags & PEERFLAG_EVALUATE_ALL)
+			rde_eval_all = 1;
+		else if (eval_all)
+			/* skip default peers if the best path didn't change */
+			continue;
+		/* skip peers using a different rib */
+		if (peer->loc_rib_id != rib->id)
 			continue;
 		/* check if peer actually supports the address family */
 		if (peer->capa.mp[aid] == 0)
@@ -3556,7 +3574,7 @@ rde_softreconfig_sync_reeval(struct rib_entry *re, void *arg)
 				nexthop_unlink(p);
 		}
 		if (re->active) {
-			rde_generate_updates(rib, NULL, re->active);
+			rde_generate_updates(rib, NULL, re->active, 0);
 			re->active = NULL;
 		}
 		return;

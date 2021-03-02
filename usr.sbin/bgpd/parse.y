@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.413 2021/02/16 08:29:16 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.414 2021/03/02 09:45:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -790,6 +790,19 @@ conf_main	: AS as4number		{
 				YYERROR;
 			}
 			free($4);
+		}
+		| RDE EVALUATE STRING {
+			if (!strcmp($3, "all"))
+				conf->flags |= BGPD_FLAG_DECISION_ALL_PATHS;
+			else if (!strcmp($3, "default"))
+				conf->flags &= ~BGPD_FLAG_DECISION_ALL_PATHS;
+			else {
+				yyerror("rde evaluate: "
+				    "unknown setting \"%s\"", $3);
+				free($3);
+				YYERROR;
+			}
+			free($3);
 		}
 		| NEXTHOP QUALIFY VIA STRING	{
 			if (!strcmp($4, "bgp"))
@@ -1726,6 +1739,19 @@ peeropts	: REMOTEAS as4number	{
 				curpeer->conf.flags |= PEERFLAG_NO_AS_SET;
 			else
 				curpeer->conf.flags &= ~PEERFLAG_NO_AS_SET;
+		}
+		| RDE EVALUATE STRING {
+			if (!strcmp($3, "all"))
+				curpeer->conf.flags |= PEERFLAG_EVALUATE_ALL;
+			else if (!strcmp($3, "default"))
+				curpeer->conf.flags &= ~PEERFLAG_EVALUATE_ALL;
+			else {
+				yyerror("rde evaluate: "
+				    "unknown setting \"%s\"", $3);
+				free($3);
+				YYERROR;
+			}
+			free($3);
 		}
 		;
 
@@ -3888,6 +3914,8 @@ alloc_peer(void)
 
 	if (conf->flags & BGPD_FLAG_DECISION_TRANS_AS)
 		p->conf.flags |= PEERFLAG_TRANS_AS;
+	if (conf->flags & BGPD_FLAG_DECISION_ALL_PATHS)
+		p->conf.flags |= PEERFLAG_EVALUATE_ALL;
 	if (conf->flags & BGPD_FLAG_NO_AS_SET)
 		p->conf.flags |= PEERFLAG_NO_AS_SET;
 
@@ -3910,8 +3938,6 @@ new_peer(void)
 		    sizeof(p->conf.descr)) >= sizeof(p->conf.descr))
 			fatalx("new_peer descr strlcpy");
 		p->conf.groupid = curgroup->conf.id;
-		p->conf.local_as = curgroup->conf.local_as;
-		p->conf.local_short_as = curgroup->conf.local_short_as;
 	}
 	return (p);
 }

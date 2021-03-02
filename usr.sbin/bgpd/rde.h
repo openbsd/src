@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.236 2021/01/13 11:34:01 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.237 2021/03/02 09:45:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -371,8 +371,9 @@ void		rde_send_nexthop(struct bgpd_addr *, int);
 void		rde_pftable_add(u_int16_t, struct prefix *);
 void		rde_pftable_del(u_int16_t, struct prefix *);
 
+int		rde_evaluate_all(void);
 void		rde_generate_updates(struct rib *, struct prefix *,
-		    struct prefix *);
+		    struct prefix *, int);
 u_int32_t	rde_local_as(void);
 int		rde_decisionflags(void);
 int		rde_as4byte(struct rde_peer *);
@@ -486,6 +487,7 @@ communities_unref(struct rde_community *comm)
 int	community_to_rd(struct community *, u_int64_t *);
 
 /* rde_decide.c */
+int	prefix_eligible(struct prefix *);
 void	prefix_evaluate(struct rib_entry *, struct prefix *, struct prefix *);
 
 /* rde_filter.c */

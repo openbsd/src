@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.124 2021/01/09 16:49:41 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.125 2021/03/02 09:45:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <siphash.h>
+#include <stdio.h>
 
 #include "bgpd.h"
 #include "rde.h"
@@ -49,26 +50,22 @@ up_test_update(struct rde_peer *peer, struct prefix *p)
 {
 	struct rde_aspath	*asp;
 	struct rde_community	*comm;
-	struct rde_peer		*prefp;
+	struct rde_peer		*frompeer;
 
-	if (p == NULL)
-		/* no prefix available */
-		return (0);
-
-	prefp = prefix_peer(p);
+	frompeer = prefix_peer(p);
 	asp = prefix_aspath(p);
 	comm = prefix_communities(p);
-
-	if (peer == prefp)
-		/* Do not send routes back to sender */
-		return (0);
 
 	if (asp == NULL || asp->flags & F_ATTR_PARSE_ERR)
 		fatalx("try to send out a botched path");
 	if (asp->flags & F_ATTR_LOOP)
 		fatalx("try to send out a looped path");
 
-	if (!prefp->conf.ebgp && !peer->conf.ebgp) {
+	if (peer == frompeer)
+		/* Do not send routes back to sender */
+		return (0);
+
+	if (!frompeer->conf.ebgp && !peer->conf.ebgp) {
 		/*
 		 * route reflector redistribution rules:
 		 * 1. if announce is set                -> announce
@@ -77,7 +74,7 @@ up_test_update(struct rde_peer *peer, struct prefix *p)
 		 * 4. old non-client, new client        -> yes
 		 * 5. old client, new client            -> yes
 		 */
-		if (prefp->conf.reflector_client == 0 &&
+		if (frompeer->conf.reflector_client == 0 &&
 		    peer->conf.reflector_client == 0 &&
 		    (asp->flags & F_PREFIX_ANNOUNCED) == 0)
 			/* Do not redistribute updates to ibgp peers */
@@ -101,14 +98,12 @@ void
 up_generate_updates(struct filter_head *rules, struct rde_peer *peer,
     struct prefix *new, struct prefix *old)
 {
-	struct filterstate		state;
-	struct bgpd_addr		addr;
+	struct filterstate	state;
+	struct bgpd_addr	addr;
+	int			need_withdraw;
 
-	if (peer->state != PEER_UP)
-		return;
-
+again:
 	if (new == NULL) {
-withdraw:
 		if (old == NULL)
 			/* no prefix to withdraw */
 			return;
@@ -121,8 +116,28 @@ withdraw:
 			peer->up_wcnt++;
 		}
 	} else {
-		if (!up_test_update(peer, new)) {
-			goto withdraw;
+		need_withdraw = 0;
+		/*
+		 * up_test_update() needs to run before the output filters
+		 * else the well known communities wont work properly.
+		 * The output filters would not be able to add well known
+		 * communities.
+		 */
+		if (!up_test_update(peer, new))
+			need_withdraw = 1;
+
+		/*
+		 * if 'rde evaluate all' is set for this peer then
+		 * delay the the withdraw because of up_test_update().
+		 * The filters may actually skip this prefix and so this
+		 * decision needs to be delayed.
+		 * For the default mode we can just give up here and
+		 * skip the filters.
+		 */
+		if (need_withdraw &&
+		    !(peer->conf.flags & PEERFLAG_EVALUATE_ALL)) {
+			new = NULL;
+			goto again;
 		}
 
 		rde_filterstate_prep(&state, prefix_aspath(new),
@@ -133,7 +148,18 @@ withdraw:
 		    new->pt->prefixlen, prefix_vstate(new), &state) ==
 		    ACTION_DENY) {
 			rde_filterstate_clean(&state);
-			goto withdraw;
+			if (peer->conf.flags & PEERFLAG_EVALUATE_ALL)
+				new = LIST_NEXT(new, entry.list.rib);
+			else
+				new = NULL;
+			if (new != NULL && !prefix_eligible(new))
+				new = NULL;
+			goto again;
+		}
+
+		if (need_withdraw) {
+			new = NULL;
+			goto again;
 		}
 
 		/* only send update if path changed */

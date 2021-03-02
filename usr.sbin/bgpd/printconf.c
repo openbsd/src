@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.146 2021/02/16 08:29:16 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.147 2021/03/02 09:45:07 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -390,9 +390,10 @@ print_mainconf(struct bgpd_config *conf)
 
 	if (conf->flags & BGPD_FLAG_DECISION_ROUTEAGE)
 		printf("rde route-age evaluate\n");
-
 	if (conf->flags & BGPD_FLAG_DECISION_MED_ALWAYS)
 		printf("rde med compare always\n");
+	if (conf->flags & BGPD_FLAG_DECISION_ALL_PATHS)
+		printf("rde evaluate all\n");
 
 	if (conf->flags & BGPD_FLAG_NO_AS_SET)
 		printf("reject as-set yes\n");
@@ -681,6 +682,14 @@ print_peer(struct peer_config *p, struct bgpd_config *conf, const char *c)
 		printf("%s\tdepend on \"%s\"\n", c, p->if_depend);
 	if (p->flags & PEERFLAG_TRANS_AS)
 		printf("%s\ttransparent-as yes\n", c);
+
+	if (conf->flags & BGPD_FLAG_DECISION_ALL_PATHS) {
+		if (!(p->flags & PEERFLAG_EVALUATE_ALL))
+			printf("%s\trde evaluate default\n", c);
+	} else {
+		if (p->flags & PEERFLAG_EVALUATE_ALL)
+			printf("%s\trde evaluate all\n", c);
+	}
 
 	if (conf->flags & BGPD_FLAG_NO_AS_SET) {
 		if (!(p->flags & PEERFLAG_NO_AS_SET))

@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.208 2021/02/16 08:29:16 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.209 2021/03/02 09:45:07 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 16 2021 $
+.Dd $Mdocdate: March 2 2021 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -268,9 +268,18 @@ daemons, such as
 .Xr ospfd 8 .
 .Pp
 .It Xo
-.Ic rde
-.Ic med
-.Ic compare
+.Ic rde Ic evaluate
+.Pq Ic default Ns | Ns Ic all
+.Xc
+If set to
+.Ar all
+keep evaluating alternative paths in case the selected path is filtered
+out.
+By default if a path is filtered by the output filters then no alternative
+path is sent to this peer.
+.Pp
+.It Xo
+.Ic rde Ic med Ic compare
 .Pq Ic always Ns | Ns Ic strict
 .Xc
 If set to
@@ -1151,6 +1160,20 @@ setting.
 .Pp
 .It Ic remote-as Ar as-number
 Set the AS number of the remote system.
+.Pp
+.It Xo
+.Ic rde Ic evaluate
+.Pq Ic default Ns | Ns Ic all
+.Xc
+If set to
+.Ar all
+keep evaluating alternative paths in case the selected path is filtered
+out.
+By default if a path is filtered by the output filters then no alternative
+path is sent to this peer.
+The default is inherited from the global
+.Ic rde Ic evaluate
+setting.
 .Pp
 .It Ic rib Ar name
 Bind the neighbor to the specified RIB.

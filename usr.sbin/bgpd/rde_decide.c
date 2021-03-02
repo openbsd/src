@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.81 2021/02/02 15:24:43 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.82 2021/03/02 09:45:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -91,8 +91,8 @@ void	prefix_remove(struct prefix *, struct rib_entry *);
 
 /*
  * Decision Engine OUR implementation:
- * Our implementation has only one RIB. The filtering is done first. The
- * filtering calculates the preference and stores it in LOCAL_PREF (Phase 1).
+ * The filtering is done first. The filtering calculates the preference and
+ * stores it in LOCAL_PREF (Phase 1).
  * Ineligible routes are flagged as ineligible via nexthop_add().
  * Phase 3 is done together with Phase 2.
  * In following cases a prefix needs to be reevaluated:
@@ -284,6 +284,13 @@ prefix_cmp(struct prefix *p1, struct prefix *p2, int *testall)
 	fatalx("Uh, oh a politician in the decision process");
 }
 
+/*
+ * Insert a prefix keeping the total order of the list. For routes
+ * that may depend on a MED selection the set is scanned until the
+ * condition is cleared. If a MED inversion is detected the respective
+ * prefix is taken of the rib list and put onto a redo queue. All
+ * prefixes on the redo queue are re-inserted at the end.
+ */
 void
 prefix_insert(struct prefix *new, struct prefix *ep, struct rib_entry *re)
 {
@@ -351,6 +358,15 @@ prefix_insert(struct prefix *new, struct prefix *ep, struct rib_entry *re)
 	}
 }
 
+/*
+ * Remove a prefix from the RIB list ensuring that the total order of the
+ * list remains intact. All routes that differ in the MED are taken of the
+ * list and put on the redo list. To figure out if a route could cause a
+ * resort because of a MED check the next prefix of the to-remove prefix
+ * is compared with the old prefix. A full scan is only done if the next
+ * route differs because of the MED or later checks.
+ * Again at the end all routes on the redo queue are reinserted.
+ */
 void
 prefix_remove(struct prefix *old, struct rib_entry *re)
 {
@@ -397,6 +413,23 @@ prefix_remove(struct prefix *old, struct rib_entry *re)
 	}
 }
 
+/* helper function to check if a prefix is valid to be selected */
+int
+prefix_eligible(struct prefix *p)
+{
+	struct rde_aspath *asp = prefix_aspath(p);
+	struct nexthop *nh = prefix_nexthop(p);
+
+	/* The aspath needs to be loop and error free */
+	if (asp == NULL || asp->flags & (F_ATTR_LOOP|F_ATTR_PARSE_ERR))
+		return 0;
+	/* The nexthop needs to exist and be reachable */
+	if (nh == NULL || nh->state != NEXTHOP_REACH)
+		return 0;
+
+	return 1;
+}
+
 /*
  * Find the correct place to insert the prefix in the prefix list.
  * If the active prefix has changed we need to send an update.
@@ -420,7 +453,7 @@ prefix_evaluate(struct rib_entry *re, struct prefix *new, struct prefix *old)
 			 * active. Clean up now to ensure that the RIB
 			 * is consistant.
 			 */
-			rde_generate_updates(re_rib(re), NULL, re->active);
+			rde_generate_updates(re_rib(re), NULL, re->active, 0);
 			re->active = NULL;
 		}
 		return;
@@ -433,15 +466,8 @@ prefix_evaluate(struct rib_entry *re, struct prefix *new, struct prefix *old)
 		prefix_insert(new, NULL, re);
 
 	xp = LIST_FIRST(&re->prefix_h);
-	if (xp != NULL) {
-		struct rde_aspath *xasp = prefix_aspath(xp);
-		if (xasp == NULL ||
-		    xasp->flags & (F_ATTR_LOOP|F_ATTR_PARSE_ERR) ||
-		    (prefix_nexthop(xp) != NULL && prefix_nexthop(xp)->state !=
-		    NEXTHOP_REACH))
-			/* xp is ineligible */
-			xp = NULL;
-	}
+	if (xp != NULL && !prefix_eligible(xp))
+		xp = NULL;
 
 	/*
 	 * If the active prefix changed or the active prefix was removed
@@ -453,7 +479,17 @@ prefix_evaluate(struct rib_entry *re, struct prefix *new, struct prefix *old)
 		 * but remember that xp may be NULL aka ineligible.
 		 * Additional decision may be made by the called functions.
 		 */
-		rde_generate_updates(re_rib(re), xp, re->active);
+		rde_generate_updates(re_rib(re), xp, re->active, 0);
 		re->active = xp;
+		return;
 	}
+
+	/*
+	 * If there are peers with 'rde evaluate all' every update needs
+	 * to be passed on (not only a change of the best prefix).
+	 * rde_generate_updates() will then take care of distribution.
+	 */
+	if (rde_evaluate_all())
+		if ((new != NULL && prefix_eligible(new)) || old != NULL)
+			rde_generate_updates(re_rib(re), re->active, NULL, 1);
 }

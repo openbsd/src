@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.412 2021/02/16 08:29:16 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.413 2021/03/02 09:45:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -65,7 +65,8 @@
 #define	BGPD_FLAG_DECISION_ROUTEAGE	0x0100
 #define	BGPD_FLAG_DECISION_TRANS_AS	0x0200
 #define	BGPD_FLAG_DECISION_MED_ALWAYS	0x0400
-#define	BGPD_FLAG_NO_AS_SET		0x0800
+#define	BGPD_FLAG_DECISION_ALL_PATHS	0x0800
+#define	BGPD_FLAG_NO_AS_SET		0x1000
 
 #define	BGPD_LOG_UPDATES		0x0001
 
@@ -408,7 +409,8 @@ struct peer_config {
 
 #define PEERFLAG_TRANS_AS	0x01
 #define PEERFLAG_LOG_UPDATES	0x02
-#define PEERFLAG_NO_AS_SET	0x04
+#define PEERFLAG_EVALUATE_ALL	0x04
+#define PEERFLAG_NO_AS_SET	0x08
 
 enum network_type {
 	NETWORK_DEFAULT,	/* from network statements */
