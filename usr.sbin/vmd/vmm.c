@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.96 2020/04/30 03:50:53 pd Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.97 2021/03/02 02:56:22 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -539,7 +539,7 @@ vmm_dispatch_vm(int fd, short event, void *arg)
 			IMSG_SIZE_CHECK(&imsg, &vmr);
 		case IMSG_VMDOP_PAUSE_VM_RESPONSE:
 		case IMSG_VMDOP_UNPAUSE_VM_RESPONSE:
-			for (i = 0; i < sizeof(procs); i++) {
+			for (i = 0; i < nitems(procs); i++) {
 				if (procs[i].p_id == PROC_PARENT) {
 					proc_forward_imsg(procs[i].p_ps,
 					    &imsg, PROC_PARENT, -1);
