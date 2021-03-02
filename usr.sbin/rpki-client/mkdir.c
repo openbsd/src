@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkdir.c,v 1.3 2021/02/22 09:46:05 claudio Exp $	*/
+/*	$OpenBSD: mkdir.c,v 1.4 2021/03/02 09:23:59 claudio Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -37,14 +37,13 @@
 #include "extern.h"
 
 /*
- * mkpathat -- create directories.
- *	dirfd    - file descriptor for local directory
+ * mkpath -- create directories.
  *	path     - path
  *	mode     - file mode of terminal directory
  *	dir_mode - file mode of intermediate directories
  */
 int
-mkpathat(int dirfd, const char *dir)
+mkpath(const char *dir)
 {
 	char *path, *slash;
 	int done;
@@ -60,7 +59,7 @@ mkpathat(int dirfd, const char *dir)
 		done = (*slash == '\0');
 		*slash = '\0';
 
-		if (mkdirat(dirfd, path, 0700) == -1 && errno != EEXIST) {
+		if (mkdir(path, 0755) == -1 && errno != EEXIST) {
 			free(path);
 			return (-1);
 		}

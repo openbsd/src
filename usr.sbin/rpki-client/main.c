@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.107 2021/03/02 09:08:59 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.108 2021/03/02 09:23:59 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -297,7 +297,7 @@ repo_fetch(struct repo *rp)
 	 * will not build the destination for us.
 	 */
 
-	if (mkpathat(cachefd, rp->local) == -1)
+	if (mkpath(rp->local) == -1)
 		err(1, "%s", rp->local);
 
 	logx("%s: pulling from network", rp->local);
