@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.76 2021/01/29 21:26:06 tobhe Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.77 2021/03/02 03:31:25 jsg Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -40,7 +40,7 @@
 #include "ikev2.h"
 
 #define ROUNDUP(x) (((x) + (PFKEYV2_CHUNK - 1)) & ~(PFKEYV2_CHUNK - 1))
-#define IOV_CNT 21
+#define IOV_CNT 27
 
 #define PFKEYV2_CHUNK sizeof(uint64_t)
 #define PFKEY_REPLY_TIMEOUT 1000
