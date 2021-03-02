@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.69 2021/02/01 20:15:01 espie Exp $
+# $OpenBSD: State.pm,v 1.70 2021/03/02 10:59:20 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -134,7 +134,7 @@ sub repo
 sub handle_continue
 {
 	my $self = shift;
-	$self->find_window_size(1);	# 1 is legacy interface for dpb
+	$self->find_window_size;
 	# invalidate cache so this runs again after continue
 	delete $self->{can_output};
 }
