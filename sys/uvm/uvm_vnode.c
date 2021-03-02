@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.109 2021/03/02 10:09:20 mpi Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.110 2021/03/02 10:12:38 mpi Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -878,6 +878,7 @@ uvn_put(struct uvm_object *uobj, struct vm_page **pps, int npages, int flags)
 	int retval;
 
 	KERNEL_ASSERT_LOCKED();
+
 	retval = uvn_io((struct uvm_vnode*)uobj, pps, npages, flags, UIO_WRITE);
 
 	return(retval);
@@ -1059,7 +1060,7 @@ uvn_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 		 * I/O to fill it with valid data.
 		 */
 		result = uvn_io((struct uvm_vnode *) uobj, &ptmp, 1,
-		    PGO_SYNCIO, UIO_READ);
+		    PGO_SYNCIO|PGO_NOWAIT, UIO_READ);
 
 		/*
 		 * I/O done.  because we used syncio the result can not be
@@ -1119,6 +1120,7 @@ uvn_io(struct uvm_vnode *uvn, vm_page_t *pps, int npages, int flags, int rw)
 	int waitf, result, mapinflags;
 	size_t got, wanted;
 	int netunlocked = 0;
+	int lkflags = (flags & PGO_NOWAIT) ? LK_NOWAIT : 0;
 
 	/* init values */
 	waitf = (flags & PGO_SYNCIO) ? M_WAITOK : M_NOWAIT;
@@ -1198,8 +1200,7 @@ uvn_io(struct uvm_vnode *uvn, vm_page_t *pps, int npages, int flags, int rw)
 	 */
 	result = 0;
 	if ((uvn->u_flags & UVM_VNODE_VNISLOCKED) == 0)
-		result = vn_lock(vn, LK_EXCLUSIVE | LK_RECURSEFAIL);
-
+		result = vn_lock(vn, LK_EXCLUSIVE | LK_RECURSEFAIL | lkflags);
 	if (result == 0) {
 		/* NOTE: vnode now locked! */
 		if (rw == UIO_READ)
@@ -1246,6 +1247,9 @@ uvn_io(struct uvm_vnode *uvn, vm_page_t *pps, int npages, int flags, int rw)
 
 	if (result == 0) {
 		return(VM_PAGER_OK);
+	} else if (result == EBUSY) {
+		KASSERT(flags & PGO_NOWAIT);
+		return(VM_PAGER_AGAIN);
 	} else {
 		while (rebooting)
 			tsleep_nsec(&rebooting, PVM, "uvndead", INFSLP);
