@@ -1,3 +1,4 @@
+/*	$OpenBSD: resolvd.c,v 1.7 2021/03/02 09:18:58 kn Exp $	*/
 /*
  * Copyright (c) 2021 Florian Obser <florian@openbsd.org>
  * Copyright (c) 2021 Theo de Raadt <deraadt@openbsd.org>
