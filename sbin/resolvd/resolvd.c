@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolvd.c,v 1.8 2021/03/02 16:39:46 deraadt Exp $	*/
+/*	$OpenBSD: resolvd.c,v 1.9 2021/03/02 17:11:28 deraadt Exp $	*/
 /*
  * Copyright (c) 2021 Florian Obser <florian@openbsd.org>
  * Copyright (c) 2021 Theo de Raadt <deraadt@openbsd.org>
@@ -163,7 +163,7 @@ main(int argc, char *argv[])
 	int			 rtfilter, nready, lockfd;
 	struct kevent		 kev[3];
 #ifndef SMALL
-	int			 unwindsock;
+	int			 unwindsock = -1;
 #endif
 
 	while ((ch = getopt(argc, argv, "dv")) != -1) {
@@ -281,7 +281,7 @@ main(int argc, char *argv[])
 		for (i = 0; i < nready; i++) {
 			unsigned short fflags = kev[i].fflags;
 
-			switch ((int)kev[i].udata) {
+			switch ((int)(long)kev[i].udata) {
 			case KQ_ROUTE:
 				route_receive(routesock);
 				break;
