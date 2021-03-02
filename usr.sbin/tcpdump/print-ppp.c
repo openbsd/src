@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ppp.c,v 1.34 2020/01/24 22:46:37 procter Exp $	*/
+/*	$OpenBSD: print-ppp.c,v 1.35 2021/03/02 00:39:57 jsg Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -151,9 +151,6 @@ static const char *lcpcodes[] = {
 #define LCPOPT_MN	5
 #define LCPOPT_PFC	7
 #define LCPOPT_ACFC	8
-
-#define LCPOPT_MIN 0
-#define LCPOPT_MAX 24
 
 static char *lcpconfopts[] = {
 	"Vendor-Ext",
@@ -522,7 +519,7 @@ print_lcp_config_options(const u_char *p, int l)
 		return (-1);
 
 	type = p[0];
-	if (type <= LCPOPT_MAX)
+	if (type < nitems(lcpconfopts))
 		printf(" %s", lcpconfopts[type]);
 	else
 		printf(" unknown-lcp-%u", type);
