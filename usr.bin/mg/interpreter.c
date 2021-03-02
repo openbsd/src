@@ -1,4 +1,4 @@
-/*      $OpenBSD: interpreter.c,v 1.6 2021/02/24 14:17:18 lum Exp $	*/
+/*      $OpenBSD: interpreter.c,v 1.7 2021/03/02 19:50:52 lum Exp $	*/
 /*
  * This file is in the public domain.
  *
@@ -22,10 +22,13 @@
  * 1. Give multiple arguments to a function that usually would accept only one:
  * (find-file a.txt b.txt. c.txt)
  *
- * 2. Define a list:
- * (define myfiles(list d.txt e.txt))
+ * 2. Define a single value variable:
+ * (define myfile d.txt)
  *
- * 3. Use the previously defined list:
+ * 3. Define a list:
+ * (define myfiles(list e.txt f.txt))
+ *
+ * 4. Use the previously defined variable or list:
  * (find-file myfiles)
  *
  * To do:
@@ -56,8 +59,6 @@
 static int	 multiarg(char *);
 static int	 isvar(char **, char **, int);
 static int	 foundvar(char *);
-static int	 foundlist(char *);
-
 
 /*
  * Structure for variables during buffer evaluation.
@@ -268,13 +269,12 @@ isvar(char **argp, char **tmpbuf, int sizof)
  * the issues.
  */
 static int
-foundlist(char *defstr)
+foundvar(char *defstr)
 {
 	struct varentry *vt, *v1 = NULL;
 	const char	 e[2] = "e", t[2] = "t";
 	char		*p, *vnamep, *vendp = NULL, *valp, *o;
-	int		 spc;
-
+	int		 spc, foundlist = 0;
 
 	p = defstr + 1;         /* move past first '(' char.    */
 	p = skipwhite(p);    	/* find first char of 'define'. */
@@ -287,7 +287,10 @@ foundlist(char *defstr)
 	/* now find the end of the list name */
 	while (1) {
 		++vendp;
-		if (*vendp == '(' || *vendp == ' ' || *vendp == '\t')
+		if (*vendp == '(') {
+			foundlist = 1;
+			break;
+		} else if (*vendp == ' ' || *vendp == '\t')
 			break;
 	}
 	*vendp = '\0';
@@ -299,8 +302,12 @@ foundlist(char *defstr)
 		return(dobeep_msgs("Variable/function name clash:", vnamep));
 
 	p = ++vendp;
-	p = strstr(p, t);	/* find 't' in 'list'.	*/
-	valp = skipwhite(++p);	/* find first value	*/
+	p = skipwhite(p);
+	if (foundlist) {
+		p = strstr(p, t);	/* find 't' in 'list'.	*/
+		valp = skipwhite(++p);	/* find first value	*/
+	} else
+		valp = p;
 	/*
 	 * Now we have the name of the list starting at 'vnamep',
 	 * and the first value is at 'valp', record the details
@@ -345,17 +352,10 @@ foundlist(char *defstr)
 	if ((v1->vals = strndup(valp, BUFSIZE)) == NULL)
 		return(dobeep_msg("strndup error"));
 
-	return (TRUE);
-}
+#ifdef  MGLOG
+        mglog_misc("var:%s\t#items:%d\tvals:%s\n", vnamep, v1->count, v1->vals);
+#endif
 
-
-/*
- * to do
- */
-static int
-foundvar(char *funstr)
-{
-	ewprintf("to do");
 	return (TRUE);
 }
 
@@ -398,7 +398,7 @@ foundparen(char *funstr)
 	}
 	if (!regexec(&regex_buff, funstr, 0, NULL, 0)) {
 		regfree(&regex_buff);
-		return(foundlist(funstr));
+		return(foundvar(funstr));
 	}
 	/* Does the line have a single variable 'define' like: */
 	/* (define i 0) */
@@ -409,7 +409,7 @@ foundparen(char *funstr)
 	}
 	if (!regexec(&regex_buff, funstr, 0, NULL, 0)) {
 		regfree(&regex_buff);
-		return(foundvar(funstr));
+		return(foundvar(funstr)); /* now as 'list' above -??  */
 	}
 	/* Does the line have an unrecognised 'define' */
 	regs = "^[(][\t ]*define[\t ]+";
