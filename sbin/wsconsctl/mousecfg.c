@@ -1,4 +1,4 @@
-/* $OpenBSD: mousecfg.c,v 1.7 2020/04/02 17:17:04 deraadt Exp $ */
+/* $OpenBSD: mousecfg.c,v 1.8 2021/03/02 22:35:19 bru Exp $ */
 
 /*
  * Copyright (c) 2017 Ulf Brosziewski
@@ -162,10 +162,16 @@ mousecfg_init(int dev_fd, const char **errstr)
 		}
 
 	parameters.params = cfg_buffer;
-	parameters.nparams = (cfg_touchpad ? BUFSIZE : BASESIZE);
+	parameters.nparams = BASESIZE;
 	if ((err = ioctl(dev_fd, WSMOUSEIO_GETPARAMS, &parameters))) {
 		*errstr = "WSMOUSEIO_GETPARAMS";
 		return (err);
+	}
+	if (cfg_touchpad) {
+		parameters.params = cfg_buffer + BASESIZE;
+		parameters.nparams = BUFSIZE - BASESIZE;
+		if (ioctl(dev_fd, WSMOUSEIO_GETPARAMS, &parameters))
+			cfg_touchpad = 0;
 	}
 
 	return (0);
