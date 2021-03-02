@@ -1,4 +1,4 @@
-/* $OpenBSD: smmu.c,v 1.3 2021/03/01 21:38:20 patrick Exp $ */
+/* $OpenBSD: smmu.c,v 1.4 2021/03/02 01:34:43 patrick Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
@@ -389,7 +389,6 @@ smmu_tlb_sync_global(struct smmu_softc *sc)
 		if ((smmu_gr0_read_4(sc, SMMU_STLBGSTATUS) &
 		    SMMU_STLBGSTATUS_GSACTIVE) == 0)
 			return;
-		delay(1000);
 	}
 
 	printf("%s: global TLB sync timeout\n",
@@ -407,7 +406,6 @@ smmu_tlb_sync_context(struct smmu_domain *dom)
 		if ((smmu_cb_read_4(sc, dom->sd_cb_idx, SMMU_CB_TLBSTATUS) &
 		    SMMU_CB_TLBSTATUS_SACTIVE) == 0)
 			return;
-		delay(1000);
 	}
 
 	printf("%s: context TLB sync timeout\n",
