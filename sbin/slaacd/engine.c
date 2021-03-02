@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.60 2021/02/26 02:28:50 jsg Exp $	*/
+/*	$OpenBSD: engine.c,v 1.61 2021/03/02 17:17:15 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -2530,47 +2530,43 @@ iface_timeout(int fd, short events, void *arg)
 	    if_state_name[iface->state]);
 
 	switch (iface->state) {
-		case IF_DELAY:
-		case IF_PROBE:
-			iface->state = IF_PROBE;
-			engine_imsg_compose_frontend(
-			    IMSG_CTL_SEND_SOLICITATION, 0, &iface->if_index,
-			    sizeof(iface->if_index));
-			if (++iface->probes >= MAX_RTR_SOLICITATIONS) {
-				iface->state = IF_DEAD;
-				tv.tv_sec = 0;
-			} else
-				tv.tv_sec = RTR_SOLICITATION_INTERVAL;
-			tv.tv_usec = arc4random_uniform(1000000);
-			evtimer_add(&iface->timer, &tv);
-			break;
-		case IF_DEAD:
-			while(!LIST_EMPTY(&iface->addr_proposals)) {
-				addr_proposal =
-				    LIST_FIRST(&iface->addr_proposals);
-				addr_proposal->state = PROPOSAL_STALE;
-				free_address_proposal(addr_proposal);
-			}
-			while(!LIST_EMPTY(&iface->dfr_proposals)) {
-				dfr_proposal =
-				    LIST_FIRST(&iface->dfr_proposals);
-				dfr_proposal->state = PROPOSAL_STALE;
-				free_dfr_proposal(dfr_proposal);
-			}
+	case IF_DELAY:
+	case IF_PROBE:
+		iface->state = IF_PROBE;
+		engine_imsg_compose_frontend(IMSG_CTL_SEND_SOLICITATION, 0,
+		    &iface->if_index, sizeof(iface->if_index));
+		if (++iface->probes >= MAX_RTR_SOLICITATIONS) {
+			iface->state = IF_DEAD;
+			tv.tv_sec = 0;
+		} else
+			tv.tv_sec = RTR_SOLICITATION_INTERVAL;
+		tv.tv_usec = arc4random_uniform(1000000);
+		evtimer_add(&iface->timer, &tv);
+		break;
+	case IF_DEAD:
+		while(!LIST_EMPTY(&iface->addr_proposals)) {
+			addr_proposal = LIST_FIRST(&iface->addr_proposals);
+			addr_proposal->state = PROPOSAL_STALE;
+			free_address_proposal(addr_proposal);
+		}
+		while(!LIST_EMPTY(&iface->dfr_proposals)) {
+			dfr_proposal = LIST_FIRST(&iface->dfr_proposals);
+			dfr_proposal->state = PROPOSAL_STALE;
+			free_dfr_proposal(dfr_proposal);
+		}
 #ifndef	SMALL
-			while(!LIST_EMPTY(&iface->rdns_proposals)) {
-				rdns_proposal =
-				    LIST_FIRST(&iface->rdns_proposals);
-				rdns_proposal->state = PROPOSAL_STALE;
-				free_rdns_proposal(rdns_proposal);
-			}
-			compose_rdns_proposal(iface->if_index, iface->rdomain);
+		while(!LIST_EMPTY(&iface->rdns_proposals)) {
+			rdns_proposal = LIST_FIRST(&iface->rdns_proposals);
+			rdns_proposal->state = PROPOSAL_STALE;
+			free_rdns_proposal(rdns_proposal);
+		}
+		compose_rdns_proposal(iface->if_index, iface->rdomain);
 #endif	/* SMALL */
-			break;
-		case IF_DOWN:
-		case IF_IDLE:
-		default:
-			break;
+		break;
+	case IF_DOWN:
+	case IF_IDLE:
+	default:
+		break;
 	}
 }
 
