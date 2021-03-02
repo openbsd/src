@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.11 2019/07/18 10:50:24 lum Exp $	*/
+/*	$OpenBSD: log.c,v 1.12 2021/03/02 13:06:50 lum Exp $	*/
 
 /* 
  * This file is in the public domain.
@@ -46,6 +46,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdarg.h>
 
 #include "def.h"
 #include "key.h"
@@ -55,22 +56,30 @@
 
 #include "log.h"
 
-static char	*mglogfiles_create(char *);
+static char	*mglogfiles_create(FILE **, char *);
 static int	 mglog_lines(PF);
 static int	 mglog_undo(void);
 static int	 mglog_window(void);
 static int	 mglog_key(KEYMAP *map);
 
-char		*mglogdir;
-extern char	*mglogpath_lines;
-extern char	*mglogpath_undo;
-extern char	*mglogpath_window;
-extern char	*mglogpath_key;
-extern char     *mglogpath_interpreter;
+const char	*mglogdir;
+const char	*mglogpath_lines;
+const char	*mglogpath_undo;
+const char	*mglogpath_window;
+const char	*mglogpath_key;
+const char    	*mglogpath_interpreter;
+const char	*mglogpath_misc;
 int		 mgloglevel;
 
+FILE		*fd_lines;
+FILE		*fd_undo;
+FILE		*fd_window;
+FILE		*fd_key;
+FILE		*fd_interpreter;
+FILE		*fd_misc;
+
 int
-mglog(PF funct, KEYMAP *map)
+mglog(PF funct, void *map)
 {
 	if(!mglog_lines(funct))
 		ewprintf("Problem logging lines");
@@ -88,43 +97,28 @@ mglog(PF funct, KEYMAP *map)
 static int
 mglog_key(KEYMAP *map)
 {
-	struct stat      sb;
-	FILE            *fd;
 	PF		*pfp;
 
-	if(stat(mglogpath_key, &sb))
-		 return (FALSE);
-	fd = fopen(mglogpath_key, "a");
-
 	if (ISWORD(*key.k_chars)) {
-		if (fprintf(fd, "k_count:%d k_chars:%hd\tchr:%c\t", key.k_count,
-		    *key.k_chars, CHARMASK(*key.k_chars)) == -1) {
-			fclose(fd);
-			return (FALSE);
-		}
+		fprintf(fd_key, "k_count:%d k_chars:%hd\tchr:%c\t", key.k_count,
+		    *key.k_chars, CHARMASK(*key.k_chars));
 	} else {
-		if (fprintf(fd, "k_count:%d k_chars:%hd\t\t", key.k_count,
-		    *key.k_chars) == -1) {
-			fclose(fd);
-			return (FALSE);
-		}
+		fprintf(fd_key, "k_count:%d k_chars:%hd\t\t", key.k_count,
+		    *key.k_chars);
 	}
-	if (fprintf(fd, "map:%p %d %d %p %hd %hd\n",
+	fprintf(fd_key, "map:%p %d %d %p %hd %hd\n",
 	    map,
 	    map->map_num,
 	    map->map_max,
 	    map->map_default,
 	    map->map_element->k_base,
 	    map->map_element->k_num
-	    ) == -1) {
-		fclose(fd);
-		return (FALSE);
-	}
-	for (pfp = map->map_element->k_funcp; *pfp != '\0'; pfp++)
-		fprintf(fd, "%s ", function_name(*pfp));
+	    );
+	for (pfp = map->map_element->k_funcp; *pfp != NULL; pfp++)
+		fprintf(fd_key, "%s ", function_name(*pfp));
 
-	fprintf(fd, "\n\n");
-	fclose(fd);
+	fprintf(fd_key, "\n\n");
+	fflush(fd_key);
 	return (TRUE);
 }
 
@@ -132,16 +126,10 @@ static int
 mglog_window(void)
 {
 	struct mgwin	*wp;
-	struct stat	 sb;
-	FILE		*fd;
 	int		 i;
 
-	if(stat(mglogpath_window, &sb))
-		return (FALSE);
-	fd = fopen(mglogpath_window, "a");
-
 	for (wp = wheadp, i = 0; wp != NULL; wp = wp->w_wndp, ++i) {
-		if (fprintf(fd,
+		fprintf(fd_window,
 		    "%d wh%p wlst%p wbfp%p wlp%p wdtp%p wmkp%p wdto%d wmko%d" \
 		    " wtpr%d wntr%d wfrm%d wrfl%c wflg%c wwrl%p wdtl%d" \
 		    " wmkl%d\n",
@@ -161,12 +149,10 @@ mglog_window(void)
 		    wp->w_flag,
 		    wp->w_wrapline,
 		    wp->w_dotline,
-		    wp->w_markline) == -1) {
-			fclose(fd);
-			return (FALSE);
-		}
+		    wp->w_markline
+		    );
 	}
-	fclose(fd);
+	fflush(fd_window);
 	return (TRUE);
 }
 
@@ -174,34 +160,25 @@ static int
 mglog_undo(void)
 {
 	struct undo_rec	*rec;
-	struct stat	 sb;
-	FILE		*fd;
 	char		 buf[4096], tmp[1024];
 	int      	 num;
 	char		*jptr;
 
 	jptr = "^J"; /* :) */
-
-	if(stat(mglogpath_undo, &sb))
-		return (FALSE);
-	fd = fopen(mglogpath_undo, "a");
-	
 	/*
 	 * From undo_dump()
 	 */
 	num = 0;
 	TAILQ_FOREACH(rec, &curbp->b_undo, next) {
 		num++;
-		if (fprintf(fd, "%d:\t %s at %d ", num,
+		fprintf(fd_undo, "%d:\t %s at %d ", num,
 		    (rec->type == DELETE) ? "DELETE":
 		    (rec->type == DELREG) ? "DELREGION":
 		    (rec->type == INSERT) ? "INSERT":
 		    (rec->type == BOUNDARY) ? "----" :
 		    (rec->type == MODIFIED) ? "MODIFIED": "UNKNOWN",
-		    rec->pos) == -1) {
-			fclose(fd);
-			return (FALSE);
-		}
+		    rec->pos
+		    );
 		if (rec->content) {
 			(void)strlcat(buf, "\"", sizeof(buf));
 			snprintf(tmp, sizeof(tmp), "%.*s",
@@ -216,17 +193,11 @@ mglog_undo(void)
 			ewprintf("Undo record too large. Aborted.");
 			return (FALSE);
 		}
-		if (fprintf(fd, "%s\n", buf) == -1) {
-			fclose(fd);
-			return (FALSE);
-		}
+		fprintf(fd_undo, "%s\n", buf);
 		tmp[0] = buf[0] = '\0';
 	}
-	if (fprintf(fd, "\t [end-of-undo]\n\n") == -1) {
-		fclose(fd);
-		return (FALSE);
-	}
-	fclose(fd);
+	fprintf(fd_undo, "\t [end-of-undo]\n\n");
+	fflush(fd_undo);
 
 	return (TRUE);
 }
@@ -235,21 +206,12 @@ static int
 mglog_lines(PF funct)
 {
 	struct line     *lp;
-	struct stat      sb;
 	char		*curline, *tmp, o;
-	FILE            *fd;
 	int		 i;
 
 	i = 0;
 
-	if(stat(mglogpath_lines, &sb))
-		return (FALSE);
-
-	fd = fopen(mglogpath_lines, "a");
-	if (fprintf(fd, "%s\n", function_name(funct)) == -1) {
-		fclose(fd);
-		return (FALSE);
-	}
+	fprintf(fd_lines, "%s\n", function_name(funct));
 	lp = bfirstlp(curbp);
 
 	for(;;) {
@@ -269,28 +231,22 @@ mglog_lines(PF funct)
 			tmp = lp->l_text;
 
 		/* segv on fprintf below with long lines */
-		if (fprintf(fd, "%s%p b^%p f.%p %d %d\t%c|%s\n", curline,
+		fprintf(fd_lines, "%s%p b^%p f.%p %d %d\t%c|%s\n", curline,
 		    lp, lp->l_bp, lp->l_fp,
-		    lp->l_size, lp->l_used, o, tmp) == -1) {
-			fclose(fd);
-			return (FALSE);
-		}
+		    lp->l_size, lp->l_used, o, tmp);
+
 		lp = lforw(lp);
 		if (lp == curbp->b_headp) {
-			if (fprintf(fd, " %p b^%p f.%p [bhead]\n(EOB)\n",
-			    lp, lp->l_bp, lp->l_fp) == -1) {
-				fclose(fd);
-        	                return (FALSE);
-			}
-			if (fprintf(fd, "lines:raw:%d buf:%d wdot:%d\n\n",
-			    i, curbp->b_lines, curwp->w_dotline) == -1) {
-				fclose(fd);
-        	                return (FALSE);
-			}
+			fprintf(fd_lines, " %p b^%p f.%p [bhead]\n(EOB)\n",
+			    lp, lp->l_bp, lp->l_fp);
+
+			fprintf(fd_lines, "lines:raw:%d buf:%d wdot:%d\n\n",
+			    i, curbp->b_lines, curwp->w_dotline);
+
 			break;
 		}
 	}
-	fclose(fd);
+	fflush(fd_lines);
 
 	return (TRUE);
 }
@@ -305,19 +261,13 @@ mglog_isvar(
 	const int 	  sizof
 )
 {
-	FILE		*fd;
 
-	fd = fopen(mglogpath_interpreter, "a");
-
-	if (fprintf(fd, " argbuf:%s,argp:%s,sizof:%d<\n",
+	fprintf(fd_interpreter, " argbuf:%s,argp:%s,sizof:%d<\n",
 	    argbuf,
 	    argp,
-	    sizof
-	    ) == -1) {
-		fclose(fd);
-		return (FALSE);
-	}
-	fclose(fd);
+	    sizof);
+
+	fflush(fd_interpreter);
 	return (TRUE);
 }
 
@@ -337,11 +287,7 @@ mglog_execbuf(
 	const char* const contbuf
 )
 {
-	FILE		*fd;
-
-	fd = fopen(mglogpath_interpreter, "a");
-
-	if (fprintf(fd, "%sexcbuf:%s,argbuf:%s,argp:%s,last:%d,inlist:%d,"\
+	fprintf(fd_interpreter, "%sexcbuf:%s,argbuf:%s,argp:%s,last:%d,inlist:%d,"\
 	    "cmdp:%s,p:%s,contbuf:%s<\n",
 	    pre,
 	    excbuf,
@@ -352,13 +298,35 @@ mglog_execbuf(
 	    cmdp,
 	    p,
 	    contbuf
-	    ) == -1) {
-		fclose(fd);
-		return (FALSE);
-	}
-	fclose(fd);
+	    );
+	fflush(fd_interpreter);
 	return (TRUE);
 }
+
+/*
+ * Misc. logging for various subsystems
+ */
+int
+mglog_misc(
+	const char *fmt,
+	...
+)
+{
+	va_list		ap;
+	int		rc;
+
+	va_start(ap, fmt);
+	rc = vfprintf(fd_misc, fmt, ap);
+	va_end(ap);
+	fflush(fd_misc);
+
+	if (rc < 0)
+		return (FALSE);
+
+	return (TRUE);
+}
+
+
 
 /*
  * Make sure logging to log files can happen.
@@ -369,7 +337,7 @@ mgloginit(void)
 	struct stat	 sb;
 	mode_t           dir_mode, f_mode, oumask;
 	char		*mglogfile_lines, *mglogfile_undo, *mglogfile_window;
-	char		*mglogfile_key, *mglogfile_interpreter;
+	char		*mglogfile_key, *mglogfile_interpreter, *mglogfile_misc;
 
 	mglogdir = "./log/";
 	mglogfile_lines = "line.log";
@@ -377,6 +345,7 @@ mgloginit(void)
 	mglogfile_window = "window.log";
 	mglogfile_key = "key.log";
 	mglogfile_interpreter = "interpreter.log";
+	mglogfile_misc = "misc.log";
 
 	/* 
 	 * Change mgloglevel for desired level of logging.
@@ -394,20 +363,24 @@ mgloginit(void)
 		if (chmod(mglogdir, f_mode) == -1)
 			return (FALSE);
 	}
-	mglogpath_lines = mglogfiles_create(mglogfile_lines);
+	mglogpath_lines = mglogfiles_create(&fd_lines, mglogfile_lines);
 	if (mglogpath_lines == NULL)
 		return (FALSE);
-	mglogpath_undo = mglogfiles_create(mglogfile_undo);
+	mglogpath_undo = mglogfiles_create(&fd_undo, mglogfile_undo);
 	if (mglogpath_undo == NULL)
 		return (FALSE);
-	mglogpath_window = mglogfiles_create(mglogfile_window);
+	mglogpath_window = mglogfiles_create(&fd_window, mglogfile_window);
 	if (mglogpath_window == NULL)
 		return (FALSE);
-	mglogpath_key = mglogfiles_create(mglogfile_key);
+	mglogpath_key = mglogfiles_create(&fd_key, mglogfile_key);
 	if (mglogpath_key == NULL)
 		return (FALSE);
-	mglogpath_interpreter = mglogfiles_create(mglogfile_interpreter);
+	mglogpath_interpreter = mglogfiles_create(&fd_interpreter,
+	    mglogfile_interpreter);
 	if (mglogpath_interpreter == NULL)
+		return (FALSE);
+	mglogpath_misc = mglogfiles_create(&fd_misc, mglogfile_misc);
+	if (mglogpath_misc == NULL)
 		return (FALSE);
 
 	return (TRUE);
@@ -415,11 +388,9 @@ mgloginit(void)
 
 
 static char *
-mglogfiles_create(char *mglogfile)
+mglogfiles_create(FILE ** fd, char *mglogfile)
 {
-	struct stat	 sb;
 	char		 tmp[NFILEN], *tmp2;
-	int     	 fd;
 
 	if (strlcpy(tmp, mglogdir, sizeof(tmp)) >
 	    sizeof(tmp))
@@ -430,37 +401,8 @@ mglogfiles_create(char *mglogfile)
 	if ((tmp2 = strndup(tmp, NFILEN)) == NULL)
 		return (NULL);
 
-	if(stat(tmp2, &sb))
-		fd = open(tmp2, O_RDWR | O_CREAT | O_TRUNC, 0644);
-	else
-		fd = open(tmp2, O_RDWR | O_TRUNC, 0644);
-
-	if (fd == -1)
+	if ((*fd = fopen(tmp2, "w")) == NULL)
 		return (NULL);
-
-	close(fd);	
 
 	return (tmp2);
 }
-
-/*
- * Template log function.
- */
-/*
-int
-mglog_?(void)
-{
-	struct stat      sb;
-	FILE            *fd;
-
-	if(stat(mglogpath_?, &sb))
-	fd = fopen(mglogpath_?, "a");
-
-	if (fprintf(fd, "%?", ??) == -1) {
-		fclose(fd);
-		return (FALSE);
-	}
-	fclose(fd);
-	return (TRUE);
-}
-*/
