@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleased.c,v 1.4 2021/02/27 17:53:23 florian Exp $	*/
+/*	$OpenBSD: dhcpleased.c,v 1.5 2021/03/02 12:01:39 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -265,13 +265,13 @@ main(int argc, char *argv[])
 #endif /* SMALL */
 
 	if (unveil("/dev/bpf", "rw") == -1)
-		fatal("unveil");
+		fatal("unveil /dev/bpf");
 
 	if (unveil(_PATH_LEASE, "rwc") == -1)
-		fatal("unveil");
+		fatal("unveil " _PATH_LEASE);
 
 	if (unveil(NULL, NULL) == -1)
-		fatal("unveil");
+		fatal("locking unveil");
 #if notyet
 	if (pledge("stdio inet rpath wpath sendfd wroute bpf", NULL) == -1)
 		fatal("pledge");
