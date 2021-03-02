@@ -1,4 +1,4 @@
-/* $OpenBSD: names.c,v 1.43 2020/10/05 11:04:40 nicm Exp $ */
+/* $OpenBSD: names.c,v 1.44 2021/03/02 11:00:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -109,6 +109,8 @@ default_window_name(struct window *w)
 {
 	char	*cmd, *s;
 
+	if (w->active == NULL)
+		return (xstrdup(""));
 	cmd = cmd_stringify_argv(w->active->argc, w->active->argv);
 	if (cmd != NULL && *cmd != '\0')
 		s = parse_window_name(cmd);
