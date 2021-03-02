@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.707 2021/02/28 17:49:01 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.708 2021/03/02 14:32:14 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -157,7 +157,7 @@ void make_release(struct interface_info *, struct client_lease *);
 void release_lease(struct interface_info *);
 void propose_release(struct interface_info *);
 
-void write_lease_db(struct client_lease_tq *);
+void write_lease_db(struct interface_info *);
 char *lease_as_string(char *, struct client_lease *);
 struct proposal *lease_as_proposal(struct client_lease *);
 struct unwind_info *lease_as_unwind_info(struct client_lease *);
@@ -715,7 +715,7 @@ main(int argc, char *argv[])
 
 	if ((leaseFile = fopen(path_lease_db, "w")) == NULL)
 		log_warn("%s: fopen(%s)", log_procname, path_lease_db);
-	write_lease_db(&ifi->lease_db);
+	write_lease_db(ifi);
 
 	set_user("_dhcp");
 
@@ -966,9 +966,6 @@ void
 dhcpnak(struct interface_info *ifi, const char *src)
 {
 	struct client_lease		*ll, *pl;
-	time_t				 cur_time;
-
-	time(&cur_time);
 
 	if (ifi->state != S_REBOOTING &&
 	    ifi->state != S_REQUESTING &&
@@ -980,12 +977,11 @@ dhcpnak(struct interface_info *ifi, const char *src)
 
 	log_debug("%s: DHCPNAK from %s", log_procname, src);
 
-	/* Remove expired leases and the NAK'd address from the database. */
+	/* Remove the NAK'd address from the database. */
 	TAILQ_FOREACH_SAFE(ll, &ifi->lease_db, next, pl) {
-		if (lease_expiry(ll) < cur_time || (
-		    ifi->ssid_len == ll->ssid_len &&
+		if (ifi->ssid_len == ll->ssid_len &&
 		    memcmp(ifi->ssid, ll->ssid, ll->ssid_len) == 0 &&
-		    ll->address.s_addr == ifi->requested_address.s_addr)) {
+		    ll->address.s_addr == ifi->requested_address.s_addr) {
 			if (ll == ifi->active) {
 				tell_unwind(NULL, ifi->flags);
 				free(ifi->unwind_info);
@@ -997,7 +993,7 @@ dhcpnak(struct interface_info *ifi, const char *src)
 			}
 			TAILQ_REMOVE(&ifi->lease_db, ll, next);
 			free_client_lease(ll);
-			write_lease_db(&ifi->lease_db);
+			write_lease_db(ifi);
 		}
 	}
 
@@ -1081,26 +1077,23 @@ bind_lease(struct interface_info *ifi)
 		fatal("bind msg");
 
 newlease:
-	/*
-	 * Remove previous dynamic lease(s) for this address, and any expired
-	 * dynamic leases.
-	 */
 	seen = 0;
 	TAILQ_FOREACH_SAFE(ll, &ifi->lease_db, next, pl) {
-		if (ifi->ssid_len != ll->ssid_len)
-			continue;
-		if (memcmp(ifi->ssid, ll->ssid, ll->ssid_len) != 0)
+		if (ifi->ssid_len != ll->ssid_len ||
+		    memcmp(ifi->ssid, ll->ssid, ll->ssid_len) != 0)
 			continue;
 		if (ifi->active == ll)
 			seen = 1;
-		else if (lease_expiry(ll) < cur_time ||
-		    ll->address.s_addr == ifi->active->address.s_addr) {
+		else if (ll->address.s_addr == ifi->active->address.s_addr) {
 			TAILQ_REMOVE(&ifi->lease_db, ll, next);
 			free_client_lease(ll);
 		}
 	}
-	if (seen == 0)
+	if (seen == 0) {
+		if (ifi->active->epoch == 0)
+			time(&ifi->active->epoch);
 		TAILQ_INSERT_HEAD(&ifi->lease_db, ifi->active,  next);
+	}
 
 	/*
 	 * Write out updated information before going daemon.
@@ -1109,7 +1102,7 @@ newlease:
 	 * the bind process is complete and all related information is in
 	 * place when dhclient(8) goes daemon.
 	 */
-	write_lease_db(&ifi->lease_db);
+	write_lease_db(ifi);
 
 	free_client_lease(lease);
 	free(effective_proposal);
@@ -1859,11 +1852,20 @@ free_client_lease(struct client_lease *lease)
 }
 
 void
-write_lease_db(struct client_lease_tq *lease_db)
+write_lease_db(struct interface_info *ifi)
 {
-	struct client_lease	*lp;
+	struct timespec		 now;
+	struct client_lease_tq *lease_db = &ifi->lease_db;
+	struct client_lease	*lp, *pl;
 	char			*leasestr;
-	time_t			 cur_time;
+
+	clock_gettime(CLOCK_REALTIME, &now);
+	TAILQ_FOREACH_SAFE(lp, lease_db, next, pl) {
+		if (lp != ifi->active && lease_expiry(lp) < now.tv_sec) {
+			TAILQ_REMOVE(lease_db, lp, next);
+			free_client_lease(lp);
+		}
+	}
 
 	if (leaseFile == NULL)
 		return;
@@ -1878,10 +1880,7 @@ write_lease_db(struct client_lease_tq *lease_db)
 	 * the leases in ifi->leases in reverse order to recreate
 	 * the chonological order required.
 	 */
-	time(&cur_time);
 	TAILQ_FOREACH_REVERSE(lp, lease_db, client_lease_tq, next) {
-		if (lease_expiry(lp) < cur_time)
-			continue;
 		leasestr = lease_as_string("lease", lp);
 		if (leasestr != NULL)
 			fprintf(leaseFile, "%s", leasestr);
@@ -2544,11 +2543,12 @@ struct client_lease *
 get_recorded_lease(struct interface_info *ifi)
 {
 	char			 ifname[IF_NAMESIZE];
-	time_t			 cur_time;
 	struct client_lease	*lp;
 	int			 i;
 
-	time(&cur_time);
+	/* Update on-disk db, which clears out expired leases. */
+	ifi->active = NULL;
+	write_lease_db(ifi);
 
 	/* Run through the list of leases and see if one can be used. */
 	i = DHO_DHCP_CLIENT_IDENTIFIER;
@@ -2565,9 +2565,6 @@ get_recorded_lease(struct interface_info *ifi)
 		if (addressinuse(ifi->name, lp->address, ifname) != 0 &&
 		    strncmp(ifname, ifi->name, IF_NAMESIZE) != 0)
 			continue;
-		if (lease_expiry(lp) <= cur_time)
-			continue;
-
 		break;
 	}
 
@@ -2743,7 +2740,7 @@ release_lease(struct interface_info *ifi)
 	TAILQ_REMOVE(&ifi->lease_db, ifi->active, next);
 	free_client_lease(ifi->active);
 	ifi->active = NULL;
-	write_lease_db(&ifi->lease_db);
+	write_lease_db(ifi);
 
 	free(ifi->configured);
 	ifi->configured = NULL;
