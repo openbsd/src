@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolvd.c,v 1.7 2021/03/02 09:18:58 kn Exp $	*/
+/*	$OpenBSD: resolvd.c,v 1.8 2021/03/02 16:39:46 deraadt Exp $	*/
 /*
  * Copyright (c) 2021 Florian Obser <florian@openbsd.org>
  * Copyright (c) 2021 Theo de Raadt <deraadt@openbsd.org>
@@ -25,6 +25,7 @@
 #include <sys/un.h>
 
 #include <arpa/inet.h>
+#include <netinet/in.h>
 #include <net/if.h>
 #include <net/route.h>
 
