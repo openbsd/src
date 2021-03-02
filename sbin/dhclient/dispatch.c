@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.169 2021/02/27 13:59:00 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.170 2021/03/02 16:17:26 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -303,12 +303,12 @@ void
 set_timeout(struct interface_info *ifi, time_t secs,
     void (*where)(struct interface_info *))
 {
-	struct timespec		cur_time;
+	struct timespec		now;
 
-	clock_gettime(CLOCK_REALTIME, &cur_time);
+	clock_gettime(CLOCK_REALTIME, &now);
 	timespecclear(&ifi->timeout);
 	ifi->timeout.tv_sec = secs;
-	timespecadd(&ifi->timeout, &cur_time, &ifi->timeout);
+	timespecadd(&ifi->timeout, &now, &ifi->timeout);
 	ifi->timeout_func = where;
 }
 
