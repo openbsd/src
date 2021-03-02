@@ -1,4 +1,4 @@
-/* $OpenBSD: tls12_record_layer.c,v 1.22 2021/03/02 17:24:37 jsing Exp $ */
+/* $OpenBSD: tls12_record_layer.c,v 1.23 2021/03/02 17:26:25 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -368,7 +368,7 @@ tls12_record_layer_ccs_aead(struct tls12_record_layer *rl,
     size_t mac_key_len, const uint8_t *key, size_t key_len, const uint8_t *iv,
     size_t iv_len)
 {
-	size_t aead_nonce_len = EVP_AEAD_nonce_length(rl->aead);
+	size_t aead_nonce_len;
 
 	if (!tls12_record_protection_unused(rp))
 		return 0;
@@ -392,6 +392,8 @@ tls12_record_layer_ccs_aead(struct tls12_record_layer *rl,
 	rp->aead_ctx->fixed_nonce_len = iv_len;
 	rp->aead_ctx->tag_len = EVP_AEAD_max_overhead(rl->aead);
 	rp->aead_ctx->variable_nonce_len = 8;
+
+	aead_nonce_len = EVP_AEAD_nonce_length(rl->aead);
 
 	if (rp->aead_ctx->xor_fixed_nonce) {
 		/* Fixed nonce length must match, variable must not exceed. */
