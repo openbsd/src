@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.90 2021/02/02 11:18:57 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.91 2021/03/02 12:15:46 edd Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1142,43 +1142,51 @@ dev_adjpar(struct dev *d, int mode,
 /*
  * Open the device with the dev_reqxxx capabilities. Setup a mixer, demuxer,
  * monitor, midi control, and any necessary conversions.
+ *
+ * Note that record and play buffers are always allocated, even if the
+ * underlying device doesn't support both modes.
  */
 int
 dev_allocbufs(struct dev *d)
 {
-	if (d->mode & MODE_REC) {
-		/*
-		 * Create device <-> demuxer buffer
-		 */
-		d->rbuf = xmalloc(d->round * d->rchan * sizeof(adata_t));
+	/*
+	 * Create record buffer.
+	 */
 
-		/*
-		 * Insert a converter, if needed.
-		 */
-		if (!aparams_native(&d->par)) {
-			dec_init(&d->dec, &d->par, d->rchan);
-			d->decbuf = xmalloc(d->round * d->rchan * d->par.bps);
-		} else
-			d->decbuf = NULL;
-	}
-	if (d->mode & MODE_PLAY) {
-		/*
-		 * Create device <-> mixer buffer
-		 */
-		d->poffs = 0;
-		d->psize = d->bufsz + d->round;
-		d->pbuf = xmalloc(d->psize * d->pchan * sizeof(adata_t));
-		d->mode |= MODE_MON;
+	 /* Create device <-> demuxer buffer */
+	d->rbuf = xmalloc(d->round * d->rchan * sizeof(adata_t));
 
-		/*
-		 * Append a converter, if needed.
-		 */
-		if (!aparams_native(&d->par)) {
-			enc_init(&d->enc, &d->par, d->pchan);
-			d->encbuf = xmalloc(d->round * d->pchan * d->par.bps);
-		} else
-			d->encbuf = NULL;
-	}
+	/* Insert a converter, if needed. */
+	if (!aparams_native(&d->par)) {
+		dec_init(&d->dec, &d->par, d->rchan);
+		d->decbuf = xmalloc(d->round * d->rchan * d->par.bps);
+	} else
+		d->decbuf = NULL;
+
+	/*
+	 * Create play buffer
+	 */
+
+	/* Create device <-> mixer buffer */
+	d->poffs = 0;
+	d->psize = d->bufsz + d->round;
+	d->pbuf = xmalloc(d->psize * d->pchan * sizeof(adata_t));
+	d->mode |= MODE_MON;
+
+	/* Append a converter, if needed. */
+	if (!aparams_native(&d->par)) {
+		enc_init(&d->enc, &d->par, d->pchan);
+		d->encbuf = xmalloc(d->round * d->pchan * d->par.bps);
+	} else
+		d->encbuf = NULL;
+
+	/*
+	 * Initially fill the record buffer with zeroed samples. This ensures
+	 * that when a client records from a play-only device the client just
+	 * gets silence.
+	 */
+	memset(d->rbuf, 0, d->round * d->rchan * sizeof(adata_t));
+
 	if (log_level >= 2) {
 		dev_log(d);
 		log_puts(": ");
@@ -1935,8 +1943,6 @@ found:
 			slot_log(s);
 			log_puts(": requested mode not supported\n");
 		}
-		dev_unref(opt->dev);
-		return NULL;
 	}
 	s->opt = opt;
 	s->ops = ops;
@@ -2055,13 +2061,7 @@ slot_attach(struct slot *s)
 	 * because dev_xxx() functions are supposed to
 	 * work (i.e., not to crash)
 	 */
-#ifdef DEBUG
-	if ((s->mode & d->mode) != s->mode) {
-		slot_log(s);
-		log_puts(": mode beyond device mode, not attaching\n");
-		panic();
-	}
-#endif
+
 	s->next = d->slot_list;
 	d->slot_list = s;
 	if (s->mode & MODE_PLAY) {

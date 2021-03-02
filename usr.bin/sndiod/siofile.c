@@ -1,4 +1,4 @@
-/*	$OpenBSD: siofile.c,v 1.22 2020/06/28 05:21:39 ratchov Exp $	*/
+/*	$OpenBSD: siofile.c,v 1.23 2021/03/02 12:15:46 edd Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -87,36 +87,75 @@ dev_sio_timeout(void *arg)
 	dev_abort(d);
 }
 
+static int
+dev_sio_openalt(struct dev *d, struct dev_alt *n,
+    struct sio_hdl **rhdl, struct sioctl_hdl **rctlhdl, unsigned int *rmode)
+{
+	struct sio_hdl *hdl;
+	struct sioctl_hdl *ctlhdl;
+	unsigned int mode = d->reqmode & (MODE_PLAY | MODE_REC);
+
+	hdl = fdpass_sio_open(d->num, n->idx, mode);
+	if (hdl == NULL) {
+		if (mode != (SIO_PLAY | SIO_REC))
+			return 0;
+		hdl = fdpass_sio_open(d->num, n->idx, SIO_PLAY);
+		if (hdl != NULL)
+			mode = SIO_PLAY;
+		else {
+			hdl = fdpass_sio_open(d->num, n->idx, SIO_REC);
+			if (hdl != NULL)
+				mode = SIO_REC;
+			else
+				return 0;
+		}
+		if (log_level >= 1) {
+			log_puts("warning, device opened in ");
+			log_puts(mode == SIO_PLAY ? "play-only" : "rec-only");
+			log_puts(" mode\n");
+		}
+	}
+
+	ctlhdl = fdpass_sioctl_open(d->num, n->idx, SIOCTL_READ | SIOCTL_WRITE);
+	if (ctlhdl == NULL) {
+		if (log_level >= 1) {
+			dev_log(d);
+			log_puts(": no control device\n");
+		}
+	}
+
+	*rhdl = hdl;
+	*rctlhdl = ctlhdl;
+	*rmode = mode;
+	return 1;
+}
+
 /*
  * open the device using one of the provided paths
  */
-static struct sio_hdl *
-dev_sio_openlist(struct dev *d, unsigned int mode, struct sioctl_hdl **rctlhdl)
+static int
+dev_sio_openlist(struct dev *d,
+    struct sio_hdl **rhdl, struct sioctl_hdl **rctlhdl, unsigned int *rmode)
 {
 	struct dev_alt *n;
-	struct sio_hdl *hdl;
-	struct sioctl_hdl *ctlhdl;
 	struct ctl *c;
 	int val;
 
 	for (n = d->alt_list; n != NULL; n = n->next) {
 		if (d->alt_num == n->idx)
 			continue;
-		hdl = fdpass_sio_open(d->num, n->idx, mode);
-		if (hdl != NULL) {
+		if (log_level >= 2) {
+			dev_log(d);
+			log_puts(": trying ");
+			log_puts(n->name);
+			log_puts("\n");
+		}
+		if (dev_sio_openalt(d, n, rhdl, rctlhdl, rmode)) {
 			if (log_level >= 2) {
 				dev_log(d);
 				log_puts(": using ");
 				log_puts(n->name);
 				log_puts("\n");
-			}
-			ctlhdl = fdpass_sioctl_open(d->num, n->idx,
-			    SIOCTL_READ | SIOCTL_WRITE);
-			if (ctlhdl == NULL) {
-				if (log_level >= 1) {
-					dev_log(d);
-					log_puts(": no control device\n");
-				}
 			}
 			d->alt_num = n->idx;
 			for (c = d->ctl_list; c != NULL; c = c->next) {
@@ -130,11 +169,10 @@ dev_sio_openlist(struct dev *d, unsigned int mode, struct sioctl_hdl **rctlhdl)
 				if (val)
 					c->val_mask = ~0U;
 			}
-			*rctlhdl = ctlhdl;
-			return hdl;
+			return 1;
 		}
 	}
-	return NULL;
+	return 0;
 }
 
 /*
@@ -144,38 +182,19 @@ int
 dev_sio_open(struct dev *d)
 {
 	struct sio_par par;
-	unsigned int mode = d->mode & (MODE_PLAY | MODE_REC);
 
-	d->sio.hdl = dev_sio_openlist(d, mode, &d->sioctl.hdl);
-	if (d->sio.hdl == NULL) {
-		if (mode != (SIO_PLAY | SIO_REC))
-			return 0;
-		d->sio.hdl = dev_sio_openlist(d, SIO_PLAY, &d->sioctl.hdl);
-		if (d->sio.hdl != NULL)
-			mode = SIO_PLAY;
-		else {
-			d->sio.hdl = dev_sio_openlist(d,
-			    SIO_REC, &d->sioctl.hdl);
-			if (d->sio.hdl != NULL)
-				mode = SIO_REC;
-			else
-				return 0;
-		}
-		if (log_level >= 1) {
-			log_puts("warning, device opened in ");
-			log_puts(mode == SIO_PLAY ? "play-only" : "rec-only");
-			log_puts(" mode\n");
-		}
-	}
+	if (!dev_sio_openlist(d, &d->sio.hdl, &d->sioctl.hdl, &d->mode))
+		return 0;
+
 	sio_initpar(&par);
 	par.bits = d->par.bits;
 	par.bps = d->par.bps;
 	par.sig = d->par.sig;
 	par.le = d->par.le;
 	par.msb = d->par.msb;
-	if (mode & SIO_PLAY)
+	if (d->mode & SIO_PLAY)
 		par.pchan = d->pchan;
-	if (mode & SIO_REC)
+	if (d->mode & SIO_REC)
 		par.rchan = d->rchan;
 	if (d->bufsz)
 		par.appbufsz = d->bufsz;
@@ -211,14 +230,14 @@ dev_sio_open(struct dev *d)
 		log_puts(": unsupported sample size\n");
 		goto bad_close;
 	}
-	if ((mode & SIO_PLAY) && par.pchan > NCHAN_MAX) {
+	if ((d->mode & SIO_PLAY) && par.pchan > NCHAN_MAX) {
 		dev_log(d);
 		log_puts(": ");
 		log_putu(par.pchan);
 		log_puts(": unsupported number of play channels\n");
 		goto bad_close;
 	}
-	if ((mode & SIO_REC) && par.rchan > NCHAN_MAX) {
+	if ((d->mode & SIO_REC) && par.rchan > NCHAN_MAX) {
 		dev_log(d);
 		log_puts(": ");
 		log_putu(par.rchan);
@@ -254,17 +273,15 @@ dev_sio_open(struct dev *d)
 	d->par.sig = par.sig;
 	d->par.le = par.le;
 	d->par.msb = par.msb;
-	if (mode & SIO_PLAY)
+	if (d->mode & SIO_PLAY)
 		d->pchan = par.pchan;
-	if (mode & SIO_REC)
+	if (d->mode & SIO_REC)
 		d->rchan = par.rchan;
 	d->bufsz = par.bufsz;
 	d->round = par.round;
 	d->rate = par.rate;
-	if (!(mode & MODE_PLAY))
-		d->mode &= ~(MODE_PLAY | MODE_MON);
-	if (!(mode & MODE_REC))
-		d->mode &= ~MODE_REC;
+	if (d->mode & MODE_PLAY)
+		d->mode |= MODE_MON;
 	sio_onmove(d->sio.hdl, dev_sio_onmove, d);
 	d->sio.file = file_new(&dev_sio_ops, d, "dev", sio_nfds(d->sio.hdl));
 	if (d->sioctl.hdl) {
@@ -291,18 +308,13 @@ dev_sio_open(struct dev *d)
 int
 dev_sio_reopen(struct dev *d)
 {
-	struct sioctl_hdl *ctlhdl;
 	struct sio_par par;
 	struct sio_hdl *hdl;
+	struct sioctl_hdl *ctlhdl;
+	unsigned int mode;
 
-	hdl = dev_sio_openlist(d, d->mode & (MODE_PLAY | MODE_REC), &ctlhdl);
-	if (hdl == NULL) {
-		if (log_level >= 1) {
-			dev_log(d);
-			log_puts(": couldn't open an alternate device\n");
-		}
+	if (!dev_sio_openlist(d, &hdl, &ctlhdl, &mode))
 		return 0;
-	}
 
 	sio_initpar(&par);
 	par.bits = d->par.bits;
@@ -310,10 +322,10 @@ dev_sio_reopen(struct dev *d)
 	par.sig = d->par.sig;
 	par.le = d->par.le;
 	par.msb = d->par.msb;
-	if (d->mode & SIO_PLAY)
-		par.pchan = d->pchan;
-	if (d->mode & SIO_REC)
-		par.rchan = d->rchan;
+	if (mode & SIO_PLAY)
+		par.pchan = d->reqpchan;
+	if (mode & SIO_REC)
+		par.rchan = d->reqrchan;
 	par.appbufsz = d->bufsz;
 	par.round = d->round;
 	par.rate = d->rate;
@@ -343,6 +355,7 @@ dev_sio_reopen(struct dev *d)
 	}
 
 	/* update parameters */
+	d->mode = mode;
 	d->par.bits = par.bits;
 	d->par.bps = par.bps;
 	d->par.sig = par.sig;
