@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.5 2021/02/18 16:23:17 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.6 2021/03/02 09:00:46 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -416,8 +416,12 @@ proc_parser_gbr(struct entity *entp, X509_STORE *store,
 	gbr_free(gbr);
 }
 
-/* use the parent (id) to walk the tree to the root and
-   build a certificate chain from cert->x509 */
+/*
+ * Use the parent (id) to walk the tree to the root and
+ * build a certificate chain from cert->x509. Do not include
+ * the root node since this node should already be in the X509_STORE
+ * as a trust anchor.
+ */
 static void
 build_chain(const struct auth *a, STACK_OF(X509) **chain)
 {
@@ -428,7 +432,7 @@ build_chain(const struct auth *a, STACK_OF(X509) **chain)
 
 	if ((*chain = sk_X509_new_null()) == NULL)
 		err(1, "sk_X509_new_null");
-	for (; a != NULL; a = a->parent) {
+	for (; a->parent != NULL; a = a->parent) {
 		assert(a->cert->x509 != NULL);
 		if (!sk_X509_push(*chain, a->cert->x509))
 			errx(1, "sk_X509_push");
