@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleased.c,v 1.5 2021/03/02 12:01:39 florian Exp $	*/
+/*	$OpenBSD: dhcpleased.c,v 1.6 2021/03/02 12:03:50 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -90,7 +90,7 @@ static struct imsgev	*iev_engine;
 pid_t			 frontend_pid;
 pid_t			 engine_pid;
 
-int			 routesock, ioctl_sock, rtm_seq = 0;
+int			 routesock, ioctl_sock, rtm_seq, no_lease_files;
 
 void
 main_sig_handler(int sig, short event, void *arg)
@@ -267,8 +267,10 @@ main(int argc, char *argv[])
 	if (unveil("/dev/bpf", "rw") == -1)
 		fatal("unveil /dev/bpf");
 
-	if (unveil(_PATH_LEASE, "rwc") == -1)
-		fatal("unveil " _PATH_LEASE);
+	if (unveil(_PATH_LEASE, "rwc") == -1) {
+		no_lease_files = 1;
+		log_warn("disabling lease files, unveil " _PATH_LEASE);
+	}
 
 	if (unveil(NULL, NULL) == -1)
 		fatal("locking unveil");
@@ -714,6 +716,9 @@ configure_interface(struct imsg_configure_interface *imsg)
 	main_imsg_compose_frontend(IMSG_UDPSOCK, udpsock,
 	    &imsg->if_index, sizeof(imsg->if_index));
 
+	if (no_lease_files)
+		return;
+
 	if (inet_ntop(AF_INET, &imsg->addr, ntop_buf, sizeof(ntop_buf)) ==
 	    NULL) {
 		log_warn("%s: inet_ntop", __func__);
@@ -964,6 +969,9 @@ read_lease_file(struct imsg_ifinfo *imsg_ifinfo)
 	int	 len, fd;
 	char	 if_name[IF_NAMESIZE];
 	char	 lease_file_buf[sizeof(_PATH_LEASE) + IF_NAMESIZE];
+
+	if (no_lease_files)
+		return;
 
 	memset(imsg_ifinfo->lease, 0, sizeof(imsg_ifinfo->lease));
 
