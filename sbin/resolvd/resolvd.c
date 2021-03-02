@@ -40,11 +40,12 @@
 
 #define	ROUTE_SOCKET_BUF_SIZE	16384
 #define	ASR_MAXNS		10
+#ifndef SMALL
 #define	_PATH_UNWIND_SOCKET	"/dev/unwind.sock"
+#endif
 #define	_PATH_RESCONF		"/etc/resolv.conf"
 #define	_PATH_RESCONF_NEW	"/etc/resolv.conf.new"
 #define _PATH_LOCKFILE		"/var/run/resolvd.lock"
-#define	STARTUP_WAIT_TIMO	1
 
 #ifndef nitems
 #define	nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
@@ -215,8 +216,10 @@ main(int argc, char *argv[])
 
 	if (unveil("/etc", "rwc") == -1)
 		lerr(1, "unveil /etc");
+#ifndef SMALL
 	if (unveil(_PATH_UNWIND_SOCKET, "r") == -1)
-		lerr(1, "unveil" _PATH_UNWIND_SOCKET);
+		lerr(1, "unveil " _PATH_UNWIND_SOCKET);
+#endif
 
 	if (pledge("stdio unix rpath wpath cpath", NULL) == -1)
 		lerr(1, "pledge");
