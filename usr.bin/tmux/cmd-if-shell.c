@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-if-shell.c,v 1.74 2020/04/13 20:51:57 nicm Exp $ */
+/* $OpenBSD: cmd-if-shell.c,v 1.75 2021/03/02 10:56:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -128,7 +128,7 @@ cmd_if_shell_exec(struct cmd *self, struct cmdq_item *item)
 		cdata->input.c->references++;
 	cmd_find_copy_state(&cdata->input.fs, target);
 
-	if (job_run(shellcmd, s,
+	if (job_run(shellcmd, 0, NULL, s,
 	    server_client_get_cwd(cmdq_get_client(item), s), NULL,
 	    cmd_if_shell_callback, cmd_if_shell_free, cdata, 0, -1,
 	    -1) == NULL) {

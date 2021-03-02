@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-run-shell.c,v 1.70 2021/01/01 08:36:51 nicm Exp $ */
+/* $OpenBSD: cmd-run-shell.c,v 1.71 2021/03/02 10:56:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -174,7 +174,7 @@ cmd_run_shell_timer(__unused int fd, __unused short events, void* arg)
 	enum cmd_parse_status		 status;
 
 	if (cmd != NULL && cdata->shell) {
-		if (job_run(cmd, cdata->s, cdata->cwd, NULL,
+		if (job_run(cmd, 0, NULL, cdata->s, cdata->cwd, NULL,
 		    cmd_run_shell_callback, cmd_run_shell_free, cdata,
 		    cdata->flags, -1, -1) == NULL)
 			cmd_run_shell_free(cdata);
