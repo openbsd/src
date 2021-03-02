@@ -1,4 +1,4 @@
-/* $OpenBSD: tls12_record_layer.c,v 1.21 2021/03/02 17:18:59 jsing Exp $ */
+/* $OpenBSD: tls12_record_layer.c,v 1.22 2021/03/02 17:24:37 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -816,7 +816,7 @@ static int
 tls12_record_layer_open_record_plaintext(struct tls12_record_layer *rl,
     uint8_t content_type, CBS *fragment, uint8_t **out, size_t *out_len)
 {
-	if (rl->read->aead_ctx != NULL || rl->read->cipher_ctx != NULL)
+	if (tls12_record_protection_engaged(rl->read))
 		return 0;
 
 	/* XXX - decrypt/process in place for now. */
@@ -1081,7 +1081,7 @@ static int
 tls12_record_layer_seal_record_plaintext(struct tls12_record_layer *rl,
     uint8_t content_type, const uint8_t *content, size_t content_len, CBB *out)
 {
-	if (rl->write->aead_ctx != NULL || rl->write->cipher_ctx != NULL)
+	if (tls12_record_protection_engaged(rl->write))
 		return 0;
 
 	return CBB_add_bytes(out, content, content_len);
