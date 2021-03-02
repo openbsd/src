@@ -1,4 +1,4 @@
-/* $OpenBSD: tls12_record_layer.c,v 1.20 2021/03/02 17:16:44 jsing Exp $ */
+/* $OpenBSD: tls12_record_layer.c,v 1.21 2021/03/02 17:18:59 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -425,10 +425,17 @@ tls12_record_layer_ccs_cipher(struct tls12_record_layer *rl,
 	int ret = 0;
 
 	if (!tls12_record_protection_unused(rp))
-		return 0;
+		goto err;
 
 	mac_type = EVP_PKEY_HMAC;
 	rp->stream_mac = 0;
+
+	if (iv_len > INT_MAX || key_len > INT_MAX)
+		goto err;
+	if (EVP_CIPHER_iv_length(rl->cipher) != iv_len)
+		goto err;
+	if (EVP_CIPHER_key_length(rl->cipher) != key_len)
+		goto err;
 
 	/* Special handling for GOST... */
 	if (EVP_MD_type(rl->mac_hash) == NID_id_Gost28147_89_MAC) {
@@ -437,6 +444,8 @@ tls12_record_layer_ccs_cipher(struct tls12_record_layer *rl,
 		mac_type = EVP_PKEY_GOSTIMIT;
 		rp->stream_mac = 1;
 	} else {
+		if (mac_key_len > INT_MAX)
+			goto err;
 		if (EVP_MD_size(rl->mac_hash) != mac_key_len)
 			goto err;
 	}
@@ -492,9 +501,6 @@ tls12_record_layer_change_cipher_state(struct tls12_record_layer *rl,
     size_t mac_key_len, const uint8_t *key, size_t key_len, const uint8_t *iv,
     size_t iv_len)
 {
-	if (mac_key_len > INT_MAX || key_len > INT_MAX || iv_len > INT_MAX)
-		return 0;
-
 	if (rl->aead != NULL)
 		return tls12_record_layer_ccs_aead(rl, rp, is_write, mac_key,
 		    mac_key_len, key, key_len, iv, iv_len);
