@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.13 2021/03/02 23:40:06 dlg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.14 2021/03/03 00:00:03 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -129,7 +129,6 @@ struct veb_port {
 	struct ether_brport		 p_brport;
 
 	unsigned int			 p_link_state;
-	unsigned int			 p_span;
 	unsigned int			 p_bif_flags;
 	uint32_t			 p_protected;
 
@@ -1862,7 +1861,7 @@ veb_p_dtor(struct veb_softc *sc, struct veb_port *p, const char *op)
 	if_detachhook_del(ifp0, &p->p_dtask);
 	if_linkstatehook_del(ifp0, &p->p_ltask);
 
-	if (p->p_span) {
+	if (ISSET(p->p_bif_flags, IFBIF_SPAN)) {
 		port_list = &sc->sc_spans;
 	} else {
 		if (ifpromisc(ifp0, 0) != 0) {
