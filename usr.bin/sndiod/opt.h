@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.h,v 1.4 2021/01/29 11:25:05 ratchov Exp $	*/
+/*	$OpenBSD: opt.h,v 1.5 2021/03/03 10:13:06 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -24,6 +24,7 @@ struct dev;
 struct opt {
 	struct opt *next;
 	struct dev *dev;
+	struct midi *midi;
 	int num;
 #define OPT_NAMEMAX 11
 	char name[OPT_NAMEMAX + 1];

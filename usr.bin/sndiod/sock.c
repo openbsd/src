@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.42 2021/03/03 10:00:27 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.43 2021/03/03 10:13:06 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -880,9 +880,12 @@ sock_hello(struct sock *f)
 			d = dev_bynum(p->devnum);
 			if (d == NULL)
 				return 0;
+			opt = opt_byname(d, p->opt);
+			if (opt == NULL)
+				return 0;
 			if (!dev_ref(d))
 				return 0;
-			midi_tag(f->midi, p->devnum);
+			midi_tag(f->midi, opt->num);
 		} else if (p->devnum < 32) {
 			midi_tag(f->midi, p->devnum);
 		} else if (p->devnum < 48) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.38 2021/03/03 10:00:27 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.39 2021/03/03 10:13:06 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -21,6 +21,7 @@
 #include "dsp.h"
 #include "siofile.h"
 #include "dev_sioctl.h"
+#include "opt.h"
 
 /*
  * preallocated audio clients
@@ -181,7 +182,6 @@ struct ctlslot {
 struct dev {
 	struct dev *next;
 	struct slot *slot_list;			/* audio streams attached */
-	struct midi *midi;
 
 	/*
 	 * name used for various controls
@@ -305,11 +305,16 @@ void dev_cycle(struct dev *);
 /*
  * midi & midi call-backs
  */
+void dev_master(struct dev *, unsigned int);
+void dev_midi_send(struct dev *, void *, int);
+void dev_midi_vol(struct dev *, struct slot *);
+void dev_midi_master(struct dev *);
+void dev_midi_slotdesc(struct dev *, struct slot *);
+void dev_midi_dump(struct dev *);
+
 void dev_mmcstart(struct dev *);
 void dev_mmcstop(struct dev *);
 void dev_mmcloc(struct dev *, unsigned int);
-void dev_master(struct dev *, unsigned int);
-void dev_midi_vol(struct dev *, struct slot *);
 
 /*
  * sio_open(3) like interface for clients
