@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndioctl.c,v 1.15 2020/06/28 05:21:39 ratchov Exp $	*/
+/*	$OpenBSD: sndioctl.c,v 1.16 2021/03/03 09:40:43 ratchov Exp $	*/
 /*
  * Copyright (c) 2014-2020 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1022,6 +1022,7 @@ main(int argc, char **argv)
 			exit(1);
 		}
 		for (;;) {
+                       fflush(stdout);
 			nfds = sioctl_pollfd(hdl, pfds, POLLIN);
 			if (nfds == 0)
 				break;
