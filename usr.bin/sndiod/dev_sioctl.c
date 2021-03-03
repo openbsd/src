@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_sioctl.c,v 1.6 2020/06/28 05:21:39 ratchov Exp $	*/
+/*	$OpenBSD: dev_sioctl.c,v 1.7 2021/03/03 10:00:27 ratchov Exp $	*/
 /*
  * Copyright (c) 2014-2020 Alexandre Ratchov <alex@caoua.org>
  *
@@ -50,34 +50,27 @@ struct fileops dev_sioctl_ops = {
 void
 dev_sioctl_ondesc(void *arg, struct sioctl_desc *desc, int val)
 {
-#define GROUP_PREFIX		"hw"
-	char group_buf[CTL_NAMEMAX], *group;
 	struct dev *d = arg;
-	int addr;
+	char *group, group_buf[CTL_NAMEMAX];
 
 	if (desc == NULL) {
 		dev_ctlsync(d);
 		return;
 	}
 
-	addr = CTLADDR_END + desc->addr;
-	dev_rmctl(d, addr);
+	ctl_del(CTL_HW, d, &desc->addr);
 
-	/*
-	 * prefix with "hw/" group names of controls we expose, to
-	 * ensure that all controls have unique names when multiple
-	 * sndiod's are chained
-	 */
-	if (strcmp(desc->group, "app") == 0 || (desc->group[0] == 0 &&
-	    strcmp(desc->node0.name, "server") == 0)) {
-		group = group_buf;
-		if (snprintf(group_buf, CTL_NAMEMAX, GROUP_PREFIX "/%s",
-		    desc->group) >= CTL_NAMEMAX)
+	if (desc->group[0] == 0)
+		group = d->name;
+	else {
+		if (snprintf(group_buf, CTL_NAMEMAX, "%s/%s",
+			d->name, desc->group) >= CTL_NAMEMAX)
 			return;
-	} else
-		group = desc->group;
+		group = group_buf;
+	}
 
-	dev_addctl(d, group, desc->type, addr,
+	ctl_new(CTL_HW, d, &desc->addr,
+	    desc->type, group,
 	    desc->node0.name, desc->node0.unit, desc->func,
 	    desc->node1.name, desc->node1.unit, desc->maxval, val);
 }
@@ -88,8 +81,6 @@ dev_sioctl_onval(void *arg, unsigned int addr, unsigned int val)
 	struct dev *d = arg;
 	struct ctl *c;
 
-	addr += CTLADDR_END;
-
 	dev_log(d);
 	log_puts(": onctl: addr = ");
 	log_putu(addr);
@@ -97,8 +88,8 @@ dev_sioctl_onval(void *arg, unsigned int addr, unsigned int val)
 	log_putu(val);
 	log_puts("\n");
 
-	for (c = d->ctl_list; c != NULL; c = c->next) {
-		if (c->addr != addr)
+	for (c = ctl_list; c != NULL; c = c->next) {
+		if (c->scope != CTL_HW || c->u.hw.addr != addr)
 			continue;
 		ctl_log(c);
 		log_puts(": new value -> ");
@@ -138,9 +129,9 @@ dev_sioctl_close(struct dev *d)
 	struct ctl *c, **pc;
 
 	/* remove controls */
-	pc = &d->ctl_list;
+	pc = &ctl_list;
 	while ((c = *pc) != NULL) {
-		if (c->addr >= CTLADDR_END) {
+		if (c->scope == CTL_HW && c->u.hw.dev == d) {
 			c->refs_mask &= ~CTL_DEVMASK;
 			if (c->refs_mask == 0) {
 				*pc = c->next;
@@ -162,8 +153,8 @@ dev_sioctl_pollfd(void *arg, struct pollfd *pfd)
 	struct ctl *c;
 	int events = 0;
 
-	for (c = d->ctl_list; c != NULL; c = c->next) {
-		if (c->dirty)
+	for (c = ctl_list; c != NULL; c = c->next) {
+		if (c->scope == CTL_HW && c->u.hw.dev == d && c->dirty)
 			events |= POLLOUT;
 	}
 	return sioctl_pollfd(d->sioctl.hdl, pfd, events);
@@ -195,11 +186,10 @@ dev_sioctl_out(void *arg)
 	 * we've finished iterating on it.
 	 */
 	cnt = 0;
-	for (c = d->ctl_list; c != NULL; c = c->next) {
-		if (!c->dirty)
+	for (c = ctl_list; c != NULL; c = c->next) {
+		if (c->scope != CTL_HW || c->u.hw.dev != d || !c->dirty)
 			continue;
-		if (!sioctl_setval(d->sioctl.hdl,
-			c->addr - CTLADDR_END, c->curval)) {
+		if (!sioctl_setval(d->sioctl.hdl, c->u.hw.addr, c->curval)) {
 			ctl_log(c);
 			log_puts(": set failed\n");
 			break;

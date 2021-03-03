@@ -1,4 +1,4 @@
-/*	$OpenBSD: siofile.c,v 1.23 2021/03/02 12:15:46 edd Exp $	*/
+/*	$OpenBSD: siofile.c,v 1.24 2021/03/03 10:00:27 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -158,11 +158,10 @@ dev_sio_openlist(struct dev *d,
 				log_puts("\n");
 			}
 			d->alt_num = n->idx;
-			for (c = d->ctl_list; c != NULL; c = c->next) {
-				if (c->addr < CTLADDR_ALT_SEL ||
-				    c->addr >= CTLADDR_ALT_SEL + DEV_NMAX)
+			for (c = ctl_list; c != NULL; c = c->next) {
+				if (!ctl_match(c, CTL_DEV_ALT, d, NULL))
 					continue;
-				val = (c->addr - CTLADDR_ALT_SEL) == n->idx;
+				val = c->u.dev_alt.idx == n->idx;
 				if (c->curval == val)
 					continue;
 				c->curval = val;

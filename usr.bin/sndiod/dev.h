@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.37 2021/01/29 11:38:23 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.38 2021/03/03 10:00:27 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -21,11 +21,6 @@
 #include "dsp.h"
 #include "siofile.h"
 #include "dev_sioctl.h"
-
-#define CTLADDR_SLOT_LEVEL(n)	(n)
-#define CTLADDR_MASTER		(DEV_NSLOT)
-#define CTLADDR_ALT_SEL		(CTLADDR_MASTER + 1)
-#define CTLADDR_END		(CTLADDR_ALT_SEL + DEV_NMAX)
 
 /*
  * preallocated audio clients
@@ -119,6 +114,7 @@ struct slot {
 
 struct ctl {
 	struct ctl *next;
+
 #define CTL_NONE	0		/* deleted */
 #define CTL_NUM		2		/* number (aka integer value) */
 #define CTL_SW		3		/* on/off switch, only bit 7 counts */
@@ -126,7 +122,34 @@ struct ctl {
 #define CTL_LIST	5		/* switch, element of a list */
 #define CTL_SEL		6		/* element of a selector */
 	unsigned int type;		/* one of above */
-	unsigned int addr;		/* control address */
+
+#define CTL_HW		0
+#define CTL_DEV_MASTER	1
+#define CTL_DEV_ALT	2
+#define CTL_SLOT_LEVEL	3
+	unsigned int scope;
+	union {
+		struct {
+			void *arg0;
+			void *arg1;
+		} any;
+		struct {
+			struct dev *dev;
+			unsigned int addr;
+		} hw;
+		struct {
+			struct dev *dev;
+		} dev_master;
+		struct {
+			struct dev *dev;
+			unsigned int idx;
+		} dev_alt;
+		struct {
+			struct slot *slot;
+		} slot_level;
+	} u;
+
+	unsigned int addr;		/* slot side control address */
 #define CTL_NAMEMAX	16		/* max name lenght */
 	char func[CTL_NAMEMAX];		/* parameter function name */
 	char group[CTL_NAMEMAX];	/* group aka namespace */
@@ -159,6 +182,11 @@ struct dev {
 	struct dev *next;
 	struct slot *slot_list;			/* audio streams attached */
 	struct midi *midi;
+
+	/*
+	 * name used for various controls
+	 */
+	char name[CTL_NAMEMAX];
 
 	/*
 	 * audio device (while opened)
@@ -243,15 +271,10 @@ struct dev {
 
 	unsigned int master;			/* software vol. knob */
 	unsigned int master_enabled;		/* 1 if h/w has no vo. knob */
-
-	/*
-	 * control
-	 */
-
-	struct ctl *ctl_list;
 };
 
 extern struct dev *dev_list;
+extern struct ctl *ctl_list;
 extern struct slot slot_array[DEV_NSLOT];
 extern struct ctlslot ctlslot_array[DEV_NCTLSLOT];
 
@@ -307,17 +330,22 @@ void slot_detach(struct slot *);
 /*
  * control related functions
  */
+
+struct ctl *ctl_new(int, void *, void *,
+    int, char *, char *, int, char *, char *, int, int, int);
+void ctl_del(int, void *, void *);
 void ctl_log(struct ctl *);
+int ctl_setval(struct ctl *c, int val);
+int ctl_match(struct ctl *, int, void *, void *);
+struct ctl *ctl_find(int, void *, void *);
+void ctl_update(struct ctl *);
+int ctl_onval(int, void *, void *, int);
+
 struct ctlslot *ctlslot_new(struct opt *, struct ctlops *, void *);
 void ctlslot_del(struct ctlslot *);
-int dev_setctl(struct dev *, int, int);
-int dev_onval(struct dev *, int, int);
-int dev_nctl(struct dev *);
+int ctlslot_visible(struct ctlslot *, struct ctl *);
+struct ctl *ctlslot_lookup(struct ctlslot *, int);
 void dev_label(struct dev *, int);
-struct ctl *dev_addctl(struct dev *, char *, int, int,
-    char *, int, char *, char *, int, int, int);
-void dev_rmctl(struct dev *, int);
-int dev_makeunit(struct dev *, char *);
 void dev_ctlsync(struct dev *);
 
 #endif /* !defined(DEV_H) */
