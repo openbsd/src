@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.55 2021/02/22 21:58:12 tobhe Exp $	*/
+/*	$OpenBSD: iked.c,v 1.56 2021/03/03 22:18:00 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -479,6 +479,7 @@ parent_shutdown(struct iked *env)
 {
 	proc_kill(&env->sc_ps);
 
+	free(env->sc_vroute);
 	free(env);
 
 	log_warnx("parent terminating");
