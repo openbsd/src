@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolvd.c,v 1.9 2021/03/02 17:11:28 deraadt Exp $	*/
+/*	$OpenBSD: resolvd.c,v 1.10 2021/03/03 09:32:11 kn Exp $	*/
 /*
  * Copyright (c) 2021 Florian Obser <florian@openbsd.org>
  * Copyright (c) 2021 Theo de Raadt <deraadt@openbsd.org>
@@ -216,8 +216,10 @@ main(int argc, char *argv[])
 
 	solicit_dns_proposals(routesock);
 
-	if (unveil("/etc", "rwc") == -1)
-		lerr(1, "unveil /etc");
+	if (unveil(_PATH_RESCONF, "rwc") == -1)
+		lerr(1, "unveil " _PATH_RESCONF);
+	if (unveil(_PATH_RESCONF_NEW, "rwc") == -1)
+		lerr(1, "unveil " _PATH_RESCONF_NEW);
 #ifndef SMALL
 	if (unveil(_PATH_UNWIND_SOCKET, "r") == -1)
 		lerr(1, "unveil " _PATH_UNWIND_SOCKET);
