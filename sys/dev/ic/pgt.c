@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.99 2020/07/10 13:26:37 patrick Exp $  */
+/*	$OpenBSD: pgt.c,v 1.100 2021/03/03 23:58:28 jsg Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -2398,7 +2398,7 @@ pgt_obj_bss2scanres(struct pgt_softc *sc, struct pgt_obj_bss *pob,
 	n = 0;
 	for (i = 0; i < 16; i++) {
 		if (letoh16(pob->pob_rates) & (1 << i)) {
-			if (i > rs->rs_nrates)
+			if (i >= rs->rs_nrates)
 				break;
 			ap.wi_srates[n++] = ap.wi_rate = rs->rs_rates[i];
 			if (n >= sizeof(ap.wi_srates) / sizeof(ap.wi_srates[0]))
