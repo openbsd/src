@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.14 2020/09/03 13:11:49 krw Exp $  */
+/*	$OpenBSD: vioscsi.c,v 1.15 2021/03/03 01:27:54 jsg Exp $  */
 
 /*
  * Copyright (c) 2017 Carlos Cardenas <ccardenas@openbsd.org>
@@ -2046,7 +2046,7 @@ void
 vioscsi_update_qs(struct vioscsi_dev *dev)
 {
 	/* Invalid queue? */
-	if (dev->cfg.queue_select > VIRTIO_MAX_QUEUES) {
+	if (dev->cfg.queue_select >= VIRTIO_MAX_QUEUES) {
 		dev->cfg.queue_size = 0;
 		return;
 	}
@@ -2060,7 +2060,7 @@ void
 vioscsi_update_qa(struct vioscsi_dev *dev)
 {
 	/* Invalid queue? */
-	if (dev->cfg.queue_select > VIRTIO_MAX_QUEUES)
+	if (dev->cfg.queue_select >= VIRTIO_MAX_QUEUES)
 		return;
 
 	dev->vq[dev->cfg.queue_select].qa = dev->cfg.queue_address;
@@ -2090,7 +2090,7 @@ vioscsi_notifyq(struct vioscsi_dev *dev)
 	ret = 0;
 
 	/* Invalid queue? */
-	if (dev->cfg.queue_notify > VIRTIO_MAX_QUEUES)
+	if (dev->cfg.queue_notify >= VIRTIO_MAX_QUEUES)
 		return (ret);
 
 	vr_sz = vring_size(VIOSCSI_QUEUE_SIZE);
