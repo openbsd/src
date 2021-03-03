@@ -1,4 +1,4 @@
-.\" $OpenBSD: ober_get_string.3,v 1.4 2021/02/22 17:15:02 martijn Exp $
+.\" $OpenBSD: ober_get_string.3,v 1.5 2021/03/03 20:15:54 martijn Exp $
 .\"
 .\" Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 22 2021 $
+.Dd $Mdocdate: March 3 2021 $
 .Dt OBER_GET_STRING 3
 .Os
 .Sh NAME
@@ -71,7 +71,7 @@ and
 .Fn ober_get_bitstring
 save the number of bytes contained in the string into
 .Pf * Fa size .
-If 
+If
 .Fa buf
 is
 .Dv NULL
@@ -87,15 +87,15 @@ to return a valid
 .Fn ober_scanf_elements
 retrieves the values from zero or more elements starting at
 .Fa root .
-For each byte in
+For each character in
 .Fa fmt ,
 arguments of the types given in the following table are consumed
 and passed to the function listed, processing one
 .Vt ber_element
-per byte.
-The following bytes are valid:
-.Bl -column -offset indent bytes ober_get_enumerated() "1: struct ber_element **"
-.It Sy byte Ta Sy function Ta Sy arguments
+per character.
+The following characters are valid:
+.Bl -column "( or {" "ober_get_enumerated()" "1: struct ber_element **" -offset indent
+.It Sy character Ta Sy function Ta Sy arguments
 .It $ Ta see below              Ta 0
 .It B Ta Fn ober_get_bitstring  Ta 2: Vt void ** , size_t *
 .It b Ta Fn ober_get_boolean    Ta 1: Vt int *
