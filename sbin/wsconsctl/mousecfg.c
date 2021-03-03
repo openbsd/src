@@ -1,4 +1,4 @@
-/* $OpenBSD: mousecfg.c,v 1.8 2021/03/02 22:35:19 bru Exp $ */
+/* $OpenBSD: mousecfg.c,v 1.9 2021/03/03 19:44:37 bru Exp $ */
 
 /*
  * Copyright (c) 2017 Ulf Brosziewski
@@ -40,9 +40,9 @@
 #define TP_FILTER_FIRST		WSMOUSECFG_DX_MAX
 #define TP_FILTER_LAST		WSMOUSECFG_SMOOTHING
 #define TP_FEATURES_FIRST	WSMOUSECFG_SOFTBUTTONS
-#define TP_FEATURES_LAST	WSMOUSECFG_TAPPING
+#define TP_FEATURES_LAST	WSMOUSECFG_DISABLE
 #define TP_SETUP_FIRST		WSMOUSECFG_LEFT_EDGE
-#define TP_SETUP_LAST		WSMOUSECFG_TAP_LOCKTIME
+#define TP_SETUP_LAST		WSMOUSECFG_TAP_THREE_BTNMAP
 #define LOG_FIRST		WSMOUSECFG_LOG_INPUT
 #define LOG_LAST		WSMOUSECFG_LOG_EVENTS
 
@@ -71,8 +71,10 @@ static const int touchpad_types[] = {
 
 struct wsmouse_parameters cfg_tapping = {
 	(struct wsmouse_param[]) {
-	    { WSMOUSECFG_TAPPING, 0 }, },
-	1
+	    { WSMOUSECFG_TAP_ONE_BTNMAP, 0 },
+	    { WSMOUSECFG_TAP_TWO_BTNMAP, 0 },
+	    { WSMOUSECFG_TAP_THREE_BTNMAP, 0 }, },
+	3
 };
 
 struct wsmouse_parameters cfg_scaling = {
@@ -268,6 +270,30 @@ set_percent(struct wsmouse_parameters *field, enum wsmousecfg key, float f)
 }
 
 static int
+set_tapping(struct wsmouse_parameters *field, char *tapping)
+{
+	int i1, i2, i3;
+
+	switch (sscanf(tapping, "%d,%d,%d", &i1, &i2, &i3)) {
+	case 1:
+		if (i1 == 0) /* Disable */
+			i2 = i3 = i1;
+		else { /* Enable with defaults */
+			i1 = 1; /* Left click */
+			i2 = 3; /* Right click */
+			i3 = 2; /* Middle click */
+		}
+		/* FALLTHROUGH */
+	case 3:
+		set_value(field, WSMOUSECFG_TAP_ONE_BTNMAP, i1);
+		set_value(field, WSMOUSECFG_TAP_TWO_BTNMAP, i2);
+		set_value(field, WSMOUSECFG_TAP_THREE_BTNMAP, i3);
+		return (0);
+	}
+	return (-1);
+}
+
+static int
 set_edges(struct wsmouse_parameters *field, char *edges)
 {
 	float f1, f2, f3, f4;
@@ -365,6 +391,12 @@ mousecfg_rd_field(struct wsmouse_parameters *field, char *val)
 	if (field == &cfg_param) {
 		if (read_param(field, val))
 			errx(1, "invalid input (param)");
+		return;
+	}
+
+	if (field == &cfg_tapping) {
+		if (set_tapping(field, val))
+			errx(1, "invalid input (tapping)");
 		return;
 	}
 
