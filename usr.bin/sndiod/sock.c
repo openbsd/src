@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.43 2021/03/03 10:13:06 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.44 2021/03/03 10:19:06 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -748,7 +748,7 @@ sock_setpar(struct sock *f)
 			return 0;
 		}
 		s->xrun = p->xrun;
-		if (s->opt->mmc && s->xrun == XRUN_IGNORE)
+		if (s->opt->mtc != NULL && s->xrun == XRUN_IGNORE)
 			s->xrun = XRUN_SYNC;
 #ifdef DEBUG
 		if (log_level >= 3) {

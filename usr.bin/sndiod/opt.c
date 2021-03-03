@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.c,v 1.7 2021/03/03 10:13:06 ratchov Exp $	*/
+/*	$OpenBSD: opt.c,v 1.8 2021/03/03 10:19:06 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2011 Alexandre Ratchov <alex@caoua.org>
  *
@@ -89,31 +89,31 @@ opt_midi_omsg(void *arg, unsigned char *msg, int len)
 		case SYSEX_MMC_STOP:
 			if (len != SYSEX_SIZE(stop))
 				return;
-			if (!o->mmc)
+			if (o->mtc == NULL)
 				return;
 			if (log_level >= 2) {
 				log_puts(o->name);
 				log_puts(": mmc stop\n");
 			}
-			dev_mmcstop(o->dev);
+			mtc_stop(o->mtc);
 			break;
 		case SYSEX_MMC_START:
 			if (len != SYSEX_SIZE(start))
 				return;
-			if (!o->mmc)
+			if (o->mtc == NULL)
 				return;
 			if (log_level >= 2) {
 				log_puts(o->name);
 				log_puts(": mmc start\n");
 			}
-			dev_mmcstart(o->dev);
+			mtc_start(o->mtc);
 			break;
 		case SYSEX_MMC_LOC:
 			if (len != SYSEX_SIZE(loc) ||
 			    x->u.loc.len != SYSEX_MMC_LOC_LEN ||
 			    x->u.loc.cmd != SYSEX_MMC_LOC_CMD)
 				return;
-			if (!o->mmc)
+			if (o->mtc == NULL)
 				return;
 			switch (x->u.loc.hr >> 5) {
 			case MTC_FPS_24:
@@ -126,10 +126,10 @@ opt_midi_omsg(void *arg, unsigned char *msg, int len)
 				fps = 30;
 				break;
 			default:
-				dev_mmcstop(o->dev);
+				mtc_stop(o->mtc);
 				return;
 			}
-			dev_mmcloc(o->dev,
+			mtc_loc(o->mtc,
 			    (x->u.loc.hr & 0x1f) * 3600 * MTC_SEC +
 			     x->u.loc.min * 60 * MTC_SEC +
 			     x->u.loc.sec * MTC_SEC +
@@ -206,6 +206,20 @@ opt_new(struct dev *d, char *name,
 		log_puts(": already defined\n");
 		return NULL;
 	}
+
+	if (mmc) {
+		if (mtc_array[0].dev != NULL && mtc_array[0].dev != d) {
+			log_puts(name);
+			log_puts(": MTC already setup for another device\n");
+			return NULL;
+		}
+		mtc_array[0].dev = d;
+		if (log_level >= 2) {
+			dev_log(d);
+			log_puts(": initial MTC source, controlled by MMC\n");
+		}
+	}
+
 	o = xmalloc(sizeof(struct opt));
 	o->num = num;
 	o->dev = d;
@@ -229,7 +243,7 @@ opt_new(struct dev *d, char *name,
 		o->rmax = rmax;
 	}
 	o->maxweight = maxweight;
-	o->mmc = mmc;
+	o->mtc = mmc ? &mtc_array[0] : NULL;
 	o->dup = dup;
 	o->mode = mode;
 	memcpy(o->name, name, len + 1);
@@ -261,8 +275,8 @@ opt_new(struct dev *d, char *name,
 			log_putu(o->rmax);
 		}
 		if (o->mode & (MODE_RECMASK | MODE_PLAY)) {
-			if (o->mmc)
-				log_puts(" mmc");
+			if (o->mtc)
+				log_puts(" mtc");
 			if (o->dup)
 				log_puts(" dup");
 		}

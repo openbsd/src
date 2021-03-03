@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.93 2021/03/03 10:13:06 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.94 2021/03/03 10:19:06 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -34,13 +34,6 @@ void zomb_flush(void *);
 void zomb_eof(void *);
 void zomb_exit(void *);
 
-void dev_midi_qfr(struct dev *, int);
-void dev_midi_full(struct dev *);
-void dev_midi_vol(struct dev *, struct slot *);
-void dev_midi_master(struct dev *);
-void dev_midi_slotdesc(struct dev *, struct slot *);
-void dev_midi_dump(struct dev *);
-
 void dev_mix_badd(struct dev *, struct slot *);
 void dev_mix_adjvol(struct dev *);
 void dev_sub_bcopy(struct dev *, struct slot *);
@@ -65,7 +58,6 @@ void dev_del(struct dev *);
 void dev_setalt(struct dev *, unsigned int);
 unsigned int dev_roundof(struct dev *, unsigned int);
 void dev_wakeup(struct dev *);
-void dev_sync_attach(struct dev *);
 
 void slot_ctlname(struct slot *, char *, size_t);
 void slot_log(struct slot *);
@@ -98,6 +90,13 @@ unsigned int dev_sndnum = 0;
 struct ctlslot ctlslot_array[DEV_NCTLSLOT];
 struct slot slot_array[DEV_NSLOT];
 unsigned int slot_serial;		/* for slot allocation */
+
+/*
+ * we support/need a single MTC clock source only
+ */
+struct mtc mtc_array[1] = {
+	{.dev = NULL, .tstate = MTC_STOP}
+};
 
 void
 slot_array_init(void)
@@ -227,69 +226,69 @@ dev_midi_send(struct dev *d, void *msg, int msglen)
  * send a quarter frame MTC message
  */
 void
-dev_midi_qfr(struct dev *d, int delta)
+mtc_midi_qfr(struct mtc *mtc, int delta)
 {
 	unsigned char buf[2];
 	unsigned int data;
 	int qfrlen;
 
-	d->mtc.delta += delta * MTC_SEC;
-	qfrlen = d->rate * (MTC_SEC / (4 * d->mtc.fps));
-	while (d->mtc.delta >= qfrlen) {
-		switch (d->mtc.qfr) {
+	mtc->delta += delta * MTC_SEC;
+	qfrlen = mtc->dev->rate * (MTC_SEC / (4 * mtc->fps));
+	while (mtc->delta >= qfrlen) {
+		switch (mtc->qfr) {
 		case 0:
-			data = d->mtc.fr & 0xf;
+			data = mtc->fr & 0xf;
 			break;
 		case 1:
-			data = d->mtc.fr >> 4;
+			data = mtc->fr >> 4;
 			break;
 		case 2:
-			data = d->mtc.sec & 0xf;
+			data = mtc->sec & 0xf;
 			break;
 		case 3:
-			data = d->mtc.sec >> 4;
+			data = mtc->sec >> 4;
 			break;
 		case 4:
-			data = d->mtc.min & 0xf;
+			data = mtc->min & 0xf;
 			break;
 		case 5:
-			data = d->mtc.min >> 4;
+			data = mtc->min >> 4;
 			break;
 		case 6:
-			data = d->mtc.hr & 0xf;
+			data = mtc->hr & 0xf;
 			break;
 		case 7:
-			data = (d->mtc.hr >> 4) | (d->mtc.fps_id << 1);
+			data = (mtc->hr >> 4) | (mtc->fps_id << 1);
 			/*
 			 * tick messages are sent 2 frames ahead
 			 */
-			d->mtc.fr += 2;
-			if (d->mtc.fr < d->mtc.fps)
+			mtc->fr += 2;
+			if (mtc->fr < mtc->fps)
 				break;
-			d->mtc.fr -= d->mtc.fps;
-			d->mtc.sec++;
-			if (d->mtc.sec < 60)
+			mtc->fr -= mtc->fps;
+			mtc->sec++;
+			if (mtc->sec < 60)
 				break;
-			d->mtc.sec = 0;
-			d->mtc.min++;
-			if (d->mtc.min < 60)
+			mtc->sec = 0;
+			mtc->min++;
+			if (mtc->min < 60)
 				break;
-			d->mtc.min = 0;
-			d->mtc.hr++;
-			if (d->mtc.hr < 24)
+			mtc->min = 0;
+			mtc->hr++;
+			if (mtc->hr < 24)
 				break;
-			d->mtc.hr = 0;
+			mtc->hr = 0;
 			break;
 		default:
 			/* NOTREACHED */
 			data = 0;
 		}
 		buf[0] = 0xf1;
-		buf[1] = (d->mtc.qfr << 4) | data;
-		d->mtc.qfr++;
-		d->mtc.qfr &= 7;
-		dev_midi_send(d, buf, 2);
-		d->mtc.delta -= qfrlen;
+		buf[1] = (mtc->qfr << 4) | data;
+		mtc->qfr++;
+		mtc->qfr &= 7;
+		dev_midi_send(mtc->dev, buf, 2);
+		mtc->delta -= qfrlen;
 	}
 }
 
@@ -297,50 +296,50 @@ dev_midi_qfr(struct dev *d, int delta)
  * send a full frame MTC message
  */
 void
-dev_midi_full(struct dev *d)
+mtc_midi_full(struct mtc *mtc)
 {
 	struct sysex x;
 	unsigned int fps;
 
-	d->mtc.delta = MTC_SEC * dev_getpos(d);
-	if (d->rate % (30 * 4 * d->round) == 0) {
-		d->mtc.fps_id = MTC_FPS_30;
-		d->mtc.fps = 30;
-	} else if (d->rate % (25 * 4 * d->round) == 0) {
-		d->mtc.fps_id = MTC_FPS_25;
-		d->mtc.fps = 25;
+	mtc->delta = MTC_SEC * dev_getpos(mtc->dev);
+	if (mtc->dev->rate % (30 * 4 * mtc->dev->round) == 0) {
+		mtc->fps_id = MTC_FPS_30;
+		mtc->fps = 30;
+	} else if (mtc->dev->rate % (25 * 4 * mtc->dev->round) == 0) {
+		mtc->fps_id = MTC_FPS_25;
+		mtc->fps = 25;
 	} else {
-		d->mtc.fps_id = MTC_FPS_24;
-		d->mtc.fps = 24;
+		mtc->fps_id = MTC_FPS_24;
+		mtc->fps = 24;
 	}
 #ifdef DEBUG
 	if (log_level >= 3) {
-		dev_log(d);
+		dev_log(mtc->dev);
 		log_puts(": mtc full frame at ");
-		log_puti(d->mtc.delta);
+		log_puti(mtc->delta);
 		log_puts(", ");
-		log_puti(d->mtc.fps);
+		log_puti(mtc->fps);
 		log_puts(" fps\n");
 	}
 #endif
-	fps = d->mtc.fps;
-	d->mtc.hr =  (d->mtc.origin / (MTC_SEC * 3600)) % 24;
-	d->mtc.min = (d->mtc.origin / (MTC_SEC * 60))   % 60;
-	d->mtc.sec = (d->mtc.origin / (MTC_SEC))        % 60;
-	d->mtc.fr =  (d->mtc.origin / (MTC_SEC / fps))  % fps;
+	fps = mtc->fps;
+	mtc->hr =  (mtc->origin / (MTC_SEC * 3600)) % 24;
+	mtc->min = (mtc->origin / (MTC_SEC * 60))   % 60;
+	mtc->sec = (mtc->origin / (MTC_SEC))        % 60;
+	mtc->fr =  (mtc->origin / (MTC_SEC / fps))  % fps;
 
 	x.start = SYSEX_START;
 	x.type = SYSEX_TYPE_RT;
 	x.dev = SYSEX_DEV_ANY;
 	x.id0 = SYSEX_MTC;
 	x.id1 = SYSEX_MTC_FULL;
-	x.u.full.hr = d->mtc.hr | (d->mtc.fps_id << 5);
-	x.u.full.min = d->mtc.min;
-	x.u.full.sec = d->mtc.sec;
-	x.u.full.fr = d->mtc.fr;
+	x.u.full.hr = mtc->hr | (mtc->fps_id << 5);
+	x.u.full.min = mtc->min;
+	x.u.full.sec = mtc->sec;
+	x.u.full.fr = mtc->fr;
 	x.u.full.end = SYSEX_END;
-	d->mtc.qfr = 0;
-	dev_midi_send(d, (unsigned char *)&x, SYSEX_SIZE(full));
+	mtc->qfr = 0;
+	dev_midi_send(mtc->dev, (unsigned char *)&x, SYSEX_SIZE(full));
 }
 
 /*
@@ -669,7 +668,8 @@ dev_cycle(struct dev *d)
 	 * check if the device is actually used. If it isn't,
 	 * then close it
 	 */
-	if (d->slot_list == NULL && d->tstate != MMC_RUN) {
+	if (d->slot_list == NULL && (mtc_array[0].dev != d ||
+	    mtc_array[0].tstate != MTC_RUN)) {
 		if (log_level >= 2) {
 			dev_log(d);
 			log_puts(": device stopped\n");
@@ -863,8 +863,9 @@ dev_onmove(struct dev *d, int delta)
 		if (s->delta >= 0)
 			s->ops->onmove(s->arg);
 	}
-	if (d->tstate == MMC_RUN)
-		dev_midi_qfr(d, delta);
+
+	if (mtc_array[0].dev == d && mtc_array[0].tstate == MTC_RUN)
+		mtc_midi_qfr(&mtc_array[0], delta);
 }
 
 void
@@ -940,8 +941,6 @@ dev_new(char *path, struct aparams *par,
 	d->pstate = DEV_CFG;
 	d->slot_list = NULL;
 	d->master = MIDI_MAXCTL;
-	d->mtc.origin = 0;
-	d->tstate = MMC_STOP;
 	snprintf(d->name, CTL_NAMEMAX, "%u", d->num);
 	d->next = dev_list;
 	dev_list = d;
@@ -1077,7 +1076,10 @@ dev_allocbufs(struct dev *d)
 		log_putu(d->bufsz / d->round);
 		log_puts(" blocks of ");
 		log_putu(d->round);
-		log_puts(" frames\n");
+		log_puts(" frames");
+		if (d == mtc_array[0].dev)
+			log_puts(", mtc");
+		log_puts("\n");
 	}
 	return 1;
 }
@@ -1220,6 +1222,7 @@ dev_close(struct dev *d)
 int
 dev_reopen(struct dev *d)
 {
+	struct mtc *mtc;
 	struct slot *s;
 	long long pos;
 	unsigned int pstate;
@@ -1264,12 +1267,13 @@ dev_reopen(struct dev *d)
 		/* reinitilize the format conversion chain */
 		slot_initconv(s);
 	}
-	if (d->tstate == MMC_RUN) {
-		d->mtc.delta -= delta * MTC_SEC;
+	mtc = &mtc_array[0];
+	if (mtc->dev == d && mtc->tstate == MTC_RUN) {
+		mtc->delta -= delta * MTC_SEC;
 		if (log_level >= 2) {
-			dev_log(d);
+			dev_log(mtc->dev);
 			log_puts(": adjusted mtc: delta ->");
-			log_puti(d->mtc.delta);
+			log_puti(mtc->delta);
 			log_puts("\n");
 		}
 	}
@@ -1344,8 +1348,8 @@ dev_done(struct dev *d)
 		log_puts(": draining\n");
 	}
 #endif
-	if (d->tstate != MMC_STOP)
-		dev_mmcstop(d);
+	if (mtc_array[0].dev == d && mtc_array[0].tstate != MTC_STOP)
+		mtc_stop(&mtc_array[0]);
 	if (d->hold)
 		dev_unref(d);
 }
@@ -1436,21 +1440,21 @@ dev_wakeup(struct dev *d)
  * attach them all at the same position
  */
 void
-dev_sync_attach(struct dev *d)
+mtc_trigger(struct mtc *mtc)
 {
 	int i;
 	struct slot *s;
 
-	if (d->tstate != MMC_START) {
+	if (mtc->tstate != MTC_START) {
 		if (log_level >= 2) {
-			dev_log(d);
+			dev_log(mtc->dev);
 			log_puts(": not started by mmc yet, waiting...\n");
 		}
 		return;
 	}
 
 	for (i = 0, s = slot_array; i < DEV_NSLOT; i++, s++) {
-		if (s->opt == NULL || s->opt->dev != d || !s->ops || !s->opt->mmc)
+		if (s->opt == NULL || s->opt->mtc != mtc)
 			continue;
 		if (s->pstate != SLOT_READY) {
 #ifdef DEBUG
@@ -1462,33 +1466,33 @@ dev_sync_attach(struct dev *d)
 			return;
 		}
 	}
-	if (!dev_ref(d))
+	if (!dev_ref(mtc->dev))
 		return;
 
 	for (i = 0, s = slot_array; i < DEV_NSLOT; i++, s++) {
-		if (s->opt == NULL || s->opt->dev != d || !s->ops || !s->opt->mmc)
+		if (s->opt == NULL || s->opt->mtc != mtc)
 			continue;
 		slot_attach(s);
 		s->pstate = SLOT_RUN;
 	}
-	d->tstate = MMC_RUN;
-	dev_midi_full(d);
-	dev_wakeup(d);
+	mtc->tstate = MTC_RUN;
+	mtc_midi_full(mtc);
+	dev_wakeup(mtc->dev);
 }
 
 /*
  * start all slots simultaneously
  */
 void
-dev_mmcstart(struct dev *d)
+mtc_start(struct mtc *mtc)
 {
-	if (d->tstate == MMC_STOP) {
-		d->tstate = MMC_START;
-		dev_sync_attach(d);
+	if (mtc->tstate == MTC_STOP) {
+		mtc->tstate = MTC_START;
+		mtc_trigger(mtc);
 #ifdef DEBUG
 	} else {
 		if (log_level >= 3) {
-			dev_log(d);
+			dev_log(mtc->dev);
 			log_puts(": ignoring mmc start\n");
 		}
 #endif
@@ -1499,20 +1503,20 @@ dev_mmcstart(struct dev *d)
  * stop all slots simultaneously
  */
 void
-dev_mmcstop(struct dev *d)
+mtc_stop(struct mtc *mtc)
 {
-	switch (d->tstate) {
-	case MMC_START:
-		d->tstate = MMC_STOP;
+	switch (mtc->tstate) {
+	case MTC_START:
+		mtc->tstate = MTC_STOP;
 		return;
-	case MMC_RUN:
-		d->tstate = MMC_STOP;
-		dev_unref(d);
+	case MTC_RUN:
+		mtc->tstate = MTC_STOP;
+		dev_unref(mtc->dev);
 		break;
 	default:
 #ifdef DEBUG
 		if (log_level >= 3) {
-			dev_log(d);
+			dev_log(mtc->dev);
 			log_puts(": ignored mmc stop\n");
 		}
 #endif
@@ -1524,19 +1528,19 @@ dev_mmcstop(struct dev *d)
  * relocate all slots simultaneously
  */
 void
-dev_mmcloc(struct dev *d, unsigned int origin)
+mtc_loc(struct mtc *mtc, unsigned int origin)
 {
 	if (log_level >= 2) {
-		dev_log(d);
+		dev_log(mtc->dev);
 		log_puts(": relocated to ");
 		log_putu(origin);
 		log_puts("\n");
 	}
-	if (d->tstate == MMC_RUN)
-		dev_mmcstop(d);
-	d->mtc.origin = origin;
-	if (d->tstate == MMC_RUN)
-		dev_mmcstart(d);
+	if (mtc->tstate == MTC_RUN)
+		mtc_stop(mtc);
+	mtc->origin = origin;
+	if (mtc->tstate == MTC_RUN)
+		mtc_start(mtc);
 }
 
 /*
@@ -1819,7 +1823,7 @@ found:
 		s->mix.nch = s->opt->pmax - s->opt->pmin + 1;
 	if (s->mode & MODE_RECMASK)
 		s->sub.nch = s->opt->rmax - s->opt->rmin + 1;
-	s->xrun = s->opt->mmc ? XRUN_SYNC : XRUN_IGNORE;
+	s->xrun = s->opt->mtc != NULL ? XRUN_SYNC : XRUN_IGNORE;
 	s->appbufsz = s->opt->dev->bufsz;
 	s->round = s->opt->dev->round;
 	s->rate = s->opt->dev->rate;
@@ -1948,11 +1952,11 @@ slot_ready(struct slot *s)
 	 */
 	if (s->opt->dev->pstate == DEV_CFG)
 		return;
-	if (!s->opt->mmc) {
+	if (s->opt->mtc == NULL) {
 		slot_attach(s);
 		s->pstate = SLOT_RUN;
 	} else
-		dev_sync_attach(s->opt->dev);
+		mtc_trigger(s->opt->mtc);
 }
 
 /*

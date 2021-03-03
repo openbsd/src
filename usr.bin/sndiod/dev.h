@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.39 2021/03/03 10:13:06 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.40 2021/03/03 10:19:06 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -177,6 +177,34 @@ struct ctlslot {
 };
 
 /*
+ * MIDI time code (MTC)
+ */
+struct mtc {
+	/*
+	 * MIDI time code (MTC) states
+	 */
+#define MTC_STOP	1		/* stopped, can't start */
+#define MTC_START	2		/* attempting to start */
+#define MTC_RUN		3		/* started */
+	unsigned int tstate;		/* one of MTC_* constants */
+	struct dev *dev;
+
+	unsigned int origin;		/* MTC start time */
+	unsigned int fps;		/* MTC frames per second */
+#define MTC_FPS_24	0
+#define MTC_FPS_25	1
+#define MTC_FPS_30	3
+	unsigned int fps_id;		/* one of above */
+	unsigned int hr;		/* MTC hours */
+	unsigned int min;		/* MTC minutes */
+	unsigned int sec;		/* MTC seconds */
+	unsigned int fr;		/* MTC frames */
+	unsigned int qfr;		/* MTC quarter frames */
+	int delta;			/* rel. to the last MTC tick */
+	int refs;
+};
+
+/*
  * audio device with plenty of slots
  */
 struct dev {
@@ -242,33 +270,6 @@ struct dev {
 	unsigned int bufsz, round, rate;
 	unsigned int prime;
 
-	/*
-	 * MIDI time code (MTC)
-	 */
-	struct {
-		unsigned int origin;		/* MTC start time */
-		unsigned int fps;		/* MTC frames per second */
-#define MTC_FPS_24	0
-#define MTC_FPS_25	1
-#define MTC_FPS_30	3
-		unsigned int fps_id;		/* one of above */
-		unsigned int hr;		/* MTC hours */
-		unsigned int min;		/* MTC minutes */
-		unsigned int sec;		/* MTC seconds */
-		unsigned int fr;		/* MTC frames */
-		unsigned int qfr;		/* MTC quarter frames */
-		int delta;			/* rel. to the last MTC tick */
-		int refs;
-	} mtc;
-
-	/*
-	 * MIDI machine control (MMC)
-	 */
-#define MMC_STOP	1			/* stopped, can't start */
-#define MMC_START	2			/* attempting to start */
-#define MMC_RUN		3			/* started */
-	unsigned int tstate;			/* one of above */
-
 	unsigned int master;			/* software vol. knob */
 	unsigned int master_enabled;		/* 1 if h/w has no vo. knob */
 };
@@ -277,6 +278,7 @@ extern struct dev *dev_list;
 extern struct ctl *ctl_list;
 extern struct slot slot_array[DEV_NSLOT];
 extern struct ctlslot ctlslot_array[DEV_NCTLSLOT];
+extern struct mtc mtc_array[1];
 
 void slot_array_init(void);
 
@@ -312,9 +314,13 @@ void dev_midi_master(struct dev *);
 void dev_midi_slotdesc(struct dev *, struct slot *);
 void dev_midi_dump(struct dev *);
 
-void dev_mmcstart(struct dev *);
-void dev_mmcstop(struct dev *);
-void dev_mmcloc(struct dev *, unsigned int);
+void mtc_midi_qfr(struct mtc *, int);
+void mtc_midi_full(struct mtc *);
+void mtc_trigger(struct mtc *);
+void mtc_start(struct mtc *);
+void mtc_stop(struct mtc *);
+void mtc_loc(struct mtc *, unsigned int);
+void mtc_setdev(struct mtc *, struct dev *);
 
 /*
  * sio_open(3) like interface for clients
