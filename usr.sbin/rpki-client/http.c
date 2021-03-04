@@ -1,4 +1,4 @@
-/*      $OpenBSD: http.c,v 1.3 2021/03/04 14:15:47 tb Exp $  */
+/*      $OpenBSD: http.c,v 1.4 2021/03/04 14:24:54 claudio Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.com>
@@ -372,13 +372,13 @@ http_parse_uri(char *uri, char **ohost, char **oport, char **opath)
 	}
 
 	if ((host = strndup(host, hosttail - host)) == NULL)
-		err(1, "strndup");
+		err(1, NULL);
 	if (port != NULL) {
 		if ((port = strndup(port, path - port)) == NULL)
-			err(1, "strndup");
+			err(1, NULL);
 	} else {
 		if ((port = strdup("443")) == NULL)
-			err(1, "strdup");
+			err(1, NULL);
 	}
 	/* do not include the initial / in path */
 	path++;
@@ -771,7 +771,7 @@ http_parse_header(struct http_connection *conn, char *buf)
 			} else {
 				locbase = strdup(conn->path);
 				if (locbase == NULL)
-					err(1, "");
+					err(1, NULL);
 				loctail = strchr(locbase, '#');
 				if (loctail != NULL)
 					*loctail = '\0';
@@ -827,7 +827,7 @@ http_get_line(struct http_connection *conn)
 	while (len > 0 && conn->buf[len - 1] == '\r')
 		--len;
 	if ((line = strndup(conn->buf, len)) == NULL)
-		err(1, "%s", __func__);
+		err(1, NULL);
 
 	/* consume line including \n */
 	end++;
