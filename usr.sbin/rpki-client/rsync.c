@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsync.c,v 1.19 2021/02/23 14:25:29 claudio Exp $ */
+/*	$OpenBSD: rsync.c,v 1.20 2021/03/04 14:02:34 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -309,5 +309,4 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 	msgbuf_clear(&msgq);
 	free(ids);
 	exit(rc);
-	/* NOTREACHED */
 }
