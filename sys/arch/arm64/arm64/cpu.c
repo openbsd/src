@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.48 2021/02/21 14:55:16 tobhe Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.49 2021/03/04 18:32:52 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -396,6 +396,18 @@ cpu_identify(struct cpu_info *ci)
 
 	if (ID_AA64ISAR1_DPB(id) >= ID_AA64ISAR1_DPB_IMPL) {
 		printf("%sDPB", sep);
+		sep = ",";
+	}
+
+	/*
+	 * ID_AA64MMFR0
+	 *
+	 * We only print ASIDBits for now.
+	 */
+	id = READ_SPECIALREG(id_aa64mmfr0_el1);
+
+	if (ID_AA64MMFR0_ASID_BITS(id) == ID_AA64MMFR0_ASID_BITS_16) {
+		printf("%sASID16", sep);
 		sep = ",";
 	}
 
