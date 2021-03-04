@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.42 2020/06/30 14:56:10 visa Exp $ */
+/*	$OpenBSD: clock.c,v 1.43 2021/03/04 15:38:06 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -37,6 +37,7 @@
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
 #include <sys/device.h>
 #include <sys/evcount.h>
 
@@ -149,7 +150,8 @@ cp0_int5(uint32_t mask, struct trapframe *tf)
 		ENABLEIPI();
 #endif
 		while (ci->ci_pendingticks) {
-			cp0_clock_count.ec_count++;
+			atomic_inc_long(
+			    (unsigned long *)&cp0_clock_count.ec_count);
 			hardclock(tf);
 			ci->ci_pendingticks--;
 		}
