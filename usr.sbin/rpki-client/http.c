@@ -1,4 +1,4 @@
-/*      $OpenBSD: http.c,v 1.1 2021/03/04 13:01:41 claudio Exp $  */
+/*      $OpenBSD: http.c,v 1.2 2021/03/04 14:00:26 claudio Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.com>
@@ -328,11 +328,8 @@ http_close(struct http_connection *conn)
 		case TLS_WANT_POLLOUT:
 			return WANT_POLLOUT;
 		case 0:
-			break;
 		case -1:
-			warnx("%s: TLS close: %s", http_info(conn->url),
-			    tls_error(conn->tls));
-			return -1;
+			break;
 		}
 	}
 
