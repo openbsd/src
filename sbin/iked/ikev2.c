@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.310 2021/02/20 22:00:32 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.311 2021/03/04 22:20:24 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -2277,6 +2277,7 @@ ikev2_add_cp(struct iked *env, struct iked_sa *sa, int type, struct ibuf *buf)
 	struct sockaddr_in6	*in6;
 	uint8_t			 prefixlen;
 	int			 sent_addr4 = 0, sent_addr6 = 0;
+	int			 have_mask4 = 0, sent_mask4 = 0;
 
 	if ((cp = ibuf_advance(buf, sizeof(*cp))) == NULL)
 		return (-1);
@@ -2338,8 +2339,15 @@ ikev2_add_cp(struct iked *env, struct iked_sa *sa, int type, struct ibuf *buf)
 			if (ibuf_add(buf, &in4->sin_addr.s_addr, 4) == -1)
 				return (-1);
 			len += 4;
-			if (ikecfg->cfg_type == IKEV2_CFG_INTERNAL_IP4_ADDRESS)
+			if (ikecfg->cfg_type == IKEV2_CFG_INTERNAL_IP4_ADDRESS) {
 				sent_addr4 = 1;
+				if (sa->sa_addrpool &&
+				    sa->sa_addrpool->addr_af == AF_INET &&
+				    sa->sa_addrpool->addr_mask != 0)
+					have_mask4 = 1;
+			}
+			if (ikecfg->cfg_type == IKEV2_CFG_INTERNAL_IP4_NETMASK)
+				sent_mask4 = 1;
 			break;
 		case IKEV2_CFG_INTERNAL_IP4_SUBNET:
 			/* 4 bytes IPv4 address + 4 bytes IPv4 mask + */
@@ -2394,6 +2402,19 @@ ikev2_add_cp(struct iked *env, struct iked_sa *sa, int type, struct ibuf *buf)
 			cfg->cfg_length = 0;
 			break;
 		}
+	}
+
+	/* derive netmask from pool */
+	if (type == IKEV2_CP_REPLY && have_mask4 && !sent_mask4) {
+		if ((cfg = ibuf_advance(buf, sizeof(*cfg))) == NULL)
+			return (-1);
+		cfg->cfg_type = htobe16(IKEV2_CFG_INTERNAL_IP4_NETMASK);
+		len += sizeof(*cfg);
+		mask4 = prefixlen2mask(sa->sa_addrpool->addr_mask);
+		cfg->cfg_length = htobe16(4);
+		if (ibuf_add(buf, &mask4, 4) == -1)
+			return (-1);
+		len += 4;
 	}
 
 	return (len);
@@ -6924,6 +6945,7 @@ ikev2_cp_setaddr_pool(struct iked *env, struct iked_sa *sa,
 		}
 	}
 
+	addr.addr_mask = ikecfg->cfg.address.addr_mask;
 	switch (addr.addr_af) {
 	case AF_INET:
 		if (!key.sa_addrpool)
