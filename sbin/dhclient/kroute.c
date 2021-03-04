@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.195 2021/02/24 16:18:59 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.196 2021/03/04 10:56:47 claudio Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -17,6 +17,7 @@
  */
 
 #include <sys/ioctl.h>
+#include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
