@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsync.c,v 1.20 2021/03/04 14:02:34 claudio Exp $ */
+/*	$OpenBSD: rsync.c,v 1.21 2021/03/04 14:24:17 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -141,13 +141,13 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 		if (getenv("PATH") == NULL)
 			errx(1, "PATH is unset");
 		if ((path = strdup(getenv("PATH"))) == NULL)
-			err(1, "strdup");
+			err(1, NULL);
 		save = path;
 		while ((pp = strsep(&path, ":")) != NULL) {
 			if (*pp == '\0')
 				continue;
 			if (asprintf(&cmd, "%s/%s", pp, prog) == -1)
-				err(1, "asprintf");
+				err(1, NULL);
 			if (lstat(cmd, &stt) == -1) {
 				free(cmd);
 				continue;

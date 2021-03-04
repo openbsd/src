@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.111 2021/03/04 14:16:21 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.112 2021/03/04 14:24:17 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -232,7 +232,7 @@ entityq_add(struct entityq *q, char *file, enum rtype type,
 	struct entity	*p;
 
 	if ((p = calloc(1, sizeof(struct entity))) == NULL)
-		err(1, "calloc");
+		err(1, NULL);
 
 	p->type = type;
 	p->file = file;
@@ -241,12 +241,12 @@ entityq_add(struct entityq *q, char *file, enum rtype type,
 	if (p->has_pkey) {
 		p->pkeysz = pkeysz;
 		if ((p->pkey = malloc(pkeysz)) == NULL)
-			err(1, "malloc");
+			err(1, NULL);
 		memcpy(p->pkey, pkey, pkeysz);
 	}
 	if (descr != NULL)
 		if ((p->descr = strdup(descr)) == NULL)
-			err(1, "strdup");
+			err(1, NULL);
 
 	filepath_add(file);
 
@@ -275,7 +275,7 @@ repo_alloc(void)
 	rt.repos = recallocarray(rt.repos, rt.reposz, rt.reposz + 1,
 	    sizeof(struct repo));
 	if (rt.repos == NULL)
-		err(1, "recallocarray");
+		err(1, NULL);
 
 	rp = &rt.repos[rt.reposz++];
 	rp->id = rt.reposz - 1;
@@ -398,7 +398,7 @@ ta_lookup(const struct tal *tal)
 	size_t		i, j;
 
 	if (asprintf(&local, "ta/%s", tal->descr) == -1)
-		err(1, "asprinf");
+		err(1, NULL);
 
 	/* Look up in repository table. (Lookup should actually fail here) */
 	for (i = 0; i < rt.reposz; i++) {
@@ -412,7 +412,7 @@ ta_lookup(const struct tal *tal)
 	rp->local = local;
 	for (i = 0, j = 0; i < tal->urisz && j < 2; i++) {
 		if ((rp->uris[j++] = strdup(tal->uri[i])) == NULL)
-			err(1, "strdup");
+			err(1, NULL);
 	}
 	if (j == 0)
 		errx(1, "TAL %s has no URI", tal->descr);
@@ -446,10 +446,10 @@ repo_lookup(const char *uri)
 	rp = repo_alloc();
 	rp->repouri = repo;
 	local = strchr(repo, ':') + strlen("://");
-	if (asprintf(&rp->local, "rsync/%s", local) == -1)
-		err(1, "asprintf");
+	if ((rp->local = strdup(repo)) == NULL)
+		err(1, NULL);
 	if ((rp->uris[0] = strdup(repo)) == NULL)
-		err(1, "strdup");
+		err(1, NULL);
 
 	repo_fetch(rp);
 	return rp;
@@ -467,7 +467,7 @@ ta_filename(const struct repo *repo, int temp)
 
 	if (asprintf(&nfile, "%s%s%s", repo->local, file,
 	    temp ? ".XXXXXXXX": "") == -1)
-		err(1, "asprintf");
+		err(1, NULL);
 
 	return nfile;
 }
@@ -485,7 +485,7 @@ repo_filename(const struct repo *repo, const char *uri)
 	uri += strlen(repo->repouri) + 1;	/* skip base and '/' */
 
 	if (asprintf(&nfile, "%s/%s", repo->local, uri) == -1)
-		err(1, "asprintf");
+		err(1, NULL);
 	return nfile;
 }
 
@@ -504,7 +504,7 @@ queue_add_from_mft(struct entityq *q, const char *mft,
 	assert(cp != NULL);
 	assert(cp - mft < INT_MAX);
 	if (asprintf(&nfile, "%.*s/%s", (int)(cp - mft), mft, file->file) == -1)
-		err(1, "asprintf");
+		err(1, NULL);
 
 	/*
 	 * Since we're from the same directory as the MFT file, we know
@@ -586,7 +586,7 @@ queue_add_tal(struct entityq *q, const char *file)
 	char	*nfile, *buf;
 
 	if ((nfile = strdup(file)) == NULL)
-		err(1, "strdup");
+		err(1, NULL);
 	buf = tal_read_file(file);
 
 	/* Record tal for later reporting */
@@ -595,7 +595,7 @@ queue_add_tal(struct entityq *q, const char *file)
 	else {
 		char *tmp;
 		if (asprintf(&tmp, "%s %s", stats.talnames, file) == -1)
-			err(1, "asprintf");
+			err(1, NULL);
 		free(stats.talnames);
 		stats.talnames = tmp;
 	}
@@ -760,7 +760,7 @@ tal_load_default(const char *tals[], size_t max)
 			err(1, "too many tal files found in %s",
 			    confdir);
 		if (asprintf(&path, "%s/%s", confdir, dp->d_name) == -1)
-			err(1, "asprintf");
+			err(1, NULL);
 		tals[s++] = path;
 	}
 	closedir (dirp);
@@ -774,10 +774,9 @@ add_to_del(char **del, size_t *dsz, char *file)
 
 	del = reallocarray(del, i + 1, sizeof(*del));
 	if (del == NULL)
-		err(1, "reallocarray");
-	del[i] = strdup(file);
-	if (del[i] == NULL)
-		err(1, "strdup");
+		err(1, NULL);
+	if ((del[i] = strdup(file)) == NULL)
+		err(1, NULL);
 	*dsz = i + 1;
 	return del;
 }
