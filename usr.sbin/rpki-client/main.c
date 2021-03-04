@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.109 2021/03/04 13:01:41 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.110 2021/03/04 14:04:47 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1001,7 +1001,7 @@ main(int argc, char *argv[])
 		if (pledge("stdio rpath", NULL) == -1)
 			err(1, "pledge");
 		proc_parser(fd[0]);
-		/* NOTREACHED */
+		errx(1, "parser process returned");
 	}
 
 	close(fd[0]);
@@ -1028,7 +1028,7 @@ main(int argc, char *argv[])
 				err(1, "pledge");
 
 			proc_rsync(rsync_prog, bind_addr, fd[0]);
-			/* NOTREACHED */
+			errx(1, "rsync process returned");
 		}
 
 		close(fd[0]);
@@ -1061,7 +1061,7 @@ main(int argc, char *argv[])
 				err(1, "pledge");
 
 			proc_http(bind_addr, fd[0]);
-			/* NOTREACHED */
+			errx(1, "http process returned");
 		}
 
 		close(fd[0]);
