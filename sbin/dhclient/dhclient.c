@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.708 2021/03/02 14:32:14 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.709 2021/03/04 02:00:42 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2643,9 +2643,6 @@ tick_msg(const char *preamble, int action)
 	static int			linkup, preamble_sent, sleeping;
 	int				printmsg;
 
-	if (isatty(STDERR_FILENO) == 0 || sleeping == 1)
-		return;
-
 	clock_gettime(CLOCK_REALTIME, &now);
 
 	if (!timespecisset(&stop)) {
@@ -2654,7 +2651,10 @@ tick_msg(const char *preamble, int action)
 		timespecadd(&now, &grace_intvl, &grace);
 		return;
 	}
-	if (timespeccmp(&now, &grace, <))
+
+	if (isatty(STDERR_FILENO) == 0 || sleeping == 1)
+		printmsg = 0;	/* Already in the background. */
+	else if (timespeccmp(&now, &grace, <))
 		printmsg = 0;	/* Wait a bit before speaking. */
 	else if (linkup && strcmp("link", preamble) == 0)
 		printmsg = 0;	/* One 'got link' is enough for anyone. */
