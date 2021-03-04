@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.49 2021/03/02 09:23:59 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.50 2021/03/04 13:01:41 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -399,6 +399,10 @@ void		 proc_parser(int) __attribute__((noreturn));
 char		*rsync_base_uri(const char *);
 void		 proc_rsync(char *, char *, int) __attribute__((noreturn));
 
+/* Http-specific. */
+
+void		 proc_http(char *, int);
+
 /* Logging (though really used for OpenSSL errors). */
 
 void		 cryptowarnx(const char *, ...)
@@ -417,6 +421,7 @@ void		 io_str_buffer(struct ibuf *, const char *);
 void		 io_simple_read(int, void *, size_t);
 void		 io_buf_read_alloc(int, void **, size_t *);
 void		 io_str_read(int, char **);
+int		 io_recvfd(int, void *, size_t);
 
 /* X509 helpers. */
 

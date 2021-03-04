@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.12 2021/01/08 08:09:07 claudio Exp $ */
+/*	$OpenBSD: io.c,v 1.13 2021/03/04 13:01:41 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -16,9 +16,11 @@
  */
 
 #include <sys/queue.h>
+#include <sys/socket.h>
 
 #include <assert.h>
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -145,4 +147,79 @@ io_str_read(int fd, char **res)
 	if ((*res = calloc(sz + 1, 1)) == NULL)
 		err(1, NULL);
 	io_simple_read(fd, *res, sz);
+}
+
+/*
+ * Read data from socket but receive a file descriptor at the same time.
+ */
+int
+io_recvfd(int fd, void *res, size_t sz)
+{
+	struct iovec iov;
+	struct msghdr msg;
+	struct cmsghdr *cmsg;
+	union {
+		struct cmsghdr	hdr;
+		char		buf[CMSG_SPACE(sizeof(int))];
+	} cmsgbuf;
+	int outfd = -1;
+	char *b = res;
+	ssize_t n;
+
+	memset(&msg, 0, sizeof(msg));
+	memset(&cmsgbuf, 0, sizeof(cmsgbuf));
+
+	iov.iov_base = res;
+	iov.iov_len = sz;
+
+	msg.msg_iov = &iov;
+	msg.msg_iovlen = 1;
+	msg.msg_control = &cmsgbuf.buf;
+	msg.msg_controllen = sizeof(cmsgbuf.buf);
+
+	while ((n = recvmsg(fd, &msg, 0)) == -1) {
+		if (errno == EINTR)
+			continue;
+		err(1, "recvmsg");
+	}
+
+	if (n == 0)
+		errx(1, "recvmsg: unexpected end of file");
+
+	for (cmsg = CMSG_FIRSTHDR(&msg); cmsg != NULL;
+	    cmsg = CMSG_NXTHDR(&msg, cmsg)) {
+		if (cmsg->cmsg_level == SOL_SOCKET &&
+		    cmsg->cmsg_type == SCM_RIGHTS) {
+			int i, j, f;
+
+			j = ((char *)cmsg + cmsg->cmsg_len -
+			    (char *)CMSG_DATA(cmsg)) / sizeof(int);
+			for (i = 0; i < j; i++) {
+				f = ((int *)CMSG_DATA(cmsg))[i];
+				if (i == 0)
+					outfd = f;
+				else
+					close(f);
+			}
+		}
+	}
+
+	b += n;
+	sz -= n;
+	while (sz > 0) {
+		/* short receive */
+		n = recv(fd, b, sz, 0);
+		if (n == -1) {
+			if (errno == EINTR)
+				continue;
+			err(1, "recv");
+		}
+		if (n == 0)
+			errx(1, "recv: unexpected end of file");
+
+		b += n;
+		sz -= n;
+	}
+
+	return outfd;
 }
