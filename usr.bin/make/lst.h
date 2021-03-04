@@ -1,7 +1,7 @@
 #ifndef _LST_H_
 #define _LST_H_
 
-/*	$OpenBSD: lst.h,v 1.32 2020/06/03 12:47:33 espie Exp $ */
+/*	$OpenBSD: lst.h,v 1.33 2021/03/04 09:45:31 espie Exp $ */
 /*	$NetBSD: lst.h,v 1.7 1996/11/06 17:59:12 christos Exp $ */
 
 /*
@@ -82,6 +82,11 @@ typedef void *(*DuplicateProc)(void *);
 
 /* Duplicate an existing list */
 extern Lst		Lst_Clone(Lst, Lst, DuplicateProc);
+
+/* XXX: Lst_Destroy only destroys the list contents, which is appropriate
+ * as most use-cases are temporary lists.
+ * In case of a permanent list, Lst_Init must also be called !
+ */
 /* Destroy an old one */
 extern void		Lst_Destroy(LIST *, SimpleProc);
 /* True if list is empty */
