@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.110 2021/03/04 14:04:47 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.111 2021/03/04 14:16:21 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -378,7 +378,7 @@ repo_fetch(struct repo *rp)
 	} else {
 		/*
 		 * Two cases for https. TA files load directly while
-		 * for RRDP XML files are downloaded an parsed to build
+		 * for RRDP XML files are downloaded and parsed to build
 		 * the repo. TA repos have a NULL repouri.
 		 */
 		if (rp->repouri == NULL) {
