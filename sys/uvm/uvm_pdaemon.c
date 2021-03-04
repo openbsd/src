@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.89 2021/03/01 09:13:33 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.90 2021/03/04 09:00:03 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
@@ -491,7 +491,7 @@ uvmpd_scan_inactive(struct pglist *pglst)
 			if (p->pg_flags & PG_CLEAN) {
 				if (p->pg_flags & PQ_SWAPBACKED) {
 					/* this page now lives only in swap */
-					uvmexp.swpgonly++;
+					atomic_inc_int(&uvmexp.swpgonly);
 				}
 
 				/* zap all mappings with pmap_page_protect... */
@@ -994,7 +994,7 @@ uvmpd_drop(struct pglist *pglst)
 			if (p->pg_flags & PG_CLEAN) {
 				if (p->pg_flags & PQ_SWAPBACKED) {
 					/* this page now lives only in swap */
-					uvmexp.swpgonly++;
+					atomic_inc_int(&uvmexp.swpgonly);
 				}
 
 				/* zap all mappings with pmap_page_protect... */

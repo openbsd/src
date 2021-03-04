@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvmexp.h,v 1.8 2020/12/28 14:01:23 mpi Exp $	*/
+/*	$OpenBSD: uvmexp.h,v 1.9 2021/03/04 09:00:03 mpi Exp $	*/
 
 #ifndef	_UVM_UVMEXP_
 #define	_UVM_UVMEXP_
@@ -41,6 +41,7 @@
  * other than the vm system.
  *
  *  Locks used to protect struct members in this file:
+ *	a	atomic operations
  *	I	immutable after creation
  *	K	kernel lock
  *	F	uvm_lock_fpageq
@@ -82,7 +83,7 @@ struct uvmexp {
 	int nswapdev;	/* number of configured swap devices in system */
 	int swpages;	/* [K] number of PAGE_SIZE'ed swap pages */
 	int swpginuse;	/* number of swap pages in use */
-	int swpgonly;	/* [K] number of swap pages in use, not also in RAM */
+	int swpgonly;	/* [a] number of swap pages in use, not also in RAM */
 	int nswget;	/* number of swap pages moved from disk to RAM */
 	int nanon;	/* XXX number total of anon's in system */
 	int unused05;	/* formerly nanonneeded */

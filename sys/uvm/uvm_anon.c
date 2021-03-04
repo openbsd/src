@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_anon.c,v 1.51 2021/01/19 13:21:36 mpi Exp $	*/
+/*	$OpenBSD: uvm_anon.c,v 1.52 2021/03/04 09:00:03 mpi Exp $	*/
 /*	$NetBSD: uvm_anon.c,v 1.10 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -120,9 +120,9 @@ uvm_anfree_list(struct vm_anon *anon, struct pglist *pgl)
 		}
 	} else {
 		if (anon->an_swslot != 0) {
-			/* this page is no longer only in swap. */
+			/* This page is no longer only in swap. */
 			KASSERT(uvmexp.swpgonly > 0);
-			uvmexp.swpgonly--;
+			atomic_dec_int(&uvmexp.swpgonly);
 		}
 	}
 	anon->an_lock = NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.90 2021/01/11 18:51:09 mpi Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.91 2021/03/04 09:00:03 mpi Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -381,7 +381,7 @@ uao_free(struct uvm_aobj *aobj)
 					 * this page is no longer
 					 * only in swap.
 					 */
-					uvmexp.swpgonly--;
+					atomic_dec_int(&uvmexp.swpgonly);
 				}
 
 				next = LIST_NEXT(elt, list);
@@ -400,7 +400,7 @@ uao_free(struct uvm_aobj *aobj)
 			if (slot) {
 				uvm_swap_free(slot, 1);
 				/* this page is no longer only in swap. */
-				uvmexp.swpgonly--;
+				atomic_dec_int(&uvmexp.swpgonly);
 			}
 		}
 		free(aobj->u_swslots, M_UVMAOBJ, aobj->u_pages * sizeof(int));
@@ -1549,6 +1549,6 @@ uao_dropswap_range(struct uvm_object *uobj, voff_t start, voff_t end)
 	 */
 	if (swpgonlydelta > 0) {
 		KASSERT(uvmexp.swpgonly >= swpgonlydelta);
-		uvmexp.swpgonly -= swpgonlydelta;
+		atomic_add_int(&uvmexp.swpgonly, -swpgonlydelta);
 	}
 }
