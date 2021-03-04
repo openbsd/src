@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.112 2021/03/04 14:24:17 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.113 2021/03/04 15:35:39 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -446,7 +446,7 @@ repo_lookup(const char *uri)
 	rp = repo_alloc();
 	rp->repouri = repo;
 	local = strchr(repo, ':') + strlen("://");
-	if ((rp->local = strdup(repo)) == NULL)
+	if (asprintf(&rp->local, "rsync/%s", local) == -1)
 		err(1, NULL);
 	if ((rp->uris[0] = strdup(repo)) == NULL)
 		err(1, NULL);
