@@ -63,7 +63,7 @@ sub configure
     'ppport_h.PL'  => 'ppport.h',
     'PPPort_pm.PL' => 'PPPort.pm',
     'RealPPPort_xs.PL' => 'RealPPPort.xs',
-    'mktests.PL' => $t_01_test,
+    #'mktests.PL' => $t_01_test,
   );
   my @moreopts;
 
