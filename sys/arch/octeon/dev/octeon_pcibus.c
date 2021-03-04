@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_pcibus.c,v 1.22 2021/03/04 16:34:47 visa Exp $	*/
+/*	$OpenBSD: octeon_pcibus.c,v 1.23 2021/03/04 16:44:07 visa Exp $	*/
 /*	$NetBSD: bonito_mainbus.c,v 1.11 2008/04/28 20:23:10 martin Exp $	*/
 /*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
 
@@ -85,7 +85,6 @@ struct octeon_pcibus_softc {
 int	octeon_pcibus_match(struct device *, void *, void *);
 void	octeon_pcibus_attach(struct device *, struct device *, void *);
 int	octeon_pcibus_print(void *, const char *);
-int	octeon_pcibus_intr_map(int dev, int fn, int pin);
 
 const struct cfattach pcibus_ca = {
 	sizeof(struct octeon_pcibus_softc),
@@ -96,24 +95,28 @@ struct cfdriver pcibus_cd = {
 	NULL, "pcibus", DV_DULL
 };
 
-bus_addr_t  octeon_pcibus_pa_to_device(paddr_t);
-paddr_t     octeon_pcibus_device_to_pa(bus_addr_t);
-void        octeon_pcibus_attach_hook(struct device *, struct device *,
-                                      struct pcibus_attach_args *);
-int         octeon_pcibus_bus_maxdevs(void *, int);
-pcitag_t    octeon_pcibus_make_tag(void *, int, int, int);
-void        octeon_pcibus_decompose_tag(void *, pcitag_t, int *, int *, int *);
-int	    octeon_pcibus_pci_conf_size(void *, pcitag_t);
-pcireg_t    octeon_pcibus_pci_conf_read(void *, pcitag_t, int);
-void        octeon_pcibus_pci_conf_write(void *, pcitag_t, int, pcireg_t);
-int         octeon_pcibus_pci_intr_map(struct pci_attach_args *,
-                                       pci_intr_handle_t *);
+bus_addr_t octeon_pcibus_pa_to_device(paddr_t);
+paddr_t	octeon_pcibus_device_to_pa(bus_addr_t);
+void	octeon_pcibus_attach_hook(struct device *, struct device *,
+	    struct pcibus_attach_args *);
+int	octeon_pcibus_bus_maxdevs(void *, int);
+pcitag_t octeon_pcibus_make_tag(void *, int, int, int);
+void	octeon_pcibus_decompose_tag(void *, pcitag_t, int *, int *, int *);
+int	octeon_pcibus_pci_conf_size(void *, pcitag_t);
+pcireg_t octeon_pcibus_pci_conf_read(void *, pcitag_t, int);
+void	octeon_pcibus_pci_conf_write(void *, pcitag_t, int, pcireg_t);
+int	octeon_pcibus_pci_intr_map(struct pci_attach_args *,
+	    pci_intr_handle_t *);
 const char *octeon_pcibus_pci_intr_string(void *, pci_intr_handle_t);
-void       *octeon_pcibus_pci_intr_establish(void *, pci_intr_handle_t, int,
-                                             int (*)(void *), void *, char *);
-void        octeon_pcibus_pci_intr_disestablish(void *, void *);
+void	*octeon_pcibus_pci_intr_establish(void *, pci_intr_handle_t, int,
+	    int (*)(void *), void *, char *);
+void	octeon_pcibus_pci_intr_disestablish(void *, void *);
+int	octeon_pcibus_intr_map(int dev, int fn, int pin);
+int	octeon_pcibus_io_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
+	    bus_space_handle_t *);
+int	octeon_pcibus_mem_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
+	    bus_space_handle_t *);
 struct extent *octeon_pcibus_get_resource_extent(pci_chipset_tag_t, int);
-
 
 struct machine_bus_dma_tag octeon_pcibus_bus_dma_tag = {
 	._cookie = NULL,
@@ -134,11 +137,6 @@ struct machine_bus_dma_tag octeon_pcibus_bus_dma_tag = {
 	._pa_to_device =	octeon_pcibus_pa_to_device,
 	._device_to_pa =	octeon_pcibus_device_to_pa
 };
-
-int octeon_pcibus_io_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
-    bus_space_handle_t *);
-int octeon_pcibus_mem_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
-    bus_space_handle_t *);
 
 #define _OCTEON_PCIBUS_PCIIO_BASE	0x00001000
 #define _OCTEON_PCIBUS_PCIIO_SIZE	0x08000000
