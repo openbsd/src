@@ -1,4 +1,4 @@
-/*      $OpenBSD: http.c,v 1.4 2021/03/04 14:24:54 claudio Exp $  */
+/*      $OpenBSD: http.c,v 1.5 2021/03/04 15:44:13 tb Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.com>
@@ -807,7 +807,8 @@ http_parse_header(struct http_connection *conn, char *buf)
 	} else if (strncasecmp(cp, LAST_MODIFIED,
 	    sizeof(LAST_MODIFIED) - 1) == 0) {
 		cp += sizeof(LAST_MODIFIED) - 1;
-		conn->last_modified = strdup(cp);
+		if ((conn->last_modified = strdup(cp)) == NULL)
+			err(1, NULL);
 	}
 
 	return 1;
