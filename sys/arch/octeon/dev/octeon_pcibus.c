@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_pcibus.c,v 1.21 2021/02/20 14:42:51 visa Exp $	*/
+/*	$OpenBSD: octeon_pcibus.c,v 1.22 2021/03/04 16:34:47 visa Exp $	*/
 /*	$NetBSD: bonito_mainbus.c,v 1.11 2008/04/28 20:23:10 martin Exp $	*/
 /*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
 
@@ -64,7 +64,6 @@
 
 #include <octeon/dev/iobusvar.h>
 #include <octeon/dev/octeon_pcibus.h>
-#include <octeon/dev/octeon_pcibusvar.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -77,8 +76,15 @@
 #define REG_READ32(addr)	(*(volatile uint32_t *)(addr))
 #define REG_WRITE32(addr, data)	(*(volatile uint32_t *)(addr) = (uint32_t)(data))
 
+struct octeon_pcibus_softc {
+	struct device sc_dev;
+	struct mips_pci_chipset sc_pc;
+	struct iobus_attach_args *sc_aa;
+};
+
 int	octeon_pcibus_match(struct device *, void *, void *);
 void	octeon_pcibus_attach(struct device *, struct device *, void *);
+int	octeon_pcibus_print(void *, const char *);
 int	octeon_pcibus_intr_map(int dev, int fn, int pin);
 
 const struct cfattach pcibus_ca = {
@@ -106,6 +112,7 @@ const char *octeon_pcibus_pci_intr_string(void *, pci_intr_handle_t);
 void       *octeon_pcibus_pci_intr_establish(void *, pci_intr_handle_t, int,
                                              int (*)(void *), void *, char *);
 void        octeon_pcibus_pci_intr_disestablish(void *, void *);
+struct extent *octeon_pcibus_get_resource_extent(pci_chipset_tag_t, int);
 
 
 struct machine_bus_dma_tag octeon_pcibus_bus_dma_tag = {
