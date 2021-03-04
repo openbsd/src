@@ -1,4 +1,4 @@
-/*	$OpenBSD: enginechoice.c,v 1.2 2021/03/04 09:32:49 espie Exp $ */
+/*	$OpenBSD: enginechoice.c,v 1.3 2021/03/04 09:34:30 espie Exp $ */
 /*
  * Copyright (c) 2020 Marc Espie.
  *
@@ -27,6 +27,7 @@
 #include "defines.h"
 #include "compat.h"
 #include "make.h"
+#include "enginechoice.h"
 
 struct engine {
 	void (*run_list)(Lst, bool *, bool *);
