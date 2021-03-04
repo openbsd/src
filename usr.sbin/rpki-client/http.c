@@ -1,4 +1,4 @@
-/*      $OpenBSD: http.c,v 1.2 2021/03/04 14:00:26 claudio Exp $  */
+/*      $OpenBSD: http.c,v 1.3 2021/03/04 14:15:47 tb Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.com>
@@ -370,7 +370,7 @@ http_parse_uri(char *uri, char **ohost, char **oport, char **opath)
 		else
 			hosttail = path;
 	}
-		
+
 	if ((host = strndup(host, hosttail - host)) == NULL)
 		err(1, "strndup");
 	if (port != NULL) {
@@ -402,7 +402,7 @@ http_new(size_t id, char *uri, char *modified_since, int outfd)
 		free(modified_since);
 		return NULL;
 	}
-		
+
 	if ((conn = calloc(1, sizeof(*conn))) == NULL)
 		err(1, NULL);
 
@@ -1160,7 +1160,7 @@ proc_http(char *bind_addr, int fd)
 				pfds[i].fd = conn->outfd;
 			else
 				pfds[i].fd = conn->fd;
-			
+
 			pfds[i].events = conn->events;
 			active_connections++;
 		}
