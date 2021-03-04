@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.434 2021/02/20 01:17:45 dlg Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.435 2021/03/04 07:46:26 jsg Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -2643,7 +2643,7 @@ join_status(void)
 				if (wpa->i_protos & IEEE80211_WPA_PROTO_WPA2)
 					printf("%swpa2", sep);
 
-				printf(" wpaakms ", stdout); sep = "";
+				printf(" wpaakms "); sep = "";
 				if (wpa->i_akms & IEEE80211_WPA_AKM_PSK) {
 					printf("psk");
 					sep = ",";
