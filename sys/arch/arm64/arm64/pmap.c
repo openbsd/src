@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.71 2021/02/16 12:33:22 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.72 2021/03/04 18:36:52 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -35,6 +35,7 @@
 #include <ddb/db_output.h>
 
 void pmap_setttb(struct proc *p);
+void pmap_allocate_asid(pmap_t);
 void pmap_free_asid(pmap_t pm);
 
 /* We run userland code with ASIDs that have the low bit set. */
@@ -81,8 +82,6 @@ void pmap_remove_pv(struct pte_desc *pted);
 
 void _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags,
     int cache);
-
-void pmap_allocate_asid(pmap_t);
 
 struct pmapvp0 {
 	uint64_t l0[VP_IDX0_CNT];
@@ -223,6 +222,56 @@ const uint64_t ap_bits_kern[8] = {
 	[PROT_EXEC|PROT_WRITE]			= ATTR_UXN|ATTR_AF|ATTR_AP(0),
 	[PROT_EXEC|PROT_WRITE|PROT_READ]	= ATTR_UXN|ATTR_AF|ATTR_AP(0),
 };
+
+/*
+ * We allocate ASIDs in pairs.  The first ASID is used to run the
+ * kernel and has both userland and the full kernel mapped.  The
+ * second ASID is used for running userland and has only the
+ * trampoline page mapped in addition to userland.
+ */
+
+#define MAX_NASID (1 << 16)
+uint32_t pmap_asid[MAX_NASID / 32];
+int pmap_nasid = (1 << 8);
+
+void
+pmap_allocate_asid(pmap_t pm)
+{
+	uint32_t bits;
+	int asid, bit;
+
+	for (;;) {
+		do {
+			asid = arc4random() & (pmap_nasid - 2);
+			bit = (asid & (32 - 1));
+			bits = pmap_asid[asid / 32];
+		} while (asid == 0 || (bits & (3U << bit)));
+
+		if (atomic_cas_uint(&pmap_asid[asid / 32], bits,
+		    bits | (3U << bit)) == bits)
+			break;
+	}
+	pm->pm_asid = asid;
+}
+
+void
+pmap_free_asid(pmap_t pm)
+{
+	uint32_t bits;
+	int bit;
+
+	KASSERT(pm != curcpu()->ci_curpm);
+	cpu_tlb_flush_asid_all((uint64_t)pm->pm_asid << 48);
+	cpu_tlb_flush_asid_all((uint64_t)(pm->pm_asid | ASID_USER) << 48);
+
+	bit = (pm->pm_asid & (32 - 1));
+	for (;;) {
+		bits = pmap_asid[pm->pm_asid / 32];
+		if (atomic_cas_uint(&pmap_asid[pm->pm_asid / 32], bits,
+		    bits & ~(3U << bit)) == bits)
+			break;
+	}
+}
 
 /*
  * This is used for pmap_kernel() mappings, they are not to be removed
@@ -1158,6 +1207,7 @@ pmap_bootstrap(long kvo, paddr_t lpt1, long kernelstart, long kernelend,
 	struct pmapvp3 *vp3;
 	struct pte_desc *pted;
 	vaddr_t vstart;
+	uint64_t id_aa64mmfr0;
 	int i, j, k;
 	int lb_idx2, ub_idx2;
 
@@ -1315,6 +1365,10 @@ pmap_bootstrap(long kvo, paddr_t lpt1, long kernelstart, long kernelend,
 	printf("all mapped\n");
 
 	curcpu()->ci_curpm = pmap_kernel();
+
+	id_aa64mmfr0 = READ_SPECIALREG(id_aa64mmfr0_el1);
+	if (ID_AA64MMFR0_ASID_BITS(id_aa64mmfr0) == ID_AA64MMFR0_ASID_BITS_16)
+		pmap_nasid = (1 << 16);
 
 	vmmap = vstart;
 	vstart += PAGE_SIZE;
@@ -2238,55 +2292,6 @@ pmap_map_early(paddr_t spa, psize_t len)
 	}
 	__asm volatile("dsb sy");
 	__asm volatile("isb");
-}
-
-/*
- * We allocate ASIDs in pairs.  The first ASID is used to run the
- * kernel and has both userland and the full kernel mapped.  The
- * second ASID is used for running userland and has only the
- * trampoline page mapped in addition to userland.
- */
-
-#define NUM_ASID (1 << 16)
-uint32_t pmap_asid[NUM_ASID / 32];
-
-void
-pmap_allocate_asid(pmap_t pm)
-{
-	uint32_t bits;
-	int asid, bit;
-
-	for (;;) {
-		do {
-			asid = arc4random() & (NUM_ASID - 2);
-			bit = (asid & (32 - 1));
-			bits = pmap_asid[asid / 32];
-		} while (asid == 0 || (bits & (3U << bit)));
-
-		if (atomic_cas_uint(&pmap_asid[asid / 32], bits,
-		    bits | (3U << bit)) == bits)
-			break;
-	}
-	pm->pm_asid = asid;
-}
-
-void
-pmap_free_asid(pmap_t pm)
-{
-	uint32_t bits;
-	int bit;
-
-	KASSERT(pm != curcpu()->ci_curpm);
-	cpu_tlb_flush_asid_all((uint64_t)pm->pm_asid << 48);
-	cpu_tlb_flush_asid_all((uint64_t)(pm->pm_asid | ASID_USER) << 48);
-
-	bit = (pm->pm_asid & (32 - 1));
-	for (;;) {
-		bits = pmap_asid[pm->pm_asid / 32];
-		if (atomic_cas_uint(&pmap_asid[pm->pm_asid / 32], bits,
-		    bits & ~(3U << bit)) == bits)
-			break;
-	}
 }
 
 void
