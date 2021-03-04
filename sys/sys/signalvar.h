@@ -1,4 +1,4 @@
-/*	$OpenBSD: signalvar.h,v 1.45 2020/11/08 20:37:24 mpi Exp $	*/
+/*	$OpenBSD: signalvar.h,v 1.46 2021/03/04 09:02:38 mpi Exp $	*/
 /*	$NetBSD: signalvar.h,v 1.17 1996/04/22 01:23:31 christos Exp $	*/
 
 /*
@@ -72,17 +72,6 @@ struct	sigacts {
 	(((p)->p_siglist | (p)->p_p->ps_siglist) & ~(p)->p_sigmask)
 
 /*
- * Determine signal that should be delivered to process p, the current
- * process, 0 if none.  If there is a pending stop signal with default
- * action, the process stops in issignal().
- */
-#define CURSIG(p)							\
-	((((p)->p_siglist | (p)->p_p->ps_siglist) == 0 ||		\
-	    (((p)->p_p->ps_flags & PS_TRACED) == 0 &&			\
-	    SIGPENDING(p) == 0)) ?					\
-	    0 : issignal(p))
-
-/*
  * Clear a pending signal from a process.
  */
 #define CLRSIG(p, sig)	do {						\
@@ -116,7 +105,7 @@ struct sigio_ref;
  */
 int	coredump(struct proc *p);
 void	execsigs(struct proc *p);
-int	issignal(struct proc *p);
+int	cursig(struct proc *p);
 void	pgsigio(struct sigio_ref *sir, int sig, int checkctty);
 void	pgsignal(struct pgrp *pgrp, int sig, int checkctty);
 void	psignal(struct proc *p, int sig);

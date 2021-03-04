@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.273 2021/02/15 09:35:59 mpi Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.274 2021/03/04 09:02:37 mpi Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1035,7 +1035,7 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 			goto out;
 		/*
 		 * Process is sleeping and traced... make it runnable
-		 * so it can discover the signal in issignal() and stop
+		 * so it can discover the signal in cursig() and stop
 		 * for the parent.
 		 */
 		if (pr->ps_flags & PS_TRACED)
@@ -1159,27 +1159,35 @@ out:
 }
 
 /*
+ * Determine signal that should be delivered to process p, the current
+ * process, 0 if none.
+ *
  * If the current process has received a signal (should be caught or cause
  * termination, should interrupt current syscall), return the signal number.
  * Stop signals with default action are processed immediately, then cleared;
  * they aren't returned.  This is checked after each entry to the system for
- * a syscall or trap (though this can usually be done without calling issignal
- * by checking the pending signal masks in the CURSIG macro.) The normal call
- * sequence is
+ * a syscall or trap. The normal call sequence is
  *
- *	while (signum = CURSIG(curproc))
+ *	while (signum = cursig(curproc))
  *		postsig(signum);
  *
  * Assumes that if the P_SINTR flag is set, we're holding both the
  * kernel and scheduler locks.
  */
 int
-issignal(struct proc *p)
+cursig(struct proc *p)
 {
 	struct process *pr = p->p_p;
-	int signum, mask, prop;
+	int sigpending, signum, mask, prop;
 	int dolock = (p->p_flag & P_SINTR) == 0;
 	int s;
+
+	sigpending = (p->p_siglist | pr->ps_siglist);
+	if (sigpending == 0)
+		return 0;
+
+	if (!ISSET(pr->ps_flags, PS_TRACED) && SIGPENDING(p) == 0)
+		return 0;
 
 	for (;;) {
 		mask = SIGPENDING(p);
@@ -1304,7 +1312,7 @@ issignal(struct proc *p)
 			 */
 			if ((prop & SA_CONT) == 0 &&
 			    (pr->ps_flags & PS_TRACED) == 0)
-				printf("issignal\n");
+				printf("%s\n", __func__);
 			break;		/* == ignore */
 		default:
 			/*
@@ -1766,7 +1774,7 @@ sys___thrsigdivert(struct proc *p, void *v, register_t *retval)
 
 	dosigsuspend(p, p->p_sigmask &~ mask);
 	for (;;) {
-		si.si_signo = CURSIG(p);
+		si.si_signo = cursig(p);
 		if (si.si_signo != 0) {
 			sigset_t smask = sigmask(si.si_signo);
 			if (smask & mask) {
@@ -1907,7 +1915,7 @@ userret(struct proc *p)
 
 	if (SIGPENDING(p) != 0) {
 		KERNEL_LOCK();
-		while ((signum = CURSIG(p)) != 0)
+		while ((signum = cursig(p)) != 0)
 			postsig(p, signum);
 		KERNEL_UNLOCK();
 	}
@@ -1923,7 +1931,7 @@ userret(struct proc *p)
 		p->p_sigmask = p->p_oldmask;
 
 		KERNEL_LOCK();
-		while ((signum = CURSIG(p)) != 0)
+		while ((signum = cursig(p)) != 0)
 			postsig(p, signum);
 		KERNEL_UNLOCK();
 	}
