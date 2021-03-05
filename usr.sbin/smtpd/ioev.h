@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioev.h,v 1.18 2019/09/11 04:19:19 martijn Exp $	*/
+/*	$OpenBSD: ioev.h,v 1.19 2021/03/05 12:37:32 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -18,7 +18,6 @@
 enum {
 	IO_CONNECTED = 0, 	/* connection successful	*/
 	IO_TLSREADY,		/* TLS started successfully	*/
-	IO_TLSERROR,		/* XXX - needs more work	*/
 	IO_DATAIN,		/* new data in input buffer	*/
 	IO_LOWAT,		/* output queue running low	*/
 	IO_DISCONNECTED,	/* error?			*/
@@ -30,6 +29,7 @@ enum {
 #define IO_OUT		0x02
 
 struct io;
+struct tls;
 
 void io_set_nonblocking(int);
 void io_set_nolinger(int);
@@ -46,11 +46,12 @@ void io_pause(struct io *, int);
 void io_resume(struct io *, int);
 void io_reload(struct io *);
 int io_connect(struct io *, const struct sockaddr *, const struct sockaddr *);
-int io_start_tls(struct io *, void *);
+int io_connect_tls(struct io *, struct tls *, const char *);
+int io_accept_tls(struct io *, struct tls *);
 const char* io_strio(struct io *);
 const char* io_strevent(int);
 const char* io_error(struct io *);
-void* io_tls(struct io *);
+struct tls* io_tls(struct io *);
 int io_fileno(struct io *);
 int io_paused(struct io *, int);
 

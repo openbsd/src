@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.h,v 1.21 2019/09/18 11:26:30 eric Exp $	*/
+/*	$OpenBSD: ssl.h,v 1.22 2021/03/05 12:37:32 eric Exp $	*/
 /*
  * Copyright (c) 2013 Gilles Chehade <gilles@poolp.org>
  *
@@ -14,6 +14,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <openssl/ssl.h>
 
 #define SSL_CIPHERS		"HIGH:!aNULL:!MD5"
 #define	SSL_SESSION_TIMEOUT	300
@@ -62,6 +64,7 @@ int		ssl_load_pkey(const void *, size_t, char *, off_t,
 		    X509 **, EVP_PKEY **);
 int		ssl_ctx_fake_private_key(SSL_CTX *, const void *, size_t,
 		    char *, off_t, X509 **, EVP_PKEY **);
+char *ssl_pubkey_hash(const char *, off_t);
 
 /* ssl_privsep.c */
 int		ssl_by_mem_ctrl(X509_LOOKUP *, int, const char *, long, char **);

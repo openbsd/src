@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.284 2021/01/23 16:11:11 rob Exp $	*/
+/*	$OpenBSD: parse.y,v 1.285 2021/03/05 12:37:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -128,13 +128,15 @@ enum listen_options {
 	LO_PROXY       	= 0x008000,
 };
 
+#define PKI_MAX	32
 static struct listen_opts {
 	char	       *ifx;
 	int		family;
 	in_port_t	port;
 	uint16_t	ssl;
 	char	       *filtername;
-	char	       *pki;
+	char	       *pki[PKI_MAX];
+	int		pkicount;
 	char	       *ca;
 	uint16_t       	auth;
 	struct table   *authtable;
@@ -2316,12 +2318,11 @@ opt_if_listen : INET4 {
 			listen_opts.ssl = F_STARTTLS|F_STARTTLS_REQUIRE|F_TLS_VERIFY;
 		}
 		| PKI STRING			{
-			if (listen_opts.options & LO_PKI) {
-				yyerror("pki already specified");
+			if (listen_opts.pkicount == PKI_MAX) {
+				yyerror("too many pki specified");
 				YYERROR;
 			}
-			listen_opts.options |= LO_PKI;
-			listen_opts.pki = $2;
+			listen_opts.pki[listen_opts.pkicount++] = $2;
 		}
 		| CA STRING			{
 			if (listen_opts.options & LO_CA) {
@@ -3221,8 +3222,10 @@ create_if_listener(struct listen_opts *lo)
 	if (lo->auth != 0 && !lo->ssl)
 		errx(1, "invalid listen option: auth requires tls/smtps");
 
-	if (lo->pki && !lo->ssl)
+	if (lo->pkicount && !lo->ssl)
 		errx(1, "invalid listen option: pki requires tls/smtps");
+	if (lo->pkicount == 0 && lo->ssl)
+		errx(1, "invalid listen option: pki required for tls/smtps");
 
 	flags = lo->flags;
 
@@ -3259,6 +3262,8 @@ create_if_listener(struct listen_opts *lo)
 static void
 config_listener(struct listener *h,  struct listen_opts *lo)
 {
+	int i;
+
 	h->fd = -1;
 	h->port = lo->port;
 	h->flags = lo->flags;
@@ -3273,17 +3278,19 @@ config_listener(struct listener *h,  struct listen_opts *lo)
 		    sizeof(h->filter_name));
 	}
 
-	h->pki_name[0] = '\0';
-
 	if (lo->authtable != NULL)
 		(void)strlcpy(h->authtable, lo->authtable->t_name, sizeof(h->authtable));
-	if (lo->pki != NULL) {
-		if (!lowercase(h->pki_name, lo->pki, sizeof(h->pki_name))) {
-			log_warnx("pki name too long: %s", lo->pki);
-			fatalx(NULL);
-		}
-		if (dict_get(conf->sc_pki_dict, h->pki_name) == NULL) {
-			log_warnx("pki name not found: %s", lo->pki);
+
+	h->pkicount = lo->pkicount;
+	if (h->pkicount) {
+		h->pki = calloc(h->pkicount, sizeof(*h->pki));
+		if (h->pki == NULL)
+			fatal("calloc");
+	}
+	for (i = 0; i < lo->pkicount; i++) {
+		h->pki[i] = dict_get(conf->sc_pki_dict, lo->pki[i]);
+		if (h->pki[i] == NULL) {
+			log_warnx("pki name not found: %s", lo->pki[i]);
 			fatalx(NULL);
 		}
 	}

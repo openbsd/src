@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.428 2020/12/21 11:44:07 martijn Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.429 2021/03/05 12:37:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -38,6 +38,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <tls.h>
 #include <unistd.h>
 #include <vis.h>
 
@@ -184,7 +185,8 @@ static void smtp_getnameinfo_cb(void *, int, const char *, const char *);
 static void smtp_getaddrinfo_cb(void *, int, struct addrinfo *);
 static void smtp_connected(struct smtp_session *);
 static void smtp_send_banner(struct smtp_session *);
-static void smtp_tls_verified(struct smtp_session *);
+static void smtp_tls_init(struct smtp_session *);
+static void smtp_tls_started(struct smtp_session *);
 static void smtp_io(struct io *, int, void *);
 static void smtp_enter_state(struct smtp_session *, int);
 static void smtp_reply(struct smtp_session *, char *, ...);
@@ -193,10 +195,6 @@ static void smtp_rfc4954_auth_plain(struct smtp_session *, char *);
 static void smtp_rfc4954_auth_login(struct smtp_session *, char *);
 static void smtp_free(struct smtp_session *, const char *);
 static const char *smtp_strstate(int);
-static void smtp_cert_init(struct smtp_session *);
-static void smtp_cert_init_cb(void *, int, const char *, const void *, size_t);
-static void smtp_cert_verify(struct smtp_session *);
-static void smtp_cert_verify_cb(void *, int);
 static void smtp_auth_failure_pause(struct smtp_session *);
 static void smtp_auth_failure_resume(int, short, void *);
 
@@ -1066,17 +1064,26 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 }
 
 static void
-smtp_tls_verified(struct smtp_session *s)
+smtp_tls_init(struct smtp_session *s)
 {
-	X509 *x;
+	io_set_read(s->io);
+	io_accept_tls(s->io, s->listener->tls);
+}
 
-	x = SSL_get_peer_certificate(io_tls(s->io));
-	if (x) {
+static void
+smtp_tls_started(struct smtp_session *s)
+{
+	if (tls_peer_cert_provided(io_tls(s->io))) {
 		log_info("%016"PRIx64" smtp "
-		    "client-cert-check result=\"%s\"",
+		    "cert-check result=\"%s\" fingerprint=\"%s\"",
 		    s->id,
-		    (s->flags & SF_VERIFIED) ? "success" : "failure");
-		X509_free(x);
+		    (s->flags & SF_VERIFIED) ? "verified" : "unchecked",
+		    tls_peer_cert_hash(io_tls(s->io)));
+	}
+	else {
+		log_info("%016"PRIx64" smtp "
+		    "cert-check result=\"no certificate presented\"",
+		    s->id);
 	}
 
 	if (s->listener->flags & F_SMTPS) {
@@ -1105,14 +1112,16 @@ smtp_io(struct io *io, int evt, void *arg)
 
 	case IO_TLSREADY:
 		log_info("%016"PRIx64" smtp tls ciphers=%s",
-		    s->id, ssl_to_text(io_tls(s->io)));
+		    s->id, tls_to_text(io_tls(s->io)));
 
-		smtp_report_link_tls(s, ssl_to_text(io_tls(s->io)));
+		smtp_report_link_tls(s, tls_to_text(io_tls(s->io)));
 
 		s->flags |= SF_SECURE;
+		if (s->listener->flags & F_TLS_VERIFY)
+			s->flags |= SF_VERIFIED;
 		s->helo[0] = '\0';
 
-		smtp_cert_verify(s);
+		smtp_tls_started(s);
 		break;
 
 	case IO_DATAIN:
@@ -1193,7 +1202,7 @@ smtp_io(struct io *io, int evt, void *arg)
 
 		/* Wait for the client to start tls */
 		if (s->state == STATE_TLS) {
-			smtp_cert_init(s);
+			smtp_tls_init(s);
 			break;
 		}
 
@@ -2071,7 +2080,7 @@ static void
 smtp_proceed_connected(struct smtp_session *s)
 {
 	if (s->listener->flags & F_SMTPS)
-		smtp_cert_init(s);
+		smtp_tls_init(s);
 	else
 		smtp_send_banner(s);
 }
@@ -2258,112 +2267,6 @@ smtp_mailaddr(struct mailaddr *maddr, char *line, int mailfrom, char **args,
 		return (0);
 
 	return (1);
-}
-
-static void
-smtp_cert_init(struct smtp_session *s)
-{
-	const char *name;
-	int fallback;
-
-	if (s->listener->pki_name[0]) {
-		name = s->listener->pki_name;
-		fallback = 0;
-	}
-	else {
-		name = s->smtpname;
-		fallback = 1;
-	}
-
-	if (cert_init(name, fallback, smtp_cert_init_cb, s))
-		tree_xset(&wait_ssl_init, s->id, s);
-}
-
-static void
-smtp_cert_init_cb(void *arg, int status, const char *name, const void *cert,
-    size_t cert_len)
-{
-	struct smtp_session *s = arg;
-	void *ssl, *ssl_ctx;
-
-	tree_pop(&wait_ssl_init, s->id);
-
-	if (status == CA_FAIL) {
-		log_info("%016"PRIx64" smtp disconnected "
-		    "reason=ca-failure",
-		    s->id);
-		smtp_free(s, "CA failure");
-		return;
-	}
-
-	ssl_ctx = dict_get(env->sc_ssl_dict, name);
-	ssl = ssl_smtp_init(ssl_ctx, s->listener->flags & F_TLS_VERIFY);
-	io_set_read(s->io);
-	io_start_tls(s->io, ssl);
-}
-
-static void
-smtp_cert_verify(struct smtp_session *s)
-{
-	const char *name;
-	int fallback;
-
-	if (s->listener->ca_name[0]) {
-		name = s->listener->ca_name;
-		fallback = 0;
-	}
-	else {
-		name = s->smtpname;
-		fallback = 1;
-	}
-
-	if (cert_verify(io_tls(s->io), name, fallback, smtp_cert_verify_cb, s)) {
-		tree_xset(&wait_ssl_verify, s->id, s);
-		io_pause(s->io, IO_IN);
-	}
-}
-
-static void
-smtp_cert_verify_cb(void *arg, int status)
-{
-	struct smtp_session *s = arg;
-	const char *reason = NULL;
-	int resume;
-
-	resume = tree_pop(&wait_ssl_verify, s->id) != NULL;
-
-	switch (status) {
-	case CERT_OK:
-		reason = "cert-ok";
-		s->flags |= SF_VERIFIED;
-		break;
-	case CERT_NOCA:
-		reason = "no-ca";
-		break;
-	case CERT_NOCERT:
-		reason = "no-client-cert";
-		break;
-	case CERT_INVALID:
-		reason = "cert-invalid";
-		break;
-	default:
-		reason = "cert-check-failed";
-		break;
-	}
-
-	log_debug("smtp: %p: smtp_cert_verify_cb: %s", s, reason);
-
-	if (!(s->flags & SF_VERIFIED) && (s->listener->flags & F_TLS_VERIFY)) {
-		log_info("%016"PRIx64" smtp disconnected "
-		    " reason=%s", s->id,
-		    reason);
-		smtp_free(s, "SSL certificate check failed");
-		return;
-	}
-
-	smtp_tls_verified(s);
-	if (resume)
-		io_resume(s->io, IO_IN);
 }
 
 static void
@@ -2844,7 +2747,6 @@ static void
 smtp_message_begin(struct smtp_tx *tx)
 {
 	struct smtp_session *s;
-	X509 *x;
 	int	(*m_printf)(struct smtp_tx *, const char *, ...);
 
 	m_printf = smtp_message_printf;
@@ -2879,13 +2781,11 @@ smtp_message_begin(struct smtp_tx *tx)
 	    tx->msgid);
 
 	if (s->flags & SF_SECURE) {
-		x = SSL_get_peer_certificate(io_tls(s->io));
 		m_printf(tx, " (%s:%s:%d:%s)",
-		    SSL_get_version(io_tls(s->io)),
-		    SSL_get_cipher_name(io_tls(s->io)),
-		    SSL_get_cipher_bits(io_tls(s->io), NULL),
-		    (s->flags & SF_VERIFIED) ? "YES" : (x ? "FAIL" : "NO"));
-		X509_free(x);
+		    tls_conn_version(io_tls(s->io)),
+		    tls_conn_cipher(io_tls(s->io)),
+		    tls_conn_cipher_strength(io_tls(s->io)),
+		    (s->flags & SF_VERIFIED) ? "YES" : "NO");
 
 		if (s->listener->flags & F_RECEIVEDAUTH) {
 			m_printf(tx, " auth=%s",

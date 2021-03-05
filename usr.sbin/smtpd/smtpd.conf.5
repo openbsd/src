@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.257 2021/02/13 07:59:54 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.258 2021/03/05 12:37:32 eric Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: February 13 2021 $
+.Dd $Mdocdate: March 5 2021 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -345,17 +345,9 @@ sending a single warning after four hours.
 .It Ic ca Ar caname Cm cert Ar cafile
 Associate the Certificate Authority (CA) certificate file
 .Ar cafile
-with host
-.Ar caname ,
-and use that file as the CA certificate for that host.
-.Ar caname
-is the server's name,
-derived from the default hostname
-or set using either
-.Pa /etc/mail/mailname
-or using the
-.Ic hostname
-directive.
+with ca entry
+.Ar caname .
+The ca entry can be referenced in listener rules and relay actions.
 .It Ic filter Ar chain-name Ic chain Brq Ar filter-name Op , Ar ...
 Register a chain of filters
 .Ar chain-name ,
@@ -479,6 +471,8 @@ use the certificate associated with
 .Ic pki
 directive)
 to prove a mail server's identity.
+This option can be used multiple times to provide alternate
+certificates for SNI.
 .It Cm port Op Ar port
 Listen on the given
 .Ar port
@@ -800,21 +794,10 @@ The default is 100.
 .It Ic pki Ar pkiname Cm cert Ar certfile
 Associate certificate file
 .Ar certfile
-with host
-.Ar pkiname ,
-and use that file to prove the identity of the mail server to clients.
-.Ar pkiname
-is the server's name,
-derived from the default hostname
-or set using either
-.Pa /etc/mail/mailname
-or using the
-.Ic hostname
-directive.
-If a fallback certificate or SNI is wanted, the
-.Sq *
-wildcard may be used as
+with pki entry
 .Ar pkiname .
+The pki entry defines a keypair configuration that can be referenced
+in listener rules and relay actions.
 .Pp
 A certificate chain may be created by appending one or many certificates,
 including a Certificate Authority certificate,
@@ -825,10 +808,10 @@ The creation of certificates is documented in
 .It Ic pki Ar pkiname Cm key Ar keyfile
 Associate the key located in
 .Ar keyfile
-with host
+with pki entry
 .Ar pkiname .
 .It Ic pki Ar pkiname Cm dhe Ar params
-Specify the DHE parameters to use for DHE cipher suites with host
+Specify the DHE parameters to use for DHE cipher suites with pki entry
 .Ar pkiname .
 Valid parameter values are
 .Cm none ,

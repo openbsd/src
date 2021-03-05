@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.234 2019/12/21 10:34:07 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.235 2021/03/05 12:37:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -38,10 +38,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <tls.h>
 #include <unistd.h>
 
 #include "smtpd.h"
 #include "log.h"
+#include "ssl.h"
 
 #define MAXERROR_PER_ROUTE	4
 
@@ -57,6 +59,7 @@
 #define RELAY_ONHOLD		0x01
 #define RELAY_HOLDQ		0x02
 
+static void mta_setup_dispatcher(struct dispatcher *);
 static void mta_handle_envelope(struct envelope *, const char *);
 static void mta_query_smarthost(struct envelope *);
 static void mta_on_smarthost(struct envelope *, const char *);
@@ -137,6 +140,12 @@ void mta_unblock(struct mta_source *, char *);
 int mta_is_blocked(struct mta_source *, char *);
 static int mta_block_cmp(const struct mta_block *, const struct mta_block *);
 SPLAY_PROTOTYPE(mta_block_tree, mta_block, entry, mta_block_cmp);
+
+/*
+ * This function is not publicy exported because it is a hack until libtls
+ * has a proper privsep setup
+ */
+void tls_config_use_fake_private_key(struct tls_config *config);
 
 static struct mta_relay_tree		relays;
 static struct mta_domain_tree		domains;
@@ -463,6 +472,70 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 void
 mta_postfork(void)
 {
+	struct dispatcher *dispatcher;
+	const char *key;
+	void *iter;
+
+	iter = NULL;
+	while (dict_iter(env->sc_dispatchers, &iter, &key, (void **)&dispatcher)) {
+		log_debug("%s: %s", __func__, key);
+		mta_setup_dispatcher(dispatcher);
+	}
+}
+
+static void
+mta_setup_dispatcher(struct dispatcher *dispatcher)
+{
+	struct dispatcher_remote *remote;
+	static const char *dheparams[] = { "none", "auto", "legacy" };
+	struct tls_config *config;
+	struct pki *pki;
+	struct ca *ca;
+
+	if (dispatcher->type != DISPATCHER_REMOTE)
+		return;
+
+	remote = &dispatcher->u.remote;
+
+	if ((config = tls_config_new()) == NULL)
+		fatal("smtpd: tls_config_new");
+
+	if (env->sc_tls_ciphers) {
+		if (tls_config_set_ciphers(config, env->sc_tls_ciphers) == -1)
+			err(1, "%s", tls_config_error(config));
+	}
+
+	if (remote->pki) {
+		pki = dict_get(env->sc_pki_dict, remote->pki);
+		if (pki == NULL)
+			err(1, "client pki \"%s\" not found ", remote->pki);
+
+		tls_config_set_dheparams(config, dheparams[pki->pki_dhe]);
+		tls_config_use_fake_private_key(config);
+		if (tls_config_set_keypair_mem(config, pki->pki_cert,
+		    pki->pki_cert_len, NULL, 0) == -1)
+		fatal("tls_config_set_keypair_mem");
+	}
+
+	if (remote->ca) {
+		ca = dict_get(env->sc_ca_dict, remote->ca);
+		if (tls_config_set_ca_mem(config, ca->ca_cert, ca->ca_cert_len)
+		    == -1)
+			fatal("tls_config_set_ca_mem");
+	}
+	else if (tls_config_set_ca_file(config, tls_default_ca_cert_file())
+	    == -1)
+		fatal("tls_config_set_ca_file");
+
+	if (remote->tls_noverify) {
+		tls_config_insecure_noverifycert(config);
+		tls_config_insecure_noverifyname(config);
+		tls_config_insecure_noverifytime(config);
+	}
+	else
+		tls_config_verify(config);
+
+	remote->tls_config = config;
 }
 
 void

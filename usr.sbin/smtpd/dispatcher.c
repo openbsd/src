@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatcher.c,v 1.1 2020/12/31 08:27:15 martijn Exp $	*/
+/*	$OpenBSD: dispatcher.c,v 1.2 2021/03/05 12:37:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2014 Gilles Chehade <gilles@poolp.org>
@@ -154,6 +154,8 @@ dispatcher(void)
 {
 	struct passwd	*pw;
 
+	ca_engine_init();
+
 	mda_postfork();
 	mta_postfork();
 	smtp_postfork();
@@ -195,8 +197,6 @@ dispatcher(void)
 	config_peer(PROC_LKA);
 	config_peer(PROC_CONTROL);
 	config_peer(PROC_CA);
-
-	ca_engine_init();
 
 	if (pledge("stdio inet unix recvfd sendfd", NULL) == -1)
 		err(1, "pledge");

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2019/09/18 11:26:30 eric Exp $
+#	$OpenBSD: Makefile,v 1.4 2021/03/05 12:37:32 eric Exp $
 
 .PATH:	${.CURDIR}/..
 
@@ -17,7 +17,7 @@ SRCS+=	ssl_verify.c
 
 CPPFLAGS+= -DIO_TLS
 
-LDADD+=	-levent -lutil -lssl -lcrypto -lm -lz
-DPADD+=	${LIBEVENT} ${LIBUTIL} ${LIBSSL} ${LIBCRYPTO} ${LIBM} ${LIBZ}
+LDADD+=	-levent -lutil -ltls -lssl -lcrypto -lm -lz
+DPADD+=	${LIBEVENT} ${LIBUTIL} ${LIBTLS} ${LIBSSL} ${LIBCRYPTO} ${LIBM} ${LIBZ}
 
 .include <bsd.prog.mk>

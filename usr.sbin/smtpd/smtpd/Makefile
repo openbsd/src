@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.110 2020/12/31 08:27:15 martijn Exp $
+#	$OpenBSD: Makefile,v 1.111 2021/03/05 12:37:32 eric Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -82,8 +82,8 @@ SRCS+=		stat_ramstat.c
 MAN=		sendmail.8 smtpd.8 smtpd.conf.5 table.5
 BINDIR=		/usr/sbin
 
-LDADD+=		-levent -lutil -lssl -lcrypto -lm -lz
-DPADD+=		${LIBEVENT} ${LIBUTIL} ${LIBSSL} ${LIBCRYPTO} ${LIBM} ${LIBZ}
+LDADD+=		-levent -lutil -ltls -lssl -lcrypto -lm -lz
+DPADD+=		${LIBEVENT} ${LIBUTIL} ${LIBTLS} ${LIBSSL} ${LIBCRYPTO} ${LIBM} ${LIBZ}
 
 CFLAGS+=	-fstack-protector-all
 CFLAGS+=	-I${.CURDIR}/..

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iobuf.h,v 1.5 2019/06/12 17:42:53 eric Exp $	*/
+/*	$OpenBSD: iobuf.h,v 1.6 2021/03/05 12:37:32 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -35,11 +35,12 @@ struct iobuf {
 	struct ioqbuf	*outqlast;
 };
 
+struct tls;
+
 #define IOBUF_WANT_READ		-1
 #define IOBUF_WANT_WRITE	-2
 #define IOBUF_CLOSED		-3
 #define IOBUF_ERROR		-4
-#define IOBUF_TLSERROR		-5
 
 int	iobuf_init(struct iobuf *, size_t, size_t);
 void	iobuf_clear(struct iobuf *);
@@ -53,7 +54,7 @@ size_t	iobuf_left(struct iobuf *);
 char   *iobuf_data(struct iobuf *);
 char   *iobuf_getline(struct iobuf *, size_t *);
 ssize_t	iobuf_read(struct iobuf *, int);
-ssize_t	iobuf_read_tls(struct iobuf *, void *);
+ssize_t	iobuf_read_tls(struct iobuf *, struct tls *);
 
 size_t  iobuf_queued(struct iobuf *);
 void*   iobuf_reserve(struct iobuf *, size_t);
@@ -62,6 +63,6 @@ int	iobuf_queuev(struct iobuf *, const struct iovec *, int);
 int	iobuf_fqueue(struct iobuf *, const char *, ...);
 int	iobuf_vfqueue(struct iobuf *, const char *, va_list);
 int	iobuf_flush(struct iobuf *, int);
-int	iobuf_flush_tls(struct iobuf *, void *);
+int	iobuf_flush_tls(struct iobuf *, struct tls *);
 ssize_t	iobuf_write(struct iobuf *, int);
-ssize_t	iobuf_write_tls(struct iobuf *, void *);
+ssize_t	iobuf_write_tls(struct iobuf *, struct tls *);
