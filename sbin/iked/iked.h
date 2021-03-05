@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.187 2021/02/25 20:13:24 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.188 2021/03/05 22:03:51 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -782,6 +782,33 @@ struct iked_socket {
 	struct sockaddr_storage	 sock_addr;
 };
 
+struct ipsec_xf {
+	const char	*name;
+	unsigned int	 id;
+	unsigned int	 length;
+	unsigned int	 keylength;
+	unsigned int	 nonce;
+	unsigned int	 noauth;
+};
+
+struct ipsec_transforms {
+	const struct ipsec_xf	**authxf;
+	unsigned int		  nauthxf;
+	const struct ipsec_xf	**prfxf;
+	unsigned int		  nprfxf;
+	const struct ipsec_xf	**encxf;
+	unsigned int		  nencxf;
+	const struct ipsec_xf	**groupxf;
+	unsigned int		  ngroupxf;
+	const struct ipsec_xf	**esnxf;
+	unsigned int		  nesnxf;
+};
+
+struct ipsec_mode {
+	struct ipsec_transforms	**xfs;
+	unsigned int		  nxfs;
+};
+
 /* iked.c */
 void	 parent_reload(struct iked *, int, const char *);
 
@@ -1217,11 +1244,24 @@ int	 ocsp_validate_cert(struct iked *, void *, size_t, struct iked_sahdr,
 
 /* parse.y */
 int	 parse_config(const char *, struct iked *);
-void	 print_user(struct iked_user *);
-void	 print_policy(struct iked_policy *);
+int	 cmdline_symset(char *);
+extern const struct ipsec_xf authxfs[];
+extern const struct ipsec_xf prfxfs[];
+extern const struct ipsec_xf *encxfs;
+extern const struct ipsec_xf ikeencxfs[];
+extern const struct ipsec_xf ipsecencxfs[];
+extern const struct ipsec_xf groupxfs[];
+extern const struct ipsec_xf esnxfs[];
+extern const struct ipsec_xf methodxfs[];
+extern const struct ipsec_xf saxfs[];
+extern const struct ipsec_xf cpxfs[];
 size_t	 keylength_xf(unsigned int, unsigned int, unsigned int);
 size_t	 noncelength_xf(unsigned int, unsigned int);
-int	 cmdline_symset(char *);
 int	 encxf_noauth(unsigned int);
+
+/* print.c */
+void	 print_user(struct iked_user *);
+void	 print_policy(struct iked_policy *);
+const char *print_xf(unsigned int, unsigned int, const struct ipsec_xf *);
 
 #endif /* IKED_H */
