@@ -1,4 +1,4 @@
-#	$OpenBSD: obsd-regress.t,v 1.12 2020/07/07 10:33:58 jca Exp $
+#	$OpenBSD: obsd-regress.t,v 1.13 2021/03/05 15:24:37 zhuk Exp $
 
 #
 # ksh regression tests from OpenBSD
@@ -601,4 +601,17 @@ stdin:
 	set +o pipefail
 	wait $p
 expected-exit: e == 1
+---
+
+name: overwrite-ro-array
+description:
+	do not allow to override first element of a read-only array
+	via the non-array access.
+stdin:
+	arr[0]=foo
+	readonly arr
+	arr=bar
+expected-exit: e == 1
+expected-stderr-pattern:
+	/: arr: is read only$/
 ---
