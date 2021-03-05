@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.94 2021/03/05 07:01:36 jsg Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.95 2021/03/05 07:10:06 jsg Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
@@ -204,7 +204,7 @@ static int
 iso_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p,
     struct iso_args *argp)
 {
-	register struct iso_mnt *isomp = NULL;
+	struct iso_mnt *isomp = NULL;
 	struct buf *bp = NULL;
 	struct buf *pribp = NULL, *supbp = NULL;
 	dev_t dev = devvp->v_rdev;
@@ -537,7 +537,7 @@ cd9660_start(struct mount *mp, int flags, struct proc *p)
 int
 cd9660_unmount(struct mount *mp, int mntflags, struct proc *p)
 {
-	register struct iso_mnt *isomp;
+	struct iso_mnt *isomp;
 	int error, flags = 0;
 
 	if (mntflags & MNT_FORCE)
@@ -599,7 +599,7 @@ cd9660_quotactl(struct mount *mp, int cmd, uid_t uid, caddr_t arg,
 int
 cd9660_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 {
-	register struct iso_mnt *isomp;
+	struct iso_mnt *isomp;
 
 	isomp = VFSTOISOFS(mp);
 
@@ -646,7 +646,7 @@ int
 cd9660_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 {
 	struct ifid *ifhp = (struct ifid *)fhp;
-	register struct iso_node *ip;
+	struct iso_node *ip;
 	struct vnode *nvp;
 	int error;
 
@@ -696,7 +696,7 @@ int
 cd9660_vget_internal(struct mount *mp, cdino_t ino, struct vnode **vpp,
     int relocated, struct iso_directory_record *isodir)
 {
-	register struct iso_mnt *imp;
+	struct iso_mnt *imp;
 	struct iso_node *ip;
 	struct buf *bp;
 	struct vnode *vp, *nvp;
@@ -910,8 +910,8 @@ retry:
 int
 cd9660_vptofh(struct vnode *vp, struct fid *fhp)
 {
-	register struct iso_node *ip = VTOI(vp);
-	register struct ifid *ifhp;
+	struct iso_node *ip = VTOI(vp);
+	struct ifid *ifhp;
 
 	ifhp = (struct ifid *)fhp;
 	ifhp->ifid_len = sizeof(struct ifid);
@@ -934,8 +934,8 @@ int
 cd9660_check_export(struct mount *mp, struct mbuf *nam, int *exflagsp,
     struct ucred **credanonp)
 {
-	register struct netcred *np;
-	register struct iso_mnt *imp = VFSTOISOFS(mp);
+	struct netcred *np;
+	struct iso_mnt *imp = VFSTOISOFS(mp);
 
 	/*
 	 * Get the export permission structure for this <mp, client> tuple.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_node.c,v 1.36 2021/03/05 07:01:36 jsg Exp $	*/
+/*	$OpenBSD: cd9660_node.c,v 1.37 2021/03/05 07:10:06 jsg Exp $	*/
 /*	$NetBSD: cd9660_node.c,v 1.17 1997/05/05 07:13:57 mycroft Exp $	*/
 
 /*-
@@ -151,7 +151,7 @@ cd9660_ihashins(struct iso_node *ip)
 void
 cd9660_ihashrem(struct iso_node *ip)
 {
-	register struct iso_node *iq;
+	struct iso_node *iq;
 
 	if (ip->i_prev == NULL)
 		return;
@@ -176,7 +176,7 @@ cd9660_inactive(void *v)
 {
 	struct vop_inactive_args *ap = v;
 	struct vnode *vp = ap->a_vp;
-	register struct iso_node *ip = VTOI(vp);
+	struct iso_node *ip = VTOI(vp);
 	int error = 0;
 
 #ifdef DIAGNOSTIC
@@ -203,8 +203,8 @@ int
 cd9660_reclaim(void *v)
 {
 	struct vop_reclaim_args *ap = v;
-	register struct vnode *vp = ap->a_vp;
-	register struct iso_node *ip = VTOI(vp);
+	struct vnode *vp = ap->a_vp;
+	struct iso_node *ip = VTOI(vp);
 
 #ifdef DIAGNOSTIC
 	if (prtactive && vp->v_usecount != 0)

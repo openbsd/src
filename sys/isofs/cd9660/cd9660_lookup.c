@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_lookup.c,v 1.28 2021/03/05 07:01:36 jsg Exp $	*/
+/*	$OpenBSD: cd9660_lookup.c,v 1.29 2021/03/05 07:10:06 jsg Exp $	*/
 /*	$NetBSD: cd9660_lookup.c,v 1.18 1997/05/08 16:19:59 mycroft Exp $	*/
 
 /*-
@@ -94,9 +94,9 @@ int
 cd9660_lookup(void *v)
 {
 	struct vop_lookup_args *ap = v;
-	register struct vnode *vdp;	/* vnode for directory being searched */
-	register struct iso_node *dp;	/* inode for directory being searched */
-	register struct iso_mnt *imp;	/* file system that directory is in */
+	struct vnode *vdp;		/* vnode for directory being searched */
+	struct iso_node *dp;		/* inode for directory being searched */
+	struct iso_mnt *imp;		/* file system that directory is in */
 	struct buf *bp;			/* a buffer of directory entries */
 	struct iso_directory_record *ep = NULL;
 					/* the current directory entry */

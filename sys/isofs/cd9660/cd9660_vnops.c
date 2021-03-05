@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.87 2021/03/05 07:01:36 jsg Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.88 2021/03/05 07:10:06 jsg Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -165,8 +165,8 @@ cd9660_getattr(void *v)
 {
 	struct vop_getattr_args *ap = v;
 	struct vnode *vp = ap->a_vp;
-	register struct vattr *vap = ap->a_vap;
-	register struct iso_node *ip = VTOI(vp);
+	struct vattr *vap = ap->a_vap;
+	struct iso_node *ip = VTOI(vp);
 
 	vap->va_fsid	= ip->i_dev;
 	vap->va_fileid	= ip->i_number;
@@ -220,9 +220,9 @@ cd9660_read(void *v)
 {
 	struct vop_read_args *ap = v;
 	struct vnode *vp = ap->a_vp;
-	register struct uio *uio = ap->a_uio;
-	register struct iso_node *ip = VTOI(vp);
-	register struct iso_mnt *imp;
+	struct uio *uio = ap->a_uio;
+	struct iso_node *ip = VTOI(vp);
+	struct iso_mnt *imp;
 	struct buf *bp;
 	daddr_t lbn, rablock;
 	off_t diff;
@@ -407,7 +407,7 @@ int
 cd9660_readdir(void *v)
 {
 	struct vop_readdir_args *ap = v;
-	register struct uio *uio = ap->a_uio;
+	struct uio *uio = ap->a_uio;
 	struct isoreaddir *idp;
 	struct vnode *vdp = ap->a_vp;
 	struct iso_node *dp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_rrip.c,v 1.15 2021/03/05 07:01:36 jsg Exp $	*/
+/*	$OpenBSD: cd9660_rrip.c,v 1.16 2021/03/05 07:10:06 jsg Exp $	*/
 /*	$NetBSD: cd9660_rrip.c,v 1.17 1997/01/24 00:27:32 cgd Exp $	*/
 
 /*-
@@ -110,8 +110,8 @@ static int
 cd9660_rrip_slink(void *v, ISO_RRIP_ANALYZE *ana)
 {
 	ISO_RRIP_SLINK  *p = v;
-	register ISO_RRIP_SLINK_COMPONENT *pcomp;
-	register ISO_RRIP_SLINK_COMPONENT *pcompe;
+	ISO_RRIP_SLINK_COMPONENT *pcomp;
+	ISO_RRIP_SLINK_COMPONENT *pcompe;
 	int len, wlen, cont;
 	char *outbuf, *inbuf;
 	
@@ -490,9 +490,9 @@ static int
 cd9660_rrip_loop(struct iso_directory_record *isodir, ISO_RRIP_ANALYZE *ana,
     RRIP_TABLE *table)
 {
-	register RRIP_TABLE *ptable;
-	register ISO_SUSP_HEADER *phead;
-	register ISO_SUSP_HEADER *pend;
+	RRIP_TABLE *ptable;
+	ISO_SUSP_HEADER *phead;
+	ISO_SUSP_HEADER *pend;
 	struct buf *bp = NULL;
 	char *pwhead;
 	u_char c;
