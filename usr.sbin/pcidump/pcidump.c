@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.62 2021/03/05 12:57:20 jan Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.63 2021/03/05 20:06:39 jan Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -1296,8 +1296,8 @@ static const struct pci_subclass pci_subclass_dasp[] = {
 	{ PCI_SUBCLASS_DASP_MISC,		"Miscellaneous"	},
 };
 
-static const struct pci_subclass pci_subclass_accelerator[] = {0};
-static const struct pci_subclass pci_subclass_instrumentation[] = {0};
+static const struct pci_subclass pci_subclass_accelerator[] = {};
+static const struct pci_subclass pci_subclass_instrumentation[] = {};
 
 #define CLASS(_c, _n, _s) { \
 	.class = _c, \
@@ -1389,7 +1389,6 @@ pci_class_name(pci_class_t class)
 	return (pc->name);
 }
 
-
 static const char *
 pci_subclass_name(pci_class_t class, pci_subclass_t subclass)
 {
@@ -1401,7 +1400,7 @@ pci_subclass_name(pci_class_t class, pci_subclass_t subclass)
 		return ("(unknown)");
 
 	ps = pci_subclass(pc, subclass);
-	if (ps == NULL)
+	if (ps == NULL || ps->name == NULL)
 		return ("(unknown)");
 
 	return (ps->name);
