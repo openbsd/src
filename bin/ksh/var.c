@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.71 2020/02/21 18:21:23 tb Exp $	*/
+/*	$OpenBSD: var.c,v 1.72 2021/03/05 15:22:03 zhuk Exp $	*/
 
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -644,7 +644,7 @@ typeset(const char *var, int set, int clr, int field, int base)
 	    global(tvar);
 	set &= ~(LOCAL|LOCAL_COPY);
 
-	vpbase = (vp->flag & ARRAY) ? global(arrayname(var)) : vp;
+	vpbase = (vp->flag & ARRAY) ? global(arrayname(tvar)) : vp;
 
 	/* only allow export flag to be set.  at&t ksh allows any attribute to
 	 * be changed, which means it can be truncated or modified
