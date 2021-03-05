@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_util.c,v 1.10 2017/12/30 20:47:00 guenther Exp $	*/
+/*	$OpenBSD: cd9660_util.c,v 1.11 2021/03/05 07:01:36 jsg Exp $	*/
 /*	$NetBSD: cd9660_util.c,v 1.12 1997/01/24 00:27:33 cgd Exp $	*/
 
 /*-
@@ -67,11 +67,7 @@ u_char (*cd9660_wchar2char)(u_int32_t wchar) = NULL;
  * Return number of bytes consumed
  */
 int
-isochar(isofn, isoend, joliet_level, c)
-      const u_char *isofn;
-      const u_char *isoend;
-      int joliet_level;
-      u_char *c;
+isochar(const u_char *isofn, const u_char *isoend, int joliet_level, u_char *c)
 {
       *c = *isofn++;
       if (joliet_level == 0 || isofn == isoend)
@@ -101,9 +97,8 @@ isochar(isofn, isoend, joliet_level, c)
  * Note: Version number plus ';' may be omitted.
  */
 int
-isofncmp(fn, fnlen, isofn, isolen, joliet_level)
-	const u_char *fn, *isofn;
-	int fnlen, isolen, joliet_level;
+isofncmp(const u_char *fn, int fnlen, const u_char *isofn, int isolen,
+    int joliet_level)
 {
 	int i, j;
 	u_char c;
@@ -161,13 +156,8 @@ isofncmp(fn, fnlen, isofn, isolen, joliet_level)
  * translate a filename of length > 0
  */
 void
-isofntrans(infn, infnlen, outfn, outfnlen, original, assoc, joliet_level)
-	u_char *infn, *outfn;
-	int infnlen;
-	u_short *outfnlen;
-	int original;
-	int assoc;
-	int joliet_level;
+isofntrans(u_char *infn, int infnlen, u_char *outfn, u_short *outfnlen,
+    int original, int assoc, int joliet_level)
 {
 	int fnidx = 0;
 	u_char c, d = '\0', *infnend = infn + infnlen;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.93 2019/12/26 13:28:49 bluhm Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.94 2021/03/05 07:01:36 jsg Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
@@ -126,12 +126,8 @@ cd9660_mountroot(void)
  * mount system call
  */
 int
-cd9660_mount(mp, path, data, ndp, p)
-	register struct mount *mp;
-	const char *path;
-	void *data;
-	struct nameidata *ndp;
-	struct proc *p;
+cd9660_mount(struct mount *mp, const char *path, void *data,
+    struct nameidata *ndp, struct proc *p)
 {
 	struct iso_mnt *imp = NULL;
 	struct iso_args *args = data;
@@ -205,11 +201,8 @@ cd9660_mount(mp, path, data, ndp, p)
  * Common code for mount and mountroot
  */
 static int
-iso_mountfs(devvp, mp, p, argp)
-	register struct vnode *devvp;
-	struct mount *mp;
-	struct proc *p;
-	struct iso_args *argp;
+iso_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p,
+    struct iso_args *argp)
 {
 	register struct iso_mnt *isomp = NULL;
 	struct buf *bp = NULL;
@@ -450,10 +443,7 @@ out:
  * Test to see if the device is an ISOFS filesystem.
  */
 int
-iso_disklabelspoof(dev, strat, lp)
-	dev_t dev;
-	void (*strat)(struct buf *);
-	register struct disklabel *lp;
+iso_disklabelspoof(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp)
 {
 	struct buf *bp = NULL;
 	struct iso_volume_descriptor *vdp;
@@ -536,10 +526,7 @@ out:
  */
 /* ARGSUSED */
 int
-cd9660_start(mp, flags, p)
-	struct mount *mp;
-	int flags;
-	struct proc *p;
+cd9660_start(struct mount *mp, int flags, struct proc *p)
 {
 	return (0);
 }
@@ -548,10 +535,7 @@ cd9660_start(mp, flags, p)
  * unmount system call
  */
 int
-cd9660_unmount(mp, mntflags, p)
-	struct mount *mp;
-	int mntflags;
-	struct proc *p;
+cd9660_unmount(struct mount *mp, int mntflags, struct proc *p)
 {
 	register struct iso_mnt *isomp;
 	int error, flags = 0;
@@ -582,9 +566,7 @@ cd9660_unmount(mp, mntflags, p)
  * Return root of a filesystem
  */
 int
-cd9660_root(mp, vpp)
-	struct mount *mp;
-	struct vnode **vpp;
+cd9660_root(struct mount *mp, struct vnode **vpp)
 {
 	struct iso_mnt *imp = VFSTOISOFS(mp);
 	struct iso_directory_record *dp =
@@ -604,12 +586,8 @@ cd9660_root(mp, vpp)
  */
 /* ARGSUSED */
 int
-cd9660_quotactl(mp, cmd, uid, arg, p)
-	struct mount *mp;
-	int cmd;
-	uid_t uid;
-	caddr_t arg;
-	struct proc *p;
+cd9660_quotactl(struct mount *mp, int cmd, uid_t uid, caddr_t arg,
+    struct proc *p)
 {
 
 	return (EOPNOTSUPP);
@@ -619,10 +597,7 @@ cd9660_quotactl(mp, cmd, uid, arg, p)
  * Get file system statistics.
  */
 int
-cd9660_statfs(mp, sbp, p)
-	struct mount *mp;
-	register struct statfs *sbp;
-	struct proc *p;
+cd9660_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 {
 	register struct iso_mnt *isomp;
 
@@ -643,12 +618,8 @@ cd9660_statfs(mp, sbp, p)
 
 /* ARGSUSED */
 int
-cd9660_sync(mp, waitfor, stall, cred, p)
-	struct mount *mp;
-	int waitfor;
-	int stall;
-	struct ucred *cred;
-	struct proc *p;
+cd9660_sync(struct mount *mp, int waitfor, int stall, struct ucred *cred,
+    struct proc *p)
 {
 	return (0);
 }
@@ -672,10 +643,7 @@ struct ifid {
 
 /* ARGSUSED */
 int
-cd9660_fhtovp(mp, fhp, vpp)
-	register struct mount *mp;
-	struct fid *fhp;
-	struct vnode **vpp;
+cd9660_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 {
 	struct ifid *ifhp = (struct ifid *)fhp;
 	register struct iso_node *ip;
@@ -702,10 +670,7 @@ cd9660_fhtovp(mp, fhp, vpp)
 }
 
 int
-cd9660_vget(mp, ino, vpp)
-	struct mount *mp;
-	ino_t ino;
-	struct vnode **vpp;
+cd9660_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 {
 
 	if (ino > (cdino_t)-1)
@@ -728,12 +693,8 @@ cd9660_vget(mp, ino, vpp)
 }
 
 int
-cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
-	struct mount *mp;
-	cdino_t ino;
-	struct vnode **vpp;
-	int relocated;
-	struct iso_directory_record *isodir;
+cd9660_vget_internal(struct mount *mp, cdino_t ino, struct vnode **vpp,
+    int relocated, struct iso_directory_record *isodir)
 {
 	register struct iso_mnt *imp;
 	struct iso_node *ip;
@@ -947,9 +908,7 @@ retry:
  */
 /* ARGSUSED */
 int
-cd9660_vptofh(vp, fhp)
-	struct vnode *vp;
-	struct fid *fhp;
+cd9660_vptofh(struct vnode *vp, struct fid *fhp)
 {
 	register struct iso_node *ip = VTOI(vp);
 	register struct ifid *ifhp;
@@ -972,11 +931,8 @@ cd9660_vptofh(vp, fhp)
  * exflagsp and credanonp.
  */
 int
-cd9660_check_export(mp, nam, exflagsp, credanonp)
-	register struct mount *mp;
-	struct mbuf *nam;
-	int *exflagsp;
-	struct ucred **credanonp;
+cd9660_check_export(struct mount *mp, struct mbuf *nam, int *exflagsp,
+    struct ucred **credanonp)
 {
 	register struct netcred *np;
 	register struct iso_mnt *imp = VFSTOISOFS(mp);

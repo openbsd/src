@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_node.c,v 1.35 2020/02/27 09:10:31 mpi Exp $	*/
+/*	$OpenBSD: cd9660_node.c,v 1.36 2021/03/05 07:01:36 jsg Exp $	*/
 /*	$NetBSD: cd9660_node.c,v 1.17 1997/05/05 07:13:57 mycroft Exp $	*/
 
 /*-
@@ -72,8 +72,7 @@ static u_int cd9660_chars2ui(u_char *, int);
  * Initialize hash links for inodes and dnodes.
  */
 int
-cd9660_init(vfsp)
-	struct vfsconf *vfsp;
+cd9660_init(struct vfsconf *vfsp)
 {
 
 	isohashtbl = hashinit(initialvnodes, M_ISOFSMNT, M_WAITOK, &isohash);
@@ -97,9 +96,7 @@ cd9660_isohash(dev_t device, cdino_t inum)
  * to it. If it is in core, but locked, wait for it.
  */
 struct vnode *
-cd9660_ihashget(dev, inum)
-	dev_t dev;
-	cdino_t inum;
+cd9660_ihashget(dev_t dev, cdino_t inum)
 {
 	struct iso_node *ip;
 	struct vnode *vp;
@@ -123,8 +120,7 @@ loop:
  * Insert the inode into the hash table, and return it locked.
  */
 int
-cd9660_ihashins(ip)
-	struct iso_node *ip;
+cd9660_ihashins(struct iso_node *ip)
 {
 	struct iso_node **ipp, *iq;
 
@@ -153,8 +149,7 @@ cd9660_ihashins(ip)
  * Remove the inode from the hash table.
  */
 void
-cd9660_ihashrem(ip)
-	register struct iso_node *ip;
+cd9660_ihashrem(struct iso_node *ip)
 {
 	register struct iso_node *iq;
 
@@ -177,8 +172,7 @@ cd9660_ihashrem(ip)
  * truncate and deallocate the file.
  */
 int
-cd9660_inactive(v)
-	void *v;
+cd9660_inactive(void *v)
 {
 	struct vop_inactive_args *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -206,8 +200,7 @@ cd9660_inactive(v)
  * Reclaim an inode so that it can be used for other purposes.
  */
 int
-cd9660_reclaim(v)
-	void *v;
+cd9660_reclaim(void *v)
 {
 	struct vop_reclaim_args *ap = v;
 	register struct vnode *vp = ap->a_vp;
@@ -239,10 +232,8 @@ cd9660_reclaim(v)
  * File attributes
  */
 void
-cd9660_defattr(isodir, inop, bp)
-	struct iso_directory_record *isodir;
-	struct iso_node *inop;
-	struct buf *bp;
+cd9660_defattr(struct iso_directory_record *isodir, struct iso_node *inop,
+    struct buf *bp)
 {
 	struct buf *bp2 = NULL;
 	struct iso_mnt *imp;
@@ -302,10 +293,8 @@ cd9660_defattr(isodir, inop, bp)
  * Time stamps
  */
 void
-cd9660_deftstamp(isodir,inop,bp)
-	struct iso_directory_record *isodir;
-	struct iso_node *inop;
-	struct buf *bp;
+cd9660_deftstamp(struct iso_directory_record *isodir, struct iso_node *inop,
+    struct buf *bp)
 {
 	struct buf *bp2 = NULL;
 	struct iso_mnt *imp;
@@ -342,9 +331,7 @@ cd9660_deftstamp(isodir,inop,bp)
 }
 
 int
-cd9660_tstamp_conv7(pi,pu)
-	u_char *pi;
-	struct timespec *pu;
+cd9660_tstamp_conv7(u_char *pi, struct timespec *pu)
 {
 	int crtime, days;
 	int y, m, d, hour, minute, second;
@@ -386,9 +373,7 @@ cd9660_tstamp_conv7(pi,pu)
 }
 
 static u_int
-cd9660_chars2ui(begin,len)
-	u_char *begin;
-	int len;
+cd9660_chars2ui(u_char *begin, int len)
 {
 	u_int rc;
 	
@@ -400,9 +385,7 @@ cd9660_chars2ui(begin,len)
 }
 
 int
-cd9660_tstamp_conv17(pi,pu)
-	u_char *pi;
-	struct timespec *pu;
+cd9660_tstamp_conv17(u_char *pi, struct timespec *pu)
 {
 	u_char buf[7];
 	
@@ -431,9 +414,7 @@ cd9660_tstamp_conv17(pi,pu)
 }
 
 cdino_t
-isodirino(isodir, imp)
-	struct iso_directory_record *isodir;
-	struct iso_mnt *imp;
+isodirino(struct iso_directory_record *isodir, struct iso_mnt *imp)
 {
 	cdino_t ino;
 

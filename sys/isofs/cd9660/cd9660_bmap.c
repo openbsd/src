@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_bmap.c,v 1.9 2017/12/30 20:47:00 guenther Exp $	*/
+/*	$OpenBSD: cd9660_bmap.c,v 1.10 2021/03/05 07:01:36 jsg Exp $	*/
 /*	$NetBSD: cd9660_bmap.c,v 1.7 1997/01/24 00:27:29 cgd Exp $	*/
 
 /*-
@@ -54,8 +54,7 @@
  * number to index into the data block (extent) for the file.
  */
 int
-cd9660_bmap(v)
-	void *v;
+cd9660_bmap(void *v)
 {
 	struct vop_bmap_args *ap = v;
 	struct iso_node *ip = VTOI(ap->a_vp);

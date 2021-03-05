@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.86 2020/12/25 12:59:52 visa Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.87 2021/03/05 07:01:36 jsg Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -328,10 +328,7 @@ cd9660_seek(void *v)
 }
 
 int
-iso_uiodir(idp,dp,off)
-	struct isoreaddir *idp;
-	struct dirent *dp;
-	off_t off;
+iso_uiodir(struct isoreaddir *idp, struct dirent *dp, off_t off)
 {
 	int error;
 
@@ -351,8 +348,7 @@ iso_uiodir(idp,dp,off)
 }
 
 int
-iso_shipdir(idp)
-	struct isoreaddir *idp;
+iso_shipdir(struct isoreaddir *idp)
 {
 	struct dirent *dp;
 	int cl, sl, assoc;
