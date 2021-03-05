@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.97 2021/03/01 10:51:14 lum Exp $	*/
+/*	$OpenBSD: dired.c,v 1.98 2021/03/05 16:16:53 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -243,7 +243,7 @@ dired(int f, int n)
 			dname[0] = '\0';
 	}
 
-	if ((bufp = eread("Dired: ", dname, NFILEN,
+	if ((bufp = eread("Dired (directory): ", dname, NFILEN,
 	    EFDEF | EFNEW | EFCR)) == NULL)
 		return (ABORT);
 	if (bufp[0] == '\0')
@@ -928,6 +928,9 @@ dired_(char *dname)
 		if (errno == EACCES) {
 			dobeep();
 			ewprintf("Permission denied: %s", dname);
+		} else {
+			dobeep();
+			ewprintf("Error opening: %s", dname);
 		}
 		return (NULL);
 	}
