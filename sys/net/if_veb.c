@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.14 2021/03/03 00:00:03 dlg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.15 2021/03/05 06:44:09 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -334,7 +334,7 @@ veb_clone_destroy(struct ifnet *ifp)
 }
 
 static struct mbuf *
-veb_span_input(struct ifnet *ifp0, struct mbuf *m, void *brport)
+veb_span_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport)
 {
 	m_freem(m);
 	return (NULL);
@@ -914,13 +914,13 @@ drop:
 }
 
 static struct mbuf *
-veb_port_input(struct ifnet *ifp0, struct mbuf *m, void *brport)
+veb_port_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport)
 {
 	struct veb_port *p = brport;
 	struct veb_softc *sc = p->p_veb;
 	struct ifnet *ifp = &sc->sc_if;
 	struct ether_header *eh;
-	uint64_t src, dst;
+	uint64_t src;
 #if NBPFILTER > 0
 	caddr_t if_bpf;
 #endif
@@ -935,7 +935,6 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, void *brport)
 
 	eh = mtod(m, struct ether_header *);
 	src = ether_addr_to_e64((struct ether_addr *)eh->ether_shost);
-	dst = ether_addr_to_e64((struct ether_addr *)eh->ether_dhost);
 
 	/* Is this a MAC Bridge component Reserved address? */
 	if (ETH64_IS_8021_RSVD(dst)) {
@@ -2148,6 +2147,9 @@ vport_enqueue(struct ifnet *ifp, struct mbuf *m)
 	smr_read_enter();
 	eb = SMR_PTR_GET(&ac->ac_brport);
 	if (eb != NULL) {
+		struct ether_header *eh;
+		uint64_t dst;
+
 		counters_pkt(ifp->if_counters, ifc_opackets, ifc_obytes,
 		    m->m_pkthdr.len);
 
@@ -2157,7 +2159,9 @@ vport_enqueue(struct ifnet *ifp, struct mbuf *m)
 			bpf_mtap_ether(if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 
-		m = (*eb->eb_input)(ifp, m, eb->eb_port);
+		eh = mtod(m, struct ether_header *);
+		dst = ether_addr_to_e64((struct ether_addr *)eh->ether_dhost);
+		m = (*eb->eb_input)(ifp, m, dst, eb->eb_port);
 
 		error = 0;
 	}

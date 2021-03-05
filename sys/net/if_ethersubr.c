@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.272 2021/03/05 03:51:41 dlg Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.273 2021/03/05 06:44:09 dlg Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -398,6 +398,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	 */
 
 	eh = mtod(m, struct ether_header *);
+	dst = ether_addr_to_e64((struct ether_addr *)eh->ether_dhost);
 	etype = ntohs(eh->ether_type);
 
 	if (ISSET(m->m_flags, M_VLANTAG) ||
@@ -426,7 +427,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	smr_read_enter();
 	eb = SMR_PTR_GET(&ac->ac_brport);
 	if (eb != NULL) {
-		m = (*eb->eb_input)(ifp, m, eb->eb_port);
+		m = (*eb->eb_input)(ifp, m, dst, eb->eb_port);
 		if (m == NULL) {
 			smr_read_leave();
 			return;
@@ -451,7 +452,6 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	 */
 
 	eh = mtod(m, struct ether_header *);
-	dst = ether_addr_to_e64((struct ether_addr *)eh->ether_dhost);
 	self = ether_addr_to_e64((struct ether_addr *)ac->ac_enaddr);
 	if (dst != self) {
 #if NCARP > 0

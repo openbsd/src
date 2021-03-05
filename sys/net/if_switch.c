@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.c,v 1.42 2021/02/25 02:48:21 dlg Exp $	*/
+/*	$OpenBSD: if_switch.c,v 1.43 2021/03/05 06:44:09 dlg Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -69,7 +69,7 @@ void	 switch_port_detach(void *);
 int	 switch_port_del(struct switch_softc *, struct ifbreq *);
 int	 switch_port_list(struct switch_softc *, struct ifbifconf *);
 struct mbuf *
-	 switch_input(struct ifnet *, struct mbuf *, void *);
+	 switch_input(struct ifnet *, struct mbuf *, uint64_t, void *);
 struct mbuf
 	*switch_port_ingress(struct switch_softc *, struct ifnet *,
 	    struct mbuf *);
@@ -668,7 +668,7 @@ switch_port_del(struct switch_softc *sc, struct ifbreq *req)
 }
 
 struct mbuf *
-switch_input(struct ifnet *ifp, struct mbuf *m, void *null)
+switch_input(struct ifnet *ifp, struct mbuf *m, uint64_t dst, void *null)
 {
 	KASSERT(m->m_flags & M_PKTHDR);
 

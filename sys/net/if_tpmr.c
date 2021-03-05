@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tpmr.c,v 1.23 2021/02/26 02:09:45 dlg Exp $ */
+/*	$OpenBSD: if_tpmr.c,v 1.24 2021/03/05 06:44:09 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -224,16 +224,8 @@ tpmr_vlan_filter(const struct mbuf *m)
 }
 
 static int
-tpmr_8021q_filter(const struct mbuf *m)
+tpmr_8021q_filter(const struct mbuf *m, uint64_t dst)
 {
-	const struct ether_header *eh;
-	uint64_t dst;
-
-	if (m->m_len < sizeof(*eh))
-		return (1);
-
-	eh = mtod(m, struct ether_header *);
-	dst = ether_addr_to_e64((struct ether_addr *)eh->ether_dhost);
 	if (ETH64_IS_8021_RSVD(dst)) {
 		switch (dst & 0xf) {
 		case 0x01: /* IEEE MAC-specific Control Protocols */
@@ -292,7 +284,7 @@ tpmr_pf(struct ifnet *ifp0, int dir, struct mbuf *m)
 #endif /* NPF > 0 */
 
 static struct mbuf *
-tpmr_input(struct ifnet *ifp0, struct mbuf *m, void *brport)
+tpmr_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport)
 {
 	struct tpmr_port *p = brport;
 	struct tpmr_softc *sc = p->p_tpmr;
@@ -325,7 +317,7 @@ tpmr_input(struct ifnet *ifp0, struct mbuf *m, void *brport)
 		goto drop;
 
 	if (!ISSET(ifp->if_flags, IFF_LINK0) &&
-	    tpmr_8021q_filter(m))
+	    tpmr_8021q_filter(m, dst))
 		goto drop;
 
 #if NPF > 0
