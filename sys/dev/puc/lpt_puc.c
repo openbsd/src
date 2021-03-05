@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt_puc.c,v 1.9 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: lpt_puc.c,v 1.10 2021/03/05 13:20:19 jsg Exp $	*/
 /*	$NetBSD: lpt_puc.c,v 1.1 1998/06/26 18:52:41 cgd Exp $	*/
 
 /*
@@ -56,9 +56,7 @@ struct cfattach lpt_puc_ca = {
 };
 
 int
-lpt_puc_probe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+lpt_puc_probe(struct device *parent, void *match, void *aux)
 {
 	struct puc_attach_args *aa = aux;
 
@@ -72,9 +70,7 @@ lpt_puc_probe(parent, match, aux)
 }
 
 void
-lpt_puc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+lpt_puc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct lpt_softc *sc = (void *)self;
 	struct puc_attach_args *aa = aux;

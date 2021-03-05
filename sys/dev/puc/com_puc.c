@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_puc.c,v 1.25 2020/08/14 18:14:11 jcs Exp $	*/
+/*	$OpenBSD: com_puc.c,v 1.26 2021/03/05 13:20:19 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997 - 1999, Jason Downs.  All rights reserved.
@@ -62,9 +62,7 @@ struct cfattach com_puc_ca = {
 };
 
 int
-com_puc_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+com_puc_match(struct device *parent, void *match, void *aux)
 {
 	struct puc_attach_args *pa = aux;
 
@@ -75,9 +73,7 @@ com_puc_match(parent, match, aux)
 }
 
 void
-com_puc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+com_puc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct com_softc *sc = (void *)self;
 	struct puc_attach_args *pa = aux;
