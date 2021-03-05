@@ -1,4 +1,4 @@
-/* $OpenBSD: smmuvar.h,v 1.2 2021/03/01 21:35:03 patrick Exp $ */
+/* $OpenBSD: smmuvar.h,v 1.3 2021/03/05 00:55:45 patrick Exp $ */
 /*
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
  *
@@ -30,7 +30,8 @@ struct smmu_domain {
 		struct smmuvp0 *l0;	/* virtual to physical table 4 lvl */
 		struct smmuvp1 *l1;	/* virtual to physical table 3 lvl */
 	} sd_vp;
-	struct mutex			 sd_mtx;
+	struct mutex			 sd_iova_mtx;
+	struct mutex			 sd_pmap_mtx;
 	SIMPLEQ_ENTRY(smmu_domain)	 sd_list;
 };
 
