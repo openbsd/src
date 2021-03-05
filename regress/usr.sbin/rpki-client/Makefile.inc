@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.7 2021/02/16 08:53:53 job Exp $
+# $OpenBSD: Makefile.inc,v 1.8 2021/03/05 17:28:09 claudio Exp $
 
 .PATH:		${.CURDIR}/../../../../usr.sbin/rpki-client
 
@@ -25,7 +25,7 @@ TALARGS += ta/AfriNIC.cer			tal/afrinic.tal
 TALARGS += ta/apnic-rpki-root-iana-origin.cer	tal/apnic.tal
 TALARGS += ta/ripe-ncc-ta.cer			tal/ripe.tal
 
-SRCS_test-cert=	test-cert.c cert.c x509.c ip.c as.c io.c log.c tal.c
+SRCS_test-cert=	test-cert.c cert.c x509.c ip.c as.c io.c log.c tal.c validate.c
 run-regress-test-cert: test-cert
 	./test-cert -v ${.CURDIR}/../cer/*.cer
 	./test-cert -vt ${TALARGS:S,,${.CURDIR}/../&,}
@@ -41,7 +41,7 @@ mft_gen.c: mft.c
 
 CLEANFILES += mft_gen.c mft_gen.c.tmp
 
-SRCS_test-mft+=	test-mft.c mft_gen.c cms.c x509.c io.c log.c
+SRCS_test-mft+=	test-mft.c mft_gen.c cms.c x509.c io.c log.c validate.c dummy.c
 run-regress-test-mft: test-mft
 	./test-mft -v ${.CURDIR}/../mft/*.mft
 
@@ -53,6 +53,6 @@ SRCS_test-gbr=	test-gbr.c gbr.c cms.c x509.c io.c log.c
 run-regress-test-gbr: test-gbr
 	./test-gbr -v ${.CURDIR}/../gbr/*.gbr
 
-SRCS_test-tal=	test-tal.c tal.c io.c log.c
+SRCS_test-tal=	test-tal.c tal.c io.c log.c validate.c dummy.c
 run-regress-test-tal: test-tal
 	./test-tal -v ${.CURDIR}/../tal/*.tal
