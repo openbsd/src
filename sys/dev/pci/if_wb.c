@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.72 2020/07/10 13:26:38 patrick Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.73 2021/03/05 12:40:13 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -183,9 +183,8 @@ void wb_miibus_statchg(struct device *);
 /*
  * Send a read command and address to the EEPROM, check for ACK.
  */
-void wb_eeprom_putbyte(sc, addr)
-	struct wb_softc		*sc;
-	int			addr;
+void
+wb_eeprom_putbyte(struct wb_softc *sc, int addr)
 {
 	int			d, i;
 
@@ -213,10 +212,8 @@ void wb_eeprom_putbyte(sc, addr)
 /*
  * Read a word of data stored in the EEPROM at address 'addr.'
  */
-void wb_eeprom_getword(sc, addr, dest)
-	struct wb_softc		*sc;
-	int			addr;
-	u_int16_t		*dest;
+void
+wb_eeprom_getword(struct wb_softc *sc, int addr, u_int16_t *dest)
 {
 	int			i;
 	u_int16_t		word = 0;
@@ -254,12 +251,8 @@ void wb_eeprom_getword(sc, addr, dest)
 /*
  * Read a sequence of words from the EEPROM.
  */
-void wb_read_eeprom(sc, dest, off, cnt, swap)
-	struct wb_softc		*sc;
-	caddr_t			dest;
-	int			off;
-	int			cnt;
-	int			swap;
+void
+wb_read_eeprom(struct wb_softc *sc, caddr_t dest, int off, int cnt, int swap)
 {
 	int			i;
 	u_int16_t		word = 0, *ptr;
@@ -279,8 +272,8 @@ void wb_read_eeprom(sc, dest, off, cnt, swap)
 /*
  * Sync the PHYs by setting data bit and strobing the clock 32 times.
  */
-void wb_mii_sync(sc)
-	struct wb_softc		*sc;
+void
+wb_mii_sync(struct wb_softc *sc)
 {
 	int			i;
 
@@ -299,10 +292,8 @@ void wb_mii_sync(sc)
 /*
  * Clock a series of bits through the MII.
  */
-void wb_mii_send(sc, bits, cnt)
-	struct wb_softc		*sc;
-	u_int32_t		bits;
-	int			cnt;
+void
+wb_mii_send(struct wb_softc *sc, u_int32_t bits, int cnt)
 {
 	int			i;
 
@@ -324,10 +315,8 @@ void wb_mii_send(sc, bits, cnt)
 /*
  * Read an PHY register through the MII.
  */
-int wb_mii_readreg(sc, frame)
-	struct wb_softc		*sc;
-	struct wb_mii_frame	*frame;
-	
+int
+wb_mii_readreg(struct wb_softc *sc, struct wb_mii_frame *frame)
 {
 	int			i, ack, s;
 
@@ -420,10 +409,8 @@ fail:
 /*
  * Write to a PHY register through the MII.
  */
-int wb_mii_writereg(sc, frame)
-	struct wb_softc		*sc;
-	struct wb_mii_frame	*frame;
-	
+int
+wb_mii_writereg(struct wb_softc *sc, struct wb_mii_frame *frame)
 {
 	int			s;
 
@@ -467,9 +454,7 @@ int wb_mii_writereg(sc, frame)
 }
 
 int
-wb_miibus_readreg(dev, phy, reg)
-	struct device *dev;
-	int phy, reg;
+wb_miibus_readreg(struct device *dev, int phy, int reg)
 {
 	struct wb_softc *sc = (struct wb_softc *)dev;
 	struct wb_mii_frame frame;
@@ -484,9 +469,7 @@ wb_miibus_readreg(dev, phy, reg)
 }
 
 void
-wb_miibus_writereg(dev, phy, reg, data)
-	struct device *dev;
-	int phy, reg, data;
+wb_miibus_writereg(struct device *dev, int phy, int reg, int data)
 {
 	struct wb_softc *sc = (struct wb_softc *)dev;
 	struct wb_mii_frame frame;
@@ -503,8 +486,7 @@ wb_miibus_writereg(dev, phy, reg, data)
 }
 
 void
-wb_miibus_statchg(dev)
-	struct device *dev;
+wb_miibus_statchg(struct device *dev)
 {
 	struct wb_softc *sc = (struct wb_softc *)dev;
 
@@ -514,8 +496,8 @@ wb_miibus_statchg(dev)
 /*
  * Program the 64-bit multicast hash filter.
  */
-void wb_setmulti(sc)
-	struct wb_softc		*sc;
+void
+wb_setmulti(struct wb_softc *sc)
 {
 	struct ifnet		*ifp;
 	int			h = 0;
@@ -575,9 +557,7 @@ void wb_setmulti(sc)
  * first have to put the transmit and/or receive logic in the idle state.
  */
 void
-wb_setcfg(sc, media)
-	struct wb_softc *sc;
-	uint64_t media;
+wb_setcfg(struct wb_softc *sc, uint64_t media)
 {
 	int			i, restart = 0;
 
@@ -614,8 +594,7 @@ wb_setcfg(sc, media)
 }
 
 void
-wb_reset(sc)
-	struct wb_softc *sc;
+wb_reset(struct wb_softc *sc)
 {
 	int i;
 	struct mii_data *mii = &sc->sc_mii;
@@ -647,8 +626,7 @@ wb_reset(sc)
 }
 
 void
-wb_fixmedia(sc)
-	struct wb_softc *sc;
+wb_fixmedia(struct wb_softc *sc)
 {
 	struct mii_data *mii = &sc->sc_mii;
 	uint64_t media;
@@ -679,9 +657,7 @@ const struct pci_matchid wb_devices[] = {
  * IDs against our list and return a device name if we find a match.
  */
 int
-wb_probe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+wb_probe(struct device *parent, void *match, void *aux)
 {
 	return (pci_matchbyid((struct pci_attach_args *)aux, wb_devices,
 	    nitems(wb_devices)));
@@ -692,9 +668,7 @@ wb_probe(parent, match, aux)
  * setup and ethernet/BPF attach.
  */
 void
-wb_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+wb_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct wb_softc *sc = (struct wb_softc *)self;
 	struct pci_attach_args *pa = aux;
@@ -833,8 +807,8 @@ fail_1:
 /*
  * Initialize the transmit descriptors.
  */
-int wb_list_tx_init(sc)
-	struct wb_softc		*sc;
+int
+wb_list_tx_init(struct wb_softc *sc)
 {
 	struct wb_chain_data	*cd;
 	struct wb_list_data	*ld;
@@ -866,8 +840,8 @@ int wb_list_tx_init(sc)
  * we arrange the descriptors in a closed ring, so that the last descriptor
  * points back to the first.
  */
-int wb_list_rx_init(sc)
-	struct wb_softc		*sc;
+int
+wb_list_rx_init(struct wb_softc *sc)
 {
 	struct wb_chain_data	*cd;
 	struct wb_list_data	*ld;
@@ -902,9 +876,7 @@ int wb_list_rx_init(sc)
  * Initialize an RX descriptor and attach an MBUF cluster.
  */
 void
-wb_newbuf(sc, c)
-	struct wb_softc *sc;
-	struct wb_chain_onefrag *c;
+wb_newbuf(struct wb_softc *sc, struct wb_chain_onefrag *c)
 {
 	c->wb_ptr->wb_data = VTOPHYS(c->wb_buf + sizeof(u_int64_t));
 	c->wb_ptr->wb_ctl = WB_RXCTL_RLINK | ETHER_MAX_DIX_LEN;
@@ -915,8 +887,8 @@ wb_newbuf(sc, c)
  * A frame has been uploaded: pass the resulting mbuf chain up to
  * the higher level protocols.
  */
-void wb_rxeof(sc)
-	struct wb_softc		*sc;
+void
+wb_rxeof(struct wb_softc *sc)
 {
 	struct mbuf_list	ml = MBUF_LIST_INITIALIZER();
         struct ifnet		*ifp;
@@ -979,8 +951,8 @@ void wb_rxeof(sc)
 	if_input(ifp, &ml);
 }
 
-void wb_rxeoc(sc)
-	struct wb_softc		*sc;
+void
+wb_rxeoc(struct wb_softc *sc)
 {
 	wb_rxeof(sc);
 
@@ -997,8 +969,8 @@ void wb_rxeoc(sc)
  * A frame was downloaded to the chip. It's safe for us to clean up
  * the list buffers.
  */
-void wb_txeof(sc)
-	struct wb_softc		*sc;
+void
+wb_txeof(struct wb_softc *sc)
 {
 	struct wb_chain		*cur_tx;
 	struct ifnet		*ifp;
@@ -1052,8 +1024,8 @@ void wb_txeof(sc)
 /*
  * TX 'end of channel' interrupt handler.
  */
-void wb_txeoc(sc)
-	struct wb_softc		*sc;
+void
+wb_txeoc(struct wb_softc *sc)
 {
 	struct ifnet		*ifp;
 
@@ -1075,8 +1047,8 @@ void wb_txeoc(sc)
 	return;
 }
 
-int wb_intr(arg)
-	void			*arg;
+int
+wb_intr(void *arg)
 {
 	struct wb_softc		*sc;
 	struct ifnet		*ifp;
@@ -1158,8 +1130,7 @@ int wb_intr(arg)
 }
 
 void
-wb_tick(xsc)
-	void *xsc;
+wb_tick(void *xsc)
 {
 	struct wb_softc *sc = xsc;
 	int s;
@@ -1174,10 +1145,8 @@ wb_tick(xsc)
  * Encapsulate an mbuf chain in a descriptor by coupling the mbuf data
  * pointers to the fragment pointers.
  */
-int wb_encap(sc, c, m_head)
-	struct wb_softc		*sc;
-	struct wb_chain		*c;
-	struct mbuf		*m_head;
+int
+wb_encap(struct wb_softc *sc, struct wb_chain *c, struct mbuf *m_head)
 {
 	int			frag = 0;
 	struct wb_desc		*f = NULL;
@@ -1267,9 +1236,8 @@ int wb_encap(sc, c, m_head)
  * copy of the pointers since the transmit list fragment pointers are
  * physical addresses.
  */
-
-void wb_start(ifp)
-	struct ifnet		*ifp;
+void
+wb_start(struct ifnet *ifp)
 {
 	struct wb_softc		*sc;
 	struct mbuf		*m_head = NULL;
@@ -1359,8 +1327,8 @@ void wb_start(ifp)
 	return;
 }
 
-void wb_init(xsc)
-	void			*xsc;
+void
+wb_init(void *xsc)
 {
 	struct wb_softc *sc = xsc;
 	struct ifnet *ifp = &sc->arpcom.ac_if;
@@ -1479,8 +1447,7 @@ void wb_init(xsc)
  * Set media options.
  */
 int
-wb_ifmedia_upd(ifp)
-	struct ifnet *ifp;
+wb_ifmedia_upd(struct ifnet *ifp)
 {
 	struct wb_softc *sc = ifp->if_softc;
 
@@ -1494,9 +1461,7 @@ wb_ifmedia_upd(ifp)
  * Report current media status.
  */
 void
-wb_ifmedia_sts(ifp, ifmr)
-	struct ifnet		*ifp;
-	struct ifmediareq	*ifmr;
+wb_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct wb_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->sc_mii;
@@ -1506,10 +1471,8 @@ wb_ifmedia_sts(ifp, ifmr)
 	ifmr->ifm_status = mii->mii_media_status;
 }
 
-int wb_ioctl(ifp, command, data)
-	struct ifnet		*ifp;
-	u_long			command;
-	caddr_t			data;
+int
+wb_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct wb_softc		*sc = ifp->if_softc;
 	struct ifreq		*ifr = (struct ifreq *) data;
@@ -1552,8 +1515,8 @@ int wb_ioctl(ifp, command, data)
 	return(error);
 }
 
-void wb_watchdog(ifp)
-	struct ifnet		*ifp;
+void
+wb_watchdog(struct ifnet *ifp)
 {
 	struct wb_softc		*sc;
 
@@ -1579,8 +1542,8 @@ void wb_watchdog(ifp)
  * Stop the adapter and free any mbufs allocated to the
  * RX and TX lists.
  */
-void wb_stop(sc)
-	struct wb_softc		*sc;
+void
+wb_stop(struct wb_softc *sc)
 {
 	int			i;
 	struct ifnet		*ifp;

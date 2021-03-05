@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_pci.c,v 1.59 2020/07/05 21:54:44 krw Exp $	*/
+/*	$OpenBSD: ahc_pci.c,v 1.60 2021/03/05 12:40:13 jsg Exp $	*/
 /*	$NetBSD: ahc_pci.c,v 1.43 2003/08/18 09:16:22 taca Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.59 2020/07/05 21:54:44 krw Exp $
+ * $Id: ahc_pci.c,v 1.60 2021/03/05 12:40:13 jsg Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -648,9 +648,7 @@ struct cfattach ahc_pci_ca = {
 };
 
 const struct ahc_pci_identity *
-ahc_find_pci_device(id, subid, func)
-	pcireg_t id, subid;
-	u_int func;
+ahc_find_pci_device(pcireg_t id, pcireg_t subid, u_int func)
 {
 	u_int64_t  full_id;
 	const struct	   ahc_pci_identity *entry;
@@ -681,9 +679,7 @@ ahc_find_pci_device(id, subid, func)
 }
 
 int
-ahc_pci_probe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+ahc_pci_probe(struct device *parent, void *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	const struct	   ahc_pci_identity *entry;
@@ -695,9 +691,7 @@ ahc_pci_probe(parent, match, aux)
 }
 
 void
-ahc_pci_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ahc_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	const struct	   ahc_pci_identity *entry;

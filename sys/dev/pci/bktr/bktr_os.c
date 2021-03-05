@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_os.c,v 1.33 2020/06/20 16:06:05 krw Exp $	*/
+/*	$OpenBSD: bktr_os.c,v 1.34 2021/03/05 12:40:14 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp $ */
 
 /*
@@ -133,10 +133,7 @@ struct radio_hw_if bktr_hw_if = {
 #endif
 
 int
-bktr_probe(parent, match, aux)
-	struct device *parent;
-        void *match;
-        void *aux;
+bktr_probe(struct device *parent, void *match, void *aux)
 {
         struct pci_attach_args *pa = aux;
 
@@ -258,10 +255,7 @@ bktr_attach(struct device *parent, struct device *self, void *aux)
  * Special Memory Allocation
  */
 vaddr_t
-get_bktr_mem(bktr, dmapp, size)
-        bktr_ptr_t bktr;
-        bus_dmamap_t *dmapp;
-        unsigned int size;
+get_bktr_mem(bktr_ptr_t bktr, bus_dmamap_t *dmapp, unsigned int size)
 {
         bus_dma_tag_t dmat = bktr->dmat;
         bus_dma_segment_t seg;
@@ -312,10 +306,7 @@ get_bktr_mem(bktr, dmapp, size)
 }
 
 void
-free_bktr_mem(bktr, dmap, kva)
-        bktr_ptr_t bktr;
-        bus_dmamap_t dmap;
-        vaddr_t kva;
+free_bktr_mem(bktr_ptr_t bktr, bus_dmamap_t dmap, vaddr_t kva)
 {
         bus_dma_tag_t dmat = bktr->dmat;
 

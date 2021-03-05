@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_pci.c,v 1.12 2017/09/08 05:36:52 deraadt Exp $ */
+/*	$OpenBSD: i82365_pci.c,v 1.13 2021/03/05 12:40:13 jsg Exp $ */
 /*	$NetBSD: i82365_pci.c,v 1.11 2000/02/24 03:42:44 itohy Exp $	*/
 
 /*
@@ -84,10 +84,7 @@ static struct pcmcia_chip_functions pcic_pci_functions = {
 };
 
 int
-pcic_pci_match(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+pcic_pci_match(struct device *parent, void *match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
@@ -100,9 +97,7 @@ pcic_pci_match(parent, match, aux)
 void pcic_isa_config_interrupts(struct device *);
 
 void
-pcic_pci_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pcic_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pcic_softc *sc = (void *) self;
 	struct pcic_pci_softc *psc = (void *) self;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_hme_pci.c,v 1.22 2019/12/05 12:46:54 mpi Exp $	*/
+/*	$OpenBSD: if_hme_pci.c,v 1.23 2021/03/05 12:40:13 jsg Exp $	*/
 /*	$NetBSD: if_hme_pci.c,v 1.3 2000/12/28 22:59:13 sommerfeld Exp $	*/
 
 /*
@@ -77,10 +77,7 @@ struct cfattach hme_pci_ca = {
 };
 
 int
-hmematch_pci(parent, vcf, aux)
-	struct device *parent;
-	void *vcf;
-	void *aux;
+hmematch_pci(struct device *parent, void *vcf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -194,9 +191,7 @@ fail:
 }
 
 void
-hmeattach_pci(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+hmeattach_pci(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct hme_pci_softc *hsc = (void *)self;

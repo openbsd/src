@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4281.c,v 1.37 2019/12/28 07:55:48 fcambus Exp $ */
+/*	$OpenBSD: cs4281.c,v 1.38 2021/03/05 12:40:13 jsg Exp $ */
 /*	$Tera: cs4281.c,v 1.18 2000/12/27 14:24:45 tacha Exp $	*/
 
 /*
@@ -246,10 +246,7 @@ struct cfdriver clct_cd = {
 };
 
 int
-cs4281_match(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+cs4281_match(struct device *parent, void *match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	
@@ -261,10 +258,7 @@ cs4281_match(parent, match, aux)
 }
 
 void
-cs4281_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+cs4281_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct cs4281_softc *sc = (struct cs4281_softc *)self;
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
@@ -340,10 +334,8 @@ cs4281_attach(parent, self, aux)
 #endif
 }
 
-
 int
-cs4281_intr(p)
-	void *p;
+cs4281_intr(void *p)
 {
 	struct cs4281_softc *sc = p;
 	u_int32_t intr, val;
@@ -396,10 +388,8 @@ cs4281_intr(p)
 }
 
 int
-cs4281_set_params(addr, setmode, usemode, play, rec)
-	void *addr;
-	int setmode, usemode;
-	struct audio_params *play, *rec;
+cs4281_set_params(void *addr, int setmode, int usemode,
+    struct audio_params *play, struct audio_params *rec)
 {
 	struct cs4281_softc *sc = addr;
 	struct audio_params *p;
@@ -451,8 +441,7 @@ cs4281_set_params(addr, setmode, usemode, play, rec)
 }
 
 int
-cs4281_halt_output(addr)
-	void *addr;
+cs4281_halt_output(void *addr)
 {
 	struct cs4281_softc *sc = addr;
 	
@@ -464,8 +453,7 @@ cs4281_halt_output(addr)
 }
 
 int
-cs4281_halt_input(addr)
-	void *addr;
+cs4281_halt_input(void *addr)
 {
 	struct cs4281_softc *sc = addr;
 
@@ -477,13 +465,8 @@ cs4281_halt_input(addr)
 }
 
 int
-cs4281_trigger_output(addr, start, end, blksize, intr, arg, param)
-	void *addr;
-	void *start, *end;
-	int blksize;
-	void (*intr)(void *);
-	void *arg;
-	struct audio_params *param;
+cs4281_trigger_output(void *addr, void *start, void *end, int blksize,
+    void (*intr)(void *), void *arg, struct audio_params *param)
 {
 	struct cs4281_softc *sc = addr;
 	u_int32_t fmt = 0;
@@ -575,13 +558,8 @@ cs4281_trigger_output(addr, start, end, blksize, intr, arg, param)
 }
 
 int
-cs4281_trigger_input(addr, start, end, blksize, intr, arg, param)
-	void *addr;
-	void *start, *end;
-	int blksize;
-	void (*intr)(void *);
-	void *arg;
-	struct audio_params *param;
+cs4281_trigger_input(void *addr, void *start, void *end, int blksize,
+    void (*intr)(void *), void *arg, struct audio_params *param)
 {
 	struct cs4281_softc *sc = addr;
 	struct cs4281_dma *p;
@@ -660,8 +638,7 @@ cs4281_trigger_input(addr, start, end, blksize, intr, arg, param)
 
 /* convert sample rate to register value */
 u_int8_t
-cs4281_sr2regval(rate)
-     int rate;
+cs4281_sr2regval(int rate)
 {
 	u_int8_t retval;
 
@@ -696,26 +673,20 @@ cs4281_sr2regval(rate)
 	return (retval);
 }
 
-	
 void
-cs4281_set_dac_rate(sc, rate)
-	struct cs4281_softc *sc;
-	int rate;
+cs4281_set_dac_rate(struct cs4281_softc *sc, int rate)
 {
 	BA0WRITE4(sc, CS4281_DACSR, cs4281_sr2regval(rate));
 }
 
 void
-cs4281_set_adc_rate(sc, rate)
-	struct cs4281_softc *sc;
-	int rate;
+cs4281_set_adc_rate(struct cs4281_softc *sc, int rate)
 {
 	BA0WRITE4(sc, CS4281_ADCSR, cs4281_sr2regval(rate));
 }
 
 int
-cs4281_init(sc)
-     struct cs4281_softc *sc;
+cs4281_init(struct cs4281_softc *sc)
 {
 	int n;
 	u_int16_t data;
@@ -1161,7 +1132,6 @@ cs4281_mixer_get_port(void *addr, mixer_ctrl_t *cp)
 	return (sc->codec_if->vtbl->mixer_get_port(sc->codec_if, cp));
 }
 
-
 int
 cs4281_query_devinfo(void *addr, mixer_devinfo_t *dip)
 {
@@ -1195,8 +1165,6 @@ cs4281_malloc(void *addr, int direction, size_t size, int pool, int flags)
 	sc->sc_dmas = p;
 	return (KERNADDR(p));
 }
-
-
 
 void
 cs4281_free(void *addr, void *ptr, int pool)
@@ -1247,7 +1215,6 @@ cs4281_attach_codec(void *addr, struct ac97_codec_if *codec_if)
 	sc->codec_if = codec_if;
 	return (0);
 }
-
 
 int
 cs4281_read_codec(void *addr, u_int8_t ac97_addr, u_int16_t *ac97_data)
@@ -1374,10 +1341,8 @@ free:
 	return (error);
 }
 
-
 int
-cs4281_src_wait(sc)
-	struct cs4281_softc *sc;
+cs4281_src_wait(struct cs4281_softc *sc)
 {
 	int n;
 

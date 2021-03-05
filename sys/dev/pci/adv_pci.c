@@ -1,4 +1,4 @@
-/*	$OpenBSD: adv_pci.c,v 1.13 2020/02/18 20:24:52 krw Exp $	*/
+/*	$OpenBSD: adv_pci.c,v 1.14 2021/03/05 12:40:13 jsg Exp $	*/
 /*	$NetBSD: adv_pci.c,v 1.5 1998/09/26 15:52:55 dante Exp $	*/
 
 /*
@@ -102,9 +102,7 @@ const struct pci_matchid adv_pci_devices[] = {
  * the actual probe routine to check it out.
  */
 int
-adv_pci_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+adv_pci_match(struct device *parent, void *match, void *aux)
 {
 	return (pci_matchbyid((struct pci_attach_args *)aux, adv_pci_devices,
 	    nitems(adv_pci_devices)));
@@ -112,9 +110,7 @@ adv_pci_match(parent, match, aux)
 
 
 void
-adv_pci_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+adv_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	ASC_SOFTC      *sc = (void *) self;

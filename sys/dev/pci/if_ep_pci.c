@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_pci.c,v 1.34 2015/11/24 17:11:39 mpi Exp $	*/
+/*	$OpenBSD: if_ep_pci.c,v 1.35 2021/03/05 12:40:13 jsg Exp $	*/
 /*	$NetBSD: if_ep_pci.c,v 1.13 1996/10/21 22:56:38 thorpej Exp $	*/
 
 /*
@@ -89,18 +89,14 @@ const struct pci_matchid ep_pci_devices[] = {
 };
 
 int
-ep_pci_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+ep_pci_match(struct device *parent, void *match, void *aux)
 {
 	return (pci_matchbyid((struct pci_attach_args *)aux, ep_pci_devices,
 	    nitems(ep_pci_devices)));
 }
 
 void
-ep_pci_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ep_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ep_softc *sc = (void *)self;
 	struct pci_attach_args *pa = aux;

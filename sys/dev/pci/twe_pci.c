@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe_pci.c,v 1.13 2011/04/03 15:36:03 jasper Exp $	*/
+/*	$OpenBSD: twe_pci.c,v 1.14 2021/03/05 12:40:13 jsg Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -59,19 +59,14 @@ const struct pci_matchid twe_pci_devices[] = {
 };
 
 int
-twe_pci_match(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+twe_pci_match(struct device *parent, void *match, void *aux)
 {
 	return (pci_matchbyid((struct pci_attach_args *)aux, twe_pci_devices,
 	    nitems(twe_pci_devices)));
 }
 
 void
-twe_pci_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+twe_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct twe_softc *sc = (struct twe_softc *)self;
 	struct pci_attach_args *pa = aux;

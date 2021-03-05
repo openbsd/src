@@ -156,7 +156,7 @@ intel_gtt_chipset_setup(struct drm_device *dev)
 }
 
 int
-intel_enable_gtt()
+intel_enable_gtt(void)
 {
 	struct inteldrm_softc *dev_priv = (void *)inteldrm_cd.cd_devs[0];
 

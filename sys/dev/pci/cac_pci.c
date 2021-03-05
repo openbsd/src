@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac_pci.c,v 1.16 2019/12/31 00:16:03 jsg Exp $	*/
+/*	$OpenBSD: cac_pci.c,v 1.17 2021/03/05 12:40:13 jsg Exp $	*/
 /*	$NetBSD: cac_pci.c,v 1.10 2001/01/10 16:48:04 ad Exp $	*/
 
 /*-
@@ -109,8 +109,7 @@ struct cac_pci_product {
 };
 
 const struct cac_pci_type *
-cac_pci_findtype(pa)
-	struct pci_attach_args *pa;
+cac_pci_findtype(struct pci_attach_args *pa)
 {
 	const struct cac_pci_type *ct;
 	const struct cac_pci_product *cp;
@@ -145,19 +144,14 @@ cac_pci_findtype(pa)
 }
 
 int
-cac_pci_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+cac_pci_match(struct device *parent, void *match, void *aux)
 {
 
 	return (cac_pci_findtype(aux) != NULL);
 }
 
 void
-cac_pci_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+cac_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa;
 	const struct cac_pci_type *ct;
@@ -251,7 +245,6 @@ cac_activate(struct device *self, int act)
 
 	return (ret);
 }
-
 
 void
 cac_pci_l0_submit(struct cac_softc *sc, struct cac_ccb *ccb)
