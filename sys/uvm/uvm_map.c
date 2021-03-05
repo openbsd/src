@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.271 2021/02/23 11:22:20 jsg Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.272 2021/03/05 05:30:44 jsg Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -3154,10 +3154,8 @@ print_uaddr:
  * uvm_object_printit: actually prints the object
  */
 void
-uvm_object_printit(uobj, full, pr)
-	struct uvm_object *uobj;
-	boolean_t full;
-	int (*pr)(const char *, ...);
+uvm_object_printit(struct uvm_object *uobj, boolean_t full,
+    int (*pr)(const char *, ...))
 {
 	struct vm_page *pg;
 	int cnt = 0;
@@ -3194,10 +3192,8 @@ static const char page_flagbits[] =
 	"\27ENCRYPT\31PMAP0\32PMAP1\33PMAP2\34PMAP3\35PMAP4\36PMAP5";
 
 void
-uvm_page_printit(pg, full, pr)
-	struct vm_page *pg;
-	boolean_t full;
-	int (*pr)(const char *, ...);
+uvm_page_printit(struct vm_page *pg, boolean_t full,
+    int (*pr)(const char *, ...))
 {
 	struct vm_page *tpg;
 	struct uvm_object *uobj;
