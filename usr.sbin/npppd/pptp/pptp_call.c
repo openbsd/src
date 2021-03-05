@@ -1,4 +1,4 @@
-/*	$OpenBSD: pptp_call.c,v 1.9 2015/12/05 16:10:31 yasuoka Exp $	*/
+/*	$OpenBSD: pptp_call.c,v 1.10 2021/03/05 08:41:26 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pptp_call.c,v 1.9 2015/12/05 16:10:31 yasuoka Exp $ */
+/* $Id: pptp_call.c,v 1.10 2021/03/05 08:41:26 yasuoka Exp $ */
 /**@file PPTP Call */
 /* currently it supports PAC mode only */
 #include <sys/types.h>
@@ -802,12 +802,13 @@ pptp_call_OCRQ_string(struct pptp_ocrq *ocrq, char *buf, int lbuf)
 	snprintf(buf, lbuf,
 	    "call_id=%u call_serial_number=%u max_bps=%u min_bps=%u bearer=%s "
 	    "framing=%s recv_winsz=%u packet_proccessing_delay=%u "
-	    "phone_nunmber=%s subaddress=%s",
+	    "phone_nunmber=%.*s subaddress=%.*s",
 	    ocrq->call_id, ocrq->call_serial_number, ocrq->maximum_bps,
 	    ocrq->minimum_bps, pptp_bearer_string(ocrq->bearer_type),
 	    pptp_framing_string(ocrq->framing_type), ocrq->recv_winsz,
-	    ocrq->packet_proccessing_delay, ocrq->phone_number,
-	    ocrq->subaddress);
+	    ocrq->packet_proccessing_delay,
+	    (u_int)sizeof(ocrq->phone_number), ocrq->phone_number,
+	    (u_int)sizeof(ocrq->subaddress), ocrq->subaddress);
 }
 
 /* convert Outgoing-Call-Reply packet to strings */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pptp_ctrl.c,v 1.11 2016/04/16 18:32:29 krw Exp $	*/
+/*	$OpenBSD: pptp_ctrl.c,v 1.12 2021/03/05 08:41:26 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * PPTP(RFC 2637) control connection implementation.
  * currently it only support PAC part
  */
-/* $Id: pptp_ctrl.c,v 1.11 2016/04/16 18:32:29 krw Exp $ */
+/* $Id: pptp_ctrl.c,v 1.12 2021/03/05 08:41:26 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -556,26 +556,24 @@ pptp_ctrl_output_flush(pptp_ctrl *_this)
 static void
 pptp_ctrl_SCCRx_string(struct pptp_scc *scc, u_char *buf, int lbuf)
 {
-	char buf1[128], buf2[128], buf3[128];
-
-	/* sanity check */
-	strlcpy(buf1, scc->host_name, sizeof(buf1));
-	strlcpy(buf2, scc->vendor_string, sizeof(buf2));
+	char results[128];
 
 	if (scc->result_code != 0)
-		snprintf(buf3, sizeof(buf3), "result=%d error=%d ",
+		snprintf(results, sizeof(results), "result=%d error=%d ",
 		    scc->result_code, scc->error_code);
 	else
-		buf3[0] = '\0';
+		results[0] = '\0';
 
 	snprintf(buf, lbuf,
 	    "protocol_version=%d.%d %sframing=%s bearer=%s max_channels=%d "
-	    "firmware_revision=%d(0x%04x) host_name=\"%s\" "
-	    "vendor_string=\"%s\"",
-	    scc->protocol_version >> 8, scc->protocol_version & 0xff, buf3,
+	    "firmware_revision=%d(0x%04x) host_name=\"%.*s\" "
+	    "vendor_string=\"%.*s\"",
+	    scc->protocol_version >> 8, scc->protocol_version & 0xff, results,
 	    pptp_framing_string(scc->framing_caps),
 	    pptp_bearer_string(scc->bearer_caps), scc->max_channels,
-	    scc->firmware_revision, scc->firmware_revision, buf1, buf2);
+	    scc->firmware_revision, scc->firmware_revision,
+	    (u_int)sizeof(scc->host_name), scc->host_name,
+	    (u_int)sizeof(scc->vendor_string), scc->vendor_string);
 }
 
 /* receive Start-Control-Connection-Request */
