@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs.h,v 1.24 2019/07/01 05:11:32 kevlo Exp $	*/
+/*	$OpenBSD: ext2fs.h,v 1.25 2021/03/05 06:01:13 jsg Exp $	*/
 /*	$NetBSD: ext2fs.h,v 1.10 2000/01/28 16:00:23 bouyer Exp $	*/
 
 /*
@@ -321,8 +321,7 @@ struct ext2_gd {
 
 static __inline__ int cg_has_sb(int) __attribute__((__unused__));
 static __inline int
-cg_has_sb(i)
-	int i;
+cg_has_sb(int i)
 {
 	int a3 ,a5 , a7;
 
