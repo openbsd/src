@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.312 2021/03/05 22:08:25 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.313 2021/03/05 22:26:04 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -5872,7 +5872,7 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
 	struct iked_flow	*flow, *saflow, *flowa, *flowb;
 	struct iked_ipcomp	*ic;
 	struct ibuf		*keymat = NULL, *seed = NULL, *dhsecret = NULL;
-	struct dh_group		*group;
+	struct dh_group		*group = NULL;
 	uint32_t		 spi = 0;
 	unsigned int		 i;
 	size_t			 ilen = 0;
@@ -6035,6 +6035,9 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
 		csa->csa_transport = sa->sa_use_transport_mode;
 		sa->sa_used_transport_mode = sa->sa_use_transport_mode;
 
+		if (pfs && group)
+			csa->csa_pfsgrpid = group->id;
+
 		/* Set up responder's SPIs */
 		if (initiator) {
 			csa->csa_dir = IPSP_DIRECTION_OUT;
@@ -6192,7 +6195,7 @@ ikev2_childsa_enable(struct iked *env, struct iked_sa *sa)
 	struct ibuf		*spibuf = NULL;
 	struct ibuf		*flowbuf = NULL;
 	char			*buf;
-	uint16_t		 encrid = 0, integrid = 0;
+	uint16_t		 encrid = 0, integrid = 0, groupid = 0;
 	size_t			 encrlen = 0 , integrlen = 0;
 
 	TAILQ_FOREACH(csa, &sa->sa_childsas, csa_entry) {
@@ -6262,6 +6265,7 @@ ikev2_childsa_enable(struct iked *env, struct iked_sa *sa)
 				integrid = csa->csa_integrid;
 				integrlen = ibuf_length(csa->csa_integrkey);
 			}
+			groupid = csa->csa_pfsgrpid;
 		}
 	}
 
@@ -6328,12 +6332,14 @@ ikev2_childsa_enable(struct iked *env, struct iked_sa *sa)
 	}
 
 	if (ibuf_strlen(spibuf)) {
-		log_info("%s: loaded SPIs: %.*s (enc %s%s%s)",
+		log_info("%s: loaded SPIs: %.*s (enc %s%s%s%s%s)",
 		    SPI_SA(sa, __func__),
 		    ibuf_strlen(spibuf), ibuf_data(spibuf),
 		    print_xf(encrid, encrlen, ipsecencxfs),
 		    integrid ? " auth " : "",
-		    integrid ? print_xf(integrid, integrlen, authxfs) : "");
+		    integrid ? print_xf(integrid, integrlen, authxfs) : "",
+		    groupid ? " group " : "",
+		    groupid ? print_xf(groupid, 0, groupxfs) : "");
 	}
 	if (ibuf_strlen(flowbuf))
 		log_info("%s: loaded flows: %.*s", SPI_SA(sa, __func__),
