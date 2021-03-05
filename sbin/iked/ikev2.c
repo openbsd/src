@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.311 2021/03/04 22:20:24 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.312 2021/03/05 22:08:25 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -6192,6 +6192,8 @@ ikev2_childsa_enable(struct iked *env, struct iked_sa *sa)
 	struct ibuf		*spibuf = NULL;
 	struct ibuf		*flowbuf = NULL;
 	char			*buf;
+	uint16_t		 encrid = 0, integrid = 0;
+	size_t			 encrlen = 0 , integrlen = 0;
 
 	TAILQ_FOREACH(csa, &sa->sa_childsas, csa_entry) {
 		if (csa->csa_rekey || csa->csa_loaded)
@@ -6245,6 +6247,21 @@ ikev2_childsa_enable(struct iked *env, struct iked_sa *sa)
 			ibuf_strcat(&spibuf, print_spi(ipcomp->csa_spi.spi,
 			    ipcomp->csa_spi.spi_size));
 			ibuf_strcat(&spibuf, ")");
+		}
+		if (!encrid) {
+			encrid = csa->csa_encrid;
+			encrlen = ibuf_length(csa->csa_encrkey);
+			switch (encrid) {
+			case IKEV2_XFORMENCR_AES_GCM_16:
+			case IKEV2_XFORMENCR_AES_GCM_12:
+				encrlen -= 4;
+				break;
+			default:
+				if (!csa->csa_integrid)
+					break;
+				integrid = csa->csa_integrid;
+				integrlen = ibuf_length(csa->csa_integrkey);
+			}
 		}
 	}
 
@@ -6310,9 +6327,14 @@ ikev2_childsa_enable(struct iked *env, struct iked_sa *sa)
 		    NULL, 0));
 	}
 
-	if (ibuf_strlen(spibuf))
-		log_info("%s: loaded SPIs: %.*s", SPI_SA(sa, __func__),
-		    ibuf_strlen(spibuf), ibuf_data(spibuf));
+	if (ibuf_strlen(spibuf)) {
+		log_info("%s: loaded SPIs: %.*s (enc %s%s%s)",
+		    SPI_SA(sa, __func__),
+		    ibuf_strlen(spibuf), ibuf_data(spibuf),
+		    print_xf(encrid, encrlen, ipsecencxfs),
+		    integrid ? " auth " : "",
+		    integrid ? print_xf(integrid, integrlen, authxfs) : "");
+	}
 	if (ibuf_strlen(flowbuf))
 		log_info("%s: loaded flows: %.*s", SPI_SA(sa, __func__),
 		    ibuf_strlen(flowbuf), ibuf_data(flowbuf));
@@ -7298,8 +7320,8 @@ ikev2_log_established(struct iked_sa *sa)
 	if (ikev2_print_id(IKESA_SRCID(sa), srcid, sizeof(srcid)) == -1)
 		bzero(srcid, sizeof(srcid));
 	log_info(
-	    "%sestablished peer %s[%s] local %s[%s]%s%s%s%s policy '%s'%s",
-	    SPI_SA(sa, NULL),
+	    "%sestablished peer %s[%s] local %s[%s]%s%s%s%s policy '%s'%s"
+	    " (enc %s%s%s group %s prf %s)", SPI_SA(sa, NULL),
 	    print_host((struct sockaddr *)&sa->sa_peer.addr, NULL, 0), dstid,
 	    print_host((struct sockaddr *)&sa->sa_local.addr, NULL, 0), srcid,
 	    sa->sa_addrpool ? " assigned " : "",
@@ -7309,7 +7331,14 @@ ikev2_log_established(struct iked_sa *sa)
 	    sa->sa_addrpool6 ?
 	    print_host((struct sockaddr *)&sa->sa_addrpool6->addr, NULL, 0) : "",
 	    sa->sa_policy ? sa->sa_policy->pol_name : "",
-	    sa->sa_hdr.sh_initiator ? " as initiator" : " as responder");
+	    sa->sa_hdr.sh_initiator ? " as initiator" : " as responder",
+	    print_xf(sa->sa_encr->encr_id, cipher_keylength(sa->sa_encr) -
+	    sa->sa_encr->encr_saltlength, ikeencxfs),
+	    sa->sa_encr->encr_authid ? "" : " auth ",
+	    sa->sa_encr->encr_authid ? "" : print_xf(sa->sa_integr->hash_id,
+	    hash_keylength(sa->sa_integr), authxfs),
+	    print_xf(sa->sa_dhgroup->id, 0, groupxfs),
+	    print_xf(sa->sa_prf->hash_id, hash_keylength(sa->sa_prf), prfxfs));
 }
 
 void
