@@ -1,4 +1,4 @@
-/* $OpenBSD: smmu.c,v 1.6 2021/03/05 00:55:45 patrick Exp $ */
+/* $OpenBSD: smmu.c,v 1.7 2021/03/05 01:16:55 patrick Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
@@ -1319,11 +1319,12 @@ smmu_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
     bus_size_t maxsegsz, bus_size_t boundary, int flags, bus_dmamap_t *dmamap)
 {
 	struct smmu_domain *dom = t->_cookie;
+	struct smmu_softc *sc = dom->sd_sc;
 	struct smmu_map_state *sms;
 	bus_dmamap_t map;
 	int error;
 
-	error = dom->sd_sc->sc_dmat->_dmamap_create(dom->sd_sc->sc_dmat, size,
+	error = sc->sc_dmat->_dmamap_create(sc->sc_dmat, size,
 	    nsegments, maxsegsz, boundary, flags, &map);
 	if (error)
 		return error;
@@ -1331,7 +1332,7 @@ smmu_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	sms = malloc(sizeof(*sms), M_DEVBUF, (flags & BUS_DMA_NOWAIT) ?
 	     (M_NOWAIT|M_ZERO) : (M_WAITOK|M_ZERO));
 	if (sms == NULL) {
-		dom->sd_sc->sc_dmat->_dmamap_destroy(dom->sd_sc->sc_dmat, map);
+		sc->sc_dmat->_dmamap_destroy(sc->sc_dmat, map);
 		return ENOMEM;
 	}
 
@@ -1344,12 +1345,13 @@ void
 smmu_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 {
 	struct smmu_domain *dom = t->_cookie;
+	struct smmu_softc *sc = dom->sd_sc;
 	struct smmu_map_state *sms = map->_dm_cookie;
 
 	if (sms->sms_len != 0)
 		smmu_dmamap_unload(t, map);
 	free(sms, M_DEVBUF, sizeof(*sms));
-	dom->sd_sc->sc_dmat->_dmamap_destroy(dom->sd_sc->sc_dmat, map);
+	sc->sc_dmat->_dmamap_destroy(sc->sc_dmat, map);
 }
 
 int
@@ -1357,16 +1359,17 @@ smmu_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
     bus_size_t buflen, struct proc *p, int flags)
 {
 	struct smmu_domain *dom = t->_cookie;
+	struct smmu_softc *sc = dom->sd_sc;
 	int error;
 
-	error = dom->sd_sc->sc_dmat->_dmamap_load(dom->sd_sc->sc_dmat, map,
+	error = sc->sc_dmat->_dmamap_load(sc->sc_dmat, map,
 	    buf, buflen, p, flags);
 	if (error)
 		return error;
 
 	error = smmu_load_map(dom, map);
 	if (error)
-		dom->sd_sc->sc_dmat->_dmamap_unload(dom->sd_sc->sc_dmat, map);
+		sc->sc_dmat->_dmamap_unload(sc->sc_dmat, map);
 
 	return error;
 }
@@ -1376,16 +1379,17 @@ smmu_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
     int flags)
 {
 	struct smmu_domain *dom = t->_cookie;
+	struct smmu_softc *sc = dom->sd_sc;
 	int error;
 
-	error = dom->sd_sc->sc_dmat->_dmamap_load_mbuf(dom->sd_sc->sc_dmat, map,
+	error = sc->sc_dmat->_dmamap_load_mbuf(sc->sc_dmat, map,
 	    m0, flags);
 	if (error)
 		return error;
 
 	error = smmu_load_map(dom, map);
 	if (error)
-		dom->sd_sc->sc_dmat->_dmamap_unload(dom->sd_sc->sc_dmat, map);
+		sc->sc_dmat->_dmamap_unload(sc->sc_dmat, map);
 
 	return error;
 }
@@ -1395,16 +1399,17 @@ smmu_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
     int flags)
 {
 	struct smmu_domain *dom = t->_cookie;
+	struct smmu_softc *sc = dom->sd_sc;
 	int error;
 
-	error = dom->sd_sc->sc_dmat->_dmamap_load_uio(dom->sd_sc->sc_dmat, map,
+	error = sc->sc_dmat->_dmamap_load_uio(sc->sc_dmat, map,
 	    uio, flags);
 	if (error)
 		return error;
 
 	error = smmu_load_map(dom, map);
 	if (error)
-		dom->sd_sc->sc_dmat->_dmamap_unload(dom->sd_sc->sc_dmat, map);
+		sc->sc_dmat->_dmamap_unload(sc->sc_dmat, map);
 
 	return error;
 }
@@ -1414,16 +1419,17 @@ smmu_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs,
     int nsegs, bus_size_t size, int flags)
 {
 	struct smmu_domain *dom = t->_cookie;
+	struct smmu_softc *sc = dom->sd_sc;
 	int error;
 
-	error = dom->sd_sc->sc_dmat->_dmamap_load_raw(dom->sd_sc->sc_dmat, map,
+	error = sc->sc_dmat->_dmamap_load_raw(sc->sc_dmat, map,
 	    segs, nsegs, size, flags);
 	if (error)
 		return error;
 
 	error = smmu_load_map(dom, map);
 	if (error)
-		dom->sd_sc->sc_dmat->_dmamap_unload(dom->sd_sc->sc_dmat, map);
+		sc->sc_dmat->_dmamap_unload(sc->sc_dmat, map);
 
 	return error;
 }
@@ -1432,7 +1438,8 @@ void
 smmu_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 {
 	struct smmu_domain *dom = t->_cookie;
+	struct smmu_softc *sc = dom->sd_sc;
 
 	smmu_unload_map(dom, map);
-	dom->sd_sc->sc_dmat->_dmamap_unload(dom->sd_sc->sc_dmat, map);
+	sc->sc_dmat->_dmamap_unload(sc->sc_dmat, map);
 }
