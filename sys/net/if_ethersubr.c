@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.271 2021/02/26 01:12:37 dlg Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.272 2021/03/05 03:51:41 dlg Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -382,6 +382,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	struct arpcom *ac;
 	const struct ether_brport *eb;
 	unsigned int sdelim = 0;
+	uint64_t dst, self;
 
 	/* Drop short frames */
 	if (m->m_len < ETHER_HDR_LEN)
@@ -450,7 +451,9 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	 */
 
 	eh = mtod(m, struct ether_header *);
-	if (memcmp(ac->ac_enaddr, eh->ether_dhost, ETHER_ADDR_LEN) != 0) {
+	dst = ether_addr_to_e64((struct ether_addr *)eh->ether_dhost);
+	self = ether_addr_to_e64((struct ether_addr *)ac->ac_enaddr);
+	if (dst != self) {
 #if NCARP > 0
 		/*
 		 * If it's not for this port, it could be for carp(4).
@@ -468,7 +471,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		/*
 		 * If not, it must be multicast or broadcast to go further.
 		 */
-		if (!ETHER_IS_MULTICAST(eh->ether_dhost))
+		if (!ETH64_IS_MULTICAST(dst))
 			goto dropanyway;
 
 		/*
@@ -476,15 +479,13 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		 * if it came from us.
 		 */
 		if ((ifp->if_flags & IFF_SIMPLEX) == 0) {
-			if (memcmp(ac->ac_enaddr, eh->ether_shost,
-			    ETHER_ADDR_LEN) == 0)
+			uint64_t src = ether_addr_to_e64(
+			    (struct ether_addr *)eh->ether_shost);
+			if (self == src)
 				goto dropanyway;
 		}
 
-		if (ETHER_IS_BROADCAST(eh->ether_dhost))
-			m->m_flags |= M_BCAST;
-		else
-			m->m_flags |= M_MCAST;
+		SET(m->m_flags, ETH64_IS_BROADCAST(dst) ? M_BCAST : M_MCAST);
 		ifp->if_imcasts++;
 	}
 
