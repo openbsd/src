@@ -1,4 +1,4 @@
-/*	$OpenBSD: inphy.c,v 1.21 2015/03/14 03:38:48 jsg Exp $	*/
+/*	$OpenBSD: inphy.c,v 1.22 2021/03/05 09:37:20 jsg Exp $	*/
 /*	$NetBSD: inphy.c,v 1.18 2000/02/02 23:34:56 thorpej Exp $	*/
 
 /*-
@@ -109,10 +109,7 @@ static const struct mii_phydesc inphys[] = {
 };
 
 int
-inphymatch(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+inphymatch(struct device *parent, void *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -123,9 +120,7 @@ inphymatch(parent, match, aux)
 }
 
 void
-inphyattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+inphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
@@ -150,10 +145,7 @@ inphyattach(parent, self, aux)
 }
 
 int
-inphy_service(sc, mii, cmd)
-	struct mii_softc *sc;
-	struct mii_data *mii;
-	int cmd;
+inphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
@@ -215,8 +207,7 @@ inphy_service(sc, mii, cmd)
 }
 
 void
-inphy_status(sc)
-	struct mii_softc *sc;
+inphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;

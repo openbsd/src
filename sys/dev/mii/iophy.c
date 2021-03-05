@@ -1,4 +1,4 @@
-/*	$OpenBSD: iophy.c,v 1.20 2015/03/14 03:38:48 jsg Exp $	*/
+/*	$OpenBSD: iophy.c,v 1.21 2021/03/05 09:37:20 jsg Exp $	*/
 /*	$NetBSD: iophy.c,v 1.8 2000/02/02 23:34:56 thorpej Exp $	*/
 
 /*
@@ -104,10 +104,7 @@ static const struct mii_phydesc iophys[] = {
 };
 
 int
-iophymatch(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+iophymatch(struct device *parent, void *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -118,9 +115,7 @@ iophymatch(parent, match, aux)
 }
 
 void
-iophyattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+iophyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
@@ -145,10 +140,7 @@ iophyattach(parent, self, aux)
 }
 
 int
-iophy_service(sc, mii, cmd)
-	struct mii_softc *sc;
-	struct mii_data *mii;
-	int cmd;
+iophy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
@@ -210,8 +202,7 @@ iophy_service(sc, mii, cmd)
 }
 
 void
-iophy_status(sc)
-	struct mii_softc *sc;
+iophy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;

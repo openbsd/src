@@ -1,4 +1,4 @@
-/*	$OpenBSD: icsphy.c,v 1.23 2015/03/14 03:38:48 jsg Exp $	*/
+/*	$OpenBSD: icsphy.c,v 1.24 2021/03/05 09:37:20 jsg Exp $	*/
 /*	$NetBSD: icsphy.c,v 1.17 2000/02/02 23:34:56 thorpej Exp $	*/
 
 /*-
@@ -145,10 +145,7 @@ icsphyattach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-icsphy_service(sc, mii, cmd)
-	struct mii_softc *sc;
-	struct mii_data *mii;
-	int cmd;
+icsphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
@@ -210,8 +207,7 @@ icsphy_service(sc, mii, cmd)
 }
 
 void
-icsphy_status(sc)
-	struct mii_softc *sc;
+icsphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
@@ -262,8 +258,7 @@ icsphy_status(sc)
 }
 
 void
-icsphy_reset(sc)
-	struct mii_softc *sc;
+icsphy_reset(struct mii_softc *sc)
 {
 
 	mii_phy_reset(sc);

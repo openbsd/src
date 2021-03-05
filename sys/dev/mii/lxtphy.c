@@ -1,4 +1,4 @@
-/*	$OpenBSD: lxtphy.c,v 1.20 2015/03/14 03:38:48 jsg Exp $	*/
+/*	$OpenBSD: lxtphy.c,v 1.21 2021/03/05 09:37:20 jsg Exp $	*/
 /*	$NetBSD: lxtphy.c,v 1.19 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -110,10 +110,7 @@ static const struct mii_phydesc lxtphys[] = {
 };
 
 int
-lxtphymatch(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+lxtphymatch(struct device *parent, void *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -124,9 +121,7 @@ lxtphymatch(parent, match, aux)
 }
 
 void
-lxtphyattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+lxtphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
@@ -159,10 +154,7 @@ lxtphyattach(parent, self, aux)
 }
 
 int
-lxtphy_service(sc, mii, cmd)
-	struct mii_softc *sc;
-	struct mii_data *mii;
-	int cmd;
+lxtphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
@@ -224,8 +216,7 @@ lxtphy_service(sc, mii, cmd)
 }
 
 void
-lxtphy_status(sc)
-	struct mii_softc *sc;
+lxtphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
@@ -274,8 +265,7 @@ lxtphy_status(sc)
 }
 
 void
-lxtphy_reset(sc)
-	struct mii_softc *sc;
+lxtphy_reset(struct mii_softc *sc)
 {
 	mii_phy_reset(sc);
 	PHY_WRITE(sc, MII_LXTPHY_IER,
