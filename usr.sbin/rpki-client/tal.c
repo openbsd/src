@@ -1,4 +1,4 @@
-/*	$OpenBSD: tal.c,v 1.27 2021/02/19 10:23:50 claudio Exp $ */
+/*	$OpenBSD: tal.c,v 1.28 2021/03/05 17:15:19 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -82,7 +82,6 @@ tal_parse_buffer(const char *fn, char *buf)
 	char		*nl, *line, *f, *file = NULL;
 	unsigned char	*der;
 	size_t		 sz, dersz;
-	ssize_t		 i;
 	int		 rc = 0;
 	struct tal	*tal = NULL;
 	EVP_PKEY	*pkey = NULL;
@@ -103,9 +102,7 @@ tal_parse_buffer(const char *fn, char *buf)
 			break;
 
 		/* make sure only US-ASCII chars are in the URL */
-		for (i = 0; i < nl - line; i++) {
-			if (isalnum(line[i]) || ispunct(line[i]))
-				continue;
+		if (!valid_uri(line, nl - line, NULL)) {
 			warnx("%s: invalid URI", fn);
 			goto out;
 		}
