@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.50 2021/03/04 13:01:41 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.51 2021/03/05 12:33:19 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -369,7 +369,7 @@ int		 ip_addr_parse(const ASN1_BIT_STRING *,
 void		 ip_addr_print(const struct ip_addr *, enum afi, char *,
 			size_t);
 void		 ip_addr_buffer(struct ibuf *, const struct ip_addr *);
-void		 ip_addr_range_buffer(struct ibuf *, 
+void		 ip_addr_range_buffer(struct ibuf *,
 			const struct ip_addr_range *);
 void		 ip_addr_read(int, struct ip_addr *);
 void		 ip_addr_range_read(int, struct ip_addr_range *);
