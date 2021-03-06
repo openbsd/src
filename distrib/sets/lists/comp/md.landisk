@@ -93,7 +93,6 @@
 ./usr/include/sh/reloc.h
 ./usr/include/sh/rtcreg.h
 ./usr/include/sh/setjmp.h
-./usr/include/sh/sh_opcode.h
 ./usr/include/sh/signal.h
 ./usr/include/sh/spinlock.h
 ./usr/include/sh/tcb.h
