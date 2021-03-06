@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.sh,v 1.13 2017/08/15 01:53:06 tedu Exp $
+#	$OpenBSD: genassym.sh,v 1.14 2021/03/06 09:20:49 jsg Exp $
 #	$NetBSD: genassym.sh,v 1.9 1998/04/25 19:48:27 matthias Exp $
 
 #
@@ -132,7 +132,7 @@ $0 ~ /^endif/ {
 	if (defining == 0) {
 		defining = 1;
 		printf("void f" FNR "(void);\n");
-		printf("void f" FNR "() {\n");
+		printf("void f" FNR "(void) {\n");
 		if (ccode)
 			call[FNR] = "f" FNR;
 		defining = 1;

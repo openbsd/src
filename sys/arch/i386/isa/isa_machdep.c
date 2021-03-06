@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.83 2016/09/22 10:25:34 jsg Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.84 2021/03/06 09:20:50 jsg Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
 
 /*-
@@ -334,8 +334,7 @@ intr_calculatemasks(void)
 }
 
 int
-fakeintr(arg)
-	void *arg;
+fakeintr(void *arg)
 {
 	return 0;
 }

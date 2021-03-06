@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.221 2020/06/15 14:52:19 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.222 2021/03/06 09:20:49 jsg Exp $	*/
 
 /*
  * Copyright (c) 2011,2020 Theo de Raadt.
@@ -547,7 +547,7 @@ arc4random_buf(void *buf, size_t n)
  * Allocate a new ChaCha20 context for the caller to use.
  */
 struct arc4random_ctx *
-arc4random_ctx_new()
+arc4random_ctx_new(void)
 {
 	char keybuf[KEYSZ + IVSZ];
 

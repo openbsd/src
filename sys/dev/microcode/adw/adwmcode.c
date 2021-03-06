@@ -1,4 +1,4 @@
-/*	$OpenBSD: adwmcode.c,v 1.8 2017/09/08 05:36:52 deraadt Exp $ */
+/*	$OpenBSD: adwmcode.c,v 1.9 2021/03/06 09:20:50 jsg Exp $ */
 /*      $NetBSD: adwmcode.c,v 1.5 2000/05/27 18:24:50 dante Exp $        */
 
 /*
@@ -69,9 +69,7 @@
  * Initialize a set of Carriers and add them to the free list.
  */
 ADW_CARRIER *
-AdwInitCarriers(carr_dmap, carriers)
-	bus_dmamap_t	carr_dmap;
-	ADW_CARRIER	*carriers;
+AdwInitCarriers(bus_dmamap_t carr_dmap, ADW_CARRIER *carriers)
 {
 	ADW_CARRIER	*carr;
 	u_int32_t	carr_next = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.278 2021/02/25 02:43:32 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.279 2021/03/06 09:20:49 jsg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -202,7 +202,7 @@ mbinit(void)
 }
 
 void
-mbcpuinit()
+mbcpuinit(void)
 {
 	int i;
 
