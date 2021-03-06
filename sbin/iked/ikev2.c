@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.313 2021/03/05 22:26:04 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.314 2021/03/06 22:27:39 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -6196,7 +6196,7 @@ ikev2_childsa_enable(struct iked *env, struct iked_sa *sa)
 	struct ibuf		*flowbuf = NULL;
 	char			*buf;
 	uint16_t		 encrid = 0, integrid = 0, groupid = 0;
-	size_t			 encrlen = 0 , integrlen = 0;
+	size_t			 encrlen = 0, integrlen = 0;
 
 	TAILQ_FOREACH(csa, &sa->sa_childsas, csa_entry) {
 		if (csa->csa_rekey || csa->csa_loaded)
