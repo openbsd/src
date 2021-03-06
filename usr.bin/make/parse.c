@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.133 2020/04/20 08:17:33 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.134 2021/03/06 08:31:42 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -925,7 +925,6 @@ ParseDoDependency(const char *line)	/* the line to parse */
 			    	ln = Lst_Adv(ln))
 				    Dir_AddDiri(Lst_Datum(ln), line, cp);
 			    break;
-			    Lst_Destroy(&paths, NOFREE);
 			    }
 		    default:
 			    break;
@@ -988,6 +987,11 @@ ParseDoDependency(const char *line)	/* the line to parse */
 			line = cp;
 		}
 	}
+
+	/* If we're not in the SPEC_PATH case the list is empty, but who 
+	 * cares ?  This is cheap. 
+	 */
+	Lst_Destroy(&paths, NOFREE);
 
 	if (mainNode == NULL) {
 		/* If we have yet to decide on a main target to make, in the
