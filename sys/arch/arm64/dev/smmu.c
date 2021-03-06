@@ -1,4 +1,4 @@
-/* $OpenBSD: smmu.c,v 1.8 2021/03/06 19:25:27 patrick Exp $ */
+/* $OpenBSD: smmu.c,v 1.9 2021/03/06 19:30:07 patrick Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
@@ -64,9 +64,7 @@ CTASSERT(sizeof(struct smmuvp0) == sizeof(struct smmuvp2));
 CTASSERT(sizeof(struct smmuvp0) == sizeof(struct smmuvp3));
 
 struct pte_desc {
-	LIST_ENTRY(pte_desc) pted_pv_list;
 	uint64_t pted_pte;
-	struct smmu_domain *pted_dom;
 	vaddr_t pted_va;
 };
 
@@ -96,9 +94,9 @@ int smmu_vp_enter(struct smmu_domain *, vaddr_t, struct pte_desc *, int);
 
 void smmu_fill_pte(struct smmu_domain *, vaddr_t, paddr_t, struct pte_desc *,
     vm_prot_t, int, int);
-void smmu_pte_update(struct pte_desc *, uint64_t *);
-void smmu_pte_insert(struct pte_desc *);
-void smmu_pte_remove(struct pte_desc *, int);
+void smmu_pte_update(struct smmu_domain *, struct pte_desc *, uint64_t *);
+void smmu_pte_insert(struct smmu_domain *, struct pte_desc *);
+void smmu_pte_remove(struct smmu_domain *, struct pte_desc *, int);
 
 int smmu_enter(struct smmu_domain *, vaddr_t, paddr_t, vm_prot_t, int, int);
 void smmu_map(struct smmu_domain *, vaddr_t, paddr_t, vm_prot_t, int, int);
@@ -1014,7 +1012,6 @@ smmu_fill_pte(struct smmu_domain *dom, vaddr_t va, paddr_t pa,
     struct pte_desc *pted, vm_prot_t prot, int flags, int cache)
 {
 	pted->pted_va = va;
-	pted->pted_dom = dom;
 
 	switch (cache) {
 	case PMAP_CACHE_WB:
@@ -1039,9 +1036,8 @@ smmu_fill_pte(struct smmu_domain *dom, vaddr_t va, paddr_t pa,
 }
 
 void
-smmu_pte_update(struct pte_desc *pted, uint64_t *pl3)
+smmu_pte_update(struct smmu_domain *dom, struct pte_desc *pted, uint64_t *pl3)
 {
-	struct smmu_domain *dom = pted->pted_dom;
 	uint64_t pte, access_bits;
 	uint64_t attr = 0;
 
@@ -1107,9 +1103,8 @@ smmu_pte_update(struct pte_desc *pted, uint64_t *pl3)
 }
 
 void
-smmu_pte_insert(struct pte_desc *pted)
+smmu_pte_insert(struct smmu_domain *dom, struct pte_desc *pted)
 {
-	struct smmu_domain *dom = pted->pted_dom;
 	uint64_t *pl3;
 
 	if (smmu_vp_lookup(dom, pted->pted_va, &pl3) == NULL) {
@@ -1117,19 +1112,18 @@ smmu_pte_insert(struct pte_desc *pted)
 		    " for %lx va domain %p", __func__, pted->pted_va, dom);
 	}
 
-	smmu_pte_update(pted, pl3);
+	smmu_pte_update(dom, pted, pl3);
 	membar_producer(); /* XXX bus dma sync? */
 }
 
 void
-smmu_pte_remove(struct pte_desc *pted, int remove_pted)
+smmu_pte_remove(struct smmu_domain *dom, struct pte_desc *pted, int remove_pted)
 {
 	/* put entry into table */
 	/* need to deal with ref/change here */
 	struct smmuvp1 *vp1;
 	struct smmuvp2 *vp2;
 	struct smmuvp3 *vp3;
-	struct smmu_domain *dom = pted->pted_dom;
 
 	if (dom->sd_4level)
 		vp1 = dom->sd_vp.l0->vp[VP_IDX0(pted->pted_va)];
@@ -1201,7 +1195,7 @@ smmu_map(struct smmu_domain *dom, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	smmu_fill_pte(dom, va, pa, pted, prot, flags, cache);
 
 	/* Insert updated information */
-	smmu_pte_insert(pted);
+	smmu_pte_insert(dom, pted);
 }
 
 void
@@ -1217,7 +1211,7 @@ smmu_unmap(struct smmu_domain *dom, vaddr_t va)
 	KASSERT(pted != NULL);
 
 	/* Remove mapping from pagetable, keep it alive */
-	smmu_pte_remove(pted, 0);
+	smmu_pte_remove(dom, pted, 0);
 	membar_producer(); /* XXX bus dma sync? */
 
 	/* Invalidate IOTLB */
@@ -1242,7 +1236,7 @@ smmu_remove(struct smmu_domain *dom, vaddr_t va)
 	KASSERT(pted != NULL);
 
 	/* Mapping already removed, remove pted as well */
-	smmu_pte_remove(pted, 1);
+	smmu_pte_remove(dom, pted, 1);
 
 	/* Destroy pted */
 	pted->pted_pte = 0;
