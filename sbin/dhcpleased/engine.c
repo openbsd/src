@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.6 2021/03/01 15:56:31 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.7 2021/03/06 18:33:44 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -56,7 +56,8 @@
  * networks are faster these days.
  */
 #define	START_EXP_BACKOFF	 1
-#define	MAX_EXP_BACKOFF		64 /* RFC 2131 4.1 p23 */
+#define	MAX_EXP_BACKOFF_SLOW	64 /* RFC 2131 4.1 p23 */
+#define	MAX_EXP_BACKOFF_FAST	 2
 #define	MINIMUM(a, b)		(((a) < (b)) ? (a) : (b))
 
 enum if_state {
@@ -1025,9 +1026,6 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 			return;
 		}
 
-		/* we have been told that our IP is inapropriate, delete now */
-		send_rdns_withdraw(iface);
-		send_deconfigure_interface(iface);
 		state_transition(iface, IF_INIT);
 		break;
 	default:
@@ -1075,21 +1073,31 @@ state_transition(struct dhcpleased_iface *iface, enum if_state new_state)
 		}
 		break;
 	case IF_INIT:
-		if (old_state == IF_REBINDING) {
-			/* lease expired, delete IP */
+		switch (old_state) {
+		case IF_INIT:
+			if (iface->timo.tv_sec < MAX_EXP_BACKOFF_SLOW)
+				iface->timo.tv_sec *= 2;
+			break;
+		case IF_REQUESTING:
+		case IF_RENEWING:
+		case IF_REBINDING:
+		case IF_REBOOTING:
+			/* lease expired, got DHCPNAK or timeout: delete IP */
 			send_rdns_withdraw(iface);
 			send_deconfigure_interface(iface);
-		}
-		if (old_state == IF_INIT) {
-			if (iface->timo.tv_sec < MAX_EXP_BACKOFF)
-				iface->timo.tv_sec *= 2;
-		} else
+			/* fall through */
+		case IF_DOWN:
 			iface->timo.tv_sec = START_EXP_BACKOFF;
+			break;
+		case IF_BOUND:
+			fatal("invalid transition Bound -> Init");
+			break;
+		}
 		request_dhcp_discover(iface);
 		break;
 	case IF_REBOOTING:
 		if (old_state == IF_REBOOTING) {
-			if (iface->timo.tv_sec < MAX_EXP_BACKOFF)
+			if (iface->timo.tv_sec < MAX_EXP_BACKOFF_FAST)
 				iface->timo.tv_sec *= 2;
 		} else {
 			/* make sure we send broadcast */
@@ -1100,7 +1108,7 @@ state_transition(struct dhcpleased_iface *iface, enum if_state new_state)
 		break;
 	case IF_REQUESTING:
 		if (old_state == IF_REQUESTING) {
-			if (iface->timo.tv_sec < MAX_EXP_BACKOFF)
+			if (iface->timo.tv_sec < MAX_EXP_BACKOFF_FAST)
 				iface->timo.tv_sec *= 2;
 		} else
 			iface->timo.tv_sec = START_EXP_BACKOFF;
@@ -1164,13 +1172,13 @@ iface_timeout(int fd, short events, void *arg)
 		state_transition(iface, IF_INIT);
 		break;
 	case IF_REBOOTING:
-		if (iface->timo.tv_sec >= MAX_EXP_BACKOFF)
+		if (iface->timo.tv_sec >= MAX_EXP_BACKOFF_FAST)
 			state_transition(iface, IF_INIT);
 		else
 			state_transition(iface, IF_REBOOTING);
 		break;
 	case IF_REQUESTING:
-		if (iface->timo.tv_sec >= MAX_EXP_BACKOFF)
+		if (iface->timo.tv_sec >= MAX_EXP_BACKOFF_FAST)
 			state_transition(iface, IF_INIT);
 		else
 			state_transition(iface, IF_REQUESTING);
