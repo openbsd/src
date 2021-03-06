@@ -1,4 +1,4 @@
-/* $OpenBSD: smmu.c,v 1.7 2021/03/05 01:16:55 patrick Exp $ */
+/* $OpenBSD: smmu.c,v 1.8 2021/03/06 19:25:27 patrick Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
@@ -36,6 +36,7 @@ struct smmu_map_state {
 	struct extent_region	sms_er;
 	bus_addr_t		sms_dva;
 	bus_size_t		sms_len;
+	bus_size_t		sms_loaded;
 };
 
 struct smmuvp0 {
@@ -97,10 +98,11 @@ void smmu_fill_pte(struct smmu_domain *, vaddr_t, paddr_t, struct pte_desc *,
     vm_prot_t, int, int);
 void smmu_pte_update(struct pte_desc *, uint64_t *);
 void smmu_pte_insert(struct pte_desc *);
-void smmu_pte_remove(struct pte_desc *);
+void smmu_pte_remove(struct pte_desc *, int);
 
-int smmu_prepare(struct smmu_domain *, vaddr_t, paddr_t, vm_prot_t, int, int);
 int smmu_enter(struct smmu_domain *, vaddr_t, paddr_t, vm_prot_t, int, int);
+void smmu_map(struct smmu_domain *, vaddr_t, paddr_t, vm_prot_t, int, int);
+void smmu_unmap(struct smmu_domain *, vaddr_t);
 void smmu_remove(struct smmu_domain *, vaddr_t);
 
 int smmu_load_map(struct smmu_domain *, bus_dmamap_t);
@@ -783,6 +785,8 @@ smmu_domain_create(struct smmu_softc *sc, uint32_t sid)
 		while (msi_len) {
 			smmu_enter(dom, msi_pa, msi_pa, PROT_READ | PROT_WRITE,
 			    PROT_READ | PROT_WRITE, PMAP_CACHE_WB);
+			smmu_map(dom, msi_pa, msi_pa, PROT_READ | PROT_WRITE,
+			    PROT_READ | PROT_WRITE, PMAP_CACHE_WB);
 			msi_pa += PAGE_SIZE;
 			msi_len -= PAGE_SIZE;
 		}
@@ -792,6 +796,8 @@ smmu_domain_create(struct smmu_softc *sc, uint32_t sid)
 		msi_len = 0x1000;
 		extent_alloc_region(dom->sd_iovamap, msi_pa, msi_len, EX_WAITOK);
 		smmu_enter(dom, msi_pa, msi_pa, PROT_READ | PROT_WRITE,
+		    PROT_READ | PROT_WRITE, PMAP_CACHE_WB);
+		smmu_map(dom, msi_pa, msi_pa, PROT_READ | PROT_WRITE,
 		    PROT_READ | PROT_WRITE, PMAP_CACHE_WB);
 		/* Reserve 8040 PCI address space */
 		extent_alloc_region(dom->sd_iovamap, 0xc0000000, 0x20000000,
@@ -1116,7 +1122,7 @@ smmu_pte_insert(struct pte_desc *pted)
 }
 
 void
-smmu_pte_remove(struct pte_desc *pted)
+smmu_pte_remove(struct pte_desc *pted, int remove_pted)
 {
 	/* put entry into table */
 	/* need to deal with ref/change here */
@@ -1144,11 +1150,12 @@ smmu_pte_remove(struct pte_desc *pted)
 		    pted->pted_va, dom);
 	}
 	vp3->l3[VP_IDX3(pted->pted_va)] = 0;
-	vp3->vp[VP_IDX3(pted->pted_va)] = NULL;
+	if (remove_pted)
+		vp3->vp[VP_IDX3(pted->pted_va)] = NULL;
 }
 
 int
-smmu_prepare(struct smmu_domain *dom, vaddr_t va, paddr_t pa, vm_prot_t prot,
+smmu_enter(struct smmu_domain *dom, vaddr_t va, paddr_t pa, vm_prot_t prot,
     int flags, int cache)
 {
 	struct smmu_softc *sc = dom->sd_sc;
@@ -1178,31 +1185,48 @@ out:
 	return error;
 }
 
-int
-smmu_enter(struct smmu_domain *dom, vaddr_t va, paddr_t pa, vm_prot_t prot,
+void
+smmu_map(struct smmu_domain *dom, vaddr_t va, paddr_t pa, vm_prot_t prot,
     int flags, int cache)
 {
 	struct pte_desc *pted;
-	int error;
 
 	/* printf("%s: 0x%lx -> 0x%lx\n", __func__, va, pa); */
 
+	/* IOVA must already be allocated */
 	pted = smmu_vp_lookup(dom, va, NULL);
-	if (pted == NULL) {
-		error = smmu_prepare(dom, va, pa, prot, PROT_NONE, cache);
-		if (error)
-			goto out;
-		pted = smmu_vp_lookup(dom, va, NULL);
-		KASSERT(pted != NULL);
-	}
+	KASSERT(pted != NULL);
 
-	pted->pted_pte |=
-	    (pted->pted_va & (PROT_READ|PROT_WRITE|PROT_EXEC));
+	/* Update PTED information for physical address */
+	smmu_fill_pte(dom, va, pa, pted, prot, flags, cache);
+
+	/* Insert updated information */
 	smmu_pte_insert(pted);
+}
 
-	error = 0;
-out:
-	return error;
+void
+smmu_unmap(struct smmu_domain *dom, vaddr_t va)
+{
+	struct smmu_softc *sc = dom->sd_sc;
+	struct pte_desc *pted;
+
+	/* printf("%s: 0x%lx\n", __func__, va); */
+
+	/* IOVA must already be allocated */
+	pted = smmu_vp_lookup(dom, va, NULL);
+	KASSERT(pted != NULL);
+
+	/* Remove mapping from pagetable, keep it alive */
+	smmu_pte_remove(pted, 0);
+	membar_producer(); /* XXX bus dma sync? */
+
+	/* Invalidate IOTLB */
+	if (dom->sd_stage == 1)
+		smmu_cb_write_8(sc, dom->sd_cb_idx, SMMU_CB_TLBIVAL,
+		    (uint64_t)dom->sd_cb_idx << 48 | va >> PAGE_SHIFT);
+	else
+		smmu_cb_write_8(sc, dom->sd_cb_idx, SMMU_CB_TLBIIPAS2L,
+		    va >> PAGE_SHIFT);
 }
 
 void
@@ -1213,22 +1237,17 @@ smmu_remove(struct smmu_domain *dom, vaddr_t va)
 
 	/* printf("%s: 0x%lx\n", __func__, va); */
 
+	/* IOVA must already be allocated */
 	pted = smmu_vp_lookup(dom, va, NULL);
-	if (pted == NULL) /* XXX really? */
-		return;
+	KASSERT(pted != NULL);
 
-	smmu_pte_remove(pted);
+	/* Mapping already removed, remove pted as well */
+	smmu_pte_remove(pted, 1);
+
+	/* Destroy pted */
 	pted->pted_pte = 0;
 	pted->pted_va = 0;
 	pool_put(&sc->sc_pted_pool, pted);
-
-	membar_producer(); /* XXX bus dma sync? */
-	if (dom->sd_stage == 1)
-		smmu_cb_write_8(sc, dom->sd_cb_idx, SMMU_CB_TLBIVAL,
-		    (uint64_t)dom->sd_cb_idx << 48 | va >> PAGE_SHIFT);
-	else
-		smmu_cb_write_8(sc, dom->sd_cb_idx, SMMU_CB_TLBIIPAS2L,
-		    va >> PAGE_SHIFT);
 }
 
 int
@@ -1236,7 +1255,7 @@ smmu_load_map(struct smmu_domain *dom, bus_dmamap_t map)
 {
 	struct smmu_map_state *sms = map->_dm_cookie;
 	u_long dva, maplen;
-	int seg, error;
+	int seg;
 
 	maplen = 0;
 	for (seg = 0; seg < map->dm_nsegs; seg++) {
@@ -1244,17 +1263,9 @@ smmu_load_map(struct smmu_domain *dom, bus_dmamap_t map)
 		psize_t off = pa - trunc_page(pa);
 		maplen += round_page(map->dm_segs[seg].ds_len + off);
 	}
+	KASSERT(maplen <= sms->sms_len);
 
-	mtx_enter(&dom->sd_iova_mtx);
-	error = extent_alloc_with_descr(dom->sd_iovamap, maplen,
-	    PAGE_SIZE, 0, 0, EX_NOWAIT, &sms->sms_er, &dva);
-	mtx_leave(&dom->sd_iova_mtx);
-	if (error)
-		return error;
-
-	sms->sms_dva = dva;
-	sms->sms_len = maplen;
-
+	dva = sms->sms_dva;
 	for (seg = 0; seg < map->dm_nsegs; seg++) {
 		paddr_t pa = map->dm_segs[seg]._ds_paddr;
 		psize_t off = pa - trunc_page(pa);
@@ -1264,22 +1275,18 @@ smmu_load_map(struct smmu_domain *dom, bus_dmamap_t map)
 
 		pa = trunc_page(pa);
 		while (len > 0) {
-			error = smmu_enter(dom, dva, pa,
+			smmu_map(dom, dva, pa,
 			    PROT_READ | PROT_WRITE,
 			    PROT_READ | PROT_WRITE, PMAP_CACHE_WB);
-			if (error)
-				goto out;
 
 			dva += PAGE_SIZE;
 			pa += PAGE_SIZE;
 			len -= PAGE_SIZE;
+			sms->sms_loaded += PAGE_SIZE;
 		}
 	}
 
-out:
-	if (error)
-		smmu_unload_map(dom, map);
-	return error;
+	return 0;
 }
 
 void
@@ -1287,29 +1294,21 @@ smmu_unload_map(struct smmu_domain *dom, bus_dmamap_t map)
 {
 	struct smmu_map_state *sms = map->_dm_cookie;
 	u_long len, dva;
-	int error;
 
-	if (sms->sms_len == 0)
+	if (sms->sms_loaded == 0)
 		return;
 
 	dva = sms->sms_dva;
-	len = sms->sms_len;
+	len = sms->sms_loaded;
 
 	while (len > 0) {
-		smmu_remove(dom, dva);
+		smmu_unmap(dom, dva);
 
 		dva += PAGE_SIZE;
 		len -= PAGE_SIZE;
 	}
 
-	mtx_enter(&dom->sd_iova_mtx);
-	error = extent_free(dom->sd_iovamap, sms->sms_dva,
-	    sms->sms_len, EX_NOWAIT);
-	mtx_leave(&dom->sd_iova_mtx);
-	KASSERT(error == 0);
-
-	sms->sms_dva = 0;
-	sms->sms_len = 0;
+	sms->sms_loaded = 0;
 
 	smmu_tlb_sync_context(dom);
 }
@@ -1322,6 +1321,7 @@ smmu_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	struct smmu_softc *sc = dom->sd_sc;
 	struct smmu_map_state *sms;
 	bus_dmamap_t map;
+	u_long dva, len;
 	int error;
 
 	error = sc->sc_dmat->_dmamap_create(sc->sc_dmat, size,
@@ -1336,6 +1336,30 @@ smmu_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 		return ENOMEM;
 	}
 
+	/* Approximation of maximum pages needed. */
+	len = round_page(size) + nsegments * PAGE_SIZE;
+
+	mtx_enter(&dom->sd_iova_mtx);
+	error = extent_alloc_with_descr(dom->sd_iovamap, len,
+	    PAGE_SIZE, 0, 0, EX_NOWAIT, &sms->sms_er, &dva);
+	mtx_leave(&dom->sd_iova_mtx);
+	if (error) {
+		sc->sc_dmat->_dmamap_destroy(sc->sc_dmat, map);
+		free(sms, M_DEVBUF, sizeof(*sms));
+		return error;
+	}
+
+	sms->sms_dva = dva;
+	sms->sms_len = len;
+
+	while (len > 0) {
+		error = smmu_enter(dom, dva, dva, PROT_READ | PROT_WRITE,
+		    PROT_NONE, PMAP_CACHE_WB);
+		KASSERT(error == 0); /* FIXME: rollback smmu_enter() */
+		dva += PAGE_SIZE;
+		len -= PAGE_SIZE;
+	}
+
 	map->_dm_cookie = sms;
 	*dmamap = map;
 	return 0;
@@ -1347,9 +1371,27 @@ smmu_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 	struct smmu_domain *dom = t->_cookie;
 	struct smmu_softc *sc = dom->sd_sc;
 	struct smmu_map_state *sms = map->_dm_cookie;
+	u_long dva, len;
+	int error;
 
-	if (sms->sms_len != 0)
+	if (sms->sms_loaded)
 		smmu_dmamap_unload(t, map);
+
+	dva = sms->sms_dva;
+	len = sms->sms_len;
+
+	while (len > 0) {
+		smmu_remove(dom, dva);
+		dva += PAGE_SIZE;
+		len -= PAGE_SIZE;
+	}
+
+	mtx_enter(&dom->sd_iova_mtx);
+	error = extent_free(dom->sd_iovamap, sms->sms_dva,
+	    sms->sms_len, EX_NOWAIT);
+	mtx_leave(&dom->sd_iova_mtx);
+	KASSERT(error == 0);
+
 	free(sms, M_DEVBUF, sizeof(*sms));
 	sc->sc_dmat->_dmamap_destroy(sc->sc_dmat, map);
 }
