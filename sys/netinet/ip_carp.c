@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.352 2021/02/08 12:30:10 bluhm Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.353 2021/03/07 06:02:32 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -260,7 +260,7 @@ void	carp_update_lsmask(struct carp_softc *);
 int	carp_new_vhost(struct carp_softc *, int, int);
 void	carp_destroy_vhosts(struct carp_softc *);
 void	carp_del_all_timeouts(struct carp_softc *);
-int	carp_vhe_match(struct carp_softc *, uint8_t *);
+int	carp_vhe_match(struct carp_softc *, uint64_t);
 
 struct if_clone carp_cloner =
     IF_CLONE_INITIALIZER("carp", carp_clone_create, carp_clone_destroy);
@@ -1345,6 +1345,7 @@ carp_ourether(struct ifnet *ifp, uint8_t *ena)
 	struct carp_softc *sc;
 	struct srp_ref sr;
 	int match = 0;
+	uint64_t dst = ether_addr_to_e64((struct ether_addr *)ena);
 
 	KASSERT(ifp->if_type == IFT_ETHER);
 
@@ -1352,7 +1353,7 @@ carp_ourether(struct ifnet *ifp, uint8_t *ena)
 		if ((sc->sc_if.if_flags & (IFF_UP|IFF_RUNNING)) !=
 		    (IFF_UP|IFF_RUNNING))
 			continue;
-		if (carp_vhe_match(sc, ena)) {
+		if (carp_vhe_match(sc, dst)) {
 			match = 1;
 			break;
 		}
@@ -1363,29 +1364,27 @@ carp_ourether(struct ifnet *ifp, uint8_t *ena)
 }
 
 int
-carp_vhe_match(struct carp_softc *sc, uint8_t *ena)
+carp_vhe_match(struct carp_softc *sc, uint64_t dst)
 {
 	struct carp_vhost_entry *vhe;
 	struct srp_ref sr;
-	int match = 0;
+	int active = 0;
 
 	vhe = SRPL_FIRST(&sr, &sc->carp_vhosts);
-	match = (vhe->state == MASTER || sc->sc_balancing >= CARP_BAL_IP) &&
-	    !memcmp(ena, sc->sc_ac.ac_enaddr, ETHER_ADDR_LEN);
+	active = (vhe->state == MASTER || sc->sc_balancing >= CARP_BAL_IP);
 	SRPL_LEAVE(&sr);
 
-	return (match);
+	return (active && (dst ==
+	    ether_addr_to_e64((struct ether_addr *)sc->sc_ac.ac_enaddr)));
 }
 
 struct mbuf *
-carp_input(struct ifnet *ifp0, struct mbuf *m)
+carp_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst)
 {
-	struct ether_header *eh;
 	struct srpl *cif;
 	struct carp_softc *sc;
 	struct srp_ref sr;
 
-	eh = mtod(m, struct ether_header *);
 	cif = &ifp0->if_carp;
 
 	SRPL_FOREACH(sc, &sr, cif, sc_list) {
@@ -1393,7 +1392,7 @@ carp_input(struct ifnet *ifp0, struct mbuf *m)
 		    (IFF_UP|IFF_RUNNING))
 			continue;
 
-		if (carp_vhe_match(sc, eh->ether_dhost)) {
+		if (carp_vhe_match(sc, dst)) {
 			/*
 			 * These packets look like layer 2 multicast but they
 			 * are unicast at layer 3. With help of the tag the
@@ -1417,7 +1416,7 @@ carp_input(struct ifnet *ifp0, struct mbuf *m)
 	if (sc == NULL) {
 		SRPL_LEAVE(&sr);
 
-		if (!ETHER_IS_MULTICAST(eh->ether_dhost))
+		if (!ETH64_IS_MULTICAST(dst))
 			return (m);
 
 		/*

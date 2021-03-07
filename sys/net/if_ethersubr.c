@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.273 2021/03/05 06:44:09 dlg Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.274 2021/03/07 06:02:32 dlg Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -460,7 +460,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		 */
 		if (ifp->if_type != IFT_CARP &&
 		    !SRPL_EMPTY_LOCKED(&ifp->if_carp)) {
-			m = carp_input(ifp, m);
+			m = carp_input(ifp, m, dst);
 			if (m == NULL)
 				return;
 
