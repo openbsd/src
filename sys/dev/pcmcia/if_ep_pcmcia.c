@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_pcmcia.c,v 1.48 2015/11/25 11:20:38 mpi Exp $	*/
+/*	$OpenBSD: if_ep_pcmcia.c,v 1.49 2021/03/07 06:20:09 jsg Exp $	*/
 /*	$NetBSD: if_ep_pcmcia.c,v 1.16 1998/08/17 23:20:40 thorpej Exp $  */
 
 /*-
@@ -154,8 +154,7 @@ struct ep_pcmcia_product {
 struct ep_pcmcia_product *ep_pcmcia_lookup(struct pcmcia_attach_args *);
 
 struct ep_pcmcia_product *
-ep_pcmcia_lookup(pa)
-	struct pcmcia_attach_args *pa;
+ep_pcmcia_lookup(struct pcmcia_attach_args *pa)
 {
 	int i;
 
@@ -168,9 +167,7 @@ ep_pcmcia_lookup(pa)
 }
 
 int
-ep_pcmcia_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+ep_pcmcia_match(struct device *parent, void *match, void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
@@ -185,8 +182,7 @@ ep_pcmcia_match(parent, match, aux)
 
 #ifdef notdef
 int
-ep_pcmcia_enable(sc)
-	struct ep_softc *sc;
+ep_pcmcia_enable(struct ep_softc *sc)
 {
 	struct ep_pcmcia_softc *psc = (struct ep_pcmcia_softc *) sc;
 	struct pcmcia_function *pf = psc->sc_pf;
@@ -205,8 +201,7 @@ ep_pcmcia_enable(sc)
 #endif
 
 int
-ep_pcmcia_enable1(sc)
-	struct ep_softc *sc;
+ep_pcmcia_enable1(struct ep_softc *sc)
 {
 	struct ep_pcmcia_softc *psc = (struct ep_pcmcia_softc *) sc;
 	struct pcmcia_function *pf = psc->sc_pf;
@@ -235,8 +230,7 @@ ep_pcmcia_enable1(sc)
 
 #ifdef notyet
 void
-ep_pcmcia_disable(sc)
-	struct ep_softc *sc;
+ep_pcmcia_disable(struct ep_softc *sc)
 {
 	struct ep_pcmcia_softc *psc = (struct ep_pcmcia_softc *) sc;
 
@@ -245,8 +239,7 @@ ep_pcmcia_disable(sc)
 }
 
 void
-ep_pcmcia_disable1(sc)
-	struct ep_softc *sc;
+ep_pcmcia_disable1(struct ep_softc *sc)
 {
 	struct ep_pcmcia_softc *psc = (struct ep_pcmcia_softc *) sc;
 
@@ -255,9 +248,7 @@ ep_pcmcia_disable1(sc)
 #endif
 
 void
-ep_pcmcia_attach(parent, self, aux)
-	struct device  *parent, *self;
-	void           *aux;
+ep_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ep_pcmcia_softc *psc = (void *) self;
 	struct ep_softc *sc = &psc->sc_ep;
@@ -375,9 +366,7 @@ ep_pcmcia_attach(parent, self, aux)
 }
 
 int
-ep_pcmcia_detach(dev, flags)
-	struct device *dev;
-	int flags;
+ep_pcmcia_detach(struct device *dev, int flags)
 {
 	int rv;
 	struct ep_pcmcia_softc *psc = (struct ep_pcmcia_softc *)dev;
@@ -392,9 +381,7 @@ ep_pcmcia_detach(dev, flags)
 }
 
 int
-ep_pcmcia_activate(dev, act)
-	struct device *dev;
-	int act;
+ep_pcmcia_activate(struct device *dev, int act)
 {
 	struct ep_pcmcia_softc *sc = (struct ep_pcmcia_softc *)dev;
 	struct ep_softc *esc = &sc->sc_ep;
@@ -428,9 +415,7 @@ ep_pcmcia_activate(dev, act)
 }
 
 int
-ep_pcmcia_get_enaddr(tuple, arg)
-	struct pcmcia_tuple *tuple;
-	void *arg;
+ep_pcmcia_get_enaddr(struct pcmcia_tuple *tuple, void *arg)
 {
 	u_int8_t *myla = arg;
 	int i;

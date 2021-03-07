@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_pcmcia.c,v 1.57 2017/12/30 20:46:59 guenther Exp $	*/
+/*	$OpenBSD: com_pcmcia.c,v 1.58 2021/03/07 06:20:09 jsg Exp $	*/
 /*	$NetBSD: com_pcmcia.c,v 1.15 1998/08/22 17:47:58 msaitoh Exp $	*/
 
 /*
@@ -150,9 +150,7 @@ struct cfattach com_pcmcia_ca = {
 };
 
 int
-com_pcmcia_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+com_pcmcia_match(struct device *parent, void *match, void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
@@ -200,9 +198,7 @@ com_pcmcia_match(parent, match, aux)
 }
 
 int
-com_pcmcia_activate(dev, act)
-	struct device *dev;
-	int act;
+com_pcmcia_activate(struct device *dev, int act)
 {
 	struct com_pcmcia_softc *sc = (void *) dev;
 
@@ -230,9 +226,7 @@ com_pcmcia_activate(dev, act)
 }
 
 void
-com_pcmcia_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+com_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct com_pcmcia_softc *psc = (void *) self;
 	struct com_softc *sc = &psc->sc_com;
@@ -326,9 +320,7 @@ found:
 }
 
 int
-com_pcmcia_detach(dev, flags)
-	struct device *dev;
-	int flags;
+com_pcmcia_detach(struct device *dev, int flags)
 {
 	struct com_pcmcia_softc *psc = (struct com_pcmcia_softc *)dev;
 	int error;
@@ -345,8 +337,7 @@ com_pcmcia_detach(dev, flags)
 }
 
 int
-com_pcmcia_enable(sc)
-	struct com_softc *sc;
+com_pcmcia_enable(struct com_softc *sc)
 {
 	struct com_pcmcia_softc *psc = (struct com_pcmcia_softc *) sc;
 	struct pcmcia_function *pf = psc->sc_pf;
@@ -363,8 +354,7 @@ com_pcmcia_enable(sc)
 }
 
 int
-com_pcmcia_enable1(sc)
-	struct com_softc *sc;
+com_pcmcia_enable1(struct com_softc *sc)
 {
 	struct com_pcmcia_softc *psc = (struct com_pcmcia_softc *) sc;
 	struct pcmcia_function *pf = psc->sc_pf;
@@ -391,8 +381,7 @@ com_pcmcia_enable1(sc)
 }
 
 void
-com_pcmcia_disable(sc)
-	struct com_softc *sc;
+com_pcmcia_disable(struct com_softc *sc)
 {
 	struct com_pcmcia_softc *psc = (struct com_pcmcia_softc *) sc;
 
@@ -401,8 +390,7 @@ com_pcmcia_disable(sc)
 }
 
 void
-com_pcmcia_disable1(sc)
-	struct com_softc *sc;
+com_pcmcia_disable1(struct com_softc *sc)
 {
 	struct com_pcmcia_softc *psc = (struct com_pcmcia_softc *) sc;
 

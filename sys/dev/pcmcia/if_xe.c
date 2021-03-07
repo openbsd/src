@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.60 2020/07/10 13:26:40 patrick Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.61 2021/03/07 06:20:09 jsg Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, Brandon Creighton, Job de Haas
@@ -182,9 +182,7 @@ void	xe_reg_dump(struct xe_softc *);
 #endif	/* XEDEBUG */
 
 int
-xe_pcmcia_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+xe_pcmcia_match(struct device *parent, void *match, void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 	
@@ -207,9 +205,7 @@ xe_pcmcia_match(parent, match, aux)
 }
 
 void
-xe_pcmcia_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+xe_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct xe_pcmcia_softc *psc = (struct xe_pcmcia_softc *)self;
 	struct xe_softc *sc = &psc->sc_xe;
@@ -425,9 +421,7 @@ bad:
 }
 
 int
-xe_pcmcia_detach(dev, flags)
-	struct device *dev;
-	int flags;
+xe_pcmcia_detach(struct device *dev, int flags)
 {
 	struct xe_pcmcia_softc *psc = (struct xe_pcmcia_softc *)dev;
 	struct xe_softc *sc = &psc->sc_xe;
@@ -447,9 +441,7 @@ xe_pcmcia_detach(dev, flags)
 }
 
 int
-xe_pcmcia_activate(dev, act)
-	struct device *dev;
-	int act;
+xe_pcmcia_activate(struct device *dev, int act)
 {
 	struct xe_pcmcia_softc *sc = (struct xe_pcmcia_softc *)dev;
 	struct ifnet *ifp = &sc->sc_xe.sc_arpcom.ac_if;
@@ -490,18 +482,14 @@ xe_pcmcia_activate(dev, act)
  * if_sm_pcmcia.c uses similar ones.
  */
 int
-xe_pcmcia_funce_enaddr(parent, myla)
-	struct device *parent;
-	u_int8_t *myla;
+xe_pcmcia_funce_enaddr(struct device *parent, u_int8_t *myla)
 {
 	/* XXX The Linux driver has more ways to do this in case of failure. */
 	return (pcmcia_scan_cis(parent, xe_pcmcia_lan_nid_ciscallback, myla));
 }
 
 int
-xe_pcmcia_lan_nid_ciscallback(tuple, arg)
-	struct pcmcia_tuple *tuple;
-	void *arg;
+xe_pcmcia_lan_nid_ciscallback(struct pcmcia_tuple *tuple, void *arg)
 {
 	u_int8_t *myla = arg;
 	int i;
@@ -545,8 +533,7 @@ xe_pcmcia_lan_nid_ciscallback(tuple, arg)
 }
 
 u_int32_t
-xe_pcmcia_interpret_manfid (parent)
-	struct device *parent;
+xe_pcmcia_interpret_manfid(struct device *parent)
 {
 	u_int32_t flags = 0;
 	struct pcmcia_softc *psc = (struct pcmcia_softc *)parent;
@@ -568,9 +555,7 @@ xe_pcmcia_interpret_manfid (parent)
 }
 
 int
-xe_pcmcia_manfid_ciscallback(tuple, arg)
-	struct pcmcia_tuple *tuple;
-	void *arg;
+xe_pcmcia_manfid_ciscallback(struct pcmcia_tuple *tuple, void *arg)
 {
 	u_int32_t *flagsp = arg;
 	u_int8_t media, product;
@@ -625,8 +610,7 @@ xe_pcmcia_manfid_ciscallback(tuple, arg)
 }
 
 int
-xe_intr(arg)
-	void *arg;
+xe_intr(void *arg)
 {
 	struct xe_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
@@ -743,8 +727,7 @@ end:
 }
 
 u_int16_t
-xe_get(sc)
-	struct xe_softc *sc;
+xe_get(struct xe_softc *sc)
 {
 	u_int8_t rsr;
 	struct mbuf *top, **mp, *m;
@@ -838,8 +821,7 @@ xe_get(sc)
 /* Let the MII serial management be idle for one period. */
 static INLINE void xe_mdi_idle(struct xe_softc *);
 static INLINE void
-xe_mdi_idle(sc)
-	struct xe_softc *sc;
+xe_mdi_idle(struct xe_softc *sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
@@ -857,9 +839,7 @@ xe_mdi_idle(sc)
 /* Pulse out one bit of data. */
 static INLINE void xe_mdi_pulse(struct xe_softc *, int);
 static INLINE void
-xe_mdi_pulse(sc, data)
-	struct xe_softc *sc;
-	int data;
+xe_mdi_pulse(struct xe_softc *sc, int data)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
@@ -878,8 +858,7 @@ xe_mdi_pulse(sc, data)
 /* Probe one bit of data. */
 static INLINE int xe_mdi_probe(struct xe_softc *sc);
 static INLINE int
-xe_mdi_probe(sc)
-	struct xe_softc *sc;
+xe_mdi_probe(struct xe_softc *sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
@@ -901,10 +880,7 @@ xe_mdi_probe(sc)
 /* Pulse out a sequence of data bits. */
 static INLINE void xe_mdi_pulse_bits(struct xe_softc *, u_int32_t, int);
 static INLINE void
-xe_mdi_pulse_bits(sc, data, len)
-	struct xe_softc *sc;
-	u_int32_t data;
-	int len;
+xe_mdi_pulse_bits(struct xe_softc *sc, u_int32_t data, int len)
 {
 	u_int32_t mask;
 
@@ -914,10 +890,7 @@ xe_mdi_pulse_bits(sc, data, len)
 
 /* Read a PHY register. */
 int
-xe_mdi_read(self, phy, reg)
-	struct device *self;
-	int phy;
-	int reg;
+xe_mdi_read(struct device *self, int phy, int reg)
 {
 	struct xe_softc *sc = (struct xe_softc *)self;
 	int i;
@@ -945,11 +918,7 @@ xe_mdi_read(self, phy, reg)
 
 /* Write a PHY register. */
 void
-xe_mdi_write(self, phy, reg, value)
-	struct device *self;
-	int phy;
-	int reg;
-	int value;
+xe_mdi_write(struct device *self, int phy, int reg, int value)
 {
 	struct xe_softc *sc = (struct xe_softc *)self;
 	int i;
@@ -969,8 +938,7 @@ xe_mdi_write(self, phy, reg, value)
 }
 
 void
-xe_statchg(self)
-	struct device *self;
+xe_statchg(struct device *self)
 {
 }
 
@@ -978,8 +946,7 @@ xe_statchg(self)
  * Change media according to request.
  */
 int
-xe_mediachange(ifp)
-	struct ifnet *ifp;
+xe_mediachange(struct ifnet *ifp)
 {
 	if (ifp->if_flags & IFF_UP)
 		xe_init(ifp->if_softc);
@@ -990,9 +957,7 @@ xe_mediachange(ifp)
  * Notify the world which media we're using.
  */
 void
-xe_mediastatus(ifp, ifmr)
-	struct ifnet *ifp;
-	struct ifmediareq *ifmr;
+xe_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct xe_softc *sc = ifp->if_softc;
 
@@ -1002,8 +967,7 @@ xe_mediastatus(ifp, ifmr)
 }
 
 void
-xe_reset(sc)
-	struct xe_softc *sc;
+xe_reset(struct xe_softc *sc)
 {
 	int s;
 
@@ -1015,8 +979,7 @@ xe_reset(sc)
 }
 
 void
-xe_watchdog(ifp)
-	struct ifnet *ifp;
+xe_watchdog(struct ifnet *ifp)
 {
 	struct xe_softc *sc = ifp->if_softc;
 
@@ -1027,8 +990,7 @@ xe_watchdog(ifp)
 }
 
 void
-xe_stop(sc)
-	register struct xe_softc *sc;
+xe_stop(struct xe_softc *sc)
 {
 	/* Disable interrupts. */
 	PAGE(sc, 0);
@@ -1047,8 +1009,7 @@ xe_stop(sc)
 }
 
 void
-xe_init(sc)
-	struct xe_softc *sc;
+xe_init(struct xe_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int s;
@@ -1072,8 +1033,7 @@ xe_init(sc)
  * Always called as splnet().
  */
 void
-xe_start(ifp)
-	struct ifnet *ifp;
+xe_start(struct ifnet *ifp)
 {
 	struct xe_softc *sc = ifp->if_softc;
 	bus_space_tag_t bst = sc->sc_bst;
@@ -1152,10 +1112,7 @@ xe_start(ifp)
 }
 
 int
-xe_ioctl(ifp, command, data)
-	struct ifnet *ifp;
-	u_long command;
-	caddr_t data;
+xe_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct xe_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
@@ -1237,8 +1194,7 @@ xe_ioctl(ifp, command, data)
 }
 
 void
-xe_set_address(sc)
-	struct xe_softc *sc;
+xe_set_address(struct xe_softc *sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
@@ -1289,8 +1245,7 @@ xe_set_address(sc)
 }
 
 void
-xe_cycle_power(sc)
-	struct xe_softc *sc;
+xe_cycle_power(struct xe_softc *sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
@@ -1309,8 +1264,7 @@ xe_cycle_power(sc)
 }
 
 void
-xe_full_reset(sc)
-	struct xe_softc *sc;
+xe_full_reset(struct xe_softc *sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
@@ -1461,8 +1415,7 @@ xe_full_reset(sc)
 
 #ifdef XEDEBUG
 void
-xe_reg_dump(sc)
-	struct xe_softc *sc;
+xe_reg_dump(struct xe_softc *sc)
 {
 	int page, i;
 	bus_space_tag_t bst = sc->sc_bst;

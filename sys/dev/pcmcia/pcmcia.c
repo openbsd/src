@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia.c,v 1.48 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: pcmcia.c,v 1.49 2021/03/07 06:20:09 jsg Exp $	*/
 /*	$NetBSD: pcmcia.c,v 1.9 1998/08/13 02:10:55 eeh Exp $	*/
 
 /*
@@ -69,9 +69,7 @@ struct cfattach pcmcia_ca = {
 };
 
 int
-pcmcia_ccr_read(pf, ccr)
-	struct pcmcia_function *pf;
-	int ccr;
+pcmcia_ccr_read(struct pcmcia_function *pf, int ccr)
 {
 
 	return (bus_space_read_1(pf->pf_ccrt, pf->pf_ccrh,
@@ -79,10 +77,7 @@ pcmcia_ccr_read(pf, ccr)
 }
 
 void
-pcmcia_ccr_write(pf, ccr, val)
-	struct pcmcia_function *pf;
-	int ccr;
-	int val;
+pcmcia_ccr_write(struct pcmcia_function *pf, int ccr, int val)
 {
 
 	if ((pf->ccr_mask) & (1 << (ccr / 2))) {
@@ -92,9 +87,7 @@ pcmcia_ccr_write(pf, ccr, val)
 }
 
 int
-pcmcia_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+pcmcia_match(struct device *parent, void *match, void *aux)
 {
 	struct cfdata *cf = match;
 	struct pcmciabus_attach_args *paa = aux;
@@ -107,9 +100,7 @@ pcmcia_match(parent, match, aux)
 }
 
 void
-pcmcia_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pcmcia_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pcmciabus_attach_args *paa = aux;
 	struct pcmcia_softc *sc = (struct pcmcia_softc *) self;
@@ -157,8 +148,7 @@ pcmcia_activate(struct device *self, int act)
 }
 
 int
-pcmcia_card_attach(dev)
-	struct device *dev;
+pcmcia_card_attach(struct device *dev)
 {
 	struct pcmcia_softc *sc = (struct pcmcia_softc *) dev;
 	struct pcmcia_function *pf;
@@ -252,9 +242,7 @@ pcmcia_card_attach(dev)
 }
 
 void
-pcmcia_card_detach(dev, flags)
-	struct device *dev;
-	int flags;		/* DETACH_* flags */
+pcmcia_card_detach(struct device *dev, int flags)
 {
 	struct pcmcia_softc *sc = (struct pcmcia_softc *) dev;
 	struct pcmcia_function *pf;
@@ -282,8 +270,7 @@ pcmcia_card_detach(dev, flags)
 }
 
 void
-pcmcia_card_deactivate(dev)
-	struct device *dev;
+pcmcia_card_deactivate(struct device *dev)
 {
 	struct pcmcia_softc *sc = (struct pcmcia_softc *) dev;
 	struct pcmcia_function *pf;
@@ -305,9 +292,7 @@ pcmcia_card_deactivate(dev)
 }
 
 int
-pcmcia_submatch(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+pcmcia_submatch(struct device *parent, void *match, void *aux)
 {
 	struct cfdata *cf = match;
 	struct pcmcia_attach_args *paa = aux;
@@ -321,9 +306,7 @@ pcmcia_submatch(parent, match, aux)
 }
 
 int
-pcmcia_print(arg, pnp)
-	void *arg;
-	const char *pnp;
+pcmcia_print(void *arg, const char *pnp)
 {
 	struct pcmcia_attach_args *pa = arg;
 	struct pcmcia_softc *sc = pa->pf->sc;
@@ -368,8 +351,7 @@ pcmcia_print(arg, pnp)
 }
 
 int
-pcmcia_card_gettype(dev)
-	struct device  *dev;
+pcmcia_card_gettype(struct device *dev)
 {
 	struct pcmcia_softc *sc = (struct pcmcia_softc *)dev;
 	struct pcmcia_function *pf;
@@ -393,9 +375,8 @@ pcmcia_card_gettype(dev)
  * disabled.
  */
 void
-pcmcia_function_init(pf, cfe)
-	struct pcmcia_function *pf;
-	struct pcmcia_config_entry *cfe;
+pcmcia_function_init(struct pcmcia_function *pf,
+    struct pcmcia_config_entry *cfe)
 {
 	if (pf->pf_flags & PFF_ENABLED)
 		panic("pcmcia_function_init: function is enabled");
@@ -406,8 +387,7 @@ pcmcia_function_init(pf, cfe)
 
 /* Enable a PCMCIA function */
 int
-pcmcia_function_enable(pf)
-	struct pcmcia_function *pf;
+pcmcia_function_enable(struct pcmcia_function *pf)
 {
 	struct pcmcia_function *tmp;
 	int reg;
@@ -551,8 +531,7 @@ pcmcia_function_enable(pf)
 
 /* Disable PCMCIA function. */
 void
-pcmcia_function_disable(pf)
-	struct pcmcia_function *pf;
+pcmcia_function_disable(struct pcmcia_function *pf)
 {
 	struct pcmcia_function *tmp;
 
@@ -604,13 +583,8 @@ pcmcia_function_disable(pf)
 }
 
 int
-pcmcia_io_map(pf, width, offset, size, pcihp, windowp)
-	struct pcmcia_function *pf;
-	int width;
-	bus_addr_t offset;
-	bus_size_t size;
-	struct pcmcia_io_handle *pcihp;
-	int *windowp;
+pcmcia_io_map(struct pcmcia_function *pf, int width, bus_addr_t offset,
+    bus_size_t size, struct pcmcia_io_handle *pcihp, int *windowp)
 {
 	int reg;
 
@@ -658,12 +632,8 @@ pcmcia_io_map(pf, width, offset, size, pcihp, windowp)
 }
 
 void *
-pcmcia_intr_establish(pf, ipl, ih_fct, ih_arg, xname)
-	struct pcmcia_function *pf;
-	int ipl;
-	int (*ih_fct)(void *);
-	void *ih_arg;
-	char *xname;
+pcmcia_intr_establish(struct pcmcia_function *pf, int ipl,
+    int (*ih_fct)(void *), void *ih_arg, char *xname)
 {
 	void *ret;
 	int s, ihcnt, hiipl, reg;
@@ -764,9 +734,7 @@ pcmcia_intr_establish(pf, ipl, ih_fct, ih_arg, xname)
 }
 
 void
-pcmcia_intr_disestablish(pf, ih)
-	struct pcmcia_function *pf;
-	void *ih;
+pcmcia_intr_disestablish(struct pcmcia_function *pf, void *ih)
 {
 	int s, reg, ihcnt, hiipl;
 	struct pcmcia_function *pf2;
@@ -848,16 +816,13 @@ pcmcia_intr_disestablish(pf, ih)
 }
 
 const char *
-pcmcia_intr_string(pf, ih)
-	struct pcmcia_function *pf;
-	void *ih;
+pcmcia_intr_string(struct pcmcia_function *pf, void *ih)
 {
 	return pcmcia_chip_intr_string(pf->sc->pct, pf->sc->pch, ih);
 }
 
 int
-pcmcia_card_intr(arg)
-	void *arg;
+pcmcia_card_intr(void *arg)
 {
 	struct pcmcia_softc *sc = arg;
 	struct pcmcia_function *pf;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.99 2015/11/24 13:33:18 mpi Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.100 2021/03/07 06:20:09 jsg Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -590,9 +590,7 @@ const struct ne2000dev {
  &ne2000devs[(n)]:NULL)
 
 int
-ne_pcmcia_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+ne_pcmcia_match(struct device *parent, void *match, void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 	int i;
@@ -606,9 +604,7 @@ ne_pcmcia_match(parent, match, aux)
 }
 
 void
-ne_pcmcia_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ne_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ne_pcmcia_softc *psc = (void *) self;
 	struct ne2000_softc *nsc = &psc->sc_ne2000;
@@ -834,9 +830,7 @@ fail_1:
 }
 
 int
-ne_pcmcia_detach(dev, flags)
-	struct device *dev;
-	int flags;
+ne_pcmcia_detach(struct device *dev, int flags)
 {
 	struct ne_pcmcia_softc *psc = (struct ne_pcmcia_softc *)dev;
 	int error;
@@ -860,9 +854,7 @@ ne_pcmcia_detach(dev, flags)
 }
 
 int
-ne_pcmcia_activate(dev, act)
-	struct device *dev;
-	int act;
+ne_pcmcia_activate(struct device *dev, int act)
 {
 	struct ne_pcmcia_softc *sc = (struct ne_pcmcia_softc *)dev;
 	struct dp8390_softc *esc = &sc->sc_ne2000.sc_dp8390;
@@ -905,8 +897,7 @@ ne_pcmcia_activate(dev, act)
 
 #ifdef notyet
 int
-ne_pcmcia_enable(dsc)
-	struct dp8390_softc *dsc;
+ne_pcmcia_enable(struct dp8390_softc *dsc)
 {
 	struct ne_pcmcia_softc *psc = (struct ne_pcmcia_softc *)dsc;
 
@@ -923,8 +914,7 @@ ne_pcmcia_enable(dsc)
 }
 
 void
-ne_pcmcia_disable(dsc)
-	struct dp8390_softc *dsc;
+ne_pcmcia_disable(struct dp8390_softc *dsc)
 {
 	struct ne_pcmcia_softc *psc = (struct ne_pcmcia_softc *)dsc;
 
@@ -934,10 +924,8 @@ ne_pcmcia_disable(dsc)
 #endif
 
 u_int8_t *
-ne_pcmcia_get_enaddr(psc, maddr, myea)
-	struct ne_pcmcia_softc *psc;
-	int maddr;
-	u_int8_t myea[ETHER_ADDR_LEN];
+ne_pcmcia_get_enaddr(struct ne_pcmcia_softc *psc, int maddr,
+    u_int8_t myea[ETHER_ADDR_LEN])
 {
 	struct ne2000_softc *nsc = &psc->sc_ne2000;
 	struct dp8390_softc *dsc = &nsc->sc_dp8390;
@@ -973,9 +961,8 @@ ne_pcmcia_get_enaddr(psc, maddr, myea)
 }
 
 u_int8_t *
-ne_pcmcia_dl10019_get_enaddr(psc, myea)
-	struct ne_pcmcia_softc *psc;
-	u_int8_t myea[ETHER_ADDR_LEN];
+ne_pcmcia_dl10019_get_enaddr(struct ne_pcmcia_softc *psc,
+    u_int8_t myea[ETHER_ADDR_LEN])
 {
 	struct ne2000_softc *nsc = &psc->sc_ne2000;
 	u_int8_t sum;
@@ -1004,8 +991,7 @@ ne_pcmcia_dl10019_get_enaddr(psc, myea)
 }
 
 int
-ne_pcmcia_ax88190_set_iobase(psc)
-	struct ne_pcmcia_softc *psc;
+ne_pcmcia_ax88190_set_iobase(struct ne_pcmcia_softc *psc)
 {
 	struct ne2000_softc *nsc = &psc->sc_ne2000;
 	struct dp8390_softc *dsc = &nsc->sc_dp8390;

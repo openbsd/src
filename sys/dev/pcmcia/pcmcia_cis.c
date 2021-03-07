@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia_cis.c,v 1.21 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: pcmcia_cis.c,v 1.22 2021/03/07 06:20:09 jsg Exp $	*/
 /*	$NetBSD: pcmcia_cis.c,v 1.9 1998/08/22 23:41:48 msaitoh Exp $	*/
 
 /*
@@ -81,8 +81,7 @@ pcmcia_cis_read_1(struct pcmcia_tuple *tuple, bus_size_t idx)
 }
 
 void
-pcmcia_read_cis(sc)
-	struct pcmcia_softc *sc;
+pcmcia_read_cis(struct pcmcia_softc *sc)
 {
 	struct cis_state state;
 
@@ -109,10 +108,8 @@ pcmcia_read_cis(sc)
 }
 
 int
-pcmcia_scan_cis(dev, fct, arg)
-	struct device *dev;
-	int (*fct)(struct pcmcia_tuple *, void *);
-	void *arg;
+pcmcia_scan_cis(struct device *dev, int (*fct)(struct pcmcia_tuple *, void *),
+    void *arg)
 {
 	struct pcmcia_softc *sc = (struct pcmcia_softc *) dev;
 	pcmcia_chipset_tag_t pct;
@@ -528,8 +525,7 @@ done:
 /* XXX this is incredibly verbose.  Not sure what trt is */
 
 void
-pcmcia_print_cis(sc)
-	struct pcmcia_softc *sc;
+pcmcia_print_cis(struct pcmcia_softc *sc)
 {
 	struct pcmcia_card *card = &sc->card;
 	struct pcmcia_function *pf;
@@ -693,9 +689,7 @@ pcmcia_print_cis(sc)
 }
 
 int
-pcmcia_parse_cis_tuple(tuple, arg)
-	struct pcmcia_tuple *tuple;
-	void *arg;
+pcmcia_parse_cis_tuple(struct pcmcia_tuple *tuple, void *arg)
 {
 	/* most of these are educated guesses */
 	static struct pcmcia_config_entry init_cfe = {

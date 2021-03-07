@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sm_pcmcia.c,v 1.37 2015/11/24 17:11:40 mpi Exp $	*/
+/*	$OpenBSD: if_sm_pcmcia.c,v 1.38 2021/03/07 06:20:09 jsg Exp $	*/
 /*	$NetBSD: if_sm_pcmcia.c,v 1.11 1998/08/15 20:47:32 thorpej Exp $  */
 
 /*-
@@ -112,9 +112,7 @@ struct sm_pcmcia_product {
 };
 
 int
-sm_pcmcia_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+sm_pcmcia_match(struct device *parent, void *match, void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 	int i;
@@ -128,9 +126,7 @@ sm_pcmcia_match(parent, match, aux)
 }
 
 void
-sm_pcmcia_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+sm_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sm_pcmcia_softc *psc = (struct sm_pcmcia_softc *)self;
 	struct smc91cxx_softc *sc = &psc->sc_smc;
@@ -219,9 +215,7 @@ sm_pcmcia_attach(parent, self, aux)
 }
 
 int
-sm_pcmcia_detach(dev, flags)
-	struct device *dev;
-	int flags;
+sm_pcmcia_detach(struct device *dev, int flags)
 {
 	struct sm_pcmcia_softc *psc = (struct sm_pcmcia_softc *)dev;
 	struct ifnet *ifp = &psc->sc_smc.sc_arpcom.ac_if;
@@ -237,9 +231,7 @@ sm_pcmcia_detach(dev, flags)
 }
 
 int
-sm_pcmcia_activate(dev, act)
-	struct device *dev;
-	int act;
+sm_pcmcia_activate(struct device *dev, int act)
 {
 	struct sm_pcmcia_softc *sc = (struct sm_pcmcia_softc *)dev;
 	struct ifnet *ifp = &sc->sc_smc.sc_arpcom.ac_if;
@@ -259,9 +251,7 @@ sm_pcmcia_activate(dev, act)
 }
 
 int
-sm_pcmcia_ascii_enaddr(cisstr, myla)
-	const char *cisstr;
-	u_int8_t *myla;
+sm_pcmcia_ascii_enaddr(const char *cisstr, u_int8_t *myla)
 {
 	char enaddr_str[12];
 	int i, j;
@@ -302,18 +292,14 @@ sm_pcmcia_ascii_enaddr(cisstr, myla)
 }
 
 int
-sm_pcmcia_funce_enaddr(parent, myla)
-	struct device *parent;
-	u_int8_t *myla;
+sm_pcmcia_funce_enaddr(struct device *parent, u_int8_t *myla)
 {
 
 	return (pcmcia_scan_cis(parent, sm_pcmcia_lannid_ciscallback, myla));
 }
 
 int
-sm_pcmcia_lannid_ciscallback(tuple, arg)
-	struct pcmcia_tuple *tuple;
-	void *arg;
+sm_pcmcia_lannid_ciscallback(struct pcmcia_tuple *tuple, void *arg)
 {
 	u_int8_t *myla = arg;
 	int i;
@@ -337,8 +323,7 @@ sm_pcmcia_lannid_ciscallback(tuple, arg)
 }
 
 int
-sm_pcmcia_enable(sc)
-	struct smc91cxx_softc *sc;
+sm_pcmcia_enable(struct smc91cxx_softc *sc)
 {
 	struct sm_pcmcia_softc *psc = (struct sm_pcmcia_softc *)sc;
 
@@ -355,8 +340,7 @@ sm_pcmcia_enable(sc)
 }
 
 void
-sm_pcmcia_disable(sc)
-	struct smc91cxx_softc *sc;
+sm_pcmcia_disable(struct smc91cxx_softc *sc)
 {
 	struct sm_pcmcia_softc *psc = (struct sm_pcmcia_softc *)sc;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic_pcmcia.c,v 1.17 2015/03/14 03:38:49 jsg Exp $	*/
+/*	$OpenBSD: aic_pcmcia.c,v 1.18 2021/03/07 06:20:09 jsg Exp $	*/
 /*	$NetBSD: aic_pcmcia.c,v 1.6 1998/07/19 17:28:15 christos Exp $	*/
 
 /*
@@ -82,9 +82,7 @@ struct aic_pcmcia_product {
 };
 
 int
-aic_pcmcia_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+aic_pcmcia_match(struct device *parent, void *match, void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 	int i;
@@ -98,9 +96,7 @@ aic_pcmcia_match(parent, match, aux)
 }
 
 void
-aic_pcmcia_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+aic_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct aic_pcmcia_softc *psc = (void *)self;
 	struct aic_softc *sc = &psc->sc_aic;
@@ -173,9 +169,7 @@ aic_pcmcia_attach(parent, self, aux)
 }
 
 int
-aic_pcmcia_detach(self, flags)
-	struct device *self;
-	int flags;
+aic_pcmcia_detach(struct device *self, int flags)
 {
 	struct aic_pcmcia_softc *sc= (void *)self;
 	int error;

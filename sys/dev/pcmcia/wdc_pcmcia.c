@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_pcmcia.c,v 1.32 2017/12/30 20:46:59 guenther Exp $	*/
+/*	$OpenBSD: wdc_pcmcia.c,v 1.33 2021/03/07 06:20:09 jsg Exp $	*/
 /*	$NetBSD: wdc_pcmcia.c,v 1.19 1999/02/19 21:49:43 abs Exp $ */
 
 /*-
@@ -135,9 +135,7 @@ struct wdc_pcmcia_product *
 	wdc_pcmcia_lookup(struct pcmcia_attach_args *);
 
 int
-wdc_pcmcia_disk_device_interface_callback(tuple, arg)
-	struct pcmcia_tuple *tuple;
-	void *arg;
+wdc_pcmcia_disk_device_interface_callback(struct pcmcia_tuple *tuple, void *arg)
 {
 	struct wdc_pcmcia_disk_device_interface_args *ddi = arg;
 
@@ -166,8 +164,7 @@ wdc_pcmcia_disk_device_interface_callback(tuple, arg)
 }
 
 int
-wdc_pcmcia_disk_device_interface(pf)
-	struct pcmcia_function *pf;
+wdc_pcmcia_disk_device_interface(struct pcmcia_function *pf)
 {
 	struct wdc_pcmcia_disk_device_interface_args ddi;
 
@@ -181,8 +178,7 @@ wdc_pcmcia_disk_device_interface(pf)
 }
 
 struct wdc_pcmcia_product *
-wdc_pcmcia_lookup(pa)
-	struct pcmcia_attach_args *pa;
+wdc_pcmcia_lookup(struct pcmcia_attach_args *pa)
 {
 	struct wdc_pcmcia_product *wpp;
 	int i, cis_match;
@@ -210,9 +206,7 @@ wdc_pcmcia_lookup(pa)
 }
 
 static int
-wdc_pcmcia_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+wdc_pcmcia_match(struct device *parent, void *match, void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_softc *sc;
@@ -236,10 +230,7 @@ wdc_pcmcia_match(parent, match, aux)
 }
 
 static void
-wdc_pcmcia_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+wdc_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct wdc_pcmcia_softc *sc = (void *)self;
 	struct pcmcia_attach_args *pa = aux;
@@ -386,9 +377,7 @@ wdc_pcmcia_attach(parent, self, aux)
 }
 
 int
-wdc_pcmcia_detach(self, flags)
-	struct device *self;
-	int  flags;
+wdc_pcmcia_detach(struct device *self, int flags)
 {
         struct wdc_pcmcia_softc *sc = (struct wdc_pcmcia_softc *)self;
         int error;
@@ -415,9 +404,7 @@ wdc_pcmcia_detach(self, flags)
 }
 
 int
-wdc_pcmcia_activate(self, act)
-	struct device *self;
-	int act;
+wdc_pcmcia_activate(struct device *self, int act)
 {
 	struct wdc_pcmcia_softc *sc = (struct wdc_pcmcia_softc *)self;
 	int rv = 0;
