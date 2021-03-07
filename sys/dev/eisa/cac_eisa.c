@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac_eisa.c,v 1.5 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: cac_eisa.c,v 1.6 2021/03/07 06:18:48 jsg Exp $	*/
 /*	$NetBSD: cac_eisa.c,v 1.1 2000/09/01 12:15:20 ad Exp $	*/
 
 /*-
@@ -118,9 +118,7 @@ struct cac_eisa_type {
 };
 
 int
-cac_eisa_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+cac_eisa_match(struct device *parent, void *match, void *aux)
 {
 	struct eisa_attach_args *ea;
 	int i;
@@ -135,10 +133,7 @@ cac_eisa_match(parent, match, aux)
 }
 
 void
-cac_eisa_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+cac_eisa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct eisa_attach_args *ea;
 	bus_space_handle_t ioh;

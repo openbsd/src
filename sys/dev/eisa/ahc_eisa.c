@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_eisa.c,v 1.23 2020/07/05 21:54:44 krw Exp $	*/
+/*	$OpenBSD: ahc_eisa.c,v 1.24 2021/03/07 06:18:48 jsg Exp $	*/
 /*	$NetBSD: ahc_eisa.c,v 1.10 1996/10/21 22:30:58 thorpej Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: ahc_eisa.c,v 1.23 2020/07/05 21:54:44 krw Exp $
+ *	$Id: ahc_eisa.c,v 1.24 2021/03/07 06:18:48 jsg Exp $
  */
 
 #include <sys/param.h>
@@ -67,9 +67,7 @@ struct cfattach ahc_eisa_ca = {
  * Return irq setting of the board, otherwise -1.
  */
 int
-ahc_eisa_irq(iot, ioh)
-bus_space_tag_t iot;
-bus_space_handle_t ioh;
+ahc_eisa_irq(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
 	int irq;
 	u_char intdef;
@@ -103,9 +101,7 @@ bus_space_handle_t ioh;
  * the actual probe routine to check it out.
  */
 int
-ahc_eisa_match(parent, match, aux)
-struct device *parent;
-void *match, *aux;
+ahc_eisa_match(struct device *parent, void *match, void *aux)
 {
 	struct eisa_attach_args *ea = aux;
 	bus_space_tag_t iot = ea->ea_iot;
@@ -134,9 +130,7 @@ void *match, *aux;
 }
 
 void
-ahc_eisa_attach(parent, self, aux)
-struct device *parent, *self;
-void *aux;
+ahc_eisa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ahc_softc *ahc = (void *)self;
 	struct eisa_attach_args *ea = aux;

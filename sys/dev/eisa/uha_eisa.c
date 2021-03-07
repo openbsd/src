@@ -1,4 +1,4 @@
-/*	$OpenBSD: uha_eisa.c,v 1.14 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: uha_eisa.c,v 1.15 2021/03/07 06:18:48 jsg Exp $	*/
 /*	$NetBSD: uha_eisa.c,v 1.5 1996/10/21 22:31:07 thorpej Exp $	*/
 
 /*
@@ -72,9 +72,7 @@ void u24_init(struct uha_softc *);
  * the actual probe routine to check it out.
  */
 int
-uha_eisa_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+uha_eisa_match(struct device *parent, void *match, void *aux)
 {
 	struct eisa_attach_args *ea = aux;
 	bus_space_tag_t iot = ea->ea_iot;
@@ -100,9 +98,7 @@ uha_eisa_match(parent, match, aux)
  * Attach all the sub-devices we can find
  */
 void
-uha_eisa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+uha_eisa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct eisa_attach_args *ea = aux;
 	struct uha_softc *sc = (void *)self;
@@ -154,10 +150,7 @@ uha_eisa_attach(parent, self, aux)
 }
 
 int
-u24_find(iot, ioh, sc)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	struct uha_softc *sc;
+u24_find(bus_space_tag_t iot, bus_space_handle_t ioh, struct uha_softc *sc)
 {
 	u_int8_t config0, config1, config2;
 	int irq, drq;
@@ -214,9 +207,7 @@ u24_find(iot, ioh, sc)
 }
 
 void
-u24_start_mbox(sc, mscp)
-	struct uha_softc *sc;
-	struct uha_mscp *mscp;
+u24_start_mbox(struct uha_softc *sc, struct uha_mscp *mscp)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -243,10 +234,7 @@ u24_start_mbox(sc, mscp)
 }
 
 int
-u24_poll(sc, xs, count)
-	struct uha_softc *sc;
-	struct scsi_xfer *xs;
-	int count;
+u24_poll(struct uha_softc *sc, struct scsi_xfer *xs, int count)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -271,8 +259,7 @@ u24_poll(sc, xs, count)
 }
 
 int
-u24_intr(arg)
-	void *arg;
+u24_intr(void *arg)
 {
 	struct uha_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -320,8 +307,7 @@ u24_intr(arg)
 }
 
 void
-u24_init(sc)
-	struct uha_softc *sc;
+u24_init(struct uha_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;

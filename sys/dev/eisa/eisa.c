@@ -1,4 +1,4 @@
-/*	$OpenBSD: eisa.c,v 1.13 2009/03/29 21:53:52 sthen Exp $	*/
+/*	$OpenBSD: eisa.c,v 1.14 2021/03/07 06:18:48 jsg Exp $	*/
 /*	$NetBSD: eisa.c,v 1.15 1996/10/21 22:31:01 thorpej Exp $	*/
 
 /*
@@ -65,9 +65,7 @@ int	eisaprint(void *, const char *);
 void	eisa_devinfo(const char *, char *, size_t);
 
 int
-eisamatch(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+eisamatch(struct device *parent, void *match, void *aux)
 {
 	struct cfdata *cf = match;
 	struct eisabus_attach_args *eba = aux;
@@ -81,9 +79,7 @@ eisamatch(parent, match, aux)
 }
 
 int
-eisaprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+eisaprint(void *aux, const char *pnp)
 {
 	register struct eisa_attach_args *ea = aux;
 	char devinfo[256]; 
@@ -97,9 +93,7 @@ eisaprint(aux, pnp)
 }
 
 int
-eisasubmatch(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+eisasubmatch(struct device *parent, void *match, void *aux)
 {
 	struct cfdata *cf = match;
 	struct eisa_attach_args *ea = aux;
@@ -111,9 +105,7 @@ eisasubmatch(parent, match, aux)
 }
 
 void
-eisaattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+eisaattach(struct device *parent, struct device *self, void *aux)
 {
 	struct eisabus_attach_args *eba = aux;
 	bus_space_tag_t iot, memt;

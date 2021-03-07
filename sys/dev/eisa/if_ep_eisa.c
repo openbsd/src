@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_eisa.c,v 1.26 2015/11/24 17:11:39 mpi Exp $	*/
+/*	$OpenBSD: if_ep_eisa.c,v 1.27 2021/03/07 06:18:48 jsg Exp $	*/
 /*	$NetBSD: if_ep_eisa.c,v 1.13 1997/04/18 00:50:33 cgd Exp $	*/
 
 /*
@@ -83,9 +83,7 @@ struct cfattach ep_eisa_ca = {
 #define EISA_ENABLE	0x01
 
 int
-ep_eisa_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+ep_eisa_match(struct device *parent, void *match, void *aux)
 {
 	struct eisa_attach_args *ea = aux;
 
@@ -107,9 +105,7 @@ ep_eisa_match(parent, match, aux)
 }
 
 void
-ep_eisa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ep_eisa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ep_softc *sc = (void *)self;
 	struct eisa_attach_args *ea = aux;
