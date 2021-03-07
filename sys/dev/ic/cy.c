@@ -1,4 +1,4 @@
-/*	$OpenBSD: cy.c,v 1.39 2019/07/19 00:17:15 cheloha Exp $	*/
+/*	$OpenBSD: cy.c,v 1.40 2021/03/07 06:21:38 jsg Exp $	*/
 /*
  * Copyright (c) 1996 Timo Rossi.
  * All rights reserved.
@@ -183,8 +183,7 @@ cy_probe_common(bus_space_tag_t memt, bus_space_handle_t memh, int bustype)
 }
 
 void
-cy_attach(parent, self)
-	struct device *parent, *self;
+cy_attach(struct device *parent, struct device *self)
 {
 	int card, port, cy_chip, num_chips, cdu, chip_offs, cy_clock;
 	struct cy_softc *sc = (void *)self;
@@ -257,10 +256,7 @@ int cyioctl(dev_t, u_long, caddr_t, int, struct proc *);
 int cystop(struct tty *, int flag);
 
 int
-cyopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+cyopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int card = CY_CARD(dev);
 	int port = CY_PORT(dev);
@@ -390,10 +386,7 @@ cyopen(dev, flag, mode, p)
  * close routine. returns zero if successful, else error code
  */
 int
-cyclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+cyclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int card = CY_CARD(dev);
 	int port = CY_PORT(dev);
@@ -433,10 +426,7 @@ cyclose(dev, flag, mode, p)
  * Read routine
  */
 int
-cyread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+cyread(dev_t dev, struct uio *uio, int flag)
 {
 	int card = CY_CARD(dev);
 	int port = CY_PORT(dev);
@@ -456,10 +446,7 @@ cyread(dev, uio, flag)
  * Write routine
  */
 int
-cywrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+cywrite(dev_t dev, struct uio *uio, int flag)
 {
 	int card = CY_CARD(dev);
 	int port = CY_PORT(dev);
@@ -479,8 +466,7 @@ cywrite(dev, uio, flag)
  * return tty pointer
  */
 struct tty *
-cytty(dev)
-	dev_t dev;
+cytty(dev_t dev)
 {
 	int card = CY_CARD(dev);
 	int port = CY_PORT(dev);
@@ -495,12 +481,7 @@ cytty(dev)
  * ioctl routine
  */
 int
-cyioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+cyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	int card = CY_CARD(dev);
 	int port = CY_PORT(dev);
@@ -585,8 +566,7 @@ cyioctl(dev, cmd, data, flag, p)
  * start output
  */
 void
-cystart(tp)
-	struct tty *tp;
+cystart(struct tty *tp)
 {
 	int card = CY_CARD(tp->t_dev);
 	int port = CY_PORT(tp->t_dev);
@@ -621,9 +601,7 @@ out:
  * stop output
  */
 int
-cystop(tp, flag)
-	struct tty *tp;
-	int flag;
+cystop(struct tty *tp, int flag)
 {
 	int card = CY_CARD(tp->t_dev);
 	int port = CY_PORT(tp->t_dev);
@@ -657,9 +635,7 @@ cystop(tp, flag)
  * returns 0 if successful, else returns error code
  */
 int
-cyparam(tp, t)
-	struct tty *tp;
-	struct termios *t;
+cyparam(struct tty *tp, struct termios *t)
 {
 	int card = CY_CARD(tp->t_dev);
 	int port = CY_PORT(tp->t_dev);
@@ -807,10 +783,7 @@ cyparam(tp, t)
  *
  */
 int
-cy_modem_control(cy, bits, howto)
-	struct cy_port *cy;
-	int bits;
-	int howto;
+cy_modem_control(struct cy_port *cy, int bits, int howto)
 {
 	int s, msvr;
 
@@ -1075,8 +1048,7 @@ out:
  * hardware interrupt routine
  */
 int
-cy_intr(arg)
-	void *arg;
+cy_intr(void *arg)
 {
 	struct cy_softc *sc = arg;
 	struct cy_port *cy;
@@ -1340,8 +1312,7 @@ txdone:
  * subroutine to enable CD1400 transmitter
  */
 void
-cy_enable_transmitter(cy)
-	struct cy_port *cy;
+cy_enable_transmitter(struct cy_port *cy)
 {
 	int s;
 	s = spltty();
@@ -1355,9 +1326,7 @@ cy_enable_transmitter(cy)
  * Execute a CD1400 channel command
  */
 void
-cd1400_channel_cmd(cy, cmd)
-	struct cy_port *cy;
-	int cmd;
+cd1400_channel_cmd(struct cy_port *cy, int cmd)
 {
 	u_int waitcnt = 5 * 8 * 1024; /* approx 5 ms */
 

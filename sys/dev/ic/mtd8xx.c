@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtd8xx.c,v 1.33 2020/07/10 13:26:37 patrick Exp $	*/
+/*	$OpenBSD: mtd8xx.c,v 1.34 2021/03/07 06:21:38 jsg Exp $	*/
 
 /*
  * Copyright (c) 2003 Oleg Safiullin <form@pdp11.org.ru>
@@ -948,8 +948,7 @@ mtd_rxeof(struct mtd_softc *sc)
  * for new packets in the RX ring, so we should catch up eventually.
  */
 static int
-mtd_rx_resync(sc)
-	struct mtd_softc *sc;
+mtd_rx_resync(struct mtd_softc *sc)
 {
 	int i, pos;
 	struct mtd_rx_desc *cur_rx;

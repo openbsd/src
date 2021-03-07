@@ -1,4 +1,4 @@
-/*	$OpenBSD: uha.c,v 1.39 2020/09/22 19:32:53 krw Exp $	*/
+/*	$OpenBSD: uha.c,v 1.40 2021/03/07 06:21:38 jsg Exp $	*/
 /*	$NetBSD: uha.c,v 1.3 1996/10/13 01:37:29 christos Exp $	*/
 /*
  * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
@@ -91,9 +91,7 @@ struct cfdriver uha_cd = {
 int	uhaprint(void *, const char *);
 
 int
-uhaprint(aux, name)
-	void *aux;
-	const char *name;
+uhaprint(void *aux, const char *name)
 {
 
 	if (name != NULL)
@@ -106,8 +104,7 @@ uhaprint(aux, name)
  * Attach all the sub-devices we can find
  */
 void
-uha_attach(sc)
-	struct uha_softc *sc;
+uha_attach(struct uha_softc *sc)
 {
 	struct scsibus_attach_args saa;
 
@@ -130,9 +127,7 @@ uha_attach(sc)
 }
 
 void
-uha_reset_mscp(sc, mscp)
-	struct uha_softc *sc;
-	struct uha_mscp *mscp;
+uha_reset_mscp(struct uha_softc *sc, struct uha_mscp *mscp)
 {
 
 	mscp->flags = 0;
@@ -142,8 +137,7 @@ uha_reset_mscp(sc, mscp)
  * A mscp (and hence a mbx-out) is put onto the free list.
  */
 void
-uha_mscp_free(xsc, xmscp)
-	void *xsc, *xmscp;
+uha_mscp_free(void *xsc, void *xmscp)
 {
 	struct uha_softc *sc = xsc;
 	struct uha_mscp *mscp = xmscp;
@@ -159,8 +153,7 @@ uha_mscp_free(xsc, xmscp)
  * Get a free mscp
  */
 void *
-uha_mscp_alloc(xsc)
-	void *xsc;
+uha_mscp_alloc(void *xsc)
 {
 	struct uha_softc *sc = xsc;
 	struct uha_mscp *mscp;
@@ -180,9 +173,7 @@ uha_mscp_alloc(xsc)
  * given a physical address, find the mscp that it corresponds to.
  */
 struct uha_mscp *
-uha_mscp_phys_kv(sc, mscp_phys)
-	struct uha_softc *sc;
-	u_long mscp_phys;
+uha_mscp_phys_kv(struct uha_softc *sc, u_long mscp_phys)
 {
 	int hashnum = MSCP_HASH(mscp_phys);
 	struct uha_mscp *mscp = sc->sc_mscphash[hashnum];
@@ -200,9 +191,7 @@ uha_mscp_phys_kv(sc, mscp_phys)
  * how the operation went.
  */
 void
-uha_done(sc, mscp)
-	struct uha_softc *sc;
-	struct uha_mscp *mscp;
+uha_done(struct uha_softc *sc, struct uha_mscp *mscp)
 {
 	struct scsi_sense_data *s1, *s2;
 	struct scsi_xfer *xs = mscp->xs;
@@ -258,8 +247,7 @@ uha_done(sc, mscp)
  * needs the unit, target and lu.
  */
 void
-uha_scsi_cmd(xs)
-	struct scsi_xfer *xs;
+uha_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *sc_link = xs->sc_link;
 	struct uha_softc *sc = sc_link->bus->sb_adapter_softc;
@@ -416,8 +404,7 @@ bad:
 }
 
 void
-uha_timeout(arg)
-	void *arg;
+uha_timeout(void *arg)
 {
 	struct uha_mscp *mscp = arg;
 	struct scsi_xfer *xs = mscp->xs;

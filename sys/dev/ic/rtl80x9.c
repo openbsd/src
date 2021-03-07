@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl80x9.c,v 1.11 2015/09/11 13:02:28 stsp Exp $	*/
+/*	$OpenBSD: rtl80x9.c,v 1.12 2021/03/07 06:21:38 jsg Exp $	*/
 /*	$NetBSD: rtl80x9.c,v 1.1 1998/10/31 00:44:33 thorpej Exp $	*/
 
 /*-
@@ -57,8 +57,7 @@
 #include <dev/ic/rtl80x9var.h>
 
 int
-rtl80x9_mediachange(dsc)
-	struct dp8390_softc *dsc;
+rtl80x9_mediachange(struct dp8390_softc *dsc)
 {
 
 	/*
@@ -71,9 +70,7 @@ rtl80x9_mediachange(dsc)
 }
 
 void
-rtl80x9_mediastatus(sc, ifmr)
-	struct dp8390_softc *sc;
-	struct ifmediareq *ifmr;
+rtl80x9_mediastatus(struct dp8390_softc *sc, struct ifmediareq *ifmr)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	u_int8_t cr_proto = sc->cr_proto |
@@ -102,8 +99,7 @@ rtl80x9_mediastatus(sc, ifmr)
 }
 
 void
-rtl80x9_init_card(sc)
-	struct dp8390_softc *sc;
+rtl80x9_init_card(struct dp8390_softc *sc)
 {
 	struct ifmedia *ifm = &sc->sc_media;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
@@ -156,8 +152,7 @@ rtl80x9_init_card(sc)
 }
 
 void
-rtl80x9_media_init(sc)
-	struct dp8390_softc *sc;
+rtl80x9_media_init(struct dp8390_softc *sc)
 {
 	static uint64_t rtl80x9_media[] = {
 		IFM_ETHER|IFM_AUTO,

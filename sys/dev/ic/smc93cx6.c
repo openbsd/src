@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc93cx6.c,v 1.18 2012/03/24 20:19:05 miod Exp $	*/
+/*	$OpenBSD: smc93cx6.c,v 1.19 2021/03/07 06:21:38 jsg Exp $	*/
 /*	$NetBSD: smc93cx6.c,v 1.10 2003/05/02 19:12:19 dyoung Exp $	*/
 
 /*
@@ -92,11 +92,8 @@ static struct seeprom_cmd {
  * not successful.
  */
 int
-read_seeprom(sd, buf, start_addr, count)
-	struct seeprom_descriptor *sd;
-	u_int16_t *buf;
-	bus_size_t start_addr;
-	bus_size_t count;
+read_seeprom(struct seeprom_descriptor *sd, u_int16_t *buf,
+    bus_size_t start_addr, bus_size_t count)
 {
 	int i = 0;
 	u_int k = 0;

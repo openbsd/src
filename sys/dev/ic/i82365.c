@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365.c,v 1.39 2020/03/04 23:19:58 cheloha Exp $	*/
+/*	$OpenBSD: i82365.c,v 1.40 2021/03/07 06:21:38 jsg Exp $	*/
 /*	$NetBSD: i82365.c,v 1.10 1998/06/09 07:36:55 thorpej Exp $	*/
 
 /*
@@ -109,8 +109,7 @@ struct cfdriver pcic_cd = {
 };
 
 int
-pcic_ident_ok(ident)
-	int ident;
+pcic_ident_ok(int ident)
 {
 	/* this is very empirical and heuristic */
 
@@ -128,8 +127,7 @@ pcic_ident_ok(ident)
 }
 
 int
-pcic_vendor(h)
-	struct pcic_handle *h;
+pcic_vendor(struct pcic_handle *h)
 {
 	int vendor, reg;
 
@@ -193,8 +191,7 @@ pcic_vendor(h)
 }
 
 void
-pcic_attach(sc)
-	struct pcic_softc *sc;
+pcic_attach(struct pcic_softc *sc)
 {
 	int vendor, count, i, reg;
 
@@ -335,8 +332,7 @@ pcic_attach(sc)
 }
 
 void
-pcic_attach_sockets(sc)
-	struct pcic_softc *sc;
+pcic_attach_sockets(struct pcic_softc *sc)
 {
 	int i;
 
@@ -346,8 +342,7 @@ pcic_attach_sockets(sc)
 }
 
 void
-pcic_attach_socket(h)
-	struct pcic_handle *h;
+pcic_attach_socket(struct pcic_handle *h)
 {
 	struct pcmciabus_attach_args paa;
 	struct pcic_softc *sc = (struct pcic_softc *)(h->ph_parent);
@@ -379,8 +374,7 @@ pcic_attach_socket(h)
 }
 
 void
-pcic_create_event_thread(arg)
-	void *arg;
+pcic_create_event_thread(void *arg)
 {
 	struct pcic_handle *h = arg;
 	char name[MAXCOMLEN+1];
@@ -412,8 +406,7 @@ pcic_create_event_thread(arg)
 }
 
 void
-pcic_event_thread(arg)
-	void *arg;
+pcic_event_thread(void *arg)
 {
 	struct pcic_handle *h = arg;
 	struct pcic_event *pe;
@@ -444,9 +437,7 @@ pcic_event_thread(arg)
 }
 
 void
-pcic_event_process(h, pe)
-	struct pcic_handle *h;
-	struct pcic_event *pe;
+pcic_event_process(struct pcic_handle *h, struct pcic_event *pe)
 {
 	int s;
 
@@ -510,8 +501,7 @@ pcic_event_process(h, pe)
 }
 
 void
-pcic_init_socket(h)
-	struct pcic_handle *h;
+pcic_init_socket(struct pcic_handle *h)
 {
 	int reg;
 	struct pcic_softc *sc = (struct pcic_softc *)(h->ph_parent);
@@ -557,9 +547,7 @@ pcic_init_socket(h)
 }
 
 int
-pcic_submatch(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+pcic_submatch(struct device *parent, void *match, void *aux)
 {
 	struct cfdata *cf = match;
 	struct pcmciabus_attach_args *paa = aux;
@@ -618,9 +606,7 @@ pcic_submatch(parent, match, aux)
 }
 
 int
-pcic_print(arg, pnp)
-	void *arg;
-	const char *pnp;
+pcic_print(void *arg, const char *pnp)
 {
 	struct pcmciabus_attach_args *paa = arg;
 	struct pcic_handle *h = (struct pcic_handle *) paa->pch;
@@ -650,8 +636,7 @@ pcic_print(arg, pnp)
 }
 
 int
-pcic_intr(arg)
-	void *arg;
+pcic_intr(void *arg)
 {
 	struct pcic_softc *sc = arg;
 	int i, ret = 0;
@@ -666,8 +651,7 @@ pcic_intr(arg)
 }
 
 void
-pcic_poll_intr(arg)
-	void *arg;
+pcic_poll_intr(void *arg)
 {
 	struct pcic_softc *sc = arg;
 	int i, s;
@@ -688,8 +672,7 @@ pcic_poll_intr(arg)
 }
 
 int
-pcic_intr_socket(h)
-	struct pcic_handle *h;
+pcic_intr_socket(struct pcic_handle *h)
 {
 	int cscreg;
 
@@ -752,9 +735,7 @@ pcic_intr_socket(h)
 }
 
 void
-pcic_queue_event(h, event)
-	struct pcic_handle *h;
-	int event;
+pcic_queue_event(struct pcic_handle *h, int event)
 {
 	struct pcic_event *pe;
 	int s;
@@ -771,8 +752,7 @@ pcic_queue_event(h, event)
 }
 
 void
-pcic_attach_card(h)
-	struct pcic_handle *h;
+pcic_attach_card(struct pcic_handle *h)
 {
 	if (h->flags & PCIC_FLAG_CARDP)
 		panic("pcic_attach_card: already attached");
@@ -784,9 +764,7 @@ pcic_attach_card(h)
 }
 
 void
-pcic_detach_card(h, flags)
-	struct pcic_handle *h;
-	int flags;		/* DETACH_* */
+pcic_detach_card(struct pcic_handle *h, int flags)
 {
 
 	if (h->flags & PCIC_FLAG_CARDP) {
@@ -800,8 +778,7 @@ pcic_detach_card(h, flags)
 }
 
 void
-pcic_deactivate_card(h)
-	struct pcic_handle *h;
+pcic_deactivate_card(struct pcic_handle *h)
 {
 	struct device *dev = (struct device *)h->pcmcia;
 
@@ -827,9 +804,7 @@ pcic_deactivate_card(h)
  * activate a card that isn't there is bad news.
  */
 void
-pcic_power(why, arg)
-	int why;
-	void *arg;
+pcic_power(int why, void *arg)
 {
 	struct pcic_handle *h = (struct pcic_handle *)arg;
 	struct pcic_softc *sc = (struct pcic_softc *)h->ph_parent;
@@ -850,10 +825,8 @@ pcic_power(why, arg)
 }
 
 int 
-pcic_chip_mem_alloc(pch, size, pcmhp)
-	pcmcia_chipset_handle_t pch;
-	bus_size_t size;
-	struct pcmcia_mem_handle *pcmhp;
+pcic_chip_mem_alloc(pcmcia_chipset_handle_t pch, bus_size_t size,
+    struct pcmcia_mem_handle *pcmhp)
 {
 	struct pcic_handle *h = (struct pcic_handle *) pch;
 	bus_space_handle_t memh;
@@ -901,9 +874,7 @@ pcic_chip_mem_alloc(pch, size, pcmhp)
 }
 
 void 
-pcic_chip_mem_free(pch, pcmhp)
-	pcmcia_chipset_handle_t pch;
-	struct pcmcia_mem_handle *pcmhp;
+pcic_chip_mem_free(pcmcia_chipset_handle_t pch, struct pcmcia_mem_handle *pcmhp)
 {
 	struct pcic_handle *h = (struct pcic_handle *) pch;
 	struct pcic_softc *sc = (struct pcic_softc *)(h->ph_parent);
@@ -968,9 +939,7 @@ static struct mem_map_index_st {
 };
 
 void 
-pcic_chip_do_mem_map(h, win)
-	struct pcic_handle *h;
-	int win;
+pcic_chip_do_mem_map(struct pcic_handle *h, int win)
 {
 	int reg;
 	int kind = h->mem[win].kind & ~PCMCIA_WIDTH_MEM_MASK;
@@ -1024,14 +993,9 @@ pcic_chip_do_mem_map(h, win)
 }
 
 int 
-pcic_chip_mem_map(pch, kind, card_addr, size, pcmhp, offsetp, windowp)
-	pcmcia_chipset_handle_t pch;
-	int kind;
-	bus_addr_t card_addr;
-	bus_size_t size;
-	struct pcmcia_mem_handle *pcmhp;
-	bus_size_t *offsetp;
-	int *windowp;
+pcic_chip_mem_map(pcmcia_chipset_handle_t pch, int kind, bus_addr_t card_addr,
+    bus_size_t size, struct pcmcia_mem_handle *pcmhp, bus_size_t *offsetp,
+    int *windowp)
 {
 	struct pcic_handle *h = (struct pcic_handle *) pch;
 	bus_addr_t busaddr;
@@ -1094,9 +1058,7 @@ pcic_chip_mem_map(pch, kind, card_addr, size, pcmhp, offsetp, windowp)
 }
 
 void 
-pcic_chip_mem_unmap(pch, window)
-	pcmcia_chipset_handle_t pch;
-	int window;
+pcic_chip_mem_unmap(pcmcia_chipset_handle_t pch, int window)
 {
 	struct pcic_handle *h = (struct pcic_handle *) pch;
 	int reg;
@@ -1112,12 +1074,8 @@ pcic_chip_mem_unmap(pch, window)
 }
 
 int 
-pcic_chip_io_alloc(pch, start, size, align, pcihp)
-	pcmcia_chipset_handle_t pch;
-	bus_addr_t start;
-	bus_size_t size;
-	bus_size_t align;
-	struct pcmcia_io_handle *pcihp;
+pcic_chip_io_alloc(pcmcia_chipset_handle_t pch, bus_addr_t start,
+    bus_size_t size, bus_size_t align, struct pcmcia_io_handle *pcihp)
 {
 	struct pcic_handle *h = (struct pcic_handle *) pch;
 	bus_space_tag_t iot;
@@ -1201,9 +1159,7 @@ pcic_chip_io_alloc(pch, start, size, align, pcihp)
 }
 
 void 
-pcic_chip_io_free(pch, pcihp)
-	pcmcia_chipset_handle_t pch;
-	struct pcmcia_io_handle *pcihp;
+pcic_chip_io_free(pcmcia_chipset_handle_t pch, struct pcmcia_io_handle *pcihp)
 {
 	bus_space_tag_t iot = pcihp->iot;
 	bus_space_handle_t ioh = pcihp->ioh;
@@ -1260,9 +1216,7 @@ static struct io_map_index_st {
 };
 
 void 
-pcic_chip_do_io_map(h, win)
-	struct pcic_handle *h;
-	int win;
+pcic_chip_do_io_map(struct pcic_handle *h, int win)
 {
 	int reg;
 
@@ -1290,13 +1244,8 @@ pcic_chip_do_io_map(h, win)
 }
 
 int 
-pcic_chip_io_map(pch, width, offset, size, pcihp, windowp)
-	pcmcia_chipset_handle_t pch;
-	int width;
-	bus_addr_t offset;
-	bus_size_t size;
-	struct pcmcia_io_handle *pcihp;
-	int *windowp;
+pcic_chip_io_map(pcmcia_chipset_handle_t pch, int width, bus_addr_t offset,
+    bus_size_t size, struct pcmcia_io_handle *pcihp, int *windowp)
 {
 	struct pcic_handle *h = (struct pcic_handle *) pch;
 	bus_addr_t ioaddr = pcihp->addr + offset;
@@ -1340,9 +1289,7 @@ pcic_chip_io_map(pch, width, offset, size, pcihp, windowp)
 }
 
 void 
-pcic_chip_io_unmap(pch, window)
-	pcmcia_chipset_handle_t pch;
-	int window;
+pcic_chip_io_unmap(pcmcia_chipset_handle_t pch, int window)
 {
 	struct pcic_handle *h = (struct pcic_handle *) pch;
 	int reg;
@@ -1358,8 +1305,7 @@ pcic_chip_io_unmap(pch, window)
 }
 
 void
-pcic_wait_ready(h)
-	struct pcic_handle *h;
+pcic_wait_ready(struct pcic_handle *h)
 {
 	int i;
 
@@ -1380,8 +1326,7 @@ pcic_wait_ready(h)
 }
 
 void
-pcic_chip_socket_enable(pch)
-	pcmcia_chipset_handle_t pch;
+pcic_chip_socket_enable(pcmcia_chipset_handle_t pch)
 {
 	struct pcic_handle *h = (struct pcic_handle *) pch;
 	int cardtype, reg, win;
@@ -1478,8 +1423,7 @@ pcic_chip_socket_enable(pch)
 }
 
 void
-pcic_chip_socket_disable(pch)
-	pcmcia_chipset_handle_t pch;
+pcic_chip_socket_disable(pcmcia_chipset_handle_t pch)
 {
 	struct pcic_handle *h = (struct pcic_handle *) pch;
 
@@ -1496,9 +1440,7 @@ pcic_chip_socket_disable(pch)
 }
 
 u_int8_t
-st_pcic_read(h, idx)
-	struct pcic_handle *h;
-	int idx;
+st_pcic_read(struct pcic_handle *h, int idx)
 {
 	if (idx != -1)
 		bus_space_write_1(h->ph_bus_t, h->ph_bus_h, PCIC_REG_INDEX,
@@ -1507,10 +1449,7 @@ st_pcic_read(h, idx)
 }
 
 void
-st_pcic_write(h, idx, data)
-	struct pcic_handle *h;
-	int idx;
-	int data;
+st_pcic_write(struct pcic_handle *h, int idx, int data)
 {
 	if (idx != -1)
 		bus_space_write_1(h->ph_bus_t, h->ph_bus_h, PCIC_REG_INDEX,

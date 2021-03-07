@@ -1,4 +1,4 @@
-/*	$OpenBSD: ax88190.c,v 1.8 2015/11/24 17:11:39 mpi Exp $	*/
+/*	$OpenBSD: ax88190.c,v 1.9 2021/03/07 06:21:38 jsg Exp $	*/
 /*	$NetBSD$	*/
 
 /*-
@@ -134,8 +134,7 @@ ax88190_stop_card(struct dp8390_softc *sc)
 }
 
 u_int32_t
-ax88190_mii_bitbang_read(self)
-	struct device *self;
+ax88190_mii_bitbang_read(struct device *self)
 {
 	struct ne2000_softc *sc = (void *)self;
 
@@ -143,9 +142,7 @@ ax88190_mii_bitbang_read(self)
 }
 
 void
-ax88190_mii_bitbang_write(self, val)
-	struct device *self;
-	u_int32_t val;
+ax88190_mii_bitbang_write(struct device *self, u_int32_t val)
 {
 	struct ne2000_softc *sc = (void *)self;
 
@@ -153,24 +150,19 @@ ax88190_mii_bitbang_write(self, val)
 }
 
 int
-ax88190_mii_readreg(self, phy, reg)
-	struct device *self;
-	int phy, reg;
+ax88190_mii_readreg(struct device *self, int phy, int reg)
 {
 	return (mii_bitbang_readreg(self, &ax88190_mii_bitbang_ops, phy, reg));
 }
 
 void
-ax88190_mii_writereg(self, phy, reg, val)
-	struct device *self;
-	int phy, reg, val;
+ax88190_mii_writereg(struct device *self, int phy, int reg, int val)
 {
 	mii_bitbang_writereg(self, &ax88190_mii_bitbang_ops, phy, reg, val);
 }
 
 void
-ax88190_mii_statchg(self)
-	struct device *self;
+ax88190_mii_statchg(struct device *self)
 {
 	/* XXX */
 }

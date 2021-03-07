@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe.c,v 1.64 2020/10/15 00:01:24 krw Exp $	*/
+/*	$OpenBSD: twe.c,v 1.65 2021/03/07 06:21:38 jsg Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Michael Shalayeff.  All rights reserved.
@@ -107,8 +107,7 @@ twe_put_ccb(void *xsc, void *xccb)
 }
 
 void
-twe_dispose(sc)
-	struct twe_softc *sc;
+twe_dispose(struct twe_softc *sc)
 {
 	register struct twe_ccb *ccb;
 	if (sc->sc_cmdmap != NULL) {
@@ -124,8 +123,7 @@ twe_dispose(sc)
 }
 
 int
-twe_attach(sc)
-	struct twe_softc *sc;
+twe_attach(struct twe_softc *sc)
 {
 	struct scsibus_attach_args saa;
 	/* this includes a buffer for drive config req, and a capacity req */
@@ -441,8 +439,7 @@ twe_thread_create(void *v)
 }
 
 void
-twe_thread(v)
-	void *v;
+twe_thread(void *v)
 {
 	struct twe_softc *sc = v;
 	struct twe_ccb *ccb;
@@ -491,9 +488,7 @@ twe_thread(v)
 }
 
 int
-twe_cmd(ccb, flags, wait)
-	struct twe_ccb *ccb;
-	int flags, wait;
+twe_cmd(struct twe_ccb *ccb, int flags, int wait)
 {
 	struct twe_softc *sc = ccb->ccb_sc;
 	bus_dmamap_t dmap;
@@ -600,9 +595,7 @@ twe_cmd(ccb, flags, wait)
 }
 
 int
-twe_start(ccb, wait)
-	struct twe_ccb *ccb;
-	int wait;
+twe_start(struct twe_ccb *ccb, int wait)
 {
 	struct twe_softc*sc = ccb->ccb_sc;
 	struct twe_cmd	*cmd = ccb->ccb_cmd;
@@ -648,8 +641,7 @@ twe_start(ccb, wait)
 }
 
 int
-twe_complete(ccb)
-	struct twe_ccb *ccb;
+twe_complete(struct twe_ccb *ccb)
 {
 	struct twe_softc *sc = ccb->ccb_sc;
 	struct scsi_xfer *xs = ccb->ccb_xs;
@@ -688,9 +680,7 @@ twe_complete(ccb)
 }
 
 int
-twe_done(sc, ccb)
-	struct twe_softc *sc;
-	struct twe_ccb *ccb;
+twe_done(struct twe_softc *sc, struct twe_ccb *ccb)
 {
 	struct twe_cmd *cmd = ccb->ccb_cmd;
 	struct scsi_xfer *xs = ccb->ccb_xs;
@@ -752,8 +742,7 @@ twe_done(sc, ccb)
 }
 
 void
-twe_scsi_cmd(xs)
-	struct scsi_xfer *xs;
+twe_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *link = xs->sc_link;
 	struct twe_softc *sc = link->bus->sb_adapter_softc;
@@ -914,8 +903,7 @@ twe_scsi_cmd(xs)
 }
 
 int
-twe_intr(v)
-	void *v;
+twe_intr(void *v)
 {
 	struct twe_softc *sc = v;
 	struct twe_ccb	*ccb;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.77 2020/09/22 19:32:52 krw Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.78 2021/03/07 06:21:38 jsg Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -175,9 +175,7 @@ const char *ncr53c9x_variant_names[] = {
  * Search linked list for LUN info by LUN id.
  */
 static struct ncr53c9x_linfo *
-ncr53c9x_lunsearch(ti, lun)
-	struct ncr53c9x_tinfo *ti;
-	int64_t lun;
+ncr53c9x_lunsearch(struct ncr53c9x_tinfo *ti, int64_t lun)
 {
 	struct ncr53c9x_linfo *li;
 	LIST_FOREACH(li, &ti->luns, link)
@@ -190,8 +188,7 @@ ncr53c9x_lunsearch(ti, lun)
  * Attach this instance, and then all the sub-devices
  */
 void
-ncr53c9x_attach(sc)
-	struct ncr53c9x_softc *sc;
+ncr53c9x_attach(struct ncr53c9x_softc *sc)
 {
 	struct scsibus_attach_args saa;
 
@@ -283,8 +280,7 @@ ncr53c9x_attach(sc)
  * routine above.
  */
 void
-ncr53c9x_reset(sc)
-	struct ncr53c9x_softc *sc;
+ncr53c9x_reset(struct ncr53c9x_softc *sc)
 {
 
 	/* reset DMA first */
@@ -356,8 +352,7 @@ ncr53c9x_reset(sc)
  * Reset the SCSI bus, but not the chip
  */
 void
-ncr53c9x_scsi_reset(sc)
-	struct ncr53c9x_softc *sc;
+ncr53c9x_scsi_reset(struct ncr53c9x_softc *sc)
 {
 
 	(*sc->sc_glue->gl_dma_stop)(sc);
@@ -370,9 +365,7 @@ ncr53c9x_scsi_reset(sc)
  * Initialize ncr53c9x state machine
  */
 void
-ncr53c9x_init(sc, doreset)
-	struct ncr53c9x_softc *sc;
-	int doreset;
+ncr53c9x_init(struct ncr53c9x_softc *sc, int doreset)
 {
 	struct ncr53c9x_ecb *ecb;
 	struct ncr53c9x_linfo *li;
@@ -486,8 +479,7 @@ ncr53c9x_init(sc, doreset)
  * if an interrupt is pending.
  */
 __inline__ void
-ncr53c9x_readregs(sc)
-	struct ncr53c9x_softc *sc;
+ncr53c9x_readregs(struct ncr53c9x_softc *sc)
 {
 
 	sc->sc_espstat = NCR_READ_REG(sc, NCR_STAT);
@@ -519,9 +511,7 @@ ncr53c9x_readregs(sc)
  * Convert Synchronous Transfer Period to chip register Clock Per Byte value.
  */
 static inline int
-ncr53c9x_stp2cpb(sc, period)
-	struct ncr53c9x_softc *sc;
-	int period;
+ncr53c9x_stp2cpb(struct ncr53c9x_softc *sc, int period)
 {
 	int v;
 	v = (sc->sc_freq * period) / 250;
@@ -532,9 +522,7 @@ ncr53c9x_stp2cpb(sc, period)
 }
 
 static inline void
-ncr53c9x_setsync(sc, ti)
-	struct ncr53c9x_softc *sc;
-	struct ncr53c9x_tinfo *ti;
+ncr53c9x_setsync(struct ncr53c9x_softc *sc, struct ncr53c9x_tinfo *ti)
 {
 	u_char syncoff, synctp;
 	u_char cfg3 = sc->sc_cfg3 | ti->cfg3;
@@ -586,9 +574,7 @@ ncr53c9x_setsync(sc, ti)
  * by DMA instead of programmed I/O soon.
  */
 void
-ncr53c9x_select(sc, ecb)
-	struct ncr53c9x_softc *sc;
-	struct ncr53c9x_ecb *ecb;
+ncr53c9x_select(struct ncr53c9x_softc *sc, struct ncr53c9x_ecb *ecb)
 {
 	struct scsi_link *sc_link = ecb->xs->sc_link;
 	int target = sc_link->target;
@@ -820,8 +806,7 @@ ncr53c9x_scsi_free(struct scsi_link *sc_link)
  * SCSI-commands.
  */
 void
-ncr53c9x_scsi_cmd(xs)
-	struct scsi_xfer *xs;
+ncr53c9x_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *sc_link = xs->sc_link;
 	struct ncr53c9x_softc *sc = sc_link->bus->sb_adapter_softc;
@@ -895,10 +880,7 @@ ncr53c9x_scsi_cmd(xs)
  * Used when interrupt driven I/O isn't allowed, e.g. during boot.
  */
 int
-ncr53c9x_poll(sc, xs, count)
-	struct ncr53c9x_softc *sc;
-	struct scsi_xfer *xs;
-	int count;
+ncr53c9x_poll(struct ncr53c9x_softc *sc, struct scsi_xfer *xs, int count)
 {
 	int s;
 
@@ -942,8 +924,7 @@ ncr53c9x_poll(sc, xs, count)
  * Should only be called when state == NCR_IDLE and at bio pl.
  */
 void
-ncr53c9x_sched(sc)
-	struct ncr53c9x_softc *sc;
+ncr53c9x_sched(struct ncr53c9x_softc *sc)
 {
 	struct ncr53c9x_ecb *ecb;
 	struct scsi_link *sc_link;
@@ -1070,9 +1051,7 @@ ncr53c9x_sched(sc)
 }
 
 void
-ncr53c9x_sense(sc, ecb)
-	struct ncr53c9x_softc *sc;
-	struct ncr53c9x_ecb *ecb;
+ncr53c9x_sense(struct ncr53c9x_softc *sc, struct ncr53c9x_ecb *ecb)
 {
 	struct scsi_xfer *xs = ecb->xs;
 	struct scsi_link *sc_link = xs->sc_link;
@@ -1112,9 +1091,7 @@ ncr53c9x_sense(sc, ecb)
  * POST PROCESSING OF SCSI_CMD (usually current)
  */
 void
-ncr53c9x_done(sc, ecb)
-	struct ncr53c9x_softc *sc;
-	struct ncr53c9x_ecb *ecb;
+ncr53c9x_done(struct ncr53c9x_softc *sc, struct ncr53c9x_ecb *ecb)
 {
 	struct scsi_xfer *xs = ecb->xs;
 	struct scsi_link *sc_link = xs->sc_link;
@@ -1188,9 +1165,7 @@ ncr53c9x_done(sc, ecb)
 }
 
 void
-ncr53c9x_dequeue(sc, ecb)
-	struct ncr53c9x_softc *sc;
-	struct ncr53c9x_ecb *ecb;
+ncr53c9x_dequeue(struct ncr53c9x_softc *sc, struct ncr53c9x_ecb *ecb)
 {
 	struct ncr53c9x_tinfo *ti =
 	    &sc->sc_tinfo[ecb->xs->sc_link->target];
@@ -1341,11 +1316,8 @@ ncr53c9x_wrfifo(struct ncr53c9x_softc *sc, u_char *p, int len)
 }
 
 int
-ncr53c9x_reselect(sc, message, tagtype, tagid)
-	struct ncr53c9x_softc *sc;
-	int message;
-	int tagtype;
-	int tagid;
+ncr53c9x_reselect(struct ncr53c9x_softc *sc, int message, int tagtype,
+    int tagid)
 {
 	u_char selid, target, lun;
 	struct ncr53c9x_ecb *ecb = NULL;
@@ -1448,8 +1420,7 @@ __verify_msg_format(u_char *p, int len)
  * byte in the FIFO
  */
 void
-ncr53c9x_msgin(sc)
-	struct ncr53c9x_softc *sc;
+ncr53c9x_msgin(struct ncr53c9x_softc *sc)
 {
 
 	NCR_TRACE(("[ncr53c9x_msgin(curmsglen:%ld)] ", (long)sc->sc_imlen));
@@ -1795,8 +1766,7 @@ gotit:
  * Send the highest priority, scheduled message
  */
 void
-ncr53c9x_msgout(sc)
-	struct ncr53c9x_softc *sc;
+ncr53c9x_msgout(struct ncr53c9x_softc *sc)
 {
 	struct ncr53c9x_tinfo *ti;
 	struct ncr53c9x_ecb *ecb;
@@ -1964,8 +1934,7 @@ ncr53c9x_msgout(sc)
  */
 int sdebug = 0;
 int
-ncr53c9x_intr(arg)
-	void *arg;
+ncr53c9x_intr(void *arg)
 {
 	struct ncr53c9x_softc *sc = arg;
 	struct ncr53c9x_ecb *ecb;
@@ -2720,9 +2689,7 @@ shortcut:
 }
 
 void
-ncr53c9x_abort(sc, ecb)
-	struct ncr53c9x_softc *sc;
-	struct ncr53c9x_ecb *ecb;
+ncr53c9x_abort(struct ncr53c9x_softc *sc, struct ncr53c9x_ecb *ecb)
 {
 
 	/* 2 secs for the abort */
@@ -2759,8 +2726,7 @@ ncr53c9x_abort(sc, ecb)
 }
 
 void
-ncr53c9x_timeout(arg)
-	void *arg;
+ncr53c9x_timeout(void *arg)
 {
 	struct ncr53c9x_ecb *ecb = arg;
 	struct scsi_xfer *xs = ecb->xs;

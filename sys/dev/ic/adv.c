@@ -1,4 +1,4 @@
-/*	$OpenBSD: adv.c,v 1.51 2020/09/22 19:32:52 krw Exp $	*/
+/*	$OpenBSD: adv.c,v 1.52 2021/03/07 06:21:38 jsg Exp $	*/
 /*	$NetBSD: adv.c,v 1.6 1998/10/28 20:39:45 dante Exp $	*/
 
 /*
@@ -96,8 +96,7 @@ struct scsi_adapter adv_switch = {
 
 
 static int
-adv_alloc_ccbs(sc)
-	ASC_SOFTC      *sc;
+adv_alloc_ccbs(ASC_SOFTC *sc)
 {
 	bus_dma_segment_t seg;
 	int             error, rseg;
@@ -146,10 +145,7 @@ adv_alloc_ccbs(sc)
  * CCB data is already zeroed on allocation.
  */
 static int
-adv_create_ccbs(sc, ccbstore, count)
-	ASC_SOFTC      *sc;
-	ADV_CCB        *ccbstore;
-	int             count;
+adv_create_ccbs(ASC_SOFTC *sc, ADV_CCB *ccbstore, int count)
 {
 	ADV_CCB        *ccb;
 	int             i, error;
@@ -172,8 +168,7 @@ adv_create_ccbs(sc, ccbstore, count)
  * A ccb is put onto the free list.
  */
 void
-adv_ccb_free(xsc, xccb)
-	void *xsc, *xccb;
+adv_ccb_free(void *xsc, void *xccb)
 {
 	ASC_SOFTC *sc = xsc;
 	ADV_CCB *ccb = xccb;
@@ -187,8 +182,7 @@ adv_ccb_free(xsc, xccb)
 
 
 static void
-adv_reset_ccb(ccb)
-	ADV_CCB        *ccb;
+adv_reset_ccb(ADV_CCB *ccb)
 {
 
 	ccb->flags = 0;
@@ -196,9 +190,7 @@ adv_reset_ccb(ccb)
 
 
 static int
-adv_init_ccb(sc, ccb)
-	ASC_SOFTC      *sc;
-	ADV_CCB        *ccb;
+adv_init_ccb(ASC_SOFTC *sc, ADV_CCB *ccb)
 {
 	int             error;
 
@@ -223,8 +215,7 @@ adv_init_ccb(sc, ccb)
  * Get a free ccb
  */
 void *
-adv_ccb_alloc(xsc)
-	void *xsc;
+adv_ccb_alloc(void *xsc)
 {
 	ASC_SOFTC *sc = xsc;
 	ADV_CCB *ccb;
@@ -244,9 +235,7 @@ adv_ccb_alloc(xsc)
  * Queue a CCB to be sent to the controller, and send it if possible.
  */
 static void
-adv_queue_ccb(sc, ccb)
-	ASC_SOFTC      *sc;
-	ADV_CCB        *ccb;
+adv_queue_ccb(ASC_SOFTC *sc, ADV_CCB *ccb)
 {
 
 	timeout_set(&ccb->xs->stimeout, adv_timeout, ccb);
@@ -257,8 +246,7 @@ adv_queue_ccb(sc, ccb)
 
 
 static void
-adv_start_ccbs(sc)
-	ASC_SOFTC      *sc;
+adv_start_ccbs(ASC_SOFTC *sc)
 {
 	ADV_CCB        *ccb;
 	struct scsi_xfer *xs;
@@ -294,10 +282,8 @@ adv_start_ccbs(sc)
  * Allocate a DMA able memory for overrun_buffer.
  * This memory can be safely shared among all the AdvanSys boards.
  */
-u_int8_t       *
-adv_alloc_overrunbuf(dvname, dmat)
-	char           *dvname;
-	bus_dma_tag_t   dmat;
+u_int8_t *
+adv_alloc_overrunbuf(char *dvname, bus_dma_tag_t dmat)
 {
 	static u_int8_t *overrunbuf = NULL;
 
@@ -357,8 +343,7 @@ adv_alloc_overrunbuf(dvname, dmat)
 
 
 int
-adv_init(sc)
-	ASC_SOFTC      *sc;
+adv_init(ASC_SOFTC *sc)
 {
 	int             warn;
 
@@ -440,8 +425,7 @@ adv_init(sc)
 
 
 void
-adv_attach(sc)
-	ASC_SOFTC      *sc;
+adv_attach(ASC_SOFTC *sc)
 {
 	struct scsibus_attach_args	saa;
 	int				i, error;
@@ -518,8 +502,7 @@ adv_attach(sc)
  * the unit, target and lu.
  */
 static void
-adv_scsi_cmd(xs)
-	struct scsi_xfer *xs;
+adv_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *sc_link = xs->sc_link;
 	ASC_SOFTC      *sc = sc_link->bus->sb_adapter_softc;
@@ -650,8 +633,7 @@ adv_scsi_cmd(xs)
 
 
 int
-adv_intr(arg)
-	void           *arg;
+adv_intr(void *arg)
 {
 	ASC_SOFTC      *sc = arg;
 
@@ -678,10 +660,7 @@ adv_intr(arg)
  * Poll a particular unit, looking for a particular xs
  */
 static int
-adv_poll(sc, xs, count)
-	ASC_SOFTC      *sc;
-	struct scsi_xfer *xs;
-	int             count;
+adv_poll(ASC_SOFTC *sc, struct scsi_xfer *xs, int count)
 {
 	int s;
 
@@ -700,8 +679,7 @@ adv_poll(sc, xs, count)
 
 
 static void
-adv_timeout(arg)
-	void           *arg;
+adv_timeout(void *arg)
 {
 	ADV_CCB        *ccb = arg;
 	struct scsi_xfer *xs = ccb->xs;
@@ -741,8 +719,7 @@ adv_timeout(arg)
 
 
 static void
-adv_watchdog(arg)
-	void           *arg;
+adv_watchdog(void *arg)
 {
 	ADV_CCB        *ccb = arg;
 	struct scsi_xfer *xs = ccb->xs;
@@ -770,9 +747,7 @@ adv_watchdog(arg)
  * Interrupt callback function for the Narrow SCSI Asc Library.
  */
 static void
-adv_narrow_isr_callback(sc, qdonep)
-	ASC_SOFTC      *sc;
-	ASC_QDONE_INFO *qdonep;
+adv_narrow_isr_callback(ASC_SOFTC *sc, ASC_QDONE_INFO *qdonep)
 {
 	bus_dma_tag_t   dmat = sc->sc_dmat;
 	ADV_CCB        *ccb = (ADV_CCB *) qdonep->d2.ccb_ptr;

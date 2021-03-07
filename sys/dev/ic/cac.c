@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac.c,v 1.73 2020/10/15 00:01:24 krw Exp $	*/
+/*	$OpenBSD: cac.c,v 1.74 2021/03/07 06:21:38 jsg Exp $	*/
 /*	$NetBSD: cac.c,v 1.15 2000/11/08 19:20:35 ad Exp $	*/
 
 /*
@@ -270,8 +270,7 @@ cac_init(struct cac_softc *sc, int startfw)
 }
 
 int
-cac_flush(sc)
-	struct cac_softc *sc;
+cac_flush(struct cac_softc *sc)
 {
 	u_int8_t buf[512];
 
@@ -286,8 +285,7 @@ cac_flush(sc)
  * dequeue any waiting CCBs.
  */
 int
-cac_intr(v)
-	void *v;
+cac_intr(void *v)
 {
 	struct cac_softc *sc = v;
 	struct cac_ccb *ccb;
@@ -543,9 +541,7 @@ cac_ccb_free(void *xsc, void *xccb)
 }
 
 int
-cac_get_dinfo(sc, target)
-	struct cac_softc *sc;
-	int target;
+cac_get_dinfo(struct cac_softc *sc, int target)
 {
 	if (sc->sc_dinfos[target].ncylinders)
 		return (0);
@@ -561,8 +557,7 @@ cac_get_dinfo(sc, target)
 }
 
 void
-cac_scsi_cmd(xs)
-	struct scsi_xfer *xs;
+cac_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *link = xs->sc_link;
 	struct cac_softc *sc = link->bus->sb_adapter_softc;
@@ -739,8 +734,7 @@ cac_l0_submit(struct cac_softc *sc, struct cac_ccb *ccb)
 }
 
 struct cac_ccb *
-cac_l0_completed(sc)
-	struct cac_softc *sc;
+cac_l0_completed(struct cac_softc *sc)
 {
 	struct cac_ccb *ccb;
 	paddr_t off, orig_off;
