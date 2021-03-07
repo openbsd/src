@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.65 2021/03/07 10:30:13 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.66 2021/03/07 10:31:20 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -626,7 +626,6 @@ engine_dispatch_main(int fd, short event, void *bula)
 	int			 shut = 0;
 #ifndef	SMALL
 	struct imsg_addrinfo	 imsg_addrinfo;
-	struct imsg_link_state	 imsg_link_state;
 	struct address_proposal	*addr_proposal = NULL;
 	size_t			 i;
 #endif	/* SMALL */
@@ -745,27 +744,6 @@ engine_dispatch_main(int fd, short event, void *bula)
 			LIST_INSERT_HEAD(&iface->addr_proposals,
 			    addr_proposal, entries);
 
-			break;
-		case IMSG_UPDATE_LINK_STATE:
-			if (IMSG_DATA_SIZE(imsg) != sizeof(imsg_link_state))
-				fatalx("%s: IMSG_UPDATE_LINK_STATE wrong "
-				    "length: %lu", __func__,
-				    IMSG_DATA_SIZE(imsg));
-
-			memcpy(&imsg_link_state, imsg.data,
-			    sizeof(imsg_link_state));
-
-			iface = get_slaacd_iface_by_id(
-			    imsg_link_state.if_index);
-			if (iface == NULL)
-				break;
-			if (iface->link_state != imsg_link_state.link_state) {
-				iface->link_state = imsg_link_state.link_state;
-				if (iface->link_state == LINK_STATE_DOWN)
-					deprecate_all_proposals(iface);
-				else
-					start_probe(iface);
-			}
 			break;
 #endif	/* SMALL */
 		default:
@@ -1095,6 +1073,7 @@ engine_update_iface(struct imsg_ifinfo *imsg_ifinfo)
 		iface->if_index = imsg_ifinfo->if_index;
 		iface->rdomain = imsg_ifinfo->rdomain;
 		iface->running = imsg_ifinfo->running;
+		iface->link_state = imsg_ifinfo->link_state;
 		iface->autoconfprivacy = imsg_ifinfo->autoconfprivacy;
 		iface->soii = imsg_ifinfo->soii;
 		memcpy(&iface->hw_address, &imsg_ifinfo->hw_address,
@@ -1141,16 +1120,23 @@ engine_update_iface(struct imsg_ifinfo *imsg_ifinfo)
 			iface->running = imsg_ifinfo->running;
 			need_refresh = 1;
 		}
+		if (imsg_ifinfo->link_state != iface->link_state) {
+			iface->link_state = imsg_ifinfo->link_state;
+			need_refresh = 1;
+		}
 	}
 
 	if (!need_refresh)
 		return;
 
-	if (iface->running)
+	if (iface->running && LINK_STATE_IS_UP(iface->link_state))
 		start_probe(iface);
 
 	else {
 		/* XXX correct state transition */
+#ifndef	SMALL
+		deprecate_all_proposals(iface);
+#endif	/* SMALL */
 		iface->state = IF_DOWN;
 		if (evtimer_pending(&iface->timer, NULL))
 			evtimer_del(&iface->timer);

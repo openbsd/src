@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.50 2021/03/07 10:30:13 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.51 2021/03/07 10:31:20 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -88,7 +88,6 @@ void		 icmp6_receive(int, short, void *);
 int		 get_flags(char *);
 int		 get_xflags(char *);
 int		 get_ifrdomain(char *);
-void		 get_lladdr(char *, struct ether_addr *, struct sockaddr_in6 *);
 struct iface	*get_iface_by_id(uint32_t);
 void		 remove_iface(uint32_t);
 struct icmp6_ev	*get_icmp6ev_by_rdomain(int);
@@ -493,7 +492,10 @@ void
 update_iface(uint32_t if_index, char* if_name)
 {
 	struct iface		*iface;
+	struct ifaddrs		*ifap, *ifa;
 	struct imsg_ifinfo	 imsg_ifinfo;
+	struct sockaddr_dl	*sdl;
+	struct sockaddr_in6	*sin6;
 	int			 flags, xflags, ifrdomain;
 
 	if ((flags = get_flags(if_name)) == -1 || (xflags =
@@ -532,10 +534,49 @@ update_iface(uint32_t if_index, char* if_name)
 	    IFF_RUNNING);
 	imsg_ifinfo.autoconfprivacy = !(xflags & IFXF_INET6_NOPRIVACY);
 	imsg_ifinfo.soii = !(xflags & IFXF_INET6_NOSOII);
-	get_lladdr(if_name, &imsg_ifinfo.hw_address, &imsg_ifinfo.ll_address);
 
-	memcpy(&iface->hw_address, &imsg_ifinfo.hw_address,
-	    sizeof(iface->hw_address));
+	if (getifaddrs(&ifap) != 0)
+		fatal("getifaddrs");
+
+	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
+		if (strcmp(if_name, ifa->ifa_name) != 0)
+			continue;
+		if (ifa->ifa_addr == NULL)
+			continue;
+
+		switch(ifa->ifa_addr->sa_family) {
+		case AF_LINK:
+			imsg_ifinfo.link_state =
+			    ((struct if_data *)ifa->ifa_data)->ifi_link_state;
+			sdl = (struct sockaddr_dl *)ifa->ifa_addr;
+			if (sdl->sdl_type != IFT_ETHER ||
+			    sdl->sdl_alen != ETHER_ADDR_LEN)
+				continue;
+			memcpy(iface->hw_address.ether_addr_octet,
+			    LLADDR(sdl), ETHER_ADDR_LEN);
+			memcpy(imsg_ifinfo.hw_address.ether_addr_octet,
+			    LLADDR(sdl), ETHER_ADDR_LEN);
+		case AF_INET6:
+			sin6 = (struct sockaddr_in6 *)ifa->ifa_addr;
+#ifdef __KAME__
+			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr) &&
+			    sin6->sin6_scope_id == 0) {
+				sin6->sin6_scope_id = ntohs(*(u_int16_t *)
+				    &sin6->sin6_addr.s6_addr[2]);
+				sin6->sin6_addr.s6_addr[2] =
+				    sin6->sin6_addr.s6_addr[3] = 0;
+			}
+#endif
+			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr))
+				memcpy(&imsg_ifinfo.ll_address, sin6,
+				    sizeof(imsg_ifinfo.ll_address));
+			break;
+		default:
+			break;
+		}
+	}
+
+	freeifaddrs(ifap);
 
 	frontend_imsg_compose_main(IMSG_UPDATE_IF, 0, &imsg_ifinfo,
 	    sizeof(imsg_ifinfo));
@@ -550,7 +591,6 @@ update_autoconf_addresses(uint32_t if_index, char* if_name)
 	struct ifaddrs		*ifap, *ifa;
 	struct in6_addrlifetime *lifetime;
 	struct sockaddr_in6	*sin6;
-	struct imsg_link_state	 imsg_link_state;
 	time_t			 t;
 	int			 xflags;
 
@@ -563,9 +603,6 @@ update_autoconf_addresses(uint32_t if_index, char* if_name)
 	memset(&imsg_addrinfo, 0, sizeof(imsg_addrinfo));
 	imsg_addrinfo.if_index = if_index;
 
-	memset(&imsg_link_state, 0, sizeof(imsg_link_state));
-	imsg_link_state.if_index = if_index;
-
 	if (getifaddrs(&ifap) != 0)
 		fatal("getifaddrs");
 
@@ -574,10 +611,6 @@ update_autoconf_addresses(uint32_t if_index, char* if_name)
 			continue;
 		if (ifa->ifa_addr == NULL)
 			continue;
-
-		if (ifa->ifa_addr->sa_family == AF_LINK)
-			imsg_link_state.link_state =
-			    ((struct if_data *)ifa->ifa_data)->ifi_link_state;
 
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
@@ -645,12 +678,6 @@ update_autoconf_addresses(uint32_t if_index, char* if_name)
 
 	}
 	freeifaddrs(ifap);
-
-	log_debug("%s: %s link state down? %s", __func__, if_name,
-	    imsg_link_state.link_state == LINK_STATE_DOWN ? "yes" : "no");
-
-	frontend_imsg_compose_main(IMSG_UPDATE_LINK_STATE, 0,
-	    &imsg_link_state, sizeof(imsg_link_state));
 }
 
 const char*
@@ -915,53 +942,6 @@ get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
 		} else
 			rti_info[i] = NULL;
 	}
-}
-
-void
-get_lladdr(char *if_name, struct ether_addr *mac, struct sockaddr_in6 *ll)
-{
-	struct ifaddrs		*ifap, *ifa;
-	struct sockaddr_dl	*sdl;
-	struct sockaddr_in6	*sin6;
-
-	if (getifaddrs(&ifap) != 0)
-		fatal("getifaddrs");
-
-	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
-		if (strcmp(if_name, ifa->ifa_name) != 0)
-			continue;
-		if (ifa->ifa_addr == NULL)
-			continue;
-
-		switch(ifa->ifa_addr->sa_family) {
-		case AF_LINK:
-			sdl = (struct sockaddr_dl *)ifa->ifa_addr;
-			if (sdl->sdl_type != IFT_ETHER ||
-			    sdl->sdl_alen != ETHER_ADDR_LEN)
-				continue;
-
-			memcpy(mac->ether_addr_octet, LLADDR(sdl),
-			    ETHER_ADDR_LEN);
-			break;
-		case AF_INET6:
-			sin6 = (struct sockaddr_in6 *)ifa->ifa_addr;
-#ifdef __KAME__
-			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr) &&
-			    sin6->sin6_scope_id == 0) {
-				sin6->sin6_scope_id = ntohs(*(u_int16_t *)
-				    &sin6->sin6_addr.s6_addr[2]);
-				sin6->sin6_addr.s6_addr[2] =
-				    sin6->sin6_addr.s6_addr[3] = 0;
-			}
-#endif
-			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr))
-				memcpy(ll, sin6, sizeof(*ll));
-			break;
-		default:
-			break;
-		}
-	}
-	freeifaddrs(ifap);
 }
 
 void
