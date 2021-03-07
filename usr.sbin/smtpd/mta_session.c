@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.139 2021/03/05 12:37:32 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.140 2021/03/07 20:56:41 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1596,7 +1596,7 @@ mta_tls_init(struct mta_session *s)
 		return;
 	}
 
-	io_connect_tls(s->io, tls, s->route->dst->ptrname);
+	io_connect_tls(s->io, tls, s->mxname);
 }
 
 static void
