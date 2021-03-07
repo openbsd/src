@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpu_isapnp.c,v 1.8 2014/09/14 14:17:25 jsg Exp $	*/
+/*	$OpenBSD: mpu_isapnp.c,v 1.9 2021/03/07 06:17:04 jsg Exp $	*/
 
 #include "midi.h"
 
@@ -36,9 +36,7 @@ struct cfattach mpu_isapnp_ca = {
 };
 
 int
-mpu_isapnp_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+mpu_isapnp_match(struct device *parent, void *match, void *aux)
 {
 	struct isa_attach_args *ipa = aux;
 
@@ -48,9 +46,7 @@ mpu_isapnp_match(parent, match, aux)
 }
 
 void
-mpu_isapnp_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mpu_isapnp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mpu_isapnp_softc *sc = (struct mpu_isapnp_softc *)self;
 	struct isa_attach_args *ipa = aux;

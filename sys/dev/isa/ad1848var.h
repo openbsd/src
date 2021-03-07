@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad1848var.h,v 1.15 2016/09/14 06:12:19 ratchov Exp $	*/
+/*	$OpenBSD: ad1848var.h,v 1.16 2021/03/07 06:17:03 jsg Exp $	*/
 /*	$NetBSD: ad1848var.h,v 1.22 1998/01/19 22:18:26 augustss Exp $	*/
 
 /*
@@ -136,9 +136,7 @@ static __inline int ad1848_to_vol(mixer_ctrl_t *, struct ad1848_volume *);
 static __inline int ad1848_from_vol(mixer_ctrl_t *, struct ad1848_volume *);
 
 static __inline int
-ad1848_to_vol(cp, vol)
-	mixer_ctrl_t *cp;
-	struct ad1848_volume *vol;
+ad1848_to_vol(mixer_ctrl_t *cp, struct ad1848_volume *vol)
 {
 	if (cp->un.value.num_channels == 1) {
 		vol->left = vol->right = cp->un.value.level[AUDIO_MIXER_LEVEL_MONO];
@@ -153,9 +151,7 @@ ad1848_to_vol(cp, vol)
 }
 
 static __inline int
-ad1848_from_vol(cp, vol)
-	mixer_ctrl_t *cp;
-	struct ad1848_volume *vol;
+ad1848_from_vol(mixer_ctrl_t *cp, struct ad1848_volume *vol)
 {
 	if (cp->un.value.num_channels == 1) {
 		cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] = vol->left;

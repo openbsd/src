@@ -1,4 +1,4 @@
-/*	$OpenBSD: pas.c,v 1.29 2016/09/19 06:46:44 ratchov Exp $	*/
+/*	$OpenBSD: pas.c,v 1.30 2021/03/07 06:17:04 jsg Exp $	*/
 /*	$NetBSD: pas.c,v 1.37 1998/01/12 09:43:43 thorpej Exp $	*/
 
 /*
@@ -149,11 +149,7 @@ static char *pasnames[] = {
 #define paswrite(d, p) outb(p, d)
 
 void
-pasconf(model, sbbase, sbirq, sbdrq)
-	int model;
-	int sbbase;
-	int sbirq;
-	int sbdrq;
+pasconf(int model, int sbbase, int sbirq, int sbdrq)
 {
 	paswrite(0x00, INTERRUPT_MASK);
 	/* Local timer control register */
@@ -247,9 +243,7 @@ struct cfdriver pas_cd = {
  * Probe for the soundblaster hardware.
  */
 int
-pasprobe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+pasprobe(struct device *parent, void *match, void *aux)
 {
 	struct pas_softc *sc = match;
 	struct isa_attach_args *ia = aux;
@@ -388,9 +382,7 @@ pasprobe(parent, match, aux)
  * pseudo-device driver .
  */
 void
-pasattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pasattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pas_softc *sc = (struct pas_softc *)self;
 	struct isa_attach_args *ia = (struct isa_attach_args *)aux;

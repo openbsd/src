@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpu_isa.c,v 1.6 2015/03/14 03:38:47 jsg Exp $	*/
+/*	$OpenBSD: mpu_isa.c,v 1.7 2021/03/07 06:17:04 jsg Exp $	*/
 
 /*
  * Copyright (c) 2002 Sergey Smitienko. All rights reserved.
@@ -68,9 +68,7 @@ struct cfattach mpu_isa_ca = {
 };
 
 int
-mpu_test (iot, iobase)
-	bus_space_tag_t iot;
-	int iobase;	/* base port number to try */
+mpu_test(bus_space_tag_t iot, int iobase)	/* base port number to try */
 {
 	bus_space_handle_t ioh;
 	int	i, rc;
@@ -116,9 +114,7 @@ done:
 }
 
 int
-mpu_isa_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+mpu_isa_match(struct device *parent, void *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 
@@ -131,9 +127,7 @@ mpu_isa_match(parent, match, aux)
 }
 
 void
-mpu_isa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mpu_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mpu_isa_softc *sc = (struct mpu_isa_softc *)self;
 	struct isa_attach_args *ia = aux;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcic2_isa.c,v 1.8 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: tcic2_isa.c,v 1.9 2021/03/07 06:17:04 jsg Exp $	*/
 /*	$NetBSD: tcic2_isa.c,v 1.2 1999/04/08 16:14:29 bad Exp $	*/
 
 #undef	TCICISADEBUG
@@ -137,10 +137,7 @@ static struct pcmcia_chip_functions tcic_isa_functions = {
 };
 
 int
-tcic_isa_probe(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+tcic_isa_probe(struct device *parent, void *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -190,9 +187,7 @@ tcic_isa_probe(parent, match, aux)
 }
 
 void
-tcic_isa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+tcic_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct tcic_softc *sc = (void *) self;
 	struct isa_attach_args *ia = aux;
@@ -307,13 +302,9 @@ tcic_isa_attach(parent, self, aux)
 }
 
 void *
-tcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg, xname)
-	pcmcia_chipset_handle_t pch;
-	struct pcmcia_function *pf;
-	int ipl;
-	int (*fct)(void *);
-	void *arg;
-	char *xname;
+tcic_isa_chip_intr_establish(pcmcia_chipset_handle_t pch,
+    struct pcmcia_function *pf, int ipl, int (*fct)(void *), void *arg,
+    char *xname)
 {
 	struct tcic_handle *h = (struct tcic_handle *) pch;
 	int irq, ist, val, reg;
@@ -355,9 +346,7 @@ tcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg, xname)
 }
 
 void 
-tcic_isa_chip_intr_disestablish(pch, ih)
-	pcmcia_chipset_handle_t pch;
-	void *ih;
+tcic_isa_chip_intr_disestablish(pcmcia_chipset_handle_t pch, void *ih)
 {
 	struct tcic_handle *h = (struct tcic_handle *) pch;
 	int val, reg;
@@ -375,9 +364,7 @@ tcic_isa_chip_intr_disestablish(pch, ih)
 }
 
 const char *
-tcic_isa_chip_intr_string(pch, ih)
-	pcmcia_chipset_handle_t pch;
-	void *ih;
+tcic_isa_chip_intr_string(pcmcia_chipset_handle_t pch, void *ih)
 {
 	struct tcic_handle *h = (struct tcic_handle *) pch;
 	static char irqstr[64];

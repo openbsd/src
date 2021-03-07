@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_isasubr.c,v 1.25 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: i82365_isasubr.c,v 1.26 2021/03/07 06:17:03 jsg Exp $	*/
 /*	$NetBSD: i82365_isasubr.c,v 1.1 1998/06/07 18:28:31 sommerfe Exp $  */
 
 /*
@@ -105,12 +105,8 @@ int	pcicsubr_debug = 1 /* XXX */ ;
 static int pcic_intr_seen;
 
 void
-pcic_isa_bus_width_probe(sc, iot, ioh, base, length)
-	struct pcic_softc *sc;
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	bus_addr_t base;
-	u_int32_t length;
+pcic_isa_bus_width_probe(struct pcic_softc *sc, bus_space_tag_t iot,
+    bus_space_handle_t ioh, bus_addr_t base, u_int32_t length)
 {
 	bus_space_handle_t ioh_high;
 	int i, iobuswidth, tmp1, tmp2;
@@ -181,13 +177,9 @@ pcic_isa_bus_width_probe(sc, iot, ioh, base, length)
 
 
 void *
-pcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg, xname)
-	pcmcia_chipset_handle_t pch;
-	struct pcmcia_function *pf;
-	int ipl;
-	int (*fct)(void *);
-	void *arg;
-	char *xname;
+pcic_isa_chip_intr_establish(pcmcia_chipset_handle_t pch,
+    struct pcmcia_function *pf, int ipl, int (*fct)(void *), void *arg,
+    char *xname)
 {
 	struct pcic_handle *h = (struct pcic_handle *)pch;
 	struct pcic_softc *sc = (struct pcic_softc *)(h->ph_parent);
@@ -215,9 +207,7 @@ pcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg, xname)
 }
 
 void 
-pcic_isa_chip_intr_disestablish(pch, ih)
-	pcmcia_chipset_handle_t pch;
-	void *ih;
+pcic_isa_chip_intr_disestablish(pcmcia_chipset_handle_t pch, void *ih)
 {
 	struct pcic_handle *h = (struct pcic_handle *) pch;
 	struct pcic_softc *sc = (struct pcic_softc *)(h->ph_parent);
@@ -234,9 +224,7 @@ pcic_isa_chip_intr_disestablish(pch, ih)
 }
 
 const char *
-pcic_isa_chip_intr_string(pch, ih)
-	pcmcia_chipset_handle_t pch;
-	void *ih;
+pcic_isa_chip_intr_string(pcmcia_chipset_handle_t pch, void *ih)
 {
 	struct pcic_handle *h = (struct pcic_handle *)pch;
 	static char irqstr[64];
@@ -249,8 +237,7 @@ pcic_isa_chip_intr_string(pch, ih)
 }
 
 int
-pcic_intr_probe(v)
-	void *v;
+pcic_intr_probe(void *v)
 {
 	pcic_intr_seen = 1;
 	return (1);
@@ -264,9 +251,7 @@ pcic_intr_probe(v)
  * tickling just assuming the first usable irq found works.
  */
 int
-pcic_intr_find(sc, ist)
-	struct pcic_softc *sc;
-	int ist;
+pcic_intr_find(struct pcic_softc *sc, int ist)
 {
 	struct pcic_handle *ph = &sc->handle[0];
 	isa_chipset_tag_t ic = sc->intr_est;

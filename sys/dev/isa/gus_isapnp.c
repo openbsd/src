@@ -1,4 +1,4 @@
-/*	$OpenBSD: gus_isapnp.c,v 1.8 2015/05/12 16:35:23 ratchov Exp $	*/
+/*	$OpenBSD: gus_isapnp.c,v 1.9 2021/03/07 06:17:03 jsg Exp $	*/
 /*	$NetBSD: gus.c,v 1.51 1998/01/25 23:48:06 mycroft Exp $	*/
 
 /*-
@@ -130,17 +130,13 @@ struct cfattach gus_isapnp_ca = {
  * Probe for the GUS hardware.
  */
 int
-gus_isapnp_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+gus_isapnp_match(struct device *parent, void *match, void *aux)
 {
 	return 1;
 }
 
 void
-gus_isapnp_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+gus_isapnp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct gus_softc *sc = (void *) self;
 	struct isa_attach_args *ipa = aux;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic_isa.c,v 1.8 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: aic_isa.c,v 1.9 2021/03/07 06:17:03 jsg Exp $	*/
 /*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 /*
@@ -88,9 +88,7 @@ struct cfattach aic_isa_ca = {
  * returns non-zero value if a controller is found.
  */
 int
-aic_isa_probe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+aic_isa_probe(struct device *parent, void *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -116,9 +114,7 @@ aic_isa_probe(parent, match, aux)
  * Attach the AIC6360, fill out some high and low level data structures
  */
 void
-aic_isa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+aic_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -138,4 +134,3 @@ aic_isa_attach(parent, self, aux)
 
 	aicattach(sc);
 }
-

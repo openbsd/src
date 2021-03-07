@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt_isa.c,v 1.15 2015/03/14 03:38:47 jsg Exp $	*/
+/*	$OpenBSD: lpt_isa.c,v 1.16 2021/03/07 06:17:04 jsg Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -93,9 +93,7 @@ struct cfattach lpt_isa_ca = {
  *	3) Set the data and control ports to a value of 0
  */
 int
-lpt_isa_probe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+lpt_isa_probe(struct device *parent, void *match, void *aux)
 {
 #if !defined(__NO_ISA_INTR_CHECK)
 	struct isa_softc *sc = (struct isa_softc *)parent;
@@ -170,9 +168,7 @@ out:
 }
 
 void
-lpt_isa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+lpt_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct lpt_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;

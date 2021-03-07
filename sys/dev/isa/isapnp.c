@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnp.c,v 1.41 2014/07/12 18:48:18 tedu Exp $	*/
+/*	$OpenBSD: isapnp.c,v 1.42 2021/03/07 06:17:03 jsg Exp $	*/
 /*	$NetBSD: isapnp.c,v 1.9.4.3 1997/10/29 00:40:43 thorpej Exp $	*/
 
 /*
@@ -92,8 +92,7 @@ struct cfdriver isapnp_cd = {
  *	Write the PNP initiation key to wake up the cards...
  */
 void
-isapnp_init(sc)
-	struct isapnp_softc *sc;
+isapnp_init(struct isapnp_softc *sc)
 {
 	int i;
 	u_char v = ISAPNP_LFSR_INIT;
@@ -114,8 +113,7 @@ isapnp_init(sc)
  *	Read a bit at a time from the config card.
  */
 static __inline u_char
-isapnp_shift_bit(sc)
-	struct isapnp_softc *sc;
+isapnp_shift_bit(struct isapnp_softc *sc)
 {
 	u_char c1, c2;
 
@@ -137,8 +135,7 @@ isapnp_shift_bit(sc)
  *	next card number to it and return 1
  */
 int
-isapnp_findcard(sc)
-	struct isapnp_softc *sc;
+isapnp_findcard(struct isapnp_softc *sc)
 {
 	u_char v = ISAPNP_LFSR_INIT, csum, w;
 	int i, b;
@@ -192,9 +189,7 @@ isapnp_findcard(sc)
  *	Free a region
  */
 void
-isapnp_free_region(t, r)
-	bus_space_tag_t t;
-	struct isapnp_region *r;
+isapnp_free_region(bus_space_tag_t t, struct isapnp_region *r)
 {
 	if (r->length == 0)
 		return;
@@ -208,9 +203,7 @@ isapnp_free_region(t, r)
  *	Allocate a single region if possible
  */
 int
-isapnp_alloc_region(t, r)
-	bus_space_tag_t t;
-	struct isapnp_region *r;
+isapnp_alloc_region(bus_space_tag_t t, struct isapnp_region *r)
 {
 	int error = 0;
 
@@ -232,9 +225,7 @@ isapnp_alloc_region(t, r)
  *	Allocate an irq
  */
 int
-isapnp_alloc_irq(ic, i)
-	isa_chipset_tag_t ic;
-	struct isapnp_pin *i;
+isapnp_alloc_irq(isa_chipset_tag_t ic, struct isapnp_pin *i)
 {
 	int irq;
 #define LEVEL_IRQ (ISAPNP_IRQTYPE_LEVEL_PLUS|ISAPNP_IRQTYPE_LEVEL_MINUS)
@@ -257,9 +248,7 @@ isapnp_alloc_irq(ic, i)
  *	Allocate a drq
  */
 int
-isapnp_alloc_drq(isa, i)
-	struct device *isa;
-	struct isapnp_pin *i;
+isapnp_alloc_drq(struct device *isa, struct isapnp_pin *i)
 {
 #if NISADMA > 0
 	int b;
@@ -283,10 +272,8 @@ isapnp_alloc_drq(isa, i)
  *	Test/Allocate the regions used
  */
 int
-isapnp_testconfig(iot, memt, ipa, alloc)
-	bus_space_tag_t iot, memt;
-	struct isa_attach_args *ipa;
-	int alloc;
+isapnp_testconfig(bus_space_tag_t iot, bus_space_tag_t memt,
+    struct isa_attach_args *ipa, int alloc)
 {
 	int nio = 0, nmem = 0, nmem32 = 0, nirq = 0, ndrq = 0;
 	int error = 0;
@@ -346,9 +333,8 @@ bad:
  *	Test/Allocate the regions used
  */
 int
-isapnp_config(iot, memt, ipa)
-	bus_space_tag_t iot, memt;
-	struct isa_attach_args *ipa;
+isapnp_config(bus_space_tag_t iot, bus_space_tag_t memt,
+    struct isa_attach_args *ipa)
 {
 	return isapnp_testconfig(iot, memt, ipa, 1);
 }
@@ -358,9 +344,8 @@ isapnp_config(iot, memt, ipa)
  *	Free the regions used
  */
 void
-isapnp_unconfig(iot, memt, ipa)
-	bus_space_tag_t iot, memt;
-	struct isa_attach_args *ipa;
+isapnp_unconfig(bus_space_tag_t iot, bus_space_tag_t memt,
+    struct isa_attach_args *ipa)
 {
 	int i;
 
@@ -380,10 +365,8 @@ isapnp_unconfig(iot, memt, ipa)
  *	free all other configurations.
  */
 struct isa_attach_args *
-isapnp_bestconfig(isa, sc, ipa)
-	struct device *isa;
-	struct isapnp_softc *sc;
-	struct isa_attach_args **ipa;
+isapnp_bestconfig(struct device *isa, struct isapnp_softc *sc,
+    struct isa_attach_args **ipa)
 {
 	struct isa_attach_args *c, *best, *f = *ipa;
 	int error;
@@ -463,9 +446,7 @@ isapnp_bestconfig(isa, sc, ipa)
  *	Convert a pnp ``compressed ascii'' vendor id to a string
  */
 char *
-isapnp_id_to_vendor(v, id)
-	char   *v;
-	const u_char *id;
+isapnp_id_to_vendor(char *v, const u_char *id)
 {
 	static const char hex[] = "0123456789ABCDEF";
 	char *p = v;
@@ -487,10 +468,7 @@ isapnp_id_to_vendor(v, id)
  *	Print a region allocation
  */
 void
-isapnp_print_region(str, r, n)
-	const char *str;
-	struct isapnp_region *r;
-	size_t n;
+isapnp_print_region(const char *str, struct isapnp_region *r, size_t n)
 {
 	size_t i;
 
@@ -512,10 +490,7 @@ isapnp_print_region(str, r, n)
  *	Print an irq/drq assignment
  */
 void
-isapnp_print_pin(str, p, n)
-	const char *str;
-	struct isapnp_pin *p;
-	size_t n;
+isapnp_print_pin(const char *str, struct isapnp_pin *p, size_t n)
 {
 	size_t i;
 
@@ -534,9 +509,7 @@ isapnp_print_pin(str, p, n)
  *	Print the configuration line for an ISA PnP card.
  */
 int
-isapnp_print(aux, str)
-	void *aux;
-	const char *str;
+isapnp_print(void *aux, const char *str)
 {
 	struct isa_attach_args *ipa = aux;
 
@@ -563,9 +536,7 @@ isapnp_print(aux, str)
  * they should have.  If it looks like a modem..... let's try it.
  */
 int
-isapnp_com_submatch(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+isapnp_com_submatch(struct device *parent, void *match, void *aux)
 {
 	struct cfdata *cf = match;
 	struct isa_attach_args *ipa = aux;
@@ -588,9 +559,7 @@ isapnp_com_submatch(parent, match, aux)
  *	Probe the logical device...
  */
 int
-isapnp_submatch(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+isapnp_submatch(struct device *parent, void *match, void *aux)
 {
 	struct cfdata *cf = match;
 	struct isa_attach_args *ipa = aux;
@@ -627,9 +596,7 @@ isapnp_submatch(parent, match, aux)
  *	Probe and add cards
  */
 int
-isapnp_find(sc, all)
-	struct isapnp_softc *sc;
-	int all;
+isapnp_find(struct isapnp_softc *sc, int all)
 {
 	int p;
 
@@ -670,9 +637,7 @@ isapnp_find(sc, all)
  *	     range/length bit an do appropriate sets.
  */
 void
-isapnp_configure(sc, ipa)
-	struct isapnp_softc *sc;
-	const struct isa_attach_args *ipa;
+isapnp_configure(struct isapnp_softc *sc, const struct isa_attach_args *ipa)
 {
 	int i;
 	static u_char isapnp_mem_range[] = ISAPNP_MEM_DESC;
@@ -809,9 +774,7 @@ isapnp_configure(sc, ipa)
  */
 
 void
-isapnp_isa_attach_hook(isa_sc)
-	struct isa_softc *isa_sc;
-
+isapnp_isa_attach_hook(struct isa_softc *isa_sc)
 {
 	struct isapnp_softc sc;
 
@@ -834,10 +797,7 @@ isapnp_isa_attach_hook(isa_sc)
  *	Probe routine
  */
 int
-isapnp_match(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+isapnp_match(struct device *parent, void *match, void *aux)
 {
 	int rv;
 	struct isapnp_softc sc;
@@ -867,9 +827,7 @@ isapnp_match(parent, match, aux)
  *	Find and attach PnP cards.
  */
 void
-isapnp_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+isapnp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct isapnp_softc *sc = (struct isapnp_softc *) self;
 	struct isa_attach_args *ia = aux;

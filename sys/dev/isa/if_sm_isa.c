@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sm_isa.c,v 1.14 2015/11/24 17:11:39 mpi Exp $	*/
+/*	$OpenBSD: if_sm_isa.c,v 1.15 2021/03/07 06:17:03 jsg Exp $	*/
 /*	$NetBSD: if_sm_isa.c,v 1.4 1998/07/05 06:49:14 jonathan Exp $	*/
 
 /*-
@@ -80,9 +80,7 @@ struct cfattach sm_isa_ca = {
 };
 
 int
-sm_isa_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+sm_isa_match(struct device *parent, void *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -145,9 +143,7 @@ sm_isa_match(parent, match, aux)
 }
 
 void
-sm_isa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+sm_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sm_isa_softc *isc = (struct sm_isa_softc *)self;
 	struct smc91cxx_softc *sc = &isc->sc_smc;

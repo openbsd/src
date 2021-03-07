@@ -1,4 +1,4 @@
-/*	$OpenBSD: isadma.c,v 1.34 2015/03/14 03:38:47 jsg Exp $	*/
+/*	$OpenBSD: isadma.c,v 1.35 2021/03/07 06:17:03 jsg Exp $	*/
 /*	$NetBSD: isadma.c,v 1.32 1997/09/05 01:48:33 thorpej Exp $	*/
 
 /*-
@@ -93,9 +93,7 @@ struct cfdriver isadma_cd = {
 };
 
 int
-isadmamatch(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+isadmamatch(struct device *parent, void *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 
@@ -105,9 +103,7 @@ isadmamatch(parent, match, aux)
 }
 
 void
-isadmaattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+isadmaattach(struct device *parent, struct device *self, void *aux)
 {
 #ifdef __ISADMA_COMPAT
 	int i, sz;
@@ -134,9 +130,7 @@ static inline void isa_dmaunmask(struct isa_softc *, int);
 static inline void isa_dmamask(struct isa_softc *, int);
 
 static inline void
-isa_dmaunmask(sc, chan)
-	struct isa_softc *sc;
-	int chan;
+isa_dmaunmask(struct isa_softc *sc, int chan)
 {
 	int ochan = chan & 3;
 
@@ -150,9 +144,7 @@ isa_dmaunmask(sc, chan)
 }
 
 static inline void
-isa_dmamask(sc, chan)
-	struct isa_softc *sc;
-	int chan;
+isa_dmamask(struct isa_softc *sc, int chan)
 {
 	int ochan = chan & 3;
 
@@ -175,9 +167,7 @@ isa_dmamask(sc, chan)
  * external dma control by a board.
  */
 void
-isa_dmacascade(isadev, chan)
-	struct device *isadev;
-	int chan;
+isa_dmacascade(struct device *isadev, int chan)
 {
 	struct isa_softc *sc = (struct isa_softc *)isadev;
 	int ochan = chan & 3;
@@ -210,11 +200,7 @@ isa_dmacascade(isadev, chan)
 }
 
 int
-isa_dmamap_create(isadev, chan, size, flags)
-	struct device *isadev;
-	int chan;
-	bus_size_t size;
-	int flags;
+isa_dmamap_create(struct device *isadev, int chan, bus_size_t size, int flags)
 {
 	struct isa_softc *sc = (struct isa_softc *)isadev;
 	bus_size_t maxsize;
@@ -247,9 +233,7 @@ isa_dmamap_create(isadev, chan, size, flags)
 }
 
 void
-isa_dmamap_destroy(isadev, chan)
-	struct device *isadev;
-	int chan;
+isa_dmamap_destroy(struct device *isadev, int chan)
 {
 	struct isa_softc *sc = (struct isa_softc *)isadev;
 
@@ -278,14 +262,8 @@ isa_dmamap_destroy(isadev, chan)
  * in motion.
  */
 int
-isa_dmastart(isadev, chan, addr, nbytes, p, flags, busdmaflags)
-	struct device *isadev;
-	int chan;
-	void *addr;
-	bus_size_t nbytes;
-	struct proc *p;
-	int flags;
-	int busdmaflags;
+isa_dmastart(struct device *isadev, int chan, void *addr, bus_size_t nbytes,
+    struct proc *p, int flags, int busdmaflags)
 {
 	struct isa_softc *sc = (struct isa_softc *)isadev;
 	bus_dmamap_t dmam;
@@ -416,9 +394,7 @@ isa_dmastart(isadev, chan, addr, nbytes, p, flags, busdmaflags)
 }
 
 void
-isa_dmaabort(isadev, chan)
-	struct device *isadev;
-	int chan;
+isa_dmaabort(struct device *isadev, int chan)
 {
 	struct isa_softc *sc = (struct isa_softc *)isadev;
 
@@ -433,9 +409,7 @@ isa_dmaabort(isadev, chan)
 }
 
 bus_size_t
-isa_dmacount(isadev, chan)
-	struct device *isadev;
-	int chan;
+isa_dmacount(struct device *isadev, int chan)
 {
 	struct isa_softc *sc = (struct isa_softc *)isadev;
 	int waport;
@@ -482,9 +456,7 @@ isa_dmacount(isadev, chan)
 }
 
 int
-isa_dmafinished(isadev, chan)
-	struct device *isadev;
-	int chan;
+isa_dmafinished(struct device *isadev, int chan)
 {
 	struct isa_softc *sc = (struct isa_softc *)isadev;
 
@@ -505,9 +477,7 @@ isa_dmafinished(isadev, chan)
 }
 
 void
-isa_dmadone(isadev, chan)
-	struct device *isadev;
-	int chan;
+isa_dmadone(struct device *isadev, int chan)
 {
 	struct isa_softc *sc = (struct isa_softc *)isadev;
 	bus_dmamap_t dmam;
@@ -534,12 +504,8 @@ isa_dmadone(isadev, chan)
 }
 
 int
-isa_dmamem_alloc(isadev, chan, size, addrp, flags)
-	struct device *isadev;
-	int chan;
-	bus_size_t size;
-	bus_addr_t *addrp;
-	int flags;
+isa_dmamem_alloc(struct device *isadev, int chan, bus_size_t size,
+    bus_addr_t *addrp, int flags)
 {
 	struct isa_softc *sc = (struct isa_softc *)isadev;
 	bus_dma_segment_t seg;
@@ -564,11 +530,8 @@ isa_dmamem_alloc(isadev, chan, size, addrp, flags)
 }
 
 void
-isa_dmamem_free(isadev, chan, addr, size)
-	struct device *isadev;
-	int chan;
-	bus_addr_t addr;
-	bus_size_t size;
+isa_dmamem_free(struct device *isadev, int chan, bus_addr_t addr,
+    bus_size_t size)
 {
 	struct isa_softc *sc = (struct isa_softc *)isadev;
 	bus_dma_segment_t seg;
@@ -585,13 +548,8 @@ isa_dmamem_free(isadev, chan, addr, size)
 }
 
 int
-isa_dmamem_map(isadev, chan, addr, size, kvap, flags)
-	struct device *isadev;
-	int chan;
-	bus_addr_t addr;
-	bus_size_t size;
-	caddr_t *kvap;
-	int flags;
+isa_dmamem_map(struct device *isadev, int chan, bus_addr_t addr,
+    bus_size_t size, caddr_t *kvap, int flags)
 {
 	struct isa_softc *sc = (struct isa_softc *)isadev;
 	bus_dma_segment_t seg;
@@ -608,11 +566,7 @@ isa_dmamem_map(isadev, chan, addr, size, kvap, flags)
 }
 
 void
-isa_dmamem_unmap(isadev, chan, kva, size)
-	struct device *isadev;
-	int chan;
-	caddr_t kva;
-	size_t size;
+isa_dmamem_unmap(struct device *isadev, int chan, caddr_t kva, size_t size)
 {
 	struct isa_softc *sc = (struct isa_softc *)isadev;
 
@@ -625,12 +579,8 @@ isa_dmamem_unmap(isadev, chan, kva, size)
 }
 
 int
-isa_dmamem_mmap(isadev, chan, addr, size, off, prot, flags)
-	struct device *isadev;
-	int chan;
-	bus_addr_t addr;
-	bus_size_t size;
-	int off, prot, flags;
+isa_dmamem_mmap(struct device *isadev, int chan, bus_addr_t addr,
+    bus_size_t size, int off, int prot, int flags)
 {
 	struct isa_softc *sc = (struct isa_softc *)isadev;
 	bus_dma_segment_t seg;
@@ -650,9 +600,7 @@ isa_dmamem_mmap(isadev, chan, addr, size, off, prot, flags)
 }
 
 int
-isa_drq_isfree(isadev, chan)
-	struct device *isadev;
-	int chan;
+isa_drq_isfree(struct device *isadev, int chan)
 {
 	struct isa_softc *sc = (struct isa_softc *)isadev;
 	if (chan < 0 || chan > 7) {
@@ -663,12 +611,7 @@ isa_drq_isfree(isadev, chan)
 }
 
 void *
-isa_malloc(isadev, chan, size, pool, flags)
-	struct device *isadev;
-	int chan;
-	size_t size;
-	int pool;
-	int flags;
+isa_malloc(struct device *isadev, int chan, size_t size, int pool, int flags)
 {
 	bus_addr_t addr;
 	caddr_t kva;
@@ -700,9 +643,7 @@ isa_malloc(isadev, chan, size, pool, flags)
 }
 
 void
-isa_free(addr, pool)
-	void *addr;
-	int pool;
+isa_free(void *addr, int pool)
 {
 	struct isa_mem **mp, *m;
 	caddr_t kva = (caddr_t)addr;
@@ -721,10 +662,7 @@ isa_free(addr, pool)
 }
 
 paddr_t
-isa_mappage(mem, off, prot)
-	void *mem;
-	off_t off;
-	int prot;
+isa_mappage(void *mem, off_t off, int prot)
 {
 	struct isa_mem *m;
 

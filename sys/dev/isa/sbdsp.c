@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbdsp.c,v 1.38 2019/12/31 10:05:32 mpi Exp $	*/
+/*	$OpenBSD: sbdsp.c,v 1.39 2021/03/07 06:17:04 jsg Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -194,8 +194,7 @@ int	sbdsp_midi_intr(void *);
 void	sb_printsc(struct sbdsp_softc *);
 
 void
-sb_printsc(sc)
-	struct sbdsp_softc *sc;
+sb_printsc(struct sbdsp_softc *sc)
 {
 	int i;
 
@@ -227,8 +226,7 @@ sb_printsc(sc)
  * Probe for the soundblaster hardware.
  */
 int
-sbdsp_probe(sc)
-	struct sbdsp_softc *sc;
+sbdsp_probe(struct sbdsp_softc *sc)
 {
 
 	if (sbdsp_reset(sc) < 0) {
@@ -252,8 +250,7 @@ sbdsp_probe(sc)
  * Try add-on stuff for Jazz16.
  */
 void
-sbdsp_jazz16_probe(sc)
-	struct sbdsp_softc *sc;
+sbdsp_jazz16_probe(struct sbdsp_softc *sc)
 {
 	static u_char jazz16_irq_conf[16] = {
 	    -1, -1, 0x02, 0x03,
@@ -324,8 +321,7 @@ done:
  * pseudo-device driver .
  */
 void
-sbdsp_attach(sc)
-	struct sbdsp_softc *sc;
+sbdsp_attach(struct sbdsp_softc *sc)
 {
 	struct audio_params pparams, rparams;
         int i;
@@ -405,10 +401,7 @@ sbdsp_attach(sc)
 }
 
 void
-sbdsp_mix_write(sc, mixerport, val)
-	struct sbdsp_softc *sc;
-	int mixerport;
-	int val;
+sbdsp_mix_write(struct sbdsp_softc *sc, int mixerport, int val)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -422,9 +415,7 @@ sbdsp_mix_write(sc, mixerport, val)
 }
 
 int
-sbdsp_mix_read(sc, mixerport)
-	struct sbdsp_softc *sc;
-	int mixerport;
+sbdsp_mix_read(struct sbdsp_softc *sc, int mixerport)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -444,10 +435,8 @@ sbdsp_mix_read(sc, mixerport)
  */
 
 int
-sbdsp_set_params(addr, setmode, usemode, play, rec)
-	void *addr;
-	int setmode, usemode;
-	struct audio_params *play, *rec;
+sbdsp_set_params(void *addr, int setmode, int usemode,
+    struct audio_params *play, struct audio_params *rec)
 {
 	struct sbdsp_softc *sc = addr;
 	struct sbmode *m;
@@ -639,9 +628,7 @@ sbdsp_set_params(addr, setmode, usemode, play, rec)
 }
 
 void
-sbdsp_set_ifilter(addr, which)
-	void *addr;
-	int which;
+sbdsp_set_ifilter(void *addr, int which)
 {
 	struct sbdsp_softc *sc = addr;
 	int mixval;
@@ -665,8 +652,7 @@ sbdsp_set_ifilter(addr, which)
 }
 
 int
-sbdsp_get_ifilter(addr)
-	void *addr;
+sbdsp_get_ifilter(void *addr)
 {
 	struct sbdsp_softc *sc = addr;
 
@@ -683,9 +669,7 @@ sbdsp_get_ifilter(addr)
 }
 
 int
-sbdsp_set_in_ports(sc, mask)
-	struct sbdsp_softc *sc;
-	int mask;
+sbdsp_set_in_ports(struct sbdsp_softc *sc, int mask)
 {
 	int bitsl, bitsr;
 	int sbport;
@@ -743,9 +727,7 @@ sbdsp_set_in_ports(sc, mask)
 }
 
 int
-sbdsp_speaker_ctl(addr, newstate)
-	void *addr;
-	int newstate;
+sbdsp_speaker_ctl(void *addr, int newstate)
 {
 	struct sbdsp_softc *sc = addr;
 
@@ -766,17 +748,13 @@ sbdsp_speaker_ctl(addr, newstate)
 }
 
 int
-sbdsp_round_blocksize(addr, blk)
-	void *addr;
-	int blk;
+sbdsp_round_blocksize(void *addr, int blk)
 {
 	return (blk + 3) & -4;	/* round to biggest sample size */
 }
 
 int
-sbdsp_open(addr, flags)
-	void *addr;
-	int flags;
+sbdsp_open(void *addr, int flags)
 {
 	struct sbdsp_softc *sc = addr;
 
@@ -808,8 +786,7 @@ sbdsp_open(addr, flags)
 }
 
 void
-sbdsp_close(addr)
-	void *addr;
+sbdsp_close(void *addr)
 {
 	struct sbdsp_softc *sc = addr;
 
@@ -835,8 +812,7 @@ sbdsp_close(addr)
  * Return non-zero if the card isn't detected.
  */
 int
-sbdsp_reset(sc)
-	struct sbdsp_softc *sc;
+sbdsp_reset(struct sbdsp_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -873,9 +849,7 @@ sbdsp_reset(sc)
  * polling loop and wait until it can take the byte.
  */
 int
-sbdsp_wdsp(sc, v)
-	struct sbdsp_softc *sc;
-	int v;
+sbdsp_wdsp(struct sbdsp_softc *sc, int v)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -899,8 +873,7 @@ sbdsp_wdsp(sc, v)
  * Read a byte from the DSP, using polling.
  */
 int
-sbdsp_rdsp(sc)
-	struct sbdsp_softc *sc;
+sbdsp_rdsp(struct sbdsp_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -925,15 +898,13 @@ sbdsp_rdsp(sc)
  * the SB hardware go away for a while, so pause a little.
  */
 void
-sbdsp_to(arg)
-	void *arg;
+sbdsp_to(void *arg)
 {
 	wakeup(arg);
 }
 
 void
-sbdsp_pause(sc)
-	struct sbdsp_softc *sc;
+sbdsp_pause(struct sbdsp_softc *sc)
 {
 	timeout_add_msec(&sc->sc_tmo, 125);	/* 8x per second */
 	tsleep_nsec(sbdsp_to, PWAIT, "sbpause", INFSLP);
@@ -950,8 +921,7 @@ sbdsp_pause(sc)
  * they designed this card.
  */
 void
-sbdsp_spkron(sc)
-	struct sbdsp_softc *sc;
+sbdsp_spkron(struct sbdsp_softc *sc)
 {
 	(void)sbdsp_wdsp(sc, SB_DSP_SPKR_ON);
 	sbdsp_pause(sc);
@@ -961,8 +931,7 @@ sbdsp_spkron(sc)
  * Turn off the speaker; see comment above.
  */
 void
-sbdsp_spkroff(sc)
-	struct sbdsp_softc *sc;
+sbdsp_spkroff(struct sbdsp_softc *sc)
 {
 	(void)sbdsp_wdsp(sc, SB_DSP_SPKR_OFF);
 	sbdsp_pause(sc);
@@ -973,8 +942,7 @@ sbdsp_spkroff(sc)
  * Store version information in the softc.
  */
 void
-sbversion(sc)
-	struct sbdsp_softc *sc;
+sbversion(struct sbdsp_softc *sc)
 {
 	int v;
 
@@ -1040,8 +1008,7 @@ sbversion(sc)
  * Halt a DMA in progress.
  */
 int
-sbdsp_haltdma(addr)
-	void *addr;
+sbdsp_haltdma(void *addr)
 {
 	struct sbdsp_softc *sc = addr;
 
@@ -1054,9 +1021,7 @@ sbdsp_haltdma(addr)
 }
 
 int
-sbdsp_set_timeconst(sc, tc)
-	struct sbdsp_softc *sc;
-	int tc;
+sbdsp_set_timeconst(struct sbdsp_softc *sc, int tc)
 {
 	DPRINTF(("sbdsp_set_timeconst: sc=%p tc=%d\n", sc, tc));
 
@@ -1068,9 +1033,7 @@ sbdsp_set_timeconst(sc, tc)
 }
 
 int
-sbdsp16_set_rate(sc, cmd, rate)
-	struct sbdsp_softc *sc;
-	int cmd, rate;
+sbdsp16_set_rate(struct sbdsp_softc *sc, int cmd, int rate)
 {
 	DPRINTF(("sbdsp16_set_rate: sc=%p cmd=0x%02x rate=%d\n", sc, cmd, rate));
 
@@ -1082,13 +1045,8 @@ sbdsp16_set_rate(sc, cmd, rate)
 }
 
 int
-sbdsp_trigger_input(addr, start, end, blksize, intr, arg, param)
-	void *addr;
-	void *start, *end;
-	int blksize;
-	void (*intr)(void *);
-	void *arg;
-	struct audio_params *param;
+sbdsp_trigger_input(void *addr, void *start, void *end, int blksize,
+    void (*intr)(void *), void *arg, struct audio_params *param)
 {
 	struct sbdsp_softc *sc = addr;
 	int stereo = param->channels == 2;
@@ -1167,8 +1125,7 @@ sbdsp_trigger_input(addr, start, end, blksize, intr, arg, param)
 }
 
 int
-sbdsp_block_input(addr)
-	void *addr;
+sbdsp_block_input(void *addr)
 {
 	struct sbdsp_softc *sc = addr;
 	int cc = sc->sc_i.blksize;
@@ -1219,13 +1176,8 @@ sbdsp_block_input(addr)
 }
 
 int
-sbdsp_trigger_output(addr, start, end, blksize, intr, arg, param)
-	void *addr;
-	void *start, *end;
-	int blksize;
-	void (*intr)(void *);
-	void *arg;
-	struct audio_params *param;
+sbdsp_trigger_output(void *addr, void *start, void *end, int blksize,
+    void (*intr)(void *), void *arg, struct audio_params *param)
 {
 	struct sbdsp_softc *sc = addr;
 	int stereo = param->channels == 2;
@@ -1305,8 +1257,7 @@ sbdsp_trigger_output(addr, start, end, blksize, intr, arg, param)
 }
 
 int
-sbdsp_block_output(addr)
-	void *addr;
+sbdsp_block_output(void *addr)
 {
 	struct sbdsp_softc *sc = addr;
 	int cc = sc->sc_o.blksize;
@@ -1367,8 +1318,7 @@ sbdsp_block_output(addr)
  * an SB2 and experience problems, buy an SB16 (it's only $40).
  */
 int
-sbdsp_intr(arg)
-	void *arg;
+sbdsp_intr(void *arg)
 {
 	struct sbdsp_softc *sc = arg;
 	u_char irq;
@@ -1419,8 +1369,7 @@ sbdsp_intr(arg)
 /* Like val & mask, but make sure the result is correctly rounded. */
 #define MAXVAL 256
 static int
-sbdsp_adjust(val, mask)
-	int val, mask;
+sbdsp_adjust(int val, int mask)
 {
 	val += (MAXVAL - mask) >> 1;
 	if (val >= MAXVAL)
@@ -1429,9 +1378,7 @@ sbdsp_adjust(val, mask)
 }
 
 void
-sbdsp_set_mixer_gain(sc, port)
-	struct sbdsp_softc *sc;
-	int port;
+sbdsp_set_mixer_gain(struct sbdsp_softc *sc, int port)
 {
 	int src, gain;
 
@@ -1533,9 +1480,7 @@ sbdsp_set_mixer_gain(sc, port)
 }
 
 int
-sbdsp_mixer_set_port(addr, cp)
-	void *addr;
-	mixer_ctrl_t *cp;
+sbdsp_mixer_set_port(void *addr, mixer_ctrl_t *cp)
 {
 	struct sbdsp_softc *sc = addr;
 	int lgain, rgain;
@@ -1724,9 +1669,7 @@ sbdsp_mixer_set_port(addr, cp)
 }
 
 int
-sbdsp_mixer_get_port(addr, cp)
-	void *addr;
-	mixer_ctrl_t *cp;
+sbdsp_mixer_get_port(void *addr, mixer_ctrl_t *cp)
 {
 	struct sbdsp_softc *sc = addr;
 
@@ -1825,9 +1768,7 @@ sbdsp_mixer_get_port(addr, cp)
 }
 
 int
-sbdsp_mixer_query_devinfo(addr, dip)
-	void *addr;
-	mixer_devinfo_t *dip;
+sbdsp_mixer_query_devinfo(void *addr, mixer_devinfo_t *dip)
 {
 	struct sbdsp_softc *sc = addr;
 	int chan, class, is1745;
@@ -2143,12 +2084,7 @@ sbdsp_mixer_query_devinfo(addr, dip)
 }
 
 void *
-sb_malloc(addr, direction, size, pool, flags)
-	void *addr;
-	int direction;
-	size_t size;
-	int pool;
-	int flags;
+sb_malloc(void *addr, int direction, size_t size, int pool, int flags)
 {
 	struct sbdsp_softc *sc = addr;
 	int drq;
@@ -2163,19 +2099,13 @@ sb_malloc(addr, direction, size, pool, flags)
 }
 
 void
-sb_free(addr, ptr, pool)
-	void *addr;
-	void *ptr;
-	int pool;
+sb_free(void *addr, void *ptr, int pool)
 {
 	isa_free(ptr, pool);
 }
 
 size_t
-sb_round(addr, direction, size)
-	void *addr;
-	int direction;
-	size_t size;
+sb_round(void *addr, int direction, size_t size)
 {
 	if (size > MAX_ISADMA)
 		size = MAX_ISADMA;
@@ -2183,8 +2113,7 @@ sb_round(addr, direction, size)
 }
 
 int
-sbdsp_get_props(addr)
-	void *addr;
+sbdsp_get_props(void *addr)
 {
 	struct sbdsp_softc *sc = addr;
 	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT |
@@ -2197,12 +2126,8 @@ sbdsp_get_props(addr)
  */
 
 int
-sbdsp_midi_open(addr, flags, iintr, ointr, arg)
-	void *addr;
-	int flags;
-	void (*iintr)(void *, int);
-	void (*ointr)(void *);
-	void *arg;
+sbdsp_midi_open(void *addr, int flags, void (*iintr)(void *, int),
+    void (*ointr)(void *), void *arg)
 {
 	struct sbdsp_softc *sc = addr;
 
@@ -2226,8 +2151,7 @@ sbdsp_midi_open(addr, flags, iintr, ointr, arg)
 }
 
 void
-sbdsp_midi_close(addr)
-	void *addr;
+sbdsp_midi_close(void *addr)
 {
 	struct sbdsp_softc *sc = addr;
 
@@ -2240,9 +2164,7 @@ sbdsp_midi_close(addr)
 }
 
 int
-sbdsp_midi_output(addr, d)
-	void *addr;
-	int d;
+sbdsp_midi_output(void *addr, int d)
 {
 	struct sbdsp_softc *sc = addr;
 
@@ -2253,9 +2175,7 @@ sbdsp_midi_output(addr, d)
 }
 
 void
-sbdsp_midi_getinfo(addr, mi)
-	void *addr;
-	struct midi_info *mi;
+sbdsp_midi_getinfo(void *addr, struct midi_info *mi)
 {
 	struct sbdsp_softc *sc = addr;
 
@@ -2264,8 +2184,7 @@ sbdsp_midi_getinfo(addr, mi)
 }
 
 int
-sbdsp_midi_intr(addr)
-	void *addr;
+sbdsp_midi_intr(void *addr)
 {
 	struct sbdsp_softc *sc = addr;
 

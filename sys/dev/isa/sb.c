@@ -1,4 +1,4 @@
-/*	$OpenBSD: sb.c,v 1.29 2016/09/19 06:46:44 ratchov Exp $	*/
+/*	$OpenBSD: sb.c,v 1.30 2021/03/07 06:17:04 jsg Exp $	*/
 /*	$NetBSD: sb.c,v 1.57 1998/01/12 09:43:46 thorpej Exp $	*/
 
 /*
@@ -131,8 +131,7 @@ int	sbdebug = 0;
 
 
 int
-sbmatch(sc)
-	struct sbdsp_softc *sc;
+sbmatch(struct sbdsp_softc *sc)
 {
 	static u_char drq_conf[8] = {
 		0x01, 0x02, -1, 0x08, -1, 0x20, 0x40, 0x80
@@ -240,8 +239,7 @@ sbmatch(sc)
 
 
 void
-sbattach(sc)
-	struct sbdsp_softc *sc;
+sbattach(struct sbdsp_softc *sc)
 {
 	struct audio_attach_args arg;
 #if NMIDI > 0
@@ -283,35 +281,26 @@ sbattach(sc)
 #define SBMPU(a) (&((struct sbdsp_softc *)addr)->sc_mpu_sc)
 
 int
-sb_mpu401_open(addr, flags, iintr, ointr, arg)
-	void *addr;
-	int flags;
-	void (*iintr)(void *, int);
-	void (*ointr)(void *);
-	void *arg;
+sb_mpu401_open(void *addr, int flags, void (*iintr)(void *, int),
+    void (*ointr)(void *), void *arg)
 {
 	return mpu_open(SBMPU(addr), flags, iintr, ointr, arg);
 }
 
 int
-sb_mpu401_output(addr, d)
-	void *addr;
-	int d;
+sb_mpu401_output(void *addr, int d)
 {
 	return mpu_output(SBMPU(addr), d);
 }
 
 void
-sb_mpu401_close(addr)
-	void *addr;
+sb_mpu401_close(void *addr)
 {
 	mpu_close(SBMPU(addr));
 }
 
 void
-sb_mpu401_getinfo(addr, mi)
-	void *addr;
-	struct midi_info *mi;
+sb_mpu401_getinfo(void *addr, struct midi_info *mi)
 {
 	mi->name = "SB MPU-401 UART";
 	mi->props = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sb_isapnp.c,v 1.15 2015/05/12 16:35:23 ratchov Exp $	*/
+/*	$OpenBSD: sb_isapnp.c,v 1.16 2021/03/07 06:17:04 jsg Exp $	*/
 /*	$NetBSD: sb_isa.c,v 1.3 1997/03/20 11:03:11 mycroft Exp $	*/
 
 /*
@@ -69,9 +69,7 @@ struct cfattach sb_isapnp_ca = {
  * Probe for the soundblaster hardware.
  */
 int
-sb_isapnp_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+sb_isapnp_match(struct device *parent, void *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 
@@ -85,9 +83,7 @@ sb_isapnp_match(parent, match, aux)
  * pseudo-device driver.
  */
 void
-sb_isapnp_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+sb_isapnp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sbdsp_softc *sc = (struct sbdsp_softc *) self;
 	struct isa_attach_args *ia = aux;

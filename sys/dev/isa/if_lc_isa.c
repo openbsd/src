@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lc_isa.c,v 1.12 2015/11/24 17:11:39 mpi Exp $ */
+/*	$OpenBSD: if_lc_isa.c,v 1.13 2021/03/07 06:17:03 jsg Exp $ */
 /*	$NetBSD: if_lc_isa.c,v 1.10 2001/06/13 10:46:03 wiz Exp $ */
 
 /*-
@@ -77,10 +77,7 @@ struct cfattach lc_isa_ca = {
 };
 
 int
-lemac_isa_find(sc, ia, attach)
-	struct lemac_softc *sc;
-	struct isa_attach_args *ia;
-	int attach;
+lemac_isa_find(struct lemac_softc *sc, struct isa_attach_args *ia, int attach)
 {
 	bus_addr_t maddr;
 	bus_size_t msize;
@@ -170,10 +167,7 @@ outio:
 }
 
 int
-lemac_isa_probe(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+lemac_isa_probe(struct device *parent, void *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct cfdata *cf = ((struct device *)match)->dv_cfdata;
@@ -186,10 +180,7 @@ lemac_isa_probe(parent, match, aux)
 }
 
 void
-lemac_isa_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+lemac_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct lemac_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;

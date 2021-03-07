@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ef_isapnp.c,v 1.39 2017/01/22 10:17:38 dlg Exp $	*/
+/*	$OpenBSD: if_ef_isapnp.c,v 1.40 2021/03/07 06:17:03 jsg Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -134,17 +134,13 @@ struct cfattach ef_isapnp_ca = {
 };
 
 int
-ef_isapnp_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+ef_isapnp_match(struct device *parent, void *match, void *aux)
 {
 	return (1);
 }
 
 void
-ef_isapnp_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ef_isapnp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ef_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
@@ -224,8 +220,7 @@ ef_isapnp_attach(parent, self, aux)
 }
 
 void
-efstart(ifp)
-	struct ifnet *ifp;
+efstart(struct ifnet *ifp)
 {
 	struct ef_softc *sc = ifp->if_softc;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -324,10 +319,7 @@ startagain:
 }
 
 int
-efioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	caddr_t data;
+efioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct ef_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
@@ -373,8 +365,7 @@ efioctl(ifp, cmd, data)
 }
 
 void
-efinit(sc)
-	struct ef_softc *sc;
+efinit(struct ef_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -445,8 +436,7 @@ efinit(sc)
 }
 
 void
-efreset(sc)
-	struct ef_softc *sc;
+efreset(struct ef_softc *sc)
 {
 	int s;
 
@@ -457,8 +447,7 @@ efreset(sc)
 }
 
 void
-efstop(sc)
-	struct ef_softc *sc;
+efstop(struct ef_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -486,9 +475,7 @@ efstop(sc)
 }
 
 void
-efcompletecmd(sc, cmd, arg)
-	struct ef_softc *sc;
-	u_int cmd, arg;
+efcompletecmd(struct ef_softc *sc, u_int cmd, u_int arg)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -499,8 +486,7 @@ efcompletecmd(sc, cmd, arg)
 }
 
 int
-efintr(vsc)
-	void *vsc;
+efintr(void *vsc)
 {
 	struct ef_softc *sc = vsc;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -546,8 +532,7 @@ efintr(vsc)
 }
 
 void
-eftxstat(sc)
-	struct ef_softc *sc;
+eftxstat(struct ef_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -591,8 +576,7 @@ eftxstat(sc)
 }
 
 int
-efbusyeeprom(sc)
-	struct ef_softc *sc;
+efbusyeeprom(struct ef_softc *sc)
 {
 	int i = 100, j;
 
@@ -614,8 +598,7 @@ efbusyeeprom(sc)
 }
 
 void
-efwatchdog(ifp)
-	struct ifnet *ifp;
+efwatchdog(struct ifnet *ifp)
 {
 	struct ef_softc *sc = ifp->if_softc;
 
@@ -625,8 +608,7 @@ efwatchdog(ifp)
 }
 
 void
-efsetmulti(sc)
-	struct ef_softc *sc;
+efsetmulti(struct ef_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct arpcom *ac = &sc->sc_arpcom;
@@ -652,8 +634,7 @@ efsetmulti(sc)
 }
 
 void
-efread(sc)
-	struct ef_softc *sc;
+efread(struct ef_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -711,9 +692,7 @@ efread(sc)
 }
 
 struct mbuf *
-efget(sc, totlen)
-	struct ef_softc *sc;
-	int totlen;
+efget(struct ef_softc *sc, int totlen)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -781,9 +760,7 @@ efget(sc, totlen)
 	    & (~(x)))
 
 void
-ef_mii_writeb(sc, b)
-	struct ef_softc *sc;
-	int b;
+ef_mii_writeb(struct ef_softc *sc, int b)
 {
 	MII_CLR(sc, EF_MII_CLK);
 
@@ -799,8 +776,7 @@ ef_mii_writeb(sc, b)
 }
 
 void
-ef_mii_sync(sc)
-	struct ef_softc *sc;
+ef_mii_sync(struct ef_softc *sc)
 {
 	int i;
 
@@ -809,9 +785,7 @@ ef_mii_sync(sc)
 }
 
 int
-ef_miibus_readreg(dev, phy, reg)
-	struct device *dev;
-	int phy, reg;
+ef_miibus_readreg(struct device *dev, int phy, int reg)
 {
 	struct ef_softc *sc = (struct ef_softc *)dev;
 	int i, ack, s, val = 0;
@@ -882,9 +856,7 @@ ef_miibus_readreg(dev, phy, reg)
 }
 
 void
-ef_miibus_writereg(dev, phy, reg, val)
-	struct device *dev;
-	int phy, reg, val;
+ef_miibus_writereg(struct device *dev, int phy, int reg, int val)
 {
 	struct ef_softc *sc = (struct ef_softc *)dev;
 	int s, i;
@@ -920,8 +892,7 @@ ef_miibus_writereg(dev, phy, reg, val)
 }
 
 int
-ef_ifmedia_upd(ifp)
-	struct ifnet *ifp;
+ef_ifmedia_upd(struct ifnet *ifp)
 {
 	struct ef_softc *sc = ifp->if_softc;
 
@@ -930,9 +901,7 @@ ef_ifmedia_upd(ifp)
 }
 
 void
-ef_ifmedia_sts(ifp, ifmr)
-	struct ifnet *ifp;
-	struct ifmediareq *ifmr;
+ef_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct ef_softc *sc = ifp->if_softc;
 
@@ -942,8 +911,7 @@ ef_ifmedia_sts(ifp, ifmr)
 }
 
 void
-ef_miibus_statchg(self)
-	struct device *self;
+ef_miibus_statchg(struct device *self)
 {
 	struct ef_softc *sc = (struct ef_softc *)self;
 	int s;
@@ -962,8 +930,7 @@ ef_miibus_statchg(self)
 }
 
 void
-ef_tick(v)
-	void *v;
+ef_tick(void *v)
 {
 	struct ef_softc *sc = v;
 	int s;

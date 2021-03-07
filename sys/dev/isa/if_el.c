@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_el.c,v 1.35 2020/07/10 13:22:20 patrick Exp $       */
+/*    $OpenBSD: if_el.c,v 1.36 2021/03/07 06:17:03 jsg Exp $       */
 /*	$NetBSD: if_el.c,v 1.39 1996/05/12 23:52:32 mycroft Exp $	*/
 
 /*
@@ -97,9 +97,7 @@ struct cfdriver el_cd = {
  * (XXX - cgd -- needs help)
  */
 int
-elprobe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+elprobe(struct device *parent, void *match, void *aux)
 {
 	struct el_softc *sc = match;
 	struct isa_attach_args *ia = aux;
@@ -159,9 +157,7 @@ elprobe(parent, match, aux)
  * assume that the IRQ given is correct.
  */
 void
-elattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+elattach(struct device *parent, struct device *self, void *aux)
 {
 	struct el_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
@@ -198,8 +194,7 @@ elattach(parent, self, aux)
  * Reset interface.
  */
 void
-elreset(sc)
-	struct el_softc *sc;
+elreset(struct el_softc *sc)
 {
 	int s;
 
@@ -214,8 +209,7 @@ elreset(sc)
  * Stop interface.
  */
 void
-elstop(sc)
-	struct el_softc *sc;
+elstop(struct el_softc *sc)
 {
 
 	outb(sc->sc_iobase+EL_AC, 0);
@@ -226,8 +220,7 @@ elstop(sc)
  * case the board forgets.
  */
 static inline void
-el_hardreset(sc)
-	struct el_softc *sc;
+el_hardreset(struct el_softc *sc)
 {
 	int iobase = sc->sc_iobase;
 	int i;
@@ -244,8 +237,7 @@ el_hardreset(sc)
  * Initialize interface.
  */
 void
-elinit(sc)
-	struct el_softc *sc;
+elinit(struct el_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int iobase = sc->sc_iobase;
@@ -283,8 +275,7 @@ elinit(sc)
  * interrupt level!
  */
 void
-elstart(ifp)
-	struct ifnet *ifp;
+elstart(struct ifnet *ifp)
 {
 	struct el_softc *sc = ifp->if_softc;
 	int iobase = sc->sc_iobase;
@@ -392,8 +383,7 @@ elstart(ifp)
  * success, non-0 on failure.
  */
 static int
-el_xmit(sc)
-	struct el_softc *sc;
+el_xmit(struct el_softc *sc)
 {
 	int iobase = sc->sc_iobase;
 	int i;
@@ -421,8 +411,7 @@ el_xmit(sc)
  * Controller interrupt.
  */
 int
-elintr(arg)
-	void *arg;
+elintr(void *arg)
 {
 	register struct el_softc *sc = arg;
 	int iobase = sc->sc_iobase;
@@ -481,9 +470,7 @@ elintr(arg)
  * Pass a packet to the higher levels.
  */
 void
-elread(sc, len)
-	register struct el_softc *sc;
-	int len;
+elread(struct el_softc *sc, int len)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
@@ -514,9 +501,7 @@ elread(sc, len)
  * units are present we copy into clusters.
  */
 struct mbuf *
-elget(sc, totlen)
-	struct el_softc *sc;
-	int totlen;
+elget(struct el_softc *sc, int totlen)
 {
 	int iobase = sc->sc_iobase;
 	struct mbuf *top, **mp, *m;
@@ -564,10 +549,7 @@ elget(sc, totlen)
  * Process an ioctl request. This code needs some work - it looks pretty ugly.
  */
 int
-elioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
-	u_long cmd;
-	caddr_t data;
+elioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct el_softc *sc = ifp->if_softc;
 	int s, error = 0;
@@ -617,8 +599,7 @@ elioctl(ifp, cmd, data)
  * Device timeout routine.
  */
 void
-elwatchdog(ifp)
-	struct ifnet *ifp;
+elwatchdog(struct ifnet *ifp)
 {
 	struct el_softc *sc = ifp->if_softc;
 

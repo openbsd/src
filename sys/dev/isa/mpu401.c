@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpu401.c,v 1.15 2015/03/14 03:38:47 jsg Exp $	*/
+/*	$OpenBSD: mpu401.c,v 1.16 2021/03/07 06:17:04 jsg Exp $	*/
 /*	$NetBSD: mpu401.c,v 1.3 1998/11/25 22:17:06 augustss Exp $	*/
 
 /*
@@ -78,8 +78,7 @@ struct midi_hw_if mpu_midi_hw_if = {
 };
 
 int
-mpu_find(v)
-	void *v;
+mpu_find(void *v)
 {
 	struct mpu_softc *sc = v;
 
@@ -96,8 +95,7 @@ bad:
 }
 
 static __inline int
-mpu_waitready(sc)
-	struct mpu_softc *sc;
+mpu_waitready(struct mpu_softc *sc)
 {
 	int i;
 
@@ -110,8 +108,7 @@ mpu_waitready(sc)
 }
 
 int
-mpu_reset(sc)
-	struct mpu_softc *sc;
+mpu_reset(struct mpu_softc *sc)
 {
 	bus_space_tag_t iot = sc->iot;
 	bus_space_handle_t ioh = sc->ioh;
@@ -136,12 +133,8 @@ mpu_reset(sc)
 }
 
 int
-mpu_open(v, flags, iintr, ointr, arg)
-	void *v;
-	int flags;
-	void (*iintr)(void *, int);
-	void (*ointr)(void *);
-	void *arg;
+mpu_open(void *v, int flags, void (*iintr)(void *, int), void (*ointr)(void *),
+    void *arg)
 {
 	struct mpu_softc *sc = v;
 
@@ -160,8 +153,7 @@ mpu_open(v, flags, iintr, ointr, arg)
 }
 
 void
-mpu_close(v)
-	void *v;
+mpu_close(void *v)
 {
 	struct mpu_softc *sc = v;
 
@@ -173,8 +165,7 @@ mpu_close(v)
 }
 
 void
-mpu_readinput(sc)
-	struct mpu_softc *sc;
+mpu_readinput(struct mpu_softc *sc)
 {
 	bus_space_tag_t iot = sc->iot;
 	bus_space_handle_t ioh = sc->ioh;
@@ -192,9 +183,7 @@ mpu_readinput(sc)
  * called with audio_lock
  */
 int
-mpu_output(v, d)
-	void *v;
-	int d;
+mpu_output(void *v, int d)
 {
 	struct mpu_softc *sc = v;
 
@@ -211,17 +200,14 @@ mpu_output(v, d)
 }
 
 void
-mpu_getinfo(addr, mi)
-	void *addr;
-	struct midi_info *mi;
+mpu_getinfo(void *addr, struct midi_info *mi)
 {
 	mi->name = "MPU-401 MIDI UART";
 	mi->props = 0;
 }
 
 int
-mpu_intr(v)
-	void *v;
+mpu_intr(void *v)
 {
 	struct mpu_softc *sc = v;
 

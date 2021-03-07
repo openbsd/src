@@ -1,4 +1,4 @@
-/*	$OpenBSD: sb_isa.c,v 1.10 2015/05/12 16:35:23 ratchov Exp $	*/
+/*	$OpenBSD: sb_isa.c,v 1.11 2021/03/07 06:17:04 jsg Exp $	*/
 /*	$NetBSD: sb_isa.c,v 1.15 1997/11/30 15:32:25 drochner Exp $	*/
 
 /*
@@ -73,10 +73,7 @@ struct cfattach sb_isa_ca = {
  * Probe for the soundblaster hardware.
  */
 int
-sb_isa_match(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+sb_isa_match(struct device *parent, void *match, void *aux)
 {
 	struct sbdsp_softc probesc, *sc = &probesc;
 
@@ -87,10 +84,8 @@ sb_isa_match(parent, match, aux)
 }
 
 static int
-sbfind(parent, sc, ia)
-	struct device *parent;
-	struct sbdsp_softc *sc;
-	struct isa_attach_args *ia;
+sbfind(struct device *parent, struct sbdsp_softc *sc,
+    struct isa_attach_args *ia)
 {
 	int rc = 0;
 
@@ -140,9 +135,7 @@ bad:
  * pseudo-device driver .
  */
 void
-sb_isa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+sb_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sbdsp_softc *sc = (struct sbdsp_softc *)self;
 	struct isa_attach_args *ia = aux;

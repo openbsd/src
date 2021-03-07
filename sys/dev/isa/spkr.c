@@ -1,4 +1,4 @@
-/*	$OpenBSD: spkr.c,v 1.25 2020/04/06 17:54:50 cheloha Exp $	*/
+/*	$OpenBSD: spkr.c,v 1.26 2021/03/07 06:17:04 jsg Exp $	*/
 /*	$NetBSD: spkr.c,v 1.1 1998/04/15 20:26:18 drochner Exp $	*/
 
 /*
@@ -83,16 +83,14 @@ static void playstring(char *, size_t);
 
 /* emit tone of frequency freq for given number of milliseconds */
 static void
-tone(freq, ms)
-	u_int freq, ms;
+tone(u_int freq, u_int ms)
 {
 	pcppi_bell(ppicookie, freq, ms, PCPPI_BELL_SLEEP);
 }
 
 /* rest for given number of milliseconds */
 static void
-rest(ms)
-	int ms;
+rest(int ms)
 {
 	/*
 	 * Set timeout to endrest function, then give up the timeslice.

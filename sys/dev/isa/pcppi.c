@@ -1,4 +1,4 @@
-/* $OpenBSD: pcppi.c,v 1.16 2020/04/06 17:54:50 cheloha Exp $ */
+/* $OpenBSD: pcppi.c,v 1.17 2021/03/07 06:17:04 jsg Exp $ */
 /* $NetBSD: pcppi.c,v 1.1 1998/04/15 20:26:18 drochner Exp $ */
 
 /*
@@ -82,10 +82,7 @@ static void pcppi_bell_stop(void *);
 #define PCPPIPRI (PZERO - 1)
 
 int
-pcppi_match(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+pcppi_match(struct device *parent, void *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_handle_t ppi_ioh, pit1_ioh;
@@ -149,9 +146,7 @@ lose:
 }
 
 void
-pcppi_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pcppi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pcppi_softc *sc = (struct pcppi_softc *)self;
 	struct isa_attach_args *ia = aux;
@@ -184,10 +179,7 @@ pcppi_attach(parent, self, aux)
 }
 
 void
-pcppi_bell(self, pitch, period_ms, slp)
-	pcppi_tag_t self;
-	int pitch, period_ms;
-	int slp;
+pcppi_bell(pcppi_tag_t self, int pitch, int period_ms, int slp)
 {
 	struct pcppi_softc *sc = self;
 	int s1, s2;
@@ -252,8 +244,7 @@ pcppi_bell(self, pitch, period_ms, slp)
 }
 
 static void
-pcppi_bell_stop(arg)
-	void *arg;
+pcppi_bell_stop(void *arg)
 {
 	struct pcppi_softc *sc = arg;
 	int s;
@@ -273,10 +264,7 @@ pcppi_bell_stop(arg)
 
 #if NPCKBD > 0 || NHIDKBD > 0
 void
-pcppi_kbd_bell(arg, pitch, period, volume, poll)
-	void *arg;
-	u_int pitch, period, volume;
-	int poll;
+pcppi_kbd_bell(void *arg, u_int pitch, u_int period, u_int volume, int poll)
 {
 	/*
 	 * NB: volume ignored.

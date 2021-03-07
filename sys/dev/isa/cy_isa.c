@@ -1,4 +1,4 @@
-/*	$OpenBSD: cy_isa.c,v 1.9 2002/09/15 21:30:25 art Exp $	*/
+/*	$OpenBSD: cy_isa.c,v 1.10 2021/03/07 06:17:03 jsg Exp $	*/
 /*
  * Copyright (c) 1996 Timo Rossi.
  * All rights reserved.
@@ -57,9 +57,7 @@ struct cfattach cy_isa_ca = {
 };
 
 int
-cy_isa_probe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+cy_isa_probe(struct device *parent, void *match, void *aux)
 {
 	int card = ((struct device *)match)->dv_unit;
 	struct isa_attach_args *ia = aux;
@@ -87,9 +85,7 @@ cy_isa_probe(parent, match, aux)
 }
 
 void
-cy_isa_attach(parent, self, aux)
-        struct device *parent, *self;
-        void *aux;
+cy_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct cy_softc *sc = (struct cy_softc *)self;
 	struct isa_attach_args *ia = aux;

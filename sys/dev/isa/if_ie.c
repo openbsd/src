@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.56 2020/07/10 13:22:20 patrick Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.57 2021/03/07 06:17:03 jsg Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.51 1996/05/12 23:52:48 mycroft Exp $	*/
 
 /*-
@@ -323,9 +323,8 @@ struct cfdriver ie_cd = {
  * since we have the inline facility, it makes sense to use that instead.
  */
 static __inline void
-ie_setup_config(cmd, promiscuous, manchester)
-	volatile struct ie_config_cmd *cmd;
-	int promiscuous, manchester;
+ie_setup_config(volatile struct ie_config_cmd *cmd, int promiscuous,
+    int manchester)
 {
 
 	cmd->ie_config_count = 0x0c;
@@ -343,9 +342,7 @@ ie_setup_config(cmd, promiscuous, manchester)
 }
 
 static __inline void
-ie_ack(sc, mask)
-	struct ie_softc *sc;
-	u_int mask;
+ie_ack(struct ie_softc *sc, u_int mask)
 {
 	volatile struct ie_sys_ctl_block *scb = sc->scb;
 
@@ -357,9 +354,7 @@ ie_ack(sc, mask)
 }
 
 int
-ieprobe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+ieprobe(struct device *parent, void *match, void *aux)
 {
 	struct ie_softc *sc = match;
 	struct isa_attach_args *ia = aux;
@@ -374,9 +369,7 @@ ieprobe(parent, match, aux)
 }
 
 int
-sl_probe(sc, ia)
-	struct ie_softc *sc;
-	struct isa_attach_args *ia;
+sl_probe(struct ie_softc *sc, struct isa_attach_args *ia)
 {
 	u_char c;
 
@@ -441,9 +434,7 @@ sl_probe(sc, ia)
 }
 
 int
-el_probe(sc, ia)
-	struct ie_softc *sc;
-	struct isa_attach_args *ia;
+el_probe(struct ie_softc *sc, struct isa_attach_args *ia)
 {
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
@@ -560,9 +551,7 @@ el_probe(sc, ia)
 /* Taken almost exactly from Rod's if_ix.c. */
 
 int
-ee16_probe(sc, ia)
-	struct ie_softc *sc;
-	struct isa_attach_args *ia;
+ee16_probe(struct ie_softc *sc, struct isa_attach_args *ia)
 {
 	int i;
 	u_short board_id, id_var1, id_var2, checksum = 0;
@@ -760,9 +749,7 @@ ee16_probe(sc, ia)
  * Taken almost exactly from Bill's if_is.c, then modified beyond recognition.
  */
 void
-ieattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ieattach(struct device *parent, struct device *self, void *aux)
 {
 	struct ie_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
@@ -793,8 +780,7 @@ ieattach(parent, self, aux)
  * an interrupt after a transmit has been started on it.
  */
 void
-iewatchdog(ifp)
-	struct ifnet *ifp;
+iewatchdog(struct ifnet *ifp)
 {
 	struct ie_softc *sc = ifp->if_softc;
 
@@ -807,8 +793,7 @@ iewatchdog(ifp)
  * What to do upon receipt of an interrupt.
  */
 int
-ieintr(arg)
-	void *arg;
+ieintr(void *arg)
 {
 	struct ie_softc *sc = arg;
 	register u_short status;
@@ -883,8 +868,7 @@ loop:
  * Process a received-frame interrupt.
  */
 void
-ierint(sc)
-	struct ie_softc *sc;
+ierint(struct ie_softc *sc)
 {
 	volatile struct ie_sys_ctl_block *scb = sc->scb;
 	int i, status;
@@ -925,8 +909,7 @@ ierint(sc)
  * the real work is done by iestart().
  */
 void
-ietint(sc)
-	struct ie_softc *sc;
+ietint(struct ie_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int status;
@@ -990,8 +973,7 @@ ietint(sc)
  * speed.  I'd love to have an inline assembler version of this...
  */
 static __inline int
-ether_equal(one, two)
-	u_char *one, *two;
+ether_equal(u_char *one, u_char *two)
 {
 
 	if (one[0] != two[0] || one[1] != two[1] || one[2] != two[2] ||
@@ -1005,9 +987,7 @@ ether_equal(one, two)
  * Return value is true if the packet is for us, and false otherwise.
  */
 static __inline int
-check_eh(sc, eh)
-	struct ie_softc *sc;
-	struct ether_header *eh;
+check_eh(struct ie_softc *sc, struct ether_header *eh)
 {
 	int i;
 
@@ -1072,9 +1052,7 @@ check_eh(sc, eh)
  * the size of the buffer, then we are screwed anyway.
  */
 static __inline int
-ie_buflen(sc, head)
-	struct ie_softc *sc;
-	int head;
+ie_buflen(struct ie_softc *sc, int head)
 {
 
 	return (sc->rbuffs[head]->ie_rbd_actual
@@ -1082,8 +1060,7 @@ ie_buflen(sc, head)
 }
 
 static __inline int
-ie_packet_len(sc)
-	struct ie_softc *sc;
+ie_packet_len(struct ie_softc *sc)
 {
 	int i;
 	int head = sc->rbhead;
@@ -1108,8 +1085,7 @@ ie_packet_len(sc)
  * also give him a copy.
  */
 void
-iexmit(sc)
-	struct ie_softc *sc;
+iexmit(struct ie_softc *sc)
 {
 
 #ifdef IEDEBUG
@@ -1148,9 +1124,7 @@ iexmit(sc)
  * that it works, of course.)
  */
 struct mbuf *
-ieget(sc, ehp)
-	struct ie_softc *sc;
-	struct ether_header *ehp;
+ieget(struct ie_softc *sc, struct ether_header *ehp)
 {
 	struct mbuf *top, **mp, *m;
 	int len, totlen, resid;
@@ -1268,9 +1242,7 @@ ieget(sc, ehp)
  * for trailers anyway.
  */
 void
-ie_readframe(sc, num)
-	struct ie_softc *sc;
-	int num;			/* frame number to read */
+ie_readframe(struct ie_softc *sc, int num)	/* frame number to read */
 {
 	int status;
 	struct mbuf *m = NULL;
@@ -1305,8 +1277,7 @@ ie_readframe(sc, num)
 }
 
 void
-ie_drop_packet_buffer(sc)
-	struct ie_softc *sc;
+ie_drop_packet_buffer(struct ie_softc *sc)
 {
 	int i;
 
@@ -1339,8 +1310,7 @@ ie_drop_packet_buffer(sc)
  * Start transmission on an interface.
  */
 void
-iestart(ifp)
-	struct ifnet *ifp;
+iestart(struct ifnet *ifp)
 {
 	struct ie_softc *sc = ifp->if_softc;
 	struct mbuf *m0, *m;
@@ -1411,10 +1381,7 @@ iestart(ifp)
  * Check to see if there's an 82586 out there.
  */
 int
-check_ie_present(sc, where, size)
-	struct ie_softc *sc;
-	caddr_t where;
-	u_int size;
+check_ie_present(struct ie_softc *sc, caddr_t where, u_int size)
 {
 	volatile struct ie_sys_conf_ptr *scp;
 	volatile struct ie_int_sys_conf_ptr *iscp;
@@ -1500,8 +1467,7 @@ check_ie_present(sc, where, size)
  * Better hope there's nothing important hiding just below the ie card...
  */
 void
-ie_find_mem_size(sc)
-	struct ie_softc *sc;
+ie_find_mem_size(struct ie_softc *sc)
 {
 	u_int size;
 
@@ -1515,8 +1481,7 @@ ie_find_mem_size(sc)
 }
 
 void
-el_reset_586(sc)
-	struct ie_softc *sc;
+el_reset_586(struct ie_softc *sc)
 {
 
 	outb(PORT + IE507_CTRL, EL_CTRL_RESET);
@@ -1526,16 +1491,14 @@ el_reset_586(sc)
 }
 
 void
-sl_reset_586(sc)
-	struct ie_softc *sc;
+sl_reset_586(struct ie_softc *sc)
 {
 
 	outb(PORT + IEATT_RESET, 0);
 }
 
 void
-ee16_reset_586(sc)
-	struct ie_softc *sc;
+ee16_reset_586(struct ie_softc *sc)
 {
 
 	outb(PORT + IEE16_ECTRL, IEE16_RESET_586);
@@ -1545,32 +1508,27 @@ ee16_reset_586(sc)
 }
 
 void
-el_chan_attn(sc)
-	struct ie_softc *sc;
+el_chan_attn(struct ie_softc *sc)
 {
 
 	outb(PORT + IE507_ATTN, 1);
 }
 
 void
-sl_chan_attn(sc)
-	struct ie_softc *sc;
+sl_chan_attn(struct ie_softc *sc)
 {
 
 	outb(PORT + IEATT_ATTN, 0);
 }
 
 void
-ee16_chan_attn(sc)
-	struct ie_softc *sc;
+ee16_chan_attn(struct ie_softc *sc)
 {
 	outb(PORT + IEE16_ATTN, 0);
 }
 
 u_short
-ee16_read_eeprom(sc, location)
-	struct ie_softc *sc;
-	int location;
+ee16_read_eeprom(struct ie_softc *sc, int location)
 {
 	int ectrl, edata;
 
@@ -1591,9 +1549,7 @@ ee16_read_eeprom(sc, location)
 }
 
 void
-ee16_eeprom_outbits(sc, edata, count)
-	struct ie_softc *sc;
-	int edata, count;
+ee16_eeprom_outbits(struct ie_softc *sc, int edata, int count)
 {
 	int ectrl, i;
 
@@ -1615,8 +1571,7 @@ ee16_eeprom_outbits(sc, edata, count)
 }
 
 int
-ee16_eeprom_inbits(sc)
-	struct ie_softc *sc;
+ee16_eeprom_inbits(struct ie_softc *sc)
 {
 	int ectrl, edata, i;
 
@@ -1635,9 +1590,7 @@ ee16_eeprom_inbits(sc)
 }
 
 void
-ee16_eeprom_clock(sc, state)
-	struct ie_softc *sc;
-	int state;
+ee16_eeprom_clock(struct ie_softc *sc, int state)
 {
 	int ectrl;
 
@@ -1651,16 +1604,15 @@ ee16_eeprom_clock(sc, state)
 }
 
 static inline void
-ee16_interrupt_enable(sc)
-	struct ie_softc *sc;
+ee16_interrupt_enable(struct ie_softc *sc)
 {
 	delay(100);
 	outb(PORT + IEE16_IRQ, sc->irq_encoded | IEE16_IRQ_ENABLE);
 	delay(100);
 }
+
 void
-slel_get_address(sc)
-	struct ie_softc *sc;
+slel_get_address(struct ie_softc *sc)
 {
 	u_char *addr = sc->sc_arpcom.ac_enaddr;
 	int i;
@@ -1670,8 +1622,7 @@ slel_get_address(sc)
 }
 
 void
-iereset(sc)
-	struct ie_softc *sc;
+iereset(struct ie_softc *sc)
 {
 	int s = splnet();
 
@@ -1700,11 +1651,7 @@ iereset(sc)
  * to become true.
  */
 static int
-command_and_wait(sc, cmd, pcmd, mask)
-	struct ie_softc *sc;
-	int cmd;
-	volatile void *pcmd;
-	int mask;
+command_and_wait(struct ie_softc *sc, int cmd, volatile void *pcmd, int mask)
 {
 	volatile struct ie_cmd_common *cc = pcmd;
 	volatile struct ie_sys_ctl_block *scb = sc->scb;
@@ -1747,9 +1694,7 @@ command_and_wait(sc, cmd, pcmd, mask)
  * Run the time-domain reflectometer.
  */
 static void
-run_tdr(sc, cmd)
-	struct ie_softc *sc;
-	struct ie_tdr_cmd *cmd;
+run_tdr(struct ie_softc *sc, struct ie_tdr_cmd *cmd)
 {
 	int result;
 
@@ -1793,9 +1738,7 @@ run_tdr(sc, cmd)
  * Here is a helper routine for ieinit().  This sets up the buffers.
  */
 void
-iememinit(ptr, sc)
-	void *ptr;
-	struct ie_softc *sc;
+iememinit(void *ptr, struct ie_softc *sc)
 {
 	int i;
 
@@ -1867,9 +1810,7 @@ iememinit(ptr, sc)
  * Called at splnet().
  */
 static int
-mc_setup(sc, ptr)
-	struct ie_softc *sc;
-	void *ptr;
+mc_setup(struct ie_softc *sc, void *ptr)
 {
 	volatile struct ie_mcast_cmd *cmd = ptr;
 
@@ -1901,8 +1842,7 @@ mc_setup(sc, ptr)
  * THIS ROUTINE MUST BE CALLED AT splnet() OR HIGHER.
  */
 int
-ieinit(sc)
-	struct ie_softc *sc;
+ieinit(struct ie_softc *sc)
 {
 	volatile struct ie_sys_ctl_block *scb = sc->scb;
 	void *ptr;
@@ -1993,18 +1933,14 @@ ieinit(sc)
 }
 
 void
-iestop(sc)
-	struct ie_softc *sc;
+iestop(struct ie_softc *sc)
 {
 
 	command_and_wait(sc, IE_RU_DISABLE, 0, 0);
 }
 
 int
-ieioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
-	u_long cmd;
-	caddr_t data;
+ieioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct ie_softc *sc = ifp->if_softc;
 	int s, error = 0;
@@ -2065,8 +2001,7 @@ ieioctl(ifp, cmd, data)
 }
 
 static void
-mc_reset(sc)
-	struct ie_softc *sc;
+mc_reset(struct ie_softc *sc)
 {
 	struct arpcom *ac = &sc->sc_arpcom;
 	struct ether_multi *enm;
@@ -2099,8 +2034,7 @@ setflag:
 
 #ifdef IEDEBUG
 void
-print_rbd(rbd)
-	volatile struct ie_recv_buf_desc *rbd;
+print_rbd(volatile struct ie_recv_buf_desc *rbd)
 {
 
 	printf("RBD at %08lx:\nactual %04x, next %04x, buffer %08x\n"
@@ -2109,4 +2043,3 @@ print_rbd(rbd)
 	    rbd->mbz);
 }
 #endif
-

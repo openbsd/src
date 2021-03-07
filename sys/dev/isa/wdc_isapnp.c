@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_isapnp.c,v 1.11 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: wdc_isapnp.c,v 1.12 2021/03/07 06:17:04 jsg Exp $	*/
 /*	$NetBSD: wdc_isapnp.c,v 1.13 1999/03/22 10:00:12 mycroft Exp $	*/
 
 /*-
@@ -62,10 +62,7 @@ struct cfattach wdc_isapnp_ca = {
 };
 
 int
-wdc_isapnp_match(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+wdc_isapnp_match(struct device *parent, void *match, void *aux)
 {
 	struct isa_attach_args *ipa = aux;
 
@@ -80,9 +77,7 @@ wdc_isapnp_match(parent, match, aux)
 }
 
 void
-wdc_isapnp_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+wdc_isapnp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct wdc_isapnp_softc *sc = (void *)self;
 	struct isa_attach_args *ipa = aux;

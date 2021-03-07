@@ -1,4 +1,4 @@
-/*	$OpenBSD: ast.c,v 1.18 2002/03/14 01:26:56 millert Exp $	*/
+/*	$OpenBSD: ast.c,v 1.19 2021/03/07 06:17:03 jsg Exp $	*/
 /*	$NetBSD: ast.c,v 1.28 1996/05/12 23:51:45 mycroft Exp $	*/
 
 /*
@@ -74,10 +74,7 @@ struct cfdriver ast_cd = {
 };
 
 int
-astprobe(parent, self, aux)
-	struct device *parent;
-	void *self;
-	void *aux;
+astprobe(struct device *parent, void *self, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	int iobase = ia->ia_iobase;
@@ -126,9 +123,7 @@ out:
 }
 
 int
-astprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+astprint(void *aux, const char *pnp)
 {
 	struct commulti_attach_args *ca = aux;
 
@@ -139,9 +134,7 @@ astprint(aux, pnp)
 }
 
 void
-astattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+astattach(struct device *parent, struct device *self, void *aux)
 {
 	struct ast_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
@@ -180,8 +173,7 @@ astattach(parent, self, aux)
 }
 
 int
-astintr(arg)
-	void *arg;
+astintr(void *arg)
 {
 	struct ast_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;

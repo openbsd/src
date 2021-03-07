@@ -1,4 +1,4 @@
-/*	$OpenBSD: gus.c,v 1.47 2018/07/30 14:19:12 kettenis Exp $	*/
+/*	$OpenBSD: gus.c,v 1.48 2021/03/07 06:17:03 jsg Exp $	*/
 /*	$NetBSD: gus.c,v 1.51 1998/01/25 23:48:06 mycroft Exp $	*/
 
 /*-
@@ -1509,9 +1509,7 @@ gusmax_round_blocksize(void *addr, int blocksize)
 }
 
 int
-gus_round_blocksize(addr, blocksize)
-	void * addr;
-	int blocksize;
+gus_round_blocksize(void *addr, int blocksize)
 {
 	struct gus_softc *sc = addr;
 

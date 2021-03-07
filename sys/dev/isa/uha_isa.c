@@ -1,4 +1,4 @@
-/*	$OpenBSD: uha_isa.c,v 1.13 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: uha_isa.c,v 1.14 2021/03/07 06:17:04 jsg Exp $	*/
 /*	$NetBSD: uha_isa.c,v 1.5 1996/10/21 22:41:21 thorpej Exp $	*/
 
 /*
@@ -71,9 +71,7 @@ void u14_init(struct uha_softc *);
  * the actual probe routine to check it out.
  */
 int
-uha_isa_probe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+uha_isa_probe(struct device *parent, void *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct uha_softc sc;
@@ -105,9 +103,7 @@ uha_isa_probe(parent, match, aux)
  * Attach all the sub-devices we can find
  */
 void
-uha_isa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+uha_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct uha_softc *sc = (void *)self;
@@ -148,10 +144,7 @@ uha_isa_attach(parent, self, aux)
  * Start the board, ready for normal operation
  */
 int
-u14_find(iot, ioh, sc)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	struct uha_softc *sc;
+u14_find(bus_space_tag_t iot, bus_space_handle_t ioh, struct uha_softc *sc)
 {
 	u_int16_t model, config;
 	int irq, drq;
@@ -237,9 +230,7 @@ u14_find(iot, ioh, sc)
  * Function to send a command out through a mailbox
  */
 void
-u14_start_mbox(sc, mscp)
-	struct uha_softc *sc;
-	struct uha_mscp *mscp;
+u14_start_mbox(struct uha_softc *sc, struct uha_mscp *mscp)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -270,10 +261,7 @@ u14_start_mbox(sc, mscp)
  *	wait = timeout in msec
  */
 int
-u14_poll(sc, xs, count)
-	struct uha_softc *sc;
-	struct scsi_xfer *xs;
-	int count;
+u14_poll(struct uha_softc *sc, struct scsi_xfer *xs, int count)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -297,8 +285,7 @@ u14_poll(sc, xs, count)
  * Catch an interrupt from the adaptor
  */
 int
-u14_intr(arg)
-	void *arg;
+u14_intr(void *arg)
 {
 	struct uha_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -347,8 +334,7 @@ u14_intr(arg)
 }
 
 void
-u14_init(sc)
-	struct uha_softc *sc;
+u14_init(struct uha_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;

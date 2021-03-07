@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_isapnp.c,v 1.9 2017/09/08 05:36:52 deraadt Exp $ */
+/*	$OpenBSD: i82365_isapnp.c,v 1.10 2021/03/07 06:17:03 jsg Exp $ */
 /*	$NetBSD: i82365_isapnp.c,v 1.8 2000/02/23 17:22:11 soren Exp $	*/
 
 /*
@@ -90,18 +90,13 @@ static struct pcmcia_chip_functions pcic_isa_functions = {
 };
 
 int
-pcic_isapnp_match(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+pcic_isapnp_match(struct device *parent, void *match, void *aux)
 {
 	return (1);
 }
 
 void
-pcic_isapnp_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pcic_isapnp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pcic_softc *sc = (void *) self;
 	struct pcic_handle *h;

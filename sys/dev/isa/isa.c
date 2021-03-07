@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa.c,v 1.47 2019/05/09 17:38:23 semarie Exp $	*/
+/*	$OpenBSD: isa.c,v 1.48 2021/03/07 06:17:03 jsg Exp $	*/
 /*	$NetBSD: isa.c,v 1.85 1996/05/14 00:31:04 thorpej Exp $	*/
 
 /*
@@ -81,9 +81,7 @@ struct cfdriver isa_cd = {
 };
 
 int
-isamatch(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+isamatch(struct device *parent, void *match, void *aux)
 {
 	struct cfdata *cf = match;
 	struct isabus_attach_args *iba = aux;
@@ -97,9 +95,7 @@ isamatch(parent, match, aux)
 }
 
 void
-isaattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+isaattach(struct device *parent, struct device *self, void *aux)
 {
 	struct isa_softc *sc = (struct isa_softc *)self;
 	struct isabus_attach_args *iba = aux;
@@ -150,9 +146,7 @@ isaattach(parent, self, aux)
 }
 
 int
-isaprint(aux, isa)
-	void *aux;
-	const char *isa;
+isaprint(void *aux, const char *isa)
 {
 	struct isa_attach_args *ia = aux;
 	int irq, nirq;
@@ -191,9 +185,7 @@ isaprint(aux, isa)
 }
 
 void
-isascan(parent, match)
-	struct device *parent;
-	void *match;
+isascan(struct device *parent, void *match)
 {
 	struct isa_softc *sc = (struct isa_softc *)parent;
 	struct device *dev = match;
@@ -296,8 +288,7 @@ isascan(parent, match)
 }
 
 char *
-isa_intr_typename(type)
-	int type;
+isa_intr_typename(int type)
 {
 
 	switch (type) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: ics2101.c,v 1.9 2014/09/14 14:17:25 jsg Exp $ */
+/* $OpenBSD: ics2101.c,v 1.10 2021/03/07 06:17:03 jsg Exp $ */
 /* $NetBSD: ics2101.c,v 1.6 1997/10/09 07:57:23 jtc Exp $ */
 
 /*-
@@ -67,9 +67,8 @@ static void ics2101_mix_doit(struct ics2101_softc *, u_int, u_int, u_int,
 
 
 static void
-ics2101_mix_doit(sc, chan, side, value, flags)
-	struct ics2101_softc *sc;
-	u_int chan, side, value, flags;
+ics2101_mix_doit(struct ics2101_softc *sc, u_int chan, u_int side, u_int value,
+    u_int flags)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	unsigned char flip_left[6] = {0x01, 0x01, 0x01, 0x02, 0x01, 0x02};
@@ -129,18 +128,16 @@ ics2101_mix_doit(sc, chan, side, value, flags)
 }
 
 void
-ics2101_mix_mute(sc, chan, side, domute)
-	struct ics2101_softc *sc;
-	unsigned int chan, side, domute;
+ics2101_mix_mute(struct ics2101_softc *sc, unsigned int chan, unsigned int side,
+    unsigned int domute)
 {
     ics2101_mix_doit(sc, chan, side, 0,
 		     domute ? ICS_MUTE|ICS_MUTE_MUTED : ICS_MUTE);
 }
 
 void
-ics2101_mix_attenuate(sc, chan, side, value)
-	struct ics2101_softc *sc;
-	unsigned int chan, side, value;
+ics2101_mix_attenuate(struct ics2101_softc *sc, unsigned int chan,
+    unsigned int side, unsigned int value)
 {
     ics2101_mix_doit(sc, chan, side, value, ICS_VALUE);
 }

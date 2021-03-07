@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_isa.c,v 1.23 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: i82365_isa.c,v 1.24 2021/03/07 06:17:03 jsg Exp $	*/
 /*	$NetBSD: i82365_isa.c,v 1.11 1998/06/09 07:25:00 thorpej Exp $	*/
 
 /*
@@ -84,9 +84,7 @@ static struct pcmcia_chip_functions pcic_isa_functions = {
 };
 
 int
-pcic_isa_probe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+pcic_isa_probe(struct device *parent, void *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t memt = ia->ia_memt, iot = ia->ia_iot;
@@ -150,9 +148,7 @@ pcic_isa_probe(parent, match, aux)
 }
 
 void
-pcic_isa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pcic_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pcic_softc *sc = (void *)self;
 	struct pcic_handle *h;

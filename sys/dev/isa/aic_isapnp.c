@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic_isapnp.c,v 1.1 2002/09/03 16:30:55 mickey Exp $	*/
+/*	$OpenBSD: aic_isapnp.c,v 1.2 2021/03/07 06:17:03 jsg Exp $	*/
 
 /*
  * Copyright (c) 2002 Anders Arnholm
@@ -63,9 +63,7 @@ struct cfattach aic_isapnp_ca = {
  *		     and other configured card are found by aic_isa_match
  */
 int
-aic_isapnp_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+aic_isapnp_match(struct device *parent, void *match, void *aux)
 {
 	AIC_TRACE(("aic: aic_isapnp_match\n"));
 	return(1);
@@ -75,9 +73,7 @@ aic_isapnp_match(parent, match, aux)
  * Attach the AIC6360, takes the data from isapnp and feads into aicattach.
  */
 void
-aic_isapnp_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+aic_isapnp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct aic_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
