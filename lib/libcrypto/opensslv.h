@@ -1,11 +1,11 @@
-/* $OpenBSD: opensslv.h,v 1.63 2020/12/08 17:39:06 bcook Exp $ */
+/* $OpenBSD: opensslv.h,v 1.64 2021/03/07 08:53:10 bcook Exp $ */
 #ifndef HEADER_OPENSSLV_H
 #define HEADER_OPENSSLV_H
 
 /* These will change with each release of LibreSSL-portable */
-#define LIBRESSL_VERSION_NUMBER 0x3030100fL
+#define LIBRESSL_VERSION_NUMBER 0x3030200fL
 /*                                    ^ Patch starts here   */
-#define LIBRESSL_VERSION_TEXT   "LibreSSL 3.3.1"
+#define LIBRESSL_VERSION_TEXT   "LibreSSL 3.3.2"
 
 /* These will never change */
 #define OPENSSL_VERSION_NUMBER	0x20000000L
