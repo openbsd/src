@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleased.c,v 1.6 2021/03/02 12:03:50 florian Exp $	*/
+/*	$OpenBSD: dhcpleased.c,v 1.7 2021/03/07 18:39:11 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -407,7 +407,6 @@ main_dispatch_frontend(int fd, short event, void *bula)
 
 		switch (imsg.hdr.type) {
 		case IMSG_OPEN_BPFSOCK:
-			log_debug("IMSG_OPEN_BPFSOCK");
 			if (IMSG_DATA_SIZE(imsg) != sizeof(if_index))
 				fatalx("%s: IMSG_OPEN_BPFSOCK wrong length: "
 				    "%lu", __func__, IMSG_DATA_SIZE(imsg));
@@ -627,8 +626,6 @@ configure_interface(struct imsg_configure_interface *imsg)
 	    IF_NAMESIZE];
 	char			 tmpl[] = _PATH_LEASE"XXXXXXXXXX";
 
-	log_debug("%s", __func__);
-
 	memset(&ifaliasreq, 0, sizeof(ifaliasreq));
 
 	if_name = if_indextoname(imsg->if_index, ifaliasreq.ifra_name);
@@ -637,6 +634,8 @@ configure_interface(struct imsg_configure_interface *imsg)
 		    imsg->if_index);
 		return;
 	}
+
+	log_debug("%s %s", __func__, if_name);
 
 	if (getifaddrs(&ifap) != 0)
 		fatal("getifaddrs");
@@ -712,7 +711,7 @@ configure_interface(struct imsg_configure_interface *imsg)
 	}
 
 	shutdown(udpsock, SHUT_RD);
-	log_debug("%s: udpsock: %d", __func__, udpsock);
+
 	main_imsg_compose_frontend(IMSG_UDPSOCK, udpsock,
 	    &imsg->if_index, sizeof(imsg->if_index));
 
@@ -772,8 +771,6 @@ deconfigure_interface(struct imsg_configure_interface *imsg)
 	struct ifaliasreq	 ifaliasreq;
 	struct sockaddr_in	*req_sin_addr;
 
-	log_debug("%s", __func__);
-
 	memset(&ifaliasreq, 0, sizeof(ifaliasreq));
 
 	if (imsg->router.s_addr != INADDR_ANY)
@@ -784,6 +781,8 @@ deconfigure_interface(struct imsg_configure_interface *imsg)
 		    imsg->if_index);
 		return;
 	}
+
+	log_debug("%s %s", __func__, ifaliasreq.ifra_name);
 
 	req_sin_addr = (struct sockaddr_in *)&ifaliasreq.ifra_addr;
 	req_sin_addr->sin_family = AF_INET;
@@ -906,9 +905,7 @@ open_bpfsock(uint32_t if_index)
 	int		 bpfsock;
 	char		 ifname[IF_NAMESIZE];
 
-	log_debug("%s: %d", __func__, if_index);
-
-	if (if_indextoname(if_index, ifname) == 0) {
+	if (if_indextoname(if_index, ifname) == NULL) {
 		log_warnx("%s: cannot find interface %d", __func__, if_index);
 		return;
 	}
@@ -975,7 +972,7 @@ read_lease_file(struct imsg_ifinfo *imsg_ifinfo)
 
 	memset(imsg_ifinfo->lease, 0, sizeof(imsg_ifinfo->lease));
 
-	if (if_indextoname(imsg_ifinfo->if_index, if_name) == 0) {
+	if (if_indextoname(imsg_ifinfo->if_index, if_name) == NULL) {
 		log_warnx("%s: cannot find interface %d", __func__,
 		    imsg_ifinfo->if_index);
 		return;

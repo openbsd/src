@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.8 2021/03/07 16:22:01 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.9 2021/03/07 18:39:11 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -137,6 +137,8 @@ void			 send_rdns_withdraw(struct dhcpleased_iface *);
 void			 parse_lease(struct dhcpleased_iface *,
 			     struct imsg_ifinfo *);
 int			 engine_imsg_compose_main(int, pid_t, void *, uint16_t);
+void			 log_dhcp_hdr(struct dhcp_hdr *);
+const char		*dhcp_message_type2str(uint8_t);
 
 static struct imsgev	*iev_frontend;
 static struct imsgev	*iev_main;
@@ -495,6 +497,7 @@ engine_showinfo_ctl(struct imsg *imsg, uint32_t if_index)
 	}
 }
 #endif	/* SMALL */
+
 void
 engine_update_iface(struct imsg_ifinfo *imsg_ifinfo)
 {
@@ -606,6 +609,7 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 	char			 hbuf_dst[INET_ADDRSTRLEN];
 	char			 hbuf[INET_ADDRSTRLEN];
 	char			 vis_buf[4 * 255 + 1];
+	char			 ifnamebuf[IF_NAMESIZE], *if_name;
 
 	if (bcast_mac.ether_addr_octet[0] == 0)
 		memset(bcast_mac.ether_addr_octet, 0xff, ETHER_ADDR_LEN);
@@ -637,7 +641,8 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 	if (rem < sizeof(*ip))
 		goto too_short;
 
-	log_debug("%s, from: %s, to: %s", __func__, from, to);
+	if (log_getverbose() > 1)
+		log_debug("%s, from: %s, to: %s", __func__, from, to);
 
 	ip = (struct ip *)p;
 
@@ -657,7 +662,7 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 	if (inet_ntop(AF_INET, &ip->ip_src, hbuf_src, sizeof(hbuf_src)) == NULL)
 		hbuf_src[0] = '\0';
 	if (inet_ntop(AF_INET, &ip->ip_dst, hbuf_dst, sizeof(hbuf_dst)) == NULL)
-		hbuf_src[0] = '\0';
+		hbuf_dst[0] = '\0';
 
 	if (rem < sizeof(*udp))
 		goto too_short;
@@ -667,8 +672,11 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 		goto too_short;
 
 	if (rem > ntohs(udp->uh_ulen)) {
-		log_debug("%s: accepting packet with %lu bytes of data after "
-		    "udp payload", __func__, rem - ntohs(udp->uh_ulen));
+		if (log_getverbose() > 1) {
+			log_debug("%s: accepting packet with %lu bytes of data"
+			    " after udp payload", __func__, rem -
+			    ntohs(udp->uh_ulen));
+		}
 		rem = ntohs(udp->uh_ulen);
 	}
 
@@ -687,9 +695,10 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 		return;
 	}
 
-	log_debug("%s: %s:%d -> %s:%d", __func__,
-	    hbuf_src, ntohs(udp->uh_sport),
-	    hbuf_dst, ntohs(udp->uh_dport));
+	if (log_getverbose() > 1) {
+		log_debug("%s: %s:%d -> %s:%d", __func__, hbuf_src,
+		    ntohs(udp->uh_sport), hbuf_dst, ntohs(udp->uh_dport));
+	}
 
 	if (ntohs(udp->uh_sport) != SERVER_PORT ||
 	    ntohs(udp->uh_dport) != CLIENT_PORT) {
@@ -707,33 +716,9 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 
 	dhcp_hdr->sname[DHCP_SNAME_LEN -1 ] = '\0'; /* ensure it's a string */
 	dhcp_hdr->file[DHCP_FILE_LEN -1 ] = '\0'; /* ensure it's a string */
-	log_debug("dhcp_hdr op: %s (%d)", dhcp_hdr->op == DHCP_BOOTREQUEST ?
-	    "Boot Request" : dhcp_hdr->op == DHCP_BOOTREPLY ? "Boot Reply" :
-	    "Unknown", dhcp_hdr->op);
-	log_debug("dhcp_hdr htype: %s (%d)", dhcp_hdr->htype == 1 ? "Ethernet":
-	    "Unknown", dhcp_hdr->htype);
-	log_debug("dhcp_hdr hlen: %d", dhcp_hdr->hlen);
-	log_debug("dhcp_hdr hops: %d", dhcp_hdr->hops);
-	log_debug("dhcp_hdr xid: 0x%x", dhcp_hdr->xid);
-	log_debug("dhcp_hdr secs: %u", dhcp_hdr->secs);
-	log_debug("dhcp_hdr flags: 0x%x", dhcp_hdr->flags);
-	log_debug("dhcp_hdr ciaddr: %s", inet_ntop(AF_INET, &dhcp_hdr->ciaddr,
-	    hbuf, sizeof(hbuf)));
-	log_debug("dhcp_hdr yiaddr: %s", inet_ntop(AF_INET, &dhcp_hdr->yiaddr,
-	    hbuf, sizeof(hbuf)));
-	log_debug("dhcp_hdr siaddr: %s", inet_ntop(AF_INET, &dhcp_hdr->siaddr,
-	    hbuf, sizeof(hbuf)));
-	log_debug("dhcp_hdr giaddr: %s", inet_ntop(AF_INET, &dhcp_hdr->giaddr,
-	    hbuf, sizeof(hbuf)));
-	log_debug("dhcp_hdr chaddr: %02x:%02x:%02x:%02x:%02x:%02x "
-	    "(%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x)",
-	    dhcp_hdr->chaddr[0], dhcp_hdr->chaddr[1], dhcp_hdr->chaddr[2],
-	    dhcp_hdr->chaddr[3], dhcp_hdr->chaddr[4], dhcp_hdr->chaddr[5],
-	    dhcp_hdr->chaddr[6], dhcp_hdr->chaddr[7], dhcp_hdr->chaddr[8],
-	    dhcp_hdr->chaddr[9], dhcp_hdr->chaddr[10], dhcp_hdr->chaddr[11],
-	    dhcp_hdr->chaddr[12], dhcp_hdr->chaddr[13], dhcp_hdr->chaddr[14],
-	    dhcp_hdr->chaddr[15]);
-	/* ignore sname and file, if we ever print it use strvis(3) */
+
+	if (log_getverbose() > 1)
+		log_dhcp_hdr(dhcp_hdr);
 
 	if (dhcp_hdr->op != DHCP_BOOTREPLY) {
 		log_warnx("%s: ignorning non-reply packet", __func__);
@@ -778,43 +763,20 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 
 		switch(dho) {
 		case DHO_PAD:
-			log_debug("DHO_PAD");
+			if (log_getverbose() > 1)
+				log_debug("DHO_PAD");
 			break;
 		case DHO_END:
-			log_debug("DHO_END");
+			if (log_getverbose() > 1)
+				log_debug("DHO_END");
 			break;
 		case DHO_DHCP_MESSAGE_TYPE:
 			if (dho_len != 1)
 				goto wrong_length;
 			dhcp_message_type = *p;
-			switch (dhcp_message_type) {
-			case DHCPDISCOVER:
-				log_debug("DHO_DHCP_MESSAGE_TYPE: DHCPDISCOVER");
-				break;
-			case DHCPOFFER:
-				log_debug("DHO_DHCP_MESSAGE_TYPE: DHCPOFFER");
-				break;
-			case DHCPREQUEST:
-				log_debug("DHO_DHCP_MESSAGE_TYPE: DHCPREQUEST");
-				break;
-			case DHCPDECLINE:
-				log_debug("DHO_DHCP_MESSAGE_TYPE: DHCPDECLINE");
-				break;
-			case DHCPACK:
-				log_debug("DHO_DHCP_MESSAGE_TYPE: DHCPACK");
-				break;
-			case DHCPNAK:
-				log_debug("DHO_DHCP_MESSAGE_TYPE: DHCPNAK");
-				break;
-			case DHCPRELEASE:
-				log_debug("DHO_DHCP_MESSAGE_TYPE: DHCPRELEASE");
-				break;
-			case DHCPINFORM:
-				log_debug("DHO_DHCP_MESSAGE_TYPE: DHCPINFORM");
-				break;
-			default:
-				log_debug("DHO_DHCP_MESSAGE_TYPE: Unknown");
-				break;
+			if (log_getverbose() > 1) {
+				log_debug("DHO_DHCP_MESSAGE_TYPE: %s",
+				    dhcp_message_type2str(dhcp_message_type));
 			}
 			p += dho_len;
 			rem -= dho_len;
@@ -824,9 +786,11 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 				goto wrong_length;
 			memcpy(&server_identifier, p,
 			    sizeof(server_identifier));
-			log_debug("DHO_DHCP_SERVER_IDENTIFIER: %s",
-			    inet_ntop(AF_INET, &server_identifier,
-			    hbuf, sizeof(hbuf)));
+			if (log_getverbose() > 1) {
+				log_debug("DHO_DHCP_SERVER_IDENTIFIER: %s",
+				    inet_ntop(AF_INET, &server_identifier,
+				    hbuf, sizeof(hbuf)));
+			}
 			p += dho_len;
 			rem -= dho_len;
 			break;
@@ -835,7 +799,10 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 				goto wrong_length;
 			memcpy(&lease_time, p, sizeof(lease_time));
 			lease_time = ntohl(lease_time);
-			log_debug("DHO_DHCP_LEASE_TIME %us", lease_time);
+			if (log_getverbose() > 1) {
+				log_debug("DHO_DHCP_LEASE_TIME %us",
+				    lease_time);
+			}
 			p += dho_len;
 			rem -= dho_len;
 			break;
@@ -843,8 +810,11 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 			if (dho_len != sizeof(subnet_mask))
 				goto wrong_length;
 			memcpy(&subnet_mask, p, sizeof(subnet_mask));
-			log_debug("DHO_SUBNET_MASK: %s", inet_ntop(AF_INET,
-			    &subnet_mask, hbuf, sizeof(hbuf)));
+			if (log_getverbose() > 1) {
+				log_debug("DHO_SUBNET_MASK: %s",
+				    inet_ntop(AF_INET, &subnet_mask, hbuf,
+				    sizeof(hbuf)));
+			}
 			p += dho_len;
 			rem -= dho_len;
 			break;
@@ -855,9 +825,11 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 				goto wrong_length;
 			/* we only use one router */
 			memcpy(&router, p, sizeof(router));
-			log_debug("DHO_ROUTER: %s (1/%lu)", inet_ntop(AF_INET,
-			    &router, hbuf, sizeof(hbuf)), dho_len /
-			    sizeof(router));
+			if (log_getverbose() > 1) {
+				log_debug("DHO_ROUTER: %s (1/%lu)",
+				    inet_ntop(AF_INET, &router, hbuf,
+				    sizeof(hbuf)), dho_len / sizeof(router));
+			}
 			p += dho_len;
 			rem -= dho_len;
 			break;
@@ -869,13 +841,15 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 			/* we limit ourself to 8 nameservers for proposals */
 			memcpy(&nameservers, p, MINIMUM(sizeof(nameservers),
 			    dho_len));
-			for (i = 0; i < MINIMUM(sizeof(nameservers), dho_len /
-			    sizeof(nameservers[0]));
-			     i++) {
-				log_debug("DHO_DOMAIN_NAME_SERVERS: %s "
-				    "(%lu/%lu)", inet_ntop(AF_INET,
-				    &nameservers[i], hbuf, sizeof(hbuf)), i + 1,
-				    dho_len / sizeof(nameservers[0]));
+			if (log_getverbose() > 1) {
+				for (i = 0; i < MINIMUM(sizeof(nameservers),
+				    dho_len / sizeof(nameservers[0])); i++) {
+					log_debug("DHO_DOMAIN_NAME_SERVERS: %s "
+					    "(%lu/%lu)", inet_ntop(AF_INET,
+					    &nameservers[i], hbuf,
+					    sizeof(hbuf)), i + 1,
+					    dho_len / sizeof(nameservers[0]));
+				}
 			}
 			p += dho_len;
 			rem -= dho_len;
@@ -883,8 +857,10 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 		case DHO_DOMAIN_NAME:
 			if ( dho_len < 1)
 				goto wrong_length;
-			strvisx(vis_buf, p, dho_len, VIS_SAFE);
-			log_debug("DHO_DOMAIN_NAME: %s", vis_buf);
+			if (log_getverbose() > 1) {
+				strvisx(vis_buf, p, dho_len, VIS_SAFE);
+				log_debug("DHO_DOMAIN_NAME: %s", vis_buf);
+			}
 			p += dho_len;
 			rem -= dho_len;
 			break;
@@ -893,7 +869,10 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 				goto wrong_length;
 			memcpy(&renewal_time, p, sizeof(renewal_time));
 			renewal_time = ntohl(renewal_time);
-			log_debug("DHO_DHCP_RENEWAL_TIME %us", renewal_time);
+			if (log_getverbose() > 1) {
+				log_debug("DHO_DHCP_RENEWAL_TIME %us",
+				    renewal_time);
+			}
 			p += dho_len;
 			rem -= dho_len;
 			break;
@@ -902,8 +881,10 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 				goto wrong_length;
 			memcpy(&rebinding_time, p, sizeof(rebinding_time));
 			rebinding_time = ntohl(rebinding_time);
-			log_debug("DHO_DHCP_REBINDING_TIME %us",
-			    rebinding_time);
+			if (log_getverbose() > 1) {
+				log_debug("DHO_DHCP_REBINDING_TIME %us",
+				    rebinding_time);
+			}
 			p += dho_len;
 			rem -= dho_len;
 			break;
@@ -925,7 +906,8 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 			rem -= dho_len;
 			break;
 		default:
-			log_debug("DHO_%u, len: %u", dho, dho_len);
+			if (log_getverbose() > 1)
+				log_debug("DHO_%u, len: %u", dho, dho_len);
 			p += dho_len;
 			rem -= dho_len;
 		}
@@ -940,6 +922,11 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 	if (rem != 0)
 		log_warnx("%s: %lu bytes garbage data from %s", __func__, rem,
 		    from);
+
+	if_name = if_indextoname(iface->if_index, ifnamebuf);
+	log_debug("%s on %s from %s/%s to %s/%s",
+	    dhcp_message_type2str(dhcp_message_type), if_name == NULL ? "?" :
+	    if_name, from, hbuf_src, to, hbuf_dst);
 
 	switch (dhcp_message_type) {
 	case DHCPOFFER:
@@ -1049,6 +1036,7 @@ state_transition(struct dhcpleased_iface *iface, enum if_state new_state)
 {
 	enum if_state	 old_state = iface->state;
 	struct timespec	 now, res;
+	char		 ifnamebuf[IF_NAMESIZE], *if_name;
 
 	iface->state = new_state;
 	switch (new_state) {
@@ -1144,8 +1132,12 @@ state_transition(struct dhcpleased_iface *iface, enum if_state new_state)
 		request_dhcp_request(iface);
 		break;
 	}
-	log_debug("%s %s -> %s, timo: %lld", __func__, if_state_name[old_state],
-	    if_state_name[new_state], iface->timo.tv_sec);
+
+	if_name = if_indextoname(iface->if_index, ifnamebuf);
+	log_debug("%s[%s] %s -> %s, timo: %lld", __func__, if_name == NULL ?
+	    "?" : if_name, if_state_name[old_state], if_state_name[new_state],
+	    iface->timo.tv_sec);
+
 	if (iface->timo.tv_sec == -1) {
 		if (evtimer_pending(&iface->timer, NULL))
 			evtimer_del(&iface->timer);
@@ -1238,12 +1230,9 @@ void
 log_lease(struct dhcpleased_iface *iface, int deconfigure)
 {
 	char	 hbuf_lease[INET_ADDRSTRLEN], hbuf_server[INET_ADDRSTRLEN];
-	char	 if_name[IF_NAMESIZE];
+	char	 ifnamebuf[IF_NAMESIZE], *if_name;
 
-	memset(if_name, 0, sizeof(if_name));
-
-	if (if_indextoname(iface->if_index, if_name) == 0)
-		if_name[0] = '?';
+	if_name = if_indextoname(iface->if_index, ifnamebuf);
 	inet_ntop(AF_INET, &iface->requested_ip, hbuf_lease,
 	    sizeof(hbuf_lease));
 	inet_ntop(AF_INET, &iface->server_identifier, hbuf_server,
@@ -1252,10 +1241,10 @@ log_lease(struct dhcpleased_iface *iface, int deconfigure)
 
 	if (deconfigure)
 		log_info("deleting %s from %s (lease from %s)", hbuf_lease,
-		    if_name, hbuf_server);
+		    if_name == NULL ? "?" : if_name, hbuf_server);
 	else
 		log_info("adding %s to %s (lease from %s)", hbuf_lease,
-		    if_name, hbuf_server);
+		    if_name == NULL ? "?" : if_name, hbuf_server);
 }
 
 void
@@ -1301,12 +1290,9 @@ log_rdns(struct dhcpleased_iface *iface, int withdraw)
 {
 	int	 i;
 	char	 hbuf_rdns[INET_ADDRSTRLEN], hbuf_server[INET_ADDRSTRLEN];
-	char	 if_name[IF_NAMESIZE], *rdns_buf = NULL, *tmp_buf;
+	char	 ifnamebuf[IF_NAMESIZE], *if_name, *rdns_buf = NULL, *tmp_buf;
 
-	memset(if_name, 0, sizeof(if_name));
-
-	if (if_indextoname(iface->if_index, if_name) == 0)
-		if_name[0] = '?';
+	if_name = if_indextoname(iface->if_index, ifnamebuf);
 
 	inet_ntop(AF_INET, &iface->server_identifier, hbuf_server,
 	    sizeof(hbuf_server));
@@ -1325,12 +1311,15 @@ log_rdns(struct dhcpleased_iface *iface, int withdraw)
 	}
 
 	if (rdns_buf != NULL) {
-		if (withdraw)
+		if (withdraw) {
 			log_info("deleting nameservers%s (lease from %s on %s)",
-			    rdns_buf, hbuf_server, if_name);
-		else
+			    rdns_buf, hbuf_server, if_name == NULL ? "?" :
+			    if_name);
+		} else {
 			log_info("adding nameservers%s (lease from %s on %s)",
-			    rdns_buf, hbuf_server, if_name);
+			    rdns_buf, hbuf_server, if_name == NULL ? "?" :
+			    if_name);
+		}
 		free(rdns_buf);
 	}
 }
@@ -1389,4 +1378,63 @@ parse_lease(struct dhcpleased_iface *iface, struct imsg_ifinfo *imsg_ifinfo)
 
 	if (inet_pton(AF_INET, p, &iface->requested_ip) != 1)
 		iface->requested_ip.s_addr = INADDR_ANY;
+}
+
+void
+log_dhcp_hdr(struct dhcp_hdr *dhcp_hdr)
+{
+	char	 hbuf[INET_ADDRSTRLEN];
+
+	log_debug("dhcp_hdr op: %s (%d)", dhcp_hdr->op == DHCP_BOOTREQUEST ?
+	    "Boot Request" : dhcp_hdr->op == DHCP_BOOTREPLY ? "Boot Reply" :
+	    "Unknown", dhcp_hdr->op);
+	log_debug("dhcp_hdr htype: %s (%d)", dhcp_hdr->htype == 1 ? "Ethernet":
+	    "Unknown", dhcp_hdr->htype);
+	log_debug("dhcp_hdr hlen: %d", dhcp_hdr->hlen);
+	log_debug("dhcp_hdr hops: %d", dhcp_hdr->hops);
+	log_debug("dhcp_hdr xid: 0x%x", dhcp_hdr->xid);
+	log_debug("dhcp_hdr secs: %u", dhcp_hdr->secs);
+	log_debug("dhcp_hdr flags: 0x%x", dhcp_hdr->flags);
+	log_debug("dhcp_hdr ciaddr: %s", inet_ntop(AF_INET, &dhcp_hdr->ciaddr,
+	    hbuf, sizeof(hbuf)));
+	log_debug("dhcp_hdr yiaddr: %s", inet_ntop(AF_INET, &dhcp_hdr->yiaddr,
+	    hbuf, sizeof(hbuf)));
+	log_debug("dhcp_hdr siaddr: %s", inet_ntop(AF_INET, &dhcp_hdr->siaddr,
+	    hbuf, sizeof(hbuf)));
+	log_debug("dhcp_hdr giaddr: %s", inet_ntop(AF_INET, &dhcp_hdr->giaddr,
+	    hbuf, sizeof(hbuf)));
+	log_debug("dhcp_hdr chaddr: %02x:%02x:%02x:%02x:%02x:%02x "
+	    "(%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x)",
+	    dhcp_hdr->chaddr[0], dhcp_hdr->chaddr[1], dhcp_hdr->chaddr[2],
+	    dhcp_hdr->chaddr[3], dhcp_hdr->chaddr[4], dhcp_hdr->chaddr[5],
+	    dhcp_hdr->chaddr[6], dhcp_hdr->chaddr[7], dhcp_hdr->chaddr[8],
+	    dhcp_hdr->chaddr[9], dhcp_hdr->chaddr[10], dhcp_hdr->chaddr[11],
+	    dhcp_hdr->chaddr[12], dhcp_hdr->chaddr[13], dhcp_hdr->chaddr[14],
+	    dhcp_hdr->chaddr[15]);
+	/* ignore sname and file, if we ever print it use strvis(3) */
+}
+
+const char *
+dhcp_message_type2str(uint8_t dhcp_message_type)
+{
+	switch (dhcp_message_type) {
+	case DHCPDISCOVER:
+		return "DHCPDISCOVER";
+	case DHCPOFFER:
+		return "DHCPOFFER";
+	case DHCPREQUEST:
+		return "DHCPREQUEST";
+	case DHCPDECLINE:
+		return "DHCPDECLINE";
+	case DHCPACK:
+		return "DHCPACK";
+	case DHCPNAK:
+		return "DHCPNAK";
+	case DHCPRELEASE:
+		return "DHCPRELEASE";
+	case DHCPINFORM:
+		return "DHCPINFORM";
+	default:
+		return "Unknown";
+	}
 }

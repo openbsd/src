@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.2 2021/03/02 17:39:26 claudio Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.3 2021/03/07 18:39:11 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -624,8 +624,7 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 {
 	struct if_msghdr		*ifm;
 	int				 xflags, if_index;
-	char				 ifnamebuf[IFNAMSIZ];
-	char				*if_name;
+	char				 ifnamebuf[IF_NAMESIZE], *if_name;
 
 	switch (rtm->rtm_type) {
 	case RTM_IFINFO:
@@ -653,7 +652,8 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 	case RTM_NEWADDR:
 		ifm = (struct if_msghdr *)rtm;
 		if_name = if_indextoname(ifm->ifm_index, ifnamebuf);
-		log_debug("RTM_NEWADDR: %s[%u]", if_name, ifm->ifm_index);
+		log_debug("RTM_NEWADDR: %s[%u]", if_name == NULL ?
+		    "?" : if_name, ifm->ifm_index);
 		update_iface(ifm->ifm_index, if_name);
 		break;
 	case RTM_PROPOSAL:
@@ -699,13 +699,13 @@ bpf_receive(int fd, short events, void *arg)
 
 	iface = (struct iface *)arg;
 
-	log_debug("%s: fd: %d", __func__, fd);
 	if ((len = read(fd, iface->bpfev.buf, BPFLEN)) == -1) {
 		log_warn("read");
 		return;
 	}
-	/* XXX len = 0 */
-	log_debug("%s: %ld", __func__, len);
+
+	if (len == 0)
+		fatal("%s len == 0", __func__);
 
 	memset(&imsg_dhcp, 0, sizeof(imsg_dhcp));
 	imsg_dhcp.if_index = iface->if_index;
@@ -818,16 +818,19 @@ void
 send_discover(struct iface *iface)
 {
 	ssize_t	 pkt_len;
+	char	 ifnamebuf[IF_NAMESIZE], *if_name;
 
 	if (!event_initialized(&iface->bpfev.ev)) {
 		iface->send_discover = 1;
 		return;
 	}
 	iface->send_discover = 0;
-	log_debug("%s", __func__);
+
+	if_name = if_indextoname(iface->if_index, ifnamebuf);
+	log_debug("DHCPDISCOVER on %s", if_name == NULL ? "?" : if_name);
+
 	pkt_len = build_packet(DHCPDISCOVER, iface->xid, &iface->hw_address,
 	    &iface->requested_ip, NULL);
-	log_debug("%s, pkt_len: %ld", __func__, pkt_len);
 	bpf_send_packet(iface, dhcp_packet, pkt_len);
 }
 
@@ -835,10 +838,13 @@ void
 send_request(struct iface *iface)
 {
 	ssize_t	 pkt_len;
+	char	 ifnamebuf[IF_NAMESIZE], *if_name;
+
+	if_name = if_indextoname(iface->if_index, ifnamebuf);
+	log_debug("DHCPREQUEST on %s", if_name == NULL ? "?" : if_name);
 
 	pkt_len = build_packet(DHCPREQUEST, iface->xid, &iface->hw_address,
 	    &iface->requested_ip, &iface->server_identifier);
-	log_debug("%s, pkt_len: %ld", __func__, pkt_len);
 	if (iface->dhcp_server.s_addr != INADDR_ANY)
 		udp_send_packet(iface, dhcp_packet, pkt_len);
 	else
@@ -850,7 +856,6 @@ udp_send_packet(struct iface *iface, uint8_t *packet, ssize_t len)
 {
 	struct sockaddr_in	to;
 
-	log_debug("%s", __func__);
 	memset(&to, 0, sizeof(to));
 	to.sin_family = AF_INET;
 	to.sin_len = sizeof(to);
@@ -959,8 +964,6 @@ void
 set_bpfsock(int bpfsock, uint32_t if_index)
 {
 	struct iface	*iface;
-
-	log_debug("%s: %d fd: %d", __func__, if_index, bpfsock);
 
 	if ((iface = get_iface_by_id(if_index)) == NULL) {
 		/*
