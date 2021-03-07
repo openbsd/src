@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.7 2021/03/06 18:33:44 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.8 2021/03/07 16:22:01 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -1096,10 +1096,9 @@ state_transition(struct dhcpleased_iface *iface, enum if_state new_state)
 		request_dhcp_discover(iface);
 		break;
 	case IF_REBOOTING:
-		if (old_state == IF_REBOOTING) {
-			if (iface->timo.tv_sec < MAX_EXP_BACKOFF_FAST)
-				iface->timo.tv_sec *= 2;
-		} else {
+		if (old_state == IF_REBOOTING)
+			iface->timo.tv_sec *= 2;
+		else {
 			/* make sure we send broadcast */
 			iface->dhcp_server.s_addr = INADDR_ANY;
 			iface->timo.tv_sec = START_EXP_BACKOFF;
@@ -1107,10 +1106,9 @@ state_transition(struct dhcpleased_iface *iface, enum if_state new_state)
 		request_dhcp_request(iface);
 		break;
 	case IF_REQUESTING:
-		if (old_state == IF_REQUESTING) {
-			if (iface->timo.tv_sec < MAX_EXP_BACKOFF_FAST)
-				iface->timo.tv_sec *= 2;
-		} else
+		if (old_state == IF_REQUESTING)
+			iface->timo.tv_sec *= 2;
+		else
 			iface->timo.tv_sec = START_EXP_BACKOFF;
 		request_dhcp_request(iface);
 		break;
