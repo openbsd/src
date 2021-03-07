@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.62 2021/03/06 19:02:53 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.63 2021/03/07 10:28:44 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -277,6 +277,7 @@ void			 deprecate_all_proposals(struct slaacd_iface *);
 struct slaacd_iface	*get_slaacd_iface_by_id(uint32_t);
 void			 remove_slaacd_iface(uint32_t);
 void			 free_ra(struct radv *);
+void			 engine_update_iface(struct imsg_ifinfo *);
 void			 parse_ra(struct slaacd_iface *, struct imsg_ra *);
 void			 gen_addr(struct slaacd_iface *, struct radv_prefix *,
 			     struct address_proposal *, int);
@@ -684,87 +685,7 @@ engine_dispatch_main(int fd, short event, void *bula)
 				fatalx("%s: IMSG_UPDATE_IF wrong length: %lu",
 				    __func__, IMSG_DATA_SIZE(imsg));
 			memcpy(&imsg_ifinfo, imsg.data, sizeof(imsg_ifinfo));
-
-			iface = get_slaacd_iface_by_id(imsg_ifinfo.if_index);
-			if (iface == NULL) {
-				if ((iface = calloc(1, sizeof(*iface))) == NULL)
-					fatal("calloc");
-				evtimer_set(&iface->timer, iface_timeout,
-				    iface);
-				iface->if_index = imsg_ifinfo.if_index;
-				iface->rdomain = imsg_ifinfo.rdomain;
-				iface->running = imsg_ifinfo.running;
-				if (iface->running)
-					start_probe(iface);
-				else
-					iface->state = IF_DOWN;
-				iface->autoconfprivacy =
-				    imsg_ifinfo.autoconfprivacy;
-				iface->soii = imsg_ifinfo.soii;
-				memcpy(&iface->hw_address,
-				    &imsg_ifinfo.hw_address,
-				    sizeof(struct ether_addr));
-				memcpy(&iface->ll_address,
-				    &imsg_ifinfo.ll_address,
-				    sizeof(struct sockaddr_in6));
-				memcpy(iface->soiikey, imsg_ifinfo.soiikey,
-				    sizeof(iface->soiikey));
-				LIST_INIT(&iface->radvs);
-				LIST_INSERT_HEAD(&slaacd_interfaces,
-				    iface, entries);
-				LIST_INIT(&iface->addr_proposals);
-				LIST_INIT(&iface->dfr_proposals);
-				LIST_INIT(&iface->rdns_proposals);
-			} else {
-				int need_refresh = 0;
-
-				if (iface->autoconfprivacy !=
-				    imsg_ifinfo.autoconfprivacy) {
-					iface->autoconfprivacy =
-					    imsg_ifinfo.autoconfprivacy;
-					need_refresh = 1;
-				}
-
-				if (iface->soii !=
-				    imsg_ifinfo.soii) {
-					iface->soii =
-					    imsg_ifinfo.soii;
-					need_refresh = 1;
-				}
-
-				if (memcmp(&iface->hw_address,
-					    &imsg_ifinfo.hw_address,
-					    sizeof(struct ether_addr)) != 0) {
-					memcpy(&iface->hw_address,
-					    &imsg_ifinfo.hw_address,
-					    sizeof(struct ether_addr));
-					need_refresh = 1;
-				}
-				if (memcmp(iface->soiikey,
-					    imsg_ifinfo.soiikey,
-					    sizeof(iface->soiikey)) != 0) {
-					memcpy(iface->soiikey,
-					    imsg_ifinfo.soiikey,
-					    sizeof(iface->soiikey));
-					need_refresh = 1;
-				}
-
-				if (iface->state != IF_DOWN &&
-				    imsg_ifinfo.running && need_refresh)
-					start_probe(iface);
-
-				iface->running = imsg_ifinfo.running;
-				if (!iface->running) {
-					iface->state = IF_DOWN;
-					if (evtimer_pending(&iface->timer,
-					    NULL))
-						evtimer_del(&iface->timer);
-				}
-
-				memcpy(&iface->ll_address,
-				    &imsg_ifinfo.ll_address,
-				    sizeof(struct sockaddr_in6));
-			}
+			engine_update_iface(&imsg_ifinfo);
 			break;
 #ifndef	SMALL
 		case IMSG_UPDATE_ADDRESS:
@@ -1158,6 +1079,78 @@ free_ra(struct radv *ra)
 	}
 
 	free(ra);
+}
+
+void
+engine_update_iface(struct imsg_ifinfo *imsg_ifinfo)
+{
+	struct slaacd_iface	*iface;
+
+	iface = get_slaacd_iface_by_id(imsg_ifinfo->if_index);
+	if (iface == NULL) {
+		if ((iface = calloc(1, sizeof(*iface))) == NULL)
+			fatal("calloc");
+		evtimer_set(&iface->timer, iface_timeout, iface);
+		iface->if_index = imsg_ifinfo->if_index;
+		iface->rdomain = imsg_ifinfo->rdomain;
+		iface->running = imsg_ifinfo->running;
+		if (iface->running)
+			start_probe(iface);
+		else
+			iface->state = IF_DOWN;
+		iface->autoconfprivacy = imsg_ifinfo->autoconfprivacy;
+		iface->soii = imsg_ifinfo->soii;
+		memcpy(&iface->hw_address, &imsg_ifinfo->hw_address,
+		    sizeof(struct ether_addr));
+		memcpy(&iface->ll_address, &imsg_ifinfo->ll_address,
+		    sizeof(struct sockaddr_in6));
+		memcpy(iface->soiikey, imsg_ifinfo->soiikey,
+		    sizeof(iface->soiikey));
+		LIST_INIT(&iface->radvs);
+		LIST_INSERT_HEAD(&slaacd_interfaces, iface, entries);
+		LIST_INIT(&iface->addr_proposals);
+		LIST_INIT(&iface->dfr_proposals);
+		LIST_INIT(&iface->rdns_proposals);
+	} else {
+		int need_refresh = 0;
+
+		if (iface->autoconfprivacy != imsg_ifinfo->autoconfprivacy) {
+			iface->autoconfprivacy = imsg_ifinfo->autoconfprivacy;
+			need_refresh = 1;
+		}
+
+		if (iface->soii != imsg_ifinfo->soii) {
+			iface->soii = imsg_ifinfo->soii;
+			need_refresh = 1;
+		}
+
+		if (memcmp(&iface->hw_address, &imsg_ifinfo->hw_address,
+		    sizeof(struct ether_addr)) != 0) {
+			memcpy(&iface->hw_address, &imsg_ifinfo->hw_address,
+			    sizeof(struct ether_addr));
+			need_refresh = 1;
+		}
+		if (memcmp(iface->soiikey, imsg_ifinfo->soiikey,
+		    sizeof(iface->soiikey)) != 0) {
+			memcpy(iface->soiikey, imsg_ifinfo->soiikey,
+			    sizeof(iface->soiikey));
+			need_refresh = 1;
+		}
+
+		if (iface->state != IF_DOWN && imsg_ifinfo->running &&
+		    need_refresh)
+			start_probe(iface);
+
+		iface->running = imsg_ifinfo->running;
+		if (!iface->running) {
+			iface->state = IF_DOWN;
+			if (evtimer_pending(&iface->timer, NULL))
+				evtimer_del(&iface->timer);
+		}
+
+		memcpy(&iface->ll_address, &imsg_ifinfo->ll_address,
+		    sizeof(struct sockaddr_in6));
+	}
 }
 
 void
