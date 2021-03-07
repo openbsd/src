@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.script,v 1.16 2020/02/19 16:55:04 kettenis Exp $	*/
+/*	$OpenBSD: ld.script,v 1.17 2021/03/07 23:10:54 mortimer Exp $	*/
 
 /*
  * Copyright (c) 2009 Tobias Weingartner <weingart@tepid.org>
@@ -45,8 +45,8 @@ __kernel_virt_to_phys = __kernel_phys_base - __kernel_virt_base;
 ENTRY(start)
 SECTIONS
 {
-	.text (__kernel_virt_base + SIZEOF_HEADERS) :
-	      AT (__kernel_phys_base + SIZEOF_HEADERS)
+	.text ALIGN(__kernel_virt_base + SIZEOF_HEADERS, __ALIGN_SIZE) :
+	      AT (ALIGN(__kernel_phys_base + SIZEOF_HEADERS, __ALIGN_SIZE))
 	{
 		start = .;
 		locore0.o(.text)
