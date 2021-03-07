@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.49 2021/01/19 16:49:56 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.50 2021/03/07 10:30:13 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -562,8 +562,6 @@ update_autoconf_addresses(uint32_t if_index, char* if_name)
 
 	memset(&imsg_addrinfo, 0, sizeof(imsg_addrinfo));
 	imsg_addrinfo.if_index = if_index;
-	get_lladdr(if_name, &imsg_addrinfo.hw_address,
-	    &imsg_addrinfo.ll_address);
 
 	memset(&imsg_link_state, 0, sizeof(imsg_link_state));
 	imsg_link_state.if_index = if_index;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.h,v 1.29 2021/02/27 10:28:12 florian Exp $	*/
+/*	$OpenBSD: slaacd.h,v 1.30 2021/03/07 10:30:13 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -169,8 +169,6 @@ struct ctl_engine_info_rdns_proposal {
 
 struct imsg_addrinfo {
 	uint32_t		if_index;
-	struct ether_addr	hw_address;
-	struct sockaddr_in6	ll_address;
 	struct sockaddr_in6	addr;
 	struct in6_addr		mask;
 	int			privacy;

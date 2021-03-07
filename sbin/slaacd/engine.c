@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.64 2021/03/07 10:29:12 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.65 2021/03/07 10:30:13 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -727,8 +727,7 @@ engine_dispatch_main(int fd, short event, void *bula)
 			    &addr_proposal->uptime))
 				fatal("clock_gettime");
 			addr_proposal->if_index = imsg_addrinfo.if_index;
-			memcpy(&addr_proposal->hw_address,
-			    &imsg_addrinfo.hw_address,
+			memcpy(&addr_proposal->hw_address, &iface->hw_address,
 			    sizeof(addr_proposal->hw_address));
 			addr_proposal->addr = imsg_addrinfo.addr;
 			addr_proposal->mask = imsg_addrinfo.mask;
