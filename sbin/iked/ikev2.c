@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.314 2021/03/06 22:27:39 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.315 2021/03/07 15:51:07 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -6197,6 +6197,7 @@ ikev2_childsa_enable(struct iked *env, struct iked_sa *sa)
 	char			*buf;
 	uint16_t		 encrid = 0, integrid = 0, groupid = 0;
 	size_t			 encrlen = 0, integrlen = 0;
+	int			 esn = 0;
 
 	TAILQ_FOREACH(csa, &sa->sa_childsas, csa_entry) {
 		if (csa->csa_rekey || csa->csa_loaded)
@@ -6266,6 +6267,7 @@ ikev2_childsa_enable(struct iked *env, struct iked_sa *sa)
 				integrlen = ibuf_length(csa->csa_integrkey);
 			}
 			groupid = csa->csa_pfsgrpid;
+			esn = csa->csa_esn;
 		}
 	}
 
@@ -6332,14 +6334,15 @@ ikev2_childsa_enable(struct iked *env, struct iked_sa *sa)
 	}
 
 	if (ibuf_strlen(spibuf)) {
-		log_info("%s: loaded SPIs: %.*s (enc %s%s%s%s%s)",
+		log_info("%s: loaded SPIs: %.*s (enc %s%s%s%s%s%s)",
 		    SPI_SA(sa, __func__),
 		    ibuf_strlen(spibuf), ibuf_data(spibuf),
 		    print_xf(encrid, encrlen, ipsecencxfs),
 		    integrid ? " auth " : "",
 		    integrid ? print_xf(integrid, integrlen, authxfs) : "",
 		    groupid ? " group " : "",
-		    groupid ? print_xf(groupid, 0, groupxfs) : "");
+		    groupid ? print_xf(groupid, 0, groupxfs) : "",
+		    esn ? " esn" : "");
 	}
 	if (ibuf_strlen(flowbuf))
 		log_info("%s: loaded flows: %.*s", SPI_SA(sa, __func__),
