@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.63 2021/03/07 10:28:44 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.64 2021/03/07 10:29:12 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -1085,19 +1085,17 @@ void
 engine_update_iface(struct imsg_ifinfo *imsg_ifinfo)
 {
 	struct slaacd_iface	*iface;
+	int			 need_refresh = 0;
 
 	iface = get_slaacd_iface_by_id(imsg_ifinfo->if_index);
 	if (iface == NULL) {
 		if ((iface = calloc(1, sizeof(*iface))) == NULL)
 			fatal("calloc");
+		iface->state = IF_DOWN;
 		evtimer_set(&iface->timer, iface_timeout, iface);
 		iface->if_index = imsg_ifinfo->if_index;
 		iface->rdomain = imsg_ifinfo->rdomain;
 		iface->running = imsg_ifinfo->running;
-		if (iface->running)
-			start_probe(iface);
-		else
-			iface->state = IF_DOWN;
 		iface->autoconfprivacy = imsg_ifinfo->autoconfprivacy;
 		iface->soii = imsg_ifinfo->soii;
 		memcpy(&iface->hw_address, &imsg_ifinfo->hw_address,
@@ -1111,8 +1109,10 @@ engine_update_iface(struct imsg_ifinfo *imsg_ifinfo)
 		LIST_INIT(&iface->addr_proposals);
 		LIST_INIT(&iface->dfr_proposals);
 		LIST_INIT(&iface->rdns_proposals);
+		need_refresh = 1;
 	} else {
-		int need_refresh = 0;
+		memcpy(&iface->ll_address, &imsg_ifinfo->ll_address,
+		    sizeof(struct sockaddr_in6));
 
 		if (iface->autoconfprivacy != imsg_ifinfo->autoconfprivacy) {
 			iface->autoconfprivacy = imsg_ifinfo->autoconfprivacy;
@@ -1130,6 +1130,7 @@ engine_update_iface(struct imsg_ifinfo *imsg_ifinfo)
 			    sizeof(struct ether_addr));
 			need_refresh = 1;
 		}
+
 		if (memcmp(iface->soiikey, imsg_ifinfo->soiikey,
 		    sizeof(iface->soiikey)) != 0) {
 			memcpy(iface->soiikey, imsg_ifinfo->soiikey,
@@ -1137,19 +1138,23 @@ engine_update_iface(struct imsg_ifinfo *imsg_ifinfo)
 			need_refresh = 1;
 		}
 
-		if (iface->state != IF_DOWN && imsg_ifinfo->running &&
-		    need_refresh)
-			start_probe(iface);
-
-		iface->running = imsg_ifinfo->running;
-		if (!iface->running) {
-			iface->state = IF_DOWN;
-			if (evtimer_pending(&iface->timer, NULL))
-				evtimer_del(&iface->timer);
+		if (imsg_ifinfo->running != iface->running) {
+			iface->running = imsg_ifinfo->running;
+			need_refresh = 1;
 		}
+	}
 
-		memcpy(&iface->ll_address, &imsg_ifinfo->ll_address,
-		    sizeof(struct sockaddr_in6));
+	if (!need_refresh)
+		return;
+
+	if (iface->running)
+		start_probe(iface);
+
+	else {
+		/* XXX correct state transition */
+		iface->state = IF_DOWN;
+		if (evtimer_pending(&iface->timer, NULL))
+			evtimer_del(&iface->timer);
 	}
 }
 
