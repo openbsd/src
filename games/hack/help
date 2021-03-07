@@ -45,7 +45,7 @@ Commands:
 	>	down: go down (just like up).
 	kjhlyubn - go one step in the direction indicated.
 		k: north (i.e., to the top of the screen),
-		j: south, h: west, l: east, y: ne, u: nw, b: se, n: sw.
+		j: south, h: west, l: east, y: nw, u: ne, b: sw, n: se.
 	KJHLYUBN - Go in that direction until you hit a wall or run
 		into something.
 	m	(followed by one of kjhlyubn): move without picking up
