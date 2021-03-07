@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.66 2021/03/07 10:31:20 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.67 2021/03/07 10:31:57 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -273,6 +273,7 @@ void			 engine_showinfo_ctl(struct imsg *, uint32_t);
 void			 debug_log_ra(struct imsg_ra *);
 int			 in6_mask2prefixlen(struct in6_addr *);
 void			 deprecate_all_proposals(struct slaacd_iface *);
+void			 send_rdns_withdraw(struct slaacd_iface *);
 #endif	/* SMALL */
 struct slaacd_iface	*get_slaacd_iface_by_id(uint32_t);
 void			 remove_slaacd_iface(uint32_t);
@@ -956,6 +957,7 @@ engine_showinfo_ctl(struct imsg *imsg, uint32_t if_index)
 		break;
 	}
 }
+
 void
 deprecate_all_proposals(struct slaacd_iface *iface)
 {
@@ -969,6 +971,19 @@ deprecate_all_proposals(struct slaacd_iface *iface)
 		addr_proposal->state = PROPOSAL_NEARLY_EXPIRED;
 	}
 }
+
+void
+send_rdns_withdraw(struct slaacd_iface *iface)
+{
+	struct rdns_proposal	*rdns_proposal;
+
+	while(!LIST_EMPTY(&iface->rdns_proposals)) {
+		rdns_proposal = LIST_FIRST(&iface->rdns_proposals);
+		free_rdns_proposal(rdns_proposal);
+	}
+	compose_rdns_proposal(iface->if_index, iface->rdomain);
+}
+
 #endif	/* SMALL */
 
 struct slaacd_iface*
@@ -1135,6 +1150,7 @@ engine_update_iface(struct imsg_ifinfo *imsg_ifinfo)
 	else {
 		/* XXX correct state transition */
 #ifndef	SMALL
+		send_rdns_withdraw(iface);
 		deprecate_all_proposals(iface);
 #endif	/* SMALL */
 		iface->state = IF_DOWN;
