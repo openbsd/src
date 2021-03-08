@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.131 2020/01/26 12:40:50 espie Exp $
+.\"	$OpenBSD: make.1,v 1.132 2021/03/08 02:47:28 jsg Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: January 26 2020 $
+.Dd $Mdocdate: March 8 2021 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -1551,6 +1551,20 @@ utility exits with a value of 0 on success, and >0 if an error occurred.
 .Xr getcwd 3 ,
 .Xr uname 3 ,
 .Xr re_format 7
+.Rs
+.%A S. I. Feldman
+.%T Make \(em A Program for Maintaining Computer Programs
+.%I AT&T Bell Laboratories
+.%R Computing Science Technical Report
+.%N 57
+.%D April 1979
+.Re
+.Rs
+.\" 4.4BSD PSD:12
+.%A Adam de Boor
+.%T PMake \(em A Tutorial
+.%B 4.4BSD Programmer's Supplementary Documents (PSD)
+.Re
 .Sh STANDARDS
 The
 .Nm

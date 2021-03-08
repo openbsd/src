@@ -1,4 +1,4 @@
-.\"	$OpenBSD: amd.8,v 1.24 2017/08/22 17:08:43 schwarze Exp $
+.\"	$OpenBSD: amd.8,v 1.25 2021/03/08 02:47:29 jsg Exp $
 .\"
 .\" Copyright (c) 1989 Jan-Simon Pendry
 .\" Copyright (c) 1989 Imperial College of Science, Technology & Medicine
@@ -34,7 +34,7 @@
 .\"
 .\"     from: @(#)amd.8	5.10 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: August 22 2017 $
+.Dd $Mdocdate: March 8 2021 $
 .Dt AMD 8
 .Os
 .Sh NAME
@@ -189,10 +189,13 @@ directory under which filesystems are dynamically mounted
 .\".Xr mk-amd-map 8 ,
 .Xr mount 8 ,
 .Xr umount 8
-.Pp
-.%T Amd \- The 4.4 BSD Automounter ,
-available by running
-.Dq info amd
+.Rs
+.\" 4.4BSD SMM:13
+.%A J-S. Pendry
+.%A N. Williams
+.%T Amd \(em The 4.4 BSD Automounter
+.%B 4.4BSD System Manager's Manual (SMM)
+.Re
 .Sh HISTORY
 The
 .Nm amd

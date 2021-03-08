@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sed.1,v 1.59 2020/10/16 09:29:04 jmc Exp $
+.\"	$OpenBSD: sed.1,v 1.60 2021/03/08 02:47:28 jsg Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)sed.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: October 16 2020 $
+.Dd $Mdocdate: March 8 2021 $
 .Dt SED 1
 .Os
 .Sh NAME
@@ -564,6 +564,15 @@ defaults to the terminal width, or 80 columns if the output is not a terminal.
 .Xr ed 1 ,
 .Xr grep 1 ,
 .Xr re_format 7
+.Rs
+.\" 4.4BSD USD:15
+.%A Lee E. McMahon
+.%I AT&T Bell Laboratories
+.%T SED \(em A Non-interactive Text Editor
+.%R Computing Science Technical Report
+.%N 77
+.%D January 1979
+.Re
 .Sh STANDARDS
 The
 .Nm

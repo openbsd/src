@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vi.1,v 1.78 2020/04/30 10:40:21 millert Exp $
+.\"	$OpenBSD: vi.1,v 1.79 2021/03/08 02:47:29 jsg Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -14,7 +14,7 @@
 .\"
 .\"     @(#)vi.1	8.51 (Berkeley) 10/10/96
 .\"
-.Dd $Mdocdate: April 30 2020 $
+.Dd $Mdocdate: March 8 2021 $
 .Dt VI 1
 .Os
 .Sh NAME
@@ -2753,6 +2753,14 @@ and >0 if an error occurs.
 .Sh SEE ALSO
 .Xr ctags 1 ,
 .Xr re_format 7
+.Rs
+.\" 4.4BSD USD:12
+.%T An Introduction to Display Editing with Vi
+.Re
+.\".Rs
+.\" 4.4BSD USD:13
+.\".%T Ex Reference Manual
+.\".Re
 .Sh STANDARDS
 .Nm nex Ns / Ns Nm nvi
 is close to

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lpd.8,v 1.30 2020/02/08 01:09:58 jsg Exp $
+.\"	$OpenBSD: lpd.8,v 1.31 2021/03/08 02:47:29 jsg Exp $
 .\"	$NetBSD: lpd.8,v 1.23 2002/02/08 01:38:50 ross Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)lpd.8	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: February 8 2020 $
+.Dd $Mdocdate: March 8 2021 $
 .Dt LPD 8
 .Os
 .Sh NAME
@@ -345,6 +345,8 @@ lists machine names allowed printer access
 .Xr resolv.conf 5 ,
 .Xr lpc 8
 .Rs
+.\" 4.4BSD SMM:7
+.%A Ralph Campbell
 .%T "4.3BSD Line Printer Spooler Manual"
 .Re
 .Sh HISTORY

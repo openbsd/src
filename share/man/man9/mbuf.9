@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.122 2021/02/25 02:43:31 dlg Exp $
+.\"     $OpenBSD: mbuf.9,v 1.123 2021/03/08 02:47:26 jsg Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 25 2021 $
+.Dd $Mdocdate: March 8 2021 $
 .Dt MGET 9
 .Os
 .Sh NAME
@@ -804,6 +804,15 @@ The function prototypes and the macros are located in
 .Xr mbuf_tags 9 ,
 .Xr mutex 9 ,
 .Xr spl 9
+.Rs
+.\" 4.4BSD SMM:18
+.%A S. J. Leffler
+.%A W. N. Joy
+.%A R. S. Fabry
+.%A M. J. Karels
+.%T Networking Implementation Notes
+.%B 4.4BSD System Manager's Manual (SMM)
+.Re
 .Rs
 .%A Jun-Ichiro Hagino
 .%T "Mbuf issues in 4.4BSD IPv6/IPsec support (experiences from KAME IPv6/IPsec implementation)"

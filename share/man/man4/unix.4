@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unix.4,v 1.13 2015/09/10 17:55:21 schwarze Exp $
+.\"	$OpenBSD: unix.4,v 1.14 2021/03/08 02:47:26 jsg Exp $
 .\"	$NetBSD: unix.4,v 1.3 1994/11/30 16:22:43 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)unix.4	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: March 8 2021 $
 .Dt UNIX 4
 .Os
 .Sh NAME
@@ -152,3 +152,20 @@ when the destination socket is closed.
 .Sh SEE ALSO
 .Xr socket 2 ,
 .Xr netintro 4
+.Rs
+.\" 4.4BSD PSD:20
+.%A S. Sechrest
+.%T An Introductory 4.4BSD Interprocess Communication Tutorial
+.%B 4.4BSD Programmer's Supplementary Documents (PSD)
+.Re
+.Rs
+.\" 4.4BSD PSD:21
+.%A S. J. Leffler
+.%A R. S. Fabry
+.%A W. N. Joy
+.%A P. Lapsley
+.%A S. Miller
+.%A C. Torek
+.%T An Advanced 4.4BSD Interprocess Communication Tutorial
+.%B 4.4BSD Programmer's Supplementary Documents (PSD)
+.Re
