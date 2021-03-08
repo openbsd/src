@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.145 2021/02/28 21:41:07 patrick Exp $
+# $OpenBSD: RAMDISK,v 1.146 2021/03/08 20:56:10 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -243,6 +243,7 @@ bnxt*		at pci?			# Broadcom BCM573xx, BCM574xx
 bge*		at pci?			# Broadcom BCM57xx
 em*		at pci?			# Intel Pro/1000 Ethernet
 ix*		at pci?			# Intel 82598EB 10Gb Ethernet
+ixl*		at pci?			# Intel Ethernet 700 Series
 mcx*		at pci?			# Mellanox ConnectX-4/5 Ethernet
 mskc*		at pci?			# Marvell Yukon-2
 msk*		at mskc?		#  each port of above
