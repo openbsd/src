@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.275 2021/03/08 10:12:05 mpi Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.276 2021/03/08 10:54:53 mpi Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1182,6 +1182,8 @@ cursig(struct proc *p)
 	int dolock = (p->p_flag & P_SINTR) == 0;
 	int s;
 
+	KERNEL_ASSERT_LOCKED();
+
 	sigpending = (p->p_siglist | pr->ps_siglist);
 	if (sigpending == 0)
 		return 0;
@@ -1225,11 +1227,7 @@ cursig(struct proc *p)
 			if (dolock)
 				SCHED_UNLOCK(s);
 
-			if (dolock)
-				KERNEL_LOCK();
 			single_thread_clear(p, 0);
-			if (dolock)
-				KERNEL_UNLOCK();
 
 			/*
 			 * If we are no longer being traced, or the parent
@@ -2124,7 +2122,6 @@ single_thread_clear(struct proc *p, int flag)
 
 	KASSERT(pr->ps_single == p);
 	KASSERT(curproc == p);
-	KERNEL_ASSERT_LOCKED();
 
 	SCHED_LOCK(s);
 	pr->ps_single = NULL;
