@@ -1,4 +1,4 @@
-/*      $OpenBSD: interpreter.c,v 1.8 2021/03/08 18:27:33 lum Exp $	*/
+/*      $OpenBSD: interpreter.c,v 1.9 2021/03/08 20:01:43 lum Exp $	*/
 /*
  * This file is in the public domain.
  *
@@ -373,7 +373,29 @@ clearvars(void)
 int
 foundparen(char *funstr)
 {
-	char	*regs;
+	char	*regs, *p;
+	int      pctr;
+
+	pctr = 0;
+
+	/*
+	 * Check for blocks of code with opening and closing ().
+	 * One block = (cmd p a r a m)
+	 * Two blocks = (cmd p a r a m s)(hola)
+	 * Two blocks = (cmd p a r (list a m s))(hola)
+	 * Only single line at moment, but more for multiline.
+	 */
+	p = funstr;
+	while (*p != '\0') {
+		if (*p == '(') {
+			pctr++;
+		} else if (*p == ')') {
+			pctr--;
+		}
+		p++;
+	}
+	if (pctr != 0)
+		return(dobeep_msg("Opening and closing parentheses error"));
 
 	/* Does the line have a list 'define' like: */
 	/* (define alist(list 1 2 3 4)) */
@@ -411,8 +433,7 @@ doregex(char *r, char *e)
 	if (!regexec(&regex_buff, e, 0, NULL, 0)) {
 		regfree(&regex_buff);
 		return(TRUE);
-	} else {
-		regfree(&regex_buff);
-		return(dobeep_msg("Regex execution error"));
 	}
+	regfree(&regex_buff);
+	return(FALSE);
 }
