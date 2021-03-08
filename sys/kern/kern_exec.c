@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.219 2020/10/15 16:31:11 cheloha Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.220 2021/03/08 10:12:05 mpi Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -432,7 +432,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	 * we're committed: any further errors will kill the process, so
 	 * kill the other threads now.
 	 */
-	single_thread_set(p, SINGLE_EXIT, 0);
+	single_thread_set(p, SINGLE_EXIT, 1);
 
 	/*
 	 * Prepare vmspace for remapping. Note that uvmspace_exec can replace
