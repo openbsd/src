@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.94 2021/03/03 10:19:06 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.95 2021/03/08 09:35:08 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1150,7 +1150,7 @@ dev_abort(struct dev *d)
 	}
 	d->slot_list = NULL;
 
-	for (c = ctlslot_array, i = DEV_NCTLSLOT; i > 0; i--, c++) {
+	for (c = ctlslot_array, i = 0; i < DEV_NCTLSLOT; i++, c++) {
 		if (c->ops == NULL)
 			continue;
 		if (c->opt->dev != d)
@@ -2581,8 +2581,10 @@ dev_ctlsync(struct dev *d)
 		    NULL, -1, 127, d->master);
 	}
 
-	for (s = ctlslot_array, i = DEV_NCTLSLOT; i > 0; i--, s++) {
-		if (s->ops && s->opt->dev == d)
+	for (s = ctlslot_array, i = 0; i < DEV_NCTLSLOT; i++, s++) {
+		if (s->ops == NULL)
+			continue;
+		if (s->opt->dev == d)
 			s->ops->sync(s->arg);
 	}
 }
