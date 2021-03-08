@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.234 2021/01/06 08:10:15 florian Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.235 2021/03/08 16:49:07 florian Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -141,7 +141,6 @@ nd6_ifattach(struct ifnet *ifp)
 	nd->basereachable = REACHABLE_TIME;
 	nd->reachable = ND_COMPUTE_RTIME(nd->basereachable);
 	nd->retrans = RETRANS_TIMER;
-	/* per-interface IFXF_AUTOCONF6 needs to be set too to accept RAs */
 
 	return nd;
 }
