@@ -1,4 +1,4 @@
-/*	$OpenBSD: utwitch.c,v 1.20 2020/02/25 10:03:39 mpi Exp $ */
+/*	$OpenBSD: utwitch.c,v 1.21 2021/03/08 14:35:57 jcs Exp $ */
 
 /*
  * Copyright (c) 2010 Yojiro UO <yuo@nui.org>
@@ -107,7 +107,7 @@ utwitch_match(struct device *parent, void *match, void *aux)
 {
 	struct uhidev_attach_arg *uha = aux;
 
-	if (uha->reportid == UHIDEV_CLAIM_ALLREPORTID)
+	if (uha->reportid == UHIDEV_CLAIM_MULTIPLE_REPORTID)
 		return (UMATCH_NONE);
 
 	return (usb_lookup(utwitch_devs, uha->uaa->vendor, uha->uaa->product) != NULL ?

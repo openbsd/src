@@ -1,4 +1,4 @@
-/*	$OpenBSD: upd.c,v 1.28 2021/01/29 16:59:41 sthen Exp $ */
+/*	$OpenBSD: upd.c,v 1.29 2021/03/08 14:35:57 jcs Exp $ */
 
 /*
  * Copyright (c) 2015 David Higgs <higgsd@gmail.com>
@@ -155,7 +155,7 @@ upd_match(struct device *parent, void *match, void *aux)
 	int			  ret = UMATCH_NONE;
 	int			  i;
 
-	if (uha->reportid != UHIDEV_CLAIM_ALLREPORTID)
+	if (uha->reportid != UHIDEV_CLAIM_MULTIPLE_REPORTID)
 		return (ret);
 
 	DPRINTF(("upd: vendor=0x%04x, product=0x%04x\n", uha->uaa->vendor,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.89 2021/02/15 11:26:00 mglocker Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.90 2021/03/08 14:35:57 jcs Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -250,20 +250,27 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 
 	uha.uaa = uaa;
 	uha.parent = sc;
-	uha.reportid = UHIDEV_CLAIM_ALLREPORTID;
+	uha.reportid = UHIDEV_CLAIM_MULTIPLE_REPORTID;
+	uha.nreports = nrepid;
+	uha.claimed = malloc(nrepid, M_TEMP, M_WAITOK|M_ZERO);
 
-	/* Look for a driver claiming all report IDs first. */
+	/* Look for a driver claiming multiple report IDs first. */
 	dev = config_found_sm(self, &uha, NULL, uhidevsubmatch);
 	if (dev != NULL) {
 		for (repid = 0; repid < nrepid; repid++) {
 			/*
 			 * Could already be assigned by uhidev_set_report_dev().
 			 */
-			if (sc->sc_subdevs[repid] == NULL)
+			if (sc->sc_subdevs[repid] != NULL)
+				continue;
+
+			if (uha.claimed[repid])
 				sc->sc_subdevs[repid] = (struct uhidev *)dev;
 		}
-		return;
 	}
+
+	free(uha.claimed, M_TEMP, nrepid);
+	uha.claimed = NULL;
 
 	for (repid = 0; repid < nrepid; repid++) {
 		DPRINTF(("%s: try repid=%d\n", __func__, repid));
@@ -355,7 +362,7 @@ uhidevprint(void *aux, const char *pnp)
 
 	if (pnp)
 		printf("uhid at %s", pnp);
-	if (uha->reportid != 0 && uha->reportid != UHIDEV_CLAIM_ALLREPORTID)
+	if (uha->reportid != 0 && uha->reportid != UHIDEV_CLAIM_MULTIPLE_REPORTID)
 		printf(" reportid %d", uha->reportid);
 	return (UNCONF);
 }
