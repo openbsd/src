@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.h,v 1.16 2021/02/16 12:33:22 kettenis Exp $ */
+/* $OpenBSD: pmap.h,v 1.17 2021/03/08 11:16:26 kettenis Exp $ */
 /*
  * Copyright (c) 2008,2009,2014 Dale Rahn <drahn@dalerahn.com>
  *
@@ -65,9 +65,9 @@ struct pmap {
 		struct pmapvp1 *l1;	/* virtual to physical table 3 lvl */
 	} pm_vp;
 	uint64_t pm_pt0pa;
+	uint64_t pm_asid;
 	int have_4_level_pt;
 	int pm_privileged;
-	int pm_asid;
 	int pm_refs;				/* ref count */
 	struct pmap_statistics  pm_stats;	/* pmap statistics */
 };

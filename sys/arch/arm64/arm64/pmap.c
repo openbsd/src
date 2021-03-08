@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.72 2021/03/04 18:36:52 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.73 2021/03/08 11:16:26 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -230,47 +230,123 @@ const uint64_t ap_bits_kern[8] = {
  * trampoline page mapped in addition to userland.
  */
 
-#define MAX_NASID (1 << 16)
-uint32_t pmap_asid[MAX_NASID / 32];
+#define PMAP_MAX_NASID	(1 << 16)
+#define PMAP_ASID_MASK	(PMAP_MAX_NASID - 1)
 int pmap_nasid = (1 << 8);
+
+uint32_t pmap_asid[PMAP_MAX_NASID / 32];
+uint64_t pmap_asid_gen = PMAP_MAX_NASID;
+struct mutex pmap_asid_mtx = MUTEX_INITIALIZER(IPL_HIGH);
+
+int
+pmap_find_asid(pmap_t pm)
+{
+	uint32_t bits;
+	int asid, bit;
+	int retry;
+
+	/* Attempt to re-use the old ASID. */
+	asid = pm->pm_asid & PMAP_ASID_MASK;
+	bit = asid & (32 - 1);
+	bits = pmap_asid[asid / 32];
+	if ((bits & (3U << bit)) == 0)
+		return asid;
+
+	/* Attempt to obtain a random ASID. */
+	for (retry = 5; retry > 0; retry--) {
+		asid = arc4random() & (pmap_nasid - 2);
+		bit = (asid & (32 - 1));
+		bits = pmap_asid[asid / 32];
+		if ((bits & (3U << bit)) == 0)
+			return asid;
+	}
+
+	/* Do a linear search if that fails. */
+	for (asid = 0; asid < pmap_nasid; asid += 32) {
+		bits = pmap_asid[asid / 32];
+		if (bits == ~0)
+			continue;
+		for (bit = 0; bit < 32; bit += 2) {
+			if ((bits & (3U << bit)) == 0)
+				return asid + bit;
+		}
+	}
+
+	return -1;
+}
+
+int
+pmap_rollover_asid(pmap_t pm)
+{
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
+	int asid, bit;
+
+	SCHED_ASSERT_LOCKED();
+	MUTEX_ASSERT_LOCKED(&pmap_asid_mtx);
+
+	/* Start a new generation.  Mark ASID 0 as in-use again. */
+	pmap_asid_gen += PMAP_MAX_NASID;
+	memset(pmap_asid, 0, (pmap_nasid / 32) * sizeof(uint32_t));
+	pmap_asid[0] |= (3U << 0);
+
+	/* 
+	 * Carry over all the ASIDs that are currently active into the
+	 * new generation and reserve them.
+	 */
+	CPU_INFO_FOREACH(cii, ci) {
+		asid = ci->ci_curpm->pm_asid & PMAP_ASID_MASK;
+		ci->ci_curpm->pm_asid = asid | pmap_asid_gen;
+		bit = (asid & (32 - 1));
+		pmap_asid[asid / 32] |= (3U << bit);
+	}
+
+	/* Flush the TLBs on all CPUs. */
+	cpu_tlb_flush();
+
+	if ((pm->pm_asid & ~PMAP_ASID_MASK) == pmap_asid_gen)
+		return pm->pm_asid & PMAP_ASID_MASK;
+
+	return pmap_find_asid(pm);
+}
 
 void
 pmap_allocate_asid(pmap_t pm)
 {
-	uint32_t bits;
 	int asid, bit;
 
-	for (;;) {
-		do {
-			asid = arc4random() & (pmap_nasid - 2);
-			bit = (asid & (32 - 1));
-			bits = pmap_asid[asid / 32];
-		} while (asid == 0 || (bits & (3U << bit)));
-
-		if (atomic_cas_uint(&pmap_asid[asid / 32], bits,
-		    bits | (3U << bit)) == bits)
-			break;
+	mtx_enter(&pmap_asid_mtx);
+	asid = pmap_find_asid(pm);
+	if (asid == -1) {
+		/*
+		 * We have no free ASIDs.  Do a rollover to clear all
+		 * inactive ASIDs and pick a fresh one.
+		 */
+		asid = pmap_rollover_asid(pm);
 	}
-	pm->pm_asid = asid;
+	KASSERT(asid > 0 && asid < pmap_nasid);
+	bit = asid & (32 - 1);
+	pmap_asid[asid / 32] |= (3U << bit);
+	pm->pm_asid = asid | pmap_asid_gen;
+	mtx_leave(&pmap_asid_mtx);
 }
 
 void
 pmap_free_asid(pmap_t pm)
 {
-	uint32_t bits;
-	int bit;
+	int asid, bit;
 
 	KASSERT(pm != curcpu()->ci_curpm);
 	cpu_tlb_flush_asid_all((uint64_t)pm->pm_asid << 48);
 	cpu_tlb_flush_asid_all((uint64_t)(pm->pm_asid | ASID_USER) << 48);
 
-	bit = (pm->pm_asid & (32 - 1));
-	for (;;) {
-		bits = pmap_asid[pm->pm_asid / 32];
-		if (atomic_cas_uint(&pmap_asid[pm->pm_asid / 32], bits,
-		    bits & ~(3U << bit)) == bits)
-			break;
+	mtx_enter(&pmap_asid_mtx);
+	if ((pm->pm_asid & ~PMAP_ASID_MASK) == pmap_asid_gen) {
+		asid = pm->pm_asid & PMAP_ASID_MASK;
+		bit = (asid & (32 - 1));
+		pmap_asid[asid / 32] &= ~(3U << bit);
 	}
+	mtx_leave(&pmap_asid_mtx);
 }
 
 /*
@@ -878,7 +954,6 @@ pmap_pinit(pmap_t pm)
 
 	pmap_extract(pmap_kernel(), l0va, (paddr_t *)&pm->pm_pt0pa);
 
-	pmap_allocate_asid(pm);
 	pmap_reference(pm);
 }
 
@@ -1242,6 +1317,9 @@ pmap_bootstrap(long kvo, paddr_t lpt1, long kernelstart, long kernelend,
 	pmap_tramp.pm_privileged = 1;
 	pmap_tramp.pm_asid = 0;
 
+	/* Mark ASID 0 as in-use. */
+	pmap_asid[0] |= (3U << 0);
+
 	/* allocate Lx entries */
 	for (i = VP_IDX1(VM_MIN_KERNEL_ADDRESS);
 	    i <= VP_IDX1(pmap_maxkvaddr - 1);
@@ -1445,12 +1523,13 @@ void
 pmap_activate(struct proc *p)
 {
 	pmap_t pm = p->p_vmspace->vm_map.pmap;
-	int psw;
+	int s;
 
-	psw = disable_interrupts();
-	if (p == curproc && pm != curcpu()->ci_curpm)
+	if (p == curproc && pm != curcpu()->ci_curpm) {
+		SCHED_LOCK(s);
 		pmap_setttb(p);
-	restore_interrupts(psw);
+		SCHED_UNLOCK(s);
+	}
 }
 
 /*
@@ -2300,9 +2379,19 @@ pmap_setttb(struct proc *p)
 	struct cpu_info *ci = curcpu();
 	pmap_t pm = p->p_vmspace->vm_map.pmap;
 
+	SCHED_ASSERT_LOCKED();
+
+	/*
+	 * If the generation of the ASID for the new pmap doesn't
+	 * match the current generation, allocate a new ASID.
+	 */
+	if (pm != pmap_kernel() &&
+	    (pm->pm_asid & ~PMAP_ASID_MASK) != pmap_asid_gen)
+		pmap_allocate_asid(pm);
+
 	WRITE_SPECIALREG(ttbr0_el1, pmap_kernel()->pm_pt0pa);
 	__asm volatile("isb");
 	cpu_setttb(pm->pm_asid, pm->pm_pt0pa);
-	ci->ci_flush_bp();
 	ci->ci_curpm = pm;
+	ci->ci_flush_bp();
 }
