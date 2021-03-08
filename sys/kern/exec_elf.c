@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.158 2021/02/08 10:51:01 mpi Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.159 2021/03/08 05:57:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -151,14 +151,12 @@ struct emul emul_elf = {
 };
 
 #define ELF_NOTE_NAME_OPENBSD	0x01
-#define ELF_NOTE_NAME_GO	0x02
 
 struct elf_note_name {
 	char *name;
 	int id;
 } elf_note_names[] = {
 	{ "OpenBSD",	ELF_NOTE_NAME_OPENBSD },
-	{ "Go",		ELF_NOTE_NAME_GO }
 };
 
 #define	ELFROUNDSIZE	sizeof(Elf_Word)
@@ -637,10 +635,7 @@ exec_elf_makecmds(struct proc *p, struct exec_package *epp)
 				addr = ELF_NO_ADDR;
 
 			/* Permit system calls in specific main-programs */
-			if (names & ELF_NOTE_NAME_GO) {
-				/* go main-binaries; we await a libc future */
-				flags |= VMCMD_SYSCALL;
-			} else if (interp == NULL) {
+			if (interp == NULL) {
 				/* statics. Also block the ld.so syscall-grant */
 				flags |= VMCMD_SYSCALL;
 				p->p_vmspace->vm_map.flags |= VM_MAP_SYSCALL_ONCE;
