@@ -1,4 +1,4 @@
-/*	$OpenBSD: umstc.c,v 1.3 2020/09/14 15:21:08 deraadt Exp $ */
+/*	$OpenBSD: umstc.c,v 1.4 2021/03/08 14:39:34 jcs Exp $ */
 
 /*
  * Copyright (c) 2020 joshua stein <jcs@jcs.org>
@@ -70,6 +70,7 @@ const struct cfattach umstc_ca = {
 static const struct usb_devno umstc_devs[] = {
 	{ USB_VENDOR_MICROSOFT, USB_PRODUCT_MICROSOFT_TYPECOVER },
 	{ USB_VENDOR_MICROSOFT, USB_PRODUCT_MICROSOFT_TYPECOVER2 },
+	{ USB_VENDOR_MICROSOFT, USB_PRODUCT_MICROSOFT_TYPECOVER3 },
 };
 
 int
