@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.if.5,v 1.73 2020/12/23 17:22:07 krw Exp $
+.\"	$OpenBSD: hostname.if.5,v 1.74 2021/03/08 16:12:28 florian Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)hosts.5	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: December 23 2020 $
+.Dd $Mdocdate: March 8 2021 $
 .Dt HOSTNAME.IF 5
 .Os
 .Sh NAME
@@ -250,9 +250,6 @@ For IPv6 stateless address autoconfiguration the literal string
 .Dq inet6 autoconf
 followed by any options to be passed to
 .Xr ifconfig 8 .
-Note that
-.Xr slaacd 8
-must also be enabled.
 .Bd -ragged -offset indent
 .Li inet6 autoconf
 .Op Va ifconfig_options
