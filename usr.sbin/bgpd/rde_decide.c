@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.82 2021/03/02 09:45:07 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.83 2021/03/08 12:18:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -423,8 +423,11 @@ prefix_eligible(struct prefix *p)
 	/* The aspath needs to be loop and error free */
 	if (asp == NULL || asp->flags & (F_ATTR_LOOP|F_ATTR_PARSE_ERR))
 		return 0;
-	/* The nexthop needs to exist and be reachable */
-	if (nh == NULL || nh->state != NEXTHOP_REACH)
+	/*
+	 * If the nexthop exists it must be reachable.
+	 * It is OK if the nexthop does not exist (local announcement).
+	 */
+	if (nh != NULL && nh->state != NEXTHOP_REACH)
 		return 0;
 
 	return 1;
