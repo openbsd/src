@@ -1,4 +1,4 @@
-/*      $OpenBSD: interpreter.c,v 1.7 2021/03/02 19:50:52 lum Exp $	*/
+/*      $OpenBSD: interpreter.c,v 1.8 2021/03/08 18:27:33 lum Exp $	*/
 /*
  * This file is in the public domain.
  *
@@ -59,6 +59,7 @@
 static int	 multiarg(char *);
 static int	 isvar(char **, char **, int);
 static int	 foundvar(char *);
+static int	 doregex(char *, char *);
 
 /*
  * Structure for variables during buffer evaluation.
@@ -77,7 +78,6 @@ SLIST_HEAD(vlisthead, varentry) varhead = SLIST_HEAD_INITIALIZER(varhead);
 static int
 multiarg(char *funstr)
 {
-	regex_t  regex_buff;
 	PF	 funcp;
 	char	 excbuf[BUFSIZE], argbuf[BUFSIZE], *contbuf, tmpbuf[BUFSIZE];
 	char	*cmdp, *argp, *fendp, *endp, *p, *t, *s = " ";
@@ -94,24 +94,12 @@ multiarg(char *funstr)
 	if (*p != '\0')
 		*p = '\0';
 	/* we now know that string starts with '(' and ends with ')' */
-	if (regcomp(&regex_buff, "^[(][\t ]*[)]$", REG_EXTENDED)) {
-		regfree(&regex_buff);
-		return (dobeep_msg("Could not compile regex"));
-	}
-	if (!regexec(&regex_buff, funstr, 0, NULL, 0)) {
-		regfree(&regex_buff);
-		return (dobeep_msg("No command found"));
-	}
-	/* currently there are no mg commands that don't have a letter */
-	if (regcomp(&regex_buff, "^[(][\t ]*[A-Za-z-]+[\t ]*[)]$",
-	    REG_EXTENDED)) {
-		regfree(&regex_buff);
-		return (dobeep_msg("Could not compile regex"));
-	}
-	if (!regexec(&regex_buff, funstr, 0, NULL, 0))
+        if (doregex("^[(][\t ]*[)]$", funstr))
+                return(dobeep_msg("No command found"));
+
+        if (doregex("^[(][\t ]*[A-Za-z-]+[\t ]*[)]$", funstr))
 		singlecmd = 1;
 
-	regfree(&regex_buff);
 	p = funstr + 1;		/* move past first '(' char.	*/
 	cmdp = skipwhite(p);	/* find first char of command.	*/
 
@@ -385,42 +373,46 @@ clearvars(void)
 int
 foundparen(char *funstr)
 {
-	regex_t  regex_buff;
 	char	*regs;
 
 	/* Does the line have a list 'define' like: */
 	/* (define alist(list 1 2 3 4)) */
 	regs = "^[(][\t ]*define[\t ]+[^\t (]+[\t ]*[(][\t ]*list[\t ]+"\
 		"[^\t ]+.*[)][\t ]*[)]";
-	if (regcomp(&regex_buff, regs, REG_EXTENDED)) {
-		regfree(&regex_buff);
-		return(dobeep_msg("Could not compile regex"));
-	}
-	if (!regexec(&regex_buff, funstr, 0, NULL, 0)) {
-		regfree(&regex_buff);
+	if (doregex(regs, funstr))
 		return(foundvar(funstr));
-	}
+
 	/* Does the line have a single variable 'define' like: */
 	/* (define i 0) */
 	regs = "^[(][\t ]*define[\t ]+[^\t (]+[\t ]*[^\t (]+[\t ]*[)]";
-	if (regcomp(&regex_buff, regs, REG_EXTENDED)) {
-		regfree(&regex_buff);
-		return(dobeep_msg("Could not compile regex"));
-	}
-	if (!regexec(&regex_buff, funstr, 0, NULL, 0)) {
-		regfree(&regex_buff);
-		return(foundvar(funstr)); /* now as 'list' above -??  */
-	}
+        if (doregex(regs, funstr))
+                return(foundvar(funstr));
+
 	/* Does the line have an unrecognised 'define' */
 	regs = "^[(][\t ]*define[\t ]+";
-	if (regcomp(&regex_buff, regs, REG_EXTENDED)) {
-		regfree(&regex_buff);
-		return(dobeep_msg("Could not compile regex"));
-	}
-	if (!regexec(&regex_buff, funstr, 0, NULL, 0)) {
-		regfree(&regex_buff);
-		return(dobeep_msg("Invalid use of define"));
-	}
-	regfree(&regex_buff);
+        if (doregex(regs, funstr))
+                return(dobeep_msg("Invalid use of define"));
+
 	return(multiarg(funstr));
+}
+
+/*
+ * Test a string against a regular expression.
+ */
+int
+doregex(char *r, char *e)
+{
+	regex_t  regex_buff;
+
+	if (regcomp(&regex_buff, r, REG_EXTENDED)) {
+		regfree(&regex_buff);
+		return(dobeep_msg("Regex compilation error"));
+	}
+	if (!regexec(&regex_buff, e, 0, NULL, 0)) {
+		regfree(&regex_buff);
+		return(TRUE);
+	} else {
+		regfree(&regex_buff);
+		return(dobeep_msg("Regex execution error"));
+	}
 }
