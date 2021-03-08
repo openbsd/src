@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.44 2021/02/05 17:59:33 jcs Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.45 2021/03/08 09:42:50 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -456,7 +456,7 @@ stop_helper(void)
 int
 main(int argc, char **argv)
 {
-	int c, i, background, unit, devindex;
+	int c, i, background, unit;
 	int pmin, pmax, rmin, rmax;
 	char base[SOCKPATH_MAX], path[SOCKPATH_MAX];
 	unsigned int mode, dup, mmc, vol;
@@ -494,7 +494,8 @@ main(int argc, char **argv)
 	aparams_init(&par);
 	mode = MODE_PLAY | MODE_REC;
 	tcpaddr_list = NULL;
-	devindex = 0;
+	d = NULL;
+	p = NULL;
 
 	slot_array_init();
 
@@ -545,21 +546,24 @@ main(int argc, char **argv)
 				errx(1, "%s: volume is %s", optarg, str);
 			break;
 		case 's':
-			if ((d = dev_list) == NULL) {
-				d = mkdev(default_devs[devindex++], &par, 0,
-				    bufsz, round, rate, hold, autovol);
+			if (d == NULL) {
+				for (i = 0; default_devs[i] != NULL; i++) {
+					mkdev(default_devs[i], &par, 0,
+					    bufsz, round, rate, 0, autovol);
+				}
+				d = dev_list;
 			}
 			if (mkopt(optarg, d, pmin, pmax, rmin, rmax,
 				mode, vol, mmc, dup) == NULL)
 				return 1;
 			break;
 		case 'q':
-			mkport(optarg, hold);
+			p = mkport(optarg, hold);
 			break;
 		case 'Q':
-			if (port_list == NULL)
+			if (p == NULL)
 				errx(1, "-Q %s: no ports defined", optarg);
-			namelist_add(&port_list->path_list, optarg);
+			namelist_add(&p->path_list, optarg);
 			break;
 		case 'a':
 			hold = opt_onoff();
@@ -578,12 +582,11 @@ main(int argc, char **argv)
 				errx(1, "%s: block size is %s", optarg, str);
 			break;
 		case 'f':
-			mkdev(optarg, &par, 0, bufsz, round,
+			d = mkdev(optarg, &par, 0, bufsz, round,
 			    rate, hold, autovol);
-			devindex = -1;
 			break;
 		case 'F':
-			if ((d = dev_list) == NULL)
+			if (d == NULL)
 				errx(1, "-F %s: no devices defined", optarg);
 			if (!dev_addname(d, optarg))
 				exit(1);
@@ -603,8 +606,8 @@ main(int argc, char **argv)
 		for (i = 0; default_ports[i] != NULL; i++)
 			mkport(default_ports[i], 0);
 	}
-	if (devindex != -1) {
-		for (i = devindex; default_devs[i] != NULL; i++) {
+	if (dev_list == NULL) {
+		for (i = 0; default_devs[i] != NULL; i++) {
 			mkdev(default_devs[i], &par, 0,
 			    bufsz, round, rate, 0, autovol);
 		}

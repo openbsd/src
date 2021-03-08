@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.96 2021/03/08 09:38:36 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.97 2021/03/08 09:42:50 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -916,7 +916,7 @@ dev_new(char *path, struct aparams *par,
     unsigned int mode, unsigned int bufsz, unsigned int round,
     unsigned int rate, unsigned int hold, unsigned int autovol)
 {
-	struct dev *d;
+	struct dev *d, **pd;
 
 	if (dev_sndnum == DEV_NMAX) {
 		if (log_level >= 1)
@@ -943,8 +943,10 @@ dev_new(char *path, struct aparams *par,
 	d->master = MIDI_MAXCTL;
 	d->master_enabled = 0;
 	snprintf(d->name, CTL_NAMEMAX, "%u", d->num);
-	d->next = dev_list;
-	dev_list = d;
+	for (pd = &dev_list; *pd != NULL; pd = &(*pd)->next)
+		;
+	d->next = *pd;
+	*pd = d;
 	return d;
 }
 
