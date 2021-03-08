@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_acpi.c,v 1.17 2020/12/24 14:09:38 patrick Exp $	*/
+/*	$OpenBSD: sdhc_acpi.c,v 1.18 2021/03/08 13:48:56 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -56,8 +56,10 @@ struct cfattach sdhc_acpi_ca = {
 
 const char *sdhc_hids[] = {
 	"PNP0D40",
-	"INT33BB",
 	"80860F14",
+	"BCM2847",	/* Raspberry Pi3/4 "arasan" controller */
+	"BRCME88C",	/* Raspberry Pi4 "emmc2" controller */
+	"INT33BB",
 	"PNP0FFF",
 	NULL
 };
@@ -148,6 +150,10 @@ sdhc_acpi_attach(struct device *parent, struct device *self, void *aux)
 		    SDHC_CAPABILITIES);
 		cap &= ~capmask;
 	}
+
+	/* Raspberry Pi4 "emmc2" controller. */
+	if (strcmp(aaa->aaa_dev, "BRCME88C") == 0)
+		sc->sc.sc_flags |= SDHC_F_NOPWR0;
 
 	sc->sc.sc_host = &sc->sc_host;
 	sc->sc.sc_dmat = aaa->aaa_dmat;
