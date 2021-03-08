@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.276 2021/03/08 10:54:53 mpi Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.277 2021/03/08 18:09:15 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1488,7 +1488,7 @@ sigexit(struct proc *p, int signum)
 
 		/* if there are other threads, pause them */
 		if (P_HASSIBLING(p))
-			single_thread_set(p, SINGLE_SUSPEND, 1);
+			single_thread_set(p, SINGLE_SUSPEND, 0);
 
 		if (coredump(p) == 0)
 			signum |= WCOREFLAG;
@@ -1998,12 +1998,14 @@ single_thread_check(struct proc *p, int deep)
  * where the other threads should stop:
  *  - SINGLE_SUSPEND: stop wherever they are, will later either be told to exit
  *    (by setting to SINGLE_EXIT) or be released (via single_thread_clear())
+ *  - SINGLE_PTRACE: stop wherever they are, will wait for them to stop
+ *    later (via single_thread_wait()) and released as with SINGLE_SUSPEND
  *  - SINGLE_UNWIND: just unwind to kernel boundary, will be told to exit
  *    or released as with SINGLE_SUSPEND
  *  - SINGLE_EXIT: unwind to kernel boundary and exit
  */
 int
-single_thread_set(struct proc *p, enum single_thread_mode mode, int wait)
+single_thread_set(struct proc *p, enum single_thread_mode mode, int deep)
 {
 	struct process *pr = p->p_p;
 	struct proc *q;
@@ -2012,7 +2014,7 @@ single_thread_set(struct proc *p, enum single_thread_mode mode, int wait)
 	KASSERT(curproc == p);
 
 	SCHED_LOCK(s);
-	error = single_thread_check_locked(p, (mode == SINGLE_UNWIND), s);
+	error = single_thread_check_locked(p, deep, s);
 	if (error) {
 		SCHED_UNLOCK(s);
 		return error;
@@ -2020,6 +2022,7 @@ single_thread_set(struct proc *p, enum single_thread_mode mode, int wait)
 
 	switch (mode) {
 	case SINGLE_SUSPEND:
+	case SINGLE_PTRACE:
 		break;
 	case SINGLE_UNWIND:
 		atomic_setbits_int(&pr->ps_flags, PS_SINGLEUNWIND);
@@ -2058,7 +2061,8 @@ single_thread_set(struct proc *p, enum single_thread_mode mode, int wait)
 			/* if it's not interruptible, then just have to wait */
 			if (q->p_flag & P_SINTR) {
 				/* merely need to suspend?  just stop it */
-				if (mode == SINGLE_SUSPEND) {
+				if (mode == SINGLE_SUSPEND ||
+				    mode == SINGLE_PTRACE) {
 					q->p_stat = SSTOP;
 					break;
 				}
@@ -2083,7 +2087,7 @@ single_thread_set(struct proc *p, enum single_thread_mode mode, int wait)
 	}
 	SCHED_UNLOCK(s);
 
-	if (wait)
+	if (mode != SINGLE_PTRACE)
 		single_thread_wait(pr, 1);
 
 	return 0;

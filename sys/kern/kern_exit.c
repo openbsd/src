@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.197 2021/03/08 10:12:05 mpi Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.198 2021/03/08 18:09:15 claudio Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -136,7 +136,7 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 	} else {
 		/* nope, multi-threaded */
 		if (flags == EXIT_NORMAL)
-			single_thread_set(p, SINGLE_EXIT, 1);
+			single_thread_set(p, SINGLE_EXIT, 0);
 		else if (flags == EXIT_THREAD)
 			single_thread_check(p, 0);
 	}
