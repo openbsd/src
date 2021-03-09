@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.709 2021/03/04 02:00:42 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.710 2021/03/09 14:32:24 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1386,9 +1386,6 @@ set_interval(struct interface_info *ifi, time_t cur_time)
 		break;
 	}
 
-	if (cur_time < ifi->startup_time + config->link_interval)
-		interval = 1;
-
 	ifi->interval = interval ? interval : 1;
 }
 
@@ -1416,17 +1413,22 @@ set_secs(struct interface_info *ifi, time_t cur_time)
 void
 send_discover(struct interface_info *ifi)
 {
-	time_t			 cur_time;
+	struct timespec		 now;
 	ssize_t			 rslt;
+	time_t			 cur_time;
 
-	time(&cur_time);
+	clock_gettime(CLOCK_REALTIME, &now);
+	cur_time = now.tv_sec;
 
 	if (cur_time > ifi->first_sending + config->offer_interval) {
 		state_panic(ifi);
 		return;
 	}
 
-	set_interval(ifi, cur_time);
+	if (timespeccmp(&now, &ifi->link_timeout, <))
+		ifi->interval = 1;
+	else
+		set_interval(ifi, cur_time);
 	set_secs(ifi, cur_time);
 
 	rslt = send_packet(ifi, inaddr_any, inaddr_broadcast, "DHCPDISCOVER");
@@ -1530,7 +1532,10 @@ send_request(struct interface_info *ifi)
 		return;
 	}
 
-	set_interval(ifi, cur_time);
+	if (timespeccmp(&now, &ifi->link_timeout, <))
+		ifi->interval = 1;
+	else
+		set_interval(ifi, cur_time);
 	set_secs(ifi, cur_time);
 
 	rslt = send_packet(ifi, from, destination.sin_addr, "DHCPREQUEST");

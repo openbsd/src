@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.170 2021/03/02 16:17:26 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.171 2021/03/09 14:32:24 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -83,6 +83,7 @@ void flush_unpriv_ibuf(void);
 void
 dispatch(struct interface_info *ifi, int routefd)
 {
+	const struct timespec	 link_intvl = {config->link_interval, 0};
 	struct pollfd		 fds[3];
 	struct timespec		 timeout;
 	struct timespec		*ts;
@@ -95,7 +96,8 @@ dispatch(struct interface_info *ifi, int routefd)
 	while (quit == 0 || quit == RESTART) {
 		if (quit == RESTART) {
 			quit = 0;
-			time(&ifi->startup_time);
+			clock_gettime(CLOCK_REALTIME, &ifi->link_timeout);
+			timespecadd(&ifi->link_timeout, &link_intvl, &ifi->link_timeout);
 			free(ifi->configured);
 			ifi->configured = NULL;
 			free(ifi->unwind_info);
