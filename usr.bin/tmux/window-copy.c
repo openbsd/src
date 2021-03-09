@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.319 2021/03/09 08:24:09 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.320 2021/03/09 13:07:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3366,8 +3366,11 @@ window_copy_match_at_cursor(struct window_copy_mode_data *data)
 	cy = screen_hsize(data->backing) - data->oy + data->cy;
 	if (window_copy_search_mark_at(data, data->cx, cy, &at) != 0)
 		return (NULL);
-	if (data->searchmark[at] == 0)
-		return (NULL);
+	if (data->searchmark[at] == 0) {
+		/* Allow one position after the match. */
+		if (at == 0 || data->searchmark[--at] == 0)
+			return (NULL);
+	}
 	window_copy_match_start_end(data, at, &start, &end);
 
 	/*
