@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.547 2021/02/26 18:29:16 kn Exp $
+#	$OpenBSD: rc,v 1.548 2021/03/09 07:12:15 deraadt Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -441,7 +441,7 @@ fill_baddynamic tcp
 
 sysctl_conf
 
-start_daemon dhcpleased slaacd >/dev/null 2>&1
+start_daemon slaacd >/dev/null 2>&1
 
 echo 'starting network'
 
@@ -454,7 +454,7 @@ sh /etc/netstart
 mount -s /usr >/dev/null 2>&1
 mount -s /var >/dev/null 2>&1
 
-start_daemon unwind resolvd >/dev/null 2>&1
+start_daemon dhcpleased unwind resolvd >/dev/null 2>&1
 
 # Load pf rules and bring up pfsync interface.
 if [[ $pf != NO ]]; then
