@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxsmi.c,v 1.9 2021/02/04 16:16:10 visa Exp $	*/
+/*	$OpenBSD: cn30xxsmi.c,v 1.10 2021/03/09 14:13:33 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -155,6 +155,10 @@ cn30xxsmi_get_phy(int phandle, int port, struct cn30xxsmi_softc **psmi,
 	static const int cam0100_phys[] = {
 		0x02, 0x03, 0x22
 	};
+	/* PHY addresses for Check Point UTM-1 EDGE N */
+	static const int cpn100_phys[] = {
+		0x0c, 0x11, 0x0d
+	};
 	/* PHY addresses for Netgear ProSecure UTM25 */
 	static const int nutm25_phys[] = {
 		0x00, 0x04, 0x09
@@ -184,6 +188,11 @@ cn30xxsmi_get_phy(int phandle, int port, struct cn30xxsmi_softc **psmi,
 			return ENOENT;
 
 		switch (octeon_board) {
+		case BOARD_CHECKPOINT_N100:
+			if (port >= nitems(cpn100_phys))
+				return ENOENT;
+			reg = cpn100_phys[port];
+			break;
 		case BOARD_NETGEAR_UTM25:
 			if (port >= nitems(nutm25_phys))
 				return ENOENT;

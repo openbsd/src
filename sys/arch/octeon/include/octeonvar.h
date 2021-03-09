@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeonvar.h,v 1.51 2021/02/04 16:16:11 visa Exp $	*/
+/*	$OpenBSD: octeonvar.h,v 1.52 2021/03/09 14:13:33 visa Exp $	*/
 /*	$NetBSD: maltavar.h,v 1.3 2002/03/18 10:10:16 simonb Exp $	*/
 
 /*-
@@ -213,6 +213,7 @@ enum cnmac_stat {
  */
 enum octeon_board {
 	BOARD_UNKNOWN,
+	BOARD_CHECKPOINT_N100,
 	BOARD_CN3010_EVB_HS5,
 	BOARD_DLINK_DSR_500,
 	BOARD_NETGEAR_UTM25,

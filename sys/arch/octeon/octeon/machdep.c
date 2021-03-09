@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.129 2021/02/04 16:16:11 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.130 2021/03/09 14:13:33 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -843,6 +843,8 @@ get_octeon_board(void)
 		return BOARD_UBIQUITI_E220;
 	case 20010:
 		return BOARD_UBIQUITI_E1000;
+	case 20011:
+		return BOARD_CHECKPOINT_N100;
 	case 20012:
 		return BOARD_RHINOLABS_UTM8;
 	case 20015:
