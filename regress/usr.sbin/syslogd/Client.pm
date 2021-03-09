@@ -1,4 +1,4 @@
-#	$OpenBSD: Client.pm,v 1.14 2020/11/06 03:26:18 bluhm Exp $
+#	$OpenBSD: Client.pm,v 1.15 2021/03/09 15:16:28 bluhm Exp $
 
 # Copyright (c) 2010-2020 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -44,6 +44,12 @@ sub new {
 
 sub child {
 	my $self = shift;
+
+	if ($self->{early}) {
+		my @sudo = $ENV{SUDO} ? $ENV{SUDO} : "env";
+		my @flush = (@sudo, "./logflush");
+		system(@flush);
+	}
 
 	# TLS 1.3 writes multiple messages without acknowledgement.
 	# If the other side closes early, we want broken pipe error.

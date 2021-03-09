@@ -18,7 +18,7 @@ our %args = (
 	nouser => 1,
 	loggrep => {
 	    qr/ -F / => 0,
-	    qr/ -d / => 1,
+	    qr/ -d / => '>=1',
 	    qr/\[priv\]: fork\+exec done/ => 1,
 	},
 	fstat => {

@@ -37,7 +37,7 @@ our %args = (
 		or die ref($self), " first log not in syslogd log";
 	    undef $!;
 	    for (my $i = 0; $i < 100000; $i++) {
-		syswrite($big, "regress syslogd file system full\n", 33)
+		syswrite($big, "regress syslogd file system full\n")
 		    or last;
 	    }
 	    $!{ENOSPC}

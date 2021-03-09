@@ -1,4 +1,4 @@
-#	$OpenBSD: Syslogd.pm,v 1.25 2020/07/24 22:12:00 bluhm Exp $
+#	$OpenBSD: Syslogd.pm,v 1.26 2021/03/09 15:16:28 bluhm Exp $
 
 # Copyright (c) 2010-2020 Alexander Bluhm <bluhm@openbsd.org>
 # Copyright (c) 2014 Florian Riehm <mail@friehm.de>
@@ -183,6 +183,12 @@ sub child {
 		    and die ref($self), " system '@pgrep' failed: $?";
 	}
 	print STDERR "syslogd not running\n";
+
+	unless (${$self->{client}}->{early}) {
+		my @flush = (@sudo, "./logflush");
+		system(@flush)
+		    and die "Command '@flush' failed: $?";
+	}
 
 	chdir $self->{chdir}
 	    or die ref($self), " chdir '$self->{chdir}' failed: $!"
