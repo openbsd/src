@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpd.conf.5,v 1.46 2021/01/22 06:33:26 martijn Exp $
+.\" $OpenBSD: snmpd.conf.5,v 1.47 2021/03/09 18:18:55 martijn Exp $
 .\"
 .\" Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 22 2021 $
+.Dd $Mdocdate: March 9 2021 $
 .Dt SNMPD.CONF 5
 .Os
 .Sh NAME
@@ -113,12 +113,15 @@ Multiple
 .Ic listen on
 statements are supported.
 The default protocol is
-.Ic udp.
+.Ic udp .
 The default
 .Ar port
-is 161, unless the only listen flags contains
+is 161, unless
 .Ic notify
-which sets it to 162.
+is the only listen flags
+which sets the
+.Ar port
+to 162.
 If no flags are specified it defaults to
 .Dq Ic read Ic write ,
 or
@@ -126,6 +129,11 @@ or
 when
 .Ar port
 is 162.
+Having
+.Ic notify
+set requires at least one
+.Ic trap handle
+statement.
 .It Ic read-only community Ar string
 Specify the name of the read-only community.
 The default value is
@@ -217,9 +225,12 @@ the resolved hostname of the host sending the trap,
 the IP address of the host sending the trap,
 and any variable bindings contained in the trap
 (the OID followed by the value, separated by a single space).
-Traps will be accepted on all
+This option requires at least one
 .Ic listen on
-UDP addresses.
+statement with a
+.Ic notify
+flag set.
+Traps over SNMPv3 are currently unsupported.
 .It Xo
 .Ic trap receiver Ar string
 .Op Ic oid Ar oid-string
