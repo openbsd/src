@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.254 2021/02/25 09:13:18 espie Exp $
+.\"	$OpenBSD: port-modules.5,v 1.255 2021/03/09 19:05:28 tracey Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 25 2021 $
+.Dd $Mdocdate: March 9 2021 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -123,11 +123,11 @@ as appropriate.
 .Pp
 As an exception to the naming mechanism, some ports have several distinct
 versions in the ports tree, say
-.Pa x11/qt3
+.Pa x11/qt4
 and
-.Pa x11/qt4 .
+.Pa x11/qt5 .
 Instead of using the namespace
-.Ev MODQT3* ,
+.Ev MODQT4* ,
 variables will usually drop the version suffix and be simply called
 .Ev MODQT_*
 so that a port using the module can be switched from version to version
@@ -135,17 +135,17 @@ without needing to change everything.
 .Pp
 It is highly desirable to define names in both namespaces for such ports,
 for example to define both
-.Ev MODQT3_LIB_DEPENDS
+.Ev MODQT4_LIB_DEPENDS
 and
 .Ev MODQT_LIB_DEPENDS .
 Normal client ports will use
 .Ev MODQT_LIB_DEPENDS ,
 but a port may exceptionally import both modules with
-.Li MODULES += x11/qt3 x11/qt4
-and differentiate between qt3 and qt4 needs with
-.Ev MODQT3_LIB_DEPENDS
+.Li MODULES += x11/qt4 x11/qt5
+and differentiate between qt4 and qt5 needs with
+.Ev MODQT4_LIB_DEPENDS
 and
-.Ev MODQT4_LIB_DEPENDS .
+.Ev MODQT5_LIB_DEPENDS .
 See
 .Pa print/poppler
 for an example.
@@ -657,16 +657,6 @@ If set to `Yes', meson will colorize its output.
 Should not be used in ports Makefiles.
 Default value is `No'.
 .El
-.It devel/pmk
-Sets
-.Ev CONFIGURE_SCRIPT ,
-.Ev CONFIGURE_ARGS
-and
-.Ev MODPMK_configure .
-It appends
-.Pa devel/pmk
-to
-.Ev BUILD_DEPENDS .
 .It devel/qmake
 See
 .Xr qmake-module 5 .
@@ -805,61 +795,6 @@ Sets
 which is also appended to
 .Ev SUBST_VARS .
 .It lang/erlang
-.It lang/ghc
-Sets
-.Ev ONLY_FOR_ARCHS ,
-.Ev MODGHC_VER ,
-.Ev BUILD_DEPENDS ,
-and
-.Ev RUN_DEPENDS .
-Build and further actions are based on the list of values in
-.Ev MODGHC_BUILD :
-.Bl -tag -width register
-.It Ar nort
-no runtime dependency on
-.Pa lang/ghc
-nor the hs- prefix to
-.Ev PKGNAME
-will be added,
-.It Ar cabal
-get the typical Cabal targets defined,
-.It Ar haddock
-generate API documentation using
-.Pa devel/haddock ,
-.It Ar register
-create and include register/unregister scripts,
-.It Ar hackage
-the distfiles are available on Hackage.
-.El
-.Pp
-Also affects
-.Ev CATEGORIES ,
-.Ev CONFIGURE_STYLE
-and
-.Ev SUBST_VARS .
-.Cm do-build ,
-.Cm do-install
-and
-.Cm do-test
-targets are provided if the port itself didn't set them.
-If
-.Ar register
-has been set, the PLIST needs to be modified in order to
-add the relevant @exec/@unexec lines.
-This module will run the Setup script and ensure the documentation
-will be built (if
-.Ar haddock
-has been set), and that the package is
-registered as a library usable by
-.Pa lang/ghc
-(if
-.Ar register
-has been set).
-Extra arguments and environment additions for the Setup configure
-command can be specified with
-.Ev MODGHC_SETUP_CONF_ARGS
-and
-.Ev MODGHC_SETUP_CONF_ENV .
 .It lang/go
 See
 .Xr go-module 5 .
@@ -935,63 +870,6 @@ defines in which files the module will substitute hardcoded
 shared library versions using a
 .Cm post-configure
 target.
-.It lang/node
-Adds common dependencies to
-.Ev RUN_DEPENDS
-and
-.Ev BUILD_DEPENDS .
-Recognizes two additional types of
-.Ev CONFIGURE_STYLE Ns s ,
-"npm" and "npm ext".
-"npm ext" should be used for npm packages that contain C++ extensions which
-need to be compiled.
-"npm" should be used for other npm packages.
-If regression tests are included that can be run using
-.Pa devel/node-expresso ,
-append "expresso" to
-.Ev CONFIGURE_STYLE .
-.Pa devel/node-expresso
-will be appended to
-.Ev TEST_DEPENDS
-and a default
-.Ev MODNODE_TEST_TARGET
-will be defined, along with a
-.Cm do-test
-target if it has not already been set.
-If "expresso" isn't appended to
-.Ev CONFIGURE_STYLE ,
-.Ev TEST_TARGET
-will be set to "test".
-One of these two
-.Ev CONFIGURE_STYLE Ns s
-should be used or the module doesn't affect anything except
-.Ev RUN_DEPENDS
-and
-.Ev BUILD_DEPENDS .
-Requires
-.Ev NPM_NAME
-to be set to the name of the npm package.
-Uses
-.Ev NPM_NAME
-and
-.Ev NPM_VERSION
-to set
-.Ev DISTNAME ,
-and
-.Ev PKGNAME ,
-and
-.Ev MASTER_SITES .
-If the npm package depends on other npm packages, the npm package names it
-depends on should be listed in
-.Ev MODNODE_DEPENDS .
-Adds default
-.Cm do_build
-and
-.Cm do_install
-tasks, and you can reference the default implementations via
-.Ev MODNODE_BUILD_TARGET
-and
-.Ev MODNODE_INSTALL_TARGET .
 .It lang/ocaml
 Appends to
 .Ev BUILD_DEPENDS
@@ -1244,31 +1122,15 @@ Sets a default
 .Ev PKGNAME
 and appends to
 .Ev CATEGORIES .
-.It www/plone
-Sets
-.Ev MODPLONE_VERSION
-and
-.Ev MODZOPE_VERSION .
-.Ev MODPLONE_VERSION
-is the default version used by all Plone ports and may be overridden.
-It appends
-.Pa www/plone
-to
-.Ev RUN_DEPENDS
-and also sets
-.Ev NO_TEST
-to Yes.
 .It x11/gnome
 See
 .Xr gnome-module 5 .
 .It x11/gnustep
-.It x11/qt3, x11/qt4 and x11/qt5
+.It x11/qt4 and x11/qt5
 All qt* modules share a common
 .Ev MODQT_*
 namespace for simple ports.
-The qt3 module also defines the same variables under
-.Ev MODQT3_* ,
-the qt4 module also defines the same variables under
+The qt4 module also defines the same variables under
 .Ev MODQT4_*
 and the qt5 module also defines the same variables under
 .Ev MODQT5_* ,
@@ -1315,9 +1177,6 @@ qt4 includes
 .Xr pkg-config 1
 files under a specific location recorded in
 .Ev MODQT_PKG_CONFIG_PATH .
-Qt3 requires the use of
-.Ev MODQT3_PLUGINS
-to correctly locate plugins.
 .Pp
 The modules add to
 .Ev CONFIGURE_ENV , MAKE_ENV
