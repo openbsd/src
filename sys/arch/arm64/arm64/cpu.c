@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.49 2021/03/04 18:32:52 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.50 2021/03/09 19:43:04 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -79,6 +79,7 @@
 #define CPU_PART_X_GENE		0x000
 
 #define CPU_PART_ICESTORM	0x022
+#define CPU_PART_FIRESTORM	0x023
 
 #define CPU_IMPL(midr)  (((midr) >> 24) & 0xff)
 #define CPU_PART(midr)  (((midr) >> 4) & 0xfff)
@@ -134,6 +135,7 @@ struct cpu_cores cpu_cores_amcc[] = {
 
 struct cpu_cores cpu_cores_apple[] = {
 	{ CPU_PART_ICESTORM, "Icestorm" },
+	{ CPU_PART_FIRESTORM, "Firestorm" },
 	{ 0, NULL },
 };
 
