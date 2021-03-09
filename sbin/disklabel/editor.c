@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.366 2021/02/03 14:41:40 naddy Exp $	*/
+/*	$OpenBSD: editor.c,v 1.367 2021/03/09 07:03:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -605,7 +605,7 @@ again:
 
 	/* bump max swap based on phys mem, little physmem gets 2x swap */
 	if (index == 0 && alloc_table == alloc_table_default) {
-		if (physmem / DEV_BSIZE < MEG(256))
+		if (physmem && physmem / DEV_BSIZE < MEG(256))
 			alloc[1].minsz = alloc[1].maxsz = 2 * (physmem /
 			    DEV_BSIZE);
 		else
