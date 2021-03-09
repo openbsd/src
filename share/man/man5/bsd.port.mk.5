@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.542 2021/02/28 14:03:09 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.543 2021/03/09 17:11:13 sthen Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 28 2021 $
+.Dd $Mdocdate: March 9 2021 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1688,35 +1688,37 @@ for other common issues).
 In the normal extraction stage (when
 .Ev EXTRACT_ONLY
 is not empty), this is the contents of a case statement, used to extract files.
-Fragments are automatically appended to extract tar, xz and zip
-archives, so that the default case is more or less equivalent to the
-following shell fragment:
+Fragments are automatically appended to extract the following archives and
+add the relevant compression tool to
+.Ev BUILD_DEPENDS :
+.Pp
+.Bl -tag -width archivers/lzip/lunzip -offset indent -compact
+.It gzip
+tar.gz, tgz
+.It tar
+tar
+.It archivers/bzip2
+tar.bz2, tbz2, tbz
+.It archivers/xz
+tar.xz, tar.lzma
+.It archivers/lzip/lunzip
+tar.lz
+.It archivers/unzip
+zip
+.It archivers/zstd
+tar.zst, tar.zstd
+.It converters/rpm2cpio
+rpm
+.El
+.Pp
+Other cases not supported directly in
+.Nm
+can be added, and existing cases can be overridden.
+For example the following example sets extra conversion flags to unzip,
+and adds support for rar:
 .Bd -literal
-set -e
-cd ${WRKDIR}
-for archive in ${EXTRACT_ONLY}
-do
-    case $$archive in
-	*.tar.xz|*.tar.lzma)
-	  xzcat ${FULLDISTDIR}/$$archive| tar -xf - -- ${EXTRACT_FILES};;
-	*.tar.lz)
-	  lunzip -c ${FULLDISTDIR}/$$archive| tar -xf - -- ${EXTRACT_FILES};;
-	*.zip)
-	  unzip -q ${FULLDISTDIR}/$$archive -d ${WRKDIR} ${EXTRACT_FILES};;
-	*.tar.bz2|*.tbz2|*.tbz)
-	  bzip2 -dc ${FULLDISTDIR}/$$archive| tar -xf - -- ${EXTRACT_FILES};;
-	*.rpm)
-	  cd ${WRKDIR} && rpm2cpio ${FULLDISTDIR}/$$archive | cpio -id -- ${EXTRACT_FILES};;
-	*.shar.gz|*.shar.Z|*.sh.Z|*.sh.gz)
-	  gzcat ${FULLDISTDIR}/$$archive | /bin/sh;;
-	*.shar|*.sh)
-	  /bin/sh ${FULLDISTDIR}/$$archive;;
-	*.tar)
-	  tar -xf ${FULLDISTDIR}/$$archive -- ${EXTRACT_FILES};;
-	*)
-	  gzip -dc ${FULLDISTDIR}/$$archive | tar -xf - -- ${EXTRACT_FILES};;
-    esac
-done
+	*.zip) ${UNZIP} -Laq ${FULLDISTDIR}/$$archive -d ${WRKDIR};; \\
+	*.rar) ${LOCALBASE}/bin/unrar x -idq ${DISTDIR}/$$archive;;
 .Ed
 .It Ev EXTRACT_ONLY
 Set to the list of distfiles to actually extract if some distfiles
