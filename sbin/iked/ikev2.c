@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.315 2021/03/07 15:51:07 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.316 2021/03/09 22:51:28 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -4513,8 +4513,15 @@ ikev2_ikesa_enable(struct iked *env, struct iked_sa *sa, struct iked_sa *nsa)
 		nsa->sa_eapid = sa->sa_eapid;
 		sa->sa_eapid = NULL;
 	}
-	log_info("%srekeyed as new IKESA %s",
-	    SPI_SA(sa, NULL), print_spi(nsa->sa_hdr.sh_ispi, 8));
+	log_info("%srekeyed as new IKESA %s (enc %s%s%s group %s prf %s)",
+	    SPI_SA(sa, NULL), print_spi(nsa->sa_hdr.sh_ispi, 8),
+	    print_xf(nsa->sa_encr->encr_id, cipher_keylength(nsa->sa_encr) -
+	    nsa->sa_encr->encr_saltlength, ikeencxfs),
+	    nsa->sa_encr->encr_authid ? "" : " auth ",
+	    nsa->sa_encr->encr_authid ? "" : print_xf(nsa->sa_integr->hash_id,
+	    hash_keylength(nsa->sa_integr), authxfs),
+	    print_xf(nsa->sa_dhgroup->id, 0, groupxfs),
+	    print_xf(nsa->sa_prf->hash_id, hash_keylength(sa->sa_prf), prfxfs));
 	sa_state(env, nsa, IKEV2_STATE_ESTABLISHED);
 	ikev2_enable_timer(env, nsa);
 
