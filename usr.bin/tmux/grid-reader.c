@@ -1,4 +1,4 @@
-/* $OpenBSD: grid-reader.c,v 1.2 2021/02/22 06:53:04 nicm Exp $ */
+/* $OpenBSD: grid-reader.c,v 1.3 2021/03/09 08:24:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Anindya Mukherjee <anindya49@hotmail.com>
@@ -172,7 +172,7 @@ grid_reader_cursor_next_word(struct grid_reader *gr, const char *separators)
 
 	/* Do not break up wrapped words. */
 	if (grid_get_line(gr->gd, gr->cy)->flags & GRID_LINE_WRAPPED)
-		xx = grid_reader_line_length(gr) - 1;
+		xx = gr->gd->sx - 1;
 	else
 		xx = grid_reader_line_length(gr);
 	yy = gr->gd->hsize + gr->gd->sy - 1;
@@ -197,7 +197,7 @@ grid_reader_cursor_next_word(struct grid_reader *gr, const char *separators)
 
 				if (grid_get_line(gr->gd, gr->cy)->flags &
 				    GRID_LINE_WRAPPED)
-					xx = grid_reader_line_length(gr) - 1;
+					xx = gr->gd->sx - 1;
 				else
 					xx = grid_reader_line_length(gr);
 			} else
@@ -216,7 +216,7 @@ grid_reader_cursor_next_word_end(struct grid_reader *gr, const char *separators)
 
 	/* Do not break up wrapped words. */
 	if (grid_get_line(gr->gd, gr->cy)->flags & GRID_LINE_WRAPPED)
-		xx = grid_reader_line_length(gr) - 1;
+		xx = gr->gd->sx - 1;
 	else
 		xx = grid_reader_line_length(gr);
 	yy = gr->gd->hsize + gr->gd->sy - 1;
@@ -241,7 +241,7 @@ grid_reader_cursor_next_word_end(struct grid_reader *gr, const char *separators)
 
 				if (grid_get_line(gr->gd, gr->cy)->flags &
 				    GRID_LINE_WRAPPED)
-					xx = grid_reader_line_length(gr) - 1;
+					xx = gr->gd->sx - 1;
 				else
 					xx = grid_reader_line_length(gr);
 			} else
@@ -294,7 +294,7 @@ grid_reader_cursor_previous_word(struct grid_reader *gr, const char *separators,
 			  GRID_LINE_WRAPPED)
 				break;
 			grid_reader_cursor_up(gr);
-			grid_reader_cursor_end_of_line(gr, 0, 0);
+			grid_reader_cursor_end_of_line(gr, 0, 1);
 		}
 		if (gr->cx > 0)
 			gr->cx--;
