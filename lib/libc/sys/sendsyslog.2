@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sendsyslog.2,v 1.12 2020/11/05 16:04:39 jmc Exp $
+.\"	$OpenBSD: sendsyslog.2,v 1.13 2021/03/09 15:08:23 bluhm Exp $
 .\"
 .\" Copyright (c) 2017 Alexander Bluhm <bluhm@openbsd.org>
 .\" Copyright (c) 2014 Theo de Raadt
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 5 2020 $
+.Dd $Mdocdate: March 9 2021 $
 .Dt SENDSYSLOG 2
 .Os
 .Sh NAME
@@ -51,10 +51,12 @@ This is used internally by
 so that messages can be sent during difficult situations.
 If sending to
 .Xr syslogd 8
-fails, dropped messages are counted.
+fails, up to 100 messages are stashed in the kernel.
+After that, dropped messages are counted.
 When
 .Xr syslogd 8
-works again, a warning with the counter and error number is logged.
+works again, before the next message, stashed messages and possibly
+a warning with the drop counter, error number, and pid is logged.
 .Pp
 To receive messages from the kernel,
 .Xr syslogd 8

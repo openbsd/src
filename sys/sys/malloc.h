@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.120 2021/02/23 13:50:16 jsg Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.121 2021/03/09 15:08:23 bluhm Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -83,7 +83,7 @@
 /* 21 - free */
 #define	M_NFSREQ	22	/* NFS request header */
 #define	M_NFSMNT	23	/* NFS mount structure */
-/* 24 - free */
+#define	M_LOG		24	/* Messages in kernel log stash */
 #define	M_VNODE		25	/* Dynamically allocated vnodes */
 #define	M_CACHE		26	/* Dynamically allocated cache entries */
 #define	M_DQUOT		27	/* UFS quota entries */
@@ -208,7 +208,7 @@
 	NULL, \
 	"NFS req",	/* 22 M_NFSREQ */ \
 	"NFS mount",	/* 23 M_NFSMNT */ \
-	NULL, \
+	"log",		/* 24 M_LOG */ \
 	"vnodes",	/* 25 M_VNODE */ \
 	"namecache",	/* 26 M_CACHE */ \
 	"UFS quota",	/* 27 M_DQUOT */ \
