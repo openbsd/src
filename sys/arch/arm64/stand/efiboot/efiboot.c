@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.30 2021/02/09 23:58:33 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.31 2021/03/09 21:11:24 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -358,7 +358,7 @@ efi_framebuffer(void)
 	     child = fdt_next_node(child)) {
 		if (!fdt_node_is_compatible(child, "simple-framebuffer"))
 			continue;
-		if (fdt_node_property(child, "status", &prop) &&
+		if (!fdt_node_property(child, "status", &prop) ||
 		    strcmp(prop, "okay") == 0) {
 			strlcpy(framebuffer_path, "/chosen/",
 			    sizeof(framebuffer_path));
@@ -372,7 +372,7 @@ efi_framebuffer(void)
 	     child = fdt_next_node(child)) {
 		if (!fdt_node_is_compatible(child, "simple-framebuffer"))
 			continue;
-		if (fdt_node_property(child, "status", &prop) &&
+		if (!fdt_node_property(child, "status", &prop) ||
 		    strcmp(prop, "okay") == 0) {
 			strlcpy(framebuffer_path, "/",
 			    sizeof(framebuffer_path));
