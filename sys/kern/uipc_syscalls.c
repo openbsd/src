@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.187 2020/09/29 11:48:54 claudio Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.188 2021/03/10 17:03:58 deraadt Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -782,7 +782,7 @@ recvit(struct proc *p, int s, struct msghdr *mp, caddr_t namelenp,
 	struct mbuf *from = NULL, *control = NULL;
 #ifdef KTRACE
 	struct iovec *ktriov = NULL;
-	int iovlen = 0;
+	int iovlen = 0, kmsgflags;
 #endif
 
 	if ((error = getsock(p, s, &fp)) != 0)
@@ -812,6 +812,7 @@ recvit(struct proc *p, int s, struct msghdr *mp, caddr_t namelenp,
 
 		memcpy(ktriov, auio.uio_iov, iovlen);
 	}
+	kmsgflags = mp->msg_flags;
 #endif
 	len = auio.uio_resid;
 	if (fp->f_flag & FNONBLOCK)
@@ -873,8 +874,14 @@ recvit(struct proc *p, int s, struct msghdr *mp, caddr_t namelenp,
 				}
 				error = copyout(mtod(m, caddr_t), cp, i);
 #ifdef KTRACE
-				if (KTRPOINT(p, KTR_STRUCT) && error == 0 && i)
+				if (KTRPOINT(p, KTR_STRUCT) && error == 0 && i) {
+					/* msg_flags potentially incorrect */
+					int rmsgflags = mp->msg_flags;
+
+					mp->msg_flags = kmsgflags;
 					ktrcmsghdr(p, mtod(m, char *), i);
+					mp->msg_flags = rmsgflags;
+				}
 #endif
 				if (m->m_next)
 					i = ALIGN(i);
