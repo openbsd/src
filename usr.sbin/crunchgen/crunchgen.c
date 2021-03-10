@@ -1,4 +1,4 @@
-/* $OpenBSD: crunchgen.c,v 1.22 2021/02/13 18:52:08 semarie Exp $	 */
+/* $OpenBSD: crunchgen.c,v 1.23 2021/03/10 22:52:28 jsg Exp $	 */
 
 /*
  * Copyright (c) 1994 University of Maryland
@@ -897,6 +897,7 @@ top_makefile_rules(FILE * outmk)
 	fprintf(outmk, "CFLAGS+=-Oz\n");
 	fprintf(outmk, "CFLAGS+=-fno-stack-protector\n");
 	fprintf(outmk, "CFLAGS+=-fno-unwind-tables\n");
+	fprintf(outmk, "CFLAGS+=-fno-asynchronous-unwind-tables\n");
 	fprintf(outmk, "LDFLAGS+=$(NOPIE_LDFLAGS)\n");
 	fprintf(outmk, "STRIP?=strip\n");
 	fprintf(outmk, "LINK=$(LD) -dc -r ${LDFLAGS}\n");
