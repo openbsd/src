@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.258 2021/03/07 22:53:46 yasuoka Exp $ */
+/* $OpenBSD: dsdt.c,v 1.259 2021/03/10 21:49:55 patrick Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -1689,7 +1689,7 @@ int aml_fixup_node(struct aml_node *node, void *arg)
 	if (arg == NULL)
 		aml_fixup_node(node, node->value);
 	else if (val->type == AML_OBJTYPE_NAMEREF) {
-		node = aml_searchname(node, val->v_nameref);
+		node = aml_searchname(node, aml_getname(val->v_nameref));
 		if (node && node->value) {
 			_aml_setvalue(val, AML_OBJTYPE_OBJREF, AMLOP_NAMECHAR,
 			    node->value);
@@ -3005,9 +3005,11 @@ aml_store(struct aml_scope *scope, struct aml_value *lhs , int64_t ival,
 		aml_copyvalue(lhs, rhs);
 		break;
 	case AML_OBJTYPE_NAMEREF:
-		node = __aml_searchname(scope->node, lhs->v_nameref, 1);
+		node = __aml_searchname(scope->node,
+		    aml_getname(lhs->v_nameref), 1);
 		if (node == NULL) {
-			aml_die("Could not create node %s", lhs->v_nameref);
+			aml_die("Could not create node %s",
+			    aml_getname(lhs->v_nameref));
 		}
 		aml_copyvalue(node->value, rhs);
 		break;

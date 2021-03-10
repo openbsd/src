@@ -1,4 +1,4 @@
-/*	$OpenBSD: atk0110.c,v 1.16 2020/12/17 17:57:19 kettenis Exp $	*/
+/*	$OpenBSD: atk0110.c,v 1.17 2021/03/10 21:49:55 patrick Exp $	*/
 
 /*
  * Copyright (c) 2009 Constantine A. Murenin <cnst+openbsd@bugmail.mojo.ru>
@@ -104,7 +104,7 @@ void	aibs_refresh(void *);
 
 void	aibs_attach_sif(struct aibs_softc *, enum sensor_type);
 void	aibs_attach_new(struct aibs_softc *);
-void	aibs_add_sensor(struct aibs_softc *, char *);
+void	aibs_add_sensor(struct aibs_softc *, const char *);
 void	aibs_refresh_r(struct aibs_softc *, struct aibs_sensor *);
 int	aibs_getvalue(struct aibs_softc *, int64_t, int64_t *);
 int	aibs_getpack(struct aibs_softc *, struct aml_node *, int64_t,
@@ -235,7 +235,7 @@ aibs_attach_sif(struct aibs_softc *sc, enum sensor_type st)
 			    DEVNAME(sc), name, i, v[0]->type);
 			continue;
 		}
-		aibs_add_sensor(sc, v[0]->v_nameref);
+		aibs_add_sensor(sc, aml_getname(v[0]->v_nameref));
 	}
 
 	aml_freevalue(&res);
@@ -266,7 +266,7 @@ aibs_attach_new(struct aibs_softc *sc)
 }
 
 void
-aibs_add_sensor(struct aibs_softc *sc, char *name)
+aibs_add_sensor(struct aibs_softc *sc, const char *name)
 {
 	struct aml_value	 ri;
 	struct aibs_sensor	*as;
