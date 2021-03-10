@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.52 2021/01/23 20:01:01 patrick Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.53 2021/03/10 12:49:24 patrick Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -709,7 +709,7 @@ struct acpi_iort_node {
 
 struct acpi_iort_rc_node {
 	uint64_t	memory_access_properties;
-	uint32_t	atf_attributes;
+	uint32_t	ats_attributes;
 	uint32_t	segment;
 	uint8_t		memory_address_size_limit;
 	uint8_t		reserved2[3];
