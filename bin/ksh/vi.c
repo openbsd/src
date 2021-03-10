@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.58 2021/03/10 20:06:04 millert Exp $	*/
+/*	$OpenBSD: vi.c,v 1.59 2021/03/10 20:17:33 millert Exp $	*/
 
 /*
  *	vi command editing
@@ -656,6 +656,10 @@ vi_insert(int ch)
 
 	case CTRL('l'):
 		do_clear_screen();
+		break;
+
+	case CTRL('r'):
+		redraw_line(1, 0);
 		break;
 
 	case CTRL('i'):
