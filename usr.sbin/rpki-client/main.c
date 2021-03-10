@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.114 2021/03/04 15:44:13 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.115 2021/03/10 08:09:41 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -532,7 +532,7 @@ queue_add_from_mft_set(struct entityq *q, const struct mft *mft)
 		f = &mft->files[i];
 		sz = strlen(f->file);
 		assert(sz > 4);
-		if (strcasecmp(f->file + sz - 4, ".crl"))
+		if (strcasecmp(f->file + sz - 4, ".crl") != 0)
 			continue;
 		queue_add_from_mft(q, mft->file, f, RTYPE_CRL);
 	}
@@ -541,39 +541,17 @@ queue_add_from_mft_set(struct entityq *q, const struct mft *mft)
 		f = &mft->files[i];
 		sz = strlen(f->file);
 		assert(sz > 4);
-		if (strcasecmp(f->file + sz - 4, ".cer"))
+		if (strcasecmp(f->file + sz - 4, ".crl") == 0)
 			continue;
-		queue_add_from_mft(q, mft->file, f, RTYPE_CER);
-	}
-
-	for (i = 0; i < mft->filesz; i++) {
-		f = &mft->files[i];
-		sz = strlen(f->file);
-		assert(sz > 4);
-		if (strcasecmp(f->file + sz - 4, ".roa"))
-			continue;
-		queue_add_from_mft(q, mft->file, f, RTYPE_ROA);
-	}
-
-	for (i = 0; i < mft->filesz; i++) {
-		f = &mft->files[i];
-		sz = strlen(f->file);
-		assert(sz > 4);
-		if (strcasecmp(f->file + sz - 4, ".gbr"))
-			continue;
-		queue_add_from_mft(q, mft->file, f, RTYPE_GBR);
-	}
-
-	for (i = 0; i < mft->filesz; i++) {
-		f = &mft->files[i];
-		sz = strlen(f->file);
-		assert(sz > 4);
-		if (strcasecmp(f->file + sz - 4, ".crl") == 0 ||
-		    strcasecmp(f->file + sz - 4, ".cer") == 0 ||
-		    strcasecmp(f->file + sz - 4, ".roa") == 0 ||
-		    strcasecmp(f->file + sz - 4, ".gbr") == 0)
-			continue;
-		logx("%s: unsupported file type: %s", mft->file, f->file);
+		else if (strcasecmp(f->file + sz - 4, ".cer") == 0)
+			queue_add_from_mft(q, mft->file, f, RTYPE_CER);
+		else if (strcasecmp(f->file + sz - 4, ".roa") == 0)
+			queue_add_from_mft(q, mft->file, f, RTYPE_ROA);
+		else if (strcasecmp(f->file + sz - 4, ".gbr") == 0)
+			queue_add_from_mft(q, mft->file, f, RTYPE_GBR);
+		else
+			logx("%s: unsupported file type: %s", mft->file,
+			    f->file);
 	}
 }
 
