@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.84 2021/02/22 15:59:10 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.85 2021/03/10 18:27:01 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -218,7 +218,14 @@ ssl3_connect(SSL *s)
 				goto end;
 			}
 
-			/* s->version=SSL3_VERSION; */
+			if (!ssl_supported_tls_version_range(s,
+			    &S3I(s)->hs.our_min_tls_version,
+			    &S3I(s)->hs.our_max_tls_version)) {
+				SSLerror(s, SSL_R_NO_PROTOCOLS_AVAILABLE);
+				ret = -1;
+				goto end;
+			}
+
 			s->internal->type = SSL_ST_CONNECT;
 
 			if (!ssl3_setup_init_buffer(s)) {
@@ -904,6 +911,12 @@ ssl3_get_server_hello(SSL *s)
 	}
 	s->version = server_version;
 
+	S3I(s)->hs.negotiated_tls_version = ssl_tls_version(server_version);
+	if (S3I(s)->hs.negotiated_tls_version == 0) {
+		SSLerror(s, ERR_R_INTERNAL_ERROR);
+		goto err;
+	}
+
 	if ((method = ssl_get_method(server_version)) == NULL) {
 		SSLerror(s, ERR_R_INTERNAL_ERROR);
 		goto err;
@@ -1019,7 +1032,7 @@ ssl3_get_server_hello(SSL *s)
 
 	/* TLS v1.2 only ciphersuites require v1.2 or later. */
 	if ((cipher->algorithm_ssl & SSL_TLSV1_2) &&
-	    (TLS1_get_version(s) < TLS1_2_VERSION)) {
+	    S3I(s)->hs.negotiated_tls_version < TLS1_2_VERSION) {
 		al = SSL_AD_ILLEGAL_PARAMETER;
 		SSLerror(s, SSL_R_WRONG_CIPHER_RETURNED);
 		goto fatal_err;
@@ -1982,6 +1995,7 @@ ssl3_send_client_kex_rsa(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
 		goto err;
 	}
 
+	/* XXX - our max protocol version. */
 	pms[0] = s->client_version >> 8;
 	pms[1] = s->client_version & 0xff;
 	arc4random_buf(&pms[2], sizeof(pms) - 2);

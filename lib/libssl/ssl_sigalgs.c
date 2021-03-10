@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.c,v 1.22 2020/10/11 01:13:04 guenther Exp $ */
+/* $OpenBSD: ssl_sigalgs.c,v 1.23 2021/03/10 18:27:02 jsing Exp $ */
 /*
  * Copyright (c) 2018-2020 Bob Beck <beck@openbsd.org>
  *
@@ -265,7 +265,7 @@ ssl_sigalg_select(SSL *s, EVP_PKEY *pkey)
 	int check_curve = 0;
 	CBS cbs;
 
-	if (TLS1_get_version(s) >= TLS1_3_VERSION) {
+	if (S3I(s)->hs.negotiated_tls_version >= TLS1_3_VERSION) {
 		tls_sigalgs = tls13_sigalgs;
 		tls_sigalgs_len = tls13_sigalgs_len;
 		check_curve = 1;
@@ -291,7 +291,7 @@ ssl_sigalg_select(SSL *s, EVP_PKEY *pkey)
 	 * RFC 5246 allows a TLS 1.2 client to send no sigalgs, in
 	 * which case the server must use the the default.
 	 */
-	if (TLS1_get_version(s) < TLS1_3_VERSION &&
+	if (S3I(s)->hs.negotiated_tls_version < TLS1_3_VERSION &&
 	    S3I(s)->hs.sigalgs == NULL) {
 		switch (pkey->type) {
 		case EVP_PKEY_RSA:
@@ -323,7 +323,7 @@ ssl_sigalg_select(SSL *s, EVP_PKEY *pkey)
 			continue;
 
 		/* RSA cannot be used without PSS in TLSv1.3. */
-		if (TLS1_get_version(s) >= TLS1_3_VERSION &&
+		if (S3I(s)->hs.negotiated_tls_version >= TLS1_3_VERSION &&
 		    sigalg->key_type == EVP_PKEY_RSA &&
 		    (sigalg->flags & SIGALG_FLAG_RSA_PSS) == 0)
 			continue;

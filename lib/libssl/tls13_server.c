@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.70 2021/02/25 17:06:05 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.71 2021/03/10 18:27:02 jsing Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -29,12 +29,12 @@ tls13_server_init(struct tls13_ctx *ctx)
 {
 	SSL *s = ctx->ssl;
 
-	if (!ssl_supported_tls_version_range(s, &ctx->hs->min_version,
-	    &ctx->hs->max_version)) {
+	if (!ssl_supported_tls_version_range(s, &S3I(s)->hs.our_min_tls_version,
+	    &S3I(s)->hs.our_max_tls_version)) {
 		SSLerror(s, SSL_R_NO_PROTOCOLS_AVAILABLE);
 		return 0;
 	}
-	s->version = ctx->hs->max_version;
+	s->version = S3I(s)->hs.our_max_tls_version;
 
 	tls13_record_layer_set_retry_after_phh(ctx->rl,
 	    (s->internal->mode & SSL_MODE_AUTO_RETRY) != 0);
@@ -163,6 +163,7 @@ tls13_client_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 			goto err;
 		return tls13_use_legacy_server(ctx);
 	}
+	S3I(s)->hs.negotiated_tls_version = TLS1_3_VERSION;
 
 	/* Add decoded values to the current ClientHello hash */
 	if (!tls13_clienthello_hash_init(ctx)) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.73 2021/02/25 17:06:05 jsing Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.74 2021/03/10 18:27:02 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -31,12 +31,12 @@ tls13_client_init(struct tls13_ctx *ctx)
 	size_t groups_len;
 	SSL *s = ctx->ssl;
 
-	if (!ssl_supported_tls_version_range(s, &ctx->hs->min_version,
-	    &ctx->hs->max_version)) {
+	if (!ssl_supported_tls_version_range(s, &S3I(s)->hs.our_min_tls_version,
+	    &S3I(s)->hs.our_max_tls_version)) {
 		SSLerror(s, SSL_R_NO_PROTOCOLS_AVAILABLE);
 		return 0;
 	}
-	s->client_version = s->version = ctx->hs->max_version;
+	s->client_version = s->version = S3I(s)->hs.our_max_tls_version;
 
 	tls13_record_layer_set_retry_after_phh(ctx->rl,
 	    (s->internal->mode & SSL_MODE_AUTO_RETRY) != 0);
@@ -64,7 +64,8 @@ tls13_client_init(struct tls13_ctx *ctx)
 	 * legacy session identifier triggers compatibility mode (see RFC 8446
 	 * Appendix D.4). In the pre-TLSv1.3 case a zero length value is used.
 	 */
-	if (ctx->middlebox_compat && ctx->hs->max_version >= TLS1_3_VERSION) {
+	if (ctx->middlebox_compat &&
+	    S3I(s)->hs.our_max_tls_version >= TLS1_3_VERSION) {
 		arc4random_buf(ctx->hs->legacy_session_id,
 		    sizeof(ctx->hs->legacy_session_id));
 		ctx->hs->legacy_session_id_len =
@@ -91,7 +92,7 @@ tls13_client_hello_build(struct tls13_ctx *ctx, CBB *cbb)
 	SSL *s = ctx->ssl;
 
 	/* Legacy client version is capped at TLS 1.2. */
-	client_version = ctx->hs->max_version;
+	client_version = S3I(s)->hs.our_max_tls_version;
 	if (client_version > TLS1_2_VERSION)
 		client_version = TLS1_2_VERSION;
 
@@ -133,7 +134,9 @@ tls13_client_hello_build(struct tls13_ctx *ctx, CBB *cbb)
 int
 tls13_client_hello_send(struct tls13_ctx *ctx, CBB *cbb)
 {
-	if (ctx->hs->min_version < TLS1_2_VERSION)
+	SSL *s = ctx->ssl;
+
+	if (S3I(s)->hs.our_min_tls_version < TLS1_2_VERSION)
 		tls13_record_layer_set_legacy_version(ctx->rl, TLS1_VERSION);
 
 	/* We may receive a pre-TLSv1.3 alert in response to the client hello. */
@@ -228,7 +231,7 @@ tls13_server_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 		goto err;
 
 	if (tls13_server_hello_is_legacy(cbs)) {
-		if (ctx->hs->max_version >= TLS1_3_VERSION) {
+		if (S3I(s)->hs.our_max_tls_version >= TLS1_3_VERSION) {
 			/*
 			 * RFC 8446 section 4.1.3: we must not downgrade if
 			 * the server random value contains the TLS 1.2 or 1.1
@@ -280,6 +283,7 @@ tls13_server_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 		ctx->alert = TLS13_ALERT_PROTOCOL_VERSION;
 		goto err;
 	}
+	S3I(s)->hs.negotiated_tls_version = ctx->hs->server_version;
 
 	/* The session_id must match. */
 	if (!CBS_mem_equal(&session_id, ctx->hs->legacy_session_id,

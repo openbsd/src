@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.86 2021/02/08 17:20:47 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.87 2021/03/10 18:27:02 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -174,7 +174,7 @@ int
 tlsext_supportedgroups_client_needs(SSL *s, uint16_t msg_type)
 {
 	return ssl_has_ecc_ciphers(s) ||
-	    (S3I(s)->hs_tls13.max_version >= TLS1_3_VERSION);
+	    (S3I(s)->hs.our_max_tls_version >= TLS1_3_VERSION);
 }
 
 int
@@ -472,7 +472,8 @@ tlsext_ri_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 int
 tlsext_ri_server_needs(SSL *s, uint16_t msg_type)
 {
-	return (s->version < TLS1_3_VERSION && S3I(s)->send_connection_binding);
+	return (S3I(s)->hs.negotiated_tls_version < TLS1_3_VERSION &&
+	    S3I(s)->send_connection_binding);
 }
 
 int
@@ -554,7 +555,7 @@ tlsext_ri_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 int
 tlsext_sigalgs_client_needs(SSL *s, uint16_t msg_type)
 {
-	return (TLS1_get_client_version(s) >= TLS1_2_VERSION);
+	return (S3I(s)->hs.our_max_tls_version >= TLS1_2_VERSION);
 }
 
 int
@@ -564,8 +565,7 @@ tlsext_sigalgs_client_build(SSL *s, uint16_t msg_type, CBB *cbb)
 	size_t tls_sigalgs_len = tls12_sigalgs_len;
 	CBB sigalgs;
 
-	if (TLS1_get_client_version(s) >= TLS1_3_VERSION &&
-	    S3I(s)->hs_tls13.min_version >= TLS1_3_VERSION) {
+	if (S3I(s)->hs.our_min_tls_version >= TLS1_3_VERSION) {
 		tls_sigalgs = tls13_sigalgs;
 		tls_sigalgs_len = tls13_sigalgs_len;
 	}
@@ -600,7 +600,7 @@ tlsext_sigalgs_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 int
 tlsext_sigalgs_server_needs(SSL *s, uint16_t msg_type)
 {
-	return (s->version >= TLS1_3_VERSION);
+	return (S3I(s)->hs.negotiated_tls_version >= TLS1_3_VERSION);
 }
 
 int
@@ -610,7 +610,7 @@ tlsext_sigalgs_server_build(SSL *s, uint16_t msg_type, CBB *cbb)
 	size_t tls_sigalgs_len = tls12_sigalgs_len;
 	CBB sigalgs;
 
-	if (s->version >= TLS1_3_VERSION) {
+	if (S3I(s)->hs.negotiated_tls_version >= TLS1_3_VERSION) {
 		tls_sigalgs = tls13_sigalgs;
 		tls_sigalgs_len = tls13_sigalgs_len;
 	}
@@ -632,7 +632,7 @@ tlsext_sigalgs_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 {
 	CBS sigalgs;
 
-	if (s->version < TLS1_3_VERSION)
+	if (ssl_effective_tls_version(s) < TLS1_3_VERSION)
 		return 0;
 
 	if (!CBS_get_u16_length_prefixed(cbs, &sigalgs))
@@ -981,7 +981,7 @@ tlsext_ocsp_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 int
 tlsext_ocsp_server_needs(SSL *s, uint16_t msg_type)
 {
-	if (s->version >= TLS1_3_VERSION &&
+	if (S3I(s)->hs.negotiated_tls_version >= TLS1_3_VERSION &&
 	    s->tlsext_status_type == TLSEXT_STATUSTYPE_ocsp &&
 	    s->ctx->internal->tlsext_status_cb != NULL) {
 		s->internal->tlsext_status_expected = 0;
@@ -998,7 +998,7 @@ tlsext_ocsp_server_build(SSL *s, uint16_t msg_type, CBB *cbb)
 {
 	CBB ocsp_response;
 
-	if (s->version >= TLS1_3_VERSION) {
+	if (S3I(s)->hs.negotiated_tls_version >= TLS1_3_VERSION) {
 		if (!CBB_add_u8(cbb, TLSEXT_STATUSTYPE_ocsp))
 			return 0;
 		if (!CBB_add_u24_length_prefixed(cbb, &ocsp_response))
@@ -1016,11 +1016,10 @@ tlsext_ocsp_server_build(SSL *s, uint16_t msg_type, CBB *cbb)
 int
 tlsext_ocsp_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 {
-	CBS response;
-	uint16_t version = TLS1_get_client_version(s);
 	uint8_t status_type;
+	CBS response;
 
-	if (version >= TLS1_3_VERSION) {
+	if (ssl_effective_tls_version(s) >= TLS1_3_VERSION) {
 		if (msg_type == SSL_TLSEXT_MSG_CR) {
 			/*
 			 * RFC 8446, 4.4.2.1 - the server may request an OCSP
@@ -1406,11 +1405,7 @@ tlsext_srtp_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 int
 tlsext_keyshare_client_needs(SSL *s, uint16_t msg_type)
 {
-	/* XXX once this gets initialized when we get tls13_client.c */
-	if (S3I(s)->hs_tls13.max_version == 0)
-		return 0;
-	return (!SSL_is_dtls(s) && S3I(s)->hs_tls13.max_version >=
-	    TLS1_3_VERSION);
+	return (S3I(s)->hs.our_max_tls_version >= TLS1_3_VERSION);
 }
 
 int
@@ -1457,7 +1452,7 @@ tlsext_keyshare_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 		 * Ignore this client share if we're using earlier than TLSv1.3
 		 * or we've already selected a key share.
 		 */
-		if (S3I(s)->hs_tls13.max_version < TLS1_3_VERSION)
+		if (S3I(s)->hs.our_max_tls_version < TLS1_3_VERSION)
 			continue;
 		if (S3I(s)->hs_tls13.key_share != NULL)
 			continue;
@@ -1485,10 +1480,8 @@ tlsext_keyshare_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 int
 tlsext_keyshare_server_needs(SSL *s, uint16_t msg_type)
 {
-	if (SSL_is_dtls(s) || s->version < TLS1_3_VERSION)
-		return 0;
-
-	return tlsext_extension_seen(s, TLSEXT_TYPE_key_share);
+	return (S3I(s)->hs.negotiated_tls_version >= TLS1_3_VERSION &&
+	    tlsext_extension_seen(s, TLSEXT_TYPE_key_share));
 }
 
 int
@@ -1550,9 +1543,7 @@ tlsext_keyshare_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 int
 tlsext_versions_client_needs(SSL *s, uint16_t msg_type)
 {
-	if (SSL_is_dtls(s))
-		return 0;
-	return (S3I(s)->hs_tls13.max_version >= TLS1_3_VERSION);
+	return (S3I(s)->hs.our_max_tls_version >= TLS1_3_VERSION);
 }
 
 int
@@ -1562,11 +1553,8 @@ tlsext_versions_client_build(SSL *s, uint16_t msg_type, CBB *cbb)
 	uint16_t version;
 	CBB versions;
 
-	max = S3I(s)->hs_tls13.max_version;
-	min = S3I(s)->hs_tls13.min_version;
-
-	if (min < TLS1_VERSION)
-		return 0;
+	max = S3I(s)->hs.our_max_tls_version;
+	min = S3I(s)->hs.our_min_tls_version;
 
 	if (!CBB_add_u8_length_prefixed(cbb, &versions))
 		return 0;
@@ -1591,8 +1579,8 @@ tlsext_versions_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 	uint16_t max, min;
 	uint16_t matched_version = 0;
 
-	max = S3I(s)->hs_tls13.max_version;
-	min = S3I(s)->hs_tls13.min_version;
+	max = S3I(s)->hs.our_max_tls_version;
+	min = S3I(s)->hs.our_min_tls_version;
 
 	if (!CBS_get_u8_length_prefixed(cbs, &versions))
 		goto err;
@@ -1608,16 +1596,8 @@ tlsext_versions_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 			matched_version = version;
 	}
 
-	/*
-	 * XXX if we haven't matched a version we should
-	 * fail - but we currently need to succeed to
-	 * ignore this before the server code for 1.3
-	 * is set up and initialized.
-	 */
-	if (max == 0)
-		return 1; /* XXX */
-
-	if (matched_version != 0)  {
+	if (matched_version > 0)  {
+		/* XXX - this should be stored for later processing. */
 		s->version = matched_version;
 		return 1;
 	}
@@ -1633,17 +1613,13 @@ tlsext_versions_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 int
 tlsext_versions_server_needs(SSL *s, uint16_t msg_type)
 {
-	return (!SSL_is_dtls(s) && s->version >= TLS1_3_VERSION);
+	return (S3I(s)->hs.negotiated_tls_version >= TLS1_3_VERSION);
 }
 
 int
 tlsext_versions_server_build(SSL *s, uint16_t msg_type, CBB *cbb)
 {
-	if (!CBB_add_u16(cbb, TLS1_3_VERSION))
-		return 0;
-	/* XXX set 1.2 in legacy version?  */
-
-	return 1;
+	return CBB_add_u16(cbb, TLS1_3_VERSION);
 }
 
 int
@@ -1656,6 +1632,7 @@ tlsext_versions_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 		return 0;
 	}
 
+	/* XXX - need to fix for DTLS 1.3 */
 	if (selected_version < TLS1_3_VERSION) {
 		*alert = SSL_AD_ILLEGAL_PARAMETER;
 		return 0;
@@ -1675,12 +1652,8 @@ tlsext_versions_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 int
 tlsext_cookie_client_needs(SSL *s, uint16_t msg_type)
 {
-	if (SSL_is_dtls(s))
-		return 0;
-	if (S3I(s)->hs_tls13.max_version < TLS1_3_VERSION)
-		return 0;
-	return (S3I(s)->hs_tls13.cookie_len > 0 &&
-	    S3I(s)->hs_tls13.cookie != NULL);
+	return (S3I(s)->hs.our_max_tls_version >= TLS1_3_VERSION &&
+	    S3I(s)->hs_tls13.cookie_len > 0 && S3I(s)->hs_tls13.cookie != NULL);
 }
 
 int
@@ -1734,17 +1707,12 @@ tlsext_cookie_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 int
 tlsext_cookie_server_needs(SSL *s, uint16_t msg_type)
 {
-
-	if (SSL_is_dtls(s))
-		return 0;
-	if (S3I(s)->hs_tls13.max_version < TLS1_3_VERSION)
-		return 0;
 	/*
 	 * Server needs to set cookie value in tls13 handshake
 	 * in order to send one, should only be sent with HRR.
 	 */
-	return (S3I(s)->hs_tls13.cookie_len > 0 &&
-	    S3I(s)->hs_tls13.cookie != NULL);
+	return (S3I(s)->hs.our_max_tls_version >= TLS1_3_VERSION &&
+	    S3I(s)->hs_tls13.cookie_len > 0 && S3I(s)->hs_tls13.cookie != NULL);
 }
 
 int
@@ -2033,13 +2001,10 @@ tlsext_build(SSL *s, int is_server, uint16_t msg_type, CBB *cbb)
 	const struct tls_extension *tlsext;
 	CBB extensions, extension_data;
 	int extensions_present = 0;
+	uint16_t tls_version;
 	size_t i;
-	uint16_t version;
 
-	if (is_server)
-		version = s->version;
-	else
-		version = TLS1_get_client_version(s);
+	tls_version = ssl_effective_tls_version(s);
 
 	if (!CBB_add_u16_length_prefixed(cbb, &extensions))
 		return 0;
@@ -2049,7 +2014,7 @@ tlsext_build(SSL *s, int is_server, uint16_t msg_type, CBB *cbb)
 		ext = tlsext_funcs(tlsext, is_server);
 
 		/* RFC 8446 Section 4.2 */
-		if (version >= TLS1_3_VERSION &&
+		if (tls_version >= TLS1_3_VERSION &&
 		    !(tlsext->messages & msg_type))
 			continue;
 
@@ -2112,15 +2077,12 @@ tlsext_parse(SSL *s, int is_server, uint16_t msg_type, CBS *cbs, int *alert)
 	CBS extensions, extension_data;
 	uint16_t type;
 	size_t idx;
-	uint16_t version;
+	uint16_t tls_version;
 	int alert_desc;
 
-	S3I(s)->hs.extensions_seen = 0;
+	tls_version = ssl_effective_tls_version(s);
 
-	if (is_server)
-		version = s->version;
-	else
-		version = TLS1_get_client_version(s);
+	S3I(s)->hs.extensions_seen = 0;
 
 	/* An empty extensions block is valid. */
 	if (CBS_len(cbs) == 0)
@@ -2143,7 +2105,7 @@ tlsext_parse(SSL *s, int is_server, uint16_t msg_type, CBS *cbs, int *alert)
 			    CBS_len(&extension_data),
 			    s->internal->tlsext_debug_arg);
 
-		if (!SSL_is_dtls(s) && version >= TLS1_3_VERSION && is_server &&
+		if (tls_version >= TLS1_3_VERSION && is_server &&
 		    msg_type == SSL_TLSEXT_MSG_CH) {
 			if (!tlsext_clienthello_hash_extension(s, type,
 			    &extension_data))
@@ -2155,7 +2117,7 @@ tlsext_parse(SSL *s, int is_server, uint16_t msg_type, CBS *cbs, int *alert)
 			continue;
 
 		/* RFC 8446 Section 4.2 */
-		if (version >= TLS1_3_VERSION &&
+		if (tls_version >= TLS1_3_VERSION &&
 		    !(tlsext->messages & msg_type)) {
 			alert_desc = SSL_AD_ILLEGAL_PARAMETER;
 			goto err;

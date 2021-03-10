@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.324 2021/02/27 14:20:50 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.325 2021/03/10 18:27:01 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -407,6 +407,23 @@ typedef struct ssl_session_internal_st {
 #define SSI(s) (s->session->internal)
 
 typedef struct ssl_handshake_st {
+	/*
+	 * Minimum and maximum versions supported for this handshake. These are
+	 * initialised at the start of a handshake based on the method in use
+	 * and the current protocol version configuration.
+	 */
+	uint16_t our_min_tls_version;
+	uint16_t our_max_tls_version;
+
+	/*
+	 * Version negotiated for this session. For a client this is set once
+	 * the server selected version is parsed from the ServerHello (either
+	 * from the legacy version or supported versions extension). For a
+	 * server this is set once we select the version we will use with the
+	 * client.
+	 */
+	uint16_t negotiated_tls_version;
+
 	/* state contains one of the SSL3_ST_* values. */
 	int state;
 
@@ -435,10 +452,6 @@ typedef struct cert_pkey_st {
 } CERT_PKEY;
 
 typedef struct ssl_handshake_tls13_st {
-	uint16_t min_version;
-	uint16_t max_version;
-	uint16_t version;
-
 	int use_legacy;
 	int hrr;
 
@@ -468,7 +481,6 @@ typedef struct ssl_handshake_tls13_st {
 	EVP_MD_CTX *clienthello_md_ctx;
 	unsigned char *clienthello_hash;
 	unsigned int clienthello_hash_len;
-
 } SSL_HANDSHAKE_TLS13;
 
 struct tls12_record_layer;
@@ -1117,6 +1129,8 @@ int ssl_version_set_max(const SSL_METHOD *meth, uint16_t proto_ver,
     uint16_t min_tls_ver, uint16_t *out_tls_ver, uint16_t *out_proto_ver);
 int ssl_enabled_tls_version_range(SSL *s, uint16_t *min_ver, uint16_t *max_ver);
 int ssl_supported_tls_version_range(SSL *s, uint16_t *min_ver, uint16_t *max_ver);
+uint16_t ssl_tls_version(uint16_t version);
+uint16_t ssl_effective_tls_version(SSL *s);
 int ssl_downgrade_max_version(SSL *s, uint16_t *max_ver);
 int ssl_max_supported_version(SSL *s, uint16_t *max_ver);
 int ssl_max_shared_version(SSL *s, uint16_t peer_ver, uint16_t *max_ver);
