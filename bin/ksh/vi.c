@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.57 2020/09/20 14:40:45 millert Exp $	*/
+/*	$OpenBSD: vi.c,v 1.58 2021/03/10 20:06:04 millert Exp $	*/
 
 /*
  *	vi command editing
@@ -55,7 +55,7 @@ static int	Endword(int);
 static int	grabhist(int, int);
 static int	grabsearch(int, int, int, char *);
 static void	do_clear_screen(void);
-static void	redraw_line(int);
+static void	redraw_line(int, int);
 static void	refresh_line(int);
 static int	outofwin(void);
 static void	rewindow(void);
@@ -719,7 +719,7 @@ vi_cmd(int argcnt, const char *cmd)
 			break;
 
 		case CTRL('r'):
-			redraw_line(1);
+			redraw_line(1, 0);
 			break;
 
 		case '@':
@@ -1737,18 +1737,19 @@ do_clear_screen(void)
 			neednl = 0;
 	}
 #endif
-	redraw_line(neednl);
+	/* Only print the full prompt if we cleared the screen. */
+	redraw_line(neednl, !neednl);
 }
 
 static void
-redraw_line(int neednl)
+redraw_line(int neednl, int full)
 {
 	(void) memset(wbuf[win], ' ', wbuf_len);
 	if (neednl) {
 		x_putc('\r');
 		x_putc('\n');
 	}
-	vi_pprompt(0);
+	vi_pprompt(full);
 	cur_col = pwidth;
 	morec = ' ';
 }
@@ -2109,7 +2110,7 @@ complete_word(int command, int count)
 			vi_error();
 			x_print_expansions(nwords, words, is_command);
 			x_free_words(nwords, words);
-			redraw_line(0);
+			redraw_line(0, 0);
 			return -1;
 		}
 		/*
@@ -2183,7 +2184,7 @@ print_expansions(struct edstate *e)
 	}
 	x_print_expansions(nwords, words, is_command);
 	x_free_words(nwords, words);
-	redraw_line(0);
+	redraw_line(0, 0);
 	return 0;
 }
 
