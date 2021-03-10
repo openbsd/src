@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.167 2021/03/05 12:37:32 eric Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.168 2021/03/10 17:25:59 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -215,8 +215,6 @@ smtp_setup_listener_tls(struct listener *l)
 
 	if (l->flags & F_TLS_VERIFY)
 		tls_config_verify_client(config);
-	else
-		tls_config_verify_client_optional(config);
 
 	l->tls = tls_server();
 	if (l->tls == NULL)
