@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.259 2021/03/10 21:49:55 patrick Exp $ */
+/* $OpenBSD: dsdt.c,v 1.260 2021/03/10 22:20:44 tobhe Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -4619,10 +4619,20 @@ acpi_getdevlist(struct acpi_devlist_head *list, struct aml_node *root,
 {
 	struct acpi_devlist *dl;
 	struct aml_value *val;
+	struct aml_node *node;
 	int idx;
 
 	for (idx = off; idx < pkg->length; idx++) {
 		val = pkg->v_package[idx];
+		if (val->type == AML_OBJTYPE_NAMEREF) {
+			node = aml_searchrel(root, aml_getname(val->v_nameref));
+			if (node == NULL) {
+				printf("%s: device %s not found\n", __func__,
+				    aml_getname(val->v_nameref));
+				continue;
+			}
+			val = node->value;
+		}
 		if (val->type == AML_OBJTYPE_OBJREF)
 			val = val->v_objref.ref;
 		if (val->node) {
