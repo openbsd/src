@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.15 2019/01/31 01:30:46 tedu Exp $	*/
+/*	$OpenBSD: file.c,v 1.16 2021/03/10 21:55:22 millert Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -49,12 +49,12 @@ struct file {
 	int	 noseek;
 	FILE	*f;
 	mmf_t	*mmf;
-	gzFile	*gzf;
+	gzFile	 gzf;
 };
 
 #ifndef NOZ
 static char *
-gzfgetln(gzFile *f, size_t *len)
+gzfgetln(gzFile f, size_t *len)
 {
 	size_t		n;
 	int		c;
