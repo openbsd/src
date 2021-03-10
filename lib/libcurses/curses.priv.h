@@ -1,4 +1,4 @@
-/* $OpenBSD: curses.priv.h,v 1.34 2010/09/06 17:26:17 nicm Exp $ */
+/* $OpenBSD: curses.priv.h,v 1.35 2021/03/10 20:16:08 millert Exp $ */
 
 /****************************************************************************
  * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
@@ -36,7 +36,7 @@
 
 
 /*
- * $Id: curses.priv.h,v 1.34 2010/09/06 17:26:17 nicm Exp $
+ * $Id: curses.priv.h,v 1.35 2021/03/10 20:16:08 millert Exp $
  *
  *	curses.priv.h
  *
@@ -895,6 +895,7 @@ struct screen {
 	 */
 #if USE_SIZECHANGE
 	int		(*_resize)(int,int);
+	int		(*_ungetch)(SCREEN *, int);
 #endif
 
 	/*

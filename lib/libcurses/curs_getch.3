@@ -1,5 +1,5 @@
 '\" t
-.\" $OpenBSD: curs_getch.3,v 1.4 2019/02/13 07:18:57 nicm Exp $
+.\" $OpenBSD: curs_getch.3,v 1.5 2021/03/10 20:16:08 millert Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998-2005,2006 Free Software Foundation, Inc.              *
@@ -29,7 +29,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $Id: curs_getch.3,v 1.4 2019/02/13 07:18:57 nicm Exp $
+.\" $Id: curs_getch.3,v 1.5 2021/03/10 20:16:08 millert Exp $
 .TH curs_getch 3 ""
 .na
 .hy 0
@@ -236,14 +236,14 @@ See \fBresizeterm\fR(3) for more details about \fBKEY_RESIZE\fP, and
 All routines return the integer \fBERR\fR upon failure and an integer value
 other than \fBERR\fR (\fBOK\fR in the case of ungetch()) upon successful
 completion.
-.RS
+.RS 3
 .TP 5
 \fBungetch\fP
-returns an error
+returns ERR
 if there is no more room in the FIFO.
-.TP 5
+.TP
 \fBwgetch\fP
-returns an error
+returns ERR
 if the window pointer is null, or
 if its timeout expires without having any data.
 .RE

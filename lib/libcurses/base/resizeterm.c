@@ -1,4 +1,4 @@
-/* $OpenBSD: resizeterm.c,v 1.3 2010/01/12 23:22:06 nicm Exp $ */
+/* $OpenBSD: resizeterm.c,v 1.4 2021/03/10 20:16:08 millert Exp $ */
 
 /****************************************************************************
  * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
@@ -43,7 +43,7 @@
 #include <curses.priv.h>
 #include <term.h>
 
-MODULE_ID("$Id: resizeterm.c,v 1.3 2010/01/12 23:22:06 nicm Exp $")
+MODULE_ID("$Id: resizeterm.c,v 1.4 2021/03/10 20:16:08 millert Exp $")
 
 #define stolen_lines (screen_lines - SP->_lines_avail)
 
@@ -420,7 +420,6 @@ resizeterm(int ToLines, int ToCols)
 	    result = resize_term(ToLines, ToCols);
 
 #if USE_SIGWINCH
-	    _nc_ungetch(SP, KEY_RESIZE);	/* so application can know this */
 	    clearok(curscr, TRUE);	/* screen contents are unknown */
 
 	    /* ripped-off lines are a special case: if we did not lengthen
@@ -451,6 +450,9 @@ resizeterm(int ToLines, int ToCols)
 	    }
 #endif
 	}
+#if USE_SIGWINCH
+	_nc_ungetch(SP, KEY_RESIZE);	/* so application can know this */
+#endif
     }
 
     returnCode(result);
