@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_id.c,v 1.15 2021/03/01 11:05:43 bluhm Exp $	*/
+/*	$OpenBSD: ip6_id.c,v 1.16 2021/03/10 10:21:49 jsg Exp $	*/
 /*	$NetBSD: ip6_id.c,v 1.7 2003/09/13 21:32:59 itojun Exp $	*/
 /*	$KAME: ip6_id.c,v 1.8 2003/09/06 13:41:06 itojun Exp $	*/
 
@@ -93,7 +93,7 @@
 
 struct randomtab {
 	const int	ru_bits; /* resulting bits */
-	const long	ru_out;	/* Time after wich will be reseeded */
+	const long	ru_out;	/* Time after which will be reseeded */
 	const u_int32_t ru_max;	/* Uniq cycle, avoid blackjack prediction */
 	const u_int32_t ru_gen;	/* Starting generator */
 	const u_int32_t ru_n;	/* ru_n: prime, ru_n - 1: product of pfacts[] */
@@ -113,7 +113,7 @@ struct randomtab {
 
 static struct randomtab randomtab_20 = {
 	20,			/* resulting bits */
-	180,			/* Time after wich will be reseeded */
+	180,			/* Time after which will be reseeded */
 	200000,			/* Uniq cycle, avoid blackjack prediction */
 	2,			/* Starting generator */
 	524269,			/* RU_N-1 = 2^2*3^2*14563 */

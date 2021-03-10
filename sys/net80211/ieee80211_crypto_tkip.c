@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.32 2020/07/15 22:49:07 cheloha Exp $	*/
+/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.33 2021/03/10 10:21:48 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -111,7 +111,7 @@ struct ieee80211_tkip_frame {
 
 /*
  * Compute TKIP MIC over an mbuf chain starting "off" bytes from the
- * beginning.  This function should be kept independant from the software
+ * beginning.  This function should be kept independent from the software
  * TKIP crypto code so that drivers doing hardware crypto but not MIC can
  * call it without a software crypto context.
  */
@@ -373,7 +373,7 @@ ieee80211_tkip_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 	}
 
 	/*
-	 * Get the frame's Tansmit Sequence Counter (TSC), and a pointer to
+	 * Get the frame's Transmit Sequence Counter (TSC), and a pointer to
 	 * our last-seen Receive Sequence Counter (RSC) with which we can
 	 * detect replays.
 	 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.499 2021/02/01 00:31:05 dlg Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.500 2021/03/10 10:21:48 jsg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -128,7 +128,7 @@ enum	{ PFTM_TCP_FIRST_PACKET, PFTM_TCP_OPENING, PFTM_TCP_ESTABLISHED,
 
 /*
  * The number of entries in the fragment queue must be limited
- * to avoid DoS by linear seaching.  Instead of a global limit,
+ * to avoid DoS by linear searching.  Instead of a global limit,
  * use a limit per entry point.  For large packets these sum up.
  */
 #define PF_FRAG_ENTRY_LIMIT		64

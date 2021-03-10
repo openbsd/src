@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.h,v 1.32 2020/07/07 00:00:03 dlg Exp $ */
+/*	$OpenBSD: ifq.h,v 1.33 2021/03/10 10:21:48 jsg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -207,7 +207,7 @@ struct ifiqueue {
  *
  * === ifq_mfreem() and ifq_mfreeml()
  *
- * A goal of the API is to avoid freeing an mbuf while mutexs are
+ * A goal of the API is to avoid freeing an mbuf while mutexes are
  * held. Because the ifq API manages the lock on behalf of the backend
  * ifqops, the backend should not directly free mbufs. If a conditioner
  * backend needs to drop a packet during the handling of ifqop_deq_begin,

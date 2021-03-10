@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.102 2020/06/11 09:18:43 mpi Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.103 2021/03/10 10:21:47 jsg Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -509,7 +509,7 @@ spec_close(void *v)
 		} else {
 			/*
 			 * If the vnode is locked, then we are in the midst
-			 * of forcably closing the device, otherwise we only
+			 * of forcibly closing the device, otherwise we only
 			 * close on last reference.
 			 */
 			if (vcount(vp) > 1 && (vp->v_flag & VXLOCK) == 0)

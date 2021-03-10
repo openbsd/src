@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.125 2018/06/21 07:49:13 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.126 2021/03/10 10:21:47 jsg Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -308,7 +308,7 @@ hib_free(struct hiballoc_arena *arena, void *addr)
 /*
  * Initialize hiballoc.
  *
- * The allocator will manage memmory at ptr, which is len bytes.
+ * The allocator will manage memory at ptr, which is len bytes.
  */
 int
 hiballoc_init(struct hiballoc_arena *arena, void *p_ptr, size_t p_len)
@@ -1788,7 +1788,7 @@ hibernate_read_chunks(union hibernate_info *hib, paddr_t pig_start,
 
 	/*
 	 * These mappings go into the resuming kernel's page table, and are
-	 * used only during image read. They dissappear from existence
+	 * used only during image read. They disappear from existence
 	 * when the suspended kernel is unpacked on top of us.
 	 */
 	tempva = (vaddr_t)km_alloc(MAXPHYS + PAGE_SIZE, &kv_any, &kp_none,

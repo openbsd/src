@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.80 2021/03/05 06:44:09 dlg Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.81 2021/03/10 10:21:48 jsg Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -138,7 +138,7 @@ struct  ether_vlan_header {
 #define	ETHERMIN	(ETHER_MIN_LEN - ETHER_HDR_LEN - ETHER_CRC_LEN)
 
 /*
- * Ethernet CRC32 polynomials (big- and little-endian verions).
+ * Ethernet CRC32 polynomials (big- and little-endian versions).
  */
 #define	ETHER_CRC_POLY_LE	0xedb88320
 #define	ETHER_CRC_POLY_BE	0x04c11db6

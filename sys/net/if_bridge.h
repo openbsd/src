@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.71 2021/01/25 19:47:16 mvs Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.72 2021/03/10 10:21:47 jsg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -289,7 +289,7 @@ struct brl_node {
 	struct ether_addr	brl_dst;	/* destination mac address */
 	u_int16_t		brl_tag;	/* pf tag ID */
 	u_int8_t		brl_action;	/* what to do with match */
-	u_int8_t		brl_flags;	/* comparision flags */
+	u_int8_t		brl_flags;	/* comparison flags */
 	struct ifbrarpf		brl_arpf;	/* arp filter */
 };
 

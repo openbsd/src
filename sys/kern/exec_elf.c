@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.159 2021/03/08 05:57:34 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.160 2021/03/10 10:21:47 jsg Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -192,7 +192,7 @@ int
 elf_check_header(Elf_Ehdr *ehdr)
 {
 	/*
-	 * We need to check magic, class size, endianess, and version before
+	 * We need to check magic, class size, endianness, and version before
 	 * we look at the rest of the Elf_Ehdr structure. These few elements
 	 * are represented in a machine independent fashion.
 	 */

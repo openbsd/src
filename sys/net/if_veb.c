@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.15 2021/03/05 06:44:09 dlg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.16 2021/03/10 10:21:48 jsg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -809,7 +809,7 @@ veb_broadcast(struct veb_softc *sc, struct veb_port *rp, struct mbuf *m0,
 
 #if NPF > 0
 	/*
-	 * we couldnt find a specific port to send this packet to,
+	 * we couldn't find a specific port to send this packet to,
 	 * but pf should still have a chance to apply policy to it.
 	 * let pf look at it, but use the veb interface as a proxy.
 	 */

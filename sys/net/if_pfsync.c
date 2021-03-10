@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.287 2021/02/25 02:48:21 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.288 2021/03/10 10:21:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -2294,7 +2294,7 @@ pfsync_delete_state(struct pf_state *st)
 		pfsync_q_del(st);
 		/*
 		 * FALLTHROUGH to putting it on the del list
-		 * Note on refence count bookeeping:
+		 * Note on reference count bookkeeping:
 		 *	pfsync_q_del() drops reference for queue
 		 *	ownership. But the st entry survives, because
 		 *	our caller still holds a reference.

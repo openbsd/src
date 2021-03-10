@@ -1,4 +1,4 @@
-/*	$OpenBSD: wait.h,v 1.17 2014/06/13 22:40:31 matthew Exp $	*/
+/*	$OpenBSD: wait.h,v 1.18 2021/03/10 10:21:47 jsg Exp $	*/
 /*	$NetBSD: wait.h,v 1.11 1996/04/09 20:55:51 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 /*
- * This file holds definitions relevent to the wait4 system call
+ * This file holds definitions relevant to the wait4 system call
  * and the alternate interfaces that use it (wait, wait3, waitpid).
  */
 

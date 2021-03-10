@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.231 2021/02/25 02:48:21 dlg Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.232 2021/03/10 10:21:49 jsg Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -531,7 +531,7 @@ ip6_ours(struct mbuf **mp, int *offp, int nxt, int af)
 	if (ip6_hbhchcheck(*mp, offp, &nxt, NULL))
 		return IPPROTO_DONE;
 
-	/* Check wheter we are already in a IPv4/IPv6 local deliver loop. */
+	/* Check whether we are already in a IPv4/IPv6 local deliver loop. */
 	if (af == AF_UNSPEC)
 		nxt = ip_deliver(mp, offp, nxt, AF_INET6);
 	return nxt;

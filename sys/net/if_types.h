@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_types.h,v 1.22 2020/06/21 11:25:54 dlg Exp $	*/
+/*	$OpenBSD: if_types.h,v 1.23 2021/03/10 10:21:48 jsg Exp $	*/
 /*	$NetBSD: if_types.h,v 1.17 2000/10/26 06:51:31 onoe Exp $	*/
 
 /*
@@ -249,8 +249,8 @@
 #define	IFT_SIPSIG		   0xcc /* SIP Signaling */
 #define	IFT_DOCSCABLEUPSTREAMCHANNEL 0xcd /* CATV Upstream Channel */
 #define	IFT_ECONET		   0xce /* Acorn Econet */
-#define	IFT_PON155		   0xcf /* FSAN 155Mb Symetrical PON interface */
-#define	IFT_PON622		   0xd0 /* FSAN 622Mb Symetrical PON interface */
+#define	IFT_PON155		   0xcf /* FSAN 155Mb Symmetrical PON interface */
+#define	IFT_PON622		   0xd0 /* FSAN 622Mb Symmetrical PON interface */
 #define	IFT_BRIDGE		   0xd1 /* Transparent bridge interface */
 #define	IFT_LINEGROUP		   0xd2 /* Interface common to multiple lines */
 #define	IFT_VOICEEMFGD		   0xd3 /* voice E&M Feature Group D */

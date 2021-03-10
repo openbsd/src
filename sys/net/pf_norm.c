@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.222 2021/03/01 11:05:42 bluhm Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.223 2021/03/10 10:21:48 jsg Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -1338,7 +1338,7 @@ pf_normalize_tcp_stateful(struct pf_pdesc *pd, u_short *reason,
 		}
 
 		if (copyback) {
-			/* Copyback the options, caller copys back header */
+			/* Copyback the options, caller copies back header */
 			*writeback = 1;
 			m_copyback(pd->m, pd->off + sizeof(*th), olen, opts, M_NOWAIT);
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.170 2021/02/27 09:21:22 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.171 2021/03/10 10:21:47 jsg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -1659,7 +1659,7 @@ mgre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dest,
 
 	rt = rt_getll(rt0);
 
-	/* chech rt_expire? */
+	/* check rt_expire? */
 	if (ISSET(rt->rt_flags, RTF_REJECT)) {
 		error = (rt == rt0) ? EHOSTDOWN : EHOSTUNREACH;
 		goto drop;
@@ -2952,7 +2952,7 @@ gre_keepalive_send(void *arg)
 	uint8_t tos;
 
 	/*
-	 * re-schedule immediately, so we deal with incomplete configuation
+	 * re-schedule immediately, so we deal with incomplete configuration
 	 * or temporary errors.
 	 */
 	if (sc->sc_ka_timeo)

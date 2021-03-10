@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherbridge.c,v 1.5 2021/02/26 08:31:23 dlg Exp $ */
+/*	$OpenBSD: if_etherbridge.c,v 1.6 2021/03/10 10:21:47 jsg Exp $ */
 
 /*
  * Copyright (c) 2018, 2021 David Gwynne <dlg@openbsd.org>
@@ -374,7 +374,7 @@ etherbridge_map(struct etherbridge *eb, void *port, uint64_t eba)
 
 	if (nebe != NULL) {
 		/*
-		 * the new entry didnt make it into the
+		 * the new entry didn't make it into the
 		 * table, so it can be freed directly.
 		 */
 		ebe_free(nebe);
@@ -440,7 +440,7 @@ etherbridge_add_addr(struct etherbridge *eb, void *port,
 
 	if (error != 0) {
 		/*
-		 * the new entry didnt make it into the
+		 * the new entry didn't make it into the
 		 * table, so it can be freed directly.
 		 */
 		ebe_free(nebe);

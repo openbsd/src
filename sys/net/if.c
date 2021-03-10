@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.633 2021/03/09 20:03:50 anton Exp $	*/
+/*	$OpenBSD: if.c,v 1.634 2021/03/10 10:21:47 jsg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -667,7 +667,7 @@ if_qstart_compat(struct ifqueue *ifq)
 	 * the stack assumes that an interface can have multiple
 	 * transmit rings, but a lot of drivers are still written
 	 * so that interfaces and send rings have a 1:1 mapping.
-	 * this provides compatability between the stack and the older
+	 * this provides compatibility between the stack and the older
 	 * drivers by translating from the only queue they have
 	 * (ifp->if_snd) back to the interface and calling if_start.
 	 */

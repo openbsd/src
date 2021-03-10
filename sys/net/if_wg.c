@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wg.c,v 1.15 2021/01/25 09:11:36 yasuoka Exp $ */
+/*	$OpenBSD: if_wg.c,v 1.16 2021/03/10 10:21:48 jsg Exp $ */
 
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
@@ -885,7 +885,7 @@ wg_tag_get(struct mbuf *m)
 
 /*
  * The following section handles the timeout callbacks for a WireGuard session.
- * These functions provide an "event based" model for controling wg(8) session
+ * These functions provide an "event based" model for controlling wg(8) session
  * timers. All function calls occur after the specified event below.
  *
  * wg_timers_event_data_sent:

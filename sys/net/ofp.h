@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp.h,v 1.13 2016/12/02 17:10:20 rzalamena Exp $	*/
+/*	$OpenBSD: ofp.h,v 1.14 2021/03/10 10:21:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -276,7 +276,7 @@ struct ofp_instruction_experimenter {
 #define OFP_ACTION_POP_VLAN		18	/* Pop the outer VLAN tag */
 #define OFP_ACTION_PUSH_MPLS		19	/* Push a new MPLS tag */
 #define OFP_ACTION_POP_MPLS		20	/* Pop the outer MPLS tag */
-#define OFP_ACTION_SET_QUEUE		21	/* Set queue id when outputing to a port */
+#define OFP_ACTION_SET_QUEUE		21	/* Set queue id when outputting to a port */
 #define OFP_ACTION_GROUP		22	/* Apply group */
 #define OFP_ACTION_SET_NW_TTL		23	/* Set IP TTL */
 #define OFP_ACTION_DEC_NW_TTL		24	/* Decrement IP TTL */

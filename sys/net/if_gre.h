@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.h,v 1.15 2018/02/07 22:30:59 dlg Exp $ */
+/*      $OpenBSD: if_gre.h,v 1.16 2021/03/10 10:21:48 jsg Exp $ */
 /*	$NetBSD: if_gre.h,v 1.5 1999/11/19 20:41:19 thorpej Exp $ */
 
 /*
@@ -54,7 +54,7 @@ struct gre_h {
 	u_int_32 seq_num     Sequence number to allow for packet order
                              Present if (seq_pres ==1 ).
 
-    struct gre_sre[] routing Routing fileds (see below)
+    struct gre_sre[] routing Routing fields (see below)
                              Present if (rt_pres == 1)
 */
 } __packed;

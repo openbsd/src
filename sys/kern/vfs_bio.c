@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.204 2020/10/05 01:56:17 asou Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.205 2021/03/10 10:21:47 jsg Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -883,7 +883,7 @@ brelse(struct buf *bp)
 		KASSERT(bp->b_bufsize > 0);
 
 	/*
-	 * softdep is basically incompatible with not cacheing buffers
+	 * softdep is basically incompatible with not caching buffers
 	 * that have dependencies, so this buffer must be cached
 	 */
 	if (LIST_FIRST(&bp->b_dep) != NULL)
@@ -1433,7 +1433,7 @@ buf_adjcnt(struct buf *bp, long ncount)
  * This implementation adds support for multiple 2q caches.
  *
  * If we have more than one 2q cache, as bufs fall off the cold queue
- * for recyclying, bufs that have been warm before (which retain the
+ * for recycling, bufs that have been warm before (which retain the
  * B_WARM flag in addition to B_COLD) can be put into the hot queue of
  * a second level 2Q cache. buffers which are only B_COLD are
  * recycled. Bufs falling off the last cache's cold queue are always

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.72 2020/11/07 09:51:40 denis Exp $ */
+/*	$OpenBSD: rtable.c,v 1.73 2021/03/10 10:21:48 jsg Exp $ */
 
 /*
  * Copyright (c) 2014-2016 Martin Pieuchot
@@ -142,7 +142,7 @@ rtmap_dtor(void *null, void *xmap)
 	struct rtmap	*map = xmap;
 
 	/*
-	 * doesnt need to be serialized since this is the last reference
+	 * doesn't need to be serialized since this is the last reference
 	 * to this map. there's nothing to race against.
 	 */
 	free(map->tbl, M_RTABLE, map->limit * sizeof(*map[0].tbl));

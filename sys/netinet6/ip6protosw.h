@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6protosw.h,v 1.13 2017/11/23 13:45:46 mpi Exp $	*/
+/*	$OpenBSD: ip6protosw.h,v 1.14 2021/03/10 10:21:49 jsg Exp $	*/
 /*	$KAME: ip6protosw.h,v 1.22 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -91,7 +91,7 @@ struct in6_addr;
  *
  * ip6c_finaldst usually points to ip6c_ip6->ip6_dst.  if the original
  * (internal) packet carries a routing header, it may point the final
- * dstination address in the routing header.
+ * destination address in the routing header.
  *
  * ip6c_src: ip6c_ip6->ip6_src + scope info + flowlabel in ip6c_ip6
  *	(beware of flowlabel, if you try to compare it against others)

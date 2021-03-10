@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.45 2021/02/08 10:51:02 mpi Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.46 2021/03/10 10:21:47 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -1693,7 +1693,7 @@ isitmychild(struct witness *parent, struct witness *child)
 }
 
 /*
- * Checks if @descendant is a direct or inderect descendant of @ancestor.
+ * Checks if @descendant is a direct or indirect descendant of @ancestor.
  */
 static int
 isitmydescendant(struct witness *ancestor, struct witness *descendant)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls.h,v 1.44 2020/08/19 19:22:53 gnezdo Exp $	*/
+/*	$OpenBSD: mpls.h,v 1.45 2021/03/10 10:21:49 jsg Exp $	*/
 
 /*
  * Copyright (C) 1999, 2000 and 2001 AYAME Project, WIDE Project.
@@ -69,7 +69,7 @@ struct shim_hdr {
 
 #define MPLS_BOS_ISSET(l)	(((l) & MPLS_BOS_MASK) == MPLS_BOS_MASK)
 
-/* Reserved lavel values (RFC3032) */
+/* Reserved label values (RFC3032) */
 #define MPLS_LABEL_IPV4NULL	0               /* IPv4 Explicit NULL Label */
 #define MPLS_LABEL_RTALERT	1               /* Router Alert Label       */
 #define MPLS_LABEL_IPV6NULL	2               /* IPv6 Explicit NULL Label */

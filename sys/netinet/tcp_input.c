@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.366 2021/02/03 13:40:06 jan Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.367 2021/03/10 10:21:49 jsg Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3180,7 +3180,7 @@ syn_cache_insert(struct syn_cache *sc, struct tcpcb *tp)
 	 * If there are no entries in the hash table, reinitialize
 	 * the hash secrets.  To avoid useless cache swaps and
 	 * reinitialization, use it until the limit is reached.
-	 * An emtpy cache is also the oportunity to resize the hash.
+	 * An empty cache is also the opportunity to resize the hash.
 	 */
 	if (set->scs_count == 0 && set->scs_use <= 0) {
 		set->scs_use = tcp_syn_use_limit;
@@ -3393,7 +3393,7 @@ syn_cache_lookup(struct sockaddr *src, struct sockaddr *dst,
 
 	NET_ASSERT_LOCKED();
 
-	/* Check the active cache first, the passive cache is likely emtpy. */
+	/* Check the active cache first, the passive cache is likely empty. */
 	sets[0] = &tcp_syn_cache[tcp_syn_cache_active];
 	sets[1] = &tcp_syn_cache[!tcp_syn_cache_active];
 	for (i = 0; i < 2; i++) {
@@ -3609,7 +3609,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	tp->rcv_up = sc->sc_irs + 1;
 
 	/*
-	 * This is what whould have happened in tcp_output() when
+	 * This is what would have happened in tcp_output() when
 	 * the SYN,ACK was sent.
 	 */
 	tp->snd_up = tp->snd_una;
@@ -3834,7 +3834,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 		 * With the default sbmax of 256K, a scale factor
 		 * of 3 will be chosen by this algorithm.  Those who
 		 * choose a larger sbmax should watch out
-		 * for the compatiblity problems mentioned above.
+		 * for the compatibility problems mentioned above.
 		 *
 		 * RFC1323: The Window field in a SYN (i.e., a <SYN>
 		 * or <SYN,ACK>) segment itself is never scaled.

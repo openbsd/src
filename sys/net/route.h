@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.183 2020/10/29 21:15:27 denis Exp $	*/
+/*	$OpenBSD: route.h,v 1.184 2021/03/10 10:21:48 jsg Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -291,7 +291,7 @@ struct rt_msghdr {
 /*
  * setsockopt defines used for the filtering.
  */
-#define ROUTE_MSGFILTER	1	/* bitmask to specifiy which types should be
+#define ROUTE_MSGFILTER	1	/* bitmask to specify which types should be
 				   sent to the client. */
 #define ROUTE_TABLEFILTER 2	/* change routing table the socket is listening
 				   on, RTABLE_ANY listens on all tables. */

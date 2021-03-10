@@ -1,4 +1,4 @@
-/*	$OpenBSD: wg_cookie.c,v 1.2 2020/12/09 05:53:33 tb Exp $ */
+/*	$OpenBSD: wg_cookie.c,v 1.3 2021/03/10 10:21:48 jsg Exp $ */
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
  * Copyright (C) 2019-2020 Matt Dunwoodie <ncon@noconroy.net>
@@ -175,7 +175,7 @@ cookie_checker_validate_macs(struct cookie_checker *cc, struct cookie_macs *cm,
 	cookie_macs_mac1(&our_cm, buf, len, cc->cc_mac1_key);
 	rw_exit_read(&cc->cc_key_lock);
 
-	/* If mac1 is invald, we want to drop the packet */
+	/* If mac1 is invalid, we want to drop the packet */
 	if (timingsafe_bcmp(our_cm.mac1, cm->mac1, COOKIE_MAC_SIZE) != 0)
 		return EINVAL;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: shm.h,v 1.29 2019/11/03 20:16:01 guenther Exp $	*/
+/*	$OpenBSD: shm.h,v 1.30 2021/03/10 10:21:47 jsg Exp $	*/
 /*	$NetBSD: shm.h,v 1.20 1996/04/09 20:55:35 cgd Exp $	*/
 
 /*
@@ -85,7 +85,7 @@
 #define	SHM_UNLOCK	4	/* Unlock a segment locked by SHM_LOCK. */
 
 /*
- * Segment low boundry address multiple
+ * Segment low boundary address multiple
  */
 #define	SHMLBA		(1U << _MAX_PAGE_SHIFT)
 

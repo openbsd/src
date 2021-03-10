@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_unveil.c,v 1.39 2020/03/22 20:23:36 anton Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.40 2021/03/10 10:21:47 jsg Exp $	*/
 
 /*
  * Copyright (c) 2017-2019 Bob Beck <beck@openbsd.org>
@@ -669,7 +669,7 @@ unveil_add(struct proc *p, struct nameidata *ndp, const char *permissions)
 
 /*
  * XXX this will probably change.
- * XXX collapse down later once debug surely unneded
+ * XXX collapse down later once debug surely unneeded
  */
 int
 unveil_flagmatch(struct nameidata *ni, u_char flags)
@@ -887,7 +887,7 @@ unveil_check_final(struct proc *p, struct nameidata *ni)
 				return ENOENT;
 
 		}
-		/* directry and flags match, update match */
+		/* directory and flags match, update match */
 		ni->ni_unveil_match = uv;
 		goto done;
 	}

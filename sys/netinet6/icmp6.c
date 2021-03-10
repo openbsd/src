@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.234 2021/01/11 13:28:53 bluhm Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.235 2021/03/10 10:21:49 jsg Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -349,7 +349,7 @@ icmp6_do_error(struct mbuf *m, int type, int code, int param)
 
 	/*
 	 * icmp6_reflect() is designed to be in the input path.
-	 * icmp6_error() can be called from both input and outut path,
+	 * icmp6_error() can be called from both input and output path,
 	 * and if we are in output path rcvif could contain bogus value.
 	 * clear m->m_pkthdr.ph_ifidx for safety, we should have enough
 	 * scope information in ip header (nip6).
@@ -362,7 +362,7 @@ icmp6_do_error(struct mbuf *m, int type, int code, int param)
 
   freeit:
 	/*
-	 * If we can't tell wheter or not we can generate ICMP6, free it.
+	 * If we can't tell whether or not we can generate ICMP6, free it.
 	 */
 	return (m_freem(m));
 }

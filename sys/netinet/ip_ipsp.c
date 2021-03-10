@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.237 2021/02/23 19:43:54 tobhe Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.238 2021/03/10 10:21:49 jsg Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -682,7 +682,7 @@ puttdb(struct tdb *tdbp)
 	/*
 	 * Rehash if this tdb would cause a bucket to have more than
 	 * two items and if the number of tdbs exceed 10% of the
-	 * bucket count.  This number is arbitratily chosen and is
+	 * bucket count.  This number is arbitrarily chosen and is
 	 * just a measure to not keep rehashing when adding and
 	 * removing tdbs which happens to always end up in the same
 	 * bucket, which is not uncommon when doing manual keying.

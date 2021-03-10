@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.76 2020/01/24 05:14:52 jsg Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.77 2021/03/10 10:21:49 jsg Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -413,7 +413,7 @@ mpls_do_error(struct mbuf *m, int type, int code, int destmtu)
 			return (NULL);
 
 		ip = mtod(m, struct ip *);
-		/* stuff to fix up which is normaly done in ip_output */
+		/* stuff to fix up which is normally done in ip_output */
 		ip->ip_v = IPVERSION;
 		ip->ip_id = htons(ip_randomid());
 		ip->ip_sum = 0;

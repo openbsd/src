@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_futex.c,v 1.16 2020/04/06 02:44:31 cheloha Exp $ */
+/*	$OpenBSD: sys_futex.c,v 1.17 2021/03/10 10:21:47 jsg Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -205,7 +205,7 @@ futex_put(struct futex *f)
 /*
  * Put the current thread on the sleep queue of the futex at address
  * ``uaddr''.  Let it sleep for the specified ``timeout'' time, or
- * indefinitly if the argument is NULL.
+ * indefinitely if the argument is NULL.
  */
 int
 futex_wait(uint32_t *uaddr, uint32_t val, const struct timespec *timeout,
@@ -255,7 +255,7 @@ futex_wait(uint32_t *uaddr, uint32_t val, const struct timespec *timeout,
 	if (error == ERESTART)
 		error = ECANCELED;
 	else if (error == EWOULDBLOCK) {
-		/* A race occured between a wakeup and a timeout. */
+		/* A race occurred between a wakeup and a timeout. */
 		if (p->p_futex == NULL)
 			error = 0;
 		else

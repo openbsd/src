@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.228 2020/12/10 12:52:49 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.229 2021/03/10 10:21:48 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -808,7 +808,7 @@ ieee80211_input_ba(struct ieee80211com *ic, struct mbuf *m,
 		if (count > ba->ba_winsize) {
 			/* 
 			 * Check whether we're consistently behind the window,
-			 * and let the window move forward if neccessary.
+			 * and let the window move forward if necessary.
 			 */
 			if (ba->ba_winmiss < IEEE80211_BA_MAX_WINMISS) { 
 				if (ba->ba_missedsn == ((sn - 1) & 0xfff))
@@ -1358,7 +1358,7 @@ ieee80211_parse_rsn_body(struct ieee80211com *ic, const u_int8_t *frm,
 	rsn->rsn_groupcipher = IEEE80211_CIPHER_CCMP;
 	rsn->rsn_nciphers = 1;
 	rsn->rsn_ciphers = IEEE80211_CIPHER_CCMP;
-	/* if Group Management Cipher Suite missing, defaut to BIP */
+	/* if Group Management Cipher Suite missing, default to BIP */
 	rsn->rsn_groupmgmtcipher = IEEE80211_CIPHER_BIP;
 	/* if AKM Suite missing, default to 802.1X */
 	rsn->rsn_nakms = 1;

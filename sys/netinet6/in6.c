@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.242 2020/08/07 18:09:16 florian Exp $	*/
+/*	$OpenBSD: in6.c,v 1.243 2021/03/10 10:21:49 jsg Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1033,7 +1033,7 @@ in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp, int *errorp)
 	IN6_LOOKUP_MULTI(*maddr6, ifp, in6m);
 	if (in6m != NULL) {
 		/*
-		 * Found it; just increment the refrence count.
+		 * Found it; just increment the reference count.
 		 */
 		in6m->in6m_refcnt++;
 	} else {
@@ -1147,7 +1147,7 @@ in6_joingroup(struct ifnet *ifp, struct in6_addr *addr, int *errorp)
 	}
 	imm->i6mm_maddr = in6_addmulti(addr, ifp, errorp);
 	if (!imm->i6mm_maddr) {
-		/* *errorp is alrady set */
+		/* *errorp is already set */
 		free(imm, M_IPMADDR, sizeof(*imm));
 		return NULL;
 	}
@@ -1580,7 +1580,7 @@ in6if_do_dad(struct ifnet *ifp)
 		/*
 		 * Our DAD routine requires the interface up and running.
 		 * However, some interfaces can be up before the RUNNING
-		 * status.  Additionaly, users may try to assign addresses
+		 * status.  Additionally, users may try to assign addresses
 		 * before the interface becomes up (or running).
 		 * We simply skip DAD in such a case as a work around.
 		 * XXX: we should rather mark "tentative" on such addresses,

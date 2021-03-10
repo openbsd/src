@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.c,v 1.59 2019/07/08 17:49:57 mpi Exp $	*/
+/*	$OpenBSD: radix.c,v 1.60 2021/03/10 10:21:48 jsg Exp $	*/
 /*	$NetBSD: radix.c,v 1.20 2003/08/07 16:32:56 agc Exp $	*/
 
 /*
@@ -836,7 +836,7 @@ rn_del_radix_mask(struct radix_node *tt)
 				    "inconsistent mklist refcount\n");
 		}
 		/*
-		 * If we end up here tt should be m->rm_leaf and therefor
+		 * If we end up here tt should be m->rm_leaf and therefore
 		 * tt should be the head of a multipath chain.
 		 * If this is not the case the table is no longer consistent.
 		 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.232 2021/01/06 07:51:40 claudio Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.233 2021/03/10 10:21:47 jsg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -473,7 +473,7 @@ pool_init(struct pool *pp, size_t size, u_int align, int ipl, int flags,
 		pool_init(&phpool, sizeof(struct pool_page_header), 0,
 		    IPL_HIGH, 0, "phpool", NULL);
 
-		/* make sure phpool wont "recurse" */
+		/* make sure phpool won't "recurse" */
 		KASSERT(POOL_INPGHDR(&phpool));
 	}
 
@@ -1618,7 +1618,7 @@ pool_allocator_alloc(struct pool *pp, int flags, int *slowdown)
 	if (v != NULL && POOL_INPGHDR(pp)) {
 		vaddr_t addr = (vaddr_t)v;
 		if ((addr & pp->pr_pgmask) != addr) {
-			panic("%s: %s page address %p isnt aligned to %u",
+			panic("%s: %s page address %p isn't aligned to %u",
 			    __func__, pp->pr_wchan, v, pp->pr_pgsize);
 		}
 	}

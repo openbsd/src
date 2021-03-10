@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.131 2021/02/25 02:48:21 dlg Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.132 2021/03/10 10:21:48 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -2332,7 +2332,7 @@ pipex_mppe_output(struct mbuf *m0, struct pipex_session *session,
 
 	/*
 	 * create a deep-copy if the mbuf has a shared mbuf cluster.
-	 * this is required to handle cases of tcp retransmition.
+	 * this is required to handle cases of tcp retransmission.
 	 */
 	for (m = m0; m != NULL; m = m->m_next) {
 		if (M_READONLY(m)) {
@@ -2468,7 +2468,7 @@ pipex_ccp_output(struct pipex_session *session, int code, int id)
 }
 #endif
 /***********************************************************************
- * Miscellaneous fuctions
+ * Miscellaneous functions
  ***********************************************************************/
 /* adapted from FreeBSD:src/usr.sbin/ppp/tcpmss.c */
 /*

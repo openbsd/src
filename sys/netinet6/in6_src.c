@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.84 2020/11/07 09:51:40 denis Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.85 2021/03/10 10:21:49 jsg Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -89,7 +89,7 @@ int in6_selectif(struct sockaddr_in6 *, struct ip6_pktopts *,
 /*
  * Return an IPv6 address, which is the most appropriate for a given
  * destination and pcb. We need the additional opt parameter because
- * the values set at pcb level can be overriden via cmsg.
+ * the values set at pcb level can be overridden via cmsg.
  */
 int
 in6_pcbselsrc(struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
@@ -220,7 +220,7 @@ in6_pcbselsrc(struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
 	/*
 	 * Use preferred source address if :
 	 * - destination is not onlink
-	 * - preferred source addresss is set
+	 * - preferred source address is set
 	 * - output interface is UP
 	 */
 	if (ro->ro_rt && !(ro->ro_rt->rt_flags & RTF_LLINFO) &&
@@ -525,7 +525,7 @@ in6_recoverscope(struct sockaddr_in6 *sin6, const struct in6_addr *in6)
 }
 
 /*
- * just clear the embedded scope identifer.
+ * just clear the embedded scope identifier.
  */
 void
 in6_clearscope(struct in6_addr *addr)

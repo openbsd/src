@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.213 2020/12/28 18:28:11 mglocker Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.214 2021/03/10 10:21:47 jsg Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -134,7 +134,7 @@ struct ctlname {
 /* was KERN_RND	31			*/
 #define	KERN_NOSUIDCOREDUMP	32	/* int: no setuid coredumps ever */ 
 #define	KERN_FSYNC		33	/* int: file synchronization support */
-#define	KERN_SYSVMSG		34	/* int: SysV message queue suppoprt */
+#define	KERN_SYSVMSG		34	/* int: SysV message queue support */
 #define	KERN_SYSVSEM		35	/* int: SysV semaphore support */
 #define	KERN_SYSVSHM		36	/* int: SysV shared memory support */
 /* was KERN_ARND		37	*/

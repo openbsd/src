@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.132 2020/12/08 15:52:04 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.133 2021/03/10 10:21:48 jsg Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -450,7 +450,7 @@ ieee80211_can_use_ampdu(struct ieee80211com *ic, struct ieee80211_node *ni)
 	    /*
 	     * Don't use A-MPDU on non-encrypted networks. There are devices
 	     * with buggy firmware which allow an attacker to inject 802.11
-	     * frames into a wifi network by embedding rouge A-MPDU subframes
+	     * frames into a wifi network by embedding rogue A-MPDU subframes
 	     * in an arbitrary data payload (e.g. PNG images) which may end
 	     * up appearing as actual frames after de-aggregation by a buggy
 	     * device; see https://github.com/rpp0/aggr-inject for details.
@@ -1687,7 +1687,7 @@ ieee80211_get_delba(struct ieee80211com *ic, struct ieee80211_node *ni,
 }
 
 /*-
- * SA Query Request/Reponse frame format:
+ * SA Query Request/Response frame format:
  * [1]  Category
  * [1]  Action
  * [16] Transaction Identifier

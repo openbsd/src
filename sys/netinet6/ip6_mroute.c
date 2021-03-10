@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.125 2020/06/24 22:03:44 cheloha Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.126 2021/03/10 10:21:49 jsg Exp $	*/
 /*	$NetBSD: ip6_mroute.c,v 1.59 2003/12/10 09:28:38 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
@@ -1137,7 +1137,7 @@ phyint_send6(struct ifnet *ifp, struct ip6_hdr *ip6, struct mbuf *m)
 	mb_copy->m_flags |= M_MCAST;
 
 	/*
-	 * If we sourced the packet, call ip6_output since we may devide
+	 * If we sourced the packet, call ip6_output since we may divide
 	 * the packet into fragments when the packet is too big for the
 	 * outgoing interface.
 	 * Otherwise, we can simply send the packet to the interface

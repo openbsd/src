@@ -1,4 +1,4 @@
-/*	$OpenBSD: domain.h,v 1.20 2019/06/13 08:12:11 claudio Exp $	*/
+/*	$OpenBSD: domain.h,v 1.21 2021/03/10 10:21:47 jsg Exp $	*/
 /*	$NetBSD: domain.h,v 1.10 1996/02/09 18:25:07 christos Exp $	*/
 
 /*
@@ -59,7 +59,7 @@ struct	domain {
 					/* initialize routing table */
 	unsigned int	dom_sasize;	/* size of sockaddr structure */
 	unsigned int	dom_rtoffset;	/* offset of the key, in bytes */
-	unsigned int	dom_maxplen;	/* maxium prefix length, in bits */
+	unsigned int	dom_maxplen;	/* maximum prefix length, in bits */
 	void	*(*dom_ifattach)(struct ifnet *);
 	void	(*dom_ifdetach)(struct ifnet *, void *);
 					/* af-dependent data on ifnet */

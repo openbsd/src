@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_percpu.c,v 1.8 2017/09/08 05:36:53 deraadt Exp $ */
+/*	$OpenBSD: subr_percpu.c,v 1.9 2021/03/10 10:21:47 jsg Exp $ */
 
 /*
  * Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
@@ -293,7 +293,7 @@ counters_alloc(unsigned int n)
 struct cpumem *
 counters_alloc_ncpus(struct cpumem *cm, unsigned int n)
 {
-	/* this is unecessary, but symmetrical */
+	/* this is unnecessary, but symmetrical */
 	return (cpumem_malloc_ncpus(cm, n * sizeof(uint64_t), M_COUNTERS));
 }
 

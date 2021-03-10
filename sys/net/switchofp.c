@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.79 2021/02/25 02:48:21 dlg Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.80 2021/03/10 10:21:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -1339,7 +1339,7 @@ swofp_flow_table_delete(struct switch_softc *sc, uint16_t table_id)
 
 	LIST_FOREACH_SAFE(swfe, &swft->swft_flow_list, swfe_next, tswfe) {
 		/*
-		 * Flows are deleted force becouse of deleting table,
+		 * Flows are deleted force because of deleting table,
 		 * s it's not necessary to send flow remove message.
 		 */
 		swfe->swfe_flags &= ~(OFP_FLOWFLAG_SEND_FLOW_REMOVED);
@@ -3056,7 +3056,7 @@ swofp_ox_match_uint32(struct switch_flow_classify *swfcl,
 	switch (OFP_OXM_GET_FIELD(oxm)) {
 	case OFP_XM_T_IN_PORT:
 		/*
-		 * in_port isn't network byte order becouse
+		 * in_port isn't network byte order because
 		 * it's pipeline match field.
 		 */
 		in = htonl(swfcl->swfcl_in_port);
@@ -5699,7 +5699,7 @@ swofp_recv_packet_out(struct switch_softc *sc, struct mbuf *m)
  *  splited some OpenFlow messages. OpenFlow Switch Specification says that
  *  "NO OBJECT CAN BE SPLIT ACROSS TWO MESSAGES". In other words, point of
  *  splittig is different per reply, so switch(4) builds multipart message using
- *  swofp_mpms_* functions which splits messsages not to object across
+ *  swofp_mpms_* functions which splits messages not to object across
  *  two messages.
  */
 int
@@ -6336,7 +6336,7 @@ swofp_table_features_put_oxm(struct mbuf *m, int *off, uint16_t tp_type)
 	}
 
 	/*
-	 * It's always 4 byte for padding becouse struct ofp_ox_mach and
+	 * It's always 4 byte for padding because struct ofp_ox_mach and
 	 * struct ofp_table_feature_property are 4 byte.
 	 */
 	if ((supported & 0x1) == 0) {
@@ -6458,7 +6458,7 @@ swofp_mp_recv_table_features(struct switch_softc *sc, struct mbuf *m)
 		goto error;
 
 	TAILQ_FOREACH(swft, &ofs->swofs_table_list, swft_table_next) {
-		/* using mbuf becouse table featrues struct is variable length*/
+		/* using mbuf because table features struct is variable length*/
 		MGETHDR(n, M_DONTWAIT, MT_DATA);
 		if (n == NULL)
 			goto error;

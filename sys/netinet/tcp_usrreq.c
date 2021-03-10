@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.179 2021/01/09 20:58:37 gnezdo Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.180 2021/03/10 10:21:49 jsg Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -1104,7 +1104,7 @@ tcp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 /*
  * Scale the send buffer so that inflight data is not accounted against
  * the limit. The buffer will scale with the congestion window, if the
- * the receiver stops acking data the window will shrink and therefor
+ * the receiver stops acking data the window will shrink and therefore
  * the buffer size will shrink as well.
  * In low memory situation try to shrink the buffer to the initial size
  * disabling the send buffer scaling as long as the situation persists.
