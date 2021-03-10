@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp.h,v 1.21 2017/08/12 11:20:34 goda Exp $ */
+/*	$OpenBSD: ppp.h,v 1.22 2021/03/10 10:51:10 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -82,7 +82,7 @@
 
 #define	MAX_USERNAME_LENGTH	256
 #define	MAX_PASSWORD_LENGTH	256
-#define MAX_CHALLENGE_LENGTH    24
+#define MAX_CHALLENGE_LENGTH    96
 
 #define INADDR_IPCP_OBEY_REMOTE_REQ	0x00000000L
 
