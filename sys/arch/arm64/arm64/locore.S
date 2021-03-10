@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.S,v 1.34 2021/02/21 13:14:47 kettenis Exp $ */
+/* $OpenBSD: locore.S,v 1.35 2021/03/10 15:56:06 kettenis Exp $ */
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
  * All rights reserved.
@@ -236,7 +236,10 @@ switch_mmu_kernel:
 
 	.align 3
 mair:
-	/* Device | Normal (no cache, write-back, write-through) */
+	/*
+	 * Device (nGnRnE, nGnRE) |
+	 * Normal (no cache, write-back, write-through)
+	 */
 	.quad	MAIR_ATTR(0x00, 0) |	\
 		MAIR_ATTR(0x04, 1) |	\
 		MAIR_ATTR(0x44, 2) |	\
