@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.99 2020/09/28 21:35:14 jca Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.100 2021/03/11 18:12:41 kn Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -489,6 +489,11 @@ main(int argc, char *argv[])
 
 	if (statonly)
 		exit(0);
+
+	if (unveil(_PATH_APM_ETC_DIR, "rx") == -1)
+		err(1, "unveil");
+	if (unveil(NULL, NULL) == -1)
+		err(1, "unveil");
 
 	set_driver_messages(ctl_fd, APM_PRINT_OFF);
 
