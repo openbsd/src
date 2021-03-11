@@ -1,4 +1,4 @@
-/*	$OpenBSD: quiz.c,v 1.30 2018/08/24 11:14:49 mestre Exp $	*/
+/*	$OpenBSD: quiz.c,v 1.31 2021/03/11 21:18:25 naddy Exp $	*/
 /*	$NetBSD: quiz.c,v 1.9 1995/04/22 10:16:58 cgd Exp $	*/
 
 /*-
@@ -48,7 +48,6 @@ static QE qlist;
 static int catone, cattwo, tflag;
 static u_int qsize;
 
-char	*appdstr(char *, const char *, size_t);
 void	 downcase(char *);
 void	 get_cats(char *, char *);
 void	 get_file(const char *);
@@ -110,7 +109,8 @@ get_file(const char *file)
 {
 	FILE *fp;
 	QE *qp;
-	size_t len;
+	ssize_t len;
+	size_t qlen, size;
 	char *lp;
 
 	if ((fp = fopen(file, "r")) == NULL)
@@ -123,26 +123,36 @@ get_file(const char *file)
 	 */
 	qp = &qlist;
 	qsize = 0;
-	while ((lp = fgetln(fp, &len)) != NULL) {
+	qlen = 0;
+	lp = NULL;
+	size = 0;
+	while ((len = getline(&lp, &size, fp)) != -1) {
 		if (lp[len - 1] == '\n')
-			--len;
-		if (qp->q_text && qp->q_text[0] != '\0' &&
-		    qp->q_text[strlen(qp->q_text) - 1] == '\\')
-			qp->q_text = appdstr(qp->q_text, lp, len);
-		else {
+			lp[--len] = '\0';
+		if (qp->q_text)
+			qlen = strlen(qp->q_text);
+		if (qlen > 0 && qp->q_text[qlen - 1] == '\\') {
+			qp->q_text[--qlen] = '\0';
+			qlen += len;
+			qp->q_text = realloc(qp->q_text, qlen + 1);
+			if (qp->q_text == NULL)
+				errx(1, "realloc");
+			strlcat(qp->q_text, lp, qlen + 1);
+		} else {
 			if ((qp->q_next = malloc(sizeof(QE))) == NULL)
 				errx(1, "malloc");
 			qp = qp->q_next;
-			if ((qp->q_text = malloc(len + 1)) == NULL)
-				errx(1, "malloc");
-			/* lp may not be zero-terminated; cannot use strlcpy */
-			strncpy(qp->q_text, lp, len);
-			qp->q_text[len] = '\0';
+			qp->q_text = strdup(lp);
+			if (qp->q_text == NULL)
+				errx(1, "strdup");
 			qp->q_asked = qp->q_answered = FALSE;
 			qp->q_next = NULL;
 			++qsize;
 		}
 	}
+	free(lp);
+	if (ferror(fp))
+		err(1, "getline");
 	(void)fclose(fp);
 }
 
@@ -316,32 +326,6 @@ next_cat(const char *s)
 			esc = 0;
 			break;
 		}
-}
-
-char *
-appdstr(char *s, const char *tp, size_t len)
-{
-	char *mp;
-	const char *sp;
-	int ch;
-	char *m;
-
-	if ((m = malloc(strlen(s) + len + 1)) == NULL)
-		errx(1, "malloc");
-	for (mp = m, sp = s; (*mp++ = *sp++) != '\0'; )
-		;
-	--mp;
-	if (*(mp - 1) == '\\')
-		--mp;
-
-	while ((ch = *mp++ = *tp++) && ch != '\n')
-		;
-	if (*(mp - 2) == '\\')
-		mp--;
-	*mp = '\0';
-
-	free(s);
-	return (m);
 }
 
 void
