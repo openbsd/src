@@ -1,4 +1,4 @@
-/* $OpenBSD: mviic.c,v 1.2 2019/09/07 13:27:40 patrick Exp $ */
+/* $OpenBSD: mviic.c,v 1.3 2021/03/11 09:15:25 patrick Exp $ */
 /*
  * Copyright (c) 2019 Patrick Wildt <patrick@blueri.se>
  *
@@ -314,17 +314,22 @@ mviic_bus_scan(struct device *self, struct i2cbus_attach_args *iba, void *aux)
 	int iba_node = *(int *)aux;
 	extern int iic_print(void *, const char *);
 	struct i2c_attach_args ia;
-	char name[32];
+	char name[32], status[32];
 	uint32_t reg[1];
 	int node;
 
 	for (node = OF_child(iba_node); node; node = OF_peer(node)) {
 		memset(name, 0, sizeof(name));
+		memset(status, 0, sizeof(status));
 		memset(reg, 0, sizeof(reg));
 
 		if (OF_getprop(node, "compatible", name, sizeof(name)) == -1)
 			continue;
 		if (name[0] == '\0')
+			continue;
+
+		if (OF_getprop(node, "status", status, sizeof(status)) > 0 &&
+		    strcmp(status, "disabled") == 0)
 			continue;
 
 		if (OF_getprop(node, "reg", &reg, sizeof(reg)) != sizeof(reg))

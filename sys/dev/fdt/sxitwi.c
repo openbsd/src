@@ -1,4 +1,4 @@
-/* $OpenBSD: sxitwi.c,v 1.12 2020/10/08 20:57:52 patrick Exp $ */
+/* $OpenBSD: sxitwi.c,v 1.13 2021/03/11 09:15:25 patrick Exp $ */
 /*	$NetBSD: gttwsi_core.c,v 1.2 2014/11/23 13:37:27 jmcneill Exp $	*/
 /*
  * Copyright (c) 2008 Eiji Kawauchi.
@@ -304,17 +304,22 @@ sxitwi_bus_scan(struct device *self, struct i2cbus_attach_args *iba, void *arg)
 {
 	int iba_node = *(int *)arg;
 	struct i2c_attach_args ia;
-	char name[32];
+	char name[32], status[32];
 	uint32_t reg[1];
 	int node;
 
 	for (node = OF_child(iba_node); node; node = OF_peer(node)) {
 		memset(name, 0, sizeof(name));
+		memset(status, 0, sizeof(status));
 		memset(reg, 0, sizeof(reg));
 
 		if (OF_getprop(node, "compatible", name, sizeof(name)) == -1)
 			continue;
 		if (name[0] == '\0')
+			continue;
+
+		if (OF_getprop(node, "status", status, sizeof(status)) > 0 &&
+		    strcmp(status, "disabled") == 0)
 			continue;
 
 		if (OF_getprop(node, "reg", &reg, sizeof(reg)) != sizeof(reg))
