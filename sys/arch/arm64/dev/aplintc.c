@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplintc.c,v 1.1 2021/02/23 17:01:17 kettenis Exp $	*/
+/*	$OpenBSD: aplintc.c,v 1.2 2021/03/11 10:40:22 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis
  *
@@ -16,6 +16,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/atomic.h>
 #include <sys/device.h>
 #include <sys/evcount.h>
 #include <sys/malloc.h>
@@ -38,7 +39,16 @@
 #define AIC_EVENT		0x2004
 #define  AIC_EVENT_TYPE(val)	((val) >> 16)
 #define  AIC_EVENT_TYPE_IRQ	1
+#define  AIC_EVENT_TYPE_IPI	4
 #define  AIC_EVENT_IRQ(val)	((val) & 0xffff)
+#define  AIC_EVENT_IPI_OTHER	1
+#define  AIC_EVENT_IPI_SELF	2
+#define AIC_IPI_SEND		0x2008
+#define AIC_IPI_ACK		0x200c
+#define AIC_IPI_MASK_SET	0x2024
+#define AIC_IPI_MASK_CLR	0x2028
+#define  AIC_IPI_OTHER		(1U << 0)
+#define  AIC_IPI_SELF		(1U << 31)
 #define AIC_TARGET_CPU(irq)	(0x3000 + ((irq) << 2))
 #define AIC_SW_SET(irq)		(0x4000 + (((irq) >> 5) << 2))
 #define AIC_SW_CLR(irq)		(0x4080 + (((irq) >> 5) << 2))
@@ -46,6 +56,8 @@
 #define AIC_MASK_SET(irq)	(0x4100 + (((irq) >> 5) << 2))
 #define AIC_MASK_CLR(irq)	(0x4180 + (((irq) >> 5) << 2))
 #define  AIC_MASK_BIT(irq)	(1U << ((irq) & 0x1f))
+
+#define AIC_MAXCPUS		32
 
 #define HREAD4(sc, reg)							\
 	(bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg)))
@@ -72,10 +84,13 @@ struct aplintc_softc {
 	struct interrupt_controller sc_ic;
 
 	struct intrhand		*sc_fiq_handler;
-	int			sc_fiq_pending;
+	int			sc_fiq_pending[AIC_MAXCPUS];
 	struct intrhand		**sc_irq_handler;
 	int 			sc_nirq;
 	TAILQ_HEAD(, intrhand)	sc_irq_list[NIPL];
+
+	uint32_t		sc_cpuremap[AIC_MAXCPUS];
+	u_int			sc_ipi_reason[AIC_MAXCPUS];
 };
 
 struct aplintc_softc *aplintc_sc;
@@ -91,6 +106,7 @@ struct cfdriver aplintc_cd = {
 	NULL, "aplintc", DV_DULL
 };
 
+void	aplintc_cpuinit(void);
 void	aplintc_irq_handler(void *);
 void	aplintc_fiq_handler(void *);
 void	aplintc_intr_barrier(void *);
@@ -102,6 +118,9 @@ void	aplintc_setipl(int);
 void 	*aplintc_intr_establish(void *, int *, int, struct cpu_info *,
 	    int (*)(void *), void *, char *);
 void	aplintc_intr_disestablish(void *);
+
+void	aplintc_send_ipi(struct cpu_info *, int);
+void	aplintc_handle_ipi(struct aplintc_softc *, uint32_t);
 
 int
 aplintc_match(struct device *parent, void *match, void *aux)
@@ -143,6 +162,8 @@ aplintc_attach(struct device *parent, struct device *self, void *aux)
 	arm_init_smask();
 
 	aplintc_sc = sc;
+	aplintc_cpuinit();
+
 	arm_set_intr_handler(aplintc_splraise, aplintc_spllower, aplintc_splx,
 	    aplintc_setipl, aplintc_irq_handler, aplintc_fiq_handler);
 
@@ -150,8 +171,25 @@ aplintc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ic.ic_cookie = self;
 	sc->sc_ic.ic_establish = aplintc_intr_establish;
 	sc->sc_ic.ic_disestablish = aplintc_intr_disestablish;
+	sc->sc_ic.ic_cpu_enable = aplintc_cpuinit;
 	sc->sc_ic.ic_barrier = aplintc_intr_barrier;
 	arm_intr_register_fdt(&sc->sc_ic);
+
+	intr_send_ipi_func = aplintc_send_ipi;
+}
+
+void
+aplintc_cpuinit(void)
+{
+	struct aplintc_softc *sc = aplintc_sc;
+	struct cpu_info *ci = curcpu();
+	uint32_t hwid;
+
+	KASSERT(ci->ci_cpuid < AIC_MAXCPUS);
+
+	hwid = HREAD4(sc, AIC_WHOAMI);
+	KASSERT(hwid < AIC_MAXCPUS);
+	sc->sc_cpuremap[ci->ci_cpuid] = hwid;
 }
 
 void
@@ -168,6 +206,11 @@ aplintc_irq_handler(void *frame)
 	event = HREAD4(sc, AIC_EVENT);
 	irq = AIC_EVENT_IRQ(event);
 	type = AIC_EVENT_TYPE(event);
+
+	if (type == AIC_EVENT_TYPE_IPI) {
+		aplintc_handle_ipi(sc, irq);
+		return;
+	}
 
 	if (type != AIC_EVENT_TYPE_IRQ)
 		panic("%s: unexpected event type %d\n", __func__, type);
@@ -210,7 +253,7 @@ aplintc_fiq_handler(void *frame)
 		/* Mask timer interrupt and mark as pending. */
 		reg = READ_SPECIALREG(cntv_ctl_el0);
 		WRITE_SPECIALREG(cntv_ctl_el0, reg | CNTV_CTL_IMASK);
-		sc->sc_fiq_pending = 1;
+		sc->sc_fiq_pending[ci->ci_cpuid] = 1;
 		return;
 	}
 
@@ -264,22 +307,25 @@ aplintc_splx(int new)
 	daif = intr_disable();
 
 	/* Process pending FIQs. */
-	if (sc->sc_fiq_pending && new < IPL_CLOCK) {
-		sc->sc_fiq_pending = 0;
+	if (sc->sc_fiq_pending[ci->ci_cpuid] && new < IPL_CLOCK) {
+		sc->sc_fiq_pending[ci->ci_cpuid] = 0;
 		reg = READ_SPECIALREG(cntv_ctl_el0);
 		WRITE_SPECIALREG(cntv_ctl_el0, reg & ~CNTV_CTL_IMASK);
 	}
 
 	/* Process pending IRQs. */
-	for (ipl = ci->ci_cpl; ipl > new; ipl--) {
-		while (!TAILQ_EMPTY(&sc->sc_irq_list[ipl])) {
-			ih = TAILQ_FIRST(&sc->sc_irq_list[ipl]);
-			TAILQ_REMOVE(&sc->sc_irq_list[ipl], ih, ih_list);
+	if (CPU_IS_PRIMARY(ci)) {
+		for (ipl = ci->ci_cpl; ipl > new; ipl--) {
+			while (!TAILQ_EMPTY(&sc->sc_irq_list[ipl])) {
+				ih = TAILQ_FIRST(&sc->sc_irq_list[ipl]);
+				TAILQ_REMOVE(&sc->sc_irq_list[ipl],
+				    ih, ih_list);
 
-			HWRITE4(sc, AIC_SW_SET(ih->ih_irq),
-			    AIC_SW_BIT(ih->ih_irq));
-			HWRITE4(sc, AIC_MASK_CLR(ih->ih_irq),
-			    AIC_MASK_BIT(ih->ih_irq));
+				HWRITE4(sc, AIC_SW_SET(ih->ih_irq),
+				    AIC_SW_BIT(ih->ih_irq));
+				HWRITE4(sc, AIC_MASK_CLR(ih->ih_irq),
+				    AIC_MASK_BIT(ih->ih_irq));
+			}
 		}
 	}
 
@@ -376,4 +422,43 @@ aplintc_intr_disestablish(void *cookie)
 	intr_restore(daif);
 
 	free(ih, M_DEVBUF, sizeof(*ih));
+}
+
+void
+aplintc_send_ipi(struct cpu_info *ci, int reason)
+{
+	struct aplintc_softc *sc = aplintc_sc;
+	uint32_t hwid;
+
+	if (ci == curcpu() && reason == ARM_IPI_NOP)
+		return;
+
+	/* never overwrite IPI_DDB with IPI_NOP */
+	if (reason == ARM_IPI_DDB)
+		sc->sc_ipi_reason[ci->ci_cpuid] = reason;
+	membar_producer();
+
+	hwid = sc->sc_cpuremap[ci->ci_cpuid];
+	HWRITE4(sc, AIC_IPI_SEND, (1U << hwid));
+}
+
+void
+aplintc_handle_ipi(struct aplintc_softc *sc, uint32_t irq)
+{
+	struct cpu_info *ci = curcpu();
+
+	if (irq != AIC_EVENT_IPI_OTHER)
+		panic("%s: unexpected irq %d\n", __func__, irq);
+
+	HWRITE4(sc, AIC_IPI_ACK, AIC_IPI_OTHER);
+
+	membar_consumer();
+	if (sc->sc_ipi_reason[ci->ci_cpuid] == ARM_IPI_DDB) {
+		sc->sc_ipi_reason[ci->ci_cpuid] = ARM_IPI_NOP;
+#ifdef DDB
+		db_enter();
+#endif
+	}
+
+	HWRITE4(sc, AIC_IPI_MASK_CLR, AIC_IPI_OTHER);
 }
