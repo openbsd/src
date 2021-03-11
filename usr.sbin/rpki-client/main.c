@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.116 2021/03/11 09:19:16 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.117 2021/03/11 09:21:16 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -126,7 +126,7 @@ logx(const char *fmt, ...)
 /*
  * Functions to lookup which files have been accessed during computation.
  */
-static void
+static int
 filepath_add(char *file)
 {
 	struct filepath *fp;
@@ -140,7 +140,10 @@ filepath_add(char *file)
 		/* already in the tree */
 		free(fp->file);
 		free(fp);
+		return 0;
 	}
+
+	return 1;
 }
 
 static int
@@ -229,6 +232,11 @@ entityq_add(char *file, enum rtype type, struct repo *rp,
 {
 	struct entity	*p;
 
+	if (filepath_add(file) == 0) {
+		warnx("%s: File already visited", file);
+		return;
+	}
+
 	if ((p = calloc(1, sizeof(struct entity))) == NULL)
 		err(1, NULL);
 
@@ -245,8 +253,6 @@ entityq_add(char *file, enum rtype type, struct repo *rp,
 	if (descr != NULL)
 		if ((p->descr = strdup(descr)) == NULL)
 			err(1, NULL);
-
-	filepath_add(file);
 
 	entity_queue++;
 
