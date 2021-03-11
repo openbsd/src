@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2021/02/18 00:34:14 tb Exp $
+# $OpenBSD: Makefile,v 1.3 2021/03/11 11:57:33 tb Exp $
 
 # Copyright (c) 2021 Jan Klemkow <j.klemkow@wemelug.de>
 #
@@ -23,11 +23,12 @@
 PERL =		perl
 OPENSSL ?=	openssl
 
-PKG_REQUIRE != pkg_info -e 'p5-IO-Socket-SSL-*'
-.if empty (PKG_REQUIRE)
+.if !(make(clean) || make(cleandir) || make(obj))
+. if !exists(/usr/local/libdata/perl5/site_perl/IO/Socket/SSL.pm)
 regress:
 	@echo "missing package p5-IO-Socket-SSL"
 	@echo SKIPPED
+. endif
 .endif
 
 REGRESS_TARGETS +=	test-inlabel-wildcard-cert-no-CA-client
