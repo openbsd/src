@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.325 2021/03/10 18:27:01 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.326 2021/03/11 17:14:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1131,7 +1131,6 @@ int ssl_enabled_tls_version_range(SSL *s, uint16_t *min_ver, uint16_t *max_ver);
 int ssl_supported_tls_version_range(SSL *s, uint16_t *min_ver, uint16_t *max_ver);
 uint16_t ssl_tls_version(uint16_t version);
 uint16_t ssl_effective_tls_version(SSL *s);
-int ssl_downgrade_max_version(SSL *s, uint16_t *max_ver);
 int ssl_max_supported_version(SSL *s, uint16_t *max_ver);
 int ssl_max_shared_version(SSL *s, uint16_t peer_ver, uint16_t *max_ver);
 int ssl_check_version_from_server(SSL *s, uint16_t server_version);

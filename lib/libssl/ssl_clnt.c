@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.85 2021/03/10 18:27:01 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.86 2021/03/11 17:14:46 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -859,7 +859,6 @@ ssl3_get_server_hello(SSL *s)
 {
 	CBS cbs, server_random, session_id;
 	uint16_t server_version, cipher_suite;
-	uint16_t max_version;
 	uint8_t compression_method;
 	const SSL_CIPHER *cipher;
 	const SSL_METHOD *method;
@@ -930,10 +929,8 @@ ssl3_get_server_hello(SSL *s)
 	    sizeof(s->s3->server_random), NULL))
 		goto err;
 
-	if (!ssl_downgrade_max_version(s, &max_version))
-		goto err;
-	if (!SSL_is_dtls(s) && max_version >= TLS1_2_VERSION &&
-	    s->version < max_version) {
+	if (S3I(s)->hs.our_max_tls_version >= TLS1_2_VERSION &&
+	    S3I(s)->hs.negotiated_tls_version < S3I(s)->hs.our_max_tls_version) {
 		/*
 		 * RFC 8446 section 4.1.3. We must not downgrade if the server
 		 * random value contains the TLS 1.2 or TLS 1.1 magical value.
@@ -941,7 +938,7 @@ ssl3_get_server_hello(SSL *s)
 		if (!CBS_skip(&server_random,
 		    CBS_len(&server_random) - sizeof(tls13_downgrade_12)))
 			goto err;
-		if (s->version == TLS1_2_VERSION &&
+		if (S3I(s)->hs.negotiated_tls_version == TLS1_2_VERSION &&
 		    CBS_mem_equal(&server_random, tls13_downgrade_12,
 		    sizeof(tls13_downgrade_12))) {
 			al = SSL_AD_ILLEGAL_PARAMETER;

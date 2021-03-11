@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_ciphers.c,v 1.10 2021/02/25 17:06:05 jsing Exp $ */
+/*	$OpenBSD: ssl_ciphers.c,v 1.11 2021/03/11 17:14:46 jsing Exp $ */
 /*
  * Copyright (c) 2015-2017 Doug Hogan <doug@openbsd.org>
  * Copyright (c) 2015-2018, 2020 Joel Sing <jsing@openbsd.org>
@@ -93,7 +93,7 @@ ssl_bytes_to_cipher_list(SSL *s, CBS *cbs)
 {
 	STACK_OF(SSL_CIPHER) *ciphers = NULL;
 	const SSL_CIPHER *cipher;
-	uint16_t cipher_value, max_version;
+	uint16_t cipher_value;
 	unsigned long cipher_id;
 
 	S3I(s)->send_connection_binding = 0;
@@ -134,9 +134,8 @@ ssl_bytes_to_cipher_list(SSL *s, CBS *cbs)
 			 * Fail if the current version is an unexpected
 			 * downgrade.
 			 */
-			if (!ssl_downgrade_max_version(s, &max_version))
-				goto err;
-			if (s->version < max_version) {
+			if (S3I(s)->hs.negotiated_tls_version <
+			    S3I(s)->hs.our_max_tls_version) {
 				SSLerror(s, SSL_R_INAPPROPRIATE_FALLBACK);
 				ssl3_send_alert(s, SSL3_AL_FATAL,
 					SSL_AD_INAPPROPRIATE_FALLBACK);

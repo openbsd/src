@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.96 2021/03/10 18:27:02 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.97 2021/03/11 17:14:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -799,7 +799,7 @@ ssl3_get_client_hello(SSL *s)
 	STACK_OF(SSL_CIPHER) *ciphers = NULL;
 	unsigned long alg_k;
 	const SSL_METHOD *method;
-	uint16_t max_version, shared_version;
+	uint16_t shared_version;
 
 	/*
 	 * We do this so that we will respond with our native type.
@@ -850,8 +850,6 @@ ssl3_get_client_hello(SSL *s)
 	 * Use version from inside client hello, not from record header.
 	 * (may differ: see RFC 2246, Appendix E, second paragraph)
 	 */
-	if (!ssl_downgrade_max_version(s, &max_version))
-		goto err;
 	if (!ssl_max_shared_version(s, client_version, &shared_version)) {
 		if ((s->client_version >> 8) == SSL3_VERSION_MAJOR &&
 		    !tls12_record_layer_write_protected(s->internal->rl)) {
@@ -1051,8 +1049,8 @@ ssl3_get_client_hello(SSL *s)
 	 */
 	arc4random_buf(s->s3->server_random, SSL3_RANDOM_SIZE);
 
-	if (!SSL_is_dtls(s) && max_version >= TLS1_2_VERSION &&
-	    s->version < max_version) {
+	if (S3I(s)->hs.our_max_tls_version >= TLS1_2_VERSION &&
+	    S3I(s)->hs.negotiated_tls_version < S3I(s)->hs.our_max_tls_version) {
 		/*
 		 * RFC 8446 section 4.1.3. If we are downgrading from TLS 1.3
 		 * we must set the last 8 bytes of the server random to magical
@@ -1061,7 +1059,7 @@ ssl3_get_client_hello(SSL *s)
 		 */
 		size_t index = SSL3_RANDOM_SIZE - sizeof(tls13_downgrade_12);
 		uint8_t *magic = &s->s3->server_random[index];
-		if (s->version == TLS1_2_VERSION) {
+		if (S3I(s)->hs.negotiated_tls_version == TLS1_2_VERSION) {
 			/* Indicate we chose to downgrade to 1.2. */
 			memcpy(magic, tls13_downgrade_12,
 			    sizeof(tls13_downgrade_12));
