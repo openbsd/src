@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.710 2021/03/09 14:32:24 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.711 2021/03/11 15:30:49 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -807,12 +807,18 @@ state_reboot(struct interface_info *ifi)
 void
 state_init(struct interface_info *ifi)
 {
+	const struct timespec	offer_intvl = {config->offer_interval, 0};
+	struct timespec		now;
+
 	ifi->xid = arc4random();
 	make_discover(ifi, ifi->active);
 
 	ifi->destination.s_addr = INADDR_BROADCAST;
 	ifi->state = S_SELECTING;
-	time(&ifi->first_sending);
+	clock_gettime(CLOCK_REALTIME, &now);
+	ifi->first_sending = now.tv_sec;
+	timespecadd(&now, &offer_intvl, &ifi->offer_timeout);
+	ifi->select_timeout = ifi->offer_timeout;
 	ifi->interval = 0;
 
 	send_discover(ifi);
@@ -892,10 +898,11 @@ void
 process_offer(struct interface_info *ifi, struct option_data *options,
     const char *src)
 {
+	const struct timespec	 select_intvl = {config->select_interval, 0};
+	struct timespec		 now, remaining;
 	struct client_lease	*lease;
-	time_t			 cur_time, stop_selecting;
 
-	time(&cur_time);
+	clock_gettime(CLOCK_REALTIME, &now);
 
 	lease = packet_to_lease(ifi, options);
 	if (lease != NULL) {
@@ -903,6 +910,10 @@ process_offer(struct interface_info *ifi, struct option_data *options,
 			ifi->offer = lease;
 			free(ifi->offer_src);
 			ifi->offer_src = strdup(src);	/* NULL is OK */
+			timespecadd(&now, &select_intvl, &ifi->select_timeout);
+			if (timespeccmp(&ifi->select_timeout,
+			    &ifi->offer_timeout, >))
+				ifi->select_timeout = ifi->offer_timeout;
 		} else if (lease->address.s_addr ==
 		    ifi->offer->address.s_addr) {
 			/* Decline duplicate offers. */
@@ -920,12 +931,16 @@ process_offer(struct interface_info *ifi, struct option_data *options,
 		}
 	}
 
-	/* Figure out when we're supposed to stop selecting. */
-	stop_selecting = ifi->first_sending + config->select_interval;
-	if (stop_selecting <= cur_time)
+	if (timespeccmp(&now, &ifi->select_timeout, >=))
 		state_selecting(ifi);
-	else
-		set_timeout(ifi, stop_selecting - cur_time, state_selecting);
+	else {
+		timespecsub(&ifi->select_timeout, &now, &remaining);
+		if (remaining.tv_sec == 0 || remaining.tv_nsec > 500000000LL)
+			remaining.tv_sec++;
+		log_debug("%s: waiting %lld seconds for better offers",
+		    log_procname, (long long)remaining.tv_sec);
+		set_timeout(ifi, remaining.tv_sec, state_selecting);
+	}
 }
 
 void
@@ -1378,9 +1393,13 @@ set_interval(struct interface_info *ifi, time_t cur_time)
 		if (cur_time + interval > ifi->expiry)
 			interval = ifi->expiry - cur_time;
 		break;
+	case S_SELECTING:
+		if (cur_time + interval > ifi->select_timeout.tv_sec)
+			interval = ifi->select_timeout.tv_sec - cur_time;
+		break;
 	case S_REQUESTING:
-		if (cur_time + interval > ifi->first_sending + config->offer_interval)
-			interval = (ifi->first_sending + config->offer_interval) - cur_time;
+		if (cur_time + interval > ifi->offer_timeout.tv_sec)
+			interval = ifi->offer_timeout.tv_sec - cur_time;
 		break;
 	default:
 		break;
@@ -1420,7 +1439,7 @@ send_discover(struct interface_info *ifi)
 	clock_gettime(CLOCK_REALTIME, &now);
 	cur_time = now.tv_sec;
 
-	if (cur_time > ifi->first_sending + config->offer_interval) {
+	if (timespeccmp(&now, &ifi->offer_timeout, >=)) {
 		state_panic(ifi);
 		return;
 	}
@@ -1514,7 +1533,7 @@ send_request(struct interface_info *ifi)
 		}
 		break;
 	case S_REQUESTING:
-		if (interval > config->offer_interval)
+		if (timespeccmp(&now, &ifi->offer_timeout, >=))
 			ifi->state = S_INIT;
 		else {
 			destination.sin_addr.s_addr = INADDR_BROADCAST;
