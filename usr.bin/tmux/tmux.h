@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1098 2021/03/11 06:41:04 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1099 2021/03/11 07:08:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1947,6 +1947,7 @@ char		*paste_make_sample(struct paste_buffer *);
 struct format_tree;
 struct format_modifier;
 typedef void *(*format_cb)(struct format_tree *);
+void		 format_tidy_jobs(void);
 const char	*format_skip(const char *, const char *);
 int		 format_true(const char *);
 struct format_tree *format_create(struct client *, struct cmdq_item *, int,
