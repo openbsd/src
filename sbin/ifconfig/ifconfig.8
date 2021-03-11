@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.366 2021/03/11 10:09:48 kn Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.367 2021/03/11 10:12:51 kn Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -1803,13 +1803,11 @@ Disable the filtering of IPv4 and IPv6 packets with
 .It Cm -link1
 Enable the filtering of IPv4 and IPv6 packets with
 .Xr pf 4 .
-Packets will appear to enter or leave the member port interfaces.
 This is the default.
 .It Cm link2
 Disable the filtering of 802.1Q VLAN and QinQ SVLAN packets.
 .It Cm -link2
 Enable the filtering of 802.1Q VLAN and QinQ SVLAN packets.
-Packets will appear to enter or leave the member port interfaces.
 This is the default.
 .El
 .Sh TRUNK (LINK AGGREGATION)
