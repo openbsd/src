@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1097 2021/03/11 06:31:05 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1098 2021/03/11 06:41:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -740,7 +740,8 @@ enum style_align {
 	STYLE_ALIGN_DEFAULT,
 	STYLE_ALIGN_LEFT,
 	STYLE_ALIGN_CENTRE,
-	STYLE_ALIGN_RIGHT
+	STYLE_ALIGN_RIGHT,
+	STYLE_ALIGN_ABSOLUTE_CENTRE
 };
 
 /* Style list. */

@@ -1,4 +1,4 @@
-/* $OpenBSD: style.c,v 1.28 2020/05/16 16:02:24 nicm Exp $ */
+/* $OpenBSD: style.c,v 1.29 2021/03/11 06:41:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -139,6 +139,8 @@ style_parse(struct style *sy, const struct grid_cell *base, const char *in)
 				sy->align = STYLE_ALIGN_CENTRE;
 			else if (strcasecmp(tmp + 6, "right") == 0)
 				sy->align = STYLE_ALIGN_RIGHT;
+			else if (strcasecmp(tmp + 6, "absolute-centre") == 0)
+				sy->align = STYLE_ALIGN_ABSOLUTE_CENTRE;
 			else
 				goto error;
 		} else if (end > 5 && strncasecmp(tmp, "fill=", 5) == 0) {
@@ -227,6 +229,8 @@ style_tostring(struct style *sy)
 			tmp = "centre";
 		else if (sy->align == STYLE_ALIGN_RIGHT)
 			tmp = "right";
+		else if (sy->align == STYLE_ALIGN_ABSOLUTE_CENTRE)
+			tmp = "absolute-centre";
 		off += xsnprintf(s + off, sizeof s - off, "%salign=%s", comma,
 		    tmp);
 		comma = ",";
