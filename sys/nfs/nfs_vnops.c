@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.185 2020/09/27 17:25:19 matthieu Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.186 2021/03/11 13:31:35 jsg Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -1264,7 +1264,7 @@ nfs_writerpc(struct vnode *vp, struct uio *uiop, int *iomode, int *must_commit)
 			commit = fxdr_unsigned(int, *tl++);
 
 			/*
-			 * Return the lowest committment level
+			 * Return the lowest commitment level
 			 * obtained by any of the RPCs.
 			 */
 			if (committed == NFSV3WRITE_FILESYNC)
@@ -3195,7 +3195,7 @@ nfs_writebp(struct buf *bp, int force)
 			} else
 				bcstats.pendingwrites--;
 		} else
-			retv = 0; /* It has already been commited. */
+			retv = 0; /* It has already been committed. */
 
 		rw_exit_write(&np->n_commitlock);
 		if (!retv) {

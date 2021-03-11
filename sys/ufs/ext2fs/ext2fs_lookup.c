@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_lookup.c,v 1.44 2018/05/02 02:24:56 visa Exp $	*/
+/*	$OpenBSD: ext2fs_lookup.c,v 1.45 2021/03/11 13:31:35 jsg Exp $	*/
 /*	$NetBSD: ext2fs_lookup.c,v 1.16 2000/08/03 20:29:26 thorpej Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ ext2fs_dirconv2ffs(struct ext2fs_direct	*e2dir, struct dirent *ffsdir)
 	ffsdir->d_type = DT_UNKNOWN;		/* don't know more here */
 #ifdef DIAGNOSTIC
 	/*
-	 * XXX Rigth now this can't happen, but if one day
+	 * XXX Right now this can't happen, but if one day
 	 * MAXNAMLEN != E2FS_MAXNAMLEN we should handle this more gracefully !
 	 */
 	/* XXX: e2d_namlen is to small for such comparison

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.113 2020/06/20 07:49:04 otto Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.114 2021/03/11 13:31:35 jsg Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -416,7 +416,7 @@ ffs_inode_alloc(struct inode *pip, mode_t mode, struct ucred *cred,
 	/*
 	 * Set up a new generation number for this inode.
 	 * On wrap, we make sure to assign a number != 0 and != UINT_MAX
-	 * (the origial value).
+	 * (the original value).
 	 */
 	if (DIP(ip, gen) != 0)
 		DIP_ADD(ip, gen, 1);

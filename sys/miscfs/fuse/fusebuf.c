@@ -1,4 +1,4 @@
-/* $OpenBSD: fusebuf.c,v 1.17 2019/12/05 10:41:08 mpi Exp $ */
+/* $OpenBSD: fusebuf.c,v 1.18 2021/03/11 13:31:35 jsg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -65,7 +65,7 @@ fb_setup(size_t len, ino_t ino, int op, struct proc *p)
  * should behave. nfs supports the -ointr or -i mount option and FUSE
  * can too but this is non-trivial. The file system daemon must be
  * multi-threaded and also support being interrupted. Note that
- * libfuse currently only supports single-threaded deamons.
+ * libfuse currently only supports single-threaded daemons.
  *
  * Why not timeout similar to mount_nfs -osoft?
  * It introduces another point of failure and a possible mount option

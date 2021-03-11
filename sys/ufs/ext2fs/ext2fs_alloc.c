@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_alloc.c,v 1.37 2020/06/24 22:03:44 cheloha Exp $	*/
+/*	$OpenBSD: ext2fs_alloc.c,v 1.38 2021/03/11 13:31:35 jsg Exp $	*/
 /*	$NetBSD: ext2fs_alloc.c,v 1.10 2001/07/05 08:38:27 toshii Exp $	*/
 
 /*
@@ -213,7 +213,7 @@ ext2fs_dirpref(struct m_ext2fs *fs)
  * If no blocks have been allocated in the first section, the policy is to
  * request a block in the same cylinder group as the inode that describes
  * the file. Otherwise, the policy is to try to allocate the blocks
- * contigously. The two fields of the ext2 inode extension (see
+ * contiguously. The two fields of the ext2 inode extension (see
  * ufs/ufs/inode.h) help this.
  */
 daddr_t
@@ -224,8 +224,8 @@ ext2fs_blkpref(struct inode *ip, u_int32_t lbn, int baps, u_int32_t *bap)
 
 	fs = ip->i_e2fs;
 	/*
-	 * if we are doing contigous lbn allocation, try to alloc blocks
-	 * contigously on disk
+	 * if we are doing contiguous lbn allocation, try to alloc blocks
+	 * contiguously on disk
 	 */
 
 	if ( ip->i_e2fs_last_blk && lbn == ip->i_e2fs_last_lblk + 1) {
@@ -343,7 +343,7 @@ ext2fs_alloccg(struct inode *ip, int cg, u_int32_t bpref, int size)
 	/*
 	 * no blocks in the requested cylinder, so take next
 	 * available one in this cylinder group.
-	 * first try to get 8 contigous blocks, then fall back to a single
+	 * first try to get 8 contiguous blocks, then fall back to a single
 	 * block.
 	 */
 	if (bpref)

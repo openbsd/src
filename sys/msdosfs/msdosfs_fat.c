@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_fat.c,v 1.33 2019/07/19 00:24:31 cheloha Exp $	*/
+/*	$OpenBSD: msdosfs_fat.c,v 1.34 2021/03/11 13:31:35 jsg Exp $	*/
 /*	$NetBSD: msdosfs_fat.c,v 1.26 1997/10/17 11:24:02 ws Exp $	*/
 
 /*-
@@ -358,7 +358,7 @@ updatefats(struct msdosfsmount *pmp, struct buf *bp, uint32_t fatbn)
 		 * other fats and then writing them back out.  This could tie up
 		 * the fat for quite a while. Preventing others from accessing it.
 		 * To prevent us from going after the fat quite so much we use
-		 * delayed writes, unless they specfied "synchronous" when the
+		 * delayed writes, unless they specified "synchronous" when the
 		 * filesystem was mounted.  If synch is asked for then use
 		 * bwrite()'s and really slow things down.
 		 */
@@ -669,7 +669,7 @@ chainlength(struct msdosfsmount *pmp, uint32_t start, uint32_t count)
 }
 
 /*
- * Allocate contigous free clusters.
+ * Allocate contiguous free clusters.
  *
  * pmp	      - mount point.
  * start      - start of cluster chain.

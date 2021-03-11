@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_ihash.c,v 1.24 2018/05/27 06:02:15 visa Exp $	*/
+/*	$OpenBSD: ufs_ihash.c,v 1.25 2021/03/11 13:31:36 jsg Exp $	*/
 /*	$NetBSD: ufs_ihash.c,v 1.3 1996/02/09 22:36:04 christos Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
 #include <crypto/siphash.h>
 
 /*
- * Structures associated with inode cacheing.
+ * Structures associated with inode caching.
  */
 LIST_HEAD(ihashhead, inode) *ihashtbl;
 u_long	ihash;		/* size of hash table - 1 */

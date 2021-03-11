@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsnode.h,v 1.41 2019/01/21 18:09:21 anton Exp $	*/
+/*	$OpenBSD: nfsnode.h,v 1.42 2021/03/11 13:31:35 jsg Exp $	*/
 /*	$NetBSD: nfsnode.h,v 1.16 1996/02/18 11:54:04 fvdl Exp $	*/
 
 /*
@@ -100,7 +100,7 @@ struct nfsnode {
 	struct ucred		*n_rcred;
 	struct ucred		*n_wcred;
 
-	off_t			n_pushedlo;	/* 1st blk in commited range */
+	off_t			n_pushedlo;	/* 1st blk in committed range */
 	off_t			n_pushedhi;	/* Last block in range */
 	off_t			n_pushlo;	/* 1st block in commit range */
 	off_t			n_pushhi;	/* Last block in range */

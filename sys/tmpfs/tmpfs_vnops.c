@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vnops.c,v 1.45 2020/12/25 12:59:53 visa Exp $	*/
+/*	$OpenBSD: tmpfs_vnops.c,v 1.46 2021/03/11 13:31:35 jsg Exp $	*/
 /*	$NetBSD: tmpfs_vnops.c,v 1.100 2012/11/05 17:27:39 dholland Exp $	*/
 
 /*
@@ -289,8 +289,8 @@ done:
 	}
 out:
 	/*
-	 * If (1) we succeded, (2) found a distinct vnode to return and (3) were
-	 * either explicitly told to keep the parent locked or are in the
+	 * If (1) we succeeded, (2) found a distinct vnode to return and (3)
+	 * were either explicitly told to keep the parent locked or are in the
 	 * middle of a lookup, unlock the parent vnode.
 	 */
 	if ((error == 0 || error == EJUSTRETURN) && /* (1) */

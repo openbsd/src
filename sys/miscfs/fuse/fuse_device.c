@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_device.c,v 1.35 2020/12/25 12:59:52 visa Exp $ */
+/* $OpenBSD: fuse_device.c,v 1.36 2021/03/11 13:31:35 jsg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -258,8 +258,8 @@ end:
 }
 
 /*
- * FIOCGETFBDAT		Get fusebuf datas from kernel to user
- * FIOCSETFBDAT		Set fusebuf datas from user to kernel
+ * FIOCGETFBDAT		Get fusebuf data from kernel to user
+ * FIOCSETFBDAT		Set fusebuf data from user to kernel
  */
 int
 fuseioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
@@ -473,7 +473,7 @@ fusewrite(dev_t dev, struct uio *uio, int ioflag)
 		goto end;
 	}
 
-	/* Get the missing datas from the fbuf */
+	/* Get the missing data from the fbuf */
 	error = uiomove(&fbuf->FD, uio->uio_resid, uio);
 	if (error)
 		return error;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_inode.c,v 1.63 2020/02/27 09:10:31 mpi Exp $	*/
+/*	$OpenBSD: ext2fs_inode.c,v 1.64 2021/03/11 13:31:35 jsg Exp $	*/
 /*	$NetBSD: ext2fs_inode.c,v 1.24 2001/06/19 12:59:18 wiz Exp $	*/
 
 /*
@@ -274,7 +274,7 @@ ext2fs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 	}
 	/*
 	 * Shorten the size of the file. If the file is not being
-	 * truncated to a block boundry, the contents of the
+	 * truncated to a block boundary, the contents of the
 	 * partial block following the end of the file must be
 	 * zero'ed in case it ever become accessible again because
 	 * of subsequent file growth.

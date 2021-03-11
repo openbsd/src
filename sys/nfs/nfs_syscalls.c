@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.116 2020/01/15 13:17:35 mpi Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.117 2021/03/11 13:31:35 jsg Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -498,7 +498,7 @@ nfsrv_zapsock(struct nfssvc_sock *slp)
 }
 
 /*
- * Derefence a server socket structure. If it has no more references and
+ * Dereference a server socket structure. If it has no more references and
  * is no longer valid, you can throw it away.
  */
 void

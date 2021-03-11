@@ -1,4 +1,4 @@
-/* $OpenBSD: dirhash.h,v 1.6 2017/10/26 02:38:54 guenther Exp $	*/
+/* $OpenBSD: dirhash.h,v 1.7 2021/03/11 13:31:36 jsg Exp $	*/
 /*
  * Copyright (c) 2001 Ian Dowse.  All rights reserved.
  *
@@ -60,7 +60,7 @@
  * together on a TAILQ list, and hashes with higher scores filter
  * towards the tail (most recently used) end of the list.
  *
- * New hash entries are given an inital score of DH_SCOREINIT and are
+ * New hash entries are given an initial score of DH_SCOREINIT and are
  * placed at the most-recently-used end of the list. This helps a lot
  * in the worst-case case scenario where every directory access is
  * to a directory that is not hashed (i.e. the working set of hash
