@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.25 2019/11/10 10:03:33 mpi Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.26 2021/03/11 11:16:58 jsg Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -589,7 +589,7 @@ m88k_db_frame_search(addr, have_addr, count, modif)
 	else
 		addr = (ddb_regs.r[31]);
 
-	/* walk back up stack until 8k boundry, looking for 0 */
+	/* walk back up stack until 8k boundary, looking for 0 */
 	while (addr & ((8 * 1024) - 1)) {
 		if (frame_is_sane((db_regs_t *)addr, 1) != 0)
 			db_printf("frame found at 0x%lx\n", addr);

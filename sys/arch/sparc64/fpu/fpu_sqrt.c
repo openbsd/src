@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_sqrt.c,v 1.4 2014/09/14 18:40:49 kettenis Exp $	*/
+/*	$OpenBSD: fpu_sqrt.c,v 1.5 2021/03/11 11:17:00 jsg Exp $	*/
 /*	$NetBSD: fpu_sqrt.c,v 1.2 1994/11/20 20:52:46 deraadt Exp $ */
 
 /*
@@ -124,7 +124,7 @@
  * zero bit at the top of x.  Doing so means that q is not going to acquire
  * a 1 bit in the first trip around the loop (since x0 < 2^NBITS).  If the
  * final value in x is not needed, or can be off by a factor of 2, this is
- * equivalant to moving the `x *= 2' step to the bottom of the loop:
+ * equivalent to moving the `x *= 2' step to the bottom of the loop:
  *
  *	for k = NBITS-1 to 0 step -1 do if ... fi; x *= 2; done
  *

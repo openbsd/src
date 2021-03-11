@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.h,v 1.8 2003/10/31 03:55:06 drahn Exp $ */
+/*	$OpenBSD: isa_machdep.h,v 1.9 2021/03/11 11:16:59 jsg Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -38,7 +38,7 @@ typedef struct ppc_isa_bus *isa_chipset_tag_t;
 
 /*
  *      I/O macros to access isa bus ports/memory.
- *      At the first glance theese macros may seem inefficient.
+ *      At the first glance these macros may seem inefficient.
  *      However, the cpu executes an instruction every <10 ns
  *      so the bus is much slower so it doesn't matter, really.
  */

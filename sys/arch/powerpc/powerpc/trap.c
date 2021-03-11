@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.118 2020/10/27 19:18:05 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.119 2021/03/11 11:16:59 jsg Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -78,7 +78,7 @@ void trap(struct trapframe *frame);
  * and the contents of that register are not used to optimize the save.
  *
  * This can lead to VRSAVE corruption, data passing between processes,
- * because this register is accessable without the MSR[VEC] bit set.
+ * because this register is accessible without the MSR[VEC] bit set.
  * To store/restore this cleanly a processor identifier bit would need
  * to be saved and this register saved on every context switch.
  * Since we do not use the information, we may be able to get by

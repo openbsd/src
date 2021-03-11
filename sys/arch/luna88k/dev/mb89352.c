@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352.c,v 1.30 2020/09/22 19:32:51 krw Exp $	*/
+/*	$OpenBSD: mb89352.c,v 1.31 2021/03/11 11:16:58 jsg Exp $	*/
 /*	$NetBSD: mb89352.c,v 1.5 2000/03/23 07:01:31 thorpej Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
@@ -1579,7 +1579,7 @@ spc_intr(void *arg)
 
 	/*
 	 * On LUNA-88K2, 2 spc(4)'s share the level 3 interrupt.
-	 * So, first, check if this deivce needs to process this interrupt.
+	 * So, first, check if this device needs to process this interrupt.
 	 */
 	ints = bus_space_read_1(iot, ioh, INTS);
 	if (ints == 0)		/* No interrupt event on this device */
@@ -1761,7 +1761,7 @@ loop:
 		/* disable disconnect interrupt */
 		bus_space_write_1(iot, ioh, PCTL,
 		    bus_space_read_1(iot, ioh, PCTL) & ~PCTL_BFINT_ENAB);
-		/* XXX reset interrput */
+		/* XXX reset interrupt */
 		bus_space_write_1(iot, ioh, INTS, ints);
 
 		switch (sc->sc_state) {

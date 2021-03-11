@@ -1,4 +1,4 @@
-/*	$OpenBSD: raptor.c,v 1.9 2020/05/25 09:55:48 jsg Exp $	*/
+/*	$OpenBSD: raptor.c,v 1.10 2021/03/11 11:17:00 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009 Mark Kettenis.
@@ -37,7 +37,7 @@
 
 /*
  * Tech Source uses the Raptor name for most of its graphics cards.
- * This driver supports the origional Raptor GFX cards built around
+ * This driver supports the original Raptor GFX cards built around
  * the Number 9 Imagine-128 chips.
  *
  * Official documentation for the Imagine-128 isn't available.  The

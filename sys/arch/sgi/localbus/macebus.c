@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.69 2018/12/03 13:50:02 visa Exp $ */
+/*	$OpenBSD: macebus.c,v 1.70 2021/03/11 11:17:00 jsg Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -613,7 +613,7 @@ macebus_iointr_skip(struct intrhand *ih, uint64_t mace_isr, uint64_t mace_imr)
 }
 
 /*
- * Macebus auxilary functions run each clock interrupt.
+ * Macebus auxiliary functions run each clock interrupt.
  */
 uint32_t
 macebus_aux(uint32_t hwpend, struct trapframe *cf)

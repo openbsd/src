@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530var.h,v 1.9 2013/04/21 14:44:16 sebastia Exp $	*/
+/*	$OpenBSD: z8530var.h,v 1.10 2021/03/11 11:16:58 jsg Exp $	*/
 /*	$NetBSD: z8530var.h,v 1.5 2002/03/17 19:40:45 atatat Exp $	*/
 
 /*
@@ -58,7 +58,7 @@ struct zsclksrc {
 			   child. The other bits tell zsloadchannelregs
 			   if it should call an md signal source
 			   changing routine. ZSC_VARIABLE says if
-			   an ioctl should be able to cahnge the
+			   an ioctl should be able to change the
 			   clock rate.*/
 };
 #define ZSC_PCLK        0x01
@@ -106,7 +106,7 @@ struct zsc_softc {
  * Functions to read and write individual registers in a channel.
  * The ZS chip requires a 1.6 uSec. recovery time between accesses,
  * and the Sun3 hardware does NOT take care of this for you.
- * MacII hardware DOES dake care of the delay for us. :-)
+ * MacII hardware DOES take care of the delay for us. :-)
  * XXX - Then these should be inline functions! -gwr
  * Some clock-chirped macs lose serial ports. It could be that the
  * hardware delay is tied to the CPU speed, and that the minimum delay

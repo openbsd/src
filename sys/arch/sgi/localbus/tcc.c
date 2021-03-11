@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcc.c,v 1.10 2016/03/06 19:42:27 mpi Exp $	*/
+/*	$OpenBSD: tcc.c,v 1.11 2021/03/11 11:17:00 jsg Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -136,7 +136,7 @@ tcc_bus_error(uint32_t hwpend, struct trapframe *tf)
 }
 
 /*
- * Cache maintainance routines
+ * Cache maintenance routines
  */
 
 #define	tcc_cache_hit(addr,op) \

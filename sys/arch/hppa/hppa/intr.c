@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.50 2018/05/14 13:54:39 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.51 2021/03/11 11:16:56 jsg Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -120,7 +120,7 @@ cpu_intr_init(void)
 	for (level = 0; level < NIPL - 1; level++)
 		imask[level + 1] |= imask[level];
 
-	/* XXX the whacky trick is to prevent hardclock from happenning */
+	/* XXX the whacky trick is to prevent hardclock from happening */
 	mfctl(CR_ITMR, mask);
 	mtctl(mask - 1, CR_ITMR);
 

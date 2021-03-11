@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridgereg.h,v 1.15 2015/06/16 18:24:38 miod Exp $	*/
+/*	$OpenBSD: xbridgereg.h,v 1.16 2021/03/11 11:17:00 jsg Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -131,7 +131,7 @@
 #define	BRIDGE_ISR_PCIX_D_PARITY		0x0000000200000000ULL
 /* PCI-X address or attribute cycle parity error */
 #define	BRIDGE_ISR_PCIX_A_PARITY		0x0000000100000000ULL
-/* multiple errors occured - bridge only */
+/* multiple errors occurred - bridge only */
 #define	BRIDGE_ISR_MULTIPLE_ERR			0x0000000080000000ULL
 /* PMU access fault */
 #define	BRIDGE_ISR_PMU_ESIZE_FAULT		0x0000000040000000ULL

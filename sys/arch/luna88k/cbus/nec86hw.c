@@ -1,4 +1,4 @@
-/*	$OpenBSD: nec86hw.c,v 1.5 2017/03/11 12:15:35 ratchov Exp $	*/
+/*	$OpenBSD: nec86hw.c,v 1.6 2021/03/11 11:16:58 jsg Exp $	*/
 /*	$NecBSD: nec86hw.c,v 1.13 1998/03/14 07:04:54 kmatsuda Exp $	*/
 /*	$NetBSD$	*/
 
@@ -151,7 +151,7 @@ nec86hw_attach(struct nec86hw_softc *sc)
 	/* Internal Speaker ON */
 	nec86hw_speaker_ctl(sc, SPKR_ON);
 
-	/* Set miscellanous stuffs. */
+	/* Set miscellaneous stuffs. */
 	data = bus_space_read_1(iot, ioh, NEC86_CTRL);
 	data &= NEC86_CTRL_MASK_PAN | NEC86_CTRL_MASK_PORT;
 	data |= NEC86_CTRL_PAN_L | NEC86_CTRL_PAN_R;

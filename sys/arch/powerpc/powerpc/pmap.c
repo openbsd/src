@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.173 2021/03/10 07:28:19 deraadt Exp $ */
+/*	$OpenBSD: pmap.c,v 1.174 2021/03/11 11:16:59 jsg Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -32,7 +32,7 @@
  */
 
 /*
- * powerpc lazy icache managment.
+ * powerpc lazy icache management.
  * The icache does not snoop dcache accesses. The icache also will not load
  * modified data from the dcache, but the unmodified data in ram.
  * Before the icache is loaded, the dcache must be synced to ram to prevent
@@ -473,7 +473,7 @@ PTED_VALID(struct pte_desc *pted)
  * One issue of making this a single data structure is that two pointers are
  * wasted for every page which does not map ram (device mappings), this 
  * should be a low percentage of mapped pages in the system, so should not
- * have too noticable unnecessary ram consumption.
+ * have too noticeable unnecessary ram consumption.
  */
 
 void

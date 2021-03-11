@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommuvar.h,v 1.18 2019/06/25 22:30:56 dlg Exp $	*/
+/*	$OpenBSD: iommuvar.h,v 1.19 2021/03/11 11:17:00 jsg Exp $	*/
 /*	$NetBSD: iommuvar.h,v 1.9 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -52,7 +52,7 @@ struct strbuf_ctl {
 	 * flush areas are not used other than as a boolean flag to indicate
 	 * the presence of a working and enabled STC.  For inconsistency's
 	 * sake, the "sb" pointers of iommu_state are sometimes used for the
-	 * same purpose.  This should be consolidated.  DEFINATELY, since
+	 * same purpose.  This should be consolidated.  DEFINITELY, since
 	 * mutex operations must happen at this level.
 	 */
 	struct mutex		sb_mtx;		/* one flush at a time */

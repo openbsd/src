@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.50 2021/02/13 17:12:38 visa Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.51 2021/03/11 11:16:59 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -369,13 +369,13 @@ cn30xxgmx_init(struct cn30xxgmx_softc *sc)
 		else
 			sc->sc_port_types[0] = GMX_MII_PORT;
 		if ((inf_mode & INF_MODE_TYPE) == 0) {
-			/* port 1 and 2 are configred as RGMII ports */
+			/* port 1 and 2 are configured as RGMII ports */
 			sc->sc_nports = 3;
 			sc->sc_port_types[1] = GMX_RGMII_PORT;
 			sc->sc_port_types[2] = GMX_RGMII_PORT;
 		} else {
 			/* port 1: GMII/MII, port 2: disabled */
-			/* GMII or MII port is slected by GMX_PRT1_CFG[SPEED] */
+			/* GMII or MII port is selected by GMX_PRT1_CFG[SPEED] */
 			sc->sc_nports = 2;
 			sc->sc_port_types[1] = GMX_GMII_PORT;
 		}

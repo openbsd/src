@@ -1,4 +1,4 @@
-/*	$OpenBSD: sc.c,v 1.3 2013/10/29 21:49:07 miod Exp $	*/
+/*	$OpenBSD: sc.c,v 1.4 2021/03/11 11:16:58 jsg Exp $	*/
 /*	$NetBSD: sc.c,v 1.4 2013/01/22 15:48:40 tsutsui Exp $	*/
 
 /*
@@ -556,7 +556,7 @@ scintr(struct scsi_softc *hs)
 				hs->sc_flags &= ~SC_SEL_TIMEOUT;
 				hs->sc_phase  = BUS_FREE_PHASE;
 				hs->sc_target = SCSI_ID;
-				/* Such SCSI Device is not conected. */
+				/* Such SCSI Device is not connected . */
 				*(hs->sc_lock) = SC_DEV_NOT_FOUND;
 				hd->scsi_ints = ints;
 				return 0;

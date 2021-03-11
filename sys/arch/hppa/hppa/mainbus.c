@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.88 2018/05/14 13:54:39 kettenis Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.89 2021/03/11 11:16:56 jsg Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -178,7 +178,7 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
 
 #ifdef DEBUG
 	if (flags & BUS_SPACE_MAP_CACHEABLE) {
-		printf("WARNING: mapping I/O space cachable\n");
+		printf("WARNING: mapping I/O space cacheable\n");
 		flags &= ~BUS_SPACE_MAP_CACHEABLE;
 	}
 #endif

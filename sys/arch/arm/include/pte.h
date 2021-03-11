@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.9 2017/01/04 00:40:49 jsg Exp $	*/
+/*	$OpenBSD: pte.h,v 1.10 2021/03/11 11:16:55 jsg Exp $	*/
 /*	$NetBSD: pte.h,v 1.6 2003/04/18 11:08:28 scw Exp $	*/
 
 /*
@@ -205,7 +205,7 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
 
 #define	L2_V7_AP(x)	((((x) & 0x4) << 7) | (((x) & 0x2) << 4))	/* AP */
 #define	L2_V7_AF	0x00000010	/* Access Flag */
-#define	L2_V7_S		0x00000400	/* Sharable */
+#define	L2_V7_S		0x00000400	/* Shareable */
 #define	L2_V7_nG	0x00000800	/* not Global */
 
 /*

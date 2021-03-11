@@ -1,4 +1,4 @@
-/*	$OpenBSD: quad_float.h,v 1.8 2003/04/10 17:27:58 mickey Exp $	*/
+/*	$OpenBSD: quad_float.h,v 1.9 2021/03/11 11:16:57 jsg Exp $	*/
 /*
   (c) Copyright 1986 HEWLETT-PACKARD COMPANY
   To anyone who acknowledges that this file is provided "AS IS"
@@ -18,7 +18,7 @@
  *  Quad precision functions  *
  ******************************/
 
-/* 32-bit word grabing functions */
+/* 32-bit word grabbing functions */
 #define Quad_firstword(value) Qallp1(value)
 #define Quad_secondword(value) Qallp2(value)
 #define Quad_thirdword(value)  Qallp3(value)

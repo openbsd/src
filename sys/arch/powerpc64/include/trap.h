@@ -65,7 +65,7 @@
 /* The following are only available on 604/750/7400: */
 #define	EXC_PERF	0x0f00		/* Performance Monitoring */
 #define	EXC_BPT		0x1300		/* Instruction Breakpoint */
-#define	EXC_SMI		0x1400		/* System Managment Interrupt */
+#define	EXC_SMI		0x1400		/* System Management Interrupt */
 
 /* The following are only available on 750/7400: */
 #define	EXC_THRM	0x1700		/* Thermal Management Interrupt */

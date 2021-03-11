@@ -1,4 +1,4 @@
-/* $OpenBSD: sioreg.h,v 1.1.1.1 2004/04/21 15:23:55 aoyama Exp $ */
+/* $OpenBSD: sioreg.h,v 1.2 2021/03/11 11:16:58 jsg Exp $ */
 /* $NetBSD: sioreg.h,v 1.1 2000/01/05 08:48:55 nisimura Exp $ */
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -65,7 +65,7 @@
 #define WR0_RSTINT	0x10	/* Reset External/Status Interrupt */
 #define WR0_CHANRST	0x18	/* Channel Reset */
 #define WR0_INTNXT	0x20	/* Enable Interrupt on Next Receive Character */
-#define WR0_RSTPEND	0x28	/* Reset Transmitter Interrput/DMA Pending */
+#define WR0_RSTPEND	0x28	/* Reset Transmitter Interrupt/DMA Pending */
 #define WR0_ERRRST	0x30	/* Error Reset */
 #define WR0_ENDINTR	0x38	/* End of Interrupt */
 

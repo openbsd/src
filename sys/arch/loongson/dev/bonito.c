@@ -1,4 +1,4 @@
-/*	$OpenBSD: bonito.c,v 1.34 2018/02/24 11:42:30 visa Exp $	*/
+/*	$OpenBSD: bonito.c,v 1.35 2021/03/11 11:16:57 jsg Exp $	*/
 /*	$NetBSD: bonito_mainbus.c,v 1.11 2008/04/28 20:23:10 martin Exp $	*/
 /*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
 
@@ -276,7 +276,7 @@ bonito_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	/*
-	 * Setup proper abitration.
+	 * Setup proper arbitration.
 	 */
 
 	if (!sc->sc_compatible) {

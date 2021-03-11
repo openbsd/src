@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.70 2020/10/16 03:59:24 jsg Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.71 2021/03/11 11:17:00 jsg Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
  *
@@ -327,7 +327,7 @@ vdsk_attach(struct device *parent, struct device *self, void *aux)
 
 	/*
 	 * Interrupts aren't enabled during autoconf, so poll for VIO
-	 * peer-to-peer hanshake completion.
+	 * peer-to-peer handshake completion.
 	 */
 	s = splbio();
 	timeout = 1000;

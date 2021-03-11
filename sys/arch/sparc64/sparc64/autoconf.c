@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.138 2020/08/26 03:29:06 visa Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.139 2021/03/11 11:17:00 jsg Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -941,7 +941,7 @@ extern bus_space_tag_t mainbus_space_tag;
 	 * description of the machine that is generally more
 	 * informative than the "name" property.  However, if the
 	 * "banner-name" property is missing, fall back on the "name"
-	 * propery.
+	 * property.
 	 */
 	if (OF_getprop(findroot(), "banner-name", buf, sizeof(buf)) > 0 ||
 	    OF_getprop(findroot(), "name", buf, sizeof(buf)) > 0)

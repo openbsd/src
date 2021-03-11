@@ -1,4 +1,4 @@
-/* $OpenBSD: mcbus.c,v 1.3 2014/08/06 15:15:16 jsg Exp $ */
+/* $OpenBSD: mcbus.c,v 1.4 2021/03/11 11:16:54 jsg Exp $ */
 /* $NetBSD: mcbus.c,v 1.19 2007/03/04 05:59:11 christos Exp $ */
 
 /*
@@ -204,7 +204,7 @@ mcbus_node_type_str(type)
 	case MCBUS_TYPE_PCI:
 		return ("PCI Bridge");
 	default:
-		panic("REALLY UNKNWON (%x) TYPE IN MCBUS_NODE_TYPE_STR", type);
+		panic("REALLY UNKNOWN (%x) TYPE IN MCBUS_NODE_TYPE_STR", type);
 		break;
 	}
 }

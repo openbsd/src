@@ -1,4 +1,4 @@
-/*	$OpenBSD: bmd.c,v 1.4 2013/10/29 21:49:07 miod Exp $	*/
+/*	$OpenBSD: bmd.c,v 1.5 2021/03/11 11:16:58 jsg Exp $	*/
 /*	$NetBSD: bmd.c,v 1.2 2013/01/20 13:35:43 tsutsui Exp $	*/
 
 /*
@@ -459,7 +459,7 @@ bmdclear(void)
 
 
 /*
- *  charactor operation routines
+ *  character operation routines
  */
 
 void

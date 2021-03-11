@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110_fp.c,v 1.12 2020/08/19 10:10:58 mpi Exp $	*/
+/*	$OpenBSD: m88110_fp.c,v 1.13 2021/03/11 11:16:58 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007, Miodrag Vallat.
@@ -50,7 +50,7 @@ void	m88110_fpu_fetch(struct trapframe *, u_int, u_int, u_int, fparg *);
  * - a genuinely unimplemented feature: fsqrt.
  *
  * - an opcode involving an odd-numbered register pair (as a double precision
- *   operand). Rather than issueing a correctly formed flavour in kernel mode,
+ *   operand). Rather than issuing a correctly formed flavour in kernel mode,
  *   and having to handle a possible nested exception, we emulate it. This
  *   will of course be slower, but we have to draw the line somewhere.
  *   Gcc will however never produce such code, so we don't have to worry
@@ -59,7 +59,7 @@ void	m88110_fpu_fetch(struct trapframe *, u_int, u_int, u_int, fparg *);
  * Note that, currently, opcodes involving the extended register file (XRF)
  * are handled as invalid opcodes. This will eventually change once the
  * toolchain can correctly assemble XRF instructions, and the XRF is saved
- * accross context switches (or not... lazy switching for XRF makes more
+ * across context switches (or not... lazy switching for XRF makes more
  * sense).
  */
 

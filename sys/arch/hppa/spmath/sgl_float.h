@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgl_float.h,v 1.12 2013/11/26 20:33:12 deraadt Exp $	*/
+/*	$OpenBSD: sgl_float.h,v 1.13 2021/03/11 11:16:57 jsg Exp $	*/
 /*
   (c) Copyright 1986 HEWLETT-PACKARD COMPANY
   To anyone who acknowledges that this file is provided "AS IS"
@@ -20,7 +20,7 @@
  * Single precision functions *
  ******************************/
 
-/* 32-bit word grabing functions */
+/* 32-bit word grabbing functions */
 #define Sgl_firstword(value) Sall(value)
 #define Sgl_secondword(value) dummy_location
 #define Sgl_thirdword(value) dummy_location

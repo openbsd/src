@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.80 2020/01/01 15:00:07 kn Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.81 2021/03/11 11:17:00 jsg Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -893,7 +893,7 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 	struct iommu_state *is;
 	struct iommu_map_state *ims;
 
-	KASSERTMSG(map->dm_nsegs == 0, "map stil in use");
+	KASSERTMSG(map->dm_nsegs == 0, "map still in use");
 
 	/*
 	 * A boundary presented to bus_dmamem_alloc() takes precedence

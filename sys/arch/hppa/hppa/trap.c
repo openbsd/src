@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.152 2020/10/22 13:41:51 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.153 2021/03/11 11:16:56 jsg Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -695,7 +695,7 @@ ss_put_value(struct proc *p, vaddr_t addr, u_int value)
 void
 ss_clear_breakpoints(struct proc *p)
 {
-	/* Restore origional instructions. */
+	/* Restore original instructions. */
 	if (p->p_md.md_bpva != 0) {
 		ss_put_value(p, p->p_md.md_bpva, p->p_md.md_bpsave[0]);
 		ss_put_value(p, p->p_md.md_bpva + 4, p->p_md.md_bpsave[1]);

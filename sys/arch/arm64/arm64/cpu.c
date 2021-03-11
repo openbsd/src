@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.50 2021/03/09 19:43:04 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.51 2021/03/11 11:16:55 jsg Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -891,7 +891,7 @@ cpu_opp_init(struct cpu_info *ci, uint32_t phandle)
 	cooling_device_register(cd);
 
 	/*
-	 * Do addional checks at mountroot when all the clocks and
+	 * Do additional checks at mountroot when all the clocks and
 	 * regulators are available.
 	 */
 	config_mountroot(ci->ci_dev, cpu_opp_mountroot);

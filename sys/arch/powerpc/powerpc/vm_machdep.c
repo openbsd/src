@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.50 2020/09/11 09:27:10 mpi Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.51 2021/03/11 11:16:59 jsg Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 1996/09/30 16:34:57 ws Exp $	*/
 
 /*
@@ -134,7 +134,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
  * We release the address space and machine-dependent resources,
  * including the memory for the user structure and kernel stack.
  *
- * Since we don't have curproc anymore, we cannot sleep, and therefor
+ * Since we don't have curproc anymore, we cannot sleep, and therefore
  * this is at least incorrect for the multiprocessor version.
  * Not sure whether we can get away with this in the single proc version.		XXX
  */

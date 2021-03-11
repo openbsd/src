@@ -1,4 +1,4 @@
-/*	$OpenBSD: voyager.c,v 1.5 2017/05/17 11:52:25 visa Exp $	*/
+/*	$OpenBSD: voyager.c,v 1.6 2021/03/11 11:16:58 jsg Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -118,7 +118,7 @@ voyager_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/*
-	 * Setup interrut handling.
+	 * Setup interrupt handling.
 	 */
 
 	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh, VOYAGER_RAW_ICR,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.94 2021/01/02 14:27:53 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.95 2021/03/11 11:16:58 jsg Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2014 Miodrag Vallat.
@@ -93,7 +93,7 @@ char	pmon_bootp[80];
 
 /*
  * Even though the system is 64bit, 2E- and 2F-based hardware is constrained
- * to up to 2G of contigous physical memory (direct 2GB DMA area). 2Gq- and
+ * to up to 2G of contiguous physical memory (direct 2GB DMA area). 2Gq- and
  * 3A-based hardware only supports 32-bit DMA addresses, even though
  * physical memory may exist beyond 4GB.
  */

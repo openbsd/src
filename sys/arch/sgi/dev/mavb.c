@@ -1,4 +1,4 @@
-/*	$OpenBSD: mavb.c,v 1.21 2018/12/03 13:46:30 visa Exp $	*/
+/*	$OpenBSD: mavb.c,v 1.22 2021/03/11 11:17:00 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -71,15 +71,15 @@ enum {
 	AD1843_DAC1_GAIN,	/* DAC1 Analog/Digital Gain/Attenuation */
 	AD1843_DAC1_MUTE,	/* DAC1 Analog Mute */
 	AD1843_DAC2_GAIN,	/* DAC2 Mix Gain */
-	AD1843_AUX1_GAIN,	/* Auxilliary 1 Mix Gain */
-	AD1843_AUX2_GAIN,	/* Auxilliary 2 Mix Gain */
-	AD1843_AUX3_GAIN,	/* Auxilliary 3 Mix Gain */
+	AD1843_AUX1_GAIN,	/* Auxiliary 1 Mix Gain */
+	AD1843_AUX2_GAIN,	/* Auxiliary 2 Mix Gain */
+	AD1843_AUX3_GAIN,	/* Auxiliary 3 Mix Gain */
 	AD1843_MIC_GAIN,	/* Microphone Mix Gain */
 	AD1843_MONO_GAIN,	/* Mono Mix Gain */
 	AD1843_DAC2_MUTE,	/* DAC2 Mix Mute */
-	AD1843_AUX1_MUTE,	/* Auxilliary 1 Mix Mute */
-	AD1843_AUX2_MUTE,	/* Auxilliary 2 Mix Mute */
-	AD1843_AUX3_MUTE,	/* Auxilliary 3 Mix Mute */
+	AD1843_AUX1_MUTE,	/* Auxiliary 1 Mix Mute */
+	AD1843_AUX2_MUTE,	/* Auxiliary 2 Mix Mute */
+	AD1843_AUX3_MUTE,	/* Auxiliary 3 Mix Mute */
 	AD1843_MIC_MUTE,	/* Microphone Mix Mute */
 	AD1843_MONO_MUTE,	/* Mono Mix Mute */
 	AD1843_SUM_MUTE,	/* Sum Mute */

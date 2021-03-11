@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iecreg.h,v 1.3 2009/11/03 21:41:42 miod Exp $	*/
+/*	$OpenBSD: if_iecreg.h,v 1.4 2021/03/11 11:17:00 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -35,7 +35,7 @@
  * IEC_RXDESCSIZE is the smallest multiple of 128 bytes (hardware requirement)
  * able to store ETHER_MAX_DIX_LEN bytes and the rxdesc administrative data.
  *
- * IEC_RXD_BUFOFFSET is choosen to use a different cache line on the CPU.
+ * IEC_RXD_BUFOFFSET is chosen to use a different cache line on the CPU.
  * A value of 128 (IOC3 cache line) would be even better, but would not fit
  * in the MCR register.
  */
@@ -48,7 +48,7 @@ struct	iec_rxdesc {
 #define	IEC_RXSTAT_CHECKSUM_MASK	0x0000ffff
 	uint32_t		rxd_err;
 #define	IEC_RXERR_CRC			0x00000001	/* CRC error */
-#define	IEC_RXERR_FRAME			0x00000002	/* Framing erorr */
+#define	IEC_RXERR_FRAME			0x00000002	/* Framing error */
 #define	IEC_RXERR_CODE			0x00000004	/* Code violation */
 #define	IEC_RXERR_INVPREAMB		0x00000008	/* Invalid preamble */
 #define	IEC_RXERR_MULTICAST		0x04000000	/* Multicast packet */

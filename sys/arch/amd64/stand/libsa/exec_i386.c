@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.32 2019/06/08 02:52:20 jsg Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.33 2021/03/11 11:16:55 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Michael Shalayeff
@@ -297,7 +297,7 @@ boot_alloc(void)
  * [entry ... end] => PA 0x1000000 (16MB, the current phys loadaddr)
  *
  * In BIOS boot mode, this function overwrites the heap with the long
- * mode kernel boostrap page tables and thus must be called immediately
+ * mode kernel bootstrap page tables and thus must be called immediately
  * before switching to long mode and starting the kernel.
  *
  * Parameters:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.30 2019/09/03 04:48:00 deraadt Exp $	*/
+/*	$OpenBSD: zs.c,v 1.31 2021/03/11 11:16:58 jsg Exp $	*/
 /*	$NetBSD: zs.c,v 1.17 2001/06/19 13:42:15 wiz Exp $	*/
 
 /*
@@ -565,7 +565,7 @@ zs_set_speed(struct zs_chanstate *cs, int bps)
 	 * Step through all the sources and see which one matches
 	 * the best. A source has to match BETTER than tol to be chosen.
 	 * Thus if two sources give the same error, the first one will be
-	 * chosen. Also, allow for the possability that one source might run
+	 * chosen. Also, allow for the possibility that one source might run
 	 * both the BRG and the direct divider (i.e. RTxC).
 	 */
 	for (i = 0; i < xcs->cs_clock_count; i++) {

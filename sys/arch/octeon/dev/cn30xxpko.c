@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxpko.c,v 1.7 2020/09/08 13:54:48 visa Exp $	*/
+/*	$OpenBSD: cn30xxpko.c,v 1.8 2021/03/11 11:16:59 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -120,7 +120,7 @@ cn30xxpko_port_enable(struct cn30xxpko_softc *sc, int enable)
 	reg_read_idx = 0;
 	SET(reg_read_idx, sc->sc_port & PKO_REG_READ_IDX_IDX);
 
-	/* XXX assume one queue maped one port */
+	/* XXX assume one queue mapped one port */
 	/* Enable packet output by enabling all queues for this port */
 	mem_queue_qos = 0;
 	SET(mem_queue_qos, ((uint64_t)sc->sc_port << 7) & PKO_MEM_QUEUE_QOS_PID);
@@ -167,7 +167,7 @@ cn30xxpko_port_config(struct cn30xxpko_softc *sc)
 		}
 	}
 
-	/* assume one queue maped one port */
+	/* assume one queue mapped one port */
 	mem_queue_ptrs = 0;
 	SET(mem_queue_ptrs, PKO_MEM_QUEUE_PTRS_TAIL);
 	SET(mem_queue_ptrs, ((uint64_t)0 << 13) & PKO_MEM_QUEUE_PTRS_IDX);

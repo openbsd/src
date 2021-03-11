@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.h,v 1.36 2013/03/23 16:12:22 deraadt Exp $	*/
+/*	$OpenBSD: pdc.h,v 1.37 2021/03/11 11:16:57 jsg Exp $	*/
 
 /*
  * Copyright (c) 1990 mt Xinu, Inc.  All rights reserved.
@@ -124,7 +124,7 @@
 #define	PDC_MODEL_ENSPEC	4	/* enable product-specific instrs */
 #define	PDC_MODEL_DISPEC	5	/* disable product-specific instrs */
 #define	PDC_MODEL_CPUID		6	/* return CPU versions */
-#define	PDC_MODEL_CPBALITIES	7	/* return capabilites */
+#define	PDC_MODEL_CPBALITIES	7	/* return capabilities */
 #define	PDC_MODEL_GETBOOTOPTS	8	/* return boot test options */
 #define	PDC_MODEL_SETBOOTOPTS	9	/* set boot test options */
 
@@ -208,7 +208,7 @@
 #define	PDC_CONF	17	/* (de)configure a module */
 #define	PDC_CONF_DECONF		0	/* deconfigure module */
 #define	PDC_CONF_RECONF		1	/* reconfigure module */
-#define	PDC_CONF_INFO		2	/* get config informaion */
+#define	PDC_CONF_INFO		2	/* get config information */
 
 #define PDC_BLOCK_TLB	18	/* Manage Block TLB entries (BTLB) */
 #define PDC_BTLB_DEFAULT	0	/* Return BTLB configuration info  */

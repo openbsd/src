@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.15 2017/02/08 05:09:26 guenther Exp $ */
+/*	$OpenBSD: exec.h,v 1.16 2021/03/11 11:16:59 jsg Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB.
@@ -24,7 +24,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: exec.h,v 1.15 2017/02/08 05:09:26 guenther Exp $
+ *	$Id: exec.h,v 1.16 2021/03/11 11:16:59 jsg Exp $
  */
 
 #ifndef _POWERPC_EXEC_H_
@@ -38,7 +38,7 @@
 #define ELF_TARG_DATA           ELFDATA2MSB
 #define ELF_TARG_MACH           EM_PPC
 
-/* Processor sepcific dynamic tag values.  */
+/* Processor specific dynamic tag values.  */
 #define DT_PPC_GOT		0x70000000
 
 #define DT_PROCNUM		(DT_PPC_GOT - DT_LOPROC + 1)

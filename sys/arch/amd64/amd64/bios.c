@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.43 2020/08/26 03:29:05 visa Exp $	*/
+/*	$OpenBSD: bios.c,v 1.44 2021/03/11 11:16:54 jsg Exp $	*/
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gklok@cogeco.ca>
  *
@@ -96,7 +96,7 @@ bios_attach(struct device *parent, struct device *self, void *aux)
 		    (uint8_t *)bios_efiinfo->config_smbios));
 
 	if (hdr == NULL) {
-		/* see if we have SMBIOS extentions */
+		/* see if we have SMBIOS extensions */
 		for (p = ISA_HOLE_VADDR(SMBIOS_START);
 		    p < (uint8_t *)ISA_HOLE_VADDR(SMBIOS_END); p+= 16) {
 			hdr = smbios_find(p);

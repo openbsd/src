@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcfiic_ebus.c,v 1.13 2008/06/08 03:07:40 deraadt Exp $ */
+/*	$OpenBSD: pcfiic_ebus.c,v 1.14 2021/03/11 11:17:00 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -190,17 +190,17 @@ envctrl_scan(struct device *self, struct i2cbus_attach_args *iba, void *aux)
 	ia.ia_name = "ecadc";
 	config_found(self, &ia, iic_print);
 
-	/* Power supply 2 termperature. */
+	/* Power supply 2 temperature. */
 	ia.ia_addr = 0x49;
 	ia.ia_name = "ecadc";
 	config_found(self, &ia, iic_print);
 
-	/* Power supply 3 tempterature. */
+	/* Power supply 3 temperature. */
 	ia.ia_addr = 0x4a;
 	ia.ia_name = "ecadc";
 	config_found(self, &ia, iic_print);
 
-	/* Ambient tempterature. */
+	/* Ambient temperature. */
 	ia.ia_addr = 0x4d;
 	ia.ia_name = "lm75";
 	config_found(self, &ia, iic_print);

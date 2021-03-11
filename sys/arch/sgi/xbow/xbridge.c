@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.102 2017/05/11 15:47:45 visa Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.103 2021/03/11 11:17:00 jsg Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009, 2011  Miodrag Vallat.
@@ -54,7 +54,7 @@
 
   IMPORTANT! there is a limited number of IOTTE per Crossbow: 7, of which the
   seventh is used to workaround a hardware bug, leaving only 6 entries
-  available accross all widgets.
+  available across all widgets.
 
   Each IOTTE opens a contiguous window of 28 or 29 bits, depending on the
   particular system model and configuration.  On Origin 300/3000 and 350/3500,
@@ -88,7 +88,7 @@
 
   So now is a good time to introduce the devio.
 
-  There are 8 devio registers, one per device; theses registers contain various
+  There are 8 devio registers, one per device; these registers contain various
   device-global flags (such as byte swapping and coherency), as well as the
   location of a ``devio window'' in one of the address spaces, selected on a
   per-devio basis.
@@ -207,7 +207,7 @@
   pins A and C map of devices 0-7 map to interrupt sources 0-7, and pins B and
   D of devices 0-7 map to interrupt sources 4-7 then 0-3 (i.e. device# ^ 4).
 
-  All interrupts occuring on the Bridge cause an XIO interrupt packet to be
+  All interrupts occurring on the Bridge cause an XIO interrupt packet to be
   sent to the XIO interrupt address programmed at Bridge initialization time;
   packets can be configured as self-clearing or not on an interrupt source
   basis.
@@ -220,12 +220,12 @@
 - - endianness
 
   Endianness control is quite finegrained and quite complex at first glance:
-  - memory and I/O accesses not occuring within devio ranges have their
+  - memory and I/O accesses not occurring within devio ranges have their
     endianness controlled by the endianness flags in the (global) Bridge
     configuration register...
   - ... to which adds the per-device endianness flag in the device devio
     register...
-  - and accesses occuring through devio register only use the
+  - and accesses occurring through devio register only use the
     per-device devio register mentioned above, even if the devio
     range is defined in a different register!
 
@@ -1081,7 +1081,7 @@ xbridge_conf_write(void *cookie, pcitag_t tag, int offset, pcireg_t data)
 			/*
 			 * Some IOC3 models do not support having this bit
 			 * cleared (which is what pci_mapreg_probe() will
-			 * do), so we set it unconditionnaly.
+			 * do), so we set it unconditionally.
 			 */
 			data |= PCI_COMMAND_MEM_ENABLE;
 			/* FALLTHROUGH */

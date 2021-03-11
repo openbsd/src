@@ -1,4 +1,4 @@
-/*	$OpenBSD: octxctl.c,v 1.4 2019/09/29 04:32:23 visa Exp $	*/
+/*	$OpenBSD: octxctl.c,v 1.5 2021/03/11 11:16:59 jsg Exp $	*/
 
 /*
  * Copyright (c) 2017 Visa Hankala
@@ -315,7 +315,7 @@ octxctl_uctl_init(struct octxctl_softc *sc, uint64_t clock_freq,
 	XCTL_WR_8(sc, XCTL_CTL, val);
 	(void)XCTL_RD_8(sc, XCTL_CTL);
 
-	/* Fix endianess. */
+	/* Fix endianness. */
 	val = XCTL_RD_8(sc, XCTL_SHIM_CFG);
 	val &= ~XCTL_SHIM_CFG_CSR_BYTE_SWAP;
 	val &= ~XCTL_SHIM_CFG_DMA_BYTE_SWAP;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.107 2020/10/23 16:54:35 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.108 2021/03/11 11:17:00 jsg Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -380,7 +380,7 @@ trap(struct trapframe64 *tf, unsigned type, vaddr_t pc, long tstate)
 #endif
 		/*
 		 * The kernel needs to use FPU registers for block
-		 * load/store.  If we trap in priviliged code, save
+		 * load/store.  If we trap in privileged code, save
 		 * the FPU state if there is any and enable the FPU.
 		 *
 		 * We rely on the kernel code properly enabling the FPU
@@ -903,7 +903,7 @@ data_access_error(struct trapframe64 *tf, unsigned type, vaddr_t afva,
 		}
 
 		/*
-		 * If this was a priviliged error but not a probe, we
+		 * If this was a privileged error but not a probe, we
 		 * cannot recover, so panic.
 		 */
 		if (afsr & ASFR_PRIV) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_loongson2.c,v 1.7 2016/01/05 05:27:54 visa Exp $	*/
+/*	$OpenBSD: cache_loongson2.c,v 1.8 2021/03/11 11:16:59 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009, 2012 Miodrag Vallat.
@@ -175,7 +175,7 @@ void
 Loongson2_InvalidateICachePage(struct cpu_info *ci, vaddr_t va)
 {
 	/*
-	 * Since the page size matches the I$ set size, and I$ maintainance
+	 * Since the page size matches the I$ set size, and I$ maintenance
 	 * operations always operate on all the sets, all we need to do here
 	 * is remember there are postponed flushes.
 	 */

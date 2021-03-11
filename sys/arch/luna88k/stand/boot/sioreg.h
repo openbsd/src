@@ -1,4 +1,4 @@
-/*	$OpenBSD: sioreg.h,v 1.1 2013/10/28 22:13:13 miod Exp $	*/
+/*	$OpenBSD: sioreg.h,v 1.2 2021/03/11 11:16:58 jsg Exp $	*/
 /*	$NetBSD: sioreg.h,v 1.2 2013/01/12 07:04:57 tsutsui Exp $	*/
 
 /*
@@ -113,7 +113,7 @@ struct siodevice {
 #define WR0_RSTINT	0x10	/* Reset External/Status Interrupt */
 #define WR0_CHANRST	0x18	/* Channel Reset */
 #define WR0_INTNXT	0x20	/* Enable Interrupt on Next Receive Character */
-#define WR0_RSTPEND	0x28	/* Reset Transmitter Interrput/DMA Pending */
+#define WR0_RSTPEND	0x28	/* Reset Transmitter Interrupt/DMA Pending */
 #define WR0_ERRRST	0x30	/* Error Reset */
 #define WR0_ENDINTR	0x38	/* End of Interrupt */
 

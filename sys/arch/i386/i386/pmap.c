@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.210 2020/12/28 14:02:08 mpi Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.211 2021/03/11 11:16:57 jsg Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -377,7 +377,7 @@ int nkptp_max = 1024 - (KERNBASE / NBPD) - 1;
 
 /*
  * pg_g_kern:  if CPU is affected by Meltdown pg_g_kern is 0,
- * otherwise it is is set to PG_G.  pmap_pg_g will be dervied
+ * otherwise it is is set to PG_G.  pmap_pg_g will be derived
  * from pg_g_kern, see pmap_bootstrap().
  */
 extern int pg_g_kern;

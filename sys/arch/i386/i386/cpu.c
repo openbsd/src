@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.106 2020/11/28 18:40:01 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.107 2021/03/11 11:16:57 jsg Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -889,7 +889,7 @@ cpu_init_mwait(struct cpu_softc *sc)
 		cpu_mwait_size = largest;
 	printf("\n");
 
-	/* enable use of mwait; may be overriden by acpicpu later */
+	/* enable use of mwait; may be overridden by acpicpu later */
 	if (cpu_mwait_size > 0)
 		cpu_idle_cycle_fcn = &cpu_idle_mwait_cycle;
 }

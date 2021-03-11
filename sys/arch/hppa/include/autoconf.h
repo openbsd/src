@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.23 2010/04/29 13:48:29 jsing Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.24 2021/03/11 11:16:57 jsg Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -38,7 +38,7 @@ struct confargs {
 	u_int		ca_hpasz;	/* module HPA size (if avail) */
 	hppa_hpa_t	ca_hpamask;	/* mask for modules on the bus */
 	int		ca_irq;		/* module IRQ */
-	struct iodc_data ca_type;	/* iodc-specific type descrition */
+	struct iodc_data ca_type;	/* iodc-specific type description */
 	struct pdc_iodc_read *ca_pdc_iodc_read;
 	int		ca_naddrs;	/* number of valid addr ents */
 	struct {

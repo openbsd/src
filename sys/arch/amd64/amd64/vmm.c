@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.277 2021/02/13 07:55:38 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.278 2021/03/11 11:16:55 jsg Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -722,7 +722,7 @@ vm_intr_pending(struct vm_intr_params *vip)
  * Return values:
  *  0: if successful
  *  ENOENT: if the VM/VCPU defined by 'vpp' cannot be found
- *  EINVAL: if an error occured reading the registers of the guest
+ *  EINVAL: if an error occurred reading the registers of the guest
  */
 int
 vm_rwvmparams(struct vm_rwvmparams_params *vpp, int dir) {
@@ -778,7 +778,7 @@ vm_rwvmparams(struct vm_rwvmparams_params *vpp, int dir) {
  * Return values:
  *  0: if successful
  *  ENOENT: if the VM/VCPU defined by 'vrwp' cannot be found
- *  EINVAL: if an error occured accessing the registers of the guest
+ *  EINVAL: if an error occurred accessing the registers of the guest
  *  EPERM: if the vm cannot be accessed from the calling process
  */
 int
@@ -827,7 +827,7 @@ vm_rwregs(struct vm_rwregs_params *vrwp, int dir)
  * IOCTL handler to sets the access protections of the ept
  *
  * Parameters:
- *   vmep: decribes the memory for which the protect will be applied..
+ *   vmep: describes the memory for which the protect will be applied..
  *
  * Return values:
  *  0: if successful
@@ -1749,7 +1749,7 @@ vcpu_reload_vmcs_vmx(uint64_t *vmcs)
  *
  * Return values:
  *  0: if successful
- *  EINVAL: an error reading registers occured
+ *  EINVAL: an error reading registers occurred
  */
 int
 vcpu_readregs_vmx(struct vcpu *vcpu, uint64_t regmask,
@@ -2020,7 +2020,7 @@ vcpu_readregs_svm(struct vcpu *vcpu, uint64_t regmask,
  *
  * Return values:
  *  0: if successful
- *  EINVAL an error writing registers occured
+ *  EINVAL an error writing registers occurred
  */
 int
 vcpu_writeregs_vmx(struct vcpu *vcpu, uint64_t regmask, int loadvmcs,
@@ -2157,7 +2157,7 @@ out:
  *
  * Return values:
  *  0: if successful
- *  EINVAL an error writing registers occured
+ *  EINVAL an error writing registers occurred
  */
 int
 vcpu_writeregs_svm(struct vcpu *vcpu, uint64_t regmask,
@@ -2589,7 +2589,7 @@ vmx_setmsrbrw(struct vcpu *vcpu, uint32_t msr)
  * Note that this function does not clear any bits; to clear bits in the
  * vmcb cleanbits bitfield, use 'svm_set_dirty'.
  *
- * Paramters:
+ * Parameters:
  *  vmcs: the VCPU whose VMCB clean value should be set
  *  value: the value(s) to enable in the cleanbits mask
  */
@@ -2616,7 +2616,7 @@ svm_set_clean(struct vcpu *vcpu, uint32_t value)
  * Multiple dirty bits can be provided in 'value' at the same time (eg,
  * "SVM_CLEANBITS_I | SVM_CLEANBITS_TPR").
  *
- * Paramters:
+ * Parameters:
  *  vmcs: the VCPU whose VMCB dirty value should be set
  *  value: the value(s) to dirty in the cleanbits mask
  */
@@ -4474,7 +4474,7 @@ vmm_translate_gva(struct vcpu *vcpu, uint64_t va, uint64_t *pa, int mode)
  * Return values:
  *  0: The run loop exited and no help is needed from vmd
  *  EAGAIN: The run loop exited and help from vmd is needed
- *  EINVAL: an error occured
+ *  EINVAL: an error occurred
  */
 int
 vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
@@ -4972,7 +4972,7 @@ svm_handle_hlt(struct vcpu *vcpu)
  * Handle HLT exits. HLTing the CPU with interrupts disabled will terminate
  * the guest (no NMIs handled) by returning EIO to vmd.
  *
- * Paramters:
+ * Parameters:
  *  vcpu: The VCPU that executed the HLT instruction
  *
  * Return Values:
@@ -5383,7 +5383,7 @@ int
 vmx_get_exit_qualification(uint64_t *exit_qualification)
 {
 	if (vmread(VMCS_GUEST_EXIT_QUALIFICATION, exit_qualification)) {
-		printf("%s: cant extract exit qual\n", __func__);
+		printf("%s: can't extract exit qual\n", __func__);
 		return (EINVAL);
 	}
 
@@ -5953,7 +5953,7 @@ exit:
  *     r: The guest's desired (incoming) cr0 value
  *
  * Return values:
- *  0: if succesful
+ *  0: if successful
  *  EINVAL: if an error occurred
  */
 int
@@ -6082,7 +6082,7 @@ vmx_handle_cr0_write(struct vcpu *vcpu, uint64_t r)
  *     r: The guest's desired (incoming) cr4 value
  *
  * Return values:
- *  0: if succesful
+ *  0: if successful
  *  EINVAL: if an error occurred
  */
 int
@@ -6910,7 +6910,7 @@ vmm_handle_cpuid(struct vcpu *vcpu)
  * Return values:
  *  0: The run loop exited and no help is needed from vmd
  *  EAGAIN: The run loop exited and help from vmd is needed
- *  EINVAL: an error occured
+ *  EINVAL: an error occurred
  */
 int
 vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
@@ -7554,7 +7554,7 @@ vcpu_state_decode(u_int state)
 /*
  * dump_vcpu
  *
- * Dumps the VMX capabilites of vcpu 'vcpu'
+ * Dumps the VMX capabilities of vcpu 'vcpu'
  */
 void
 dump_vcpu(struct vcpu *vcpu)

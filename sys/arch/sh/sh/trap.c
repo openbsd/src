@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.47 2020/10/21 19:12:58 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.48 2021/03/11 11:17:00 jsg Exp $	*/
 /*	$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $	*/
 /*	$NetBSD: syscall.c,v 1.6 2006/03/07 07:21:50 thorpej Exp $	*/
 
@@ -147,7 +147,7 @@ void cachectl(struct proc *, struct trapframe *);
 
 /*
  * void general_exception(struct proc *p, struct trapframe *tf):
- *	p  ... curproc when exception occured.
+ *	p  ... curproc when exception occurred.
  *	tf ... full user context.
  *	va ... fault va for user mode EXPEVT_ADDR_ERR_{LD,ST}
  */
@@ -163,7 +163,7 @@ general_exception(struct proc *p, struct trapframe *tf, uint32_t va)
 
 	/*
 	 * This function is entered at splhigh. Restore the interrupt
-	 * level to what it was when the trap occured.
+	 * level to what it was when the trap occurred.
 	 */
 	splx(tf->tf_ssr & PSL_IMASK);
 
@@ -307,7 +307,7 @@ do_panic:
 
 /*
  * void tlb_exception(struct proc *p, struct trapframe *tf, uint32_t va):
- *	p  ... curproc when exception occured.
+ *	p  ... curproc when exception occurred.
  *	tf ... full user context.
  *	va ... fault address.
  */
@@ -331,7 +331,7 @@ tlb_exception(struct proc *p, struct trapframe *tf, uint32_t va)
 
 	/*
 	 * This function is entered at splhigh. Restore the interrupt
-	 * level to what it was when the trap occured.
+	 * level to what it was when the trap occurred.
 	 */
 	splx(tf->tf_ssr & PSL_IMASK);
 
@@ -464,7 +464,7 @@ tlb_panic:
 
 /*
  * void ast(struct proc *p, struct trapframe *tf):
- *	p  ... curproc when exception occured.
+ *	p  ... curproc when exception occurred.
  *	tf ... full user context.
  *	This is called upon exception return. if return from kernel to user,
  *	handle asynchronous software traps and context switch if needed.

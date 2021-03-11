@@ -1,4 +1,4 @@
-/*	$OpenBSD: dbdma.h,v 1.4 2006/01/13 19:25:44 miod Exp $	*/
+/*	$OpenBSD: dbdma.h,v 1.5 2021/03/11 11:16:58 jsg Exp $	*/
 /*	$NetBSD: dbdma.h,v 1.2 1998/08/21 16:13:28 tsubai Exp $	*/
 
 /*
@@ -213,7 +213,7 @@ struct dbdma_regmap {
 	u_int32_t	d_reserved;	/* Reserved for the moment */
 	u_int32_t	d_branchptrhi;	/* MSB of Branch Pointer */
 	u_int32_t	d_branchptrlo;	/* LSB of Branch Pointer */
-	/* The remaining fields are undefinied and unimplemented */
+	/* The remaining fields are undefined and unimplemented */
 };
 
 typedef volatile struct dbdma_regmap dbdma_regmap_t;

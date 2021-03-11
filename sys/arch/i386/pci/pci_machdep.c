@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.86 2020/06/17 06:17:19 dlg Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.87 2021/03/11 11:16:57 jsg Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.28 1997/06/06 23:29:17 thorpej Exp $	*/
 
 /*-
@@ -119,7 +119,7 @@ int pci_mode = -1;
  * Memory Mapped Configuration space access.
  *
  * Since mapping the whole configuration space will cost us up to
- * 256MB of kernel virtual memory, we use seperate mappings per bus.
+ * 256MB of kernel virtual memory, we use separate mappings per bus.
  * The mappings are created on-demand, such that we only use kernel
  * virtual memory for busses that are actually present.
  */
@@ -244,7 +244,7 @@ pci_attach_hook(struct device *parent, struct device *self,
 	 * support it than the other way around, so be conservative
 	 * here.  So we don't enable MSI if we don't find a host
 	 * bridge there.  We also deliberately don't enable MSI on
-	 * chipsets from low-end manifacturers like VIA and SiS.
+	 * chipsets from low-end manufacturers like VIA and SiS.
 	 */
 	tag = pci_make_tag(pc, 0, 0, 0);
 	id = pci_conf_read(pc, tag, PCI_ID_REG);

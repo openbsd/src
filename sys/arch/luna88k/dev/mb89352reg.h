@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352reg.h,v 1.4 2008/10/17 18:30:20 okan Exp $	*/
+/*	$OpenBSD: mb89352reg.h,v 1.5 2021/03/11 11:16:58 jsg Exp $	*/
 /*	$NetBSD: mb89352reg.h,v 1.3 2003/08/07 16:31:02 agc Exp $	*/
 /*	NecBSD: mb89352reg.h,v 1.3 1998/03/14 07:04:34 kmatsuda Exp 	*/
 
@@ -84,7 +84,7 @@
  * FUJITSU MB89352A SCSI Protocol Controller Hardware Description.
  */
 
-/* Definitions, most of them has turned out to be unneccesary, but here they
+/* Definitions, most of them have turned out to be unnecessary, but here they
  * are anyway.
  */
 

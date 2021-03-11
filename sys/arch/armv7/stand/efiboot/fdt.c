@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.6 2019/10/25 10:06:40 kettenis Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.7 2021/03/11 11:16:56 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -550,7 +550,7 @@ fdt_node_is_compatible(void *node, const char *name)
 
 #ifdef DEBUG
 /*
- * Debug methods for printing whole tree, particular odes and properies
+ * Debug methods for printing whole tree, particular nodes and properties
  */
 void *
 fdt_print_property(void *node, int level)

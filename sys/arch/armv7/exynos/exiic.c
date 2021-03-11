@@ -47,7 +47,7 @@
 #define I2C_STAT_LAST_RVCD_BIT		(0x1 << 0) /* last received bit 0 => ack, 1 => no ack */
 #define I2C_STAT_ADDR_ZERO_FLAG		(0x1 << 1) /* 0 => start/stop cond. detected, 1 => received slave addr 0xb */
 #define I2C_STAT_ADDR_SLAVE_ZERO_FLAG	(0x1 << 2) /* 0 => start/stop cond. detected, 1 => received slave addr matches i2cadd */
-#define I2C_STAT_ARBITRATION		(0x1 << 3) /* 0 => successul, 1 => failed */
+#define I2C_STAT_ARBITRATION		(0x1 << 3) /* 0 => successful, 1 => failed */
 #define I2C_STAT_SERIAL_OUTPUT		(0x1 << 4) /* 0 => disable tx/rx, 1 => enable tx/rx */
 #define I2C_STAT_BUSY_SIGNAL		(0x1 << 5) /* 0 => not busy / stop signal generation, 1 => busy / start signal generation */
 #define I2C_STAT_MODE_SEL_SLAVE_RX	(0x0 << 6) /* slave receive mode */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.82 2021/02/17 14:12:29 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.83 2021/03/11 11:16:59 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -98,7 +98,7 @@
 
 /*
  * Set the PKO to think command buffers are an odd length.  This makes it so we
- * never have to divide a comamnd across two buffers.
+ * never have to divide a command across two buffers.
  */
 #define OCTEON_POOL_NWORDS_CMD	\
 	    (((uint32_t)OCTEON_POOL_SIZE_CMD / sizeof(uint64_t)) - 1)

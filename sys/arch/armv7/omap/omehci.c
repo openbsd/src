@@ -1,4 +1,4 @@
-/*	$OpenBSD: omehci.c,v 1.6 2020/06/02 03:16:34 jsg Exp $ */
+/*	$OpenBSD: omehci.c,v 1.7 2021/03/11 11:16:56 jsg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -252,7 +252,7 @@ omehci_init(struct omehci_softc *sc)
 	sc->ehci_rev = bus_space_read_4(sc->sc.iot, sc->uhh_ioh,
 	    OMAP_USBHOST_UHH_REVISION);
 
-	/* Initilise the low level interface module(s) */
+	/* Initialise the low level interface module(s) */
 	if (sc->ehci_rev == OMAP_EHCI_REV1) {
 		/* Enable the USB TLL */
 		prcm_enablemodule(PRCM_USBTLL);

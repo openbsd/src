@@ -1,4 +1,4 @@
-/*	$OpenBSD: lance.c,v 1.2 2013/10/29 21:49:07 miod Exp $	*/
+/*	$OpenBSD: lance.c,v 1.3 2021/03/11 11:16:58 jsg Exp $	*/
 /*	$NetBSD: lance.c,v 1.1 2013/01/13 14:10:55 tsutsui Exp $	*/
 
 /*
@@ -289,7 +289,7 @@ lance_do_initialize(struct le_softc *sc)
 	sc->sc_curtmd = 0;
 	sc->sc_currmd = 0;
 
-	/* Initialze LANCE */
+	/* Initialize LANCE */
 	lereg->ler_rap = LE_CSR0;
 	lereg->ler_rdp = LE_C0_INIT;
 

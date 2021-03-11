@@ -1,4 +1,4 @@
-/* $OpenBSD: exec.h,v 1.3 2020/06/28 19:36:54 kettenis Exp $ */
+/* $OpenBSD: exec.h,v 1.4 2021/03/11 11:16:59 jsg Exp $ */
 
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -27,7 +27,7 @@
 #define ELF_TARG_DATA		ELFDATA2MSB
 #define ELF_TARG_MACH		EM_PPC64
 
-/* Processor sepcific dynamic tag values.  */
+/* Processor specific dynamic tag values.  */
 #define DT_PPC64_GLINK		0x70000000
 #define DT_PPC64_OPT		0x70000003
 

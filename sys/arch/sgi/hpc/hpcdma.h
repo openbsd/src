@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpcdma.h,v 1.1 2012/03/28 20:44:23 miod Exp $	*/
+/*	$OpenBSD: hpcdma.h,v 1.2 2021/03/11 11:17:00 jsg Exp $	*/
 /*	$NetBSD: hpcdma.h,v 1.11 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -51,7 +51,7 @@ struct hpc_dma_softc {
 	bus_dmamap_t		sc_dmamap;
 	struct hpc_dma_desc    *sc_desc_kva;	/* Virtual address */
 	bus_addr_t		sc_desc_pa;	/* DMA address */
-	ssize_t			sc_dlen;	/* number of bytes transfered */
+	ssize_t			sc_dlen;	/* number of bytes transferred */
 	struct hpc_values       *hpc;		/* constants for HPC1/3 */
 };
 

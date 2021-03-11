@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.63 2021/03/09 04:53:40 deraadt Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.64 2021/03/11 11:16:59 jsg Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -341,7 +341,7 @@ ofw_recurse_keyboard(int pnode)
 			} else if (ofw_devtree == DEVTREE_ADB) {
 				ofw_have_kbd |= OFW_HAVE_ADBKBD;
 			} else {
-				/* hid or some other keyboard? igore */
+				/* hid or some other keyboard? ignore */
 			}
 			continue;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smbiosvar.h,v 1.1 2021/01/23 12:10:08 kettenis Exp $	*/
+/*	$OpenBSD: smbiosvar.h,v 1.2 2021/03/11 11:17:00 jsg Exp $	*/
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gklok@cogeco.ca>
  * Copyright (c) 2005 Jordan Hargrave
@@ -35,7 +35,7 @@
 /*
  * Section 3.5 of "UUIDs and GUIDs" found at
  * http://www.opengroup.org/dce/info/draft-leach-uuids-guids-01.txt
- * specifies the string repersentation of a UUID.
+ * specifies the string representation of a UUID.
  */
 #define SMBIOS_UUID_REP "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x"
 #define SMBIOS_UUID_REPLEN 37 /* 16 zero padded values, 4 hyphens, 1 null */

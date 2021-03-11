@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.152 2020/10/22 13:41:51 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.153 2021/03/11 11:16:59 jsg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -244,9 +244,9 @@ trap(struct trapframe *trapframe)
 		if (trapframe->cause & CR_INT_MASK) {
 			/*
 			 * Similar reality check as done in interrupt(), in
-			 * case an interrupt occured between a write to
+			 * case an interrupt occurred between a write to
 			 * COP_0_STATUS_REG and it taking effect.
-			 * (I have never seen this occuring on R8000 but
+			 * (I have never seen this occurring on R8000 but
 			 *  this is cheap)
 			 */
 			if (ISSET(trapframe->sr, SR_INT_ENAB))

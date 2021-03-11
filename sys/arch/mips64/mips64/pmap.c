@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.115 2020/12/24 10:10:49 visa Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.116 2021/03/11 11:16:59 jsg Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -1844,7 +1844,7 @@ pmap_alloc_tlbpid(struct proc *p)
 		id = pmap_asid_info[cpuid].pma_asid;
 		if (id >= PG_ASID_COUNT) {
 			tlb_asid_wrap(ci);
-			/* reserve tlbpid_gen == 0 to alway mean invalid */
+			/* reserve tlbpid_gen == 0 to always mean invalid */
 			if (++pmap_asid_info[cpuid].pma_asidgen == 0)
 				pmap_asid_info[cpuid].pma_asidgen = 1;
 			id = MIN_USER_ASID;

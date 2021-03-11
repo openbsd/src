@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.11 2019/11/10 10:03:33 mpi Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.12 2021/03/11 11:16:58 jsg Exp $	*/
 /*
  * Copyright (c) 2006, Miodrag Vallat
  *
@@ -510,7 +510,7 @@ instset(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
 	return (1);
 }
 
-/* Handles unconditionnal branches */
+/* Handles unconditional branches */
 int
 obranch(int cpu, u_int32_t inst, const char *opcode, vaddr_t iadr)
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: viper.h,v 1.6 2007/04/10 17:47:54 miod Exp $	*/
+/*	$OpenBSD: viper.h,v 1.7 2021/03/11 11:16:56 jsg Exp $	*/
 
 /* 
  * Copyright (c) 1991,1994 The University of Utah and
@@ -118,7 +118,7 @@ struct vi_trs {
 ** Viper also creates HPA registers for the graphics accelerator (Venom).
 ** Venom has two sets of resisters; the User HPA contains registers that
 ** users are allowed to access, while the Supervisor HPA is only accessible
-** by code running at the most priviliged level.  Both sets of registers
+** by code running at the most privileged level.  Both sets of registers
 ** are defined below.
 */
 
@@ -129,7 +129,7 @@ struct vi_trs {
  * Define bits in the Venom "User Control" register.
  */
 struct vnu_ctl {
-	u_int	sdt_msk	:16,	/* screen door transparancy mask */
+	u_int	sdt_msk	:16,	/* screen door transparency mask */
 		: 6,
 		d_z_intp: 1,	/* disable Z Interpolation when set */
 		d_c_intp: 1,	/* disable Color Interpolation when set */

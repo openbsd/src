@@ -1,4 +1,4 @@
-/*	$OpenBSD: efipxe.c,v 1.9 2020/12/09 18:10:18 krw Exp $	*/
+/*	$OpenBSD: efipxe.c,v 1.10 2021/03/11 11:16:56 jsg Exp $	*/
 /*
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
  *
@@ -66,7 +66,7 @@ void		 efinet_end(struct netif *);
 
 /*
  * TFTP initial probe.  This function discovers PXE handles and tries
- * to figure out if there has already been a successfull PXE handshake.
+ * to figure out if there has already been a successful PXE handshake.
  * If so, set the PXE variable.
  */
 void

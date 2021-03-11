@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.10 2004/09/14 22:41:20 mickey Exp $	*/
+/*	$OpenBSD: psl.h,v 1.11 2021/03/11 11:16:57 jsg Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 Michael Shalayeff
@@ -30,7 +30,7 @@
 #define _MACHINE_PSL_H_
 
 /*
- * Rference:
+ * Reference:
  * 1. PA-RISC 1.1 Architecture and Instruction Set Manual
  *    Hewlett Packard, 3rd Edition, February 1994; Part Number 09740-90039
  */
@@ -88,7 +88,7 @@
 #define	PSL_CB	(1 << (31-PSL_CB_POS))	/* Carry/Borrow Bits */
 #define	PSL_O	(1 << (31-PSL_O_POS))	/* Force strong ordering (2.0) */
 #define	PSL_G	(1 << (31-PSL_G_POS))	/* Debug Trap Enable */
-#define	PSL_F	(1 << (31-PSL_F_POS))	/* Perfomance Monitor Interrupt Unmask */
+#define	PSL_F	(1 << (31-PSL_F_POS))	/* Performance Monitor Interrupt Unmask */
 #define	PSL_R	(1 << (31-PSL_R_POS))	/* Recover Counter Enable */
 #define	PSL_Q	(1 << (31-PSL_Q_POS))	/* Interrupt State Collection Enable */
 #define	PSL_P	(1 << (31-PSL_P_POS))	/* Protection Identifier Validation Enable */

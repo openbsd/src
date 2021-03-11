@@ -1,4 +1,4 @@
-/*	$OpenBSD: psychoreg.h,v 1.13 2008/07/20 10:37:43 kettenis Exp $	*/
+/*	$OpenBSD: psychoreg.h,v 1.14 2021/03/11 11:17:00 jsg Exp $	*/
 /*	$NetBSD: psychoreg.h,v 1.6.4.2 2001/09/13 01:14:40 thorpej Exp $ */
 
 /*
@@ -241,7 +241,7 @@ struct psychoreg {
 	 * accesses.  Memory space can use any sized accesses.
 	 *
 	 * Note that the SUNW,sabre/SUNW,simba combinations found on the
-	 * Ultra5 and Ultra10 machines uses slightly differrent addresses
+	 * Ultra5 and Ultra10 machines uses slightly different addresses
 	 * than the above.  This is mostly due to the fact that the APB is
 	 * a multi-function PCI device with two PCI bridges, and the U2P is
 	 * two separate PCI bridges.  It uses the same PCI configuration
@@ -357,7 +357,7 @@ struct psychoreg {
  */
 
 /*
- * For the physical addresses split into 3 32 bit values, we deocde
+ * For the physical addresses split into 3 32 bit values, we decode
  * them like the following (IEEE1275 PCI Bus binding 2.0, 2.2.1.1
  * Numerical Representation):
  *

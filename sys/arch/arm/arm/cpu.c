@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.53 2020/01/12 16:55:00 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.54 2021/03/11 11:16:55 jsg Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 2004/04/14 04:01:49 bsh Exp $	*/
 
 
@@ -688,7 +688,7 @@ cpu_opp_init_legacy(struct cpu_info *ci)
 	cooling_device_register(cd);
 
 	/*
-	 * Do addional checks at mountroot when all the clocks and
+	 * Do additional checks at mountroot when all the clocks and
 	 * regulators are available.
 	 */
 	config_mountroot(ci->ci_dev, cpu_opp_mountroot);
@@ -776,7 +776,7 @@ cpu_opp_init(struct cpu_info *ci, uint32_t phandle)
 	cooling_device_register(cd);
 
 	/*
-	 * Do addional checks at mountroot when all the clocks and
+	 * Do additional checks at mountroot when all the clocks and
 	 * regulators are available.
 	 */
 	config_mountroot(ci->ci_dev, cpu_opp_mountroot);

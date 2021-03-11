@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpipci.c,v 1.5 2020/09/26 15:16:12 kettenis Exp $	*/
+/*	$OpenBSD: acpipci.c,v 1.6 2021/03/11 11:16:55 jsg Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -196,7 +196,7 @@ acpipci_attach_bus(struct device *parent, struct acpipci_softc *sc)
 		pba.pba_flags |= PCI_FLAGS_MSI_ENABLED;
 
 	/*
-	 * Don't enable MSI on chipsets from low-end manifacturers
+	 * Don't enable MSI on chipsets from low-end manufacturers
 	 * like VIA and SiS.  We do this by looking at the host
 	 * bridge, which should be device 0 function 0.
 	 */

@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.58 2021/02/16 12:33:22 kettenis Exp $ */
+/* $OpenBSD: machdep.c,v 1.59 2021/03/11 11:16:55 jsg Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -977,7 +977,7 @@ initarm(struct arm64_bootparams *abp)
 			end = MIN(reg.addr + reg.size, (paddr_t)-PAGE_SIZE);
 
 			/*
-			 * The intial 64MB block is not excluded, so we need
+			 * The initial 64MB block is not excluded, so we need
 			 * to make sure we don't add it here.
 			 */
 			if (start < memend && end > memstart) {

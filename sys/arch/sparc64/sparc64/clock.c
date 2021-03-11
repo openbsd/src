@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.69 2021/02/23 15:47:53 cheloha Exp $	*/
+/*	$OpenBSD: clock.c,v 1.70 2021/03/11 11:17:00 jsg Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -572,7 +572,7 @@ cpu_initclocks(void)
 
 	/*
 	 * UltraSPARC IIe processors do have a STICK register, but it
-	 * lives on the PCI host bridge and isn't accessable through
+	 * lives on the PCI host bridge and isn't accessible through
 	 * ASR24.
 	 */
 	if (CPU_ISSUN4U || CPU_ISSUN4US)

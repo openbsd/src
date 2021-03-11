@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.76 2020/09/13 05:57:28 jsg Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.77 2021/03/11 11:16:57 jsg Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -52,7 +52,7 @@
 #define	CR0_CD	0x40000000	/* Cache Disable */
 
 /*
- * Cyrix 486 DLC special registers, accessable as IO ports.
+ * Cyrix 486 DLC special registers, accessible as IO ports.
  */
 #define CCR0	0xc0		/* configuration control register 0 */
 #define CCR0_NC0	0x01	/* first 64K of each 1M memory region is non-cacheable */

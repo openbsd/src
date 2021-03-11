@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.272 2021/02/13 07:46:44 mlarkin Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.273 2021/03/11 11:16:55 jsg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1410,7 +1410,7 @@ init_x86_64(paddr_t first_avail)
  * Memory on the AMD64 port is described by three different things.
  *
  * 1. biosbasemem - This is outdated, and should really only be used to
- *    santize the other values. Thiis is what we get back from the BIOS
+ *    sanitize the other values. This is what we get back from the BIOS
  *    using the legacy routines, describing memory below 640KB.
  *
  * 2. bios_memmap[] - This is the memory map as the bios has returned

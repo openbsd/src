@@ -3,7 +3,7 @@
  * DONT EDIT THIS FILE
  */
 
-/*	$OpenBSD: cn30xxgmxreg.h,v 1.8 2021/02/13 17:12:38 visa Exp $	*/
+/*	$OpenBSD: cn30xxgmxreg.h,v 1.9 2021/03/11 11:16:59 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -218,7 +218,7 @@
 #define	RXN_RRM_MAX_XXX_63_16			0xffffffffffff0000ULL
 #define	RXN_RRM_MAX_LEN				0x000000000000ffffULL
 
-/* GMX Maximun Packet-Size Registers */
+/* GMX Maximum Packet-Size Registers */
 
 #define	RXN_JABBER_XXX_63_16			0xffffffffffff0000ULL
 #define	RXN_JABBER_CNT				0x000000000000ffffULL
@@ -240,7 +240,7 @@
 #define	RXN_STATS_CTL_XXX_63_1			0xfffffffffffffffeULL
 #define	RXN_STATS_CTL_RD_CLR			0x0000000000000001ULL
 
-/* GMX Minimun Interface-Gap Cycles Registers */
+/* GMX Minimum Interface-Gap Cycles Registers */
 
 #define	RXN_IFG_XXX_63_4			0xfffffffffffffff0ULL
 #define	RXN_IFG_IFG				0x000000000000000fULL

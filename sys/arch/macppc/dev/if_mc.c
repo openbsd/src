@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mc.c,v 1.30 2020/07/10 13:22:19 patrick Exp $	*/
+/*	$OpenBSD: if_mc.c,v 1.31 2021/03/11 11:16:58 jsg Exp $	*/
 /*	$NetBSD: if_mc.c,v 1.9.16.1 2006/06/21 14:53:13 yamt Exp $	*/
 
 /*-
@@ -170,7 +170,7 @@
 #define	RCVINT			0x02	/* Receive Interrupt */
 #define	XMTINT			0x01	/* Transmit Interrupt */
 
-/* 9: Interrut Mask Register (IMR) */
+/* 9: Interrupt Mask Register (IMR) */
 #define	JABM			0x80	/* Jabber Error Mask */
 #define	BABLM			0x40	/* Babble Error Mask */
 #define	CERRM			0x20	/* Collision Error Mask */

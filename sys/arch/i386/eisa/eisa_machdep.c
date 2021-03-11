@@ -1,4 +1,4 @@
-/*	$OpenBSD: eisa_machdep.c,v 1.17 2017/09/08 05:36:51 deraadt Exp $	*/
+/*	$OpenBSD: eisa_machdep.c,v 1.18 2021/03/11 11:16:57 jsg Exp $	*/
 /*	$NetBSD: eisa_machdep.c,v 1.10.22.2 2000/06/25 19:36:58 sommerfeld Exp $	*/
 
 /*-
@@ -79,7 +79,7 @@
 
 /*
  * EISA doesn't have any special needs; just use the generic versions
- * of these funcions.
+ * of these functions.
  */
 struct bus_dma_tag eisa_bus_dma_tag = {
 	NULL,			/* _cookie */

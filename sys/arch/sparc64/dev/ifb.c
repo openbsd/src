@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifb.c,v 1.23 2020/05/25 09:55:48 jsg Exp $	*/
+/*	$OpenBSD: ifb.c,v 1.24 2021/03/11 11:17:00 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009 Miodrag Vallat.
@@ -602,7 +602,7 @@ ifb_dac_value(u_int r, u_int g, u_int b)
 	/*
 	 * Convert 8 bit values to 10 bit scale, by shifting and inserting
 	 * the former high bits in the low two bits.
-	 * Simply shifting is sligthly too dull.
+	 * Simply shifting is slightly too dull.
 	 */
 	r = (r << 2) | (r >> 6);
 	g = (g << 2) | (g >> 6);

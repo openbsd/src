@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.263 2021/01/09 18:03:19 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.264 2021/03/11 11:16:56 jsg Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -944,7 +944,7 @@ doreset:
 		/* ask firmware to reset */
                 pdc_call((iodcio_t)pdc, 0, PDC_BROADCAST_RESET, PDC_DO_RESET);
 
-		/* forcably reset module if that fails */
+		/* forcibly reset module if that fails */
 		__asm volatile(".export hppa_reset, entry\n\t"
 		    ".label hppa_reset");
 		__asm volatile("stwas %0, 0(%1)"

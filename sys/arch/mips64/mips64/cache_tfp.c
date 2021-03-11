@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_tfp.c,v 1.7 2017/06/22 14:40:20 visa Exp $	*/
+/*	$OpenBSD: cache_tfp.c,v 1.8 2021/03/11 11:16:59 jsg Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -21,7 +21,7 @@
  *
  * These routines only handle the L1 cache found onboard the R8000.
  * The L2 (Streaming Cache) cache handling is apparently quite different
- * accross R8000-based designs (well... the two of them: IP21 and IP26),
+ * across R8000-based designs (well... the two of them: IP21 and IP26),
  * and is handled on a per-platform basis.
  */
 

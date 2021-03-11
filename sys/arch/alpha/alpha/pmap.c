@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.86 2018/09/06 11:50:53 jsg Exp $ */
+/* $OpenBSD: pmap.c,v 1.87 2021/03/11 11:16:54 jsg Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -3153,7 +3153,7 @@ pmap_l1pt_ctor(pt_entry_t *l1pt)
  *
  *	Page allocator for L1 PT pages.
  *
- *	Note: The growkernel lock is held accross allocations
+ *	Note: The growkernel lock is held across allocations
  *	from this pool, so we don't need to acquire it
  *	ourselves.
  */

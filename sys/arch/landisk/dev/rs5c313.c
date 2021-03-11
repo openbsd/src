@@ -1,4 +1,4 @@
-/*	$OpenBSD: rs5c313.c,v 1.3 2008/06/27 06:03:08 ray Exp $	*/
+/*	$OpenBSD: rs5c313.c,v 1.4 2021/03/11 11:16:57 jsg Exp $	*/
 /*	$NetBSD: rs5c313.c,v 1.1 2006/09/07 01:12:00 uwe Exp $	*/
 /*	$NetBSD: rs5c313_landisk.c,v 1.1 2006/09/07 01:55:03 uwe Exp $	*/
 
@@ -321,7 +321,7 @@ rtc_ce(struct rs5c313_softc *sc, int onoff)
 }
 
 /*
- * SCLK pin is connnected to SPB0DT.
+ * SCLK pin is connected to SPB0DT.
  * SPB0DT is always in output mode, we set SPB0IO in rtc_begin.
  */
 void

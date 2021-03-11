@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.86 2019/09/03 17:51:52 deraadt Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.87 2021/03/11 11:16:58 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2008 Dale Rahn <drahn@openbsd.org>
@@ -231,7 +231,7 @@ openpic_attach(struct device *parent, struct device *self, void *aux)
 	while (openpic_read(OPENPIC_CONFIG) & OPENPIC_CONFIG_RESET)
 		delay(100);
 
-	/* openpic may support more than 128 interupts but driver doesn't */
+	/* openpic may support more than 128 interrupts but driver doesn't */
 	openpic_numirq = ((openpic_read(OPENPIC_FEATURE) >> 16) & 0x7f)+1;
 
 	printf(": version 0x%x feature %x %s",

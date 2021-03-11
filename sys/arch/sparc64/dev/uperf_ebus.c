@@ -1,4 +1,4 @@
-/*	$OpenBSD: uperf_ebus.c,v 1.6 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: uperf_ebus.c,v 1.7 2021/03/11 11:17:00 jsg Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -182,7 +182,7 @@ uperf_ebus_read_reg(sc, r)
 	bus_space_barrier(sc->sc_bus_t, sc->sc_bus_h, USC_ADDR, 1,
 	    BUS_SPACE_BARRIER_WRITE);
 
-	/* Can't use multi reads because we have to gaurantee order */
+	/* Can't use multi reads because we have to guarantee order */
 
 	v = bus_space_read_1(sc->sc_bus_t, sc->sc_bus_h, USC_DATA + 0);
 	bus_space_barrier(sc->sc_bus_t, sc->sc_bus_h, USC_DATA + 0, 1,
@@ -223,7 +223,7 @@ uperf_ebus_write_reg(sc, r, v)
 	bus_space_barrier(sc->sc_bus_t, sc->sc_bus_h, USC_ADDR, 1,
 	    BUS_SPACE_BARRIER_WRITE);
 
-	/* Can't use multi writes because we have to gaurantee order */
+	/* Can't use multi writes because we have to guarantee order */
 
 	bus_space_write_1(sc->sc_bus_t, sc->sc_bus_h, USC_DATA + 0,
 	    (v >> 24) & 0xff);

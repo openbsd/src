@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.h,v 1.19 2013/05/08 15:48:05 tedu Exp $	*/
+/*	$OpenBSD: npx.h,v 1.20 2021/03/11 11:16:57 jsg Exp $	*/
 /*	$NetBSD: npx.h,v 1.11 1994/10/27 04:16:11 cgd Exp $	*/
 
 /*-
@@ -99,7 +99,7 @@ struct envxmm {
 	uint32_t en_mxcsr_mask; /* Mask for valid MXCSR bits (may be 0) */
 };
 
-/* FPU regsters in the extended save format. */
+/* FPU registers in the extended save format. */
 struct fpaccxmm {
 	uint8_t	fp_bytes[10];
 	uint8_t	fp_rsvd[6];

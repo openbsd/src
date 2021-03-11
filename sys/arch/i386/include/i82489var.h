@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82489var.h,v 1.14 2014/01/24 21:20:23 kettenis Exp $	*/
+/*	$OpenBSD: i82489var.h,v 1.15 2021/03/11 11:16:57 jsg Exp $	*/
 /*	$NetBSD: i82489var.h,v 1.1.2.2 2000/02/21 18:46:14 sommerfeld Exp $	*/
 
 /*-
@@ -54,7 +54,7 @@ i82489_writereg(int reg, u_int32_t val)
 	    val;
 	/*
 	 * intel xeon errata p53:
-	 *   write to a lapic register sometimes may appear to have not occured
+	 *   write to a lapic register sometimes may appear to have not occurred
 	 * workaround:
 	 *   follow write with a read [from id register]
 	 */
