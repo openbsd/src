@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.67 2020/10/14 19:28:22 naddy Exp $ */
+/*	$OpenBSD: kvm.c,v 1.68 2021/03/11 07:43:34 deraadt Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -216,7 +216,7 @@ _kvm_open(kvm_t *kd, const char *uf, const char *mf, const char *sf,
 	}
 	flag |= O_CLOEXEC;
 
-	if (mf == 0)
+	if (mf == NULL)
 		mf = _PATH_MEM;
 
 	if ((kd->pmfd = open(mf, flag)) == -1) {
