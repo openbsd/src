@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.365 2021/03/09 19:39:20 kn Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.366 2021/03/11 10:09:48 kn Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: March 9 2021 $
+.Dd $Mdocdate: March 11 2021 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -2043,6 +2043,103 @@ Disable data roaming.
 As soon as the interface is marked as "up", the
 .Xr umb 4
 device will try to establish a data connection with the service provider.
+.El
+.Sh VEB
+.nr nS 1
+.Bk -words
+.Nm ifconfig
+.Ar veb-interface
+.Op Cm add Ar child-iface
+.Op Cm addspan Ar child-iface
+.Op Cm del Ar child-iface
+.Op Cm delspan Ar child-iface
+.Op Oo Fl Oc Ns Cm discover Ar child-iface
+.It Oo Fl Oc Ns Cm learn Ar child-iface
+.Op Oo Fl Oc Ns Cm link0
+.Op Oo Fl Oc Ns Cm link1
+.Op Oo Fl Oc Ns Cm protected Ar child-iface ids
+.Ek
+.nr nS 0
+.Pp
+The following options are available for a
+.Xr veb 4
+interface:
+.Bl -tag -width Ds
+.It Cm add Ar child-iface
+Add
+.Ar child-iface
+as a member.
+.It Cm addspan Ar child-iface
+Add
+.Ar child-iface
+as a span port on the bridge.
+.It Cm del Ar child-iface
+Remove the member
+.Ar child-iface .
+.It Cm delspan Ar child-iface
+Delete
+.Ar child-iface
+from the list of span ports of the bridge.
+.It Cm discover Ar child-iface
+Mark
+.Ar child-iface
+so that packets are sent out of the interface
+if the destination port of the packet is unknown.
+If the bridge has no address cache entry for the destination of
+a packet, meaning that there is no static entry and no dynamically learned
+entry for the destination, the bridge will forward the packet to all member
+interfaces that have this flag set.
+This is the default for interfaces added to the bridge.
+.It Cm -discover Ar child-iface
+Mark
+.Ar child-iface
+so that packets are not sent out of the interface
+if the destination port of the packet is unknown.
+Turning this flag
+off means that the bridge will not send packets out of this interface
+unless the packet is a broadcast packet, multicast packet, or a
+packet with a destination address found on the interface's segment.
+This, in combination with static address cache entries,
+prevents potentially sensitive packets from being sent on
+segments that have no need to see the packet.
+.It Cm learn Ar child-iface
+Mark
+.Ar child-iface
+so that the source address of packets received from
+the interface
+are entered into the address cache.
+This is the default for interfaces added to the bridge.
+.It Cm -learn Ar child-iface
+Mark
+.Ar child-iface
+so that the source address of packets received from interface
+are not entered into the address cache.
+.It Cm link0
+Disable the filtering of 802.1Q VLAN and QinQ SVLAN packets.
+.It Cm -link0
+Enable the filtering of 802.1Q VLAN and QinQ SVLAN packets.
+This is the default.
+.It Cm link1
+Enable the filtering of IPv4 and IPv6 packets with
+.Xr pf 4 .
+.It Cm -link1
+Disable the filtering of IPv4 and IPv6 packets with
+.Xr pf 4 .
+This is the default.
+.It Cm protected Ar child-iface ids
+Put
+.Ar interface
+in protected domains.
+.Ar ids
+is a comma delimited list of domain IDs, between 1 and 31, to put the
+interface in.
+Interfaces that are part of a protected domain cannot forward traffic to any
+other interface in that domain.
+Interfaces do not belong to any protected domain by default.
+.It Cm -protected Ar child-iface
+Remove
+.Ar child-iface
+from all protected domains.
 .El
 .Sh VLAN
 .nr nS 1
