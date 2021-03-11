@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.51 2021/03/07 10:31:20 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.52 2021/03/11 19:53:40 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -532,7 +532,7 @@ update_iface(uint32_t if_index, char* if_name)
 	imsg_ifinfo.rdomain = ifrdomain;
 	imsg_ifinfo.running = (flags & (IFF_UP | IFF_RUNNING)) == (IFF_UP |
 	    IFF_RUNNING);
-	imsg_ifinfo.autoconfprivacy = !(xflags & IFXF_INET6_NOPRIVACY);
+	imsg_ifinfo.autoconfprivacy = (xflags & IFXF_AUTOCONF6TEMP);
 	imsg_ifinfo.soii = !(xflags & IFXF_INET6_NOSOII);
 
 	if (getifaddrs(&ifap) != 0)

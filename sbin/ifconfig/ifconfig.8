@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.367 2021/03/11 10:12:51 kn Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.368 2021/03/11 19:53:39 florian Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -1321,7 +1321,7 @@ protocol when supported by the access point.
 .Ar interface
 .Cm inet6
 .Op Oo Fl Oc Ns Cm anycast
-.Op Oo Fl Oc Ns Cm autoconfprivacy
+.Op Oo Fl Oc Ns Cm temporary
 .Op Cm eui64
 .Op Cm pltime Ar n
 .Op Oo Fl Oc Ns Cm soii
@@ -1338,9 +1338,9 @@ interface:
 Set the IPv6 anycast address bit.
 .It Cm -anycast
 Clear the IPv6 anycast address bit.
-.It Cm autoconfprivacy
-Enable privacy extensions for stateless IPv6 address autoconfiguration
-(RFC 4941) on the interface.
+.It Cm temporary
+Enable temporary address  extensions for stateless IPv6 address
+autoconfiguration (RFC 8981) on the interface.
 These extensions are enabled by default.
 The purpose of these extensions is to prevent tracking of individual
 devices which connect to the IPv6 internet from different networks
@@ -1362,8 +1362,8 @@ Deprecated addresses will not be used for new connections as long as a
 non-deprecated address remains available.
 Temporary addresses become invalid after another 24 hours, at which time they
 will be removed from the interface.
-.It Cm -autoconfprivacy
-Disable IPv6 autoconf privacy extensions on the interface.
+.It Cm -temporary
+Disable IPv6 autoconf temporary address extensions on the interface.
 Currently configured addresses will not be removed until they become
 invalid.
 .It Cm eui64

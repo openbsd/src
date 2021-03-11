@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.435 2021/03/04 07:46:26 jsg Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.436 2021/03/11 19:53:39 florian Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -464,8 +464,10 @@ const struct	cmd {
 	{ "pltime",	NEXTARG,	0,		setia6pltime },
 	{ "vltime",	NEXTARG,	0,		setia6vltime },
 	{ "eui64",	0,		0,		setia6eui64 },
-	{ "autoconfprivacy",	-IFXF_INET6_NOPRIVACY,	0,	setifxflags },
-	{ "-autoconfprivacy",	IFXF_INET6_NOPRIVACY,	0,	setifxflags },
+	{ "autoconfprivacy",	IFXF_AUTOCONF6TEMP,	0,	setifxflags },
+	{ "-autoconfprivacy",	-IFXF_AUTOCONF6TEMP,	0,	setifxflags },
+	{ "temporary",	IFXF_AUTOCONF6TEMP,	0,	setifxflags },
+	{ "-temporary",	-IFXF_AUTOCONF6TEMP,	0,	setifxflags },
 	{ "soii",	-IFXF_INET6_NOSOII,	0,	setifxflags },
 	{ "-soii",	IFXF_INET6_NOSOII,	0,	setifxflags },
 	{ "monitor",	IFXF_MONITOR,	0,		setifxflags },
@@ -676,7 +678,7 @@ const struct	cmd {
 	"\024\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5POINTOPOINT\6STATICARP"	\
 	"\7RUNNING\10NOARP\11PROMISC\12ALLMULTI\13OACTIVE\14SIMPLEX"	\
 	"\15LINK0\16LINK1\17LINK2\20MULTICAST"				\
-	"\23INET6_NOPRIVACY\24MPLS\25WOL\26AUTOCONF6\27INET6_NOSOII"	\
+	"\23AUTOCONF6TEMP\24MPLS\25WOL\26AUTOCONF6\27INET6_NOSOII"	\
 	"\30AUTOCONF4" "\31MONITOR"
 
 int	getinfo(struct ifreq *, int);
@@ -1577,7 +1579,8 @@ setautoconf(const char *cmd, int val)
 		setifxflags("inet", val * IFXF_AUTOCONF4);
 		break;
 	case AF_INET6:
-		setifxflags("inet6", val * IFXF_AUTOCONF6);
+		setifxflags("inet6", val * (IFXF_AUTOCONF6 |
+		    IFXF_AUTOCONF6TEMP));
 		break;
 	default:
 		errx(1, "autoconf not allowed for this address family");
@@ -3676,7 +3679,7 @@ in6_alias(struct in6_ifreq *creq)
 		if (ifr6.ifr_ifru.ifru_flags6 & IN6_IFF_AUTOCONF)
 			printf(" autoconf");
 		if (ifr6.ifr_ifru.ifru_flags6 & IN6_IFF_TEMPORARY)
-			printf(" autoconfprivacy");
+			printf(" temporary");
 	}
 
 	if (scopeid)
