@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.368 2021/03/11 19:53:39 florian Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.369 2021/03/11 21:07:16 jmc Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -1339,7 +1339,7 @@ Set the IPv6 anycast address bit.
 .It Cm -anycast
 Clear the IPv6 anycast address bit.
 .It Cm temporary
-Enable temporary address  extensions for stateless IPv6 address
+Enable temporary address extensions for stateless IPv6 address
 autoconfiguration (RFC 8981) on the interface.
 These extensions are enabled by default.
 The purpose of these extensions is to prevent tracking of individual
@@ -2052,7 +2052,7 @@ device will try to establish a data connection with the service provider.
 .Op Cm del Ar child-iface
 .Op Cm delspan Ar child-iface
 .Op Oo Fl Oc Ns Cm discover Ar child-iface
-.It Oo Fl Oc Ns Cm learn Ar child-iface
+.Op Oo Fl Oc Ns Cm learn Ar child-iface
 .Op Oo Fl Oc Ns Cm link0
 .Op Oo Fl Oc Ns Cm link1
 .Op Oo Fl Oc Ns Cm protected Ar child-iface ids
