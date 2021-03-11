@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-join-pane.c,v 1.47 2021/01/06 07:32:23 nicm Exp $ */
+/* $OpenBSD: cmd-join-pane.c,v 1.48 2021/03/11 06:31:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 George Nachman <tmux@georgester.com>
@@ -147,7 +147,7 @@ cmd_join_pane_exec(struct cmd *self, struct cmdq_item *item)
 		TAILQ_INSERT_BEFORE(dst_wp, src_wp, entry);
 	else
 		TAILQ_INSERT_AFTER(&dst_w->panes, dst_wp, src_wp, entry);
-	layout_assign_pane(lc, src_wp);
+	layout_assign_pane(lc, src_wp, 0);
 
 	recalculate_sizes();
 

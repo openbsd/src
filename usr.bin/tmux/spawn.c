@@ -1,4 +1,4 @@
-/* $OpenBSD: spawn.c,v 1.27 2021/03/02 11:00:38 nicm Exp $ */
+/* $OpenBSD: spawn.c,v 1.28 2021/03/11 06:31:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -261,7 +261,10 @@ spawn_pane(struct spawn_context *sc, char **cause)
 		layout_init(w, new_wp);
 	} else {
 		new_wp = window_add_pane(w, sc->wp0, hlimit, sc->flags);
-		layout_assign_pane(sc->lc, new_wp);
+		if (sc->flags & SPAWN_ZOOM)
+			layout_assign_pane(sc->lc, new_wp, 1);
+		else
+			layout_assign_pane(sc->lc, new_wp, 0);
 	}
 
 	/*

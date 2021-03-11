@@ -1,4 +1,4 @@
-/* $OpenBSD: options.c,v 1.61 2021/01/18 11:14:23 nicm Exp $ */
+/* $OpenBSD: options.c,v 1.62 2021/03/11 06:31:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1115,7 +1115,7 @@ options_push_changes(const char *name)
 	}
 	if (strcmp(name, "pane-border-status") == 0) {
 		RB_FOREACH(w, windows, &windows)
-			layout_fix_panes(w);
+			layout_fix_panes(w, NULL);
 	}
 	RB_FOREACH(s, sessions, &sessions)
 		status_update_cache(s);
