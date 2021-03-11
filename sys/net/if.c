@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.634 2021/03/10 10:21:47 jsg Exp $	*/
+/*	$OpenBSD: if.c,v 1.635 2021/03/11 15:56:27 deraadt Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1952,28 +1952,6 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		NET_UNLOCK();
 		break;
 
-	case SIOCSIFFLAGS:
-		if ((error = suser(p)) != 0)
-			break;
-
-		NET_LOCK();
-		ifp->if_flags = (ifp->if_flags & IFF_CANTCHANGE) |
-			(ifr->ifr_flags & ~IFF_CANTCHANGE);
-
-		error = (*ifp->if_ioctl)(ifp, cmd, data);
-		if (error != 0) {
-			ifp->if_flags = oif_flags;
-		} else if (ISSET(oif_flags ^ ifp->if_flags, IFF_UP)) {
-			s = splnet();
-			if (ISSET(ifp->if_flags, IFF_UP))
-				if_up(ifp);
-			else
-				if_down(ifp);
-			splx(s);
-		}
-		NET_UNLOCK();
-		break;
-
 	case SIOCSIFXFLAGS:
 		if ((error = suser(p)) != 0)
 			break;
@@ -2042,6 +2020,39 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		if (error == 0)
 			ifp->if_xflags = (ifp->if_xflags & IFXF_CANTCHANGE) |
 				(ifr->ifr_flags & ~IFXF_CANTCHANGE);
+
+		if (!ISSET(ifp->if_flags, IFF_UP) &&
+		    ((!ISSET(oif_xflags, IFXF_AUTOCONF4) &&
+		    ISSET(ifp->if_xflags, IFXF_AUTOCONF4)) ||
+		    (!ISSET(oif_xflags, IFXF_AUTOCONF6) &&
+		    ISSET(ifp->if_xflags, IFXF_AUTOCONF6)))) {
+			ifr->ifr_flags = ifp->if_flags | IFF_UP;
+			cmd = SIOCSIFFLAGS;
+			goto forceup;
+		}
+
+		NET_UNLOCK();
+		break;
+
+	case SIOCSIFFLAGS:
+		if ((error = suser(p)) != 0)
+			break;
+
+		NET_LOCK();
+forceup:
+		ifp->if_flags = (ifp->if_flags & IFF_CANTCHANGE) |
+			(ifr->ifr_flags & ~IFF_CANTCHANGE);
+		error = (*ifp->if_ioctl)(ifp, cmd, data);
+		if (error != 0) {
+			ifp->if_flags = oif_flags;
+		} else if (ISSET(oif_flags ^ ifp->if_flags, IFF_UP)) {
+			s = splnet();
+			if (ISSET(ifp->if_flags, IFF_UP))
+				if_up(ifp);
+			else
+				if_down(ifp);
+			splx(s);
+		}
 		NET_UNLOCK();
 		break;
 
