@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.635 2021/03/11 15:56:27 deraadt Exp $	*/
+/*	$OpenBSD: if.c,v 1.636 2021/03/11 16:48:47 florian Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1958,7 +1958,8 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 
 		NET_LOCK();
 #ifdef INET6
-		if (ISSET(ifr->ifr_flags, IFXF_AUTOCONF6)) {
+		if (ISSET(ifr->ifr_flags, IFXF_AUTOCONF6) &&
+		    !ISSET(ifp->if_xflags, IFXF_AUTOCONF6)) {
 			error = in6_ifattach(ifp);
 			if (error != 0) {
 				NET_UNLOCK();
