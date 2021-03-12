@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifaddr.c,v 1.4 2020/07/03 17:42:50 florian Exp $	*/
+/*	$OpenBSD: ifaddr.c,v 1.5 2021/03/12 19:35:43 florian Exp $	*/
 
 /*
  * This file has been copied from ifconfig and adapted to test
@@ -224,7 +224,7 @@ const struct	cmd {
 	"\024\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5POINTOPOINT\6STATICARP"	\
 	"\7RUNNING\10NOARP\11PROMISC\12ALLMULTI\13OACTIVE\14SIMPLEX"	\
 	"\15LINK0\16LINK1\17LINK2\20MULTICAST"				\
-	"\23INET6_NOPRIVACY\24MPLS\25WOL\26AUTOCONF6\27INET6_NOSOII"	\
+	"\23AUTOCONF6TEMP\24MPLS\25WOL\26AUTOCONF6\27INET6_NOSOII"	\
 	"\30AUTOCONF4"
 
 int	getinfo(struct ifreq *, int);
