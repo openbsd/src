@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnvar.h,v 1.39 2020/10/11 07:05:28 mpi Exp $	*/
+/*	$OpenBSD: if_iwnvar.h,v 1.40 2021/03/12 16:27:28 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -65,16 +65,10 @@ struct iwn_tx_data {
 	struct mbuf		*m;
 	struct ieee80211_node	*ni;
 	int totlen;
-	int retries;
-	int txfail;
-	int txmcs;
-	int txrate;
 
 	/* A-MPDU subframes */
-	int ampdu_id;
 	int ampdu_txmcs;
 	int ampdu_nframes;
-	int ampdu_size;
 };
 
 struct iwn_tx_ring {
@@ -108,11 +102,12 @@ struct iwn_rx_ring {
 struct iwn_node {
 	struct	ieee80211_node		ni;	/* must be the first */
 	struct	ieee80211_amrr_node	amn;
-	struct	ieee80211_mira_node	mn;
+	struct	ieee80211_ra_node	rn;
 	uint16_t			disable_tid;
 	uint8_t				id;
 	uint8_t				ridx[IEEE80211_RATE_MAXSIZE];
 	uint32_t			next_ampdu_id;
+	int				lq_rate_mismatch;
 };
 
 struct iwn_calib_state {
