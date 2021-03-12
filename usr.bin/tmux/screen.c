@@ -1,4 +1,4 @@
-/* $OpenBSD: screen.c,v 1.69 2021/01/26 09:32:52 nicm Exp $ */
+/* $OpenBSD: screen.c,v 1.70 2021/03/12 08:39:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -154,8 +154,10 @@ screen_reset_tabs(struct screen *s)
 void
 screen_set_cursor_style(struct screen *s, u_int style)
 {
-	if (style <= 6)
+	if (style <= 6) {
 		s->cstyle = style;
+		s->mode &= ~MODE_BLINKING;
+	}
 }
 
 /* Set screen cursor colour. */
