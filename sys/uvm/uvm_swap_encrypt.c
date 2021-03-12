@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap_encrypt.c,v 1.23 2021/01/09 21:00:29 gnezdo Exp $	*/
+/*	$OpenBSD: uvm_swap_encrypt.c,v 1.24 2021/03/12 14:15:49 jsg Exp $	*/
 
 /*
  * Copyright 1999 Niels Provos <provos@citi.umich.edu>
@@ -136,7 +136,7 @@ swap_encrypt(struct swap_key *key, caddr_t src, caddr_t dst, u_int64_t block,
 		ddst[2] = dsrc[2] ^ iv3;
 		ddst[3] = dsrc[3] ^ iv4;
 		/*
-		 * Do not worry about endianess, it only needs to decrypt
+		 * Do not worry about endianness, it only needs to decrypt
 		 * on this machine.
 		 */
 		rijndael_encrypt(&swap_ctxt, (u_char *)ddst, (u_char *)ddst);

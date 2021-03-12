@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.272 2021/03/05 05:30:44 jsg Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.273 2021/03/12 14:15:49 jsg Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -667,7 +667,7 @@ uvm_map_sel_limits(vaddr_t *min, vaddr_t *max, vsize_t sz, int guardpg,
 
 		/*
 		 * Fixup: it's possible that pmap_min and pmap_max
-		 * cross eachother. In this case, try to find one
+		 * cross each other. In this case, try to find one
 		 * address that is allowed.
 		 * (This usually happens in biased case.)
 		 */
@@ -1473,14 +1473,14 @@ uvm_mapent_isjoinable(struct vm_map *map, struct vm_map_entry *e1,
 	if (e2->aref.ar_amap && amap_refs(e2->aref.ar_amap) != 1)
 		return 0;
 
-	/* Apprently, e1 and e2 match. */
+	/* Apparently, e1 and e2 match. */
 	return 1;
 }
 
 /*
  * Join support function.
  *
- * Returns the merged entry on succes.
+ * Returns the merged entry on success.
  * Returns NULL if the merge failed.
  */
 struct vm_map_entry*

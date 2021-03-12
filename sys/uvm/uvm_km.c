@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.140 2021/03/04 09:00:03 mpi Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.141 2021/03/12 14:15:49 jsg Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -145,7 +145,7 @@ struct vm_map *kernel_map = NULL;
 struct uvm_constraint_range	no_constraint = { 0x0, (paddr_t)-1 };
 
 /*
- * local data structues
+ * local data structures
  */
 static struct vm_map		kernel_map_store;
 

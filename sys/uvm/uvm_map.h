@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.h,v 1.68 2020/10/09 08:16:28 mpi Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.69 2021/03/12 14:15:49 jsg Exp $	*/
 /*	$NetBSD: uvm_map.h,v 1.24 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -101,7 +101,7 @@
 
 /*
  * UVM_MAP_CLIP_END: ensure that the entry ends at or before
- *      the ending address, if it does't we split the entry.
+ *      the ending address, if it doesn't we split the entry.
  *
  * => map must be locked by caller
  */

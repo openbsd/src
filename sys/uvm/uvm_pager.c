@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.c,v 1.74 2021/01/19 13:21:36 mpi Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.75 2021/03/12 14:15:49 jsg Exp $	*/
 /*	$NetBSD: uvm_pager.c,v 1.36 2000/11/27 18:26:41 chs Exp $	*/
 
 /*
@@ -526,7 +526,7 @@ ReTry:
 	}
 
 	/*
-	 * a pager error occured (even after dropping the cluster, if there
+	 * a pager error occurred (even after dropping the cluster, if there
 	 * was one).  give up! the caller only has one page ("pg")
 	 * to worry about.
 	 */

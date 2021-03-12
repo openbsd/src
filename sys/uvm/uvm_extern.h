@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.156 2020/12/28 14:01:23 mpi Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.157 2021/03/12 14:15:49 jsg Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -219,7 +219,7 @@ struct vmspace {
  * uvm_constraint_range's:
  * MD code is allowed to setup constraint ranges for memory allocators, the
  * primary use for this is to keep allocation for certain memory consumers
- * such as mbuf pools withing address ranges that are reachable by devices
+ * such as mbuf pools within address ranges that are reachable by devices
  * that perform DMA.
  *
  * It is also to discourge memory allocations from being satisfied from ranges

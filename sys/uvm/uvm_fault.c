@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.117 2021/03/01 09:09:35 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.118 2021/03/12 14:15:49 jsg Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -928,7 +928,7 @@ uvm_fault_upper(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 
 	case VM_PAGER_ERROR:
 		/*
-		 * An error occured while trying to bring in the
+		 * An error occurred while trying to bring in the
 		 * page -- this is the only error we return right
 		 * now.
 		 */

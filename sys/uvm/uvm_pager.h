@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.h,v 1.31 2021/03/04 08:38:48 mpi Exp $	*/
+/*	$OpenBSD: uvm_pager.h,v 1.32 2021/03/12 14:15:49 jsg Exp $	*/
 /*	$NetBSD: uvm_pager.h,v 1.20 2000/11/27 08:40:05 chs Exp $	*/
 
 /*
@@ -146,7 +146,7 @@ struct vm_page **uvm_mk_pcluster(struct uvm_object *, struct vm_page **,
  * AGAIN   temporary resource shortage prevented operation from happening
  * UNLOCK  unlock the map and try again
  * REFAULT [uvm_fault internal use only!] unable to relock data structures,
- *         thus the mapping needs to be reverified before we can procede
+ *         thus the mapping needs to be reverified before we can proceed
  */
 #define	VM_PAGER_OK		0
 #define	VM_PAGER_BAD		1

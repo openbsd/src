@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.111 2021/03/04 08:38:48 mpi Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.112 2021/03/12 14:15:49 jsg Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -960,7 +960,7 @@ uvn_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 
 		/*
 		 * XXX: given the "advice", should we consider async read-ahead?
-		 * XXX: fault current does deactive of pages behind us.  is
+		 * XXX: fault current does deactivate of pages behind us.  is
 		 * this good (other callers might now).
 		 */
 		/*

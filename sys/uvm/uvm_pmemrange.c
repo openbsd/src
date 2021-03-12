@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.60 2020/12/01 13:56:22 mpi Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.61 2021/03/12 14:15:49 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Ariane van der Steldt <ariane@stack.nl>
@@ -989,7 +989,7 @@ retry_desperate:
 		    result, start, end, 0);
 
 		/*
-		 * If we found sufficient pages, go to the succes exit code.
+		 * If we found sufficient pages, go to the success exit code.
 		 *
 		 * Otherwise, go immediately to fail, since we collected
 		 * all we could anyway.
@@ -1093,7 +1093,7 @@ drain_found:
 
 			/*
 			 * If there's still space left in found, try to
-			 * fully drain it prior to continueing.
+			 * fully drain it prior to continuing.
 			 */
 			if (found != NULL) {
 				fstart = fend;
@@ -1143,7 +1143,7 @@ drain_found:
 	 * iteration may fall out. Hence there is a small chance of a false
 	 * negative.
 	 *
-	 * When desparate: scan all sizes starting at the smallest
+	 * When desperate: scan all sizes starting at the smallest
 	 * (start_try = 1) and do not consider UVM_PLA_TRYCONTIG (which may
 	 * allow us to hit the fast path now).
 	 *
@@ -1186,7 +1186,7 @@ fail:
 	return ENOMEM;
 
 out:
-	/* Allocation succesful. */
+	/* Allocation successful. */
 	uvmexp.free -= fcount;
 
 	uvm_unlock_fpageq();
