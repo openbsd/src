@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1161 2021/01/30 18:21:06 krw Exp $
+#	$OpenBSD: install.sub,v 1.1162 2021/03/12 11:32:03 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2342,6 +2342,14 @@ parse_hn_line() {
 
 	ifconfig $_if inet6 >/dev/null 2>&1 && _has_inet6=true
 	[[ -x /sbin/dhclient ]] && _has_dhclient=true
+
+	# XXX Reverse when dhcpleased is made the default.
+	if  { [[ ${_c[_af]} == inet ]] && [[ ${_c[_name]} == autoconf ]]; } ||
+	    { [[ ${_c[_af]} == autoconf ]]; }; then
+		# emulate "[inet] autoconf" with "dhcp"
+		[[ ${_c[_af]} == inet ]] && shift 2 || shift 1
+		set -A _c -- dhcp "$@"
+	fi
 
 	case ${_c[_af]} in
 	''|*([[:blank:]])'#'*)
