@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.57 2020/10/11 07:05:28 mpi Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.58 2021/03/12 16:27:10 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -546,9 +546,8 @@ struct iwm_node {
 	uint16_t in_color;
 
 	struct ieee80211_amrr_node in_amn;
-	int chosen_txrate;
-	struct ieee80211_mira_node in_mn;
-	int chosen_txmcs;
+	struct ieee80211_ra_node in_rn;
+	int lq_rate_mismatch;
 };
 #define IWM_STATION_ID 0
 #define IWM_AUX_STA_ID 1
