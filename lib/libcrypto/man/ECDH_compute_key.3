@@ -1,4 +1,4 @@
-.\" $OpenBSD: ECDH_compute_key.3,v 1.1 2019/08/19 13:08:26 schwarze Exp $
+.\" $OpenBSD: ECDH_compute_key.3,v 1.2 2021/03/12 05:18:00 jsg Exp $
 .\" Copyright (c) 2019 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 19 2019 $
+.Dd $Mdocdate: March 12 2021 $
 .Dt ECDH_COMPUTE_KEY 3
 .Os
 .Sh NAME
@@ -63,7 +63,7 @@ must be at least
 returns the number of bytes needed to store an affine coordinate of a
 point on the elliptic curve used by
 .Fa ecdh ,
-which is one eigth of the degree of the finite field underlying
+which is one eighth of the degree of the finite field underlying
 that elliptic curve, rounded up to the next integer number.
 .Sh RETURN VALUES
 .Fn ECDH_compute_key

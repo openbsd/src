@@ -1,4 +1,4 @@
-.\" $OpenBSD: PEM_read.3,v 1.12 2020/07/23 17:34:53 schwarze Exp $
+.\" $OpenBSD: PEM_read.3,v 1.13 2021/03/12 05:18:00 jsg Exp $
 .\" full merge up to: OpenSSL 83cf7abf May 29 13:07:08 2018 +0100
 .\"
 .\" This file is a derived work.
@@ -66,7 +66,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 23 2020 $
+.Dd $Mdocdate: March 12 2021 $
 .Dt PEM_READ 3
 .Os
 .Sh NAME
@@ -262,7 +262,7 @@ to
 .Fn PEM_get_EVP_CIPHER_INFO .
 If that structure indicates the absence of encryption,
 .Fn PEM_do_header
-returns sucessfully without taking any action.
+returns successfully without taking any action.
 The
 .Fa data
 and
