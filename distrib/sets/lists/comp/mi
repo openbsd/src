@@ -1010,6 +1010,7 @@
 ./usr/include/net80211/ieee80211_node.h
 ./usr/include/net80211/ieee80211_priv.h
 ./usr/include/net80211/ieee80211_proto.h
+./usr/include/net80211/ieee80211_ra.h
 ./usr/include/net80211/ieee80211_radiotap.h
 ./usr/include/net80211/ieee80211_regdomain.h
 ./usr/include/net80211/ieee80211_rssadapt.h
