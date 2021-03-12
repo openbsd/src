@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_new.3,v 1.19 2019/11/02 15:27:10 schwarze Exp $
+.\" $OpenBSD: BIO_new.3,v 1.20 2021/03/12 07:05:35 jmc Exp $
 .\" full merge up to:
 .\" OpenSSL man3/BIO_new.pod fb46be03 Feb 26 11:51:31 2016 +0000
 .\" OpenSSL man7/bio.pod 631c37be Dec 12 16:56:50 2017 +0100
@@ -52,7 +52,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 2 2019 $
+.Dd $Mdocdate: March 12 2021 $
 .Dt BIO_NEW 3
 .Os
 .Sh NAME
@@ -156,7 +156,7 @@ and
 .Fn BIO_vfree
 decrement the reference count of
 .Fa a
-by 1, and if the refenece count reaches 0, they destruct the single
+by 1, and if the reference count reaches 0, they destruct the single
 .Vt BIO
 .Fa a ,
 which may also have some effect on the
