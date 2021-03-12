@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.436 2021/03/11 19:53:39 florian Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.437 2021/03/12 17:25:02 florian Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -265,6 +265,8 @@ void	unsetifgroup(const char *, int);
 void	setgroupattribs(char *, int, char *[]);
 int	printgroup(char *, int);
 void	setautoconf(const char *, int);
+void	settemporary(const char *, int);
+void	setprivacy(const char *, int);
 void	settrunkport(const char *, int);
 void	unsettrunkport(const char *, int);
 void	settrunkproto(const char *, int);
@@ -464,10 +466,10 @@ const struct	cmd {
 	{ "pltime",	NEXTARG,	0,		setia6pltime },
 	{ "vltime",	NEXTARG,	0,		setia6vltime },
 	{ "eui64",	0,		0,		setia6eui64 },
-	{ "autoconfprivacy",	IFXF_AUTOCONF6TEMP,	0,	setifxflags },
-	{ "-autoconfprivacy",	-IFXF_AUTOCONF6TEMP,	0,	setifxflags },
-	{ "temporary",	IFXF_AUTOCONF6TEMP,	0,	setifxflags },
-	{ "-temporary",	-IFXF_AUTOCONF6TEMP,	0,	setifxflags },
+	{ "autoconfprivacy",	1,		0,	setprivacy },
+	{ "-autoconfprivacy",	-1,		0,	setprivacy },
+	{ "temporary",	1,		0,		settemporary },
+	{ "-temporary",	-1,		0,		settemporary },
 	{ "soii",	-IFXF_INET6_NOSOII,	0,	setifxflags },
 	{ "-soii",	IFXF_INET6_NOSOII,	0,	setifxflags },
 	{ "monitor",	IFXF_MONITOR,	0,		setifxflags },
@@ -1585,6 +1587,26 @@ setautoconf(const char *cmd, int val)
 	default:
 		errx(1, "autoconf not allowed for this address family");
 	}
+}
+
+void
+settemporary(const char *cmd, int val)
+{
+	switch (afp->af_af) {
+	case AF_INET6:
+		setifxflags("inet6", val * IFXF_AUTOCONF6TEMP);
+		break;
+	default:
+		errx(1, "temporary not allowed for this address family");
+	}
+}
+
+/* XXX remove after 7.0 */
+void
+setprivacy(const char *cmd, int val)
+{
+	warnx("The 'autoconfprivacy' option is deprecated, use 'temporary'");
+	settemporary(cmd, val);
 }
 
 #ifndef SMALL
