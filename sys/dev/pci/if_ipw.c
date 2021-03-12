@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.127 2020/07/10 13:22:20 patrick Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.128 2021/03/12 17:54:50 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -1780,6 +1780,12 @@ ipw_auth_and_assoc(void *arg1)
 	error = ipw_cmd(sc, IPW_CMD_ENABLE, NULL, 0);
 	if (error != 0)
 		goto fail;
+
+	/*
+	 * net80211 won't see the AP's auth response. Move to ASSOC state
+	 * in order to make net80211 accept the AP's assoc response.
+	 */
+	ic->ic_newstate(ic, IEEE80211_S_ASSOC, -1);
 
 	return;
 fail:
