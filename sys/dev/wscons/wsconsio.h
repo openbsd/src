@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.96 2021/03/03 19:44:37 bru Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.97 2021/03/12 23:42:50 kettenis Exp $ */
 /* $NetBSD: wsconsio.h,v 1.74 2005/04/28 07:15:44 martin Exp $ */
 
 /*
@@ -596,6 +596,7 @@ struct wsdisplay_param {
 #define WSDISPLAYIO_DEPTH_24_24		0x20
 #define WSDISPLAYIO_DEPTH_24_32		0x40
 #define WSDISPLAYIO_DEPTH_24 (WSDISPLAYIO_DEPTH_24_24|WSDISPLAYIO_DEPTH_24_32)
+#define WSDISPLAYIO_DEPTH_30		0x80
 
 #define WSDISPLAYIO_GETSUPPORTEDDEPTH	_IOR('W', 92, unsigned int)
 
