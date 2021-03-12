@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.34 2021/02/26 15:19:41 tb Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.35 2021/03/12 15:53:38 tb Exp $ */
 /*
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
  *
@@ -52,7 +52,8 @@ x509_verify_chain_new(void)
 	if ((chain->cert_errors = calloc(X509_VERIFY_MAX_CHAIN_CERTS,
 	    sizeof(int))) == NULL)
 		goto err;
-	if ((chain->names = x509_constraints_names_new()) == NULL)
+	if ((chain->names =
+	    x509_constraints_names_new(X509_VERIFY_MAX_CHAIN_NAMES)) == NULL)
 		goto err;
 
 	return chain;
@@ -720,11 +721,13 @@ x509_verify_validate_constraints(X509 *cert,
 		return 1;
 
 	if (cert->nc != NULL) {
-		if ((permitted = x509_constraints_names_new()) == NULL) {
+		if ((permitted = x509_constraints_names_new(
+		    X509_VERIFY_MAX_CHAIN_CONSTRAINTS)) == NULL) {
 			err = X509_V_ERR_OUT_OF_MEM;
 			goto err;
 		}
-		if ((excluded = x509_constraints_names_new()) == NULL) {
+		if ((excluded = x509_constraints_names_new(
+		    X509_VERIFY_MAX_CHAIN_CONSTRAINTS)) == NULL) {
 			err = X509_V_ERR_OUT_OF_MEM;
 			goto err;
 		}

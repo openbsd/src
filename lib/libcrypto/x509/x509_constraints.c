@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_constraints.c,v 1.12 2020/11/25 21:17:52 tb Exp $ */
+/* $OpenBSD: x509_constraints.c,v 1.13 2021/03/12 15:53:38 tb Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -86,9 +86,16 @@ x509_constraints_name_dup(struct x509_constraints_name *name)
 }
 
 struct x509_constraints_names *
-x509_constraints_names_new()
+x509_constraints_names_new(size_t names_max)
 {
-	return (calloc(1, sizeof(struct x509_constraints_names)));
+	struct x509_constraints_names *new;
+
+	if ((new = calloc(1, sizeof(struct x509_constraints_names))) == NULL)
+		return NULL;
+
+	new->names_max = names_max;
+
+	return new;
 }
 
 void
@@ -118,6 +125,8 @@ x509_constraints_names_add(struct x509_constraints_names *names,
 {
 	size_t i = names->names_count;
 
+	if (names->names_count >= names->names_max)
+		return 0;
 	if (names->names_count == names->names_len) {
 		struct x509_constraints_name **tmp;
 		if ((tmp = recallocarray(names->names, names->names_len,
@@ -141,14 +150,16 @@ x509_constraints_names_dup(struct x509_constraints_names *names)
 	if (names == NULL)
 		return NULL;
 
-	if ((new = x509_constraints_names_new()) == NULL)
+	if ((new = x509_constraints_names_new(names->names_max)) == NULL)
 		goto err;
+
 	for (i = 0; i < names->names_count; i++) {
 		if ((name = x509_constraints_name_dup(names->names[i])) == NULL)
 			goto err;
 		if (!x509_constraints_names_add(new, name))
 			goto err;
 	}
+
 	return new;
  err:
 	x509_constraints_names_free(new);
@@ -1117,7 +1128,8 @@ x509_constraints_chain(STACK_OF(X509) *chain, int *error, int *depth)
 		goto err;
 	if (chain_length == 1)
 		return 1;
-	if ((names = x509_constraints_names_new()) == NULL) {
+	if ((names = x509_constraints_names_new(
+	    X509_VERIFY_MAX_CHAIN_NAMES)) == NULL) {
 		verify_err = X509_V_ERR_OUT_OF_MEM;
 		goto err;
 	}
@@ -1130,13 +1142,13 @@ x509_constraints_chain(STACK_OF(X509) *chain, int *error, int *depth)
 		if ((cert = sk_X509_value(chain, i)) == NULL)
 			goto err;
 		if (cert->nc != NULL) {
-			if ((permitted =
-			    x509_constraints_names_new()) == NULL) {
+			if ((permitted = x509_constraints_names_new(
+			    X509_VERIFY_MAX_CHAIN_CONSTRAINTS)) == NULL) {
 				verify_err = X509_V_ERR_OUT_OF_MEM;
 				goto err;
 			}
-			if ((excluded =
-			    x509_constraints_names_new()) == NULL) {
+			if ((excluded = x509_constraints_names_new(
+			    X509_VERIFY_MAX_CHAIN_CONSTRAINTS)) == NULL) {
 				verify_err = X509_V_ERR_OUT_OF_MEM;
 				goto err;
 			}
@@ -1161,10 +1173,6 @@ x509_constraints_chain(STACK_OF(X509) *chain, int *error, int *depth)
 		if (!x509_constraints_extract_names(names, cert, 0,
 		    &verify_err))
 			goto err;
-		if (names->names_count > X509_VERIFY_MAX_CHAIN_NAMES) {
-			verify_err = X509_V_ERR_OUT_OF_MEM;
-			goto err;
-		}
 	}
 
 	x509_constraints_names_free(names);
