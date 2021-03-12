@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.698 2021/02/23 03:30:04 dlg Exp $
+#	$OpenBSD: files,v 1.699 2021/03/12 16:26:27 stsp Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -861,6 +861,7 @@ file net80211/ieee80211_output.c	wlan
 file net80211/ieee80211_pae_input.c	wlan
 file net80211/ieee80211_pae_output.c	wlan
 file net80211/ieee80211_proto.c		wlan
+file net80211/ieee80211_ra.c		wlan
 file net80211/ieee80211_rssadapt.c	wlan
 file net80211/ieee80211_regdomain.c	wlan
 file netinet/if_ether.c			ether
