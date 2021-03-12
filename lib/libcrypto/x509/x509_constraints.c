@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_constraints.c,v 1.14 2021/03/12 15:55:26 tb Exp $ */
+/* $OpenBSD: x509_constraints.c,v 1.15 2021/03/12 15:57:30 tb Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -123,8 +123,6 @@ int
 x509_constraints_names_add(struct x509_constraints_names *names,
     struct x509_constraints_name *name)
 {
-	size_t i = names->names_count;
-
 	if (names->names_count >= names->names_max)
 		return 0;
 	if (names->names_count == names->names_len) {
@@ -135,7 +133,7 @@ x509_constraints_names_add(struct x509_constraints_names *names,
 		names->names_len += 32;
 		names->names = tmp;
 	}
-	names->names[i] = name;
+	names->names[names->names_count] = name;
 	names->names_count++;
 	return 1;
 }
