@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_changer.h,v 1.8 2019/11/29 14:06:21 krw Exp $	*/
+/*	$OpenBSD: scsi_changer.h,v 1.9 2021/03/12 10:22:46 jsg Exp $	*/
 /*	$NetBSD: scsi_changer.h,v 1.7 1996/04/03 00:25:48 thorpej Exp $	*/
 
 /*
@@ -273,7 +273,7 @@ struct read_element_status_descriptor {
 /*
  * Device capabilities page.
  *
- * This page defines characteristics of the elemenet types in the
+ * This page defines characteristics of the element types in the
  * medium changer device.
  *
  * Note in the definitions below, the following abbreviations are
@@ -333,7 +333,7 @@ struct page_device_capabilities {
 };
 
 /*
- * Medium changer elemement address assignment page.
+ * Medium changer element address assignment page.
  *
  * Some of these fields can be a little confusing, so an explanation
  * is in order.

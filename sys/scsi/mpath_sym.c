@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_sym.c,v 1.25 2020/06/30 18:43:37 krw Exp $ */
+/*	$OpenBSD: mpath_sym.c,v 1.26 2021/03/12 10:22:46 jsg Exp $ */
 
 /*
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -143,7 +143,7 @@ sym_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	/* check if we're an assymetric access device */
+	/* check if we're an asymmetric access device */
 	for (i = 0; i < nitems(asym_devices); i++) {
 		s = &asym_devices[i];
 

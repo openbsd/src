@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.67 2020/09/22 19:32:53 krw Exp $	*/
+/*	$OpenBSD: ch.c,v 1.68 2021/03/12 10:22:46 jsg Exp $	*/
 /*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
@@ -774,7 +774,7 @@ ch_interpret_sense(struct scsi_xfer *xs)
 	 * rescan their state (i.e. when the door got opened) and can
 	 * take a long time for large units. Rather than having a
 	 * massive timeout for all operations (which would cause other
-	 * problems) we allow changers to wait (but be interruptable
+	 * problems) we allow changers to wait (but be interruptible
 	 * with Ctrl-C) forever as long as they are reporting that they
 	 * are becoming ready.  all other cases are handled as per the
 	 * default.

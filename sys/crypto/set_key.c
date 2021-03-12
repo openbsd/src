@@ -1,4 +1,4 @@
-/*	$OpenBSD: set_key.c,v 1.4 2015/12/10 21:00:51 naddy Exp $	*/
+/*	$OpenBSD: set_key.c,v 1.5 2021/03/12 10:22:46 jsg Exp $	*/
 
 /* lib/des/set_key.c */
 /* Copyright (C) 1995 Eric Young (eay@mincom.oz.au)
@@ -110,7 +110,7 @@ des_is_weak_key(des_cblock (*key))
 	int i;
 
 	for (i = 0; i < NUM_WEAK_KEY; i++) {
-		/* Added == 0 to comparision, I obviously don't run
+		/* Added == 0 to comparison, I obviously don't run
 		 * this section very often :-(, thanks to
 		 * engineering@MorningStar.Com for the fix
 		 * eay 93/06/29 */

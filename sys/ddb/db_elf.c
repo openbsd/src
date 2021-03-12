@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_elf.c,v 1.31 2020/10/15 03:14:00 deraadt Exp $	*/
+/*	$OpenBSD: db_elf.c,v 1.32 2021/03/12 10:22:46 jsg Exp $	*/
 /*	$NetBSD: db_elf.c,v 1.13 2000/07/07 21:55:18 jhawk Exp $	*/
 
 /*-
@@ -54,7 +54,7 @@ Elf_Sym		*db_elf_sym_lookup(char *);
  * symsize:	size of symbol table
  * symtab:	pointer to start of symbol table
  * esymtab:	pointer to end of string table, for checking - rounded up to
- *		    integer boundry
+ *		    integer boundary
  */
 int
 db_elf_sym_init(int symsize, void *symtab, void *esymtab, const char *name)

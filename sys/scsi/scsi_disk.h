@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_disk.h,v 1.41 2020/09/01 12:17:53 krw Exp $	*/
+/*	$OpenBSD: scsi_disk.h,v 1.42 2021/03/12 10:22:46 jsg Exp $	*/
 /*	$NetBSD: scsi_disk.h,v 1.10 1996/07/05 16:19:05 christos Exp $	*/
 
 /*
@@ -113,7 +113,7 @@ struct scsi_initialization_pattern_descriptor {
 };
 
 /*
- * Defect desciptors.  These are used as the defect lists in the FORMAT UNIT
+ * Defect descriptors.  These are used as the defect lists in the FORMAT UNIT
  * and READ DEFECT DATA commands, and as the translate page of the
  * SEND DIAGNOSTIC and RECEIVE DIAGNOSTIC RESULTS commands.
  */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.185 2020/09/22 19:32:53 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.186 2021/03/12 10:22:46 jsg Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -182,7 +182,7 @@ struct st_softc {
 	short mt_resid;		/* last (short) resid                 */
 	short mt_erreg;		/* last error (sense key) seen        */
 
-	struct scsi_link *sc_link;	/* our link to the adpter etc.        */
+	struct scsi_link *sc_link;	/* our link to the adapter etc.       */
 
 	int blkmin;		/* min blk size                       */
 	int blkmax;		/* max blk size                       */
@@ -496,7 +496,7 @@ st_mount_tape(struct st_softc *st, int flags)
 	 * Throw another dummy instruction to catch
 	 * 'Unit attention' errors. Some drives appear to give
 	 * these after doing a Load instruction.
-	 * (noteably some DAT drives)
+	 * (notably some DAT drives)
 	 */
 	/* XXX */
 	scsi_test_unit_ready(link, TEST_READY_RETRIES, SCSI_SILENT);
@@ -1865,7 +1865,7 @@ st_interpret_sense(struct scsi_xfer *xs)
 	 * drives report "Unit Becoming Ready" when loading media, etc.
 	 * and can take a long time.  Rather than having a massive timeout
 	 * for all operations (which would cause other problems) we allow
-	 * operations to wait (but be interruptable with Ctrl-C) forever
+	 * operations to wait (but be interruptible with Ctrl-C) forever
 	 * as long as the drive is reporting that it is becoming ready.
 	 * all other cases are handled as per the default.
 	 */

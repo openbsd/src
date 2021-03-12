@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.12 2014/07/13 15:31:20 mpi Exp $	*/
+/*	$OpenBSD: arp.c,v 1.13 2021/03/12 10:22:46 jsg Exp $	*/
 /*	$NetBSD: arp.c,v 1.15 1996/10/13 02:28:58 christos Exp $	*/
 
 /*
@@ -132,7 +132,7 @@ arpwhohas(struct iodesc *d, struct in_addr addr)
 	if (debug) {
 		printf("arp: response from %s\n",
 		    ether_sprintf(rbuf.eh.ether_shost));
-		printf("arp: cacheing %s --> %s\n",
+		printf("arp: caching %s --> %s\n",
 		    inet_ntoa(addr), ether_sprintf(ah->arp_sha));
 	}
 #endif

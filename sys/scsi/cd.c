@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.262 2020/09/22 19:32:53 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.263 2021/03/12 10:22:46 jsg Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -2082,7 +2082,7 @@ cd_interpret_sense(struct scsi_xfer *xs)
 	 * report "Unit Becoming Ready" when loading media and can
 	 * take a long time.  Rather than having a massive timeout for
 	 * all operations (which would cause other problems), we allow
-	 * operations to wait (but be interruptable with Ctrl-C)
+	 * operations to wait (but be interruptible with Ctrl-C)
 	 * forever as long as the drive is reporting that it is
 	 * becoming ready.  All other cases of not being ready are
 	 * handled by the default handler.
