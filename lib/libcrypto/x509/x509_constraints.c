@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_constraints.c,v 1.13 2021/03/12 15:53:38 tb Exp $ */
+/* $OpenBSD: x509_constraints.c,v 1.14 2021/03/12 15:55:26 tb Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -36,7 +36,7 @@
 #define DOMAIN_PART_MAX_LEN 255
 
 struct x509_constraints_name *
-x509_constraints_name_new()
+x509_constraints_name_new(void)
 {
 	return (calloc(1, sizeof(struct x509_constraints_name)));
 }
