@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.309 2021/02/15 09:35:59 mpi Exp $	*/
+/*	$OpenBSD: proc.h,v 1.310 2021/03/12 10:13:28 mpi Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -600,7 +600,6 @@ refreshcreds(struct proc *p)
 
 enum single_thread_mode {
 	SINGLE_SUSPEND,		/* other threads to stop wherever they are */
-	SINGLE_PTRACE,		/* other threads to stop but don't wait */
 	SINGLE_UNWIND,		/* other threads to unwind and stop */
 	SINGLE_EXIT		/* other threads to unwind and then exit */
 };
