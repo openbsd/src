@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.438 2021/03/13 21:14:15 kn Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.439 2021/03/13 21:21:36 kn Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -158,12 +158,12 @@ struct	ifaliasreq	addreq;
 
 int	wconfig = 0;
 int	wcwconfig = 0;
+int	rdomainid;
 #endif /* SMALL */
 
 char	ifname[IFNAMSIZ];
 int	flags, xflags, setaddr, setipdst, doalias;
 u_long	metric, mtu;
-int	rdomainid;
 int	llprio;
 int	clearaddr, sock;
 int	newaddr = 0;
@@ -241,8 +241,6 @@ void	clone_create(const char *, int);
 void	clone_destroy(const char *, int);
 void	unsetmediaopt(const char *, int);
 void	setmediainst(const char *, int);
-void	setrdomain(const char *, int);
-void	unsetrdomain(const char *, int);
 int	prefix(void *val, int);
 void	getifgroups(void);
 void	setifgroup(const char *, int);
@@ -261,6 +259,8 @@ void	trunk_status(void);
 void	list_cloners(void);
 
 #ifndef SMALL
+void	setrdomain(const char *, int);
+void	unsetrdomain(const char *, int);
 void	carp_status(void);
 void	setcarp_advbase(const char *,int);
 void	setcarp_advskew(const char *, int);
@@ -3353,8 +3353,10 @@ status(int link, struct sockaddr_dl *sdl, int ls)
 
 	printf("%s: ", ifname);
 	printb("flags", flags | (xflags << 16), IFFBITS);
+#ifndef SMALL
 	if (rdomainid)
 		printf(" rdomain %d", rdomainid);
+#endif
 	if (metric)
 		printf(" metric %lu", metric);
 	if (mtu)
