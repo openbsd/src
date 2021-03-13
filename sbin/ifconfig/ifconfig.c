@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.437 2021/03/12 17:25:02 florian Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.438 2021/03/13 21:14:15 kn Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -219,12 +219,6 @@ void	setifnwflag(const char *, int);
 void	unsetifnwflag(const char *, int);
 void	setifnetmask(const char *, int);
 void	setifprefixlen(const char *, int);
-void	settunnel(const char *, const char *);
-void	settunneladdr(const char *, int);
-void	deletetunnel(const char *, int);
-void	settunnelinst(const char *, int);
-void	unsettunnelinst(const char *, int);
-void	settunnelttl(const char *, int);
 void	setvnetid(const char *, int);
 void	delvnetid(const char *, int);
 void	getvnetid(struct ifencap *);
@@ -247,15 +241,6 @@ void	clone_create(const char *, int);
 void	clone_destroy(const char *, int);
 void	unsetmediaopt(const char *, int);
 void	setmediainst(const char *, int);
-void	setmplslabel(const char *, int);
-void	unsetmplslabel(const char *, int);
-void	setpwe3cw(const char *, int);
-void	unsetpwe3cw(const char *, int);
-void	setpwe3fat(const char *, int);
-void	unsetpwe3fat(const char *, int);
-void	setpwe3neighbor(const char *, const char *);
-void	unsetpwe3neighbor(const char *, int);
-void	mpls_status(void);
 void	setrdomain(const char *, int);
 void	unsetrdomain(const char *, int);
 int	prefix(void *val, int);
@@ -301,6 +286,21 @@ void	gettxprio(struct ifencap *);
 void	settxprio(const char *, int);
 void	getrxprio(struct ifencap *);
 void	setrxprio(const char *, int);
+void	setmplslabel(const char *, int);
+void	unsetmplslabel(const char *, int);
+void	setpwe3cw(const char *, int);
+void	unsetpwe3cw(const char *, int);
+void	setpwe3fat(const char *, int);
+void	unsetpwe3fat(const char *, int);
+void	setpwe3neighbor(const char *, const char *);
+void	unsetpwe3neighbor(const char *, int);
+void	mpls_status(void);
+void	settunnel(const char *, const char *);
+void	settunneladdr(const char *, int);
+void	deletetunnel(const char *, int);
+void	settunnelinst(const char *, int);
+void	unsettunnelinst(const char *, int);
+void	settunnelttl(const char *, int);
 void	settunneldf(const char *, int);
 void	settunnelnodf(const char *, int);
 void	settunnelecn(const char *, int);
