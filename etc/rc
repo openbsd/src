@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.548 2021/03/09 07:12:15 deraadt Exp $
+#	$OpenBSD: rc,v 1.549 2021/03/13 21:11:56 deraadt Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -505,6 +505,10 @@ swapctl -A -t noblk
 do_fsck -N
 mount -a -N
 
+# Build kvm(3) and /dev databases.
+kvm_mkdb
+dev_mkdb
+
 # /var/crash should be a directory or a symbolic link to the crash directory
 # if core dumps are to be saved.
 if [[ -d /var/crash ]]; then
@@ -522,10 +526,6 @@ if [[ $check_quotas == YES ]]; then
 	echo ' done.'
 	quotaon -a
 fi
-
-# Build kvm(3) and /dev databases.
-kvm_mkdb
-dev_mkdb
 
 # Set proper permission for the tty device files.
 chmod 666 /dev/tty[pqrstuvwxyzPQRST]*
