@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.59 2021/03/11 11:16:55 jsg Exp $ */
+/* $OpenBSD: machdep.c,v 1.60 2021/03/13 10:09:40 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -937,7 +937,8 @@ initarm(struct arm64_bootparams *abp)
 		int i;
 
 		/*
-		 * Load all memory marked as EfiConventionalMemory.
+		 * Load all memory marked as EfiConventionalMemory,
+		 * EfiBootServicesCode or EfiBootServicesData.
 		 * Don't bother with blocks smaller than 64KB.  The
 		 * initial 64MB memory block should be marked as
 		 * EfiLoaderData so it won't be added again here.
@@ -947,7 +948,9 @@ initarm(struct arm64_bootparams *abp)
 			    desc->Type, desc->PhysicalStart,
 			    desc->VirtualStart, desc->NumberOfPages,
 			    desc->Attribute);
-			if (desc->Type == EfiConventionalMemory &&
+			if ((desc->Type == EfiConventionalMemory ||
+			     desc->Type == EfiBootServicesCode ||
+			     desc->Type == EfiBootServicesData) &&
 			    desc->NumberOfPages >= 16) {
 				uvm_page_physload(atop(desc->PhysicalStart),
 				    atop(desc->PhysicalStart) +
