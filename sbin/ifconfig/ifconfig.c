@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.439 2021/03/13 21:21:36 kn Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.440 2021/03/13 21:23:29 kn Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -518,8 +518,6 @@ const struct	cmd {
 	{ "tunnel",	NEXTARG2,	0,		NULL, settunnel },
 	{ "tunneladdr",	NEXTARG,	0,		settunneladdr },
 	{ "-tunnel",	0,		0,		deletetunnel },
-	/* deletetunnel is for backward compat, remove during 6.4-current */
-	{ "deletetunnel",  0,		0,		deletetunnel },
 	{ "tunneldomain", NEXTARG,	0,		settunnelinst },
 	{ "-tunneldomain", 0,		0,		unsettunnelinst },
 	{ "tunnelttl",	NEXTARG,	0,		settunnelttl },
