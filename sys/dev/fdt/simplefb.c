@@ -1,4 +1,4 @@
-/*	$OpenBSD: simplefb.c,v 1.12 2021/03/09 19:02:44 kettenis Exp $	*/
+/*	$OpenBSD: simplefb.c,v 1.13 2021/03/13 14:02:02 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -264,7 +264,10 @@ simplefb_wsioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case WSDISPLAYIO_GETSUPPORTEDDEPTH:
 		switch (ri->ri_depth) {
 		case 32:
-			*(u_int *)data = WSDISPLAYIO_DEPTH_24_32;
+			if (ri->ri_rnum == 10)
+				*(u_int *)data = WSDISPLAYIO_DEPTH_30;
+			else
+				*(u_int *)data = WSDISPLAYIO_DEPTH_24_32;
 			break;
 		case 24:
 			*(u_int *)data = WSDISPLAYIO_DEPTH_24_24;
