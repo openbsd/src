@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.202 2021/02/25 20:51:55 naddy Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.203 2021/03/13 11:36:31 sthen Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -1142,7 +1142,8 @@ cleanup_url_get:
 	ftp_close(&fin, &tls, &fd);
 	if (out >= 0 && out != fileno(stdout)) {
 #ifndef SMALL
-		if (server_timestamps && lmt.tm_zone != 0) {
+		if (server_timestamps && lmt.tm_zone != 0 &&
+		    fstat(out, &stbuf) == 0 && S_ISREG(stbuf.st_mode) != 0) {
 			ts[0].tv_nsec = UTIME_NOW;
 			ts[1].tv_nsec = 0;
 			setenv("TZ", lmt.tm_zone, 1);
