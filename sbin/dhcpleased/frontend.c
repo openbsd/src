@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.3 2021/03/07 18:39:11 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.4 2021/03/14 16:05:50 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -87,7 +87,6 @@ void		 get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
 void		 bpf_receive(int, short, void *);
 int		 get_flags(char *);
 int		 get_xflags(char *);
-int		 get_ifrdomain(char *);
 struct iface	*get_iface_by_id(uint32_t);
 void		 remove_iface(uint32_t);
 void		 set_bpfsock(int, uint32_t);
@@ -463,19 +462,6 @@ get_xflags(char *if_name)
 	return ifr.ifr_flags;
 }
 
-int
-get_ifrdomain(char *if_name)
-{
-	struct ifreq		 ifr;
-
-	strlcpy(ifr.ifr_name, if_name, sizeof(ifr.ifr_name));
-	if (ioctl(ioctlsock, SIOCGIFRDOMAIN, (caddr_t)&ifr) == -1) {
-		log_warn("SIOCGIFRDOMAIN");
-		return -1;
-	}
-	return ifr.ifr_rdomainid;
-}
-
 void
 update_iface(uint32_t if_index, char* if_name)
 {
@@ -483,7 +469,7 @@ update_iface(uint32_t if_index, char* if_name)
 	struct imsg_ifinfo	 imsg_ifinfo;
 	struct ifaddrs		*ifap, *ifa;
 	struct sockaddr_dl	*sdl;
-	int			 flags, xflags, ifrdomain;
+	int			 flags, xflags;
 
 	if ((flags = get_flags(if_name)) == -1 || (xflags =
 	    get_xflags(if_name)) == -1)
@@ -492,38 +478,11 @@ update_iface(uint32_t if_index, char* if_name)
 	if (!(xflags & IFXF_AUTOCONF4))
 		return;
 
-	if((ifrdomain = get_ifrdomain(if_name)) == -1)
-		return;
-
-	iface = get_iface_by_id(if_index);
-
-	if (iface != NULL) {
-		if (iface->rdomain != ifrdomain) {
-			iface->rdomain = ifrdomain;
-			if (iface->udpsock != -1) {
-				close(iface->udpsock);
-				iface->udpsock = -1;
-			}
-		}
-	} else {
-		if ((iface = calloc(1, sizeof(*iface))) == NULL)
-			fatal("calloc");
-		iface->if_index = if_index;
-		iface->rdomain = ifrdomain;
-		iface->udpsock = -1;
-		LIST_INSERT_HEAD(&interfaces, iface, entries);
-		frontend_imsg_compose_main(IMSG_OPEN_BPFSOCK, 0,
-		    &if_index, sizeof(if_index));
-	}
-
 	memset(&imsg_ifinfo, 0, sizeof(imsg_ifinfo));
 
 	imsg_ifinfo.if_index = if_index;
-	imsg_ifinfo.rdomain = ifrdomain;
-
 	imsg_ifinfo.running = (flags & (IFF_UP | IFF_RUNNING)) == (IFF_UP |
 	    IFF_RUNNING);
-
 
 	if (getifaddrs(&ifap) != 0)
 		fatal("getifaddrs");
@@ -535,16 +494,20 @@ update_iface(uint32_t if_index, char* if_name)
 			continue;
 
 		switch(ifa->ifa_addr->sa_family) {
-		case AF_LINK:
-			imsg_ifinfo.link_state =
-			    ((struct if_data *)ifa->ifa_data)->ifi_link_state;
+		case AF_LINK: {
+			struct if_data	*if_data;
+
+			if_data = (struct if_data *)ifa->ifa_data;
+			imsg_ifinfo.link_state = if_data->ifi_link_state;
+			imsg_ifinfo.rdomain = if_data->ifi_rdomain;
 			sdl = (struct sockaddr_dl *)ifa->ifa_addr;
 			if (sdl->sdl_type != IFT_ETHER ||
 			    sdl->sdl_alen != ETHER_ADDR_LEN)
 				continue;
-			memcpy(iface->hw_address.ether_addr_octet,
+			memcpy(imsg_ifinfo.hw_address.ether_addr_octet,
 			    LLADDR(sdl), ETHER_ADDR_LEN);
 			goto out;
+		}
 		default:
 			break;
 		}
@@ -552,8 +515,29 @@ update_iface(uint32_t if_index, char* if_name)
  out:
 	freeifaddrs(ifap);
 
-	memcpy(&imsg_ifinfo.hw_address, &iface->hw_address,
-	    sizeof(imsg_ifinfo.hw_address));
+	iface = get_iface_by_id(if_index);
+
+	if (iface != NULL) {
+		if (iface->rdomain != imsg_ifinfo.rdomain) {
+			iface->rdomain = imsg_ifinfo.rdomain;
+			if (iface->udpsock != -1) {
+				close(iface->udpsock);
+				iface->udpsock = -1;
+			}
+		}
+	} else {
+		if ((iface = calloc(1, sizeof(*iface))) == NULL)
+			fatal("calloc");
+		iface->if_index = if_index;
+		iface->rdomain = imsg_ifinfo.rdomain;
+		iface->udpsock = -1;
+		LIST_INSERT_HEAD(&interfaces, iface, entries);
+		frontend_imsg_compose_main(IMSG_OPEN_BPFSOCK, 0,
+		    &if_index, sizeof(if_index));
+	}
+
+	memcpy(&iface->hw_address, &imsg_ifinfo.hw_address,
+	    sizeof(iface->hw_address));
 
 	frontend_imsg_compose_main(IMSG_UPDATE_IF, 0, &imsg_ifinfo,
 	    sizeof(imsg_ifinfo));
