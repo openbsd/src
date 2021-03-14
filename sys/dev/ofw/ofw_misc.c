@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.c,v 1.30 2021/02/28 21:09:44 patrick Exp $	*/
+/*	$OpenBSD: ofw_misc.c,v 1.31 2021/03/14 14:46:52 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -931,7 +931,7 @@ iommu_device_map_pci(int node, uint32_t rid, bus_dma_tag_t dmat)
 	map = malloc(len, M_TEMP, M_WAITOK);
 	OF_getpropintarray(node, "iommu-map", map, len);
 
-	mask = OF_getpropint(node, "msi-map-mask", 0xffff);
+	mask = OF_getpropint(node, "iommu-map-mask", 0xffff);
 	rid = rid & mask;
 
 	cell = map;
