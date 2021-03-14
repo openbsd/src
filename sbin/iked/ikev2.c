@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.316 2021/03/09 22:51:28 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.317 2021/03/14 20:23:43 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -4198,13 +4198,13 @@ ikev2_init_create_child_sa(struct iked *env, struct iked_message *msg)
 
 	if (msg->msg_prop == NULL ||
 	    TAILQ_EMPTY(&msg->msg_proposals)) {
-		log_debug("%s: no proposal specified", __func__);
+		log_info("%s: no proposal specified", SPI_SA(sa, __func__));
 		return (-1);
 	}
 
 	if (proposals_negotiate(&sa->sa_proposals, &sa->sa_proposals,
 	    &msg->msg_proposals, 1) != 0) {
-		log_debug("%s: no proposal chosen", __func__);
+		log_info("%s: no proposal chosen", SPI_SA(sa, __func__));
 		return (-1);
 	}
 
@@ -4213,7 +4213,7 @@ ikev2_init_create_child_sa(struct iked *env, struct iked_message *msg)
 			break;
 	}
 	if (prop == NULL) {
-		log_debug("%s: failed to find %s proposals", __func__,
+		log_info("%s: failed to find %s proposals", SPI_SA(sa, __func__),
 		    print_map(msg->msg_prop->prop_protoid, ikev2_saproto_map));
 		return (-1);
 	}
@@ -4221,7 +4221,8 @@ ikev2_init_create_child_sa(struct iked *env, struct iked_message *msg)
 	/* IKE SA rekeying */
 	if (prop->prop_protoid == IKEV2_SAPROTO_IKE) {
 		if (sa->sa_nexti == NULL) {
-			log_debug("%s: missing IKE SA for rekeying", __func__);
+			log_info("%s: missing IKE SA for rekeying",
+			    SPI_SA(sa, __func__));
 			return (-1);
 		}
 		/* Update the responder SPI */
@@ -4229,7 +4230,7 @@ ikev2_init_create_child_sa(struct iked *env, struct iked_message *msg)
 		spi = &msg->msg_prop->prop_peerspi;
 		if ((nsa = sa_new(env, sa->sa_nexti->sa_hdr.sh_ispi,
 		    spi->spi, 1, NULL)) == NULL || nsa != sa->sa_nexti) {
-			log_debug("%s: invalid rekey SA", __func__);
+			log_info("%s: invalid rekey SA", SPI_SA(sa, __func__));
 			if (nsa) {
 				ikev2_ike_sa_setreason(nsa,
 				    "invalid SA for rekey");
@@ -4241,7 +4242,8 @@ ikev2_init_create_child_sa(struct iked *env, struct iked_message *msg)
 			return (-1);
 		}
 		if (ikev2_sa_initiator(env, nsa, sa, msg) == -1) {
-			log_debug("%s: failed to get IKE keys", __func__);
+			log_info("%s: failed to get IKE keys",
+			    SPI_SA(sa, __func__));
 			return (-1);
 		}
 		sa->sa_stateflags &= ~IKED_REQ_CHILDSA;
@@ -4297,7 +4299,8 @@ ikev2_init_create_child_sa(struct iked *env, struct iked_message *msg)
 	if (sa->sa_rekeyspi &&
 	    (csa = childsa_lookup(sa, sa->sa_rekeyspi, prop->prop_protoid))
 	    != NULL) {
-		log_debug("%s: rekeying CHILD SA old %s spi %s", __func__,
+		log_info("%s: rekeying CHILD SA old %s spi %s",
+		    SPI_SA(sa, __func__),
 		    print_spi(csa->csa_spi.spi, csa->csa_spi.spi_size),
 		    print_spi(prop->prop_peerspi.spi,
 		    prop->prop_peerspi.spi_size));
@@ -4307,11 +4310,12 @@ ikev2_init_create_child_sa(struct iked *env, struct iked_message *msg)
 	if (ibuf_length(msg->msg_ke)) {
 		log_debug("%s: using PFS", __func__);
 		if (ikev2_sa_initiator_dh(sa, msg, prop->prop_protoid, NULL) < 0) {
-			log_debug("%s: failed to setup DH", __func__);
+			log_info("%s: failed to setup DH",
+			    SPI_SA(sa, __func__));
 			return (ret);
 		}
 		if (sa->sa_dhpeer == NULL) {
-			log_debug("%s: no peer DH", __func__);
+			log_info("%s: no peer DH", SPI_SA(sa, __func__));
 			return (ret);
 		}
 		pfs = 1;
@@ -4321,7 +4325,8 @@ ikev2_init_create_child_sa(struct iked *env, struct iked_message *msg)
 
 	/* Update responder's nonce */
 	if (!ibuf_length(msg->msg_nonce)) {
-		log_debug("%s: responder didn't send nonce", __func__);
+		log_info("%s: responder didn't send nonce",
+		    SPI_SA(sa, __func__));
 		return (-1);
 	}
 	ibuf_release(sa->sa_rnonce);
@@ -4349,7 +4354,7 @@ ikev2_init_create_child_sa(struct iked *env, struct iked_message *msg)
 
 	if (ikev2_childsa_negotiate(env, sa, &sa->sa_kex, &sa->sa_proposals, 1,
 	    pfs)) {
-		log_debug("%s: failed to get CHILD SAs", __func__);
+		log_info("%s: failed to get CHILD SAs", SPI_SA(sa, __func__));
 		return (-1);
 	}
 
