@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1959 2021/02/27 03:00:54 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1960 2021/03/14 01:09:29 jan Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3470,6 +3470,7 @@
 #define	PCI_PRODUCT_INTEL_CORE4G_S_ULT_GT3	0x0a2a		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_CORE4G_R_ULT_GT3_1	0x0a2b		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_CORE4G_R_ULT_GT3_2	0x0a2e		/* Iris Graphics 5100 */
+#define	PCI_PRODUCT_INTEL_NVME_5	0x0a54		/* SSD DC */
 #define	PCI_PRODUCT_INTEL_GMA3600_0	0x0be0		/* GMA 3600 */
 #define	PCI_PRODUCT_INTEL_D2000_IGD	0x0be1		/* Atom D2000/N2000 Video */
 #define	PCI_PRODUCT_INTEL_GMA3600_2	0x0be2		/* GMA 3600 */
