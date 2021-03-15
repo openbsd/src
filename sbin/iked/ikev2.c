@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.317 2021/03/14 20:23:43 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.318 2021/03/15 22:29:17 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -4622,6 +4622,7 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 	struct iked_kex			*kex, *kextmp = NULL;
 	struct iked_sa			*nsa = NULL, *sa = msg->msg_sa;
 	struct iked_spi			*spi, *rekey = &msg->msg_rekey;
+	struct iked_transform		*xform;
 	struct ikev2_keyexchange	*ke;
 	struct ikev2_payload		*pld = NULL;
 	struct ibuf			*e = NULL, *nonce = NULL;
@@ -4709,8 +4710,11 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 			goto fail;
 		}
 
-		/* check KE payload for PFS */
-		if (ibuf_length(msg->msg_ke)) {
+		/* Check KE payload for PFS, ignore if DH transform is NONE */
+		if (((xform = config_findtransform(&proposals,
+		    IKEV2_XFORMTYPE_DH, protoid)) != NULL) &&
+		    xform->xform_id != IKEV2_XFORMDH_NONE &&
+		    ibuf_length(msg->msg_ke)) {
 			log_debug("%s: using PFS", __func__);
 			if (ikev2_sa_responder_dh(kex, &proposals,
 			    msg, protoid) < 0) {
