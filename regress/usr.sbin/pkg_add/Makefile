@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.75 2019/08/20 11:05:42 espie Exp $
+# $OpenBSD: Makefile,v 1.76 2021/03/15 09:26:29 espie Exp $
 
 REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames pkgcfl \
 	collision-check1 collision-check2 collision-check3 \
@@ -12,7 +12,7 @@ REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames pkgcfl \
 	usertest-1 usertest-2 usertest-3 cups-bug nettle-bug \
 	tying-1 tying-2 tag-delete setsprint temp-error1 \
 	temp-error2 temp-error2-as-root temp-error3 temp-error4 \
-	cksum-error
+	cksum-error system-version
 
 REGRESS_ROOT_TARGETS = temp-error2-as-root
 
@@ -48,7 +48,7 @@ D$i ?= ${.OBJDIR}/dest$i
 DEST$i ?= ${D$i}/usr/local
 .endfor
 
-# current maxes (used): D44, SRC27, plist24, rep5
+# current maxes (used): D45, SRC27, plist24, rep5
 pkgnames:
 	${PERLSCRIPT}/check-name
 
@@ -253,6 +253,12 @@ inter1: rep0/inta-0.tgz rep0/intb-0.tgz
 	-rm -rf ${D31}
 	@ROOT=${D31} PKG_PATH=${.OBJDIR}/rep0 ${ADD_PKG} inta intb
 	@ROOT=${D31} ${DELETE_PKG} inta intb
+
+system-version: rep0/syst-0.tgz rep1/syst-0.tgz
+	-rm -rf ${D45}
+	@ROOT=${D45} PKG_PATH=${.OBJDIR}/rep0 ${ADD_PKG} syst
+	@ROOT=${D45} PKG_PATH=${.OBJDIR}/rep1 ${ADD_PKG} -u
+	@ROOT=${D45} ${INFO_PKG} -qS syst |diff -u - ${.CURDIR}/system-version.ref
 
 plist1:
 	@${MKPLIST} ${LONG1} ${LONG2} ${LONG3} ${LONG4} >$@
@@ -709,6 +715,12 @@ rep5/a-0.tgz: plist19
 	@mkdir -p ${SRC27}
 	@echo "zoinx" > ${SRC27}/a
 	@INJECT=inject-badsum ${CREATE_PKG} -B src27 -f plist19 $@
+
+rep0/syst-0.tgz:
+	@${CREATE_PKG} -V 1 ${EMPTY} $@
+
+rep1/syst-0.tgz:
+	@${CREATE_PKG} -V 3 ${EMPTY} $@
 
 .PHONY: ${REGRESS_TARGETS}
 
