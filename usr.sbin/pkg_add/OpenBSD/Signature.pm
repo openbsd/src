@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Signature.pm,v 1.24 2019/05/08 13:04:27 espie Exp $
+# $OpenBSD: Signature.pm,v 1.25 2021/03/15 09:32:04 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -36,7 +36,9 @@ sub always
 package OpenBSD::PackingElement::Version;
 sub signature
 {
-	&OpenBSD::PackingElement::VersionElement::signature;
+	my ($self, $hash) = @_;
+
+	$hash->{VERSION}{name} += $self->name;
 }
 
 package OpenBSD::PackingElement::Dependency;
@@ -122,9 +124,8 @@ sub from_plist
 	my ($class, $plist) = @_;
 
 	my $k = {};
+	$k->{VERSION} = OpenBSD::PackingElement::Version->new(0);
 	$plist->visit('signature', $k);
-
-	$k->{VERSION} //= OpenBSD::PackingElement::Version->new(0);
 
 	if ($plist->has('always-update')) {
 		return $class->full->new($plist->pkgname, $k, $plist);
@@ -164,7 +165,7 @@ sub revert_compare
 	if ($a->{name} eq $b->{name}) {
 		# first check if system version changed
 		# then we don't have to go any further
-		my $d = $b->{extra}{VERSION}->name - $a->{extra}{VERSION}->name;
+		my $d = $b->{extra}{VERSION}->compare($a->{extra}{VERSION});
 		if ($d < 0) {
 			return 1;
 		} elsif ($d > 0) {
