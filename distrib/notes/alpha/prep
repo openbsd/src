@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.33 2020/04/28 13:02:10 benno Exp $
+dnl	$OpenBSD: prep,v 1.34 2021/03/15 09:29:51 jsg Exp $
 OpenBSD/MACHINE requires the SRM console.  Some alphas come with
 the AlphaBIOS (also known as the ARC firmware on older machines) instead;
 this is what Windows NT uses. It is fairly simple to replace the AlphaBIOS
@@ -46,7 +46,7 @@ AXPpci33 Motherboard specific notes:
 	ftp://ftp.digital.com/pub/Digital/axppci/design_guide.ps.Z 
     with a corrected pinout (as well as more information than the 1994
     edition). Although ftp.digital.com does not exist anymore, a few
-    copies of this document are scattered accross various ftp servers
+    copies of this document are scattered across various ftp servers
     on the globe, such as
 	ftp://ftp.uniroma2.it/Digital/support/axppci/design_guide.ps.Z
     or

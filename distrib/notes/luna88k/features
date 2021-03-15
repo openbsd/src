@@ -1,4 +1,4 @@
-dnl	$OpenBSD: features,v 1.3 2013/01/31 23:48:36 miod Exp $
+dnl	$OpenBSD: features,v 1.4 2021/03/15 09:29:51 jsg Exp $
 dnl
 dnl This file lists almost all the conditional features of this port,
 dnl which are used to provide accurate installation notes.
@@ -30,7 +30,7 @@ dnl define if some media have timezone information (TZ in their list)
 define({:-MDTZ-:},)dnl
 dnl
 dnl define if glass console is possible
-dnl (XXX does not imply availablity of X servers though)
+dnl (XXX does not imply availability of X servers though)
 define({:-MDX-:},1)dnl
 dnl
 dnl define if the X server can't start until machdep.allow_aperture is set
