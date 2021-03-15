@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.12 2021/03/15 22:44:57 patrick Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.13 2021/03/15 22:56:48 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -30,6 +30,8 @@
 
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/dsdt.h>
+
+#include <arm64/dev/acpiiort.h>
 
 int	lid_action;
 int	pwr_action = 1;
@@ -220,5 +222,5 @@ acpi_resume_mp(void)
 bus_dma_tag_t
 acpi_iommu_device_map(struct aml_node *node, bus_dma_tag_t dmat)
 {
-	return dmat;
+	return acpiiort_device_map(node, dmat);
 }

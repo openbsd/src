@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiiort.c,v 1.2 2021/03/15 22:48:57 patrick Exp $ */
+/* $OpenBSD: acpiiort.c,v 1.3 2021/03/15 22:56:48 patrick Exp $ */
 /*
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
  *
@@ -21,6 +21,7 @@
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
+#include <dev/acpi/dsdt.h>
 
 #include <arm64/dev/acpiiort.h>
 
@@ -98,6 +99,78 @@ acpiiort_smmu_map(struct acpi_iort_node *node, uint32_t rid,
 		if (as->as_node == node)
 			return as->as_map(as->as_cookie, rid, dmat);
 	}
+
+	return dmat;
+}
+
+bus_dma_tag_t
+acpiiort_device_map(struct aml_node *root, bus_dma_tag_t dmat)
+{
+	struct acpi_table_header *hdr;
+	struct acpi_iort *iort = NULL;
+	struct acpi_iort_node *node;
+	struct acpi_iort_mapping *map;
+	struct acpi_iort_nc_node *nc;
+	struct acpi_q *entry;
+	const char *name;
+	uint32_t rid, offset;
+	int i;
+
+	name = aml_nodename(root);
+
+	/* Look for IORT table. */
+	SIMPLEQ_FOREACH(entry, &acpi_softc->sc_tables, q_next) {
+		hdr = entry->q_table;
+		if (strncmp(hdr->signature, IORT_SIG,
+		    sizeof(hdr->signature)) == 0) {
+			iort = entry->q_table;
+			break;
+		}
+	}
+	if (iort == NULL)
+		return dmat;
+
+	/* Find our named component. */
+	offset = iort->offset;
+	for (i = 0; i < iort->number_of_nodes; i++) {
+		node = (struct acpi_iort_node *)((char *)iort + offset);
+		if (node->type == ACPI_IORT_NAMED_COMPONENT) {
+			nc = (struct acpi_iort_nc_node *)&node[1];
+			if (strcmp(nc->device_object_name, name) == 0)
+				break;
+		}
+		offset += node->length;
+	}
+
+	/* No NC found? Weird. */
+	if (i >= iort->number_of_nodes)
+		return dmat;
+
+	/* Find our output base towards SMMU. */
+	map = (struct acpi_iort_mapping *)((char *)node + node->mapping_offset);
+	for (i = 0; i < node->number_of_mappings; i++) {
+		offset = map[i].output_reference;
+
+		if (map[i].flags & ACPI_IORT_MAPPING_SINGLE) {
+			rid = map[i].output_base;
+			break;
+		}
+
+		/* Mapping encodes number of IDs in the range minus one. */
+		if (map[i].input_base <= rid &&
+		    rid <= map[i].input_base + map[i].number_of_ids) {
+			rid = map[i].output_base + (rid - map[i].input_base);
+			break;
+		}
+	}
+
+	/* No mapping found? Even weirder. */
+	if (i >= node->number_of_mappings)
+		return dmat;
+
+	node = (struct acpi_iort_node *)((char *)iort + offset);
+	if (node->type == ACPI_IORT_SMMU)
+		return acpiiort_smmu_map(node, rid, dmat);
 
 	return dmat;
 }
