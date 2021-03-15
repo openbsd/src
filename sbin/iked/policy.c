@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.79 2021/03/01 16:38:07 tobhe Exp $	*/
+/*	$OpenBSD: policy.c,v 1.80 2021/03/15 22:32:44 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2020-2021 Tobias Heider <tobhe@openbsd.org>
@@ -1090,7 +1090,7 @@ proposals_match(struct iked_proposal *local, struct iked_proposal *peer,
     struct iked_transform **xforms, int rekey)
 {
 	struct iked_transform	*tpeer, *tlocal;
-	unsigned int		 i, j, type, score, requiredh = 0, noauth = 0;
+	unsigned int		 i, j, type, score, requiredh = 0, nodh = 0, noauth = 0;
 	uint8_t			 protoid = peer->prop_protoid;
 	uint8_t			 peerxfs[IKEV2_XFORMTYPE_MAX];
 
@@ -1131,6 +1131,16 @@ proposals_match(struct iked_proposal *local, struct iked_proposal *peer,
 			    tlocal->xform_id != IKEV2_XFORMDH_NONE)
 				requiredh = 1;
 
+			/*
+			 * If none is an explicit option, don't require
+			 * DH group. Overrides requiredh = 1.
+			 */
+			if (rekey && nodh == 0 &&
+			    protoid == IKEV2_SAPROTO_ESP &&
+			    tlocal->xform_type == IKEV2_XFORMTYPE_DH &&
+			    tlocal->xform_id == IKEV2_XFORMDH_NONE)
+				nodh = 1;
+
 			/* Compare peer and local proposals */
 			if (tpeer->xform_type != tlocal->xform_type ||
 			    tpeer->xform_id != tlocal->xform_id ||
@@ -1169,7 +1179,7 @@ proposals_match(struct iked_proposal *local, struct iked_proposal *peer,
 			break;
 		} else if (protoid == IKEV2_SAPROTO_ESP && xforms[i] == NULL &&
 		    (i == IKEV2_XFORMTYPE_ENCR || i == IKEV2_XFORMTYPE_ESN ||
-		    (requiredh && i == IKEV2_XFORMTYPE_DH))) {
+		    (requiredh && !nodh && i == IKEV2_XFORMTYPE_DH))) {
 			score = 0;
 			break;
 		} else if (peerxfs[i] && xforms[i] == NULL) {
