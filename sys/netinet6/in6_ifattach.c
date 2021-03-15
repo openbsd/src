@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.117 2020/06/21 11:32:34 dlg Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.118 2021/03/15 17:28:45 florian Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -459,6 +459,6 @@ in6_ifdetach(struct ifnet *ifp)
 		rtfree(rt);
 	}
 
-	if (ifp->if_xflags & IFXF_AUTOCONF6)
-		ifp->if_xflags &= ~IFXF_AUTOCONF6;
+	if (ifp->if_xflags & (IFXF_AUTOCONF6 | IFXF_AUTOCONF6TEMP))
+		ifp->if_xflags &= ~(IFXF_AUTOCONF6 | IFXF_AUTOCONF6TEMP);
 }
