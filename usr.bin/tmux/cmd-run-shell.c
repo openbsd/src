@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-run-shell.c,v 1.71 2021/03/02 10:56:45 nicm Exp $ */
+/* $OpenBSD: cmd-run-shell.c,v 1.72 2021/03/15 13:06:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -20,6 +20,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
+#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -190,8 +191,12 @@ cmd_run_shell_timer(__unused int fd, __unused short events, void* arg)
 			    &error);
 		}
 		if (status == CMD_PARSE_ERROR) {
-		       cmdq_error(cdata->item, "%s", error);
-		       free(error);
+			if (cdata->item == NULL) {
+				*error = toupper((u_char)*error);
+				status_message_set(c, -1, 1, "%s", error);
+			} else
+				cmdq_error(cdata->item, "%s", error);
+			free(error);
 		}
 	}
 
