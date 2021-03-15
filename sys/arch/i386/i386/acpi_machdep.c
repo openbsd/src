@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.75 2020/12/19 06:28:42 jmatthew Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.76 2021/03/15 22:44:57 patrick Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -520,3 +520,9 @@ acpi_resume_mp(void)
 #endif /* MULTIPROCESSOR */
 
 #endif /* ! SMALL_KERNEL */
+
+bus_dma_tag_t
+acpi_iommu_device_map(struct aml_node *node, bus_dma_tag_t dmat)
+{
+	return dmat;
+}

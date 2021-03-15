@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.113 2020/12/06 21:19:55 kettenis Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.114 2021/03/15 22:44:57 patrick Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -409,6 +409,8 @@ void	acpi_intr_disestablish(void *);
 
 struct acpi_q *acpi_maptable(struct acpi_softc *sc, paddr_t,
 	    const char *, const char *, const char *, int);
+
+bus_dma_tag_t acpi_iommu_device_map(struct aml_node *, bus_dma_tag_t);
 
 #endif
 

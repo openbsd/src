@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.11 2020/12/19 06:28:42 jmatthew Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.12 2021/03/15 22:44:57 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -216,3 +216,9 @@ acpi_resume_mp(void)
 }
 
 #endif
+
+bus_dma_tag_t
+acpi_iommu_device_map(struct aml_node *node, bus_dma_tag_t dmat)
+{
+	return dmat;
+}
