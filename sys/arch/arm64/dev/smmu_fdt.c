@@ -1,4 +1,4 @@
-/* $OpenBSD: smmu_fdt.c,v 1.2 2021/03/01 21:35:03 patrick Exp $ */
+/* $OpenBSD: smmu_fdt.c,v 1.3 2021/03/15 22:48:57 patrick Exp $ */
 /*
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
  *
@@ -117,5 +117,5 @@ smmu_fdt_map(void *cookie, uint32_t *cells, bus_dma_tag_t dmat)
 	struct smmu_fdt_softc *fsc = (struct smmu_fdt_softc *)cookie;
 	struct smmu_softc *sc = &fsc->sc_smmu;
 
-	return smmu_device_hook(sc, cells[0], dmat);
+	return smmu_device_map(sc, cells[0], dmat);
 }

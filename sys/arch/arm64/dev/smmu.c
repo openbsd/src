@@ -1,4 +1,4 @@
-/* $OpenBSD: smmu.c,v 1.9 2021/03/06 19:30:07 patrick Exp $ */
+/* $OpenBSD: smmu.c,v 1.10 2021/03/15 22:48:57 patrick Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
@@ -500,8 +500,9 @@ smmu_cb_write_8(struct smmu_softc *sc, int idx, bus_size_t off, uint64_t val)
 }
 
 bus_dma_tag_t
-smmu_device_hook(struct smmu_softc *sc, uint32_t sid, bus_dma_tag_t dmat)
+smmu_device_map(void *cookie, uint32_t sid, bus_dma_tag_t dmat)
 {
+	struct smmu_softc *sc = cookie;
 	struct smmu_domain *dom;
 
 	dom = smmu_domain_lookup(sc, sid);
@@ -525,15 +526,6 @@ smmu_device_hook(struct smmu_softc *sc, uint32_t sid, bus_dma_tag_t dmat)
 	}
 
 	return dom->sd_dmat;
-}
-
-void
-smmu_pci_device_hook(void *cookie, uint32_t rid, struct pci_attach_args *pa)
-{
-	struct smmu_softc *sc = cookie;
-
-	printf("%s: rid %x\n", sc->sc_dev.dv_xname, rid);
-	pa->pa_dmat = smmu_device_hook(sc, rid, pa->pa_dmat);
 }
 
 struct smmu_domain *

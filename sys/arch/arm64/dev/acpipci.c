@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpipci.c,v 1.26 2021/02/28 21:42:08 patrick Exp $	*/
+/*	$OpenBSD: acpipci.c,v 1.27 2021/03/15 22:48:57 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -412,7 +412,7 @@ acpipci_probe_device_hook(void *v, struct pci_attach_args *pa)
 
 	node = (struct acpi_iort_node *)((char *)iort + offset);
 	if (node->type == ACPI_IORT_SMMU)
-		acpiiort_smmu_hook(node, rid, pa);
+		pa->pa_dmat = acpiiort_smmu_map(node, rid, pa->pa_dmat);
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiiort.h,v 1.1 2021/02/28 21:31:10 patrick Exp $ */
+/* $OpenBSD: acpiiort.h,v 1.2 2021/03/15 22:48:57 patrick Exp $ */
 /*
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
  *
@@ -26,10 +26,9 @@ struct acpiiort_smmu {
 	SIMPLEQ_ENTRY(acpiiort_smmu) as_list;
 	struct acpi_iort_node	*as_node;
 	void			*as_cookie;
-	void			(*as_hook)(void *, uint32_t,
-				    struct pci_attach_args *);
+	bus_dma_tag_t		(*as_map)(void *, uint32_t,
+				    bus_dma_tag_t);
 };
 
 void acpiiort_smmu_register(struct acpiiort_smmu *);
-void acpiiort_smmu_hook(struct acpi_iort_node *, uint32_t,
-    struct pci_attach_args *);
+bus_dma_tag_t acpiiort_smmu_map(struct acpi_iort_node *, uint32_t, bus_dma_tag_t);
