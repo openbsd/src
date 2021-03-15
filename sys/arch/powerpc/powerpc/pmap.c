@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.174 2021/03/11 11:16:59 jsg Exp $ */
+/*	$OpenBSD: pmap.c,v 1.175 2021/03/15 15:49:22 deraadt Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -1461,6 +1461,7 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 	int i, k;
 	struct pmapvp *vp1;
 	struct pmapvp *vp2;
+	extern vaddr_t ppc_kvm_stolen;
 
 	/*
 	 * set the page size (default value is 4K which is ok)

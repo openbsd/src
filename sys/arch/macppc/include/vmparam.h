@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.31 2015/11/01 20:10:00 miod Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.32 2021/03/15 15:49:20 deraadt Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.1 1996/09/30 16:34:38 ws Exp $	*/
 
 /*-
@@ -87,10 +87,6 @@
 #define VM_PIE_MIN_ADDR		PAGE_SIZE
 #define VM_PIE_MAX_ADDR		0x40000000
 
-/* ppc_kvm_stolen is so that vm space can be stolen before vm is fully
- * initialized.
- */
-extern vaddr_t ppc_kvm_stolen;
 #define VM_KERN_ADDRESS_SIZE  (PPC_SEGMENT_LENGTH - (32 * 1024 * 1024))
 #define	VM_MAX_KERNEL_ADDRESS	(VM_MIN_KERNEL_ADDRESS + VM_KERN_ADDRESS_SIZE)
 
