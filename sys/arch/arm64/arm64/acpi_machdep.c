@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.13 2021/03/15 22:56:48 patrick Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.14 2021/03/16 18:31:16 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -187,6 +187,7 @@ acpi_intr_disestablish(void *cookie)
 	struct interrupt_controller *ic = aih->ih_ic;
 
 	ic->ic_disestablish(aih->ih_ih);
+	free(aih, M_DEVBUF, sizeof(*aih));
 }
 
 void
