@@ -1,4 +1,4 @@
-/* $OpenBSD: control-notify.c,v 1.28 2021/01/20 07:16:54 nicm Exp $ */
+/* $OpenBSD: control-notify.c,v 1.29 2021/03/16 09:14:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -168,6 +168,17 @@ control_notify_client_session_changed(struct client *cc)
 			control_write(c, "%%client-session-changed %s $%u %s",
 			    cc->name, s->id, s->name);
 		}
+	}
+}
+
+void
+control_notify_client_detached(struct client *cc)
+{
+	struct client	*c;
+
+	TAILQ_FOREACH(c, &clients, entry) {
+		if (CONTROL_SHOULD_NOTIFY_CLIENT(c))
+			control_write(c, "%%client-detached %s", cc->name);
 	}
 }
 
