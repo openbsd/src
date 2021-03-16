@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.129 2021/03/05 22:03:51 tobhe Exp $	*/
+/*	$OpenBSD: parse.y,v 1.130 2021/03/16 22:50:52 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -278,6 +278,7 @@ const struct ipsec_xf groupxfs[] = {
 	{ "brainpool512",	IKEV2_XFORMDH_BRAINPOOL_P512R1 },
 	{ "grp30",		IKEV2_XFORMDH_BRAINPOOL_P512R1 },
 	{ "curve25519",		IKEV2_XFORMDH_CURVE25519 },
+	{ "grp31",		IKEV2_XFORMDH_CURVE25519 },
 	{ NULL }
 };
 
