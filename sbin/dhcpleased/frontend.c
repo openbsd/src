@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.4 2021/03/14 16:05:50 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.5 2021/03/16 17:39:15 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -632,13 +632,6 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 				update_iface(ifm->ifm_index, if_name);
 			}
 		}
-		break;
-	case RTM_NEWADDR:
-		ifm = (struct if_msghdr *)rtm;
-		if_name = if_indextoname(ifm->ifm_index, ifnamebuf);
-		log_debug("RTM_NEWADDR: %s[%u]", if_name == NULL ?
-		    "?" : if_name, ifm->ifm_index);
-		update_iface(ifm->ifm_index, if_name);
 		break;
 	case RTM_PROPOSAL:
 		if (rtm->rtm_priority == RTP_PROPOSAL_SOLICIT) {
