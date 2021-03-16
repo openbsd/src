@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.9 2021/03/07 18:39:11 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.10 2021/03/16 17:40:28 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -1267,6 +1267,9 @@ void
 send_deconfigure_interface(struct dhcpleased_iface *iface)
 {
 	struct imsg_configure_interface	 imsg;
+
+	if (iface->requested_ip.s_addr == INADDR_ANY)
+		return;
 
 	log_lease(iface, 1);
 
