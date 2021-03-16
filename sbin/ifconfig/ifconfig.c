@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.440 2021/03/13 21:23:29 kn Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.441 2021/03/16 19:24:36 kn Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -190,7 +190,6 @@ const	char *lacptimeoutslow = "slow";
 
 void	notealias(const char *, int);
 void	setifaddr(const char *, int);
-void	setifrtlabel(const char *, int);
 void	setiflladdr(const char *, int);
 void	setifdstaddr(const char *, int);
 void	setifflags(const char *, int);
@@ -231,8 +230,6 @@ void	setia6pltime(const char *, int);
 void	setia6vltime(const char *, int);
 void	setia6lifetime(const char *, const char *);
 void	setia6eui64(const char *, int);
-void	setkeepalive(const char *, const char *);
-void	unsetkeepalive(const char *, int);
 void	setmedia(const char *, int);
 void	setmediaopt(const char *, int);
 void	setmediamode(const char *, int);
@@ -259,8 +256,11 @@ void	trunk_status(void);
 void	list_cloners(void);
 
 #ifndef SMALL
+void	setifrtlabel(const char *, int);
 void	setrdomain(const char *, int);
 void	unsetrdomain(const char *, int);
+void	setkeepalive(const char *, const char *);
+void	unsetkeepalive(const char *, int);
 void	carp_status(void);
 void	setcarp_advbase(const char *,int);
 void	setcarp_advskew(const char *, int);
