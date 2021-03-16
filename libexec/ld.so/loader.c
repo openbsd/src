@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.190 2019/12/17 03:16:07 guenther Exp $ */
+/*	$OpenBSD: loader.c,v 1.191 2021/03/16 18:03:06 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -32,6 +32,7 @@
 #include <sys/mman.h>
 #include <sys/exec.h>
 #include <sys/sysctl.h>
+#include <machine/vmparam.h>
 #include <nlist.h>
 #include <string.h>
 #include <link.h>
@@ -73,6 +74,7 @@ char *_dl_preload __boot_data = NULL;
 char *_dl_tracefmt1 __boot_data = NULL;
 char *_dl_tracefmt2 __boot_data = NULL;
 char *_dl_traceprog __boot_data = NULL;
+void *_dl_exec_hint __boot_data = NULL;
 
 char **environ = NULL;
 char *__progname = NULL;
@@ -461,7 +463,7 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 	unsigned int loop;
 	int failed;
 	struct dep_node *n;
-	Elf_Addr minva, maxva, exe_loff;
+	Elf_Addr minva, maxva, exe_loff, exec_end, cur_exec_end;
 	Elf_Phdr *ptls = NULL;
 	int align;
 
@@ -499,7 +501,7 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 	_dl_loading_object = NULL;
 
 	minva = ELF_NO_ADDR;
-	maxva = exe_loff = 0;
+	maxva = exe_loff = exec_end = 0;
 
 	/*
 	 * Examine the user application and set up object information.
@@ -539,6 +541,10 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 			next_load->start = (char *)TRUNC_PG(phdp->p_vaddr) + exe_loff;
 			next_load->size = (phdp->p_vaddr & align) + phdp->p_filesz;
 			next_load->prot = PFLAGS(phdp->p_flags);
+			cur_exec_end = (Elf_Addr)next_load->start + next_load->size;
+			if ((next_load->prot & PROT_EXEC) != 0 &&
+			    cur_exec_end > exec_end)
+				exec_end = cur_exec_end;
 			break;
 		case PT_TLS:
 			if (phdp->p_filesz > phdp->p_memsz)
@@ -556,6 +562,12 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 	exe_obj->obj_flags |= DF_1_GLOBAL;
 	exe_obj->load_size = maxva - minva;
 	_dl_set_sod(exe_obj->load_name, &exe_obj->sod);
+
+#ifdef __i386__
+	if (exec_end > I386_MAX_EXE_ADDR)
+		_dl_exec_hint = (void *)ROUND_PG(exec_end-I386_MAX_EXE_ADDR);
+	DL_DEB(("_dl_exec_hint:  0x%lx\n", _dl_exec_hint));
+#endif
 
 	/* TLS bits in the base executable */
 	if (ptls != NULL && ptls->p_memsz)

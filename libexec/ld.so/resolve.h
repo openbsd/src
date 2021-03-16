@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.96 2019/10/04 17:42:16 guenther Exp $ */
+/*	$OpenBSD: resolve.h,v 1.97 2021/03/16 18:03:06 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -349,6 +349,8 @@ extern char *_dl_preload;
 extern char *_dl_tracefmt1;
 extern char *_dl_tracefmt2;
 extern char *_dl_traceprog;
+
+extern void *_dl_exec_hint;
 
 extern int _dl_trust;
 

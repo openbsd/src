@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_mquery.c,v 1.64 2019/12/09 23:15:03 bluhm Exp $ */
+/*	$OpenBSD: library_mquery.c,v 1.65 2021/03/16 18:03:06 kurt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -256,6 +256,8 @@ retry:
 			 * EXEC region unless it is writable.
 			 */
 			int exec = (ld->prot & PROT_WRITE) ? 0 : PROT_EXEC;
+			if (exec && lowld->start == NULL)
+				lowld->start = _dl_exec_hint;
 			res = _dl_mquery((void *)(LOFF + ld->moff),
 			    ROUND_PG(ld->size), ld->prot | exec, flags,
 			    fd, foff);
