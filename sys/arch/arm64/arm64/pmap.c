@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.74 2021/03/11 11:16:55 jsg Exp $ */
+/* $OpenBSD: pmap.c,v 1.75 2021/03/16 10:57:47 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -1672,11 +1672,14 @@ pmap_init(void)
 	 * the identity mapping in TTBR0 and can set the TCR to a
 	 * more useful value.
 	 */
+	WRITE_SPECIALREG(ttbr0_el1, pmap_kernel()->pm_pt0pa);
+	__asm volatile("isb");
 	tcr = READ_SPECIALREG(tcr_el1);
 	tcr &= ~TCR_T0SZ(0x3f);
 	tcr |= TCR_T0SZ(64 - USER_SPACE_BITS);
 	tcr |= TCR_A1;
 	WRITE_SPECIALREG(tcr_el1, tcr);
+	cpu_tlb_flush();
 
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, IPL_NONE, 0,
 	    "pmap", NULL);

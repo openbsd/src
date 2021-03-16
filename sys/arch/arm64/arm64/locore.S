@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.S,v 1.35 2021/03/10 15:56:06 kettenis Exp $ */
+/* $OpenBSD: locore.S,v 1.36 2021/03/16 10:57:47 kettenis Exp $ */
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
  * All rights reserved.
@@ -194,7 +194,10 @@ start_mmu:
 	msr	mdscr_el1, xzr
 
 	/* Invalidate the TLB */
+	dsb	ishst
 	tlbi	vmalle1is
+	dsb	ish
+	isb
 
 	ldr	x2, mair
 	msr	mair_el1, x2
@@ -226,11 +229,17 @@ start_mmu:
 switch_mmu_kernel:
 	RETGUARD_SETUP(switch_mmu_kernel, x15)
 	dsb	sy
-	/* Invalidate the TLB */
-	tlbi	vmalle1is
+
 	/* Load ttbr1 (kernel) */
 	msr	ttbr1_el1, x0
 	isb
+
+	/* Invalidate the TLB */
+	dsb	ishst
+	tlbi	vmalle1is
+	dsb	ish
+	isb
+
 	RETGUARD_CHECK(switch_mmu_kernel, x15)
 	ret
 
