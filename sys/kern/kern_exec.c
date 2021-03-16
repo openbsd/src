@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.222 2021/03/12 10:13:28 mpi Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.223 2021/03/16 16:32:22 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -834,7 +834,7 @@ exec_sigcode_map(struct process *pr, struct emul *e)
 	if (e->e_sigobject == NULL) {
 		extern int sigfillsiz;
 		extern u_char sigfill[];
-		size_t off;
+		size_t off, left;
 		vaddr_t va;
 		int r;
 
@@ -848,8 +848,12 @@ exec_sigcode_map(struct process *pr, struct emul *e)
 			return (ENOMEM);
 		}
 
-		for (off = 0; off < round_page(sz); off += sigfillsiz)
-			memcpy((caddr_t)va + off, sigfill, sigfillsiz);
+		for (off = 0, left = round_page(sz); left != 0;
+		    off += sigfillsiz) {
+			size_t chunk = ulmin(left, sigfillsiz);
+			memcpy((caddr_t)va + off, sigfill, chunk);
+			left -= chunk;
+		}
 		memcpy((caddr_t)va, e->e_sigcode, sz);
 		uvm_unmap(kernel_map, va, va + round_page(sz));
 	}
