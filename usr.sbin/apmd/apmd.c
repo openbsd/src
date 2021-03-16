@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.100 2021/03/11 18:12:41 kn Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.101 2021/03/16 09:00:43 kn Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -72,7 +72,6 @@ void resumed(int ctl_fd);
 void setperfpolicy(char *policy);
 void sigexit(int signo);
 void do_etc_file(const char *file);
-void sockunlink(void);
 void error(const char *fmt, const char *arg);
 void set_driver_messages(int fd, int mode);
 
@@ -80,7 +79,6 @@ void set_driver_messages(int fd, int mode);
 void
 sigexit(int signo)
 {
-	sockunlink();
 	_exit(1);
 }
 
@@ -204,15 +202,6 @@ power_status(int fd, int force, struct apm_power_info *pinfo)
 	return acon;
 }
 
-char socketname[PATH_MAX];
-
-void
-sockunlink(void)
-{
-	if (socketname[0])
-		remove(socketname);
-}
-
 int
 bind_socket(const char *sockname)
 {
@@ -238,8 +227,6 @@ bind_socket(const char *sockname)
 		error("cannot set socket mode/owner/group to 660/0/0", NULL);
 
 	listen(sock, 1);
-	strlcpy(socketname, sockname, sizeof socketname);
-	atexit(sockunlink);
 
 	return sock;
 }
