@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.711 2021/03/11 15:30:49 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.712 2021/03/16 20:21:54 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1497,14 +1497,11 @@ send_request(struct interface_info *ifi)
 	struct in_addr		 from;
 	struct timespec		 now;
 	ssize_t			 rslt;
-	time_t			 cur_time, interval;
+	time_t			 cur_time;
 
 	cancel_timeout(ifi);
 	clock_gettime(CLOCK_REALTIME, &now);
 	cur_time = now.tv_sec;
-
-	/* Figure out how long it's been since we started transmitting. */
-	interval = cur_time - ifi->first_sending;
 
 	switch (ifi->state) {
 	case S_REBOOTING:
