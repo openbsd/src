@@ -362,7 +362,7 @@
 #define HAVE_MEMMOVE 1
 
 /* Define to 1 if you have the <memory.h> header file. */
-#define HAVE_MEMORY_H 1
+/* #undef HAVE_MEMORY_H */
 
 /* Define to 1 if you have the <netdb.h> header file. */
 #define HAVE_NETDB_H 1
@@ -730,7 +730,7 @@
 #define PACKAGE_NAME "unbound"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "unbound 1.13.0"
+#define PACKAGE_STRING "unbound 1.13.1"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "unbound"
@@ -739,7 +739,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.13.0"
+#define PACKAGE_VERSION "1.13.1"
 
 /* default pidfile location */
 #define PIDFILE ""
@@ -748,7 +748,8 @@
    your system. */
 /* #undef PTHREAD_CREATE_JOINABLE */
 
-/* Define as the return type of signal handlers (`int' or `void'). */
+/* Return type of signal handlers, but autoconf 2.70 says 'your code may
+   safely assume C89 semantics that RETSIGTYPE is void.' */
 #define RETSIGTYPE void
 
 /* if REUSEPORT is enabled by default */
@@ -761,7 +762,7 @@
 #define ROOT_CERT_FILE "/var/unbound/etc/icannbundle.pem"
 
 /* version number for resource files */
-#define RSRC_PACKAGE_VERSION 1,13,0,0
+#define RSRC_PACKAGE_VERSION 1,13,1,0
 
 /* Directory to chdir to */
 #define RUN_DIR "/var/unbound/etc"
@@ -927,7 +928,7 @@
 /* #undef _MINIX */
 
 /* Enable for compile on Minix */
-/* #undef _NETBSD_SOURCE */
+#define _NETBSD_SOURCE 1
 
 /* Define to 2 if the system does not provide POSIX.1 features except with
    this defined. */
