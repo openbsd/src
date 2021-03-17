@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.49 2021/01/17 14:24:00 jcs Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.50 2021/03/17 15:59:27 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -7710,6 +7710,7 @@ static const struct pci_matchid iwx_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_1 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_2 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_3 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_4,},
 };
 
 static const struct pci_matchid iwx_subsystem_id_ax201[] = {
@@ -7749,6 +7750,7 @@ iwx_match(struct device *parent, iwx_match_t match __unused, void *aux)
 		return 1; /* match any device */
 	case PCI_PRODUCT_INTEL_WL_22500_2: /* AX201 */
 	case PCI_PRODUCT_INTEL_WL_22500_3: /* AX201 */
+	case PCI_PRODUCT_INTEL_WL_22500_4: /* AX201 */
 		for (i = 0; i < nitems(iwx_subsystem_id_ax201); i++) {
 			if (svid == iwx_subsystem_id_ax201[i].pm_vid &&
 			    spid == iwx_subsystem_id_ax201[i].pm_pid)
@@ -7951,6 +7953,17 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_tx_with_siso_diversity = 0;
 		sc->sc_uhb_supported = 0;
 		break;
+	case PCI_PRODUCT_INTEL_WL_22500_4:
+	    sc->sc_fwname = "iwx-Qu-c0-hr-b0-48";
+	    sc->sc_device_family = IWX_DEVICE_FAMILY_22000;
+	    sc->sc_fwdmasegsz = IWX_FWDMASEGSZ_8000;
+	    sc->sc_integrated = 1;
+	    sc->sc_ltr_delay = IWX_SOC_FLAGS_LTR_APPLY_DELAY_200;
+	    sc->sc_low_latency_xtal = 0;
+	    sc->sc_xtal_latency = 5000;
+	    sc->sc_tx_with_siso_diversity = 0;
+	    sc->sc_uhb_supported = 0;
+	    break;
 	default:
 		printf("%s: unknown adapter type\n", DEVNAME(sc));
 		return;
