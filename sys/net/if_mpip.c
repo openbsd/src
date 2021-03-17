@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpip.c,v 1.13 2021/02/20 05:03:37 dlg Exp $ */
+/*	$OpenBSD: if_mpip.c,v 1.14 2021/03/17 14:30:09 kn Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -145,7 +145,7 @@ mpip_clone_destroy(struct ifnet *ifp)
 
 	if (sc->sc_smpls.smpls_label) {
 		rt_ifa_del(&sc->sc_ifa, RTF_LOCAL | RTF_MPLS,
-		    smplstosa(&sc->sc_smpls), 0);
+		    smplstosa(&sc->sc_smpls), sc->sc_rdomain);
 	}
 	NET_UNLOCK();
 
@@ -165,13 +165,13 @@ mpip_set_route(struct mpip_softc *sc, uint32_t shim, unsigned int rdomain)
 	int error;
 
 	rt_ifa_del(&sc->sc_ifa, RTF_MPLS | RTF_LOCAL,
-	    smplstosa(&sc->sc_smpls), 0);
+	    smplstosa(&sc->sc_smpls), sc->sc_rdomain);
 
 	sc->sc_smpls.smpls_label = shim;
 	sc->sc_rdomain = rdomain;
 
 	error = rt_ifa_add(&sc->sc_ifa, RTF_MPLS | RTF_LOCAL,
-	    smplstosa(&sc->sc_smpls), 0);
+	    smplstosa(&sc->sc_smpls), sc->sc_rdomain);
 	if (error) {
 		sc->sc_smpls.smpls_label = MPLS_LABEL2SHIM(0);
 		return (error);
@@ -221,7 +221,7 @@ mpip_del_label(struct mpip_softc *sc)
 {
 	if (sc->sc_smpls.smpls_label != MPLS_LABEL2SHIM(0)) {
 		rt_ifa_del(&sc->sc_ifa, RTF_MPLS | RTF_LOCAL,
-		    smplstosa(&sc->sc_smpls), 0);
+		    smplstosa(&sc->sc_smpls), sc->sc_rdomain);
 	}
 
 	sc->sc_smpls.smpls_label = MPLS_LABEL2SHIM(0);
