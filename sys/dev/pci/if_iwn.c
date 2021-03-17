@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.245 2021/03/12 16:27:27 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.246 2021/03/17 15:34:21 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -3505,7 +3505,10 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 		}
 	}
 
-	if (IEEE80211_IS_MULTICAST(wh->i_addr1) ||
+	if (type == IEEE80211_FC0_TYPE_CTL &&
+	    subtype == IEEE80211_FC0_SUBTYPE_BAR)
+		tx->id = wn->id;
+	else if (IEEE80211_IS_MULTICAST(wh->i_addr1) ||
 	    type != IEEE80211_FC0_TYPE_DATA)
 		tx->id = sc->broadcast_id;
 	else
