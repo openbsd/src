@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.75 2021/03/16 10:57:47 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.76 2021/03/17 12:03:40 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -2372,7 +2372,7 @@ pmap_map_early(paddr_t spa, psize_t len)
 		    ATTR_IDX(PTE_ATTR_WB) | ATTR_SH(SH_INNER) |
 		    ATTR_nG | ATTR_UXN | ATTR_AF | ATTR_AP(0);
 	}
-	__asm volatile("dsb sy");
+	__asm volatile("dsb sy" ::: "memory");
 	__asm volatile("isb");
 }
 

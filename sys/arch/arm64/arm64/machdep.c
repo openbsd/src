@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.60 2021/03/13 10:09:40 kettenis Exp $ */
+/* $OpenBSD: machdep.c,v 1.61 2021/03/17 12:03:40 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -205,7 +205,7 @@ void
 cpu_idle_cycle(void)
 {
 	enable_irq_daif();
-	__asm volatile("dsb sy");
+	__asm volatile("dsb sy" ::: "memory");
 	__asm volatile("wfi");
 }
 

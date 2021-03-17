@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.52 2021/03/16 10:57:47 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.53 2021/03/17 12:03:40 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -545,7 +545,7 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		sched_init_cpu(ci);
 		if (cpu_hatch_secondary(ci, spinup_method, spinup_data)) {
 			atomic_setbits_int(&ci->ci_flags, CPUF_IDENTIFY);
-			__asm volatile("dsb sy; sev");
+			__asm volatile("dsb sy; sev" ::: "memory");
 
 			while ((ci->ci_flags & CPUF_IDENTIFIED) == 0 &&
 			    --timeout)
@@ -643,7 +643,7 @@ cpu_hatch_spin_table(struct cpu_info *ci, uint64_t start, uint64_t data)
 	pmap_kenter_cache(start_pg, pa, PROT_READ|PROT_WRITE, PMAP_CACHE_CI);
 
 	*startvec = start;
-	__asm volatile("dsb sy; sev");
+	__asm volatile("dsb sy; sev" ::: "memory");
 
 	pmap_kremove(start_pg, PAGE_SIZE);
 }
@@ -695,7 +695,7 @@ void
 cpu_boot_secondary(struct cpu_info *ci)
 {
 	atomic_setbits_int(&ci->ci_flags, CPUF_GO);
-	__asm volatile("dsb sy; sev");
+	__asm volatile("dsb sy; sev" ::: "memory");
 
 	while ((ci->ci_flags & CPUF_RUNNING) == 0)
 		__asm volatile("wfe");
@@ -709,14 +709,14 @@ cpu_start_secondary(struct cpu_info *ci)
 	int s;
 
 	ci->ci_flags |= CPUF_PRESENT;
-	__asm volatile("dsb sy");
+	__asm volatile("dsb sy" ::: "memory");
 
 	while ((ci->ci_flags & CPUF_IDENTIFY) == 0)
 		__asm volatile("wfe");
 
 	cpu_identify(ci);
 	atomic_setbits_int(&ci->ci_flags, CPUF_IDENTIFIED);
-	__asm volatile("dsb sy");
+	__asm volatile("dsb sy" ::: "memory");
 
 	while ((ci->ci_flags & CPUF_GO) == 0)
 		__asm volatile("wfe");
@@ -749,7 +749,7 @@ cpu_start_secondary(struct cpu_info *ci)
 	nanouptime(&ci->ci_schedstate.spc_runtime);
 
 	atomic_setbits_int(&ci->ci_flags, CPUF_RUNNING);
-	__asm volatile("dsb sy; sev");
+	__asm volatile("dsb sy; sev" ::: "memory");
 
 	spllower(IPL_NONE);
 
