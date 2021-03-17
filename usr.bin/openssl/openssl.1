@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.128 2020/12/30 08:26:44 tb Exp $
+.\" $OpenBSD: openssl.1,v 1.129 2021/03/17 18:08:32 jsing Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: December 30 2020 $
+.Dd $Mdocdate: March 17 2021 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -4280,7 +4280,9 @@ Verify the input data and output the recovered data.
 .Op Fl crl_check_all
 .Op Fl crlf
 .Op Fl debug
+.Op Fl dtls
 .Op Fl dtls1
+.Op Fl dtls1_2
 .Op Fl extended_crl
 .Op Fl groups Ar list
 .Op Fl host Ar host
@@ -4424,8 +4426,12 @@ Translate a line feed from the terminal into CR+LF,
 as required by some servers.
 .It Fl debug
 Print extensive debugging information, including a hex dump of all traffic.
+.It Fl dtls
+Permit any version of DTLS.
 .It Fl dtls1
 Permit only DTLS1.0.
+.It Fl dtls1_2
+Permit only DTLS1.2.
 .It Fl groups Ar list
 Set the supported elliptic curve groups to the colon separated
 .Ar list
@@ -4588,7 +4594,9 @@ will be used.
 .Op Fl dkey Ar file
 .Op Fl dkeyform Cm der | pem
 .Op Fl dpass Ar arg
+.Op Fl dtls
 .Op Fl dtls1
+.Op Fl dtls1_2
 .Op Fl groups Ar list
 .Op Fl HTTP
 .Op Fl id_prefix Ar arg
@@ -4754,8 +4762,12 @@ load the parameters from the server certificate file.
 If this fails, a static set of parameters hard coded into the
 .Nm s_server
 program will be used.
+.It Fl dtls
+Permit any version of DTLS.
 .It Fl dtls1
 Permit only DTLS1.0.
+.It Fl dtls1_2
+Permit only DTLS1.2.
 .It Fl groups Ar list
 Set the supported elliptic curve groups to the colon separated
 .Ar list

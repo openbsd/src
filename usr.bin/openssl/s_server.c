@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.44 2020/10/02 15:43:48 tb Exp $ */
+/* $OpenBSD: s_server.c,v 1.45 2021/03/17 18:08:32 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -239,7 +239,7 @@ static struct {
 	int bugs;
 	char *CAfile;
 	char *CApath;
-#ifndef OPENSSL_NO_DTLS1
+#ifndef OPENSSL_NO_DTLS
 	int cert_chain;
 #endif
 	char *cert_file;
@@ -315,7 +315,7 @@ s_server_opt_keymatexportlen(char *arg)
 	return (0);
 }
 
-#ifndef OPENSSL_NO_DTLS1
+#ifndef OPENSSL_NO_DTLS
 static int
 s_server_opt_mtu(char *arg)
 {
@@ -328,11 +328,37 @@ s_server_opt_mtu(char *arg)
 	}
 	return (0);
 }
+#endif
 
+#ifndef OPENSSL_NO_DTLS
 static int
-s_server_protocol_version_dtls1(void)
+s_server_opt_protocol_version_dtls(void)
 {
 	s_server_config.meth = DTLS_server_method();
+	s_server_config.socket_type = SOCK_DGRAM;
+	return (0);
+}
+#endif
+
+#ifndef OPENSSL_NO_DTLS1
+static int
+s_server_opt_protocol_version_dtls1(void)
+{
+	s_server_config.meth = DTLS_server_method();
+	s_server_config.min_version = DTLS1_VERSION;
+	s_server_config.max_version = DTLS1_VERSION;
+	s_server_config.socket_type = SOCK_DGRAM;
+	return (0);
+}
+#endif
+
+#ifndef OPENSSL_NO_DTLS1_2
+static int
+s_server_opt_protocol_version_dtls1_2(void)
+{
+	s_server_config.meth = DTLS_server_method();
+	s_server_config.min_version = DTLS1_2_VERSION;
+	s_server_config.max_version = DTLS1_2_VERSION;
 	s_server_config.socket_type = SOCK_DGRAM;
 	return (0);
 }
@@ -538,7 +564,7 @@ static const struct option s_server_options[] = {
 		.type = OPTION_ARG_FORMAT,
 		.opt.value = &s_server_config.cert_format,
 	},
-#ifndef OPENSSL_NO_DTLS1
+#ifndef OPENSSL_NO_DTLS
 	{
 		.name = "chain",
 		.type = OPTION_FLAG,
@@ -613,12 +639,28 @@ static const struct option s_server_options[] = {
 		.type = OPTION_ARG,
 		.opt.arg = &s_server_config.dpassarg,
 	},
+#ifndef OPENSSL_NO_DTLS
+	{
+		.name = "dtls",
+		.desc = "Use any version of DTLS",
+		.type = OPTION_FUNC,
+		.opt.func = s_server_opt_protocol_version_dtls,
+	},
+#endif
 #ifndef OPENSSL_NO_DTLS1
 	{
 		.name = "dtls1",
-		.desc = "Just talk DTLSv1",
+		.desc = "Just use DTLSv1",
 		.type = OPTION_FUNC,
-		.opt.func = s_server_protocol_version_dtls1,
+		.opt.func = s_server_opt_protocol_version_dtls1,
+	},
+#endif
+#ifndef OPENSSL_NO_DTLS1_2
+	{
+		.name = "dtls1_2",
+		.desc = "Just use DTLSv1.2",
+		.type = OPTION_FUNC,
+		.opt.func = s_server_opt_protocol_version_dtls1_2,
 	},
 #endif
 	{
@@ -689,7 +731,7 @@ static const struct option s_server_options[] = {
 		.type = OPTION_FLAG,
 		.opt.flag = &s_server_config.msg,
 	},
-#ifndef OPENSSL_NO_DTLS1
+#ifndef OPENSSL_NO_DTLS
 	{
 		.name = "mtu",
 		.argname = "mtu",
@@ -876,7 +918,7 @@ static const struct option s_server_options[] = {
 		.type = OPTION_FUNC,
 		.opt.func = s_server_opt_status_verbose,
 	},
-#ifndef OPENSSL_NO_DTLS1
+#ifndef OPENSSL_NO_DTLS
 	{
 		.name = "timeout",
 		.desc = "Enable timeouts",
@@ -1000,7 +1042,7 @@ sv_usage(void)
 	    "    [-context id] [-crl_check] [-crl_check_all] [-crlf]\n"
 	    "    [-dcert file] [-dcertform der | pem] [-debug]\n"
 	    "    [-dhparam file] [-dkey file] [-dkeyform der | pem]\n"
-	    "    [-dpass arg] [-dtls1] [-groups list] [-HTTP]\n"
+	    "    [-dpass arg] [-dtls] [-dtls1] [-dtls1_2] [-groups list] [-HTTP]\n"
 	    "    [-id_prefix arg] [-key keyfile] [-key2 keyfile]\n"
 	    "    [-keyform der | pem] [-keymatexport label]\n"
 	    "    [-keymatexportlen len] [-msg] [-mtu mtu]\n"
@@ -1535,8 +1577,7 @@ sv_body(char *hostname, int s, unsigned char *context)
 	}
 	SSL_clear(con);
 
-	if (SSL_version(con) == DTLS1_VERSION) {
-
+	if (SSL_is_dtls(con)) {
 		sbio = BIO_new_dgram(s, BIO_NOCLOSE);
 
 		if (s_server_config.enable_timeouts) {
@@ -1602,7 +1643,7 @@ sv_body(char *hostname, int s, unsigned char *context)
 			pfd[1].fd = s;
 			pfd[1].events = POLLIN;
 
-			if ((SSL_version(con) == DTLS1_VERSION) &&
+			if (SSL_is_dtls(con) &&
 			    DTLSv1_get_timeout(con, &timeout))
 				ptimeout = timeout.tv_sec * 1000 +
 				    timeout.tv_usec / 1000;
@@ -1611,10 +1652,9 @@ sv_body(char *hostname, int s, unsigned char *context)
 
 			i = poll(pfd, 2, ptimeout);
 
-			if ((SSL_version(con) == DTLS1_VERSION) &&
-			    DTLSv1_handle_timeout(con) > 0) {
+			if (SSL_is_dtls(con) &&
+			    DTLSv1_handle_timeout(con) > 0)
 				BIO_printf(bio_err, "TIMEOUT occured\n");
-			}
 			if (i <= 0)
 				continue;
 			if (pfd[0].revents) {
@@ -1660,7 +1700,7 @@ sv_body(char *hostname, int s, unsigned char *context)
 				}
 				if ((i <= 0) || (buf[0] == 'q')) {
 					BIO_printf(bio_s_out, "DONE\n");
-					if (SSL_version(con) != DTLS1_VERSION) {
+					if (!SSL_is_dtls(con)) {
 						shutdown(s, SHUT_RD);
 						close(s);
 					}

@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.52 2020/10/14 05:36:18 tb Exp $ */
+/* $OpenBSD: s_client.c,v 1.53 2021/03/17 18:08:32 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -260,7 +260,7 @@ s_client_opt_keymatexportlen(char *arg)
 	return (0);
 }
 
-#ifndef OPENSSL_NO_DTLS1
+#ifndef OPENSSL_NO_DTLS
 static int
 s_client_opt_mtu(char *arg)
 {
@@ -285,11 +285,35 @@ s_client_opt_port(char *arg)
 	return (0);
 }
 
+#ifndef OPENSSL_NO_DTLS
+static int
+s_client_opt_protocol_version_dtls(void)
+{
+	s_client_config.meth = DTLS_client_method();
+	s_client_config.socket_type = SOCK_DGRAM;
+	return (0);
+}
+#endif
+
 #ifndef OPENSSL_NO_DTLS1
 static int
 s_client_opt_protocol_version_dtls1(void)
 {
 	s_client_config.meth = DTLS_client_method();
+	s_client_config.min_version = DTLS1_VERSION;
+	s_client_config.max_version = DTLS1_VERSION;
+	s_client_config.socket_type = SOCK_DGRAM;
+	return (0);
+}
+#endif
+
+#ifndef OPENSSL_NO_DTLS1_2
+static int
+s_client_opt_protocol_version_dtls1_2(void)
+{
+	s_client_config.meth = DTLS_client_method();
+	s_client_config.min_version = DTLS1_2_VERSION;
+	s_client_config.max_version = DTLS1_2_VERSION;
 	s_client_config.socket_type = SOCK_DGRAM;
 	return (0);
 }
@@ -472,12 +496,28 @@ static const struct option s_client_options[] = {
 		.type = OPTION_FLAG,
 		.opt.flag = &s_client_config.debug,
 	},
+#ifndef OPENSSL_NO_DTLS
+	{
+		.name = "dtls",
+		.desc = "Use any version of DTLS",
+		.type = OPTION_FUNC,
+		.opt.func = s_client_opt_protocol_version_dtls,
+	},
+#endif
 #ifndef OPENSSL_NO_DTLS1
 	{
 		.name = "dtls1",
 		.desc = "Just use DTLSv1",
 		.type = OPTION_FUNC,
 		.opt.func = s_client_opt_protocol_version_dtls1,
+	},
+#endif
+#ifndef OPENSSL_NO_DTLS1_2
+	{
+		.name = "dtls1_2",
+		.desc = "Just use DTLSv1.2",
+		.type = OPTION_FUNC,
+		.opt.func = s_client_opt_protocol_version_dtls1_2,
 	},
 #endif
 	{
@@ -546,7 +586,7 @@ static const struct option s_client_options[] = {
 		.type = OPTION_FLAG,
 		.opt.flag = &s_client_config.msg,
 	},
-#ifndef OPENSSL_NO_DTLS1
+#ifndef OPENSSL_NO_DTLS
 	{
 		.name = "mtu",
 		.argname = "mtu",
@@ -745,7 +785,7 @@ static const struct option s_client_options[] = {
 		.type = OPTION_FLAG,
 		.opt.flag = &s_client_config.status_req,
 	},
-#ifndef OPENSSL_NO_DTLS1
+#ifndef OPENSSL_NO_DTLS
 	{
 		.name = "timeout",
 		.desc = "Enable send/receive timeout on DTLS connections",
@@ -828,7 +868,7 @@ sc_usage(void)
 	    "[-4 | -6] [-alpn protocols] [-bugs] [-CAfile file]\n"
 	    "    [-CApath directory] [-cert file] [-certform der | pem] [-check_ss_sig]\n"
 	    "    [-cipher cipherlist] [-connect host[:port]] [-crl_check]\n"
-	    "    [-crl_check_all] [-crlf] [-debug] [-dtls1] [-extended_crl]\n"
+	    "    [-crl_check_all] [-crlf] [-debug] [-dtls] [-dtls1] [-dtls1_2] [-extended_crl]\n"
 	    "    [-groups list] [-host host] [-ign_eof] [-ignore_critical]\n"
 	    "    [-issuer_checks] [-key keyfile] [-keyform der | pem]\n"
 	    "    [-keymatexport label] [-keymatexportlen len] [-legacy_server_connect]\n"
@@ -1090,8 +1130,7 @@ s_client_main(int argc, char **argv)
 	if (s_client_config.pause & 0x01)
 		SSL_set_debug(con, 1);
 
-	if (SSL_version(con) == DTLS1_VERSION) {
-
+	if (SSL_is_dtls(con)) {
 		sbio = BIO_new_dgram(s, BIO_NOCLOSE);
 		if (getsockname(s, (struct sockaddr *)&peer,
 		    (void *)&peerlen) == -1) {
@@ -1290,8 +1329,7 @@ s_client_main(int argc, char **argv)
 		struct pollfd pfd[3];	/* stdin, stdout, socket */
 		int ptimeout = -1;
 
-		if ((SSL_version(con) == DTLS1_VERSION) &&
-		    DTLSv1_get_timeout(con, &timeout))
+		if (SSL_is_dtls(con) && DTLSv1_get_timeout(con, &timeout))
 			ptimeout = timeout.tv_sec * 1000 +
 			    timeout.tv_usec / 1000;
 
@@ -1370,10 +1408,9 @@ s_client_main(int argc, char **argv)
 				/* goto end; */
 			}
 		}
-		if ((SSL_version(con) == DTLS1_VERSION) &&
-		    DTLSv1_handle_timeout(con) > 0) {
+		if (SSL_is_dtls(con) &&
+		    DTLSv1_handle_timeout(con) > 0)
 			BIO_printf(bio_err, "TIMEOUT occured\n");
-		}
 		if (!ssl_pending &&
 		    (pfd[2].revents & (POLLOUT|POLLERR|POLLNVAL))) {
 			if (pfd[2].revents & (POLLERR|POLLNVAL)) {
