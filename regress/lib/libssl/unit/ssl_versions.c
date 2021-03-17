@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_versions.c,v 1.12 2021/02/25 17:07:52 jsing Exp $ */
+/* $OpenBSD: ssl_versions.c,v 1.13 2021/03/17 17:23:42 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -407,20 +407,68 @@ static struct shared_version_test shared_version_tests[] = {
 		.want_maxver = TLS1_1_VERSION,
 	},
 	{
-		.ssl_method = DTLSv1_method,
+		.ssl_method = DTLS_method,
 		.options = 0,
-		.minver = TLS1_VERSION,
+		.minver = TLS1_1_VERSION,
 		.maxver = TLS1_2_VERSION,
 		.peerver = DTLS1_VERSION,
 		.want_maxver = DTLS1_VERSION,
 	},
 	{
+		.ssl_method = DTLS_method,
+		.options = 0,
+		.minver = TLS1_1_VERSION,
+		.maxver = TLS1_2_VERSION,
+		.peerver = DTLS1_2_VERSION,
+		.want_maxver = DTLS1_VERSION,
+	},
+	{
+		.ssl_method = DTLS_method,
+		.options = 0,
+		.minver = TLS1_1_VERSION,
+		.maxver = TLS1_2_VERSION,
+		.peerver = 0xfefc,	/* DTLSv1.3, probably. */
+		.want_maxver = DTLS1_VERSION,
+	},
+	{
 		.ssl_method = DTLSv1_method,
 		.options = 0,
-		.minver = TLS1_VERSION,
+		.minver = TLS1_1_VERSION,
+		.maxver = TLS1_1_VERSION,
+		.peerver = DTLS1_2_VERSION,
+		.want_maxver = DTLS1_VERSION,
+	},
+	{
+		.ssl_method = DTLSv1_2_method,
+		.options = 0,
+		.minver = TLS1_2_VERSION,
 		.maxver = TLS1_2_VERSION,
+		.peerver = DTLS1_2_VERSION,
+		.want_maxver = DTLS1_2_VERSION,
+	},
+	{
+		.ssl_method = DTLSv1_method,
+		.options = 0,
+		.minver = TLS1_1_VERSION,
+		.maxver = TLS1_1_VERSION,
 		.peerver = TLS1_2_VERSION,
 		.want_maxver = 0,
+	},
+	{
+		.ssl_method = DTLS_method,
+		.options = SSL_OP_NO_DTLSv1,
+		.minver = TLS1_1_VERSION,
+		.maxver = TLS1_2_VERSION,
+		.peerver = DTLS1_VERSION,
+		.want_maxver = 0,
+	},
+	{
+		.ssl_method = DTLS_method,
+		.options = SSL_OP_NO_DTLSv1_2,
+		.minver = TLS1_1_VERSION,
+		.maxver = TLS1_2_VERSION,
+		.peerver = DTLS1_2_VERSION,
+		.want_maxver = DTLS1_VERSION,
 	},
 };
 
@@ -461,10 +509,11 @@ test_ssl_max_shared_version(void)
 		ssl->internal->min_tls_version = svt->minver;
 		ssl->internal->max_tls_version = svt->maxver;
 
-		if (ssl_max_shared_version(ssl, svt->peerver, &maxver) != 1) {
+		if (!ssl_max_shared_version(ssl, svt->peerver, &maxver)) {
 			if (svt->want_maxver != 0) {
 				fprintf(stderr, "FAIL: test %zu - failed but "
-				    "wanted non-zero shared version\n", i);
+				    "wanted non-zero shared version (peer %x)\n",
+				    i, svt->peerver);
 				failed++;
 			}
 			continue;
@@ -622,6 +671,34 @@ static struct min_max_version_test min_max_version_tests[] = {
 		.want_max_fail = 1,
 	},
 	{
+		.ssl_method = DTLS_method,
+		.minver = 0,
+		.maxver = 0,
+		.want_minver = 0,
+		.want_maxver = 0,
+	},
+	{
+		.ssl_method = DTLS_method,
+		.minver = 0,
+		.maxver = DTLS1_VERSION,
+		.want_minver = 0,
+		.want_maxver = DTLS1_VERSION,
+	},
+	{
+		.ssl_method = DTLS_method,
+		.minver = DTLS1_VERSION,
+		.maxver = 0,
+		.want_minver = DTLS1_VERSION,
+		.want_maxver = 0,
+	},
+	{
+		.ssl_method = DTLS_method,
+		.minver = DTLS1_VERSION,
+		.maxver = DTLS1_2_VERSION,
+		.want_minver = DTLS1_VERSION,
+		.want_maxver = DTLS1_VERSION,
+	},
+	{
 		.ssl_method = DTLSv1_method,
 		.minver = 0,
 		.maxver = 0,
@@ -639,6 +716,13 @@ static struct min_max_version_test min_max_version_tests[] = {
 		.ssl_method = DTLSv1_method,
 		.minver = 0,
 		.maxver = DTLS1_VERSION,
+		.want_minver = 0,
+		.want_maxver = DTLS1_VERSION,
+	},
+	{
+		.ssl_method = DTLSv1_method,
+		.minver = 0,
+		.maxver = DTLS1_2_VERSION,
 		.want_minver = 0,
 		.want_maxver = DTLS1_VERSION,
 	},
