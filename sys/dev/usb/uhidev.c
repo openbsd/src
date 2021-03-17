@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.90 2021/03/08 14:35:57 jcs Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.91 2021/03/17 19:44:16 jcs Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -382,17 +382,32 @@ int
 uhidev_activate(struct device *self, int act)
 {
 	struct uhidev_softc *sc = (struct uhidev_softc *)self;
-	int i, rv = 0, r;
+	int i, j, already, rv = 0, r;
 
 	switch (act) {
 	case DVACT_DEACTIVATE:
-		for (i = 0; i < sc->sc_nrepid; i++)
-			if (sc->sc_subdevs[i] != NULL) {
+		for (i = 0; i < sc->sc_nrepid; i++) {
+			if (sc->sc_subdevs[i] == NULL)
+				continue;
+
+			/*
+			 * Only notify devices attached to multiple report ids
+			 * once.
+			 */
+			for (already = 0, j = 0; j < i; j++) {
+				if (sc->sc_subdevs[i] == sc->sc_subdevs[j]) {
+					already = 1;
+					break;
+				}
+			}
+
+			if (!already) {
 				r = config_deactivate(
 				    &sc->sc_subdevs[i]->sc_dev);
 				if (r && r != EOPNOTSUPP)
 					rv = r;
 			}
+		}
 		usbd_deactivate(sc->sc_udev);
 		break;
 	}
@@ -403,7 +418,7 @@ int
 uhidev_detach(struct device *self, int flags)
 {
 	struct uhidev_softc *sc = (struct uhidev_softc *)self;
-	int i, rv = 0;
+	int i, j, rv = 0;
 
 	DPRINTF(("uhidev_detach: sc=%p flags=%d\n", sc, flags));
 
@@ -420,20 +435,22 @@ uhidev_detach(struct device *self, int flags)
 	if (sc->sc_repdesc != NULL)
 		free(sc->sc_repdesc, M_USBDEV, sc->sc_repdesc_size);
 
-	/*
-	 * XXX Check if we have only one children claiming all the Report
-	 * IDs, this is a hack since we need a dev -> Report ID mapping
-	 * for uhidev_intr().
-	 */
-	if (sc->sc_nrepid > 1 && sc->sc_subdevs[0] != NULL &&
-	    sc->sc_subdevs[0] == sc->sc_subdevs[1])
-		return (config_detach(&sc->sc_subdevs[0]->sc_dev, flags));
-
 	for (i = 0; i < sc->sc_nrepid; i++) {
-		if (sc->sc_subdevs[i] != NULL) {
-			rv |= config_detach(&sc->sc_subdevs[i]->sc_dev, flags);
-			sc->sc_subdevs[i] = NULL;
+		if (sc->sc_subdevs[i] == NULL)
+			continue;
+
+		rv |= config_detach(&sc->sc_subdevs[i]->sc_dev, flags);
+
+		/*
+		 * Nullify without detaching any other instances of this device
+		 * found on other report ids.
+		 */
+		for (j = i + 1; j < sc->sc_nrepid; j++) {
+			if (sc->sc_subdevs[i] == sc->sc_subdevs[j])
+				sc->sc_subdevs[j] = NULL;
 		}
+
+		sc->sc_subdevs[i] = NULL;
 	}
 
 	return (rv);
