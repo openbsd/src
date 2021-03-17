@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.46 2021/03/17 18:09:50 jsing Exp $ */
+/* $OpenBSD: s_server.c,v 1.47 2021/03/17 18:11:01 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1239,12 +1239,6 @@ s_server_main(int argc, char *argv[])
 	if (s_server_config.bugs)
 		SSL_CTX_set_options(ctx, SSL_OP_ALL);
 	SSL_CTX_set_options(ctx, s_server_config.off);
-	/*
-	 * DTLS: partial reads end up discarding unread UDP bytes :-( Setting
-	 * read ahead solves this problem.
-	 */
-	if (s_server_config.socket_type == SOCK_DGRAM)
-		SSL_CTX_set_read_ahead(ctx, 1);
 
 	if (s_server_config.state)
 		SSL_CTX_set_info_callback(ctx, apps_ssl_info_callback);
@@ -1307,12 +1301,6 @@ s_server_main(int argc, char *argv[])
 		if (s_server_config.bugs)
 			SSL_CTX_set_options(ctx2, SSL_OP_ALL);
 		SSL_CTX_set_options(ctx2, s_server_config.off);
-		/*
-		 * DTLS: partial reads end up discarding unread UDP bytes :-(
-		 * Setting read ahead solves this problem.
-		 */
-		if (s_server_config.socket_type == SOCK_DGRAM)
-			SSL_CTX_set_read_ahead(ctx2, 1);
 
 		if (s_server_config.state)
 			SSL_CTX_set_info_callback(ctx2, apps_ssl_info_callback);

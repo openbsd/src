@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.53 2021/03/17 18:08:32 jsing Exp $ */
+/* $OpenBSD: s_client.c,v 1.54 2021/03/17 18:11:01 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1025,12 +1025,6 @@ s_client_main(int argc, char **argv)
 
 	if (s_client_config.clr)
 		SSL_CTX_clear_options(ctx, s_client_config.clr);
-	/*
-	 * DTLS: partial reads end up discarding unread UDP bytes :-( Setting
-	 * read ahead solves this problem.
-	 */
-	if (s_client_config.socket_type == SOCK_DGRAM)
-		SSL_CTX_set_read_ahead(ctx, 1);
 
 	if (s_client_config.alpn_in) {
 		unsigned short alpn_len;
