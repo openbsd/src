@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_versions.c,v 1.13 2021/03/17 17:23:42 jsing Exp $ */
+/* $OpenBSD: ssl_versions.c,v 1.14 2021/03/17 17:43:31 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -420,7 +420,7 @@ static struct shared_version_test shared_version_tests[] = {
 		.minver = TLS1_1_VERSION,
 		.maxver = TLS1_2_VERSION,
 		.peerver = DTLS1_2_VERSION,
-		.want_maxver = DTLS1_VERSION,
+		.want_maxver = DTLS1_2_VERSION,
 	},
 	{
 		.ssl_method = DTLS_method,
@@ -428,7 +428,7 @@ static struct shared_version_test shared_version_tests[] = {
 		.minver = TLS1_1_VERSION,
 		.maxver = TLS1_2_VERSION,
 		.peerver = 0xfefc,	/* DTLSv1.3, probably. */
-		.want_maxver = DTLS1_VERSION,
+		.want_maxver = DTLS1_2_VERSION,
 	},
 	{
 		.ssl_method = DTLSv1_method,
@@ -696,7 +696,7 @@ static struct min_max_version_test min_max_version_tests[] = {
 		.minver = DTLS1_VERSION,
 		.maxver = DTLS1_2_VERSION,
 		.want_minver = DTLS1_VERSION,
-		.want_maxver = DTLS1_VERSION,
+		.want_maxver = DTLS1_2_VERSION,
 	},
 	{
 		.ssl_method = DTLSv1_method,
