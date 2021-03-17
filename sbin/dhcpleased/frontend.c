@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.5 2021/03/16 17:39:15 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.6 2021/03/17 15:24:04 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -66,9 +66,7 @@ struct bpf_ev {
 struct iface           {
 	LIST_ENTRY(iface)	 entries;
 	struct bpf_ev		 bpfev;
-	struct ether_addr	 hw_address;
-	uint32_t		 if_index;
-	int			 rdomain;
+	struct imsg_ifinfo	 ifinfo;
 	int			 send_discover;
 	uint32_t		 xid;
 	struct in_addr		 requested_ip;
@@ -79,8 +77,9 @@ struct iface           {
 
 __dead void	 frontend_shutdown(void);
 void		 frontend_sig_handler(int, short, void *);
-void		 update_iface(uint32_t, char*);
+void		 update_iface(struct if_msghdr *);
 void		 frontend_startup(void);
+void		 init_ifaces(void);
 void		 route_receive(int, short, void *);
 void		 handle_route_message(struct rt_msghdr *, struct sockaddr **);
 void		 get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
@@ -463,26 +462,49 @@ get_xflags(char *if_name)
 }
 
 void
-update_iface(uint32_t if_index, char* if_name)
+update_iface(struct if_msghdr *ifm)
 {
 	struct iface		*iface;
-	struct imsg_ifinfo	 imsg_ifinfo;
+	struct imsg_ifinfo	 ifinfo;
 	struct ifaddrs		*ifap, *ifa;
-	struct sockaddr_dl	*sdl;
-	int			 flags, xflags;
+	uint32_t		 if_index;
+	int			 flags, xflags, found = 0;
+	char			 ifnamebuf[IF_NAMESIZE], *if_name;
 
-	if ((flags = get_flags(if_name)) == -1 || (xflags =
-	    get_xflags(if_name)) == -1)
+	if_index = ifm->ifm_index;
+
+	flags = ifm->ifm_flags;
+	xflags = ifm->ifm_xflags;
+
+	iface = get_iface_by_id(if_index);
+	if_name = if_indextoname(if_index, ifnamebuf);
+
+	if (if_name == NULL) {
+		if (iface != NULL) {
+			log_debug("interface with idx %d removed", if_index);
+			frontend_imsg_compose_engine(IMSG_REMOVE_IF, 0, 0,
+			    &if_index, sizeof(if_index));
+			remove_iface(if_index);
+		}
 		return;
+	}
 
-	if (!(xflags & IFXF_AUTOCONF4))
+	if (!(xflags & IFXF_AUTOCONF4)) {
+		if (iface != NULL) {
+			log_info("Removed autoconf flag from %s", if_name);
+			frontend_imsg_compose_engine(IMSG_REMOVE_IF, 0, 0,
+			    &if_index, sizeof(if_index));
+			remove_iface(if_index);
+		}
 		return;
+	}
 
-	memset(&imsg_ifinfo, 0, sizeof(imsg_ifinfo));
-
-	imsg_ifinfo.if_index = if_index;
-	imsg_ifinfo.running = (flags & (IFF_UP | IFF_RUNNING)) == (IFF_UP |
-	    IFF_RUNNING);
+	memset(&ifinfo, 0, sizeof(ifinfo));
+	ifinfo.if_index = if_index;
+	ifinfo.link_state = ifm->ifm_data.ifi_link_state;
+	ifinfo.rdomain = ifm->ifm_tableid;
+	ifinfo.running = (flags & (IFF_UP | IFF_RUNNING)) ==
+	    (IFF_UP | IFF_RUNNING);
 
 	if (getifaddrs(&ifap) != 0)
 		fatal("getifaddrs");
@@ -495,17 +517,15 @@ update_iface(uint32_t if_index, char* if_name)
 
 		switch(ifa->ifa_addr->sa_family) {
 		case AF_LINK: {
-			struct if_data	*if_data;
+			struct sockaddr_dl	*sdl;
 
-			if_data = (struct if_data *)ifa->ifa_data;
-			imsg_ifinfo.link_state = if_data->ifi_link_state;
-			imsg_ifinfo.rdomain = if_data->ifi_rdomain;
 			sdl = (struct sockaddr_dl *)ifa->ifa_addr;
 			if (sdl->sdl_type != IFT_ETHER ||
 			    sdl->sdl_alen != ETHER_ADDR_LEN)
 				continue;
-			memcpy(imsg_ifinfo.hw_address.ether_addr_octet,
-			    LLADDR(sdl), ETHER_ADDR_LEN);
+			memcpy(ifinfo.hw_address.ether_addr_octet, LLADDR(sdl),
+			    ETHER_ADDR_LEN);
+			found = 1;
 			goto out;
 		}
 		default:
@@ -515,52 +535,127 @@ update_iface(uint32_t if_index, char* if_name)
  out:
 	freeifaddrs(ifap);
 
-	iface = get_iface_by_id(if_index);
-
-	if (iface != NULL) {
-		if (iface->rdomain != imsg_ifinfo.rdomain) {
-			iface->rdomain = imsg_ifinfo.rdomain;
-			if (iface->udpsock != -1) {
-				close(iface->udpsock);
-				iface->udpsock = -1;
-			}
+	if (!found) {
+		log_warnx("Could not find AF_LINK address for %s.", if_name);
+		if (iface != NULL) {
+			frontend_imsg_compose_engine(IMSG_REMOVE_IF, 0, 0,
+			    &if_index, sizeof(if_index));
+			remove_iface(if_index);
 		}
-	} else {
+		return;
+	}
+
+	if (iface == NULL) {
 		if ((iface = calloc(1, sizeof(*iface))) == NULL)
 			fatal("calloc");
-		iface->if_index = if_index;
-		iface->rdomain = imsg_ifinfo.rdomain;
 		iface->udpsock = -1;
 		LIST_INSERT_HEAD(&interfaces, iface, entries);
 		frontend_imsg_compose_main(IMSG_OPEN_BPFSOCK, 0,
 		    &if_index, sizeof(if_index));
+	} else {
+		if (iface->ifinfo.rdomain != ifinfo.rdomain &&
+		    iface->udpsock != -1) {
+			close(iface->udpsock);
+			iface->udpsock = -1;
+		}
 	}
 
-	memcpy(&iface->hw_address, &imsg_ifinfo.hw_address,
-	    sizeof(iface->hw_address));
-
-	frontend_imsg_compose_main(IMSG_UPDATE_IF, 0, &imsg_ifinfo,
-	    sizeof(imsg_ifinfo));
+	if (memcmp(&iface->ifinfo, &ifinfo, sizeof(iface->ifinfo)) != 0) {
+		memcpy(&iface->ifinfo, &ifinfo, sizeof(iface->ifinfo));
+		frontend_imsg_compose_main(IMSG_UPDATE_IF, 0, &iface->ifinfo,
+		    sizeof(iface->ifinfo));
+	}
 }
 
 void
 frontend_startup(void)
 {
-	struct if_nameindex	*ifnidxp, *ifnidx;
-
 	if (!event_initialized(&ev_route))
 		fatalx("%s: did not receive a route socket from the main "
 		    "process", __func__);
 
+	init_ifaces();
 	event_add(&ev_route, NULL);
+}
+
+void
+init_ifaces(void)
+{
+	struct iface		*iface;
+	struct imsg_ifinfo	 ifinfo;
+	struct if_nameindex	*ifnidxp, *ifnidx;
+	struct ifaddrs		*ifap, *ifa;
+	uint32_t		 if_index;
+	int			 flags, xflags;
+	char			*if_name;
 
 	if ((ifnidxp = if_nameindex()) == NULL)
 		fatalx("if_nameindex");
 
-	for(ifnidx = ifnidxp; ifnidx->if_index !=0 && ifnidx->if_name != NULL;
-	    ifnidx++)
-		update_iface(ifnidx->if_index, ifnidx->if_name);
+	if (getifaddrs(&ifap) != 0)
+		fatal("getifaddrs");
 
+	for(ifnidx = ifnidxp; ifnidx->if_index != 0 && ifnidx->if_name != NULL;
+	    ifnidx++) {
+		if_index = ifnidx->if_index;
+		if_name = ifnidx->if_name;
+		if ((flags = get_flags(if_name)) == -1)
+			continue;
+		if((xflags = get_xflags(if_name)) == -1)
+			continue;
+		if (!(xflags & IFXF_AUTOCONF4))
+			continue;
+
+		memset(&ifinfo, 0, sizeof(ifinfo));
+		ifinfo.if_index = if_index;
+		ifinfo.link_state = -1;
+		ifinfo.running = (flags & (IFF_UP | IFF_RUNNING)) ==
+		    (IFF_UP | IFF_RUNNING);
+
+		for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
+			if (strcmp(if_name, ifa->ifa_name) != 0)
+				continue;
+			if (ifa->ifa_addr == NULL)
+				continue;
+
+			switch(ifa->ifa_addr->sa_family) {
+			case AF_LINK: {
+				struct if_data		*if_data;
+				struct sockaddr_dl	*sdl;
+
+				sdl = (struct sockaddr_dl *)ifa->ifa_addr;
+				if (sdl->sdl_type != IFT_ETHER ||
+				    sdl->sdl_alen != ETHER_ADDR_LEN)
+					continue;
+				memcpy(ifinfo.hw_address.ether_addr_octet,
+				    LLADDR(sdl), ETHER_ADDR_LEN);
+
+				if_data = (struct if_data *)ifa->ifa_data;
+				ifinfo.link_state = if_data->ifi_link_state;
+				ifinfo.rdomain = if_data->ifi_rdomain;
+				goto out;
+			}
+			default:
+				break;
+			}
+		}
+ out:
+		if (ifinfo.link_state == -1)
+			/* no AF_LINK found */
+			continue;
+
+		if ((iface = calloc(1, sizeof(*iface))) == NULL)
+			fatal("calloc");
+		iface->udpsock = -1;
+		memcpy(&iface->ifinfo, &ifinfo, sizeof(iface->ifinfo));
+		LIST_INSERT_HEAD(&interfaces, iface, entries);
+		frontend_imsg_compose_main(IMSG_OPEN_BPFSOCK, 0,
+		    &if_index, sizeof(if_index));
+		frontend_imsg_compose_main(IMSG_UPDATE_IF, 0, &iface->ifinfo,
+		    sizeof(iface->ifinfo));
+	}
+
+	freeifaddrs(ifap);
 	if_freenameindex(ifnidxp);
 }
 
@@ -607,31 +702,11 @@ void
 handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 {
 	struct if_msghdr		*ifm;
-	int				 xflags, if_index;
-	char				 ifnamebuf[IF_NAMESIZE], *if_name;
 
 	switch (rtm->rtm_type) {
 	case RTM_IFINFO:
 		ifm = (struct if_msghdr *)rtm;
-		if_name = if_indextoname(ifm->ifm_index, ifnamebuf);
-		if (if_name == NULL) {
-			log_debug("RTM_IFINFO: lost if %d", ifm->ifm_index);
-			if_index = ifm->ifm_index;
-			frontend_imsg_compose_engine(IMSG_REMOVE_IF, 0, 0,
-			    &if_index, sizeof(if_index));
-			remove_iface(if_index);
-		} else {
-			xflags = get_xflags(if_name);
-			if (xflags == -1 || !(xflags & IFXF_AUTOCONF4)) {
-				log_debug("RTM_IFINFO: %s(%d) no(longer) "
-				   "autoconf4", if_name, ifm->ifm_index);
-				if_index = ifm->ifm_index;
-				frontend_imsg_compose_engine(IMSG_REMOVE_IF, 0,
-				    0, &if_index, sizeof(if_index));
-			} else {
-				update_iface(ifm->ifm_index, if_name);
-			}
-		}
+		update_iface(ifm);
 		break;
 	case RTM_PROPOSAL:
 		if (rtm->rtm_priority == RTP_PROPOSAL_SOLICIT) {
@@ -644,7 +719,6 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 		log_debug("unexpected RTM: %d", rtm->rtm_type);
 		break;
 	}
-
 }
 
 #define ROUNDUP(a) \
@@ -685,7 +759,7 @@ bpf_receive(int fd, short events, void *arg)
 		fatal("%s len == 0", __func__);
 
 	memset(&imsg_dhcp, 0, sizeof(imsg_dhcp));
-	imsg_dhcp.if_index = iface->if_index;
+	imsg_dhcp.if_index = iface->ifinfo.if_index;
 
 	rem = len;
 	p = iface->bpfev.buf;
@@ -803,11 +877,11 @@ send_discover(struct iface *iface)
 	}
 	iface->send_discover = 0;
 
-	if_name = if_indextoname(iface->if_index, ifnamebuf);
+	if_name = if_indextoname(iface->ifinfo.if_index, ifnamebuf);
 	log_debug("DHCPDISCOVER on %s", if_name == NULL ? "?" : if_name);
 
-	pkt_len = build_packet(DHCPDISCOVER, iface->xid, &iface->hw_address,
-	    &iface->requested_ip, NULL);
+	pkt_len = build_packet(DHCPDISCOVER, iface->xid,
+	    &iface->ifinfo.hw_address, &iface->requested_ip, NULL);
 	bpf_send_packet(iface, dhcp_packet, pkt_len);
 }
 
@@ -817,11 +891,12 @@ send_request(struct iface *iface)
 	ssize_t	 pkt_len;
 	char	 ifnamebuf[IF_NAMESIZE], *if_name;
 
-	if_name = if_indextoname(iface->if_index, ifnamebuf);
+	if_name = if_indextoname(iface->ifinfo.if_index, ifnamebuf);
 	log_debug("DHCPREQUEST on %s", if_name == NULL ? "?" : if_name);
 
-	pkt_len = build_packet(DHCPREQUEST, iface->xid, &iface->hw_address,
-	    &iface->requested_ip, &iface->server_identifier);
+	pkt_len = build_packet(DHCPREQUEST, iface->xid,
+	    &iface->ifinfo.hw_address, &iface->requested_ip,
+	    &iface->server_identifier);
 	if (iface->dhcp_server.s_addr != INADDR_ANY)
 		udp_send_packet(iface, dhcp_packet, pkt_len);
 	else
@@ -854,7 +929,8 @@ bpf_send_packet(struct iface *iface, uint8_t *packet, ssize_t len)
 	int			 iovcnt = 0, i;
 
 	memset(eh.ether_dhost, 0xff, sizeof(eh.ether_dhost));
-	memcpy(eh.ether_shost, &iface->hw_address, sizeof(eh.ether_dhost));
+	memcpy(eh.ether_shost, &iface->ifinfo.hw_address,
+	    sizeof(eh.ether_dhost));
 	eh.ether_type = htons(ETHERTYPE_IP);
 	iov[0].iov_base = &eh;
 	iov[0].iov_len = sizeof(eh);
@@ -912,7 +988,7 @@ get_iface_by_id(uint32_t if_index)
 	struct iface	*iface;
 
 	LIST_FOREACH (iface, &interfaces, entries) {
-		if (iface->if_index == if_index)
+		if (iface->ifinfo.if_index == if_index)
 			return (iface);
 	}
 
