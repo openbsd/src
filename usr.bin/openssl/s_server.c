@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.45 2021/03/17 18:08:32 jsing Exp $ */
+/* $OpenBSD: s_server.c,v 1.46 2021/03/17 18:09:50 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -365,7 +365,7 @@ s_server_opt_protocol_version_dtls1_2(void)
 #endif
 
 static int
-s_server_protocol_version_tls1(void)
+s_server_opt_protocol_version_tls1(void)
 {
 	s_server_config.min_version = TLS1_VERSION;
 	s_server_config.max_version = TLS1_VERSION;
@@ -373,7 +373,7 @@ s_server_protocol_version_tls1(void)
 }
 
 static int
-s_server_protocol_version_tls1_1(void)
+s_server_opt_protocol_version_tls1_1(void)
 {
 	s_server_config.min_version = TLS1_1_VERSION;
 	s_server_config.max_version = TLS1_1_VERSION;
@@ -381,7 +381,7 @@ s_server_protocol_version_tls1_1(void)
 }
 
 static int
-s_server_protocol_version_tls1_2(void)
+s_server_opt_protocol_version_tls1_2(void)
 {
 	s_server_config.min_version = TLS1_2_VERSION;
 	s_server_config.max_version = TLS1_2_VERSION;
@@ -389,7 +389,7 @@ s_server_protocol_version_tls1_2(void)
 }
 
 static int
-s_server_protocol_version_tls1_3(void)
+s_server_opt_protocol_version_tls1_3(void)
 {
 	s_server_config.min_version = TLS1_3_VERSION;
 	s_server_config.max_version = TLS1_3_VERSION;
@@ -930,25 +930,25 @@ static const struct option s_server_options[] = {
 		.name = "tls1",
 		.desc = "Just talk TLSv1",
 		.type = OPTION_FUNC,
-		.opt.func = s_server_protocol_version_tls1,
+		.opt.func = s_server_opt_protocol_version_tls1,
 	},
 	{
 		.name = "tls1_1",
 		.desc = "Just talk TLSv1.1",
 		.type = OPTION_FUNC,
-		.opt.func = s_server_protocol_version_tls1_1,
+		.opt.func = s_server_opt_protocol_version_tls1_1,
 	},
 	{
 		.name = "tls1_2",
 		.desc = "Just talk TLSv1.2",
 		.type = OPTION_FUNC,
-		.opt.func = s_server_protocol_version_tls1_2,
+		.opt.func = s_server_opt_protocol_version_tls1_2,
 	},
 	{
 		.name = "tls1_3",
 		.desc = "Just talk TLSv1.3",
 		.type = OPTION_FUNC,
-		.opt.func = s_server_protocol_version_tls1_3,
+		.opt.func = s_server_opt_protocol_version_tls1_3,
 	},
 	{
 		.name = "tlsextdebug",
