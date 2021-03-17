@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1960 2021/03/14 01:09:29 jan Exp 
+ *	OpenBSD: pcidevs,v 1.1961 2021/03/17 15:58:38 stsp Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -17362,6 +17362,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_495SERIES_LP_SRAM,
 	    "495 Series Shared SRAM",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_4,
+	    "Wi-Fi 6 AX201",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_495SERIES_LP_SDXC,
