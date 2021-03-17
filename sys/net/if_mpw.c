@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.60 2021/03/17 14:30:08 kn Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.61 2021/03/17 18:53:25 kn Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -442,6 +442,9 @@ mpw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (error != 0)
 			break;
 		error = mpw_set_label(sc, &shim);
+		break;
+	case SIOCDELLABEL:
+		error = mpw_del_label(sc);
 		break;
 
 	case SIOCSETMPWCFG:
