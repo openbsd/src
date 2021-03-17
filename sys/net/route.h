@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.184 2021/03/10 10:21:48 jsg Exp $	*/
+/*	$OpenBSD: route.h,v 1.185 2021/03/17 09:05:42 claudio Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -42,6 +42,7 @@
  * are set by making entries for all directly connected interfaces.
  */
 
+#ifdef _KERNEL
 /*
  * These numbers are used by reliable protocols for determining
  * retransmission behavior and are included in the routing structure.
@@ -52,6 +53,7 @@ struct rt_kmetrics {
 	u_int		rmx_locks;	/* Kernel must leave these values */
 	u_int		rmx_mtu;	/* MTU for this path */
 };
+#endif
 
 /*
  * Huge version for userland compatibility.
@@ -72,6 +74,7 @@ struct rt_metrics {
 	u_int		rmx_pad;
 };
 
+#ifdef _KERNEL
 /*
  * rmx_rtt and rmx_rttvar are stored as microseconds;
  * RTTTOPRHZ(rtt) converts to a value suitable for use
@@ -119,6 +122,8 @@ struct rtentry {
 #define	rt_expire	rt_rmx.rmx_expire
 #define	rt_locks	rt_rmx.rmx_locks
 #define	rt_mtu		rt_rmx.rmx_mtu
+
+#endif /* _KERNEL */
 
 /* bitmask values for rtm_flags */
 #define	RTF_UP		0x1		/* route usable */
