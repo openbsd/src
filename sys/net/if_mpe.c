@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.98 2021/02/20 05:03:37 dlg Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.99 2021/03/18 14:47:17 kn Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -401,7 +401,7 @@ mpe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			    smplstosa(&sc->sc_smpls), sc->sc_rdomain);
 		
 		}
-		shim.shim_label = MPLS_LABEL2SHIM(0);
+		sc->sc_smpls.smpls_label = MPLS_LABEL2SHIM(0);
 		break;
 
 	case SIOCSLIFPHYRTABLE:
