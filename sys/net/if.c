@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.636 2021/03/11 16:48:47 florian Exp $	*/
+/*	$OpenBSD: if.c,v 1.637 2021/03/18 15:57:16 claudio Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2284,8 +2284,11 @@ forceup:
 		break;
 	}
 
-	if (oif_flags != ifp->if_flags || oif_xflags != ifp->if_xflags)
-		rtm_ifchg(ifp);
+	if (oif_flags != ifp->if_flags || oif_xflags != ifp->if_xflags) {
+		/* if_up() and if_down() already sent an update, skip here */
+		if (((oif_flags ^ ifp->if_flags) & IFF_UP) == 0)
+			rtm_ifchg(ifp);
+	}
 
 	if (((oif_flags ^ ifp->if_flags) & IFF_UP) != 0)
 		getmicrotime(&ifp->if_lastchange);
