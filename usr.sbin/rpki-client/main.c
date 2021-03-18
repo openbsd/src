@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.119 2021/03/15 08:56:31 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.120 2021/03/18 14:05:44 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1018,8 +1018,10 @@ main(int argc, char *argv[])
 
 		close(fd[0]);
 		rsync = fd[1];
-	} else
+	} else {
 		rsync = -1;
+		rsyncpid = -1;
+	}
 
 	/*
 	 * Create a process that will fetch data via https.
@@ -1051,8 +1053,10 @@ main(int argc, char *argv[])
 
 		close(fd[0]);
 		http = fd[1];
-	} else
+	} else {
 		http = -1;
+		httppid = -1;
+	}
 
 	if (pledge("stdio rpath wpath cpath fattr sendfd", NULL) == -1)
 		err(1, "pledge");
