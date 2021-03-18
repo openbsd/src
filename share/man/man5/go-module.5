@@ -1,4 +1,4 @@
-.\"	$OpenBSD: go-module.5,v 1.1 2021/02/25 09:13:18 espie Exp $
+.\"	$OpenBSD: go-module.5,v 1.2 2021/03/18 22:36:36 sthen Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 25 2021 $
+.Dd $Mdocdate: March 18 2021 $
 .Dt GO-MODULE 5
 .Os
 .Sh NAME
@@ -135,7 +135,7 @@ are appended to port's
 Defaults to
 .Ar Yes .
 .It Ev MODGO_MODNAME
-is the module name as defined in the
+Name of Go module as defined in the
 .Pa go.mod
 file contained in a project.
 If this is set,
@@ -150,9 +150,7 @@ When
 .Ev MODGO_MODFILES
 is set, and a "cmd" directory is found in
 .Ev WRKSRC ,
-"cmd/..." is appended to
-.Ev ALL_TARGET
-in
+"./cmd/..." is also built by
 .Cm do-build
 automatically.
 .It Ev MODGO_VERSION
