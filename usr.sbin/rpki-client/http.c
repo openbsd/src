@@ -1,4 +1,4 @@
-/*      $OpenBSD: http.c,v 1.7 2021/03/18 15:40:45 tb Exp $  */
+/*      $OpenBSD: http.c,v 1.8 2021/03/18 16:15:19 tb Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.com>
@@ -364,7 +364,7 @@ http_parse_uri(char *uri, char **ohost, char **oport, char **opath)
 		if (hosttail[1] == '/' || hosttail[1] == ':')
 			host++;
 		if (hosttail[1] == ':')
-			port = hosttail + 1;
+			port = hosttail + 2;
 		if ((scope = memchr(host, '%', hosttail - host)) != NULL)
 			hosttail = scope;
 	} else {
