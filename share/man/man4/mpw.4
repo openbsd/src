@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mpw.4,v 1.8 2019/04/03 06:24:07 jmc Exp $
+.\"	$OpenBSD: mpw.4,v 1.9 2021/03/18 14:22:04 kn Exp $
 .\"
 .\" Copyright (C) 2015 Rafael Zalamena <rzalamena@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 3 2019 $
+.Dd $Mdocdate: March 18 2021 $
 .Dt MPW 4
 .Os
 .Sh NAME
@@ -85,6 +85,8 @@ using different identifiers for their protected domains:
 # ifconfig bridge0 protected mpw12 1
 .Ed
 .Sh SEE ALSO
+.Xr mpe 4 ,
+.Xr mpip 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8 ,
 .Xr ldpd 8 ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mpe.4,v 1.10 2018/01/12 04:36:44 deraadt Exp $
+.\"	$OpenBSD: mpe.4,v 1.11 2021/03/18 14:22:04 kn Exp $
 .\"
 .\" Copyright (C) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 12 2018 $
+.Dd $Mdocdate: March 18 2021 $
 .Dt MPE 4
 .Os
 .Sh NAME
@@ -39,9 +39,15 @@ configuration file for
 The interface itself can be configured with
 .Xr ifconfig 8 ;
 see its manual page for more information.
-.Pp
-.Nm
-interfaces support the following unique ioctls:
+.Sh IOCTLS
+The following
+.Nm ioctl 2
+calls are specific to
+.Nm ,
+.Xr mpip 4
+and
+.Xr mpw 4
+interfaces:
 .Bl -tag -width "SIOCSETLABEL" -offset 3n
 .It SIOCSETLABEL
 Encapsulate packets entering this interface in MPLS using
@@ -49,10 +55,14 @@ the specified label.
 .It SIOCGETLABEL
 Report the label that packets entering this interface will be
 tagged with.
+.It SIOCDELLABEL
+Unset the MPLS label.
 .El
 .\"
 .Sh SEE ALSO
 .Xr sysctl 2 ,
+.Xr mpip 4 ,
+.Xr mpw 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8 ,
 .Xr ldpd 8 ,
