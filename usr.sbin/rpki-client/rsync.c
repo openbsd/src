@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsync.c,v 1.21 2021/03/04 14:24:17 claudio Exp $ */
+/*	$OpenBSD: rsync.c,v 1.22 2021/03/18 15:47:10 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -55,6 +55,7 @@ char *
 rsync_base_uri(const char *uri)
 {
 	const char *host, *module, *rest;
+	char *base_uri;
 
 	/* Case-insensitive rsync URI. */
 	if (strncasecmp(uri, "rsync://", 8) != 0) {
@@ -82,13 +83,17 @@ rsync_base_uri(const char *uri)
 
 	/* The path component is optional. */
 	if ((rest = strchr(module, '/')) == NULL) {
-		return strdup(uri);
+		if ((base_uri = strdup(uri)) == NULL)
+			err(1, NULL);
+		return base_uri;
 	} else if (rest == module) {
 		warnx("%s: zero-length module", uri);
 		return NULL;
 	}
 
-	return strndup(uri, rest - uri);
+	if ((base_uri = strndup(uri, rest - uri)) == NULL)
+		err(1, NULL);
+	return base_uri;
 }
 
 static void
