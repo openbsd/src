@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.91 2021/03/17 19:44:16 jcs Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.92 2021/03/18 09:21:53 anton Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -993,15 +993,5 @@ uhidev_set_report_dev(struct uhidev_softc *sc, struct uhidev *dev, int repid)
 		return EINVAL;
 
 	sc->sc_subdevs[repid] = dev;
-	return 0;
-}
-
-int
-uhidev_unset_report_dev(struct uhidev_softc *sc, int repid)
-{
-	if (repid >= sc->sc_nrepid)
-		return EINVAL;
-
-	sc->sc_subdevs[repid] = NULL;
 	return 0;
 }

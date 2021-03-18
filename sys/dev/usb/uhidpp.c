@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidpp.c,v 1.12 2021/02/16 18:36:43 anton Exp $	*/
+/*	$OpenBSD: uhidpp.c,v 1.13 2021/03/18 09:21:53 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -433,14 +433,6 @@ uhidpp_detach(struct device *self, int flags)
 		for (j = 0; j < UHIDPP_NSENSORS; j++)
 			sensor_detach(&sc->sc_sensdev, &dev->d_battery.b_sens[j]);
 	}
-
-	/*
-	 * Since this driver has multiple device handlers attached, remove all
-	 * of them preventing the uhidev parent from calling this detach routine
-	 * more than once.
-	 */
-	uhidev_unset_report_dev(sc->sc_hdev.sc_parent, HIDPP_REPORT_ID_SHORT);
-	uhidev_unset_report_dev(sc->sc_hdev.sc_parent, HIDPP_REPORT_ID_LONG);
 
 	uhidev_close(&sc->sc_hdev);
 
