@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.73 2021/03/09 15:08:23 bluhm Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.74 2021/03/18 08:43:38 mvs Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -86,7 +86,9 @@ int	log_open;			/* also used in log() */
 int	msgbufmapped;			/* is the message buffer mapped */
 struct	msgbuf *msgbufp;		/* the mapped buffer, itself. */
 struct	msgbuf *consbufp;		/* console message buffer. */
+
 struct	file *syslogf;
+struct	rwlock syslogf_rwlock = RWLOCK_INITIALIZER("syslogf");
 
 /*
  * Lock that serializes access to log message buffers.
@@ -215,8 +217,11 @@ logclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct file *fp;
 
+	rw_enter_write(&syslogf_rwlock);
 	fp = syslogf;
 	syslogf = NULL;
+	rw_exit(&syslogf_rwlock);
+
 	if (fp)
 		FRELE(fp, p);
 	log_open = 0;
@@ -407,7 +412,7 @@ out:
 int
 logioctl(dev_t dev, u_long com, caddr_t data, int flag, struct proc *p)
 {
-	struct file *fp;
+	struct file *fp, *newfp;
 	int error;
 
 	switch (com) {
@@ -441,9 +446,14 @@ logioctl(dev_t dev, u_long com, caddr_t data, int flag, struct proc *p)
 	case LIOCSFD:
 		if ((error = suser(p)) != 0)
 			return (error);
-		fp = syslogf;
-		if ((error = getsock(p, *(int *)data, &syslogf)) != 0)
+		if ((error = getsock(p, *(int *)data, &newfp)) != 0)
 			return (error);
+
+		rw_enter_write(&syslogf_rwlock);
+		fp = syslogf;
+		syslogf = newfp;
+		rw_exit(&syslogf_rwlock);
+
 		if (fp)
 			FRELE(fp, p);
 		break;
@@ -635,12 +645,15 @@ dosendsyslog(struct proc *p, const char *buf, size_t nbyte, int flags,
 	int error;
 
 	/* Global variable syslogf may change during sleep, use local copy. */
+	rw_enter_read(&syslogf_rwlock);
 	fp = syslogf;
 	if (fp)
 		FREF(fp);
-	else if (!ISSET(flags, LOG_CONS))
-		return (ENOTCONN);
-	else {
+	rw_exit(&syslogf_rwlock);
+
+	if (fp == NULL) {
+		if (!ISSET(flags, LOG_CONS))
+			return (ENOTCONN);
 		/*
 		 * Strip off syslog priority when logging to console.
 		 * LOG_PRIMASK | LOG_FACMASK is 0x03ff, so at most 4
@@ -690,41 +703,45 @@ dosendsyslog(struct proc *p, const char *buf, size_t nbyte, int flags,
 		error = sosend(fp->f_data, NULL, &auio, NULL, NULL, flags);
 		if (error == 0)
 			len -= auio.uio_resid;
-	} else if (constty || cn_devvp) {
-		error = cnwrite(0, &auio, 0);
-		if (error == 0)
-			len -= auio.uio_resid;
-		aiov.iov_base = "\r\n";
-		aiov.iov_len = 2;
-		auio.uio_iov = &aiov;
-		auio.uio_iovcnt = 1;
-		auio.uio_segflg = UIO_SYSSPACE;
-		auio.uio_rw = UIO_WRITE;
-		auio.uio_procp = p;
-		auio.uio_offset = 0;
-		auio.uio_resid = aiov.iov_len;
-		cnwrite(0, &auio, 0);
 	} else {
-		/* XXX console redirection breaks down... */
-		if (sflg == UIO_USERSPACE) {
-			kbuf = malloc(len, M_TEMP, M_WAITOK);
-			error = copyin(aiov.iov_base, kbuf, len);
+		KERNEL_LOCK();
+		if (constty || cn_devvp) {
+			error = cnwrite(0, &auio, 0);
+			if (error == 0)
+				len -= auio.uio_resid;
+			aiov.iov_base = "\r\n";
+			aiov.iov_len = 2;
+			auio.uio_iov = &aiov;
+			auio.uio_iovcnt = 1;
+			auio.uio_segflg = UIO_SYSSPACE;
+			auio.uio_rw = UIO_WRITE;
+			auio.uio_procp = p;
+			auio.uio_offset = 0;
+			auio.uio_resid = aiov.iov_len;
+			cnwrite(0, &auio, 0);
 		} else {
-			kbuf = aiov.iov_base;
-			error = 0;
-		}
-		if (error == 0)
-			for (i = 0; i < len; i++) {
-				if (kbuf[i] == '\0')
-					break;
-				cnputc(kbuf[i]);
-				auio.uio_resid--;
+			/* XXX console redirection breaks down... */
+			if (sflg == UIO_USERSPACE) {
+				kbuf = malloc(len, M_TEMP, M_WAITOK);
+				error = copyin(aiov.iov_base, kbuf, len);
+			} else {
+				kbuf = aiov.iov_base;
+				error = 0;
 			}
-		if (sflg == UIO_USERSPACE)
-			free(kbuf, M_TEMP, len);
-		if (error == 0)
-			len -= auio.uio_resid;
-		cnputc('\n');
+			if (error == 0)
+				for (i = 0; i < len; i++) {
+					if (kbuf[i] == '\0')
+						break;
+					cnputc(kbuf[i]);
+					auio.uio_resid--;
+				}
+			if (sflg == UIO_USERSPACE)
+				free(kbuf, M_TEMP, len);
+			if (error == 0)
+				len -= auio.uio_resid;
+			cnputc('\n');
+		}
+		KERNEL_UNLOCK();
 	}
 
 #ifdef KTRACE
