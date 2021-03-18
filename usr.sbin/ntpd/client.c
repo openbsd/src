@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.114 2020/09/11 07:09:41 otto Exp $ */
+/*	$OpenBSD: client.c,v 1.115 2021/03/18 11:06:41 bluhm Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -208,7 +208,7 @@ client_query(struct ntp_peer *p)
 
 	p->query->msg.xmttime.int_partl = arc4random();
 	p->query->msg.xmttime.fractionl = arc4random();
-	p->query->xmttime = gettime_corrected();
+	p->query->xmttime = gettime();
 
 	if (ntp_sendmsg(p->query->fd, NULL, &p->query->msg) == -1) {
 		p->senderrors++;
@@ -295,7 +295,6 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime, u_int8_t automatic)
 	somsg.msg_control = cmsgbuf.buf;
 	somsg.msg_controllen = sizeof(cmsgbuf.buf);
 
-	T4 = getoffset();
 	if ((size = recvmsg(p->query->fd, &somsg, 0)) == -1) {
 		if (errno == EHOSTUNREACH || errno == EHOSTDOWN ||
 		    errno == ENETUNREACH || errno == ENETDOWN ||
@@ -325,10 +324,12 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime, u_int8_t automatic)
 		if (cmsg->cmsg_level == SOL_SOCKET &&
 		    cmsg->cmsg_type == SCM_TIMESTAMP) {
 			memcpy(&tv, CMSG_DATA(cmsg), sizeof(tv));
-			T4 += gettime_from_timeval(&tv);
+			T4 = gettime_from_timeval(&tv);
 			break;
 		}
 	}
+	if (cmsg == NULL)
+		fatal("SCM_TIMESTAMP");
 
 	ntp_getmsg((struct sockaddr *)&p->addr->ss, buf, size, &msg);
 
@@ -384,7 +385,7 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime, u_int8_t automatic)
 		return (0);
 	}
 
-	p->reply[p->shift].offset = ((T2 - T1) + (T3 - T4)) / 2;
+	p->reply[p->shift].offset = ((T2 - T1) + (T3 - T4)) / 2 - getoffset();
 	p->reply[p->shift].delay = (T4 - T1) - (T3 - T2);
 	p->reply[p->shift].status.stratum = msg.stratum;
 	if (p->reply[p->shift].delay < 0) {
