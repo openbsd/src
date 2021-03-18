@@ -1,4 +1,4 @@
-/*      $OpenBSD: http.c,v 1.6 2021/03/18 14:08:01 claudio Exp $  */
+/*      $OpenBSD: http.c,v 1.7 2021/03/18 15:40:45 tb Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.com>
@@ -357,8 +357,11 @@ http_parse_uri(char *uri, char **ohost, char **oport, char **opath)
 	}
 	if (*host == '[') {
 		char *scope;
-		if ((hosttail = memrchr(host, ']', path - host)) != NULL &&
-		    (hosttail[1] == '/' || hosttail[1] == ':'))
+		if ((hosttail = memrchr(host, ']', path - host)) == NULL) {
+			warnx("%s: unmatched opening bracket", http_info(uri));
+			return -1;
+		}
+		if (hosttail[1] == '/' || hosttail[1] == ':')
 			host++;
 		if (hosttail[1] == ':')
 			port = hosttail + 1;
