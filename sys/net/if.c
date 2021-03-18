@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.637 2021/03/18 15:57:16 claudio Exp $	*/
+/*	$OpenBSD: if.c,v 1.638 2021/03/18 15:58:58 claudio Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2071,7 +2071,7 @@ forceup:
 		NET_LOCK();
 		error = (*ifp->if_ioctl)(ifp, cmd, data);
 		NET_UNLOCK();
-		if (!error)
+		if (error == 0)
 			rtm_ifchg(ifp);
 		break;
 
@@ -2172,6 +2172,8 @@ forceup:
 		if (error == 0)
 			ifnewlladdr(ifp);
 		NET_UNLOCK();
+		if (error == 0)
+			rtm_ifchg(ifp);
 		break;
 
 	case SIOCSIFLLPRIO:
