@@ -1,4 +1,4 @@
-
+/* $OpenBSD: buffer.c,v 1.110 2021/03/18 18:09:21 lum Exp $ */
 
 /* This file is in the public domain. */
 
@@ -78,6 +78,7 @@ int
 usebufname(const char *bufp)
 {
 	struct buffer *bp = NULL;
+	int ret;
 
 	if (bufp == NULL) {
 		if ((bp = bfind("*scratch*", TRUE)) == NULL)
@@ -89,7 +90,10 @@ usebufname(const char *bufp)
 
 	/* and put it in current window */
 	curbp = bp;
-	return (showbuffer(bp, curwp, WFFRAME | WFFULL));
+	ret = showbuffer(bp, curwp, WFFRAME | WFFULL);
+	eerase();
+
+	return (ret);
 }
 
 /*
@@ -165,6 +169,7 @@ killbuffer_cmd(int f, int n)
 {
 	struct buffer *bp;
 	char    bufn[NBUFN], *bufp;
+	int 	ret;
 
 	if (f & FFRAND) /* dired mode 'q' */
 		bp = curbp;
@@ -175,7 +180,10 @@ killbuffer_cmd(int f, int n)
 		bp = curbp;
 	else if ((bp = bfind(bufn, FALSE)) == NULL)
 		return (FALSE);
-	return (killbuffer(bp));
+	ret = killbuffer(bp);
+	eerase();
+
+	return (ret);
 }
 
 int
