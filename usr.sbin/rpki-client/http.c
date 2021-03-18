@@ -1,4 +1,4 @@
-/*      $OpenBSD: http.c,v 1.5 2021/03/04 15:44:13 tb Exp $  */
+/*      $OpenBSD: http.c,v 1.6 2021/03/18 14:08:01 claudio Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.com>
@@ -596,7 +596,7 @@ static int
 http_request(struct http_connection *conn)
 {
 	char *host, *epath, *modified_since;
-	int with_port = 0;
+	int r, with_port = 0;
 
 	/* TODO adjust request for HTTP proxy setups */
 
@@ -634,7 +634,7 @@ http_request(struct http_connection *conn)
 
 	free(conn->buf);
 	conn->bufpos = 0;
-	if ((conn->bufsz = asprintf(&conn->buf,
+	if ((r = asprintf(&conn->buf,
 	    "GET /%s HTTP/1.1\r\n"
 	    "Connection: close\r\n"
 	    "User-Agent: " HTTP_USER_AGENT "\r\n"
@@ -642,6 +642,7 @@ http_request(struct http_connection *conn)
 	    epath, host,
 	    modified_since ? modified_since : "")) == -1)
 		err(1, NULL);
+	conn->bufsz = r;
 
 	free(epath);
 	free(host);
@@ -1032,6 +1033,7 @@ http_handle(struct http_connection *conn)
 	case STATE_FREE:
 		errx(1, "bad http state");
 	}
+	errx(1, "unknown http state");
 }
 
 static int
@@ -1084,6 +1086,7 @@ http_nextstep(struct http_connection *conn)
 	case STATE_FREE:
 		errx(1, "bad http state");
 	}
+	errx(1, "unknown http state");
 }
 
 static int
