@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.260 2021/03/10 22:20:44 tobhe Exp $ */
+/* $OpenBSD: dsdt.c,v 1.261 2021/03/18 00:17:26 yasuoka Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -2961,10 +2961,13 @@ aml_store(struct aml_scope *scope, struct aml_value *lhs , int64_t ival,
 		aml_rwfield(rhs, 0, rhs->v_field.bitlen, &tmp, ACPI_IOREAD);
 		rhs = &tmp;
 	}
+	/* Store to LocalX: free value */
+	if (lhs->stack >= AMLOP_LOCAL0 && lhs->stack <= AMLOP_LOCAL7)
+		aml_freevalue(lhs);
 
 	lhs = aml_gettgt(lhs, AMLOP_STORE);
 
-	/* Store to LocalX: free value */
+	/* Store to LocalX: free value again */
 	if (lhs->stack >= AMLOP_LOCAL0 && lhs->stack <= AMLOP_LOCAL7)
 		aml_freevalue(lhs);
 	switch (lhs->type) {
