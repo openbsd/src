@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.121 2021/03/19 09:43:59 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.122 2021/03/19 13:56:10 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -880,7 +880,7 @@ main(int argc, char *argv[])
 	    "proc exec unveil", NULL) == -1)
 		err(1, "pledge");
 
-	while ((c = getopt(argc, argv, "b:Bcd:e:jnos:t:T:v")) != -1)
+	while ((c = getopt(argc, argv, "b:Bcd:e:jnos:t:T:vV")) != -1)
 		switch (c) {
 		case 'b':
 			bind_addr = optarg;
@@ -923,6 +923,8 @@ main(int argc, char *argv[])
 		case 'v':
 			verbose++;
 			break;
+		case 'V':
+			errx(0, "version: %s", RPKI_VERSION);
 		default:
 			goto usage;
 		}
@@ -1294,7 +1296,7 @@ main(int argc, char *argv[])
 
 usage:
 	fprintf(stderr,
-	    "usage: rpki-client [-Bcjnov] [-b sourceaddr] [-d cachedir]"
+	    "usage: rpki-client [-BcjnoVv] [-b sourceaddr] [-d cachedir]"
 	    " [-e rsync_prog]\n"
 	    "                   [-s timeout] [-T table] [-t tal]"
 	    " [outputdir]\n");

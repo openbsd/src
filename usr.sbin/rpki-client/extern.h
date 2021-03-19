@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.54 2021/03/18 14:03:42 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.55 2021/03/19 13:56:10 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -458,5 +458,6 @@ int	mkpath(const char *);
 
 #define		RPKI_PATH_OUT_DIR	"/var/db/rpki-client"
 #define		RPKI_PATH_BASE_DIR	"/var/cache/rpki-client"
+#define		RPKI_VERSION		"OpenBSD"
 
 #endif /* ! EXTERN_H */

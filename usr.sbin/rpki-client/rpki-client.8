@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.33 2020/12/09 11:33:10 claudio Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.34 2021/03/19 13:56:10 claudio Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 9 2020 $
+.Dd $Mdocdate: March 19 2021 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -22,7 +22,7 @@
 .Nd RPKI validator to support BGP Origin Validation
 .Sh SYNOPSIS
 .Nm
-.Op Fl Bcjnov
+.Op Fl BcjnoVv
 .Op Fl b Ar sourceaddr
 .Op Fl d Ar cachedir
 .Op Fl e Ar rsync_prog
@@ -122,6 +122,8 @@ By default
 .Nm
 will load all TAL files in
 .Pa /etc/rpki .
+.It Fl V
+Show the version and exit.
 .It Fl v
 Specified once, prints information about status.
 Twice, prints each filename as it's processed.
