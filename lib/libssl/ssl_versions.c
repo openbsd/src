@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_versions.c,v 1.17 2021/03/17 18:04:21 tb Exp $ */
+/* $OpenBSD: ssl_versions.c,v 1.18 2021/03/19 19:52:55 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -250,7 +250,7 @@ ssl_max_supported_version(SSL *s, uint16_t *max_ver)
 
 	return 1;
 }
- 
+
 int
 ssl_max_shared_version(SSL *s, uint16_t peer_ver, uint16_t *max_ver)
 {
