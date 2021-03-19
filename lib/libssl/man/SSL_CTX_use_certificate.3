@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_CTX_use_certificate.3,v 1.14 2019/11/14 20:48:48 millert Exp $
+.\" $OpenBSD: SSL_CTX_use_certificate.3,v 1.15 2021/03/19 20:31:49 tb Exp $
 .\" full merge up to: OpenSSL 3aaa1bd0 Mar 28 16:35:25 2017 +1000
 .\" selective merge up to: OpenSSL d1f7a1e6 Apr 26 14:05:40 2018 +0100
 .\"
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 14 2019 $
+.Dd $Mdocdate: March 19 2021 $
 .Dt SSL_CTX_USE_CERTIFICATE 3
 .Os
 .Sh NAME
@@ -59,6 +59,9 @@
 .Nm SSL_CTX_use_certificate_file ,
 .Nm SSL_use_certificate ,
 .Nm SSL_use_certificate_ASN1 ,
+.ig \" will appear in a library bump before Ox 6.9
+.Nm SSL_use_certificate_chain_file ,
+..
 .Nm SSL_use_certificate_file ,
 .Nm SSL_CTX_use_certificate_chain_file ,
 .Nm SSL_CTX_use_certificate_chain_mem ,
@@ -89,6 +92,10 @@
 .Fn SSL_use_certificate "SSL *ssl" "X509 *x"
 .Ft int
 .Fn SSL_use_certificate_ASN1 "SSL *ssl" "unsigned char *d" "int len"
+.ig
+.Ft int
+.Fn SSL_use_certificate_chain_file "SSL *ssl" "const char *file"
+..
 .Ft int
 .Fn SSL_use_certificate_file "SSL *ssl" "const char *file" "int type"
 .Ft int
@@ -219,6 +226,10 @@ The certificates must be in PEM format and must be sorted starting with the
 subject's certificate (actual client or server certificate),
 followed by intermediate CA certificates if applicable,
 and ending at the highest level (root) CA.
+.ig
+With the exception of
+.Fn SSL_use_certificate_chain_file ,
+..
 There is no corresponding function working on a single
 .Vt SSL
 object.
@@ -428,6 +439,12 @@ All these functions have been available since
 .Fn SSL_CTX_use_certificate_chain_file
 first appeared in OpenSSL 0.9.4 and has been available since
 .Ox 2.6 .
+.ig
+.Pp
+.Fn SSL_use_certificate_chain_file
+first appeared in OpenSSL 1.1.0 and has been available since
+.Ox 6.9 .
+..
 .Pp
 Support for DER encoded private keys
 .Pq Dv SSL_FILETYPE_ASN1
