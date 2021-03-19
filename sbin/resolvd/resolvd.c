@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolvd.c,v 1.10 2021/03/03 09:32:11 kn Exp $	*/
+/*	$OpenBSD: resolvd.c,v 1.11 2021/03/19 08:10:57 kn Exp $	*/
 /*
  * Copyright (c) 2021 Florian Obser <florian@openbsd.org>
  * Copyright (c) 2021 Theo de Raadt <deraadt@openbsd.org>
@@ -354,7 +354,7 @@ route_receive(int fd)
 	if ((n = read(fd, rsock_buf, sizeof(rsock_buf))) == -1) {
 		if (errno == EAGAIN || errno == EINTR)
 			return;
-		lwarn("dispatch_rtmsg: read error");
+		lwarn("%s: read error", __func__);
 		return;
 	}
 
