@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.82 2020/12/27 23:05:37 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.83 2021/03/19 04:30:56 deraadt Exp $
 
 machine		amd64
 maxusers	4
@@ -77,7 +77,7 @@ com0		at isa? port 0x3f8 irq 4	# standard PC serial ports
 com1		at isa? port 0x2f8 irq 3
 
 mpi*		at pci?			# LSI Logic Message Passing Interface
-mfi*		at pci?			# LSI MegaRAID SAS controllers
+#mfi*		at pci?			# LSI MegaRAID SAS controllers
 
 scsibus*	at scsi?
 sd*		at scsibus?		# SCSI disk drives
