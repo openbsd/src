@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.182 2021/02/20 08:33:17 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.183 2021/03/19 19:51:07 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1357,6 +1357,9 @@ int	SSL_use_certificate_ASN1(SSL *ssl, const unsigned char *d, int len);
 int	SSL_use_RSAPrivateKey_file(SSL *ssl, const char *file, int type);
 int	SSL_use_PrivateKey_file(SSL *ssl, const char *file, int type);
 int	SSL_use_certificate_file(SSL *ssl, const char *file, int type);
+#if defined(LIBRESSL_INTERNAL)
+int	SSL_use_certificate_chain_file(SSL *ssl, const char *file);
+#endif
 int	SSL_CTX_use_RSAPrivateKey_file(SSL_CTX *ctx, const char *file, int type);
 int	SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, const char *file, int type);
 int	SSL_CTX_use_certificate_file(SSL_CTX *ctx, const char *file, int type);
