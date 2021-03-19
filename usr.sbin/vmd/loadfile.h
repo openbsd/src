@@ -1,5 +1,5 @@
 /*	$NetBSD: loadfile.h,v 1.1 1999/04/28 09:08:50 christos Exp $	 */
-/*	$OpenBSD: loadfile.h,v 1.12 2019/05/16 21:16:04 claudio Exp $	 */
+/*	$OpenBSD: loadfile.h,v 1.13 2021/03/19 09:29:33 kn Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,8 +73,6 @@
 #define PML2_PAGE 0x13000
 #define NPTE_PG (PAGE_SIZE / sizeof(uint64_t))
 
-int loadfile_elf(FILE *, struct vm_create_params *,
-    struct vcpu_reg_state *, uint32_t, uint32_t, unsigned int);
+int loadfile_elf(FILE *, struct vm_create_params *, struct vcpu_reg_state *);
 
 size_t mread(FILE *, paddr_t, size_t);
-

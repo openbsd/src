@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.36 2020/10/26 04:04:31 visa Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.37 2021/03/19 09:29:33 kn Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -118,8 +118,8 @@ static void setsegment(struct mem_segment_descriptor *, uint32_t,
 static int elf32_exec(FILE *, Elf32_Ehdr *, u_long *, int);
 static int elf64_exec(FILE *, Elf64_Ehdr *, u_long *, int);
 static size_t create_bios_memmap(struct vm_create_params *, bios_memmap_t *);
-static uint32_t push_bootargs(bios_memmap_t *, size_t, bios_bootmac_t *);
-static size_t push_stack(uint32_t, uint32_t, uint32_t, uint32_t);
+static uint32_t push_bootargs(bios_memmap_t *, size_t);
+static size_t push_stack(uint32_t, uint32_t);
 static void push_gdt(void);
 static void push_pt_32(void);
 static void push_pt_64(void);
@@ -263,16 +263,13 @@ push_pt_64(void)
  *  various error codes returned from read(2) or loadelf functions
  */
 int
-loadfile_elf(FILE *fp, struct vm_create_params *vcp,
-    struct vcpu_reg_state *vrs, uint32_t bootdev, uint32_t howto,
-    unsigned int bootdevice)
+loadfile_elf(FILE *fp, struct vm_create_params *vcp, struct vcpu_reg_state *vrs)
 {
 	int r, is_i386 = 0;
 	uint32_t bootargsz;
 	size_t n, stacksize;
 	u_long marks[MARK_MAX];
 	bios_memmap_t memmap[VMM_MAX_MEM_RANGES + 1];
-	bios_bootmac_t bm, *bootmac = NULL;
 
 	if ((r = fread(&hdr, 1, sizeof(hdr), fp)) != sizeof(hdr))
 		return 1;
@@ -303,13 +300,9 @@ loadfile_elf(FILE *fp, struct vm_create_params *vcp,
 	else
 		push_pt_64();
 
-	if (bootdevice & VMBOOTDEV_NET) {
-		bootmac = &bm;
-		memcpy(bootmac, vcp->vcp_macs[0], ETHER_ADDR_LEN);
-	}
 	n = create_bios_memmap(vcp, memmap);
-	bootargsz = push_bootargs(memmap, n, bootmac);
-	stacksize = push_stack(bootargsz, marks[MARK_END], bootdev, howto);
+	bootargsz = push_bootargs(memmap, n);
+	stacksize = push_stack(bootargsz, marks[MARK_END]);
 
 	vrs->vrs_gprs[VCPU_REGS_RIP] = (uint64_t)marks[MARK_ENTRY];
 	vrs->vrs_gprs[VCPU_REGS_RSP] = (uint64_t)(STACK_PAGE + PAGE_SIZE) - stacksize;
@@ -388,9 +381,9 @@ create_bios_memmap(struct vm_create_params *vcp, bios_memmap_t *memmap)
  *  The size of the bootargs
  */
 static uint32_t
-push_bootargs(bios_memmap_t *memmap, size_t n, bios_bootmac_t *bootmac)
+push_bootargs(bios_memmap_t *memmap, size_t n)
 {
-	uint32_t memmap_sz, consdev_sz, bootmac_sz, i;
+	uint32_t memmap_sz, consdev_sz, i;
 	bios_consdev_t consdev;
 	uint32_t ba[1024];
 
@@ -413,15 +406,6 @@ push_bootargs(bios_memmap_t *memmap, size_t n, bios_bootmac_t *bootmac)
 	ba[i + 2] = consdev_sz;
 	memcpy(&ba[i + 3], &consdev, sizeof(bios_consdev_t));
 	i += consdev_sz / sizeof(int);
-
-	if (bootmac) {
-		bootmac_sz = 3 * sizeof(int) + (sizeof(bios_bootmac_t) + 3) & ~3;
-		ba[i] = 0x7;   /* bootmac */
-		ba[i + 1] = bootmac_sz;
-		ba[i + 2] = bootmac_sz;
-		memcpy(&ba[i + 3], bootmac, sizeof(bios_bootmac_t));
-		i += bootmac_sz / sizeof(int);
-	} 
 
 	ba[i++] = 0xFFFFFFFF; /* BOOTARG_END */
 
@@ -458,7 +442,7 @@ push_bootargs(bios_memmap_t *memmap, size_t n, bios_bootmac_t *bootmac)
  *  size of the stack
  */
 static size_t
-push_stack(uint32_t bootargsz, uint32_t end, uint32_t bootdev, uint32_t howto)
+push_stack(uint32_t bootargsz, uint32_t end)
 {
 	uint32_t stack[1024];
 	uint16_t loc;
@@ -466,17 +450,14 @@ push_stack(uint32_t bootargsz, uint32_t end, uint32_t bootdev, uint32_t howto)
 	memset(&stack, 0, sizeof(stack));
 	loc = 1024;
 
-	if (bootdev == 0)
-		bootdev = MAKEBOOTDEV(0x4, 0, 0, 0, 0); /* bootdev: sd0a */
-
 	stack[--loc] = BOOTARGS_PAGE;
 	stack[--loc] = bootargsz;
 	stack[--loc] = 0; /* biosbasemem */
 	stack[--loc] = 0; /* biosextmem */
 	stack[--loc] = end;
 	stack[--loc] = 0x0e;
-	stack[--loc] = bootdev;
-	stack[--loc] = howto;
+	stack[--loc] = MAKEBOOTDEV(0x4, 0, 0, 0, 0); /* bootdev: sd0a */
+	stack[--loc] = 0;
 
 	write_mem(STACK_PAGE, &stack, PAGE_SIZE);
 

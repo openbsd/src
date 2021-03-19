@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.59 2021/02/13 07:56:26 mlarkin Exp $	*/
+/*	$OpenBSD: vm.c,v 1.60 2021/03/19 09:29:33 kn Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -278,7 +278,6 @@ start_vm(struct vmd_vm *vm, int fd)
 	int			 nicfds[VMM_MAX_NICS_PER_VM];
 	int			 ret;
 	FILE			*fp;
-	struct vmboot_params	 vmboot;
 	size_t			 i;
 	struct vm_rwregs_params  vrp;
 
@@ -332,14 +331,11 @@ start_vm(struct vmd_vm *vm, int fd)
 		memcpy(&vrs, &vcpu_init_flat64, sizeof(vrs));
 
 		/* Find and open kernel image */
-		if ((fp = vmboot_open(vm->vm_kernel,
-		    vm->vm_disks[0], vmc->vmc_diskbases[0],
-		    vmc->vmc_disktypes[0], &vmboot)) == NULL)
+		if ((fp = fdopen(vm->vm_kernel, "r")) == NULL)
 			fatalx("failed to open kernel - exiting");
 
 		/* Load kernel image */
-		ret = loadfile_elf(fp, vcp, &vrs,
-		    vmboot.vbp_bootdev, vmboot.vbp_howto, vmc->vmc_bootdevice);
+		ret = loadfile_elf(fp, vcp, &vrs);
 
 		/*
 		 * Try BIOS as a fallback (only if it was provided as an image
@@ -351,7 +347,8 @@ start_vm(struct vmd_vm *vm, int fd)
 		if (ret)
 			fatal("failed to load kernel or BIOS - exiting");
 
-		vmboot_close(fp, &vmboot);
+		if (fp)
+			fclose(fp);
 	}
 
 	if (vm->vm_kernel != -1)
