@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.6 2021/03/17 15:24:04 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.7 2021/03/19 07:43:27 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -77,7 +77,7 @@ struct iface           {
 
 __dead void	 frontend_shutdown(void);
 void		 frontend_sig_handler(int, short, void *);
-void		 update_iface(struct if_msghdr *);
+void		 update_iface(struct if_msghdr *, struct sockaddr_dl *);
 void		 frontend_startup(void);
 void		 init_ifaces(void);
 void		 route_receive(int, short, void *);
@@ -462,13 +462,12 @@ get_xflags(char *if_name)
 }
 
 void
-update_iface(struct if_msghdr *ifm)
+update_iface(struct if_msghdr *ifm, struct sockaddr_dl *sdl)
 {
 	struct iface		*iface;
 	struct imsg_ifinfo	 ifinfo;
-	struct ifaddrs		*ifap, *ifa;
 	uint32_t		 if_index;
-	int			 flags, xflags, found = 0;
+	int			 flags, xflags;
 	char			 ifnamebuf[IF_NAMESIZE], *if_name;
 
 	if_index = ifm->ifm_index;
@@ -506,42 +505,12 @@ update_iface(struct if_msghdr *ifm)
 	ifinfo.running = (flags & (IFF_UP | IFF_RUNNING)) ==
 	    (IFF_UP | IFF_RUNNING);
 
-	if (getifaddrs(&ifap) != 0)
-		fatal("getifaddrs");
-
-	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
-		if (strcmp(if_name, ifa->ifa_name) != 0)
-			continue;
-		if (ifa->ifa_addr == NULL)
-			continue;
-
-		switch(ifa->ifa_addr->sa_family) {
-		case AF_LINK: {
-			struct sockaddr_dl	*sdl;
-
-			sdl = (struct sockaddr_dl *)ifa->ifa_addr;
-			if (sdl->sdl_type != IFT_ETHER ||
-			    sdl->sdl_alen != ETHER_ADDR_LEN)
-				continue;
-			memcpy(ifinfo.hw_address.ether_addr_octet, LLADDR(sdl),
-			    ETHER_ADDR_LEN);
-			found = 1;
-			goto out;
-		}
-		default:
-			break;
-		}
-	}
- out:
-	freeifaddrs(ifap);
-
-	if (!found) {
+	if (sdl != NULL && sdl->sdl_type == IFT_ETHER &&
+	    sdl->sdl_alen == ETHER_ADDR_LEN)
+		memcpy(ifinfo.hw_address.ether_addr_octet, LLADDR(sdl),
+		    ETHER_ADDR_LEN);
+	else if (iface == NULL) {
 		log_warnx("Could not find AF_LINK address for %s.", if_name);
-		if (iface != NULL) {
-			frontend_imsg_compose_engine(IMSG_REMOVE_IF, 0, 0,
-			    &if_index, sizeof(if_index));
-			remove_iface(if_index);
-		}
 		return;
 	}
 
@@ -575,6 +544,8 @@ frontend_startup(void)
 		    "process", __func__);
 
 	init_ifaces();
+	if (pledge("stdio unix recvfd", NULL) == -1)
+		fatal("pledge");
 	event_add(&ev_route, NULL);
 }
 
@@ -701,12 +672,13 @@ route_receive(int fd, short events, void *arg)
 void
 handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 {
-	struct if_msghdr		*ifm;
-
+	struct sockaddr_dl	*sdl = NULL;
 	switch (rtm->rtm_type) {
 	case RTM_IFINFO:
-		ifm = (struct if_msghdr *)rtm;
-		update_iface(ifm);
+		if (rtm->rtm_addrs & RTA_IFP && rti_info[RTAX_IFP]->sa_family
+		    == AF_LINK)
+			sdl = (struct sockaddr_dl *)rti_info[RTAX_IFP];
+		update_iface((struct if_msghdr *)rtm, sdl);
 		break;
 	case RTM_PROPOSAL:
 		if (rtm->rtm_priority == RTP_PROPOSAL_SOLICIT) {
