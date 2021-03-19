@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_purp.c,v 1.3 2021/03/13 23:01:49 tobhe Exp $ */
+/* $OpenBSD: x509_purp.c,v 1.4 2021/03/19 18:52:14 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -571,7 +571,7 @@ x509v3_cache_extensions(X509 *x)
 	if (x->skid == NULL && i != -1)
 		x->ex_flags |= EXFLAG_INVALID;
 	x->akid = X509_get_ext_d2i(x, NID_authority_key_identifier, &i, NULL);
-	if (x->skid == NULL && i != -1)
+	if (x->akid == NULL && i != -1)
 		x->ex_flags |= EXFLAG_INVALID;
 
 	/* Does subject name match issuer? */
