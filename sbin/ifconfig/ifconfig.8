@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.370 2021/03/18 14:16:38 kn Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.371 2021/03/19 19:36:10 procter Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: March 18 2021 $
+.Dd $Mdocdate: March 19 2021 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -2214,15 +2214,15 @@ Packets on a VLAN interface without a tag set will use a value of
 .Op Cm wgkey Ar privatekey
 .Op Cm wgport Ar port
 .Op Cm wgrtable Ar rtable
+.Op Fl wgpeerall
 .Oo
 .Oo Fl Oc Ns Cm wgpeer Ar publickey
+.Op Cm wgaip Ar allowed-ip_address/prefix
+.Op Cm wgendpoint Ar peer_address port
+.Op Cm wgpka Ar interval
 .Op Cm wgpsk Ar presharedkey
 .Op Fl wgpsk
-.Op Cm wgpka Ar persistent-keepalive
-.Op Cm wgendpoint Ar ip port
-.Op Cm wgaip Ar allowed-ip/prefix
 .Oc
-.Op Fl wgpeerall
 .Ek
 .nr nS 0
 .Pp
@@ -2231,103 +2231,91 @@ The following options are available for
 interfaces:
 .Bl -tag -width Ds
 .It Cm wgkey Ar privatekey
-Set the local private key of the interface to
-.Ar privatekey .
-This is a random 32-byte value, encoded as base64.
-It may be generated as follows:
+Set the private key of the interface.
+The
+.Ar privatekey
+is 32 bytes, base64-encoded.
+It can be generated as follows:
 .Pp
 .Dl $ openssl rand -base64 32
 .Pp
-A valid Curve25519 key is required to have 5 bits set to specific
-values.
-This is done by the interface, so it is safe to provide a random
-32-byte base64 string.
-.Pp
-Once set, the corresponding public key will be displayed
-in the interface status; it must be distributed to peers
-that this interface intends to communicate with.
+The corresponding public key will then be displayed
+in the interface status for distribution to peers.
+.It Cm wgpeer Ar publickey
+Specify an interface peer by its
+.Ar publickey ,
+which is 32 bytes, base64-encoded.
+Repeat the option to specify multiple peers in a single command.
+.It Cm -wgpeer Ar publickey
+Remove the peer with the given
+.Ar publickey .
+.It Cm -wgpeerall
+Remove all peers from the interface.
 .It Cm wgport Ar port
-Set the UDP
+Set the interface's UDP
 .Ar port
-that the tunnel operates on.
+for exchanging traffic with its peers.
 The interface will bind to
 .Dv INADDR_ANY
 and
 .Dv IN6ADDR_ANY_INIT .
-If no port is configured, one will be chosen automatically.
+By default, the interface will choose a port.
 .It Cm wgrtable Ar rtable
-Use routing table
+Exchange traffic with peers under the routing table
+.Ar rtable ,
+instead of the default
+.Xr rtable 4 .
+The routing domain of the
 .Ar rtable
-instead of the default table for the tunnel.
-The tunnel does not need to terminate in the same routing domain as the
-interface itself.
-.Ar rtable
-can be set to any valid routing table ID; the corresponding routing
-domain is derived from this table.
-.It Cm wgpeer Ar publickey
-Select the peer to perform the subsequent operations on.
-This creates a peer with the associated 32-byte, base64-encoded
-.Ar publickey
-if it does not yet exist.
-This option can be specified multiple times in a single command.
-.It Cm -wgpeer Ar publickey
-Remove the peer with the associated
-.Ar publickey .
-.It Cm -wgpeerall
-Remove all peers from the interface.
+needn't be the routing domain to which the interface is attached, in which
+the interface's tunneled traffic appears.
 .El
 .Pp
-The following options configure peers for the interface.
-Each interface can have multiple peers.
-In order to add a peer, a
+Peer configuration options, which apply to the
 .Cm wgpeer
-option must be specified, followed by its configuration options.
+immediately preceding them,
+are as follows:
 .Bl -tag -width Ds
+.It Cm wgaip Ar allowed-ip_address/prefix
+Set the peer's IPv4 or IPv6
+.Ar allowed-ip_address
+range for tunneled traffic.
+Repeat the option to set multiple ranges.
+By default, no addresses are allowed.
+.It Cm wgendpoint Ar peer_address port
+Address traffic to the peer's IPv4 or IPv6
+.Ar peer_address
+and UDP
+.Ar port .
+The interface will track the peer, updating
+.Cm wgendpoint
+to the source of its last authenticated packet.
+By default, the endpoint is unknown and so the peer cannot be addressed until
+it initiates communication.
+This implies that at least one peer in each pair must specify
+.Cm wgendpoint .
+.It Cm wgpka Ar interval
+Set the
+.Ar interval
+of persistent keepalive packets in seconds.
+The default, zero, disables these.
+They can be used to maintain connectivity to a peer otherwise blocked
+to unsolicited traffic by an intermediate firewall or NAT device.
+For this, an
+.Ar interval
+of 25 seconds should suffice.
 .It Cm wgpsk Ar presharedkey
-Set the preshared key for the peer.
-This is a random 32-byte, base64-encoded string
-that both ends must agree on.
-It offers a post-quantum resistance to the Diffie-Hellman exchange.
-If there is no preshared key, the exact same handshake is performed,
-however the preshared key is set to all zero.
-This can be generated in the same way as
-.Ar privatekey .
-.It Cm -wgpsk
-Remove the preshared key from the specified peer.
-.It Cm wgpka Ar persistent-keepalive
-Set the interval of additional keepalive packets in seconds.
-By default this functionality is disabled, equivalent to a value of 0.
-This is often used to ensure a peer will be accessible when protected by
-a firewall, as when behind a NAT address.
-A value of 25 is commonly used.
-.It Cm wgendpoint Ar ip port
-Set the IP address and port to send the encapsulated packets to.
-If the peer changes address, the local interface will update the address
-after receiving a correctly authenticated packet.
-The IP address can be either
-IPv4 or IPv6, and the port is a regular 16-bit UDP port.
-.It Cm wgaip Ar allowed-ip/prefix
-Set the allowed IPs for the peer.
-The allowed IPs indicate the IP addresses a peer is allowed to send
-from.
-That is, in order for an incoming packet from a peer to reach the host,
-the decrypted IP source address must be in the peer's
-.Ar allowed-ip
-ranges.
-.Pp
+Set a unique key pre-shared with the peer.
+This strengthens the Diffie-Hellman exchange should in future a
+quantum-computational attack on it become feasible.
 The
-.Ar allowed-ip
-list also provides an outgoing routing table for outgoing packets.
-Overlapping ranges can be configured, with packets being
-directed to the most specific route.
-Likewise, packets can only be received for the most specific route.
+.Ar presharedkey
+is 32 bytes, base64-encoded.
+It is optional but recommended and can be generated as follows:
 .Pp
-Both IPv4 and IPv6 addresses are supported.
-To set multiple allowed IPs, specify the
-.Cm wgaip
-option multiple times in the same
-.Nm
-invocation.
+.Dl $ openssl rand -base64 32
+.It Cm -wgpsk
+Remove the pre-shared key for this peer.
 .El
 .Sh EXAMPLES
 Assign the
@@ -2362,6 +2350,7 @@ tried to alter an interface's configuration.
 .Xr intro 4 ,
 .Xr netintro 4 ,
 .Xr route 4 ,
+.Xr rtable 4 ,
 .Xr hostname.if 5 ,
 .Xr hosts 5 ,
 .Xr rc 8 ,
