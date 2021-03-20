@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.441 2021/03/16 19:24:36 kn Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.442 2021/03/20 17:11:49 florian Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -1579,8 +1579,11 @@ setautoconf(const char *cmd, int val)
 		setifxflags("inet", val * IFXF_AUTOCONF4);
 		break;
 	case AF_INET6:
-		setifxflags("inet6", val * (IFXF_AUTOCONF6 |
-		    IFXF_AUTOCONF6TEMP));
+		if (val > 0)
+			setifxflags("inet6", (IFXF_AUTOCONF6 |
+			    IFXF_AUTOCONF6TEMP));
+		else
+			setifxflags("inet6", -IFXF_AUTOCONF6);
 		break;
 	default:
 		errx(1, "autoconf not allowed for this address family");
