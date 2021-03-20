@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.53 2021/03/20 16:46:03 kn Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.54 2021/03/20 17:07:49 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -502,7 +502,7 @@ update_iface(uint32_t if_index, char* if_name)
 	    get_xflags(if_name)) == -1)
 		return;
 
-	if (!(xflags & IFXF_AUTOCONF6))
+	if (!(xflags & (IFXF_AUTOCONF6 | IFXF_AUTOCONF6TEMP)))
 		return;
 
 	if((ifrdomain = get_ifrdomain(if_name)) == -1)
@@ -532,6 +532,7 @@ update_iface(uint32_t if_index, char* if_name)
 	imsg_ifinfo.rdomain = ifrdomain;
 	imsg_ifinfo.running = (flags & (IFF_UP | IFF_RUNNING)) == (IFF_UP |
 	    IFF_RUNNING);
+	imsg_ifinfo.autoconf = (xflags & IFXF_AUTOCONF6);
 	imsg_ifinfo.autoconfprivacy = (xflags & IFXF_AUTOCONF6TEMP);
 	imsg_ifinfo.soii = !(xflags & IFXF_INET6_NOSOII);
 
@@ -597,7 +598,7 @@ update_autoconf_addresses(uint32_t if_index, char* if_name)
 	if ((xflags = get_xflags(if_name)) == -1)
 		return;
 
-	if (!(xflags & IFXF_AUTOCONF6))
+	if (!(xflags & (IFXF_AUTOCONF6 | IFXF_AUTOCONF6TEMP)))
 		return;
 
 	memset(&imsg_addrinfo, 0, sizeof(imsg_addrinfo));
@@ -796,7 +797,8 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 			    &if_index, sizeof(if_index));
 		} else {
 			xflags = get_xflags(if_name);
-			if (xflags == -1 || !(xflags & IFXF_AUTOCONF6)) {
+			if (xflags == -1 || !(xflags & (IFXF_AUTOCONF6 |
+			    IFXF_AUTOCONF6TEMP))) {
 				log_debug("RTM_IFINFO: %s(%d) no(longer) "
 				   "autoconf6", if_name, ifm->ifm_index);
 				if_index = ifm->ifm_index;

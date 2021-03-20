@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.h,v 1.31 2021/03/07 10:31:20 florian Exp $	*/
+/*	$OpenBSD: slaacd.h,v 1.32 2021/03/20 17:07:49 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -87,6 +87,7 @@ enum rpref {
 struct ctl_engine_info {
 	uint32_t		if_index;
 	int			running;
+	int			autoconf;
 	int			autoconfprivacy;
 	int			soii;
 	struct ether_addr	hw_address;
@@ -189,6 +190,7 @@ struct imsg_ifinfo {
 	int			rdomain;
 	int			running;
 	int			link_state;
+	int			autoconf;
 	int			autoconfprivacy;
 	int			soii;
 	struct ether_addr	hw_address;

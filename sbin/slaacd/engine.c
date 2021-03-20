@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.68 2021/03/20 16:46:03 kn Exp $	*/
+/*	$OpenBSD: engine.c,v 1.69 2021/03/20 17:07:49 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -248,6 +248,7 @@ struct slaacd_iface {
 	uint32_t			 if_index;
 	uint32_t			 rdomain;
 	int				 running;
+	int				 autoconf;
 	int				 autoconfprivacy;
 	int				 soii;
 	struct ether_addr		 hw_address;
@@ -786,6 +787,7 @@ send_interface_info(struct slaacd_iface *iface, pid_t pid)
 	memset(&cei, 0, sizeof(cei));
 	cei.if_index = iface->if_index;
 	cei.running = iface->running;
+	cei.autoconf = iface->autoconf;
 	cei.autoconfprivacy = iface->autoconfprivacy;
 	cei.soii = iface->soii;
 	memcpy(&cei.hw_address, &iface->hw_address, sizeof(struct ether_addr));
@@ -1089,6 +1091,7 @@ engine_update_iface(struct imsg_ifinfo *imsg_ifinfo)
 		iface->rdomain = imsg_ifinfo->rdomain;
 		iface->running = imsg_ifinfo->running;
 		iface->link_state = imsg_ifinfo->link_state;
+		iface->autoconf = imsg_ifinfo->autoconf;
 		iface->autoconfprivacy = imsg_ifinfo->autoconfprivacy;
 		iface->soii = imsg_ifinfo->soii;
 		memcpy(&iface->hw_address, &imsg_ifinfo->hw_address,
@@ -1106,6 +1109,11 @@ engine_update_iface(struct imsg_ifinfo *imsg_ifinfo)
 	} else {
 		memcpy(&iface->ll_address, &imsg_ifinfo->ll_address,
 		    sizeof(struct sockaddr_in6));
+
+		if (iface->autoconf != imsg_ifinfo->autoconf) {
+			iface->autoconf = imsg_ifinfo->autoconf;
+			need_refresh = 1;
+		}
 
 		if (iface->autoconfprivacy != imsg_ifinfo->autoconfprivacy) {
 			iface->autoconfprivacy = imsg_ifinfo->autoconfprivacy;
@@ -1913,11 +1921,12 @@ update_iface_ra_prefix(struct slaacd_iface *iface, struct radv *ra,
 		}
 	}
 
-	if (!found && duplicate_found && iface->soii) {
+	if (!found && iface->autoconf && duplicate_found && iface->soii) {
 		prefix->dad_counter++;
 		log_debug("%s dad_counter: %d", __func__, prefix->dad_counter);
 		gen_address_proposal(iface, ra, prefix, 0);
-	} else if (!found && (iface->soii || prefix->prefix_len <= 64))
+	} else if (!found  && iface->autoconf && (iface->soii ||
+	    prefix->prefix_len <= 64))
 		/* new proposal */
 		gen_address_proposal(iface, ra, prefix, 0);
 
