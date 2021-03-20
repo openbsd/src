@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.1 2017/06/03 10:00:29 florian Exp $	*/
+/*	$OpenBSD: log.c,v 1.2 2021/03/20 16:46:03 kn Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -15,7 +15,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
+#ifndef SMALL
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -197,3 +197,4 @@ fatalx(const char *emsg, ...)
 	va_end(ap);
 	exit(1);
 }
+#endif	/* SMALL */

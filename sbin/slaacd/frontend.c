@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.52 2021/03/11 19:53:40 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.53 2021/03/20 16:46:03 kn Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -954,7 +954,10 @@ icmp6_receive(int fd, short events, void *arg)
 	struct cmsghdr		*cm;
 	ssize_t			 len;
 	int			 if_index = 0, *hlimp = NULL;
-	char			 ntopbuf[INET6_ADDRSTRLEN], ifnamebuf[IFNAMSIZ];
+	char			 ntopbuf[INET6_ADDRSTRLEN];
+#ifndef SMALL
+	char			 ifnamebuf[IFNAMSIZ];
+#endif	/* SMALL */
 
 	icmp6ev = arg;
 	if ((len = recvmsg(fd, &icmp6ev->rcvmhdr, 0)) == -1) {

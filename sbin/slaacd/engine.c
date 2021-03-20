@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.67 2021/03/07 10:31:57 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.68 2021/03/20 16:46:03 kn Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -622,10 +622,10 @@ engine_dispatch_main(int fd, short event, void *bula)
 	struct imsgev		*iev = bula;
 	struct imsgbuf		*ibuf = &iev->ibuf;
 	struct imsg_ifinfo	 imsg_ifinfo;
-	struct slaacd_iface	*iface;
 	ssize_t			 n;
 	int			 shut = 0;
 #ifndef	SMALL
+	struct slaacd_iface	*iface;
 	struct imsg_addrinfo	 imsg_addrinfo;
 	struct address_proposal	*addr_proposal = NULL;
 	size_t			 i;
@@ -2531,7 +2531,9 @@ iface_timeout(int fd, short events, void *arg)
 	struct timeval		 tv;
 	struct address_proposal	*addr_proposal;
 	struct dfr_proposal	*dfr_proposal;
+#ifndef SMALL
 	struct rdns_proposal	*rdns_proposal;
+#endif	/* SMALL */
 
 	log_debug("%s[%d]: %s", __func__, iface->if_index,
 	    if_state_name[iface->state]);

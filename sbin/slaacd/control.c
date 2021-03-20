@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.8 2021/03/02 04:10:07 jsg Exp $	*/
+/*	$OpenBSD: control.c,v 1.9 2021/03/20 16:46:03 kn Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -15,6 +15,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#ifndef SMALL
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -302,3 +303,4 @@ control_imsg_relay(struct imsg *imsg)
 	return (imsg_compose_event(&c->iev, imsg->hdr.type, 0, imsg->hdr.pid,
 	    -1, imsg->data, IMSG_DATA_SIZE(*imsg)));
 }
+#endif	/* SMALL */
