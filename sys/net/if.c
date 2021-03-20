@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.638 2021/03/18 15:58:58 claudio Exp $	*/
+/*	$OpenBSD: if.c,v 1.639 2021/03/20 17:08:57 florian Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1958,8 +1958,10 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 
 		NET_LOCK();
 #ifdef INET6
-		if (ISSET(ifr->ifr_flags, IFXF_AUTOCONF6) &&
-		    !ISSET(ifp->if_xflags, IFXF_AUTOCONF6)) {
+		if ((ISSET(ifr->ifr_flags, IFXF_AUTOCONF6) ||
+		    ISSET(ifr->ifr_flags, IFXF_AUTOCONF6TEMP)) &&
+		    !ISSET(ifp->if_xflags, IFXF_AUTOCONF6) &&
+		    !ISSET(ifp->if_xflags, IFXF_AUTOCONF6TEMP)) {
 			error = in6_ifattach(ifp);
 			if (error != 0) {
 				NET_UNLOCK();
@@ -2026,7 +2028,9 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		    ((!ISSET(oif_xflags, IFXF_AUTOCONF4) &&
 		    ISSET(ifp->if_xflags, IFXF_AUTOCONF4)) ||
 		    (!ISSET(oif_xflags, IFXF_AUTOCONF6) &&
-		    ISSET(ifp->if_xflags, IFXF_AUTOCONF6)))) {
+		    ISSET(ifp->if_xflags, IFXF_AUTOCONF6)) ||
+		    (!ISSET(oif_xflags, IFXF_AUTOCONF6TEMP) &&
+		    ISSET(ifp->if_xflags, IFXF_AUTOCONF6TEMP)))) {
 			ifr->ifr_flags = ifp->if_flags | IFF_UP;
 			cmd = SIOCSIFFLAGS;
 			goto forceup;
