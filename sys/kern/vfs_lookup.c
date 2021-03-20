@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.83 2019/09/11 15:01:40 beck Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.84 2021/03/20 11:26:07 semarie Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -157,12 +157,8 @@ namei(struct nameidata *ndp)
 	if (error == 0 && ndp->ni_pathlen == 1)
 		error = ENOENT;
 
-	if (error) {
-fail:
-		pool_put(&namei_pool, cnp->cn_pnbuf);
-		ndp->ni_vp = NULL;
-		return (error);
-	}
+	if (error)
+		goto fail;
 
 #ifdef KTRACE
 	if (KTRPOINT(cnp->cn_proc, KTR_NAMEI))
@@ -222,14 +218,14 @@ fail:
 	} else {
 		struct file *fp = fd_getfile(fdp, ndp->ni_dirfd);
 		if (fp == NULL) {
-			pool_put(&namei_pool, cnp->cn_pnbuf);
-			return (EBADF);
+			error = EBADF;
+			goto fail;
 		}
 		dp = (struct vnode *)fp->f_data;
 		if (fp->f_type != DTYPE_VNODE || dp->v_type != VDIR) {
 			FRELE(fp, p);
-			pool_put(&namei_pool, cnp->cn_pnbuf);
-			return (ENOTDIR);
+			error = ENOTDIR;
+			goto fail;
 		}
 		vref(dp);
 		unveil_start_relative(p, ndp, dp);
@@ -239,23 +235,21 @@ fail:
 	for (;;) {
 		if (!dp->v_mount) {
 			/* Give up if the directory is no longer mounted */
-			pool_put(&namei_pool, cnp->cn_pnbuf);
 			vrele(dp);
-			ndp->ni_vp = NULL;
-			return (ENOENT);
+			error = ENOENT;
+			goto fail;
 		}
+
 		cnp->cn_nameptr = cnp->cn_pnbuf;
 		ndp->ni_startdir = dp;
-		if ((error = vfs_lookup(ndp)) != 0) {
-			pool_put(&namei_pool, cnp->cn_pnbuf);
-			return (error);
-		}
+		if ((error = vfs_lookup(ndp)) != 0)
+			goto fail;
+
 		/*
 		 * If not a symbolic link, return search result.
 		 */
 		if ((cnp->cn_flags & ISSYMLINK) == 0) {
 			if ((error = unveil_check_final(p, ndp))) {
-				pool_put(&namei_pool, cnp->cn_pnbuf);
 				if ((cnp->cn_flags & LOCKPARENT) &&
 				    (cnp->cn_flags & ISLASTCN) &&
 				    (ndp->ni_vp != ndp->ni_dvp))
@@ -266,14 +260,13 @@ fail:
 					else
 						vrele(ndp->ni_vp);
 				}
-				ndp->ni_vp = NULL;
-				return (error);
+				goto fail;
 			}
 			if ((cnp->cn_flags & (SAVENAME | SAVESTART)) == 0)
 				pool_put(&namei_pool, cnp->cn_pnbuf);
 			else
 				cnp->cn_flags |= HASBUF;
-			return(0);
+			return (0);
 		}
 		if ((cnp->cn_flags & LOCKPARENT) && (cnp->cn_flags & ISLASTCN))
 			VOP_UNLOCK(ndp->ni_dvp);
@@ -337,9 +330,10 @@ badlink:
 			component_pop(cnp);
 		}
 	}
-	pool_put(&namei_pool, cnp->cn_pnbuf);
 	vrele(ndp->ni_dvp);
 	vput(ndp->ni_vp);
+fail:
+	pool_put(&namei_pool, cnp->cn_pnbuf);
 	ndp->ni_vp = NULL;
 	return (error);
 }
