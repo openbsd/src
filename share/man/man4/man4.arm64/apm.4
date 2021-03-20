@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apm.4,v 1.3 2019/01/28 14:38:33 jmc Exp $
+.\"	$OpenBSD: apm.4,v 1.4 2021/03/20 19:41:44 kn Exp $
 .\"
 .\"	Copyright (c) 1998 Marco S. Hyman
 .\"
@@ -9,7 +9,7 @@
 .\"	LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
 .\"	FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: January 28 2019 $
+.Dd $Mdocdate: March 20 2021 $
 .Dt APM 4 arm64
 .Os
 .Sh NAME
@@ -24,6 +24,9 @@ driver provides an interface which simulates the Advanced Power Management
 .Pq APM
 BIOS functions.
 .Pp
+Suspend/resume and other power events are
+.Em NOT YET SUPPORTED .
+.Pp
 The
 .Nm
 driver implements the following
@@ -35,16 +38,22 @@ They are defined in
 .It Dv APM_IOC_REJECT
 .Em Not implemented . DO NOT USE .
 .It Dv APM_IOC_STANDBY
+.Em NOT YET SUPPORTED on arm64 .
+.Pp
 .Pq Li "no parameters"
 Request
 .Dq standby
 mode.
 .It Dv APM_IOC_SUSPEND
+.Em NOT YET SUPPORTED on arm64 .
+.Pp
 .Pq Li "no parameters"
 Request
 .Dq suspend
 mode.
 .It Dv APM_IOC_HIBERNATE
+.Em NOT YET SUPPORTED on arm64 .
+.Pp
 .Pq Li "no parameters"
 Request
 .Dq hibernate
@@ -142,6 +151,8 @@ is one of:
 .It Dv APM_SYS_STANDBY_RESUME
 .El
 .It Dv APM_IOC_DEV_CTL
+.Em NOT YET SUPPORTED on arm64 .
+.Pp
 .Pq Li "struct apm_ctl"
 Allows an application to directly set the
 APM operating mode.
