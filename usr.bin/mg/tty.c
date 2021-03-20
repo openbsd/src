@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.38 2021/03/01 10:51:14 lum Exp $	*/
+/*	$OpenBSD: tty.c,v 1.39 2021/03/20 09:00:49 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -34,6 +34,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <term.h>
+#include <unistd.h>
 
 #include "def.h"
 
@@ -64,9 +65,15 @@ winchhandler(int sig)
 void
 ttinit(void)
 {
+	char *tty;
 	int errret;
 
-	if (setupterm(NULL, 1, &errret))
+	if (batch == 1)
+		tty = "pty";
+	else
+		tty = NULL;
+
+	if (setupterm(tty, STDOUT_FILENO, &errret))
 		panic("Terminal setup failed");
 
 	signal(SIGWINCH, winchhandler);

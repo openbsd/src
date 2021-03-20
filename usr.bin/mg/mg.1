@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.120 2021/02/23 18:45:33 lum Exp $
+.\"	$OpenBSD: mg.1,v 1.121 2021/03/20 09:00:49 lum Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: February 23 2021 $
+.Dd $Mdocdate: March 20 2021 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -10,6 +10,7 @@
 .Sh SYNOPSIS
 .Nm mg
 .Op Fl nR
+.Op Fl b Ar file
 .Op Fl f Ar mode
 .Op Fl u Ar file
 .Op + Ns Ar number
@@ -35,6 +36,12 @@ sign and the number).
 If a negative number is specified, the line number counts
 backwards from the end of the file i.e. +-1 will be the last
 line of the file, +-2 will be second last, and so on.
+.It Fl b Ar file
+Turn on batch mode and execute the
+.Nm
+commands found in the specified
+.Ar file
+and then terminate.
 .It Fl f Ar mode
 Run the mode command for all buffers created from
 arguments on the command line, including the
