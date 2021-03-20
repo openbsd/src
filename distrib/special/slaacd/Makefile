@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2018/06/25 16:29:00 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 2021/03/20 16:36:52 kn Exp $
 
 PROG=	slaacd
 COPTS+=	-DSMALL
@@ -6,8 +6,6 @@ COPTS+=	-DSMALL
 SRCS=	engine.c frontend.c slaacd.c
 
 MAN=
-
-CFLAGS+= -DSKIP_PROPOSAL
 
 YFLAGS=
 LDADD+=	-levent -lutil
