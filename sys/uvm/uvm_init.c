@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_init.c,v 1.41 2020/12/28 14:01:23 mpi Exp $	*/
+/*	$OpenBSD: uvm_init.c,v 1.42 2021/03/20 10:24:21 mpi Exp $	*/
 /*	$NetBSD: uvm_init.c,v 1.14 2000/06/27 17:29:23 mrg Exp $	*/
 
 /*
@@ -69,41 +69,41 @@ vaddr_t vm_min_kernel_address;
 /*
  * uvm_init: init the VM system.   called from kern/init_main.c.
  */
+
 void
 uvm_init(void)
 {
 	vaddr_t kvm_start, kvm_end;
 
-	/* step 0: ensure that the hardware set the page size */
+	/*
+	 * Ensure that the hardware set the page size.
+	 */
 	if (uvmexp.pagesize == 0) {
 		panic("uvm_init: page size not set");
 	}
-
-	/* step 1: set up stats. */
 	averunnable.fscale = FSCALE;
 
 	/*
-	 * step 2: init the page sub-system.  this includes allocating the
-	 * vm_page structures, and setting up all the page queues (and
-	 * locks).  available memory will be put in the "free" queue.
-	 * kvm_start and kvm_end will be set to the area of kernel virtual
-	 * memory which is available for general use.
+	 * Init the page sub-system.  This includes allocating the vm_page
+	 * structures, and setting up all the page queues (and locks).
+	 * Available memory will be put in the "free" queue, kvm_start and
+	 * kvm_end will be set to the area of kernel virtual memory which
+	 * is available for general use.
 	 */
 	uvm_page_init(&kvm_start, &kvm_end);
 
 	/*
-	 * step 3: init the map sub-system.  allocates the static pool of
-	 * vm_map_entry structures that are used for "special" kernel maps
-	 * (e.g. kernel_map, kmem_map, etc...).
+	 * Init the map sub-system.
+	 *
+	 * Allocates the static pool of vm_map_entry structures that are
+	 * used for "special" kernel maps (e.g. kernel_map, kmem_map, etc...).
 	 */
 	uvm_map_init();
 
 	/*
-	 * step 4: setup the kernel's virtual memory data structures.  this
-	 * includes setting up the kernel_map/kernel_object and the kmem_map/
-	 * kmem_object.
+	 * Setup the kernel's virtual memory data structures.  This includes
+	 * setting up the kernel_map/kernel_object.
 	 */
-
 	uvm_km_init(vm_min_kernel_address, kvm_start, kvm_end);
 
 	/*
@@ -112,7 +112,7 @@ uvm_init(void)
 	uvmfault_init();
 
 	/*
-	 * step 5: init the pmap module.   the pmap module is free to allocate
+	 * Init the pmap module.  The pmap module is free to allocate
 	 * memory for its private use (e.g. pvlists).
 	 */
 	pmap_init();
@@ -123,8 +123,8 @@ uvm_init(void)
 	uvm_km_page_init();
 
 	/*
-	 * step 7: init the kernel memory allocator.   after this call the
-	 * kernel memory allocator (malloc) can be used.
+	 * Make kernel memory allocators ready for use.
+	 * After this call the malloc memory allocator can be used.
 	 */
 	kmeminit();
 
@@ -134,7 +134,7 @@ uvm_init(void)
 	dma_alloc_init();
 
 	/*
-	 * step 8: init all pagers and the pager_map.
+	 * Init all pagers and the pager_map.
 	 */
 	uvm_pager_init();
 
@@ -172,7 +172,7 @@ uvm_init(void)
 		panic("uvm_init: cannot reserve dead beef @0x%x", DEADBEEF1);
 #endif
 	/*
-	 * init anonymous memory systems
+	 * Init anonymous memory systems.
 	 */
 	uvm_anon_init();
 

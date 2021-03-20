@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_device.c,v 1.60 2020/11/06 11:52:39 mpi Exp $	*/
+/*	$OpenBSD: uvm_device.c,v 1.61 2021/03/20 10:24:21 mpi Exp $	*/
 /*	$NetBSD: uvm_device.c,v 1.30 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -79,6 +79,11 @@ const struct uvm_pagerops uvm_deviceops = {
 };
 
 /*
+ * the ops!
+ */
+
+
+/*
  * udv_attach
  *
  * get a VM object that is associated with a device.   allocate a new
@@ -97,14 +102,18 @@ udv_attach(dev_t device, vm_prot_t accessprot, voff_t off, vsize_t size)
 	struct uvm_object *obj;
 #endif
 
-	/* before we do anything, ensure this device supports mmap */
+	/*
+	 * before we do anything, ensure this device supports mmap
+	 */
 	mapfn = cdevsw[major(device)].d_mmap;
 	if (mapfn == NULL ||
 	    mapfn == (paddr_t (*)(dev_t, off_t, int)) enodev ||
 	    mapfn == (paddr_t (*)(dev_t, off_t, int)) nullop)
 		return(NULL);
 
-	/* Negative offsets on the object are not allowed. */
+	/*
+	 * Negative offsets on the object are not allowed.
+	 */
 	if (off < 0)
 		return(NULL);
 
@@ -126,16 +135,22 @@ udv_attach(dev_t device, vm_prot_t accessprot, voff_t off, vsize_t size)
 		off += PAGE_SIZE; size -= PAGE_SIZE;
 	}
 
-	/* keep looping until we get it */
+	/*
+	 * keep looping until we get it
+	 */
 	for (;;) {
-		/* first, attempt to find it on the main list */
+		/*
+		 * first, attempt to find it on the main list
+		 */
 		mtx_enter(&udv_lock);
 		LIST_FOREACH(lcv, &udv_list, u_list) {
 			if (device == lcv->u_device)
 				break;
 		}
 
-		/* got it on main list.  put a hold on it and unlock udv_lock. */
+		/*
+		 * got it on main list.  put a hold on it and unlock udv_lock.
+		 */
 		if (lcv) {
 			/*
 			 * if someone else has a hold on it, sleep and start
@@ -153,7 +168,9 @@ udv_attach(dev_t device, vm_prot_t accessprot, voff_t off, vsize_t size)
 			lcv->u_flags |= UVM_DEVICE_HOLD;
 			mtx_leave(&udv_lock);
 
-			/* bump reference count, unhold, return. */
+			/*
+			 * bump reference count, unhold, return.
+			 */
 			lcv->u_obj.uo_refs++;
 
 			mtx_enter(&udv_lock);
@@ -164,7 +181,9 @@ udv_attach(dev_t device, vm_prot_t accessprot, voff_t off, vsize_t size)
 			return(&lcv->u_obj);
 		}
 
-		/* did not find it on main list.   need to malloc a new one. */
+		/*
+		 * Did not find it on main list.  Need to allocate a new one.
+		 */
 		mtx_leave(&udv_lock);
 		/* NOTE: we could sleep in the following malloc() */
 		udv = malloc(sizeof(*udv), M_TEMP, M_WAITOK);
@@ -229,7 +248,9 @@ udv_detach(struct uvm_object *uobj)
 
 	KERNEL_ASSERT_LOCKED();
 
-	/* loop until done */
+	/*
+	 * loop until done
+	 */
 again:
 	if (uobj->uo_refs > 1) {
 		uobj->uo_refs--;
@@ -237,7 +258,9 @@ again:
 	}
 	KASSERT(uobj->uo_npages == 0 && RBT_EMPTY(uvm_objtree, &uobj->memt));
 
-	/* is it being held?   if so, wait until others are done. */
+	/*
+	 * is it being held?   if so, wait until others are done.
+	 */
 	mtx_enter(&udv_lock);
 	if (udv->u_flags & UVM_DEVICE_HOLD) {
 		udv->u_flags |= UVM_DEVICE_WANTED;
@@ -250,7 +273,9 @@ again:
 		goto again;
 	}
 
-	/* got it!   nuke it now. */
+	/*
+	 * got it!   nuke it now.
+	 */
 	LIST_REMOVE(udv, u_list);
 	if (udv->u_flags & UVM_DEVICE_WANTED)
 		wakeup(udv);
@@ -310,7 +335,9 @@ udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, vm_page_t *pps, int npages,
 		return(VM_PAGER_ERROR);
 	}
 
-	/* get device map function. */
+	/*
+	 * get device map function.
+	 */
 	device = udv->u_device;
 	mapfn = cdevsw[major(device)].d_mmap;
 
@@ -325,7 +352,9 @@ udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, vm_page_t *pps, int npages,
 	/* pmap va = vaddr (virtual address of pps[0]) */
 	curr_va = vaddr;
 
-	/* loop over the page range entering in as needed */
+	/*
+	 * loop over the page range entering in as needed
+	 */
 	retval = VM_PAGER_OK;
 	for (lcv = 0 ; lcv < npages ; lcv++, curr_offset += PAGE_SIZE,
 	    curr_va += PAGE_SIZE) {

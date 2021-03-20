@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_anon.c,v 1.52 2021/03/04 09:00:03 mpi Exp $	*/
+/*	$OpenBSD: uvm_anon.c,v 1.53 2021/03/20 10:24:21 mpi Exp $	*/
 /*	$NetBSD: uvm_anon.c,v 1.10 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -42,9 +42,6 @@
 
 struct pool uvm_anon_pool;
 
-/*
- * allocate anons
- */
 void
 uvm_anon_init(void)
 {
@@ -54,7 +51,9 @@ uvm_anon_init(void)
 }
 
 /*
- * allocate an anon
+ * uvm_analloc: allocate a new anon.
+ *
+ * => anon will have no lock associated.
  */
 struct vm_anon *
 uvm_analloc(void)
@@ -93,12 +92,10 @@ uvm_anfree_list(struct vm_anon *anon, struct pglist *pgl)
 		KASSERT(anon->an_lock != NULL);
 
 		/*
-		 * if page is busy then we just mark it as released (who ever
-		 * has it busy must check for this when they wake up). if the
-		 * page is not busy then we can free it now.
+		 * If the page is busy, mark it as PG_RELEASED, so
+		 * that uvm_anon_release(9) would release it later.
 		 */
 		if ((pg->pg_flags & PG_BUSY) != 0) {
-			/* tell them to dump it when done */
 			atomic_setbits_int(&pg->pg_flags, PG_RELEASED);
 			rw_obj_hold(anon->an_lock);
 			return;
@@ -127,13 +124,11 @@ uvm_anfree_list(struct vm_anon *anon, struct pglist *pgl)
 	}
 	anon->an_lock = NULL;
 
-	/* free any swap resources. */
+	/*
+	 * Free any swap resources, leave a page replacement hint.
+	 */
 	uvm_anon_dropswap(anon);
 
-	/*
-	 * now that we've stripped the data areas from the anon, free the anon
-	 * itself!
-	 */
 	KASSERT(anon->an_page == NULL);
 	KASSERT(anon->an_swslot == 0);
 
@@ -154,9 +149,10 @@ uvm_anwait(void)
 }
 
 /*
- * fetch an anon's page.
+ * uvm_anon_pagein: fetch an anon's page.
  *
- * => returns TRUE if pagein was aborted due to lack of memory.
+ * => anon must be locked, and is unlocked upon return.
+ * => returns true if pagein was aborted due to lack of memory.
  */
 
 boolean_t
@@ -168,20 +164,26 @@ uvm_anon_pagein(struct vm_amap *amap, struct vm_anon *anon)
 	KASSERT(rw_write_held(anon->an_lock));
 	KASSERT(anon->an_lock == amap->am_lock);
 
+	/*
+	 * Get the page of the anon.
+	 */
 	rv = uvmfault_anonget(NULL, amap, anon);
 
 	switch (rv) {
 	case VM_PAGER_OK:
 		KASSERT(rw_write_held(anon->an_lock));
 		break;
+
 	case VM_PAGER_ERROR:
 	case VM_PAGER_REFAULT:
+
 		/*
-		 * nothing more to do on errors.
-		 * VM_PAGER_REFAULT can only mean that the anon was freed,
-		 * so again there's nothing to do.
+		 * Nothing more to do on errors.
+		 * VM_PAGER_REFAULT  means that the anon was freed.
 		 */
+
 		return FALSE;
+
 	default:
 #ifdef DIAGNOSTIC
 		panic("anon_pagein: uvmfault_anonget -> %d", rv);
@@ -191,8 +193,7 @@ uvm_anon_pagein(struct vm_amap *amap, struct vm_anon *anon)
 	}
 
 	/*
-	 * ok, we've got the page now.
-	 * mark it as dirty, clear its swslot and un-busy it.
+	 * Mark the page as dirty and clear its swslot.
 	 */
 	pg = anon->an_page;
 	if (anon->an_swslot > 0) {
@@ -201,7 +202,9 @@ uvm_anon_pagein(struct vm_amap *amap, struct vm_anon *anon)
 	anon->an_swslot = 0;
 	atomic_clearbits_int(&pg->pg_flags, PG_CLEAN);
 
-	/* deactivate the page (to put it on a page queue) */
+	/*
+	 * Deactivate the page (to put it on a page queue).
+	 */
 	pmap_clear_reference(pg);
 	pmap_page_protect(pg, PROT_NONE);
 	uvm_lock_pageq();
@@ -213,7 +216,7 @@ uvm_anon_pagein(struct vm_amap *amap, struct vm_anon *anon)
 }
 
 /*
- * uvm_anon_dropswap:  release any swap resources from this anon.
+ * uvm_anon_dropswap: release any swap resources from this anon.
  *
  * => anon must be locked or have a reference count of 0.
  */

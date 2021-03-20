@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.87 2021/01/19 13:21:36 mpi Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.88 2021/03/20 10:24:21 mpi Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -188,7 +188,7 @@ amap_chunk_free(struct vm_amap *amap, struct vm_amap_chunk *chunk)
  * when enabled, an array of ints is allocated for the pprefs.  this
  * array is allocated only when a partial reference is added to the
  * map (either by unmapping part of the amap, or gaining a reference
- * to only a part of an amap).  if the malloc of the array fails
+ * to only a part of an amap).  if the allocation of the array fails
  * (M_NOWAIT), then we set the array pointer to PPREF_NONE to indicate
  * that we tried to do ppref's but couldn't alloc the array so just
  * give up (after all, this is an optional feature!).
@@ -209,12 +209,14 @@ amap_chunk_free(struct vm_amap *amap, struct vm_amap_chunk *chunk)
  * chunk.    note that the "plus one" part is needed because a reference
  * count of zero is neither positive or negative (need a way to tell
  * if we've got one zero or a bunch of them).
- * 
+ *
  * here are some in-line functions to help us.
  */
 
 /*
  * pp_getreflen: get the reference and length for a specific offset
+ *
+ * => ppref's amap must be locked
  */
 static inline void
 pp_getreflen(int *ppref, int offset, int *refp, int *lenp)
@@ -231,6 +233,8 @@ pp_getreflen(int *ppref, int offset, int *refp, int *lenp)
 
 /*
  * pp_setreflen: set the reference and length for a specific offset
+ *
+ * => ppref's amap must be locked
  */
 static inline void
 pp_setreflen(int *ppref, int offset, int ref, int len)
@@ -242,7 +246,7 @@ pp_setreflen(int *ppref, int offset, int ref, int len)
 		ppref[offset+1] = len;
 	}
 }
-#endif
+#endif /* UVM_AMAP_PPREF */
 
 /*
  * amap_init: called at boot time to init global amap data structures
@@ -276,8 +280,9 @@ amap_init(void)
 }
 
 /*
- * amap_alloc1: internal function that allocates an amap, but does not
- *	init the overlay.
+ * amap_alloc1: allocate an amap, but do not initialise the overlay.
+ *
+ * => Note: lock is not set.
  */
 static inline struct vm_amap *
 amap_alloc1(int slots, int waitf, int lazyalloc)
@@ -408,6 +413,7 @@ amap_lock_alloc(struct vm_amap *amap)
  *
  * => caller should ensure sz is a multiple of PAGE_SIZE
  * => reference count to new amap is set to one
+ * => new amap is returned unlocked
  */
 struct vm_amap *
 amap_alloc(vaddr_t sz, int waitf, int lazyalloc)
@@ -432,6 +438,7 @@ amap_alloc(vaddr_t sz, int waitf, int lazyalloc)
 /*
  * amap_free: free an amap
  *
+ * => the amap must be unlocked
  * => the amap should have a zero reference count and be empty
  */
 void
@@ -466,11 +473,9 @@ amap_free(struct vm_amap *amap)
 /*
  * amap_wipeout: wipeout all anon's in an amap; then free the amap!
  *
- * => called from amap_unref when the final reference to an amap is
- *	discarded (i.e. when reference count == 1)
+ * => Called from amap_unref(), when reference count drops to zero.
  * => amap must be locked.
  */
-
 void
 amap_wipeout(struct vm_amap *amap)
 {
@@ -483,7 +488,9 @@ amap_wipeout(struct vm_amap *amap)
 	KASSERT(amap->am_ref == 0);
 
 	if (__predict_false((amap->am_flags & AMAP_SWAPOFF) != 0)) {
-		/* amap_swap_off will call us again. */
+		/*
+		 * Note: amap_swap_off() will call us again.
+		 */
 		amap_unlock(amap);
 		return;
 	}
@@ -503,12 +510,11 @@ amap_wipeout(struct vm_amap *amap)
 				panic("amap_wipeout: corrupt amap");
 			KASSERT(anon->an_lock == amap->am_lock);
 
+			/*
+			 * Drop the reference.
+			 */
 			refs = --anon->an_ref;
 			if (refs == 0) {
-				/*
-				 * we had the last reference to a vm_anon.
-				 * free it.
-				 */
 				uvm_anfree_list(anon, &pgl);
 			}
 		}
@@ -516,7 +522,9 @@ amap_wipeout(struct vm_amap *amap)
 	/* free the pages */
 	uvm_pglistfree(&pgl);
 
-	/* now we free the map */
+	/*
+	 * Finally, destroy the amap.
+	 */
 	amap->am_ref = 0;	/* ... was one */
 	amap->am_nused = 0;
 	amap_unlock(amap);
@@ -526,10 +534,10 @@ amap_wipeout(struct vm_amap *amap)
 /*
  * amap_copy: ensure that a map entry's "needs_copy" flag is false
  *	by copying the amap if necessary.
- * 
+ *
  * => an entry with a null amap pointer will get a new (blank) one.
- * => the map that the map entry blocks to must be locked by caller.
- * => the amap (if any) currently attached to the entry must be unlocked.
+ * => the map that the map entry belongs to must be locked by caller.
+ * => the amap currently attached to "entry" (if any) must be unlocked.
  * => if canchunk is true, then we may clip the entry into a chunk
  * => "startva" and "endva" are used only if canchunk is true.  they are
  *     used to limit chunking (e.g. if you have a large space that you
@@ -550,14 +558,16 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int waitf,
 
 	KASSERT(map != kernel_map);		/* we use sleeping locks */
 
-	/* is there a map to copy?   if not, create one from scratch. */
+	/*
+	 * Is there an amap to copy?  If not, create one.
+	 */
 	if (entry->aref.ar_amap == NULL) {
 		/*
-		 * check to see if we have a large amap that we can
-		 * chunk.  we align startva/endva to chunk-sized
+		 * Check to see if we have a large amap that we can
+		 * chunk.  We align startva/endva to chunk-sized
 		 * boundaries and then clip to them.
 		 *
-		 * if we cannot chunk the amap, allocate it in a way
+		 * If we cannot chunk the amap, allocate it in a way
 		 * that makes it grow or shrink dynamically with
 		 * the number of slots.
 		 */
@@ -584,17 +594,21 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int waitf,
 	}
 
 	/*
-	 * first check and see if we are the only map entry
-	 * referencing the amap we currently have.  if so, then we can
-	 * just take it over rather than copying it.  the value can only
-	 * be one if we have the only reference to the amap
+	 * First check and see if we are the only map entry referencing
+	 * he amap we currently have.  If so, then just take it over instead
+	 * of copying it.  Note that we are reading am_ref without lock held
+	 * as the value value can only be one if we have the only reference
+	 * to the amap (via our locked map).  If the value is greater than
+	 * one, then allocate amap and re-check the value.
 	 */
 	if (entry->aref.ar_amap->am_ref == 1) {
 		entry->etype &= ~UVM_ET_NEEDSCOPY;
 		return;
 	}
 
-	/* looks like we need to copy the map. */
+	/*
+	 * Allocate a new amap (note: not initialised, etc).
+	 */
 	AMAP_B2SLOT(slots, entry->end - entry->start);
 	if (!UVM_AMAP_SMALL(entry->aref.ar_amap) &&
 	    entry->aref.ar_amap->am_hashshift != 0)
@@ -607,20 +621,22 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int waitf,
 	amap_lock(srcamap);
 
 	/*
-	 * need to double check reference count now.  the reference count
-	 * could have changed while we were in malloc.  if the reference count
-	 * dropped down to one we take over the old map rather than
-	 * copying the amap.
+	 * Re-check the reference count with the lock held.  If it has
+	 * dropped to one - we can take over the existing map.
 	 */
-	if (srcamap->am_ref == 1) {		/* take it over? */
+	if (srcamap->am_ref == 1) {
+		/* Just take over the existing amap. */
 		entry->etype &= ~UVM_ET_NEEDSCOPY;
 		amap_unlock(srcamap);
-		amap->am_ref--;		/* drop final reference to map */
-		amap_free(amap);	/* dispose of new (unused) amap */
+		/* Destroy the new (unused) amap. */
+		amap->am_ref--;
+		amap_free(amap);
 		return;
 	}
 
-	/* we must copy it now. */
+	/*
+	 * Copy the slots.
+	 */
 	for (lcv = 0; lcv < slots; lcv += n) {
 		srcslot = entry->aref.ar_pageoff + lcv;
 		i = UVM_AMAP_SLOTIDX(lcv);
@@ -659,10 +675,9 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int waitf,
 	}
 
 	/*
-	 * drop our reference to the old amap (srcamap).
-	 * we know that the reference count on srcamap is greater than
-	 * one (we checked above), so there is no way we could drop
-	 * the count to zero.  [and no need to worry about freeing it]
+	 * Drop our reference to the old amap (srcamap) and unlock.
+	 * Since the reference count on srcamap is greater than one,
+	 * (we checked above), it cannot drop to zero while it is locked.
 	 */
 	srcamap->am_ref--;
 	KASSERT(srcamap->am_ref > 0);
@@ -690,7 +705,9 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int waitf,
 	if (amap->am_lock == NULL)
 		amap_lock_alloc(amap);
 
-	/* install new amap. */
+	/*
+	 * Install new amap.
+	 */
 	entry->aref.ar_pageoff = 0;
 	entry->aref.ar_amap = amap;
 	entry->etype &= ~UVM_ET_NEEDSCOPY;
@@ -723,9 +740,9 @@ amap_cow_now(struct vm_map *map, struct vm_map_entry *entry)
 	struct vm_amap_chunk *chunk;
 
 	/*
-	 * note that if we wait, we must ReStart the "lcv" for loop because
-	 * some other process could reorder the anon's in the
-	 * am_anon[] array on us.
+	 * note that if we unlock the amap then we must ReStart the "lcv" for
+	 * loop because some other process could reorder the anon's in the
+	 * am_anon[] array on us while the lock is dropped.
 	 */
 ReStart:
 	amap_lock(amap);
@@ -739,7 +756,10 @@ ReStart:
 			pg = anon->an_page;
 			KASSERT(anon->an_lock == amap->am_lock);
 
-			/* page must be resident since parent is wired */
+			/*
+			 * The old page must be resident since the parent is
+			 * wired.
+			 */
 			KASSERT(pg != NULL);
 
 			/*
@@ -750,7 +770,7 @@ ReStart:
 				continue;
 
 			/*
-			 * if the page is busy then we have to wait for
+			 * If the page is busy, then we have to unlock, wait for
 			 * it and then restart.
 			 */
 			if (pg->pg_flags & PG_BUSY) {
@@ -760,7 +780,10 @@ ReStart:
 				goto ReStart;
 			}
 
-			/* ok, time to do a copy-on-write to a new anon */
+			/*
+			 * Perform a copy-on-write.
+			 * First - get a new anon and a page.
+			 */
 			nanon = uvm_analloc();
 			if (nanon != NULL) {
 				/* the new anon will share the amap's lock */
@@ -783,18 +806,18 @@ ReStart:
 			}
 
 			/*
-			 * got it... now we can copy the data and replace anon
-			 * with our new one...
+			 * Copy the data and replace anon with the new one.
+			 * Also, setup its lock (share the with amap's lock).
 			 */
-			uvm_pagecopy(pg, npg);		/* old -> new */
-			anon->an_ref--;			/* can't drop to zero */
+			uvm_pagecopy(pg, npg);
+			anon->an_ref--;
 			KASSERT(anon->an_ref > 0);
-			chunk->ac_anon[slot] = nanon;	/* replace */
+			chunk->ac_anon[slot] = nanon;
 
 			/*
-			 * drop PG_BUSY on new page ... since we have had its
-			 * owner locked the whole time it can't be
-			 * PG_RELEASED | PG_WANTED.
+			 * Drop PG_BUSY on new page.  Since its owner was write
+			 * locked all this time - it cannot be PG_RELEASED or
+			 * PG_WANTED.
 			 */
 			atomic_clearbits_int(&npg->pg_flags, PG_BUSY|PG_FAKE);
 			UVM_PAGE_OWN(npg, NULL);
@@ -810,6 +833,8 @@ ReStart:
  * amap_splitref: split a single reference into two separate references
  *
  * => called from uvm_map's clip routines
+ * => origref's map should be locked
+ * => origref->ar_amap should be unlocked (we will lock)
  */
 void
 amap_splitref(struct vm_aref *origref, struct vm_aref *splitref, vaddr_t offset)
@@ -824,12 +849,11 @@ amap_splitref(struct vm_aref *origref, struct vm_aref *splitref, vaddr_t offset)
 
 	amap_lock(amap);
 
-	/* now: we have a valid am_mapped array. */
 	if (amap->am_nslot - origref->ar_pageoff - leftslots <= 0)
 		panic("amap_splitref: map size check failed");
 
 #ifdef UVM_AMAP_PPREF
-        /* Establish ppref before we add a duplicate reference to the amap. */
+	/* Establish ppref before we add a duplicate reference to the amap. */
 	if (amap->am_ppref == NULL)
 		amap_pp_establish(amap);
 #endif
@@ -844,7 +868,9 @@ amap_splitref(struct vm_aref *origref, struct vm_aref *splitref, vaddr_t offset)
 #ifdef UVM_AMAP_PPREF
 
 /*
- * amap_pp_establish: add a ppref array to an amap, if possible
+ * amap_pp_establish: add a ppref array to an amap, if possible.
+ *
+ * => amap should be locked by caller* => amap should be locked by caller
  */
 void
 amap_pp_establish(struct vm_amap *amap)
@@ -854,13 +880,12 @@ amap_pp_establish(struct vm_amap *amap)
 	amap->am_ppref = mallocarray(amap->am_nslot, sizeof(int),
 	    M_UVMAMAP, M_NOWAIT|M_ZERO);
 
-	/* if we fail then we just won't use ppref for this amap */
 	if (amap->am_ppref == NULL) {
-		amap->am_ppref = PPREF_NONE;	/* not using it */
+		/* Failure - just do not use ppref. */
+		amap->am_ppref = PPREF_NONE;
 		return;
 	}
 
-	/* init ppref */
 	pp_setreflen(amap->am_ppref, 0, amap->am_ref, amap->am_nslot);
 }
 
@@ -868,7 +893,8 @@ amap_pp_establish(struct vm_amap *amap)
  * amap_pp_adjref: adjust reference count to a part of an amap using the
  * per-page reference count array.
  *
- * => caller must check that ppref != PPREF_NONE before calling
+ * => caller must check that ppref != PPREF_NONE before calling.
+ * => map and amap must be locked.
  */
 void
 amap_pp_adjref(struct vm_amap *amap, int curslot, vsize_t slotlen, int adjval)
@@ -883,8 +909,7 @@ amap_pp_adjref(struct vm_amap *amap, int curslot, vsize_t slotlen, int adjval)
  	prevlcv = 0;
 
 	/*
- 	 * first advance to the correct place in the ppref array,
- 	 * fragment if needed.
+	 * Advance to the correct place in the array, fragment if needed.
 	 */
 	for (lcv = 0 ; lcv < curslot ; lcv += len) {
 		pp_getreflen(ppref, lcv, &ref, &len);
@@ -898,17 +923,17 @@ amap_pp_adjref(struct vm_amap *amap, int curslot, vsize_t slotlen, int adjval)
 	if (lcv != 0)
 		pp_getreflen(ppref, prevlcv, &prevref, &prevlen);
 	else {
-		/* Ensure that the "prevref == ref" test below always
-		 * fails, since we're starting from the beginning of
-		 * the ppref array; that is, there is no previous
-		 * chunk.  
+		/*
+		 * Ensure that the "prevref == ref" test below always
+		 * fails, since we are starting from the beginning of
+		 * the ppref array; that is, there is no previous chunk.
 		 */
 		prevref = -1;
 		prevlen = 0;
 	}
 
 	/*
-	 * now adjust reference counts in range.  merge the first
+	 * Now adjust reference counts in range.  Merge the first
 	 * changed entry with the last unchanged entry if possible.
 	 */
 	if (lcv != curslot)
@@ -972,12 +997,19 @@ amap_wiperange_chunk(struct vm_amap *amap, struct vm_amap_chunk *chunk,
 		if (refs == 0) {
 			uvm_anfree(anon);
 		}
-	}
+
+		/*
+		 * done with this anon, next ...!
+		 */
+
+	}	/* end of 'for' loop */
 }
 
 /*
- * amap_wiperange: wipe out a range of an amap
- * [different from amap_wipeout because the amap is kept intact]
+ * amap_wiperange: wipe out a range of an amap.
+ * Note: different from amap_wipeout because the amap is kept intact.
+ *
+ * => Both map and amap must be locked by caller.
  */
 void
 amap_wiperange(struct vm_amap *amap, int slotoff, int slots)
@@ -991,8 +1023,8 @@ amap_wiperange(struct vm_amap *amap, int slotoff, int slots)
 	endbucket = UVM_AMAP_BUCKET(amap, slotoff + slots - 1);
 
 	/*
-	 * we can either traverse the amap by am_chunks or by am_buckets
-	 * depending on which is cheaper.    decide now.
+	 * We can either traverse the amap by am_chunks or by am_buckets.
+	 * Determine which way is less expensive.
 	 */
 	if (UVM_AMAP_SMALL(amap))
 		amap_wiperange_chunk(amap, &amap->am_small, slotoff, slots);
@@ -1110,7 +1142,9 @@ nextamap:
 }
 
 /*
- * amap_lookup: look up a page in an amap
+ * amap_lookup: look up a page in an amap.
+ *
+ * => amap should be locked by caller.
  */
 struct vm_anon *
 amap_lookup(struct vm_aref *aref, vaddr_t offset)
@@ -1131,8 +1165,9 @@ amap_lookup(struct vm_aref *aref, vaddr_t offset)
 }
 
 /*
- * amap_lookups: look up a range of pages in an amap
+ * amap_lookups: look up a range of pages in an amap.
  *
+ * => amap should be locked by caller.
  * => XXXCDC: this interface is biased toward array-based amaps.  fix.
  */
 void
@@ -1184,9 +1219,10 @@ amap_populate(struct vm_aref *aref, vaddr_t offset)
 }
 
 /*
- * amap_add: add (or replace) a page to an amap
+ * amap_add: add (or replace) a page to an amap.
  *
- * => returns 0 if adding the page was successful or 1 when not.
+ * => amap should be locked by caller.
+ * => anon must have the lock associated with this amap.
  */
 int
 amap_add(struct vm_aref *aref, vaddr_t offset, struct vm_anon *anon,
@@ -1228,7 +1264,9 @@ amap_add(struct vm_aref *aref, vaddr_t offset, struct vm_anon *anon,
 }
 
 /*
- * amap_unadd: remove a page from an amap
+ * amap_unadd: remove a page from an amap.
+ *
+ * => amap should be locked by caller.
  */
 void
 amap_unadd(struct vm_aref *aref, vaddr_t offset)

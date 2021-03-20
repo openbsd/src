@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.141 2021/03/12 14:15:49 jsg Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.142 2021/03/20 10:24:21 mpi Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -223,7 +223,9 @@ uvm_km_suballoc(struct vm_map *map, vaddr_t *min, vaddr_t *max, vsize_t size,
 		uvm_map_setup(submap, vm_map_pmap(map), *min, *max, flags);
 	}
 
-	/* now let uvm_map_submap plug in it...  */
+	/*
+	 * now let uvm_map_submap plug in it...
+	 */
 	if (uvm_map_submap(map, *min, *max, submap) != 0)
 		panic("uvm_km_suballoc: submap allocation failed");
 
@@ -541,8 +543,9 @@ uvm_km_valloc_align(struct vm_map *map, vsize_t size, vsize_t align, int flags)
 	size = round_page(size);
 	kva = vm_map_min(map);		/* hint */
 
-	/* allocate some virtual space, demand filled by kernel_object. */
-
+	/*
+	 * allocate some virtual space.  will be demand filled by kernel_object.
+	 */
 	if (__predict_false(uvm_map(map, &kva, size, uvm.kernel_object,
 	    UVM_UNKNOWN_OFFSET, align,
 	    UVM_MAPFLAG(PROT_READ | PROT_WRITE, PROT_READ | PROT_WRITE,
