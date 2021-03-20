@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.368 2021/03/01 11:05:42 bluhm Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.369 2021/03/20 01:15:28 dlg Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -688,13 +688,11 @@ ip_fragment(struct mbuf *m, struct mbuf_list *fml, struct ifnet *ifp,
 			goto bad;
 		}
 		ml_enqueue(fml, m);
+		if ((error = m_dup_pkthdr(m, m0, M_DONTWAIT)) != 0)
+			goto bad;
 		m->m_data += max_linkhdr;
 		mhip = mtod(m, struct ip *);
 		*mhip = *ip;
-		/* we must inherit MCAST/BCAST flags, routing table and prio */
-		m->m_flags |= m0->m_flags & (M_MCAST|M_BCAST);
-		m->m_pkthdr.ph_rtableid = m0->m_pkthdr.ph_rtableid;
-		m->m_pkthdr.pf.prio = m0->m_pkthdr.pf.prio;
 		if (hlen > sizeof (struct ip)) {
 			mhlen = ip_optcopy(ip, mhip) + sizeof (struct ip);
 			mhip->ip_hl = mhlen >> 2;
