@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ifq_enqueue.9,v 1.11 2020/08/28 09:15:16 fcambus Exp $
+.\"     $OpenBSD: ifq_enqueue.9,v 1.12 2021/03/20 21:02:56 sthen Exp $
 .\"
 .\"  Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 28 2020 $
+.Dd $Mdocdate: March 20 2021 $
 .Dt IFQ_ENQUEUE 9
 .Os
 .Sh NAME
@@ -34,7 +34,7 @@
 .In net/if_var.h
 .Ft int
 .Fn ifq_enqueue "struct ifqueue *ifq" "struct mbuf *m"
-.Ft struft mbuf *
+.Ft struct mbuf *
 .Fn ifq_dequeue "struct ifqueue *ifq"
 .Ft unsigned int
 .Fn ifq_purge "struct ifqueue *ifq"
