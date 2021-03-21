@@ -1,4 +1,4 @@
-/* $OpenBSD: tls12_record_layer.c,v 1.23 2021/03/02 17:26:25 jsing Exp $ */
+/* $OpenBSD: tls12_record_layer.c,v 1.24 2021/03/21 19:08:22 tb Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -922,6 +922,7 @@ tls12_record_layer_open_record_protected_cipher(struct tls12_record_layer *rl,
 	int ret = 0;
 
 	memset(&cbb_mac, 0, sizeof(cbb_mac));
+	memset(&rrec, 0, sizeof(rrec));
 
 	if (!tls12_record_protection_block_size(rl->read, &block_size))
 		goto err;
