@@ -1,4 +1,4 @@
-/* $OpenBSD: wstpad.c,v 1.27 2021/03/03 19:44:37 bru Exp $ */
+/* $OpenBSD: wstpad.c,v 1.28 2021/03/21 16:20:49 bru Exp $ */
 
 /*
  * Copyright (c) 2015, 2016 Ulf Brosziewski
@@ -1668,6 +1668,19 @@ wstpad_reset(struct wsmouseinput *input)
 		input->sbtn.sync = input->sbtn.buttons;
 		input->sbtn.buttons = 0;
 	}
+}
+
+void
+wstpad_cleanup(struct wsmouseinput *input)
+{
+	struct wstpad *tp = input->tp;
+	int slots;
+
+	timeout_del(&tp->tap.to);
+	slots = imax(input->mt.num_slots, 1);
+	free(tp->tpad_touches, M_DEVBUF, slots * sizeof(struct tpad_touch));
+	free(tp, M_DEVBUF, sizeof(struct wstpad));
+	input->tp = NULL;
 }
 
 int

@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.66 2020/07/29 05:53:52 anton Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.67 2021/03/21 16:20:49 bru Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -1712,5 +1712,8 @@ wsmouse_input_reset(struct wsmouseinput *input)
 void
 wsmouse_input_cleanup(struct wsmouseinput *input)
 {
+	if (input->tp != NULL)
+		wstpad_cleanup(input);
+
 	free_mt_slots(input);
 }

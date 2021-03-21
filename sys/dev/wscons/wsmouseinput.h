@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouseinput.h,v 1.14 2019/08/19 21:19:38 bru Exp $ */
+/* $OpenBSD: wsmouseinput.h,v 1.15 2021/03/21 16:20:49 bru Exp $ */
 
 /*
  * Copyright (c) 2015, 2016 Ulf Brosziewski
@@ -193,6 +193,7 @@ void wstpad_compat_convert(struct wsmouseinput *, struct evq_access *);
 void wstpad_init_deceleration(struct wsmouseinput *);
 int wstpad_configure(struct wsmouseinput *);
 void wstpad_reset(struct wsmouseinput *);
+void wstpad_cleanup(struct wsmouseinput *);
 
 int wstpad_get_param(struct wsmouseinput *, int, int *);
 int wstpad_set_param(struct wsmouseinput *, int, int);
