@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.46 2021/03/10 18:28:01 jsing Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.47 2021/03/21 18:37:26 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -3128,10 +3128,10 @@ test_tlsext_keyshare_client(void)
 	if ((ssl = SSL_new(ssl_ctx)) == NULL)
 		errx(1, "failed to create SSL");
 
-	if ((S3I(ssl)->hs_tls13.key_share =
+	if ((S3I(ssl)->hs.tls13.key_share =
 	    tls13_key_share_new_nid(NID_X25519)) == NULL)
 		errx(1, "failed to create key share");
-	if (!tls13_key_share_generate(S3I(ssl)->hs_tls13.key_share))
+	if (!tls13_key_share_generate(S3I(ssl)->hs.tls13.key_share))
 		errx(1, "failed to generate key share");
 
 	S3I(ssl)->hs.our_max_tls_version = TLS1_2_VERSION;
@@ -3251,14 +3251,14 @@ test_tlsext_keyshare_server(void)
 		goto done;
 	}
 
-	if ((S3I(ssl)->hs_tls13.key_share =
+	if ((S3I(ssl)->hs.tls13.key_share =
 	    tls13_key_share_new_nid(NID_X25519)) == NULL)
 		errx(1, "failed to create key share");
-	if (!tls13_key_share_generate(S3I(ssl)->hs_tls13.key_share))
+	if (!tls13_key_share_generate(S3I(ssl)->hs.tls13.key_share))
 		errx(1, "failed to generate key share");
 
 	CBS_init(&cbs, bogokey, sizeof(bogokey));
-	if (!tls13_key_share_peer_public(S3I(ssl)->hs_tls13.key_share,
+	if (!tls13_key_share_peer_public(S3I(ssl)->hs.tls13.key_share,
 	    0x001d, &cbs)) {
 		FAIL("failed to load peer public key\n");
 		failure = 1;
@@ -3284,10 +3284,10 @@ test_tlsext_keyshare_server(void)
 		goto done;
 	}
 
-	if ((S3I(ssl)->hs_tls13.key_share =
+	if ((S3I(ssl)->hs.tls13.key_share =
 	    tls13_key_share_new_nid(NID_X25519)) == NULL)
 		errx(1, "failed to create key share");
-	if (!tls13_key_share_generate(S3I(ssl)->hs_tls13.key_share))
+	if (!tls13_key_share_generate(S3I(ssl)->hs.tls13.key_share))
 		errx(1, "failed to generate key share");
 
 	CBS_init(&cbs, data, dlen);
@@ -3357,8 +3357,8 @@ test_tlsext_cookie_client(void)
 	}
 
 	/* Normally would be set by receiving a server cookie in an HRR */
-	S3I(ssl)->hs_tls13.cookie = strdup(cookie);
-	S3I(ssl)->hs_tls13.cookie_len = strlen(cookie);
+	S3I(ssl)->hs.tls13.cookie = strdup(cookie);
+	S3I(ssl)->hs.tls13.cookie_len = strlen(cookie);
 
 	if (!tlsext_cookie_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should need cookie\n");
@@ -3388,7 +3388,7 @@ test_tlsext_cookie_client(void)
 
 	CBS_init(&cbs, data, dlen);
 
-	/* Checks cookie against what's in the hs_tls13 */
+	/* Checks cookie against what's in the hs.tls13 */
 	if (!tlsext_cookie_server_parse(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("failed to parse client cookie\n");
 		failure = 1;
@@ -3444,8 +3444,8 @@ test_tlsext_cookie_server(void)
 	}
 
 	/* Normally would be set by server before sending HRR */
-	S3I(ssl)->hs_tls13.cookie = strdup(cookie);
-	S3I(ssl)->hs_tls13.cookie_len = strlen(cookie);
+	S3I(ssl)->hs.tls13.cookie = strdup(cookie);
+	S3I(ssl)->hs.tls13.cookie_len = strlen(cookie);
 
 	if (!tlsext_cookie_server_needs(ssl, SSL_TLSEXT_MSG_SH)) {
 		FAIL("server should need cookie\n");
@@ -3481,9 +3481,9 @@ test_tlsext_cookie_server(void)
 		goto done;
 	}
 
-	freezero(S3I(ssl)->hs_tls13.cookie, S3I(ssl)->hs_tls13.cookie_len);
-	S3I(ssl)->hs_tls13.cookie = NULL;
-	S3I(ssl)->hs_tls13.cookie_len = 0;
+	freezero(S3I(ssl)->hs.tls13.cookie, S3I(ssl)->hs.tls13.cookie_len);
+	S3I(ssl)->hs.tls13.cookie = NULL;
+	S3I(ssl)->hs.tls13.cookie_len = 0;
 
 	if (!tlsext_cookie_client_parse(ssl, SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
 		FAIL("failed to parse server cookie\n");
@@ -3491,8 +3491,8 @@ test_tlsext_cookie_server(void)
 		goto done;
 	}
 
-	if (memcmp(cookie, S3I(ssl)->hs_tls13.cookie,
-		S3I(ssl)->hs_tls13.cookie_len) != 0) {
+	if (memcmp(cookie, S3I(ssl)->hs.tls13.cookie,
+		S3I(ssl)->hs.tls13.cookie_len) != 0) {
 		FAIL("parsed server cookie does not match sent cookie\n");
 		failure = 1;
 		goto done;
