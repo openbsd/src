@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.1 2021/03/05 22:03:51 tobhe Exp $	*/
+/*	$OpenBSD: print.c,v 1.2 2021/03/21 22:18:00 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019-2021 Tobias Heider <tobias.heider@stusta.de>
@@ -231,11 +231,11 @@ print_policy(struct iked_policy *pol)
 		    0));
 	}
 
-	if (pol->pol_tag[0] != '\0')
-		print_verbose(" tag \"%s\"", pol->pol_tag);
-
 	if (pol->pol_iface != 0 && if_indextoname(pol->pol_iface, iface) != NULL)
 		print_verbose(" iface %s", iface);
+
+	if (pol->pol_tag[0] != '\0')
+		print_verbose(" tag \"%s\"", pol->pol_tag);
 
 	if (pol->pol_tap != 0)
 		print_verbose(" tap \"enc%u\"", pol->pol_tap);
