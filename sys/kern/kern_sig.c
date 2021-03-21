@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.278 2021/03/12 10:13:28 mpi Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.279 2021/03/21 10:24:36 mpi Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -118,8 +118,8 @@ const int sigprop[NSIG + 1] = {
 	SA_IGNORE,		/* SIGTHR */
 };
 
-#define	contsigmask	(sigmask(SIGCONT))
-#define	stopsigmask	(sigmask(SIGSTOP) | sigmask(SIGTSTP) | \
+#define	CONTSIGMASK	(sigmask(SIGCONT))
+#define	STOPSIGMASK	(sigmask(SIGSTOP) | sigmask(SIGTSTP) | \
 			    sigmask(SIGTTIN) | sigmask(SIGTTOU))
 
 void setsigvec(struct proc *, int, struct sigaction *);
@@ -996,11 +996,11 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 	siglist = (type == SPROCESS) ? &pr->ps_siglist : &p->p_siglist;
 	if (prop & SA_CONT) {
 		siglist = &p->p_siglist;
-		atomic_clearbits_int(siglist, stopsigmask);
+		atomic_clearbits_int(siglist, STOPSIGMASK);
 	}
 	if (prop & SA_STOP) {
 		siglist = &p->p_siglist;
-		atomic_clearbits_int(siglist, contsigmask);
+		atomic_clearbits_int(siglist, CONTSIGMASK);
 		atomic_clearbits_int(&p->p_flag, P_CONTINUED);
 	}
 	atomic_setbits_int(siglist, mask);
@@ -1194,7 +1194,7 @@ cursig(struct proc *p)
 	for (;;) {
 		mask = SIGPENDING(p);
 		if (pr->ps_flags & PS_PPWAIT)
-			mask &= ~stopsigmask;
+			mask &= ~STOPSIGMASK;
 		if (mask == 0)	 	/* no signal to send */
 			return (0);
 		signum = ffs((long)mask);
