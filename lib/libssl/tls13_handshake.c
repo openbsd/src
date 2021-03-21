@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_handshake.c,v 1.64 2020/07/30 16:23:17 tb Exp $	*/
+/*	$OpenBSD: tls13_handshake.c,v 1.65 2021/03/21 18:36:34 jsing Exp $	*/
 /*
  * Copyright (c) 2018-2019 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
@@ -428,8 +428,9 @@ tls13_handshake_send_action(struct tls13_ctx *ctx,
 
 	if (action->send_preserve_transcript_hash) {
 		if (!tls1_transcript_hash_value(ctx->ssl,
-		    ctx->hs->transcript_hash, sizeof(ctx->hs->transcript_hash),
-		    &ctx->hs->transcript_hash_len))
+		    ctx->hs->tls13.transcript_hash,
+		    sizeof(ctx->hs->tls13.transcript_hash),
+		    &ctx->hs->tls13.transcript_hash_len))
 			return TLS13_IO_FAILURE;
 	}
 
@@ -471,8 +472,9 @@ tls13_handshake_recv_action(struct tls13_ctx *ctx,
 
 	if (action->recv_preserve_transcript_hash) {
 		if (!tls1_transcript_hash_value(ctx->ssl,
-		    ctx->hs->transcript_hash, sizeof(ctx->hs->transcript_hash),
-		    &ctx->hs->transcript_hash_len))
+		    ctx->hs->tls13.transcript_hash,
+		    sizeof(ctx->hs->tls13.transcript_hash),
+		    &ctx->hs->tls13.transcript_hash_len))
 			return TLS13_IO_FAILURE;
 	}
 

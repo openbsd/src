@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_legacy.c,v 1.22 2021/02/25 17:06:05 jsing Exp $ */
+/*	$OpenBSD: tls13_legacy.c,v 1.23 2021/03/21 18:36:34 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -361,7 +361,7 @@ tls13_use_legacy_client(struct tls13_ctx *ctx)
 	s->internal->handshake_func = s->method->internal->ssl_connect;
 	s->client_version = s->version = s->method->internal->max_tls_version;
 
-	S3I(s)->hs.state = SSL3_ST_CR_SRVR_HELLO_A;
+	ctx->hs->state = SSL3_ST_CR_SRVR_HELLO_A;
 
 	return 1;
 }
@@ -378,7 +378,7 @@ tls13_use_legacy_server(struct tls13_ctx *ctx)
 	s->client_version = s->version = s->method->internal->max_tls_version;
 	s->server = 1;
 
-	S3I(s)->hs.state = SSL3_ST_SR_CLNT_HELLO_A;
+	ctx->hs->state = SSL3_ST_SR_CLNT_HELLO_A;
 
 	return 1;
 }
@@ -396,7 +396,7 @@ tls13_legacy_accept(SSL *ssl)
 		}
 		ssl->internal->tls13 = ctx;
 		ctx->ssl = ssl;
-		ctx->hs = &S3I(ssl)->hs_tls13;
+		ctx->hs = &S3I(ssl)->hs;
 
 		if (!tls13_server_init(ctx)) {
 			if (ERR_peek_error() == 0)
@@ -406,13 +406,13 @@ tls13_legacy_accept(SSL *ssl)
 	}
 
 	ERR_clear_error();
-	S3I(ssl)->hs.state = SSL_ST_ACCEPT;
+	ctx->hs->state = SSL_ST_ACCEPT;
 
 	ret = tls13_server_accept(ctx);
 	if (ret == TLS13_IO_USE_LEGACY)
 		return ssl->method->internal->ssl_accept(ssl);
 	if (ret == TLS13_IO_SUCCESS)
-		S3I(ssl)->hs.state = SSL_ST_OK;
+		ctx->hs->state = SSL_ST_OK;
 
 	return tls13_legacy_return_code(ssl, ret);
 }
@@ -438,7 +438,7 @@ tls13_legacy_connect(SSL *ssl)
 		}
 		ssl->internal->tls13 = ctx;
 		ctx->ssl = ssl;
-		ctx->hs = &S3I(ssl)->hs_tls13;
+		ctx->hs = &S3I(ssl)->hs;
 
 		if (!tls13_client_init(ctx)) {
 			if (ERR_peek_error() == 0)
@@ -448,13 +448,13 @@ tls13_legacy_connect(SSL *ssl)
 	}
 
 	ERR_clear_error();
-	S3I(ssl)->hs.state = SSL_ST_CONNECT;
+	ctx->hs->state = SSL_ST_CONNECT;
 
 	ret = tls13_client_connect(ctx);
 	if (ret == TLS13_IO_USE_LEGACY)
 		return ssl->method->internal->ssl_connect(ssl);
 	if (ret == TLS13_IO_SUCCESS)
-		S3I(ssl)->hs.state = SSL_ST_OK;
+		ctx->hs->state = SSL_ST_OK;
 
 	return tls13_legacy_return_code(ssl, ret);
 }

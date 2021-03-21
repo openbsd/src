@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.57 2021/03/21 16:56:42 jsing Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.58 2021/03/21 18:36:34 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -223,7 +223,7 @@ tls13_legacy_ocsp_status_recv_cb(void *arg)
 static int
 tls13_phh_update_local_traffic_secret(struct tls13_ctx *ctx)
 {
-	struct tls13_secrets *secrets = ctx->hs->secrets;
+	struct tls13_secrets *secrets = ctx->hs->tls13.secrets;
 
 	if (ctx->mode == TLS13_HS_CLIENT)
 		return (tls13_update_client_traffic_secret(secrets) &&
@@ -237,7 +237,7 @@ tls13_phh_update_local_traffic_secret(struct tls13_ctx *ctx)
 static int
 tls13_phh_update_peer_traffic_secret(struct tls13_ctx *ctx)
 {
-	struct tls13_secrets *secrets = ctx->hs->secrets;
+	struct tls13_secrets *secrets = ctx->hs->tls13.secrets;
 
 	if (ctx->mode == TLS13_HS_CLIENT)
 		return (tls13_update_server_traffic_secret(secrets) &&
@@ -503,16 +503,16 @@ tls13_synthetic_handshake_message(struct tls13_ctx *ctx)
 int
 tls13_clienthello_hash_init(struct tls13_ctx *ctx)
 {
-	if (ctx->hs->clienthello_md_ctx != NULL)
+	if (ctx->hs->tls13.clienthello_md_ctx != NULL)
 		return 0;
-	if ((ctx->hs->clienthello_md_ctx = EVP_MD_CTX_new()) == NULL)
+	if ((ctx->hs->tls13.clienthello_md_ctx = EVP_MD_CTX_new()) == NULL)
 		return 0;
-	if (!EVP_DigestInit_ex(ctx->hs->clienthello_md_ctx,
+	if (!EVP_DigestInit_ex(ctx->hs->tls13.clienthello_md_ctx,
 	    EVP_sha256(), NULL))
 		return 0;
 
-	if ((ctx->hs->clienthello_hash == NULL) &&
-	    (ctx->hs->clienthello_hash = calloc(1, EVP_MAX_MD_SIZE)) ==
+	if ((ctx->hs->tls13.clienthello_hash == NULL) &&
+	    (ctx->hs->tls13.clienthello_hash = calloc(1, EVP_MAX_MD_SIZE)) ==
 	    NULL)
 		return 0;
 
@@ -520,7 +520,7 @@ tls13_clienthello_hash_init(struct tls13_ctx *ctx)
 }
 
 void
-tls13_clienthello_hash_clear(struct ssl_handshake_tls13_st *hs)
+tls13_clienthello_hash_clear(struct ssl_handshake_tls13_st *hs) /* XXX */
 {
 	EVP_MD_CTX_free(hs->clienthello_md_ctx);
 	hs->clienthello_md_ctx = NULL;
@@ -532,7 +532,7 @@ int
 tls13_clienthello_hash_update_bytes(struct tls13_ctx *ctx, void *data,
     size_t len)
 {
-	return EVP_DigestUpdate(ctx->hs->clienthello_md_ctx, data, len);
+	return EVP_DigestUpdate(ctx->hs->tls13.clienthello_md_ctx, data, len);
 }
 
 int
@@ -545,12 +545,12 @@ tls13_clienthello_hash_update(struct tls13_ctx *ctx, CBS *cbs)
 int
 tls13_clienthello_hash_finalize(struct tls13_ctx *ctx)
 {
-	if (!EVP_DigestFinal_ex(ctx->hs->clienthello_md_ctx,
-	    ctx->hs->clienthello_hash,
-	    &ctx->hs->clienthello_hash_len))
+	if (!EVP_DigestFinal_ex(ctx->hs->tls13.clienthello_md_ctx,
+	    ctx->hs->tls13.clienthello_hash,
+	    &ctx->hs->tls13.clienthello_hash_len))
 		return 0;
-	EVP_MD_CTX_free(ctx->hs->clienthello_md_ctx);
-	ctx->hs->clienthello_md_ctx = NULL;
+	EVP_MD_CTX_free(ctx->hs->tls13.clienthello_md_ctx);
+	ctx->hs->tls13.clienthello_md_ctx = NULL;
 	return 1;
 }
 
@@ -560,18 +560,18 @@ tls13_clienthello_hash_validate(struct tls13_ctx *ctx)
 	unsigned char new_ch_hash[EVP_MAX_MD_SIZE];
 	unsigned int new_ch_hash_len;
 
-	if (ctx->hs->clienthello_hash == NULL)
+	if (ctx->hs->tls13.clienthello_hash == NULL)
 		return 0;
 
-	if (!EVP_DigestFinal_ex(ctx->hs->clienthello_md_ctx,
+	if (!EVP_DigestFinal_ex(ctx->hs->tls13.clienthello_md_ctx,
 	    new_ch_hash, &new_ch_hash_len))
 		return 0;
-	EVP_MD_CTX_free(ctx->hs->clienthello_md_ctx);
-	ctx->hs->clienthello_md_ctx = NULL;
+	EVP_MD_CTX_free(ctx->hs->tls13.clienthello_md_ctx);
+	ctx->hs->tls13.clienthello_md_ctx = NULL;
 
-	if (ctx->hs->clienthello_hash_len != new_ch_hash_len)
+	if (ctx->hs->tls13.clienthello_hash_len != new_ch_hash_len)
 		return 0;
-	if (memcmp(ctx->hs->clienthello_hash, new_ch_hash,
+	if (memcmp(ctx->hs->tls13.clienthello_hash, new_ch_hash,
 	    new_ch_hash_len) != 0)
 		return 0;
 
@@ -584,7 +584,7 @@ tls13_exporter(struct tls13_ctx *ctx, const uint8_t *label, size_t label_len,
     size_t out_len)
 {
 	struct tls13_secret context, export_out, export_secret;
-	struct tls13_secrets *secrets = ctx->hs->secrets;
+	struct tls13_secrets *secrets = ctx->hs->tls13.secrets;
 	EVP_MD_CTX *md_ctx = NULL;
 	unsigned int md_out_len;
 	int md_len;

@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.204 2021/02/07 15:26:32 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.205 2021/03/21 18:36:34 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1565,10 +1565,10 @@ ssl3_free(SSL *s)
 	EC_KEY_free(S3I(s)->tmp.ecdh);
 	freezero(S3I(s)->tmp.x25519, X25519_KEY_LENGTH);
 
-	tls13_key_share_free(S3I(s)->hs_tls13.key_share);
-	tls13_secrets_destroy(S3I(s)->hs_tls13.secrets);
-	freezero(S3I(s)->hs_tls13.cookie, S3I(s)->hs_tls13.cookie_len);
-	tls13_clienthello_hash_clear(&S3I(s)->hs_tls13);
+	tls13_key_share_free(S3I(s)->hs.tls13.key_share);
+	tls13_secrets_destroy(S3I(s)->hs.tls13.secrets);
+	freezero(S3I(s)->hs.tls13.cookie, S3I(s)->hs.tls13.cookie_len);
+	tls13_clienthello_hash_clear(&S3I(s)->hs.tls13);
 
 	sk_X509_NAME_pop_free(S3I(s)->tmp.ca_names, X509_NAME_free);
 
@@ -1605,15 +1605,15 @@ ssl3_clear(SSL *s)
 	S3I(s)->hs.sigalgs = NULL;
 	S3I(s)->hs.sigalgs_len = 0;
 
-	tls13_key_share_free(S3I(s)->hs_tls13.key_share);
-	S3I(s)->hs_tls13.key_share = NULL;
+	tls13_key_share_free(S3I(s)->hs.tls13.key_share);
+	S3I(s)->hs.tls13.key_share = NULL;
 
-	tls13_secrets_destroy(S3I(s)->hs_tls13.secrets);
-	S3I(s)->hs_tls13.secrets = NULL;
-	freezero(S3I(s)->hs_tls13.cookie, S3I(s)->hs_tls13.cookie_len);
-	S3I(s)->hs_tls13.cookie = NULL;
-	S3I(s)->hs_tls13.cookie_len = 0;
-	tls13_clienthello_hash_clear(&S3I(s)->hs_tls13);
+	tls13_secrets_destroy(S3I(s)->hs.tls13.secrets);
+	S3I(s)->hs.tls13.secrets = NULL;
+	freezero(S3I(s)->hs.tls13.cookie, S3I(s)->hs.tls13.cookie_len);
+	S3I(s)->hs.tls13.cookie = NULL;
+	S3I(s)->hs.tls13.cookie_len = 0;
+	tls13_clienthello_hash_clear(&S3I(s)->hs.tls13);
 
 	S3I(s)->hs.extensions_seen = 0;
 
@@ -1678,8 +1678,8 @@ _SSL_get_peer_tmp_key(SSL *s, EVP_PKEY **key)
 	} else if (sc->peer_x25519_tmp != NULL) {
 		if (!ssl_kex_dummy_ecdhe_x25519(pkey))
 			goto err;
-	} else if (S3I(s)->hs_tls13.key_share != NULL) {
-		if (!tls13_key_share_peer_pkey(S3I(s)->hs_tls13.key_share,
+	} else if (S3I(s)->hs.tls13.key_share != NULL) {
+		if (!tls13_key_share_peer_pkey(S3I(s)->hs.tls13.key_share,
 		    pkey))
 			goto err;
 	} else {

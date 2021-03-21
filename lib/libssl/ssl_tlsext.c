@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.87 2021/03/10 18:27:02 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.88 2021/03/21 18:36:34 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -226,7 +226,7 @@ tlsext_supportedgroups_server_parse(SSL *s, uint16_t msg_type, CBS *cbs,
 		uint16_t *groups;
 		int i;
 
-		if (S3I(s)->hs_tls13.hrr) {
+		if (S3I(s)->hs.tls13.hrr) {
 			if (SSI(s)->tlsext_supportedgroups == NULL) {
 				*alert = SSL_AD_HANDSHAKE_FAILURE;
 				return 0;
@@ -759,7 +759,7 @@ tlsext_sni_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 		goto err;
 	}
 
-	if (s->internal->hit || S3I(s)->hs_tls13.hrr) {
+	if (s->internal->hit || S3I(s)->hs.tls13.hrr) {
 		if (s->session->tlsext_hostname == NULL) {
 			*alert = TLS1_AD_UNRECOGNIZED_NAME;
 			goto err;
@@ -1416,7 +1416,7 @@ tlsext_keyshare_client_build(SSL *s, uint16_t msg_type, CBB *cbb)
 	if (!CBB_add_u16_length_prefixed(cbb, &client_shares))
 		return 0;
 
-	if (!tls13_key_share_public(S3I(s)->hs_tls13.key_share,
+	if (!tls13_key_share_public(S3I(s)->hs.tls13.key_share,
 	    &client_shares))
 		return 0;
 
@@ -1454,7 +1454,7 @@ tlsext_keyshare_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 		 */
 		if (S3I(s)->hs.our_max_tls_version < TLS1_3_VERSION)
 			continue;
-		if (S3I(s)->hs_tls13.key_share != NULL)
+		if (S3I(s)->hs.tls13.key_share != NULL)
 			continue;
 
 		/* XXX - consider implementing server preference. */
@@ -1462,10 +1462,10 @@ tlsext_keyshare_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 			continue;
 
 		/* Decode and store the selected key share. */
-		S3I(s)->hs_tls13.key_share = tls13_key_share_new(group);
-		if (S3I(s)->hs_tls13.key_share == NULL)
+		S3I(s)->hs.tls13.key_share = tls13_key_share_new(group);
+		if (S3I(s)->hs.tls13.key_share == NULL)
 			goto err;
-		if (!tls13_key_share_peer_public(S3I(s)->hs_tls13.key_share,
+		if (!tls13_key_share_peer_public(S3I(s)->hs.tls13.key_share,
 		    group, &key_exchange))
 			goto err;
 	}
@@ -1488,16 +1488,16 @@ int
 tlsext_keyshare_server_build(SSL *s, uint16_t msg_type, CBB *cbb)
 {
 	/* In the case of a HRR, we only send the server selected group. */
-	if (S3I(s)->hs_tls13.hrr) {
-		if (S3I(s)->hs_tls13.server_group == 0)
+	if (S3I(s)->hs.tls13.hrr) {
+		if (S3I(s)->hs.tls13.server_group == 0)
 			return 0;
-		return CBB_add_u16(cbb, S3I(s)->hs_tls13.server_group);
+		return CBB_add_u16(cbb, S3I(s)->hs.tls13.server_group);
 	}
 
-	if (S3I(s)->hs_tls13.key_share == NULL)
+	if (S3I(s)->hs.tls13.key_share == NULL)
 		return 0;
 
-	if (!tls13_key_share_public(S3I(s)->hs_tls13.key_share, cbb))
+	if (!tls13_key_share_public(S3I(s)->hs.tls13.key_share, cbb))
 		return 0;
 
 	return 1;
@@ -1516,17 +1516,17 @@ tlsext_keyshare_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 	if (CBS_len(cbs) == 0) {
 		/* HRR does not include an actual key share. */
 		/* XXX - we should know that we are in a HRR... */
-		S3I(s)->hs_tls13.server_group = group;
+		S3I(s)->hs.tls13.server_group = group;
 		return 1;
 	}
 
 	if (!CBS_get_u16_length_prefixed(cbs, &key_exchange))
 		return 0;
 
-	if (S3I(s)->hs_tls13.key_share == NULL)
+	if (S3I(s)->hs.tls13.key_share == NULL)
 		return 0;
 
-	if (!tls13_key_share_peer_public(S3I(s)->hs_tls13.key_share,
+	if (!tls13_key_share_peer_public(S3I(s)->hs.tls13.key_share,
 	    group, &key_exchange))
 		goto err;
 
@@ -1639,7 +1639,7 @@ tlsext_versions_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 	}
 
 	/* XXX test between min and max once initialization code goes in */
-	S3I(s)->hs_tls13.server_version = selected_version;
+	S3I(s)->hs.tls13.server_version = selected_version;
 
 	return 1;
 }
@@ -1653,7 +1653,7 @@ int
 tlsext_cookie_client_needs(SSL *s, uint16_t msg_type)
 {
 	return (S3I(s)->hs.our_max_tls_version >= TLS1_3_VERSION &&
-	    S3I(s)->hs_tls13.cookie_len > 0 && S3I(s)->hs_tls13.cookie != NULL);
+	    S3I(s)->hs.tls13.cookie_len > 0 && S3I(s)->hs.tls13.cookie != NULL);
 }
 
 int
@@ -1664,8 +1664,8 @@ tlsext_cookie_client_build(SSL *s, uint16_t msg_type, CBB *cbb)
 	if (!CBB_add_u16_length_prefixed(cbb, &cookie))
 		return 0;
 
-	if (!CBB_add_bytes(&cookie, S3I(s)->hs_tls13.cookie,
-	    S3I(s)->hs_tls13.cookie_len))
+	if (!CBB_add_bytes(&cookie, S3I(s)->hs.tls13.cookie,
+	    S3I(s)->hs.tls13.cookie_len))
 		return 0;
 
 	if (!CBB_flush(cbb))
@@ -1682,7 +1682,7 @@ tlsext_cookie_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 	if (!CBS_get_u16_length_prefixed(cbs, &cookie))
 		goto err;
 
-	if (CBS_len(&cookie) != S3I(s)->hs_tls13.cookie_len)
+	if (CBS_len(&cookie) != S3I(s)->hs.tls13.cookie_len)
 		goto err;
 
 	/*
@@ -1690,8 +1690,8 @@ tlsext_cookie_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 	 * sent - client *MUST* send the same cookie with new CR after
 	 * a cookie is sent by the server with an HRR.
 	 */
-	if (!CBS_mem_equal(&cookie, S3I(s)->hs_tls13.cookie,
-	    S3I(s)->hs_tls13.cookie_len)) {
+	if (!CBS_mem_equal(&cookie, S3I(s)->hs.tls13.cookie,
+	    S3I(s)->hs.tls13.cookie_len)) {
 		/* XXX special cookie mismatch alert? */
 		*alert = SSL_AD_ILLEGAL_PARAMETER;
 		return 0;
@@ -1712,7 +1712,7 @@ tlsext_cookie_server_needs(SSL *s, uint16_t msg_type)
 	 * in order to send one, should only be sent with HRR.
 	 */
 	return (S3I(s)->hs.our_max_tls_version >= TLS1_3_VERSION &&
-	    S3I(s)->hs_tls13.cookie_len > 0 && S3I(s)->hs_tls13.cookie != NULL);
+	    S3I(s)->hs.tls13.cookie_len > 0 && S3I(s)->hs.tls13.cookie != NULL);
 }
 
 int
@@ -1725,8 +1725,8 @@ tlsext_cookie_server_build(SSL *s, uint16_t msg_type, CBB *cbb)
 	if (!CBB_add_u16_length_prefixed(cbb, &cookie))
 		return 0;
 
-	if (!CBB_add_bytes(&cookie, S3I(s)->hs_tls13.cookie,
-	    S3I(s)->hs_tls13.cookie_len))
+	if (!CBB_add_bytes(&cookie, S3I(s)->hs.tls13.cookie,
+	    S3I(s)->hs.tls13.cookie_len))
 		return 0;
 
 	if (!CBB_flush(cbb))
@@ -1745,8 +1745,8 @@ tlsext_cookie_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 	 * HRR from a server with a cookie to process after accepting
 	 * one from the server in the same handshake
 	 */
-	if (S3I(s)->hs_tls13.cookie != NULL ||
-	    S3I(s)->hs_tls13.cookie_len != 0) {
+	if (S3I(s)->hs.tls13.cookie != NULL ||
+	    S3I(s)->hs.tls13.cookie_len != 0) {
 		*alert = SSL_AD_ILLEGAL_PARAMETER;
 		return 0;
 	}
@@ -1754,8 +1754,8 @@ tlsext_cookie_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 	if (!CBS_get_u16_length_prefixed(cbs, &cookie))
 		goto err;
 
-	if (!CBS_stow(&cookie, &S3I(s)->hs_tls13.cookie,
-	    &S3I(s)->hs_tls13.cookie_len))
+	if (!CBS_stow(&cookie, &S3I(s)->hs.tls13.cookie,
+	    &S3I(s)->hs.tls13.cookie_len))
 		goto err;
 
 	return 1;
