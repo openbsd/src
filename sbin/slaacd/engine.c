@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.69 2021/03/20 17:07:49 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.70 2021/03/21 13:59:22 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -1932,14 +1932,15 @@ update_iface_ra_prefix(struct slaacd_iface *iface, struct radv *ra,
 
 	/* privacy addresses do not depend on eui64 */
 	if (!found_privacy && iface->autoconfprivacy) {
-		if (prefix->pltime < PRIV_REGEN_ADVANCE) {
+		if (prefix->pltime >= PRIV_REGEN_ADVANCE) {
+			/* new privacy proposal */
+			gen_address_proposal(iface, ra, prefix, 1);
+		} else if (prefix->pltime > 0) {
 			log_warnx("%s: pltime from %s is too small: %d < %d; "
 			    "not generating privacy address", __func__,
 			    sin6_to_str(&ra->from), prefix->pltime,
 			    PRIV_REGEN_ADVANCE);
-		} else
-			/* new privacy proposal */
-			gen_address_proposal(iface, ra, prefix, 1);
+		}
 	}
 }
 
