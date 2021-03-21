@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2014/12/28 14:01:33 jsing Exp $
+#	$OpenBSD: Makefile,v 1.2 2021/03/21 17:22:37 jsing Exp $
 
 PROG=	optionstest
 SRCS=	optionstest.c
@@ -7,7 +7,7 @@ LDADD=	-lcrypto -lssl
 DPADD=	${LIBCRYPTO} ${LIBSSL}
 
 OSSLSRC= ${.CURDIR}/../../../../usr.bin/openssl/
-CFLAGS+= -I${OSSLSRC}
+CFLAGS+= -DLIBRESSL_INTERNAL -I${OSSLSRC}
 
 .PATH:	${OSSLSRC}
 SRCS+=	apps.c
