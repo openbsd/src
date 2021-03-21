@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.29 2021/02/08 09:46:45 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.30 2021/03/21 01:24:35 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -124,7 +124,7 @@ main(int argc, char *argv[])
 	int fd = -1, ch, error = 0;
 	const char *filename = NULL, *btscript = NULL;
 	const char *errstr;
-	int showprobes = 0, tracepid = -1;
+	int showprobes = 0, tracepid = -1, noaction = 0;
 
 	setlocale(LC_ALL, "");
 
@@ -133,13 +133,16 @@ main(int argc, char *argv[])
 		err(1, "pledge");
 #endif
 
-	while ((ch = getopt(argc, argv, "e:lp:v")) != -1) {
+	while ((ch = getopt(argc, argv, "e:lnp:v")) != -1) {
 		switch (ch) {
 		case 'e':
 			btscript = optarg;
 			break;
 		case 'l':
 			showprobes = 1;
+			break;
+		case 'n':
+			noaction = 1;
 			break;
 		case 'p':
 			if (tracepid != -1)
@@ -178,6 +181,9 @@ main(int argc, char *argv[])
 			return error;
 	}
 
+	if (noaction)
+		return error;
+
 	if (showprobes || g_nprobes > 0) {
 		fd = open(__PATH_DEVDT, O_RDONLY);
 		if (fd == -1)
@@ -201,7 +207,7 @@ main(int argc, char *argv[])
 __dead void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-lv] [-p pid] [-e program|file]\n",
+	fprintf(stderr, "usage: %s [-lnv] [-p pid] [-e program | file]\n",
 	    getprogname());
 	exit(1);
 }
