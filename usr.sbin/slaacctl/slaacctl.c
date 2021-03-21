@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacctl.c,v 1.21 2021/02/27 10:28:12 florian Exp $	*/
+/*	$OpenBSD: slaacctl.c,v 1.22 2021/03/21 18:25:24 florian Exp $	*/
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -199,7 +199,8 @@ show_interface_msg(struct imsg *imsg)
 		printf("%s:\n", bufp != NULL ? bufp : "unknown");
 		printf("\t index: %3u ", cei->if_index);
 		printf("running: %3s ", cei->running ? "yes" : "no");
-		printf("privacy: %3s\n", cei->autoconfprivacy ? "yes" : "no");
+		printf("temporary: %3s\n", cei->temporary ? "yes" :
+		    "no");
 		printf("\tlladdr: %s\n", ether_ntoa(&cei->hw_address));
 		if (getnameinfo((struct sockaddr *)&cei->ll_address,
 		    cei->ll_address.sin6_len, hbuf, sizeof(hbuf), NULL, 0,
@@ -272,9 +273,9 @@ show_interface_msg(struct imsg *imsg)
 		    NULL, 0, NI_NUMERICHOST | NI_NUMERICSERV))
 			err(1, "cannot get proposal IP");
 
-		printf("\t\tid: %4lld, state: %15s, privacy: %s\n",
+		printf("\t\tid: %4lld, state: %15s, temporary: %s\n",
 		    cei_addr_proposal->id, cei_addr_proposal->state,
-		    cei_addr_proposal->privacy ? "y" : "n");
+		    cei_addr_proposal->temporary ? "y" : "n");
 
 		if (clock_gettime(CLOCK_MONOTONIC, &now))
 			err(1, "clock_gettime");

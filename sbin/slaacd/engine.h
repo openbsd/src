@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.h,v 1.5 2020/09/14 09:07:05 florian Exp $	*/
+/*	$OpenBSD: engine.h,v 1.6 2021/03/21 18:25:24 florian Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -23,7 +23,7 @@ struct imsg_configure_address {
 	uint32_t		 vltime;
 	uint32_t		 pltime;
 	uint32_t		 mtu;
-	int			 privacy;
+	int			 temporary;
 };
 
 struct imsg_configure_dfr {

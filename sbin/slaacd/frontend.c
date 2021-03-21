@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.54 2021/03/20 17:07:49 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.55 2021/03/21 18:25:24 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -533,7 +533,7 @@ update_iface(uint32_t if_index, char* if_name)
 	imsg_ifinfo.running = (flags & (IFF_UP | IFF_RUNNING)) == (IFF_UP |
 	    IFF_RUNNING);
 	imsg_ifinfo.autoconf = (xflags & IFXF_AUTOCONF6);
-	imsg_ifinfo.autoconfprivacy = (xflags & IFXF_AUTOCONF6TEMP);
+	imsg_ifinfo.temporary = (xflags & IFXF_AUTOCONF6TEMP);
 	imsg_ifinfo.soii = !(xflags & IFXF_INET6_NOSOII);
 
 	if (getifaddrs(&ifap) != 0)
@@ -635,7 +635,7 @@ update_autoconf_addresses(uint32_t if_index, char* if_name)
 		    IN6_IFF_TEMPORARY)))
 			continue;
 
-		imsg_addrinfo.privacy = ifr6.ifr_ifru.ifru_flags6 &
+		imsg_addrinfo.temporary = ifr6.ifr_ifru.ifru_flags6 &
 		    IN6_IFF_TEMPORARY ? 1 : 0;
 
 		memset(&ifr6, 0, sizeof(ifr6));
@@ -685,7 +685,7 @@ const char*
 flags_to_str(int flags)
 {
 	static char	buf[sizeof(" anycast tentative duplicated detached "
-			    "deprecated autoconf autoconfprivacy")];
+			    "deprecated autoconf temporary")];
 
 	buf[0] = '\0';
 	if (flags & IN6_IFF_ANYCAST)
@@ -701,7 +701,7 @@ flags_to_str(int flags)
 	if (flags & IN6_IFF_AUTOCONF)
 		strlcat(buf, " autoconf", sizeof(buf));
 	if (flags & IN6_IFF_TEMPORARY)
-		strlcat(buf, " autoconfprivacy", sizeof(buf));
+		strlcat(buf, " temporary", sizeof(buf));
 
 	return (buf);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.h,v 1.32 2021/03/20 17:07:49 florian Exp $	*/
+/*	$OpenBSD: slaacd.h,v 1.33 2021/03/21 18:25:24 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -88,7 +88,7 @@ struct ctl_engine_info {
 	uint32_t		if_index;
 	int			running;
 	int			autoconf;
-	int			autoconfprivacy;
+	int			temporary;
 	int			soii;
 	struct ether_addr	hw_address;
 	struct sockaddr_in6	ll_address;
@@ -136,7 +136,7 @@ struct ctl_engine_info_address_proposal {
 	struct timespec		 uptime;
 	struct sockaddr_in6	 addr;
 	struct in6_addr		 prefix;
-	int			 privacy;
+	int			 temporary;
 	uint8_t			 prefix_len;
 	uint32_t		 vltime;
 	uint32_t		 pltime;
@@ -171,7 +171,7 @@ struct imsg_addrinfo {
 	uint32_t		if_index;
 	struct sockaddr_in6	addr;
 	struct in6_addr		mask;
-	int			privacy;
+	int			temporary;
 	uint32_t		vltime;
 	uint32_t		pltime;
 };
@@ -191,7 +191,7 @@ struct imsg_ifinfo {
 	int			running;
 	int			link_state;
 	int			autoconf;
-	int			autoconfprivacy;
+	int			temporary;
 	int			soii;
 	struct ether_addr	hw_address;
 	struct sockaddr_in6	ll_address;
