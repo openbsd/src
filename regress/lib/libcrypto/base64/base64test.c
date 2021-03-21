@@ -1,4 +1,4 @@
-/*	$OpenBSD: base64test.c,v 1.8 2020/03/10 11:13:28 inoguchi Exp $	*/
+/*	$OpenBSD: base64test.c,v 1.9 2021/03/21 14:06:29 tb Exp $	*/
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -434,8 +434,7 @@ base64_decoding_test(int test_no, struct base64_test *bt, int test_nl)
 done:
 	BIO_free_all(bio_mem);
 	free(buf);
-	if (test_nl)
-		free(input);
+	free(input);
 
 	return failure;
 }
