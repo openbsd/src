@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_conf.c,v 1.36 2019/11/28 04:34:50 guenther Exp $	*/
+/*	$OpenBSD: exec_conf.c,v 1.37 2021/03/21 11:29:38 semarie Exp $	*/
 /*	$NetBSD: exec_conf.c,v 1.16 1995/12/09 05:34:47 cgd Exp $	*/
 
 /*
@@ -38,9 +38,15 @@
 
 extern struct emul emul_native;
 
-struct execsw execsw[] = {
-	{ EXEC_SCRIPT_HDRSZ, exec_script_makecmds },	/* shell scripts */
-	{ sizeof(Elf_Ehdr), exec_elf_makecmds },	/* elf binaries */
+const struct execsw execsw[] = {
+	{	/* shell scripts */
+		.es_hdrsz = EXEC_SCRIPT_HDRSZ,
+		.es_check = exec_script_makecmds,
+	},
+	{	/* elf binaries */
+		.es_hdrsz = sizeof(Elf_Ehdr),
+		.es_check = exec_elf_makecmds,
+	},
 };
 int nexecs = (sizeof execsw / sizeof(*execsw));
 int exec_maxhdrsz;

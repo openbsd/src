@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.42 2020/06/28 09:29:57 kettenis Exp $	*/
+/*	$OpenBSD: exec.h,v 1.43 2021/03/21 11:29:38 semarie Exp $	*/
 /*	$NetBSD: exec.h,v 1.59 1996/02/09 18:25:09 christos Exp $	*/
 
 /*-
@@ -212,7 +212,7 @@ void	new_vmcmd(struct exec_vmcmd_set *evsp,
  * Functions for specific exec types should be defined in their own
  * header file.
  */
-extern struct	execsw execsw[];
+extern const struct	execsw execsw[];
 extern int	nexecs;
 extern int	exec_maxhdrsz;
 
