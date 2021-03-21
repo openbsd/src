@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.103 2021/03/11 11:17:00 jsg Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.104 2021/03/21 14:18:37 visa Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009, 2011  Miodrag Vallat.
@@ -3506,7 +3506,7 @@ xbridge_allocate_devio(struct xbpci_softc *xb, int dev, int wantlarge)
 
 	if (!ISSET(xb->xb_devio_usemask, 1 << dev)) {
 		if (BRIDGE_DEVIO_SIZE(dev) >=
-		    wantlarge ? BRIDGE_DEVIO_LARGE : BRIDGE_DEVIO_SHORT) {
+		    (wantlarge ? BRIDGE_DEVIO_LARGE : BRIDGE_DEVIO_SHORT)) {
 #ifdef DEBUG
 			printf("%s(%d,%d): using reserved entry\n",
 			    __func__, dev, wantlarge);
@@ -3528,7 +3528,7 @@ xbridge_allocate_devio(struct xbpci_softc *xb, int dev, int wantlarge)
 			continue;	/* devio to be used soon */
 
 		if (BRIDGE_DEVIO_SIZE(dev) >=
-		    wantlarge ? BRIDGE_DEVIO_LARGE : BRIDGE_DEVIO_SHORT) {
+		    (wantlarge ? BRIDGE_DEVIO_LARGE : BRIDGE_DEVIO_SHORT)) {
 #ifdef DEBUG
 			printf("%s(%d,%d): using unused entry %d\n",
 			    __func__, orig_dev, wantlarge, dev);
