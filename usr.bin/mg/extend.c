@@ -1,4 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.72 2021/03/01 10:51:14 lum Exp $	*/
+/*	$OpenBSD: extend.c,v 1.73 2021/03/21 12:56:16 lum Exp $	*/
 /* This file is in the public domain. */
 
 /*
@@ -606,11 +606,11 @@ evalbuffer(int f, int n)
 		/* make sure it's terminated */
 		excbuf[llength(lp)] = '\0';
 		if ((s = excline(excbuf)) != TRUE) {
-			(void) clearvars();
+			cleanup();
 			return (s);
 		}
 	}
-	(void) clearvars();
+	cleanup();
 	return (TRUE);
 }
 

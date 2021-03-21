@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.169 2021/03/20 09:00:49 lum Exp $	*/
+/*	$OpenBSD: def.h,v 1.170 2021/03/21 12:56:16 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -721,7 +721,7 @@ void		 dobeep(void);
 
 /* interpreter.c */
 int		 foundparen(char *);
-int		 clearvars(void);
+void		 cleanup(void);
 
 /*
  * Externals.
