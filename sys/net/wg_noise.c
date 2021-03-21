@@ -1,4 +1,4 @@
-/*	$OpenBSD: wg_noise.c,v 1.4 2020/12/09 05:53:33 tb Exp $ */
+/*	$OpenBSD: wg_noise.c,v 1.5 2021/03/21 18:13:59 sthen Exp $ */
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
  * Copyright (C) 2019-2020 Matt Dunwoodie <ncon@noconroy.net>
@@ -299,9 +299,6 @@ noise_consume_initiation(struct noise_local *l, struct noise_remote **rp,
 	    NOISE_TIMESTAMP_LEN + NOISE_AUTHTAG_LEN, key, hs.hs_hash) != 0)
 		goto error;
 
-	hs.hs_state = CONSUMED_INITIATION;
-	hs.hs_local_index = 0;
-	hs.hs_remote_index = s_idx;
 	memcpy(hs.hs_e, ue, NOISE_PUBLIC_KEY_LEN);
 
 	/* We have successfully computed the same results, now we ensure that
@@ -321,6 +318,9 @@ noise_consume_initiation(struct noise_local *l, struct noise_remote **rp,
 
 	/* Ok, we're happy to accept this initiation now */
 	noise_remote_handshake_index_drop(r);
+	hs.hs_state = CONSUMED_INITIATION;
+	hs.hs_local_index = noise_remote_handshake_index_get(r);
+	hs.hs_remote_index = s_idx;
 	r->r_handshake = hs;
 	*rp = r;
 	ret = 0;
@@ -369,7 +369,6 @@ noise_create_response(struct noise_remote *r, uint32_t *s_idx, uint32_t *r_idx,
 	noise_msg_encrypt(en, NULL, 0, key, hs->hs_hash);
 
 	hs->hs_state = CREATED_RESPONSE;
-	hs->hs_local_index = noise_remote_handshake_index_get(r);
 	*r_idx = hs->hs_remote_index;
 	*s_idx = hs->hs_local_index;
 	ret = 0;
