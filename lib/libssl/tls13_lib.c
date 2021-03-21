@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.56 2021/01/05 17:47:35 tb Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.57 2021/03/21 16:56:42 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -429,9 +429,9 @@ tls13_ctx_free(struct tls13_ctx *ctx)
 
 int
 tls13_cert_add(struct tls13_ctx *ctx, CBB *cbb, X509 *cert,
-    int(*build_extensions)(SSL *s, uint16_t msg_type, CBB *cbb))
+    int (*build_extensions)(SSL *s, uint16_t msg_type, CBB *cbb))
 {
-	CBB cert_data;
+	CBB cert_data, cert_exts;
 	uint8_t *data;
 	int cert_len;
 
@@ -448,7 +448,6 @@ tls13_cert_add(struct tls13_ctx *ctx, CBB *cbb, X509 *cert,
 		if (!build_extensions(ctx->ssl, SSL_TLSEXT_MSG_CT, cbb))
 			return 0;
 	} else {
-		CBB cert_exts;
 		if (!CBB_add_u16_length_prefixed(cbb, &cert_exts))
 			return 0;
 	}
