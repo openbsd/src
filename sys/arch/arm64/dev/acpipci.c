@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpipci.c,v 1.27 2021/03/15 22:48:57 patrick Exp $	*/
+/*	$OpenBSD: acpipci.c,v 1.28 2021/03/22 20:30:21 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -77,6 +77,12 @@ struct acpipci_softc {
 	char		sc_memex_name[32];
 	int		sc_bus;
 	uint32_t	sc_seg;
+};
+
+struct acpipci_intr_handle {
+	struct arm_intr_handle	 aih_ih;
+	bus_dma_tag_t		 aih_dmat;
+	bus_dmamap_t		 aih_map;
 };
 
 int	acpipci_match(struct device *, void *, void *);
@@ -516,7 +522,8 @@ acpipci_intr_establish(void *v, pci_intr_handle_t ih, int level,
 {
 	struct acpipci_softc *sc = v;
 	struct interrupt_controller *ic;
-	struct arm_intr_handle *aih;
+	struct acpipci_intr_handle *aih;
+	bus_dma_segment_t seg;
 	void *cookie;
 
 	extern LIST_HEAD(, interrupt_controller) interrupt_controllers;
@@ -539,17 +546,37 @@ acpipci_intr_establish(void *v, pci_intr_handle_t ih, int level,
 		if (cookie == NULL)
 			return NULL;
 
-		/* TODO: translate address to the PCI device's view */
+		aih = malloc(sizeof(*aih), M_DEVBUF, M_WAITOK);
+		aih->aih_ih.ih_ic = ic;
+		aih->aih_ih.ih_ih = cookie;
+		aih->aih_dmat = ih.ih_dmat;
 
+		if (bus_dmamap_create(aih->aih_dmat, sizeof(uint32_t), 1,
+		    sizeof(uint32_t), 0, BUS_DMA_WAITOK, &aih->aih_map)) {
+			free(aih, M_DEVBUF, sizeof(*aih));
+			ic->ic_disestablish(cookie);
+			return NULL;
+		}
+
+		memset(&seg, 0, sizeof(seg));
+		seg.ds_addr = addr;
+		seg.ds_len = sizeof(uint32_t);
+
+		if (bus_dmamap_load_raw(aih->aih_dmat, aih->aih_map,
+		    &seg, 1, sizeof(uint32_t), BUS_DMA_WAITOK)) {
+			bus_dmamap_destroy(aih->aih_dmat, aih->aih_map);
+			free(aih, M_DEVBUF, sizeof(*aih));
+			ic->ic_disestablish(cookie);
+			return NULL;
+		}
+
+		addr = aih->aih_map->dm_segs[0].ds_addr;
 		if (ih.ih_type == PCI_MSIX) {
 			pci_msix_enable(ih.ih_pc, ih.ih_tag,
 			    &sc->sc_bus_memt, ih.ih_intrpin, addr, data);
 		} else
 			pci_msi_enable(ih.ih_pc, ih.ih_tag, addr, data);
 
-		aih = malloc(sizeof(*aih), M_DEVBUF, M_WAITOK);
-		aih->ih_ic = ic;
-		aih->ih_ih = cookie;
 		cookie = aih;
 	} else {
 		if (ci != NULL && !CPU_IS_PRIMARY(ci))
@@ -564,12 +591,15 @@ acpipci_intr_establish(void *v, pci_intr_handle_t ih, int level,
 void
 acpipci_intr_disestablish(void *v, void *cookie)
 {
-	struct arm_intr_handle *aih = cookie;
-	struct interrupt_controller *ic = aih->ih_ic;
+	struct acpipci_intr_handle *aih = cookie;
+	struct interrupt_controller *ic = aih->aih_ih.ih_ic;
 
-	if (ic->ic_establish_msi)
-		ic->ic_disestablish(aih->ih_ih);
-	else
+	if (ic->ic_establish_msi) {
+		ic->ic_disestablish(aih->aih_ih.ih_ih);
+		bus_dmamap_unload(aih->aih_dmat, aih->aih_map);
+		bus_dmamap_destroy(aih->aih_dmat, aih->aih_map);
+		free(aih, M_DEVBUF, sizeof(*aih));
+	} else
 		acpi_intr_disestablish(cookie);
 }
 

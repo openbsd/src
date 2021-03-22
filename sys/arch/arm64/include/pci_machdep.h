@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.8 2021/02/25 23:07:48 patrick Exp $ */
+/*	$OpenBSD: pci_machdep.h,v 1.9 2021/03/22 20:30:21 patrick Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -40,6 +40,7 @@ typedef struct {
 	pcitag_t		ih_tag;
 	int			ih_intrpin;
 	int			ih_type;
+	bus_dma_tag_t		ih_dmat;
 } pci_intr_handle_t;
 
 struct pci_attach_args;
