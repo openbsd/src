@@ -1,4 +1,4 @@
-/*	$Id: extern.h,v 1.34 2020/11/24 16:54:44 claudio Exp $ */
+/*	$Id: extern.h,v 1.35 2021/03/22 11:14:42 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -209,7 +209,7 @@ struct arglist {
 	u_int	num;
 	u_int	nalloc;
 };
-void	addargs(arglist *, char *, ...)
+void	addargs(arglist *, const char *, ...)
 	    __attribute__((format(printf, 2, 3)));
 void	freeargs(arglist *);
 

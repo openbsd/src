@@ -1,4 +1,4 @@
-/* $OpenBSD: misc.c,v 1.1 2019/04/02 05:32:08 deraadt Exp $ */
+/* $OpenBSD: misc.c,v 1.2 2021/03/22 11:14:42 claudio Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2005,2006 Damien Miller.  All rights reserved.
@@ -34,12 +34,12 @@
 
 /* function to assist building execv() arguments */
 void
-addargs(arglist *args, char *fmt, ...)
+addargs(arglist *args, const char *fmt, ...)
 {
-	va_list ap;
-	char *cp;
-	u_int nalloc;
-	int r;
+	va_list	 ap;
+	char	*cp;
+	u_int	 nalloc;
+	int	 r;
 
 	va_start(ap, fmt);
 	r = vasprintf(&cp, fmt, ap);
