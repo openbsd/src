@@ -1,4 +1,4 @@
-/*	$Id: uploader.c,v 1.23 2019/08/26 22:22:14 benno Exp $ */
+/*	$Id: uploader.c,v 1.24 2021/03/22 11:20:04 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2019 Florian Obser <florian@openbsd.org>
@@ -150,11 +150,8 @@ init_blk(struct blk *p, const struct blkset *set, off_t offs,
 	size_t idx, const void *map, const struct sess *sess)
 {
 
-	assert(map != MAP_FAILED);
-
-	/* Block length inherits for all but the last. */
-
 	p->idx = idx;
+	/* Block length inherits for all but the last. */
 	p->len = idx < set->blksz - 1 ? set->len : set->rem;
 	p->offs = offs;
 
