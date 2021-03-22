@@ -1,4 +1,4 @@
-/*	$OpenBSD: asn1test.c,v 1.6 2016/12/26 15:31:38 jsing Exp $	*/
+/*	$OpenBSD: asn1test.c,v 1.7 2021/03/22 20:05:21 tb Exp $	*/
 /*
  * Copyright (c) 2014, 2016 Joel Sing <jsing@openbsd.org>
  *
@@ -334,7 +334,7 @@ session_cmp(SSL_SESSION *s1, SSL_SESSION *s2)
 		fprintf(stderr, "peer differs\n");
 		return (1);
 	}
-	
+
 	if (s1->verify_result != s2->verify_result) {
 		fprintf(stderr, "verify_result differs: %li != %li\n",
 		    s1->verify_result, s2->verify_result);
@@ -369,7 +369,7 @@ session_cmp(SSL_SESSION *s1, SSL_SESSION *s2)
 static int
 do_ssl_asn1_test(int test_no, struct ssl_asn1_test *sat)
 {
-	SSL_SESSION session, *sp = NULL;
+	SSL_SESSION *sp = NULL;
 	unsigned char *ap, *asn1 = NULL;
 	const unsigned char *pp;
 	int i, len, rv = 1;
@@ -426,11 +426,9 @@ do_ssl_asn1_test(int test_no, struct ssl_asn1_test *sat)
 		goto failed;
 	}
 
-	sp = &session;
-	memset(sp, 0, sizeof(*sp));
 	pp = sat->asn1;
 
-	if ((sp = d2i_SSL_SESSION(&sp, &pp, sat->asn1_len)) == NULL) {
+	if ((sp = d2i_SSL_SESSION(NULL, &pp, sat->asn1_len)) == NULL) {
 		fprintf(stderr, "FAIL: test %i - decoding failed\n", test_no);
 		goto failed;
 	}
@@ -442,9 +440,9 @@ do_ssl_asn1_test(int test_no, struct ssl_asn1_test *sat)
 
 	rv = 0;
 
-failed:
-	ERR_print_errors(BIO_new_fp(stderr, BIO_NOCLOSE));
-
+ failed:
+	ERR_print_errors_fp(stderr);
+	SSL_SESSION_free(sp);
 	free(asn1);
 
 	return (rv);
