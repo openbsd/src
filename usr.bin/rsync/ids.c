@@ -1,4 +1,4 @@
-/*	$Id: ids.c,v 1.13 2019/05/08 21:30:11 benno Exp $ */
+/*	$Id: ids.c,v 1.14 2021/03/22 11:25:29 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -26,7 +26,7 @@
 #include "extern.h"
 
 /*
- * Free a list of struct ident previously allocated with idents_gid_add().
+ * Free a list of struct ident previously allocated with idents_add().
  * Does nothing if the pointer is NULL.
  */
 void
@@ -104,7 +104,7 @@ idents_remap(struct sess *sess, int isgid, struct ident *ids, size_t idsz)
 	struct group	*grp;
 	struct passwd	*usr;
 	uint32_t	 id;
-	int		valid;
+	int		 valid;
 
 	assert(!sess->opts->numeric_ids);
 
@@ -267,7 +267,7 @@ int
 idents_recv(struct sess *sess,
 	int fd, struct ident **ids, size_t *idsz)
 {
-	int32_t	 id;
+	uint32_t id;
 	uint8_t	 sz;
 	void	*pp;
 
@@ -299,6 +299,7 @@ idents_recv(struct sess *sess,
 		} else if (sz == 0)
 			WARNX("zero-length name in identifier list");
 
+		assert(id < INT32_MAX);
 		(*ids)[*idsz].id = id;
 		(*ids)[*idsz].name = calloc(sz + 1, 1);
 		if ((*ids)[*idsz].name == NULL) {
