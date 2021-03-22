@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.51 2020/12/15 08:20:42 claudio Exp $ */
+/*	$Id: main.c,v 1.52 2021/03/22 11:16:05 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -132,7 +132,7 @@ fargs_parse(size_t argc, char *argv[], struct opts *opts)
 			f->module = cp;
 			if ((cp = strchr(f->module, '/')) != NULL)
 				*cp = '\0';
-			if ((cp = strchr(f->host, ':'))) {
+			if ((cp = strchr(f->host, ':')) != NULL) {
 				/* host:port --> extract port */
 				*cp++ = '\0';
 				opts->port = cp;
