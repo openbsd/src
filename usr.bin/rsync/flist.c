@@ -1,4 +1,4 @@
-/*	$Id: flist.c,v 1.29 2019/06/27 18:03:37 deraadt Exp $ */
+/*	$Id: flist.c,v 1.30 2021/03/22 11:26:44 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2019 Florian Obser <florian@openbsd.org>
@@ -635,7 +635,7 @@ flist_recv(struct sess *sess, int fd, struct flist **flp, size_t *sz)
 
 		if (!(FLIST_TIME_SAME & flag)) {
 			if (!io_read_uint(sess, fd, &uival)) {
-				ERRX1("io_read_int");
+				ERRX1("io_read_uint");
 				goto out;
 			}
 			ff->st.mtime = uival;	/* beyond 2038 */
@@ -649,7 +649,7 @@ flist_recv(struct sess *sess, int fd, struct flist **flp, size_t *sz)
 
 		if (!(FLIST_MODE_SAME & flag)) {
 			if (!io_read_uint(sess, fd, &uival)) {
-				ERRX1("io_read_int");
+				ERRX1("io_read_uint");
 				goto out;
 			}
 			ff->st.mode = uival;
@@ -680,7 +680,7 @@ flist_recv(struct sess *sess, int fd, struct flist **flp, size_t *sz)
 		if (sess->opts->preserve_gids) {
 			if (!(FLIST_GID_SAME & flag)) {
 				if (!io_read_uint(sess, fd, &uival)) {
-					ERRX1("io_read_int");
+					ERRX1("io_read_uint");
 					goto out;
 				}
 				ff->st.gid = uival;
