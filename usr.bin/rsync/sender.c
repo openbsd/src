@@ -1,4 +1,4 @@
-/*	$Id: sender.c,v 1.26 2020/11/24 16:54:44 claudio Exp $ */
+/*	$Id: sender.c,v 1.27 2021/03/22 11:49:15 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -350,7 +350,7 @@ send_dl_enqueue(struct sess *sess, struct send_dlq *q,
  * It queues requests for updates as soon as it receives them.
  * Returns zero on failure, non-zero on success.
  *
- * Pledges: stdio, rpath, unveil.
+ * Pledges: stdio, getpw, rpath.
  */
 int
 rsync_sender(struct sess *sess, int fdin,
@@ -370,7 +370,7 @@ rsync_sender(struct sess *sess, int fdin,
 	size_t		    wbufpos = 0, wbufsz = 0, wbufmax = 0;
 	ssize_t		    ssz;
 
-	if (pledge("stdio getpw rpath unveil", NULL) == -1) {
+	if (pledge("stdio getpw rpath", NULL) == -1) {
 		ERR("pledge");
 		return 0;
 	}
