@@ -1,4 +1,4 @@
-/*      $OpenBSD: interpreter.c,v 1.11 2021/03/21 12:56:16 lum Exp $	*/
+/*      $OpenBSD: interpreter.c,v 1.12 2021/03/22 09:26:23 lum Exp $	*/
 /*
  * This file is in the public domain.
  *
@@ -64,15 +64,15 @@ static int	 doregex(char *, char *);
 static int	 parseexp(char *);
 static void	 clearexp(void);
 
+TAILQ_HEAD(exphead, expentry) ehead;
 struct expentry {
-	SLIST_ENTRY(expentry) eentry;
+	TAILQ_ENTRY(expentry) eentry;
 	char	*exp;		/* The string found between paraenthesis. */
 	int	 par1;		/* Parenthesis at start of string (=1	  */
 	int	 par2;		/* Parenthesis at end of string   )=2     */
 	int	 expctr;	/* An incremental counter:+1 for each exp */
 	int	 blkid;		/* Which block are we in?		  */
 };
-SLIST_HEAD(elisthead, expentry) exphead = SLIST_HEAD_INITIALIZER(exphead);
 
 /*
  * Structure for variables during buffer evaluation.
@@ -86,6 +86,21 @@ struct varentry {
 SLIST_HEAD(vlisthead, varentry) varhead = SLIST_HEAD_INITIALIZER(varhead);
 
 /*
+ * Structure for scheme keywords. 
+ */
+#define NUMSCHKEYS	4
+#define MAXLENSCHKEYS	17	/* 17 = longest keyword (16)  + 1 */
+
+char scharkey[NUMSCHKEYS][MAXLENSCHKEYS] =
+	{ 
+		"define",
+	  	"list",
+	  	"if",
+	  	"lambda"
+	};
+
+
+/*
  * Line has a '(' as the first non-white char.
  * Do some very basic parsing of line.
  * Multi-line not supported at the moment, To do.
@@ -93,7 +108,7 @@ SLIST_HEAD(vlisthead, varentry) varhead = SLIST_HEAD_INITIALIZER(varhead);
 int
 foundparen(char *funstr)
 {
-	struct expentry *e1 = NULL;
+	struct expentry *e1 = NULL, *e2 = NULL;
 	char		*p, *valp, *endp = NULL, *regs;
 	char		 expbuf[BUFSIZE], tmpbuf[BUFSIZE];
 	int     	 ret, pctr, fndstart, expctr, blkid, fndchr, fndend;
@@ -127,6 +142,8 @@ foundparen(char *funstr)
 	 * Not really live code at the moment. Just part of the process of
 	 * working out what needs to be done.
 	 */
+	TAILQ_INIT(&ehead);
+
 	while (*p != '\0') {
 		if (*p == '(') {
 			if (fndstart == 1) {
@@ -145,7 +162,7 @@ foundparen(char *funstr)
 				cleanup();
                                	return (dobeep_msg("malloc Error"));
 			}
-                       	SLIST_INSERT_HEAD(&exphead, e1, eentry);
+                       	TAILQ_INSERT_HEAD(&ehead, e1, eentry);
 			e1->exp = NULL;
                        	e1->expctr = ++expctr;
 			e1->blkid = blkid;
@@ -188,7 +205,7 @@ foundparen(char *funstr)
 			*p = ' ';
 			fndend = 1;
 			endp = p;
-		} else if (*p == '\t') /* need to check not between "" */
+		} else if (*p == '\t')
 			if (inquote == 0)
 				*p = ' ';
 		if (pctr == 0)
@@ -206,7 +223,7 @@ foundparen(char *funstr)
 	 * iterate in-to-out, evaluating as we go. Eventually.
 	 */
 	expbuf[0] = tmpbuf[0] = '\0';
-	SLIST_FOREACH(e1, &exphead, eentry) {
+	TAILQ_FOREACH_SAFE(e1, &ehead, eentry, e2) {
 		if (strlcpy(tmpbuf, expbuf, sizeof(tmpbuf)) >= sizeof(tmpbuf))
 			return (dobeep_msg("strlcpy error"));
 		expbuf[0] = '\0';
@@ -247,6 +264,12 @@ parseexp(char *funstr)
         regs = "^define[ ]+[A-Za-z-]+[ ]+list[ ]+.*[ ]*";
         if (doregex(regs, funstr))
                 return(foundvar(funstr));
+
+	/* Does the line have a variable 'define' like: */
+	/* (define i (function-name j)) */
+	regs = "^define[ ]+[A-Za-z-]+[ ]+[A-Za-z-]+[ ]+.*$";
+	if (doregex(regs, funstr))
+		return(foundvar(funstr));
 
         /* Does the line have a incorrect variable 'define' like: */
         /* (define i y z) */
@@ -517,9 +540,9 @@ clearexp(void)
 {
 	struct expentry	*e1 = NULL;
 
-	while (!SLIST_EMPTY(&exphead)) {
-		e1 = SLIST_FIRST(&exphead);
-		SLIST_REMOVE_HEAD(&exphead, eentry);
+	while (!TAILQ_EMPTY(&ehead)) {
+		e1 = TAILQ_FIRST(&ehead);
+		TAILQ_REMOVE(&ehead, e1, eentry);
 		free(e1->exp);
 		free(e1);
 	}
