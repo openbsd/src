@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.76 2021/01/27 07:21:12 deraadt Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.77 2021/03/22 18:50:11 kn Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -708,7 +708,7 @@ add_info(struct imsg *imsg, int *ret)
  *
  * Returns a string representing the current VM state, note that the order
  * matters. A paused VM does have the VM_STATE_RUNNING bit set, but
- * VM_STATE_PAUSED is more significant to report.
+ * VM_STATE_PAUSED is more significant to report. Same goes for stopping VMs.
  *
  * Parameters
  *  vm_state: mask indicating the vm state
@@ -720,10 +720,10 @@ vm_state(unsigned int mask)
 		return "paused";
 	else if (mask & VM_STATE_WAITING)
 		return "waiting";
-	else if (mask & VM_STATE_RUNNING)
-		return "running";
 	else if (mask & VM_STATE_SHUTDOWN)
 		return "stopping";
+	else if (mask & VM_STATE_RUNNING)
+		return "running";
 	/* Presence of absence of other flags */
 	else if (!mask || (mask & VM_STATE_DISABLED))
 		return "stopped";
