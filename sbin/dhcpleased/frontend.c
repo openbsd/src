@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.7 2021/03/19 07:43:27 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.8 2021/03/22 16:28:25 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -57,6 +57,7 @@
 #include "checksum.h"
 
 #define	ROUTE_SOCKET_BUF_SIZE	16384
+#define	BOOTP_MIN_LEN		300	/* fixed bootp packet adds up to 300 */
 
 struct bpf_ev {
 	struct event		 ev;
@@ -783,6 +784,7 @@ build_packet(uint8_t message_type, uint32_t xid, struct ether_addr *hw_address,
 	static uint8_t	 dhcp_server_identifier[] = {DHO_DHCP_SERVER_IDENTIFIER,
 		4, 0, 0, 0, 0};
 	struct dhcp_hdr	*hdr;
+	ssize_t		 len;
 	uint8_t		*p;
 	char		*c;
 
@@ -834,7 +836,13 @@ build_packet(uint8_t message_type, uint32_t xid, struct ether_addr *hw_address,
 	*p = DHO_END;
 	p += 1;
 
-	return (p - dhcp_packet);
+	len = p - dhcp_packet;
+
+	/* dhcp_packet is initialized with DHO_PADs */
+	if (len < BOOTP_MIN_LEN)
+		len = BOOTP_MIN_LEN;
+
+	return (len);
 }
 
 void
