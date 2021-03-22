@@ -1,4 +1,4 @@
-/* $OpenBSD: cwfg.c,v 1.1 2020/06/10 17:51:21 patrick Exp $ */
+/* $OpenBSD: cwfg.c,v 1.2 2021/03/22 18:37:26 kn Exp $ */
 /* $NetBSD: cwfg.c,v 1.1 2020/01/03 18:00:05 jmcneill Exp $ */
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -96,7 +96,7 @@ struct cwfg_softc {
 	struct ksensordev sc_sensordev;
 };
 
-#define	CWFG_MONITOR_INTERVAL_DEFAULT	8
+#define	CWFG_MONITOR_INTERVAL_DEFAULT	5000
 #define	CWFG_DESIGN_CAPACITY_DEFAULT	2000
 #define	CWFG_ALERT_LEVEL_DEFAULT	0
 
@@ -124,7 +124,7 @@ cwfg_match(struct device *parent, void *match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 
-	if (strcmp(ia->ia_name, "cellwise,cw201x") == 0)
+	if (strcmp(ia->ia_name, "cellwise,cw2015") == 0)
 		return 1;
 
 	return 0;
@@ -143,14 +143,14 @@ cwfg_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_addr = ia->ia_addr;
 	sc->sc_node = *(int *)ia->ia_cookie;
 
-	len = OF_getproplen(sc->sc_node, "cellwise,bat-config-info");
+	len = OF_getproplen(sc->sc_node, "cellwise,battery-profile");
 	if (len <= 0) {
 		printf(": missing or invalid battery info\n");
 		return;
 	}
 
 	batinfo = malloc(len, M_TEMP, M_WAITOK);
-	OF_getprop(sc->sc_node, "cellwise,bat-config-info", batinfo, len);
+	OF_getprop(sc->sc_node, "cellwise,battery-profile", batinfo, len);
 	switch (len) {
 	case BATINFO_SIZE:
 		memcpy(sc->sc_batinfo, batinfo, BATINFO_SIZE);
@@ -167,7 +167,7 @@ cwfg_attach(struct device *parent, struct device *self, void *aux)
 	free(batinfo, M_TEMP, len);
 
 	sc->sc_monitor_interval = OF_getpropint(sc->sc_node,
-	    "cellwise,monitor-interval", CWFG_MONITOR_INTERVAL_DEFAULT);
+	    "cellwise,monitor-interval-ms", CWFG_MONITOR_INTERVAL_DEFAULT);
 	sc->sc_design_capacity = OF_getpropint(sc->sc_node,
 	    "cellwise,design-capacity", CWFG_DESIGN_CAPACITY_DEFAULT);
 	sc->sc_alert_level = OF_getpropint(sc->sc_node,
