@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.10 2021/03/16 17:40:28 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.11 2021/03/22 15:34:07 otto Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -975,7 +975,7 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 		if(renewal_time == 0)
 			renewal_time = lease_time / 2;
 		if (rebinding_time == 0)
-			rebinding_time = (lease_time * 7) / 8;
+			rebinding_time = lease_time - (lease_time / 8);
 
 		if (renewal_time >= rebinding_time) {
 			log_warnx("%s: renewal_time >= rebinding_time "
