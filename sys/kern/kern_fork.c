@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.234 2021/02/15 09:35:59 mpi Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.235 2021/03/23 10:30:40 mpi Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -95,12 +95,15 @@ fork_return(void *arg)
 int
 sys_fork(struct proc *p, void *v, register_t *retval)
 {
+	void (*func)(void *) = child_return;
 	int flags;
 
 	flags = FORK_FORK;
-	if (p->p_p->ps_ptmask & PTRACE_FORK)
+	if (p->p_p->ps_ptmask & PTRACE_FORK) {
 		flags |= FORK_PTRACE;
-	return fork1(p, flags, fork_return, NULL, retval, NULL);
+		func = fork_return;
+	}
+	return fork1(p, flags, func, NULL, retval, NULL);
 }
 
 int
