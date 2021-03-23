@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiacpi.c,v 1.10 2021/03/11 11:16:56 jsg Exp $	*/
+/*	$OpenBSD: efiacpi.c,v 1.11 2021/03/23 09:41:12 patrick Exp $	*/
 
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -340,7 +340,7 @@ struct acpi_spcr {
 	uint32_t	pci_flags;
 	uint8_t		pci_segment;
 	uint32_t	reserved3;
-};
+} __packed;
 
 /* We'll never see ACPI 1.0 tables on ARM. */
 static EFI_GUID acpi_guid = ACPI_20_TABLE_GUID;

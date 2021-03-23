@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.54 2021/03/15 22:40:23 patrick Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.55 2021/03/23 09:41:12 patrick Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -448,7 +448,7 @@ struct acpi_spcr {
 	uint32_t	pci_flags;
 	uint8_t		pci_segment;
 	uint32_t	reserved3;
-};
+} __packed;
 
 struct acpi_facs {
 	uint8_t		signature[4];
