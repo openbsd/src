@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.230 2021/03/23 11:58:38 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.231 2021/03/23 12:03:44 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -902,6 +902,10 @@ ieee80211_input_ba_flush(struct ieee80211com *ic, struct ieee80211_node *ni,
 
 {
 	struct ifnet *ifp = &ic->ic_if;
+
+	/* Do not re-arm the gap timeout if we made no progress. */
+	if (ba->ba_buf[ba->ba_head].m == NULL)
+		return;
 
 	/* pass reordered MPDUs up to the next MAC process */
 	while (ba->ba_buf[ba->ba_head].m != NULL) {
