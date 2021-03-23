@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleasectl.c,v 1.2 2021/02/27 10:21:08 florian Exp $	*/
+/*	$OpenBSD: dhcpleasectl.c,v 1.3 2021/03/23 17:46:20 florian Exp $	*/
 
 /*
  * Copyright (c) 2021 Florian Obser <florian@openbsd.org>
@@ -176,7 +176,8 @@ show_interface_msg(struct imsg *imsg)
 	static int		 if_count = 0;
 	struct ctl_engine_info	*cei;
 	struct timespec		 now, diff;
-	int			 i, h, m, s;
+	time_t			 y, d, h, m, s;
+	int			 i;
 	char			 buf[IF_NAMESIZE], *bufp;
 	char			 ipbuf[INET_ADDRSTRLEN];
 	char			 maskbuf[INET_ADDRSTRLEN];
@@ -238,14 +239,23 @@ show_interface_msg(struct imsg *imsg)
 			s = cei->lease_time - diff.tv_sec;
 			if (s < 0)
 				s = 0;
+			y = s / 31556926; s -= y * 31556926;
+			d = s / 86400; s -= d * 86400;
 			h = s / 3600; s -= h * 3600;
 			m = s / 60; s -= m * 60;
+
+			printf("\t lease: ");
+			if (y > 0)
+				printf("%lldy ", y);
+			if (d > 0)
+				printf("%lldd ", d);
 			if (h > 0)
-				printf("\t lease: %dh%dm%ds\n", h, m ,s);
-			else if (m > 0)
-				printf("\t lease: %dm%ds\n", m ,s);
-			else
-				printf("\t lease: %ds\n", s);
+				printf("%lldh ", h);
+			if (m > 0)
+				printf("%lldm ", m);
+			if (s > 0)
+				printf("%llds ", s);
+			printf("\n");
 		}
 		break;
 	case IMSG_CTL_END:
