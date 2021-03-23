@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls_ocsp.c,v 1.19 2019/12/03 14:56:42 tb Exp $ */
+/*	$OpenBSD: tls_ocsp.c,v 1.20 2021/03/23 20:04:29 tb Exp $ */
 /*
  * Copyright (c) 2015 Marko Kreen <markokr@gmail.com>
  * Copyright (c) 2016 Bob Beck <beck@openbsd.org>
@@ -218,7 +218,7 @@ tls_ocsp_verify_response(struct tls *ctx, OCSP_RESPONSE *resp)
 	/* now verify */
 	if (OCSP_basic_verify(br, ctx->ocsp->extra_certs,
 		SSL_CTX_get_cert_store(ctx->ssl_ctx), flags) != 1) {
-		tls_set_error(ctx, "ocsp verify failed");
+		tls_set_errorx(ctx, "ocsp verify failed");
 		goto err;
 	}
 
