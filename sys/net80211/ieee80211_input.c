@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.229 2021/03/10 10:21:48 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.230 2021/03/23 11:58:38 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -881,7 +881,7 @@ ieee80211_input_ba_seq(struct ieee80211com *ic, struct ieee80211_node *ni,
 			seq = letoh16(*(u_int16_t *)wh->i_seq) >>
 			    IEEE80211_SEQ_SEQ_SHIFT;
 			if (!SEQ_LT(seq, max_seq))
-				return;
+				break;
 			ieee80211_inputm(ifp, ba->ba_buf[ba->ba_head].m,
 			    ni, &ba->ba_buf[ba->ba_head].rxi, ml);
 			ba->ba_buf[ba->ba_head].m = NULL;
@@ -999,6 +999,7 @@ ieee80211_ba_move_window(struct ieee80211com *ic, struct ieee80211_node *ni,
 	}
 	/* move window forward */
 	ba->ba_winstart = ssn;
+	ba->ba_winend = (ba->ba_winstart + ba->ba_winsize - 1) & 0xfff;
 
 	ieee80211_input_ba_flush(ic, ni, ba, ml);
 }
