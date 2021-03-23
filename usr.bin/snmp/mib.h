@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.9 2020/12/14 07:44:26 martijn Exp $	*/
+/*	$OpenBSD: mib.h,v 1.10 2021/03/23 22:05:21 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -1193,7 +1193,7 @@
 	{ MIBDECL(pfStateInserts) },			\
 	{ MIBDECL(pfStateRemovals) },			\
 	{ MIBDECL(pfLogInterface) },			\
-	{ MIBDECL(pfLogIfName) },			\
+	{ MIBDECL(pfLogIfName), "DisplayString" },	\
 	{ MIBDECL(pfLogIfIpBytesIn) },			\
 	{ MIBDECL(pfLogIfIpBytesOut) },			\
 	{ MIBDECL(pfLogIfIpPktsInPass) },		\
@@ -1242,7 +1242,7 @@
 	{ MIBDECL(pfIfTable) },				\
 	{ MIBDECL(pfIfEntry) },				\
 	{ MIBDECL(pfIfIndex) },				\
-	{ MIBDECL(pfIfDescr) },				\
+	{ MIBDECL(pfIfDescr), "DisplayString" },	\
 	{ MIBDECL(pfIfType) },				\
 	{ MIBDECL(pfIfRefs) },				\
 	{ MIBDECL(pfIfRules) },				\
@@ -1267,7 +1267,7 @@
 	{ MIBDECL(pfTblTable) },			\
 	{ MIBDECL(pfTblEntry) },			\
 	{ MIBDECL(pfTblIndex) },			\
-	{ MIBDECL(pfTblName) },				\
+	{ MIBDECL(pfTblName), "SnmpAdminString" },	\
 	{ MIBDECL(pfTblAddresses) },			\
 	{ MIBDECL(pfTblAnchorRefs) },			\
 	{ MIBDECL(pfTblRuleRefs) },			\
@@ -1313,7 +1313,7 @@
 	{ MIBDECL(pfLabelTable) },			\
 	{ MIBDECL(pfLabelEntry) },			\
 	{ MIBDECL(pfLabelIndex) },			\
-	{ MIBDECL(pfLabelName) },			\
+	{ MIBDECL(pfLabelName), "SnmpAdminString" },	\
 	{ MIBDECL(pfLabelEvals) },			\
 	{ MIBDECL(pfLabelPkts) },			\
 	{ MIBDECL(pfLabelBytes) },			\
