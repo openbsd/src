@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpc.c,v 1.32 2021/03/03 09:06:20 jsg Exp $	*/
+/*	$OpenBSD: snmpc.c,v 1.33 2021/03/23 22:07:36 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -799,7 +799,7 @@ snmpc_trap(int argc, char *argv[])
 		if (clock_gettime(CLOCK_UPTIME, &ts) == -1)
 			err(1, "clock_gettime");
 	} else {
-		lval = strtonum(argv[1], 0, LLONG_MAX, &errstr);
+		lval = strtonum(argv[1], 0, UINT32_MAX, &errstr);
 		if (errstr != NULL)
 			errx(1, "Bad value notation (%s)", argv[1]);
 		ts.tv_sec = lval / 100;
@@ -1437,7 +1437,7 @@ snmpc_varbindparse(int argc, char *argv[])
 			 */
 			goto pastestring;
 		case 'c':
-			lval = strtonum(argv[i + 2], INT32_MIN, INT32_MAX,
+			lval = strtonum(argv[i + 2], 0, UINT32_MAX,
 			    &errstr);
 			if (errstr != NULL)
 				errx(1, "%s: Bad value notation (%s)", argv[i],
@@ -1470,9 +1470,8 @@ snmpc_varbindparse(int argc, char *argv[])
 				tmpstr = endstr + 1;
 			} while (endstr[0] != '\0');
 			goto pastestring;
-		case 'u':
 		case 'i':
-			lval = strtonum(argv[i + 2], LLONG_MIN, LLONG_MAX,
+			lval = strtonum(argv[i + 2], INT32_MIN, INT32_MAX,
 			    &errstr);
 			if (errstr != NULL)
 				errx(1, "%s: Bad value notation (%s)", argv[i],
@@ -1506,7 +1505,7 @@ pastestring:
 			free(str);
 			break;
 		case 't':
-			lval = strtonum(argv[i + 2], LLONG_MIN, LLONG_MAX,
+			lval = strtonum(argv[i + 2], 0, UINT32_MAX,
 			    &errstr);
 			if (errstr != NULL)
 				errx(1, "%s: Bad value notation (%s)", argv[i],
@@ -1514,6 +1513,17 @@ pastestring:
 			if ((varbind = ober_printf_elements(varbind, "{Oit}",
 			    &oid, lval, BER_CLASS_APPLICATION,
 			    SNMP_T_TIMETICKS)) == NULL)
+				err(1, "ober_printf_elements");
+			break;
+		case 'u':
+			lval = strtonum(argv[i + 2], 0, UINT32_MAX,
+			    &errstr);
+			if (errstr != NULL)
+				errx(1, "%s: Bad value notation (%s)", argv[i],
+				    argv[i + 2]);
+			if ((varbind = ober_printf_elements(varbind, "{Oit}",
+			    &oid, lval, BER_CLASS_APPLICATION,
+			    SNMP_T_GAUGE32)) == NULL)
 				err(1, "ober_printf_elements");
 			break;
 		case 'x':
