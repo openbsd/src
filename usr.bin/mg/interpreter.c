@@ -1,4 +1,4 @@
-/*      $OpenBSD: interpreter.c,v 1.12 2021/03/22 09:26:23 lum Exp $	*/
+/*      $OpenBSD: interpreter.c,v 1.13 2021/03/23 15:22:25 lum Exp $	*/
 /*
  * This file is in the public domain.
  *
@@ -43,6 +43,8 @@
  * 
  */
 #include <sys/queue.h>
+
+#include <limits.h>
 #include <regex.h>
 #include <signal.h>
 #include <stdio.h>
@@ -384,8 +386,15 @@ multiarg(char *funstr)
 				spc = 1;
 				fin = 0;
 				continue;
-			} else
-				return (dobeep_msgs("Var not found:", argp));
+			} else {
+				const char *errstr;
+				int iters;
+
+				iters = strtonum(argp, 0, INT_MAX, &errstr);
+				if (errstr != NULL)
+					return (dobeep_msgs("Var not found:",
+					    argp));
+			}
 
 			if (strlcpy(excbuf, cmdp, sizeof(excbuf))
 			    >= sizeof(excbuf))
