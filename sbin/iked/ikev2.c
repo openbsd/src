@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.318 2021/03/15 22:29:17 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.319 2021/03/23 21:31:29 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -3409,7 +3409,7 @@ ikev2_record_dstid(struct iked *env, struct iked_sa *sa)
 			if (osa->sa_state == IKEV2_STATE_ESTABLISHED)
 				ikev2_disable_timer(env, osa);
 			ikev2_ike_sa_setreason(osa, "sa replaced");
-			ikev2_ikesa_delete(env, osa, 1);
+			ikev2_ikesa_delete(env, osa, 0);
 			timer_add(env, &osa->sa_timer,
 			    3 * IKED_RETRANSMIT_TIMEOUT);
 		}
