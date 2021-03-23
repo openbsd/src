@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.265 2021/01/27 20:33:05 eric Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.266 2021/03/23 16:34:31 claudio Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -269,6 +269,7 @@ struct ctl_keyop {
 	int			 cko_flen;
 	int			 cko_tlen;
 	int			 cko_padding;
+	u_int			 cko_cookie;
 };
 
 struct ctl_stats {

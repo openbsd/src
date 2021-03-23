@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.35 2019/05/31 15:15:37 reyk Exp $	*/
+/*	$OpenBSD: ca.c,v 1.36 2021/03/23 16:34:31 claudio Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -334,6 +334,7 @@ rsae_send_imsg(int flen, const u_char *from, u_char *to, RSA *rsa,
 	struct imsg	 imsg;
 	int		 n, done = 0, cnt = 0;
 	u_char		*toptr;
+	static u_int	 seq = 0;
 
 	if ((hash = RSA_get_ex_data(rsa, 0)) == NULL)
 		return (0);
@@ -350,6 +351,7 @@ rsae_send_imsg(int flen, const u_char *from, u_char *to, RSA *rsa,
 	cko.cko_flen = flen;
 	cko.cko_tlen = RSA_size(rsa);
 	cko.cko_padding = padding;
+	cko.cko_cookie = seq++;
 
 	iov[cnt].iov_base = &cko;
 	iov[cnt++].iov_len = sizeof(cko);
@@ -372,8 +374,10 @@ rsae_send_imsg(int flen, const u_char *from, u_char *to, RSA *rsa,
 		case -1:
 			fatal("%s: poll", __func__);
 		case 0:
-			log_warnx("%s: priv%s poll timeout", __func__,
-			    cmd == IMSG_CA_PRIVENC ? "enc" : "dec");
+			log_warnx("%s: priv%s poll timeout, keyop #%x",
+			    __func__,
+			    cmd == IMSG_CA_PRIVENC ? "enc" : "dec",
+			    cko.cko_cookie);
 			return (-1);
 		default:
 			break;
@@ -388,11 +392,24 @@ rsae_send_imsg(int flen, const u_char *from, u_char *to, RSA *rsa,
 				fatalx("imsg_get error");
 			if (n == 0)
 				break;
-			if (imsg.hdr.type != cmd)
-				fatalx("invalid response");
 
 			IMSG_SIZE_CHECK(&imsg, (&cko));
 			memcpy(&cko, imsg.data, sizeof(cko));
+
+			/*
+			 * Due to earlier timed out requests, there may be
+			 * responses that need to be skipped.
+			 */
+			if (cko.cko_cookie != seq - 1) {
+				log_warnx(
+				    "%s: priv%s obsolete keyop #%x", __func__,
+				    cmd == IMSG_CA_PRIVENC ? "enc" : "dec",
+				    cko.cko_cookie);
+				continue;
+			}
+
+			if (imsg.hdr.type != cmd)
+				fatalx("invalid response");
 
 			ret = cko.cko_tlen;
 			if (ret > 0) {
