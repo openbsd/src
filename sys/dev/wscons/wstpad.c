@@ -1,4 +1,4 @@
-/* $OpenBSD: wstpad.c,v 1.29 2021/03/24 07:40:37 bru Exp $ */
+/* $OpenBSD: wstpad.c,v 1.30 2021/03/24 18:28:24 bru Exp $ */
 
 /*
  * Copyright (c) 2015, 2016 Ulf Brosziewski
@@ -655,20 +655,29 @@ int
 wstpad_is_tap(struct wstpad *tp, struct tpad_touch *t)
 {
 	struct timespec ts;
+
+	timespecsub(&tp->time, &t->orig.time, &ts);
+	return (timespeccmp(&ts, &tp->tap.maxtime, <));
+}
+
+/*
+ * At least one MT touch must remain close to its origin and end
+ * in the main area.  The same conditions apply to one-finger taps
+ * on single-touch devices.
+ */
+void
+wstpad_tap_filter(struct wstpad *tp, struct tpad_touch *t)
+{
 	int dx, dy, dist = 0;
 
-	/* Try to distinguish one-finger taps from short movements. */
-	if (tp->tap.contacts == (tp->ignore ? 2 : 1)) {
+	if (IS_MT(tp) || tp->tap.contacts == 1) {
 		dx = abs(t->x - t->orig.x) << 12;
 		dy = abs(t->y - t->orig.y) * tp->ratio;
 		dist = (dx >= dy ? dx + 3 * dy / 8 : dy + 3 * dx / 8);
 	}
-	if (dist <= (tp->tap.maxdist << 12)) {
-		timespecsub(&tp->time, &t->orig.time, &ts);
-		return (timespeccmp(&ts, &tp->tap.maxtime, <));
-	}
-	return (0);
+	tp->tap.centered = (CENTERED(t) && dist <= (tp->tap.maxdist << 12));
 }
+
 
 /*
  * Return the oldest touch in the TOUCH_END state, or NULL.
@@ -685,8 +694,8 @@ wstpad_tap_touch(struct wsmouseinput *input)
 		lifted = (input->mt.sync[MTS_TOUCH] & ~input->mt.touches);
 		FOREACHBIT(lifted, slot) {
 			s = &tp->tpad_touches[slot];
-			if (tp->tap.state == TAP_DETECT)
-				tp->tap.centered |= CENTERED(s);
+			if (tp->tap.state == TAP_DETECT && !tp->tap.centered)
+				wstpad_tap_filter(tp, s);
 			if (t == NULL || timespeccmp(&t->orig.time,
 			    &s->orig.time, >))
 				t = s;
@@ -694,8 +703,8 @@ wstpad_tap_touch(struct wsmouseinput *input)
 	} else {
 		if (tp->t->state == TOUCH_END) {
 			t = tp->t;
-			if (tp->tap.state == TAP_DETECT)
-				tp->tap.centered = CENTERED(t);
+			if (tp->tap.state == TAP_DETECT && !tp->tap.centered)
+				wstpad_tap_filter(tp, t);
 		}
 	}
 
