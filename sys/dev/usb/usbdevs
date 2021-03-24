@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.732 2021/03/08 14:37:08 jcs Exp $
+$OpenBSD: usbdevs,v 1.733 2021/03/24 02:20:44 jcs Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -636,6 +636,7 @@ vendor ARDUINO		0x2341	Arduino SA
 vendor TPLINK		0x2357	TP-Link
 vendor WMR		0x2405	West Mountain Radio
 vendor TRIPPLITE	0x2478	Tripp-Lite
+vendor HAILUCK		0x258a	HAILUCK Co., Ltd
 vendor ARUBA		0x2626	Aruba
 vendor XIAOMI		0x2717	Xiaomi
 vendor NHJ		0x2770	NHJ
@@ -2178,6 +2179,9 @@ product GUNZE TOUCHPANEL	0x0001	Gunze USB Touch Panel
 product HAGIWARA FGSM		0x0002  FlashGate SmartMedia
 product HAGIWARA FGCF		0x0003  FlashGate CompactFlash
 product HAGIWARA FG		0x0005  FlashGate
+
+/* HAILUCK Co., Ltd products */
+product HAILUCK KEYBOARD	0x001e	Keyboard
 
 /* HAL Corporation products */
 product HAL IMR001		0x0011	Crossam2+USB IR commander
