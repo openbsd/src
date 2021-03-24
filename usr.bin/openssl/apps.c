@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.58 2021/03/17 18:08:32 jsing Exp $ */
+/* $OpenBSD: apps.c,v 1.59 2021/03/24 12:07:39 inoguchi Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -2302,6 +2302,10 @@ options_parse(int argc, char **argv, const struct option *opts, char **unnamed,
 
 		case OPTION_UL_VALUE_OR:
 			*opt->opt.ulvalue |= opt->ulvalue;
+			break;
+
+		case OPTION_ORDER:
+			*opt->opt.order = ++(*opt->order);
 			break;
 
 		default:
