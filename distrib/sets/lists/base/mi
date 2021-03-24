@@ -439,7 +439,6 @@
 ./usr/bin/lam
 ./usr/bin/last
 ./usr/bin/lastcomm
-./usr/bin/ld
 ./usr/bin/ldap
 ./usr/bin/ldd
 ./usr/bin/leave
@@ -6361,3 +6360,4 @@
 ./var/yp/Makefile.yp
 ./var/yp/Makefile.yp.dist
 ./var/yp/README
+./usr/bin/ld

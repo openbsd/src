@@ -1,4 +1,3 @@
-./usr/bin/ld.lld
 ./usr/bin/lldb
 ./usr/bin/lldb-server
 ./usr/bin/llvm-config

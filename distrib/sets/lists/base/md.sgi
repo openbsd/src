@@ -67,6 +67,7 @@
 ./usr/bin/clang
 ./usr/bin/clang++
 ./usr/bin/clang-cpp
+./usr/bin/ld.bfd
 ./usr/bin/objcopy
 ./usr/lib/crtbegin.o
 ./usr/lib/crtbeginS.o

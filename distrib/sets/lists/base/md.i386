@@ -72,6 +72,7 @@
 ./usr/bin/clang
 ./usr/bin/clang++
 ./usr/bin/clang-cpp
+./usr/bin/ld.lld
 ./usr/bin/objcopy
 ./usr/bin/pctr
 ./usr/lib/crtbegin.o

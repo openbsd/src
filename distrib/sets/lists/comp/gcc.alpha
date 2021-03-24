@@ -1,7 +1,6 @@
 ./usr/bin/g++
 ./usr/bin/gcc
 ./usr/bin/gcov
-./usr/bin/ld.bfd
 ./usr/include/g++
 ./usr/include/g++/algorithm
 ./usr/include/g++/alpha-unknown-openbsd6.9

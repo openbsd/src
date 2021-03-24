@@ -62,6 +62,7 @@
 ./sbin/kbd
 ./sbin/mount_ntfs
 ./sbin/wsconsctl
+./usr/bin/ld.bfd
 ./usr/bin/objcopy
 ./usr/lib/crtbegin.o
 ./usr/lib/crtbeginS.o
