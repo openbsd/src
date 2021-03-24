@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.712 2021/03/16 20:21:54 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.713 2021/03/24 16:04:10 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -137,8 +137,10 @@ void state_selecting(struct interface_info *);
 void state_bound(struct interface_info *);
 void state_panic(struct interface_info *);
 
-void set_interval(struct interface_info *, time_t);
-void set_secs(struct interface_info *, time_t);
+void set_interval(struct interface_info *, struct timespec *);
+void set_resend_timeout(struct interface_info *, struct timespec *,
+    void (*where)(struct interface_info *));
+void set_secs(struct interface_info *, struct timespec *);
 
 void send_discover(struct interface_info *);
 void send_request(struct interface_info *);
@@ -768,7 +770,6 @@ void
 state_reboot(struct interface_info *ifi)
 {
 	const struct timespec	 reboot_intvl = {config->reboot_interval, 0};
-	struct timespec		 now;
 	struct client_lease	*lease;
 
 	cancel_timeout(ifi);
@@ -792,9 +793,8 @@ state_reboot(struct interface_info *ifi)
 	make_request(ifi, ifi->active);
 
 	ifi->destination.s_addr = INADDR_BROADCAST;
-	clock_gettime(CLOCK_REALTIME, &now);
-	ifi->first_sending = now.tv_sec;
-	timespecadd(&now, &reboot_intvl, &ifi->reboot_timeout);
+	clock_gettime(CLOCK_REALTIME, &ifi->first_sending);
+	timespecadd(&ifi->first_sending, &reboot_intvl, &ifi->reboot_timeout);
 	ifi->interval = 0;
 
 	send_request(ifi);
@@ -808,16 +808,14 @@ void
 state_init(struct interface_info *ifi)
 {
 	const struct timespec	offer_intvl = {config->offer_interval, 0};
-	struct timespec		now;
 
 	ifi->xid = arc4random();
 	make_discover(ifi, ifi->active);
 
 	ifi->destination.s_addr = INADDR_BROADCAST;
 	ifi->state = S_SELECTING;
-	clock_gettime(CLOCK_REALTIME, &now);
-	ifi->first_sending = now.tv_sec;
-	timespecadd(&now, &offer_intvl, &ifi->offer_timeout);
+	clock_gettime(CLOCK_REALTIME, &ifi->first_sending);
+	timespecadd(&ifi->first_sending, &offer_intvl, &ifi->offer_timeout);
 	ifi->select_timeout = ifi->offer_timeout;
 	ifi->interval = 0;
 
@@ -847,7 +845,7 @@ state_selecting(struct interface_info *ifi)
 	}
 
 	ifi->destination.s_addr = INADDR_BROADCAST;
-	time(&ifi->first_sending);
+	clock_gettime(CLOCK_REALTIME, &ifi->first_sending);
 	ifi->interval = 0;
 
 	/*
@@ -899,7 +897,7 @@ process_offer(struct interface_info *ifi, struct option_data *options,
     const char *src)
 {
 	const struct timespec	 select_intvl = {config->select_interval, 0};
-	struct timespec		 now, remaining;
+	struct timespec		 now;
 	struct client_lease	*lease;
 
 	clock_gettime(CLOCK_REALTIME, &now);
@@ -934,12 +932,8 @@ process_offer(struct interface_info *ifi, struct option_data *options,
 	if (timespeccmp(&now, &ifi->select_timeout, >=))
 		state_selecting(ifi);
 	else {
-		timespecsub(&ifi->select_timeout, &now, &remaining);
-		if (remaining.tv_sec == 0 || remaining.tv_nsec > 500000000LL)
-			remaining.tv_sec++;
-		log_debug("%s: waiting %lld seconds for better offers",
-		    log_procname, (long long)remaining.tv_sec);
-		set_timeout(ifi, remaining.tv_sec, state_selecting);
+		ifi->timeout = ifi->select_timeout;
+		ifi->timeout_func = state_selecting;
 	}
 }
 
@@ -1178,7 +1172,7 @@ state_bound(struct interface_info *ifi)
 	else
 		dest->s_addr = INADDR_BROADCAST;
 
-	time(&ifi->first_sending);
+	clock_gettime(CLOCK_REALTIME, &ifi->first_sending);
 	ifi->interval = 0;
 	ifi->state = S_RENEWING;
 
@@ -1372,53 +1366,85 @@ decline:
 }
 
 void
-set_interval(struct interface_info *ifi, time_t cur_time)
+set_interval(struct interface_info *ifi, struct timespec *now)
 {
-	time_t interval = ifi->interval;
+	struct timespec		interval;
 
-	if (interval == 0) {
-		if (ifi->state == S_REBOOTING)
-			interval = config->reboot_interval;
-		else
-			interval = config->initial_interval;
-	} else {
-		interval += arc4random_uniform(2 * interval);
-		if (interval > config->backoff_cutoff)
-			interval = config->backoff_cutoff;
+	if (timespeccmp(now, &ifi->timeout, >))
+		ifi->interval = 1;
+	else {
+		timespecsub(&ifi->timeout, now, &interval);
+		if (interval.tv_sec == 0 || interval.tv_nsec > 500000000LL)
+			interval.tv_sec++;
+		ifi->interval = interval.tv_sec;
 	}
+}
 
+void
+set_resend_timeout(struct interface_info *ifi, struct timespec *now,
+    void (*where)(struct interface_info *))
+{
+	const struct timespec	expiry = {ifi->expiry, 0};
+	const struct timespec	reboot_intvl = {config->reboot_interval, 0};
+	const struct timespec	initial_intvl = {config->initial_interval, 0};
+	const struct timespec	cutoff_intvl = {config->backoff_cutoff, 0};
+	const struct timespec	onesecond = {1, 0};
+	struct timespec		interval, when;
+
+	if (timespeccmp(now, &ifi->link_timeout, <))
+		interval = onesecond;
+	else if (ifi->interval == 0) {
+		if (ifi->state == S_REBOOTING)
+			interval = reboot_intvl;
+		else
+			interval = initial_intvl;
+	} else {
+		timespecclear(&interval);
+		interval.tv_sec = ifi->interval + arc4random_uniform(2 *
+		    ifi->interval);
+	}
+	if (timespeccmp(&interval, &onesecond, <))
+		interval = onesecond;
+	else if (timespeccmp(&interval, &cutoff_intvl, >))
+		interval = cutoff_intvl;
+
+	timespecadd(now, &interval, &when);
 	switch (ifi->state) {
 	case S_REBOOTING:
 	case S_RENEWING:
-		if (cur_time + interval > ifi->expiry)
-			interval = ifi->expiry - cur_time;
+		if (timespeccmp(&when, &expiry, >))
+			when = expiry;
 		break;
 	case S_SELECTING:
-		if (cur_time + interval > ifi->select_timeout.tv_sec)
-			interval = ifi->select_timeout.tv_sec - cur_time;
+		if (timespeccmp(&when, &ifi->select_timeout, >))
+			when = ifi->select_timeout;
 		break;
 	case S_REQUESTING:
-		if (cur_time + interval > ifi->offer_timeout.tv_sec)
-			interval = ifi->offer_timeout.tv_sec - cur_time;
+		if (timespeccmp(&when, &ifi->offer_timeout, >))
+			when = ifi->offer_timeout;
 		break;
 	default:
 		break;
 	}
 
-	ifi->interval = interval ? interval : 1;
+	ifi->timeout = when;
+	ifi->timeout_func = where;
 }
 
 void
-set_secs(struct interface_info *ifi, time_t cur_time)
+set_secs(struct interface_info *ifi, struct timespec *now)
 {
-	time_t		secs;
+	struct timespec interval;
 
 	if (ifi->state != S_REQUESTING) {
 		/* Update the number of seconds since we started sending. */
-		secs = cur_time - ifi->first_sending;
-		if (secs > UINT16_MAX)
-			secs = UINT16_MAX;
-		ifi->secs = secs;
+		timespecsub(now, &ifi->first_sending, &interval);
+		if (interval.tv_nsec > 500000000LL)
+			interval.tv_sec++;
+		if (interval.tv_sec > UINT16_MAX)
+			ifi->secs = UINT16_MAX;
+		else
+			ifi->secs = interval.tv_sec;
 	}
 
 	ifi->sent_packet.secs = htons(ifi->secs);
@@ -1434,21 +1460,16 @@ send_discover(struct interface_info *ifi)
 {
 	struct timespec		 now;
 	ssize_t			 rslt;
-	time_t			 cur_time;
 
 	clock_gettime(CLOCK_REALTIME, &now);
-	cur_time = now.tv_sec;
-
 	if (timespeccmp(&now, &ifi->offer_timeout, >=)) {
 		state_panic(ifi);
 		return;
 	}
 
-	if (timespeccmp(&now, &ifi->link_timeout, <))
-		ifi->interval = 1;
-	else
-		set_interval(ifi, cur_time);
-	set_secs(ifi, cur_time);
+	set_resend_timeout(ifi, &now, send_discover);
+	set_interval(ifi, &now);
+	set_secs(ifi, &now);
 
 	rslt = send_packet(ifi, inaddr_any, inaddr_broadcast, "DHCPDISCOVER");
 	if (rslt != -1)
@@ -1456,7 +1477,6 @@ send_discover(struct interface_info *ifi)
 		    (long long)ifi->interval);
 
 	tick_msg("lease", TICK_WAIT);
-	set_timeout(ifi, ifi->interval, send_discover);
 }
 
 /*
@@ -1548,11 +1568,9 @@ send_request(struct interface_info *ifi)
 		return;
 	}
 
-	if (timespeccmp(&now, &ifi->link_timeout, <))
-		ifi->interval = 1;
-	else
-		set_interval(ifi, cur_time);
-	set_secs(ifi, cur_time);
+	set_resend_timeout(ifi, &now, send_request);
+	set_interval(ifi, &now);
+	set_secs(ifi, &now);
 
 	rslt = send_packet(ifi, from, destination.sin_addr, "DHCPREQUEST");
 	if (rslt != -1)
@@ -1560,7 +1578,6 @@ send_request(struct interface_info *ifi)
 		    inet_ntoa(destination.sin_addr));
 
 	tick_msg("lease", TICK_WAIT);
-	set_timeout(ifi, ifi->interval, send_request);
 }
 
 void
