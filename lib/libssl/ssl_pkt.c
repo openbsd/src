@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.38 2021/03/24 18:40:03 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.39 2021/03/24 18:44:00 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1038,7 +1038,7 @@ ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 		}
 
 		/* Check we have a cipher to change to */
-		if (S3I(s)->hs.new_cipher == NULL) {
+		if (S3I(s)->hs.cipher == NULL) {
 			al = SSL_AD_UNEXPECTED_MESSAGE;
 			SSLerror(s, SSL_R_CCS_RECEIVED_EARLY);
 			goto fatal_err;
@@ -1170,7 +1170,7 @@ ssl3_do_change_cipher_spec(SSL *s)
 			return (0);
 		}
 
-		s->session->cipher = S3I(s)->hs.new_cipher;
+		s->session->cipher = S3I(s)->hs.cipher;
 		if (!tls1_setup_key_block(s))
 			return (0);
 	}

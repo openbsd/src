@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.205 2021/03/21 18:36:34 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.206 2021/03/24 18:43:59 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2548,7 +2548,7 @@ ssl3_get_req_cert_types(SSL *s, CBB *cbb)
 {
 	unsigned long alg_k;
 
-	alg_k = S3I(s)->hs.new_cipher->algorithm_mkey;
+	alg_k = S3I(s)->hs.cipher->algorithm_mkey;
 
 #ifndef OPENSSL_NO_GOST
 	if ((alg_k & SSL_kGOST) != 0) {

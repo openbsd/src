@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_both.c,v 1.24 2021/02/20 14:14:16 tb Exp $ */
+/* $OpenBSD: ssl_both.c,v 1.25 2021/03/24 18:44:00 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -224,7 +224,7 @@ ssl3_take_mac(SSL *s)
 	 * If no new cipher setup return immediately: other functions will
 	 * set the appropriate error.
 	 */
-	if (S3I(s)->hs.new_cipher == NULL)
+	if (S3I(s)->hs.cipher == NULL)
 		return;
 
 	if (S3I(s)->hs.state & SSL_ST_CONNECT) {

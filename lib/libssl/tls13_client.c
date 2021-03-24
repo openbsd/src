@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.75 2021/03/21 18:36:34 jsing Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.76 2021/03/24 18:44:00 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -304,7 +304,7 @@ tls13_server_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 		goto err;
 	}
 	/* XXX - move this to hs.tls13? */
-	ctx->hs->new_cipher = cipher;
+	ctx->hs->cipher = cipher;
 
 	if (compression_method != 0) {
 		ctx->alert = TLS13_ALERT_ILLEGAL_PARAMETER;
@@ -338,12 +338,12 @@ tls13_client_engage_record_protection(struct tls13_ctx *ctx)
 	    &shared_key_len))
 		goto err;
 
-	s->session->cipher = ctx->hs->new_cipher;
+	s->session->cipher = ctx->hs->cipher;
 	s->session->ssl_version = ctx->hs->tls13.server_version;
 
-	if ((ctx->aead = tls13_cipher_aead(ctx->hs->new_cipher)) == NULL)
+	if ((ctx->aead = tls13_cipher_aead(ctx->hs->cipher)) == NULL)
 		goto err;
-	if ((ctx->hash = tls13_cipher_hash(ctx->hs->new_cipher)) == NULL)
+	if ((ctx->hash = tls13_cipher_hash(ctx->hs->cipher)) == NULL)
 		goto err;
 
 	if ((secrets = tls13_secrets_create(ctx->hash, 0)) == NULL)

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.329 2021/03/24 18:40:03 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.330 2021/03/24 18:44:00 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -483,7 +483,7 @@ typedef struct ssl_handshake_st {
 	int state;
 
 	/* Cipher being negotiated in this handshake. */
-	const SSL_CIPHER *new_cipher;
+	const SSL_CIPHER *cipher;
 
 	/* Extensions seen in this handshake. */
 	uint32_t extensions_seen;

@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.134 2021/03/24 18:40:03 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.135 2021/03/24 18:44:00 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -343,7 +343,7 @@ tls1_change_cipher_state(SSL *s, int which)
 
 	if (aead != NULL) {
 		key_len = EVP_AEAD_key_length(aead);
-		iv_len = SSL_CIPHER_AEAD_FIXED_NONCE_LEN(S3I(s)->hs.new_cipher);
+		iv_len = SSL_CIPHER_AEAD_FIXED_NONCE_LEN(S3I(s)->hs.cipher);
 	} else {
 		key_len = EVP_CIPHER_key_length(cipher);
 		iv_len = EVP_CIPHER_iv_length(cipher);
