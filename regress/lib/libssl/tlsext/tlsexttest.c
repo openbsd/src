@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.47 2021/03/21 18:37:26 jsing Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.48 2021/03/24 19:02:35 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1064,7 +1064,7 @@ test_tlsext_ecpf_server(void)
 		errx(1, "failed to create session");
 
 	/* Setup the state so we can call needs. */
-	if ((S3I(ssl)->hs.new_cipher =
+	if ((S3I(ssl)->hs.cipher =
 	    ssl3_get_cipher_by_id(TLS1_CK_ECDHE_ECDSA_CHACHA20_POLY1305))
 	    == NULL) {
 		FAIL("server cannot find cipher\n");
@@ -2851,7 +2851,7 @@ test_tlsext_serverhello_build(void)
 
 	S3I(ssl)->hs.our_max_tls_version = TLS1_3_VERSION;
 	S3I(ssl)->hs.negotiated_tls_version = TLS1_3_VERSION;
-	S3I(ssl)->hs.new_cipher =
+	S3I(ssl)->hs.cipher =
 	    ssl3_get_cipher_by_id(TLS1_CK_RSA_WITH_AES_128_SHA256);
 
 	if (!tlsext_server_build(ssl, SSL_TLSEXT_MSG_SH, &cbb)) {
@@ -2881,7 +2881,7 @@ test_tlsext_serverhello_build(void)
 
 	/* Turn a few things on so we get extensions... */
 	S3I(ssl)->send_connection_binding = 1;
-	S3I(ssl)->hs.new_cipher =
+	S3I(ssl)->hs.cipher =
 	    ssl3_get_cipher_by_id(TLS1_CK_ECDHE_RSA_WITH_AES_128_SHA256);
 	ssl->internal->tlsext_status_expected = 1;
 	ssl->internal->tlsext_ticket_expected = 1;
