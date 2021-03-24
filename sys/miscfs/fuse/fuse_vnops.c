@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.62 2020/12/25 12:59:52 visa Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.63 2021/03/24 16:11:32 semarie Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -88,6 +88,7 @@ const struct vops fusefs_vops = {
 	.vop_ioctl	= fusefs_ioctl,
 	.vop_poll	= fusefs_poll,
 	.vop_kqfilter	= fusefs_kqfilter,
+	.vop_revoke	= NULL,
 	.vop_fsync	= fusefs_fsync,
 	.vop_remove	= fusefs_remove,
 	.vop_link	= fusefs_link,
@@ -108,6 +109,7 @@ const struct vops fusefs_vops = {
 	.vop_islocked	= fusefs_islocked,
 	.vop_pathconf	= spec_pathconf,
 	.vop_advlock	= fusefs_advlock,
+	.vop_bwrite	= NULL,
 };
 
 const struct filterops fusefsread_filtops = {

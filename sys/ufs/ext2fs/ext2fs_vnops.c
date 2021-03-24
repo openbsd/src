@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.87 2020/02/27 09:10:31 mpi Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.88 2021/03/24 16:11:32 semarie Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -1280,6 +1280,7 @@ const struct vops ext2fs_vops = {
         .vop_ioctl      = ufs_ioctl,
         .vop_poll       = ufs_poll,
         .vop_kqfilter   = ufs_kqfilter,
+        .vop_revoke     = NULL,
         .vop_fsync      = ext2fs_fsync,
         .vop_remove     = ext2fs_remove,
         .vop_link       = ext2fs_link,
@@ -1300,7 +1301,7 @@ const struct vops ext2fs_vops = {
         .vop_islocked   = ufs_islocked,
         .vop_pathconf   = ext2fs_pathconf,
         .vop_advlock    = ext2fs_advlock,
-        .vop_bwrite     = vop_generic_bwrite
+        .vop_bwrite     = vop_generic_bwrite,
 };
 
 const struct vops ext2fs_specvops = {
