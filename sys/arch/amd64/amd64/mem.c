@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.34 2018/02/19 08:59:52 mpi Exp $ */
+/*	$OpenBSD: mem.c,v 1.35 2021/03/24 14:26:39 bluhm Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -148,13 +148,13 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 		case 1:
 			v = uio->uio_offset;
 			c = ulmin(iov->iov_len, MAXPHYS);
-			if (v >= (vaddr_t)&start && v < kern_end) {
-                                if (v < (vaddr_t)&etext &&
+			if (v >= (vaddr_t)&start && v < kern_end - c) {
+                                if (v < (vaddr_t)&etext - c &&
                                     uio->uio_rw == UIO_WRITE)
                                         return EFAULT;
                         } else if ((!uvm_kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE)) &&
-			    (v < PMAP_DIRECT_BASE && v > PMAP_DIRECT_END))
+			    (v < PMAP_DIRECT_BASE || v > PMAP_DIRECT_END - c))
 				return (EFAULT);
 			error = uiomove((caddr_t)v, c, uio);
 			continue;
