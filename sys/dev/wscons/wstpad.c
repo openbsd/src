@@ -1,4 +1,4 @@
-/* $OpenBSD: wstpad.c,v 1.28 2021/03/21 16:20:49 bru Exp $ */
+/* $OpenBSD: wstpad.c,v 1.29 2021/03/24 07:40:37 bru Exp $ */
 
 /*
  * Copyright (c) 2015, 2016 Ulf Brosziewski
@@ -657,14 +657,8 @@ wstpad_is_tap(struct wstpad *tp, struct tpad_touch *t)
 	struct timespec ts;
 	int dx, dy, dist = 0;
 
-	/*
-	 * No distance limit applies if there has been more than one contact
-	 * on a single-touch device.  We cannot use (t->x - t->orig.x) in this
-	 * case.  Accumulated deltas might be an alternative, but some
-	 * touchpads provide unreliable coordinates at the start or end of a
-	 * multi-finger touch.
-	 */
-	if (IS_MT(tp) || tp->tap.contacts < 2) {
+	/* Try to distinguish one-finger taps from short movements. */
+	if (tp->tap.contacts == (tp->ignore ? 2 : 1)) {
 		dx = abs(t->x - t->orig.x) << 12;
 		dy = abs(t->y - t->orig.y) * tp->ratio;
 		dist = (dx >= dy ? dx + 3 * dy / 8 : dy + 3 * dx / 8);
