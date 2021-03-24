@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.48 2021/03/24 19:02:35 jsing Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.49 2021/03/24 21:36:26 tb Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -3447,14 +3447,14 @@ test_tlsext_cookie_server(void)
 	S3I(ssl)->hs.tls13.cookie = strdup(cookie);
 	S3I(ssl)->hs.tls13.cookie_len = strlen(cookie);
 
-	if (!tlsext_cookie_server_needs(ssl, SSL_TLSEXT_MSG_SH)) {
+	if (!tlsext_cookie_server_needs(ssl, SSL_TLSEXT_MSG_HRR)) {
 		FAIL("server should need cookie\n");
 		failure = 1;
 		goto done;
 	}
 
-	if (!tlsext_cookie_server_build(ssl, SSL_TLSEXT_MSG_SH, &cbb)) {
-		FAIL("server have built a cookie response\n");
+	if (!tlsext_cookie_server_build(ssl, SSL_TLSEXT_MSG_HRR, &cbb)) {
+		FAIL("server should have built a cookie response\n");
 		failure = 1;
 		goto done;
 	}
