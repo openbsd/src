@@ -1,4 +1,4 @@
-/*	$OpenBSD: ums.c,v 1.47 2021/01/29 16:59:41 sthen Exp $ */
+/*	$OpenBSD: ums.c,v 1.48 2021/03/24 02:49:57 jcs Exp $ */
 /*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -58,6 +58,7 @@
 struct ums_softc {
 	struct uhidev	sc_hdev;
 	struct hidms	sc_ms;
+	uint32_t	sc_quirks;
 };
 
 void ums_intr(struct uhidev *addr, void *ibuf, u_int len);
@@ -122,7 +123,7 @@ ums_attach(struct device *parent, struct device *self, void *aux)
 	struct usb_attach_arg *uaa = uha->uaa;
 	int size, repid;
 	void *desc;
-	u_int32_t quirks, qflags = 0;
+	u_int32_t qflags = 0;
 
 	sc->sc_hdev.sc_intr = ums_intr;
 	sc->sc_hdev.sc_parent = uha->parent;
@@ -131,7 +132,7 @@ ums_attach(struct device *parent, struct device *self, void *aux)
 
 	usbd_set_idle(uha->parent->sc_udev, uha->parent->sc_ifaceno, 0, 0);
 
-	quirks = usbd_get_quirks(sc->sc_hdev.sc_udev)->uq_flags;
+	sc->sc_quirks = usbd_get_quirks(sc->sc_hdev.sc_udev)->uq_flags;
 	uhidev_get_report_desc(uha->parent, &desc, &size);
 
 	if (uaa->vendor == USB_VENDOR_ELECOM)
@@ -142,15 +143,15 @@ ums_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_hdev.sc_osize = hid_report_size(desc, size, hid_output, repid);
 	sc->sc_hdev.sc_fsize = hid_report_size(desc, size, hid_feature, repid);
 
-	if (quirks & UQ_MS_REVZ)
+	if (sc->sc_quirks & UQ_MS_REVZ)
 		qflags |= HIDMS_REVZ;
-	if (quirks & UQ_SPUR_BUT_UP)
+	if (sc->sc_quirks & UQ_SPUR_BUT_UP)
 		qflags |= HIDMS_SPUR_BUT_UP;
-	if (quirks & UQ_MS_BAD_CLASS)
+	if (sc->sc_quirks & UQ_MS_BAD_CLASS)
 		qflags |= HIDMS_MS_BAD_CLASS;
-	if (quirks & UQ_MS_LEADING_BYTE)
+	if (sc->sc_quirks & UQ_MS_LEADING_BYTE)
 		qflags |= HIDMS_LEADINGBYTE;
-	if (quirks & UQ_MS_VENDOR_BUTTONS)
+	if (sc->sc_quirks & UQ_MS_VENDOR_BUTTONS)
 		qflags |= HIDMS_VENDOR_BUTTONS;
 
 	if (hidms_setup(self, ms, qflags, uha->reportid, desc, size) != 0)
@@ -177,6 +178,13 @@ ums_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	hidms_attach(ms, &ums_accessops);
+
+	if (sc->sc_quirks & UQ_ALWAYS_OPEN) {
+		/* open uhidev and keep it open */
+		ums_enable(sc);
+		/* but mark the hidms not in use */
+		ums_disable(sc);
+	}
 }
 
 int
@@ -211,7 +219,13 @@ ums_enable(void *v)
 	if ((rv = hidms_enable(ms)) != 0)
 		return rv;
 
-	return uhidev_open(&sc->sc_hdev);
+	if ((sc->sc_quirks & UQ_ALWAYS_OPEN) &&
+	    (sc->sc_hdev.sc_state & UHIDEV_OPEN))
+		rv = 0;
+	else
+		rv = uhidev_open(&sc->sc_hdev);
+
+	return rv;
 }
 
 void
@@ -221,6 +235,10 @@ ums_disable(void *v)
 	struct hidms *ms = &sc->sc_ms;
 
 	hidms_disable(ms);
+
+	if (sc->sc_quirks & UQ_ALWAYS_OPEN)
+		return;
+
 	uhidev_close(&sc->sc_hdev);
 }
 
