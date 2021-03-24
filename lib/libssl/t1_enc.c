@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.133 2021/02/27 14:20:50 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.134 2021/03/24 18:40:03 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -152,9 +152,9 @@ int tls1_PRF(SSL *s, const unsigned char *secret, size_t secret_len,
 void
 tls1_cleanup_key_block(SSL *s)
 {
-	freezero(S3I(s)->hs.key_block, S3I(s)->hs.key_block_len);
-	S3I(s)->hs.key_block = NULL;
-	S3I(s)->hs.key_block_len = 0;
+	freezero(S3I(s)->hs.tls12.key_block, S3I(s)->hs.tls12.key_block_len);
+	S3I(s)->hs.tls12.key_block = NULL;
+	S3I(s)->hs.tls12.key_block_len = 0;
 }
 
 void
@@ -351,7 +351,7 @@ tls1_change_cipher_state(SSL *s, int which)
 
 	mac_secret_size = S3I(s)->tmp.new_mac_secret_size;
 
-	key_block = S3I(s)->hs.key_block;
+	key_block = S3I(s)->hs.tls12.key_block;
 	client_write_mac_secret = key_block;
 	key_block += mac_secret_size;
 	server_write_mac_secret = key_block;
@@ -375,7 +375,8 @@ tls1_change_cipher_state(SSL *s, int which)
 		iv = server_write_iv;
 	}
 
-	if (key_block - S3I(s)->hs.key_block != S3I(s)->hs.key_block_len) {
+	if (key_block - S3I(s)->hs.tls12.key_block !=
+	    S3I(s)->hs.tls12.key_block_len) {
 		SSLerror(s, ERR_R_INTERNAL_ERROR);
 		goto err;
 	}
@@ -410,7 +411,7 @@ tls1_setup_key_block(SSL *s)
 	const EVP_MD *mac_hash = NULL;
 	int ret = 0;
 
-	if (S3I(s)->hs.key_block_len != 0)
+	if (S3I(s)->hs.tls12.key_block_len != 0)
 		return (1);
 
 	if (s->session->cipher &&
@@ -451,8 +452,8 @@ tls1_setup_key_block(SSL *s)
 	}
 	key_block_len = (mac_secret_size + key_len + iv_len) * 2;
 
-	S3I(s)->hs.key_block_len = key_block_len;
-	S3I(s)->hs.key_block = key_block;
+	S3I(s)->hs.tls12.key_block_len = key_block_len;
+	S3I(s)->hs.tls12.key_block = key_block;
 
 	if (!tls1_generate_key_block(s, key_block, key_block_len))
 		goto err;

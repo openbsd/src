@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.328 2021/03/21 18:36:34 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.329 2021/03/24 18:40:03 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -416,6 +416,15 @@ typedef struct cert_pkey_st {
 	STACK_OF(X509) *chain;
 } CERT_PKEY;
 
+typedef struct ssl_handshake_tls12_st {
+	/* Used when SSL_ST_FLUSH_DATA is entered. */
+	int next_state;
+
+	/* Record-layer key block for TLS 1.2 and earlier. */
+	unsigned char *key_block;
+	size_t key_block_len;
+} SSL_HANDSHAKE_TLS12;
+
 typedef struct ssl_handshake_tls13_st {
 	int use_legacy;
 	int hrr;
@@ -466,27 +475,25 @@ typedef struct ssl_handshake_st {
 	 */
 	uint16_t negotiated_tls_version;
 
-	SSL_HANDSHAKE_TLS13 tls13;
-
-	/* state contains one of the SSL3_ST_* values. */
+	/*
+	 * Current handshake state - contains one of the SSL3_ST_* values and
+	 * is used by the TLSv1.2 state machine, as well as being updated by
+	 * the TLSv1.3 stack due to it being exposed externally.
+	 */
 	int state;
 
-	/* used when SSL_ST_FLUSH_DATA is entered */
-	int next_state;
-
-	/*  new_cipher is the cipher being negotiated in this handshake. */
+	/* Cipher being negotiated in this handshake. */
 	const SSL_CIPHER *new_cipher;
-
-	/* key_block is the record-layer key block for TLS 1.2 and earlier. */
-	size_t key_block_len;
-	unsigned char *key_block;
 
 	/* Extensions seen in this handshake. */
 	uint32_t extensions_seen;
 
 	/* sigalgs offered in this handshake in wire form */
-	size_t sigalgs_len;
 	uint8_t *sigalgs;
+	size_t sigalgs_len;
+
+	SSL_HANDSHAKE_TLS12 tls12;
+	SSL_HANDSHAKE_TLS13 tls13;
 } SSL_HANDSHAKE;
 
 struct tls12_record_layer;

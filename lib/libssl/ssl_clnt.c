@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.86 2021/03/11 17:14:46 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.87 2021/03/24 18:40:03 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -278,7 +278,7 @@ ssl3_connect(SSL *s)
 
 			if (SSL_is_dtls(s) && D1I(s)->send_cookie) {
 				S3I(s)->hs.state = SSL3_ST_CW_FLUSH;
-				S3I(s)->hs.next_state = SSL3_ST_CR_SRVR_HELLO_A;
+				S3I(s)->hs.tls12.next_state = SSL3_ST_CR_SRVR_HELLO_A;
 			} else
 				S3I(s)->hs.state = SSL3_ST_CR_SRVR_HELLO_A;
 
@@ -509,14 +509,14 @@ ssl3_connect(SSL *s)
 
 			/* clear flags */
 			if (s->internal->hit) {
-				S3I(s)->hs.next_state = SSL_ST_OK;
+				S3I(s)->hs.tls12.next_state = SSL_ST_OK;
 			} else {
 				/* Allow NewSessionTicket if ticket expected */
 				if (s->internal->tlsext_ticket_expected)
-					S3I(s)->hs.next_state =
+					S3I(s)->hs.tls12.next_state =
 					    SSL3_ST_CR_SESSION_TICKET_A;
 				else
-					S3I(s)->hs.next_state =
+					S3I(s)->hs.tls12.next_state =
 					    SSL3_ST_CR_FINISHED_A;
 			}
 			s->internal->init_num = 0;
@@ -567,14 +567,14 @@ ssl3_connect(SSL *s)
 					/* If the write error was fatal, stop trying */
 					if (!BIO_should_retry(s->wbio)) {
 						s->internal->rwstate = SSL_NOTHING;
-						S3I(s)->hs.state = S3I(s)->hs.next_state;
+						S3I(s)->hs.state = S3I(s)->hs.tls12.next_state;
 					}
 				}
 				ret = -1;
 				goto end;
 			}
 			s->internal->rwstate = SSL_NOTHING;
-			S3I(s)->hs.state = S3I(s)->hs.next_state;
+			S3I(s)->hs.state = S3I(s)->hs.tls12.next_state;
 			break;
 
 		case SSL_ST_OK:

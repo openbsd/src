@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.97 2021/03/11 17:14:47 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.98 2021/03/24 18:40:03 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -290,9 +290,9 @@ ssl3_accept(SSL *s)
 			if (ret <= 0)
 				goto end;
 			if (SSL_is_dtls(s))
-				S3I(s)->hs.next_state = SSL3_ST_SR_CLNT_HELLO_A;
+				S3I(s)->hs.tls12.next_state = SSL3_ST_SR_CLNT_HELLO_A;
 			else
-				S3I(s)->hs.next_state = SSL3_ST_SW_HELLO_REQ_C;
+				S3I(s)->hs.tls12.next_state = SSL3_ST_SW_HELLO_REQ_C;
 			S3I(s)->hs.state = SSL3_ST_SW_FLUSH;
 			s->internal->init_num = 0;
 
@@ -365,7 +365,7 @@ ssl3_accept(SSL *s)
 			if (ret <= 0)
 				goto end;
 			S3I(s)->hs.state = SSL3_ST_SW_FLUSH;
-			S3I(s)->hs.next_state = SSL3_ST_SR_CLNT_HELLO_A;
+			S3I(s)->hs.tls12.next_state = SSL3_ST_SR_CLNT_HELLO_A;
 
 			/* HelloVerifyRequest resets Finished MAC. */
 			tls1_transcript_reset(s);
@@ -488,7 +488,7 @@ ssl3_accept(SSL *s)
 			ret = ssl3_send_server_done(s);
 			if (ret <= 0)
 				goto end;
-			S3I(s)->hs.next_state = SSL3_ST_SR_CERT_A;
+			S3I(s)->hs.tls12.next_state = SSL3_ST_SR_CERT_A;
 			S3I(s)->hs.state = SSL3_ST_SW_FLUSH;
 			s->internal->init_num = 0;
 			break;
@@ -510,14 +510,14 @@ ssl3_accept(SSL *s)
 					/* If the write error was fatal, stop trying. */
 					if (!BIO_should_retry(s->wbio)) {
 						s->internal->rwstate = SSL_NOTHING;
-						S3I(s)->hs.state = S3I(s)->hs.next_state;
+						S3I(s)->hs.state = S3I(s)->hs.tls12.next_state;
 					}
 				}
 				ret = -1;
 				goto end;
 			}
 			s->internal->rwstate = SSL_NOTHING;
-			S3I(s)->hs.state = S3I(s)->hs.next_state;
+			S3I(s)->hs.state = S3I(s)->hs.tls12.next_state;
 			break;
 
 		case SSL3_ST_SR_CERT_A:
@@ -674,10 +674,10 @@ ssl3_accept(SSL *s)
 				goto end;
 			S3I(s)->hs.state = SSL3_ST_SW_FLUSH;
 			if (s->internal->hit) {
-				S3I(s)->hs.next_state = SSL3_ST_SR_FINISHED_A;
+				S3I(s)->hs.tls12.next_state = SSL3_ST_SR_FINISHED_A;
 				tls1_transcript_free(s);
 			} else
-				S3I(s)->hs.next_state = SSL_ST_OK;
+				S3I(s)->hs.tls12.next_state = SSL_ST_OK;
 			s->internal->init_num = 0;
 			break;
 

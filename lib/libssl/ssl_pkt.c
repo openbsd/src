@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.37 2021/03/10 18:27:02 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.38 2021/03/24 18:40:03 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1163,7 +1163,7 @@ ssl3_do_change_cipher_spec(SSL *s)
 	else
 		i = SSL3_CHANGE_CIPHER_CLIENT_READ;
 
-	if (S3I(s)->hs.key_block == NULL) {
+	if (S3I(s)->hs.tls12.key_block == NULL) {
 		if (s->session == NULL || s->session->master_key_length == 0) {
 			/* might happen if dtls1_read_bytes() calls this */
 			SSLerror(s, SSL_R_CCS_RECEIVED_EARLY);
