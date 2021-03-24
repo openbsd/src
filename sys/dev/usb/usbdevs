@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.733 2021/03/24 02:20:44 jcs Exp $
+$OpenBSD: usbdevs,v 1.734 2021/03/24 18:49:25 sthen Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1517,7 +1517,7 @@ product	DELL PRISM_GT_1		0x8102	PrismGT USB 2.0 WLAN
 product DELL BLUETOOTH350	0x8103	Bluetooth
 product	DELL PRISM_GT_2		0x8104	PrismGT USB 2.0 WLAN
 product DELL W5500		0x8115	W5500 HSDPA 
-product DELL U740		0x8135	Dell U740 CDMA
+product DELL U740		0x8135	U740 CDMA
 product DELL EU870D		0x8138	EU870D HSDPA
 product DELL DW700		0x9500	DW700 GPS
 product DELL2 UPS		0xffff	UPS
