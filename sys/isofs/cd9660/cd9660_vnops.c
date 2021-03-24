@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.88 2021/03/05 07:10:06 jsg Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.89 2021/03/24 16:17:05 semarie Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -811,44 +811,29 @@ cd9660_pathconf(void *v)
 /*
  * Global vfs data structures for isofs
  */
-#define	cd9660_create	eopnotsupp
-#define	cd9660_mknod	eopnotsupp
-#define	cd9660_write	eopnotsupp
-#define	cd9660_fsync	nullop
-#define	cd9660_remove	eopnotsupp
-#define	cd9660_rename	eopnotsupp
-#define	cd9660_mkdir	eopnotsupp
-#define	cd9660_rmdir	eopnotsupp
-#define	cd9660_advlock	eopnotsupp
-#define	cd9660_valloc	eopnotsupp
-#define	cd9660_vfree	eopnotsupp
-#define	cd9660_truncate	eopnotsupp
-#define	cd9660_update	eopnotsupp
-#define	cd9660_bwrite	eopnotsupp
-#define cd9660_revoke   vop_generic_revoke
 
 /* Global vfs data structures for cd9660. */
 const struct vops cd9660_vops = {
 	.vop_lookup	= cd9660_lookup,
-	.vop_create	= cd9660_create,
-	.vop_mknod	= cd9660_mknod,
+	.vop_create	= eopnotsupp,
+	.vop_mknod	= eopnotsupp,
 	.vop_open	= cd9660_open,
 	.vop_close	= cd9660_close,
 	.vop_access	= cd9660_access,
 	.vop_getattr	= cd9660_getattr,
 	.vop_setattr	= cd9660_setattr,
 	.vop_read	= cd9660_read,
-	.vop_write	= cd9660_write,
+	.vop_write	= eopnotsupp,
 	.vop_ioctl	= cd9660_ioctl,
 	.vop_poll	= cd9660_poll,
 	.vop_kqfilter	= cd9660_kqfilter,
-	.vop_revoke	= cd9660_revoke,
-	.vop_fsync	= cd9660_fsync,
-	.vop_remove	= cd9660_remove,
+	.vop_revoke	= vop_generic_revoke,
+	.vop_fsync	= nullop,
+	.vop_remove	= eopnotsupp,
 	.vop_link	= cd9660_link,
-	.vop_rename	= cd9660_rename,
-	.vop_mkdir	= cd9660_mkdir,
-	.vop_rmdir	= cd9660_rmdir,
+	.vop_rename	= eopnotsupp,
+	.vop_mkdir	= eopnotsupp,
+	.vop_rmdir	= eopnotsupp,
 	.vop_symlink	= cd9660_symlink,
 	.vop_readdir	= cd9660_readdir,
 	.vop_readlink	= cd9660_readlink,
@@ -862,8 +847,8 @@ const struct vops cd9660_vops = {
 	.vop_print	= cd9660_print,
 	.vop_islocked	= cd9660_islocked,
 	.vop_pathconf	= cd9660_pathconf,
-	.vop_advlock	= cd9660_advlock,
-	.vop_bwrite	= vop_generic_bwrite
+	.vop_advlock	= eopnotsupp,
+	.vop_bwrite	= vop_generic_bwrite,
 };
 
 /* Special device vnode ops */
