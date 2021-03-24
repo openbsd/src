@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.23 2017/07/14 14:41:03 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.24 2021/03/24 21:03:06 benno Exp $
 
 # Copyright (c) 2010-2017 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -280,12 +280,14 @@ sub http_response {
 			}
 		}
 	}
-	if ($chunked) {
-		read_chunked($self);
-	} else {
-		undef $len unless defined($vers) && $vers eq "1.1";
-		read_char($self, $len)
-		    if $method eq "GET";
+	if ($method ne 'HEAD') {
+		if ($chunked) {
+			read_chunked($self);
+		} else {
+			undef $len unless defined($vers) && $vers eq "1.1";
+			read_char($self, $len)
+			    if $method eq "GET";
+		}
 	}
 }
 
@@ -423,7 +425,7 @@ sub http_server {
 			print STDERR "<<< $_\n";
 			($method, $url, $vers) = m{^(\w+) (.*) HTTP/(1\.[01])$}
 			    or die ref($self), " http request not ok";
-			$method =~ /^(GET|PUT)$/
+			$method =~ /^(GET|HEAD|PUT)$/
 			    or die ref($self), " unknown method: $method";
 			($len, my @chunks) = $url =~ /(\d+)/g;
 			$len = [ $len, @chunks ] if @chunks;
@@ -449,7 +451,7 @@ sub http_server {
 
 		my @response = ("HTTP/$vers 200 OK");
 		$len = defined($len) ? $len : scalar(split /|/,$url);
-		if ($vers eq "1.1" && $method eq "GET") {
+		if ($vers eq "1.1" && $method =~ /^(GET|HEAD)$/) {
 			if (ref($len) eq 'ARRAY') {
 				push @response, "Transfer-Encoding: chunked";
 			} else {
