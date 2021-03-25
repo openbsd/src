@@ -1,4 +1,4 @@
-/*      $OpenBSD: interpreter.c,v 1.16 2021/03/25 17:31:21 lum Exp $	*/
+/*      $OpenBSD: interpreter.c,v 1.17 2021/03/25 20:25:31 lum Exp $	*/
 /*
  * This file is in the public domain.
  *
@@ -71,6 +71,7 @@ static int	 foundvar(char *);
 static int	 doregex(char *, char *);
 static int	 parseexp(char *);
 static void	 clearexp(void);
+static int	 addexp(char *, int, int, int, int);
 static int	 exitinterpreter(void);
 
 TAILQ_HEAD(exphead, expentry) ehead;
@@ -125,14 +126,6 @@ foundparen(char *funstr, int llen)
 
 	pctr = fndstart = expctr = fndend = inquote = 0;
 	blkid = 1;
-	/*
-	 * Check for blocks of code with opening and closing ().
-	 * One block = (cmd p a r a m)
-	 * Two blocks = (cmd p a r a m s)(hola)
-	 * Two blocks = (cmd p a r (list a m s))(hola)
-	 * Only single line at moment, but more for multiline.
-	 */
-	p = funstr;
 
 	/*
 	 * Currently can't do () or (( at the moment,
@@ -153,31 +146,31 @@ foundparen(char *funstr, int llen)
 	 */
 	TAILQ_INIT(&ehead);
 
-	for (i = llen; i > 0; --i) {
+	/*
+	 * Check for blocks of code with opening and closing ().
+	 * One block = (cmd p a r a m)
+	 * Two blocks = (cmd p a r a m s)(hola)
+	 * Two blocks = (cmd p a r (list a m s))(hola)
+	 * Only single line at moment, but more for multiline.
+	 */
+	p = funstr;
+
+	for (i = 0; i < llen; ++i) {
 		if (*p == '(') {
 			if (fndstart == 1) {
 				if (endp == NULL)
 					*p = '\0';
 				else
 					*endp = '\0';
-				e1->par2 = 1;
-	                        if ((e1->exp = strndup(begp, BUFSIZE)) ==
-				    NULL) {
+
+				ret = addexp(begp, 1, 1, blkid, ++expctr);
+				if (!ret) {
 					cleanup();
-        	                        return(dobeep_msg("strndup error"));
+					return(ret);
 				}
-				begp = NULL;
+				begp = NULL;			
 			}
-			if ((e1 = malloc(sizeof(struct expentry))) == NULL) {
-				cleanup();
-                               	return (dobeep_msg("malloc Error"));
-			}
-                       	TAILQ_INSERT_HEAD(&ehead, e1, eentry);
-			e1->exp = NULL;
-                       	e1->expctr = ++expctr;
-			e1->blkid = blkid;
-                       	e1->par1 = 1; 
-			fndstart = 1;
+			fndstart = 0;
 			fndend = 0;
 			endp = NULL;
 			pctr++;
@@ -187,20 +180,28 @@ foundparen(char *funstr, int llen)
 				return(dobeep_msg("Opening and closing quote "\
 				    "char error"));
 			}
-			if (endp == NULL)
-				*p = '\0';
-			else
-				*endp = '\0';
-			if ((e1->exp = strndup(begp, BUFSIZE)) == NULL) {
-				cleanup();
-				return(dobeep_msg("strndup error"));
+			if (fndstart == 1) {
+				if (endp == NULL)
+					*p = '\0';
+				else
+					*endp = '\0';
+
+				ret = addexp(begp, 1, 2, blkid, ++expctr);
+				if (!ret) {
+					cleanup();
+					return(ret);
+				}
 			}
 			fndstart = 0;
+			fndend = 0;
+			begp = NULL;
 			pctr--;
 		} else if (*p != ' ' && *p != '\t') {
-			if (begp == NULL)
-				begp = p;
-
+			if (fndstart == 0) {
+				fndstart = 1;
+				if (begp == NULL)
+					begp = p;
+			}
 			if (*p == '"') {
 				if (inquote == 0)
 					inquote = 1;
@@ -256,6 +257,30 @@ foundparen(char *funstr, int llen)
 		clearexp();	/* leave lists but remove expressions */
 
 	return (ret);
+}
+
+
+static int
+addexp(char *begp, int par1, int par2, int blkid, int expctr)
+{
+	struct expentry *e1 = NULL;
+
+	if ((e1 = malloc(sizeof(struct expentry))) == NULL) {
+		cleanup();
+		return (dobeep_msg("malloc Error"));
+	}
+	TAILQ_INSERT_HEAD(&ehead, e1, eentry);
+	if ((e1->exp = strndup(begp, BUFSIZE)) == NULL) {
+		cleanup();
+		return(dobeep_msg("strndup error"));
+	}
+	e1->expctr = expctr;
+	e1->blkid = blkid;
+	/* need to think about these two */
+	e1->par1 = par1; 
+	e1->par2 = par2;
+
+	return (TRUE);
 }
 
 /*
