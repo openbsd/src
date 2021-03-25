@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.101 2021/03/16 09:00:43 kn Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.102 2021/03/25 20:46:55 kn Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -329,7 +329,8 @@ suspend(int ctl_fd)
 	do_etc_file(_PATH_APM_ETC_SUSPEND);
 	sync();
 	sleep(1);
-	ioctl(ctl_fd, APM_IOC_SUSPEND, 0);
+	if (ioctl(ctl_fd, APM_IOC_SUSPEND, 0) == -1)
+		logmsg(LOG_WARNING, "%s: %s", __func__, strerror(errno));
 }
 
 void
@@ -340,7 +341,8 @@ stand_by(int ctl_fd)
 	do_etc_file(_PATH_APM_ETC_STANDBY);
 	sync();
 	sleep(1);
-	ioctl(ctl_fd, APM_IOC_STANDBY, 0);
+	if (ioctl(ctl_fd, APM_IOC_STANDBY, 0) == -1)
+		logmsg(LOG_WARNING, "%s: %s", __func__, strerror(errno));
 }
 
 void
@@ -351,7 +353,8 @@ hibernate(int ctl_fd)
 	do_etc_file(_PATH_APM_ETC_HIBERNATE);
 	sync();
 	sleep(1);
-	ioctl(ctl_fd, APM_IOC_HIBERNATE, 0);
+	if (ioctl(ctl_fd, APM_IOC_HIBERNATE, 0) == -1)
+		logmsg(LOG_WARNING, "%s: %s", __func__, strerror(errno));
 }
 
 void
