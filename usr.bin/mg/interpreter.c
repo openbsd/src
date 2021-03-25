@@ -1,4 +1,4 @@
-/*      $OpenBSD: interpreter.c,v 1.14 2021/03/25 12:46:11 lum Exp $	*/
+/*      $OpenBSD: interpreter.c,v 1.15 2021/03/25 16:58:46 lum Exp $	*/
 /*
  * This file is in the public domain.
  *
@@ -117,12 +117,12 @@ int
 foundparen(char *funstr, int llen)
 {
 	struct expentry *e1 = NULL, *e2 = NULL;
-	char		*p, *valp, *endp = NULL, *regs;
+	char		*p, *begp = NULL, *endp = NULL, *regs;
 	char		 expbuf[BUFSIZE], tmpbuf[BUFSIZE];
-	int     	 i, ret, pctr, fndstart, expctr, blkid, fndchr, fndend;
+	int     	 i, ret, pctr, fndstart, expctr, blkid, fndend;
 	int		 inquote;
 
-	pctr = fndstart = expctr = fndchr = fndend = inquote = 0;
+	pctr = fndstart = expctr = fndend = inquote = 0;
 	blkid = 1;
 	/*
 	 * Check for blocks of code with opening and closing ().
@@ -160,11 +160,12 @@ foundparen(char *funstr, int llen)
 				else
 					*endp = '\0';
 				e1->par2 = 1;
-	                        if ((e1->exp = strndup(valp, BUFSIZE)) ==
+	                        if ((e1->exp = strndup(begp, BUFSIZE)) ==
 				    NULL) {
 					cleanup();
         	                        return(dobeep_msg("strndup error"));
 				}
+				begp = NULL;
 			}
 			if ((e1 = malloc(sizeof(struct expentry))) == NULL) {
 				cleanup();
@@ -177,7 +178,6 @@ foundparen(char *funstr, int llen)
                        	e1->par1 = 1; 
 			fndstart = 1;
 			fndend = 0;
-			fndchr = 0;
 			endp = NULL;
 			pctr++;
 		} else if (*p == ')') {
@@ -190,17 +190,16 @@ foundparen(char *funstr, int llen)
 				*p = '\0';
 			else
 				*endp = '\0';
-			if ((e1->exp = strndup(valp, BUFSIZE)) == NULL) {
+			if ((e1->exp = strndup(begp, BUFSIZE)) == NULL) {
 				cleanup();
 				return(dobeep_msg("strndup error"));
 			}
 			fndstart = 0;
 			pctr--;
 		} else if (*p != ' ' && *p != '\t') {
-			if (fndchr == 0) {
-				valp = p;
-				fndchr = 1;
-			}
+			if (begp == NULL)
+				begp = p;
+
 			if (*p == '"') {
 				if (inquote == 0)
 					inquote = 1;
@@ -216,6 +215,7 @@ foundparen(char *funstr, int llen)
 		} else if (*p == '\t')
 			if (inquote == 0)
 				*p = ' ';
+
 		if (pctr == 0)
 			blkid++;
 		p++;
