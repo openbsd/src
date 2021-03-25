@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.170 2021/03/21 12:56:16 lum Exp $	*/
+/*	$OpenBSD: def.h,v 1.171 2021/03/25 12:46:11 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -582,7 +582,7 @@ int		 evalexpr(int, int);
 int		 evalbuffer(int, int);
 int		 evalfile(int, int);
 int		 load(const char *);
-int		 excline(char *);
+int		 excline(char *, int);
 char		*skipwhite(char *);
 
 /* help.c X */
@@ -720,7 +720,7 @@ int		 dobeep_msg(const char *);
 void		 dobeep(void);
 
 /* interpreter.c */
-int		 foundparen(char *);
+int		 foundparen(char *, int);
 void		 cleanup(void);
 
 /*

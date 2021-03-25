@@ -1,4 +1,4 @@
-/*      $OpenBSD: interpreter.c,v 1.13 2021/03/23 15:22:25 lum Exp $	*/
+/*      $OpenBSD: interpreter.c,v 1.14 2021/03/25 12:46:11 lum Exp $	*/
 /*
  * This file is in the public domain.
  *
@@ -41,6 +41,12 @@
  * [...]
  * n. implement user definable functions.
  * 
+ * Notes:
+ * - Currently calls to excline() from this file have the line length set to
+ *   zero. That's because excline() uses '\0' as the end of line indicator
+ *   and only the call to foundparen() within excline() uses excline's 2nd
+ *   argument. Importantly, any lines sent to there from here will not be
+ *   coming back here.
  */
 #include <sys/queue.h>
 
@@ -108,12 +114,12 @@ char scharkey[NUMSCHKEYS][MAXLENSCHKEYS] =
  * Multi-line not supported at the moment, To do.
  */
 int
-foundparen(char *funstr)
+foundparen(char *funstr, int llen)
 {
 	struct expentry *e1 = NULL, *e2 = NULL;
 	char		*p, *valp, *endp = NULL, *regs;
 	char		 expbuf[BUFSIZE], tmpbuf[BUFSIZE];
-	int     	 ret, pctr, fndstart, expctr, blkid, fndchr, fndend;
+	int     	 i, ret, pctr, fndstart, expctr, blkid, fndchr, fndend;
 	int		 inquote;
 
 	pctr = fndstart = expctr = fndchr = fndend = inquote = 0;
@@ -146,7 +152,7 @@ foundparen(char *funstr)
 	 */
 	TAILQ_INIT(&ehead);
 
-	while (*p != '\0') {
+	for (i = llen; i > 0; --i) {
 		if (*p == '(') {
 			if (fndstart == 1) {
 				if (endp == NULL)
@@ -241,7 +247,7 @@ foundparen(char *funstr)
 		mglog_misc("exp|%s|\n", e1->exp);
 #endif
 	}
-	
+
 	ret = parseexp(expbuf);
 	if (ret == FALSE)
 		cleanup();
@@ -309,7 +315,7 @@ multiarg(char *funstr)
 
 	/* mg function name regex */	
         if (doregex("^[A-Za-z-]+$", funstr))
-		return(excline(funstr));
+		return(excline(funstr, 0));
 
 	cmdp = funstr;
 	fendp = strchr(cmdp, ' ');
@@ -406,7 +412,7 @@ multiarg(char *funstr)
 			    >= sizeof(excbuf))
 				return (dobeep_msg("strlcat error"));
 
-			excline(excbuf);
+			excline(excbuf, 0);
 
 			if (fin)
 				break;
