@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.270 2021/02/03 22:46:55 tobhe Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.271 2021/03/25 21:27:45 abieber Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -888,7 +888,7 @@ pledge_sysctl(struct proc *p, int miblen, int *mib, void *new)
 			return (0);
 	}
 
-	if ((p->p_p->ps_pledge & PLEDGE_INET)) {
+	if ((p->p_p->ps_pledge & (PLEDGE_INET | PLEDGE_UNIX))) {
 		if (miblen == 2 &&		/* kern.somaxconn */
 		    mib[0] == CTL_KERN && mib[1] == KERN_SOMAXCONN)
 			return (0);
