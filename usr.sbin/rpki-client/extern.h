@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.55 2021/03/19 13:56:10 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.56 2021/03/25 12:18:45 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -262,6 +262,12 @@ enum rtype {
 	RTYPE_CER,
 	RTYPE_CRL,
 	RTYPE_GBR,
+};
+
+enum http_result {
+	HTTP_FAILED,	/* anything else */
+	HTTP_OK,	/* 200 OK */
+	HTTP_NOT_MOD,	/* 304 Not Modified */
 };
 
 /*

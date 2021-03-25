@@ -1,4 +1,4 @@
-/*      $OpenBSD: http.c,v 1.8 2021/03/18 16:15:19 tb Exp $  */
+/*      $OpenBSD: http.c,v 1.9 2021/03/25 12:18:45 claudio Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.com>
@@ -264,7 +264,7 @@ http_resolv(struct http_connection *conn, const char *host, const char *port)
 }
 
 static void
-http_done(struct http_connection *conn, int ok)
+http_done(struct http_connection *conn, enum http_result res)
 {
 	struct ibuf *b;
 
@@ -273,10 +273,8 @@ http_done(struct http_connection *conn, int ok)
 	if ((b = ibuf_dynamic(64, UINT_MAX)) == NULL)
 		err(1, NULL);
 	io_simple_buffer(b, &conn->id, sizeof(conn->id));
-	io_simple_buffer(b, &ok, sizeof(ok));
-#if 0	/* TODO: cache last_modified */
+	io_simple_buffer(b, &res, sizeof(res));
 	io_str_buffer(b, conn->last_modified);
-#endif
 	ibuf_close(&msgq, b);
 }
 
@@ -284,12 +282,13 @@ static void
 http_fail(size_t id)
 {
 	struct ibuf *b;
-	int ok = 0;
+	enum http_result res = HTTP_FAILED;
 
 	if ((b = ibuf_dynamic(8, UINT_MAX)) == NULL)
 		err(1, NULL);
 	io_simple_buffer(b, &id, sizeof(id));
-	io_simple_buffer(b, &ok, sizeof(ok));
+	io_simple_buffer(b, &res, sizeof(res));
+	io_str_buffer(b, NULL);
 	ibuf_close(&msgq, b);
 }
 
@@ -434,7 +433,7 @@ http_redirect(struct http_connection *conn, char *uri)
 {
 	char *host, *port, *path;
 
-	warnx("redirect to %s", http_info(uri));
+	logx("redirect to %s", http_info(uri));
 
 	if (http_parse_uri(uri, &host, &port, &path) == -1) {
 		free(uri);
@@ -705,6 +704,7 @@ http_parse_status(struct http_connection *conn, char *buf)
 	case 302:
 	case 303:
 	case 307:
+	case 308:
 		if (conn->redirect_loop++ > 10) {
 			warnx("%s: Too many redirections requested",
 			    http_info(conn->url));
@@ -712,7 +712,6 @@ http_parse_status(struct http_connection *conn, char *buf)
 		}
 		/* FALLTHROUGH */
 	case 200:
-	case 206:
 	case 304:
 		conn->status = status;
 		break;
@@ -729,7 +728,7 @@ static inline int
 http_isredirect(struct http_connection *conn)
 {
 	if ((conn->status >= 301 && conn->status <= 303) ||
-	    conn->status == 307)
+	    conn->status == 307 || conn->status == 308)
 		return 1;
 	return 0;
 }
@@ -865,7 +864,7 @@ http_parse_chunked(struct http_connection *conn, char *buf)
 	conn->chunksz = chunksize;
 
 	if (conn->chunksz == 0) {
-		http_done(conn, 1);
+		http_done(conn, HTTP_OK);
 		return 0;
 	}
 
@@ -970,7 +969,7 @@ data_write(struct http_connection *conn)
 	memmove(conn->buf, conn->buf + s, conn->bufpos);
 
 	if (conn->bytes == conn->filesize) {
-		http_done(conn, 1);
+		http_done(conn, HTTP_OK);
 		return 0;
 	}
 
@@ -1065,10 +1064,13 @@ http_nextstep(struct http_connection *conn)
 		conn->state = STATE_RESPONSE_HEADER;
 		return WANT_POLLIN;
 	case STATE_RESPONSE_HEADER:
-		if (conn->status == 200)
+		if (conn->status == 200) {
 			conn->state = STATE_RESPONSE_DATA;
-		else {
-			http_done(conn, 0);
+		} else {
+			if (conn->status == 304)
+				http_done(conn, HTTP_NOT_MOD);
+			else
+				http_done(conn, HTTP_FAILED);
 			return http_close(conn);
 		}
 		return WANT_POLLIN;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.122 2021/03/19 13:56:10 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.123 2021/03/25 12:18:45 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -321,11 +321,11 @@ http_ta_fetch(struct repo *rp)
 }
 
 static int
-http_done(struct repo *rp, int ok)
+http_done(struct repo *rp, enum http_result res)
 {
 	if (rp->repouri == NULL) {
 		/* Move downloaded TA file into place, or unlink on failure. */
-		if (ok) {
+		if (res == HTTP_OK) {
 			char *file;
 
 			file = ta_filename(rp, 0);
@@ -339,18 +339,16 @@ http_done(struct repo *rp, int ok)
 		rp->temp = NULL;
 	}
 
-	if (!ok && rp->uriidx < REPO_MAX_URI - 1 &&
+	if (res == HTTP_OK)
+		logx("%s: loaded from network", rp->local);
+	else if (rp->uriidx < REPO_MAX_URI - 1 &&
 	    rp->uris[rp->uriidx + 1] != NULL) {
 		logx("%s: load from network failed, retry", rp->local);
 
 		rp->uriidx++;
 		repo_fetch(rp);
 		return 0;
-	}
-
-	if (ok)
-		logx("%s: loaded from network", rp->local);
-	else
+	} else
 		logx("%s: load from network failed, "
 		    "fallback to cache", rp->local);
 
@@ -842,7 +840,7 @@ suicide(int sig __attribute__((unused)))
 int
 main(int argc, char *argv[])
 {
-	int		 rc = 1, c, st, proc, rsync, http,
+	int		 rc = 1, c, st, proc, rsync, http, ok,
 			 fl = SOCK_STREAM | SOCK_CLOEXEC;
 	size_t		 i, id, outsz = 0, talsz = 0;
 	pid_t		 procpid, rsyncpid, httppid;
@@ -1157,7 +1155,6 @@ main(int argc, char *argv[])
 		 */
 
 		if ((pfd[0].revents & POLLIN)) {
-			int ok;
 			io_simple_read(rsync, &id, sizeof(id));
 			io_simple_read(rsync, &ok, sizeof(ok));
 			rp = repo_find(id);
@@ -1176,19 +1173,23 @@ main(int argc, char *argv[])
 		}
 
 		if ((pfd[2].revents & POLLIN)) {
-			int ok;
+			enum http_result res;
+			char *last_mod;
+
 			io_simple_read(http, &id, sizeof(id));
-			io_simple_read(http, &ok, sizeof(ok));
+			io_simple_read(http, &res, sizeof(res));
+			io_str_read(http, &last_mod);
 			rp = repo_find(id);
 			if (rp == NULL)
 				errx(1, "unknown repository id: %zu", id);
 
 			assert(!rp->loaded);
-			if (http_done(rp, ok)) {
+			if (http_done(rp, res)) {
 				rp->loaded = 1;
 				stats.repos++;
 				entityq_flush(rp);
 			}
+			free(last_mod);
 		}
 
 		/*
