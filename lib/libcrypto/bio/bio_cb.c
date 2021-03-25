@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_cb.c,v 1.16 2014/12/08 03:54:19 bcook Exp $ */
+/* $OpenBSD: bio_cb.c,v 1.17 2021/03/25 09:26:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -70,15 +70,22 @@ BIO_debug_callback(BIO *bio, int cmd, const char *argp, int argi, long argl,
 	BIO *b;
 	char buf[256];
 	char *p;
+	int nbuf;
 	long r = 1;
 	size_t p_maxlen;
 
 	if (BIO_CB_RETURN & cmd)
 		r = ret;
 
-	snprintf(buf, sizeof buf, "BIO[%p]:", bio);
-	p = &(buf[14]);
-	p_maxlen = sizeof buf - 14;
+	nbuf = snprintf(buf, sizeof(buf), "BIO[%p]: ", bio);
+	if (nbuf < 0)
+		nbuf = 0;	/* Ignore error; continue printing. */
+	if (nbuf >= sizeof(buf))
+		goto out;
+
+	p = buf + nbuf;
+	p_maxlen = sizeof(buf) - nbuf;
+
 	switch (cmd) {
 	case BIO_CB_FREE:
 		snprintf(p, p_maxlen, "Free - %s\n", bio->method->name);
@@ -136,6 +143,7 @@ BIO_debug_callback(BIO *bio, int cmd, const char *argp, int argi, long argl,
 		break;
 	}
 
+ out:
 	b = (BIO *)bio->cb_arg;
 	if (b != NULL)
 		BIO_write(b, buf, strlen(buf));
