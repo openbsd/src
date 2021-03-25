@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxtemp.c,v 1.5 2018/03/30 20:31:01 patrick Exp $	*/
+/*	$OpenBSD: imxtemp.c,v 1.6 2021/03/25 04:12:01 jsg Exp $	*/
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -18,16 +18,10 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/queue.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/evcount.h>
 #include <sys/sensors.h>
-#include <sys/socket.h>
 #include <sys/timeout.h>
 
-#include <machine/intr.h>
-#include <machine/bus.h>
 #include <machine/fdt.h>
 
 #include <dev/ofw/openfirm.h>

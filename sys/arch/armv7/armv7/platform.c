@@ -1,4 +1,4 @@
-/*	$OpenBSD: platform.c,v 1.24 2019/10/25 10:17:06 kettenis Exp $	*/
+/*	$OpenBSD: platform.c,v 1.25 2021/03/25 04:12:01 jsg Exp $	*/
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -16,7 +16,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/systm.h>
 
 #include <machine/bus.h>
 

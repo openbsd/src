@@ -1,4 +1,4 @@
-/*	$OpenBSD: undefined.c,v 1.14 2020/08/19 10:10:58 mpi Exp $	*/
+/*	$OpenBSD: undefined.c,v 1.15 2021/03/25 04:12:00 jsg Exp $	*/
 /*	$NetBSD: undefined.c,v 1.22 2003/11/29 22:21:29 bjh21 Exp $	*/
 
 /*
@@ -54,8 +54,6 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <sys/syslog.h>
-#include <sys/vmmeter.h>
 
 #include <uvm/uvm_extern.h>
 

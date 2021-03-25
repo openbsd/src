@@ -1,4 +1,4 @@
-/*	$OpenBSD: omehci.c,v 1.7 2021/03/11 11:16:56 jsg Exp $ */
+/*	$OpenBSD: omehci.c,v 1.8 2021/03/25 04:12:01 jsg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -47,8 +47,6 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/rwlock.h>
-#include <sys/timeout.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
@@ -57,9 +55,7 @@
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
-#include <dev/usb/usb_mem.h>
 
-#include <armv7/armv7/armv7var.h>
 #include <armv7/omap/prcmvar.h>
 #include <armv7/omap/omehcivar.h>
 

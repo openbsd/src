@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.62 2021/03/11 11:16:56 jsg Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.63 2021/03/25 04:12:01 jsg Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -109,8 +109,6 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
-#include <sys/termios.h>
-#include <sys/socket.h>
 
 #include <machine/db_machdep.h>
 #include <machine/bootconfig.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.56 2021/01/23 05:08:34 thfr Exp $	*/
+/*	$OpenBSD: conf.c,v 1.57 2021/03/25 04:12:00 jsg Exp $	*/
 /*	$NetBSD: conf.c,v 1.10 2002/04/19 01:04:38 wiz Exp $	*/
 
 /*
@@ -47,13 +47,8 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/buf.h>
-#include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
-#include <sys/vnode.h>
-
-#include <machine/conf.h>
 
 /*
  * From this point, these need to be MI foo.h files.

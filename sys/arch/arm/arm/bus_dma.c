@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.40 2020/04/29 15:25:07 kettenis Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.41 2021/03/25 04:12:00 jsg Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.38 2003/10/30 08:44:13 scw Exp $	*/
 
 /*-
@@ -35,20 +35,13 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/buf.h>
-#include <sys/reboot.h>
-#include <sys/conf.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
-#include <sys/vnode.h>
-#include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
-#include <machine/cpu.h>
 #include <arm/cpufunc.h>
 
 /*

@@ -1,4 +1,4 @@
-/* $OpenBSD: imxahci.c,v 1.11 2018/04/02 17:43:08 patrick Exp $ */
+/* $OpenBSD: imxahci.c,v 1.12 2021/03/25 04:12:01 jsg Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -17,11 +17,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/buf.h>
-#include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/queue.h>
 
 #include <machine/bus.h>
 #include <machine/fdt.h>

@@ -1,4 +1,4 @@
-/* $OpenBSD: exgpio.c,v 1.6 2017/03/11 17:06:27 kettenis Exp $ */
+/* $OpenBSD: exgpio.c,v 1.7 2021/03/25 04:12:01 jsg Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -24,7 +24,6 @@
 
 #include <machine/bus.h>
 #include <machine/fdt.h>
-#include <machine/intr.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_gpio.h>

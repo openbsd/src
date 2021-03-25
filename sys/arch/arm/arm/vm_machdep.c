@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.25 2020/03/19 16:35:39 visa Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.26 2021/03/25 04:12:00 jsg Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.31 2004/01/04 11:33:29 jdolecek Exp $	*/
 
 /*
@@ -47,20 +47,13 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/signalvar.h>
-#include <sys/malloc.h>
-#include <sys/vnode.h>
 #include <sys/buf.h>
 #include <sys/user.h>
-#include <sys/exec.h>
-#include <sys/ptrace.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <machine/pmap.h>
-#include <machine/reg.h>
-#include <machine/vmparam.h>
 
 #include <arm/vfp.h>
 

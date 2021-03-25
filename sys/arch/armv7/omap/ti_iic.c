@@ -1,4 +1,4 @@
-/*	$OpenBSD: ti_iic.c,v 1.13 2020/04/10 22:02:45 kettenis Exp $	*/
+/*	$OpenBSD: ti_iic.c,v 1.14 2021/03/25 04:12:01 jsg Exp $	*/
 /* $NetBSD: ti_iic.c,v 1.4 2013/04/25 13:04:27 rkujawa Exp $ */
 
 /*
@@ -50,11 +50,9 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/kernel.h>
 #include <sys/rwlock.h>
 
 #include <machine/bus.h>
@@ -63,7 +61,6 @@
 
 #include <dev/i2c/i2cvar.h>
 
-#include <armv7/armv7/armv7var.h>
 #include <armv7/omap/prcmvar.h>
 #include <armv7/omap/ti_iicreg.h>
 

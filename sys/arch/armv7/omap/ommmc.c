@@ -1,4 +1,4 @@
-/*	$OpenBSD: ommmc.c,v 1.38 2021/01/19 18:04:43 kettenis Exp $	*/
+/*	$OpenBSD: ommmc.c,v 1.39 2021/03/25 04:12:01 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
@@ -22,8 +22,6 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/systm.h>
 #include <machine/bus.h>
 #include <machine/fdt.h>
@@ -31,7 +29,6 @@
 #include <dev/sdmmc/sdmmcchip.h>
 #include <dev/sdmmc/sdmmcvar.h>
 
-#include <armv7/armv7/armv7var.h>
 #include <armv7/omap/prcmvar.h>
 
 #include <dev/ofw/openfirm.h>

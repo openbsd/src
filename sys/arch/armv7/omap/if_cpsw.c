@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpsw.c,v 1.50 2021/03/11 11:16:56 jsg Exp $ */
+/* $OpenBSD: if_cpsw.c,v 1.51 2021/03/25 04:12:01 jsg Exp $ */
 /*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
@@ -61,10 +61,8 @@
 #include <sys/mbuf.h>
 #include <sys/pool.h>
 #include <sys/queue.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/timeout.h>
-#include <sys/socket.h>
 
 #include <machine/bus.h>
 #include <machine/fdt.h>
@@ -79,10 +77,8 @@
 #include <net/bpf.h>
 #endif
 
-#include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
-#include <arch/armv7/armv7/armv7var.h>
 #include <arch/armv7/omap/if_cpswreg.h>
 
 #include <dev/ofw/openfirm.h>

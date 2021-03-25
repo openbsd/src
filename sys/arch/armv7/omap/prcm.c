@@ -1,4 +1,4 @@
-/* $OpenBSD: prcm.c,v 1.15 2021/01/19 18:04:43 kettenis Exp $ */
+/* $OpenBSD: prcm.c,v 1.16 2021/03/25 04:12:01 jsg Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -50,13 +50,9 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/time.h>
 #include <sys/device.h>
 
 #include <machine/bus.h>
-#include <machine/intr.h>
-#include <arm/cpufunc.h>
 #include <armv7/armv7/armv7var.h>
 #include <armv7/omap/prcmvar.h>
 

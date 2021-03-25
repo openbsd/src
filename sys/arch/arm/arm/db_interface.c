@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.16 2019/11/07 14:44:52 mpi Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.17 2021/03/25 04:12:00 jsg Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.34 2003/10/26 23:11:15 chris Exp $	*/
 
 /* 
@@ -36,9 +36,7 @@
  */
 #include <sys/param.h>
 #include <sys/proc.h>
-#include <sys/reboot.h>
 #include <sys/systm.h>	/* just for boothowto */
-#include <sys/exec.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -49,7 +47,6 @@
 #include <ddb/db_command.h>
 #include <ddb/db_output.h>
 #include <ddb/db_variables.h>
-#include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_interface.h>
 #include <dev/cons.h>

@@ -1,4 +1,4 @@
-/* $OpenBSD: pciecam.c,v 1.3 2021/02/25 23:07:48 patrick Exp $ */
+/* $OpenBSD: pciecam.c,v 1.4 2021/03/25 04:12:01 jsg Exp $ */
 /*
  * Copyright (c) 2013,2017 Patrick Wildt <patrick@blueri.se>
  *
@@ -17,13 +17,9 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/queue.h>
 #include <sys/malloc.h>
 #include <sys/extent.h>
 #include <sys/device.h>
-#include <sys/evcount.h>
-#include <sys/socket.h>
-#include <sys/timeout.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
@@ -33,8 +29,6 @@
 
 #include <dev/ofw/fdt.h>
 #include <dev/ofw/openfirm.h>
-#include <dev/ofw/ofw_clock.h>
-#include <dev/ofw/ofw_pinctrl.h>
 
 /* Assembling ECAM Configuration Address */
 #define PCIE_BUS_SHIFT			20

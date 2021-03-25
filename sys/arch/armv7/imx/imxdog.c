@@ -1,4 +1,4 @@
-/* $OpenBSD: imxdog.c,v 1.5 2016/10/05 22:06:48 kettenis Exp $ */
+/* $OpenBSD: imxdog.c,v 1.6 2021/03/25 04:12:01 jsg Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -17,14 +17,8 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/queue.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/evcount.h>
-#include <sys/socket.h>
-#include <sys/timeout.h>
 
-#include <machine/intr.h>
 #include <machine/bus.h>
 #include <machine/fdt.h>
 
@@ -32,8 +26,6 @@
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/fdt.h>
-
-#include <armv7/armv7/armv7var.h>
 
 /* registers */
 #define WCR		0x00

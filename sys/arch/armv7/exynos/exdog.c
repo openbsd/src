@@ -1,4 +1,4 @@
-/* $OpenBSD: exdog.c,v 1.6 2017/03/09 20:07:35 kettenis Exp $ */
+/* $OpenBSD: exdog.c,v 1.7 2021/03/25 04:12:01 jsg Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -17,14 +17,8 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/queue.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/evcount.h>
-#include <sys/socket.h>
-#include <sys/timeout.h>
 
-#include <machine/intr.h>
 #include <machine/bus.h>
 #include <machine/fdt.h>
 

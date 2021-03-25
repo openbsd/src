@@ -1,4 +1,4 @@
-/*	$OpenBSD: softintr.c,v 1.10 2020/09/11 09:27:10 mpi Exp $	*/
+/*	$OpenBSD: softintr.c,v 1.11 2021/03/25 04:12:00 jsg Exp $	*/
 /*	$NetBSD: softintr.c,v 1.2 2003/07/15 00:24:39 lukem Exp $	*/
 
 /*
@@ -42,7 +42,6 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/atomic.h>
 #include <machine/intr.h>
 
 struct soft_intrq soft_intrq[SI_NQUEUES];

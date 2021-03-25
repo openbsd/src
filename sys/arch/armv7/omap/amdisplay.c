@@ -1,4 +1,4 @@
-/* $OpenBSD: amdisplay.c,v 1.14 2021/03/11 11:16:56 jsg Exp $ */
+/* $OpenBSD: amdisplay.c,v 1.15 2021/03/25 04:12:01 jsg Exp $ */
 /*
  * Copyright (c) 2016 Ian Sutton <ians@openbsd.org>
  *
@@ -20,10 +20,8 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 
-#include <dev/cons.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
-#include <dev/wscons/wscons_callbacks.h>
 #include <dev/rasops/rasops.h>
 #include <dev/videomode/videomode.h>
 #include <dev/videomode/edidvar.h>

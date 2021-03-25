@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysreg.c,v 1.4 2019/05/06 03:50:48 mlarkin Exp $	*/
+/*	$OpenBSD: sysreg.c,v 1.5 2021/03/25 04:12:01 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Jonathan Gray <jsg@openbsd.org>
@@ -22,7 +22,6 @@
 #include <machine/bus.h>
 #include <machine/fdt.h>
 
-#include <armv7/armv7/armv7var.h>
 #include <armv7/armv7/armv7_machdep.h>
 
 #include <dev/ofw/openfirm.h>

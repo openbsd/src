@@ -1,4 +1,4 @@
-/*	$OpenBSD: omdog.c,v 1.8 2017/11/27 06:29:41 jsg Exp $	*/
+/*	$OpenBSD: omdog.c,v 1.9 2021/03/25 04:12:01 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Federico G. Schwindt <fgsch@openbsd.org>
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
@@ -18,21 +18,13 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/queue.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/evcount.h>
-#include <sys/socket.h>
-#include <sys/timeout.h>
 
-#include <machine/intr.h>
 #include <machine/bus.h>
 #include <machine/fdt.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/fdt.h>
-
-#include <armv7/armv7/armv7var.h>
 
 #define WIDR		0x00			/* Identification Register */
 #define WCLR		0x24			/* Control Register */

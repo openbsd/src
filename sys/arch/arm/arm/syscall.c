@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.21 2020/03/13 08:46:50 deraadt Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.22 2021/03/25 04:12:00 jsg Exp $	*/
 /*	$NetBSD: syscall.c,v 1.24 2003/11/14 19:03:17 scw Exp $	*/
 
 /*-
@@ -72,11 +72,8 @@
 
 #include <sys/param.h>
 
-#include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/kernel.h>
-#include <sys/reboot.h>
-#include <sys/signalvar.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/user.h>
@@ -88,7 +85,6 @@
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/pcb.h>
-#include <arm/swi.h>
 #include <arm/vfp.h>
 
 #define MAXARGS 8

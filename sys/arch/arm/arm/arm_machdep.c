@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm_machdep.c,v 1.5 2018/03/16 21:46:04 kettenis Exp $	*/
+/*	$OpenBSD: arm_machdep.c,v 1.6 2021/03/25 04:12:00 jsg Exp $	*/
 /*	$NetBSD: arm_machdep.c,v 1.7 2003/10/25 19:44:42 scw Exp $	*/
 
 /*
@@ -78,14 +78,8 @@
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/user.h>
-#include <sys/pool.h>
 
-#include <arm/cpufunc.h>
 #include <arm/vfp.h>
-
-#include <machine/pcb.h>
-#include <machine/vmparam.h>
-#include <machine/bus.h>
 
 /*
  * The ARM architecture places the vector page at address 0.

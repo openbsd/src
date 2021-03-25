@@ -1,4 +1,4 @@
-/* $OpenBSD: crosec.c,v 1.3 2017/03/06 06:50:47 kettenis Exp $ */
+/* $OpenBSD: crosec.c,v 1.4 2021/03/25 04:12:01 jsg Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -18,8 +18,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/sensors.h>
-#include <sys/malloc.h>
 
 #include <armv7/exynos/crosecvar.h>
 

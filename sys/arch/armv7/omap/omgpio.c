@@ -1,4 +1,4 @@
-/* $OpenBSD: omgpio.c,v 1.12 2020/04/10 22:02:45 kettenis Exp $ */
+/* $OpenBSD: omgpio.c,v 1.13 2021/03/25 04:12:01 jsg Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -17,13 +17,9 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/queue.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/evcount.h>
 #include <sys/gpio.h>
-
-#include <arm/cpufunc.h>
 
 #include <machine/bus.h>
 #include <machine/fdt.h>
@@ -31,7 +27,6 @@
 
 #include <dev/gpio/gpiovar.h>
 
-#include <armv7/armv7/armv7var.h>
 #include <armv7/omap/prcmvar.h>
 #include <armv7/omap/omgpiovar.h>
 

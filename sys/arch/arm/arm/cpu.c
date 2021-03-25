@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.54 2021/03/11 11:16:55 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.55 2021/03/25 04:12:00 jsg Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 2004/04/14 04:01:49 bsh Exp $	*/
 
 
@@ -47,21 +47,14 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/user.h>
-#include <sys/proc.h>
-#include <sys/conf.h>
 #include <sys/sched.h>
 #include <sys/sysctl.h>
 #include <sys/task.h>
 
-#include <uvm/uvm_extern.h>
-
 #include <machine/cpu.h>
-#include <machine/intr.h>
 #include <machine/fdt.h>
 
-#include <arm/cpuconf.h>
-#include <arm/undefined.h>
+#include <arm/cpufunc.h>
 #include <arm/vfp.h>
 
 #include <dev/ofw/openfirm.h>

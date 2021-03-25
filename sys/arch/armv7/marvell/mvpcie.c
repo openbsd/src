@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvpcie.c,v 1.3 2021/02/25 23:07:48 patrick Exp $	*/
+/*	$OpenBSD: mvpcie.c,v 1.4 2021/03/25 04:12:01 jsg Exp $	*/
 /*
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -36,7 +36,6 @@
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/ofw_gpio.h>
-#include <dev/ofw/fdt.h>
 
 /* Registers */
 #define PCIE_DEV_ID			0x0000

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fault.c,v 1.44 2020/10/27 19:18:47 deraadt Exp $	*/
+/*	$OpenBSD: fault.c,v 1.45 2021/03/25 04:12:00 jsg Exp $	*/
 /*	$NetBSD: fault.c,v 1.46 2004/01/21 15:39:21 skrll Exp $	*/
 
 /*
@@ -82,22 +82,17 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <sys/kernel.h>
 #include <sys/signalvar.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <arm/cpuconf.h>
-
 #include <machine/frame.h>
 #include <machine/cpu.h>
-#include <machine/intr.h>
 #ifdef DDB
 #include <machine/db_machdep.h>
 #endif
 
 #include <arm/db_machdep.h>
-#include <arch/arm/arm/disassem.h>
 #include <arm/machdep.h>
 #include <arm/vfp.h>
  

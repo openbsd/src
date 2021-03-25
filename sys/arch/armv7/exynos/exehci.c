@@ -1,4 +1,4 @@
-/*	$OpenBSD: exehci.c,v 1.9 2021/02/14 19:24:38 kettenis Exp $ */
+/*	$OpenBSD: exehci.c,v 1.10 2021/03/25 04:12:01 jsg Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -18,7 +18,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/kernel.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
@@ -27,14 +26,11 @@
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
-#include <dev/usb/usb_mem.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/ofw_gpio.h>
 #include <dev/ofw/ofw_misc.h>
-#include <dev/ofw/ofw_pinctrl.h>
-#include <dev/ofw/ofw_regulator.h>
 #include <dev/ofw/fdt.h>
 
 #include <dev/usb/ehcireg.h>

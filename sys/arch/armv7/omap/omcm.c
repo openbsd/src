@@ -1,4 +1,4 @@
-/* $OpenBSD: omcm.c,v 1.1 2020/04/10 22:02:45 kettenis Exp $ */
+/* $OpenBSD: omcm.c,v 1.2 2021/03/25 04:12:01 jsg Exp $ */
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -21,7 +21,6 @@
 #include <machine/fdt.h>
 
 #include <dev/ofw/openfirm.h>
-#include <dev/ofw/fdt.h>
 
 #include <arm/simplebus/simplebusvar.h>
 

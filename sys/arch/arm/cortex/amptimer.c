@@ -1,4 +1,4 @@
-/* $OpenBSD: amptimer.c,v 1.11 2021/02/23 04:44:30 cheloha Exp $ */
+/* $OpenBSD: amptimer.c,v 1.12 2021/03/25 04:12:00 jsg Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -17,12 +17,9 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/queue.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/timetc.h>
-#include <sys/evcount.h>
 
 #include <arm/cpufunc.h>
 #include <machine/bus.h>

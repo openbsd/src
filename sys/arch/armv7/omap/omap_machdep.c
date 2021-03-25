@@ -1,4 +1,4 @@
-/*	$OpenBSD: omap_machdep.c,v 1.12 2017/09/08 05:36:51 deraadt Exp $	*/
+/*	$OpenBSD: omap_machdep.c,v 1.13 2021/03/25 04:12:01 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -18,18 +18,10 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
-#include <sys/termios.h>
 
 #include <machine/bus.h>
-#include <machine/bootconfig.h>
 
-#include <dev/ic/comreg.h>
-#include <dev/ic/comvar.h>
-
-#include <arm/cortex/smc.h>
-#include <arm/armv7/armv7var.h>
 #include <arm/mainbus/mainbus.h>
-#include <armv7/armv7/armv7var.h>
 #include <armv7/armv7/armv7_machdep.h>
 
 extern void omap4_smc_call(uint32_t, uint32_t);

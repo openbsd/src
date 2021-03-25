@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.60 2021/03/11 11:16:55 jsg Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.61 2021/03/25 04:12:00 jsg Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -176,18 +176,14 @@
  */
 
 #include <sys/param.h>
-#include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/user.h>
 #include <sys/pool.h>
-#include <sys/cdefs.h>
-#include <sys/sched.h>
  
 #include <uvm/uvm.h>
 
-#include <machine/bus.h>
 #include <machine/pmap.h>
 #include <machine/pcb.h>
 #include <machine/param.h>

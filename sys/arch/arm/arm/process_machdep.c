@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.6 2018/03/16 21:46:04 kettenis Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.7 2021/03/25 04:12:00 jsg Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.11 2003/08/07 16:26:52 agc Exp $	*/
 
 /*
@@ -102,15 +102,10 @@
  */
 
 #include <sys/param.h>
-
 #include <sys/proc.h>
 #include <sys/ptrace.h>
 #include <sys/systm.h>
 #include <sys/user.h>
-
-#include <machine/frame.h>
-#include <machine/pcb.h>
-#include <machine/reg.h>
 
 #include <arm/armreg.h>
 #include <arm/vfp.h>

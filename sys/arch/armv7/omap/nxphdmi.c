@@ -1,4 +1,4 @@
-/* $OpenBSD: nxphdmi.c,v 1.6 2019/05/06 03:45:58 mlarkin Exp $ */
+/* $OpenBSD: nxphdmi.c,v 1.7 2021/03/25 04:12:01 jsg Exp $ */
 /*
  * Copyright (c) 2016 Ian Sutton <ians@openbsd.org>
  * All rights reserved.
@@ -59,7 +59,6 @@
 #include <dev/i2c/i2cvar.h>
 #include <dev/videomode/videomode.h>
 
-#include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_pinctrl.h>
 
 #include <arch/armv7/omap/nxphdmivar.h>

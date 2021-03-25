@@ -1,4 +1,4 @@
-/* $OpenBSD: omapid.c,v 1.3 2016/10/08 05:55:03 jsg Exp $ */
+/* $OpenBSD: omapid.c,v 1.4 2021/03/25 04:12:01 jsg Exp $ */
 /*
  * Copyright (c) 2013 Dale Rahn <drahn@dalerahn.com>
  *
@@ -17,13 +17,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/queue.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/evcount.h>
-#include <sys/socket.h>
-#include <sys/timeout.h>
-#include <machine/intr.h>
 #include <machine/bus.h>
 #include <armv7/armv7/armv7var.h>
 

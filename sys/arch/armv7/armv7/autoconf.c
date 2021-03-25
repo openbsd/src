@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.9 2018/03/31 18:19:12 patrick Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.10 2021/03/25 04:12:01 jsg Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.2 2001/09/05 16:17:36 matt Exp $	*/
 
 /*
@@ -44,11 +44,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/reboot.h>
-#include <sys/socket.h>
-#include <sys/disklabel.h>
 #include <sys/device.h>
-#include <sys/conf.h>
-#include <sys/kernel.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -57,7 +53,6 @@
 
 #include <machine/bootconfig.h>
 #include <machine/intr.h>
-#include <machine/bus.h>
 
 struct device *bootdv = NULL;
 

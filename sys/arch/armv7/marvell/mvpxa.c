@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvpxa.c,v 1.1 2017/08/27 21:27:14 patrick Exp $	*/
+/*	$OpenBSD: mvpxa.c,v 1.2 2021/03/25 04:12:01 jsg Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -17,7 +17,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/malloc.h>
 #include <sys/systm.h>
 
 #include <machine/bus.h>
@@ -33,7 +32,6 @@
 
 #include <dev/sdmmc/sdhcreg.h>
 #include <dev/sdmmc/sdhcvar.h>
-#include <dev/sdmmc/sdmmcvar.h>
 
 #define MVPXA_READ(sc, reg) \
 	bus_space_read_4((sc)->sc_iot, (sc)->mbus_ioh, (reg))

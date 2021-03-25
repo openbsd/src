@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.5 2018/06/30 15:23:35 deraadt Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.6 2021/03/25 04:12:00 jsg Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.6 2003/07/15 00:24:42 lukem Exp $	*/
 
 /*
@@ -44,7 +44,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/mbuf.h>
 #include <sys/mount.h>
 #include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>

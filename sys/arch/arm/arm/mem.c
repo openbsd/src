@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.22 2020/05/17 11:12:55 kn Exp $	*/
+/*	$OpenBSD: mem.c,v 1.23 2021/03/25 04:12:00 jsg Exp $	*/
 /*	$NetBSD: mem.c,v 1.11 2003/10/16 12:02:58 jdolecek Exp $	*/
 
 /*
@@ -74,17 +74,13 @@
  */
 
 #include <sys/param.h>
-#include <sys/conf.h>
 #include <sys/buf.h>
 #include <sys/filio.h>
 #include <sys/systm.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
-#include <sys/proc.h>
-#include <sys/fcntl.h>
 #include <sys/rwlock.h>
 
-#include <machine/cpu.h>
 #include <arm/conf.h>
 
 #include <uvm/uvm_extern.h>

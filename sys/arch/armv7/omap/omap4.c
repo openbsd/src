@@ -1,4 +1,4 @@
-/* $OpenBSD: omap4.c,v 1.6 2020/04/07 09:04:34 kettenis Exp $ */
+/* $OpenBSD: omap4.c,v 1.7 2021/03/25 04:12:01 jsg Exp $ */
 
 /*
  * Copyright (c) 2011 Uwe Stuehler <uwe@openbsd.org>
@@ -17,8 +17,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/device.h>
 
 #include <machine/bus.h>
 

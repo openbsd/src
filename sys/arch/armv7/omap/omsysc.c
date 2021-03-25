@@ -1,4 +1,4 @@
-/* $OpenBSD: omsysc.c,v 1.1 2020/04/10 22:02:45 kettenis Exp $ */
+/* $OpenBSD: omsysc.c,v 1.2 2021/03/25 04:12:01 jsg Exp $ */
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -16,7 +16,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/device.h>
 
 #include <machine/fdt.h>

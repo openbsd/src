@@ -1,4 +1,4 @@
-/*	$OpenBSD: openprom.c,v 1.3 2020/07/06 15:18:03 kettenis Exp $	*/
+/*	$OpenBSD: openprom.c,v 1.4 2021/03/25 04:12:00 jsg Exp $	*/
 /*	$NetBSD: openprom.c,v 1.4 2002/01/10 06:21:53 briggs Exp $ */
 
 /*
@@ -47,8 +47,6 @@
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
-#include <sys/conf.h>
-#include <sys/device.h>
 
 #include <machine/openpromio.h>
 #include <machine/conf.h>

@@ -1,4 +1,4 @@
-/* $OpenBSD: omusbtll.c,v 1.3 2019/05/06 03:45:58 mlarkin Exp $ */
+/* $OpenBSD: omusbtll.c,v 1.4 2021/03/25 04:12:01 jsg Exp $ */
 /*
  * Copyright (c) 2010 Dale Rahn <drahn@openbsd.org>
  *
@@ -17,12 +17,8 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/queue.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
-#include <sys/evcount.h>
 #include <machine/bus.h>
-#include <machine/intr.h>
 #include <armv7/armv7/armv7var.h>
 #include <armv7/omap/prcmvar.h>
 

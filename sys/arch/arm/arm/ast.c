@@ -1,4 +1,4 @@
-/*	$OpenBSD: ast.c,v 1.16 2018/06/26 10:00:09 kettenis Exp $	*/
+/*	$OpenBSD: ast.c,v 1.17 2021/03/25 04:12:00 jsg Exp $	*/
 /*	$NetBSD: ast.c,v 1.6 2003/10/31 16:44:34 cl Exp $	*/
 
 /*
@@ -44,19 +44,10 @@
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <sys/acct.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/signal.h>
-#include <sys/signalvar.h>
 #include <sys/vmmeter.h>
 #include <sys/syscall.h>
 #include <sys/syscall_mi.h>
-
-#include <machine/cpu.h>
-#include <machine/frame.h>
-
-#include <arm/cpufunc.h>
 
 #include <uvm/uvm_extern.h>
 
