@@ -1,4 +1,4 @@
-/* $OpenBSD: cwfg.c,v 1.2 2021/03/22 18:37:26 kn Exp $ */
+/* $OpenBSD: cwfg.c,v 1.3 2021/03/25 12:18:27 kn Exp $ */
 /* $NetBSD: cwfg.c,v 1.1 2020/01/03 18:00:05 jmcneill Exp $ */
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -32,11 +32,14 @@
 #include <sys/malloc.h>
 #include <sys/sensors.h>
 
+#include <machine/apmvar.h>
 #include <machine/fdt.h>
 
 #include <dev/ofw/openfirm.h>
 
 #include <dev/i2c/i2cvar.h>
+
+#include "apm.h"
 
 #define	VERSION_REG		0x00
 #define	VCELL_HI_REG		0x02
@@ -118,6 +121,22 @@ struct cfattach cwfg_ca = {
 struct cfdriver cwfg_cd = {
 	NULL, "cwfg", DV_DULL
 };
+
+#if NAPM > 0
+struct apm_power_info cwfg_power = {
+	.battery_state = APM_BATT_UNKNOWN,
+	.ac_state = APM_AC_UNKNOWN,
+	.battery_life = 0,
+	.minutes_left = -1,
+};
+
+int
+cwfg_apminfo(struct apm_power_info *info)
+{
+	memcpy(info, &cwfg_power, sizeof(*info));
+	return 0;
+}
+#endif
 
 int
 cwfg_match(struct device *parent, void *match, void *aux)
@@ -201,6 +220,10 @@ cwfg_attach(struct device *parent, struct device *self, void *aux)
 	sensordev_install(&sc->sc_sensordev);
 
 	sensor_task_register(sc, cwfg_update_sensors, 5);
+
+#if NAPM > 0
+	apm_setinfohook(cwfg_apminfo);
+#endif
 
 	printf("\n");
 }
@@ -325,6 +348,15 @@ cwfg_update_sensors(void *arg)
 	uint8_t val;
 	int error, n;
 
+#if NAPM > 0
+	/* reset previous reads so apm(4) never gets stale values
+	 * in case of transient cwfg_read() failures below */
+	cwfg_power.battery_state = APM_BATT_UNKNOWN;
+	cwfg_power.ac_state = APM_AC_UNKNOWN;
+	cwfg_power.battery_life = 0;
+	cwfg_power.minutes_left = -1;
+#endif
+
 	if ((error = cwfg_lock(sc)) != 0)
 		return;
 
@@ -350,6 +382,11 @@ cwfg_update_sensors(void *arg)
 	if (val != 0xff) {
 		sc->sc_sensor[CWFG_SENSOR_SOC].value = val * 1000;
 		sc->sc_sensor[CWFG_SENSOR_SOC].flags &= ~SENSOR_FINVALID;
+#if NAPM > 0
+		cwfg_power.battery_state = val > sc->sc_alert_level ?
+		    APM_BATT_HIGH : APM_BATT_LOW;
+		cwfg_power.battery_life = val;
+#endif
 	}
 
 	/* RTT */
@@ -362,6 +399,9 @@ cwfg_update_sensors(void *arg)
 	if (rtt != 0x1fff) {
 		sc->sc_sensor[CWFG_SENSOR_RTT].value = rtt;
 		sc->sc_sensor[CWFG_SENSOR_RTT].flags &= ~SENSOR_FINVALID;
+#if NAPM > 0
+		cwfg_power.minutes_left = rtt;
+#endif
 	}
 
 done:
