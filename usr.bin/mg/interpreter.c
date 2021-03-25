@@ -1,4 +1,4 @@
-/*      $OpenBSD: interpreter.c,v 1.15 2021/03/25 16:58:46 lum Exp $	*/
+/*      $OpenBSD: interpreter.c,v 1.16 2021/03/25 17:31:21 lum Exp $	*/
 /*
  * This file is in the public domain.
  *
@@ -71,6 +71,7 @@ static int	 foundvar(char *);
 static int	 doregex(char *, char *);
 static int	 parseexp(char *);
 static void	 clearexp(void);
+static int	 exitinterpreter(void);
 
 TAILQ_HEAD(exphead, expentry) ehead;
 struct expentry {
@@ -295,6 +296,11 @@ parseexp(char *funstr)
         regs = "^define[\t ]+";
         if (doregex(regs, funstr))
                 return(dobeep_msg("Invalid use of define"));
+
+	/* Exit? */
+	regs = "^exit$";
+	if (doregex(regs, funstr))
+		return(exitinterpreter());
 
 	return(multiarg(funstr));
 }
@@ -591,5 +597,18 @@ doregex(char *r, char *e)
 		return(TRUE);
 	}
 	regfree(&regex_buff);
+	return(FALSE);
+}
+
+/*
+ * Display a message so it is apparent that this is the method which stopped
+ * execution.
+ */
+static int
+exitinterpreter()
+{
+	cleanup();
+	if (batch == 0)
+		return(dobeep_msg("Interpreter exited via exit command."));
 	return(FALSE);
 }
