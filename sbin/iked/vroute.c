@@ -1,4 +1,4 @@
-/*	$OpenBSD: vroute.c,v 1.6 2021/02/28 19:25:59 tobhe Exp $	*/
+/*	$OpenBSD: vroute.c,v 1.7 2021/03/25 01:39:09 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2021 Tobias Heider <tobhe@openbsd.org>
@@ -37,8 +37,7 @@
 
 #define IKED_VROUTE_PRIO	6
 
-#define ROUNDUP(a)			\
-    (((a) & (sizeof(long) - 1)) ? (1 + ((a) | (sizeof(long) - 1))) : (a))
+#define ROUNDUP(a) (a>0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 
 int vroute_setroute(struct iked *, uint8_t, struct sockaddr *, uint8_t,
     struct sockaddr *, int);
