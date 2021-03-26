@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.308 2021/03/18 15:55:19 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.309 2021/03/26 22:40:08 mvs Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -2294,6 +2294,7 @@ int
 rt_setsource(unsigned int rtableid, struct sockaddr *src)
 {
 	struct ifaddr	*ifa;
+	int		error;
 	/*
 	 * If source address is 0.0.0.0 or ::
 	 * use automatic source selection
@@ -2317,14 +2318,20 @@ rt_setsource(unsigned int rtableid, struct sockaddr *src)
 		return (EAFNOSUPPORT);
 	}
 
+	KERNEL_LOCK();
 	/*
 	 * Check if source address is assigned to an interface in the
 	 * same rdomain
 	 */
-	if ((ifa = ifa_ifwithaddr(src, rtableid)) == NULL)
+	if ((ifa = ifa_ifwithaddr(src, rtableid)) == NULL) {
+		KERNEL_UNLOCK();
 		return (EINVAL);
+	}
 
-	return (rtable_setsource(rtableid, src->sa_family, ifa->ifa_addr));
+	error = rtable_setsource(rtableid, src->sa_family, ifa->ifa_addr);
+	KERNEL_UNLOCK();
+
+	return (error);
 }
 
 /*
