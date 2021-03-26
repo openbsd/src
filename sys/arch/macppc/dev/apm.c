@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.23 2020/12/25 12:59:51 visa Exp $	*/
+/*	$OpenBSD: apm.c,v 1.24 2021/03/26 23:34:50 kn Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -213,12 +213,14 @@ apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	switch (cmd) {
 		/* some ioctl names from linux */
 	case APM_IOC_STANDBY:
-		if ((flag & FWRITE) == 0)
-			error = EBADF;
-		break;
+	case APM_IOC_STANDBY_REQ:
 	case APM_IOC_SUSPEND:
+	case APM_IOC_SUSPEND_REQ:
+	case APM_IOC_DEV_CTL:
 		if ((flag & FWRITE) == 0)
 			error = EBADF;
+		else
+			error = EOPNOTSUPP;
 		break;
 	case APM_IOC_PRN_CTL:
 		if ((flag & FWRITE) == 0)
@@ -243,10 +245,6 @@ apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 				break;
 			}
 		}
-		break;
-	case APM_IOC_DEV_CTL:
-		if ((flag & FWRITE) == 0)
-			error = EBADF;
 		break;
 	case APM_IOC_GETPOWER:
 	        power = (struct apm_power_info *)data;
@@ -284,14 +282,6 @@ apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			else
 				power->battery_state = APM_BATT_CRITICAL;
 		}
-		break;
-	case APM_IOC_STANDBY_REQ:
-		if ((flag & FWRITE) == 0)
-			error = EBADF;
-		break;
-	case APM_IOC_SUSPEND_REQ:
-		if ((flag & FWRITE) == 0)
-			error = EBADF;
 		break;
 	default:
 		error = ENOTTY;
