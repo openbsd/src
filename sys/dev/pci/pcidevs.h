@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1961 2021/03/17 15:58:38 stsp Exp 
+ *	OpenBSD: pcidevs,v 1.1962 2021/03/26 07:58:44 jan Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3707,6 +3707,7 @@
 #define	PCI_PRODUCT_INTEL_ICH8_IGP_C	0x104b		/* ICH8 IGP C */
 #define	PCI_PRODUCT_INTEL_ICH8_IFE	0x104c		/* ICH8 IFE */
 #define	PCI_PRODUCT_INTEL_ICH8_IGP_M	0x104d		/* ICH8 IGP M */
+#define	PCI_PRODUCT_INTEL_X710_10G_SFP_2	0x104e		/* X710 SFP+ */
 #define	PCI_PRODUCT_INTEL_PRO_100_VE_4	0x1050		/* PRO/100 VE */
 #define	PCI_PRODUCT_INTEL_PRO_100_VE_5	0x1051		/* PRO/100 VE */
 #define	PCI_PRODUCT_INTEL_PRO_100_VM_6	0x1052		/* PRO/100 VM */
