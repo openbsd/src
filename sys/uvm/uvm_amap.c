@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.88 2021/03/20 10:24:21 mpi Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.89 2021/03/26 13:40:05 mpi Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -342,7 +342,7 @@ amap_alloc1(int slots, int waitf, int lazyalloc)
 		amap = pool_get(&uvm_small_amap_pool[slots - 1],
 		    pwaitf | PR_ZERO);
 	if (amap == NULL)
-		return(NULL);
+		return NULL;
 
 	amap->am_lock = NULL;
 	amap->am_ref = 1;
@@ -355,7 +355,7 @@ amap_alloc1(int slots, int waitf, int lazyalloc)
 
 	if (UVM_AMAP_SMALL(amap)) {
 		amap->am_small.ac_nslot = slots;
-		return (amap);
+		return amap;
 	}
 
 	amap->am_ncused = 0;
@@ -392,14 +392,14 @@ amap_alloc1(int slots, int waitf, int lazyalloc)
 		}
 	}
 
-	return(amap);
+	return amap;
 
 fail1:
 	free(amap->am_buckets, M_UVMAMAP, buckets * sizeof(*amap->am_buckets));
 	TAILQ_FOREACH_SAFE(chunk, &amap->am_chunks, ac_list, tmp)
 		pool_put(&uvm_amap_chunk_pool, chunk);
 	pool_put(&uvm_amap_pool, amap);
-	return (NULL);
+	return NULL;
 }
 
 static void
@@ -423,7 +423,7 @@ amap_alloc(vaddr_t sz, int waitf, int lazyalloc)
 
 	AMAP_B2SLOT(slots, sz);		/* load slots */
 	if (slots > INT_MAX)
-		return (NULL);
+		return NULL;
 
 	amap = amap_alloc1(slots, waitf, lazyalloc);
 	if (amap != NULL) {
@@ -431,7 +431,7 @@ amap_alloc(vaddr_t sz, int waitf, int lazyalloc)
 		amap_list_insert(amap);
 	}
 
-	return(amap);
+	return amap;
 }
 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.142 2021/03/20 10:24:21 mpi Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.143 2021/03/26 13:40:05 mpi Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -343,12 +343,12 @@ uvm_km_kmemalloc_pla(struct vm_map *map, struct uvm_object *obj, vsize_t size,
 	if (__predict_false(uvm_map(map, &kva, size, obj, UVM_UNKNOWN_OFFSET,
 	    valign, UVM_MAPFLAG(PROT_READ | PROT_WRITE, PROT_READ | PROT_WRITE,
 	    MAP_INHERIT_NONE, MADV_RANDOM, (flags & UVM_KMF_TRYLOCK))) != 0)) {
-		return(0);
+		return 0;
 	}
 
 	/* if all we wanted was VA, return now */
 	if (flags & UVM_KMF_VALLOC) {
-		return(kva);
+		return kva;
 	}
 
 	/* recover object offset from virtual address */
@@ -405,7 +405,7 @@ uvm_km_kmemalloc_pla(struct vm_map *map, struct uvm_object *obj, vsize_t size,
 	KASSERT(TAILQ_EMPTY(&pgl));
 	pmap_update(pmap_kernel());
 
-	return(kva);
+	return kva;
 }
 
 /*
@@ -461,7 +461,7 @@ uvm_km_alloc1(struct vm_map *map, vsize_t size, vsize_t align, boolean_t zeroit)
 	    UVM_MAPFLAG(PROT_READ | PROT_WRITE,
 	    PROT_READ | PROT_WRITE | PROT_EXEC,
 	    MAP_INHERIT_NONE, MADV_RANDOM, 0)) != 0)) {
-		return(0);
+		return 0;
 	}
 
 	/* recover object offset from virtual address */
@@ -512,7 +512,7 @@ uvm_km_alloc1(struct vm_map *map, vsize_t size, vsize_t align, boolean_t zeroit)
 	if (zeroit)
 		memset((caddr_t)kva, 0, loopva - kva);
 
-	return(kva);
+	return kva;
 }
 
 /*
@@ -524,13 +524,13 @@ uvm_km_alloc1(struct vm_map *map, vsize_t size, vsize_t align, boolean_t zeroit)
 vaddr_t
 uvm_km_valloc(struct vm_map *map, vsize_t size)
 {
-	return(uvm_km_valloc_align(map, size, 0, 0));
+	return uvm_km_valloc_align(map, size, 0, 0);
 }
 
 vaddr_t
 uvm_km_valloc_try(struct vm_map *map, vsize_t size)
 {
-	return(uvm_km_valloc_align(map, size, 0, UVM_FLAG_TRYLOCK));
+	return uvm_km_valloc_align(map, size, 0, UVM_FLAG_TRYLOCK);
 }
 
 vaddr_t
@@ -550,10 +550,10 @@ uvm_km_valloc_align(struct vm_map *map, vsize_t size, vsize_t align, int flags)
 	    UVM_UNKNOWN_OFFSET, align,
 	    UVM_MAPFLAG(PROT_READ | PROT_WRITE, PROT_READ | PROT_WRITE,
 	    MAP_INHERIT_NONE, MADV_RANDOM, flags)) != 0)) {
-		return(0);
+		return 0;
 	}
 
-	return(kva);
+	return kva;
 }
 
 /*
@@ -572,7 +572,7 @@ uvm_km_valloc_prefer_wait(struct vm_map *map, vsize_t size, voff_t prefer)
 
 	size = round_page(size);
 	if (size > vm_map_max(map) - vm_map_min(map))
-		return(0);
+		return 0;
 
 	while (1) {
 		kva = vm_map_min(map);		/* hint */
@@ -585,7 +585,7 @@ uvm_km_valloc_prefer_wait(struct vm_map *map, vsize_t size, voff_t prefer)
 		    prefer, 0,
 		    UVM_MAPFLAG(PROT_READ | PROT_WRITE, PROT_READ | PROT_WRITE,
 		    MAP_INHERIT_NONE, MADV_RANDOM, 0)) == 0)) {
-			return(kva);
+			return kva;
 		}
 
 		/* failed.  sleep for a while (on map) */

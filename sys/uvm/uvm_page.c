@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.155 2021/01/19 13:21:36 mpi Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.156 2021/03/26 13:40:05 mpi Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -84,7 +84,7 @@ RBT_GENERATE(uvm_objtree, vm_page, objt, uvm_pagecmp);
 int
 uvm_pagecmp(const struct vm_page *a, const struct vm_page *b)
 {
-	return (a->offset < b->offset ? -1 : a->offset > b->offset);
+	return a->offset < b->offset ? -1 : a->offset > b->offset;
 }
 
 /*
@@ -324,7 +324,7 @@ uvm_pageboot_alloc(vsize_t size)
 	addr = pmap_steal_memory(size, &virtual_space_start,
 	    &virtual_space_end);
 
-	return(addr);
+	return addr;
 
 #else /* !PMAP_STEAL_MEMORY */
 
@@ -380,7 +380,7 @@ uvm_pageboot_alloc(vsize_t size)
 		pmap_kenter_pa(vaddr, paddr, PROT_READ | PROT_WRITE);
 	}
 	pmap_update(pmap_kernel());
-	return(addr);
+	return addr;
 #endif	/* PMAP_STEAL_MEMORY */
 }
 
@@ -428,7 +428,7 @@ uvm_page_physget(paddr_t *paddrp)
 					/* structure copy */
 					seg[0] = seg[1];
 			}
-			return (TRUE);
+			return TRUE;
 		}
 
 		/* try from rear */
@@ -446,7 +446,7 @@ uvm_page_physget(paddr_t *paddrp)
 					/* structure copy */
 					seg[0] = seg[1];
 			}
-			return (TRUE);
+			return TRUE;
 		}
 	}
 
@@ -478,10 +478,10 @@ uvm_page_physget(paddr_t *paddrp)
 				/* structure copy */
 				seg[0] = seg[1];
 		}
-		return (TRUE);
+		return TRUE;
 	}
 
-	return (FALSE);        /* whoops! */
+	return FALSE;        /* whoops! */
 }
 
 #endif /* PMAP_STEAL_MEMORY */
@@ -729,7 +729,7 @@ uvm_pglistalloc(psize_t size, paddr_t low, paddr_t high, paddr_t alignment,
 	KASSERT(!(flags & UVM_PLA_WAITOK) ^ !(flags & UVM_PLA_NOWAIT));
 
 	if (size == 0)
-		return (EINVAL);
+		return EINVAL;
 	size = atop(round_page(size));
 
 	/*
@@ -896,10 +896,10 @@ uvm_pagealloc(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	else
 		atomic_setbits_int(&pg->pg_flags, PG_CLEAN);
 
-	return(pg);
+	return pg;
 
 fail:
-	return (NULL);
+	return NULL;
 }
 
 /*
@@ -1136,7 +1136,7 @@ vm_physseg_find(paddr_t pframe, int *offp)
 			if (pframe < seg->end) {
 				if (offp)
 					*offp = pframe - seg->start;
-				return(try);            /* got it */
+				return try;            /* got it */
 			}
 			start = try + 1;	/* next time, start here */
 			len--;			/* "adjust" */
@@ -1147,7 +1147,7 @@ vm_physseg_find(paddr_t pframe, int *offp)
 			 */
 		}
 	}
-	return(-1);
+	return -1;
 
 #else
 	/* linear search for it */
@@ -1157,10 +1157,10 @@ vm_physseg_find(paddr_t pframe, int *offp)
 		if (pframe >= seg->start && pframe < seg->end) {
 			if (offp)
 				*offp = pframe - seg->start;
-			return(lcv);		   /* got it */
+			return lcv;		   /* got it */
 		}
 	}
-	return(-1);
+	return -1;
 
 #endif
 }
@@ -1178,7 +1178,7 @@ PHYS_TO_VM_PAGE(paddr_t pa)
 
 	psi = vm_physseg_find(pf, &off);
 
-	return ((psi == -1) ? NULL : &vm_physmem[psi].pgs[off]);
+	return (psi == -1) ? NULL : &vm_physmem[psi].pgs[off];
 }
 #endif /* VM_PHYSSEG_MAX > 1 */
 
@@ -1192,7 +1192,7 @@ uvm_pagelookup(struct uvm_object *obj, voff_t off)
 	struct vm_page pg;
 
 	pg.offset = off;
-	return (RBT_FIND(uvm_objtree, &obj->memt, &pg));
+	return RBT_FIND(uvm_objtree, &obj->memt, &pg);
 }
 
 /*

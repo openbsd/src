@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.79 2021/03/12 14:15:49 jsg Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.80 2021/03/26 13:40:05 mpi Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
 /* 
@@ -97,7 +97,7 @@ uvm_kernacc(caddr_t addr, size_t len, int rw)
 	rv = uvm_map_checkprot(kernel_map, saddr, eaddr, prot);
 	vm_map_unlock_read(kernel_map);
 
-	return(rv);
+	return rv;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.119 2021/03/20 10:24:21 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.120 2021/03/26 13:40:05 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -1688,7 +1688,7 @@ uvmfault_lookup(struct uvm_faultinfo *ufi, boolean_t write_lock)
 	while (1) {
 		if (ufi->orig_rvaddr < ufi->map->min_offset ||
 		    ufi->orig_rvaddr >= ufi->map->max_offset)
-			return(FALSE);
+			return FALSE;
 
 		/* lock map */
 		if (write_lock) {
@@ -1701,7 +1701,7 @@ uvmfault_lookup(struct uvm_faultinfo *ufi, boolean_t write_lock)
 		if (!uvm_map_lookup_entry(ufi->map, ufi->orig_rvaddr,
 		    &ufi->entry)) {
 			uvmfault_unlockmaps(ufi, write_lock);
-			return(FALSE);
+			return FALSE;
 		}
 
 		/* reduce size if necessary */
@@ -1723,7 +1723,7 @@ uvmfault_lookup(struct uvm_faultinfo *ufi, boolean_t write_lock)
 		 * got it!
 		 */
 		ufi->mapv = ufi->map->timestamp;
-		return(TRUE);
+		return TRUE;
 
 	}	/* while loop */
 
@@ -1756,9 +1756,9 @@ uvmfault_relock(struct uvm_faultinfo *ufi)
 	vm_map_lock_read(ufi->map);
 	if (ufi->mapv != ufi->map->timestamp) {
 		vm_map_unlock_read(ufi->map);
-		return(FALSE);
+		return FALSE;
 	}
 
 	counters_inc(uvmexp_counters, flt_relckok);
-	return(TRUE);		/* got it! */
+	return TRUE;		/* got it! */
 }

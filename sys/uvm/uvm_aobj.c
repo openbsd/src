@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.92 2021/03/20 10:24:21 mpi Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.93 2021/03/26 13:40:05 mpi Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -211,7 +211,7 @@ uao_find_swhash_elt(struct uvm_aobj *aobj, int pageidx, boolean_t create)
 	 */
 	LIST_FOREACH(elt, swhash, list) {
 		if (elt->tag == page_tag)
-			return(elt);
+			return elt;
 	}
 
 	if (!create)
@@ -234,7 +234,7 @@ uao_find_swhash_elt(struct uvm_aobj *aobj, int pageidx, boolean_t create)
 	LIST_INSERT_HEAD(swhash, elt, list);
 	elt->tag = page_tag;
 
-	return(elt);
+	return elt;
 }
 
 /*
@@ -248,7 +248,7 @@ uao_find_swslot(struct uvm_aobj *aobj, int pageidx)
 	 * if noswap flag is set, then we never return a slot
 	 */
 	if (aobj->u_flags & UAO_FLAG_NOSWAP)
-		return(0);
+		return 0;
 
 	/*
 	 * if hashing, look in hash table.
@@ -258,15 +258,15 @@ uao_find_swslot(struct uvm_aobj *aobj, int pageidx)
 		    uao_find_swhash_elt(aobj, pageidx, FALSE);
 
 		if (elt)
-			return(UAO_SWHASH_ELT_PAGESLOT(elt, pageidx));
+			return UAO_SWHASH_ELT_PAGESLOT(elt, pageidx);
 		else
-			return(0);
+			return 0;
 	}
 
 	/*
 	 * otherwise, look in the array
 	 */
-	return(aobj->u_swslots[pageidx]);
+	return aobj->u_swslots[pageidx];
 }
 
 /*
@@ -289,7 +289,7 @@ uao_set_swslot(struct uvm_object *uobj, int pageidx, int slot)
 	 */
 	if (aobj->u_flags & UAO_FLAG_NOSWAP) {
 		if (slot == 0)
-			return(0);		/* a clear is ok */
+			return 0;		/* a clear is ok */
 
 		/* but a set is not */
 		printf("uao_set_swslot: uobj = %p\n", uobj);
@@ -309,7 +309,7 @@ uao_set_swslot(struct uvm_object *uobj, int pageidx, int slot)
 		    uao_find_swhash_elt(aobj, pageidx, slot ? TRUE : FALSE);
 		if (elt == NULL) {
 			KASSERT(slot == 0);
-			return (0);
+			return 0;
 		}
 
 		oldslot = UAO_SWHASH_ELT_PAGESLOT(elt, pageidx);
@@ -336,7 +336,7 @@ uao_set_swslot(struct uvm_object *uobj, int pageidx, int slot)
 		oldslot = aobj->u_swslots[pageidx];
 		aobj->u_swslots[pageidx] = slot;
 	}
-	return (oldslot);
+	return oldslot;
 }
 /*
  * end of hash/array functions
@@ -749,7 +749,7 @@ uao_create(vsize_t size, int flags)
 			if (aobj->u_swhash == NULL) {
 				if (flags & UAO_FLAG_CANFAIL) {
 					pool_put(&uvm_aobj_pool, aobj);
-					return (NULL);
+					return NULL;
 				}
 				panic("uao_create: hashinit swhash failed");
 			}
@@ -759,7 +759,7 @@ uao_create(vsize_t size, int flags)
 			if (aobj->u_swslots == NULL) {
 				if (flags & UAO_FLAG_CANFAIL) {
 					pool_put(&uvm_aobj_pool, aobj);
-					return (NULL);
+					return NULL;
 				}
 				panic("uao_create: malloc swslots failed");
 			}
@@ -767,7 +767,7 @@ uao_create(vsize_t size, int flags)
 
 		if (flags & UAO_FLAG_KERNSWAP) {
 			aobj->u_flags &= ~UAO_FLAG_NOSWAP; /* clear noswap */
-			return(&aobj->u_obj);
+			return &aobj->u_obj;
 			/* done! */
 		}
 	}
@@ -784,7 +784,7 @@ uao_create(vsize_t size, int flags)
 	LIST_INSERT_HEAD(&uao_list, aobj, u_list);
 	mtx_leave(&uao_list_lock);
 
-	return(&aobj->u_obj);
+	return &aobj->u_obj;
 }
 
 
@@ -940,7 +940,7 @@ uao_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 	 * or deactivating pages.
 	 */
 	if ((flags & (PGO_DEACTIVATE|PGO_FREE)) == 0)
-		return (TRUE);
+		return TRUE;
 
 	curoff = start;
 	for (;;) {
@@ -1016,7 +1016,7 @@ uao_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 		}
 	}
 
-	return (TRUE);
+	return TRUE;
 }
 
 /*
@@ -1118,10 +1118,10 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 		*npagesp = gotpages;
 		if (done)
 			/* bingo! */
-			return(VM_PAGER_OK);	
+			return VM_PAGER_OK;	
 		else
 			/* EEK!   Need to unlock and I/O */
-			return(VM_PAGER_UNLOCK);
+			return VM_PAGER_UNLOCK;
 	}
 
 	/*
@@ -1249,7 +1249,7 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 				uvm_pagefree(ptmp);
 				uvm_unlock_pageq();
 
-				return (rv);
+				return rv;
 			}
 		}
 
@@ -1269,7 +1269,7 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 
 	}	/* lcv loop */
 
-	return(VM_PAGER_OK);
+	return VM_PAGER_OK;
 }
 
 /*
@@ -1284,7 +1284,7 @@ uao_dropswap(struct uvm_object *uobj, int pageidx)
 	if (slot) {
 		uvm_swap_free(slot, 1);
 	}
-	return (slot);
+	return slot;
 }
 
 /*

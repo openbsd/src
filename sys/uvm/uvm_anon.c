@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_anon.c,v 1.53 2021/03/20 10:24:21 mpi Exp $	*/
+/*	$OpenBSD: uvm_anon.c,v 1.54 2021/03/26 13:40:05 mpi Exp $	*/
 /*	$NetBSD: uvm_anon.c,v 1.10 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -67,7 +67,7 @@ uvm_analloc(void)
 		anon->an_page = NULL;
 		anon->an_swslot = 0;
 	}
-	return(anon);
+	return anon;
 }
 
 /*

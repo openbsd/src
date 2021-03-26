@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.273 2021/03/12 14:15:49 jsg Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.274 2021/03/26 13:40:05 mpi Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -1000,7 +1000,7 @@ uvm_mapanon(struct vm_map *map, vaddr_t *addr, vsize_t sz,
 	 */
 	new = uvm_mapent_alloc(map, flags);
 	if (new == NULL)
-		return(ENOMEM);
+		return ENOMEM;
 
 	vm_map_lock(map);
 	first = last = NULL;
@@ -1229,7 +1229,7 @@ uvm_map(struct vm_map *map, vaddr_t *addr, vsize_t sz,
 	 */
 	new = uvm_mapent_alloc(map, flags);
 	if (new == NULL)
-		return(ENOMEM);
+		return ENOMEM;
 
 	if (flags & UVM_FLAG_TRYLOCK) {
 		if (vm_map_lock_try(map) == FALSE) {
@@ -1759,7 +1759,7 @@ uvm_mapent_alloc(struct vm_map *map, int flags)
 
 	RBT_POISON(uvm_map_addr, me, UVMMAP_DEADBEEF);
 out:
-	return(me);
+	return me;
 }
 
 /*
@@ -4229,7 +4229,7 @@ uvm_map_submap(struct vm_map *map, vaddr_t start, vaddr_t end,
 		result = EINVAL;
 
 	vm_map_unlock(map);
-	return(result);
+	return result;
 }
 
 /*

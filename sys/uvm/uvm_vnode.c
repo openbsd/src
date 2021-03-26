@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.112 2021/03/12 14:15:49 jsg Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.113 2021/03/26 13:40:05 mpi Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -155,7 +155,7 @@ uvn_attach(struct vnode *vp, vm_prot_t accessprot)
 
 	/* if we're mapping a BLK device, make sure it is a disk. */
 	if (vp->v_type == VBLK && bdevsw[major(vp->v_rdev)].d_type != D_DISK) {
-		return(NULL);
+		return NULL;
 	}
 
 	/*
@@ -219,7 +219,7 @@ uvn_attach(struct vnode *vp, vm_prot_t accessprot)
 		if (uvn->u_flags & UVM_VNODE_WANTED)
 			wakeup(uvn);
 		uvn->u_flags = 0;
-		return(NULL);
+		return NULL;
 	}
 
 	/*
@@ -253,7 +253,7 @@ uvn_attach(struct vnode *vp, vm_prot_t accessprot)
 	if (oldflags & UVM_VNODE_WANTED)
 		wakeup(uvn);
 
-	return(&uvn->u_obj);
+	return &uvn->u_obj;
 }
 
 
@@ -835,7 +835,7 @@ ReTry:
 
 	uvm_pglistfree(&dead);
 
-	return(retval);
+	return retval;
 }
 
 /*
@@ -885,11 +885,11 @@ uvn_put(struct uvm_object *uobj, struct vm_page **pps, int npages, int flags)
 
 	retval = uvm_vnode_lock(uvn);
 	if (retval)
-		return(retval);
+		return retval;
 	retval = uvn_io(uvn, pps, npages, flags, UIO_WRITE);
 	uvm_vnode_unlock(uvn);
 
-	return(retval);
+	return retval;
 }
 
 /*
@@ -977,9 +977,9 @@ uvn_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 
 		*npagesp = gotpages;		/* let caller know */
 		if (done)
-			return(VM_PAGER_OK);		/* bingo! */
+			return VM_PAGER_OK;		/* bingo! */
 		else
-			return(VM_PAGER_UNLOCK);
+			return VM_PAGER_UNLOCK;
 	}
 
 	/*
@@ -992,7 +992,7 @@ uvn_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 	 */
 	retval = uvm_vnode_lock(uvn);
 	if (retval)
-		return(retval);
+		return retval;
 
 	/*
 	 * step 2: get non-resident or busy pages.
@@ -1098,7 +1098,7 @@ uvn_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 			uvm_lock_pageq();
 			uvm_pagefree(ptmp);
 			uvm_unlock_pageq();
-			return(result);
+			return result;
 		}
 
 		/*
@@ -1154,7 +1154,7 @@ uvn_io(struct uvm_vnode *uvn, vm_page_t *pps, int npages, int flags, int rw)
 	/* check for sync'ing I/O. */
 	while (uvn->u_flags & UVM_VNODE_IOSYNC) {
 		if (waitf == M_NOWAIT) {
-			return(VM_PAGER_AGAIN);
+			return VM_PAGER_AGAIN;
 		}
 		uvn->u_flags |= UVM_VNODE_IOSYNCWANTED;
 		tsleep_nsec(&uvn->u_flags, PVM, "uvn_iosync", INFSLP);
@@ -1162,7 +1162,7 @@ uvn_io(struct uvm_vnode *uvn, vm_page_t *pps, int npages, int flags, int rw)
 
 	/* check size */
 	if (file_offset >= uvn->u_size) {
-		return(VM_PAGER_BAD);
+		return VM_PAGER_BAD;
 	}
 
 	/* first try and map the pages in (without waiting) */
@@ -1171,7 +1171,7 @@ uvn_io(struct uvm_vnode *uvn, vm_page_t *pps, int npages, int flags, int rw)
 
 	kva = uvm_pagermapin(pps, npages, mapinflags);
 	if (kva == 0 && waitf == M_NOWAIT) {
-		return(VM_PAGER_AGAIN);
+		return VM_PAGER_AGAIN;
 	}
 
 	/*
@@ -1245,13 +1245,13 @@ uvn_io(struct uvm_vnode *uvn, vm_page_t *pps, int npages, int flags, int rw)
 	}
 
 	if (result == 0)
-		return(VM_PAGER_OK);
+		return VM_PAGER_OK;
 
 	if (result == EIO) {
 		/* Signal back to uvm_vnode_unlock(). */
 		uvn->u_flags |= UVM_VNODE_IOERROR;
 	}
-	return(VM_PAGER_ERROR);
+	return VM_PAGER_ERROR;
 }
 
 /*
@@ -1301,7 +1301,7 @@ uvm_vnp_uncache(struct vnode *vp)
 
 	if ((uvn->u_flags & UVM_VNODE_VALID) == 0 ||
 			(uvn->u_flags & UVM_VNODE_BLOCKED) != 0) {
-		return(TRUE);
+		return TRUE;
 	}
 
 	/*
@@ -1310,7 +1310,7 @@ uvm_vnp_uncache(struct vnode *vp)
 	 */
 	uvn->u_flags &= ~UVM_VNODE_CANPERSIST;
 	if (uvn->u_obj.uo_refs) {
-		return(FALSE);
+		return FALSE;
 	}
 
 	/*
@@ -1343,7 +1343,7 @@ uvm_vnp_uncache(struct vnode *vp)
 	uvn_detach(&uvn->u_obj);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
-	return(TRUE);
+	return TRUE;
 }
 
 /*
@@ -1476,7 +1476,7 @@ uvm_vnode_lock(struct uvm_vnode *uvn)
 	int netunlocked = 0;
 
 	if (uvn->u_flags & UVM_VNODE_VNISLOCKED)
-		return(VM_PAGER_OK);
+		return VM_PAGER_OK;
 
 	/*
 	 * This thread may already have the net lock, if we faulted in copyin()
@@ -1499,7 +1499,7 @@ uvm_vnode_lock(struct uvm_vnode *uvn)
 	error = vn_lock(uvn->u_vnode, LK_EXCLUSIVE | LK_RECURSEFAIL);
 	if (netunlocked)
 		NET_LOCK();
-	return(error ? VM_PAGER_ERROR : VM_PAGER_OK);
+	return error ? VM_PAGER_ERROR : VM_PAGER_OK;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.149 2021/03/04 09:00:03 mpi Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.150 2021/03/26 13:40:05 mpi Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -1426,7 +1426,7 @@ ReTry:	/* XXXMRG */
 			sdp->swd_npginuse += *nslots;
 			uvmexp.swpginuse += *nslots;
 			/* done!  return drum slot number */
-			return(result + sdp->swd_drumoffset);
+			return result + sdp->swd_drumoffset;
 		}
 	}
 
