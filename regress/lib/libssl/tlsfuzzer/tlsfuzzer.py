@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.24 2021/03/20 12:17:45 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.25 2021/03/26 22:35:17 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -525,6 +525,10 @@ tls12_failing_tests = TestGroup("failing TLSv1.2 tests", [
     #   'rsa_pss_pss_sha384 only'
     #   'rsa_pss_pss_sha512 only'
     Test("test-sig-algs.py"),
+
+    # Without --sig-algs-drop-ok, two tests fail since we do not currently
+    # implement the signature_algorithms_cert extension (although we MUST).
+    Test("test-sig-algs-renegotiation-resumption.py", ["--sig-algs-drop-ok"]),
 
     # 13 failures:
     #   'duplicated n non-rsa schemes' for n in 202 2342 8119 23741 32744
