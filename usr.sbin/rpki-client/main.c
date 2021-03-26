@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.124 2021/03/26 10:01:51 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.125 2021/03/26 16:03:29 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -86,7 +86,7 @@ struct filepath {
 static inline int
 filepathcmp(struct filepath *a, struct filepath *b)
 {
-	return strcasecmp(a->file, b->file);
+	return strcmp(a->file, b->file);
 }
 
 RB_HEAD(filepath_tree, filepath);
