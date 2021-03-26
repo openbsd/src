@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.231 2021/03/23 12:03:44 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.232 2021/03/26 10:18:55 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -2040,7 +2040,7 @@ ieee80211_recv_auth(struct ieee80211com *ic, struct mbuf *m,
 			/* XXX hack to workaround calling convention */
 			IEEE80211_SEND_MGMT(ic, ni,
 			    IEEE80211_FC0_SUBTYPE_AUTH,
-			    IEEE80211_STATUS_ALG << 16 | ((seq + 1) & 0xffff));
+			    IEEE80211_STATUS_ALG << 16 | ((seq + 1) & 0xfff));
 		}
 #endif
 		return;
