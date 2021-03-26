@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.61 2021/03/17 18:53:25 kn Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.62 2021/03/26 19:00:21 kn Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -171,6 +171,10 @@ mpw_set_route(struct mpw_softc *sc, uint32_t label, unsigned int rdomain)
 
 	sc->sc_smpls.smpls_label = label;
 	sc->sc_rdomain = rdomain;
+
+	/* only install with a label or mpw_clone_destroy() will ignore it */
+	if (sc->sc_smpls.smpls_label == MPLS_LABEL2SHIM(0))
+		return 0;
 
 	error = rt_ifa_add(&sc->sc_ifa, RTF_MPLS|RTF_LOCAL,
 	    smplstosa(&sc->sc_smpls), sc->sc_rdomain);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpip.c,v 1.14 2021/03/17 14:30:09 kn Exp $ */
+/*	$OpenBSD: if_mpip.c,v 1.15 2021/03/26 19:00:21 kn Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -169,6 +169,10 @@ mpip_set_route(struct mpip_softc *sc, uint32_t shim, unsigned int rdomain)
 
 	sc->sc_smpls.smpls_label = shim;
 	sc->sc_rdomain = rdomain;
+
+	/* only install with a label or mpip_clone_destroy() will ignore it */
+	if (sc->sc_smpls.smpls_label == MPLS_LABEL2SHIM(0))
+		return 0;
 
 	error = rt_ifa_add(&sc->sc_ifa, RTF_MPLS | RTF_LOCAL,
 	    smplstosa(&sc->sc_smpls), sc->sc_rdomain);

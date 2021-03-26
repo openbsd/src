@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.99 2021/03/18 14:47:17 kn Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.100 2021/03/26 19:00:21 kn Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -338,6 +338,10 @@ mpe_set_label(struct mpe_softc *sc, uint32_t label, unsigned int rdomain)
 	/* add new MPLS route */
 	sc->sc_smpls.smpls_label = label;
 	sc->sc_rdomain = rdomain;
+
+	/* only install with a label or mpe_clone_destroy() will ignore it */
+	if (sc->sc_smpls.smpls_label == MPLS_LABEL2SHIM(0))
+		return 0;
 
 	error = rt_ifa_add(&sc->sc_ifa, RTF_MPLS|RTF_LOCAL,
 	    smplstosa(&sc->sc_smpls), sc->sc_rdomain);
