@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.31 2021/03/09 21:11:24 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.32 2021/03/26 23:29:21 kn Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -980,24 +980,26 @@ Xdtb_efi(void)
 
 #define O_RDONLY	0
 
-	if (cmd.argc != 2)
-		return (1);
+	if (cmd.argc != 2) {
+		printf("dtb file\n");
+		return (0);
+	}
 
 	snprintf(path, sizeof(path), "%s:%s", cmd.bootdev, cmd.argv[1]);
 
 	fd = open(path, O_RDONLY);
 	if (fd < 0 || fstat(fd, &sb) == -1) {
 		printf("cannot open %s\n", path);
-		return (1);
+		return (0);
 	}
 	if (efi_memprobe_find(EFI_SIZE_TO_PAGES(sb.st_size),
 	    0x1000, &addr) != EFI_SUCCESS) {
 		printf("cannot allocate memory for %s\n", path);
-		return (1);
+		return (0);
 	}
 	if (read(fd, (void *)addr, sb.st_size) != sb.st_size) {
 		printf("cannot read from %s\n", path);
-		return (1);
+		return (0);
 	}
 
 	fdt = (void *)addr;
