@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.121 2021/03/20 09:00:49 lum Exp $
+.\"	$OpenBSD: mg.1,v 1.122 2021/03/26 15:02:10 lum Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: March 20 2021 $
+.Dd $Mdocdate: March 26 2021 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -692,6 +692,11 @@ directory.
 Toggle whether the line number is displayed in the modeline.
 .It list-buffers
 Display the list of available buffers.
+The first column in the output indicates which buffer is active with a '>'
+character.
+The second column indicates which buffers are modified.
+The third column indicates which buffers are read-only.
+The remaining columns are self-explanatory.
 .It load
 Prompt the user for a filename, and then execute commands
 from that file.
