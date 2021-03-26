@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.73 2021/03/10 10:21:48 jsg Exp $ */
+/*	$OpenBSD: rtable.c,v 1.74 2021/03/26 22:41:06 mvs Exp $ */
 
 /*
  * Copyright (c) 2014-2016 Martin Pieuchot
@@ -195,15 +195,15 @@ rtable_add(unsigned int id)
 	struct dommp	*dmm;
 	sa_family_t	 af;
 	unsigned int	 off, alen;
-	int		 i;
-
-	KERNEL_ASSERT_LOCKED();
+	int		 i, error = 0;
 
 	if (id > RT_TABLEID_MAX)
 		return (EINVAL);
 
+	KERNEL_LOCK();
+
 	if (rtable_exists(id))
-		return (EEXIST);
+		goto out;
 
 	for (i = 0; (dp = domains[i]) != NULL; i++) {
 		if (dp->dom_rtoffset == 0)
@@ -217,8 +217,10 @@ rtable_add(unsigned int id)
 			rtmap_grow(id + 1, af);
 
 		tbl = rtable_alloc(id, alen, off);
-		if (tbl == NULL)
-			return (ENOMEM);
+		if (tbl == NULL) {
+			error = ENOMEM;
+			goto out;
+		}
 
 		map = srp_get_locked(&afmap[af2idx[af]]);
 		map->tbl[id] = tbl;
@@ -233,8 +235,10 @@ rtable_add(unsigned int id)
 	/* Use main rtable/rdomain by default. */
 	dmm = srp_get_locked(&afmap[0]);
 	dmm->value[id] = 0;
+out:
+	KERNEL_UNLOCK();
 
-	return (0);
+	return (error);
 }
 
 void *

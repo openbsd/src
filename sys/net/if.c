@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.639 2021/03/20 17:08:57 florian Exp $	*/
+/*	$OpenBSD: if.c,v 1.640 2021/03/26 22:41:06 mvs Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1780,7 +1780,7 @@ if_createrdomain(int rdomain, struct ifnet *ifp)
 	char loifname[IFNAMSIZ];
 	unsigned int unit = rdomain;
 
-	if (!rtable_exists(rdomain) && (error = rtable_add(rdomain)) != 0)
+	if ((error = rtable_add(rdomain)) != 0)
 		return (error);
 	if (!rtable_empty(rdomain))
 		return (EEXIST);
