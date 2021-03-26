@@ -1,4 +1,4 @@
-/*      $OpenBSD: interpreter.c,v 1.19 2021/03/26 08:27:49 lum Exp $	*/
+/*      $OpenBSD: interpreter.c,v 1.20 2021/03/26 12:31:37 lum Exp $	*/
 /*
  * This file is in the public domain.
  *
@@ -475,8 +475,8 @@ static int
 foundvar(char *defstr)
 {
 	struct varentry *vt, *v1 = NULL;
-	const char	 t[2] = "t";
 	char		*p, *vnamep, *vendp = NULL, *valp;
+	char		 tmpbuf[BUFSIZE];
 	int		 spc;
 
 	/* vars names can't start with these. */
@@ -496,7 +496,6 @@ foundvar(char *defstr)
 
 	/*
 	 * Check list name is not an existing function.
-	 * Although could this be allowed? Shouldn't context dictate?
 	 */
 	if (name_function(vnamep) != NULL)
 		return(dobeep_msgs("Variable/function name clash:", vnamep));
@@ -504,9 +503,36 @@ foundvar(char *defstr)
 	p = ++vendp;
 	p = skipwhite(p);
 
-	if ((*p == 'l') && (*(p + 1) == 'i') && (*(p + 2) == 's')) {
-		p = strstr(p, t);	/* find 't' in 'list'.	*/
-		valp = skipwhite(++p);	/* find first value	*/
+	/*
+	 * Now what have we found? A keyword (e.g list)? A value?
+	 * We only deal with values and a couple of keywords at moment.
+	 */
+	if (strncmp(p, "list ", 5) == 0) {
+		p = strstr(p, " ");     /* find ' ' after 'list'.  */
+		valp = skipwhite(p);    /* find first value     */
+	} else if (strncmp(p, "get-environment-variable ", 25) == 0) {
+		const char	*t;
+		char		*tmp;
+		const char	*q = "\"";
+
+		p = strstr(p, " ");     /* find ' ' after keyword.  */
+		t = skipwhite(p);    /* find first value     */
+
+		if (t[0] == *q || t[strlen(t) - 1] == *q)
+			return (dobeep_msgs("Please remove '\"' around:",
+			    t));
+		if ((tmp = getenv(t)) == NULL || *tmp == '\0')
+			return(dobeep_msgs("Envar not found:", t));
+		/* envar is returned without "" around the string */
+		tmpbuf[0] = '\0';
+		if (strlcat(tmpbuf, q, sizeof(tmpbuf)) >= sizeof(tmpbuf))
+			return (dobeep_msg("strlcat error"));
+		if (strlcat(tmpbuf, tmp, sizeof(tmpbuf)) >= sizeof(tmpbuf))
+			return (dobeep_msg("strlcat error"));
+		if (strlcat(tmpbuf, q, sizeof(tmpbuf)) >= sizeof(tmpbuf))
+			return (dobeep_msg("strlcat error"));
+		
+		valp = tmpbuf;
 	} else
 		valp = p;
 	/*
