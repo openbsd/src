@@ -1,4 +1,4 @@
-/*      $OpenBSD: interpreter.c,v 1.17 2021/03/25 20:25:31 lum Exp $	*/
+/*      $OpenBSD: interpreter.c,v 1.18 2021/03/26 07:25:23 lum Exp $	*/
 /*
  * This file is in the public domain.
  *
@@ -121,10 +121,9 @@ foundparen(char *funstr, int llen)
 	struct expentry *e1 = NULL, *e2 = NULL;
 	char		*p, *begp = NULL, *endp = NULL, *regs;
 	char		 expbuf[BUFSIZE], tmpbuf[BUFSIZE];
-	int     	 i, ret, pctr, fndstart, expctr, blkid, fndend;
-	int		 inquote;
+	int     	 i, ret, pctr, expctr, blkid, inquote;
 
-	pctr = fndstart = expctr = fndend = inquote = 0;
+	pctr = expctr = inquote = 0;
 	blkid = 1;
 
 	/*
@@ -155,9 +154,9 @@ foundparen(char *funstr, int llen)
 	 */
 	p = funstr;
 
-	for (i = 0; i < llen; ++i) {
+	for (i = 0; i < llen; ++i, p++) {
 		if (*p == '(') {
-			if (fndstart == 1) {
+			if (begp != NULL) {
 				if (endp == NULL)
 					*p = '\0';
 				else
@@ -168,11 +167,8 @@ foundparen(char *funstr, int llen)
 					cleanup();
 					return(ret);
 				}
-				begp = NULL;			
 			}
-			fndstart = 0;
-			fndend = 0;
-			endp = NULL;
+			begp = endp = NULL;
 			pctr++;
 		} else if (*p == ')') {
 			if (inquote == 1) {
@@ -180,7 +176,7 @@ foundparen(char *funstr, int llen)
 				return(dobeep_msg("Opening and closing quote "\
 				    "char error"));
 			}
-			if (fndstart == 1) {
+			if (begp != NULL) {
 				if (endp == NULL)
 					*p = '\0';
 				else
@@ -192,27 +188,20 @@ foundparen(char *funstr, int llen)
 					return(ret);
 				}
 			}
-			fndstart = 0;
-			fndend = 0;
-			begp = NULL;
+			begp = endp = NULL;
 			pctr--;
 		} else if (*p != ' ' && *p != '\t') {
-			if (fndstart == 0) {
-				fndstart = 1;
-				if (begp == NULL)
-					begp = p;
-			}
+			if (begp == NULL)
+				begp = p;
 			if (*p == '"') {
 				if (inquote == 0)
 					inquote = 1;
 				else
 					inquote = 0;
 			}
-			fndend = 0;
 			endp = NULL;
-		} else if (fndend == 0 && (*p == ' ' || *p == '\t')) {
+		} else if (endp == NULL && (*p == ' ' || *p == '\t')) {
 			*p = ' ';
-			fndend = 1;
 			endp = p;
 		} else if (*p == '\t')
 			if (inquote == 0)
@@ -220,7 +209,6 @@ foundparen(char *funstr, int llen)
 
 		if (pctr == 0)
 			blkid++;
-		p++;
 	}
 
 	if (pctr != 0) {
