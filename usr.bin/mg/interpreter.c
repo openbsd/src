@@ -1,4 +1,4 @@
-/*      $OpenBSD: interpreter.c,v 1.18 2021/03/26 07:25:23 lum Exp $	*/
+/*      $OpenBSD: interpreter.c,v 1.19 2021/03/26 08:27:49 lum Exp $	*/
 /*
  * This file is in the public domain.
  *
@@ -36,7 +36,8 @@
  * 2. parsing for '(' and ')' throughout whole string and evaluate correctly.
  * 3. conditional execution.
  * 4. deal with special characters in a string: "x\" x" etc
- * 5. do symbol names need more complex regex patterns? A-Za-z- at the moment. 
+ * 5. do symbol names need more complex regex patterns? [A-Za-z][.0-9_A-Z+a-z-]
+ *    at the moment. 
  * 6. oh so many things....
  * [...]
  * n. implement user definable functions.
@@ -69,7 +70,7 @@ static int	 multiarg(char *);
 static int	 isvar(char **, char **, int);
 static int	 foundvar(char *);
 static int	 doregex(char *, char *);
-static int	 parseexp(char *);
+static int	 parseexp_tmp(char *);
 static void	 clearexp(void);
 static int	 addexp(char *, int, int, int, int);
 static int	 exitinterpreter(void);
@@ -238,7 +239,7 @@ foundparen(char *funstr, int llen)
 #endif
 	}
 
-	ret = parseexp(expbuf);
+	ret = parseexp_tmp(expbuf);
 	if (ret == FALSE)
 		cleanup();
 	else
@@ -272,36 +273,35 @@ addexp(char *begp, int par1, int par2, int blkid, int expctr)
 }
 
 /*
- * At the moment, only parsing list defines. Much more to do.
- * Also only use basic chars for symbol names like ones found in
- * mg functions.
+ * At the moment, use parseexp_tmp in lieu of proper block parsing.
+ * Move away from this eventually.
  */
 static int
-parseexp(char *funstr)
+parseexp_tmp(char *funstr)
 {
 	char    *regs;
 
         /* Does the line have a list 'define' like: */
         /* (define alist(list 1 2 3 4)) */
-        regs = "^define[ ]+[A-Za-z-]+[ ]+list[ ]+.*[ ]*";
+        regs = "^define[ ]+[A-Za-z][.0-9_A-Z+a-z-]*[ ]+list[ ]+.*[ ]*";
         if (doregex(regs, funstr))
                 return(foundvar(funstr));
 
 	/* Does the line have a variable 'define' like: */
 	/* (define i (function-name j)) */
-	regs = "^define[ ]+[A-Za-z-]+[ ]+[A-Za-z-]+[ ]+.*$";
+	regs = "^define[ ]+[A-Za-z][.0-9_A-Z+a-z-]*[ ]+[A-Za-z-]+[ ]+.*$";
 	if (doregex(regs, funstr))
 		return(foundvar(funstr));
 
         /* Does the line have a incorrect variable 'define' like: */
         /* (define i y z) */
-        regs = "^define[ ]+[A-Za-z-]+[ ]+.*[ ]+.*$";
+        regs = "^define[ ]+[A-Za-z][.0-9_A-Z+a-z-]*[ ]+.*[ ]+.*$";
         if (doregex(regs, funstr))
                 return(dobeep_msg("Invalid use of define."));
 
         /* Does the line have a single variable 'define' like: */
         /* (define i 0) */
-        regs = "^define[ ]+[A-Za-z-]+[ ]+.*$";
+        regs = "^define[ ]+[A-Za-z][.0-9_A-Z+a-z-]*[ ]+.*$";
         if (doregex(regs, funstr))
                 return(foundvar(funstr));
 
@@ -468,7 +468,8 @@ isvar(char **argp, char **varbuf, int sizof)
 /*
  * The define string _must_ adhere to the regex in parsexp().
  * This is not the correct way to do parsing but it does highlight
- * the issues.
+ * the issues. Also, vars should find their way into one list only.
+ * Currently they go into two.
  */
 static int
 foundvar(char *defstr)
