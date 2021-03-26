@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.82 2019/12/11 06:45:16 pd Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.83 2021/03/26 17:40:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1404,7 +1404,6 @@ vionet_notify_tx(struct vionet_dev *dev)
 
 	vr = pkt = dhcppkt = NULL;
 	ret = spc = 0;
-	dhcpsz = 0;
 
 	vr_sz = vring_size(VIONET_QUEUE_SIZE);
 	q_gpa = dev->vq[TXQ].qa;
@@ -1510,7 +1509,7 @@ vionet_notify_tx(struct vionet_dev *dev)
 			log_debug("vionet: wrong source address %s for vm %d",
 			    ether_ntoa((struct ether_addr *)
 			    eh->ether_shost), dev->vm_id);
-		else if (dev->local && dhcpsz == 0 &&
+		else if (dev->local &&
 		    (dhcpsz = dhcp_request(dev, pkt, pktsz, &dhcppkt)) != -1) {
 			log_debug("vionet: dhcp request,"
 			    " local response size %zd", dhcpsz);
