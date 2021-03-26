@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.62 2020/01/03 05:32:00 pd Exp $	*/
+/*	$OpenBSD: main.c,v 1.63 2021/03/26 16:28:15 tb Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -927,7 +927,7 @@ ctl_start(struct parse_result *res, int argc, char *argv[])
 int
 ctl_stop(struct parse_result *res, int argc, char *argv[])
 {
-	int		 ch, ret;
+	int		 ch;
 
 	while ((ch = getopt(argc, argv, "afw")) != -1) {
 		switch (ch) {
@@ -948,20 +948,15 @@ ctl_stop(struct parse_result *res, int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (argc == 0) {
-		if (res->action != CMD_STOPALL)
+	if (res->action == CMD_STOPALL) {
+		if (argc != 0)
 			ctl_usage(res->ctl);
-	} else if (argc > 1)
-		ctl_usage(res->ctl);
-	else if (argc == 1)
-		ret = parse_vmid(res, argv[0], 0);
-	else
-		ret = -1;
-
-	/* VM id is only expected without the -a flag */
-	if ((res->action != CMD_STOPALL && ret == -1) ||
-	    (res->action == CMD_STOPALL && ret != -1))
-		errx(1, "invalid id: %s", argv[1]);
+	} else {
+		if (argc != 1)
+			ctl_usage(res->ctl);
+		if (parse_vmid(res, argv[0], 0) == -1)
+			errx(1, "invalid id: %s", argv[0]);
+	}
 
 	return (vmmaction(res));
 }
