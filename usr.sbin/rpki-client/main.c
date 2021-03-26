@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.123 2021/03/25 12:18:45 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.124 2021/03/26 10:01:51 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -837,6 +837,8 @@ suicide(int sig __attribute__((unused)))
 
 }
 
+#define NPFD	3
+
 int
 main(int argc, char *argv[])
 {
@@ -845,7 +847,8 @@ main(int argc, char *argv[])
 	size_t		 i, id, outsz = 0, talsz = 0;
 	pid_t		 procpid, rsyncpid, httppid;
 	int		 fd[2];
-	struct pollfd	 pfd[3];
+	struct pollfd	 pfd[NPFD];
+	struct msgbuf	*queues[NPFD];
 	struct roa	**out = NULL;
 	struct repo	*rp;
 	char		*rsync_prog = "openrsync";
@@ -1079,8 +1082,11 @@ main(int argc, char *argv[])
 	 */
 
 	pfd[0].fd = rsync;
+	queues[0] = &rsyncq;
 	pfd[1].fd = proc;
+	queues[1] = &procq;
 	pfd[2].fd = http;
+	queues[2] = &httpq;
 
 	/*
 	 * Prime the process with our TAL file.
@@ -1096,53 +1102,31 @@ main(int argc, char *argv[])
 		err(1, "fchdir");
 
 	while (entity_queue > 0 && !killme) {
-		pfd[0].events = POLLIN;
-		if (rsyncq.queued)
-			pfd[0].events |= POLLOUT;
-		pfd[1].events = POLLIN;
-		if (procq.queued)
-			pfd[1].events |= POLLOUT;
-		pfd[2].events = POLLIN;
-		if (httpq.queued)
-			pfd[2].events |= POLLOUT;
+		for (i = 0; i < NPFD; i++) {
+			pfd[i].events = POLLIN;
+			if (queues[i]->queued)
+				pfd[i].events |= POLLOUT;
+		}
 
-		if ((c = poll(pfd, 3, INFTIM)) == -1) {
+		if ((c = poll(pfd, NPFD, INFTIM)) == -1) {
 			if (errno == EINTR)
 				continue;
 			err(1, "poll");
 		}
 
-		if ((pfd[0].revents & (POLLERR|POLLNVAL)) ||
-		    (pfd[1].revents & (POLLERR|POLLNVAL)) ||
-		    (pfd[2].revents & (POLLERR|POLLNVAL)))
-			errx(1, "poll: bad fd");
-		if ((pfd[0].revents & POLLHUP) ||
-		    (pfd[1].revents & POLLHUP) ||
-		    (pfd[2].revents & POLLHUP))
-			errx(1, "poll: hangup");
-
-		if (pfd[0].revents & POLLOUT) {
-			switch (msgbuf_write(&rsyncq)) {
-			case 0:
-				errx(1, "write: connection closed");
-			case -1:
-				err(1, "write");
-			}
-		}
-		if (pfd[1].revents & POLLOUT) {
-			switch (msgbuf_write(&procq)) {
-			case 0:
-				errx(1, "write: connection closed");
-			case -1:
-				err(1, "write");
-			}
-		}
-		if (pfd[2].revents & POLLOUT) {
-			switch (msgbuf_write(&httpq)) {
-			case 0:
-				errx(1, "write: connection closed");
-			case -1:
-				err(1, "write");
+		for (i = 0; i < NPFD; i++) {
+			if (pfd[i].revents & (POLLERR|POLLNVAL))
+				errx(1, "poll[%zu]: bad fd", i);
+			if (pfd[i].revents & POLLHUP)
+				errx(1, "poll[%zu]: hangup", i);
+			if (pfd[i].revents & POLLOUT) {
+				switch (msgbuf_write(queues[i])) {
+				case 0:
+					errx(1, "write[%zu]: "
+					    "connection closed", i);
+				case -1:
+					err(1, "write[%zu]", i);
+				}
 			}
 		}
 
