@@ -1,4 +1,4 @@
-/* $OpenBSD: cwfg.c,v 1.3 2021/03/25 12:18:27 kn Exp $ */
+/* $OpenBSD: cwfg.c,v 1.4 2021/03/26 22:54:41 kn Exp $ */
 /* $NetBSD: cwfg.c,v 1.1 2020/01/03 18:00:05 jmcneill Exp $ */
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -348,9 +348,13 @@ cwfg_update_sensors(void *arg)
 	uint8_t val;
 	int error, n;
 
-#if NAPM > 0
-	/* reset previous reads so apm(4) never gets stale values
+	/* invalidate all previous reads to avoid stale/incoherent values
 	 * in case of transient cwfg_read() failures below */
+	sc->sc_sensor[CWFG_SENSOR_VCELL].flags |= SENSOR_FINVALID;
+	sc->sc_sensor[CWFG_SENSOR_SOC].flags |= SENSOR_FINVALID;
+	sc->sc_sensor[CWFG_SENSOR_RTT].flags |= SENSOR_FINVALID;
+
+#if NAPM > 0
 	cwfg_power.battery_state = APM_BATT_UNKNOWN;
 	cwfg_power.ac_state = APM_AC_UNKNOWN;
 	cwfg_power.battery_life = 0;
