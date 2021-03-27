@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_scsi.c,v 1.59 2020/10/15 13:22:13 krw Exp $	*/
+/*	$OpenBSD: sdmmc_scsi.c,v 1.60 2021/03/27 14:36:28 kn Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -323,7 +323,7 @@ sdmmc_scsi_cmd(struct scsi_xfer *xs)
 	}
 
 	DPRINTF(("%s: scsi cmd target=%d opcode=%#x proc=\"%s\" (poll=%#x)\n",
-	    DEVNAME(sc), link->target, xs->cmd.pcode, curproc ?
+	    DEVNAME(sc), link->target, xs->cmd.opcode, curproc ?
 	    curproc->p_p->ps_comm : "", xs->flags & SCSI_POLL));
 
 	xs->error = XS_NOERROR;

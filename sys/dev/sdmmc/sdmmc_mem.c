@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_mem.c,v 1.35 2020/08/24 15:06:10 kettenis Exp $	*/
+/*	$OpenBSD: sdmmc_mem.c,v 1.36 2021/03/27 14:36:28 kn Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -188,7 +188,7 @@ sdmmc_mem_enable(struct sdmmc_softc *sc)
 		error = sdmmc_mmc_command(sc, &cmd);
 		if (error) {
 			DPRINTF(("%s: voltage switch command failed\n",
-			    SDMMCDEVNAME(sc)));
+			    DEVNAME(sc)));
 			return error;
 		}
 
@@ -220,7 +220,7 @@ sdmmc_mem_signal_voltage(struct sdmmc_softc *sc, int signal_voltage)
 	 * Card switch command was successful, update host controller
 	 * signal voltage setting.
 	 */
-	DPRINTF(("%s: switching host to %s\n", SDMMCDEVNAME(sc),
+	DPRINTF(("%s: switching host to %s\n", DEVNAME(sc),
 	    signal_voltage == SDMMC_SIGNAL_VOLTAGE_180 ? "1.8V" : "3.3V"));
 	error = sdmmc_chip_signal_voltage(sc->sct, sc->sch, signal_voltage);
 	if (error)
@@ -738,7 +738,7 @@ sdmmc_mem_execute_tuning(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 		}
 	}
 
-	DPRINTF(("%s: execute tuning for timing %d\n", SDMMCDEVNAME(sc),
+	DPRINTF(("%s: execute tuning for timing %d\n", DEVNAME(sc),
 	    timing));
 
 	return sdmmc_chip_execute_tuning(sc->sct, sc->sch, timing);
@@ -814,13 +814,13 @@ sdmmc_mem_sd_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			if (!(support_func & (1 << i)))
 				continue;
 			DPRINTF(("%s: card supports mode %s\n",
-			    SDMMCDEVNAME(sc),
+			    DEVNAME(sc),
 			    switch_group0_functions[i].name));
 		}
 
 		best_func = sdmmc_mem_select_transfer_mode(sc, support_func);
 
-		DPRINTF(("%s: using mode %s\n", SDMMCDEVNAME(sc),
+		DPRINTF(("%s: using mode %s\n", DEVNAME(sc),
 		    switch_group0_functions[best_func].name));
 	}
 
