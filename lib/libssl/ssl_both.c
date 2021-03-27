@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_both.c,v 1.25 2021/03/24 18:44:00 jsing Exp $ */
+/* $OpenBSD: ssl_both.c,v 1.26 2021/03/27 17:56:28 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -181,7 +181,7 @@ ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen)
 		S3I(s)->tmp.finish_md_len = md_len;
 
 		/* Copy finished so we can use it for renegotiation checks. */
-		if (s->internal->type == SSL_ST_CONNECT) {
+		if (!s->server) {
 			memcpy(S3I(s)->previous_client_finished,
 			    S3I(s)->tmp.finish_md, md_len);
 			S3I(s)->previous_client_finished_len = md_len;
@@ -285,7 +285,7 @@ ssl3_get_finished(SSL *s, int a, int b)
 
 	/* Copy finished so we can use it for renegotiation checks. */
 	OPENSSL_assert(md_len <= EVP_MAX_MD_SIZE);
-	if (s->internal->type == SSL_ST_ACCEPT) {
+	if (s->server) {
 		memcpy(S3I(s)->previous_client_finished,
 		    S3I(s)->tmp.peer_finish_md, md_len);
 		S3I(s)->previous_client_finished_len = md_len;

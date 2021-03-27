@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.330 2021/03/24 18:44:00 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.331 2021/03/27 17:56:28 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -754,8 +754,6 @@ typedef struct ssl_internal_st {
 	void *tls_session_secret_cb_arg;
 
 	/* XXX non-callback */
-
-	int type; /* SSL_ST_CONNECT or SSL_ST_ACCEPT */
 
 	/* This holds a variable that indicates what we were doing
 	 * when a 0 or -1 is returned.  This is needed for

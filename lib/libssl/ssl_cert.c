@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.80 2020/11/20 08:08:02 tb Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.81 2021/03/27 17:56:28 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -505,7 +505,7 @@ SSL_CTX_get_client_CA_list(const SSL_CTX *ctx)
 STACK_OF(X509_NAME) *
 SSL_get_client_CA_list(const SSL *s)
 {
-	if (s->internal->type == SSL_ST_CONNECT) {
+	if (!s->server) {
 		/* We are in the client. */
 		if ((s->version >> 8) == SSL3_VERSION_MAJOR)
 			return (S3I(s)->tmp.ca_names);

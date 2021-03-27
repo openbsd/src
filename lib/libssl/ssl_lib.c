@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.252 2021/03/24 18:44:00 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.253 2021/03/27 17:56:28 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -185,8 +185,6 @@ SSL_clear(SSL *s)
 		SSLerror(s, ERR_R_INTERNAL_ERROR);
 		return (0);
 	}
-
-	s->internal->type = 0;
 
 	s->version = s->method->internal->version;
 	s->client_version = s->version;
@@ -2494,7 +2492,6 @@ SSL_dup(SSL *s)
 		goto err;
 
 	ret->version = s->version;
-	ret->internal->type = s->internal->type;
 	ret->method = s->method;
 
 	if (s->session != NULL) {
