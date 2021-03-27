@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbr.c,v 1.6 2021/03/04 15:43:18 tb Exp $ */
+/*	$OpenBSD: gbr.c,v 1.7 2021/03/27 18:12:15 job Exp $ */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  *
@@ -62,8 +62,8 @@ gbr_parse(X509 **x509, const char *fn)
 		err(1, NULL);
 	if ((p.res->vcard = strndup(cms, cmsz)) == NULL)
 		err(1, NULL);
-	if (!x509_get_extensions(*x509, fn, &p.res->ski, &p.res->aki,
-	    &p.res->aia)) {
+	if (!x509_get_extensions(*x509, fn, &p.res->aia, &p.res->aki,
+	    &p.res->ski)) {
 		gbr_free(p.res);
 		X509_free(*x509);
 		*x509 = NULL;

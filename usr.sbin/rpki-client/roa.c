@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.15 2021/02/19 12:18:23 tb Exp $ */
+/*	$OpenBSD: roa.c,v 1.16 2021/03/27 18:12:15 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -348,8 +348,8 @@ roa_parse(X509 **x509, const char *fn)
 
 	if ((p.res = calloc(1, sizeof(struct roa))) == NULL)
 		err(1, NULL);
-	if (!x509_get_extensions(*x509, fn, &p.res->ski, &p.res->aki,
-	    &p.res->aia))
+	if (!x509_get_extensions(*x509, fn, &p.res->aia, &p.res->aki,
+	    &p.res->ski))
 		goto out;
 	if (!roa_parse_econtent(cms, cmsz, &p))
 		goto out;

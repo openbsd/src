@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.29 2021/03/05 16:00:00 claudio Exp $ */
+/*	$OpenBSD: mft.c,v 1.30 2021/03/27 18:12:15 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -394,8 +394,8 @@ mft_parse(X509 **x509, const char *fn)
 		err(1, NULL);
 	if ((p.res->file = strdup(fn)) == NULL)
 		err(1, NULL);
-	if (!x509_get_extensions(*x509, fn, &p.res->ski, &p.res->aki,
-	    &p.res->aia))
+	if (!x509_get_extensions(*x509, fn, &p.res->aia, &p.res->aki,
+	    &p.res->ski))
 		goto out;
 
 	/*
