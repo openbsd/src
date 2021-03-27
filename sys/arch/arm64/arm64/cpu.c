@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.53 2021/03/17 12:03:40 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.54 2021/03/27 19:57:19 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -334,6 +334,30 @@ cpu_identify(struct cpu_info *ci)
 	id = READ_SPECIALREG(id_aa64isar0_el1);
 	sep = "";
 
+	if (ID_AA64ISAR0_RNDR(id) >= ID_AA64ISAR0_RNDR_IMPL) {
+		printf("%sRNDR", sep);
+		sep = ",";
+	}
+
+	if (ID_AA64ISAR0_TLB(id) >= ID_AA64ISAR0_TLB_IOS) {
+		printf("%sTLBIOS", sep);
+		sep = ",";
+	}
+	if (ID_AA64ISAR0_TLB(id) >= ID_AA64ISAR0_TLB_IRANGE)
+		printf("+IRANGE");
+
+	if (ID_AA64ISAR0_TS(id) >= ID_AA64ISAR0_TS_BASE) {
+		printf("%sTS", sep);
+		sep = ",";
+	}
+	if (ID_AA64ISAR0_TS(id) >= ID_AA64ISAR0_TS_AXFLAG)
+		printf("+AXFLAG");
+
+	if (ID_AA64ISAR0_FHM(id) >= ID_AA64ISAR0_FHM_IMPL) {
+		printf("%sFHM", sep);
+		sep = ",";
+	}
+
 	if (ID_AA64ISAR0_DP(id) >= ID_AA64ISAR0_DP_IMPL) {
 		printf("%sDP", sep);
 		sep = ",";
@@ -395,6 +419,62 @@ cpu_identify(struct cpu_info *ci)
 	 * ID_AA64ISAR1
 	 */
 	id = READ_SPECIALREG(id_aa64isar1_el1);
+
+	if (ID_AA64ISAR1_SPECRES(id) >= ID_AA64ISAR1_SPECRES_IMPL) {
+		printf("%sSPECRES", sep);
+		sep = ",";
+	}
+
+	if (ID_AA64ISAR1_SB(id) >= ID_AA64ISAR1_SB_IMPL) {
+		printf("%sSB", sep);
+		sep = ",";
+	}
+
+	if (ID_AA64ISAR1_FRINTTS(id) >= ID_AA64ISAR1_FRINTTS_IMPL) {
+		printf("%sFRINTTS", sep);
+		sep = ",";
+	}
+
+	if (ID_AA64ISAR1_GPI(id) >= ID_AA64ISAR1_GPI_IMPL) {
+		printf("%sGPI", sep);
+		sep = ",";
+	}
+
+	if (ID_AA64ISAR1_GPA(id) >= ID_AA64ISAR1_GPA_IMPL) {
+		printf("%sGPA", sep);
+		sep = ",";
+	}
+
+	if (ID_AA64ISAR1_LRCPC(id) >= ID_AA64ISAR1_LRCPC_BASE) {
+		printf("%sLRCPC", sep);
+		sep = ",";
+	}
+	if (ID_AA64ISAR1_LRCPC(id) >= ID_AA64ISAR1_LRCPC_LDAPUR)
+		printf("+LDAPUR");
+
+	if (ID_AA64ISAR1_FCMA(id) >= ID_AA64ISAR1_FCMA_IMPL) {
+		printf("%sFCMA", sep);
+		sep = ",";
+	}
+
+	if (ID_AA64ISAR1_JSCVT(id) >= ID_AA64ISAR1_JSCVT_IMPL) {
+		printf("%sJSCVT", sep);
+		sep = ",";
+	}
+
+	if (ID_AA64ISAR1_API(id) >= ID_AA64ISAR1_API_BASE) {
+		printf("%sAPI", sep);
+		sep = ",";
+	}
+	if (ID_AA64ISAR1_API(id) >= ID_AA64ISAR1_API_PAC)
+		printf("+PAC");
+
+	if (ID_AA64ISAR1_APA(id) >= ID_AA64ISAR1_APA_BASE) {
+		printf("%sAPA", sep);
+		sep = ",";
+	}
+	if (ID_AA64ISAR1_APA(id) >= ID_AA64ISAR1_APA_PAC)
+		printf("+PAC");
 
 	if (ID_AA64ISAR1_DPB(id) >= ID_AA64ISAR1_DPB_IMPL) {
 		printf("%sDPB", sep);
@@ -466,6 +546,31 @@ cpu_identify(struct cpu_info *ci)
 	}
 	if (ID_AA64PFR0_CSV2(id) >= ID_AA64PFR0_CSV2_SCXT)
 		printf("+SCTX");
+
+#ifdef CPU_DEBUG
+	id = READ_SPECIALREG(id_aa64afr0_el1);
+	printf("\nID_AA64AFR0_EL1: 0x%016llx", id);
+	id = READ_SPECIALREG(id_aa64afr1_el1);
+	printf("\nID_AA64AFR1_EL1: 0x%016llx", id);
+	id = READ_SPECIALREG(id_aa64dfr0_el1);
+	printf("\nID_AA64DFR0_EL1: 0x%016llx", id);
+	id = READ_SPECIALREG(id_aa64dfr1_el1);
+	printf("\nID_AA64DFR1_EL1: 0x%016llx", id);
+	id = READ_SPECIALREG(id_aa64isar0_el1);
+	printf("\nID_AA64ISAR0_EL1: 0x%016llx", id);
+	id = READ_SPECIALREG(id_aa64isar1_el1);
+	printf("\nID_AA64ISAR1_EL1: 0x%016llx", id);
+	id = READ_SPECIALREG(id_aa64mmfr0_el1);
+	printf("\nID_AA64MMFR0_EL1: 0x%016llx", id);
+	id = READ_SPECIALREG(id_aa64mmfr1_el1);
+	printf("\nID_AA64MMFR1_EL1: 0x%016llx", id);
+	id = READ_SPECIALREG(id_aa64mmfr2_el1);
+	printf("\nID_AA64MMFR2_EL1: 0x%016llx", id);
+	id = READ_SPECIALREG(id_aa64pfr0_el1);
+	printf("\nID_AA64PFR0_EL1: 0x%016llx", id);
+	id = READ_SPECIALREG(id_aa64pfr1_el1);
+	printf("\nID_AA64PFR1_EL1: 0x%016llx", id);
+#endif
 }
 
 int	cpu_hatch_secondary(struct cpu_info *ci, int, uint64_t);
