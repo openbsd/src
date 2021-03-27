@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleased.c,v 1.8 2021/03/16 17:39:15 florian Exp $	*/
+/*	$OpenBSD: dhcpleased.c,v 1.9 2021/03/27 18:10:38 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -801,8 +801,8 @@ configure_gateway(struct imsg_configure_interface *imsg, uint8_t rtm_type)
 {
 	struct rt_msghdr		 rtm;
 	struct sockaddr_rtlabel		 rl;
-	struct sockaddr_in		 dst, gw, mask;
-	struct iovec			 iov[10];
+	struct sockaddr_in		 dst, gw, mask, ifa;
+	struct iovec			 iov[12];
 	long				 pad = 0;
 	int				 iovcnt = 0, padlen;
 
@@ -815,7 +815,8 @@ configure_gateway(struct imsg_configure_interface *imsg, uint8_t rtm_type)
 	rtm.rtm_index = imsg->if_index;
 	rtm.rtm_seq = ++rtm_seq;
 	rtm.rtm_priority = RTP_NONE;
-	rtm.rtm_addrs = RTA_DST | RTA_GATEWAY | RTA_NETMASK | RTA_LABEL;
+	rtm.rtm_addrs = RTA_DST | RTA_GATEWAY | RTA_NETMASK | RTA_IFA |
+	    RTA_LABEL;
 	rtm.rtm_flags = RTF_UP | RTF_GATEWAY | RTF_STATIC | RTF_MPATH;
 
 	iov[iovcnt].iov_base = &rtm;
@@ -856,6 +857,20 @@ configure_gateway(struct imsg_configure_interface *imsg, uint8_t rtm_type)
 	iov[iovcnt++].iov_len = sizeof(mask);
 	rtm.rtm_msglen += sizeof(mask);
 	padlen = ROUNDUP(sizeof(mask)) - sizeof(mask);
+	if (padlen > 0) {
+		iov[iovcnt].iov_base = &pad;
+		iov[iovcnt++].iov_len = padlen;
+		rtm.rtm_msglen += padlen;
+	}
+
+	memset(&ifa, 0, sizeof(ifa));
+	memcpy(&ifa.sin_addr, &imsg->addr, sizeof(ifa.sin_addr));
+	ifa.sin_family = AF_INET;
+	ifa.sin_len = sizeof(struct sockaddr_in);
+	iov[iovcnt].iov_base = &ifa;
+	iov[iovcnt++].iov_len = sizeof(ifa);
+	rtm.rtm_msglen += sizeof(ifa);
+	padlen = ROUNDUP(sizeof(ifa)) - sizeof(ifa);
 	if (padlen > 0) {
 		iov[iovcnt].iov_base = &pad;
 		iov[iovcnt++].iov_len = padlen;
