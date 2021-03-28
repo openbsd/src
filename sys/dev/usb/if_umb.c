@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.37 2021/01/29 17:06:19 sthen Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.38 2021/03/28 12:08:58 sthen Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -225,6 +225,28 @@ const struct cfattach umb_ca = {
 int umb_delay = 4000;
 
 /*
+ * Normally, MBIM devices are detected by their interface class and subclass.
+ * But for some models that have multiple configurations, it is better to
+ * match by vendor and product id so that we can select the desired
+ * configuration ourselves, e.g. to override a class-based match to another
+ * driver.
+ *
+ * OTOH, some devices identify themselves as an MBIM device but fail to speak
+ * the MBIM protocol.
+ */
+struct umb_products {
+	struct usb_devno	 dev;
+	int			 confno;
+};
+const struct umb_products umb_devs[] = {
+	{ { USB_VENDOR_DELL, USB_PRODUCT_DELL_DW5821E }, 2 },
+	{ { USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_ME906S }, 3 },
+};
+
+#define umb_lookup(vid, pid)		\
+	((const struct umb_products *)usb_lookup(umb_devs, vid, pid))
+
+/*
  * These devices require an "FCC Authentication" command.
  */
 const struct usb_devno umb_fccauth_devs[] = {
@@ -263,6 +285,8 @@ umb_match(struct device *parent, void *match, void *aux)
 	struct usb_attach_arg *uaa = aux;
 	usb_interface_descriptor_t *id;
 
+	if (umb_lookup(uaa->vendor, uaa->product) != NULL)
+		return UMATCH_VENDOR_PRODUCT;
 	if (!uaa->iface)
 		return UMATCH_NONE;
 	if ((id = usbd_get_interface_descriptor(uaa->iface)) == NULL)
@@ -314,6 +338,43 @@ umb_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_udev = uaa->device;
 	sc->sc_ctrl_ifaceno = uaa->ifaceno;
 	ml_init(&sc->sc_tx_ml);
+
+	if (uaa->configno < 0) {
+		/*
+		 * In case the device was matched by VID/PID instead of
+		 * InterfaceClass/InterfaceSubClass, we have to pick the
+		 * correct configuration ourself.
+		 */
+		uaa->configno = umb_lookup(uaa->vendor, uaa->product)->confno;
+		DPRINTF("%s: switching to config #%d\n", DEVNAM(sc),
+		    uaa->configno);
+		status = usbd_set_config_no(sc->sc_udev, uaa->configno, 1);
+		if (status) {
+			printf("%s: failed to switch to config #%d: %s\n",
+			    DEVNAM(sc), uaa->configno, usbd_errstr(status));
+			goto fail;
+		}
+		usbd_delay_ms(sc->sc_udev, 200);
+
+		/*
+		 * Need to do some manual setups that usbd_probe_and_attach()
+		 * would do for us otherwise.
+		 */
+		uaa->nifaces = uaa->device->cdesc->bNumInterfaces;
+		for (i = 0; i < uaa->nifaces; i++) {
+			if (usbd_iface_claimed(sc->sc_udev, i))
+				continue;
+			id = usbd_get_interface_descriptor(&uaa->device->ifaces[i]);
+			if (id != NULL && id->bInterfaceClass == UICLASS_CDC &&
+			    id->bInterfaceSubClass ==
+			    UISUBCLASS_MOBILE_BROADBAND_INTERFACE_MODEL) {
+				uaa->iface = &uaa->device->ifaces[i];
+				uaa->ifaceno = uaa->iface->idesc->bInterfaceNumber;
+				sc->sc_ctrl_ifaceno = uaa->ifaceno;
+				break;
+			}
+		}
+	}
 
 	/*
 	 * Some MBIM hardware does not provide the mandatory CDC Union
@@ -382,9 +443,9 @@ umb_attach(struct device *parent, struct device *self, void *aux)
 	for (i = 0; i < uaa->nifaces; i++) {
 		if (usbd_iface_claimed(sc->sc_udev, i))
 			continue;
-		id = usbd_get_interface_descriptor(uaa->ifaces[i]);
+		id = usbd_get_interface_descriptor(&sc->sc_udev->ifaces[i]);
 		if (id != NULL && id->bInterfaceNumber == data_ifaceno) {
-			sc->sc_data_iface = uaa->ifaces[i];
+			sc->sc_data_iface = &sc->sc_udev->ifaces[i];
 			usbd_claim_iface(sc->sc_udev, i);
 		}
 	}
