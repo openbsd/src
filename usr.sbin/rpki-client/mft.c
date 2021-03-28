@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.30 2021/03/27 18:12:15 job Exp $ */
+/*	$OpenBSD: mft.c,v 1.31 2021/03/28 16:22:17 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -25,6 +25,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <openssl/bn.h>
 #include <openssl/asn1.h>
 #include <openssl/sha.h>
 #include <openssl/x509.h>
@@ -257,6 +258,8 @@ mft_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 	ASN1_SEQUENCE_ANY	*seq;
 	const ASN1_TYPE		*t;
 	const ASN1_GENERALIZEDTIME *from, *until;
+	BIGNUM			*mft_seqnum = NULL;
+	long			 mft_version;
 	int			 i, rc = -1;
 
 	if ((seq = d2i_ASN1_SEQUENCE_ANY(NULL, &d, dsz)) == NULL) {
@@ -265,7 +268,7 @@ mft_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 		goto out;
 	}
 
-	/* The version is optional. */
+	/* The profile version is optional. */
 
 	if (sk_ASN1_TYPE_num(seq) != 5 &&
 	    sk_ASN1_TYPE_num(seq) != 6) {
@@ -275,7 +278,7 @@ mft_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 		goto out;
 	}
 
-	/* Start with optional version. */
+	/* Start with optional profile version. */
 
 	i = 0;
 	if (sk_ASN1_TYPE_num(seq) == 6) {
@@ -284,6 +287,16 @@ mft_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 			warnx("%s: RFC 6486 section 4.2.1: version: "
 			    "want ASN.1 integer, have %s (NID %d)",
 			    p->fn, ASN1_tag2str(t->type), t->type);
+			goto out;
+		}
+
+		if (t->value.integer == NULL)
+			goto out;
+
+		mft_version = ASN1_INTEGER_get(t->value.integer);
+		if (mft_version != 0) {
+			warnx("%s: RFC 6486 section 4.2.1: version: "
+			    "want 0, have %ld", p->fn, mft_version);
 			goto out;
 		}
 	}
@@ -295,6 +308,30 @@ mft_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 		warnx("%s: RFC 6486 section 4.2.1: manifestNumber: "
 		    "want ASN.1 integer, have %s (NID %d)",
 		    p->fn, ASN1_tag2str(t->type), t->type);
+		goto out;
+	}
+
+	mft_seqnum = ASN1_INTEGER_to_BN(t->value.integer, NULL);
+	if (mft_seqnum == NULL) {
+		warnx("%s: ASN1_INTEGER_to_BN error", p->fn);
+		goto out;
+	}
+
+	if (BN_is_negative(mft_seqnum)) {
+		warnx("%s: RFC 6486 section 4.2.1: manifestNumber: "
+		    "want positive integer, have negative.", p->fn);
+		goto out;
+	}
+
+	if (BN_num_bytes(mft_seqnum) > 20) {
+		warnx("%s: RFC 6486 section 4.2.1: manifestNumber: "
+		    "want 20 or less than octets, have more.", p->fn);
+		goto out;
+	}
+
+	p->res->seqnum = BN_bn2hex(mft_seqnum);
+	if (p->res->seqnum == NULL) {
+		warnx("%s: BN_bn2hex error", p->fn);
 		goto out;
 	}
 
@@ -363,6 +400,7 @@ mft_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 	rc = 1;
 out:
 	sk_ASN1_TYPE_pop_free(seq, ASN1_TYPE_free);
+	BN_free(mft_seqnum);
 	return rc;
 }
 
@@ -485,6 +523,7 @@ mft_free(struct mft *p)
 	free(p->ski);
 	free(p->file);
 	free(p->files);
+	free(p->seqnum);
 	free(p);
 }
 

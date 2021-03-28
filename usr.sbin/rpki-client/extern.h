@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.56 2021/03/25 12:18:45 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.57 2021/03/28 16:22:17 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -156,6 +156,7 @@ struct mft {
 	struct mftfile	*files; /* file and hash */
 	size_t		 filesz; /* number of filenames */
 	int		 stale; /* if a stale manifest */
+	char		*seqnum; /* manifestNumber */
 	char		*aia; /* AIA */
 	char		*aki; /* AKI */
 	char		*ski; /* SKI */
