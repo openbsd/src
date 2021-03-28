@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.26 2021/03/27 18:11:53 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.27 2021/03/28 18:12:09 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -256,9 +256,7 @@ tls13_failing_tests = TestGroup("failing TLSv1.3 tests", [
     # 3 failing rsa_pss_pss tests
     Test("test-tls13-rsa-signatures.py"),
 
-    # AssertionError: Unexpected message from peer: ChangeCipherSpec()
-    # Most failing tests expect the CCS right before finished.
-    # What's up with that?
+    # The failing tests all expect an ri extension.  What's up with that?
     Test("test-tls13-version-negotiation.py"),
 ])
 
