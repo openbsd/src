@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.734 2021/03/24 18:49:25 sthen Exp $
+$OpenBSD: usbdevs,v 1.735 2021/03/28 12:06:35 sthen Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1519,6 +1519,7 @@ product	DELL PRISM_GT_2		0x8104	PrismGT USB 2.0 WLAN
 product DELL W5500		0x8115	W5500 HSDPA 
 product DELL U740		0x8135	U740 CDMA
 product DELL EU870D		0x8138	EU870D HSDPA
+product DELL DW5821E		0x81d7	DW5821e LTE
 product DELL DW700		0x9500	DW700 GPS
 product DELL2 UPS		0xffff	UPS
 
@@ -2302,6 +2303,7 @@ product HUAWEI E392_INIT	0x1505	HUAWEI Mobile E392 Initial
 product HUAWEI K3765_INIT	0x1520	HUAWEI Mobile K3765 Initial
 product HUAWEI K3772_INIT	0x1526	HUAWEI Mobile K3772 Initial
 product HUAWEI MU609		0x1573	HUAWEI Mobile ME906 
+product HUAWEI ME906S		0x15c1	ME906s LTE
 product HUAWEI E173S		0x1c05	HUAWEI Mobile E173s
 product HUAWEI E173S_INIT	0x1c0b	HUAWEI Mobile E173s Initial
 product HUAWEI E303		0x1f01	HUAWEI Mobile E303
