@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.171 2021/03/09 14:32:24 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.172 2021/03/28 17:25:21 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -96,7 +96,7 @@ dispatch(struct interface_info *ifi, int routefd)
 	while (quit == 0 || quit == RESTART) {
 		if (quit == RESTART) {
 			quit = 0;
-			clock_gettime(CLOCK_REALTIME, &ifi->link_timeout);
+			clock_gettime(CLOCK_MONOTONIC, &ifi->link_timeout);
 			timespecadd(&ifi->link_timeout, &link_intvl, &ifi->link_timeout);
 			free(ifi->configured);
 			ifi->configured = NULL;
@@ -106,7 +106,7 @@ dispatch(struct interface_info *ifi, int routefd)
 			state_preboot(ifi);
 		}
 		if (timespecisset(&ifi->timeout)) {
-			clock_gettime(CLOCK_REALTIME, &timeout);
+			clock_gettime(CLOCK_MONOTONIC, &timeout);
 			if (timespeccmp(&timeout, &ifi->timeout, >=)) {
 				func = ifi->timeout_func;
 				cancel_timeout(ifi);
@@ -307,7 +307,7 @@ set_timeout(struct interface_info *ifi, time_t secs,
 {
 	struct timespec		now;
 
-	clock_gettime(CLOCK_REALTIME, &now);
+	clock_gettime(CLOCK_MONOTONIC, &now);
 	timespecclear(&ifi->timeout);
 	ifi->timeout.tv_sec = secs;
 	timespecadd(&ifi->timeout, &now, &ifi->timeout);

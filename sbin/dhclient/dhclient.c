@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.714 2021/03/28 16:23:05 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.715 2021/03/28 17:25:21 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -793,7 +793,7 @@ state_reboot(struct interface_info *ifi)
 	make_request(ifi, ifi->active);
 
 	ifi->destination.s_addr = INADDR_BROADCAST;
-	clock_gettime(CLOCK_REALTIME, &ifi->first_sending);
+	clock_gettime(CLOCK_MONOTONIC, &ifi->first_sending);
 	timespecadd(&ifi->first_sending, &reboot_intvl, &ifi->reboot_timeout);
 	ifi->interval = 0;
 
@@ -814,7 +814,7 @@ state_init(struct interface_info *ifi)
 
 	ifi->destination.s_addr = INADDR_BROADCAST;
 	ifi->state = S_SELECTING;
-	clock_gettime(CLOCK_REALTIME, &ifi->first_sending);
+	clock_gettime(CLOCK_MONOTONIC, &ifi->first_sending);
 	timespecadd(&ifi->first_sending, &offer_intvl, &ifi->offer_timeout);
 	ifi->select_timeout = ifi->offer_timeout;
 	ifi->interval = 0;
@@ -845,7 +845,7 @@ state_selecting(struct interface_info *ifi)
 	}
 
 	ifi->destination.s_addr = INADDR_BROADCAST;
-	clock_gettime(CLOCK_REALTIME, &ifi->first_sending);
+	clock_gettime(CLOCK_MONOTONIC, &ifi->first_sending);
 	ifi->interval = 0;
 
 	/*
@@ -900,7 +900,7 @@ process_offer(struct interface_info *ifi, struct option_data *options,
 	struct timespec		 now;
 	struct client_lease	*lease;
 
-	clock_gettime(CLOCK_REALTIME, &now);
+	clock_gettime(CLOCK_MONOTONIC, &now);
 
 	lease = packet_to_lease(ifi, options);
 	if (lease != NULL) {
@@ -1024,7 +1024,7 @@ bind_lease(struct interface_info *ifi)
 	int			 rslt, seen;
 
 	tick_msg("lease", TICK_SUCCESS);
-	clock_gettime(CLOCK_REALTIME, &now);
+	clock_gettime(CLOCK_MONOTONIC, &now);
 
 	lease = apply_defaults(ifi->offer);
 	get_lease_timeouts(ifi, lease);
@@ -1160,7 +1160,7 @@ state_bound(struct interface_info *ifi)
 	else
 		dest->s_addr = INADDR_BROADCAST;
 
-	clock_gettime(CLOCK_REALTIME, &ifi->first_sending);
+	clock_gettime(CLOCK_MONOTONIC, &ifi->first_sending);
 	ifi->interval = 0;
 	ifi->state = S_RENEWING;
 
@@ -1448,7 +1448,7 @@ send_discover(struct interface_info *ifi)
 	struct timespec		 now;
 	ssize_t			 rslt;
 
-	clock_gettime(CLOCK_REALTIME, &now);
+	clock_gettime(CLOCK_MONOTONIC, &now);
 	if (timespeccmp(&now, &ifi->offer_timeout, >=)) {
 		state_panic(ifi);
 		return;
@@ -1506,7 +1506,7 @@ send_request(struct interface_info *ifi)
 	ssize_t			 rslt;
 
 	cancel_timeout(ifi);
-	clock_gettime(CLOCK_REALTIME, &now);
+	clock_gettime(CLOCK_MONOTONIC, &now);
 
 	switch (ifi->state) {
 	case S_REBOOTING:
@@ -2492,7 +2492,7 @@ take_charge(struct interface_info *ifi, int routefd, char *leasespath)
 	struct rt_msghdr	 rtm;
 	int			 fd, nfds;
 
-	clock_gettime(CLOCK_REALTIME, &now);
+	clock_gettime(CLOCK_MONOTONIC, &now);
 	resend = now;
 	timespecadd(&now, &max_timeout, &stop);
 
@@ -2514,7 +2514,7 @@ take_charge(struct interface_info *ifi, int routefd, char *leasespath)
 	rtm.rtm_flags = RTF_UP | RTF_PROTO3;
 
 	for (fd = -1; fd == -1 && quit != TERMINATE;) {
-		clock_gettime(CLOCK_REALTIME, &now);
+		clock_gettime(CLOCK_MONOTONIC, &now);
 		if (timespeccmp(&now, &stop, >=))
 			fatalx("failed to take charge");
 
@@ -2657,7 +2657,7 @@ get_lease_timeouts(struct interface_info *ifi, struct client_lease *lease)
 {
 	struct timespec	now, interval;
 
-	clock_gettime(CLOCK_REALTIME, &now);
+	clock_gettime(CLOCK_MONOTONIC, &now);
 	timespecclear(&interval);
 
 	interval.tv_sec = lease_expiry(lease);
@@ -2685,7 +2685,7 @@ tick_msg(const char *preamble, int action)
 	static int			linkup, preamble_sent, sleeping;
 	int				printmsg;
 
-	clock_gettime(CLOCK_REALTIME, &now);
+	clock_gettime(CLOCK_MONOTONIC, &now);
 
 	if (!timespecisset(&stop)) {
 		preamble_sent = 0;
@@ -2802,7 +2802,7 @@ propose_release(struct interface_info *ifi)
 	struct rt_msghdr	 rtm;
 	int			 nfds, routefd, rtfilter;
 
-	clock_gettime(CLOCK_REALTIME, &now);
+	clock_gettime(CLOCK_MONOTONIC, &now);
 	timespecadd(&now, &max_timeout, &stop);
 
 	if ((routefd = socket(AF_ROUTE, SOCK_RAW, AF_INET)) == -1)
@@ -2834,7 +2834,7 @@ propose_release(struct interface_info *ifi)
 	log_debug("%s: sent RTM_PROPOSAL to release lease", log_procname);
 
 	while (quit == 0) {
-		clock_gettime(CLOCK_REALTIME, &now);
+		clock_gettime(CLOCK_MONOTONIC, &now);
 		if (timespeccmp(&now, &stop, >=))
 			break;
 		timespecsub(&stop, &now, &timeout);
