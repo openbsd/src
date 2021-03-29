@@ -1,4 +1,4 @@
-/*	$OpenBSD: apldart.c,v 1.1 2021/02/27 16:19:14 kettenis Exp $	*/
+/*	$OpenBSD: apldart.c,v 1.2 2021/03/29 17:04:00 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -190,9 +190,14 @@ apldart_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_sid_mask = OF_getpropint(faa->fa_node, "sid-mask", 0xffff);
 	sc->sc_nsid = fls(sc->sc_sid_mask);
 
-	/* Default aperture for PCIe DART. */
-	sc->sc_dvabase = 0x00100000UL;
-	sc->sc_dvaend = 0x3fefffffUL;
+	/*
+	 * Skip the first page to help catching bugs where a device is
+	 * doing DMA to/from address zero because we didn't properly
+	 * set up the DMA transfer.  Skip the last page to avoid using
+	 * the address reserved for MSIs.
+	 */
+	sc->sc_dvabase = DART_PAGE_SIZE;
+	sc->sc_dvaend = 0xffffffff - DART_PAGE_SIZE;
 
 	/* Disable translations. */
 	for (sid = 0; sid < sc->sc_nsid; sid++)
