@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip.c,v 1.15 2021/03/29 03:35:32 deraadt Exp $ */
+/*	$OpenBSD: ip.c,v 1.16 2021/03/29 06:15:29 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -157,13 +157,17 @@ ip_addr_check_overlap(const struct cert_ip *ip, const char *fn,
 		    "cannot have overlapping IP addresses", fn);
 		ip_addr_print(&ip->ip, ip->afi, buf, sizeof(buf));
 		warnx("%s: certificate IP: %s", fn, buf);
-		inet_ntop(socktype, ip->min, buf, sizeof(buf));
+		if (inet_ntop(socktype, ip->min, buf, sizeof(buf)) == NULL)
+			err(1, "inet_ntop");
 		warnx("%s: certificate IP minimum: %s", fn, buf);
-		inet_ntop(socktype, ip->max, buf, sizeof(buf));
+		if (inet_ntop(socktype, ip->max, buf, sizeof(buf)) == NULL)
+			err(1, "inet_ntop");
 		warnx("%s: certificate IP maximum: %s", fn, buf);
-		inet_ntop(socktype, ips[i].min, buf, sizeof(buf));
+		if (inet_ntop(socktype, ips[i].min, buf, sizeof(buf)) == NULL)
+			err(1, "inet_ntop");
 		warnx("%s: offending IP minimum: %s", fn, buf);
-		inet_ntop(socktype, ips[i].max, buf, sizeof(buf));
+		if (inet_ntop(socktype, ips[i].max, buf, sizeof(buf)) == NULL)
+			err(1, "inet_ntop");
 		warnx("%s: offending IP maximum: %s", fn, buf);
 		return 0;
 	}
@@ -238,8 +242,9 @@ ip4_addr2str(const struct ip_addr *addr, char *b, size_t bsz)
 	char buf[16];
 	int ret;
 
-	ret = snprintf(b, bsz, "%s/%hhu", inet_ntop(AF_INET, addr->addr, buf,
-	    sizeof(buf)), addr->prefixlen);
+	if (inet_ntop(AF_INET, addr->addr, buf, sizeof(buf)) == NULL)
+		err(1, "inet_ntop");
+	ret = snprintf(b, bsz, "%s/%hhu", buf, addr->prefixlen);
 	if (ret < 0 || (size_t)ret >= bsz)
 		err(1, "malformed IPV4 address");
 }
@@ -255,8 +260,9 @@ ip6_addr2str(const struct ip_addr *addr, char *b, size_t bsz)
 	char buf[44];
 	int ret;
 
-	ret = snprintf(b, bsz, "%s/%hhu", inet_ntop(AF_INET6, addr->addr, buf,
-	    sizeof(buf)), addr->prefixlen);
+	if (inet_ntop(AF_INET6, addr->addr, buf, sizeof(buf)) == NULL)
+		err(1, "inet_ntop");
+	ret = snprintf(b, bsz, "%s/%hhu", buf, addr->prefixlen);
 	if (ret < 0 || (size_t)ret >= bsz)
 		err(1, "malformed IPV6 address");
 }
