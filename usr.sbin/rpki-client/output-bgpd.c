@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-bgpd.c,v 1.18 2020/09/12 15:46:48 claudio Exp $ */
+/*	$OpenBSD: output-bgpd.c,v 1.19 2021/03/29 03:35:32 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -33,10 +33,12 @@ output_bgpd(FILE *out, struct vrp_tree *vrps, struct stats *st)
 
 	RB_FOREACH(v, vrp_tree, vrps) {
 		ip_addr_print(&v->addr, v->afi, buf1, sizeof(buf1));
-		if (v->maxlength > v->addr.prefixlen)
-			snprintf(buf2, sizeof(buf2), "maxlen %u ",
+		if (v->maxlength > v->addr.prefixlen) {
+			int ret = snprintf(buf2, sizeof(buf2), "maxlen %u ",
 			    v->maxlength);
-		else
+			if (ret < 0 || (size_t)ret > sizeof(buf2))
+				return -1;
+		} else
 			buf2[0] = '\0';
 		if (fprintf(out, "\t%s %ssource-as %u\n", buf1, buf2, v->asid) < 0)
 			return -1;

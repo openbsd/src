@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip.c,v 1.14 2021/01/08 08:09:07 claudio Exp $ */
+/*	$OpenBSD: ip.c,v 1.15 2021/03/29 03:35:32 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -236,9 +236,12 @@ static void
 ip4_addr2str(const struct ip_addr *addr, char *b, size_t bsz)
 {
 	char buf[16];
+	int ret;
 
-	snprintf(b, bsz, "%s/%hhu", inet_ntop(AF_INET, addr->addr, buf,
+	ret = snprintf(b, bsz, "%s/%hhu", inet_ntop(AF_INET, addr->addr, buf,
 	    sizeof(buf)), addr->prefixlen);
+	if (ret < 0 || (size_t)ret >= bsz)
+		err(1, "malformed IPV4 address");
 }
 
 /*
@@ -249,10 +252,13 @@ ip4_addr2str(const struct ip_addr *addr, char *b, size_t bsz)
 static void
 ip6_addr2str(const struct ip_addr *addr, char *b, size_t bsz)
 {
-	char	 buf[44];
+	char buf[44];
+	int ret;
 
-	snprintf(b, bsz, "%s/%hhu", inet_ntop(AF_INET6, addr->addr, buf,
+	ret = snprintf(b, bsz, "%s/%hhu", inet_ntop(AF_INET6, addr->addr, buf,
 	    sizeof(buf)), addr->prefixlen);
+	if (ret < 0 || (size_t)ret >= bsz)
+		err(1, "malformed IPV6 address");
 }
 
 /*
