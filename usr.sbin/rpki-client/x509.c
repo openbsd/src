@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.17 2021/03/29 03:45:35 deraadt Exp $ */
+/*	$OpenBSD: x509.c,v 1.18 2021/03/29 04:00:38 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -85,7 +85,6 @@ x509_get_aki(X509 *x, int ta, const char *fn)
 	if ((res = calloc(dsz * 3 + 1, 1)) == NULL)
 		err(1, NULL);
 
-// XXX hate this
 	for (i = 0; i < dsz; i++) {
 		snprintf(buf, sizeof(buf), "%02X:", d[i]);
 		strlcat(res, buf, dsz * 3 + 1);
@@ -136,7 +135,6 @@ x509_get_ski(X509 *x, const char *fn)
 	if ((res = calloc(dsz * 3 + 1, 1)) == NULL)
 		err(1, NULL);
 
-// XXX hate this
 	for (i = 0; i < dsz; i++) {
 		snprintf(buf, sizeof(buf), "%02X:", d[i]);
 		strlcat(res, buf, dsz * 3 + 1);
@@ -349,7 +347,6 @@ x509_crl_get_aki(X509_CRL *crl, const char *fn)
 	if ((res = calloc(dsz * 3 + 1, 1)) == NULL)
 		err(1, NULL);
 
-// XXX hate this
 	for (i = 0; i < dsz; i++) {
 		snprintf(buf, sizeof(buf), "%02X:", d[i]);
 		strlcat(res, buf, dsz * 3 + 1);
