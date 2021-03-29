@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.19 2021/03/29 06:50:44 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.20 2021/03/29 12:41:35 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -30,9 +30,32 @@
 #include "extern.h"
 
 /*
+ * Convert binary buffer of size dsz into an upper-case hex-string.
+ * Returns pointer to the newly allocated string. Function can't fail.
+ */
+char *
+hex_encode(const unsigned char *in, size_t insz)
+{
+	const char hex[] = "0123456789ABCDEF";
+	size_t i;
+	char *out;
+
+	if ((out = calloc(2, insz + 1)) == NULL)
+		err(1, NULL);
+
+	for (i = 0; i < insz; i++) {
+		out[i * 2] = hex[in[i] >> 4];
+		out[i * 2 + 1] = hex[in[i] & 0xf];
+	}
+	out[i * 2] = '\0';
+
+	return out;
+}
+
+/*
  * Parse X509v3 authority key identifier (AKI), RFC 6487 sec. 4.8.3.
  * Returns the AKI or NULL if it could not be parsed.
- * The AKI is formatted as aa:bb:cc:dd, with each being a hex value.
+ * The AKI is formatted as a hex string.
  */
 char *
 x509_get_aki(X509 *x, int ta, const char *fn)
@@ -40,8 +63,7 @@ x509_get_aki(X509 *x, int ta, const char *fn)
 	const unsigned char	*d;
 	AUTHORITY_KEYID		*akid;
 	ASN1_OCTET_STRING	*os;
-	int			 i, dsz, crit;
-	char			 buf[4];
+	int			 dsz, crit;
 	char			*res = NULL;
 
 	akid = X509_get_ext_d2i(x, NID_authority_key_identifier, &crit, NULL);
@@ -80,16 +102,7 @@ x509_get_aki(X509 *x, int ta, const char *fn)
 		goto out;
 	}
 
-	/* Make room for [hex1, hex2, ":"]*, NUL. */
-
-	if ((res = calloc(dsz * 3 + 1, 1)) == NULL)
-		err(1, NULL);
-
-	for (i = 0; i < dsz; i++) {
-		snprintf(buf, sizeof(buf), "%02X:", d[i]);
-		strlcat(res, buf, dsz * 3 + 1);
-	}
-	res[dsz * 3 - 1] = '\0';
+	res = hex_encode(d, dsz);
 out:
 	AUTHORITY_KEYID_free(akid);
 	return res;
@@ -98,15 +111,14 @@ out:
 /*
  * Parse X509v3 subject key identifier (SKI), RFC 6487 sec. 4.8.2.
  * Returns the SKI or NULL if it could not be parsed.
- * The SKI is formatted as aa:bb:cc:dd, with each being a hex value.
+ * The SKI is formatted as a hex string.
  */
 char *
 x509_get_ski(X509 *x, const char *fn)
 {
 	const unsigned char	*d;
 	ASN1_OCTET_STRING	*os;
-	int			 i, dsz, crit;
-	char			 buf[4];
+	int			 dsz, crit;
 	char			*res = NULL;
 
 	os = X509_get_ext_d2i(x, NID_subject_key_identifier, &crit, NULL);
@@ -130,16 +142,7 @@ x509_get_ski(X509 *x, const char *fn)
 		goto out;
 	}
 
-	/* Make room for [hex1, hex2, ":"]*, NUL. */
-
-	if ((res = calloc(dsz * 3 + 1, 1)) == NULL)
-		err(1, NULL);
-
-	for (i = 0; i < dsz; i++) {
-		snprintf(buf, sizeof(buf), "%02X:", d[i]);
-		strlcat(res, buf, dsz * 3 + 1);
-	}
-	res[dsz * 3 - 1] = '\0';
+	res = hex_encode(d, dsz);
 out:
 	ASN1_OCTET_STRING_free(os);
 	return res;
@@ -270,14 +273,19 @@ out:
 	return crl;
 }
 
+/*
+ * Parse X509v3 authority key identifier (AKI) from the CRL.
+ * This is matched against the string from x509_get_ski() above.
+ * Returns the AKI or NULL if it could not be parsed.
+ * The AKI is formatted as a hex string.
+ */
 char *
 x509_crl_get_aki(X509_CRL *crl, const char *fn)
 {
 	const unsigned char	*d;
 	AUTHORITY_KEYID		*akid;
 	ASN1_OCTET_STRING	*os;
-	int			 i, dsz, crit;
-	char			 buf[4];
+	int			 dsz, crit;
 	char			*res = NULL;
 
 	akid = X509_CRL_get_ext_d2i(crl, NID_authority_key_identifier, &crit,
@@ -315,16 +323,7 @@ x509_crl_get_aki(X509_CRL *crl, const char *fn)
 		goto out;
 	}
 
-	/* Make room for [hex1, hex2, ":"]*, NUL. */
-
-	if ((res = calloc(dsz * 3 + 1, 1)) == NULL)
-		err(1, NULL);
-
-	for (i = 0; i < dsz; i++) {
-		snprintf(buf, sizeof(buf), "%02X:", d[i]);
-		strlcat(res, buf, dsz * 3 + 1);
-	}
-	res[dsz * 3 - 1] = '\0';
+	res = hex_encode(d, dsz);
 out:
 	AUTHORITY_KEYID_free(akid);
 	return res;
