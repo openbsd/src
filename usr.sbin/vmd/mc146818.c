@@ -1,4 +1,4 @@
-/* $OpenBSD: mc146818.c,v 1.22 2020/06/28 16:52:45 pd Exp $ */
+/* $OpenBSD: mc146818.c,v 1.23 2021/03/29 13:09:41 dv Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -368,6 +368,9 @@ mc146818_restore(int fd, uint32_t vm_id)
 	memset(&rtc.per, 0, sizeof(struct event));
 	evtimer_set(&rtc.sec, rtc_fire1, NULL);
 	evtimer_set(&rtc.per, rtc_fireper, (void *)(intptr_t)rtc.vm_id);
+
+	vm_pipe_init(&dev_pipe, mc146818_pipe_dispatch);
+
 	return (0);
 }
 
@@ -376,11 +379,13 @@ mc146818_stop()
 {
 	evtimer_del(&rtc.per);
 	evtimer_del(&rtc.sec);
+	event_del(&dev_pipe.read_ev);
 }
 
 void
 mc146818_start()
 {
 	evtimer_add(&rtc.sec, &rtc.sec_tv);
+	event_add(&dev_pipe.read_ev, NULL);
 	rtc_reschedule_per();
 }

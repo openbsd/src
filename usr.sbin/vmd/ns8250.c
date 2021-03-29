@@ -1,4 +1,4 @@
-/* $OpenBSD: ns8250.c,v 1.29 2020/06/28 16:52:45 pd Exp $ */
+/* $OpenBSD: ns8250.c,v 1.30 2021/03/29 13:09:41 dv Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -694,15 +694,19 @@ ns8250_restore(int fd, int con_fd, uint32_t vmid)
 	com1_dev.byte_out = 0;
 	com1_dev.regs.divlo = 1;
 	com1_dev.baudrate = 115200;
-	com1_dev.rate_tv.tv_usec = 10000;
 	com1_dev.pause_ct = (com1_dev.baudrate / 8) / 1000 * 10;
-	evtimer_set(&com1_dev.rate, ratelimit, NULL);
 
 	event_set(&com1_dev.event, com1_dev.fd, EV_READ | EV_PERSIST,
 	    com_rcv_event, (void *)(intptr_t)vmid);
 
 	event_set(&com1_dev.wake, com1_dev.fd, EV_WRITE,
 	    com_rcv_event, (void *)(intptr_t)vmid);
+
+	timerclear(&com1_dev.rate_tv);
+	com1_dev.rate_tv.tv_usec = 10000;
+	evtimer_set(&com1_dev.rate, ratelimit, NULL);
+
+	vm_pipe_init(&dev_pipe, ns8250_pipe_dispatch);
 
 	return (0);
 }
@@ -712,6 +716,7 @@ ns8250_stop()
 {
 	if(event_del(&com1_dev.event))
 		log_warn("could not delete ns8250 event handler");
+	event_del(&dev_pipe.read_ev);
 	evtimer_del(&com1_dev.rate);
 }
 
@@ -720,5 +725,6 @@ ns8250_start()
 {
 	event_add(&com1_dev.event, NULL);
 	event_add(&com1_dev.wake, NULL);
+	event_add(&dev_pipe.read_ev, NULL);
 	evtimer_add(&com1_dev.rate, &com1_dev.rate_tv);
 }
