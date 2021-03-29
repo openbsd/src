@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.120 2021/01/27 07:21:54 deraadt Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.121 2021/03/29 23:37:01 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -58,6 +58,7 @@ void	 vmd_shutdown(void);
 int	 vmd_control_run(void);
 int	 vmd_dispatch_control(int, struct privsep_proc *, struct imsg *);
 int	 vmd_dispatch_vmm(int, struct privsep_proc *, struct imsg *);
+int	 vmd_dispatch_priv(int, struct privsep_proc *, struct imsg *);
 int	 vmd_check_vmh(struct vm_dump_header *);
 
 int	 vm_instance(struct privsep *, struct vmd_vm **,
@@ -70,7 +71,7 @@ struct vmd	*env;
 
 static struct privsep_proc procs[] = {
 	/* Keep "priv" on top as procs[0] */
-	{ "priv",	PROC_PRIV,	NULL, priv },
+	{ "priv",	PROC_PRIV,	vmd_dispatch_priv, priv },
 	{ "control",	PROC_CONTROL,	vmd_dispatch_control, control },
 	{ "vmm",	PROC_VMM,	vmd_dispatch_vmm, vmm, vmm_shutdown },
 };
@@ -542,6 +543,24 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 		}
 		IMSG_SIZE_CHECK(imsg, &res);
 		proc_forward_imsg(ps, imsg, PROC_CONTROL, -1);
+		break;
+	default:
+		return (-1);
+	}
+
+	return (0);
+}
+
+int
+vmd_dispatch_priv(int fd, struct privsep_proc *p, struct imsg *imsg)
+{
+	struct vmop_addr_result	 var;
+
+	switch (imsg->hdr.type) {
+	case IMSG_VMDOP_PRIV_GET_ADDR_RESPONSE:
+		IMSG_SIZE_CHECK(imsg, &var);
+		memcpy(&var, imsg->data, sizeof(var));
+		proc_forward_imsg(p->p_ps, imsg, PROC_VMM, -1);
 		break;
 	default:
 		return (-1);

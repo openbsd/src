@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.60 2021/03/19 09:29:33 kn Exp $	*/
+/*	$OpenBSD: vm.c,v 1.61 2021/03/29 23:37:01 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -394,6 +394,7 @@ vm_dispatch_vmm(int fd, short event, void *arg)
 {
 	struct vmd_vm		*vm = arg;
 	struct vmop_result	 vmr;
+	struct vmop_addr_result	 var;
 	struct imsgev		*iev = &vm->vm_iev;
 	struct imsgbuf		*ibuf = &iev->ibuf;
 	struct imsg		 imsg;
@@ -470,6 +471,16 @@ vm_dispatch_vmm(int fd, short event, void *arg)
 				imsg_flush(&current_vm->vm_iev.ibuf);
 				_exit(0);
 			}
+			break;
+		case IMSG_VMDOP_PRIV_GET_ADDR_RESPONSE:
+			IMSG_SIZE_CHECK(&imsg, &var);
+			memcpy(&var, imsg.data, sizeof(var));
+
+			log_debug("%s: received tap addr %s for nic %d",
+			    vm->vm_params.vmc_params.vcp_name,
+			    ether_ntoa((void *)var.var_addr), var.var_nic_idx);
+
+			vionet_set_hostmac(vm, var.var_nic_idx, var.var_addr);
 			break;
 		default:
 			fatalx("%s: got invalid imsg %d from %s",

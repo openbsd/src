@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.60 2021/03/19 09:29:33 kn Exp $	*/
+/*	$OpenBSD: config.c,v 1.61 2021/03/29 23:37:01 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -227,6 +227,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 	char			 base[PATH_MAX];
 	unsigned int		 unit;
 	struct timeval		 tv, rate, since_last;
+	struct vmop_addr_req	 var;
 
 	errno = 0;
 
@@ -499,6 +500,12 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 		proc_compose_imsg(ps, PROC_VMM, -1,
 		    IMSG_VMDOP_START_VM_IF, vm->vm_vmid, tapfds[i],
 		    &i, sizeof(i));
+
+		memset(&var, 0, sizeof(var));
+		var.var_vmid = vm->vm_vmid;
+		var.var_nic_idx = i;
+		proc_compose_imsg(ps, PROC_PRIV, -1, IMSG_VMDOP_PRIV_GET_ADDR,
+		    vm->vm_vmid, dup(tapfds[i]), &var, sizeof(var));
 	}
 
 	if (!(vm->vm_state & VM_STATE_RECEIVED))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.8 2018/12/27 19:51:30 anton Exp $	*/
+/*	$OpenBSD: dhcp.c,v 1.9 2021/03/29 23:37:01 dv Exp $	*/
 
 /*
  * Copyright (c) 2017 Reyk Floeter <reyk@openbsd.org>
@@ -57,8 +57,11 @@ dhcp_request(struct vionet_dev *dev, char *buf, size_t buflen, char **obuf)
 	if ((offset = decode_hw_header(buf, buflen, 0, &pc, HTYPE_ETHER)) < 0)
 		return (-1);
 
-	if (memcmp(pc.pc_smac, dev->mac, ETHER_ADDR_LEN) != 0 ||
-	    memcmp(pc.pc_dmac, broadcast, ETHER_ADDR_LEN) != 0)
+	if (memcmp(pc.pc_dmac, broadcast, ETHER_ADDR_LEN) != 0 &&
+	    memcmp(pc.pc_dmac, dev->hostmac, ETHER_ADDR_LEN) != 0)
+		return (-1);
+
+	if (memcmp(pc.pc_smac, dev->mac, ETHER_ADDR_LEN) != 0)
 		return (-1);
 
 	if ((offset = decode_udp_ip_header(buf, buflen, offset, &pc)) < 0)

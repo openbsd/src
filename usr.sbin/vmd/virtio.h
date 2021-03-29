@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.h,v 1.36 2021/01/07 17:11:38 tracey Exp $	*/
+/*	$OpenBSD: virtio.h,v 1.37 2021/03/29 23:37:01 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -208,6 +208,7 @@ struct vionet_dev {
 	uint32_t vm_vmid;
 	int irq;
 	uint8_t mac[6];
+	uint8_t hostmac[6];
 
 	int idx;
 	int lockedmac;
@@ -298,6 +299,7 @@ void vionet_notify_rx(struct vionet_dev *);
 int vionet_notify_tx(struct vionet_dev *);
 void vionet_process_rx(uint32_t);
 int vionet_enq_rx(struct vionet_dev *, char *, ssize_t, int *);
+void vionet_set_hostmac(struct vmd_vm *, unsigned int, uint8_t *);
 
 int vmmci_io(int, uint16_t, uint32_t *, uint8_t *, void *, uint8_t);
 int vmmci_dump(int);
