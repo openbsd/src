@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd.c,v 1.50 2019/05/10 01:29:31 guenther Exp $ */
+/*	$OpenBSD: npppd.c,v 1.51 2021/03/29 03:54:39 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2005-2008,2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * Next pppd(nppd). This file provides a npppd daemon process and operations
  * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.50 2019/05/10 01:29:31 guenther Exp $
+ * $Id: npppd.c,v 1.51 2021/03/29 03:54:39 yasuoka Exp $
  */
 #include "version.h"
 #include <sys/param.h>	/* ALIGNED_POINTER */
@@ -762,7 +762,7 @@ npppd_get_ppp_by_ip(npppd *_this, struct in_addr ipaddr)
  * This function finds {@link npppd_ppp} instances that are authenticated
  * as the specified username and returns them as a {@link slist} list.
  * @param username	PPP Username.
- * @return	{@link slist} that contans the {@link npppd_ppp} instances.
+ * @return	{@link slist} that contains the {@link npppd_ppp} instances.
  * NULL may be returned if no instance has been found.
  */
 static slist *
@@ -1066,7 +1066,7 @@ npppd_ppp_pipex_enable(npppd *_this, npppd_ppp *ppp)
 		struct ether_header *eh;
 		pppoe = (pppoe_session *)ppp->phy_context;
 
-		/* PPPoE specific informations */
+		/* PPPoE specific information */
 		req.pr_protocol = PIPEX_PROTO_PPPOE;
 		req.pr_session_id = pppoe->session_id;
 		req.pr_peer_session_id = 0;
@@ -1090,7 +1090,7 @@ npppd_ppp_pipex_enable(npppd *_this, npppd_ppp *ppp)
 	case NPPPD_TUNNEL_PPTP:
 		call = (pptp_call *)ppp->phy_context;
 
-		/* PPTP specific informations */
+		/* PPTP specific information */
 		req.pr_session_id = call->id;
 		req.pr_protocol = PIPEX_PROTO_PPTP;
 
@@ -1206,7 +1206,7 @@ npppd_ppp_pipex_disable(npppd *_this, npppd_ppp *ppp)
 	case NPPPD_TUNNEL_PPPOE:
 		pppoe = (pppoe_session *)ppp->phy_context;
 
-		/* PPPoE specific informations */
+		/* PPPoE specific information */
 		req.pcr_protocol = PIPEX_PROTO_PPPOE;
 		req.pcr_session_id = pppoe->session_id;
 		break;
@@ -1215,7 +1215,7 @@ npppd_ppp_pipex_disable(npppd *_this, npppd_ppp *ppp)
 	case NPPPD_TUNNEL_PPTP:
 		call = (pptp_call *)ppp->phy_context;
 
-		/* PPTP specific informations */
+		/* PPTP specific information */
 		req.pcr_session_id = call->id;
 		req.pcr_protocol = PIPEX_PROTO_PPTP;
 		break;
@@ -1272,7 +1272,7 @@ npppd_ppp_pipex_ip_disable(npppd *_this, npppd_ppp *ppp)
 	case NPPPD_TUNNEL_PPPOE:
 		pppoe = (pppoe_session *)ppp->phy_context;
 
-		/* PPPoE specific informations */
+		/* PPPoE specific information */
 		req.pcr_protocol = PIPEX_PROTO_PPPOE;
 		req.pcr_session_id = pppoe->session_id;
 		break;
@@ -1281,7 +1281,7 @@ npppd_ppp_pipex_ip_disable(npppd *_this, npppd_ppp *ppp)
 	case NPPPD_TUNNEL_PPTP:
 		call = (pptp_call *)ppp->phy_context;
 
-		/* PPTP specific informations */
+		/* PPTP specific information */
 		req.pcr_session_id = call->id;
 		req.pcr_protocol = PIPEX_PROTO_PPTP;
 		break;
@@ -1370,7 +1370,7 @@ pipex_periodic(npppd *_this)
 			continue;
 		}
 		ppp_log(ppp, LOG_INFO, "Stop requested by the kernel");
-		/* TODO: PIPEX doesn't return the disconect reason */
+		/* TODO: PIPEX doesn't return the disconnect reason */
 #ifdef USE_NPPPD_RADIUS
 		ppp_set_radius_terminate_cause(ppp,
 		    RADIUS_TERMNATE_CAUSE_IDLE_TIMEOUT);
@@ -1760,7 +1760,7 @@ npppd_set_radish(npppd *_this, void *radish_head)
 			/* Don't delete the route of active PPP session */
 			slist_itr_remove(&rtlist0);
 
-			/* clear informations about old pool configuration */
+			/* clear information about old pool configuration */
 			snp->snp_next = NULL;
 
 			delppp0 = 0;
@@ -2027,11 +2027,11 @@ npppd_on_sigchld(int fd, short ev_type, void *ctx)
 	if (wait4(wpid, &status, WNOHANG, NULL) == wpid) {
 		if (WIFSIGNALED(status))
 			log_printf(LOG_WARNING,
-			    "privileged process exits abnormaly.  signal=%d",
+			    "privileged process exits abnormally.  signal=%d",
 			    WTERMSIG(status));
 		else
 			log_printf(LOG_WARNING,
-			    "privileged process exits abnormaly.  status=%d",
+			    "privileged process exits abnormally.  status=%d",
 			    WEXITSTATUS(status));
 		_this->stop_by_error = 1;
 		npppd_stop(_this);
@@ -2238,7 +2238,7 @@ npppd_ppp_bind_iface(npppd *_this, npppd_ppp *ppp)
 	if (ipcpstat == NULL) {
 		ppp_log(ppp, LOG_WARNING, "Unknown IPCP %s",
 		    ppp_ipcp(ppp)->name);
-		ppp->ifidx = -1; /* unbind inteface */
+		ppp->ifidx = -1; /* unbind interface */
 		return 1;
 	}
 	if (ppp_ipcp(ppp)->max_session > 0 &&
@@ -2246,7 +2246,7 @@ npppd_ppp_bind_iface(npppd *_this, npppd_ppp *ppp)
 		ppp_log(ppp, LOG_WARNING,
 		    "Number of sessions per IPCP reaches out of the limit=%d",
 		    ppp_ipcp(ppp)->max_session);
-		ppp->ifidx = -1; /* unbind inteface */
+		ppp->ifidx = -1; /* unbind interface */
 		return 1;
 	}
 
@@ -2255,7 +2255,7 @@ npppd_ppp_bind_iface(npppd *_this, npppd_ppp *ppp)
 		ppp_log(ppp, LOG_WARNING,
 		    "Number of sessions reaches out of the limit=%d",
 		    _this->conf.max_session);
-		ppp->ifidx = -1; /* unbind inteface */
+		ppp->ifidx = -1; /* unbind interface */
 		return 1;
 	}
 	_this->nsession++;

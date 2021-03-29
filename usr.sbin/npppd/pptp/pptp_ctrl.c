@@ -1,4 +1,4 @@
-/*	$OpenBSD: pptp_ctrl.c,v 1.12 2021/03/05 08:41:26 yasuoka Exp $	*/
+/*	$OpenBSD: pptp_ctrl.c,v 1.13 2021/03/29 03:54:40 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * PPTP(RFC 2637) control connection implementation.
  * currently it only support PAC part
  */
-/* $Id: pptp_ctrl.c,v 1.12 2021/03/05 08:41:26 yasuoka Exp $ */
+/* $Id: pptp_ctrl.c,v 1.13 2021/03/29 03:54:40 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -303,7 +303,7 @@ pptp_ctrl_stop(pptp_ctrl *_this, int result)
 
 	switch (_this->state) {
 	case PPTP_CTRL_STATE_WAIT_STOP_REPLY:
-		/* waiting responce. */
+		/* waiting response. */
 		/* this state will timeout by pptp_ctrl_timeout */
 		break;
 	case PPTP_CTRL_STATE_ESTABLISHED:
@@ -751,7 +751,7 @@ pptp_ctrl_send_SCCRP(pptp_ctrl *_this, int result, int error)
 		val = "";
 	strlcpy(scc->host_name, val, sizeof(scc->host_name));
 
-	/* vender name */
+	/* vendor name */
 	if (PPTP_CTRL_CONF(_this)->vendor_name == NULL)
 		val = PPTPD_DEFAULT_VENDOR_NAME;
 	strlcpy(scc->vendor_string, val, sizeof(scc->vendor_string));

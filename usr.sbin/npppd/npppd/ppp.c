@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp.c,v 1.29 2020/04/01 08:33:52 mpi Exp $ */
+/*	$OpenBSD: ppp.c,v 1.30 2021/03/29 03:54:39 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: ppp.c,v 1.29 2020/04/01 08:33:52 mpi Exp $ */
+/* $Id: ppp.c,v 1.30 2021/03/29 03:54:39 yasuoka Exp $ */
 /**@file
  * This file provides PPP(Point-to-Point Protocol, RFC 1661) and
  * {@link :: _npppd_ppp PPP instance} related functions.
@@ -700,7 +700,7 @@ ppp_ccp_opened(npppd_ppp *_this)
 	} else {
 		ppp_log(_this, LOG_INFO, "mppe is rejected by peer");
 		if (_this->mppe.required)
-			ppp_stop(_this, "MPPE is requred");
+			ppp_stop(_this, "MPPE is required");
 	}
 #endif
 #ifdef USE_NPPPD_PIPEX
@@ -851,7 +851,7 @@ ppp_recv_packet(npppd_ppp *_this, unsigned char *pkt, int lpkt, int flags)
 				 * call ppp_stop() here, Windows on the packet
 				 * loss condition etc cannot not connect us.
 				 * So we don't call ppp_stop() here.
-				 * (*1) At least Microsof Windows 2000
+				 * (*1) At least Microsoft Windows 2000
 				 * Professional SP4 does.
 				 */
 				 /*ppp_stop(_this, "Encryption is required.");*/

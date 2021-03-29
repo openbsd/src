@@ -1,4 +1,4 @@
-/*	$OpenBSD: pptp.h,v 1.10 2014/03/22 04:32:39 yasuoka Exp $	*/
+/*	$OpenBSD: pptp.h,v 1.11 2021/03/29 03:54:40 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -171,13 +171,13 @@
 #define	PPTP_CALL_DEFAULT_MAXWINSZ		64
 #endif
 
-/* Connection speed that nofified by OCRP */
+/* Connection speed that notified by OCRP */
 /* XXX: currently we use fixed value */
 #ifndef	PPTP_CALL_CONNECT_SPEED
 #define	PPTP_CALL_CONNECT_SPEED			10000000
 #endif
 
-/* Initial packet processing delay that nofified by OCRP */
+/* Initial packet processing delay that notified by OCRP */
 #ifndef	PPTP_CALL_INITIAL_PPD
 #define PPTP_CALL_INITIAL_PPD			0
 #endif
@@ -285,7 +285,7 @@ typedef struct _pptp_ctrl {
 	slist		call_list;
 
 	time_t	last_snd_ctrl;	/* timestamp of latest ctrl message sent */
-	time_t	last_rcv_ctrl;	/* timestamp of latest ctrl message receieved */
+	time_t	last_rcv_ctrl;	/* timestamp of latest ctrl message received */
 	uint32_t	echo_seq; /* identifier of Echo Request */
 
 	int16_t		/* flags : processing I/O events */

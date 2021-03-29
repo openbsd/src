@@ -1,4 +1,4 @@
-/*	$OpenBSD: chap_ms.c,v 1.7 2014/11/20 03:48:12 tedu Exp $	*/
+/*	$OpenBSD: chap_ms.c,v 1.8 2021/03/29 03:54:39 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -333,7 +333,7 @@ mschap_msk(u_int8_t *password, int passwordlen,
 }
 
 void
-mschap_radiuskey(u_int8_t *plain, const u_int8_t *crypted,
+mschap_radiuskey(u_int8_t *plain, const u_int8_t *encrypted,
     const u_int8_t *authenticator, const u_int8_t *secret)
 {
 	EVP_MD_CTX	 ctx;
@@ -343,20 +343,20 @@ mschap_radiuskey(u_int8_t *plain, const u_int8_t *crypted,
 	EVP_DigestInit(&ctx, EVP_md5());
 	EVP_DigestUpdate(&ctx, secret, strlen(secret));
 	EVP_DigestUpdate(&ctx, authenticator, 16);
-	EVP_DigestUpdate(&ctx, crypted, 2);
+	EVP_DigestUpdate(&ctx, encrypted, 2);
 	EVP_DigestFinal(&ctx, b, &mdlen);
 
 	for (i = 0; i < mdlen; i++) {
-		p[i] = b[i] ^ crypted[i+2];
+		p[i] = b[i] ^ encrypted[i+2];
 	}
 
 	EVP_DigestInit(&ctx, EVP_md5());
 	EVP_DigestUpdate(&ctx, secret, strlen(secret));
-	EVP_DigestUpdate(&ctx, crypted + 2, mdlen);
+	EVP_DigestUpdate(&ctx, encrypted + 2, mdlen);
 	EVP_DigestFinal(&ctx, b, &mdlen);
 
 	for (i = 0; i < mdlen; i++) {
-		p[i+16] = b[i] ^ crypted[i+18];
+		p[i+16] = b[i] ^ encrypted[i+18];
 	}
 
 	memcpy(plain, p+1, 16);

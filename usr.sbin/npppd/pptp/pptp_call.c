@@ -1,4 +1,4 @@
-/*	$OpenBSD: pptp_call.c,v 1.11 2021/03/10 10:29:26 patrick Exp $	*/
+/*	$OpenBSD: pptp_call.c,v 1.12 2021/03/29 03:54:40 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pptp_call.c,v 1.11 2021/03/10 10:29:26 patrick Exp $ */
+/* $Id: pptp_call.c,v 1.12 2021/03/29 03:54:40 yasuoka Exp $ */
 /**@file PPTP Call */
 /* currently it supports PAC mode only */
 #include <sys/types.h>
@@ -540,7 +540,7 @@ pptp_call_gre_input(pptp_call *_this, uint32_t seq, uint32_t ack,
 		if (SEQ_SUB(seq, _this->rcv_acked) > RUPDIV(_this->winsz, 2)) {
 			/*
 			 * Multi-packet acknowledgement.
-			 * send ack when it reachs to half of window size
+			 * send ack when it reaches to half of window size
 			 */
 			PPTP_CALL_DBG((_this, LOG_DEBUG,
 			    "rcv window size=%u %u %u\n",

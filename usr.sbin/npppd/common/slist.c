@@ -1,4 +1,4 @@
-/*	$OpenBSD: slist.c,v 1.7 2015/12/17 07:56:01 tb Exp $ */
+/*	$OpenBSD: slist.c,v 1.8 2021/03/29 03:54:39 yasuoka Exp $ */
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -306,7 +306,7 @@ slist_remove_all(slist *list)
 	list->list = list0;
 }
 
-/* Swap items. This doesn't check boudary. */
+/* Swap items. This doesn't check boundary. */
 static __inline void
 slist_swap0(slist *list, int m, int n)
 {

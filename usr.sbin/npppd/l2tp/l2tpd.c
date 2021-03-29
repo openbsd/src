@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2tpd.c,v 1.21 2019/02/22 07:04:20 jmc Exp $ */
+/*	$OpenBSD: l2tpd.c,v 1.22 2021/03/29 03:54:39 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file L2TP(Layer Two Tunneling Protocol "L2TP") / RFC2661 */
-/* $Id: l2tpd.c,v 1.21 2019/02/22 07:04:20 jmc Exp $ */
+/* $Id: l2tpd.c,v 1.22 2021/03/29 03:54:39 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -255,7 +255,7 @@ l2tpd_release_call(l2tpd *_this, l2tp_call *call)
 	slist_add(&_this->free_session_id_list, (void *)(uintptr_t)call->id);
 }
 
-/* start l2tpd listner */
+/* start l2tpd listener */
 static int
 l2tpd_listener_start(l2tpd_listener *_this)
 {

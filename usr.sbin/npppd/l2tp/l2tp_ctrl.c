@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2tp_ctrl.c,v 1.24 2020/06/09 02:39:27 yasuoka Exp $	*/
+/*	$OpenBSD: l2tp_ctrl.c,v 1.25 2021/03/29 03:54:39 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file Control connection processing functions for L2TP LNS */
-/* $Id: l2tp_ctrl.c,v 1.24 2020/06/09 02:39:27 yasuoka Exp $ */
+/* $Id: l2tp_ctrl.c,v 1.25 2021/03/29 03:54:39 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/socket.h>
@@ -295,7 +295,7 @@ l2tp_ctrl_send_disconnect_notify(l2tp_ctrl *_this)
  * <p>
  * When the return value of this function is zero, the _this
  * is already released. The lt2p_ctrl process that was bound to it
- * could not contine.
+ * could not continue.
  * When the return value of this function is one, the timer
  * is reset.</p>
  *
@@ -439,7 +439,7 @@ l2tp_ctrl_purge_ipsec_sa(l2tp_ctrl *_this)
 		SIN(&sock)->sin_port = ipsec_sa_cookie->local_port;
 #if 1
 		/*
-		 * XXX: As RFC 2367, protocol sould be specified if the port
+		 * XXX: As RFC 2367, protocol should be specified if the port
 		 * XXX: number is non-zero.
 		 */
 		proto = 0;
@@ -1484,7 +1484,7 @@ l2tp_ctrl_recv_StopCCN(l2tp_ctrl *_this, u_char *pkt, int pktlen)
 		/*
 		 * Memo:
 		 * This state may be happen in following state.
-		 * - lots of connect/disconect by long-running
+		 * - lots of connect/disconnect by long-running
 		 *   windows2000, sometimes it fall to this state.
 		 *   Once it fall to here, connection will fail till
 		 *   the windows rebooted

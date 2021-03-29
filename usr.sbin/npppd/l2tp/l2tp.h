@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2tp.h,v 1.13 2020/06/09 02:39:27 yasuoka Exp $	*/
+/*	$OpenBSD: l2tp.h,v 1.14 2021/03/29 03:54:39 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -30,7 +30,7 @@
 /*@file
  * header file for the L2TP module
  */
-/* $Id: l2tp.h,v 1.13 2020/06/09 02:39:27 yasuoka Exp $ */
+/* $Id: l2tp.h,v 1.14 2021/03/29 03:54:39 yasuoka Exp $ */
 
 /************************************************************************
  * Protocol Constants
@@ -50,7 +50,7 @@
 #define	L2TP_HEADER_FLAG_VERSION_MASK		0x000f
 #define	L2TP_HEADER_VERSION_RFC2661		0x02
 
-/* AVP Atrribute Types */
+/* AVP Attribute Types */
 
 /* RFC 2661 */
 #define	L2TP_AVP_TYPE_MESSAGE_TYPE		0

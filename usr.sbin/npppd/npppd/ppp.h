@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp.h,v 1.22 2021/03/10 10:51:10 yasuoka Exp $ */
+/*	$OpenBSD: ppp.h,v 1.23 2021/03/29 03:54:39 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -296,7 +296,7 @@ typedef struct _chap {
 	u_char		chall[MAX_CHALLENGE_LENGTH];
 	int		lchall;			/* length of challenge */
 	u_char		pktid;			/* PPP Packet Id */
-	u_char		challid;		/* Id of challange */
+	u_char		challid;		/* Id of challenge */
 	int		type;			/* chap type */
 	int		ntry;
 	u_char		authenticator[16];
@@ -372,9 +372,9 @@ typedef int (*npppd_iofunc) (
 	int		flags
 );
 
-/** Flag indicates the orignal packet was encrypted by MPPE */
+/** Flag indicates the original packet was encrypted by MPPE */
 #define	PPP_IO_FLAGS_MPPE_ENCRYPTED			0x0001
-/** Flag indicates the orignal packet was delayed */
+/** Flag indicates the original packet was delayed */
 #define	PPP_IO_FLAGS_DELAYED				0x0002
 
 typedef void (*npppd_voidfunc) (
@@ -512,7 +512,7 @@ struct _npppd_ppp {
 	uint8_t		mppe_started;
 	mppe		mppe;
 #endif
-	/** Assiging/Assigned IP Address */
+	/** Assigning/Assigned IP Address */
 	struct sockaddr_npppd snp;
 #define	ppp_framed_ip_address	snp.snp_addr
 #define	ppp_framed_ip_netmask	snp.snp_mask
@@ -566,7 +566,7 @@ struct _npppd_ppp {
 			logged_rcvd:5;
 
 	/*
-	 * Statistical informations
+	 * Statistical information
 	 */
 	/** Start time */
 	time_t		start_time;
@@ -587,7 +587,7 @@ struct _npppd_ppp {
 	/** Number of output packet bytes */
 	uint64_t	obytes;
 
-	/** RADIUS Accouting (RFC2866) Terminate Cause */
+	/** RADIUS Accounting (RFC2866) Terminate Cause */
 	int				terminate_cause;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_util.c,v 1.8 2015/12/17 08:01:55 tb Exp $ */
+/*	$OpenBSD: ipsec_util.c,v 1.9 2021/03/29 03:54:39 yasuoka Exp $ */
 /*-
  * Copyright (c) 2007, 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -24,7 +24,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: ipsec_util.c,v 1.8 2015/12/17 08:01:55 tb Exp $ */
+/* $Id: ipsec_util.c,v 1.9 2021/03/29 03:54:39 yasuoka Exp $ */
 /*@file IPsec related utility functions */
 /*
  * RFC 2367 PF_KEY Key Management API, Version 2
@@ -112,7 +112,7 @@ ipsec_util_prepare(void)
 
 	/*
 	 * for sadb_msg_seq.  As RFC 2367, it must be used to uniquely
-	 * identify request to a proccess.
+	 * identify request to a process.
 	 */
 	while (++ipsec_util_seq == 0)
 		/* empty */;

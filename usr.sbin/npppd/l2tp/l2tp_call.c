@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2tp_call.c,v 1.19 2015/12/05 16:10:31 yasuoka Exp $	*/
+/*	$OpenBSD: l2tp_call.c,v 1.20 2021/03/29 03:54:39 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: l2tp_call.c,v 1.19 2015/12/05 16:10:31 yasuoka Exp $ */
+/* $Id: l2tp_call.c,v 1.20 2021/03/29 03:54:39 yasuoka Exp $ */
 /**@file L2TP LNS call */
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -133,7 +133,7 @@ l2tp_call_drop(l2tp_call *_this)
 
 /*
  * disconnect l2tp connection
- * @param result_code	disconect without CDN, specify zero
+ * @param result_code	disconnect without CDN, specify zero
  */
 static void
 l2tp_call_disconnect(l2tp_call *_this, int result_code, int error_code,
@@ -280,7 +280,7 @@ l2tp_call_recv_packet(l2tp_ctrl *ctrl, l2tp_call *_this, int mestype,
 	return 1;
 }
 /*
- * receieve ICRQ
+ * receive ICRQ
  * @return	return 0 if the ICRQ is acceptable.
  *		other values means fail to receive, and
  *		CDN was sent and status was updated.
@@ -809,7 +809,7 @@ l2tp_call_send_CDN(l2tp_call *_this, int result_code, int error_code, const
 
 	if (error_code > 0) {
 		l2tp_call_log(_this, LOG_INFO,
-		    "SendCDN result=%s/%d error=%s/%d messsage=%s",
+		    "SendCDN result=%s/%d error=%s/%d message=%s",
 		    l2tp_cdn_rcode_string(result_code), result_code,
 		    l2tp_ecode_string(error_code), error_code,
 		    (errmes == NULL)? "none" : errmes);

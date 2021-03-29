@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_auth.c,v 1.21 2019/02/27 04:52:19 denis Exp $ */
+/*	$OpenBSD: npppd_auth.c,v 1.22 2021/03/29 03:54:39 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file authentication realm */
-/* $Id: npppd_auth.c,v 1.21 2019/02/27 04:52:19 denis Exp $ */
+/* $Id: npppd_auth.c,v 1.22 2021/03/29 03:54:39 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -121,8 +121,8 @@ radius_fail:
 /**
  * Call this function to make the object unusable.
  * <p>
- * {@link ::npppd_auth_base} objects is refered by the {@link ::npppd_ppp}
- * object.   After this funcation is called, npppd will disconnect the PPP
+ * {@link ::npppd_auth_base} objects is referred by the {@link ::npppd_ppp}
+ * object.   After this function is called, npppd will disconnect the PPP
  * links that refers the object, it will call {@link ::npppd_auth_destroy()}
  * when all the references to the object are released.</p>
  */

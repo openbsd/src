@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppoed.c,v 1.24 2020/12/30 19:04:56 benno Exp $	*/
+/*	$OpenBSD: pppoed.c,v 1.25 2021/03/29 03:54:40 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -27,8 +27,8 @@
  */
 /**@file
  * This file provides the PPPoE(RFC2516) server(access concentrator)
- * implementaion.
- * $Id: pppoed.c,v 1.24 2020/12/30 19:04:56 benno Exp $
+ * implementation.
+ * $Id: pppoed.c,v 1.25 2021/03/29 03:54:40 yasuoka Exp $
  */
 #include <sys/param.h>	/* ALIGN */
 #include <sys/types.h>
@@ -177,7 +177,7 @@ pppoed_listener_init(pppoed *_this, pppoed_listener *listener)
 	listener->index = PPPOED_LISTENER_INVALID_INDEX;
 }
 
-/* reload listner */
+/* reload listener */
 int
 pppoed_reload_listeners(pppoed *_this)
 {

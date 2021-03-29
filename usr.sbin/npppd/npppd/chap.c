@@ -1,4 +1,4 @@
-/*	$OpenBSD: chap.c,v 1.16 2019/02/27 04:52:19 denis Exp $ */
+/*	$OpenBSD: chap.c,v 1.17 2021/03/29 03:54:39 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -36,7 +36,7 @@
  * </ul></p>
  */
 /* RFC 1994, 2433 */
-/* $Id: chap.c,v 1.16 2019/02/27 04:52:19 denis Exp $ */
+/* $Id: chap.c,v 1.17 2021/03/29 03:54:39 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -504,7 +504,7 @@ chap_proxy_authen_prepare(chap *_this, dialin_proxy_info *dpi)
 		return -1;
 	}
 
-	/* copy the authenticaiton properties */
+	/* copy the authentication properties */
 	CHAP_ASSERT(_this->ppp->proxy_authen_resp == NULL);
 	if ((_this->ppp->proxy_authen_resp = malloc(dpi->lauth_resp)) ==
 	    NULL) {
@@ -863,7 +863,7 @@ chap_radius_response(void *context, RADIUS_PACKET *pkt, int flags,
 		goto auth_failed;
 	}
 	/*
-	 * Authetication OK
+	 * Authentication OK
 	 */
 	switch (_this->type) {
 	case PPP_AUTH_CHAP_MD5:

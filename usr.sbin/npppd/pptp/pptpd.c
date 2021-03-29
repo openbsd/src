@@ -1,4 +1,4 @@
-/*	$OpenBSD: pptpd.c,v 1.32 2019/05/10 01:29:31 guenther Exp $	*/
+/*	$OpenBSD: pptpd.c,v 1.33 2021/03/29 03:54:40 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,12 +25,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pptpd.c,v 1.32 2019/05/10 01:29:31 guenther Exp $ */
+/* $Id: pptpd.c,v 1.33 2021/03/29 03:54:40 yasuoka Exp $ */
 
 /**@file
  * This file provides a implementation of PPTP daemon.  Currently it
  * provides functions for PAC (PPTP Access Concentrator) only.
- * $Id: pptpd.c,v 1.32 2019/05/10 01:29:31 guenther Exp $
+ * $Id: pptpd.c,v 1.33 2021/03/29 03:54:40 yasuoka Exp $
  */
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -138,7 +138,7 @@ pptpd_init(pptpd *_this)
 	return 0;
 }
 
-/* add a listner to pptpd daemon context */
+/* add a listener to pptpd daemon context */
 int
 pptpd_add_listener(pptpd *_this, int idx, struct pptp_conf *conf,
     struct sockaddr *addr)
@@ -615,7 +615,7 @@ pptpd_io_event(int fd, short evmask, void *ctx)
 	PPTPD_ASSERT(_this != NULL);
 
 	if ((evmask & EV_READ) != 0) {
-		for (;;) { /* accept till EAGAIN occured */
+		for (;;) { /* accept till EAGAIN occurred */
 			peerlen = sizeof(peer);
 			if ((newsock = accept(listener->sock,
 			    (struct sockaddr *)&peer, &peerlen)) < 0) {
@@ -643,7 +643,7 @@ pptpd_io_event(int fd, short evmask, void *ctx)
 	}
 }
 
-/* I/O event handeler of GRE */
+/* I/O event handler of GRE */
 static void
 pptpd_gre_io_event(int fd, short evmask, void *ctx)
 {

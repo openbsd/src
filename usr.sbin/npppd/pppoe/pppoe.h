@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppoe.h,v 1.7 2015/12/05 16:10:31 yasuoka Exp $ */
+/*	$OpenBSD: pppoe.h,v 1.8 2021/03/29 03:54:39 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -174,7 +174,7 @@ typedef struct _pppoe_session {
 	struct event ev_disposing;
 } pppoe_session;
 
-#define	PPPOE_SESSION_STATE_INIT		0 /** Inital */
+#define	PPPOE_SESSION_STATE_INIT		0 /** Initial */
 #define	PPPOE_SESSION_STATE_RUNNING		1 /** Running */
 #define	PPPOE_SESSION_STATE_DISPOSING		2 /** Disposing */
 

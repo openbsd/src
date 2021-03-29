@@ -1,4 +1,4 @@
-/*	$OpenBSD: radius_chap_const.h,v 1.4 2012/05/08 13:15:12 yasuoka Exp $ */
+/*	$OpenBSD: radius_chap_const.h,v 1.5 2021/03/29 03:54:39 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -57,7 +57,7 @@ struct RADIUS_MPPE_KEY {
 	char key[253];
 	/*
 	 * XXX: Having maximum size for RADIUS attribute is required to prevent
-	 * XXX: oveflow by radius_get_vs_raw_attr().
+	 * XXX: overflow by radius_get_vs_raw_attr().
 	 */
 };
 

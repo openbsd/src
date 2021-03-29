@@ -1,4 +1,4 @@
-/*	$OpenBSD: pptp_local.h,v 1.4 2012/05/08 13:15:12 yasuoka Exp $	*/
+/*	$OpenBSD: pptp_local.h,v 1.5 2021/03/29 03:54:40 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -60,7 +60,7 @@ struct pptp_gre_header {
 } __attribute__((__packed__));
 
 
-/* Commont part of the PPTP control packet */
+/* Common part of the PPTP control packet */
 struct pptp_ctrl_header {
 	uint16_t	length;
 	uint16_t	pptp_message_type;

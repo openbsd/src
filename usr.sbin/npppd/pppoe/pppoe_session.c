@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppoe_session.c,v 1.11 2015/12/05 16:10:31 yasuoka Exp $ */
+/*	$OpenBSD: pppoe_session.c,v 1.12 2021/03/29 03:54:40 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,7 +28,7 @@
 
 /**@file
  * Session management of PPPoE protocol
- * $Id: pppoe_session.c,v 1.11 2015/12/05 16:10:31 yasuoka Exp $
+ * $Id: pppoe_session.c,v 1.12 2021/03/29 03:54:40 yasuoka Exp $
  */
 
 #include <sys/types.h>
@@ -171,7 +171,7 @@ pppoe_session_input(pppoe_session *_this, u_char *pkt, int lpkt)
 		 * Quit this function before statistics counter
 		 * is processed when the packet will be processed by
 		 * PIPEX. Because current NPPPD PPPOE implementation
-		 * is recieving all packet from BPF even though the
+		 * is receiving all packet from BPF even though the
 		 * PIPEX will process it.
 		 */
 	} else if (rval != 0)  {

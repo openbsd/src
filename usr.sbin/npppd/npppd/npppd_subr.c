@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_subr.c,v 1.20 2019/05/10 01:29:31 guenther Exp $ */
+/*	$OpenBSD: npppd_subr.c,v 1.21 2021/03/29 03:54:39 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -404,7 +404,7 @@ in_addr_range_delete_route(struct in_addr_range *range)
 }
 
 
-/* GETSHORT is also defined in #inlude <arpa/nameser_compat.h>. */
+/* GETSHORT is also defined in #include <arpa/nameser_compat.h>. */
 #undef	GETCHAR
 #undef	GETSHORT
 #undef	PUTSHORT

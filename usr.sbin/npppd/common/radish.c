@@ -1,4 +1,4 @@
-/*	$OpenBSD: radish.c,v 1.6 2018/01/05 08:13:31 mpi Exp $ */
+/*	$OpenBSD: radish.c,v 1.7 2021/03/29 03:54:39 yasuoka Exp $ */
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -279,7 +279,7 @@ rd_insert(struct sockaddr *d_arg, struct sockaddr *m_arg,
 		 * masklen < cur->rd_masklen
 		 */
 
-		/* See if route matches with dest, be carefull!
+		/* See if route matches with dest, be careful!
 		 * 	dest == (route & dest_mask)
 		 */
 		rp = (u_char *)cur->rd_route + off;
@@ -592,7 +592,7 @@ rd_delete(struct sockaddr *d_arg, struct sockaddr *m_arg,
 		return 0;
 
 	next:
-		/* seach corresponding subtree */
+		/* search corresponding subtree */
 		if (cur->rd_btest & *(dp + cur->rd_masklim)) {
 			if (cur->rd_r) {
 				cur = cur->rd_r;
