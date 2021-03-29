@@ -1,7 +1,7 @@
-/*      $OpenBSD: http.c,v 1.10 2021/03/29 03:34:52 deraadt Exp $  */
+/*      $OpenBSD: http.c,v 1.11 2021/03/29 15:37:04 claudio Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
- * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.com>
+ * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
