@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.38 2021/03/28 12:08:58 sthen Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.39 2021/03/29 13:38:01 sthen Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -224,34 +224,34 @@ const struct cfattach umb_ca = {
 
 int umb_delay = 4000;
 
-/*
- * Normally, MBIM devices are detected by their interface class and subclass.
- * But for some models that have multiple configurations, it is better to
- * match by vendor and product id so that we can select the desired
- * configuration ourselves, e.g. to override a class-based match to another
- * driver.
- *
- * OTOH, some devices identify themselves as an MBIM device but fail to speak
- * the MBIM protocol.
- */
-struct umb_products {
+struct umb_quirk {
 	struct usb_devno	 dev;
-	int			 confno;
+	u_int32_t		 umb_flags;
+	int			 umb_confno;
+	int			 umb_match;
 };
-const struct umb_products umb_devs[] = {
-	{ { USB_VENDOR_DELL, USB_PRODUCT_DELL_DW5821E }, 2 },
-	{ { USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_ME906S }, 3 },
+const struct umb_quirk umb_quirks[] = {
+	{ { USB_VENDOR_DELL, USB_PRODUCT_DELL_DW5821E },
+	  0,
+	  2,
+	  UMATCH_VENDOR_PRODUCT
+	},
+
+	{ { USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_ME906S },
+	  0,
+	  3,
+	  UMATCH_VENDOR_PRODUCT
+	},
+
+	{ { USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_EM7455 },
+	  UMBFLG_FCC_AUTH_REQUIRED,
+	  0,
+	  0
+	},
 };
 
 #define umb_lookup(vid, pid)		\
-	((const struct umb_products *)usb_lookup(umb_devs, vid, pid))
-
-/*
- * These devices require an "FCC Authentication" command.
- */
-const struct usb_devno umb_fccauth_devs[] = {
-	{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_EM7455 },
-};
+	((const struct umb_quirk *)usb_lookup(umb_quirks, vid, pid))
 
 uint8_t umb_qmi_alloc_cid[] = {
 	0x01,
@@ -283,10 +283,12 @@ int
 umb_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
+	const struct umb_quirk *quirk;
 	usb_interface_descriptor_t *id;
 
-	if (umb_lookup(uaa->vendor, uaa->product) != NULL)
-		return UMATCH_VENDOR_PRODUCT;
+	quirk = umb_lookup(uaa->vendor, uaa->product);
+	if (quirk != NULL && quirk->umb_match)
+		return (quirk->umb_match);
 	if (!uaa->iface)
 		return UMATCH_NONE;
 	if ((id = usbd_get_interface_descriptor(uaa->iface)) == NULL)
@@ -317,6 +319,7 @@ umb_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct umb_softc *sc = (struct umb_softc *)self;
 	struct usb_attach_arg *uaa = aux;
+	const struct umb_quirk *quirk;
 	usbd_status status;
 	struct usbd_desc_iter iter;
 	const usb_descriptor_t *desc;
@@ -339,13 +342,27 @@ umb_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ctrl_ifaceno = uaa->ifaceno;
 	ml_init(&sc->sc_tx_ml);
 
+	quirk = umb_lookup(uaa->vendor, uaa->product);
+	if (quirk != NULL && quirk->umb_flags) {
+		DPRINTF("%s: setting flags 0x%x from quirk\n", DEVNAM(sc),
+                    quirk->umb_flags);
+		sc->sc_flags |= quirk->umb_flags;
+	}
+
+	/*
+	 * Normally, MBIM devices are detected by their interface class and
+	 * subclass. But for some models that have multiple configurations, it
+	 * is better to match by vendor and product id so that we can select
+	 * the desired configuration ourselves, e.g. to override a class-based
+	 * match to another driver.
+	 */
 	if (uaa->configno < 0) {
-		/*
-		 * In case the device was matched by VID/PID instead of
-		 * InterfaceClass/InterfaceSubClass, we have to pick the
-		 * correct configuration ourself.
-		 */
-		uaa->configno = umb_lookup(uaa->vendor, uaa->product)->confno;
+		if (quirk == NULL) {
+			printf("%s: unknown configuration for vid/pid match\n",
+			    DEVNAM(sc));
+			goto fail;
+		}
+		uaa->configno = quirk->umb_confno;
 		DPRINTF("%s: switching to config #%d\n", DEVNAM(sc),
 		    uaa->configno);
 		status = usbd_set_config_no(sc->sc_udev, uaa->configno, 1);
@@ -357,7 +374,7 @@ umb_attach(struct device *parent, struct device *self, void *aux)
 		usbd_delay_ms(sc->sc_udev, 200);
 
 		/*
-		 * Need to do some manual setups that usbd_probe_and_attach()
+		 * Need to do some manual setup that usbd_probe_and_attach()
 		 * would do for us otherwise.
 		 */
 		uaa->nifaces = uaa->device->cdesc->bNumInterfaces;
@@ -435,10 +452,8 @@ umb_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: missing MBIM descriptor\n", DEVNAM(sc));
 		goto fail;
 	}
-	if (usb_lookup(umb_fccauth_devs, uaa->vendor, uaa->product)) {
-		sc->sc_flags |= UMBFLG_FCC_AUTH_REQUIRED;
+	if (sc->sc_flags & UMBFLG_FCC_AUTH_REQUIRED)
 		sc->sc_cid = -1;
-	}
 
 	for (i = 0; i < uaa->nifaces; i++) {
 		if (usbd_iface_claimed(sc->sc_udev, i))
