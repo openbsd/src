@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.18 2021/03/29 04:00:38 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.19 2021/03/29 06:50:44 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -197,33 +197,6 @@ x509_get_aia(X509 *x, const char *fn)
 out:
 	AUTHORITY_INFO_ACCESS_free(info);
 	return aia;
-}
-
-/*
- * Wraps around x509_get_aia, x509_get_aki, and x509_get_ski.
- * Returns zero on failure (out pointers are NULL) or non-zero on
- * success (out pointers must be freed).
- */
-int
-x509_get_extensions(X509 *x, const char *fn, char **aia, char **aki, char **ski)
-{
-	*aia = *aki = *ski = NULL;
-
-	*aia = x509_get_aia(x, fn);
-	*aki = x509_get_aki(x, 0, fn);
-	*ski = x509_get_ski(x, fn);
-
-	if (*aia == NULL || *aki == NULL || *ski == NULL) {
-		warnx("%s: RFC 6487 section 4.8: "
-		    "missing AIA, AKI or SKI X509 extension", fn);
-		free(*aia);
-		free(*aki);
-		free(*ski);
-		*aia = *aki = *ski = NULL;
-		return 0;
-	}
-
-	return 1;
 }
 
 /*
