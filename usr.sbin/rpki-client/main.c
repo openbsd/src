@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.125 2021/03/26 16:03:29 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.126 2021/03/29 03:45:35 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -302,13 +302,13 @@ http_ta_fetch(struct repo *rp)
 	int		 filefd;
 
 	rp->temp = ta_filename(rp, 1);
-	
+
 	filefd = mkostemp(rp->temp, O_CLOEXEC);
 	if (filefd == -1)
 		err(1, "mkostemp: %s", rp->temp);
 	if (fchmod(filefd, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH) == -1)
 		warn("fchmod: %s", rp->temp);
-	
+
 	if ((b = ibuf_dynamic(256, UINT_MAX)) == NULL)
 		err(1, NULL);
 	io_simple_buffer(b, &rp->id, sizeof(rp->id));
@@ -750,7 +750,7 @@ tal_load_default(const char *tals[], size_t max)
 		tals[s++] = path;
 	}
 	closedir (dirp);
-	return (s);
+	return s;
 }
 
 static char **
