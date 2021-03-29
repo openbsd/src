@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.254 2021/03/29 16:46:09 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.255 2021/03/29 16:57:38 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1716,9 +1716,6 @@ void
 SSL_get0_alpn_selected(const SSL *ssl, const unsigned char **data,
     unsigned int *len)
 {
-	*data = NULL;
-	*len = 0;
-
 	*data = ssl->s3->internal->alpn_selected;
 	*len = ssl->s3->internal->alpn_selected_len;
 }
