@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.203 2021/03/13 11:36:31 sthen Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.204 2021/03/29 03:34:52 deraadt Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -128,7 +128,7 @@ unsafe_char(const char *c0)
 	     * hexadecimal digits.
 	     */
 	    strchr(unsafe_chars, *c) != NULL ||
-	    (*c == '%' && (!isxdigit(*++c) || !isxdigit(*++c))));
+	    (*c == '%' && (!isxdigit(c[1]) || !isxdigit(c[2]))));
 }
 
 /*
