@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.135 2021/03/24 18:44:00 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.136 2021/03/29 16:19:15 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -155,17 +155,6 @@ tls1_cleanup_key_block(SSL *s)
 	freezero(S3I(s)->hs.tls12.key_block, S3I(s)->hs.tls12.key_block_len);
 	S3I(s)->hs.tls12.key_block = NULL;
 	S3I(s)->hs.tls12.key_block_len = 0;
-}
-
-void
-tls1_record_sequence_increment(unsigned char *seq)
-{
-	int i;
-
-	for (i = SSL3_SEQUENCE_SIZE - 1; i >= 0; i--) {
-		if (++seq[i] != 0)
-			break;
-	}
 }
 
 /*

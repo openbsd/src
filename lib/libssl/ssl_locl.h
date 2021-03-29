@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.331 2021/03/27 17:56:28 tb Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.332 2021/03/29 16:19:15 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1261,7 +1261,6 @@ int ssl3_handshake_msg_finish(SSL *s, CBB *handshake);
 int ssl3_handshake_write(SSL *s);
 int ssl3_record_write(SSL *s, int type);
 
-void tls1_record_sequence_increment(unsigned char *seq);
 int ssl3_do_change_cipher_spec(SSL *ssl);
 
 int dtls1_do_write(SSL *s, int type);

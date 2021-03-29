@@ -1,4 +1,4 @@
-/* $OpenBSD: tls12_record_layer.c,v 1.24 2021/03/21 19:08:22 tb Exp $ */
+/* $OpenBSD: tls12_record_layer.c,v 1.25 2021/03/29 16:19:15 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -22,9 +22,11 @@
 
 #include "ssl_locl.h"
 
+#define TLS12_RECORD_SEQ_NUM_LEN 8
+
 struct tls12_record_protection {
 	uint16_t epoch;
-	uint8_t seq_num[SSL3_SEQUENCE_SIZE];
+	uint8_t seq_num[TLS12_RECORD_SEQ_NUM_LEN];
 
 	SSL_AEAD_CTX *aead_ctx;
 
@@ -340,6 +342,38 @@ tls12_record_layer_reflect_seq_num(struct tls12_record_layer *rl)
 {
 	memcpy(rl->write->seq_num, rl->read->seq_num,
 	    sizeof(rl->write->seq_num));
+}
+
+static const uint8_t tls12_max_seq_num[TLS12_RECORD_SEQ_NUM_LEN] = {
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+};
+
+int
+tls12_record_layer_inc_seq_num(struct tls12_record_layer *rl, uint8_t *seq_num)
+{
+	CBS max_seq_num;
+	int i;
+
+	/*
+	 * RFC 5246 section 6.1 and RFC 6347 section 4.1 - both TLS and DTLS
+	 * sequence numbers must not wrap. Note that for DTLS the first two
+	 * bytes are used as an "epoch" and not part of the sequence number.
+	 */
+	CBS_init(&max_seq_num, seq_num, TLS12_RECORD_SEQ_NUM_LEN);
+	if (rl->dtls) {
+		if (!CBS_skip(&max_seq_num, 2))
+			return 0;
+	}
+	if (CBS_mem_equal(&max_seq_num, tls12_max_seq_num,
+	    CBS_len(&max_seq_num)))
+		return 0;
+
+	for (i = TLS12_RECORD_SEQ_NUM_LEN - 1; i >= 0; i--) {
+		if (++seq_num[i] != 0)
+			break;
+	}
+
+	return 1;
 }
 
 static int
@@ -1074,8 +1108,10 @@ tls12_record_layer_open_record(struct tls12_record_layer *rl, uint8_t *buf,
 			return 0;
 	}
 
-	if (!rl->dtls)
-		tls1_record_sequence_increment(rl->read->seq_num);
+	if (!rl->dtls) {
+		if (!tls12_record_layer_inc_seq_num(rl, rl->read->seq_num))
+			return 0;
+	}
 
 	return 1;
 }
@@ -1274,7 +1310,8 @@ tls12_record_layer_seal_record(struct tls12_record_layer *rl,
 	if (!CBB_flush(cbb))
 		goto err;
 
-	tls1_record_sequence_increment(rl->write->seq_num);
+	if (!tls12_record_layer_inc_seq_num(rl, rl->write->seq_num))
+		goto err;
 
 	ret = 1;
 
