@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.34 2021/03/19 13:56:10 claudio Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.35 2021/03/29 15:04:28 deraadt Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 19 2021 $
+.Dd $Mdocdate: March 29 2021 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -50,8 +50,12 @@ in various formats.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl B
-Create output in the file
+Create output in the files
+.Pa bird1v4 ,
+.Pa bird1v6 ,
+and
 .Pa bird
+(for bird2)
 in the output directory which is suitable for the BIRD internet routing daemon.
 .It Fl b Ar sourceaddr
 Tell the rsync client to use
