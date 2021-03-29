@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_both.c,v 1.26 2021/03/27 17:56:28 tb Exp $ */
+/* $OpenBSD: ssl_both.c,v 1.27 2021/03/29 16:46:09 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -176,25 +176,25 @@ ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen)
 		OPENSSL_assert(md_len <= EVP_MAX_MD_SIZE);
 
 		if (tls1_final_finish_mac(s, sender, slen,
-		    S3I(s)->tmp.finish_md) != md_len)
+		    S3I(s)->hs.finished) != md_len)
 			return (0);
-		S3I(s)->tmp.finish_md_len = md_len;
+		S3I(s)->hs.finished_len = md_len;
 
 		/* Copy finished so we can use it for renegotiation checks. */
 		if (!s->server) {
 			memcpy(S3I(s)->previous_client_finished,
-			    S3I(s)->tmp.finish_md, md_len);
+			    S3I(s)->hs.finished, md_len);
 			S3I(s)->previous_client_finished_len = md_len;
 		} else {
 			memcpy(S3I(s)->previous_server_finished,
-			    S3I(s)->tmp.finish_md, md_len);
+			    S3I(s)->hs.finished, md_len);
 			S3I(s)->previous_server_finished_len = md_len;
 		}
 
 		if (!ssl3_handshake_msg_start(s, &cbb, &finished,
 		    SSL3_MT_FINISHED))
                         goto err;
-		if (!CBB_add_bytes(&finished, S3I(s)->tmp.finish_md, md_len))
+		if (!CBB_add_bytes(&finished, S3I(s)->hs.finished, md_len))
 			goto err;
 		if (!ssl3_handshake_msg_finish(s, &cbb))
 			goto err;
@@ -235,9 +235,9 @@ ssl3_take_mac(SSL *s)
 		slen = TLS_MD_CLIENT_FINISH_CONST_SIZE;
 	}
 
-	S3I(s)->tmp.peer_finish_md_len =
+	S3I(s)->hs.peer_finished_len =
 	    tls1_final_finish_mac(s, sender, slen,
-		S3I(s)->tmp.peer_finish_md);
+		S3I(s)->hs.peer_finished);
 }
 
 int
@@ -270,14 +270,14 @@ ssl3_get_finished(SSL *s, int a, int b)
 
 	CBS_init(&cbs, s->internal->init_msg, n);
 
-	if (S3I(s)->tmp.peer_finish_md_len != md_len ||
+	if (S3I(s)->hs.peer_finished_len != md_len ||
 	    CBS_len(&cbs) != md_len) {
 		al = SSL_AD_DECODE_ERROR;
 		SSLerror(s, SSL_R_BAD_DIGEST_LENGTH);
 		goto fatal_err;
 	}
 
-	if (!CBS_mem_equal(&cbs, S3I(s)->tmp.peer_finish_md, CBS_len(&cbs))) {
+	if (!CBS_mem_equal(&cbs, S3I(s)->hs.peer_finished, CBS_len(&cbs))) {
 		al = SSL_AD_DECRYPT_ERROR;
 		SSLerror(s, SSL_R_DIGEST_CHECK_FAILED);
 		goto fatal_err;
@@ -287,11 +287,11 @@ ssl3_get_finished(SSL *s, int a, int b)
 	OPENSSL_assert(md_len <= EVP_MAX_MD_SIZE);
 	if (s->server) {
 		memcpy(S3I(s)->previous_client_finished,
-		    S3I(s)->tmp.peer_finish_md, md_len);
+		    S3I(s)->hs.peer_finished, md_len);
 		S3I(s)->previous_client_finished_len = md_len;
 	} else {
 		memcpy(S3I(s)->previous_server_finished,
-		    S3I(s)->tmp.peer_finish_md, md_len);
+		    S3I(s)->hs.peer_finished, md_len);
 		S3I(s)->previous_server_finished_len = md_len;
 	}
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.39 2021/03/24 18:44:00 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.40 2021/03/29 16:46:09 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1190,12 +1190,12 @@ ssl3_do_change_cipher_spec(SSL *s)
 	}
 
 	i = tls1_final_finish_mac(s, sender, slen,
-	    S3I(s)->tmp.peer_finish_md);
+	    S3I(s)->hs.peer_finished);
 	if (i == 0) {
 		SSLerror(s, ERR_R_INTERNAL_ERROR);
 		return 0;
 	}
-	S3I(s)->tmp.peer_finish_md_len = i;
+	S3I(s)->hs.peer_finished_len = i;
 
 	return (1);
 }

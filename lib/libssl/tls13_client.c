@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.76 2021/03/24 18:44:00 jsing Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.77 2021/03/29 16:46:09 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -746,7 +746,6 @@ tls13_server_finished_recv(struct tls13_ctx *ctx, CBS *cbs)
 	uint8_t key[EVP_MAX_MD_SIZE];
 	HMAC_CTX *hmac_ctx = NULL;
 	unsigned int hlen;
-	SSL *s = ctx->ssl;
 	int ret = 0;
 
 	/*
@@ -781,9 +780,9 @@ tls13_server_finished_recv(struct tls13_ctx *ctx, CBS *cbs)
 		goto err;
 	}
 
-	if (!CBS_write_bytes(cbs, S3I(s)->tmp.peer_finish_md,
-	    sizeof(S3I(s)->tmp.peer_finish_md),
-	    &S3I(s)->tmp.peer_finish_md_len))
+	if (!CBS_write_bytes(cbs, ctx->hs->peer_finished,
+	    sizeof(ctx->hs->peer_finished),
+	    &ctx->hs->peer_finished_len))
 		goto err;
 
 	if (!CBS_skip(cbs, verify_data_len))
@@ -1032,7 +1031,6 @@ tls13_client_finished_send(struct tls13_ctx *ctx, CBB *cbb)
 	unsigned int hlen;
 	HMAC_CTX *hmac_ctx = NULL;
 	CBS cbs;
-	SSL *s = ctx->ssl;
 	int ret = 0;
 
 	if (!tls13_secret_init(&finished_key, EVP_MD_size(ctx->hash)))
@@ -1064,8 +1062,8 @@ tls13_client_finished_send(struct tls13_ctx *ctx, CBB *cbb)
 		goto err;
 
 	CBS_init(&cbs, verify_data, verify_data_len);
-	if (!CBS_write_bytes(&cbs, S3I(s)->tmp.finish_md,
-	    sizeof(S3I(s)->tmp.finish_md), &S3I(s)->tmp.finish_md_len))
+	if (!CBS_write_bytes(&cbs, ctx->hs->finished,
+	    sizeof(ctx->hs->finished), &ctx->hs->finished_len))
 		goto err;
 
 	ret = 1;

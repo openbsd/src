@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.253 2021/03/27 17:56:28 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.254 2021/03/29 16:46:09 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -723,10 +723,10 @@ SSL_get_finished(const SSL *s, void *buf, size_t count)
 {
 	size_t	ret;
 
-	ret = S3I(s)->tmp.finish_md_len;
+	ret = S3I(s)->hs.finished_len;
 	if (count > ret)
 		count = ret;
-	memcpy(buf, S3I(s)->tmp.finish_md, count);
+	memcpy(buf, S3I(s)->hs.finished, count);
 	return (ret);
 }
 
@@ -736,10 +736,10 @@ SSL_get_peer_finished(const SSL *s, void *buf, size_t count)
 {
 	size_t	ret;
 
-	ret = S3I(s)->tmp.peer_finish_md_len;
+	ret = S3I(s)->hs.peer_finished_len;
 	if (count > ret)
 		count = ret;
-	memcpy(buf, S3I(s)->tmp.peer_finish_md, count);
+	memcpy(buf, S3I(s)->hs.peer_finished, count);
 	return (ret);
 }
 

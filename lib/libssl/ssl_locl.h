@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.332 2021/03/29 16:19:15 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.333 2021/03/29 16:46:09 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -492,6 +492,15 @@ typedef struct ssl_handshake_st {
 	uint8_t *sigalgs;
 	size_t sigalgs_len;
 
+	/*
+	 * Copies of the verify data sent in our finished message and the
+	 * verify data received in the finished message sent by our peer.
+	 */
+	uint8_t finished[EVP_MAX_MD_SIZE];
+	size_t finished_len;
+	uint8_t peer_finished[EVP_MAX_MD_SIZE];
+	size_t peer_finished_len;
+
 	SSL_HANDSHAKE_TLS12 tls12;
 	SSL_HANDSHAKE_TLS13 tls13;
 } SSL_HANDSHAKE;
@@ -917,11 +926,6 @@ typedef struct ssl3_state_internal_st {
 
 	struct	{
 		unsigned char cert_verify_md[EVP_MAX_MD_SIZE];
-
-		unsigned char finish_md[EVP_MAX_MD_SIZE];
-		size_t finish_md_len;
-		unsigned char peer_finish_md[EVP_MAX_MD_SIZE];
-		size_t peer_finish_md_len;
 
 		unsigned long message_size;
 		int message_type;

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.88 2021/03/21 18:36:34 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.89 2021/03/29 16:46:09 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -36,7 +36,7 @@ tlsext_alpn_client_needs(SSL *s, uint16_t msg_type)
 {
 	/* ALPN protos have been specified and this is the initial handshake */
 	return s->internal->alpn_client_proto_list != NULL &&
-	    S3I(s)->tmp.finish_md_len == 0;
+	    S3I(s)->hs.finished_len == 0;
 }
 
 int
