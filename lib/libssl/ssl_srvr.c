@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.100 2021/03/27 17:56:28 tb Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.101 2021/03/29 16:56:20 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -294,9 +294,11 @@ ssl3_accept(SSL *s)
 			S3I(s)->hs.state = SSL3_ST_SW_FLUSH;
 			s->internal->init_num = 0;
 
-			if (!tls1_transcript_init(s)) {
-				ret = -1;
-				goto end;
+			if (SSL_is_dtls(s)) {
+				if (!tls1_transcript_init(s)) {
+					ret = -1;
+					goto end;
+				}
 			}
 			break;
 
