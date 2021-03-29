@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2020/07/15 22:46:52 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.20 2021/03/29 20:10:30 kn Exp $
 
 
 .if ((${MACHINE} == "arm64") || (${MACHINE} == "amd64") || \
@@ -19,6 +19,5 @@ NOPROG=yes
 .endif
 
 MAN=	apm.8
-MANSUBDIR=arm64 amd64 i386 loongson macppc sparc64
 
 .include <bsd.prog.mk>

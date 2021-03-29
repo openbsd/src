@@ -2296,8 +2296,6 @@
 ./usr/share/man/man8/alpha/setnetbootinfo.8
 ./usr/share/man/man8/amd.8
 ./usr/share/man/man8/amd64/MAKEDEV.8
-./usr/share/man/man8/amd64/apm.8
-./usr/share/man/man8/amd64/apmd.8
 ./usr/share/man/man8/amd64/biosboot.8
 ./usr/share/man/man8/amd64/boot.8
 ./usr/share/man/man8/amd64/boot_amd64.8
@@ -2307,9 +2305,9 @@
 ./usr/share/man/man8/amd64/memconfig.8
 ./usr/share/man/man8/amd64/pxeboot.8
 ./usr/share/man/man8/amq.8
+./usr/share/man/man8/apm.8
+./usr/share/man/man8/apmd.8
 ./usr/share/man/man8/arm64/MAKEDEV.8
-./usr/share/man/man8/arm64/apm.8
-./usr/share/man/man8/arm64/apmd.8
 ./usr/share/man/man8/arm64/eeprom.8
 ./usr/share/man/man8/arm64/gpioctl.8
 ./usr/share/man/man8/armv7/MAKEDEV.8
@@ -2383,8 +2381,6 @@
 ./usr/share/man/man8/hppa/mkboot.8
 ./usr/share/man/man8/httpd.8
 ./usr/share/man/man8/i386/MAKEDEV.8
-./usr/share/man/man8/i386/apm.8
-./usr/share/man/man8/i386/apmd.8
 ./usr/share/man/man8/i386/biosboot.8
 ./usr/share/man/man8/i386/boot.8
 ./usr/share/man/man8/i386/boot_i386.8
@@ -2431,15 +2427,11 @@
 ./usr/share/man/man8/login_token.8
 ./usr/share/man/man8/login_yubikey.8
 ./usr/share/man/man8/loongson/MAKEDEV.8
-./usr/share/man/man8/loongson/apm.8
-./usr/share/man/man8/loongson/apmd.8
 ./usr/share/man/man8/lpc.8
 ./usr/share/man/man8/lpd.8
 ./usr/share/man/man8/luna88k/MAKEDEV.8
 ./usr/share/man/man8/luna88k/boot_luna88k.8
 ./usr/share/man/man8/macppc/MAKEDEV.8
-./usr/share/man/man8/macppc/apm.8
-./usr/share/man/man8/macppc/apmd.8
 ./usr/share/man/man8/macppc/boot.8
 ./usr/share/man/man8/macppc/boot_macppc.8
 ./usr/share/man/man8/macppc/eeprom.8
@@ -2583,8 +2575,6 @@
 ./usr/share/man/man8/spamdb.8
 ./usr/share/man/man8/spamlogd.8
 ./usr/share/man/man8/sparc64/MAKEDEV.8
-./usr/share/man/man8/sparc64/apm.8
-./usr/share/man/man8/sparc64/apmd.8
 ./usr/share/man/man8/sparc64/boot_sparc64.8
 ./usr/share/man/man8/sparc64/eeprom.8
 ./usr/share/man/man8/sparc64/ldomctl.8
