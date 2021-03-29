@@ -1,4 +1,4 @@
-/* $OpenBSD: record_layer_test.c,v 1.3 2020/03/16 15:13:15 tb Exp $ */
+/* $OpenBSD: record_layer_test.c,v 1.4 2021/03/29 16:22:02 jsing Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -18,9 +18,12 @@
 #include <err.h>
 #include <string.h>
 
+#include "ssl_locl.h"
 #include "tls13_internal.h"
 #include "tls13_record.h"
 
+int tls12_record_layer_inc_seq_num(struct tls12_record_layer *rl,
+    uint8_t *seq_num);
 int tls13_record_layer_inc_seq_num(uint8_t *seq_num);
 
 static void
@@ -40,7 +43,83 @@ struct seq_num_test {
 	int want;
 };
 
-struct seq_num_test seq_num_tests[] = {
+struct seq_num_test seq_num_dtls_tests[] = {
+	{
+		.seq_num = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+		.want_num = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01},
+		.want = 1,
+	},
+	{
+		.seq_num = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01},
+		.want_num = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02},
+		.want = 1,
+	},
+	{
+		.seq_num = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xfe},
+		.want_num = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff},
+		.want = 1,
+	},
+	{
+		.seq_num = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff},
+		.want_num = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00},
+		.want = 1,
+	},
+	{
+		.seq_num = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00},
+		.want_num = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01},
+		.want = 1,
+	},
+	{
+		.seq_num = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0xff},
+		.want_num = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00},
+		.want = 1,
+	},
+	{
+		.seq_num = {0xab, 0xcd, 0xef, 0x00, 0xfe, 0xff, 0xff, 0xff},
+		.want_num = {0xab, 0xcd, 0xef, 0x00, 0xff, 0x00, 0x00, 0x00},
+		.want = 1,
+	},
+	{
+		.seq_num = {0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
+		.want_num = {0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
+		.want = 0,
+	},
+	{
+		.seq_num = {0x01, 0xff, 0xfe, 0xff, 0xff, 0xff, 0xff, 0xff},
+		.want_num = {0x01, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00},
+		.want = 1,
+	},
+	{
+		.seq_num = {0x01, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe},
+		.want_num = {0x01, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
+		.want = 1,
+	},
+	{
+		.seq_num = {0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+		.want_num = {0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01},
+		.want = 1,
+	},
+	{
+		.seq_num = {0xfe, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
+		.want_num = {0xfe, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
+		.want = 0,
+	},
+	{
+		.seq_num = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe},
+		.want_num = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
+		.want = 1,
+	},
+	{
+		.seq_num = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
+		.want_num = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
+		.want = 0,
+	},
+};
+
+#define N_SEQ_NUM_DTLS_TESTS \
+    (sizeof(seq_num_dtls_tests) / sizeof(seq_num_dtls_tests[0]))
+
+struct seq_num_test seq_num_tls_tests[] = {
 	{
 		.seq_num = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
 		.want_num = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01},
@@ -108,10 +187,71 @@ struct seq_num_test seq_num_tests[] = {
 	},
 };
 
-#define N_SEQ_NUM_TESTS (sizeof(seq_num_tests) / sizeof(seq_num_tests[0]))
+#define N_SEQ_NUM_TLS_TESTS \
+    (sizeof(seq_num_tls_tests) / sizeof(seq_num_tls_tests[0]))
+
+#ifndef TLS12_RECORD_SEQ_NUM_LEN
+#define TLS12_RECORD_SEQ_NUM_LEN 8
+#endif
 
 static int
-do_seq_num_test(size_t test_no, struct seq_num_test *snt)
+do_seq_num_test_tls12(size_t test_no, int dtls, struct seq_num_test *snt)
+{
+	uint8_t seq_num[TLS12_RECORD_SEQ_NUM_LEN];
+	struct tls12_record_layer *rl;
+	int failed = 1;
+	int ret;
+
+	if ((rl = tls12_record_layer_new()) == NULL)
+		errx(1, "tls12_record_layer_new");
+
+	if (dtls)
+		tls12_record_layer_set_version(rl, DTLS1_2_VERSION);
+
+	memcpy(seq_num, snt->seq_num, sizeof(seq_num));
+
+	if ((ret = tls12_record_layer_inc_seq_num(rl, seq_num)) != snt->want) {
+		fprintf(stderr, "FAIL: Test %zu - got return %i, want %i\n",
+		    test_no, ret, snt->want);
+		goto failure;
+	}
+
+	if (memcmp(seq_num, snt->want_num, sizeof(seq_num)) != 0) {
+		fprintf(stderr, "FAIL: Test %zu - got sequence number:\n",
+		    test_no);
+		hexdump(seq_num, sizeof(seq_num));
+		fprintf(stderr, "want:\n");
+		hexdump(snt->want_num, sizeof(snt->want_num));
+		goto failure;
+	}
+
+	failed = 0;
+
+ failure:
+	tls12_record_layer_free(rl);
+
+	return failed;
+}
+
+static int
+test_seq_num_tls12(void)
+{
+	int failed = 0;
+	size_t i;
+
+	fprintf(stderr, "Running TLSv1.2 sequence number tests...\n");
+	for (i = 0; i < N_SEQ_NUM_TLS_TESTS; i++)
+		failed |= do_seq_num_test_tls12(i, 0, &seq_num_tls_tests[i]);
+
+	fprintf(stderr, "Running DTLSv1.2 sequence number tests...\n");
+	for (i = 0; i < N_SEQ_NUM_DTLS_TESTS; i++)
+		failed |= do_seq_num_test_tls12(i, 1, &seq_num_dtls_tests[i]);
+
+	return failed;
+}
+
+static int
+do_seq_num_test_tls13(size_t test_no, struct seq_num_test *snt)
 {
 	uint8_t seq_num[TLS13_RECORD_SEQ_NUM_LEN];
 	int failed = 1;
@@ -141,13 +281,15 @@ do_seq_num_test(size_t test_no, struct seq_num_test *snt)
 }
 
 static int
-test_seq_num(void)
+test_seq_num_tls13(void)
 {
 	int failed = 0;
 	size_t i;
 
-	for (i = 0; i < N_SEQ_NUM_TESTS; i++)
-		failed |= do_seq_num_test(i, &seq_num_tests[i]);
+	fprintf(stderr, "Running TLSv1.3 sequence number tests...\n");
+
+	for (i = 0; i < N_SEQ_NUM_TLS_TESTS; i++)
+		failed |= do_seq_num_test_tls13(i, &seq_num_tls_tests[i]);
 
 	return failed;
 }
@@ -157,7 +299,8 @@ main(int argc, char **argv)
 {
 	int failed = 0;
 
-	failed |= test_seq_num();
+	failed |= test_seq_num_tls12();
+	failed |= test_seq_num_tls13();
 
 	return failed;
 }
