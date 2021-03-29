@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-bgpd.c,v 1.19 2021/03/29 03:35:32 deraadt Exp $ */
+/*	$OpenBSD: output-bgpd.c,v 1.20 2021/03/29 03:39:14 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -22,7 +22,7 @@
 int
 output_bgpd(FILE *out, struct vrp_tree *vrps, struct stats *st)
 {
-	char		 buf1[64], buf2[32];
+	char		 ipbuf[64], maxlenbuf[100];
 	struct vrp	*v;
 
 	if (outputheader(out, st) < 0)
@@ -32,15 +32,16 @@ output_bgpd(FILE *out, struct vrp_tree *vrps, struct stats *st)
 		return -1;
 
 	RB_FOREACH(v, vrp_tree, vrps) {
-		ip_addr_print(&v->addr, v->afi, buf1, sizeof(buf1));
+		ip_addr_print(&v->addr, v->afi, ipbuf, sizeof(ipbuf));
 		if (v->maxlength > v->addr.prefixlen) {
-			int ret = snprintf(buf2, sizeof(buf2), "maxlen %u ",
-			    v->maxlength);
-			if (ret < 0 || (size_t)ret > sizeof(buf2))
+			int ret = snprintf(maxlenbuf, sizeof(maxlenbuf),
+			    "maxlen %u ", v->maxlength);
+			if (ret < 0 || (size_t)ret > sizeof(maxlenbuf))
 				return -1;
 		} else
-			buf2[0] = '\0';
-		if (fprintf(out, "\t%s %ssource-as %u\n", buf1, buf2, v->asid) < 0)
+			maxlenbuf[0] = '\0';
+		if (fprintf(out, "\t%s %ssource-as %u\n",
+		    ipbuf, maxlenbuf, v->asid) < 0)
 			return -1;
 	}
 
