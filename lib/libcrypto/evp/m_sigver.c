@@ -1,4 +1,4 @@
-/* $OpenBSD: m_sigver.c,v 1.7 2018/05/13 06:35:10 tb Exp $ */
+/* $OpenBSD: m_sigver.c,v 1.8 2021/03/29 15:57:23 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -74,15 +74,17 @@ do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx, const EVP_MD *type,
 	if (ctx->pctx == NULL)
 		return 0;
 
-	if (type == NULL) {
-		int def_nid;
-		if (EVP_PKEY_get_default_digest_nid(pkey, &def_nid) > 0)
-			type = EVP_get_digestbynid(def_nid);
-	}
+	if (!(ctx->pctx->pmeth->flags & EVP_PKEY_FLAG_SIGCTX_CUSTOM)) {
+		if (type == NULL) {
+			int def_nid;
+			if (EVP_PKEY_get_default_digest_nid(pkey, &def_nid) > 0)
+				type = EVP_get_digestbynid(def_nid);
+		}
 
-	if (type == NULL) {
-		EVPerror(EVP_R_NO_DEFAULT_DIGEST);
-		return 0;
+		if (type == NULL) {
+			EVPerror(EVP_R_NO_DEFAULT_DIGEST);
+			return 0;
+		}
 	}
 
 	if (ver) {
@@ -105,6 +107,8 @@ do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx, const EVP_MD *type,
 		return 0;
 	if (pctx)
 		*pctx = ctx->pctx;
+	if (ctx->pctx->pmeth->flags & EVP_PKEY_FLAG_SIGCTX_CUSTOM)
+		return 1;
 	if (!EVP_DigestInit_ex(ctx, type, e))
 		return 0;
 	return 1;
@@ -127,7 +131,24 @@ EVP_DigestVerifyInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx, const EVP_MD *type,
 int
 EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret, size_t *siglen)
 {
-	int sctx, r = 0;
+	EVP_PKEY_CTX *pctx = ctx->pctx;
+	int sctx;
+	int r = 0;
+
+	if (pctx->pmeth->flags & EVP_PKEY_FLAG_SIGCTX_CUSTOM) {
+		EVP_PKEY_CTX *dctx;
+
+		if (sigret == NULL)
+			return pctx->pmeth->signctx(pctx, sigret, siglen, ctx);
+
+		/* XXX - support EVP_MD_CTX_FLAG_FINALISE? */
+		if ((dctx = EVP_PKEY_CTX_dup(ctx->pctx)) == NULL)
+			return 0;
+		r = dctx->pmeth->signctx(dctx, sigret, siglen, ctx);
+		EVP_PKEY_CTX_free(dctx);
+
+		return r;
+	}
 
 	if (ctx->pctx->pmeth->signctx)
 		sctx = 1;

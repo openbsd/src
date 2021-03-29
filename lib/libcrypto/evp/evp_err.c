@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_err.c,v 1.26 2020/04/27 19:31:02 tb Exp $ */
+/* $OpenBSD: evp_err.c,v 1.27 2021/03/29 15:57:23 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -116,6 +116,7 @@ static ERR_STRING_DATA EVP_str_reasons[] = {
 	{ERR_REASON(EVP_R_INVALID_OPERATION)     , "invalid operation"},
 	{ERR_REASON(EVP_R_IV_TOO_LARGE)          , "iv too large"},
 	{ERR_REASON(EVP_R_KEYGEN_FAILURE)        , "keygen failure"},
+	{ERR_REASON(EVP_R_KEY_SETUP_FAILED)      , "key setup failed"},
 	{ERR_REASON(EVP_R_MESSAGE_DIGEST_IS_NULL), "message digest is null"},
 	{ERR_REASON(EVP_R_METHOD_NOT_SUPPORTED)  , "method not supported"},
 	{ERR_REASON(EVP_R_MISSING_PARAMETERS)    , "missing parameters"},

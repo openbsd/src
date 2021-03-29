@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.79 2020/04/27 19:31:02 tb Exp $ */
+/* $OpenBSD: evp.h,v 1.80 2021/03/29 15:57:23 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1149,6 +1149,10 @@ void EVP_PKEY_CTX_set0_keygen_info(EVP_PKEY_CTX *ctx, int *dat, int datlen);
 
 EVP_PKEY *EVP_PKEY_new_mac_key(int type, ENGINE *e, const unsigned char *key,
     int keylen);
+#if defined(LIBRESSL_INTERNAL)
+EVP_PKEY *EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv,
+    size_t len, const EVP_CIPHER *cipher);
+#endif
 
 void EVP_PKEY_CTX_set_data(EVP_PKEY_CTX *ctx, void *data);
 void *EVP_PKEY_CTX_get_data(EVP_PKEY_CTX *ctx);
@@ -1512,6 +1516,9 @@ void ERR_load_EVP_strings(void);
 #define EVP_R_INVALID_OPERATION				 148
 #define EVP_R_IV_TOO_LARGE				 102
 #define EVP_R_KEYGEN_FAILURE				 120
+#if defined(LIBRESSL_INTERNAL)
+#define EVP_R_KEY_SETUP_FAILED				 180
+#endif
 #define EVP_R_MESSAGE_DIGEST_IS_NULL			 159
 #define EVP_R_METHOD_NOT_SUPPORTED			 144
 #define EVP_R_MISSING_PARAMETERS			 103
