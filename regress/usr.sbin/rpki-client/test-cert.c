@@ -1,4 +1,4 @@
-/*	$Id: test-cert.c,v 1.9 2021/02/16 08:53:53 job Exp $ */
+/*	$Id: test-cert.c,v 1.10 2021/03/29 15:47:34 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -32,6 +32,8 @@
 
 #include "extern.h"
 
+#include "test-common.c"
+
 int verbose;
 
 static void
@@ -49,9 +51,9 @@ cert_print(const struct cert *p)
 		printf("Notify URL: %s\n", p->notify);
 	if (p->crl != NULL)
 		printf("Revocation list: %s\n", p->crl);
-	printf("Subject key identifier: %s\n", p->ski);
+	printf("Subject key identifier: %s\n", pretty_key_id(p->ski));
 	if (p->aki != NULL)
-		printf("Authority key identifier: %s\n", p->aki);
+		printf("Authority key identifier: %s\n", pretty_key_id(p->aki));
 	if (p->aia != NULL)
 		printf("Authority info access: %s\n", p->aia);
 

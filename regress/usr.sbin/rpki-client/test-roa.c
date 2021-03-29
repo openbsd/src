@@ -1,4 +1,4 @@
-/*	$Id: test-roa.c,v 1.9 2021/02/16 08:53:53 job Exp $ */
+/*	$Id: test-roa.c,v 1.10 2021/03/29 15:47:34 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -30,6 +30,8 @@
 
 #include "extern.h"
 
+#include "test-common.c"
+
 int verbose;
 
 static void
@@ -40,8 +42,8 @@ roa_print(const struct roa *p)
 
 	assert(p != NULL);
 
-	printf("Subject key identifier: %s\n", p->ski);
-	printf("Authority key identifier: %s\n", p->aki);
+	printf("Subject key identifier: %s\n", pretty_key_id(p->ski));
+	printf("Authority key identifier: %s\n", pretty_key_id(p->aki));
 	printf("Authority info access: %s\n", p->aia);
 	printf("asID: %" PRIu32 "\n", p->asid);
 	for (i = 0; i < p->ipsz; i++) {
