@@ -1,4 +1,4 @@
-/*      $OpenBSD: http.c,v 1.11 2021/03/29 15:37:04 claudio Exp $  */
+/*      $OpenBSD: http.c,v 1.12 2021/03/30 16:05:56 claudio Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -402,6 +402,8 @@ http_new(size_t id, char *uri, char *modified_since, int outfd)
 	if (http_parse_uri(uri, &host, &port, &path) == -1) {
 		free(uri);
 		free(modified_since);
+		close(outfd);
+		http_fail(id);
 		return NULL;
 	}
 
@@ -1197,10 +1199,7 @@ proc_http(char *bind_addr, int fd)
 			io_str_read(fd, &mod);
 
 			h = http_new(id, uri, mod, outfd);
-			if (h == NULL) {
-				close(outfd);
-				http_fail(id);
-			} else
+			if (h != NULL) {
 				for (i = 0; i < MAX_CONNECTIONS; i++) {
 					if (http_conns[i] != NULL)
 						continue;
@@ -1209,6 +1208,7 @@ proc_http(char *bind_addr, int fd)
 						http_conns[i] = NULL;
 					break;
 				}
+			}
 		}
 		if (pfds[MAX_CONNECTIONS].revents & POLLOUT) {
 			switch (msgbuf_write(&msgq)) {
