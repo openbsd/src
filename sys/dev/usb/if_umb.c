@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.41 2021/03/30 15:59:04 patrick Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.42 2021/03/30 20:58:19 sthen Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -670,7 +670,7 @@ umb_ncm_setup(struct umb_softc *sc)
 	usb_device_request_t req;
 	struct ncm_ntb_parameters np;
 
-	/* Query NTB tranfers sizes */
+	/* Query NTB transfer sizes */
 	req.bmRequestType = UT_READ_CLASS_INTERFACE;
 	req.bRequest = NCM_GET_NTB_PARAMETERS;
 	USETW(req.wValue, 0);
@@ -922,7 +922,7 @@ umb_input(struct ifnet *ifp, struct mbuf *m)
 	}
 	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
 
-	/* pop of DLT_LOOP header, no longer needed */
+	/* pop off DLT_LOOP header, no longer needed */
 	af = *mtod(m, uint32_t *);
 	m_adj(m, sizeof (af));
 	af = ntohl(af);
