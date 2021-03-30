@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.185 2021/02/25 02:48:21 dlg Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.186 2021/03/30 08:37:10 sashan Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -846,10 +846,21 @@ icmp_send(struct mbuf *m, struct mbuf *opts)
 		printf("icmp_send dst %s src %s\n", dst, src);
 	}
 #endif
-	if (opts != NULL)
+	/*
+	 * ip_send() cannot handle IP options properly. So in case we have
+	 * options fill out the IP header here and use ip_send_raw() instead.
+	 */
+	if (opts != NULL) {
 		m = ip_insertoptions(m, opts, &hlen);
-
-	ip_send(m);
+		ip = mtod(m, struct ip *);
+		ip->ip_hl = (hlen >> 2);
+		ip->ip_v = IPVERSION;
+		ip->ip_off &= htons(IP_DF);
+		ip->ip_id = htons(ip_randomid());
+		ipstat_inc(ips_localout);
+		ip_send_raw(m);
+	} else
+		ip_send(m);
 }
 
 u_int32_t

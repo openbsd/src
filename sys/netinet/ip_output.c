@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.369 2021/03/20 01:15:28 dlg Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.370 2021/03/30 08:37:11 sashan Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -765,6 +765,13 @@ ip_insertoptions(struct mbuf *m, struct mbuf *opt, int *phlen)
 	optlen = opt->m_len - sizeof(p->ipopt_dst);
 	if (optlen + ntohs(ip->ip_len) > IP_MAXPACKET)
 		return (m);		/* XXX should fail */
+
+	/* check if options will fit to IP header */
+	if ((optlen + sizeof(struct ip)) > (0x0f << 2)) {
+		*phlen = sizeof(struct ip);
+		return (m);
+	}
+
 	if (p->ipopt_dst.s_addr)
 		ip->ip_dst = p->ipopt_dst;
 	if (m->m_flags & M_EXT || m->m_data - optlen < m->m_pktdat) {

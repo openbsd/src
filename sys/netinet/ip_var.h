@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.87 2021/03/01 11:05:42 bluhm Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.88 2021/03/30 08:37:11 sashan Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -240,6 +240,7 @@ struct mbuf *
 u_int16_t
 	 ip_randomid(void);
 void	 ip_send(struct mbuf *);
+void	 ip_send_raw(struct mbuf *);
 void	 ip_slowtimo(void);
 struct mbuf *
 	 ip_srcroute(struct mbuf *);
