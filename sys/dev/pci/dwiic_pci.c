@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic_pci.c,v 1.15 2020/12/25 21:48:27 jsg Exp $ */
+/* $OpenBSD: dwiic_pci.c,v 1.16 2021/03/30 16:46:36 kettenis Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  * PCI attachment
@@ -225,7 +225,12 @@ dwiic_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	config_found((struct device *)sc, &sc->sc_iba, iicbus_print);
 
-	return;
+#if NACPI > 0 && !defined(SMALL_KERNEL)
+	if (sc->sc_devnode) {
+		sc->sc_devnode->i2c = &sc->sc_i2c_tag;
+		acpi_register_gsb(acpi_softc, sc->sc_devnode);
+	}
+#endif
 }
 
 int
