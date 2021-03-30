@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.39 2021/03/29 13:38:01 sthen Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.40 2021/03/30 15:48:36 patrick Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -172,7 +172,7 @@ void		 umb_send_inet_proposal(struct umb_softc *, int);
 int		 umb_decode_ip_configuration(struct umb_softc *, void *, int);
 void		 umb_rx(struct umb_softc *);
 void		 umb_rxeof(struct usbd_xfer *, void *, usbd_status);
-int		 umb_encap(struct umb_softc *);
+int		 umb_encap(struct umb_softc *, int);
 void		 umb_txeof(struct usbd_xfer *, void *, usbd_status);
 void		 umb_decap(struct umb_softc *, struct usbd_xfer *);
 
@@ -238,7 +238,7 @@ const struct umb_quirk umb_quirks[] = {
 	},
 
 	{ { USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_ME906S },
-	  0,
+	  UMBFLG_NDP_AT_END,
 	  3,
 	  UMATCH_VENDOR_PRODUCT
 	},
@@ -974,7 +974,7 @@ umb_start(struct ifnet *ifp)
 	}
 	if (ml_empty(&sc->sc_tx_ml))
 		return;
-	if (umb_encap(sc)) {
+	if (umb_encap(sc, ndgram)) {
 		ifq_set_oactive(&ifp->if_snd);
 		ifp->if_timer = (2 * umb_xfer_tout) / 1000;
 	}
@@ -2126,13 +2126,13 @@ umb_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 }
 
 int
-umb_encap(struct umb_softc *sc)
+umb_encap(struct umb_softc *sc, int ndgram)
 {
 	struct ncm_header16 *hdr;
 	struct ncm_pointer16 *ptr;
 	struct ncm_pointer16_dgram *dgram;
-	int	 offs, poffs;
-	struct mbuf_list tmpml = MBUF_LIST_INITIALIZER();
+	int	 offs = 0, plen = 0;
+	int	 dgoffs = 0, poffs;
 	struct mbuf *m;
 	usbd_status  err;
 
@@ -2146,39 +2146,60 @@ umb_encap(struct umb_softc *sc)
 	offs = sizeof (*hdr);
 	offs += umb_padding(sc->sc_tx_buf, sc->sc_tx_bufsz, offs,
 	    sc->sc_align, 0);
-	USETW(hdr->wNdpIndex, offs);
 
-	poffs = offs;
-	ptr = (struct ncm_pointer16 *)(sc->sc_tx_buf + offs);
+	if (sc->sc_flags & UMBFLG_NDP_AT_END) {
+		dgoffs = offs;
+
+		/*
+		 * Calculate space needed for datagrams.
+		 *
+		 * XXX cannot use ml_len(&sc->sc_tx_ml), since it ignores
+		 *	the padding requirements.
+		 */
+		poffs = dgoffs;
+		MBUF_LIST_FOREACH(&sc->sc_tx_ml, m) {
+			poffs += umb_padding(sc->sc_tx_buf, sc->sc_tx_bufsz,
+			    poffs, sc->sc_ndp_div, sc->sc_ndp_remainder);
+			poffs += m->m_pkthdr.len;
+		}
+		poffs += umb_padding(sc->sc_tx_buf, sc->sc_tx_bufsz,
+		    poffs, sc->sc_ndp_div, sc->sc_ndp_remainder);
+	} else
+		poffs = offs;
+
+	USETW(hdr->wNdpIndex, poffs);
+	ptr = (struct ncm_pointer16 *)(sc->sc_tx_buf + poffs);
+	plen = sizeof(*ptr) + ndgram * sizeof(*dgram);
 	USETDW(ptr->dwSignature, MBIM_NCM_NTH16_SIG(umb_session_id));
+	USETW(ptr->wLength, plen);
 	USETW(ptr->wNextNdpIndex, 0);
-	dgram = &ptr->dgram[0];
-	offs = (caddr_t)dgram - (caddr_t)sc->sc_tx_buf;
+	dgram = ptr->dgram;
 
-	/* Leave space for dgram pointers */
+	if (!(sc->sc_flags & UMBFLG_NDP_AT_END))
+		dgoffs = offs + plen;
+
+	/* Encap mbufs to NCM dgrams */
 	while ((m = ml_dequeue(&sc->sc_tx_ml)) != NULL) {
-		offs += sizeof (*dgram);
-		ml_enqueue(&tmpml, m);
-	}
-	offs += sizeof (*dgram);	/* one more to terminate pointer list */
-	USETW(ptr->wLength, offs - poffs);
-
-	/* Encap mbufs */
-	while ((m = ml_dequeue(&tmpml)) != NULL) {
-		offs += umb_padding(sc->sc_tx_buf, sc->sc_tx_bufsz, offs,
+		dgoffs += umb_padding(sc->sc_tx_buf, sc->sc_tx_bufsz, dgoffs,
 		    sc->sc_ndp_div, sc->sc_ndp_remainder);
-		USETW(dgram->wDatagramIndex, offs);
+		USETW(dgram->wDatagramIndex, dgoffs);
 		USETW(dgram->wDatagramLen, m->m_pkthdr.len);
 		dgram++;
-		m_copydata(m, 0, m->m_pkthdr.len, sc->sc_tx_buf + offs);
-		offs += m->m_pkthdr.len;
-		ml_enqueue(&sc->sc_tx_ml, m);
+		m_copydata(m, 0, m->m_pkthdr.len, sc->sc_tx_buf + dgoffs);
+		dgoffs += m->m_pkthdr.len;
+		m_freem(m);
 	}
 
-	/* Terminating pointer */
+	if (sc->sc_flags & UMBFLG_NDP_AT_END)
+		offs = poffs + plen;
+	else
+		offs = dgoffs;
+
+	/* Terminating pointer and datagram size */
 	USETW(dgram->wDatagramIndex, 0);
 	USETW(dgram->wDatagramLen, 0);
 	USETW(hdr->wBlockLength, offs);
+	KASSERT(dgram - ptr->dgram == ndgram);
 
 	DPRINTFN(3, "%s: encap %d bytes\n", DEVNAM(sc), offs);
 	DDUMPN(5, sc->sc_tx_buf, offs);
@@ -2237,7 +2258,7 @@ umb_decap(struct umb_softc *sc, struct usbd_xfer *xfer)
 	struct ncm_pointer16_dgram *dgram16;
 	struct ncm_pointer32_dgram *dgram32;
 	uint32_t hsig, psig;
-	int	 hlen, blen;
+	int	 blen;
 	int	 ptrlen, ptroff, dgentryoff;
 	uint32_t doff, dlen;
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
@@ -2252,27 +2273,28 @@ umb_decap(struct umb_softc *sc, struct usbd_xfer *xfer)
 
 	hdr16 = (struct ncm_header16 *)buf;
 	hsig = UGETDW(hdr16->dwSignature);
-	hlen = UGETW(hdr16->wHeaderLength);
-	if (len < hlen)
-		goto toosmall;
 
 	switch (hsig) {
 	case NCM_HDR16_SIG:
 		blen = UGETW(hdr16->wBlockLength);
 		ptroff = UGETW(hdr16->wNdpIndex);
-		if (hlen != sizeof (*hdr16)) {
+		if (UGETW(hdr16->wHeaderLength) != sizeof (*hdr16)) {
 			DPRINTF("%s: bad header len %d for NTH16 (exp %zu)\n",
-			    DEVNAM(sc), hlen, sizeof (*hdr16));
+			    DEVNAM(sc), UGETW(hdr16->wHeaderLength),
+			    sizeof (*hdr16));
 			goto fail;
 		}
 		break;
 	case NCM_HDR32_SIG:
+		if (len < sizeof (*hdr32))
+			goto toosmall;
 		hdr32 = (struct ncm_header32 *)hdr16;
 		blen = UGETDW(hdr32->dwBlockLength);
 		ptroff = UGETDW(hdr32->dwNdpIndex);
-		if (hlen != sizeof (*hdr32)) {
+		if (UGETW(hdr32->wHeaderLength) != sizeof (*hdr32)) {
 			DPRINTF("%s: bad header len %d for NTH32 (exp %zu)\n",
-			    DEVNAM(sc), hlen, sizeof (*hdr32));
+			    DEVNAM(sc), UGETW(hdr32->wHeaderLength),
+			    sizeof (*hdr32));
 			goto fail;
 		}
 		break;
