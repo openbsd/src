@@ -1,4 +1,4 @@
-/* $OpenBSD: mandoc.css,v 1.34 2020/10/30 21:31:19 schwarze Exp $ */
+/* $OpenBSD: mandoc.css,v 1.35 2021/03/30 19:23:50 schwarze Exp $ */
 /*
  * Standard style sheet for mandoc(1) -Thtml and man.cgi(8).
  *
@@ -31,6 +31,7 @@ td {		vertical-align: top;
 ul, ol, dl {	margin-top: 0em;
 		margin-bottom: 0em; }
 li, dt {	margin-top: 1em; }
+pre {		font-family: inherit; }
 
 .permalink {	border-bottom: thin dotted;
 		color: inherit;
