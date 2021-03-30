@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.261 2021/03/18 00:17:26 yasuoka Exp $ */
+/* $OpenBSD: dsdt.c,v 1.262 2021/03/30 16:49:58 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -2535,51 +2535,53 @@ aml_rwgsb(struct aml_value *conn, int alen, int bpos, int blen,
 	i2c_tag_t tag;
 	i2c_op_t op;
 	i2c_addr_t addr;
-	int cmdlen, buflen;
+	int cmdlen, buflen, acclen;
 	uint8_t cmd;
 	uint8_t *buf;
-	int err;
+	int pos, err;
 
 	if (conn->type != AML_OBJTYPE_BUFFER || conn->length < 5 ||
 	    AML_CRSTYPE(crs) != LR_SERBUS || AML_CRSLEN(crs) > conn->length ||
 	    crs->lr_i2cbus.revid != 1 || crs->lr_i2cbus.type != LR_SERBUS_I2C)
 		aml_die("Invalid GenericSerialBus");
 	if (AML_FIELD_ACCESS(flag) != AML_FIELD_BUFFERACC ||
-	    bpos & 0x3 || blen != 8)
+	    bpos & 0x3 || (blen % 8) != 0)
 		aml_die("Invalid GenericSerialBus access");
 
 	node = aml_searchname(conn->node,
 	    (char *)&crs->lr_i2cbus.vdata[crs->lr_i2cbus.tlength - 6]);
-
-	if (node == NULL || node->i2c == NULL)
-		aml_die("Could not find GenericSerialBus controller");
 
 	switch (((flag >> 6) & 0x3)) {
 	case 0:			/* Normal */
 		switch (AML_FIELD_ATTR(flag)) {
 		case 0x02:	/* AttribQuick */
 			cmdlen = 0;
-			buflen = 0;
+			buflen = acclen = 0;
 			break;
 		case 0x04:	/* AttribSendReceive */
 			cmdlen = 0;
-			buflen = 1;
+			acclen = 1;
+			buflen = blen / 8;
 			break;
 		case 0x06:	/* AttribByte */
 			cmdlen = 1;
-			buflen = 1;
+			acclen = 1;
+			buflen = blen / 8;
 			break;
 		case 0x08:	/* AttribWord */
 			cmdlen = 1;
-			buflen = 2;
+			acclen = 2;
+			buflen = blen / 8;
 			break;
 		case 0x0b:	/* AttribBytes */
 			cmdlen = 1;
-			buflen = alen;
+			acclen = alen;
+			buflen = blen / 8;
 			break;
 		case 0x0e:	/* AttribRawBytes */
 			cmdlen = 0;
-			buflen = alen;
+			acclen = alen;
+			buflen = blen / 8;
 			break;
 		default:
 			aml_die("unsupported access type 0x%x", flag);
@@ -2588,11 +2590,11 @@ aml_rwgsb(struct aml_value *conn, int alen, int bpos, int blen,
 		break;
 	case 1:			/* AttribBytes */
 		cmdlen = 1;
-		buflen = AML_FIELD_ATTR(flag);
+		acclen = buflen = AML_FIELD_ATTR(flag);
 		break;
 	case 2:			/* AttribRawBytes */
 		cmdlen = 0;
-		buflen = AML_FIELD_ATTR(flag);
+		acclen = buflen = AML_FIELD_ATTR(flag);
 		break;
 	default:
 		aml_die("unsupported access type 0x%x", flag);
@@ -2606,13 +2608,29 @@ aml_rwgsb(struct aml_value *conn, int alen, int bpos, int blen,
 		op = I2C_OP_WRITE_WITH_STOP;
 	}
 
+	buf = val->v_buffer;
+
+	/*
+	 * Return an error if we can't find the I2C controller that
+	 * we're supposed to use for this request.
+	 */
+	if (node == NULL || node->i2c == NULL) {
+		buf[0] = EIO;
+		return;
+	}
+
 	tag = node->i2c;
 	addr = crs->lr_i2cbus._adr;
 	cmd = bpos >> 3;
-	buf = val->v_buffer;
 
 	iic_acquire_bus(tag, 0);
-	err = iic_exec(tag, op, addr, &cmd, cmdlen, &buf[2], buflen, 0);
+	for (pos = 0; pos < buflen; pos += acclen) {
+		err = iic_exec(tag, op, addr, &cmd, cmdlen,
+		    &buf[pos + 2], acclen, 0);
+		if (err)
+			break;
+		cmd++;
+	}
 	iic_release_bus(tag, 0);
 
 	/*
@@ -2622,6 +2640,58 @@ aml_rwgsb(struct aml_value *conn, int alen, int bpos, int blen,
 	 * numbers should fit in a single byte.
 	 */
 	buf[0] = err;
+}
+
+#else
+
+/*
+ * We don't support GenericSerialBus in RAMDISK kernels.  Provide a
+ * dummy implementation that returns a non-zero error status.
+ */
+
+void
+aml_rwgsb(struct aml_value *conn, int alen, int bpos, int blen,
+    struct aml_value *val, int mode, int flag)
+{
+	int buflen;
+	uint8_t *buf;
+
+	if (AML_FIELD_ACCESS(flag) != AML_FIELD_BUFFERACC ||
+	    bpos & 0x3 || (blen % 8) != 0)
+		aml_die("Invalid GenericSerialBus access");
+
+	switch (((flag >> 6) & 0x3)) {
+	case 0:			/* Normal */
+		switch (AML_FIELD_ATTR(flag)) {
+		case 0x02:	/* AttribQuick */
+			buflen = 0;
+			break;
+		case 0x04:	/* AttribSendReceive */
+		case 0x06:	/* AttribByte */
+		case 0x08:	/* AttribWord */
+		case 0x0b:	/* AttribBytes */
+		case 0x0e:	/* AttribRawBytes */
+			buflen = blen / 8;
+			break;
+		default:
+			aml_die("unsupported access type 0x%x", flag);
+			break;
+		}
+		break;
+	case 1:			/* AttribBytes */
+	case 2:			/* AttribRawBytes */
+		buflen = AML_FIELD_ATTR(flag);
+		break;
+	default:
+		aml_die("unsupported access type 0x%x", flag);
+		break;
+	}
+
+	if (mode == ACPI_IOREAD)
+		_aml_setvalue(val, AML_OBJTYPE_BUFFER, buflen + 2, NULL);
+
+	buf = val->v_buffer;
+	buf[0] = EIO;
 }
 
 #endif
@@ -2727,13 +2797,11 @@ aml_rwfield(struct aml_value *fld, int bpos, int blen, struct aml_value *val,
 			aml_rwgpio(ref2, bpos, blen, val, mode,
 			    fld->v_field.flags);
 			break;
-#ifndef SMALL_KERNEL
 		case ACPI_OPREG_GSB:
 			aml_rwgsb(ref2, fld->v_field.ref3,
 			    fld->v_field.bitpos + bpos, blen,
 			    val, mode, fld->v_field.flags);
 			break;
-#endif
 		default:
 			aml_rwgen(ref1, fld->v_field.bitpos + bpos, blen,
 			    val, mode, fld->v_field.flags);
