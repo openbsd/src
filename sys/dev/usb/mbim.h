@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbim.h,v 1.5 2021/01/29 17:06:19 sthen Exp $ */
+/*	$OpenBSD: mbim.h,v 1.6 2021/03/30 15:59:04 patrick Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -605,12 +605,17 @@ struct mbim_descriptor {
  * NCM Parameters
  */
 #define NCM_GET_NTB_PARAMETERS	0x80
+#define NCM_GET_NTB_FORMAT	0x83	/* Current format returned as uWord */
+#define NCM_SET_NTB_FORMAT	0x84	/* Desired format is in wValue */
+
+#define NCM_FORMAT_NTB16	0x00
+#define NCM_FORMAT_NTB32	0x01
 
 struct ncm_ntb_parameters {
 	uWord	wLength;
 	uWord	bmNtbFormatsSupported;
-#define NCM_FORMAT_NTB16	0x0001
-#define NCM_FORMAT_NTB32	0x0002
+#define NCM_FORMAT_NTB16_MASK	(1U << NCM_FORMAT_NTB16)
+#define NCM_FORMAT_NTB32_MASK	(1U << NCM_FORMAT_NTB32)
 	uDWord	dwNtbInMaxSize;
 	uWord	wNdpInDivisor;
 	uWord	wNdpInPayloadRemainder;

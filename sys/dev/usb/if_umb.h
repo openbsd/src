@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.h,v 1.8 2021/03/30 15:48:36 patrick Exp $ */
+/*	$OpenBSD: if_umb.h,v 1.9 2021/03/30 15:59:04 patrick Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -339,6 +339,8 @@ struct umb_softc {
 	int			 sc_ctrl_len;
 	int			 sc_maxpktlen;
 	int			 sc_maxsessions;
+	unsigned int		 sc_ncm_supported_formats;
+	int			 sc_ncm_format;
 
 	int			 sc_maxdgram;
 	int			 sc_align;
