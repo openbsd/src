@@ -1587,6 +1587,7 @@ EVP_PKEY_meth_set_verify_recover
 EVP_PKEY_meth_set_verifyctx
 EVP_PKEY_missing_parameters
 EVP_PKEY_new
+EVP_PKEY_new_CMAC_key
 EVP_PKEY_new_mac_key
 EVP_PKEY_paramgen
 EVP_PKEY_paramgen_init
