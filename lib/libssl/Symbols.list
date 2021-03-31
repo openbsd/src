@@ -312,6 +312,7 @@ SSL_use_RSAPrivateKey_ASN1
 SSL_use_RSAPrivateKey_file
 SSL_use_certificate
 SSL_use_certificate_ASN1
+SSL_use_certificate_chain_file
 SSL_use_certificate_file
 SSL_version
 SSL_version_str
