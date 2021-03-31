@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.126 2021/03/29 03:45:35 deraadt Exp $ */
+/*	$OpenBSD: main.c,v 1.127 2021/03/31 16:11:02 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -979,6 +979,7 @@ main(int argc, char *argv[])
 	if (procpid == 0) {
 		close(fd[1]);
 
+		setproctitle("parser");
 		/* change working directory to the cache directory */
 		if (fchdir(cachefd) == -1)
 			err(1, "fchdir");
@@ -1012,6 +1013,7 @@ main(int argc, char *argv[])
 			close(proc);
 			close(fd[1]);
 
+			setproctitle("rsync");
 			/* change working directory to the cache directory */
 			if (fchdir(cachefd) == -1)
 				err(1, "fchdir");
@@ -1047,6 +1049,7 @@ main(int argc, char *argv[])
 			close(rsync);
 			close(fd[1]);
 
+			setproctitle("http");
 			/* change working directory to the cache directory */
 			if (fchdir(cachefd) == -1)
 				err(1, "fchdir");
