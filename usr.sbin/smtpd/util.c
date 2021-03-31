@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.152 2020/11/29 20:07:38 tb Exp $	*/
+/*	$OpenBSD: util.c,v 1.153 2021/03/31 19:09:19 eric Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -823,15 +823,13 @@ base64_encode_rfc3548(unsigned char const *src, size_t srclen,
 }
 
 void
-log_trace(int mask, const char *emsg, ...)
+log_trace0(const char *emsg, ...)
 {
 	va_list	 ap;
 
-	if (tracing & mask) {
-		va_start(ap, emsg);
-		vlog(LOG_DEBUG, emsg, ap);
-		va_end(ap);
-	}
+	va_start(ap, emsg);
+	vlog(LOG_DEBUG, emsg, ap);
+	va_end(ap);
 }
 
 void
