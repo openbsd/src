@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.285 2021/03/05 12:37:32 eric Exp $	*/
+/*	$OpenBSD: parse.y,v 1.286 2021/03/31 17:47:16 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -190,7 +190,7 @@ typedef struct {
 %token	MAIL_FROM MAILDIR MASK_SRC MASQUERADE MATCH MAX_MESSAGE_SIZE MAX_DEFERRED MBOX MDA MTA MX
 %token	NO_DSN NO_VERIFY NOOP
 %token	ON
-%token	PHASE PKI PORT PROC PROC_EXEC PROXY_V2
+%token	PHASE PKI PORT PROC PROC_EXEC PROTOCOLS PROXY_V2
 %token	QUEUE QUIT
 %token	RCPT_TO RDNS RECIPIENT RECEIVEDAUTH REGEX RELAY REJECT REPORT REWRITE RSET
 %token	SCHEDULER SENDER SENDERS SMTP SMTP_IN SMTP_OUT SMTPS SOCKET SRC SRS SUB_ADDR_DELIM
@@ -767,6 +767,22 @@ HELO STRING {
 	}
 
 	dsp->u.remote.ca = $2;
+}
+| CIPHERS STRING {
+	if (dsp->u.remote.tls_ciphers) {
+		yyerror("ciphers already specified for this dispatcher");
+		YYERROR;
+	}
+
+	dsp->u.remote.tls_ciphers = $2;
+}
+| PROTOCOLS STRING {
+	if (dsp->u.remote.tls_protocols) {
+		yyerror("protocols already specified for this dispatcher");
+		YYERROR;
+	}
+
+	dsp->u.remote.tls_protocols = $2;
 }
 | SRC tables {
 	struct table   *t = $2;
@@ -2682,6 +2698,7 @@ lookup(char *s)
 		{ "port",		PORT },
 		{ "proc",		PROC },
 		{ "proc-exec",		PROC_EXEC },
+		{ "protocols",		PROTOCOLS },
 		{ "proxy-v2",		PROXY_V2 },
 		{ "queue",		QUEUE },
 		{ "quit",		QUIT },

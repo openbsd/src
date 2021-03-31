@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.258 2021/03/05 12:37:32 eric Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.259 2021/03/31 17:47:16 eric Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: March 5 2021 $
+.Dd $Mdocdate: March 31 2021 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -298,6 +298,18 @@ When used with a smarthost, the protocol must not be
 If
 .Cm no-verify
 is specified, do not require a valid certificate.
+.It Cm protocols Ar protostr
+Define the protocol versions to be used for TLS sessions.
+Refer to the
+.Xr tls_config_parse_protocols 3
+manpage for the format of
+.Ar protostr .
+.It Cm ciphers Ar cipherstr
+Define the list of ciphers that may be used for TLS sessions.
+Refer to the
+.Xr tls_config_set_ciphers 3
+manpage for the format of
+.Ar cipherstr .
 .It Cm auth Pf < Ar table Ns >
 Use the mapping
 .Ar table

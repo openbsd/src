@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.235 2021/03/05 12:37:32 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.236 2021/03/31 17:47:16 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -491,6 +491,7 @@ mta_setup_dispatcher(struct dispatcher *dispatcher)
 	struct tls_config *config;
 	struct pki *pki;
 	struct ca *ca;
+	uint32_t protos;
 
 	if (dispatcher->type != DISPATCHER_REMOTE)
 		return;
@@ -500,10 +501,14 @@ mta_setup_dispatcher(struct dispatcher *dispatcher)
 	if ((config = tls_config_new()) == NULL)
 		fatal("smtpd: tls_config_new");
 
-	if (env->sc_tls_ciphers) {
-		if (tls_config_set_ciphers(config, env->sc_tls_ciphers) == -1)
-			err(1, "%s", tls_config_error(config));
-	}
+	if (remote->tls_ciphers &&
+	    tls_config_set_ciphers(config, remote->tls_ciphers) == -1)
+		err(1, "%s", tls_config_error(config));
+
+	if (remote->tls_protocols &&
+	    (tls_config_parse_protocols(&protos, remote->tls_protocols) == -1
+	    || tls_config_set_protocols(config, protos) == -1))
+		err(1, "%s", tls_config_error(config));
 
 	if (remote->pki) {
 		pki = dict_get(env->sc_pki_dict, remote->pki);
