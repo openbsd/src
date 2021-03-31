@@ -1,4 +1,4 @@
-.\" $OpenBSD: ober_get_string.3,v 1.5 2021/03/03 20:15:54 martijn Exp $
+.\" $OpenBSD: ober_get_string.3,v 1.6 2021/03/31 19:31:35 schwarze Exp $
 .\"
 .\" Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 3 2021 $
+.Dd $Mdocdate: March 31 2021 $
 .Dt OBER_GET_STRING 3
 .Os
 .Sh NAME
@@ -94,7 +94,8 @@ and passed to the function listed, processing one
 .Vt ber_element
 per character.
 The following characters are valid:
-.Bl -column "( or {" "ober_get_enumerated()" "1: struct ber_element **" -offset indent
+.Bl -column -offset indent\
+ characte ober_get_enumerated_ "1: struct ber_element **"
 .It Sy character Ta Sy function Ta Sy arguments
 .It $ Ta see below              Ta 0
 .It B Ta Fn ober_get_bitstring  Ta 2: Vt void ** , size_t *
