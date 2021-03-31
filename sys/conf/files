@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.699 2021/03/12 16:26:27 stsp Exp $
+#	$OpenBSD: files,v 1.700 2021/03/31 12:59:50 visa Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -1071,15 +1071,15 @@ file lib/libkern/arch/${MACHINE_ARCH}/htonl.S | lib/libkern/htonl.c
 file lib/libkern/arch/${MACHINE_ARCH}/htons.S | lib/libkern/htons.c
 file lib/libkern/arch/${MACHINE_ARCH}/strncasecmp.S | lib/libkern/strncasecmp.c
 
-file lib/libz/adler32.c			ppp_deflate | ipsec | crypto | bios
+file lib/libz/adler32.c			ppp_deflate | ipsec | crypto | ddb |
+					    bios
 file lib/libz/crc32.c
-file lib/libz/infback.c			ppp_deflate | ipsec | crypto
-file lib/libz/inffast.c			ppp_deflate | ipsec | crypto
-file lib/libz/inflate.c			ppp_deflate | ipsec | crypto
-file lib/libz/inftrees.c		ppp_deflate | ipsec | crypto
-file lib/libz/deflate.c			ppp_deflate | ipsec | crypto
-file lib/libz/zutil.c			ppp_deflate | ipsec | crypto
-file lib/libz/zopenbsd.c		ppp_deflate | ipsec | crypto
-file lib/libz/trees.c			ppp_deflate | ipsec | crypto
-file lib/libz/compress.c		ppp_deflate | ipsec | crypto
-
+file lib/libz/infback.c			ppp_deflate | ipsec | crypto | ddb
+file lib/libz/inffast.c			ppp_deflate | ipsec | crypto | ddb
+file lib/libz/inflate.c			ppp_deflate | ipsec | crypto | ddb
+file lib/libz/inftrees.c		ppp_deflate | ipsec | crypto | ddb
+file lib/libz/deflate.c			ppp_deflate | ipsec | crypto | ddb
+file lib/libz/zutil.c			ppp_deflate | ipsec | crypto | ddb
+file lib/libz/zopenbsd.c		ppp_deflate | ipsec | crypto | ddb
+file lib/libz/trees.c			ppp_deflate | ipsec | crypto | ddb
+file lib/libz/compress.c		ppp_deflate | ipsec | crypto | ddb
