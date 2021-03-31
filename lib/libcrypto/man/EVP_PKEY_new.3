@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_PKEY_new.3,v 1.12 2021/03/29 17:58:29 tb Exp $
+.\" $OpenBSD: EVP_PKEY_new.3,v 1.13 2021/03/31 16:48:43 tb Exp $
 .\" full merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\" selective merge up to: OpenSSL df75c2bf Dec 9 01:02:36 2018 +0100
 .\"
@@ -50,16 +50,14 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 29 2021 $
+.Dd $Mdocdate: March 31 2021 $
 .Dt EVP_PKEY_NEW 3
 .Os
 .Sh NAME
 .Nm EVP_PKEY_new ,
 .Nm EVP_PKEY_up_ref ,
 .Nm EVP_PKEY_free ,
-.ig \" will appear in a library bump before Ox 6.9
-.Nm EVP_PKEY_new_CMAC_key
-..
+.Nm EVP_PKEY_new_CMAC_key ,
 .Nm EVP_PKEY_new_mac_key
 .Nd private key allocation functions
 .Sh SYNOPSIS
@@ -74,7 +72,6 @@
 .Fo EVP_PKEY_free
 .Fa "EVP_PKEY *key"
 .Fc
-.ig
 .Ft EVP_PKEY *
 .Fo EVP_PKEY_new_CMAC_key
 .Fa "ENGINE *e"
@@ -82,7 +79,6 @@
 .Fa "size_t len"
 .Fa "const EVP_CIPHER *cipher"
 .Fc
-..
 .Ft EVP_PKEY *
 .Fo EVP_PKEY_new_mac_key
 .Fa "int type"
@@ -119,7 +115,6 @@ If
 is a
 .Dv NULL
 pointer, no action occurs.
-.ig
 .Pp
 .Fn EVP_PKEY_new_CMAC_key
 allocates a new
@@ -146,7 +141,6 @@ specifies a cipher algorithm to be used during creation of the CMAC.
 .Fa cipher
 should be a standard encryption only cipher.
 For example, AEAD and XTS ciphers should not be used.
-..
 .Pp
 .Fn EVP_PKEY_new_mac_key
 allocates a new
@@ -174,10 +168,8 @@ The length should be appropriate for the type of the key.
 The public key data will be automatically derived from the given
 private key data (if appropriate for the algorithm type).
 .Sh RETURN VALUES
-.Fn EVP_PKEY_new
-.ig
+.Fn EVP_PKEY_new ,
 .Fn EVP_PKEY_new_CMAC_key ,
-..
 and
 .Fn EVP_PKEY_new_mac_key
 return either the newly allocated
@@ -189,9 +181,7 @@ if an error occurred.
 .Fn EVP_PKEY_up_ref
 returns 1 for success or 0 for failure.
 .Sh SEE ALSO
-.ig
 .Xr CMAC_Init 3 ,
-..
 .Xr d2i_PrivateKey 3 ,
 .Xr evp 3 ,
 .Xr EVP_PKEY_asn1_new 3 ,
@@ -207,12 +197,10 @@ and
 .Fn EVP_PKEY_free
 first appeared in SSLeay 0.6.0 and have been available since
 .Ox 2.4 .
-.ig
 .Pp
 .Fn EVP_PKEY_new_CMAC_key
 first appeared in OpenSSL 1.1.1 and has been available since
 .Ox 6.9 .
-..
 .Pp
 .Fn EVP_PKEY_new_mac_key
 first appeared in OpenSSL 1.0.0 and has been available since
