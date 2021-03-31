@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.716 2021/03/31 15:32:11 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.717 2021/03/31 20:52:09 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2370,10 +2370,14 @@ apply_defaults(struct client_lease *lease)
 	if (config->filename != NULL) {
 		free(newlease->filename);
 		newlease->filename = strdup(config->filename);
+		if (newlease->filename == NULL)
+			fatal("strdup(config->filename)");
 	}
 	if (config->server_name != NULL) {
 		free(newlease->server_name);
 		newlease->server_name = strdup(config->server_name);
+		if (newlease->server_name == NULL)
+			fatal("strdup(config->server_name)");
 	}
 	if (config->address.s_addr != INADDR_ANY)
 		newlease->address.s_addr = config->address.s_addr;
