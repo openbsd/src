@@ -1,4 +1,4 @@
-.\"     $OpenBSD: nc.1,v 1.95 2020/02/12 14:46:36 schwarze Exp $
+.\"     $OpenBSD: nc.1,v 1.96 2021/03/31 20:41:35 jmc Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 12 2020 $
+.Dd $Mdocdate: March 31 2021 $
 .Dt NC 1
 .Os
 .Sh NAME
@@ -414,7 +414,7 @@ On a second console
 .Pq or a second machine ,
 connect to the machine and port being listened on:
 .Pp
-.Dl $ nc 127.0.0.1 1234
+.Dl $ nc -N 127.0.0.1 1234
 .Pp
 There should now be a connection between the ports.
 Anything typed at the second console will be concatenated to the first,
@@ -427,7 +427,10 @@ and which side is being used as a
 .Sq client .
 The connection may be terminated using an
 .Dv EOF
-.Pq Sq ^D .
+.Pq Sq ^D ,
+as the
+.Fl N
+flag was given.
 .Sh DATA TRANSFER
 The example in the previous section can be expanded to build a
 basic data transfer model.
