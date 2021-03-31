@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg-buffer.c,v 1.12 2019/01/20 02:50:03 bcook Exp $	*/
+/*	$OpenBSD: imsg-buffer.c,v 1.13 2021/03/31 17:42:24 eric Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -225,7 +225,7 @@ int
 msgbuf_write(struct msgbuf *msgbuf)
 {
 	struct iovec	 iov[IOV_MAX];
-	struct ibuf	*buf;
+	struct ibuf	*buf, *buf0 = NULL;
 	unsigned int	 i = 0;
 	ssize_t		 n;
 	struct msghdr	 msg;
@@ -241,24 +241,26 @@ msgbuf_write(struct msgbuf *msgbuf)
 	TAILQ_FOREACH(buf, &msgbuf->bufs, entry) {
 		if (i >= IOV_MAX)
 			break;
+		if (i > 0 && buf->fd != -1)
+			break;
 		iov[i].iov_base = buf->buf + buf->rpos;
 		iov[i].iov_len = buf->wpos - buf->rpos;
 		i++;
 		if (buf->fd != -1)
-			break;
+			buf0 = buf;
 	}
 
 	msg.msg_iov = iov;
 	msg.msg_iovlen = i;
 
-	if (buf != NULL && buf->fd != -1) {
+	if (buf0 != NULL) {
 		msg.msg_control = (caddr_t)&cmsgbuf.buf;
 		msg.msg_controllen = sizeof(cmsgbuf.buf);
 		cmsg = CMSG_FIRSTHDR(&msg);
 		cmsg->cmsg_len = CMSG_LEN(sizeof(int));
 		cmsg->cmsg_level = SOL_SOCKET;
 		cmsg->cmsg_type = SCM_RIGHTS;
-		*(int *)CMSG_DATA(cmsg) = buf->fd;
+		*(int *)CMSG_DATA(cmsg) = buf0->fd;
 	}
 
 again:
@@ -279,9 +281,9 @@ again:
 	 * assumption: fd got sent if sendmsg sent anything
 	 * this works because fds are passed one at a time
 	 */
-	if (buf != NULL && buf->fd != -1) {
-		close(buf->fd);
-		buf->fd = -1;
+	if (buf0 != NULL) {
+		close(buf0->fd);
+		buf0->fd = -1;
 	}
 
 	msgbuf_drain(msgbuf, n);
