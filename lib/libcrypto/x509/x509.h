@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.74 2018/08/24 20:26:03 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.75 2021/03/31 16:51:06 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -679,6 +679,7 @@ int i2d_RSA_PUBKEY_fp(FILE *fp,RSA *rsa);
 #ifndef OPENSSL_NO_DSA
 DSA *d2i_DSA_PUBKEY_fp(FILE *fp, DSA **dsa);
 int i2d_DSA_PUBKEY_fp(FILE *fp, DSA *dsa);
+DSA *d2i_DSAPrivateKey_fp(FILE *fp, DSA **dsa);
 int i2d_DSAPrivateKey_fp(FILE *fp, DSA *dsa);
 #endif
 #ifndef OPENSSL_NO_EC
