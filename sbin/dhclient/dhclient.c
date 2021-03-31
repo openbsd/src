@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.715 2021/03/28 17:25:21 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.716 2021/03/31 15:32:11 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -730,6 +730,8 @@ main(int argc, char *argv[])
 			fatal("pledge");
 	}
 
+	tick_msg("link", LINK_STATE_IS_UP(ifi->link_state) ? TICK_SUCCESS :
+	    TICK_WAIT);
 	quit = RESTART;
 	dispatch(ifi, routefd);
 
@@ -2708,9 +2710,11 @@ tick_msg(const char *preamble, int action)
 	if (timespeccmp(&now, &stop, >=)) {
 		if (action == TICK_WAIT)
 			action = TICK_DAEMON;
-		log_debug("%s: link timeout (%lld seconds) expired",
-		    log_procname, (long long)link_intvl.tv_sec);
-		linkup = 1;
+		if (linkup == 0) {
+			log_debug("%s: link timeout (%lld seconds) expired",
+			    log_procname, (long long)link_intvl.tv_sec);
+			linkup = 1;
+		}
 	}
 
 	if (printmsg && preamble_sent == 0) {
