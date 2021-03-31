@@ -4,6 +4,7 @@
  * enabled (or possibly not yet not implemented, or removed!).
  */
 /* #define LIBRESSL_HAS_TLS1_3 */
+/* #define LIBRESSL_HAS_DTLS1_2 */
 
 #define OPENSSL_THREADS
 

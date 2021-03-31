@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.185 2021/03/31 16:55:04 tb Exp $ */
+/* $OpenBSD: ssl.h,v 1.186 2021/03/31 16:59:32 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -301,9 +301,7 @@ extern "C" {
 #define SSL_TXT_STREEBOG512		"STREEBOG512"
 
 #define SSL_TXT_DTLS1		"DTLSv1"
-#if defined(LIBRESSL_HAS_DTLS1_2) || defined(LIBRESSL_INTERNAL)
 #define SSL_TXT_DTLS1_2		"DTLSv1.2"
-#endif
 #define SSL_TXT_SSLV2		"SSLv2"
 #define SSL_TXT_SSLV3		"SSLv3"
 #define SSL_TXT_TLSV1		"TLSv1"
@@ -523,10 +521,8 @@ struct ssl_session_st {
 #define SSL_OP_NO_TLSv1_3				0x20000000L
 #endif
 
-#if defined(LIBRESSL_HAS_DTLS1_2) || defined(LIBRESSL_INTERNAL)
 #define SSL_OP_NO_DTLSv1				0x40000000L
 #define SSL_OP_NO_DTLSv1_2				0x80000000L
-#endif
 
 /* SSL_OP_ALL: various bug workarounds that should be rather harmless. */
 #define SSL_OP_ALL \
@@ -1465,9 +1461,7 @@ void	SSL_free(SSL *ssl);
 int	SSL_up_ref(SSL *ssl);
 int 	SSL_accept(SSL *ssl);
 int 	SSL_connect(SSL *ssl);
-#ifdef LIBRESSL_INTERNAL
 int	SSL_is_dtls(const SSL *s);
-#endif
 int	SSL_is_server(const SSL *s);
 int 	SSL_read(SSL *ssl, void *buf, int num);
 int 	SSL_peek(SSL *ssl, void *buf, int num);
@@ -1527,11 +1521,9 @@ const SSL_METHOD *DTLSv1_method(void);		/* DTLSv1.0 */
 const SSL_METHOD *DTLSv1_server_method(void);	/* DTLSv1.0 */
 const SSL_METHOD *DTLSv1_client_method(void);	/* DTLSv1.0 */
 
-#if defined(LIBRESSL_HAS_DTLS1_2) || defined(LIBRESSL_INTERNAL)
 const SSL_METHOD *DTLSv1_2_method(void);	/* DTLSv1.2 */
 const SSL_METHOD *DTLSv1_2_server_method(void);	/* DTLSv1.2 */
 const SSL_METHOD *DTLSv1_2_client_method(void);	/* DTLSv1.2 */
-#endif
 
 const SSL_METHOD *DTLS_method(void);		/* DTLS v1.0 or later */
 const SSL_METHOD *DTLS_server_method(void);	/* DTLS v1.0 or later */

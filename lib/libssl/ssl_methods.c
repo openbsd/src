@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_methods.c,v 1.23 2021/02/25 17:06:05 jsing Exp $ */
+/* $OpenBSD: ssl_methods.c,v 1.24 2021/03/31 16:59:32 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,7 +59,6 @@
 #include "ssl_locl.h"
 #include "tls13_internal.h"
 
-#ifdef LIBRESSL_HAS_DTLS1_2
 static const SSL_METHOD_INTERNAL DTLS_method_internal_data = {
 	.dtls = 1,
 	.server = 1,
@@ -117,7 +116,6 @@ static const SSL_METHOD DTLS_client_method_data = {
 	.put_cipher_by_char = ssl3_put_cipher_by_char,
 	.internal = &DTLS_client_method_internal_data,
 };
-#endif
 
 static const SSL_METHOD_INTERNAL DTLSv1_method_internal_data = {
 	.dtls = 1,
@@ -274,31 +272,19 @@ DTLSv1_2_server_method(void)
 const SSL_METHOD *
 DTLS_client_method(void)
 {
-#ifdef LIBRESSL_HAS_DTLS1_2
 	return &DTLS_client_method_data;
-#else
-	return DTLSv1_client_method();
-#endif
 }
 
 const SSL_METHOD *
 DTLS_method(void)
 {
-#ifdef LIBRESSL_HAS_DTLS1_2
 	return &DTLS_method_data;
-#else
-	return DTLSv1_method();
-#endif
 }
 
 const SSL_METHOD *
 DTLS_server_method(void)
 {
-#ifdef LIBRESSL_HAS_DTLS1_2
 	return &DTLS_method_data;
-#else
-	return DTLSv1_server_method();
-#endif
 }
 
 #if defined(LIBRESSL_HAS_TLS1_3_CLIENT) && defined(LIBRESSL_HAS_TLS1_3_SERVER)

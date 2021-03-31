@@ -13,6 +13,9 @@ DTLS_server_method
 DTLSv1_client_method
 DTLSv1_method
 DTLSv1_server_method
+DTLSv1_2_client_method
+DTLSv1_2_method
+DTLSv1_2_server_method
 SSLv23_client_method
 SSLv23_method
 SSLv23_server_method
@@ -244,6 +247,7 @@ SSL_get_version
 SSL_get_wbio
 SSL_get_wfd
 SSL_has_matching_session_id
+SSL_is_dtls
 SSL_is_server
 SSL_library_init
 SSL_load_client_CA_file
