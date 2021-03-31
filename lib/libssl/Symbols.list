@@ -196,6 +196,7 @@ SSL_get0_alpn_selected
 SSL_get0_chain_certs
 SSL_get0_next_proto_negotiated
 SSL_get0_param
+SSL_get0_peername
 SSL_get1_session
 SSL_get1_supported_ciphers
 SSL_get_SSL_CTX
@@ -274,6 +275,7 @@ SSL_set_debug
 SSL_set_ex_data
 SSL_set_fd
 SSL_set_generate_session_id
+SSL_set_hostflags
 SSL_set_info_callback
 SSL_set_max_proto_version
 SSL_set_min_proto_version
