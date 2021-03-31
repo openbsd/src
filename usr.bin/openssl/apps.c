@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.59 2021/03/24 12:07:39 inoguchi Exp $ */
+/* $OpenBSD: apps.c,v 1.60 2021/03/31 17:13:54 tb Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -2339,11 +2339,4 @@ show_cipher(const OBJ_NAME *name, void *arg)
 		return;
 
 	fprintf(stderr, " -%-24s%s", name->name, (++*n % 3 != 0 ? "" : "\n"));
-}
-
-int
-SSL_is_dtls(const SSL *s)
-{
-	return SSL_version(s) == DTLS1_VERSION ||
-	    SSL_version(s) == DTLS1_2_VERSION;
 }
