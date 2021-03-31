@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.52 2021/03/22 11:16:05 claudio Exp $ */
+/*	$Id: main.c,v 1.53 2021/03/31 19:45:16 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -311,6 +311,7 @@ main(int argc, char *argv[])
 		{ "verbose",	no_argument,	&verbose,		1 },
 		{ "no-verbose",	no_argument,	&verbose,		0 },
 		{ "address",	required_argument, NULL,		4 },
+		{ "no-motd",	no_argument,	NULL,			6 },
 		{ NULL,		0,		NULL,			0 }};
 
 	/* Global pledge. */
@@ -391,6 +392,9 @@ main(int argc, char *argv[])
 			poll_timeout = strtonum(optarg, 0, 60*60, &errstr);
 			if (errstr != NULL)
 				errx(1, "timeout is %s: %s", errstr, optarg);
+			break;
+		case 6:
+			opts.no_motd = 1;
 			break;
 		case 'h':
 		default:
@@ -524,8 +528,9 @@ main(int argc, char *argv[])
 usage:
 	fprintf(stderr, "usage: %s"
 	    " [-aDglnoprtvx] [-e program] [--address=sourceaddr] [--del]\n"
-	    "\t[--numeric-ids] [--port=portnumber] [--rsync-path=program]\n"
-	    "\t[--timeout=seconds] [--version] source ... directory\n",
+	    "\t[--no-motd] [--numeric-ids] [--port=portnumber] "
+	    "[--rsync-path=program]\n\t[--timeout=seconds] [--version] "
+            "source ... directory\n",
 	    getprogname());
 	exit(1);
 }

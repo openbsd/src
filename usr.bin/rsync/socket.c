@@ -1,4 +1,4 @@
-/*	$Id: socket.c,v 1.28 2020/08/19 11:10:42 kn Exp $ */
+/*	$Id: socket.c,v 1.29 2021/03/31 19:45:16 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -236,7 +236,8 @@ protocol_line(struct sess *sess, __attribute__((unused)) const char *host,
 	int	major, minor;
 
 	if (strncmp(cp, "@RSYNCD: ", 9)) {
-		LOG1("%s", cp);
+		if (sess->opts->no_motd == 0)
+			LOG1("%s", cp);
 		return 0;
 	}
 

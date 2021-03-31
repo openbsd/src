@@ -1,4 +1,4 @@
-/*	$Id: extern.h,v 1.35 2021/03/22 11:14:42 claudio Exp $ */
+/*	$Id: extern.h,v 1.36 2021/03/31 19:45:16 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -115,6 +115,7 @@ struct	opts {
 	int		 del;			/* --delete */
 	int		 devices;		/* --devices */
 	int		 specials;		/* --specials */
+	int		 no_motd;		/* --no-motd */
 	int		 numeric_ids;		/* --numeric-ids */
 	int		 one_file_system;	/* -x */
 	char		*rsync_path;		/* --rsync-path */
