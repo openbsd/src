@@ -1,4 +1,4 @@
-# $OpenBSD: symbols.awk,v 1.3 2020/10/12 13:36:38 tb Exp $
+# $OpenBSD: symbols.awk,v 1.4 2021/03/31 17:10:13 tb Exp $
 
 # Copyright (c) 2018,2020 Theo Buehler <tb@openbsd.org>
 #
@@ -89,10 +89,6 @@ BEGIN {
 /^X9_62_CHARACTERISTIC_TWO_new$/				||
 /^X9_62_PENTANOMIAL_new$/ {
 	printf("extern void *%s(void);\n", $0)
-}
-
-/^d2i_DSAPrivateKey_fp$/ {
-	printf("extern void *%s(FILE *, void **);\n", $0)
 }
 
 /^d2i_ECPKPARAMETERS$/						||
