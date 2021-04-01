@@ -42,12 +42,12 @@ struct dt_collector* dt_collector_create(struct nsd* nsd)
 	dt_col->dt_env = NULL;
 	dt_col->region = region_create(xalloc, free);
 	dt_col->send_buffer = buffer_create(dt_col->region,
-		/* msglen + is_response + addrlen + is_tcp + packetlen + packet + zonelen + zone + spare + addr */
+		/* msglen + is_response + addrlen + is_tcp + packetlen + packet + zonelen + zone + spare + local_addr + addr */
 		4+1+4+1+4+TCP_MAX_MESSAGE_LEN+4+MAXHOSTNAMELEN + 32 +
 #ifdef INET6
-		sizeof(struct sockaddr_storage)
+		sizeof(struct sockaddr_storage) + sizeof(struct sockaddr_storage)
 #else
-		sizeof(struct sockaddr_in)
+		sizeof(struct sockaddr_in) + sizeof(struct sockaddr_in)
 #endif
 		);
 
@@ -190,9 +190,9 @@ dt_submit_content(struct dt_env* dt_env, struct buffer* buf)
 {
 	uint8_t is_response, is_tcp;
 #ifdef INET6
-	struct sockaddr_storage addr;
+	struct sockaddr_storage local_addr, addr;
 #else
-	struct sockaddr_in addr;
+	struct sockaddr_in local_addr, addr;
 #endif
 	socklen_t addrlen;
 	size_t pktlen;
@@ -205,8 +205,9 @@ dt_submit_content(struct dt_env* dt_env, struct buffer* buf)
 	buffer_skip(buf, 4); /* skip msglen */
 	is_response = buffer_read_u8(buf);
 	addrlen = buffer_read_u32(buf);
-	if(addrlen > sizeof(addr)) return;
-	if(!buffer_available(buf, addrlen)) return;
+	if(addrlen > sizeof(local_addr) || addrlen > sizeof(addr)) return;
+	if(!buffer_available(buf, 2*addrlen)) return;
+	buffer_read(buf, &local_addr, addrlen);
 	buffer_read(buf, &addr, addrlen);
 	if(!buffer_available(buf, 1+4)) return;
 	is_tcp = buffer_read_u8(buf);
@@ -227,10 +228,10 @@ dt_submit_content(struct dt_env* dt_env, struct buffer* buf)
 
 	/* submit it */
 	if(is_response) {
-		dt_msg_send_auth_response(dt_env, &addr, is_tcp, zone,
+		dt_msg_send_auth_response(dt_env, &local_addr, &addr, is_tcp, zone,
 			zonelen, data, pktlen);
 	} else {
-		dt_msg_send_auth_query(dt_env, &addr, is_tcp, zone,
+		dt_msg_send_auth_query(dt_env, &local_addr, &addr, is_tcp, zone,
 			zonelen, data, pktlen);
 	}
 }
@@ -341,12 +342,12 @@ static void dt_attach_events(struct dt_collector* dt_col, struct nsd* nsd)
 			log_msg(LOG_ERR, "dnstap collector: event_add failed");
 		
 		dt_col->inputs[i].buffer = buffer_create(dt_col->region,
-			/* msglen + is_response + addrlen + is_tcp + packetlen + packet + zonelen + zone + spare + addr */
+			/* msglen + is_response + addrlen + is_tcp + packetlen + packet + zonelen + zone + spare + local_addr + addr */
 			4+1+4+1+4+TCP_MAX_MESSAGE_LEN+4+MAXHOSTNAMELEN + 32 +
 #ifdef INET6
-			sizeof(struct sockaddr_storage)
+			sizeof(struct sockaddr_storage) + sizeof(struct sockaddr_storage)
 #else
-			sizeof(struct sockaddr_in)
+			sizeof(struct sockaddr_in) + sizeof(struct sockaddr_in)
 #endif
 		);
 		assert(buffer_capacity(dt_col->inputs[i].buffer) ==
@@ -400,19 +401,29 @@ void dt_collector_start(struct dt_collector* dt_col, struct nsd* nsd)
 static int
 prep_send_data(struct buffer* buf, uint8_t is_response,
 #ifdef INET6
+	struct sockaddr_storage* local_addr,
 	struct sockaddr_storage* addr,
 #else
+	struct sockaddr_in* local_addr,
 	struct sockaddr_in* addr,
 #endif
 	socklen_t addrlen, int is_tcp, struct buffer* packet,
 	struct zone* zone)
 {
 	buffer_clear(buf);
-	if(!buffer_available(buf, 4+1+4+addrlen+1+4+buffer_remaining(packet)))
+#ifdef INET6
+	if(local_addr->ss_family != addr->ss_family)
+		return 0; /* must be same length to send */
+#else
+	if(local_addr->sin_family != addr->sin_family)
+		return 0; /* must be same length to send */
+#endif
+	if(!buffer_available(buf, 4+1+4+2*addrlen+1+4+buffer_remaining(packet)))
 		return 0; /* does not fit in send_buffer, log is dropped */
 	buffer_skip(buf, 4); /* the length of the message goes here */
 	buffer_write_u8(buf, is_response);
 	buffer_write_u32(buf, addrlen);
+	buffer_write(buf, local_addr, (size_t)addrlen);
 	buffer_write(buf, addr, (size_t)addrlen);
 	buffer_write_u8(buf, (is_tcp?1:0));
 	buffer_write_u32(buf, buffer_remaining(packet));
@@ -470,8 +481,10 @@ static void attempt_to_write(int s, uint8_t* data, size_t len)
 
 void dt_collector_submit_auth_query(struct nsd* nsd,
 #ifdef INET6
+	struct sockaddr_storage* local_addr,
 	struct sockaddr_storage* addr,
 #else
+	struct sockaddr_in* local_addr,
 	struct sockaddr_in* addr,
 #endif
 	socklen_t addrlen, int is_tcp, struct buffer* packet)
@@ -481,7 +494,7 @@ void dt_collector_submit_auth_query(struct nsd* nsd,
 	VERBOSITY(4, (LOG_INFO, "dnstap submit auth query"));
 
 	/* marshal data into send buffer */
-	if(!prep_send_data(nsd->dt_collector->send_buffer, 0, addr, addrlen,
+	if(!prep_send_data(nsd->dt_collector->send_buffer, 0, local_addr, addr, addrlen,
 		is_tcp, packet, NULL))
 		return; /* probably did not fit in buffer */
 
@@ -493,8 +506,10 @@ void dt_collector_submit_auth_query(struct nsd* nsd,
 
 void dt_collector_submit_auth_response(struct nsd* nsd,
 #ifdef INET6
+	struct sockaddr_storage* local_addr,
 	struct sockaddr_storage* addr,
 #else
+	struct sockaddr_in* local_addr,
 	struct sockaddr_in* addr,
 #endif
 	socklen_t addrlen, int is_tcp, struct buffer* packet,
@@ -505,7 +520,7 @@ void dt_collector_submit_auth_response(struct nsd* nsd,
 	VERBOSITY(4, (LOG_INFO, "dnstap submit auth response"));
 
 	/* marshal data into send buffer */
-	if(!prep_send_data(nsd->dt_collector->send_buffer, 1, addr, addrlen,
+	if(!prep_send_data(nsd->dt_collector->send_buffer, 1, local_addr, addr, addrlen,
 		is_tcp, packet, zone))
 		return; /* probably did not fit in buffer */
 
