@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.718 2021/03/31 21:17:46 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.719 2021/04/01 13:17:48 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -923,12 +923,15 @@ process_offer(struct interface_info *ifi, struct option_data *options,
 			ifi->offer = lease;
 			free(ifi->offer_src);
 			ifi->offer_src = strdup(src);	/* NULL is OK */
-			ifi->select_timeout = now;
 		}
+
 		if (ifi->offer != lease) {
 			make_decline(ifi, lease);
 			send_decline(ifi);
 			free_client_lease(lease);
+		} else if (ifi->offer->address.s_addr ==
+		    ifi->requested_address.s_addr) {
+			ifi->select_timeout = now;
 		}
 	}
 
