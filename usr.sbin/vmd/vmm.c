@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.98 2021/03/29 23:37:01 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.99 2021/04/01 11:05:47 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -273,7 +273,6 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		IMSG_SIZE_CHECK(imsg, &vid);
 		memcpy(&vid, imsg->data, sizeof(vid));
 		id = vid.vid_id;
-		vm = vm_getbyvmid(id);
 		if ((vm = vm_getbyvmid(id)) == NULL) {
 			res = ENOENT;
 			cmd = IMSG_VMDOP_PAUSE_VM_RESPONSE;
