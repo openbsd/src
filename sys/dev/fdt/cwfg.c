@@ -1,4 +1,4 @@
-/* $OpenBSD: cwfg.c,v 1.5 2021/04/01 10:34:21 kn Exp $ */
+/* $OpenBSD: cwfg.c,v 1.6 2021/04/01 12:06:00 kn Exp $ */
 /* $NetBSD: cwfg.c,v 1.1 2020/01/03 18:00:05 jmcneill Exp $ */
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -89,15 +89,9 @@ struct cwfg_softc {
 
 	uint8_t		sc_batinfo[BATINFO_SIZE];
 
-	uint32_t	sc_monitor_interval;
-	uint32_t	sc_design_capacity;
-
 	struct ksensor	sc_sensor[CWFG_NSENSORS];
 	struct ksensordev sc_sensordev;
 };
-
-#define	CWFG_MONITOR_INTERVAL_DEFAULT	5000
-#define	CWFG_DESIGN_CAPACITY_DEFAULT	2000
 
 int cwfg_match(struct device *, void *, void *);
 void cwfg_attach(struct device *, struct device *, void *);
@@ -180,11 +174,6 @@ cwfg_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	free(batinfo, M_TEMP, len);
-
-	sc->sc_monitor_interval = OF_getpropint(sc->sc_node,
-	    "cellwise,monitor-interval-ms", CWFG_MONITOR_INTERVAL_DEFAULT);
-	sc->sc_design_capacity = OF_getpropint(sc->sc_node,
-	    "cellwise,design-capacity", CWFG_DESIGN_CAPACITY_DEFAULT);
 
 	if (cwfg_init(sc) != 0) {
 		printf(": failed to initialize device\n");
