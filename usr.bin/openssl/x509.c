@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.20 2021/03/26 13:46:25 inoguchi Exp $ */
+/* $OpenBSD: x509.c,v 1.21 2021/04/01 10:47:38 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -782,7 +782,7 @@ x509_main(int argc, char **argv)
 		    "need to specify a CAkey if using the CA command\n");
 		goto end;
 	}
-	if (x509_config.extfile) {
+	if (x509_config.extfile != NULL) {
 		long errorline = -1;
 		X509V3_CTX ctx2;
 		extconf = NCONF_new(NULL);
@@ -797,10 +797,10 @@ x509_main(int argc, char **argv)
 				    errorline, x509_config.extfile);
 			goto end;
 		}
-		if (!x509_config.extsect) {
+		if (x509_config.extsect == NULL) {
 			x509_config.extsect = NCONF_get_string(extconf,
 			    "default", "extensions");
-			if (!x509_config.extsect) {
+			if (x509_config.extsect == NULL) {
 				ERR_clear_error();
 				x509_config.extsect = "default";
 			}
@@ -882,7 +882,7 @@ x509_main(int argc, char **argv)
 
 		if (x509_config.sno == NULL) {
 			x509_config.sno = ASN1_INTEGER_new();
-			if (!x509_config.sno ||
+			if (x509_config.sno == NULL ||
 			    !rand_serial(NULL, x509_config.sno))
 				goto end;
 			if (!X509_set_serialNumber(x, x509_config.sno))
@@ -933,7 +933,7 @@ x509_main(int argc, char **argv)
 			}
 		}
 	}
-	if (x509_config.alias)
+	if (x509_config.alias != NULL)
 		X509_alias_set1(x, (unsigned char *) x509_config.alias, -1);
 
 	if (x509_config.clrtrust)
@@ -941,14 +941,14 @@ x509_main(int argc, char **argv)
 	if (x509_config.clrreject)
 		X509_reject_clear(x);
 
-	if (x509_config.trust) {
+	if (x509_config.trust != NULL) {
 		for (i = 0; i < sk_ASN1_OBJECT_num(x509_config.trust); i++) {
 			x509_config.objtmp = sk_ASN1_OBJECT_value(
 			    x509_config.trust, i);
 			X509_add1_trust_object(x, x509_config.objtmp);
 		}
 	}
-	if (x509_config.reject) {
+	if (x509_config.reject != NULL) {
 		for (i = 0; i < sk_ASN1_OBJECT_num(x509_config.reject); i++) {
 			x509_config.objtmp = sk_ASN1_OBJECT_value(
 			    x509_config.reject, i);
@@ -975,12 +975,12 @@ x509_main(int argc, char **argv)
 				ASN1_INTEGER *ser;
 				ser = X509_get_serialNumber(x);
 				bnser = ASN1_INTEGER_to_BN(ser, NULL);
-				if (!bnser)
+				if (bnser == NULL)
 					goto end;
 				if (!BN_add_word(bnser, 1))
 					goto end;
 				ser = BN_to_ASN1_INTEGER(bnser, NULL);
-				if (!ser)
+				if (ser == NULL)
 					goto end;
 				BN_free(bnser);
 				i2a_ASN1_INTEGER(out, ser);
@@ -1001,7 +1001,7 @@ x509_main(int argc, char **argv)
 			} else if (x509_config.aliasout == i) {
 				unsigned char *alstr;
 				alstr = X509_alias_get0(x, NULL);
-				if (alstr)
+				if (alstr != NULL)
 					BIO_printf(STDout, "%s\n", alstr);
 				else
 					BIO_puts(STDout, "<No Alias>\n");
@@ -1155,7 +1155,7 @@ x509_main(int argc, char **argv)
 				unsigned char md[EVP_MAX_MD_SIZE];
 				const EVP_MD *fdig = x509_config.digest;
 
-				if (!fdig)
+				if (fdig == NULL)
 					fdig = EVP_sha256();
 
 				if (!X509_digest(x, fdig, md, &n)) {
@@ -1372,9 +1372,9 @@ x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest, X509 *x,
 		BIO_printf(bio_err, "Error initialising X509 store\n");
 		goto end;
 	}
-	if (sno)
+	if (sno != NULL)
 		bs = sno;
-	else if (!(bs = x509_load_serial(CAfile, serialfile, create)))
+	else if ((bs = x509_load_serial(CAfile, serialfile, create)) == NULL)
 		goto end;
 
 /*	if (!X509_STORE_add_cert(ctx,x)) goto end;*/
@@ -1409,7 +1409,7 @@ x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest, X509 *x,
 		while (X509_get_ext_count(x) > 0)
 			X509_delete_ext(x, 0);
 	}
-	if (conf) {
+	if (conf != NULL) {
 		X509V3_CTX ctx2;
 		X509_set_version(x, 2);	/* version 3 certificate */
 		X509V3_set_ctx(&ctx2, xca, x, NULL, NULL, 0);
@@ -1424,7 +1424,7 @@ x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest, X509 *x,
 	X509_STORE_CTX_cleanup(&xsc);
 	if (!ret)
 		ERR_print_errors(bio_err);
-	if (!sno)
+	if (sno == NULL)
 		ASN1_INTEGER_free(bs);
 	return ret;
 }
@@ -1469,7 +1469,6 @@ static int
 sign(X509 *x, EVP_PKEY *pkey, int days, int clrext, const EVP_MD *digest,
     CONF *conf, char *section)
 {
-
 	EVP_PKEY *pktmp;
 
 	pktmp = X509_get_pubkey(x);
@@ -1496,7 +1495,7 @@ sign(X509 *x, EVP_PKEY *pkey, int days, int clrext, const EVP_MD *digest,
 		while (X509_get_ext_count(x) > 0)
 			X509_delete_ext(x, 0);
 	}
-	if (conf) {
+	if (conf != NULL) {
 		X509V3_CTX ctx;
 		X509_set_version(x, 2);	/* version 3 certificate */
 		X509V3_set_ctx(&ctx, x, x, NULL, NULL, 0);
