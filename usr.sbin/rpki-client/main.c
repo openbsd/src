@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.127 2021/03/31 16:11:02 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.128 2021/04/01 06:53:49 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -152,6 +152,26 @@ filepath_exists(char *file)
 
 	needle.file = file;
 	return RB_FIND(filepath_tree, &fpt, &needle) != NULL;
+}
+
+/*
+ * Return true if a filepath entry exists that starts with path.
+ */
+static int
+filepath_dir_exists(char *path)
+{
+	struct filepath needle;
+	struct filepath *res;
+
+	needle.file = path;
+	res = RB_NFIND(filepath_tree, &fpt, &needle);
+	while (res != NULL && strstr(res->file, path) == res->file) {
+		/* make sure that filepath acctually is in that path */
+		if (res->file[strlen(path)] == '/')
+			return 1;
+		res = RB_NEXT(filepath_tree, &fpt, res);
+	}
+	return 0;
 }
 
 RB_GENERATE(filepath_tree, filepath, entry, filepathcmp);
@@ -767,56 +787,56 @@ add_to_del(char **del, size_t *dsz, char *file)
 	return del;
 }
 
-static size_t
+static void
 repo_cleanup(void)
 {
-	size_t i, delsz = 0;
-	char *argv[2], **del = NULL;
-	struct repo *rp;
+	size_t i, delsz = 0, dirsz = 0;
+	char *argv[3], **del = NULL, **dir = NULL;
 	FTS *fts;
 	FTSENT *e;
 
-	SLIST_FOREACH(rp, &repos, entry) {
-		argv[0] = rp->local;
-		argv[1] = NULL;
-		if ((fts = fts_open(argv, FTS_PHYSICAL | FTS_NOSTAT,
-		    NULL)) == NULL)
-			err(1, "fts_open");
-		errno = 0;
-		while ((e = fts_read(fts)) != NULL) {
-			switch (e->fts_info) {
-			case FTS_NSOK:
-				if (!filepath_exists(e->fts_path))
-					del = add_to_del(del, &delsz,
-					    e->fts_path);
-				break;
-			case FTS_D:
-			case FTS_DP:
-				/* TODO empty directory pruning */
-				break;
-			case FTS_SL:
-			case FTS_SLNONE:
-				warnx("symlink %s", e->fts_path);
-				del = add_to_del(del, &delsz, e->fts_path);
-				break;
-			case FTS_NS:
-			case FTS_ERR:
-				warnx("fts_read %s: %s", e->fts_path,
-				    strerror(e->fts_errno));
-				break;
-			default:
-				warnx("unhandled[%x] %s", e->fts_info,
+	argv[0] = "ta";
+	argv[1] = "rsync";
+	argv[2] = NULL;
+	if ((fts = fts_open(argv, FTS_PHYSICAL | FTS_NOSTAT, NULL)) == NULL)
+		err(1, "fts_open");
+	errno = 0;
+	while ((e = fts_read(fts)) != NULL) {
+		switch (e->fts_info) {
+		case FTS_NSOK:
+			if (!filepath_exists(e->fts_path))
+				del = add_to_del(del, &delsz,
 				    e->fts_path);
-				break;
-			}
-
-			errno = 0;
+			break;
+		case FTS_D:
+			break;
+		case FTS_DP:
+			if (!filepath_dir_exists(e->fts_path))
+				dir = add_to_del(dir, &dirsz,
+				    e->fts_path);
+			break;
+		case FTS_SL:
+		case FTS_SLNONE:
+			warnx("symlink %s", e->fts_path);
+			del = add_to_del(del, &delsz, e->fts_path);
+			break;
+		case FTS_NS:
+		case FTS_ERR:
+			warnx("fts_read %s: %s", e->fts_path,
+			    strerror(e->fts_errno));
+			break;
+		default:
+			warnx("unhandled[%x] %s", e->fts_info,
+			    e->fts_path);
+			break;
 		}
-		if (errno)
-			err(1, "fts_read");
-		if (fts_close(fts) == -1)
-			err(1, "fts_close");
+
+		errno = 0;
 	}
+	if (errno)
+		err(1, "fts_read");
+	if (fts_close(fts) == -1)
+		err(1, "fts_close");
 
 	for (i = 0; i < delsz; i++) {
 		if (unlink(del[i]) == -1)
@@ -826,8 +846,17 @@ repo_cleanup(void)
 		free(del[i]);
 	}
 	free(del);
+	stats.del_files = delsz;
 
-	return delsz;
+	for (i = 0; i < dirsz; i++) {
+		if (rmdir(dir[i]) == -1)
+			warn("rmdir %s", dir[i]);
+		if (verbose > 1)
+			logx("deleted dir %s", dir[i]);
+		free(dir[i]);
+	}
+	free(dir);
+	stats.del_dirs = dirsz;
 }
 
 void
@@ -1231,7 +1260,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	stats.del_files = repo_cleanup();
+	repo_cleanup();
 
 	gettimeofday(&now_time, NULL);
 	timersub(&now_time, &start_time, &stats.elapsed_time);
@@ -1262,7 +1291,8 @@ main(int argc, char *argv[])
 	logx("Certificate revocation lists: %zu", stats.crls);
 	logx("Ghostbuster records: %zu", stats.gbrs);
 	logx("Repositories: %zu", stats.repos);
-	logx("Files removed: %zu", stats.del_files);
+	logx("Cleanup: removed %zu files, %zu directories",
+	    stats.del_files, stats.del_dirs);
 	logx("VRP Entries: %zu (%zu unique)", stats.vrps, stats.uniqs);
 
 	/* Memory cleanup. */

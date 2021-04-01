@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.60 2021/04/01 06:43:23 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.61 2021/04/01 06:53:49 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -306,6 +306,7 @@ struct	stats {
 	size_t	 vrps; /* total number of vrps */
 	size_t	 uniqs; /* number of unique vrps */
 	size_t	 del_files; /* number of files removed in cleanup */
+	size_t	 del_dirs; /* number of directories removed in cleanup */
 	char	*talnames;
 	struct timeval	elapsed_time;
 	struct timeval	user_time;
