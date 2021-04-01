@@ -1,4 +1,4 @@
-.TH "nsd.conf" "5" "Dec  1, 2020" "NLnet Labs" "nsd 4.3.4"
+.TH "nsd.conf" "5" "Mar 29, 2021" "NLnet Labs" "nsd 4.3.6rc1"
 .\" Copyright (c) 2001\-2008, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
@@ -161,7 +161,7 @@ anycast instances.  Use ip-transparent to be able to list addresses that
 turn on later (typical for certain load-balancing).
 .TP
 .B interface:\fR <ip4 or ip6>[@port] [servers] [bindtodevice] [setfib]
-Same as ip\-address (for easy of compatibility with unbound.conf).
+Same as ip\-address (for ease of compatibility with unbound.conf).
 .TP
 .B ip\-transparent:\fR <yes or no>
 Allows NSD to bind to non local addresses. This is useful to have NSD
@@ -534,12 +534,15 @@ the chroot and readable by the superuser only.
 .B control\-enable:\fR <yes or no>
 Enable remote control, default is no.
 .TP
-.B control\-interface:\fR <ip4 or ip6>
+.B control\-interface:\fR <ip4 or ip6 | interface name | absolute path>
 NSD will bind to the listed addresses to service control requests
 (on TCP).  Can be given multiple times to bind multiple ip\-addresses.
 Use 0.0.0.0 and ::0 to service the wildcard interface.  If none are given
 NSD listens to the localhost 127.0.0.1 and ::1 interfaces for control,
 if control is enabled with control\-enable.
+.IP
+If an interface name is used instead of ip4 or ip6, the list of IP addresses
+associated with that interface is picked up and used at server start.
 .IP
 With an absolute path, a unix local named pipe is used for control.  The
 file is created with user and group that is configured and access bits
@@ -593,6 +596,7 @@ this pattern.  The referenced pattern must be defined above this one.
 .B <zone option>:\fR <value>
 The zone options such as
 .BR zonefile ,
+.BR allow\-query ,
 .BR allow\-notify ,
 .BR request\-xfr ,
 .BR allow\-axfr\-fallback ,
@@ -646,6 +650,24 @@ third character in a two letter domain name).
 .B %y\fR is replaced with the next label under the toplevel domain.
 .IP
 .B %x\fR is replaced with the next-next label under the toplevel domain.
+.TP
+.B allow\-query:\fR <ip\-spec> <key\-name | NOKEY | BLOCKED>
+Access control list.  When at least one \fBallow\-query\fR option is
+specified, then the in the \fBallow\-query\fR options specified addresses
+are are allowed to query the server for the zone.  Queries from unlisted or
+specifically BLOCKED addresses are discarded. If NOKEY is given no TSIG
+signature is required.  BLOCKED supersedes other entries, other entries are
+scanned for a match in the order of the statements.  Without
+\fBallow\-query\fR options, queries are allowed from any IP address
+without TSIG key (which is the default).
+.P
+.RS
+The ip\-spec is either a plain IP address (IPv4 or IPv6), or can be 
+a subnet of the form 1.2.3.4/24, or masked like 
+1.2.3.4&255.255.255.0 or a range of the form 1.2.3.4\-1.2.3.25. 
+Note the ip\-spec ranges do not use spaces around the /, &, @ and \- 
+symbols.
+.RE
 .TP
 .B allow\-notify:\fR <ip\-spec> <key\-name | NOKEY | BLOCKED>
 Access control list. The listed (primary) address is allowed to 
@@ -812,6 +834,43 @@ file, which may have different security policies, can be split apart.
 The content of the secret is the agreed base64 secret content.  To make it
 up, enter a password (its length must be a multiple of 4 characters, A\-Za\-z0\-9), or use
 dev-random output through a base64 encode filter.
+.SS DNSTAP Logging Options
+DNSTAP support, when compiled in, is enabled in the \fBdnstap:\fR section.
+This starts a collector process that writes the log information to the
+destination.
+.TP
+.B dnstap-enable:\fR <yes or no>
+If dnstap is enabled.  Default no.  If yes, it connects to the dnstap server
+and if any of the dnstap-log-..-messages options is enabled it sends logs
+for those messages to the server.
+.TP
+.B dnstap-socket-path:\fR <file name>
+Sets the unix socket file name for connecting to the server that is
+listening on that socket.  Default is "@dnstap_socket_path@".
+.TP
+.B dnstap-send-identity:\fR <yes or no>
+If enabled, the server identity is included in the log messages.
+Default is no.
+.TP
+.B dnstap-send-version:\fR <yes or no>
+If enabled, the server version if included in the log messages.
+Default is no.
+.TP
+.B dnstap-identity:\fR <string>
+The identity to send with messages, if "" the hostname is used.
+Default is "".
+.TP
+.B dnstap-version:\fR <string>
+The version to send with messages, if "" the package version is used.
+Default is "".
+.TP
+.B dnstap-log-auth-query-messages:\fR <yes or no>
+Enable to log auth query messages.  Default is no.
+These are client queries to NSD.
+.TP
+.B dnstap-log-auth-response-messages:\fR <yes or no>
+Enable to log auth response messages.  Default is no.
+These are responses from NSD to clients.
 .SH "NSD CONFIGURATION FOR BIND9 HACKERS"
 BIND9 is a name server implementation with its own configuration 
 file format, named.conf(5). BIND9 types zones as 'Master' or 'Slave'. 

@@ -180,7 +180,7 @@ write_zone_to_udb(udb_base* udb, zone_type* zone, struct timespec* mtime,
 	return 1;
 }
 
-static int
+int
 print_rrs(FILE* out, struct zone* zone)
 {
 	rrset_type *rrset;

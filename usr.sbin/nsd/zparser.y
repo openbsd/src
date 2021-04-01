@@ -72,7 +72,7 @@ nsec3_add_params(const char* hash_algo_str, const char* flag_str,
 
 /* other tokens */
 %token	       DOLLAR_TTL DOLLAR_ORIGIN NL SP
-%token <data>  STR PREV BITLAB
+%token <data>  QSTR STR PREV BITLAB
 %token <ttl>   T_TTL
 %token <klass> T_RRCLASS
 
@@ -84,7 +84,8 @@ nsec3_add_params(const char* hash_algo_str, const char* flag_str,
 %type <domain>	owner dname abs_dname
 %type <dname>	rel_dname label
 %type <data>	wire_dname wire_abs_dname wire_rel_dname wire_label
-%type <data>	concatenated_str_seq str_sp_seq str_dot_seq dotted_str
+%type <data>	str concatenated_str_seq str_sp_seq str_dot_seq
+%type <data>	unquoted_dotted_str dotted_str
 %type <data>	nxt_seq nsec_more
 %type <unknown> rdata_unknown
 
@@ -140,11 +141,13 @@ sp:	SP
     |	sp SP
     ;
 
+str:	STR | QSTR;
+
 trail:	NL
     |	sp NL
     ;
 
-ttl_directive:	DOLLAR_TTL sp STR trail
+ttl_directive:	DOLLAR_TTL sp str trail
     {
 	    parser->default_ttl = zparser_ttl2int($3.str, &(parser->error_occurred));
 	    if (parser->error_occurred == 1) {
@@ -256,7 +259,7 @@ abs_dname:	'.'
     }
     ;
 
-label:	STR
+label:	str
     {
 	    if ($1.len > MAXLABELLEN) {
 		    zc_error("label exceeds %d character limit", MAXLABELLEN);
@@ -352,7 +355,7 @@ wire_abs_dname:	'.'
     }
     ;
 
-wire_label:	STR
+wire_label:	str
     {
 	    char *result = (char *) region_alloc(parser->rr_region,
 						 $1.len + 1);
@@ -382,13 +385,40 @@ wire_rel_dname:	wire_label
     }
     ;
 
-str_seq:	dotted_str
+str_seq:	unquoted_dotted_str
     {
 	    zadd_rdata_txt_wireformat(zparser_conv_text(parser->rr_region, $1.str, $1.len), 1);
     }
-    |	str_seq sp dotted_str
+    |	QSTR
+    {
+	    zadd_rdata_txt_wireformat(zparser_conv_text(parser->rr_region, $1.str, $1.len), 1);
+    }
+    |	QSTR unquoted_dotted_str
+    {
+	    zadd_rdata_txt_wireformat(zparser_conv_text(parser->rr_region, $1.str, $1.len), 1);
+	    zadd_rdata_txt_wireformat(zparser_conv_text(parser->rr_region, $2.str, $2.len), 0);
+    }
+    |	str_seq QSTR
+    {
+	    zadd_rdata_txt_wireformat(zparser_conv_text(parser->rr_region, $2.str, $2.len), 0);
+    }
+    |	str_seq QSTR unquoted_dotted_str
+    {
+	    zadd_rdata_txt_wireformat(zparser_conv_text(parser->rr_region, $2.str, $2.len), 0);
+	    zadd_rdata_txt_wireformat(zparser_conv_text(parser->rr_region, $3.str, $3.len), 0);
+    }
+    |	str_seq sp unquoted_dotted_str
     {
 	    zadd_rdata_txt_wireformat(zparser_conv_text(parser->rr_region, $3.str, $3.len), 0);
+    }
+    |	str_seq sp QSTR
+    {
+	    zadd_rdata_txt_wireformat(zparser_conv_text(parser->rr_region, $3.str, $3.len), 0);
+    }
+    |	str_seq sp QSTR unquoted_dotted_str
+    {
+	    zadd_rdata_txt_wireformat(zparser_conv_text(parser->rr_region, $3.str, $3.len), 0);
+	    zadd_rdata_txt_wireformat(zparser_conv_text(parser->rr_region, $4.str, $4.len), 0);
     }
     ;
 
@@ -396,13 +426,13 @@ str_seq:	dotted_str
  * Generate a single string from multiple STR tokens, separated by
  * spaces or dots.
  */
-concatenated_str_seq:	STR
+concatenated_str_seq:	str
     |	'.'
     {
 	    $$.len = 1;
 	    $$.str = region_strdup(parser->rr_region, ".");
     }
-    |	concatenated_str_seq sp STR
+    |	concatenated_str_seq sp str
     {
 	    $$.len = $1.len + $3.len + 1;
 	    $$.str = (char *) region_alloc(parser->rr_region, $$.len + 1);
@@ -411,7 +441,7 @@ concatenated_str_seq:	STR
 	    memcpy($$.str + $1.len + 1, $3.str, $3.len);
 	    $$.str[$$.len] = '\0';
     }
-    |	concatenated_str_seq '.' STR
+    |	concatenated_str_seq '.' str
     {
 	    $$.len = $1.len + $3.len + 1;
 	    $$.str = (char *) region_alloc(parser->rr_region, $$.len + 1);
@@ -423,7 +453,7 @@ concatenated_str_seq:	STR
     ;
 
 /* used to convert a nxt list of types */
-nxt_seq:	STR
+nxt_seq:	str
     {
 	    uint16_t type = rrtype_from_string($1.str);
 	    if (type != 0 && type < 128) {
@@ -432,7 +462,7 @@ nxt_seq:	STR
 		    zc_error("bad type %d in NXT record", (int) type);
 	    }
     }
-    |	nxt_seq sp STR
+    |	nxt_seq sp str
     {
 	    uint16_t type = rrtype_from_string($3.str);
 	    if (type != 0 && type < 128) {
@@ -449,7 +479,7 @@ nsec_more:	SP nsec_more
     |	NL
     {
     }
-    |	STR nsec_seq
+    |	str nsec_seq
     {
 	    uint16_t type = rrtype_from_string($1.str);
 	    if (type != 0) {
@@ -471,8 +501,8 @@ nsec_seq:	NL
  * Sequence of STR tokens separated by spaces.	The spaces are not
  * preserved during concatenation.
  */
-str_sp_seq:	STR
-    |	str_sp_seq sp STR
+str_sp_seq:	str
+    |	str_sp_seq sp str
     {
 	    char *result = (char *) region_alloc(parser->rr_region,
 						 $1.len + $3.len + 1);
@@ -488,8 +518,8 @@ str_sp_seq:	STR
  * Sequence of STR tokens separated by dots.  The dots are not
  * preserved during concatenation.
  */
-str_dot_seq:	STR
-    |	str_dot_seq '.' STR
+str_dot_seq:	str
+    |	str_dot_seq '.' str
     {
 	    char *result = (char *) region_alloc(parser->rr_region,
 						 $1.len + $3.len + 1);
@@ -504,13 +534,13 @@ str_dot_seq:	STR
 /*
  * A string that can contain dots.
  */
-dotted_str:	STR
+unquoted_dotted_str:	STR
     |	'.'
     {
 	$$.str = ".";
 	$$.len = 1;
     }
-    |	dotted_str '.'
+    |	unquoted_dotted_str '.'
     {
 	    char *result = (char *) region_alloc(parser->rr_region,
 						 $1.len + 2);
@@ -520,7 +550,7 @@ dotted_str:	STR
 	    $$.len = $1.len + 1;
 	    $$.str[$$.len] = '\0';
     }
-    |	dotted_str '.' STR
+    |	unquoted_dotted_str '.' STR
     {
 	    char *result = (char *) region_alloc(parser->rr_region,
 						 $1.len + $3.len + 2);
@@ -532,6 +562,11 @@ dotted_str:	STR
 	    $$.str[$$.len] = '\0';
     }
     ;
+
+/*
+ * A string that can contain dots or a quoted string.
+ */
+dotted_str:	unquoted_dotted_str | QSTR
 
 /* define what we can parse */
 type_and_rdata:
@@ -675,7 +710,7 @@ type_and_rdata:
     |	T_URI sp rdata_uri
     |	T_URI sp rdata_unknown { $$ = $1; parse_unknown_rdata($1, $3); }
     |	T_UTYPE sp rdata_unknown { $$ = $1; parse_unknown_rdata($1, $3); }
-    |	STR error NL
+    |	str error NL
     {
 	    zc_error_prev_line("unrecognized RR type '%s'", $1.str);
     }
@@ -700,7 +735,7 @@ rdata_domain_name:	dname trail
     }
     ;
 
-rdata_soa:	dname sp dname sp STR sp STR sp STR sp STR sp STR trail
+rdata_soa:	dname sp dname sp str sp str sp str sp str sp str trail
     {
 	    /* convert the soa data */
 	    zadd_rdata_domain($1);	/* prim. ns */
@@ -713,14 +748,14 @@ rdata_soa:	dname sp dname sp STR sp STR sp STR sp STR sp STR trail
     }
     ;
 
-rdata_wks:	dotted_str sp STR sp concatenated_str_seq trail
+rdata_wks:	dotted_str sp str sp concatenated_str_seq trail
     {
 	    zadd_rdata_wireformat(zparser_conv_a(parser->region, $1.str)); /* address */
 	    zadd_rdata_wireformat(zparser_conv_services(parser->region, $3.str, $5.str)); /* protocol and services */
     }
     ;
 
-rdata_hinfo:	STR sp STR trail
+rdata_hinfo:	str sp str trail
     {
 	    zadd_rdata_wireformat(zparser_conv_text(parser->region, $1.str, $1.len)); /* CPU */
 	    zadd_rdata_wireformat(zparser_conv_text(parser->region, $3.str, $3.len)); /* OS*/
@@ -735,7 +770,7 @@ rdata_minfo:	dname sp dname trail
     }
     ;
 
-rdata_mx:	STR sp dname trail
+rdata_mx:	str sp dname trail
     {
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, $1.str));  /* priority */
 	    zadd_rdata_domain($3);	/* MX host */
@@ -757,7 +792,7 @@ rdata_rp:	dname sp dname trail
     ;
 
 /* RFC 1183 */
-rdata_afsdb:	STR sp dname trail
+rdata_afsdb:	str sp dname trail
     {
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, $1.str)); /* subtype */
 	    zadd_rdata_domain($3); /* domain name */
@@ -765,18 +800,18 @@ rdata_afsdb:	STR sp dname trail
     ;
 
 /* RFC 1183 */
-rdata_x25:	STR trail
+rdata_x25:	str trail
     {
 	    zadd_rdata_wireformat(zparser_conv_text(parser->region, $1.str, $1.len)); /* X.25 address. */
     }
     ;
 
 /* RFC 1183 */
-rdata_isdn:	STR trail
+rdata_isdn:	str trail
     {
 	    zadd_rdata_wireformat(zparser_conv_text(parser->region, $1.str, $1.len)); /* address */
     }
-    |	STR sp STR trail
+    |	str sp str trail
     {
 	    zadd_rdata_wireformat(zparser_conv_text(parser->region, $1.str, $1.len)); /* address */
 	    zadd_rdata_wireformat(zparser_conv_text(parser->region, $3.str, $3.len)); /* sub-address */
@@ -784,7 +819,7 @@ rdata_isdn:	STR trail
     ;
 
 /* RFC 1183 */
-rdata_rt:	STR sp dname trail
+rdata_rt:	str sp dname trail
     {
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, $1.str)); /* preference */
 	    zadd_rdata_domain($3); /* intermediate host */
@@ -804,7 +839,7 @@ rdata_nsap:	str_dot_seq trail
     ;
 
 /* RFC 2163 */
-rdata_px:	STR sp dname sp dname trail
+rdata_px:	str sp dname sp dname trail
     {
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, $1.str)); /* preference */
 	    zadd_rdata_domain($3); /* MAP822 */
@@ -832,7 +867,7 @@ rdata_nxt:	dname sp nxt_seq trail
     }
     ;
 
-rdata_srv:	STR sp STR sp STR sp dname trail
+rdata_srv:	str sp str sp str sp dname trail
     {
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, $1.str)); /* prio */
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, $3.str)); /* weight */
@@ -842,7 +877,7 @@ rdata_srv:	STR sp STR sp STR sp dname trail
     ;
 
 /* RFC 2915 */
-rdata_naptr:	STR sp STR sp STR sp STR sp STR sp dname trail
+rdata_naptr:	str sp str sp str sp str sp str sp dname trail
     {
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, $1.str)); /* order */
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, $3.str)); /* preference */
@@ -854,7 +889,7 @@ rdata_naptr:	STR sp STR sp STR sp STR sp STR sp dname trail
     ;
 
 /* RFC 2230 */
-rdata_kx:	STR sp dname trail
+rdata_kx:	str sp dname trail
     {
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, $1.str)); /* preference */
 	    zadd_rdata_domain($3); /* exchanger */
@@ -862,7 +897,7 @@ rdata_kx:	STR sp dname trail
     ;
 
 /* RFC 2538 */
-rdata_cert:	STR sp STR sp STR sp str_sp_seq trail
+rdata_cert:	str sp str sp str sp str_sp_seq trail
     {
 	    zadd_rdata_wireformat(zparser_conv_certificate_type(parser->region, $1.str)); /* type */
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, $3.str)); /* key tag */
@@ -885,7 +920,7 @@ rdata_apl_seq:	dotted_str
     }
     ;
 
-rdata_ds:	STR sp STR sp STR sp str_sp_seq trail
+rdata_ds:	str sp str sp str sp str_sp_seq trail
     {
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, $1.str)); /* keytag */
 	    zadd_rdata_wireformat(zparser_conv_algorithm(parser->region, $3.str)); /* alg */
@@ -894,7 +929,7 @@ rdata_ds:	STR sp STR sp STR sp str_sp_seq trail
     }
     ;
 
-rdata_dlv:	STR sp STR sp STR sp str_sp_seq trail
+rdata_dlv:	str sp str sp str sp str_sp_seq trail
     {
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, $1.str)); /* keytag */
 	    zadd_rdata_wireformat(zparser_conv_algorithm(parser->region, $3.str)); /* alg */
@@ -903,7 +938,7 @@ rdata_dlv:	STR sp STR sp STR sp str_sp_seq trail
     }
     ;
 
-rdata_sshfp:	STR sp STR sp str_sp_seq trail
+rdata_sshfp:	str sp str sp str_sp_seq trail
     {
 	    zadd_rdata_wireformat(zparser_conv_byte(parser->region, $1.str)); /* alg */
 	    zadd_rdata_wireformat(zparser_conv_byte(parser->region, $3.str)); /* fp type */
@@ -918,7 +953,7 @@ rdata_dhcid:	str_sp_seq trail
     }
     ;
 
-rdata_rrsig:	STR sp STR sp STR sp STR sp STR sp STR sp STR sp wire_dname sp str_sp_seq trail
+rdata_rrsig:	str sp str sp str sp str sp str sp str sp str sp wire_dname sp str_sp_seq trail
     {
 	    zadd_rdata_wireformat(zparser_conv_rrtype(parser->region, $1.str)); /* rr covered */
 	    zadd_rdata_wireformat(zparser_conv_algorithm(parser->region, $3.str)); /* alg */
@@ -943,7 +978,7 @@ rdata_nsec:	wire_dname nsec_seq
     }
     ;
 
-rdata_nsec3:   STR sp STR sp STR sp STR sp STR nsec_seq
+rdata_nsec3:   str sp str sp str sp str sp str nsec_seq
     {
 #ifdef NSEC3
 	    nsec3_add_params($1.str, $3.str, $5.str, $7.str, $7.len);
@@ -958,7 +993,7 @@ rdata_nsec3:   STR sp STR sp STR sp STR sp STR nsec_seq
     }
     ;
 
-rdata_nsec3_param:   STR sp STR sp STR sp STR trail
+rdata_nsec3_param:   str sp str sp str sp str trail
     {
 #ifdef NSEC3
 	    nsec3_add_params($1.str, $3.str, $5.str, $7.str, $7.len);
@@ -968,7 +1003,7 @@ rdata_nsec3_param:   STR sp STR sp STR sp STR trail
     }
     ;
 
-rdata_tlsa:	STR sp STR sp STR sp str_sp_seq trail
+rdata_tlsa:	str sp str sp str sp str_sp_seq trail
     {
 	    zadd_rdata_wireformat(zparser_conv_byte(parser->region, $1.str)); /* usage */
 	    zadd_rdata_wireformat(zparser_conv_byte(parser->region, $3.str)); /* selector */
@@ -977,7 +1012,7 @@ rdata_tlsa:	STR sp STR sp STR sp str_sp_seq trail
     }
     ;
 
-rdata_smimea:	STR sp STR sp STR sp str_sp_seq trail
+rdata_smimea:	str sp str sp str sp str_sp_seq trail
     {
 	    zadd_rdata_wireformat(zparser_conv_byte(parser->region, $1.str)); /* usage */
 	    zadd_rdata_wireformat(zparser_conv_byte(parser->region, $3.str)); /* selector */
@@ -986,7 +1021,7 @@ rdata_smimea:	STR sp STR sp STR sp str_sp_seq trail
     }
     ;
 
-rdata_dnskey:	STR sp STR sp STR sp str_sp_seq trail
+rdata_dnskey:	str sp str sp str sp str_sp_seq trail
     {
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, $1.str)); /* flags */
 	    zadd_rdata_wireformat(zparser_conv_byte(parser->region, $3.str)); /* proto */
@@ -995,7 +1030,7 @@ rdata_dnskey:	STR sp STR sp STR sp str_sp_seq trail
     }
     ;
 
-rdata_ipsec_base: STR sp STR sp STR sp dotted_str
+rdata_ipsec_base: str sp str sp str sp dotted_str
     {
 	    const dname_type* name = 0;
 	    zadd_rdata_wireformat(zparser_conv_byte(parser->region, $1.str)); /* precedence */
@@ -1048,48 +1083,48 @@ rdata_ipseckey:	rdata_ipsec_base sp str_sp_seq trail
     ;
 
 /* RFC 6742 */ 
-rdata_nid:	STR sp dotted_str trail
+rdata_nid:	str sp dotted_str trail
     {
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, $1.str));  /* preference */
 	    zadd_rdata_wireformat(zparser_conv_ilnp64(parser->region, $3.str));  /* NodeID */
     }
     ;
 
-rdata_l32:	STR sp dotted_str trail
+rdata_l32:	str sp dotted_str trail
     {
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, $1.str));  /* preference */
 	    zadd_rdata_wireformat(zparser_conv_a(parser->region, $3.str));  /* Locator32 */
     }
     ;
 
-rdata_l64:	STR sp dotted_str trail
+rdata_l64:	str sp dotted_str trail
     {
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, $1.str));  /* preference */
 	    zadd_rdata_wireformat(zparser_conv_ilnp64(parser->region, $3.str));  /* Locator64 */
     }
     ;
 
-rdata_lp:	STR sp dname trail
+rdata_lp:	str sp dname trail
     {
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, $1.str));  /* preference */
 	    zadd_rdata_domain($3);  /* FQDN */
     }
     ;
 
-rdata_eui48:	STR trail
+rdata_eui48:	str trail
     {
 	    zadd_rdata_wireformat(zparser_conv_eui(parser->region, $1.str, 48));
     }
     ;
 
-rdata_eui64:	STR trail
+rdata_eui64:	str trail
     {
 	    zadd_rdata_wireformat(zparser_conv_eui(parser->region, $1.str, 64));
     }
     ;
 
 /* RFC7553 */
-rdata_uri:	STR sp STR sp dotted_str trail
+rdata_uri:	str sp str sp dotted_str trail
     {
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, $1.str)); /* priority */
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, $3.str)); /* weight */
@@ -1098,7 +1133,7 @@ rdata_uri:	STR sp STR sp dotted_str trail
     ;
 
 /* RFC 6844 */
-rdata_caa:	STR sp STR sp dotted_str trail
+rdata_caa:	str sp str sp dotted_str trail
     {
 	    zadd_rdata_wireformat(zparser_conv_byte(parser->region, $1.str)); /* Flags */
 	    zadd_rdata_wireformat(zparser_conv_tag(parser->region, $3.str, $3.len)); /* Tag */
@@ -1114,7 +1149,7 @@ rdata_openpgpkey:	str_sp_seq trail
     ;
 
 /* RFC7477 */
-rdata_csync:	STR sp STR nsec_seq
+rdata_csync:	str sp str nsec_seq
     {
 	    zadd_rdata_wireformat(zparser_conv_serial(parser->region, $1.str));
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, $3.str));
@@ -1125,7 +1160,7 @@ rdata_csync:	STR sp STR nsec_seq
     ;
 
 /* draft-ietf-dnsop-dns-zone-digest */
-rdata_zonemd:	STR sp STR sp STR sp str_sp_seq trail
+rdata_zonemd:	str sp str sp str sp str_sp_seq trail
     {
 	    zadd_rdata_wireformat(zparser_conv_serial(parser->region, $1.str)); /* serial */
 	    zadd_rdata_wireformat(zparser_conv_byte(parser->region, $3.str)); /* scheme */
@@ -1134,13 +1169,13 @@ rdata_zonemd:	STR sp STR sp STR sp str_sp_seq trail
     }
     ;
 
-rdata_unknown:	URR sp STR sp str_sp_seq trail
+rdata_unknown:	URR sp str sp str_sp_seq trail
     {
 	    /* $2 is the number of octets, currently ignored */
 	    $$ = zparser_conv_hex(parser->rr_region, $5.str, $5.len);
 
     }
-    |	URR sp STR trail
+    |	URR sp str trail
     {
 	    $$ = zparser_conv_hex(parser->rr_region, "", 0);
     }

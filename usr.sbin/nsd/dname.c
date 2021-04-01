@@ -416,7 +416,7 @@ dname_to_string(const dname_type *dname, const dname_type *origin)
 		++src;
 		for (j = 0; j < len; ++j) {
 			uint8_t ch = *src++;
-			if (isalnum((unsigned char)ch) || ch == '-' || ch == '_') {
+			if (isalnum((unsigned char)ch) || ch == '-' || ch == '_' || ch == '*') {
 				*dst++ = ch;
 			} else if (ch == '.' || ch == '\\') {
 				*dst++ = '\\';
@@ -512,7 +512,7 @@ char* wirelabel2str(const uint8_t* label)
 	lablen = *label++;
 	while(lablen--) {
 		uint8_t ch = *label++;
-		if (isalnum((unsigned char)ch) || ch == '-' || ch == '_') {
+		if (isalnum((unsigned char)ch) || ch == '-' || ch == '_' || ch == '*') {
 			*p++ = ch;
 		} else if (ch == '.' || ch == '\\') {
 			*p++ = '\\';

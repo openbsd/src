@@ -199,6 +199,9 @@
 /* Define to 1 if you have the `HMAC_CTX_reset' function. */
 #undef HAVE_HMAC_CTX_RESET
 
+/* Define to 1 if you have the <ifaddrs.h> header file. */
+#undef HAVE_IFADDRS_H
+
 /* Define to 1 if you have the `inet_aton' function. */
 #undef HAVE_INET_ATON
 
@@ -552,7 +555,8 @@
 /* If reallocarray needs defines to appear in the headers */
 #undef REALLOCARRAY_NEEDS_DEFINES
 
-/* Define as the return type of signal handlers (`int' or `void'). */
+/* Return type of signal handlers, but autoconf 2.70 says 'your code may
+   safely assume C89 semantics that RETSIGTYPE is void.' */
 #undef RETSIGTYPE
 
 /* Define this to configure as a root server. */
@@ -824,10 +828,8 @@
 
 
 #include <sys/types.h>
-#if STDC_HEADERS
 #include <stdlib.h>
 #include <stddef.h>
-#endif
 
 #ifdef HAVE_TIME_H
 #include <time.h>

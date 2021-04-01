@@ -255,7 +255,7 @@ server:
 # dnstap:
 	# set this to yes and set one or more of dnstap-log-..-messages to yes.
 	# dnstap-enable: no
-	# dnstap-socket-path: "/var/run/dnstap.sock"
+	# dnstap-socket-path: "@dnstap_socket_path@"
 	# dnstap-send-identity: no
 	# dnstap-send-version: no
 	# dnstap-identity: ""
@@ -270,10 +270,14 @@ remote-control:
 	# control-enable: no
 
 	# what interfaces are listened to for control, default is on localhost.
+	# interfaces can be specified by IP address or interface name.
+	# with an interface name, all IP addresses associated with that
+	# interface are used.
 	# with an absolute path, a unix local named pipe is used for control
 	# (and key and cert files are not needed, use directory permissions).
 	# control-interface: 127.0.0.1
 	# control-interface: ::1
+	# control-interface: lo
 
 	# port number for remote control operations (uses TLS over TCP).
 	# control-port: 8952
@@ -319,6 +323,13 @@ remote-control:
 	# if label or character does not exist you get a dot '.'.
 	# for example "%s.zone" or "zones/%1/%2/%3/%s" or "secondary/%z/%s"
 	#zonefile: "%s.zone"
+	
+	# The allow-query allows an access control list to be specified
+	# for a zone to be queried. Without an allow-query option, any
+	# IP address is allowed to send queries for the zone.
+	# This could be useful for example to not leak content from a zone
+	# which is only offered for transfer to secondaries over TLS.
+	#allow-query: 192.0.2.0/24 NOKEY
 
 	# If no master and slave access control elements are provided,
 	# this zone will not be served to/from other servers.

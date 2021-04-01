@@ -191,6 +191,9 @@ answer_axfr_ixfr(struct nsd *nsd, struct query *q)
 					RCODE_SET(q->packet, RCODE_NOTAUTH);
 				} else {
 					RCODE_SET(q->packet, RCODE_REFUSE);
+					/* RFC8914 - Extended DNS Errors
+					 * 4.19.  Extended DNS Error Code 18 - Prohibited */
+					q->edns.ede = EDE_PROHIBITED;
 				}
 				return QUERY_PROCESSED;
 			}

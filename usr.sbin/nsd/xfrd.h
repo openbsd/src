@@ -210,6 +210,7 @@ struct xfrd_zone {
 	/* xfr message handling data */
 	/* query id */
 	uint16_t query_id;
+	uint16_t query_type;
 	uint32_t msg_seq_nr; /* number of messages already handled */
 	uint32_t msg_old_serial, msg_new_serial; /* host byte order */
 	size_t msg_rr_count;

@@ -305,6 +305,7 @@ config_print_zone(nsd_options_type* opt, const char* k, int s, const char *o,
 		}
 		ZONE_GET_BIN(part_of_config, o, zone);
 		ZONE_GET_PATH(final, zonefile, o, zone->pattern);
+		ZONE_GET_ACL(allow_query, o, zone->pattern);
 		ZONE_GET_ACL(request_xfr, o, zone->pattern);
 		ZONE_GET_ACL(provide_xfr, o, zone->pattern);
 		ZONE_GET_ACL(allow_notify, o, zone->pattern);
@@ -337,6 +338,7 @@ config_print_zone(nsd_options_type* opt, const char* k, int s, const char *o,
 		}
 		ZONE_GET_STR(zonefile, o, p);
 		ZONE_GET_PATH(final, zonefile, o, p);
+		ZONE_GET_ACL(allow_query, o, p);
 		ZONE_GET_ACL(request_xfr, o, p);
 		ZONE_GET_ACL(provide_xfr, o, p);
 		ZONE_GET_ACL(allow_notify, o, p);
@@ -463,6 +465,7 @@ static void print_zone_content_elems(pattern_options_type* pat)
 #ifdef RATELIMIT
 	zone_print_rrl_whitelist("\trrl-whitelist: ", pat->rrl_whitelist);
 #endif
+	print_acl("allow_query:", pat->allow_query);
 	print_acl("allow-notify:", pat->allow_notify);
 	print_acl("request-xfr:", pat->request_xfr);
 	if(pat->multi_master_check)

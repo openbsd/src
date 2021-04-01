@@ -91,6 +91,9 @@
 #ifdef HAVE_SYS_UN_H
 #  include <sys/un.h>
 #endif
+#ifndef AF_LOCAL
+#define AF_LOCAL AF_UNIX
+#endif
 
 /** number of seconds timeout on incoming remote control handshake */
 #define REMOTE_CONTROL_TCP_TIMEOUT 120
@@ -2096,6 +2099,8 @@ do_assoc_tsig(RES* ssl, xfrd_state_type* xfrd, char* arg)
 		key_opt);
 	zopt_set_acl_to_tsig(zone->pattern->provide_xfr, region, arg2,
 		key_opt);
+	zopt_set_acl_to_tsig(zone->pattern->allow_query, region, arg2,
+		key_opt);
 
 	task_new_add_pattern(xfrd->nsd->task[xfrd->nsd->mytask],
 		xfrd->last_task, zone->pattern);
@@ -2137,7 +2142,8 @@ do_del_tsig(RES* ssl, xfrd_state_type* xfrd, char* arg) {
 		if(acl_contains_tsig_key(zone->pattern->allow_notify, arg) ||
 		   acl_contains_tsig_key(zone->pattern->notify, arg) ||
 		   acl_contains_tsig_key(zone->pattern->request_xfr, arg) ||
-		   acl_contains_tsig_key(zone->pattern->provide_xfr, arg)) {
+		   acl_contains_tsig_key(zone->pattern->provide_xfr, arg) ||
+		   acl_contains_tsig_key(zone->pattern->allow_query, arg)) {
 			if(!ssl_printf(ssl, "zone %s uses key %s\n",
 				zone->name, arg))
 				return;

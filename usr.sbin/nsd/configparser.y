@@ -20,7 +20,6 @@
 #include "dname.h"
 #include "tsig.h"
 #include "rrl.h"
-#include "configyyrename.h"
 
 int yylex(void);
 
@@ -151,6 +150,7 @@ static int parse_range(const char *str, long long *low, long long *high);
 %token VAR_ZONEFILE
 %token VAR_NOTIFY
 %token VAR_PROVIDE_XFR
+%token VAR_ALLOW_QUERY
 %token VAR_AXFR
 %token VAR_UDP
 %token VAR_NOTIFY_RETRY
@@ -824,6 +824,11 @@ pattern_or_zone_option:
     {
       acl_options_type *acl = parse_acl_info(cfg_parser->opt->region, $2, $3);
       append_acl(&cfg_parser->pattern->provide_xfr, acl);
+    }
+  | VAR_ALLOW_QUERY STRING STRING
+    {
+      acl_options_type *acl = parse_acl_info(cfg_parser->opt->region, $2, $3);
+      append_acl(&cfg_parser->pattern->allow_query, acl);
     }
   | VAR_OUTGOING_INTERFACE STRING
     {

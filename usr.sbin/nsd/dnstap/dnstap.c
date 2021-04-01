@@ -292,50 +292,85 @@ dt_fill_buffer(uint8_t* pkt, size_t pktlen, ProtobufCBinaryData *p, protobuf_c_b
 static void
 dt_msg_fill_net(struct dt_msg *dm,
 #ifdef INET6
-		struct sockaddr_storage *ss,
+		struct sockaddr_storage *rs,
+		struct sockaddr_storage *qs,
 #else
-		struct sockaddr_in *ss,
+		struct sockaddr_in *rs,
+		struct sockaddr_in *qs,
 #endif
 		int is_tcp,
-		ProtobufCBinaryData *addr, protobuf_c_boolean *has_addr,
-		uint32_t *port, protobuf_c_boolean *has_port)
+		ProtobufCBinaryData *raddr, protobuf_c_boolean *has_raddr,
+		uint32_t *rport, protobuf_c_boolean *has_rport,
+		ProtobufCBinaryData *qaddr, protobuf_c_boolean *has_qaddr,
+		uint32_t *qport, protobuf_c_boolean *has_qport)
+
 {
 #ifdef INET6
-	assert(ss->ss_family == AF_INET6 || ss->ss_family == AF_INET);
-	if (ss->ss_family == AF_INET6) {
-		struct sockaddr_in6 *s = (struct sockaddr_in6 *) ss;
+	assert(qs->ss_family == AF_INET6 || qs->ss_family == AF_INET);
+	if (qs->ss_family == AF_INET6) {
+		struct sockaddr_in6 *s = (struct sockaddr_in6 *) qs;
 
 		/* socket_family */
 		dm->m.socket_family = DNSTAP__SOCKET_FAMILY__INET6;
 		dm->m.has_socket_family = 1;
 
 		/* addr: query_address or response_address */
-		addr->data = s->sin6_addr.s6_addr;
-		addr->len = 16; /* IPv6 */
-		*has_addr = 1;
+		qaddr->data = s->sin6_addr.s6_addr;
+		qaddr->len = 16; /* IPv6 */
+		*has_qaddr = 1;
 
 		/* port: query_port or response_port */
-		*port = ntohs(s->sin6_port);
-		*has_port = 1;
-	} else if (ss->ss_family == AF_INET) {
+		*qport = ntohs(s->sin6_port);
+		*has_qport = 1;
+	} else if (qs->ss_family == AF_INET) {
 #else
-	if (ss->sin_family == AF_INET) {
+	if (qs->sin_family == AF_INET) {
 #endif /* INET6 */
-		struct sockaddr_in *s = (struct sockaddr_in *) ss;
+		struct sockaddr_in *s = (struct sockaddr_in *) qs;
 
 		/* socket_family */
 		dm->m.socket_family = DNSTAP__SOCKET_FAMILY__INET;
 		dm->m.has_socket_family = 1;
 
 		/* addr: query_address or response_address */
-		addr->data = (uint8_t *) &s->sin_addr.s_addr;
-		addr->len = 4; /* IPv4 */
-		*has_addr = 1;
+		qaddr->data = (uint8_t *) &s->sin_addr.s_addr;
+		qaddr->len = 4; /* IPv4 */
+		*has_qaddr = 1;
 
 		/* port: query_port or response_port */
-		*port = ntohs(s->sin_port);
-		*has_port = 1;
+		*qport = ntohs(s->sin_port);
+		*has_qport = 1;
 	}
+
+#ifdef INET6
+        assert(rs->ss_family == AF_INET6 || rs->ss_family == AF_INET);
+        if (rs->ss_family == AF_INET6) {
+                struct sockaddr_in6 *s = (struct sockaddr_in6 *) rs;
+
+                /* addr: query_address or response_address */
+                raddr->data = s->sin6_addr.s6_addr;
+                raddr->len = 16; /* IPv6 */
+                *has_raddr = 1;
+
+                /* port: query_port or response_port */
+                *rport = ntohs(s->sin6_port);
+                *has_rport = 1;
+        } else if (rs->ss_family == AF_INET) {
+#else
+        if (rs->sin_family == AF_INET) {
+#endif /* INET6 */
+                struct sockaddr_in *s = (struct sockaddr_in *) rs;
+
+                /* addr: query_address or response_address */
+                raddr->data = (uint8_t *) &s->sin_addr.s_addr;
+                raddr->len = 4; /* IPv4 */
+                *has_raddr = 1;
+
+                /* port: query_port or response_port */
+                *rport = ntohs(s->sin_port);
+                *has_rport = 1;
+        }
+
 
 	if (!is_tcp) {
 		/* socket_protocol */
@@ -351,8 +386,10 @@ dt_msg_fill_net(struct dt_msg *dm,
 void
 dt_msg_send_auth_query(struct dt_env *env,
 #ifdef INET6
+	struct sockaddr_storage* local_addr,
 	struct sockaddr_storage* addr,
 #else
+	struct sockaddr_in* local_addr,
 	struct sockaddr_in* addr,
 #endif
 	int is_tcp, uint8_t* zone, size_t zonelen, uint8_t* pkt, size_t pktlen)
@@ -380,10 +417,13 @@ dt_msg_send_auth_query(struct dt_env *env,
 	/* query_message */
 	dt_fill_buffer(pkt, pktlen, &dm.m.query_message, &dm.m.has_query_message);
 
-	/* socket_family, socket_protocol, query_address, query_port */
-	dt_msg_fill_net(&dm, addr, is_tcp,
+	/* socket_family, socket_protocol, query_address, query_port, reponse_address (local_address), response_port (local_port) */
+	dt_msg_fill_net(&dm, local_addr, addr, is_tcp,
+			&dm.m.response_address, &dm.m.has_response_address,
+			&dm.m.response_port, &dm.m.has_response_port,
 			&dm.m.query_address, &dm.m.has_query_address,
 			&dm.m.query_port, &dm.m.has_query_port);
+
 
 	if (dt_pack(&dm.d, &dm.buf, &dm.len_buf))
 		dt_send(env, dm.buf, dm.len_buf);
@@ -392,8 +432,10 @@ dt_msg_send_auth_query(struct dt_env *env,
 void
 dt_msg_send_auth_response(struct dt_env *env,
 #ifdef INET6
+	struct sockaddr_storage* local_addr,
 	struct sockaddr_storage* addr,
 #else
+	struct sockaddr_in* local_addr,
 	struct sockaddr_in* addr,
 #endif
 	int is_tcp, uint8_t* zone, size_t zonelen, uint8_t* pkt, size_t pktlen)
@@ -421,8 +463,10 @@ dt_msg_send_auth_response(struct dt_env *env,
 	/* response_message */
 	dt_fill_buffer(pkt, pktlen, &dm.m.response_message, &dm.m.has_response_message);
 
-	/* socket_family, socket_protocol, query_address, query_port */
-	dt_msg_fill_net(&dm, addr, is_tcp,
+	/* socket_family, socket_protocol, query_address, query_port, response_address (local_address), response_port (local_port)  */
+	dt_msg_fill_net(&dm, local_addr, addr, is_tcp,
+			&dm.m.response_address, &dm.m.has_response_address,
+			&dm.m.response_port, &dm.m.has_response_port,
 			&dm.m.query_address, &dm.m.has_query_address,
 			&dm.m.query_port, &dm.m.has_query_port);
 

@@ -87,6 +87,37 @@
 
 #define RELOAD_SYNC_TIMEOUT 25 /* seconds */
 
+#ifdef USE_DNSTAP
+/*
+ * log_addr() - the function to print sockaddr_in/sockaddr_in6 structures content
+ * just like its done in Unbound via the same log_addr(VERB_LEVEL, const char*, sockaddr_storage*)
+ */
+static void
+log_addr(const char* descr,
+#ifdef INET6
+	struct sockaddr_storage* addr,
+#else
+	struct sockaddr_in* addr,
+#endif
+	short family)
+{
+	char str_buf[64];
+	if(verbosity < 6)
+		return;
+	if(family == AF_INET) {
+		struct sockaddr_in* s = (struct sockaddr_in*)addr;
+		inet_ntop(AF_INET, &s->sin_addr.s_addr, str_buf, sizeof(str_buf));
+		VERBOSITY(6, (LOG_INFO, "%s: address is: %s, port is: %d", descr, str_buf, ntohs(s->sin_port)));
+#ifdef INET6
+	} else {
+		struct sockaddr_in6* s6 = (struct sockaddr_in6*)addr;
+		inet_ntop(AF_INET6, &s6->sin6_addr.s6_addr, str_buf, sizeof(str_buf));
+		VERBOSITY(6, (LOG_INFO, "%s: address is: %s, port is: %d", descr, str_buf, ntohs(s6->sin6_port)));
+#endif
+	}
+}
+#endif /* USE_DNSTAP */
+
 #ifdef USE_TCP_FASTOPEN
   #define TCP_FASTOPEN_FILE "/proc/sys/net/ipv4/tcp_fastopen"
   #define TCP_FASTOPEN_SERVER_BIT_MASK 0x2
@@ -209,6 +240,17 @@ struct tcp_handler_data
 	 * The timeout in msec for this tcp connection
 	 */
 	int	tcp_timeout;
+
+	/*
+	 * If the connection is allowed to have further queries on it.
+	 */
+	int tcp_no_more_queries;
+
+#ifdef USE_DNSTAP
+	/* the socket of the accept socket to find proper service (local) address the socket is bound to. */
+	struct nsd_socket *socket;
+#endif /* USE_DNSTAP */
+
 #ifdef HAVE_SSL
 	/*
 	 * TLS object.
@@ -3102,6 +3144,7 @@ service_remaining_tcp(struct nsd* nsd)
 		}
 #endif
 
+		p->tcp_no_more_queries = 1;
 		/* set timeout to 1/10 second */
 		if(p->tcp_timeout > 100)
 			p->tcp_timeout = 100;
@@ -3299,7 +3342,12 @@ handle_udp(int fd, short event, void* arg)
 		buffer_skip(q->packet, received);
 		buffer_flip(q->packet);
 #ifdef USE_DNSTAP
-		dt_collector_submit_auth_query(data->nsd, &q->addr, q->addrlen,
+		/*
+		 * sending UDP-query with server address (local) and client address to dnstap process
+		 */
+		log_addr("query from client", &q->addr, data->socket->addr.ai_family);
+		log_addr("to server (local)", &data->socket->addr.ai_addr, data->socket->addr.ai_family);
+		dt_collector_submit_auth_query(data->nsd, &data->socket->addr.ai_addr, &q->addr, q->addrlen,
 			q->tcp, q->packet);
 #endif /* USE_DNSTAP */
 
@@ -3333,7 +3381,12 @@ handle_udp(int fd, short event, void* arg)
 			}
 #endif /* BIND8_STATS */
 #ifdef USE_DNSTAP
-			dt_collector_submit_auth_response(data->nsd,
+			/*
+			 * sending UDP-response with server address (local) and client address to dnstap process
+			 */
+			log_addr("from server (local)", &data->socket->addr.ai_addr, data->socket->addr.ai_family);
+			log_addr("response to client", &q->addr, data->socket->addr.ai_family);
+			dt_collector_submit_auth_response(data->nsd, &data->socket->addr.ai_addr,
 				&q->addr, q->addrlen, q->tcp, q->packet,
 				q->zone);
 #endif /* USE_DNSTAP */
@@ -3493,8 +3546,9 @@ handle_tcp_reading(int fd, short event, void* arg)
 		return;
 	}
 
-	if (data->nsd->tcp_query_count > 0 &&
-		data->query_count >= data->nsd->tcp_query_count) {
+	if ((data->nsd->tcp_query_count > 0 &&
+		data->query_count >= data->nsd->tcp_query_count) ||
+		data->tcp_no_more_queries) {
 		/* No more queries allowed on this tcp connection. */
 		cleanup_tcp_handler(data);
 		return;
@@ -3634,7 +3688,12 @@ handle_tcp_reading(int fd, short event, void* arg)
 
 	buffer_flip(data->query->packet);
 #ifdef USE_DNSTAP
-	dt_collector_submit_auth_query(data->nsd, &data->query->addr,
+	/*
+	 * and send TCP-query with found address (local) and client address to dnstap process
+	 */
+	log_addr("query from client", &data->query->addr, data->query->addr.ss_family);
+	log_addr("to server (local)", &data->socket->addr.ai_addr, data->query->addr.ss_family);
+	dt_collector_submit_auth_query(data->nsd, &data->socket->addr.ai_addr, &data->query->addr,
 		data->query->addrlen, data->query->tcp, data->query->packet);
 #endif /* USE_DNSTAP */
 	data->query_state = server_process_query(data->nsd, data->query);
@@ -3682,7 +3741,12 @@ handle_tcp_reading(int fd, short event, void* arg)
 	}
 #endif /* BIND8_STATS */
 #ifdef USE_DNSTAP
-	dt_collector_submit_auth_response(data->nsd, &data->query->addr,
+	/*
+	 * sending TCP-response with found (earlier) address (local) and client address to dnstap process
+	 */
+	log_addr("from server (local)", &data->socket->addr.ai_addr, data->query->addr.ss_family);
+	log_addr("response to client", &data->query->addr, data->query->addr.ss_family);
+	dt_collector_submit_auth_response(data->nsd, &data->socket->addr.ai_addr, &data->query->addr,
 		data->query->addrlen, data->query->tcp, data->query->packet,
 		data->query->zone);
 #endif /* USE_DNSTAP */
@@ -3846,8 +3910,9 @@ handle_tcp_writing(int fd, short event, void* arg)
 	 * Done sending, wait for the next request to arrive on the
 	 * TCP socket by installing the TCP read handler.
 	 */
-	if (data->nsd->tcp_query_count > 0 &&
-		data->query_count >= data->nsd->tcp_query_count) {
+	if ((data->nsd->tcp_query_count > 0 &&
+		data->query_count >= data->nsd->tcp_query_count) ||
+		data->tcp_no_more_queries) {
 
 		(void) shutdown(fd, SHUT_WR);
 	}
@@ -3971,8 +4036,9 @@ handle_tls_reading(int fd, short event, void* arg)
 		return;
 	}
 
-	if (data->nsd->tcp_query_count > 0 &&
-	    data->query_count >= data->nsd->tcp_query_count) {
+	if ((data->nsd->tcp_query_count > 0 &&
+	    data->query_count >= data->nsd->tcp_query_count) ||
+	    data->tcp_no_more_queries) {
 		/* No more queries allowed on this tcp connection. */
 		cleanup_tcp_handler(data);
 		return;
@@ -4110,7 +4176,12 @@ handle_tls_reading(int fd, short event, void* arg)
 
 	buffer_flip(data->query->packet);
 #ifdef USE_DNSTAP
-	dt_collector_submit_auth_query(data->nsd, &data->query->addr,
+	/*
+	 * and send TCP-query with found address (local) and client address to dnstap process
+	 */
+	log_addr("query from client", &data->query->addr, data->query->addr.ss_family);
+	log_addr("to server (local)", &data->socket->addr.ai_addr, data->query->addr.ss_family);
+	dt_collector_submit_auth_query(data->nsd, &data->socket->addr.ai_addr, &data->query->addr,
 		data->query->addrlen, data->query->tcp, data->query->packet);
 #endif /* USE_DNSTAP */
 	data->query_state = server_process_query(data->nsd, data->query);
@@ -4158,7 +4229,12 @@ handle_tls_reading(int fd, short event, void* arg)
 	}
 #endif /* BIND8_STATS */
 #ifdef USE_DNSTAP
-	dt_collector_submit_auth_response(data->nsd, &data->query->addr,
+	/*
+	 * sending TCP-response with found (earlier) address (local) and client address to dnstap process
+	 */
+	log_addr("from server (local)", &data->socket->addr.ai_addr, data->query->addr.ss_family);
+	log_addr("response to client", &data->query->addr, data->query->addr.ss_family);
+	dt_collector_submit_auth_response(data->nsd, &data->socket->addr.ai_addr, &data->query->addr,
 		data->query->addrlen, data->query->tcp, data->query->packet,
 		data->query->zone);
 #endif /* USE_DNSTAP */
@@ -4286,8 +4362,9 @@ handle_tls_writing(int fd, short event, void* arg)
 	 * Done sending, wait for the next request to arrive on the
 	 * TCP socket by installing the TCP read handler.
 	 */
-	if (data->nsd->tcp_query_count > 0 &&
-		data->query_count >= data->nsd->tcp_query_count) {
+	if ((data->nsd->tcp_query_count > 0 &&
+		data->query_count >= data->nsd->tcp_query_count) ||
+		data->tcp_no_more_queries) {
 
 		(void) shutdown(fd, SHUT_WR);
 	}
@@ -4432,6 +4509,7 @@ handle_tcp_accept(int fd, short event, void* arg)
 	memcpy(&tcp_data->query->addr, &addr, addrlen);
 	tcp_data->query->addrlen = addrlen;
 
+	tcp_data->tcp_no_more_queries = 0;
 	tcp_data->tcp_timeout = data->nsd->tcp_timeout * 1000;
 	if (data->nsd->current_tcp_count > data->nsd->maximum_tcp_count/2) {
 		/* very busy, give smaller timeout */
@@ -4440,6 +4518,11 @@ handle_tcp_accept(int fd, short event, void* arg)
 	memset(&tcp_data->event, 0, sizeof(tcp_data->event));
 	timeout.tv_sec = tcp_data->tcp_timeout / 1000;
 	timeout.tv_usec = (tcp_data->tcp_timeout % 1000)*1000;
+
+#ifdef USE_DNSTAP
+	/* save the address of the connection */
+	tcp_data->socket = data->socket;
+#endif /* USE_DNSTAP */
 
 #ifdef HAVE_SSL
 	if (data->tls_accept) {

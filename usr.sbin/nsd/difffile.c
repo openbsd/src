@@ -1349,7 +1349,7 @@ apply_ixfr_for_zone(nsd_type* nsd, zone_type* zonedb, FILE* in,
 					apex->name_size)) {
 					/* out of disk space perhaps */
 					log_msg(LOG_ERR, "could not udb_create_zone "
-						"%s, disk space full?", log_buf);
+						"%s, disk space full?", zone_buf);
 					return 0;
 				}
 			}

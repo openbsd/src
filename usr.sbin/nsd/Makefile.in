@@ -73,6 +73,7 @@ EDIT		= $(SED) \
 			-e 's,@nsdconfigfile\@,$(nsdconfigfile),g' \
 			-e 's,@shell\@,$(SHELL),g' \
 			-e 's,@ratelimit_default\@,@ratelimit_default@,g' \
+			-e 's,@dnstap_socket_path\@,@opt_dnstap_socket_path@,g' \
 			-e 's,@user\@,$(user),g'
 
 TARGETS=nsd nsd-checkconf nsd-checkzone nsd-control nsd.conf.sample nsd-control-setup.sh
@@ -344,13 +345,13 @@ zparser.c zparser.h: $(srcdir)/zparser.y
 
 configlexer.c:	$(srcdir)/configlexer.lex
 	if test "$(LEX)" != ":"; then rm -f $@ ;\
-		echo '#include "configyyrename.h"' > $@ ;\
-		$(LEX) -i -t $(srcdir)/configlexer.lex >> $@ ;\
+		echo '#include "config.h"' > $@ ;\
+		$(LEX) -P c_ -i -t $(srcdir)/configlexer.lex >> $@ ;\
 	fi
 	@if test ! -f $@; then echo "No $@ : need flex and bison to compile from source repository"; exit 1; fi
 
 configparser.c configparser.h:	$(srcdir)/configparser.y
-	$(YACC) -d -o configparser.c $(srcdir)/configparser.y
+	$(YACC) -d -p c_ -o configparser.c $(srcdir)/configparser.y
 
 # dnstap
 dnstap.o:	$(srcdir)/dnstap/dnstap.c config.h dnstap/dnstap_config.h \
@@ -417,11 +418,11 @@ axfr.o: $(srcdir)/axfr.c config.h $(srcdir)/axfr.h $(srcdir)/nsd.h $(srcdir)/dns
  $(srcdir)/region-allocator.h $(srcdir)/util.h $(srcdir)/query.h $(srcdir)/namedb.h $(srcdir)/dname.h $(srcdir)/radtree.h $(srcdir)/rbtree.h \
  $(srcdir)/packet.h $(srcdir)/tsig.h $(srcdir)/options.h
 buffer.o: $(srcdir)/buffer.c config.h $(srcdir)/buffer.h $(srcdir)/region-allocator.h $(srcdir)/util.h
-configlexer.o: configlexer.c $(srcdir)/configyyrename.h config.h $(srcdir)/options.h \
+configlexer.o: configlexer.c config.h $(srcdir)/options.h \
  $(srcdir)/region-allocator.h $(srcdir)/rbtree.h configparser.h
 configparser.o: configparser.c config.h $(srcdir)/options.h $(srcdir)/region-allocator.h \
  $(srcdir)/rbtree.h $(srcdir)/util.h $(srcdir)/dname.h $(srcdir)/buffer.h $(srcdir)/tsig.h $(srcdir)/rrl.h $(srcdir)/query.h $(srcdir)/namedb.h $(srcdir)/dns.h \
- $(srcdir)/radtree.h $(srcdir)/nsd.h $(srcdir)/edns.h $(srcdir)/packet.h $(srcdir)/configyyrename.h
+ $(srcdir)/radtree.h $(srcdir)/nsd.h $(srcdir)/edns.h $(srcdir)/packet.h
 dbaccess.o: $(srcdir)/dbaccess.c config.h $(srcdir)/dns.h $(srcdir)/namedb.h $(srcdir)/dname.h $(srcdir)/buffer.h \
  $(srcdir)/region-allocator.h $(srcdir)/util.h $(srcdir)/radtree.h $(srcdir)/rbtree.h $(srcdir)/options.h $(srcdir)/rdata.h $(srcdir)/udb.h \
  $(srcdir)/udbradtree.h $(srcdir)/udbzone.h $(srcdir)/zonec.h $(srcdir)/nsec3.h $(srcdir)/difffile.h $(srcdir)/nsd.h $(srcdir)/edns.h
@@ -467,7 +468,7 @@ nsec3.o: $(srcdir)/nsec3.c config.h $(srcdir)/nsec3.h $(srcdir)/iterated_hash.h 
  $(srcdir)/answer.h $(srcdir)/packet.h $(srcdir)/query.h $(srcdir)/tsig.h $(srcdir)/udbzone.h $(srcdir)/udb.h $(srcdir)/udbradtree.h $(srcdir)/options.h
 options.o: $(srcdir)/options.c config.h $(srcdir)/options.h $(srcdir)/region-allocator.h $(srcdir)/rbtree.h \
  $(srcdir)/query.h $(srcdir)/namedb.h $(srcdir)/dname.h $(srcdir)/buffer.h $(srcdir)/util.h $(srcdir)/dns.h $(srcdir)/radtree.h $(srcdir)/nsd.h $(srcdir)/edns.h \
- $(srcdir)/packet.h $(srcdir)/tsig.h $(srcdir)/difffile.h $(srcdir)/udb.h $(srcdir)/rrl.h $(srcdir)/configyyrename.h configparser.h
+ $(srcdir)/packet.h $(srcdir)/tsig.h $(srcdir)/difffile.h $(srcdir)/udb.h $(srcdir)/rrl.h configparser.h
 packet.o: $(srcdir)/packet.c config.h $(srcdir)/packet.h $(srcdir)/dns.h $(srcdir)/namedb.h $(srcdir)/dname.h $(srcdir)/buffer.h \
  $(srcdir)/region-allocator.h $(srcdir)/util.h $(srcdir)/radtree.h $(srcdir)/rbtree.h $(srcdir)/query.h $(srcdir)/nsd.h $(srcdir)/edns.h $(srcdir)/tsig.h \
  $(srcdir)/rdata.h

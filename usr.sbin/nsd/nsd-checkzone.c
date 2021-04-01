@@ -31,13 +31,14 @@ struct nsd nsd;
 static void
 usage (void)
 {
-	fprintf(stderr, "Usage: nsd-checkzone <zone name> <zone file>\n");
+	fprintf(stderr, "Usage: nsd-checkzone [-p] <zone name> <zone file>\n");
+	fprintf(stderr, "\t-p\tprint the zone if the zone is ok\n");
 	fprintf(stderr, "Version %s. Report bugs to <%s>.\n",
 		PACKAGE_VERSION, PACKAGE_BUGREPORT);
 }
 
 static void
-check_zone(struct nsd* nsd, const char* name, const char* fname)
+check_zone(struct nsd* nsd, const char* name, const char* fname, FILE *out)
 {
 	const dname_type* dname;
 	zone_options_type* zo;
@@ -67,6 +68,10 @@ check_zone(struct nsd* nsd, const char* name, const char* fname)
 #endif
 		exit(1);
 	}
+	if (out) {
+		print_rrs(out, zone);
+		printf("; ");
+	}
 	printf("zone %s is ok\n", name);
 	namedb_close(nsd->db);
 }
@@ -95,17 +100,21 @@ main(int argc, char *argv[])
 {
 	/* Scratch variables... */
 	int c;
+	int print_zone = 0;
 	struct nsd nsd;
 	memset(&nsd, 0, sizeof(nsd));
 
 	log_init("nsd-checkzone");
 
 	/* Parse the command line... */
-	while ((c = getopt(argc, argv, "h")) != -1) {
+	while ((c = getopt(argc, argv, "hp")) != -1) {
 		switch (c) {
 		case 'h':
 			usage();
 			exit(0);
+		case 'p':
+			print_zone = 1;
+			break;
 		case '?':
 		default:
 			usage();
@@ -128,7 +137,7 @@ main(int argc, char *argv[])
 	if (verbosity == 0)
 		verbosity = nsd.options->verbosity;
 
-	check_zone(&nsd, argv[0], argv[1]);
+	check_zone(&nsd, argv[0], argv[1], print_zone ? stdout : NULL);
 	region_destroy(nsd.options->region);
 	/* yylex_destroy(); but, not available in all versions of flex */
 

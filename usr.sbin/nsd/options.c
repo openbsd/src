@@ -11,6 +11,9 @@
 #include <stdio.h>
 #include <sys/stat.h>
 #include <errno.h>
+#ifdef HAVE_IFADDRS_H
+#include <ifaddrs.h>
+#endif
 #include "options.h"
 #include "query.h"
 #include "tsig.h"
@@ -18,7 +21,6 @@
 #include "rrl.h"
 #include "bitset.h"
 
-#include "configyyrename.h"
 #include "configparser.h"
 config_parser_state_type* cfg_parser = 0;
 extern FILE* c_in, *c_out;
@@ -250,6 +252,15 @@ parse_options_file(struct nsd_options* opt, const char* file,
 					acl->key_name, pat->pname);
 		}
 		for(acl=pat->provide_xfr; acl; acl=acl->next)
+		{
+			if(acl->nokey || acl->blocked)
+				continue;
+			acl->key_options = key_options_find(opt, acl->key_name);
+			if(!acl->key_options)
+				c_error("key %s in pattern %s could not be found",
+					acl->key_name, pat->pname);
+		}
+		for(acl=pat->allow_query; acl; acl=acl->next)
 		{
 			if(acl->nokey || acl->blocked)
 				continue;
@@ -828,6 +839,7 @@ pattern_options_create(region_type* region)
 	p->size_limit_xfr = 0;
 	p->notify = 0;
 	p->provide_xfr = 0;
+	p->allow_query = 0;
 	p->outgoing_interface = 0;
 	p->notify_retry = 5;
 	p->notify_retry_is_default = 1;
@@ -897,6 +909,7 @@ pattern_options_remove(struct nsd_options* opt, const char* name)
 	acl_list_delete(opt->region, p->request_xfr);
 	acl_list_delete(opt->region, p->notify);
 	acl_list_delete(opt->region, p->provide_xfr);
+	acl_list_delete(opt->region, p->allow_query);
 	acl_list_delete(opt->region, p->outgoing_interface);
 
 	region_recycle(opt->region, p, sizeof(struct pattern_options));
@@ -997,6 +1010,7 @@ pattern_options_add_modify(struct nsd_options* opt, struct pattern_options* p)
 		orig->request_xfr = copy_acl_list(opt, p->request_xfr);
 		orig->notify = copy_acl_list(opt, p->notify);
 		orig->provide_xfr = copy_acl_list(opt, p->provide_xfr);
+		orig->allow_query = copy_acl_list(opt, p->allow_query);
 		orig->outgoing_interface = copy_acl_list(opt,
 			p->outgoing_interface);
 		nsd_options_insert_pattern(opt, orig);
@@ -1014,6 +1028,7 @@ pattern_options_add_modify(struct nsd_options* opt, struct pattern_options* p)
 		copy_changed_acl(opt, &orig->request_xfr, p->request_xfr);
 		copy_changed_acl(opt, &orig->notify, p->notify);
 		copy_changed_acl(opt, &orig->provide_xfr, p->provide_xfr);
+		copy_changed_acl(opt, &orig->allow_query, p->allow_query);
 		copy_changed_acl(opt, &orig->outgoing_interface,
 			p->outgoing_interface);
 	}
@@ -1050,6 +1065,7 @@ pattern_options_equal(struct pattern_options* p, struct pattern_options* q)
 	if(!acl_list_equal(p->request_xfr, q->request_xfr)) return 0;
 	if(!acl_list_equal(p->notify, q->notify)) return 0;
 	if(!acl_list_equal(p->provide_xfr, q->provide_xfr)) return 0;
+	if(!acl_list_equal(p->allow_query, q->allow_query)) return 0;
 	if(!acl_list_equal(p->outgoing_interface, q->outgoing_interface))
 		return 0;
 	if(p->max_refresh_time != q->max_refresh_time) return 0;
@@ -1222,6 +1238,7 @@ pattern_options_marshal(struct buffer* b, struct pattern_options* p)
 	marshal_acl_list(b, p->request_xfr);
 	marshal_acl_list(b, p->notify);
 	marshal_acl_list(b, p->provide_xfr);
+	marshal_acl_list(b, p->allow_query);
 	marshal_acl_list(b, p->outgoing_interface);
 	marshal_u32(b, p->max_refresh_time);
 	marshal_u8(b, p->max_refresh_time_is_default);
@@ -1256,6 +1273,7 @@ pattern_options_unmarshal(region_type* r, struct buffer* b)
 	p->request_xfr = unmarshal_acl_list(r, b);
 	p->notify = unmarshal_acl_list(r, b);
 	p->provide_xfr = unmarshal_acl_list(r, b);
+	p->allow_query = unmarshal_acl_list(r, b);
 	p->outgoing_interface = unmarshal_acl_list(r, b);
 	p->max_refresh_time = unmarshal_u32(b);
 	p->max_refresh_time_is_default = unmarshal_u8(b);
@@ -2050,6 +2068,7 @@ config_apply_pattern(struct pattern_options *dest, const char* name)
 	copy_and_append_acls(&dest->request_xfr, pat->request_xfr);
 	copy_and_append_acls(&dest->notify, pat->notify);
 	copy_and_append_acls(&dest->provide_xfr, pat->provide_xfr);
+	copy_and_append_acls(&dest->allow_query, pat->allow_query);
 	copy_and_append_acls(&dest->outgoing_interface, pat->outgoing_interface);
 	if(pat->multi_master_check)
 		dest->multi_master_check = pat->multi_master_check;
@@ -2103,4 +2122,145 @@ options_remote_is_address(struct nsd_options* cfg)
 	if(!cfg->control_interface->address) return 1;
 	if(cfg->control_interface->address[0] == 0) return 1;
 	return (cfg->control_interface->address[0] != '/');
+}
+
+#ifdef HAVE_GETIFADDRS
+static void
+resolve_ifa_name(struct ifaddrs *ifas, const char *search_ifa, char ***ip_addresses, size_t *ip_addresses_size)
+{
+	struct ifaddrs *ifa;
+	size_t last_ip_addresses_size = *ip_addresses_size;
+
+	for(ifa = ifas; ifa != NULL; ifa = ifa->ifa_next) {
+		sa_family_t family;
+		const char* atsign;
+#ifdef INET6      /* |   address ip    | % |  ifa name  | @ |  port  | nul */
+		char addr_buf[INET6_ADDRSTRLEN + 1 + IF_NAMESIZE + 1 + 16 + 1];
+#else
+		char addr_buf[INET_ADDRSTRLEN + 1 + 16 + 1];
+#endif
+
+		if((atsign=strrchr(search_ifa, '@')) != NULL) {
+			if(strlen(ifa->ifa_name) != (size_t)(atsign-search_ifa)
+			   || strncmp(ifa->ifa_name, search_ifa,
+			   atsign-search_ifa) != 0)
+				continue;
+		} else {
+			if(strcmp(ifa->ifa_name, search_ifa) != 0)
+				continue;
+			atsign = "";
+		}
+
+		if(ifa->ifa_addr == NULL)
+			continue;
+
+		family = ifa->ifa_addr->sa_family;
+		if(family == AF_INET) {
+			char a4[INET_ADDRSTRLEN + 1];
+			struct sockaddr_in *in4 = (struct sockaddr_in *)
+				ifa->ifa_addr;
+			if(!inet_ntop(family, &in4->sin_addr, a4, sizeof(a4)))
+				error("inet_ntop");
+			snprintf(addr_buf, sizeof(addr_buf), "%s%s",
+				a4, atsign);
+		}
+#ifdef INET6
+		else if(family == AF_INET6) {
+			struct sockaddr_in6 *in6 = (struct sockaddr_in6 *)
+				ifa->ifa_addr;
+			char a6[INET6_ADDRSTRLEN + 1];
+			char if_index_name[IF_NAMESIZE + 1];
+			if_index_name[0] = 0;
+			if(!inet_ntop(family, &in6->sin6_addr, a6, sizeof(a6)))
+				error("inet_ntop");
+			if_indextoname(in6->sin6_scope_id,
+				(char *)if_index_name);
+			if (strlen(if_index_name) != 0) {
+				snprintf(addr_buf, sizeof(addr_buf),
+					"%s%%%s%s", a6, if_index_name, atsign);
+			} else {
+				snprintf(addr_buf, sizeof(addr_buf), "%s%s",
+					a6, atsign);
+			}
+		}
+#endif
+		else {
+			continue;
+		}
+		VERBOSITY(4, (LOG_INFO, "interface %s has address %s",
+			search_ifa, addr_buf));
+
+		*ip_addresses = xrealloc(*ip_addresses, sizeof(char *) * (*ip_addresses_size + 1));
+		(*ip_addresses)[*ip_addresses_size] = xstrdup(addr_buf);
+		(*ip_addresses_size)++;
+	}
+
+	if (*ip_addresses_size == last_ip_addresses_size) {
+		*ip_addresses = xrealloc(*ip_addresses, sizeof(char *) * (*ip_addresses_size + 1));
+		(*ip_addresses)[*ip_addresses_size] = xstrdup(search_ifa);
+		(*ip_addresses_size)++;
+	}
+}
+
+static void
+resolve_interface_names_for_ref(struct ip_address_option** ip_addresses_ref,
+		struct ifaddrs *addrs, region_type* region)
+{
+	struct ip_address_option *ip_addr;
+	struct ip_address_option *last = NULL;
+	struct ip_address_option *first = NULL;
+
+	/* replace the list of ip_adresses with a new list where the
+	 * interface names are replaced with their ip-address strings
+	 * from getifaddrs.  An interface can have several addresses. */
+	for(ip_addr = *ip_addresses_ref; ip_addr; ip_addr = ip_addr->next) {
+		char **ip_addresses = NULL;
+		size_t ip_addresses_size = 0, i;
+		resolve_ifa_name(addrs, ip_addr->address, &ip_addresses,
+			&ip_addresses_size);
+
+		for (i = 0; i < ip_addresses_size; i++) {
+			struct ip_address_option *current;
+			/* this copies the range_option, dev, and fib from
+			 * the original ip_address option to the new ones
+			 * with the addresses spelled out by resolve_ifa_name*/
+			current = region_alloc_init(region, ip_addr,
+				sizeof(*ip_addr));
+			current->address = region_strdup(region,
+				ip_addresses[i]);
+			current->next = NULL;
+			free(ip_addresses[i]);
+
+			if(first == NULL) {
+				first = current;
+			} else {
+				last->next = current;
+			}
+			last = current;
+		}
+		free(ip_addresses);
+	}
+	*ip_addresses_ref = first;
+
+}
+#endif /* HAVE_GETIFADDRS */
+
+void
+resolve_interface_names(struct nsd_options* options)
+{
+#ifdef HAVE_GETIFADDRS
+	struct ifaddrs *addrs;
+
+	if(getifaddrs(&addrs) == -1)
+		  error("failed to list interfaces");
+
+	resolve_interface_names_for_ref(&options->ip_addresses, 
+			addrs, options->region);
+	resolve_interface_names_for_ref(&options->control_interface, 
+			addrs, options->region);
+
+	freeifaddrs(addrs);
+#else
+	(void)options;
+#endif /* HAVE_GETIFADDRS */
 }

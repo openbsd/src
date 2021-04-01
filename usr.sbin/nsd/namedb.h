@@ -369,6 +369,7 @@ int udb_write_rr(struct udb_base* udb, struct udb_ptr* z, rr_type* rr);
 void udb_del_rr(struct udb_base* udb, struct udb_ptr* z, rr_type* rr);
 int write_zone_to_udb(struct udb_base* udb, zone_type* zone,
 	struct timespec* mtime, const char* file_str);
+int print_rrs(FILE* out, struct zone* zone);
 /** marshal rdata into buffer, must be MAX_RDLENGTH in size */
 size_t rr_marshal_rdata(rr_type* rr, uint8_t* rdata, size_t sz);
 /* dbaccess.c */

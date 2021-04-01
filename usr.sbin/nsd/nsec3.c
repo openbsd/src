@@ -977,6 +977,10 @@ nsec3_add_nonexist_proof(struct query* query, struct answer* answer,
 		VERBOSITY(3, (LOG_ERR, "nsec3 hash collision for name=%s hash=%s reverse=%s",
 			dname_to_string(to_prove, NULL), hashbuf, reversebuf));
 		RCODE_SET(query->packet, RCODE_SERVFAIL);
+		/* RFC 8914 - Extended DNS Errors
+		 * 4.21. Extended DNS Error Code 0 - Other */
+		ASSIGN_EDE_CODE_AND_STRING_LITERAL(query->edns.ede,
+			EDE_OTHER, "NSEC3 hash collision");
 		return;
 	}
 	else
@@ -1187,6 +1191,10 @@ nsec3_answer_authoritative(struct domain** match, struct query *query,
 			/* wildcard exists below the domain */
 			/* wildcard and nsec3 domain clash. server failure. */
 			RCODE_SET(query->packet, RCODE_SERVFAIL);
+			/* RFC 8914 - Extended DNS Errors
+			 * 4.21. Extended DNS Error Code 0 - Other */
+			ASSIGN_EDE_CODE_AND_STRING_LITERAL(query->edns.ede,
+				EDE_OTHER, "Wildcard and NSEC3 domain clash");
 		}
 		return;
 	}

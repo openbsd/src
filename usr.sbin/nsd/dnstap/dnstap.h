@@ -108,6 +108,7 @@ dt_delete(struct dt_env *env);
 /**
  * Create and send a new dnstap "Message" event of type AUTH_QUERY.
  * @param env: dnstap environment object.
+ * @param local_addr: address/port of server (local address).
  * @param addr: address/port of client.
  * @param is_tcp: true for tcp, false for udp.
  * @param zone: zone name, or NULL. in wireformat.
@@ -118,8 +119,10 @@ dt_delete(struct dt_env *env);
 void
 dt_msg_send_auth_query(struct dt_env *env,
 #ifdef INET6
+	struct sockaddr_storage* local_addr,
 	struct sockaddr_storage* addr,
 #else
+	struct sockaddr_in* local_addr,
 	struct sockaddr_in* addr,
 #endif
 	int is_tcp, uint8_t* zone, size_t zonelen, uint8_t* pkt, size_t pktlen);
@@ -127,6 +130,7 @@ dt_msg_send_auth_query(struct dt_env *env,
 /**
  * Create and send a new dnstap "Message" event of type AUTH_RESPONSE.
  * @param env: dnstap environment object.
+ * @param local_addr: address/port of server (local address).
  * @param addr: address/port of client.
  * @param is_tcp: true for tcp, false for udp.
  * @param zone: zone name, or NULL. in wireformat.
@@ -137,8 +141,10 @@ dt_msg_send_auth_query(struct dt_env *env,
 void
 dt_msg_send_auth_response(struct dt_env *env,
 #ifdef INET6
+	struct sockaddr_storage* local_addr,
 	struct sockaddr_storage* addr,
 #else
+	struct sockaddr_in* local_addr,
 	struct sockaddr_in* addr,
 #endif
 	int is_tcp, uint8_t* zone, size_t zonelen, uint8_t* pkt, size_t pktlen);
