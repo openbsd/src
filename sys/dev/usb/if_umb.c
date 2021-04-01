@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.42 2021/03/30 20:58:19 sthen Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.43 2021/04/01 08:39:52 mvs Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -1053,10 +1053,12 @@ umb_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 	struct umb_softc *sc = ifp->if_softc;
 
 	if (req == RTM_PROPOSAL) {
+		KERNEL_LOCK();
 		umb_send_inet_proposal(sc, AF_INET);
 #ifdef INET6
 		umb_send_inet_proposal(sc, AF_INET6);
 #endif
+		KERNEL_UNLOCK();
 		return;
 	}
 
