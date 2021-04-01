@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.1 2021/04/01 16:04:48 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.2 2021/04/01 16:50:23 deraadt Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -171,7 +171,7 @@ filepath_dir_exists(struct filepath_tree *tree, char *path)
 	needle.file = path;
 	res = RB_NFIND(filepath_tree, tree, &needle);
 	while (res != NULL && strstr(res->file, path) == res->file) {
-		/* make sure that filepath acctually is in that path */
+		/* make sure that filepath actually is in that path */
 		if (res->file[strlen(path)] == '/')
 			return 1;
 		res = RB_NEXT(filepath_tree, tree, res);
