@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.38 2021/04/01 16:58:56 jmc Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.39 2021/04/01 17:43:11 job Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -105,10 +105,14 @@ and
 .Fl j
 options are not specified this is the default.
 .It Fl R
-Disable synchronisation via RRDP.
-Currently this is the default mode.
+Do not synchronize via RRDP.
+This is the default.
 .It Fl r
-Enable synchronisation via RRDP.
+Attempt to synchronize via RRDP.
+If RRDP fails, RSYNC will be used.
+This flag is for testing purposes, it will be removed in a future release.
+Mutually exclusive with
+.Fl n .
 .It Fl s Ar timeout
 Terminate after
 .Ar timeout
@@ -219,6 +223,8 @@ Signed Object Template for the Resource Public Key Infrastructure (RPKI).
 The Resource Public Key Infrastructure (RPKI) Ghostbusters Record.
 .It RFC 7730
 Resource Public Key Infrastructure (RPKI) Trust Anchor Locator.
+.It RFC 8182
+The RPKI Repository Delta Protocol (RRDP).
 .El
 .\" .Sh HISTORY
 .Sh AUTHORS
