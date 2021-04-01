@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.719 2021/04/01 13:17:48 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.720 2021/04/01 16:07:44 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -233,9 +233,9 @@ get_link_ifa(const char *name, struct ifaddrs *ifap)
 void
 interface_state(struct interface_info *ifi)
 {
-	struct ether_addr		 hw;
 	struct ifaddrs			*ifap, *ifa;
 	struct sockaddr_dl		*sdl;
+	char				*oldlladdr;
 	int				 newlinkup, oldlinkup;
 
 	oldlinkup = LINK_STATE_IS_UP(ifi->link_state);
@@ -265,15 +265,19 @@ interface_state(struct interface_info *ifi)
 		tick_msg("link", newlinkup ? TICK_SUCCESS : TICK_WAIT);
 	}
 
-	if (newlinkup != 0) {
-		memcpy(&hw, &ifi->hw_address, sizeof(hw));
-		sdl = (struct sockaddr_dl *)ifa->ifa_addr;
-		memcpy(ifi->hw_address.ether_addr_octet, LLADDR(sdl),
-		    ETHER_ADDR_LEN);
-		if (memcmp(&hw, &ifi->hw_address, sizeof(hw))) {
-			log_debug("%s: LLADDR changed", log_procname);
-			quit = RESTART;
+	sdl = (struct sockaddr_dl *)ifa->ifa_addr;
+	if (memcmp(&ifi->hw_address, LLADDR(sdl), ETHER_ADDR_LEN) != 0) {
+		if (log_getverbose()) {
+			oldlladdr = strdup(ether_ntoa(&ifi->hw_address));
+			if (oldlladdr == NULL)
+				fatal("oldlladddr");
+			log_debug("%s: LLADDR %s -> %s", log_procname,
+			    oldlladdr,
+			    ether_ntoa((struct ether_addr *)LLADDR(sdl)));
+			free(oldlladdr);
 		}
+		memcpy(&ifi->hw_address, LLADDR(sdl), ETHER_ADDR_LEN);
+		quit = RESTART;	/* Even if MTU has changed. */
 	}
 
 	freeifaddrs(ifap);
@@ -503,6 +507,7 @@ rtm_dispatch(struct interface_info *ifi, struct rt_msghdr *rtm)
 	struct if_announcemsghdr	*ifan;
 	struct ifa_msghdr		*ifam;
 	struct if_ieee80211_data	*ifie;
+	char				*oldssid;
 	uint32_t			 oldmtu;
 
 	switch (rtm->rtm_type) {
@@ -547,8 +552,8 @@ rtm_dispatch(struct interface_info *ifi, struct rt_msghdr *rtm)
 		if (oldmtu == ifi->mtu)
 			quit = RESTART;
 		else
-			log_debug("%s: MTU change RTM_IFINFO ignored",
-			    log_procname);
+			log_debug("%s: MTU %u -> %u",
+			    log_procname, oldmtu, ifi->mtu);
 		break;
 
 	case RTM_80211INFO:
@@ -557,9 +562,17 @@ rtm_dispatch(struct interface_info *ifi, struct rt_msghdr *rtm)
 		ifie = &((struct if_ieee80211_msghdr *)rtm)->ifim_ifie;
 		if (ifi->ssid_len != ifie->ifie_nwid_len || memcmp(ifi->ssid,
 		    ifie->ifie_nwid, ifie->ifie_nwid_len) != 0) {
-			log_debug("%s: SSID changed", log_procname);
+			if (log_getverbose()) {
+				oldssid = strdup(pretty_print_string(ifi->ssid,
+				    ifi->ssid_len, 1));
+				if (oldssid == NULL)
+					fatal("oldssid");
+				log_debug("%s: SSID %s -> %s", log_procname,
+				    oldssid, pretty_print_string(ifie->ifie_nwid,
+				    ifie->ifie_nwid_len, 1));
+				free(oldssid);
+			}
 			quit = RESTART;
-			return;
 		}
 		break;
 
@@ -957,7 +970,7 @@ dhcpack(struct interface_info *ifi, struct option_data *options,
 		return;
 	}
 
-	log_debug("%s: DHCPACK from %s", log_procname, src);
+	log_debug("%s: DHCPACK", log_procname);
 
 	lease = packet_to_lease(ifi, options);
 	if (lease == NULL) {
@@ -990,7 +1003,7 @@ dhcpnak(struct interface_info *ifi, const char *src)
 		return;
 	}
 
-	log_debug("%s: DHCPNAK from %s", log_procname, src);
+	log_debug("%s: DHCPNAK", log_procname);
 
 	/* Remove the NAK'd address from the database. */
 	TAILQ_FOREACH_SAFE(ll, &ifi->lease_db, next, pl) {
@@ -1466,8 +1479,9 @@ send_discover(struct interface_info *ifi)
 
 	rslt = send_packet(ifi, inaddr_any, inaddr_broadcast, "DHCPDISCOVER");
 	if (rslt != -1)
-		log_debug("%s: DHCPDISCOVER - interval %lld", log_procname,
-		    (long long)ifi->interval);
+		log_debug("%s: DHCPDISCOVER %s", log_procname,
+		    (ifi->requested_address.s_addr == INADDR_ANY) ? "" :
+		    inet_ntoa(ifi->requested_address));
 
 	tick_msg("lease", TICK_WAIT);
 }
@@ -1510,6 +1524,7 @@ send_request(struct interface_info *ifi)
 	struct in_addr		 from;
 	struct timespec		 now;
 	ssize_t			 rslt;
+	char			*addr;
 
 	cancel_timeout(ifi);
 	clock_gettime(CLOCK_MONOTONIC, &now);
@@ -1564,9 +1579,17 @@ send_request(struct interface_info *ifi)
 	set_secs(ifi, &now);
 
 	rslt = send_packet(ifi, from, destination.sin_addr, "DHCPREQUEST");
-	if (rslt != -1)
-		log_debug("%s: DHCPREQUEST to %s", log_procname,
-		    inet_ntoa(destination.sin_addr));
+	if (rslt != -1 && log_getverbose()) {
+		addr = strdup(inet_ntoa(ifi->requested_address));
+		if (addr == NULL)
+			fatal("strdup(ifi->requested_address)");
+		if (destination.sin_addr.s_addr == INADDR_BROADCAST)
+			log_debug("%s: DHCPREQUEST %s", log_procname, addr);
+		else
+			log_debug("%s: DHCPREQUEST %s from %s", log_procname,
+			    addr, inet_ntoa(destination.sin_addr));
+		free(addr);
+	}
 
 	tick_msg("lease", TICK_WAIT);
 }
