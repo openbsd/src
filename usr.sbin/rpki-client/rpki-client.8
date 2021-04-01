@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.37 2021/04/01 16:16:44 claudio Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.38 2021/04/01 16:58:56 jmc Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -104,6 +104,11 @@ If the
 and
 .Fl j
 options are not specified this is the default.
+.It Fl R
+Disable synchronisation via RRDP.
+Currently this is the default mode.
+.It Fl r
+Enable synchronisation via RRDP.
 .It Fl s Ar timeout
 Terminate after
 .Ar timeout
@@ -126,11 +131,6 @@ By default
 .Nm
 will load all TAL files in
 .Pa /etc/rpki .
-.It Fl R
-Disable synchronisation via RRDP.
-Currently this is the default mode.
-.It Fl r
-Enable synchronisation via RRDP.
 .It Fl V
 Show the version and exit.
 .It Fl v
