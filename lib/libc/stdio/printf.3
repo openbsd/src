@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.3,v 1.89 2020/09/13 12:58:08 tb Exp $
+.\"	$OpenBSD: printf.3,v 1.90 2021/04/01 14:27:47 deraadt Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)printf.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: September 13 2020 $
+.Dd $Mdocdate: April 1 2021 $
 .Dt PRINTF 3
 .Os
 .Sh NAME
@@ -1019,7 +1019,7 @@ for later interpolation by
 Be sure to use the proper secure idiom:
 .Bd -literal -offset indent
 int ret = snprintf(buffer, sizeof(buffer), "%s", string);
-if (ret < 0 || ret >= sizeof(buffer))
+if (ret < 0 || (size_t)ret >= sizeof(buffer))
 	goto toolong;
 .Ed
 .Pp
