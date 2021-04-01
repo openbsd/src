@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.20 2021/03/29 12:41:35 claudio Exp $ */
+/*	$OpenBSD: x509.c,v 1.21 2021/04/01 06:43:23 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -20,7 +20,6 @@
 #include <assert.h>
 #include <err.h>
 #include <stdarg.h>
-#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -28,29 +27,6 @@
 #include <openssl/x509v3.h>
 
 #include "extern.h"
-
-/*
- * Convert binary buffer of size dsz into an upper-case hex-string.
- * Returns pointer to the newly allocated string. Function can't fail.
- */
-char *
-hex_encode(const unsigned char *in, size_t insz)
-{
-	const char hex[] = "0123456789ABCDEF";
-	size_t i;
-	char *out;
-
-	if ((out = calloc(2, insz + 1)) == NULL)
-		err(1, NULL);
-
-	for (i = 0; i < insz; i++) {
-		out[i * 2] = hex[in[i] >> 4];
-		out[i * 2 + 1] = hex[in[i] & 0xf];
-	}
-	out[i * 2] = '\0';
-
-	return out;
-}
 
 /*
  * Parse X509v3 authority key identifier (AKI), RFC 6487 sec. 4.8.3.

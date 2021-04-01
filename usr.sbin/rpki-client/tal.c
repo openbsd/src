@@ -1,4 +1,4 @@
-/*	$OpenBSD: tal.c,v 1.29 2021/03/25 09:27:38 claudio Exp $ */
+/*	$OpenBSD: tal.c,v 1.30 2021/04/01 06:43:23 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -19,49 +19,12 @@
 #include <assert.h>
 #include <ctype.h>
 #include <err.h>
-#include <limits.h>
 #include <libgen.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "extern.h"
-
-static int
-base64_decode(const unsigned char *in, unsigned char **out, size_t *outlen)
-{
-	static EVP_ENCODE_CTX *ctx;
-	unsigned char *to;
-	size_t inlen;
-	int tolen;
-
-	if (ctx == NULL && (ctx = EVP_ENCODE_CTX_new()) == NULL)
-		err(1, "EVP_ENCODE_CTX_new");
-
-	*out = NULL;
-	*outlen = 0;
-
-	inlen = strlen(in);
-	if (inlen >= INT_MAX - 3)
-		return -1;
-	tolen = ((inlen + 3) / 4) * 3 + 1;
-	if ((to = malloc(tolen)) == NULL)
-		return -1;
-
-	EVP_DecodeInit(ctx);
-	if (EVP_DecodeUpdate(ctx, to, &tolen, in, inlen) == -1)
-		goto fail;
-	*outlen = tolen;
-	if (EVP_DecodeFinal(ctx, to + tolen, &tolen) == -1)
-		goto fail;
-	*outlen += tolen;
-	*out = to;
-	return 0;
-
-fail:
-	free(to);
-	return -1;
-}
 
 static int
 tal_cmp(const void *a, const void *b)
