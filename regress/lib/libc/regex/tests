@@ -1,4 +1,4 @@
-#	$OpenBSD: tests,v 1.9 2020/12/28 21:41:55 millert Exp $
+#	$OpenBSD: tests,v 1.10 2021/04/02 14:20:57 otto Exp $
 #	$NetBSD: tests,v 1.5 1995/04/20 22:40:00 cgd Exp $
 
 # regular expression test set
@@ -595,3 +595,18 @@ a?b	-	ab	ab
 # FreeBSD PR 130504
 (.|())(b)	-	ab	ab
 (()|.)(b)	-	ab	ab
+
+# Some BRE cases where \{0,\} makes a backref go wrong, as reported by Michael Paoli
+Y*\(x\)\1	b	YYxx	YYxx
+Y\{2,\}\(x\)\1	b	YYxx	YYxx
+# Fails currently
+#Y\{0,\}\(x\)\1	b	YYxx	YYxx
+Y\{0,\}\(x\)	b	YYxx	YYx
+Y\{2,\}x\{1,\}	b	YYxx	YYxx
+Y\{2,\}x\{0,\}z	b	YYxxz	YYxxz
+Y\{0,\}x\{0,\}z	b	YYxxz	YYxxz
+Y\{2,\}\(xy\)\1	b	YYxyxy	YYxyxy
+# Fails currently
+#Y\{0,\}\(xy\)\1	b	YYxyxy	YYxyxy
+Y*\(xy\)\1	b	YYxyxy	YYxyxy
+Y\{0,\}\(xy\)xy	b	YYxyxy	YYxyxy
