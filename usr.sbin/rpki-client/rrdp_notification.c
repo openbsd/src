@@ -62,6 +62,8 @@ struct notification_xml {
 	enum notification_scope	 scope;
 };
 
+static void	free_delta(struct delta_item *);
+
 static int
 add_delta(struct notification_xml *nxml, const char *uri,
     const char hash[SHA256_DIGEST_LENGTH], long long serial)
@@ -85,7 +87,7 @@ add_delta(struct notification_xml *nxml, const char *uri,
 		TAILQ_FOREACH(n, &nxml->delta_q, q) {
 			if (n->serial == serial) {
 				warnx("duplicate delta serial %lld ", serial);
-				free(d);
+				free_delta(d);
 				return 0;
 			}
 			if (n->serial > serial) {
