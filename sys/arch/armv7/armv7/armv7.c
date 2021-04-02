@@ -1,6 +1,6 @@
-/* $OpenBSD: armv7.c,v 1.18 2021/03/25 04:12:01 jsg Exp $ */
+/* $OpenBSD: armv7.c,v 1.19 2021/04/02 03:02:46 tb Exp $ */
 /*
- * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
+ * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
  * Permission to use, copy, modify, and distribute this software for any

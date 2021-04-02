@@ -1,6 +1,6 @@
-/* $OpenBSD: arm64var.h,v 1.2 2018/05/15 11:12:35 kettenis Exp $ */
+/* $OpenBSD: arm64var.h,v 1.3 2021/04/02 03:02:45 tb Exp $ */
 /*
- * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
+ * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
  * Permission to use, copy, modify, and distribute this software for any

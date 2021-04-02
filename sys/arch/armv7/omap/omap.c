@@ -1,6 +1,6 @@
-/* $OpenBSD: omap.c,v 1.21 2017/03/01 04:36:45 jsg Exp $ */
+/* $OpenBSD: omap.c,v 1.22 2021/04/02 03:02:46 tb Exp $ */
 /*
- * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
+ * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
