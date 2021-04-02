@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdata.c,v 1.32 2020/09/14 08:40:43 florian Exp $ */
+/* $Id: rdata.c,v 1.33 2021/04/02 06:37:40 florian Exp $ */
 
 /*! \file */
 
@@ -833,7 +833,8 @@ dns_rdatatype_fromtext(dns_rdatatype_t *typep, isc_textregion_t *source) {
 		{"unspec",	103},
 		{"uri",		256},
 		{"wks",		11},
-		{"x25",		19}
+		{"x25",		19},
+		{"zonemd",	63},
 	};
 	const dns_rdata_type_lookup_t *p;
 	unsigned int n;
@@ -1003,6 +1004,8 @@ dns_rdatatype_totext(dns_rdatatype_t type, isc_buffer_t *target) {
 		return (isc_str_tobuffer("OPENPGPKEY", target));
 	case 62:
 		return (isc_str_tobuffer("CSYNC", target));
+	case 63:
+		return (isc_str_tobuffer("ZONEMD", target));
 	case 99:
 		return (isc_str_tobuffer("SPF", target));
 	case 100:
