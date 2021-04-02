@@ -50,16 +50,16 @@ struct delta_item {
 TAILQ_HEAD(delta_q, delta_item);
 
 struct notification_xml {
-	XML_Parser		parser;
+	XML_Parser		 parser;
 	struct rrdp_session	*repository;
 	struct rrdp_session	*current;
 	char			*session_id;
 	char			*snapshot_uri;
-	char			snapshot_hash[SHA256_DIGEST_LENGTH];
-	struct delta_q		delta_q;
-	long long		serial;
-	int			version;
-	enum notification_scope	scope;
+	char			 snapshot_hash[SHA256_DIGEST_LENGTH];
+	struct delta_q		 delta_q;
+	long long		 serial;
+	int			 version;
+	enum notification_scope	 scope;
 };
 
 static int
