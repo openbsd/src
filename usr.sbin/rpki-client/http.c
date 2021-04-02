@@ -1,4 +1,4 @@
-/*      $OpenBSD: http.c,v 1.12 2021/03/30 16:05:56 claudio Exp $  */
+/*      $OpenBSD: http.c,v 1.13 2021/04/02 11:35:05 claudio Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -232,7 +232,7 @@ http_setup(void)
 	tls_ca_mem = tls_load_file(tls_default_ca_cert_file(),
 	    &tls_ca_size, NULL);
 	if (tls_ca_mem == NULL)
-		err(1, "tls_load_file");
+		err(1, "tls_load_file: %s", tls_default_ca_cert_file());
 	tls_config_set_ca_mem(tls_config, tls_ca_mem, tls_ca_size);
 
 	/* TODO initalize proxy settings */
