@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmm.4,v 1.6 2021/04/02 01:56:20 dv Exp $
+.\"	$OpenBSD: vmm.4,v 1.7 2021/04/02 06:09:44 jmc Exp $
 .\"
 .\"Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -79,7 +79,8 @@ guests:
 .It Dv VMM_IOC_CREATE Fa "struct vm_create_params *"
 Create a VM, initializing
 .Nm
-if not yet started. (Does not start the VCPU.)
+if not yet started.
+(Does not start the VCPU.)
 .It Dv VMM_IOC_RUN Fa "struct vm_run_params *"
 Run a VCPU for a defined VM.
 Return on VM-exit, when the VCPU stopped, or an error occurred.
@@ -95,7 +96,7 @@ Signal a pending interrupt for a VCPU.
 .It Dv VMM_IOC_READREGS Fa "struct vm_rwregs_params *"
 Read registers of a VCPU.
 .It Dv VMM_IOC_WRITEREGS Fa "struct vm_rwregs_params *"
-Write registers values of a VCPU.
+Write register values of a VCPU.
 .It Dv VMM_IOC_READVMPARAMS Fa "struct vm_revmparams_params *"
 Read paravirtualized hardware parameters (such as
 .Xr pvclock 4
