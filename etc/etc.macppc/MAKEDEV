@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.macppc/MAKEDEV.md,v 1.77 2021/02/12 10:26:34 jsg Exp 
+#	OpenBSD: etc.macppc/MAKEDEV.md,v 1.78 2021/04/02 02:29:56 deraadt Exp 
 #	OpenBSD: MAKEDEV.common,v 1.113 2021/02/12 10:26:33 jsg Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.83 2016/09/11 03:06:31 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
@@ -536,8 +536,8 @@ local)
 	;;
 
 ramdisk)
-	R diskmap bio pty0 rd0 cd0 cd1 st0 st1 wd0 wd1 wd2 wd3 wd4
-	R sd0 sd1 sd2 sd3 sd4 tty00 tty01 bpf std
+	R diskmap bio rd0 cd0 cd1 st0 st1 wd0 wd1 wd2 wd3 wd4 sd0 sd1
+	R sd2 sd3 sd4 tty00 tty01 bpf std
 	;;
 
 all)

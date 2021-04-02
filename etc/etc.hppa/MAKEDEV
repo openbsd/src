@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.hppa/MAKEDEV.md,v 1.66 2021/01/23 05:08:33 thfr Exp 
-#	OpenBSD: MAKEDEV.common,v 1.112 2021/01/23 05:08:33 thfr Exp 
+#	OpenBSD: etc.hppa/MAKEDEV.md,v 1.67 2021/04/02 02:29:54 deraadt Exp 
+#	OpenBSD: MAKEDEV.common,v 1.113 2021/02/12 10:26:33 jsg Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.83 2016/09/11 03:06:31 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -213,7 +213,7 @@ U=`unt $i`
 case $i in
 ramdisk)
 	R std fd st0 st1 sd0 sd1 sd2 sd3 rd0 random
-	R pty0 bpf bio diskmap
+	R bpf bio diskmap
 	;;
 
 std)
