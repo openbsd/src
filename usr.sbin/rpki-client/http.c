@@ -1,4 +1,4 @@
-/*      $OpenBSD: http.c,v 1.13 2021/04/02 11:35:05 claudio Exp $  */
+/*      $OpenBSD: http.c,v 1.14 2021/04/02 16:41:36 deraadt Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -473,7 +473,6 @@ http_redirect(struct http_connection *conn, char *uri)
 static int
 http_connect(struct http_connection *conn)
 {
-	char pbuf[NI_MAXSERV], hbuf[NI_MAXHOST];
 	char *cause = "unknown";
 
 	if (conn->fd != -1) {
@@ -489,11 +488,6 @@ http_connect(struct http_connection *conn)
 	for (; conn->res != NULL; conn->res = conn->res->ai_next) {
 		struct addrinfo *res = conn->res;
 		int fd, error, save_errno;
-
-		if (getnameinfo(res->ai_addr, res->ai_addrlen, hbuf,
-		    sizeof(hbuf), pbuf, sizeof(pbuf),
-		    NI_NUMERICHOST | NI_NUMERICSERV) != 0)
-			strlcpy(hbuf, "(unknown)", sizeof(hbuf));
 
 		fd = socket(res->ai_family,
 		    res->ai_socktype | SOCK_NONBLOCK, res->ai_protocol);
