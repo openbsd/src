@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmm.4,v 1.5 2015/12/06 19:06:17 jmc Exp $
+.\"	$OpenBSD: vmm.4,v 1.6 2021/04/02 01:56:20 dv Exp $
 .\"
 .\"Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 6 2015 $
+.Dd $Mdocdate: April 2 2021 $
 .Dt VMM 4 amd64
 .Os
 .Sh NAME
@@ -22,6 +22,8 @@
 .Nd virtual machine monitor
 .Sh SYNOPSIS
 .Cd "vmm0    at mainbus0"
+.Pp
+.In machine/vmmvar.h
 .Sh DESCRIPTION
 The
 .Nm
@@ -67,6 +69,45 @@ driver requires at least one CPU with hardware-assisted virtualization
 capabilities and nested or extended paging capabilities to be
 present on the host.
 For more information, consult the CPU vendor's documentation.
+.Pp
+The following
+.Xr ioctl 2
+commands are provided for managing
+.Nm
+guests:
+.Bl -tag -width Ds -offset indent
+.It Dv VMM_IOC_CREATE Fa "struct vm_create_params *"
+Create a VM, initializing
+.Nm
+if not yet started. (Does not start the VCPU.)
+.It Dv VMM_IOC_RUN Fa "struct vm_run_params *"
+Run a VCPU for a defined VM.
+Return on VM-exit, when the VCPU stopped, or an error occurred.
+.It Dv VMM_IOC_INFO Fa "struct vm_info_params *"
+Get information about the VMs currently hosted by
+.Nm .
+.It Dv VMM_IOC_TERM Fa "struct vm_terminate_params *"
+Terminate a given VM.
+.It Dv VMM_IOC_RESETCPU Fa "struct vm_resetcpu_params *"
+Reset a VCPU to power-on-init state using the provided register state.
+.It Dv VMM_IOC_INTR Fa "struct vm_intr_params *"
+Signal a pending interrupt for a VCPU.
+.It Dv VMM_IOC_READREGS Fa "struct vm_rwregs_params *"
+Read registers of a VCPU.
+.It Dv VMM_IOC_WRITEREGS Fa "struct vm_rwregs_params *"
+Write registers values of a VCPU.
+.It Dv VMM_IOC_READVMPARAMS Fa "struct vm_revmparams_params *"
+Read paravirtualized hardware parameters (such as
+.Xr pvclock 4
+version) for a VM.
+.It Dv VMM_IOC_WRITEVMPARAMS Fa "struct vm_rwvmparams_params *"
+Write paravirtualized hardware parameters (such as
+.Xr pvclock 4
+guest physical addresss) for a VM.
+.It Dv VMM_IOC_MPROTECT_EPT Fa "struct vm_mprotect_ept_params *"
+Set access protections on guest page table entries
+(only supported on hosts providing EPT or RVI).
+.El
 .Sh SEE ALSO
 .Xr cpu 4 ,
 .Xr intro 4 ,
