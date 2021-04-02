@@ -1,4 +1,4 @@
-/* $OpenBSD: s_cb.c,v 1.14 2020/04/26 02:09:21 inoguchi Exp $ */
+/* $OpenBSD: s_cb.c,v 1.15 2021/04/02 10:19:19 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -413,6 +413,9 @@ msg_cb(int write_p, int version, int content_type, const void *buf, size_t len, 
 	case DTLS1_VERSION:
 		str_version = "DTLS 1.0 ";
 		break;
+	case DTLS1_2_VERSION:
+		str_version = "DTLS 1.2 ";
+		break;
 	default:
 		str_version = "???";
 	}
@@ -474,7 +477,8 @@ msg_cb(int write_p, int version, int content_type, const void *buf, size_t len, 
 	}
 	if (version == SSL3_VERSION || version == TLS1_VERSION ||
 	    version == TLS1_1_VERSION || version == TLS1_2_VERSION ||
-	    version == TLS1_3_VERSION || version == DTLS1_VERSION) {
+	    version == TLS1_3_VERSION || version == DTLS1_VERSION ||
+	    version == DTLS1_2_VERSION) {
 		/* XXX magic numbers are in ssl3.h */
 		switch (content_type) {
 		case 20:
