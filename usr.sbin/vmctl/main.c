@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.63 2021/03/26 16:28:15 tb Exp $	*/
+/*	$OpenBSD: main.c,v 1.64 2021/04/02 19:07:18 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -303,7 +303,6 @@ vmmaction(struct parse_result *res)
 				else
 					ret = 0;
 				if (ret != 0) {
-					memcpy(&ret, imsg.data, sizeof(ret));
 					errno = ret;
 					err(1, "command failed");
 				} else
