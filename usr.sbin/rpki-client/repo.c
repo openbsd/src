@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.2 2021/04/01 16:50:23 deraadt Exp $ */
+/*	$OpenBSD: repo.c,v 1.3 2021/04/02 05:16:29 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -48,7 +48,7 @@ enum repo_state {
 /*
  * A ta, rsync or rrdp repository.
  * Depending on what is needed the generic repository is backed by
- * a ta, rsync or rrdp reposityry. Multiple repositories can use the
+ * a ta, rsync or rrdp repository. Multiple repositories can use the
  * same backend.
  */
 struct rrdprepo {
@@ -91,7 +91,7 @@ struct	repo {
 	const struct rrdprepo	*rrdp;
 	const struct rsyncrepo	*rsync;
 	const struct tarepo	*ta;
-	struct entityq	 	 queue;		/* files waiting for repo */
+	struct entityq		 queue;		/* files waiting for repo */
 	size_t			 id;		/* identifier */
 };
 SLIST_HEAD(, repo)	repos = SLIST_HEAD_INITIALIZER(repos);
@@ -548,7 +548,7 @@ rrdp_free(void)
 
 		filepath_free(&rr->added);
 		filepath_free(&rr->deleted);
-	
+
 		free(rr);
 	}
 }
@@ -1068,7 +1068,7 @@ repo_lookup(const char *uri, const char *notify)
 		rp->rrdp = rrdp_get(notify);
 	if (rp->rrdp == NULL)
 		rp->rsync = rsync_get(uri);
-	
+
 	return rp;
 }
 
