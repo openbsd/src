@@ -1,4 +1,4 @@
-/*	$OpenBSD: vroute.c,v 1.7 2021/03/25 01:39:09 tobhe Exp $	*/
+/*	$OpenBSD: vroute.c,v 1.8 2021/04/03 21:29:14 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2021 Tobias Heider <tobhe@openbsd.org>
@@ -108,6 +108,8 @@ vroute_getaddr(struct iked *env, struct imsg *imsg)
 	ptr += addr->sa_len;
 	left -= addr->sa_len;
 
+	if (left < sizeof(*mask))
+		fatalx("bad length imsg received");
 	mask = (struct sockaddr *) ptr;
 	if (mask->sa_family != af)
 		return (-1);
