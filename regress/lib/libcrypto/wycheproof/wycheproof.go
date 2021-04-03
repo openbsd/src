@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.120 2020/05/14 18:11:45 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.121 2021/04/03 13:34:45 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018, 2019 Theo Buehler <tb@openbsd.org>
@@ -39,6 +39,12 @@ package main
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 #include <openssl/rsa.h>
+
+int
+evpDigestSignUpdate(EVP_MD_CTX *ctx, const void *d, size_t cnt)
+{
+	return EVP_DigestSignUpdate(ctx, d, cnt);
+}
 */
 import "C"
 
@@ -1008,22 +1014,28 @@ func runAesCmacTest(cipher *C.EVP_CIPHER, wt *wycheproofTestAesCmac) bool {
 		tag = append(tag, 0)
 	}
 
-	ctx := C.CMAC_CTX_new()
-	if ctx == nil {
+	mdctx := C.EVP_MD_CTX_new()
+	if mdctx == nil {
+		log.Fatal("EVP_MD_CTX_new failed")
+	}
+	defer C.EVP_MD_CTX_free(mdctx)
+
+	pkey := C.EVP_PKEY_new_CMAC_key(nil, (*C.uchar)(unsafe.Pointer(&key[0])), C.size_t(keyLen), cipher)
+	if pkey == nil {
 		log.Fatal("CMAC_CTX_new failed")
 	}
-	defer C.CMAC_CTX_free(ctx)
+	defer C.EVP_PKEY_free(pkey)
 
-	ret := C.CMAC_Init(ctx, unsafe.Pointer(&key[0]), C.size_t(keyLen), cipher, nil)
+	ret := C.EVP_DigestSignInit(mdctx, nil, nil, nil, pkey)
 	if ret != 1 {
-		fmt.Printf("FAIL: Test case %d (%q) %v - CMAC_Init() = %d, want %v\n",
+		fmt.Printf("FAIL: Test case %d (%q) %v - EVP_DigestSignInit() = %d, want %v\n",
 			wt.TCID, wt.Comment, wt.Flags, ret, wt.Result)
 		return false
 	}
 
-	ret = C.CMAC_Update(ctx, unsafe.Pointer(&msg[0]), C.size_t(msgLen))
+	ret = C.evpDigestSignUpdate(mdctx, unsafe.Pointer(&msg[0]), C.size_t(msgLen))
 	if ret != 1 {
-		fmt.Printf("FAIL: Test case %d (%q) %v - CMAC_Update() = %d, want %v\n",
+		fmt.Printf("FAIL: Test case %d (%q) %v - EVP_DigestSignUpdate() = %d, want %v\n",
 			wt.TCID, wt.Comment, wt.Flags, ret, wt.Result)
 		return false
 	}
@@ -1031,9 +1043,9 @@ func runAesCmacTest(cipher *C.EVP_CIPHER, wt *wycheproofTestAesCmac) bool {
 	var outLen C.size_t
 	outTag := make([]byte, 16)
 
-	ret = C.CMAC_Final(ctx, (*C.uchar)(unsafe.Pointer(&outTag[0])), &outLen)
+	ret = C.EVP_DigestSignFinal(mdctx, (*C.uchar)(unsafe.Pointer(&outTag[0])), &outLen)
 	if ret != 1 {
-		fmt.Printf("FAIL: Test case %d (%q) %v - CMAC_Final() = %d, want %v\n",
+		fmt.Printf("FAIL: Test case %d (%q) %v - EVP_DigestSignFinal() = %d, want %v\n",
 			wt.TCID, wt.Comment, wt.Flags, ret, wt.Result)
 		return false
 	}
