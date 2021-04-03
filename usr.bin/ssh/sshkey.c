@@ -1,4 +1,4 @@
-/* $OpenBSD: sshkey.c,v 1.115 2021/02/02 22:36:46 djm Exp $ */
+/* $OpenBSD: sshkey.c,v 1.116 2021/04/03 06:18:41 djm Exp $ */
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2008 Alexander von Gernler.  All rights reserved.
@@ -137,7 +137,7 @@ static const struct keytype keytypes[] = {
 	{ "ecdsa-sha2-nistp384-cert-v01@openssh.com", "ECDSA-CERT", NULL,
 	    KEY_ECDSA_CERT, NID_secp384r1, 1, 0 },
 	{ "ecdsa-sha2-nistp521-cert-v01@openssh.com", "ECDSA-CERT", NULL,
-	   KEY_ECDSA_CERT, NID_secp521r1, 1, 0 },
+	    KEY_ECDSA_CERT, NID_secp521r1, 1, 0 },
 	{ "sk-ecdsa-sha2-nistp256-cert-v01@openssh.com", "ECDSA-SK-CERT", NULL,
 	    KEY_ECDSA_SK_CERT, NID_X9_62_prime256v1, 1, 0 },
 #endif /* WITH_OPENSSL */
@@ -1996,7 +1996,7 @@ sshkey_shield_private(struct sshkey *k)
 	if (sshkey_is_shielded(k) && (r = sshkey_unshield_private(k)) != 0)
 		goto out;
 	if ((r = sshkey_private_serialize_opt(k, prvbuf,
-	     SSHKEY_SERIALIZE_SHIELD)) != 0)
+	    SSHKEY_SERIALIZE_SHIELD)) != 0)
 		goto out;
 	/* pad to cipher blocksize */
 	i = 0;
@@ -3626,7 +3626,7 @@ sshkey_private_deserialize(struct sshbuf *buf, struct sshkey **kp)
 	if ((expect_sk_application != NULL && (k->sk_application == NULL ||
 	    strcmp(expect_sk_application, k->sk_application) != 0)) ||
 	    (expect_ed25519_pk != NULL && (k->ed25519_pk == NULL ||
-	     memcmp(expect_ed25519_pk, k->ed25519_pk, ED25519_PK_SZ) != 0))) {
+	    memcmp(expect_ed25519_pk, k->ed25519_pk, ED25519_PK_SZ) != 0))) {
 		r = SSH_ERR_KEY_CERT_MISMATCH;
 		goto out;
 	}
@@ -3904,7 +3904,7 @@ sshkey_private_to_blob2(struct sshkey *prv, struct sshbuf *blob,
 
 	/* append private key and comment*/
 	if ((r = sshkey_private_serialize_opt(prv, encrypted,
-	     SSHKEY_SERIALIZE_FULL)) != 0 ||
+	    SSHKEY_SERIALIZE_FULL)) != 0 ||
 	    (r = sshbuf_put_cstring(encrypted, comment)) != 0)
 		goto out;
 
@@ -4527,12 +4527,12 @@ sshkey_parse_private_pem_fileblob(struct sshbuf *blob, int type,
 	clear_libcrypto_errors();
 	if ((pk = PEM_read_bio_PrivateKey(bio, NULL, NULL,
 	    (char *)passphrase)) == NULL) {
-	       /*
-		* libcrypto may return various ASN.1 errors when attempting
-		* to parse a key with an incorrect passphrase.
-		* Treat all format errors as "incorrect passphrase" if a
-		* passphrase was supplied.
-		*/
+		/*
+		 * libcrypto may return various ASN.1 errors when attempting
+		 * to parse a key with an incorrect passphrase.
+		 * Treat all format errors as "incorrect passphrase" if a
+		 * passphrase was supplied.
+		 */
 		if (passphrase != NULL && *passphrase != '\0')
 			r = SSH_ERR_KEY_WRONG_PASSPHRASE;
 		else
