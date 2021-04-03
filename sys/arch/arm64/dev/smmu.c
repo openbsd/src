@@ -1,4 +1,4 @@
-/* $OpenBSD: smmu.c,v 1.12 2021/04/03 15:10:58 patrick Exp $ */
+/* $OpenBSD: smmu.c,v 1.13 2021/04/03 15:59:08 patrick Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
@@ -1294,8 +1294,9 @@ smmu_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	/* Approximation of maximum pages needed. */
 	len = round_page(size) + nsegments * PAGE_SIZE;
 
+	/* Allocate IOVA, and a guard page at the end. */
 	mtx_enter(&dom->sd_iova_mtx);
-	error = extent_alloc_with_descr(dom->sd_iovamap, len,
+	error = extent_alloc_with_descr(dom->sd_iovamap, len + PAGE_SIZE,
 	    PAGE_SIZE, 0, 0, EX_NOWAIT, &sms->sms_er, &dva);
 	mtx_leave(&dom->sd_iova_mtx);
 	if (error) {
@@ -1343,7 +1344,7 @@ smmu_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 
 	mtx_enter(&dom->sd_iova_mtx);
 	error = extent_free(dom->sd_iovamap, sms->sms_dva,
-	    sms->sms_len, EX_NOWAIT);
+	    sms->sms_len + PAGE_SIZE, EX_NOWAIT);
 	mtx_leave(&dom->sd_iova_mtx);
 	KASSERT(error == 0);
 
