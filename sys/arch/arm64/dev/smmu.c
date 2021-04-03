@@ -1,4 +1,4 @@
-/* $OpenBSD: smmu.c,v 1.11 2021/03/22 20:34:45 patrick Exp $ */
+/* $OpenBSD: smmu.c,v 1.12 2021/04/03 15:10:58 patrick Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
@@ -750,8 +750,9 @@ smmu_domain_create(struct smmu_softc *sc, uint32_t sid)
 
 	snprintf(dom->sd_exname, sizeof(dom->sd_exname), "%s:%x",
 	    sc->sc_dev.dv_xname, sid);
-	dom->sd_iovamap = extent_create(dom->sd_exname, 0, (1LL << iovabits)-1,
-	    M_DEVBUF, NULL, 0, EX_WAITOK | EX_NOCOALESCE);
+	dom->sd_iovamap = extent_create(dom->sd_exname, PAGE_SIZE,
+	    (1LL << iovabits) - 1, M_DEVBUF, NULL, 0, EX_WAITOK |
+	    EX_NOCOALESCE);
 
 #if 0
 	/* FIXME PCIe address space */
