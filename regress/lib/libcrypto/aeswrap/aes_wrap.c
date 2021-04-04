@@ -1,4 +1,4 @@
-/*	$OpenBSD: aes_wrap.c,v 1.4 2018/07/17 17:06:49 tb Exp $	*/
+/*	$OpenBSD: aes_wrap.c,v 1.5 2021/04/04 20:40:48 tb Exp $	*/
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -85,6 +85,8 @@ AES_wrap_unwrap_test(const unsigned char *kek, int keybits,
 	if (AES_set_decrypt_key(kek, keybits, &wctx))
 		goto err;
 	r = AES_unwrap_key(&wctx, iv, ptmp, otmp, r);
+	if (r <= 0)
+		goto err;
 
 	if (memcmp(key, ptmp, keylen))
 		goto err;
