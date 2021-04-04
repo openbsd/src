@@ -1,4 +1,4 @@
-/* $OpenBSD: tlstest.c,v 1.12 2020/07/04 09:07:02 jsing Exp $ */
+/* $OpenBSD: tlstest.c,v 1.13 2021/04/04 16:19:47 tb Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -297,6 +297,7 @@ test_tls(char *client_protocols, char *server_protocols, char *ciphers)
 	struct tls_config *client_cfg, *server_cfg;
 	struct tls *client, *server;
 	uint32_t protocols;
+	int failure = 0;
 
 	if ((client = tls_client()) == NULL)
 		errx(1, "failed to create tls client");
@@ -332,7 +333,15 @@ test_tls(char *client_protocols, char *server_protocols, char *ciphers)
 	if (tls_configure(server, server_cfg) == -1)
 		errx(1, "failed to configure server: %s", tls_error(server));
 
-	return test_tls_cbs(client, server);
+	tls_config_free(client_cfg);
+	tls_config_free(server_cfg);
+
+	failure |= test_tls_cbs(client, server);
+
+	tls_free(client);
+	tls_free(server);
+
+	return (failure);
 }
 
 static int
