@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_methods.c,v 1.3 2021/04/04 20:16:29 tb Exp $ */
+/*	$OpenBSD: ssl_methods.c,v 1.4 2021/04/04 20:21:43 tb Exp $ */
 /*
  * Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
  *
@@ -198,7 +198,7 @@ test_client_or_server_method(struct ssl_method_test_data *testcase)
 	}
 
 	if ((ssl = SSL_new(ssl_ctx)) == NULL) {
-		fprintf(stderr, "SSL_CTX_new returned NULL\n");
+		fprintf(stderr, "SSL_new returned NULL\n");
 		goto err;
 	}
 
@@ -230,7 +230,7 @@ test_dtls_method(struct ssl_method_test_data *testcase)
 	}
 
 	if ((ssl = SSL_new(ssl_ctx)) == NULL) {
-		fprintf(stderr, "SSL_CTX_new returned NULL\n");
+		fprintf(stderr, "SSL_new returned NULL\n");
 		goto err;
 	}
 
