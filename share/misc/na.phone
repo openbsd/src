@@ -1,4 +1,4 @@
-	$OpenBSD: na.phone,v 1.35 2020/03/24 17:34:06 deraadt Exp $
+	$OpenBSD: na.phone,v 1.36 2021/04/04 20:08:49 deraadt Exp $
 #	@(#)na.phone	8.1 (Berkeley) 6/8/93
 #
 # Area Code : City : State/Province : State/Province Abbrev.
@@ -11,6 +11,7 @@
 203:New Haven:Connecticut:CT
 203:Stamford:Connecticut:CT
 204::Manitoba:MB
+431::Manitoba:MB
 205:Birmingham:Alabama:AL
 205:Fairfield:Alabama:AL
 205:Tuscaloosa:Alabama:AL
