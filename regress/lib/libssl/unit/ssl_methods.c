@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_methods.c,v 1.2 2020/12/01 08:05:06 tb Exp $ */
+/*	$OpenBSD: ssl_methods.c,v 1.3 2021/04/04 20:16:29 tb Exp $ */
 /*
  * Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
  *
@@ -137,6 +137,25 @@ struct ssl_method_test_data ssl_method_tests[] = {
 	{
 		.method = DTLSv1_client_method,
 		.name = "DTLSv1_client_method",
+		.server = 0,
+		.dtls = 1,
+	},
+
+	{
+		.method = DTLSv1_2_method,
+		.name = "DTLSv1_2_method",
+		.server = 1,
+		.dtls = 1,
+	},
+	{
+		.method = DTLSv1_2_server_method,
+		.name = "DTLSv1_2_server_method",
+		.server = 1,
+		.dtls = 1,
+	},
+	{
+		.method = DTLSv1_2_client_method,
+		.name = "DTLSv1_2_client_method",
 		.server = 0,
 		.dtls = 1,
 	},
