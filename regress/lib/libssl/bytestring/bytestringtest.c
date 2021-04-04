@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytestringtest.c,v 1.13 2020/03/13 15:55:00 jsing Exp $	*/
+/*	$OpenBSD: bytestringtest.c,v 1.14 2021/04/04 19:55:46 tb Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -826,7 +826,7 @@ test_write_bytes(void)
 	size_t len;
 	static const uint8_t input[] = {'f', 'o', 'o', 'b', 'a', 'r'};
 	CBS data;
-	char *tmp = NULL;
+	uint8_t *tmp = NULL;
 
 	CHECK_GOTO((tmp = malloc(sizeof(input))) != NULL);
 	memset(tmp, 100, sizeof(input));
