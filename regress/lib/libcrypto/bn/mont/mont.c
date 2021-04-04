@@ -1,4 +1,4 @@
-/*	$OpenBSD: mont.c,v 1.3 2021/04/04 19:32:26 tb Exp $	*/
+/*	$OpenBSD: mont.c,v 1.4 2021/04/04 19:36:09 tb Exp $	*/
 
 /*
  * Copyright (c) 2014 Miodrag Vallat.
@@ -63,7 +63,9 @@ main(int argc, char *argv[])
 			goto err;
 
 		free(key);
+		key = NULL;
 		DH_free(dh);
+		dh = NULL;
 	}
 
 	return 0;
