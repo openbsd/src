@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.736 2021/03/31 09:59:21 sthen Exp $
+$OpenBSD: usbdevs,v 1.737 2021/04/05 16:17:25 landry Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -656,6 +656,7 @@ vendor MICRONET		0x3980	Micronet Communications
 vendor IODATA2		0x40bb	I-O Data
 vendor IRIVER		0x4102	iRiver
 vendor DELL		0x413c	Dell
+vendor PCSENSORS	0x413d	PC Sensors
 vendor WCH		0x4348	QinHeng Electronics
 vendor ACEECA		0x4766	Aceeca
 vendor FEIXUN		0x4855	FeiXun Communication
@@ -3498,6 +3499,9 @@ product PAPOUCH GOLIATH_MSR	0x8005	GOLIATH MSR
 
 /* PARA Industrial products */
 product PARA RT3070		0x8888	RT3070
+
+/* PC Sensors products */
+product PCSENSORS TEMPER	0x2107	TEMPer
 
 /* Pegatron products */
 product PEGATRON RT2870		0x0002	RT2870
