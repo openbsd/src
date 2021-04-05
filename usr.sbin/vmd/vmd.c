@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.121 2021/03/29 23:37:01 dv Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.122 2021/04/05 11:35:26 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -203,20 +203,26 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 		if (vid.vid_id == 0) {
 			if ((vm = vm_getbyname(vid.vid_name)) == NULL) {
 				res = ENOENT;
-				cmd = IMSG_VMDOP_PAUSE_VM_RESPONSE;
+				cmd = imsg->hdr.type == IMSG_VMDOP_PAUSE_VM
+				    ? IMSG_VMDOP_PAUSE_VM_RESPONSE
+				    : IMSG_VMDOP_UNPAUSE_VM_RESPONSE;
 				break;
 			} else {
 				vid.vid_id = vm->vm_vmid;
 			}
 		} else if ((vm = vm_getbyid(vid.vid_id)) == NULL) {
 			res = ENOENT;
-			cmd = IMSG_VMDOP_PAUSE_VM_RESPONSE;
+			cmd = imsg->hdr.type == IMSG_VMDOP_PAUSE_VM
+			    ? IMSG_VMDOP_PAUSE_VM_RESPONSE
+			    : IMSG_VMDOP_UNPAUSE_VM_RESPONSE;
 			break;
 		}
 		if (vm_checkperm(vm, &vm->vm_params.vmc_owner,
 		    vid.vid_uid) != 0) {
 			res = EPERM;
-			cmd = IMSG_VMDOP_PAUSE_VM_RESPONSE;
+			cmd = imsg->hdr.type == IMSG_VMDOP_PAUSE_VM
+			    ? IMSG_VMDOP_PAUSE_VM_RESPONSE
+			    : IMSG_VMDOP_UNPAUSE_VM_RESPONSE;
 			break;
 		}
 		proc_compose_imsg(ps, PROC_VMM, -1, imsg->hdr.type,
