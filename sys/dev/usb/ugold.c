@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugold.c,v 1.16 2021/03/08 14:35:57 jcs Exp $   */
+/*	$OpenBSD: ugold.c,v 1.17 2021/04/05 16:26:06 landry Exp $   */
 
 /*
  * Copyright (c) 2013 Takayoshi SASANO <uaa@openbsd.org>
@@ -47,6 +47,8 @@
 #define UGOLD_TYPE_SI7005	1
 #define UGOLD_TYPE_SI7006	2
 #define UGOLD_TYPE_SHT1X	3
+#define UGOLD_TYPE_GOLD		4
+#define UGOLD_TYPE_TEMPERX	5
 
 /*
  * This driver uses three known commands for the TEMPer and TEMPerHUM
@@ -83,6 +85,7 @@ struct ugold_softc {
 const struct usb_devno ugold_devs[] = {
 	{ USB_VENDOR_MICRODIA, USB_PRODUCT_MICRODIA_TEMPER },
 	{ USB_VENDOR_MICRODIA, USB_PRODUCT_MICRODIA_TEMPERHUM },
+	{ USB_VENDOR_PCSENSORS, USB_PRODUCT_PCSENSORS_TEMPER },
 };
 
 int 	ugold_match(struct device *, void *, void *);
@@ -147,6 +150,7 @@ ugold_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_hdev.sc_intr = ugold_ds75_intr;
 		break;
 	case USB_PRODUCT_MICRODIA_TEMPERHUM:
+	case USB_PRODUCT_PCSENSORS_TEMPER:
 		sc->sc_hdev.sc_intr = ugold_si700x_intr;
 		break;
 	default:
@@ -179,6 +183,7 @@ ugold_attach(struct device *parent, struct device *self, void *aux)
 		    sizeof(sc->sc_sensor[UGOLD_OUTER].desc));
 		break;
 	case USB_PRODUCT_MICRODIA_TEMPERHUM:
+	case USB_PRODUCT_PCSENSORS_TEMPER:
 		/* 1 temperature and 1 humidity sensor */
 		sc->sc_sensor[UGOLD_INNER].type = SENSOR_TEMP;
 		strlcpy(sc->sc_sensor[UGOLD_INNER].desc, "inner",
@@ -307,9 +312,15 @@ ugold_si700x_temp(int type, uint8_t msb, uint8_t lsb)
 	case UGOLD_TYPE_SHT1X:
 		temp = (temp * 1000) / 256;
 		break;
+	case UGOLD_TYPE_GOLD:
+	case UGOLD_TYPE_TEMPERX:
+		/* temp = temp / 100 to get degC, then * 1000 to get mdegC */
+		temp = temp * 10;
+		break;
 	default:
 		temp = 0;
 	}
+
 	return temp;
 }
 
@@ -332,6 +343,9 @@ ugold_si700x_rhum(int type, uint8_t msb, uint8_t lsb, int temp)
 	case UGOLD_TYPE_SHT1X: /* 16 bit */
 		rhum = rhum * 32;
 		break;
+	case UGOLD_TYPE_TEMPERX:
+		rhum = rhum * 10;
+		break;
 	default:
 		rhum = 0;
 	}
@@ -348,7 +362,9 @@ static void
 ugold_si700x_type(struct ugold_softc *sc, uint8_t *buf, u_int len)
 {
 	if (memcmp(buf, "TEMPerHu", len) == 0 ||
-	    memcmp(buf, "TEMPer1F", len) == 0)
+	    memcmp(buf, "TEMPer1F", len) == 0 ||
+	    memcmp(buf, "TEMPerX_", len) == 0 ||
+	    memcmp(buf, "TEMPerGo", len) == 0)
 		return; /* skip equal first half of the answer */
 
 	printf("%s: %d sensor%s type ", sc->sc_hdev.sc_dev.dv_xname,
@@ -363,6 +379,15 @@ ugold_si700x_type(struct ugold_softc *sc, uint8_t *buf, u_int len)
 	} else if (memcmp(buf, "_H1V1.5F", len) == 0) {
 		sc->sc_type = UGOLD_TYPE_SHT1X;
 		printf("sht1x (temperature and humidity)\n");
+	} else if (memcmp(buf, "V3.1    ", len) == 0) {
+		sc->sc_type = UGOLD_TYPE_TEMPERX;
+		printf("temperx (temperature and humidity)\n");
+	} else if (memcmp(buf, "V3.3    ", len) == 0) {
+		sc->sc_type = UGOLD_TYPE_TEMPERX;
+		printf("temperx (temperature and humidity)\n");
+	} else if (memcmp(buf, "ld_V3.1 ", len) == 0) {
+		sc->sc_type = UGOLD_TYPE_GOLD;
+		printf("gold (temperature only)\n");
 	} else {
 		sc->sc_type = -1;
 		printf("unknown\n");
@@ -381,7 +406,11 @@ ugold_si700x_intr(struct uhidev *addr, void *ibuf, u_int len)
 		if (sc->sc_num_sensors)
 			break;
 
-		sc->sc_num_sensors = min(buf[1], UGOLD_MAX_SENSORS) /* XXX */;
+		if (sc->sc_type == UGOLD_TYPE_GOLD)
+			sc->sc_num_sensors = 1;
+		else
+			sc->sc_num_sensors = min(buf[1],
+			    UGOLD_MAX_SENSORS) /* XXX */;
 
 		for (i = 0; i < sc->sc_num_sensors; i++) {
 			sc->sc_sensor[i].flags |= SENSOR_FINVALID;
@@ -389,15 +418,17 @@ ugold_si700x_intr(struct uhidev *addr, void *ibuf, u_int len)
 		}
 		break;
 	case UGOLD_CMD_DATA:
-		if (buf[1] != 4)
+		if (buf[1] != 4 && buf[1] != 64)
 			printf("%s: invalid data length (%d bytes)\n",
 			    sc->sc_hdev.sc_dev.dv_xname, buf[1]);
 		temp = ugold_si700x_temp(sc->sc_type, buf[2], buf[3]);
 		sc->sc_sensor[UGOLD_INNER].value = (temp * 1000) + 273150000;
 		sc->sc_sensor[UGOLD_INNER].flags &= ~SENSOR_FINVALID;
-		rhum = ugold_si700x_rhum(sc->sc_type, buf[4], buf[5], temp);
-		sc->sc_sensor[UGOLD_HUM].value = rhum;
-		sc->sc_sensor[UGOLD_HUM].flags &= ~SENSOR_FINVALID;
+		if (sc->sc_type != UGOLD_TYPE_GOLD) {
+			rhum = ugold_si700x_rhum(sc->sc_type, buf[4], buf[5], temp);
+			sc->sc_sensor[UGOLD_HUM].value = rhum;
+			sc->sc_sensor[UGOLD_HUM].flags &= ~SENSOR_FINVALID;
+		}
 		break;
 	default:
 		if (!sc->sc_type) { /* type command returns arbitrary string */
