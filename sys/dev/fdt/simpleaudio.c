@@ -1,4 +1,4 @@
-/*	$OpenBSD: simpleaudio.c,v 1.1 2020/06/10 23:55:19 patrick Exp $	*/
+/*	$OpenBSD: simpleaudio.c,v 1.2 2021/04/05 14:36:18 kn Exp $	*/
 /*
  * Copyright (c) 2020 Patrick Wildt <patrick@blueri.se>
  *
@@ -300,24 +300,6 @@ simpleaudio_set_params(void *cookie, int setmode, int usemode,
 	uint32_t rate;
 	int error;
 
-	dai = sc->sc_dai_cpu;
-	hwif = dai->dd_hw_if;
-	if (hwif->set_params) {
-		error = hwif->set_params(dai->dd_cookie,
-		    setmode, usemode, play, rec);
-		if (error)
-			return error;
-	}
-
-	dai = sc->sc_dai_codec;
-	hwif = dai->dd_hw_if;
-	if (hwif->set_params) {
-		error = hwif->set_params(dai->dd_cookie,
-		    setmode, usemode, play, rec);
-		if (error)
-			return error;
-	}
-
 	if (sc->sc_mclk_fs) {
 		if (setmode & AUMODE_PLAY)
 			rate = play->sample_rate * sc->sc_mclk_fs;
@@ -337,6 +319,24 @@ simpleaudio_set_params(void *cookie, int setmode, int usemode,
 			if (error)
 				return error;
 		}
+	}
+
+	dai = sc->sc_dai_cpu;
+	hwif = dai->dd_hw_if;
+	if (hwif->set_params) {
+		error = hwif->set_params(dai->dd_cookie,
+		    setmode, usemode, play, rec);
+		if (error)
+			return error;
+	}
+
+	dai = sc->sc_dai_codec;
+	hwif = dai->dd_hw_if;
+	if (hwif->set_params) {
+		error = hwif->set_params(dai->dd_cookie,
+		    setmode, usemode, play, rec);
+		if (error)
+			return error;
 	}
 
 	return 0;
