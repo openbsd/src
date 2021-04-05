@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.278 2021/03/11 11:16:55 jsg Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.279 2021/04/05 18:26:45 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -207,6 +207,7 @@ void svm_set_dirty(struct vcpu *, uint32_t);
 int vmm_gpa_is_valid(struct vcpu *vcpu, paddr_t gpa, size_t obj_size);
 void vmm_init_pvclock(struct vcpu *, paddr_t);
 int vmm_update_pvclock(struct vcpu *);
+int vmm_pat_is_valid(uint64_t);
 
 #ifdef VMM_DEBUG
 void dump_vcpu(struct vcpu *);
@@ -3193,6 +3194,9 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	/* xcr0 power on default sets bit 0 (x87 state) */
 	vcpu->vc_gueststate.vg_xcr0 = XCR0_X87 & xsave_mask;
 
+	/* XXX PAT shadow */
+	vcpu->vc_shadow_pat = rdmsr(MSR_CR_PAT);
+
 exit:
 	/* Flush the VMCS */
 	if (vmclear(&vcpu->vc_control_pa)) {
@@ -3584,6 +3588,10 @@ vcpu_init(struct vcpu *vcpu)
 	vcpu->vc_state = VCPU_STATE_STOPPED;
 	vcpu->vc_vpid = 0;
 	vcpu->vc_pvclock_system_gpa = 0;
+
+	/* Shadow PAT MSR, starting with host's value. */
+	vcpu->vc_shadow_pat = rdmsr(MSR_CR_PAT);
+
 	if (vmm_softc->mode == VMM_MODE_VMX ||
 	    vmm_softc->mode == VMM_MODE_EPT)
 		ret = vcpu_init_vmx(vcpu);
@@ -6257,25 +6265,23 @@ vmx_handle_rdmsr(struct vcpu *vcpu)
 	rdx = &vcpu->vc_gueststate.vg_rdx;
 
 	switch (*rcx) {
-	case MSR_SMBASE:
-		/*
-		 * 34.15.6.3 - Saving Guest State (SMM)
-		 *
-		 * Unsupported, so inject #GP and return without
-		 * advancing %rip.
-		 */
+	case MSR_BIOS_SIGN:
+	case MSR_PLATFORM_ID:
+		/* Ignored */
+		*rax = 0;
+		*rdx = 0;
+		break;
+	case MSR_CR_PAT:
+		*rax = (vcpu->vc_shadow_pat & 0xFFFFFFFFULL);
+		*rdx = (vcpu->vc_shadow_pat >> 32);
+		break;
+	default:
+		/* Unsupported MSRs causes #GP exception, don't advance %rip */
+		DPRINTF("%s: unsupported rdmsr (msr=0x%llx), injecting #GP\n",
+		    __func__, *rcx);
 		ret = vmm_inject_gp(vcpu);
 		return (ret);
 	}
-
-	*rax = 0;
-	*rdx = 0;
-
-#ifdef VMM_DEBUG
-	/* Log the access, to be able to identify unknown MSRs */
-	DPRINTF("%s: rdmsr exit, msr=0x%llx, data returned to "
-	    "guest=0x%llx:0x%llx\n", __func__, *rcx, *rdx, *rax);
-#endif /* VMM_DEBUG */
 
 	vcpu->vc_gueststate.vg_rip += insn_length;
 
@@ -6442,7 +6448,7 @@ vmx_handle_misc_enable_msr(struct vcpu *vcpu)
 int
 vmx_handle_wrmsr(struct vcpu *vcpu)
 {
-	uint64_t insn_length;
+	uint64_t insn_length, val;
 	uint64_t *rax, *rdx, *rcx;
 	int ret;
 
@@ -6460,8 +6466,16 @@ vmx_handle_wrmsr(struct vcpu *vcpu)
 	rax = &vcpu->vc_gueststate.vg_rax;
 	rcx = &vcpu->vc_gueststate.vg_rcx;
 	rdx = &vcpu->vc_gueststate.vg_rdx;
+	val = (*rdx << 32) | (*rax & 0xFFFFFFFFULL);
 
 	switch (*rcx) {
+	case MSR_CR_PAT:
+		if (!vmm_pat_is_valid(val)) {
+			ret = vmm_inject_gp(vcpu);
+			return (ret);
+		}
+		vcpu->vc_shadow_pat = val;
+		break;
 	case MSR_MISC_ENABLE:
 		vmx_handle_misc_enable_msr(vcpu);
 		break;
@@ -6508,7 +6522,7 @@ vmx_handle_wrmsr(struct vcpu *vcpu)
 int
 svm_handle_msr(struct vcpu *vcpu)
 {
-	uint64_t insn_length;
+	uint64_t insn_length, val;
 	uint64_t *rax, *rcx, *rdx;
 	struct vmcb *vmcb = (struct vmcb *)vcpu->vc_control_va;
 	int ret;
@@ -6521,35 +6535,58 @@ svm_handle_msr(struct vcpu *vcpu)
 	rdx = &vcpu->vc_gueststate.vg_rdx;
 
 	if (vmcb->v_exitinfo1 == 1) {
-		if (*rcx == MSR_EFER) {
+		/* WRMSR */
+		val = (*rdx << 32) | (*rax & 0xFFFFFFFFULL);
+
+		switch (*rcx) {
+		case MSR_CR_PAT:
+			if (!vmm_pat_is_valid(val)) {
+				ret = vmm_inject_gp(vcpu);
+				return (ret);
+			}
+			vcpu->vc_shadow_pat = val;
+			break;
+		case MSR_EFER:
 			vmcb->v_efer = *rax | EFER_SVME;
-		} else if (*rcx == KVM_MSR_SYSTEM_TIME) {
+			break;
+		case KVM_MSR_SYSTEM_TIME:
 			vmm_init_pvclock(vcpu,
 			    (*rax & 0xFFFFFFFFULL) | (*rdx  << 32));
-		} else {
-#ifdef VMM_DEBUG
+			break;
+		default:
 			/* Log the access, to be able to identify unknown MSRs */
 			DPRINTF("%s: wrmsr exit, msr=0x%llx, discarding data "
 			    "written from guest=0x%llx:0x%llx\n", __func__,
 			    *rcx, *rdx, *rax);
-#endif /* VMM_DEBUG */
 		}
 	} else {
+		/* RDMSR */
 		switch (*rcx) {
-			case MSR_DE_CFG:
-				/* LFENCE seralizing bit is set by host */
-				*rax = DE_CFG_SERIALIZE_LFENCE;
-				*rdx = 0;
-				break;
-			case MSR_INT_PEN_MSG:
-				*rax = 0;
-				*rdx = 0;
-				break;
-			default:
-				DPRINTF("%s: guest read msr 0x%llx, injecting "
-				    "#GP\n", __func__, *rcx);
-				ret = vmm_inject_gp(vcpu);
-				return (ret);
+		case MSR_BIOS_SIGN:
+		case MSR_INT_PEN_MSG:
+		case MSR_PLATFORM_ID:
+			/* Ignored */
+			*rax = 0;
+			*rdx = 0;
+			break;
+		case MSR_CR_PAT:
+			*rax = (vcpu->vc_shadow_pat & 0xFFFFFFFFULL);
+			*rdx = (vcpu->vc_shadow_pat >> 32);
+			break;
+		case MSR_DE_CFG:
+			/* LFENCE seralizing bit is set by host */
+			*rax = DE_CFG_SERIALIZE_LFENCE;
+			*rdx = 0;
+			break;
+		default:
+			/*
+			 * Unsupported MSRs causes #GP exception, don't advance
+			 * %rip
+			 */
+			DPRINTF("%s: unsupported rdmsr (msr=0x%llx), "
+			    "injecting #GP\n", __func__, *rcx);
+			ret = vmm_inject_gp(vcpu);
+			return (ret);
 		}
 	}
 
@@ -7271,6 +7308,23 @@ vmm_update_pvclock(struct vcpu *vcpu)
 		pvclock_ti->ti_version &= ~0x1;
 	}
 	return (0);
+}
+
+int
+vmm_pat_is_valid(uint64_t pat)
+{
+	int i;
+	uint8_t *byte = (uint8_t *)&pat;
+
+	/* Intel SDM Vol 3A, 11.12.2: 0x02, 0x03, and 0x08-0xFF result in #GP */
+	for (i = 0; i < 8; i++) {
+		if (byte[i] == 0x02 || byte[i] == 0x03 || byte[i] > 0x07) {
+			DPRINTF("%s: invalid pat %llx\n", __func__, pat);
+			return 0;
+		}
+	}
+
+	return 1;
 }
 
 /*

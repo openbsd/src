@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.70 2020/04/08 07:39:48 pd Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.71 2021/04/05 18:26:46 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -935,6 +935,9 @@ struct vcpu {
 	uint32_t vc_pvclock_version;
 	paddr_t vc_pvclock_system_gpa;
 	uint32_t vc_pvclock_system_tsc_mul;
+
+	/* Shadowed MSRs */
+	uint64_t vc_shadow_pat;
 
 	/* VMX only */
 	uint64_t vc_vmx_basic;
