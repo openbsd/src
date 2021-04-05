@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.75 2020/08/03 00:09:01 deraadt Exp $	*/
+/*	$OpenBSD: print.c,v 1.76 2021/04/05 00:51:14 kn Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -305,8 +305,7 @@ printstate(const struct kinfo_proc *kp, VARENT *ve)
 void
 printpledge(const struct kinfo_proc *kp, VARENT *ve)
 {
-	int flag, i;
-	char *cp, state = '\0';
+	int i;
 	VAR *v;
 	char buf[1024];
 
