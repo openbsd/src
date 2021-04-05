@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioev.c,v 1.44 2021/03/05 12:37:32 eric Exp $	*/
+/*	$OpenBSD: ioev.c,v 1.45 2021/04/05 15:50:11 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -883,22 +883,24 @@ void
 io_dispatch_accept_tls(int fd, short event, void *humppa)
 {
 	struct io	*io = humppa;
-	struct tls      *cctx = NULL;
+	struct tls      *tls = io->tls;
 	int		 ret;
 
 	io_frame_enter("io_dispatch_accept_tls", io, event);
+
+	/* Replaced by TLS context for accepted socket on success. */
+	io->tls = NULL;
 
 	if (event == EV_TIMEOUT) {
 		io_callback(io, IO_TIMEOUT);
 		goto leave;
 	}
 
-	if ((ret = tls_accept_socket(io->tls, &cctx, io->sock)) == 0) {
-		io->tls = cctx;
+	if ((ret = tls_accept_socket(tls, &io->tls, io->sock)) == 0) {
 		io_reset(io, EV_READ|EV_WRITE, io_dispatch_handshake_tls);
 		goto leave;
 	}
-	io->error = tls_error(io->tls);
+	io->error = tls_error(tls);
 	io_callback(io, IO_ERROR);
 
  leave:
