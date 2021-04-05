@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.211 2021/01/27 17:28:19 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.212 2021/04/05 20:45:49 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -307,6 +307,7 @@ struct video_hw_if uvideo_hw_if = {
 #define UVIDEO_FLAG_ISIGHT_STREAM_HEADER	0x1
 #define UVIDEO_FLAG_REATTACH			0x2
 #define UVIDEO_FLAG_VENDOR_CLASS		0x4
+#define UVIDEO_FLAG_NOATTACH			0x8
 struct uvideo_devs {
 	struct usb_devno	 uv_dev;
 	char			*ucode_name;
@@ -381,6 +382,12 @@ struct uvideo_devs {
 	    NULL,
 	    NULL,
 	    UVIDEO_FLAG_VENDOR_CLASS
+	},
+	{   /* Infrared camera not supported */
+	    { USB_VENDOR_CHICONY, USB_PRODUCT_CHICONY_IRCAMERA },
+	    NULL,
+	    NULL,
+	    UVIDEO_FLAG_NOATTACH
 	},
 };
 #define uvideo_lookup(v, p) \
@@ -480,13 +487,12 @@ uvideo_match(struct device *parent, void *match, void *aux)
 	if (id == NULL)
 		return (UMATCH_NONE);
 
-	if (id->bInterfaceClass == UICLASS_VIDEO &&
-	    id->bInterfaceSubClass == UISUBCLASS_VIDEOCONTROL)
-		return (UMATCH_VENDOR_PRODUCT_CONF_IFACE);
-
-	/* quirk devices which we want to attach */
+	/* quirk devices */
 	quirk = uvideo_lookup(uaa->vendor, uaa->product);
 	if (quirk != NULL) {
+		if (quirk->flags & UVIDEO_FLAG_NOATTACH)
+			return (UMATCH_NONE);
+
 		if (quirk->flags & UVIDEO_FLAG_REATTACH)
 			return (UMATCH_VENDOR_PRODUCT_CONF_IFACE);
 
@@ -495,6 +501,10 @@ uvideo_match(struct device *parent, void *match, void *aux)
 		    id->bInterfaceSubClass == UISUBCLASS_VIDEOCONTROL)
 			return (UMATCH_VENDOR_PRODUCT_CONF_IFACE);
 	}
+
+	if (id->bInterfaceClass == UICLASS_VIDEO &&
+	    id->bInterfaceSubClass == UISUBCLASS_VIDEOCONTROL)
+		return (UMATCH_VENDOR_PRODUCT_CONF_IFACE);
 
 	return (UMATCH_NONE);
 }

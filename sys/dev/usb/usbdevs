@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.737 2021/04/05 16:17:25 landry Exp $
+$OpenBSD: usbdevs,v 1.738 2021/04/05 20:45:49 mglocker Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1338,6 +1338,7 @@ product CHICONY RTL8188CUS_3	0xaff9	RTL8188CUS
 product CHICONY RTL8188CUS_4	0xaffa	RTL8188CUS
 product CHICONY RTL8188CUS_5	0xaffb	RTL8188CUS
 product CHICONY RTL8188CUS_6	0xaffc	RTL8188CUS
+product CHICONY IRCAMERA	0xb615	Integrated IR Camera
 
 /* CH Products */
 product CHPRODUCTS PROTHROTTLE	0x00f1	Pro Throttle
