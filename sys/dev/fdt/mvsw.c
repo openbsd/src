@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvsw.c,v 1.2 2020/12/02 09:49:34 patrick Exp $	*/
+/*	$OpenBSD: mvsw.c,v 1.3 2021/04/05 12:13:07 dtucker Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -139,7 +139,7 @@ mvsw_attach(struct device *parent, struct device *self, void *aux)
 		printf(": 88E6341");
 		break;
 	default:
-		printf(": unknow product 0x%04x\n",
+		printf(": unknown product 0x%04x\n",
 		   swid & MVSW_PORT_SWITCHID_PROD_MASK);
 		return;
 	}
