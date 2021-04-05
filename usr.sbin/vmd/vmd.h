@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.103 2021/03/29 23:37:01 dv Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.104 2021/04/05 18:09:48 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -484,10 +484,6 @@ int	 config_getvm(struct privsep *, struct imsg *);
 int	 config_getdisk(struct privsep *, struct imsg *);
 int	 config_getif(struct privsep *, struct imsg *);
 int	 config_getcdrom(struct privsep *, struct imsg *);
-
-/* vmboot.c */
-FILE	*vmboot_open(int, int *, int, unsigned int, struct vmboot_params *);
-void	 vmboot_close(FILE *, struct vmboot_params *);
 
 /* parse.y */
 int	 parse_config(const char *);

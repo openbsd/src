@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.61 2021/03/29 23:37:01 dv Exp $	*/
+/*	$OpenBSD: vm.c,v 1.62 2021/04/05 18:09:48 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -21,6 +21,7 @@
 #include <sys/queue.h>
 #include <sys/wait.h>
 #include <sys/uio.h>
+#include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/mman.h>
@@ -84,7 +85,7 @@ void vcpu_exit_inout(struct vm_run_params *);
 int vcpu_exit_eptviolation(struct vm_run_params *);
 uint8_t vcpu_exit_pci(struct vm_run_params *);
 int vcpu_pic_intr(uint32_t, uint32_t, uint8_t);
-int loadfile_bios(FILE *, struct vcpu_reg_state *);
+int loadfile_bios(gzFile, off_t, struct vcpu_reg_state *);
 int send_vm(int, struct vm_create_params *);
 int dump_send_header(int);
 int dump_vmr(int , struct vm_mem_range *);
@@ -213,6 +214,7 @@ static const struct vcpu_reg_state vcpu_init_flat16 = {
  *
  * Parameters:
  *  fp: file of a kernel file to load
+ *  size: uncompressed size of the image
  *  (out) vrs: register state to set on init for this kernel
  *
  * Return values:
@@ -220,16 +222,15 @@ static const struct vcpu_reg_state vcpu_init_flat16 = {
  *  various error codes returned from read(2) or loadelf functions
  */
 int
-loadfile_bios(FILE *fp, struct vcpu_reg_state *vrs)
+loadfile_bios(gzFile fp, off_t size, struct vcpu_reg_state *vrs)
 {
-	off_t	 size, off;
+	off_t	 off;
 
 	/* Set up a "flat 16 bit" register state for BIOS */
 	memcpy(vrs, &vcpu_init_flat16, sizeof(*vrs));
 
-	/* Get the size of the BIOS image and seek to the beginning */
-	if (fseeko(fp, 0, SEEK_END) == -1 || (size = ftello(fp)) == -1 ||
-	    fseeko(fp, 0, SEEK_SET) == -1)
+	/* Seek to the beginning of the BIOS image */
+	if (gzseek(fp, 0, SEEK_SET) == -1)
 		return (-1);
 
 	/* The BIOS image must end at 1M */
@@ -277,9 +278,10 @@ start_vm(struct vmd_vm *vm, int fd)
 	struct vcpu_reg_state	 vrs;
 	int			 nicfds[VMM_MAX_NICS_PER_VM];
 	int			 ret;
-	FILE			*fp;
+	gzFile			 fp;
 	size_t			 i;
 	struct vm_rwregs_params  vrp;
+	struct stat		 sb;
 
 	/* Child */
 	setproctitle("%s", vcp->vcp_name);
@@ -331,7 +333,7 @@ start_vm(struct vmd_vm *vm, int fd)
 		memcpy(&vrs, &vcpu_init_flat64, sizeof(vrs));
 
 		/* Find and open kernel image */
-		if ((fp = fdopen(vm->vm_kernel, "r")) == NULL)
+		if ((fp = gzdopen(vm->vm_kernel, "r")) == NULL)
 			fatalx("failed to open kernel - exiting");
 
 		/* Load kernel image */
@@ -339,16 +341,16 @@ start_vm(struct vmd_vm *vm, int fd)
 
 		/*
 		 * Try BIOS as a fallback (only if it was provided as an image
-		 * with vm->vm_kernel and not loaded from the disk)
+		 * with vm->vm_kernel and the file is not compressed)
 		 */
-		if (ret && errno == ENOEXEC && vm->vm_kernel != -1)
-			ret = loadfile_bios(fp, &vrs);
+		if (ret && errno == ENOEXEC && vm->vm_kernel != -1 &&
+		    gzdirect(fp) && (ret = fstat(vm->vm_kernel, &sb)) == 0)
+			ret = loadfile_bios(fp, sb.st_size, &vrs);
 
 		if (ret)
 			fatal("failed to load kernel or BIOS - exiting");
 
-		if (fp)
-			fclose(fp);
+		gzclose(fp);
 	}
 
 	if (vm->vm_kernel != -1)
