@@ -1,3 +1,6 @@
+30 March 2021: Wouter
+	- Fix configure failure for enable systemd because of autoconf.
+
 24 November 2020: Wouter
 	- Merge PR #141: ZONEMD RR type.
 	- tag for 4.3.4rc1.
