@@ -1,9 +1,115 @@
 30 March 2021: Wouter
 	- Fix configure failure for enable systemd because of autoconf.
 
+29 March 2021: Wouter
+	- Note unlisted changes in RELNOTES and prepare for 4.3.6rc1 tag.
+
+29 March 2021: Willem
+	- Per zone Access Control List for queries
+	  with an allow-query: option.
+
+24 March 2021: Wouter
+	- Update acx_nlnetlabs.m4 to version 38, fix deprecation test.
+	- Fix configure to use header checks with compile.
+	- Fix warning about unused function log_addr.
+
+18 March 2021: Tom
+	- Add Extended DNS Errors RFC8914
+
+15 March 2021: Wouter
+	- Fix double config.h include in configlexer.c
+	- Fix to remove configyyrename from makedist.sh and also
+	  update the flex and bison rules there to add the "c_" prefix.
+
+13 March 2021: Willem
+	- Fix #154: TXT with parentheses fails in 4.3.5.
+	- Align parsing of TXT elements with how bind does it.
+	- A -p option to nsd-checkzone to print a successfully read zone.
+
+12 March 2021: Wouter
+	- Fix that wildcard is printed as a star instead of escaped, in
+	  logs and in written zone files.
+	- Fix unit test for wildcard printout change.
+
+11 March 2021: Wouter
+	- Fix #163: A TSIG noncompliance with RFC 2845.
+
+9 March 2021: Willem
+	- Enable configuring a control-interface by interface name.
+
+19 February 2021: Wouter
+	- Fix segfault on high verbosity for TLS channels with dnstap log
+	  local address.
+
+18 February 2021: Wouter
+	- Fix #146 with #147: DNSTAP log the local address of the server
+	  with the dnstap logs.
+
+16 February 2021: Wouter
+	- Man page documentation for dnstap options.
+
+8 February 2021: Wouter
+	- Fix AF_LOCAL compile error for Solaris.
+	- Fix ifaddrs compile error for Solaris.
+	- Fix ifaddrs.h compile error for Solaris.
+
+4 February 2021: Wouter
+	- Merge PR #153 from fobser: Repair -fno-common linker errors
+	  automatically.
+	- Fix uninitialized access of log_buf in error printout on apply ixfr.
+
+26 January 2021: Wouter
+	- Prevent a few more yacc clashes.
+
+19 January 2021: Wouter
+	- Set branch ready for 4.3.5 release.  Tag for 4.3.5rc1.
+	  Became the 4.3.5 release on 26 january 2021.  This branch continues
+	  with 4.3.6 in development.
+
+15 January 2021: Wouter
+	- Fix #152: '*' in Rdata causes the return code to be NOERROR instead
+	  of NX.
+	- Add config.guess and config.sub to .gitignore for autoconf 2.70.
+	- Fix #150: TXT record validation difference with BIND.
+	- Fixup TXT record validation fix for escaped quotes.
+	- Fixup TXT record validation fix for escaped backslashes.
+	- Fixup escape character parse for quoted strings.
+
+11 January 2021: Wouter
+	- Fix #151: DNAME not applied more than once to resolve the query.
+	- Fix dname test for #148.
+	- For #151: fix to not produce loops in output.
+
+5 January 2021: Wouter
+	- Fix configure.ac for autoconf 2.70.
+
+4 January 2021: Wouter
+	- Fix #148: CNAME need not be followed after a synthesized CNAME
+	  for a CNAME query.
+
+11 December 2020: Wouter
+	- Fix that nsd-control has timeout when connection is down.
+	- remove windows socket ifdefs from nsd-control.
+
+3 December 2020: Wouter
+	- For #145: Fix that service of remaining TCP and TLS connections
+	  does not allow new queries to be made, the connection is closed.
+	  Only existing queries and zone transfers are answered, new ones
+	  are rejected by a close of the channel.
+
+30 November 2020: Wouter
+	- Fix #144: fix better.
+
+27 November 2020: Wouter
+	- Fix #144: Typo fix in nsd.conf.5.in.
+
+26 November 2020: Wouter
+	- Fix #143: xfrd no hysteresis with NOT IMPLEMENTED rcode.
+
 24 November 2020: Wouter
 	- Merge PR #141: ZONEMD RR type.
-	- tag for 4.3.4rc1.
+	- tag for 4.3.4rc1.  This became 4.3.4 release on 1 dec 2020.
+	  The code repo continues for 4.3.5 in development.
 
 23 November 2020: Wouter
 	- Fix #142: NODATA answers missin SOA in authority section after

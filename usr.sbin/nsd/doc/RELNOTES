@@ -1,5 +1,59 @@
 NSD RELEASE NOTES
 
+4.3.6
+================
+FEATURES:
+	- Fix #146 with #147: DNSTAP log the local address of the server
+	  with the dnstap logs.
+	- Enable configuring a control-interface by interface name.
+	- A -p option to nsd-checkzone to print a successfully read zone.
+	- Add Extended DNS Errors RFC8914
+	- Per zone Access Control List for queries
+	  with an allow-query: option.
+BUG FIXES:
+	- Prevent a few more yacc clashes.
+	- Merge PR #153 from fobser: Repair -fno-common linker errors
+	  automatically.
+	- Fix uninitialized access of log_buf in error printout on apply ixfr.
+	- Fix AF_LOCAL compile error for Solaris.
+	- Fix ifaddrs compile error for Solaris.
+	- Fix ifaddrs.h compile error for Solaris.
+	- Man page documentation for dnstap options.
+	- Fix segfault on high verbosity for TLS channels with dnstap log
+	  local address.
+	- Fix #163: A TSIG noncompliance with RFC 2845.
+	- Fix that wildcard is printed as a star instead of escaped, in
+	  logs and in written zone files.
+	- Fix double config.h include in configlexer.c
+	- Fix to remove configyyrename from makedist.sh and also
+	  update the flex and bison rules there to add the "c_" prefix.
+	- Fix configure to use header checks with compile.
+	- Fix warning about unused function log_addr.
+	- Fix #154: TXT with parentheses fails in 4.3.5.
+	- Align parsing of TXT elements with how bind does it.
+	- Fix configure failure for enable systemd because of autoconf.
+
+
+4.3.5
+================
+BUG FIXES:
+	- Fix #143: xfrd no hysteresis with NOT IMPLEMENTED rcode.
+	- Fix #144: Typo fix in nsd.conf.5.in.
+	- For #145: Fix that service of remaining TCP and TLS connections
+	  does not allow new queries to be made, the connection is closed.
+	  Only existing queries and zone transfers are answered, new ones
+	  are rejected by a close of the channel.
+	- Fix that nsd-control has timeout when connection is down.
+	- remove windows socket ifdefs from nsd-control.
+	- Fix #148: CNAME need not be followed after a synthesized CNAME
+	  for a CNAME query.
+	- Fix configure.ac for autoconf 2.70.
+	- Fix #150: TXT record validation difference with BIND.
+	- Fix #151: DNAME not applied more than once to resolve the query.
+	- Fix #152: '*' in Rdata causes the return code to be NOERROR instead
+	  of NX.
+
+
 4.3.4
 ================
 FEATURES:
