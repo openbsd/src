@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.114 2020/10/29 12:30:52 denis Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.115 2021/04/06 06:28:38 jmc Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 29 2020 $
+.Dd $Mdocdate: April 6 2021 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -155,7 +155,7 @@ see
 .Xr patterns 7 .
 .El
 .Pp
-Followed by a block of options that is enclosed in curly brackets:
+Followed by a block of options enclosed in curly braces:
 .Bl -tag -width Ds
 .It Ic alias Ar name
 Specify an additional alias
@@ -282,6 +282,7 @@ will neither display nor generate a directory index.
 .El
 .It Oo Ic no Oc Ic fastcgi Oo Ar option Oc
 Enable FastCGI instead of serving files.
+Multiple options may be specified within curly braces.
 Valid options are:
 .Bl -tag -width Ds
 .It Ic socket Oo Cm tcp Oc Ar socket Oo Ar port Oc
