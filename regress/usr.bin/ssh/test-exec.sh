@@ -1,8 +1,12 @@
-#	$OpenBSD: test-exec.sh,v 1.78 2021/03/13 01:52:16 dtucker Exp $
+#	$OpenBSD: test-exec.sh,v 1.79 2021/04/06 23:57:56 dtucker Exp $
 #	Placed in the Public Domain.
 
 USER=`id -un`
 #SUDO=sudo
+
+if [ ! -x "$TEST_SSH_ELAPSED_TIMES" ]; then
+	STARTTIME=`date '+%s'`
+fi
 
 if [ ! -z "$TEST_SSH_PORT" ]; then
 	PORT="$TEST_SSH_PORT"
@@ -205,6 +209,11 @@ cleanup ()
 		fi
 	fi
 	stop_sshd
+	if [ ! -z "$TEST_SSH_ELAPSED_TIMES" ]; then
+		now=`date '+%s'`
+		elapsed=$(($now - $STARTTIME))
+		echo elapsed $elapsed `basename $SCRIPT .sh`
+	fi
 }
 
 start_debug_log ()
