@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.103 2021/04/06 20:30:32 kn Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.104 2021/04/06 22:12:48 jca Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -64,7 +64,7 @@ extern char *__progname;
 void usage(void);
 int power_status(int fd, int force, struct apm_power_info *pinfo);
 int bind_socket(const char *sn);
-enum apm_state handle_client(int sock_fd, int ctl_fd);
+void handle_client(int sock_fd, int ctl_fd);
 int suspend(int ctl_fd);
 int stand_by(int ctl_fd);
 int hibernate(int ctl_fd);
@@ -231,7 +231,7 @@ bind_socket(const char *sockname)
 	return sock;
 }
 
-enum apm_state
+void
 handle_client(int sock_fd, int ctl_fd)
 {
 	/* accept a handle from the client, process it, then clean up */
@@ -251,19 +251,19 @@ handle_client(int sock_fd, int ctl_fd)
 	cli_fd = accept(sock_fd, (struct sockaddr *)&from, &fromlen);
 	if (cli_fd == -1) {
 		logmsg(LOG_INFO, "client accept failure: %s", strerror(errno));
-		return NORMAL;
+		return;
 	}
 
 	if (recv(cli_fd, &cmd, sizeof(cmd), 0) != sizeof(cmd)) {
 		(void) close(cli_fd);
 		logmsg(LOG_INFO, "client size botch");
-		return NORMAL;
+		return;
 	}
 
 	if (cmd.vno != APMD_VNO) {
 		close(cli_fd);			/* terminate client */
 		/* no error message, just drop it. */
-		return NORMAL;
+		return;
 	}
 
 	bzero(&reply, sizeof(reply));
@@ -324,8 +324,6 @@ handle_client(int sock_fd, int ctl_fd)
 	if (send(cli_fd, &reply, sizeof(reply), 0) != sizeof(reply))
 		logmsg(LOG_INFO, "reply to client botched");
 	close(cli_fd);
-
-	return reply.newstate;
 }
 
 int
@@ -528,12 +526,8 @@ main(int argc, char *argv[])
 			break;
 
 		if (rv == 1 && ev->ident == sock_fd) {
-			int state;
-
-			if ((state = handle_client(sock_fd, ctl_fd)) == -1)
-				logmsg(LOG_WARNING, "%s: %s", apm_state(state), strerror(errno));
-			else
-				continue;
+			handle_client(sock_fd, ctl_fd);
+			continue;
 		}
 
 		suspends = standbys = hibernates = resumes = 0;
