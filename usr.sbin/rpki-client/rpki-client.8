@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.40 2021/04/02 06:11:01 jmc Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.41 2021/04/06 15:22:30 tb Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 2 2021 $
+.Dd $Mdocdate: April 6 2021 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -34,6 +34,7 @@
 The
 .Nm
 utility queries the RPKI repository system with
+a built-in http client and
 .Xr openrsync 1
 to fetch all X.509 certificates, manifests, and revocation lists under a given
 .Em Trust Anchor .
@@ -58,7 +59,7 @@ and
 (for bird2)
 in the output directory which is suitable for the BIRD internet routing daemon.
 .It Fl b Ar sourceaddr
-Tell the rsync client to use
+Tell the http and rsync clients to use
 .Ar sourceaddr
 as the source address for connections, which is useful on machines
 with multiple interfaces.
