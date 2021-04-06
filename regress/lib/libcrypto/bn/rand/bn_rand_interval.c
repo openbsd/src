@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_rand_interval.c,v 1.3 2018/11/10 01:39:35 tb Exp $	*/
+/*	$OpenBSD: bn_rand_interval.c,v 1.4 2021/04/06 16:40:34 tb Exp $	*/
 /*
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
  *
@@ -54,15 +54,15 @@ main(int argc, char *argv[])
 	int i, success = 1;
 
 	if ((a = BN_new()) == NULL)
-		err(1, "BN_new(a)");
+		errx(1, "BN_new(a)");
 	if ((b = BN_new()) == NULL)
-		err(1, "BN_new(b)");
+		errx(1, "BN_new(b)");
 	if ((x = BN_new()) == NULL)
-		err(1, "BN_new(c)");
-	
+		errx(1, "BN_new(c)");
+
 	for (i = 0; i < NUM_TESTS; i++) {
 		if (!BN_rand(a, 256, 0, 0))
-			err(1, "BN_rand(a)");
+			errx(1, "BN_rand(a)");
 
 		if (bn_rand_interval(x, a, a) != 0) {
 			success = 0;
@@ -72,7 +72,7 @@ main(int argc, char *argv[])
 		}
 
 		if (!BN_rand(b, 256, 0, 0))
-			err(1, "BN_rand(b)");
+			errx(1, "BN_rand(b)");
 
 		switch(BN_cmp(a, b)) {
 		case 0:		/* a == b */
@@ -87,7 +87,7 @@ main(int argc, char *argv[])
 		}
 
 		if (!bn_rand_interval(x, a, b))
-			err(1, "bn_rand_interval() failed");
+			errx(1, "bn_rand_interval() failed");
 
 		if (BN_cmp(x, a) < 0 || BN_cmp(x, b) >= 0) {
 			success = 0;
