@@ -1,4 +1,4 @@
-/*      $OpenBSD: http.c,v 1.16 2021/04/06 12:28:56 claudio Exp $  */
+/*      $OpenBSD: http.c,v 1.17 2021/04/06 12:30:43 claudio Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -291,9 +291,6 @@ http_fail(size_t id)
 static void
 http_free(struct http_connection *conn)
 {
-	if (conn->state != STATE_DONE)
-		http_fail(conn->id);
-
 	free(conn->url);
 	free(conn->host);
 	free(conn->port);
@@ -419,6 +416,7 @@ http_new(size_t id, char *uri, char *modified_since, int outfd)
 	/* TODO proxy support (overload of host and port) */
 
 	if (http_resolv(conn, host, port) == -1) {
+		http_fail(conn->id);
 		http_free(conn);
 		return NULL;
 	}
@@ -1103,6 +1101,8 @@ http_do(struct http_connection *conn)
 	switch (http_handle(conn)) {
 	case -1:
 		/* connection failure */
+		if (conn->state != STATE_DONE)
+			http_fail(conn->id);
 		http_free(conn);
 		return -1;
 	case 0:
@@ -1114,6 +1114,8 @@ http_do(struct http_connection *conn)
 			conn->events = POLLOUT;
 			break;
 		case -1:
+			if (conn->state != STATE_DONE)
+				http_fail(conn->id);
 			http_free(conn);
 			return -1;
 		}
