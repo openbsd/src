@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.102 2021/03/25 20:46:55 kn Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.103 2021/04/06 20:30:32 kn Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -65,9 +65,9 @@ void usage(void);
 int power_status(int fd, int force, struct apm_power_info *pinfo);
 int bind_socket(const char *sn);
 enum apm_state handle_client(int sock_fd, int ctl_fd);
-void suspend(int ctl_fd);
-void stand_by(int ctl_fd);
-void hibernate(int ctl_fd);
+int suspend(int ctl_fd);
+int stand_by(int ctl_fd);
+int hibernate(int ctl_fd);
 void resumed(int ctl_fd);
 void setperfpolicy(char *policy);
 void sigexit(int signo);
@@ -266,16 +266,23 @@ handle_client(int sock_fd, int ctl_fd)
 		return NORMAL;
 	}
 
+	bzero(&reply, sizeof(reply));
 	power_status(ctl_fd, 0, &reply.batterystate);
 	switch (cmd.action) {
 	case SUSPEND:
 		reply.newstate = SUSPENDING;
+		if (suspend(ctl_fd) == -1)
+			reply.error = errno;
 		break;
 	case STANDBY:
 		reply.newstate = STANDING_BY;
+		if (stand_by(ctl_fd) == -1)
+			reply.error = errno;
 		break;
 	case HIBERNATE:
 		reply.newstate = HIBERNATING;
+		if (hibernate(ctl_fd) == -1)
+			reply.error = errno;
 		break;
 	case SETPERF_LOW:
 		reply.newstate = NORMAL;
@@ -321,40 +328,49 @@ handle_client(int sock_fd, int ctl_fd)
 	return reply.newstate;
 }
 
-void
+int
 suspend(int ctl_fd)
 {
+	int ret;
+
 	logmsg(LOG_NOTICE, "system suspending");
 	power_status(ctl_fd, 1, NULL);
 	do_etc_file(_PATH_APM_ETC_SUSPEND);
 	sync();
 	sleep(1);
-	if (ioctl(ctl_fd, APM_IOC_SUSPEND, 0) == -1)
+	if ((ret = ioctl(ctl_fd, APM_IOC_SUSPEND, 0)) == -1)
 		logmsg(LOG_WARNING, "%s: %s", __func__, strerror(errno));
+	return (ret);
 }
 
-void
+int
 stand_by(int ctl_fd)
 {
+	int ret;
+
 	logmsg(LOG_NOTICE, "system entering standby");
 	power_status(ctl_fd, 1, NULL);
 	do_etc_file(_PATH_APM_ETC_STANDBY);
 	sync();
 	sleep(1);
-	if (ioctl(ctl_fd, APM_IOC_STANDBY, 0) == -1)
+	if ((ret = ioctl(ctl_fd, APM_IOC_STANDBY, 0)) == -1)
 		logmsg(LOG_WARNING, "%s: %s", __func__, strerror(errno));
+	return (ret);
 }
 
-void
+int
 hibernate(int ctl_fd)
 {
+	int ret;
+
 	logmsg(LOG_NOTICE, "system hibernating");
 	power_status(ctl_fd, 1, NULL);
 	do_etc_file(_PATH_APM_ETC_HIBERNATE);
 	sync();
 	sleep(1);
-	if (ioctl(ctl_fd, APM_IOC_HIBERNATE, 0) == -1)
+	if ((ret = ioctl(ctl_fd, APM_IOC_HIBERNATE, 0)) == -1)
 		logmsg(LOG_WARNING, "%s: %s", __func__, strerror(errno));
+	return (ret);
 }
 
 void
@@ -512,20 +528,12 @@ main(int argc, char *argv[])
 			break;
 
 		if (rv == 1 && ev->ident == sock_fd) {
-			switch (handle_client(sock_fd, ctl_fd)) {
-			case NORMAL:
-				break;
-			case SUSPENDING:
-				suspend(ctl_fd);
-				break;
-			case STANDING_BY:
-				stand_by(ctl_fd);
-				break;
-			case HIBERNATING:
-				hibernate(ctl_fd);
-				break;
-			}
-			continue;
+			int state;
+
+			if ((state = handle_client(sock_fd, ctl_fd)) == -1)
+				logmsg(LOG_WARNING, "%s: %s", apm_state(state), strerror(errno));
+			else
+				continue;
 		}
 
 		suspends = standbys = hibernates = resumes = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm-proto.h,v 1.10 2020/09/23 05:50:26 jca Exp $	*/
+/*	$OpenBSD: apm-proto.h,v 1.11 2021/04/06 20:30:32 kn Exp $	*/
 
 /*
  *  Copyright (c) 1996 John T. Kohl
@@ -64,6 +64,7 @@ struct apm_reply {
 	enum apm_perfmode perfmode;
 	int cpuspeed;
 	struct apm_power_info batterystate;
+	int error;
 };
 
 #define APMD_VNO	3
@@ -71,3 +72,4 @@ struct apm_reply {
 extern const char *battstate(int state);
 extern const char *ac_state(int state);
 extern const char *perf_mode(int mode);
+extern const char *apm_state(int apm_state);

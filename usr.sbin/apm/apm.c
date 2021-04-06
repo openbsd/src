@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.37 2020/09/23 05:50:26 jca Exp $	*/
+/*	$OpenBSD: apm.c,v 1.38 2021/04/06 20:30:32 kn Exp $	*/
 
 /*
  *  Copyright (c) 1996 John T. Kohl
@@ -97,6 +97,7 @@ do_zzz(int fd, enum apm_action action)
 	struct apm_command command;
 	struct apm_reply reply;
 	char *msg;
+	int ret;
 
 	switch (action) {
 	case NONE:
@@ -117,7 +118,10 @@ do_zzz(int fd, enum apm_action action)
 	}
 
 	printf("%s...\n", msg);
-	exit(send_command(fd, &command, &reply));
+	ret = send_command(fd, &command, &reply);
+	if (reply.error)
+		errx(1, "%s: %s", apm_state(reply.newstate), strerror(reply.error));
+	exit(ret);
 }
 
 static int
@@ -418,5 +422,7 @@ balony:
 	default:
 		break;
 	}
+	if (reply.error)
+		errx(1, "%s: %s", apm_state(reply.newstate), strerror(reply.error));
 	return (0);
 }
