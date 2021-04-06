@@ -1,4 +1,4 @@
-/*	$OpenBSD: sm3test.c,v 1.2 2018/11/12 15:55:59 tb Exp $	*/
+/*	$OpenBSD: sm3test.c,v 1.3 2021/04/06 15:00:19 tb Exp $	*/
 /*
  * Copyright (c) 2018 Ribose Inc
  *
@@ -68,12 +68,13 @@ main(int argc, char *argv[])
 {
 	EVP_MD_CTX *ctx;
 	uint8_t digest[32];
-	int numerrors = 0, i;
-	
+	int i;
+	int numerrors = 0;
+
 	if ((ctx = EVP_MD_CTX_new()) == NULL)
 		err(1, NULL);
-	
-	for (i = 0; i != SM3_TESTS; ++i) {
+
+	for (i = 0; i < SM3_TESTS; i++) {
 		if (!EVP_DigestInit(ctx, EVP_sm3()))
 			errx(1, "EVP_DigestInit() failed");
 		if (!EVP_DigestUpdate(ctx, sm3_input[i], strlen(sm3_input[i])))
