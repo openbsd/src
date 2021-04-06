@@ -1,4 +1,4 @@
-/*      $OpenBSD: rrdp.c,v 1.1 2021/04/01 16:04:48 claudio Exp $ */
+/*      $OpenBSD: rrdp.c,v 1.2 2021/04/06 18:35:46 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -485,7 +485,6 @@ rrdp_data_handler(struct rrdp *s)
 			if (memcmp(s->hash, h, sizeof(s->hash)) != 0) {
 				s->state |= RRDP_STATE_PARSE_ERROR;
 				warnx("%s: bad message digest", s->local);
-				return;
 			}
 		}
 
