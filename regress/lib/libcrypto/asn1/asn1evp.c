@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1evp.c,v 1.3 2018/11/08 21:37:21 jsing Exp $ */
+/* $OpenBSD: asn1evp.c,v 1.4 2021/04/06 16:30:27 tb Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -36,12 +36,12 @@ unsigned char test_octetstring[] = {
 static void
 hexdump(const unsigned char *buf, size_t len)
 {
-        size_t i;
+	size_t i;
 
-        for (i = 1; i <= len; i++)
-                fprintf(stderr, " 0x%02hhx,%s", buf[i - 1], i % 8 ? "" : "\n");
+	for (i = 1; i <= len; i++)
+		fprintf(stderr, " 0x%02hhx,%s", buf[i - 1], i % 8 ? "" : "\n");
 
-        fprintf(stderr, "\n");
+	fprintf(stderr, "\n");
 }
 
 static int
