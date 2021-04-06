@@ -1,4 +1,4 @@
-/*      $OpenBSD: http.c,v 1.15 2021/04/02 17:10:12 claudio Exp $  */
+/*      $OpenBSD: http.c,v 1.16 2021/04/06 12:28:56 claudio Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -123,10 +123,6 @@ struct sockaddr_storage http_bindaddr;
 struct tls_config *tls_config;
 uint8_t *tls_ca_mem;
 size_t tls_ca_size;
-
-char *resp_buf[MAX_CONNECTIONS];
-size_t resp_bsz[MAX_CONNECTIONS];
-size_t resp_idx;
 
 /*
  * Return a string that can be used in error message to identify the
@@ -1191,7 +1187,14 @@ proc_http(char *bind_addr, int fd)
 
 		if (pfds[MAX_CONNECTIONS].revents & POLLHUP)
 			break;
-
+		if (pfds[MAX_CONNECTIONS].revents & POLLOUT) {
+			switch (msgbuf_write(&msgq)) {
+			case 0:
+				errx(1, "write: connection closed");
+			case -1:
+				err(1, "write");
+			}
+		}
 		if (pfds[MAX_CONNECTIONS].revents & POLLIN) {
 			struct http_connection *h;
 			size_t id;
@@ -1213,14 +1216,6 @@ proc_http(char *bind_addr, int fd)
 						http_conns[i] = NULL;
 					break;
 				}
-			}
-		}
-		if (pfds[MAX_CONNECTIONS].revents & POLLOUT) {
-			switch (msgbuf_write(&msgq)) {
-			case 0:
-				errx(1, "write: connection closed");
-			case -1:
-				err(1, "write");
 			}
 		}
 		for (i = 0; i < MAX_CONNECTIONS; i++) {
