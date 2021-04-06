@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.279 2021/04/05 18:26:45 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.280 2021/04/06 00:19:58 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -5511,13 +5511,31 @@ svm_handle_np_fault(struct vcpu *vcpu)
  * Request a new page to be faulted into the UVM map of the VM owning 'vcpu'
  * at address 'gpa'.
  *
- * Returns EAGAIN to indication a protection fault, ie writing to a read only
- * page.
+ * Parameters:
+ *  vcpu: guest VCPU requiring the page to be faulted into the UVM map
+ *  gpa: guest physical address that triggered the fault
+ *
+ * Return Values:
+ *  0: if successful
+ *  EINVAL: if fault type could not be determined
+ *  EAGAIN: if a protection fault occurred, ie writing to a read-only page
+ *  errno: if uvm_fault(9) fails to wire in the page
  */
 int
 vmx_fault_page(struct vcpu *vcpu, paddr_t gpa)
 {
-	int ret;
+	int fault_type, ret;
+
+	fault_type = vmx_get_guest_faulttype();
+	if (fault_type == -1) {
+		printf("%s: invalid fault type\n", __func__);
+		return (EINVAL);
+	}
+
+	if (fault_type == VM_FAULT_PROTECT) {
+		vcpu->vc_exit.vee.vee_fault_type = VEE_FAULT_PROTECT;
+		return (EAGAIN);
+	}
 
 	ret = uvm_fault(vcpu->vc_parent->vm_map, gpa, VM_FAULT_WIRE,
 	    PROT_READ | PROT_WRITE | PROT_EXEC);
