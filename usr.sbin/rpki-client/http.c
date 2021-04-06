@@ -1,4 +1,4 @@
-/*      $OpenBSD: http.c,v 1.17 2021/04/06 12:30:43 claudio Exp $  */
+/*      $OpenBSD: http.c,v 1.18 2021/04/06 12:35:24 claudio Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -467,7 +467,7 @@ http_redirect(struct http_connection *conn, char *uri)
 static int
 http_connect(struct http_connection *conn)
 {
-	char *cause = "unknown";
+	const char *cause = NULL;
 
 	if (conn->fd != -1) {
 		close(conn->fd);
@@ -481,7 +481,7 @@ http_connect(struct http_connection *conn)
 		conn->res = conn->res->ai_next;
 	for (; conn->res != NULL; conn->res = conn->res->ai_next) {
 		struct addrinfo *res = conn->res;
-		int fd, error, save_errno;
+		int fd, save_errno;
 
 		fd = socket(res->ai_family,
 		    res->ai_socktype | SOCK_NONBLOCK, res->ai_protocol);
@@ -497,10 +497,9 @@ http_connect(struct http_connection *conn)
 				warn("%s: bind", http_info(conn->url));
 		}
 
-		error = connect(conn->fd, res->ai_addr, res->ai_addrlen);
-		if (error == -1) {
+		if (connect(conn->fd, res->ai_addr, res->ai_addrlen) == -1) {
 			if (errno == EINPROGRESS) {
-				/* waiting for connect to finish. */
+				/* wait for async connect to finish. */
 				return WANT_POLLOUT;
 			} else {
 				save_errno = errno;
@@ -512,14 +511,19 @@ http_connect(struct http_connection *conn)
 			}
 		}
 
-		break;
+		break;	/* okay we got one */
 	}
-	freeaddrinfo(conn->res0);
-	conn->res0 = NULL;
+
 	if (conn->fd == -1) {
-		warn("%s: %s", http_info(conn->url), cause);
+		if (cause != NULL)
+			warn("%s: %s", http_info(conn->url), cause);
+		freeaddrinfo(conn->res0);
+		conn->res0 = NULL;
 		return -1;
 	}
+
+	freeaddrinfo(conn->res0);
+	conn->res0 = NULL;
 
 #if 0
 	/* TODO proxy connect */
