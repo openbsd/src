@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.3 2021/04/02 05:16:29 tb Exp $ */
+/*	$OpenBSD: repo.c,v 1.4 2021/04/07 14:19:31 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -838,22 +838,37 @@ rrdp_merge_repo(struct rrdprepo *rr)
 
 	/* XXX should delay deletes */
 	RB_FOREACH_SAFE(fp, filepath_tree, &rr->deleted, nfp) {
-		if ((fn = rrdp_filename(rr, fp->file, 0)) != NULL) {
-			if (unlink(fn) == -1)
-				warn("%s: unlink", fn);
-			free(fn);
+		fn = rrdp_filename(rr, fp->file, 1);
+		rfn = rrdp_filename(rr, fp->file, 0);
+
+		if (fn == NULL || rfn == NULL)
+			errx(1, "bad filepath");	/* should not happen */
+
+		if (unlink(rfn) == -1) {
+			if (errno == ENOENT) {
+				if (unlink(fn) == -1)
+					warn("%s: unlink", fn);
+			} else
+				warn("%s: unlink", rfn);
 		}
+
+		free(rfn);
+		free(fn);
 		filepath_put(&rr->deleted, fp);
 	}
 
 	RB_FOREACH_SAFE(fp, filepath_tree, &rr->added, nfp) {
-		if ((fn = rrdp_filename(rr, fp->file, 1)) != NULL &&
-		    (rfn = rrdp_filename(rr, fp->file, 0)) != NULL) {
-			repo_mkpath(rfn);
-			if (rename(fn, rfn) == -1)
-				warn("%s: link", rfn);
-			free(rfn);
-		}
+		fn = rrdp_filename(rr, fp->file, 1);
+		rfn = rrdp_filename(rr, fp->file, 0);
+
+		if (fn == NULL || rfn == NULL)
+			errx(1, "bad filepath");	/* should not happen */
+
+		repo_mkpath(rfn);
+		if (rename(fn, rfn) == -1)
+			warn("%s: rename", rfn);
+
+		free(rfn);
 		free(fn);
 		filepath_put(&rr->added, fp);
 	}
