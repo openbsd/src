@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.100 2020/11/30 13:37:45 nicm Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.101 2021/04/07 12:50:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -276,7 +276,7 @@ cmdq_merge_formats(struct cmdq_item *item, struct format_tree *ft)
 	const struct cmd_entry	*entry;
 
 	if (item->cmd != NULL) {
-		entry = cmd_get_entry (item->cmd);
+		entry = cmd_get_entry(item->cmd);
 		format_add(ft, "command", "%s", entry->name);
 	}
 	if (item->state->formats != NULL)
