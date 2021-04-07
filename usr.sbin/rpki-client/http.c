@@ -1,4 +1,4 @@
-/*      $OpenBSD: http.c,v 1.20 2021/04/07 16:06:37 deraadt Exp $  */
+/*      $OpenBSD: http.c,v 1.21 2021/04/07 16:40:38 claudio Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -54,6 +54,7 @@
 #include <limits.h>
 #include <netdb.h>
 #include <poll.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1140,6 +1141,13 @@ http_do(struct http_connection *conn)
 	return 0;
 }
 
+static void
+gotpipe(int sig __attribute__((unused)))
+{
+	warnx("http: unexpected sigpipe\n");
+	kill(getpid(), SIGABRT);
+}
+
 void
 proc_http(char *bind_addr, int fd)
 {
@@ -1147,6 +1155,9 @@ proc_http(char *bind_addr, int fd)
 	struct pollfd pfds[MAX_CONNECTIONS + 1];
 	size_t i;
 	int active_connections;
+
+	/* XXX for now track possible SIGPIPE */
+	signal(SIGPIPE, gotpipe);
 
 	if (bind_addr != NULL) {
 		struct addrinfo hints, *res;
