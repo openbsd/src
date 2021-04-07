@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.22 2021/04/07 10:29:58 inoguchi Exp $ */
+/* $OpenBSD: x509.c,v 1.23 2021/04/07 10:44:03 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -897,19 +897,26 @@ x509_main(int argc, char **argv)
 		if (!X509_set_subject_name(x, req->req_info->subject))
 			goto end;
 
-		X509_gmtime_adj(X509_get_notBefore(x), 0);
-		X509_time_adj_ex(X509_get_notAfter(x), x509_config.days, 0,
-		    NULL);
+		if (X509_gmtime_adj(X509_get_notBefore(x), 0) == NULL)
+			goto end;
+		if (X509_time_adj_ex(X509_get_notAfter(x), x509_config.days, 0,
+		    NULL) == NULL)
+			goto end;
 
-		pkey = X509_REQ_get_pubkey(req);
-		X509_set_pubkey(x, pkey);
+		if ((pkey = X509_REQ_get_pubkey(req)) == NULL)
+			goto end;
+		if (!X509_set_pubkey(x, pkey)) {
+			EVP_PKEY_free(pkey);
+			goto end;
+		}
 		EVP_PKEY_free(pkey);
-	} else
+	} else {
 		x = load_cert(bio_err, x509_config.infile, x509_config.informat,
 		    NULL, "Certificate");
-
+	}
 	if (x == NULL)
 		goto end;
+
 	if (x509_config.CA_flag) {
 		xca = load_cert(bio_err, x509_config.CAfile,
 		    x509_config.CAformat, NULL, "CA Certificate");
@@ -933,8 +940,10 @@ x509_main(int argc, char **argv)
 			}
 		}
 	}
-	if (x509_config.alias != NULL)
-		X509_alias_set1(x, (unsigned char *) x509_config.alias, -1);
+	if (x509_config.alias != NULL) {
+		if (!X509_alias_set1(x, (unsigned char *)x509_config.alias, -1))
+			goto end;
+	}
 
 	if (x509_config.clrtrust)
 		X509_trust_clear(x);
@@ -945,14 +954,16 @@ x509_main(int argc, char **argv)
 		for (i = 0; i < sk_ASN1_OBJECT_num(x509_config.trust); i++) {
 			x509_config.objtmp = sk_ASN1_OBJECT_value(
 			    x509_config.trust, i);
-			X509_add1_trust_object(x, x509_config.objtmp);
+			if (!X509_add1_trust_object(x, x509_config.objtmp))
+				goto end;
 		}
 	}
 	if (x509_config.reject != NULL) {
 		for (i = 0; i < sk_ASN1_OBJECT_num(x509_config.reject); i++) {
 			x509_config.objtmp = sk_ASN1_OBJECT_value(
 			    x509_config.reject, i);
-			X509_add1_reject_object(x, x509_config.objtmp);
+			if (!X509_add1_reject_object(x, x509_config.objtmp))
+				goto end;
 		}
 	}
 	if (x509_config.num) {
@@ -974,6 +985,8 @@ x509_main(int argc, char **argv)
 				BIGNUM *bnser;
 				ASN1_INTEGER *ser;
 				ser = X509_get_serialNumber(x);
+				if (ser == NULL)
+					goto end;
 				bnser = ASN1_INTEGER_to_BN(ser, NULL);
 				if (bnser == NULL)
 					goto end;
@@ -1075,14 +1088,21 @@ x509_main(int argc, char **argv)
 				char *m;
 				int y, z;
 
-				X509_NAME_oneline(X509_get_subject_name(x),
+				m = X509_NAME_oneline(X509_get_subject_name(x),
 				    buf, sizeof buf);
+				if (m == NULL)
+					goto end;
 				BIO_printf(STDout, "/* subject:%s */\n", buf);
 				m = X509_NAME_oneline(X509_get_issuer_name(x),
 				    buf, sizeof buf);
+				if (m == NULL)
+					goto end;
 				BIO_printf(STDout, "/* issuer :%s */\n", buf);
 
 				z = i2d_X509(x, NULL);
+				if (z < 0)
+					goto end;
+
 				m = malloc(z);
 				if (m == NULL) {
 					BIO_printf(bio_err, "out of mem\n");
@@ -1091,6 +1111,10 @@ x509_main(int argc, char **argv)
 
 				d = (unsigned char *) m;
 				z = i2d_X509_NAME(X509_get_subject_name(x), &d);
+				if (z < 0) {
+					free(m);
+					goto end;
+				}
 				BIO_printf(STDout,
 				    "unsigned char XXX_subject_name[%d]={\n", z);
 				d = (unsigned char *) m;
@@ -1104,6 +1128,10 @@ x509_main(int argc, char **argv)
 				BIO_printf(STDout, "};\n");
 
 				z = i2d_X509_PUBKEY(X509_get_X509_PUBKEY(x), &d);
+				if (z < 0) {
+					free(m);
+					goto end;
+				}
 				BIO_printf(STDout,
 				    "unsigned char XXX_public_key[%d]={\n", z);
 				d = (unsigned char *) m;
@@ -1117,6 +1145,10 @@ x509_main(int argc, char **argv)
 				BIO_printf(STDout, "};\n");
 
 				z = i2d_X509(x, &d);
+				if (z < 0) {
+					free(m);
+					goto end;
+				}
 				BIO_printf(STDout,
 				    "unsigned char XXX_certificate[%d]={\n", z);
 				d = (unsigned char *) m;
@@ -1131,8 +1163,9 @@ x509_main(int argc, char **argv)
 
 				free(m);
 			} else if (x509_config.text == i) {
-				X509_print_ex(STDout, x, x509_config.nmflag,
-				    x509_config.certflag);
+				if(!X509_print_ex(STDout, x, x509_config.nmflag,
+				    x509_config.certflag))
+					goto end;
 			} else if (x509_config.startdate == i) {
 				ASN1_TIME *nB = X509_get_notBefore(x);
 				BIO_puts(STDout, "notBefore=");
@@ -1235,12 +1268,15 @@ x509_main(int argc, char **argv)
 					goto end;
 				}
 				if (!x509_config.noout) {
-					X509_REQ_print(out, rq);
-					PEM_write_bio_X509_REQ(out, rq);
+					if (!X509_REQ_print(out, rq))
+						goto end;
+					if (!PEM_write_bio_X509_REQ(out, rq))
+						goto end;
 				}
 				x509_config.noout = 1;
 			} else if (x509_config.ocspid == i) {
-				X509_ocspid_print(out, x);
+				if (!X509_ocspid_print(out, x))
+					goto end;
 			}
 		}
 	}
@@ -1369,6 +1405,8 @@ x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest, X509 *x,
 	EVP_PKEY *upkey;
 
 	upkey = X509_get_pubkey(xca);
+	if (upkey == NULL)
+		goto end;
 	EVP_PKEY_copy_parameters(upkey, pkey);
 	EVP_PKEY_free(upkey);
 
@@ -1410,12 +1448,15 @@ x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest, X509 *x,
 		goto end;
 
 	if (clrext) {
-		while (X509_get_ext_count(x) > 0)
-			X509_delete_ext(x, 0);
+		while (X509_get_ext_count(x) > 0) {
+			if (X509_delete_ext(x, 0) == NULL)
+				goto end;
+		}
 	}
 	if (conf != NULL) {
 		X509V3_CTX ctx2;
-		X509_set_version(x, 2);	/* version 3 certificate */
+		if (!X509_set_version(x, 2))	/* version 3 certificate */
+			goto end;
 		X509V3_set_ctx(&ctx2, xca, x, NULL, NULL, 0);
 		X509V3_set_nconf(&ctx2, conf);
 		if (!X509V3_EXT_add_nconf(conf, &ctx2, section, x))
@@ -1423,6 +1464,7 @@ x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest, X509 *x,
 	}
 	if (!do_X509_sign(bio_err, x, pkey, digest, sigopts))
 		goto end;
+
 	ret = 1;
  end:
 	X509_STORE_CTX_cleanup(&xsc);
@@ -1476,6 +1518,8 @@ sign(X509 *x, EVP_PKEY *pkey, int days, int clrext, const EVP_MD *digest,
 	EVP_PKEY *pktmp;
 
 	pktmp = X509_get_pubkey(x);
+	if (pktmp == NULL)
+		goto err;
 	EVP_PKEY_copy_parameters(pktmp, pkey);
 	EVP_PKEY_save_parameters(pktmp, 1);
 	EVP_PKEY_free(pktmp);
@@ -1496,12 +1540,15 @@ sign(X509 *x, EVP_PKEY *pkey, int days, int clrext, const EVP_MD *digest,
 	if (!X509_set_pubkey(x, pkey))
 		goto err;
 	if (clrext) {
-		while (X509_get_ext_count(x) > 0)
-			X509_delete_ext(x, 0);
+		while (X509_get_ext_count(x) > 0) {
+			if (X509_delete_ext(x, 0) == NULL)
+				goto err;
+		}
 	}
 	if (conf != NULL) {
 		X509V3_CTX ctx;
-		X509_set_version(x, 2);	/* version 3 certificate */
+		if (!X509_set_version(x, 2))	/* version 3 certificate */
+			goto err;
 		X509V3_set_ctx(&ctx, x, x, NULL, NULL, 0);
 		X509V3_set_nconf(&ctx, conf);
 		if (!X509V3_EXT_add_nconf(conf, &ctx, section, x))
