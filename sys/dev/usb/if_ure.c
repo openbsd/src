@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ure.c,v 1.22 2021/03/27 01:12:01 dlg Exp $	*/
+/*	$OpenBSD: if_ure.c,v 1.23 2021/04/07 06:52:22 dlg Exp $	*/
 /*-
  * Copyright (c) 2015, 2016, 2019 Kevin Lo <kevlo@openbsd.org>
  * Copyright (c) 2020 Jonathon Fletcher <jonathon.fletcher@gmail.com>
@@ -1896,17 +1896,10 @@ ure_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 			ifp->if_ierrors++;
 			goto done;
 		}
-		if (pktlen < ETHER_MIN_LEN) {
-			DPRINTF(("Ethernet frame is too short\n"));
-			ifp->if_ierrors++;
-			goto done;
-		}
 
 		total_len -= roundup(pktlen, URE_RX_BUF_ALIGN);
 		buf += sizeof(rxhdr);
 
-		/* trim fcs */
-		pktlen -= ETHER_CRC_LEN;
 		m = m_devget(buf, pktlen, ETHER_ALIGN);
 		if (m == NULL) {
 			DPRINTF(("unable to allocate mbuf for next packet\n"));
