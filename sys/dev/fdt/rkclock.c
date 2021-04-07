@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.54 2020/09/06 23:42:19 jmatthew Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.55 2021/04/07 16:35:02 kettenis Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -2167,19 +2167,19 @@ struct rkclock rk3399_clocks[] = {
 	{
 		RK3399_CLK_I2S0_8CH, RK3399_CRU_CLKSEL_CON(28),
 		SEL(9, 8), 0,
-		{ RK3399_CLK_I2S0_DIV, 0, 0, RK3399_XIN12M },
+		{ RK3399_CLK_I2S0_DIV, RK3399_CLK_I2S0_FRAC, 0, RK3399_XIN12M },
 		SET_PARENT
 	},
 	{
 		RK3399_CLK_I2S1_8CH, RK3399_CRU_CLKSEL_CON(29),
 		SEL(9, 8), 0,
-		{ RK3399_CLK_I2S1_DIV, 0, 0, RK3399_XIN12M },
+		{ RK3399_CLK_I2S1_DIV, RK3399_CLK_I2S1_FRAC, 0, RK3399_XIN12M },
 		SET_PARENT
 	},
 	{
 		RK3399_CLK_I2S2_8CH, RK3399_CRU_CLKSEL_CON(30),
 		SEL(9, 8), 0,
-		{ RK3399_CLK_I2S2_DIV, 0, 0, RK3399_XIN12M },
+		{ RK3399_CLK_I2S2_DIV, RK3399_CLK_I2S2_FRAC, 0, RK3399_XIN12M },
 		SET_PARENT
 	},
 	{
@@ -2586,6 +2586,78 @@ rk3399_set_armclk(struct rkclock_softc *sc, bus_size_t clksel, uint32_t freq)
 }
 
 uint32_t
+rk3399_get_frac(struct rkclock_softc *sc, int parent, bus_size_t base)
+{
+	uint32_t frac;
+	uint16_t n, d;
+
+	frac = HREAD4(sc, base);
+	n = frac >> 16;
+	d = frac & 0xffff;
+	return ((uint64_t)rkclock_get_frequency(sc, parent) * n) / d;
+}
+
+int
+rk3399_set_frac(struct rkclock_softc *sc, int parent, bus_size_t base,
+    uint32_t freq)
+{
+	uint32_t n, d;
+	uint32_t p0, p1, p2;
+	uint32_t q0, q1, q2;
+	uint32_t a, tmp;
+
+	n = freq;
+	d = rkclock_get_frequency(sc, parent);
+
+	/*
+	 * The denominator needs to be at least 20 times the numerator
+	 * for a stable clock.
+	 */
+	if (n == 0 || d == 0 || d < 20 * n)
+		return -1;
+
+	/*
+	 * This is a simplified implementation of the algorithm to
+	 * calculate the best rational approximation using continued
+	 * fractions.
+	 */
+
+	p0 = q1 = 0;
+	p1 = q0 = 1;
+
+	while (d != 0) {
+		/*
+		 * Calculate next coefficient in the continued
+		 * fraction and keep track of the remainder.
+		 */
+		tmp = d;
+		a = n / d;
+		d = n % d;
+		n = tmp;
+
+		/*
+		 * Calculate next approximation in the series based on
+		 * the current coefficient.
+		 */
+		p2 = p0 + a * p1;
+		q2 = q0 + a * q1;
+
+		/*
+		 * Terminate if we reached the maximum allowed
+		 * denominator.
+		 */
+		if (q2 > 0xffff)
+			break;
+
+		p0 = p1; p1 = p2; 
+		q0 = q1; q1 = q2;
+	}
+
+	HWRITE4(sc, base, p1 << 16 | q1);
+	return 0;
+}
+
+uint32_t
 rk3399_get_frequency(void *cookie, uint32_t *cells)
 {
 	struct rkclock_softc *sc = cookie;
@@ -2616,6 +2688,15 @@ rk3399_get_frequency(void *cookie, uint32_t *cells)
 		return 32768;
 	case RK3399_XIN12M:
 		return 12000000;
+	case RK3399_CLK_I2S0_FRAC:
+		return rk3399_get_frac(sc, RK3399_CLK_I2S0_DIV,
+		    RK3399_CRU_CLKSEL_CON(96));
+	case RK3399_CLK_I2S1_FRAC:
+		return rk3399_get_frac(sc, RK3399_CLK_I2S1_DIV,
+		    RK3399_CRU_CLKSEL_CON(97));
+	case RK3399_CLK_I2S2_FRAC:
+		return rk3399_get_frac(sc, RK3399_CLK_I2S2_DIV,
+		    RK3399_CRU_CLKSEL_CON(98));
 	default:
 		break;
 	}
@@ -2646,10 +2727,28 @@ rk3399_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 		return rk3399_set_armclk(sc, RK3399_CRU_CLKSEL_CON(0), freq);
 	case RK3399_ARMCLKB:
 		return rk3399_set_armclk(sc, RK3399_CRU_CLKSEL_CON(2), freq);
+	case RK3399_CLK_I2S0_8CH:
+		rkclock_set_parent(sc, idx, RK3399_CLK_I2S0_FRAC);
+		return rkclock_set_frequency(sc, idx, freq);
+	case RK3399_CLK_I2S1_8CH:
+		rkclock_set_parent(sc, idx, RK3399_CLK_I2S1_FRAC);
+		return rkclock_set_frequency(sc, idx, freq);
+	case RK3399_CLK_I2S2_8CH:
+		rkclock_set_parent(sc, idx, RK3399_CLK_I2S2_FRAC);
+		return rkclock_set_frequency(sc, idx, freq);
 	case RK3399_XIN12M:
 		if (freq / (1000 * 1000) != 12)
 			return -1;
 		return 0;
+	case RK3399_CLK_I2S0_FRAC:
+		return rk3399_set_frac(sc, RK3399_CLK_I2S0_DIV,
+		    RK3399_CRU_CLKSEL_CON(96), freq);
+	case RK3399_CLK_I2S1_FRAC:
+		return rk3399_set_frac(sc, RK3399_CLK_I2S1_DIV,
+		    RK3399_CRU_CLKSEL_CON(97), freq);
+	case RK3399_CLK_I2S2_FRAC:
+		return rk3399_set_frac(sc, RK3399_CLK_I2S2_DIV,
+		    RK3399_CRU_CLKSEL_CON(98), freq);
 	default:
 		break;
 	}
