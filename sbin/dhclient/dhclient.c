@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.720 2021/04/01 16:07:44 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.721 2021/04/07 16:09:40 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -270,7 +270,7 @@ interface_state(struct interface_info *ifi)
 		if (log_getverbose()) {
 			oldlladdr = strdup(ether_ntoa(&ifi->hw_address));
 			if (oldlladdr == NULL)
-				fatal("oldlladddr");
+				fatal("oldlladdr");
 			log_debug("%s: LLADDR %s -> %s", log_procname,
 			    oldlladdr,
 			    ether_ntoa((struct ether_addr *)LLADDR(sdl)));
