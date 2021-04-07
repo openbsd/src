@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.c,v 1.31 2021/03/14 14:46:52 patrick Exp $	*/
+/*	$OpenBSD: ofw_misc.c,v 1.32 2021/04/07 17:12:22 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -661,6 +661,22 @@ device_ports_register(struct device_ports *ports,
 		device_port_register(node, ports, type);
 }
 
+struct device_ports *
+device_ports_byphandle(uint32_t phandle)
+{
+	struct endpoint *ep;
+
+	if (phandle == 0)
+		return NULL;
+
+	LIST_FOREACH(ep, &endpoints, ep_list) {
+		if (ep->ep_port->dp_phandle == phandle)
+			return ep->ep_port->dp_ports;
+	}
+
+	return NULL;
+}
+
 struct endpoint *
 endpoint_byphandle(uint32_t phandle)
 {
@@ -771,14 +787,23 @@ device_port_activate(uint32_t phandle, void *arg)
 LIST_HEAD(, dai_device) dai_devices =
 	LIST_HEAD_INITIALIZER(dai_devices);
 
+void *
+dai_ep_get_cookie(void *cookie, struct endpoint *ep)
+{
+	return cookie;
+}
+
 void
 dai_register(struct dai_device *dd)
 {
 	dd->dd_phandle = OF_getpropint(dd->dd_node, "phandle", 0);
-	if (dd->dd_phandle == 0)
-		return;
+	if (dd->dd_phandle != 0)
+		LIST_INSERT_HEAD(&dai_devices, dd, dd_list);
 
-	LIST_INSERT_HEAD(&dai_devices, dd, dd_list);
+	dd->dd_ports.dp_node = dd->dd_node;
+	dd->dd_ports.dp_cookie = dd;
+	dd->dd_ports.dp_ep_get_cookie = dai_ep_get_cookie;
+	device_ports_register(&dd->dd_ports, EP_DAI_DEVICE);
 }
 
 struct dai_device *

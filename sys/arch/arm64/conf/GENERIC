@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.193 2021/03/08 20:56:10 patrick Exp $
+# $OpenBSD: GENERIC,v 1.194 2021/04/07 17:12:22 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -113,6 +113,8 @@ option	WSDISPLAY_COMPAT_USL		# VT handling
 option	WSDISPLAY_COMPAT_RAWKBD		# provide raw scancodes; needed for X11
 option	WSDISPLAY_DEFAULTSCREENS=6	# initial number of text consoles
 
+graphaudio*	at fdt?
+audio*		at graphaudio?
 simpleamp*	at fdt?
 simpleaudio*	at fdt?
 audio*		at simpleaudio?

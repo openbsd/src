@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.h,v 1.19 2021/02/28 21:09:44 patrick Exp $	*/
+/*	$OpenBSD: ofw_misc.h,v 1.20 2021/04/07 17:12:22 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -163,6 +163,7 @@ enum endpoint_type {
 	EP_DRM_CRTC,		/* struct drm_crtc */
 	EP_DRM_ENCODER,		/* struct drm_encoder */
 	EP_DRM_PANEL,		/* struct drm_panel */
+	EP_DAI_DEVICE,		/* struct dai_device */
 };
 
 struct endpoint {
@@ -176,6 +177,7 @@ struct endpoint {
 };
 
 void	device_ports_register(struct device_ports *, enum endpoint_type);
+struct device_ports *device_ports_byphandle(uint32_t);
 int	device_port_activate(uint32_t, void *);
 struct endpoint *endpoint_byreg(struct device_ports *, uint32_t, uint32_t);
 struct endpoint *endpoint_remote(struct endpoint *);
@@ -193,6 +195,8 @@ struct dai_device {
 
 	LIST_ENTRY(dai_device) dd_list;
 	uint32_t dd_phandle;
+
+	struct device_ports dd_ports;
 };
 
 void	dai_register(struct dai_device *);
