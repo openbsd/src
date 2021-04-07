@@ -1,4 +1,4 @@
-/*      $OpenBSD: rrdp.c,v 1.2 2021/04/06 18:35:46 claudio Exp $ */
+/*      $OpenBSD: rrdp.c,v 1.3 2021/04/07 16:29:14 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -230,10 +230,10 @@ rrdp_free(struct rrdp *s)
 	free_snapshot_xml(s->sxml);
 	free_delta_xml(s->dxml);
 
-	if (s->infd != -1)
-		close(s->infd);
 	if (s->parser)
 		XML_ParserFree(s->parser);
+	if (s->infd != -1)
+		close(s->infd);
 	free(s->notifyuri);
 	free(s->local);
 	free(s->last_mod);
