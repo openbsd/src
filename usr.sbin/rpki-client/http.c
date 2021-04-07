@@ -1,4 +1,4 @@
-/*      $OpenBSD: http.c,v 1.19 2021/04/07 14:26:21 claudio Exp $  */
+/*      $OpenBSD: http.c,v 1.20 2021/04/07 16:06:37 deraadt Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -1176,6 +1176,7 @@ proc_http(char *bind_addr, int fd)
 		active_connections = 0;
 		for (i = 0; i < MAX_CONNECTIONS; i++) {
 			struct http_connection *conn = http_conns[i];
+
 			if (conn == NULL) {
 				pfds[i].fd = -1;
 				continue;
