@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.58 2021/03/21 18:36:34 jsing Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.59 2021/04/07 21:48:23 tb Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -147,7 +147,8 @@ tls13_alert_sent_cb(uint8_t alert_desc, void *arg)
 	}
 
 	/* All other alerts are treated as fatal in TLSv1.3. */
-	SSLerror(ctx->ssl, SSL_AD_REASON_OFFSET + alert_desc);
+	if (ctx->error.code == 0)
+		SSLerror(ctx->ssl, SSL_AD_REASON_OFFSET + alert_desc);
 }
 
 static void
