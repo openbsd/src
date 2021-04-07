@@ -1,4 +1,4 @@
-/*      $OpenBSD: http.c,v 1.18 2021/04/06 12:35:24 claudio Exp $  */
+/*      $OpenBSD: http.c,v 1.19 2021/04/07 14:26:21 claudio Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -493,8 +493,14 @@ http_connect(struct http_connection *conn)
 
 		if (http_bindaddr.ss_family == res->ai_family) {
 			if (bind(conn->fd, (struct sockaddr *)&http_bindaddr,
-			    res->ai_addrlen) == -1)
-				warn("%s: bind", http_info(conn->url));
+			    res->ai_addrlen) == -1) {
+				save_errno = errno;
+				close(conn->fd);
+				conn->fd = -1;
+				errno = save_errno;
+				cause = "bind";
+				continue;
+			}
 		}
 
 		if (connect(conn->fd, res->ai_addr, res->ai_addrlen) == -1) {
