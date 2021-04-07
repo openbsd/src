@@ -1,4 +1,4 @@
-/* $OpenBSD: key-string.c,v 1.64 2021/04/07 07:30:02 nicm Exp $ */
+/* $OpenBSD: key-string.c,v 1.65 2021/04/07 15:46:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -239,10 +239,11 @@ key_string_lookup_string(const char *string)
 
 	/* Convert the standard control keys. */
 	if (key < KEYC_BASE && (modifiers & KEYC_CTRL) &&
-	    strchr(other, key) == NULL &&
-	    (key < 64 || key > 95)) {
+	    strchr(other, key) == NULL) {
 		if (key >= 97 && key <= 122)
 			key -= 96;
+		else if (key >= 64 && key <= 95)
+                       key -= 64;
 		else if (key == 32)
 			key = 0;
 		else if (key == 63)
