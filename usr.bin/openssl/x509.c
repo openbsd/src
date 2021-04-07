@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.21 2021/04/01 10:47:38 inoguchi Exp $ */
+/* $OpenBSD: x509.c,v 1.22 2021/04/07 10:29:58 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -977,11 +977,15 @@ x509_main(int argc, char **argv)
 				bnser = ASN1_INTEGER_to_BN(ser, NULL);
 				if (bnser == NULL)
 					goto end;
-				if (!BN_add_word(bnser, 1))
+				if (!BN_add_word(bnser, 1)) {
+					BN_free(bnser);
 					goto end;
+				}
 				ser = BN_to_ASN1_INTEGER(bnser, NULL);
-				if (ser == NULL)
+				if (ser == NULL) {
+					BN_free(bnser);
 					goto end;
+				}
 				BN_free(bnser);
 				i2a_ASN1_INTEGER(out, ser);
 				ASN1_INTEGER_free(ser);
