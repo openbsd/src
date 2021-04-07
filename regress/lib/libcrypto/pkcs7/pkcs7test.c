@@ -1,4 +1,4 @@
-/*	$OpenBSD: pkcs7test.c,v 1.4 2018/11/10 02:23:28 jsing Exp $	*/
+/*	$OpenBSD: pkcs7test.c,v 1.5 2021/04/07 17:21:40 tb Exp $	*/
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -103,7 +103,7 @@ static void
 fatal(const char *msg)
 {
 	warnx("%s", msg);
-	ERR_print_errors(BIO_new_fd(STDERR_FILENO, 0));
+	ERR_print_errors_fp(stderr);
 	exit(1);
 }
 
