@@ -1,4 +1,4 @@
-/*      $OpenBSD: http.c,v 1.21 2021/04/07 16:40:38 claudio Exp $  */
+/*      $OpenBSD: http.c,v 1.22 2021/04/08 16:43:08 claudio Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -526,11 +526,13 @@ http_connect(struct http_connection *conn)
 			warn("%s: %s", http_info(conn->url), cause);
 		freeaddrinfo(conn->res0);
 		conn->res0 = NULL;
+		conn->res = NULL;
 		return -1;
 	}
 
 	freeaddrinfo(conn->res0);
 	conn->res0 = NULL;
+	conn->res = NULL;
 
 #if 0
 	/* TODO proxy connect */
@@ -560,6 +562,7 @@ http_finish_connect(struct http_connection *conn)
 
 	freeaddrinfo(conn->res0);
 	conn->res0 = NULL;
+	conn->res = NULL;
 
 #if 0
 	/* TODO proxy connect */
