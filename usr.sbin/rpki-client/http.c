@@ -1,4 +1,4 @@
-/*      $OpenBSD: http.c,v 1.24 2021/04/08 16:56:34 claudio Exp $  */
+/*      $OpenBSD: http.c,v 1.25 2021/04/08 18:32:55 claudio Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -107,9 +107,7 @@ struct http_connection {
 	size_t		bufsz;
 	size_t		bufpos;
 	size_t		id;
-	size_t		chunksz;
-	off_t		filesize;
-	off_t		bytes;
+	off_t		iosz;
 	int		status;
 	int		redirect_loop;
 	int		fd;
@@ -727,10 +725,10 @@ http_parse_header(struct http_connection *conn, char *buf)
 		cp += sizeof(CONTENTLEN) - 1;
 		if ((s = strcspn(cp, " \t")) != 0)
 			*(cp+s) = 0;
-		conn->filesize = strtonum(cp, 0, LLONG_MAX, &errstr);
+		conn->iosz = strtonum(cp, 0, LLONG_MAX, &errstr);
 		if (errstr != NULL) {
-			warnx("Improper response from %s",
-			    http_info(conn->url));
+			warnx("Content-Length of %s is %s",
+			    http_info(conn->url), errstr);
 			return -1;
 		}
 	} else if (http_isredirect(conn) &&
@@ -820,7 +818,7 @@ http_parse_chunked(struct http_connection *conn, char *buf)
 {
 	char *header = buf;
 	char *end;
-	int chunksize;
+	unsigned long chunksize;
 
 	/* ignore empty lines, used between chunk and next header */
 	if (*header == '\0')
@@ -830,14 +828,14 @@ http_parse_chunked(struct http_connection *conn, char *buf)
 	header[strcspn(header, ";\r\n")] = '\0';
 	errno = 0;
 	chunksize = strtoul(header, &end, 16);
-	if (errno != 0 || header[0] == '\0' || *end != '\0' ||
-	    chunksize > INT_MAX) {
+	if (header[0] == '\0' || *end != '\0' || (errno == ERANGE &&
+	    chunksize == ULONG_MAX) || chunksize > INT_MAX) {
 		warnx("%s: Invalid chunk size", http_info(conn->url));
 		return -1;
 	}
-	conn->chunksz = chunksize;
+	conn->iosz = chunksize;
 
-	if (conn->chunksz == 0) {
+	if (conn->iosz == 0) {
 		http_done(conn, HTTP_OK);
 		return 0;
 	}
@@ -895,11 +893,11 @@ http_read(struct http_connection *conn)
 		return WANT_POLLIN;
 	case STATE_RESPONSE_DATA:
 		if (conn->bufpos == conn->bufsz ||
-		    conn->filesize - conn->bytes <= (off_t)conn->bufpos)
+		    conn->iosz <= (off_t)conn->bufpos)
 			return 0;
 		return WANT_POLLIN;
 	case STATE_RESPONSE_CHUNKED:
-		while (conn->chunksz == 0) {
+		while (conn->iosz == 0) {
 			buf = http_get_line(conn);
 			if (buf == NULL)
 				return WANT_POLLIN;
@@ -915,7 +913,7 @@ http_read(struct http_connection *conn)
 		}
 
 		if (conn->bufpos == conn->bufsz ||
-		    conn->chunksz <= conn->bufpos)
+		    conn->iosz <= (off_t)conn->bufpos)
 			return 0;
 		return WANT_POLLIN;
 	default:
@@ -970,53 +968,30 @@ data_write(struct http_connection *conn)
 	ssize_t s;
 	size_t bsz = conn->bufpos;
 
-	if (conn->filesize - conn->bytes < (off_t)bsz)
-		bsz = conn->filesize - conn->bytes;
+	if (conn->iosz < (off_t)bsz)
+		bsz = conn->iosz;
 
 	s = write(conn->outfd, conn->buf, bsz);
 	if (s == -1) {
-		warn("%s: Data write", http_info(conn->url));
+		warn("%s: data write", http_info(conn->url));
 		return -1;
 	}
 
 	conn->bufpos -= s;
-	conn->bytes += s;
+	conn->iosz -= s;
 	memmove(conn->buf, conn->buf + s, conn->bufpos);
 
-	if (conn->bytes == conn->filesize) {
+	/* check if regular file transfer is finished */
+	if (!conn->chunked && conn->iosz == 0) {
 		http_done(conn, HTTP_OK);
 		return 0;
 	}
 
-	if (conn->bufpos == 0)
+	/* all data written, switch back to read */
+	if (conn->bufpos == 0 || conn->iosz == 0)
 		return 0;
 
-	return WANT_POLLOUT;
-}
-
-static int
-chunk_write(struct http_connection *conn)
-{
-	ssize_t s;
-	size_t bsz = conn->bufpos;
-
-	if (bsz > conn->chunksz)
-		bsz = conn->chunksz;
-
-	s = write(conn->outfd, conn->buf, bsz);
-	if (s == -1) {
-		warn("%s: Chunk write", http_info(conn->url));
-		return -1;
-	}
-
-	conn->bufpos -= s;
-	conn->chunksz -= s;
-	conn->bytes += s;
-	memmove(conn->buf, conn->buf + s, conn->bufpos);
-
-	if (conn->bufpos == 0 || conn->chunksz == 0)
-		return 0;
-
+	/* still more data to write in buffer */
 	return WANT_POLLOUT;
 }
 
@@ -1041,10 +1016,7 @@ http_handle(struct http_connection *conn)
 	case STATE_RESPONSE_CHUNKED:
 		return http_read(conn);
 	case STATE_WRITE_DATA:
-		if (conn->chunked)
-			return chunk_write(conn);
-		else
-			return data_write(conn);
+		return data_write(conn);
 	case STATE_DONE:
 		return http_close(conn);
 	case STATE_FREE:
