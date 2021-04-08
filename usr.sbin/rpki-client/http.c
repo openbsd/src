@@ -1,4 +1,4 @@
-/*      $OpenBSD: http.c,v 1.23 2021/04/08 16:46:59 claudio Exp $  */
+/*      $OpenBSD: http.c,v 1.24 2021/04/08 16:56:34 claudio Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -1222,6 +1222,18 @@ proc_http(char *bind_addr, int fd)
 				err(1, "write");
 			}
 		}
+		for (i = 0; i < MAX_CONNECTIONS; i++) {
+			struct http_connection *conn = http_conns[i];
+
+			if (conn == NULL)
+				continue;
+			/* event not ready */
+			if (!(pfds[i].revents & (conn->events | POLLHUP)))
+				continue;
+
+			if (http_do(conn) == -1)
+				http_conns[i] = NULL;
+		}
 		if (pfds[MAX_CONNECTIONS].revents & POLLIN) {
 			struct http_connection *h;
 			size_t id;
@@ -1244,18 +1256,6 @@ proc_http(char *bind_addr, int fd)
 					break;
 				}
 			}
-		}
-		for (i = 0; i < MAX_CONNECTIONS; i++) {
-			struct http_connection *conn = http_conns[i];
-
-			if (conn == NULL)
-				continue;
-			/* event not ready */
-			if (!(pfds[i].revents & (conn->events | POLLHUP)))
-				continue;
-
-			if (http_do(conn) == -1)
-				http_conns[i] = NULL;
 		}
 	}
 
