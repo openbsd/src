@@ -1,4 +1,4 @@
-/*      $OpenBSD: http.c,v 1.25 2021/04/08 18:32:55 claudio Exp $  */
+/*      $OpenBSD: http.c,v 1.26 2021/04/08 18:35:02 claudio Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -130,7 +130,7 @@ size_t tls_ca_size;
 static const char *
 http_info(const char *url)
 {
-	static char buf[64];
+	static char buf[80];
 
 	if (strnvis(buf, url, sizeof buf, VIS_SAFE) >= (int)sizeof buf) {
 		/* overflow, add indicator */
