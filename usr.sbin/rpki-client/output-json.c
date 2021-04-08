@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.14 2020/12/09 11:29:04 claudio Exp $ */
+/*	$OpenBSD: output-json.c,v 1.15 2021/04/08 19:49:27 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -58,7 +58,9 @@ outputheader_json(FILE *out, struct stats *st)
 	    "\t\t\"gbrs\": %zu,\n"
 	    "\t\t\"repositories\": %zu,\n"
 	    "\t\t\"vrps\": %zu,\n"
-	    "\t\t\"uniquevrps\": %zu\n"
+	    "\t\t\"uniquevrps\": %zu,\n"
+	    "\t\t\"cachedir_del_files\": %zu,\n"
+	    "\t\t\"cachedir_del_dirs\": %zu\n"
 	    "\t},\n\n",
 	    hn, tbuf, (long long)st->elapsed_time.tv_sec,
 	    (long long)st->user_time.tv_sec, (long long)st->system_time.tv_sec,
@@ -69,7 +71,8 @@ outputheader_json(FILE *out, struct stats *st)
 	    st->crls,
 	    st->gbrs,
 	    st->repos,
-	    st->vrps, st->uniqs) < 0)
+	    st->vrps, st->uniqs,
+	    st->del_files, st->del_dirs) < 0)
 		return -1;
 	return 0;
 }
