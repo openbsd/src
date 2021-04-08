@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.131 2021/04/07 16:06:37 deraadt Exp $ */
+/*	$OpenBSD: main.c,v 1.132 2021/04/08 15:31:14 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -836,6 +836,7 @@ main(int argc, char *argv[])
 			close(http);
 			close(fd[1]);
 
+			setproctitle("rrdp");
 			/* change working directory to the cache directory */
 			if (fchdir(cachefd) == -1)
 				err(1, "fchdir");
