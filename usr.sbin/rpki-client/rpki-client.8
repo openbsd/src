@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.42 2021/04/06 18:29:43 jmc Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.43 2021/04/08 14:03:32 job Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 6 2021 $
+.Dd $Mdocdate: April 8 2021 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -92,7 +92,10 @@ Create output in the file
 in the output directory as JSON object.
 This format is similar to that produced by other RPKI validators.
 .It Fl n
-Assume that all requested repositories exist: don't update.
+Offline mode.
+Validate the contents of
+.Ar cachedir
+without synchronizing via RRDP or RSYNC.
 .It Fl o
 Create output in the file
 .Pa openbgpd
