@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.132 2021/04/08 15:31:14 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.133 2021/04/08 16:32:42 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -538,7 +538,7 @@ entity_process(int proc, struct stats *st, struct vrp_tree *tree)
 		st->gbrs++;
 		break;
 	default:
-		abort();
+		errx(1, "unknown entity type");
 	}
 
 	entity_queue--;
@@ -580,7 +580,6 @@ void
 suicide(int sig __attribute__((unused)))
 {
 	killme = 1;
-
 }
 
 #define NPFD	4
@@ -588,10 +587,10 @@ suicide(int sig __attribute__((unused)))
 int
 main(int argc, char *argv[])
 {
-	int		 rc = 1, c, st, proc, rsync, http, rrdp, ok,
-			 fl = SOCK_STREAM | SOCK_CLOEXEC;
+	int		 rc, c, st, proc, rsync, http, rrdp, ok,
+			 hangup = 0, fl = SOCK_STREAM | SOCK_CLOEXEC;
 	size_t		 i, id, outsz = 0, talsz = 0;
-	pid_t		 procpid, rsyncpid, httppid, rrdppid;
+	pid_t		 pid, procpid, rsyncpid, httppid, rrdppid;
 	int		 fd[2];
 	struct pollfd	 pfd[NPFD];
 	struct msgbuf	*queues[NPFD];
@@ -599,7 +598,7 @@ main(int argc, char *argv[])
 	char		*rsync_prog = "openrsync";
 	char		*bind_addr = NULL;
 	const char	*cachedir = NULL, *outputdir = NULL;
-	const char	*tals[TALSZ_MAX], *errs;
+	const char	*tals[TALSZ_MAX], *errs, *name;
 	struct vrp_tree	 v = RB_INITIALIZER(&v);
 	struct rusage	ru;
 	struct timeval	start_time, now_time;
@@ -872,10 +871,10 @@ main(int argc, char *argv[])
 	 * parsing process.
 	 */
 
-	pfd[0].fd = rsync;
-	queues[0] = &rsyncq;
-	pfd[1].fd = proc;
-	queues[1] = &procq;
+	pfd[0].fd = proc;
+	queues[0] = &procq;
+	pfd[1].fd = rsync;
+	queues[1] = &rsyncq;
 	pfd[2].fd = http;
 	queues[2] = &httpq;
 	pfd[3].fd = rrdp;
@@ -910,8 +909,10 @@ main(int argc, char *argv[])
 		for (i = 0; i < NPFD; i++) {
 			if (pfd[i].revents & (POLLERR|POLLNVAL))
 				errx(1, "poll[%zu]: bad fd", i);
-			if (pfd[i].revents & POLLHUP)
-				errx(1, "poll[%zu]: hangup", i);
+			if (pfd[i].revents & POLLHUP) {
+				warnx("poll[%zu]: hangup", i);
+				hangup = 1;
+			}
 			if (pfd[i].revents & POLLOUT) {
 				/*
 				 * XXX work around deadlocks because of
@@ -930,7 +931,8 @@ main(int argc, char *argv[])
 					io_socket_blocking(pfd[i].fd);
 			}
 		}
-
+		if (hangup)
+			break;
 
 		/*
 		 * Check the rsync and http process.
@@ -939,7 +941,7 @@ main(int argc, char *argv[])
 		 * the parser process.
 		 */
 
-		if ((pfd[0].revents & POLLIN)) {
+		if ((pfd[1].revents & POLLIN)) {
 			io_simple_read(rsync, &id, sizeof(id));
 			io_simple_read(rsync, &ok, sizeof(ok));
 			rsync_finish(id, ok);
@@ -1014,7 +1016,7 @@ main(int argc, char *argv[])
 		 * Dequeue these one by one.
 		 */
 
-		if ((pfd[1].revents & POLLIN)) {
+		if ((pfd[0].revents & POLLIN)) {
 			entity_process(proc, &stats, &v);
 		}
 	}
@@ -1024,10 +1026,6 @@ main(int argc, char *argv[])
 		    "excessive runtime (%d seconds), giving up", timeout);
 		errx(1, "excessive runtime (%d seconds), giving up", timeout);
 	}
-
-	assert(entity_queue == 0);
-	logx("all files parsed: generating output");
-	rc = 0;
 
 	/*
 	 * For clean-up, close the input for the parser and rsync
@@ -1040,36 +1038,42 @@ main(int argc, char *argv[])
 	close(http);
 	close(rrdp);
 
-	if (waitpid(procpid, &st, 0) == -1)
-		err(1, "waitpid");
-	if (!WIFEXITED(st) || WEXITSTATUS(st) != 0) {
-		warnx("parser process exited abnormally");
-		rc = 1;
-	}
-	if (!noop) {
-		if (waitpid(rsyncpid, &st, 0) == -1)
-			err(1, "waitpid");
-		if (!WIFEXITED(st) || WEXITSTATUS(st) != 0) {
-			warnx("rsync process exited abnormally");
-			rc = 1;
+	rc = 0;
+	for (;;) {
+		pid = waitpid(WAIT_ANY, &st, 0);
+		if (pid == -1) {
+			if (errno == EINTR)
+				continue;
+			if (errno != ECHILD)
+				err(1, "wait");
+			break;
 		}
 
-		if (waitpid(httppid, &st, 0) == -1)
-			err(1, "waitpid");
-		if (!WIFEXITED(st) || WEXITSTATUS(st) != 0) {
-			warnx("http process exited abnormally");
+		if (pid == procpid)
+			name = "parser";
+		else if (pid == rsyncpid)
+			name = "rsync";
+		else if (pid == httppid)
+			name = "http";
+		else if (pid == rrdppid)
+			name = "rrdp";
+		else
+			name = "unknown";
+
+		if (WIFSIGNALED(st)) {
+			warnx("%s terminated signal %d", name, WTERMSIG(st));
+			rc = 1;
+		} else if (!WIFEXITED(st) || WEXITSTATUS(st) != 0) {
+			warnx("%s process exited abnormally", name);
 			rc = 1;
 		}
-
-		if (rrdpon) {
-			if (waitpid(rrdppid, &st, 0) == -1)
-				err(1, "waitpid");
-			if (!WIFEXITED(st) || WEXITSTATUS(st) != 0) {
-				warnx("rrdp process exited abnormally");
-				rc = 1;
-			}
-		}
 	}
+
+	/* processing did not finish because of error */
+	if (entity_queue != 0)
+		return 1;
+
+	logx("all files parsed: generating output");
 
 	repo_cleanup(&fpt);
 
