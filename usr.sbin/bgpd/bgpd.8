@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.8,v 1.64 2021/02/16 08:29:16 claudio Exp $
+.\" $OpenBSD: bgpd.8,v 1.65 2021/04/08 11:56:30 danj Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 16 2021 $
+.Dd $Mdocdate: April 8 2021 $
 .Dt BGPD 8
 .Os
 .Sh NAME
@@ -90,7 +90,7 @@ Comparison of the BGP session type.
 Paths learned over an external (EBGP) session are preferred over those
 learned via an internal (IBGP) session.
 .It
-The path with the lowest local
+The path with the highest local
 .Em weight
 is selected.
 .It
