@@ -1,4 +1,4 @@
-/*      $OpenBSD: http.c,v 1.22 2021/04/08 16:43:08 claudio Exp $  */
+/*      $OpenBSD: http.c,v 1.23 2021/04/08 16:46:59 claudio Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -312,24 +312,6 @@ http_free(struct http_connection *conn)
 }
 
 static int
-http_close(struct http_connection *conn)
-{
-	if (conn->tls != NULL) {
-		switch (tls_close(conn->tls)) {
-		case TLS_WANT_POLLIN:
-			return WANT_POLLIN;
-		case TLS_WANT_POLLOUT:
-			return WANT_POLLOUT;
-		case 0:
-		case -1:
-			break;
-		}
-	}
-
-	return -1;
-}
-
-static int
 http_parse_uri(char *uri, char **ohost, char **oport, char **opath)
 {
 	char *host, *port = NULL, *path;
@@ -423,46 +405,6 @@ http_new(size_t id, char *uri, char *modified_since, int outfd)
 	}
 
 	return conn;
-}
-
-static int
-http_redirect(struct http_connection *conn, char *uri)
-{
-	char *host, *port, *path;
-
-	logx("redirect to %s", http_info(uri));
-
-	if (http_parse_uri(uri, &host, &port, &path) == -1) {
-		free(uri);
-		return -1;
-	}
-
-	free(conn->url);
-	conn->url = uri;
-	free(conn->host);
-	conn->host = host;
-	free(conn->port);
-	conn->port = port;
-	conn->path = path;
-	/* keep modified_since since that is part of the request */
-	free(conn->last_modified);
-	conn->last_modified = NULL;
-	free(conn->buf);
-	conn->buf = NULL;
-	conn->bufpos = 0;
-	conn->bufsz = 0;
-	tls_close(conn->tls);
-	tls_free(conn->tls);
-	conn->tls = NULL;
-	close(conn->fd);
-	conn->state = STATE_INIT;
-
-	/* TODO proxy support (overload of host and port) */
-
-	if (http_resolv(conn, host, port) == -1)
-		return -1;
-
-	return 0;
 }
 
 static int
@@ -669,29 +611,6 @@ http_request(struct http_connection *conn)
 }
 
 static int
-http_write(struct http_connection *conn)
-{
-	ssize_t s;
-
-	s = tls_write(conn->tls, conn->buf + conn->bufpos,
-	    conn->bufsz - conn->bufpos);
-	if (s == -1) {
-		warnx("%s: TLS write: %s", http_info(conn->url),
-		    tls_error(conn->tls));
-		return -1;
-	} else if (s == TLS_WANT_POLLIN) {
-		return WANT_POLLIN;
-	} else if (s == TLS_WANT_POLLOUT) {
-		return WANT_POLLOUT;
-	}
-
-	conn->bufpos += s;
-	if (conn->bufpos == conn->bufsz)
-		return 0;
-	return WANT_POLLOUT;
-}
-
-static int
 http_parse_status(struct http_connection *conn, char *buf)
 {
 	const char *errstr;
@@ -745,6 +664,46 @@ http_isredirect(struct http_connection *conn)
 	if ((conn->status >= 301 && conn->status <= 303) ||
 	    conn->status == 307 || conn->status == 308)
 		return 1;
+	return 0;
+}
+
+static int
+http_redirect(struct http_connection *conn, char *uri)
+{
+	char *host, *port, *path;
+
+	logx("redirect to %s", http_info(uri));
+
+	if (http_parse_uri(uri, &host, &port, &path) == -1) {
+		free(uri);
+		return -1;
+	}
+
+	free(conn->url);
+	conn->url = uri;
+	free(conn->host);
+	conn->host = host;
+	free(conn->port);
+	conn->port = port;
+	conn->path = path;
+	/* keep modified_since since that is part of the request */
+	free(conn->last_modified);
+	conn->last_modified = NULL;
+	free(conn->buf);
+	conn->buf = NULL;
+	conn->bufpos = 0;
+	conn->bufsz = 0;
+	tls_close(conn->tls);
+	tls_free(conn->tls);
+	conn->tls = NULL;
+	close(conn->fd);
+	conn->state = STATE_INIT;
+
+	/* TODO proxy support (overload of host and port) */
+
+	if (http_resolv(conn, host, port) == -1)
+		return -1;
+
 	return 0;
 }
 
@@ -962,6 +921,47 @@ http_read(struct http_connection *conn)
 	default:
 		errx(1, "unexpected http state");
 	}
+}
+
+static int
+http_write(struct http_connection *conn)
+{
+	ssize_t s;
+
+	s = tls_write(conn->tls, conn->buf + conn->bufpos,
+	    conn->bufsz - conn->bufpos);
+	if (s == -1) {
+		warnx("%s: TLS write: %s", http_info(conn->url),
+		    tls_error(conn->tls));
+		return -1;
+	} else if (s == TLS_WANT_POLLIN) {
+		return WANT_POLLIN;
+	} else if (s == TLS_WANT_POLLOUT) {
+		return WANT_POLLOUT;
+	}
+
+	conn->bufpos += s;
+	if (conn->bufpos == conn->bufsz)
+		return 0;
+	return WANT_POLLOUT;
+}
+
+static int
+http_close(struct http_connection *conn)
+{
+	if (conn->tls != NULL) {
+		switch (tls_close(conn->tls)) {
+		case TLS_WANT_POLLIN:
+			return WANT_POLLIN;
+		case TLS_WANT_POLLOUT:
+			return WANT_POLLOUT;
+		case 0:
+		case -1:
+			break;
+		}
+	}
+
+	return -1;
 }
 
 static int
