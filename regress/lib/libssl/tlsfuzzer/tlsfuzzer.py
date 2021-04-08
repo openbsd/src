@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.27 2021/03/28 18:12:09 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.28 2021/04/08 17:11:43 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -326,6 +326,7 @@ tls12_tests = TestGroup("TLSv1.2 tests", [
     Test("test-chacha20.py"),
     Test("test-conversation.py"),
     Test("test-cve-2016-2107.py"),
+    Test("test-cve-2016-6309.py"),
     Test("test-dhe-rsa-key-exchange.py"),
     Test("test-dhe-rsa-key-exchange-with-bad-messages.py"),
     Test("test-early-application-data.py"),
@@ -416,8 +417,6 @@ tls12_failing_tests = TestGroup("failing TLSv1.2 tests", [
     Test("test-client-hello-max-size.py"),
     # unknown signature algorithms
     Test("test-clienthello-md5.py"),
-    # abrupt closure
-    Test("test-cve-2016-6309.py"),
 
     # Tests expect an illegal_parameter alert
     Test("test-ecdhe-rsa-key-exchange-with-bad-messages.py"),
