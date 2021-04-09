@@ -1,4 +1,4 @@
-/*      $OpenBSD: http.c,v 1.26 2021/04/08 18:35:02 claudio Exp $  */
+/*      $OpenBSD: http.c,v 1.27 2021/04/09 06:52:50 claudio Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -410,6 +410,8 @@ http_connect(struct http_connection *conn)
 {
 	const char *cause = NULL;
 
+	conn->state = STATE_CONNECT;
+
 	if (conn->fd != -1) {
 		close(conn->fd);
 		conn->fd = -1;
@@ -702,7 +704,7 @@ http_redirect(struct http_connection *conn, char *uri)
 	if (http_resolv(conn, host, port) == -1)
 		return -1;
 
-	return 0;
+	return http_connect(conn);
 }
 
 static int
@@ -995,12 +997,34 @@ data_write(struct http_connection *conn)
 	return WANT_POLLOUT;
 }
 
+/*
+ * Do one IO call depending on the connection state.
+ * Return WANT_POLLIN or WANT_POLLOUT to poll for more data.
+ * If 0 is returned this stage is finished and the protocol should move
+ * to the next stage by calling http_nextstep(). On error return -1.
+ */
 static int
-http_handle(struct http_connection *conn)
+http_handle(struct http_connection *conn, int events)
 {
+	/* special case for INIT,  there is no event to start a request */
+	if (conn->state == STATE_INIT)
+		return http_connect(conn);
+
+	if (events & POLLHUP) {
+		if (conn->state == STATE_WRITE_DATA)
+			warnx("%s: output pipe closed", http_info(conn->url));
+		else
+			warnx("%s: server closed connection",
+			    http_info(conn->url));
+		return -1;
+	}
+
+	if ((events & conn->events) == 0) {
+		warnx("%s: unexpected event", http_info(conn->url));
+		return -1;
+	}
+
 	switch (conn->state) {
-	case STATE_INIT:
-		return 0;
 	case STATE_CONNECT:
 		if (http_finish_connect(conn) == -1)
 			/* something went wrong, try other host */
@@ -1019,22 +1043,31 @@ http_handle(struct http_connection *conn)
 		return data_write(conn);
 	case STATE_DONE:
 		return http_close(conn);
+	case STATE_INIT:
 	case STATE_FREE:
 		errx(1, "bad http state");
 	}
 	errx(1, "unknown http state");
 }
 
+/*
+ * Move the state machine forward until IO needs to happen.
+ * Returns either WANT_POLLIN or WANT_POLLOUT or -1 on error.
+ */
 static int
 http_nextstep(struct http_connection *conn)
 {
+	int r;
+
 	switch (conn->state) {
 	case STATE_INIT:
-		conn->state = STATE_CONNECT;
-		return http_connect(conn);
+		errx(1, "bad http state");
 	case STATE_CONNECT:
 		conn->state = STATE_TLSCONNECT;
-		return http_tls_connect(conn);
+		r = http_tls_connect(conn);
+		if (r != 0)
+			return r;
+		/* FALLTHROUGH */
 	case STATE_TLSCONNECT:
 		conn->state = STATE_REQUEST;
 		return http_request(conn);
@@ -1082,9 +1115,9 @@ http_nextstep(struct http_connection *conn)
 }
 
 static int
-http_do(struct http_connection *conn)
+http_do(struct http_connection *conn, int events)
 {
-	switch (http_handle(conn)) {
+	switch (http_handle(conn, events)) {
 	case -1:
 		/* connection failure */
 		if (conn->state != STATE_DONE)
@@ -1104,6 +1137,9 @@ http_do(struct http_connection *conn)
 				http_fail(conn->id);
 			http_free(conn);
 			return -1;
+		case 0:
+			errx(1, "%s: http_nextstep returned 0, state %d",
+			    http_info(conn->url), conn->state);
 		}
 		break;
 	case WANT_POLLIN:
@@ -1194,18 +1230,22 @@ proc_http(char *bind_addr, int fd)
 				err(1, "write");
 			}
 		}
+
+		/* process active http requests */
 		for (i = 0; i < MAX_CONNECTIONS; i++) {
 			struct http_connection *conn = http_conns[i];
 
 			if (conn == NULL)
 				continue;
 			/* event not ready */
-			if (!(pfds[i].revents & (conn->events | POLLHUP)))
+			if (pfds[i].revents == 0)
 				continue;
 
-			if (http_do(conn) == -1)
+			if (http_do(conn, pfds[i].revents) == -1)
 				http_conns[i] = NULL;
 		}
+
+		/* process new requests last */
 		if (pfds[MAX_CONNECTIONS].revents & POLLIN) {
 			struct http_connection *h;
 			size_t id;
@@ -1223,7 +1263,7 @@ proc_http(char *bind_addr, int fd)
 					if (http_conns[i] != NULL)
 						continue;
 					http_conns[i] = h;
-					if (http_do(h) == -1)
+					if (http_do(h, 0) == -1)
 						http_conns[i] = NULL;
 					break;
 				}
