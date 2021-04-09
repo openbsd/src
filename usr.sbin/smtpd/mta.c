@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.237 2021/04/02 06:30:55 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.238 2021/04/09 16:43:43 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -508,10 +508,14 @@ mta_setup_dispatcher(struct dispatcher *dispatcher)
 	if (ciphers && tls_config_set_ciphers(config, ciphers) == -1)
 		err(1, "%s", tls_config_error(config));
 
-	if (remote->tls_protocols &&
-	    (tls_config_parse_protocols(&protos, remote->tls_protocols) == -1
-	    || tls_config_set_protocols(config, protos) == -1))
-		err(1, "%s", tls_config_error(config));
+	if (remote->tls_protocols) {
+		if (tls_config_parse_protocols(&protos,
+		    remote->tls_protocols) == -1)
+			err(1, "failed to parse protocols \"%s\"",
+			    remote->tls_protocols);
+		if (tls_config_set_protocols(config, protos) == -1)
+			err(1, "%s", tls_config_error(config));
+	}
 
 	if (remote->pki) {
 		pki = dict_get(env->sc_pki_dict, remote->pki);

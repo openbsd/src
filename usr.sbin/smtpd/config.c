@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.54 2021/03/05 12:37:32 eric Exp $	*/
+/*	$OpenBSD: config.c,v 1.55 2021/04/09 16:43:43 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -252,6 +252,8 @@ purge_config(uint8_t what)
 	if (what & PURGE_LISTENERS) {
 		while ((l = TAILQ_FIRST(env->sc_listeners)) != NULL) {
 			TAILQ_REMOVE(env->sc_listeners, l, entry);
+			free(l->tls_ciphers);
+			free(l->tls_protocols);
 			free(l->pki);
 			free(l);
 		}

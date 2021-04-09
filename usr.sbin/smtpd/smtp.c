@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.168 2021/03/10 17:25:59 eric Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.169 2021/04/09 16:43:43 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -169,6 +169,8 @@ smtp_setup_listener_tls(struct listener *l)
 {
 	static const char *dheparams[] = { "none", "auto", "legacy" };
 	struct tls_config *config;
+	const char *ciphers;
+	uint32_t protos;
 	struct pki *pki;
 	struct ca *ca;
 	int i;
@@ -176,9 +178,19 @@ smtp_setup_listener_tls(struct listener *l)
 	if ((config = tls_config_new()) == NULL)
 		fatal("smtpd: tls_config_new");
 
-	if (env->sc_tls_ciphers &&
-	    tls_config_set_ciphers(config, env->sc_tls_ciphers) == -1)
+	ciphers = env->sc_tls_ciphers;
+	if (l->tls_ciphers)
+		ciphers = l->tls_ciphers;
+	if (ciphers && tls_config_set_ciphers(config, ciphers) == -1)
+		err(1, "%s", tls_config_error(config));
+
+	if (l->tls_protocols) {
+		if (tls_config_parse_protocols(&protos, l->tls_protocols) == -1)
+			err(1, "failed to parse protocols \"%s\"",
+			    l->tls_protocols);
+		if (tls_config_set_protocols(config, protos) == -1)
 			err(1, "%s", tls_config_error(config));
+	}
 
 	pki = l->pki[0];
 	if (pki == NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.664 2021/03/31 19:09:19 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.665 2021/04/09 16:43:43 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -543,6 +543,8 @@ struct listener {
 
 	int			 local;		/* there must be a better way */
 
+	char			*tls_protocols;
+	char			*tls_ciphers;
 	struct tls		*tls;
 	struct pki		**pki;
 	int			 pkicount;

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.259 2021/03/31 17:47:16 eric Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.260 2021/04/09 16:43:43 eric Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: March 31 2021 $
+.Dd $Mdocdate: April 9 2021 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -527,6 +527,18 @@ With the
 .Cm verify
 option, clients must also provide a valid certificate
 to establish an SMTP session.
+.It Cm protocols Ar protostr
+Define the protocol versions to be used for TLS sessions.
+Refer to the
+.Xr tls_config_parse_protocols 3
+manpage for the format of
+.Ar protostr .
+.It Cm ciphers Ar cipherstr
+Define the list of ciphers that may be used for TLS sessions.
+Refer to the
+.Xr tls_config_set_ciphers 3
+manpage for the format of
+.Ar cipherstr .
 .El
 .It Ic listen on Cm socket Op Ar options
 Listen for incoming SMTP connections on the Unix domain socket
