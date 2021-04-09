@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.11 2021/03/22 15:34:07 otto Exp $	*/
+/*	$OpenBSD: engine.c,v 1.12 2021/04/09 14:46:39 martijn Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -972,23 +972,24 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 		}
 
 		/* RFC 2131 4.4.5 */
+		/* Ignore invalid T1/T2 options */
+		if (renewal_time >= rebinding_time) {
+			log_warnx("%s: renewal_time(%u) >= rebinding_time(%u) "
+			    "from %s: using defaults",
+			    __func__, renewal_time, rebinding_time, from);
+			renewal_time = rebinding_time = 0;
+		} else if (rebinding_time >= lease_time) {
+			log_warnx("%s: rebinding_time(%u) >= lease_time(%u) "
+			    "from %s: using defaults",
+			    __func__, rebinding_time, lease_time, from);
+			renewal_time = rebinding_time = 0;
+		}
+
 		if(renewal_time == 0)
 			renewal_time = lease_time / 2;
 		if (rebinding_time == 0)
 			rebinding_time = lease_time - (lease_time / 8);
 
-		if (renewal_time >= rebinding_time) {
-			log_warnx("%s: renewal_time >= rebinding_time "
-			    "(%u >= %u) from %s", __func__, renewal_time,
-			    rebinding_time, from);
-			return;
-		}
-		if (rebinding_time >= lease_time) {
-			log_warnx("%s: rebinding_time >= lease_time"
-			    "(%u >= %u) from %s", __func__, rebinding_time,
-			    lease_time, from);
-			return;
-		}
 		clock_gettime(CLOCK_MONOTONIC, &iface->request_time);
 		iface->server_identifier.s_addr = server_identifier.s_addr;
 		iface->requested_ip.s_addr = dhcp_hdr->yiaddr.s_addr;
