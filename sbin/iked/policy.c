@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.80 2021/03/15 22:32:44 tobhe Exp $	*/
+/*	$OpenBSD: policy.c,v 1.81 2021/04/09 09:15:04 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2020-2021 Tobias Heider <tobhe@openbsd.org>
@@ -684,6 +684,9 @@ sa_configure_iface(struct iked *env, struct iked_sa *sa, int add)
 	int			 rdomain;
 
 	if (sa->sa_policy == NULL || sa->sa_policy->pol_iface == 0)
+		return (0);
+
+	if (!sa->sa_cp_addr && !sa->sa_cp_addr6)
 		return (0);
 
 	if (sa->sa_cp_addr) {
