@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.127 2021/02/25 15:20:18 otto Exp $
+.\"	$OpenBSD: malloc.3,v 1.128 2021/04/09 06:04:15 otto Exp $
 .\"
-.Dd $Mdocdate: February 25 2021 $
+.Dd $Mdocdate: April 9 2021 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -366,7 +366,8 @@ If a program changes behavior if any of these options (except
 are used,
 it is buggy.
 .Pp
-The default number of free pages cached is 64 per malloc pool.
+The default size of the cache is 64 single page allocations.
+It also caches a number of larger regions.
 Multi-threaded programs use multiple pools.
 .Sh RETURN VALUES
 Upon successful completion, the allocation functions
