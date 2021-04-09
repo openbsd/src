@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.269 2021/03/09 07:39:28 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.270 2021/04/09 06:05:21 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -1404,6 +1404,8 @@ ofree(struct dir_info **argpool, void *p, int clear, int check, size_t argsz)
 	} else {
 		/* Validate and optionally canary check */
 		struct chunk_info *info = (struct chunk_info *)r->size;
+		if (info->size != sz)
+			wrterror(pool, "internal struct corrupt");
 		find_chunknum(pool, info, p, mopts.chunk_canaries);
 		if (!clear) {
 			void *tmp;
@@ -1608,6 +1610,7 @@ orealloc(struct dir_info **argpool, void *p, size_t newsz, void *f)
 			}
 			if (munmap((char *)r->p + rnewsz, roldsz - rnewsz))
 				wrterror(pool, "munmap %p", (char *)r->p + rnewsz);
+			STATS_SUB(d->malloc_used, roldsz - rnewsz);
 			r->size = gnewsz;
 			if (MALLOC_MOVE_COND(gnewsz)) {
 				void *pp = MALLOC_MOVE(r->p, gnewsz);
