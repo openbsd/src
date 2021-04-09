@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1962 2021/03/26 07:58:44 jan Exp $
+$OpenBSD: pcidevs,v 1.1963 2021/04/09 20:58:20 mlarkin Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -340,6 +340,7 @@ vendor	SYMPHONY2	0x1c1c	Symphony Labs
 vendor	SKHYNIX		0x1c5c	SK hynix
 vendor	ADATA		0x1cc1	ADATA Technology
 vendor	UMIS		0x1cc4	Union Memory
+vendor	AQUANTIA	0x1d6a	Aquantia
 vendor	ROCKCHIP	0x1d87	Rockchip
 vendor	TEKRAM2		0x1de1	Tekram
 vendor	AMPERE		0x1def	Ampere
@@ -1045,6 +1046,24 @@ product APPLE M1_PCIE		0x100c	M1 PCIe
 product APPLE BCM5701		0x1645	BCM5701
 product APPLE NVME1		0x2001	NVMe
 product APPLE NVME2		0x2003	NVMe
+
+/* Aquantia Corp. */
+product AQUANTIA AQC100		0x00b1	AQC100
+product AQUANTIA AQC107		0x07b1	AQC107
+product AQUANTIA AQC108		0x08b1	AQC108
+product AQUANTIA AQC109		0x09b1	AQC109
+product AQUANTIA AQC111		0x11b1	AQC111
+product AQUANTIA AQC112		0x12b1	AQC112
+product AQUANTIA AQC100S	0x80b1	AQC100S
+product AQUANTIA AQC107S	0x87b1	AQC107S
+product AQUANTIA AQC108S	0x88b1	AQC108S
+product AQUANTIA AQC109S	0x89b1	AQC109S
+product AQUANTIA AQC111S	0x91b1	AQC111S
+product AQUANTIA AQC112S	0x92b1	AQC112S
+product AQUANTIA D100		0xd100	D100
+product AQUANTIA D107		0xd107	D107
+product AQUANTIA D108		0xd108	D108
+product AQUANTIA D109		0xd109	D109
 
 /* Aralion products */
 product ARALION ARS106S		0x0301	ARS106S
