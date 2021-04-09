@@ -1,4 +1,4 @@
-/* $OpenBSD: input-keys.c,v 1.82 2021/04/08 14:16:12 nicm Exp $ */
+/* $OpenBSD: input-keys.c,v 1.83 2021/04/09 07:02:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -430,7 +430,7 @@ input_key_pane(struct window_pane *wp, key_code key, struct mouse_event *m)
 }
 
 static void
-input_key_write(const char *from, struct bufferevent *bev, const void *data,
+input_key_write(const char *from, struct bufferevent *bev, const char *data,
     size_t size)
 {
 	log_debug("%s: %.*s", from, (int)size, data);
