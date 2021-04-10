@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.124 2021/01/02 18:35:07 tb Exp $	*/
+/*	$OpenBSD: server.c,v 1.125 2021/04/10 10:10:07 claudio Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -127,7 +127,7 @@ server_privinit(struct server *srv)
 }
 
 int
-server_tls_cmp(struct server *s1, struct server *s2, int match_keypair)
+server_tls_cmp(struct server *s1, struct server *s2)
 {
 	struct server_config	*sc1, *sc2;
 
@@ -146,13 +146,6 @@ server_tls_cmp(struct server *s1, struct server *s2, int match_keypair)
 		return (-1);
 	if (strcmp(sc1->tls_ecdhe_curves, sc2->tls_ecdhe_curves) != 0)
 		return (-1);
-
-	if (match_keypair) {
-		if (strcmp(sc1->tls_cert_file, sc2->tls_cert_file) != 0)
-			return (-1);
-		if (strcmp(sc1->tls_key_file, sc2->tls_key_file) != 0)
-			return (-1);
-	}
 
 	return (0);
 }

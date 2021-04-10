@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.124 2021/01/22 13:07:17 benno Exp $	*/
+/*	$OpenBSD: parse.y,v 1.125 2021/04/10 10:10:07 claudio Exp $	*/
 
 /*
  * Copyright (c) 2020 Matthias Pressfreund <mpfr@fn.de>
@@ -333,7 +333,8 @@ server		: SERVER optmatch STRING	{
 					free(srv);
 					YYERROR;
 				}
-				if (server_tls_cmp(s, srv, 0) != 0) {
+				if (srv->srv_conf.flags & SRVFLAG_TLS &&
+				    server_tls_cmp(s, srv) != 0) {
 					yyerror("server \"%s\": tls "
 					    "configuration mismatch on same "
 					    "address/port",
