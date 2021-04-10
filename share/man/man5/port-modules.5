@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.255 2021/03/09 19:05:28 tracey Exp $
+.\"	$OpenBSD: port-modules.5,v 1.256 2021/04/10 15:26:47 gnezdo Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 9 2021 $
+.Dd $Mdocdate: April 10 2021 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -587,6 +587,9 @@ Also,
 .Sq nojunk
 is added to DPB_PROPERTIES because CMake's include files parser cheats
 too much.
+.It devel/cabal
+See
+.Xr cabal-module 5 for porting Haskell applications .
 .It devel/cargo
 See
 .Xr cargo-module 5 .
