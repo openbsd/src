@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpc.c,v 1.14 2021/03/05 12:37:32 eric Exp $	*/
+/*	$OpenBSD: smtpc.c,v 1.15 2021/04/10 10:19:19 eric Exp $	*/
 
 /*
  * Copyright (c) 2018 Eric Faurot <eric@openbsd.org>
@@ -32,10 +32,7 @@
 #include <tls.h>
 #include <unistd.h>
 
-#include <openssl/ssl.h>
-
 #include "smtp.h"
-#include "ssl.h"
 #include "log.h"
 
 static void parse_server(char *);
@@ -368,37 +365,6 @@ log_trace(int lvl, const char *emsg, ...)
 		vlog(LOG_DEBUG, emsg, ap);
 		va_end(ap);
 	}
-}
-
-void
-smtp_verify_server_cert(void *tag, struct smtp_client *proto, void *ctx)
-{
-	SSL *ssl = ctx;
-	X509 *cert;
-	long res;
-	int match;
-
-	if ((cert = SSL_get_peer_certificate(ssl))) {
-		(void)ssl_check_name(cert, servname, &match);
-		X509_free(cert);
-		res = SSL_get_verify_result(ssl);
-		if (res == X509_V_OK) {
-			if (match) {
-				log_debug("valid certificate");
-				smtp_cert_verified(proto, CERT_OK);
-			}
-			else {
-				log_debug("certificate does not match hostname");
-				smtp_cert_verified(proto, CERT_INVALID);
-			}
-			return;
-		}
-		log_debug("certificate validation error %ld", res);
-	}
-	else
-		log_debug("no certificate provided");
-
-	smtp_cert_verified(proto, CERT_INVALID);
 }
 
 void
