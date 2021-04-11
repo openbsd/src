@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.104 2021/04/05 18:09:48 dv Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.105 2021/04/11 14:12:42 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -472,7 +472,7 @@ void	 vm_pipe_init(struct vm_dev_pipe *, void (*)(int, short, void *));
 void	 vm_pipe_send(struct vm_dev_pipe *, enum pipe_msg_type);
 enum pipe_msg_type vm_pipe_recv(struct vm_dev_pipe *);
 
-/* control.c */
+/* config.c */
 int	 config_init(struct vmd *);
 void	 config_purge(struct vmd *, unsigned int);
 int	 config_setconfig(struct vmd *);
