@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.17 2021/01/27 07:21:54 deraadt Exp $	*/
+/*	$OpenBSD: proc.h,v 1.18 2021/04/11 18:53:23 dv Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -32,7 +32,6 @@ enum {
 	IMSG_CTL_FAIL,
 	IMSG_CTL_VERBOSE,
 	IMSG_CTL_END,
-	IMSG_CTL_NOTIFY,
 	IMSG_CTL_RESET,
 	IMSG_CTL_PROCFD,
 	IMSG_PROC_MAX
@@ -71,12 +70,8 @@ TAILQ_HEAD(control_socks, control_sock);
 
 struct ctl_conn {
 	TAILQ_ENTRY(ctl_conn)	 entry;
-	uint8_t			 flags;
-	unsigned int		 waiting;
-#define CTL_CONN_NOTIFY		 0x01
 	struct imsgev		 iev;
 	struct sockpeercred	 peercred;
-
 };
 TAILQ_HEAD(ctl_connlist, ctl_conn);
 extern  struct ctl_connlist ctl_conns;

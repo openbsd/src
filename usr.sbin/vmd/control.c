@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.32 2020/09/23 19:18:18 martijn Exp $	*/
+/*	$OpenBSD: control.c,v 1.33 2021/04/11 18:53:23 dv Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -48,7 +48,6 @@ struct ctl_conn
 void	 control_close(int, struct control_sock *);
 void	 control_dispatch_imsg(int, short, void *);
 int	 control_dispatch_vmd(int, struct privsep_proc *, struct imsg *);
-void	 control_imsg_forward(struct imsg *);
 void	 control_run(struct privsep *, struct privsep_proc *, void *);
 
 static struct privsep_proc procs[] = {
@@ -357,19 +356,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			break;
 		}
 
-		control_imsg_forward(&imsg);
-
 		switch (imsg.hdr.type) {
-		case IMSG_CTL_NOTIFY:
-			if (c->flags & CTL_CONN_NOTIFY) {
-				log_debug("%s: "
-				    "client requested notify more than once",
-				    __func__);
-				ret = EINVAL;
-				goto fail;
-			}
-			c->flags |= CTL_CONN_NOTIFY;
-			break;
 		case IMSG_CTL_VERBOSE:
 			if (IMSG_DATA_SIZE(&imsg) < sizeof(v))
 				goto fail;
@@ -458,16 +445,4 @@ control_dispatch_imsg(int fd, short event, void *arg)
 	    0, 0, -1, &ret, sizeof(ret));
 	imsg_flush(&c->iev.ibuf);
 	control_close(fd, cs);
-}
-
-void
-control_imsg_forward(struct imsg *imsg)
-{
-	struct ctl_conn *c;
-
-	TAILQ_FOREACH(c, &ctl_conns, entry)
-		if (c->flags & CTL_CONN_NOTIFY)
-			imsg_compose_event(&c->iev, imsg->hdr.type,
-			    imsg->hdr.peerid, imsg->hdr.pid, -1, imsg->data,
-			    imsg->hdr.len - IMSG_HEADER_SIZE);
 }
