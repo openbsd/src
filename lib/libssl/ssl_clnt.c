@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.89 2021/03/27 17:56:28 tb Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.90 2021/04/11 07:06:01 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2659,8 +2659,8 @@ ssl3_send_client_certificate(SSL *s)
 	if (S3I(s)->hs.state == SSL3_ST_CW_CERT_B) {
 		/*
 		 * If we get an error, we need to
-		 * ssl->rwstate=SSL_X509_LOOKUP; return(-1);
-		 * We then get retied later
+		 * ssl->internal->rwstate = SSL_X509_LOOKUP; return(-1);
+		 * We then get retried later.
 		 */
 		i = ssl_do_client_cert_cb(s, &x509, &pkey);
 		if (i < 0) {
