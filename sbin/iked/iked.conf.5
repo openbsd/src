@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.84 2021/02/13 16:14:12 tobhe Exp $
+.\" $OpenBSD: iked.conf.5,v 1.85 2021/04/11 23:27:06 tobhe Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 13 2021 $
+.Dd $Mdocdate: April 11 2021 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -257,7 +257,7 @@ After the connection is closed or times out, the IKE SA is
 automatically removed.
 .Pp
 The commands are as follows:
-.Bl -tag -width xxxx
+.Bl -tag -width xxxx -compact
 .It Xo
 .Ic ikev2
 .Op Ar name
@@ -272,6 +272,7 @@ The name should only occur once in
 or any included files.
 If omitted,
 a name will be generated automatically for the policy.
+.Pp
 .It Op Ar eval
 The
 .Ar eval
@@ -291,6 +292,7 @@ option will disable evaluation of this policy for incoming connections.
 The
 .Ar default
 option sets the default policy and should only be specified once.
+.Pp
 .It Op Ar mode
 .Ar mode
 specifies the IKEv2 mode to use:
@@ -310,6 +312,7 @@ is specified, negotiation will be started at once.
 If omitted,
 .Ar passive
 mode will be used.
+.Pp
 .It Op Ar ipcomp
 The keyword
 .Ar ipcomp
@@ -320,6 +323,7 @@ The optional compression is applied before packets are encapsulated.
 IPcomp must be enabled in the kernel:
 .Pp
 .Dl # sysctl net.inet.ipcomp.enable=1
+.Pp
 .It Op Ar tmode
 .Ar tmode
 describes the encapsulation mode to be used.
@@ -329,6 +333,7 @@ and
 .Ar transport ;
 the default is
 .Ar tunnel .
+.Pp
 .It Op Ar encap
 .Ar encap
 specifies the encapsulation protocol to be used.
@@ -338,6 +343,7 @@ and
 .Ar ah ;
 the default is
 .Ar esp .
+.Pp
 .It Op Ar af
 This policy only applies to endpoints of the specified address family
 which can be either
@@ -347,6 +353,7 @@ or
 Note that this only matters for IKEv2 endpoints and does not
 restrict the traffic selectors to negotiate flows with different
 address families, e.g. IPv6 flows negotiated by IPv4 endpoints.
+.Pp
 .It Ic proto Ar protocol
 The optional
 .Ic proto
@@ -360,6 +367,7 @@ For a list of all the protocol name to number mappings used by
 .Xr iked 8 ,
 see the file
 .Pa /etc/protocols .
+.Pp
 .It Ic rdomain Ar number
 Specify a different routing domain for unencrypted traffic.
 The resulting IPsec SAs will match outgoing packets in the specified
@@ -372,6 +380,7 @@ Vice versa, incoming
 traffic is moved to
 .Ic rdomain Ar number
 after decryption.
+.Pp
 .It Xo
 .Ic from Ar src
 .Op Ic port Ar sport
@@ -419,6 +428,7 @@ For a list of all port name to number mappings used by
 .Xr ipsecctl 8 ,
 see the file
 .Pa /etc/services .
+.Pp
 .It Ic local Ar localip Ic peer Ar remote
 The
 .Ic local
@@ -439,6 +449,7 @@ automatically.
 If it is not specified or if the keyword
 .Ar any
 is given, the default peer is used.
+.Pp
 .It Xo
 .Ic ikesa
 .Ic auth Ar algorithm
@@ -474,6 +485,7 @@ and
 .Ic group
 can be used multiple times within a single proposal to configure
 multiple crypto transforms.
+.Pp
 .It Xo
 .Ic childsa
 .Ic auth Ar algorithm
@@ -516,6 +528,7 @@ and
 .Ic group
 can be used multiple times within a single proposal to configure
 multiple crypto transforms.
+.Pp
 .It Ic srcid Ar string Ic dstid Ar string
 .Ic srcid
 defines an ID of type
@@ -551,6 +564,7 @@ is similar to
 .Ic srcid ,
 but instead specifies the ID to be used
 by the remote peer.
+.Pp
 .It Ic ikelifetime Ar time
 The optional
 .Ic ikelifetime
@@ -563,6 +577,7 @@ This is the default.
 The accepted format of the
 .Ar time
 specification is described below.
+.Pp
 .It Ic lifetime Ar time Op Ic bytes Ar bytes
 The optional
 .Ic lifetime
@@ -589,6 +604,7 @@ for kilo-, mega- and gigabytes accordingly.
 .Pp
 Please note that rekeying must happen at least several times a day as
 IPsec security heavily depends on frequent key renewals.
+.Pp
 .It Op Ar ikeauth
 Specify a method to be used to authenticate the remote peer.
 .Xr iked 8
@@ -627,8 +643,10 @@ Use RSA public key authentication with SHA1 as the hash.
 .El
 .Pp
 The default is to allow any signature authentication.
-.It Ic config Ar option address
-Send one or more optional configuration payloads (CP) to the peer.
+.Pp
+.It Cm config Ar option address
+.It Cm request Ar option address
+Request or serve one or more optional configuration payloads (CP).
 The configuration
 .Ar option
 can be one of the following with the expected address format:
@@ -659,9 +677,11 @@ included.
 .It Ic access-server Ar address
 The address of an internal remote access server.
 .El
+.Pp
 .It Ic iface Ar interface
 Configure requested addresses and routes on the specified
 .Ar interface .
+.Pp
 .It Ic tag Ar string
 Add a
 .Xr pf 4
@@ -715,6 +735,7 @@ The variable expansion for the
 .Ar tag
 directive occurs only at runtime (not when the file is parsed)
 and must be quoted, or it will be interpreted as a macro.
+.Pp
 .It Ic tap Ar interface
 Send the decapsulated IPsec traffic to the specified
 .Xr enc 4
