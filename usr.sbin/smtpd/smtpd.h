@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.666 2021/04/10 06:44:18 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.667 2021/04/11 07:18:08 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1636,11 +1636,6 @@ int fork_proc_backend(const char *, const char *, const char *);
 /* srs.c */
 const char *srs_encode(const char *, const char *);
 const char *srs_decode(const char *);
-
-
-/* ssl_smtpd.c */
-void   *ssl_mta_init(void *, char *, off_t, const char *);
-void   *ssl_smtp_init(void *, int);
 
 
 /* stat_backend.c */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.h,v 1.22 2021/03/05 12:37:32 eric Exp $	*/
+/*	$OpenBSD: ssl.h,v 1.23 2021/04/11 07:18:08 eric Exp $	*/
 /*
  * Copyright (c) 2013 Gilles Chehade <gilles@poolp.org>
  *
@@ -65,9 +65,3 @@ int		ssl_load_pkey(const void *, size_t, char *, off_t,
 int		ssl_ctx_fake_private_key(SSL_CTX *, const void *, size_t,
 		    char *, off_t, X509 **, EVP_PKEY **);
 char *ssl_pubkey_hash(const char *, off_t);
-
-/* ssl_privsep.c */
-int		ssl_by_mem_ctrl(X509_LOOKUP *, int, const char *, long, char **);
-
-/* ssl_verify.c */
-int ssl_check_name(X509 *, const char *, int *);
