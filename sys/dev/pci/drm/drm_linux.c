@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.78 2021/02/14 03:42:55 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.79 2021/04/11 15:30:51 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -1760,13 +1760,19 @@ get_dma_buf(struct dma_buf *dmabuf)
 enum pci_bus_speed
 pcie_get_speed_cap(struct pci_dev *pdev)
 {
-	pci_chipset_tag_t	pc = pdev->pc;
-	pcitag_t		tag = pdev->tag;
+	pci_chipset_tag_t	pc;
+	pcitag_t		tag;
 	int			pos ;
 	pcireg_t		xcap, lnkcap = 0, lnkcap2 = 0;
 	pcireg_t		id;
 	enum pci_bus_speed	cap = PCI_SPEED_UNKNOWN;
 	int			bus, device, function;
+
+	if (pdev == NULL)
+		return PCI_SPEED_UNKNOWN;
+
+	pc = pdev->pc;
+	tag = pdev->tag;
 
 	if (!pci_get_capability(pc, tag, PCI_CAP_PCIEXPRESS,
 	    &pos, NULL)) 
