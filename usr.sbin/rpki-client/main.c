@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.134 2021/04/08 17:07:55 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.135 2021/04/11 01:20:03 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -852,7 +852,7 @@ main(int argc, char *argv[])
 	} else
 		rrdp = -1;
 
-	/* TODO unveil chachedir and outputdir, no other access allowed */
+	/* TODO unveil cachedir and outputdir, no other access allowed */
 	if (pledge("stdio rpath wpath cpath fattr sendfd", NULL) == -1)
 		err(1, "pledge");
 
@@ -1088,7 +1088,7 @@ main(int argc, char *argv[])
 		timeradd(&stats.system_time, &ru.ru_stime, &stats.system_time);
 	}
 
-	/* change working directory to the cache directory */
+	/* change working directory to the output directory */
 	if (fchdir(outdirfd) == -1)
 		err(1, "fchdir output dir");
 
