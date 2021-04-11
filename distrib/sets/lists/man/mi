@@ -2138,6 +2138,7 @@
 ./usr/share/man/man5/bsd.port.mk.5
 ./usr/share/man/man5/bsd.regress.mk.5
 ./usr/share/man/man5/bt.5
+./usr/share/man/man5/cabal-module.5
 ./usr/share/man/man5/cargo-module.5
 ./usr/share/man/man5/changelist.5
 ./usr/share/man/man5/chio.conf.5
