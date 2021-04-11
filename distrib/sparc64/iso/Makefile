@@ -1,6 +1,12 @@
-#	$OpenBSD: Makefile,v 1.22 2020/05/17 17:04:28 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.23 2021/04/11 17:18:16 deraadt Exp $
 
+FS=		install${OSrev}.img
+FSSIZE=		1032192
+FSDISKTYPE=	install
 CDROM=		install${OSrev}.iso
+
+MOUNT_POINT=	/mnt
+
 RELXDIR?=	/home/relx-${MACHINE}
 RELDIR?=	/home/rel-${MACHINE}
 
@@ -11,7 +17,30 @@ BASE=		${RELDIR}/base${OSrev}.tgz ${RELDIR}/comp${OSrev}.tgz \
 XBASE=		${RELXDIR}/xbase${OSrev}.tgz ${RELXDIR}/xfont${OSrev}.tgz \
 		${RELXDIR}/xshare${OSrev}.tgz ${RELXDIR}/xserv${OSrev}.tgz
 
-all: ${CDROM}
+all: ${FS} ${CDROM} 
+
+${FS}: ${BASE} ${XBASE}
+	dd if=/dev/zero of=${FS} bs=512 count=${FSSIZE}
+	vnconfig -v ${FS} > vnd
+	disklabel -w `cat vnd` ${FSDISKTYPE}
+	newfs -O 1 -m 0 -o space -i 524288 -c ${FSSIZE} /dev/r`cat vnd`a
+	mount /dev/`cat vnd`a ${MOUNT_POINT}
+	install -c -m 555 -o root -g wheel \
+	    ${DESTDIR}/usr/mdec/ofwboot ${MOUNT_POINT}/ofwboot
+	installboot -v -r ${MOUNT_POINT} `cat vnd` \
+	    ${DESTDIR}/usr/mdec/bootblk ${MOUNT_POINT}/ofwboot
+	mkdir -p ${MOUNT_POINT}/${OSREV}/${MACHINE}
+	cp -p ${BASE} ${MOUNT_POINT}/${OSREV}/${MACHINE}
+	cp -p ${XBASE} ${MOUNT_POINT}/${OSREV}/${MACHINE}
+	ln ${MOUNT_POINT}/${OSREV}/${MACHINE}/bsd.rd ${MOUNT_POINT}/bsd.rd
+	ln ${MOUNT_POINT}/${OSREV}/${MACHINE}/bsd.rd ${MOUNT_POINT}/bsd
+
+	cat ${RELDIR}/SHA256 ${RELXDIR}/SHA256 > \
+	    ${MOUNT_POINT}/${OSREV}/${MACHINE}/SHA256
+	# XXX no SHA256.sig
+	df -i ${MOUNT_POINT}
+	umount ${MOUNT_POINT}
+	vnconfig -u `cat vnd`
 
 ${CDROM}: ${BASE} ${XBASE}
 	rm -rf ${.OBJDIR}/cd-dir/
@@ -50,9 +79,10 @@ unconfig:
 	-[ -f vnd ] && vnconfig -u `cat vnd` && rm -f vnd
 
 install:
-	cp ${CDROM} ${RELDIR}/
+	cp ${CDROM} ${FS} ${RELDIR}/
 
 clean cleandir:
-	rm -rf ${CDROM} ${.OBJDIR}/cd-dir
+	rm -rf ${CDROM} ${FS}
+	rm -rf cd-dir
 
 .include <bsd.obj.mk>

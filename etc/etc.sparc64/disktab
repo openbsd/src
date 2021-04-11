@@ -1,4 +1,4 @@
-# $OpenBSD: disktab,v 1.19 2020/04/04 13:28:46 deraadt Exp $
+# $OpenBSD: disktab,v 1.20 2021/04/11 17:18:15 deraadt Exp $
 
 miniroot:\
 	:dt=rdroot:se#512:nt#2:ns#64:nc#90:\
@@ -30,3 +30,8 @@ fakeramdisk:\
 	:dt=rdroot:se#512:nt#1:ns#32:nc#200:\
 	:pa#6400:oa#0:ba#8192:fa#4096:ta=4.2BSD:\
 	:pc#6400:oc#0:
+
+install:\
+	:dt=rdroot:se#512:nt#1:ns#32:nc#32256:\
+	:pa#1032192:oa#0:ba#8192:fa#4096:ta=4.2BSD:\
+	:pc#1032192:oc#0:
