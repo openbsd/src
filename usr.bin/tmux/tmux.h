@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1101 2021/04/05 08:43:48 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1102 2021/04/12 06:50:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2855,6 +2855,7 @@ typedef void (*mode_tree_draw_cb)(void *, void *, struct screen_write_ctx *,
 typedef int (*mode_tree_search_cb)(void *, void *, const char *);
 typedef void (*mode_tree_menu_cb)(void *, struct client *, key_code);
 typedef u_int (*mode_tree_height_cb)(void *, u_int);
+typedef key_code (*mode_tree_key_cb)(void *, void *, u_int);
 typedef void (*mode_tree_each_cb)(void *, void *, struct client *, key_code);
 u_int	 mode_tree_count_tagged(struct mode_tree_data *);
 void	*mode_tree_get_current(struct mode_tree_data *);
@@ -2869,7 +2870,7 @@ void	 mode_tree_up(struct mode_tree_data *, int);
 void	 mode_tree_down(struct mode_tree_data *, int);
 struct mode_tree_data *mode_tree_start(struct window_pane *, struct args *,
 	     mode_tree_build_cb, mode_tree_draw_cb, mode_tree_search_cb,
-	     mode_tree_menu_cb, mode_tree_height_cb, void *,
+	     mode_tree_menu_cb, mode_tree_height_cb, mode_tree_key_cb, void *,
 	     const struct menu_item *, const char **, u_int, struct screen **);
 void	 mode_tree_zoom(struct mode_tree_data *, struct args *);
 void	 mode_tree_build(struct mode_tree_data *);
