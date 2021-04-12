@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.8 2016/08/16 18:41:57 tedu Exp $ */
+/*	$OpenBSD: util.c,v 1.9 2021/04/12 10:03:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -107,7 +107,7 @@ pdu_free(struct pdu *p)
 int
 socket_setblockmode(int fd, int nonblocking)
 {
-	int     flags;
+	int flags;
 
 	if ((flags = fcntl(fd, F_GETFL)) == -1)
 		return -1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdu.c,v 1.12 2019/07/03 03:24:03 deraadt Exp $ */
+/*	$OpenBSD: pdu.c,v 1.13 2021/04/12 10:03:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -287,7 +287,7 @@ pdu_write(struct connection *c)
 
 	if ((n = writev(c->fd, iov, niov)) == -1) {
 		if (errno == EAGAIN || errno == ENOBUFS ||
-		    errno == EINTR)     /* try later */
+		    errno == EINTR)	/* try later */
 			return 0;
 		else {
 			log_warn("pdu_write");
@@ -298,7 +298,7 @@ pdu_write(struct connection *c)
 		return 0;
 
 	size = n;
-        for (b = TAILQ_FIRST(&c->pdu_w); b != NULL && size > 0; b = nb) {
+	for (b = TAILQ_FIRST(&c->pdu_w); b != NULL && size > 0; b = nb) {
 		nb = TAILQ_NEXT(b, entry);
 		resid = b->resid;
 		for (j = 0; j < PDU_MAXIOV; j++) {
@@ -385,7 +385,7 @@ pdu_parse(struct connection *c)
 				else {
 					n = pdu_readbuf_read(&c->prbuf,
 					    (char *)p->iov[j].iov_base + off,
-					     p->iov[j].iov_len - off);
+					    p->iov[j].iov_len - off);
 					p->resid += n;
 					if (n == 0 || off + n !=
 					    p->iov[j].iov_len)
