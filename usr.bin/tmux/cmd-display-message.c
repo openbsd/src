@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-message.c,v 1.56 2021/04/07 12:49:33 nicm Exp $ */
+/* $OpenBSD: cmd-display-message.c,v 1.57 2021/04/12 09:36:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -39,8 +39,8 @@ const struct cmd_entry cmd_display_message_entry = {
 	.name = "display-message",
 	.alias = "display",
 
-	.args = { "acd:Ipt:F:v", 0, 1 },
-	.usage = "[-aIpv] [-c target-client] [-d delay] [-F format] "
+	.args = { "acd:INpt:F:v", 0, 1 },
+	.usage = "[-aINpv] [-c target-client] [-d delay] [-F format] "
 		 CMD_TARGET_PANE_USAGE " [message]",
 
 	.target = { 't', CMD_FIND_PANE, CMD_FIND_CANFAIL },
@@ -132,8 +132,10 @@ cmd_display_message_exec(struct cmd *self, struct cmdq_item *item)
 		cmdq_error(item, "%s", msg);
 	else if (args_has(args, 'p'))
 		cmdq_print(item, "%s", msg);
-	else if (tc != NULL)
-		status_message_set(tc, delay, 0, "%s", msg);
+	else if (tc != NULL) {
+		status_message_set(tc, delay, 0, args_has(args, 'N'), "%s",
+		    msg);
+	}
 	free(msg);
 
 	format_free(ft);

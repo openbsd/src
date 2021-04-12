@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-tree.c,v 1.52 2021/04/12 06:50:25 nicm Exp $ */
+/* $OpenBSD: mode-tree.c,v 1.53 2021/04/12 09:36:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1204,7 +1204,7 @@ mode_tree_run_command(struct client *c, struct cmd_find_state *fs,
 		if (status == CMD_PARSE_ERROR) {
 			if (c != NULL) {
 				*error = toupper((u_char)*error);
-				status_message_set(c, -1, 1, "%s", error);
+				status_message_set(c, -1, 1, 0, "%s", error);
 			}
 			free(error);
 		}

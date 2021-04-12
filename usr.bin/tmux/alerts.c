@@ -1,4 +1,4 @@
-/* $OpenBSD: alerts.c,v 1.32 2020/08/19 07:15:42 nicm Exp $ */
+/* $OpenBSD: alerts.c,v 1.33 2021/04/12 09:36:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -315,10 +315,11 @@ alerts_set_message(struct winlink *wl, const char *type, const char *option)
 			tty_putcode(&c->tty, TTYC_BEL);
 		if (visual == VISUAL_OFF)
 			continue;
-		if (c->session->curw == wl)
-			status_message_set(c, -1, 1, "%s in current window", type);
-		else {
-			status_message_set(c, -1, 1, "%s in window %d", type,
+		if (c->session->curw == wl) {
+			status_message_set(c, -1, 1, 0, "%s in current window",
+			    type);
+		} else {
+			status_message_set(c, -1, 1, 0, "%s in window %d", type,
 			    wl->idx);
 		}
 	}
