@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.371 2021/03/19 19:36:10 procter Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.372 2021/04/12 03:17:57 kn Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: March 19 2021 $
+.Dd $Mdocdate: April 12 2021 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -182,6 +182,7 @@ Create the specified network pseudo-device.
 At least the following devices can be created on demand:
 .Pp
 .Xr aggr 4 ,
+.Xr bpe 4 ,
 .Xr bridge 4 ,
 .Xr carp 4 ,
 .Xr egre 4 ,
@@ -528,6 +529,31 @@ WoL frames are sent using
 .It Cm -wol
 Disable WoL.
 WoL is disabled at boot by the driver, if possible.
+.El
+.Sh BPE
+.nr nS 1
+.Bk -words
+.Nm ifconfig
+.Ar bpe-interface
+.Op Oo Fl Oc Ns Cm parent Ar parent-interface
+.Op Ns Cm vnetid Ar vnetid-tag
+.Ek
+.nr nS 0
+.Pp
+The following options are available for
+.Xr bpe 4
+interfaces:
+.Bl -tag -width Ds
+.It Cm parent Ar parent-interface
+Associate the BPE interface with the interface
+.Ar parent-interface .
+.It Cm -parent
+Disassociate from the parent interface.
+This breaks the link between the BPE interface and its parent.
+.It Cm vnetid Ar vnetid-tag
+Set the virtual network identifier tag value to
+.Ar vnetid-tag .
+This is a 24-bit value in the range 0 to 16777215.
 .El
 .Sh BRIDGE
 The following options are available for a
