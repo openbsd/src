@@ -1,4 +1,4 @@
-/*      $OpenBSD: rrdp.c,v 1.3 2021/04/07 16:29:14 claudio Exp $ */
+/*      $OpenBSD: rrdp.c,v 1.4 2021/04/12 17:23:30 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -303,18 +303,18 @@ rrdp_finished(struct rrdp *s)
 	}
 
 	if (s->res == HTTP_OK) {
+		XML_Parser p = s->parser;
+
 		/*
 		 * Finalize parsing on success to be sure that
 		 * all of the XML is correct. Needs to be done here
 		 * since the call would most probably fail for non
 		 * successful data fetches.
 		 */
-		if (XML_Parse(s->parser, NULL, 0, 1) != XML_STATUS_OK) {
-			warnx("%s: XML error at line %lu: %s",
-			    s->local,
-			    XML_GetCurrentLineNumber(s->parser),
-			    XML_ErrorString(XML_GetErrorCode(s->parser))
-			    );
+		if (XML_Parse(p, NULL, 0, 1) != XML_STATUS_OK) {
+			warnx("%s: XML error at line %llu: %s", s->local,
+			    (unsigned long long)XML_GetCurrentLineNumber(p),
+			    XML_ErrorString(XML_GetErrorCode(p)));
 			rrdp_failed(s);
 			return;
 		}
@@ -340,16 +340,14 @@ rrdp_finished(struct rrdp *s)
 			case SNAPSHOT:
 				warnx("%s: downloading snapshot",
 				    s->local);
-				s->sxml = new_snapshot_xml(s->parser,
-				    &s->current, s);
+				s->sxml = new_snapshot_xml(p, &s->current, s);
 				s->state = RRDP_STATE_REQ;
 				break;
 			case DELTA:
 				warnx("%s: downloading %lld deltas",
 				    s->local, s->repository.serial -
 				    s->current.serial);
-				s->dxml = new_delta_xml(s->parser,
-				    &s->current, s);
+				s->dxml = new_delta_xml(p, &s->current, s);
 				s->state = RRDP_STATE_REQ;
 				break;
 			}
@@ -368,8 +366,7 @@ rrdp_finished(struct rrdp *s)
 			} else {
 				/* reset delta parser for next delta */
 				free_delta_xml(s->dxml);
-				s->dxml = new_delta_xml(s->parser,
-				    &s->current, s);
+				s->dxml = new_delta_xml(p, &s->current, s);
 				s->state = RRDP_STATE_REQ;
 			}
 			break;
@@ -498,10 +495,10 @@ rrdp_data_handler(struct rrdp *s)
 		SHA256_Update(&s->ctx, buf, len);
 	if ((s->state & RRDP_STATE_PARSE_ERROR) == 0 &&
 	    XML_Parse(p, buf, len, 0) != XML_STATUS_OK) {
-		s->state |= RRDP_STATE_PARSE_ERROR;
-		warnx("%s: parse error at line %lu: %s", s->local,
-		    XML_GetCurrentLineNumber(p),
+		warnx("%s: parse error at line %llu: %s", s->local,
+		    (unsigned long long)XML_GetCurrentLineNumber(p),
 		    XML_ErrorString(XML_GetErrorCode(p)));
+		s->state |= RRDP_STATE_PARSE_ERROR;
 	}
 }
 
