@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-keys.c,v 1.62 2021/04/12 09:36:12 nicm Exp $ */
+/* $OpenBSD: cmd-list-keys.c,v 1.63 2021/04/13 16:00:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -165,7 +165,7 @@ cmd_list_keys_exec(struct cmd *self, struct cmdq_item *item)
 			cmdq_error(item, "invalid key: %s", args->argv[0]);
 			return (CMD_RETURN_ERROR);
 		}
-		only &= KEYC_MASK_KEY;
+		only &= (KEYC_MASK_KEY|KEYC_MASK_MODIFIERS);
 	}
 
 	tablename = args_get(args, 'T');
