@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.44 2020/06/26 07:28:46 stsp Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.45 2021/04/13 14:20:24 stsp Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -838,6 +838,8 @@ duplicate(struct range *r1, struct range *r2)
 		do {
 			c = getc(fp[0]);
 			d = getc(fp[1]);
+			if (c == -1 && d == -1)
+				break;
 			if (c == -1 || d== -1)
 				return (-1);
 			nchar++;
