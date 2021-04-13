@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_txt.c,v 1.34 2020/04/30 10:40:21 millert Exp $	*/
+/*	$OpenBSD: v_txt.c,v 1.35 2021/04/13 15:34:41 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -1214,7 +1214,8 @@ leftmargin:		tp->lb[tp->cno - 1] = ' ';
 		hexcnt = 1;
 		goto insq_ch;
 	case K_TAB:
-		if (quote != Q_VTHIS && O_ISSET(sp, O_EXPANDTAB)) {
+		if (sp->showmode != SM_COMMAND && quote != Q_VTHIS &&
+		    O_ISSET(sp, O_EXPANDTAB)) {
 			if (txt_dent(sp, tp, O_TABSTOP, 1))
 				goto err;
 			goto ebuf_chk;
