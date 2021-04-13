@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.30 2021/04/13 15:45:22 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.31 2021/04/13 15:53:20 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -335,6 +335,7 @@ tls12_tests = TestGroup("TLSv1.2 tests", [
     Test("test-fuzzed-ciphertext.py"),
     Test("test-fuzzed-finished.py"),
     Test("test-fuzzed-padding.py"),
+    Test("test-fuzzed-plaintext.py"), # fails once in a while
     Test("test-hello-request-by-client.py"),
     Test("test-invalid-cipher-suites.py"),
     Test("test-invalid-content-type.py"),
@@ -388,8 +389,6 @@ tls12_slow_tests = TestGroup("slow TLSv1.2 tests", [
     Test("test-dhe-no-shared-secret-padding.py", tls12_exclude_legacy_protocols),
     Test("test-ecdhe-padded-shared-secret.py", tls12_exclude_legacy_protocols),
     Test("test-ecdhe-rsa-key-share-random.py", tls12_exclude_legacy_protocols),
-    # This test has some failures once in a while.
-    Test("test-fuzzed-plaintext.py"),
 ])
 
 tls12_failing_tests = TestGroup("failing TLSv1.2 tests", [
