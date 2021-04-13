@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.29 2021/04/13 15:35:20 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.30 2021/04/13 15:45:22 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -419,26 +419,15 @@ tls12_failing_tests = TestGroup("failing TLSv1.2 tests", [
     Test("test-clienthello-md5.py"),
 
     # Tests expect an illegal_parameter or a decode_error alert.  Should be
-    * added to ssl3_get_client_key_exchange on kex function failure.
+    # added to ssl3_get_client_key_exchange on kex function failure.
     Test("test-ecdhe-rsa-key-exchange-with-bad-messages.py"),
 
-    # We send a handshake_failure while the test expects to succeed
+    # We send a handshake_failure due to no shared ciphers while the
+    # test expects to succeed.
     Test("test-ecdhe-rsa-key-exchange.py"),
-
-    # unsupported?
-    Test("test-extended-master-secret-extension-with-client-cert.py"),
 
     # no shared cipher
     Test("test-ecdsa-sig-flexibility.py"),
-
-    # unsupported
-    Test("test-encrypt-then-mac-renegotiation.py"),
-    Test("test-encrypt-then-mac.py"),
-    Test("test-extended-master-secret-extension.py"),
-    Test("test-ffdhe-expected-params.py"),
-    Test("test-ffdhe-negotiation.py"),
-    # unsupported. Expects the server to send the heartbeat extension
-    Test("test-heartbeat.py"),
 
     # 29 succeed, 263 fail:
     #   'n extensions', 'n extensions last empty' n in 4086, 4096, 8192, 16383
@@ -553,6 +542,17 @@ tls12_unsupported_tests = TestGroup("TLSv1.2 for unsupported features", [
     Test("test-SSLv3-padding.py"),
     # we don't do RSA key exchanges
     Test("test-bleichenbacher-timing.py"),
+    # no encrypt-then-mac
+    Test("test-encrypt-then-mac-renegotiation.py"),
+    Test("test-encrypt-then-mac.py"),
+    # no EME support
+    Test("test-extended-master-secret-extension-with-client-cert.py"),
+    Test("test-extended-master-secret-extension.py"),
+    # no ffdhe
+    Test("test-ffdhe-expected-params.py"),
+    Test("test-ffdhe-negotiation.py"),
+    # expects the server to send the heartbeat extension
+    Test("test-heartbeat.py"),
 ])
 
 # These tests take a ton of time to fail against an 1.3 server,
