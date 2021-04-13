@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.8 2018/12/03 18:39:42 bluhm Exp $ */
+/*	$OpenBSD: util.c,v 1.9 2021/04/13 08:21:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -52,7 +52,9 @@
 #include <sys/srp.h>
 
 #include <net/rtable.h>
+#define _KERNEL
 #include <net/route.h>
+#undef _KERNEL
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -281,6 +283,18 @@ rt_maskedcopy(struct sockaddr *src, struct sockaddr *dst,
 }
 
 void
+rtref(struct rtentry *rt)
+{
+	rt->rt_refcnt++;
+}
+
+void
+rtfree(struct rtentry *rt)
+{
+	assert(--(rt->rt_refcnt) >= 0);
+}
+
+void
 in_prefixlen2mask(struct in_addr *maskp, int plen)
 {
 	if (plen == 0)
@@ -341,11 +355,7 @@ rt_plentosa(sa_family_t af, int plen, struct sockaddr_in6 *sa_mask)
 struct sockaddr *
 rt_plen2mask(struct rtentry *rt, struct sockaddr_in6 *sa_mask)
 {
-#ifndef ART
-	return (rt_mask(rt));
-#else
 	return (rt_plentosa(rt_key(rt)->sa_family, rt_plen(rt), sa_mask));
-#endif /* ART */
 }
 
 

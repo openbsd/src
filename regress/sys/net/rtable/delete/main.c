@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.6 2019/06/24 12:33:36 visa Exp $ */
+/*	$OpenBSD: main.c,v 1.7 2021/04/13 08:21:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -20,21 +20,17 @@
 
 #include <sys/socket.h>
 #include <net/route.h>
+#include <net/rtable.h>
+#include <net/art.h>
 
+#include <assert.h>
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "util.h"
 
-#ifdef ART
-#include <net/rtable.h>
-#include <net/art.h>
-
-#include <assert.h>
-
 extern void  *rtable_get(unsigned int, sa_family_t);
-#endif /* ART */
 
 __dead void
 usage(void)
@@ -62,12 +58,10 @@ main(int argc, char *argv[])
 
 	rtable_walk(0, AF_INET6, NULL, rtentry_dump, NULL);
 
-#ifdef ART
 	struct art_root *ar;
 	ar = rtable_get(0, AF_INET6);
 	assert(ar != NULL);
 	assert(ar->ar_root.ref == NULL);
-#endif /* ART */
 
 	return (0);
 }

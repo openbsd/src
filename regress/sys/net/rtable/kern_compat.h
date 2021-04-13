@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_compat.h,v 1.11 2020/11/07 09:53:21 denis Exp $	*/
+/*	$OpenBSD: kern_compat.h,v 1.12 2021/04/13 08:21:12 claudio Exp $	*/
 
 #ifndef _KERN_COMPAT_H_
 #define _KERN_COMPAT_H_
@@ -7,6 +7,7 @@
 #include <sys/domain.h>
 #include <sys/queue.h>
 #include <sys/mutex.h>
+#include <sys/rwlock.h>
 #include <sys/task.h>
 #include <sys/select.h>
 #include <arpa/inet.h>
@@ -14,6 +15,7 @@
 #include <assert.h>
 #include <err.h>
 #include <errno.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,6 +23,7 @@
 
 #include "srp_compat.h"
 
+#define _KERNEL
 #define DIAGNOSTIC
 #define INET
 #define INET6
@@ -53,9 +56,6 @@ struct pool {
 #ifndef nitems
 #define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
 #endif
-
-#define rtref(_rt)		((_rt)->rt_refcnt++)
-#define rtfree(_rt)		(assert(--(_rt)->rt_refcnt >= 0))
 
 #ifndef IPL_NONE
 #define IPL_NONE 0
