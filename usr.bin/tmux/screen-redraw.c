@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-redraw.c,v 1.83 2021/02/05 12:29:18 nicm Exp $ */
+/* $OpenBSD: screen-redraw.c,v 1.84 2021/04/13 05:25:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -604,8 +604,8 @@ screen_redraw_screen(struct client *c)
 		return;
 
 	screen_redraw_set_context(c, &ctx);
-	tty_update_mode(&c->tty, c->tty.mode, NULL);
 	tty_sync_start(&c->tty);
+	tty_update_mode(&c->tty, c->tty.mode, NULL);
 
 	if (flags & (CLIENT_REDRAWWINDOW|CLIENT_REDRAWBORDERS)) {
 		log_debug("%s: redrawing borders", c->name);
@@ -640,8 +640,8 @@ screen_redraw_pane(struct client *c, struct window_pane *wp)
 		return;
 
 	screen_redraw_set_context(c, &ctx);
-	tty_update_mode(&c->tty, c->tty.mode, NULL);
 	tty_sync_start(&c->tty);
+	tty_update_mode(&c->tty, c->tty.mode, NULL);
 
 	screen_redraw_draw_pane(&ctx, wp);
 
