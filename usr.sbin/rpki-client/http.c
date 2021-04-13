@@ -1,4 +1,4 @@
-/*      $OpenBSD: http.c,v 1.27 2021/04/09 06:52:50 claudio Exp $  */
+/*      $OpenBSD: http.c,v 1.28 2021/04/13 13:54:15 claudio Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -259,17 +259,15 @@ http_resolv(struct http_connection *conn, const char *host, const char *port)
 }
 
 static void
-http_done(struct http_connection *conn, enum http_result res)
+http_done(size_t id, enum http_result res, const char *last_modified)
 {
 	struct ibuf *b;
 
-	conn->state = STATE_DONE;
-
 	if ((b = ibuf_dynamic(64, UINT_MAX)) == NULL)
 		err(1, NULL);
-	io_simple_buffer(b, &conn->id, sizeof(conn->id));
+	io_simple_buffer(b, &id, sizeof(id));
 	io_simple_buffer(b, &res, sizeof(res));
-	io_str_buffer(b, conn->last_modified);
+	io_str_buffer(b, last_modified);
 	ibuf_close(&msgq, b);
 }
 
@@ -406,6 +404,43 @@ http_new(size_t id, char *uri, char *modified_since, int outfd)
 }
 
 static int
+http_connect_done(struct http_connection *conn)
+{
+	freeaddrinfo(conn->res0);
+	conn->res0 = NULL;
+	conn->res = NULL;
+
+#if 0
+	/* TODO proxy connect */
+	if (proxyenv)
+		proxy_connect(conn->fd, sslhost, proxy_credentials); */
+#endif
+
+	return 0;
+}
+
+static int
+http_finish_connect(struct http_connection *conn)
+{
+	int error = 0;
+	socklen_t len;
+
+	len = sizeof(error);
+	if (getsockopt(conn->fd, SOL_SOCKET, SO_ERROR, &error, &len) == -1) {
+		warn("%s: getsockopt SO_ERROR", http_info(conn->url));
+		/* connection will be closed by http_connect() */
+		return -1;
+	}
+	if (error != 0) {
+		errno = error;
+		warn("%s: connect", http_info(conn->url));
+		return -1;
+	}
+
+	return http_connect_done(conn);
+}
+
+static int
 http_connect(struct http_connection *conn)
 {
 	const char *cause = NULL;
@@ -472,47 +507,7 @@ http_connect(struct http_connection *conn)
 		return -1;
 	}
 
-	freeaddrinfo(conn->res0);
-	conn->res0 = NULL;
-	conn->res = NULL;
-
-#if 0
-	/* TODO proxy connect */
-	if (proxyenv)
-		proxy_connect(conn->fd, sslhost, proxy_credentials); */
-#endif
-	return 0;
-}
-
-static int
-http_finish_connect(struct http_connection *conn)
-{
-	int error = 0;
-	socklen_t len;
-
-	len = sizeof(error);
-	if (getsockopt(conn->fd, SOL_SOCKET, SO_ERROR, &error, &len) == -1) {
-		warn("%s: getsockopt SO_ERROR", http_info(conn->url));
-		/* connection will be closed by http_connect() */
-		return -1;
-	}
-	if (error != 0) {
-		errno = error;
-		warn("%s: connect", http_info(conn->url));
-		return -1;
-	}
-
-	freeaddrinfo(conn->res0);
-	conn->res0 = NULL;
-	conn->res = NULL;
-
-#if 0
-	/* TODO proxy connect */
-	if (proxyenv)
-		proxy_connect(conn->fd, sslhost, proxy_credentials); */
-#endif
-
-	return 0;
+	return http_connect_done(conn);
 }
 
 static int
@@ -838,7 +833,8 @@ http_parse_chunked(struct http_connection *conn, char *buf)
 	conn->iosz = chunksize;
 
 	if (conn->iosz == 0) {
-		http_done(conn, HTTP_OK);
+		http_done(conn->id, HTTP_OK, conn->last_modified);
+		conn->state = STATE_DONE;
 		return 0;
 	}
 
@@ -985,7 +981,8 @@ data_write(struct http_connection *conn)
 
 	/* check if regular file transfer is finished */
 	if (!conn->chunked && conn->iosz == 0) {
-		http_done(conn, HTTP_OK);
+		http_done(conn->id, HTTP_OK, conn->last_modified);
+		conn->state = STATE_DONE;
 		return 0;
 	}
 
@@ -1088,9 +1085,12 @@ http_nextstep(struct http_connection *conn)
 			conn->state = STATE_RESPONSE_DATA;
 		} else {
 			if (conn->status == 304)
-				http_done(conn, HTTP_NOT_MOD);
+				http_done(conn->id, HTTP_NOT_MOD,
+				    conn->last_modified);
 			else
-				http_done(conn, HTTP_FAILED);
+				http_done(conn->id, HTTP_FAILED,
+				    conn->last_modified);
+			conn->state = STATE_DONE;
 			return http_close(conn);
 		}
 		return WANT_POLLIN;
