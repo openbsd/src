@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.4 2021/04/07 14:19:31 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.5 2021/04/13 13:35:59 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -778,6 +778,10 @@ rrdp_handle_file(size_t id, enum publish_type pt, char *uri,
 	if (pt == PUB_DEL) {
 		filepath_add(&rr->deleted, uri);
 	} else {
+		fp = filepath_find(&rr->deleted, uri);
+		if (fp != NULL)
+			filepath_put(&rr->deleted, fp);
+
 		/* add new file to temp dir */
 		if ((fn = rrdp_filename(rr, uri, 1)) == NULL)
 			return 0;
