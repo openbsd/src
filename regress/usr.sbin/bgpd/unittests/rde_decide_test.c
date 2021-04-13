@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide_test.c,v 1.4 2021/01/22 17:18:13 claudio Exp $ */
+/*	$OpenBSD: rde_decide_test.c,v 1.5 2021/04/13 07:43:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -345,6 +345,12 @@ rde_local_as(void)
 }
 
 int
+rde_evaluate_all(void)
+{
+        return 0;
+}
+
+int
 as_set_match(const struct as_set *aset, u_int32_t asnum)
 {
 	errx(1, __func__);
@@ -357,7 +363,8 @@ rib_byid(u_int16_t id)
 }
 
 void
-rde_generate_updates(struct rib *rib, struct prefix *new, struct prefix *old)
+rde_generate_updates(struct rib *rib, struct prefix *new, struct prefix *old,
+    int eval_all)
 {
 	/* maybe we want to do something here */
 }
