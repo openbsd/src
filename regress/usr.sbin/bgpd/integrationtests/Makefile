@@ -1,7 +1,8 @@
-# $OpenBSD: Makefile,v 1.13 2021/02/10 16:37:29 claudio Exp $
+# $OpenBSD: Makefile,v 1.14 2021/04/13 07:39:17 claudio Exp $
 
 REGRESS_TARGETS	= 	network_statement md5 ovs mrt \
-			maxprefix maxprefixout as0 med
+			maxprefix maxprefixout as0 med \
+			eval_all
 
 BGPD ?=			/usr/sbin/bgpd
 
@@ -43,12 +44,13 @@ med:
 	    ${.IMPSRC} > ${.TARGET} || \
 	(rm ${.TARGET} && exit 1)
 
-AS0_CONFS = 	exabgp.as0.test1.conf exabgp.as0.test2.conf
-
-as0: api-exabgp ${AS0_CONFS}
+as0: api-exabgp exabgp.as0.test1.conf exabgp.as0.test2.conf
 	${SUDO} ksh ${.CURDIR}/$@.sh ${BGPD} ${.CURDIR} 11 12 pair11 pair12
 
 med: api-exabgp exabgp.med.conf
+	${SUDO} ksh ${.CURDIR}/$@.sh ${BGPD} ${.CURDIR} 11 12 pair11 pair12
+
+eval_all: api-exabgp exabgp.eval_all.conf
 	${SUDO} ksh ${.CURDIR}/$@.sh ${BGPD} ${.CURDIR} 11 12 pair11 pair12
 
 .endif

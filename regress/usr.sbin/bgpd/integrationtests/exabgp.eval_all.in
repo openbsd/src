@@ -1,0 +1,72 @@
+process reader {
+	run "##OBJDIR##/api-exabgp" "##OBJDIR##/eval_all.fifo";
+	encoder text;
+}
+
+neighbor 10.12.57.1 {
+	router-id 10.12.57.2;
+	local-address 10.12.57.2;
+	local-as 64501;
+	peer-as 64500;
+	group-updates;
+	adj-rib-in false;
+	passive false;
+
+	family {
+		ipv4 unicast;
+	}
+
+	static {
+		route 10.12.1.0/24 next-hop self;
+		route 10.12.2.0/24 next-hop self community [ 64500:64503 64500:64504 ];
+		route 10.12.3.0/24 next-hop self community [ 64500:64503 64500:64504 ];
+	}
+}
+
+neighbor 10.12.57.1 {
+	router-id 10.12.57.3;
+	local-address 10.12.57.3;
+	local-as 64502;
+	peer-as 64500;
+	group-updates;
+	adj-rib-in false;
+	passive false;
+
+	family {
+		ipv4 unicast;
+	}
+
+	static {
+		route 10.12.1.0/24 next-hop self;
+		route 10.12.2.0/24 next-hop self;
+		route 10.12.3.0/24 next-hop self community [ 64500:64503 64500:64504 ];
+	}
+}
+
+neighbor 10.12.57.1 {
+	router-id 10.12.57.4;
+	local-address 10.12.57.4;
+	local-as 64503;
+	peer-as 64500;
+	group-updates;
+	adj-rib-in false;
+	passive false;
+
+	family {
+		ipv4 unicast;
+	}
+}
+
+neighbor 10.12.57.1 {
+	router-id 10.12.57.5;
+	local-address 10.12.57.5;
+	local-as 64504;
+	peer-as 64500;
+	group-updates;
+	adj-rib-in false;
+	passive false;
+
+	family {
+		ipv4 unicast;
+	}
+}
