@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.32 2021/04/13 15:59:14 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.33 2021/04/13 16:16:06 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -377,6 +377,15 @@ tls12_tests = TestGroup("TLSv1.2 tests", [
     ),
     Test("test-fallback-scsv.py", tls13_args = ["--tls-1.3"] ),
 
+    Test("test-invalid-compression-methods.py", [
+        "-x", "invalid compression methods",
+        "-X", 'Expected alert description "illegal_parameter" '
+        'does not match received "decode_error"',
+        "-x", "only deflate compression method",
+        "-X", 'Expected alert description "illegal_parameter" '
+        'does not match received "decode_error"',
+    ]),
+
     # Without --sig-algs-drop-ok, two tests fail since we do not currently
     # implement the signature_algorithms_cert extension (although we MUST).
     Test("test-sig-algs-renegotiation-resumption.py", ["--sig-algs-drop-ok"]),
@@ -451,10 +460,6 @@ tls12_failing_tests = TestGroup("failing TLSv1.2 tests", [
 
     # Lots of failures. abrupt closure
     Test("test-invalid-client-hello.py"),
-
-    # Test expects illegal_parameter, we send decode_error in ssl_srvr.c:1016
-    # Need to check that this is correct.
-    Test("test-invalid-compression-methods.py"),
 
     # abrupt closure
     # 'encrypted premaster set to all zero (n)' n in 256 384 512
