@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.28 2021/04/08 17:11:43 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.29 2021/04/13 15:35:20 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -418,7 +418,8 @@ tls12_failing_tests = TestGroup("failing TLSv1.2 tests", [
     # unknown signature algorithms
     Test("test-clienthello-md5.py"),
 
-    # Tests expect an illegal_parameter alert
+    # Tests expect an illegal_parameter or a decode_error alert.  Should be
+    * added to ssl3_get_client_key_exchange on kex function failure.
     Test("test-ecdhe-rsa-key-exchange-with-bad-messages.py"),
 
     # We send a handshake_failure while the test expects to succeed
