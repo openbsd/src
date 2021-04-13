@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.28 2020/04/30 10:40:21 millert Exp $	*/
+/*	$OpenBSD: options.c,v 1.29 2021/04/13 15:39:21 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -182,7 +182,7 @@ OPTLIST const optlist[] = {
 /* O_WARN	    4BSD */
 	{"warn",	NULL,		OPT_1BOOL,	0},
 /* O_WINDOW	    4BSD */
-	{"window",	f_window,	OPT_NUM,	0},
+	{"window",	f_window,	OPT_NUM,	OPT_NOZERO},
 /* O_WINDOWNAME	    4BSD */
 	{"windowname",	NULL,		OPT_0BOOL,	0},
 /* O_WRAPLEN	  4.4BSD */
