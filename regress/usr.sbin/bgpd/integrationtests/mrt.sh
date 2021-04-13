@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: mrt.sh,v 1.3 2019/08/06 07:31:53 claudio Exp $
+#	$OpenBSD: mrt.sh,v 1.4 2021/04/13 07:38:23 claudio Exp $
 
 set -e
 
@@ -52,7 +52,7 @@ sleep 2
 for i in table-v2 table-mp table; do
 	echo test $i
 	bgpctl show mrt detail file mrt-$i.mrt | \
-		grep -v 'Last update:' > mrt-$i.out
+		grep -v 'Last update:' | tee mrt-$i.out
 	diff -u ${BGPDCONFIGDIR}/mrt-$i.ok mrt-$i.out
 done
 
