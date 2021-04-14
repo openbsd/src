@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.3 2021/01/09 13:14:02 kettenis Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.4 2021/04/14 18:35:14 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -76,7 +76,7 @@ restore_vsx(struct proc *p)
 
 	isync();
 
-	__asm volatile ("lfs %%f0, 0(%0); mtfsf 0xff,%%f0"
+	__asm volatile ("lfd %%f0, 0(%0); mtfsf 0xff,%%f0"
 	    :: "b"(&fp->fp_fpscr));
 	__asm volatile ("vxor %%v0, %%v0, %%v0; lvewx %%v0, 0, %0; mtvscr %%v0"
 	    :: "b"(&fp->fp_vscr));
