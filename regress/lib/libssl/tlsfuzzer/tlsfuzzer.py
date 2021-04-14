@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.37 2021/04/14 14:29:16 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.38 2021/04/14 14:54:30 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -172,7 +172,6 @@ tls13_tests = TestGroup("TLSv1.3 tests", [
     Test("test-tls13-finished-plaintext.py"),
     Test("test-tls13-hrr.py"),
     Test("test-tls13-keyshare-omitted.py"),
-    Test("test-tls13-keyupdate.py"),
     Test("test-tls13-legacy-version.py"),
     Test("test-tls13-nociphers.py"),
     Test("test-tls13-record-padding.py"),
@@ -202,7 +201,9 @@ tls13_slow_tests = TestGroup("slow TLSv1.3 tests", [
     # correct decode_error while we send a decrypt_error (like fizz/boring).
     Test("test-tls13-record-layer-limits.py", [
         "-x", "max size payload (2**14) of Finished msg, with 16348 bytes of left padding, cipher TLS_AES_128_GCM_SHA256",
+        "-X", substitute_alert("decode_error", "decrypt_error"),
         "-x", "max size payload (2**14) of Finished msg, with 16348 bytes of left padding, cipher TLS_CHACHA20_POLY1305_SHA256",
+        "-X", substitute_alert("decode_error", "decrypt_error"),
     ]),
     # We don't accept an empty ECPF extension since it must advertise the
     # uncompressed point format. Exclude this extension type from the test.
@@ -267,6 +268,14 @@ tls13_failing_tests = TestGroup("failing TLSv1.3 tests", [
 tls13_slow_failing_tests = TestGroup("slow, failing TLSv1.3 tests", [
     # Other test failures bugs in keyshare/tlsext negotiation?
     Test("test-tls13-unrecognised-groups.py"),    # unexpected closure
+
+    # 5 occasional failures:
+    #   'app data split, conversation with KeyUpdate msg'
+    #   'fragmented keyupdate msg'
+    #   'multiple KeyUpdate messages'
+    #   'post-handshake KeyUpdate msg with update_not_request'
+    #   'post-handshake KeyUpdate msg with update_request'
+    Test("test-tls13-keyupdate.py"),
 
     Test("test-tls13-symetric-ciphers.py"),       # unexpected message from peer
 
