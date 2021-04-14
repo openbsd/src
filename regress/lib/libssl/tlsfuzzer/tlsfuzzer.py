@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.35 2021/04/14 13:37:59 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.36 2021/04/14 14:19:51 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -496,9 +496,6 @@ tls12_failing_tests = TestGroup("failing TLSv1.2 tests", [
     # unexpected closure
     Test("test-openssl-3712.py"),
 
-    # wants --reply-AD-size
-    Test("test-record-size-limit.py"),
-
     # failed: 3 (expect an alert, we send AD)
     # 'try insecure (legacy) renegotiation with incomplete GET'
     # 'try secure renegotiation with GET after 2nd CH'
@@ -550,6 +547,8 @@ tls12_unsupported_tests = TestGroup("TLSv1.2 for unsupported features", [
     # no ffdhe
     Test("test-ffdhe-expected-params.py"),
     Test("test-ffdhe-negotiation.py"),
+    # record_size_limit/max_fragment_length extension (RFC 8449)
+    Test("test-record-size-limit.py"),
     # expects the server to send the heartbeat extension
     Test("test-heartbeat.py"),
 ])
