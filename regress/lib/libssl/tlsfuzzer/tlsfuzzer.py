@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.36 2021/04/14 14:19:51 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.37 2021/04/14 14:29:16 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -172,6 +172,7 @@ tls13_tests = TestGroup("TLSv1.3 tests", [
     Test("test-tls13-finished-plaintext.py"),
     Test("test-tls13-hrr.py"),
     Test("test-tls13-keyshare-omitted.py"),
+    Test("test-tls13-keyupdate.py"),
     Test("test-tls13-legacy-version.py"),
     Test("test-tls13-nociphers.py"),
     Test("test-tls13-record-padding.py"),
@@ -266,14 +267,6 @@ tls13_failing_tests = TestGroup("failing TLSv1.3 tests", [
 tls13_slow_failing_tests = TestGroup("slow, failing TLSv1.3 tests", [
     # Other test failures bugs in keyshare/tlsext negotiation?
     Test("test-tls13-unrecognised-groups.py"),    # unexpected closure
-
-    # 5 failures:
-    #   'app data split, conversation with KeyUpdate msg'
-    #   'fragmented keyupdate msg'
-    #   'multiple KeyUpdate messages'
-    #   'post-handshake KeyUpdate msg with update_not_request'
-    #   'post-handshake KeyUpdate msg with update_request'
-    Test("test-tls13-keyupdate.py"),
 
     Test("test-tls13-symetric-ciphers.py"),       # unexpected message from peer
 
