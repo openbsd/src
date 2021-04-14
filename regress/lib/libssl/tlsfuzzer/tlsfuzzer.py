@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.33 2021/04/13 16:16:06 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.34 2021/04/14 13:06:53 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -68,13 +68,16 @@ tls13_unsupported_ciphers = [
     "-e", "TLS 1.3 with x448",
 ]
 
+def substitute_alert(want, got):
+    return f"Expected alert description \"{want}\" " \
+        + f"does not match received \"{got}\""
+
 # test-tls13-finished.py has 70 failing tests that expect a "decode_error"
 # instead of the "decrypt_error" sent by tls13_server_finished_recv().
 # Both alerts appear to be reasonable in this context, so work around this
 # in the test instead of the library.
 def generate_test_tls13_finished_args():
-    assertion = "Expected alert description \"decode_error\""
-    assertion += " does not match received \"decrypt_error\""
+    assertion = substitute_alert("decode_error", "decrypt_error");
     paddings = [
         ("TLS_AES_128_GCM_SHA256", 0, 1),
         ("TLS_AES_128_GCM_SHA256", 0, 2),
@@ -379,11 +382,9 @@ tls12_tests = TestGroup("TLSv1.2 tests", [
 
     Test("test-invalid-compression-methods.py", [
         "-x", "invalid compression methods",
-        "-X", 'Expected alert description "illegal_parameter" '
-        'does not match received "decode_error"',
+        "-X", substitute_alert("illegal_parameter", "decode_error"),
         "-x", "only deflate compression method",
-        "-X", 'Expected alert description "illegal_parameter" '
-        'does not match received "decode_error"',
+        "-X", substitute_alert("illegal_parameter", "decode_error"),
     ]),
 
     # Without --sig-algs-drop-ok, two tests fail since we do not currently
