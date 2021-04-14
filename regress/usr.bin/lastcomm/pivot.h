@@ -1,5 +1,3 @@
-/*	$OpenBSD: pivot.h,v 1.1 2019/09/10 19:01:24 bluhm Exp $	*/
-
 #ifndef REGRESS_PIVOT_H
 #define REGRESS_PIVOT_H
 
@@ -12,6 +10,10 @@ static void pivot(void *newstack) {
     asm("mov %0, %%esp; retl;" ::"r"(newstack));
 #elif defined(__mips64__)
     asm("move $sp, %0; ld $ra, 0($sp); jr $ra;" ::"r"(newstack));
+#elif defined(__powerpc64__)
+    asm("mr %%r1, %0; ld %%r3, 0(%%r1); mtlr %%r3; blr;" ::"r"(newstack));
+#elif defined(__powerpc__)
+    asm("mr %%r1, %0; lwz %%r3, 0(%%r1); mtlr %%r3; blr;" ::"r"(newstack));
 #endif
 }
 

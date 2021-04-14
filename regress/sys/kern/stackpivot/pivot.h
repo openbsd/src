@@ -1,7 +1,7 @@
 #ifndef REGRESS_PIVOT_H
 #define REGRESS_PIVOT_H
 
-static void pivot(size_t *newstack) {
+static void pivot(void *newstack) {
 #if defined(__aarch64__)
     asm("mov sp, %0; ldr lr, [sp]; ret;" ::"r"(newstack));
 #elif defined(__amd64__)
