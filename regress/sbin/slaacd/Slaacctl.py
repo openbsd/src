@@ -1,4 +1,4 @@
-# $OpenBSD: Slaacctl.py,v 1.3 2020/12/25 14:25:58 bluhm Exp $
+# $OpenBSD: Slaacctl.py,v 1.4 2021/04/14 12:32:56 bluhm Exp $
 
 # Copyright (c) 2017 Florian Obser <florian@openbsd.org>
 # Copyright (c) 2020 Alexander Bluhm <bluhm@openbsd.org>
@@ -26,7 +26,7 @@ class ShowInterface(object):
 		self.debug = debug
 		self.index = None
 		self.running = None
-		self.privacy = None
+		self.temporary = None
 		self.lladdr = None
 		self.linklocal = None
 		self.RAs = []
@@ -43,7 +43,7 @@ class ShowInterface(object):
 		rep[self.ifname] = iface
 		iface['index'] = self.index
 		iface['running'] = self.running
-		iface['privacy'] = self.privacy
+		iface['temporary'] = self.temporary
 		iface['lladdr'] = self.lladdr
 		iface['linklocal'] = self.linklocal
 		iface['RAs'] = self.RAs
@@ -73,10 +73,10 @@ class ShowInterface(object):
 				state = 'IFINFO'
 			elif state == 'IFINFO':
 				m = re.match("^\s+index:\s+(\d+)\s+running:"
-				    + "\s+(\w+)\s+privacy:\s+(\w+)", line)
+				    + "\s+(\w+)\s+temporary:\s+(\w+)", line)
 				self.index = m.group(1)
 				self.running = m.group(2)
-				self.privacy = m.group(3)
+				self.temporary = m.group(3)
 				state = 'IFLLADDR'
 			elif state == 'IFLLADDR':
 				self.lladdr = re.match("^\s+lladdr:\s+(.*)",
@@ -169,7 +169,7 @@ class ShowInterface(object):
 				state = 'RAOPTIONS'
 			elif state == 'ADDRESS_PROPOSAL':
 				is_id = re.match("^\s+id:\s+(\d+), "
-				    + "state:\s+(.+), privacy: (.+)", line)
+				    + "state:\s+(.+), temporary: (.+)", line)
 				is_defrouter = re.match("\s+Default router "
 				    + "proposals", line)
 				if is_id:
@@ -178,7 +178,7 @@ class ShowInterface(object):
 					    addr_proposal)
 					addr_proposal['id'] = is_id.group(1)
 					addr_proposal['state'] = is_id.group(2)
-					addr_proposal['privacy'] = \
+					addr_proposal['temporary'] = \
 					    is_id.group(3)
 					state = 'ADDRESS_PROPOSAL_LIFETIME'
 				elif is_defrouter:
