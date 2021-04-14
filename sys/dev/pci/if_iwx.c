@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.50 2021/03/17 15:59:27 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.51 2021/04/14 18:38:54 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -7711,6 +7711,7 @@ static const struct pci_matchid iwx_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_2 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_3 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_4,},
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_5,},
 };
 
 static const struct pci_matchid iwx_subsystem_id_ax201[] = {
@@ -7751,6 +7752,7 @@ iwx_match(struct device *parent, iwx_match_t match __unused, void *aux)
 	case PCI_PRODUCT_INTEL_WL_22500_2: /* AX201 */
 	case PCI_PRODUCT_INTEL_WL_22500_3: /* AX201 */
 	case PCI_PRODUCT_INTEL_WL_22500_4: /* AX201 */
+	case PCI_PRODUCT_INTEL_WL_22500_5: /* AX201 */
 		for (i = 0; i < nitems(iwx_subsystem_id_ax201); i++) {
 			if (svid == iwx_subsystem_id_ax201[i].pm_vid &&
 			    spid == iwx_subsystem_id_ax201[i].pm_pid)
@@ -7938,6 +7940,7 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	case PCI_PRODUCT_INTEL_WL_22500_2:
 	case PCI_PRODUCT_INTEL_WL_22500_3:
+	case PCI_PRODUCT_INTEL_WL_22500_5:
 		if (sc->sc_hw_rev != IWX_CSR_HW_REV_TYPE_QUZ) {
 			printf("%s: unsupported AX201 adapter\n", DEVNAME(sc));
 			return;
