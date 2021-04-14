@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.34 2021/04/14 13:06:53 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.35 2021/04/14 13:37:59 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -347,6 +347,7 @@ tls12_tests = TestGroup("TLSv1.2 tests", [
     Test("test-lucky13.py"),
     Test("test-message-skipping.py"),
     Test("test-no-heartbeat.py"),
+    Test("test-record-layer-fragmentation.py"),
     Test("test-sessionID-resumption.py"),
     Test("test-sslv2-connection.py"),
     Test("test-truncating-of-finished.py"),
@@ -494,12 +495,6 @@ tls12_failing_tests = TestGroup("failing TLSv1.2 tests", [
 
     # unexpected closure
     Test("test-openssl-3712.py"),
-
-    # 3 failures:
-    # 'big, needs fragmentation: max fragment - 16336B extension'
-    # 'big, needs fragmentation: max fragment - 32768B extension'
-    # 'maximum size: max fragment - 65531B extension'
-    Test("test-record-layer-fragmentation.py"),
 
     # wants --reply-AD-size
     Test("test-record-size-limit.py"),
