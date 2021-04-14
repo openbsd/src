@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-wg.c,v 1.5 2020/07/20 02:24:24 kn Exp $ */
+/*	$OpenBSD: print-wg.c,v 1.6 2021/04/14 19:34:56 bluhm Exp $ */
 
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
@@ -25,10 +25,10 @@
 #include "interface.h"
 #include "extract.h"
 
-#define INITIATION	htole32(1)
-#define RESPONSE	htole32(2)
-#define COOKIE		htole32(3)
-#define DATA		htole32(4)
+#define INITIATION	1
+#define RESPONSE	2
+#define COOKIE		3
+#define DATA		4
 
 struct wg_initiation {
 	uint32_t	type;
