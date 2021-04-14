@@ -1,4 +1,4 @@
-.\"	$OpenBSD: passwd.1,v 1.46 2019/04/23 17:52:12 schwarze Exp $
+.\"	$OpenBSD: passwd.1,v 1.47 2021/04/14 13:59:59 millert Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)passwd.1	6.11 (Berkeley) 7/24/91
 .\"
-.Dd $Mdocdate: April 23 2019 $
+.Dd $Mdocdate: April 14 2021 $
 .Dt PASSWD 1
 .Os
 .Sh NAME
@@ -51,9 +51,6 @@ The new password must be entered twice to avoid typing errors.
 .Pp
 The new password should be at least six characters long and not
 purely alphabetic.
-Its total length must be less than
-.Dv _PASSWORD_LEN
-(currently 128 characters).
 A mixture of both lower and uppercase letters, numbers, and
 meta-characters is encouraged.
 .Pp
