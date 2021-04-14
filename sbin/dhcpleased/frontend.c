@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.9 2021/04/08 17:29:17 kn Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.10 2021/04/14 23:35:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -64,7 +64,7 @@ struct bpf_ev {
 	uint8_t			 buf[BPFLEN];
 };
 
-struct iface           {
+struct iface {
 	LIST_ENTRY(iface)	 entries;
 	struct bpf_ev		 bpfev;
 	struct imsg_ifinfo	 ifinfo;
@@ -567,13 +567,13 @@ init_ifaces(void)
 	if (getifaddrs(&ifap) != 0)
 		fatal("getifaddrs");
 
-	for(ifnidx = ifnidxp; ifnidx->if_index != 0 && ifnidx->if_name != NULL;
+	for (ifnidx = ifnidxp; ifnidx->if_index != 0 && ifnidx->if_name != NULL;
 	    ifnidx++) {
 		if_index = ifnidx->if_index;
 		if_name = ifnidx->if_name;
 		if ((flags = get_flags(if_name)) == -1)
 			continue;
-		if((xflags = get_xflags(if_name)) == -1)
+		if ((xflags = get_xflags(if_name)) == -1)
 			continue;
 		if (!(xflags & IFXF_AUTOCONF4))
 			continue;
@@ -590,7 +590,7 @@ init_ifaces(void)
 			if (ifa->ifa_addr == NULL)
 				continue;
 
-			switch(ifa->ifa_addr->sa_family) {
+			switch (ifa->ifa_addr->sa_family) {
 			case AF_LINK: {
 				struct if_data		*if_data;
 				struct sockaddr_dl	*sdl;

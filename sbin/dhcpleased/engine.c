@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.12 2021/04/09 14:46:39 martijn Exp $	*/
+/*	$OpenBSD: engine.c,v 1.13 2021/04/14 23:35:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -761,7 +761,7 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 				goto too_short;
 		}
 
-		switch(dho) {
+		switch (dho) {
 		case DHO_PAD:
 			if (log_getverbose() > 1)
 				log_debug("DHO_PAD");
@@ -913,7 +913,7 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 		}
 
 	}
-	while(rem != 0) {
+	while (rem != 0) {
 		if (*p != DHO_PAD)
 			break;
 		p++;
@@ -985,7 +985,7 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 			renewal_time = rebinding_time = 0;
 		}
 
-		if(renewal_time == 0)
+		if (renewal_time == 0)
 			renewal_time = lease_time / 2;
 		if (rebinding_time == 0)
 			rebinding_time = lease_time - (lease_time / 8);

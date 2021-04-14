@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleased.c,v 1.9 2021/03/27 18:10:38 florian Exp $	*/
+/*	$OpenBSD: dhcpleased.c,v 1.10 2021/04/14 23:35:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -411,7 +411,7 @@ main_dispatch_frontend(int fd, short event, void *bula)
 				    "%lu", __func__, IMSG_DATA_SIZE(imsg));
 			memcpy(&if_index, imsg.data, sizeof(if_index));
 			open_bpfsock(if_index);
-                        break;
+			break;
 #ifndef	SMALL
 		case IMSG_CTL_LOG_VERBOSE:
 			if (IMSG_DATA_SIZE(imsg) != sizeof(verbose))
