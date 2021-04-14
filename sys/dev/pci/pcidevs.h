@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1963 2021/04/09 20:58:20 mlarkin Exp 
+ *	OpenBSD: pcidevs,v 1.1964 2021/04/14 18:36:42 stsp Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3970,6 +3970,9 @@
 #define	PCI_PRODUCT_INTEL_JHL6340	0x15d9		/* JHL6340 Thunderbolt 3 */
 #define	PCI_PRODUCT_INTEL_JHL6340_PCIE	0x15da		/* JHL6340 Thunderbolt 3 */
 #define	PCI_PRODUCT_INTEL_JHL6340_XHCI	0x15db		/* JHL6340 Thunderbolt 3 */
+#define	PCI_PRODUCT_INTEL_JHL7540	0x15eb		/* JHL7540 Thunderbolt 3 */
+#define	PCI_PRODUCT_INTEL_JHL7540_PCIE	0x15ea		/* JHL7540 Thunderbolt 3 */
+#define	PCI_PRODUCT_INTEL_JHL7540_XHCI	0x15ec		/* JHL7540 Thunderbolt 3 */
 #define	PCI_PRODUCT_INTEL_I219_LM8	0x15df		/* I219-LM */
 #define	PCI_PRODUCT_INTEL_I219_V8	0x15e0		/* I219-V */
 #define	PCI_PRODUCT_INTEL_I219_LM9	0x15e1		/* I219-LM */
@@ -5006,6 +5009,7 @@
 #define	PCI_PRODUCT_INTEL_495SERIES_LP_XDCI	0x34ee		/* 495 Series xDCI */
 #define	PCI_PRODUCT_INTEL_495SERIES_LP_SRAM	0x34ef		/* 495 Series Shared SRAM */
 #define	PCI_PRODUCT_INTEL_WL_22500_4	0x34f0		/* Wi-Fi 6 AX201 */
+#define	PCI_PRODUCT_INTEL_WL_22500_5	0x06f0		/* Wi-Fi 6 AX201 */
 #define	PCI_PRODUCT_INTEL_495SERIES_LP_SDXC	0x34f8		/* 495 Series SDXC */
 #define	PCI_PRODUCT_INTEL_495SERIES_LP_GSPI_3	0x34fb		/* 495 Series GSPI */
 #define	PCI_PRODUCT_INTEL_495SERIES_LP_ISH	0x34fc		/* 495 Series ISH */

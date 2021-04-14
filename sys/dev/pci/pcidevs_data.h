@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1963 2021/04/09 20:58:20 mlarkin Exp 
+ *	OpenBSD: pcidevs,v 1.1964 2021/04/14 18:36:42 stsp Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -13292,6 +13292,18 @@ static const struct pci_known_product pci_known_products[] = {
 	    "JHL6340 Thunderbolt 3",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_JHL7540,
+	    "JHL7540 Thunderbolt 3",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_JHL7540_PCIE,
+	    "JHL7540 Thunderbolt 3",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_JHL7540_XHCI,
+	    "JHL7540 Thunderbolt 3",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_LM8,
 	    "I219-LM",
 	},
@@ -17433,6 +17445,10 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_4,
+	    "Wi-Fi 6 AX201",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_5,
 	    "Wi-Fi 6 AX201",
 	},
 	{
