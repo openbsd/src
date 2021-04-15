@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_CTX_new.3,v 1.15 2020/10/12 09:26:57 schwarze Exp $
+.\" $OpenBSD: SSL_CTX_new.3,v 1.16 2021/04/15 16:30:14 tb Exp $
 .\" full merge up to: OpenSSL 21cd6e00 Oct 21 14:40:15 2015 +0100
 .\" selective merge up to: OpenSSL 8f75443f May 24 14:04:26 2019 +0200
 .\"
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 12 2020 $
+.Dd $Mdocdate: April 15 2021 $
 .Dt SSL_CTX_NEW 3
 .Os
 .Sh NAME
@@ -76,7 +76,10 @@
 .Nm DTLS_client_method ,
 .Nm DTLSv1_method ,
 .Nm DTLSv1_server_method ,
-.Nm DTLSv1_client_method
+.Nm DTLSv1_client_method ,
+.Nm DTLSv1_2_method ,
+.Nm DTLSv1_2_server_method ,
+.Nm DTLSv1_2_client_method
 .Nd create a new SSL_CTX object as a framework for TLS enabled functions
 .Sh SYNOPSIS
 .In openssl/ssl.h
@@ -126,6 +129,12 @@
 .Fn DTLSv1_server_method void
 .Ft const SSL_METHOD *
 .Fn DTLSv1_client_method void
+.Ft const SSL_METHOD *
+.Fn DTLSv1_2_method void
+.Ft const SSL_METHOD *
+.Fn DTLSv1_2_server_method void
+.Ft const SSL_METHOD *
+.Fn DTLSv1_2_client_method void
 .Sh DESCRIPTION
 .Fn SSL_CTX_new
 creates a new
@@ -165,7 +174,7 @@ version mutually supported by the client and the server.
 The supported protocols are TLSv1, TLSv1.1, TLSv1.2, and TLSv1.3.
 .It Fn DTLS_method
 The version-flexible DTLS method.
-The currently supported protocol is DTLS 1.0.
+The currently supported protocols are DTLSv1 and DTLSv1.2.
 .El
 .Pp
 The following
@@ -214,6 +223,12 @@ understand the TLSv1.2 protocol.
 .Fn DTLSv1_client_method
 .Xc
 These are the version-specific methods for DTLSv1.
+.It Xo
+.Fn DTLSv1_2_method ,
+.Fn DTLSv1_2_server_method ,
+.Fn DTLSv1_2_client_method
+These are the version-specific methods for DTLSv1.2.
+.Xc
 .El
 .Pp
 In LibreSSL, the methods containing the substrings
@@ -239,6 +254,16 @@ all previous or all subsequent protocol versions.
 In clients, when a protocol version is disabled without disabling
 all previous protocol versions, the effect is to also disable all
 subsequent protocol versions.
+.Pp
+DTLSv1 and DTLSv1.2 can be disabled with
+.Xr SSL_CTX_set_options 3
+or
+.Xr SSL_set_options 3
+using the
+.Dv SSL_OP_NO_DTLSv1
+and
+.Dv SSL_OP_NO_DTLSv1_2
+options, respectively.
 .Sh RETURN VALUES
 .Fn SSL_CTX_new
 returns a pointer to the newly allocated object or
@@ -310,3 +335,10 @@ first appeared in OpenSSL 1.1.0 and have been available since
 .Fn SSL_CTX_up_ref
 first appeared in OpenSSL 1.1.0 and has been available since
 .Ox 6.3 .
+.Pp
+.Fn DTLSv1_2_method ,
+.Fn DTLSv1_2_server_method ,
+and
+.Fn DTLSv1_2_client_method
+first appeared in OpenSSL 1.1.0 and have been available since
+.Ox 6.9 .
