@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_mmio.c,v 1.8 2019/05/26 15:20:04 sf Exp $	*/
+/*	$OpenBSD: virtio_mmio.c,v 1.9 2021/04/15 17:06:59 patrick Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -58,10 +58,17 @@
 #define VIRTIO_MMIO_QUEUE_NUM		0x038
 #define VIRTIO_MMIO_QUEUE_ALIGN		0x03c
 #define VIRTIO_MMIO_QUEUE_PFN		0x040
+#define VIRTIO_MMIO_QUEUE_READY		0x044
 #define VIRTIO_MMIO_QUEUE_NOTIFY	0x050
 #define VIRTIO_MMIO_INTERRUPT_STATUS	0x060
 #define VIRTIO_MMIO_INTERRUPT_ACK	0x064
 #define VIRTIO_MMIO_STATUS		0x070
+#define VIRTIO_MMIO_QUEUE_DESC_LOW	0x080
+#define VIRTIO_MMIO_QUEUE_DESC_HIGH	0x084
+#define VIRTIO_MMIO_QUEUE_AVAIL_LOW	0x090
+#define VIRTIO_MMIO_QUEUE_AVAIL_HIGH	0x094
+#define VIRTIO_MMIO_QUEUE_USED_LOW	0x0a0
+#define VIRTIO_MMIO_QUEUE_USED_HIGH	0x0a4
 #define VIRTIO_MMIO_CONFIG		0x100
 
 #define VIRTIO_MMIO_INT_VRING		(1 << 0)
@@ -106,6 +113,7 @@ struct virtio_mmio_softc {
 	void			*sc_ih;
 
 	int			sc_config_offset;
+	uint32_t		sc_version;
 };
 
 struct cfattach virtio_mmio_ca = {
@@ -159,10 +167,31 @@ virtio_mmio_setup_queue(struct virtio_softc *vsc, struct virtqueue *vq,
 	    vq->vq_index);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, VIRTIO_MMIO_QUEUE_NUM,
 	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, VIRTIO_MMIO_QUEUE_NUM_MAX));
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, VIRTIO_MMIO_QUEUE_ALIGN,
-	    PAGE_SIZE);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, VIRTIO_MMIO_QUEUE_PFN,
-	    addr / VIRTIO_PAGE_SIZE);
+	if (sc->sc_version == 1) {
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+		    VIRTIO_MMIO_QUEUE_ALIGN, PAGE_SIZE);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+		    VIRTIO_MMIO_QUEUE_PFN, addr / VIRTIO_PAGE_SIZE);
+	} else {
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+		    VIRTIO_MMIO_QUEUE_DESC_LOW, addr);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+		    VIRTIO_MMIO_QUEUE_DESC_HIGH, addr >> 32);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+		    VIRTIO_MMIO_QUEUE_AVAIL_LOW,
+		    addr + vq->vq_availoffset);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+		    VIRTIO_MMIO_QUEUE_AVAIL_HIGH,
+		    (addr + vq->vq_availoffset) >> 32);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+		    VIRTIO_MMIO_QUEUE_USED_LOW,
+		    addr + vq->vq_usedoffset);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+		    VIRTIO_MMIO_QUEUE_USED_HIGH,
+		    (addr + vq->vq_usedoffset) >> 32);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+		    VIRTIO_MMIO_QUEUE_READY, 1);
+	}
 }
 
 void
@@ -192,7 +221,7 @@ virtio_mmio_attach(struct device *parent, struct device *self, void *aux)
 	struct fdt_attach_args *faa = aux;
 	struct virtio_mmio_softc *sc = (struct virtio_mmio_softc *)self;
 	struct virtio_softc *vsc = &sc->sc_sc;
-	uint32_t id, magic, version;
+	uint32_t id, magic;
 
 	if (faa->fa_nreg < 1) {
 		printf(": no register data\n");
@@ -213,17 +242,19 @@ virtio_mmio_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	version = bus_space_read_4(sc->sc_iot, sc->sc_ioh, VIRTIO_MMIO_VERSION);
-	if (version != 1) {
-		printf(": unknown version 0x%02x; giving up\n", version);
+	sc->sc_version = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+	    VIRTIO_MMIO_VERSION);
+	if (sc->sc_version < 1 || sc->sc_version > 2) {
+		printf(": unknown version 0x%02x; giving up\n", sc->sc_version);
 		return;
 	}
 
 	id = bus_space_read_4(sc->sc_iot, sc->sc_ioh, VIRTIO_MMIO_DEVICE_ID);
 	printf(": Virtio %s Device", virtio_device_string(id));
 
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, VIRTIO_MMIO_GUEST_PAGE_SIZE,
-	    PAGE_SIZE);
+	if (sc->sc_version == 1)
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+		    VIRTIO_MMIO_GUEST_PAGE_SIZE, PAGE_SIZE);
 
 	printf("\n");
 
