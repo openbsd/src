@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ure.c,v 1.23 2021/04/07 06:52:22 dlg Exp $	*/
+/*	$OpenBSD: if_ure.c,v 1.24 2021/04/15 02:23:17 kevlo Exp $	*/
 /*-
  * Copyright (c) 2015, 2016, 2019 Kevin Lo <kevlo@openbsd.org>
  * Copyright (c) 2020 Jonathon Fletcher <jonathon.fletcher@gmail.com>
@@ -761,8 +761,8 @@ ure_init(void *xsc)
 	ure_write_1(sc, URE_PLA_CRWECR, URE_MCU_TYPE_PLA, URE_CRWECR_NORAML);
 
 	if (!(sc->ure_flags & URE_FLAG_8152)) {
-		reg = sc->ure_rxbufsz - URE_FRAMELEN(ifp->if_mtu) +
-		    sizeof(struct ure_rxpkt) + URE_RX_BUF_ALIGN;
+		reg = sc->ure_rxbufsz - URE_FRAMELEN(ifp->if_mtu) -
+		    sizeof(struct ure_rxpkt) - URE_RX_BUF_ALIGN;
 		if (sc->ure_flags & (URE_FLAG_8153B | URE_FLAG_8156)) {
 			ure_write_2(sc, URE_USB_RX_EARLY_SIZE, URE_MCU_TYPE_USB,
 			    reg / 8);
