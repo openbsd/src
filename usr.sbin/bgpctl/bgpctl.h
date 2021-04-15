@@ -24,7 +24,7 @@ struct output {
 	void	(*fib_table)(struct ktable *);
 	void	(*nexthop)(struct ctl_show_nexthop *);
 	void	(*interface)(struct ctl_show_interface *);
-	void	(*attr)(u_char *, size_t, struct parse_result *);
+	void	(*attr)(u_char *, size_t, int);
 	void	(*communities)(u_char *, size_t, struct parse_result *);
 	void	(*rib)(struct ctl_show_rib *, u_char *, size_t,
 		    struct parse_result *);

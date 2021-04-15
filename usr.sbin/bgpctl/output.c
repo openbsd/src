@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.14 2021/03/01 08:02:34 jsg Exp $ */
+/*	$OpenBSD: output.c,v 1.15 2021/04/15 14:12:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -594,7 +594,7 @@ show_ext_community(u_char *data, u_int16_t len)
 }
 
 static void
-show_attr(u_char *data, size_t len, struct parse_result *res)
+show_attr(u_char *data, size_t len, int reqflags)
 {
 	u_char		*path;
 	struct in_addr	 id;
@@ -822,7 +822,7 @@ show_attr(u_char *data, size_t len, struct parse_result *res)
 		break;
 	}
  done:
-	printf("%c", EOL0(res->flags));
+	printf("%c", EOL0(reqflags));
 }
 
 static void

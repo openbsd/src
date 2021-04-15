@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.8 2021/03/01 08:02:34 jsg Exp $ */
+/*	$OpenBSD: output_json.c,v 1.9 2021/04/15 14:12:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -538,7 +538,7 @@ json_do_ext_community(u_char *data, uint16_t len)
 }
 
 static void
-json_attr(u_char *data, size_t len, struct parse_result *res)
+json_attr(u_char *data, size_t len, int reqflags)
 {
 	struct bgpd_addr prefix;
 	struct in_addr id;
