@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.67 2021/01/09 13:14:02 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.68 2021/04/15 07:28:37 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -933,7 +933,7 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 	frame.sf_sc.sc_xer = tf->xer;
 	frame.sf_sc.sc_ctr = tf->ctr;
 	frame.sf_sc.sc_pc = tf->srr0;
-	frame.sf_sc.sc_ps = tf->srr1;
+	frame.sf_sc.sc_ps = PSL_USER;
 	frame.sf_sc.sc_vrsave = tf->vrsave;
 
 	/* Copy the saved FPU state into the frame if necessary. */
