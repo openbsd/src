@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_CTX_set_min_proto_version.3,v 1.4 2020/05/12 20:12:44 tb Exp $
+.\" $OpenBSD: SSL_CTX_set_min_proto_version.3,v 1.5 2021/04/15 16:40:32 tb Exp $
 .\" full merge up to: OpenSSL 3edabd3c Sep 14 09:28:39 2017 +0200
 .\"
 .\" This file was written by Kurt Roeckx <kurt@roeckx.be> and
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 12 2020 $
+.Dd $Mdocdate: April 15 2021 $
 .Dt SSL_CTX_SET_MIN_PROTO_VERSION 3
 .Os
 .Sh NAME
@@ -116,12 +116,14 @@ versions down to the lowest or up to the highest version supported
 by the library, respectively.
 .Pp
 Currently supported versions are
-.Sy TLS1_VERSION ,
-.Sy TLS1_1_VERSION ,
+.Dv TLS1_VERSION ,
+.Dv TLS1_1_VERSION ,
 and
-.Sy TLS1_2_VERSION
+.Dv TLS1_2_VERSION
 for TLS and
-.Sy DTLS1_VERSION
+.Dv DTLS1_VERSION
+and
+.Dv DTLS1_2_VERSION
 for DTLS.
 .Pp
 In other implementations, these functions may be implemented as macros.
