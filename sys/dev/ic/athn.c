@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.109 2020/07/10 13:22:19 patrick Exp $	*/
+/*	$OpenBSD: athn.c,v 1.110 2021/04/15 18:14:45 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -2660,9 +2660,19 @@ athn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		break;
 	case IEEE80211_S_RUN:
 		athn_set_led(sc, 1);
-
-		if (ic->ic_opmode == IEEE80211_M_MONITOR)
+#ifndef IEEE80211_STA_ONLY
+		if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
+			error = athn_switch_chan(sc, ic->ic_bss->ni_chan, NULL);
+			if (error != 0)
+				return (error);
+		} else
+#endif
+		if (ic->ic_opmode == IEEE80211_M_MONITOR) {
+			error = athn_switch_chan(sc, ic->ic_ibss_chan, NULL);
+			if (error != 0)
+				return (error);
 			break;
+		}
 
 		/* Fake a join to initialize the Tx rate. */
 		athn_newassoc(ic, ic->ic_bss, 1);
