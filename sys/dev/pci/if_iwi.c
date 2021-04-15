@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.144 2020/07/10 13:22:20 patrick Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.145 2021/04/15 18:32:19 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -725,8 +725,12 @@ int
 iwi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct iwi_softc *sc = ic->ic_softc;
+	struct ifnet *ifp = &ic->ic_if;
 	enum ieee80211_state ostate;
 	uint32_t tmp;
+
+	if (LINK_STATE_IS_UP(ifp->if_link_state))
+		ieee80211_set_link_state(ic, LINK_STATE_DOWN);
 
 	ostate = ic->ic_state;
 
@@ -736,7 +740,10 @@ iwi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		break;
 
 	case IEEE80211_S_AUTH:
-		iwi_auth_and_assoc(sc);
+		if (iwi_auth_and_assoc(sc)) {
+			ieee80211_begin_scan(&ic->ic_if);
+			return 0;
+		}
 		break;
 
 	case IEEE80211_S_RUN:
@@ -752,6 +759,14 @@ iwi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		/* assoc led on */
 		tmp = MEM_READ_4(sc, IWI_MEM_EVENT_CTL) & IWI_LED_MASK;
 		MEM_WRITE_4(sc, IWI_MEM_EVENT_CTL, tmp | IWI_LED_ASSOC);
+
+		if (!(ic->ic_flags & IEEE80211_F_RSNON)) {
+			/*
+			 * NB: When RSN is enabled, we defer setting
+			 * the link up until the port is valid.
+			 */
+			ieee80211_set_link_state(ic, LINK_STATE_UP);
+		}
 		break;
 
 	case IEEE80211_S_INIT:
