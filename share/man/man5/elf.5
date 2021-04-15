@@ -1,4 +1,4 @@
-.\"	$OpenBSD: elf.5,v 1.39 2021/02/27 19:32:58 jmc Exp $
+.\"	$OpenBSD: elf.5,v 1.40 2021/04/15 18:13:24 kettenis Exp $
 .\"Copyright (c) 1999 Jeroen Ruigrok van der Werven
 .\"All rights reserved.
 .\"
@@ -25,7 +25,7 @@
 .\"
 .\"	$FreeBSD: src/share/man/man5/elf.5,v 1.21 2001/10/01 16:09:23 ru Exp $
 .\"
-.Dd $Mdocdate: February 27 2021 $
+.Dd $Mdocdate: April 15 2021 $
 .Dt ELF 5
 .Os
 .Sh NAME
@@ -207,60 +207,61 @@ Invalid version.
 .It Dv EV_CURRENT
 Current version.
 .El
-.\" .It Dv EI_OSABI
-.\" This byte identifies the operating system
-.\" and ABI to which the object is targeted.
-.\" Some fields in other ELF structures have flags
-.\" and values that have platform specific meanings;
-.\" the interpretation of those fields is determined by the value of this byte.
-.\" The following values are currently defined:
-.\" .Pp
-.\" .Bl -tag -width "ELFOSABI_STANDALONE" -compact
-.\" .It Dv ELFOSABI_SYSV
-.\" UNIX System V ABI.
-.\" .It Dv ELFOSABI_HPUX
-.\" HP-UX operating system ABI.
-.\" .It Dv ELFOSABI_NETBSD
-.\" .Nx
-.\" operating system ABI.
-.\" .It Dv ELFOSABI_LINUX
-.\" GNU/Linux operating system ABI.
-.\" .It Dv ELFOSABI_HURD
-.\" GNU/Hurd operating system ABI.
-.\" .It Dv ELFOSABI_86OPEN
-.\" 86Open Common IA32 ABI.
-.\" .It Dv ELFOSABI_SOLARIS
-.\" Solaris operating system ABI.
-.\" .It Dv ELFOSABI_MONTEREY
-.\" Monterey project ABI.
-.\" .It Dv ELFOSABI_IRIX
-.\" IRIX operating system ABI.
-.\" .It Dv ELFOSABI_FREEBSD
-.\" .Fx
-.\" operating system ABI.
-.\" .It Dv ELFOSABI_TRU64
-.\" TRU64 UNIX operating system ABI.
-.\" .It Dv ELFOSABI_ARM
-.\" ARM architecture ABI.
-.\" .It Dv ELFOSABI_STANDALONE
-.\" Stand-alone (embedded) ABI.
-.\" .El
-.\" .It Dv EI_ABIVERSION
-.\" This byte identifies the version of the ABI
-.\" to which the object is targeted.
-.\" This field is used to distinguish among incompatible versions of an ABI.
-.\" The interpretation of this version number
-.\" is dependent on the ABI identified by the EI_OSABI field.
-.\" Applications conforming to this specification use the value 0.
+.It Dv EI_OSABI
+This byte identifies the OS- or ABI-specific ELF extensions used by
+this object.
+Some fields in other ELF structures have flags and values that have
+platform specific meanings; the interpretation of those fields is
+determined by the value of this byte.
+The following values are currently defined:
+.Pp
+.Bl -tag -width "ELFOSABI_STANDALONE" -compact
+.It Dv ELFOSABI_SYSV
+UNIX System V ABI.
+.It Dv ELFOSABI_HPUX
+HP-UX operating system ABI.
+.It Dv ELFOSABI_NETBSD
+.Nx
+operating system ABI.
+.It Dv ELFOSABI_LINUX
+GNU/Linux operating system ABI.
+.It Dv ELFOSABI_HURD
+GNU/Hurd operating system ABI.
+.It Dv ELFOSABI_86OPEN
+86Open Common IA32 ABI.
+.It Dv ELFOSABI_SOLARIS
+Solaris operating system ABI.
+.It Dv ELFOSABI_MONTEREY
+Monterey project ABI.
+.It Dv ELFOSABI_IRIX
+IRIX operating system ABI.
+.It Dv ELFOSABI_FREEBSD
+.Fx
+operating system ABI.
+.It Dv ELFOSABI_TRU64
+TRU64 UNIX operating system ABI.
+.It Dv ELFOSABI_MODESTO
+Novell Modesto operating system ABI.
+.It Dv ELFOSABI_OPENBSD
+.Ox
+operating system ABI.
+.It Dv ELFOSABI_ARM
+ARM architecture ABI.
+.It Dv ELFOSABI_STANDALONE
+Stand-alone (embedded) ABI.
+.El
+.It Dv EI_ABIVERSION
+This byte identifies the version of the ABI
+to which the object is targeted.
+This field is used to distinguish among incompatible versions of an ABI.
+The interpretation of this version number
+is dependent on the ABI identified by the EI_OSABI field.
 .It Dv EI_PAD
 Start of padding.
 These bytes are reserved and set to zero.
-Programs
-which read them should ignore them.
+Programs which read them should ignore them.
 The value for EI_PAD will change in
 the future if currently unused bytes are given meanings.
-.It Dv EI_BRAND
-Start of architecture identification.
 .It Dv EI_NIDENT
 The size of the e_ident array.
 .El
