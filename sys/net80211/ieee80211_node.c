@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.183 2021/03/10 10:21:48 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.184 2021/04/15 18:05:05 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -903,6 +903,7 @@ ieee80211_next_scan(struct ifnet *ifp)
 void
 ieee80211_create_ibss(struct ieee80211com* ic, struct ieee80211_channel *chan)
 {
+	enum ieee80211_phymode mode;
 	struct ieee80211_node *ni;
 	struct ifnet *ifp = &ic->ic_if;
 
@@ -911,7 +912,25 @@ ieee80211_create_ibss(struct ieee80211com* ic, struct ieee80211_channel *chan)
 		printf("%s: creating ibss\n", ifp->if_xname);
 	ic->ic_flags |= IEEE80211_F_SIBSS;
 	ni->ni_chan = chan;
-	ni->ni_rates = ic->ic_sup_rates[ieee80211_chan2mode(ic, ni->ni_chan)];
+	if ((ic->ic_flags & IEEE80211_F_VHTON) && IEEE80211_IS_CHAN_5GHZ(chan))
+		mode = IEEE80211_MODE_11AC;
+	else if (ic->ic_flags & IEEE80211_F_HTON)
+		mode = IEEE80211_MODE_11N;
+	else
+		mode = ieee80211_chan2mode(ic, ni->ni_chan);
+	ieee80211_setmode(ic, mode);
+	/* Pick an appropriate mode for supported legacy rates. */
+	if (ic->ic_curmode == IEEE80211_MODE_11AC) {
+		mode = IEEE80211_MODE_11A;
+	} else if (ic->ic_curmode == IEEE80211_MODE_11N) {
+		if (IEEE80211_IS_CHAN_5GHZ(chan))
+			mode = IEEE80211_MODE_11A;
+		else
+			mode = IEEE80211_MODE_11G;
+	} else {
+		mode = ic->ic_curmode;
+	}
+	ni->ni_rates = ic->ic_sup_rates[mode];
 	ni->ni_txrate = 0;
 	IEEE80211_ADDR_COPY(ni->ni_macaddr, ic->ic_myaddr);
 	IEEE80211_ADDR_COPY(ni->ni_bssid, ic->ic_myaddr);
