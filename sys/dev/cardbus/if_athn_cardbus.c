@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_cardbus.c,v 1.15 2017/01/12 16:32:28 stsp Exp $	*/
+/*	$OpenBSD: if_athn_cardbus.c,v 1.16 2021/04/15 18:25:43 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -43,7 +43,7 @@
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_amrr.h>
-#include <net80211/ieee80211_mira.h>
+#include <net80211/ieee80211_ra.h>
 #include <net80211/ieee80211_radiotap.h>
 
 #include <dev/ic/athnreg.h>

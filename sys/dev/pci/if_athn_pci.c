@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_pci.c,v 1.20 2019/04/23 01:17:09 kevlo Exp $	*/
+/*	$OpenBSD: if_athn_pci.c,v 1.21 2021/04/15 18:25:44 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -43,7 +43,7 @@
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_amrr.h>
-#include <net80211/ieee80211_mira.h>
+#include <net80211/ieee80211_ra.h>
 #include <net80211/ieee80211_radiotap.h>
 
 #include <dev/ic/athnreg.h>

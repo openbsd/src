@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.110 2021/04/15 18:14:45 stsp Exp $	*/
+/*	$OpenBSD: athn.c,v 1.111 2021/04/15 18:25:43 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -53,7 +53,7 @@
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_amrr.h>
-#include <net80211/ieee80211_mira.h>
+#include <net80211/ieee80211_ra.h>
 #include <net80211/ieee80211_radiotap.h>
 
 #include <dev/ic/athnreg.h>
@@ -127,11 +127,8 @@ int		athn_hw_reset(struct athn_softc *, struct ieee80211_channel *,
 struct		ieee80211_node *athn_node_alloc(struct ieee80211com *);
 void		athn_newassoc(struct ieee80211com *, struct ieee80211_node *,
 		    int);
-void		athn_node_leave(struct ieee80211com *, struct ieee80211_node *);
 int		athn_media_change(struct ifnet *);
 void		athn_next_scan(void *);
-void		athn_iter_mira_delete(void *, struct ieee80211_node *);
-void		athn_delete_mira_nodes(struct athn_softc *);
 int		athn_newstate(struct ieee80211com *, enum ieee80211_state,
 		    int);
 void		athn_updateedca(struct ieee80211com *);
@@ -379,9 +376,6 @@ athn_attach(struct athn_softc *sc)
 	if_attach(ifp);
 	ieee80211_ifattach(ifp);
 	ic->ic_node_alloc = athn_node_alloc;
-#ifndef IEEE80211_STA_ONLY
-	ic->ic_node_leave = athn_node_leave;
-#endif
 	ic->ic_newassoc = athn_newassoc;
 	ic->ic_updateslot = athn_updateslot;
 	ic->ic_updateedca = athn_updateedca;
@@ -404,13 +398,10 @@ void
 athn_detach(struct athn_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
-	struct ieee80211com *ic = &sc->sc_ic;
 	int qid;
 
 	timeout_del(&sc->scan_to);
 	timeout_del(&sc->calib_to);
-	if (ic->ic_flags & IEEE80211_F_HTON)
-		athn_delete_mira_nodes(sc);
 
 	if (!(sc->flags & ATHN_FLAG_USB)) {
 		for (qid = 0; qid < ATHN_QID_COUNT; qid++)
@@ -2479,7 +2470,7 @@ athn_node_alloc(struct ieee80211com *ic)
 
 	an = malloc(sizeof(struct athn_node), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (an && (ic->ic_flags & IEEE80211_F_HTON))
-		ieee80211_mira_node_init(&an->mn);
+		ieee80211_ra_node_init(&an->rn);
 	return (struct ieee80211_node *)an;
 }
 
@@ -2495,7 +2486,7 @@ athn_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
 	if ((ni->ni_flags & IEEE80211_NODE_HT) == 0)
 		ieee80211_amrr_node_init(&sc->amrr, &an->amn);
 	else if (ic->ic_opmode == IEEE80211_M_STA)
-		ieee80211_mira_node_init(&an->mn);
+		ieee80211_ra_node_init(&an->rn);
 
 	/* Start at lowest available bit-rate, AMRR will raise. */
 	ni->ni_txrate = 0;
@@ -2552,16 +2543,6 @@ athn_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
 	}
 }
 
-#ifndef IEEE80211_STA_ONLY
-void
-athn_node_leave(struct ieee80211com *ic, struct ieee80211_node *ni)
-{
-	struct athn_node *an = (void *)ni;
-	if (ic->ic_flags & IEEE80211_F_HTON)
-		ieee80211_mira_cancel_timeouts(&an->mn);
-}
-#endif
-
 int
 athn_media_change(struct ifnet *ifp)
 {
@@ -2604,26 +2585,6 @@ athn_next_scan(void *arg)
 	splx(s);
 }
 
-void
-athn_iter_mira_delete(void *arg, struct ieee80211_node *ni)
-{
-	struct athn_node *an = (struct athn_node *)ni;
-	ieee80211_mira_cancel_timeouts(&an->mn);
-}
-
-/* Delete pending timeouts managed by MiRA. */
-void
-athn_delete_mira_nodes(struct athn_softc *sc)
-{
-	struct ieee80211com *ic = &sc->sc_ic;
-
-	if (ic->ic_opmode == IEEE80211_M_STA) {
-		struct athn_node *an = (struct athn_node *)ic->ic_bss;
-		ieee80211_mira_cancel_timeouts(&an->mn);
-	} else
-		ieee80211_iterate_nodes(ic, athn_iter_mira_delete, sc);
-}
-
 int
 athn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
@@ -2633,10 +2594,6 @@ athn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	int error;
 
 	timeout_del(&sc->calib_to);
-
-	if ((ic->ic_flags & IEEE80211_F_HTON) &&
-	    ic->ic_state == IEEE80211_S_RUN && nstate != IEEE80211_S_RUN)
-		athn_delete_mira_nodes(sc);
 
 	switch (nstate) {
 	case IEEE80211_S_INIT:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnvar.h,v 1.41 2020/10/11 07:05:28 mpi Exp $	*/
+/*	$OpenBSD: athnvar.h,v 1.42 2021/04/15 18:25:43 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -79,6 +79,7 @@ struct athn_tx_buf {
 
 	struct mbuf			*bf_m;
 	struct ieee80211_node		*bf_ni;
+	int				bf_txmcs;
 	int				bf_txflags;
 #define ATHN_TXFLAG_PAPRD	(1 << 0)
 #define ATHN_TXFLAG_CAB		(1 << 1) 
@@ -295,7 +296,7 @@ static const uint16_t ar_mcs_ndbps[][2] = {
 struct athn_node {
 	struct ieee80211_node		ni;
 	struct ieee80211_amrr_node	amn;
-	struct ieee80211_mira_node	mn;
+	struct ieee80211_ra_node	rn;
 	uint8_t				ridx[ATHN_NUM_RATES];
 	uint8_t				fallback[ATHN_NUM_RATES];
 	uint8_t				sta_index;

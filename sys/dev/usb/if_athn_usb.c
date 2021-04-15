@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.60 2021/02/25 02:48:20 dlg Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.61 2021/04/15 18:25:44 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -49,7 +49,7 @@
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_amrr.h>
-#include <net80211/ieee80211_mira.h>
+#include <net80211/ieee80211_ra.h>
 #include <net80211/ieee80211_radiotap.h>
 
 #include <dev/ic/athnreg.h>

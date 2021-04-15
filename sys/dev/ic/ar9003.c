@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9003.c,v 1.52 2020/12/12 11:48:52 jan Exp $	*/
+/*	$OpenBSD: ar9003.c,v 1.53 2021/04/15 18:25:43 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -51,7 +51,7 @@
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_amrr.h>
-#include <net80211/ieee80211_mira.h>
+#include <net80211/ieee80211_ra.h>
 #include <net80211/ieee80211_radiotap.h>
 
 #include <dev/ic/athnreg.h>

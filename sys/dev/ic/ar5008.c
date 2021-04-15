@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.64 2020/12/12 11:48:52 jan Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.65 2021/04/15 18:25:43 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -51,7 +51,7 @@
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_amrr.h>
-#include <net80211/ieee80211_mira.h>
+#include <net80211/ieee80211_ra.h>
 #include <net80211/ieee80211_radiotap.h>
 
 #include <dev/ic/athnreg.h>
@@ -1064,7 +1064,7 @@ ar5008_tx_process(struct athn_softc *sc, int qid)
 	struct athn_tx_buf *bf;
 	struct ar_tx_desc *ds;
 	uint8_t failcnt;
-	int txfail;
+	int txfail = 0, rtscts;
 
 	bf = SIMPLEQ_FIRST(&txq->head);
 	if (bf == NULL)
@@ -1079,12 +1079,14 @@ ar5008_tx_process(struct athn_softc *sc, int qid)
 
 	sc->sc_tx_timer = 0;
 
-	txfail = (ds->ds_status1 & AR_TXS1_EXCESSIVE_RETRIES);
-	if (txfail)
-		ifp->if_oerrors++;
-
-	if (ds->ds_status1 & AR_TXS1_UNDERRUN)
-		athn_inc_tx_trigger_level(sc);
+	/* These status bits are valid if “FRM_XMIT_OK” is clear. */
+	if ((ds->ds_status1 & AR_TXS1_FRM_XMIT_OK) == 0) {
+		txfail = (ds->ds_status1 & AR_TXS1_EXCESSIVE_RETRIES);
+		if (txfail)
+			ifp->if_oerrors++;
+		if (ds->ds_status1 & AR_TXS1_UNDERRUN)
+			athn_inc_tx_trigger_level(sc);
+	}
 
 	an = (struct athn_node *)bf->bf_ni;
 	ni = (struct ieee80211_node *)bf->bf_ni;
@@ -1094,33 +1096,51 @@ ar5008_tx_process(struct athn_softc *sc, int qid)
 	 * for the final series used.  We must add the number of tries for
 	 * each series that was fully processed to punish transmit rates in
 	 * the earlier series which did not perform well.
-	 * If RTS/CTS was used, each series used the same transmit rate.
-	 * Ignore the series count in this case, since each series had
-	 * the same chance of success.
 	 */
 	failcnt  = MS(ds->ds_status1, AR_TXS1_DATA_FAIL_CNT);
-	if (!(ds->ds_ctl0 & (AR_TXC0_RTS_ENABLE | AR_TXC0_CTS_ENABLE))) {
-		/* NB: Assume two tries per series. */
-		failcnt += MS(ds->ds_status9, AR_TXS9_FINAL_IDX) * 2;
-	}
+	/* Assume two tries per series, as per AR_TXC2_XMIT_DATA_TRIESx. */
+	failcnt += MS(ds->ds_status9, AR_TXS9_FINAL_IDX) * 2;
+
+	rtscts = (ds->ds_ctl0 & (AR_TXC0_RTS_ENABLE | AR_TXC0_CTS_ENABLE));
 
 	/* Update rate control statistics. */
-	if (ni->ni_flags & IEEE80211_NODE_HT) {
-		an->mn.frames++;
-		an->mn.ampdu_size = bf->bf_m->m_pkthdr.len + IEEE80211_CRC_LEN;
-		an->mn.agglen = 1; /* XXX We do not yet support Tx agg. */
-		if (failcnt > 0)
-			an->mn.retries += failcnt;
-		if (txfail)
-			an->mn.txfail++;
+	if ((ni->ni_flags & IEEE80211_NODE_HT) && ic->ic_fixed_mcs == -1) {
+		const struct ieee80211_ht_rateset *rs =
+		    ieee80211_ra_get_ht_rateset(bf->bf_txmcs,
+		    ieee80211_node_supports_ht_sgi20(ni));
+		unsigned int retries = 0, i;
+		int mcs = bf->bf_txmcs;
+
+		/* With RTS/CTS each Tx series used the same MCS. */
+		if (rtscts) {
+			retries = failcnt;
+		} else {
+			for (i = 0; i < failcnt; i++) {
+				if (mcs > rs->min_mcs) {
+					ieee80211_ra_add_stats_ht(&an->rn,
+					    ic, ni, mcs, 1, 1);
+					if (i % 2) /* two tries per series */
+						mcs--;
+				} else
+					retries++;
+			}
+		}
+
+		if (txfail && retries == 0) {
+			ieee80211_ra_add_stats_ht(&an->rn, ic, ni,
+			    mcs, 1, 1);
+		} else {
+			ieee80211_ra_add_stats_ht(&an->rn, ic, ni,
+			    mcs, retries + 1, retries);
+		}
 		if (ic->ic_state == IEEE80211_S_RUN) {
 #ifndef IEEE80211_STA_ONLY
 			if (ic->ic_opmode != IEEE80211_M_HOSTAP ||
 			    ni->ni_state == IEEE80211_STA_ASSOC)
 #endif
-				ieee80211_mira_choose(&an->mn, ic, ni);
+				ieee80211_ra_choose(&an->rn, ic, ni);
 		}
-	} else {
+	} else if (ic->ic_fixed_rate == -1) {
 		an->amn.amn_txcnt++;
 		if (failcnt > 0)
 			an->amn.amn_retrycnt++;
@@ -1492,11 +1512,6 @@ ar5008_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 		/* Use same fixed rate for all tries. */
 		ridx[0] = ridx[1] = ridx[2] = ridx[3] =
 		    sc->fixed_ridx;
-	} else if ((ni->ni_flags & IEEE80211_NODE_HT) &&
-	    ieee80211_mira_is_probing(&an->mn)) {
-		/* Use same fixed rate for all tries. */
-		ridx[0] = ridx[1] = ridx[2] = ridx[3] =
-		    ATHN_RIDX_MCS0 + ni->ni_txmcs;
 	} else {
 		/* Use fallback table of the node. */
 		int txrate;
@@ -1562,6 +1577,7 @@ ar5008_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 	}
 	bf->bf_m = m;
 	bf->bf_ni = ni;
+	bf->bf_txmcs = ni->ni_txmcs;
 	bf->bf_txflags = txflags;
 
 	wh = mtod(m, struct ieee80211_frame *);
@@ -1607,16 +1623,12 @@ ar5008_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 	if (!IEEE80211_IS_MULTICAST(wh->i_addr1) &&
 	    (wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
 	    IEEE80211_FC0_TYPE_DATA) {
-		int rtsthres = ic->ic_rtsthreshold;
 		enum ieee80211_htprot htprot;
 
-		if (ni->ni_flags & IEEE80211_NODE_HT)
-			rtsthres = ieee80211_mira_get_rts_threshold(&an->mn,
-			    ic, ni, totlen);
 		htprot = (ic->ic_bss->ni_htop1 & IEEE80211_HTOP1_PROT_MASK);
 
 		/* NB: Group frames are sent using CCK in 802.11b/g. */
-		if (totlen > rtsthres) {
+		if (totlen > ic->ic_rtsthreshold) {
 			ds->ds_ctl0 |= AR_TXC0_RTS_ENABLE;
 		} else if (((ic->ic_flags & IEEE80211_F_USEPROT) &&
 		    athn_rates[ridx[0]].phy == IEEE80211_T_OFDM) ||
