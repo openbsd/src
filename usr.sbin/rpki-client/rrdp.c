@@ -1,4 +1,4 @@
-/*      $OpenBSD: rrdp.c,v 1.4 2021/04/12 17:23:30 claudio Exp $ */
+/*      $OpenBSD: rrdp.c,v 1.5 2021/04/15 13:31:30 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -579,7 +579,7 @@ proc_rrdp(int fd)
 		TAILQ_FOREACH_SAFE(s, &states, entry, ns) {
 			if (s->pfd == NULL)
 				continue;
-			if (s->pfd->revents & POLLIN)
+			if (s->pfd->revents != 0)
 				rrdp_data_handler(s);
 		}
 	}
