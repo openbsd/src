@@ -1,4 +1,4 @@
-/*      $OpenBSD: http.c,v 1.29 2021/04/15 14:22:05 claudio Exp $  */
+/*      $OpenBSD: http.c,v 1.30 2021/04/15 16:07:21 claudio Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -94,27 +94,27 @@ struct http_proxy {
 };
 
 struct http_connection {
-	char		*url;
-	char		*host;
-	char		*port;
-	const char	*path;	/* points into url */
-	char		*modified_since;
-	char		*last_modified;
-	struct addrinfo *res0;
-	struct addrinfo *res;
-	struct tls	*tls;
-	char		*buf;
-	size_t		bufsz;
-	size_t		bufpos;
-	size_t		id;
-	off_t		iosz;
-	int		status;
-	int		redirect_loop;
-	int		fd;
-	int		outfd;
-	short		events;
-	short		chunked;
-	enum http_state	state;
+	char			*url;
+	char			*host;
+	char			*port;
+	const char		*path;	/* points into url */
+	char			*modified_since;
+	char			*last_modified;
+	struct addrinfo		*res0;
+	struct addrinfo		*res;
+	struct tls		*tls;
+	char			*buf;
+	size_t			bufsz;
+	size_t			bufpos;
+	size_t			id;
+	off_t			iosz;
+	int			status;
+	int			redirect_loop;
+	int			fd;
+	int			outfd;
+	short			events;
+	short			chunked;
+	enum http_state		state;
 };
 
 struct msgbuf msgq;
@@ -123,6 +123,9 @@ struct tls_config *tls_config;
 uint8_t *tls_ca_mem;
 size_t tls_ca_size;
 
+static void	http_free(struct http_connection *);
+
+static int	http_tls_handshake(struct http_connection *);
 static int	http_write(struct http_connection *);
 
 /*
@@ -209,106 +212,6 @@ url_encode(const char *path)
 	return (epath);
 }
 
-static void
-http_setup(void)
-{
-	tls_config = tls_config_new();
-	if (tls_config == NULL)
-		errx(1, "tls config failed");
-#if 0
-	/* TODO Should we allow extra protos and ciphers? */
-	if (tls_config_set_protocols(tls_config, TLS_PROTOCOLS_ALL) == -1)
-		errx(1, "tls set protocols failed: %s",
-		    tls_config_error(tls_config));
-	if (tls_config_set_ciphers(tls_config, "legacy") == -1)
-		errx(1, "tls set ciphers failed: %s",
-		    tls_config_error(tls_config));
-#endif
-
-	/* load cert file from disk now */
-	tls_ca_mem = tls_load_file(tls_default_ca_cert_file(),
-	    &tls_ca_size, NULL);
-	if (tls_ca_mem == NULL)
-		err(1, "tls_load_file: %s", tls_default_ca_cert_file());
-	tls_config_set_ca_mem(tls_config, tls_ca_mem, tls_ca_size);
-
-	/* TODO initalize proxy settings */
-
-}
-
-static int
-http_resolv(struct http_connection *conn, const char *host, const char *port)
-{
-	struct addrinfo hints;
-	int error;
-
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = PF_UNSPEC;
-	hints.ai_socktype = SOCK_STREAM;
-	error = getaddrinfo(host, port, &hints, &conn->res0);
-	/*
-	 * If the services file is corrupt/missing, fall back
-	 * on our hard-coded defines.
-	 */
-	if (error == EAI_SERVICE)
-		error = getaddrinfo(host, "443", &hints, &conn->res0);
-	if (error != 0) {
-		warnx("%s: %s", host, gai_strerror(error));
-		return -1;
-	}
-
-	return 0;
-}
-
-static void
-http_done(size_t id, enum http_result res, const char *last_modified)
-{
-	struct ibuf *b;
-
-	if ((b = ibuf_dynamic(64, UINT_MAX)) == NULL)
-		err(1, NULL);
-	io_simple_buffer(b, &id, sizeof(id));
-	io_simple_buffer(b, &res, sizeof(res));
-	io_str_buffer(b, last_modified);
-	ibuf_close(&msgq, b);
-}
-
-static void
-http_fail(size_t id)
-{
-	struct ibuf *b;
-	enum http_result res = HTTP_FAILED;
-
-	if ((b = ibuf_dynamic(8, UINT_MAX)) == NULL)
-		err(1, NULL);
-	io_simple_buffer(b, &id, sizeof(id));
-	io_simple_buffer(b, &res, sizeof(res));
-	io_str_buffer(b, NULL);
-	ibuf_close(&msgq, b);
-}
-
-static void
-http_free(struct http_connection *conn)
-{
-	free(conn->url);
-	free(conn->host);
-	free(conn->port);
-	/* no need to free conn->path it points into conn->url */
-	free(conn->modified_since);
-	free(conn->last_modified);
-	free(conn->buf);
-
-	if (conn->res0 != NULL)
-		freeaddrinfo(conn->res0);
-
-	tls_free(conn->tls);
-
-	if (conn->fd != -1)
-		close(conn->fd);
-	close(conn->outfd);
-	free(conn);
-}
-
 static int
 http_parse_uri(char *uri, char **ohost, char **oport, char **opath)
 {
@@ -366,6 +269,56 @@ http_parse_uri(char *uri, char **ohost, char **oport, char **opath)
 	return 0;
 }
 
+static int
+http_resolv(struct http_connection *conn, const char *host, const char *port)
+{
+	struct addrinfo hints;
+	int error;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	error = getaddrinfo(host, port, &hints, &conn->res0);
+	/*
+	 * If the services file is corrupt/missing, fall back
+	 * on our hard-coded defines.
+	 */
+	if (error == EAI_SERVICE)
+		error = getaddrinfo(host, "443", &hints, &conn->res0);
+	if (error != 0) {
+		warnx("%s: %s", host, gai_strerror(error));
+		return -1;
+	}
+
+	return 0;
+}
+
+static void
+http_done(size_t id, enum http_result res, const char *last_modified)
+{
+	struct ibuf *b;
+
+	if ((b = ibuf_dynamic(64, UINT_MAX)) == NULL)
+		err(1, NULL);
+	io_simple_buffer(b, &id, sizeof(id));
+	io_simple_buffer(b, &res, sizeof(res));
+	io_str_buffer(b, last_modified);
+	ibuf_close(&msgq, b);
+}
+
+static void
+http_fail(size_t id)
+{
+	struct ibuf *b;
+	enum http_result res = HTTP_FAILED;
+
+	if ((b = ibuf_dynamic(8, UINT_MAX)) == NULL)
+		err(1, NULL);
+	io_simple_buffer(b, &id, sizeof(id));
+	io_simple_buffer(b, &res, sizeof(res));
+	io_str_buffer(b, NULL);
+	ibuf_close(&msgq, b);
+}
 
 static struct http_connection *
 http_new(size_t id, char *uri, char *modified_since, int outfd)
@@ -405,6 +358,29 @@ http_new(size_t id, char *uri, char *modified_since, int outfd)
 	return conn;
 }
 
+static void
+http_free(struct http_connection *conn)
+{
+	free(conn->url);
+	free(conn->host);
+	free(conn->port);
+	/* no need to free conn->path it points into conn->url */
+	free(conn->modified_since);
+	free(conn->last_modified);
+	free(conn->buf);
+
+	if (conn->res0 != NULL)
+		freeaddrinfo(conn->res0);
+
+	tls_free(conn->tls);
+
+	if (conn->fd != -1)
+		close(conn->fd);
+	close(conn->outfd);
+	free(conn);
+}
+
+
 static int
 http_connect_done(struct http_connection *conn)
 {
@@ -419,27 +395,6 @@ http_connect_done(struct http_connection *conn)
 #endif
 
 	return 0;
-}
-
-static int
-http_finish_connect(struct http_connection *conn)
-{
-	int error = 0;
-	socklen_t len;
-
-	len = sizeof(error);
-	if (getsockopt(conn->fd, SOL_SOCKET, SO_ERROR, &error, &len) == -1) {
-		warn("%s: getsockopt SO_ERROR", http_info(conn->url));
-		/* connection will be closed by http_connect() */
-		return -1;
-	}
-	if (error != 0) {
-		errno = error;
-		warn("%s: connect", http_info(conn->url));
-		return -1;
-	}
-
-	return http_connect_done(conn);
 }
 
 static int
@@ -513,19 +468,24 @@ http_connect(struct http_connection *conn)
 }
 
 static int
-http_tls_handshake(struct http_connection *conn)
+http_finish_connect(struct http_connection *conn)
 {
-	switch (tls_handshake(conn->tls)) {
-	case 0:
-		return 0;
-	case TLS_WANT_POLLIN:
-		return WANT_POLLIN;
-	case TLS_WANT_POLLOUT:
-		return WANT_POLLOUT;
+	int error = 0;
+	socklen_t len;
+
+	len = sizeof(error);
+	if (getsockopt(conn->fd, SOL_SOCKET, SO_ERROR, &error, &len) == -1) {
+		warn("%s: getsockopt SO_ERROR", http_info(conn->url));
+		/* connection will be closed by http_connect() */
+		return -1;
 	}
-	warnx("%s: TLS handshake: %s", http_info(conn->url),
-	    tls_error(conn->tls));
-	return -1;
+	if (error != 0) {
+		errno = error;
+		warn("%s: connect", http_info(conn->url));
+		return -1;
+	}
+
+	return http_connect_done(conn);
 }
 
 static int
@@ -546,6 +506,22 @@ http_tls_connect(struct http_connection *conn)
 		return -1;
 	}
 	return http_tls_handshake(conn);
+}
+
+static int
+http_tls_handshake(struct http_connection *conn)
+{
+	switch (tls_handshake(conn->tls)) {
+	case 0:
+		return 0;
+	case TLS_WANT_POLLIN:
+		return WANT_POLLIN;
+	case TLS_WANT_POLLOUT:
+		return WANT_POLLOUT;
+	}
+	warnx("%s: TLS handshake: %s", http_info(conn->url),
+	    tls_error(conn->tls));
+	return -1;
 }
 
 static int
@@ -1146,6 +1122,33 @@ http_do(struct http_connection *conn, int events)
 		break;
 	}
 	return 0;
+}
+
+static void
+http_setup(void)
+{
+	tls_config = tls_config_new();
+	if (tls_config == NULL)
+		errx(1, "tls config failed");
+#if 0
+	/* TODO Should we allow extra protos and ciphers? */
+	if (tls_config_set_protocols(tls_config, TLS_PROTOCOLS_ALL) == -1)
+		errx(1, "tls set protocols failed: %s",
+		    tls_config_error(tls_config));
+	if (tls_config_set_ciphers(tls_config, "legacy") == -1)
+		errx(1, "tls set ciphers failed: %s",
+		    tls_config_error(tls_config));
+#endif
+
+	/* load cert file from disk now */
+	tls_ca_mem = tls_load_file(tls_default_ca_cert_file(),
+	    &tls_ca_size, NULL);
+	if (tls_ca_mem == NULL)
+		err(1, "tls_load_file: %s", tls_default_ca_cert_file());
+	tls_config_set_ca_mem(tls_config, tls_ca_mem, tls_ca_size);
+
+	/* TODO initalize proxy settings */
+
 }
 
 void
