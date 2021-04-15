@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_CTX_set_options.3,v 1.12 2018/04/11 18:05:49 schwarze Exp $
+.\" $OpenBSD: SSL_CTX_set_options.3,v 1.13 2021/04/15 16:35:54 tb Exp $
 .\" full merge up to: OpenSSL 7946ab33 Dec 6 17:56:41 2015 +0100
 .\" selective merge up to: OpenSSL edb79c3a Mar 29 10:07:14 2017 +1000
 .\"
@@ -52,7 +52,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 11 2018 $
+.Dd $Mdocdate: April 15 2021 $
 .Dt SSL_CTX_SET_OPTIONS 3
 .Os
 .Sh NAME
@@ -184,6 +184,16 @@ this option is currently set by default.
 See the
 .Sx SECURE RENEGOTIATION
 section for more details.
+.It Dv SSL_OP_NO_DTLSv1
+Do not use the DTLSv1 protocol.
+Deprecated; use
+.Xr SSL_CTX_set_min_proto_version 3
+instead.
+.It Dv SSL_OP_NO_DTLSv1_2
+Do not use the DTLSv1.2 protocol.
+Deprecated; use
+.Xr SSL_CTX_set_min_proto_version 3
+instead.
 .It Dv SSL_OP_NO_QUERY_MTU
 Do not query the MTU.
 Only affects DTLS connections.
@@ -204,6 +214,9 @@ Deprecated; use
 instead.
 .It Dv SSL_OP_NO_TLSv1_1
 Do not use the TLSv1.1 protocol.
+Deprecated; use
+.Xr SSL_CTX_set_min_proto_version 3
+instead.
 .It Dv SSL_OP_NO_TLSv1_2
 Do not use the TLSv1.2 protocol.
 Deprecated; use
