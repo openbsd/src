@@ -1,4 +1,4 @@
-/*      $OpenBSD: http.c,v 1.28 2021/04/13 13:54:15 claudio Exp $  */
+/*      $OpenBSD: http.c,v 1.29 2021/04/15 14:22:05 claudio Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -122,6 +122,8 @@ struct sockaddr_storage http_bindaddr;
 struct tls_config *tls_config;
 uint8_t *tls_ca_mem;
 size_t tls_ca_size;
+
+static int	http_write(struct http_connection *);
 
 /*
  * Return a string that can be used in error message to identify the
@@ -699,7 +701,7 @@ http_redirect(struct http_connection *conn, char *uri)
 	if (http_resolv(conn, host, port) == -1)
 		return -1;
 
-	return http_connect(conn);
+	return -2;
 }
 
 static int
@@ -846,7 +848,9 @@ http_read(struct http_connection *conn)
 {
 	ssize_t s;
 	char *buf;
+	int done;
 
+read_more:
 	s = tls_read(conn->tls, conn->buf + conn->bufpos,
 	    conn->bufsz - conn->bufpos);
 	if (s == -1) {
@@ -867,38 +871,63 @@ http_read(struct http_connection *conn)
 
 	conn->bufpos += s;
 
+again:
 	switch (conn->state) {
 	case STATE_RESPONSE_STATUS:
 		buf = http_get_line(conn);
 		if (buf == NULL)
-			return WANT_POLLIN;
+			goto read_more;
 		if (http_parse_status(conn, buf) == -1) {
 			free(buf);
 			return -1;
 		}
 		free(buf);
 		conn->state = STATE_RESPONSE_HEADER;
-		/* FALLTHROUGH */
+		goto again;
 	case STATE_RESPONSE_HEADER:
-		while ((buf = http_get_line(conn)) != NULL) {
+		done = 0;
+		while (!done) {
 			int rv;
+
+			buf = http_get_line(conn);
+			if (buf == NULL)
+				goto read_more;
 
 			rv = http_parse_header(conn, buf);
 			free(buf);
-			if (rv != 1)
-				return rv;
+			if (rv == -1)
+				return -1;
+			if (rv == -2)	/* redirect */
+				return 0;
+			if (rv == 0)
+				done = 1;
 		}
-		return WANT_POLLIN;
+
+		/* Check status header and decide what to do next */
+		if (conn->status == 200) {
+			if (conn->chunked)
+				conn->state = STATE_RESPONSE_CHUNKED;
+			else
+				conn->state = STATE_RESPONSE_DATA;
+			goto again;
+		} else if (conn->status == 304) {
+			http_done(conn->id, HTTP_NOT_MOD, conn->last_modified);
+		} else {
+			http_done(conn->id, HTTP_FAILED, conn->last_modified);
+		}
+
+		conn->state = STATE_DONE;
+		return 0;
 	case STATE_RESPONSE_DATA:
 		if (conn->bufpos == conn->bufsz ||
 		    conn->iosz <= (off_t)conn->bufpos)
 			return 0;
-		return WANT_POLLIN;
+		goto read_more;
 	case STATE_RESPONSE_CHUNKED:
 		while (conn->iosz == 0) {
 			buf = http_get_line(conn);
 			if (buf == NULL)
-				return WANT_POLLIN;
+				goto read_more;
 			switch (http_parse_chunked(conn, buf)) {
 			case -1:
 				free(buf);
@@ -913,7 +942,7 @@ http_read(struct http_connection *conn)
 		if (conn->bufpos == conn->bufsz ||
 		    conn->iosz <= (off_t)conn->bufpos)
 			return 0;
-		return WANT_POLLIN;
+		goto read_more;
 	default:
 		errx(1, "unexpected http state");
 	}
@@ -939,6 +968,7 @@ http_write(struct http_connection *conn)
 	conn->bufpos += s;
 	if (conn->bufpos == conn->bufsz)
 		return 0;
+
 	return WANT_POLLOUT;
 }
 
@@ -987,8 +1017,13 @@ data_write(struct http_connection *conn)
 	}
 
 	/* all data written, switch back to read */
-	if (conn->bufpos == 0 || conn->iosz == 0)
-		return 0;
+	if (conn->bufpos == 0 || conn->iosz == 0) {
+		if (conn->chunked)
+			conn->state = STATE_RESPONSE_CHUNKED;
+		else
+			conn->state = STATE_RESPONSE_DATA;
+		return http_read(conn);
+	}
 
 	/* still more data to write in buffer */
 	return WANT_POLLOUT;
@@ -1003,25 +1038,9 @@ data_write(struct http_connection *conn)
 static int
 http_handle(struct http_connection *conn, int events)
 {
-	/* special case for INIT,  there is no event to start a request */
-	if (conn->state == STATE_INIT)
-		return http_connect(conn);
-
-	if (events & POLLHUP) {
-		if (conn->state == STATE_WRITE_DATA)
-			warnx("%s: output pipe closed", http_info(conn->url));
-		else
-			warnx("%s: server closed connection",
-			    http_info(conn->url));
-		return -1;
-	}
-
-	if ((events & conn->events) == 0) {
-		warnx("%s: unexpected event", http_info(conn->url));
-		return -1;
-	}
-
 	switch (conn->state) {
+	case STATE_INIT:
+		return http_connect(conn);
 	case STATE_CONNECT:
 		if (http_finish_connect(conn) == -1)
 			/* something went wrong, try other host */
@@ -1040,7 +1059,6 @@ http_handle(struct http_connection *conn, int events)
 		return data_write(conn);
 	case STATE_DONE:
 		return http_close(conn);
-	case STATE_INIT:
 	case STATE_FREE:
 		errx(1, "bad http state");
 	}
@@ -1058,7 +1076,7 @@ http_nextstep(struct http_connection *conn)
 
 	switch (conn->state) {
 	case STATE_INIT:
-		errx(1, "bad http state");
+		return http_connect(conn);
 	case STATE_CONNECT:
 		conn->state = STATE_TLSCONNECT;
 		r = http_tls_connect(conn);
@@ -1076,38 +1094,16 @@ http_nextstep(struct http_connection *conn)
 			err(1, NULL);
 		conn->bufpos = 0;
 		conn->bufsz = HTTP_BUF_SIZE;
-		return WANT_POLLIN;
-	case STATE_RESPONSE_STATUS:
-		conn->state = STATE_RESPONSE_HEADER;
-		return WANT_POLLIN;
-	case STATE_RESPONSE_HEADER:
-		if (conn->status == 200) {
-			conn->state = STATE_RESPONSE_DATA;
-		} else {
-			if (conn->status == 304)
-				http_done(conn->id, HTTP_NOT_MOD,
-				    conn->last_modified);
-			else
-				http_done(conn->id, HTTP_FAILED,
-				    conn->last_modified);
-			conn->state = STATE_DONE;
-			return http_close(conn);
-		}
-		return WANT_POLLIN;
+		return http_read(conn);
 	case STATE_RESPONSE_DATA:
-		conn->state = STATE_WRITE_DATA;
-		return WANT_POLLOUT;
 	case STATE_RESPONSE_CHUNKED:
 		conn->state = STATE_WRITE_DATA;
 		return WANT_POLLOUT;
-	case STATE_WRITE_DATA:
-		if (conn->chunked)
-			conn->state = STATE_RESPONSE_CHUNKED;
-		else
-			conn->state = STATE_RESPONSE_DATA;
-		return WANT_POLLIN;
 	case STATE_DONE:
 		return http_close(conn);
+	case STATE_RESPONSE_STATUS:
+	case STATE_RESPONSE_HEADER:
+	case STATE_WRITE_DATA:
 	case STATE_FREE:
 		errx(1, "bad http state");
 	}
@@ -1152,13 +1148,6 @@ http_do(struct http_connection *conn, int events)
 	return 0;
 }
 
-static void
-gotpipe(int sig __attribute__((unused)))
-{
-	warnx("http: unexpected sigpipe\n");
-	kill(getpid(), SIGABRT);
-}
-
 void
 proc_http(char *bind_addr, int fd)
 {
@@ -1166,9 +1155,6 @@ proc_http(char *bind_addr, int fd)
 	struct pollfd pfds[MAX_CONNECTIONS + 1];
 	size_t i;
 	int active_connections;
-
-	/* XXX for now track possible SIGPIPE */
-	signal(SIGPIPE, gotpipe);
 
 	if (bind_addr != NULL) {
 		struct addrinfo hints, *res;
