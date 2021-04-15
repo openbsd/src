@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.414 2021/03/02 09:45:07 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.415 2021/04/15 13:42:33 bluhm Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3558,6 +3558,28 @@ symget(const char *nam)
 }
 
 static int
+cmpcommunity(struct community *a, struct community *b)
+{
+	if (a->flags > b->flags)
+		return 1;
+	if (a->flags < b->flags)
+		return -1;
+	if (a->data1 > b->data1)
+		return 1;
+	if (a->data1 < b->data1)
+		return -1;
+	if (a->data2 > b->data2)
+		return 1;
+	if (a->data2 < b->data2)
+		return -1;
+	if (a->data3 > b->data3)
+		return 1;
+	if (a->data3 < b->data3)
+		return -1;
+	return 0;
+}
+
+static int
 getcommunity(char *s, int large, u_int32_t *val, u_int32_t *flag)
 {
 	long long	 max = USHRT_MAX;
@@ -4396,16 +4418,17 @@ filterset_add(struct filter_set_head *sh, struct filter_set *s)
 			switch (s->type) {
 			case ACTION_SET_COMMUNITY:
 			case ACTION_DEL_COMMUNITY:
-				if (memcmp(&s->action.community,
-				    &t->action.community,
-				    sizeof(s->action.community)) < 0) {
+				switch (cmpcommunity(&s->action.community,
+				    &t->action.community)) {
+				case -1:
 					TAILQ_INSERT_BEFORE(t, s, entry);
 					return;
-				} else if (memcmp(&s->action.community,
-				    &t->action.community,
-				    sizeof(s->action.community)) == 0)
+				case 0:
 					break;
-				continue;
+				case 1:
+					continue;
+				}
+				break;
 			case ACTION_SET_NEXTHOP:
 				/* only last nexthop per AF matters */
 				if (s->action.nexthop.aid <
