@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsid.h,v 1.16 2016/09/02 16:22:31 benno Exp $ */
+/*	$OpenBSD: iscsid.h,v 1.17 2021/04/16 14:37:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -67,7 +67,7 @@ struct ctrldata {
 #define CTRL_LOG_VERBOSE	6
 #define CTRL_VSCSI_STATS	7
 #define CTRL_SHOW_SUM		8
-
+#define CTRL_SESS_POLL		9
 
 TAILQ_HEAD(session_head, session);
 TAILQ_HEAD(connection_head, connection);
@@ -75,10 +75,10 @@ TAILQ_HEAD(pduq, pdu);
 TAILQ_HEAD(taskq, task);
 
 /* as in tcp_seq.h */
-#define SEQ_LT(a,b)     ((int)((a)-(b)) < 0)
-#define SEQ_LEQ(a,b)    ((int)((a)-(b)) <= 0)
-#define SEQ_GT(a,b)     ((int)((a)-(b)) > 0)
-#define SEQ_GEQ(a,b)    ((int)((a)-(b)) >= 0)
+#define SEQ_LT(a,b)	((int)((a)-(b)) < 0)
+#define SEQ_LEQ(a,b)	((int)((a)-(b)) <= 0)
+#define SEQ_GT(a,b)	((int)((a)-(b)) > 0)
+#define SEQ_GEQ(a,b)	((int)((a)-(b)) >= 0)
 
 #define SESS_INIT		0x0001
 #define SESS_FREE		0x0002
@@ -251,6 +251,16 @@ struct session {
 	int			 action;
 };
 
+struct session_poll {
+	int session_count;
+	int session_init_count;
+	int session_running_count;
+	int conn_logged_in_count;
+	int conn_failed_count;
+	int conn_waiting_count;
+	int sess_conn_status;
+};
+
 struct connection {
 	struct event		 ev;
 	struct event		 wev;
@@ -390,6 +400,10 @@ void	vscsi_data(unsigned long, int, void *, size_t);
 void	vscsi_status(int, int, void *, size_t);
 void	vscsi_event(unsigned long, u_int, u_int);
 struct vscsi_stats *vscsi_stats(void);
+
+/* Session polling */
+void    poll_session(struct session_poll *, struct session *);
+void    poll_finalize(struct session_poll *);
 
 /* logmsg.c */
 void	log_hexdump(void *, size_t);

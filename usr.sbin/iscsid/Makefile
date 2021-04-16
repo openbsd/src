@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.5 2019/11/25 22:52:13 kn Exp $
+#	$OpenBSD: Makefile,v 1.6 2021/04/16 14:37:06 claudio Exp $
 
 PROG=	iscsid
 SRCS=	connection.c control.c initiator.c iscsid.c log.c logmsg.c pdu.c \
-	session.c task.c util.c vscsi.c
+	poll.c session.c task.c util.c vscsi.c
 
 MAN=	iscsid.8
 
