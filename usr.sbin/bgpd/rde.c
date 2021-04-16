@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.516 2021/03/02 09:45:07 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.517 2021/04/16 06:20:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -681,6 +681,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 	static struct l3vpn	*vpn;
 	struct imsg		 imsg;
 	struct mrt		 xmrt;
+	struct roa		 roa;
 	struct rde_rib		 rr;
 	struct filterstate	 state;
 	struct imsgbuf		*i;
@@ -889,6 +890,12 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 				    entry);
 			}
 			last_prefixset = ps;
+			break;
+		case IMSG_RECONF_ROA_ITEM:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(roa))
+				fatalx("IMSG_RECONF_ROA_ITEM bad len");
+			memcpy(&roa, imsg.data, sizeof(roa));
+			rv = trie_roa_add(&last_prefixset->th, &roa);
 			break;
 		case IMSG_RECONF_PREFIX_SET_ITEM:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(psi))
