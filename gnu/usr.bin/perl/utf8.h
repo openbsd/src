@@ -316,7 +316,12 @@ C<cp> is Unicode if above 255; otherwise is platform-native.
 
 =cut
  */
+#if defined(__m88k__)
+/* XXX workaround: m88k gcc3 produces wrong code with NATIVE_TO_UNI() */
+#define UVCHR_IS_INVARIANT(cp)  (OFFUNI_IS_INVARIANT(cp))
+#else	/* the original one */
 #define UVCHR_IS_INVARIANT(cp)  (OFFUNI_IS_INVARIANT(NATIVE_TO_UNI(cp)))
+#endif
 
 /* Internal macro to be used only in this file to aid in constructing other
  * publicly accessible macros.
