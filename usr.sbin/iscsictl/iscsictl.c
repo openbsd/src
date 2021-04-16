@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsictl.c,v 1.11 2016/08/16 18:41:57 tedu Exp $ */
+/*	$OpenBSD: iscsictl.c,v 1.12 2021/04/16 14:39:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -40,6 +40,10 @@ struct pdu	*ctl_getpdu(char *, size_t);
 int		 ctl_sendpdu(int, struct pdu *);
 void		 show_config(struct ctrlmsghdr *, struct pdu *);
 void		 show_vscsi_stats(struct ctrlmsghdr *, struct pdu *);
+void             poll_and_wait(void);
+void             poll_session_status(void);
+void             register_poll(struct ctrlmsghdr *, struct pdu *);
+void             poll_print(struct session_poll *);
 
 char		cbuf[CONTROL_READ_SIZE];
 
@@ -47,6 +51,11 @@ struct control {
 	struct pduq	channel;
 	int		fd;
 } control;
+
+
+struct session_poll poll_result;
+#define POLL_DELAY_SEC	1
+#define POLL_ATTEMPTS	10
 
 __dead void
 usage(void)
@@ -68,7 +77,7 @@ main (int argc, char* argv[])
 	char *sockname = ISCSID_CONTROL;
 	struct session_ctlcfg *s;
 	struct iscsi_config *cf;
-	int ch, val = 0;
+	int ch, poll = 0, val = 0;
 
 	/* check flags */
 	while ((ch = getopt(argc, argv, "f:s:")) != -1) {
@@ -135,6 +144,7 @@ main (int argc, char* argv[])
 			    &cf->initiator, sizeof(cf->initiator)) == -1)
 				err(1, "control_compose");
 		}
+
 		SIMPLEQ_FOREACH(s, &cf->sessions, entry) {
 			struct ctrldata cdv[3];
 			bzero(cdv, sizeof(cdv));
@@ -157,6 +167,9 @@ main (int argc, char* argv[])
 			    nitems(cdv), cdv) == -1)
 				err(1, "control_build");
 		}
+
+		/* Reloading, so poll for connection establishment. */
+		poll = 1;
 		break;
 	case DISCOVERY:
 		printf("discover %s\n", log_sockaddr(&res->addr));
@@ -174,8 +187,10 @@ main (int argc, char* argv[])
 
 	run();
 
-	close(control.fd);
+	if (poll)
+		poll_and_wait();
 
+	close(control.fd);
 	return (0);
 }
 
@@ -237,6 +252,11 @@ run_command(struct pdu *pdu)
 			show_vscsi_stats(cmh, pdu);
 			done = 1;
 			break;
+		case CTRL_SESS_POLL:
+			register_poll(cmh, pdu);
+			done = 1;
+			break;
+
 		}
 	}
 }
@@ -382,4 +402,70 @@ show_vscsi_stats(struct ctrlmsghdr *cmh, struct pdu *pdu)
 	    vs->cnt_t2i_status[0], 
 	    vs->cnt_t2i_status[1], 
 	    vs->cnt_t2i_status[2]);
+}
+
+void
+poll_session_status(void)
+{
+	struct pdu *pdu;
+
+	if (control_compose(NULL, CTRL_SESS_POLL, NULL, 0) == -1)
+		err(1, "control_compose");
+
+	while ((pdu = TAILQ_FIRST(&control.channel)) != NULL) {
+		TAILQ_REMOVE(&control.channel, pdu, entry);
+		run_command(pdu);
+	}
+}
+
+void
+poll_and_wait(void)
+{
+	int attempts;
+
+	printf("waiting for config to settle..");
+	fflush(stdout);
+
+	for (attempts = 0; attempts < POLL_ATTEMPTS; attempts++) {
+
+		poll_session_status();
+
+		/* Poll says we are good to go. */
+		if (poll_result.sess_conn_status != 0) {
+			printf("ok\n");
+			/* wait a bit longer so all is settled. */
+			sleep(POLL_DELAY_SEC);
+			return;
+		}
+
+		/* Poll says we should wait... */
+		printf(".");
+		fflush(stdout);
+		sleep(POLL_DELAY_SEC);
+	}
+
+	printf("giving up.\n");
+
+	poll_print(&poll_result);
+}
+
+void
+register_poll(struct ctrlmsghdr *cmh, struct pdu *pdu)
+{
+	if (cmh->len[0] != sizeof(poll_result))
+		errx(1, "poll: bad size of response");
+
+	poll_result = *((struct session_poll *)pdu_getbuf(pdu, NULL, 1));
+}
+
+void
+poll_print(struct session_poll *p)
+{
+	printf("Configured sessions: %d\n", p->session_count);
+	printf("Sessions initializing: %d\n", p->session_init_count);
+	printf("Sessions started/failed: %d\n", p->session_running_count);
+	printf("Sessions logged in: %d\n", p->conn_logged_in_count);
+	printf("Sessions with failed connections: %d\n", p->conn_failed_count);
+	printf("Sessions still attempting to connect: %d\n",
+	    p->conn_waiting_count);
 }
