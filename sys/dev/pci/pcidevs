@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1964 2021/04/14 18:36:42 stsp Exp $
+$OpenBSD: pcidevs,v 1.1965 2021/04/17 14:28:58 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -636,8 +636,8 @@ product ALI M1689		0x1689	M1689 PCI
 product ALI M1695		0x1695	M1695 PCI
 product ALI M3309		0x3309	M3309 MPEG
 product ALI M4803		0x5215	M4803
-product ALI M5219		0x5219	M5219 UDMA IDE
-product ALI M5229		0x5229	M5229 UDMA IDE
+product ALI M5219		0x5219	M5219 IDE
+product ALI M5229		0x5229	M5229 IDE
 product ALI M5237		0x5237	M5237 USB
 product ALI M5239		0x5239	M5239 USB2
 product ALI M5243		0x5243	M5243 AGP/PCI-PCI
@@ -3456,13 +3456,13 @@ product INTEL WL_130_1		0x0896	Centrino Wireless-N 130
 product INTEL WL_130_2		0x0897	Centrino Wireless-N 130
 product INTEL WL_100_1		0x08ae	Centrino Wireless-N 100
 product INTEL WL_100_2		0x08af	Centrino Wireless-N 100
-product INTEL WL_7260_1		0x08b1	Dual Band Wireless AC 7260
-product INTEL WL_7260_2		0x08b2	Dual Band Wireless AC 7260
-product INTEL WL_3160_1		0x08b3	Dual Band Wireless AC 3160
-product INTEL WL_3160_2		0x08b4	Dual Band Wireless AC 3160
+product INTEL WL_7260_1		0x08b1	AC 7260
+product INTEL WL_7260_2		0x08b2	AC 7260
+product INTEL WL_3160_1		0x08b3	AC 3160
+product INTEL WL_3160_2		0x08b4	AC 3160
 product INTEL NVME		0x0953	NVMe
-product INTEL WL_7265_1		0x095a	Dual Band Wireless AC 7265
-product INTEL WL_7265_2		0x095b	Dual Band Wireless AC 7265
+product INTEL WL_7265_1		0x095a	AC 7265
+product INTEL WL_7265_2		0x095b	AC 7265
 product INTEL 80960RP		0x0960	i960 RP
 product INTEL 80960RM		0x0962	i960 RM
 product INTEL 80960RN		0x0964	i960 RN
@@ -4381,10 +4381,10 @@ product INTEL 82801EB_IDE	0x24db	82801EB/ER IDE
 product INTEL 82801EB_USB_5	0x24dd	82801EB/ER USB2
 product INTEL 82801EB_USB_4	0x24de	82801EB/ER USB
 product INTEL 82801ER_SATA	0x24df	82801ER SATA
-product INTEL WL_8260_1		0x24f3	Dual Band Wireless AC 8260
-product INTEL WL_8260_2		0x24f4	Dual Band Wireless AC 8260
-product INTEL WL_4165_1		0x24f5	Dual Band Wireless AC 4165
-product INTEL WL_4165_2		0x24f6	Dual Band Wireless AC 4165
+product INTEL WL_8260_1		0x24f3	AC 8260
+product INTEL WL_8260_2		0x24f4	AC 8260
+product INTEL WL_4165_1		0x24f5	AC 4165
+product INTEL WL_4165_2		0x24f6	AC 4165
 product INTEL WL_3168_1		0x24fb	Dual Band Wireless-AC 3168
 product INTEL WL_8265_1		0x24fd	Dual Band Wireless-AC 8265
 product INTEL 82820_HB		0x2501	82820 Host
@@ -4882,8 +4882,8 @@ product INTEL RCU32		0x3092	RCU32 I2O RAID
 product INTEL I225_K		0x3100	I225-K
 product INTEL I225_K2		0x3101	I225-K2
 product INTEL 3124		0x3124	3124 SATA
-product INTEL WL_3165_1		0x3165	Dual Band Wireless AC 3165
-product INTEL WL_3165_2		0x3166	Dual Band Wireless AC 3165
+product INTEL WL_3165_1		0x3165	AC 3165
+product INTEL WL_3165_2		0x3166	AC 3165
 product INTEL GLK_UHD_605	0x3184	UHD Graphics 605
 product INTEL GLK_UHD_600	0x3185	UHD Graphics 600
 product INTEL GLK_DPTF		0x318c	Gemini Lake DPTF
@@ -5911,7 +5911,7 @@ product INTEL 300SERIES_U_I2C_5		0x9dea	300 Series I2C
 product INTEL 300SERIES_U_I2C_6		0x9deb	300 Series I2C
 product INTEL 300SERIES_U_XHCI	0x9ded	300 Series xHCI
 product INTEL 300SERIES_U_SSRAM	0x9def	300 Series Shared SRAM
-product INTEL WL_9560_1		0x9df0	Dual Band Wireless AC 9560
+product INTEL WL_9560_1		0x9df0	AC 9560
 product INTEL 300SERIES_U_SDXC	0x9df5	300 Series SDXC
 product INTEL 300SERIES_U_THERM	0x9df9	300 Series Thermal
 product INTEL 300SERIES_U_SPI_2	0x9dfb	300 Series SPI
@@ -6161,7 +6161,7 @@ product INTEL 300SERIES_I2C_4	0xa36b	300 Series I2C
 product INTEL 300SERIES_XHCI	0xa36d	300 Series xHCI
 product INTEL 300SERIES_XDCI	0xa36e	300 Series xDCI
 product INTEL 300SERIES_SSRAM	0xa36f	300 Series Shared SRAM
-product INTEL WL_9560_2		0xa370	Dual Band Wireless AC 9560
+product INTEL WL_9560_2		0xa370	AC 9560
 product INTEL 300SERIES_THERM	0xa379	300 Series Thermal
 product INTEL 300SERIES_GSPI_3	0xa37b	300 Series GSPI
 product INTEL 300SERIES_ISH	0xa37c	300 Series ISH
