@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1964 2021/04/14 18:36:42 stsp Exp 
+ *	OpenBSD: pcidevs,v 1.1965 2021/04/17 14:28:58 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -905,11 +905,11 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5219,
-	    "M5219 UDMA IDE",
+	    "M5219 IDE",
 	},
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5229,
-	    "M5229 UDMA IDE",
+	    "M5229 IDE",
 	},
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5237,
@@ -11257,19 +11257,19 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_7260_1,
-	    "Dual Band Wireless AC 7260",
+	    "AC 7260",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_7260_2,
-	    "Dual Band Wireless AC 7260",
+	    "AC 7260",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_3160_1,
-	    "Dual Band Wireless AC 3160",
+	    "AC 3160",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_3160_2,
-	    "Dual Band Wireless AC 3160",
+	    "AC 3160",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_NVME,
@@ -11277,11 +11277,11 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_7265_1,
-	    "Dual Band Wireless AC 7265",
+	    "AC 7265",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_7265_2,
-	    "Dual Band Wireless AC 7265",
+	    "AC 7265",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80960RP,
@@ -14957,19 +14957,19 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_8260_1,
-	    "Dual Band Wireless AC 8260",
+	    "AC 8260",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_8260_2,
-	    "Dual Band Wireless AC 8260",
+	    "AC 8260",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_4165_1,
-	    "Dual Band Wireless AC 4165",
+	    "AC 4165",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_4165_2,
-	    "Dual Band Wireless AC 4165",
+	    "AC 4165",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_3168_1,
@@ -16961,11 +16961,11 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_3165_1,
-	    "Dual Band Wireless AC 3165",
+	    "AC 3165",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_3165_2,
-	    "Dual Band Wireless AC 3165",
+	    "AC 3165",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_GLK_UHD_605,
@@ -21077,7 +21077,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_9560_1,
-	    "Dual Band Wireless AC 9560",
+	    "AC 9560",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_300SERIES_U_SDXC,
@@ -22077,7 +22077,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_9560_2,
-	    "Dual Band Wireless AC 9560",
+	    "AC 9560",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_300SERIES_THERM,
