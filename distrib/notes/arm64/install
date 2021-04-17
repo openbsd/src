@@ -1,4 +1,4 @@
-dnl     $OpenBSD: install,v 1.2 2020/07/05 22:27:47 tj Exp $
+dnl     $OpenBSD: install,v 1.3 2021/04/17 21:21:41 sthen Exp $
 OpenBSDInstallPrelude
 
 OpenBSDInstallPart2
@@ -41,6 +41,17 @@ OpenBSDCommonInstall
 OpenBSDInstallWrapup
 
 OpenBSDCongratulations
+
+As you may have seen during installation, on some systems OpenBSD/MACHINE
+will configure the system console (displaying kernel messages, panics, and
+so on) to use the serial interface even though it has video hardware.
+To use video output on the framebuffer instead, you may add "set tty fb0"
+to /etc/boot.conf and set the entry in /etc/ttys named "console" to off
+(otherwise you may experience a conflict with ttyC0 resulting in erratic
+keyboard input).
+
+In these cases the installer question about running X11 is not displayed;
+to start an X11 display manager at boot, use "rcctl enable xenodm".
 
 
 

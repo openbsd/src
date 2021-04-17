@@ -1,33 +1,36 @@
-dnl	$OpenBSD: prep,v 1.11 2020/05/17 17:04:27 deraadt Exp $
+dnl	$OpenBSD: prep,v 1.12 2021/04/17 21:21:41 sthen Exp $
 Please be aware that OpenBSD support for this platform is far from
 complete.
 
-To perform an installation you must be able to interact with the serial
-console of the machine.  USB OTG ports such as the one found on the
-BeagleBone will not function as a console.  You need to be able to
-interact with the firmware on the console.  Often this requires a 3.3V
-TTL level adapter connected to pins or a header on the board.
+To perform an installation you must be able to interact with the
+console of the machine.  In some cases this can be done by an attached
+monitor and keyboard.  In others a serial console is required.
+USB OTG ports such as the one found on the BeagleBone will not
+function as a console.  You need to be able to interact with the
+firmware on the console.  Often this requires a 3.3V TTL level
+adapter connected to pins or a header on the board.
 
 Firmware which provides an UEFI interface with a Device Tree Blob
 (DTB) file or ACPI support is required to boot.  In most cases this is
 provided by images of U-Boot 2016.07 or newer on SD/MMC devices or in
-SPI flash.  If the miniroot images are used, U-Boot and DTB files are
-distributed as part of the miniroot disk images.
+SPI flash.  If the miniroot or install images are used, U-Boot and
+DTB files are distributed as part of the images.
 
-OpenBSD can be installed onto a disk by copying the miniroot for your
-board "miniroot{:--:}OSrev.img" image to an SD card.
+OpenBSD can be installed onto a disk by copying the miniroot or install
+image for your board ("miniroot{:--:}OSrev.img" or "install{:--:}OSrev.img")
+to an SD card.
 
 Booting from an SD card:
 
-  To use the miniroot image you will need another machine to plug the
+  To use a miniroot/install image you will need another machine to plug the
   SD card in to. Any machine type will do, as long as it supports SD card
   storage devices.  Under OpenBSD, it will appear as a ``sd'' device, for
   example sd1.
-  
-  Use the dd(1) utility to copy the miniroot to the SD card.
+
+  Use the dd(1) utility to copy the image to the SD card.
   The command would likely be, under OpenBSD:
-  	dd if=miniroot{:--:}OSrev.img of=/dev/rsd1c bs=1m
-  
+	dd if=miniroot{:--:}OSrev.img of=/dev/rsd1c bs=1m
+
   When you have connected the serial to your computer, a command such
   as "cu -l cuaU0 -s 115200" (assuming cuaU0 is your serial port device)
   should connect you to the board's console.
@@ -49,34 +52,29 @@ script.
 The bootloader will then run and try to load sd0a:/bsd off an FFS
 filesystem after a timeout.
 
-Install on Raspberry Pi 4:
+Install on Raspberry Pi:
 
-  You will need a microSD card (only a small one is needed), a USB
-  storage device, a TTL serial interface adapter (e.g. CP2102 USB-UART
-  converter), and a cable to attach this to the TXD/RXD/GND pins on the
-  https://pinout.xyz/ header on the board.
+  As of OpenBSD 6.9, the standard miniroot supports at least the
+  Raspberry Pi 3 and 4 with no additional firmware.  Some devices may
+  not be functional with Pi 3+.  It is recommended that you install
+  to a USB storage device.
 
-  Follow the installation instructions at https://github.com/pftf/RPi4
-  to install UEFI firmware to a FAT-formatted microSD card.
+  The default system console is on the TTL serial interface on the
+  TXD/RXD/GND pins of the https://pinout.xyz/ header on the board.
+  It will be helpful to obtain an adapter (e.g. CP2102 USB-UART).
+  If you have one, attach it to the pins and a computer; a command
+  such as "cu -l cuaU0 -s 115200" (assuming cuaU0 is your serial
+  port device) should connect you to the board's console.
 
-  Use the dd(1) utility to copy the miniroot to the USB storage device.
-  The command would likely be, under OpenBSD:
-	dd if=miniroot{:--:}OSrev.img of=/dev/rsd1c bs=1m
+  If not, note that once the kernel has started running, by default you
+  will only see output on the serial console.  To switch to displaying on
+  the monitor instead, watch for the OpenBSD BOOTAA64 "boot>" prompt,
+  and type "set tty fb0".
 
-  When you have connected the serial to your computer, a command such
-  as "cu -l cuaU0 -s 115200" (assuming cuaU0 is your serial port device)
-  should connect you to the board's console.
-
-  Shortly after powering the board, you should see messages on the serial
-  console starting with "Initialising SDRAM" followed by messages from the
-  UEFI firmware.  If you have a monitor connected to the HDMI port, you
-  should see a multi-coloured screen followed by UEFI firmware output.
-  If you do not see this, re-check your UEFI firmware installation.
-
-  OpenBSD should boot automatically soon after loading the UEFI firmware.
-  If a monitor is connected you will see messages from the boot loader,
-  but after the kernel has started running you will only see output on
-  the serial console.
+  Alternatively the system can be booted using UEFI firmware found at
+  https://github.com/pftf/RPi4. Follow their instructions to install to an
+  SD card and run the OpenBSD installer from USB. v1.21 is known to work;
+  some newer versions may have problems.
 
 Install on systems without a supported miniroot:
 
