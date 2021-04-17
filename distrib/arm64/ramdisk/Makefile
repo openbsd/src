@@ -1,14 +1,14 @@
-#	$OpenBSD: Makefile,v 1.21 2021/02/15 07:06:03 semarie Exp $
+#	$OpenBSD: Makefile,v 1.22 2021/04/17 21:19:40 sthen Exp $
 
 FS=		miniroot${OSrev}.img
-FSSIZE=		67584
-FSDISKTYPE=	miniroot
+FSSIZE=		88064
 MOUNT_POINT=	/mnt
 MTREE=		${UTILS}/mtree.conf
 RAMDISK=	RAMDISK
 
+# this offset is required by Rockchip
 MSDOSSTART=	32768
-MSDOSSIZE=	8192
+MSDOSSIZE=	16384
 FFSSTART!=	expr ${MSDOSSTART} + ${MSDOSSIZE}
 
 NEWFS_ARGS_msdos=-L boot -c1 -F16
@@ -27,10 +27,16 @@ MRMAKEFSARGS=	-o disklabel=${MRFSDISKTYPE},minfree=0,density=4096
 PIFILES=\
 	bootcode.bin \
 	start.elf \
+	start4.elf \
 	fixup.dat \
+	fixup4.dat \
+	bcm2710-rpi-2-b.dtb \
 	bcm2710-rpi-3-b.dtb \
 	bcm2710-rpi-3-b-plus.dtb \
-	bcm2710-rpi-cm3.dtb
+	bcm2710-rpi-cm3.dtb \
+	bcm2711-rpi-4-b.dtb \
+	bcm2711-rpi-400.dtb \
+	bcm2711-rpi-cm4.dtb
 
 PIDTBO=\
 	disable-bt.dtbo
@@ -39,7 +45,7 @@ all: ${FS}
 
 ${FS}: bsd.rd
 	dd if=/dev/zero of=${FS} bs=512 count=${FSSIZE}
-	vnconfig -v -t ${FSDISKTYPE} ${FS} > vnd
+	vnconfig -v ${FS} > vnd
 	echo 'u\ne 0\nc\nn\n${MSDOSSTART}\n${MSDOSSIZE}\ne 3\nA6\nn\n${FFSSTART}\n*\nf 0\nw\nq\n' \
 	    | fdisk -e `cat vnd` >/dev/null
 	echo 'a a\n\n\n\nw\nq\n' | disklabel -E `cat vnd` >/dev/null
@@ -52,7 +58,7 @@ ${FS}: bsd.rd
 .for FILE in ${PIDTBO}
 	cp ${PRPI}/overlays/${FILE} ${MOUNT_POINT}/overlays/
 .endfor
-	cp ${PUBOOT}/rpi_3/u-boot.bin ${MOUNT_POINT}/
+	cp ${PUBOOT}/rpi_arm64/u-boot.bin ${MOUNT_POINT}/u-boot.bin
 	mkdir -p ${MOUNT_POINT}/efi/boot
 	cp /usr/mdec/BOOTAA64.EFI ${MOUNT_POINT}/efi/boot/bootaa64.efi
 	echo bootaa64.efi > ${MOUNT_POINT}/efi/boot/startup.nsh

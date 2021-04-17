@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2021/04/10 21:02:36 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.2 2021/04/17 21:19:41 sthen Exp $
 
 FS=		install${OSrev}.img
 FSSIZE=		1032192
@@ -16,8 +16,9 @@ BASE=		${RELDIR}/base${OSrev}.tgz ${RELDIR}/comp${OSrev}.tgz \
 XBASE=		${RELXDIR}/xbase${OSrev}.tgz ${RELXDIR}/xfont${OSrev}.tgz \
 		${RELXDIR}/xshare${OSrev}.tgz ${RELXDIR}/xserv${OSrev}.tgz
 
+# this offset is required by Rockchip
 MSDOSSTART=	32768
-MSDOSSIZE=	8192
+MSDOSSIZE=	16384
 FFSSTART!=	expr ${MSDOSSTART} + ${MSDOSSIZE}
 
 NEWFS_ARGS_msdos=-L boot -c1 -F16
@@ -30,10 +31,16 @@ PRPI=		/usr/local/share/raspberrypi-firmware/boot
 PIFILES=\
 	bootcode.bin \
 	start.elf \
+	start4.elf \
 	fixup.dat \
+	fixup4.dat \
+	bcm2710-rpi-2-b.dtb \
 	bcm2710-rpi-3-b.dtb \
 	bcm2710-rpi-3-b-plus.dtb \
-	bcm2710-rpi-cm3.dtb
+	bcm2710-rpi-cm3.dtb \
+	bcm2711-rpi-4-b.dtb \
+	bcm2711-rpi-400.dtb \
+	bcm2711-rpi-cm4.dtb
 
 PIDTBO=\
 	disable-bt.dtbo
@@ -55,7 +62,7 @@ ${FS}: ${BASE} ${XBASE}
 .for FILE in ${PIDTBO}
 	cp ${PRPI}/overlays/${FILE} ${MOUNT_POINT}/overlays/
 .endfor
-	cp ${PUBOOT}/rpi_3/u-boot.bin ${MOUNT_POINT}/
+	cp ${PUBOOT}/rpi_arm64/u-boot.bin ${MOUNT_POINT}/u-boot.bin
 	mkdir -p ${MOUNT_POINT}/efi/boot
 	cp /usr/mdec/BOOTAA64.EFI ${MOUNT_POINT}/efi/boot/bootaa64.efi
 	echo bootaa64.efi > ${MOUNT_POINT}/efi/boot/startup.nsh

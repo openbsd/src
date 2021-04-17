@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.13 2021/02/15 07:06:03 semarie Exp $
+#	$OpenBSD: list,v 1.14 2021/04/17 21:19:40 sthen Exp $
 
 SRCDIRS distrib/special
 
@@ -92,14 +92,20 @@ COPY	${DESTDIR}/etc/firmware/atu-rfmd2958smc-ext etc/firmware/atu-rfmd2958smc-ex
 COPY	${DESTDIR}/etc/firmware/atu-rfmd2958smc-int etc/firmware/atu-rfmd2958smc-int
 
 MKDIR	usr/mdec/rpi
+COPY	/usr/local/share/raspberrypi-firmware/boot/bcm2710-rpi-2-b.dtb usr/mdec/rpi/bcm2710-rpi-2-b.dtb
 COPY	/usr/local/share/raspberrypi-firmware/boot/bcm2710-rpi-3-b.dtb usr/mdec/rpi/bcm2710-rpi-3-b.dtb
 COPY	/usr/local/share/raspberrypi-firmware/boot/bcm2710-rpi-3-b-plus.dtb usr/mdec/rpi/bcm2710-rpi-3-b-plus.dtb
 COPY	/usr/local/share/raspberrypi-firmware/boot/bcm2710-rpi-cm3.dtb usr/mdec/rpi/bcm2710-rpi-cm3.dtb
+COPY	/usr/local/share/raspberrypi-firmware/boot/bcm2711-rpi-4-b.dtb usr/mdec/rpi/bcm2711-rpi-4-b.dtb
+COPY	/usr/local/share/raspberrypi-firmware/boot/bcm2711-rpi-400.dtb usr/mdec/rpi/bcm2711-rpi-400.dtb
+COPY	/usr/local/share/raspberrypi-firmware/boot/bcm2711-rpi-cm4.dtb usr/mdec/rpi/bcm2711-rpi-cm4.dtb
 COPY	/usr/local/share/raspberrypi-firmware/boot/bootcode.bin usr/mdec/rpi/bootcode.bin
 COPY	/usr/local/share/raspberrypi-firmware/boot/start.elf usr/mdec/rpi/start.elf
+COPY	/usr/local/share/raspberrypi-firmware/boot/start4.elf usr/mdec/rpi/start4.elf
 COPY	/usr/local/share/raspberrypi-firmware/boot/fixup.dat usr/mdec/rpi/fixup.dat
+COPY	/usr/local/share/raspberrypi-firmware/boot/fixup4.dat usr/mdec/rpi/fixup4.dat
 COPY	/usr/local/share/raspberrypi-firmware/boot/overlays/disable-bt.dtbo usr/mdec/rpi/disable-bt.dtbo
-COPY	/usr/local/share/u-boot/rpi_3/u-boot.bin usr/mdec/rpi/u-boot.bin
+COPY	/usr/local/share/u-boot/rpi_arm64/u-boot.bin usr/mdec/rpi/u-boot.bin
 
 MKDIR	usr/mdec/pine64
 COPY	/usr/local/share/u-boot/pine64_plus/u-boot-sunxi-with-spl.bin usr/mdec/pine64/u-boot-sunxi-with-spl.bin

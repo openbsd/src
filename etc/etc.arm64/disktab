@@ -1,10 +1,10 @@
-# $OpenBSD: disktab,v 1.3 2019/06/28 13:28:21 deraadt Exp $
+# $OpenBSD: disktab,v 1.4 2021/04/17 21:19:40 sthen Exp $
 
 # Leave nc=16; adjust size using: ns
 rdroot|ramdiskroot|RAM-disk root FS image:\
-	:dt=rdroot:se#512:nc#16:nt#2:ns#512:\
-	:ta=4.2BSD:oa#0:pa#16384:fa#512:ba#4096:\
-	:ob#0:pb#0:oc#0:pc#16384:
+	:dt=rdroot:se#512:nc#16:nt#2:ns#768:\
+	:ta=4.2BSD:oa#0:pa#24576:fa#512:ba#4096:\
+	:ob#0:pb#0:oc#0:pc#24576:
 
 miniroot:\
 	:dt=rdroot:se#512:nc#33:nt#16:ns#128:\
