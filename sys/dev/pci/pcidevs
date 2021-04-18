@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1966 2021/04/18 00:17:22 deraadt Exp $
+$OpenBSD: pcidevs,v 1.1967 2021/04/18 00:21:53 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -2934,7 +2934,7 @@ product ENDACE DAG423GE		0x423e	Endace Dag4.23GE
 /* ENE Technology products */
 product ENE FLASH		0x0520	Flash memory
 product ENE MEMSTICK		0x0530	Memory Stick
-product ENE SDCARD		0x0550	SD Controller
+product ENE SDCARD		0x0550	SD
 product ENE SDMMC		0x0551	SD/MMC
 product ENE CB1211		0x1211	CB-1211 CardBus
 product ENE CB1225		0x1225	CB-1225 CardBus
@@ -8402,7 +8402,7 @@ product TOSHIBA2 TOPIC95B	0x060a	ToPIC95B CardBus
 product TOSHIBA2 TOPIC97	0x060f	ToPIC97 CardBus
 product TOSHIBA2 TOPIC100	0x0617	ToPIC100 CardBus
 product TOSHIBA2 TFIRO		0x0701	Infrared
-product TOSHIBA2 SDCARD		0x0805	SD Controller
+product TOSHIBA2 SDCARD		0x0805	SD
 
 /* Transmeta products */
 product TRANSMETA NB		0x0295	Northbridge
