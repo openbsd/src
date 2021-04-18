@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1966 2021/04/18 00:17:22 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.1967 2021/04/18 00:21:53 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2939,7 +2939,7 @@
 /* ENE Technology products */
 #define	PCI_PRODUCT_ENE_FLASH	0x0520		/* Flash memory */
 #define	PCI_PRODUCT_ENE_MEMSTICK	0x0530		/* Memory Stick */
-#define	PCI_PRODUCT_ENE_SDCARD	0x0550		/* SD Controller */
+#define	PCI_PRODUCT_ENE_SDCARD	0x0550		/* SD */
 #define	PCI_PRODUCT_ENE_SDMMC	0x0551		/* SD/MMC */
 #define	PCI_PRODUCT_ENE_CB1211	0x1211		/* CB-1211 CardBus */
 #define	PCI_PRODUCT_ENE_CB1225	0x1225		/* CB-1225 CardBus */
@@ -8407,7 +8407,7 @@
 #define	PCI_PRODUCT_TOSHIBA2_TOPIC97	0x060f		/* ToPIC97 CardBus */
 #define	PCI_PRODUCT_TOSHIBA2_TOPIC100	0x0617		/* ToPIC100 CardBus */
 #define	PCI_PRODUCT_TOSHIBA2_TFIRO	0x0701		/* Infrared */
-#define	PCI_PRODUCT_TOSHIBA2_SDCARD	0x0805		/* SD Controller */
+#define	PCI_PRODUCT_TOSHIBA2_SDCARD	0x0805		/* SD */
 
 /* Transmeta products */
 #define	PCI_PRODUCT_TRANSMETA_NB	0x0295		/* Northbridge */

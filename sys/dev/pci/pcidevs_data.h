@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1966 2021/04/18 00:17:22 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.1967 2021/04/18 00:21:53 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -9449,7 +9449,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_SDCARD,
-	    "SD Controller",
+	    "SD",
 	},
 	{
 	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_SDMMC,
@@ -29905,7 +29905,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_SDCARD,
-	    "SD Controller",
+	    "SD",
 	},
 	{
 	    PCI_VENDOR_TRANSMETA, PCI_PRODUCT_TRANSMETA_NB,
