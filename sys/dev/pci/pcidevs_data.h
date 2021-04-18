@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1965 2021/04/17 14:28:58 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.1966 2021/04/18 00:17:22 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -65,7 +65,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C_MPCI_MODEM,
-	    "V.90 Modem",
+	    "Modem",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C940,
@@ -141,7 +141,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_MODEM56,
-	    "56k Modem",
+	    "Modem",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CCFEM656C,
@@ -149,7 +149,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_GLOBALMODEM56,
-	    "56k Global Modem",
+	    "Modem",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CSOHO100TX,
@@ -8661,11 +8661,11 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_56K_WINMODEM,
-	    "56k Winmodem",
+	    "Winmodem",
 	},
 	{
 	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_56K_WINMODEM2,
-	    "56k Winmodem",
+	    "Winmodem",
 	},
 	{
 	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_RS7112,
@@ -8673,7 +8673,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_56K_WINMODEM3,
-	    "56k Winmodem",
+	    "Winmodem",
 	},
 	{
 	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_SOFTK56_PCI,
@@ -9581,7 +9581,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_SUPERLINK,
-	    "ES2838/2839 SuperLink Modem",
+	    "ES2838/2839 Modem",
 	},
 	{
 	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_2898,
@@ -10337,15 +10337,15 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INNOTEK, PCI_PRODUCT_INNOTEK_VBNVME,
-	    "VirtualBox NVMe",
+	    "NVMe",
 	},
 	{
 	    PCI_VENDOR_INNOTEK, PCI_PRODUCT_INNOTEK_VBGA,
-	    "VirtualBox Graphics Adapter",
+	    "Graphics Adapter",
 	},
 	{
 	    PCI_VENDOR_INNOTEK, PCI_PRODUCT_INNOTEK_VBGS,
-	    "VirtualBox Guest Service",
+	    "Guest Service",
 	},
 	{
 	    PCI_VENDOR_INPROCOMM, PCI_PRODUCT_INPROCOMM_IPN2120,
@@ -12125,7 +12125,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_MODEM56,
-	    "56k Modem",
+	    "Modem",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82543GC_COPPER,
@@ -29869,7 +29869,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_BG3_NVME,
-	    "BG3 NVMe",
+	    "NVMe",
 	},
 	{
 	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_NVME,
@@ -29901,7 +29901,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_TFIRO,
-	    "Fast Infrared Type O",
+	    "Infrared",
 	},
 	{
 	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_SDCARD,
@@ -31685,7 +31685,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W89C940F,
-	    "Linksys EtherPCI II",
+	    "Ethernet",
 	},
 	{
 	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W89C940F_1,
@@ -31697,7 +31697,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_WINBOND2, PCI_PRODUCT_WINBOND2_W89C940,
-	    "Linksys EtherPCI",
+	    "Ethernet",
 	},
 	{
 	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_CF32A_1,
@@ -31745,7 +31745,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_MPCI_MODEM_V90,
-	    "V.90 56k Modem",
+	    "Modem",
 	},
 	{
 	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_CARDBUS_ETH_4,
@@ -31753,19 +31753,19 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_MPCI_MODEM_K56,
-	    "K56Flex Modem",
+	    "Modem",
 	},
 	{
 	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_MODEM_56K,
-	    "56k Modem",
+	    "Modem",
 	},
 	{
 	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_MODEM56,
-	    "56k Modem",
+	    "Modem",
 	},
 	{
 	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_CBEM56G,
-	    "CBEM56G Modem",
+	    "Modem",
 	},
 	{
 	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF724,
