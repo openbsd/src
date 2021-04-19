@@ -1,4 +1,4 @@
-/*      $OpenBSD: malloc.c,v 1.31 2020/12/26 13:17:33 otto Exp $       */
+/*      $OpenBSD: malloc.c,v 1.32 2021/04/19 06:43:15 otto Exp $       */
 /*
  * Copyright (c) 2008, 2010, 2011 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -950,7 +950,10 @@ ofree(void *p)
 	} else {
 		void *tmp;
 		int i;
+		struct chunk_info *info = (struct chunk_info *)r->size;
 
+		if (info->size != sz)
+			wrterror("internal struct corrupt");
 		find_chunknum(g_pool, r, p, CHUNK_CANARIES);
 		for (i = 0; i <= MALLOC_DELAYED_CHUNK_MASK; i++) {
 			if (p == g_pool->delayed_chunks[i])
