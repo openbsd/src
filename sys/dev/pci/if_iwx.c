@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.51 2021/04/14 18:38:54 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.52 2021/04/19 14:27:25 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3252,7 +3252,7 @@ int
 iwx_ccmp_decap(struct iwx_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ieee80211_key *k = &ni->ni_pairwise_key;
+	struct ieee80211_key *k;
 	struct ieee80211_frame *wh;
 	uint64_t pn, *prsc;
 	uint8_t *ivp;
@@ -3262,6 +3262,11 @@ iwx_ccmp_decap(struct iwx_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	wh = mtod(m, struct ieee80211_frame *);
 	hdrlen = ieee80211_get_hdrlen(wh);
 	ivp = (uint8_t *)wh + hdrlen;
+
+	/* find key for decryption */
+	k = ieee80211_get_rxkey(ic, m, ni);
+	if (k == NULL || k->k_cipher != IEEE80211_CIPHER_CCMP)
+		return 1;
 
 	/* Check that ExtIV bit is be set. */
 	if (!(ivp[3] & IEEE80211_WEP_EXTIV))
@@ -3327,7 +3332,10 @@ iwx_rx_frame(struct iwx_softc *sc, struct mbuf *m, int chanidx,
 	if (((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) != IEEE80211_FC0_TYPE_CTL)
 	    && (wh->i_fc[1] & IEEE80211_FC1_PROTECTED) &&
 	    (ni->ni_flags & IEEE80211_NODE_RXPROT) &&
-	    ni->ni_pairwise_key.k_cipher == IEEE80211_CIPHER_CCMP) {
+	    ((!IEEE80211_IS_MULTICAST(wh->i_addr1) &&
+	    ni->ni_rsncipher == IEEE80211_CIPHER_CCMP) ||
+	    (IEEE80211_IS_MULTICAST(wh->i_addr1) &&
+	    ni->ni_rsngroupcipher == IEEE80211_CIPHER_CCMP))) {
 		if ((rx_pkt_status & IWX_RX_MPDU_RES_STATUS_SEC_ENC_MSK) !=
 		    IWX_RX_MPDU_RES_STATUS_SEC_CCM_ENC) {
 			ic->ic_stats.is_ccmp_dec_errs++;
