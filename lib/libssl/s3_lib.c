@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.206 2021/03/24 18:43:59 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.207 2021/04/19 16:47:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1627,6 +1627,7 @@ ssl3_clear(SSL *s)
 
 	free(S3I(s)->alpn_selected);
 	S3I(s)->alpn_selected = NULL;
+	S3I(s)->alpn_selected_len = 0;
 
 	memset(S3I(s), 0, sizeof(*S3I(s)));
 	internal = S3I(s);
