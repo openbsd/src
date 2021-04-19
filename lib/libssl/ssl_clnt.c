@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.90 2021/04/11 07:06:01 tb Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.91 2021/04/19 16:51:56 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -623,7 +623,7 @@ ssl3_connect(SSL *s)
 		}
 
 		/* did we do anything */
-		if (!S3I(s)->tmp.reuse_message && !skip) {
+		if (!S3I(s)->hs.tls12.reuse_message && !skip) {
 			if (s->internal->debug) {
 				if ((ret = BIO_flush(s->wbio)) <= 0)
 					goto end;
@@ -804,9 +804,9 @@ ssl3_get_dtls_hello_verify(SSL *s)
 	if (!ok)
 		return ((int)n);
 
-	if (S3I(s)->tmp.message_type != DTLS1_MT_HELLO_VERIFY_REQUEST) {
+	if (S3I(s)->hs.tls12.message_type != DTLS1_MT_HELLO_VERIFY_REQUEST) {
 		D1I(s)->send_cookie = 0;
-		S3I(s)->tmp.reuse_message = 1;
+		S3I(s)->hs.tls12.reuse_message = 1;
 		return (1);
 	}
 
@@ -878,9 +878,9 @@ ssl3_get_server_hello(SSL *s)
 	CBS_init(&cbs, s->internal->init_msg, n);
 
 	if (SSL_is_dtls(s)) {
-		if (S3I(s)->tmp.message_type == DTLS1_MT_HELLO_VERIFY_REQUEST) {
+		if (S3I(s)->hs.tls12.message_type == DTLS1_MT_HELLO_VERIFY_REQUEST) {
 			if (D1I(s)->send_cookie == 0) {
-				S3I(s)->tmp.reuse_message = 1;
+				S3I(s)->hs.tls12.reuse_message = 1;
 				return (1);
 			} else {
 				/* Already sent a cookie. */
@@ -891,7 +891,7 @@ ssl3_get_server_hello(SSL *s)
 		}
 	}
 
-	if (S3I(s)->tmp.message_type != SSL3_MT_SERVER_HELLO) {
+	if (S3I(s)->hs.tls12.message_type != SSL3_MT_SERVER_HELLO) {
 		al = SSL_AD_UNEXPECTED_MESSAGE;
 		SSLerror(s, SSL_R_BAD_MESSAGE_TYPE);
 		goto fatal_err;
@@ -1128,12 +1128,12 @@ ssl3_get_server_certificate(SSL *s)
 	if (!ok)
 		return ((int)n);
 
-	if (S3I(s)->tmp.message_type == SSL3_MT_SERVER_KEY_EXCHANGE) {
-		S3I(s)->tmp.reuse_message = 1;
+	if (S3I(s)->hs.tls12.message_type == SSL3_MT_SERVER_KEY_EXCHANGE) {
+		S3I(s)->hs.tls12.reuse_message = 1;
 		return (1);
 	}
 
-	if (S3I(s)->tmp.message_type != SSL3_MT_CERTIFICATE) {
+	if (S3I(s)->hs.tls12.message_type != SSL3_MT_CERTIFICATE) {
 		al = SSL_AD_UNEXPECTED_MESSAGE;
 		SSLerror(s, SSL_R_BAD_MESSAGE_TYPE);
 		goto fatal_err;
@@ -1498,7 +1498,7 @@ ssl3_get_server_key_exchange(SSL *s)
 
 	CBS_init(&cbs, s->internal->init_msg, n);
 
-	if (S3I(s)->tmp.message_type != SSL3_MT_SERVER_KEY_EXCHANGE) {
+	if (S3I(s)->hs.tls12.message_type != SSL3_MT_SERVER_KEY_EXCHANGE) {
 		/*
 		 * Do not skip server key exchange if this cipher suite uses
 		 * ephemeral keys.
@@ -1509,7 +1509,7 @@ ssl3_get_server_key_exchange(SSL *s)
 			goto fatal_err;
 		}
 
-		S3I(s)->tmp.reuse_message = 1;
+		S3I(s)->hs.tls12.reuse_message = 1;
 		EVP_MD_CTX_cleanup(&md_ctx);
 		return (1);
 	}
@@ -1663,8 +1663,8 @@ ssl3_get_certificate_request(SSL *s)
 
 	S3I(s)->tmp.cert_req = 0;
 
-	if (S3I(s)->tmp.message_type == SSL3_MT_SERVER_DONE) {
-		S3I(s)->tmp.reuse_message = 1;
+	if (S3I(s)->hs.tls12.message_type == SSL3_MT_SERVER_DONE) {
+		S3I(s)->hs.tls12.reuse_message = 1;
 		/*
 		 * If we get here we don't need any cached handshake records
 		 * as we wont be doing client auth.
@@ -1673,7 +1673,7 @@ ssl3_get_certificate_request(SSL *s)
 		return (1);
 	}
 
-	if (S3I(s)->tmp.message_type != SSL3_MT_CERTIFICATE_REQUEST) {
+	if (S3I(s)->hs.tls12.message_type != SSL3_MT_CERTIFICATE_REQUEST) {
 		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_UNEXPECTED_MESSAGE);
 		SSLerror(s, SSL_R_WRONG_MESSAGE_TYPE);
 		goto err;
@@ -1814,11 +1814,11 @@ ssl3_get_new_session_ticket(SSL *s)
 	if (!ok)
 		return ((int)n);
 
-	if (S3I(s)->tmp.message_type == SSL3_MT_FINISHED) {
-		S3I(s)->tmp.reuse_message = 1;
+	if (S3I(s)->hs.tls12.message_type == SSL3_MT_FINISHED) {
+		S3I(s)->hs.tls12.reuse_message = 1;
 		return (1);
 	}
-	if (S3I(s)->tmp.message_type != SSL3_MT_NEWSESSION_TICKET) {
+	if (S3I(s)->hs.tls12.message_type != SSL3_MT_NEWSESSION_TICKET) {
 		al = SSL_AD_UNEXPECTED_MESSAGE;
 		SSLerror(s, SSL_R_BAD_MESSAGE_TYPE);
 		goto fatal_err;
@@ -2799,9 +2799,9 @@ ssl3_check_finished(SSL *s)
 	if (!ok)
 		return ((int)n);
 
-	S3I(s)->tmp.reuse_message = 1;
-	if ((S3I(s)->tmp.message_type == SSL3_MT_FINISHED) ||
-	    (S3I(s)->tmp.message_type == SSL3_MT_NEWSESSION_TICKET))
+	S3I(s)->hs.tls12.reuse_message = 1;
+	if ((S3I(s)->hs.tls12.message_type == SSL3_MT_FINISHED) ||
+	    (S3I(s)->hs.tls12.message_type == SSL3_MT_NEWSESSION_TICKET))
 		return (2);
 
 	return (1);

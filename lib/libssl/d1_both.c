@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_both.c,v 1.68 2021/02/27 14:20:50 jsing Exp $ */
+/* $OpenBSD: d1_both.c,v 1.69 2021/04/19 16:51:56 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -380,16 +380,16 @@ dtls1_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 	 * s3->internal->tmp is used to store messages that are unexpected, caused
 	 * by the absence of an optional handshake message
 	 */
-	if (S3I(s)->tmp.reuse_message) {
-		S3I(s)->tmp.reuse_message = 0;
-		if ((mt >= 0) && (S3I(s)->tmp.message_type != mt)) {
+	if (S3I(s)->hs.tls12.reuse_message) {
+		S3I(s)->hs.tls12.reuse_message = 0;
+		if ((mt >= 0) && (S3I(s)->hs.tls12.message_type != mt)) {
 			al = SSL_AD_UNEXPECTED_MESSAGE;
 			SSLerror(s, SSL_R_UNEXPECTED_MESSAGE);
 			goto fatal_err;
 		}
 		*ok = 1;
 		s->internal->init_msg = s->internal->init_buf->data + DTLS1_HM_HEADER_LENGTH;
-		s->internal->init_num = (int)S3I(s)->tmp.message_size;
+		s->internal->init_num = (int)S3I(s)->hs.tls12.message_size;
 		return s->internal->init_num;
 	}
 
@@ -466,9 +466,9 @@ dtls1_preprocess_fragment(SSL *s, struct hm_header_st *msg_hdr, int max)
 			return SSL_AD_INTERNAL_ERROR;
 		}
 
-		S3I(s)->tmp.message_size = msg_len;
+		S3I(s)->hs.tls12.message_size = msg_len;
 		D1I(s)->r_msg_hdr.msg_len = msg_len;
-		S3I(s)->tmp.message_type = msg_hdr->type;
+		S3I(s)->hs.tls12.message_type = msg_hdr->type;
 		D1I(s)->r_msg_hdr.type = msg_hdr->type;
 		D1I(s)->r_msg_hdr.seq = msg_hdr->seq;
 	} else if (msg_len != D1I(s)->r_msg_hdr.msg_len) {

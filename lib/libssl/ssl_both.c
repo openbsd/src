@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_both.c,v 1.27 2021/03/29 16:46:09 jsing Exp $ */
+/* $OpenBSD: ssl_both.c,v 1.28 2021/04/19 16:51:56 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -445,16 +445,16 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 	if (SSL_is_dtls(s))
 		return (dtls1_get_message(s, st1, stn, mt, max, ok));
 
-	if (S3I(s)->tmp.reuse_message) {
-		S3I(s)->tmp.reuse_message = 0;
-		if ((mt >= 0) && (S3I(s)->tmp.message_type != mt)) {
+	if (S3I(s)->hs.tls12.reuse_message) {
+		S3I(s)->hs.tls12.reuse_message = 0;
+		if ((mt >= 0) && (S3I(s)->hs.tls12.message_type != mt)) {
 			al = SSL_AD_UNEXPECTED_MESSAGE;
 			SSLerror(s, SSL_R_UNEXPECTED_MESSAGE);
 			goto fatal_err;
 		}
 		*ok = 1;
 		s->internal->init_msg = s->internal->init_buf->data + 4;
-		s->internal->init_num = (int)S3I(s)->tmp.message_size;
+		s->internal->init_num = (int)S3I(s)->hs.tls12.message_size;
 		return s->internal->init_num;
 	}
 
@@ -511,7 +511,7 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 			SSLerror(s, ERR_R_BUF_LIB);
 			goto err;
 		}
-		S3I(s)->tmp.message_type = u8;
+		S3I(s)->hs.tls12.message_type = u8;
 
 		if (l > (unsigned long)max) {
 			al = SSL_AD_ILLEGAL_PARAMETER;
@@ -522,7 +522,7 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 			SSLerror(s, ERR_R_BUF_LIB);
 			goto err;
 		}
-		S3I(s)->tmp.message_size = l;
+		S3I(s)->hs.tls12.message_size = l;
 		S3I(s)->hs.state = stn;
 
 		s->internal->init_msg = s->internal->init_buf->data + 4;
@@ -531,7 +531,7 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 
 	/* next state (stn) */
 	p = s->internal->init_msg;
-	n = S3I(s)->tmp.message_size - s->internal->init_num;
+	n = S3I(s)->hs.tls12.message_size - s->internal->init_num;
 	while (n > 0) {
 		i = s->method->internal->ssl_read_bytes(s, SSL3_RT_HANDSHAKE,
 		    &p[s->internal->init_num], n, 0);

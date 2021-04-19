@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.333 2021/03/29 16:46:09 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.334 2021/04/19 16:51:56 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -420,9 +420,19 @@ typedef struct ssl_handshake_tls12_st {
 	/* Used when SSL_ST_FLUSH_DATA is entered. */
 	int next_state;
 
+	/* Handshake message type and size. */
+	int message_type;
+	unsigned long message_size;
+
+	/* Reuse current handshake message. */
+	int reuse_message;
+
 	/* Record-layer key block for TLS 1.2 and earlier. */
 	unsigned char *key_block;
 	size_t key_block_len;
+
+	/* Transcript hash prior to sending certificate verify message. */
+	uint8_t cert_verify[EVP_MAX_MD_SIZE];
 } SSL_HANDSHAKE_TLS12;
 
 typedef struct ssl_handshake_tls13_st {
@@ -925,19 +935,12 @@ typedef struct ssl3_state_internal_st {
 	SSL_HANDSHAKE hs;
 
 	struct	{
-		unsigned char cert_verify_md[EVP_MAX_MD_SIZE];
-
-		unsigned long message_size;
-		int message_type;
-
 		DH *dh;
 
 		EC_KEY *ecdh; /* holds short lived ECDH key */
 		int ecdh_nid;
 
 		uint8_t *x25519;
-
-		int reuse_message;
 
 		/* used for certificate requests */
 		int cert_req;
