@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.335 2021/04/19 17:03:39 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.336 2021/04/19 17:26:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -528,6 +528,8 @@ int tls12_record_layer_write_overhead(struct tls12_record_layer *rl,
     size_t *overhead);
 int tls12_record_layer_read_protected(struct tls12_record_layer *rl);
 int tls12_record_layer_write_protected(struct tls12_record_layer *rl);
+const EVP_AEAD *tls12_record_layer_aead(struct tls12_record_layer *rl);
+const EVP_CIPHER *tls12_record_layer_cipher(struct tls12_record_layer *rl);
 void tls12_record_layer_set_aead(struct tls12_record_layer *rl,
     const EVP_AEAD *aead);
 void tls12_record_layer_set_cipher_hash(struct tls12_record_layer *rl,
@@ -950,9 +952,6 @@ typedef struct ssl3_state_internal_st {
 		int ctype_num;
 		char ctype[SSL3_CT_NUMBER];
 		STACK_OF(X509_NAME) *ca_names;
-
-		const EVP_CIPHER *new_sym_enc;
-		const EVP_AEAD *new_aead;
 
 		int cert_request;
 	} tmp;

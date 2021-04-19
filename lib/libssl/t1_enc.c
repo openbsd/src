@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.137 2021/04/19 17:03:39 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.138 2021/04/19 17:26:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -312,8 +312,8 @@ tls1_change_cipher_state(SSL *s, int which)
 	const EVP_AEAD *aead;
 	char is_read, use_client_keys;
 
-	cipher = S3I(s)->tmp.new_sym_enc;
-	aead = S3I(s)->tmp.new_aead;
+	aead = tls12_record_layer_aead(s->internal->rl);
+	cipher = tls12_record_layer_cipher(s->internal->rl);
 
 	/*
 	 * is_read is true if we have just read a ChangeCipherSpec message,
@@ -424,8 +424,6 @@ tls1_setup_key_block(SSL *s)
 	if (!ssl_get_handshake_evp_md(s, &handshake_hash))
 		return (0);
 
-	S3I(s)->tmp.new_aead = aead;
-	S3I(s)->tmp.new_sym_enc = cipher;
 	S3I(s)->hs.tls12.mac_secret_size = mac_secret_size;
 
 	tls12_record_layer_set_aead(s->internal->rl, aead);
