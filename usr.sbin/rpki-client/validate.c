@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.13 2021/03/05 17:15:19 claudio Exp $ */
+/*	$OpenBSD: validate.c,v 1.14 2021/04/19 17:04:35 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -53,8 +53,7 @@ valid_as(struct auth *a, uint32_t min, uint32_t max)
 
 	/* Does this certificate cover our AS number? */
 	if (a->cert->asz) {
-		c = as_check_covered(min, max,
-		    a->cert->as, a->cert->asz);
+		c = as_check_covered(min, max, a->cert->as, a->cert->asz);
 		if (c > 0)
 			return 1;
 		else if (c < 0)
@@ -81,8 +80,7 @@ valid_ip(struct auth *a, enum afi afi,
 		return 0;
 
 	/* Does this certificate cover our IP prefix? */
-	c = ip_addr_check_covered(afi, min, max,
-	    a->cert->ips, a->cert->ipsz);
+	c = ip_addr_check_covered(afi, min, max, a->cert->ips, a->cert->ipsz);
 	if (c > 0)
 		return 1;
 	else if (c < 0)

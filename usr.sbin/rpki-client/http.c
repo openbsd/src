@@ -1,4 +1,4 @@
-/*      $OpenBSD: http.c,v 1.30 2021/04/15 16:07:21 claudio Exp $  */
+/*	$OpenBSD: http.c,v 1.31 2021/04/19 17:04:35 deraadt Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -1156,8 +1156,6 @@ proc_http(char *bind_addr, int fd)
 {
 	struct http_connection *http_conns[MAX_CONNECTIONS];
 	struct pollfd pfds[MAX_CONNECTIONS + 1];
-	size_t i;
-	int active_connections;
 
 	if (bind_addr != NULL) {
 		struct addrinfo hints, *res;
@@ -1184,7 +1182,9 @@ proc_http(char *bind_addr, int fd)
 	msgq.fd = fd;
 
 	for (;;) {
-		active_connections = 0;
+		int active_connections = 0;
+		size_t i;
+
 		for (i = 0; i < MAX_CONNECTIONS; i++) {
 			struct http_connection *conn = http_conns[i];
 

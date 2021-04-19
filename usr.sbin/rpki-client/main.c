@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.138 2021/04/15 14:22:05 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.139 2021/04/19 17:04:35 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -145,13 +145,14 @@ entityq_flush(struct entityq *q, struct repo *rp)
 	struct entity	*p, *np;
 
 	TAILQ_FOREACH_SAFE(p, q, entries, np) {
+		char *file = p->file;
+
 		/*
 		 * XXX fixup path here since the repo may change
 		 * during load because of fallback. In that case
 		 * the file path changes as well since RRDP and RSYNC
 		 * can not share a common repo.
 		 */
-		char *file = p->file;
 		p->file = repo_filename(rp, file);
 		if (p->file == NULL)
 			err(1, "can't construct repo filename");
@@ -405,6 +406,7 @@ queue_add_tal(const char *file)
 			err(1, NULL);
 	} else {
 		char *tmp;
+
 		if (asprintf(&tmp, "%s %s", stats.talnames, file) == -1)
 			err(1, NULL);
 		free(stats.talnames);

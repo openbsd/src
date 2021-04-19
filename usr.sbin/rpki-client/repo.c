@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.5 2021/04/13 13:35:59 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.6 2021/04/19 17:04:35 deraadt Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -326,8 +326,6 @@ rrdp_state_filename(const struct rrdprepo *rr, int temp)
 static void
 ta_fetch(struct tarepo *tr)
 {
-	int fd;
-
 	logx("ta/%s: pulling from %s", tr->descr, tr->uri[tr->uriidx]);
 
 	if (strncasecmp(tr->uri[tr->uriidx], "rsync://", 8) == 0) {
@@ -337,6 +335,8 @@ ta_fetch(struct tarepo *tr)
 		 */
 		rsync_fetch(tr->id, tr->uri[tr->uriidx], tr->basedir);
 	} else {
+		int fd;
+
 		tr->temp = ta_filename(tr, 1);
 		fd = mkostemp(tr->temp, O_CLOEXEC);
 		if (fd == -1) {
@@ -1151,14 +1151,10 @@ repo_cleanup(struct filepath_tree *tree)
 {
 	size_t i, delsz = 0, dirsz = 0;
 	char **del = NULL, **dir = NULL;
-	char *argv[4];
+	char *argv[4] = { "ta", "rsync", "rrdp", NULL };
 	FTS *fts;
 	FTSENT *e;
 
-	argv[0] = "ta";
-	argv[1] = "rsync";
-	argv[2] = "rrdp";
-	argv[3] = NULL;
 	if ((fts = fts_open(argv, FTS_PHYSICAL | FTS_NOSTAT, NULL)) == NULL)
 		err(1, "fts_open");
 	errno = 0;

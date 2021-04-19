@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip.c,v 1.16 2021/03/29 06:15:29 deraadt Exp $ */
+/*	$OpenBSD: ip.c,v 1.17 2021/04/19 17:04:35 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -110,7 +110,6 @@ ip_addr_check_overlap(const struct cert_ip *ip, const char *fn,
 	size_t	 i, sz = ip->afi == AFI_IPV4 ? 4 : 16;
 	int	 inherit_v4 = 0, inherit_v6 = 0;
 	int	 has_v4 = 0, has_v6 = 0, socktype;
-	char	 buf[64];
 
 	/*
 	 * FIXME: cache this by having a flag on the cert_ip, else we're
@@ -147,6 +146,8 @@ ip_addr_check_overlap(const struct cert_ip *ip, const char *fn,
 	/* Check our ranges. */
 
 	for (i = 0; i < ipsz; i++) {
+		char	 buf[64];
+
 		if (ips[i].afi != ip->afi)
 			continue;
 		if (memcmp(ips[i].max, ip->min, sz) <= 0 ||
