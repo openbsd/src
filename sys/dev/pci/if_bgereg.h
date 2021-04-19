@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.131 2020/06/18 17:13:32 kettenis Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.132 2021/04/19 17:03:49 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -310,6 +310,8 @@
 #define	BGE_CHIPID_BCM5762_A0		0x05762000
 #define	BGE_CHIPID_BCM57765_A0		0x57785000
 #define	BGE_CHIPID_BCM57765_B0		0x57785100
+#define	BGE_CHIPID_BCM57766_A0		0x57766000
+#define	BGE_CHIPID_BCM57766_A1		0x57766001
 
 /* shorthand one */
 #define	BGE_ASICREV(x)			((x) >> 12)

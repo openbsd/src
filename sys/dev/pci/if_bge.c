@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.393 2020/12/12 11:48:52 jan Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.394 2021/04/19 17:03:49 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -403,6 +403,8 @@ static const struct bge_revision {
 	{ BGE_CHIPID_BCM5906_A2, "BCM5906 A2" },
 	{ BGE_CHIPID_BCM57765_A0, "BCM57765 A0" },
 	{ BGE_CHIPID_BCM57765_B0, "BCM57765 B0" },
+	{ BGE_CHIPID_BCM57766_A0, "BCM57766 A0" },
+	{ BGE_CHIPID_BCM57766_A1, "BCM57766 A1" },
 	{ BGE_CHIPID_BCM57780_A0, "BCM57780 A0" },
 	{ BGE_CHIPID_BCM57780_A1, "BCM57780 A1" },
 
