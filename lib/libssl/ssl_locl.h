@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.334 2021/04/19 16:51:56 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.335 2021/04/19 17:03:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -426,6 +426,9 @@ typedef struct ssl_handshake_tls12_st {
 
 	/* Reuse current handshake message. */
 	int reuse_message;
+
+	/* Size of the MAC secret. */
+	int mac_secret_size;
 
 	/* Record-layer key block for TLS 1.2 and earlier. */
 	unsigned char *key_block;
@@ -950,7 +953,6 @@ typedef struct ssl3_state_internal_st {
 
 		const EVP_CIPHER *new_sym_enc;
 		const EVP_AEAD *new_aead;
-		int new_mac_secret_size;
 
 		int cert_request;
 	} tmp;

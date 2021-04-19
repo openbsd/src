@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.136 2021/03/29 16:19:15 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.137 2021/04/19 17:03:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -338,7 +338,7 @@ tls1_change_cipher_state(SSL *s, int which)
 		iv_len = EVP_CIPHER_iv_length(cipher);
 	}
 
-	mac_secret_size = S3I(s)->tmp.new_mac_secret_size;
+	mac_secret_size = S3I(s)->hs.tls12.mac_secret_size;
 
 	key_block = S3I(s)->hs.tls12.key_block;
 	client_write_mac_secret = key_block;
@@ -426,7 +426,7 @@ tls1_setup_key_block(SSL *s)
 
 	S3I(s)->tmp.new_aead = aead;
 	S3I(s)->tmp.new_sym_enc = cipher;
-	S3I(s)->tmp.new_mac_secret_size = mac_secret_size;
+	S3I(s)->hs.tls12.mac_secret_size = mac_secret_size;
 
 	tls12_record_layer_set_aead(s->internal->rl, aead);
 	tls12_record_layer_set_cipher_hash(s->internal->rl, cipher,
