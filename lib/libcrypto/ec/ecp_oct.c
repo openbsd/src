@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_oct.c,v 1.13 2021/04/20 17:16:38 tb Exp $ */
+/* $OpenBSD: ecp_oct.c,v 1.14 2021/04/20 17:32:57 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -363,10 +363,10 @@ ec_GFp_simple_oct2point(const EC_GROUP * group, EC_POINT * point,
 	}
 	if (form == POINT_CONVERSION_COMPRESSED) {
 		/*
-		 * EC_POINT_set_compressed_coordinates_GFp checks that the point
+		 * EC_POINT_set_compressed_coordinates checks that the point
 		 * is on the curve as required by X9.62.
 		 */
-		if (!EC_POINT_set_compressed_coordinates_GFp(group, point, x, y_bit, ctx))
+		if (!EC_POINT_set_compressed_coordinates(group, point, x, y_bit, ctx))
 			goto err;
 	} else {
 		if (!BN_bin2bn(buf + 1 + field_len, field_len, y))

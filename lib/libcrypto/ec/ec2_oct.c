@@ -1,4 +1,4 @@
-/* $OpenBSD: ec2_oct.c,v 1.14 2021/04/20 17:16:37 tb Exp $ */
+/* $OpenBSD: ec2_oct.c,v 1.15 2021/04/20 17:32:57 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -366,10 +366,10 @@ ec_GF2m_simple_oct2point(const EC_GROUP *group, EC_POINT *point,
 	}
 	if (form == POINT_CONVERSION_COMPRESSED) {
 		/*
-		 * EC_POINT_set_compressed_coordinates_GF2m checks that the
+		 * EC_POINT_set_compressed_coordinates checks that the
 		 * point is on the curve as required by X9.62.
 		 */
-		if (!EC_POINT_set_compressed_coordinates_GF2m(group, point, x, y_bit, ctx))
+		if (!EC_POINT_set_compressed_coordinates(group, point, x, y_bit, ctx))
 			goto err;
 	} else {
 		if (!BN_bin2bn(buf + 1 + field_len, field_len, y))

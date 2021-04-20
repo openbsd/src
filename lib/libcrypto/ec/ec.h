@@ -1,4 +1,4 @@
-/* $OpenBSD: ec.h,v 1.21 2021/04/20 17:28:18 tb Exp $ */
+/* $OpenBSD: ec.h,v 1.22 2021/04/20 17:32:57 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -455,11 +455,20 @@ const EC_METHOD *EC_POINT_method_of(const EC_POINT *point);
 int EC_POINT_set_to_infinity(const EC_GROUP *group, EC_POINT *point);
 
 #if defined(LIBRESSL_INTERNAL)
+
 int EC_POINT_set_Jprojective_coordinates(const EC_GROUP *group, EC_POINT *p,
     const BIGNUM *x, const BIGNUM *y, const BIGNUM *z, BN_CTX *ctx);
 int EC_POINT_get_Jprojective_coordinates(const EC_GROUP *group,
-	const EC_POINT *p, BIGNUM *x, BIGNUM *y, BIGNUM *z, BN_CTX *ctx);
+    const EC_POINT *p, BIGNUM *x, BIGNUM *y, BIGNUM *z, BN_CTX *ctx);
+int EC_POINT_set_affine_coordinates(const EC_GROUP *group, EC_POINT *p,
+    const BIGNUM *x, const BIGNUM *y, BN_CTX *ctx);
+int EC_POINT_get_affine_coordinates(const EC_GROUP *group, const EC_POINT *p,
+    BIGNUM *x, BIGNUM *y, BN_CTX *ctx);
+int EC_POINT_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *p,
+    const BIGNUM *x, int y_bit, BN_CTX *ctx);
+
 #else
+
 /** Sets the jacobian projective coordinates of a EC_POINT over GFp
  *  \param  group  underlying EC_GROUP object
  *  \param  p      EC_POINT object
@@ -483,14 +492,7 @@ int EC_POINT_set_Jprojective_coordinates_GFp(const EC_GROUP *group, EC_POINT *p,
  */
 int EC_POINT_get_Jprojective_coordinates_GFp(const EC_GROUP *group,
 	const EC_POINT *p, BIGNUM *x, BIGNUM *y, BIGNUM *z, BN_CTX *ctx);
-#endif
 
-#if defined(LIBRESSL_INTERNAL)
-int EC_POINT_set_affine_coordinates(const EC_GROUP *group, EC_POINT *p,
-    const BIGNUM *x, const BIGNUM *y, BN_CTX *ctx);
-int EC_POINT_get_affine_coordinates(const EC_GROUP *group, const EC_POINT *p,
-    BIGNUM *x, BIGNUM *y, BN_CTX *ctx);
-#else
 /** Sets the affine coordinates of a EC_POINT over GFp
  *  \param  group  underlying EC_GROUP object
  *  \param  p      EC_POINT object
@@ -512,7 +514,6 @@ int EC_POINT_set_affine_coordinates_GFp(const EC_GROUP *group, EC_POINT *p,
  */
 int EC_POINT_get_affine_coordinates_GFp(const EC_GROUP *group,
 	const EC_POINT *p, BIGNUM *x, BIGNUM *y, BN_CTX *ctx);
-#endif
 
 /** Sets the x9.62 compressed coordinates of a EC_POINT over GFp
  *  \param  group  underlying EC_GROUP object
@@ -526,7 +527,6 @@ int EC_POINT_set_compressed_coordinates_GFp(const EC_GROUP *group, EC_POINT *p,
 	const BIGNUM *x, int y_bit, BN_CTX *ctx);
 
 #ifndef OPENSSL_NO_EC2M
-#if !defined(LIBRESSL_INTERNAL)
 /** Sets the affine coordinates of a EC_POINT over GF2m
  *  \param  group  underlying EC_GROUP object
  *  \param  p      EC_POINT object
@@ -548,7 +548,6 @@ int EC_POINT_set_affine_coordinates_GF2m(const EC_GROUP *group, EC_POINT *p,
  */
 int EC_POINT_get_affine_coordinates_GF2m(const EC_GROUP *group,
 	const EC_POINT *p, BIGNUM *x, BIGNUM *y, BN_CTX *ctx);
-#endif
 
 /** Sets the x9.62 compressed coordinates of a EC_POINT over GF2m
  *  \param  group  underlying EC_GROUP object
@@ -560,7 +559,9 @@ int EC_POINT_get_affine_coordinates_GF2m(const EC_GROUP *group,
  */
 int EC_POINT_set_compressed_coordinates_GF2m(const EC_GROUP *group, EC_POINT *p,
 	const BIGNUM *x, int y_bit, BN_CTX *ctx);
-#endif
+#endif /* OPENSSL_NO_EC2M */
+#endif /* !LIBRESSL_INTERNAL */
+
 /** Encodes a EC_POINT object to a octet string
  *  \param  group  underlying EC_GROUP object
  *  \param  p      EC_POINT object
