@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2021/01/17 20:53:51 bluhm Exp $
+# $OpenBSD: Makefile,v 1.6 2021/04/20 11:17:52 martijn Exp $
 
 .if ! exists(/usr/local/sbin/snmpd)
 regress:
@@ -8,7 +8,7 @@ regress:
 
 PROG=			agentx
 SRCS=			main.c log.c
-CFLAGS=			-Wall
+CFLAGS+=		-Wall
 NOMAN=			yes
 LDADD=			-lagentx -levent
 
