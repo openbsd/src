@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.36 2021/04/20 17:16:37 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.37 2021/04/20 17:17:47 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -958,7 +958,7 @@ int
 EC_POINT_set_affine_coordinates(const EC_GROUP *group, EC_POINT *point,
     const BIGNUM *x, const BIGNUM *y, BN_CTX *ctx)
 {
-	if (group->meth->point_set_affine_coordinates == 0) {
+	if (group->meth->point_set_affine_coordinates == NULL) {
 		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return 0;
 	}
@@ -995,7 +995,7 @@ int
 EC_POINT_get_affine_coordinates(const EC_GROUP *group, const EC_POINT *point,
     BIGNUM *x, BIGNUM *y, BN_CTX *ctx)
 {
-	if (group->meth->point_get_affine_coordinates == 0) {
+	if (group->meth->point_get_affine_coordinates == NULL) {
 		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return 0;
 	}
