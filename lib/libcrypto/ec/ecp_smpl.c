@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_smpl.c,v 1.30 2021/04/20 17:16:38 tb Exp $ */
+/* $OpenBSD: ecp_smpl.c,v 1.31 2021/04/20 17:28:18 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -87,10 +87,10 @@ EC_GFp_simple_method(void)
 		.point_clear_finish = ec_GFp_simple_point_clear_finish,
 		.point_copy = ec_GFp_simple_point_copy,
 		.point_set_to_infinity = ec_GFp_simple_point_set_to_infinity,
-		.point_set_Jprojective_coordinates_GFp =
-		ec_GFp_simple_set_Jprojective_coordinates_GFp,
-		.point_get_Jprojective_coordinates_GFp =
-		ec_GFp_simple_get_Jprojective_coordinates_GFp,
+		.point_set_Jprojective_coordinates =
+		ec_GFp_simple_set_Jprojective_coordinates,
+		.point_get_Jprojective_coordinates =
+		ec_GFp_simple_get_Jprojective_coordinates,
 		.point_set_affine_coordinates =
 		ec_GFp_simple_point_set_affine_coordinates,
 		.point_get_affine_coordinates =
@@ -413,9 +413,10 @@ ec_GFp_simple_point_set_to_infinity(const EC_GROUP * group, EC_POINT * point)
 }
 
 
-int 
-ec_GFp_simple_set_Jprojective_coordinates_GFp(const EC_GROUP * group, EC_POINT * point,
-    const BIGNUM * x, const BIGNUM * y, const BIGNUM * z, BN_CTX * ctx)
+int
+ec_GFp_simple_set_Jprojective_coordinates(const EC_GROUP *group,
+    EC_POINT *point, const BIGNUM *x, const BIGNUM *y, const BIGNUM *z,
+    BN_CTX *ctx)
 {
 	BN_CTX *new_ctx = NULL;
 	int ret = 0;
@@ -465,10 +466,9 @@ ec_GFp_simple_set_Jprojective_coordinates_GFp(const EC_GROUP * group, EC_POINT *
 	return ret;
 }
 
-
-int 
-ec_GFp_simple_get_Jprojective_coordinates_GFp(const EC_GROUP * group, const EC_POINT * point,
-    BIGNUM * x, BIGNUM * y, BIGNUM * z, BN_CTX * ctx)
+int
+ec_GFp_simple_get_Jprojective_coordinates(const EC_GROUP *group,
+    const EC_POINT *point, BIGNUM *x, BIGNUM *y, BIGNUM *z, BN_CTX *ctx)
 {
 	BN_CTX *new_ctx = NULL;
 	int ret = 0;
@@ -513,8 +513,7 @@ ec_GFp_simple_get_Jprojective_coordinates_GFp(const EC_GROUP * group, const EC_P
 	return ret;
 }
 
-
-int 
+int
 ec_GFp_simple_point_set_affine_coordinates(const EC_GROUP * group, EC_POINT * point,
     const BIGNUM * x, const BIGNUM * y, BN_CTX * ctx)
 {
@@ -523,11 +522,11 @@ ec_GFp_simple_point_set_affine_coordinates(const EC_GROUP * group, EC_POINT * po
 		ECerror(ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 	}
-	return EC_POINT_set_Jprojective_coordinates_GFp(group, point, x, y, BN_value_one(), ctx);
+	return EC_POINT_set_Jprojective_coordinates(group, point, x, y,
+	    BN_value_one(), ctx);
 }
 
-
-int 
+int
 ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP * group, const EC_POINT * point,
     BIGNUM * x, BIGNUM * y, BN_CTX * ctx)
 {

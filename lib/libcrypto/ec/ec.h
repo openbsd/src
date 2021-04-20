@@ -1,4 +1,4 @@
-/* $OpenBSD: ec.h,v 1.20 2021/04/20 17:16:37 tb Exp $ */
+/* $OpenBSD: ec.h,v 1.21 2021/04/20 17:28:18 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -454,6 +454,12 @@ const EC_METHOD *EC_POINT_method_of(const EC_POINT *point);
  */
 int EC_POINT_set_to_infinity(const EC_GROUP *group, EC_POINT *point);
 
+#if defined(LIBRESSL_INTERNAL)
+int EC_POINT_set_Jprojective_coordinates(const EC_GROUP *group, EC_POINT *p,
+    const BIGNUM *x, const BIGNUM *y, const BIGNUM *z, BN_CTX *ctx);
+int EC_POINT_get_Jprojective_coordinates(const EC_GROUP *group,
+	const EC_POINT *p, BIGNUM *x, BIGNUM *y, BIGNUM *z, BN_CTX *ctx);
+#else
 /** Sets the jacobian projective coordinates of a EC_POINT over GFp
  *  \param  group  underlying EC_GROUP object
  *  \param  p      EC_POINT object
@@ -477,6 +483,7 @@ int EC_POINT_set_Jprojective_coordinates_GFp(const EC_GROUP *group, EC_POINT *p,
  */
 int EC_POINT_get_Jprojective_coordinates_GFp(const EC_GROUP *group,
 	const EC_POINT *p, BIGNUM *x, BIGNUM *y, BIGNUM *z, BN_CTX *ctx);
+#endif
 
 #if defined(LIBRESSL_INTERNAL)
 int EC_POINT_set_affine_coordinates(const EC_GROUP *group, EC_POINT *p,

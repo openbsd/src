@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_nistp256.c,v 1.23 2021/04/20 17:16:37 tb Exp $ */
+/* $OpenBSD: ecp_nistp256.c,v 1.24 2021/04/20 17:28:18 tb Exp $ */
 /*
  * Written by Adam Langley (Google) for the OpenSSL project
  */
@@ -1704,10 +1704,10 @@ EC_GFp_nistp256_method(void)
 		.point_clear_finish = ec_GFp_simple_point_clear_finish,
 		.point_copy = ec_GFp_simple_point_copy,
 		.point_set_to_infinity = ec_GFp_simple_point_set_to_infinity,
-		.point_set_Jprojective_coordinates_GFp =
-		ec_GFp_simple_set_Jprojective_coordinates_GFp,
-		.point_get_Jprojective_coordinates_GFp =
-		ec_GFp_simple_get_Jprojective_coordinates_GFp,
+		.point_set_Jprojective_coordinates =
+		ec_GFp_simple_set_Jprojective_coordinates,
+		.point_get_Jprojective_coordinates =
+		ec_GFp_simple_get_Jprojective_coordinates,
 		.point_set_affine_coordinates =
 		ec_GFp_simple_point_set_affine_coordinates,
 		.point_get_affine_coordinates =
@@ -1959,8 +1959,8 @@ ec_GFp_nistp256_points_mul(const EC_GROUP * group, EC_POINT * r,
 			ECerror(ERR_R_BN_LIB);
 			goto err;
 		}
-		if (!EC_POINT_set_Jprojective_coordinates_GFp(group,
-			generator, x, y, z, ctx))
+		if (!EC_POINT_set_Jprojective_coordinates(group, generator,
+		    x, y, z, ctx))
 			goto err;
 		if (0 == EC_POINT_cmp(group, generator, group->generator, ctx))
 			/* precomputation matches generator */
@@ -2089,7 +2089,7 @@ ec_GFp_nistp256_points_mul(const EC_GROUP * group, EC_POINT * r,
 		ECerror(ERR_R_BN_LIB);
 		goto err;
 	}
-	ret = EC_POINT_set_Jprojective_coordinates_GFp(group, r, x, y, z, ctx);
+	ret = EC_POINT_set_Jprojective_coordinates(group, r, x, y, z, ctx);
 
  err:
 	BN_CTX_end(ctx);

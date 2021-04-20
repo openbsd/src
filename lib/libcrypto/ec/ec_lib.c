@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.37 2021/04/20 17:17:47 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.38 2021/04/20 17:28:18 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -922,36 +922,50 @@ EC_POINT_set_to_infinity(const EC_GROUP * group, EC_POINT * point)
 	return group->meth->point_set_to_infinity(group, point);
 }
 
+int
+EC_POINT_set_Jprojective_coordinates(const EC_GROUP *group, EC_POINT *point,
+    const BIGNUM *x, const BIGNUM *y, const BIGNUM *z, BN_CTX *ctx)
+{
+	if (group->meth->point_set_Jprojective_coordinates == 0) {
+		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return 0;
+	}
+	if (group->meth != point->meth) {
+		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
+		return 0;
+	}
+	return group->meth->point_set_Jprojective_coordinates(group, point,
+	    x, y, z, ctx);
+}
 
-int 
+int
+EC_POINT_get_Jprojective_coordinates(const EC_GROUP *group,
+    const EC_POINT *point, BIGNUM *x, BIGNUM *y, BIGNUM *z, BN_CTX *ctx)
+{
+	if (group->meth->point_get_Jprojective_coordinates == 0) {
+		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return 0;
+	}
+	if (group->meth != point->meth) {
+		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
+		return 0;
+	}
+	return group->meth->point_get_Jprojective_coordinates(group, point,
+	    x, y, z, ctx);
+}
+
+int
 EC_POINT_set_Jprojective_coordinates_GFp(const EC_GROUP *group, EC_POINT *point,
     const BIGNUM *x, const BIGNUM *y, const BIGNUM *z, BN_CTX *ctx)
 {
-	if (group->meth->point_set_Jprojective_coordinates_GFp == 0) {
-		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-		return 0;
-	}
-	if (group->meth != point->meth) {
-		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
-		return 0;
-	}
-	return group->meth->point_set_Jprojective_coordinates_GFp(group, point, x, y, z, ctx);
+	return EC_POINT_set_Jprojective_coordinates(group, point, x, y, z, ctx);
 }
 
-
-int 
+int
 EC_POINT_get_Jprojective_coordinates_GFp(const EC_GROUP *group,
     const EC_POINT *point, BIGNUM *x, BIGNUM *y, BIGNUM *z, BN_CTX *ctx)
 {
-	if (group->meth->point_get_Jprojective_coordinates_GFp == 0) {
-		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-		return 0;
-	}
-	if (group->meth != point->meth) {
-		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
-		return 0;
-	}
-	return group->meth->point_get_Jprojective_coordinates_GFp(group, point, x, y, z, ctx);
+	return EC_POINT_get_Jprojective_coordinates(group, point, x, y, z, ctx);
 }
 
 int

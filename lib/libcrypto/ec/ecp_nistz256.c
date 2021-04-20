@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecp_nistz256.c,v 1.8 2021/04/20 17:16:38 tb Exp $	*/
+/*	$OpenBSD: ecp_nistz256.c,v 1.9 2021/04/20 17:28:18 tb Exp $	*/
 /* Copyright (c) 2014, Intel Corporation.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -1159,10 +1159,10 @@ EC_GFp_nistz256_method(void)
 		.point_clear_finish = ec_GFp_simple_point_clear_finish,
 		.point_copy = ec_GFp_simple_point_copy,
 		.point_set_to_infinity = ec_GFp_simple_point_set_to_infinity,
-		.point_set_Jprojective_coordinates_GFp =
-		    ec_GFp_simple_set_Jprojective_coordinates_GFp,
-		.point_get_Jprojective_coordinates_GFp =
-		    ec_GFp_simple_get_Jprojective_coordinates_GFp,
+		.point_set_Jprojective_coordinates =
+		    ec_GFp_simple_set_Jprojective_coordinates,
+		.point_get_Jprojective_coordinates =
+		    ec_GFp_simple_get_Jprojective_coordinates,
 		.point_set_affine_coordinates =
 		    ec_GFp_simple_point_set_affine_coordinates,
 		.point_get_affine_coordinates = ecp_nistz256_get_affine,

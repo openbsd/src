@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lcl.h,v 1.15 2021/04/20 17:16:37 tb Exp $ */
+/* $OpenBSD: ec_lcl.h,v 1.16 2021/04/20 17:28:18 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -122,16 +122,16 @@ struct ec_method_st {
 	int (*point_copy)(EC_POINT *, const EC_POINT *);
 
 	/* used by EC_POINT_set_to_infinity,
-	 * EC_POINT_set_Jprojective_coordinates_GFp,
-	 * EC_POINT_get_Jprojective_coordinates_GFp,
+	 * EC_POINT_set_Jprojective_coordinates,
+	 * EC_POINT_get_Jprojective_coordinates,
 	 * EC_POINT_set_affine_coordinates,
 	 * EC_POINT_get_affine_coordinates,
 	 * EC_POINT_set_compressed_coordinates_GFp, ..._GF2m:
 	 */
 	int (*point_set_to_infinity)(const EC_GROUP *, EC_POINT *);
-	int (*point_set_Jprojective_coordinates_GFp)(const EC_GROUP *, EC_POINT *,
+	int (*point_set_Jprojective_coordinates)(const EC_GROUP *, EC_POINT *,
 		const BIGNUM *x, const BIGNUM *y, const BIGNUM *z, BN_CTX *);
-	int (*point_get_Jprojective_coordinates_GFp)(const EC_GROUP *, const EC_POINT *,
+	int (*point_get_Jprojective_coordinates)(const EC_GROUP *, const EC_POINT *,
 		BIGNUM *x, BIGNUM *y, BIGNUM *z, BN_CTX *);
 	int (*point_set_affine_coordinates)(const EC_GROUP *, EC_POINT *,
 		const BIGNUM *x, const BIGNUM *y, BN_CTX *);
@@ -320,10 +320,10 @@ void ec_GFp_simple_point_finish(EC_POINT *);
 void ec_GFp_simple_point_clear_finish(EC_POINT *);
 int ec_GFp_simple_point_copy(EC_POINT *, const EC_POINT *);
 int ec_GFp_simple_point_set_to_infinity(const EC_GROUP *, EC_POINT *);
-int ec_GFp_simple_set_Jprojective_coordinates_GFp(const EC_GROUP *, EC_POINT *,
-	const BIGNUM *x, const BIGNUM *y, const BIGNUM *z, BN_CTX *);
-int ec_GFp_simple_get_Jprojective_coordinates_GFp(const EC_GROUP *, const EC_POINT *,
-	BIGNUM *x, BIGNUM *y, BIGNUM *z, BN_CTX *);
+int ec_GFp_simple_set_Jprojective_coordinates(const EC_GROUP *, EC_POINT *,
+    const BIGNUM *x, const BIGNUM *y, const BIGNUM *z, BN_CTX *);
+int ec_GFp_simple_get_Jprojective_coordinates(const EC_GROUP *,
+    const EC_POINT *, BIGNUM *x, BIGNUM *y, BIGNUM *z, BN_CTX *);
 int ec_GFp_simple_point_set_affine_coordinates(const EC_GROUP *, EC_POINT *,
 	const BIGNUM *x, const BIGNUM *y, BN_CTX *);
 int ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP *, const EC_POINT *,
