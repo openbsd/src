@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_oct.c,v 1.7 2021/04/20 17:32:57 tb Exp $ */
+/* $OpenBSD: ec_oct.c,v 1.8 2021/04/20 17:34:33 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -74,8 +74,8 @@ int
 EC_POINT_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *point,
     const BIGNUM *x, int y_bit, BN_CTX *ctx)
 {
-	if (group->meth->point_set_compressed_coordinates == 0
-	    && !(group->meth->flags & EC_FLAGS_DEFAULT_OCT)) {
+	if (group->meth->point_set_compressed_coordinates == NULL &&
+	    !(group->meth->flags & EC_FLAGS_DEFAULT_OCT)) {
 		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return 0;
 	}
