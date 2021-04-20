@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.125 2021/03/02 09:45:07 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.126 2021/04/20 11:19:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -69,10 +69,10 @@ up_test_update(struct rde_peer *peer, struct prefix *p)
 		/*
 		 * route reflector redistribution rules:
 		 * 1. if announce is set                -> announce
-		 * 2. old non-client, new non-client    -> no
-		 * 3. old client, new non-client        -> yes
-		 * 4. old non-client, new client        -> yes
-		 * 5. old client, new client            -> yes
+		 * 2. from non-client, to non-client    -> no
+		 * 3. from client, to non-client        -> yes
+		 * 4. from non-client, to client        -> yes
+		 * 5. from client, to client            -> yes
 		 */
 		if (frompeer->conf.reflector_client == 0 &&
 		    peer->conf.reflector_client == 0 &&
