@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_nistp256.c,v 1.24 2021/04/20 17:28:18 tb Exp $ */
+/* $OpenBSD: ecp_nistp256.c,v 1.25 2021/04/20 17:38:02 tb Exp $ */
 /*
  * Written by Adam Langley (Google) for the OpenSSL project
  */
@@ -115,7 +115,7 @@ static const u64 bottom63bits = 0x7ffffffffffffffful;
 
 /* bin32_to_felem takes a little-endian byte array and converts it into felem
  * form. This assumes that the CPU is little-endian. */
-static void 
+static void
 bin32_to_felem(felem out, const u8 in[32])
 {
 	out[0] = *((u64 *) & in[0]);
@@ -126,7 +126,7 @@ bin32_to_felem(felem out, const u8 in[32])
 
 /* smallfelem_to_bin32 takes a smallfelem and serialises into a little endian,
  * 32 byte array. This assumes that the CPU is little-endian. */
-static void 
+static void
 smallfelem_to_bin32(u8 out[32], const smallfelem in)
 {
 	*((u64 *) & out[0]) = in[0];
@@ -136,7 +136,7 @@ smallfelem_to_bin32(u8 out[32], const smallfelem in)
 }
 
 /* To preserve endianness when using BN_bn2bin and BN_bin2bn */
-static void 
+static void
 flip_endian(u8 * out, const u8 * in, unsigned len)
 {
 	unsigned i;
@@ -145,7 +145,7 @@ flip_endian(u8 * out, const u8 * in, unsigned len)
 }
 
 /* BN_to_felem converts an OpenSSL BIGNUM into an felem */
-static int 
+static int
 BN_to_felem(felem out, const BIGNUM * bn)
 {
 	felem_bytearray b_in;
@@ -183,7 +183,7 @@ smallfelem_to_BN(BIGNUM * out, const smallfelem in)
 /* Field operations
  * ---------------- */
 
-static void 
+static void
 smallfelem_one(smallfelem out)
 {
 	out[0] = 1;
@@ -192,7 +192,7 @@ smallfelem_one(smallfelem out)
 	out[3] = 0;
 }
 
-static void 
+static void
 smallfelem_assign(smallfelem out, const smallfelem in)
 {
 	out[0] = in[0];
@@ -201,7 +201,7 @@ smallfelem_assign(smallfelem out, const smallfelem in)
 	out[3] = in[3];
 }
 
-static void 
+static void
 felem_assign(felem out, const felem in)
 {
 	out[0] = in[0];
@@ -211,7 +211,7 @@ felem_assign(felem out, const felem in)
 }
 
 /* felem_sum sets out = out + in. */
-static void 
+static void
 felem_sum(felem out, const felem in)
 {
 	out[0] += in[0];
@@ -221,7 +221,7 @@ felem_sum(felem out, const felem in)
 }
 
 /* felem_small_sum sets out = out + in. */
-static void 
+static void
 felem_small_sum(felem out, const smallfelem in)
 {
 	out[0] += in[0];
@@ -231,7 +231,7 @@ felem_small_sum(felem out, const smallfelem in)
 }
 
 /* felem_scalar sets out = out * scalar */
-static void 
+static void
 felem_scalar(felem out, const u64 scalar)
 {
 	out[0] *= scalar;
@@ -241,7 +241,7 @@ felem_scalar(felem out, const u64 scalar)
 }
 
 /* longfelem_scalar sets out = out * scalar */
-static void 
+static void
 longfelem_scalar(longfelem out, const u64 scalar)
 {
 	out[0] *= scalar;
@@ -265,7 +265,7 @@ static const felem zero105 = {two105m41m9, two105, two105m41p9, two105m41p9};
  * On exit:
  *   out[i] < out[i] + 2^105
  */
-static void 
+static void
 smallfelem_neg(felem out, const smallfelem small)
 {
 	/* In order to prevent underflow, we subtract from 0 mod p. */
@@ -281,7 +281,7 @@ smallfelem_neg(felem out, const smallfelem small)
  * On exit:
  *   out[i] < out[i] + 2^105
  */
-static void 
+static void
 felem_diff(felem out, const felem in)
 {
 	/* In order to prevent underflow, we add 0 mod p before subtracting. */
@@ -310,7 +310,7 @@ static const felem zero107 = {two107m43m11, two107, two107m43p11, two107m43p11};
  * On exit:
  *   out[i] < out[i] + 2^107
  */
-static void 
+static void
 felem_diff_zero107(felem out, const felem in)
 {
 	/* In order to prevent underflow, we add 0 mod p before subtracting. */
@@ -331,7 +331,7 @@ felem_diff_zero107(felem out, const felem in)
  * On exit:
  *   out[i] < out[i] + 2^70 + 2^40
  */
-static void 
+static void
 longfelem_diff(longfelem out, const longfelem in)
 {
 	static const limb two70m8p6 = (((limb) 1) << 70) - (((limb) 1) << 8) + (((limb) 1) << 6);
@@ -377,7 +377,7 @@ static const felem zero110 = {two64m0, two110p32m0, two64m46, two64m32};
  * On exit:
  *   out[i] < 2^64
  */
-static void 
+static void
 felem_shrink(smallfelem out, const felem in)
 {
 	felem tmp;
@@ -468,7 +468,7 @@ felem_shrink(smallfelem out, const felem in)
 }
 
 /* smallfelem_expand converts a smallfelem to an felem */
-static void 
+static void
 smallfelem_expand(felem out, const smallfelem in)
 {
 	out[0] = in[0];
@@ -483,7 +483,7 @@ smallfelem_expand(felem out, const smallfelem in)
  * On exit:
  *   out[i] < 7 * 2^64 < 2^67
  */
-static void 
+static void
 smallfelem_square(longfelem out, const smallfelem small)
 {
 	limb a;
@@ -562,7 +562,7 @@ smallfelem_square(longfelem out, const smallfelem small)
  * On exit:
  *   out[i] < 7 * 2^64 < 2^67
  */
-static void 
+static void
 felem_square(longfelem out, const felem in)
 {
 	u64 small[4];
@@ -577,7 +577,7 @@ felem_square(longfelem out, const felem in)
  * On exit:
  *   out[i] < 7 * 2^64 < 2^67
  */
-static void 
+static void
 smallfelem_mul(longfelem out, const smallfelem small1, const smallfelem small2)
 {
 	limb a;
@@ -693,7 +693,7 @@ smallfelem_mul(longfelem out, const smallfelem small1, const smallfelem small2)
  * On exit:
  *   out[i] < 7 * 2^64 < 2^67
  */
-static void 
+static void
 felem_mul(longfelem out, const felem in1, const felem in2)
 {
 	smallfelem small1, small2;
@@ -709,7 +709,7 @@ felem_mul(longfelem out, const felem in1, const felem in2)
  * On exit:
  *   out[i] < 7 * 2^64 < 2^67
  */
-static void 
+static void
 felem_small_mul(longfelem out, const smallfelem small1, const felem in2)
 {
 	smallfelem small2;
@@ -736,7 +736,7 @@ static const felem zero100 = {two100m36m4, two100, two100m36p4, two100m36p4};
  *   out[2] <= out[2] + in[7] + 2*in[6] + 2^33*in[7]
  *   out[3] <= out[3] + 2^32*in[4] + 3*in[7]
  */
-static void 
+static void
 felem_reduce_(felem out, const longfelem in)
 {
 	int128_t c;
@@ -779,7 +779,7 @@ felem_reduce_(felem out, const longfelem in)
  * On exit:
  *   out[i] < 2^101
  */
-static void 
+static void
 felem_reduce(felem out, const longfelem in)
 {
 	out[0] = zero100[0] + in[0];
@@ -794,7 +794,7 @@ felem_reduce(felem out, const longfelem in)
 	 * out[1] > 2^100 - 2^64 - 7*2^96 > 0 out[2] > 2^100 - 2^36 + 2^4 -
 	 * 5*2^64 - 5*2^96 > 0 out[3] > 2^100 - 2^36 + 2^4 - 7*2^64 - 5*2^96
 	 * - 3*2^96 > 0
-	 * 
+	 *
 	 * out[0] < 2^100 + 2^64 + 7*2^64 + 5*2^96 < 2^101 out[1] < 2^100 +
 	 * 3*2^64 + 5*2^64 + 3*2^97 < 2^101 out[2] < 2^100 + 5*2^64 + 2^64 +
 	 * 3*2^65 + 2^97 < 2^101 out[3] < 2^100 + 7*2^64 + 7*2^96 + 3*2^64 <
@@ -808,7 +808,7 @@ felem_reduce(felem out, const longfelem in)
  * On exit:
  *   out[i] < 2^106
  */
-static void 
+static void
 felem_reduce_zero105(felem out, const longfelem in)
 {
 	out[0] = zero105[0] + in[0];
@@ -823,7 +823,7 @@ felem_reduce_zero105(felem out, const longfelem in)
 	 * out[1] > 2^105 - 2^71 - 2^103 > 0 out[2] > 2^105 - 2^41 + 2^9 -
 	 * 2^71 - 2^103 > 0 out[3] > 2^105 - 2^41 + 2^9 - 2^71 - 2^103 -
 	 * 2^103 > 0
-	 * 
+	 *
 	 * out[0] < 2^105 + 2^71 + 2^71 + 2^103 < 2^106 out[1] < 2^105 + 2^71 +
 	 * 2^71 + 2^103 < 2^106 out[2] < 2^105 + 2^71 + 2^71 + 2^71 + 2^103 <
 	 * 2^106 out[3] < 2^105 + 2^71 + 2^103 + 2^71 < 2^106
@@ -832,7 +832,7 @@ felem_reduce_zero105(felem out, const longfelem in)
 
 /* subtract_u64 sets *result = *result - v and *carry to one if the subtraction
  * underflowed. */
-static void 
+static void
 subtract_u64(u64 * result, u64 * carry, u64 v)
 {
 	uint128_t r = *result;
@@ -845,7 +845,7 @@ subtract_u64(u64 * result, u64 * carry, u64 v)
  * On entry:
  *   in[i] < 2^109
  */
-static void 
+static void
 felem_contract(smallfelem out, const felem in)
 {
 	unsigned i;
@@ -909,7 +909,7 @@ felem_contract(smallfelem out, const felem in)
 	subtract_u64(&out[3], &carry, result & kPrime[3]);
 }
 
-static void 
+static void
 smallfelem_square_contract(smallfelem out, const smallfelem in)
 {
 	longfelem longtmp;
@@ -920,7 +920,7 @@ smallfelem_square_contract(smallfelem out, const smallfelem in)
 	felem_contract(out, tmp);
 }
 
-static void 
+static void
 smallfelem_mul_contract(smallfelem out, const smallfelem in1, const smallfelem in2)
 {
 	longfelem longtmp;
@@ -936,7 +936,7 @@ smallfelem_mul_contract(smallfelem out, const smallfelem in1, const smallfelem i
  * On entry:
  *   small[i] < 2^64
  */
-static limb 
+static limb
 smallfelem_is_zero(const smallfelem small)
 {
 	limb result;
@@ -972,7 +972,7 @@ smallfelem_is_zero(const smallfelem small)
 	return result;
 }
 
-static int 
+static int
 smallfelem_is_zero_int(const smallfelem small)
 {
 	return (int) (smallfelem_is_zero(small) & ((limb) 1));
@@ -985,7 +985,7 @@ smallfelem_is_zero_int(const smallfelem small)
  *   a^{p-1} = 1 (mod p)
  *   a^{p-2} = a^{-1} (mod p)
  */
-static void 
+static void
 felem_inv(felem out, const felem in)
 {
 	felem ftmp, ftmp2;
@@ -1080,7 +1080,7 @@ felem_inv(felem out, const felem in)
 	felem_reduce(out, tmp);	/* 2^256 - 2^224 + 2^192 + 2^96 - 3 */
 }
 
-static void 
+static void
 smallfelem_inv_contract(smallfelem out, const smallfelem in)
 {
 	felem tmp;
@@ -1233,7 +1233,7 @@ copy_small_conditional(felem out, const smallfelem in, limb mask)
  * are equal, (while not equal to the point at infinity). This case never
  * happens during single point multiplication, so there is no timing leak for
  * ECDH or ECDSA signing. */
-static void 
+static void
 point_add(felem x3, felem y3, felem z3,
     const felem x1, const felem y1, const felem z1,
     const int mixed, const smallfelem x2, const smallfelem y2, const smallfelem z2)
@@ -1393,7 +1393,7 @@ point_add(felem x3, felem y3, felem z3,
 
 /* point_add_small is the same as point_add, except that it operates on
  * smallfelems */
-static void 
+static void
 point_add_small(smallfelem x3, smallfelem y3, smallfelem z3,
     smallfelem x1, smallfelem y1, smallfelem z1,
     smallfelem x2, smallfelem y2, smallfelem z2)
@@ -1545,7 +1545,7 @@ static const smallfelem gmul[2][16][3] =
 
 /* select_point selects the |idx|th point from a precomputation table and
  * copies it to out. */
-static void 
+static void
 select_point(const u64 idx, unsigned int size, const smallfelem pre_comp[16][3], smallfelem out[3])
 {
 	unsigned i, j;
@@ -1566,7 +1566,7 @@ select_point(const u64 idx, unsigned int size, const smallfelem pre_comp[16][3],
 }
 
 /* get_bit returns the |i|th bit in |in| */
-static char 
+static char
 get_bit(const felem_bytearray in, int i)
 {
 	if ((i < 0) || (i >= 256))
@@ -1579,7 +1579,7 @@ get_bit(const felem_bytearray in, int i)
  * the scalars in scalars[]. If g_scalar is non-NULL, we also add this multiple
  * of the generator, using certain (large) precomputed multiples in g_pre_comp.
  * Output point (X, Y, Z) is stored in x_out, y_out, z_out */
-static void 
+static void
 batch_mul(felem x_out, felem y_out, felem z_out,
     const felem_bytearray scalars[], const unsigned num_points, const u8 * g_scalar,
     const int mixed, const smallfelem pre_comp[][17][3], const smallfelem g_pre_comp[2][16][3])
@@ -1698,20 +1698,20 @@ EC_GFp_nistp256_method(void)
 		.group_get_curve = ec_GFp_simple_group_get_curve,
 		.group_get_degree = ec_GFp_simple_group_get_degree,
 		.group_check_discriminant =
-		ec_GFp_simple_group_check_discriminant,
+		    ec_GFp_simple_group_check_discriminant,
 		.point_init = ec_GFp_simple_point_init,
 		.point_finish = ec_GFp_simple_point_finish,
 		.point_clear_finish = ec_GFp_simple_point_clear_finish,
 		.point_copy = ec_GFp_simple_point_copy,
 		.point_set_to_infinity = ec_GFp_simple_point_set_to_infinity,
 		.point_set_Jprojective_coordinates =
-		ec_GFp_simple_set_Jprojective_coordinates,
+		    ec_GFp_simple_set_Jprojective_coordinates,
 		.point_get_Jprojective_coordinates =
-		ec_GFp_simple_get_Jprojective_coordinates,
+		    ec_GFp_simple_get_Jprojective_coordinates,
 		.point_set_affine_coordinates =
-		ec_GFp_simple_point_set_affine_coordinates,
+		    ec_GFp_simple_point_set_affine_coordinates,
 		.point_get_affine_coordinates =
-		ec_GFp_nistp256_point_get_affine_coordinates,
+		    ec_GFp_nistp256_point_get_affine_coordinates,
 		.add = ec_GFp_simple_add,
 		.dbl = ec_GFp_simple_dbl,
 		.invert = ec_GFp_simple_invert,
@@ -1760,7 +1760,7 @@ nistp256_pre_comp_dup(void *src_)
 	return src_;
 }
 
-static void 
+static void
 nistp256_pre_comp_free(void *pre_)
 {
 	int i;
@@ -1776,7 +1776,7 @@ nistp256_pre_comp_free(void *pre_)
 	free(pre);
 }
 
-static void 
+static void
 nistp256_pre_comp_clear_free(void *pre_)
 {
 	int i;
@@ -1796,7 +1796,7 @@ nistp256_pre_comp_clear_free(void *pre_)
 /*			   OPENSSL EC_METHOD FUNCTIONS
  */
 
-int 
+int
 ec_GFp_nistp256_group_init(EC_GROUP * group)
 {
 	int ret;
@@ -1805,7 +1805,7 @@ ec_GFp_nistp256_group_init(EC_GROUP * group)
 	return ret;
 }
 
-int 
+int
 ec_GFp_nistp256_group_set_curve(EC_GROUP * group, const BIGNUM * p,
     const BIGNUM * a, const BIGNUM * b, BN_CTX * ctx)
 {
@@ -1839,7 +1839,7 @@ ec_GFp_nistp256_group_set_curve(EC_GROUP * group, const BIGNUM * p,
 
 /* Takes the Jacobian coordinates (X, Y, Z) of a point and returns
  * (X', Y') = (X/Z^2, Y/Z^3) */
-int 
+int
 ec_GFp_nistp256_point_get_affine_coordinates(const EC_GROUP * group,
     const EC_POINT * point, BIGNUM * x, BIGNUM * y, BN_CTX * ctx)
 {
@@ -1880,7 +1880,7 @@ ec_GFp_nistp256_point_get_affine_coordinates(const EC_GROUP * group,
 	return 1;
 }
 
-static void 
+static void
 make_points_affine(size_t num, smallfelem points[ /* num */ ][3], smallfelem tmp_smallfelems[ /* num+1 */ ])
 {
 	/*
@@ -1903,7 +1903,7 @@ make_points_affine(size_t num, smallfelem points[ /* num */ ][3], smallfelem tmp
 
 /* Computes scalar*generator + \sum scalars[i]*points[i], ignoring NULL values
  * Result is stored in r (r can equal one of the inputs). */
-int 
+int
 ec_GFp_nistp256_points_mul(const EC_GROUP * group, EC_POINT * r,
     const BIGNUM * scalar, size_t num, const EC_POINT * points[],
     const BIGNUM * scalars[], BN_CTX * ctx)
@@ -2101,7 +2101,7 @@ ec_GFp_nistp256_points_mul(const EC_GROUP * group, EC_POINT * r,
 	return ret;
 }
 
-int 
+int
 ec_GFp_nistp256_precompute_mult(EC_GROUP * group, BN_CTX * ctx)
 {
 	int ret = 0;
@@ -2222,7 +2222,7 @@ ec_GFp_nistp256_precompute_mult(EC_GROUP * group, BN_CTX * ctx)
 	return ret;
 }
 
-int 
+int
 ec_GFp_nistp256_have_precompute_mult(const EC_GROUP * group)
 {
 	if (EC_EX_DATA_get_data(group->extra_data, nistp256_pre_comp_dup,
