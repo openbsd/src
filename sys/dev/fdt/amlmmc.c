@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlmmc.c,v 1.9 2020/08/24 15:15:08 kettenis Exp $	*/
+/*	$OpenBSD: amlmmc.c,v 1.10 2021/04/20 19:33:03 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -199,7 +199,8 @@ amlmmc_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "amlogic,meson-axg-mmc");
+	return (OF_is_compatible(faa->fa_node, "amlogic,meson-axg-mmc") ||
+	    OF_is_compatible(faa->fa_node, "amlogic,meson-sm1-mmc"));
 }
 
 void
