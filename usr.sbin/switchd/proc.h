@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.8 2018/09/10 13:21:39 akoshibe Exp $	*/
+/*	$OpenBSD: proc.h,v 1.9 2021/04/20 21:11:56 dv Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -123,7 +123,6 @@ struct ctl_conn {
 	int				 restricted;
 };
 TAILQ_HEAD(ctl_connlist, ctl_conn);
-extern  struct ctl_connlist ctl_conns;
 
 /* proc.c */
 void	 proc_init(struct privsep *, struct privsep_proc *, unsigned int, int,

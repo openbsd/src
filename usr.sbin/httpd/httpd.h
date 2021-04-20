@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.155 2021/04/10 10:10:07 claudio Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.156 2021/04/20 21:11:56 dv Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -612,8 +612,6 @@ void	 control_dispatch_imsg(int, short, void *);
 void	 control_imsg_forward(struct privsep *, struct imsg *);
 struct ctl_conn	*
 	 control_connbyfd(int);
-
-extern  struct ctl_connlist ctl_conns;
 
 /* parse.y */
 int	 parse_config(const char *, struct httpd *);

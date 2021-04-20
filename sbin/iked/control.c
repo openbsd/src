@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.30 2020/10/09 08:59:15 tobhe Exp $	*/
+/*	$OpenBSD: control.c,v 1.31 2021/04/20 21:11:56 dv Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -35,7 +35,7 @@
 
 #define	CONTROL_BACKLOG	5
 
-struct ctl_connlist ctl_conns;
+struct ctl_connlist ctl_conns = TAILQ_HEAD_INITIALIZER(ctl_conns);
 
 void
 	 control_accept(int, short, void *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldape.c,v 1.33 2019/10/26 17:52:55 martijn Exp $ */
+/*	$OpenBSD: ldape.c,v 1.34 2021/04/20 21:11:56 dv Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -373,7 +373,6 @@ ldape(int debug, int verbose, char *csockpath)
 	csock.cs_name = csockpath;
 	control_init(&csock);
 	control_listen(&csock);
-	TAILQ_INIT(&ctl_conns);
 
 	/* Initialize LDAP listeners.
 	 */

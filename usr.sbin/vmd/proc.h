@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.18 2021/04/11 18:53:23 dv Exp $	*/
+/*	$OpenBSD: proc.h,v 1.19 2021/04/20 21:11:56 dv Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -74,7 +74,6 @@ struct ctl_conn {
 	struct sockpeercred	 peercred;
 };
 TAILQ_HEAD(ctl_connlist, ctl_conn);
-extern  struct ctl_connlist ctl_conns;
 
 /* privsep */
 enum privsep_procid {
