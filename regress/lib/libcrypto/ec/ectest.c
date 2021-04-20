@@ -1,4 +1,4 @@
-/*	$OpenBSD: ectest.c,v 1.10 2021/04/20 17:19:39 tb Exp $	*/
+/*	$OpenBSD: ectest.c,v 1.11 2021/04/20 17:30:32 tb Exp $	*/
 /* crypto/ec/ectest.c */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
@@ -336,7 +336,7 @@ prime_field_tests(void)
 	fprintf(stdout, "\nGenerator as octet string, hybrid form:\n     ");
 	for (i = 0; i < len; i++) fprintf(stdout, "%02X", buf[i]);
 
-		if (!EC_POINT_get_Jprojective_coordinates_GFp(group, R, x, y, z, ctx))
+		if (!EC_POINT_get_Jprojective_coordinates(group, R, x, y, z, ctx))
 			ABORT;
 	fprintf(stdout, "\nA representation of the inverse of that generator in\nJacobian projective coordinates:\n     X = 0x");
 	BN_print_fp(stdout, x);
