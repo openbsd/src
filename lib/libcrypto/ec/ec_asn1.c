@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.32 2021/04/20 17:04:13 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.33 2021/04/20 17:12:43 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -818,20 +818,10 @@ ec_asn1_group2curve(const EC_GROUP * group, X9_62_CURVE * curve)
 	nid = EC_METHOD_get_field_type(EC_GROUP_method_of(group));
 
 	/* get a and b */
-	if (nid == NID_X9_62_prime_field) {
-		if (!EC_GROUP_get_curve(group, NULL, tmp_1, tmp_2, NULL)) {
-			ECerror(ERR_R_EC_LIB);
-			goto err;
-		}
+	if (!EC_GROUP_get_curve(group, NULL, tmp_1, tmp_2, NULL)) {
+		ECerror(ERR_R_EC_LIB);
+		goto err;
 	}
-#ifndef OPENSSL_NO_EC2M
-	else {			/* nid == NID_X9_62_characteristic_two_field */
-		if (!EC_GROUP_get_curve(group, NULL, tmp_1, tmp_2, NULL)) {
-			ECerror(ERR_R_EC_LIB);
-			goto err;
-		}
-	}
-#endif
 	len_1 = (size_t) BN_num_bytes(tmp_1);
 	len_2 = (size_t) BN_num_bytes(tmp_2);
 
