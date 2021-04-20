@@ -1,4 +1,4 @@
-/*	$OpenBSD: ectest.c,v 1.11 2021/04/20 17:30:32 tb Exp $	*/
+/*	$OpenBSD: ectest.c,v 1.12 2021/04/20 17:35:21 tb Exp $	*/
 /* crypto/ec/ectest.c */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
@@ -248,7 +248,7 @@ prime_field_tests(void)
 
 	if (!BN_hex2bn(&x, "D"))
 		ABORT;
-	if (!EC_POINT_set_compressed_coordinates_GFp(group, Q, x, 1, ctx))
+	if (!EC_POINT_set_compressed_coordinates(group, Q, x, 1, ctx))
 		ABORT;
 	if (!EC_POINT_is_on_curve(group, Q, ctx)) {
 		if (!EC_POINT_get_affine_coordinates(group, Q, x, y, ctx))
@@ -420,7 +420,7 @@ prime_field_tests(void)
 
 	if (!BN_hex2bn(&x, "188DA80EB03090F67CBF20EB43A18800F4FF0AFD82FF1012"))
 		ABORT;
-	if (!EC_POINT_set_compressed_coordinates_GFp(group, P, x, 1, ctx))
+	if (!EC_POINT_set_compressed_coordinates(group, P, x, 1, ctx))
 		ABORT;
 	if (!EC_POINT_is_on_curve(group, P, ctx))
 		ABORT;
@@ -470,7 +470,7 @@ prime_field_tests(void)
 
 	if (!BN_hex2bn(&x, "B70E0CBD6BB4BF7F321390B94A03C1D356C21122343280D6115C1D21"))
 		ABORT;
-	if (!EC_POINT_set_compressed_coordinates_GFp(group, P, x, 0, ctx))
+	if (!EC_POINT_set_compressed_coordinates(group, P, x, 0, ctx))
 		ABORT;
 	if (!EC_POINT_is_on_curve(group, P, ctx))
 		ABORT;
@@ -520,7 +520,7 @@ prime_field_tests(void)
 
 	if (!BN_hex2bn(&x, "6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296"))
 		ABORT;
-	if (!EC_POINT_set_compressed_coordinates_GFp(group, P, x, 1, ctx))
+	if (!EC_POINT_set_compressed_coordinates(group, P, x, 1, ctx))
 		ABORT;
 	if (!EC_POINT_is_on_curve(group, P, ctx))
 		ABORT;
@@ -570,7 +570,7 @@ prime_field_tests(void)
 
 	if (!BN_hex2bn(&x, "AA87CA22BE8B05378EB1C71EF320AD746E1D3B628BA79B"
 	    "9859F741E082542A385502F25DBF55296C3A545E3872760AB7")) ABORT;
-	if (!EC_POINT_set_compressed_coordinates_GFp(group, P, x, 1, ctx))
+	if (!EC_POINT_set_compressed_coordinates(group, P, x, 1, ctx))
 		ABORT;
 	if (!EC_POINT_is_on_curve(group, P, ctx))
 		ABORT;
@@ -624,7 +624,7 @@ prime_field_tests(void)
 	if (!BN_hex2bn(&x, "C6858E06B70404E9CD9E3ECB662395B4429C648139053F"
 	    "B521F828AF606B4D3DBAA14B5E77EFE75928FE1DC127A2FFA8DE3348B"
 	    "3C1856A429BF97E7E31C2E5BD66")) ABORT;
-	if (!EC_POINT_set_compressed_coordinates_GFp(group, P, x, 0, ctx))
+	if (!EC_POINT_set_compressed_coordinates(group, P, x, 0, ctx))
 		ABORT;
 	if (!EC_POINT_is_on_curve(group, P, ctx))
 		ABORT;
@@ -718,7 +718,7 @@ prime_field_tests(void)
 #ifdef OPENSSL_EC_BIN_PT_COMP
 #define CHAR2_CURVE_TEST_INTERNAL(_name, _p, _a, _b, _x, _y, _y_bit, _order, _cof, _degree, _variable) \
 	if (!BN_hex2bn(&x, _x)) ABORT; \
-	if (!EC_POINT_set_compressed_coordinates_GF2m(group, P, x, _y_bit, ctx)) ABORT; \
+	if (!EC_POINT_set_compressed_coordinates(group, P, x, _y_bit, ctx)) ABORT; \
 	if (!EC_POINT_is_on_curve(group, P, ctx)) ABORT; \
 	if (!BN_hex2bn(&z, _order)) ABORT; \
 	if (!BN_hex2bn(&cof, _cof)) ABORT; \
@@ -855,7 +855,7 @@ prime_field_tests(void)
 		ABORT;
 /* Change test based on whether binary point compression is enabled or not. */
 #ifdef OPENSSL_EC_BIN_PT_COMP
-	if (!EC_POINT_set_compressed_coordinates_GF2m(group, Q, x, 1, ctx))
+	if (!EC_POINT_set_compressed_coordinates(group, Q, x, 1, ctx))
 		ABORT;
 #else
 	if (!BN_hex2bn(&y, "8"))
