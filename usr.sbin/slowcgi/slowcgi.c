@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.58 2021/01/08 22:05:34 millert Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.59 2021/04/20 07:32:19 claudio Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -148,7 +148,6 @@ SLIST_HEAD(requests_head, requests);
 struct slowcgi_proc {
 	struct requests_head	requests;
 	struct event		ev_sigchld;
-	struct event		ev_sigpipe;
 };
 
 struct fcgi_begin_request_body {
@@ -374,11 +373,9 @@ main(int argc, char *argv[])
 
 	signal_set(&slowcgi_proc.ev_sigchld, SIGCHLD, slowcgi_sig_handler,
 	    &slowcgi_proc);
-	signal_set(&slowcgi_proc.ev_sigpipe, SIGPIPE, slowcgi_sig_handler,
-	    &slowcgi_proc);
+	signal(SIGPIPE, SIG_IGN);
 
 	signal_add(&slowcgi_proc.ev_sigchld, NULL);
-	signal_add(&slowcgi_proc.ev_sigpipe, NULL);
 
 	event_dispatch();
 	return (0);
@@ -560,9 +557,6 @@ slowcgi_sig_handler(int sig, short event, void *arg)
 		}
 		if (pid == -1 && errno != ECHILD)
 			lwarn("waitpid");
-		break;
-	case SIGPIPE:
-		/* ignore */
 		break;
 	default:
 		lerr(1, "unexpected signal: %d", sig);
@@ -939,6 +933,8 @@ exec_cgi(struct request *c)
 		close(s_in[1]);
 		close(s_out[1]);
 		close(s_err[1]);
+
+		signal(SIGPIPE, SIG_DFL);
 
 		path = strrchr(c->script_name, '/');
 		if (path != NULL) {
