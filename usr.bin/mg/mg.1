@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.122 2021/03/26 15:02:10 lum Exp $
+.\"	$OpenBSD: mg.1,v 1.123 2021/04/20 10:02:50 lum Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: March 26 2021 $
+.Dd $Mdocdate: April 20 2021 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -205,6 +205,8 @@ list-buffers
 save-buffers-kill-emacs
 .It C-x C-f
 find-file
+.It C-x C-j
+dired-jump
 .It C-x C-g
 keyboard-quit
 .It C-x C-l
@@ -530,6 +532,8 @@ Display the name of the function currently bound to the key.
 View the differences between buffer and its associated file.
 .It digit-argument
 Process a numerical argument for keyboard-invoked functions.
+.It dired-jump
+Open a dired buffer containing the current buffer's directory location.
 .It downcase-region
 Set all characters in the region to lower case.
 .It downcase-word

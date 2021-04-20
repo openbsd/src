@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.98 2021/03/05 16:16:53 lum Exp $	*/
+/*	$OpenBSD: dired.c,v 1.99 2021/04/20 10:02:50 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -53,6 +53,7 @@ static int	 d_refreshbuffer(int, int);
 static int	 d_filevisitalt(int, int);
 static int	 d_gotofile(int, int);
 static void	 reaper(int);
+static int	 gotofile(char*);
 static struct buffer	*refreshbuffer(struct buffer *);
 static int	 createlist(struct buffer *);
 static void	 redelete(struct buffer *);
@@ -1091,13 +1092,50 @@ createlist(struct buffer *bp)
 }
 
 int
+dired_jump(int f, int n)
+{
+	struct buffer   *bp;
+	const char	*modename;
+	char             dname[NFILEN], *fname;
+	int              ret, i;
+
+	/*
+	 * We use fundamental mode in dired, so just check we aren't in
+	 * dired mode for this specific function. Seems like a corner
+	 * case at the moment.
+	 */
+	for (i = 0; i <= curbp->b_nmodes; i++) {
+		modename = curbp->b_modes[i]->p_name;
+		if (strncmp(modename, "dired", 5) == 0)
+			return (dobeep_msg("In dired mode already"));
+	}
+
+	if (getbufcwd(dname, sizeof(dname)) != TRUE)
+		return (FALSE);
+
+	fname = curbp->b_fname;
+
+	if ((bp = dired_(dname)) == NULL)
+		return (FALSE);
+	curbp = bp;
+
+	ret = showbuffer(bp, curwp, WFFULL | WFMODE);
+	if (ret != TRUE)
+		return ret;
+
+	fname = adjustname(fname, TRUE);
+	if (fname != NULL)
+		gotofile(fname);
+
+	return (TRUE);
+}
+
+int
 d_gotofile(int f, int n)
 {
-	struct line	*lp, *nlp;
 	size_t		 lenfpath;
-	char		 fpath[NFILEN], fname[NFILEN];
-	char		*p, *fpth, *fnp = NULL;
-	int		 tmp;
+	char		 fpath[NFILEN];
+	char		*fpth, *fnp = NULL;
 
 	if (getbufcwd(fpath, sizeof(fpath)) != TRUE)
 		fpath[0] = '\0';
@@ -1114,8 +1152,18 @@ d_gotofile(int f, int n)
 		ewprintf("No file to find");	/* Current directory given so  */
 		return (TRUE);			/* return at present location. */
 	}
+	return gotofile(fpth);
+}
+
+int
+gotofile(char *fpth)
+{
+	struct line	*lp, *nlp;
+	char		 fname[NFILEN];
+	char		*p;
+	int		 tmp;
+
 	(void)xbasename(fname, fpth, NFILEN);
-	curbp = curwp->w_bufp;
 	tmp = 0;
 	for (lp = bfirstlp(curbp); lp != curbp->b_headp; lp = nlp) {
 		tmp++;
