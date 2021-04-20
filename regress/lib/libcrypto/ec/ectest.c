@@ -1,4 +1,4 @@
-/*	$OpenBSD: ectest.c,v 1.8 2018/07/15 18:22:57 tb Exp $	*/
+/*	$OpenBSD: ectest.c,v 1.9 2021/04/20 17:09:45 tb Exp $	*/
 /* crypto/ec/ectest.c */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
@@ -195,7 +195,7 @@ prime_field_tests(void)
 	if (!group)
 		ABORT;
 
-	if (!EC_GROUP_set_curve_GFp(group, p, a, b, ctx))
+	if (!EC_GROUP_set_curve(group, p, a, b, ctx))
 		ABORT;
 
 	{
@@ -209,7 +209,7 @@ prime_field_tests(void)
 		group = tmp;
 	}
 
-	if (!EC_GROUP_get_curve_GFp(group, p, a, b, ctx))
+	if (!EC_GROUP_get_curve(group, p, a, b, ctx))
 		ABORT;
 
 	fprintf(stdout, "Curve defined by Weierstrass equation\n     y^2 = x^3 + a*x + b  (mod 0x");
@@ -363,7 +363,7 @@ prime_field_tests(void)
 		ABORT;
 	if (!BN_hex2bn(&b, "1C97BEFC54BD7A8B65ACF89F81D4D4ADC565FA45"))
 		ABORT;
-	if (!EC_GROUP_set_curve_GFp(group, p, a, b, ctx))
+	if (!EC_GROUP_set_curve(group, p, a, b, ctx))
 		ABORT;
 
 	if (!BN_hex2bn(&x, "4A96B5688EF573284664698968C38BB913CBFC82"))
@@ -415,7 +415,7 @@ prime_field_tests(void)
 		ABORT;
 	if (!BN_hex2bn(&b, "64210519E59C80E70FA7E9AB72243049FEB8DEECC146B9B1"))
 		ABORT;
-	if (!EC_GROUP_set_curve_GFp(group, p, a, b, ctx))
+	if (!EC_GROUP_set_curve(group, p, a, b, ctx))
 		ABORT;
 
 	if (!BN_hex2bn(&x, "188DA80EB03090F67CBF20EB43A18800F4FF0AFD82FF1012"))
@@ -465,7 +465,7 @@ prime_field_tests(void)
 		ABORT;
 	if (!BN_hex2bn(&b, "B4050A850C04B3ABF54132565044B0B7D7BFD8BA270B39432355FFB4"))
 		ABORT;
-	if (!EC_GROUP_set_curve_GFp(group, p, a, b, ctx))
+	if (!EC_GROUP_set_curve(group, p, a, b, ctx))
 		ABORT;
 
 	if (!BN_hex2bn(&x, "B70E0CBD6BB4BF7F321390B94A03C1D356C21122343280D6115C1D21"))
@@ -515,7 +515,7 @@ prime_field_tests(void)
 		ABORT;
 	if (!BN_hex2bn(&b, "5AC635D8AA3A93E7B3EBBD55769886BC651D06B0CC53B0F63BCE3C3E27D2604B"))
 		ABORT;
-	if (!EC_GROUP_set_curve_GFp(group, p, a, b, ctx))
+	if (!EC_GROUP_set_curve(group, p, a, b, ctx))
 		ABORT;
 
 	if (!BN_hex2bn(&x, "6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296"))
@@ -565,7 +565,7 @@ prime_field_tests(void)
 	    "FFFFFFFFFFFFFFFFFEFFFFFFFF0000000000000000FFFFFFFC")) ABORT;
 	if (!BN_hex2bn(&b, "B3312FA7E23EE7E4988E056BE3F82D19181D9C6EFE8141"
 	    "120314088F5013875AC656398D8A2ED19D2A85C8EDD3EC2AEF")) ABORT;
-	if (!EC_GROUP_set_curve_GFp(group, p, a, b, ctx))
+	if (!EC_GROUP_set_curve(group, p, a, b, ctx))
 		ABORT;
 
 	if (!BN_hex2bn(&x, "AA87CA22BE8B05378EB1C71EF320AD746E1D3B628BA79B"
@@ -618,7 +618,7 @@ prime_field_tests(void)
 	if (!BN_hex2bn(&b, "051953EB9618E1C9A1F929A21A0B68540EEA2DA725B99B"
 	    "315F3B8B489918EF109E156193951EC7E937B1652C0BD3BB1BF073573"
 	    "DF883D2C34F1EF451FD46B503F00")) ABORT;
-	if (!EC_GROUP_set_curve_GFp(group, p, a, b, ctx))
+	if (!EC_GROUP_set_curve(group, p, a, b, ctx))
 		ABORT;
 
 	if (!BN_hex2bn(&x, "C6858E06B70404E9CD9E3ECB662395B4429C648139053F"
@@ -752,7 +752,7 @@ prime_field_tests(void)
 	if (!BN_hex2bn(&p, _p)) ABORT; \
 	if (!BN_hex2bn(&a, _a)) ABORT; \
 	if (!BN_hex2bn(&b, _b)) ABORT; \
-	if (!EC_GROUP_set_curve_GF2m(group, p, a, b, ctx)) ABORT; \
+	if (!EC_GROUP_set_curve(group, p, a, b, ctx)) ABORT; \
 	CHAR2_CURVE_TEST_INTERNAL(_name, _p, _a, _b, _x, _y, _y_bit, _order, _cof, _degree, _variable) \
 	fprintf(stdout, "verify degree ..."); \
 	if (EC_GROUP_get_degree(group) != _degree) ABORT; \
@@ -799,7 +799,7 @@ prime_field_tests(void)
 	                                                * so that the library gets to choose the EC_METHOD */
 	if (!group)
 		ABORT;
-	if (!EC_GROUP_set_curve_GF2m(group, p, a, b, ctx))
+	if (!EC_GROUP_set_curve(group, p, a, b, ctx))
 		ABORT;
 
 	{
@@ -813,7 +813,7 @@ prime_field_tests(void)
 		group = tmp;
 	}
 
-	if (!EC_GROUP_get_curve_GF2m(group, p, a, b, ctx))
+	if (!EC_GROUP_get_curve(group, p, a, b, ctx))
 		ABORT;
 
 	fprintf(stdout, "Curve defined by Weierstrass equation\n     y^2 + x*y = x^3 + a*x^2 + b  (mod 0x");
@@ -1315,7 +1315,7 @@ nistp_single_test(const struct nistp_test_params *test)
 		ABORT;
 	if (!BN_hex2bn(&b, test->b))
 		ABORT;
-	if (!EC_GROUP_set_curve_GFp(NISTP, p, a, b, ctx))
+	if (!EC_GROUP_set_curve(NISTP, p, a, b, ctx))
 		ABORT;
 	G = EC_POINT_new(NISTP);
 	P = EC_POINT_new(NISTP);
