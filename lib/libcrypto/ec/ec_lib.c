@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.33 2020/12/04 08:55:30 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.34 2021/04/20 17:04:13 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -488,10 +488,9 @@ EC_GROUP_get_seed_len(const EC_GROUP * group)
 	return group->seed_len;
 }
 
-
-int 
-EC_GROUP_set_curve_GFp(EC_GROUP * group, const BIGNUM * p, const BIGNUM * a,
-    const BIGNUM * b, BN_CTX * ctx)
+int
+EC_GROUP_set_curve(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a,
+    const BIGNUM *b, BN_CTX *ctx)
 {
 	if (group->meth->group_set_curve == 0) {
 		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
@@ -500,40 +499,44 @@ EC_GROUP_set_curve_GFp(EC_GROUP * group, const BIGNUM * p, const BIGNUM * a,
 	return group->meth->group_set_curve(group, p, a, b, ctx);
 }
 
-
-int 
-EC_GROUP_get_curve_GFp(const EC_GROUP * group, BIGNUM * p, BIGNUM * a,
-    BIGNUM * b, BN_CTX * ctx)
+int
+EC_GROUP_get_curve(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b,
+    BN_CTX *ctx)
 {
 	if (group->meth->group_get_curve == 0) {
 		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return 0;
 	}
 	return group->meth->group_get_curve(group, p, a, b, ctx);
+}
+
+int
+EC_GROUP_set_curve_GFp(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a,
+    const BIGNUM *b, BN_CTX *ctx)
+{
+	return EC_GROUP_set_curve(group, p, a, b, ctx);
+}
+
+int
+EC_GROUP_get_curve_GFp(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b,
+    BN_CTX *ctx)
+{
+	return EC_GROUP_get_curve(group, p, a, b, ctx);
 }
 
 #ifndef OPENSSL_NO_EC2M
-int 
-EC_GROUP_set_curve_GF2m(EC_GROUP * group, const BIGNUM * p, const BIGNUM * a,
-    const BIGNUM * b, BN_CTX * ctx)
+int
+EC_GROUP_set_curve_GF2m(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a,
+    const BIGNUM *b, BN_CTX *ctx)
 {
-	if (group->meth->group_set_curve == 0) {
-		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-		return 0;
-	}
-	return group->meth->group_set_curve(group, p, a, b, ctx);
+	return EC_GROUP_set_curve(group, p, a, b, ctx);
 }
 
-
-int 
-EC_GROUP_get_curve_GF2m(const EC_GROUP * group, BIGNUM * p, BIGNUM * a,
-    BIGNUM * b, BN_CTX * ctx)
+int
+EC_GROUP_get_curve_GF2m(const EC_GROUP *group, BIGNUM *p, BIGNUM *a,
+    BIGNUM *b, BN_CTX *ctx)
 {
-	if (group->meth->group_get_curve == 0) {
-		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-		return 0;
-	}
-	return group->meth->group_get_curve(group, p, a, b, ctx);
+	return EC_GROUP_get_curve(group, p, a, b, ctx);
 }
 #endif
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lcl.h,v 1.13 2019/01/19 01:12:48 tb Exp $ */
+/* $OpenBSD: ec_lcl.h,v 1.14 2021/04/20 17:04:13 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -105,8 +105,7 @@ struct ec_method_st {
 	void (*group_clear_finish)(EC_GROUP *);
 	int (*group_copy)(EC_GROUP *, const EC_GROUP *);
 
-	/* used by EC_GROUP_set_curve_GFp, EC_GROUP_get_curve_GFp, */
-	/* EC_GROUP_set_curve_GF2m, and EC_GROUP_get_curve_GF2m: */
+	/* used by EC_GROUP_{get,set}_curve */
 	int (*group_set_curve)(EC_GROUP *, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
 	int (*group_get_curve)(const EC_GROUP *, BIGNUM *p, BIGNUM *a, BIGNUM *b, BN_CTX *);
 

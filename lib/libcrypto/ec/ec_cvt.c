@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_cvt.c,v 1.6 2014/07/10 22:45:57 jsing Exp $ */
+/* $OpenBSD: ec_cvt.c,v 1.7 2021/04/20 17:04:13 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -112,7 +112,7 @@ EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a, const BIGNUM *b,
 	if (ret == NULL)
 		return NULL;
 
-	if (!EC_GROUP_set_curve_GFp(ret, p, a, b, ctx)) {
+	if (!EC_GROUP_set_curve(ret, p, a, b, ctx)) {
 		unsigned long err;
 
 		err = ERR_peek_last_error();
@@ -136,7 +136,7 @@ EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a, const BIGNUM *b,
 		if (ret == NULL)
 			return NULL;
 
-		if (!EC_GROUP_set_curve_GFp(ret, p, a, b, ctx)) {
+		if (!EC_GROUP_set_curve(ret, p, a, b, ctx)) {
 			EC_GROUP_clear_free(ret);
 			return NULL;
 		}
@@ -158,7 +158,7 @@ EC_GROUP_new_curve_GF2m(const BIGNUM *p, const BIGNUM *a, const BIGNUM *b,
 	if (ret == NULL)
 		return NULL;
 
-	if (!EC_GROUP_set_curve_GF2m(ret, p, a, b, ctx)) {
+	if (!EC_GROUP_set_curve(ret, p, a, b, ctx)) {
 		EC_GROUP_clear_free(ret);
 		return NULL;
 	}

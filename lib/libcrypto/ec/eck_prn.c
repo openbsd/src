@@ -1,4 +1,4 @@
-/* $OpenBSD: eck_prn.c,v 1.15 2018/07/15 16:27:39 tb Exp $ */
+/* $OpenBSD: eck_prn.c,v 1.16 2021/04/20 17:04:13 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -216,14 +216,14 @@ ECPKParameters_print(BIO * bp, const EC_GROUP * x, int off)
 		}
 #ifndef OPENSSL_NO_EC2M
 		if (is_char_two) {
-			if (!EC_GROUP_get_curve_GF2m(x, p, a, b, ctx)) {
+			if (!EC_GROUP_get_curve(x, p, a, b, ctx)) {
 				reason = ERR_R_EC_LIB;
 				goto err;
 			}
 		} else		/* prime field */
 #endif
 		{
-			if (!EC_GROUP_get_curve_GFp(x, p, a, b, ctx)) {
+			if (!EC_GROUP_get_curve(x, p, a, b, ctx)) {
 				reason = ERR_R_EC_LIB;
 				goto err;
 			}

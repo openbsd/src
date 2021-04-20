@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.31 2018/09/01 16:23:15 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.32 2021/04/20 17:04:13 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -709,7 +709,7 @@ ec_asn1_group2fieldid(const EC_GROUP * group, X9_62_FIELDID * field)
 			goto err;
 		}
 		/* the parameters are specified by the prime number p */
-		if (!EC_GROUP_get_curve_GFp(group, tmp, NULL, NULL, NULL)) {
+		if (!EC_GROUP_get_curve(group, tmp, NULL, NULL, NULL)) {
 			ECerror(ERR_R_EC_LIB);
 			goto err;
 		}
@@ -819,14 +819,14 @@ ec_asn1_group2curve(const EC_GROUP * group, X9_62_CURVE * curve)
 
 	/* get a and b */
 	if (nid == NID_X9_62_prime_field) {
-		if (!EC_GROUP_get_curve_GFp(group, NULL, tmp_1, tmp_2, NULL)) {
+		if (!EC_GROUP_get_curve(group, NULL, tmp_1, tmp_2, NULL)) {
 			ECerror(ERR_R_EC_LIB);
 			goto err;
 		}
 	}
 #ifndef OPENSSL_NO_EC2M
 	else {			/* nid == NID_X9_62_characteristic_two_field */
-		if (!EC_GROUP_get_curve_GF2m(group, NULL, tmp_1, tmp_2, NULL)) {
+		if (!EC_GROUP_get_curve(group, NULL, tmp_1, tmp_2, NULL)) {
 			ECerror(ERR_R_EC_LIB);
 			goto err;
 		}

@@ -1,4 +1,4 @@
-/* $OpenBSD: ec.h,v 1.18 2019/09/29 10:09:09 tb Exp $ */
+/* $OpenBSD: ec.h,v 1.19 2021/04/20 17:04:13 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -280,6 +280,12 @@ unsigned char *EC_GROUP_get0_seed(const EC_GROUP *x);
 size_t EC_GROUP_get_seed_len(const EC_GROUP *);
 size_t EC_GROUP_set_seed(EC_GROUP *, const unsigned char *, size_t len);
 
+#if defined(LIBRESSL_INTERNAL)
+int EC_GROUP_set_curve(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a,
+    const BIGNUM *b, BN_CTX *ctx);
+int EC_GROUP_get_curve(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b,
+    BN_CTX *ctx);
+#else
 /** Sets the parameter of a ec over GFp defined by y^2 = x^3 + a*x + b
  *  \param  group  EC_GROUP object
  *  \param  p      BIGNUM with the prime number
@@ -321,6 +327,8 @@ int EC_GROUP_set_curve_GF2m(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a, c
  */
 int EC_GROUP_get_curve_GF2m(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b, BN_CTX *ctx);
 #endif
+#endif
+
 /** Returns the number of bits needed to represent a field element 
  *  \param  group  EC_GROUP object
  *  \return number of bits needed to represent a field element
