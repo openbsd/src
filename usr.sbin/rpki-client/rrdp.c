@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp.c,v 1.6 2021/04/19 17:04:35 deraadt Exp $ */
+/*	$OpenBSD: rrdp.c,v 1.7 2021/04/20 13:26:46 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -331,22 +331,19 @@ rrdp_finished(struct rrdp *s)
 			s->last_mod = NULL;
 			switch (s->task) {
 			case NOTIFICATION:
-				warnx("%s: repository not modified",
-				    s->local);
+				logx("%s: repository not modified", s->local);
 				rrdp_state_send(s);
 				rrdp_free(s);
 				rrdp_done(id, 1);
 				break;
 			case SNAPSHOT:
-				warnx("%s: downloading snapshot",
-				    s->local);
+				logx("%s: downloading snapshot", s->local);
 				s->sxml = new_snapshot_xml(p, &s->current, s);
 				s->state = RRDP_STATE_REQ;
 				break;
 			case DELTA:
-				warnx("%s: downloading %lld deltas",
-				    s->local, s->repository.serial -
-				    s->current.serial);
+				logx("%s: downloading %lld deltas", s->local,
+				    s->repository.serial - s->current.serial);
 				s->dxml = new_delta_xml(p, &s->current, s);
 				s->state = RRDP_STATE_REQ;
 				break;
@@ -372,7 +369,7 @@ rrdp_finished(struct rrdp *s)
 			break;
 		}
 	} else if (s->res == HTTP_NOT_MOD && s->task == NOTIFICATION) {
-		warnx("%s: notification file not modified", s->local);
+		logx("%s: notification file not modified", s->local);
 		/* no need to update state file */
 		rrdp_free(s);
 		rrdp_done(id, 1);
