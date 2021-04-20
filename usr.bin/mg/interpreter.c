@@ -1,4 +1,4 @@
-/*      $OpenBSD: interpreter.c,v 1.20 2021/03/26 12:31:37 lum Exp $	*/
+/*      $OpenBSD: interpreter.c,v 1.21 2021/04/20 14:26:19 lum Exp $	*/
 /*
  * This file is in the public domain.
  *
@@ -66,21 +66,29 @@
 #include "log.h"
 #endif
 
-static int	 multiarg(char *);
+static int	 multiarg(char *, char *, int);
 static int	 isvar(char **, char **, int);
-static int	 foundvar(char *);
+/*static int	 dofunc(char **, char **, int);*/
+static int	 founddef(char *, int, int, int);
+static int	 foundlst(char *, int, int);
+static int	 expandvals(char *, char *, char *);
+static int	 foundfun(char *, int);
 static int	 doregex(char *, char *);
-static int	 parseexp_tmp(char *);
 static void	 clearexp(void);
-static int	 addexp(char *, int, int, int, int);
-static int	 exitinterpreter(void);
+static int	 parse(char *, const char *, const char *, int, int);
+static int	 parsdef(char *, const char *, const char *, int, int);
+static int	 parsval(char *, const char *, const char *, int, int);
+static int	 parsexp(char *, const char *, const char *, int, int);
+
+static int	 exitinterpreter(char *, char *, int);
 
 TAILQ_HEAD(exphead, expentry) ehead;
 struct expentry {
 	TAILQ_ENTRY(expentry) eentry;
-	char	*exp;		/* The string found between paraenthesis. */
-	int	 par1;		/* Parenthesis at start of string (=1	  */
-	int	 par2;		/* Parenthesis at end of string   )=2     */
+	char	*fun;		/* The 1st string found between parens.   */
+	char	 funbuf[BUFSIZE];
+	const char	*par1;	/* Parenthesis at start of string	  */
+	const char	*par2;	/* Parenthesis at end of string		  */
 	int	 expctr;	/* An incremental counter:+1 for each exp */
 	int	 blkid;		/* Which block are we in?		  */
 };
@@ -90,9 +98,12 @@ struct expentry {
  */
 struct varentry {
 	SLIST_ENTRY(varentry) entry;
+	char	 valbuf[BUFSIZE];
 	char	*name;
 	char	*vals;
 	int	 count;
+	int	 expctr;
+	int	 blkid;
 };
 SLIST_HEAD(vlisthead, varentry) varhead = SLIST_HEAD_INITIALIZER(varhead);
 
@@ -110,6 +121,9 @@ char scharkey[NUMSCHKEYS][MAXLENSCHKEYS] =
 	  	"lambda"
 	};
 
+const char lp = '(';
+const char rp = ')';
+char *defnam = NULL;
 
 /*
  * Line has a '(' as the first non-white char.
@@ -119,9 +133,8 @@ char scharkey[NUMSCHKEYS][MAXLENSCHKEYS] =
 int
 foundparen(char *funstr, int llen)
 {
-	struct expentry *e1 = NULL, *e2 = NULL;
+	const char	*lrp = NULL;
 	char		*p, *begp = NULL, *endp = NULL, *regs;
-	char		 expbuf[BUFSIZE], tmpbuf[BUFSIZE];
 	int     	 i, ret, pctr, expctr, blkid, inquote;
 
 	pctr = expctr = inquote = 0;
@@ -157,18 +170,24 @@ foundparen(char *funstr, int llen)
 
 	for (i = 0; i < llen; ++i, p++) {
 		if (*p == '(') {
+			if (inquote == 1) {
+				cleanup();
+				return(dobeep_msg("Opening and closing quote "\
+				    "char error"));
+			}
 			if (begp != NULL) {
 				if (endp == NULL)
 					*p = '\0';
 				else
 					*endp = '\0';
 
-				ret = addexp(begp, 1, 1, blkid, ++expctr);
+				ret = parse(begp, lrp, &lp, blkid, ++expctr);
 				if (!ret) {
 					cleanup();
 					return(ret);
 				}
 			}
+			lrp = &lp;
 			begp = endp = NULL;
 			pctr++;
 		} else if (*p == ')') {
@@ -183,12 +202,13 @@ foundparen(char *funstr, int llen)
 				else
 					*endp = '\0';
 
-				ret = addexp(begp, 1, 2, blkid, ++expctr);
+				ret = parse(begp, lrp, &rp, blkid, ++expctr);
 				if (!ret) {
 					cleanup();
 					return(ret);
 				}
 			}
+			lrp = &rp;
 			begp = endp = NULL;
 			pctr--;
 		} else if (*p != ' ' && *p != '\t') {
@@ -208,38 +228,17 @@ foundparen(char *funstr, int llen)
 			if (inquote == 0)
 				*p = ' ';
 
-		if (pctr == 0)
+		if (pctr == 0) {
 			blkid++;
+			expctr = 0;
+			defnam = NULL;
+		}
 	}
 
 	if (pctr != 0) {
 		cleanup();
 		return(dobeep_msg("Opening and closing parentheses error"));
 	}
-	/*
-	 * Join expressions together for the moment, to progess.
-	 * This needs to be totally redone and
-	 * iterate in-to-out, evaluating as we go. Eventually.
-	 */
-	expbuf[0] = tmpbuf[0] = '\0';
-	TAILQ_FOREACH_SAFE(e1, &ehead, eentry, e2) {
-		if (strlcpy(tmpbuf, expbuf, sizeof(tmpbuf)) >= sizeof(tmpbuf))
-			return (dobeep_msg("strlcpy error"));
-		expbuf[0] = '\0';
-		if (strlcpy(expbuf, e1->exp, sizeof(expbuf)) >= sizeof(expbuf))
-                	return (dobeep_msg("strlcat error"));
-		if (*tmpbuf != '\0')
-			if (strlcat(expbuf, " ", sizeof(expbuf)) >=
-			    sizeof(expbuf))
-				return (dobeep_msg("strlcat error"));
-		if (strlcat(expbuf, tmpbuf, sizeof(expbuf)) >= sizeof(expbuf))
-			return (dobeep_msg("strlcat error"));
-#ifdef MGLOG
-		mglog_misc("exp|%s|\n", e1->exp);
-#endif
-	}
-
-	ret = parseexp_tmp(expbuf);
 	if (ret == FALSE)
 		cleanup();
 	else
@@ -250,95 +249,117 @@ foundparen(char *funstr, int llen)
 
 
 static int
-addexp(char *begp, int par1, int par2, int blkid, int expctr)
+parse(char *begp, const char *par1, const char *par2, int blkid, int expctr)
 {
-	struct expentry *e1 = NULL;
+	char    *regs;
+	int 	 ret = FALSE;
 
-	if ((e1 = malloc(sizeof(struct expentry))) == NULL) {
-		cleanup();
-		return (dobeep_msg("malloc Error"));
-	}
-	TAILQ_INSERT_HEAD(&ehead, e1, eentry);
-	if ((e1->exp = strndup(begp, BUFSIZE)) == NULL) {
-		cleanup();
-		return(dobeep_msg("strndup error"));
-	}
-	e1->expctr = expctr;
-	e1->blkid = blkid;
-	/* need to think about these two */
-	e1->par1 = par1; 
-	e1->par2 = par2;
+	if (strncmp(begp, "define", 6) == 0) {
+		ret = parsdef(begp, par1, par2, blkid, expctr);
+		if (ret == TRUE || ret == FALSE)
+			return (ret);
+	} else if (strncmp(begp, "list", 4) == 0)
+		return(parsval(begp, par1, par2, blkid, expctr));
 
-	return (TRUE);
+	regs = "^exit$";
+	if (doregex(regs, begp))
+		return(exitinterpreter(NULL, NULL, FALSE));
+
+	/* mg function name regex */	
+	regs = "^[A-Za-z-]+$";
+        if (doregex(regs, begp))
+		return(excline(begp, 0));
+
+	/* Corner case 1 */
+	if (strncmp(begp, "global-set-key ", 15) == 0)
+		/* function name as 2nd param screws up multiarg. */
+		return(excline(begp, 0));
+
+	/* Corner case 2 */
+	if (strncmp(begp, "define-key ", 11) == 0)
+		/* function name as 3rd param screws up multiarg. */
+		return(excline(begp, 0));
+
+	return (parsexp(begp, par1, par2, blkid, expctr));
 }
 
-/*
- * At the moment, use parseexp_tmp in lieu of proper block parsing.
- * Move away from this eventually.
- */
 static int
-parseexp_tmp(char *funstr)
+parsdef(char *begp, const char *par1, const char *par2, int blkid, int expctr)
 {
 	char    *regs;
 
-        /* Does the line have a list 'define' like: */
-        /* (define alist(list 1 2 3 4)) */
-        regs = "^define[ ]+[A-Za-z][.0-9_A-Z+a-z-]*[ ]+list[ ]+.*[ ]*";
-        if (doregex(regs, funstr))
-                return(foundvar(funstr));
-
-	/* Does the line have a variable 'define' like: */
-	/* (define i (function-name j)) */
-	regs = "^define[ ]+[A-Za-z][.0-9_A-Z+a-z-]*[ ]+[A-Za-z-]+[ ]+.*$";
-	if (doregex(regs, funstr))
-		return(foundvar(funstr));
+	if ((defnam == NULL) && (expctr != 1))
+		return(dobeep_msg("'define' incorrectly used"));
 
         /* Does the line have a incorrect variable 'define' like: */
         /* (define i y z) */
-        regs = "^define[ ]+[A-Za-z][.0-9_A-Z+a-z-]*[ ]+.*[ ]+.*$";
-        if (doregex(regs, funstr))
-                return(dobeep_msg("Invalid use of define."));
+        regs = "^define[ ]+[A-Za-z][.0-9_A-Z+a-z-]*[ ]+.+[ ]+.+$";
+        if (doregex(regs, begp))
+                return(dobeep_msg("Invalid use of define"));
 
         /* Does the line have a single variable 'define' like: */
         /* (define i 0) */
         regs = "^define[ ]+[A-Za-z][.0-9_A-Z+a-z-]*[ ]+.*$";
-        if (doregex(regs, funstr))
-                return(foundvar(funstr));
+        if (doregex(regs, begp)) {
+		if (par1 == &lp && par2 == &rp && expctr == 1)
+			return(founddef(begp, blkid, expctr, 1));
+		return(dobeep_msg("Invalid use of define."));
+	}
+	/* Does the line have  '(define i(' */
+        regs = "^define[ ]+[A-Za-z][.0-9_A-Z+a-z-]*[ ]*$";
+        if (doregex(regs, begp)) {
+		if (par1 == &lp && par2 == &lp && expctr == 1)
+                	return(founddef(begp, blkid, expctr, 0));
+		return(dobeep_msg("Invalid use of 'define'"));
+	}
+	/* Does the line have  '(define (' */
+	regs = "^define$";
+	if (doregex(regs, begp)) {
+		if (par1 == &lp && par2 == &lp && expctr == 1)
+			return(foundfun(begp, expctr));
+		return(dobeep_msg("Invalid use of 'define'."));
+	}
 
-        /* Does the line have an unrecognised 'define' */
-        regs = "^define[\t ]+";
-        if (doregex(regs, funstr))
-                return(dobeep_msg("Invalid use of define"));
-
-	/* Exit? */
-	regs = "^exit$";
-	if (doregex(regs, funstr))
-		return(exitinterpreter());
-
-	return(multiarg(funstr));
+	return (ABORT);
 }
 
-/*
- * Pass a list of arguments to a function.
- */
 static int
-multiarg(char *funstr)
+parsval(char *begp, const char *par1, const char *par2, int blkid, int expctr)
 {
-	PF	 funcp;
-	char	 excbuf[BUFSIZE], argbuf[BUFSIZE];
-	char	 contbuf[BUFSIZE], varbuf[BUFSIZE];
-	char	*cmdp = NULL, *argp, *fendp = NULL, *endp, *p, *v, *s = " ";
-	char	*regs;
-	int	 spc, numparams, numspc;
-	int	 inlist, sizof, fin, inquote;
+	char    *regs;
 
-	/* mg function name regex */	
-        if (doregex("^[A-Za-z-]+$", funstr))
-		return(excline(funstr, 0));
+	/* Does the line have 'list' */
+	regs = "^list$";
+	if (doregex(regs, begp))
+		return(dobeep_msg("Invalid use of list"));
 
-	cmdp = funstr;
+        /* Does the line have a 'list' like: */
+        /* (list "a" "b") */
+        regs = "^list[ ]+.*$";
+        if (doregex(regs, begp)) {
+		if (expctr == 1)
+			return(dobeep_msg("list with no-where to go."));
+
+		if (par1 == &lp && expctr > 1)
+			return(foundlst(begp, blkid, expctr));
+
+		return(dobeep_msg("Invalid use of list."));
+	}
+	return (FALSE);
+}
+
+static int
+parsexp(char *begp, const char *par1, const char *par2, int blkid, int expctr)
+{
+	struct expentry *e1 = NULL;
+	PF		 funcp;
+	char		*cmdp, *fendp, *valp, *fname, *funb = NULL;;
+	int		 numparams, ret;
+
+	cmdp = begp;
 	fendp = strchr(cmdp, ' ');
 	*fendp = '\0';
+
 	/*
 	 * If no extant mg command found, just return.
 	 */
@@ -347,17 +368,52 @@ multiarg(char *funstr)
 
 	numparams = numparams_function(funcp);
 	if (numparams == 0)
-		return (dobeep_msgs("Command takes no arguments: ", cmdp));
+		return (dobeep_msgs("Command takes no arguments:", cmdp));
 
-	/* now find the first argument */
-	p = fendp + 1;
-	p = skipwhite(p);
+	if ((e1 = malloc(sizeof(struct expentry))) == NULL) {
+		cleanup();
+		return (dobeep_msg("malloc Error"));
+	}
+	TAILQ_INSERT_HEAD(&ehead, e1, eentry);
+	if ((e1->fun = strndup(cmdp, BUFSIZE)) == NULL) {
+		cleanup();
+		return(dobeep_msg("strndup error"));
+	}
+	cmdp = e1->fun;
+	fname = e1->fun;
+	e1->funbuf[0] = '\0';
+	funb = e1->funbuf;
+	e1->expctr = expctr;
+	e1->blkid = blkid;
+	/* need to think about these two */
+	e1->par1 = par1;
+	e1->par2 = par2;
 
-	if (strlcpy(argbuf, p, sizeof(argbuf)) >= sizeof(argbuf))
-		return (dobeep_msg("strlcpy error"));
+	*fendp = ' ';
+	valp = fendp + 1;
+
+	ret = expandvals(cmdp, valp, funb);
+	if (!ret)
+		return (ret);
+
+	return (multiarg(fname, funb, numparams));
+}
+
+/*
+ * Pass a list of arguments to a function.
+ */
+static int
+multiarg(char *cmdp, char *argbuf, int numparams)
+{
+	char	 excbuf[BUFSIZE];
+	char	*argp, *p, *s = " ";
+	char	*regs;
+	int	 spc, numspc;
+	int	 fin, inquote;
+
 	argp = argbuf;
-	numspc = spc = 1; /* initially fake a space so we find first argument */
-	inlist = fin = inquote = 0;
+	spc = 1; /* initially fake a space so we find first argument */
+	numspc = fin = inquote = 0;
 
 	for (p = argbuf; *p != '\0'; p++) {
 		if (*(p + 1) == '\0')
@@ -371,47 +427,25 @@ multiarg(char *funstr)
 					inquote = 1;
 			}
 			if (spc == 1)
-				argp = p;
+				if ((numspc % numparams) == 0) {
+					argp = p;
+				}
 			spc = 0;
 		}
 		if ((*p == ' ' && inquote == 0) || fin) {
-			if (spc == 1)
+			if (spc == 1)/* || (numspc % numparams == 0))*/
 				continue;
-
+			if ((numspc % numparams) != (numparams - 1)) {
+				numspc++;
+				continue;
+			}
 			if (*p == ' ') {
 				*p = '\0';		/* terminate arg string */
 			}
-			endp = p + 1;
 			excbuf[0] = '\0';
-			varbuf[0] = '\0';
-			contbuf[0] = '\0';			
-			sizof = sizeof(varbuf);
-			v = varbuf;
 			regs = "[\"]+.*[\"]+";
-       			if (doregex(regs, argp))
-				;			/* found quotes */
-			else if (isvar(&argp, &v, sizof)) {
-				(void)(strlcat(varbuf, " ",
-                                    sizof) >= sizof);
 
-				*p = ' ';
-
-				(void)(strlcpy(contbuf, endp,
-				    sizeof(contbuf)) >= sizeof(contbuf));
-
-				(void)(strlcat(varbuf, contbuf,
-				    sizof) >= sizof);
-				
-				argbuf[0] = ' ';
-				argbuf[1] = '\0';
-				(void)(strlcat(argbuf, varbuf,
-				    sizof) >= sizof);
-
-				p = argp = argbuf;
-				spc = 1;
-				fin = 0;
-				continue;
-			} else {
+       			if (!doregex(regs, argp)) {
 				const char *errstr;
 				int iters;
 
@@ -437,6 +471,7 @@ multiarg(char *funstr)
 				break;
 
 			*p = ' ';		/* unterminate arg string */
+			numspc++;
 			spc = 1;
 		}
 	}
@@ -458,35 +493,46 @@ isvar(char **argp, char **varbuf, int sizof)
 #endif
 	SLIST_FOREACH(v1, &varhead, entry) {
 		if (strcmp(*argp, v1->name) == 0) {
-			(void)(strlcpy(*varbuf, v1->vals, sizof) >= sizof);
+			(void)(strlcpy(*varbuf, v1->valbuf, sizof) >= sizof);
 			return (TRUE);
 		}
 	}
 	return (FALSE);
 }
 
+
+static int
+foundfun(char *defstr, int expctr)
+{
+	return (TRUE);
+}
+
+static int
+foundlst(char *defstr, int blkid, int expctr)
+{
+	char		*p;
+
+	p = strstr(defstr, " ");
+	p = skipwhite(p);
+	expandvals(NULL, p, defnam);
+
+	return (TRUE);
+}
+
 /*
- * The define string _must_ adhere to the regex in parsexp().
- * This is not the correct way to do parsing but it does highlight
- * the issues. Also, vars should find their way into one list only.
- * Currently they go into two.
+ * 'define' strings follow the regex in parsdef().
  */
 static int
-foundvar(char *defstr)
+founddef(char *defstr, int blkid, int expctr, int hasval)
 {
 	struct varentry *vt, *v1 = NULL;
 	char		*p, *vnamep, *vendp = NULL, *valp;
-	char		 tmpbuf[BUFSIZE];
-	int		 spc;
-
-	/* vars names can't start with these. */
-	/* char *spchrs = "+-.#";	*/
 
 	p = strstr(defstr, " ");        /* move to first ' ' char.    */
 	vnamep = skipwhite(p);		/* find first char of var name. */
 	vendp = vnamep;
 
-	/* now find the end of the list name */
+	/* now find the end of the define/list name */
 	while (1) {
 		++vendp;
 		if (*vendp == ' ')
@@ -495,51 +541,11 @@ foundvar(char *defstr)
 	*vendp = '\0';
 
 	/*
-	 * Check list name is not an existing function.
+	 * Check list name is not an existing mg function.
 	 */
 	if (name_function(vnamep) != NULL)
 		return(dobeep_msgs("Variable/function name clash:", vnamep));
 
-	p = ++vendp;
-	p = skipwhite(p);
-
-	/*
-	 * Now what have we found? A keyword (e.g list)? A value?
-	 * We only deal with values and a couple of keywords at moment.
-	 */
-	if (strncmp(p, "list ", 5) == 0) {
-		p = strstr(p, " ");     /* find ' ' after 'list'.  */
-		valp = skipwhite(p);    /* find first value     */
-	} else if (strncmp(p, "get-environment-variable ", 25) == 0) {
-		const char	*t;
-		char		*tmp;
-		const char	*q = "\"";
-
-		p = strstr(p, " ");     /* find ' ' after keyword.  */
-		t = skipwhite(p);    /* find first value     */
-
-		if (t[0] == *q || t[strlen(t) - 1] == *q)
-			return (dobeep_msgs("Please remove '\"' around:",
-			    t));
-		if ((tmp = getenv(t)) == NULL || *tmp == '\0')
-			return(dobeep_msgs("Envar not found:", t));
-		/* envar is returned without "" around the string */
-		tmpbuf[0] = '\0';
-		if (strlcat(tmpbuf, q, sizeof(tmpbuf)) >= sizeof(tmpbuf))
-			return (dobeep_msg("strlcat error"));
-		if (strlcat(tmpbuf, tmp, sizeof(tmpbuf)) >= sizeof(tmpbuf))
-			return (dobeep_msg("strlcat error"));
-		if (strlcat(tmpbuf, q, sizeof(tmpbuf)) >= sizeof(tmpbuf))
-			return (dobeep_msg("strlcat error"));
-		
-		valp = tmpbuf;
-	} else
-		valp = p;
-	/*
-	 * Now we have the name of the list starting at 'vnamep',
-	 * and the first value is at 'valp', record the details
-	 * in a linked list. But first remove variable, if existing already.
-	 */
 	if (!SLIST_EMPTY(&varhead)) {
 		SLIST_FOREACH_SAFE(v1, &varhead, entry, vt) {
 			if (strcmp(vnamep, v1->name) == 0)
@@ -551,26 +557,125 @@ foundvar(char *defstr)
 	SLIST_INSERT_HEAD(&varhead, v1, entry);
 	if ((v1->name = strndup(vnamep, BUFSIZE)) == NULL)
 		return(dobeep_msg("strndup error"));
+	vnamep = v1->name;
 	v1->count = 0;
-	vendp = NULL;
-	
-	/* initially fake a space so we find first value */
-	spc = 1;
-	/* now loop through values in list value string while counting them */
-	for (p = valp; *p != '\0'; p++) {
-		if (*p != ' ' && *p != '\t') {
+	v1->expctr = expctr;
+	v1->blkid = blkid;
+	v1->vals = NULL;
+	v1->valbuf[0] = '\0';
+
+	defnam = v1->valbuf;
+
+	if (hasval) {
+		valp = skipwhite(vendp + 1);
+
+		expandvals(NULL, valp, defnam);
+		defnam = NULL;
+	}
+	*vendp = ' ';	
+	return (TRUE);
+}
+
+
+static int
+expandvals(char *cmdp, char *valp, char *bp)
+{
+	char	 excbuf[BUFSIZE], argbuf[BUFSIZE];
+	char	 contbuf[BUFSIZE], varbuf[BUFSIZE];
+	char	*argp, *endp, *p, *v, *s = " ";
+	char	*regs;
+	int	 spc, cnt;
+	int	 inlist, sizof, fin, inquote;
+
+	/* now find the first argument */
+	p = skipwhite(valp);
+
+	if (strlcpy(argbuf, p, sizeof(argbuf)) >= sizeof(argbuf))
+		return (dobeep_msg("strlcpy error"));
+	argp = argbuf;
+	spc = 1; /* initially fake a space so we find first argument */
+	inlist = fin = inquote = cnt = spc = 0;
+
+	for (p = argbuf; *p != '\0'; p++) {
+		if (*(p + 1) == '\0')
+			fin = 1;
+
+		if (*p != ' ') {
+			if (*p == '"') {
+				if (inquote == 1)
+					inquote = 0;	
+				else
+					inquote = 1;
+			}
 			if (spc == 1)
-				v1->count++;
+				argp = p;
 			spc = 0;
 		}
-	}
-	if ((v1->vals = strndup(valp, BUFSIZE)) == NULL)
-		return(dobeep_msg("strndup error"));
+		if ((*p == ' ' && inquote == 0) || fin) {
+			if (spc == 1)
+				continue;
+			/* terminate arg string */
+			if (*p == ' ') {
+				*p = '\0';		
+			}
+			endp = p + 1;
+			excbuf[0] = '\0';
+			varbuf[0] = '\0';
+			contbuf[0] = '\0';			
+			sizof = sizeof(varbuf);
+			v = varbuf;
+			regs = "[\"]+.*[\"]+";
+       			if (doregex(regs, argp))
+				;			/* found quotes */
+			else if (isvar(&argp, &v, sizof)) {
 
+				(void)(strlcat(varbuf, " ",
+                                    sizof) >= sizof);
+
+				*p = ' ';
+				(void)(strlcpy(contbuf, endp,
+				    sizeof(contbuf)) >= sizeof(contbuf));
+
+				(void)(strlcat(varbuf, contbuf,
+				    sizof) >= sizof);
+				
+				argbuf[0] = ' ';
+				argbuf[1] = '\0';
+				(void)(strlcat(argbuf, varbuf,
+				    sizof) >= sizof);
+
+				p = argp = argbuf;
+				spc = 1;
+				fin = 0;
+				continue;
+			} else {
+				const char *errstr;
+				int iters;
+
+				iters = strtonum(argp, 0, INT_MAX, &errstr);
+				if (errstr != NULL)
+					return (dobeep_msgs("Var not found:",
+					    argp));
+			}
 #ifdef  MGLOG
-        mglog_misc("var:%s\t#items:%d\tvals:|%s|\n", vnamep, v1->count, v1->vals);
+        mglog_misc("x|%s|%p|%d|\n", bp, defnam, BUFSIZE);
 #endif
+			if (*bp != '\0') {
+				if (strlcat(bp, s, BUFSIZE) >= BUFSIZE)
+					return (dobeep_msg("strlcat error"));
+			}
+			if (strlcat(bp, argp, BUFSIZE) >= BUFSIZE) {
+				return (dobeep_msg("strlcat error"));
+			}
+/*			v1->count++;*/
+			
+			if (fin)
+				break;
 
+			*p = ' ';		/* unterminate arg string */
+			spc = 1;
+		}
+	}
 	return (TRUE);
 }
 
@@ -586,7 +691,7 @@ clearvars(void)
 	while (!SLIST_EMPTY(&varhead)) {
 		v1 = SLIST_FIRST(&varhead);
 		SLIST_REMOVE_HEAD(&varhead, entry);
-		free(v1->vals);
+/*		free(v1->vals);*/
 		free(v1->name);
 		free(v1);
 	}
@@ -604,7 +709,7 @@ clearexp(void)
 	while (!TAILQ_EMPTY(&ehead)) {
 		e1 = TAILQ_FIRST(&ehead);
 		TAILQ_REMOVE(&ehead, e1, eentry);
-		free(e1->exp);
+		free(e1->fun);
 		free(e1);
 	}
 	return;
@@ -616,6 +721,8 @@ clearexp(void)
 void
 cleanup(void)
 {
+	defnam = NULL;
+
 	clearexp();
 	clearvars();
 }
@@ -645,10 +752,186 @@ doregex(char *r, char *e)
  * execution.
  */
 static int
-exitinterpreter()
+exitinterpreter(char *ptr, char *dobuf, int dosiz)
 {
 	cleanup();
 	if (batch == 0)
 		return(dobeep_msg("Interpreter exited via exit command."));
 	return(FALSE);
 }
+
+/*
+ * All code below commented out (until end of file).
+ *
+ * Need to think about how interpreter functions are done.
+ * Probably don't have a choice with string-append().
+
+static int 	 getenvironmentvariable(char *, char *, int);
+static int	 stringappend(char *, char *, int);
+
+typedef int	 (*PFI)(char *, char *, int);
+
+
+struct ifunmap {
+	PFI		 fn_funct;
+	const char 	*fn_name;
+	struct ifunmap	*fn_next;
+};
+static struct ifunmap *ifuns;
+
+static struct ifunmap ifunctnames[] = {
+	{exitinterpreter, "exit"},
+	{getenvironmentvariable, "get-environment-variable"},
+	{stringappend, "string-append"},
+	{NULL, NULL}
+};
+
+void
+ifunmap_init(void)
+{
+	struct ifunmap *fn;
+
+	for (fn = ifunctnames; fn->fn_name != NULL; fn++) {
+		fn->fn_next = ifuns;
+		ifuns = fn;
+	}
+}
+
+PFI
+name_ifun(const char *ifname)
+{
+	struct ifunmap 	*fn;
+
+	for (fn = ifuns; fn != NULL; fn = fn->fn_next) {
+		if (strcmp(fn->fn_name, ifname) == 0)
+			return (fn->fn_funct);
+	}
+
+	return (NULL);
+}
+
+
+int
+dofunc(char **ifname, char **tmpbuf, int sizof)
+{
+	PFI 	 fnc;
+	char	*p, *tmp;
+
+	p = strstr(*ifname, " ");
+	*p = '\0';
+
+	fnc = name_ifun(*ifname);
+	if (fnc == NULL)
+		return (FALSE);
+
+	*p = ' ';
+
+	tmp = *tmpbuf;
+
+	fnc(p, tmp, sizof);
+
+	return (TRUE);
+}
+
+static int
+getenvironmentvariable(char *ptr, char *dobuf, int dosiz)
+{
+	char		*t;
+	char		*tmp;
+	const char	*q = "\"";
+
+	t = skipwhite(ptr);
+
+	if (t[0] == *q || t[strlen(t) - 1] == *q)
+		return (dobeep_msgs("Please remove '\"' around:", t));
+	if ((tmp = getenv(t)) == NULL || *tmp == '\0')
+		return(dobeep_msgs("Envar not found:", t));
+
+	dobuf[0] = '\0';
+	if (strlcat(dobuf, q, dosiz) >= dosiz)
+		return (dobeep_msg("strlcat error"));
+	if (strlcat(dobuf, tmp, dosiz) >= dosiz)
+		return (dobeep_msg("strlcat error"));
+	if (strlcat(dobuf, q, dosiz) >= dosiz)
+		return (dobeep_msg("strlcat error"));
+		
+	return (TRUE);
+}
+
+static int
+stringappend(char *ptr, char *dobuf, int dosiz)
+{
+	char		 varbuf[BUFSIZE], funbuf[BUFSIZE];
+	char            *p, *f, *v, *vendp;
+	int		 sizof, fin = 0;
+
+	varbuf[0] = funbuf[0] = '\0';
+	f = funbuf;
+	v = varbuf;
+	sizof = sizeof(varbuf);
+	*dobuf = '\0';
+
+	p = skipwhite(ptr);
+
+	while (*p != '\0') {
+		vendp = p;
+		while (1) {
+			if (*vendp == ' ') {
+				break;
+			} else if (*vendp == '\0') {
+				fin = 1;
+				break;
+			}
+			++vendp;
+		}
+        	*vendp = '\0';
+
+		if (isvar(&p, &v, sizof)) {
+			if (v[0] == '"' && v[strlen(v) - 1] == '"' ) {
+				v[strlen(v) - 1] = '\0';
+				v = v + 1;
+			}
+			if (strlcat(f, v, sizof) >= sizof)
+				return (dobeep_msg("strlcat error"));		
+		} else {
+			if (p[0] == '"' && p[strlen(p) - 1] == '"' ) {
+				p[strlen(p) - 1] = '\0';
+				p = p + 1;
+			}
+			if (strlcat(f, p, sizof) >= sizof)
+				return (dobeep_msg("strlcat error"));		
+		}
+		if (fin)
+			break;
+		vendp++;
+		if (*vendp == '\0')
+			break;
+		p = skipwhite(vendp);
+	}
+
+	(void)snprintf(dobuf, dosiz, "\"%s\"", f);
+
+	return (TRUE);
+}
+
+Index: main.c
+===================================================================
+RCS file: /cvs/src/usr.bin/mg/main.c,v
+retrieving revision 1.89
+diff -u -p -u -p -r1.89 main.c
+--- main.c      20 Mar 2021 09:00:49 -0000      1.89
++++ main.c      12 Apr 2021 17:58:52 -0000
+@@ -133,10 +133,12 @@ main(int argc, char **argv)
+                extern void grep_init(void);
+                extern void cmode_init(void);
+                extern void dired_init(void);
++               extern void ifunmap_init(void);
+
+                dired_init();
+                grep_init();
+                cmode_init();
++               ifunmap_init();
+        }
+
+
+*/
