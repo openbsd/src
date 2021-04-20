@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.5 2021/01/13 17:00:20 martijn Exp $	*/
+/*	$OpenBSD: main.c,v 1.6 2021/04/20 11:19:54 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -39,7 +39,6 @@
 
 void regress_fd(struct agentx *, void *, int);
 void regress_tryconnect(int, short, void *);
-void regress_shutdown(void);
 void regress_read(int, short, void *);
 void regress_usr1(int, short, void *);
 void regress_usr2(int, short, void *);
@@ -316,7 +315,7 @@ main(int argc, char *argv[])
 		fatal("agentx_object");
 
 	if (!dflag) {
-		if (daemon(0, 0) == -1)
+		if (daemon(0, 1) == -1)
 			fatalx("daemon");
 	}
 
@@ -337,9 +336,12 @@ regress_fd(struct agentx *sa2, void *cookie, int close)
 	struct sockaddr_un sun;
 
 	/* For ease of cleanup we take the single run approach */
-	if (init)
-		regress_shutdown();
-	else {
+	if (init) {
+		if (!close)
+			agentx_free(sa);
+		else
+			evtimer_del(&rev);
+	} else {
 		sun.sun_family = AF_UNIX;
 		strlcpy(sun.sun_path, path, sizeof(sun.sun_path));
 
@@ -356,13 +358,6 @@ void
 regress_read(int fd, short event, void *cookie)
 {
 	agentx_read(sa);
-}
-
-void
-regress_shutdown(void)
-{
-	agentx_free(sa);
-	evtimer_del(&connev);
 }
 
 #ifdef notyet
