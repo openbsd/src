@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.83 2021/03/08 12:18:46 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.84 2021/04/20 08:03:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -295,7 +295,7 @@ void
 prefix_insert(struct prefix *new, struct prefix *ep, struct rib_entry *re)
 {
 	struct prefix_list redo = LIST_HEAD_INITIALIZER(redo);
-	struct prefix *xp, *np, *rp, *ip = ep;
+	struct prefix *xp, *np, *tailp = NULL, *insertp = ep;
 	int testall, selected = 0;
 
 	/* start scan at the entry point (ep) or if the head if ep == NULL */
@@ -315,13 +315,13 @@ prefix_insert(struct prefix *new, struct prefix *ep, struct rib_entry *re)
 				 * put it onto redo queue.
 				 */
 				LIST_REMOVE(xp, entry.list.rib);
-				if (LIST_EMPTY(&redo))
+				if (tailp == NULL)
 					LIST_INSERT_HEAD(&redo, xp,
 					    entry.list.rib);
 				else
-					LIST_INSERT_AFTER(rp, xp,
+					LIST_INSERT_AFTER(tailp, xp,
 					    entry.list.rib);
-				rp = xp;
+				tailp = xp;
 			} else {
 				/*
 				 * lock insertion point and
@@ -340,14 +340,14 @@ prefix_insert(struct prefix *new, struct prefix *ep, struct rib_entry *re)
 			if (testall == 2)
 				selected = 0;
 			if (!selected)
-				ip = xp;
+				insertp = xp;
 		}
 	}
 
-	if (ip == NULL)
+	if (insertp == NULL)
 		LIST_INSERT_HEAD(&re->prefix_h, new, entry.list.rib);
 	else
-		LIST_INSERT_AFTER(ip, new, entry.list.rib);
+		LIST_INSERT_AFTER(insertp, new, entry.list.rib);
 
 	/* Fixup MED order again. All elements are < new */
 	while (!LIST_EMPTY(&redo)) {
@@ -371,7 +371,7 @@ void
 prefix_remove(struct prefix *old, struct rib_entry *re)
 {
 	struct prefix_list redo = LIST_HEAD_INITIALIZER(redo);
-	struct prefix *xp, *np, *rp;
+	struct prefix *xp, *np, *tailp = NULL;
 	int testall;
 
 	xp = LIST_NEXT(old, entry.list.rib);
@@ -393,13 +393,13 @@ prefix_remove(struct prefix *old, struct rib_entry *re)
 				 * put it onto redo queue.
 				 */
 				LIST_REMOVE(xp, entry.list.rib);
-				if (LIST_EMPTY(&redo))
+				if (tailp == NULL)
 					LIST_INSERT_HEAD(&redo, xp,
 					    entry.list.rib);
 				else
-					LIST_INSERT_AFTER(rp, xp,
+					LIST_INSERT_AFTER(tailp, xp,
 					    entry.list.rib);
-				rp = xp;
+				tailp = xp;
 			}
 		}
 	}
