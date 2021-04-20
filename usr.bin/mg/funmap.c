@@ -1,4 +1,4 @@
-/*	$OpenBSD: funmap.c,v 1.61 2021/04/20 10:02:50 lum Exp $	*/
+/*	$OpenBSD: funmap.c,v 1.62 2021/04/20 16:34:20 lum Exp $	*/
 
 /* This file is in the public domain */
 
@@ -34,7 +34,7 @@ static struct funmap *funs;
  *  0 = a toggle, non-modifiable insert/delete, region modifier, etc
  *  1 = value can be string or number value (like: file/buf name, search string)
  *  2 = multiple type value required, see auto-execute, or global-set-key, etc
- * -1 = variable length # parameters (unused at moment)
+ * -1 = error: interactive commmand, unsuitable for interpreter
  *
  * Some functions when used interactively may ask for a 'y' or 'n' (or another
  * character) to continue, in excline, a 'y' is assumed. Functions like this
@@ -168,9 +168,9 @@ static struct funmap functnames[] = {
 	{prevwind, "previous-window", 0},
 	{spawncli, "push-shell", 0},
 	{showcwdir, "pwd", 0},
-	{queryrepl, "query-replace", 1},
+	{queryrepl, "query-replace", -1},
 #ifdef REGEX
-	{re_queryrepl, "query-replace-regexp", 1},
+	{re_queryrepl, "query-replace-regexp", -1},
 #endif /* REGEX */
 	{quote, "quoted-insert", 1},
 #ifdef REGEX

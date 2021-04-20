@@ -1,4 +1,4 @@
-/*      $OpenBSD: interpreter.c,v 1.21 2021/04/20 14:26:19 lum Exp $	*/
+/*      $OpenBSD: interpreter.c,v 1.22 2021/04/20 16:34:20 lum Exp $	*/
 /*
  * This file is in the public domain.
  *
@@ -369,6 +369,9 @@ parsexp(char *begp, const char *par1, const char *par2, int blkid, int expctr)
 	numparams = numparams_function(funcp);
 	if (numparams == 0)
 		return (dobeep_msgs("Command takes no arguments:", cmdp));
+
+	if (numparams == -1)
+		return (dobeep_msgs("Interactive command found:", cmdp));
 
 	if ((e1 = malloc(sizeof(struct expentry))) == NULL) {
 		cleanup();
