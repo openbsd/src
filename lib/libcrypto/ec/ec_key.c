@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_key.c,v 1.25 2021/04/20 17:16:37 tb Exp $ */
+/* $OpenBSD: ec_key.c,v 1.26 2021/04/20 17:23:37 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -381,7 +381,7 @@ EC_KEY_set_public_key_affine_coordinates(EC_KEY * key, BIGNUM * x, BIGNUM * y)
 	BN_CTX *ctx = NULL;
 	BIGNUM *tx, *ty;
 	EC_POINT *point = NULL;
-	int ok = 0, tmp_nid, is_char_two = 0;
+	int ok = 0;
 
 	if (!key || !key->group || !x || !y) {
 		ECerror(ERR_R_PASSED_NULL_PARAMETER);
@@ -396,34 +396,15 @@ EC_KEY_set_public_key_affine_coordinates(EC_KEY * key, BIGNUM * x, BIGNUM * y)
 	if (!point)
 		goto err;
 
-	tmp_nid = EC_METHOD_get_field_type(EC_GROUP_method_of(key->group));
-
-	if (tmp_nid == NID_X9_62_characteristic_two_field)
-		is_char_two = 1;
-
 	if ((tx = BN_CTX_get(ctx)) == NULL)
 		goto err;
 	if ((ty = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
-#ifndef OPENSSL_NO_EC2M
-	if (is_char_two) {
-		if (!EC_POINT_set_affine_coordinates(key->group, point,
-			x, y, ctx))
-			goto err;
-		if (!EC_POINT_get_affine_coordinates(key->group, point,
-			tx, ty, ctx))
-			goto err;
-	} else
-#endif
-	{
-		if (!EC_POINT_set_affine_coordinates(key->group, point,
-			x, y, ctx))
-			goto err;
-		if (!EC_POINT_get_affine_coordinates(key->group, point,
-			tx, ty, ctx))
-			goto err;
-	}
+	if (!EC_POINT_set_affine_coordinates(key->group, point, x, y, ctx))
+		goto err;
+	if (!EC_POINT_get_affine_coordinates(key->group, point, tx, ty, ctx))
+		goto err;
 	/*
 	 * Check if retrieved coordinates match originals: if not values are
 	 * out of range.

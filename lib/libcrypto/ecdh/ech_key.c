@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_key.c,v 1.10 2021/04/20 17:16:38 tb Exp $ */
+/* $OpenBSD: ech_key.c,v 1.11 2021/04/20 17:23:37 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -140,21 +140,10 @@ ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
 		goto err;
 	}
 
-	if (EC_METHOD_get_field_type(EC_GROUP_method_of(group)) ==
-	    NID_X9_62_prime_field) {
-		if (!EC_POINT_get_affine_coordinates(group, tmp, x, y, ctx)) {
-			ECDHerror(ECDH_R_POINT_ARITHMETIC_FAILURE);
-			goto err;
-		}
+	if (!EC_POINT_get_affine_coordinates(group, tmp, x, y, ctx)) {
+		ECDHerror(ECDH_R_POINT_ARITHMETIC_FAILURE);
+		goto err;
 	}
-#ifndef OPENSSL_NO_EC2M
-	else {
-		if (!EC_POINT_get_affine_coordinates(group, tmp, x, y, ctx)) {
-			ECDHerror(ECDH_R_POINT_ARITHMETIC_FAILURE);
-			goto err;
-		}
-	}
-#endif
 
 	buflen = ECDH_size(ecdh);
 	len = BN_num_bytes(x);
