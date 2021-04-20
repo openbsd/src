@@ -1,4 +1,4 @@
-/*	$OpenBSD: ectest.c,v 1.9 2021/04/20 17:09:45 tb Exp $	*/
+/*	$OpenBSD: ectest.c,v 1.10 2021/04/20 17:19:39 tb Exp $	*/
 /* crypto/ec/ectest.c */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
@@ -251,7 +251,7 @@ prime_field_tests(void)
 	if (!EC_POINT_set_compressed_coordinates_GFp(group, Q, x, 1, ctx))
 		ABORT;
 	if (!EC_POINT_is_on_curve(group, Q, ctx)) {
-		if (!EC_POINT_get_affine_coordinates_GFp(group, Q, x, y, ctx))
+		if (!EC_POINT_get_affine_coordinates(group, Q, x, y, ctx))
 			ABORT;
 		fprintf(stderr, "Point is not on curve: x = 0x");
 		BN_print_fp(stderr, x);
@@ -271,7 +271,7 @@ prime_field_tests(void)
 		if (EC_POINT_is_at_infinity(group, P))
 			fprintf(stdout, "     point at infinity\n");
 		else {
-			if (!EC_POINT_get_affine_coordinates_GFp(group, P, x, y, ctx))
+			if (!EC_POINT_get_affine_coordinates(group, P, x, y, ctx))
 				ABORT;
 
 			fprintf(stdout, "     x = 0x");
@@ -370,7 +370,7 @@ prime_field_tests(void)
 		ABORT;
 	if (!BN_hex2bn(&y, "23a628553168947d59dcc912042351377ac5fb32"))
 		ABORT;
-	if (!EC_POINT_set_affine_coordinates_GFp(group, P, x, y, ctx))
+	if (!EC_POINT_set_affine_coordinates(group, P, x, y, ctx))
 		ABORT;
 	if (!EC_POINT_is_on_curve(group, P, ctx))
 		ABORT;
@@ -379,7 +379,7 @@ prime_field_tests(void)
 	if (!EC_GROUP_set_generator(group, P, z, BN_value_one()))
 		ABORT;
 
-	if (!EC_POINT_get_affine_coordinates_GFp(group, P, x, y, ctx))
+	if (!EC_POINT_get_affine_coordinates(group, P, x, y, ctx))
 		ABORT;
 	fprintf(stdout, "\nSEC2 curve secp160r1 -- Generator:\n     x = 0x");
 	BN_print_fp(stdout, x);
@@ -429,7 +429,7 @@ prime_field_tests(void)
 	if (!EC_GROUP_set_generator(group, P, z, BN_value_one()))
 		ABORT;
 
-	if (!EC_POINT_get_affine_coordinates_GFp(group, P, x, y, ctx))
+	if (!EC_POINT_get_affine_coordinates(group, P, x, y, ctx))
 		ABORT;
 	fprintf(stdout, "\nNIST curve P-192 -- Generator:\n     x = 0x");
 	BN_print_fp(stdout, x);
@@ -479,7 +479,7 @@ prime_field_tests(void)
 	if (!EC_GROUP_set_generator(group, P, z, BN_value_one()))
 		ABORT;
 
-	if (!EC_POINT_get_affine_coordinates_GFp(group, P, x, y, ctx))
+	if (!EC_POINT_get_affine_coordinates(group, P, x, y, ctx))
 		ABORT;
 	fprintf(stdout, "\nNIST curve P-224 -- Generator:\n     x = 0x");
 	BN_print_fp(stdout, x);
@@ -529,7 +529,7 @@ prime_field_tests(void)
 	if (!EC_GROUP_set_generator(group, P, z, BN_value_one()))
 		ABORT;
 
-	if (!EC_POINT_get_affine_coordinates_GFp(group, P, x, y, ctx))
+	if (!EC_POINT_get_affine_coordinates(group, P, x, y, ctx))
 		ABORT;
 	fprintf(stdout, "\nNIST curve P-256 -- Generator:\n     x = 0x");
 	BN_print_fp(stdout, x);
@@ -579,7 +579,7 @@ prime_field_tests(void)
 	if (!EC_GROUP_set_generator(group, P, z, BN_value_one()))
 		ABORT;
 
-	if (!EC_POINT_get_affine_coordinates_GFp(group, P, x, y, ctx))
+	if (!EC_POINT_get_affine_coordinates(group, P, x, y, ctx))
 		ABORT;
 	fprintf(stdout, "\nNIST curve P-384 -- Generator:\n     x = 0x");
 	BN_print_fp(stdout, x);
@@ -634,7 +634,7 @@ prime_field_tests(void)
 	if (!EC_GROUP_set_generator(group, P, z, BN_value_one()))
 		ABORT;
 
-	if (!EC_POINT_get_affine_coordinates_GFp(group, P, x, y, ctx))
+	if (!EC_POINT_get_affine_coordinates(group, P, x, y, ctx))
 		ABORT;
 	fprintf(stdout, "\nNIST curve P-521 -- Generator:\n     x = 0x");
 	BN_print_fp(stdout, x);
@@ -723,7 +723,7 @@ prime_field_tests(void)
 	if (!BN_hex2bn(&z, _order)) ABORT; \
 	if (!BN_hex2bn(&cof, _cof)) ABORT; \
 	if (!EC_GROUP_set_generator(group, P, z, cof)) ABORT; \
-	if (!EC_POINT_get_affine_coordinates_GF2m(group, P, x, y, ctx)) ABORT; \
+	if (!EC_POINT_get_affine_coordinates(group, P, x, y, ctx)) ABORT; \
 	fprintf(stdout, "\n%s -- Generator:\n     x = 0x", _name); \
 	BN_print_fp(stdout, x); \
 	fprintf(stdout, "\n     y = 0x"); \
@@ -736,7 +736,7 @@ prime_field_tests(void)
 #define CHAR2_CURVE_TEST_INTERNAL(_name, _p, _a, _b, _x, _y, _y_bit, _order, _cof, _degree, _variable) \
 	if (!BN_hex2bn(&x, _x)) ABORT; \
 	if (!BN_hex2bn(&y, _y)) ABORT; \
-	if (!EC_POINT_set_affine_coordinates_GF2m(group, P, x, y, ctx)) ABORT; \
+	if (!EC_POINT_set_affine_coordinates(group, P, x, y, ctx)) ABORT; \
 	if (!EC_POINT_is_on_curve(group, P, ctx)) ABORT; \
 	if (!BN_hex2bn(&z, _order)) ABORT; \
 	if (!BN_hex2bn(&cof, _cof)) ABORT; \
@@ -860,13 +860,13 @@ prime_field_tests(void)
 #else
 	if (!BN_hex2bn(&y, "8"))
 		ABORT;
-	if (!EC_POINT_set_affine_coordinates_GF2m(group, Q, x, y, ctx))
+	if (!EC_POINT_set_affine_coordinates(group, Q, x, y, ctx))
 		ABORT;
 #endif
 	if (!EC_POINT_is_on_curve(group, Q, ctx)) {
 /* Change test based on whether binary point compression is enabled or not. */
 #ifdef OPENSSL_EC_BIN_PT_COMP
-		if (!EC_POINT_get_affine_coordinates_GF2m(group, Q, x, y, ctx))
+		if (!EC_POINT_get_affine_coordinates(group, Q, x, y, ctx))
 			ABORT;
 #endif
 		fprintf(stderr, "Point is not on curve: x = 0x");
@@ -887,7 +887,7 @@ prime_field_tests(void)
 		if (EC_POINT_is_at_infinity(group, P))
 			fprintf(stdout, "     point at infinity\n");
 		else {
-			if (!EC_POINT_get_affine_coordinates_GF2m(group, P, x, y, ctx))
+			if (!EC_POINT_get_affine_coordinates(group, P, x, y, ctx))
 				ABORT;
 
 			fprintf(stdout, "     x = 0x");
@@ -1325,13 +1325,13 @@ nistp_single_test(const struct nistp_test_params *test)
 		ABORT;
 	if (!BN_hex2bn(&y, test->Qy))
 		ABORT;
-	if (!EC_POINT_set_affine_coordinates_GFp(NISTP, Q_CHECK, x, y, ctx))
+	if (!EC_POINT_set_affine_coordinates(NISTP, Q_CHECK, x, y, ctx))
 		ABORT;
 	if (!BN_hex2bn(&x, test->Gx))
 		ABORT;
 	if (!BN_hex2bn(&y, test->Gy))
 		ABORT;
-	if (!EC_POINT_set_affine_coordinates_GFp(NISTP, G, x, y, ctx))
+	if (!EC_POINT_set_affine_coordinates(NISTP, G, x, y, ctx))
 		ABORT;
 	if (!BN_hex2bn(&order, test->order))
 		ABORT;
