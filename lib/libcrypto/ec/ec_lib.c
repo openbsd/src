@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.34 2021/04/20 17:04:13 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.35 2021/04/20 17:06:17 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -492,7 +492,7 @@ int
 EC_GROUP_set_curve(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a,
     const BIGNUM *b, BN_CTX *ctx)
 {
-	if (group->meth->group_set_curve == 0) {
+	if (group->meth->group_set_curve == NULL) {
 		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return 0;
 	}
@@ -503,7 +503,7 @@ int
 EC_GROUP_get_curve(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b,
     BN_CTX *ctx)
 {
-	if (group->meth->group_get_curve == 0) {
+	if (group->meth->group_get_curve == NULL) {
 		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return 0;
 	}
