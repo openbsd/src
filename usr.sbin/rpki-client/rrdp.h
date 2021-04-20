@@ -10,7 +10,7 @@
 	XML_StopParser(p, XML_FALSE);	\
 	warnx(__VA_ARGS__);		\
 	return;				\
-} while(0)
+} while (0)
 
 enum rrdp_task {
 	NOTIFICATION,
