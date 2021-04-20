@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_smpl.c,v 1.29 2018/11/15 05:53:31 tb Exp $ */
+/* $OpenBSD: ecp_smpl.c,v 1.30 2021/04/20 17:16:38 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -1209,9 +1209,9 @@ ec_GFp_simple_make_affine(const EC_GROUP * group, EC_POINT * point, BN_CTX * ctx
 	if ((y = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
-	if (!EC_POINT_get_affine_coordinates_GFp(group, point, x, y, ctx))
+	if (!EC_POINT_get_affine_coordinates(group, point, x, y, ctx))
 		goto err;
-	if (!EC_POINT_set_affine_coordinates_GFp(group, point, x, y, ctx))
+	if (!EC_POINT_set_affine_coordinates(group, point, x, y, ctx))
 		goto err;
 	if (!point->Z_is_one) {
 		ECerror(ERR_R_INTERNAL_ERROR);

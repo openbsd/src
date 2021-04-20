@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_nistp521.c,v 1.23 2018/11/05 20:18:21 tb Exp $ */
+/* $OpenBSD: ecp_nistp521.c,v 1.24 2021/04/20 17:16:38 tb Exp $ */
 /*
  * Written by Adam Langley (Google) for the OpenSSL project
  */
@@ -2019,7 +2019,7 @@ ec_GFp_nistp521_precompute_mult(EC_GROUP * group, BN_CTX * ctx)
 		goto err;
 	BN_bin2bn(nistp521_curve_params[3], sizeof(felem_bytearray), x);
 	BN_bin2bn(nistp521_curve_params[4], sizeof(felem_bytearray), y);
-	if (!EC_POINT_set_affine_coordinates_GFp(group, generator, x, y, ctx))
+	if (!EC_POINT_set_affine_coordinates(group, generator, x, y, ctx))
 		goto err;
 	if ((pre = nistp521_pre_comp_new()) == NULL)
 		goto err;

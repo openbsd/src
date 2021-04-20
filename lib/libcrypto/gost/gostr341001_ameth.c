@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001_ameth.c,v 1.16 2020/06/05 17:17:22 jsing Exp $ */
+/* $OpenBSD: gostr341001_ameth.c,v 1.17 2021/04/20 17:16:38 tb Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -290,7 +290,7 @@ pub_encode_gost01(X509_PUBKEY *pub, const EVP_PKEY *pk)
 		goto err;
 	}
 
-	if (EC_POINT_get_affine_coordinates_GFp(GOST_KEY_get0_group(ec),
+	if (EC_POINT_get_affine_coordinates(GOST_KEY_get0_group(ec),
 	    pub_key, X, Y, NULL) == 0) {
 		GOSTerror(ERR_R_EC_LIB);
 		goto err;
@@ -352,8 +352,7 @@ pub_print_gost01(BIO *out, const EVP_PKEY *pkey, int indent, ASN1_PCTX *pctx)
 		goto err;
 	pubkey = GOST_KEY_get0_public_key(pkey->pkey.gost);
 	group = GOST_KEY_get0_group(pkey->pkey.gost);
-	if (EC_POINT_get_affine_coordinates_GFp(group, pubkey, X, Y,
-	    ctx) == 0) {
+	if (EC_POINT_get_affine_coordinates(group, pubkey, X, Y, ctx) == 0) {
 		GOSTerror(ERR_R_EC_LIB);
 		goto err;
 	}

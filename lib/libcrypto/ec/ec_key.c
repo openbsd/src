@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_key.c,v 1.24 2019/01/19 01:12:48 tb Exp $ */
+/* $OpenBSD: ec_key.c,v 1.25 2021/04/20 17:16:37 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -408,19 +408,19 @@ EC_KEY_set_public_key_affine_coordinates(EC_KEY * key, BIGNUM * x, BIGNUM * y)
 
 #ifndef OPENSSL_NO_EC2M
 	if (is_char_two) {
-		if (!EC_POINT_set_affine_coordinates_GF2m(key->group, point,
+		if (!EC_POINT_set_affine_coordinates(key->group, point,
 			x, y, ctx))
 			goto err;
-		if (!EC_POINT_get_affine_coordinates_GF2m(key->group, point,
+		if (!EC_POINT_get_affine_coordinates(key->group, point,
 			tx, ty, ctx))
 			goto err;
 	} else
 #endif
 	{
-		if (!EC_POINT_set_affine_coordinates_GFp(key->group, point,
+		if (!EC_POINT_set_affine_coordinates(key->group, point,
 			x, y, ctx))
 			goto err;
-		if (!EC_POINT_get_affine_coordinates_GFp(key->group, point,
+		if (!EC_POINT_get_affine_coordinates(key->group, point,
 			tx, ty, ctx))
 			goto err;
 	}

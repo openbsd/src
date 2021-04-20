@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001.c,v 1.7 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: gostr341001.c,v 1.8 2021/04/20 17:16:38 tb Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -206,7 +206,7 @@ gost2001_do_sign(BIGNUM *md, GOST_KEY *eckey)
 				GOSTerror(ERR_R_EC_LIB);
 				goto err;
 			}
-			if (EC_POINT_get_affine_coordinates_GFp(group, C, X,
+			if (EC_POINT_get_affine_coordinates(group, C, X,
 			    NULL, ctx) == 0) {
 				GOSTerror(ERR_R_EC_LIB);
 				goto err;
@@ -304,7 +304,7 @@ gost2001_do_verify(BIGNUM *md, ECDSA_SIG *sig, GOST_KEY *ec)
 		GOSTerror(ERR_R_EC_LIB);
 		goto err;
 	}
-	if (EC_POINT_get_affine_coordinates_GFp(group, C, X, NULL, ctx) == 0) {
+	if (EC_POINT_get_affine_coordinates(group, C, X, NULL, ctx) == 0) {
 		GOSTerror(ERR_R_EC_LIB);
 		goto err;
 	}
@@ -354,7 +354,7 @@ VKO_compute_key(BIGNUM *X, BIGNUM *Y, const GOST_KEY *pkey, GOST_KEY *priv_key,
 		goto err;
 	if (EC_POINT_mul(group, pnt, NULL, pub_key, p, ctx) == 0)
 		goto err;
-	if (EC_POINT_get_affine_coordinates_GFp(group, pnt, X, Y, ctx) == 0)
+	if (EC_POINT_get_affine_coordinates(group, pnt, X, Y, ctx) == 0)
 		goto err;
 	ok = 1;
 

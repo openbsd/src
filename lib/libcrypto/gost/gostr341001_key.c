@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001_key.c,v 1.8 2017/05/02 03:59:44 deraadt Exp $ */
+/* $OpenBSD: gostr341001_key.c,v 1.9 2021/04/20 17:16:38 tb Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -201,10 +201,10 @@ GOST_KEY_set_public_key_affine_coordinates(GOST_KEY *key, BIGNUM *x, BIGNUM *y)
 		goto err;
 	if ((ty = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if (EC_POINT_set_affine_coordinates_GFp(key->group, point, x, y,
+	if (EC_POINT_set_affine_coordinates(key->group, point, x, y,
 	    ctx) == 0)
 		goto err;
-	if (EC_POINT_get_affine_coordinates_GFp(key->group, point, tx, ty,
+	if (EC_POINT_get_affine_coordinates(key->group, point, tx, ty,
 	    ctx) == 0)
 		goto err;
 	/*

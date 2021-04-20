@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lcl.h,v 1.14 2021/04/20 17:04:13 tb Exp $ */
+/* $OpenBSD: ec_lcl.h,v 1.15 2021/04/20 17:16:37 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -124,8 +124,8 @@ struct ec_method_st {
 	/* used by EC_POINT_set_to_infinity,
 	 * EC_POINT_set_Jprojective_coordinates_GFp,
 	 * EC_POINT_get_Jprojective_coordinates_GFp,
-	 * EC_POINT_set_affine_coordinates_GFp,     ..._GF2m,
-	 * EC_POINT_get_affine_coordinates_GFp,     ..._GF2m,
+	 * EC_POINT_set_affine_coordinates,
+	 * EC_POINT_get_affine_coordinates,
 	 * EC_POINT_set_compressed_coordinates_GFp, ..._GF2m:
 	 */
 	int (*point_set_to_infinity)(const EC_GROUP *, EC_POINT *);

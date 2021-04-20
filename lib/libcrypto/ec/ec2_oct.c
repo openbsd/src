@@ -1,4 +1,4 @@
-/* $OpenBSD: ec2_oct.c,v 1.13 2021/04/19 17:06:37 tb Exp $ */
+/* $OpenBSD: ec2_oct.c,v 1.14 2021/04/20 17:16:37 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -152,7 +152,7 @@ ec_GF2m_simple_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *point
 		}
 	}
 
-	if (!EC_POINT_set_affine_coordinates_GF2m(group, point, x, y, ctx))
+	if (!EC_POINT_set_affine_coordinates(group, point, x, y, ctx))
 		goto err;
 
 	ret = 1;
@@ -221,7 +221,7 @@ ec_GF2m_simple_point2oct(const EC_GROUP *group, const EC_POINT *point,
 		if ((yxi = BN_CTX_get(ctx)) == NULL)
 			goto err;
 
-		if (!EC_POINT_get_affine_coordinates_GF2m(group, point, x, y, ctx))
+		if (!EC_POINT_get_affine_coordinates(group, point, x, y, ctx))
 			goto err;
 
 		buf[0] = form;
@@ -400,10 +400,10 @@ ec_GF2m_simple_oct2point(const EC_GROUP *group, EC_POINT *point,
 			}
 		}
 		/*
-		 * EC_POINT_set_affine_coordinates_GF2m checks that the
+		 * EC_POINT_set_affine_coordinates checks that the
 		 * point is on the curve as required by X9.62.
 		 */
-		if (!EC_POINT_set_affine_coordinates_GF2m(group, point, x, y, ctx))
+		if (!EC_POINT_set_affine_coordinates(group, point, x, y, ctx))
 			goto err;
 	}
 

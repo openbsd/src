@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.20 2019/06/04 18:15:27 tb Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.21 2021/04/20 17:16:38 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -207,7 +207,7 @@ ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 		}
 		if (EC_METHOD_get_field_type(EC_GROUP_method_of(group)) ==
 		    NID_X9_62_prime_field) {
-			if (!EC_POINT_get_affine_coordinates_GFp(group, point,
+			if (!EC_POINT_get_affine_coordinates(group, point,
 			    X, NULL, ctx)) {
 				ECDSAerror(ERR_R_EC_LIB);
 				goto err;
@@ -215,7 +215,7 @@ ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 		}
 #ifndef OPENSSL_NO_EC2M
 		else {	/* NID_X9_62_characteristic_two_field */
-			if (!EC_POINT_get_affine_coordinates_GF2m(group, point,
+			if (!EC_POINT_get_affine_coordinates(group, point,
 			    X, NULL, ctx)) {
 				ECDSAerror(ERR_R_EC_LIB);
 				goto err;
@@ -523,7 +523,7 @@ ecdsa_do_verify(const unsigned char *dgst, int dgst_len, const ECDSA_SIG *sig,
 	}
 	if (EC_METHOD_get_field_type(EC_GROUP_method_of(group)) ==
 	    NID_X9_62_prime_field) {
-		if (!EC_POINT_get_affine_coordinates_GFp(group, point, X, NULL,
+		if (!EC_POINT_get_affine_coordinates(group, point, X, NULL,
 		    ctx)) {
 			ECDSAerror(ERR_R_EC_LIB);
 			goto err;
@@ -531,7 +531,7 @@ ecdsa_do_verify(const unsigned char *dgst, int dgst_len, const ECDSA_SIG *sig,
 	}
 #ifndef OPENSSL_NO_EC2M
 	else { /* NID_X9_62_characteristic_two_field */
-		if (!EC_POINT_get_affine_coordinates_GF2m(group, point, X, NULL,
+		if (!EC_POINT_get_affine_coordinates(group, point, X, NULL,
 		    ctx)) {
 			ECDSAerror(ERR_R_EC_LIB);
 			goto err;

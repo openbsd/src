@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_oct.c,v 1.12 2020/12/04 08:55:30 tb Exp $ */
+/* $OpenBSD: ecp_oct.c,v 1.13 2021/04/20 17:16:38 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -185,7 +185,7 @@ ec_GFp_simple_set_compressed_coordinates(const EC_GROUP * group,
 		ECerror(ERR_R_INTERNAL_ERROR);
 		goto err;
 	}
-	if (!EC_POINT_set_affine_coordinates_GFp(group, point, x, y, ctx))
+	if (!EC_POINT_set_affine_coordinates(group, point, x, y, ctx))
 		goto err;
 
 	ret = 1;
@@ -246,7 +246,7 @@ ec_GFp_simple_point2oct(const EC_GROUP * group, const EC_POINT * point, point_co
 		if ((y = BN_CTX_get(ctx)) == NULL)
 			goto err;
 
-		if (!EC_POINT_get_affine_coordinates_GFp(group, point, x, y, ctx))
+		if (!EC_POINT_get_affine_coordinates(group, point, x, y, ctx))
 			goto err;
 
 		if ((form == POINT_CONVERSION_COMPRESSED || form == POINT_CONVERSION_HYBRID) && BN_is_odd(y))
@@ -382,10 +382,10 @@ ec_GFp_simple_oct2point(const EC_GROUP * group, EC_POINT * point,
 			}
 		}
 		/*
-		 * EC_POINT_set_affine_coordinates_GFp checks that the point is
+		 * EC_POINT_set_affine_coordinates checks that the point is
 		 * on the curve as required by X9.62.
 		 */
-		if (!EC_POINT_set_affine_coordinates_GFp(group, point, x, y, ctx))
+		if (!EC_POINT_set_affine_coordinates(group, point, x, y, ctx))
 			goto err;
 	}
 
