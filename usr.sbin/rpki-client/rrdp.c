@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp.c,v 1.7 2021/04/20 13:26:46 claudio Exp $ */
+/*	$OpenBSD: rrdp.c,v 1.8 2021/04/21 09:03:42 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -297,7 +297,6 @@ rrdp_finished(struct rrdp *s)
 		return;
 
 	if (s->state & RRDP_STATE_PARSE_ERROR) {
-		warnx("%s: failed after XML parse error", s->local);
 		rrdp_failed(s);
 		return;
 	}
