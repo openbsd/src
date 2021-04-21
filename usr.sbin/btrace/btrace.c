@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.33 2021/04/21 10:53:17 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.34 2021/04/21 13:23:56 jmc Exp $ */
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -213,7 +213,7 @@ main(int argc, char *argv[])
 __dead void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-lnv] [-p pid] [-e program | file]\n",
+	fprintf(stderr, "usage: %s [-lnv] [-e program | file]\n",
 	    getprogname());
 	exit(1);
 }
