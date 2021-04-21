@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2021/02/05 14:12:17 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.2 2021/04/21 10:18:35 bluhm Exp $
 
 # Copyright (c) 2021 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -161,14 +161,34 @@ run-ping6-$f-$t:
 REGRESS_TARGETS +=	run-tcpbench-$f-$t
 run-tcpbench-$f-$t:
 	rm -f nc.log
-	nc -v -l -V ${N$t} ${IP_${N$t}} 12345 >/dev/null 2>nc.log &
+	nc -4 -v -l -V ${N$t} ${IP_${N$t}} 12345 >/dev/null 2>nc.log &
 	# Wait until nc is listening.
 	for  i in `jot 30`; do\
 	    if fgrep -q Listening nc.log; then break; fi; sleep .1; done
 	fgrep Listening nc.log
 	# Test that path MTU dicovery is working.
-	tcpbench -t 5 -V ${N$f} -b ${IP_${N$f}} ${IP_${N$t}}
-	route -T ${N$f} -n get ${IP_${N$t}}
+	tcpbench -4 -t 5 -V ${N$f} -b ${IP_${N$f}} ${IP_${N$t}}
+.if $f == "3" && $t == "1"
+	# path MTU discovery must create a dynamic route
+	route -T ${N$f} -n get -host -inet ${IP_${N$t}} | grep DYNAMIC
+.endif
+
+REGRESS_TARGETS +=	run-tcpbench6-$f-$t
+run-tcpbench6-$f-$t:
+	rm -f nc.log
+	nc -6 -v -l -V ${N$t} ${IP6_${N$t}} 12345 >/dev/null 2>nc.log &
+	# Wait until nc is listening.
+	for  i in `jot 30`; do\
+	    if fgrep -q Listening nc.log; then break; fi; sleep .1; done
+	fgrep Listening nc.log
+	# Test that path MTU dicovery is working.
+	tcpbench -6 -t 5 -V ${N$f} -b ${IP6_${N$f}} ${IP6_${N$t}}
+.if $f == "3" && $t == "1"
+	# path MTU discovery in other rtable does not work in ip6_output()
+	route -T ${N$f} -n get -host -inet6 ${IP6_${N$t}}
+	@echo DISABLED
+.endif
+
 .endfor
 .endfor
 
