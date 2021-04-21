@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplintc.c,v 1.2 2021/03/11 10:40:22 kettenis Exp $	*/
+/*	$OpenBSD: aplintc.c,v 1.3 2021/04/21 18:11:17 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis
  *
@@ -212,8 +212,10 @@ aplintc_irq_handler(void *frame)
 		return;
 	}
 
-	if (type != AIC_EVENT_TYPE_IRQ)
-		panic("%s: unexpected event type %d\n", __func__, type);
+	if (type != AIC_EVENT_TYPE_IRQ) {
+		printf("%s: unexpected event type %d\n", __func__, type);
+		return;
+	}
 
 	if (irq >= sc->sc_nirq)
 		panic("%s: unexpected irq %d\n", __func__, irq);
