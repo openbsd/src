@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.30 2021/03/21 01:24:35 jmatthew Exp $ */
+/*	$OpenBSD: btrace.c,v 1.31 2021/04/21 10:22:36 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -68,8 +68,8 @@ struct dtioc_probe_info	*dtpi_get_by_value(const char *, const char *,
 /*
  * Main loop and rule evaluation.
  */
-void			 rules_do(int, int);
-void			 rules_setup(int, int);
+void			 rules_do(int);
+void			 rules_setup(int);
 void			 rules_apply(struct dt_evt *);
 void			 rules_teardown(int);
 void			 rule_eval(struct bt_rule *, struct dt_evt *);
@@ -108,6 +108,7 @@ void			 debug_dump_filter(struct bt_rule *);
 struct dtioc_probe_info	*dt_dtpis;	/* array of available probes */
 size_t			 dt_ndtpi;	/* # of elements in the array */
 
+int			 vargs[1];
 int			 verbose = 0;
 volatile sig_atomic_t	 quit_pending;
 
@@ -124,7 +125,7 @@ main(int argc, char *argv[])
 	int fd = -1, ch, error = 0;
 	const char *filename = NULL, *btscript = NULL;
 	const char *errstr;
-	int showprobes = 0, tracepid = -1, noaction = 0;
+	int showprobes = 0, noaction = 0;
 
 	setlocale(LC_ALL, "");
 
@@ -144,13 +145,6 @@ main(int argc, char *argv[])
 		case 'n':
 			noaction = 1;
 			break;
-		case 'p':
-			if (tracepid != -1)
-				usage();
-			tracepid =  strtonum(optarg, 1, INT_MAX, &errstr);
-			if (errstr != NULL)
-				errx(1, "invalid pid %s: %s", optarg, errstr);
-			break;
 		case 'v':
 			verbose++;
 			break;
@@ -168,6 +162,14 @@ main(int argc, char *argv[])
 
 		filename = argv[0];
 		btscript = read_btfile(filename);
+		argc--;
+		argv++;
+	}
+
+	if (argc == 1) {
+		vargs[0] = strtonum(*argv, 1, INT_MAX, &errstr);
+		if (errstr != NULL)
+			errx(1, "invalid argument %s: %s", *argv, errstr);
 		argc--;
 		argv++;
 	}
@@ -196,7 +198,7 @@ main(int argc, char *argv[])
 	}
 
 	if (!TAILQ_EMPTY(&g_rules))
-		rules_do(fd, tracepid);
+		rules_do(fd);
 
 	if (fd != -1)
 		close(fd);
@@ -331,7 +333,7 @@ dtpi_get_by_value(const char *prov, const char *func, const char *name)
 }
 
 void
-rules_do(int fd, int tracepid)
+rules_do(int fd)
 {
 	struct sigaction sa;
 
@@ -342,7 +344,7 @@ rules_do(int fd, int tracepid)
 	if (sigaction(SIGINT, &sa, NULL))
 		err(1, "sigaction");
 
-	rules_setup(fd, tracepid);
+	rules_setup(fd);
 
 	while (!quit_pending && g_nprobes > 0) {
 		static struct dt_evt devtbuf[64];
@@ -405,7 +407,7 @@ dvar2dt(enum bt_filtervar var)
 
 
 void
-rules_setup(int fd, int tracepid)
+rules_setup(int fd)
 {
 	struct dtioc_probe_info *dtpi;
 	struct dtioc_req *dtrq;
@@ -445,10 +447,6 @@ rules_setup(int fd, int tracepid)
 			dtrq->dtrq_filter.dtf_operand = dop2dt(df->bf_op);
 			dtrq->dtrq_filter.dtf_variable = dvar2dt(df->bf_var);
 			dtrq->dtrq_filter.dtf_value = df->bf_val;
-		} else if (tracepid != -1) {
-			dtrq->dtrq_filter.dtf_operand = DT_OP_EQ;
-			dtrq->dtrq_filter.dtf_variable = DT_FV_PID;
-			dtrq->dtrq_filter.dtf_value = tracepid;
 		}
 		dtrq->dtrq_rate = r->br_probe->bp_rate;
 

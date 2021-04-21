@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parse.y,v 1.23 2021/02/08 09:46:45 mpi Exp $	*/
+/*	$OpenBSD: bt_parse.y,v 1.24 2021/04/21 10:22:36 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019-2021 Martin Pieuchot <mpi@openbsd.org>
@@ -111,13 +111,14 @@ static int pflag;
 %token	<v.number>	NUMBER
 
 %type	<v.string>	gvar
+%type	<v.number>	value
 %type	<v.i>		fval testop binop builtin
 %type	<v.i>		BUILTIN F_DELETE F_PRINT FUNC0 FUNC1 FUNCN OP1 OP4
 %type	<v.i>		MOP0 MOP1
 %type	<v.probe>	probe probeval
 %type	<v.filter>	predicate
 %type	<v.stmt>	action stmt stmtlist
-%type	<v.arg>		expr vargs map mexpr printargs term condition
+%type	<v.arg>		expr vargs map mexpr printargs term variable
 %type	<v.rtype>	beginend
 
 %left	'|'
@@ -168,14 +169,18 @@ binop		: testop
 		| '|'				{ $$ = B_AT_OP_BOR; }
 		;
 
-predicate	: /* empty */			{ $$ = NULL; }
-		| '/' fval testop NUMBER '/'	{ $$ = bf_new($3, $2, $4); }
-		| '/' NUMBER testop fval '/'	{ $$ = bf_new($3, $4, $2); }
-		| '/' condition '/' 		{ $$ = bc_new($2); }
+value		: NUMBER			{ $$ = $1; }
+		| '$' NUMBER			{ $$ = get_varg($2); }
 		;
 
-condition	: gvar				{ $$ = bv_get($1); }
-		| map				{ $$ = $1; }
+predicate	: /* empty */			{ $$ = NULL; }
+		| '/' fval testop value '/'	{ $$ = bf_new($3, $2, $4); }
+		| '/' value testop fval '/'	{ $$ = bf_new($3, $4, $2); }
+		| '/' variable '/' 		{ $$ = bc_new($2); }
+		;
+
+variable	: gvar				{ $$ = bv_get($1); }
+		| map
 		;
 
 builtin		: PID 				{ $$ = B_AT_BI_PID; }
@@ -185,7 +190,7 @@ builtin		: PID 				{ $$ = B_AT_BI_PID; }
 
 mexpr		: MOP0 '(' ')'			{ $$ = ba_new(NULL, $1); }
 		| MOP1 '(' expr ')'		{ $$ = ba_new($3, $1); }
-		| expr				{ $$ = $1; }
+		| expr
 		;
 
 expr		: CSTRING			{ $$ = ba_new($1, B_AT_STR); }
@@ -194,10 +199,9 @@ expr		: CSTRING			{ $$ = ba_new($1, B_AT_STR); }
 
 term		: '(' term ')'			{ $$ = $2; }
 		| term binop term		{ $$ = ba_op($2, $1, $3); }
-		| NUMBER			{ $$ = ba_new($1, B_AT_LONG); }
+		| value				{ $$ = ba_new($1, B_AT_LONG); }
 		| builtin			{ $$ = ba_new(NULL, $1); }
-		| gvar				{ $$ = bv_get($1); }
-		| map				{ $$ = $1; }
+		| variable
 
 
 gvar		: '@' STRING			{ $$ = $2; }
@@ -237,6 +241,16 @@ action		: '{' stmtlist '}'		{ $$ = $2; }
 		;
 
 %%
+
+int
+get_varg(int index)
+{
+	extern int vargs[];
+
+	assert(index == 1);
+
+	return vargs[index - 1];
+}
 
 /* Create a new rule, representing  "probe / filter / { action }" */
 struct bt_rule *

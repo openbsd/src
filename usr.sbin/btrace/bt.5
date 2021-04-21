@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bt.5,v 1.10 2020/12/07 20:14:35 anton Exp $
+.\"	$OpenBSD: bt.5,v 1.11 2021/04/21 10:22:36 mpi Exp $
 .\"
 .\" Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 7 2020 $
+.Dd $Mdocdate: April 21 2021 $
 .Dt BT 5
 .Os
 .Sh NAME
@@ -87,6 +87,10 @@ by the associated
 Variable names with special meaning:
 .Pp
 .Bl -tag -width "kstack " -compact -offset indent
+.It Va $N
+Command line argument
+.Va N
+after the script name.
 .It Va argN
 Argument
 .Va N
