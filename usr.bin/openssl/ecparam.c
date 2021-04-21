@@ -1,4 +1,4 @@
-/* $OpenBSD: ecparam.c,v 1.19 2021/04/20 17:08:08 tb Exp $ */
+/* $OpenBSD: ecparam.c,v 1.20 2021/04/21 00:31:59 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -87,10 +87,10 @@
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 
-int EC_GROUP_get_curve_GF2m(EC_GROUP *, const BIGNUM *, const BIGNUM *,
-    const BIGNUM *, BN_CTX *);
-int EC_GROUP_get_curve_GFp(EC_GROUP *, const BIGNUM *, const BIGNUM *,
-    const BIGNUM *, BN_CTX *);
+int EC_GROUP_get_curve_GF2m(const EC_GROUP *, BIGNUM *, BIGNUM *, BIGNUM *,
+    BN_CTX *);
+int EC_GROUP_get_curve_GFp(const EC_GROUP *, BIGNUM *, BIGNUM *, BIGNUM *,
+    BN_CTX *);
 
 static int ecparam_print_var(BIO *, BIGNUM *, const char *, int,
     unsigned char *);
