@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parse.y,v 1.24 2021/04/21 10:22:36 mpi Exp $	*/
+/*	$OpenBSD: bt_parse.y,v 1.25 2021/04/21 10:26:18 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019-2021 Martin Pieuchot <mpi@openbsd.org>
@@ -169,7 +169,7 @@ binop		: testop
 		| '|'				{ $$ = B_AT_OP_BOR; }
 		;
 
-value		: NUMBER			{ $$ = $1; }
+value		: NUMBER
 		| '$' NUMBER			{ $$ = get_varg($2); }
 		;
 
@@ -185,7 +185,7 @@ variable	: gvar				{ $$ = bv_get($1); }
 
 builtin		: PID 				{ $$ = B_AT_BI_PID; }
 		| TID 				{ $$ = B_AT_BI_TID; }
-		| BUILTIN			{ $$ = $1; }
+		| BUILTIN
 		;
 
 mexpr		: MOP0 '(' ')'			{ $$ = ba_new(NULL, $1); }
@@ -214,7 +214,7 @@ vargs		: expr
 		| vargs ',' expr		{ $$ = ba_append($1, $3); }
 		;
 
-printargs	: gvar				{ $$ = bv_get($1); }
+printargs	: term
 		| gvar ',' expr			{ $$ = ba_append(bv_get($1), $3); }
 		;
 

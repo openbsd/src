@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parser.h,v 1.13 2021/02/08 09:46:45 mpi Exp $	*/
+/*	$OpenBSD: bt_parser.h,v 1.14 2021/04/21 10:26:18 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019-2021 Martin Pieuchot <mpi@openbsd.org>
@@ -102,6 +102,12 @@ struct bt_var {
 	SLIST_ENTRY(bt_var)	 bv_next;	/* linkage in global list */
 	const char		*bv_name;	/* name of the variable */
 	struct bt_arg		*bv_value;	/* corresponding value */
+	enum bt_vartype	{
+		B_VT_STR = 1,
+		B_VT_LONG,
+		B_VT_MAP,
+		B_VT_HIST,
+	}			 bv_type;
 };
 
 /*
@@ -114,7 +120,7 @@ struct bt_arg {
 	SLIST_ENTRY(bt_arg)	 ba_next;
 	void			*ba_value;
 	struct bt_arg		*ba_key;	/* key for maps/histograms */
-	enum  bt_argtype {
+	enum bt_argtype {
 		B_AT_STR = 1,			/* C-style string */
 		B_AT_LONG,			/* Number (integer) */
 		B_AT_VAR,			/* global variable (@var) */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.31 2021/04/21 10:22:36 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.32 2021/04/21 10:26:18 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -107,6 +107,8 @@ void			 debug_dump_filter(struct bt_rule *);
 
 struct dtioc_probe_info	*dt_dtpis;	/* array of available probes */
 size_t			 dt_ndtpi;	/* # of elements in the array */
+
+struct dt_evt		 bt_devt;	/* fake event for BEGIN/END */
 
 int			 vargs[1];
 int			 verbose = 0;
@@ -465,8 +467,14 @@ rules_setup(int fd)
 	if (dokstack)
 		kelf_open();
 
+	/* Initialize "fake" event for BEGIN/END */
+	bt_devt.dtev_pbn = -1;
+	memcpy(&bt_devt.dtev_comm, getprogname(), sizeof(bt_devt.dtev_comm));
+	bt_devt.dtev_pid = getpid();
+	bt_devt.dtev_tid = getthrid();
+
 	if (rbegin)
-		rule_eval(rbegin, NULL);
+		rule_eval(rbegin, &bt_devt);
 
 	/* Enable all probes */
 	TAILQ_FOREACH(r, &g_rules, br_next) {
@@ -525,7 +533,7 @@ rules_teardown(int fd)
 		kelf_close();
 
 	if (rend)
-		rule_eval(rend, NULL);
+		rule_eval(rend, &bt_devt);
 	else {
 		debug("eval default 'end' rule\n");
 
@@ -595,20 +603,21 @@ rule_printmaps(struct bt_rule *r)
 
 		SLIST_FOREACH(ba, &bs->bs_args, ba_next) {
 			struct bt_var *bv = ba->ba_value;
+			struct map *map;
 
 			if (ba->ba_type != B_AT_MAP && ba->ba_type != B_AT_HIST)
 				continue;
 
-			if (bv->bv_value != NULL) {
-				struct map *map = (struct map *)bv->bv_value;
+			map = (struct map *)bv->bv_value;
+			if (map == NULL)
+				continue;
 
-				if (ba->ba_type == B_AT_MAP)
-					map_print(map, SIZE_T_MAX, bv_name(bv));
-				else
-					hist_print((struct hist *)map, bv_name(bv));
-				map_clear(map);
-				bv->bv_value = NULL;
-			}
+			if (ba->ba_type == B_AT_MAP)
+				map_print(map, SIZE_T_MAX, bv_name(bv));
+			else
+				hist_print((struct hist *)map, bv_name(bv));
+			map_clear(map);
+			bv->bv_value = NULL;
 		}
 	}
 }
@@ -718,6 +727,7 @@ stmt_bucketize(struct bt_stmt *bs, struct dt_evt *dtev)
 
 	bv->bv_value = (struct bt_arg *)
 	    hist_increment((struct hist *)bv->bv_value, bucket, step);
+	bv->bv_type = B_VT_HIST;
 }
 
 
@@ -786,10 +796,11 @@ stmt_insert(struct bt_stmt *bs, struct dt_evt *dtev)
 
 	bv->bv_value = (struct bt_arg *)map_insert((struct map *)bv->bv_value,
 	    hash, bval, dtev);
+	bv->bv_type = B_VT_MAP;
 }
 
 /*
- * Print map entries:	{ print(@map[, 8]); }
+ * Print variables:	{ print(890); print(@map[, 8]); print(comm); }
  *
  * In this case the global variable 'map' is pointed at by `ba'
  * and '8' is represented by `btop'.
@@ -802,7 +813,6 @@ stmt_print(struct bt_stmt *bs, struct dt_evt *dtev)
 	size_t top = SIZE_T_MAX;
 
 	assert(bs->bs_var == NULL);
-	assert(ba->ba_type == B_AT_VAR);
 
 	/* Parse optional `top' argument. */
 	btop = SLIST_NEXT(ba, ba_next);
@@ -810,9 +820,26 @@ stmt_print(struct bt_stmt *bs, struct dt_evt *dtev)
 		assert(SLIST_NEXT(btop, ba_next) == NULL);
 		top = ba2long(btop, dtev);
 	}
+
+	/* Static argument. */
+	if (ba->ba_type != B_AT_VAR) {
+		assert(btop == NULL);
+		printf("%s\n", ba2str(ba, dtev));
+		return;
+	}
+
 	debug("map=%p '%s' print (top=%d)\n", bv->bv_value, bv_name(bv), top);
 
-	map_print((struct map *)bv->bv_value, top, bv_name(bv));
+	/* Empty? */
+	if (bv->bv_value == NULL)
+		return;
+
+	if (bv->bv_type == B_VT_MAP)
+		map_print((struct map *)bv->bv_value, top, bv_name(bv));
+	else if (bv->bv_type == B_VT_HIST)
+		hist_print((struct hist *)bv->bv_value, bv_name(bv));
+	else
+		printf("%s\n", ba2str(ba, dtev));
 }
 
 /*
@@ -833,14 +860,21 @@ stmt_store(struct bt_stmt *bs, struct dt_evt *dtev)
 	assert(SLIST_NEXT(ba, ba_next) == NULL);
 
 	switch (ba->ba_type) {
+	case B_AT_STR:
+		bv->bv_value = ba;
+		bv->bv_type = B_VT_STR;
+		break;
 	case B_AT_LONG:
 		bv->bv_value = ba;
+		bv->bv_type = B_VT_LONG;
 		break;
 	case B_AT_BI_NSECS:
 		bv->bv_value = ba_new(builtin_nsecs(dtev), B_AT_LONG);
+		bv->bv_type = B_VT_LONG;
 		break;
 	case B_AT_OP_PLUS ... B_AT_OP_LOR:
 		bv->bv_value = ba_new(ba2long(ba, dtev), B_AT_LONG);
+		bv->bv_type = B_VT_LONG;
 		break;
 	default:
 		xabort("store not implemented for type %d", ba->ba_type);
