@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp.c,v 1.8 2021/04/21 09:03:42 claudio Exp $ */
+/*	$OpenBSD: rrdp.c,v 1.9 2021/04/21 09:36:06 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -272,6 +272,7 @@ rrdp_failed(struct rrdp *s)
 		s->sxml = new_snapshot_xml(s->parser, &s->current, s);
 		s->task = SNAPSHOT;
 		s->state = RRDP_STATE_REQ;
+		logx("%s: delta sync failed, fallback to snapshot", s->local);
 	} else {
 		/*
 		 * TODO: update state to track recurring failures
@@ -373,7 +374,6 @@ rrdp_finished(struct rrdp *s)
 		rrdp_free(s);
 		rrdp_done(id, 1);
 	} else {
-		warnx("%s: HTTP request failed", s->local);
 		rrdp_failed(s);
 	}
 }
