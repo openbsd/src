@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.244 2020/12/31 08:27:15 martijn Exp $	*/
+/*	$OpenBSD: lka.c,v 1.245 2021/04/21 07:54:10 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -109,12 +109,6 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 	case IMSG_GETNAMEINFO:
 	case IMSG_RES_QUERY:
 		resolver_dispatch_request(p, imsg);
-		return;
-
-	case IMSG_CERT_INIT:
-	case IMSG_CERT_CERTIFICATE:
-	case IMSG_CERT_VERIFY:
-		cert_dispatch_request(p, imsg);
 		return;
 
 	case IMSG_MTA_DNS_HOST:

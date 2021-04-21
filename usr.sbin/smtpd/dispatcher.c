@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatcher.c,v 1.2 2021/03/05 12:37:32 eric Exp $	*/
+/*	$OpenBSD: dispatcher.c,v 1.3 2021/04/21 07:54:10 eric Exp $	*/
 
 /*
  * Copyright (c) 2014 Gilles Chehade <gilles@poolp.org>
@@ -62,11 +62,6 @@ dispatcher_imsg(struct mproc *p, struct imsg *imsg)
 	case IMSG_GETNAMEINFO:
 	case IMSG_RES_QUERY:
 		resolver_dispatch_result(p, imsg);
-		return;
-
-	case IMSG_CERT_INIT:
-	case IMSG_CERT_VERIFY:
-		cert_dispatch_result(p, imsg);
 		return;
 
 	case IMSG_CONF_START:

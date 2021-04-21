@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.667 2021/04/11 07:18:08 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.668 2021/04/21 07:54:10 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -102,12 +102,6 @@
 #define P_NEWALIASES	1
 #define P_MAKEMAP	2
 
-#define	CERT_ERROR	-1
-#define	CERT_OK		 0
-#define	CERT_NOCA	 1
-#define	CERT_NOCERT	 2
-#define	CERT_INVALID	 3
-
 struct userinfo {
 	char username[SMTPD_VUSERNAME_SIZE];
 	char directory[PATH_MAX];
@@ -210,10 +204,6 @@ enum imsg_type {
 	IMSG_GETADDRINFO_END,
 	IMSG_GETNAMEINFO,
 	IMSG_RES_QUERY,
-
-	IMSG_CERT_INIT,
-	IMSG_CERT_CERTIFICATE,
-	IMSG_CERT_VERIFY,
 
 	IMSG_SETUP_KEY,
 	IMSG_SETUP_PEER,
@@ -1281,14 +1271,6 @@ int	 ca_X509_verify(void *, void *, const char *, const char *, const char **);
 void	 ca_imsg(struct mproc *, struct imsg *);
 void	 ca_init(void);
 void	 ca_engine_init(void);
-
-
-/* cert.c */
-int cert_init(const char *, int,
-    void (*)(void *, int, const char *, const void *, size_t), void *);
-int cert_verify(const void *, const char *, int, void (*)(void *, int), void *);
-void cert_dispatch_request(struct mproc *, struct imsg *);
-void cert_dispatch_result(struct mproc *, struct imsg *);
 
 
 /* compress_backend.c */
