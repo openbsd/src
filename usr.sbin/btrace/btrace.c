@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.32 2021/04/21 10:26:18 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.33 2021/04/21 10:53:17 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -92,6 +92,7 @@ void			 stmt_time(struct bt_stmt *, struct dt_evt *);
 void			 stmt_zero(struct bt_stmt *);
 struct bt_arg		*ba_read(struct bt_arg *);
 const char		*ba2hash(struct bt_arg *, struct dt_evt *);
+long			 baexpr2long(struct bt_arg *, struct dt_evt *);
 const char		*ba2bucket(struct bt_arg *, struct bt_arg *,
 			     struct dt_evt *, long *);
 int			 ba2dtflags(struct bt_arg *);
@@ -109,6 +110,7 @@ struct dtioc_probe_info	*dt_dtpis;	/* array of available probes */
 size_t			 dt_ndtpi;	/* # of elements in the array */
 
 struct dt_evt		 bt_devt;	/* fake event for BEGIN/END */
+uint64_t		 bt_filtered;	/* # of events filtered out */
 
 int			 vargs[1];
 int			 verbose = 0;
@@ -380,6 +382,7 @@ rules_do(int fd)
 
 		printf("%llu events read\n", dtst.dtst_readevt);
 		printf("%llu events dropped\n", dtst.dtst_dropevt);
+		printf("%llu events filtered\n", bt_filtered);
 	}
 }
 
@@ -551,8 +554,10 @@ rule_eval(struct bt_rule *r, struct dt_evt *dtev)
 	debug_dump_filter(r);
 
 	if (r->br_filter != NULL && r->br_filter->bf_condition != NULL) {
-		if (stmt_test(r->br_filter->bf_condition, dtev) == false)
+		if (stmt_test(r->br_filter->bf_condition, dtev) == false) {
+			bt_filtered++;
 			return;
+		}
 	}
 
 	SLIST_FOREACH(bs, &r->br_action, bs_next) {
@@ -889,19 +894,15 @@ stmt_store(struct bt_stmt *bs, struct dt_evt *dtev)
 bool
 stmt_test(struct bt_stmt *bs, struct dt_evt *dtev)
 {
-	struct bt_arg *ba;
-	long val;
+	struct bt_arg *bop;
 
 	if (bs == NULL)
 		return true;
 
 	assert(bs->bs_var == NULL);
-	ba = SLIST_FIRST(&bs->bs_args);
-	val = ba2long(ba, dtev);
+	bop = SLIST_FIRST(&bs->bs_args);
 
-	debug("ba=%p test (%ld != 0)\n", ba, val);
-
-	return val != 0;
+	return baexpr2long(bop, dtev) != 0;
 }
 
 /*
@@ -1042,10 +1043,9 @@ ba2bucket(struct bt_arg *ba, struct bt_arg *brange, struct dt_evt *dtev,
 }
 
 /*
- * Helper to evaluate the operation encoded in `ba' and return its
- * result.
+ * Evaluate the operation encoded in `ba' and return its result.
  */
-static inline long
+long
 baexpr2long(struct bt_arg *ba, struct dt_evt *dtev)
 {
 	static long recursions;
@@ -1056,12 +1056,16 @@ baexpr2long(struct bt_arg *ba, struct dt_evt *dtev)
 		errx(1, "too many operands (>%d) in expression", __MAXOPERANDS);
 
 	a = ba->ba_value;
+	first = ba2long(a, dtev);
+
 	b = SLIST_NEXT(a, ba_next);
 
-	assert(SLIST_NEXT(b, ba_next) == NULL);
-
-	first = ba2long(a, dtev);
-	second = ba2long(b, dtev);
+	if (b == NULL) {
+		second = 0;
+	} else {
+		assert(SLIST_NEXT(b, ba_next) == NULL);
+		second = ba2long(b, dtev);
+	}
 
 	switch (ba->ba_type) {
 	case B_AT_OP_PLUS:
@@ -1116,6 +1120,9 @@ const char *
 ba_name(struct bt_arg *ba)
 {
 	switch (ba->ba_type) {
+	case B_AT_VAR:
+	case B_AT_MAP:
+		break;
 	case B_AT_BI_PID:
 		return "pid";
 	case B_AT_BI_TID:
@@ -1145,10 +1152,34 @@ ba_name(struct bt_arg *ba)
 	case B_AT_OP_LOR:
 		return "||";
 	default:
-		break;
+		xabort("unsuported type %d", ba->ba_type);
 	}
 
-	return ba2str(ba, NULL);
+	assert(ba->ba_type == B_AT_VAR || ba->ba_type == B_AT_MAP);
+
+	static char buf[64];
+	size_t sz;
+	int l;
+
+	buf[0] = '@';
+	buf[1] = '\0';
+	sz = sizeof(buf) - 1;
+	l = snprintf(buf+1, sz, "%s", bv_name(ba->ba_value));
+	if (l < 0 || (size_t)l > sz) {
+		warn("string too long %d > %zu", l, sz);
+		return buf;
+	}
+
+	if (ba->ba_type == B_AT_MAP) {
+		sz -= l;
+		l = snprintf(buf+1+l, sz, "[%s]", ba_name(ba->ba_key));
+		if (l < 0 || (size_t)l > sz) {
+			warn("string too long %d > %zu", l, sz);
+			return buf;
+		}
+	}
+
+	return buf;
 }
 
 /*
@@ -1175,6 +1206,12 @@ ba2long(struct bt_arg *ba, struct dt_evt *dtev)
 			return 0;
 		val = ba2long(map_get((struct map *)bv->bv_value,
 		    ba2str(ba->ba_key, dtev)), dtev);
+		break;
+	case B_AT_BI_PID:
+		val = dtev->dtev_pid;
+		break;
+	case B_AT_BI_TID:
+		val = dtev->dtev_tid;
 		break;
 	case B_AT_BI_NSECS:
 		val = builtin_nsecs(dtev);
@@ -1405,11 +1442,14 @@ debug_dump_filter(struct bt_rule *r)
 			debugx(" / %s %s %u /", debug_getfiltervar(df),
 			    debug_getfilterop(df), df->bf_val);
 		} else {
-			struct bt_arg *ba = SLIST_FIRST(&bs->bs_args);
-			struct bt_var *bv = ba->ba_value;
+			struct bt_arg *bop = SLIST_FIRST(&bs->bs_args);
+			struct bt_arg *a, *b;
 
-			debugx(" / %s[%s] != 0 /.", bv_name(bv),
-			    ba_name(ba->ba_key));
+			a = bop->ba_value;
+			b = SLIST_NEXT(a, ba_next);
+
+			debugx(" / %s %s %s /", ba_name(a), ba_name(bop),
+			    (b != NULL) ? ba_name(b) : "NULL");
 		}
 	}
 	debugx("\n");

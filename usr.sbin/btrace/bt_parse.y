@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parse.y,v 1.28 2021/04/21 10:34:36 mpi Exp $	*/
+/*	$OpenBSD: bt_parse.y,v 1.29 2021/04/21 10:53:17 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019-2021 Martin Pieuchot <mpi@openbsd.org>
@@ -61,6 +61,7 @@ struct bt_rule	*br_new(struct bt_probe *, struct bt_filter *, struct bt_stmt *,
 struct bt_filter *bf_new(enum bt_argtype, enum bt_filtervar, int);
 struct bt_probe	*bp_new(const char *, const char *, const char *, int32_t);
 struct bt_arg	*ba_append(struct bt_arg *, struct bt_arg *);
+struct bt_arg	*ba_op(enum bt_argtype, struct bt_arg *, struct bt_arg *);
 struct bt_stmt	*bs_new(enum bt_action, struct bt_arg *, struct bt_var *);
 struct bt_stmt	*bs_append(struct bt_stmt *, struct bt_stmt *);
 
@@ -124,7 +125,7 @@ static int pflag;
 %type	<v.i>		BUILTIN F_DELETE F_PRINT FUNC0 FUNC1 FUNCN OP1 OP4
 %type	<v.i>		MOP0 MOP1
 %type	<v.probe>	probe probename
-%type	<v.filter>	predicate
+%type	<v.filter>	predicate conditional
 %type	<v.stmt>	action stmt stmtlist
 %type	<v.arg>		expr vargs mentry mexpr printargs term globalvar variable
 %type	<v.rtype>	beginend
@@ -187,10 +188,12 @@ gvar		: '@' STRING			{ $$ = $2; }
 lvar		: '$' STRING			{ $$ = $2; }
 
 
+conditional	: variable		{ $$ = bc_new(NULL, B_AT_OP_NE, $1); }
+		| term testop variable		{ $$ = bc_new($1, $2, $3); }
+		;
+
 predicate	: /* empty */			{ $$ = NULL; }
-		| '/' fval testop staticval '/'	{ $$ = bf_new($3, $2, $4); }
-		| '/' staticval testop fval '/'	{ $$ = bf_new($3, $4, $2); }
-		| '/' variable '/' 		{ $$ = bc_new($2); }
+		| '/' conditional '/' 		{ $$ = $2; }
 		;
 
 mentry		: gvar '[' vargs ']'		{ $$ = bm_find($1, $3); }
@@ -319,7 +322,7 @@ bf_new(enum bt_argtype op, enum bt_filtervar var, int val)
 
 /* Create a new condition */
 struct bt_filter *
-bc_new(struct bt_arg *ba)
+bc_new(struct bt_arg *term, enum bt_argtype op, struct bt_arg *ba)
 {
 	struct bt_filter *bf;
 
@@ -327,7 +330,7 @@ bc_new(struct bt_arg *ba)
 	if (bf == NULL)
 		err(1, "bt_filter: calloc");
 
-	bf->bf_condition = bs_new(B_AC_TEST, ba, NULL);
+	bf->bf_condition = bs_new(B_AC_TEST, ba_op(op, term, ba), NULL);
 
 	return bf;
 }
@@ -391,9 +394,9 @@ ba_append(struct bt_arg *da0, struct bt_arg *da1)
 
 /* Create an operator argument */
 struct bt_arg *
-ba_op(enum bt_argtype type, struct bt_arg *da0, struct bt_arg *da1)
+ba_op(enum bt_argtype op, struct bt_arg *da0, struct bt_arg *da1)
 {
-	return ba_new(ba_append(da0, da1), type);
+	return ba_new(ba_append(da0, da1), op);
 }
 
 /* Create a new statement: function call or assignment. */
