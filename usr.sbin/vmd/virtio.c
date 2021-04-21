@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.84 2021/03/29 23:37:01 dv Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.85 2021/04/21 18:27:36 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1075,7 +1075,7 @@ vionet_update_qs(struct vionet_dev *dev)
  * Must be called with dev->mutex acquired.
  */
 int
-vionet_enq_rx(struct vionet_dev *dev, char *pkt, ssize_t sz, int *spc)
+vionet_enq_rx(struct vionet_dev *dev, char *pkt, size_t sz, int *spc)
 {
 	uint64_t q_gpa;
 	uint32_t vr_sz;
@@ -1083,7 +1083,7 @@ vionet_enq_rx(struct vionet_dev *dev, char *pkt, ssize_t sz, int *spc)
 	ptrdiff_t off;
 	int ret;
 	char *vr;
-	ssize_t rem;
+	size_t rem;
 	struct vring_desc *desc, *pkt_desc, *hdr_desc;
 	struct vring_avail *avail;
 	struct vring_used *used;
@@ -1091,6 +1091,11 @@ vionet_enq_rx(struct vionet_dev *dev, char *pkt, ssize_t sz, int *spc)
 	struct virtio_net_hdr hdr;
 
 	ret = 0;
+
+	if (sz < 1) {
+		log_warn("%s: invalid packet size", __func__);
+		return (0);
+	}
 
 	if (!(dev->cfg.device_status & VIRTIO_CONFIG_DEVICE_STATUS_DRIVER_OK))
 		return ret;
@@ -1162,7 +1167,7 @@ vionet_enq_rx(struct vionet_dev *dev, char *pkt, ssize_t sz, int *spc)
 		}
 	} else {
 		/* Fallback to pkt_desc descriptor */
-		if ((uint64_t)pkt_desc->len >= (uint64_t)sz) {
+		if (pkt_desc->len >= sz) {
 			/* Must be not readable */
 			if ((pkt_desc->flags & VRING_DESC_F_WRITE) == 0) {
 				log_warnx("unexpected readable rx desc %d",
@@ -1231,7 +1236,7 @@ vionet_rx(struct vionet_dev *dev)
 			if (errno != EAGAIN)
 				log_warn("unexpected read error on vionet "
 				    "device");
-		} else if (sz != 0) {
+		} else if (sz > 0) {
 			eh = (struct ether_header *)buf;
 			if (!dev->lockedmac || sz < ETHER_HDR_LEN ||
 			    ETHER_IS_MULTICAST(eh->ether_dhost) ||
@@ -1402,6 +1407,7 @@ vionet_notify_tx(struct vionet_dev *dev)
 	struct vring_used *used;
 	struct ether_header *eh;
 
+	dhcpsz = 0;
 	vr = pkt = dhcppkt = NULL;
 	ret = spc = 0;
 
