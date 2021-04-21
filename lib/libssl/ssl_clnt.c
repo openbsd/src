@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.91 2021/04/19 16:51:56 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.92 2021/04/21 19:27:56 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -391,7 +391,7 @@ ssl3_connect(SSL *s)
 				goto end;
 			if (SSL_is_dtls(s))
 				dtls1_stop_timer(s);
-			if (S3I(s)->tmp.cert_req)
+			if (S3I(s)->hs.tls12.cert_request)
 				S3I(s)->hs.state = SSL3_ST_CW_CERT_A;
 			else
 				S3I(s)->hs.state = SSL3_ST_CW_KEY_EXCH_A;
@@ -435,7 +435,7 @@ ssl3_connect(SSL *s)
 			 * message when client's ECDH public key is sent
 			 * inside the client certificate.
 			 */
-			if (S3I(s)->tmp.cert_req == 1) {
+			if (S3I(s)->hs.tls12.cert_request == 1) {
 				S3I(s)->hs.state = SSL3_ST_CW_CERT_VRFY_A;
 			} else {
 				S3I(s)->hs.state = SSL3_ST_CW_CHANGE_A;
@@ -1650,8 +1650,7 @@ ssl3_get_certificate_request(SSL *s)
 {
 	int			 ok, ret = 0;
 	long			 n;
-	uint8_t			 ctype_num;
-	CBS			 cert_request, ctypes, rdn_list;
+	CBS			 cert_request, cert_types, rdn_list;
 	X509_NAME		*xn = NULL;
 	const unsigned char	*q;
 	STACK_OF(X509_NAME)	*ca_sk = NULL;
@@ -1661,7 +1660,7 @@ ssl3_get_certificate_request(SSL *s)
 	if (!ok)
 		return ((int)n);
 
-	S3I(s)->tmp.cert_req = 0;
+	S3I(s)->hs.tls12.cert_request = 0;
 
 	if (S3I(s)->hs.tls12.message_type == SSL3_MT_SERVER_DONE) {
 		S3I(s)->hs.tls12.reuse_message = 1;
@@ -1695,18 +1694,8 @@ ssl3_get_certificate_request(SSL *s)
 		goto err;
 	}
 
-	/* get the certificate types */
-	if (!CBS_get_u8(&cert_request, &ctype_num))
+	if (!CBS_get_u8_length_prefixed(&cert_request, &cert_types))
 		goto decode_err;
-
-	if (ctype_num > SSL3_CT_NUMBER)
-		ctype_num = SSL3_CT_NUMBER;
-	if (!CBS_get_bytes(&cert_request, &ctypes, ctype_num) ||
-	    !CBS_write_bytes(&ctypes, (uint8_t *)S3I(s)->tmp.ctype,
-	    sizeof(S3I(s)->tmp.ctype), NULL)) {
-		SSLerror(s, SSL_R_DATA_LENGTH_TOO_LONG);
-		goto err;
-	}
 
 	if (SSL_USE_SIGALGS(s)) {
 		CBS sigalgs;
@@ -1778,10 +1767,9 @@ ssl3_get_certificate_request(SSL *s)
 	}
 
 	/* we should setup a certificate to return.... */
-	S3I(s)->tmp.cert_req = 1;
-	S3I(s)->tmp.ctype_num = ctype_num;
-	sk_X509_NAME_pop_free(S3I(s)->tmp.ca_names, X509_NAME_free);
-	S3I(s)->tmp.ca_names = ca_sk;
+	S3I(s)->hs.tls12.cert_request = 1;
+	sk_X509_NAME_pop_free(S3I(s)->hs.tls12.ca_names, X509_NAME_free);
+	S3I(s)->hs.tls12.ca_names = ca_sk;
 	ca_sk = NULL;
 
 	ret = 1;
@@ -2228,7 +2216,7 @@ ssl3_send_client_kex_gost(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
 	/*
 	 * If we have client certificate, use its secret as peer key.
 	 */
-	if (S3I(s)->tmp.cert_req && s->cert->key->privatekey) {
+	if (S3I(s)->hs.tls12.cert_request && s->cert->key->privatekey) {
 		if (EVP_PKEY_derive_set_peer(pkey_ctx,
 		    s->cert->key->privatekey) <=0) {
 			/*
@@ -2681,7 +2669,7 @@ ssl3_send_client_certificate(SSL *s)
 		X509_free(x509);
 		EVP_PKEY_free(pkey);
 		if (i == 0) {
-			S3I(s)->tmp.cert_req = 2;
+			S3I(s)->hs.tls12.cert_request = 2;
 
 			/* There is no client certificate to verify. */
 			tls1_transcript_free(s);
@@ -2696,7 +2684,7 @@ ssl3_send_client_certificate(SSL *s)
 		    SSL3_MT_CERTIFICATE))
 			goto err;
 		if (!ssl3_output_cert_chain(s, &client_cert,
-		    (S3I(s)->tmp.cert_req == 2) ? NULL : s->cert->key))
+		    (S3I(s)->hs.tls12.cert_request == 2) ? NULL : s->cert->key))
 			goto err;
 		if (!ssl3_handshake_msg_finish(s, &cbb))
 			goto err;

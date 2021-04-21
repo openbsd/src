@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.336 2021/04/19 17:26:39 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.337 2021/04/21 19:27:56 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -426,6 +426,10 @@ typedef struct ssl_handshake_tls12_st {
 
 	/* Reuse current handshake message. */
 	int reuse_message;
+
+	/* Client certificate requests. */
+	int cert_request;
+	STACK_OF(X509_NAME) *ca_names;
 
 	/* Size of the MAC secret. */
 	int mac_secret_size;
@@ -946,14 +950,6 @@ typedef struct ssl3_state_internal_st {
 		int ecdh_nid;
 
 		uint8_t *x25519;
-
-		/* used for certificate requests */
-		int cert_req;
-		int ctype_num;
-		char ctype[SSL3_CT_NUMBER];
-		STACK_OF(X509_NAME) *ca_names;
-
-		int cert_request;
 	} tmp;
 
 	/* Connection binding to prevent renegotiation attacks */

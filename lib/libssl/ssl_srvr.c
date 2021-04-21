@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.102 2021/04/19 16:51:56 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.103 2021/04/21 19:27:56 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -464,13 +464,13 @@ ssl3_accept(SSL *s)
 			     SSL_VERIFY_FAIL_IF_NO_PEER_CERT))) {
 				/* No cert request. */
 				skip = 1;
-				S3I(s)->tmp.cert_request = 0;
+				S3I(s)->hs.tls12.cert_request = 0;
 				S3I(s)->hs.state = SSL3_ST_SW_SRVR_DONE_A;
 
 				if (!SSL_is_dtls(s))
 					tls1_transcript_free(s);
 			} else {
-				S3I(s)->tmp.cert_request = 1;
+				S3I(s)->hs.tls12.cert_request = 1;
 				if (SSL_is_dtls(s))
 					dtls1_start_timer(s);
 				ret = ssl3_send_certificate_request(s);
@@ -522,7 +522,7 @@ ssl3_accept(SSL *s)
 
 		case SSL3_ST_SR_CERT_A:
 		case SSL3_ST_SR_CERT_B:
-			if (S3I(s)->tmp.cert_request) {
+			if (S3I(s)->hs.tls12.cert_request) {
 				ret = ssl3_get_client_certificate(s);
 				if (ret <= 0)
 					goto end;
@@ -2379,7 +2379,7 @@ ssl3_get_client_certificate(SSL *s)
 		 * If tls asked for a client cert,
 		 * the client must return a 0 list.
 		 */
-		if (S3I(s)->tmp.cert_request) {
+		if (S3I(s)->hs.tls12.cert_request) {
 			SSLerror(s, SSL_R_TLS_PEER_DID_NOT_RESPOND_WITH_CERTIFICATE_LIST
 			    );
 			al = SSL_AD_UNEXPECTED_MESSAGE;
