@@ -1,0 +1,7 @@
+BEGIN {
+	$str = "string";
+
+	print(890);
+	print($str);
+	print(comm);
+}

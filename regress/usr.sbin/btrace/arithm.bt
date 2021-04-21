@@ -10,6 +10,6 @@ END
 {
 	printf("a - b = %d\n", @a - @b);
 
-	@c = @a + 2 * @b;
-	printf("c = %d, total = %d\n", @c, (@c - @b) / 5);
+	$c = @a + 2 * @b;
+	printf("c = %d, total = %d\n", $c, ($c - @b) / 5);
 }
