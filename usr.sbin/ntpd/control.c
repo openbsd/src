@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.18 2020/02/12 19:14:56 otto Exp $ */
+/*	$OpenBSD: control.c,v 1.19 2021/04/21 09:38:11 bluhm Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -341,7 +341,7 @@ build_show_peer(struct ctl_show_peer *cp, struct ntp_peer *p)
 	const char	*a = "not resolved";
 	const char	*pool = "", *addr_head_name = "";
 	const char	*auth = "";
-	u_int8_t	 shift, best, validdelaycnt, jittercnt;
+	int		 shift, best = -1, validdelaycnt = 0, jittercnt = 0;
 	time_t		 now;
 
 	now = getmonotime();
@@ -360,14 +360,14 @@ build_show_peer(struct ctl_show_peer *cp, struct ntp_peer *p)
 	snprintf(cp->peer_desc, sizeof(cp->peer_desc),
 	    "%s %s%s%s", a, pool, addr_head_name, auth);
 
-	validdelaycnt = best = 0;
 	cp->offset = cp->delay = 0.0;
 	for (shift = 0; shift < OFFSET_ARRAY_SIZE; shift++) {
 		if (p->reply[shift].delay > 0.0) {
 			cp->offset += p->reply[shift].offset;
 			cp->delay += p->reply[shift].delay;
 
-			if (p->reply[shift].delay < p->reply[best].delay)
+			if (best == -1 ||
+			    p->reply[shift].delay < p->reply[best].delay)
 				best = shift;
 
 			validdelaycnt++;
@@ -379,18 +379,19 @@ build_show_peer(struct ctl_show_peer *cp, struct ntp_peer *p)
 		cp->delay /= validdelaycnt;
 	}
 
-	jittercnt = 0;
 	cp->jitter = 0.0;
-	for (shift = 0; shift < OFFSET_ARRAY_SIZE; shift++) {
-		if (p->reply[shift].delay > 0.0 && shift != best) {
-			cp->jitter += square(p->reply[shift].delay -
-			    p->reply[best].delay);
-			jittercnt++;
+	if (best != -1) {
+		for (shift = 0; shift < OFFSET_ARRAY_SIZE; shift++) {
+			if (p->reply[shift].delay > 0.0 && shift != best) {
+				cp->jitter += square(p->reply[shift].delay -
+				    p->reply[best].delay);
+				jittercnt++;
+			}
 		}
+		if (jittercnt > 1)
+			cp->jitter /= jittercnt;
+		cp->jitter = sqrt(cp->jitter);
 	}
-	if (jittercnt > 1)
-		cp->jitter /= jittercnt;
-	cp->jitter = sqrt(cp->jitter);
 
 	if (p->shift == 0)
 		shift = OFFSET_ARRAY_SIZE - 1;

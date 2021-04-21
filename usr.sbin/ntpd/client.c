@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.115 2021/03/18 11:06:41 bluhm Exp $ */
+/*	$OpenBSD: client.c,v 1.116 2021/04/21 09:38:11 bluhm Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -473,7 +473,7 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime, u_int8_t automatic)
 int
 client_update(struct ntp_peer *p)
 {
-	int	i, best = 0, good = 0;
+	int	shift, best = -1, good = 0;
 
 	/*
 	 * clock filter
@@ -482,27 +482,22 @@ client_update(struct ntp_peer *p)
 	 * invalidate it and all older ones
 	 */
 
-	for (i = 0; good == 0 && i < OFFSET_ARRAY_SIZE; i++)
-		if (p->reply[i].good) {
+	for (shift = 0; shift < OFFSET_ARRAY_SIZE; shift++)
+		if (p->reply[shift].good) {
 			good++;
-			best = i;
+			if (best == -1 ||
+			    p->reply[shift].delay < p->reply[best].delay)
+				best = shift;
 		}
 
-	for (; i < OFFSET_ARRAY_SIZE; i++)
-		if (p->reply[i].good) {
-			good++;
-			if (p->reply[i].delay < p->reply[best].delay)
-				best = i;
-		}
-
-	if (good < 8)
+	if (best == -1 || good < 8)
 		return (-1);
 
-	memcpy(&p->update, &p->reply[best], sizeof(p->update));
+	p->update = p->reply[best];
 	if (priv_adjtime() == 0) {
-		for (i = 0; i < OFFSET_ARRAY_SIZE; i++)
-			if (p->reply[i].rcvd <= p->reply[best].rcvd)
-				p->reply[i].good = 0;
+		for (shift = 0; shift < OFFSET_ARRAY_SIZE; shift++)
+			if (p->reply[shift].rcvd <= p->reply[best].rcvd)
+				p->reply[shift].good = 0;
 	}
 	return (0);
 }
