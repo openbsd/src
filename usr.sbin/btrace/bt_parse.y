@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parse.y,v 1.27 2021/04/21 10:29:49 mpi Exp $	*/
+/*	$OpenBSD: bt_parse.y,v 1.28 2021/04/21 10:34:36 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019-2021 Martin Pieuchot <mpi@openbsd.org>
@@ -595,7 +595,7 @@ bh_inc(const char *hname, struct bt_arg *hval, struct bt_arg *hrange)
 	if (hrange == NULL) {
 		/* Power-of-2 histogram */
 	} else {
-		long min, max;
+		long min = 0, max;
 		int count = 0;
 
 		/* Linear histogram */
