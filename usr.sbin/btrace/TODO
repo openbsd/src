@@ -5,7 +5,6 @@ Missing feature:
 Missing language features:
 
 - if/else
-- scratch variable ($name)
 - `args', tracepoint arguments support (requires kernel work)
 - str(args->buf, args->count)
 - 'argv'

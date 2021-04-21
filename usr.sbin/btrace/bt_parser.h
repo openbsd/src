@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parser.h,v 1.14 2021/04/21 10:26:18 mpi Exp $	*/
+/*	$OpenBSD: bt_parser.h,v 1.15 2021/04/21 10:28:54 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019-2021 Martin Pieuchot <mpi@openbsd.org>
@@ -82,6 +82,7 @@ struct bt_rule {
 	struct bt_probe		*br_probe;
 	struct bt_filter	*br_filter;
 	SLIST_HEAD(, bt_stmt)	 br_action;
+	SLIST_HEAD(, bt_var)	 br_variables;	/* local variables */
 
 	enum bt_rtype {
 		 B_RT_BEGIN = 1,
@@ -123,7 +124,7 @@ struct bt_arg {
 	enum bt_argtype {
 		B_AT_STR = 1,			/* C-style string */
 		B_AT_LONG,			/* Number (integer) */
-		B_AT_VAR,			/* global variable (@var) */
+		B_AT_VAR,			/* global/local variable */
 		B_AT_MAP,			/* global map (@map[]) */
 		B_AT_HIST,			/* histogram */
 
@@ -204,8 +205,5 @@ int			 btparse(const char *, size_t, const char *, int);
 struct bt_arg		*ba_new0(void *, enum bt_argtype);
 
 const char		*bv_name(struct bt_var *);
-
-void			 bm_insert(struct bt_var *, struct bt_arg *,
-			     struct bt_arg *);
 
 #endif /* BT_PARSER_H */
