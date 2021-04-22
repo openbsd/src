@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.43 2021/04/01 08:39:52 mvs Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.44 2021/04/22 14:06:59 patrick Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -212,7 +212,7 @@ uint8_t		 umb_uuid_qmi_mbim[] = MBIM_UUID_QMI_MBIM;
 uint32_t	 umb_session_id = 0;
 
 struct cfdriver umb_cd = {
-	NULL, "umb", DV_DULL
+	NULL, "umb", DV_IFNET
 };
 
 const struct cfattach umb_ca = {
