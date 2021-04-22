@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.94 2021/03/31 08:53:39 mpi Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.95 2021/04/22 11:54:32 mpi Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -416,6 +416,7 @@ uao_free(struct uvm_aobj *aobj)
  * pager functions
  */
 
+#ifdef TMPFS
 /*
  * Shrink an aobj to a given number of pages. The procedure is always the same:
  * assess the necessity of data structure conversion (hash to array), secure
@@ -692,6 +693,7 @@ uao_grow(struct uvm_object *uobj, int pages)
 	else
 		return uao_grow_convert(uobj, pages);
 }
+#endif /* TMPFS */
 
 /*
  * uao_create: create an aobj of the given size and return its uvm_object.
