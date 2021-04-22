@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.15 2021/03/03 01:27:54 jsg Exp $  */
+/*	$OpenBSD: vioscsi.c,v 1.16 2021/04/22 10:45:21 dv Exp $  */
 
 /*
  * Copyright (c) 2017 Carlos Cardenas <ccardenas@openbsd.org>
@@ -50,7 +50,7 @@ vioscsi_prepare_resp(struct virtio_scsi_res_hdr *resp, uint8_t vio_status,
 
 	/* determine if we need to populate the sense field */
 	if (scsi_status == SCSI_CHECK) {
-		/* 
+		/*
 		 * sense data is a 96 byte field.
 		 * We only need to use the first 14 bytes
 		 * - set the sense_len accordingly
@@ -352,7 +352,7 @@ vioscsi_handle_mode_sense(struct vioscsi_dev *dev,
 	if (mode_page_ctl == SMS_PAGE_CTRL_CURRENT &&
 	    (mode_page_code == ERR_RECOVERY_PAGE ||
 	    mode_page_code == CDVD_CAPABILITIES_PAGE)) {
-		/* 
+		/*
 		 * mode sense header is 4 bytes followed
 		 * by a variable page
 		 * ERR_RECOVERY_PAGE is 12 bytes
@@ -495,7 +495,7 @@ vioscsi_handle_mode_sense_big(struct vioscsi_dev *dev,
 	if (mode_page_ctl == SMS_PAGE_CTRL_CURRENT &&
 	    (mode_page_code == ERR_RECOVERY_PAGE ||
 	    mode_page_code == CDVD_CAPABILITIES_PAGE)) {
-		/* 
+		/*
 		 * mode sense header is 8 bytes followed
 		 * by a variable page
 		 * ERR_RECOVERY_PAGE is 12 bytes
@@ -1104,7 +1104,7 @@ vioscsi_handle_read_10(struct vioscsi_dev *dev,
 		goto free_read_10;
 	}
 
-	/* 
+	/*
 	 * Perform possible chunking of writes of read_buf
 	 * based on the segment length allocated by the host.
 	 * At least one write will be performed.
@@ -1288,12 +1288,12 @@ vioscsi_handle_read_toc(struct vioscsi_dev *dev,
 		goto read_toc_out;
 	}
 
-	/* 
+	/*
 	 * toc_data is defined as:
 	 * [0-1]: TOC Data Length, typically 0x1a
 	 * [2]: First Track, 1
 	 * [3]: Last Track, 1
-	 * 
+	 *
 	 * Track 1 Descriptor
 	 * [0]: Reserved, 0
 	 * [1]: ADR,Control, 0x14
@@ -1542,7 +1542,7 @@ vioscsi_handle_get_config(struct vioscsi_dev *dev,
 	if (get_conf_reply == NULL)
 		goto get_config_out;
 
-	/* 
+	/*
 	 * Use MMC-5 6.6 for structure and
 	 * MMC-5 5.2 to send back:
 	 * feature header - 8 bytes
@@ -2072,7 +2072,7 @@ vioscsi_update_qa(struct vioscsi_dev *dev)
  * virtio_scsi_req_hdr with a possible SCSI_DATA_OUT buffer
  * along with a virtio_scsi_res_hdr with a possible SCSI_DATA_IN buffer
  * for consumption.
- * 
+ *
  * Return 1 if an interrupt should be generated (response written)
  *        0 otherwise
  */
@@ -2144,7 +2144,7 @@ vioscsi_notifyq(struct vioscsi_dev *dev)
 			goto out;
 		}
 
-		/* 
+		/*
 		 * req.lun is defined by virtio as
 		 * lun[0] - Always set to 1
 		 * lun[1] - Target, negotiated as VIOSCSI_MAX_TARGET
