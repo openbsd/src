@@ -1,4 +1,4 @@
-/*	$OpenBSD: re_search.c,v 1.35 2020/07/22 13:29:05 tb Exp $	*/
+/*	$OpenBSD: re_search.c,v 1.36 2021/04/22 19:50:55 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -209,6 +209,34 @@ stopsearch:
 			ewprintf("(%d replacements done)", rcnt);
 	}
 	return (TRUE);
+}
+
+int
+re_repl(int f, int n)
+{
+	int     rcnt = 0;		/* replacements made so far     */
+	int     plen, s;		/* length of found string       */
+	char    news[NPAT];		/* replacement string           */
+
+	if ((s = re_readpattern("RE Replace")) != TRUE)
+		return (s);
+	if (eread("Replace %s with: ", news, NPAT,
+	    EFNUL | EFNEW | EFCR, re_pat) == NULL)
+                return (ABORT);
+
+	while (re_forwsrch() == TRUE) {
+		plen = regex_match[0].rm_eo - regex_match[0].rm_so;
+		if (re_doreplace((RSIZE)plen, news) == FALSE)
+			return (FALSE);
+		rcnt++;
+	}
+
+	curwp->w_rflag |= WFFULL;
+	update(CMODE);
+	if (!inmacro)
+		ewprintf("(%d replacement(s) done)", rcnt);
+	
+	return(TRUE);
 }
 
 /*

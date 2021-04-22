@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.123 2021/04/20 10:02:50 lum Exp $
+.\"	$OpenBSD: mg.1,v 1.124 2021/04/22 19:50:55 lum Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: April 20 2021 $
+.Dd $Mdocdate: April 22 2021 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -778,6 +778,8 @@ Display current (global) working directory in the status area.
 .It query-replace
 Query Replace.
 Search and replace strings selectively, prompting after each match.
+.It replace-regexp
+Replace regular expression globally without individual prompting.
 .It replace-string
 Replace string globally without individual prompting.
 .It query-replace-regexp

@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.172 2021/04/20 10:02:50 lum Exp $	*/
+/*	$OpenBSD: def.h,v 1.173 2021/04/22 19:50:55 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -673,6 +673,7 @@ int		 re_forwsearch(int, int);
 int		 re_backsearch(int, int);
 int		 re_searchagain(int, int);
 int		 re_queryrepl(int, int);
+int		 re_repl(int, int);
 int		 replstr(int, int);
 int		 setcasefold(int, int);
 int		 delmatchlines(int, int);
