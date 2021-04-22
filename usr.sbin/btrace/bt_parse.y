@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parse.y,v 1.29 2021/04/21 10:53:17 mpi Exp $	*/
+/*	$OpenBSD: bt_parse.y,v 1.30 2021/04/22 09:36:39 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019-2021 Martin Pieuchot <mpi@openbsd.org>
@@ -58,7 +58,6 @@ SLIST_HEAD(, bt_var)	l_variables;
 
 struct bt_rule	*br_new(struct bt_probe *, struct bt_filter *, struct bt_stmt *,
 		     enum bt_rtype);
-struct bt_filter *bf_new(enum bt_argtype, enum bt_filtervar, int);
 struct bt_probe	*bp_new(const char *, const char *, const char *, int32_t);
 struct bt_arg	*ba_append(struct bt_arg *, struct bt_arg *);
 struct bt_arg	*ba_op(enum bt_argtype, struct bt_arg *, struct bt_arg *);
@@ -121,7 +120,7 @@ static int pflag;
 
 %type	<v.string>	gvar lvar
 %type	<v.number>	staticval
-%type	<v.i>		fval testop binop builtin
+%type	<v.i>		testop binop builtin
 %type	<v.i>		BUILTIN F_DELETE F_PRINT FUNC0 FUNC1 FUNCN OP1 OP4
 %type	<v.i>		MOP0 MOP1
 %type	<v.probe>	probe probename
@@ -154,11 +153,6 @@ probe		: { pflag = 1; } probename	{ $$ = $2; pflag = 0; }
 
 probename	: STRING ':' STRING ':' STRING	{ $$ = bp_new($1, $3, $5, 0); }
 		| STRING ':' HZ ':' NUMBER	{ $$ = bp_new($1, "hz", NULL, $5); }
-		;
-
-
-fval		: PID				{ $$ = B_FV_PID; }
-		| TID				{ $$ = B_FV_TID; }
 		;
 
 testop		: OP_EQ				{ $$ = B_AT_OP_EQ; }
@@ -299,25 +293,6 @@ br_new(struct bt_probe *probe, struct bt_filter *filter, struct bt_stmt *head,
 	}
 
 	return br;
-}
-
-/* Create a new event filter */
-struct bt_filter *
-bf_new(enum bt_argtype op, enum bt_filtervar var, int val)
-{
-	struct bt_filter *bf;
-
-	if (val < 0 || val > INT_MAX)
-		errx(1, "invalid pid '%d'", val);
-
-	bf = calloc(1, sizeof(*bf));
-	if (bf == NULL)
-		err(1, "bt_filter: calloc");
-	bf->bf_evtfilter.bf_op = op;
-	bf->bf_evtfilter.bf_var = var;
-	bf->bf_evtfilter.bf_val = val;
-
-	return bf;
 }
 
 /* Create a new condition */

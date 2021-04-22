@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.34 2021/04/21 13:23:56 jmc Exp $ */
+/*	$OpenBSD: btrace.c,v 1.35 2021/04/22 09:36:39 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -386,31 +386,6 @@ rules_do(int fd)
 	}
 }
 
-static inline enum dt_operand
-dop2dt(enum bt_argtype op)
-{
-	switch (op) {
-	case B_AT_OP_EQ:	return DT_OP_EQ;
-	case B_AT_OP_NE:	return DT_OP_NE;
-	default:	break;
-	}
-	xabort("unknown operand %d", op);
-}
-
-
-static inline enum dt_filtervar
-dvar2dt(enum bt_filtervar var)
-{
-	switch (var) {
-	case B_FV_PID:	return DT_FV_PID;
-	case B_FV_TID:	return DT_FV_TID;
-	case B_FV_NONE:	return DT_FV_NONE;
-	default:	break;
-	}
-	xabort("unknown filter %d", var);
-}
-
-
 void
 rules_setup(int fd)
 {
@@ -445,14 +420,6 @@ rules_setup(int fd)
 
 		r->br_pbn = dtpi->dtpi_pbn;
 		dtrq->dtrq_pbn = dtpi->dtpi_pbn;
-		if (r->br_filter != NULL &&
-		    r->br_filter->bf_condition == NULL) {
-			struct bt_evtfilter *df = &r->br_filter->bf_evtfilter;
-
-			dtrq->dtrq_filter.dtf_operand = dop2dt(df->bf_op);
-			dtrq->dtrq_filter.dtf_variable = dvar2dt(df->bf_var);
-			dtrq->dtrq_filter.dtf_value = df->bf_val;
-		}
 		dtrq->dtrq_rate = r->br_probe->bp_rate;
 
 		SLIST_FOREACH(bs, &r->br_action, bs_next) {
@@ -1407,50 +1374,19 @@ debugx(const char *fmt, ...)
 	va_end(ap);
 }
 
-static inline const char *
-debug_getfiltervar(struct bt_evtfilter *df)
-{
-	switch (df->bf_var) {
-	case B_FV_PID:	return "pid";
-	case B_FV_TID:	return "tid";
-	case B_FV_NONE:	return "";
-	default:
-		xabort("invalid filtervar %d", df->bf_var);
-	}
-}
-
-static inline const char *
-debug_getfilterop(struct bt_evtfilter *df)
-{
-	switch (df->bf_op) {
-	case B_AT_OP_EQ:	return "==";
-	case B_AT_OP_NE:	return "!=";
-	default:
-		xabort("invalid operand %d", df->bf_op);
-	}
-}
-
 void
 debug_dump_filter(struct bt_rule *r)
 {
 	if (r->br_filter != NULL) {
 		struct bt_stmt *bs = r->br_filter->bf_condition;
+		struct bt_arg *bop = SLIST_FIRST(&bs->bs_args);
+		struct bt_arg *a, *b;
 
-		if (bs == NULL) {
-			struct bt_evtfilter *df = &r->br_filter->bf_evtfilter;
+		a = bop->ba_value;
+		b = SLIST_NEXT(a, ba_next);
 
-			debugx(" / %s %s %u /", debug_getfiltervar(df),
-			    debug_getfilterop(df), df->bf_val);
-		} else {
-			struct bt_arg *bop = SLIST_FIRST(&bs->bs_args);
-			struct bt_arg *a, *b;
-
-			a = bop->ba_value;
-			b = SLIST_NEXT(a, ba_next);
-
-			debugx(" / %s %s %s /", ba_name(a), ba_name(bop),
-			    (b != NULL) ? ba_name(b) : "NULL");
-		}
+		debugx(" / %s %s %s /", ba_name(a), ba_name(bop),
+		    (b != NULL) ? ba_name(b) : "NULL");
 	}
 	debugx("\n");
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parser.h,v 1.15 2021/04/21 10:28:54 mpi Exp $	*/
+/*	$OpenBSD: bt_parser.h,v 1.16 2021/04/22 09:36:39 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019-2021 Martin Pieuchot <mpi@openbsd.org>
@@ -59,12 +59,10 @@ struct bt_evtfilter {
  * Filters, also known as predicates, describe under which set of
  * conditions a rule is executed.
  *
- * Depending on their type they are performed in-kernel or when a rule
- * is evaluated.  In the first case they might prevent the recording of
- * events, in the second case events might be discarded at runtime.
+ * They are performed when a rule is evaluated and events might be
+ * discarded at runtime.
  */
 struct bt_filter {
-	struct bt_evtfilter	  bf_evtfilter;	/* in-kernel event filter */
 	struct bt_stmt		 *bf_condition;	/* per event condition */
 };
 
