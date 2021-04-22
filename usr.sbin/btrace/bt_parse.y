@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parse.y,v 1.32 2021/04/22 10:06:52 mpi Exp $	*/
+/*	$OpenBSD: bt_parse.y,v 1.33 2021/04/22 11:36:11 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019-2021 Martin Pieuchot <mpi@openbsd.org>
@@ -109,9 +109,9 @@ static int	 yylex(void);
 static int pflag;
 %}
 
-%token	<v.i>		ERROR OP_EQ OP_NE OP_LE OP_GE OP_LAND OP_LOR BEGIN END
+%token	<v.i>		ERROR ENDPRED OP_EQ OP_NE OP_LE OP_GE OP_LAND OP_LOR
 /* Builtins */
-%token	<v.i>		BUILTIN HZ
+%token	<v.i>		BUILTIN BEGIN END HZ
 /* Functions and Map operators */
 %token  <v.i>		F_DELETE F_PRINT FUNC0 FUNC1 FUNCN OP1 OP4 MOP0 MOP1
 %token	<v.string>	STRING CSTRING
@@ -120,14 +120,14 @@ static int pflag;
 %type	<v.string>	gvar lvar
 %type	<v.number>	staticval
 %type	<v.i>		beginend
-%type	<v.i>		testop binop
 %type	<v.probe>	probe probename
-%type	<v.filter>	predicate conditional
+%type	<v.filter>	predicate
 %type	<v.stmt>	action stmt stmtlist
 %type	<v.arg>		expr vargs mentry mexpr printargs term globalvar variable
 
-%left	'|'
-%left	'&'
+%right	'='
+%nonassoc OP_EQ OP_NE OP_LE OP_GE OP_LAND OP_LOR
+%left	'&' '|'
 %left	'+' '-'
 %left	'/' '*'
 %%
@@ -150,39 +150,15 @@ probename	: STRING ':' STRING ':' STRING	{ $$ = bp_new($1, $3, $5, 0); }
 		| STRING ':' HZ ':' NUMBER	{ $$ = bp_new($1, "hz", NULL, $5); }
 		;
 
-testop		: OP_EQ				{ $$ = B_AT_OP_EQ; }
-		| OP_NE				{ $$ = B_AT_OP_NE; }
-		| OP_LE				{ $$ = B_AT_OP_LE; }
-		| OP_GE				{ $$ = B_AT_OP_GE; }
-		| OP_LAND			{ $$ = B_AT_OP_LAND; }
-		| OP_LOR			{ $$ = B_AT_OP_LOR; }
-		;
-
-binop		: testop
-		| '+'				{ $$ = B_AT_OP_PLUS; }
-		| '-'				{ $$ = B_AT_OP_MINUS; }
-		| '*'				{ $$ = B_AT_OP_MULT; }
-		| '/'				{ $$ = B_AT_OP_DIVIDE; }
-		| '&'				{ $$ = B_AT_OP_BAND; }
-		| '|'				{ $$ = B_AT_OP_BOR; }
-		;
-
 staticval	: NUMBER
 		| '$' NUMBER			{ $$ = get_varg($2); }
 		;
 
 gvar		: '@' STRING			{ $$ = $2; }
 		| '@'				{ $$ = UNNAMED_MAP; }
-
-lvar		: '$' STRING			{ $$ = $2; }
-
-
-conditional	: variable		{ $$ = bc_new(NULL, B_AT_OP_NE, $1); }
-		| term testop variable		{ $$ = bc_new($1, $2, $3); }
 		;
 
-predicate	: /* empty */			{ $$ = NULL; }
-		| '/' conditional '/' 		{ $$ = $2; }
+lvar		: '$' STRING			{ $$ = $2; }
 		;
 
 mentry		: gvar '[' vargs ']'		{ $$ = bm_find($1, $3); }
@@ -205,12 +181,27 @@ expr		: CSTRING			{ $$ = ba_new($1, B_AT_STR); }
 		| term
 		;
 
-term		: '(' term ')'			{ $$ = $2; }
-		| term binop term		{ $$ = ba_op($2, $1, $3); }
-		| staticval			{ $$ = ba_new($1, B_AT_LONG); }
-		| BUILTIN			{ $$ = ba_new(NULL, $1); }
-		| variable
+predicate	: /* empty */		{ $$ = NULL; }
+		| '/' term ENDPRED	{ $$ = bc_new(NULL, B_AT_OP_NE, $2); }
+		;
 
+term		: '(' term ')'		{ $$ = $2; }
+		| term OP_EQ term	{ $$ = ba_op(B_AT_OP_EQ, $1, $3); }
+		| term OP_NE term	{ $$ = ba_op(B_AT_OP_NE, $1, $3); }
+		| term OP_LE term	{ $$ = ba_op(B_AT_OP_LE, $1, $3); }
+		| term OP_GE term	{ $$ = ba_op(B_AT_OP_GE, $1, $3); }
+		| term OP_LAND term	{ $$ = ba_op(B_AT_OP_LAND, $1, $3); }
+		| term OP_LOR term	{ $$ = ba_op(B_AT_OP_LOR, $1, $3); }
+		| term '+' term		{ $$ = ba_op(B_AT_OP_PLUS, $1, $3); }
+		| term '-' term		{ $$ = ba_op(B_AT_OP_MINUS, $1, $3); }
+		| term '*' term		{ $$ = ba_op(B_AT_OP_MULT, $1, $3); }
+		| term '/' term		{ $$ = ba_op(B_AT_OP_DIVIDE, $1, $3); }
+		| term '&' term		{ $$ = ba_op(B_AT_OP_BAND, $1, $3); }
+		| term '|' term		{ $$ = ba_op(B_AT_OP_BOR, $1, $3); }
+		| staticval		{ $$ = ba_new($1, B_AT_LONG); }
+		| BUILTIN		{ $$ = ba_new(NULL, $1); }
+		| variable
+		;
 
 
 vargs		: expr
@@ -748,6 +739,11 @@ again:
 			lgetc();
 			return OP_LOR;
 		}
+	case '/':
+		if (peek() == '{' || peek() == '/' || peek() == '\n') {
+			return ENDPRED;
+		}
+		/* FALLTHROUGH */
 	case ',':
 	case '(':
 	case ')':
@@ -755,7 +751,6 @@ again:
 	case '}':
 	case ':':
 	case ';':
-	case '/':
 		return c;
 	case EOF:
 		return 0;
