@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.162 2021/02/27 13:43:16 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.163 2021/04/22 15:30:12 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -135,7 +135,8 @@ int	filt_fileattach(struct knote *kn);
 void	filt_timerexpire(void *knx);
 int	filt_timerattach(struct knote *kn);
 void	filt_timerdetach(struct knote *kn);
-int	filt_timer(struct knote *kn, long hint);
+int	filt_timermodify(struct kevent *kev, struct knote *kn);
+int	filt_timerprocess(struct knote *kn, struct kevent *kev);
 void	filt_seltruedetach(struct knote *kn);
 
 const struct filterops kqread_filtops = {
@@ -163,7 +164,9 @@ const struct filterops timer_filtops = {
 	.f_flags	= 0,
 	.f_attach	= filt_timerattach,
 	.f_detach	= filt_timerdetach,
-	.f_event	= filt_timer,
+	.f_event	= NULL,
+	.f_modify	= filt_timermodify,
+	.f_process	= filt_timerprocess,
 };
 
 struct	pool knote_pool;
@@ -444,15 +447,48 @@ filt_timerdetach(struct knote *kn)
 	struct timeout *to;
 
 	to = (struct timeout *)kn->kn_hook;
-	timeout_del(to);
+	timeout_del_barrier(to);
 	free(to, M_KEVENT, sizeof(*to));
 	kq_ntimeouts--;
 }
 
 int
-filt_timer(struct knote *kn, long hint)
+filt_timermodify(struct kevent *kev, struct knote *kn)
 {
-	return (kn->kn_data != 0);
+	struct timeout *to = kn->kn_hook;
+	int s;
+
+	/* Reset the timer. Any pending events are discarded. */
+
+	timeout_del_barrier(to);
+
+	s = splhigh();
+	if (kn->kn_status & KN_QUEUED)
+		knote_dequeue(kn);
+	kn->kn_status &= ~KN_ACTIVE;
+	splx(s);
+
+	kn->kn_data = 0;
+	knote_modify(kev, kn);
+	/* Reinit timeout to invoke tick adjustment again. */
+	timeout_set(to, filt_timerexpire, kn);
+	filt_timer_timeout_add(kn);
+
+	return (0);
+}
+
+int
+filt_timerprocess(struct knote *kn, struct kevent *kev)
+{
+	int active, s;
+
+	s = splsoftclock();
+	active = (kn->kn_data != 0);
+	if (active)
+		knote_submit(kn, kev);
+	splx(s);
+
+	return (active);
 }
 
 

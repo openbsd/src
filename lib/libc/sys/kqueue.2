@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kqueue.2,v 1.43 2020/11/14 10:16:15 jmc Exp $
+.\"	$OpenBSD: kqueue.2,v 1.44 2021/04/22 15:30:12 visa Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/sys/kqueue.2,v 1.18 2001/02/14 08:48:35 guido Exp $
 .\"
-.Dd $Mdocdate: November 14 2020 $
+.Dd $Mdocdate: April 22 2021 $
 .Dt KQUEUE 2
 .Os
 .Sh NAME
@@ -468,6 +468,11 @@ contains the number of times the timeout has expired since the last call to
 This filter automatically sets the
 .Dv EV_CLEAR
 flag internally.
+.Pp
+If an existing timer is re-added, the existing timer and related pending events
+will be cancelled.
+The timer will be re-started using the timeout period
+.Fa data .
 .It Dv EVFILT_DEVICE
 Takes a descriptor as the identifier and the events to watch for in
 .Fa fflags ,
