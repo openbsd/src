@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parse.y,v 1.31 2021/04/22 09:44:38 mpi Exp $	*/
+/*	$OpenBSD: bt_parse.y,v 1.32 2021/04/22 10:06:52 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019-2021 Martin Pieuchot <mpi@openbsd.org>
@@ -96,7 +96,6 @@ typedef struct {
 		struct bt_filter	*filter;
 		struct bt_stmt		*stmt;
 		struct bt_arg		*arg;
-		enum bt_rtype		 rtype;
 	} v;
 	const char			*filename;
 	int				 lineno;
@@ -110,24 +109,22 @@ static int	 yylex(void);
 static int pflag;
 %}
 
-%token	ERROR OP_EQ OP_NE OP_LE OP_GE OP_LAND OP_LOR BEGIN END HZ
+%token	<v.i>		ERROR OP_EQ OP_NE OP_LE OP_GE OP_LAND OP_LOR BEGIN END
 /* Builtins */
-%token	BUILTIN
+%token	<v.i>		BUILTIN HZ
 /* Functions and Map operators */
-%token  F_DELETE F_PRINT FUNC0 FUNC1 FUNCN OP1 OP4 MOP0 MOP1
+%token  <v.i>		F_DELETE F_PRINT FUNC0 FUNC1 FUNCN OP1 OP4 MOP0 MOP1
 %token	<v.string>	STRING CSTRING
 %token	<v.number>	NUMBER
 
 %type	<v.string>	gvar lvar
 %type	<v.number>	staticval
+%type	<v.i>		beginend
 %type	<v.i>		testop binop
-%type	<v.i>		BUILTIN F_DELETE F_PRINT FUNC0 FUNC1 FUNCN OP1 OP4
-%type	<v.i>		MOP0 MOP1
 %type	<v.probe>	probe probename
 %type	<v.filter>	predicate conditional
 %type	<v.stmt>	action stmt stmtlist
 %type	<v.arg>		expr vargs mentry mexpr printargs term globalvar variable
-%type	<v.rtype>	beginend
 
 %left	'|'
 %left	'&'
