@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.83 2021/02/26 00:07:41 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.84 2021/04/22 22:14:30 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -2955,6 +2955,8 @@ bwfm_loadfirmware(struct bwfm_softc *sc, const char *chip, const char *bus,
 	if (*size == 0) {
 		snprintf(name, sizeof(name), "brcmfmac%s%s.bin", chip, bus);
 		if (loadfirmware(name, ucode, size) != 0) {
+			snprintf(name, sizeof(name), "brcmfmac%s%s%s%s.bin", chip, bus,
+			    sysname ? "." : "", sysname ? sysname : "");
 			printf("%s: failed loadfirmware of file %s\n",
 			    DEVNAME(sc), name);
 			return 1;
@@ -2998,7 +3000,8 @@ bwfm_loadfirmware(struct bwfm_softc *sc, const char *chip, const char *bus,
 	}
 
 	if (*nvlen == 0 && strcmp(bus, "-sdio") == 0) {
-		snprintf(name, sizeof(name), "brcmfmac%s%s.txt", chip, bus);
+		snprintf(name, sizeof(name), "brcmfmac%s%s%s%s.txt", chip, bus,
+		    sysname ? "." : "", sysname ? sysname : "");
 		printf("%s: failed loadfirmware of file %s\n",
 		    DEVNAME(sc), name);
 		free(*ucode, M_DEVBUF, *size);
