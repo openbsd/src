@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.16 2021/04/22 10:45:21 dv Exp $  */
+/*	$OpenBSD: vioscsi.c,v 1.17 2021/04/22 18:40:21 dv Exp $  */
 
 /*
  * Copyright (c) 2017 Carlos Cardenas <ccardenas@openbsd.org>
@@ -2081,7 +2081,7 @@ vioscsi_notifyq(struct vioscsi_dev *dev)
 {
 	uint64_t q_gpa;
 	uint32_t vr_sz;
-	int ret;
+	int cnt, ret;
 	char *vr;
 	struct virtio_scsi_req_hdr req;
 	struct virtio_scsi_res_hdr resp;
@@ -2123,7 +2123,14 @@ vioscsi_notifyq(struct vioscsi_dev *dev)
 		goto out;
 	}
 
+	cnt = 0;
 	while (acct.idx != (acct.avail->idx & VIOSCSI_QUEUE_MASK)) {
+
+		/* Guard against infinite descriptor chains */
+		if (++cnt >= VIOSCSI_QUEUE_SIZE) {
+			log_warnx("%s: invalid descriptor table", __func__);
+			goto out;
+		}
 
 		acct.req_idx = acct.avail->ring[acct.idx] & VIOSCSI_QUEUE_MASK;
 		acct.req_desc = &(acct.desc[acct.req_idx]);
