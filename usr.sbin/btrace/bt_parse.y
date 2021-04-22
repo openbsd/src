@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parse.y,v 1.30 2021/04/22 09:36:39 mpi Exp $	*/
+/*	$OpenBSD: bt_parse.y,v 1.31 2021/04/22 09:44:38 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019-2021 Martin Pieuchot <mpi@openbsd.org>
@@ -112,7 +112,7 @@ static int pflag;
 
 %token	ERROR OP_EQ OP_NE OP_LE OP_GE OP_LAND OP_LOR BEGIN END HZ
 /* Builtins */
-%token	BUILTIN PID TID
+%token	BUILTIN
 /* Functions and Map operators */
 %token  F_DELETE F_PRINT FUNC0 FUNC1 FUNCN OP1 OP4 MOP0 MOP1
 %token	<v.string>	STRING CSTRING
@@ -120,7 +120,7 @@ static int pflag;
 
 %type	<v.string>	gvar lvar
 %type	<v.number>	staticval
-%type	<v.i>		testop binop builtin
+%type	<v.i>		testop binop
 %type	<v.i>		BUILTIN F_DELETE F_PRINT FUNC0 FUNC1 FUNCN OP1 OP4
 %type	<v.i>		MOP0 MOP1
 %type	<v.probe>	probe probename
@@ -145,9 +145,7 @@ rule		: beginend action	 { br_new(NULL, NULL, $2, $1); }
 		| probe predicate action { br_new($1, $2, $3, B_RT_PROBE); }
 		;
 
-beginend	: BEGIN				{ $$ = B_RT_BEGIN; }
-		| END				{ $$ = B_RT_END; }
-		;
+beginend	: BEGIN	| END ;
 
 probe		: { pflag = 1; } probename	{ $$ = $2; pflag = 0; }
 
@@ -201,11 +199,6 @@ variable	: globalvar
 		| lvar				{ $$ = bl_find($1); }
 		;
 
-builtin		: PID 				{ $$ = B_AT_BI_PID; }
-		| TID 				{ $$ = B_AT_BI_TID; }
-		| BUILTIN
-		;
-
 mexpr		: MOP0 '(' ')'			{ $$ = ba_new(NULL, $1); }
 		| MOP1 '(' expr ')'		{ $$ = ba_new($3, $1); }
 		| expr
@@ -218,7 +211,7 @@ expr		: CSTRING			{ $$ = ba_new($1, B_AT_STR); }
 term		: '(' term ')'			{ $$ = $2; }
 		| term binop term		{ $$ = ba_op($2, $1, $3); }
 		| staticval			{ $$ = ba_new($1, B_AT_LONG); }
-		| builtin			{ $$ = ba_new(NULL, $1); }
+		| BUILTIN			{ $$ = ba_new(NULL, $1); }
 		| variable
 
 
@@ -626,8 +619,8 @@ struct keyword *
 lookup(char *s)
 {
 	static const struct keyword kws[] = {
-		{ "BEGIN",	BEGIN,		0 },
-		{ "END",	END,		0 },
+		{ "BEGIN",	BEGIN,		B_RT_BEGIN },
+		{ "END",	END,		B_RT_END },
 		{ "arg0",	BUILTIN,	B_AT_BI_ARG0 },
 		{ "arg1",	BUILTIN,	B_AT_BI_ARG1 },
 		{ "arg2",	BUILTIN,	B_AT_BI_ARG2 },
@@ -651,12 +644,12 @@ lookup(char *s)
 		{ "max",	MOP1,		B_AT_MF_MAX },
 		{ "min",	MOP1,		B_AT_MF_MIN },
 		{ "nsecs",	BUILTIN,	B_AT_BI_NSECS },
-		{ "pid",	PID,		0 /*B_AT_BI_PID*/ },
+		{ "pid",	BUILTIN,	B_AT_BI_PID },
 		{ "print",	F_PRINT,	B_AC_PRINT },
 		{ "printf",	FUNCN,		B_AC_PRINTF },
 		{ "retval",	BUILTIN,	B_AT_BI_RETVAL },
 		{ "sum",	MOP1,		B_AT_MF_SUM },
-		{ "tid",	TID,		0 /*B_AT_BI_TID*/ },
+		{ "tid",	BUILTIN,	B_AT_BI_TID },
 		{ "time",	FUNC1,		B_AC_TIME },
 		{ "ustack",	BUILTIN,	B_AT_BI_USTACK },
 		{ "zero",	FUNC1,		B_AC_ZERO },
