@@ -1,0 +1,117 @@
+# Standard stanzas config(8) can't run without
+maxpartitions 16
+maxusers 2 8 64
+
+# Major number for block devices, for ``root on'' lines
+major	{ sd = 0 }
+#major	{ cd = 3 }
+#major	{ wd = 4 }
+major	{ rd = 8 }
+
+file	dev/cninit.c
+
+file	arch/riscv64/riscv64/autoconf.c
+file	arch/riscv64/riscv64/ast.c
+file	arch/riscv64/riscv64/bus_space.c
+file	arch/riscv64/riscv64/bus_dma.c
+file	arch/riscv64/riscv64/conf.c
+file	arch/riscv64/riscv64/disksubr.c		disk
+file	arch/riscv64/riscv64/locore.S
+file	arch/riscv64/riscv64/copy.S
+file	arch/riscv64/riscv64/copystr.S
+file	arch/riscv64/riscv64/trap.S
+file	arch/riscv64/riscv64/cpuswitch.S
+file	arch/riscv64/riscv64/machdep.c
+file	arch/riscv64/riscv64/intr.c
+file	arch/riscv64/riscv64/pmap.c
+file	arch/riscv64/riscv64/mem.c
+file	arch/riscv64/riscv64/process_machdep.c
+file	arch/riscv64/riscv64/vm_machdep.c
+file	arch/riscv64/riscv64/sig_machdep.c
+file	arch/riscv64/riscv64/softintr.c
+file	arch/riscv64/riscv64/support.S
+file	arch/riscv64/riscv64/syscall.c
+file	arch/riscv64/riscv64/pagezero.S
+file	arch/riscv64/riscv64/trap_machdep.c
+file	arch/riscv64/riscv64/sbi.c
+file	arch/riscv64/riscv64/cpufunc_asm.S
+file	arch/riscv64/riscv64/fpu.c
+
+file	arch/riscv64/riscv64/db_disasm.c	ddb
+file	arch/riscv64/riscv64/db_interface.c	ddb
+file	arch/riscv64/riscv64/db_trace.c	ddb
+
+define	fdt {[early = 0]}
+
+#
+# mainbus
+#
+define	mainbus {[early = 0]}
+device	mainbus: fdt
+attach	mainbus at root
+file	arch/riscv64/dev/mainbus.c
+
+#
+# cpu
+#
+define	cpu {}
+device	cpu
+attach	cpu at mainbus
+file	arch/riscv64/riscv64/cpu.c
+
+#
+# timer
+#
+device	timer
+attach	timer at cpu
+file	arch/riscv64/dev/timer.c
+
+#
+# HART-specific interrupt controller
+#
+device	intc
+attach	intc at cpu
+file	arch/riscv64/dev/riscv_cpu_intc.c
+
+#
+# simplebus
+#
+define	simplebus {[early = 1]}
+device	simplebus
+attach	simplebus at mainbus
+file	arch/riscv64/dev/simplebus.c
+
+# PLIC
+device	plic
+attach	plic at simplebus
+file	arch/riscv64/dev/plic.c
+
+
+# Paravirtual device bus and virtio
+include "dev/pv/files.pv"
+
+file	netinet/in_cksum.c
+file	netinet/in4_cksum.c
+
+#
+# Machine-independent HID support
+#
+include	"dev/hid/files.hid"
+
+# Machine-independent I2C drivers
+include "dev/i2c/files.i2c"
+
+# FDT now requires drm (which is part of pci)
+include "dev/mii/files.mii"
+include "dev/pci/files.pci"
+
+# FDT support
+include "dev/ofw/files.ofw"
+
+# Machine-independent FDT drivers
+include "dev/fdt/files.fdt"
+
+# Machine-independent SCSI drivers
+include "scsi/files.scsi"
+
+# XXX ofwbus

@@ -1,0 +1,108 @@
+# Copyright (c) 2020 Brian Bamsch <bbamsch@google.com>
+# All rights reserved.
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+include <sys/param.h>
+include <sys/proc.h>
+include <sys/systm.h>
+include <sys/mbuf.h>
+include <sys/resourcevar.h>
+include <sys/device.h>
+include <sys/user.h>
+include <sys/signal.h>
+include <sys/mbuf.h>
+include <sys/socketvar.h>
+include <netinet/in.h>
+include <netinet/ip.h>
+
+include <machine/frame.h>
+include <machine/pcb.h>
+include <machine/cpu.h>
+include <machine/param.h>
+include <machine/bootconfig.h>
+
+struct	trapframe
+member	tf_ra
+member	tf_sp
+member	tf_gp
+member	tf_tp
+member	tf_t
+member	tf_s
+member	tf_a
+member	tf_sepc
+member	tf_sstatus
+member	tf_stval
+member	tf_scause
+
+struct	switchframe
+member	sf_s
+member	sf_ra
+
+export	IPL_NONE
+
+struct	proc
+member	p_stat
+member	p_cpu
+member	p_addr
+member	p_astpending	p_md.md_astpending
+
+export	SONPROC
+
+struct	sigframe
+member	sf_signum
+member	sf_sc
+member	sf_si
+
+struct	pcb
+member	pcb_flags
+member	pcb_tf
+member	pcb_sp
+member	pcb_onfault
+member	pcb_fpstate
+member	pcb_fpcpu
+
+struct	cpu_info
+member	ci_dev
+member	ci_next
+member	ci_schedstate
+member	ci_cpuid
+member	ci_self
+member	ci_curproc
+member	ci_curpm
+member	ci_randseed
+member	ci_curpcb
+member	ci_idle_pcb
+member	ci_ipending
+member	ci_idepth
+ifdef DIAGNOSTIC
+member	ci_mutex_level
+endif
+member	ci_want_resched
+ifdef MULTIPROCESSOR
+member	ci_srp_hazards
+member	ci_flags
+member	ci_ddb_paused
+endif
+ifdef GPROF
+member	ci_gmon
+endif
+
+struct	riscv_bootparams
+member	kern_l1pt
+member	kern_delta
+member	kern_stack
+member	dtbp_virt
+member	dtbp_phys
+
+

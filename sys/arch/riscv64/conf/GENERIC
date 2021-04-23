@@ -1,0 +1,55 @@
+# For further information on compiling OpenBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
+
+machine		riscv64
+include		"../../../conf/GENERIC"
+maxusers	32
+
+makeoptions	KERNEL_BASE_PHYS="0x00200000"
+makeoptions	KERNEL_BASE_VIRT="0xffffffc000200000"
+#option		DEBUG
+#option		DEBUG_AUTOCONF
+#option		DEBUG_INTC
+#option		DEBUG_TIMER
+
+config	bsd	swap generic
+
+#
+# Definition of system
+#
+
+# mainbus
+mainbus0	at root
+
+# cpu0
+cpu0		at mainbus0
+timer0		at cpu0
+intc0		at cpu0
+
+# NS16550 compatible serial ports
+com*		at mainbus0 early 1
+
+virtio*		at mainbus0
+vio*		at virtio?	# Network
+vioblk*		at virtio?
+vioscsi*	at virtio?	# Disk (SCSI)
+#viomb*		at virtio?	# Memory Ballooning
+#viornd*	at virtio?	# Random Source
+
+# simplebus0
+simplebus*	at mainbus0 early 1
+# Platform Level Interrupt Controller
+plic*		at simplebus? early 1
+
+
+scsibus*        at scsi?
+sd*		at scsibus?
+cd*		at scsibus?
+ch*		at scsibus?
+uk*		at scsibus?
