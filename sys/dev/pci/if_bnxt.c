@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.28 2020/12/12 11:48:53 jan Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.29 2021/04/23 03:23:44 jmatthew Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -82,7 +82,6 @@
 #define BNXT_AG_RING_ID		1
 #define BNXT_TX_RING_ID		3
 
-#define BNXT_MAX_QUEUE		8
 #define BNXT_MAX_MTU		9500
 #define BNXT_AG_BUFFER_SIZE	8192
 
@@ -114,11 +113,6 @@ do {	 						\
 	if (++(_cons) == (_ring)->ring_size)		\
 		((_cons) = 0, (_v_bit) = !_v_bit);	\
 } while (0);
-
-struct bnxt_cos_queue {
-	uint8_t			id;
-	uint8_t			profile;
-};
 
 struct bnxt_ring {
 	uint64_t		paddr;
@@ -212,8 +206,7 @@ struct bnxt_softc {
 	void			*sc_ih;
 
 	int			sc_hwrm_ver;
-	int			sc_max_tc;
-	struct bnxt_cos_queue	sc_q_info[BNXT_MAX_QUEUE];
+	int			sc_tx_queue_id;
 
 	struct bnxt_vnic_info	sc_vnic;
 	struct bnxt_dmamem	*sc_stats_ctx_mem;
@@ -2228,9 +2221,7 @@ bnxt_hwrm_queue_qportcfg(struct bnxt_softc *softc)
 	struct hwrm_queue_qportcfg_input req = {0};
 	struct hwrm_queue_qportcfg_output *resp =
 	    BNXT_DMA_KVA(softc->sc_cmd_resp);
-
-	int	i, rc = 0;
-	uint8_t	*qptr;
+	int	rc = 0;
 
 	bnxt_hwrm_cmd_hdr_init(softc, &req, HWRM_QUEUE_QPORTCFG);
 
@@ -2243,15 +2234,8 @@ bnxt_hwrm_queue_qportcfg(struct bnxt_softc *softc)
 		rc = -EINVAL;
 		goto qportcfg_exit;
 	}
-	softc->sc_max_tc = resp->max_configurable_queues;
-	if (softc->sc_max_tc > BNXT_MAX_QUEUE)
-		softc->sc_max_tc = BNXT_MAX_QUEUE;
 
-	qptr = &resp->queue_id0;
-	for (i = 0; i < softc->sc_max_tc; i++) {
-		softc->sc_q_info[i].id = *qptr++;
-		softc->sc_q_info[i].profile = *qptr++;
-	}
+	softc->sc_tx_queue_id = resp->queue_id0;
 
 qportcfg_exit:
 	BNXT_HWRM_UNLOCK(softc);
@@ -2735,7 +2719,7 @@ bnxt_hwrm_ring_alloc(struct bnxt_softc *softc, uint8_t type,
 	req.length = htole32(ring->ring_size);
 	req.logical_id = htole16(ring->id);
 	req.cmpl_ring_id = htole16(cmpl_ring_id);
-	req.queue_id = htole16(softc->sc_q_info[0].id);
+	req.queue_id = htole16(softc->sc_tx_queue_id);
 	req.int_mode = (softc->sc_flags & BNXT_FLAG_MSIX) ?
 	    HWRM_RING_ALLOC_INPUT_INT_MODE_MSIX :
 	    HWRM_RING_ALLOC_INPUT_INT_MODE_LEGACY;
