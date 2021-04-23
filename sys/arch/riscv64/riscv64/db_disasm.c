@@ -15,6 +15,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <machine/db_machdep.h>
 #include <ddb/db_interface.h>
 #include <ddb/db_sym.h>
