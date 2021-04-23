@@ -417,7 +417,7 @@ PTED_VALID(struct pte_desc *pted)
  * One issue of making this a single data structure is that two pointers are
  * wasted for every page which does not map ram (device mappings), this
  * should be a low percentage of mapped pages in the system, so should not
- * have too noticable unnecessary ram consumption.
+ * have too noticeable unnecessary ram consumption.
  */
 
 void
@@ -1785,7 +1785,7 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 
 		/*
 		 * Exec always includes a reference. Since we now know
-		 * the page has been accesed, we can enable read as well
+		 * the page has been accessed, we can enable read as well
 		 * if UVM allows it.
 		 */
 		atomic_setbits_int(&pg->pg_flags, PG_PMAP_REF);

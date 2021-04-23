@@ -117,7 +117,7 @@ riscv_intc_irq_handler(void *frame)
 	ih = intc_handler[irq];
 	if (ih->ih_func(frame) == 0)
 #ifdef DEBUG_INTC
-		printf("fail in handleing irq %d %s\n", irq, ih->ih_name);
+		printf("fail in handling irq %d %s\n", irq, ih->ih_name);
 #else
 		;
 #endif /* DEBUG_INTC */

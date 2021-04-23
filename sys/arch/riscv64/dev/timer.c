@@ -272,7 +272,7 @@ riscv_timer_cpu_initclocks()
 	sc->sc_ticks_err_cnt = sc->sc_ticks_per_second % hz;
 	pc->pc_ticks_err_sum = 0;
 
-	/* configure virtual timer interupt */
+	/* configure virtual timer interrupt */
 	sc->sc_ih = riscv_intc_intr_establish(IRQ_TIMER_SUPERVISOR, 0,
 			riscv_timer_intr, NULL, "riscv_timer");
 

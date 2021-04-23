@@ -586,7 +586,7 @@ void
 setstatclockrate(int new)
 {
 	if (riscv_clock_func.setstatclockrate == NULL) {
-		panic("riscv_clock_func.setstatclockrate not intialized");
+		panic("riscv_clock_func.setstatclockrate not initialized");
 	}
 	riscv_clock_func.setstatclockrate(new);
 }

@@ -791,7 +791,7 @@ initriscv(struct riscv_bootparams *rbp)
 			end = MIN(reg.addr + reg.size, (paddr_t)-PAGE_SIZE);
 
 			/*
-			 * The intial 64MB block is not excluded, so we need
+			 * The initial 64MB block is not excluded, so we need
 			 * to make sure we don't add it here.
 			 */
 			if (start < memend && end > memstart) {

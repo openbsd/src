@@ -234,7 +234,7 @@ fpu_load(struct proc *p)
 	/*
 	 * pcb->pcb_fpcpu and ci->ci_fpuproc are activated here
 	 * to indicate that the fpu context is correctly loaded on
-	 * this cpu. XXX block interupts for these saves ?
+	 * this cpu. XXX block interrupts for these saves ?
 	 */
 	pcb->pcb_fpcpu = ci;
 	ci->ci_fpuproc = p;
