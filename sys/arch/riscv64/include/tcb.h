@@ -23,7 +23,7 @@
 #include <machine/pcb.h>
 
 #define TCB_GET(p)		\
-	((struct pcb *)(p)->p_addr)->pcb_tf->tf_tp
+	((void *)(((struct pcb *)(p)->p_addr)->pcb_tf->tf_tp))
 
 #define TCB_SET(p, addr)						\
 	do {								\
