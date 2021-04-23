@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1114 2021/03/10 10:21:48 jsg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1115 2021/04/23 03:29:24 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6844,8 +6844,10 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 	if ((*m0)->m_pkthdr.pf.flags & PF_TAG_GENERATED)
 		return (PF_PASS);
 
-	if ((*m0)->m_pkthdr.pf.flags & PF_TAG_DIVERTED_PACKET)
+	if ((*m0)->m_pkthdr.pf.flags & PF_TAG_DIVERTED_PACKET) {
+		(*m0)->m_pkthdr.pf.flags &= ~PF_TAG_DIVERTED_PACKET;
 		return (PF_PASS);
+	}
 
 	if ((*m0)->m_pkthdr.pf.flags & PF_TAG_REFRAGMENTED) {
 		(*m0)->m_pkthdr.pf.flags &= ~PF_TAG_REFRAGMENTED;
