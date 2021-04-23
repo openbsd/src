@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.30 2021/04/23 04:58:34 jmatthew Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.31 2021/04/23 07:00:58 jmatthew Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -730,32 +730,35 @@ bnxt_queue_up(struct bnxt_softc *sc, struct bnxt_queue *bq)
 		goto free_tx;
 	}
 
-	cp->ring_mem = bnxt_dmamem_alloc(sc, PAGE_SIZE * BNXT_CP_PAGES);
-	if (cp->ring_mem == NULL) {
-		printf("%s: failed to allocate completion ring %d mem\n",
-		    DEVNAME(sc), bq->q_index);
-		goto free_rx;
-	}
-	cp->ring.vaddr = BNXT_DMA_KVA(cp->ring_mem);
-	cp->ring.paddr = BNXT_DMA_DVA(cp->ring_mem);
-	cp->cons = UINT32_MAX;
-	cp->v_bit = 1;
-	bnxt_mark_cpr_invalid(cp);
+	/* completion ring is already allocated if we only have one queue */
+	if (sc->sc_nqueues > 1) {
+		cp->ring_mem = bnxt_dmamem_alloc(sc, PAGE_SIZE * BNXT_CP_PAGES);
+		if (cp->ring_mem == NULL) {
+			printf("%s: failed to allocate completion ring %d mem\n",
+			    DEVNAME(sc), bq->q_index);
+			goto free_rx;
+		}
+		cp->ring.vaddr = BNXT_DMA_KVA(cp->ring_mem);
+		cp->ring.paddr = BNXT_DMA_DVA(cp->ring_mem);
+		cp->cons = UINT32_MAX;
+		cp->v_bit = 1;
+		bnxt_mark_cpr_invalid(cp);
 
-	if (bnxt_hwrm_ring_alloc(sc, HWRM_RING_ALLOC_INPUT_RING_TYPE_L2_CMPL,
-	    &cp->ring, (uint16_t)HWRM_NA_SIGNATURE,
-	    HWRM_NA_SIGNATURE, 1) != 0) {
-		printf("%s: failed to allocate completion queue %d\n",
-		    DEVNAME(sc), bq->q_index);
-		goto free_rx;
-	}
+		if (bnxt_hwrm_ring_alloc(sc, HWRM_RING_ALLOC_INPUT_RING_TYPE_L2_CMPL,
+		    &cp->ring, (uint16_t)HWRM_NA_SIGNATURE,
+		    HWRM_NA_SIGNATURE, 1) != 0) {
+			printf("%s: failed to allocate completion queue %d\n",
+			    DEVNAME(sc), bq->q_index);
+			goto free_rx;
+		}
 
-	if (bnxt_set_cp_ring_aggint(sc, cp) != 0) {
-		printf("%s: failed to set interrupt %d aggregation\n",
-		    DEVNAME(sc), bq->q_index);
-		goto free_rx;
+		if (bnxt_set_cp_ring_aggint(sc, cp) != 0) {
+			printf("%s: failed to set interrupt %d aggregation\n",
+			    DEVNAME(sc), bq->q_index);
+			goto free_rx;
+		}
+		bnxt_write_cp_doorbell(sc, &cp->ring, 1);
 	}
-	bnxt_write_cp_doorbell(sc, &cp->ring, 1);
 
 	if (bnxt_hwrm_stat_ctx_alloc(sc, &bq->q_cp,
 	    BNXT_DMA_DVA(sc->sc_stats_ctx_mem) +
@@ -960,17 +963,21 @@ bnxt_queue_down(struct bnxt_softc *sc, struct bnxt_queue *bq)
 	    &rx->rx_ag_ring);
 	bnxt_hwrm_ring_free(sc, HWRM_RING_ALLOC_INPUT_RING_TYPE_RX,
 	    &rx->rx_ring);
-	bnxt_hwrm_ring_free(sc, HWRM_RING_ALLOC_INPUT_RING_TYPE_L2_CMPL,
-	    &cp->ring);
+
+	/* if only one queue, leave cp ring in place for async events */
+	if (sc->sc_nqueues > 1) {
+		bnxt_hwrm_ring_free(sc, HWRM_RING_ALLOC_INPUT_RING_TYPE_L2_CMPL,
+		    &cp->ring);
+
+		bnxt_dmamem_free(sc, cp->ring_mem);
+		cp->ring_mem = NULL;
+	}
 
 	bnxt_dmamem_free(sc, rx->rx_ring_mem);
 	rx->rx_ring_mem = NULL;
 
 	bnxt_dmamem_free(sc, tx->tx_ring_mem);
 	tx->tx_ring_mem = NULL;
-
-	bnxt_dmamem_free(sc, cp->ring_mem);
-	cp->ring_mem = NULL;
 }
 
 void
