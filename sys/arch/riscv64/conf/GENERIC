@@ -47,6 +47,7 @@ simplebus*	at mainbus0 early 1
 # Platform Level Interrupt Controller
 plic*		at simplebus? early 1
 
+syscon*		at fdt? early 1
 
 scsibus*        at scsi?
 sd*		at scsibus?
