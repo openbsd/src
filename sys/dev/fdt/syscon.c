@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscon.c,v 1.4 2018/03/17 18:04:15 kettenis Exp $	*/
+/*	$OpenBSD: syscon.c,v 1.5 2021/04/23 12:38:00 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -42,6 +42,7 @@ struct syscon_softc {
 	uint32_t		sc_regmap;
 	bus_size_t		sc_offset;
 	uint32_t		sc_mask;
+	uint32_t		sc_value;
 };
 
 struct syscon_softc *syscon_reboot_sc;
@@ -110,12 +111,26 @@ syscon_attach(struct device *parent, struct device *self, void *aux)
 		if (sc->sc_regmap == 0)
 			return;
 
-		if (OF_getproplen(faa->fa_node, "offset") != sizeof(uint32_t) ||
-		    OF_getproplen(faa->fa_node, "mask") != sizeof(uint32_t))
+		if (OF_getproplen(faa->fa_node, "offset") != sizeof(uint32_t))
+			return;
+
+		/* At least one of "mask" and "value" should be provided. */
+		if (OF_getproplen(faa->fa_node, "mask") != sizeof(uint32_t) &&
+		    OF_getproplen(faa->fa_node, "value") != sizeof(uint32_t))
 			return;
 
 		sc->sc_offset = OF_getpropint(faa->fa_node, "offset", 0);
-		sc->sc_mask = OF_getpropint(faa->fa_node, "mask", 0);
+		sc->sc_mask = OF_getpropint(faa->fa_node, "mask", 0xffffffff);
+		sc->sc_value = OF_getpropint(faa->fa_node, "value", 0);
+
+		/*
+		 * Old binding used "mask" as the value to write with
+		 * an all-ones mask.  This is still supported.
+		 */
+		if (OF_getproplen(faa->fa_node, "value") != sizeof(uint32_t)) {
+			sc->sc_value = sc->sc_mask;
+			sc->sc_mask = 0xffffffff;
+		}
 
 		if (OF_is_compatible(faa->fa_node, "syscon-reboot")) {
 			syscon_reboot_sc = sc;
@@ -132,12 +147,16 @@ syscon_reset(void)
 {
 	struct syscon_softc *sc = syscon_reboot_sc;
 	struct regmap *rm;
+	uint32_t value;
 
 	rm = regmap_byphandle(sc->sc_regmap);
 	if (rm == NULL)
 		return;
 
-	regmap_write_4(rm, sc->sc_offset, sc->sc_mask);
+	value = regmap_read_4(rm, sc->sc_offset);
+	value &= ~sc->sc_mask;
+	value |= sc->sc_value;
+	regmap_write_4(rm, sc->sc_offset, value);
 	delay(1000000);
 }
 
@@ -146,11 +165,15 @@ syscon_powerdown(void)
 {
 	struct syscon_softc *sc = syscon_poweroff_sc;
 	struct regmap *rm;
+	uint32_t value;
 
 	rm = regmap_byphandle(sc->sc_regmap);
 	if (rm == NULL)
 		return;
 
-	regmap_write_4(rm, sc->sc_offset, sc->sc_mask);
+	value = regmap_read_4(rm, sc->sc_offset);
+	value &= ~sc->sc_mask;
+	value |= sc->sc_value;
+	regmap_write_4(rm, sc->sc_offset, value);
 	delay(1000000);
 }
