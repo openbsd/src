@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.389 2021/02/08 10:51:02 mpi Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.390 2021/04/23 07:21:02 bluhm Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -114,24 +114,21 @@
 #endif
 
 #include "audio.h"
-#include "video.h"
+#include "dt.h"
 #include "pf.h"
+#include "video.h"
 
 extern struct forkstat forkstat;
 extern struct nchstats nchstats;
 extern int nselcoll, fscale;
 extern struct disklist_head disklist;
 extern fixpt_t ccpu;
-extern  long numvnodes;
-#if NAUDIO > 0
+extern long numvnodes;
+extern int allowdt;
 extern int audio_record_enable;
-#endif
-#if NVIDEO > 0
 extern int video_record_enable;
-#endif
 
 int allowkmem;
-int allowdt;
 
 int sysctl_diskinit(int, struct proc *);
 int sysctl_proc_args(int *, u_int, void *, size_t *, struct proc *);
@@ -142,12 +139,8 @@ int sysctl_proc_vmmap(int *, u_int, void *, size_t *, struct proc *);
 int sysctl_intrcnt(int *, u_int, void *, size_t *);
 int sysctl_sensors(int *, u_int, void *, size_t *, void *, size_t);
 int sysctl_cptime2(int *, u_int, void *, size_t *, void *, size_t);
-#if NAUDIO > 0
 int sysctl_audio(int *, u_int, void *, size_t *, void *, size_t);
-#endif
-#if NVIDEO > 0
 int sysctl_video(int *, u_int, void *, size_t *, void *, size_t);
-#endif
 int sysctl_cpustats(int *, u_int, void *, size_t *, void *, size_t);
 int sysctl_utc_offset(void *, size_t *, void *, size_t);
 
@@ -479,10 +472,12 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			return (EPERM);
 		securelevel = level;
 		return (0);
+#if NDT > 0
 	case KERN_ALLOWDT:
 		if (securelevel > 0)
 			return (sysctl_rdint(oldp, oldlenp, newp, allowdt));
 		return (sysctl_int(oldp, oldlenp, newp, newlen,  &allowdt));
+#endif
 	case KERN_ALLOWKMEM:
 		if (securelevel > 0)
 			return (sysctl_rdint(oldp, oldlenp, newp, allowkmem));
