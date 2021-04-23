@@ -36,8 +36,7 @@ INCLUDES=	-nostdinc -I$S -I${.OBJDIR} -I$S/arch \
 		-I$S/dev/pci/drm/amd/display/dc/inc/hw \
 		-I$S/dev/pci/drm/amd/display/modules/inc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D__${_mach}__ -MD -MP
-# XXX -Werror removed to relax compile errors while building with -O0
-CWARNFLAGS=	-Wall -Wimplicit-function-declaration \
+CWARNFLAGS=	-Werror -Wall -Wimplicit-function-declaration \
 		-Wno-uninitialized -Wno-pointer-sign \
 		-Wno-constant-conversion -Wno-address-of-packed-member \
 		-Wframe-larger-than=2047
