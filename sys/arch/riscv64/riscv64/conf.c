@@ -141,7 +141,7 @@ cdev_decl(pci);
 #include "vscsi.h"
 #include "pppx.h"
 #include "fuse.h"
-//#include "openprom.h"
+#include "openprom.h"
 #include "gpio.h"
 #include "ipmi.h"
 #include "switch.h"

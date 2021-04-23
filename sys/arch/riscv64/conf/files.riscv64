@@ -41,6 +41,9 @@ file	arch/riscv64/riscv64/db_disasm.c	ddb
 file	arch/riscv64/riscv64/db_interface.c	ddb
 file	arch/riscv64/riscv64/db_trace.c	ddb
 
+pseudo-device	openprom
+file	arch/riscv64/riscv64/openprom.c		openprom needs-flag
+
 define	fdt {[early = 0]}
 
 #

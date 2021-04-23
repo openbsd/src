@@ -53,3 +53,6 @@ sd*		at scsibus?
 cd*		at scsibus?
 ch*		at scsibus?
 uk*		at scsibus?
+
+# Pseudo-Devices
+pseudo-device	openprom
