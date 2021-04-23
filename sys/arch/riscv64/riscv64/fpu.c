@@ -55,6 +55,7 @@ int fpu_valid_opcode(uint32_t instr)
 		case 0x2002:	// C.FLDSP
 			// must verify dest register is float
 			valid = opcode16 & (1 << 11);
+			break;
 		case 0xa002:	// C.FSDSP
 			// must verify dest register is float
 			valid = opcode16 & (1 << 6);
