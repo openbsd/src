@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_transcript.c,v 1.2 2020/02/05 16:47:34 jsing Exp $ */
+/* $OpenBSD: ssl_transcript.c,v 1.3 2021/04/23 18:30:18 tb Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -50,7 +50,7 @@ tls1_transcript_hash_init(SSL *s)
 		SSLerror(s, ERR_R_EVP_LIB);
 		goto err;
 	}
-		
+
 	return 1;
 
  err:
@@ -139,7 +139,7 @@ tls1_transcript_reset(SSL *s)
 	 * it is impossible to tell if it succeeded (returning a length of zero)
 	 * or if it failed (and returned zero)... our implementation never
 	 * fails with a length of zero, so we trust all is okay...
-	 */ 
+	 */
 	(void)BUF_MEM_grow_clean(S3I(s)->handshake_transcript, 0);
 
 	tls1_transcript_unfreeze(s);
