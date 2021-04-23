@@ -40,7 +40,7 @@ vio*		at virtio?	# Network
 vioblk*		at virtio?
 vioscsi*	at virtio?	# Disk (SCSI)
 #viomb*		at virtio?	# Memory Ballooning
-#viornd*	at virtio?	# Random Source
+viornd*		at virtio?	# Random Source
 
 # simplebus0
 simplebus*	at mainbus0 early 1

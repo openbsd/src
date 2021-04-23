@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.2 2021/04/23 12:49:53 jsg Exp $
+# $OpenBSD: RAMDISK,v 1.3 2021/04/23 13:03:41 jsg Exp $
 #
 # GENERIC machine description file
 #
@@ -59,7 +59,7 @@ vio*		at virtio?	# Network
 vioblk*		at virtio?
 vioscsi*	at virtio?	# Disk (SCSI)
 #viomb*		at virtio?	# Memory Ballooning
-#viornd*	at virtio?	# Random Source
+viornd*		at virtio?	# Random Source
 
 # simplebus0
 simplebus*	at mainbus0 early 1
