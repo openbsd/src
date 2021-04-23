@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.203 2021/01/21 12:33:14 dlg Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.204 2021/04/23 03:43:19 dlg Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1690,8 +1690,10 @@ bpfsdetach(void *p)
 		if (cdevsw[maj].d_open == bpfopen)
 			break;
 
-	while ((bd = SMR_SLIST_FIRST_LOCKED(&bp->bif_dlist)))
+	while ((bd = SMR_SLIST_FIRST_LOCKED(&bp->bif_dlist))) {
 		vdevgone(maj, bd->bd_unit, bd->bd_unit, VCHR);
+		klist_invalidate(&bd->bd_sel.si_note);
+	}
 
 	for (tbp = bpf_iflist; tbp; tbp = tbp->bif_next) {
 		if (tbp->bif_next == bp) {
