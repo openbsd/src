@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.357 2021/04/23 21:47:32 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.358 2021/04/23 21:55:36 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -223,6 +223,7 @@ ip_init(void)
 	mq_init(&ipsend_mq, 64, IPL_SOFTNET);
 	mq_init(&ipsendraw_mq, 64, IPL_SOFTNET);
 
+	arpinit();
 #ifdef IPSEC
 	ipsec_init();
 #endif

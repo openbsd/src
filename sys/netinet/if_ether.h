@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.81 2021/03/10 10:21:48 jsg Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.82 2021/04/23 21:55:36 bluhm Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -257,6 +257,7 @@ void	revarprequest(struct ifnet *);
 int	revarpwhoarewe(struct ifnet *, struct in_addr *, struct in_addr *);
 int	revarpwhoami(struct in_addr *, struct ifnet *);
 
+void	arpinit(void);
 void	arpinput(struct ifnet *, struct mbuf *);
 void	arprequest(struct ifnet *, u_int32_t *, u_int32_t *, u_int8_t *);
 void	arpwhohas(struct arpcom *, struct in_addr *);

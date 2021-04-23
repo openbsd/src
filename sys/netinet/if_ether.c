@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.244 2021/04/23 21:47:32 bluhm Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.245 2021/04/23 21:55:36 bluhm Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -96,7 +96,6 @@ struct niqueue arpinq = NIQUEUE_INITIALIZER(50, NETISR_ARP);
 LIST_HEAD(, llinfo_arp) arp_list;
 struct	pool arp_pool;		/* pool for llinfo_arp structures */
 int	arp_maxtries = 5;
-int	arpinit_done;
 int	la_hold_total;
 
 #ifdef NFSCLIENT
@@ -113,7 +112,7 @@ unsigned int revarp_ifidx;
 void
 arptimer(void *arg)
 {
-	struct timeout *to = (struct timeout *)arg;
+	struct timeout *to = arg;
 	struct llinfo_arp *la, *nla;
 
 	NET_LOCK();
@@ -128,21 +127,22 @@ arptimer(void *arg)
 }
 
 void
+arpinit(void)
+{
+	static struct timeout arptimer_to;
+
+	pool_init(&arp_pool, sizeof(struct llinfo_arp), 0,
+	    IPL_SOFTNET, 0, "arp", NULL);
+
+	timeout_set_proc(&arptimer_to, arptimer, &arptimer_to);
+	timeout_add_sec(&arptimer_to, arpt_prune);
+}
+
+void
 arp_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 {
 	struct sockaddr *gate = rt->rt_gateway;
 	struct llinfo_arp *la = (struct llinfo_arp *)rt->rt_llinfo;
-
-	if (!arpinit_done) {
-		static struct timeout arptimer_to;
-
-		arpinit_done = 1;
-		pool_init(&arp_pool, sizeof(struct llinfo_arp), 0,
-		    IPL_SOFTNET, 0, "arp", NULL);
-
-		timeout_set_proc(&arptimer_to, arptimer, &arptimer_to);
-		timeout_add_sec(&arptimer_to, arpt_prune);
-	}
 
 	if (ISSET(rt->rt_flags,
 	    RTF_GATEWAY|RTF_BROADCAST|RTF_MULTICAST|RTF_MPLS))
