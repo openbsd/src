@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_kiss.c,v 1.19 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: p12_kiss.c,v 1.20 2021/04/24 18:16:39 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -132,10 +132,12 @@ PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
 
 	while ((x = sk_X509_pop(ocerts))) {
 		if (pkey && *pkey && cert && !*cert) {
+			ERR_set_mark();
 			if (X509_check_private_key(x, *pkey)) {
 				*cert = x;
 				x = NULL;
 			}
+			ERR_pop_to_mark();
 		}
 
 		if (ca && x) {
