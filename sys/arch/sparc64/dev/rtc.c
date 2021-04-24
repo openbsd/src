@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtc.c,v 1.10 2014/07/11 08:18:31 guenther Exp $	*/
+/*	$OpenBSD: rtc.c,v 1.11 2021/04/24 10:15:14 mpi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -119,8 +119,6 @@ int rtc_gettime(todr_chip_handle_t, struct timeval *);
 int rtc_settime(todr_chip_handle_t, struct timeval *);
 int rtc_bq4802_gettime(todr_chip_handle_t, struct timeval *);
 int rtc_bq4802_settime(todr_chip_handle_t, struct timeval *);
-int rtc_getcal(todr_chip_handle_t, int *);
-int rtc_setcal(todr_chip_handle_t, int);
 
 int
 rtc_match(struct device *parent, void *cf, void *aux)
@@ -166,8 +164,6 @@ rtc_attach(struct device *parent, struct device *self, void *aux)
 	handle->cookie = sc;
 	handle->todr_gettime = rtc_gettime;
 	handle->todr_settime = rtc_settime;
-	handle->todr_getcal = rtc_getcal;
-	handle->todr_setcal = rtc_setcal;
 
 	handle->bus_cookie = NULL;
 	handle->todr_setwen = NULL;
@@ -403,16 +399,4 @@ rtc_bq4802_settime(todr_chip_handle_t handle, struct timeval *tv)
 	csr &= ~BQ4802_UTI;
 	bus_space_write_1(iot, ioh, BQ4802_CTRL, csr);
 	return (0);
-}
-
-int
-rtc_getcal(todr_chip_handle_t handle, int *vp)
-{
-	return (EOPNOTSUPP);
-}
-
-int
-rtc_setcal(todr_chip_handle_t handle, int v)
-{
-	return (EOPNOTSUPP);
 }

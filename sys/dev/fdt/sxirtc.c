@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxirtc.c,v 1.4 2019/08/11 14:46:18 kettenis Exp $	*/
+/*	$OpenBSD: sxirtc.c,v 1.5 2021/04/24 10:15:15 mpi Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  * Copyright (c) 2013 Artturi Alm
@@ -146,8 +146,6 @@ sxirtc_attach(struct device *parent, struct device *self, void *aux)
 	handle->cookie = self;
 	handle->todr_gettime = sxirtc_gettime;
 	handle->todr_settime = sxirtc_settime;
-	handle->todr_getcal = NULL;
-	handle->todr_setcal = NULL;
 	handle->bus_cookie = NULL;
 	handle->todr_setwen = NULL;
 	todr_handle = handle;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock_subr.h,v 1.6 2020/05/17 13:21:20 visa Exp $	*/
+/*	$OpenBSD: clock_subr.h,v 1.7 2021/04/24 10:15:15 mpi Exp $	*/
 /*	$NetBSD: clock_subr.h,v 1.2 1997/03/15 18:11:17 is Exp $	*/
 
 /*-
@@ -35,8 +35,6 @@
  *
  * todr_gettime: convert time-of-day clock into a `struct timeval'
  * todr_settime: set time-of-day clock from a `struct timeval'
- * todr_getcal: get current TOD clock calibration value in ppm
- * todr_setcal: set calibration value in ppm in TOD clock
  *
  * (this is probably not so useful:)
  * todr_setwen: provide a machine-dependent TOD clock write-enable callback
@@ -49,16 +47,12 @@ struct todr_chip_handle {
 
 	int	(*todr_gettime)(struct todr_chip_handle *, struct timeval *);
 	int	(*todr_settime)(struct todr_chip_handle *, struct timeval *);
-	int	(*todr_getcal)(struct todr_chip_handle *, int *);
-	int	(*todr_setcal)(struct todr_chip_handle *, int);
 	int	(*todr_setwen)(struct todr_chip_handle *, int);
 };
 typedef struct todr_chip_handle *todr_chip_handle_t;
 
 #define todr_gettime(ct, t)	((*(ct)->todr_gettime)(ct, t))
 #define todr_settime(ct, t)	((*(ct)->todr_settime)(ct, t))
-#define todr_getcal(ct, vp)	((*(ct)->todr_gettime)(ct, vp))
-#define todr_setcal(ct, v) 	((*(ct)->todr_settime)(ct, v))
 #define todr_wenable(ct, v)	if ((ct)->todr_setwen) \
 					((*(ct)->todr_setwen)(ct, v))
 

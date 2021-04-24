@@ -1,4 +1,4 @@
-/*	$OpenBSD: rs5c372.c,v 1.5 2009/10/05 18:59:36 deraadt Exp $	*/
+/*	$OpenBSD: rs5c372.c,v 1.6 2021/04/24 10:15:15 mpi Exp $	*/
 /*	$NetBSD: rs5c372.c,v 1.5 2006/03/29 06:41:24 thorpej Exp $	*/
 
 /*
@@ -107,8 +107,6 @@ int ricohrtc_clock_read(struct ricohrtc_softc *, struct clock_ymdhms *);
 int ricohrtc_clock_write(struct ricohrtc_softc *, struct clock_ymdhms *);
 int ricohrtc_gettime(struct todr_chip_handle *, struct timeval *);
 int ricohrtc_settime(struct todr_chip_handle *, struct timeval *);
-int ricohrtc_getcal(struct todr_chip_handle *, int *);
-int ricohrtc_setcal(struct todr_chip_handle *, int);
 
 int
 ricohrtc_match(struct device *parent, void *v, void *arg)
@@ -186,8 +184,6 @@ ricohrtc_attach(struct device *parent, struct device *self, void *arg)
 	sc->sc_todr.cookie = sc;
 	sc->sc_todr.todr_gettime = ricohrtc_gettime;
 	sc->sc_todr.todr_settime = ricohrtc_settime;
-	sc->sc_todr.todr_getcal = ricohrtc_getcal;
-	sc->sc_todr.todr_setcal = ricohrtc_setcal;
 	sc->sc_todr.todr_setwen = NULL;
 
 #if 0
@@ -231,20 +227,6 @@ ricohrtc_settime(struct todr_chip_handle *ch, struct timeval *tv)
 	if (ricohrtc_clock_write(sc, &dt) == 0)
 		return (-1);
 	return (0);
-}
-
-int
-ricohrtc_setcal(struct todr_chip_handle *ch, int cal)
-{
-
-	return (EOPNOTSUPP);
-}
-
-int
-ricohrtc_getcal(struct todr_chip_handle *ch, int *cal)
-{
-
-	return (EOPNOTSUPP);
 }
 
 void

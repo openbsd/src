@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcf8523.c,v 1.4 2020/04/27 12:36:03 kettenis Exp $	*/
+/*	$OpenBSD: pcf8523.c,v 1.5 2021/04/24 10:15:15 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005 Kimihiro Nonaka
@@ -109,8 +109,6 @@ int pcfrtc_clock_read(struct pcfrtc_softc *, struct clock_ymdhms *);
 int pcfrtc_clock_write(struct pcfrtc_softc *, struct clock_ymdhms *);
 int pcfrtc_gettime(struct todr_chip_handle *, struct timeval *);
 int pcfrtc_settime(struct todr_chip_handle *, struct timeval *);
-int pcfrtc_getcal(struct todr_chip_handle *, int *);
-int pcfrtc_setcal(struct todr_chip_handle *, int);
 
 int
 pcfrtc_match(struct device *parent, void *v, void *arg)
@@ -136,8 +134,6 @@ pcfrtc_attach(struct device *parent, struct device *self, void *arg)
 	sc->sc_todr.cookie = sc;
 	sc->sc_todr.todr_gettime = pcfrtc_gettime;
 	sc->sc_todr.todr_settime = pcfrtc_settime;
-	sc->sc_todr.todr_getcal = pcfrtc_getcal;
-	sc->sc_todr.todr_setcal = pcfrtc_setcal;
 	sc->sc_todr.todr_setwen = NULL;
 
 #if 0
@@ -201,18 +197,6 @@ pcfrtc_settime(struct todr_chip_handle *ch, struct timeval *tv)
 	}
 
 	return (0);
-}
-
-int
-pcfrtc_setcal(struct todr_chip_handle *ch, int cal)
-{
-	return (EOPNOTSUPP);
-}
-
-int
-pcfrtc_getcal(struct todr_chip_handle *ch, int *cal)
-{
-	return (EOPNOTSUPP);
 }
 
 uint8_t

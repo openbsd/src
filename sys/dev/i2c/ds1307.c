@@ -1,4 +1,4 @@
-/*	$OpenBSD: ds1307.c,v 1.2 2020/04/27 12:41:44 kettenis Exp $ */
+/*	$OpenBSD: ds1307.c,v 1.3 2021/04/24 10:15:15 mpi Exp $ */
 
 /*
  * Copyright (c) 2016 Marcus Glocker <mglocker@openbsd.org>
@@ -72,8 +72,6 @@ int	maxrtc_enable_osc(struct maxrtc_softc *);
 int	maxrtc_set_24h_mode(struct maxrtc_softc *);
 int	maxrtc_gettime(struct todr_chip_handle *, struct timeval *);
 int	maxrtc_settime(struct todr_chip_handle *, struct timeval *);
-int	maxrtc_getcal(struct todr_chip_handle *, int *);
-int	maxrtc_setcal(struct todr_chip_handle *, int);
 
 /*
  * Driver glue structures.
@@ -114,8 +112,6 @@ maxrtc_attach(struct device *parent, struct device *self, void *arg)
 	sc->sc_todr.cookie = sc;
 	sc->sc_todr.todr_gettime = maxrtc_gettime;
 	sc->sc_todr.todr_settime = maxrtc_settime;
-	sc->sc_todr.todr_getcal = maxrtc_getcal;
-	sc->sc_todr.todr_setcal = maxrtc_setcal;
 	sc->sc_todr.todr_setwen = NULL;
 
 	if (maxrtc_enable_osc(sc) == -1)
@@ -275,16 +271,4 @@ maxrtc_settime(struct todr_chip_handle *ch, struct timeval *tv)
 	}
 
 	return (0);
-}
-
-int
-maxrtc_getcal(struct todr_chip_handle *ch, int *cal)
-{
-	return (EOPNOTSUPP);
-}
-
-int
-maxrtc_setcal(struct todr_chip_handle *ch, int cal)
-{
-	return (EOPNOTSUPP);
 }

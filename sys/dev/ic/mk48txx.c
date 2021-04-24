@@ -1,4 +1,4 @@
-/*	$OpenBSD: mk48txx.c,v 1.7 2011/04/05 19:54:35 jasper Exp $	*/
+/*	$OpenBSD: mk48txx.c,v 1.8 2021/04/24 10:15:15 mpi Exp $	*/
 /*	$NetBSD: mk48txx.c,v 1.7 2001/04/08 17:05:10 tsutsui Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -54,8 +54,6 @@ struct mk48txx {
 
 int mk48txx_gettime(todr_chip_handle_t, struct timeval *);
 int mk48txx_settime(todr_chip_handle_t, struct timeval *);
-int mk48txx_getcal(todr_chip_handle_t, int *);
-int mk48txx_setcal(todr_chip_handle_t, int);
 
 int mk48txx_auto_century_adjust = 1;
 
@@ -111,8 +109,6 @@ mk48txx_attach(bt, bh, model, year0)
 	handle->cookie = mk;
 	handle->todr_gettime = mk48txx_gettime;
 	handle->todr_settime = mk48txx_settime;
-	handle->todr_getcal = mk48txx_getcal;
-	handle->todr_setcal = mk48txx_setcal;
 	handle->todr_setwen = NULL;
 	mk->mk_bt = bt;
 	mk->mk_bh = bh;
@@ -222,22 +218,6 @@ mk48txx_settime(handle, tv)
 	bus_space_write_1(bt, bh, clkoff + MK48TXX_ICSR, csr);
 	todr_wenable(handle, 0);
 	return (0);
-}
-
-int
-mk48txx_getcal(handle, vp)
-	todr_chip_handle_t handle;
-	int *vp;
-{
-	return (EOPNOTSUPP);
-}
-
-int
-mk48txx_setcal(handle, v)
-	todr_chip_handle_t handle;
-	int v;
-{
-	return (EOPNOTSUPP);
 }
 
 int
