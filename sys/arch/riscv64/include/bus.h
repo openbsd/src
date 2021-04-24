@@ -1,3 +1,4 @@
+/* $OpenBSD: bus.h,v 1.2 2021/04/24 21:37:41 kettenis Exp $ */
 /*
  * Copyright (c) 2003-2004 Opsycon AB Sweden.  All rights reserved.
  *
@@ -128,10 +129,9 @@ struct bus_space {
 #define	bus_space_subregion(t, h, o, s, p) \
     (*(t)->_space_subregion)((t), (h), (o), (s), (p))
 
-#define	BUS_SPACE_MAP_CACHEABLE		0x01
-#define BUS_SPACE_MAP_KSEG0		0x02
-#define	BUS_SPACE_MAP_LINEAR		0x04
-#define	BUS_SPACE_MAP_PREFETCHABLE	0x08
+#define BUS_SPACE_MAP_CACHEABLE		0x01
+#define BUS_SPACE_MAP_LINEAR		0x02
+#define BUS_SPACE_MAP_PREFETCHABLE	0x04
 
 #define	bus_space_vaddr(t, h)	(*(t)->_space_vaddr)((t), (h))
 #define	bus_space_mmap(t, a, o, p, f) \
@@ -158,8 +158,10 @@ static __inline void							      \
 CAT(bus_space_read_region_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,    \
      bus_addr_t ba, CAT3(u_int,m,_t) *x, size_t cnt)			      \
 {									      \
-	while (cnt--)							      \
-		*x++ = CAT(bus_space_read_,n)(bst, bsh, ba++);		      \
+	while (cnt--) {							      \
+		*x++ = CAT(bus_space_read_,n)(bst, bsh, ba);		      \
+		ba += (n);						      \
+	}								      \
 }
 
 bus_space_read_region(1,8)
@@ -192,9 +194,8 @@ static __inline void							      \
 CAT(bus_space_write_multi_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,    \
      bus_size_t o, const CAT3(u_int,m,_t) *x, size_t cnt)		      \
 {									      \
-	while (cnt--) {							      \
+	while (cnt--)							      \
 		CAT(bus_space_write_,n)(bst, bsh, o, *x++);		      \
-	}								      \
 }
 
 bus_space_write_multi(1,8)
@@ -210,7 +211,7 @@ CAT(bus_space_write_region_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,   \
 {									      \
 	while (cnt--) {							      \
 		CAT(bus_space_write_,n)(bst, bsh, ba, *x++);		      \
-		ba += sizeof(x);					      \
+		ba += (n);						      \
 	}								      \
 }
 
@@ -246,7 +247,7 @@ CAT(bus_space_set_region_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,     \
 {									      \
 	while (cnt--) {							      \
 		CAT(bus_space_write_,n)(bst, bsh, ba, x);		      \
-		ba += sizeof(x);					      \
+		ba += (n);						      \
 	}								      \
 }
 
