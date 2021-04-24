@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.353 2021/01/26 08:01:09 deraadt Exp $
+#	$OpenBSD: files.pci,v 1.354 2021/04/24 09:37:46 jmatthew Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -826,7 +826,7 @@ attach	ccp at pci with ccp_pci
 file	dev/pci/ccp_pci.c		ccp_pci
 
 # Broadcom NetXtreme-C/E
-device	bnxt: ether, ifnet, ifmedia
+device	bnxt: ether, ifnet, ifmedia, intrmap, stoeplitz
 attach	bnxt at pci
 file	dev/pci/if_bnxt.c		bnxt
 

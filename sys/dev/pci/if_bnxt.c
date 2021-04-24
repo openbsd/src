@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.31 2021/04/23 07:00:58 jmatthew Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.32 2021/04/24 09:37:46 jmatthew Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -56,6 +56,7 @@
 #include <sys/stdint.h>
 #include <sys/sockio.h>
 #include <sys/atomic.h>
+#include <sys/intrmap.h>
 
 #include <machine/bus.h>
 
@@ -67,6 +68,7 @@
 
 #include <net/if.h>
 #include <net/if_media.h>
+#include <net/toeplitz.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -252,7 +254,7 @@ struct bnxt_softc {
 
 	struct bnxt_vnic_info	sc_vnic;
 	struct bnxt_dmamem	*sc_stats_ctx_mem;
-	struct bnxt_dmamem	*sc_rx_mcast;
+	struct bnxt_dmamem	*sc_rx_cfg;
 
 	struct bnxt_cp_ring	sc_cp_ring;
 
@@ -290,6 +292,7 @@ void		bnxt_iff(struct bnxt_softc *);
 int		bnxt_ioctl(struct ifnet *, u_long, caddr_t);
 int		bnxt_rxrinfo(struct bnxt_softc *, struct if_rxrinfo *);
 void		bnxt_start(struct ifqueue *);
+int		bnxt_admin_intr(void *);
 int		bnxt_intr(void *);
 void		bnxt_watchdog(struct ifnet *);
 void		bnxt_media_status(struct ifnet *, struct ifmediareq *);
@@ -363,6 +366,8 @@ int		bnxt_hwrm_set_filter(struct bnxt_softc *,
 		    struct bnxt_vnic_info *);
 int		bnxt_hwrm_free_filter(struct bnxt_softc *,
 		    struct bnxt_vnic_info *);
+int		bnxt_hwrm_vnic_rss_cfg(struct bnxt_softc *,
+		    struct bnxt_vnic_info *, uint32_t, daddr_t, daddr_t);
 int		bnxt_cfg_async_cr(struct bnxt_softc *, struct bnxt_cp_ring *);
 int		bnxt_hwrm_nvm_get_dev_info(struct bnxt_softc *, uint16_t *,
 		    uint16_t *, uint32_t *, uint32_t *, uint32_t *, uint32_t *);
@@ -377,8 +382,6 @@ int bnxt_hwrm_func_drv_unrgtr(struct bnxt_softc *softc, bool shutdown);
 
 int bnxt_hwrm_port_qstats(struct bnxt_softc *softc);
 
-int bnxt_hwrm_rss_cfg(struct bnxt_softc *softc, struct bnxt_vnic_info *vnic,
-    uint32_t hash_type);
 
 int bnxt_hwrm_vnic_tpa_cfg(struct bnxt_softc *softc);
 void bnxt_validate_hw_lro_settings(struct bnxt_softc *softc);
@@ -528,16 +531,36 @@ bnxt_attach(struct device *parent, struct device *self, void *aux)
 	 * devices advertise msi support, but there's no way to tell a
 	 * completion queue to use msi mode, only legacy or msi-x.
 	 */
-	sc->sc_nqueues = 1;
 	if (pci_intr_map_msix(pa, 0, &ih) == 0) {
+		int nmsix;
+
 		sc->sc_flags |= BNXT_FLAG_MSIX;
-	} else if (pci_intr_map(pa, &ih) != 0) {
+		intrstr = pci_intr_string(sc->sc_pc, ih);
+
+		nmsix = pci_intr_msix_count(pa->pa_pc, pa->pa_tag);
+		if (nmsix > 1) {
+			sc->sc_ih = pci_intr_establish(sc->sc_pc, ih,
+			    IPL_NET | IPL_MPSAFE, bnxt_admin_intr, sc, DEVNAME(sc));
+			sc->sc_intrmap = intrmap_create(&sc->sc_dev,
+			    nmsix - 1, BNXT_MAX_QUEUES, INTRMAP_POWEROF2);
+			sc->sc_nqueues = intrmap_count(sc->sc_intrmap);
+			KASSERT(sc->sc_nqueues > 0);
+			KASSERT(powerof2(sc->sc_nqueues));
+		} else {
+			sc->sc_ih = pci_intr_establish(sc->sc_pc, ih,
+			    IPL_NET | IPL_MPSAFE, bnxt_intr, &sc->sc_queues[0],
+			    DEVNAME(sc));
+			sc->sc_nqueues = 1;
+		}
+	} else if (pci_intr_map(pa, &ih) == 0) {
+		intrstr = pci_intr_string(sc->sc_pc, ih);
+		sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_NET | IPL_MPSAFE,
+		    bnxt_intr, &sc->sc_queues[0], DEVNAME(sc));
+		sc->sc_nqueues = 1;
+	} else {
 		printf(": unable to map interrupt\n");
 		goto free_resp;
 	}
-	intrstr = pci_intr_string(sc->sc_pc, ih);
-	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_NET | IPL_MPSAFE,
-	    bnxt_intr, &sc->sc_queues[0], DEVNAME(sc));
 	if (sc->sc_ih == NULL) {
 		printf(": unable to establish interrupt");
 		if (intrstr != NULL)
@@ -545,7 +568,8 @@ bnxt_attach(struct device *parent, struct device *self, void *aux)
 		printf("\n");
 		goto deintr;
 	}
-	printf("%s, address %s\n", intrstr, ether_sprintf(sc->sc_ac.ac_enaddr));
+	printf("%s, %d queues, address %s\n", intrstr, sc->sc_nqueues,
+	    ether_sprintf(sc->sc_ac.ac_enaddr));
 
 	if (bnxt_hwrm_func_qcfg(sc) != 0) {
 		printf("%s: failed to query function config\n", DEVNAME(sc));
@@ -634,6 +658,7 @@ bnxt_attach(struct device *parent, struct device *self, void *aux)
 		struct ifiqueue *ifiq = ifp->if_iqs[i];
 		struct ifqueue *ifq = ifp->if_ifqs[i];
 		struct bnxt_queue *bq = &sc->sc_queues[i];
+		struct bnxt_cp_ring *cp = &bq->q_cp;
 		struct bnxt_rx_queue *rx = &bq->q_rx;
 		struct bnxt_tx_queue *tx = &bq->q_tx;
 
@@ -648,15 +673,52 @@ bnxt_attach(struct device *parent, struct device *self, void *aux)
 		tx->tx_softc = sc;
 		tx->tx_ifq = ifq;
 		ifq->ifq_softc = tx;
+
+		if (sc->sc_nqueues > 1) {
+			cp->stats_ctx_id = HWRM_NA_SIGNATURE;
+			cp->ring.phys_id = (uint16_t)HWRM_NA_SIGNATURE;
+			cp->ring.id = i + 1;	/* first cp ring is async only */
+			cp->softc = sc;
+			cp->ring.doorbell = bq->q_cp.ring.id * 0x80;
+			cp->ring.ring_size = (PAGE_SIZE * BNXT_CP_PAGES) /
+			    sizeof(struct cmpl_base);
+			if (pci_intr_map_msix(pa, i + 1, &ih) != 0) {
+				printf("%s: unable to map queue interrupt %d\n",
+				    DEVNAME(sc), i);
+				goto intrdisestablish;
+			}
+			snprintf(bq->q_name, sizeof(bq->q_name), "%s:%d",
+			    DEVNAME(sc), i);
+			bq->q_ihc = pci_intr_establish_cpu(sc->sc_pc, ih,
+			    IPL_NET | IPL_MPSAFE, intrmap_cpu(sc->sc_intrmap, i),
+			    bnxt_intr, bq, bq->q_name);
+			if (bq->q_ihc == NULL) {
+				printf("%s: unable to establish interrupt %d\n",
+				    DEVNAME(sc), i);
+				goto intrdisestablish;
+			}
+		}
 	}
 
 	bnxt_media_autonegotiate(sc);
 	bnxt_hwrm_port_phy_qcfg(sc, NULL);
 	return;
 
+intrdisestablish:
+	for (i = 0; i < sc->sc_nqueues; i++) {
+		struct bnxt_queue *bq = &sc->sc_queues[i];
+		if (bq->q_ihc == NULL)
+			continue;
+		pci_intr_disestablish(sc->sc_pc, bq->q_ihc);
+		bq->q_ihc = NULL;
+	}
 free_cp_mem:
 	bnxt_dmamem_free(sc, cpr->ring_mem);
 deintr:
+	if (sc->sc_intrmap != NULL) {
+		intrmap_destroy(sc->sc_intrmap);
+		sc->sc_intrmap = NULL;
+	}
 	pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
 	sc->sc_ih = NULL;
 free_resp:
@@ -993,9 +1055,9 @@ bnxt_up(struct bnxt_softc *sc)
 		return;
 	}
 
-	sc->sc_rx_mcast = bnxt_dmamem_alloc(sc, PAGE_SIZE * 2);
-	if (sc->sc_rx_mcast == NULL) {
-		printf("%s: failed to allocate multicast table\n",
+	sc->sc_rx_cfg = bnxt_dmamem_alloc(sc, PAGE_SIZE * 2);
+	if (sc->sc_rx_cfg == NULL) {
+		printf("%s: failed to allocate rx config buffer\n",
 		    DEVNAME(sc));
 		goto free_stats;
 	}
@@ -1042,6 +1104,31 @@ bnxt_up(struct bnxt_softc *sc)
 		goto dealloc_vnic;
 	}
 
+	if (sc->sc_nqueues > 1) {
+		uint16_t *rss_table = (BNXT_DMA_KVA(sc->sc_rx_cfg) + PAGE_SIZE);
+		uint8_t *hash_key = (uint8_t *)(rss_table + HW_HASH_INDEX_SIZE);
+
+		for (i = 0; i < HW_HASH_INDEX_SIZE; i++) {
+			struct bnxt_queue *bq;
+
+			bq = &sc->sc_queues[i % sc->sc_nqueues];
+			rss_table[i] = htole16(bq->q_rg.grp_id);
+		}
+		stoeplitz_to_key(hash_key, HW_HASH_KEY_SIZE);
+
+		if (bnxt_hwrm_vnic_rss_cfg(sc, &sc->sc_vnic,
+		    HWRM_VNIC_RSS_CFG_INPUT_HASH_TYPE_IPV4 |
+		    HWRM_VNIC_RSS_CFG_INPUT_HASH_TYPE_TCP_IPV4 |
+		    HWRM_VNIC_RSS_CFG_INPUT_HASH_TYPE_IPV6 |
+		    HWRM_VNIC_RSS_CFG_INPUT_HASH_TYPE_TCP_IPV6,
+		    BNXT_DMA_DVA(sc->sc_rx_cfg) + PAGE_SIZE,
+		    BNXT_DMA_DVA(sc->sc_rx_cfg) + PAGE_SIZE +
+		    (HW_HASH_INDEX_SIZE * sizeof(uint16_t))) != 0) {
+			printf("%s: failed to set RSS config\n", DEVNAME(sc));
+			goto dealloc_vnic;
+		}
+	}
+
 	bnxt_iff(sc);
 	SET(ifp->if_flags, IFF_RUNNING);
 
@@ -1055,8 +1142,8 @@ down_queues:
 	for (i = 0; i < sc->sc_nqueues; i++)
 		bnxt_queue_down(sc, &sc->sc_queues[i]);
 
-	bnxt_dmamem_free(sc, sc->sc_rx_mcast);
-	sc->sc_rx_mcast = NULL;
+	bnxt_dmamem_free(sc, sc->sc_rx_cfg);
+	sc->sc_rx_cfg = NULL;
 free_stats:
 	bnxt_dmamem_free(sc, sc->sc_stats_ctx_mem);
 	sc->sc_stats_ctx_mem = NULL;
@@ -1085,8 +1172,8 @@ bnxt_down(struct bnxt_softc *sc)
 	for (i = 0; i < sc->sc_nqueues; i++)
 		bnxt_queue_down(sc, &sc->sc_queues[i]);
 
-	bnxt_dmamem_free(sc, sc->sc_rx_mcast);
-	sc->sc_rx_mcast = NULL;
+	bnxt_dmamem_free(sc, sc->sc_rx_cfg);
+	sc->sc_rx_cfg = NULL;
 
 	bnxt_dmamem_free(sc, sc->sc_stats_ctx_mem);
 	sc->sc_stats_ctx_mem = NULL;
@@ -1105,7 +1192,7 @@ bnxt_iff(struct bnxt_softc *sc)
 	    | HWRM_CFA_L2_SET_RX_MASK_INPUT_MASK_MCAST
 	    | HWRM_CFA_L2_SET_RX_MASK_INPUT_MASK_ANYVLAN_NONVLAN;
 
-	mc_list = BNXT_DMA_KVA(sc->sc_rx_mcast);
+	mc_list = BNXT_DMA_KVA(sc->sc_rx_cfg);
 	mc_count = 0;
 
 	if (ifp->if_flags & IFF_PROMISC) {
@@ -1128,7 +1215,7 @@ bnxt_iff(struct bnxt_softc *sc)
 	}
 
 	bnxt_hwrm_cfa_l2_set_rx_mask(sc, sc->sc_vnic.id, rx_mask,
-	    BNXT_DMA_DVA(sc->sc_rx_mcast), mc_count);
+	    BNXT_DMA_DVA(sc->sc_rx_cfg), mc_count);
 }
 
 int
@@ -2179,6 +2266,11 @@ bnxt_rx(struct bnxt_softc *sc, struct bnxt_rx_queue *rx,
 	}
 #endif
 
+	if (lemtoh16(&rxlo->flags_type) & RX_PKT_CMPL_FLAGS_RSS_VALID) {
+		m->m_pkthdr.ph_flowid = lemtoh32(&rxlo->rss_hash);
+		m->m_pkthdr.csum_flags |= M_FLOWID;
+	}
+
 	if (ag != NULL) {
 		bs = &rx->rx_ag_slots[ag->opaque];
 		bus_dmamap_sync(sc->sc_dmat, bs->bs_map, 0,
@@ -3097,25 +3189,21 @@ bnxt_hwrm_free_filter(struct bnxt_softc *softc, struct bnxt_vnic_info *vnic)
 }
 
 
-#if 0
-
 int
-bnxt_hwrm_rss_cfg(struct bnxt_softc *softc, struct bnxt_vnic_info *vnic,
-    uint32_t hash_type)
+bnxt_hwrm_vnic_rss_cfg(struct bnxt_softc *softc, struct bnxt_vnic_info *vnic,
+    uint32_t hash_type, daddr_t rss_table, daddr_t rss_key)
 {
 	struct hwrm_vnic_rss_cfg_input	req = {0};
 
 	bnxt_hwrm_cmd_hdr_init(softc, &req, HWRM_VNIC_RSS_CFG);
 
 	req.hash_type = htole32(hash_type);
-	req.ring_grp_tbl_addr = htole64(vnic->rss_grp_tbl.idi_paddr);
-	req.hash_key_tbl_addr = htole64(vnic->rss_hash_key_tbl.idi_paddr);
+	req.ring_grp_tbl_addr = htole64(rss_table);
+	req.hash_key_tbl_addr = htole64(rss_key);
 	req.rss_ctx_idx = htole16(vnic->rss_id);
 
 	return hwrm_send_message(softc, &req, sizeof(req));
 }
-
-#endif
 
 int
 bnxt_cfg_async_cr(struct bnxt_softc *softc, struct bnxt_cp_ring *cpr)
