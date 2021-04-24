@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.120 2021/03/11 07:57:18 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.121 2021/04/24 07:49:11 visa Exp $
 
 machine		armv7 arm
 
@@ -195,6 +195,9 @@ rkgpio*		at fdt?
 rkiic*		at fdt?
 iic*		at rkiic?
 dwdog*		at fdt?
+
+# Xilinx Zynq-7000
+cduart*		at fdt?
 
 axppmic*	at iic?			# axp209 pmic
 crosec*		at iic?

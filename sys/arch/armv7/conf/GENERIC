@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.134 2021/02/04 16:25:39 anton Exp $
+#	$OpenBSD: GENERIC,v 1.135 2021/04/24 07:49:11 visa Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -210,6 +210,9 @@ rkiic*		at fdt?
 iic*		at rkiic?
 rktemp*		at fdt?
 dwdog*		at fdt?
+
+# Xilinx Zynq-7000
+cduart*		at fdt?
 
 # I2C devices
 abcrtc*		at iic?			# Abracon x80x RTC

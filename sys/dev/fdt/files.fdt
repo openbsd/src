@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.148 2021/04/24 05:14:45 jsg Exp $
+#	$OpenBSD: files.fdt,v 1.149 2021/04/24 07:49:11 visa Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -275,6 +275,10 @@ file	dev/fdt/amluart.c		amluart
 device	amlusbphy
 attach	amlusbphy at fdt
 file	dev/fdt/amlusbphy.c		amlusbphy
+
+device	cduart
+attach	cduart at fdt
+file	dev/fdt/cduart.c		cduart
 
 device	hiclock
 attach	hiclock at fdt
