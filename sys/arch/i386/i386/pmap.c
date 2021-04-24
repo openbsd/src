@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.211 2021/03/11 11:16:57 jsg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.212 2021/04/24 09:44:44 mpi Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -1365,7 +1365,7 @@ void
 pmap_pinit_pd_86(struct pmap *pmap)
 {
 	/* allocate PDP */
-	pmap->pm_pdir = uvm_km_alloc(kernel_map, NBPG);
+	pmap->pm_pdir = (vaddr_t)km_alloc(NBPG, &kv_any, &kp_dirty, &kd_waitok);
 	if (pmap->pm_pdir == 0)
 		panic("pmap_pinit_pd_86: kernel_map out of virtual space!");
 	pmap_extract(pmap_kernel(), (vaddr_t)pmap->pm_pdir,
@@ -1397,7 +1397,8 @@ pmap_pinit_pd_86(struct pmap *pmap)
 	 * execution, one that lacks all kernel mappings.
 	 */
 	if (cpu_meltdown) {
-		pmap->pm_pdir_intel = uvm_km_zalloc(kernel_map, NBPG);
+		pmap->pm_pdir_intel = (vaddr_t)km_alloc(NBPG, &kv_any, &kp_zero,
+		    &kd_waitok);
 		if (pmap->pm_pdir_intel == 0)
 			panic("%s: kernel_map out of virtual space!", __func__);
 
@@ -1449,11 +1450,12 @@ pmap_destroy(struct pmap *pmap)
 		uvm_pagefree(pg);
 	}
 
-	uvm_km_free(kernel_map, pmap->pm_pdir, pmap->pm_pdirsize);
+	km_free((void *)pmap->pm_pdir, pmap->pm_pdirsize, &kv_any, &kp_dirty);
 	pmap->pm_pdir = 0;
 
 	if (pmap->pm_pdir_intel) {
-		uvm_km_free(kernel_map, pmap->pm_pdir_intel, pmap->pm_pdirsize);
+		km_free((void *)pmap->pm_pdir_intel, pmap->pm_pdirsize,
+		    &kv_any, &kp_dirty);
 		pmap->pm_pdir_intel = 0;
 	}
 
@@ -2522,8 +2524,9 @@ pmap_enter_special_86(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int32_t flags)
 		    __func__, va);
 
 	if (!pmap->pm_pdir_intel) {
-		if ((pmap->pm_pdir_intel = uvm_km_zalloc(kernel_map, NBPG))
-		    == 0)
+		pmap->pm_pdir_intel = (vaddr_t)km_alloc(NBPG, &kv_any, &kp_zero,
+		    &kd_waitok);
+		if (pmap->pm_pdir_intel == 0)
 			panic("%s: kernel_map out of virtual space!", __func__);
 		if (!pmap_extract(pmap, pmap->pm_pdir_intel,
 		    &pmap->pm_pdirpa_intel))

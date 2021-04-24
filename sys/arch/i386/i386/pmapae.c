@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.60 2020/09/23 15:13:26 deraadt Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.61 2021/04/24 09:44:45 mpi Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Michael Shalayeff
@@ -738,7 +738,7 @@ pmap_bootstrap_pae(void)
 				    (uint32_t)VM_PAGE_TO_PHYS(ptppg));
 			}
 		}
-		uvm_km_free(kernel_map, (vaddr_t)pd, NBPG);
+		km_free(pd, NBPG, &kv_any, &kp_dirty);
 		DPRINTF("%s: freeing PDP 0x%x\n", __func__, (uint32_t)pd);
 	}
 
@@ -944,7 +944,8 @@ pmap_pinit_pd_pae(struct pmap *pmap)
 	paddr_t pdidx[4];
 
 	/* allocate PDP */
-	pmap->pm_pdir = uvm_km_alloc(kernel_map, 4 * NBPG);
+	pmap->pm_pdir = (vaddr_t)km_alloc(4 * NBPG, &kv_any, &kp_dirty,
+	    &kd_waitok);
 	if (pmap->pm_pdir == 0)
 		panic("pmap_pinit_pd_pae: kernel_map out of virtual space!");
 	/* page index is in the pmap! */
@@ -997,7 +998,8 @@ pmap_pinit_pd_pae(struct pmap *pmap)
 	if (cpu_meltdown) {
 		int i;
 
-		if ((va = uvm_km_zalloc(kernel_map, 4 * NBPG)) == 0)
+		va = (vaddr_t)km_alloc(4 * NBPG, &kv_any, &kp_zero, &kd_nowait);
+		if (va == 0)
 			panic("%s: kernel_map out of virtual space!", __func__);
 		if (!pmap_extract(pmap_kernel(),
 		    (vaddr_t)&pmap->pm_pdidx_intel, &pmap->pm_pdirpa_intel))
@@ -1936,7 +1938,20 @@ pmap_enter_special_pae(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int32_t flags)
 		    __func__, va);
 
 	if (!pmap->pm_pdir_intel) {
-		if ((vapd = uvm_km_zalloc(kernel_map, 4 * NBPG)) == 0)
+#if notyet
+		/*
+		 * XXX mapping is established via pmap_kenter() and lost
+		 * after enabling PAE.
+		 */
+		vapd = (vaddr_t)km_alloc(4 * NBPG, &kv_any, &kp_zero,
+		    &kd_waitok);
+#else
+		vapd = (vaddr_t)km_alloc(4 * NBPG, &kv_any, &kp_pageable,
+		    &kd_waitok);
+		if (vapd != 0)
+			bzero((void *)vapd, 4 * NBPG);
+#endif
+		if (vapd == 0)
 			panic("%s: kernel_map out of virtual space!", __func__);
 		pmap->pm_pdir_intel = vapd;
 		if (!pmap_extract(pmap, (vaddr_t)&pmap->pm_pdidx_intel,
