@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.47 2021/02/26 15:15:40 tb Exp $
+# $OpenBSD: appstest.sh,v 1.48 2021/04/24 00:10:43 inoguchi Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -1721,18 +1721,11 @@ function test_server_client {
 		pwd=$sv_rsa_pass
 	fi
 
-	$s_bin version | grep 'OpenSSL 1.1.1' > /dev/null
-	if [ $? -eq 0 ] ; then
-		extra_opts="-4"
-	else
-		extra_opts=""
-	fi
-
 	start_message "s_server ... start TLS/SSL test server"
 	$s_bin s_server -accept $port -CAfile $ca_cert \
 		-cert $crt -key $key -pass pass:$pwd \
 		-context "appstest.sh" -id_prefix "APPSTEST.SH" -crl_check \
-		-alpn "http/1.1,spdy/3" -www -cipher ALL $extra_opts \
+		-alpn "http/1.1,spdy/3" -www -cipher ALL -4 \
 		-msg -tlsextdebug -verify 3 -groups X25519:P-384:P-256 \
 		-status -servername xyz -cert2 $crt -key2 $key \
 		> $s_server_out 2>&1 &
