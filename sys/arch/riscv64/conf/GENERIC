@@ -48,6 +48,7 @@ simplebus*	at mainbus0 early 1
 plic*		at simplebus? early 1
 
 syscon*		at fdt? early 1
+gfrtc*		at fdt?
 
 scsibus*        at scsi?
 sd*		at scsibus?

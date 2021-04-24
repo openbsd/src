@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.3 2021/04/23 13:03:41 jsg Exp $
+# $OpenBSD: RAMDISK,v 1.4 2021/04/24 05:14:45 jsg Exp $
 #
 # GENERIC machine description file
 #
@@ -67,6 +67,7 @@ simplebus*	at mainbus0 early 1
 plic*		at simplebus? early 1
 
 syscon*		at fdt? early 1
+gfrtc*		at fdt?
 
 scsibus*        at scsi?
 sd*		at scsibus?

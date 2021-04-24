@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.147 2021/04/07 17:12:22 kettenis Exp $
+#	$OpenBSD: files.fdt,v 1.148 2021/04/24 05:14:45 jsg Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -155,6 +155,11 @@ file	dev/fdt/exrtc.c			exrtc
 device	exuart
 attach	exuart at fdt
 file	dev/fdt/exuart.c		exuart
+
+# Google Goldfish real-time clock
+device	gfrtc
+attach	gfrtc at fdt
+file	dev/fdt/gfrtc.c			gfrtc
 
 # ARM PrimeCell PL061 General Purpose Input/Output
 device	plgpio
