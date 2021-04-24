@@ -1,4 +1,4 @@
-/* $OpenBSD: com_fdt.c,v 1.4 2020/03/23 21:40:01 uaa Exp $ */
+/* $OpenBSD: com_fdt.c,v 1.5 2021/04/24 10:33:09 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -52,11 +52,13 @@ void
 com_fdt_init_cons(void)
 {
 	struct fdt_reg reg;
+	uint32_t width, shift;
 	void *node;
 
 	if ((node = fdt_find_cons("brcm,bcm2835-aux-uart")) == NULL &&
-	    (node = fdt_find_cons("snps,dw-apb-uart")) == NULL &&
 	    (node = fdt_find_cons("marvell,armada-38x-uart")) == NULL &&
+	    (node = fdt_find_cons("ns16550a")) == NULL &&
+	    (node = fdt_find_cons("snps,dw-apb-uart")) == NULL &&
 	    (node = fdt_find_cons("ti,omap3-uart")) == NULL &&
 	    (node = fdt_find_cons("ti,omap4-uart")) == NULL)
 			return;
@@ -71,8 +73,16 @@ com_fdt_init_cons(void)
 	 * comcnattach() does by doing the minimal setup here.
 	 */
 
-	comcons_reg_width = OF_getpropint(stdout_node, "reg-io-width", 4);
-	comcons_reg_shift = OF_getpropint(stdout_node, "reg-shift", 2);
+	if (OF_is_compatible(stdout_node, "ns16550a")) {
+		width = 1;
+		shift = 0;
+	} else {
+		width = 4;
+		shift = 2;
+	}
+
+	comcons_reg_width = OF_getpropint(stdout_node, "reg-io-width", width);
+	comcons_reg_shift = OF_getpropint(stdout_node, "reg-shift", shift);
 
 	comconsiot = fdt_cons_bs_tag;
 	if (bus_space_map(comconsiot, reg.addr, reg.size, 0, &comconsioh))
@@ -87,8 +97,9 @@ com_fdt_match(struct device *parent, void *match, void *aux)
 	struct fdt_attach_args *faa = aux;
 
 	return (OF_is_compatible(faa->fa_node, "brcm,bcm2835-aux-uart") ||
-	    OF_is_compatible(faa->fa_node, "snps,dw-apb-uart") ||
 	    OF_is_compatible(faa->fa_node, "marvell,armada-38x-uart") ||
+	    OF_is_compatible(faa->fa_node, "ns16550a") ||
+	    OF_is_compatible(faa->fa_node, "snps,dw-apb-uart") ||
 	    OF_is_compatible(faa->fa_node, "ti,omap3-uart") ||
 	    OF_is_compatible(faa->fa_node, "ti,omap4-uart"));
 }
@@ -99,7 +110,7 @@ com_fdt_attach(struct device *parent, struct device *self, void *aux)
 	struct com_softc *sc = (struct com_softc *)self;
 	struct fdt_attach_args *faa = aux;
 	int (*intr)(void *) = comintr;
-	uint32_t freq;
+	uint32_t freq, width, shift;
 
 	if (faa->fa_nreg < 1)
 		return;
@@ -121,8 +132,16 @@ com_fdt_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_uarttype = COM_UART_16550;
 	sc->sc_frequency = freq ? freq : COM_FREQ;
 
-	sc->sc_reg_width = OF_getpropint(faa->fa_node, "reg-io-width", 4);
-	sc->sc_reg_shift = OF_getpropint(faa->fa_node, "reg-shift", 2);
+	if (OF_is_compatible(stdout_node, "ns16550a")) {
+		width = 1;
+		shift = 0;
+	} else {
+		width = 4;
+		shift = 2;
+	}
+
+	sc->sc_reg_width = OF_getpropint(faa->fa_node, "reg-io-width", width);
+	sc->sc_reg_shift = OF_getpropint(faa->fa_node, "reg-shift", shift);
 
 	if (OF_is_compatible(faa->fa_node, "snps,dw-apb-uart") ||
 	    OF_is_compatible(faa->fa_node, "marvell,armada-38x-uart"))
