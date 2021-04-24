@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.517 2021/04/16 06:20:29 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.518 2021/04/24 17:04:24 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2594,8 +2594,6 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 
 		peer = peer_match(&req->neighbor, 0);
 		if (peer == NULL) {
-			log_warnx("%s: no peer found for adj-rib-out",
-			    __func__);
 			error = CTL_RES_NOSUCHPEER;
 			imsg_compose(ibuf_se_ctl, IMSG_CTL_RESULT, 0, pid, -1,
 			    &error, sizeof(error));
