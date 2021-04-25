@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.96 2020/11/15 00:04:05 jmatthew Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.97 2021/04/25 15:59:19 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -331,6 +331,8 @@ static const struct urtwn_type {
 	URTWN_DEV_8188EU(REALTEK,	RTL8188ETV),
 	URTWN_DEV_8188EU(REALTEK,	RTL8188EU),
 	URTWN_DEV_8188EU(TPLINK,	RTL8188EUS),
+	URTWN_DEV_8188EU(ASUS,  	RTL8188EUS),
+
 	/* URTWN_RTL8192EU */
 	URTWN_DEV_8192EU(DLINK,		DWA131E1),
 	URTWN_DEV_8192EU(REALTEK,	RTL8192EU),
