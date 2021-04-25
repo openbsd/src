@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.101 2020/12/09 15:50:58 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.102 2021/04/25 15:32:21 stsp Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -695,10 +695,7 @@ ieee80211_addba_request(struct ieee80211com *ic, struct ieee80211_node *ni,
 	ba->ba_params =
 	    (ba->ba_winsize << IEEE80211_ADDBA_BUFSZ_SHIFT) |
 	    (tid << IEEE80211_ADDBA_TID_SHIFT);
-#if 0
-	/* iwm(4) 9k and iwx(4) need more work before AMSDU can be enabled. */
 	ba->ba_params |= IEEE80211_ADDBA_AMSDU;
-#endif
 	if ((ic->ic_htcaps & IEEE80211_HTCAP_DELAYEDBA) == 0)
 		/* immediate BA */
 		ba->ba_params |= IEEE80211_ADDBA_BA_POLICY;

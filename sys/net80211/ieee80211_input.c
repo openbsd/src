@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.232 2021/03/26 10:18:55 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.233 2021/04/25 15:32:21 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -59,7 +59,8 @@
 #include <net80211/ieee80211_priv.h>
 
 struct	mbuf *ieee80211_input_hwdecrypt(struct ieee80211com *,
-	    struct ieee80211_node *, struct mbuf *);
+	    struct ieee80211_node *, struct mbuf *,
+	    struct ieee80211_rxinfo *rxi);
 struct	mbuf *ieee80211_defrag(struct ieee80211com *, struct mbuf *, int);
 void	ieee80211_defrag_timeout(void *);
 void	ieee80211_input_ba(struct ieee80211com *, struct mbuf *,
@@ -153,7 +154,7 @@ ieee80211_get_hdrlen(const struct ieee80211_frame *wh)
 /* Post-processing for drivers which perform decryption in hardware. */
 struct mbuf *
 ieee80211_input_hwdecrypt(struct ieee80211com *ic, struct ieee80211_node *ni,
-    struct mbuf *m)
+    struct mbuf *m, struct ieee80211_rxinfo *rxi)
 {
 	struct ieee80211_key *k;
 	struct ieee80211_frame *wh;
@@ -188,7 +189,12 @@ ieee80211_input_hwdecrypt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		}
 		if (ieee80211_ccmp_get_pn(&pn, &prsc, m, k) != 0)
 			return NULL;
-		if (pn <= *prsc) {
+		if (rxi->rxi_flags & IEEE80211_RXI_HWDEC_SAME_PN) {
+			if (pn < *prsc) {
+				ic->ic_stats.is_ccmp_replays++;
+				return NULL;
+			}
+		} else if (pn <= *prsc) {
 			ic->ic_stats.is_ccmp_replays++;
 			return NULL;
 		}
@@ -213,8 +219,12 @@ ieee80211_input_hwdecrypt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		}
 		if (ieee80211_tkip_get_tsc(&pn, &prsc, m, k) != 0)
 			return NULL;
-
-		if (pn <= *prsc) {
+		if (rxi->rxi_flags & IEEE80211_RXI_HWDEC_SAME_PN) {
+			if (pn < *prsc) {
+				ic->ic_stats.is_tkip_replays++;
+				return NULL;
+			}
+		} else if (pn <= *prsc) {
 			ic->ic_stats.is_tkip_replays++;
 			return NULL;
 		}
@@ -381,7 +391,13 @@ ieee80211_inputm(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 			orxseq = &ni->ni_qos_rxseqs[tid];
 		else
 			orxseq = &ni->ni_rxseq;
-		if ((wh->i_fc[1] & IEEE80211_FC1_RETRY) &&
+		if (rxi->rxi_flags & IEEE80211_RXI_SAME_SEQ) {
+			if (nrxseq != *orxseq) {
+				/* duplicate, silently discarded */
+				ic->ic_stats.is_rx_dup++;
+				goto out;
+			}
+		} else if ((wh->i_fc[1] & IEEE80211_FC1_RETRY) &&
 		    nrxseq == *orxseq) {
 			/* duplicate, silently discarded */
 			ic->ic_stats.is_rx_dup++;
@@ -557,7 +573,7 @@ ieee80211_inputm(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 					goto err;
 				}
 			} else {
-				m = ieee80211_input_hwdecrypt(ic, ni, m);
+				m = ieee80211_input_hwdecrypt(ic, ni, m, rxi);
 				if (m == NULL)
 					goto err;
 			}
@@ -2758,10 +2774,7 @@ ieee80211_recv_addba_req(struct ieee80211com *ic, struct mbuf *m,
 	ba->ba_params = (params & IEEE80211_ADDBA_BA_POLICY);
 	ba->ba_params |= ((ba->ba_winsize << IEEE80211_ADDBA_BUFSZ_SHIFT) |
 	    (tid << IEEE80211_ADDBA_TID_SHIFT));
-#if 0
-	/* iwm(4) 9k and iwx(4) need more work before AMSDU can be enabled. */
 	ba->ba_params |= IEEE80211_ADDBA_AMSDU;
-#endif
 	ba->ba_winstart = ssn;
 	ba->ba_winend = (ba->ba_winstart + ba->ba_winsize - 1) & 0xfff;
 	/* allocate and setup our reordering buffer */
