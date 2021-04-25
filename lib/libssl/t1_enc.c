@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.138 2021/04/19 17:26:39 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.139 2021/04/25 13:15:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -143,11 +143,6 @@
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 #include <openssl/md5.h>
-
-int tls1_PRF(SSL *s, const unsigned char *secret, size_t secret_len,
-    const void *seed1, size_t seed1_len, const void *seed2, size_t seed2_len,
-    const void *seed3, size_t seed3_len, const void *seed4, size_t seed4_len,
-    const void *seed5, size_t seed5_len, unsigned char *out, size_t out_len);
 
 void
 tls1_cleanup_key_block(SSL *s)
@@ -468,26 +463,6 @@ tls1_setup_key_block(SSL *s)
 
  err:
 	return (ret);
-}
-
-int
-tls1_final_finish_mac(SSL *s, const char *str, int str_len, unsigned char *out)
-{
-	unsigned char buf[EVP_MAX_MD_SIZE];
-	size_t hash_len;
-
-	if (str_len < 0)
-		return 0;
-
-	if (!tls1_transcript_hash_value(s, buf, sizeof(buf), &hash_len))
-		return 0;
-
-	if (!tls1_PRF(s, s->session->master_key, s->session->master_key_length,
-	    str, str_len, buf, hash_len, NULL, 0, NULL, 0, NULL, 0,
-	    out, TLS1_FINISH_MAC_LENGTH))
-		return 0;
-
-	return TLS1_FINISH_MAC_LENGTH;
 }
 
 int

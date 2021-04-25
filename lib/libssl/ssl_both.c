@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_both.c,v 1.28 2021/04/19 16:51:56 jsing Exp $ */
+/* $OpenBSD: ssl_both.c,v 1.29 2021/04/25 13:15:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -164,42 +164,39 @@ ssl3_do_write(SSL *s, int type)
 }
 
 int
-ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen)
+ssl3_send_finished(SSL *s, int state_a, int state_b)
 {
 	CBB cbb, finished;
-	int md_len;
 
 	memset(&cbb, 0, sizeof(cbb));
 
-	if (S3I(s)->hs.state == a) {
-		md_len = TLS1_FINISH_MAC_LENGTH;
-		OPENSSL_assert(md_len <= EVP_MAX_MD_SIZE);
-
-		if (tls1_final_finish_mac(s, sender, slen,
-		    S3I(s)->hs.finished) != md_len)
-			return (0);
-		S3I(s)->hs.finished_len = md_len;
+	if (S3I(s)->hs.state == state_a) {
+		if (!tls12_derive_finished(s))
+			goto err;
 
 		/* Copy finished so we can use it for renegotiation checks. */
 		if (!s->server) {
 			memcpy(S3I(s)->previous_client_finished,
-			    S3I(s)->hs.finished, md_len);
-			S3I(s)->previous_client_finished_len = md_len;
+			    S3I(s)->hs.finished, S3I(s)->hs.finished_len);
+			S3I(s)->previous_client_finished_len =
+			    S3I(s)->hs.finished_len;
 		} else {
 			memcpy(S3I(s)->previous_server_finished,
-			    S3I(s)->hs.finished, md_len);
-			S3I(s)->previous_server_finished_len = md_len;
+			    S3I(s)->hs.finished, S3I(s)->hs.finished_len);
+			S3I(s)->previous_server_finished_len =
+			    S3I(s)->hs.finished_len;
 		}
 
 		if (!ssl3_handshake_msg_start(s, &cbb, &finished,
 		    SSL3_MT_FINISHED))
                         goto err;
-		if (!CBB_add_bytes(&finished, S3I(s)->hs.finished, md_len))
+		if (!CBB_add_bytes(&finished, S3I(s)->hs.finished,
+		    S3I(s)->hs.finished_len))
 			goto err;
 		if (!ssl3_handshake_msg_finish(s, &cbb))
 			goto err;
 
-		S3I(s)->hs.state = b;
+		S3I(s)->hs.state = state_b;
 	}
 
 	return (ssl3_handshake_write(s));
@@ -208,36 +205,6 @@ ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen)
 	CBB_cleanup(&cbb);
 
 	return (-1);
-}
-
-/*
- * ssl3_take_mac calculates the Finished MAC for the handshakes messages seen
- * so far.
- */
-static void
-ssl3_take_mac(SSL *s)
-{
-	const char *sender;
-	int slen;
-
-	/*
-	 * If no new cipher setup return immediately: other functions will
-	 * set the appropriate error.
-	 */
-	if (S3I(s)->hs.cipher == NULL)
-		return;
-
-	if (S3I(s)->hs.state & SSL_ST_CONNECT) {
-		sender = TLS_MD_SERVER_FINISH_CONST;
-		slen = TLS_MD_SERVER_FINISH_CONST_SIZE;
-	} else {
-		sender = TLS_MD_CLIENT_FINISH_CONST;
-		slen = TLS_MD_CLIENT_FINISH_CONST_SIZE;
-	}
-
-	S3I(s)->hs.peer_finished_len =
-	    tls1_final_finish_mac(s, sender, slen,
-		S3I(s)->hs.peer_finished);
 }
 
 int
@@ -544,10 +511,16 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 		n -= i;
 	}
 
-	/* If receiving Finished, record MAC of prior handshake messages for
-	 * Finished verification. */
-	if (*s->internal->init_buf->data == SSL3_MT_FINISHED)
-		ssl3_take_mac(s);
+	/*
+	 * If receiving Finished, record MAC of prior handshake messages for
+	 * Finished verification.
+	 */
+	if (*s->internal->init_buf->data == SSL3_MT_FINISHED) {
+		if (S3I(s)->hs.cipher != NULL) {
+			if (!tls12_derive_peer_finished(s))
+				goto err;
+		}
+	}
 
 	/* Feed this message into MAC computation. */
 	if (s->internal->mac_packet) {
@@ -566,7 +539,7 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 
  fatal_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
-err:
+ err:
 	*ok = 0;
 	return (-1);
 }

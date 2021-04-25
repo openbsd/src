@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.337 2021/04/21 19:27:56 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.338 2021/04/25 13:15:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1219,7 +1219,7 @@ int ssl3_do_write(SSL *s, int type);
 int ssl3_send_alert(SSL *s, int level, int desc);
 int ssl3_get_req_cert_types(SSL *s, CBB *cbb);
 long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok);
-int ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen);
+int ssl3_send_finished(SSL *s, int state_a, int state_b);
 int ssl3_num_ciphers(void);
 const SSL_CIPHER *ssl3_get_cipher(unsigned int u);
 const SSL_CIPHER *ssl3_get_cipher_by_id(unsigned int id);
@@ -1371,10 +1371,14 @@ void tls1_transcript_freeze(SSL *s);
 void tls1_transcript_unfreeze(SSL *s);
 int tls1_transcript_record(SSL *s, const unsigned char *buf, size_t len);
 
+int tls1_PRF(SSL *s, const unsigned char *secret, size_t secret_len,
+    const void *seed1, size_t seed1_len, const void *seed2, size_t seed2_len,
+    const void *seed3, size_t seed3_len, const void *seed4, size_t seed4_len,
+    const void *seed5, size_t seed5_len, unsigned char *out, size_t out_len);
+
 void tls1_cleanup_key_block(SSL *s);
 int tls1_change_cipher_state(SSL *s, int which);
 int tls1_setup_key_block(SSL *s);
-int tls1_final_finish_mac(SSL *s, const char *str, int slen, unsigned char *p);
 int tls1_generate_master_secret(SSL *s, unsigned char *out,
     unsigned char *p, int len);
 int tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,
@@ -1382,6 +1386,9 @@ int tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,
     int use_context);
 int tls1_alert_code(int code);
 int ssl_ok(SSL *s);
+
+int tls12_derive_finished(SSL *s);
+int tls12_derive_peer_finished(SSL *s);
 
 int ssl_using_ecc_cipher(SSL *s);
 int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s);

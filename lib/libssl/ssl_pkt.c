@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.40 2021/03/29 16:46:09 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.41 2021/04/25 13:15:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1155,13 +1155,6 @@ int
 ssl3_do_change_cipher_spec(SSL *s)
 {
 	int i;
-	const char *sender;
-	int slen;
-
-	if (S3I(s)->hs.state & SSL_ST_ACCEPT)
-		i = SSL3_CHANGE_CIPHER_SERVER_READ;
-	else
-		i = SSL3_CHANGE_CIPHER_CLIENT_READ;
 
 	if (S3I(s)->hs.tls12.key_block == NULL) {
 		if (s->session == NULL || s->session->master_key_length == 0) {
@@ -1175,27 +1168,20 @@ ssl3_do_change_cipher_spec(SSL *s)
 			return (0);
 	}
 
+	if (S3I(s)->hs.state & SSL_ST_ACCEPT)
+		i = SSL3_CHANGE_CIPHER_SERVER_READ;
+	else
+		i = SSL3_CHANGE_CIPHER_CLIENT_READ;
+
 	if (!tls1_change_cipher_state(s, i))
 		return (0);
 
-	/* we have to record the message digest at
-	 * this point so we can get it before we read
-	 * the finished message */
-	if (S3I(s)->hs.state & SSL_ST_CONNECT) {
-		sender = TLS_MD_SERVER_FINISH_CONST;
-		slen = TLS_MD_SERVER_FINISH_CONST_SIZE;
-	} else {
-		sender = TLS_MD_CLIENT_FINISH_CONST;
-		slen = TLS_MD_CLIENT_FINISH_CONST_SIZE;
-	}
-
-	i = tls1_final_finish_mac(s, sender, slen,
-	    S3I(s)->hs.peer_finished);
-	if (i == 0) {
-		SSLerror(s, ERR_R_INTERNAL_ERROR);
-		return 0;
-	}
-	S3I(s)->hs.peer_finished_len = i;
+	/*
+	 * We have to record the message digest at this point so we can get it
+	 * before we read the finished message.
+	 */
+	if (!tls12_derive_peer_finished(s))
+		return (0);
 
 	return (1);
 }

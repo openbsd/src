@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.103 2021/04/21 19:27:56 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.104 2021/04/25 13:15:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -666,10 +666,8 @@ ssl3_accept(SSL *s)
 
 		case SSL3_ST_SW_FINISHED_A:
 		case SSL3_ST_SW_FINISHED_B:
-			ret = ssl3_send_finished(s,
-			    SSL3_ST_SW_FINISHED_A, SSL3_ST_SW_FINISHED_B,
-			    TLS_MD_SERVER_FINISH_CONST,
-			    TLS_MD_SERVER_FINISH_CONST_SIZE);
+			ret = ssl3_send_finished(s, SSL3_ST_SW_FINISHED_A,
+			    SSL3_ST_SW_FINISHED_B);
 			if (ret <= 0)
 				goto end;
 			S3I(s)->hs.state = SSL3_ST_SW_FLUSH;
