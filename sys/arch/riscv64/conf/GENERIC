@@ -33,9 +33,9 @@ timer0		at cpu0
 intc0		at cpu0
 
 # NS16550 compatible serial ports
-com*		at mainbus0 early 1
+com*		at fdt?
 
-virtio*		at mainbus0
+virtio*		at fdt?
 vio*		at virtio?	# Network
 vioblk*		at virtio?
 vioscsi*	at virtio?	# Disk (SCSI)
@@ -43,9 +43,9 @@ vioscsi*	at virtio?	# Disk (SCSI)
 viornd*		at virtio?	# Random Source
 
 # simplebus0
-simplebus*	at mainbus0 early 1
+simplebus*	at fdt?
 # Platform Level Interrupt Controller
-plic*		at simplebus? early 1
+plic*		at fdt? early 1
 
 syscon*		at fdt? early 1
 gfrtc*		at fdt?

@@ -49,10 +49,10 @@ define	fdt {[early = 0]}
 #
 # mainbus
 #
-define	mainbus {[early = 0]}
+define	mainbus {}
 device	mainbus: fdt
 attach	mainbus at root
-file	arch/riscv64/dev/mainbus.c
+file	arch/riscv64/dev/mainbus.c		mainbus
 
 #
 # cpu
@@ -60,34 +60,33 @@ file	arch/riscv64/dev/mainbus.c
 define	cpu {}
 device	cpu
 attach	cpu at mainbus
-file	arch/riscv64/riscv64/cpu.c
+file	arch/riscv64/riscv64/cpu.c		cpu
 
 #
 # timer
 #
 device	timer
 attach	timer at cpu
-file	arch/riscv64/dev/timer.c
+file	arch/riscv64/dev/timer.c		timer
 
 #
 # HART-specific interrupt controller
 #
 device	intc
 attach	intc at cpu
-file	arch/riscv64/dev/riscv_cpu_intc.c
+file	arch/riscv64/dev/riscv_cpu_intc.c	intc
 
 #
 # simplebus
 #
-define	simplebus {[early = 1]}
-device	simplebus
-attach	simplebus at mainbus
-file	arch/riscv64/dev/simplebus.c
+device	simplebus: fdt
+attach	simplebus at fdt
+file	arch/riscv64/dev/simplebus.c		simplebus
 
 # PLIC
 device	plic
-attach	plic at simplebus
-file	arch/riscv64/dev/plic.c
+attach	plic at fdt
+file	arch/riscv64/dev/plic.c			plic
 
 
 # Paravirtual device bus and virtio
