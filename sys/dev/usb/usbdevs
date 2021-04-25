@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.738 2021/04/05 20:45:49 mglocker Exp $
+$OpenBSD: usbdevs,v 1.739 2021/04/25 15:58:01 stsp Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1076,6 +1076,7 @@ product ASUS USBN66		0x17ad	USB-N66
 product ASUS RTL8192CU_2	0x17ba	RTL8192CU
 product ASUS RTL8192CU_3	0x17c0	RTL8192CU
 product ASUS RTL8156		0x18d1	RTL8156
+product ASUS RTL8188EUS		0x18f0	RTL8188EUS
 product ASUS MYPAL_A730		0x4202	MyPal A730
 product ASUS2 USBN11		0x0b05	USB-N11
 
