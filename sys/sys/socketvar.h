@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.93 2021/02/18 11:40:20 mvs Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.94 2021/04/25 00:00:35 mvs Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -37,6 +37,7 @@
 #include <sys/sigio.h>				/* for struct sigio_ref */
 #include <sys/task.h>
 #include <sys/timeout.h>
+#include <sys/rwlock.h>
 
 #ifndef	_SOCKLEN_T_DEFINED_
 #define	_SOCKLEN_T_DEFINED_
@@ -53,6 +54,7 @@ TAILQ_HEAD(soqhead, socket);
  */
 struct socket {
 	const struct protosw *so_proto;	/* protocol handle */
+	struct rwlock so_lock;		/* this socket lock */
 	void	*so_pcb;		/* protocol control block */
 	u_int	so_state;		/* internal state flags SS_*, below */
 	short	so_type;		/* generic type, see socket.h */
