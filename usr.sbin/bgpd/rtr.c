@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr.c,v 1.1 2021/02/16 08:29:16 claudio Exp $ */
+/*	$OpenBSD: rtr.c,v 1.2 2021/04/26 07:40:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -74,7 +74,7 @@ rtr_main(int debug, int verbose)
 	struct pollfd		*pfd = NULL;
 	void			*newp;
 	size_t			 pfd_elms = 0, i;
-	time_t			 now, timeout;
+	time_t			 timeout;
 
 	log_init(debug, LOG_DAEMON);
 	log_setverbose(verbose);
@@ -129,7 +129,6 @@ rtr_main(int debug, int verbose)
 		set_pollfd(&pfd[PFD_PIPE_MAIN], ibuf_main);
 		set_pollfd(&pfd[PFD_PIPE_RDE], ibuf_rde);
 
-		now = getmonotime();
 		i = PFD_PIPE_COUNT;
 		i += rtr_poll_events(pfd + i, pfd_elms - i, &timeout);
 
@@ -152,7 +151,6 @@ rtr_main(int debug, int verbose)
 		} else
 			rtr_dispatch_imsg_rde(ibuf_rde);
 
-		now = getmonotime();
 		i = PFD_PIPE_COUNT;
 		rtr_check_events(pfd + i, pfd_elms - i);
 	}
