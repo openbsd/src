@@ -19,22 +19,7 @@ S!=	cd ../../../..; pwd
 _machdir?=	$S/arch/${_mach}
 _archdir?=	$S/arch/${_arch}
 
-INCLUDES=	-nostdinc -I$S -I${.OBJDIR} -I$S/arch \
-		-I$S/dev/pci/drm/include \
-		-I$S/dev/pci/drm/include/uapi \
-		-I$S/dev/pci/drm/amd/include/asic_reg \
-		-I$S/dev/pci/drm/amd/include \
-		-I$S/dev/pci/drm/amd/amdgpu \
-		-I$S/dev/pci/drm/amd/display \
-		-I$S/dev/pci/drm/amd/display/include \
-		-I$S/dev/pci/drm/amd/display/dc \
-		-I$S/dev/pci/drm/amd/display/amdgpu_dm \
-		-I$S/dev/pci/drm/amd/powerplay/inc \
-		-I$S/dev/pci/drm/amd/powerplay/smumgr \
-		-I$S/dev/pci/drm/amd/powerplay/hwmgr \
-		-I$S/dev/pci/drm/amd/display/dc/inc \
-		-I$S/dev/pci/drm/amd/display/dc/inc/hw \
-		-I$S/dev/pci/drm/amd/display/modules/inc
+INCLUDES=	-nostdinc -I$S -I${.OBJDIR} -I$S/arch
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D__${_mach}__ -MD -MP
 CWARNFLAGS=	-Werror -Wall -Wimplicit-function-declaration \
 		-Wno-uninitialized -Wno-pointer-sign \
