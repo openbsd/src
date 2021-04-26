@@ -113,6 +113,7 @@ cdev_decl(spkr);
 #include "video.h"
 #include "midi.h"
 #include "ksyms.h"
+#include "kstat.h"
 #include "radio.h"
 
 #ifdef USER_PCICONF
@@ -183,7 +184,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 48 */
 	cdev_notdef(),			/* 49: Bt848 video capture device */
 	cdev_ksyms_init(NKSYMS,ksyms),	/* 50: Kernel symbols device */
-	cdev_notdef(),			/* 51 */
+	cdev_kstat_init(NKSTAT,kstat),	/* 51: kernel statistics */
 	cdev_midi_init(NMIDI,midi),	/* 52: MIDI I/O */
 	cdev_notdef(),			/* 53 was: sequencer I/O */
 	cdev_notdef(),			/* 54 was: RAIDframe disk driver */
@@ -238,6 +239,7 @@ struct cdevsw	cdevsw[] =
 	cdev_switch_init(NSWITCH,switch), /* 97: switch(4) control interface */
 	cdev_notdef(),			/* 98: FIDO/U2F security key */
 	cdev_pppx_init(NPPPX,pppac),	/* 99: PPP Access Concentrator */
+	cdev_notdef(),			/* 100: USB joystick/gamecontroller */
 };
 int	nchrdev = nitems(cdevsw);
 
