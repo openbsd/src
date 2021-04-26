@@ -1,4 +1,4 @@
-.\"	$OpenBSD: timeout.9,v 1.51 2020/08/07 00:45:25 cheloha Exp $
+.\"	$OpenBSD: timeout.9,v 1.52 2021/04/26 20:32:30 mvs Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -23,12 +23,13 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 7 2020 $
+.Dd $Mdocdate: April 26 2021 $
 .Dt TIMEOUT_SET 9
 .Os
 .Sh NAME
 .Nm timeout_set ,
 .Nm timeout_set_flags ,
+.Nm timeout_set_proc ,
 .Nm timeout_add ,
 .Nm timeout_add_sec ,
 .Nm timeout_add_msec ,
@@ -56,6 +57,8 @@
 .Fa "void *arg"
 .Fa "int flags"
 .Fc
+.Ft void
+.Fn timeout_set_proc "struct timeout *to" "void (*fn)(void *)" "void *arg"
 .Ft int
 .Fn timeout_add "struct timeout *to" "int ticks"
 .Ft int
@@ -133,6 +136,14 @@ Runs the timeout in a process context instead of the default
 interrupt context.
 .El
 .Pp
+The
+.Fn timeout_set_proc
+function is similar to
+.Fn timeout_set
+but it runs the timeout in a process context instead of the default
+.Dv IPL_SOFTCLOCK
+interrupt context.
+.Pp
 The function
 .Fn timeout_add
 schedules the execution of the
@@ -151,13 +162,15 @@ but in the future it might cause an immediate timeout.
 The timeout in the
 .Fa to
 argument must be already initialized by
-.Fn timeout_set
+.Fn timeout_set ,
+.Fn timeout_set_flags ,
 or
-.Fn timeout_set_flags
+.Fn timeout_set_proc
 and may not be used in calls to
-.Fn timeout_set
+.Fn timeout_set ,
+.Fn timeout_set_flags ,
 or
-.Fn timeout_set_flags
+.Fn timeout_set_proc
 until it has timed out or been removed with
 .Fn timeout_del .
 If the timeout in the
@@ -237,9 +250,10 @@ See the
 .Fn timeout_set_flags
 function for details.
 .Sh CONTEXT
-.Fn timeout_set
+.Fn timeout_set ,
+.Fn timeout_set_flags ,
 and
-.Fn timeout_set_flags
+.Fn timeout_set_proc
 can be called during autoconf, from process context, or from interrupt
 context.
 .Pp
@@ -273,6 +287,11 @@ will be called in an interrupt context at
 or a process context if the
 .Dv TIMEOUT_PROC
 flag was given at initialization.
+The
+.Fa fn
+argument to
+.Fn timeout_set_proc
+will be called in a process context.
 .Sh RETURN VALUES
 .Fn timeout_add ,
 .Fn timeout_add_sec ,
