@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.17 2021/01/23 05:08:34 thfr Exp $	*/
+/*	$OpenBSD: conf.c,v 1.18 2021/04/26 06:05:55 jsg Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -72,21 +72,6 @@ struct bdevsw	bdevsw[] =
 };
 int	nblkdev = nitems(bdevsw);
 
-/* open, close, ioctl, select -- XXX should be a generic device */
-#define cdev_ocis_init(c,n) { \
-        dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-        (dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-        (dev_type_stop((*))) enodev, 0,  dev_init(c,n,poll), \
-        (dev_type_mmap((*))) enodev, 0 }
-
-/* open, close, read */
-#define cdev_nvram_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	(dev_type_write((*))) enodev, (dev_type_ioctl((*))) enodev, \
-	(dev_type_stop((*))) enodev, 0, seltrue, \
-	(dev_type_mmap((*))) enodev, 0, 0, seltrue_kqfilter }
-
-
 #define	mmread	mmrw
 #define	mmwrite	mmrw
 cdev_decl(mm);
@@ -99,7 +84,6 @@ cdev_decl(com);
 cdev_decl(lpt);
 #include "ch.h"
 #include "bpfilter.h"
-cdev_decl(spkr);
 #include "tun.h"
 #include "audio.h"
 #include "video.h"
