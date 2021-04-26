@@ -42,7 +42,6 @@
 #include "uk.h"
 #include "vnd.h"
 #include "rd.h"
-//#include "apm.h"
 
 struct bdevsw	bdevsw[] =
 {
@@ -113,36 +112,21 @@ cdev_decl(spkr);
 #include "audio.h"
 #include "video.h"
 #include "midi.h"
-//#include "bktr.h"
 #include "ksyms.h"
-//#include "usb.h"
-//#include "uhid.h"
-//#include "fido.h"
-//#include "ugen.h"
-//#include "ulpt.h"
-//#include "ucom.h"
 #include "radio.h"
-//#include "drm.h"
-cdev_decl(drm);
-
-//#include "wsdisplay.h"
-//#include "wskbd.h"
-//#include "wsmouse.h"
-//#include "wsmux.h"
 
 #ifdef USER_PCICONF
 #include "pci.h"
 cdev_decl(pci);
 #endif
 
-//#include "dt.h"
+#include "dt.h"
 #include "pf.h"
 #include "hotplug.h"
 #include "vscsi.h"
 #include "pppx.h"
 #include "fuse.h"
 #include "openprom.h"
-#include "gpio.h"
 #include "ipmi.h"
 #include "switch.h"
 
@@ -160,9 +144,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 9: was floppy disk */
 	cdev_notdef(),			/* 10 */
 	cdev_notdef(),			/* 11: Sony CD-ROM */
-	cdev_notdef(),			/* 12: frame buffers, etc.		\
-	cdev_wsdisplay_init(NWSDISPLAY,						\
-	    wsdisplay), */
+	cdev_notdef(),			/* 12: frame buffers, etc. */
 	cdev_disk_init(NSD,sd),		/* 13: SCSI disk */
 	cdev_notdef(),			/* 14: was: SCSI tape */
 	cdev_disk_init(NCD,cd),		/* 15: SCSI CD-ROM */
@@ -180,8 +162,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 27 */
 	cdev_notdef(),			/* 28 was LKM */
 	cdev_notdef(),			/* 29 */
-	cdev_notdef(),			/* 30: dynamic tracer			\
-	cdev_dt_init(NDT,dt), */
+	cdev_dt_init(NDT,dt),		/* 30: dynamic tracer */
 	cdev_notdef(),			/* 31 */
 	cdev_notdef(),			/* 32 */
 	cdev_notdef(),			/* 33 */
@@ -200,8 +181,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 46 */
 	cdev_disk_init(NRD,rd),		/* 47: ram disk driver */
 	cdev_notdef(),			/* 48 */
-	cdev_notdef(),			/* 49: Bt848 video capture device	\
-	cdev_bktr_init(NBKTR,bktr), */
+	cdev_notdef(),			/* 49: Bt848 video capture device */
 	cdev_ksyms_init(NKSYMS,ksyms),	/* 50: Kernel symbols device */
 	cdev_notdef(),			/* 51 */
 	cdev_midi_init(NMIDI,midi),	/* 52: MIDI I/O */
@@ -215,26 +195,16 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 59: i4b trace device */
 	cdev_notdef(),			/* 60: i4b phone device */
 	/* End of reserved slots for isdn4bsd. */
-	cdev_notdef(),			/* 61: USB controller			\
-	cdev_usb_init(NUSB,usb), */
-	cdev_notdef(),			/* 62: USB generic HID			\
-	cdev_usbdev_init(NUHID,uhid), */
-	cdev_notdef(),			/* 63: USB generic driver		\
-	cdev_usbdev_init(NUGEN,ugen), */
-	cdev_notdef(),			/* 64: USB printers			\
-	cdev_ulpt_init(NULPT,ulpt), */
+	cdev_notdef(),			/* 61: USB controller */
+	cdev_notdef(),			/* 62: USB generic HID */
+	cdev_notdef(),			/* 63: USB generic driver */
+	cdev_notdef(),			/* 64: USB printers */
 	cdev_notdef(),			/* 65: urio */
-	cdev_notdef(),			/* 66: USB tty				\
-	cdev_tty_init(NUCOM,ucom), */
-	cdev_notdef(),			/* 67: keyboards			\
-	cdev_mouse_init(NWSKBD, wskbd), */
-	cdev_notdef(),			/* 68: mice				\
-	cdev_mouse_init(NWSMOUSE,						\
-	    wsmouse), */
-	cdev_notdef(),			/* 69: ws multiplexor			\
-	cdev_mouse_init(NWSMUX, wsmux), */
-	cdev_notdef(),			/* 70: /dev/openprom			\
-	cdev_openprom_init(NOPENPROM,openprom), */
+	cdev_notdef(),			/* 66: USB tty */
+	cdev_notdef(),			/* 67: keyboards */
+	cdev_notdef(),			/* 68: mice */
+	cdev_notdef(),			/* 69: ws multiplexor */
+	cdev_openprom_init(NOPENPROM,openprom),	/* 70: /dev/openprom */
 	cdev_notdef(),			/* 71: was: Cyclades-Z serial port */
 #ifdef USER_PCICONF
 	cdev_pci_init(NPCI,pci),        /* 72: PCI user */
@@ -251,15 +221,12 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 80 */
 	cdev_ptm_init(NPTY,ptm),	/* 81: pseudo-tty ptm device */
 	cdev_hotplug_init(NHOTPLUG,hotplug), /* 82: devices hot plugging */
-	cdev_notdef(),			/* 83: apm				\
-	cdev_acpiapm_init(NAPM,acpiapm), */
+	cdev_notdef(),			/* 83: apm */
 	cdev_notdef(),			/* 84 */
 	cdev_notdef(),			/* 85 */
 	cdev_notdef(),			/* 86 */
-	cdev_notdef(),			/* 87: drm				\
-	cdev_drm_init(NDRM,drm), */
-	cdev_notdef(),			/* 88: GPIO interface			\
-	cdev_gpio_init(NGPIO,gpio), */
+	cdev_notdef(),			/* 87: drm */
+	cdev_notdef(),			/* 88: GPIO interface */
 	cdev_vscsi_init(NVSCSI,vscsi),	/* 89: vscsi */
 	cdev_disk_init(1,diskmap),	/* 90: disk mapper */
 	cdev_pppx_init(NPPPX,pppx),     /* 91: pppx */
@@ -269,10 +236,8 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 95 */
 	cdev_ipmi_init(NIPMI,ipmi),	/* 96: ipmi */
 	cdev_switch_init(NSWITCH,switch), /* 97: switch(4) control interface */
-	cdev_notdef(),			/* 98: FIDO/U2F security key		\
-	cdev_fido_init(NFIDO,fido), */
-	cdev_notdef(),			/* 99: PPP Access Concentrator		\
-	cdev_pppx_init(NPPPX,pppac), */
+	cdev_notdef(),			/* 98: FIDO/U2F security key */
+	cdev_pppx_init(NPPPX,pppac),	/* 99: PPP Access Concentrator */
 };
 int	nchrdev = nitems(cdevsw);
 
