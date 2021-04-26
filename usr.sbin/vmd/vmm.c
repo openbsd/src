@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.100 2021/04/11 21:02:40 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.101 2021/04/26 22:58:27 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -150,30 +150,6 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 			res = ENOENT;
 		cmd = IMSG_VMDOP_START_VM_RESPONSE;
 		break;
-	case IMSG_VMDOP_WAIT_VM_REQUEST:
-		IMSG_SIZE_CHECK(imsg, &vid);
-		memcpy(&vid, imsg->data, sizeof(vid));
-		id = vid.vid_id;
-
-		DPRINTF("%s: recv'ed WAIT_VM for %d", __func__, id);
-
-		cmd = IMSG_VMDOP_TERMINATE_VM_RESPONSE;
-		if (id == 0) {
-			res = ENOENT;
-		} else if ((vm = vm_getbyvmid(id)) != NULL) {
-			if (vm->vm_peerid != (uint32_t)-1) {
-				peerid = vm->vm_peerid;
-				res = EINTR;
-			} else
-				cmd = 0;
-			vm->vm_peerid = imsg->hdr.peerid;
-		} else {
-			/* vm doesn't exist, cannot stop vm */
-			log_debug("%s: cannot stop vm that is not running",
-			    __func__);
-			res = VMD_VM_STOP_INVALID;
-		}
-		break;
 	case IMSG_VMDOP_TERMINATE_VM_REQUEST:
 		IMSG_SIZE_CHECK(imsg, &vid);
 		memcpy(&vid, imsg->data, sizeof(vid));
@@ -221,15 +197,6 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 					    __func__);
 					res = VMD_VM_STOP_INVALID;
 				}
-			}
-			if ((flags & VMOP_WAIT) &&
-			    res == 0 && (vm->vm_state & VM_STATE_SHUTDOWN)) {
-				if (vm->vm_peerid != (uint32_t)-1) {
-					peerid = vm->vm_peerid;
-					res = EINTR;
-				} else
-					cmd = 0;
-				vm->vm_peerid = imsg->hdr.peerid;
 			}
 		} else {
 			/* VM doesn't exist, cannot stop vm */

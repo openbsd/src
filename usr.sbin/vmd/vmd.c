@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.122 2021/04/05 11:35:26 dv Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.123 2021/04/26 22:58:27 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -128,42 +128,41 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 		IMSG_SIZE_CHECK(imsg, &vid);
 		memcpy(&vid, imsg->data, sizeof(vid));
 		flags = vid.vid_flags;
+		cmd = IMSG_VMDOP_TERMINATE_VM_RESPONSE;
 
 		if ((id = vid.vid_id) == 0) {
 			/* Lookup vm (id) by name */
 			if ((vm = vm_getbyname(vid.vid_name)) == NULL) {
 				res = ENOENT;
-				cmd = IMSG_VMDOP_TERMINATE_VM_RESPONSE;
 				break;
 			} else if ((vm->vm_state & VM_STATE_SHUTDOWN) &&
 			    (flags & VMOP_FORCE) == 0) {
 				res = EALREADY;
-				cmd = IMSG_VMDOP_TERMINATE_VM_RESPONSE;
 				break;
 			} else if (!(vm->vm_state & VM_STATE_RUNNING)) {
 				res = EINVAL;
-				cmd = IMSG_VMDOP_TERMINATE_VM_RESPONSE;
 				break;
 			}
 			id = vm->vm_vmid;
 		} else if ((vm = vm_getbyvmid(id)) == NULL) {
 			res = ENOENT;
-			cmd = IMSG_VMDOP_TERMINATE_VM_RESPONSE;
 			break;
 		}
-		if (vm_checkperm(vm, &vm->vm_params.vmc_owner,
-		    vid.vid_uid) != 0) {
+		if (vm_checkperm(vm, &vm->vm_params.vmc_owner, vid.vid_uid)) {
 			res = EPERM;
-			cmd = IMSG_VMDOP_TERMINATE_VM_RESPONSE;
 			break;
 		}
 
-		memset(&vid, 0, sizeof(vid));
-		vid.vid_id = id;
-		vid.vid_flags = flags;
-		if (proc_compose_imsg(ps, PROC_VMM, -1, imsg->hdr.type,
-		    imsg->hdr.peerid, -1, &vid, sizeof(vid)) == -1)
-			return (-1);
+		/* Only relay TERMINATION requests, not WAIT requests */
+		if (imsg->hdr.type == IMSG_VMDOP_TERMINATE_VM_REQUEST) {
+			memset(&vid, 0, sizeof(vid));
+			vid.vid_id = id;
+			vid.vid_flags = flags;
+
+			if (proc_compose_imsg(ps, PROC_VMM, -1, imsg->hdr.type,
+				imsg->hdr.peerid, -1, &vid, sizeof(vid)) == -1)
+				return (-1);
+		}
 		break;
 	case IMSG_VMDOP_GET_INFO_VM_REQUEST:
 		proc_forward_imsg(ps, imsg, PROC_VMM, -1);
@@ -420,12 +419,14 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_VMDOP_TERMINATE_VM_RESPONSE:
 		IMSG_SIZE_CHECK(imsg, &vmr);
 		memcpy(&vmr, imsg->data, sizeof(vmr));
-		DPRINTF("%s: forwarding TERMINATE VM for vm id %d",
-		    __func__, vmr.vmr_id);
-		proc_forward_imsg(ps, imsg, PROC_CONTROL, -1);
-		if ((vm = vm_getbyvmid(vmr.vmr_id)) == NULL)
-			break;
-		if (vmr.vmr_result == 0) {
+
+		if (vmr.vmr_result) {
+			DPRINTF("%s: forwarding TERMINATE VM for vm id %d",
+			    __func__, vmr.vmr_id);
+			proc_forward_imsg(ps, imsg, PROC_CONTROL, -1);
+		} else {
+			if ((vm = vm_getbyvmid(vmr.vmr_id)) == NULL)
+				break;
 			/* Mark VM as shutting down */
 			vm->vm_state |= VM_STATE_SHUTDOWN;
 		}
@@ -478,16 +479,13 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 			config_setvm(ps, vm, (uint32_t)-1, vm->vm_uid);
 		}
 
-		/* Send a response if a control client is waiting for it */
-		if (imsg->hdr.peerid != (uint32_t)-1) {
-			/* the error is meaningless for deferred responses */
-			vmr.vmr_result = 0;
+		/* The error is meaningless for deferred responses */
+		vmr.vmr_result = 0;
 
-			if (proc_compose_imsg(ps, PROC_CONTROL, -1,
-			    IMSG_VMDOP_TERMINATE_VM_RESPONSE,
-			    imsg->hdr.peerid, -1, &vmr, sizeof(vmr)) == -1)
-				return (-1);
-		}
+		if (proc_compose_imsg(ps, PROC_CONTROL, -1,
+			IMSG_VMDOP_TERMINATE_VM_EVENT,
+			imsg->hdr.peerid, -1, &vmr, sizeof(vmr)) == -1)
+			return (-1);
 		break;
 	case IMSG_VMDOP_GET_INFO_VM_DATA:
 		IMSG_SIZE_CHECK(imsg, &vir);
