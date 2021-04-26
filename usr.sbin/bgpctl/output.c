@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.15 2021/04/15 14:12:05 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.16 2021/04/26 18:23:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -132,14 +132,14 @@ show_summary(struct peer *p)
 }
 
 static void
-show_neighbor_capa_mp(struct peer *p)
+show_neighbor_capa_mp(struct capabilities *capa)
 {
 	int		comma;
 	u_int8_t	i;
 
 	printf("    Multiprotocol extensions: ");
 	for (i = 0, comma = 0; i < AID_MAX; i++)
-		if (p->capa.peer.mp[i]) {
+		if (capa->mp[i]) {
 			printf("%s%s", comma ? ", " : "", aid2str(i));
 			comma = 1;
 		}
@@ -147,23 +147,23 @@ show_neighbor_capa_mp(struct peer *p)
 }
 
 static void
-show_neighbor_capa_restart(struct peer *p)
+show_neighbor_capa_restart(struct capabilities *capa)
 {
 	int		comma;
 	u_int8_t	i;
 
 	printf("    Graceful Restart");
-	if (p->capa.peer.grestart.timeout)
-		printf(": Timeout: %d, ", p->capa.peer.grestart.timeout);
+	if (capa->grestart.timeout)
+		printf(": Timeout: %d, ", capa->grestart.timeout);
 	for (i = 0, comma = 0; i < AID_MAX; i++)
-		if (p->capa.peer.grestart.flags[i] & CAPA_GR_PRESENT) {
+		if (capa->grestart.flags[i] & CAPA_GR_PRESENT) {
 			if (!comma &&
-			    p->capa.peer.grestart.flags[i] & CAPA_GR_RESTART)
+			    capa->grestart.flags[i] & CAPA_GR_RESTART)
 				printf("restarted, ");
 			if (comma)
 				printf(", ");
 			printf("%s", aid2str(i));
-			if (p->capa.peer.grestart.flags[i] & CAPA_GR_FORWARD)
+			if (capa->grestart.flags[i] & CAPA_GR_FORWARD)
 				printf(" (preserved)");
 			comma = 1;
 		}
@@ -286,12 +286,27 @@ show_neighbor_full(struct peer *p, struct parse_result *res)
 	    p->capa.peer.grestart.restart || p->capa.peer.as4byte) {
 		printf("  Neighbor capabilities:\n");
 		if (hascapamp)
-			show_neighbor_capa_mp(p);
+			show_neighbor_capa_mp(&p->capa.peer);
 		if (p->capa.peer.refresh)
 			printf("    Route Refresh\n");
 		if (p->capa.peer.grestart.restart)
-			show_neighbor_capa_restart(p);
+			show_neighbor_capa_restart(&p->capa.peer);
 		if (p->capa.peer.as4byte)
+			printf("    4-byte AS numbers\n");
+	}
+	for (i = 0; i < AID_MAX; i++)
+		if (p->capa.neg.mp[i])
+			hascapamp = 1;
+	if (hascapamp || p->capa.neg.refresh ||
+	    p->capa.neg.grestart.restart || p->capa.neg.as4byte) {
+		printf("  Negotiated capabilities:\n");
+		if (hascapamp)
+			show_neighbor_capa_mp(&p->capa.neg);
+		if (p->capa.neg.refresh)
+			printf("    Route Refresh\n");
+		if (p->capa.neg.grestart.restart)
+			show_neighbor_capa_restart(&p->capa.neg);
+		if (p->capa.neg.as4byte)
 			printf("    4-byte AS numbers\n");
 	}
 	printf("\n");
