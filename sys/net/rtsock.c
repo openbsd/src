@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.310 2021/04/25 00:00:35 mvs Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.311 2021/04/26 08:21:36 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -143,7 +143,7 @@ int		 rt_setsource(unsigned int, struct sockaddr *);
 /*
  * Locks used to protect struct members
  *       I       immutable after creation
- *       s       solock
+ *       sK      solock (kernel lock)
  */
 struct rtpcb {
 	struct socket		*rop_socket;		/* [I] */
@@ -151,12 +151,12 @@ struct rtpcb {
 	SRPL_ENTRY(rtpcb)	rop_list;
 	struct refcnt		rop_refcnt;
 	struct timeout		rop_timeout;
-	unsigned int		rop_msgfilter;		/* [s] */
-	unsigned int		rop_flagfilter;		/* [s] */
-	unsigned int		rop_flags;		/* [s] */
-	u_int			rop_rtableid;		/* [s] */
+	unsigned int		rop_msgfilter;		/* [sK] */
+	unsigned int		rop_flagfilter;		/* [sK] */
+	unsigned int		rop_flags;		/* [sK] */
+	u_int			rop_rtableid;		/* [sK] */
 	unsigned short		rop_proto;		/* [I] */
-	u_char			rop_priority;		/* [s] */
+	u_char			rop_priority;		/* [sK] */
 };
 #define	sotortpcb(so)	((struct rtpcb *)(so)->so_pcb)
 
@@ -188,7 +188,7 @@ route_prinit(void)
 	rw_init(&rtptable.rtp_lk, "rtsock");
 	SRPL_INIT(&rtptable.rtp_list);
 	pool_init(&rtpcb_pool, sizeof(struct rtpcb), 0,
-	    IPL_SOFTNET, PR_WAITOK, "rtpcb", NULL);
+	    IPL_NONE, PR_WAITOK, "rtpcb", NULL);
 }
 
 void
@@ -352,12 +352,8 @@ route_detach(struct socket *so)
 	    rop_list);
 	rw_exit(&rtptable.rtp_lk);
 
-	sounlock(so, SL_LOCKED);
-
 	/* wait for all references to drop */
 	refcnt_finalize(&rop->rop_refcnt, "rtsockrefs");
-
-	solock(so);
 
 	so->so_pcb = NULL;
 	KASSERT((so->so_state & SS_NOFDREF) == 0);
@@ -680,7 +676,7 @@ route_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 	struct rtentry		*rt = NULL;
 	struct rt_addrinfo	 info;
 	struct ifnet		*ifp;
-	int			 len, seq, useloopback, error = 0;
+	int			 len, seq, error = 0;
 	u_int			 tableid;
 	u_int8_t		 prio;
 	u_char			 vers, type;
@@ -690,16 +686,6 @@ route_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 		return (ENOBUFS);
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("route_output");
-
-	useloopback = so->so_options & SO_USELOOPBACK;
-
-	/*
-	 * The socket can't be closed concurrently because the file
-	 * descriptor reference is still held.
-	 */
-
-	sounlock(so, SL_LOCKED);
-
 	len = m->m_pkthdr.len;
 	if (len < offsetof(struct rt_msghdr, rtm_hdrlen) + 1 ||
 	    len != mtod(m, struct rt_msghdr *)->rtm_msglen) {
@@ -873,10 +859,13 @@ route_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 	/*
 	 * Check to see if we don't want our own messages.
 	 */
-	if (!useloopback) {
-		if (rtptable.rtp_count == 0) {
+	if (!(so->so_options & SO_USELOOPBACK)) {
+		if (rtptable.rtp_count <= 1) {
 			/* no other listener and no loopback of messages */
-			goto fail;
+fail:
+			free(rtm, M_RTABLE, len);
+			m_freem(m);
+			return (error);
 		}
 	}
 	if (m_copyback(m, 0, len, rtm, M_NOWAIT)) {
@@ -888,13 +877,6 @@ route_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 	if (m)
 		route_input(m, so, info.rti_info[RTAX_DST] ?
 		    info.rti_info[RTAX_DST]->sa_family : AF_UNSPEC);
-	solock(so);
-
-	return (error);
-fail:
-	free(rtm, M_RTABLE, len);
-	m_freem(m);
-	solock(so);
 
 	return (error);
 }

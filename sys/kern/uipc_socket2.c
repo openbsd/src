@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.107 2021/04/25 00:00:34 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.108 2021/04/26 08:21:35 claudio Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -162,7 +162,6 @@ sonewconn(struct socket *head, int connstatus)
 	so = pool_get(&socket_pool, PR_NOWAIT|PR_ZERO);
 	if (so == NULL)
 		return (NULL);
-	rw_init(&so->so_lock, "solock");
 	so->so_type = head->so_type;
 	so->so_options = head->so_options &~ SO_ACCEPTCONN;
 	so->so_linger = head->so_linger;
@@ -288,8 +287,6 @@ solock(struct socket *so)
 		rw_enter_write(&unp_lock);
 		break;
 	case PF_ROUTE:
-		rw_enter_write(&so->so_lock);
-		break;
 	case PF_KEY:
 	default:
 		KERNEL_LOCK();
@@ -316,8 +313,6 @@ sounlock(struct socket *so, int s)
 		rw_exit_write(&unp_lock);
 		break;
 	case PF_ROUTE:
-		rw_exit_write(&so->so_lock);
-		break;
 	case PF_KEY:
 	default:
 		KERNEL_UNLOCK();
@@ -337,8 +332,6 @@ soassertlocked(struct socket *so)
 		rw_assert_wrlock(&unp_lock);
 		break;
 	case PF_ROUTE:
-		rw_assert_wrlock(&so->so_lock);
-		break;
 	case PF_KEY:
 	default:
 		KERNEL_ASSERT_LOCKED();
@@ -361,8 +354,6 @@ sosleep_nsec(struct socket *so, void *ident, int prio, const char *wmesg,
 		ret = rwsleep_nsec(ident, &unp_lock, prio, wmesg, nsecs);
 		break;
 	case PF_ROUTE:
-		ret = rwsleep_nsec(ident, &so->so_lock, prio, wmesg, nsecs);
-		break;
 	case PF_KEY:
 	default:
 		ret = tsleep_nsec(ident, prio, wmesg, nsecs);
