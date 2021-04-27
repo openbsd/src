@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2021/03/11 11:57:33 tb Exp $
+# $OpenBSD: Makefile,v 1.4 2021/04/27 05:14:25 tb Exp $
 
 # Copyright (c) 2021 Jan Klemkow <j.klemkow@wemelug.de>
 #
@@ -46,7 +46,6 @@ REGRESS_EXPECTED_FAILURES +=	test-inlabel-wildcard-cert-no-CA-client
 REGRESS_EXPECTED_FAILURES +=	test-unusual-wildcard-cert-no-CA-client
 REGRESS_EXPECTED_FAILURES +=	test-common-wildcard-cert-no-CA-client
 REGRESS_EXPECTED_FAILURES +=	test-common-wildcard-cert-CA-client
-REGRESS_EXPECTED_FAILURES +=	test-verify-unusual-wildcard-cert
 
 create-libressl-test-certs: create-libressl-test-certs.pl
 	${PERL} ${.CURDIR}/$@.pl
