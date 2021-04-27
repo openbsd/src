@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.48 2021/04/24 00:10:43 inoguchi Exp $
+# $OpenBSD: appstest.sh,v 1.49 2021/04/27 10:13:04 inoguchi Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -1762,6 +1762,70 @@ function test_server_client {
 	stop_s_server
 }
 
+function test_server_client_dtls {
+	# --- client/server operations (DTLS) ---
+	section_message "client/server operations (DTLS)"
+
+	s_id="$1"
+	c_id="$2"
+	sc="$1$2"
+
+	test_pause_sec=0.2
+
+	if [ $s_id = "0" ] ; then
+		s_bin=$openssl_bin
+	else
+		s_bin=$other_openssl_bin
+	fi
+
+	if [ $c_id = "0" ] ; then
+		c_bin=$openssl_bin
+	else
+		c_bin=$other_openssl_bin
+	fi
+
+	echo "s_server is [`$s_bin version`]"
+	echo "s_client is [`$c_bin version`]"
+
+	host="localhost"
+	port=4433
+	s_server_out=$server_dir/s_server_${sc}_dtls.out
+
+	if [ $ecdsa_tests = 1 ] ; then
+		echo "Using ECDSA certificate"
+		crt=$sv_ecdsa_cert
+		key=$sv_ecdsa_key
+		pwd=$sv_ecdsa_pass
+	elif [ $gost_tests = 1 ] ; then
+		echo "Using GOST certificate"
+		crt=$sv_gost_cert
+		key=$sv_gost_key
+		pwd=$sv_gost_pass
+	else
+		echo "Using RSA certificate"
+		crt=$sv_rsa_cert
+		key=$sv_rsa_key
+		pwd=$sv_rsa_pass
+	fi
+
+	start_message "s_server ... start DTLS test server"
+	$s_bin s_server -accept $port -CAfile $ca_cert \
+		-cert $crt -key $key -pass pass:$pwd \
+		-context "appstest.sh" -id_prefix "APPSTEST.SH" -crl_check \
+		-alpn "http/1.1,spdy/3" -cipher ALL -4 \
+		-msg -tlsextdebug -verify 3 -groups X25519:P-384:P-256 \
+		-status -servername xyz -cert2 $crt -key2 $key -dtls -quiet \
+		> $s_server_out 2>&1 &
+	check_exit_status $?
+	s_server_pid=$!
+	echo "s_server pid = [ $s_server_pid ]"
+	sleep 1
+
+	# test by protocol version
+	test_sc_by_protocol_version $sc dtls1_2 'Protocol  : DTLSv1.2$' $c_id
+
+	stop_s_server
+}
 function test_speed {
 	# === PERFORMANCE ===
 	section_message "PERFORMANCE"
@@ -1873,6 +1937,11 @@ test_server_client 0 0
 if [ $interop_tests = 1 ] ; then
 	test_server_client 0 1
 	test_server_client 1 0
+fi
+test_server_client_dtls 0 0
+if [ $interop_tests = 1 ] ; then
+	test_server_client_dtls 0 1
+	test_server_client_dtls 1 0
 fi
 test_speed
 test_version
