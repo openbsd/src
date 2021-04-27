@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.411 2021/02/16 08:29:16 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.412 2021/04/27 09:12:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -2175,6 +2175,16 @@ parse_open(struct peer *peer)
 		log_peer_warnx(&peer->conf, "peer sent wrong AS %s",
 		    log_as(as));
 		session_notification(peer, ERR_OPEN, ERR_OPEN_AS, NULL, 0);
+		change_state(peer, STATE_IDLE, EVNT_RCVD_OPEN);
+		return (-1);
+	}
+
+	/* on iBGP sessions check for bgpid collision */
+	if (!peer->conf.ebgp && peer->remote_bgpid == conf->bgpid) {
+		log_peer_warnx(&peer->conf, "peer BGPID %u conflicts with ours",
+		    ntohl(bgpid));
+		session_notification(peer, ERR_OPEN, ERR_OPEN_BGPID,
+		    NULL, 0);
 		change_state(peer, STATE_IDLE, EVNT_RCVD_OPEN);
 		return (-1);
 	}
