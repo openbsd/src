@@ -1,4 +1,4 @@
-#  $OpenBSD: Makefile,v 1.121 2020/11/07 11:56:40 kettenis Exp $
+#  $OpenBSD: Makefile,v 1.122 2021/04/27 00:31:34 drahn Exp $
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
@@ -62,6 +62,8 @@ ARCH_SRCS = e_sqrt.c e_sqrtf.c s_fabsf.c
 .PATH:	${.CURDIR}/arch/powerpc
 .elif (${MACHINE_ARCH} == "powerpc64")
 .PATH:	${.CURDIR}/arch/powerpc64
+.elif (${MACHINE_ARCH} == "riscv64")
+.PATH:	${.CURDIR}/arch/riscv64
 .elif (${MACHINE_ARCH} == "sparc64")
 .PATH:	${.CURDIR}/arch/sparc64
 ARCH_SRCS = e_sqrtl.c
@@ -138,7 +140,7 @@ CPPFLAGS+=	-I${.CURDIR}/src -I${.CURDIR}/src/ld80
 SRCS+=		${LONG_SRCS}
 .endif
 .if (${MACHINE_CPU} == "mips64") || (${MACHINE_ARCH} == "sparc64") || \
-    (${MACHINE_ARCH} == "aarch64")
+    (${MACHINE_ARCH} == "aarch64") || (${MACHINE_ARCH} == "riscv64")
 .PATH:		${.CURDIR}/src/ld128
 CPPFLAGS+=	-I${.CURDIR}/src -I${.CURDIR}/src/ld128
 SRCS+=		${LONG_SRCS}
