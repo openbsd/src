@@ -49,6 +49,8 @@ unsigned char *valid_hostnames[] = {
 unsigned char *valid_sandns_names[] = {
 	"*.ca",
 	"*.op3nbsd.org",
+	"c*.openbsd.org",
+	"foo.*.d*.c*.openbsd.org",
 	NULL,
 };
 
@@ -96,6 +98,7 @@ unsigned char *invalid_hostnames[] = {
 	"openbsd\n.org",
 	"open\178bsd.org",
 	"open\255bsd.org",
+	"*.openbsd.org",
 	NULL,
 };
 
@@ -110,10 +113,10 @@ unsigned char *invalid_sandns_names[] = {
 	"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
 	"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.a",
 	"*.-p3nbsd.org",
-	"a*.openbsd.org",
 	"*.*..openbsd.org",
 	"*..openbsd.org",
 	".openbsd.org",
+	"c*c.openbsd.org",
 	NULL,
 };
 
@@ -250,13 +253,6 @@ test_invalid_hostnames(void)
 		if (x509_constraints_valid_host(invalid_hostnames[i],
 		    strlen(invalid_hostnames[i]))) {
 			FAIL("Invalid hostname '%s' accepted\n",
-			    invalid_hostnames[i]);
-			failure = 1;
-			goto done;
-		}
-		if (x509_constraints_valid_sandns(invalid_hostnames[i],
-		    strlen(invalid_hostnames[i]))) {
-			FAIL("Invalid sandns '%s' accepted\n",
 			    invalid_hostnames[i]);
 			failure = 1;
 			goto done;
