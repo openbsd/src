@@ -1,4 +1,4 @@
-#	$OpenBSD: elf,v 1.18 2017/02/19 13:15:19 jsg Exp $
+#	$OpenBSD: elf,v 1.19 2021/04/28 04:41:14 drahn Exp $
 
 #------------------------------------------------------------------------------
 # elf:  file(1) magic for ELF executables
@@ -147,6 +147,7 @@
 >>18	leshort		106		Analog Devices Blackfin,
 >>18	leshort		0x9026		Alpha (unofficial),
 >>18	leshort		183		AArch64,
+>>18	leshort		243		RISC-V,
 >>20	lelong		0		invalid version
 >>20	lelong		1		version 1
 >>36	lelong		1		MathCoPro/FPU/MAU Required
