@@ -3894,6 +3894,7 @@ public:
   void      setSP(uint64_t value) { _registers[2] = value; }
   uint64_t  getIP() const         { return _registers[0]; }
   void      setIP(uint64_t value) { _registers[0] = value; }
+  uint64_t  getWCookie() const     { return 0; }
 
 private:
   // _registers[0] holds the pc
