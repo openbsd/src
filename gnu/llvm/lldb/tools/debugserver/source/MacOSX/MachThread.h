@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef __MachThread_h__
-#define __MachThread_h__
+#ifndef LLDB_TOOLS_DEBUGSERVER_SOURCE_MACOSX_MACHTHREAD_H
+#define LLDB_TOOLS_DEBUGSERVER_SOURCE_MACOSX_MACHTHREAD_H
 
 #include <string>
 #include <vector>
@@ -66,10 +66,12 @@ public:
   uint64_t GetSP(uint64_t failValue = INVALID_NUB_ADDRESS); // Get stack pointer
 
   DNBBreakpoint *CurrentBreakpoint();
-  uint32_t EnableHardwareBreakpoint(const DNBBreakpoint *breakpoint);
+  uint32_t EnableHardwareBreakpoint(const DNBBreakpoint *breakpoint,
+                                    bool also_set_on_task);
   uint32_t EnableHardwareWatchpoint(const DNBBreakpoint *watchpoint,
                                     bool also_set_on_task);
-  bool DisableHardwareBreakpoint(const DNBBreakpoint *breakpoint);
+  bool DisableHardwareBreakpoint(const DNBBreakpoint *breakpoint,
+                                 bool also_set_on_task);
   bool DisableHardwareWatchpoint(const DNBBreakpoint *watchpoint,
                                  bool also_set_on_task);
   uint32_t NumSupportedHardwareWatchpoints() const;

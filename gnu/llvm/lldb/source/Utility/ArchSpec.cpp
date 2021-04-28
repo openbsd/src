@@ -1,4 +1,4 @@
-//===-- ArchSpec.cpp --------------------------------------------*- C++ -*-===//
+//===-- ArchSpec.cpp ------------------------------------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -100,9 +100,9 @@ static const CoreDefinition g_core_definitions[] = {
     {eByteOrderLittle, 8, 4, 4, llvm::Triple::aarch64,
      ArchSpec::eCore_arm_armv8, "armv8"},
     {eByteOrderLittle, 4, 2, 4, llvm::Triple::arm,
-      ArchSpec::eCore_arm_armv8l, "armv8l"},
+     ArchSpec::eCore_arm_armv8l, "armv8l"},
     {eByteOrderLittle, 4, 4, 4, llvm::Triple::aarch64_32,
-      ArchSpec::eCore_arm_arm64_32, "arm64_32"},
+     ArchSpec::eCore_arm_arm64_32, "arm64_32"},
     {eByteOrderLittle, 8, 4, 4, llvm::Triple::aarch64,
      ArchSpec::eCore_arm_aarch64, "aarch64"},
 
@@ -205,8 +205,6 @@ static const CoreDefinition g_core_definitions[] = {
      ArchSpec::eCore_x86_64_x86_64, "x86_64"},
     {eByteOrderLittle, 8, 1, 15, llvm::Triple::x86_64,
      ArchSpec::eCore_x86_64_x86_64h, "x86_64h"},
-    {eByteOrderLittle, 8, 1, 15, llvm::Triple::x86_64,
-     ArchSpec::eCore_x86_64_amd64, "amd64"},
     {eByteOrderLittle, 4, 4, 4, llvm::Triple::hexagon,
      ArchSpec::eCore_hexagon_generic, "hexagon"},
     {eByteOrderLittle, 4, 4, 4, llvm::Triple::hexagon,
@@ -218,7 +216,12 @@ static const CoreDefinition g_core_definitions[] = {
      ArchSpec::eCore_uknownMach32, "unknown-mach-32"},
     {eByteOrderLittle, 8, 4, 4, llvm::Triple::UnknownArch,
      ArchSpec::eCore_uknownMach64, "unknown-mach-64"},
-    {eByteOrderLittle, 4, 2, 4, llvm::Triple::arc, ArchSpec::eCore_arc, "arc"}
+    {eByteOrderLittle, 4, 2, 4, llvm::Triple::arc, ArchSpec::eCore_arc, "arc"},
+
+    {eByteOrderLittle, 2, 2, 4, llvm::Triple::avr, ArchSpec::eCore_avr, "avr"},
+
+    {eByteOrderLittle, 4, 1, 4, llvm::Triple::wasm32, ArchSpec::eCore_wasm32,
+     "wasm32"},
 };
 
 // Ensure that we have an entry in the g_core_definitions for each core. If you
@@ -447,6 +450,8 @@ static const ArchDefinitionEntry g_elf_arch_entries[] = {
      LLDB_INVALID_CPUTYPE, 0xFFFFFFFFu, 0xFFFFFFFFu}, // HEXAGON
     {ArchSpec::eCore_arc, llvm::ELF::EM_ARC_COMPACT2, LLDB_INVALID_CPUTYPE,
      0xFFFFFFFFu, 0xFFFFFFFFu}, // ARC
+    {ArchSpec::eCore_avr, llvm::ELF::EM_AVR, LLDB_INVALID_CPUTYPE,
+     0xFFFFFFFFu, 0xFFFFFFFFu}, // AVR
 };
 
 static const ArchDefinition g_elf_arch_def = {
@@ -1203,17 +1208,9 @@ static bool cores_match(const ArchSpec::Core core1, const ArchSpec::Core core2,
 
   case ArchSpec::eCore_x86_64_x86_64h:
     if (!enforce_exact_match) {
+      try_inverse = false;
       if (core2 == ArchSpec::eCore_x86_64_x86_64)
         return true;
-      try_inverse = false;
-    }
-    break;
-
-  case ArchSpec::eCore_x86_64_amd64:
-    if (!enforce_exact_match) {
-      if (core2 == ArchSpec::eCore_x86_64_x86_64)
-        return true;
-      try_inverse = false;
     }
     break;
 
@@ -1469,4 +1466,16 @@ void ArchSpec::DumpTriple(llvm::raw_ostream &s) const {
 
   if (!environ_str.empty())
     s << "-" << environ_str;
+}
+
+void llvm::yaml::ScalarTraits<ArchSpec>::output(const ArchSpec &Val, void *,
+                                                raw_ostream &Out) {
+  Val.DumpTriple(Out);
+}
+
+llvm::StringRef
+llvm::yaml::ScalarTraits<ArchSpec>::input(llvm::StringRef Scalar, void *,
+                                          ArchSpec &Val) {
+  Val = ArchSpec(Scalar);
+  return {};
 }

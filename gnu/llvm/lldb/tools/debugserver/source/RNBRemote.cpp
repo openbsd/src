@@ -12,9 +12,14 @@
 
 #include "RNBRemote.h"
 
+#include <bsm/audit.h>
+#include <bsm/audit_session.h>
 #include <errno.h>
+#include <libproc.h>
 #include <mach-o/loader.h>
 #include <mach/exception_types.h>
+#include <mach/task_info.h>
+#include <pwd.h>
 #include <signal.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
@@ -48,6 +53,9 @@
 #include <memory>
 #include <sstream>
 #include <unordered_set>
+
+#include <CoreFoundation/CoreFoundation.h>
+#include <Security/Security.h>
 
 // constants
 
@@ -279,12 +287,10 @@ void RNBRemote::CreatePacketTable() {
                      "x", "Read data from memory"));
   t.push_back(Packet(write_data_to_memory, &RNBRemote::HandlePacket_X, NULL,
                      "X", "Write data to memory"));
-  //  t.push_back (Packet (insert_hardware_bp,
-  //  &RNBRemote::HandlePacket_UNIMPLEMENTED, NULL, "Z1", "Insert hardware
-  //  breakpoint"));
-  //  t.push_back (Packet (remove_hardware_bp,
-  //  &RNBRemote::HandlePacket_UNIMPLEMENTED, NULL, "z1", "Remove hardware
-  //  breakpoint"));
+  t.push_back(Packet(insert_hardware_bp, &RNBRemote::HandlePacket_z, NULL, "Z1",
+                     "Insert hardware breakpoint"));
+  t.push_back(Packet(remove_hardware_bp, &RNBRemote::HandlePacket_z, NULL, "z1",
+                     "Remove hardware breakpoint"));
   t.push_back(Packet(insert_write_watch_bp, &RNBRemote::HandlePacket_z, NULL,
                      "Z2", "Insert write watchpoint"));
   t.push_back(Packet(remove_write_watch_bp, &RNBRemote::HandlePacket_z, NULL,
@@ -1637,7 +1643,9 @@ rnb_err_t RNBRemote::HandlePacket_qLaunchSuccess(const char *p) {
     return SendPacket("OK");
   std::ostringstream ret_str;
   std::string status_str;
-  ret_str << "E" << m_ctx.LaunchStatusAsString(status_str);
+  std::string error_quoted = binary_encode_string
+               (m_ctx.LaunchStatusAsString(status_str));
+  ret_str << "E" << error_quoted;
 
   return SendPacket(ret_str.str());
 }
@@ -2671,8 +2679,9 @@ std::string cstring_to_asciihex_string(const char *str) {
   std::string hex_str;
   hex_str.reserve (strlen (str) * 2);
   while (str && *str) {
+    uint8_t c = *str++;
     char hexbuf[5];
-    snprintf (hexbuf, sizeof(hexbuf), "%02x", *str++);
+    snprintf (hexbuf, sizeof(hexbuf), "%02x", c);
     hex_str += hexbuf;
   }
   return hex_str;
@@ -3646,6 +3655,173 @@ rnb_err_t RNBRemote::HandlePacket_qSupported(const char *p) {
   return SendPacket(buf);
 }
 
+static bool process_does_not_exist (nub_process_t pid) {
+  std::vector<struct kinfo_proc> proc_infos;
+  DNBGetAllInfos (proc_infos);
+  const size_t infos_size = proc_infos.size();
+  for (size_t i = 0; i < infos_size; i++)
+    if (proc_infos[i].kp_proc.p_pid == pid)
+      return false;
+
+  return true; // process does not exist
+}
+
+// my_uid and process_uid are only initialized if this function
+// returns true -- that there was a uid mismatch -- and those
+// id's may want to be used in the error message.
+// 
+// NOTE: this should only be called after process_does_not_exist().
+// This sysctl will return uninitialized data if we ask for a pid
+// that doesn't exist.  The alternative would be to fetch all
+// processes and step through to find the one we're looking for
+// (as process_does_not_exist() does).
+static bool attach_failed_due_to_uid_mismatch (nub_process_t pid,
+                                               uid_t &my_uid,
+                                               uid_t &process_uid) {
+  struct kinfo_proc kinfo;
+  int mib[] = {CTL_KERN, KERN_PROC, KERN_PROC_PID, pid};
+  size_t len = sizeof(struct kinfo_proc);
+  if (sysctl(mib, sizeof(mib) / sizeof(mib[0]), &kinfo, &len, NULL, 0) != 0) {
+    return false; // pid doesn't exist? can't check uid mismatch - it was fine
+  }
+  my_uid = geteuid();
+  if (my_uid == 0)
+    return false; // if we're root, attach didn't fail because of uid mismatch
+  process_uid = kinfo.kp_eproc.e_ucred.cr_uid;
+
+  // If my uid != the process' uid, then the attach probably failed because
+  // of that.
+  if (my_uid != process_uid)
+    return true;
+  else
+    return false;
+}
+
+// NOTE: this should only be called after process_does_not_exist().
+// This sysctl will return uninitialized data if we ask for a pid
+// that doesn't exist.  The alternative would be to fetch all
+// processes and step through to find the one we're looking for
+// (as process_does_not_exist() does).
+static bool process_is_already_being_debugged (nub_process_t pid) {
+  struct kinfo_proc kinfo;
+  int mib[] = {CTL_KERN, KERN_PROC, KERN_PROC_PID, pid};
+  size_t len = sizeof(struct kinfo_proc);
+  if (sysctl(mib, sizeof(mib) / sizeof(mib[0]), &kinfo, &len, NULL, 0) != 0) {
+    return false; // pid doesn't exist? well, it's not being debugged...
+  }
+  if (kinfo.kp_proc.p_flag & P_TRACED)
+    return true; // is being debugged already
+  else
+    return false;
+}
+
+// Test if this current login session has a connection to the
+// window server (if it does not have that access, it cannot ask
+// for debug permission by popping up a dialog box and attach
+// may fail outright).
+static bool login_session_has_gui_access () {
+  // I believe this API only works on macOS.
+#if TARGET_OS_OSX == 0
+  return true;
+#else
+  auditinfo_addr_t info;
+  getaudit_addr(&info, sizeof(info));
+  if (info.ai_flags & AU_SESSION_FLAG_HAS_GRAPHIC_ACCESS)
+    return true;
+  else
+    return false;
+#endif
+}
+
+// Checking for 
+//
+//  {
+//    'class' : 'rule',
+//    'comment' : 'For use by Apple.  WARNING: administrators are advised
+//              not to modify this right.',
+//    'k-of-n' : '1',
+//    'rule' : [
+//      'is-admin',
+//      'is-developer',
+//      'authenticate-developer'
+//    ]
+//  }
+//
+// $ security authorizationdb read system.privilege.taskport.debug
+
+static bool developer_mode_enabled () {
+  // This API only exists on macOS.
+#if TARGET_OS_OSX == 0
+  return true;
+#else
+ CFDictionaryRef currentRightDict = NULL;
+ const char *debug_right = "system.privilege.taskport.debug";
+ // caller must free dictionary initialized by the following
+ OSStatus status = AuthorizationRightGet(debug_right, &currentRightDict);
+ if (status != errAuthorizationSuccess) {
+   // could not check authorization
+   return true;
+ }
+
+ bool devmode_enabled = true;
+
+ if (!CFDictionaryContainsKey(currentRightDict, CFSTR("k-of-n"))) {
+   devmode_enabled = false;
+ } else {
+   CFNumberRef item = (CFNumberRef) CFDictionaryGetValue(currentRightDict, CFSTR("k-of-n"));
+   if (item && CFGetTypeID(item) == CFNumberGetTypeID()) {
+      int64_t num = 0;
+      ::CFNumberGetValue(item, kCFNumberSInt64Type, &num);
+      if (num != 1) {
+        devmode_enabled = false;
+      }
+   } else {
+     devmode_enabled = false;
+   }
+ }
+
+ if (!CFDictionaryContainsKey(currentRightDict, CFSTR("class"))) {
+   devmode_enabled = false;
+ } else {
+   CFStringRef item = (CFStringRef) CFDictionaryGetValue(currentRightDict, CFSTR("class"));
+   if (item && CFGetTypeID(item) == CFStringGetTypeID()) {
+     char tmpbuf[128];
+     if (CFStringGetCString (item, tmpbuf, sizeof(tmpbuf), CFStringGetSystemEncoding())) {
+       tmpbuf[sizeof (tmpbuf) - 1] = '\0';
+       if (strcmp (tmpbuf, "rule") != 0) {
+         devmode_enabled = false;
+       }
+     } else {
+       devmode_enabled = false;
+     }
+   } else {
+     devmode_enabled = false;
+   }
+ }
+
+ if (!CFDictionaryContainsKey(currentRightDict, CFSTR("rule"))) {
+   devmode_enabled = false;
+ } else {
+   CFArrayRef item = (CFArrayRef) CFDictionaryGetValue(currentRightDict, CFSTR("rule"));
+   if (item && CFGetTypeID(item) == CFArrayGetTypeID()) {
+     int count = ::CFArrayGetCount(item);
+      CFRange range = CFRangeMake (0, count);
+     if (!::CFArrayContainsValue (item, range, CFSTR("is-admin")))
+       devmode_enabled = false;
+     if (!::CFArrayContainsValue (item, range, CFSTR("is-developer")))
+       devmode_enabled = false;
+     if (!::CFArrayContainsValue (item, range, CFSTR("authenticate-developer")))
+       devmode_enabled = false;
+   } else {
+     devmode_enabled = false;
+   }
+ }
+ ::CFRelease(currentRightDict);
+
+ return devmode_enabled;
+#endif // TARGET_OS_OSX
+}
+
 /*
  vAttach;pid
 
@@ -3804,49 +3980,92 @@ rnb_err_t RNBRemote::HandlePacket_v(const char *p) {
       else
         m_ctx.LaunchStatus().SetErrorString("attach failed");
 
-#if defined(__APPLE__) &&                                                      \
-    (__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ >= 101000)
       if (pid_attaching_to == INVALID_NUB_PROCESS && !attach_name.empty()) {
         pid_attaching_to = DNBProcessGetPIDByName(attach_name.c_str());
       }
-      if (pid_attaching_to != INVALID_NUB_PROCESS &&
-          strcmp(err_str, "No such process") != 0) {
-        // csr_check(CSR_ALLOW_TASK_FOR_PID) will be nonzero if System Integrity
-        // Protection is in effect.
-        if (csr_check(CSR_ALLOW_TASK_FOR_PID) != 0) {
-          bool attach_failed_due_to_sip = false;
 
-          if (rootless_allows_task_for_pid(pid_attaching_to) == 0) {
-            attach_failed_due_to_sip = true;
-          }
+      // attach_pid is INVALID_NUB_PROCESS - we did not succeed in attaching
+      // if the original request, pid_attaching_to, is available, see if we
+      // can figure out why we couldn't attach.  Return an informative error
+      // string to lldb.
 
-          if (!attach_failed_due_to_sip) {
-            int csops_flags = 0;
-            int retval = ::csops(pid_attaching_to, CS_OPS_STATUS, &csops_flags,
-                                 sizeof(csops_flags));
-            if (retval != -1 && (csops_flags & CS_RESTRICT)) {
-              attach_failed_due_to_sip = true;
-            }
+      if (pid_attaching_to != INVALID_NUB_PROCESS) {
+        // The order of these checks is important.  
+        if (process_does_not_exist (pid_attaching_to)) {
+          DNBLogError("Tried to attach to pid that doesn't exist");
+          std::string return_message = "E96;";
+          return_message += cstring_to_asciihex_string("no such process.");
+          return SendPacket(return_message.c_str());
+        }
+        if (process_is_already_being_debugged (pid_attaching_to)) {
+          DNBLogError("Tried to attach to process already being debugged");
+          std::string return_message = "E96;";
+          return_message += cstring_to_asciihex_string("tried to attach to "
+                                           "process already being debugged");
+          return SendPacket(return_message.c_str());
+        }
+        uid_t my_uid, process_uid;
+        if (attach_failed_due_to_uid_mismatch (pid_attaching_to, 
+                                               my_uid, process_uid)) {
+          std::string my_username = "uid " + std::to_string (my_uid);
+          std::string process_username = "uid " + std::to_string (process_uid);
+          struct passwd *pw = getpwuid (my_uid);
+          if (pw && pw->pw_name) {
+            my_username = pw->pw_name;
           }
-          if (attach_failed_due_to_sip) {
-            std::string return_message = "E96;";
-            return_message += cstring_to_asciihex_string(
-                "Process attach denied, possibly because "
-                "System Integrity Protection is enabled and "
-                "process does not allow attaching.");
-
-            SendPacket(return_message.c_str());
-            DNBLogError("Attach failed because process does not allow "
-                        "attaching: \"%s\".",
-                        err_str);
-            return rnb_err;
+          pw = getpwuid (process_uid);
+          if (pw && pw->pw_name) {
+            process_username = pw->pw_name;
           }
+          DNBLogError("Tried to attach to process with uid mismatch");
+          std::string return_message = "E96;";
+          std::string msg = "tried to attach to process as user '" 
+                            + my_username + "' and process is running "
+                            "as user '" + process_username + "'";
+          return_message += cstring_to_asciihex_string(msg.c_str());
+          return SendPacket(return_message.c_str());
+        }
+        if (!login_session_has_gui_access() && !developer_mode_enabled()) {
+          DNBLogError("Developer mode is not enabled and this is a "
+                      "non-interactive session");
+          std::string return_message = "E96;";
+          return_message += cstring_to_asciihex_string("developer mode is "
+                                           "not enabled on this machine "
+                                           "and this is a non-interactive "
+                                           "debug session.");
+          return SendPacket(return_message.c_str());
+        }
+        if (!login_session_has_gui_access()) {
+          DNBLogError("This is a non-interactive session");
+          std::string return_message = "E96;";
+          return_message += cstring_to_asciihex_string("this is a "
+                                           "non-interactive debug session, "
+                                           "cannot get permission to debug "
+                                           "processes.");
+          return SendPacket(return_message.c_str());
         }
       }
 
-#endif
-
-      SendPacket("E01"); // E01 is our magic error value for attach failed.
+      std::string error_explainer = "attach failed";
+      if (err_str[0] != '\0') {
+        // This is not a super helpful message for end users
+        if (strcmp (err_str, "unable to start the exception thread") == 0) {
+          snprintf (err_str, sizeof (err_str) - 1,
+                    "Not allowed to attach to process.  Look in the console "
+                    "messages (Console.app), near the debugserver entries "
+                    "when the attached failed.  The subsystem that denied "
+                    "the attach permission will likely have logged an "
+                    "informative message about why it was denied.");
+          err_str[sizeof (err_str) - 1] = '\0';
+        }
+        error_explainer += " (";
+        error_explainer += err_str;
+        error_explainer += ")";
+      }
+      std::string default_return_msg = "E96;";
+      default_return_msg += cstring_to_asciihex_string 
+                              (error_explainer.c_str());
+      SendPacket (default_return_msg.c_str());
       DNBLogError("Attach failed: \"%s\".", err_str);
       return rnb_err;
     }
@@ -4689,6 +4908,8 @@ rnb_err_t RNBRemote::HandlePacket_qHostInfo(const char *p) {
     strm << "ostype:watchos;";
 #elif defined(TARGET_OS_BRIDGE) && TARGET_OS_BRIDGE == 1
     strm << "ostype:bridgeos;";
+#elif defined(TARGET_OS_OSX) && TARGET_OS_OSX == 1
+    strm << "ostype:macosx;";
 #else
     strm << "ostype:ios;";
 #endif
@@ -6117,7 +6338,7 @@ rnb_err_t RNBRemote::HandlePacket_qProcessInfo(const char *p) {
   if (addr_size > 0) {
     rep << "ptrsize:" << std::dec << addr_size << ';';
 
-#if (defined(__x86_64__) || defined(__i386__))
+#if defined(TARGET_OS_OSX) && TARGET_OS_OSX == 1
     // Try and get the OS type by looking at the load commands in the main
     // executable and looking for a LC_VERSION_MIN load command. This is the
     // most reliable way to determine the "ostype" value when on desktop.
@@ -6147,7 +6368,7 @@ rnb_err_t RNBRemote::HandlePacket_qProcessInfo(const char *p) {
         load_command_addr = load_command_addr + lc.cmdsize;
       }
     }
-#endif // when compiling this on x86 targets
+#endif // TARGET_OS_OSX
   }
 
   // If we weren't able to find the OS in a LC_VERSION_MIN load command, try
@@ -6164,6 +6385,8 @@ rnb_err_t RNBRemote::HandlePacket_qProcessInfo(const char *p) {
       rep << "ostype:watchos;";
 #elif defined(TARGET_OS_BRIDGE) && TARGET_OS_BRIDGE == 1
       rep << "ostype:bridgeos;";
+#elif defined(TARGET_OS_OSX) && TARGET_OS_OSX == 1
+      rep << "ostype:macosx;";
 #else
       rep << "ostype:ios;";
 #endif

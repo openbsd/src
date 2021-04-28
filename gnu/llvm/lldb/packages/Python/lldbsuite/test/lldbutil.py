@@ -775,7 +775,7 @@ def run_to_breakpoint_do_run(test, target, bkpt, launch_info = None,
         launch_info = target.GetLaunchInfo()
         launch_info.SetWorkingDirectory(test.get_process_working_directory())
 
-    if extra_images and lldb.remote_platform:
+    if extra_images:
         environ = test.registerSharedLibrariesWithTarget(target, extra_images)
         launch_info.SetEnvironmentEntries(environ, True)
 
@@ -788,6 +788,8 @@ def run_to_breakpoint_do_run(test, target, bkpt, launch_info = None,
     test.assertFalse(error.Fail(),
                      "Process launch failed: %s" % (error.GetCString()))
 
+    test.assertEqual(process.GetState(), lldb.eStateStopped)
+
     # Frame #0 should be at our breakpoint.
     threads = get_threads_stopped_at_breakpoint(
                 process, bkpt)
@@ -797,7 +799,7 @@ def run_to_breakpoint_do_run(test, target, bkpt, launch_info = None,
         test.assertEqual(num_threads, 1, "Expected 1 thread to stop at breakpoint, %d did."%(num_threads))
     else:
         test.assertGreater(num_threads, 0, "No threads stopped at breakpoint")
-        
+
     thread = threads[0]
     return (target, process, thread, bkpt)
 
@@ -1062,7 +1064,7 @@ def print_stacktraces(process, string_buffer=False):
         return output.getvalue()
 
 
-def expect_state_changes(test, listener, process, states, timeout=5):
+def expect_state_changes(test, listener, process, states, timeout=30):
     """Listens for state changed events on the listener and makes sure they match what we
     expect. Stop-and-restart events (where GetRestartedFromEvent() returns true) are ignored."""
 

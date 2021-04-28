@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef __DNBArchImplI386_h__
-#define __DNBArchImplI386_h__
+#ifndef LLDB_TOOLS_DEBUGSERVER_SOURCE_MACOSX_I386_DNBARCHIMPLI386_H
+#define LLDB_TOOLS_DEBUGSERVER_SOURCE_MACOSX_I386_DNBARCHIMPLI386_H
 
 #if defined(__i386__) || defined(__x86_64__)
 
@@ -51,7 +51,12 @@ public:
   virtual bool ThreadDidStop();
   virtual bool NotifyException(MachException::Data &exc);
 
+  virtual uint32_t NumSupportedHardwareBreakpoints();
   virtual uint32_t NumSupportedHardwareWatchpoints();
+  virtual uint32_t EnableHardwareBreakpoint(nub_addr_t addr, nub_size_t size,
+                                            bool also_set_on_task);
+  virtual bool DisableHardwareBreakpoint(uint32_t hw_index,
+                                         bool also_set_on_task);
   virtual uint32_t EnableHardwareWatchpoint(nub_addr_t addr, nub_size_t size,
                                             bool read, bool write,
                                             bool also_set_on_task);
@@ -210,6 +215,9 @@ protected:
 
   static uint32_t GetRegisterContextSize();
 
+  static void SetHardwareBreakpoint(DBG &debug_state, uint32_t hw_index,
+                                    nub_addr_t addr, nub_size_t size);
+
   // Helper functions for watchpoint manipulations.
   static void SetWatchpoint(DBG &debug_state, uint32_t hw_index,
                             nub_addr_t addr, nub_size_t size, bool read,
@@ -235,4 +243,4 @@ protected:
 };
 
 #endif // #if defined (__i386__) || defined (__x86_64__)
-#endif // #ifndef __DNBArchImplI386_h__
+#endif // LLDB_TOOLS_DEBUGSERVER_SOURCE_MACOSX_I386_DNBARCHIMPLI386_H

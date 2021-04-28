@@ -1,4 +1,4 @@
-//===-- SystemInitializerCommon.cpp -----------------------------*- C++ -*-===//
+//===-- SystemInitializerCommon.cpp ---------------------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -18,7 +18,7 @@
 #include "lldb/Utility/Timer.h"
 #include "lldb/lldb-private.h"
 
-#if defined(__linux__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__NetBSD__)
 #include "Plugins/Process/POSIX/ProcessPOSIXLog.h"
 #endif
 
@@ -110,7 +110,7 @@ llvm::Error SystemInitializerCommon::Initialize() {
 
   process_gdb_remote::ProcessGDBRemoteLog::Initialize();
 
-#if defined(__linux__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__NetBSD__)
   ProcessPOSIXLog::Initialize();
 #endif
 #if defined(_WIN32)

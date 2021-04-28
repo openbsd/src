@@ -6,8 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_x86AssemblyInspectionEngine_h_
-#define liblldb_x86AssemblyInspectionEngine_h_
+#ifndef LLDB_SOURCE_PLUGINS_UNWINDASSEMBLY_X86_X86ASSEMBLYINSPECTIONENGINE_H
+#define LLDB_SOURCE_PLUGINS_UNWINDASSEMBLY_X86_X86ASSEMBLYINSPECTIONENGINE_H
 
 #include "llvm-c/Disassembler.h"
 
@@ -114,7 +114,6 @@ private:
   bool call_next_insn_pattern_p();
   bool mov_reg_to_local_stack_frame_p(int &regno, int &rbp_offset);
   bool ret_pattern_p();
-  bool retguard_prologue_p(size_t offset, int insn_len);
   bool jmp_to_reg_p();
   bool pc_rel_branch_or_jump_p (const int instruction_length, int &offset);
   bool non_local_branch_p (const lldb::addr_t current_func_text_offset, 
@@ -192,9 +191,11 @@ private:
 
   ::LLVMDisasmContextRef m_disasm_context;
 
-  DISALLOW_COPY_AND_ASSIGN(x86AssemblyInspectionEngine);
+  x86AssemblyInspectionEngine(const x86AssemblyInspectionEngine &) = delete;
+  const x86AssemblyInspectionEngine &
+  operator=(const x86AssemblyInspectionEngine &) = delete;
 };
 
 } // namespace lldb_private
 
-#endif // liblldb_x86AssemblyInspectionEngine_h_
+#endif // LLDB_SOURCE_PLUGINS_UNWINDASSEMBLY_X86_X86ASSEMBLYINSPECTIONENGINE_H

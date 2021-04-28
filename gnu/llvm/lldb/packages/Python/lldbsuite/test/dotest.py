@@ -49,9 +49,6 @@ from . import test_result
 from lldbsuite.test_event.event_builder import EventBuilder
 from ..support import seven
 
-def get_dotest_invocation():
-    return ' '.join(sys.argv)
-
 
 def is_exe(fpath):
     """Returns true if fpath is an executable."""
@@ -220,7 +217,6 @@ def parseOptionsAndInitTestdirs():
         parser = dotest_args.create_parser()
         args = parser.parse_args()
     except:
-        print(get_dotest_invocation())
         raise
 
     if args.unset_env_varnames:
@@ -242,10 +238,6 @@ def parseOptionsAndInitTestdirs():
 
     if args.set_inferior_env_vars:
         lldbtest_config.inferior_env = ' '.join(args.set_inferior_env_vars)
-
-    # Only print the args if being verbose.
-    if args.v:
-        print(get_dotest_invocation())
 
     if args.h:
         do_help = True
@@ -275,17 +267,21 @@ def parseOptionsAndInitTestdirs():
                     break
 
     if args.dsymutil:
-        os.environ['DSYMUTIL'] = args.dsymutil
+        configuration.dsymutil = args.dsymutil
     elif platform_system == 'Darwin':
-        os.environ['DSYMUTIL'] = seven.get_command_output(
+        configuration.dsymutil = seven.get_command_output(
             'xcrun -find -toolchain default dsymutil')
 
+
+    # The lldb-dotest script produced by the CMake build passes in a path to a
+    # working FileCheck and yaml2obj binary. So does one specific Xcode
+    # project target. However, when invoking dotest.py directly, a valid
+    # --filecheck and --yaml2obj option needs to be given.
     if args.filecheck:
-        # The lldb-dotest script produced by the CMake build passes in a path
-        # to a working FileCheck binary. So does one specific Xcode project
-        # target. However, when invoking dotest.py directly, a valid --filecheck
-        # option needs to be given.
         configuration.filecheck = os.path.abspath(args.filecheck)
+
+    if args.yaml2obj:
+        configuration.yaml2obj = os.path.abspath(args.yaml2obj)
 
     if not configuration.get_filecheck_path():
         logging.warning('No valid FileCheck executable; some tests may fail...')
@@ -302,19 +298,12 @@ def parseOptionsAndInitTestdirs():
 
     # Set SDKROOT if we are using an Apple SDK
     if platform_system == 'Darwin' and args.apple_sdk:
-        os.environ['SDKROOT'] = seven.get_command_output(
+        configuration.sdkroot = seven.get_command_output(
             'xcrun --sdk "%s" --show-sdk-path 2> /dev/null' %
             (args.apple_sdk))
 
     if args.arch:
         configuration.arch = args.arch
-        if configuration.arch.startswith(
-                'arm') and platform_system == 'Darwin' and not args.apple_sdk:
-            os.environ['SDKROOT'] = seven.get_command_output(
-                'xcrun --sdk iphoneos.internal --show-sdk-path 2> /dev/null')
-            if not os.path.exists(os.environ['SDKROOT']):
-                os.environ['SDKROOT'] = seven.get_command_output(
-                    'xcrun --sdk iphoneos --show-sdk-path 2> /dev/null')
     else:
         configuration.arch = platform_machine
 
@@ -349,7 +338,8 @@ def parseOptionsAndInitTestdirs():
                 logging.error('"%s" is not a setting in the form "key=value"',
                               setting[0])
                 sys.exit(-1)
-            configuration.settings.append(setting[0].split('=', 1))
+            setting_list = setting[0].split('=', 1)
+            configuration.settings.append((setting_list[0], setting_list[1]))
 
     if args.d:
         sys.stdout.write(
@@ -377,7 +367,10 @@ def parseOptionsAndInitTestdirs():
                     args.executable)
             sys.exit(-1)
 
-    if args.server:
+    if args.server and args.out_of_tree_debugserver:
+        logging.warning('Both --server and --out-of-tree-debugserver are set')
+
+    if args.server and not args.out_of_tree_debugserver:
         os.environ['LLDB_DEBUGSERVER_PATH'] = args.server
 
     if args.excluded:
@@ -415,18 +408,16 @@ def parseOptionsAndInitTestdirs():
     if do_help:
         usage(parser)
 
-    if args.results_file:
-        configuration.results_filename = args.results_file
+    # Reproducer arguments
+    if args.capture_path and args.replay_path:
+        logging.error('Cannot specify both a capture and a replay path.')
+        sys.exit(-1)
 
-    if args.results_formatter:
-        configuration.results_formatter_name = args.results_formatter
-    if args.results_formatter_options:
-        configuration.results_formatter_options = args.results_formatter_options
+    if args.capture_path:
+        configuration.capture_path = args.capture_path
 
-    # Default to using the BasicResultsFormatter if no formatter is specified.
-    if configuration.results_formatter_name is None:
-        configuration.results_formatter_name = (
-            "lldbsuite.test_event.formatter.results_formatter.ResultsFormatter")
+    if args.replay_path:
+        configuration.replay_path = args.replay_path
 
     # rerun-related arguments
     configuration.rerun_all_issues = args.rerun_all_issues
@@ -450,7 +441,11 @@ def parseOptionsAndInitTestdirs():
         configuration.clang_module_cache_dir = os.path.join(
             configuration.test_build_dir, 'module-cache-clang')
 
-    os.environ['CLANG_MODULE_CACHE_DIR'] = configuration.clang_module_cache_dir
+    if args.lldb_libs_dir:
+        configuration.lldb_libs_dir = args.lldb_libs_dir
+
+    if args.enabled_plugins:
+        configuration.enabled_plugins = args.enabled_plugins
 
     # Gather all the dirs passed on the command line.
     if len(args.args) > 0:
@@ -461,16 +456,10 @@ def parseOptionsAndInitTestdirs():
 
 def setupTestResults():
     """Sets up test results-related objects based on arg settings."""
-    # Setup the results formatter configuration.
-    formatter_config = formatter.FormatterConfig()
-    formatter_config.filename = configuration.results_filename
-    formatter_config.formatter_name = configuration.results_formatter_name
-    formatter_config.formatter_options = (
-        configuration.results_formatter_options)
 
     # Create the results formatter.
     formatter_spec = formatter.create_results_formatter(
-        formatter_config)
+            "lldbsuite.test_event.formatter.results_formatter.ResultsFormatter")
     if formatter_spec is not None and formatter_spec.formatter is not None:
         configuration.results_formatter_object = formatter_spec.formatter
 
@@ -501,12 +490,12 @@ def setupSysPath():
         sys.exit(-1)
 
     os.environ["LLDB_TEST"] = scriptPath
+    os.environ["LLDB_TEST_SRC"] = lldbsuite.lldb_test_root
 
     # Set up the root build directory.
-    builddir = configuration.test_build_dir
     if not configuration.test_build_dir:
         raise Exception("test_build_dir is not set")
-    os.environ["LLDB_BUILD"] = os.path.abspath(configuration.test_build_dir)
+    configuration.test_build_dir = os.path.abspath(configuration.test_build_dir)
 
     # Set up the LLDB_SRC environment variable, so that the tests can locate
     # the LLDB source code.
@@ -559,10 +548,7 @@ def setupSysPath():
     # confusingly, this is the "bin" directory
     lldbLibDir = os.path.dirname(lldbtest_config.lldbExec)
     os.environ["LLDB_LIB_DIR"] = lldbLibDir
-    lldbImpLibDir = os.path.join(
-        lldbLibDir,
-        '..',
-        'lib') if sys.platform.startswith('win32') else lldbLibDir
+    lldbImpLibDir = configuration.lldb_libs_dir
     os.environ["LLDB_IMPLIB_DIR"] = lldbImpLibDir
     print("LLDB library dir:", os.environ["LLDB_LIB_DIR"])
     print("LLDB import library dir:", os.environ["LLDB_IMPLIB_DIR"])
@@ -773,16 +759,6 @@ def visit(prefix, dir, names):
             raise
 
 
-def setSetting(setting, value):
-    import lldb
-    ci = lldb.DBG.GetCommandInterpreter()
-    res = lldb.SBCommandReturnObject()
-    cmd = 'setting set %s %s'%(setting, value)
-    print(cmd)
-    ci.HandleCommand(cmd, res, False)
-    if not res.Succeeded():
-        raise Exception('failed to run "%s"'%cmd)
-
 # ======================================== #
 #                                          #
 # Execution of the test driver starts here #
@@ -808,6 +784,8 @@ def checkDsymForUUIDIsNotOn():
 
 
 def exitTestSuite(exitCode=None):
+    # lldb.py does SBDebugger.Initialize().
+    # Call SBDebugger.Terminate() on exit.
     import lldb
     lldb.SBDebugger.Terminate()
     if exitCode:
@@ -930,7 +908,7 @@ def checkWatchpointSupport():
 def checkDebugInfoSupport():
     import lldb
 
-    platform = lldb.DBG.GetSelectedPlatform().GetTriple().split('-')[2]
+    platform = lldb.selected_platform.GetTriple().split('-')[2]
     compiler = configuration.compiler
     skipped = []
     for cat in test_categories.debug_info_categories:
@@ -960,16 +938,25 @@ def run_suite():
 
     setupSysPath()
 
-
-    # For the time being, let's bracket the test runner within the
-    # lldb.SBDebugger.Initialize()/Terminate() pair.
+    import lldbconfig
+    if configuration.capture_path or configuration.replay_path:
+        lldbconfig.INITIALIZE = False
     import lldb
+
+    if configuration.capture_path:
+        lldb.SBReproducer.Capture(configuration.capture_path)
+        lldb.SBReproducer.SetAutoGenerate(True)
+    elif configuration.replay_path:
+        lldb.SBReproducer.PassiveReplay(configuration.replay_path)
+
+    if not lldbconfig.INITIALIZE:
+        lldb.SBDebugger.Initialize()
+
+    # Use host platform by default.
+    lldb.selected_platform = lldb.SBPlatform.GetHostPlatform()
 
     # Now we can also import lldbutil
     from lldbsuite.test import lldbutil
-
-    # Create a singleton SBDebugger in the lldb namespace.
-    lldb.DBG = lldb.SBDebugger.Create()
 
     if configuration.lldb_platform_name:
         print("Setting up remote platform '%s'" %
@@ -1019,7 +1006,7 @@ def run_suite():
         if not lldb.remote_platform.SetWorkingDirectory(
                 configuration.lldb_platform_working_dir):
             raise Exception("failed to set working directory '%s'" % configuration.lldb_platform_working_dir)
-        lldb.DBG.SetSelectedPlatform(lldb.remote_platform)
+        lldb.selected_platform = lldb.remote_platform
     else:
         lldb.remote_platform = None
         configuration.lldb_platform_working_dir = None
@@ -1027,10 +1014,9 @@ def run_suite():
 
     # Set up the working directory.
     # Note that it's not dotest's job to clean this directory.
-    build_dir = configuration.test_build_dir
-    lldbutil.mkdir_p(build_dir)
+    lldbutil.mkdir_p(configuration.test_build_dir)
 
-    target_platform = lldb.DBG.GetSelectedPlatform().GetTriple().split('-')[2]
+    target_platform = lldb.selected_platform.GetTriple().split('-')[2]
 
     checkLibcxxSupport()
     checkLibstdcxxSupport()
@@ -1050,25 +1036,13 @@ def run_suite():
             "netbsd" in target_platform or
             "windows" in target_platform)
 
-    # Collect tests from the specified testing directories. If a test
-    # subdirectory filter is explicitly specified, limit the search to that
-    # subdirectory.
-    exclusive_test_subdir = configuration.get_absolute_path_to_exclusive_test_subdir()
-    if exclusive_test_subdir:
-        dirs_to_search = [exclusive_test_subdir]
-    else:
-        dirs_to_search = configuration.testdirs
-    for testdir in dirs_to_search:
+    for testdir in configuration.testdirs:
         for (dirpath, dirnames, filenames) in os.walk(testdir):
             visit('Test', dirpath, filenames)
 
     #
     # Now that we have loaded all the test cases, run the whole test suite.
     #
-
-    # Set any user-overridden settings.
-    for key, value in configuration.settings:
-        setSetting(key, value)
 
     # Install the control-c handler.
     unittest2.signals.installHandler()
@@ -1080,7 +1054,6 @@ def run_suite():
         "\nSession logs for test failures/errors/unexpected successes"
         " will go into directory '%s'\n" %
         configuration.sdir_name)
-    sys.stderr.write("Command invoked: %s\n" % get_dotest_invocation())
 
     #
     # Invoke the default TextTestRunner to run the test suite
@@ -1091,8 +1064,6 @@ def run_suite():
         print("compiler=%s" % configuration.compiler)
 
     # Iterating over all possible architecture and compiler combinations.
-    os.environ["ARCH"] = configuration.arch
-    os.environ["CC"] = configuration.compiler
     configString = "arch=%s compiler=%s" % (configuration.arch,
                                             configuration.compiler)
 

@@ -40,8 +40,6 @@
 #include "Plugins/Process/Linux/NativeProcessLinux.h"
 #elif defined(__NetBSD__)
 #include "Plugins/Process/NetBSD/NativeProcessNetBSD.h"
-#elif defined(__OpenBSD__)
-#include "Plugins/Process/OpenBSD/NativeProcessOpenBSD.h"
 #elif defined(_WIN32)
 #include "Plugins/Process/Windows/Common/NativeProcessWindows.h"
 #endif
@@ -65,8 +63,6 @@ namespace {
 typedef process_linux::NativeProcessLinux::Factory NativeProcessFactory;
 #elif defined(__NetBSD__)
 typedef process_netbsd::NativeProcessNetBSD::Factory NativeProcessFactory;
-#elif defined(__OpenBSD__)
-typedef process_openbsd::NativeProcessOpenBSD::Factory NativeProcessFactory;
 #elif defined(_WIN32)
 typedef NativeProcessWindows::Factory NativeProcessFactory;
 #else

@@ -1,4 +1,4 @@
-//===-- TestLineEntry.cpp ------------------------------*- C++ -*-===//
+//===-- TestLineEntry.cpp -------------------------------------------------===//
 //
 //
 //                     The LLVM Compiler Infrastructure
@@ -14,9 +14,9 @@
 #include "Plugins/ObjectFile/Mach-O/ObjectFileMachO.h"
 #include "Plugins/SymbolFile/DWARF/DWARFASTParserClang.h"
 #include "Plugins/SymbolFile/DWARF/SymbolFileDWARF.h"
+#include "Plugins/TypeSystem/Clang/TypeSystemClang.h"
 #include "TestingSupport/SubsystemRAII.h"
 #include "TestingSupport/TestUtilities.h"
-#include "lldb/Symbol/ClangASTContext.h"
 
 #include "lldb/Core/Module.h"
 #include "lldb/Host/FileSystem.h"
@@ -33,7 +33,7 @@ using namespace lldb;
 
 class LineEntryTest : public testing::Test {
   SubsystemRAII<FileSystem, HostInfo, ObjectFileMachO, SymbolFileDWARF,
-                ClangASTContext>
+                TypeSystemClang>
       subsystem;
 
 public:
@@ -49,7 +49,7 @@ void LineEntryTest::SetUp() {
   auto ExpectedFile = TestFile::fromYamlFile("inlined-functions.yaml");
   ASSERT_THAT_EXPECTED(ExpectedFile, llvm::Succeeded());
   m_file.emplace(std::move(*ExpectedFile));
-  m_module_sp = std::make_shared<Module>(ModuleSpec(FileSpec(m_file->name())));
+  m_module_sp = std::make_shared<Module>(m_file->moduleSpec());
 }
 
 llvm::Expected<LineEntry> LineEntryTest::GetLineEntryForLine(uint32_t line) {

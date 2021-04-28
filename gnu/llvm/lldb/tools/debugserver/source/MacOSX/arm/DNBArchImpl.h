@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef __DebugNubArchMachARM_h__
-#define __DebugNubArchMachARM_h__
+#ifndef LLDB_TOOLS_DEBUGSERVER_SOURCE_MACOSX_ARM_DNBARCHIMPL_H
+#define LLDB_TOOLS_DEBUGSERVER_SOURCE_MACOSX_ARM_DNBARCHIMPL_H
 
 #if defined(__arm__) || defined(__arm64__) || defined(__aarch64__)
 
@@ -70,8 +70,10 @@ public:
 
   virtual uint32_t NumSupportedHardwareBreakpoints();
   virtual uint32_t NumSupportedHardwareWatchpoints();
-  virtual uint32_t EnableHardwareBreakpoint(nub_addr_t addr, nub_size_t size);
-  virtual bool DisableHardwareBreakpoint(uint32_t hw_break_index);
+  virtual uint32_t EnableHardwareBreakpoint(nub_addr_t addr, nub_size_t size,
+                                            bool also_set_on_task);
+  virtual bool DisableHardwareBreakpoint(uint32_t hw_break_index,
+                                         bool also_set_on_task);
 
   virtual uint32_t EnableHardwareWatchpoint(nub_addr_t addr, nub_size_t size,
                                             bool read, bool write,
@@ -271,4 +273,4 @@ protected:
 };
 
 #endif // #if defined (__arm__)
-#endif // #ifndef __DebugNubArchMachARM_h__
+#endif // LLDB_TOOLS_DEBUGSERVER_SOURCE_MACOSX_ARM_DNBARCHIMPL_H

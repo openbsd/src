@@ -1,4 +1,4 @@
-//===-- source/Host/windows/Host.cpp ----------------------------*- C++ -*-===//
+//===-- source/Host/windows/Host.cpp --------------------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -131,9 +131,9 @@ FileSpec Host::GetModuleFileSpecForHostAddress(const void *host_addr) {
   return module_filespec;
 }
 
-uint32_t Host::FindProcesses(const ProcessInstanceInfoMatch &match_info,
-                             ProcessInstanceInfoList &process_infos) {
-  process_infos.Clear();
+uint32_t Host::FindProcessesImpl(const ProcessInstanceInfoMatch &match_info,
+                                 ProcessInstanceInfoList &process_infos) {
+  process_infos.clear();
 
   AutoHandle snapshot(CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0));
   if (!snapshot.IsValid())
@@ -156,10 +156,10 @@ uint32_t Host::FindProcesses(const ProcessInstanceInfoMatch &match_info,
       GetProcessExecutableAndTriple(handle, process);
 
       if (match_info.MatchAllProcesses() || match_info.Matches(process))
-        process_infos.Append(process);
+        process_infos.push_back(process);
     } while (Process32NextW(snapshot.get(), &pe));
   }
-  return process_infos.GetSize();
+  return process_infos.size();
 }
 
 bool Host::GetProcessInfo(lldb::pid_t pid, ProcessInstanceInfo &process_info) {
@@ -225,7 +225,7 @@ Status Host::ShellExpandArguments(ProcessLaunchInfo &launch_info) {
 
     int status;
     std::string output;
-    std::string command = expand_command.GetString();
+    std::string command = expand_command.GetString().str();
     Status e =
         RunShellCommand(command.c_str(), launch_info.GetWorkingDirectory(),
                         &status, nullptr, &output, std::chrono::seconds(10));

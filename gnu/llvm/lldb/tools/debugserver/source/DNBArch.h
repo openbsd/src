@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef __DebugNubArch_h__
-#define __DebugNubArch_h__
+#ifndef LLDB_TOOLS_DEBUGSERVER_SOURCE_DNBARCH_H
+#define LLDB_TOOLS_DEBUGSERVER_SOURCE_DNBARCH_H
 
 #include "DNBDefs.h"
 #include "MacOSX/MachException.h"
@@ -78,7 +78,8 @@ public:
   virtual bool NotifyException(MachException::Data &exc) { return false; }
   virtual uint32_t NumSupportedHardwareBreakpoints() { return 0; }
   virtual uint32_t NumSupportedHardwareWatchpoints() { return 0; }
-  virtual uint32_t EnableHardwareBreakpoint(nub_addr_t addr, nub_size_t size) {
+  virtual uint32_t EnableHardwareBreakpoint(nub_addr_t addr, nub_size_t size,
+                                            bool also_set_on_task) {
     return INVALID_NUB_HW_INDEX;
   }
   virtual uint32_t EnableHardwareWatchpoint(nub_addr_t addr, nub_size_t size,
@@ -86,7 +87,10 @@ public:
                                             bool also_set_on_task) {
     return INVALID_NUB_HW_INDEX;
   }
-  virtual bool DisableHardwareBreakpoint(uint32_t hw_index) { return false; }
+  virtual bool DisableHardwareBreakpoint(uint32_t hw_index,
+                                         bool also_set_on_task) {
+    return false;
+  }
   virtual bool DisableHardwareWatchpoint(uint32_t hw_index,
                                          bool also_set_on_task) {
     return false;
@@ -120,7 +124,6 @@ protected:
 #include "MacOSX/arm/DNBArchImpl.h"
 #include "MacOSX/arm64/DNBArchImplARM64.h"
 #include "MacOSX/i386/DNBArchImplI386.h"
-#include "MacOSX/ppc/DNBArchImpl.h"
 #include "MacOSX/x86_64/DNBArchImplX86_64.h"
 
 #endif

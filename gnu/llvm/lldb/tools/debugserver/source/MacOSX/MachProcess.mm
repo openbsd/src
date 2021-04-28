@@ -25,13 +25,16 @@
 #include <sys/ptrace.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <uuid/uuid.h>
 
 #include <algorithm>
+#include <chrono>
 #include <map>
 
+#include <TargetConditionals.h>
 #import <Foundation/Foundation.h>
 
 #include "DNBDataRef.h"
@@ -162,16 +165,18 @@ static bool CallBoardSystemServiceOpenApplication(NSString *bundleIDNSStr,
                    [(NSString *)[bks_error localizedDescription] UTF8String];
                if (error_str) {
                  open_app_error_string = error_str;
+                 DNBLogError("In app launch attempt, got error "
+                             "localizedDescription '%s'.", error_str);
+                 const char *obj_desc = 
+                      [NSString stringWithFormat:@"%@", bks_error].UTF8String;
+                 DNBLogError("In app launch attempt, got error "
+                             "NSError object description: '%s'.",
+                             obj_desc);
                }
                DNBLogThreadedIf(LOG_PROCESS, "In completion handler for send "
                                              "event, got error \"%s\"(%ld).",
                                 error_str ? error_str : "<unknown error>",
                                 open_app_error);
-               // REMOVE ME
-               DNBLogError("In completion handler for send event, got error "
-                           "\"%s\"(%ld).",
-                           error_str ? error_str : "<unknown error>",
-                           open_app_error);
              }
 
              [system_service release];
@@ -485,6 +490,7 @@ MachProcess::MachProcess()
       m_stdio_mutex(PTHREAD_MUTEX_RECURSIVE), m_stdout_data(),
       m_profile_enabled(false), m_profile_interval_usec(0), m_profile_thread(0),
       m_profile_data_mutex(PTHREAD_MUTEX_RECURSIVE), m_profile_data(),
+      m_profile_events(0, eMachProcessProfileCancel),
       m_thread_actions(), m_exception_messages(),
       m_exception_messages_mutex(PTHREAD_MUTEX_RECURSIVE), m_thread_list(),
       m_activities(), m_state(eStateUnloaded),
@@ -595,72 +601,77 @@ nub_addr_t MachProcess::GetTSDAddressForThread(
       plo_pthread_tsd_entry_size);
 }
 
-
-const char *MachProcess::GetDeploymentInfo(const struct load_command& lc,
-                                           uint64_t load_command_address,
-                                           uint32_t& major_version,
-                                           uint32_t& minor_version,
-                                           uint32_t& patch_version) {
+MachProcess::DeploymentInfo
+MachProcess::GetDeploymentInfo(const struct load_command &lc,
+                               uint64_t load_command_address) {
+  DeploymentInfo info;
   uint32_t cmd = lc.cmd & ~LC_REQ_DYLD;
-  bool lc_cmd_known =
-    cmd == LC_VERSION_MIN_IPHONEOS || cmd == LC_VERSION_MIN_MACOSX ||
-    cmd == LC_VERSION_MIN_TVOS || cmd == LC_VERSION_MIN_WATCHOS;
-
-  if (lc_cmd_known) {
+  // Handle the older LC_VERSION load commands, which don't
+  // distinguish between simulator and real hardware.
+  auto handle_version_min = [&](char platform) {
     struct version_min_command vers_cmd;
     if (ReadMemory(load_command_address, sizeof(struct version_min_command),
-                   &vers_cmd) != sizeof(struct version_min_command)) {
-      return nullptr;
-    }
-    major_version = vers_cmd.sdk >> 16;
-    minor_version = (vers_cmd.sdk >> 8) & 0xffu;
-    patch_version = vers_cmd.sdk & 0xffu;
-
-    switch (cmd) {
-    case LC_VERSION_MIN_IPHONEOS:
-      return "ios";
-    case LC_VERSION_MIN_MACOSX:
-      return "macosx";
-    case LC_VERSION_MIN_TVOS:
-      return "tvos";
-    case LC_VERSION_MIN_WATCHOS:
-      return "watchos";
-    default:
-      return nullptr;
-    }
-  }
-#if defined (LC_BUILD_VERSION)
-  if (cmd == LC_BUILD_VERSION) {
+                   &vers_cmd) != sizeof(struct version_min_command))
+      return;
+    info.platform = platform;
+    info.major_version = vers_cmd.version >> 16;
+    info.minor_version = (vers_cmd.version >> 8) & 0xffu;
+    info.patch_version = vers_cmd.version & 0xffu;
+    info.maybe_simulator = true;
+  };
+  switch (cmd) {
+  case LC_VERSION_MIN_IPHONEOS:
+    handle_version_min(PLATFORM_IOS);
+    break;
+  case LC_VERSION_MIN_MACOSX:
+    handle_version_min(PLATFORM_MACOS);
+    break;
+  case LC_VERSION_MIN_TVOS:
+    handle_version_min(PLATFORM_TVOS);
+    break;
+  case LC_VERSION_MIN_WATCHOS:
+    handle_version_min(PLATFORM_WATCHOS);
+    break;
+#if defined(LC_BUILD_VERSION)
+  case LC_BUILD_VERSION: {
     struct build_version_command build_vers;
     if (ReadMemory(load_command_address, sizeof(struct build_version_command),
-                   &build_vers) != sizeof(struct build_version_command)) {
-      return nullptr;
-    }
-    major_version = build_vers.sdk >> 16;;
-    minor_version = (build_vers.sdk >> 8) & 0xffu;
-    patch_version = build_vers.sdk & 0xffu;
-
-    switch (build_vers.platform) {
-    case PLATFORM_MACOS:
-      return "macosx";
-    case PLATFORM_MACCATALYST:
-      return "maccatalyst";
-    case PLATFORM_IOS:
-    case PLATFORM_IOSSIMULATOR:
-      return "ios";
-    case PLATFORM_TVOS:
-    case PLATFORM_TVOSSIMULATOR:
-      return "tvos";
-    case PLATFORM_WATCHOS:
-    case PLATFORM_WATCHOSSIMULATOR:
-      return "watchos";
-    case PLATFORM_BRIDGEOS:
-      return "bridgeos";
-    case PLATFORM_DRIVERKIT:
-      return "driverkit";
-    }
+                   &build_vers) != sizeof(struct build_version_command))
+      break;
+    info.platform = build_vers.platform;
+    info.major_version = build_vers.minos >> 16;
+    info.minor_version = (build_vers.minos >> 8) & 0xffu;
+    info.patch_version = build_vers.minos & 0xffu;
+    break;
   }
 #endif
+  }
+  return info;
+}
+
+const char *MachProcess::GetPlatformString(unsigned char platform) {
+  switch (platform) {
+  case PLATFORM_MACOS:
+    return "macosx";
+  case PLATFORM_MACCATALYST:
+    return "maccatalyst";
+  case PLATFORM_IOS:
+    return "ios";
+  case PLATFORM_IOSSIMULATOR:
+    return "iossimulator";
+  case PLATFORM_TVOS:
+    return "tvos";
+  case PLATFORM_TVOSSIMULATOR:
+    return "tvossimulator";
+  case PLATFORM_WATCHOS:
+    return "watchos";
+  case PLATFORM_WATCHOSSIMULATOR:
+    return "watchossimulator";
+  case PLATFORM_BRIDGEOS:
+    return "bridgeos";
+  case PLATFORM_DRIVERKIT:
+    return "driverkit";
+  }
   return nullptr;
 }
 
@@ -734,6 +745,8 @@ bool MachProcess::GetMachOInformationFromMemory(
       this_seg.nsects = seg.nsects;
       this_seg.flags = seg.flags;
       inf.segments.push_back(this_seg);
+      if (this_seg.name == "ExecExtraSuspend")
+        m_task.TaskWillExecProcessesSuspended();
     }
     if (lc.cmd == LC_SEGMENT_64) {
       struct segment_command_64 seg;
@@ -755,6 +768,8 @@ bool MachProcess::GetMachOInformationFromMemory(
       this_seg.nsects = seg.nsects;
       this_seg.flags = seg.flags;
       inf.segments.push_back(this_seg);
+      if (this_seg.name == "ExecExtraSuspend")
+        m_task.TaskWillExecProcessesSuspended();
     }
     if (lc.cmd == LC_UUID) {
       struct uuid_command uuidcmd;
@@ -762,10 +777,36 @@ bool MachProcess::GetMachOInformationFromMemory(
           sizeof(struct uuid_command))
         uuid_copy(inf.uuid, uuidcmd.uuid);
     }
-
-    uint32_t major_version, minor_version, patch_version;
-    if (const char *lc_platform = GetDeploymentInfo(
-            lc, load_cmds_p, major_version, minor_version, patch_version)) {
+    if (DeploymentInfo deployment_info = GetDeploymentInfo(lc, load_cmds_p)) {
+      // Simulator support. If the platform is ambiguous, use the dyld info.
+      if (deployment_info.maybe_simulator) {
+        if (deployment_info.maybe_simulator) {
+#if (defined(__x86_64__) || defined(__i386__))
+          // If dyld doesn't return a platform, use a heuristic.
+          // If we are running on Intel macOS, it is safe to assume
+          // this is really a back-deploying simulator binary.
+          switch (deployment_info.platform) {
+          case PLATFORM_IOS:
+            deployment_info.platform = PLATFORM_IOSSIMULATOR;
+            break;
+          case PLATFORM_TVOS:
+            deployment_info.platform = PLATFORM_TVOSSIMULATOR;
+            break;
+          case PLATFORM_WATCHOS:
+            deployment_info.platform = PLATFORM_WATCHOSSIMULATOR;
+            break;
+          }
+#else
+          // On an Apple Silicon macOS host, there is no
+          // ambiguity. The only binaries that use legacy load
+          // commands are back-deploying native iOS binaries. All
+          // simulator binaries use the newer, unambiguous
+          // LC_BUILD_VERSION load commands.
+          deployment_info.maybe_simulator = false;
+#endif
+        }
+      }
+      const char *lc_platform = GetPlatformString(deployment_info.platform);
       // macCatalyst support.
       //
       // This handles two special cases:
@@ -799,12 +840,15 @@ bool MachProcess::GetMachOInformationFromMemory(
       } else {
         inf.min_version_os_name = lc_platform;
         inf.min_version_os_version = "";
-        inf.min_version_os_version += std::to_string(major_version);
+        inf.min_version_os_version +=
+            std::to_string(deployment_info.major_version);
         inf.min_version_os_version += ".";
-        inf.min_version_os_version += std::to_string(minor_version);
-        if (patch_version != 0) {
+        inf.min_version_os_version +=
+            std::to_string(deployment_info.minor_version);
+        if (deployment_info.patch_version != 0) {
           inf.min_version_os_version += ".";
-          inf.min_version_os_version += std::to_string(patch_version);
+          inf.min_version_os_version +=
+              std::to_string(deployment_info.patch_version);
         }
       }
     }
@@ -1290,10 +1334,7 @@ void MachProcess::Clear(bool detaching) {
     m_exception_messages.clear();
   }
   m_activities.Clear();
-  if (m_profile_thread) {
-    pthread_join(m_profile_thread, NULL);
-    m_profile_thread = NULL;
-  }
+  StopProfileThread();
 }
 
 bool MachProcess::StartSTDIOThread() {
@@ -1312,9 +1353,17 @@ void MachProcess::SetEnableAsyncProfiling(bool enable, uint64_t interval_usec,
   if (m_profile_enabled && (m_profile_thread == NULL)) {
     StartProfileThread();
   } else if (!m_profile_enabled && m_profile_thread) {
-    pthread_join(m_profile_thread, NULL);
-    m_profile_thread = NULL;
+    StopProfileThread();
   }
+}
+
+void MachProcess::StopProfileThread() {
+  if (m_profile_thread == NULL)
+    return;
+  m_profile_events.SetEvents(eMachProcessProfileCancel);
+  pthread_join(m_profile_thread, NULL);
+  m_profile_thread = NULL;
+  m_profile_events.ResetEvents(eMachProcessProfileCancel);
 }
 
 bool MachProcess::StartProfileThread() {
@@ -2509,10 +2558,20 @@ void *MachProcess::ProfileThread(void *arg) {
       // Done. Get out of this thread.
       break;
     }
-
-    // A simple way to set up the profile interval. We can also use select() or
-    // dispatch timer source if necessary.
-    usleep(proc->ProfileInterval());
+    timespec ts;
+    {
+      using namespace std::chrono;
+      std::chrono::microseconds dur(proc->ProfileInterval());
+      const auto dur_secs = duration_cast<seconds>(dur);
+      const auto dur_usecs = dur % std::chrono::seconds(1);
+      DNBTimer::OffsetTimeOfDay(&ts, dur_secs.count(), 
+                                dur_usecs.count());
+    }
+    uint32_t bits_set = 
+        proc->m_profile_events.WaitForSetEvents(eMachProcessProfileCancel, &ts);
+    // If we got bits back, we were told to exit.  Do so.
+    if (bits_set & eMachProcessProfileCancel)
+      break;
   }
   return NULL;
 }
@@ -3215,9 +3274,9 @@ pid_t MachProcess::PosixSpawnChildForPTraceDebugging(
   if (file_actions_valid) {
     if (stdin_path == NULL && stdout_path == NULL && stderr_path == NULL &&
         !no_stdio) {
-      pty_error = pty.OpenFirstAvailableMaster(O_RDWR | O_NOCTTY);
+      pty_error = pty.OpenFirstAvailablePrimary(O_RDWR | O_NOCTTY);
       if (pty_error == PseudoTerminal::success) {
-        stdin_path = stdout_path = stderr_path = pty.SlaveName();
+        stdin_path = stdout_path = stderr_path = pty.SecondaryName();
       }
     }
 
@@ -3292,8 +3351,8 @@ pid_t MachProcess::PosixSpawnChildForPTraceDebugging(
 
   if (pty_error == 0) {
     if (process != NULL) {
-      int master_fd = pty.ReleaseMasterFD();
-      process->SetChildFileDescriptors(master_fd, master_fd, master_fd);
+      int primary_fd = pty.ReleasePrimaryFD();
+      process->SetChildFileDescriptors(primary_fd, primary_fd, primary_fd);
     }
   }
   ::posix_spawnattr_destroy(&attr);
@@ -3390,10 +3449,10 @@ pid_t MachProcess::ForkChildForPTraceDebugging(const char *path,
     ::setpgid(pid, pid); // Set the child process group to match its pid
 
     if (process != NULL) {
-      // Release our master pty file descriptor so the pty class doesn't
+      // Release our primary pty file descriptor so the pty class doesn't
       // close it and so we can continue to use it in our STDIO thread
-      int master_fd = pty.ReleaseMasterFD();
-      process->SetChildFileDescriptors(master_fd, master_fd, master_fd);
+      int primary_fd = pty.ReleasePrimaryFD();
+      process->SetChildFileDescriptors(primary_fd, primary_fd, primary_fd);
     }
   }
   return pid;
@@ -3566,15 +3625,15 @@ pid_t MachProcess::SBForkChildForPTraceDebugging(
   PseudoTerminal pty;
   if (!no_stdio) {
     PseudoTerminal::Status pty_err =
-        pty.OpenFirstAvailableMaster(O_RDWR | O_NOCTTY);
+        pty.OpenFirstAvailablePrimary(O_RDWR | O_NOCTTY);
     if (pty_err == PseudoTerminal::success) {
-      const char *slave_name = pty.SlaveName();
+      const char *secondary_name = pty.SecondaryName();
       DNBLogThreadedIf(LOG_PROCESS,
-                       "%s() successfully opened master pty, slave is %s",
-                       __FUNCTION__, slave_name);
-      if (slave_name && slave_name[0]) {
-        ::chmod(slave_name, S_IRWXU | S_IRWXG | S_IRWXO);
-        stdio_path.SetFileSystemRepresentation(slave_name);
+                       "%s() successfully opened primary pty, secondary is %s",
+                       __FUNCTION__, secondary_name);
+      if (secondary_name && secondary_name[0]) {
+        ::chmod(secondary_name, S_IRWXU | S_IRWXG | S_IRWXO);
+        stdio_path.SetFileSystemRepresentation(secondary_name);
       }
     }
   }
@@ -3631,10 +3690,10 @@ pid_t MachProcess::SBForkChildForPTraceDebugging(
     CFRelease(bundleIDCFStr);
     if (pid_found) {
       if (process != NULL) {
-        // Release our master pty file descriptor so the pty class doesn't
+        // Release our primary pty file descriptor so the pty class doesn't
         // close it and so we can continue to use it in our STDIO thread
-        int master_fd = pty.ReleaseMasterFD();
-        process->SetChildFileDescriptors(master_fd, master_fd, master_fd);
+        int primary_fd = pty.ReleasePrimaryFD();
+        process->SetChildFileDescriptors(primary_fd, primary_fd, primary_fd);
       }
       DNBLogThreadedIf(LOG_PROCESS, "%s() => pid = %4.4x", __FUNCTION__, pid);
     } else {
@@ -3767,17 +3826,17 @@ pid_t MachProcess::BoardServiceForkChildForPTraceDebugging(
   PseudoTerminal pty;
   if (!no_stdio) {
     PseudoTerminal::Status pty_err =
-        pty.OpenFirstAvailableMaster(O_RDWR | O_NOCTTY);
+        pty.OpenFirstAvailablePrimary(O_RDWR | O_NOCTTY);
     if (pty_err == PseudoTerminal::success) {
-      const char *slave_name = pty.SlaveName();
+      const char *secondary_name = pty.SecondaryName();
       DNBLogThreadedIf(LOG_PROCESS,
-                       "%s() successfully opened master pty, slave is %s",
-                       __FUNCTION__, slave_name);
-      if (slave_name && slave_name[0]) {
-        ::chmod(slave_name, S_IRWXU | S_IRWXG | S_IRWXO);
+                       "%s() successfully opened primary pty, secondary is %s",
+                       __FUNCTION__, secondary_name);
+      if (secondary_name && secondary_name[0]) {
+        ::chmod(secondary_name, S_IRWXU | S_IRWXG | S_IRWXO);
         stdio_path = [file_manager
-            stringWithFileSystemRepresentation:slave_name
-                                        length:strlen(slave_name)];
+            stringWithFileSystemRepresentation:secondary_name
+                                        length:strlen(secondary_name)];
       }
     }
   }
@@ -3826,8 +3885,8 @@ pid_t MachProcess::BoardServiceForkChildForPTraceDebugging(
 #endif
 
   if (success) {
-    int master_fd = pty.ReleaseMasterFD();
-    SetChildFileDescriptors(master_fd, master_fd, master_fd);
+    int primary_fd = pty.ReleasePrimaryFD();
+    SetChildFileDescriptors(primary_fd, primary_fd, primary_fd);
     CFString::UTF8(bundleIDCFStr, m_bundle_id);
   }
 

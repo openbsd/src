@@ -1,4 +1,4 @@
-//===-- DomainSocket.cpp ----------------------------------------*- C++ -*-===//
+//===-- DomainSocket.cpp --------------------------------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -50,7 +50,7 @@ bool SetSockAddr(llvm::StringRef name, const size_t name_offset,
     saddr_un_len =
         offsetof(struct sockaddr_un, sun_path) + name_offset + name.size();
 
-#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__NetBSD__)
   saddr_un->sun_len = saddr_un_len;
 #endif
 
@@ -146,10 +146,10 @@ std::string DomainSocket::GetSocketName() const {
 
 std::string DomainSocket::GetRemoteConnectionURI() const {
   if (m_socket != kInvalidSocketValue) {
-    return llvm::formatv("{0}://{1}",
-                         GetNameOffset() == 0 ? "unix-connect"
-                                              : "unix-abstract-connect",
-                         GetSocketName());
+    return std::string(llvm::formatv(
+        "{0}://{1}",
+        GetNameOffset() == 0 ? "unix-connect" : "unix-abstract-connect",
+        GetSocketName()));
   }
   return "";
 }

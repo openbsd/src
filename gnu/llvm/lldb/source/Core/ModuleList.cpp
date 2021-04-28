@@ -1,4 +1,4 @@
-//===-- ModuleList.cpp ------------------------------------------*- C++ -*-===//
+//===-- ModuleList.cpp ----------------------------------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -12,6 +12,7 @@
 #include "lldb/Core/ModuleSpec.h"
 #include "lldb/Host/FileSystem.h"
 #include "lldb/Interpreter/OptionValueFileSpec.h"
+#include "lldb/Interpreter/OptionValueFileSpecList.h"
 #include "lldb/Interpreter/OptionValueProperties.h"
 #include "lldb/Interpreter/Property.h"
 #include "lldb/Symbol/LocateSymbolFile.h"
@@ -77,6 +78,8 @@ ModuleListProperties::ModuleListProperties() {
   m_collection_sp =
       std::make_shared<OptionValueProperties>(ConstString("symbols"));
   m_collection_sp->Initialize(g_modulelist_properties);
+  m_collection_sp->SetValueChangedCallback(ePropertySymLinkPaths,
+                                           [this] { UpdateSymlinkMappings(); });
 
   llvm::SmallString<128> path;
   clang::driver::Driver::getDefaultModuleCachePath(path);
@@ -104,6 +107,28 @@ FileSpec ModuleListProperties::GetClangModulesCachePath() const {
 bool ModuleListProperties::SetClangModulesCachePath(llvm::StringRef path) {
   return m_collection_sp->SetPropertyAtIndexAsString(
       nullptr, ePropertyClangModulesCachePath, path);
+}
+
+void ModuleListProperties::UpdateSymlinkMappings() {
+  FileSpecList list = m_collection_sp
+                          ->GetPropertyAtIndexAsOptionValueFileSpecList(
+                              nullptr, false, ePropertySymLinkPaths)
+                          ->GetCurrentValue();
+  llvm::sys::ScopedWriter lock(m_symlink_paths_mutex);
+  const bool notify = false;
+  m_symlink_paths.Clear(notify);
+  for (FileSpec symlink : list) {
+    FileSpec resolved;
+    Status status = FileSystem::Instance().Readlink(symlink, resolved);
+    if (status.Success())
+      m_symlink_paths.Append(ConstString(symlink.GetPath()),
+                             ConstString(resolved.GetPath()), notify);
+  }
+}
+
+PathMappingList ModuleListProperties::GetSymlinkMappings() const {
+  llvm::sys::ScopedReader lock(m_symlink_paths_mutex);
+  return m_symlink_paths;
 }
 
 ModuleList::ModuleList()
@@ -146,7 +171,9 @@ void ModuleList::Append(const ModuleSP &module_sp, bool notify) {
   AppendImpl(module_sp, notify);
 }
 
-void ModuleList::ReplaceEquivalent(const ModuleSP &module_sp) {
+void ModuleList::ReplaceEquivalent(
+    const ModuleSP &module_sp,
+    llvm::SmallVectorImpl<lldb::ModuleSP> *old_modules) {
   if (module_sp) {
     std::lock_guard<std::recursive_mutex> guard(m_modules_mutex);
 
@@ -159,11 +186,14 @@ void ModuleList::ReplaceEquivalent(const ModuleSP &module_sp) {
 
     size_t idx = 0;
     while (idx < m_modules.size()) {
-      ModuleSP module_sp(m_modules[idx]);
-      if (module_sp->MatchesModuleSpec(equivalent_module_spec))
+      ModuleSP test_module_sp(m_modules[idx]);
+      if (test_module_sp->MatchesModuleSpec(equivalent_module_spec)) {
+        if (old_modules)
+          old_modules->push_back(test_module_sp);
         RemoveImpl(m_modules.begin() + idx);
-      else
+      } else {
         ++idx;
+      }
     }
     // Now add the new module to the list
     Append(module_sp);
@@ -338,7 +368,7 @@ void ModuleList::FindFunctions(ConstString name,
     std::lock_guard<std::recursive_mutex> guard(m_modules_mutex);
     collection::const_iterator pos, end = m_modules.end();
     for (pos = m_modules.begin(); pos != end; ++pos) {
-      (*pos)->FindFunctions(lookup_info.GetLookupName(), nullptr,
+      (*pos)->FindFunctions(lookup_info.GetLookupName(), CompilerDeclContext(),
                             lookup_info.GetNameTypeMask(), include_symbols,
                             include_inlines, sc_list);
     }
@@ -351,8 +381,8 @@ void ModuleList::FindFunctions(ConstString name,
     std::lock_guard<std::recursive_mutex> guard(m_modules_mutex);
     collection::const_iterator pos, end = m_modules.end();
     for (pos = m_modules.begin(); pos != end; ++pos) {
-      (*pos)->FindFunctions(name, nullptr, name_type_mask, include_symbols,
-                            include_inlines, sc_list);
+      (*pos)->FindFunctions(name, CompilerDeclContext(), name_type_mask,
+                            include_symbols, include_inlines, sc_list);
     }
   }
 }
@@ -409,7 +439,8 @@ void ModuleList::FindGlobalVariables(ConstString name, size_t max_matches,
   std::lock_guard<std::recursive_mutex> guard(m_modules_mutex);
   collection::const_iterator pos, end = m_modules.end();
   for (pos = m_modules.begin(); pos != end; ++pos) {
-    (*pos)->FindGlobalVariables(name, nullptr, max_matches, variable_list);
+    (*pos)->FindGlobalVariables(name, CompilerDeclContext(), max_matches,
+                                variable_list);
   }
 }
 
@@ -565,10 +596,6 @@ size_t ModuleList::GetSize() const {
 }
 
 void ModuleList::Dump(Stream *s) const {
-  //  s.Printf("%.*p: ", (int)sizeof(void*) * 2, this);
-  //  s.Indent();
-  //  s << "ModuleList\n";
-
   std::lock_guard<std::recursive_mutex> guard(m_modules_mutex);
   collection::const_iterator pos, end = m_modules.end();
   for (pos = m_modules.begin(); pos != end; ++pos) {
@@ -709,11 +736,11 @@ size_t ModuleList::RemoveOrphanSharedModules(bool mandatory) {
   return GetSharedModuleList().RemoveOrphans(mandatory);
 }
 
-Status ModuleList::GetSharedModule(const ModuleSpec &module_spec,
-                                   ModuleSP &module_sp,
-                                   const FileSpecList *module_search_paths_ptr,
-                                   ModuleSP *old_module_sp_ptr,
-                                   bool *did_create_ptr, bool always_create) {
+Status
+ModuleList::GetSharedModule(const ModuleSpec &module_spec, ModuleSP &module_sp,
+                            const FileSpecList *module_search_paths_ptr,
+                            llvm::SmallVectorImpl<lldb::ModuleSP> *old_modules,
+                            bool *did_create_ptr, bool always_create) {
   ModuleList &shared_module_list = GetSharedModuleList();
   std::lock_guard<std::recursive_mutex> guard(
       shared_module_list.m_modules_mutex);
@@ -725,8 +752,6 @@ Status ModuleList::GetSharedModule(const ModuleSpec &module_spec,
 
   if (did_create_ptr)
     *did_create_ptr = false;
-  if (old_module_sp_ptr)
-    old_module_sp_ptr->reset();
 
   const UUID *uuid_ptr = module_spec.GetUUIDPtr();
   const FileSpec &module_file_spec = module_spec.GetFileSpec();
@@ -747,8 +772,8 @@ Status ModuleList::GetSharedModule(const ModuleSpec &module_spec,
 
         // Make sure the file for the module hasn't been modified
         if (module_sp->FileHasChanged()) {
-          if (old_module_sp_ptr && !*old_module_sp_ptr)
-            *old_module_sp_ptr = module_sp;
+          if (old_modules)
+            old_modules->push_back(module_sp);
 
           Log *log(lldb_private::GetLogIfAnyCategoriesSet(LIBLLDB_LOG_MODULES));
           if (log != nullptr)
@@ -790,7 +815,7 @@ Status ModuleList::GetSharedModule(const ModuleSpec &module_spec,
           *did_create_ptr = true;
         }
 
-        shared_module_list.ReplaceEquivalent(module_sp);
+        shared_module_list.ReplaceEquivalent(module_sp, old_modules);
         return error;
       }
     }
@@ -807,7 +832,7 @@ Status ModuleList::GetSharedModule(const ModuleSpec &module_spec,
       if (!FileSystem::Instance().IsDirectory(search_path_spec))
         continue;
       search_path_spec.AppendPathComponent(
-          module_spec.GetFileSpec().GetFilename().AsCString());
+          module_spec.GetFileSpec().GetFilename().GetStringRef());
       if (!FileSystem::Instance().Exists(search_path_spec))
         continue;
 
@@ -827,7 +852,7 @@ Status ModuleList::GetSharedModule(const ModuleSpec &module_spec,
             if (did_create_ptr)
               *did_create_ptr = true;
 
-            shared_module_list.ReplaceEquivalent(module_sp);
+            shared_module_list.ReplaceEquivalent(module_sp, old_modules);
             return Status();
           }
         }
@@ -902,8 +927,8 @@ Status ModuleList::GetSharedModule(const ModuleSpec &module_spec,
             located_binary_modulespec.GetFileSpec());
         if (file_spec_mod_time != llvm::sys::TimePoint<>()) {
           if (file_spec_mod_time != module_sp->GetModificationTime()) {
-            if (old_module_sp_ptr)
-              *old_module_sp_ptr = module_sp;
+            if (old_modules)
+              old_modules->push_back(module_sp);
             shared_module_list.Remove(module_sp);
             module_sp.reset();
           }
@@ -925,7 +950,7 @@ Status ModuleList::GetSharedModule(const ModuleSpec &module_spec,
           if (did_create_ptr)
             *did_create_ptr = true;
 
-          shared_module_list.ReplaceEquivalent(module_sp);
+          shared_module_list.ReplaceEquivalent(module_sp, old_modules);
         }
       } else {
         located_binary_modulespec.GetFileSpec().GetPath(path, sizeof(path));

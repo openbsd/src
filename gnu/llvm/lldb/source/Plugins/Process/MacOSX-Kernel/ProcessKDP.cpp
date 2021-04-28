@@ -1,4 +1,4 @@
-//===-- ProcessKDP.cpp ------------------------------------------*- C++ -*-===//
+//===-- ProcessKDP.cpp ----------------------------------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -49,6 +49,8 @@
 
 using namespace lldb;
 using namespace lldb_private;
+
+LLDB_PLUGIN_DEFINE_ADV(ProcessKDP, ProcessMacOSXKernel)
 
 namespace {
 
@@ -215,7 +217,7 @@ bool ProcessKDP::GetHostArchitecture(ArchSpec &arch) {
   return false;
 }
 
-Status ProcessKDP::DoConnectRemote(Stream *strm, llvm::StringRef remote_url) {
+Status ProcessKDP::DoConnectRemote(llvm::StringRef remote_url) {
   Status error;
 
   // Don't let any JIT happen when doing KDP as we can't allocate memory and we
@@ -248,7 +250,7 @@ Status ProcessKDP::DoConnectRemote(Stream *strm, llvm::StringRef remote_url) {
     const uint16_t reply_port = socket.GetLocalPortNumber();
 
     if (reply_port != 0) {
-      m_comm.SetConnection(conn_up.release());
+      m_comm.SetConnection(std::move(conn_up));
 
       if (m_comm.SendRequestReattach(reply_port)) {
         if (m_comm.SendRequestConnect(reply_port, reply_port,

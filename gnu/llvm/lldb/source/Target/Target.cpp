@@ -1,4 +1,4 @@
-//===-- Target.cpp ----------------------------------------------*- C++ -*-===//
+//===-- Target.cpp --------------------------------------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -27,6 +27,7 @@
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Core/StructuredDataImpl.h"
 #include "lldb/Core/ValueObject.h"
+#include "lldb/Expression/ExpressionVariable.h"
 #include "lldb/Expression/REPL.h"
 #include "lldb/Expression/UserExpression.h"
 #include "lldb/Host/Host.h"
@@ -36,8 +37,6 @@
 #include "lldb/Interpreter/OptionGroupWatchpoint.h"
 #include "lldb/Interpreter/OptionValues.h"
 #include "lldb/Interpreter/Property.h"
-#include "lldb/Symbol/ClangASTContext.h"
-#include "lldb/Symbol/ClangASTImporter.h"
 #include "lldb/Symbol/Function.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/Symbol.h"
@@ -91,7 +90,7 @@ Target::Target(Debugger &debugger, const ArchSpec &target_arch,
       m_mutex(), m_arch(target_arch), m_images(this), m_section_load_history(),
       m_breakpoint_list(false), m_internal_breakpoint_list(true),
       m_watchpoint_list(), m_process_sp(), m_search_filter_sp(),
-      m_image_search_paths(ImageSearchPathsChanged, this), m_ast_importer_sp(),
+      m_image_search_paths(ImageSearchPathsChanged, this),
       m_source_manager_up(), m_stop_hooks(), m_stop_hook_next_id(0),
       m_valid(true), m_suppress_stop_hooks(false),
       m_is_dummy_target(is_dummy_target),
@@ -114,6 +113,8 @@ Target::Target(Debugger &debugger, const ArchSpec &target_arch,
              target_arch.GetArchitectureName(),
              target_arch.GetTriple().getTriple().c_str());
   }
+
+  UpdateLaunchInfoFromProperties();
 }
 
 Target::~Target() {
@@ -128,12 +129,13 @@ void Target::PrimeFromDummyTarget(Target *target) {
 
   m_stop_hooks = target->m_stop_hooks;
 
-  for (BreakpointSP breakpoint_sp : target->m_breakpoint_list.Breakpoints()) {
+  for (const auto &breakpoint_sp : target->m_breakpoint_list.Breakpoints()) {
     if (breakpoint_sp->IsInternal())
       continue;
 
-    BreakpointSP new_bp(new Breakpoint(*this, *breakpoint_sp.get()));
-    AddBreakpoint(new_bp, false);
+    BreakpointSP new_bp(
+        Breakpoint::CopyFromBreakpoint(shared_from_this(), *breakpoint_sp));
+    AddBreakpoint(std::move(new_bp), false);
   }
 
   for (auto bp_name_entry : target->m_breakpoint_names) {
@@ -622,7 +624,7 @@ BreakpointSP Target::CreateBreakpoint(SearchFilterSP &filter_sp,
     const bool hardware = request_hardware || GetRequireHardwareBreakpoints();
     bp_sp.reset(new Breakpoint(*this, filter_sp, resolver_sp, hardware,
                                resolve_indirect_symbols));
-    resolver_sp->SetBreakpoint(bp_sp.get());
+    resolver_sp->SetBreakpoint(bp_sp);
     AddBreakpoint(bp_sp, internal);
   }
   return bp_sp;
@@ -1109,8 +1111,8 @@ Status Target::CreateBreakpointsFromFile(const FileSpec &file,
         !Breakpoint::SerializedBreakpointMatchesNames(bkpt_data_sp, names))
       continue;
 
-    BreakpointSP bkpt_sp =
-        Breakpoint::CreateFromStructuredData(*this, bkpt_data_sp, error);
+    BreakpointSP bkpt_sp = Breakpoint::CreateFromStructuredData(
+        shared_from_this(), bkpt_data_sp, error);
     if (!error.Success()) {
       error.SetErrorStringWithFormat(
           "Error restoring breakpoint %zu from %s: %s.", i,
@@ -1378,7 +1380,6 @@ void Target::ClearModules(bool delete_locations) {
   m_section_load_history.Clear();
   m_images.Clear();
   m_scratch_type_system_map.Clear();
-  m_ast_importer_sp.reset();
 }
 
 void Target::DidExec() {
@@ -1964,8 +1965,9 @@ ModuleSP Target::GetOrCreateModule(const ModuleSpec &module_spec, bool notify,
     module_sp = m_images.FindFirstModule(module_spec);
 
   if (!module_sp) {
-    ModuleSP old_module_sp; // This will get filled in if we have a new version
-                            // of the library
+    llvm::SmallVector<ModuleSP, 1>
+        old_modules; // This will get filled in if we have a new version
+                     // of the library
     bool did_create_module = false;
     FileSpecList search_paths = GetExecutableSearchPaths();
     // If there are image search path entries, try to use them first to acquire
@@ -1978,7 +1980,7 @@ ModuleSP Target::GetOrCreateModule(const ModuleSpec &module_spec, bool notify,
         transformed_spec.GetFileSpec().GetFilename() =
             module_spec.GetFileSpec().GetFilename();
         error = ModuleList::GetSharedModule(transformed_spec, module_sp,
-                                            &search_paths, &old_module_sp,
+                                            &search_paths, &old_modules,
                                             &did_create_module);
       }
     }
@@ -1996,7 +1998,7 @@ ModuleSP Target::GetOrCreateModule(const ModuleSpec &module_spec, bool notify,
         // We have a UUID, it is OK to check the global module list...
         error =
             ModuleList::GetSharedModule(module_spec, module_sp, &search_paths,
-                                        &old_module_sp, &did_create_module);
+                                        &old_modules, &did_create_module);
       }
 
       if (!module_sp) {
@@ -2005,7 +2007,7 @@ ModuleSP Target::GetOrCreateModule(const ModuleSpec &module_spec, bool notify,
         if (m_platform_sp) {
           error = m_platform_sp->GetSharedModule(
               module_spec, m_process_sp.get(), module_sp, &search_paths,
-              &old_module_sp, &did_create_module);
+              &old_modules, &did_create_module);
         } else {
           error.SetErrorString("no platform is currently set");
         }
@@ -2056,18 +2058,18 @@ ModuleSP Target::GetOrCreateModule(const ModuleSpec &module_spec, bool notify,
         // this target. So let's remove the UUID from the module list, and look
         // in the target's module list. Only do this if there is SOMETHING else
         // in the module spec...
-        if (!old_module_sp) {
-          if (module_spec.GetUUID().IsValid() &&
-              !module_spec.GetFileSpec().GetFilename().IsEmpty() &&
-              !module_spec.GetFileSpec().GetDirectory().IsEmpty()) {
-            ModuleSpec module_spec_copy(module_spec.GetFileSpec());
-            module_spec_copy.GetUUID().Clear();
+        if (module_spec.GetUUID().IsValid() &&
+            !module_spec.GetFileSpec().GetFilename().IsEmpty() &&
+            !module_spec.GetFileSpec().GetDirectory().IsEmpty()) {
+          ModuleSpec module_spec_copy(module_spec.GetFileSpec());
+          module_spec_copy.GetUUID().Clear();
 
-            ModuleList found_modules;
-            m_images.FindModules(module_spec_copy, found_modules);
-            if (found_modules.GetSize() == 1)
-              old_module_sp = found_modules.GetModuleAtIndex(0);
-          }
+          ModuleList found_modules;
+          m_images.FindModules(module_spec_copy, found_modules);
+          found_modules.ForEach([&](const ModuleSP &found_module) -> bool {
+            old_modules.push_back(found_module);
+            return true;
+          });
         }
 
         // Preload symbols outside of any lock, so hopefully we can do this for
@@ -2075,14 +2077,67 @@ ModuleSP Target::GetOrCreateModule(const ModuleSpec &module_spec, bool notify,
         if (GetPreloadSymbols())
           module_sp->PreloadSymbols();
 
-        if (old_module_sp && m_images.GetIndexForModule(old_module_sp.get()) !=
-                                 LLDB_INVALID_INDEX32) {
-          m_images.ReplaceModule(old_module_sp, module_sp);
+        llvm::SmallVector<ModuleSP, 1> replaced_modules;
+        for (ModuleSP &old_module_sp : old_modules) {
+          if (m_images.GetIndexForModule(old_module_sp.get()) !=
+              LLDB_INVALID_INDEX32) {
+            if (replaced_modules.empty())
+              m_images.ReplaceModule(old_module_sp, module_sp);
+            else
+              m_images.Remove(old_module_sp);
+
+            replaced_modules.push_back(std::move(old_module_sp));
+          }
+        }
+
+        if (replaced_modules.size() > 1) {
+          // The same new module replaced multiple old modules
+          // simultaneously.  It's not clear this should ever
+          // happen (if we always replace old modules as we add
+          // new ones, presumably we should never have more than
+          // one old one).  If there are legitimate cases where
+          // this happens, then the ModuleList::Notifier interface
+          // may need to be adjusted to allow reporting this.
+          // In the meantime, just log that this has happened; just
+          // above we called ReplaceModule on the first one, and Remove
+          // on the rest.
+          if (Log *log = GetLogIfAnyCategoriesSet(LIBLLDB_LOG_TARGET |
+                                                  LIBLLDB_LOG_MODULES)) {
+            StreamString message;
+            auto dump = [&message](Module &dump_module) -> void {
+              UUID dump_uuid = dump_module.GetUUID();
+
+              message << '[';
+              dump_module.GetDescription(message.AsRawOstream());
+              message << " (uuid ";
+
+              if (dump_uuid.IsValid())
+                dump_uuid.Dump(&message);
+              else
+                message << "not specified";
+
+              message << ")]";
+            };
+
+            message << "New module ";
+            dump(*module_sp);
+            message.AsRawOstream()
+                << llvm::formatv(" simultaneously replaced {0} old modules: ",
+                                 replaced_modules.size());
+            for (ModuleSP &replaced_module_sp : replaced_modules)
+              dump(*replaced_module_sp);
+
+            log->PutString(message.GetString());
+          }
+        }
+
+        if (replaced_modules.empty())
+          m_images.Append(module_sp, notify);
+
+        for (ModuleSP &old_module_sp : replaced_modules) {
           Module *old_module_ptr = old_module_sp.get();
           old_module_sp.reset();
           ModuleList::RemoveSharedModuleIfOrphaned(old_module_ptr);
-        } else {
-          m_images.Append(module_sp, notify);
         }
       } else
         module_sp.reset();
@@ -2258,16 +2313,6 @@ Target::GetUtilityFunctionForLanguage(const char *text,
   return utility_fn;
 }
 
-ClangASTImporterSP Target::GetClangASTImporter() {
-  if (m_valid) {
-    if (!m_ast_importer_sp) {
-      m_ast_importer_sp = std::make_shared<ClangASTImporter>();
-    }
-    return m_ast_importer_sp;
-  }
-  return ClangASTImporterSP();
-}
-
 void Target::SettingsInitialize() { Process::SettingsInitialize(); }
 
 void Target::SettingsTerminate() { Process::SettingsTerminate(); }
@@ -2368,11 +2413,9 @@ ExpressionResults Target::EvaluateExpression(
   } else {
     llvm::StringRef prefix = GetExpressionPrefixContents();
     Status error;
-    execution_results =
-        UserExpression::Evaluate(exe_ctx, options, expr, prefix,
-                                 result_valobj_sp, error, fixed_expression,
-                                 nullptr, // Module
-                                 ctx_obj);
+    execution_results = UserExpression::Evaluate(exe_ctx, options, expr, prefix,
+                                                 result_valobj_sp, error,
+                                                 fixed_expression, ctx_obj);
   }
 
   return execution_results;
@@ -2412,21 +2455,13 @@ lldb::addr_t Target::GetPersistentSymbol(ConstString name) {
 
 llvm::Expected<lldb_private::Address> Target::GetEntryPointAddress() {
   Module *exe_module = GetExecutableModulePointer();
-  llvm::Error error = llvm::Error::success();
-  assert(!error); // Check the success value when assertions are enabled.
 
-  if (!exe_module || !exe_module->GetObjectFile()) {
-    error = llvm::make_error<llvm::StringError>("No primary executable found",
-                                                llvm::inconvertibleErrorCode());
-  } else {
+  // Try to find the entry point address in the primary executable.
+  const bool has_primary_executable = exe_module && exe_module->GetObjectFile();
+  if (has_primary_executable) {
     Address entry_addr = exe_module->GetObjectFile()->GetEntryPointAddress();
     if (entry_addr.IsValid())
       return entry_addr;
-
-    error = llvm::make_error<llvm::StringError>(
-        "Could not find entry point address for executable module \"" +
-            exe_module->GetFileSpec().GetFilename().GetStringRef() + "\"",
-        llvm::inconvertibleErrorCode());
   }
 
   const ModuleList &modules = GetImages();
@@ -2437,14 +2472,21 @@ llvm::Expected<lldb_private::Address> Target::GetEntryPointAddress() {
       continue;
 
     Address entry_addr = module_sp->GetObjectFile()->GetEntryPointAddress();
-    if (entry_addr.IsValid()) {
-      // Discard the error.
-      llvm::consumeError(std::move(error));
+    if (entry_addr.IsValid())
       return entry_addr;
-    }
   }
 
-  return std::move(error);
+  // We haven't found the entry point address. Return an appropriate error.
+  if (!has_primary_executable)
+    return llvm::make_error<llvm::StringError>(
+        "No primary executable found and could not find entry point address in "
+        "any executable module",
+        llvm::inconvertibleErrorCode());
+
+  return llvm::make_error<llvm::StringError>(
+      "Could not find entry point address for primary executable module \"" +
+          exe_module->GetFileSpec().GetFilename().GetStringRef() + "\"",
+      llvm::inconvertibleErrorCode());
 }
 
 lldb::addr_t Target::GetCallableLoadAddress(lldb::addr_t load_addr,
@@ -2469,7 +2511,7 @@ lldb::addr_t Target::GetBreakableLoadAddress(lldb::addr_t addr) {
 
 SourceManager &Target::GetSourceManager() {
   if (!m_source_manager_up)
-    m_source_manager_up.reset(new SourceManager(shared_from_this()));
+    m_source_manager_up = std::make_unique<SourceManager>(shared_from_this());
   return *m_source_manager_up;
 }
 
@@ -2567,7 +2609,7 @@ void Target::RunStopHooks() {
   if (!any_active_hooks)
     return;
 
-  CommandReturnObject result;
+  CommandReturnObject result(m_debugger.GetUseColor());
 
   std::vector<ExecutionContext> exc_ctx_with_reasons;
   std::vector<SymbolContext> sym_ctx_with_reasons;
@@ -2691,8 +2733,10 @@ Status Target::Install(ProcessLaunchInfo *launch_info) {
   if (platform_sp) {
     if (platform_sp->IsRemote()) {
       if (platform_sp->IsConnected()) {
-        // Install all files that have an install path, and always install the
-        // main executable when connected to a remote platform
+        // Install all files that have an install path when connected to a
+        // remote platform. If target.auto-install-main-executable is set then
+        // also install the main executable even if it does not have an explicit
+        // install path specified.
         const ModuleList &modules = GetImages();
         const size_t num_images = modules.GetSize();
         for (size_t idx = 0; idx < num_images; ++idx) {
@@ -2703,10 +2747,8 @@ Status Target::Install(ProcessLaunchInfo *launch_info) {
             if (local_file) {
               FileSpec remote_file(module_sp->GetRemoteInstallFileSpec());
               if (!remote_file) {
-                if (is_main_executable) // TODO: add setting for always
-                                        // installing main executable???
-                {
-                  // Always install the main executable
+                if (is_main_executable && GetAutoInstallMainExecutable()) {
+                  // Automatically install the main executable.
                   remote_file = platform_sp->GetRemoteWorkingDirectory();
                   remote_file.AppendPathComponent(
                       module_sp->GetFileSpec().GetFilename().GetCString());
@@ -2971,11 +3013,6 @@ Status Target::Launch(ProcessLaunchInfo &launch_info, Stream *stream) {
       }
     }
     m_process_sp->RestoreProcessEvents();
-  } else {
-    Status error2;
-    error2.SetErrorStringWithFormat("process launch failed: %s",
-                                    error.AsCString());
-    error = error2;
   }
   return error;
 }
@@ -3153,7 +3190,7 @@ Target::StopHook::StopHook(const StopHook &rhs)
       m_thread_spec_up(), m_active(rhs.m_active),
       m_auto_continue(rhs.m_auto_continue) {
   if (rhs.m_thread_spec_up)
-    m_thread_spec_up.reset(new ThreadSpec(*rhs.m_thread_spec_up));
+    m_thread_spec_up = std::make_unique<ThreadSpec>(*rhs.m_thread_spec_up);
 }
 
 Target::StopHook::~StopHook() = default;
@@ -3360,16 +3397,13 @@ enum {
 
 class TargetOptionValueProperties : public OptionValueProperties {
 public:
-  TargetOptionValueProperties(ConstString name)
-      : OptionValueProperties(name), m_target(nullptr), m_got_host_env(false) {}
+  TargetOptionValueProperties(ConstString name) : OptionValueProperties(name) {}
 
   // This constructor is used when creating TargetOptionValueProperties when it
   // is part of a new lldb_private::Target instance. It will copy all current
   // global property values as needed
-  TargetOptionValueProperties(Target *target,
-                              const TargetPropertiesSP &target_properties_sp)
-      : OptionValueProperties(*target_properties_sp->GetValueProperties()),
-        m_target(target), m_got_host_env(false) {}
+  TargetOptionValueProperties(const TargetPropertiesSP &target_properties_sp)
+      : OptionValueProperties(*target_properties_sp->GetValueProperties()) {}
 
   const Property *GetPropertyAtIndex(const ExecutionContext *exe_ctx,
                                      bool will_modify,
@@ -3377,9 +3411,6 @@ public:
     // When getting the value for a key from the target options, we will always
     // try and grab the setting from the current target if there is one. Else
     // we just use the one from this instance.
-    if (idx == ePropertyEnvVars)
-      GetHostEnvironmentIfNeeded();
-
     if (exe_ctx) {
       Target *target = exe_ctx->GetTargetPtr();
       if (target) {
@@ -3392,49 +3423,14 @@ public:
     }
     return ProtectedGetPropertyAtIndex(idx);
   }
-
-  lldb::TargetSP GetTargetSP() { return m_target->shared_from_this(); }
-
-protected:
-  void GetHostEnvironmentIfNeeded() const {
-    if (!m_got_host_env) {
-      if (m_target) {
-        m_got_host_env = true;
-        const uint32_t idx = ePropertyInheritEnv;
-        if (GetPropertyAtIndexAsBoolean(
-                nullptr, idx, g_target_properties[idx].default_uint_value != 0)) {
-          PlatformSP platform_sp(m_target->GetPlatform());
-          if (platform_sp) {
-            Environment env = platform_sp->GetEnvironment();
-            OptionValueDictionary *env_dict =
-                GetPropertyAtIndexAsOptionValueDictionary(nullptr,
-                                                          ePropertyEnvVars);
-            if (env_dict) {
-              const bool can_replace = false;
-              for (const auto &KV : env) {
-                // Don't allow existing keys to be replaced with ones we get
-                // from the platform environment
-                env_dict->SetValueForKey(
-                    ConstString(KV.first()),
-                    OptionValueSP(new OptionValueString(KV.second.c_str())),
-                    can_replace);
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-  Target *m_target;
-  mutable bool m_got_host_env;
 };
 
 // TargetProperties
-#define LLDB_PROPERTIES_experimental
+#define LLDB_PROPERTIES_target_experimental
 #include "TargetProperties.inc"
 
 enum {
-#define LLDB_PROPERTIES_experimental
+#define LLDB_PROPERTIES_target_experimental
 #include "TargetPropertiesEnum.inc"
 };
 
@@ -3448,15 +3444,15 @@ public:
 TargetExperimentalProperties::TargetExperimentalProperties()
     : Properties(OptionValuePropertiesSP(
           new TargetExperimentalOptionValueProperties())) {
-  m_collection_sp->Initialize(g_experimental_properties);
+  m_collection_sp->Initialize(g_target_experimental_properties);
 }
 
 // TargetProperties
 TargetProperties::TargetProperties(Target *target)
-    : Properties(), m_launch_info() {
+    : Properties(), m_launch_info(), m_target(target) {
   if (target) {
     m_collection_sp = std::make_shared<TargetOptionValueProperties>(
-        target, Target::GetGlobalProperties());
+        Target::GetGlobalProperties());
 
     // Set callbacks to update launch_info whenever "settins set" updated any
     // of these properties
@@ -3466,6 +3462,10 @@ TargetProperties::TargetProperties(Target *target)
         ePropertyRunArgs, [this] { RunArgsValueChangedCallback(); });
     m_collection_sp->SetValueChangedCallback(
         ePropertyEnvVars, [this] { EnvVarsValueChangedCallback(); });
+    m_collection_sp->SetValueChangedCallback(
+        ePropertyUnsetEnvVars, [this] { EnvVarsValueChangedCallback(); });
+    m_collection_sp->SetValueChangedCallback(
+        ePropertyInheritEnv, [this] { EnvVarsValueChangedCallback(); });
     m_collection_sp->SetValueChangedCallback(
         ePropertyInputPath, [this] { InputPathValueChangedCallback(); });
     m_collection_sp->SetValueChangedCallback(
@@ -3480,29 +3480,19 @@ TargetProperties::TargetProperties(Target *target)
     m_collection_sp->SetValueChangedCallback(
         ePropertyDisableSTDIO, [this] { DisableSTDIOValueChangedCallback(); });
 
-    m_experimental_properties_up.reset(new TargetExperimentalProperties());
+    m_experimental_properties_up =
+        std::make_unique<TargetExperimentalProperties>();
     m_collection_sp->AppendProperty(
         ConstString(Properties::GetExperimentalSettingsName()),
         ConstString("Experimental settings - setting these won't produce "
                     "errors if the setting is not present."),
         true, m_experimental_properties_up->GetValueProperties());
-
-    // Update m_launch_info once it was created
-    Arg0ValueChangedCallback();
-    RunArgsValueChangedCallback();
-    // EnvVarsValueChangedCallback(); // FIXME: cause segfault in
-    // Target::GetPlatform()
-    InputPathValueChangedCallback();
-    OutputPathValueChangedCallback();
-    ErrorPathValueChangedCallback();
-    DetachOnErrorValueChangedCallback();
-    DisableASLRValueChangedCallback();
-    DisableSTDIOValueChangedCallback();
   } else {
     m_collection_sp =
         std::make_shared<TargetOptionValueProperties>(ConstString("target"));
     m_collection_sp->Initialize(g_target_properties);
-    m_experimental_properties_up.reset(new TargetExperimentalProperties());
+    m_experimental_properties_up =
+        std::make_unique<TargetExperimentalProperties>();
     m_collection_sp->AppendProperty(
         ConstString(Properties::GetExperimentalSettingsName()),
         ConstString("Experimental settings - setting these won't produce "
@@ -3515,6 +3505,18 @@ TargetProperties::TargetProperties(Target *target)
 }
 
 TargetProperties::~TargetProperties() = default;
+
+void TargetProperties::UpdateLaunchInfoFromProperties() {
+  Arg0ValueChangedCallback();
+  RunArgsValueChangedCallback();
+  EnvVarsValueChangedCallback();
+  InputPathValueChangedCallback();
+  OutputPathValueChangedCallback();
+  ErrorPathValueChangedCallback();
+  DetachOnErrorValueChangedCallback();
+  DisableASLRValueChangedCallback();
+  DisableSTDIOValueChangedCallback();
+}
 
 bool TargetProperties::GetInjectLocalVariables(
     ExecutionContext *exe_ctx) const {
@@ -3657,19 +3659,43 @@ void TargetProperties::SetRunArguments(const Args &args) {
   m_launch_info.GetArguments() = args;
 }
 
+Environment TargetProperties::ComputeEnvironment() const {
+  Environment env;
+
+  if (m_target &&
+      m_collection_sp->GetPropertyAtIndexAsBoolean(
+          nullptr, ePropertyInheritEnv,
+          g_target_properties[ePropertyInheritEnv].default_uint_value != 0)) {
+    if (auto platform_sp = m_target->GetPlatform()) {
+      Environment platform_env = platform_sp->GetEnvironment();
+      for (const auto &KV : platform_env)
+        env[KV.first()] = KV.second;
+    }
+  }
+
+  Args property_unset_env;
+  m_collection_sp->GetPropertyAtIndexAsArgs(nullptr, ePropertyUnsetEnvVars,
+                                            property_unset_env);
+  for (const auto &var : property_unset_env)
+    env.erase(var.ref());
+
+  Args property_env;
+  m_collection_sp->GetPropertyAtIndexAsArgs(nullptr, ePropertyEnvVars,
+                                            property_env);
+  for (const auto &KV : Environment(property_env))
+    env[KV.first()] = KV.second;
+
+  return env;
+}
+
 Environment TargetProperties::GetEnvironment() const {
-  // TODO: Get rid of the Args intermediate step
-  Args env;
-  const uint32_t idx = ePropertyEnvVars;
-  m_collection_sp->GetPropertyAtIndexAsArgs(nullptr, idx, env);
-  return Environment(env);
+  return ComputeEnvironment();
 }
 
 void TargetProperties::SetEnvironment(Environment env) {
   // TODO: Get rid of the Args intermediate step
   const uint32_t idx = ePropertyEnvVars;
   m_collection_sp->SetPropertyAtIndexFromArgs(nullptr, idx, Args(env));
-  m_launch_info.GetEnvironment() = std::move(env);
 }
 
 bool TargetProperties::GetSkipPrologue() const {
@@ -3739,6 +3765,12 @@ bool TargetProperties::GetEnableAutoApplyFixIts() const {
   const uint32_t idx = ePropertyAutoApplyFixIts;
   return m_collection_sp->GetPropertyAtIndexAsBoolean(
       nullptr, idx, g_target_properties[idx].default_uint_value != 0);
+}
+
+uint64_t TargetProperties::GetNumberOfRetriesWithFixits() const {
+  const uint32_t idx = ePropertyRetriesWithFixIts;
+  return m_collection_sp->GetPropertyAtIndexAsUInt64(
+      nullptr, idx, g_target_properties[idx].default_uint_value);
 }
 
 bool TargetProperties::GetEnableNotifyAboutFixIts() const {
@@ -3970,6 +4002,12 @@ void TargetProperties::SetRequireHardwareBreakpoints(bool b) {
   m_collection_sp->SetPropertyAtIndexAsBoolean(nullptr, idx, b);
 }
 
+bool TargetProperties::GetAutoInstallMainExecutable() const {
+  const uint32_t idx = ePropertyAutoInstallMainExecutable;
+  return m_collection_sp->GetPropertyAtIndexAsBoolean(
+      nullptr, idx, g_target_properties[idx].default_uint_value != 0);
+}
+
 void TargetProperties::Arg0ValueChangedCallback() {
   m_launch_info.SetArg0(GetArg0());
 }
@@ -3981,7 +4019,7 @@ void TargetProperties::RunArgsValueChangedCallback() {
 }
 
 void TargetProperties::EnvVarsValueChangedCallback() {
-  m_launch_info.GetEnvironment() = GetEnvironment();
+  m_launch_info.GetEnvironment() = ComputeEnvironment();
 }
 
 void TargetProperties::InputPathValueChangedCallback() {
@@ -4073,7 +4111,7 @@ Target::TargetEventData::GetModuleListFromEvent(const Event *event_ptr) {
   return module_list;
 }
 
-std::recursive_mutex &Target::GetAPIMutex() { 
+std::recursive_mutex &Target::GetAPIMutex() {
   if (GetProcessSP() && GetProcessSP()->CurrentThreadIsPrivateStateThread())
     return m_private_mutex;
   else

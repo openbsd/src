@@ -1,4 +1,4 @@
-//===-- TestClient.cpp ------------------------------------------*- C++ -*-===//
+//===-- TestClient.cpp ----------------------------------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -30,7 +30,7 @@ using namespace llgs_tests;
 #endif
 
 TestClient::TestClient(std::unique_ptr<Connection> Conn) {
-  SetConnection(Conn.release());
+  SetConnection(std::move(Conn));
   SetPacketTimeout(std::chrono::seconds(10));
 }
 

@@ -1,4 +1,4 @@
-//===-- DynamicLoaderPOSIXDYLD.cpp ------------------------------*- C++ -*-===//
+//===-- DynamicLoaderPOSIXDYLD.cpp ----------------------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -28,6 +28,8 @@
 
 using namespace lldb;
 using namespace lldb_private;
+
+LLDB_PLUGIN_DEFINE_ADV(DynamicLoaderPOSIXDYLD, DynamicLoaderPosixDYLD)
 
 void DynamicLoaderPOSIXDYLD::Initialize() {
   PluginManager::RegisterPlugin(GetPluginNameStatic(),
@@ -60,8 +62,7 @@ DynamicLoader *DynamicLoaderPOSIXDYLD::CreateInstance(Process *process,
         process->GetTarget().GetArchitecture().GetTriple();
     if (triple_ref.getOS() == llvm::Triple::FreeBSD ||
         triple_ref.getOS() == llvm::Triple::Linux ||
-        triple_ref.getOS() == llvm::Triple::NetBSD ||
-        triple_ref.getOS() == llvm::Triple::OpenBSD)
+        triple_ref.getOS() == llvm::Triple::NetBSD)
       create = true;
   }
 

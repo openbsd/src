@@ -57,7 +57,6 @@ typedef std::map<nub_process_t, MachProcessSP> ProcessMap;
 typedef ProcessMap::iterator ProcessMapIter;
 typedef ProcessMap::const_iterator ProcessMapConstIter;
 
-size_t GetAllInfos(std::vector<struct kinfo_proc> &proc_infos);
 static size_t
 GetAllInfosMatchingName(const char *process_name,
                         std::vector<struct kinfo_proc> &matching_proc_infos);
@@ -422,7 +421,8 @@ nub_process_t DNBProcessAttachByName(const char *name, struct timespec *timeout,
   if (num_matching_proc_infos == 0) {
     DNBLogError("error: no processes match '%s'\n", name);
     return INVALID_NUB_PROCESS;
-  } else if (num_matching_proc_infos > 1) {
+  }
+  if (num_matching_proc_infos > 1) {
     DNBLogError("error: %llu processes match '%s':\n",
                 (uint64_t)num_matching_proc_infos, name);
     size_t i;
@@ -520,7 +520,7 @@ nub_process_t DNBProcessAttach(nub_process_t attach_pid,
   return INVALID_NUB_PROCESS;
 }
 
-size_t GetAllInfos(std::vector<struct kinfo_proc> &proc_infos) {
+size_t DNBGetAllInfos(std::vector<struct kinfo_proc> &proc_infos) {
   size_t size = 0;
   int name[] = {CTL_KERN, KERN_PROC, KERN_PROC_ALL};
   u_int namelen = sizeof(name) / sizeof(int);
@@ -573,7 +573,7 @@ GetAllInfosMatchingName(const char *full_process_name,
 
     const size_t process_name_len = strlen(process_name);
     std::vector<struct kinfo_proc> proc_infos;
-    const size_t num_proc_infos = GetAllInfos(proc_infos);
+    const size_t num_proc_infos = DNBGetAllInfos(proc_infos);
     if (num_proc_infos > 0) {
       uint32_t i;
       for (i = 0; i < num_proc_infos; i++) {
@@ -1392,10 +1392,14 @@ const char *DNBGetDeploymentInfo(nub_process_t pid,
                                  uint32_t& minor_version,
                                  uint32_t& patch_version) {
   MachProcessSP procSP;
-  if (GetProcessSP(pid, procSP))
-    return procSP->GetDeploymentInfo(lc, load_command_address,
-                                     major_version, minor_version,
-                                     patch_version);
+  if (GetProcessSP(pid, procSP)) {
+    // FIXME: This doesn't correct for older ios simulator and macCatalyst.
+    auto info = procSP->GetDeploymentInfo(lc, load_command_address);
+    major_version = info.major_version;
+    minor_version = info.minor_version;
+    patch_version = info.patch_version;
+    return procSP->GetPlatformString(info.platform);
+  }
   return nullptr;
 }
 

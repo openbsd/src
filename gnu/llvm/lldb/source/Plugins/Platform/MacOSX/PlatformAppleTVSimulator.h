@@ -6,12 +6,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_PlatformAppleTVSimulator_h_
-#define liblldb_PlatformAppleTVSimulator_h_
+#ifndef LLDB_SOURCE_PLUGINS_PLATFORM_MACOSX_PLATFORMAPPLETVSIMULATOR_H
+#define LLDB_SOURCE_PLUGINS_PLATFORM_MACOSX_PLATFORMAPPLETVSIMULATOR_H
 
-#include "PlatformDarwin.h"
+#include "PlatformAppleSimulator.h"
 
-class PlatformAppleTVSimulator : public PlatformDarwin {
+class PlatformAppleTVSimulator : public PlatformAppleSimulator {
 public:
   // Class Functions
   static lldb::PlatformSP CreateInstance(bool force,
@@ -55,7 +55,7 @@ public:
   GetSharedModule(const lldb_private::ModuleSpec &module_spec,
                   lldb_private::Process *process, lldb::ModuleSP &module_sp,
                   const lldb_private::FileSpecList *module_search_paths_ptr,
-                  lldb::ModuleSP *old_module_sp_ptr,
+                  llvm::SmallVectorImpl<lldb::ModuleSP> *old_modules,
                   bool *did_create_ptr) override;
 
   uint32_t
@@ -69,7 +69,7 @@ public:
   AddClangModuleCompilationOptions(lldb_private::Target *target,
                                    std::vector<std::string> &options) override {
     return PlatformDarwin::AddClangModuleCompilationOptionsForSDKType(
-        target, options, PlatformDarwin::SDKType::iPhoneSimulator);
+        target, options, lldb_private::XcodeSDK::Type::iPhoneSimulator);
   }
 
 protected:
@@ -77,10 +77,12 @@ protected:
   std::string m_sdk_directory;
   std::string m_build_update;
 
-  const char *GetSDKDirectoryAsCString();
+  llvm::StringRef GetSDKDirectoryAsCString();
 
 private:
-  DISALLOW_COPY_AND_ASSIGN(PlatformAppleTVSimulator);
+  PlatformAppleTVSimulator(const PlatformAppleTVSimulator &) = delete;
+  const PlatformAppleTVSimulator &
+  operator=(const PlatformAppleTVSimulator &) = delete;
 };
 
-#endif // liblldb_PlatformAppleTVSimulator_h_
+#endif // LLDB_SOURCE_PLUGINS_PLATFORM_MACOSX_PLATFORMAPPLETVSIMULATOR_H

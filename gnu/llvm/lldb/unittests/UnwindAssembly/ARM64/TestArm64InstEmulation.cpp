@@ -1,5 +1,4 @@
-//===-- TestArm64InstEmulation.cpp ------------------------------------*- C++
-//-*-===//
+//===-- TestArm64InstEmulation.cpp ----------------------------------------===//
 
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
@@ -20,7 +19,7 @@
 #include "lldb/Target/UnwindAssembly.h"
 #include "lldb/Utility/ArchSpec.h"
 
-#include "Plugins/Disassembler/llvm/DisassemblerLLVMC.h"
+#include "Plugins/Disassembler/LLVMC/DisassemblerLLVMC.h"
 #include "Plugins/Instruction/ARM64/EmulateInstructionARM64.h"
 #include "Plugins/Process/Utility/lldb-arm64-register-enums.h"
 #include "llvm/Support/TargetSelect.h"
@@ -680,8 +679,8 @@ TEST_F(TestArm64InstEmulation, TestRegisterDoubleSpills) {
   }
 }
 
-TEST_F(TestArm64InstEmulation, TestRetguardEmptyFunction) {
-  ArchSpec arch("arm64-unknown-openbsd6.4");
+TEST_F(TestArm64InstEmulation, TestCFARegisterTrackedAcrossJumps) {
+  ArchSpec arch("arm64-apple-ios10");
   std::unique_ptr<UnwindAssemblyInstEmulation> engine(
       static_cast<UnwindAssemblyInstEmulation *>(
           UnwindAssemblyInstEmulation::CreateInstance(arch)));
@@ -692,67 +691,90 @@ TEST_F(TestArm64InstEmulation, TestRetguardEmptyFunction) {
   UnwindPlan unwind_plan(eRegisterKindLLDB);
   UnwindPlan::Row::RegisterLocation regloc;
 
-  // void main() { } compiled on arm64-unknown-openbsd6.4 with -fret-protector
   uint8_t data[] = {
-       0x2f, 0x37, 0x00, 0xf0, //  0:  adrp    x15, #7237632
-       0xef, 0x35, 0x43, 0xf9, //  4:  ldr     x15, [x15, #1640]
-       0xef, 0x01, 0x1e, 0xca, //  8:  eor     x15, x15, x30
-       0xef, 0x0f, 0x1f, 0xf8, // 12:  str     x15, [sp, #-16]!
-       0xef, 0x07, 0x41, 0xf8, // 16:  ldr     x15, [sp], #16
-       0x29, 0x37, 0x00, 0xf0, // 20:  adrp    x9, #7237632
-       0x29, 0x35, 0x43, 0xf9, // 24:  ldr     x9, [x9, #1640]
-       0xef, 0x01, 0x1e, 0xca, // 28:  eor     x15, x15, x30
-       0xef, 0x01, 0x09, 0xeb, // 32:  subs    x15, x15, x9
-       0x4f, 0x00, 0x00, 0xb4, // 36:  cbz     x15, #8
-       0x20, 0x00, 0x20, 0xd4, // 40:  brk     #0x1
-       0xc0, 0x03, 0x5f, 0xd6, // 44:  ret
+      // prologue
+      0xf4, 0x4f, 0xbe, 0xa9, //  0: 0xa9be4ff4 stp x20, x19, [sp, #-0x20]!
+      0xfd, 0x7b, 0x01, 0xa9, //  4: 0xa9017bfd stp x29, x30, [sp, #0x10]
+      0xfd, 0x43, 0x00, 0x91, //  8: 0x910043fd add x29, sp, #0x10
+      0xff, 0x43, 0x00, 0xd1, // 12: 0xd10043ff sub sp, sp, #0x10
+      // conditional branch over a mid-function epilogue
+      0xeb, 0x00, 0x00, 0x54, // 16: 0x540000eb b.lt <+44>
+      // mid-function epilogue
+      0x1f, 0x20, 0x03, 0xd5, // 20: 0xd503201f   nop
+      0xe0, 0x03, 0x13, 0xaa, // 24: 0xaa1303e0   mov    x0, x19
+      0xbf, 0x43, 0x00, 0xd1, // 28: 0xd10043bf   sub    sp, x29, #0x10
+      0xfd, 0x7b, 0x41, 0xa9, // 32: 0xa9417bfd   ldp    x29, x30, [sp, #0x10]
+      0xf4, 0x4f, 0xc2, 0xa8, // 36: 0xa8c24ff4   ldp    x20, x19, [sp], #0x20
+      0xc0, 0x03, 0x5f, 0xd6, // 40: 0xd65f03c0   ret
+      // unwind state restored, we're using a frame pointer, let's change the
+      // stack pointer and see no change in how the CFA is computed
+      0x1f, 0x20, 0x03, 0xd5, // 44: 0xd503201f   nop
+      0xff, 0x43, 0x00, 0xd1, // 48: 0xd10043ff   sub    sp, sp, #0x10
+      0x1f, 0x20, 0x03, 0xd5, // 52: 0xd503201f   nop
+      // final epilogue
+      0xe0, 0x03, 0x13, 0xaa, // 56: 0xaa1303e0   mov    x0, x19
+      0xbf, 0x43, 0x00, 0xd1, // 60: 0xd10043bf   sub    sp, x29, #0x10
+      0xfd, 0x7b, 0x41, 0xa9, // 64: 0xa9417bfd   ldp    x29, x30, [sp, #0x10]
+      0xf4, 0x4f, 0xc2, 0xa8, // 68: 0xa8c24ff4   ldp    x20, x19, [sp], #0x20
+      0xc0, 0x03, 0x5f, 0xd6, // 72: 0xd65f03c0   ret
+
+      0x1f, 0x20, 0x03, 0xd5, // 52: 0xd503201f   nop
   };
 
-  // UnwindPlan we expect
-  //  0: CFA=sp+0
-  // 16: CFA=sp+16
-  // 20: CFA=sp+0
+  // UnwindPlan we expect:
+  // row[0]:    0: CFA=sp +0 =>
+  // row[1]:    4: CFA=sp+32 => x19=[CFA-24] x20=[CFA-32]
+  // row[2]:    8: CFA=sp+32 => x19=[CFA-24] x20=[CFA-32] fp=[CFA-16] lr=[CFA-8]
+  // row[3]:   12: CFA=fp+16 => x19=[CFA-24] x20=[CFA-32] fp=[CFA-16] lr=[CFA-8]
+  // row[4]:   32: CFA=sp+32 => x19=[CFA-24] x20=[CFA-32] fp=[CFA-16] lr=[CFA-8]
+  // row[5]:   36: CFA=sp+32 => x19=[CFA-24] x20=[CFA-32] fp= <same> lr= <same>
+  // row[6]:   40: CFA=sp +0 => x19= <same> x20= <same> fp= <same> lr= <same> 
+  // row[7]:   44: CFA=fp+16 => x19=[CFA-24] x20=[CFA-32] fp=[CFA-16] lr=[CFA-8] 
+  // row[8]:   64: CFA=sp+32 => x19=[CFA-24] x20=[CFA-32] fp=[CFA-16] lr=[CFA-8] 
+  // row[9]:   68: CFA=sp+32 => x19=[CFA-24] x20=[CFA-32] fp= <same> lr= <same> 
+  // row[10]:  72: CFA=sp +0 => x19= <same> x20= <same> fp= <same> lr= <same> 
+
+  // The specific bug we're looking for is this incorrect CFA definition, 
+  // where the InstEmulation is using the $sp value mixed in with $fp, 
+  // it looks like this:
+  //
+  // row[7]:   44: CFA=fp+16 => x19=[CFA-24] x20=[CFA-32] fp=[CFA-16] lr=[CFA-8]
+  // row[8]:   52: CFA=fp+64 => x19=[CFA-24] x20=[CFA-32] fp=[CFA-16] lr=[CFA-8]
+  // row[9]:   68: CFA=fp+64 => x19=[CFA-24] x20=[CFA-32] fp= <same> lr= <same>
+ 
   sample_range = AddressRange(0x1000, sizeof(data));
 
   EXPECT_TRUE(engine->GetNonCallSiteUnwindPlanFromAssembly(
       sample_range, data, sizeof(data), unwind_plan));
 
-  //  0: CFA=sp+0
-  row_sp = unwind_plan.GetRowForFunctionOffset(0);
-  EXPECT_EQ(0ull, row_sp->GetOffset());
+  // Confirm CFA at mid-func epilogue 'ret' is $sp+0
+  row_sp = unwind_plan.GetRowForFunctionOffset(40);
+  EXPECT_EQ(40ull, row_sp->GetOffset());
   EXPECT_TRUE(row_sp->GetCFAValue().GetRegisterNumber() == gpr_sp_arm64);
   EXPECT_TRUE(row_sp->GetCFAValue().IsRegisterPlusOffset() == true);
   EXPECT_EQ(0, row_sp->GetCFAValue().GetOffset());
 
-  row_sp = unwind_plan.GetRowForFunctionOffset(4);
-  EXPECT_EQ(0ull, row_sp->GetOffset());
-  row_sp = unwind_plan.GetRowForFunctionOffset(8);
-  EXPECT_EQ(0ull, row_sp->GetOffset());
-  row_sp = unwind_plan.GetRowForFunctionOffset(12);
-  EXPECT_EQ(0ull, row_sp->GetOffset());
-
-  // 16: CFA=sp+16
-  row_sp = unwind_plan.GetRowForFunctionOffset(16);
-  EXPECT_EQ(16ull, row_sp->GetOffset());
-  EXPECT_TRUE(row_sp->GetCFAValue().GetRegisterNumber() == gpr_sp_arm64);
+  // After the 'ret', confirm we're back to the correct CFA of $fp+16
+  row_sp = unwind_plan.GetRowForFunctionOffset(44);
+  EXPECT_EQ(44ull, row_sp->GetOffset());
+  EXPECT_TRUE(row_sp->GetCFAValue().GetRegisterNumber() == gpr_fp_arm64);
   EXPECT_TRUE(row_sp->GetCFAValue().IsRegisterPlusOffset() == true);
   EXPECT_EQ(16, row_sp->GetCFAValue().GetOffset());
 
-  // 20: CFA=sp+0
-  row_sp = unwind_plan.GetRowForFunctionOffset(20);
-  EXPECT_EQ(20ull, row_sp->GetOffset());
+  // Confirm that we have no additional UnwindPlan rows before the 
+  // real epilogue -- we still get the Row at offset 44.
+  row_sp = unwind_plan.GetRowForFunctionOffset(60);
+  EXPECT_EQ(44ull, row_sp->GetOffset());
+  EXPECT_TRUE(row_sp->GetCFAValue().GetRegisterNumber() == gpr_fp_arm64);
+  EXPECT_TRUE(row_sp->GetCFAValue().IsRegisterPlusOffset() == true);
+  EXPECT_EQ(16, row_sp->GetCFAValue().GetOffset());
+
+  // And in the epilogue, confirm that we start by switching back to 
+  // defining the CFA in terms of $sp.
+  row_sp = unwind_plan.GetRowForFunctionOffset(64);
+  EXPECT_EQ(64ull, row_sp->GetOffset());
   EXPECT_TRUE(row_sp->GetCFAValue().GetRegisterNumber() == gpr_sp_arm64);
   EXPECT_TRUE(row_sp->GetCFAValue().IsRegisterPlusOffset() == true);
-  EXPECT_EQ(0, row_sp->GetCFAValue().GetOffset());
-
-  row_sp = unwind_plan.GetRowForFunctionOffset(24);
-  EXPECT_EQ(20ull, row_sp->GetOffset());
-  row_sp = unwind_plan.GetRowForFunctionOffset(28);
-  EXPECT_EQ(20ull, row_sp->GetOffset());
-  row_sp = unwind_plan.GetRowForFunctionOffset(32);
-  EXPECT_EQ(20ull, row_sp->GetOffset());
-  row_sp = unwind_plan.GetRowForFunctionOffset(36);
-  EXPECT_EQ(20ull, row_sp->GetOffset());
-  row_sp = unwind_plan.GetRowForFunctionOffset(40);
-  EXPECT_EQ(20ull, row_sp->GetOffset());
+  EXPECT_EQ(32, row_sp->GetCFAValue().GetOffset());
 }
+

@@ -1,4 +1,4 @@
-//===-- PipePosix.cpp -------------------------------------------*- C++ -*-===//
+//===-- PipePosix.cpp -----------------------------------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -39,7 +39,7 @@ enum PIPES { READ, WRITE }; // Constants 0 and 1 for READ and WRITE
 // pipe2 is supported by a limited set of platforms
 // TODO: Add more platforms that support pipe2.
 #if defined(__linux__) || (defined(__FreeBSD__) && __FreeBSD__ >= 10) ||       \
-    defined(__NetBSD__) || defined(__OpenBSD__)
+    defined(__NetBSD__)
 #define PIPE2_SUPPORTED 1
 #else
 #define PIPE2_SUPPORTED 0

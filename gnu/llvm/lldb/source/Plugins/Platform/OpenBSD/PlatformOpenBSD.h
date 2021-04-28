@@ -6,8 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_PlatformOpenBSD_h_
-#define liblldb_PlatformOpenBSD_h_
+#ifndef LLDB_SOURCE_PLUGINS_PLATFORM_OPENBSD_PLATFORMOPENBSD_H
+#define LLDB_SOURCE_PLUGINS_PLATFORM_OPENBSD_PLATFORMOPENBSD_H
 
 #include "Plugins/Platform/POSIX/PlatformPOSIX.h"
 
@@ -46,9 +46,6 @@ public:
 
   bool CanDebugProcess() override;
 
-  lldb::ProcessSP DebugProcess(ProcessLaunchInfo &launch_info, Debugger &debugger,
-                               Target *target, Status &error) override;
-
   void CalculateTrapHandlerSymbolNames() override;
 
   MmapArgList GetMmapArgumentList(const ArchSpec &arch, lldb::addr_t addr,
@@ -56,13 +53,12 @@ public:
                                   unsigned flags, lldb::addr_t fd,
                                   lldb::addr_t offset) override;
 
-  lldb_private::FileSpec LocateExecutable(const char *basename) override;
-
 private:
-  DISALLOW_COPY_AND_ASSIGN(PlatformOpenBSD);
+  PlatformOpenBSD(const PlatformOpenBSD &) = delete;
+  const PlatformOpenBSD &operator=(const PlatformOpenBSD &) = delete;
 };
 
 } // namespace platform_openbsd
 } // namespace lldb_private
 
-#endif // liblldb_PlatformOpenBSD_h_
+#endif // LLDB_SOURCE_PLUGINS_PLATFORM_OPENBSD_PLATFORMOPENBSD_H

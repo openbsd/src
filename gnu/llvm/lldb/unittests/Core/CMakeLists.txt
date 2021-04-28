@@ -1,6 +1,9 @@
 add_lldb_unittest(LLDBCoreTests
+  CommunicationTest.cpp
   MangledTest.cpp
+  ModuleSpecTest.cpp
   RichManglingContextTest.cpp
+  SourceManagerTest.cpp
   StreamCallbackTest.cpp
   UniqueCStringMapTest.cpp
 
@@ -9,6 +12,8 @@ add_lldb_unittest(LLDBCoreTests
     lldbHost
     lldbSymbol
     lldbPluginObjectFileELF
+    lldbPluginObjectFileMachO
+    lldbPluginObjectFilePECOFF
     lldbPluginSymbolFileSymtab
     lldbUtilityHelpers
     LLVMTestingSupport
