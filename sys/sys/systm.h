@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.152 2021/02/08 08:18:45 mpi Exp $	*/
+/*	$OpenBSD: systm.h,v 1.153 2021/04/28 09:42:04 sashan Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -361,9 +361,17 @@ do {									\
 		splassert_fail(RW_READ, _s, __func__);			\
 } while (0)
 
+#define	NET_ASSERT_WLOCKED()						\
+do {									\
+	int _s = rw_status(&netlock);					\
+	if ((splassert_ctl > 0) && (_s != RW_WRITE))			\
+		splassert_fail(RW_WRITE, _s, __func__);			\
+} while (0)
+
 #else /* DIAGNOSTIC */
 #define	NET_ASSERT_UNLOCKED()	do {} while (0)
 #define	NET_ASSERT_LOCKED()	do {} while (0)
+#define	NET_ASSERT_WLOCKED()	do {} while (0)
 #endif /* !DIAGNOSTIC */
 
 __returns_twice int	setjmp(label_t *);
