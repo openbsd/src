@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.88 2020/11/10 16:13:35 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.89 2021/04/28 17:59:53 bluhm Exp $
 
 SUBDIR+= __syscall
 SUBDIR+= accept access
@@ -6,7 +6,7 @@ SUBDIR+= bind
 SUBDIR+= clock_gettime cmsgsize
 SUBDIR+= descrip dup2 dup2_accept dup2_self
 SUBDIR+= exec_self execve exit extent
-SUBDIR+= fchdir fchown fcntl_dup flock ftruncate futex
+SUBDIR+= fchdir fchown fcntl_dup flock fork-exit ftruncate futex
 SUBDIR+= getpeereid getrusage gettimeofday
 SUBDIR+= itimer
 SUBDIR+= kqueue
