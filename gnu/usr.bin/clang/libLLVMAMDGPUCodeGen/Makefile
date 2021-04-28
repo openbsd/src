@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2020/08/03 14:45:24 patrick Exp $
+# $OpenBSD: Makefile,v 1.5 2021/04/28 12:55:38 patrick Exp $
 
 LIB=	LLVMAMDGPUCodeGen
 NOPROFILE=
@@ -15,6 +15,7 @@ SRCS+=	AMDGPUAliasAnalysis.cpp \
 	AMDGPUAtomicOptimizer.cpp \
 	AMDGPUCallLowering.cpp \
 	AMDGPUCodeGenPrepare.cpp \
+	AMDGPUExportClustering.cpp \
 	AMDGPUFixFunctionBitcasts.cpp \
 	AMDGPUFrameLowering.cpp \
 	AMDGPUHSAMetadataStreamer.cpp \
@@ -35,10 +36,12 @@ SRCS+=	AMDGPUAliasAnalysis.cpp \
 	AMDGPUMacroFusion.cpp \
 	AMDGPUMCInstLower.cpp \
 	AMDGPUOpenCLEnqueuedBlockLowering.cpp \
+	AMDGPUPostLegalizerCombiner.cpp \
+	AMDGPUPreLegalizerCombiner.cpp \
 	AMDGPUPromoteAlloca.cpp \
 	AMDGPUPropagateAttributes.cpp \
+	AMDGPURegBankCombiner.cpp \
 	AMDGPURegisterBankInfo.cpp \
-	AMDGPURegisterInfo.cpp \
 	AMDGPURewriteOutArguments.cpp \
 	AMDGPUSubtarget.cpp \
 	AMDGPUTargetMachine.cpp \
@@ -50,11 +53,7 @@ SRCS+=	AMDGPUAliasAnalysis.cpp \
 	AMDGPUPerfHintAnalysis.cpp \
 	AMDILCFGStructurizer.cpp \
 	AMDGPUPrintfRuntimeBinding.cpp \
-	GCNDPPCombine.cpp \
 	GCNHazardRecognizer.cpp \
-	GCNILPSched.cpp \
-	GCNRegBankReassign.cpp \
-	GCNNSAReassign.cpp \
 	GCNIterativeScheduler.cpp \
 	GCNMinRegStrategy.cpp \
 	GCNRegPressure.cpp \
@@ -76,12 +75,13 @@ SRCS+=	AMDGPUAliasAnalysis.cpp \
 	SIAddIMGInit.cpp \
 	SIAnnotateControlFlow.cpp \
 	SIFixSGPRCopies.cpp \
+	SIFixupVectorISel.cpp \
 	SIFixVGPRCopies.cpp \
 	SIPreAllocateWWMRegs.cpp \
-	SIFixupVectorISel.cpp \
 	SIFoldOperands.cpp \
 	SIFormMemoryClauses.cpp \
 	SIFrameLowering.cpp \
+	SIInsertHardClauses.cpp \
 	SIInsertSkips.cpp \
 	SIInsertWaitcnts.cpp \
 	SIInstrInfo.cpp \
@@ -93,12 +93,19 @@ SRCS+=	AMDGPUAliasAnalysis.cpp \
 	SIMachineFunctionInfo.cpp \
 	SIMachineScheduler.cpp \
 	SIMemoryLegalizer.cpp \
-	SIModeRegister.cpp \
 	SIOptimizeExecMasking.cpp \
 	SIOptimizeExecMaskingPreRA.cpp \
 	SIPeepholeSDWA.cpp \
+	SIPostRABundler.cpp \
+	SIPreEmitPeephole.cpp \
 	SIRegisterInfo.cpp \
+	SIRemoveShortExecBranches.cpp \
 	SIShrinkInstructions.cpp \
-	SIWholeQuadMode.cpp
+	SIWholeQuadMode.cpp \
+	GCNILPSched.cpp \
+	GCNRegBankReassign.cpp \
+	GCNNSAReassign.cpp \
+	GCNDPPCombine.cpp \
+	SIModeRegister.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/llvm/lib/Target/AMDGPU

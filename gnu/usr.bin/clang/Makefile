@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.13 2020/08/03 14:45:22 patrick Exp $
+# $OpenBSD: Makefile,v 1.14 2021/04/28 12:55:37 patrick Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,8 @@ SUBDIR+=libLLVMTableGen
 SUBDIR+=llvm-tblgen
 SUBDIR+=include/llvm/IR
 SUBDIR+=include/llvm/Transforms/InstCombine
+SUBDIR+=include/llvm/Frontend/OpenACC
+SUBDIR+=include/llvm/Frontend/OpenMP
 
 .for arch in ${LLVM_ARCHS}
 .if "${arch}" == ${LLVM_ARCH} || "${arch}" == "AMDGPU" || make(obj)
@@ -25,7 +27,6 @@ SUBDIR+=clang-tblgen
 SUBDIR+=include/clang
 
 SUBDIR+=libclangBasic
-SUBDIR+=libclangBasicTargets
 SUBDIR+=libclangLex
 SUBDIR+=libclangParse
 SUBDIR+=libclangAST
@@ -35,7 +36,6 @@ SUBDIR+=libclangAnalysis
 SUBDIR+=libclangEdit
 SUBDIR+=libclangRewrite
 SUBDIR+=libclangDriver
-SUBDIR+=libclangDriverArch
 SUBDIR+=libclangSerialization
 SUBDIR+=libclangFrontend
 SUBDIR+=libclangRewriteFrontend
@@ -50,6 +50,7 @@ SUBDIR+=liblldCore
 SUBDIR+=liblldELF
 
 SUBDIR+=lld
+
 
 SUBDIR+=lldb-tblgen
 SUBDIR+=include/lldb/Commands
@@ -82,7 +83,6 @@ SUBDIR+=liblldbPluginLanguageRuntime
 SUBDIR+=liblldbPluginMemoryHistory
 SUBDIR+=liblldbPluginObjectContainer
 SUBDIR+=liblldbPluginObjectFile
-SUBDIR+=liblldbPluginOperatingSystem
 SUBDIR+=liblldbPluginPlatform
 SUBDIR+=liblldbPluginProcess
 SUBDIR+=liblldbPluginScriptInterpreter
@@ -90,6 +90,7 @@ SUBDIR+=liblldbPluginStructuredData
 SUBDIR+=liblldbPluginSymbolFile
 SUBDIR+=liblldbPluginSymbolVendor
 SUBDIR+=liblldbPluginSystemRuntime
+SUBDIR+=liblldbPluginTypeSystem
 SUBDIR+=liblldbPluginUnwindAssembly
 SUBDIR+=liblldbSymbol
 SUBDIR+=liblldbTarget

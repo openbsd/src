@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.12 2020/08/03 14:45:28 patrick Exp $
+# $OpenBSD: Makefile,v 1.13 2021/04/28 12:55:40 patrick Exp $
 
 LIB=	LLVMTransformUtils
 NOPROFILE=
@@ -6,14 +6,18 @@ NOPROFILE=
 CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/Transforms
 CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/Transforms/Utils
 
-SRCS+=	ASanStackFrameLayout.cpp \
-	AddDiscriminators.cpp \
+SRCS+=	AddDiscriminators.cpp \
+	AMDGPUEmitPrintf.cpp \
+	ASanStackFrameLayout.cpp \
+	AssumeBundleBuilder.cpp \
 	BasicBlockUtils.cpp \
 	BreakCriticalEdges.cpp \
 	BuildLibCalls.cpp \
 	BypassSlowDivision.cpp \
 	CallPromotionUtils.cpp \
+	CallGraphUpdater.cpp \
 	CanonicalizeAliases.cpp \
+	CanonicalizeFreezeInLoops.cpp \
 	CloneFunction.cpp \
 	CloneModule.cpp \
 	CodeExtractor.cpp \
@@ -24,14 +28,15 @@ SRCS+=	ASanStackFrameLayout.cpp \
 	EntryExitInstrumenter.cpp \
 	EscapeEnumerator.cpp \
 	Evaluator.cpp \
+	FixIrreducible.cpp \
 	FlattenCFG.cpp \
 	FunctionComparator.cpp \
 	FunctionImportUtils.cpp \
 	GlobalStatus.cpp \
 	TransformUtilsGuardUtils.cpp \
+	InlineFunction.cpp \
 	ImportedFunctionsInliningStatistics.cpp \
 	InjectTLIMappings.cpp \
-	InlineFunction.cpp \
 	InstructionNamer.cpp \
 	IntegerDivision.cpp \
 	LCSSA.cpp \
@@ -55,8 +60,10 @@ SRCS+=	ASanStackFrameLayout.cpp \
 	NameAnonGlobals.cpp \
 	PredicateInfo.cpp \
 	PromoteMemoryToRegister.cpp \
+	ScalarEvolutionExpander.cpp \
 	StripGCRelocates.cpp \
 	SSAUpdater.cpp \
+	SSAUpdaterBulk.cpp \
 	SanitizerStats.cpp \
 	SimplifyCFG.cpp \
 	SimplifyIndVar.cpp \
@@ -66,9 +73,11 @@ SRCS+=	ASanStackFrameLayout.cpp \
 	StripNonLineTableDebugInfo.cpp \
 	SymbolRewriter.cpp \
 	UnifyFunctionExitNodes.cpp \
+	UnifyLoopExits.cpp \
+	UniqueInternalLinkageNames.cpp \
 	TransformUtilsUtils.cpp \
-	VNCoercion.cpp \
-	ValueMapper.cpp
+	ValueMapper.cpp \
+	VNCoercion.cpp
 
 TransformUtilsGuardUtils.cpp:
 	ln -s ${LLVM_SRCS}/lib/Transforms/Utils/GuardUtils.cpp $@

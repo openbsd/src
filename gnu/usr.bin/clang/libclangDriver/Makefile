@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2020/08/03 14:45:28 patrick Exp $
+# $OpenBSD: Makefile,v 1.9 2021/04/28 12:55:40 patrick Exp $
 
 LIB=	clangDriver
 NOPIC=
@@ -8,63 +8,80 @@ CPPFLAGS+=	${CLANG_INCLUDES}
 CPPFLAGS+=	-I${CLANG_SRCS}/lib/Driver
 
 .include <bsd.own.mk>
-SRCS=	AIX.cpp \
+
+# Driver
+SRCS=	Action.cpp \
+	Compilation.cpp \
+	DarwinSDKInfo.cpp \
+	Distro.cpp \
+	Driver.cpp \
+	DriverOptions.cpp \
+	Job.cpp \
+	Multilib.cpp \
+	OptionUtils.cpp \
+	Phases.cpp \
+	SanitizerArgs.cpp \
+	Tool.cpp \
+	ToolChain.cpp \
+	Types.cpp \
+	XRayArgs.cpp
+
+# Driver/Toolchains
+SRCS+=	AIX.cpp \
+	Ananas.cpp \
 	AMDGPU.cpp \
 	AVR.cpp \
-	Action.cpp \
-	Ananas.cpp \
 	BareMetal.cpp \
 	Clang.cpp \
 	CloudABI.cpp \
 	CommonArgs.cpp \
-	Compilation.cpp \
 	Contiki.cpp \
 	CrossWindows.cpp \
 	Cuda.cpp \
 	Darwin.cpp \
-	DarwinSDKInfo.cpp \
-	Distro.cpp \
 	DragonFly.cpp \
-	Driver.cpp \
-	DriverOptions.cpp \
 	Flang.cpp \
 	FreeBSD.cpp \
 	Fuchsia.cpp \
 	Gnu.cpp \
-	HIP.cpp \
 	Haiku.cpp \
+	HIP.cpp \
 	Hexagon.cpp \
 	Hurd.cpp \
-	InterfaceStubs.cpp \
-	Job.cpp \
 	Linux.cpp \
-	MSP430.cpp \
-	MSVC.cpp \
+	MipsLinux.cpp \
 	MinGW.cpp \
 	Minix.cpp \
-	MipsLinux.cpp \
-	Multilib.cpp \
+	MSP430.cpp \
+	MSVC.cpp \
 	Myriad.cpp \
 	NaCl.cpp \
 	NetBSD.cpp \
 	OpenBSD.cpp \
-	OptionUtils.cpp \
-	PPCLinux.cpp \
 	PS4CPU.cpp \
-	Phases.cpp \
 	RISCVToolchain.cpp \
-	SanitizerArgs.cpp \
 	Solaris.cpp \
 	TCE.cpp \
-	Tool.cpp \
-	ToolChain.cpp \
-	Types.cpp \
+	VEToolchain.cpp \
 	WebAssembly.cpp \
 	XCore.cpp \
-	XRayArgs.cpp
+	PPCLinux.cpp \
+	InterfaceStubs.cpp
+
+# Driver/Toolchains/Arch
+SRCS+=	AArch64.cpp \
+	ARM.cpp \
+	Mips.cpp \
+	PPC.cpp \
+	RISCV.cpp \
+	Sparc.cpp \
+	SystemZ.cpp \
+	VE.cpp \
+	X86.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/clang/lib/Driver
 .PATH:	${.CURDIR}/../../../llvm/clang/lib/Driver/ToolChains
+.PATH:	${.CURDIR}/../../../llvm/clang/lib/Driver/ToolChains/Arch
 
 install:
 	@# Nothing here so far ...

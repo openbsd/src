@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2020/08/03 14:45:30 patrick Exp $
+# $OpenBSD: Makefile,v 1.4 2021/04/28 12:55:41 patrick Exp $
 
 LIB=	lldbPluginInstruction
 NOPIC=
@@ -6,11 +6,11 @@ NOPROFILE=
 
 .include <bsd.own.mk>
 SRCS=	EmulateInstructionARM.cpp \
+	EmulationStateARM.cpp \
 	EmulateInstructionARM64.cpp \
 	EmulateInstructionMIPS.cpp \
 	EmulateInstructionMIPS64.cpp \
-	EmulateInstructionPPC64.cpp \
-	EmulationStateARM.cpp \
+	EmulateInstructionPPC64.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/Instruction/ARM
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/Instruction/ARM64

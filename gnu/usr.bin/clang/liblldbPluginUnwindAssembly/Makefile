@@ -1,13 +1,13 @@
-# $OpenBSD: Makefile,v 1.2 2020/08/03 14:45:31 patrick Exp $
+# $OpenBSD: Makefile,v 1.3 2021/04/28 12:55:42 patrick Exp $
 
 LIB=	lldbPluginUnwindAssembly
 NOPIC=
 NOPROFILE=
 
 .include <bsd.own.mk>
-SRCS=	UnwindAssembly-x86.cpp \
-	UnwindAssemblyInstEmulation.cpp \
-	x86AssemblyInspectionEngine.cpp \
+SRCS=	UnwindAssemblyInstEmulation.cpp \
+	UnwindAssembly-x86.cpp \
+	x86AssemblyInspectionEngine.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/UnwindAssembly/InstEmulation
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/UnwindAssembly/x86

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2020/08/03 14:45:31 patrick Exp $
+# $OpenBSD: Makefile,v 1.5 2021/04/28 12:55:42 patrick Exp $
 
 LIB=	lldbUtility
 NOPIC=
@@ -34,7 +34,6 @@ SRCS=	ArchSpec.cpp \
 	ReproducerInstrumentation.cpp \
 	Scalar.cpp \
 	SelectHelper.cpp \
-	SharingPtr.cpp \
 	State.cpp \
 	Status.cpp \
 	Stream.cpp \
@@ -53,6 +52,7 @@ SRCS=	ArchSpec.cpp \
 	UserIDResolver.cpp \
 	VASprintf.cpp \
 	VMRange.cpp \
+	XcodeSDK.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Utility
 

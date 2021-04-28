@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.23 2020/08/09 15:56:39 patrick Exp $
+# $OpenBSD: Makefile,v 1.24 2021/04/28 12:55:37 patrick Exp $
 
 .include <bsd.own.mk>
 
-LLVM_V=			10.0.1
+LLVM_V=			11.1.0
 CLANG_INTR_INCDIR=	/usr/lib/clang/${LLVM_V}/include
 
 TBLGEN= ${.OBJDIR}/../../../clang-tblgen/clang-tblgen
@@ -22,35 +22,39 @@ HEADERS=	stdalign.h \
 .if ${MACHINE_ARCH} == "aarch64" || ${MACHINE_ARCH} == "arm"
 GEN+=		arm_neon.h
 GEN+=		arm_fp16.h
+GEN+=		arm_sve.h
+GEN+=		arm_bf16.h
 GEN+=		arm_mve.h
+GEN+=		arm_cde.h
 HEADERS+=	arm_acle.h arm_cmse.h ${GEN}
 .elif ${MACHINE_ARCH} == "amd64" || ${MACHINE_ARCH} == "i386"
 HEADERS+=	adxintrin.h \
 		ammintrin.h \
+		amxintrin.h \
 		avx2intrin.h \
 		avx512bf16intrin.h \
-		avx512bitalgintrin.h \
 		avx512bwintrin.h \
+		avx512bitalgintrin.h \
+		avx512vlbitalgintrin.h \
 		avx512cdintrin.h \
+		avx512vpopcntdqintrin.h \
 		avx512dqintrin.h \
 		avx512erintrin.h \
 		avx512fintrin.h \
 		avx512ifmaintrin.h \
 		avx512ifmavlintrin.h \
 		avx512pfintrin.h \
-		avx512vbmi2intrin.h \
 		avx512vbmiintrin.h \
 		avx512vbmivlintrin.h \
-		avx512vlbitalgintrin.h \
+		avx512vbmi2intrin.h \
+		avx512vlvbmi2intrin.h \
 		avx512vlbf16intrin.h \
 		avx512vlbwintrin.h \
 		avx512vlcdintrin.h \
 		avx512vldqintrin.h \
 		avx512vlintrin.h \
-		avx512vlvbmi2intrin.h \
 		avx512vp2intersectintrin.h \
 		avx512vlvp2intersectintrin.h \
-		avx512vpopcntdqintrin.h \
 		avx512vpopcntdqvlintrin.h \
 		avx512vnniintrin.h \
 		avx512vlvnniintrin.h \
@@ -58,11 +62,12 @@ HEADERS+=	adxintrin.h \
 		bmi2intrin.h \
 		bmiintrin.h \
 		cetintrin.h \
-		cpuid.h \
+		cet.h \
 		cldemoteintrin.h \
+		clzerointrin.h \
+		cpuid.h \
 		clflushoptintrin.h \
 		clwbintrin.h \
-		clzerointrin.h \
 		emmintrin.h \
 		enqcmdintrin.h \
 		f16cintrin.h \
@@ -76,8 +81,8 @@ HEADERS+=	adxintrin.h \
 		lwpintrin.h \
 		lzcntintrin.h \
 		mm3dnow.h \
-		mm_malloc.h \
 		mmintrin.h \
+		mm_malloc.h \
 		movdirintrin.h \
 		mwaitxintrin.h \
 		nmmintrin.h \
@@ -89,14 +94,17 @@ HEADERS+=	adxintrin.h \
 		ptwriteintrin.h \
 		rdseedintrin.h \
 		rtmintrin.h \
+		serializeintrin.h \
 		sgxintrin.h \
 		shaintrin.h \
 		smmintrin.h \
 		tbmintrin.h \
 		tmmintrin.h \
+		tsxldtrkintrin.h \
 		vaesintrin.h \
 		vpclmulqdqintrin.h \
 		waitpkgintrin.h \
+		wasm_simd128.h \
 		wbnoinvdintrin.h \
 		wmmintrin.h \
 		__wmmintrin_aes.h \
@@ -104,9 +112,9 @@ HEADERS+=	adxintrin.h \
 		x86intrin.h \
 		xmmintrin.h \
 		xopintrin.h \
+		xsavecintrin.h \
 		xsaveintrin.h \
 		xsaveoptintrin.h \
-		xsavecintrin.h \
 		xsavesintrin.h \
 		xtestintrin.h
 .elif ${MACHINE_ARCH} == "powerpc" || ${MACHINE_ARCH} == "powerpc64"
@@ -136,8 +144,20 @@ arm_fp16.h: ${CLANG_INC}/clang/Basic/arm_fp16.td
 	${TBLGEN} -gen-arm-fp16 -I${CLANG_INC}/clang/Basic \
 	    -o ${.TARGET} ${.ALLSRC}
 
+arm_sve.h: ${CLANG_INC}/clang/Basic/arm_sve.td
+	${TBLGEN} -gen-arm-sve-header -I${CLANG_INC}/clang/Basic \
+	    -o ${.TARGET} ${.ALLSRC}
+
+arm_bf16.h: ${CLANG_INC}/clang/Basic/arm_bf16.td
+	${TBLGEN} -gen-arm-bf16 -I${CLANG_INC}/clang/Basic \
+	    -o ${.TARGET} ${.ALLSRC}
+
 arm_mve.h: ${CLANG_INC}/clang/Basic/arm_mve.td
 	${TBLGEN} -gen-arm-mve-header -I${CLANG_INC}/clang/Basic \
+	    -o ${.TARGET} ${.ALLSRC}
+
+arm_cde.h: ${CLANG_INC}/clang/Basic/arm_cde.td
+	${TBLGEN} -gen-arm-cde-header -I${CLANG_INC}/clang/Basic \
 	    -o ${.TARGET} ${.ALLSRC}
 
 .include <bsd.obj.mk>

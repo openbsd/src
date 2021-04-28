@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.10 2020/08/03 14:45:24 patrick Exp $
+# $OpenBSD: Makefile,v 1.11 2021/04/28 12:55:38 patrick Exp $
 
 LIB=	LLVMAArch64CodeGen
 NOPROFILE=
@@ -6,17 +6,22 @@ NOPROFILE=
 CPPFLAGS+=	-I${.OBJDIR}/../include/llvm/AArch64 \
 		-I${LLVM_SRCS}/lib/Target/AArch64
 
+# GISel
+SRCS+=	AArch64CallLowering.cpp \
+	AArch64InstructionSelector.cpp \
+	AArch64LegalizerInfo.cpp \
+	AArch64PreLegalizerCombiner.cpp \
+	AArch64PostLegalizerCombiner.cpp \
+	AArch64RegisterBankInfo.cpp
+
 SRCS+=	AArch64A57FPLoadBalancing.cpp \
 	AArch64AdvSIMDScalarPass.cpp \
 	AArch64AsmPrinter.cpp \
 	AArch64BranchTargets.cpp \
 	AArch64CallingConvention.cpp \
-	AArch64CallLowering.cpp \
 	AArch64CleanupLocalDynamicTLSPass.cpp \
 	AArch64CollectLOH.cpp \
-	AArch64CompressJumpTables.cpp \
 	AArch64CondBrTuning.cpp \
-	AArch64ConditionOptimizer.cpp \
 	AArch64ConditionalCompares.cpp \
 	AArch64DeadRegisterDefinitionsPass.cpp \
 	AArch64ExpandImm.cpp \
@@ -25,22 +30,21 @@ SRCS+=	AArch64A57FPLoadBalancing.cpp \
 	AArch64FastISel.cpp \
 	AArch64A53Fix835769.cpp \
 	AArch64FrameLowering.cpp \
+	AArch64CompressJumpTables.cpp \
+	AArch64ConditionOptimizer.cpp \
+	AArch64RedundantCopyElimination.cpp \
 	AArch64ISelDAGToDAG.cpp \
 	AArch64ISelLowering.cpp \
 	AArch64InstrInfo.cpp \
-	AArch64InstructionSelector.cpp \
-	AArch64LegalizerInfo.cpp \
 	AArch64LoadStoreOptimizer.cpp \
+	AArch64MachineFunctionInfo.cpp \
 	AArch64MacroFusion.cpp \
 	AArch64MCInstLower.cpp \
-	AArch64PreLegalizerCombiner.cpp \
 	AArch64PromoteConstant.cpp \
 	AArch64PBQPRegAlloc.cpp \
-	AArch64RedundantCopyElimination.cpp \
-	AArch64RegisterBankInfo.cpp \
 	AArch64RegisterInfo.cpp \
 	AArch64ReturnProtectorLowering.cpp \
-	AArch64SIMDInstrOpt.cpp \
+	AArch64SLSHardening.cpp \
 	AArch64SelectionDAGInfo.cpp \
 	AArch64SpeculationHardening.cpp \
 	AArch64StackTagging.cpp \
@@ -49,6 +53,9 @@ SRCS+=	AArch64A57FPLoadBalancing.cpp \
 	AArch64Subtarget.cpp \
 	AArch64TargetMachine.cpp \
 	AArch64TargetObjectFile.cpp \
-	AArch64TargetTransformInfo.cpp
+	AArch64TargetTransformInfo.cpp \
+	SVEIntrinsicOpts.cpp \
+	AArch64SIMDInstrOpt.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/llvm/lib/Target/AArch64
+.PATH:	${.CURDIR}/../../../llvm/llvm/lib/Target/AArch64/GISel

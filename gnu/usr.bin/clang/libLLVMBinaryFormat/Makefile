@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2020/08/03 14:45:25 patrick Exp $
+# $OpenBSD: Makefile,v 1.6 2021/04/28 12:55:39 patrick Exp $
 
 LIB=	LLVMBinaryFormat
 NOPROFILE=
@@ -6,9 +6,10 @@ NOPROFILE=
 CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/BinaryFormat
 
 SRCS+=	AMDGPUMetadataVerifier.cpp \
-	BinaryFormatMinidump.cpp \
 	Dwarf.cpp \
+	MachO.cpp \
 	Magic.cpp \
+	BinaryFormatMinidump.cpp \
 	MsgPackDocument.cpp \
 	MsgPackDocumentYAML.cpp \
 	MsgPackReader.cpp \

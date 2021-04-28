@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2020/08/03 14:45:24 patrick Exp $
+# $OpenBSD: Makefile,v 1.6 2021/04/28 12:55:38 patrick Exp $
 
 LIB=	LLVMAArch64Desc
 NOPROFILE=
@@ -10,11 +10,11 @@ SRCS+=	AArch64AsmBackend.cpp \
 	AArch64ELFObjectWriter.cpp \
 	AArch64ELFStreamer.cpp \
 	AArch64InstPrinter.cpp \
-	AArch64MachObjectWriter.cpp \
 	AArch64MCAsmInfo.cpp \
 	AArch64MCCodeEmitter.cpp \
 	AArch64MCExpr.cpp \
 	AArch64MCTargetDesc.cpp \
+	AArch64MachObjectWriter.cpp \
 	AArch64TargetStreamer.cpp \
 	AArch64WinCOFFObjectWriter.cpp \
 	AArch64WinCOFFStreamer.cpp

@@ -1,7 +1,9 @@
-# $OpenBSD: Makefile,v 1.4 2020/08/03 14:45:26 patrick Exp $
+# $OpenBSD: Makefile,v 1.5 2021/04/28 12:55:39 patrick Exp $
 
 LIB=	LLVMMIRParser
 NOPROFILE=
+
+CPPFLAGS+=-I${LLVM_SRC}/include/llvm/CodeGen/MIRParser
 
 SRCS+=	MILexer.cpp \
 	MIParser.cpp \

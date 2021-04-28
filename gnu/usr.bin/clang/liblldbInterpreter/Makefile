@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2020/08/03 14:45:30 patrick Exp $
+# $OpenBSD: Makefile,v 1.4 2021/04/28 12:55:41 patrick Exp $
 
 LIB=	lldbInterpreter
 NOPIC=
@@ -49,7 +49,7 @@ SRCS=	CommandAlias.cpp \
 	OptionGroupWatchpoint.cpp \
 	Options.cpp \
 	Property.cpp \
-	ScriptInterpreter.cpp \
+	ScriptInterpreter.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Interpreter
 

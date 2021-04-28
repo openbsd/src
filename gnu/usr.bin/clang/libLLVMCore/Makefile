@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.10 2020/08/03 14:45:25 patrick Exp $
+# $OpenBSD: Makefile,v 1.11 2021/04/28 12:55:39 patrick Exp $
 
 LIB=	LLVMCore
 NOPROFILE=
@@ -37,6 +37,7 @@ SRCS+=	AbstractCallSite.cpp \
 	IntrinsicInst.cpp \
 	LLVMContext.cpp \
 	LLVMContextImpl.cpp \
+	LLVMRemarkStreamer.cpp \
 	LegacyPassManager.cpp \
 	MDBuilder.cpp \
 	Mangler.cpp \
@@ -50,9 +51,8 @@ SRCS+=	AbstractCallSite.cpp \
 	PassManager.cpp \
 	PassRegistry.cpp \
 	PassTimingInfo.cpp \
-	ProfileSummary.cpp \
-	RemarkStreamer.cpp \
 	SafepointIRVerifier.cpp \
+	ProfileSummary.cpp \
 	Statepoint.cpp \
 	Type.cpp \
 	TypeFinder.cpp \

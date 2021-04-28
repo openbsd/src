@@ -7,7 +7,7 @@
 #include "llvm/Config/llvm-config.h"
 
 /* Bug report URL. */
-#define BUG_REPORT_URL "http://llvm.org/bugs/"
+#define BUG_REPORT_URL "https://bugs.llvm.org/"
 
 /* Define to 1 to enable backtraces, and to 0 otherwise. */
 #define ENABLE_BACKTRACES 1
@@ -296,7 +296,7 @@
 
 /* Target triple LLVM will generate code for by default */
 /* Doesn't use `cmakedefine` because it is allowed to be empty. */
-/* #define LLVM_DEFAULT_TARGET_TRIPLE "amd64-unknown-openbsd6.0" */
+/* #define LLVM_DEFAULT_TARGET_TRIPLE "amd64-unknown-openbsd6.8" */
 
 /* Define if zlib compression is available */
 /* #define LLVM_ENABLE_ZLIB 1 */
@@ -317,16 +317,16 @@
 #define LTDL_SHLIB_EXT ".so"
 
 /* Define to the address where bug reports for this package should be sent. */
-#define PACKAGE_BUGREPORT "http://llvm.org/bugs/"
+#define PACKAGE_BUGREPORT "https://bugs.llvm.org/"
 
 /* Define to the full name of this package. */
 #define PACKAGE_NAME "LLVM"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "LLVM 10.0.1"
+#define PACKAGE_STRING "LLVM 11.1.0"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "10.0.1"
+#define PACKAGE_VERSION "11.1.0"
 
 /* Define to the vendor of this package. */
 /* #undef PACKAGE_VENDOR */
@@ -342,9 +342,6 @@
 
 /* Define to a function implementing strdup */
 /* #undef strdup */
-
-/* Define if we have z3 and want to build it */
-#define LLVM_WITH_Z3 0
 
 /* Whether GlobalISel rule coverage is being collected */
 #define LLVM_GISEL_COV_ENABLED 0

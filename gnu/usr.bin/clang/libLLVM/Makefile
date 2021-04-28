@@ -2,6 +2,7 @@
 
 .if "${LLVM_ARCH}" != ""
 
+.include "../libLLVMAggressiveInstCombine/Makefile"
 .include "../libLLVMAMDGPUAsmParser/Makefile"
 .include "../libLLVMAMDGPUCodeGen/Makefile"
 .include "../libLLVMAMDGPUDesc/Makefile"
@@ -26,6 +27,7 @@
 .include "../libLLVMDebugInfoPDB/Makefile"
 .include "../libLLVMDemangle/Makefile"
 .include "../libLLVMExecutionEngine/Makefile"
+.include "../libLLVMFrontendOpenACC/Makefile"
 .include "../libLLVMFrontendOpenMP/Makefile"
 .include "../libLLVMGlobalISel/Makefile"
 .include "../libLLVMIRReader/Makefile"
@@ -56,7 +58,7 @@
 .include "../libLLVM${LLVM_ARCH}Desc/Makefile"
 .include "../libLLVM${LLVM_ARCH}Disassembler/Makefile"
 .include "../libLLVM${LLVM_ARCH}Info/Makefile"
-.if "${LLVM_ARCH}" == "X86" || "${LLVM_ARCH}" == "AArch64" || "${LLVM_ARCH}" == "ARM"
+.if "${LLVM_ARCH}" == "AArch64" || "${LLVM_ARCH}" == "ARM"
 .include "../libLLVM${LLVM_ARCH}Utils/Makefile"
 .endif
 .include "../libLLVMipo/Makefile"
@@ -75,3 +77,6 @@ includes:
 	    -print` ${DESTDIR}/usr/include
 
 .include <bsd.lib.mk>
+
+# Enable return protectors for libLLVM.so
+PICFLAG+= -fret-protector

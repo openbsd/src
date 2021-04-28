@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2020/08/03 14:45:29 patrick Exp $
+# $OpenBSD: Makefile,v 1.5 2021/04/28 12:55:40 patrick Exp $
 
 LIB=	clangSema
 NOPIC=
@@ -21,6 +21,7 @@ SRCS=	AnalysisBasedWarnings.cpp \
 	Sema.cpp \
 	SemaAccess.cpp \
 	SemaAttr.cpp \
+	SemaAvailability.cpp \
 	SemaCXXScopeSpec.cpp \
 	SemaCast.cpp \
 	SemaChecking.cpp \
@@ -50,6 +51,7 @@ SRCS=	AnalysisBasedWarnings.cpp \
 	SemaStmt.cpp \
 	SemaStmtAsm.cpp \
 	SemaStmtAttr.cpp \
+	SemaSYCL.cpp \
 	SemaTemplate.cpp \
 	SemaTemplateDeduction.cpp \
 	SemaTemplateInstantiate.cpp \

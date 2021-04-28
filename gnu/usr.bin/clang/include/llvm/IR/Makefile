@@ -1,18 +1,26 @@
-# $OpenBSD: Makefile,v 1.7 2020/08/03 14:45:23 patrick Exp $
+# $OpenBSD: Makefile,v 1.8 2021/04/28 12:55:38 patrick Exp $
 
 .include <bsd.own.mk>
 
 LLVM_SRCS=	${.CURDIR}/../../../../../llvm/llvm
 
-DEFS=	Attributes.inc AttributesCompatFunc.inc \
-	IntrinsicEnums.inc IntrinsicImpl.inc \
-	IntrinsicsAArch64.h IntrinsicsAMDGPU.h \
-	IntrinsicsARM.h IntrinsicsBPF.h \
-	IntrinsicsHexagon.h IntrinsicsMips.h \
-	IntrinsicsNVPTX.h IntrinsicsPowerPC.h \
-	IntrinsicsR600.h IntrinsicsRISCV.h \
-	IntrinsicsS390.h IntrinsicsWebAssembly.h \
-	IntrinsicsX86.h IntrinsicsXCore.h
+DEFS=	Attributes.inc \
+	IntrinsicImpl.inc \
+	IntrinsicEnums.inc \
+	IntrinsicsAArch64.h \
+	IntrinsicsAMDGPU.h \
+	IntrinsicsARM.h \
+	IntrinsicsBPF.h \
+	IntrinsicsHexagon.h \
+	IntrinsicsMips.h \
+	IntrinsicsNVPTX.h \
+	IntrinsicsPowerPC.h \
+	IntrinsicsR600.h \
+	IntrinsicsRISCV.h \
+	IntrinsicsS390.h \
+	IntrinsicsWebAssembly.h \
+	IntrinsicsX86.h \
+	IntrinsicsXCore.h
 
 INCDIR=	/usr/include/llvm/IR
 
@@ -27,20 +35,14 @@ Attributes.inc: ${LLVM_SRCS}/include/llvm/IR/Attributes.td
 		-I${LLVM_SRCS}/include \
 		-o ${.TARGET} ${.ALLSRC}
 
-AttributesCompatFunc.inc: ${LLVM_SRCS}/lib/IR/AttributesCompatFunc.td
-	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-attrs \
+IntrinsicImpl.inc: ${LLVM_SRCS}/include/llvm/IR/Intrinsics.td
+	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-intrinsic-impl \
 		-I${LLVM_SRCS}/include/llvm/IR -I${LLVM_SRCS}/lib/Target \
 		-I${LLVM_SRCS}/include \
 		-o ${.TARGET} ${.ALLSRC}
 
 IntrinsicEnums.inc: ${LLVM_SRCS}/include/llvm/IR/Intrinsics.td
 	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-intrinsic-enums \
-		-I${LLVM_SRCS}/include/llvm/IR -I${LLVM_SRCS}/lib/Target \
-		-I${LLVM_SRCS}/include \
-		-o ${.TARGET} ${.ALLSRC}
-
-IntrinsicImpl.inc: ${LLVM_SRCS}/include/llvm/IR/Intrinsics.td
-	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-intrinsic-impl \
 		-I${LLVM_SRCS}/include/llvm/IR -I${LLVM_SRCS}/lib/Target \
 		-I${LLVM_SRCS}/include \
 		-o ${.TARGET} ${.ALLSRC}

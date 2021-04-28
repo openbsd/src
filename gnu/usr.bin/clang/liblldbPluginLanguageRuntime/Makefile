@@ -1,25 +1,31 @@
-# $OpenBSD: Makefile,v 1.3 2020/08/03 14:45:30 patrick Exp $
+# $OpenBSD: Makefile,v 1.4 2021/04/28 12:55:41 patrick Exp $
 
 LIB=	lldbPluginLanguageRuntime
 NOPIC=
 NOPROFILE=
 
 .include <bsd.own.mk>
-SRCS=	AppleObjCClassDescriptorV2.cpp \
-	AppleObjCDeclVendor.cpp \
+
+# CPlusPlus
+SRCS+= CPPLanguageRuntime.cpp \
+	ItaniumABILanguageRuntime.cpp
+
+# ObjC
+SRCS+=	ObjCLanguageRuntime.cpp \
 	AppleObjCRuntime.cpp \
 	AppleObjCRuntimeV1.cpp \
 	AppleObjCRuntimeV2.cpp \
 	AppleObjCTrampolineHandler.cpp \
-	AppleObjCTypeEncodingParser.cpp \
+	AppleObjCDeclVendor.cpp \
 	AppleThreadPlanStepThroughObjCTrampoline.cpp \
-	CPPLanguageRuntime.cpp \
-	ItaniumABILanguageRuntime.cpp \
-	ObjCLanguageRuntime.cpp \
+	AppleObjCClassDescriptorV2.cpp \
+	AppleObjCTypeEncodingParser.cpp
+
+# RenderScript
+SRCS+=	RenderScriptRuntime.cpp \
 	RenderScriptExpressionOpts.cpp \
-	RenderScriptRuntime.cpp \
-	RenderScriptScriptGroup.cpp \
 	RenderScriptx86ABIFixups.cpp \
+	RenderScriptScriptGroup.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/LanguageRuntime/CPlusPlus
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/LanguageRuntime/CPlusPlus/ItaniumABI

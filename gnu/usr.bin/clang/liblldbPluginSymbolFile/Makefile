@@ -1,59 +1,66 @@
-# $OpenBSD: Makefile,v 1.4 2020/08/03 14:45:31 patrick Exp $
+# $OpenBSD: Makefile,v 1.5 2021/04/28 12:55:42 patrick Exp $
 
 LIB=	lldbPluginSymbolFile
 NOPIC=
 NOPROFILE=
 
 .include <bsd.own.mk>
-SRCS=	AppleDWARFIndex.cpp \
-	CodeViewRegisterMapping.cpp \
-	CompileUnitIndex.cpp \
+# SymbolFile/Breakpad
+SRCS=	SymbolFileBreakpad.cpp
+
+# SymbolFile/DWARF
+SRCS+=	AppleDWARFIndex.cpp \
+	DebugNamesDWARFIndex.cpp \
 	DIERef.cpp \
-	DWARFASTParserClang.cpp \
 	DWARFAbbreviationDeclaration.cpp \
+	DWARFASTParserClang.cpp \
 	DWARFAttribute.cpp \
 	DWARFBaseDIE.cpp \
 	DWARFCompileUnit.cpp \
 	DWARFContext.cpp \
-	DWARFDIE.cpp \
 	DWARFDataExtractor.cpp \
 	DWARFDebugAbbrev.cpp \
-	DWARFDebugArangeSet.cpp \
 	DWARFDebugAranges.cpp \
+	DWARFDebugArangeSet.cpp \
 	DWARFDebugInfo.cpp \
 	DWARFDebugInfoEntry.cpp \
 	DWARFDebugMacro.cpp \
 	DWARFDebugRanges.cpp \
 	DWARFDeclContext.cpp \
 	DWARFDefines.cpp \
+	DWARFDIE.cpp \
 	DWARFFormValue.cpp \
 	DWARFIndex.cpp \
-	DWARFLocationExpression.cpp \
 	DWARFTypeUnit.cpp \
 	DWARFUnit.cpp \
-	DebugNamesDWARFIndex.cpp \
 	HashedNameToDIE.cpp \
 	LogChannelDWARF.cpp \
 	ManualDWARFIndex.cpp \
 	NameToDIE.cpp \
-	PDBASTParser.cpp \
-	PDBLocationToDWARFExpression.cpp \
+	SymbolFileDWARF.cpp \
+	SymbolFileDWARFDwo.cpp \
+	SymbolFileDWARFDebugMap.cpp \
+	UniqueDWARFASTType.cpp
+
+# SymbolFile/NativePDB
+SRCS+=	CodeViewRegisterMapping.cpp \
+	CompileUnitIndex.cpp \
+	DWARFLocationExpression.cpp \
 	PdbAstBuilder.cpp \
 	PdbFPOProgramToDWARFExpression.cpp \
 	PdbIndex.cpp \
 	PdbSymUid.cpp \
 	PdbUtil.cpp \
-	SymbolFileBreakpad.cpp \
-	SymbolFileDWARF.cpp \
-	SymbolFileDWARFDebugMap.cpp \
-	SymbolFileDWARFDwo.cpp \
-	SymbolFileDWARFDwoDwp.cpp \
-	SymbolFileDWARFDwp.cpp \
 	SymbolFileNativePDB.cpp \
-	SymbolFilePDB.cpp \
-	SymbolFileSymtab.cpp \
-	UdtRecordCompleter.cpp \
-	UniqueDWARFASTType.cpp \
+	UdtRecordCompleter.cpp
+
+# SymbolFile/PDB
+SRCS+=	PDBASTParser.cpp \
+	PDBLocationToDWARFExpression.cpp \
+	SymbolFilePDB.cpp
+
+# SymbolFile/Symtab
+SRCS+=	SymbolFileSymtab.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/SymbolFile/Breakpad
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/SymbolFile/DWARF

@@ -1,21 +1,23 @@
-# $OpenBSD: Makefile,v 1.11 2020/08/03 14:45:27 patrick Exp $
+# $OpenBSD: Makefile,v 1.12 2021/04/28 12:55:40 patrick Exp $
 
 LIB=	LLVMSupport
 NOPIC=
 NOPROFILE=
 
-CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/Support
+CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/ADT     \
+	-I${LLVM_SRCS}/include/llvm/Support
 
 .include <bsd.own.mk>
+
 SRCS=	AArch64TargetParser.cpp \
 	ABIBreak.cpp \
+	ARMTargetParser.cpp \
 	AMDGPUMetadata.cpp \
 	APFloat.cpp \
 	APInt.cpp \
 	APSInt.cpp \
-	ARMAttributeParser.cpp \
 	ARMBuildAttrs.cpp \
-	ARMTargetParser.cpp \
+	ARMAttributeParser.cpp \
 	ARMWinEH.cpp \
 	Allocator.cpp \
 	BinaryStreamError.cpp \
@@ -25,32 +27,35 @@ SRCS=	AArch64TargetParser.cpp \
 	BlockFrequency.cpp \
 	BranchProbability.cpp \
 	BuryPointer.cpp \
-	circular_raw_ostream.cpp \
-	COM.cpp \
-	CRC.cpp \
 	CachePruning.cpp \
+	circular_raw_ostream.cpp \
 	Chrono.cpp \
+	COM.cpp \
 	CodeGenCoverage.cpp \
 	CommandLine.cpp \
 	Compression.cpp \
+	CRC.cpp \
 	ConvertUTF.cpp \
 	ConvertUTFWrapper.cpp \
 	CrashRecoveryContext.cpp \
-	DAGDeltaAlgorithm.cpp \
-	DJB.cpp \
 	DataExtractor.cpp \
 	Debug.cpp \
 	DebugCounter.cpp \
 	DeltaAlgorithm.cpp \
+	DAGDeltaAlgorithm.cpp \
+	DJB.cpp \
+	ELFAttributeParser.cpp \
+	ELFAttributes.cpp \
 	SupportError.cpp \
 	ErrorHandling.cpp \
+	ExtensibleRTTI.cpp \
 	FileCheck.cpp \
 	FileCollector.cpp \
 	FileUtilities.cpp \
 	FileOutputBuffer.cpp \
 	FoldingSet.cpp \
-	FormatVariadic.cpp \
 	FormattedStream.cpp \
+	FormatVariadic.cpp \
 	GlobPattern.cpp \
 	GraphWriter.cpp \
 	Hashing.cpp \
@@ -67,15 +72,19 @@ SRCS=	AArch64TargetParser.cpp \
 	SupportLowLevelType.cpp \
 	ManagedStatic.cpp \
 	MathExtras.cpp \
+	MemAlloc.cpp \
 	MemoryBuffer.cpp \
 	MD5.cpp \
 	NativeFormatting.cpp \
+	OptimizedStructLayout.cpp \
 	Optional.cpp \
 	Parallel.cpp \
 	PluginLoader.cpp \
 	PrettyStackTrace.cpp \
 	RandomNumberGenerator.cpp \
 	Regex.cpp \
+	RISCVAttributes.cpp \
+	RISCVAttributeParser.cpp \
 	ScaledNumber.cpp \
 	ScopedPrinter.cpp \
 	SHA1.cpp \
@@ -87,9 +96,9 @@ SRCS=	AArch64TargetParser.cpp \
 	Statistic.cpp \
 	StringExtras.cpp \
 	StringMap.cpp \
-	StringPool.cpp \
 	StringSaver.cpp \
 	StringRef.cpp \
+	SuffixTree.cpp \
 	SymbolRemappingReader.cpp \
 	SystemUtils.cpp \
 	TarWriter.cpp \
@@ -102,6 +111,11 @@ SRCS=	AArch64TargetParser.cpp \
 	Triple.cpp \
 	Twine.cpp \
 	Unicode.cpp \
+	UnicodeCaseFold.cpp \
+	VersionTuple.cpp \
+	VirtualFileSystem.cpp \
+	WithColor.cpp \
+	X86TargetParser.cpp \
 	YAMLParser.cpp \
 	YAMLTraits.cpp \
 	raw_os_ostream.cpp \
@@ -111,6 +125,8 @@ SRCS=	AArch64TargetParser.cpp \
 	regexec.c \
 	regfree.c \
 	regstrlcpy.c \
+	xxhash.cpp \
+	Z3Solver.cpp \
 	Atomic.cpp \
 	DynamicLibrary.cpp \
 	Errno.cpp \
@@ -124,14 +140,8 @@ SRCS=	AArch64TargetParser.cpp \
 	TargetRegistry.cpp \
 	ThreadLocal.cpp \
 	Threading.cpp \
-	UnicodeCaseFold.cpp \
 	Valgrind.cpp \
-	VersionTuple.cpp \
-	VirtualFileSystem.cpp \
-	Watchdog.cpp \
-	WithColor.cpp \
-	Z3Solver.cpp \
-	xxhash.cpp
+	Watchdog.cpp
 
 SupportError.cpp:
 	ln -s ${LLVM_SRCS}/lib/Support/Error.cpp $@

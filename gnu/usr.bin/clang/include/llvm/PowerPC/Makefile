@@ -1,15 +1,20 @@
-# $OpenBSD: Makefile,v 1.3 2020/08/03 14:45:23 patrick Exp $
+# $OpenBSD: Makefile,v 1.4 2021/04/28 12:55:38 patrick Exp $
 
 .include <bsd.own.mk>
 
 LLVM_SRCS=	${.CURDIR}/../../../../../llvm/llvm
 
-HDRS=	PPCGenAsmMatcher.inc PPCGenAsmWriter.inc \
+HDRS=	PPCGenAsmMatcher.inc \
+	PPCGenAsmWriter.inc \
 	PPCGenCallingConv.inc \
-	PPCGenDAGISel.inc PPCGenDisassemblerTables.inc \
-	PPCGenFastISel.inc PPCGenInstrInfo.inc \
-	PPCGenRegisterInfo.inc PPCGenSubtargetInfo.inc \
-	PPCGenMCCodeEmitter.inc
+	PPCGenDAGISel.inc \
+	PPCGenDisassemblerTables.inc \
+	PPCGenFastISel.inc \
+	PPCGenInstrInfo.inc \
+	PPCGenMCCodeEmitter.inc \
+	PPCGenRegisterInfo.inc \
+	PPCGenSubtargetInfo.inc \
+	PPCGenExegesis.inc
 
 all: ${HDRS}
 
@@ -66,6 +71,11 @@ PPCGenRegisterInfo.inc: ${LLVM_SRCS}/lib/Target/PowerPC/PPC.td
 
 PPCGenSubtargetInfo.inc: ${LLVM_SRCS}/lib/Target/PowerPC/PPC.td
 	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-subtarget \
+		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/PowerPC \
+		-o ${.TARGET} ${.ALLSRC}
+
+PPCGenExegesis.inc: ${LLVM_SRCS}/lib/Target/PowerPC/PPC.td
+	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-exegesis \
 		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/PowerPC \
 		-o ${.TARGET} ${.ALLSRC}
 

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2020/08/03 14:45:29 patrick Exp $
+# $OpenBSD: Makefile,v 1.4 2021/04/28 12:55:41 patrick Exp $
 
 LIB=	lldbHostCommon
 NOPIC=
@@ -8,8 +8,8 @@ NOPROFILE=
 SRCS=	Editline.cpp \
 	FileAction.cpp \
 	FileCache.cpp \
-	FileSystem.cpp \
 	File.cpp \
+	FileSystem.cpp \
 	GetOptInc.cpp \
 	Host.cpp \
 	HostInfoBase.cpp \
@@ -32,12 +32,11 @@ SRCS=	Editline.cpp \
 	SocketAddress.cpp \
 	Socket.cpp \
 	StringConvert.cpp \
-	TaskPool.cpp \
 	TCPSocket.cpp \
 	Terminal.cpp \
 	ThreadLauncher.cpp \
 	UDPSocket.cpp \
-	XML.cpp \
+	XML.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Host/common
 

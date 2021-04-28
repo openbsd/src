@@ -1,15 +1,14 @@
-# $OpenBSD: Makefile,v 1.7 2020/08/03 14:45:25 patrick Exp $
+# $OpenBSD: Makefile,v 1.8 2021/04/28 12:55:38 patrick Exp $
 
 LIB=	LLVMAsmPrinter
 NOPROFILE=
 
-SRCS+=	ARMException.cpp \
-	AccelTable.cpp \
+SRCS+=	AccelTable.cpp \
 	AddressPool.cpp \
+	ARMException.cpp \
 	AsmPrinter.cpp \
 	AsmPrinterDwarf.cpp \
 	AsmPrinterInlineAsm.cpp \
-	CodeViewDebug.cpp \
 	DbgEntityHistoryCalculator.cpp \
 	DebugHandlerBase.cpp \
 	DebugLocStream.cpp \
@@ -25,8 +24,10 @@ SRCS+=	ARMException.cpp \
 	EHStreamer.cpp \
 	ErlangGCPrinter.cpp \
 	OcamlGCPrinter.cpp \
-	WasmException.cpp \
 	WinCFGuard.cpp \
-	WinException.cpp
+	WinException.cpp \
+	CodeViewDebug.cpp \
+	WasmException.cpp
+
 
 .PATH:	${.CURDIR}/../../../llvm/llvm/lib/CodeGen/AsmPrinter

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2020/08/03 14:45:30 patrick Exp $
+# $OpenBSD: Makefile,v 1.3 2021/04/28 12:55:41 patrick Exp $
 
 LIB=	lldbPluginObjectContainer
 NOPIC=
@@ -6,7 +6,7 @@ NOPROFILE=
 
 .include <bsd.own.mk>
 SRCS=	ObjectContainerBSDArchive.cpp \
-	ObjectContainerUniversalMachO.cpp \
+	ObjectContainerUniversalMachO.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/ObjectContainer/BSD-Archive
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/ObjectContainer/Universal-Mach-O

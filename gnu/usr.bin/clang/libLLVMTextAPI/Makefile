@@ -1,11 +1,14 @@
-# $OpenBSD: Makefile,v 1.1 2020/08/03 14:45:28 patrick Exp $
+# $OpenBSD: Makefile,v 1.2 2021/04/28 12:55:40 patrick Exp $
 
 LIB=	LLVMTextAPI
 NOPROFILE=
 
+# TextAPI/ELF
 SRCS+=	ELFStub.cpp \
-	TBEHandler.cpp \
-	Architecture.cpp \
+	TBEHandler.cpp
+
+# TextAPI/MachO
+SRCS+=	Architecture.cpp \
 	ArchitectureSet.cpp \
 	InterfaceFile.cpp \
 	PackedVersion.cpp \

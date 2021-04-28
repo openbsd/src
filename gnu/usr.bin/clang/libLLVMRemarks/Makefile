@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2020/08/03 14:45:27 patrick Exp $
+# $OpenBSD: Makefile,v 1.2 2021/04/28 12:55:40 patrick Exp $
 
 LIB=	LLVMRemarks
 NOPROFILE=
@@ -10,6 +10,7 @@ SRCS+=	BitstreamRemarkParser.cpp \
 	RemarkLinker.cpp \
 	RemarkParser.cpp \
 	RemarkSerializer.cpp \
+	RemarkStreamer.cpp \
 	RemarkStringTable.cpp \
 	YAMLRemarkParser.cpp \
 	YAMLRemarkSerializer.cpp

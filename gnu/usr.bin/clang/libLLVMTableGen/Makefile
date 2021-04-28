@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2020/08/03 14:45:27 patrick Exp $
+# $OpenBSD: Makefile,v 1.6 2021/04/28 12:55:40 patrick Exp $
 
 LIB=	LLVMTableGen
 NOPIC=
@@ -8,8 +8,8 @@ CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/TableGen
 
 .include <bsd.own.mk>
 SRCS=	TableGenError.cpp \
-	Main.cpp \
 	JSONBackend.cpp \
+	Main.cpp \
 	Record.cpp \
 	SetTheory.cpp \
 	StringMatcher.cpp \

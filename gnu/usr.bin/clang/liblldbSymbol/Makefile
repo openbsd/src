@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2020/08/03 14:45:31 patrick Exp $
+# $OpenBSD: Makefile,v 1.4 2021/04/28 12:55:42 patrick Exp $
 
 LIB=	lldbSymbol
 NOPIC=
@@ -7,17 +7,11 @@ NOPROFILE=
 .include <bsd.own.mk>
 SRCS=	ArmUnwindInfo.cpp \
 	Block.cpp \
-	ClangASTContext.cpp \
-	ClangASTImporter.cpp \
-	ClangASTMetadata.cpp \
-	ClangExternalASTSourceCallbacks.cpp \
-	ClangUtil.cpp \
 	CompactUnwindInfo.cpp \
 	CompileUnit.cpp \
 	CompilerDecl.cpp \
 	CompilerDeclContext.cpp \
 	CompilerType.cpp \
-	CxxModuleHandler.cpp \
 	DWARFCallFrameInfo.cpp \
 	DebugMacros.cpp \
 	Declaration.cpp \
@@ -41,7 +35,7 @@ SRCS=	ArmUnwindInfo.cpp \
 	UnwindPlan.cpp \
 	UnwindTable.cpp \
 	Variable.cpp \
-	VariableList.cpp \
+	VariableList.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Symbol
 

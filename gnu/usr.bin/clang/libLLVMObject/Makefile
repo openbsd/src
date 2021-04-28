@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2020/08/03 14:45:26 patrick Exp $
+# $OpenBSD: Makefile,v 1.9 2021/04/28 12:55:39 patrick Exp $
 
 LIB=	LLVMObject
 NOPROFILE=
@@ -8,16 +8,18 @@ CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/Object
 SRCS+=	Archive.cpp \
 	ArchiveWriter.cpp \
 	Binary.cpp \
+	COFFImportFile.cpp \
+	COFFModuleDefinition.cpp \
 	COFFObjectFile.cpp \
 	Decompressor.cpp \
-	ELF.cpp \
+	ObjectELF.cpp \
 	ELFObjectFile.cpp \
 	ObjectError.cpp \
-	ObjectMinidump.cpp \
 	IRObjectFile.cpp \
 	IRSymtab.cpp \
 	MachOObjectFile.cpp \
 	MachOUniversal.cpp \
+	ObjectMinidump.cpp \
 	ModuleSymbolTable.cpp \
 	Object.cpp \
 	ObjectFile.cpp \
@@ -32,6 +34,9 @@ SRCS+=	Archive.cpp \
 	WindowsResource.cpp \
 	XCOFFObjectFile.cpp
 
+ObjectELF.cpp:
+	ln -s ${LLVM_SRCS}/lib/Object/ELF.cpp $@
+
 ObjectError.cpp:
 	ln -s ${LLVM_SRCS}/lib/Object/Error.cpp $@
 
@@ -40,4 +45,4 @@ ObjectMinidump.cpp:
 
 .PATH:	${.CURDIR}/../../../llvm/llvm/lib/Object
 
-CLEANFILES+= ObjectError.cpp ObjectMinidump.cpp
+CLEANFILES+= ObjectELF.cpp ObjectError.cpp ObjectMinidump.cpp

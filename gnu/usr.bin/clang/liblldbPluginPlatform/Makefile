@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2020/08/03 14:45:30 patrick Exp $
+# $OpenBSD: Makefile,v 1.4 2021/04/28 12:55:42 patrick Exp $
 
 LIB=	lldbPluginPlatform
 NOPIC=
@@ -8,25 +8,21 @@ NOPROFILE=
 SRCS=	AdbClient.cpp \
 	PlatformAndroid.cpp \
 	PlatformAndroidRemoteGDBServer.cpp \
-	PlatformAppleSimulator.cpp \
-	PlatformAppleTVSimulator.cpp \
-	PlatformAppleWatchSimulator.cpp \
-	PlatformDarwin.cpp \
-	PlatformDarwinKernel.cpp \
 	PlatformFreeBSD.cpp \
 	PlatformLinux.cpp \
+	PlatformDarwin.cpp \
+	PlatformDarwinKernel.cpp \
 	PlatformMacOSX.cpp \
-	PlatformNetBSD.cpp \
-	PlatformOpenBSD.cpp \
-	PlatformPOSIX.cpp \
-	PlatformRemoteAppleBridge.cpp \
+	PlatformRemoteiOS.cpp \
 	PlatformRemoteAppleTV.cpp \
 	PlatformRemoteAppleWatch.cpp \
 	PlatformRemoteDarwinDevice.cpp \
-	PlatformRemoteGDBServer.cpp \
-	PlatformRemoteiOS.cpp \
+	PlatformRemoteAppleBridge.cpp \
+	PlatformNetBSD.cpp \
+	PlatformOpenBSD.cpp \
+	PlatformPOSIX.cpp \
 	PlatformWindows.cpp \
-	PlatformiOSSimulator.cpp \
+	PlatformRemoteGDBServer.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/Platform/Android
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/Platform/FreeBSD

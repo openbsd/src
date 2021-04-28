@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2020/08/03 14:45:25 patrick Exp $
+# $OpenBSD: Makefile,v 1.6 2021/04/28 12:55:39 patrick Exp $
 
 LIB=	LLVMDebugInfoPDB
 NOPROFILE=
@@ -11,24 +11,25 @@ SRCS+=	DbiModuleDescriptor.cpp \
 	DbiStream.cpp \
 	DbiStreamBuilder.cpp \
 	DebugInfoPDBEnumTables.cpp \
-	GSIStreamBuilder.cpp \
-	GenericError.cpp \
 	GlobalsStream.cpp \
 	Hash.cpp \
 	HashTable.cpp \
-	IPDBSourceFile.cpp \
 	InfoStream.cpp \
 	InfoStreamBuilder.cpp \
 	InjectedSourceStream.cpp \
 	ModuleDebugStream.cpp \
-	NamedStreamMap.cpp \
 	NativeCompilandSymbol.cpp \
 	NativeEnumGlobals.cpp \
 	NativeEnumInjectedSources.cpp \
+	NativeEnumLineNumbers.cpp \
 	NativeEnumModules.cpp \
 	NativeEnumTypes.cpp \
 	NativeExeSymbol.cpp \
+	NativeFunctionSymbol.cpp \
+	NativeLineNumber.cpp \
+	NativePublicSymbol.cpp \
 	NativeRawSymbol.cpp \
+	NativeSourceFile.cpp \
 	NativeSymbolEnumerator.cpp \
 	NativeTypeArray.cpp \
 	NativeTypeBuiltin.cpp \
@@ -38,16 +39,26 @@ SRCS+=	DbiModuleDescriptor.cpp \
 	NativeTypeTypedef.cpp \
 	NativeTypeUDT.cpp \
 	NativeTypeVTShape.cpp \
+	NamedStreamMap.cpp \
 	NativeSession.cpp \
+	PDBFile.cpp \
+	PDBFileBuilder.cpp \
+	PDBStringTable.cpp \
+	PDBStringTableBuilder.cpp \
+	PublicsStream.cpp \
+	GSIStreamBuilder.cpp \
+	RawError.cpp \
+	SymbolCache.cpp \
+	SymbolStream.cpp \
+	TpiHashing.cpp \
+	TpiStream.cpp \
+	TpiStreamBuilder.cpp \
+	GenericError.cpp \
+	IPDBSourceFile.cpp \
 	PDB.cpp \
 	PDBContext.cpp \
 	PDBExtras.cpp \
-	PDBFile.cpp \
-	PDBFileBuilder.cpp \
 	PDBInterfaceAnchors.cpp \
-	PDBStringTable.cpp \
-	PDBStringTableBuilder.cpp \
-	PDBSymDumper.cpp \
 	PDBSymbol.cpp \
 	PDBSymbolAnnotation.cpp \
 	PDBSymbolBlock.cpp \
@@ -80,14 +91,8 @@ SRCS+=	DbiModuleDescriptor.cpp \
 	PDBSymbolTypeVTableShape.cpp \
 	PDBSymbolUnknown.cpp \
 	PDBSymbolUsingNamespace.cpp \
-	PublicsStream.cpp \
-	RawError.cpp \
-	SymbolCache.cpp \
-	SymbolStream.cpp \
-	TpiHashing.cpp \
-	TpiStream.cpp \
-	TpiStreamBuilder.cpp \
-	UDTLayout.cpp \
+	PDBSymDumper.cpp \
+	UDTLayout.cpp
 
 DebugInfoPDBEnumTables.cpp:
 	ln -s ${LLVM_SRCS}/lib/DebugInfo/PDB/Native/EnumTables.cpp $@

@@ -1,15 +1,18 @@
-# $OpenBSD: Makefile,v 1.4 2020/08/03 14:45:23 patrick Exp $
+# $OpenBSD: Makefile,v 1.5 2021/04/28 12:55:38 patrick Exp $
 
 .include <bsd.own.mk>
 
 LLVM_SRCS=	${.CURDIR}/../../../../../llvm/llvm
 
-HDRS=	SparcGenAsmMatcher.inc SparcGenAsmWriter.inc \
-	SparcGenCodeEmitter.inc SparcGenCallingConv.inc \
-	SparcGenDAGISel.inc SparcGenDisassemblerTables.inc \
-	SparcGenFastISel.inc SparcGenInstrInfo.inc \
-	SparcGenRegisterInfo.inc SparcGenSubtargetInfo.inc \
-	SparcGenMCCodeEmitter.inc
+HDRS=	SparcGenAsmMatcher.inc \
+	SparcGenAsmWriter.inc \
+	SparcGenCallingConv.inc \
+	SparcGenDAGISel.inc \
+	SparcGenDisassemblerTables.inc \
+	SparcGenInstrInfo.inc \
+	SparcGenMCCodeEmitter.inc \
+	SparcGenRegisterInfo.inc \
+	SparcGenSubtargetInfo.inc
 
 all: ${HDRS}
 
@@ -34,11 +37,6 @@ SparcGenCallingConv.inc: ${LLVM_SRCS}/lib/Target/Sparc/Sparc.td
 		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/Sparc \
 		-o ${.TARGET} ${.ALLSRC}
 
-SparcGenCodeEmitter.inc: ${LLVM_SRCS}/lib/Target/Sparc/Sparc.td
-	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-emitter \
-		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/Sparc \
-		-o ${.TARGET} ${.ALLSRC}
-
 SparcGenDAGISel.inc: ${LLVM_SRCS}/lib/Target/Sparc/Sparc.td
 	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-dag-isel \
 		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/Sparc \
@@ -46,11 +44,6 @@ SparcGenDAGISel.inc: ${LLVM_SRCS}/lib/Target/Sparc/Sparc.td
 
 SparcGenDisassemblerTables.inc: ${LLVM_SRCS}/lib/Target/Sparc/Sparc.td
 	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-disassembler \
-		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/Sparc \
-		-o ${.TARGET} ${.ALLSRC}
-
-SparcGenFastISel.inc: ${LLVM_SRCS}/lib/Target/Sparc/Sparc.td
-	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-fast-isel \
 		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/Sparc \
 		-o ${.TARGET} ${.ALLSRC}
 

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2020/08/03 14:45:28 patrick Exp $
+# $OpenBSD: Makefile,v 1.9 2021/04/28 12:55:40 patrick Exp $
 
 LIB=	clangAST
 NOPIC=
@@ -19,7 +19,6 @@ SRCS=	APValue.cpp \
 	ASTStructuralEquivalence.cpp \
 	ASTTypeTraits.cpp \
 	AttrImpl.cpp \
-	CXXInheritance.cpp \
 	Comment.cpp \
 	CommentBriefParser.cpp \
 	CommentCommandTraits.cpp \
@@ -27,6 +26,9 @@ SRCS=	APValue.cpp \
 	CommentParser.cpp \
 	CommentSema.cpp \
 	ComparisonCategories.cpp \
+	ComputeDependence.cpp \
+	CXXInheritance.cpp \
+	DataCollection.cpp \
 	Decl.cpp \
 	DeclarationName.cpp \
 	DeclBase.cpp \
@@ -37,6 +39,7 @@ SRCS=	APValue.cpp \
 	DeclOpenMP.cpp \
 	DeclPrinter.cpp \
 	DeclTemplate.cpp \
+	ParentMapContext.cpp \
 	Expr.cpp \
 	ExprClassification.cpp \
 	ExprConcepts.cpp \
@@ -56,8 +59,8 @@ SRCS=	APValue.cpp \
 	NestedNameSpecifier.cpp \
 	NSAPI.cpp \
 	ODRHash.cpp \
-	OSLog.cpp \
 	OpenMPClause.cpp \
+	OSLog.cpp \
 	ParentMap.cpp \
 	PrintfFormatString.cpp \
 	QualTypeNames.cpp \
@@ -81,9 +84,10 @@ SRCS=	APValue.cpp \
 	TypeLoc.cpp \
 	TypePrinter.cpp \
 	VTableBuilder.cpp \
-	VTTBuilder.cpp \
-	Block.cpp \
-	ByteCodeEmitter.cpp \
+	VTTBuilder.cpp
+
+# Interp
+SRCS+=	ByteCodeEmitter.cpp \
 	ByteCodeExprGen.cpp \
 	ByteCodeGenError.cpp \
 	ByteCodeStmtGen.cpp \
@@ -94,6 +98,7 @@ SRCS=	APValue.cpp \
 	Frame.cpp \
 	Function.cpp \
 	Interp.cpp \
+	InterpBlock.cpp \
 	InterpFrame.cpp \
 	InterpStack.cpp \
 	InterpState.cpp \

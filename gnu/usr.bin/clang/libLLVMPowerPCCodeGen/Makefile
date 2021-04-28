@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2020/10/12 14:52:08 mortimer Exp $
+# $OpenBSD: Makefile,v 1.9 2021/04/28 12:55:40 patrick Exp $
 
 LIB=	LLVMPowerPCCodeGen
 NOPROFILE=
@@ -8,12 +8,11 @@ CPPFLAGS+=	-I${.OBJDIR}/../include/llvm/PowerPC \
 
 SRCS+=	PPCBoolRetToInt.cpp \
 	PPCAsmPrinter.cpp \
-	PPCBranchCoalescing.cpp \
 	PPCBranchSelector.cpp \
+	PPCBranchCoalescing.cpp \
+	PPCCallingConv.cpp \
 	PPCCCState.cpp \
 	PPCCTRLoops.cpp \
-	PPCCallingConv.cpp \
-	PPCExpandISEL.cpp \
 	PPCHazardRecognizers.cpp \
 	PPCInstrInfo.cpp \
 	PPCISelDAGToDAG.cpp \
@@ -22,16 +21,14 @@ SRCS+=	PPCBoolRetToInt.cpp \
 	PPCFastISel.cpp \
 	PPCFrameLowering.cpp \
 	PPCLoopInstrFormPrep.cpp \
-	PPCLowerMASSVEntries.cpp \
 	PPCMCInstLower.cpp \
 	PPCMachineFunctionInfo.cpp \
 	PPCMachineScheduler.cpp \
+	PPCMacroFusion.cpp \
 	PPCMIPeephole.cpp \
-	PPCPreEmitPeephole.cpp \
-	PPCQPXLoadSplat.cpp \
-	PPCReduceCRLogicals.cpp \
 	PPCRegisterInfo.cpp \
 	PPCReturnProtectorLowering.cpp \
+	PPCQPXLoadSplat.cpp \
 	PPCSubtarget.cpp \
 	PPCTargetMachine.cpp \
 	PPCTargetObjectFile.cpp \
@@ -39,7 +36,11 @@ SRCS+=	PPCBoolRetToInt.cpp \
 	PPCTOCRegDeps.cpp \
 	PPCTLSDynamicCall.cpp \
 	PPCVSXCopy.cpp \
+	PPCReduceCRLogicals.cpp \
 	PPCVSXFMAMutate.cpp \
-	PPCVSXSwapRemoval.cpp
+	PPCVSXSwapRemoval.cpp \
+	PPCExpandISEL.cpp \
+	PPCPreEmitPeephole.cpp \
+	PPCLowerMASSVEntries.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/llvm/lib/Target/PowerPC

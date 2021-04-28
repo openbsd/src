@@ -6,7 +6,7 @@
 #define CLANG_CONFIG_H
 
 /* Bug report URL. */
-#define BUG_REPORT_URL "http://llvm.org/bugs/"
+#define BUG_REPORT_URL "https://bugs.llvm.org/"
 
 /* Default linker to use. */
 #define CLANG_DEFAULT_LINKER ""
@@ -35,6 +35,9 @@
 /* Default architecture for OpenMP offloading to Nvidia GPUs. */
 #define CLANG_OPENMP_NVPTX_DEFAULT_ARCH ""
 
+/* Default architecture for SystemZ. */
+#define CLANG_SYSTEMZ_DEFAULT_ARCH ""
+
 /* Multilib suffix for libdir. */
 #define CLANG_LIBDIR_SUFFIX ""
 
@@ -61,7 +64,7 @@
 #define CLANG_HAVE_RLIMITS 1
 
 /* The LLVM product name and version */
-#define BACKEND_PACKAGE_STRING "LLVM 10.0.1"
+#define BACKEND_PACKAGE_STRING "LLVM 11.1.0"
 
 /* Linker version detected at compile time. */
 /* #undef HOST_LINK_VERSION */
