@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.100 2021/04/28 05:05:05 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.101 2021/04/28 05:10:29 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -41,7 +41,6 @@ void dev_sub_bcopy(struct dev *, struct slot *);
 void dev_onmove(struct dev *, int);
 void dev_master(struct dev *, unsigned int);
 void dev_cycle(struct dev *);
-int dev_getpos(struct dev *);
 struct dev *dev_new(char *, struct aparams *, unsigned int, unsigned int,
     unsigned int, unsigned int, unsigned int, unsigned int);
 void dev_adjpar(struct dev *, int, int, int);
@@ -301,7 +300,7 @@ mtc_midi_full(struct mtc *mtc)
 	struct sysex x;
 	unsigned int fps;
 
-	mtc->delta = MTC_SEC * dev_getpos(mtc->dev);
+	mtc->delta = -MTC_SEC * (int)mtc->dev->bufsz;
 	if (mtc->dev->rate % (30 * 4 * mtc->dev->round) == 0) {
 		mtc->fps_id = MTC_FPS_30;
 		mtc->fps = 30;
@@ -897,15 +896,6 @@ dev_master(struct dev *d, unsigned int master)
 			ctl_setval(c, v);
 		}
 	}
-}
-
-/*
- * return the latency that a stream would have if it's attached
- */
-int
-dev_getpos(struct dev *d)
-{
-	return (d->mode & MODE_PLAY) ? -d->bufsz : 0;
 }
 
 /*
@@ -1991,7 +1981,7 @@ slot_start(struct slot *s)
 		/*
 		 * N-th recorded block is the N-th played block
 		 */
-		s->sub.prime = -dev_getpos(d) / d->round;
+		s->sub.prime = d->bufsz / d->round;
 	}
 	s->skip = 0;
 
@@ -1999,7 +1989,7 @@ slot_start(struct slot *s)
 	 * get the current position, the origin is when the first sample
 	 * played and/or recorded
 	 */
-	s->delta = dev_getpos(d) * (int)s->round / (int)d->round;
+	s->delta = -(long long)d->bufsz * s->round / d->round;
 	s->delta_rem = 0;
 
 	if (s->mode & MODE_PLAY) {
