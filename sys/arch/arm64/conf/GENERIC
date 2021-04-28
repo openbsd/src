@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.194 2021/04/07 17:12:22 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.195 2021/04/28 11:32:59 bluhm Exp $
 #
 # GENERIC machine description file
 #
@@ -490,6 +490,7 @@ owctr*		at onewire?		# Counter device
 # Pseudo-Devices
 pseudo-device	openprom
 pseudo-device	hotplug		1	# devices hot plugging
+pseudo-device	dt
 
 # mouse & keyboard multiplexor pseudo-devices
 pseudo-device	wsmux		2

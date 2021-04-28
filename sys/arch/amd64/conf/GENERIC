@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.497 2021/02/04 16:25:38 anton Exp $
+#	$OpenBSD: GENERIC,v 1.498 2021/04/28 11:32:59 bluhm Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -685,6 +685,7 @@ owctr*	at onewire?		# Counter device
 pseudo-device	pctr		1
 pseudo-device	nvram		1
 pseudo-device	hotplug		1	# devices hot plugging
+pseudo-device	dt
 
 # mouse & keyboard multiplexor pseudo-devices
 pseudo-device	wsmux		2
