@@ -1,4 +1,4 @@
-.\"	$OpenBSD: script.1,v 1.18 2019/03/28 19:44:59 jmc Exp $
+.\"	$OpenBSD: script.1,v 1.19 2021/04/28 17:44:35 tb Exp $
 .\"	$NetBSD: script.1,v 1.3 1994/12/21 08:55:41 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)script.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: March 28 2019 $
+.Dd $Mdocdate: April 28 2021 $
 .Dt SCRIPT 1
 .Os
 .Sh NAME
@@ -102,7 +102,7 @@ If not set, the Bourne shell is assumed.
 .Sh EXAMPLES
 Start a virtual machine and log all console output to a file:
 .Bd -literal -offset indent
-$ script -c "vmctl start myvm -c" myvm.typescript
+$ script -c "vmctl start -c myvm" myvm.typescript
 .Ed
 .Sh HISTORY
 A predecessor called
