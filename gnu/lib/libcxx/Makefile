@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2021/01/11 15:27:21 patrick Exp $
+# $OpenBSD: Makefile,v 1.4 2021/04/28 13:06:20 patrick Exp $
 
 .include <bsd.own.mk>
 
@@ -22,6 +22,8 @@ LIB=		c++
 
 SRCS+=		algorithm.cpp \
 		any.cpp \
+		atomic.cpp \
+		barrier.cpp \
 		bind.cpp \
 		charconv.cpp \
 		chrono.cpp \
@@ -43,6 +45,7 @@ SRCS+=		algorithm.cpp \
 		operations.cpp \
 		optional.cpp \
 		random.cpp \
+		random_shuffle.cpp \
 		regex.cpp \
 		shared_mutex.cpp \
 		stdexcept.cpp \
@@ -95,6 +98,7 @@ STD_HEADERS=	__bit_reference \
 		any \
 		array \
 		atomic \
+		barrier \
 		bit \
 		bitset \
 		cassert \
@@ -114,6 +118,7 @@ STD_HEADERS=	__bit_reference \
 		compare \
 		complex \
 		complex.h \
+		concepts \
 		condition_variable \
 		csetjmp \
 		csignal \
@@ -133,8 +138,8 @@ STD_HEADERS=	__bit_reference \
 		errno.h \
 		exception \
 		execution \
-		filesystem \
 		fenv.h \
+		filesystem \
 		float.h \
 		forward_list \
 		fstream \
@@ -148,6 +153,7 @@ STD_HEADERS=	__bit_reference \
 		iostream \
 		istream \
 		iterator \
+		latch \
 		limits \
 		limits.h \
 		list \
@@ -159,6 +165,7 @@ STD_HEADERS=	__bit_reference \
 		module.modulemap \
 		mutex \
 		new \
+		numbers \
 		numeric \
 		optional \
 		ostream \
@@ -167,6 +174,7 @@ STD_HEADERS=	__bit_reference \
 		ratio \
 		regex \
 		scoped_allocator \
+		semaphore \
 		set \
 		setjmp.h \
 		shared_mutex \

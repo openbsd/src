@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2021/01/11 15:27:21 patrick Exp $
+# $OpenBSD: Makefile,v 1.3 2021/04/28 13:06:20 patrick Exp $
 
 .include <bsd.own.mk>
 
@@ -30,7 +30,6 @@ SRCS+=		abort_message.cpp \
 		cxa_handlers.cpp \
 		cxa_personality.cpp \
 		cxa_thread_atexit.cpp \
-		cxa_unexpected.cpp \
 		cxa_vector.cpp \
 		cxa_virtual.cpp \
 		fallback_malloc.cpp \
