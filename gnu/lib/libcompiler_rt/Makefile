@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2020/08/14 14:30:06 kettenis Exp $
+# $OpenBSD: Makefile,v 1.5 2021/04/28 22:56:22 drahn Exp $
 
 .include <bsd.own.mk>
 
@@ -280,6 +280,27 @@ SRCS+=	comparetf2.c \
 # Omit "double-double" functions since long double is the same as
 # double on OpenBSD.
 SRCS+=	atomic_lock_free.c
+.endif
+
+.if ${RTARCH} == "riscv64"
+SRCS+=	comparetf2.c \
+	extenddftf2.c \
+	extendsftf2.c \
+	fixtfdi.c \
+	fixtfsi.c \
+	fixtfti.c \
+	fixunstfdi.c \
+	fixunstfsi.c \
+	fixunstfti.c \
+	floatditf.c \
+	floatsitf.c \
+	floattitf.c \
+	floatunditf.c \
+	floatunsitf.c \
+	floatuntitf.c \
+	multc3.c \
+	trunctfdf2.c \
+	trunctfsf2.c
 .endif
 
 .if ${RTARCH} == "sparc64"
