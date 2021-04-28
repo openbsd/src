@@ -32,6 +32,7 @@
 ./usr/include/c++/v1/any
 ./usr/include/c++/v1/array
 ./usr/include/c++/v1/atomic
+./usr/include/c++/v1/barrier
 ./usr/include/c++/v1/bit
 ./usr/include/c++/v1/bitset
 ./usr/include/c++/v1/cassert
@@ -51,6 +52,7 @@
 ./usr/include/c++/v1/compare
 ./usr/include/c++/v1/complex
 ./usr/include/c++/v1/complex.h
+./usr/include/c++/v1/concepts
 ./usr/include/c++/v1/condition_variable
 ./usr/include/c++/v1/csetjmp
 ./usr/include/c++/v1/csignal
@@ -113,6 +115,7 @@
 ./usr/include/c++/v1/iostream
 ./usr/include/c++/v1/istream
 ./usr/include/c++/v1/iterator
+./usr/include/c++/v1/latch
 ./usr/include/c++/v1/libunwind.h
 ./usr/include/c++/v1/limits
 ./usr/include/c++/v1/limits.h
@@ -127,6 +130,7 @@
 ./usr/include/c++/v1/module.modulemap
 ./usr/include/c++/v1/mutex
 ./usr/include/c++/v1/new
+./usr/include/c++/v1/numbers
 ./usr/include/c++/v1/numeric
 ./usr/include/c++/v1/optional
 ./usr/include/c++/v1/ostream
@@ -135,6 +139,7 @@
 ./usr/include/c++/v1/ratio
 ./usr/include/c++/v1/regex
 ./usr/include/c++/v1/scoped_allocator
+./usr/include/c++/v1/semaphore
 ./usr/include/c++/v1/set
 ./usr/include/c++/v1/setjmp.h
 ./usr/include/c++/v1/shared_mutex

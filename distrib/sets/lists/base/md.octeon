@@ -43,7 +43,7 @@
 ./usr/lib/crtend.o
 ./usr/lib/crtendS.o
 ./usr/lib/libLLVM.so.5.0
-./usr/lib/libc++.so.7.0
+./usr/lib/libc++.so.8.0
 ./usr/lib/libc++abi.so.5.0
 ./usr/lib/libcompiler_rt.a
 ./usr/libdata/perl5/mips64-openbsd
