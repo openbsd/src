@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.247 2021/04/28 10:33:34 bluhm Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.248 2021/04/28 21:21:44 bluhm Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -611,7 +611,9 @@ arpcache(struct ifnet *ifp, struct ether_arp *ea, struct rtentry *rt)
 	struct in_addr *spa = (struct in_addr *)ea->arp_spa;
 	char addr[INET_ADDRSTRLEN];
 	struct ifnet *rifp;
+	struct mbuf_list ml;
 	struct mbuf *m;
+	unsigned int len;
 	int changed = 0;
 
 	KERNEL_ASSERT_LOCKED();
@@ -683,21 +685,16 @@ arpcache(struct ifnet *ifp, struct ether_arp *ea, struct rtentry *rt)
 
 	la->la_asked = 0;
 	la->la_refreshed = 0;
-	while ((m = mq_dequeue(&la->la_mq)) != NULL) {
-		unsigned int len;
-
-		atomic_dec_int(&la_hold_total);
-		len = mq_len(&la->la_mq);
-
+	mq_delist(&la->la_mq, &ml);
+	len = ml_len(&ml);
+	while ((m = ml_dequeue(&ml)) != NULL)
 		ifp->if_output(ifp, m, rt_key(rt), rt);
-
-		/* XXXSMP we discard if other CPU enqueues */
-		if (mq_len(&la->la_mq) > len) {
-			/* mbuf is back in queue. Discard. */
-			atomic_sub_int(&la_hold_total, mq_purge(&la->la_mq));
-			break;
-		}
-	}
+	/* XXXSMP we discard if other CPU enqueues */
+	if (mq_len(&la->la_mq) > 0) {
+		/* mbuf is back in queue. Discard. */
+		atomic_sub_int(&la_hold_total, len + mq_purge(&la->la_mq));
+	} else
+		atomic_sub_int(&la_hold_total, len);
 
 	return (0);
 }
