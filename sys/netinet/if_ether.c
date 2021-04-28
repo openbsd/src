@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.246 2021/04/26 07:55:16 bluhm Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.247 2021/04/28 10:33:34 bluhm Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -65,9 +65,18 @@
 #include <netinet/ip_carp.h>
 #endif
 
+/*
+ *  Locks used to protect struct members in this file:
+ *	a	atomic operations
+ *	I	immutable after creation
+ *	K	kernel lock
+ *	m	arp mutex, needed when net lock is shared
+ *	N	net lock
+ */
+
 struct llinfo_arp {
-	LIST_ENTRY(llinfo_arp)	 la_list;
-	struct rtentry		*la_rt;		/* backpointer to rtentry */
+	LIST_ENTRY(llinfo_arp)	 la_list;	/* [mN] global arp_list */
+	struct rtentry		*la_rt;		/* [I] backpointer to rtentry */
 	struct mbuf_queue	 la_mq;		/* packet hold queue */
 	time_t			 la_refreshed;	/* when was refresh sent */
 	int			 la_asked;	/* number of queries sent */
@@ -76,9 +85,9 @@ struct llinfo_arp {
 #define LA_HOLD_TOTAL 100
 
 /* timer values */
-int	arpt_prune = (5 * 60);	/* walk list every 5 minutes */
-int	arpt_keep = (20 * 60);	/* once resolved, cache for 20 minutes */
-int	arpt_down = 20;		/* once declared down, don't send for 20 secs */
+int 	arpt_prune = (5 * 60);	/* [I] walk list every 5 minutes */
+int 	arpt_keep = (20 * 60);	/* [a] once resolved, cache for 20 minutes */
+int 	arpt_down = 20;	/* [a] once declared down, don't send for 20 secs */
 
 struct mbuf *arppullup(struct mbuf *m);
 void arpinvalidate(struct rtentry *);
@@ -92,11 +101,12 @@ void arpreply(struct ifnet *, struct mbuf *, struct in_addr *, uint8_t *,
     unsigned int);
 
 struct niqueue arpinq = NIQUEUE_INITIALIZER(50, NETISR_ARP);
+struct mutex arp_mtx = MUTEX_INITIALIZER(IPL_SOFTNET);
 
-LIST_HEAD(, llinfo_arp) arp_list;
-struct	pool arp_pool;		/* pool for llinfo_arp structures */
-int	arp_maxtries = 5;
-int	la_hold_total;
+LIST_HEAD(, llinfo_arp) arp_list; /* [mN] list of all llinfo_arp structures */
+struct	pool arp_pool;		/* [I] pool for llinfo_arp structures */
+int	arp_maxtries = 5;	/* [I] arp requests before set to rejected */
+int	la_hold_total;		/* [a] packets currently in the arp queue */
 
 #ifdef NFSCLIENT
 /* revarp state */
@@ -117,6 +127,7 @@ arptimer(void *arg)
 
 	NET_LOCK();
 	timeout_add_sec(to, arpt_prune);
+	/* Net lock is exclusive, no arp mutex needed for arp_list here. */
 	LIST_FOREACH_SAFE(la, &arp_list, la_list, nla) {
 		struct rtentry *rt = la->la_rt;
 
@@ -143,6 +154,8 @@ arp_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 {
 	struct sockaddr *gate = rt->rt_gateway;
 	struct llinfo_arp *la = (struct llinfo_arp *)rt->rt_llinfo;
+
+	NET_ASSERT_LOCKED();
 
 	if (ISSET(rt->rt_flags,
 	    RTF_GATEWAY|RTF_BROADCAST|RTF_MULTICAST|RTF_MPLS))
@@ -194,13 +207,17 @@ arp_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 		rt->rt_flags |= RTF_LLINFO;
 		if ((rt->rt_flags & RTF_LOCAL) == 0)
 			rt->rt_expire = getuptime();
+		mtx_enter(&arp_mtx);
 		LIST_INSERT_HEAD(&arp_list, la, la_list);
+		mtx_leave(&arp_mtx);
 		break;
 
 	case RTM_DELETE:
 		if (la == NULL)
 			break;
+		mtx_enter(&arp_mtx);
 		LIST_REMOVE(la, la_list);
+		mtx_leave(&arp_mtx);
 		rt->rt_llinfo = NULL;
 		rt->rt_flags &= ~RTF_LLINFO;
 		atomic_sub_int(&la_hold_total, mq_purge(&la->la_mq));
