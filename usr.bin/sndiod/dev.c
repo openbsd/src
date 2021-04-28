@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.99 2021/03/10 08:22:25 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.100 2021/04/28 05:05:05 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1560,12 +1560,18 @@ slot_initconv(struct slot *s)
 		    s->opt->pmin, s->opt->pmin + s->mix.nch - 1,
 		    0, d->pchan - 1,
 		    s->opt->pmin, s->opt->pmax);
+		s->mix.decbuf = NULL;
+		s->mix.resampbuf = NULL;
 		if (!aparams_native(&s->par)) {
 			dec_init(&s->mix.dec, &s->par, s->mix.nch);
+			s->mix.decbuf =
+			    xmalloc(s->round * s->mix.nch * sizeof(adata_t));
 		}
 		if (s->rate != d->rate) {
 			resamp_init(&s->mix.resamp, s->round, d->round,
 			    s->mix.nch);
+			s->mix.resampbuf =
+			    xmalloc(d->round * s->mix.nch * sizeof(adata_t));
 		}
 		s->mix.join = 1;
 		s->mix.expand = 1;
@@ -1584,6 +1590,8 @@ slot_initconv(struct slot *s)
 		unsigned int outchan = (s->mode & MODE_MON) ?
 		    d->pchan : d->rchan;
 
+		s->sub.encbuf = NULL;
+		s->sub.resampbuf = NULL;
 		cmap_init(&s->sub.cmap,
 		    0, outchan - 1,
 		    s->opt->rmin, s->opt->rmax,
@@ -1592,9 +1600,13 @@ slot_initconv(struct slot *s)
 		if (s->rate != d->rate) {
 			resamp_init(&s->sub.resamp, d->round, s->round,
 			    s->sub.nch);
+			s->sub.resampbuf =
+			    xmalloc(d->round * s->sub.nch * sizeof(adata_t));
 		}
 		if (!aparams_native(&s->par)) {
 			enc_init(&s->sub.enc, &s->par, s->sub.nch);
+			s->sub.encbuf =
+			    xmalloc(s->round * s->sub.nch * sizeof(adata_t));
 		}
 		s->sub.join = 1;
 		s->sub.expand = 1;
@@ -1633,41 +1645,15 @@ slot_initconv(struct slot *s)
 void
 slot_allocbufs(struct slot *s)
 {
-	struct dev *d = s->opt->dev;
-
 	if (s->mode & MODE_PLAY) {
 		s->mix.bpf = s->par.bps * s->mix.nch;
 		abuf_init(&s->mix.buf, s->appbufsz * s->mix.bpf);
-
-		s->mix.decbuf = NULL;
-		s->mix.resampbuf = NULL;
-		if (!aparams_native(&s->par)) {
-			s->mix.decbuf =
-			    xmalloc(s->round * s->mix.nch * sizeof(adata_t));
-		}
-		if (s->rate != d->rate) {
-			s->mix.resampbuf =
-			    xmalloc(d->round * s->mix.nch * sizeof(adata_t));
-		}
 	}
 
 	if (s->mode & MODE_RECMASK) {
 		s->sub.bpf = s->par.bps * s->sub.nch;
 		abuf_init(&s->sub.buf, s->appbufsz * s->sub.bpf);
-
-		s->sub.encbuf = NULL;
-		s->sub.resampbuf = NULL;
-		if (s->rate != d->rate) {
-			s->sub.resampbuf =
-			    xmalloc(d->round * s->sub.nch * sizeof(adata_t));
-		}
-		if (!aparams_native(&s->par)) {
-			s->sub.encbuf =
-			    xmalloc(s->round * s->sub.nch * sizeof(adata_t));
-		}
 	}
-
-	slot_initconv(s);
 
 #ifdef DEBUG
 	if (log_level >= 3) {
@@ -1689,18 +1675,10 @@ slot_freebufs(struct slot *s)
 {
 	if (s->mode & MODE_RECMASK) {
 		abuf_done(&s->sub.buf);
-		if (s->sub.encbuf)
-			xfree(s->sub.encbuf);
-		if (s->sub.resampbuf)
-			xfree(s->sub.resampbuf);
 	}
 
 	if (s->mode & MODE_PLAY) {
 		abuf_done(&s->mix.buf);
-		if (s->mix.decbuf)
-			xfree(s->mix.decbuf);
-		if (s->mix.resampbuf)
-			xfree(s->mix.resampbuf);
 	}
 }
 
@@ -1903,6 +1881,11 @@ slot_attach(struct slot *s)
 	long long pos;
 
 	/*
+	 * setup converions layer
+	 */
+	slot_initconv(s);
+
+	/*
 	 * start the device if not started
 	 */
 	dev_wakeup(d);
@@ -2076,6 +2059,28 @@ slot_detach(struct slot *s)
 #endif
 	if (s->mode & MODE_PLAY)
 		dev_mix_adjvol(d);
+
+	if (s->mode & MODE_RECMASK) {
+		if (s->sub.encbuf) {
+			xfree(s->sub.encbuf);
+			s->sub.encbuf = NULL;
+		}
+		if (s->sub.resampbuf) {
+			xfree(s->sub.resampbuf);
+			s->sub.resampbuf = NULL;
+		}
+	}
+
+	if (s->mode & MODE_PLAY) {
+		if (s->mix.decbuf) {
+			xfree(s->mix.decbuf);
+			s->mix.decbuf = NULL;
+		}
+		if (s->mix.resampbuf) {
+			xfree(s->mix.resampbuf);
+			s->mix.resampbuf = NULL;
+		}
+	}
 }
 
 /*
