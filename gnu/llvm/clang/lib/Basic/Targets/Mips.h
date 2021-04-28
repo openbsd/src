@@ -239,7 +239,6 @@ public:
     case 'y': // Equivalent to "r", backward compatibility only.
     case 'f': // floating-point registers.
     case 'c': // $25 for indirect jumps
-    case 'h': // hi register
     case 'l': // lo register
     case 'x': // hilo register pair
       Info.setAllowsRegister();
@@ -407,6 +406,7 @@ public:
   unsigned getUnwindWordWidth() const override;
 
   bool validateTarget(DiagnosticsEngine &Diags) const override;
+  bool hasExtIntType() const override { return true; }
 };
 } // namespace targets
 } // namespace clang

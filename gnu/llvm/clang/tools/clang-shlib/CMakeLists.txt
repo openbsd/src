@@ -13,7 +13,12 @@ foreach (lib ${clang_libs})
   else()
     list(APPEND _OBJECTS $<TARGET_OBJECTS:obj.${lib}>)
   endif()
-  list(APPEND _DEPS $<TARGET_PROPERTY:${lib},INTERFACE_LINK_LIBRARIES>)
+  if (BUILD_SHARED_LIBS)
+    # If we are building static libraries, then we don't need to add the static
+    # libraries as a depedency, because we are already linking against the
+    # individual object files.
+    list(APPEND _DEPS $<TARGET_PROPERTY:${lib},INTERFACE_LINK_LIBRARIES>)
+  endif()
 
   # clang libraries are redundant since we are linking all the individual
   # object files into libclang-cpp.so, so filter them out from _DEPS.
@@ -43,3 +48,8 @@ add_clang_library(clang-cpp
                   ${_OBJECTS}
                   LINK_LIBS
                   ${_DEPS})
+
+    set_target_properties(clang-cpp
+      PROPERTIES
+      VERSION ${LIBCLANG_LIBRARY_VERSION}
+      SOVERSION ${LIBCLANG_LIBRARY_VERSION})

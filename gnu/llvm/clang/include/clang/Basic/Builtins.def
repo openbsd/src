@@ -36,6 +36,7 @@
 //  a -> __builtin_va_list
 //  A -> "reference" to __builtin_va_list
 //  V -> Vector, followed by the number of elements and the base type.
+//  q -> Scalable vector, followed by the number of elements and the base type.
 //  E -> ext_vector, followed by the number of elements and the base type.
 //  X -> _Complex, followed by the base type.
 //  Y -> ptrdiff_t
@@ -64,6 +65,7 @@
 // & -> reference (optionally followed by an address space number)
 // C -> const
 // D -> volatile
+// R -> restrict
 
 // The third value provided to the macro specifies information about attributes
 // of the function.  These must be kept in sync with the predicates in the
@@ -73,6 +75,9 @@
 //  U -> pure
 //  c -> const
 //  t -> signature is meaningless, use custom typechecking
+//  T -> type is not important to semantic analysis and codegen; recognize as
+//       builtin even if type doesn't match signature, and don't warn if we
+//       can't be sure the type is right
 //  F -> this is a libc/libm function with a '__builtin_' prefix added.
 //  f -> this is a libc/libm function without the '__builtin_' prefix. It can
 //       be followed by ':headername:' to state which header this function
@@ -322,6 +327,9 @@ BUILTIN(__builtin_truncf, "ff", "Fnc")
 BUILTIN(__builtin_truncl, "LdLd", "Fnc")
 BUILTIN(__builtin_truncf16, "hh", "Fnc")
 
+// Access to floating point environment
+BUILTIN(__builtin_flt_rounds, "i", "n")
+
 // C99 complex builtins
 BUILTIN(__builtin_cabs, "dXd", "Fne")
 BUILTIN(__builtin_cabsf, "fXf", "Fne")
@@ -471,7 +479,7 @@ BUILTIN(__builtin___NSStringMakeConstantString, "FC*cC*", "nc")
 BUILTIN(__builtin_va_start, "vA.", "nt")
 BUILTIN(__builtin_va_end, "vA", "n")
 BUILTIN(__builtin_va_copy, "vAA", "n")
-BUILTIN(__builtin_stdarg_start, "vA.", "n")
+BUILTIN(__builtin_stdarg_start, "vA.", "nt")
 BUILTIN(__builtin_assume_aligned, "v*vC*z.", "nc")
 BUILTIN(__builtin_bcmp, "ivC*vC*z", "Fn")
 BUILTIN(__builtin_bcopy, "vv*v*z", "n")
@@ -480,6 +488,7 @@ BUILTIN(__builtin_fprintf, "iP*cC*.", "Fp:1:")
 BUILTIN(__builtin_memchr, "v*vC*iz", "nF")
 BUILTIN(__builtin_memcmp, "ivC*vC*z", "nF")
 BUILTIN(__builtin_memcpy, "v*v*vC*z", "nF")
+BUILTIN(__builtin_memcpy_inline, "vv*vC*Iz", "nt")
 BUILTIN(__builtin_memmove, "v*v*vC*z", "nF")
 BUILTIN(__builtin_mempcpy, "v*v*vC*z", "nF")
 BUILTIN(__builtin_memset, "v*v*iz", "nF")
@@ -515,7 +524,6 @@ BUILTIN(__builtin_return_address, "v*IUi", "n")
 BUILTIN(__builtin_extract_return_addr, "v*v*", "n")
 BUILTIN(__builtin_frame_address, "v*IUi", "n")
 BUILTIN(__builtin___clear_cache, "vc*c*", "n")
-BUILTIN(__builtin_flt_rounds, "i", "nc")
 BUILTIN(__builtin_setjmp, "iv**", "j")
 BUILTIN(__builtin_longjmp, "vv**i", "r")
 BUILTIN(__builtin_unwind_init, "v", "")
@@ -562,6 +570,7 @@ BUILTIN(__builtin___vprintf_chk, "iicC*a", "FP:1:")
 
 BUILTIN(__builtin_unpredictable, "LiLi"   , "nc")
 BUILTIN(__builtin_expect, "LiLiLi"   , "nc")
+BUILTIN(__builtin_expect_with_probability, "LiLiLid", "nc")
 BUILTIN(__builtin_prefetch, "vvC*.", "nc")
 BUILTIN(__builtin_readcyclecounter, "ULLi", "n")
 BUILTIN(__builtin_trap, "v", "nr")
@@ -572,6 +581,10 @@ BUILTIN(__builtin_convertvector, "v."   , "nct")
 BUILTIN(__builtin_alloca, "v*z"   , "Fn")
 BUILTIN(__builtin_alloca_with_align, "v*zIz", "Fn")
 BUILTIN(__builtin_call_with_static_chain, "v.", "nt")
+
+BUILTIN(__builtin_matrix_transpose, "v.", "nFt")
+BUILTIN(__builtin_matrix_column_major_load, "v.", "nFt")
+BUILTIN(__builtin_matrix_column_major_store, "v.", "nFt")
 
 // "Overloaded" Atomic operator builtins.  These are overloaded to support data
 // types of i8, i16, i32, i64, and i128.  The front-end sees calls to the
@@ -722,7 +735,7 @@ ATOMIC_BUILTIN(__c11_atomic_fetch_max, "v.", "t")
 ATOMIC_BUILTIN(__c11_atomic_fetch_min, "v.", "t")
 BUILTIN(__c11_atomic_thread_fence, "vi", "n")
 BUILTIN(__c11_atomic_signal_fence, "vi", "n")
-BUILTIN(__c11_atomic_is_lock_free, "iz", "n")
+BUILTIN(__c11_atomic_is_lock_free, "bz", "n")
 
 // GNU atomic builtins.
 ATOMIC_BUILTIN(__atomic_load, "v.", "t")
@@ -751,8 +764,8 @@ BUILTIN(__atomic_test_and_set, "bvD*i", "n")
 BUILTIN(__atomic_clear, "vvD*i", "n")
 BUILTIN(__atomic_thread_fence, "vi", "n")
 BUILTIN(__atomic_signal_fence, "vi", "n")
-BUILTIN(__atomic_always_lock_free, "izvCD*", "n")
-BUILTIN(__atomic_is_lock_free, "izvCD*", "n")
+BUILTIN(__atomic_always_lock_free, "bzvCD*", "n")
+BUILTIN(__atomic_is_lock_free, "bzvCD*", "n")
 
 // OpenCL 2.0 atomic builtins.
 ATOMIC_BUILTIN(__opencl_atomic_init, "v.", "t")
@@ -883,7 +896,7 @@ LANGBUILTIN(__va_start,       "vc**.", "nt", ALL_MS_LANGUAGES)
 LANGBUILTIN(__fastfail, "vUi",    "nr", ALL_MS_LANGUAGES)
 
 // Microsoft library builtins.
-LIBBUILTIN(_setjmpex, "iJ", "fj",   "setjmpex.h", ALL_MS_LANGUAGES)
+LIBBUILTIN(_setjmpex, "iJ", "fjT", "setjmpex.h", ALL_MS_LANGUAGES)
 
 // C99 library functions
 // C99 stdarg.h
@@ -977,8 +990,8 @@ LIBBUILTIN(wmemmove,"w*w*wC*z", "f", "wchar.h", ALL_LANGUAGES)
 // In some systems setjmp is a macro that expands to _setjmp. We undefine
 // it here to avoid having two identical LIBBUILTIN entries.
 #undef setjmp
-LIBBUILTIN(setjmp, "iJ",          "fj",    "setjmp.h", ALL_LANGUAGES)
-LIBBUILTIN(longjmp, "vJi",        "fr",    "setjmp.h", ALL_LANGUAGES)
+LIBBUILTIN(setjmp, "iJ",          "fjT",   "setjmp.h", ALL_LANGUAGES)
+LIBBUILTIN(longjmp, "vJi",        "frT",   "setjmp.h", ALL_LANGUAGES)
 
 // Non-C library functions, active in GNU mode only.
 // Functions with (returns_twice) attribute (marked as "j") are still active in
@@ -1005,20 +1018,22 @@ LIBBUILTIN(strcasecmp, "icC*cC*", "f",     "strings.h", ALL_GNU_LANGUAGES)
 LIBBUILTIN(strncasecmp, "icC*cC*z", "f",   "strings.h", ALL_GNU_LANGUAGES)
 // POSIX unistd.h
 LIBBUILTIN(_exit, "vi",           "fr",    "unistd.h", ALL_GNU_LANGUAGES)
-LIBBUILTIN(vfork, "p",            "fj",    "unistd.h", ALL_LANGUAGES)
+LIBBUILTIN(vfork, "p",            "fjT",   "unistd.h", ALL_LANGUAGES)
 // POSIX pthread.h
+// FIXME: Should specify argument types.
 LIBBUILTIN(pthread_create, "",  "fC<2,3>", "pthread.h", ALL_GNU_LANGUAGES)
 
 // POSIX setjmp.h
 
-LIBBUILTIN(_setjmp, "iJ",         "fj",   "setjmp.h", ALL_LANGUAGES)
-LIBBUILTIN(__sigsetjmp, "iSJi",   "fj",   "setjmp.h", ALL_LANGUAGES)
-LIBBUILTIN(sigsetjmp, "iSJi",     "fj",   "setjmp.h", ALL_LANGUAGES)
-LIBBUILTIN(savectx, "iJ",         "fj",   "setjmp.h", ALL_LANGUAGES)
-LIBBUILTIN(getcontext, "iK*",     "fj",   "setjmp.h", ALL_LANGUAGES)
+// FIXME: MinGW _setjmp has an additional void* parameter.
+LIBBUILTIN(_setjmp, "iJ",         "fjT",   "setjmp.h", ALL_LANGUAGES)
+LIBBUILTIN(__sigsetjmp, "iSJi",   "fjT",   "setjmp.h", ALL_LANGUAGES)
+LIBBUILTIN(sigsetjmp, "iSJi",     "fjT",   "setjmp.h", ALL_LANGUAGES)
+LIBBUILTIN(savectx, "iJ",         "fjT",   "setjmp.h", ALL_LANGUAGES)
+LIBBUILTIN(getcontext, "iK*",     "fjT",   "setjmp.h", ALL_LANGUAGES)
 
-LIBBUILTIN(_longjmp, "vJi",       "fr",    "setjmp.h", ALL_GNU_LANGUAGES)
-LIBBUILTIN(siglongjmp, "vSJi",    "fr",    "setjmp.h", ALL_GNU_LANGUAGES)
+LIBBUILTIN(_longjmp, "vJi",       "frT",   "setjmp.h", ALL_GNU_LANGUAGES)
+LIBBUILTIN(siglongjmp, "vSJi",    "frT",   "setjmp.h", ALL_GNU_LANGUAGES)
 // non-standard but very common
 LIBBUILTIN(strlcpy, "zc*cC*z",    "f",     "string.h", ALL_GNU_LANGUAGES)
 LIBBUILTIN(strlcat, "zc*cC*z",    "f",     "string.h", ALL_GNU_LANGUAGES)

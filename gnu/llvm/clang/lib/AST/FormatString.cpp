@@ -419,7 +419,6 @@ ArgType::matchesType(ASTContext &C, QualType argTy) const {
       QualType pointeeTy = PT->getPointeeType();
       if (const BuiltinType *BT = pointeeTy->getAs<BuiltinType>())
         switch (BT->getKind()) {
-          case BuiltinType::Void:
           case BuiltinType::Char_U:
           case BuiltinType::UChar:
           case BuiltinType::Char_S:
@@ -539,7 +538,7 @@ QualType ArgType::getRepresentativeType(ASTContext &C) const {
 }
 
 std::string ArgType::getRepresentativeTypeName(ASTContext &C) const {
-  std::string S = getRepresentativeType(C).getAsString();
+  std::string S = getRepresentativeType(C).getAsString(C.getPrintingPolicy());
 
   std::string Alias;
   if (Name) {
@@ -760,10 +759,6 @@ bool FormatSpecifier::hasValidLengthModifier(const TargetInfo &Target,
         case ConversionSpecifier::XArg:
         case ConversionSpecifier::nArg:
           return true;
-        case ConversionSpecifier::FreeBSDbArg:
-          return Target.getTriple().isOSFreeBSD() ||
-                 Target.getTriple().isPS4() ||
-                 Target.getTriple().isOSOpenBSD();
         case ConversionSpecifier::FreeBSDrArg:
         case ConversionSpecifier::FreeBSDyArg:
           return Target.getTriple().isOSFreeBSD() || Target.getTriple().isPS4();
@@ -799,10 +794,6 @@ bool FormatSpecifier::hasValidLengthModifier(const TargetInfo &Target,
         case ConversionSpecifier::ScanListArg:
         case ConversionSpecifier::ZArg:
           return true;
-        case ConversionSpecifier::FreeBSDbArg:
-          return Target.getTriple().isOSFreeBSD() ||
-                 Target.getTriple().isPS4() ||
-                 Target.getTriple().isOSOpenBSD();
         case ConversionSpecifier::FreeBSDrArg:
         case ConversionSpecifier::FreeBSDyArg:
           return Target.getTriple().isOSFreeBSD() || Target.getTriple().isPS4();
@@ -962,7 +953,6 @@ bool FormatSpecifier::hasStandardLengthConversionCombination() const {
         case ConversionSpecifier::uArg:
         case ConversionSpecifier::xArg:
         case ConversionSpecifier::XArg:
-        case ConversionSpecifier::FreeBSDbArg:
           return false;
         default:
           return true;
