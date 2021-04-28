@@ -870,6 +870,18 @@ int16_t x86AssemblyInspectionEngine::extract_2_signed(uint8_t *b) {
   return v;
 }
 
+// movq $0x????????(%rip), $reg [(0x4c || 0x48) 0x8b ?? ?? ?? ?? ??]
+// xorq $off(%rsp), $reg        [(0x4c || 0x48) 0x33 ?? 0x24]
+bool x86AssemblyInspectionEngine::retguard_prologue_p(size_t offset, int insn_len) {
+  uint8_t *p = m_cur_insn;
+  if (offset == 0 && insn_len == 7)
+    return (*p == 0x48 || *p == 0x4c) && (*(p + 1) == 0x8b);
+  else if (offset == 7 && insn_len == 4)
+    return (*p == 0x48 || *p == 0x4c) && (*(p + 1) == 0x33) && (*(p + 3) == 0x24);
+
+  return false;
+}
+
 uint32_t x86AssemblyInspectionEngine::extract_4(uint8_t *b) {
   uint32_t v = 0;
   for (int i = 3; i >= 0; i--)
@@ -1601,6 +1613,7 @@ bool x86AssemblyInspectionEngine::FindFirstNonPrologueInstruction(
     if (push_rbp_pattern_p() || mov_rsp_rbp_pattern_p() ||
         sub_rsp_pattern_p(scratch) || push_reg_p(regno) ||
         mov_reg_to_local_stack_frame_p(regno, scratch) ||
+        retguard_prologue_p(offset, insn_len) ||
         (lea_rsp_pattern_p(scratch) && offset == 0)) {
       offset += insn_len;
       continue;

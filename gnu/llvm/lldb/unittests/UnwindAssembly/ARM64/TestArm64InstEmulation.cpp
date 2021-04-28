@@ -679,6 +679,83 @@ TEST_F(TestArm64InstEmulation, TestRegisterDoubleSpills) {
   }
 }
 
+TEST_F(TestArm64InstEmulation, TestRetguardEmptyFunction) {
+  ArchSpec arch("arm64-unknown-openbsd6.4");
+  std::unique_ptr<UnwindAssemblyInstEmulation> engine(
+      static_cast<UnwindAssemblyInstEmulation *>(
+          UnwindAssemblyInstEmulation::CreateInstance(arch)));
+  ASSERT_NE(nullptr, engine);
+
+  UnwindPlan::RowSP row_sp;
+  AddressRange sample_range;
+  UnwindPlan unwind_plan(eRegisterKindLLDB);
+  UnwindPlan::Row::RegisterLocation regloc;
+
+  // void main() { } compiled on arm64-unknown-openbsd6.4 with -fret-protector
+  uint8_t data[] = {
+       0x2f, 0x37, 0x00, 0xf0, //  0:  adrp    x15, #7237632
+       0xef, 0x35, 0x43, 0xf9, //  4:  ldr     x15, [x15, #1640]
+       0xef, 0x01, 0x1e, 0xca, //  8:  eor     x15, x15, x30
+       0xef, 0x0f, 0x1f, 0xf8, // 12:  str     x15, [sp, #-16]!
+       0xef, 0x07, 0x41, 0xf8, // 16:  ldr     x15, [sp], #16
+       0x29, 0x37, 0x00, 0xf0, // 20:  adrp    x9, #7237632
+       0x29, 0x35, 0x43, 0xf9, // 24:  ldr     x9, [x9, #1640]
+       0xef, 0x01, 0x1e, 0xca, // 28:  eor     x15, x15, x30
+       0xef, 0x01, 0x09, 0xeb, // 32:  subs    x15, x15, x9
+       0x4f, 0x00, 0x00, 0xb4, // 36:  cbz     x15, #8
+       0x20, 0x00, 0x20, 0xd4, // 40:  brk     #0x1
+       0xc0, 0x03, 0x5f, 0xd6, // 44:  ret
+  };
+
+  // UnwindPlan we expect
+  //  0: CFA=sp+0
+  // 16: CFA=sp+16
+  // 20: CFA=sp+0
+  sample_range = AddressRange(0x1000, sizeof(data));
+
+  EXPECT_TRUE(engine->GetNonCallSiteUnwindPlanFromAssembly(
+      sample_range, data, sizeof(data), unwind_plan));
+
+  //  0: CFA=sp+0
+  row_sp = unwind_plan.GetRowForFunctionOffset(0);
+  EXPECT_EQ(0ull, row_sp->GetOffset());
+  EXPECT_TRUE(row_sp->GetCFAValue().GetRegisterNumber() == gpr_sp_arm64);
+  EXPECT_TRUE(row_sp->GetCFAValue().IsRegisterPlusOffset() == true);
+  EXPECT_EQ(0, row_sp->GetCFAValue().GetOffset());
+
+  row_sp = unwind_plan.GetRowForFunctionOffset(4);
+  EXPECT_EQ(0ull, row_sp->GetOffset());
+  row_sp = unwind_plan.GetRowForFunctionOffset(8);
+  EXPECT_EQ(0ull, row_sp->GetOffset());
+  row_sp = unwind_plan.GetRowForFunctionOffset(12);
+  EXPECT_EQ(0ull, row_sp->GetOffset());
+
+  // 16: CFA=sp+16
+  row_sp = unwind_plan.GetRowForFunctionOffset(16);
+  EXPECT_EQ(16ull, row_sp->GetOffset());
+  EXPECT_TRUE(row_sp->GetCFAValue().GetRegisterNumber() == gpr_sp_arm64);
+  EXPECT_TRUE(row_sp->GetCFAValue().IsRegisterPlusOffset() == true);
+  EXPECT_EQ(16, row_sp->GetCFAValue().GetOffset());
+
+  // 20: CFA=sp+0
+  row_sp = unwind_plan.GetRowForFunctionOffset(20);
+  EXPECT_EQ(20ull, row_sp->GetOffset());
+  EXPECT_TRUE(row_sp->GetCFAValue().GetRegisterNumber() == gpr_sp_arm64);
+  EXPECT_TRUE(row_sp->GetCFAValue().IsRegisterPlusOffset() == true);
+  EXPECT_EQ(0, row_sp->GetCFAValue().GetOffset());
+
+  row_sp = unwind_plan.GetRowForFunctionOffset(24);
+  EXPECT_EQ(20ull, row_sp->GetOffset());
+  row_sp = unwind_plan.GetRowForFunctionOffset(28);
+  EXPECT_EQ(20ull, row_sp->GetOffset());
+  row_sp = unwind_plan.GetRowForFunctionOffset(32);
+  EXPECT_EQ(20ull, row_sp->GetOffset());
+  row_sp = unwind_plan.GetRowForFunctionOffset(36);
+  EXPECT_EQ(20ull, row_sp->GetOffset());
+  row_sp = unwind_plan.GetRowForFunctionOffset(40);
+  EXPECT_EQ(20ull, row_sp->GetOffset());
+}
+
 TEST_F(TestArm64InstEmulation, TestCFARegisterTrackedAcrossJumps) {
   ArchSpec arch("arm64-apple-ios10");
   std::unique_ptr<UnwindAssemblyInstEmulation> engine(

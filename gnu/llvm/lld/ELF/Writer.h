@@ -30,7 +30,7 @@ template <class ELFT> void writeResult();
 // placed in it.
 struct PhdrEntry {
   PhdrEntry(unsigned type, unsigned flags)
-      : p_align(type == llvm::ELF::PT_LOAD ? config->maxPageSize : 0),
+      : p_align(type == llvm::ELF::PT_LOAD ? config->textAlignPageSize : 0),
         p_type(type), p_flags(flags) {}
   void add(OutputSection *sec);
 

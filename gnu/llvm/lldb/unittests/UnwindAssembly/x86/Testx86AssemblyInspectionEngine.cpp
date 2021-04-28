@@ -2643,6 +2643,181 @@ TEST_F(Testx86AssemblyInspectionEngine, TestDisassemblyJunkBytes) {
 
 }
 
+TEST_F(Testx86AssemblyInspectionEngine, TestRetguard64bitFrameFunction) {
+  std::unique_ptr<x86AssemblyInspectionEngine> engine = Getx86_64Inspector();
+
+  // 'int main() { }' compiled for amd64-unknown-openbsd6.4 with -fret-protector
+  uint8_t data[] = {
+      0x4c, 0x8b, 0x1d, 0xf1, 0x0c, 0x00, 0x00, // offset 0  -- movq 3313(%rip), %r11
+      0x4c, 0x33, 0x1c, 0x24,                   // offset 7  -- xorq (%rsp), %r11
+      0x55,                                     // offset 11 -- pushq %rbp
+      0x48, 0x89, 0xe5,                         // offset 12 -- movq %rsp, %rbp
+      0x41, 0x53,                               // offset 15 -- pushq %r11
+      0x31, 0xc0,                               // offset 17 -- xorl %eax, %eax
+      0x41, 0x5b,                               // offset 19 -- popq %r11
+      0x5d,                                     // offset 21 -- popq %rbp
+      0x4c, 0x33, 0x1c, 0x24,                   // offset 22 -- xorq (%rsp), %r11
+      0x4c, 0x3b, 0x1d, 0xd7, 0x0c, 0x00, 0x00, // offset 26 -- cmp 3287(%rsp), %r11
+      0x0f, 0x84, 0x02, 0x00, 0x00, 0x00,       // offset 33 -- je +2
+      0xcc,                                     // offset 39 -- int3
+      0xcc,                                     // offset 40 -- int3
+      0xc3                                      // offset 41 -- retq
+  };
+
+  AddressRange sample_range(0x1000, sizeof(data));
+
+  UnwindPlan unwind_plan(eRegisterKindLLDB);
+  EXPECT_TRUE(engine->GetNonCallSiteUnwindPlanFromAssembly(
+      data, sizeof(data), sample_range, unwind_plan));
+
+  // We expect 4 rows in the unwind plan, corresponding to offsets
+  // 0:  CFA=rsp+8  => rsp=CFA+0, rip=[CFA-8]
+  // 12: CFA=rsp+16 => rsp=CFA+0, rip=[CFA-8], rbp=[CFA-16]
+  // 15: CFA=rbp+16 => rsp=CFA+0, rip=[CFA-8], rbp=[CFA-16]
+  // 22: CFA=rsp+8  => rsp=CFA+0, rip=[CFA-8]
+
+  EXPECT_TRUE(unwind_plan.GetInitialCFARegister() == k_rsp);
+  EXPECT_TRUE(unwind_plan.GetUnwindPlanValidAtAllInstructions() ==
+              eLazyBoolYes);
+  EXPECT_TRUE(unwind_plan.GetSourcedFromCompiler() == eLazyBoolNo);
+
+  UnwindPlan::Row::RegisterLocation regloc;
+
+  // 0:  CFA=rsp+8  => rsp=CFA+0, rip=[CFA-8]
+  UnwindPlan::RowSP row_sp = unwind_plan.GetRowForFunctionOffset(0);
+  EXPECT_EQ(0ull, row_sp->GetOffset());
+  EXPECT_TRUE(row_sp->GetCFAValue().GetRegisterNumber() == k_rsp);
+  EXPECT_TRUE(row_sp->GetCFAValue().IsRegisterPlusOffset() == true);
+  EXPECT_EQ(8, row_sp->GetCFAValue().GetOffset());
+
+  EXPECT_TRUE(row_sp->GetRegisterInfo(k_rsp, regloc));
+  EXPECT_TRUE(regloc.IsCFAPlusOffset());
+  EXPECT_EQ(0, regloc.GetOffset());
+
+  EXPECT_TRUE(row_sp->GetRegisterInfo(k_rip, regloc));
+  EXPECT_TRUE(regloc.IsAtCFAPlusOffset());
+  EXPECT_EQ(-8, regloc.GetOffset());
+
+  row_sp = unwind_plan.GetRowForFunctionOffset(7);
+  EXPECT_EQ(0ull, row_sp->GetOffset());
+  row_sp = unwind_plan.GetRowForFunctionOffset(11);
+  EXPECT_EQ(0ull, row_sp->GetOffset());
+
+  // 12: CFA=rsp+16 => rsp=CFA+0, rip=[CFA-8], rbp=[CFA-16]
+  row_sp = unwind_plan.GetRowForFunctionOffset(12);
+  EXPECT_EQ(12ull, row_sp->GetOffset());
+  EXPECT_TRUE(row_sp->GetCFAValue().GetRegisterNumber() == k_rsp);
+  EXPECT_TRUE(row_sp->GetCFAValue().IsRegisterPlusOffset() == true);
+  EXPECT_EQ(16, row_sp->GetCFAValue().GetOffset());
+
+  EXPECT_TRUE(row_sp->GetRegisterInfo(k_rsp, regloc));
+  EXPECT_TRUE(regloc.IsCFAPlusOffset());
+  EXPECT_EQ(0, regloc.GetOffset());
+
+  EXPECT_TRUE(row_sp->GetRegisterInfo(k_rip, regloc));
+  EXPECT_TRUE(regloc.IsAtCFAPlusOffset());
+  EXPECT_EQ(-8, regloc.GetOffset());
+
+  EXPECT_TRUE(row_sp->GetRegisterInfo(k_rbp, regloc));
+  EXPECT_TRUE(regloc.IsAtCFAPlusOffset());
+  EXPECT_EQ(-16, regloc.GetOffset());
+
+  // 15: CFA=rbp+16 => rsp=CFA+0, rip=[CFA-8], rbp=[CFA-16]
+  row_sp = unwind_plan.GetRowForFunctionOffset(15);
+  EXPECT_EQ(15ull, row_sp->GetOffset());
+  EXPECT_TRUE(row_sp->GetCFAValue().GetRegisterNumber() == k_rbp);
+  EXPECT_TRUE(row_sp->GetCFAValue().IsRegisterPlusOffset() == true);
+  EXPECT_EQ(16, row_sp->GetCFAValue().GetOffset());
+
+  EXPECT_TRUE(row_sp->GetRegisterInfo(k_rsp, regloc));
+  EXPECT_TRUE(regloc.IsCFAPlusOffset());
+  EXPECT_EQ(0, regloc.GetOffset());
+
+  EXPECT_TRUE(row_sp->GetRegisterInfo(k_rip, regloc));
+  EXPECT_TRUE(regloc.IsAtCFAPlusOffset());
+  EXPECT_EQ(-8, regloc.GetOffset());
+
+  EXPECT_TRUE(row_sp->GetRegisterInfo(k_rbp, regloc));
+  EXPECT_TRUE(regloc.IsAtCFAPlusOffset());
+  EXPECT_EQ(-16, regloc.GetOffset());
+
+  row_sp = unwind_plan.GetRowForFunctionOffset(17);
+  EXPECT_EQ(15ull, row_sp->GetOffset());
+  row_sp = unwind_plan.GetRowForFunctionOffset(19);
+  EXPECT_EQ(15ull, row_sp->GetOffset());
+  row_sp = unwind_plan.GetRowForFunctionOffset(21);
+  EXPECT_EQ(15ull, row_sp->GetOffset());
+
+  // 22: CFA=rsp+8  => rsp=CFA+0, rip=[CFA-8]
+  row_sp = unwind_plan.GetRowForFunctionOffset(22);
+  EXPECT_EQ(22ull, row_sp->GetOffset());
+  EXPECT_TRUE(row_sp->GetCFAValue().GetRegisterNumber() == k_rsp);
+  EXPECT_TRUE(row_sp->GetCFAValue().IsRegisterPlusOffset() == true);
+  EXPECT_EQ(8, row_sp->GetCFAValue().GetOffset());
+
+  EXPECT_TRUE(row_sp->GetRegisterInfo(k_rsp, regloc));
+  EXPECT_TRUE(regloc.IsCFAPlusOffset());
+  EXPECT_EQ(0, regloc.GetOffset());
+
+  EXPECT_TRUE(row_sp->GetRegisterInfo(k_rip, regloc));
+  EXPECT_TRUE(regloc.IsAtCFAPlusOffset());
+  EXPECT_EQ(-8, regloc.GetOffset());
+
+  row_sp = unwind_plan.GetRowForFunctionOffset(26);
+  EXPECT_EQ(22ull, row_sp->GetOffset());
+  row_sp = unwind_plan.GetRowForFunctionOffset(33);
+  EXPECT_EQ(22ull, row_sp->GetOffset());
+  row_sp = unwind_plan.GetRowForFunctionOffset(39);
+  EXPECT_EQ(22ull, row_sp->GetOffset());
+  row_sp = unwind_plan.GetRowForFunctionOffset(40);
+  EXPECT_EQ(22ull, row_sp->GetOffset());
+  row_sp = unwind_plan.GetRowForFunctionOffset(41);
+  EXPECT_EQ(22ull, row_sp->GetOffset());
+}
+
+TEST_F(Testx86AssemblyInspectionEngine, TestSimple64bitPrologueDetection) {
+  std::unique_ptr<x86AssemblyInspectionEngine> engine = Getx86_64Inspector();
+
+  // 'int main() { }' compiled for x86_64-apple-macosx with clang
+  uint8_t data[] = {
+      0x55,             // offset 0 -- pushq %rbp
+      0x48, 0x89, 0xe5, // offset 1 -- movq %rsp, %rbp
+      0x31, 0xc0,       // offset 4 -- xorl %eax, %eax
+      0x5d,             // offset 6 -- popq %rbp
+      0xc3              // offset 7 -- retq
+  };
+
+  size_t offset = 0;
+  EXPECT_TRUE(engine->FindFirstNonPrologueInstruction(data, sizeof(data), offset));
+  EXPECT_EQ(4ull, offset);
+}
+
+TEST_F(Testx86AssemblyInspectionEngine, TestRetguard64bitPrologueDetection) {
+  std::unique_ptr<x86AssemblyInspectionEngine> engine = Getx86_64Inspector();
+
+  // 'int main() { }' compiled for amd64-unknown-openbsd6.4 with -fret-protector
+  uint8_t data[] = {
+      0x4c, 0x8b, 0x1d, 0xf1, 0x0c, 0x00, 0x00, // offset 0  -- movq 3313(%rip), %r11
+      0x4c, 0x33, 0x1c, 0x24,                   // offset 7  -- xorq (%rsp), %r11
+      0x55,                                     // offset 11 -- pushq %rbp
+      0x48, 0x89, 0xe5,                         // offset 12 -- movq %rsp, %rbp
+      0x41, 0x53,                               // offset 15 -- pushq %r11
+      0x31, 0xc0,                               // offset 17 -- xorl %eax, %eax
+      0x41, 0x5b,                               // offset 19 -- popq %r11
+      0x5d,                                     // offset 21 -- popq %rbp
+      0x4c, 0x33, 0x1c, 0x24,                   // offset 22 -- xorq (%rsp), %r11
+      0x4c, 0x3b, 0x1d, 0xd7, 0x0c, 0x00, 0x00, // offset 26 -- cmp 3287(%rsp), %r11
+      0x0f, 0x84, 0x02, 0x00, 0x00, 0x00,       // offset 33 -- je +2
+      0xcc,                                     // offset 39 -- int3
+      0xcc,                                     // offset 40 -- int3
+      0xc3                                      // offset 41 -- retq
+  };
+
+  size_t offset = 0;
+  EXPECT_TRUE(engine->FindFirstNonPrologueInstruction(data, sizeof(data), offset));
+  EXPECT_EQ(17ull, offset);
+}
+
 TEST_F(Testx86AssemblyInspectionEngine, TestReturnDetect) {
   std::unique_ptr<x86AssemblyInspectionEngine> engine = Getx86_64Inspector();
 
@@ -2670,6 +2845,11 @@ TEST_F(Testx86AssemblyInspectionEngine, TestReturnDetect) {
 
   UnwindPlan unwind_plan(eRegisterKindLLDB);
   EXPECT_TRUE(engine->GetNonCallSiteUnwindPlanFromAssembly(
+  UnwindPlan::RowSP row_sp = unwind_plan.GetRowForFunctionOffset(0);
+  EXPECT_EQ(0ull, row_sp->GetOffset());
+  EXPECT_TRUE(row_sp->GetCFAValue().GetRegisterNumber() == k_rsp);
+  EXPECT_TRUE(row_sp->GetCFAValue().IsRegisterPlusOffset() == true);
+  EXPECT_EQ(8, row_sp->GetCFAValue().GetOffset());
       data, sizeof(data), sample_range, unwind_plan));
 
   // Expect following unwind rows:

@@ -393,6 +393,8 @@ HANDLE_DW_AT(0x2133, GNU_addr_base, 0, GNU)
 HANDLE_DW_AT(0x2134, GNU_pubnames, 0, GNU)
 HANDLE_DW_AT(0x2135, GNU_pubtypes, 0, GNU)
 HANDLE_DW_AT(0x2136, GNU_discriminator, 0, GNU)
+// Sun Extension
+HANDLE_DW_AT(0x2224, SUN_amd64_parmdump, 0, GNU)
 // Borland extensions.
 HANDLE_DW_AT(0x3b11, BORLAND_property_read, 0, BORLAND)
 HANDLE_DW_AT(0x3b12, BORLAND_property_write, 0, BORLAND)

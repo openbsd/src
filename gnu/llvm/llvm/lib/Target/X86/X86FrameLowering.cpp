@@ -14,6 +14,7 @@
 #include "X86InstrBuilder.h"
 #include "X86InstrInfo.h"
 #include "X86MachineFunctionInfo.h"
+#include "X86ReturnProtectorLowering.h"
 #include "X86Subtarget.h"
 #include "X86TargetMachine.h"
 #include "llvm/ADT/SmallSet.h"
@@ -45,7 +46,7 @@ X86FrameLowering::X86FrameLowering(const X86Subtarget &STI,
                                    MaybeAlign StackAlignOverride)
     : TargetFrameLowering(StackGrowsDown, StackAlignOverride.valueOrOne(),
                           STI.is64Bit() ? -8 : -4),
-      STI(STI), TII(*STI.getInstrInfo()), TRI(STI.getRegisterInfo()) {
+      STI(STI), TII(*STI.getInstrInfo()), TRI(STI.getRegisterInfo()), RPL() {
   // Cache a bunch of frame-related predicates for this subtarget.
   SlotSize = TRI->getSlotSize();
   Is64Bit = STI.is64Bit();
@@ -53,6 +54,7 @@ X86FrameLowering::X86FrameLowering(const X86Subtarget &STI,
   // standard x86_64 and NaCl use 64-bit frame/stack pointers, x32 - 32-bit.
   Uses64BitFramePtr = STI.isTarget64BitLP64() || STI.isTargetNaCl64();
   StackPtr = TRI->getStackRegister();
+  SaveArgs = Is64Bit ? STI.getSaveArgs() : 0;
 }
 
 bool X86FrameLowering::hasReservedCallFrame(const MachineFunction &MF) const {
@@ -98,7 +100,8 @@ bool X86FrameLowering::hasFP(const MachineFunction &MF) const {
           MF.getInfo<X86MachineFunctionInfo>()->hasPreallocatedCall() ||
           MF.callsUnwindInit() || MF.hasEHFunclets() || MF.callsEHReturn() ||
           MFI.hasStackMap() || MFI.hasPatchPoint() ||
-          MFI.hasCopyImplyingStackAdjustment());
+          MFI.hasCopyImplyingStackAdjustment() ||
+          SaveArgs);
 }
 
 static unsigned getSUBriOpcode(bool IsLP64, int64_t Imm) {
@@ -1243,6 +1246,24 @@ void X86FrameLowering::BuildStackAlignAND(MachineBasicBlock &MBB,
   }
 }
 
+// FIXME: Get this from tablegen.
+static ArrayRef<MCPhysReg> get64BitArgumentGPRs(CallingConv::ID CallConv,
+                                                const X86Subtarget &Subtarget) {
+  assert(Subtarget.is64Bit());
+
+  if (Subtarget.isCallingConvWin64(CallConv)) {
+    static const MCPhysReg GPR64ArgRegsWin64[] = {
+      X86::RCX, X86::RDX, X86::R8,  X86::R9
+    };
+    return makeArrayRef(std::begin(GPR64ArgRegsWin64), std::end(GPR64ArgRegsWin64));
+  }
+
+  static const MCPhysReg GPR64ArgRegs64Bit[] = {
+    X86::RDI, X86::RSI, X86::RDX, X86::RCX, X86::R8, X86::R9
+  };
+  return makeArrayRef(std::begin(GPR64ArgRegs64Bit), std::end(GPR64ArgRegs64Bit));
+}
+
 bool X86FrameLowering::has128ByteRedZone(const MachineFunction& MF) const {
   // x86-64 (non Win64) has a 128 byte red zone which is guaranteed not to be
   // clobbered by any interrupt handler.
@@ -1515,6 +1536,43 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF,
         unsigned DwarfFramePtr = TRI->getDwarfRegNum(MachineFramePtr, true);
         BuildCFI(MBB, MBBI, DL, MCCFIInstruction::createDefCfaRegister(
                                     nullptr, DwarfFramePtr));
+      }
+
+      if (SaveArgs && !Fn.arg_empty()) {
+        ArrayRef<MCPhysReg> GPRs =
+          get64BitArgumentGPRs(Fn.getCallingConv(), STI);
+        unsigned arg_size = Fn.arg_size();
+        unsigned RI = 0;
+        int64_t SaveSize = 0;
+
+        if (Fn.hasStructRetAttr()) {
+          GPRs = GPRs.drop_front(1);
+          arg_size--;
+        }
+
+        for (MCPhysReg Reg : GPRs) {
+          if (++RI > arg_size)
+            break;
+
+          SaveSize += SlotSize;
+
+          BuildMI(MBB, MBBI, DL, TII.get(X86::PUSH64r))
+            .addReg(Reg)
+            .setMIFlag(MachineInstr::FrameSetup);
+        }
+
+        // Realign the stack. PUSHes are the most space efficient.
+        while (SaveSize % getStackAlignment()) {
+          BuildMI(MBB, MBBI, DL, TII.get(X86::PUSH64r))
+            .addReg(GPRs.front())
+            .setMIFlag(MachineInstr::FrameSetup);
+
+          SaveSize += SlotSize;
+        }
+
+	//dlg StackSize -= SaveSize;
+        //dlg MFI.setStackSize(StackSize);
+        X86FI->setSaveArgSize(SaveSize);
       }
 
       if (NeedsWinFPO) {
@@ -2009,10 +2067,16 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
   // AfterPop is the position to insert .cfi_restore.
   MachineBasicBlock::iterator AfterPop = MBBI;
   if (HasFP) {
-    // Pop EBP.
-    BuildMI(MBB, MBBI, DL, TII.get(Is64Bit ? X86::POP64r : X86::POP32r),
+    if (X86FI->getSaveArgSize()) {
+      // LEAVE is effectively mov rbp,rsp; pop rbp
+      BuildMI(MBB, MBBI, DL, TII.get(X86::LEAVE64))
+        .setMIFlag(MachineInstr::FrameDestroy);
+    } else {
+      // Pop EBP.
+      BuildMI(MBB, MBBI, DL, TII.get(Is64Bit ? X86::POP64r : X86::POP32r),
             MachineFramePtr)
         .setMIFlag(MachineInstr::FrameDestroy);
+    }
     if (NeedsDwarfCFI) {
       unsigned DwarfStackPtr =
           TRI->getDwarfRegNum(Is64Bit ? X86::RSP : X86::ESP, true);
@@ -2037,7 +2101,8 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
 
     if (Opc != X86::DBG_VALUE && !PI->isTerminator()) {
       if ((Opc != X86::POP32r || !PI->getFlag(MachineInstr::FrameDestroy)) &&
-          (Opc != X86::POP64r || !PI->getFlag(MachineInstr::FrameDestroy)))
+          (Opc != X86::POP64r || !PI->getFlag(MachineInstr::FrameDestroy)) &&
+          (Opc != X86::LEAVE64 || !PI->getFlag(MachineInstr::FrameDestroy)))
         break;
       FirstCSPop = PI;
     }
@@ -2202,6 +2267,8 @@ int X86FrameLowering::getFrameIndexReference(const MachineFunction &MF, int FI,
            "FPDelta isn't aligned per the Win64 ABI!");
   }
 
+  if (FI >= 0)
+    Offset -= X86FI->getSaveArgSize();
 
   if (TRI->hasBasePointer(MF)) {
     assert(HasFP && "VLAs and dynamic stack realign, but no FP?!");
@@ -3603,6 +3670,10 @@ void X86FrameLowering::processFunctionBeforeFrameFinalized(
   addFrameReference(BuildMI(MBB, MBBI, DL, TII.get(X86::MOV64mi32)),
                     UnwindHelpFI)
       .addImm(-2);
+}
+
+const ReturnProtectorLowering *X86FrameLowering::getReturnProtector() const {
+  return &RPL;
 }
 
 void X86FrameLowering::processFunctionBeforeFrameIndicesReplaced(

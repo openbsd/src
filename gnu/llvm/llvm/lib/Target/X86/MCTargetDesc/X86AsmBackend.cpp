@@ -1071,57 +1071,23 @@ void X86AsmBackend::finishLayout(MCAssembler const &Asm,
 /// bytes.
 /// \return - true on success, false on failure
 bool X86AsmBackend::writeNopData(raw_ostream &OS, uint64_t Count) const {
-  static const char Nops[10][11] = {
-    // nop
-    "\x90",
-    // xchg %ax,%ax
-    "\x66\x90",
-    // nopl (%[re]ax)
-    "\x0f\x1f\x00",
-    // nopl 0(%[re]ax)
-    "\x0f\x1f\x40\x00",
-    // nopl 0(%[re]ax,%[re]ax,1)
-    "\x0f\x1f\x44\x00\x00",
-    // nopw 0(%[re]ax,%[re]ax,1)
-    "\x66\x0f\x1f\x44\x00\x00",
-    // nopl 0L(%[re]ax)
-    "\x0f\x1f\x80\x00\x00\x00\x00",
-    // nopl 0L(%[re]ax,%[re]ax,1)
-    "\x0f\x1f\x84\x00\x00\x00\x00\x00",
-    // nopw 0L(%[re]ax,%[re]ax,1)
-    "\x66\x0f\x1f\x84\x00\x00\x00\x00\x00",
-    // nopw %cs:0L(%[re]ax,%[re]ax,1)
-    "\x66\x2e\x0f\x1f\x84\x00\x00\x00\x00\x00",
-  };
 
-  // This CPU doesn't support long nops. If needed add more.
-  // FIXME: We could generated something better than plain 0x90.
-  if (!STI.hasFeature(X86::FeatureNOPL) && !STI.hasFeature(X86::Mode64Bit)) {
-    for (uint64_t i = 0; i < Count; ++i)
-      OS << '\x90';
-    return true;
-  }
-
-  // 15-bytes is the longest single NOP instruction, but 10-bytes is
-  // commonly the longest that can be efficiently decoded.
-  uint64_t MaxNopLength = 10;
-  if (STI.getFeatureBits()[X86::FeatureFast7ByteNOP])
-    MaxNopLength = 7;
-  else if (STI.getFeatureBits()[X86::FeatureFast15ByteNOP])
-    MaxNopLength = 15;
-  else if (STI.getFeatureBits()[X86::FeatureFast11ByteNOP])
-    MaxNopLength = 11;
-
-  // Emit as many MaxNopLength NOPs as needed, then emit a NOP of the remaining
-  // length.
+  // Write 1 or 2 byte NOP sequences, or a longer trapsled, until
+  // we have written Count bytes
   do {
-    const uint8_t ThisNopLength = (uint8_t) std::min(Count, MaxNopLength);
-    const uint8_t Prefixes = ThisNopLength <= 10 ? 0 : ThisNopLength - 10;
-    for (uint8_t i = 0; i < Prefixes; i++)
-      OS << '\x66';
-    const uint8_t Rest = ThisNopLength - Prefixes;
-    if (Rest != 0)
-      OS.write(Nops[Rest - 1], Rest);
+    const uint8_t ThisNopLength = (uint8_t) std::min(Count, (uint64_t)127);
+    switch (ThisNopLength) {
+      case 0: break;
+      case 1: OS << '\x90';
+              break;
+      case 2: OS << '\x66';
+              OS << '\x90';
+              break;
+      default: OS << '\xEB';
+               OS << (uint8_t)(ThisNopLength - 2);
+               for(uint8_t i = 2; i < ThisNopLength; ++i)
+                 OS << '\xCC';
+    }
     Count -= ThisNopLength;
   } while (Count != 0);
 

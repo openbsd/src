@@ -2566,6 +2566,50 @@ void X86AsmPrinter::emitInstruction(const MachineInstr *MI) {
         MCInstBuilder(X86::MOV64rr).addReg(X86::R10).addReg(X86::RAX));
     return;
 
+  case X86::RETGUARD_JMP_TRAP: {
+    // Make a symbol for the end of the trapsled and emit a jump to it
+    MCSymbol *RGSuccSym = OutContext.createTempSymbol();
+    const MCExpr *RGSuccExpr = MCSymbolRefExpr::create(RGSuccSym, OutContext);
+    EmitAndCountInstruction(MCInstBuilder(X86::JCC_1)
+                              .addExpr(RGSuccExpr)
+                              .addImm(X86::COND_E));
+
+    // Emit at least two trap instructions
+    EmitAndCountInstruction(MCInstBuilder(X86::INT3));
+    EmitAndCountInstruction(MCInstBuilder(X86::INT3));
+
+    // Now .fill up to 0xe byte, so the ret happens on 0xf
+    MCSymbol *Dot = OutContext.createTempSymbol();
+    OutStreamer->emitLabel(Dot);
+    const MCExpr *DotE = MCSymbolRefExpr::create(Dot, OutContext);
+    const MCExpr *BaseE = MCSymbolRefExpr::create(
+        TM.getSymbol(&MF->getFunction()), OutContext);
+    // .fill (0xf - ((DotE - BaseE) & 0xf)), 1, 0xcc
+    const MCExpr *FillE = MCBinaryExpr::createSub(
+        MCConstantExpr::create(0xf, OutContext),
+        MCBinaryExpr::createAnd(
+          MCBinaryExpr::createSub(DotE, BaseE, OutContext),
+          MCConstantExpr::create(0xf, OutContext),
+          OutContext),
+        OutContext);
+    OutStreamer->emitFill(*FillE, 0xCC);
+
+    // And finally emit the jump target symbol
+    OutStreamer->emitLabel(RGSuccSym);
+    return;
+  }
+
+  case X86::JMP_TRAP: {
+    MCSymbol *RGSuccSym = OutContext.createTempSymbol();
+    const MCExpr *RGSuccExpr = MCSymbolRefExpr::create(RGSuccSym, OutContext);
+    EmitAndCountInstruction(MCInstBuilder(X86::JMP_1).addExpr(RGSuccExpr));
+    EmitAndCountInstruction(MCInstBuilder(X86::INT3));
+    EmitAndCountInstruction(MCInstBuilder(X86::INT3));
+    OutStreamer->emitValueToAlignment(8, 0xCC, 1);
+    OutStreamer->emitLabel(RGSuccSym);
+    return;
+  }
+
   case X86::SEH_PushReg:
   case X86::SEH_SaveReg:
   case X86::SEH_SaveXMM:
@@ -2615,4 +2659,10 @@ void X86AsmPrinter::emitInstruction(const MachineInstr *MI) {
   }
 
   EmitAndCountInstruction(TmpInst);
+}
+
+/// Emit Trap bytes to the specified power of two alignment
+void X86AsmPrinter::emitTrapToAlignment(Align Alignment) const {
+  if (Alignment == Align(1)) return;
+  OutStreamer->emitValueToAlignment(Alignment.value(), 0xCC, 1);
 }

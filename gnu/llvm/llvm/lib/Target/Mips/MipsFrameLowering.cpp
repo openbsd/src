@@ -14,6 +14,7 @@
 #include "MCTargetDesc/MipsBaseInfo.h"
 #include "MipsInstrInfo.h"
 #include "MipsMachineFunction.h"
+#include "MipsReturnProtectorLowering.h"
 #include "MipsTargetMachine.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -122,6 +123,10 @@ uint64_t MipsFrameLowering::estimateStackSize(const MachineFunction &MF) const {
     if (MFI.getObjectOffset(I) > 0)
       Size += MFI.getObjectSize(I);
 
+  // Account for saving return protector register
+  if (MFI.getReturnProtectorNeeded())
+    Size += TRI.getSpillSize(*TRI.getMinimalPhysRegClass(Mips::T9_64));
+
   // Conservatively assume all callee-saved registers will be saved.
   for (const MCPhysReg *R = TRI.getCalleeSavedRegs(&MF); *R; ++R) {
     unsigned RegSize = TRI.getSpillSize(*TRI.getMinimalPhysRegClass(*R));
@@ -148,4 +153,8 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
   }
 
   return MBB.erase(I);
+}
+
+const ReturnProtectorLowering *MipsFrameLowering::getReturnProtector() const {
+  return &RPL;
 }

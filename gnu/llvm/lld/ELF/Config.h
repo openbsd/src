@@ -249,8 +249,13 @@ struct Configuration {
   ELFKind ekind = ELFNoneKind;
   uint16_t emachine = llvm::ELF::EM_NONE;
   llvm::Optional<uint64_t> imageBase;
+  // commonPageSize and maxPageSize are influenced by nmagic or omagic
+  // so may be set to 1 if either of those options is given.
   uint64_t commonPageSize;
   uint64_t maxPageSize;
+  // textAlignPageSize is the target max page size for the purpose
+  // of aligning text sections, which may be unaligned if given nmagic
+  uint64_t textAlignPageSize;
   uint64_t mipsGotSize;
   uint64_t zStackSize;
   unsigned ltoPartitions;

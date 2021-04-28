@@ -239,6 +239,7 @@ public:
     case 'y': // Equivalent to "r", backward compatibility only.
     case 'f': // floating-point registers.
     case 'c': // $25 for indirect jumps
+    case 'h': // hi register
     case 'l': // lo register
     case 'x': // hilo register pair
       Info.setAllowsRegister();

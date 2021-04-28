@@ -273,6 +273,15 @@ private:
   /// The frame index for the stack protector.
   int StackProtectorIdx = -1;
 
+  struct ReturnProtector {
+    /// The register to use for return protector calculations
+    unsigned Register = 0;
+    /// Set to true if this function needs return protectors
+    bool Needed = false;
+    /// Does the return protector cookie need to be stored in frame
+    bool NeedsStore = true;
+  } RPI;
+
   /// The frame index for the function context. Used for SjLj exceptions.
   int FunctionContextIdx = -1;
 
@@ -353,6 +362,17 @@ public:
   int getStackProtectorIndex() const { return StackProtectorIdx; }
   void setStackProtectorIndex(int I) { StackProtectorIdx = I; }
   bool hasStackProtectorIndex() const { return StackProtectorIdx != -1; }
+
+  /// Get / Set return protector calculation register
+  unsigned getReturnProtectorRegister() const { return RPI.Register; }
+  void setReturnProtectorRegister(unsigned I) { RPI.Register = I; }
+  bool hasReturnProtectorRegister() const { return RPI.Register != 0; }
+  /// Get / Set if this frame needs a return protector
+  void setReturnProtectorNeeded(bool I) { RPI.Needed = I; }
+  bool getReturnProtectorNeeded() const { return RPI.Needed; }
+  /// Get / Set if the return protector cookie needs to be stored in frame
+  void setReturnProtectorNeedsStore(bool I) { RPI.NeedsStore = I; }
+  bool getReturnProtectorNeedsStore() const { return RPI.NeedsStore; }
 
   /// Return the index for the function context object.
   /// This object is used for SjLj exceptions.

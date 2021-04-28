@@ -294,6 +294,7 @@ void OpenBSD::AddCXXStdlibLibArgs(const ArgList &Args,
 
   CmdArgs.push_back(Profiling ? "-lc++_p" : "-lc++");
   CmdArgs.push_back(Profiling ? "-lc++abi_p" : "-lc++abi");
+  CmdArgs.push_back(Profiling ? "-lpthread_p" : "-lpthread");
 }
 
 std::string OpenBSD::getCompilerRT(const ArgList &Args,

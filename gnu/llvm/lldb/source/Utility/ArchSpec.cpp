@@ -205,6 +205,8 @@ static const CoreDefinition g_core_definitions[] = {
      ArchSpec::eCore_x86_64_x86_64, "x86_64"},
     {eByteOrderLittle, 8, 1, 15, llvm::Triple::x86_64,
      ArchSpec::eCore_x86_64_x86_64h, "x86_64h"},
+    {eByteOrderLittle, 8, 1, 15, llvm::Triple::x86_64,
+     ArchSpec::eCore_x86_64_amd64, "amd64"},
     {eByteOrderLittle, 4, 4, 4, llvm::Triple::hexagon,
      ArchSpec::eCore_hexagon_generic, "hexagon"},
     {eByteOrderLittle, 4, 4, 4, llvm::Triple::hexagon,
@@ -1208,9 +1210,17 @@ static bool cores_match(const ArchSpec::Core core1, const ArchSpec::Core core2,
 
   case ArchSpec::eCore_x86_64_x86_64h:
     if (!enforce_exact_match) {
-      try_inverse = false;
       if (core2 == ArchSpec::eCore_x86_64_x86_64)
         return true;
+      try_inverse = false;
+    }
+    break;
+
+  case ArchSpec::eCore_x86_64_amd64:
+    if (!enforce_exact_match) {
+      if (core2 == ArchSpec::eCore_x86_64_x86_64)
+        return true;
+      try_inverse = false;
     }
     break;
 

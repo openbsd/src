@@ -140,7 +140,8 @@ StringRef elf::getOutputSectionName(const InputSectionBase *s) {
   for (StringRef v :
        {".text.", ".rodata.", ".data.rel.ro.", ".data.", ".bss.rel.ro.",
         ".bss.", ".init_array.", ".fini_array.", ".ctors.", ".dtors.", ".tbss.",
-        ".gcc_except_table.", ".tdata.", ".ARM.exidx.", ".ARM.extab."})
+        ".gcc_except_table.", ".tdata.", ".ARM.exidx.", ".ARM.extab.",
+        ".openbsd.randomdata."})
     if (isSectionPrefix(v, s->name))
       return v.drop_back();
 
@@ -319,6 +320,7 @@ void elf::addReservedSymbols() {
   };
 
   ElfSym::bss = add("__bss_start", 0);
+  ElfSym::data = add("__data_start", 0);
   ElfSym::end1 = add("end", -1);
   ElfSym::end2 = add("_end", -1);
   ElfSym::etext1 = add("etext", -1);
@@ -870,7 +872,11 @@ static bool isRelroSection(const OutputSection *sec) {
   // However, if "-z now" is given, the lazy symbol resolution is
   // disabled, which enables us to put it into RELRO.
   if (sec == in.gotPlt->getParent())
+#ifndef __OpenBSD__
     return config->zNow;
+#else
+    return true;	/* kbind(2) means we can always put these in RELRO */
+#endif
 
   // .dynamic section contains data for the dynamic linker, and
   // there's no need to write to it at runtime, so it's better to put
@@ -1179,6 +1185,9 @@ template <class ELFT> void Writer<ELFT>::setReservedSymbolSections() {
 
   if (ElfSym::bss)
     ElfSym::bss->section = findSection(".bss");
+
+  if (ElfSym::data)
+    ElfSym::data->section = findSection(".data");
 
   // Setup MIPS _gp_disp/__gnu_local_gp symbols which should
   // be equal to the _gp symbol's value.
@@ -2499,6 +2508,31 @@ template <class ELFT> void Writer<ELFT>::fixSectionAlignments() {
         };
     }
   };
+
+#ifdef __OpenBSD__
+  // On i386, produce binaries that are compatible with our W^X implementation
+  if (config->emachine == EM_386) {
+    auto NXAlign = [](OutputSection *Cmd) {
+      if (Cmd && !Cmd->addrExpr)
+        Cmd->addrExpr = [=] {
+          return alignTo(script->getDot(), 0x20000000);
+        };
+    };
+
+    for (Partition &part : partitions) {
+      PhdrEntry *firstRW = nullptr;
+      for (PhdrEntry *P : part.phdrs) {
+        if (P->p_type == PT_LOAD && (P->p_flags & PF_W)) {
+          firstRW = P;
+          break;
+        }
+      }
+
+      if (firstRW)
+        NXAlign(firstRW->firstSec);
+    }
+  }
+#endif
 
   for (Partition &part : partitions) {
     prev = nullptr;

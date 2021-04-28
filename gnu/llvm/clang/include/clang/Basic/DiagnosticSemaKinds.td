@@ -6440,7 +6440,7 @@ def warn_pointer_indirection_from_incompatible_type : Warning<
   InGroup<UndefinedReinterpretCast>, DefaultIgnore;
 def warn_taking_address_of_packed_member : Warning<
   "taking address of packed member %0 of class or structure %q1 may result in an unaligned pointer value">,
-  InGroup<DiagGroup<"address-of-packed-member">>;
+  InGroup<DiagGroup<"address-of-packed-member">>, DefaultIgnore;
 
 def err_objc_object_assignment : Error<
   "cannot assign to class object (%0 invalid)">;
@@ -7607,7 +7607,7 @@ def ext_typecheck_convert_incompatible_pointer_sign : ExtWarn<
   "sending to parameter of different type}0,1"
   "|%diff{casting $ to type $|casting between types}0,1}2"
   " converts between pointers to integer types with different sign">,
-  InGroup<DiagGroup<"pointer-sign">>;
+  InGroup<DiagGroup<"pointer-sign">>, DefaultIgnore;
 def err_typecheck_convert_incompatible_pointer_sign : Error<
   "%select{%diff{assigning to $ from $|assigning to different types}0,1"
   "|%diff{passing $ to parameter of type $|"

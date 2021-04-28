@@ -46,12 +46,17 @@ public:
 
   bool CanDebugProcess() override;
 
+  lldb::ProcessSP DebugProcess(ProcessLaunchInfo &launch_info, Debugger &debugger,
+                               Target *target, Status &error) override;
+
   void CalculateTrapHandlerSymbolNames() override;
 
   MmapArgList GetMmapArgumentList(const ArchSpec &arch, lldb::addr_t addr,
                                   lldb::addr_t length, unsigned prot,
                                   unsigned flags, lldb::addr_t fd,
                                   lldb::addr_t offset) override;
+
+  lldb_private::FileSpec LocateExecutable(const char *basename) override;
 
 private:
   PlatformOpenBSD(const PlatformOpenBSD &) = delete;

@@ -312,6 +312,8 @@ bool LoopIdiomRecognize::runOnLoop(Loop *L) {
   StringRef Name = L->getHeader()->getParent()->getName();
   if (Name == "memset" || Name == "memcpy")
     return false;
+  if (Name == "_libc_memset" || Name == "_libc_memcpy")
+    return false;
 
   // Determine if code size heuristics need to be applied.
   ApplyCodeSizeHeuristics =

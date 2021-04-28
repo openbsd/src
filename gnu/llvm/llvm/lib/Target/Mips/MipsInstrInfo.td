@@ -2012,6 +2012,31 @@ def LONG_BRANCH_ADDiu2Op : PseudoSE<(outs GPR32Opnd:$dst),
   bit hasNoSchedulingInfo = 1;
 }
 
+// Pseudo instructions used by retguard. In order to calculste the PC
+// for PIC code, we use a pair of pseudos to get the function address
+// into T9, which is normally used to hold this value but is trashed
+// by function epilogue.
+let isCodeGenOnly = 1, hasNoSchedulingInfo = 1 in {
+
+  // Use BAL to get the PC into RA, then calculate the address of the
+  // current function and save this value in $rd. $rs and $rt are used
+  // as scratch registers and are trashed by this pseudo. $tgt is the
+  // symbol to branch to when calling BAL.
+  let Size = 32 in {
+  def RETGUARD_GET_FUNCTION_ADDR: PseudoSE<(outs GPR64:$rd),
+    (ins GPR64:$rs, GPR64:$rt, brtarget:$tgt), []>;
+  }
+
+  // Emit the symbol used for $tgt in RETGUARD_GET_FUNCTION_ADDR. We
+  // emit this symbol immediately before the usual function return, with
+  // the effect that the BAL branches to an immediate return and resumes
+  // execution through the rest of the RETGUARD epilogue. We pair BAL
+  // with RET to satisfy return branch predictors.
+  let Size = 0 in {
+  def RETGUARD_EMIT_SYMBOL: PseudoSE<(outs), (ins brtarget:$tgt), []>;
+  }
+}
+
 //===----------------------------------------------------------------------===//
 // Instruction definition
 //===----------------------------------------------------------------------===//

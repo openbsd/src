@@ -687,7 +687,7 @@ void AsmPrinter::emitFunctionHeader() {
 
   emitLinkage(&F, CurrentFnSym);
   if (MAI->hasFunctionAlignment())
-    emitAlignment(MF->getAlignment(), &F);
+    emitTrapAlignment(MF->getAlignment(), &F);
 
   if (MAI->hasDotTypeDotSizeDirective())
     OutStreamer->emitSymbolAttribute(CurrentFnSym, MCSA_ELF_TypeFunction);
@@ -2256,6 +2256,30 @@ void AsmPrinter::emitAlignment(Align Alignment, const GlobalObject *GV) const {
 }
 
 //===----------------------------------------------------------------------===//
+/// emitTrapAlignment - Emit an alignment directive to the specified power of
+/// two boundary, but call emitTrapToAlignment to fill with Trap instructions
+/// if the Target implements emitTrapToAlignment.
+void AsmPrinter::emitTrapAlignment(Align Alignment, const GlobalObject *GV) const {
+  if (GV)
+    Alignment = getGVAlignment(GV, GV->getParent()->getDataLayout(), Alignment);
+
+  if (Alignment == Align(1)) return;   // 1-byte aligned: no need to emit alignment.
+
+  emitTrapToAlignment(Alignment);
+}
+
+//===----------------------------------------------------------------------===//
+/// emitTrapToAlignment - Emit an alignment directive to the specified power
+/// of two boundary. This default implementation calls EmitCodeAlignment on
+/// the OutStreamer, but can be overridden by Target implementations.
+void AsmPrinter::emitTrapToAlignment(Align Alignment) const {
+  if (Alignment == Align(1)) return;
+  OutStreamer->emitCodeAlignment(Alignment.value());
+}
+
+
+
+//===----------------------------------------------------------------------===//
 // Constant emission.
 //===----------------------------------------------------------------------===//
 
@@ -3020,10 +3044,17 @@ void AsmPrinter::emitBasicBlockStart(const MachineBasicBlock &MBB) {
     }
   }
 
+  bool isReachableViaFallthrough =
+    std::find(MBB.pred_begin(), MBB.pred_end(), MBB.getPrevNode()) !=
+      MBB.pred_end();
   // Emit an alignment directive for this block, if needed.
   const Align Alignment = MBB.getAlignment();
-  if (Alignment != Align(1))
-    emitAlignment(Alignment);
+  if (Alignment != Align(1)) {
+    if (isReachableViaFallthrough)
+      emitAlignment(Alignment);
+    else
+      emitTrapAlignment(Alignment);
+  }
 
   // If the block has its address taken, emit any labels that were used to
   // reference the block.  It is possible that there is more than one label

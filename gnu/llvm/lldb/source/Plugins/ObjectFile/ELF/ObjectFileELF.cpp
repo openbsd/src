@@ -2750,11 +2750,13 @@ Symtab *ObjectFileELF::GetSymtab() {
     //      also be present.
     const ELFDynamic *symbol = FindDynamicSymbol(DT_JMPREL);
     if (symbol) {
+      const ELFDynamic *pltrelsz = FindDynamicSymbol(DT_PLTRELSZ);
+      assert(pltrelsz != NULL);
       // Synthesize trampoline symbols to help navigate the PLT.
       addr_t addr = symbol->d_ptr;
       Section *reloc_section =
           section_list->FindSectionContainingFileAddress(addr).get();
-      if (reloc_section) {
+      if (reloc_section && pltrelsz->d_val > 0) {
         user_id_t reloc_id = reloc_section->GetID();
         const ELFSectionHeaderInfo *reloc_header =
             GetSectionHeaderByIndex(reloc_id);

@@ -1350,6 +1350,19 @@ void AArch64AsmPrinter::emitInstruction(const MachineInstr *MI) {
   case AArch64::SEH_EpilogEnd:
     TS->EmitARM64WinCFIEpilogEnd();
     return;
+
+  case AArch64::RETGUARD_JMP_TRAP:
+    {
+    MCSymbol *RGSuccSym = OutContext.createTempSymbol();
+    /* Compare and branch */
+    EmitToStreamer(*OutStreamer, MCInstBuilder(AArch64::CBZX)
+        .addReg(MI->getOperand(0).getReg())
+        .addExpr(MCSymbolRefExpr::create(RGSuccSym, OutContext)));
+    EmitToStreamer(*OutStreamer, MCInstBuilder(AArch64::BRK).addImm(1));
+    OutStreamer->emitLabel(RGSuccSym);
+    return;
+    }
+
   }
 
   // Finally, do the automated lowerings for everything else.

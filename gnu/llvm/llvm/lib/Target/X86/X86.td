@@ -313,6 +313,9 @@ def FeatureLZCNTFalseDeps : SubtargetFeature<"false-deps-lzcnt-tzcnt",
                                      "LZCNT/TZCNT have a false dependency on dest register">;
 def FeaturePCONFIG : SubtargetFeature<"pconfig", "HasPCONFIG", "true",
                                       "platform configuration instruction">;
+def FeatureSaveArgs
+    : SubtargetFeature<"save-args", "SaveArgs", "true",
+                       "Save register arguments on the stack.">;
 // On recent X86 (port bound) processors, its preferable to combine to a single shuffle
 // using a variable mask over multiple fixed shuffles.
 def FeatureFastVariableShuffle

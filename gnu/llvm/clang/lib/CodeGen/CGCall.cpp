@@ -2068,6 +2068,9 @@ void CodeGenModule::ConstructAttributeList(
     // CPU/feature overrides.  addDefaultFunctionDefinitionAttributes
     // handles these separately to set them based on the global defaults.
     GetCPUAndFeaturesAttributes(CalleeInfo.getCalleeDecl(), FuncAttrs);
+
+    if (CodeGenOpts.ReturnProtector)
+      FuncAttrs.addAttribute("ret-protector");
   }
 
   // Collect attributes from arguments and return values.

@@ -403,6 +403,12 @@ int main(int argc, char **argv) {
     StaticExt = "a";
     StaticDir = SharedDir = ActiveLibDir;
     StaticPrefix = SharedPrefix = "lib";
+  } else if (HostTriple.isOSOpenBSD()) {
+    SharedExt = "so";
+    SharedVersionedExt = ".so" ;
+    StaticExt = "a";
+    StaticDir = SharedDir = ActiveLibDir;
+    StaticPrefix = SharedPrefix = "lib";
   } else {
     // default to the unix values:
     SharedExt = "so";
@@ -419,7 +425,7 @@ int main(int argc, char **argv) {
 
   bool DyLibExists = false;
   const std::string DyLibName =
-      (SharedPrefix + "LLVM-" + SharedVersionedExt).str();
+      (SharedPrefix + "LLVM" + SharedVersionedExt).str();
 
   // If LLVM_LINK_DYLIB is ON, the single shared library will be returned
   // for "--libs", etc, if they exist. This behaviour can be overridden with
@@ -431,7 +437,12 @@ int main(int argc, char **argv) {
     if (DirSep == "\\") {
       std::replace(path.begin(), path.end(), '/', '\\');
     }
-    DyLibExists = sys::fs::exists(path);
+    // path does not include major.minor
+    if (HostTriple.isOSOpenBSD()) {
+      DyLibExists = true;
+    } else {
+      DyLibExists = sys::fs::exists(path);
+    }
     if (!DyLibExists) {
       // The shared library does not exist: don't error unless the user
       // explicitly passes --link-shared.

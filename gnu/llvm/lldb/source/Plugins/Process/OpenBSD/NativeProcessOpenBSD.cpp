@@ -102,7 +102,7 @@ NativeProcessOpenBSD::Factory::Launch(ProcessLaunchInfo &launch_info,
            Info.GetArchitecture().GetArchitectureName());
 
   std::unique_ptr<NativeProcessOpenBSD> process_up(new NativeProcessOpenBSD(
-      pid, launch_info.GetPTY().ReleaseMasterFileDescriptor(), native_delegate,
+      pid, launch_info.GetPTY().ReleasePrimaryFileDescriptor(), native_delegate,
       Info.GetArchitecture(), mainloop));
 
   status = process_up->ReinitializeThreads();

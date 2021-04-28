@@ -242,6 +242,83 @@ void MipsAsmPrinter::emitInstruction(const MachineInstr *MI) {
   case Mips::PATCHABLE_TAIL_CALL:
     LowerPATCHABLE_TAIL_CALL(*MI);
     return;
+  case Mips::RETGUARD_GET_FUNCTION_ADDR:
+    {
+      MCSymbol *PCSym = OutContext.createTempSymbol();
+      MCSymbol *FuncSym = OutContext.lookupSymbol(MI->getMF()->getName());
+      if (FuncSym == nullptr)
+        llvm_unreachable("Function name has no symbol");
+
+      // Branch and link forward, calculate the distance
+      // from here to the start of the function, and fill the
+      // address in the given dest register
+      unsigned OUT = MI->getOperand(0).getReg();
+      unsigned IN1 = MI->getOperand(1).getReg();
+      unsigned IN2 = MI->getOperand(2).getReg();
+      MCSymbol *ReturnSym = MI->getOperand(3).getMCSymbol();
+
+      // Save the value of RA in IN1
+      EmitToStreamer(*OutStreamer, MCInstBuilder(Mips::OR64)
+          .addReg(IN1)
+          .addReg(Mips::RA_64)
+          .addReg(Mips::ZERO_64));
+      // BAL to get the PC into RA
+      EmitToStreamer(*OutStreamer, MCInstBuilder(Mips::BAL)
+          .addExpr(MCSymbolRefExpr::create(ReturnSym, OutContext)));
+      // NOP
+      EmitToStreamer(*OutStreamer, MCInstBuilder(Mips::SLL)
+          .addReg(Mips::ZERO_64)
+          .addReg(Mips::ZERO_64)
+          .addImm(0));
+
+      // Emit a symbol for "here/PC" because BAL will put
+      // the address of the instruction following the NOP into RA
+      // and we need this symbol to do the math
+      OutStreamer->emitLabel(PCSym);
+
+      // Store PC in IN2
+      EmitToStreamer(*OutStreamer, MCInstBuilder(Mips::OR64)
+          .addReg(IN2)
+          .addReg(Mips::RA_64)
+          .addReg(Mips::ZERO_64));
+      // Restore original RA
+      EmitToStreamer(*OutStreamer, MCInstBuilder(Mips::OR64)
+          .addReg(Mips::RA_64)
+          .addReg(IN1)
+          .addReg(Mips::ZERO_64));
+      // Load the offset from PCSym to the start of the function
+      EmitToStreamer(*OutStreamer, MCInstBuilder(Mips::LUi64)
+          .addReg(IN1)
+          .addExpr(MipsMCExpr::create(MipsMCExpr::MipsExprKind::MEK_HI,
+              MCBinaryExpr::createSub(
+                MCSymbolRefExpr::create(PCSym, OutContext),
+                MCSymbolRefExpr::create(FuncSym, OutContext),
+                OutContext),
+              OutContext)));
+      EmitToStreamer(*OutStreamer, MCInstBuilder(Mips::DADDiu)
+          .addReg(IN1)
+          .addReg(IN1)
+          .addExpr(MipsMCExpr::create(MipsMCExpr::MipsExprKind::MEK_LO,
+              MCBinaryExpr::createSub(
+                MCSymbolRefExpr::create(PCSym, OutContext),
+                MCSymbolRefExpr::create(FuncSym, OutContext),
+                OutContext),
+              OutContext)));
+
+      // Sub distance from here to start of function
+      // to get address of the start of function
+      EmitToStreamer(*OutStreamer, MCInstBuilder(Mips::DSUBu)
+          .addReg(OUT)
+          .addReg(IN2)
+          .addReg(IN1));
+      return;
+    }
+  case Mips::RETGUARD_EMIT_SYMBOL:
+    {
+      MCSymbol *ReturnSym = MI->getOperand(0).getMCSymbol();
+      OutStreamer->emitLabel(ReturnSym);
+      return;
+    }
   }
 
   if (EmitJalrReloc &&

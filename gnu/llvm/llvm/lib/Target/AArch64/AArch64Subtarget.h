@@ -453,6 +453,7 @@ public:
   bool isTargetDarwin() const { return TargetTriple.isOSDarwin(); }
   bool isTargetIOS() const { return TargetTriple.isiOS(); }
   bool isTargetLinux() const { return TargetTriple.isOSLinux(); }
+  bool isTargetOpenBSD() const { return TargetTriple.isOSOpenBSD(); }
   bool isTargetWindows() const { return TargetTriple.isOSWindows(); }
   bool isTargetAndroid() const { return TargetTriple.isAndroid(); }
   bool isTargetFuchsia() const { return TargetTriple.isOSFuchsia(); }

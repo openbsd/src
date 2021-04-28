@@ -909,6 +909,10 @@ bool AsmParser::Run(bool NoInitialTextSection, bool NoFinalize) {
     (void)InsertResult;
   }
 
+  StringRef Filename = getContext().getMainFileName();
+  if (!Filename.empty() && (Filename.compare(StringRef("-")) != 0))
+    Out.emitFileDirective(Filename);
+
   // While we have input, parse each statement.
   while (Lexer.isNot(AsmToken::Eof)) {
     ParseStatementInfo Info(&AsmStrRewrites);

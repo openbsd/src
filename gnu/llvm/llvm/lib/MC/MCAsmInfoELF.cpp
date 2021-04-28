@@ -25,7 +25,7 @@ MCSection *MCAsmInfoELF::getNonexecutableStackSection(MCContext &Ctx) const {
 }
 
 MCAsmInfoELF::MCAsmInfoELF() {
-  HasIdentDirective = true;
+  HasIdentDirective = false;
   WeakRefDirective = "\t.weak\t";
   PrivateGlobalPrefix = ".L";
   PrivateLabelPrefix = ".L";

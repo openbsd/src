@@ -114,6 +114,7 @@ private:
   bool call_next_insn_pattern_p();
   bool mov_reg_to_local_stack_frame_p(int &regno, int &rbp_offset);
   bool ret_pattern_p();
+  bool retguard_prologue_p(size_t offset, int insn_len);
   bool jmp_to_reg_p();
   bool pc_rel_branch_or_jump_p (const int instruction_length, int &offset);
   bool non_local_branch_p (const lldb::addr_t current_func_text_offset, 

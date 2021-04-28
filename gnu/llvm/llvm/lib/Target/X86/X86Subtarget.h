@@ -459,6 +459,9 @@ protected:
   /// entry to the function and which must be maintained by every function.
   Align stackAlignment = Align(4);
 
+  /// Whether function prologues should save register arguments on the stack.
+  bool SaveArgs = false;
+
   /// Max. memset / memcpy size that is turned into rep/movs, rep/stos ops.
   ///
   // FIXME: this is a known good value for Yonah. How about others?
@@ -548,6 +551,8 @@ public:
   const X86RegisterInfo *getRegisterInfo() const override {
     return &getInstrInfo()->getRegisterInfo();
   }
+
+  bool getSaveArgs() const { return SaveArgs; }
 
   /// Returns the minimum alignment known to hold of the
   /// stack frame on entry to the function and which must be maintained by every
@@ -809,6 +814,7 @@ public:
 
   bool isTargetDarwin() const { return TargetTriple.isOSDarwin(); }
   bool isTargetFreeBSD() const { return TargetTriple.isOSFreeBSD(); }
+  bool isTargetOpenBSD() const { return TargetTriple.isOSOpenBSD(); }
   bool isTargetDragonFly() const { return TargetTriple.isOSDragonFly(); }
   bool isTargetSolaris() const { return TargetTriple.isOSSolaris(); }
   bool isTargetPS4() const { return TargetTriple.isPS4CPU(); }
