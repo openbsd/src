@@ -1,5 +1,5 @@
 ===========================
-Libc++ 10.0.0 Release Notes
+Libc++ 11.0.0 Release Notes
 ===========================
 
 .. contents::
@@ -12,7 +12,7 @@ Introduction
 ============
 
 This document contains the release notes for the libc++ C++ Standard Library,
-part of the LLVM Compiler Infrastructure, release 10.0.0. Here we describe the
+part of the LLVM Compiler Infrastructure, release 11.0.0. Here we describe the
 status of libc++ in some detail, including major improvements from the previous
 release and new feature work. For the general LLVM release notes, see `the LLVM
 documentation <https://llvm.org/docs/ReleaseNotes.html>`_. All LLVM releases may
@@ -21,10 +21,10 @@ be downloaded from the `LLVM releases web site <https://llvm.org/releases/>`_.
 For more information about libc++, please see the `Libc++ Web Site
 <https://libcxx.llvm.org>`_ or the `LLVM Web Site <https://llvm.org>`_.
 
-What's New in Libc++ 10.0.0?
+What's New in Libc++ 11.0.0?
 ============================
 
-Fixes
------
+New Features
+------------
 
-- Fixed use of non-default locales on Windows
+- ``<numbers>``
