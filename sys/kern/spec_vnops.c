@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.103 2021/03/10 10:21:47 jsg Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.104 2021/04/28 09:53:53 claudio Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -484,7 +484,7 @@ spec_close(void *v)
 	struct vnode *vp = ap->a_vp;
 	dev_t dev = vp->v_rdev;
 	int (*devclose)(dev_t, int, int, struct proc *);
-	int mode, relock, error;
+	int mode, relock, xlocked, error;
 	int clone = 0;
 
 	switch (vp->v_type) {
@@ -512,7 +512,10 @@ spec_close(void *v)
 			 * of forcibly closing the device, otherwise we only
 			 * close on last reference.
 			 */
-			if (vcount(vp) > 1 && (vp->v_flag & VXLOCK) == 0)
+			mtx_enter(&vnode_mtx);
+			xlocked = (vp->v_lflag & VXLOCK);
+			mtx_leave(&vnode_mtx);
+			if (vcount(vp) > 1 && !xlocked)
 				return (0);
 		}
 		devclose = cdevsw[major(dev)].d_close;
@@ -527,10 +530,13 @@ spec_close(void *v)
 		 * that, we must lock the vnode. If we are coming from
 		 * vclean(), the vnode is already locked.
 		 */
-		if (!(vp->v_flag & VXLOCK))
+		mtx_enter(&vnode_mtx);
+		xlocked = (vp->v_lflag & VXLOCK);
+		mtx_leave(&vnode_mtx);
+		if (!xlocked)
 			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		error = vinvalbuf(vp, V_SAVE, ap->a_cred, p, 0, INFSLP);
-		if (!(vp->v_flag & VXLOCK))
+		if (!xlocked)
 			VOP_UNLOCK(vp);
 		if (error)
 			return (error);
@@ -543,7 +549,10 @@ spec_close(void *v)
 		 * sum of the reference counts on all the aliased
 		 * vnodes descends to one, we are on last close.
 		 */
-		if (vcount(vp) > 1 && (vp->v_flag & VXLOCK) == 0)
+		mtx_enter(&vnode_mtx);
+		xlocked = (vp->v_lflag & VXLOCK);
+		mtx_leave(&vnode_mtx);
+		if (vcount(vp) > 1 && !xlocked)
 			return (0);
 		devclose = bdevsw[major(dev)].d_close;
 		mode = S_IFBLK;
@@ -554,7 +563,10 @@ spec_close(void *v)
 	}
 
 	/* release lock if held and this isn't coming from vclean() */
-	relock = VOP_ISLOCKED(vp) && !(vp->v_flag & VXLOCK);
+	mtx_enter(&vnode_mtx);
+	xlocked = (vp->v_lflag & VXLOCK);
+	mtx_leave(&vnode_mtx);
+	relock = VOP_ISLOCKED(vp) && !xlocked;
 	if (relock)
 		VOP_UNLOCK(vp);
 	error = (*devclose)(dev, ap->a_fflag, mode, p);

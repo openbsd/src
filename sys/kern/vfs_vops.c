@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vops.c,v 1.29 2020/10/07 12:33:03 mpi Exp $	*/
+/*	$OpenBSD: vfs_vops.c,v 1.30 2021/04/28 09:53:53 claudio Exp $	*/
 /*
  * Copyright (c) 2010 Thordur I. Bjornsson <thib@openbsd.org> 
  *
@@ -48,8 +48,6 @@
 #include <sys/systm.h>
 
 #ifdef VFSLCKDEBUG
-#include <sys/systm.h>		/* for panic() */
-
 #define ASSERT_VP_ISLOCKED(vp) do {				\
 	if (((vp)->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) {	\
 		VOP_PRINT(vp);					\
@@ -607,6 +605,8 @@ VOP_LOCK(struct vnode *vp, int flags)
 	struct vop_lock_args a;
 	a.a_vp = vp;
 	a.a_flags = flags;
+
+	MUTEX_ASSERT_UNLOCKED(&vnode_mtx);
 
 	if (vp->v_op->vop_lock == NULL)
 		return (EOPNOTSUPP);

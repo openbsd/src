@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.114 2020/04/08 08:07:51 mpi Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.115 2021/04/28 09:53:53 claudio Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -563,19 +563,29 @@ vn_poll(struct file *fp, int events, struct proc *p)
 int
 vn_lock(struct vnode *vp, int flags)
 {
-	int error;
+	int error, xlocked, do_wakeup;
 
 	do {
-		if (vp->v_flag & VXLOCK) {
-			vp->v_flag |= VXWANT;
-			tsleep_nsec(vp, PINOD, "vn_lock", INFSLP);
+		mtx_enter(&vnode_mtx);
+		if (vp->v_lflag & VXLOCK) {
+			vp->v_lflag |= VXWANT;
+			msleep_nsec(vp, &vnode_mtx, PINOD, "vn_lock", INFSLP);
+			mtx_leave(&vnode_mtx);
 			error = ENOENT;
 		} else {
 			vp->v_lockcount++;
+			mtx_leave(&vnode_mtx);
+
 			error = VOP_LOCK(vp, flags);
+
+			mtx_enter(&vnode_mtx);
 			vp->v_lockcount--;
+			do_wakeup = (vp->v_lockcount == 0);
+			xlocked = vp->v_lflag & VXLOCK;
+			mtx_leave(&vnode_mtx);
+
 			if (error == 0) {
-				if ((vp->v_flag & VXLOCK) == 0)
+				if (!xlocked)
 					return (0);
 
 				/*
@@ -585,7 +595,7 @@ vn_lock(struct vnode *vp, int flags)
 				 */
 				error = ENOENT;
 				VOP_UNLOCK(vp);
-				if (vp->v_lockcount == 0)
+				if (do_wakeup)
 					wakeup_one(&vp->v_lockcount);
 			}
 		}

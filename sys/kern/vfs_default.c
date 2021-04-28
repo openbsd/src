@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_default.c,v 1.47 2020/02/20 16:56:52 visa Exp $  */
+/*	$OpenBSD: vfs_default.c,v 1.48 2021/04/28 09:53:53 claudio Exp $  */
 
 /*
  * Portions of this code are:
@@ -86,9 +86,12 @@ vop_generic_revoke(void *v)
 		 * If a vgone (or vclean) is already in progress,
 		 * wait until it is done and return.
 		 */
-		if (vp->v_flag & VXLOCK) {
-			vp->v_flag |= VXWANT;
-			tsleep_nsec(vp, PINOD, "vop_generic_revokeall", INFSLP);
+		mtx_enter(&vnode_mtx);
+		if (vp->v_lflag & VXLOCK) {
+			vp->v_lflag |= VXWANT;
+			msleep_nsec(vp, &vnode_mtx, PINOD,
+			    "vop_generic_revokeall", INFSLP);
+			mtx_leave(&vnode_mtx);
 			return(0);
 		}
 
@@ -96,7 +99,9 @@ vop_generic_revoke(void *v)
 		 * Ensure that vp will not be vgone'd while we
 		 * are eliminating its aliases.
 		 */
-		vp->v_flag |= VXLOCK;
+		vp->v_lflag |= VXLOCK;
+		mtx_leave(&vnode_mtx);
+
 		while (vp->v_flag & VALIASED) {
 			SLIST_FOREACH(vq, vp->v_hashchain, v_specnext) {
 				if (vq->v_rdev != vp->v_rdev ||
@@ -112,7 +117,9 @@ vop_generic_revoke(void *v)
 		 * really eliminate the vnode after which time
 		 * vgone will awaken any sleepers.
 		 */
-		vp->v_flag &= ~VXLOCK;
+		mtx_enter(&vnode_mtx);
+		vp->v_lflag &= ~VXLOCK;
+		mtx_leave(&vnode_mtx);
 	}
 
 	vgonel(vp, p);

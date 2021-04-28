@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.304 2021/01/29 10:47:24 claudio Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.305 2021/04/28 09:53:53 claudio Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -116,6 +116,8 @@ void vputonfreelist(struct vnode *);
 
 int vflush_vnode(struct vnode *, void *);
 int maxvnodes;
+
+struct mutex vnode_mtx = MUTEX_INITIALIZER(IPL_BIO);
 
 void vfs_unmountall(void);
 
@@ -644,16 +646,19 @@ vget(struct vnode *vp, int flags)
 	 * return failure. Cleaning is determined by checking that
 	 * the VXLOCK flag is set.
 	 */
-
-	if (vp->v_flag & VXLOCK) {
+	mtx_enter(&vnode_mtx);
+	if (vp->v_lflag & VXLOCK) {
 		if (flags & LK_NOWAIT) {
+			mtx_leave(&vnode_mtx);
 			return (EBUSY);
 		}
 
-		vp->v_flag |= VXWANT;
-		tsleep_nsec(vp, PINOD, "vget", INFSLP);
+		vp->v_lflag |= VXWANT;
+		msleep_nsec(vp, &vnode_mtx, PINOD, "vget", INFSLP);
+		mtx_leave(&vnode_mtx);
 		return (ENOENT);
 	}
+	mtx_leave(&vnode_mtx);
 
 	onfreelist = vp->v_bioflag & VBIOONFREELIST;
 	if (vp->v_usecount == 0 && onfreelist) {
@@ -982,7 +987,7 @@ vflush(struct mount *mp, struct vnode *skipvp, int flags)
 void
 vclean(struct vnode *vp, int flags, struct proc *p)
 {
-	int active;
+	int active, do_wakeup = 0;
 
 	/*
 	 * Check to see if the vnode is in use.
@@ -997,9 +1002,10 @@ vclean(struct vnode *vp, int flags, struct proc *p)
 	 * Prevent the vnode from being recycled or
 	 * brought into use while we clean it out.
 	 */
-	if (vp->v_flag & VXLOCK)
+	mtx_enter(&vnode_mtx);
+	if (vp->v_lflag & VXLOCK)
 		panic("vclean: deadlock");
-	vp->v_flag |= VXLOCK;
+	vp->v_lflag |= VXLOCK;
 
 	if (vp->v_lockcount > 0) {
 		/*
@@ -1007,9 +1013,11 @@ vclean(struct vnode *vp, int flags, struct proc *p)
 		 * observed that the vnode is about to be exclusively locked
 		 * before continuing.
 		 */
-		tsleep_nsec(&vp->v_lockcount, PINOD, "vop_lock", INFSLP);
+		msleep_nsec(&vp->v_lockcount, &vnode_mtx, PINOD, "vop_lock",
+		    INFSLP);
 		KASSERT(vp->v_lockcount == 0);
 	}
+	mtx_leave(&vnode_mtx);
 
 	/*
 	 * Even if the count is zero, the VOP_INACTIVE routine may still
@@ -1067,14 +1075,18 @@ vclean(struct vnode *vp, int flags, struct proc *p)
 	vp->v_op = &dead_vops;
 	VN_KNOTE(vp, NOTE_REVOKE);
 	vp->v_tag = VT_NON;
-	vp->v_flag &= ~VXLOCK;
 #ifdef VFSLCKDEBUG
 	vp->v_flag &= ~VLOCKSWORK;
 #endif
-	if (vp->v_flag & VXWANT) {
-		vp->v_flag &= ~VXWANT;
-		wakeup(vp);
+	mtx_enter(&vnode_mtx);
+	vp->v_lflag &= ~VXLOCK;
+	if (vp->v_lflag & VXWANT) {
+		vp->v_lflag &= ~VXWANT;
+		do_wakeup = 1;
 	}
+	mtx_leave(&vnode_mtx);
+	if (do_wakeup)
+		wakeup(vp);
 }
 
 /*
@@ -1116,11 +1128,14 @@ vgonel(struct vnode *vp, struct proc *p)
 	 * If a vgone (or vclean) is already in progress,
 	 * wait until it is done and return.
 	 */
-	if (vp->v_flag & VXLOCK) {
-		vp->v_flag |= VXWANT;
-		tsleep_nsec(vp, PINOD, "vgone", INFSLP);
+	mtx_enter(&vnode_mtx);
+	if (vp->v_lflag & VXLOCK) {
+		vp->v_lflag |= VXWANT;
+		msleep_nsec(vp, &vnode_mtx, PINOD, "vgone", INFSLP);
+		mtx_leave(&vnode_mtx);
 		return;
 	}
+	mtx_leave(&vnode_mtx);
 
 	/*
 	 * Clean out the filesystem specific data.
@@ -1275,9 +1290,9 @@ vprint(char *label, struct vnode *vp)
 		strlcat(buf, "|VTEXT", sizeof buf);
 	if (vp->v_flag & VSYSTEM)
 		strlcat(buf, "|VSYSTEM", sizeof buf);
-	if (vp->v_flag & VXLOCK)
+	if (vp->v_lflag & VXLOCK)
 		strlcat(buf, "|VXLOCK", sizeof buf);
-	if (vp->v_flag & VXWANT)
+	if (vp->v_lflag & VXWANT)
 		strlcat(buf, "|VXWANT", sizeof buf);
 	if (vp->v_bioflag & VBIOWAIT)
 		strlcat(buf, "|VBIOWAIT", sizeof buf);

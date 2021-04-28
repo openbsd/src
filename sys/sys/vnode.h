@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.156 2020/04/08 08:07:52 mpi Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.157 2021/04/28 09:53:53 claudio Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -85,18 +85,24 @@ RBT_HEAD(buf_rb_bufs, buf);
 struct namecache;
 RBT_HEAD(namecache_rb_cache, namecache);
 
+/*
+ * Locks used to protect struct members in struct vnode:
+ *	a	atomic
+ *	V	vnode_mtx
+ */
 struct uvm_vnode;
 struct vnode {
-	struct uvm_vnode *v_uvm;		/* uvm data */
-	const struct vops *v_op;		/* vnode operations vector */
-	enum	vtype v_type;			/* vnode type */
-	enum	vtagtype v_tag;			/* type of underlying data */
-	u_int	v_flag;				/* vnode flags (see below) */
-	u_int   v_usecount;			/* reference count of users */
-	u_int   v_uvcount;			/* unveil references */
-	/* reference count of writers */
-	u_int   v_writecount;
-	u_int	v_lockcount;			/* # threads waiting on lock */
+	struct uvm_vnode *v_uvm;	/* uvm data */
+	const struct vops *v_op;	/* vnode operations vector */
+	enum	vtype v_type;		/* vnode type */
+	enum	vtagtype v_tag;		/* type of underlying data */
+	u_int	v_flag;			/* vnode flags (see below) */
+	u_int	v_lflag;		/* [V] lock vnode flags */
+	u_int   v_usecount;		/* reference count of users */
+	u_int   v_uvcount;		/* unveil references */
+	u_int   v_writecount;		/* reference count of writers */
+	u_int	v_lockcount;		/* [V] # threads waiting on lock */
+
 	/* Flags that can be read/written in interrupts */
 	u_int   v_bioflag;
 	u_int   v_holdcnt;			/* buffer references */
@@ -255,6 +261,7 @@ extern	int initialvnodes;		/* XXX number of vnodes to start */
 extern	int maxvnodes;			/* XXX number of vnodes to allocate */
 extern	int syncdelay;			/* seconds to delay syncing vnodes */
 extern	int rushjob;			/* # of slots syncer should run ASAP */
+extern	struct mutex vnode_mtx;
 extern void    vhold(struct vnode *);
 extern void    vdrop(struct vnode *);
 
