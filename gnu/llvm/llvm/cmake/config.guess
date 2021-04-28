@@ -973,6 +973,30 @@ EOF
     ppc:Linux:*:*)
 	echo powerpc-unknown-linux-gnu
 	exit ;;
+    riscv32:Linux:*:* | riscv64:Linux:*:*)
+	LIBC=gnu
+	eval $set_cc_for_build
+	# Do not check for __GLIBC__ because uclibc defines it too
+	sed 's/^	//' << EOF >$dummy.c
+	#include <features.h>
+	#if defined(__UCLIBC__)
+	LIBC=uclibc
+	#elif defined(__dietlibc__)
+	LIBC=dietlibc
+	#endif
+EOF
+	eval `$CC_FOR_BUILD -E $dummy.c 2>/dev/null | grep '^LIBC'`
+
+	# There is no features test macro for musl
+	# Follow the GNU's config.guess approach of
+	# checking the output of ldd
+	if command -v ldd >/dev/null && \
+		ldd --version 2>&1 | grep -q ^musl; then
+	    LIBC=musl
+	fi
+
+	echo ${UNAME_MACHINE}-unknown-linux-${LIBC}
+	exit ;;
     s390:Linux:*:* | s390x:Linux:*:*)
 	echo ${UNAME_MACHINE}-ibm-linux
 	exit ;;
@@ -1238,6 +1262,23 @@ EOF
 		  then
 		      UNAME_PROCESSOR="x86_64"
 		  fi
+		fi ;;
+		arm)
+		eval $set_cc_for_build
+		if [ "$CC_FOR_BUILD" != 'no_compiler_found' ]; then
+			if (echo '#ifdef __LP64__'; echo IS_64BIT_ARCH; echo '#endif') | \
+				(CCOPTS= $CC_FOR_BUILD -E - 2>/dev/null) | \
+				grep IS_64BIT_ARCH >/dev/null
+			then
+				if (echo '#ifdef __PTRAUTH_INTRINSICS__'; echo HAS_AUTH; echo '#endif') | \
+					(CCOPTS= $CC_FOR_BUILD -E - 2>/dev/null) | \
+					grep HAS_AUTH >/dev/null
+				then
+					UNAME_PROCESSOR="arm64e"
+				else
+					UNAME_PROCESSOR="arm64"
+				fi
+			fi
 		fi ;;
 	    unknown) UNAME_PROCESSOR=powerpc ;;
 	esac

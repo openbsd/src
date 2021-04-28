@@ -23,7 +23,7 @@ template("write_lit_cfg") {
       "LLVM_RUNTIME_OUTPUT_INTDIR=" + rebase_path("$root_out_dir/bin"),
       "LLVM_SOURCE_DIR=" + rebase_path("//llvm"),
       "LLVM_TOOLS_DIR=" + rebase_path("$root_out_dir/bin"),
-      "PYTHON_EXECUTABLE=$python_path",
+      "Python3_EXECUTABLE=$python_path",
       "TARGET_TRIPLE=$llvm_target_triple",
     ]
     values += invoker.extra_values
@@ -85,6 +85,7 @@ group("test") {
     "//llvm/tools/llvm-cvtres",
     "//llvm/tools/llvm-dis",
     "//llvm/tools/llvm-dwarfdump",
+    "//llvm/tools/llvm-lipo",
     "//llvm/tools/llvm-mc",
     "//llvm/tools/llvm-nm:symlinks",
     "//llvm/tools/llvm-objcopy:symlinks",
@@ -110,24 +111,16 @@ action("check-lld") {
   }
   args = [
     "-sv",
-    "--param",
-    "lld_site_config=" + rebase_path(lld_lit_site_cfg_file, root_out_dir),
-    "--param",
-    "lld_unit_site_config=" +
-        rebase_path(lld_lit_unit_site_cfg_file, root_out_dir),
     rebase_path(".", root_out_dir),
   ]
-  outputs = [
-    "$target_gen_dir/run-lit",  # Non-existing, so that ninja runs it each time.
-  ]
+  outputs = [ "$target_gen_dir/run-lit" ]  # Non-existing, so that ninja runs it
+                                           # each time.
 
   # Since check-lld is always dirty, //:default doesn't depend on it so that
   # it's not part of the default ninja target.  Hence, check-lld shouldn't
   # have any deps except :test, so that the default target is sure to build
   # all the deps.
-  deps = [
-    ":test",
-  ]
+  deps = [ ":test" ]
   testonly = true
 
   pool = "//:console"

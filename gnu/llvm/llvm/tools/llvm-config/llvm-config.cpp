@@ -361,7 +361,7 @@ int main(int argc, char **argv) {
     ActiveIncludeDir = ActivePrefix + "/include";
     SmallString<256> path(StringRef(LLVM_TOOLS_INSTALL_DIR));
     sys::fs::make_absolute(ActivePrefix, path);
-    ActiveBinDir = path.str();
+    ActiveBinDir = std::string(path.str());
     ActiveLibDir = ActivePrefix + "/lib" + LLVM_LIBDIR_SUFFIX;
     ActiveCMakeDir = ActiveLibDir + "/cmake/llvm";
     ActiveIncludeOption = "-I" + ActiveIncludeDir;
@@ -375,7 +375,8 @@ int main(int argc, char **argv) {
   /// in the first place. This can't be done at configure/build time.
 
   StringRef SharedExt, SharedVersionedExt, SharedDir, SharedPrefix, StaticExt,
-      StaticPrefix, StaticDir = "lib", DirSep = "/";
+      StaticPrefix, StaticDir = "lib";
+  std::string DirSep = "/";
   const Triple HostTriple(Triple::normalize(LLVM_HOST_TRIPLE));
   if (HostTriple.isOSWindows()) {
     SharedExt = "dll";
@@ -402,12 +403,6 @@ int main(int argc, char **argv) {
     StaticExt = "a";
     StaticDir = SharedDir = ActiveLibDir;
     StaticPrefix = SharedPrefix = "lib";
-  } else if (HostTriple.isOSOpenBSD()) {
-    SharedExt = "so";
-    SharedVersionedExt = ".so" ;
-    StaticExt = "a";
-    StaticDir = SharedDir = ActiveLibDir;
-    StaticPrefix = SharedPrefix = "lib";
   } else {
     // default to the unix values:
     SharedExt = "so";
@@ -424,7 +419,7 @@ int main(int argc, char **argv) {
 
   bool DyLibExists = false;
   const std::string DyLibName =
-      (SharedPrefix + "LLVM" + SharedVersionedExt).str();
+      (SharedPrefix + "LLVM-" + SharedVersionedExt).str();
 
   // If LLVM_LINK_DYLIB is ON, the single shared library will be returned
   // for "--libs", etc, if they exist. This behaviour can be overridden with
@@ -436,12 +431,7 @@ int main(int argc, char **argv) {
     if (DirSep == "\\") {
       std::replace(path.begin(), path.end(), '/', '\\');
     }
-    // path does not include major.minor
-    if (HostTriple.isOSOpenBSD()) {
-      DyLibExists = true;
-    } else {
-      DyLibExists = sys::fs::exists(path);
-    }
+    DyLibExists = sys::fs::exists(path);
     if (!DyLibExists) {
       // The shared library does not exist: don't error unless the user
       // explicitly passes --link-shared.
@@ -483,7 +473,7 @@ int main(int argc, char **argv) {
         // already has the necessary prefix and suffix (e.g. `.so`) added so
         // just return it unmodified.
         assert(Lib.endswith(SharedExt) && "DyLib is missing suffix");
-        LibFileName = Lib;
+        LibFileName = std::string(Lib);
       } else {
         LibFileName = (SharedPrefix + Lib + "." + SharedExt).str();
       }

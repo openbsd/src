@@ -255,8 +255,8 @@ int RegAllocFast::getStackSpaceFor(Register VirtReg) {
   // Allocate a new stack object for this spill location...
   const TargetRegisterClass &RC = *MRI->getRegClass(VirtReg);
   unsigned Size = TRI->getSpillSize(RC);
-  unsigned Align = TRI->getSpillAlignment(RC);
-  int FrameIdx = MFI->CreateSpillStackObject(Size, Align);
+  Align Alignment = TRI->getSpillAlign(RC);
+  int FrameIdx = MFI->CreateSpillStackObject(Size, Alignment);
 
   // Assign the slot.
   StackSlotForVirtReg[VirtReg] = FrameIdx;
@@ -1209,7 +1209,7 @@ void RegAllocFast::allocateInstruction(MachineInstr &MI) {
 }
 
 void RegAllocFast::handleDebugValue(MachineInstr &MI) {
-  MachineOperand &MO = MI.getOperand(0);
+  MachineOperand &MO = MI.getDebugOperand(0);
 
   // Ignore DBG_VALUEs that aren't based on virtual registers. These are
   // mostly constants and frame indices.

@@ -48,7 +48,11 @@ Requesting a review via the web interface
 The tool to create and review patches in Phabricator is called
 *Differential*.
 
-Note that you can upload patches created through git.
+Note that you can upload patches created through git, but using `arc` on the
+command line (see previous section) is prefered: it adds more metadata to
+Phabricator which are useful for the pre-merge testing system and for
+propagating attribution on commits when someone else has to push it for you.
+
 To make reviews easier, please always include **as much context as
 possible** with your diff! Don't worry, Phabricator
 will automatically send a diff with a smaller context in the review
@@ -59,7 +63,8 @@ To get a full diff, use one of the following commands (or just use Arcanist
 to upload your patch):
 
 * ``git show HEAD -U999999 > mypatch.patch``
-* ``git format-patch -U999999 @{u}``
+* ``git diff -U999999 @{u} > mypatch.patch``
+* ``git diff HEAD~1 -U999999 > mypatch.patch``
 
 Before uploading your patch, please make sure it is formatted properly, as
 described in :ref:`How to Submit a Patch <format patches>`.
@@ -77,8 +82,7 @@ To upload a new patch:
 * Add reviewers (see below for advice). (If you set the Repository field
   correctly, llvm-commits or cfe-commits will be subscribed automatically;
   otherwise, you will have to manually subscribe them.)
-* In the Repository field, enter the name of the project (LLVM, Clang,
-  etc.) to which the review should be sent.
+* In the Repository field, enter "rG LLVM Github Monorepo".
 * Click *Save*.
 
 To submit an updated patch:
@@ -169,7 +173,7 @@ yourself.
 Using the Arcanist tool can simplify the process of committing reviewed code as
 it will retrieve reviewers, the ``Differential Revision``, etc from the review
 and place it in the commit message. You may also commit an accepted change
-directly using ``git llvm push``, per the section in the :ref:`getting started
+directly using ``git push``, per the section in the :ref:`getting started
 guide <commit_from_git>`.
 
 Note that if you commit the change without using Arcanist and forget to add the
@@ -177,6 +181,13 @@ Note that if you commit the change without using Arcanist and forget to add the
 that you close the review manually. In the web UI, under "Leap Into Action" put
 the git revision number in the Comment, set the Action to "Close Revision" and
 click Submit.  Note the review must have been Accepted first.
+
+Arcanist also adds extra tags that are mostly noise in the commit message, for
+this reason avoid using `arc land` and push commits to master directly with git
+after removing tags other than "Reviewed by" and "Differential Revision".
+You can run `llvm/utils/git/arcfilter.sh` to clean the commit message of the
+current "HEAD" commit automatically. You can also setup a git hook to catch this
+for you (see `Getting Started <GettingStarted.html#git-pre-push-hook>`).
 
 
 Committing someone's change from Phabricator
@@ -194,22 +205,23 @@ This will create a new branch called ``arcpatch-D<Revision>`` based on the
 current ``master`` and will create a commit corresponding to ``D<Revision>`` with a
 commit message derived from information in the Phabricator review.
 
-Check you are happy with the commit message and amend it if necessary. Then,
-make sure the commit is up-to-date, and commit it. This can be done by running
+Check you are happy with the commit message and amend it if necessary.
+For example, ensure the 'Author' property of the commit is set to the original author.
+You can use a command to correct the author property if it is incorrect:
+
+::
+
+  git commit --amend --author="John Doe <jdoe@llvm.org>"
+
+Then, make sure the commit is up-to-date, and commit it. This can be done by running
 the following:
 
 ::
 
-  git pull --rebase origin master
+  git pull --rebase https://github.com/llvm/llvm-project.git master
   git show # Ensure the patch looks correct.
   ninja check-$whatever # Rerun the appropriate tests if needed.
-  git llvm push
-
-Or
-
-::
-
-  arc land D<Revision>
+  git push https://github.com/llvm/llvm-project.git HEAD:master
 
 
 Abandoning a change

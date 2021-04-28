@@ -27,9 +27,9 @@ set python64_dir=C:\Users\%USERNAME%\AppData\Local\Programs\Python\Python36
 for /f "usebackq" %%i in (`PowerShell ^(Get-Date^).ToString^('yyyyMMdd'^)`) do set datestamp=%%i
 
 set revision=%1
-set package_version=10.0.1-%revision%
-set clang_format_vs_version=10.0.1.%datestamp%
-set build_dir=llvm_package_%revision%
+set package_version=11.1.0-%revision:~0,8%
+set clang_format_vs_version=11.1.0.%datestamp%
+set build_dir=llvm_package_%revision:~0,8%
 
 echo Revision: %revision%
 echo Package version: %package_version%

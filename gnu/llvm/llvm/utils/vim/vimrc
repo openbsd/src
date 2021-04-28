@@ -1,5 +1,5 @@
 " LLVM coding guidelines conformance for VIM
-" $Revision: 1.1.1.2 $
+" $Revision$
 "
 " Maintainer: The LLVM Team, http://llvm.org
 " WARNING:    Read before you source in all these commands and macros!  Some

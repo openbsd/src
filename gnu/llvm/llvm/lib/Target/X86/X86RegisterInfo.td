@@ -265,6 +265,16 @@ let SubRegIndices = [sub_ymm] in {
   }
 }
 
+// Tile "registers".
+def TMM0:  X86Reg<"tmm0",   0>;
+def TMM1:  X86Reg<"tmm1",   1>;
+def TMM2:  X86Reg<"tmm2",   2>;
+def TMM3:  X86Reg<"tmm3",   3>;
+def TMM4:  X86Reg<"tmm4",   4>;
+def TMM5:  X86Reg<"tmm5",   5>;
+def TMM6:  X86Reg<"tmm6",   6>;
+def TMM7:  X86Reg<"tmm7",   7>;
+
 // Mask Registers, used by AVX-512 instructions.
 def K0 : X86Reg<"k0", 0>, DwarfRegNum<[118,  93,  93]>;
 def K1 : X86Reg<"k1", 1>, DwarfRegNum<[119,  94,  94]>;
@@ -411,8 +421,8 @@ def GRH16 : RegisterClass<"X86", [i16], 16,
                                R15WH)>;
 
 def GR32 : RegisterClass<"X86", [i32], 32,
-                         (add EAX, ECX, EDX, ESI, EDI,
-                              R8D, R9D, R10D, R11D, R14D, R15D, R12D, R13D, EBX, EBP, ESP)>;
+                         (add EAX, ECX, EDX, ESI, EDI, EBX, EBP, ESP,
+                              R8D, R9D, R10D, R11D, R14D, R15D, R12D, R13D)>;
 
 // GR64 - 64-bit GPRs. This oddly includes RIP, which isn't accurate, since
 // RIP isn't really a register and it can't be used anywhere except in an
@@ -421,7 +431,7 @@ def GR32 : RegisterClass<"X86", [i32], 32,
 // tests because of the inclusion of RIP in this register class.
 def GR64 : RegisterClass<"X86", [i64], 64,
                          (add RAX, RCX, RDX, RSI, RDI, R8, R9, R10, R11,
-                              R14, R15, R12, R13, RBX, RBP, RSP, RIP)>;
+                              RBX, R14, R15, R12, R13, RBP, RSP, RIP)>;
 
 // Segment registers for use by MOV instructions (and others) that have a
 //   segment register as one operand.  Always contain a 16-bit segment
@@ -498,7 +508,7 @@ def GR64_NOREX_NOSP : RegisterClass<"X86", [i64], 64,
 // which we do not have right now.
 def LOW32_ADDR_ACCESS : RegisterClass<"X86", [i32], 32, (add GR32, RIP)>;
 
-// When RBP is used as a base pointer in a 32-bit addresses environement,
+// When RBP is used as a base pointer in a 32-bit addresses environment,
 // this is also safe to use the full register to access addresses.
 // Since RBP will never be spilled, stick to a 32 alignment to save
 // on memory consumption.
@@ -621,3 +631,8 @@ def VK64WM  : RegisterClass<"X86", [v64i1], 64, (add VK32WM)> {let Size = 64;}
 
 // Bound registers
 def BNDR : RegisterClass<"X86", [v2i64], 128, (sequence "BND%u", 0, 3)>;
+
+// Tiles
+let isAllocatable = 0 in
+def TILE : RegisterClass<"X86", [untyped], 0,
+                         (sequence "TMM%u", 0, 7)> {let Size = 8192;}

@@ -35,21 +35,23 @@ static const MCPhysReg DRegList[] = {AArch64::D0, AArch64::D1, AArch64::D2,
 static const MCPhysReg QRegList[] = {AArch64::Q0, AArch64::Q1, AArch64::Q2,
                                      AArch64::Q3, AArch64::Q4, AArch64::Q5,
                                      AArch64::Q6, AArch64::Q7};
+static const MCPhysReg ZRegList[] = {AArch64::Z0, AArch64::Z1, AArch64::Z2,
+                                     AArch64::Z3, AArch64::Z4, AArch64::Z5,
+                                     AArch64::Z6, AArch64::Z7};
 
 static bool finishStackBlock(SmallVectorImpl<CCValAssign> &PendingMembers,
                              MVT LocVT, ISD::ArgFlagsTy &ArgFlags,
-                             CCState &State, unsigned SlotAlign) {
+                             CCState &State, Align SlotAlign) {
   unsigned Size = LocVT.getSizeInBits() / 8;
   const Align StackAlign =
       State.getMachineFunction().getDataLayout().getStackAlignment();
-  const Align OrigAlign(ArgFlags.getOrigAlign());
-  const Align Align = std::min(OrigAlign, StackAlign);
+  const Align OrigAlign = ArgFlags.getNonZeroOrigAlign();
+  const Align Alignment = std::min(OrigAlign, StackAlign);
 
   for (auto &It : PendingMembers) {
-    It.convertToMem(State.AllocateStack(
-        Size, std::max((unsigned)Align.value(), SlotAlign)));
+    It.convertToMem(State.AllocateStack(Size, std::max(Alignment, SlotAlign)));
     State.addLoc(It);
-    SlotAlign = 1;
+    SlotAlign = Align(1);
   }
 
   // All pending members have now been allocated
@@ -72,7 +74,7 @@ static bool CC_AArch64_Custom_Stack_Block(
   if (!ArgFlags.isInConsecutiveRegsLast())
     return true;
 
-  return finishStackBlock(PendingMembers, LocVT, ArgFlags, State, 8);
+  return finishStackBlock(PendingMembers, LocVT, ArgFlags, State, Align(8));
 }
 
 /// Given an [N x Ty] block, it should be passed in a consecutive sequence of
@@ -98,6 +100,8 @@ static bool CC_AArch64_Custom_Block(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
     RegList = DRegList;
   else if (LocVT.SimpleTy == MVT::f128 || LocVT.is128BitVector())
     RegList = QRegList;
+  else if (LocVT.isScalableVector())
+    RegList = ZRegList;
   else {
     // Not an array we want to split up after all.
     return false;
@@ -142,11 +146,15 @@ static bool CC_AArch64_Custom_Block(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
     return true;
   }
 
+  if (LocVT.isScalableVector())
+    report_fatal_error(
+        "Passing consecutive scalable vector registers unsupported");
+
   // Mark all regs in the class as unavailable
   for (auto Reg : RegList)
     State.AllocateReg(Reg);
 
-  unsigned SlotAlign = Subtarget.isTargetDarwin() ? 1 : 8;
+  const Align SlotAlign = Subtarget.isTargetDarwin() ? Align(1) : Align(8);
 
   return finishStackBlock(PendingMembers, LocVT, ArgFlags, State, SlotAlign);
 }

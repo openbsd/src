@@ -14,6 +14,21 @@ from math import ceil
 from collections import OrderedDict
 from subprocess import Popen, PIPE
 
+# Initialize the plot.
+def init_plot(plt):
+  plt.title('Debug Location Statistics', fontweight='bold')
+  plt.xlabel('location buckets')
+  plt.ylabel('number of variables in the location buckets')
+  plt.xticks(rotation=45, fontsize='x-small')
+  plt.yticks()
+
+# Finalize the plot.
+def finish_plot(plt):
+  plt.legend()
+  plt.grid(color='grey', which='major', axis='y', linestyle='-', linewidth=0.3)
+  plt.savefig('locstats.png')
+  print('The plot was saved within "locstats.png".')
+
 # Holds the debug location statistics.
 class LocationStats:
   def __init__(self, file_name, variables_total, variables_total_locstats,
@@ -73,24 +88,14 @@ class LocationStats:
 
   # Draw a plot representing the location buckets.
   def draw_plot(self):
-    try:
-      import matplotlib
-    except ImportError:
-      print('error: matplotlib not found.')
-      sys.exit(1)
-
     from matplotlib import pyplot as plt
 
     buckets = range(len(self.variables_coverage_map))
     plt.figure(figsize=(12, 8))
-    plt.title('Debug Location Statistics', fontweight='bold')
-    plt.xlabel('location buckets')
-    plt.ylabel('number of variables in the location buckets')
+    init_plot(plt)
     plt.bar(buckets, self.variables_coverage_map.values(), align='center',
             tick_label=self.variables_coverage_map.keys(),
             label='variables of {}'.format(self.file_name))
-    plt.xticks(rotation=45, fontsize='x-small')
-    plt.yticks()
 
     # Place the text box with the coverage info.
     pc_ranges_covered = self.get_pc_coverage()
@@ -98,11 +103,49 @@ class LocationStats:
     plt.text(0.02, 0.90, 'PC ranges covered: {}%'.format(pc_ranges_covered),
              transform=plt.gca().transAxes, fontsize=12,
              verticalalignment='top', bbox=props)
-    plt.legend()
-    plt.grid(color='grey', which='major', axis='y', linestyle='-', linewidth=0.3)
 
-    plt.savefig('locstats.png')
-    print('The plot was saved within "locstats.png".')
+    finish_plot(plt)
+
+  # Compare the two LocationStats objects and draw a plot showing
+  # the difference.
+  def draw_location_diff(self, locstats_to_compare):
+    from matplotlib import pyplot as plt
+
+    pc_ranges_covered = self.get_pc_coverage()
+    pc_ranges_covered_to_compare = locstats_to_compare.get_pc_coverage()
+
+    buckets = range(len(self.variables_coverage_map))
+    buckets_to_compare = range(len(locstats_to_compare.variables_coverage_map))
+
+    fig = plt.figure(figsize=(12, 8))
+    ax = fig.add_subplot(111)
+    init_plot(plt)
+
+    comparison_keys = list(coverage_buckets())
+    ax.bar(buckets, self.variables_coverage_map.values(), align='edge',
+           width=0.4,
+           label='variables of {}'.format(self.file_name))
+    ax.bar(buckets_to_compare,
+           locstats_to_compare.variables_coverage_map.values(),
+           color='r', align='edge', width=-0.4,
+           label='variables of {}'.format(locstats_to_compare.file_name))
+    ax.set_xticks(range(len(comparison_keys)))
+    ax.set_xticklabels(comparison_keys)
+
+    props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+    plt.text(0.02, 0.88,
+             '{} PC ranges covered: {}%'. \
+             format(self.file_name, pc_ranges_covered),
+             transform=plt.gca().transAxes, fontsize=12,
+             verticalalignment='top', bbox=props)
+    plt.text(0.02, 0.83,
+             '{} PC ranges covered: {}%'. \
+             format(locstats_to_compare.file_name,
+                    pc_ranges_covered_to_compare),
+             transform=plt.gca().transAxes, fontsize=12,
+             verticalalignment='top', bbox=props)
+
+    finish_plot(plt)
 
 # Define the location buckets.
 def coverage_buckets():
@@ -145,74 +188,85 @@ def parse_locstats(opts, binary):
     print ('error: No valid llvm-dwarfdump statistics found.')
     sys.exit(1)
 
+  # TODO: Parse the statistics Version from JSON.
+
   if opts.only_variables:
     # Read the JSON only for local variables.
     variables_total_locstats = \
-      json_parsed['total vars procesed by location statistics']
+      json_parsed['#local vars processed by location statistics']
     variables_scope_bytes_covered = \
-      json_parsed['vars scope bytes covered']
+      json_parsed['sum_all_local_vars(#bytes in parent scope covered' \
+                  ' by DW_AT_location)']
     variables_scope_bytes = \
-      json_parsed['vars scope bytes total']
+      json_parsed['sum_all_local_vars(#bytes in parent scope)']
     if not opts.ignore_debug_entry_values:
       for cov_bucket in coverage_buckets():
-        cov_category = "vars with {} of its scope covered".format(cov_bucket)
+        cov_category = "#local vars with {} of parent scope covered " \
+                       "by DW_AT_location".format(cov_bucket)
         variables_coverage_map[cov_bucket] = json_parsed[cov_category]
     else:
       variables_scope_bytes_entry_values = \
-        json_parsed['vars entry value scope bytes covered']
+        json_parsed['sum_all_local_vars(#bytes in parent scope ' \
+                    'covered by DW_OP_entry_value)']
       variables_scope_bytes_covered = variables_scope_bytes_covered \
          - variables_scope_bytes_entry_values
       for cov_bucket in coverage_buckets():
         cov_category = \
-          "vars (excluding the debug entry values) " \
-          "with {} of its scope covered".format(cov_bucket)
+          "#local vars - entry values with {} of parent scope " \
+          "covered by DW_AT_location".format(cov_bucket)
         variables_coverage_map[cov_bucket] = json_parsed[cov_category]
   elif opts.only_formal_parameters:
     # Read the JSON only for formal parameters.
     variables_total_locstats = \
-      json_parsed['total params procesed by location statistics']
+      json_parsed['#params processed by location statistics']
     variables_scope_bytes_covered = \
-      json_parsed['formal params scope bytes covered']
+      json_parsed['sum_all_params(#bytes in parent scope covered ' \
+                  'by DW_AT_location)']
     variables_scope_bytes = \
-      json_parsed['formal params scope bytes total']
+      json_parsed['sum_all_params(#bytes in parent scope)']
     if not opts.ignore_debug_entry_values:
       for cov_bucket in coverage_buckets():
-        cov_category = "params with {} of its scope covered".format(cov_bucket)
+        cov_category = "#params with {} of parent scope covered " \
+                       "by DW_AT_location".format(cov_bucket)
         variables_coverage_map[cov_bucket] = json_parsed[cov_category]
     else:
       variables_scope_bytes_entry_values = \
-        json_parsed['formal params entry value scope bytes covered']
+        json_parsed['sum_all_params(#bytes in parent scope covered ' \
+                    'by DW_OP_entry_value)']
       variables_scope_bytes_covered = variables_scope_bytes_covered \
         - variables_scope_bytes_entry_values
       for cov_bucket in coverage_buckets():
         cov_category = \
-          "params (excluding the debug entry values) " \
-          "with {} of its scope covered".format(cov_bucket)
+          "#params - entry values with {} of parent scope covered" \
+          " by DW_AT_location".format(cov_bucket)
         variables_coverage_map[cov_bucket] = json_parsed[cov_category]
   else:
     # Read the JSON for both local variables and formal parameters.
     variables_total = \
-      json_parsed['source variables']
-    variables_with_loc = json_parsed['variables with location']
+      json_parsed['#source variables']
+    variables_with_loc = json_parsed['#source variables with location']
     variables_total_locstats = \
-      json_parsed['total variables procesed by location statistics']
+      json_parsed['#variables processed by location statistics']
     variables_scope_bytes_covered = \
-      json_parsed['scope bytes covered']
+      json_parsed['sum_all_variables(#bytes in parent scope covered ' \
+                  'by DW_AT_location)']
     variables_scope_bytes = \
-      json_parsed['scope bytes total']
+      json_parsed['sum_all_variables(#bytes in parent scope)']
     if not opts.ignore_debug_entry_values:
       for cov_bucket in coverage_buckets():
-        cov_category = "variables with {} of its scope covered". \
-                       format(cov_bucket)
+        cov_category = "#variables with {} of parent scope covered " \
+                       "by DW_AT_location".format(cov_bucket)
         variables_coverage_map[cov_bucket] = json_parsed[cov_category]
     else:
       variables_scope_bytes_entry_values = \
-        json_parsed['entry value scope bytes covered']
+        json_parsed['sum_all_variables(#bytes in parent scope covered ' \
+                    'by DW_OP_entry_value)']
       variables_scope_bytes_covered = variables_scope_bytes_covered \
         - variables_scope_bytes_entry_values
       for cov_bucket in coverage_buckets():
-        cov_category = "variables (excluding the debug entry values) " \
-                       "with {} of its scope covered". format(cov_bucket)
+        cov_category = \
+          "#variables - entry values with {} of parent scope covered " \
+          "by DW_AT_location".format(cov_bucket)
         variables_coverage_map[cov_bucket] = json_parsed[cov_category]
 
   return LocationStats(binary, variables_total, variables_total_locstats,
@@ -233,7 +287,11 @@ def parse_program_args(parser):
   parser.add_argument('--draw-plot', action='store_true', default=False,
             help='show histogram of location buckets generated (requires '
                  'matplotlib)')
-  parser.add_argument('file_name', type=str, help='file to process')
+  parser.add_argument('--compare', action='store_true', default=False,
+            help='compare the debug location coverage on two files provided, '
+                 'and draw a plot showing the difference  (requires '
+                 'matplotlib)')
+  parser.add_argument('file_names', nargs='+', type=str, help='file to process')
 
   return parser.parse_args()
 
@@ -247,6 +305,21 @@ def verify_program_inputs(opts):
     print ('error: Please use just one --only* option.')
     return False
 
+  if not opts.compare and len(opts.file_names) != 1:
+    print ('error: Please specify only one file to process.')
+    return False
+
+  if opts.compare and len(opts.file_names) != 2:
+    print ('error: Please specify two files to process.')
+    return False
+
+  if opts.draw_plot or opts.compare:
+    try:
+      import matplotlib
+    except ImportError:
+      print('error: matplotlib not found.')
+      return False
+
   return True
 
 def Main():
@@ -257,16 +330,23 @@ def Main():
     parser.print_help()
     sys.exit(1)
 
-  binary = opts.file_name
-  locstats = parse_locstats(opts, binary)
+  binary_file = opts.file_names[0]
+  locstats = parse_locstats(opts, binary_file)
 
-  if opts.draw_plot:
-    # Draw a histogram representing the location buckets.
-    locstats.draw_plot()
+  if not opts.compare:
+    if opts.draw_plot:
+      # Draw a histogram representing the location buckets.
+      locstats.draw_plot()
+    else:
+      # Pretty print collected info on the standard output.
+      if locstats.pretty_print() == -1:
+        sys.exit(0)
   else:
-    # Pretty print collected info on the standard output.
-    if locstats.pretty_print() == -1:
-      sys.exit(0)
+    binary_file_to_compare = opts.file_names[1]
+    locstats_to_compare = parse_locstats(opts, binary_file_to_compare)
+    # Draw a plot showing the difference in debug location coverage between
+    # two files.
+    locstats.draw_location_diff(locstats_to_compare)
 
 if __name__ == '__main__':
   Main()
