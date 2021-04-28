@@ -439,6 +439,7 @@
 ./usr/bin/lam
 ./usr/bin/last
 ./usr/bin/lastcomm
+./usr/bin/ld
 ./usr/bin/ldap
 ./usr/bin/ldd
 ./usr/bin/leave
@@ -2802,6 +2803,7 @@
 ./usr/share/man/man4/macppc
 ./usr/share/man/man4/octeon
 ./usr/share/man/man4/powerpc64
+./usr/share/man/man4/riscv64
 ./usr/share/man/man4/sgi
 ./usr/share/man/man4/sparc64
 ./usr/share/man/man5
@@ -2824,6 +2826,7 @@
 ./usr/share/man/man8/macppc
 ./usr/share/man/man8/octeon
 ./usr/share/man/man8/powerpc64
+./usr/share/man/man8/riscv64
 ./usr/share/man/man8/sgi
 ./usr/share/man/man8/sparc64
 ./usr/share/man/man8/user.8
@@ -6360,4 +6363,3 @@
 ./var/yp/Makefile.yp
 ./var/yp/Makefile.yp.dist
 ./var/yp/README
-./usr/bin/ld
