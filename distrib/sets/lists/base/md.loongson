@@ -44,7 +44,7 @@
 ./usr/lib/crtbeginS.o
 ./usr/lib/crtend.o
 ./usr/lib/crtendS.o
-./usr/lib/libLLVM.so.4.0
+./usr/lib/libLLVM.so.5.0
 ./usr/lib/libc++.so.7.0
 ./usr/lib/libc++abi.so.5.0
 ./usr/lib/libcompiler_rt.a

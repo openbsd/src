@@ -78,7 +78,7 @@
 ./usr/lib/gcc-lib/mips64-unknown-openbsd6.9/4.2.1/collect2
 ./usr/lib/gcc-lib/mips64-unknown-openbsd6.9/4.2.1/libgcc.a
 ./usr/lib/gcc-lib/mips64-unknown-openbsd6.9/4.2.1/specs
-./usr/lib/libLLVM.so.4.0
+./usr/lib/libLLVM.so.5.0
 ./usr/lib/libc++.so.7.0
 ./usr/lib/libc++abi.so.5.0
 ./usr/lib/libcompiler_rt.a
