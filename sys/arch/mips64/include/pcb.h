@@ -1,4 +1,4 @@
-/*      $OpenBSD: pcb.h,v 1.8 2016/03/06 19:42:27 mpi Exp $	*/
+/*      $OpenBSD: pcb.h,v 1.9 2021/04/29 12:49:19 visa Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,6 +48,7 @@
 struct pcb {
 	struct trapframe pcb_regs;	/* saved CPU and registers */
 	struct {
+		/* val[12] is unused, was RM7000 ICR */
 		register_t val[13];
 	} pcb_context;			/* kernel context for resume */
 	int	pcb_onfault;		/* for copyin/copyout faults */

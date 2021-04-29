@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.39 2019/12/20 13:34:41 visa Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.40 2021/04/29 12:49:19 visa Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -124,12 +124,9 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 	/*
 	 * Copy the process control block to the new proc and
 	 * create a clean stack for exit through trampoline.
-	 * pcb_context has s0-s7, sp, s8, ra, sr, icr.
+	 * pcb_context has s0-s7, sp, s8, ra, sr.
 	 */
 	if (p1 != curproc) {
-#ifdef RM7000_ICR
-		pcb->pcb_context.val[12] = (idle_mask << 8) & IC_INT_MASK;
-#endif
 		pcb->pcb_context.val[11] = (pcb->pcb_regs.sr & ~SR_INT_MASK) |
 		    (idle_mask & SR_INT_MASK);
 	}

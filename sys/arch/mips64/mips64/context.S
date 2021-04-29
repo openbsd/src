@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.61 2019/08/21 16:14:34 visa Exp $ */
+/*	$OpenBSD: context.S,v 1.62 2021/04/29 12:49:19 visa Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -62,10 +62,6 @@ LEAF(savectx, 0)
 	REG_S	s8, PCB_CONTEXT+9*REGSZ(a0)
 	REG_S	ra, PCB_CONTEXT+10*REGSZ(a0)
 	REG_S	v0, PCB_CONTEXT+11*REGSZ(a0)
-#ifdef RM7000_ICR
-	cfc0	t1, COP_0_ICR
-	REG_S	t1, PCB_CONTEXT+12*REGSZ(a0)	# save status register
-#endif
 	j	ra
 	 move	v0, zero
 END(savectx)
@@ -146,10 +142,6 @@ NON_LEAF(cpu_switchto_asm, FRAMESZ(CF_SZ), ra)
 	REG_S	s8, PCB_CONTEXT+9*REGSZ(t3)
 	REG_S	ra, PCB_CONTEXT+10*REGSZ(t3)
 	REG_S	v0, PCB_CONTEXT+11*REGSZ(t3)
-#ifdef RM7000_ICR
-	cfc0	t1, COP_0_ICR
-	REG_S	t1, PCB_CONTEXT+12*REGSZ(t3)
-#endif
 
 1:
 	/*
@@ -342,10 +334,6 @@ ctx3:
 	REG_L	s8, PCB_CONTEXT+9*REGSZ(t3)
 	REG_L	ra, PCB_CONTEXT+10*REGSZ(t3)
 	REG_L	v0, PCB_CONTEXT+11*REGSZ(t3)
-#ifdef RM7000_ICR
-	REG_L	v1, PCB_CONTEXT+12*REGSZ(t3)
-	ctc0	v1, COP_0_ICR		# XXX RM7000
-#endif
 	ori	v0, v0, SR_INT_ENAB
 	MTC0	v0, COP_0_STATUS_REG
 	MTC0_SR_IE_HAZARD
@@ -395,10 +383,6 @@ LEAF(proc_trampoline, 0)
 	PTR_L	k0, CI_CURPROCPADDR(k1)
 	RESTORE_CPU_SREG(k0, 0)
 	RESTORE_REG(a0, PC, k0, 0)
-#ifdef RM7000_ICR
-	RESTORE_REG(t0, IC, k0, 0)
-	ctc0	t0, COP_0_ICR
-#endif
 	RESTORE_CPU(k0, 0)
 	RESTORE_REG(sp, SP, k0, 0)
 	LI	k0, 0

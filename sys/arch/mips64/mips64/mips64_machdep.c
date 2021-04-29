@@ -1,4 +1,4 @@
-/*	$OpenBSD: mips64_machdep.c,v 1.35 2021/02/23 04:44:30 cheloha Exp $ */
+/*	$OpenBSD: mips64_machdep.c,v 1.36 2021/04/29 12:49:19 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2012 Miodrag Vallat.
@@ -151,7 +151,6 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 	p->p_md.md_regs->pc = pack->ep_entry & ~3;
 	p->p_md.md_regs->t9 = pack->ep_entry & ~3; /* abicall req */
 	p->p_md.md_regs->sr = protosr | (idle_mask & SR_INT_MASK);
-	p->p_md.md_regs->ic = (idle_mask << 8) & IC_INT_MASK;
 	if (CPU_HAS_FPU(ci))
 		p->p_md.md_flags &= ~MDP_FPUSED;
 	if (ci->ci_fpuproc == p)
