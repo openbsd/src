@@ -1,9 +1,9 @@
-# $OpenBSD: Makefile,v 1.5 2021/04/28 12:55:42 patrick Exp $
+# $OpenBSD: Makefile,v 1.6 2021/04/29 05:51:57 jsg Exp $
 
 PROG=	llvm-config
 BINDIR= /usr/bin
 
-NATIVE_ARCHS=AArch64 ARM Mips PowerPC Sparc X86
+NATIVE_ARCHS=AArch64 ARM Mips PowerPC RISCV Sparc X86
 
 PYTHON=		python3
 LLVMBUILD=	${.CURDIR}/../../../llvm/llvm/utils/llvm-build/llvm-build
