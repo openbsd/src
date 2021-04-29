@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.80 2020/05/25 09:55:48 jsg Exp $	*/
+/*	$OpenBSD: sti.c,v 1.81 2021/04/29 15:12:14 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -211,7 +211,9 @@ sti_rom_setup(struct sti_rom *rom, bus_space_tag_t iot, bus_space_tag_t memt,
     bus_space_handle_t romh, bus_addr_t *bases, u_int codebase)
 {
 	struct sti_dd *dd;
-	int error, size, i;
+	int size, i;
+	vaddr_t va;
+	paddr_t pa;
 
 	STI_ENABLE_ROM(rom->rom_softc);
 
@@ -315,12 +317,13 @@ sti_rom_setup(struct sti_rom *rom, bus_space_tag_t iot, bus_space_tag_t memt,
 		return (EINVAL);
 	}
 
-	if (!(rom->rom_code = uvm_km_alloc(kernel_map, round_page(size)))) {
+	if (!(rom->rom_code = km_alloc(round_page(size), &kv_any,
+	    &kp_zero, &kd_waitok))) {
 		printf(": cannot allocate %u bytes for code\n", size);
 		return (ENOMEM);
 	}
 #ifdef STIDEBUG
-	printf("code=0x%lx[%x]\n", rom->rom_code, size);
+	printf("code=%p[%x]\n", rom->rom_code, size);
 #endif
 
 	/*
@@ -330,7 +333,7 @@ sti_rom_setup(struct sti_rom *rom, bus_space_tag_t iot, bus_space_tag_t memt,
 	STI_ENABLE_ROM(rom->rom_softc);
 
 	if (rom->rom_devtype == STI_DEVTYPE1) {
-		u_int8_t *p = (u_int8_t *)rom->rom_code;
+		u_int8_t *p = rom->rom_code;
 		u_int32_t addr, eaddr;
 
 		for (addr = dd->dd_pacode[STI_BEGIN], eaddr = addr + size * 4;
@@ -339,17 +342,24 @@ sti_rom_setup(struct sti_rom *rom, bus_space_tag_t iot, bus_space_tag_t memt,
 
 	} else	/* STI_DEVTYPE4 */
 		bus_space_read_raw_region_4(memt, romh,
-		    dd->dd_pacode[STI_BEGIN], (u_int8_t *)rom->rom_code,
-		    size);
+		    dd->dd_pacode[STI_BEGIN], rom->rom_code, size);
 
 	STI_DISABLE_ROM(rom->rom_softc);
 
-	if ((error = uvm_map_protect(kernel_map, rom->rom_code,
-	    rom->rom_code + round_page(size), PROT_READ | PROT_EXEC, FALSE))) {
-		printf(": uvm_map_protect failed (%d)\n", error);
-		uvm_km_free(kernel_map, rom->rom_code, round_page(size));
-		return (error);
+	/*
+	 * Remap the ROM code as executable.  This happens to be the
+	 * only place in the OpenBSD kernel where we need to do this.
+	 * Since the kernel (deliberately) doesn't provide a
+	 * high-level interface to map kernel memory as executable we
+	 * use low-level pmap calls for this.
+	 */
+	for (va = (vaddr_t)rom->rom_code;
+	     va < (vaddr_t)rom->rom_code + round_page(size);
+	     va += PAGE_SIZE) {
+		pmap_extract(pmap_kernel(), va, &pa);
+		pmap_kenter_pa(va, pa, PROT_READ | PROT_EXEC);
 	}
+	pmap_update(pmap_kernel());
 
 	/*
 	 * Setup code function pointers.
