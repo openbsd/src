@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.53 2021/04/25 15:32:21 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.54 2021/04/29 21:43:47 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -300,8 +300,10 @@ void	iwx_unprotect_session(struct iwx_softc *, struct iwx_node *);
 void	iwx_init_channel_map(struct iwx_softc *, uint16_t *, uint32_t *, int);
 void	iwx_setup_ht_rates(struct iwx_softc *);
 int	iwx_mimo_enabled(struct iwx_softc *);
-void	iwx_htprot_task(void *);
-void	iwx_update_htprot(struct ieee80211com *, struct ieee80211_node *);
+void	iwx_mac_ctxt_task(void *);
+void	iwx_updateprot(struct ieee80211com *);
+void	iwx_updateslot(struct ieee80211com *);
+void	iwx_updateedca(struct ieee80211com *);
 void	iwx_init_reorder_buffer(struct iwx_reorder_buffer *, uint16_t,
 	    uint16_t);
 void	iwx_clear_reorder_buffer(struct iwx_softc *, struct iwx_rxba_data *);
@@ -2940,7 +2942,7 @@ iwx_sta_rx_agg(struct iwx_softc *sc, struct ieee80211_node *ni, uint8_t tid,
 }
 
 void
-iwx_htprot_task(void *arg)
+iwx_mac_ctxt_task(void *arg)
 {
 	struct iwx_softc *sc = arg;
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -2953,27 +2955,39 @@ iwx_htprot_task(void *arg)
 		return;
 	}
 
-	/* This call updates HT protection based on in->in_ni.ni_htop1. */
 	err = iwx_mac_ctxt_cmd(sc, in, IWX_FW_CTXT_ACTION_MODIFY, 1);
 	if (err)
-		printf("%s: could not change HT protection: error %d\n",
-		    DEVNAME(sc), err);
+		printf("%s: failed to update MAC\n", DEVNAME(sc));
 
 	refcnt_rele_wake(&sc->task_refs);
 	splx(s);
 }
 
-/*
- * This function is called by upper layer when HT protection settings in
- * beacons have changed.
- */
 void
-iwx_update_htprot(struct ieee80211com *ic, struct ieee80211_node *ni)
+iwx_updateprot(struct ieee80211com *ic)
 {
 	struct iwx_softc *sc = ic->ic_softc;
 
-	/* assumes that ni == ic->ic_bss */
-	iwx_add_task(sc, systq, &sc->htprot_task);
+	if (ic->ic_state == IEEE80211_S_RUN)
+		iwx_add_task(sc, systq, &sc->mac_ctxt_task);
+}
+
+void
+iwx_updateslot(struct ieee80211com *ic)
+{
+	struct iwx_softc *sc = ic->ic_softc;
+
+	if (ic->ic_state == IEEE80211_S_RUN)
+		iwx_add_task(sc, systq, &sc->mac_ctxt_task);
+}
+
+void
+iwx_updateedca(struct ieee80211com *ic)
+{
+	struct iwx_softc *sc = ic->ic_softc;
+
+	if (ic->ic_state == IEEE80211_S_RUN)
+		iwx_add_task(sc, systq, &sc->mac_ctxt_task);
 }
 
 void
@@ -6854,7 +6868,7 @@ iwx_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 	if (ic->ic_state == IEEE80211_S_RUN) {
 		iwx_del_task(sc, systq, &sc->ba_task);
-		iwx_del_task(sc, systq, &sc->htprot_task);
+		iwx_del_task(sc, systq, &sc->mac_ctxt_task);
 		for (i = 0; i < nitems(sc->sc_rxba_data); i++) {
 			struct iwx_rxba_data *rxba = &sc->sc_rxba_data[i];
 			iwx_clear_reorder_buffer(sc, rxba);
@@ -7426,7 +7440,7 @@ iwx_stop(struct ifnet *ifp)
 	task_del(systq, &sc->init_task);
 	iwx_del_task(sc, sc->sc_nswq, &sc->newstate_task);
 	iwx_del_task(sc, systq, &sc->ba_task);
-	iwx_del_task(sc, systq, &sc->htprot_task);
+	iwx_del_task(sc, systq, &sc->mac_ctxt_task);
 	KASSERT(sc->task_refs.refs >= 1);
 	refcnt_finalize(&sc->task_refs, "iwxstop");
 
@@ -8823,7 +8837,7 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 	task_set(&sc->init_task, iwx_init_task, sc);
 	task_set(&sc->newstate_task, iwx_newstate_task, sc);
 	task_set(&sc->ba_task, iwx_ba_task, sc);
-	task_set(&sc->htprot_task, iwx_htprot_task, sc);
+	task_set(&sc->mac_ctxt_task, iwx_mac_ctxt_task, sc);
 
 	ic->ic_node_alloc = iwx_node_alloc;
 	ic->ic_bgscan_start = iwx_bgscan;
@@ -8833,7 +8847,9 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 	/* Override 802.11 state transition machine. */
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = iwx_newstate;
-	ic->ic_update_htprot = iwx_update_htprot;
+	ic->ic_updateprot = iwx_updateprot;
+	ic->ic_updateslot = iwx_updateslot;
+	ic->ic_updateedca = iwx_updateedca;
 	ic->ic_ampdu_rx_start = iwx_ampdu_rx_start;
 	ic->ic_ampdu_rx_stop = iwx_ampdu_rx_stop;
 #ifdef notyet

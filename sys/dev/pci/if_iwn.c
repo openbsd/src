@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.247 2021/03/22 09:52:49 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.248 2021/04/29 21:43:47 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -247,8 +247,9 @@ int		iwn_set_key(struct ieee80211com *, struct ieee80211_node *,
 		    struct ieee80211_key *);
 void		iwn_delete_key(struct ieee80211com *, struct ieee80211_node *,
 		    struct ieee80211_key *);
-void		iwn_update_htprot(struct ieee80211com *,
-		    struct ieee80211_node *);
+void		iwn_updateprot(struct ieee80211com *);
+void		iwn_updateslot(struct ieee80211com *);
+void		iwn_update_rxon(struct iwn_softc *);
 int		iwn_ampdu_rx_start(struct ieee80211com *,
 		    struct ieee80211_node *, uint8_t);
 void		iwn_ampdu_rx_stop(struct ieee80211com *,
@@ -540,7 +541,8 @@ iwn_attach(struct device *parent, struct device *self, void *aux)
 	ic->ic_updateedca = iwn_updateedca;
 	ic->ic_set_key = iwn_set_key;
 	ic->ic_delete_key = iwn_delete_key;
-	ic->ic_update_htprot = iwn_update_htprot;
+	ic->ic_updateprot = iwn_updateprot;
+	ic->ic_updateslot = iwn_updateslot;
 	ic->ic_ampdu_rx_start = iwn_ampdu_rx_start;
 	ic->ic_ampdu_rx_stop = iwn_ampdu_rx_stop;
 	ic->ic_ampdu_tx_start = iwn_ampdu_tx_start;
@@ -5652,24 +5654,57 @@ iwn_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	(void)ops->add_node(sc, &node, 1);
 }
 
-/*
- * This function is called by upper layer when HT protection settings in
- * beacons have changed.
- */
 void
-iwn_update_htprot(struct ieee80211com *ic, struct ieee80211_node *ni)
+iwn_updateprot(struct ieee80211com *ic)
 {
 	struct iwn_softc *sc = ic->ic_softc;
-	struct iwn_ops *ops = &sc->ops;
 	enum ieee80211_htprot htprot;
-	struct iwn_rxon_assoc rxon_assoc;
-	int s, error;
+
+	if (ic->ic_state != IEEE80211_S_RUN)
+		return;
+
+	/* Update ERP protection setting. */
+	if (ic->ic_flags & IEEE80211_F_USEPROT)
+		sc->rxon.flags |= htole32(IWN_RXON_TGG_PROT);
+	else
+		sc->rxon.flags &= ~htole32(IWN_RXON_TGG_PROT);
 
 	/* Update HT protection mode setting. */
-	htprot = (ni->ni_htop1 & IEEE80211_HTOP1_PROT_MASK) >>
+	htprot = (ic->ic_bss->ni_htop1 & IEEE80211_HTOP1_PROT_MASK) >>
 	    IEEE80211_HTOP1_PROT_SHIFT;
 	sc->rxon.flags &= ~htole32(IWN_RXON_HT_PROTMODE(3));
 	sc->rxon.flags |= htole32(IWN_RXON_HT_PROTMODE(htprot));
+
+	iwn_update_rxon(sc);
+}
+
+void
+iwn_updateslot(struct ieee80211com *ic)
+{
+	struct iwn_softc *sc = ic->ic_softc;
+
+	if (ic->ic_state != IEEE80211_S_RUN)
+		return;
+
+	if (ic->ic_flags & IEEE80211_F_SHSLOT)
+		sc->rxon.flags |= htole32(IWN_RXON_SHSLOT);
+	else
+		sc->rxon.flags &= ~htole32(IWN_RXON_SHSLOT);
+
+	if (ic->ic_flags & IEEE80211_F_SHPREAMBLE)
+		sc->rxon.flags |= htole32(IWN_RXON_SHPREAMBLE);
+	else
+		sc->rxon.flags &= ~htole32(IWN_RXON_SHPREAMBLE);
+
+	iwn_update_rxon(sc);
+}
+void
+iwn_update_rxon(struct iwn_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct iwn_ops *ops = &sc->ops;
+	struct iwn_rxon_assoc rxon_assoc;
+	int s, error;
 
 	/* Update RXON config. */
 	memset(&rxon_assoc, 0, sizeof(rxon_assoc));

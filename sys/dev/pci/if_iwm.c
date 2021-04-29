@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.319 2021/04/25 15:32:21 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.320 2021/04/29 21:43:47 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -328,8 +328,10 @@ void	iwm_init_channel_map(struct iwm_softc *, const uint16_t * const,
 	    const uint8_t *nvm_channels, int nchan);
 int	iwm_mimo_enabled(struct iwm_softc *);
 void	iwm_setup_ht_rates(struct iwm_softc *);
-void	iwm_htprot_task(void *);
-void	iwm_update_htprot(struct ieee80211com *, struct ieee80211_node *);
+void	iwm_mac_ctxt_task(void *);
+void	iwm_updateprot(struct ieee80211com *);
+void	iwm_updateslot(struct ieee80211com *);
+void	iwm_updateedca(struct ieee80211com *);
 void	iwm_init_reorder_buffer(struct iwm_reorder_buffer *, uint16_t,
 	    uint16_t);
 void	iwm_clear_reorder_buffer(struct iwm_softc *, struct iwm_rxba_data *);
@@ -3170,7 +3172,7 @@ iwm_sta_rx_agg(struct iwm_softc *sc, struct ieee80211_node *ni, uint8_t tid,
 }
 
 void
-iwm_htprot_task(void *arg)
+iwm_mac_ctxt_task(void *arg)
 {
 	struct iwm_softc *sc = arg;
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -3183,27 +3185,39 @@ iwm_htprot_task(void *arg)
 		return;
 	}
 
-	/* This call updates HT protection based on in->in_ni.ni_htop1. */
 	err = iwm_mac_ctxt_cmd(sc, in, IWM_FW_CTXT_ACTION_MODIFY, 1);
 	if (err)
-		printf("%s: could not change HT protection: error %d\n",
-		    DEVNAME(sc), err);
+		printf("%s: failed to update MAC\n", DEVNAME(sc));
 
 	refcnt_rele_wake(&sc->task_refs);
 	splx(s);
 }
 
-/*
- * This function is called by upper layer when HT protection settings in
- * beacons have changed.
- */
 void
-iwm_update_htprot(struct ieee80211com *ic, struct ieee80211_node *ni)
+iwm_updateprot(struct ieee80211com *ic)
 {
 	struct iwm_softc *sc = ic->ic_softc;
 
-	/* assumes that ni == ic->ic_bss */
-	iwm_add_task(sc, systq, &sc->htprot_task);
+	if (ic->ic_state == IEEE80211_S_RUN)
+		iwm_add_task(sc, systq, &sc->mac_ctxt_task);
+}
+
+void
+iwm_updateslot(struct ieee80211com *ic)
+{
+	struct iwm_softc *sc = ic->ic_softc;
+
+	if (ic->ic_state == IEEE80211_S_RUN)
+		iwm_add_task(sc, systq, &sc->mac_ctxt_task);
+}
+
+void
+iwm_updateedca(struct ieee80211com *ic)
+{
+	struct iwm_softc *sc = ic->ic_softc;
+
+	if (ic->ic_state == IEEE80211_S_RUN)
+		iwm_add_task(sc, systq, &sc->mac_ctxt_task);
 }
 
 void
@@ -8026,7 +8040,7 @@ iwm_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	if (ic->ic_state == IEEE80211_S_RUN) {
 		timeout_del(&sc->sc_calib_to);
 		iwm_del_task(sc, systq, &sc->ba_task);
-		iwm_del_task(sc, systq, &sc->htprot_task);
+		iwm_del_task(sc, systq, &sc->mac_ctxt_task);
 		for (i = 0; i < nitems(sc->sc_rxba_data); i++) {
 			struct iwm_rxba_data *rxba = &sc->sc_rxba_data[i];
 			iwm_clear_reorder_buffer(sc, rxba);
@@ -8808,7 +8822,7 @@ iwm_stop(struct ifnet *ifp)
 	task_del(systq, &sc->init_task);
 	iwm_del_task(sc, sc->sc_nswq, &sc->newstate_task);
 	iwm_del_task(sc, systq, &sc->ba_task);
-	iwm_del_task(sc, systq, &sc->htprot_task);
+	iwm_del_task(sc, systq, &sc->mac_ctxt_task);
 	KASSERT(sc->task_refs.refs >= 1);
 	refcnt_finalize(&sc->task_refs, "iwmstop");
 
@@ -10250,7 +10264,7 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 	task_set(&sc->init_task, iwm_init_task, sc);
 	task_set(&sc->newstate_task, iwm_newstate_task, sc);
 	task_set(&sc->ba_task, iwm_ba_task, sc);
-	task_set(&sc->htprot_task, iwm_htprot_task, sc);
+	task_set(&sc->mac_ctxt_task, iwm_mac_ctxt_task, sc);
 
 	ic->ic_node_alloc = iwm_node_alloc;
 	ic->ic_bgscan_start = iwm_bgscan;
@@ -10260,7 +10274,9 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 	/* Override 802.11 state transition machine. */
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = iwm_newstate;
-	ic->ic_update_htprot = iwm_update_htprot;
+	ic->ic_updateprot = iwm_updateprot;
+	ic->ic_updateslot = iwm_updateslot;
+	ic->ic_updateedca = iwm_updateedca;
 	ic->ic_ampdu_rx_start = iwm_ampdu_rx_start;
 	ic->ic_ampdu_rx_stop = iwm_ampdu_rx_stop;
 #ifdef notyet
