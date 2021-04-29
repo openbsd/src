@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.144 2021/02/22 19:14:01 mvs Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.145 2021/04/29 20:13:25 mvs Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -142,8 +142,6 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		error = EINVAL;
 		goto release;
 	}
-
-	NET_ASSERT_UNLOCKED();
 
 	switch (req) {
 
@@ -407,8 +405,6 @@ uipc_detach(struct socket *so)
 
 	if (unp == NULL)
 		return (EINVAL);
-
-	NET_ASSERT_UNLOCKED();
 
 	unp_detach(unp);
 
