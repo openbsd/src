@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.61 2021/04/24 09:44:45 mpi Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.62 2021/04/29 15:34:22 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Michael Shalayeff
@@ -1938,20 +1938,7 @@ pmap_enter_special_pae(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int32_t flags)
 		    __func__, va);
 
 	if (!pmap->pm_pdir_intel) {
-#if notyet
-		/*
-		 * XXX mapping is established via pmap_kenter() and lost
-		 * after enabling PAE.
-		 */
-		vapd = (vaddr_t)km_alloc(4 * NBPG, &kv_any, &kp_zero,
-		    &kd_waitok);
-#else
-		vapd = (vaddr_t)km_alloc(4 * NBPG, &kv_any, &kp_pageable,
-		    &kd_waitok);
-		if (vapd != 0)
-			bzero((void *)vapd, 4 * NBPG);
-#endif
-		if (vapd == 0)
+		if ((vapd = uvm_km_zalloc(kernel_map, 4 * NBPG)) == 0)
 			panic("%s: kernel_map out of virtual space!", __func__);
 		pmap->pm_pdir_intel = vapd;
 		if (!pmap_extract(pmap, (vaddr_t)&pmap->pm_pdidx_intel,
