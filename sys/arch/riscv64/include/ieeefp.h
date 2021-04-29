@@ -1,5 +1,4 @@
-/*	$OpenBSD: ieeefp.h,v 1.1 2021/04/23 02:42:16 drahn Exp $	*/
-/*	$NetBSD: ieeefp.h,v 1.1 2001/01/10 19:02:06 bjh21 Exp $	*/
+/*	$OpenBSD: ieeefp.h,v 1.2 2021/04/29 17:19:18 kettenis Exp $	*/
 
 /*
  * Based on ieeefp.h written by J.T. Conklin, Apr 28, 1995
@@ -9,34 +8,18 @@
 #ifndef _MACHINE_IEEEFP_H_
 #define _MACHINE_IEEEFP_H_
 
-/* FP exception codes */
-
-#define FP_EXCEPT_INV	0
-#define FP_EXCEPT_DZ	1
-#define FP_EXCEPT_OFL	2
-#define FP_EXCEPT_UFL	3
-#define FP_EXCEPT_IMP	4
-
-/* Exception type (used by fpsetmask() et al.) */
-
 typedef int fp_except;
-
-/* Bit defines for fp_except */
-
-#define	FP_X_INV	(1 << FP_EXCEPT_INV)	/* invalid operation exception */
-#define	FP_X_DZ		(1 << FP_EXCEPT_DZ)	/* divide-by-zero exception */
-#define	FP_X_OFL	(1 << FP_EXCEPT_OFL)	/* overflow exception */
-#define	FP_X_UFL	(1 << FP_EXCEPT_UFL)	/* underflow exception */
-#define	FP_X_IMP	(1 << FP_EXCEPT_IMP)	/* imprecise (loss of precision; "inexact") */
-#define FP_X_MASK	0x1f
-
-/* Rounding modes */
+#define FP_X_INV	0x10	/* invalid operation exception */
+#define FP_X_DZ		0x08	/* divide-by-zero exception */
+#define FP_X_OFL	0x04	/* overflow exception */
+#define FP_X_UFL	0x02	/* underflow exception */
+#define FP_X_IMP	0x01	/* imprecise (loss of precision) */
 
 typedef enum {
     FP_RN=0,			/* round to nearest representable number */
-    FP_RP=1,			/* round toward positive infinity */
+    FP_RZ=1			/* round to zero (truncate) */
     FP_RM=2,			/* round toward negative infinity */
-    FP_RZ=3			/* round to zero (truncate) */
+    FP_RP=3,			/* round toward positive infinity */
 } fp_rnd;
 
 #endif /* _MACHINE_IEEEFP_H_ */

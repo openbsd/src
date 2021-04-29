@@ -1,6 +1,6 @@
-/*	$OpenBSD: fpgetmask.c,v 1.2 2021/04/29 17:19:18 kettenis Exp $	*/
+/*	$OpenBSD: fpsetsticky.c,v 1.1 2021/04/29 17:19:18 kettenis Exp $	*/
 /*
- * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
+ * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,11 +15,15 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/types.h>
 #include <ieeefp.h>
 
 fp_except
-fpgetmask(void)
+fpsetsticky(fp_except sticky)
 {
-	return 0;
+	uint32_t fflags;
+
+	__asm volatile ("fsflags %0, %1" : "=r"(fflags) : "r"(sticky));
+	return fflags;
 }
-DEF_WEAK(fpgetmask);
+DEF_WEAK(fpsetsticky);
