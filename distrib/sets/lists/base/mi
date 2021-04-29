@@ -687,6 +687,7 @@
 ./usr/lib/pkgconfig/libelf.pc
 ./usr/lib/pkgconfig/libssl.pc
 ./usr/lib/pkgconfig/openssl.pc
+./usr/lib/pkgconfig/sndio.pc
 ./usr/lib/pkgconfig/zlib.pc
 ./usr/libdata
 ./usr/libdata/cvs
