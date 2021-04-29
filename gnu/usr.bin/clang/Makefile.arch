@@ -1,12 +1,14 @@
-# $OpenBSD: Makefile.arch,v 1.8 2020/08/03 14:45:22 patrick Exp $
+# $OpenBSD: Makefile.arch,v 1.9 2021/04/29 05:32:01 drahn Exp $
 
-LLVM_ARCHS=AArch64 AMDGPU ARM Mips PowerPC Sparc X86
+LLVM_ARCHS=AArch64 AMDGPU ARM Mips PowerPC RISCV Sparc X86
 
 LLVM_ARCH?=
 .if ${MACHINE_ARCH} == "amd64" || ${MACHINE_ARCH} == "i386"
 LLVM_ARCH=	X86
 .elif ${MACHINE_ARCH} == "powerpc" || ${MACHINE_ARCH} == "powerpc64"
 LLVM_ARCH=	PowerPC
+.elif ${MACHINE_ARCH} == "riscv64"
+LLVM_ARCH=	RISCV
 .elif ${MACHINE_ARCH} == "sparc64"
 LLVM_ARCH=	Sparc
 .elif ${MACHINE_ARCH} == "aarch64"
@@ -32,7 +34,7 @@ BACKEND_DESC+=		LLVM${arch}Desc
 BACKEND_DISASSEMBLER+=	LLVM${arch}Disassembler
 BACKEND_INFO+=		LLVM${arch}Info
 .if "${arch}" == "X86" || "${arch}" == "AArch64" || "${arch}" == "ARM" \
- || "${arch}" == "AMDGPU"
+ || "${arch}" == "AMDGPU" || "${arch}" == "RISCV"
 BACKEND_UTILS+=		LLVM${arch}Utils
 .endif
 .endif
