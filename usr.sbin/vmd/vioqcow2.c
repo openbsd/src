@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioqcow2.c,v 1.14 2020/10/19 19:06:49 naddy Exp $	*/
+/*	$OpenBSD: vioqcow2.c,v 1.15 2021/04/29 23:27:10 dv Exp $	*/
 
 /*
  * Copyright (c) 2018 Ori Bernstein <ori@eigenstate.org>
@@ -634,27 +634,7 @@ int
 virtio_qcow2_create(const char *imgfile_path,
     const char *base_path, long imgsize)
 {
-	struct qcheader {
-		char magic[4];
-		uint32_t version;
-		uint64_t backingoff;
-		uint32_t backingsz;
-		uint32_t clustershift;
-		uint64_t disksz;
-		uint32_t cryptmethod;
-		uint32_t l1sz;
-		uint64_t l1off;
-		uint64_t refoff;
-		uint32_t refsz;
-		uint32_t snapcount;
-		uint64_t snapsz;
-		/* v3 additions */
-		uint64_t incompatfeatures;
-		uint64_t compatfeatures;
-		uint64_t autoclearfeatures;
-		uint32_t reforder;
-		uint32_t headersz;
-	} __packed hdr, basehdr;
+	struct qcheader hdr, basehdr;
 	int fd, ret;
 	ssize_t base_len;
 	uint64_t l1sz, refsz, disksz, initsz, clustersz;
@@ -729,7 +709,7 @@ virtio_qcow2_create(const char *imgfile_path,
 	if (ftruncate(fd, (off_t)initsz + clustersz) == -1)
 		goto error;
 
-	/* 
+	/*
 	 * Paranoia: if our disk image takes more than one cluster
 	 * to refcount the initial image, fail.
 	 */
