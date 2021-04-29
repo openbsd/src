@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.9 2016/01/10 13:35:09 mestre Exp $	*/
+/*	$OpenBSD: io.c,v 1.10 2021/04/29 01:57:00 millert Exp $	*/
 /*	$NetBSD: io.c,v 1.2 1995/03/24 03:58:50 cgd Exp $	*/
 
 /*
@@ -323,7 +323,6 @@ getanswer(char *choices, bool def)
 	getyx(stdscr, oldy, oldx);
 	alarm(0);		/* make sure alarm is off */
 
-	for (loop = 3; loop; --loop)
 	for (loop = 3; loop; --loop)
 		/* try for 3 times */
 	{
