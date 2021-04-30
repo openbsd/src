@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpsetround.c,v 1.1 2021/04/29 17:19:18 kettenis Exp $	*/
+/*	$OpenBSD: fpsetround.c,v 1.2 2021/04/30 16:13:00 drahn Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -28,4 +28,3 @@ fpsetround(fp_rnd rnd_dir)
 	/* Truncating to 2 bits means both RNE and RMM become FP_RN. */
 	return frm & 0x3;
 }
-DEF_WEAK(fpsetround);

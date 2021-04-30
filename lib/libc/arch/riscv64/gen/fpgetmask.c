@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpgetmask.c,v 1.2 2021/04/29 17:19:18 kettenis Exp $	*/
+/*	$OpenBSD: fpgetmask.c,v 1.3 2021/04/30 16:13:00 drahn Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -22,4 +22,3 @@ fpgetmask(void)
 {
 	return 0;
 }
-DEF_WEAK(fpgetmask);

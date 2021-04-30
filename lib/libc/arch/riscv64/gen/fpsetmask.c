@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpsetmask.c,v 1.2 2021/04/29 17:19:18 kettenis Exp $	*/
+/*	$OpenBSD: fpsetmask.c,v 1.3 2021/04/30 16:13:00 drahn Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -22,4 +22,3 @@ fpsetmask(fp_except mask)
 {
 	return 0;
 }
-DEF_WEAK(fpsetmask);

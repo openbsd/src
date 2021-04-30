@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpsetsticky.c,v 1.1 2021/04/29 17:19:18 kettenis Exp $	*/
+/*	$OpenBSD: fpsetsticky.c,v 1.2 2021/04/30 16:13:00 drahn Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -26,4 +26,3 @@ fpsetsticky(fp_except sticky)
 	__asm volatile ("fsflags %0, %1" : "=r"(fflags) : "r"(sticky));
 	return fflags;
 }
-DEF_WEAK(fpsetsticky);
