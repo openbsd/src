@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.180 2021/03/10 10:21:49 jsg Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.181 2021/04/30 13:52:48 bluhm Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -112,7 +112,7 @@ u_int	tcp_autorcvbuf_inc = 16 * 1024;
 
 static int pr_slowhz = PR_SLOWHZ;
 const struct sysctl_bounded_args tcpctl_vars[] = {
-	{ TCPCTL_SLOWHZ, &pr_slowhz, 1, 0 },
+	{ TCPCTL_SLOWHZ, &pr_slowhz, SYSCTL_INT_READONLY },
 	{ TCPCTL_RFC1323, &tcp_do_rfc1323, 0, 1 },
 	{ TCPCTL_KEEPINITTIME, &tcptv_keep_init, 1, 3 * TCPTV_KEEP_INIT },
 	{ TCPCTL_KEEPIDLE, &tcp_keepidle, 1, 5 * TCPTV_KEEP_IDLE },

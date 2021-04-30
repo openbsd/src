@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.71 2021/02/23 04:44:31 cheloha Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.72 2021/04/30 13:52:48 bluhm Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -829,7 +829,7 @@ inittimecounter(void)
 }
 
 const struct sysctl_bounded_args tc_vars[] = {
-	{ KERN_TIMECOUNTER_TICK, &tc_tick, 1, 0 },
+	{ KERN_TIMECOUNTER_TICK, &tc_tick, SYSCTL_INT_READONLY },
 	{ KERN_TIMECOUNTER_TIMESTEPWARNINGS, &timestepwarnings, 0, 1 },
 };
 

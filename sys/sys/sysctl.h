@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.214 2021/03/10 10:21:47 jsg Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.215 2021/04/30 13:52:48 bluhm Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -999,6 +999,9 @@ struct sysctl_bounded_args {
 	int minimum; /* checking is disabled if minimum == maximum  */
 	int maximum; /* read-only variable if minimum > maximum */
 };
+
+#define SYSCTL_INT_UNBOUNDED	0,0
+#define SYSCTL_INT_READONLY	1,0
 
 /*
  * Internal sysctl function calling convention:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.60 2020/11/17 03:23:54 gnezdo Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.61 2021/04/30 13:52:48 bluhm Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -860,10 +860,10 @@ sema_reallocate(int val)
 }
 
 const struct sysctl_bounded_args sysvsem_vars[] = {
-	{ KERN_SEMINFO_SEMUME, &seminfo.semume, 1, 0 },
-	{ KERN_SEMINFO_SEMUSZ, &seminfo.semusz, 1, 0 },
-	{ KERN_SEMINFO_SEMVMX, &seminfo.semvmx, 1, 0 },
-	{ KERN_SEMINFO_SEMAEM, &seminfo.semaem, 1, 0 },
+	{ KERN_SEMINFO_SEMUME, &seminfo.semume, SYSCTL_INT_READONLY },
+	{ KERN_SEMINFO_SEMUSZ, &seminfo.semusz, SYSCTL_INT_READONLY },
+	{ KERN_SEMINFO_SEMVMX, &seminfo.semvmx, SYSCTL_INT_READONLY },
+	{ KERN_SEMINFO_SEMAEM, &seminfo.semaem, SYSCTL_INT_READONLY },
 	{ KERN_SEMINFO_SEMOPM, &seminfo.semopm, 1, INT_MAX },
 };
 
