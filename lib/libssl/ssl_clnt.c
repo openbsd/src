@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.93 2021/04/25 13:15:22 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.94 2021/04/30 19:26:44 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2001,9 +2001,8 @@ ssl3_send_client_kex_rsa(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
 	if (!CBB_flush(cbb))
 		goto err;
 
-	s->session->master_key_length =
-	    tls1_generate_master_secret(s,
-		s->session->master_key, pms, sizeof(pms));
+	if (!tls12_derive_master_secret(s, pms, sizeof(pms)))
+		goto err;
 
 	ret = 1;
 
@@ -2055,10 +2054,8 @@ ssl3_send_client_kex_dhe(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
 		goto err;
 	}
 
-	/* Generate master key from the result. */
-	s->session->master_key_length =
-	    tls1_generate_master_secret(s,
-		s->session->master_key, key, key_len);
+	if (!tls12_derive_master_secret(s, key, key_len))
+		goto err;
 
 	if (!CBB_add_u16_length_prefixed(cbb, &dh_Yc))
 		goto err;
@@ -2104,8 +2101,8 @@ ssl3_send_client_kex_ecdhe_ecp(SSL *s, SESS_CERT *sc, CBB *cbb)
 
 	if (!ssl_kex_derive_ecdhe_ecp(ecdh, sc->peer_ecdh_tmp, &key, &key_len))
 		goto err;
-	s->session->master_key_length = tls1_generate_master_secret(s,
-		s->session->master_key, key, key_len);
+	if (!tls12_derive_master_secret(s, key, key_len))
+		goto err;
 
 	ret = 1;
 
@@ -2142,10 +2139,8 @@ ssl3_send_client_kex_ecdhe_ecx(SSL *s, SESS_CERT *sc, CBB *cbb)
 	if (!CBB_flush(cbb))
 		goto err;
 
-	/* Generate master key from the result. */
-	s->session->master_key_length =
-	    tls1_generate_master_secret(s,
-		s->session->master_key, shared_key, X25519_KEY_LENGTH);
+	if (!tls12_derive_master_secret(s, shared_key, X25519_KEY_LENGTH))
+		goto err;
 
 	ret = 1;
 
@@ -2276,9 +2271,9 @@ ssl3_send_client_kex_gost(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
 		s->s3->flags |= TLS1_FLAGS_SKIP_CERT_VERIFY;
 	}
 	EVP_PKEY_CTX_free(pkey_ctx);
-	s->session->master_key_length =
-	    tls1_generate_master_secret(s,
-		s->session->master_key, premaster_secret, 32);
+
+	if (!tls12_derive_master_secret(s, premaster_secret, 32))
+		goto err;
 
 	ret = 1;
 

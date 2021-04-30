@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.104 2021/04/25 13:15:22 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.105 2021/04/30 19:26:45 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1797,9 +1797,8 @@ ssl3_get_client_kex_rsa(SSL *s, CBS *cbs)
 		p = fakekey;
 	}
 
-	s->session->master_key_length =
-	    tls1_generate_master_secret(s,
-		s->session->master_key, p, SSL_MAX_MASTER_KEY_LENGTH);
+	if (!tls12_derive_master_secret(s, p, SSL_MAX_MASTER_KEY_LENGTH))
+		goto err;
 
 	freezero(pms, pms_len);
 
@@ -1867,8 +1866,8 @@ ssl3_get_client_kex_dhe(SSL *s, CBS *cbs)
 		goto fatal_err;
 	}
 
-	s->session->master_key_length = tls1_generate_master_secret(s,
-	    s->session->master_key, key, key_len);
+	if (!tls12_derive_master_secret(s, key, key_len))
+		goto err;
 
 	DH_free(S3I(s)->tmp.dh);
 	S3I(s)->tmp.dh = NULL;
@@ -1928,8 +1927,8 @@ ssl3_get_client_kex_ecdhe_ecp(SSL *s, CBS *cbs)
 	/* Derive the shared secret and compute master secret. */
 	if (!ssl_kex_derive_ecdhe_ecp(ecdh, ecdh_peer, &key, &key_len))
 		goto err;
-	s->session->master_key_length = tls1_generate_master_secret(s,
-	    s->session->master_key, key, key_len);
+	if (!tls12_derive_master_secret(s, key, key_len))
+		goto err;
 
 	EC_KEY_free(S3I(s)->tmp.ecdh);
 	S3I(s)->tmp.ecdh = NULL;
@@ -1966,9 +1965,8 @@ ssl3_get_client_kex_ecdhe_ecx(SSL *s, CBS *cbs)
 	freezero(S3I(s)->tmp.x25519, X25519_KEY_LENGTH);
 	S3I(s)->tmp.x25519 = NULL;
 
-	s->session->master_key_length =
-	    tls1_generate_master_secret(
-		s, s->session->master_key, shared_key, X25519_KEY_LENGTH);
+	if (!tls12_derive_master_secret(s, shared_key, X25519_KEY_LENGTH))
+		goto err;
 
 	ret = 1;
 
@@ -2033,10 +2031,8 @@ ssl3_get_client_kex_gost(SSL *s, CBS *cbs)
 		goto gerr;
 	}
 
-	/* Generate master secret */
-	s->session->master_key_length =
-	    tls1_generate_master_secret(
-		s, s->session->master_key, premaster_secret, 32);
+	if (!tls12_derive_master_secret(s, premaster_secret, 32))
+		goto err;
 
 	/* Check if pubkey from client certificate was used */
 	if (EVP_PKEY_CTX_ctrl(pkey_ctx, -1, -1,
