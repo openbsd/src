@@ -109,7 +109,7 @@ struct cfattach timer_ca = {
 };
 
 struct cfdriver timer_cd = {
-	NULL, "riscv_timer", DV_DULL
+	NULL, "timer", DV_DULL
 };
 
 static inline uint64_t
@@ -274,7 +274,7 @@ riscv_timer_cpu_initclocks()
 
 	/* configure virtual timer interrupt */
 	sc->sc_ih = riscv_intc_intr_establish(IRQ_TIMER_SUPERVISOR, 0,
-			riscv_timer_intr, NULL, "riscv_timer");
+			riscv_timer_intr, NULL, "timer");
 
 	next = get_cycles() + sc->sc_ticks_per_intr;
 	pc->pc_nexttickevent = pc->pc_nextstatevent = next;

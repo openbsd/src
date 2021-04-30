@@ -55,7 +55,7 @@ struct cfattach        intc_ca = {
 };
 
 struct cfdriver intc_cd = {
-       NULL, "rv_cpu_intc", DV_DULL
+       NULL, "intc", DV_DULL
 };
 
 int
