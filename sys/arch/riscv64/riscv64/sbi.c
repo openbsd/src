@@ -44,6 +44,10 @@ u_long sbi_spec_version;
 u_long sbi_impl_id;
 u_long sbi_impl_version;
 
+extern register_t mvendorid;
+extern register_t mimpid;
+extern register_t marchid;
+
 static struct sbi_ret
 sbi_get_spec_version(void)
 {
@@ -135,10 +139,6 @@ sbi_init(void)
 	sbi_impl_id = sbi_get_impl_id().value;
 	sbi_impl_version = sbi_get_impl_version().value;
 
-	// XXX Move somewhere accessible -- md_var.h?
-	register_t mvendorid;
-	register_t marchid;
-	register_t mimpid;
 	/* Set the hardware implementation info. */
 	mvendorid = sbi_get_mvendorid().value;
 	marchid = sbi_get_marchid().value;
