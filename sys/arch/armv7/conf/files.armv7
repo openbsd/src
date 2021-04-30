@@ -1,4 +1,4 @@
-#	$OpenBSD: files.armv7,v 1.37 2018/06/05 20:41:19 kettenis Exp $
+#	$OpenBSD: files.armv7,v 1.38 2021/04/30 13:20:14 visa Exp $
 
 maxpartitions	16
 maxusers	2 8 64
@@ -75,3 +75,4 @@ include "arch/armv7/exynos/files.exynos"
 include "arch/armv7/vexpress/files.vexpress"
 include "arch/armv7/broadcom/files.broadcom"
 include "arch/armv7/marvell/files.marvell"
+include "arch/armv7/xilinx/files.xilinx"

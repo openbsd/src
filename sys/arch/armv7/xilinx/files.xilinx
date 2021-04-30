@@ -1,0 +1,5 @@
+#	$OpenBSD: files.xilinx,v 1.1 2021/04/30 13:20:14 visa Exp $
+
+device zqreset
+attach zqreset at fdt
+file	arch/armv7/xilinx/zqreset.c		zqreset

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.121 2021/04/24 07:49:11 visa Exp $
+#	$OpenBSD: RAMDISK,v 1.122 2021/04/30 13:20:14 visa Exp $
 
 machine		armv7 arm
 
@@ -198,6 +198,7 @@ dwdog*		at fdt?
 
 # Xilinx Zynq-7000
 cduart*		at fdt?
+zqreset*	at fdt?
 
 axppmic*	at iic?			# axp209 pmic
 crosec*		at iic?
