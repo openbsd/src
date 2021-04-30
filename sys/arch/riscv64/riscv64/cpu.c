@@ -264,7 +264,7 @@ cpu_identify(struct cpu_info *ci)
 
 	/* Print details for boot CPU */
 	if (cpu == 0) {
-		printf(": cpu%d: %s %s %s\n", cpu,
+		printf(": %s %s %s\n",
 		    cpu_desc[cpu].cpu_impl_name,
 		    cpu_desc[cpu].cpu_part_name,
 		    isa);
@@ -374,7 +374,6 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		 * therefore, must attach timer before any node
 		 */
 		config_found_sm(dev, NULL, NULL, riscv_timer_match);
-		printf("\n");
 
 		/*
 		 * attach cpu's children node, so far there is only the
@@ -386,7 +385,6 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 			fa_intc.fa_node = node;
 			/* no specifying match func, will call cfdata's match func*/
 			config_found(dev, &fa_intc, NULL);
-			printf("\n");
 		}
 
 #ifdef MULTIPROCESSOR
