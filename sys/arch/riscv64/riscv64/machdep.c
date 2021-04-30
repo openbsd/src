@@ -120,7 +120,6 @@ atoi(const char *s)
 	return (neg ? -n : n);
 }
 
-
 void *
 fdt_find_cons(const char *name)
 {
@@ -169,15 +168,7 @@ fdt_find_cons(const char *name)
 	return (NULL);
 }
 
-#if 0	//	CMPE: not supporting following uarts
-extern void	amluart_init_cons(void);
-extern void	imxuart_init_cons(void);
-extern void	mvuart_init_cons(void);
-extern void	pluart_init_cons(void);
-extern void	simplefb_init_cons(bus_space_tag_t);
-#endif 
-
-extern void	com_fdt_init_cons(void);
+void	com_fdt_init_cons(void);
 
 void
 consinit(void)
@@ -188,17 +179,8 @@ consinit(void)
 		return;
 
 	consinit_called = 1;
-#if 0 //no support
-	amluart_init_cons();
-	com_fdt_init_cons();
-	imxuart_init_cons();
-	mvuart_init_cons();
-	pluart_init_cons();
-	simplefb_init_cons(&riscv64_bs_tag);
-#endif
 	com_fdt_init_cons();
 }
-
 
 //XXX TODO: need to populate console for qemu
 //maybe no longer needed, as already have cn_tab ??
