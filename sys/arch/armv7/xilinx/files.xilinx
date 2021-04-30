@@ -1,4 +1,8 @@
-#	$OpenBSD: files.xilinx,v 1.1 2021/04/30 13:20:14 visa Exp $
+#	$OpenBSD: files.xilinx,v 1.2 2021/04/30 13:25:24 visa Exp $
+
+device zqclock
+attach zqclock at fdt
+file	arch/armv7/xilinx/zqclock.c		zqclock
 
 device zqreset
 attach zqreset at fdt

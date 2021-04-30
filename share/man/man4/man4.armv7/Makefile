@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.29 2021/04/30 13:20:14 visa Exp $
+#	$OpenBSD: Makefile,v 1.30 2021/04/30 13:25:24 visa Exp $
 
 MAN=	agtimer.4 amdisplay.4 ampintc.4 amptimer.4 armliicc.4 \
 	cortex.4 cpsw.4 dmtimer.4 edma.4 gptimer.4 \
@@ -6,7 +6,7 @@ MAN=	agtimer.4 amdisplay.4 ampintc.4 amptimer.4 armliicc.4 \
 	omap.4 omclock.4 omcm.4 omdog.4 omgpio.4 ommmc.4 omrng.4 omsysc.4 \
 	omwugen.4 prcm.4 \
 	sxie.4 sxiintc.4 \
-	sxitimer.4 sxits.4 sysreg.4 zqreset.4
+	sxitimer.4 sxits.4 sysreg.4 zqclock.4 zqreset.4
 
 MANSUBDIR=armv7
 
