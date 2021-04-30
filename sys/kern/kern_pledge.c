@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.271 2021/03/25 21:27:45 abieber Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.272 2021/04/30 02:06:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -547,6 +547,10 @@ pledge_fail(struct proc *p, int error, uint64_t code)
 	log(LOG_ERR, "%s[%d]: pledge \"%s\", syscall %d\n",
 	    p->p_p->ps_comm, p->p_p->ps_pid, codes, p->p_pledge_syscall);
 	p->p_p->ps_acflag |= APLEDGE;
+
+	/* Stop threads immediately, because this process is suspect */
+	if (P_HASSIBLING(p))
+		single_thread_set(p, SINGLE_SUSPEND, 1);
 
 	/* Send uncatchable SIGABRT for coredump */
 	sigabort(p);
