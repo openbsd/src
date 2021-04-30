@@ -23,10 +23,12 @@
  */
 
 /*  CTL_MACHDEP definitions. */
-/* None for now */
-#define	CPU_MAXID		0	/* number of valid machdep ids */
+#define	CPU_COMPATIBLE		1	/* compatible property */
+#define	CPU_MAXID		2	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
+	{ 0, 0 }, \
+	{ "compatible", CTLTYPE_STRING }, \
 }
 
 #ifdef _KERNEL

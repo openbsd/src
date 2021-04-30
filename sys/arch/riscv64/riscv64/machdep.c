@@ -15,9 +15,8 @@
  */
 
 #include <sys/param.h>
-#include <sys/timetc.h>
-#include <sys/sched.h>
 #include <sys/systm.h>
+#include <sys/sched.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
 #include <sys/reboot.h>
@@ -31,13 +30,13 @@
 #include <sys/buf.h>
 #include <sys/termios.h>
 #include <sys/sensors.h>
+#include <sys/malloc.h>
 #include <sys/syscallargs.h>
 #include <sys/stdarg.h>
 
 #include <net/if.h>
 #include <uvm/uvm.h>
 #include <dev/cons.h>
-#include <dev/clock_subr.h>
 #include <dev/ofw/fdt.h>
 #include <dev/ofw/openfirm.h>
 #include <machine/param.h>
@@ -56,12 +55,12 @@
 #include <dev/softraidvar.h>
 #endif
 
+extern vaddr_t virtual_avail;
+extern uint64_t esym;
+
 char *boot_args = NULL;
-char *boot_file = "";
 
 uint8_t *bootmac = NULL;
-
-extern uint64_t esym;
 
 int stdout_node;
 int stdout_speed;
@@ -88,7 +87,6 @@ struct uvm_constraint_range *uvm_md_constraints[] = { NULL };
 
 /* the following is used externally (sysctl_hw) */
 char    machine[] = MACHINE;            /* from <machine/param.h> */
-extern todr_chip_handle_t todr_handle;
 
 int safepri = 0;
 
@@ -189,12 +187,12 @@ struct consdev constab[] = {
 };
 
 void
-cpu_idle_enter()
+cpu_idle_enter(void)
 {
 }
 
 void
-cpu_idle_cycle()
+cpu_idle_cycle(void)
 {
 	// Enable interrupts
 	enable_interrupts();
@@ -203,15 +201,15 @@ cpu_idle_cycle()
 }
 
 void
-cpu_idle_leave()
+cpu_idle_leave(void)
 {
 }
 
+/* Dummy trapframe for proc0. */
+struct trapframe proc0tf;
 
-// XXX what? - not really used
-struct trapframe  proc0tf;
 void
-cpu_startup()
+cpu_startup(void)
 {
 	u_int loop;
 	paddr_t minaddr;
@@ -243,7 +241,7 @@ cpu_startup()
 	printf("%s", version);
 
 	printf("real mem  = %lu (%luMB)\n", ptoa(physmem),
-	    ptoa(physmem)/1024/1024);
+	    ptoa(physmem) / 1024 / 1024);
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
@@ -251,8 +249,7 @@ cpu_startup()
 	 */
 	minaddr = vm_map_min(kernel_map);
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
-
+	    16 * NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 
 	/*
 	 * Allocate a submap for physio
@@ -266,7 +263,7 @@ cpu_startup()
 	bufinit();
 
 	printf("avail mem = %lu (%luMB)\n", ptoa(uvmexp.free),
-	    ptoa(uvmexp.free)/1024/1024);
+	    ptoa(uvmexp.free) / 1024 / 1024);
 
 	curpcb = &proc0.p_addr->u_pcb;
 	curpcb->pcb_flags = 0;
@@ -281,16 +278,33 @@ cpu_startup()
 	}
 }
 
+/*
+ * machine dependent system variables.
+ */
+
 int
 cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen, struct proc *p)
 {
+	char *compatible;
+	int node, len, error;
+
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1)
 		return (ENOTDIR);		/* overloaded */
 
 	switch (name[0]) {
-		// none supported currently
+	case CPU_COMPATIBLE:
+		node = OF_finddevice("/");
+		len = OF_getproplen(node, "compatible");
+		if (len <= 0)
+			return (EOPNOTSUPP); 
+		compatible = malloc(len, M_TEMP, M_WAITOK | M_ZERO);
+		OF_getprop(node, "compatible", compatible, len);
+		compatible[len - 1] = 0;
+		error = sysctl_rdstring(oldp, oldlenp, newp, compatible);
+		free(compatible, M_TEMP, len);
+		return error;
 	default:
 		return (EOPNOTSUPP);
 	}
@@ -397,13 +411,12 @@ need_resched(struct cpu_info *ci)
 }
 
 
-/// XXX ?
 /*
  * Size of memory segments, before any memory is stolen.
  */
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int     mem_cluster_cnt;
-/// XXX ?
+
 /*
  * cpu_dumpsize: calculate size of machine-dependent kernel core dump headers.
  */
@@ -434,7 +447,7 @@ cache_setup(void)
 }
 
 u_long
-cpu_dump_mempagecnt()
+cpu_dump_mempagecnt(void)
 {
 	return 0;
 }
@@ -505,7 +518,7 @@ uint32_t mmap_size;
 uint32_t mmap_desc_size;
 uint32_t mmap_desc_ver;
 
-void	collect_kernel_args(char *);
+void	collect_kernel_args(const char *);
 void	process_kernel_args(void);
 
 void
@@ -541,13 +554,15 @@ initriscv(struct riscv_bootparams *rbp)
 	if (node != NULL) {
 		char *prop;
 		int len;
-		// static uint8_t lladdr[6]; //not yet used
+		static uint8_t lladdr[6];
 
 		len = fdt_node_property(node, "bootargs", &prop);
 		if (len > 0)
 			collect_kernel_args(prop);
 
-#if 0 //CMPE: yet not using these properties
+		len = fdt_node_property(node, "openbsd,boothowto", &prop);
+		if (len == sizeof(boothowto))
+			boothowto = bemtoh32((uint32_t *)prop);
 
 		len = fdt_node_property(node, "openbsd,bootduid", &prop);
 		if (len == sizeof(bootduid))
@@ -575,6 +590,7 @@ initriscv(struct riscv_bootparams *rbp)
 		if (len > 0)
 			explicit_bzero(prop, len);
 
+#if 0 //CMPE: yet not using these properties
 		len = fdt_node_property(node, "openbsd,uefi-mmap-start", &prop);
 		if (len == sizeof(mmap_start))
 			mmap_start = bemtoh64((uint64_t *)prop);
@@ -587,6 +603,7 @@ initriscv(struct riscv_bootparams *rbp)
 		len = fdt_node_property(node, "openbsd,uefi-mmap-desc-ver", &prop);
 		if (len == sizeof(mmap_desc_ver))
 			mmap_desc_ver = bemtoh32((uint32_t *)prop);
+
 		len = fdt_node_property(node, "openbsd,uefi-system-table", &prop);
 		if (len == sizeof(system_table))
 			system_table = bemtoh64((uint64_t *)prop);
@@ -653,7 +670,6 @@ initriscv(struct riscv_bootparams *rbp)
 	vstart = pmap_bootstrap(kvo, rbp->kern_l1pt,
 	    kernbase, esym, fdt_start, fdt_end, memstart, memend);
 
-	// XX correctly sized?
 	proc0paddr = (struct user *)rbp->kern_stack;
 
 	msgbufaddr = (caddr_t)vstart;
@@ -708,7 +724,6 @@ initriscv(struct riscv_bootparams *rbp)
 	map_func_save = riscv64_bs_tag._space_map;
 	riscv64_bs_tag._space_map = pmap_bootstrap_bs_map;
 
-	// cninit
 	consinit();
 
 #ifdef	DEBUG_AUTOCONF
@@ -717,7 +732,6 @@ initriscv(struct riscv_bootparams *rbp)
 
 	riscv64_bs_tag._space_map = map_func_save;
 
-	/* XXX */
 	pmap_avail_fixup();
 
 	uvmexp.pagesize = PAGE_SIZE;
@@ -733,7 +747,8 @@ initriscv(struct riscv_bootparams *rbp)
 		int i;
 
 		/*
-		 * Load all memory marked as EfiConventionalMemory.
+		 * Load all memory marked as EfiConventionalMemory,
+		 * EfiBootServicesCode or EfiBootServicesData.
 		 * Don't bother with blocks smaller than 64KB.  The
 		 * initial 64MB memory block should be marked as
 		 * EfiLoaderData so it won't be added again here.
@@ -743,7 +758,9 @@ initriscv(struct riscv_bootparams *rbp)
 			    desc->Type, desc->PhysicalStart,
 			    desc->VirtualStart, desc->NumberOfPages,
 			    desc->Attribute);
-			if (desc->Type == EfiConventionalMemory &&
+			if ((desc->Type == EfiConventionalMemory ||
+			     desc->Type == EfiBootServicesCode ||
+			     desc->Type == EfiBootServicesData) &&
 			    desc->NumberOfPages >= 16) {
 				uvm_page_physload(atop(desc->PhysicalStart),
 				    atop(desc->PhysicalStart) +
@@ -804,6 +821,7 @@ initriscv(struct riscv_bootparams *rbp)
 	 */
 	pmap_growkernel(VM_MIN_KERNEL_ADDRESS + 1024 * 1024 * 1024 +
 	    physmem * sizeof(struct vm_page));
+
 #ifdef DDB
 	db_machine_init();
 
@@ -813,6 +831,7 @@ initriscv(struct riscv_bootparams *rbp)
 	if (boothowto & RB_KDB)
 		db_enter();
 #endif
+
 	softintr_init();
 	splraise(IPL_IPI);
 }
@@ -820,7 +839,7 @@ initriscv(struct riscv_bootparams *rbp)
 char bootargs[256];
 
 void
-collect_kernel_args(char *args)
+collect_kernel_args(const char *args)
 {
 	/* Make a local copy of the bootargs */
 	strlcpy(bootargs, args, sizeof(bootargs));
@@ -831,27 +850,21 @@ process_kernel_args(void)
 {
 	char *cp = bootargs;
 
-	if (cp[0] == '\0') {
-		boothowto = RB_AUTOBOOT;
+	if (*cp == 0)
 		return;
-	}
-
-	boothowto = 0;
-	boot_file = bootargs;
 
 	/* Skip the kernel image filename */
 	while (*cp != ' ' && *cp != 0)
-		++cp;
+		cp++;
 
 	if (*cp != 0)
 		*cp++ = 0;
 
 	while (*cp == ' ')
-		++cp;
+		cp++;
 
 	boot_args = cp;
 
-	printf("bootfile: %s\n", boot_file);
 	printf("bootargs: %s\n", boot_args);
 
 	/* Setup pointer to boot flags */
@@ -859,34 +872,30 @@ process_kernel_args(void)
 		if (*cp++ == '\0')
 			return;
 
-	for (;*++cp;) {
-		int fl;
-
-		fl = 0;
+	while (*cp != 0) {
 		switch(*cp) {
 		case 'a':
-			fl |= RB_ASKNAME;
+			boothowto |= RB_ASKNAME;
 			break;
 		case 'c':
-			fl |= RB_CONFIG;
+			boothowto |= RB_CONFIG;
 			break;
 		case 'd':
-			fl |= RB_KDB;
+			boothowto |= RB_KDB;
 			break;
 		case 's':
-			fl |= RB_SINGLE;
+			boothowto |= RB_SINGLE;
 			break;
 		default:
 			printf("unknown option `%c'\n", *cp);
 			break;
 		}
-		boothowto |= fl;
+		cp++;
 	}
 }
 
 /*
- * allow bootstrap to steal KVA after machdep has given it back to pmap.
- * XXX - need a mechanism to prevent this from being used too early or late.
+ * Allow bootstrap to steal KVA after machdep has given it back to pmap.
  */
 int
 pmap_bootstrap_bs_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
@@ -895,12 +904,7 @@ pmap_bootstrap_bs_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
 	u_long startpa, pa, endpa;
 	vaddr_t va;
 
-	extern vaddr_t virtual_avail, virtual_end;
-
-	va = virtual_avail; // steal memory from virtual avail.
-
-	if (va == 0)
-		panic("pmap_bootstrap_bs_map, no virtual avail");
+	va = virtual_avail;	/* steal memory from virtual avail. */
 
 	startpa = trunc_page(bpa);
 	endpa = round_page((bpa + size));
