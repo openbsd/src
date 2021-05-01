@@ -1,4 +1,4 @@
-/* $OpenBSD: a_object.c,v 1.31 2018/04/25 11:48:21 tb Exp $ */
+/* $OpenBSD: a_object.c,v 1.32 2021/05/01 13:16:30 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -304,8 +304,6 @@ c2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp, long len)
 		}
 	}
 
-	/* only the ASN1_OBJECTs from the 'table' will have values
-	 * for ->sn or ->ln */
 	if ((a == NULL) || ((*a) == NULL) ||
 	    !((*a)->flags & ASN1_OBJECT_FLAG_DYNAMIC)) {
 		if ((ret = ASN1_OBJECT_new()) == NULL)
@@ -326,6 +324,13 @@ c2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp, long len)
 	}
 
 	memcpy(data, p, length);
+
+	/* If there are dynamic strings, free them here, and clear the flag. */
+	if ((ret->flags & ASN1_OBJECT_FLAG_DYNAMIC_STRINGS) != 0) {
+		free((void *)ret->sn);
+		free((void *)ret->ln);
+		ret->flags &= ~ASN1_OBJECT_FLAG_DYNAMIC_STRINGS;
+	}
 
 	/* reattach data to object, after which it remains const */
 	ret->data = data;
