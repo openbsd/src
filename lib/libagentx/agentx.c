@@ -1,4 +1,4 @@
-/*	$OpenBSD: agentx.c,v 1.8 2020/10/27 18:24:01 martijn Exp $ */
+/*	$OpenBSD: agentx.c,v 1.9 2021/05/01 16:44:17 martijn Exp $ */
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
  *
@@ -93,7 +93,6 @@ struct agentx_varbind {
 	struct agentx_varbind_index {
 		struct agentx_index *axv_axi;
 		union ax_data axv_idata;
-		uint8_t axv_idatacomplete;
 	} axv_index[AGENTX_OID_INDEX_MAX_LEN];
 	size_t axv_indexlen;
 	int axv_initialized;
@@ -2716,7 +2715,6 @@ agentx_varbind_start(struct agentx_varbind *axv)
 	struct agentx_context *axc = axg->axg_axc;
 	struct agentx_object *axo, axo_search;
 	struct agentx_varbind_index *index;
-	struct agentx_index *axi;
 	struct ax_oid *oid;
 	union ax_data *data;
 	struct in_addr *ipaddress;
@@ -2785,18 +2783,21 @@ getnext:
 				goto getnext;
 			}
 		}
-	}
-	j = axo->axo_oid.aoi_idlen;
+		j = oid->aoi_idlen;
+	} else
+		j = axo->axo_oid.aoi_idlen;
 /*
  * We can't trust what the client gives us, so sometimes we need to map it to
  * index type.
  * - AX_PDU_TYPE_GET: we always return AX_DATA_TYPE_NOSUCHINSTANCE
  * - AX_PDU_TYPE_GETNEXT:
- *   - Missing OID digits to match indices will result in the indices to be NUL-
- *     initialized and the request type will be set to
+ *   - Missing OID digits to match indices or !dynamic indices
+ *     (AX_DATA_TYPE_INTEGER) undeflows will result in the following indices to
+ *     be NUL-initialized and the request type will be set to
  *     AGENTX_REQUEST_TYPE_GETNEXTINCLUSIVE
  *   - An overflow can happen on AX_DATA_TYPE_OCTETSTRING and
- *     AX_DATA_TYPE_IPADDRESS. This results in request type being set to
+ *     AX_DATA_TYPE_IPADDRESS data, and AX_DATA_TYPE_OCTETSTRING and
+ *     AX_DATA_TYPE_OID length. This results in request type being set to
  *     AGENTX_REQUEST_TYPE_GETNEXT and will set the index to its maximum
  *     value:
  *     - AX_DATA_TYPE_INTEGER: UINT32_MAX
@@ -2805,100 +2806,65 @@ getnext:
  *     - AX_DATA_TYPE_OID: aoi_idlen = UINT32_MAX and aoi_id[x] = UINT32_MAX
  *     - AX_DATA_TYPE_IPADDRESS: 255.255.255.255
  */
-	for (dynamic = 0, i = 0; i < axo->axo_indexlen; i++) {
+	for (dynamic = 0, i = 0; i < axo->axo_indexlen; i++, j++) {
 		index = &(axv->axv_index[i]);
 		index->axv_axi = axo->axo_index[i];
 		data = &(index->axv_idata);
 		if (axo->axo_index[i]->axi_type == AXI_TYPE_DYNAMIC)
 			dynamic = 1;
-		if (j >= axv->axv_vb.avb_oid.aoi_idlen && !overflow &&
-		    axo->axo_index[i]->axi_type == AXI_TYPE_DYNAMIC)
-			continue;
 		switch (axo->axo_index[i]->axi_vb.avb_type) {
 		case AX_DATA_TYPE_INTEGER:
-/* Dynamic index: normal copy paste */
-			if (axo->axo_index[i]->axi_type == AXI_TYPE_DYNAMIC) {
-				if (axv->axv_vb.avb_oid.aoi_id[j] > INT32_MAX)
+			if (index->axv_axi->axi_type != AXI_TYPE_DYNAMIC) {
+				index->axv_idata.avb_int32 =
+				    index->axv_axi->axi_vb.avb_data.avb_int32;
+				if (overflow == 0) {
+					if ((uint32_t)index->axv_idata.avb_int32 >
+					    oid->aoi_id[j])
+						overflow = -1;
+					else if ((uint32_t)index->axv_idata.avb_int32 <
+					    oid->aoi_id[j])
+						overflow = 1;
+				}
+			} else if (overflow == 1)
+				index->axv_idata.avb_int32 = INT32_MAX;
+			else if (j >= oid->aoi_idlen || overflow == -1)
+				index->axv_idata.avb_int32 = 0;
+			else {
+				if (oid->aoi_id[j] > INT32_MAX) {
+					index->axv_idata.avb_int32 = INT32_MAX;
 					overflow = 1;
-				data->avb_int32 = overflow ?
-				    INT32_MAX : axv->axv_vb.avb_oid.aoi_id[j];
-				j++;
-				index->axv_idatacomplete = 1;
-				break;
+				} else
+					index->axv_idata.avb_int32 =
+					    oid->aoi_id[j];
 			}
-			if (axv->axv_vb.avb_oid.aoi_id[j] > INT32_MAX) {
-				agentx_varbind_nosuchinstance(axv);
-				return;
-			}
-			axi = axo->axo_index[i];
-/* With a GET-request we need an exact match */
-			if (axv->axv_axg->axg_type == AX_PDU_TYPE_GET) {
-				if (axi->axi_vb.avb_data.avb_int32 !=
-				    (int32_t)axv->axv_vb.avb_oid.aoi_id[j]) {
-					agentx_varbind_nosuchinstance(axv);
-					return;
-				}
-				index->axv_idatacomplete = 1;
-				j++;
-				break;
-			}
-/* A higher value automatically moves us to the next value */
-			if (overflow ||
-			    (int32_t)axv->axv_vb.avb_oid.aoi_id[j] >
-			    axi->axi_vb.avb_data.avb_int32) {
-/* If we're !dynamic up until now the rest of the oid doesn't matter */
-				if (!dynamic) {
-					agentx_varbind_endofmibview(axv);
-					return;
-				}
-/*
- * Else we just pick the max value and make sure we don't return
- * AGENTX_REQUEST_TYPE_GETNEXTINCLUSIVE
- */
-				data->avb_int32 = INT32_MAX;
-				index->axv_idatacomplete = 1;
-				overflow = 1;
-				j++;
-				break;
-/*
- * A lower value automatically moves to the set value and counts as a short oid
- */
-			} else if ((int32_t)axv->axv_vb.avb_oid.aoi_id[j] <
-			    axi->axi_vb.avb_data.avb_int32) {
-				data->avb_int32 =
-				    axi->axi_vb.avb_data.avb_int32;
-				j = axv->axv_vb.avb_oid.aoi_idlen;
-				break;
-			}
-/* Normal match, except we already matched overflow at higher value */
-			data->avb_int32 =
-			    (int32_t)axv->axv_vb.avb_oid.aoi_id[j];
-			j++;
-			index->axv_idatacomplete = 1;
 			break;
 		case AX_DATA_TYPE_OCTETSTRING:
-			if (!agentx_object_implied(axo, index->axv_axi)) {
-				if (overflow || axv->axv_vb.avb_oid.aoi_id[j] >
-				    AGENTX_OID_MAX_LEN -
-				    axv->axv_vb.avb_oid.aoi_idlen) {
+			if (overflow == 1) {
+				data->avb_ostring.aos_slen = UINT32_MAX;
+				data->avb_ostring.aos_string = NULL;
+				continue;
+			} else if (j >= oid->aoi_idlen || overflow == -1) {
+				data->avb_ostring.aos_slen = 0;
+				data->avb_ostring.aos_string = NULL;
+				continue;
+			}
+			if (agentx_object_implied(axo, index->axv_axi))
+				data->avb_ostring.aos_slen = oid->aoi_idlen - j;
+			else {
+				data->avb_ostring.aos_slen = oid->aoi_id[j++];
+				if (data->avb_ostring.aos_slen >=
+				    AGENTX_OID_MAX_LEN - j) {
+					data->avb_ostring.aos_slen = UINT32_MAX;
 					overflow = 1;
-					data->avb_ostring.aos_slen = UINT32_MAX;
-					index->axv_idatacomplete = 1;
-					continue;
 				}
-				data->avb_ostring.aos_slen =
-				    axv->axv_vb.avb_oid.aoi_id[j++];
-			} else {
-				if (overflow) {
-					data->avb_ostring.aos_slen = UINT32_MAX;
-					index->axv_idatacomplete = 1;
-					continue;
-				}
-				data->avb_ostring.aos_slen =
-				    axv->axv_vb.avb_oid.aoi_idlen - j;
+			}
+			if (data->avb_ostring.aos_slen == UINT32_MAX ||
+			    data->avb_ostring.aos_slen == 0) {
+				data->avb_ostring.aos_string = NULL;
+				continue;
 			}
 			data->avb_ostring.aos_string =
-			    calloc(data->avb_ostring.aos_slen + 1, 1);
+			    malloc(data->avb_ostring.aos_slen + 1);
 			if (data->avb_ostring.aos_string == NULL) {
 				agentx_log_axg_warn(axg,
 				    "Failed to bind string index");
@@ -2907,54 +2873,53 @@ getnext:
 				return;
 			}
 			for (k = 0; k < data->avb_ostring.aos_slen; k++, j++) {
-				if (!overflow &&
-				    j == axv->axv_vb.avb_oid.aoi_idlen)
-					break;
-
-				if (axv->axv_vb.avb_oid.aoi_id[j] > 255)
+				if (j < oid->aoi_idlen && oid->aoi_id[j] > 0xff)
 					overflow = 1;
-
-				data->avb_ostring.aos_string[k] = overflow ?
-				    0xff : axv->axv_vb.avb_oid.aoi_id[j];
+				if (overflow == 1)
+					data->avb_ostring.aos_string[k] = 0xff;
+				else if (j >= oid->aoi_idlen || overflow == -1)
+					data->avb_ostring.aos_string[k] = '\0';
+				else
+					data->avb_ostring.aos_string[k] =
+					    oid->aoi_id[j];
 			}
-			if (k == data->avb_ostring.aos_slen)
-				index->axv_idatacomplete = 1;
+			data->avb_ostring.aos_string[k] = '\0';
+			j--;
 			break;
 		case AX_DATA_TYPE_OID:
-			if (!agentx_object_implied(axo, index->axv_axi)) {
-				if (overflow || axv->axv_vb.avb_oid.aoi_id[j] >
-				    AGENTX_OID_MAX_LEN -
-				    axv->axv_vb.avb_oid.aoi_idlen) {
+			if (overflow == 1) {
+				data->avb_oid.aoi_idlen = UINT32_MAX;
+				continue;
+			} else if (j >= oid->aoi_idlen || overflow == -1) {
+				data->avb_oid.aoi_idlen = 0;
+				continue;
+			}
+			if (agentx_object_implied(axo, index->axv_axi))
+				data->avb_oid.aoi_idlen = oid->aoi_idlen - j;
+			else {
+				data->avb_oid.aoi_idlen = oid->aoi_id[j++];
+				if (data->avb_oid.aoi_idlen >=
+				    AGENTX_OID_MAX_LEN - j) {
+					data->avb_oid.aoi_idlen = UINT32_MAX;
 					overflow = 1;
-					data->avb_oid.aoi_idlen = UINT32_MAX;
-					index->axv_idatacomplete = 1;
-					continue;
 				}
-				data->avb_oid.aoi_idlen =
-				    axv->axv_vb.avb_oid.aoi_id[j++];
-			} else {
-				if (overflow) {
-					data->avb_oid.aoi_idlen = UINT32_MAX;
-					index->axv_idatacomplete = 1;
-					continue;
-				}
-				data->avb_oid.aoi_idlen =
-				    axv->axv_vb.avb_oid.aoi_idlen - j;
 			}
+			if (data->avb_oid.aoi_idlen == UINT32_MAX ||
+			    data->avb_oid.aoi_idlen == 0)
+				continue;
 			for (k = 0; k < data->avb_oid.aoi_idlen; k++, j++) {
-				if (!overflow &&
-				    j == axv->axv_vb.avb_oid.aoi_idlen) {
+				if (overflow == 1)
+					data->avb_oid.aoi_id[k] = UINT32_MAX;
+				else if (j >= oid->aoi_idlen || overflow == -1)
 					data->avb_oid.aoi_id[k] = 0;
-					continue;
-				}
-				data->avb_oid.aoi_id[k] = overflow ?
-				    UINT32_MAX : axv->axv_vb.avb_oid.aoi_id[j];
+				else
+					data->avb_oid.aoi_id[k] =
+					    oid->aoi_id[j];
 			}
-			if (j <= axv->axv_vb.avb_oid.aoi_idlen)
-				index->axv_idatacomplete = 1;
+			j--;
 			break;
 		case AX_DATA_TYPE_IPADDRESS:
-			ipaddress = calloc(1, sizeof(*ipaddress));
+			ipaddress = malloc(sizeof(*ipaddress));
 			if (ipaddress == NULL) {
 				agentx_log_axg_warn(axg,
 				    "Failed to bind ipaddress index");
@@ -2964,18 +2929,16 @@ getnext:
 			}
 			ipbytes = (unsigned char *)ipaddress;
 			for (k = 0; k < 4; k++, j++) {
-				if (!overflow &&
-				    j == axv->axv_vb.avb_oid.aoi_idlen)
-					break;
-
-				if (axv->axv_vb.avb_oid.aoi_id[j] > 255)
+				if (j < oid->aoi_idlen && oid->aoi_id[j] > 255)
 					overflow = 1;
-
-				ipbytes[k] = overflow ? 255 :
-				    axv->axv_vb.avb_oid.aoi_id[j];
+				if (overflow == 1)
+					ipbytes[k] = 255;
+				else if (j >= oid->aoi_idlen || overflow == -1)
+					ipbytes[k] = 0;
+				else
+					ipbytes[k] = oid->aoi_id[j];
 			}
-			if (j <= axv->axv_vb.avb_oid.aoi_idlen)
-				index->axv_idatacomplete = 1;
+			j--;
 			data->avb_ostring.aos_slen = sizeof(*ipaddress);
 			data->avb_ostring.aos_string =
 			    (unsigned char *)ipaddress;
@@ -2994,21 +2957,20 @@ getnext:
 		}
 	}
 	if (axv->axv_axg->axg_type == AX_PDU_TYPE_GET) {
-		if ((axo->axo_indexlen > 0 &&
-		    !axv->axv_index[axo->axo_indexlen - 1].axv_idatacomplete) ||
-		    j != axv->axv_vb.avb_oid.aoi_idlen || overflow) {
+		if (j != oid->aoi_idlen || overflow) {
 			agentx_varbind_nosuchinstance(axv);
 			return;
 		}
 	}
 
-	if (overflow || j > axv->axv_vb.avb_oid.aoi_idlen)
+	if (overflow == 1) {
 		axv->axv_include = 0;
-
-/*
- * AGENTX_REQUEST_TYPE_GETNEXT request can !dynamic objects can just move to
- * the next object
- */
+	} else if (overflow == -1) {
+		axv->axv_include = 1;
+	} else if (j < oid->aoi_idlen)
+		axv->axv_include = 0;
+	else if (j > oid->aoi_idlen)
+		axv->axv_include = 1;
 	if (agentx_varbind_request(axv) == AGENTX_REQUEST_TYPE_GETNEXT &&
 	    !dynamic) {
 		agentx_varbind_endofmibview(axv);
@@ -3401,9 +3363,7 @@ agentx_varbind_request(struct agentx_varbind *axv)
 {
 	if (axv->axv_axg->axg_type == AX_PDU_TYPE_GET)
 		return AGENTX_REQUEST_TYPE_GET;
-	if (axv->axv_include ||
-	    (axv->axv_indexlen > 0 &&
-	    !axv->axv_index[axv->axv_indexlen - 1].axv_idatacomplete))
+	if (axv->axv_include)
 		return AGENTX_REQUEST_TYPE_GETNEXTINCLUSIVE;
 	return AGENTX_REQUEST_TYPE_GETNEXT;
 }
