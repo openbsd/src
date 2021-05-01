@@ -2815,8 +2815,6 @@
 ./usr/share/man/man3/setmode.3
 ./usr/share/man/man3/setproctitle.3
 ./usr/share/man/man3/setvbuf.3
-./usr/share/man/man3/sgi/cacheflush.3
-./usr/share/man/man3/sgi/get_fpc_csr.3
 ./usr/share/man/man3/shm_open.3
 ./usr/share/man/man3/sigaddset.3
 ./usr/share/man/man3/sigblock.3

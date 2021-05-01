@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.12 2018/10/02 02:05:34 kevlo Exp $
+# $OpenBSD: Makefile,v 1.13 2021/05/01 16:11:15 visa Exp $
 
 NOPROG=
 NOMAN=
@@ -10,7 +10,7 @@ CC=${HOSTCC}
      ${MACHINE} == "i386" || \
      ${MACHINE} == "loongson" || ${MACHINE} == "octeon" || \
      ${MACHINE_ARCH} == "powerpc" || \
-     ${MACHINE} == "sgi" || ${MACHINE} == "sparc64")
+     ${MACHINE} == "sparc64")
 
 FIRM=	ral-rt2561 ral-rt2561s ral-rt2661 ral-rt2860 ral-rt3290
 

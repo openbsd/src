@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.55 2019/11/07 14:44:53 mpi Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.56 2021/05/01 16:11:11 visa Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -380,8 +380,6 @@ db_trap_trace_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *m)
 void
 db_print_tlb(uint tlbno, uint64_t tlblo)
 {
-	paddr_t pa;
-#ifndef CPU_R8000
 	/* short description of coherency attributes */
 	static const char *attr[] = {
 		"CCA 0",
@@ -393,22 +391,17 @@ db_print_tlb(uint tlbno, uint64_t tlblo)
 		"CCA 6",
 		"NCACC"
 	};
-#endif
+	paddr_t pa;
 
 	pa = pfn_to_pad(tlblo);
-#ifdef CPU_R8000
-	pa |= ptoa(tlbno % 128);
-#endif
 	if (tlblo & PG_V) {
 		db_printf("%016lx ", pa);
 #ifdef CPU_MIPS64R2
 		db_printf("%c", tlblo & PG_XI ? 'X' : ' ');
 #endif
 		db_printf("%c", tlblo & PG_M ? 'M' : ' ');
-#ifndef CPU_R8000
 		db_printf("%c", tlblo & PG_G ? 'G' : ' ');
 		db_printf("%s ", attr[(tlblo >> 3) & 7]);
-#endif
 	} else {
 		db_printf("invalid                 ");
 	}
@@ -484,19 +477,12 @@ db_dump_tlb_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *m)
 
 			asid = (tlb.tlb_hi & PG_ASID_MASK) >> PG_ASID_SHIFT;
 			va = tlb.tlb_hi & ~((vaddr_t)PG_ASID_MASK);
-#ifdef CPU_R8000
-			if ((int64_t)va < 0)
-				asid = 0;	/* KV1 addresses ignore ASID */
-			va |= ptoa((tlbno ^ asid) % 128);
-#endif
 			db_printf("%3d v=%016lx", tlbno, va);
 			db_printf("/%02x ", asid);
 
 			db_print_tlb(tlbno, tlb.tlb_lo0);
-#ifndef CPU_R8000
 			db_print_tlb(tlbno, tlb.tlb_lo1);
 			db_printf(" sz=%llx", tlb.tlb_mask);
-#endif
 		} else if (pid < 0) {
 			db_printf("%3d v=invalid    ", tlbno);
 		}

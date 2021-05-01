@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.153 2021/03/11 11:16:59 jsg Exp $	*/
+/*	$OpenBSD: trap.c,v 1.154 2021/05/01 16:11:11 visa Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -178,16 +178,9 @@ trap(struct trapframe *trapframe)
 
 	type = (trapframe->cause & CR_EXC_CODE) >> CR_EXC_CODE_SHIFT;
 
-#if defined(CPU_R8000) && !defined(DEBUG_INTERRUPT)
-	if (type != T_INT)
-#endif
-		trapdebug_enter(ci, trapframe, -1);
+	trapdebug_enter(ci, trapframe, -1);
 
-#ifdef CPU_R8000
-	if (type != T_INT && type != T_SYSCALL)
-#else
 	if (type != T_SYSCALL)
-#endif
 		atomic_inc_int(&uvmexp.traps);
 	if (USERMODE(trapframe->sr))
 		type |= T_USER;
@@ -197,10 +190,6 @@ trap(struct trapframe *trapframe)
 	 * enable IPI interrupts only otherwise.
 	 */
 	switch (type) {
-#ifdef CPU_R8000
-	case T_INT:
-	case T_INT | T_USER:
-#endif
 	case T_BREAK:
 		break;
 	default:
@@ -213,52 +202,6 @@ trap(struct trapframe *trapframe)
 		}
 		break;
 	}
-
-#ifdef CPU_R8000
-	/*
-	 * Some exception causes on R8000 are actually detected by external
-	 * circuitry, and as such are reported as external interrupts.
-	 * On R8000 kernels, external interrupts vector to trap() instead of
-	 * interrupt(), so that we can process these particular exceptions
-	 * as if they were triggered as regular exceptions.
-	 */
-	if ((type & ~T_USER) == T_INT) {
-		if (trapframe->cause & CR_VCE) {
-#ifndef DEBUG_INTERRUPT
-			trapdebug_enter(ci, trapframe, -1);
-#endif
-			panic("VCE or TLBX");
-		}
-
-		if (trapframe->cause & CR_FPE) {
-#ifndef DEBUG_INTERRUPT
-			trapdebug_enter(ci, trapframe, -1);
-#endif
-			atomic_inc_int(&uvmexp.traps);
-			if (type & T_USER)
-				refreshcreds(p);
-			itsa(trapframe, ci, p, T_FPE | (type & T_USER));
-			cp0_reset_cause(CR_FPE);
-		}
-
-		if (trapframe->cause & CR_INT_MASK) {
-			/*
-			 * Similar reality check as done in interrupt(), in
-			 * case an interrupt occurred between a write to
-			 * COP_0_STATUS_REG and it taking effect.
-			 * (I have never seen this occurring on R8000 but
-			 *  this is cheap)
-			 */
-			if (ISSET(trapframe->sr, SR_INT_ENAB))
-				interrupt(trapframe);
-		}
-
-		if ((trapframe->cause & CR_FPE) && (type & T_USER))
-			userret(p);
-
-		return;
-	}
-#endif
 
 	if (type & T_USER)
 		refreshcreds(p);
@@ -394,21 +337,7 @@ fault_common:
 		    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
 			return;
 
-#ifdef CPU_R4000
-		if (r4000_errata != 0) {
-			if (eop_tlb_miss_handler(trapframe, ci, p) != 0)
-				return;
-		}
-#endif
-
 fault_common_no_miss:
-
-#ifdef CPU_R4000
-		if (r4000_errata != 0) {
-			eop_cleanup(trapframe, p);
-		}
-#endif
-
 	    {
 		vaddr_t va;
 		struct vmspace *vm;
@@ -873,31 +802,6 @@ fault_common_no_miss:
 		}
 		goto err;
 
-#ifdef CPU_R10000
-	case T_BUS_ERR_IFETCH:
-		/*
-		 * At least R16000 processor have been found triggering
-		 * reproduceable bus error on instruction fetch in the
-		 * kernel code, which are trivially recoverable (and
-		 * look like an obscure errata to me).
-		 *
-		 * Thus, ignore these exceptions if the faulting address
-		 * is in the kernel.
-		 */
-	    {
-		extern void *kernel_text;
-		extern void *etext;
-		vaddr_t va;
-
-		va = (vaddr_t)trapframe->pc;
-		if (trapframe->cause & CR_BR_DELAY)
-			va += 4;
-		if (va > (vaddr_t)&kernel_text && va < (vaddr_t)&etext)
-			return;
-	    }
-		goto err;
-#endif
-
 	default:
 	err:
 		disableintr();
@@ -984,18 +888,11 @@ trapDump(const char *msg, int (*pr)(const char *, ...))
 			if (ptrp->cause == 0)
 				break;
 
-#ifdef CPU_R8000
-			(*pr)("%s: PC %p CR 0x%016lx SR 0x%011lx\n",
-			    trap_type[(ptrp->cause & CR_EXC_CODE) >>
-			      CR_EXC_CODE_SHIFT],
-			    ptrp->pc, ptrp->cause, ptrp->status);
-#else
 			(*pr)("%s: PC %p CR 0x%08lx SR 0x%08lx\n",
 			    trap_type[(ptrp->cause & CR_EXC_CODE) >>
 			      CR_EXC_CODE_SHIFT],
 			    ptrp->pc, ptrp->cause & 0xffffffff,
 			    ptrp->status & 0xffffffff);
-#endif
 			(*pr)(" RA %p SP %p ADR %p\n",
 			    ptrp->ra, ptrp->sp, ptrp->vadr);
 		}
@@ -1253,15 +1150,9 @@ stacktrace(struct trapframe *regs)
 	stacktrace_subr(regs, 6, printf);
 }
 
-#ifdef CPU_R8000
-#define	VALID_ADDRESS(va) \
-	(((va) >= VM_MIN_KERNEL_ADDRESS && (va) < VM_MAX_KERNEL_ADDRESS) || \
-	 IS_XKPHYS(va))
-#else
 #define	VALID_ADDRESS(va) \
 	(((va) >= VM_MIN_KERNEL_ADDRESS && (va) < VM_MAX_KERNEL_ADDRESS) || \
 	 IS_XKPHYS(va) || ((va) >= CKSEG0_BASE && (va) < CKSEG1_BASE))
-#endif
 
 void
 stacktrace_subr(struct trapframe *regs, int count,

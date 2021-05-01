@@ -1,9 +1,9 @@
 
-# $OpenBSD: Makefile,v 1.36 2019/05/11 07:18:15 deraadt Exp $
+# $OpenBSD: Makefile,v 1.37 2021/05/01 16:11:09 visa Exp $
 
 MAKEDEVARCHS+=alpha amd64 armv7 hppa i386 landisk
 MAKEDEVARCHS+=loongson luna88k macppc
-MAKEDEVARCHS+=sgi sparc64
+MAKEDEVARCHS+=sparc64
 
 MAKEDEVTARGS?=all ramdisk
 

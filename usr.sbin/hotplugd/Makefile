@@ -1,11 +1,10 @@
-# $OpenBSD: Makefile,v 1.21 2019/05/11 07:18:17 deraadt Exp $
+# $OpenBSD: Makefile,v 1.22 2021/05/01 16:11:17 visa Exp $
 
 .if ${MACHINE} == "alpha" || ${MACHINE} == "amd64" || \
     ${MACHINE} == "arm64" || ${MACHINE} == "armv7" || \
     ${MACHINE} == "hppa" || ${MACHINE} == "i386" || \
     ${MACHINE} == "landisk" || ${MACHINE} == "loongson" || \
-    ${MACHINE} == "macppc" || ${MACHINE} == "sgi" || \
-    ${MACHINE} == "sparc64"
+    ${MACHINE} == "macppc" || ${MACHINE} == "sparc64"
 
 PROG=	hotplugd
 SRCS=	hotplugd.c

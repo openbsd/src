@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.5 2017/10/08 15:14:17 visa Exp $
+#	$OpenBSD: Makefile,v 1.6 2021/05/01 16:11:09 visa Exp $
 
 MAN=		cacheflush.3 get_fpc_csr.3
-MANSUBDIR=	loongson octeon sgi
+MANSUBDIR=	loongson octeon
 
 #.if ${MACHINE_CPU} == "mips64"
 #NOPIC=

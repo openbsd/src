@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.43 2021/03/04 15:38:06 visa Exp $ */
+/*	$OpenBSD: clock.c,v 1.44 2021/05/01 16:11:11 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -67,9 +67,6 @@ clockmatch(struct device *parent, void *vcf, void *aux)
 {
 	struct mainbus_attach_args *maa = aux;
 
-#ifdef CPU_R8000
-	return 0;	/* shouldn't be in the kernel configuration anyway */
-#endif
 	return strcmp(maa->maa_name, clock_cd.cd_name) == 0;
 }
 

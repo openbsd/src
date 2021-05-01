@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.116 2021/03/11 11:16:59 jsg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.117 2021/05/01 16:11:11 visa Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -174,14 +174,8 @@ pmap_invalidate_user_page(pmap_t pmap, vaddr_t va)
 	u_long asid = pmap->pm_asid[cpuid].pma_asid << PG_ASID_SHIFT;
 
 	if (pmap->pm_asid[cpuid].pma_asidgen ==
-	    pmap_asid_info[cpuid].pma_asidgen) {
-#ifdef CPU_R4000
-		if (r4000_errata != 0)
-			eop_tlb_flush_addr(pmap, va, asid);
-		else
-#endif
-			tlb_flush_addr(va | asid);
-	}
+	    pmap_asid_info[cpuid].pma_asidgen)
+		tlb_flush_addr(va | asid);
 }
 
 void
@@ -371,9 +365,7 @@ void
 pmap_bootstrap(void)
 {
 	u_int i;
-#ifndef CPU_R8000
 	pt_entry_t *spte;
-#endif
 
 	/*
 	 * Create a mapping table for kernel virtual memory. This
@@ -386,10 +378,8 @@ pmap_bootstrap(void)
 
 	Sysmapsize = (VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS) /
 	    PAGE_SIZE;
-#ifndef CPU_R8000
 	if (Sysmapsize & 1)
 		Sysmapsize++;	/* force even number of pages */
-#endif
 
 	Sysmap = (pt_entry_t *)
 	    uvm_pageboot_alloc(sizeof(pt_entry_t) * Sysmapsize);
@@ -403,7 +393,6 @@ pmap_bootstrap(void)
 
 	pmap_kernel()->pm_count = 1;
 
-#ifndef CPU_R8000
 	/*
 	 * The 64 bit Mips architecture stores the AND result
 	 * of the Global bits in the pte pair in the on chip
@@ -414,9 +403,7 @@ pmap_bootstrap(void)
 	 */
 	for (i = Sysmapsize, spte = Sysmap; i != 0; i--, spte++)
 		*spte = PG_G;
-#else
-	bzero(Sysmap, sizeof(pt_entry_t) * Sysmapsize);
-#endif
+
 	tlb_set_gbase((vaddr_t)Sysmap, Sysmapsize);
 
 	for (i = 0; i < MAXCPUS; i++) {
@@ -477,19 +464,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 		if (vendp)
 			*vendp = virtual_end;
 
-#ifdef __sgi__
-#ifndef CPU_R8000
-		/*
-		 * Return a CKSEG0 address whenever possible.
-		 */
-		if (pa + size < CKSEG_SIZE)
-			va = PHYS_TO_CKSEG0(pa);
-		else
-#endif
-			va = PHYS_TO_XKPHYS(pa, CCA_CACHED);
-#else
 		va = PHYS_TO_XKPHYS(pa, CCA_CACHED);
-#endif
 
 		bzero((void *)va, size);
 		return (va);
@@ -1251,24 +1226,6 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		DPRINTF(PDB_ENTER, ("pmap_enter: new pte 0x%08x\n", npte));
 	}
 
-#ifdef CPU_R4000
-	/*
-	 * If mapping an executable page, check for the R4000 EOP bug, and
-	 * flag it in the pte.
-	 */
-	if (r4000_errata != 0) {
-		if (pg != NULL && (prot & PROT_EXEC)) {
-			if ((pg->pg_flags & PGF_EOP_CHECKED) == 0)
-				atomic_setbits_int(&pg->pg_flags,
-				     PGF_EOP_CHECKED |
-				     eop_page_check(pa));
-
-			if (pg->pg_flags & PGF_EOP_VULN)
-				npte |= PG_SP;
-		}
-	}
-#endif
-
 	opte = *pte;
 	*pte = npte;
 	pmap_update_user_page(pmap, va, npte);
@@ -1413,14 +1370,12 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 	if (pmap == pmap_kernel()) {
 		if (IS_XKPHYS(va))
 			pa = XKPHYS_TO_PHYS(va);
-#ifndef CPU_R8000
 		else if (va >= (vaddr_t)CKSEG0_BASE &&
 		    va < (vaddr_t)CKSEG0_BASE + CKSEG_SIZE)
 			pa = CKSEG0_TO_PHYS(va);
 		else if (va >= (vaddr_t)CKSEG1_BASE &&
 		    va < (vaddr_t)CKSEG1_BASE + CKSEG_SIZE)
 			pa = CKSEG1_TO_PHYS(va);
-#endif
 		else {
 #ifdef DIAGNOSTIC
 			if (va < VM_MIN_KERNEL_ADDRESS ||
@@ -1507,10 +1462,6 @@ pmap_zero_page(struct vm_page *pg)
 	mem_zero_page(va);
 	if (df || cache_valias_mask != 0)
 		Mips_HitSyncDCachePage(ci, va, phys);
-
-#ifdef CPU_R4000
-	atomic_clearbits_int(&pg->pg_flags, PGF_EOP_CHECKED | PGF_EOP_VULN);
-#endif
 }
 
 /*
@@ -1566,12 +1517,6 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 		Mips_HitInvalidateDCache(ci, s, PAGE_SIZE);
 	if (df || cache_valias_mask != 0)
 		Mips_HitSyncDCachePage(ci, d, dst);
-
-#ifdef CPU_R4000
-	atomic_clearbits_int(&dstpg->pg_flags, PGF_EOP_CHECKED | PGF_EOP_VULN);
-	atomic_setbits_int(&dstpg->pg_flags,
-	    srcpg->pg_flags & (PGF_EOP_CHECKED | PGF_EOP_VULN));
-#endif
 }
 
 /*
@@ -2119,19 +2064,7 @@ pmap_map_direct(vm_page_t pg)
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	vaddr_t va;
 
-#ifdef __sgi__
-#ifndef CPU_R8000
-	/*
-	 * Return a CKSEG0 address whenever possible.
-	 */
-	if (pa < CKSEG_SIZE)
-		va = PHYS_TO_CKSEG0(pa);
-	else
-#endif
-		va = PHYS_TO_XKPHYS(pa, CCA_CACHED);
-#else
 	va = PHYS_TO_XKPHYS(pa, CCA_CACHED);
-#endif
 
 	return va;
 }
@@ -2142,17 +2075,7 @@ pmap_unmap_direct(vaddr_t va)
 	paddr_t pa;
 	vm_page_t pg;
 
-#ifdef __sgi__
-#ifndef CPU_R8000
-	if (va >= CKSEG0_BASE)
-		pa = CKSEG0_TO_PHYS(va);
-	else
-#endif
-		pa = XKPHYS_TO_PHYS(va);
-#else
 	pa = XKPHYS_TO_PHYS(va);
-#endif
-
 	pg = PHYS_TO_VM_PAGE(pa);
 	if (cache_valias_mask)
 		Mips_HitSyncDCachePage(curcpu(), va, pa);

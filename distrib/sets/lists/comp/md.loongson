@@ -62,7 +62,6 @@
 ./usr/include/mips64
 ./usr/include/mips64/_float.h
 ./usr/include/mips64/_types.h
-./usr/include/mips64/arcbios.h
 ./usr/include/mips64/archtype.h
 ./usr/include/mips64/asm.h
 ./usr/include/mips64/atomic.h

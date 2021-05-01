@@ -1,4 +1,4 @@
-/*	$OpenBSD: mips_cpu.h,v 1.9 2020/07/18 08:37:43 visa Exp $	*/
+/*	$OpenBSD: mips_cpu.h,v 1.10 2021/05/01 16:11:11 visa Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -81,52 +81,15 @@
 #define	SR_INT_MASK_4		0x00004000
 #define	SR_INT_MASK_5		0x00008000
 
-/* R8000-specific bits */
-#define	SR_SERIALIZE_FPU	0x0000010000000000
-#define	SR_KPGSZ_SHIFT		36
-#define	SR_UPGSZ_SHIFT		32
-#define	SR_PGSZ_4K		0
-#define	SR_PGSZ_8K		1
-#define	SR_PGSZ_16K		2
-#define	SR_PGSZ_64K		3
-#define	SR_PGSZ_1M		4
-#define	SR_PGSZ_4M		5
-#define	SR_PGSZ_16M		6
-#define	SR_PGSZ_MASK		0x0f
-
-#define	SR_INT_MASK_6		0x00010000
-#define	SR_INT_MASK_7		0x00020000
-#define	SR_INT_MASK_8		0x00040000
-
-#ifdef CPU_R8000
-#define	SR_XX			0x00000040
-#define	SR_KSU_MASK		0x00000010
-#define	SR_KSU_KERNEL		0x00000000
-#define	SR_INT_MASK		0x0007ff00
-#else
 #define	SR_XX			0x80000000
 #define	SR_KSU_MASK		0x00000018
 #define	SR_KSU_SUPER		0x00000008
 #define	SR_KSU_KERNEL		0x00000000
 #define	SR_INT_MASK		0x0000ff00
-#endif
 /* SR_KSU_USER is in <mips64/cpu.h> for CLKF_USERMODE() */
 #ifndef SR_KSU_USER
 #define	SR_KSU_USER		0x00000010
 #endif
-
-/*
- * Interrupt control register in RM7000. Expansion of interrupts.
- */
-
-#define	IC_INT_MASK		0x00003f00	/* Two msb reserved */
-#define	IC_INT_MASK_6		0x00000100
-#define	IC_INT_MASK_7		0x00000200
-#define	IC_INT_MASK_8		0x00000400
-#define	IC_INT_MASK_9		0x00000800
-#define	IC_INT_TIMR		0x00001000	/* 12 Timer */
-#define	IC_INT_PERF		0x00002000	/* 13 Performance counter */
-#define	IC_INT_TE		0x00000080	/* Timer on INT11 */
 
 #define	SOFT_INT_MASK		(SOFT_INT_MASK_0 | SOFT_INT_MASK_1)
 
@@ -134,17 +97,10 @@
  * Cause register.
  */
 
-#ifdef CPU_R8000
-#define	CR_BR_DELAY		0x8000000000000000
-#define	CR_EXC_CODE		0x000000f8
-#define	CR_EXC_CODE_SHIFT	3
-#define	CR_COP_ERR		0x10000000
-#else
 #define	CR_BR_DELAY		0x80000000
 #define	CR_EXC_CODE		0x0000007c
 #define	CR_EXC_CODE_SHIFT	2
 #define	CR_COP_ERR		0x30000000
-#endif
 #define	CR_COP1_ERR		0x10000000
 #define	CR_COP2_ERR		0x20000000
 #define	CR_COP3_ERR		0x20000000
@@ -156,26 +112,8 @@
 #define	CR_INT_3		0x00002000
 #define	CR_INT_4		0x00004000
 #define	CR_INT_5		0x00008000
-/* Following on RM7000 and R8000 */
-#define	CR_INT_6		0x00010000
-#define	CR_INT_7		0x00020000
-#define	CR_INT_8		0x00040000
-/* Following on RM7000 */
-#define	CR_INT_9		0x00080000
-#define	CR_INT_HARD		0x000ffc00
-#define	CR_INT_TIMR		0x00100000	/* 12 Timer */
-#define	CR_INT_PERF		0x00200000	/* 13 Performance counter */
-/* R8000 specific */
-#define	CR_FPE			0x01000000
-#define	CR_VCE			0x02000000
-#define	CR_BERR			0x04000000
-#define	CR_NMI			0x08000000
 
-#ifdef CPU_R8000
-#define	CR_INT_MASK		0x0007ff00
-#else
 #define	CR_INT_MASK		0x003fff00
-#endif
 
 /*
  * Config register.
@@ -190,20 +128,11 @@
  * Location of exception vectors.
  */
 
-#ifdef CPU_R8000
-#define	RESET_EXC_VEC		PHYS_TO_XKPHYS(0x1fc00000, CCA_NC)
-/* all the others are relative to COP_0_TRAPBASE */
-/* #define	UTLB_MISS_EXC_VEC	0x00000000 */
-/* #define	KV1TLB_MISS_EXC_VEC	0x00000400 */
-/* #define	KV0TLB_MISS_EXC_VEC	0x00000800 */
-/* #define	GEN_EXC_VEC		0x00000c00 */
-#else
 #define	RESET_EXC_VEC		(CKSEG1_BASE + 0x1fc00000)
 #define	TLB_MISS_EXC_VEC	(CKSEG1_BASE + 0x00000000)
 #define	XTLB_MISS_EXC_VEC	(CKSEG1_BASE + 0x00000080)
 #define	CACHE_ERR_EXC_VEC	(CKSEG1_BASE + 0x00000100)
 #define	GEN_EXC_VEC		(CKSEG1_BASE + 0x00000180)
-#endif
 
 /*
  * Coprocessor 0 registers
@@ -243,34 +172,6 @@
 #define	COP_0_TAG_HI		$29
 #define	COP_0_ERROR_PC		$30
 
-/* R8000 specific */
-#define	COP_0_TLB_SET		$0
-#define	COP_0_TLB_LO		$2
-#define	COP_0_UBASE		$4
-#define	COP_0_SHIFTAMT		$5
-#define	COP_0_TRAPBASE		$6
-#define	COP_0_BAD_PADDR		$7
-#define	COP_0_VADDR		$8
-#define	COP_0_WORK0		$18
-#define	COP_0_WORK1		$19
-#define	COP_0_PBASE		$20
-#define	COP_0_GBASE		$21
-#define	COP_0_TFP_TLB_WIRED	$24
-#define	COP_0_DCACHE		$28
-#define	COP_0_ICACHE		$29
-
-/* RM7000 specific */
-#define	COP_0_WATCH_1		$18
-#define	COP_0_WATCH_2		$19
-#define	COP_0_WATCH_M		$24
-#define	COP_0_PC_COUNT		$25
-#define	COP_0_PC_CTRL		$22
-
-#define	COP_0_ICR		$20	/* Use cfc0/ctc0 to access */
-
-/* R10000 specific */
-#define	COP_0_TLB_FR_MASK	$21
-
 /* Loongson-2 specific */
 #define	COP_0_DIAG		$22
 
@@ -281,7 +182,7 @@
 /*
  * COP_0_COUNT speed divider.
  */
-#if defined(CPU_OCTEON) || defined(CPU_R8000)
+#if defined(CPU_OCTEON)
 #define	CP0_CYCLE_DIVIDER	1
 #else
 #define	CP0_CYCLE_DIVIDER	2

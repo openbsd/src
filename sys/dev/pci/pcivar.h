@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcivar.h,v 1.74 2020/09/08 20:13:52 kettenis Exp $	*/
+/*	$OpenBSD: pcivar.h,v 1.75 2021/05/01 16:11:16 visa Exp $	*/
 /*	$NetBSD: pcivar.h,v 1.23 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -73,8 +73,6 @@ struct pci_softc;
 #include <alpha/pci/pci_machdep.h>
 #elif defined(__i386__)
 #include <i386/pci/pci_machdep.h>
-#elif defined(__sgi__)
-#include <sgi/pci/pci_machdep.h>
 #else
 #include <machine/pci_machdep.h>
 #endif

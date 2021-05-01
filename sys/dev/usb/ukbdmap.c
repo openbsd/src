@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbdmap.c,v 1.45 2020/11/02 19:47:50 tobhe Exp $	*/
+/*	$OpenBSD: ukbdmap.c,v 1.46 2021/05/01 16:11:16 visa Exp $	*/
 
 /*
  * THIS FILE IS AUTOMAGICALLY GENERATED.  DO NOT EDIT.
@@ -13,7 +13,6 @@
 /*
  * PLEASE DO NOT FORGET TO REGEN
  *	sys/dev/usb/ukbdmap.c
- *	sys/arch/sgi/hpc/wskbdmap_sgi.c
  * AFTER ANY CHANGES TO THIS FILE!
  */
 

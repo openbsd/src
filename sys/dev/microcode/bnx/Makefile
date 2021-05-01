@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2016/05/11 21:52:50 deraadt Exp $
+# $OpenBSD: Makefile,v 1.6 2021/05/01 16:11:15 visa Exp $
 
 NOPROG=
 NOMAN=
@@ -7,8 +7,7 @@ CC=${HOSTCC}
 # PCI capable systems only
 .if (${MACHINE_ARCH} == "powerpc") || (${MACHINE} == "alpha") || \
     (${MACHINE} == "amd64") || (${MACHINE} == "hppa") || \
-    (${MACHINE} == "i386") || \
-    (${MACHINE} == "sgi") || (${MACHINE} == "sparc64")
+    (${MACHINE} == "i386") || (${MACHINE} == "sparc64")
 
 FIRM=	bnx-b06 bnx-b09 bnx-rv2p bnx-xi-rv2p bnx-xi90-rv2p
 

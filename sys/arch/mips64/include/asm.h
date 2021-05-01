@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.26 2021/03/11 11:16:59 jsg Exp $ */
+/*	$OpenBSD: asm.h,v 1.27 2021/05/01 16:11:10 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2002 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -178,29 +178,12 @@
 #define	PTR_VAL		.dword
 #endif
 
-/*
- * The following macros are here to benefit the R8000 processor:
- * - all coprocessor 0 control registers are 64-bit
- * - the regular nop (sll zero, zero, 0) has the drawback of using the
- *   shifter, potentially breaking instruction dispatch if occurring after
- *   another instruction using the shifter.
- */
-#ifdef CPU_R8000
-#define	SSNOP	sll zero, zero, 1		/* ``ssnop'' */
-#define	NOP	PTR_ADDU zero, zero, zero	/* real nop for R8000 */
-#define	DMFC0	SSNOP; dmfc0
-#define	DMTC0	SSNOP; dmtc0
-#define	MFC0	SSNOP; dmfc0
-#define	MTC0	SSNOP; dmtc0
-#define	ERET	eret; mul k0, k0; mflo k0
-#else
 #define	NOP	nop
 #define	DMFC0	dmfc0
 #define	DMTC0	dmtc0
 #define	MFC0	mfc0
 #define	MTC0	mtc0
 #define	ERET	sync; eret
-#endif
 
 /*
  * Define -pg profile entry code.
@@ -345,36 +328,6 @@ x: ;				\
 #define	MTC0_SR_IE_HAZARD	/* nothing */
 #define	MTC0_SR_CU_HAZARD	/* nothing */
 #define	TLB_HAZARD		/* nothing */
-#endif
-
-#ifdef CPU_RM7000
-/*
- * Due to a flaw in RM7000 1.x processors a pipeline 'drain' is
- * required after some mtc0 instructions.
- * Ten nops in sequence does the trick.
- */
-#define	MTC0_HAZARD		NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP
-#define	MTC0_SR_IE_HAZARD	MTC0_HAZARD
-/*
- * The RM7000 needs twice as much nops around tlb* instructions.
- */
-#define	TLB_HAZARD		NOP; NOP; NOP; NOP
-#endif
-
-#ifdef CPU_R8000
-/*
- * The R8000 needs a lot of care inserting proper superscalar dispatch breaks
- * to prevent unwanted side-effects or avoid collisions on the internal MiscBus
- * and the E and W stages of the pipelines.
- *
- * The following settings are a bit pessimistic, but better run safely than
- * not at all.
- */
-#define	PRE_MFC0_ADDR_HAZARD	.align 5; SSNOP
-#define	MFC0_HAZARD		SSNOP
-#define	MTC0_HAZARD		SSNOP; SSNOP; SSNOP; SSNOP
-#define	MTC0_SR_IE_HAZARD	MTC0_HAZARD
-#define	MTC0_SR_CU_HAZARD	MTC0_HAZARD
 #endif
 
 /* Hazard between {d,}mfc0 of COP_0_VADDR */

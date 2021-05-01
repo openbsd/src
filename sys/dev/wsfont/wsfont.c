@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.c,v 1.58 2020/07/10 08:28:04 fcambus Exp $ */
+/*	$OpenBSD: wsfont.c,v 1.59 2021/05/01 16:11:16 visa Exp $ */
 /*	$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $	*/
 
 /*-
@@ -97,7 +97,7 @@
 #if defined(__sparc64__)
 #define	FONT_GALLANT12x22
 #elif defined(__alpha__) || defined(__luna88k__) || defined(__macppc__) || \
-    defined(__sgi__) || !defined(SMALL_KERNEL)
+    !defined(SMALL_KERNEL)
 #define FONT_SPLEEN12x24
 #endif
 

@@ -1,4 +1,4 @@
-.\" $OpenBSD: pckbd.4,v 1.41 2019/05/11 14:19:16 abieber Exp $
+.\" $OpenBSD: pckbd.4,v 1.42 2021/05/01 16:11:09 visa Exp $
 .\" $NetBSD: pckbd.4,v 1.3 1999/12/21 11:31:07 drochner Exp $
 .\"
 .\" Copyright (c) 1999
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 11 2019 $
+.Dd $Mdocdate: May 1 2021 $
 .Dt PCKBD 4
 .Os
 .Sh NAME
@@ -34,7 +34,6 @@
 .Sh SYNOPSIS
 .Cd "pckbd* at pckbc?"
 .Cd "pckbd* at gsckbc?" Pq hppa
-.Cd "pckbd* at mkbc?" Pq sgi
 .Cd "wskbd* at pckbd?"
 .Cd "option PCKBD_LAYOUT=XXX"
 .Sh DESCRIPTION
@@ -219,7 +218,6 @@ option PCKBD_LAYOUT="(KB_DE|KB_NODEAD|KB_METAESC)"
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr isa 4 ,
-.Xr mkbc 4 ,
 .Xr pckbc 4 ,
 .Xr wskbd 4 ,
 .Xr wsconsctl 8

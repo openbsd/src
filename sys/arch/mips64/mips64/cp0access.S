@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp0access.S,v 1.22 2021/04/29 12:49:19 visa Exp $ */
+/*	$OpenBSD: cp0access.S,v 1.23 2021/05/01 16:11:11 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -182,43 +182,19 @@ LEAF(cp0_get_count, 0)
 	NOP
 END(cp0_get_count)
 
-#ifndef CPU_R8000
 LEAF(cp0_set_compare, 0)
 	MTC0	a0, COP_0_COMPARE
 	MTC0_HAZARD
 	j	ra
 	NOP
 END(cp0_set_compare)
-#endif
-
-#ifdef CPU_R8000
-LEAF(cp0_reset_cause, 0)
-	DMFC0	v0, COP_0_CAUSE_REG
-	MFC0_HAZARD
-	or	v0, a0
-	xor	v0, a0
-	DMTC0	v0, COP_0_CAUSE_REG
-	MTC0_HAZARD
-	j	ra
-	 NOP
-END(cp0_reset_cause)
-
-LEAF(cp0_set_trapbase, 0)
-	DMTC0	a0, COP_0_TRAPBASE
-	MTC0_HAZARD
-	j	ra
-	 NOP
-END(cp0_set_trapbase)
-#endif
 
 LEAF(cpu_rnd_messybits, 0)
 	MFC0	v0, COP_0_COUNT
 	MFC0_HAZARD
-#ifndef CPU_R8000
 	MFC0	v1, COP_0_BAD_VADDR
 	MFC0_HAZARD
 	xor	v0, v1
-#endif
 	j	ra
 	 NOP
 END(cpu_rnd_messybits)

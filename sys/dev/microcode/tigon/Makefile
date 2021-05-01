@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2016/09/01 10:40:38 tedu Exp $
+# $OpenBSD: Makefile,v 1.10 2021/05/01 16:11:16 visa Exp $
 
 NOPROG=
 NOMAN=
@@ -8,7 +8,7 @@ CC=${HOSTCC}
 .if (${MACHINE} == "i386") || (${MACHINE} == "amd64") || \
     (${MACHINE} == "alpha") || (${MACHINE} == "sparc64") || \
     (${MACHINE_ARCH} == "powerpc") || \
-    (${MACHINE} == "hppa") || (${MACHINE} == "sgi")
+    (${MACHINE} == "hppa")
 
 FIRM= 	tigon1 tigon2
 

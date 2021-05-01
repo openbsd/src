@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.796 2021/04/24 07:49:11 visa Exp $
+#	$OpenBSD: Makefile,v 1.797 2021/05/01 16:11:09 visa Exp $
 
 MAN=	aac.4 abcrtc.4 abl.4 ac97.4 acphy.4 acrtc.4 \
 	acpi.4 acpiac.4 acpials.4 acpiasus.4 acpibat.4 \
@@ -98,7 +98,7 @@ MAN=	aac.4 abcrtc.4 abl.4 ac97.4 acphy.4 acrtc.4 \
 	vioblk.4 viocon.4 viomb.4 viornd.4 vioscsi.4 virtio.4 vlan.4 \
 	vmmci.4 vmt.4 vmwpvs.4 vmx.4 vnd.4 vr.4 \
 	vscsi.4 vte.4 vxlan.4 \
-	watchdog.4 wb.4 wbenv.4 wbng.4 wbsd.4 wbsio.4 wd.4 wdc.4 wdsc.4 we.4 \
+	watchdog.4 wb.4 wbenv.4 wbng.4 wbsd.4 wbsio.4 wd.4 wdc.4 we.4 \
 	wg.4 wi.4 witness.4 wpi.4 wscons.4 wsdisplay.4 wskbd.4 wsmouse.4 \
 	wsmux.4 \
 	xbf.4 xe.4 xen.4 xf86.4 xge.4 xhci.4 xl.4 xmphy.4 xnf.4 xspd.4 \
@@ -106,7 +106,7 @@ MAN=	aac.4 abcrtc.4 abl.4 ac97.4 acphy.4 acrtc.4 \
 
 SUBDIR=	man4.alpha man4.amd64 man4.arm64 man4.armv7 \
 	man4.hppa man4.i386 man4.landisk man4.loongson man4.luna88k \
-	man4.macppc man4.octeon man4.powerpc64 man4.sgi man4.sparc64
+	man4.macppc man4.octeon man4.powerpc64 man4.sparc64
 
 CLEANFILES+= wi.4
 

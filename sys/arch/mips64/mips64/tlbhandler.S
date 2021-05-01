@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlbhandler.S,v 1.50 2019/01/05 12:18:13 visa Exp $ */
+/*	$OpenBSD: tlbhandler.S,v 1.51 2021/05/01 16:11:11 visa Exp $ */
 
 /*
  * Copyright (c) 1995-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -55,70 +55,6 @@
  */
 	.set	noat
 
-#ifdef CPU_R4000
-	.globl	xtlb_miss_err_r4k
-	.ent	xtlb_miss_err_r4k, 0
-xtlb_miss_err_r4k:
-	/*
-	 * R4000 errata #27: TLB miss exception may be invoked with BadVAddr
-	 * being incorrect.
-	 */
-	tlbp
-	mfc0	k1, COP_0_TLB_INDEX
-	bltz	k1, xtlb_miss			# missing!
-	 nop
-	ERET
-	 nop
-	.end	xtlb_miss_err_r4k
-
-	.globl	xtlb_miss_err_r4000SC
-	.ent	xtlb_miss_err_r4000SC, 0
-xtlb_miss_err_r4000SC:
-	/*
-	 * R4000SC errata #12: In addition to errata #27 above, the tlbp
-	 * instruction needs to be issued in uncached space, to prevent
-	 * BadVAddr to be further corrupted if a VCE exception occurs
-	 * immediately after the TLB miss exception has been serviced.
-	 */
-	tlbp
-	mfc0	k1, COP_0_TLB_INDEX
-	bltz	k1, 1f		# missing!
-	 nop
-	ERET
-	 nop
-1:
-	LA	k1, xtlb_miss
-	jr	k1
-	 nop
-	.end	xtlb_miss_err_r4000SC
-#endif	/* CPU_R4000 */
-#if defined(CPU_R5000) || defined(CPU_RM7000)
-	.globl	xtlb_miss_err_r5k
-	.ent	xtlb_miss_err_r5k, 0
-xtlb_miss_err_r5k:
-	/*
-	 * R5000 errata: edge cases can trigger a TLB miss exception
-	 * instead of an invalid TLB exception. Servicing the TLB miss
-	 * exception would cause a duplicate TLB to be inserted, which
-	 * causes the processor operation to become unpredictable (but
-	 * very bad for the kernel's health, ten times out of nine).
-	 *
-	 * More details about the problem can be found in:
-	 *  http://www.linux-mips.org/archives/linux-mips/2000-02/msg00040.html
-	 *
-	 * We work around the issue by checking for an existing TLB entry,
-	 * and handling this as an invalid TLB exception (as it was intended
-	 * to be), in this case.
-	 */
-	tlbp
-	mfc0	k1, COP_0_TLB_INDEX
-	bltz	k1, xtlb_miss		# missing!
-	 nop
-	b	k_tlb_inv
-	 nop
-	.end	xtlb_miss_err_r5k
-#endif	/* CPU_R5000 || CPU_RM7000 */
-
 	.globl	xtlb_miss
 	.ent	xtlb_miss, 0
 xtlb_miss:
@@ -149,19 +85,8 @@ xtlb_miss:
 	PTR_ADDU k1, k1, k0
 	PTE_LOAD	k0, 0(k1)
 	PTE_LOAD	k1, PTE_OFFS(k1)
-#ifdef CPU_R4000
-	dsll	k0, k0, (64 - PG_FRAMEBITS - 1)	# clear bits left of PG_FRAME...
-	dsll	k1, k1, (64 - PG_FRAMEBITS - 1)	# ...but PG_SP
-	bltz	k0, _inv_seg			# defer to trap() if PG_SP set.
-	bltz	k1, _inv_seg
-	dsll	k0, k0, 1
-	dsll	k1, k1, 1
-	dsrl	k0, k0, (64 - PG_FRAMEBITS)
-	dsrl	k1, k1, (64 - PG_FRAMEBITS)
-#else
 	PTE_CLEAR_SWBITS(k0)
 	PTE_CLEAR_SWBITS(k1)
-#endif
 	dmtc0	k0, COP_0_TLB_LO0
 	dmtc0	k1, COP_0_TLB_LO1
 	TLB_HAZARD
@@ -686,18 +611,6 @@ LEAF(tlb_set_wired, 0)
 	j	ra
 	nop
 END(tlb_set_wired)
-
-#ifdef CPU_RM7000
-/*
- * Similar to tlb_set_wired() above, but returns the value of the random
- * register.
- */
-LEAF(tlb_set_wired_get_random, 0)
-	mtc0	a0, COP_0_TLB_WIRED
-	j	ra
-	 mfc0	v0, COP_0_TLB_RANDOM
-END(tlb_set_wired_get_random)
-#endif
 
 /*
  *	Initialize the TLB page mask.

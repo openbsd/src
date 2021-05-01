@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlw_pci.c,v 1.10 2017/08/17 12:21:31 jsg Exp $ */
+/*	$OpenBSD: qlw_pci.c,v 1.11 2021/05/01 16:11:16 visa Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -255,16 +255,11 @@ qlw_pci_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	/*
-	 * The standard SCSI initiator ID is 7, but various SGI
-	 * machines use 0 as the initiator ID for their onboard SCSI.
+	 * The standard SCSI initiator ID is 7.
 	 * Add-on cards should have a valid nvram, which will override
 	 * these defaults.
 	 */
-#ifdef __sgi__
-	sc->sc_initiator[0] = sc->sc_initiator[1] = 0;
-#else
 	sc->sc_initiator[0] = sc->sc_initiator[1] = 7;
-#endif
 
 #ifdef __sparc64__
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.130 2020/07/11 15:18:08 visa Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.131 2021/05/01 16:11:10 visa Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -89,28 +89,14 @@
 #define	CCA_CACHED		CCA_NONCOHERENT
 #endif
 
-/*
- * Uncached spaces.
- * R1x000 processors use bits 58:57 of uncached virtual addresses (CCA_NC)
- * to select different spaces. Unfortunately, other processors need these
- * bits to be zero, so uncached address have to be decided at runtime.
- */
-#define	SP_HUB			0UL	/* Hub space */
-#define	SP_IO			1UL	/* I/O space */
-#define	SP_SPECIAL		2UL	/* Memory Special space */
-#define	SP_NC			3UL	/* Memory Uncached space */
-
 #define	XKSSSEG_BASE		0x4000000000000000UL
 #define	XKPHYS_BASE		0x8000000000000000UL
 #define	XKSSEG_BASE		0xc000000000000000UL
 
 #define	XKPHYS_TO_PHYS(x)	((paddr_t)(x) & 0x0000000fffffffffUL)
 #define	PHYS_TO_XKPHYS(x,c)	((paddr_t)(x) | XKPHYS_BASE | ((c) << 59))
-#define	PHYS_TO_XKPHYS_UNCACHED(x,s) \
-	(PHYS_TO_XKPHYS(x, CCA_NC) | ((s) << 57))
 #define	IS_XKPHYS(va)		(((va) >> 62) == 2)
 #define	XKPHYS_TO_CCA(x)	(((x) >> 59) & 0x07)
-#define	XKPHYS_TO_SP(x)		(((x) >> 57) & 0x03)
 
 #endif	/* _LOCORE */
 
@@ -320,12 +306,7 @@ void	signotify(struct proc *);
 
 #define	aston(p)		((p)->p_md.md_astpending = 1)
 
-#ifdef CPU_R8000
-#define	mips_sync()		__asm__ volatile ("lw $0, 0(%0)" :: \
-				    "r" (PHYS_TO_XKPHYS(0, CCA_NC)) : "memory")
-#else
 #define	mips_sync()		__asm__ volatile ("sync" ::: "memory")
-#endif
 
 #endif /* _KERNEL && !_LOCORE */
 
@@ -463,17 +444,6 @@ int	classify_insn(uint32_t);
 #define	INSNCLASS_NEUTRAL	0
 #define	INSNCLASS_CALL		1
 #define	INSNCLASS_BRANCH	2
-
-/*
- * R4000 end-of-page errata workaround routines
- */
-
-extern int r4000_errata;
-u_int	eop_page_check(paddr_t);
-void	eop_tlb_flush_addr(struct pmap *, vaddr_t, u_long);
-int	eop_tlb_miss_handler(struct trapframe *, struct cpu_info *,
-	    struct proc *);
-void	eop_cleanup(struct trapframe *, struct proc *);
 
 /*
  * Low level access routines to CPU registers

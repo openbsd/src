@@ -1,4 +1,4 @@
-/* $OpenBSD: cgi.c,v 1.112 2021/04/28 14:29:50 jsg Exp $ */
+/* $OpenBSD: cgi.c,v 1.113 2021/05/01 16:11:17 visa Exp $ */
 /*
  * Copyright (c) 2014-2019 Ingo Schwarze <schwarze@usta.de>
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -121,15 +121,15 @@ static	const char *const arch_names[] = {
     "amd64",       "alpha",       "armv7",       "arm64",
     "hppa",        "i386",        "landisk",     "loongson",
     "luna88k",     "macppc",      "mips64",      "octeon",
-    "powerpc64",   "riscv64",     "sgi",         "socppc",
-    "sparc64",
+    "powerpc64",   "riscv64",     "sparc64",
 
     "amiga",       "arc",         "armish",      "arm32",
     "atari",       "aviion",      "beagle",      "cats",
     "hppa64",      "hp300",
     "ia64",        "mac68k",      "mvme68k",     "mvme88k",
     "mvmeppc",     "palm",        "pc532",       "pegasos",
-    "pmax",        "powerpc",     "solbourne",   "sparc",
+    "pmax",        "powerpc",     "sgi",         "socppc",
+    "solbourne",   "sparc",
     "sun3",        "vax",         "wgrisc",      "x68k",
     "zaurus"
 };

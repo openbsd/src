@@ -2790,7 +2790,6 @@
 ./usr/share/man/man3
 ./usr/share/man/man3/loongson
 ./usr/share/man/man3/octeon
-./usr/share/man/man3/sgi
 ./usr/share/man/man3p
 ./usr/share/man/man4
 ./usr/share/man/man4/alpha
@@ -2805,7 +2804,6 @@
 ./usr/share/man/man4/octeon
 ./usr/share/man/man4/powerpc64
 ./usr/share/man/man4/riscv64
-./usr/share/man/man4/sgi
 ./usr/share/man/man4/sparc64
 ./usr/share/man/man5
 ./usr/share/man/man5/sparc64
@@ -2828,7 +2826,6 @@
 ./usr/share/man/man8/octeon
 ./usr/share/man/man8/powerpc64
 ./usr/share/man/man8/riscv64
-./usr/share/man/man8/sgi
 ./usr/share/man/man8/sparc64
 ./usr/share/man/man8/user.8
 ./usr/share/man/man8/useradd.8

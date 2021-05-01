@@ -1,2 +1,0 @@
-dnl	$OpenBSD: upgrade,v 1.3 2008/03/10 22:00:12 miod Exp $
-OpenBSDUpgrade({:-the CD-ROM or the bsd.rd kernel-:})

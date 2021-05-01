@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.77 2020/07/22 08:04:41 fcambus Exp $ */
+/*	$OpenBSD: cpu.c,v 1.78 2021/05/01 16:11:11 visa Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -50,7 +50,6 @@ struct cpuset cpus_running;
 #endif
 
 extern void cpu_idle_cycle_nop(void);
-extern void cpu_idle_cycle_rm7k(void);
 extern void cpu_idle_cycle_wait(void);
 void (*cpu_idle_cycle_func)(void) = cpu_idle_cycle_nop;
 
@@ -84,7 +83,6 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 	struct cpu_hwinfo *ch = caa->caa_hw;
 	struct cpu_info *ci;
 	int cpuno = dev->dv_unit;
-	int isr16k = 0;
 	int fptype, vers_maj, vers_min;
 	int displayver;
 
@@ -141,65 +139,6 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 	vers_maj = (ch->c0prid >> 4) & 0x0f;
 	vers_min = ch->c0prid & 0x0f;
 	switch (ch->type) {
-	case MIPS_R4000:
-		if (vers_maj < 4)
-			printf("MIPS R4000 CPU");
-		else {
-			vers_maj -= 3;
-			printf("MIPS R4400 CPU");
-		}
-		fptype = MIPS_R4000;
-		break;
-#if 0
-	case MIPS_R4100:
-		printf("NEC VR41xx CPU");
-		break;
-	case MIPS_R4200:
-		printf("NEC VR4200 CPU (ICE)");
-		break;
-	case MIPS_R4300:
-		printf("NEC VR4300 CPU");
-		break;
-#endif
-	case MIPS_R4600:
-		printf("QED R4600 Orion CPU");
-		break;
-#if 0
-	case MIPS_R4700:
-		printf("QED R4700 Orion CPU");
-		break;
-#endif
-	case MIPS_R5000:
-		printf("MIPS R5000 CPU");
-		break;
-	case MIPS_RM52X0:
-		printf("PMC-Sierra RM52X0 CPU");
-		break;
-	case MIPS_RM7000:
-		if (vers_maj < 2)
-			printf("PMC-Sierra RM7000 CPU");
-		else
-			printf("PMC-Sierra RM7000A CPU");
-		break;
-	case MIPS_R8000:
-		printf("MIPS R8000 CPU");
-		break;
-	case MIPS_RM9000:
-		printf("PMC-Sierra RM9000 CPU");
-		break;
-	case MIPS_R10000:
-		printf("MIPS R10000 CPU");
-		break;
-	case MIPS_R12000:
-		printf("MIPS R12000 CPU");
-		break;
-	case MIPS_R14000:
-		if (vers_maj > 2) {
-			vers_maj -= 2;
-			isr16k = 1;
-		}
-		printf("R1%d000 CPU", isr16k ? 6 : 4);
-		break;
 	case MIPS_LOONGSON2:
 		switch (ch->c0prid & 0xff) {
 		case 0x00:
@@ -271,51 +210,6 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 		printf("no FPU");
 #endif
 		displayver = 0;
-		break;
-	case MIPS_R4000:
-		printf("R4010 FPC");
-		break;
-#if 0
-	case MIPS_R4200:
-		printf("VR4200 FPC (ICE)");
-		break;
-#endif
-	case MIPS_R4600:
-		printf("R4600 Orion FPC");
-		break;
-#if 0
-	case MIPS_R4700:
-		printf("R4700 Orion FPC");
-		break;
-#endif
-	case MIPS_R5000:
-		printf("R5000 based FPC");
-		break;
-	case MIPS_RM52X0:
-		printf("RM52X0 FPC");
-		break;
-	case MIPS_RM7000:
-		printf("RM7000 FPC");
-		break;
-	case MIPS_R8000:
-		printf("R8010 FPU");
-		break;
-	case MIPS_RM9000:
-		printf("RM9000 FPC");
-		break;
-	case MIPS_R10000:
-		printf("R10000 FPU");
-		break;
-	case MIPS_R12000:
-		printf("R12000 FPU");
-		break;
-	case MIPS_R14000:
-		if (isr16k) {
-			if (ch->c0prid == ch->c1prid)
-				vers_maj -= 2;
-			printf("R16000 FPU");
-		} else
-			printf("R14000 FPU");
 		break;
 	case MIPS_LOONGSON2:
 		switch (ch->c1prid & 0xff) {
@@ -392,13 +286,6 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 
 	if (cpuno == 0) {
 		switch (ch->type) {
-		case MIPS_R4600:
-		case MIPS_R4700:
-		case MIPS_R5000:
-		case MIPS_RM52X0:
-		case MIPS_RM7000:
-			cpu_idle_cycle_func = cpu_idle_cycle_rm7k;
-			break;
 		case MIPS_CN50XX:
 		case MIPS_CN61XX:
 		case MIPS_CN71XX:

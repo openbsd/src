@@ -1,4 +1,4 @@
-.\"	$OpenBSD: com.4,v 1.46 2020/01/22 05:19:24 jsg Exp $
+.\"	$OpenBSD: com.4,v 1.47 2021/05/01 16:11:09 visa Exp $
 .\"	$NetBSD: com.4,v 1.5 1996/03/16 00:07:08 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -33,7 +33,7 @@
 .\"
 .\"     from: @(#)dca.4	5.2 (Berkeley) 3/27/91
 .\"
-.Dd $Mdocdate: January 22 2020 $
+.Dd $Mdocdate: May 1 2021 $
 .Dt COM 4
 .Os
 .Sh NAME
@@ -87,12 +87,6 @@
 .Pp
 .Cd "# octeon"
 .Cd "com* at fdt?"
-.Pp
-.Cd "# sgi"
-.Cd "com0 at macebus0 base 0x00390000 irq 5"
-.Cd "com1 at macebus0 base 0x00398000 irq 5"
-.Cd "com0 at ioc? base 0x00020178"
-.Cd "com1 at ioc? base 0x00020170"
 .Pp
 .Cd "# sparc64"
 .Cd "com* at asio?"

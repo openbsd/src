@@ -1,6 +1,5 @@
-#	$OpenBSD: files.mips64,v 1.29 2018/01/25 15:06:29 mpi Exp $
+#	$OpenBSD: files.mips64,v 1.30 2021/05/01 16:11:10 visa Exp $
 
-file	arch/mips64/mips64/arcbios.c		arcbios
 file	arch/mips64/mips64/clock.c		clock
 file	arch/mips64/mips64/cpu.c
 file	arch/mips64/mips64/interrupt.c
@@ -18,22 +17,14 @@ file	arch/mips64/mips64/cache_loongson2.c	cpu_loongson2
 file	arch/mips64/mips64/cache_loongson3.c	cpu_loongson3
 file	arch/mips64/mips64/cache_mips64r2.c	cpu_mips64r2
 file	arch/mips64/mips64/cache_octeon.c	cpu_octeon
-file	arch/mips64/mips64/cache_r4k.c		cpu_r4000
-file	arch/mips64/mips64/cache_r5k.c		cpu_r5000 | cpu_rm7000
-file	arch/mips64/mips64/cache_r10k.c		cpu_r10000
-file	arch/mips64/mips64/cache_tfp.c		cpu_r8000
-file	arch/mips64/mips64/cache_tfp_subr.S	cpu_r8000
 file	arch/mips64/mips64/context.S
 file	arch/mips64/mips64/cp0access.S
-file	arch/mips64/mips64/exception.S		!cpu_r8000
-file	arch/mips64/mips64/exception_tfp.S	cpu_r8000
+file	arch/mips64/mips64/exception.S
 file	arch/mips64/mips64/fp_emulate.c
 file	arch/mips64/mips64/lcore_access.S
 file	arch/mips64/mips64/lcore_float.S
 file	arch/mips64/mips64/mips64r2.S		cpu_mips64r2
-file	arch/mips64/mips64/r4000_errata.c	cpu_r4000
-file	arch/mips64/mips64/tlbhandler.S		!cpu_r8000
-file	arch/mips64/mips64/tlb_tfp.S		cpu_r8000
+file	arch/mips64/mips64/tlbhandler.S
 
 file	arch/mips64/mips64/db_disasm.c		ddb
 file	arch/mips64/mips64/db_machdep.c		ddb
