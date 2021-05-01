@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.71 2021/03/21 18:25:24 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.72 2021/05/01 11:53:06 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -364,10 +364,13 @@ engine(int debug, int verbose)
 	if ((pw = getpwnam(SLAACD_USER)) == NULL)
 		fatal("getpwnam");
 
-	if (chroot(pw->pw_dir) == -1)
-		fatal("chroot");
 	if (chdir("/") == -1)
 		fatal("chdir(\"/\")");
+
+	if (unveil("/", "") == -1)
+		fatal("unveil(\"/\", \"\")");
+	if (unveil(NULL, NULL) == -1)
+		fatal("unveil(NULL, NULL)");
 
 	setproctitle("%s", "engine");
 	log_procinit("engine");
