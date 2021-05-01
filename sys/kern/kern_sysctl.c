@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.391 2021/04/30 13:52:48 bluhm Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.392 2021/05/01 16:18:28 gnezdo Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -292,54 +292,54 @@ extern int uvm_wxabort;
 extern int global_ptrace;
 
 const struct sysctl_bounded_args kern_vars[] = {
-	{KERN_OSREV, &openbsd, 1, 0},
+	{KERN_OSREV, &openbsd, SYSCTL_INT_READONLY},
 	{KERN_MAXVNODES, &maxvnodes, 0, INT_MAX},
 	{KERN_MAXPROC, &maxprocess, 0, INT_MAX},
 	{KERN_MAXFILES, &maxfiles, 0, INT_MAX},
-	{KERN_NFILES, &numfiles, 1, 0},
-	{KERN_TTYCOUNT, &tty_count, 1, 0},
-	{KERN_ARGMAX, &arg_max, 1, 0},
-	{KERN_NSELCOLL, &nselcoll, 1, 0},
-	{KERN_POSIX1, &posix_version, 1, 0},
-	{KERN_NGROUPS, &ngroups_max, 1, 0},
-	{KERN_JOB_CONTROL, &int_one, 1, 0},
-	{KERN_SAVED_IDS, &int_one, 1, 0},
-	{KERN_MAXPARTITIONS, &maxpartitions, 1, 0},
-	{KERN_RAWPARTITION, &raw_part, 1, 0},
+	{KERN_NFILES, &numfiles, SYSCTL_INT_READONLY},
+	{KERN_TTYCOUNT, &tty_count, SYSCTL_INT_READONLY},
+	{KERN_ARGMAX, &arg_max, SYSCTL_INT_READONLY},
+	{KERN_NSELCOLL, &nselcoll, SYSCTL_INT_READONLY},
+	{KERN_POSIX1, &posix_version, SYSCTL_INT_READONLY},
+	{KERN_NGROUPS, &ngroups_max, SYSCTL_INT_READONLY},
+	{KERN_JOB_CONTROL, &int_one, SYSCTL_INT_READONLY},
+	{KERN_SAVED_IDS, &int_one, SYSCTL_INT_READONLY},
+	{KERN_MAXPARTITIONS, &maxpartitions, SYSCTL_INT_READONLY},
+	{KERN_RAWPARTITION, &raw_part, SYSCTL_INT_READONLY},
 	{KERN_MAXTHREAD, &maxthread, 0, INT_MAX},
-	{KERN_NTHREADS, &nthreads, 1, 0},
+	{KERN_NTHREADS, &nthreads, SYSCTL_INT_READONLY},
 	{KERN_SOMAXCONN, &somaxconn, 0, SHRT_MAX},
 	{KERN_SOMINCONN, &sominconn, 0, SHRT_MAX},
 	{KERN_NOSUIDCOREDUMP, &nosuidcoredump, 0, 3},
-	{KERN_FSYNC, &int_one, 1, 0},
+	{KERN_FSYNC, &int_one, SYSCTL_INT_READONLY},
 	{KERN_SYSVMSG,
 #ifdef SYSVMSG
 	 &int_one,
 #else
 	 &int_zero,
 #endif
-	 1, 0},
+	 SYSCTL_INT_READONLY},
 	{KERN_SYSVSEM,
 #ifdef SYSVSEM
 	 &int_one,
 #else
 	 &int_zero,
 #endif
-	 1, 0},
+	 SYSCTL_INT_READONLY},
 	{KERN_SYSVSHM,
 #ifdef SYSVSHM
 	 &int_one,
 #else
 	 &int_zero,
 #endif
-	 1, 0},
-	{KERN_FSCALE, &fscale, 1, 0},
-	{KERN_CCPU, &ccpu, 1, 0},
-	{KERN_NPROCS, &nprocesses, 1, 0},
+	 SYSCTL_INT_READONLY},
+	{KERN_FSCALE, &fscale, SYSCTL_INT_READONLY},
+	{KERN_CCPU, &ccpu, SYSCTL_INT_READONLY},
+	{KERN_NPROCS, &nprocesses, SYSCTL_INT_READONLY},
 	{KERN_SPLASSERT, &splassert_ctl, 0, 3},
 	{KERN_MAXLOCKSPERUID, &maxlocksperuid, 0, INT_MAX},
 	{KERN_WXABORT, &uvm_wxabort, 0, 1},
-	{KERN_NETLIVELOCKS, &int_zero, 1, 0},
+	{KERN_NETLIVELOCKS, &int_zero, SYSCTL_INT_READONLY},
 #ifdef PTRACE
 	{KERN_GLOBAL_PTRACE, &global_ptrace, 0, 1},
 #endif
@@ -660,11 +660,11 @@ static int byte_order = BYTE_ORDER;
 static int page_size = PAGE_SIZE;
 
 const struct sysctl_bounded_args hw_vars[] = {
-	{HW_NCPU, &ncpus, 1, 0},
-	{HW_NCPUFOUND, &ncpusfound, 1, 0},
-	{HW_BYTEORDER, &byte_order, 1, 0},
-	{HW_PAGESIZE, &page_size, 1, 0},
-	{HW_DISKCOUNT, &disk_count, 1, 0},
+	{HW_NCPU, &ncpus, SYSCTL_INT_READONLY},
+	{HW_NCPUFOUND, &ncpusfound, SYSCTL_INT_READONLY},
+	{HW_BYTEORDER, &byte_order, SYSCTL_INT_READONLY},
+	{HW_PAGESIZE, &page_size, SYSCTL_INT_READONLY},
+	{HW_DISKCOUNT, &disk_count, SYSCTL_INT_READONLY},
 };
 
 int

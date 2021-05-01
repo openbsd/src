@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vfsops.c,v 1.44 2020/11/17 03:23:10 gnezdo Exp $ */
+/* $OpenBSD: fuse_vfsops.c,v 1.45 2021/05/01 16:18:29 gnezdo Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -356,10 +356,10 @@ fusefs_init(struct vfsconf *vfc)
 extern int stat_fbufs_in, stat_fbufs_wait, stat_opened_fusedev;
 
 const struct sysctl_bounded_args fusefs_vars[] = {
-	{ FUSEFS_OPENDEVS, &stat_opened_fusedev, 1, 0 },
-	{ FUSEFS_INFBUFS, &stat_fbufs_in, 1, 0 },
-	{ FUSEFS_WAITFBUFS, &stat_fbufs_wait, 1, 0 },
-	{ FUSEFS_POOL_NBPAGES, &fusefs_fbuf_pool.pr_npages, 1, 0 },
+	{ FUSEFS_OPENDEVS, &stat_opened_fusedev, SYSCTL_INT_READONLY },
+	{ FUSEFS_INFBUFS, &stat_fbufs_in, SYSCTL_INT_READONLY },
+	{ FUSEFS_WAITFBUFS, &stat_fbufs_wait, SYSCTL_INT_READONLY },
+	{ FUSEFS_POOL_NBPAGES, &fusefs_fbuf_pool.pr_npages, SYSCTL_INT_READONLY },
 };
 
 int

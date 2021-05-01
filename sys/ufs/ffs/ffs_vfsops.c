@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.188 2020/11/07 05:24:20 gnezdo Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.189 2021/05/01 16:18:29 gnezdo Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -1578,21 +1578,21 @@ const struct sysctl_bounded_args ffs_vars[] = {
 #ifdef FFS_SOFTUPDATES
 	{ FFS_MAX_SOFTDEPS, &max_softdeps, 0, INT_MAX },
 	{ FFS_SD_TICKDELAY, &tickdelay, 2, INT_MAX },
-	{ FFS_SD_WORKLIST_PUSH, &stat_worklist_push, 1, 0 }, /* read-only */
-	{ FFS_SD_BLK_LIMIT_PUSH, &stat_blk_limit_push, 1, 0 },
-	{ FFS_SD_INO_LIMIT_PUSH, &stat_ino_limit_push, 1, 0 },
-	{ FFS_SD_BLK_LIMIT_HIT, &stat_blk_limit_hit, 1, 0 },
-	{ FFS_SD_INO_LIMIT_HIT, &stat_ino_limit_hit, 1, 0 },
-	{ FFS_SD_SYNC_LIMIT_HIT, &stat_sync_limit_hit, 1, 0 },
-	{ FFS_SD_INDIR_BLK_PTRS, &stat_indir_blk_ptrs, 1, 0 },
-	{ FFS_SD_INODE_BITMAP, &stat_inode_bitmap, 1, 0 },
-	{ FFS_SD_DIRECT_BLK_PTRS, &stat_direct_blk_ptrs, 1, 0 },
-	{ FFS_SD_DIR_ENTRY, &stat_dir_entry, 1, 0 },
+	{ FFS_SD_WORKLIST_PUSH, &stat_worklist_push, SYSCTL_INT_READONLY },
+	{ FFS_SD_BLK_LIMIT_PUSH, &stat_blk_limit_push, SYSCTL_INT_READONLY },
+	{ FFS_SD_INO_LIMIT_PUSH, &stat_ino_limit_push, SYSCTL_INT_READONLY },
+	{ FFS_SD_BLK_LIMIT_HIT, &stat_blk_limit_hit, SYSCTL_INT_READONLY },
+	{ FFS_SD_INO_LIMIT_HIT, &stat_ino_limit_hit, SYSCTL_INT_READONLY },
+	{ FFS_SD_SYNC_LIMIT_HIT, &stat_sync_limit_hit, SYSCTL_INT_READONLY },
+	{ FFS_SD_INDIR_BLK_PTRS, &stat_indir_blk_ptrs, SYSCTL_INT_READONLY },
+	{ FFS_SD_INODE_BITMAP, &stat_inode_bitmap, SYSCTL_INT_READONLY },
+	{ FFS_SD_DIRECT_BLK_PTRS, &stat_direct_blk_ptrs, SYSCTL_INT_READONLY },
+	{ FFS_SD_DIR_ENTRY, &stat_dir_entry, SYSCTL_INT_READONLY },
 #endif
 #ifdef UFS_DIRHASH
 	{ FFS_DIRHASH_DIRSIZE, &ufs_mindirhashsize, 0, INT_MAX },
 	{ FFS_DIRHASH_MAXMEM, &ufs_dirhashmaxmem, 0, INT_MAX },
-	{ FFS_DIRHASH_MEM, &ufs_dirhashmem, 1, 0 },
+	{ FFS_DIRHASH_MEM, &ufs_dirhashmem, SYSCTL_INT_READONLY },
 #endif
 };
 

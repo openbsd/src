@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.273 2021/03/11 11:16:55 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.274 2021/05/01 16:18:28 gnezdo Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -475,10 +475,10 @@ extern int amd64_has_xcrypt;
 const struct sysctl_bounded_args cpuctl_vars[] = {
 	{ CPU_LIDACTION, &lid_action, 0, 2 },
 	{ CPU_PWRACTION, &pwr_action, 0, 2 },
-	{ CPU_CPUID, &cpu_id, 1, 0 },
-	{ CPU_CPUFEATURE, &cpu_feature, 1, 0 },
-	{ CPU_XCRYPT, &amd64_has_xcrypt, 1, 0 },
-	{ CPU_INVARIANTTSC, &tsc_is_invariant, 1, 0 },
+	{ CPU_CPUID, &cpu_id, SYSCTL_INT_READONLY },
+	{ CPU_CPUFEATURE, &cpu_feature, SYSCTL_INT_READONLY },
+	{ CPU_XCRYPT, &amd64_has_xcrypt, SYSCTL_INT_READONLY },
+	{ CPU_INVARIANTTSC, &tsc_is_invariant, SYSCTL_INT_READONLY },
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.644 2021/01/09 21:01:20 gnezdo Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.645 2021/05/01 16:18:28 gnezdo Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3560,11 +3560,11 @@ idt_vec_free(int vec)
 
 const struct sysctl_bounded_args cpuctl_vars[] = {
 	{ CPU_LIDACTION, &lid_action, 0, 2 },
-	{ CPU_CPUID, &cpu_id, 1, 0 },
-	{ CPU_OSFXSR, &i386_use_fxsave, 1, 0 },
-	{ CPU_SSE, &i386_has_sse, 1, 0 },
-	{ CPU_SSE2, &i386_has_sse2, 1, 0 },
-	{ CPU_XCRYPT, &i386_has_xcrypt, 1, 0 },
+	{ CPU_CPUID, &cpu_id, SYSCTL_INT_READONLY },
+	{ CPU_OSFXSR, &i386_use_fxsave, SYSCTL_INT_READONLY },
+	{ CPU_SSE, &i386_has_sse, SYSCTL_INT_READONLY },
+	{ CPU_SSE2, &i386_has_sse2, SYSCTL_INT_READONLY },
+	{ CPU_XCRYPT, &i386_has_xcrypt, SYSCTL_INT_READONLY },
 };
 
 /*
