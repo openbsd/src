@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.59 2021/03/21 18:25:24 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.60 2021/05/01 11:53:24 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -263,7 +263,7 @@ main(int argc, char *argv[])
 
 #ifndef SMALL
 	if ((control_fd = control_init(csock)) == -1)
-		fatalx("control socket setup failed");
+		warnx("control socket setup failed");
 #endif /* SMALL */
 
 	if (pledge("stdio inet sendfd wroute", NULL) == -1)
@@ -272,7 +272,8 @@ main(int argc, char *argv[])
 	main_imsg_compose_frontend(IMSG_ROUTESOCK, frontend_routesock, NULL, 0);
 
 #ifndef SMALL
-	main_imsg_compose_frontend(IMSG_CONTROLFD, control_fd, NULL, 0);
+	if (control_fd != -1)
+		main_imsg_compose_frontend(IMSG_CONTROLFD, control_fd, NULL, 0);
 #endif /* SMALL */
 
 	main_imsg_compose_frontend(IMSG_STARTUP, -1, NULL, 0);
