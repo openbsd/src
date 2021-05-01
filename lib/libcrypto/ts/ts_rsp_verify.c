@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_rsp_verify.c,v 1.18 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: ts_rsp_verify.c,v 1.19 2021/05/01 13:13:45 tb Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -639,6 +639,7 @@ TS_compute_imprint(BIO *data, TS_TST_INFO *tst_info, X509_ALGOR **md_alg,
 
 err:
 	X509_ALGOR_free(*md_alg);
+	*md_alg = NULL;
 	free(*imprint);
 	*imprint = NULL;
 	*imprint_len = 0;
