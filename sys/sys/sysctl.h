@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.215 2021/04/30 13:52:48 bluhm Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.216 2021/05/01 16:18:58 gnezdo Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -1000,7 +1000,7 @@ struct sysctl_bounded_args {
 	int maximum; /* read-only variable if minimum > maximum */
 };
 
-#define SYSCTL_INT_UNBOUNDED	0,0
+/* Special case minimum,maximum marker for sysctl_bounded_args. */
 #define SYSCTL_INT_READONLY	1,0
 
 /*
