@@ -1265,6 +1265,8 @@
 ./usr/share/man/man4/armv7/sxitimer.4
 ./usr/share/man/man4/armv7/sxits.4
 ./usr/share/man/man4/armv7/sysreg.4
+./usr/share/man/man4/armv7/zqclock.4
+./usr/share/man/man4/armv7/zqreset.4
 ./usr/share/man/man4/arp.4
 ./usr/share/man/man4/asbtm.4
 ./usr/share/man/man4/asmc.4
