@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.258 2021/04/26 08:21:35 claudio Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.259 2021/05/01 16:13:12 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -151,6 +151,7 @@ socreate(int dom, struct socket **aso, int type, int proto)
 	if (prp->pr_type != type)
 		return (EPROTOTYPE);
 	so = pool_get(&socket_pool, PR_WAITOK | PR_ZERO);
+	rw_init(&so->so_lock, "solock");
 	sigio_init(&so->so_sigio);
 	TAILQ_INIT(&so->so_q0);
 	TAILQ_INIT(&so->so_q);
