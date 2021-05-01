@@ -172,17 +172,13 @@ do_trap_user(struct trapframe *frame)
 	}
 	printf("ILL at %lx scause %lx stval %lx\n", frame->tf_sepc, frame->tf_scause, frame->tf_stval);
 		sv.sival_ptr = (void *)frame->tf_stval;
-		KERNEL_LOCK();
 		trapsignal(p, SIGILL, 0, ILL_ILLTRP, sv);
-		KERNEL_UNLOCK();
 		userret(p);
 		break;
 	case EXCP_BREAKPOINT:
 	printf("BREAKPOINT\n");
 		sv.sival_ptr = (void *)frame->tf_stval;
-		KERNEL_LOCK();
 		trapsignal(p, SIGTRAP, 0, TRAP_BRKPT, sv);
-		KERNEL_UNLOCK();
 		userret(p);
 		break;
 	default:
@@ -267,10 +263,7 @@ data_abort(struct trapframe *frame, int usermode)
 				code = SEGV_MAPERR;
 			}
 			sv.sival_ptr = (void *)stval;
-			KERNEL_LOCK();
-			//printf("signalling %d at pc 0%lx ra 0x%lx %llx\n", code, frame->tf_sepc, frame->tf_ra, stval);
 			trapsignal(p, sig, 0, code, sv);
-			KERNEL_UNLOCK();
 		} else {
 			if (curcpu()->ci_idepth == 0 && pcb->pcb_onfault != 0) {
 				frame->tf_a[0] = error;
