@@ -1,4 +1,4 @@
-/*	$OpenBSD: stivar.h,v 1.25 2015/04/05 23:25:57 miod Exp $	*/
+/*	$OpenBSD: stivar.h,v 1.26 2021/05/01 00:22:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -45,7 +45,7 @@ struct sti_rom {
 	bus_addr_t		*bases;
 
 	struct sti_dd		 rom_dd;	/* in word format */
-	vaddr_t			 rom_code;
+	void			*rom_code;
 
 	/*
 	 * ROM-provided function pointers
