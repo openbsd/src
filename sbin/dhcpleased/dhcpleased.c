@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleased.c,v 1.10 2021/04/14 23:35:24 deraadt Exp $	*/
+/*	$OpenBSD: dhcpleased.c,v 1.11 2021/05/01 11:52:36 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -260,7 +260,7 @@ main(int argc, char *argv[])
 
 #ifndef SMALL
 	if ((control_fd = control_init(csock)) == -1)
-		fatalx("control socket setup failed");
+		warnx("control socket setup failed");
 #endif /* SMALL */
 
 	if (unveil("/dev/bpf", "rw") == -1)
@@ -280,7 +280,8 @@ main(int argc, char *argv[])
 	main_imsg_compose_frontend(IMSG_ROUTESOCK, frontend_routesock, NULL, 0);
 
 #ifndef SMALL
-	main_imsg_compose_frontend(IMSG_CONTROLFD, control_fd, NULL, 0);
+	if (control_fd != -1)
+		main_imsg_compose_frontend(IMSG_CONTROLFD, control_fd, NULL, 0);
 #endif /* SMALL */
 
 	main_imsg_compose_frontend(IMSG_STARTUP, -1, NULL, 0);
