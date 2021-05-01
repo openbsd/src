@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.13 2021/04/14 23:35:24 deraadt Exp $	*/
+/*	$OpenBSD: engine.c,v 1.14 2021/05/01 11:51:59 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -173,10 +173,13 @@ engine(int debug, int verbose)
 	if ((pw = getpwnam(DHCPLEASED_USER)) == NULL)
 		fatal("getpwnam");
 
-	if (chroot(pw->pw_dir) == -1)
-		fatal("chroot");
 	if (chdir("/") == -1)
 		fatal("chdir(\"/\")");
+
+	if (unveil("/", "") == -1)
+		fatal("unveil(\"/\", \"\")");
+	if (unveil(NULL, NULL) == -1)
+		fatal("unveil(NULL, NULL)");
 
 	setproctitle("%s", "engine");
 	log_procinit("engine");
