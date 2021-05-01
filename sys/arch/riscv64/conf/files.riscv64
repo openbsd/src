@@ -8,8 +8,6 @@ major	{ sd = 0 }
 #major	{ wd = 4 }
 major	{ rd = 8 }
 
-file	dev/cninit.c
-
 file	arch/riscv64/riscv64/autoconf.c
 file	arch/riscv64/riscv64/ast.c
 file	arch/riscv64/riscv64/bus_space.c

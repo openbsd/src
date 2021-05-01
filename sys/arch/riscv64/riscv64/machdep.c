@@ -75,8 +75,6 @@ struct vm_map *phys_map = NULL;
 
 int physmem;
 
-//struct consdev *cn_tab;
-
 caddr_t msgbufaddr;
 paddr_t msgbufphys;
 
@@ -179,12 +177,6 @@ consinit(void)
 	consinit_called = 1;
 	com_fdt_init_cons();
 }
-
-//XXX TODO: need to populate console for qemu
-//maybe no longer needed, as already have cn_tab ??
-struct consdev constab[] = {
-	{ NULL }
-};
 
 void
 cpu_idle_enter(void)
@@ -919,5 +911,3 @@ pmap_bootstrap_bs_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
 
 	return 0;
 }
-
-

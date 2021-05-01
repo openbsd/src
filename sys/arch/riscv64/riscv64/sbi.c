@@ -25,16 +25,13 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/types.h>
 
-#if 0
-#include <machine/md_var.h>
-#endif
 #include <machine/sbi.h>
+
+#include <dev/cons.h>
 
 /* SBI Implementation-Specific Definitions */
 #define	OPENSBI_VERSION_MAJOR_OFFSET	16
@@ -167,3 +164,52 @@ sbi_init(void)
 	KASSERTMSG(sbi_probe_extension(SBI_SHUTDOWN) != 0,
 	    "SBI doesn't implement sbi_shutdown()");
 }
+
+/*
+ * Early console implementation based on the Console Putchar and
+ * Console Getchar legacy extensions.  These extensions are deprecated
+ * but extremely useful for bringing up new boards.
+ */
+
+void
+sbi_cnprobe(struct consdev *cd)
+{
+}
+
+void
+sbi_cninit(struct consdev *cd)
+{
+}
+
+int
+sbi_cngetc(dev_t dev)
+{
+	int c;
+
+	for (;;) {
+		c = sbi_console_getchar();
+		if (c != -1)
+			return c;
+	}
+}
+
+void
+sbi_cnputc(dev_t dev, int c)
+{
+	sbi_console_putchar(c);
+}
+
+void
+sbi_cnpollc(dev_t dev, int on)
+{
+}
+
+struct consdev sbi_consdev = {
+	.cn_probe = sbi_cnprobe,
+	.cn_init = sbi_cninit,
+	.cn_getc = sbi_cngetc,
+	.cn_putc = sbi_cnputc,
+	.cn_pollc = sbi_cnpollc,
+};
+
+struct consdev *cn_tab = &sbi_consdev;
