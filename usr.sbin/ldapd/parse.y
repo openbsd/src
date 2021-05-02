@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.39 2021/01/09 14:51:45 rob Exp $ */
+/*	$OpenBSD: parse.y,v 1.40 2021/05/02 14:39:05 martijn Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -1066,7 +1066,7 @@ host_dns(const char *s, const char *cert,
 		TAILQ_INSERT_HEAD(al, h, entry);
 	}
 	freeaddrinfo(res0);
-	return 0;
+	return 1;
 }
 
 int
