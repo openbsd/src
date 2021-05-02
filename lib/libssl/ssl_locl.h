@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.340 2021/05/02 17:18:10 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.341 2021/05/02 17:46:58 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1378,7 +1378,8 @@ int tls1_PRF(SSL *s, const unsigned char *secret, size_t secret_len,
     const void *seed5, size_t seed5_len, unsigned char *out, size_t out_len);
 
 void tls1_cleanup_key_block(SSL *s);
-int tls1_change_cipher_state(SSL *s, int which);
+int tls1_change_read_cipher_state(SSL *s);
+int tls1_change_write_cipher_state(SSL *s);
 int tls1_setup_key_block(SSL *s);
 int tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,
     const char *label, size_t llen, const unsigned char *p, size_t plen,

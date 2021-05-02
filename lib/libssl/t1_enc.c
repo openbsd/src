@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.141 2021/05/02 17:18:10 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.142 2021/05/02 17:46:58 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -294,8 +294,8 @@ tls1_generate_key_block(SSL *s, uint8_t *key_block, size_t key_block_len)
 	    NULL, 0, NULL, 0, key_block, key_block_len);
 }
 
-int
-tls1_change_cipher_state(SSL *s, int which)
+static int
+tls1_change_cipher_state(SSL *s, int is_write)
 {
 	const unsigned char *client_write_mac_secret, *server_write_mac_secret;
 	const unsigned char *client_write_key, *server_write_key;
@@ -305,25 +305,9 @@ tls1_change_cipher_state(SSL *s, int which)
 	unsigned char *key_block;
 	const EVP_CIPHER *cipher;
 	const EVP_AEAD *aead;
-	char is_read, use_client_keys;
 
 	aead = tls12_record_layer_aead(s->internal->rl);
 	cipher = tls12_record_layer_cipher(s->internal->rl);
-
-	/*
-	 * is_read is true if we have just read a ChangeCipherSpec message,
-	 * that is we need to update the read cipherspec. Otherwise we have
-	 * just written one.
-	 */
-	is_read = (which & SSL3_CC_READ) != 0;
-
-	/*
-	 * use_client_keys is true if we wish to use the keys for the "client
-	 * write" direction. This is the case if we're a client sending a
-	 * ChangeCipherSpec, or a server reading a client's ChangeCipherSpec.
-	 */
-	use_client_keys = ((which == SSL3_CHANGE_CIPHER_CLIENT_WRITE) ||
-	    (which == SSL3_CHANGE_CIPHER_SERVER_READ));
 
 	if (aead != NULL) {
 		key_len = EVP_AEAD_key_length(aead);
@@ -349,7 +333,8 @@ tls1_change_cipher_state(SSL *s, int which)
 	server_write_iv = key_block;
 	key_block += iv_len;
 
-	if (use_client_keys) {
+	/* Use client write keys on client write and server read. */
+	if ((!s->server && is_write) || (s->server && !is_write)) {
 		mac_secret = client_write_mac_secret;
 		key = client_write_key;
 		iv = client_write_iv;
@@ -365,7 +350,7 @@ tls1_change_cipher_state(SSL *s, int which)
 		goto err;
 	}
 
-	if (is_read) {
+	if (!is_write) {
 		if (!tls12_record_layer_change_read_cipher_state(s->internal->rl,
 		    mac_secret, mac_secret_size, key, key_len, iv, iv_len))
 			goto err;
@@ -384,6 +369,18 @@ tls1_change_cipher_state(SSL *s, int which)
 
  err:
 	return (0);
+}
+
+int
+tls1_change_read_cipher_state(SSL *s)
+{
+	return tls1_change_cipher_state(s, 0);
+}
+
+int
+tls1_change_write_cipher_state(SSL *s)
+{
+	return tls1_change_cipher_state(s, 1);
 }
 
 int

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.41 2021/04/25 13:15:22 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.42 2021/05/02 17:46:58 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1154,8 +1154,6 @@ ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 int
 ssl3_do_change_cipher_spec(SSL *s)
 {
-	int i;
-
 	if (S3I(s)->hs.tls12.key_block == NULL) {
 		if (s->session == NULL || s->session->master_key_length == 0) {
 			/* might happen if dtls1_read_bytes() calls this */
@@ -1168,12 +1166,7 @@ ssl3_do_change_cipher_spec(SSL *s)
 			return (0);
 	}
 
-	if (S3I(s)->hs.state & SSL_ST_ACCEPT)
-		i = SSL3_CHANGE_CIPHER_SERVER_READ;
-	else
-		i = SSL3_CHANGE_CIPHER_CLIENT_READ;
-
-	if (!tls1_change_cipher_state(s, i))
+	if (!tls1_change_read_cipher_state(s))
 		return (0);
 
 	/*
