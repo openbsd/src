@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_transcript.c,v 1.3 2021/04/23 18:30:18 tb Exp $ */
+/* $OpenBSD: ssl_transcript.c,v 1.4 2021/05/02 16:00:33 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -75,6 +75,9 @@ tls1_transcript_hash_value(SSL *s, const unsigned char *out, size_t len,
 	EVP_MD_CTX *mdctx = NULL;
 	unsigned int mdlen;
 	int ret = 0;
+
+	if (S3I(s)->handshake_hash == NULL)
+		goto err;
 
 	if (EVP_MD_CTX_size(S3I(s)->handshake_hash) > len)
 		goto err;
