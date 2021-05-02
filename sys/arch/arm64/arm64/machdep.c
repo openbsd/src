@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.61 2021/03/17 12:03:40 kettenis Exp $ */
+/* $OpenBSD: machdep.c,v 1.62 2021/05/02 21:47:51 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -760,6 +760,13 @@ initarm(struct arm64_bootparams *abp)
 	int (*map_func_save)(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 	    bus_space_handle_t *);
 
+	/*
+	 * Set the per-CPU pointer with a backup in tpidr_el1 to be
+	 * loaded when entering the kernel from userland.
+	 */
+	__asm volatile("mov x18, %0\n"
+	    "msr tpidr_el1, %0" :: "r"(&cpu_info_primary));
+
 	pmap_map_early((paddr_t)config, PAGE_SIZE);
 	if (!fdt_init(config) || fdt_get_size(config) == 0)
 		panic("initarm: no FDT");
@@ -831,14 +838,6 @@ initarm(struct arm64_bootparams *abp)
 			dma_constraint.ucr_high = bemtoh64((uint64_t *)prop + 1);
 		}
 	}
-
-	/*
-	 * Set the per-CPU pointer with a backup in tpidr_el1 to be
-	 * loaded when entering the kernel from userland.
-	 */
-	__asm __volatile(
-	    "mov x18, %0 \n"
-	    "msr tpidr_el1, %0" :: "r"(&cpu_info_primary));
 
 	cache_setup();
 
