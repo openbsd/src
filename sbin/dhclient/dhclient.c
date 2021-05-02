@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.721 2021/04/07 16:09:40 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.722 2021/05/02 19:16:48 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -115,7 +115,6 @@ int		 addressinuse(char *, struct in_addr, char *);
 
 void		 fork_privchld(struct interface_info *, int, int);
 void		 get_name(struct interface_info *, int, char *);
-void		 get_address(struct interface_info *);
 void		 get_ssid(struct interface_info *, int);
 void		 get_sockets(struct interface_info *);
 int		 get_routefd(int);
@@ -216,16 +215,17 @@ get_link_ifa(const char *name, struct ifaddrs *ifap)
 		    (ifa->ifa_flags & IFF_POINTOPOINT) == 0 &&
 		    ifa->ifa_data != NULL && /* NULL shouldn't be possible. */
 		    ifa->ifa_addr != NULL &&
-		    ifa->ifa_addr->sa_family == AF_LINK)
-			break;
+		    ifa->ifa_addr->sa_family == AF_LINK) {
+			sdl = (struct sockaddr_dl *)ifa->ifa_addr;
+			if (sdl->sdl_alen == ETHER_ADDR_LEN &&
+			    (sdl->sdl_type == IFT_ETHER ||
+			    sdl->sdl_type == IFT_CARP))
+				break;
+		}
 	}
 
-	if (ifa != NULL) {
-		sdl = (struct sockaddr_dl *)ifa->ifa_addr;
-		if ((sdl->sdl_type != IFT_ETHER && sdl->sdl_type != IFT_CARP) ||
-		    sdl->sdl_alen != ETHER_ADDR_LEN)
-			return NULL;
-	}
+	if (ifa == NULL)
+		fatal("get_link_ifa()");
 
 	return ifa;
 }
@@ -234,6 +234,7 @@ void
 interface_state(struct interface_info *ifi)
 {
 	struct ifaddrs			*ifap, *ifa;
+	struct if_data			*ifd;
 	struct sockaddr_dl		*sdl;
 	char				*oldlladdr;
 	int				 newlinkup, oldlinkup;
@@ -244,17 +245,15 @@ interface_state(struct interface_info *ifi)
 		fatal("getifaddrs");
 
 	ifa = get_link_ifa(ifi->name, ifap);
-	if (ifa == NULL)
-		fatalx("invalid interface");
+	sdl = (struct sockaddr_dl *)ifa->ifa_addr;
+	ifd = (struct if_data *)ifa->ifa_data;
 
 	if ((ifa->ifa_flags & IFF_UP) == 0 ||
 	    (ifa->ifa_flags & IFF_RUNNING) == 0) {
 		ifi->link_state = LINK_STATE_DOWN;
 	} else {
-		ifi->link_state =
-		    ((struct if_data *)ifa->ifa_data)->ifi_link_state;
-		ifi->mtu =
-		    ((struct if_data *)ifa->ifa_data)->ifi_mtu;
+		ifi->link_state = ifd->ifi_link_state;
+		ifi->mtu = ifd->ifi_mtu;
 	}
 
 	newlinkup = LINK_STATE_IS_UP(ifi->link_state);
@@ -265,7 +264,6 @@ interface_state(struct interface_info *ifi)
 		tick_msg("link", newlinkup ? TICK_SUCCESS : TICK_WAIT);
 	}
 
-	sdl = (struct sockaddr_dl *)ifa->ifa_addr;
 	if (memcmp(&ifi->hw_address, LLADDR(sdl), ETHER_ADDR_LEN) != 0) {
 		if (log_getverbose()) {
 			oldlladdr = strdup(ether_ntoa(&ifi->hw_address));
@@ -287,6 +285,9 @@ struct interface_info *
 initialize_interface(char *name, int noaction)
 {
 	struct interface_info		*ifi;
+	struct ifaddrs			*ifap, *ifa;
+	struct if_data			*ifd;
+	struct sockaddr_dl		*sdl;
 	int				 ioctlfd;
 
 	ifi = calloc(1, sizeof(*ifi));
@@ -306,14 +307,30 @@ initialize_interface(char *name, int noaction)
 	if (ifi->index == 0)
 		fatalx("if_nametoindex(%s) == 0", ifi->name);
 
-	get_address(ifi);
+	if (getifaddrs(&ifap) == -1)
+		fatal("getifaddrs()");
+
+	ifa = get_link_ifa(ifi->name, ifap);
+	sdl = (struct sockaddr_dl *)ifa->ifa_addr;
+	ifd = (struct if_data *)ifa->ifa_data;
+
+	if ((ifa->ifa_flags & IFF_UP) == 0 ||
+	    (ifa->ifa_flags & IFF_RUNNING) == 0)
+		ifi->link_state = LINK_STATE_DOWN;
+	else
+		ifi->link_state = ifd->ifi_link_state;
+
+	memcpy(ifi->hw_address.ether_addr_octet, LLADDR(sdl), ETHER_ADDR_LEN);
+	ifi->rdomain = ifd->ifi_rdomain;
+
 	get_sockets(ifi);
 	get_ssid(ifi, ioctlfd);
 
-	if (noaction == 0)
+	if (noaction == 0 && !LINK_STATE_IS_UP(ifi->link_state))
 		set_iff_up(ifi, ioctlfd);
 
 	close(ioctlfd);
+	freeifaddrs(ifap);
 
 	return ifi;
 }
@@ -343,28 +360,6 @@ get_name(struct interface_info *ifi, int ioctlfd, char *arg)
 
 	if (len >= IFNAMSIZ)
 		fatalx("interface name too long");
-}
-
-void
-get_address(struct interface_info *ifi)
-{
-	struct ifaddrs		*ifap, *ifa;
-	struct sockaddr_dl	*sdl;
-
-	if (getifaddrs(&ifap) == -1)
-		fatal("getifaddrs");
-
-	ifa = get_link_ifa(ifi->name, ifap);
-	if (ifa == NULL)
-		fatalx("invalid interface");
-
-	ifi->rdomain = ((struct if_data *)ifa->ifa_data)->ifi_rdomain;
-
-	sdl = (struct sockaddr_dl *)ifa->ifa_addr;
-	memcpy(ifi->hw_address.ether_addr_octet, LLADDR(sdl),
-	    ETHER_ADDR_LEN);
-
-	freeifaddrs(ifap);
 }
 
 void
