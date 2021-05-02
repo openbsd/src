@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolvd.8,v 1.5 2021/03/01 05:15:37 deraadt Exp $
+.\"	$OpenBSD: resolvd.8,v 1.6 2021/05/02 15:15:44 deraadt Exp $
 .\"
 .\" Copyright (c) 2021 Florian Obser <florian@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 1 2021 $
+.Dd $Mdocdate: May 2 2021 $
 .Dt RESOLVD 8
 .Os
 .Sh NAME
@@ -29,33 +29,41 @@ handles the contents of
 .Pa /etc/resolv.conf ,
 which contains details of the system's DNS nameservers, and is
 read by the resolver routines in the C library.
+Nameservers are learned from various sources, incorporated in a priority
+order, then user-edited information found in the pre-existing file is
+re-appended.
 .Pp
 .Nm
 checks whether
 .Xr unwind 8
-is running and
-monitors the routing socket for proposals sent by
-.Xr dhclient 8 ,
-.Xr slaacd 8 ,
-or network devices which learn DNS information such as
-.Xr umb 4 .
-.Pp
-If
-.Xr unwind 8
-is running it prepends the following to
-.Pa /etc/resolv.conf :
+is running, and if so places
 .Pp
 .Dl nameserver 127.0.0.1
 .Pp
-It also adds any other DNS proposals,
-but commented out.
-If
-.Xr unwind 8
-is not running it simply adds any other DNS proposals.
-After that, it appends user-edited lines to the file.
+at the top, to cause local resolution.
 .Pp
 .Nm
-keeps track of which parts it managed in the past and will only change those.
+also monitors the routing socket for proposals learned by
+.Xr dhclient 8 ,
+.Xr dhcpleased 8 ,
+.Xr slaacd 8 ,
+or network devices which natively learn DNS information such as
+.Xr umb 4 .
+.Pp
+These proposals are added in priority order, but commented out
+if
+.Xr unwind 8
+is running.
+.Pp
+After that,
+.Nm
+appends all user-edited lines found in the file.
+.Pp
+.Nm
+also notices if the
+.Pa /etc/resolv.conf
+file is edited, and will rewrite the file, re-blending the various
+pieces of information.
 It will also create
 .Pa /etc/resolv.conf
 if it does not exist or if it is empty.
@@ -74,6 +82,7 @@ Produce more verbose output.
 .Sh SEE ALSO
 .Xr resolv.conf 5 ,
 .Xr dhclient 8 ,
+.Xr dhcpleased 8 ,
 .Xr slaacd 8 ,
 .Xr unwind 8
 .Sh HISTORY
