@@ -1,0 +1,30 @@
+dnl	$OpenBSD: contents,v 1.1 2021/05/02 23:48:14 drahn Exp $
+TopPart
+
+OpenBSDminiroot
+
+OpenBSDdistsets
+
+OpenBSDbsd
+
+OpenBSDrd
+dnl not yet...
+dnl OpenBSDcd
+
+DistributionDescription(eight)
+
+OpenBSDbase(92997156,284219392)
+
+OpenBSDcomp(57727901,212260864)
+
+OpenBSDgame(2768356,9330688)
+
+OpenBSDman(7322823,31395840)
+
+OpenBSDxbase(16439912,71249920)
+
+OpenBSDxfont(40291103,59377664)
+
+OpenBSDxserv(6446904,18399232)
+
+OpenBSDxshare(4524534,30216192)

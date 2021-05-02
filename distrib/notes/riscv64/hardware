@@ -1,0 +1,4 @@
+dnl	$OpenBSD: hardware,v 1.1 2021/05/02 23:48:14 drahn Exp $
+The following machines are targeted by OpenBSD/MACHINE:
+
+	Qemu riscv64
