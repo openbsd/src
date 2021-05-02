@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls12_lib.c,v 1.2 2021/04/30 19:26:45 jsing Exp $ */
+/*	$OpenBSD: tls12_lib.c,v 1.3 2021/05/02 15:57:29 jsing Exp $ */
 /*
  * Copyright (c) 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -26,6 +26,9 @@ tls12_finished_verify_data(SSL *s, const char *finished_label,
 	size_t transcript_hash_len;
 
 	*out_len = 0;
+
+	if (s->session->master_key_length <= 0)
+		return 0;
 
 	if (verify_data_len < TLS1_FINISH_MAC_LENGTH)
 		return 0;
