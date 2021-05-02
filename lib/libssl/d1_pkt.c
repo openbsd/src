@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.93 2021/02/20 14:14:16 tb Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.94 2021/05/02 17:18:10 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -869,9 +869,6 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 		if (!ssl3_do_change_cipher_spec(s))
 			goto err;
 
-		/* do this whenever CCS is processed */
-		dtls1_reset_seq_numbers(s, SSL3_CC_READ);
-
 		goto start;
 	}
 
@@ -1219,15 +1216,16 @@ dtls1_get_bitmap(SSL *s, SSL3_RECORD_INTERNAL *rr, unsigned int *is_next_epoch)
 }
 
 void
-dtls1_reset_seq_numbers(SSL *s, int rw)
+dtls1_reset_read_seq_numbers(SSL *s)
 {
-	if (rw & SSL3_CC_READ) {
-		D1I(s)->r_epoch++;
-		memcpy(&(D1I(s)->bitmap), &(D1I(s)->next_bitmap),
-		    sizeof(DTLS1_BITMAP));
-		memset(&(D1I(s)->next_bitmap), 0, sizeof(DTLS1_BITMAP));
-	} else {
-		D1I(s)->w_epoch++;
-		tls12_record_layer_set_write_epoch(s->internal->rl, D1I(s)->w_epoch);
-	}
+	D1I(s)->r_epoch++;
+	memcpy(&(D1I(s)->bitmap), &(D1I(s)->next_bitmap), sizeof(DTLS1_BITMAP));
+	memset(&(D1I(s)->next_bitmap), 0, sizeof(DTLS1_BITMAP));
+}
+
+void
+dtls1_reset_write_seq_numbers(SSL *s)
+{
+	D1I(s)->w_epoch++;
+	tls12_record_layer_set_write_epoch(s->internal->rl, D1I(s)->w_epoch);
 }

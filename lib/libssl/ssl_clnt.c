@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.94 2021/04/30 19:26:44 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.95 2021/05/02 17:18:10 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -486,10 +486,6 @@ ssl3_connect(SSL *s)
 				ret = -1;
 				goto end;
 			}
-
-			if (SSL_is_dtls(s))
-				dtls1_reset_seq_numbers(s, SSL3_CC_WRITE);
-
 			break;
 
 		case SSL3_ST_CW_FINISHED_A:

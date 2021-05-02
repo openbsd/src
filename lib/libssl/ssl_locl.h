@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.339 2021/04/30 19:26:44 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.340 2021/05/02 17:18:10 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1293,7 +1293,8 @@ void dtls1_clear_record_buffer(SSL *s);
 int dtls1_get_message_header(unsigned char *data,
     struct hm_header_st *msg_hdr);
 void dtls1_get_ccs_header(unsigned char *data, struct ccs_header_st *ccs_hdr);
-void dtls1_reset_seq_numbers(SSL *s, int rw);
+void dtls1_reset_read_seq_numbers(SSL *s);
+void dtls1_reset_write_seq_numbers(SSL *s);
 struct timeval* dtls1_get_timeout(SSL *s, struct timeval* timeleft);
 int dtls1_check_timeout_num(SSL *s);
 int dtls1_handle_timeout(SSL *s);
