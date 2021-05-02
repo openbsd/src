@@ -335,7 +335,7 @@ boot(int howto)
 	cold = 1;
 
 	if ((howto & RB_DUMP) != 0)
-		//dumpsys();//XXX no dump so far. CMPE295
+		printf("no dump so far\n");
 
 haltsys:
 	config_suspend_all(DVACT_POWERDOWN);
