@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.208 2020/12/14 20:20:06 tobhe Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.209 2021/05/02 14:22:05 mvs Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -269,23 +269,19 @@ pfkeyv2_attach(struct socket *so, int proto)
 	if ((so->so_state & SS_PRIV) == 0)
 		return EACCES;
 
+	error = soreserve(so, PFKEYSNDQ, PFKEYRCVQ);
+	if (error)
+		return (error);
+
 	kp = pool_get(&pkpcb_pool, PR_WAITOK|PR_ZERO);
 	so->so_pcb = kp;
 	refcnt_init(&kp->kcb_refcnt);
-
-	error = soreserve(so, PFKEYSNDQ, PFKEYRCVQ);
-	if (error) {
-		pool_put(&pkpcb_pool, kp);
-		return (error);
-	}
-
 	kp->kcb_socket = so;
+	kp->kcb_pid = curproc->p_p->ps_pid;
+	kp->kcb_rdomain = rtable_l2(curproc->p_p->ps_rtableid);
 
 	so->so_options |= SO_USELOOPBACK;
 	soisconnected(so);
-
-	kp->kcb_pid = curproc->p_p->ps_pid;
-	kp->kcb_rdomain = rtable_l2(curproc->p_p->ps_rtableid);
 
 	rw_enter(&pkptable.pkp_lk, RW_WRITE);
 	SRPL_INSERT_HEAD_LOCKED(&pkptable.pkp_rc, &pkptable.pkp_list, kp, kcb_list);
