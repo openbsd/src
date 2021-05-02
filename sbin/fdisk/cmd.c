@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.99 2021/01/30 18:16:36 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.100 2021/05/02 20:07:14 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -67,6 +67,7 @@ Xreinit(char *args, struct mbr *mbr)
 		GPT_init();
 		GPT_print("s", 0);
 	} else {
+		memset(&gh, 0, sizeof(gh));
 		MBR_init(mbr);
 		MBR_print(mbr, "s");
 	}
@@ -430,8 +431,8 @@ Xwrite(char *args, struct mbr *mbr)
 			warn("error writing GPT");
 			return (CMD_CONT);
 		}
-	} else if (reinited) {
-		/* Make sure GPT doesn't get in the way. */
+	} else {
+		/* Ensure any on-disk GPT headers are zeroed. */
 		MBR_zapgpt(&dos_mbr, DL_GETDSIZE(&dl) - 1);
 	}
 
