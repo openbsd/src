@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_both.c,v 1.29 2021/04/25 13:15:22 jsing Exp $ */
+/* $OpenBSD: ssl_both.c,v 1.30 2021/05/02 15:55:29 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -509,17 +509,6 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 		}
 		s->internal->init_num += i;
 		n -= i;
-	}
-
-	/*
-	 * If receiving Finished, record MAC of prior handshake messages for
-	 * Finished verification.
-	 */
-	if (*s->internal->init_buf->data == SSL3_MT_FINISHED) {
-		if (S3I(s)->hs.cipher != NULL) {
-			if (!tls12_derive_peer_finished(s))
-				goto err;
-		}
 	}
 
 	/* Feed this message into MAC computation. */
