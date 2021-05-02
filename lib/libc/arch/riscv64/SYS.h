@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.1 2021/04/29 18:33:36 drahn Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.2 2021/05/02 20:08:49 drahn Exp $	*/
 /*-
  * Copyright (c) 2020 Brian Bamsch <bbamsch@google.com>
  * Copyright (c) 1990 The Regents of the University of California.
@@ -56,12 +56,11 @@
 
 #define	CERROR		_C_LABEL(__cerror)
 #define HANDLE_ERROR()							\
-	bnez	t0, 1f;							\
-	ret;								\
+	beqz	t0, 2f;							\
 1:	auipc	t0, %got_pcrel_hi(CERROR);				\
 	ld	t1, %pcrel_lo(1b)(t0);					\
-	jr	t1
-
+	jr	t1;							\
+2:
 #define _SYSCALL_NOERROR(x,y)						\
 	SYSENTRY(x);							\
 	SYSTRAP(y)
