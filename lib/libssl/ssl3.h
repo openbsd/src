@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl3.h,v 1.51 2020/06/05 18:14:05 jsing Exp $ */
+/* $OpenBSD: ssl3.h,v 1.52 2021/05/02 18:10:32 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -475,6 +475,7 @@ typedef struct ssl3_state_st {
 
 #define SSL3_MT_CCS				1
 
+#ifndef LIBRESSL_INTERNAL
 /* These are used when changing over to a new cipher */
 #define SSL3_CC_READ		0x01
 #define SSL3_CC_WRITE		0x02
@@ -484,6 +485,7 @@ typedef struct ssl3_state_st {
 #define SSL3_CHANGE_CIPHER_SERVER_READ		(SSL3_CC_SERVER|SSL3_CC_READ)
 #define SSL3_CHANGE_CIPHER_CLIENT_READ		(SSL3_CC_CLIENT|SSL3_CC_READ)
 #define SSL3_CHANGE_CIPHER_SERVER_WRITE		(SSL3_CC_SERVER|SSL3_CC_WRITE)
+#endif
 
 #ifdef  __cplusplus
 }
