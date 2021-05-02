@@ -517,7 +517,6 @@ void
 initriscv(struct riscv_bootparams *rbp)
 {
 	vaddr_t vstart, vend;
-	struct cpu_info *pcpup;
 	long kvo = rbp->kern_delta;	//should be PA - VA 
 	paddr_t memstart, memend;
 
@@ -526,6 +525,9 @@ initriscv(struct riscv_bootparams *rbp)
 
 	int (*map_func_save)(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 	    bus_space_handle_t *);
+
+	/* Set the per-CPU pointer. */
+	__asm volatile("mv tp, %0" :: "r"(&cpu_info_primary));
 
 	// NOTE that 1GB of ram is mapped in by default in
 	// the bootstrap memory config, so nothing is necessary
@@ -601,16 +603,6 @@ initriscv(struct riscv_bootparams *rbp)
 			system_table = bemtoh64((uint64_t *)prop);
 #endif
 	}
-
-	/* Set the pcpu data, this is needed by pmap_bootstrap */
-	// smp
-	pcpup = &cpu_info_primary;
-
-	/*
-	 * backup the pcpu pointer in tp to 
-	 * restore kernel context when entering the kernel from userland.
-	 */
-	__asm __volatile("mv tp, %0" :: "r"(pcpup));
 
 	sbi_init();
 	cache_setup();//dummy for now
