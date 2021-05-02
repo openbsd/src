@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.99 2021/04/20 10:02:50 lum Exp $	*/
+/*	$OpenBSD: dired.c,v 1.100 2021/05/02 14:13:17 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -220,6 +220,7 @@ dired_init(void)
 	funmap_add(d_refreshbuffer, "dired-revert", 0);
 	funmap_add(d_backpage, "dired-scroll-down", 0);
 	funmap_add(d_forwpage, "dired-scroll-up", 0);
+	funmap_add(d_shell_command, "dired-shell-command", 1);
 	funmap_add(d_undel, "dired-unmark", 0);
 	funmap_add(d_undelbak, "dired-unmark-backward", 0);
 	funmap_add(d_killbuffer_cmd, "quit-window", 0);
