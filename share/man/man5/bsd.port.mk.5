@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.544 2021/03/11 09:57:39 kn Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.545 2021/05/02 06:13:57 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 11 2021 $
+.Dd $Mdocdate: May 2 2021 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1780,10 +1780,20 @@ Defaults to
 Can be used to go through excessively paranoid firewalls.
 Note that
 .Ev FETCH_CMD
-should support
+should support a few ftp options, chief among them
+being
 .Fl C
 and
-.Fl o Ar dest .
+.Fl o Ar dest ,
+but also
+.Fl m ,
+.Fl S ,
+.Fl v ,
+.Fl V .
+Most of these can be no-ops in a FETCH_CMD script,
+See
+.Pa ${PORTSDIR}/infrastructure/template/fetch_cmd.template
+for a skeleton script.
 .It Ev FETCH_MANUALLY
 Some ports' distfiles cannot be fetched automatically for licensing reasons.
 In this case, set
