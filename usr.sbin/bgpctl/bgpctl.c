@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.266 2021/04/15 14:12:05 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.267 2021/05/03 14:01:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -510,6 +510,20 @@ show(struct imsg *imsg, struct parse_result *res)
 	return (0);
 }
 
+time_t
+get_monotime(time_t t)
+{
+	struct timespec ts;
+
+	if (t == 0)
+		return -1;
+	if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0)
+		err(1, "clock_gettime");
+	if (t > ts.tv_sec)	/* time in the future is not possible */
+		t = ts.tv_sec;
+	return (ts.tv_sec - t);
+}
+
 char *
 fmt_peer(const char *descr, const struct bgpd_addr *remote_addr,
     int masklen)
@@ -596,16 +610,12 @@ fmt_timeframe(time_t t)
 const char *
 fmt_monotime(time_t t)
 {
-	struct timespec ts;
+	t = get_monotime(t);
 
-	if (t == 0)
+	if (t == -1)
 		return ("Never");
 
-	if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0)
-		err(1, "clock_gettime");
-	if (t > ts.tv_sec)	/* time in the future is not possible */
-		t = ts.tv_sec;
-	return (fmt_timeframe(ts.tv_sec - t));
+	return (fmt_timeframe(t));
 }
 
 const char *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.9 2021/04/15 14:12:05 claudio Exp $ */
+/*	$OpenBSD: output_json.c,v 1.10 2021/05/03 14:01:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -104,7 +104,9 @@ json_neighbor_stats(struct peer *p)
 {
 	json_do_object("stats");
 	json_do_printf("last_read", "%s", fmt_monotime(p->stats.last_read));
+	json_do_int("last_read_sec", get_monotime(p->stats.last_read));
 	json_do_printf("last_write", "%s", fmt_monotime(p->stats.last_write));
+	json_do_int("last_write_sec", get_monotime(p->stats.last_write));
 
 	json_do_object("prefixes");
 	json_do_uint("sent", p->stats.prefix_out_cnt);
@@ -267,6 +269,7 @@ json_neighbor(struct peer *p, struct parse_result *res)
 	}
 	json_do_printf("state", "%s", statenames[p->state]);
 	json_do_printf("last_updown", "%s", fmt_monotime(p->stats.last_updown));
+	json_do_int("last_updown_sec", get_monotime(p->stats.last_updown));
 
 	switch (res->action) {
 	case SHOW:
@@ -827,6 +830,7 @@ json_rib(struct ctl_show_rib *r, u_char *asdata, size_t aslen,
 	json_do_uint("localpref", r->local_pref);
 	json_do_uint("weight", r->weight);
 	json_do_printf("last_update", "%s", fmt_timeframe(r->age));
+	json_do_int("last_update_sec", r->age);
 
 	/* keep the object open for communities and attribuites */
 }
@@ -927,6 +931,7 @@ json_rib_set(struct ctl_show_set *set)
 	json_do_printf("name", "%s", set->name);
 	json_do_printf("type", "%s", fmt_set_type(set));
 	json_do_printf("last_change", "%s", fmt_monotime(set->lastchange));
+	json_do_int("last_change_sec", get_monotime(set->lastchange));
 	if (set->type == ASNUM_SET) {
 		json_do_uint("num_ASnum", set->as_cnt);
 	} else {

@@ -41,6 +41,7 @@ extern const size_t pt_sizes[];
 
 #define EOL0(flag)	((flag & F_CTL_SSV) ? ';' : '\n')
 
+time_t		 get_monotime(time_t);
 char		*fmt_peer(const char *, const struct bgpd_addr *, int);
 const char	*fmt_timeframe(time_t);
 const char	*fmt_monotime(time_t);
