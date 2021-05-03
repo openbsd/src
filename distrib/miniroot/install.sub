@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1163 2021/03/19 23:52:55 kn Exp $
+#	$OpenBSD: install.sub,v 1.1164 2021/05/03 11:34:55 sthen Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1682,6 +1682,7 @@ install_files() {
 		fi
 		if isin comp$VERSION.tgz $_get_sets; then
 			rm -rf /mnt/usr/lib/{gcc-lib,clang}
+			rm -rf /mnt/usr/bin/{gcc,g++}
 			rm -rf /mnt/usr/include/g++
 		fi
 		rm -rf /mnt/var/syspatch/*
