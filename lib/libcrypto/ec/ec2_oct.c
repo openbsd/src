@@ -1,4 +1,4 @@
-/* $OpenBSD: ec2_oct.c,v 1.15 2021/04/20 17:32:57 tb Exp $ */
+/* $OpenBSD: ec2_oct.c,v 1.16 2021/05/03 14:42:45 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -121,6 +121,10 @@ ec_GF2m_simple_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *point
 	if (!BN_GF2m_mod_arr(x, x_, group->poly))
 		goto err;
 	if (BN_is_zero(x)) {
+		if (y_bit != 0) {
+			ECerror(EC_R_INVALID_COMPRESSED_POINT);
+			goto err;
+		}
 		if (!BN_GF2m_mod_sqrt_arr(y, &group->b, group->poly, ctx))
 			goto err;
 	} else {
