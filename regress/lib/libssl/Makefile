@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.42 2020/10/14 15:53:22 jsing Exp $
+#	$OpenBSD: Makefile,v 1.43 2021/05/03 18:31:40 tb Exp $
 
 SUBDIR += asn1
 SUBDIR += buffer
@@ -18,6 +18,7 @@ SUBDIR += key_schedule
 SUBDIR += unit
 
 # Things that take a long time should go below here. 
+SUBDIR += openssl-ruby
 SUBDIR += tlsfuzzer
 SUBDIR += interop
 
