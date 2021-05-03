@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.412 2021/04/27 09:12:23 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.413 2021/05/03 14:08:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -2557,11 +2557,12 @@ capa_neg_calc(struct peer *p)
 
 	/* MP: both side must announce capability */
 	for (i = 0; i < AID_MAX; i++) {
-		if (p->capa.ann.mp[i] && p->capa.peer.mp[i]) {
+		if (p->capa.ann.mp[i] && p->capa.peer.mp[i])
 			p->capa.neg.mp[i] = 1;
-			hasmp = 1;
-		} else
+		else
 			p->capa.neg.mp[i] = 0;
+		if (p->capa.ann.mp[i])
+			hasmp = 1;
 	}
 	/* if no MP capability present default to IPv4 unicast mode */
 	if (!hasmp)
