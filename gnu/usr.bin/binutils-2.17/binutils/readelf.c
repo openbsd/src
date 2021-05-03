@@ -103,6 +103,7 @@
 #include "elf/pj.h"
 #include "elf/ppc.h"
 #include "elf/ppc64.h"
+#include "elf/riscv.h"
 #include "elf/s390.h"
 #include "elf/sh.h"
 #include "elf/sparc.h"
@@ -618,6 +619,7 @@ guess_is_rela (unsigned long e_machine)
     case EM_ALTERA_NIOS2:
     case EM_88K:
     case EM_AARCH64:
+    case EM_RISCV:
       return TRUE;
 
     case EM_MMA:
@@ -1144,6 +1146,10 @@ dump_relocations (FILE *file,
 
 	case EM_AARCH64:
 	  rtype = elf_aarch64_reloc_type (type);
+	  break;
+
+	case EM_RISCV:
+	  rtype = elf_riscv_reloc_type (type);
 	  break;
 	}
 
