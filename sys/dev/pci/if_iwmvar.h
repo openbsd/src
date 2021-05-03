@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.60 2021/04/29 21:43:47 stsp Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.61 2021/05/03 08:41:25 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -250,6 +250,9 @@ struct iwm_fw_paging {
 #define IWM_TX_RING_LOMARK	192
 #define IWM_TX_RING_HIMARK	224
 
+/* For aggregation queues, index must be aligned to frame sequence number. */
+#define IWM_AGG_SSN_TO_TXQ_IDX(x)	((x) & (IWM_TX_RING_COUNT - 1))
+
 struct iwm_tx_data {
 	bus_dmamap_t	map;
 	bus_addr_t	cmd_paddr;
@@ -258,6 +261,10 @@ struct iwm_tx_data {
 	struct iwm_node *in;
 	int txmcs;
 	int txrate;
+
+	/* A-MPDU subframes */
+	int ampdu_txmcs;
+	int ampdu_nframes;
 };
 
 struct iwm_tx_ring {
@@ -454,6 +461,11 @@ struct iwm_rxq_dup_data {
 	uint8_t last_sub_frame[IWM_MAX_TID_COUNT + 1];
 };
 
+struct iwm_ba_task_data {
+	uint32_t		start_tidmask;
+	uint32_t		stop_tidmask;
+};
+
 struct iwm_softc {
 	struct device sc_dev;
 	struct ieee80211com sc_ic;
@@ -472,11 +484,8 @@ struct iwm_softc {
 
 	/* Task for firmware BlockAck setup/teardown and its arguments. */
 	struct task		ba_task;
-	uint32_t		ba_start_tidmask;
-	uint32_t		ba_stop_tidmask;
-	uint16_t		ba_ssn[IWM_MAX_TID_COUNT];
-	uint16_t		ba_winsize[IWM_MAX_TID_COUNT];
-	int			ba_timeout_val[IWM_MAX_TID_COUNT];
+	struct iwm_ba_task_data	ba_rx;
+	struct iwm_ba_task_data	ba_tx;
 
 	/* Task for ERP/HT prot/slot-time/EDCA updates. */
 	struct task		mac_ctxt_task;
@@ -498,6 +507,7 @@ struct iwm_softc {
 	struct iwm_tx_ring txq[IWM_MAX_QUEUES];
 	struct iwm_rx_ring rxq;
 	int qfullmsk;
+	int qenablemsk;
 	int cmdqid;
 
 	int sc_sf_state;
@@ -573,6 +583,7 @@ struct iwm_softc {
 
 	int sc_tx_timer;
 	int sc_rx_ba_sessions;
+	int tx_ba_queue_mask;
 
 	int sc_scan_last_antenna;
 
@@ -646,6 +657,10 @@ struct iwm_node {
 	int lq_rate_mismatch;
 
 	struct iwm_rxq_dup_data dup_data;
+
+	/* For use with the ADD_STA command. */
+	uint32_t tfd_queue_msk;
+	uint16_t tid_disable_ampdu;
 };
 #define IWM_STATION_ID 0
 #define IWM_AUX_STA_ID 1

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmreg.h,v 1.49 2021/04/25 15:32:21 stsp Exp $	*/
+/*	$OpenBSD: if_iwmreg.h,v 1.50 2021/05/03 08:41:25 stsp Exp $	*/
 
 /******************************************************************************
  *
@@ -1837,6 +1837,9 @@ struct iwm_agn_scd_bc_tbl {
 	uint16_t tfd_offset[IWM_TFD_QUEUE_BC_SIZE];
 } __packed;
 
+#define IWM_TX_CRC_SIZE 4
+#define IWM_TX_DELIMITER_SIZE 4
+
 /* Maximum number of Tx queues. */
 #define IWM_MAX_QUEUES	31
 
@@ -1874,6 +1877,11 @@ struct iwm_agn_scd_bc_tbl {
 #define IWM_DQA_AP_PROBE_RESP_QUEUE	9
 #define IWM_DQA_MIN_DATA_QUEUE		10
 #define IWM_DQA_MAX_DATA_QUEUE		31
+
+/* Reserve 8 DQA Tx queues, from 10 up to 17, for A-MPDU aggregation. */
+#define IWM_MAX_TID_COUNT	8
+#define IWM_FIRST_AGG_TX_QUEUE	IWM_DQA_MIN_DATA_QUEUE
+#define IWM_LAST_AGG_TX_QUEUE	(IWM_FIRST_AGG_TX_QUEUE + IWM_MAX_TID_COUNT - 1)
 
 /* legacy non-DQA queues; the legacy command queue uses a different number! */
 #define IWM_OFFCHANNEL_QUEUE	8
@@ -4640,7 +4648,8 @@ struct iwm_lq_cmd {
  * TID for non QoS frames - to be written in tid_tspec
  */
 #define IWM_MAX_TID_COUNT	8
-#define IWM_TID_NON_QOS	IWM_MAX_TID_COUNT
+#define IWM_TID_NON_QOS		0
+#define IWM_TID_MGMT		15
 
 /*
  * Limits on the retransmissions - to be written in {data,rts}_retry_limit
@@ -4651,13 +4660,36 @@ struct iwm_lq_cmd {
 #define IWM_BAR_DFAULT_RETRY_LIMIT		60
 #define IWM_LOW_RETRY_LIMIT			7
 
+/**
+ * enum iwm_tx_offload_assist_flags_pos -  set %iwm_tx_cmd offload_assist values
+ * @TX_CMD_OFFLD_IP_HDR: offset to start of IP header (in words)
+ *	from mac header end. For normal case it is 4 words for SNAP.
+ *	note: tx_cmd, mac header and pad are not counted in the offset.
+ *	This is used to help the offload in case there is tunneling such as
+ *	IPv6 in IPv4, in such case the ip header offset should point to the
+ *	inner ip header and IPv4 checksum of the external header should be
+ *	calculated by driver.
+ * @TX_CMD_OFFLD_L4_EN: enable TCP/UDP checksum
+ * @TX_CMD_OFFLD_L3_EN: enable IP header checksum
+ * @TX_CMD_OFFLD_MH_SIZE: size of the mac header in words. Includes the IV
+ *	field. Doesn't include the pad.
+ * @TX_CMD_OFFLD_PAD: mark 2-byte pad was inserted after the mac header for
+ *	alignment
+ * @TX_CMD_OFFLD_AMSDU: mark TX command is A-MSDU
+ */
+#define IWM_TX_CMD_OFFLD_IP_HDR		(1 << 0)
+#define IWM_TX_CMD_OFFLD_L4_EN		(1 << 6)
+#define IWM_TX_CMD_OFFLD_L3_EN		(1 << 7)
+#define IWM_TX_CMD_OFFLD_MH_SIZE	(1 << 8)
+#define IWM_TX_CMD_OFFLD_PAD		(1 << 13)
+#define IWM_TX_CMD_OFFLD_AMSDU		(1 << 14)
+
 /* TODO: complete documentation for try_cnt and btkill_cnt */
 /**
  * struct iwm_tx_cmd - TX command struct to FW
  * ( IWM_TX_CMD = 0x1c )
  * @len: in bytes of the payload, see below for details
- * @next_frame_len: same as len, but for next frame (0 if not applicable)
- *	Used for fragmentation and bursting, but not in 11n aggregation.
+ * @offload_assist: TX offload configuration
  * @tx_flags: combination of IWM_TX_CMD_FLG_*
  * @rate_n_flags: rate for *all* Tx attempts, if IWM_TX_CMD_FLG_STA_RATE_MSK is
  *	cleared. Combination of IWM_RATE_MCS_*
@@ -4693,7 +4725,7 @@ struct iwm_lq_cmd {
  */
 struct iwm_tx_cmd {
 	uint16_t len;
-	uint16_t next_frame_len;
+	uint16_t offload_assist;
 	uint32_t tx_flags;
 	struct {
 		uint8_t try_cnt;
@@ -4706,8 +4738,7 @@ struct iwm_tx_cmd {
 	uint8_t initial_rate_index;
 	uint8_t reserved2;
 	uint8_t key[16];
-	uint16_t next_frame_flags;
-	uint16_t reserved3;
+	uint32_t reserved3;
 	uint32_t life_time;
 	uint32_t dram_lsb_ptr;
 	uint8_t dram_msb_ptr;
@@ -4715,10 +4746,10 @@ struct iwm_tx_cmd {
 	uint8_t data_retry_limit;
 	uint8_t tid_tspec;
 	uint16_t pm_frame_timeout;
-	uint16_t driver_txop;
+	uint16_t reserved4;
 	uint8_t payload[0];
 	struct ieee80211_frame hdr[0];
-} __packed; /* IWM_TX_CMD_API_S_VER_3 */
+} __packed; /* IWM_TX_CMD_API_S_VER_6 */
 
 /*
  * TX response related data
@@ -4911,21 +4942,23 @@ struct iwm_tx_resp {
 /**
  * struct iwm_ba_notif - notifies about reception of BA
  * ( IWM_BA_NOTIF = 0xc5 )
- * @sta_addr_lo32: lower 32 bits of the MAC address
- * @sta_addr_hi16: upper 16 bits of the MAC address
+ * @sta_addr: MAC address
  * @sta_id: Index of recipient (BA-sending) station in fw's station table
  * @tid: tid of the session
- * @seq_ctl: sequence control field from IEEE80211 frame header (it is unclear
- *  which frame this relates to; info or reverse engineering welcome)
+ * @seq_ctl: sequence control field from IEEE80211 frame header (the first
+ * bit in @bitmap corresponds to the sequence number stored here)
  * @bitmap: the bitmap of the BA notification as seen in the air
  * @scd_flow: the tx queue this BA relates to
  * @scd_ssn: the index of the last contiguously sent packet
  * @txed: number of Txed frames in this batch
  * @txed_2_done: number of Acked frames in this batch
+ * @reduced_txp: power reduced according to TPC. This is the actual value and
+ *	not a copy from the LQ command. Thus, if not the first rate was used
+ *	for Tx-ing then this value will be set to 0 by FW.
+ * @reserved1: reserved
  */
 struct iwm_ba_notif {
-	uint32_t sta_addr_lo32;
-	uint16_t sta_addr_hi16;
+	uint8_t sta_addr[ETHER_ADDR_LEN];
 	uint16_t reserved;
 
 	uint8_t sta_id;
@@ -4936,7 +4969,8 @@ struct iwm_ba_notif {
 	uint16_t scd_ssn;
 	uint8_t txed;
 	uint8_t txed_2_done;
-	uint16_t reserved1;
+	uint8_t reduced_txp;
+	uint8_t reserved1;
 } __packed;
 
 /*
