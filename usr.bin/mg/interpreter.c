@@ -1,4 +1,4 @@
-/*      $OpenBSD: interpreter.c,v 1.23 2021/05/03 12:18:43 lum Exp $	*/
+/*      $OpenBSD: interpreter.c,v 1.24 2021/05/03 13:28:03 lum Exp $	*/
 /*
  * This file is in the public domain.
  *
@@ -158,48 +158,52 @@ foundparen(char *funstr, int llen)
 		if (*p == '\\') {
 			esc = 1;
 		} else if (*p == '(') {
-			if (inquote != 0) {
+			if (inquote == 0) {
+				if (begp != NULL) {
+					if (endp == NULL)
+						*p = '\0';
+					else
+						*endp = '\0';
+
+					ret = parse(begp, lrp, &lp, blkid,
+					    ++expctr);
+					if (!ret) {
+						cleanup();
+						return(ret);
+					}
+				}
+				lrp = &lp;
+				begp = endp = NULL;
+				pctr++;
+			} else if (inquote != 1) {
 				cleanup();
 				return(dobeep_msg("Opening and closing quote "\
 				    "char error"));
 			}
-			if (begp != NULL) {
-				if (endp == NULL)
-					*p = '\0';
-				else
-					*endp = '\0';
-
-				ret = parse(begp, lrp, &lp, blkid, ++expctr);
-				if (!ret) {
-					cleanup();
-					return(ret);
-				}
-			}
-			lrp = &lp;
-			begp = endp = NULL;
-			pctr++;
 			esc = 0;
 		} else if (*p == ')') {
-			if (inquote != 0) {
+			if (inquote == 0) {
+				if (begp != NULL) {
+					if (endp == NULL)
+						*p = '\0';
+					else
+						*endp = '\0';
+
+					ret = parse(begp, lrp, &rp, blkid,
+					    ++expctr);
+					if (!ret) {
+						cleanup();
+						return(ret);
+					}
+				}
+				lrp = &rp;
+				begp = endp = NULL;
+				pctr--;
+			} else if (inquote != 1) {
 				cleanup();
 				return(dobeep_msg("Opening and closing quote "\
 				    "char error"));
 			}
-			if (begp != NULL) {
-				if (endp == NULL)
-					*p = '\0';
-				else
-					*endp = '\0';
-
-				ret = parse(begp, lrp, &rp, blkid, ++expctr);
-				if (!ret) {
-					cleanup();
-					return(ret);
-				}
-			}
-			lrp = &rp;
-			begp = endp = NULL;
-			pctr--;
 			esc = 0;
 		} else if (*p != ' ' && *p != '\t') {
 			if (begp == NULL)
