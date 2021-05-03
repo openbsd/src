@@ -936,7 +936,7 @@ pmap_vp_destroy(pmap_t pm)
 	return;
 }
 
-vaddr_t virtual_avail, virtual_end;
+vaddr_t virtual_avail;
 int	pmap_virtual_space_called;
 
 static inline pt_entry_t
@@ -1112,7 +1112,7 @@ fail:
 	return pmap_maxkvaddr;
 }
 
-void pmap_setup_avail(uint64_t ram_start, uint64_t ram_end, uint64_t kvo);
+void pmap_setup_avail(uint64_t memstart, uint64_t memend, uint64_t kvo);
 
 /*
  * Initialize pmap setup.
@@ -1131,7 +1131,7 @@ paddr_t dmap_phys_base;
 paddr_t dmap_phys_max;
 vaddr_t dmap_virt_max;
 
-static void
+void
 pmap_bootstrap_dmap(vaddr_t kern_l1, paddr_t min_pa, paddr_t max_pa)
 {
 	vaddr_t va;
@@ -1166,7 +1166,7 @@ pmap_bootstrap_dmap(vaddr_t kern_l1, paddr_t min_pa, paddr_t max_pa)
 
 vaddr_t
 pmap_bootstrap(long kvo, vaddr_t l1pt, vaddr_t kernelstart, vaddr_t kernelend,
-    paddr_t fdt_start, paddr_t fdt_end, paddr_t ram_start, paddr_t ram_end)
+    paddr_t memstart, paddr_t memend, paddr_t ramstart, paddr_t ramend)
 {
 	void  *va;
 	paddr_t pa, pt1pa;
@@ -1178,23 +1178,8 @@ pmap_bootstrap(long kvo, vaddr_t l1pt, vaddr_t kernelstart, vaddr_t kernelend,
 	int i, j, k;
 	int lb_idx2, ub_idx2;
 
-	pmap_setup_avail(ram_start, ram_end, kvo);
-
-	/*
-	 * in theory we could start with just the memory in the
-	 * kernel, however this could 'allocate' the bootloader and
-	 * bootstrap vm table, which we may need to preserve until
-	 * later.
-	 */
-	printf("removing %lx-%lx\n", ram_start, kernelstart+kvo);
-	pmap_remove_avail(ram_start, kernelstart+kvo);
-
-	printf("removing %lx-%lx\n", kernelstart+kvo, kernelend+kvo);
-	pmap_remove_avail(kernelstart+kvo, kernelend+kvo);
-
-	// Remove the FDT physical address range as well
-	printf("removing %lx-%lx\n", fdt_start+kvo, fdt_end+kvo);
-	pmap_remove_avail(fdt_start, fdt_end);
+	pmap_setup_avail(memstart, memend, kvo);
+	pmap_remove_avail(kernelstart + kvo, kernelend + kvo);
 
 	/*
 	 * KERNEL IS ASSUMED TO BE 39 bits (or less), start from L1,
@@ -1204,7 +1189,7 @@ pmap_bootstrap(long kvo, vaddr_t l1pt, vaddr_t kernelstart, vaddr_t kernelend,
 	 */
 
 	// Map the entire Physical Address Space to Direct Mapped Region
-	pmap_bootstrap_dmap(l1pt, ram_start, ram_end);
+	pmap_bootstrap_dmap(l1pt, ramstart, ramend);
 
 	pt1pa = pmap_steal_avail(2 * sizeof(struct pmapvp1), Lx_TABLE_ALIGN,
 	    &va);
@@ -1333,7 +1318,7 @@ pmap_bootstrap(long kvo, vaddr_t l1pt, vaddr_t kernelstart, vaddr_t kernelend,
 	// Include the Direct Map in Kernel PMAP
 	// as gigapages, only populated the pmapvp1->l1 field,
 	// pmap->va field is not used
-	pmap_bootstrap_dmap((vaddr_t) pmap_kernel()->pm_vp.l1, ram_start, ram_end);
+	pmap_bootstrap_dmap((vaddr_t) pmap_kernel()->pm_vp.l1, ramstart, ramend);
 
 	//switching to new page table
 	uint64_t satp = pmap_kernel()->pm_satp;
@@ -1964,14 +1949,14 @@ void
 pmap_virtual_space(vaddr_t *start, vaddr_t *end)
 {
 	*start = virtual_avail;
-	*end = virtual_end;
+	*end = VM_MAX_KERNEL_ADDRESS;
 
 	/* Prevent further KVA stealing. */
 	pmap_virtual_space_called = 1;
 }
 
 void
-pmap_setup_avail(uint64_t ram_start, uint64_t ram_end, uint64_t kvo)
+pmap_setup_avail(uint64_t memstart, uint64_t memend, uint64_t kvo)
 {
 	/* This makes several assumptions
 	 * 1) kernel will be located 'low' in memory
@@ -1986,12 +1971,8 @@ pmap_setup_avail(uint64_t ram_start, uint64_t ram_end, uint64_t kvo)
 	 */
 
 	pmap_avail_kvo = kvo;
-	pmap_avail[0].start = ram_start;
-	pmap_avail[0].size = ram_end-ram_start;
-
-	/* XXX - multiple sections */
-	physmem = atop(pmap_avail[0].size);
-
+	pmap_avail[0].start = memstart;
+	pmap_avail[0].size = memend - memstart;
 	pmap_cnt_avail = 1;
 
 	pmap_avail_fixup();
