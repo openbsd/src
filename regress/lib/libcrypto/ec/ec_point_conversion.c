@@ -1,4 +1,4 @@
-/*	$OpenBSD: ec_point_conversion.c,v 1.3 2021/05/03 14:48:10 tb Exp $ */
+/*	$OpenBSD: ec_point_conversion.c,v 1.4 2021/05/03 14:49:37 tb Exp $ */
 /*
  * Copyright (c) 2021 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Joel Sing <jsing@openbsd.org>
@@ -110,7 +110,7 @@ roundtrip(EC_GROUP *group, EC_POINT *point, int form, BIGNUM *x, BIGNUM *y)
 }
 
 static int
-hybrid_corner_case(void)
+test_hybrid_corner_case(void)
 {
 	BIGNUM *x = NULL, *y = NULL;
 	EC_GROUP *group;
@@ -879,7 +879,7 @@ main(int argc, char **argv)
 	int failed = 0;
 
 	failed |= test_random_points();
-	failed |= hybrid_corner_case();
+	failed |= test_hybrid_corner_case();
 	failed |= test_point_conversions();
 
 	fprintf(stderr, "%s\n", failed ? "FAILED" : "SUCCESS");
