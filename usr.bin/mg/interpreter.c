@@ -1,4 +1,4 @@
-/*      $OpenBSD: interpreter.c,v 1.22 2021/04/20 16:34:20 lum Exp $	*/
+/*      $OpenBSD: interpreter.c,v 1.23 2021/05/03 12:18:43 lum Exp $	*/
 /*
  * This file is in the public domain.
  *
@@ -35,7 +35,7 @@
  * 1. multiline parsing - currently only single lines supported.
  * 2. parsing for '(' and ')' throughout whole string and evaluate correctly.
  * 3. conditional execution.
- * 4. deal with special characters in a string: "x\" x" etc
+ * 4. have memory allocated dynamically for variable values.
  * 5. do symbol names need more complex regex patterns? [A-Za-z][.0-9_A-Z+a-z-]
  *    at the moment. 
  * 6. oh so many things....
@@ -94,20 +94,6 @@ struct expentry {
 };
 
 /*
- * Structure for variables during buffer evaluation.
- */
-struct varentry {
-	SLIST_ENTRY(varentry) entry;
-	char	 valbuf[BUFSIZE];
-	char	*name;
-	char	*vals;
-	int	 count;
-	int	 expctr;
-	int	 blkid;
-};
-SLIST_HEAD(vlisthead, varentry) varhead = SLIST_HEAD_INITIALIZER(varhead);
-
-/*
  * Structure for scheme keywords. 
  */
 #define NUMSCHKEYS	4
@@ -135,9 +121,9 @@ foundparen(char *funstr, int llen)
 {
 	const char	*lrp = NULL;
 	char		*p, *begp = NULL, *endp = NULL, *regs;
-	int     	 i, ret, pctr, expctr, blkid, inquote;
+	int     	 i, ret, pctr, expctr, blkid, inquote, esc;
 
-	pctr = expctr = inquote = 0;
+	pctr = expctr = inquote = esc = 0;
 	blkid = 1;
 
 	/*
@@ -169,8 +155,10 @@ foundparen(char *funstr, int llen)
 	p = funstr;
 
 	for (i = 0; i < llen; ++i, p++) {
-		if (*p == '(') {
-			if (inquote == 1) {
+		if (*p == '\\') {
+			esc = 1;
+		} else if (*p == '(') {
+			if (inquote != 0) {
 				cleanup();
 				return(dobeep_msg("Opening and closing quote "\
 				    "char error"));
@@ -190,8 +178,9 @@ foundparen(char *funstr, int llen)
 			lrp = &lp;
 			begp = endp = NULL;
 			pctr++;
+			esc = 0;
 		} else if (*p == ')') {
-			if (inquote == 1) {
+			if (inquote != 0) {
 				cleanup();
 				return(dobeep_msg("Opening and closing quote "\
 				    "char error"));
@@ -211,22 +200,28 @@ foundparen(char *funstr, int llen)
 			lrp = &rp;
 			begp = endp = NULL;
 			pctr--;
+			esc = 0;
 		} else if (*p != ' ' && *p != '\t') {
 			if (begp == NULL)
 				begp = p;
 			if (*p == '"') {
-				if (inquote == 0)
-					inquote = 1;
+				if (inquote == 0 && esc == 0)
+					inquote++;
+				else if (inquote > 0 && esc == 1)
+					esc = 0;
 				else
-					inquote = 0;
+					inquote--;
 			}
 			endp = NULL;
 		} else if (endp == NULL && (*p == ' ' || *p == '\t')) {
 			*p = ' ';
 			endp = p;
-		} else if (*p == '\t')
+			esc = 0;
+		} else if (*p == '\t') {
 			if (inquote == 0)
 				*p = ' ';
+			esc = 0;
+		}
 
 		if (pctr == 0) {
 			blkid++;
@@ -495,8 +490,8 @@ isvar(char **argp, char **varbuf, int sizof)
 	mglog_isvar(*varbuf, *argp, sizof);
 #endif
 	SLIST_FOREACH(v1, &varhead, entry) {
-		if (strcmp(*argp, v1->name) == 0) {
-			(void)(strlcpy(*varbuf, v1->valbuf, sizof) >= sizof);
+		if (strcmp(*argp, v1->v_name) == 0) {
+			(void)(strlcpy(*varbuf, v1->v_buf, sizof) >= sizof);
 			return (TRUE);
 		}
 	}
@@ -551,23 +546,21 @@ founddef(char *defstr, int blkid, int expctr, int hasval)
 
 	if (!SLIST_EMPTY(&varhead)) {
 		SLIST_FOREACH_SAFE(v1, &varhead, entry, vt) {
-			if (strcmp(vnamep, v1->name) == 0)
+			if (strcmp(vnamep, v1->v_name) == 0)
 				SLIST_REMOVE(&varhead, v1, varentry, entry);
 		}
 	}
 	if ((v1 = malloc(sizeof(struct varentry))) == NULL)
 		return (ABORT);
 	SLIST_INSERT_HEAD(&varhead, v1, entry);
-	if ((v1->name = strndup(vnamep, BUFSIZE)) == NULL)
+	if ((v1->v_name = strndup(vnamep, BUFSIZE)) == NULL)
 		return(dobeep_msg("strndup error"));
-	vnamep = v1->name;
-	v1->count = 0;
-	v1->expctr = expctr;
-	v1->blkid = blkid;
-	v1->vals = NULL;
-	v1->valbuf[0] = '\0';
+	vnamep = v1->v_name;
+	v1->v_count = 0;
+	v1->v_vals = NULL;
+	v1->v_buf[0] = '\0';
 
-	defnam = v1->valbuf;
+	defnam = v1->v_buf;
 
 	if (hasval) {
 		valp = skipwhite(vendp + 1);
@@ -670,7 +663,7 @@ expandvals(char *cmdp, char *valp, char *bp)
 			if (strlcat(bp, argp, BUFSIZE) >= BUFSIZE) {
 				return (dobeep_msg("strlcat error"));
 			}
-/*			v1->count++;*/
+/*			v1->v_count++;*/
 			
 			if (fin)
 				break;
@@ -686,7 +679,7 @@ expandvals(char *cmdp, char *valp, char *bp)
  * Finished with buffer evaluation, so clean up any vars.
  * Perhaps keeps them in mg even after use,...
  */
-static int
+/*static int
 clearvars(void)
 {
 	struct varentry	*v1 = NULL;
@@ -694,13 +687,12 @@ clearvars(void)
 	while (!SLIST_EMPTY(&varhead)) {
 		v1 = SLIST_FIRST(&varhead);
 		SLIST_REMOVE_HEAD(&varhead, entry);
-/*		free(v1->vals);*/
-		free(v1->name);
+		free(v1->v_name);
 		free(v1);
 	}
 	return (FALSE);
 }
-
+*/
 /*
  * Finished with block evaluation, so clean up any expressions.
  */
@@ -727,7 +719,7 @@ cleanup(void)
 	defnam = NULL;
 
 	clearexp();
-	clearvars();
+/*	clearvars();*/
 }
 
 /*

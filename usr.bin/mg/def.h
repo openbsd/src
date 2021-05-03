@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.173 2021/04/22 19:50:55 lum Exp $	*/
+/*	$OpenBSD: def.h,v 1.174 2021/05/03 12:18:43 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -309,6 +309,18 @@ struct undo_rec {
 	int		 pos;
 	char		*content;
 };
+
+/*
+ * Variable structure.
+ */
+struct varentry {
+	SLIST_ENTRY(varentry) entry;
+	char	 v_buf[BUFSIZE];
+	char	*v_name;
+	char	*v_vals;
+	int	 v_count;
+};
+SLIST_HEAD(vhead, varentry);
 
 /*
  * Previously from ttydef.h
@@ -732,6 +744,7 @@ extern struct buffer	*bheadp;
 extern struct buffer	*curbp;
 extern struct mgwin	*curwp;
 extern struct mgwin	*wheadp;
+extern struct vhead	 varhead;
 extern int		 thisflag;
 extern int		 lastflag;
 extern int		 curgoal;

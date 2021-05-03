@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.89 2021/03/20 09:00:49 lum Exp $	*/
+/*	$OpenBSD: main.c,v 1.90 2021/05/03 12:18:43 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -40,6 +40,7 @@ struct buffer	*curbp;				/* current buffer	*/
 struct buffer	*bheadp;			/* BUFFER list head	*/
 struct mgwin	*curwp;				/* current window	*/
 struct mgwin	*wheadp;			/* MGWIN listhead	*/
+struct vhead	 varhead;			/* Variable list head	*/
 char		 pat[NPAT];			/* pattern		*/
 
 static void	 edinit(struct buffer *);
