@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.101 2021/04/28 05:10:29 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.102 2021/05/03 04:29:50 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -497,6 +497,14 @@ dev_mix_badd(struct dev *d, struct slot *s)
 		panic();
 	}
 #endif
+	if (!(s->opt->mode & MODE_PLAY)) {
+		/*
+		 * playback not allowed in opt structure, produce silence
+		 */
+		abuf_rdiscard(&s->mix.buf, s->round * s->mix.bpf);
+		return;
+	}
+
 
 	/*
 	 * Apply the following processing chain:
@@ -598,13 +606,6 @@ dev_sub_bcopy(struct dev *d, struct slot *s)
 	int i, vol, offs, nch;
 
 
-	if (s->mode & MODE_MON) {
-		moffs = d->poffs + d->round;
-		if (moffs == d->psize)
-			moffs = 0;
-		idata = d->pbuf + moffs * d->pchan;
-	} else
-		idata = d->rbuf;
 	odata = (adata_t *)abuf_wgetblk(&s->sub.buf, &ocount);
 #ifdef DEBUG
 	if (ocount < s->round * s->sub.bpf) {
@@ -612,6 +613,21 @@ dev_sub_bcopy(struct dev *d, struct slot *s)
 		panic();
 	}
 #endif
+	if (s->opt->mode & MODE_MON) {
+		moffs = d->poffs + d->round;
+		if (moffs == d->psize)
+			moffs = 0;
+		idata = d->pbuf + moffs * d->pchan;
+	} else if (s->opt->mode & MODE_REC) {
+		idata = d->rbuf;
+	} else {
+		/*
+		 * recording not allowed in opt structure, produce silence
+		 */
+		enc_sil_do(&s->sub.enc, odata, s->round);
+		abuf_wcommit(&s->sub.buf, s->round * s->sub.bpf);
+		return;
+	}
 
 	/*
 	 * Apply the following processing chain:
@@ -1577,7 +1593,7 @@ slot_initconv(struct slot *s)
 	}
 
 	if (s->mode & MODE_RECMASK) {
-		unsigned int outchan = (s->mode & MODE_MON) ?
+		unsigned int outchan = (s->opt->mode & MODE_MON) ?
 		    d->pchan : d->rchan;
 
 		s->sub.encbuf = NULL;
@@ -1771,25 +1787,8 @@ slot_new(struct opt *opt, unsigned int id, char *who,
 	    NULL, -1, 127, s->vol);
 
 found:
-	if ((mode & MODE_REC) && (opt->mode & MODE_MON)) {
-		mode |= MODE_MON;
-		mode &= ~MODE_REC;
-	}
-	if ((mode & opt->mode) != mode) {
-		if (log_level >= 1) {
-			slot_log(s);
-			log_puts(": requested mode not allowed\n");
-		}
-		return NULL;
-	}
 	if (!dev_ref(opt->dev))
 		return NULL;
-	if ((mode & opt->dev->mode) != mode) {
-		if (log_level >= 1) {
-			slot_log(s);
-			log_puts(": requested mode not supported\n");
-		}
-	}
 	s->opt = opt;
 	s->ops = ops;
 	s->arg = arg;
@@ -1869,6 +1868,16 @@ slot_attach(struct slot *s)
 {
 	struct dev *d = s->opt->dev;
 	long long pos;
+
+	if (((s->mode & MODE_PLAY) && !(s->opt->mode & MODE_PLAY)) ||
+	    ((s->mode & MODE_RECMASK) && !(s->opt->mode & MODE_RECMASK))) {
+		if (log_level >= 1) {
+			slot_log(s);
+			log_puts(" at ");
+			log_puts(s->opt->name);
+			log_puts(": mode not allowed on this sub-device\n");
+		}
+	}
 
 	/*
 	 * setup converions layer
