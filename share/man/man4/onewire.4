@@ -1,4 +1,4 @@
-.\"	$OpenBSD: onewire.4,v 1.11 2021/05/01 16:11:09 visa Exp $
+.\"	$OpenBSD: onewire.4,v 1.12 2021/05/03 07:09:26 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 1 2021 $
+.Dd $Mdocdate: May 3 2021 $
 .Dt ONEWIRE 4
 .Os
 .Sh NAME
@@ -50,8 +50,6 @@ The driver supports plugging and unplugging slave devices on the fly.
 IOC3 generic workstation I/O device
 .It Xr uow 4
 Maxim/Dallas DS2490 USB 1-Wire adapter
-.It Xr xheart 4
-Octane core system widget
 .El
 .Sh SUPPORTED SLAVES
 .Bl -tag -width 11n -offset ind -compact
@@ -59,12 +57,8 @@ Octane core system widget
 1-Wire counter device
 .It Xr owid 4
 1-Wire ID device
-.It Xr owmac 4
-1-Wire Ethernet address
 .It Xr owsbm 4
 1-Wire smart battery monitor device
-.It Xr owserial 4
-1-Wire serial number
 .It Xr owtemp 4
 1-Wire temperature device
 .El
