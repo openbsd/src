@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.65 2021/04/15 18:25:43 stsp Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.66 2021/05/03 08:23:05 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -865,7 +865,7 @@ ar5008_rx_process(struct athn_softc *sc, struct mbuf_list *ml)
 	struct ieee80211_rxinfo rxi;
 	struct ieee80211_node *ni;
 	struct mbuf *m, *m1;
-	int error, len;
+	int error, len, michael_mic_failure = 0;
 
 	bf = SIMPLEQ_FIRST(&rxq->head);
 	if (__predict_false(bf == NULL)) {	/* Should not happen. */
@@ -915,16 +915,12 @@ ar5008_rx_process(struct athn_softc *sc, struct mbuf_list *ml)
 			ic->ic_stats.is_ccmp_dec_errs++;
 		} else if (ds->ds_status8 & AR_RXS8_MICHAEL_ERR) {
 			DPRINTFN(2, ("Michael MIC failure\n"));
-			/* Report Michael MIC failures to net80211. */
-			ic->ic_stats.is_rx_locmicfail++;
-			ieee80211_michael_mic_failure(ic, 0);
-			/*
-			 * XXX Check that it is not a control frame
-			 * (invalid MIC failures on valid ctl frames).
-			 */
+			michael_mic_failure = 1;
 		}
-		ifp->if_ierrors++;
-		goto skip;
+		if (!michael_mic_failure) {
+			ifp->if_ierrors++;
+			goto skip;
+		}
 	}
 
 	len = MS(ds->ds_status1, AR_RXS1_DATA_LEN);
@@ -977,6 +973,25 @@ ar5008_rx_process(struct athn_softc *sc, struct mbuf_list *ml)
 	/* Grab a reference to the source node. */
 	wh = mtod(m, struct ieee80211_frame *);
 	ni = ieee80211_find_rxnode(ic, wh);
+
+	if (michael_mic_failure) {
+		/*
+		 * Check that it is not a control frame
+		 * (invalid MIC failures on valid ctl frames).
+		 */
+		if (!(wh->i_fc[0] & IEEE80211_FC0_TYPE_CTL) &&
+		    (ic->ic_flags & IEEE80211_F_RSNON) &&
+		    (ni->ni_rsncipher == IEEE80211_CIPHER_TKIP ||
+		    ni->ni_rsngroupcipher == IEEE80211_CIPHER_TKIP)) {
+			/* Report Michael MIC failures to net80211. */
+			ic->ic_stats.is_rx_locmicfail++;
+			ieee80211_michael_mic_failure(ic, 0);
+			ifp->if_ierrors++;
+			ieee80211_release_node(ic, ni);
+			m_freem(m);
+			goto skip;
+		}
+	}
 
 	/* Remove any HW padding after the 802.11 header. */
 	if (!(wh->i_fc[0] & IEEE80211_FC0_TYPE_CTL)) {
