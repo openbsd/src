@@ -1,4 +1,4 @@
-/*	$OpenBSD: ec_point_conversion.c,v 1.4 2021/05/03 14:49:37 tb Exp $ */
+/*	$OpenBSD: ec_point_conversion.c,v 1.5 2021/05/03 14:51:47 tb Exp $ */
 /*
  * Copyright (c) 2021 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Joel Sing <jsing@openbsd.org>
@@ -811,7 +811,8 @@ static const struct point_conversion {
 		.valid = 1,
 	},
 	{
-		.description = "generic hybrid point on secp256r1",
+		.description =
+		    "generic hybrid point on secp256r1 (flipped y_bit)",
 		.nid = NID_X9_62_prime256v1,
 		.octets = {
 			0x06, 0x38, 0xb2, 0x98, 0x38, 0x21, 0x6b, 0xec,
