@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.234 2021/02/16 08:29:16 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.235 2021/05/03 13:18:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1261,6 +1261,7 @@ imsg_send_sockets(struct imsgbuf *se, struct imsgbuf *rde, struct imsgbuf *roa)
 void
 bgpd_rtr_connect(struct rtr_config *r)
 {
+	struct sockaddr *sa;
 	socklen_t len;
 	int fd;
 
@@ -1270,8 +1271,8 @@ bgpd_rtr_connect(struct rtr_config *r)
 		log_warn("rtr %s", r->descr);
 		return;
 	}
-	if (r->local_addr.aid != AID_UNSPEC) {
-		if (bind(fd,  addr2sa(&r->local_addr, 0, &len), len) == -1) {
+	if ((sa = addr2sa(&r->local_addr, 0, &len)) != NULL) {
+		if (bind(fd, sa, len) == -1) {
 			log_warn("rtr %s: bind to %s", r->descr,
 			    log_addr(&r->local_addr));
 			close(fd);
@@ -1279,8 +1280,8 @@ bgpd_rtr_connect(struct rtr_config *r)
 		}
 	}
 
-	if (connect(fd, addr2sa(&r->remote_addr, r->remote_port, &len), len) ==
-	    -1) {
+	sa = addr2sa(&r->remote_addr, r->remote_port, &len);
+	if (connect(fd, sa, len) == -1) {
 		log_warn("rtr %s: connect to %s:%u", r->descr,
 		    log_addr(&r->remote_addr), r->remote_port);
 		close(fd);
