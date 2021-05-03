@@ -1,4 +1,4 @@
-/* $OpenBSD: dtlstest.c,v 1.7 2021/02/07 14:52:17 jsing Exp $ */
+/* $OpenBSD: dtlstest.c,v 1.8 2021/05/03 23:44:05 inoguchi Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -16,10 +16,10 @@
  */
 
 #include <netinet/in.h>
-#include <sys/limits.h>
 #include <sys/socket.h>
 
 #include <err.h>
+#include <limits.h>
 #include <poll.h>
 #include <unistd.h>
 
