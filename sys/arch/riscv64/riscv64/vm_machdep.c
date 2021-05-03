@@ -111,7 +111,7 @@ cpu_exit(struct proc *p)
 {
 	/* If we were using the FPU, forget about it. */
 	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
-		fpu_discard(p); // XXX Discard FP
+		fpu_discard(p);
 
 	pmap_deactivate(p);
 	sched_exit(p);

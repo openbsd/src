@@ -49,16 +49,12 @@ svc_handler(trapframe_t *frame)
 
 	uvmexp.syscalls++;
 
-#if 0	// XXX Save FPU State
 	/* Before enabling interrupts, save FPU state */
-	vfp_save();
-#endif
+	fpu_save(p, frame);
 
-#if 0	// XXX Re-enable interrupts
 	/* Re-enable interrupts if they were enabled previously */
-	if (__predict_true((frame->tf_spsr & I_bit) == 0))
+	if (__predict_true(frame->tf_scause & EXCP_INTR))
 		enable_interrupts();
-#endif
 
 	ap = &frame->tf_a[0]; // Pointer to first arg
 	code = frame->tf_t[0]; // Syscall code

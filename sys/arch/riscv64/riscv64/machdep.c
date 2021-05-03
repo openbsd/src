@@ -373,10 +373,8 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 	struct trapframe *tf;
 
 	/* If we were using the FPU, forget about it. */
-#if 0	// XXX ignore fp for now
 	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
-		vfp_discard(p);
-#endif
+		fpu_discard(p);
 	p->p_addr->u_pcb.pcb_flags &= ~PCB_FPU;
 
 	tf = p->p_addr->u_pcb.pcb_tf;
