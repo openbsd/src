@@ -1,3 +1,4 @@
+/* $OpenBSD: mainbus.c,v 1.2 2021/05/03 21:25:48 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -49,6 +50,7 @@ struct mainbus_softc {
 	int			*sc_ranges;
 	int			 sc_rangeslen;
 	int			 sc_early;
+	int			 sc_early_nodes[64];
 };
 
 const struct cfattach mainbus_ca = {
@@ -80,7 +82,6 @@ struct machine_bus_dma_tag mainbus_dma_tag = {
 };
 
 /*
- * XXX This statement is copied from OpenBSD/arm64. We do not handle EFI.
  * Mainbus takes care of FDT and non-FDT machines, so we
  * always attach.
  */
@@ -90,14 +91,13 @@ mainbus_match(struct device *parent, void *cfdata, void *aux)
 	return (1);
 }
 
-extern char *hw_prod;
 void riscv_timer_init(void);
 
 void
 mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mainbus_softc *sc = (struct mainbus_softc *)self;
-	char model[128];
+	char prop[128];
 	int node, len;
 
 	riscv_intr_init_fdt();
@@ -109,20 +109,27 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_acells = OF_getpropint(OF_peer(0), "#address-cells", 1);
 	sc->sc_scells = OF_getpropint(OF_peer(0), "#size-cells", 1);
 
-	len = OF_getprop(sc->sc_node, "model", model, sizeof(model));
+	len = OF_getprop(sc->sc_node, "model", prop, sizeof(prop));
 	if (len > 0) {
-		printf(": %s\n", model);
+		printf(": %s\n", prop);
 		hw_prod = malloc(len, M_DEVBUF, M_NOWAIT);
 		if (hw_prod)
-			strlcpy(hw_prod, model, len);
+			strlcpy(hw_prod, prop, len);
 	} else
 		printf(": unknown model\n");
 
+	len = OF_getprop(sc->sc_node, "serial-number", prop, sizeof(prop));
+	if (len > 0) {
+		hw_serial = malloc(len, M_DEVBUF, M_NOWAIT);
+		if (hw_serial)
+			strlcpy(hw_serial, prop, len);
+	}
+
 	/* Attach primary CPU first. */
-#ifdef DEBUG_AUTOCONF
-	printf("Attaching primary CPU...\n");
-#endif
 	mainbus_attach_cpus(self, mainbus_match_primary);
+
+	/* Attach secondary CPUs. */
+	mainbus_attach_cpus(self, mainbus_match_secondary);
 
 	sc->sc_rangeslen = OF_getproplen(OF_peer(0), "ranges");
 	if (sc->sc_rangeslen > 0 && !(sc->sc_rangeslen % sizeof(uint32_t))) {
@@ -133,23 +140,46 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Scan the whole tree. */
 	sc->sc_early = 1;
-#ifdef DEBUG_AUTOCONF
-	printf("Attaching node with sc_early == 1 ...\n");
-#endif
 	for (node = OF_child(sc->sc_node); node != 0; node = OF_peer(node))
 		mainbus_attach_node(self, node, NULL);
 
 	sc->sc_early = 0;
-#ifdef DEBUG_AUTOCONF
-	printf("Attaching node with sc_early == 0 ...\n");
-#endif
 	for (node = OF_child(sc->sc_node); node != 0; node = OF_peer(node))
 		mainbus_attach_node(self, node, NULL);
 
 	mainbus_attach_framebuffer(self);
+}
 
-	/* Attach secondary CPUs. */
-	mainbus_attach_cpus(self, mainbus_match_secondary);
+int
+mainbus_print(void *aux, const char *pnp)
+{
+	struct fdt_attach_args *fa = aux;
+	char buf[32];
+
+	if (!pnp)
+		return (QUIET);
+
+	if (OF_getprop(fa->fa_node, "status", buf, sizeof(buf)) > 0 &&
+	    strcmp(buf, "disabled") == 0)
+		return (QUIET);
+
+	if (OF_getprop(fa->fa_node, "name", buf, sizeof(buf)) > 0) {
+		buf[sizeof(buf) - 1] = 0;
+		if (strcmp(buf, "aliases") == 0 ||
+		    strcmp(buf, "chosen") == 0 ||
+		    strcmp(buf, "cpus") == 0 ||
+		    strcmp(buf, "memory") == 0 ||
+		    strcmp(buf, "reserved-memory") == 0 ||
+		    strcmp(buf, "thermal-zones") == 0 ||
+		    strncmp(buf, "__", 2) == 0)
+			return (QUIET);
+		printf("\"%s\"", buf);
+	} else
+		printf("node %u", fa->fa_node);
+
+	printf(" at %s", pnp);
+
+	return (UNCONF);
 }
 
 /*
@@ -162,6 +192,16 @@ mainbus_attach_node(struct device *self, int node, cfmatch_t submatch)
 	struct fdt_attach_args	 fa;
 	int			 i, len, line;
 	uint32_t		*cell, *reg;
+	struct device		*child;
+	cfprint_t		 print = NULL;
+
+	/* Skip if already attached early. */
+	for (i = 0; i < nitems(sc->sc_early_nodes); i++) {
+		if (sc->sc_early_nodes[i] == node)
+			return;
+		if (sc->sc_early_nodes[i] == 0)
+			break;
+	}
 
 	memset(&fa, 0, sizeof(fa));
 	fa.fa_name = "";
@@ -173,7 +213,7 @@ mainbus_attach_node(struct device *self, int node, cfmatch_t submatch)
 
 	len = OF_getproplen(node, "reg");
 	line = (sc->sc_acells + sc->sc_scells) * sizeof(uint32_t);
-	if (len > 0 && line > 0 && (len % line) == 0) {
+	if (len > 0 && (len % line) == 0) {
 		reg = malloc(len, M_TEMP, M_WAITOK);
 		OF_getpropintarray(node, "reg", reg, len);
 
@@ -209,16 +249,22 @@ mainbus_attach_node(struct device *self, int node, cfmatch_t submatch)
 		OF_getpropintarray(node, "interrupts", fa.fa_intr, len);
 	}
 
+	if (submatch == NULL && sc->sc_early == 0)
+		print = mainbus_print;
 	if (submatch == NULL)
 		submatch = mainbus_match_status;
 
-#ifdef DEBUG_AUTOCONF
-	char buf[32];
-	if (OF_getprop(fa.fa_node, "name", buf, sizeof(buf)) > 0)
-		printf("\ncurrent parent: %s, current node: %d-%s\n", self->dv_xname, fa.fa_node, buf);
-#endif
+	child = config_found_sm(self, &fa, print, submatch);
 
-	config_found_sm(self, &fa, NULL, submatch);
+	/* Record nodes that we attach early. */
+	if (child && sc->sc_early) {
+		for (i = 0; i < nitems(sc->sc_early_nodes); i++) {
+			if (sc->sc_early_nodes[i] != 0)
+				continue;
+			sc->sc_early_nodes[i] = node;
+			break;
+		}
+	}
 
 	free(fa.fa_reg, M_DEVBUF, fa.fa_nreg * sizeof(struct fdt_reg));
 	free(fa.fa_intr, M_DEVBUF, fa.fa_nintr * sizeof(uint32_t));
@@ -232,15 +278,13 @@ mainbus_match_status(struct device *parent, void *match, void *aux)
 	struct cfdata *cf = match;
 	char buf[32];
 
-	if (fa->fa_node == 0)
-		return 0;
-
 	if (OF_getprop(fa->fa_node, "status", buf, sizeof(buf)) > 0 &&
 	    strcmp(buf, "disabled") == 0)
 		return 0;
 
 	if (cf->cf_loc[0] == sc->sc_early)
 		return (*cf->cf_attach->ca_match)(parent, match, aux);
+
 	return 0;
 }
 
@@ -252,7 +296,7 @@ mainbus_attach_cpus(struct device *self, cfmatch_t match)
 	int acells, scells;
 	char buf[32];
 
-	if (node == 0)
+	if (node == -1)
 		return;
 
 	acells = sc->sc_acells;
@@ -266,9 +310,6 @@ mainbus_attach_cpus(struct device *self, cfmatch_t match)
 		    strcmp(buf, "cpu") == 0)
 			ncpusfound++;
 
-#ifdef DEBUG_AUTOCONF
-                printf("scanning cpus subnode: %d\n", node);
-#endif
 		mainbus_attach_node(self, node, match);
 	}
 
@@ -305,7 +346,7 @@ mainbus_attach_framebuffer(struct device *self)
 {
 	int node = OF_finddevice("/chosen");
 
-	if (node == 0)
+	if (node == -1)
 		return;
 
 	for (node = OF_child(node); node != 0; node = OF_peer(node))
