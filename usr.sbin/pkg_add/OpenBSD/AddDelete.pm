@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.94 2021/01/30 10:24:19 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.95 2021/05/04 10:19:28 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -347,6 +347,7 @@ sub run_quirks
 
 	if (!exists $state->{quirks}) {
 		eval {
+			use lib ('/usr/local/libdata/perl5/site_perl');
 			require OpenBSD::Quirks;
 			# interface version number.
 			$state->{quirks} = OpenBSD::Quirks->new(1);
