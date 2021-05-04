@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.220 2021/01/18 12:15:36 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.221 2021/05/04 09:27:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1034,6 +1034,7 @@ prefix_move(struct prefix *p, struct rde_peer *peer,
 	if (peer != prefix_peer(p))
 		fatalx("prefix_move: cross peer move");
 
+	/* add new prefix node */
 	np = prefix_alloc();
 	/* add reference to new AS path and communities */
 	np->aspath = path_ref(asp);
@@ -1055,25 +1056,13 @@ prefix_move(struct prefix *p, struct rde_peer *peer,
 	 * no need to update the peer prefix count because we are only moving
 	 * the prefix without changing the peer.
 	 */
-
-	/*
-	 * First kick the old prefix node out of the prefix list,
-	 * afterwards run the route decision for new prefix node.
-	 * Because of this only one update is generated if the prefix
-	 * was active.
-	 * This is safe because we create a new prefix and so the change
-	 * is noticed by prefix_evaluate().
-	 */
 	prefix_evaluate(np->re, np, p);
 
-	/* remove old prefix node */
-	/* as before peer count needs no update because of move */
-
-	/* remove possible pftable reference first */
+	/* remove possible pftable reference from old path first */
 	if (p->aspath && p->aspath->pftableid)
 		rde_pftable_del(p->aspath->pftableid, p);
 
-	/* destroy all references to other objects and free the old prefix */
+	/* remove old prefix node */
 	nexthop_unlink(p);
 	nexthop_unref(p->nexthop);
 	communities_unref(p->communities);
