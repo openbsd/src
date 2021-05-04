@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.210 2021/05/04 09:27:22 mvs Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.211 2021/05/04 09:28:04 mvs Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -252,6 +252,8 @@ pfkey_init(void)
 	SRPL_INIT(&pkptable.pkp_list);
 	pool_init(&pkpcb_pool, sizeof(struct pkpcb), 0,
 	    IPL_NONE, PR_WAITOK, "pkpcb", NULL);
+	pool_init(&ipsec_policy_pool, sizeof(struct ipsec_policy), 0,
+	    IPL_SOFTNET, 0, "ipsec policy", NULL);
 }
 
 
@@ -1887,13 +1889,6 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 		}
 
 		if (!exists) {
-			if (ipsec_policy_pool_initialized == 0) {
-				ipsec_policy_pool_initialized = 1;
-				pool_init(&ipsec_policy_pool,
-				    sizeof(struct ipsec_policy), 0,
-				    IPL_NONE, 0, "ipsec policy", NULL);
-			}
-
 			/* Allocate policy entry */
 			ipo = pool_get(&ipsec_policy_pool, PR_NOWAIT|PR_ZERO);
 			if (ipo == NULL) {

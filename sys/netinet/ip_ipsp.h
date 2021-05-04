@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.196 2020/11/05 19:28:28 phessler Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.197 2021/05/04 09:28:04 mvs Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -482,7 +482,6 @@ struct xformsw {
 
 extern int ipsec_in_use;
 extern u_int64_t ipsec_last_added;
-extern int ipsec_policy_pool_initialized;
 extern int encdebug;			/* enable message reporting */
 
 extern int ipsec_keep_invalid;		/* lifetime of embryonic SAs (in sec) */
