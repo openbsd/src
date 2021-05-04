@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.2 2021/05/02 20:08:49 drahn Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.3 2021/05/04 04:26:00 drahn Exp $	*/
 /*-
  * Copyright (c) 2020 Brian Bamsch <bbamsch@google.com>
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,6 +37,12 @@
 #include "DEFS.h"
 #include <sys/syscall.h>
 
+/* offsetof(struct tib, tib_errno) - offsetof(struct tib, __tib_tcb) */
+#define TCB_OFFSET_ERRNO	(-12)
+
+/* offset of errno from tp */
+#define TP_OFFSET_ERRNO		TCB_OFFSET_ERRNO
+
 #define SYSENTRY(x)					\
 	.weak _C_LABEL(x);				\
 	_C_LABEL(x) = _C_LABEL(_thread_sys_ ## x);	\
@@ -54,13 +60,18 @@
 	li	t0, SYS_ ## x;		\
 	ecall
 
-#define	CERROR		_C_LABEL(__cerror)
 #define HANDLE_ERROR()							\
-	beqz	t0, 2f;							\
-1:	auipc	t0, %got_pcrel_hi(CERROR);				\
-	ld	t1, %pcrel_lo(1b)(t0);					\
-	jr	t1;							\
-2:
+	beqz	t0, 200f;						\
+	sw	a0, TP_OFFSET_ERRNO(tp);				\
+	li	a0, -1;							\
+200:
+
+#define HANDLE_ERROR_TARGET(target)					\
+	beqz	t0, 200f;						\
+	sw	a0, TP_OFFSET_ERRNO(tp);				\
+	li	a0, -1;							\
+	j	target;							\
+200:
 #define _SYSCALL_NOERROR(x,y)						\
 	SYSENTRY(x);							\
 	SYSTRAP(y)
@@ -70,10 +81,10 @@
 
 #define _SYSCALL(x, y)							\
 	_SYSCALL_NOERROR(x,y);						\
-	HANDLE_ERROR
+	HANDLE_ERROR()							\
 #define _SYSCALL_HIDDEN(x, y)						\
 	_SYSCALL_HIDDEN_NOERROR(x,y);					\
-	HANDLE_ERROR
+	HANDLE_ERROR()							\
 
 #define SYSCALL_NOERROR(x)						\
 	_SYSCALL_NOERROR(x,x)
@@ -118,5 +129,3 @@
 	__END(x)
 #define SYSCALL_END_HIDDEN(x)						\
 	__END_HIDDEN(x)
-
-	.globl	CERROR

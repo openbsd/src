@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsuspend.S,v 1.1 2021/04/29 18:33:36 drahn Exp $	*/
+/*	$OpenBSD: sigsuspend.S,v 1.2 2021/05/04 04:26:00 drahn Exp $	*/
 /*
  * Copyright (c) 2020 Brian Bamsch <bbamsch@google.com>
  * All rights reserved.
@@ -34,8 +34,9 @@ SYSENTRY_HIDDEN(sigsuspend)
 	RETGUARD_SETUP(sigsuspend, t6)
 	lw	a0, (a0)
 	SYSTRAP(sigsuspend)
-	HANDLE_ERROR()
+	HANDLE_ERROR_TARGET(1f)
 	li	a0, 0
+1:
 	RETGUARD_CHECK(sigsuspend, t6)
 	ret
 SYSCALL_END_HIDDEN(sigsuspend)

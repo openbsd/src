@@ -1,5 +1,6 @@
-#	$OpenBSD: Makefile.inc,v 1.1 2021/04/29 18:33:36 drahn Exp $
+#	$OpenBSD: Makefile.inc,v 1.2 2021/05/04 04:26:00 drahn Exp $
 .include <bsd.own.mk>
 
-CERROR=	cerror.S
+# Suppress DWARF2 warnings
+DEBUG?= -gdwarf-4
 

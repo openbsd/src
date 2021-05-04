@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigprocmask.S,v 1.1 2021/04/29 18:33:36 drahn Exp $	*/
+/*	$OpenBSD: sigprocmask.S,v 1.2 2021/05/04 04:26:00 drahn Exp $	*/
 /*
  * Copyright (c) 2020 Brian Bamsch <bbamsch@google.com>
  * All rights reserved.
@@ -41,11 +41,12 @@ SYSENTRY_HIDDEN(sigprocmask)
 2:
 
 	SYSTRAP(sigprocmask)
-	HANDLE_ERROR()
+	HANDLE_ERROR_TARGET(3f)
 	beqz	a2, 1f
 	sw	a0, (a2)
 1:
-	mv	a0, x0
+	li	a0, 0
+3:
 	RETGUARD_CHECK(sigprocmask, t6)
 	ret
 SYSCALL_END_HIDDEN(sigprocmask)

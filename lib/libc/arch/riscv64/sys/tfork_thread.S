@@ -1,4 +1,4 @@
-/*	$OpenBSD: tfork_thread.S,v 1.1 2021/04/29 18:33:36 drahn Exp $	*/
+/*	$OpenBSD: tfork_thread.S,v 1.2 2021/05/04 04:26:00 drahn Exp $	*/
 /*
  * Copyright (c) 2020 Brian Bamsch <bbamsch@google.com>
  * All rights reserved.
@@ -38,10 +38,11 @@
 ENTRY(__tfork_thread)
 	RETGUARD_SETUP(__tfork_thread, t6)
 	SYSTRAP(__tfork)
-	HANDLE_ERROR()
+	HANDLE_ERROR_TARGET(2f)
 
 	beqz	a0, 1f
 	/* parent thread */
+2:
 	RETGUARD_CHECK(__tfork_thread, t6)
 	ret
 

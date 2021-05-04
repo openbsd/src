@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigpending.S,v 1.1 2021/04/29 18:33:36 drahn Exp $	*/
+/*	$OpenBSD: sigpending.S,v 1.2 2021/05/04 04:26:00 drahn Exp $	*/
 /*
  * Copyright (c) 2020 Brian Bamsch <bbamsch@google.com>
  * All rights reserved.
@@ -34,9 +34,10 @@ SYSENTRY(sigpending)
 	RETGUARD_SETUP(sigpending, t6)
 	mv	a2, a0
 	SYSTRAP(sigpending)
-	HANDLE_ERROR()
+	HANDLE_ERROR_TARGET(1f)
 	sw	a0, 0(a2)	/* 4 bytes */
 	mv	a0, x0
+1:
 	RETGUARD_CHECK(sigpending, t6)
 	ret
 SYSCALL_END(sigpending)
