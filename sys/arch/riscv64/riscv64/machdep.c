@@ -567,6 +567,10 @@ initriscv(struct riscv_bootparams *rbp)
 		int len;
 		static uint8_t lladdr[6];
 
+		len = fdt_node_property(node, "boot-hartid", &prop);
+		if (len == sizeof(boot_hart))
+			boot_hart = bemtoh32((uint32_t *)prop);
+
 		len = fdt_node_property(node, "bootargs", &prop);
 		if (len > 0)
 			collect_kernel_args(prop);

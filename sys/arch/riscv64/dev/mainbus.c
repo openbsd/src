@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.2 2021/05/03 21:25:48 kettenis Exp $ */
+/* $OpenBSD: mainbus.c,v 1.3 2021/05/04 06:32:58 jsg Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -323,7 +323,7 @@ mainbus_match_primary(struct device *parent, void *match, void *aux)
 	struct fdt_attach_args *fa = aux;
 	struct cfdata *cf = match;
 
-	if (fa->fa_nreg < 1)
+	if (fa->fa_nreg < 1 || fa->fa_reg[0].addr != boot_hart)
 		return 0;
 
 	return (*cf->cf_attach->ca_match)(parent, match, aux);
