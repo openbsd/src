@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2021/04/29 13:39:22 bluhm Exp $
+# $OpenBSD: Makefile,v 1.3 2021/05/04 13:24:49 bluhm Exp $
 
 # Copyright (c) 2021 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -53,5 +53,40 @@ REGRESS_TARGETS +=	run-fork-thread
 run-fork-thread: ${PROG}
 	# fork 30 children each with 30 threads and kill process group
 	ulimit -p 500 -n 1000; ./fork-exit -p 30 -t 30
+
+REGRESS_TARGETS +=	run-fork1-heap
+run-fork1-heap: ${PROG}
+	# allocate 400 MB of heap memory
+	ulimit -p 500 -n 1000; ./fork-exit -h 100000
+
+REGRESS_TARGETS +=	run-fork-heap
+run-fork-heap: ${PROG}
+	# allocate 400 MB of heap memory in processes
+	ulimit -p 500 -n 1000; ./fork-exit -p 100 -h 1000
+
+REGRESS_TARGETS +=	run-fork-thread-heap
+run-fork-thread-heap: ${PROG}
+	# allocate 400 MB of heap memory in threads
+	ulimit -p 500 -n 1000; ./fork-exit -p 10 -t 100 -h 100
+
+REGRESS_TARGETS +=	run-fork1-stack
+run-fork1-stack: ${PROG}
+	# allocate 32 MB of stack memory
+	ulimit -p 500 -n 1000; ulimit -s 32768; ./fork-exit -s 8000
+
+REGRESS_TARGETS +=	run-fork-stack
+run-fork-stack: ${PROG}
+	# allocate 400 MB of stack memory in processes
+	ulimit -p 500 -n 1000; ulimit -s 32768; ./fork-exit -p 100 -s 1000
+
+REGRESS_TARGETS +=	run-fork-thread-stack
+run-fork-thread-stack: ${PROG}
+	# allocate 400 MB of stack memory in threads
+	ulimit -p 500 -n 1000; ulimit -s 32768; ./fork-exit -p 10 -t 100 -s 100
+
+REGRESS_CLEANUP =	cleanup
+cleanup:
+	# check that all processes have been terminated and waited for
+	! pkill -u `id -u` fork-exit
 
 .include <bsd.regress.mk>

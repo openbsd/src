@@ -1,4 +1,4 @@
-/*	$OpenBSD: fork-exit.c,v 1.2 2021/04/29 13:39:22 bluhm Exp $	*/
+/*	$OpenBSD: fork-exit.c,v 1.3 2021/05/04 13:24:49 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2021 Alexander Bluhm <bluhm@openbsd.org>
@@ -16,6 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/mman.h>
 #include <sys/select.h>
 #include <sys/wait.h>
 
@@ -27,11 +28,14 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 int execute = 0;
 int daemonize = 0;
+int heap = 0;
 int procs = 1;
+int stack = 0;
 int threads = 0;
 int timeout = 30;
 
@@ -44,16 +48,56 @@ usage(void)
 	fprintf(stderr, "fork-exit [-ed] [-p procs] [-t threads] [-T timeout]\n"
 	    "    -e          child execs sleep(1), default call sleep(3)\n"
 	    "    -d          daemonize, use if already process group leader\n"
+	    "    -h heap     allocate pages of heap memory, default 0\n"
 	    "    -p procs    number of processes to fork, default 1\n"
-	    "    -t threads   number of threads to create, default 0\n"
+	    "    -s stack    allocate pages of stack memory, default 0\n"
+	    "    -t threads  number of threads to create, default 0\n"
 	    "    -T timeout  parent and children will exit, default 30 sec\n");
 	exit(2);
+}
+
+static void
+recurse_page(int depth)
+{
+	int p[4096 / sizeof(int)];
+
+	if (depth == 0)
+		return;
+	p[1] = 0x9abcdef0;
+	explicit_bzero(p, sizeof(int));
+	recurse_page(depth - 1);
+}
+
+static void
+alloc_stack(void)
+{
+	recurse_page(stack);
+}
+
+static void
+alloc_heap(void)
+{
+	int *p;
+	int i;
+
+	for(i = 0; i < heap; i++) {
+		p = mmap(0, 4096, PROT_WRITE, MAP_SHARED|MAP_ANON, -1, 0);
+		if (p == MAP_FAILED)
+			err(1, "mmap");
+		p[1] = 0x12345678;
+		explicit_bzero(p, sizeof(int));
+	}
 }
 
 static void * __dead
 run_thread(void *arg)
 {
 	int error;
+
+	if (heap)
+		alloc_heap();
+	if (stack)
+		alloc_stack();
 
 	error = pthread_barrier_wait(&thread_barrier);
 	if (error && error != PTHREAD_BARRIER_SERIAL_THREAD)
@@ -109,8 +153,14 @@ run_child(int fd)
 			err(1, "fcntl FD_CLOEXEC");
 		exec_sleep();
 	} else {
-		if (threads)
+		if (threads) {
 			create_threads();
+		} else {
+			if (heap)
+				alloc_heap();
+			if (stack)
+				alloc_stack();
+		}
 		if (close(fd) == -1)
 			err(1, "close child");
 		if (sleep(timeout) != 0)
@@ -152,7 +202,7 @@ main(int argc, char *argv[])
 	pid_t pgrp;
 	struct timeval tv;
 
-	while ((ch = getopt(argc, argv, "edp:T:t:")) != -1) {
+	while ((ch = getopt(argc, argv, "edh:p:s:T:t:")) != -1) {
 	switch (ch) {
 		case 'e':
 			execute = 1;
@@ -160,11 +210,23 @@ main(int argc, char *argv[])
 		case 'd':
 			daemonize = 1;
 			break;
+		case 'h':
+			heap = strtonum(optarg, 0, INT_MAX, &errstr);
+			if (errstr != NULL)
+				errx(1, "number of heap allocations is %s: %s",
+				    errstr, optarg);
+			break;
 		case 'p':
 			procs = strtonum(optarg, 0, INT_MAX, &errstr);
 			if (errstr != NULL)
 				errx(1, "number of procs is %s: %s", errstr,
 				    optarg);
+			break;
+		case 's':
+			stack = strtonum(optarg, 0, INT_MAX, &errstr);
+			if (errstr != NULL)
+				errx(1, "number of stack allocations is %s: %s",
+				    errstr, optarg);
 			break;
 		case 't':
 			threads = strtonum(optarg, 0, INT_MAX, &errstr);
