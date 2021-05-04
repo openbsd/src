@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.209 2021/05/02 14:22:05 mvs Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.210 2021/05/04 09:27:22 mvs Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -126,8 +126,6 @@ extern uint64_t sadb_exts_allowed_out[SADB_MAX+1];
 extern uint64_t sadb_exts_required_out[SADB_MAX+1];
 
 extern struct pool ipsec_policy_pool;
-
-extern struct radix_node_head **spd_tables;
 
 struct pool pkpcb_pool;
 #define PFKEY_MSG_MAXSZ 4096
