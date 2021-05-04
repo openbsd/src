@@ -1,9 +1,9 @@
-.\"	$OpenBSD: getopt.1,v 1.19 2018/03/16 16:58:26 schwarze Exp $
+.\"	$OpenBSD: getopt.1,v 1.20 2021/05/04 21:03:31 naddy Exp $
 .\"
 .\" This material, written by Henry Spencer, was released by him
 .\" into the public domain and is thus not subject to any copyright.
 .\"
-.Dd $Mdocdate: March 16 2018 $
+.Dd $Mdocdate: May 4 2021 $
 .Dt GETOPT 1
 .Os
 .Sh NAME
@@ -14,6 +14,13 @@
 .Ar optstring
 .Va $*
 .Sh DESCRIPTION
+The
+.Nm
+utility cannot handle option arguments containing whitespace;
+consider using the standard
+.Ic getopts
+shell built-in instead.
+.Pp
 .Nm
 is used to break up options in command lines for easy parsing by
 shell procedures, and to check for legal options.

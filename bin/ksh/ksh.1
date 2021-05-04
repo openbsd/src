@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.214 2021/03/11 07:04:12 jmc Exp $
+.\"	$OpenBSD: ksh.1,v 1.215 2021/05/04 21:03:30 naddy Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: March 11 2021 $
+.Dd $Mdocdate: May 4 2021 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -3218,6 +3218,25 @@ to a value other than 1, or parsing different sets of arguments without
 resetting
 .Ev OPTIND ,
 may lead to unexpected results.
+.Pp
+The following code fragment shows how one might process the arguments
+for a command that can take the option
+.Fl a
+and the option
+.Fl o ,
+which requires an argument.
+.Bd -literal -offset indent
+while getopts ao: name
+do
+	case $name in
+	a)	flag=1 ;;
+	o)	oarg=$OPTARG ;;
+	?)	echo "Usage: ..."; exit 2 ;;
+	esac
+done
+shift $(($OPTIND - 1))
+echo "Non-option arguments: " "$@"
+.Ed
 .Pp
 .It Xo
 .Ic hash

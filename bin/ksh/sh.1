@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.152 2019/05/22 15:23:23 schwarze Exp $
+.\"	$OpenBSD: sh.1,v 1.153 2021/05/04 21:03:31 naddy Exp $
 .\"
 .\" Copyright (c) 2015 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 22 2019 $
+.Dd $Mdocdate: May 4 2021 $
 .Dt SH 1
 .Os
 .Sh NAME
@@ -508,6 +508,25 @@ is a colon,
 .Ev OPTARG
 is set to the unsupported option,
 otherwise an error message is displayed.
+.Pp
+The following code fragment shows how one might process the arguments
+for a command that can take the option
+.Fl a
+and the option
+.Fl o ,
+which requires an argument.
+.Bd -literal -offset indent
+while getopts ao: name
+do
+	case $name in
+	a)	flag=1 ;;
+	o)	oarg=$OPTARG ;;
+	?)	echo "Usage: ..."; exit 2 ;;
+	esac
+done
+shift $(($OPTIND - 1))
+echo "Non-option arguments: " "$@"
+.Ed
 .It Ic hash Op Fl r | Ar utility
 Add
 .Ar utility
