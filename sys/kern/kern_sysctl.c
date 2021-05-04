@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.393 2021/05/04 19:04:56 bluhm Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.394 2021/05/04 21:57:15 bluhm Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -856,6 +856,27 @@ sysctl_int(void *oldp, size_t *oldlenp, void *newp, size_t newlen, int *valp)
 	return (error);
 }
 
+/*
+ * As above, but read-only.
+ */
+int
+sysctl_rdint(void *oldp, size_t *oldlenp, void *newp, int val)
+{
+	int error = 0;
+
+	if (oldp && *oldlenp < sizeof(int))
+		return (ENOMEM);
+	if (newp)
+		return (EPERM);
+	*oldlenp = sizeof(int);
+	if (oldp)
+		error = copyout((caddr_t)&val, oldp, sizeof(int));
+	return (error);
+}
+
+/*
+ * Read-only or bounded integer values.
+ */
 int
 sysctl_int_bounded(void *oldp, size_t *oldlenp, void *newp, size_t newlen,
     int *valp, int minimum, int maximum)
@@ -877,25 +898,7 @@ sysctl_int_bounded(void *oldp, size_t *oldlenp, void *newp, size_t newlen,
 }
 
 /*
- * As above, but read-only.
- */
-int
-sysctl_rdint(void *oldp, size_t *oldlenp, void *newp, int val)
-{
-	int error = 0;
-
-	if (oldp && *oldlenp < sizeof(int))
-		return (ENOMEM);
-	if (newp)
-		return (EPERM);
-	*oldlenp = sizeof(int);
-	if (oldp)
-		error = copyout((caddr_t)&val, oldp, sizeof(int));
-	return (error);
-}
-
-/*
- * Array of bounded integer values.
+ * Array of read-only or bounded integer values.
  */
 int
 sysctl_bounded_arr(const struct sysctl_bounded_args *valpp, u_int valplen,
