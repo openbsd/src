@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigpending.S,v 1.3 2018/08/12 17:15:10 mortimer Exp $	*/
+/*	$OpenBSD: sigpending.S,v 1.4 2021/05/04 19:02:52 kettenis Exp $	*/
 /*	$NetBSD: sigpending.S,v 1.5 2003/08/07 16:42:05 agc Exp $	*/
 
 /*-
@@ -38,7 +38,6 @@ SYSENTRY(sigpending)
 	RETGUARD_SETUP(sigpending, x15)
 	mov	x2, x0
 	SYSTRAP(sigpending)
-	bcs	CERROR
 	str	w0, [x2]
 	mov	x0, #0
 	RETGUARD_CHECK(sigpending, x15)
