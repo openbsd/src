@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.84 2021/04/20 08:03:12 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.85 2021/05/04 09:21:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -435,8 +435,10 @@ prefix_eligible(struct prefix *p)
 
 /*
  * Find the correct place to insert the prefix in the prefix list.
- * If the active prefix has changed we need to send an update.
- * The to evaluate prefix must not be in the prefix list.
+ * If the active prefix has changed we need to send an update also special
+ * treatment is needed if 'rde evaluate all' is used on some peers.
+ * To re-evaluate a prefix just call prefix_evaluate with old and new pointing
+ * to the same prefix.
  */
 void
 prefix_evaluate(struct rib_entry *re, struct prefix *new, struct prefix *old)
