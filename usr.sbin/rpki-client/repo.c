@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.6 2021/04/19 17:04:35 deraadt Exp $ */
+/*	$OpenBSD: repo.c,v 1.7 2021/05/04 08:16:36 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -553,16 +553,19 @@ rrdp_free(void)
 	}
 }
 
-static int
+static struct rrdprepo *
 rrdp_basedir(const char *dir)
 {
 	struct rrdprepo *rr;
 
 	SLIST_FOREACH(rr, &rrdprepos, entry)
-		if (strcmp(dir, rr->basedir) == 0)
-			return 1;
+		if (strcmp(dir, rr->basedir) == 0) {
+			if (rr->state == REPO_FAILED)
+				return NULL;
+			return rr;
+		}
 
-	return 0;
+	return NULL;
 }
 
 /*
@@ -839,27 +842,6 @@ rrdp_merge_repo(struct rrdprepo *rr)
 {
 	struct filepath *fp, *nfp;
 	char *fn, *rfn;
-
-	/* XXX should delay deletes */
-	RB_FOREACH_SAFE(fp, filepath_tree, &rr->deleted, nfp) {
-		fn = rrdp_filename(rr, fp->file, 1);
-		rfn = rrdp_filename(rr, fp->file, 0);
-
-		if (fn == NULL || rfn == NULL)
-			errx(1, "bad filepath");	/* should not happen */
-
-		if (unlink(rfn) == -1) {
-			if (errno == ENOENT) {
-				if (unlink(fn) == -1)
-					warn("%s: unlink", fn);
-			} else
-				warn("%s: unlink", rfn);
-		}
-
-		free(rfn);
-		free(fn);
-		filepath_put(&rr->deleted, fp);
-	}
 
 	RB_FOREACH_SAFE(fp, filepath_tree, &rr->added, nfp) {
 		fn = rrdp_filename(rr, fp->file, 1);
@@ -1146,12 +1128,40 @@ add_to_del(char **del, size_t *dsz, char *file)
 	*dsz = i + 1;
 	return del;
 }
+
+static char **
+repo_rrdp_cleanup(struct filepath_tree *tree, struct rrdprepo *rr,
+    char **del, size_t *delsz)
+{
+	struct filepath *fp, *nfp;
+	char *fn;
+
+	RB_FOREACH_SAFE(fp, filepath_tree, &rr->deleted, nfp) {
+		fn = rrdp_filename(rr, fp->file, 0);
+		/* temp dir will be cleaned up by repo_cleanup() */
+
+		if (fn == NULL)
+			errx(1, "bad filepath");	/* should not happen */
+
+		if (!filepath_exists(tree, fn))
+			del = add_to_del(del, delsz, fn);
+		else
+			warnx("%s: referenced file supposed to be deleted", fn);
+
+		free(fn);
+		filepath_put(&rr->deleted, fp);
+	}
+
+	return del;
+}
+
 void
 repo_cleanup(struct filepath_tree *tree)
 {
-	size_t i, delsz = 0, dirsz = 0;
+	size_t i, cnt, delsz = 0, dirsz = 0;
 	char **del = NULL, **dir = NULL;
 	char *argv[4] = { "ta", "rsync", "rrdp", NULL };
+	struct rrdprepo *rr;
 	FTS *fts;
 	FTSENT *e;
 
@@ -1166,10 +1176,12 @@ repo_cleanup(struct filepath_tree *tree)
 				    e->fts_path);
 			break;
 		case FTS_D:
-			/* skip rrdp base directories during cleanup */
-			if (rrdp_basedir(e->fts_path))
+			/* special cleanup for rrdp directories */
+			if ((rr = rrdp_basedir(e->fts_path)) != NULL) {
+				del = repo_rrdp_cleanup(tree, rr, del, &delsz);
 				if (fts_set(fts, e, FTS_SKIP) == -1)
 					err(1, "fts_set");
+			}
 			break;
 		case FTS_DP:
 			if (!filepath_dir_exists(tree, e->fts_path))
@@ -1203,25 +1215,31 @@ repo_cleanup(struct filepath_tree *tree)
 	if (fts_close(fts) == -1)
 		err(1, "fts_close");
 
+	cnt = 0;
 	for (i = 0; i < delsz; i++) {
-		if (unlink(del[i]) == -1)
-			warn("unlink %s", del[i]);
-		if (verbose > 1)
-			logx("deleted %s", del[i]);
+		if (unlink(del[i]) == -1) {
+			if (errno != ENOENT)
+				warn("unlink %s", del[i]);
+		} else {
+			if (verbose > 1)
+				logx("deleted %s", del[i]);
+			cnt++;
+		}
 		free(del[i]);
 	}
 	free(del);
-	stats.del_files = delsz;
+	stats.del_files = cnt;
 
+	cnt = 0;
 	for (i = 0; i < dirsz; i++) {
 		if (rmdir(dir[i]) == -1)
 			warn("rmdir %s", dir[i]);
-		if (verbose > 1)
-			logx("deleted dir %s", dir[i]);
+		else
+			cnt++;
 		free(dir[i]);
 	}
 	free(dir);
-	stats.del_dirs = dirsz;
+	stats.del_dirs = cnt;
 }
 
 void
