@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.38 2021/04/05 18:09:48 dv Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.39 2021/05/04 10:48:51 dv Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -482,6 +482,8 @@ push_stack(uint32_t bootargsz, uint32_t end)
 size_t
 mread(gzFile fp, paddr_t addr, size_t sz)
 {
+	const char *errstr = NULL;
+	int errnum = 0;
 	size_t ct;
 	size_t i, rd, osz;
 	char buf[PAGE_SIZE];
@@ -501,7 +503,11 @@ mread(gzFile fp, paddr_t addr, size_t sz)
 			ct = sz;
 
 		if ((size_t)gzread(fp, buf, ct) != ct) {
-			log_warn("%s: error %d in mread", __progname, errno);
+			errstr = gzerror(fp, &errnum);
+			if (errnum == Z_ERRNO)
+				errnum = errno;
+			log_warnx("%s: error %d in mread, %s", __progname,
+			    errnum, errstr);
 			return (0);
 		}
 		rd += ct;
@@ -525,7 +531,11 @@ mread(gzFile fp, paddr_t addr, size_t sz)
 			ct = PAGE_SIZE;
 
 		if ((size_t)gzread(fp, buf, ct) != ct) {
-			log_warn("%s: error %d in mread", __progname, errno);
+			errstr = gzerror(fp, &errnum);
+			if (errnum == Z_ERRNO)
+				errnum = errno;
+			log_warnx("%s: error %d in mread, %s", __progname,
+			    errnum, errstr);
 			return (0);
 		}
 		rd += ct;
