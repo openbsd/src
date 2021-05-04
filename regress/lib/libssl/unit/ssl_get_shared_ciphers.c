@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_get_shared_ciphers.c,v 1.9 2021/05/03 23:42:04 inoguchi Exp $ */
+/*	$OpenBSD: ssl_get_shared_ciphers.c,v 1.10 2021/05/04 18:20:05 tb Exp $ */
 /*
  * Copyright (c) 2021 Theo Buehler <tb@openbsd.org>
  *
@@ -353,7 +353,7 @@ handshake(SSL *client_ssl, SSL *server_ssl, const char *description)
 }
 
 static int
-shutdown_all(SSL *client_ssl, SSL *server_ssl, const char *description)
+shutdown_peers(SSL *client_ssl, SSL *server_ssl, const char *description)
 {
 	int loops = 0, client_ret = 0, server_ret = 0;
 
@@ -442,7 +442,7 @@ test_get_shared_ciphers(const struct ssl_shared_ciphers_test_data *test)
 		goto err;
 	}
 
-	if (!shutdown_all(client_ssl, server_ssl, test->description))
+	if (!shutdown_peers(client_ssl, server_ssl, test->description))
 		goto err;
 
 	failed = check_shared_ciphers(test, buf);
