@@ -23,7 +23,6 @@
 
 #include <machine/fdt.h>
 #include <machine/riscvreg.h>
-#include "../dev/timer.h"
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>
@@ -157,15 +156,6 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 			cpu_node = ci->ci_node;
 			cpu_cpuspeed = cpu_clockspeed;
 		}
-
-		/*
-		 * attach cpu-embedded timer
-		 * Trick: timer has no fdt node to match,
-		 * riscv_timer_match will always return 1 at first call,
-		 * and return 0 for all following calls,
-		 * therefore, must attach timer before any node
-		 */
-		config_found_sm(dev, NULL, NULL, riscv_timer_match);
 
 		/*
 		 * attach cpu's children node, so far there is only the

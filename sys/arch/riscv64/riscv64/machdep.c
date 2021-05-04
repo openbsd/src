@@ -97,6 +97,8 @@ uint32_t boot_hart;	/* The hart we booted on. */
 struct cpu_info cpu_info_primary;
 struct cpu_info *cpu_info[MAXCPUS] = { &cpu_info_primary };
 
+uint32_t tb_freq = 1000000;
+
 struct fdt_reg memreg[VM_PHYSSEG_MAX];
 int nmemreg;
 
@@ -560,6 +562,16 @@ initriscv(struct riscv_bootparams *rbp)
 
 	struct fdt_reg reg;
 	void *node;
+
+	node = fdt_find_node("/cpus");
+	if (node != NULL) {
+		char *prop;
+		int len;
+
+		len = fdt_node_property(node, "timebase-frequency", &prop);
+		if (len == sizeof(tb_freq))
+			tb_freq = bemtoh32((uint32_t *)prop);
+	}
 
 	node = fdt_find_node("/chosen");
 	if (node != NULL) {

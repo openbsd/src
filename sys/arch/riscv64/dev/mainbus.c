@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.4 2021/05/04 12:46:28 kettenis Exp $ */
+/* $OpenBSD: mainbus.c,v 1.5 2021/05/04 16:38:06 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -91,8 +91,6 @@ mainbus_match(struct device *parent, void *cfdata, void *aux)
 	return (1);
 }
 
-void riscv_timer_init(void);
-
 void
 mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
@@ -101,7 +99,6 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	int node, len;
 
 	riscv_intr_init_fdt();
-	riscv_timer_init();
 
 	sc->sc_node = OF_peer(0);
 	sc->sc_iot = &riscv64_bs_tag;

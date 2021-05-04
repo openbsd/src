@@ -12,6 +12,7 @@ file	arch/riscv64/riscv64/autoconf.c
 file	arch/riscv64/riscv64/ast.c
 file	arch/riscv64/riscv64/bus_space.c
 file	arch/riscv64/riscv64/bus_dma.c
+file	arch/riscv64/riscv64/clock.c
 file	arch/riscv64/riscv64/conf.c
 file	arch/riscv64/riscv64/disksubr.c		disk
 file	arch/riscv64/riscv64/locore.S
@@ -59,13 +60,6 @@ define	cpu {}
 device	cpu
 attach	cpu at mainbus
 file	arch/riscv64/riscv64/cpu.c		cpu
-
-#
-# timer
-#
-device	timer
-attach	timer at cpu
-file	arch/riscv64/dev/timer.c		timer
 
 #
 # HART-specific interrupt controller

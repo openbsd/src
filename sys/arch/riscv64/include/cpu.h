@@ -95,6 +95,11 @@ struct cpu_info {
 
 	u_int32_t		ci_ctrl; /* The CPU control register */
 
+	uint64_t		ci_lasttb;
+	uint64_t		ci_nexttimerevent;
+	uint64_t		ci_nextstatevent;
+	int			ci_statspending;
+
 	uint32_t		ci_cpl;
 	uint32_t		ci_ipending;
 	uint32_t		ci_idepth;

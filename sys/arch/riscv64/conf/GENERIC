@@ -29,7 +29,6 @@ mainbus0	at root
 
 # cpu0
 cpu0		at mainbus0
-timer0		at cpu0
 intc0		at cpu0
 
 # NS16550 compatible serial ports
