@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.123 2021/04/26 22:58:27 dv Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.124 2021/05/04 10:36:01 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -802,6 +802,9 @@ main(int argc, char **argv)
 	if (env->vmd_noaction && !env->vmd_debug)
 		env->vmd_debug = 1;
 
+	log_init(env->vmd_debug, LOG_DAEMON);
+	log_setverbose(env->vmd_verbose);
+
 	/* check for root privileges */
 	if (env->vmd_noaction == 0) {
 		if (geteuid())
@@ -835,9 +838,6 @@ main(int argc, char **argv)
 
 	/* Configuration will be parsed after forking the children */
 	env->vmd_conffile = conffile;
-
-	log_init(env->vmd_debug, LOG_DAEMON);
-	log_setverbose(env->vmd_verbose);
 
 	if (env->vmd_noaction)
 		ps->ps_noaction = 1;
