@@ -382,14 +382,47 @@ static int amd64obsd_tf_reg_offset[] =
   21 * 8,			/* %ss */
 };
 
+static int amd64obsd_fromspllower_reg_offset[] =
+{
+  -1,				/* %rax */
+  2 * 8,			/* %rbx */
+  -1,				/* %rcx */
+  -1,				/* %rdx */
+  -1,				/* %rsi */
+  -1,				/* %rdi */
+  -1,				/* %rbp */
+  -1,				/* %rsp */
+  -1,				/* %r8 ... */
+  -1,
+  -1,
+  0 * 8,
+  -1,
+  1 * 8,
+  -1,
+  -1,				/* ... %r15 */
+  3 * 8,			/* %rip */
+  -1,				/* %rflags */
+  -1,				/* %cs */
+  -1,				/* %ss */
+};
+
+/* from trad-frame.c */
+struct trad_frame_cache
+{
+  struct frame_info *next_frame;
+  CORE_ADDR this_base;
+  struct trad_frame_saved_reg *prev_regs;
+  struct frame_id this_id;
+};
 
 static struct trad_frame_cache *
 amd64obsd_trapframe_cache(struct frame_info *next_frame, void **this_cache)
 {
   struct trad_frame_cache *cache;
-  CORE_ADDR func, sp, addr;
+  CORE_ADDR func, sp, addr, trapcheck;
   ULONGEST cs;
   int i;
+  char *name = NULL;
 
   if (*this_cache)
     return *this_cache;
@@ -400,6 +433,29 @@ amd64obsd_trapframe_cache(struct frame_info *next_frame, void **this_cache)
   func = frame_func_unwind (next_frame);
   sp = frame_unwind_register_unsigned (next_frame, AMD64_RSP_REGNUM);
   addr = sp;
+
+  /* adhoc check: from trap/intr? or from spllower()? */
+  /* Xspllower() pushes %rbx, %r13, %r11.
+     so, if *(sp+(8*3)) == spllower(),
+     this frame may not be trapframe, but a frame created by Xspllower(). */
+  trapcheck = read_memory_unsigned_integer (sp+(8*3), 8);
+  find_pc_partial_function (trapcheck, &name, NULL, NULL);
+
+  if (name != NULL && (strcmp (name, "spllower") == 0)) {
+    /* from spllower(). */
+
+    for (i = 0; i < ARRAY_SIZE (amd64obsd_fromspllower_reg_offset); i++)
+      if (amd64obsd_fromspllower_reg_offset[i] != -1)
+        trad_frame_set_reg_addr (cache, i, addr + amd64obsd_fromspllower_reg_offset[i]);
+
+    /* skip rbx,r13,r11(pushed by Xspllower()), rip(pushd by spllower()). */
+    trad_frame_set_value (cache->prev_regs, AMD64_RSP_REGNUM, addr+(8*4));
+
+    /* Construct the frame ID using the function start.  */
+    trad_frame_set_id (cache, frame_id_build (sp + (8*4), func));
+
+  } else {
+    /* from trap/intr. */
 
   for (i = 0; i < ARRAY_SIZE (amd64obsd_tf_reg_offset); i++)
     if (amd64obsd_tf_reg_offset[i] != -1)
@@ -418,6 +474,8 @@ amd64obsd_trapframe_cache(struct frame_info *next_frame, void **this_cache)
       /* Construct the frame ID using the function start.  */
       trad_frame_set_id (cache, frame_id_build (sp + 16, func));
     }
+
+  }
 
   return cache;
 }
