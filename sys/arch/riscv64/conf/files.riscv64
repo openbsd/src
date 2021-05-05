@@ -18,7 +18,7 @@ file	arch/riscv64/riscv64/disksubr.c		disk
 file	arch/riscv64/riscv64/locore.S
 file	arch/riscv64/riscv64/copy.S
 file	arch/riscv64/riscv64/copystr.S
-file	arch/riscv64/riscv64/trap.S
+file	arch/riscv64/riscv64/exception.S
 file	arch/riscv64/riscv64/cpuswitch.S
 file	arch/riscv64/riscv64/machdep.c
 file	arch/riscv64/riscv64/intr.c
@@ -31,7 +31,7 @@ file	arch/riscv64/riscv64/softintr.c
 file	arch/riscv64/riscv64/support.S
 file	arch/riscv64/riscv64/syscall.c
 file	arch/riscv64/riscv64/pagezero.S
-file	arch/riscv64/riscv64/trap_machdep.c
+file	arch/riscv64/riscv64/trap.c
 file	arch/riscv64/riscv64/sbi.c
 file	arch/riscv64/riscv64/cpufunc_asm.S
 file	arch/riscv64/riscv64/fpu.c

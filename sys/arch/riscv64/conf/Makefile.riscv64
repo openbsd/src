@@ -144,7 +144,7 @@ depend obj:
 locore0.o: ${_archdir}/${_arch}/locore0.S assym.h
 copy.o copystr.o copyinout.o: assym.h
 pagezero.o: assym.h
-cpuswitch.o trap.o support.o: assym.h
+cpuswitch.o exception.o support.o: assym.h
 locore.o trampoline.o: assym.h
 
 hardlink-obsd:

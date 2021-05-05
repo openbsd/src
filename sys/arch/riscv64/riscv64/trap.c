@@ -30,7 +30,7 @@
 #include <machine/syscall.h>
 #include <machine/db_machdep.h>
 
-/* Called from trap.S */
+/* Called from exception.S */
 void do_trap_supervisor(struct trapframe *);
 void do_trap_user(struct trapframe *);
 
