@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.142 2021/05/02 17:46:58 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.143 2021/05/05 10:05:27 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -147,9 +147,8 @@
 void
 tls1_cleanup_key_block(SSL *s)
 {
-	freezero(S3I(s)->hs.tls12.key_block, S3I(s)->hs.tls12.key_block_len);
+	tls12_key_block_free(S3I(s)->hs.tls12.key_block);
 	S3I(s)->hs.tls12.key_block = NULL;
-	S3I(s)->hs.tls12.key_block_len = 0;
 }
 
 /*
@@ -283,7 +282,7 @@ tls1_PRF(SSL *s, const unsigned char *secret, size_t secret_len,
 	return (1);
 }
 
-static int
+int
 tls1_generate_key_block(SSL *s, uint8_t *key_block, size_t key_block_len)
 {
 	return tls1_PRF(s,
@@ -297,62 +296,20 @@ tls1_generate_key_block(SSL *s, uint8_t *key_block, size_t key_block_len)
 static int
 tls1_change_cipher_state(SSL *s, int is_write)
 {
-	const unsigned char *client_write_mac_secret, *server_write_mac_secret;
-	const unsigned char *client_write_key, *server_write_key;
-	const unsigned char *client_write_iv, *server_write_iv;
-	const unsigned char *mac_secret, *key, *iv;
-	int mac_secret_size, key_len, iv_len;
-	unsigned char *key_block;
-	const EVP_CIPHER *cipher;
-	const EVP_AEAD *aead;
-
-	aead = tls12_record_layer_aead(s->internal->rl);
-	cipher = tls12_record_layer_cipher(s->internal->rl);
-
-	if (aead != NULL) {
-		key_len = EVP_AEAD_key_length(aead);
-		iv_len = SSL_CIPHER_AEAD_FIXED_NONCE_LEN(S3I(s)->hs.cipher);
-	} else {
-		key_len = EVP_CIPHER_key_length(cipher);
-		iv_len = EVP_CIPHER_iv_length(cipher);
-	}
-
-	mac_secret_size = S3I(s)->hs.tls12.mac_secret_size;
-
-	key_block = S3I(s)->hs.tls12.key_block;
-	client_write_mac_secret = key_block;
-	key_block += mac_secret_size;
-	server_write_mac_secret = key_block;
-	key_block += mac_secret_size;
-	client_write_key = key_block;
-	key_block += key_len;
-	server_write_key = key_block;
-	key_block += key_len;
-	client_write_iv = key_block;
-	key_block += iv_len;
-	server_write_iv = key_block;
-	key_block += iv_len;
+	CBS mac_key, key, iv;
 
 	/* Use client write keys on client write and server read. */
 	if ((!s->server && is_write) || (s->server && !is_write)) {
-		mac_secret = client_write_mac_secret;
-		key = client_write_key;
-		iv = client_write_iv;
+		tls12_key_block_client_write(S3I(s)->hs.tls12.key_block,
+		    &mac_key, &key, &iv);
 	} else {
-		mac_secret = server_write_mac_secret;
-		key = server_write_key;
-		iv = server_write_iv;
-	}
-
-	if (key_block - S3I(s)->hs.tls12.key_block !=
-	    S3I(s)->hs.tls12.key_block_len) {
-		SSLerror(s, ERR_R_INTERNAL_ERROR);
-		goto err;
+		tls12_key_block_server_write(S3I(s)->hs.tls12.key_block,
+		    &mac_key, &key, &iv);
 	}
 
 	if (!is_write) {
 		if (!tls12_record_layer_change_read_cipher_state(s->internal->rl,
-		    mac_secret, mac_secret_size, key, key_len, iv, iv_len))
+		    &mac_key, &key, &iv))
 			goto err;
 		if (SSL_is_dtls(s))
 			dtls1_reset_read_seq_numbers(s);
@@ -360,7 +317,7 @@ tls1_change_cipher_state(SSL *s, int is_write)
 		    &s->enc_read_ctx, &s->read_hash);
 	} else {
 		if (!tls12_record_layer_change_write_cipher_state(s->internal->rl,
-		    mac_secret, mac_secret_size, key, key_len, iv, iv_len))
+		    &mac_key, &key, &iv))
 			goto err;
 		if (SSL_is_dtls(s))
 			dtls1_reset_write_seq_numbers(s);
@@ -386,17 +343,19 @@ tls1_change_write_cipher_state(SSL *s)
 int
 tls1_setup_key_block(SSL *s)
 {
-	unsigned char *key_block;
+	struct tls12_key_block *key_block;
 	int mac_type = NID_undef, mac_secret_size = 0;
-	size_t key_block_len;
-	int key_len, iv_len;
 	const EVP_CIPHER *cipher = NULL;
 	const EVP_AEAD *aead = NULL;
 	const EVP_MD *handshake_hash = NULL;
 	const EVP_MD *mac_hash = NULL;
 	int ret = 0;
 
-	if (S3I(s)->hs.tls12.key_block_len != 0)
+	/*
+	 * XXX - callers should be changed so that they only call this
+	 * function once.
+	 */
+	if (S3I(s)->hs.tls12.key_block != NULL)
 		return (1);
 
 	if (s->session->cipher &&
@@ -405,41 +364,29 @@ tls1_setup_key_block(SSL *s)
 			SSLerror(s, SSL_R_CIPHER_OR_HASH_UNAVAILABLE);
 			return (0);
 		}
-		key_len = EVP_AEAD_key_length(aead);
-		iv_len = SSL_CIPHER_AEAD_FIXED_NONCE_LEN(s->session->cipher);
 	} else {
+		/* XXX - mac_type and mac_secret_size are now unused. */
 		if (!ssl_cipher_get_evp(s->session, &cipher, &mac_hash,
 		    &mac_type, &mac_secret_size)) {
 			SSLerror(s, SSL_R_CIPHER_OR_HASH_UNAVAILABLE);
 			return (0);
 		}
-		key_len = EVP_CIPHER_key_length(cipher);
-		iv_len = EVP_CIPHER_iv_length(cipher);
 	}
 
 	if (!ssl_get_handshake_evp_md(s, &handshake_hash))
 		return (0);
 
-	S3I(s)->hs.tls12.mac_secret_size = mac_secret_size;
-
 	tls12_record_layer_set_aead(s->internal->rl, aead);
 	tls12_record_layer_set_cipher_hash(s->internal->rl, cipher,
 	    handshake_hash, mac_hash);
 
-	tls1_cleanup_key_block(s);
-
-	if ((key_block = reallocarray(NULL, mac_secret_size + key_len + iv_len,
-	    2)) == NULL) {
-		SSLerror(s, ERR_R_MALLOC_FAILURE);
+	if ((key_block = tls12_key_block_new()) == NULL)
 		goto err;
-	}
-	key_block_len = (mac_secret_size + key_len + iv_len) * 2;
+	if (!tls12_key_block_generate(key_block, s, aead, cipher, mac_hash))
+		goto err;
 
-	S3I(s)->hs.tls12.key_block_len = key_block_len;
 	S3I(s)->hs.tls12.key_block = key_block;
-
-	if (!tls1_generate_key_block(s, key_block, key_block_len))
-		goto err;
+	key_block = NULL;
 
 	if (!(s->internal->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS) &&
 	    s->method->internal->version <= TLS1_VERSION) {
@@ -463,6 +410,8 @@ tls1_setup_key_block(SSL *s)
 	ret = 1;
 
  err:
+	tls12_key_block_free(key_block);
+
 	return (ret);
 }
 

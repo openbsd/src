@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.341 2021/05/02 17:46:58 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.342 2021/05/05 10:05:27 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -431,12 +431,8 @@ typedef struct ssl_handshake_tls12_st {
 	int cert_request;
 	STACK_OF(X509_NAME) *ca_names;
 
-	/* Size of the MAC secret. */
-	int mac_secret_size;
-
 	/* Record-layer key block for TLS 1.2 and earlier. */
-	unsigned char *key_block;
-	size_t key_block_len;
+	struct tls12_key_block *key_block;
 
 	/* Transcript hash prior to sending certificate verify message. */
 	uint8_t cert_verify[EVP_MAX_MD_SIZE];
@@ -522,6 +518,17 @@ typedef struct ssl_handshake_st {
 	SSL_HANDSHAKE_TLS13 tls13;
 } SSL_HANDSHAKE;
 
+struct tls12_key_block;
+
+struct tls12_key_block *tls12_key_block_new(void);
+void tls12_key_block_free(struct tls12_key_block *kb);
+void tls12_key_block_client_write(struct tls12_key_block *kb, CBS *mac_key,
+    CBS *key, CBS *iv);
+void tls12_key_block_server_write(struct tls12_key_block *kb, CBS *mac_key,
+    CBS *key, CBS *iv);
+int tls12_key_block_generate(struct tls12_key_block *kb, SSL *s,
+    const EVP_AEAD *aead, const EVP_CIPHER *cipher, const EVP_MD *mac_hash);
+
 struct tls12_record_layer;
 
 struct tls12_record_layer *tls12_record_layer_new(void);
@@ -532,8 +539,6 @@ int tls12_record_layer_write_overhead(struct tls12_record_layer *rl,
     size_t *overhead);
 int tls12_record_layer_read_protected(struct tls12_record_layer *rl);
 int tls12_record_layer_write_protected(struct tls12_record_layer *rl);
-const EVP_AEAD *tls12_record_layer_aead(struct tls12_record_layer *rl);
-const EVP_CIPHER *tls12_record_layer_cipher(struct tls12_record_layer *rl);
 void tls12_record_layer_set_aead(struct tls12_record_layer *rl,
     const EVP_AEAD *aead);
 void tls12_record_layer_set_cipher_hash(struct tls12_record_layer *rl,
@@ -553,11 +558,9 @@ void tls12_record_layer_reflect_seq_num(struct tls12_record_layer *rl);
 void tls12_record_layer_read_cipher_hash(struct tls12_record_layer *rl,
     EVP_CIPHER_CTX **cipher, EVP_MD_CTX **hash);
 int tls12_record_layer_change_read_cipher_state(struct tls12_record_layer *rl,
-    const uint8_t *mac_key, size_t mac_key_len, const uint8_t *key,
-    size_t key_len, const uint8_t *iv, size_t iv_len);
+    CBS *mac_key, CBS *key, CBS *iv);
 int tls12_record_layer_change_write_cipher_state(struct tls12_record_layer *rl,
-    const uint8_t *mac_key, size_t mac_key_len, const uint8_t *key,
-    size_t key_len, const uint8_t *iv, size_t iv_len);
+    CBS *mac_key, CBS *key, CBS *iv);
 int tls12_record_layer_open_record(struct tls12_record_layer *rl,
     uint8_t *buf, size_t buf_len, uint8_t **out, size_t *out_len);
 int tls12_record_layer_seal_record(struct tls12_record_layer *rl,
@@ -1381,6 +1384,7 @@ void tls1_cleanup_key_block(SSL *s);
 int tls1_change_read_cipher_state(SSL *s);
 int tls1_change_write_cipher_state(SSL *s);
 int tls1_setup_key_block(SSL *s);
+int tls1_generate_key_block(SSL *s, uint8_t *key_block, size_t key_block_len);
 int tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,
     const char *label, size_t llen, const unsigned char *p, size_t plen,
     int use_context);

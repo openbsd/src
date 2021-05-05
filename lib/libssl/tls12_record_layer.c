@@ -1,4 +1,4 @@
-/* $OpenBSD: tls12_record_layer.c,v 1.26 2021/04/19 17:26:39 jsing Exp $ */
+/* $OpenBSD: tls12_record_layer.c,v 1.27 2021/05/05 10:05:27 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -254,18 +254,6 @@ tls12_record_layer_write_protected(struct tls12_record_layer *rl)
 	return tls12_record_protection_engaged(rl->write);
 }
 
-const EVP_AEAD *
-tls12_record_layer_aead(struct tls12_record_layer *rl)
-{
-	return rl->aead;
-}
-
-const EVP_CIPHER *
-tls12_record_layer_cipher(struct tls12_record_layer *rl)
-{
-	return rl->cipher;
-}
-
 void
 tls12_record_layer_set_aead(struct tls12_record_layer *rl, const EVP_AEAD *aead)
 {
@@ -410,11 +398,10 @@ tls12_record_layer_set_mac_key(struct tls12_record_protection *rp,
 
 static int
 tls12_record_layer_ccs_aead(struct tls12_record_layer *rl,
-    struct tls12_record_protection *rp, int is_write, const uint8_t *mac_key,
-    size_t mac_key_len, const uint8_t *key, size_t key_len, const uint8_t *iv,
-    size_t iv_len)
+    struct tls12_record_protection *rp, int is_write, CBS *mac_key, CBS *key,
+    CBS *iv)
 {
-	size_t aead_nonce_len;
+	size_t aead_nonce_len, fixed_nonce_len;
 
 	if (!tls12_record_protection_unused(rp))
 		return 0;
@@ -431,11 +418,11 @@ tls12_record_layer_ccs_aead(struct tls12_record_layer *rl,
 	if (rl->aead == EVP_aead_chacha20_poly1305())
 		rp->aead_ctx->xor_fixed_nonce = 1;
 
-	if (iv_len > sizeof(rp->aead_ctx->fixed_nonce))
+	if (!CBS_write_bytes(iv, rp->aead_ctx->fixed_nonce,
+	    sizeof(rp->aead_ctx->fixed_nonce), &fixed_nonce_len))
 		return 0;
 
-	memcpy(rp->aead_ctx->fixed_nonce, iv, iv_len);
-	rp->aead_ctx->fixed_nonce_len = iv_len;
+	rp->aead_ctx->fixed_nonce_len = fixed_nonce_len;
 	rp->aead_ctx->tag_len = EVP_AEAD_max_overhead(rl->aead);
 	rp->aead_ctx->variable_nonce_len = 8;
 
@@ -454,8 +441,8 @@ tls12_record_layer_ccs_aead(struct tls12_record_layer *rl,
 			return 0;
 	}
 
-	if (!EVP_AEAD_CTX_init(&rp->aead_ctx->ctx, rl->aead, key, key_len,
-	    EVP_AEAD_DEFAULT_TAG_LENGTH, NULL))
+	if (!EVP_AEAD_CTX_init(&rp->aead_ctx->ctx, rl->aead, CBS_data(key),
+	    CBS_len(key), EVP_AEAD_DEFAULT_TAG_LENGTH, NULL))
 		return 0;
 
 	return 1;
@@ -463,9 +450,8 @@ tls12_record_layer_ccs_aead(struct tls12_record_layer *rl,
 
 static int
 tls12_record_layer_ccs_cipher(struct tls12_record_layer *rl,
-    struct tls12_record_protection *rp, int is_write, const uint8_t *mac_key,
-    size_t mac_key_len, const uint8_t *key, size_t key_len, const uint8_t *iv,
-    size_t iv_len)
+    struct tls12_record_protection *rp, int is_write, CBS *mac_key, CBS *key,
+    CBS *iv)
 {
 	EVP_PKEY *mac_pkey = NULL;
 	int gost_param_nid;
@@ -478,23 +464,23 @@ tls12_record_layer_ccs_cipher(struct tls12_record_layer *rl,
 	mac_type = EVP_PKEY_HMAC;
 	rp->stream_mac = 0;
 
-	if (iv_len > INT_MAX || key_len > INT_MAX)
+	if (CBS_len(iv) > INT_MAX || CBS_len(key) > INT_MAX)
 		goto err;
-	if (EVP_CIPHER_iv_length(rl->cipher) != iv_len)
+	if (EVP_CIPHER_iv_length(rl->cipher) != CBS_len(iv))
 		goto err;
-	if (EVP_CIPHER_key_length(rl->cipher) != key_len)
+	if (EVP_CIPHER_key_length(rl->cipher) != CBS_len(key))
 		goto err;
 
 	/* Special handling for GOST... */
 	if (EVP_MD_type(rl->mac_hash) == NID_id_Gost28147_89_MAC) {
-		if (mac_key_len != 32)
+		if (CBS_len(mac_key) != 32)
 			goto err;
 		mac_type = EVP_PKEY_GOSTIMIT;
 		rp->stream_mac = 1;
 	} else {
-		if (mac_key_len > INT_MAX)
+		if (CBS_len(mac_key) > INT_MAX)
 			goto err;
-		if (EVP_MD_size(rl->mac_hash) != mac_key_len)
+		if (EVP_MD_size(rl->mac_hash) != CBS_len(mac_key))
 			goto err;
 	}
 
@@ -503,15 +489,16 @@ tls12_record_layer_ccs_cipher(struct tls12_record_layer *rl,
 	if ((rp->hash_ctx = EVP_MD_CTX_new()) == NULL)
 		goto err;
 
-	if (!tls12_record_layer_set_mac_key(rp, mac_key, mac_key_len))
+	if (!tls12_record_layer_set_mac_key(rp, CBS_data(mac_key),
+	    CBS_len(mac_key)))
 		goto err;
 
-	if ((mac_pkey = EVP_PKEY_new_mac_key(mac_type, NULL, mac_key,
-	    mac_key_len)) == NULL)
+	if ((mac_pkey = EVP_PKEY_new_mac_key(mac_type, NULL, CBS_data(mac_key),
+	    CBS_len(mac_key))) == NULL)
 		goto err;
 
-	if (!EVP_CipherInit_ex(rp->cipher_ctx, rl->cipher, NULL, key, iv,
-	    is_write))
+	if (!EVP_CipherInit_ex(rp->cipher_ctx, rl->cipher, NULL, CBS_data(key),
+	    CBS_data(iv), is_write))
 		goto err;
 
 	if (EVP_DigestSignInit(rp->hash_ctx, NULL, rl->mac_hash, NULL,
@@ -545,22 +532,20 @@ tls12_record_layer_ccs_cipher(struct tls12_record_layer *rl,
 
 static int
 tls12_record_layer_change_cipher_state(struct tls12_record_layer *rl,
-    struct tls12_record_protection *rp, int is_write, const uint8_t *mac_key,
-    size_t mac_key_len, const uint8_t *key, size_t key_len, const uint8_t *iv,
-    size_t iv_len)
+    struct tls12_record_protection *rp, int is_write, CBS *mac_key, CBS *key,
+    CBS *iv)
 {
 	if (rl->aead != NULL)
 		return tls12_record_layer_ccs_aead(rl, rp, is_write, mac_key,
-		    mac_key_len, key, key_len, iv, iv_len);
+		    key, iv);
 
 	return tls12_record_layer_ccs_cipher(rl, rp, is_write, mac_key,
-	    mac_key_len, key, key_len, iv, iv_len);
+	    key, iv);
 }
 
 int
 tls12_record_layer_change_read_cipher_state(struct tls12_record_layer *rl,
-    const uint8_t *mac_key, size_t mac_key_len, const uint8_t *key,
-    size_t key_len, const uint8_t *iv, size_t iv_len)
+    CBS *mac_key, CBS *key, CBS *iv)
 {
 	struct tls12_record_protection *read_new = NULL;
 	int ret = 0;
@@ -571,7 +556,7 @@ tls12_record_layer_change_read_cipher_state(struct tls12_record_layer *rl,
 	/* Read sequence number gets reset to zero. */
 
 	if (!tls12_record_layer_change_cipher_state(rl, read_new, 0,
-	    mac_key, mac_key_len, key, key_len, iv, iv_len))
+	    mac_key, key, iv))
 		goto err;
 
 	tls12_record_protection_free(rl->read_current);
@@ -588,8 +573,7 @@ tls12_record_layer_change_read_cipher_state(struct tls12_record_layer *rl,
 
 int
 tls12_record_layer_change_write_cipher_state(struct tls12_record_layer *rl,
-    const uint8_t *mac_key, size_t mac_key_len, const uint8_t *key,
-    size_t key_len, const uint8_t *iv, size_t iv_len)
+    CBS *mac_key, CBS *key, CBS *iv)
 {
 	struct tls12_record_protection *write_new;
 	int ret = 0;
@@ -600,7 +584,7 @@ tls12_record_layer_change_write_cipher_state(struct tls12_record_layer *rl,
 	/* Write sequence number gets reset to zero. */
 
 	if (!tls12_record_layer_change_cipher_state(rl, write_new, 1,
-	    mac_key, mac_key_len, key, key_len, iv, iv_len))
+	    mac_key, key, iv))
 		goto err;
 
 	if (rl->dtls) {
