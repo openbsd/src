@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.321 2021/05/03 08:41:25 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.322 2021/05/05 05:47:11 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -503,9 +503,10 @@ void	iwm_start(struct ifnet *);
 void	iwm_stop(struct ifnet *);
 void	iwm_watchdog(struct ifnet *);
 int	iwm_ioctl(struct ifnet *, u_long, caddr_t);
-#ifdef IWM_DEBUG
+#if 1
 const char *iwm_desc_lookup(uint32_t);
 void	iwm_nic_error(struct iwm_softc *);
+void	iwm_dump_driver_status(struct iwm_softc *);
 void	iwm_nic_umac_error(struct iwm_softc *);
 #endif
 void	iwm_rx_mpdu(struct iwm_softc *, struct mbuf *, void *, size_t,
@@ -9435,8 +9436,9 @@ iwm_watchdog(struct ifnet *ifp)
 	if (sc->sc_tx_timer > 0) {
 		if (--sc->sc_tx_timer == 0) {
 			printf("%s: device timeout\n", DEVNAME(sc));
-#ifdef IWM_DEBUG
+#if 1
 			iwm_nic_error(sc);
+			iwm_dump_driver_status(sc);
 #endif
 			if ((sc->sc_flags & IWM_FLAG_SHUTDOWN) == 0)
 				task_add(systq, &sc->init_task);
@@ -9502,7 +9504,7 @@ iwm_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	return err;
 }
 
-#ifdef IWM_DEBUG
+#if 1
 /*
  * Note: This structure is read from the device with IO accesses,
  * and the reading already does the endian conversion. As it is
@@ -9751,6 +9753,23 @@ iwm_nic_error(struct iwm_softc *sc)
 
 	if (sc->sc_uc.uc_umac_error_event_table)
 		iwm_nic_umac_error(sc);
+}
+
+void
+iwm_dump_driver_status(struct iwm_softc *sc)
+{
+	int i;
+
+	printf("driver status:\n");
+	for (i = 0; i < IWM_MAX_QUEUES; i++) {
+		struct iwm_tx_ring *ring = &sc->txq[i];
+		printf("  tx ring %2d: qid=%-2d cur=%-3d "
+		    "queued=%-3d\n",
+		    i, ring->qid, ring->cur, ring->queued);
+	}
+	printf("  rx ring: cur=%d\n", sc->rxq.cur);
+	printf("  802.11 state %s\n",
+	    ieee80211_state_name[sc->sc_ic.ic_state]);
 }
 #endif
 
@@ -10232,22 +10251,9 @@ iwm_intr(void *arg)
 	}
 
 	if (r1 & IWM_CSR_INT_BIT_SW_ERR) {
-#ifdef IWM_DEBUG
-		int i;
-
+#if 1
 		iwm_nic_error(sc);
-
-		/* Dump driver status (TX and RX rings) while we're here. */
-		DPRINTF(("driver status:\n"));
-		for (i = 0; i < IWM_MAX_QUEUES; i++) {
-			struct iwm_tx_ring *ring = &sc->txq[i];
-			DPRINTF(("  tx ring %2d: qid=%-2d cur=%-3d "
-			    "queued=%-3d\n",
-			    i, ring->qid, ring->cur, ring->queued));
-		}
-		DPRINTF(("  rx ring: cur=%d\n", sc->rxq.cur));
-		DPRINTF(("  802.11 state %s\n",
-		    ieee80211_state_name[sc->sc_ic.ic_state]));
+		iwm_dump_driver_status(sc);
 #endif
 
 		printf("%s: fatal firmware error\n", DEVNAME(sc));
@@ -10342,22 +10348,9 @@ iwm_intr_msix(void *arg)
 	if ((inta_fh & IWM_MSIX_FH_INT_CAUSES_FH_ERR) ||
 	    (inta_hw & IWM_MSIX_HW_INT_CAUSES_REG_SW_ERR) ||
 	    (inta_hw & IWM_MSIX_HW_INT_CAUSES_REG_SW_ERR_V2)) {
-#ifdef IWM_DEBUG
-		int i;
-
+#if 1
 		iwm_nic_error(sc);
-
-		/* Dump driver status (TX and RX rings) while we're here. */
-		DPRINTF(("driver status:\n"));
-		for (i = 0; i < IWM_MAX_QUEUES; i++) {
-			struct iwm_tx_ring *ring = &sc->txq[i];
-			DPRINTF(("  tx ring %2d: qid=%-2d cur=%-3d "
-			    "queued=%-3d\n",
-			    i, ring->qid, ring->cur, ring->queued));
-		}
-		DPRINTF(("  rx ring: cur=%d\n", sc->rxq.cur));
-		DPRINTF(("  802.11 state %s\n",
-		    ieee80211_state_name[sc->sc_ic.ic_state]));
+		iwm_dump_driver_status(sc);
 #endif
 
 		printf("%s: fatal firmware error\n", DEVNAME(sc));
