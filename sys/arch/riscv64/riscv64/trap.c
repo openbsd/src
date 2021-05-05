@@ -67,6 +67,9 @@ do_trap_supervisor(struct trapframe *frame)
 	KASSERTMSG((csr_read(sstatus) & (SSTATUS_SPP | SSTATUS_SIE)) ==
 	    SSTATUS_SPP, "Came from S mode with interrupts enabled");
 
+	KASSERTMSG((csr_read(sstatus) & (SSTATUS_SUM)) == 0,
+	    "Came from S mode with SUM enabled");
+
 	if (frame->tf_scause & EXCP_INTR) {
 		/* Interrupt */
 		riscv_cpu_intr(frame);
@@ -118,6 +121,9 @@ do_trap_user(struct trapframe *frame)
 	/* Ensure we came from usermode, interrupts disabled */
 	KASSERTMSG((csr_read(sstatus) & (SSTATUS_SPP | SSTATUS_SIE)) == 0,
 	    "Came from U mode with interrupts enabled");
+
+	KASSERTMSG((csr_read(sstatus) & (SSTATUS_SUM)) == 0,
+	    "Came from U mode with SUM enabled");
 
 	/* Save fpu context before (possibly) calling interrupt handler.
 	 * Could end up context switching in interrupt handler.
