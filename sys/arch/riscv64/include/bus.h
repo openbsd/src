@@ -1,4 +1,4 @@
-/* $OpenBSD: bus.h,v 1.2 2021/04/24 21:37:41 kettenis Exp $ */
+/* $OpenBSD: bus.h,v 1.3 2021/05/05 13:28:56 jsg Exp $ */
 /*
  * Copyright (c) 2003-2004 Opsycon AB Sweden.  All rights reserved.
  *
@@ -315,7 +315,7 @@ static inline void
 bus_space_barrier(bus_space_tag_t t, bus_space_handle_t h, bus_size_t offset,
     bus_size_t length, int flags)
 {
-	__asm__ volatile ("sfence.vma" ::: "memory");//XXX What?? CMPE
+	__asm__ volatile ("fence iorw,iorw" ::: "memory");
 }
 #define BUS_SPACE_BARRIER_READ  0x01		/* force read barrier */
 #define BUS_SPACE_BARRIER_WRITE 0x02		/* force write barrier */
