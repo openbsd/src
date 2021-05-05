@@ -1,3 +1,5 @@
+/*	$OpenBSD: bus_dma.c,v 1.2 2021/05/05 13:12:26 kettenis Exp $ */
+
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
  *
@@ -310,9 +312,12 @@ _dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs,
 				if (paddr == lastaddr &&
 				    (map->dm_segs[seg].ds_len + sgsize) <=
 				     map->_dm_maxsegsz &&
-				     (map->_dm_boundary == 0 ||
+				    (map->_dm_boundary == 0 ||
 				     (map->dm_segs[seg].ds_addr & bmask) ==
-				     (paddr & bmask)))
+				     (paddr & bmask)) &&
+				    (t->_flags & BUS_DMA_COHERENT ||
+				     (map->dm_segs[seg]._ds_vaddr +
+				     map->dm_segs[seg].ds_len == vaddr)))
 					map->dm_segs[seg].ds_len += sgsize;
 				else {
 					if (++seg >= map->_dm_segcnt)
@@ -447,7 +452,8 @@ _dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
     int flags)
 {
 	return _dmamem_alloc_range(t, size, alignment, boundary,
-	    segs, nsegs, rsegs, flags, (paddr_t)0, (paddr_t)-1);
+	    segs, nsegs, rsegs, flags, dma_constraint.ucr_low,
+	    dma_constraint.ucr_high);
 }
 
 /*
@@ -542,8 +548,10 @@ paddr_t
 _dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, off_t off,
     int prot, int flags)
 {
-	int i;
-	paddr_t pa;
+	int i, pmapflags = 0;
+
+	if (flags & BUS_DMA_NOCACHE)
+		pmapflags |= PMAP_NOCACHE;
 
 	for (i = 0; i < nsegs; i++) {
 #ifdef DIAGNOSTIC
@@ -560,8 +568,7 @@ _dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, off_t off,
 			continue;
 		}
 
-		(void)pmap_extract (pmap_kernel(), segs[i].ds_addr, &pa);
-		return pa + off;
+		return ((segs[i].ds_addr + off) | pmapflags);
 	}
 
 	/* Page not found. */
@@ -639,9 +646,12 @@ _dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 			if ((bus_addr_t)curaddr == lastaddr &&
 			    (map->dm_segs[seg].ds_len + sgsize) <=
 			     map->_dm_maxsegsz &&
-			     (map->_dm_boundary == 0 ||
+			    (map->_dm_boundary == 0 ||
 			     (map->dm_segs[seg].ds_addr & bmask) ==
-			     ((bus_addr_t)curaddr & bmask)))
+			     ((bus_addr_t)curaddr & bmask)) &&
+			    (t->_flags & BUS_DMA_COHERENT ||
+			     (map->dm_segs[seg]._ds_vaddr +
+			     map->dm_segs[seg].ds_len == vaddr)))
 				map->dm_segs[seg].ds_len += sgsize;
 			else {
 				if (++seg >= map->_dm_segcnt)
