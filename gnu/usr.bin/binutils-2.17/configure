@@ -1237,6 +1237,9 @@ case "${target}" in
 	;;
     esac
     ;;
+  riscv*-*-openbsd*)
+    noconfigdirs="ld gas"
+    ;;
   *-*-netware*)
     noconfigdirs="$noconfigdirs target-newlib target-libiberty target-libgloss ${libgcj} target-libmudflap"
     ;;
@@ -1584,6 +1587,9 @@ case "${target}" in
     ;;
   mips*-*-*)
     noconfigdirs="$noconfigdirs gprof ${libgcj}"
+    ;;
+  riscv*-*-openbsd*)
+    noconfigdirs="ld gas"
     ;;
   romp-*-*)
     noconfigdirs="$noconfigdirs bfd binutils ld gas opcodes target-libgloss ${libgcj}"

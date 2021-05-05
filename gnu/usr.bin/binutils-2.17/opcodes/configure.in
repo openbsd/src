@@ -198,6 +198,7 @@ if test x${all_targets} = xfalse ; then
 	bfd_powerpc_arch)	ta="$ta ppc-dis.lo ppc-opc.lo" ;;
 	bfd_powerpc_64_arch)	ta="$ta ppc-dis.lo ppc-opc.lo" ;;
 	bfd_pyramid_arch)	;;
+	bfd_riscv64_arch)	;;
 	bfd_romp_arch)		;;
 	bfd_rs6000_arch)	ta="$ta ppc-dis.lo ppc-opc.lo" ;;
 	bfd_s390_arch)		ta="$ta s390-dis.lo s390-opc.lo" ;;

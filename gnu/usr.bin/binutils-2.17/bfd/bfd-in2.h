@@ -1987,6 +1987,7 @@ enum bfd_architecture
 #define bfd_mach_z80full        7 /* All undocumented instructions.  */
 #define bfd_mach_r800           11 /* R800: successor with multiplication.  */
   bfd_arch_aarch64,
+  bfd_arch_riscv64,
   bfd_arch_last
   };
 

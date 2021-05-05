@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.21 2020/05/30 19:22:00 drahn Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.22 2021/05/05 04:52:39 drahn Exp $
 
 .include <bsd.own.mk>
 
@@ -32,10 +32,11 @@ INST_SUBDIRS+=	binutils
 MAN+=		binutils/doc/ar.1 binutils/doc/ranlib.1 \
 		binutils/doc/strings.1 binutils/doc/strip.1
 
-.if (${TARGET_ARCH} != "aarch64" && ${TARGET_ARCH} != "powerpc64")
-SUBDIRS+=	ld gas
-CONF_SUBDIRS+=	ld gas
-INST_SUBDIRS+=	ld gas
+.if (${TARGET_ARCH} != "aarch64" && ${TARGET_ARCH} != "powerpc64" && \
+    ${TARGET_ARCH} != "riscv64")
+SUBDIRS+=	 ld gas
+CONF_SUBDIRS+=	 ld gas
+INST_SUBDIRS+=	 ld gas
 MAN+=		gas/doc/as.1	ld/ld.bfd.1
 .if ${LINKER_VERSION:L} == "bfd"
 maninstall:
