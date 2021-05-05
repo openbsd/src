@@ -1,4 +1,4 @@
-/*      $OpenBSD: interpreter.c,v 1.24 2021/05/03 13:28:03 lum Exp $	*/
+/*      $OpenBSD: interpreter.c,v 1.25 2021/05/05 06:12:23 lum Exp $	*/
 /*
  * This file is in the public domain.
  *
@@ -37,8 +37,9 @@
  * 3. conditional execution.
  * 4. have memory allocated dynamically for variable values.
  * 5. do symbol names need more complex regex patterns? [A-Za-z][.0-9_A-Z+a-z-]
- *    at the moment. 
- * 6. oh so many things....
+ *    at the moment.
+ * 6. display line numbers with parsing errors.
+ * 7. oh so many things....
  * [...]
  * n. implement user definable functions.
  * 
@@ -120,7 +121,7 @@ int
 foundparen(char *funstr, int llen)
 {
 	const char	*lrp = NULL;
-	char		*p, *begp = NULL, *endp = NULL, *regs;
+	char		*p, *begp = NULL, *endp = NULL, *regs, *prechr;
 	int     	 i, ret, pctr, expctr, blkid, inquote, esc;
 
 	pctr = expctr = inquote = esc = 0;
@@ -209,12 +210,16 @@ foundparen(char *funstr, int llen)
 			if (begp == NULL)
 				begp = p;
 			if (*p == '"') {
-				if (inquote == 0 && esc == 0)
+				if (inquote == 0 && esc == 0) {
+					if (*prechr != ' ' && *prechr != '\t')
+						return(dobeep_msg("char err"));
 					inquote++;
-				else if (inquote > 0 && esc == 1)
+				} else if (inquote > 0 && esc == 1)
 					esc = 0;
 				else
 					inquote--;
+			} else if (*prechr == '"' && inquote == 0) {
+				return(dobeep_msg("char err"));
 			}
 			endp = NULL;
 		} else if (endp == NULL && (*p == ' ' || *p == '\t')) {
@@ -232,6 +237,7 @@ foundparen(char *funstr, int llen)
 			expctr = 0;
 			defnam = NULL;
 		}
+		prechr = p;
 	}
 
 	if (pctr != 0) {
