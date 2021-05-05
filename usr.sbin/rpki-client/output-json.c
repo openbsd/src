@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.15 2021/04/08 19:49:27 job Exp $ */
+/*	$OpenBSD: output-json.c,v 1.16 2021/05/05 17:25:44 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -100,7 +100,7 @@ output_json(FILE *out, struct vrp_tree *vrps, struct stats *st)
 
 		ip_addr_print(&v->addr, v->afi, buf, sizeof(buf));
 
-		if (fprintf(out, "\t\t{ \"asn\": \"AS%u\", \"prefix\": \"%s\", "
+		if (fprintf(out, "\t\t{ \"asn\": %u, \"prefix\": \"%s\", "
 		    "\"maxLength\": %u, \"ta\": \"%s\" }",
 		    v->asid, buf, v->maxlength, v->tal) < 0)
 			return -1;
