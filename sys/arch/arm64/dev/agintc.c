@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.30 2021/02/17 12:11:45 kettenis Exp $ */
+/* $OpenBSD: agintc.c,v 1.31 2021/05/05 12:02:21 kettenis Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -70,7 +70,7 @@
 #define  GICD_CTLR_ARE_NS		(1 << 4)
 #define  GICD_CTLR_DS			(1 << 6)
 #define GICD_TYPER		0x0004
-#define  GICD_TYPER_LPIS		(1 << 16)
+#define  GICD_TYPER_LPIS		(1 << 17)
 #define  GICD_TYPER_ITLINE_M		0x1f
 #define GICD_IIDR		0x0008
 #define GICD_ISENABLER(i)	(0x0100 + (IRQ_TO_REG32(i) * 4))
