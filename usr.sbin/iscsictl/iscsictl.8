@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iscsictl.8,v 1.6 2015/07/27 17:28:39 sobrado Exp $
+.\"	$OpenBSD: iscsictl.8,v 1.7 2021/05/05 12:34:12 claudio Exp $
 .\"
 .\" Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 27 2015 $
+.Dd $Mdocdate: May 5 2021 $
 .Dt ISCSICTL 8
 .Os
 .Sh NAME
@@ -47,7 +47,9 @@ to communicate with
 The following commands are available:
 .Bl -tag -width Ds
 .It Cm reload
-Reload the configuration file.
+Reload the configuration file and wait to return until iscsid reports all
+connections have completed (successfully or otherwise), or for up to 10
+seconds.
 .It Cm show Op Cm summary
 Show a list of all configured sessions.
 .It Cm show Cm vscsi stats
