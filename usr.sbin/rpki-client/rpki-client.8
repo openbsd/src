@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.43 2021/04/08 14:03:32 job Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.44 2021/05/05 17:24:00 job Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 8 2021 $
+.Dd $Mdocdate: May 5 2021 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -95,6 +95,8 @@ This format is similar to that produced by other RPKI validators.
 Offline mode.
 Validate the contents of
 .Ar cachedir
+and write to
+.Ar outputdir
 without synchronizing via RRDP or RSYNC.
 .It Fl o
 Create output in the file
