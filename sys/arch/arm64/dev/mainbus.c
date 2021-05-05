@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.20 2021/02/28 21:10:22 patrick Exp $ */
+/* $OpenBSD: mainbus.c,v 1.21 2021/05/05 14:13:57 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -156,7 +156,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_early = 0;
 	for (node = OF_child(sc->sc_node); node != 0; node = OF_peer(node))
 		mainbus_attach_node(self, node, NULL);
-	
+
 	mainbus_attach_framebuffer(self);
 
 	thermal_init();
