@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.342 2021/05/05 10:05:27 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.343 2021/05/05 19:52:00 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -546,8 +546,7 @@ void tls12_record_layer_set_cipher_hash(struct tls12_record_layer *rl,
     const EVP_MD *mac_hash);
 void tls12_record_layer_set_version(struct tls12_record_layer *rl,
     uint16_t version);
-void tls12_record_layer_set_write_epoch(struct tls12_record_layer *rl,
-    uint16_t epoch);
+uint16_t tls12_record_layer_write_epoch(struct tls12_record_layer *rl);
 int tls12_record_layer_use_write_epoch(struct tls12_record_layer *rl,
     uint16_t epoch);
 void tls12_record_layer_write_epoch_done(struct tls12_record_layer *rl,
@@ -997,7 +996,6 @@ typedef struct dtls1_state_internal_st {
 	 * completed
 	 */
 	unsigned short r_epoch;
-	unsigned short w_epoch;
 
 	/* records being received in the current epoch */
 	DTLS1_BITMAP bitmap;
@@ -1297,7 +1295,6 @@ int dtls1_get_message_header(unsigned char *data,
     struct hm_header_st *msg_hdr);
 void dtls1_get_ccs_header(unsigned char *data, struct ccs_header_st *ccs_hdr);
 void dtls1_reset_read_seq_numbers(SSL *s);
-void dtls1_reset_write_seq_numbers(SSL *s);
 struct timeval* dtls1_get_timeout(SSL *s, struct timeval* timeleft);
 int dtls1_check_timeout_num(SSL *s);
 int dtls1_handle_timeout(SSL *s);

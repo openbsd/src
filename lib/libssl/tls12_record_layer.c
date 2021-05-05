@@ -1,4 +1,4 @@
-/* $OpenBSD: tls12_record_layer.c,v 1.27 2021/05/05 10:05:27 jsing Exp $ */
+/* $OpenBSD: tls12_record_layer.c,v 1.28 2021/05/05 19:52:00 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -277,10 +277,10 @@ tls12_record_layer_set_version(struct tls12_record_layer *rl, uint16_t version)
 	rl->dtls = ((version >> 8) == DTLS1_VERSION_MAJOR);
 }
 
-void
-tls12_record_layer_set_write_epoch(struct tls12_record_layer *rl, uint16_t epoch)
+uint16_t
+tls12_record_layer_write_epoch(struct tls12_record_layer *rl)
 {
-	rl->write->epoch = epoch;
+	return rl->write->epoch;
 }
 
 int
@@ -582,6 +582,10 @@ tls12_record_layer_change_write_cipher_state(struct tls12_record_layer *rl,
 		goto err;
 
 	/* Write sequence number gets reset to zero. */
+
+	/* DTLS epoch is incremented and is permitted to wrap. */
+	if (rl->dtls)
+		write_new->epoch = rl->write_current->epoch + 1;
 
 	if (!tls12_record_layer_change_cipher_state(rl, write_new, 1,
 	    mac_key, key, iv))
