@@ -1,11 +1,7 @@
-# $OpenBSD: services,v 1.99 2021/02/18 02:30:29 deraadt Exp $
+# $OpenBSD: services,v 1.100 2021/05/05 11:49:17 sthen Exp $
 #
 # Network services, Internet style
 # https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt
-#
-# Note that it is presently the policy of IANA to assign a single well-known
-# port number for both TCP and UDP; hence, most entries here have two entries
-# even if the protocol doesn't support UDP operations.
 #
 
 tcpmux		1/tcp				# TCP port service multiplexer
@@ -64,10 +60,7 @@ csnet-ns	105/tcp		cso-ns		# also used by CSO name server
 csnet-ns	105/udp		cso-ns
 rtelnet		107/tcp				# Remote Telnet
 rtelnet		107/udp
-pop2		109/tcp		postoffice	# POP version 2
-pop2		109/udp
 pop3		110/tcp				# POP version 3
-pop3		110/udp
 sunrpc		111/tcp		portmap rpcbind
 sunrpc		111/udp		portmap rpcbind
 auth		113/tcp		authentication tap ident
@@ -87,7 +80,6 @@ netbios-dgm	138/udp
 netbios-ssn	139/tcp				# NETBIOS session service
 netbios-ssn	139/udp
 imap		143/tcp		imap2		# Internet Message Access Proto
-imap		143/udp		imap2		# Internet Message Access Proto
 bftp		152/tcp				# Background File Transfer Proto
 snmp		161/udp				# Simple Net Mgmt Proto
 snmp-trap	162/udp		snmptrap	# Traps for SNMP
@@ -100,11 +92,9 @@ xdmcp		177/udp
 nextstep	178/tcp		NeXTStep NextStep	# NeXTStep window
 nextstep	178/udp		NeXTStep NextStep	# server
 bgp		179/tcp				# Border Gateway Proto.
-bgp		179/udp
 prospero	191/tcp				# Cliff Neuman's Prospero
 prospero	191/udp
 irc		194/tcp				# Internet Relay Chat
-irc		194/udp
 smux		199/tcp				# SNMP Unix Multiplexer
 smux		199/udp
 at-rtmp		201/tcp				# AppleTalk routing
@@ -119,8 +109,6 @@ z3950		210/tcp		wais		# NISO Z39.50 database
 z3950		210/udp		wais
 ipx		213/tcp				# IPX
 ipx		213/udp
-imap3		220/tcp				# Interactive Mail Access
-imap3		220/udp				# Protocol v3
 rpki-rtr	323/tcp				# Resource PKI to Router Protocol
 ulistserv	372/tcp				# UNIX Listserv
 ulistserv	372/udp
@@ -129,13 +117,13 @@ ldap		389/udp
 svrloc		427/tcp				# Server Location
 svrloc		427/udp
 nnsp		433/tcp		usenet		# Network News Transfer
-https		443/tcp				# secure http (SSL)
+https		443/tcp				# secure http (TLS)
 snpp		444/tcp				# Simple Network Paging Protocol
-snpp		444/udp				# Simple Network Paging Protocol
 microsoft-ds	445/tcp				# Microsoft-DS
 microsoft-ds	445/udp				# Microsoft-DS
 kpasswd		464/tcp				# Kerberos 5 password changing
 kpasswd		464/udp				# Kerberos 5 password changing
+smtps		465/tcp				# mail message submission (TLS)
 photuris	468/tcp				# Photuris Key Management
 photuris	468/udp
 isakmp		500/udp				# ISAKMP key management
@@ -164,30 +152,25 @@ dhcpv6-client	546/udp				# DHCPv6 client
 dhcpv6-server	547/udp				# DHCPv6 server
 remotefs	556/tcp		rfs_server rfs	# Brunhoff remote filesystem
 afpovertcp	548/tcp				# AFP over TCP
-afpovertcp	548/udp				# AFP over TCP
 rtsp		554/tcp				# Real Time Stream Control Proto
 rtsp		554/udp				# Real Time Stream Control Proto
 submission	587/tcp		msa		# mail message submission
-submission	587/udp		msa		# mail message submission
 asf-rmcp	623/udp				# ASF/IPMI Proto
 ipp		631/tcp				# Internet Printing Protocol
 ipp		631/udp				# Internet Printing Protocol
-ldaps		636/tcp				# LDAP over SSL
+ldaps		636/tcp				# LDAP over TLS/SSL
 ldaps		636/udp
 ldp		646/tcp
 ldp		646/udp
 agentx		705/tcp
 silc		706/tcp				# Secure Live Internet Conferencing
-silc		706/udp
 kerberos-adm	749/tcp				# Kerberos 5 kadmin
 kerberos-adm	749/udp				# Kerberos 5 kadmin
 domain-s	853/tcp				# DNS query-response protocol run over TLS/DTLS
 domain-s	853/udp				# DNS query-response protocol run over TLS/DTLS
 rsync		873/tcp				# rsync server
 imaps		993/tcp				# imap4 protocol over TLS/SSL
-imaps		993/udp				# imap4 protocol over TLS/SSL
 pop3s		995/tcp		spop3		# pop3 protocol over TLS/SSL
-pop3s		995/udp		spop3		# pop3 protocol over TLS/SSL
 socks		1080/tcp			# Socks
 kpop		1109/tcp			# Pop with Kerberos
 ms-sql-s	1433/tcp	Microsoft-SQL-Server
@@ -240,13 +223,11 @@ svn		3690/tcp			# Subversion
 bfd-control	3784/udp			# BFD Control Protocol
 bfd-echo	3785/udp			# BFD Echo Protocol
 sieve		4190/tcp			# ManageSieve Protocol
-sieve		4190/udp			# ManageSieve Protocol
 krb524		4444/tcp			# Kerberos 5->4
 krb524		4444/udp			# Kerberos 5->4
 ipsec-nat-t	4500/tcp	ipsec-msft	# IPsec NAT-Traversal
 ipsec-nat-t	4500/udp	ipsec-msft	# IPsec NAT-Traversal
 hylafax		4559/tcp			# HylaFAX client-server protocol
-hylafax		4559/udp			# HylaFAX client-server protocol
 gre-in-udp	4754/udp			# GRE-in-UDP Encapsulation
 gre-udp-dtls	4755/udp			# GRE-in-UDP Encapsulation with DTLS
 vxlan		4789/udp			# VXLAN
@@ -309,17 +290,13 @@ openwebnet	20005/udp	xcept		# OpenWebNet protocol for electric network
 # Unofficial services
 #
 pop3pw		106/tcp		poppassd	# Eudora compatible PW changer
-smtps		465/tcp				# SSL-wrapped SMTP
 kerberos-iv	750/udp		kdc		# Kerberos authentication--udp
 kerberos-iv	750/tcp		kdc		# Kerberos authentication--tcp
 kerberos_master	751/udp				# Kerberos 4 kadmin
 kerberos_master	751/tcp				# Kerberos 4 kadmin
 krb_prop	754/tcp		hprop		# Kerberos slave propagation
 krbupdate	760/tcp		kreg		# BSD Kerberos registration
-supfilesrv	871/tcp				# SUP server
 swat		901/tcp				# Samba Web Administration Tool
-supfiledbg	1127/tcp			# SUP debugging
-support		1529/tcp			# GNATS, cygnus bug tracker
 datametrics	1645/udp
 ekshell2	2106/tcp			# Encrypted kshell - UColorado, Boulder
 webster		2627/tcp			# Network dictionary
