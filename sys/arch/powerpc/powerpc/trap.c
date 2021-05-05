@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.119 2021/03/11 11:16:59 jsg Exp $	*/
+/*	$OpenBSD: trap.c,v 1.120 2021/05/05 07:29:01 mpi Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -282,9 +282,7 @@ trap(struct trapframe *frame)
 		else
 			ftype = PROT_READ;
 
-		KERNEL_LOCK();
 		error = uvm_fault(map, trunc_page(va), 0, ftype);
-		KERNEL_UNLOCK();
 
 		if (error == 0)
 			return;
@@ -318,10 +316,8 @@ trap(struct trapframe *frame)
 		} else
 			vftype = ftype = PROT_READ;
 
-		KERNEL_LOCK();
 		error = uvm_fault(&p->p_vmspace->vm_map,
 		    trunc_page(frame->dar), 0, ftype);
-		KERNEL_UNLOCK();
 
 		if (error == 0) {
 			uvm_grow(p, frame->dar);
@@ -343,10 +339,8 @@ trap(struct trapframe *frame)
 
 		ftype = PROT_READ | PROT_EXEC;
 
-		KERNEL_LOCK();
 		error = uvm_fault(&p->p_vmspace->vm_map,
 		    trunc_page(frame->srr0), 0, ftype);
-		KERNEL_UNLOCK();
 
 		if (error == 0) {
 			uvm_grow(p, frame->srr0);

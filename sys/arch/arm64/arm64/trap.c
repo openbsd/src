@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.35 2021/01/25 19:37:18 kettenis Exp $ */
+/* $OpenBSD: trap.c,v 1.36 2021/05/05 07:29:00 mpi Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -120,9 +120,7 @@ udata_abort(struct trapframe *frame, uint64_t esr, uint64_t far, int exe)
 	if (pmap_fault_fixup(map->pmap, va, access_type))
 		return;
 
-	KERNEL_LOCK();
 	error = uvm_fault(map, va, 0, access_type);
-	KERNEL_UNLOCK();
 
 	if (error == 0) {
 		uvm_grow(p, va);
@@ -178,9 +176,7 @@ kdata_abort(struct trapframe *frame, uint64_t esr, uint64_t far, int exe)
 
 	/* Handle referenced/modified emulation */
 	if (!pmap_fault_fixup(map->pmap, va, access_type)) {
-		KERNEL_LOCK();
 		error = uvm_fault(map, va, 0, access_type);
-		KERNEL_UNLOCK();
 
 		if (error == 0 && map != kernel_map)
 			uvm_grow(p, va);

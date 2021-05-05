@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.49 2021/01/09 13:14:02 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.50 2021/05/05 07:29:01 mpi Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -126,9 +126,7 @@ trap(struct trapframe *frame)
 			access_type = PROT_READ | PROT_WRITE;
 		else
 			access_type = PROT_READ;
-		KERNEL_LOCK();
 		error = uvm_fault(map, trunc_page(va), 0, access_type);
-		KERNEL_UNLOCK();
 		if (error == 0)
 			return;
 
@@ -237,9 +235,7 @@ trap(struct trapframe *frame)
 			access_type = PROT_READ | PROT_WRITE;
 		else
 			access_type = PROT_READ;
-		KERNEL_LOCK();
 		error = uvm_fault(map, trunc_page(va), 0, access_type);
-		KERNEL_UNLOCK();
 		if (error == 0)
 			uvm_grow(p, va);
 
@@ -284,9 +280,7 @@ trap(struct trapframe *frame)
 		map = &p->p_vmspace->vm_map;
 		va = frame->srr0;
 		access_type = PROT_READ | PROT_EXEC;
-		KERNEL_LOCK();
 		error = uvm_fault(map, trunc_page(va), 0, access_type);
-		KERNEL_UNLOCK();
 		if (error == 0)
 			uvm_grow(p, va);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.87 2020/10/22 13:41:51 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.88 2021/05/05 07:29:00 mpi Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -176,10 +176,7 @@ upageflttrap(struct trapframe *frame, uint64_t cr2)
 	union sigval sv;
 	int signal, sicode, error;
 
-	KERNEL_LOCK();
 	error = uvm_fault(&p->p_vmspace->vm_map, va, 0, access_type);
-	KERNEL_UNLOCK();
-
 	if (error == 0) {
 		uvm_grow(p, va);
 		return 1;
@@ -261,9 +258,7 @@ kpageflttrap(struct trapframe *frame, uint64_t cr2)
 	if (curcpu()->ci_inatomic == 0 || map == kernel_map) {
 		onfault = pcb->pcb_onfault;
 		pcb->pcb_onfault = NULL;
-		KERNEL_LOCK();
 		error = uvm_fault(map, va, 0, access_type);
-		KERNEL_UNLOCK();
 		pcb->pcb_onfault = onfault;
 
 		if (error == 0 && map != kernel_map)
