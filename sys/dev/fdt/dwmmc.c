@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwmmc.c,v 1.23 2020/01/22 11:56:41 patrick Exp $	*/
+/*	$OpenBSD: dwmmc.c,v 1.24 2021/05/05 09:17:19 jsg Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -274,7 +274,8 @@ dwmmc_match(struct device *parent, void *match, void *aux)
 	return (OF_is_compatible(faa->fa_node, "hisilicon,hi3660-dw-mshc") ||
 	    OF_is_compatible(faa->fa_node, "hisilicon,hi3670-dw-mshc") ||
 	    OF_is_compatible(faa->fa_node, "rockchip,rk3288-dw-mshc") ||
-	    OF_is_compatible(faa->fa_node, "samsung,exynos5420-dw-mshc"));
+	    OF_is_compatible(faa->fa_node, "samsung,exynos5420-dw-mshc") ||
+	    OF_is_compatible(faa->fa_node, "snps,dw-mshc"));
 }
 
 void
@@ -354,6 +355,9 @@ dwmmc_attach(struct device *parent, struct device *self, void *aux)
 		clock_set_frequency(faa->fa_node, "ciu", (div + 1) * freq);
 
 	sc->sc_clkbase = clock_get_frequency(faa->fa_node, "ciu");
+	/* if ciu clock is missing the rate is clock-frequency */
+	if (sc->sc_clkbase == 0)
+		sc->sc_clkbase = freq;
 	div = OF_getpropint(faa->fa_node, "samsung,dw-mshc-ciu-div", div);
 	sc->sc_clkbase /= (div + 1);
 
