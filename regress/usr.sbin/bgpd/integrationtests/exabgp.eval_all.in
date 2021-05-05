@@ -16,10 +16,9 @@ neighbor 10.12.57.1 {
 		ipv4 unicast;
 	}
 
-	static {
-		route 10.12.1.0/24 next-hop self;
-		route 10.12.2.0/24 next-hop self community [ 64500:64503 64500:64504 ];
-		route 10.12.3.0/24 next-hop self community [ 64500:64503 64500:64504 ];
+	api {
+		processes [ reader ];
+		neighbor-changes;
 	}
 }
 
@@ -36,10 +35,9 @@ neighbor 10.12.57.1 {
 		ipv4 unicast;
 	}
 
-	static {
-		route 10.12.1.0/24 next-hop self;
-		route 10.12.2.0/24 next-hop self;
-		route 10.12.3.0/24 next-hop self community [ 64500:64503 64500:64504 ];
+	api {
+		processes [ reader ];
+		neighbor-changes;
 	}
 }
 

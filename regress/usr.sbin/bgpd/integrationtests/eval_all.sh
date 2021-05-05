@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: eval_all.sh,v 1.1 2021/04/13 07:39:17 claudio Exp $
+#	$OpenBSD: eval_all.sh,v 1.2 2021/05/05 10:28:11 claudio Exp $
 
 set -e
 
@@ -107,12 +107,57 @@ sleep 2
 
 echo test 1
 
-sleep 5
-route -T ${RDOMAIN1} exec bgpctl sh rib detail
-route -T ${RDOMAIN1} exec bgpctl sh rib out detail | \
+# no filtering
+exacmd 'neighbor 10.12.57.1 router-id 10.12.57.2 announce route 10.12.1.0/24 next-hop self'
+exacmd 'neighbor 10.12.57.1 router-id 10.12.57.3 announce route 10.12.1.0/24 next-hop self'
+# filter from 64501
+exacmd 'neighbor 10.12.57.1 router-id 10.12.57.2 announce route 10.12.2.0/24 next-hop self community [ 64500:64503 64500:64504 ]'
+exacmd 'neighbor 10.12.57.1 router-id 10.12.57.3 announce route 10.12.2.0/24 next-hop self'
+# filter from both
+exacmd 'neighbor 10.12.57.1 router-id 10.12.57.2 announce route 10.12.3.0/24 next-hop self community [ 64500:64503 64500:64504 ]'
+exacmd 'neighbor 10.12.57.1 router-id 10.12.57.3 announce route 10.12.3.0/24 next-hop self community [ 64500:64503 64500:64504 ]'
+# similar with aspath and prepends
+exacmd 'neighbor 10.12.57.1 router-id 10.12.57.2 announce route 10.0.1.0/24 next-hop self as-path [ 64501 101 ] community [ 64500:64503 64500:64504 ]'
+exacmd 'neighbor 10.12.57.1 router-id 10.12.57.3 announce route 10.0.1.0/24 next-hop self as-path [ 64502 101 101 101 ]'
+
+sleep 3
+route -T ${RDOMAIN1} exec bgpctl sh rib
+(route -T ${RDOMAIN1} exec bgpctl sh rib out nei 10.12.57.4 detail;
+route -T ${RDOMAIN1} exec bgpctl sh rib out nei 10.12.57.5 detail ) | \
 	grep -v 'Last update:' | tee eval_all.out
 sleep .2
-diff -u ${BGPDCONFIGDIR}/eval_all.ok eval_all.out
+diff -u ${BGPDCONFIGDIR}/eval_all.test1.ok eval_all.out
+echo OK
+
+echo test 2
+
+# withdraw hidden route
+exacmd 'neighbor 10.12.57.1 router-id 10.12.57.3 withdraw route 10.12.2.0/24'
+exacmd 'neighbor 10.12.57.1 router-id 10.12.57.3 withdraw route 10.0.1.0/24'
+
+sleep 3
+route -T ${RDOMAIN1} exec bgpctl sh rib
+(route -T ${RDOMAIN1} exec bgpctl sh rib out nei 10.12.57.4 detail;
+route -T ${RDOMAIN1} exec bgpctl sh rib out nei 10.12.57.5 detail ) | \
+	grep -v 'Last update:' | tee eval_all.out
+sleep .2
+diff -u ${BGPDCONFIGDIR}/eval_all.test2.ok eval_all.out
+echo OK
+
+# same result as test 1
+echo test 3
+
+# readd route
+exacmd 'neighbor 10.12.57.1 router-id 10.12.57.3 announce route 10.12.2.0/24 next-hop self'
+exacmd 'neighbor 10.12.57.1 router-id 10.12.57.3 announce route 10.0.1.0/24 next-hop self as-path [ 64502 101 101 101 ]'
+
+sleep 3
+route -T ${RDOMAIN1} exec bgpctl sh rib
+(route -T ${RDOMAIN1} exec bgpctl sh rib out nei 10.12.57.4 detail;
+route -T ${RDOMAIN1} exec bgpctl sh rib out nei 10.12.57.5 detail ) | \
+	grep -v 'Last update:' | tee eval_all.out
+sleep .2
+diff -u ${BGPDCONFIGDIR}/eval_all.test1.ok eval_all.out
 echo OK
 
 exacmd 'shutdown'
