@@ -45,6 +45,8 @@ viornd*		at virtio?	# Random Source
 simplebus*	at fdt?
 # Platform Level Interrupt Controller
 plic*		at fdt? early 1
+# L2 Cache Controller
+sfcc*		at fdt? early 1
 
 syscon*		at fdt? early 1
 gfrtc*		at fdt?

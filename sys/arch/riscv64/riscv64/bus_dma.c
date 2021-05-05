@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.2 2021/05/05 13:12:26 kettenis Exp $ */
+/*	$OpenBSD: bus_dma.c,v 1.3 2021/05/05 19:26:51 kettenis Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -359,20 +359,20 @@ _dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 }
 
 static void
-_dmamap_sync_segment(vaddr_t va, vsize_t len, int ops)
+_dmamap_sync_segment(paddr_t pa, psize_t len, int ops)
 {
 	switch (ops) {
 	case BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE:
 	case BUS_DMASYNC_PREREAD:
-		cpu_dcache_wbinv_range(va, len);
+		cpu_dcache_wbinv_range(pa, len);
 		break;
 
 	case BUS_DMASYNC_PREWRITE:
-		cpu_dcache_wb_range(va, len);
+		cpu_dcache_wb_range(pa, len);
 		break;
 
 	/*
-	 * Cortex CPUs can do speculative loads so we need to clean the cache
+	 * RISC-V CPUs can do speculative loads so we need to clean the cache
 	 * after a DMA read to deal with any speculatively loaded cache lines.
 	 * Since these can't be dirty, we can just invalidate them and don't
 	 * have to worry about having to write back their contents.
@@ -380,7 +380,7 @@ _dmamap_sync_segment(vaddr_t va, vsize_t len, int ops)
 	case BUS_DMASYNC_POSTREAD:
 	case BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE:
 		membar_sync();
-		cpu_dcache_inv_range(va, len);
+		cpu_dcache_inv_range(pa, len);
 		break;
 	}
 }
@@ -410,18 +410,18 @@ _dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t addr,
 	curseg = 0;
 
 	while (size && nsegs) {
-		vaddr_t vaddr;
+		paddr_t paddr;
 		bus_size_t ssize;
 
 		ssize = map->dm_segs[curseg].ds_len;
-		vaddr = map->dm_segs[curseg]._ds_vaddr;
+		paddr = map->dm_segs[curseg]._ds_paddr;
 
 		if (addr != 0) {
 			if (addr >= ssize) {
 				addr -= ssize;
 				ssize = 0;
 			} else {
-				vaddr += addr;
+				paddr += addr;
 				ssize -= addr;
 				addr = 0;
 			}
@@ -430,7 +430,7 @@ _dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t addr,
 			ssize = size;
 
 		if (ssize != 0) {
-			_dmamap_sync_segment(vaddr, ssize, op);
+			_dmamap_sync_segment(paddr, ssize, op);
 			size -= ssize;
 		}
 		curseg++;

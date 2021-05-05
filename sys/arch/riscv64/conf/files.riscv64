@@ -80,6 +80,10 @@ device	plic
 attach	plic at fdt
 file	arch/riscv64/dev/plic.c			plic
 
+# L2 cache controller
+device	sfcc
+attach	sfcc at fdt
+file	arch/riscv64/dev/sfcc.c			sfcc
 
 # Paravirtual device bus and virtio
 include "dev/pv/files.pv"

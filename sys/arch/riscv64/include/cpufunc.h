@@ -87,9 +87,9 @@ sfence_vma_page_asid(uintptr_t addr, uint64_t asid)
 extern int64_t dcache_line_size;
 extern int64_t icache_line_size;
 
-#define	cpu_dcache_wbinv_range(a, s)
-#define	cpu_dcache_inv_range(a, s)
-#define	cpu_dcache_wb_range(a, s)
+extern void (*cpu_dcache_wbinv_range)(paddr_t, psize_t);
+extern void (*cpu_dcache_inv_range)(paddr_t, psize_t);
+extern void (*cpu_dcache_wb_range)(paddr_t, psize_t);
 
 #define	cpu_idcache_wbinv_range(a, s)
 #define	cpu_icache_sync_range(a, s)

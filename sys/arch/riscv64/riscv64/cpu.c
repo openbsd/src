@@ -180,3 +180,12 @@ cpu_clockspeed(int *freq)
 	*freq = clock_get_frequency(cpu_node, NULL) / 1000000;
 	return 0;
 }
+
+void
+cpu_cache_nop_range(paddr_t pa, psize_t len)
+{
+}
+
+void (*cpu_dcache_wbinv_range)(paddr_t, psize_t) = cpu_cache_nop_range;
+void (*cpu_dcache_inv_range)(paddr_t, psize_t) = cpu_cache_nop_range;
+void (*cpu_dcache_wb_range)(paddr_t, psize_t) = cpu_cache_nop_range;
