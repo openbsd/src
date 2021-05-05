@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.11 2020/12/31 07:00:21 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.12 2021/05/05 00:04:49 kurt Exp $
 The following machines are targeted by OpenBSD/MACHINE:
 
 	Allwinner A64/H5
@@ -23,12 +23,13 @@ The following machines are targeted by OpenBSD/MACHINE:
 		Raspberry Pi 4
 	Marvell ARMADA 7K/8K
 		SolidRun/Marvell MACCHIATObin
-	Rockchip RK3328/RK3399
+	Rockchip RK3328/RK3399(pro)
 		Pine64 ROCK64
 		Pine64 ROCKPro64
 		Pinebook Pro
 		Firefly-RK3399
 		FriendlyElec NanoPC-T4
 		Theobroma Systems RK3399-Q7
+		Radxa Rock Pi N10
 	Socionext SC2A11
 		Socionext SynQuacer-E Developerbox
