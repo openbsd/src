@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.54 2021/04/29 21:43:47 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.55 2021/05/06 09:19:28 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -416,6 +416,7 @@ int	iwx_run_stop(struct iwx_softc *);
 struct ieee80211_node *iwx_node_alloc(struct ieee80211com *);
 int	iwx_set_key(struct ieee80211com *, struct ieee80211_node *,
 	    struct ieee80211_key *);
+void	iwx_setkey_task(void *);
 void	iwx_delete_key(struct ieee80211com *,
 	    struct ieee80211_node *, struct ieee80211_key *);
 int	iwx_media_change(struct ifnet *);
@@ -6433,6 +6434,7 @@ iwx_deauth(struct iwx_softc *sc)
 		}
 		sc->sc_flags &= ~IWX_FLAG_STA_ACTIVE;
 		sc->sc_rx_ba_sessions = 0;
+		in->in_flags = 0;
 	}
 
 	if (sc->sc_flags & IWX_FLAG_BINDING_ACTIVE) {
@@ -6498,6 +6500,7 @@ iwx_disassoc(struct iwx_softc *sc)
 			return err;
 		}
 		sc->sc_flags &= ~IWX_FLAG_STA_ACTIVE;
+		in->in_flags = 0;
 		sc->sc_rx_ba_sessions = 0;
 		sc->ba_start_tidmask = 0;
 		sc->ba_stop_tidmask = 0;
@@ -6670,12 +6673,44 @@ iwx_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
     struct ieee80211_key *k)
 {
 	struct iwx_softc *sc = ic->ic_softc;
-	struct iwx_add_sta_key_cmd cmd;
+	struct iwx_setkey_task_arg *a;
 
 	if (k->k_cipher != IEEE80211_CIPHER_CCMP) {
 		/* Fallback to software crypto for other ciphers. */
 		return (ieee80211_set_key(ic, ni, k));
 	}
+
+	if (sc->setkey_nkeys >= nitems(sc->setkey_arg))
+		return ENOSPC;
+
+	a = &sc->setkey_arg[sc->setkey_cur];
+	a->sta_id = IWX_STATION_ID;
+	a->ni = ni;
+	a->k = k;
+	sc->setkey_cur = (sc->setkey_cur + 1) % nitems(sc->setkey_arg);
+	sc->setkey_nkeys++;
+	iwx_add_task(sc, systq, &sc->setkey_task);
+	return EBUSY;
+}
+
+int
+iwx_add_sta_key(struct iwx_softc *sc, int sta_id, struct ieee80211_node *ni,
+    struct ieee80211_key *k)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct iwx_node *in = (void *)ni;
+	struct iwx_add_sta_key_cmd cmd;
+	uint32_t status;
+	const int want_keymask = (IWX_NODE_FLAG_HAVE_PAIRWISE_KEY |
+	    IWX_NODE_FLAG_HAVE_GROUP_KEY);
+	int err;
+
+	/*
+	 * Keys are stored in 'ni' so 'k' is valid if 'ni' is valid.
+	 * Currently we only implement station mode where 'ni' is always
+	 * ic->ic_bss so there is no need to validate arguments beyond this:
+	 */
+	KASSERT(ni == ic->ic_bss);
 
 	memset(&cmd, 0, sizeof(cmd));
 
@@ -6690,12 +6725,61 @@ iwx_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 		cmd.common.key_offset = 0;
 
 	memcpy(cmd.common.key, k->k_key, MIN(sizeof(cmd.common.key), k->k_len));
-	cmd.common.sta_id = IWX_STATION_ID;
+	cmd.common.sta_id = sta_id;
 
 	cmd.transmit_seq_cnt = htole64(k->k_tsc);
 
-	return iwx_send_cmd_pdu(sc, IWX_ADD_STA_KEY, IWX_CMD_ASYNC,
-	    sizeof(cmd), &cmd);
+	status = IWX_ADD_STA_SUCCESS;
+	err = iwx_send_cmd_pdu_status(sc, IWX_ADD_STA_KEY, sizeof(cmd), &cmd,
+	    &status);
+	if (sc->sc_flags & IWX_FLAG_SHUTDOWN)
+		return ECANCELED;
+	if (!err && (status & IWX_ADD_STA_STATUS_MASK) != IWX_ADD_STA_SUCCESS)
+		err = EIO;
+	if (err) {
+		IEEE80211_SEND_MGMT(ic, ni, IEEE80211_FC0_SUBTYPE_DEAUTH,
+		    IEEE80211_REASON_AUTH_LEAVE);
+		ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
+		return err;
+	}
+
+	if (k->k_flags & IEEE80211_KEY_GROUP)
+		in->in_flags |= IWX_NODE_FLAG_HAVE_GROUP_KEY;
+	else
+		in->in_flags |= IWX_NODE_FLAG_HAVE_PAIRWISE_KEY;
+
+	if ((in->in_flags & want_keymask) == want_keymask) {
+		DPRINTF(("marking port %s valid\n",
+		    ether_sprintf(ni->ni_macaddr)));
+		ni->ni_port_valid = 1;
+		ieee80211_set_link_state(ic, LINK_STATE_UP);
+	}
+
+	return 0;
+}
+
+void
+iwx_setkey_task(void *arg)
+{
+	struct iwx_softc *sc = arg;
+	struct iwx_setkey_task_arg *a;
+	int err = 0, s = splnet();
+
+	while (sc->setkey_nkeys > 0) {
+		if (err || (sc->sc_flags & IWX_FLAG_SHUTDOWN))
+			break;
+		a = &sc->setkey_arg[sc->setkey_tail];
+		err = iwx_add_sta_key(sc, a->sta_id, a->ni, a->k);
+		a->sta_id = 0;
+		a->ni = NULL;
+		a->k = NULL;
+		sc->setkey_tail = (sc->setkey_tail + 1) %
+		    nitems(sc->setkey_arg);
+		sc->setkey_nkeys--;
+	}
+
+	refcnt_rele_wake(&sc->task_refs);
+	splx(s);
 }
 
 void
@@ -6868,6 +6952,9 @@ iwx_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 	if (ic->ic_state == IEEE80211_S_RUN) {
 		iwx_del_task(sc, systq, &sc->ba_task);
+		iwx_del_task(sc, systq, &sc->setkey_task);
+		memset(sc->setkey_arg, 0, sizeof(sc->setkey_arg));
+		sc->setkey_cur = sc->setkey_tail = sc->setkey_nkeys = 0;
 		iwx_del_task(sc, systq, &sc->mac_ctxt_task);
 		for (i = 0; i < nitems(sc->sc_rxba_data); i++) {
 			struct iwx_rxba_data *rxba = &sc->sc_rxba_data[i];
@@ -7440,6 +7527,9 @@ iwx_stop(struct ifnet *ifp)
 	task_del(systq, &sc->init_task);
 	iwx_del_task(sc, sc->sc_nswq, &sc->newstate_task);
 	iwx_del_task(sc, systq, &sc->ba_task);
+	iwx_del_task(sc, systq, &sc->setkey_task);
+	memset(sc->setkey_arg, 0, sizeof(sc->setkey_arg));
+	sc->setkey_cur = sc->setkey_tail = sc->setkey_nkeys = 0;
 	iwx_del_task(sc, systq, &sc->mac_ctxt_task);
 	KASSERT(sc->task_refs.refs >= 1);
 	refcnt_finalize(&sc->task_refs, "iwxstop");
@@ -7458,6 +7548,7 @@ iwx_stop(struct ifnet *ifp)
 	ifq_clr_oactive(&ifp->if_snd);
 
 	in->in_phyctxt = NULL;
+	in->in_flags = 0;
 
 	sc->sc_flags &= ~(IWX_FLAG_SCANNING | IWX_FLAG_BGSCAN);
 	sc->sc_flags &= ~IWX_FLAG_MAC_ACTIVE;
@@ -8837,6 +8928,7 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 	task_set(&sc->init_task, iwx_init_task, sc);
 	task_set(&sc->newstate_task, iwx_newstate_task, sc);
 	task_set(&sc->ba_task, iwx_ba_task, sc);
+	task_set(&sc->setkey_task, iwx_setkey_task, sc);
 	task_set(&sc->mac_ctxt_task, iwx_mac_ctxt_task, sc);
 
 	ic->ic_node_alloc = iwx_node_alloc;

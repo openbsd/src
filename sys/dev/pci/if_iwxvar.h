@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxvar.h,v 1.15 2021/04/29 21:43:47 stsp Exp $	*/
+/*	$OpenBSD: if_iwxvar.h,v 1.16 2021/05/06 09:19:28 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -438,6 +438,12 @@ struct iwx_rxq_dup_data {
 	uint8_t last_sub_frame[IWX_MAX_TID_COUNT + 1];
 };
 
+struct iwx_setkey_task_arg {
+	int sta_id;
+	struct ieee80211_node *ni;
+	struct ieee80211_key *k;
+};
+
 struct iwx_softc {
 	struct device sc_dev;
 	struct ieee80211com sc_ic;
@@ -457,6 +463,20 @@ struct iwx_softc {
 	uint16_t		ba_ssn[IWX_MAX_TID_COUNT];
 	uint16_t		ba_winsize[IWX_MAX_TID_COUNT];
 	int			ba_timeout_val[IWX_MAX_TID_COUNT];
+
+	/* Task for setting encryption keys and its arguments. */
+	struct task		setkey_task;
+	/*
+	 * At present we need to process at most two keys at once:
+	 * Our pairwise key and a group key.
+	 * When hostap mode is implemented this array needs to grow or
+	 * it might become a bottleneck for associations that occur at
+	 * roughly the same time.
+	 */
+	struct iwx_setkey_task_arg setkey_arg[2];
+	int setkey_cur;
+	int setkey_tail;
+	int setkey_nkeys;
 
 	/* Task for ERP/HT prot/slot-time/EDCA updates. */
 	struct task		mac_ctxt_task;
@@ -608,6 +628,10 @@ struct iwx_node {
 	uint16_t in_color;
 
 	struct iwx_rxq_dup_data dup_data;
+
+	int in_flags;
+#define IWX_NODE_FLAG_HAVE_PAIRWISE_KEY	0x01
+#define IWX_NODE_FLAG_HAVE_GROUP_KEY	0x02
 };
 #define IWX_STATION_ID 0
 #define IWX_AUX_STA_ID 1
