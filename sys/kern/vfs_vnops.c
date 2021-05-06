@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.115 2021/04/28 09:53:53 claudio Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.116 2021/05/06 12:55:20 anton Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -657,7 +657,9 @@ vn_seek(struct file *fp, off_t *offset, int whence, struct proc *p)
 		newoff = fp->f_offset + *offset;
 		break;
 	case SEEK_END:
+		KERNEL_LOCK();
 		error = VOP_GETATTR(vp, &vattr, cred, p);
+		KERNEL_UNLOCK();
 		if (error)
 			goto out;
 		newoff = *offset + (off_t)vattr.va_size;
