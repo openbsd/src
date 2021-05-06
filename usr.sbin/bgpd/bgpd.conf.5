@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.209 2021/03/02 09:45:07 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.210 2021/05/06 09:21:35 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 2 2021 $
+.Dd $Mdocdate: May 6 2021 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -989,9 +989,6 @@ messages will be sent to the neighbor.
 If set to
 .Ic default-route ,
 only the default route will be announced to the neighbor.
-When
-.Ic export
-is modified the neighbor session needs to be reset to become active.
 .Pp
 .It Ic holdtime Ar seconds
 Set the holdtime in seconds.
