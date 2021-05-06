@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.279 2021/03/21 10:24:36 mpi Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.280 2021/05/06 09:33:22 mpi Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -124,7 +124,7 @@ const int sigprop[NSIG + 1] = {
 
 void setsigvec(struct proc *, int, struct sigaction *);
 
-void proc_stop(struct proc *p, int);
+int proc_stop(struct proc *p, int, int);
 void proc_stop_sweep(void *);
 void *proc_stop_si;
 
@@ -1061,8 +1061,7 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 			if (pr->ps_flags & PS_PPWAIT)
 				goto out;
 			atomic_clearbits_int(siglist, mask);
-			pr->ps_xsig = signum;
-			proc_stop(p, 0);
+			proc_stop(p, signum, 0);
 			goto out;
 		}
 		/*
@@ -1170,17 +1169,12 @@ out:
  *
  *	while (signum = cursig(curproc))
  *		postsig(signum);
- *
- * Assumes that if the P_SINTR flag is set, we're holding both the
- * kernel and scheduler locks.
  */
 int
 cursig(struct proc *p)
 {
 	struct process *pr = p->p_p;
 	int sigpending, signum, mask, prop;
-	int dolock = (p->p_flag & P_SINTR) == 0;
-	int s;
 
 	KERNEL_ASSERT_LOCKED();
 
@@ -1217,31 +1211,22 @@ cursig(struct proc *p)
 		 */
 		if (((pr->ps_flags & (PS_TRACED | PS_PPWAIT)) == PS_TRACED) &&
 		    signum != SIGKILL) {
-			pr->ps_xsig = signum;
 
 			single_thread_set(p, SINGLE_SUSPEND, 0);
-
-			if (dolock)
-				SCHED_LOCK(s);
-			proc_stop(p, 1);
-			if (dolock)
-				SCHED_UNLOCK(s);
-
+			signum = proc_stop(p, signum, 1);
 			single_thread_clear(p, 0);
 
 			/*
 			 * If we are no longer being traced, or the parent
 			 * didn't give us a signal, look for more signals.
 			 */
-			if ((pr->ps_flags & PS_TRACED) == 0 ||
-			    pr->ps_xsig == 0)
+			if ((pr->ps_flags & PS_TRACED) == 0 || signum == 0)
 				continue;
 
 			/*
 			 * If the new signal is being masked, look for other
 			 * signals.
 			 */
-			signum = pr->ps_xsig;
 			mask = sigmask(signum);
 			if ((p->p_sigmask & mask) != 0)
 				continue;
@@ -1286,12 +1271,7 @@ cursig(struct proc *p)
 		    		    (pr->ps_pgrp->pg_jobc == 0 &&
 				    prop & SA_TTYSTOP))
 					break;	/* == ignore */
-				pr->ps_xsig = signum;
-				if (dolock)
-					SCHED_LOCK(s);
-				proc_stop(p, 1);
-				if (dolock)
-					SCHED_UNLOCK(s);
+				proc_stop(p, signum, 1);
 				break;
 			} else if (prop & SA_IGNORE) {
 				/*
@@ -1331,15 +1311,21 @@ keep:
  * Put the argument process into the stopped state and notify the parent
  * via wakeup.  Signals are handled elsewhere.  The process must not be
  * on the run queue.
+ *
+ * Assumes that if the P_SINTR flag is set, we're holding the scheduler
+ * lock.
  */
-void
-proc_stop(struct proc *p, int sw)
+int
+proc_stop(struct proc *p, int signum, int sw)
 {
 	struct process *pr = p->p_p;
+	int dolock = (p->p_flag & P_SINTR) == 0;
+	int s;
 
-#ifdef MULTIPROCESSOR
-	SCHED_ASSERT_LOCKED();
-#endif
+	pr->ps_xsig = signum;
+
+	if (dolock)
+		SCHED_LOCK(s);
 
 	p->p_stat = SSTOP;
 	atomic_clearbits_int(&pr->ps_flags, PS_WAITED);
@@ -1352,6 +1338,11 @@ proc_stop(struct proc *p, int sw)
 	softintr_schedule(proc_stop_si);
 	if (sw)
 		mi_switch();
+
+	if (dolock)
+		SCHED_UNLOCK(s);
+
+	return pr->ps_xsig;
 }
 
 /*
@@ -1374,6 +1365,27 @@ proc_stop_sweep(void *v)
 			prsignal(pr->ps_pptr, SIGCHLD);
 		wakeup(pr->ps_pptr);
 	}
+}
+
+void
+proc_unstop(struct proc *p, int signum)
+{
+	struct process *pr = p->p_p;
+
+	KASSERT(signum >= 0);
+	KASSERT(p->p_stat == SSTOP);
+
+	if (signum != 0)
+		pr->ps_xsig = signum;
+
+	/*
+	 * If we're being traced (possibly because someone attached us
+	 * while we were stopped), check for a signal from the debugger.
+	 */
+	if ((pr->ps_flags & PS_TRACED) != 0 && pr->ps_xsig != 0)
+		atomic_setbits_int(&p->p_siglist, sigmask(pr->ps_xsig));
+
+	setrunnable(p);
 }
 
 /*
@@ -2042,7 +2054,7 @@ single_thread_set(struct proc *p, enum single_thread_mode mode, int wait)
 		if (q->p_flag & P_WEXIT) {
 			if (mode == SINGLE_EXIT) {
 				if (q->p_stat == SSTOP) {
-					setrunnable(q);
+					proc_unstop(q, 0);
 					atomic_inc_int(&pr->ps_singlecount);
 				}
 			}
@@ -2069,7 +2081,7 @@ single_thread_set(struct proc *p, enum single_thread_mode mode, int wait)
 			break;
 		case SSTOP:
 			if (mode == SINGLE_EXIT) {
-				setrunnable(q);
+				proc_unstop(q, 0);
 				atomic_inc_int(&pr->ps_singlecount);
 			}
 			break;
@@ -2138,7 +2150,7 @@ single_thread_clear(struct proc *p, int flag)
 		 */
 		if (q->p_stat == SSTOP && (q->p_flag & flag) == 0) {
 			if (q->p_wchan == 0)
-				setrunnable(q);
+				proc_unstop(q, 0);
 			else
 				q->p_stat = SSLEEP;
 		}
