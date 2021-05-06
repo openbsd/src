@@ -1,4 +1,4 @@
-/*      $OpenBSD: interpreter.c,v 1.25 2021/05/05 06:12:23 lum Exp $	*/
+/*      $OpenBSD: interpreter.c,v 1.26 2021/05/06 07:16:24 lum Exp $	*/
 /*
  * This file is in the public domain.
  *
@@ -156,6 +156,11 @@ foundparen(char *funstr, int llen)
 	p = funstr;
 
 	for (i = 0; i < llen; ++i, p++) {
+		if (pctr == 0 && *p != ' ' && *p != '\t' && *p != '(') {
+			if (*p == ')')
+				return(dobeep_msg("Extra ')' found"));
+			return(dobeep_msg("parse error"));
+		}
 		if (*p == '\\') {
 			esc = 1;
 		} else if (*p == '(') {
@@ -212,14 +217,14 @@ foundparen(char *funstr, int llen)
 			if (*p == '"') {
 				if (inquote == 0 && esc == 0) {
 					if (*prechr != ' ' && *prechr != '\t')
-						return(dobeep_msg("char err"));
+						return(dobeep_msg("parse err"));
 					inquote++;
 				} else if (inquote > 0 && esc == 1)
 					esc = 0;
 				else
 					inquote--;
 			} else if (*prechr == '"' && inquote == 0) {
-				return(dobeep_msg("char err"));
+				return(dobeep_msg("parse err"));
 			}
 			endp = NULL;
 		} else if (endp == NULL && (*p == ' ' || *p == '\t')) {
