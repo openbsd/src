@@ -1,4 +1,4 @@
-.\" $OpenBSD: athn.4,v 1.40 2020/07/13 16:35:52 stsp Exp $
+.\" $OpenBSD: athn.4,v 1.41 2021/05/06 14:40:35 stsp Exp $
 .\"
 .\" Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>.
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 13 2020 $
+.Dd $Mdocdate: May 6 2021 $
 .Dt ATHN 4
 .Os
 .Sh NAME
@@ -170,7 +170,8 @@ the driver supports powersave mode,
 which can be enabled via
 .Xr ifconfig 8 .
 In Host AP mode,
-the driver is compatible with clients using powersave.
+the driver is compatible with clients using powersave, except on AR7010
+and AR9287 USB devices.
 .Pp
 The
 .Nm
@@ -269,4 +270,7 @@ Additional work is required in
 .Xr ieee80211 9
 before those features can be supported.
 .Pp
-On USB devices, the firmware limits Host AP mode to 7 concurrent clients.
+On USB devices, Host AP mode is limited to 7 concurrent clients and does
+not support power saving.
+Clients attempting to use power saving mode may experience significant
+packet loss.
