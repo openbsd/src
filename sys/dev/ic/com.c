@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.173 2020/08/14 18:14:11 jcs Exp $	*/
+/*	$OpenBSD: com.c,v 1.174 2021/05/06 20:35:21 kettenis Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -1609,9 +1609,9 @@ com_write_reg(struct com_softc *sc, bus_size_t reg, uint8_t value)
 	reg <<= sc->sc_reg_shift;
 
 	if (sc->sc_reg_width == 4)
-		return bus_space_write_4(sc->sc_iot, sc->sc_ioh, reg, value);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, reg, value);
 	else
-		return bus_space_write_1(sc->sc_iot, sc->sc_ioh, reg, value);
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, reg, value);
 }
 
 #ifdef COM_CONSOLE
@@ -1636,9 +1636,9 @@ comcn_write_reg(bus_size_t reg, uint8_t value)
 	reg <<= comcons_reg_shift;
 
 	if (comcons_reg_width == 4)
-		return bus_space_write_4(comconsiot, comconsioh, reg, value);
+		bus_space_write_4(comconsiot, comconsioh, reg, value);
 	else
-		return bus_space_write_1(comconsiot, comconsioh, reg, value);
+		bus_space_write_1(comconsiot, comconsioh, reg, value);
 }
 
 #endif
