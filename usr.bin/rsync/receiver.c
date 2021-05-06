@@ -1,4 +1,4 @@
-/*	$Id: receiver.c,v 1.25 2020/11/24 16:54:44 claudio Exp $ */
+/*	$Id: receiver.c,v 1.26 2021/05/06 07:29:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -356,7 +356,7 @@ rsync_receiver(struct sess *sess, int fdin, int fdout, const char *root)
 		 */
 
 		if (sess->mplex_reads &&
-		    (POLLIN & pfd[PFD_SENDER_IN].revents)) {
+		    (pfd[PFD_SENDER_IN].revents & POLLIN)) {
 			if (!io_read_flush(sess, fdin)) {
 				ERRX1("io_read_flush");
 				goto out;
@@ -371,8 +371,8 @@ rsync_receiver(struct sess *sess, int fdin, int fdout, const char *root)
 		 * is read to mmap.
 		 */
 
-		if ((POLLIN & pfd[PFD_UPLOADER_IN].revents) ||
-		    (POLLOUT & pfd[PFD_SENDER_OUT].revents)) {
+		if ((pfd[PFD_UPLOADER_IN].revents & POLLIN) ||
+		    (pfd[PFD_SENDER_OUT].revents & POLLOUT)) {
 			c = rsync_uploader(ul,
 				&pfd[PFD_UPLOADER_IN].fd,
 				sess, &pfd[PFD_SENDER_OUT].fd);
@@ -391,8 +391,8 @@ rsync_receiver(struct sess *sess, int fdin, int fdout, const char *root)
 		 * messages, which will otherwise clog up the pipes.
 		 */
 
-		if ((POLLIN & pfd[PFD_SENDER_IN].revents) ||
-		    (POLLIN & pfd[PFD_DOWNLOADER_IN].revents)) {
+		if ((pfd[PFD_SENDER_IN].revents & POLLIN) ||
+		    (pfd[PFD_DOWNLOADER_IN].revents & POLLIN)) {
 			c = rsync_downloader(dl, sess,
 				&pfd[PFD_DOWNLOADER_IN].fd);
 			if (c < 0) {
@@ -421,10 +421,12 @@ rsync_receiver(struct sess *sess, int fdin, int fdout, const char *root)
 		if (!io_write_int(sess, fdout, -1)) {
 			ERRX1("io_write_int");
 			goto out;
-		} else if (!io_read_int(sess, fdin, &ioerror)) {
+		}
+		if (!io_read_int(sess, fdin, &ioerror)) {
 			ERRX1("io_read_int");
 			goto out;
-		} else if (ioerror != -1) {
+		}
+		if (ioerror != -1) {
 			ERRX("expected phase ack");
 			goto out;
 		}
@@ -445,7 +447,8 @@ rsync_receiver(struct sess *sess, int fdin, int fdout, const char *root)
 	if (!sess_stats_recv(sess, fdin)) {
 		ERRX1("sess_stats_recv");
 		goto out;
-	} else if (!io_write_int(sess, fdout, -1)) {
+	}
+	if (!io_write_int(sess, fdout, -1)) {
 		ERRX1("io_write_int");
 		goto out;
 	}
