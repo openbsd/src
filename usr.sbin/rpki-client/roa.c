@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.17 2021/03/29 06:50:44 tb Exp $ */
+/*	$OpenBSD: roa.c,v 1.18 2021/05/06 17:03:57 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -335,6 +335,9 @@ roa_parse(X509 **x509, const char *fn)
 	size_t		 cmsz;
 	unsigned char	*cms;
 	int		 rc = 0;
+	const ASN1_TIME	*at;
+	struct tm	 expires_tm;
+	time_t		 expires;
 
 	memset(&p, 0, sizeof(struct parse));
 	p.fn = fn;
@@ -358,6 +361,21 @@ roa_parse(X509 **x509, const char *fn)
 		goto out;
 	}
 
+	at = X509_get0_notAfter(*x509);
+	if (at == NULL) {
+		warnx("%s: X509_get0_notAfter failed", fn);
+		goto out;
+	}
+	if (ASN1_time_parse(at->data, at->length, &expires_tm, 0) == -1) {
+		warnx("%s: ASN1_time_parse failed", fn);
+		goto out;
+	}
+	if ((expires = mktime(&expires_tm)) == -1) {
+		err(1, "mktime failed");
+		goto out;
+	}
+	p.res->expires = expires;
+	
 	if (!roa_parse_econtent(cms, cmsz, &p))
 		goto out;
 
@@ -404,6 +422,7 @@ roa_buffer(struct ibuf *b, const struct roa *p)
 	io_simple_buffer(b, &p->valid, sizeof(int));
 	io_simple_buffer(b, &p->asid, sizeof(uint32_t));
 	io_simple_buffer(b, &p->ipsz, sizeof(size_t));
+	io_simple_buffer(b, &p->expires, sizeof(time_t));
 
 	for (i = 0; i < p->ipsz; i++) {
 		io_simple_buffer(b, &p->ips[i].afi, sizeof(enum afi));
@@ -436,6 +455,7 @@ roa_read(int fd)
 	io_simple_read(fd, &p->valid, sizeof(int));
 	io_simple_read(fd, &p->asid, sizeof(uint32_t));
 	io_simple_read(fd, &p->ipsz, sizeof(size_t));
+	io_simple_read(fd, &p->expires, sizeof(time_t));
 
 	if ((p->ips = calloc(p->ipsz, sizeof(struct roa_ip))) == NULL)
 		err(1, NULL);
@@ -466,8 +486,8 @@ void
 roa_insert_vrps(struct vrp_tree *tree, struct roa *roa, size_t *vrps,
     size_t *uniqs)
 {
-	struct vrp *v;
-	size_t i;
+	struct vrp	*v, *found;
+	size_t		 i;
 
 	for (i = 0; i < roa->ipsz; i++) {
 		if ((v = malloc(sizeof(*v))) == NULL)
@@ -478,10 +498,27 @@ roa_insert_vrps(struct vrp_tree *tree, struct roa *roa, size_t *vrps,
 		v->asid = roa->asid;
 		if ((v->tal = strdup(roa->tal)) == NULL)
 			err(1, NULL);
-		if (RB_INSERT(vrp_tree, tree, v) == NULL)
-			(*uniqs)++;
-		else /* already exists */
+		v->expires = roa->expires;
+
+		/*
+		 * Check if a similar VRP already exists in the tree.
+		 * If the found VRP expires sooner, update it to this
+		 * ROAs later expiry moment.
+		 */
+		if ((found = RB_INSERT(vrp_tree, tree, v)) != NULL) {
+			/* already exists */
+			if (found->expires < v->expires) {
+				/* update found with preferred data */
+				found->expires = roa->expires;
+				free(found->tal);
+				found->tal = v->tal;
+				v->tal = NULL;
+			}
+			free(v->tal);
 			free(v);
+		} else
+			(*uniqs)++;
+
 		(*vrps)++;
 	}
 }

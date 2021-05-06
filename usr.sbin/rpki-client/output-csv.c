@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-csv.c,v 1.9 2021/04/19 17:04:35 deraadt Exp $ */
+/*	$OpenBSD: output-csv.c,v 1.10 2021/05/06 17:03:57 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -24,15 +24,16 @@ output_csv(FILE *out, struct vrp_tree *vrps, struct stats *st)
 {
 	struct vrp	*v;
 
-	if (fprintf(out, "ASN,IP Prefix,Max Length,Trust Anchor\n") < 0)
+	if (fprintf(out, "ASN,IP Prefix,Max Length,Trust Anchor,Expires\n") < 0)
 		return -1;
 
 	RB_FOREACH(v, vrp_tree, vrps) {
 		char buf[64];
 
 		ip_addr_print(&v->addr, v->afi, buf, sizeof(buf));
-		if (fprintf(out, "AS%u,%s,%u,%s\n", v->asid, buf, v->maxlength,
-		    v->tal) < 0)
+
+		if (fprintf(out, "AS%u,%s,%u,%s,%lld\n", v->asid, buf,
+		    v->maxlength, v->tal, (long long)v->expires) < 0)
 			return -1;
 	}
 	return 0;

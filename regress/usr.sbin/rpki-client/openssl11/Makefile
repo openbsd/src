@@ -13,6 +13,7 @@ a_time_tm_gen.c: a_time_tm.c
 CLEANFILES += a_time_tm_gen.c a_time_tm_gen.c.tmp
 
 SRCS_test-mft =	a_time_tm_gen.c o_time.c
+SRCS_test-roa =	a_time_tm_gen.c o_time.c
 CFLAGS +=	-I${.CURDIR}/../../../../lib/libcrypto/
 
 .PATH:		${.CURDIR}/..

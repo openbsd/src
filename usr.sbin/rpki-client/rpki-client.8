@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.44 2021/05/05 17:24:00 job Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.45 2021/05/06 17:03:57 job Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 5 2021 $
+.Dd $Mdocdate: May 6 2021 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -66,9 +66,13 @@ with multiple interfaces.
 .It Fl c
 Create output in the file
 .Pa csv
-in the output directory as comma-separated values of the prefix in slash notation,
-the maximum prefix length, the autonomous system number, and an abbreviation
-for the trust anchor the entry is derived from.
+in the output directory as comma-separated values of the
+.Em Autonomous System ,
+the prefix in slash notation, the maximum prefix length, an abbreviation for
+the
+.Em Trust Anchor
+the entry is derived from, and the moment the VRP will expire derived from
+the chain of X.509 certificates and CRLs in seconds since the Epoch, UTC.
 .It Fl d Ar cachedir
 The directory where
 .Nm
@@ -90,7 +94,9 @@ flags and connect with rsync-protocol locations.
 Create output in the file
 .Pa json
 in the output directory as JSON object.
-This format is similar to that produced by other RPKI validators.
+See
+.Fl c
+for a description of the fields.
 .It Fl n
 Offline mode.
 Validate the contents of

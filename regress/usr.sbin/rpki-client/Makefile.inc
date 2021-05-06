@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.9 2021/04/01 06:47:18 claudio Exp $
+# $OpenBSD: Makefile.inc,v 1.10 2021/05/06 17:03:57 job Exp $
 
 .PATH:		${.CURDIR}/../../../../usr.sbin/rpki-client
 
@@ -40,14 +40,23 @@ mft_gen.c: mft.c
 	cat $> >> $@.tmp
 	mv -f $@.tmp $@
 
-CLEANFILES += mft_gen.c mft_gen.c.tmp
+# Provide missing prototypes for OpenSSL
+roa_gen.c: roa.c
+	echo '#include <openssl/asn1.h>\n' > $@.tmp
+	echo 'int ASN1_time_parse(const char *, size_t, struct tm *, int);' \
+		>> $@.tmp
+	echo 'int ASN1_time_tm_cmp(struct tm *, struct tm *);' >> $@.tmp
+	cat $> >> $@.tmp
+	mv -f $@.tmp $@
+
+CLEANFILES += mft_gen.c mft_gen.c.tmp roa_gen.c roa_gen.c.tmp
 
 SRCS_test-mft+=	test-mft.c mft_gen.c cms.c x509.c io.c log.c validate.c \
 		encoding.c dummy.c
 run-regress-test-mft: test-mft
 	./test-mft -v ${.CURDIR}/../mft/*.mft
 
-SRCS_test-roa=	test-roa.c roa.c cms.c x509.c ip.c as.c io.c log.c encoding.c
+SRCS_test-roa+=	test-roa.c roa_gen.c cms.c x509.c ip.c as.c io.c log.c encoding.c
 run-regress-test-roa: test-roa
 	./test-roa -v ${.CURDIR}/../roa/*.roa
 
