@@ -102,6 +102,7 @@ include "dev/i2c/files.i2c"
 # FDT now requires drm (which is part of pci)
 include "dev/mii/files.mii"
 include "dev/pci/files.pci"
+include "dev/sdmmc/files.sdmmc"
 
 # FDT support
 include "dev/ofw/files.ofw"
@@ -111,5 +112,3 @@ include "dev/fdt/files.fdt"
 
 # Machine-independent SCSI drivers
 include "scsi/files.scsi"
-
-# XXX ofwbus

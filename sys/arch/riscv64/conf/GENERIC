@@ -51,6 +51,9 @@ sfcc*		at fdt? early 1
 syscon*		at fdt? early 1
 gfrtc*		at fdt?
 
+dwmmc*		at fdt?
+sdmmc*		at dwmmc?
+
 scsibus*        at scsi?
 sd*		at scsibus?
 cd*		at scsibus?
