@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.126 2021/04/20 11:19:56 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.127 2021/05/06 09:18:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -135,7 +135,7 @@ again:
 		 * skip the filters.
 		 */
 		if (need_withdraw &&
-		    !(peer->conf.flags & PEERFLAG_EVALUATE_ALL)) {
+		    !(peer->flags & PEERFLAG_EVALUATE_ALL)) {
 			new = NULL;
 			goto again;
 		}
@@ -148,7 +148,7 @@ again:
 		    new->pt->prefixlen, prefix_vstate(new), &state) ==
 		    ACTION_DENY) {
 			rde_filterstate_clean(&state);
-			if (peer->conf.flags & PEERFLAG_EVALUATE_ALL)
+			if (peer->flags & PEERFLAG_EVALUATE_ALL)
 				new = LIST_NEXT(new, entry.list.rib);
 			else
 				new = NULL;
@@ -360,7 +360,7 @@ up_generate_attr(u_char *buf, int len, struct rde_peer *peer,
 			break;
 		case ATTR_ASPATH:
 			if (!peer->conf.ebgp ||
-			    peer->conf.flags & PEERFLAG_TRANS_AS)
+			    peer->flags & PEERFLAG_TRANS_AS)
 				pdata = aspath_prepend(asp->aspath,
 				    peer->conf.local_as, 0, &plen);
 			else
@@ -399,7 +399,7 @@ up_generate_attr(u_char *buf, int len, struct rde_peer *peer,
 			 */
 			if (asp->flags & F_ATTR_MED && (!peer->conf.ebgp ||
 			    asp->flags & F_ATTR_MED_ANNOUNCE ||
-			    peer->conf.flags & PEERFLAG_TRANS_AS)) {
+			    peer->flags & PEERFLAG_TRANS_AS)) {
 				tmp32 = htonl(asp->med);
 				if ((r = attr_write(buf + wlen, len,
 				    ATTR_OPTIONAL, ATTR_MED, &tmp32, 4)) == -1)
@@ -439,7 +439,7 @@ up_generate_attr(u_char *buf, int len, struct rde_peer *peer,
 		case ATTR_AS4_PATH:
 			if (neednewpath) {
 				if (!peer->conf.ebgp ||
-				    peer->conf.flags & PEERFLAG_TRANS_AS)
+				    peer->flags & PEERFLAG_TRANS_AS)
 					pdata = aspath_prepend(asp->aspath,
 					peer->conf.local_as, 0, &plen);
 				else

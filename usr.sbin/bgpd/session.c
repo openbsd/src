@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.413 2021/05/03 14:08:09 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.414 2021/05/06 09:18:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -2734,10 +2734,24 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 			}
 			break;
 		case IMSG_RECONF_DRAIN:
-			if (idx != PFD_PIPE_MAIN)
-				fatalx("reconf request not from parent");
-			imsg_compose(ibuf_main, IMSG_RECONF_DRAIN, 0, 0,
-			    -1, NULL, 0);
+			switch (idx) {
+			case PFD_PIPE_ROUTE:
+				if (nconf != NULL)
+					fatalx("got unexpected %s from RDE",
+					    "IMSG_RECONF_DONE");
+				imsg_compose(ibuf_main, IMSG_RECONF_DONE, 0, 0,
+				    -1, NULL, 0);
+				break;
+			case PFD_PIPE_MAIN:
+				if (nconf == NULL)
+					fatalx("got unexpected %s from parent",
+					    "IMSG_RECONF_DONE");
+				imsg_compose(ibuf_main, IMSG_RECONF_DRAIN, 0, 0,
+				    -1, NULL, 0);
+				break;
+			default:
+				fatalx("reconf request not from parent or RDE");
+			}
 			break;
 		case IMSG_RECONF_DONE:
 			if (idx != PFD_PIPE_MAIN)
@@ -2771,8 +2785,10 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 			nconf = NULL;
 			pending_reconf = 0;
 			log_info("SE reconfigured");
-			imsg_compose(ibuf_main, IMSG_RECONF_DONE, 0, 0,
-			    -1, NULL, 0);
+			/*
+			 * IMSG_RECONF_DONE is sent when the RDE drained
+			 * the peer config sent in merge_peers().
+			 */
 			break;
 		case IMSG_IFINFO:
 			if (idx != PFD_PIPE_MAIN)
@@ -3342,6 +3358,9 @@ merge_peers(struct bgpd_config *c, struct bgpd_config *nc)
 			}
 		}
 	}
+
+	if (imsg_rde(IMSG_RECONF_DRAIN, 0, NULL, 0) == -1)
+		fatalx("imsg_compose error");
 
 	/* pfkeys of new peers already loaded by the parent process */
 	RB_FOREACH_SAFE(np, peer_head, &nc->peers, next) {

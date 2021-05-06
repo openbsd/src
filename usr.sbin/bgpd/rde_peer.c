@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.6 2020/12/04 11:57:13 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.7 2021/05/06 09:18:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -170,6 +170,8 @@ peer_add(u_int32_t id, struct peer_config *p_conf)
 	if (peer->loc_rib_id == RIB_NOTFOUND)
 		fatalx("King Bula's new peer met an unknown RIB");
 	peer->state = PEER_NONE;
+	peer->export_type = peer->conf.export_type;
+	peer->flags = peer->conf.flags;
 	SIMPLEQ_INIT(&peer->imsg_queue);
 
 	head = PEER_HASH(id);
@@ -429,11 +431,11 @@ peer_stale(struct rde_peer *peer, u_int8_t aid)
 void
 peer_dump(struct rde_peer *peer, u_int8_t aid)
 {
-	if (peer->conf.export_type == EXPORT_NONE) {
+	if (peer->export_type == EXPORT_NONE) {
 		/* nothing to send apart from the marker */
 		if (peer->capa.grestart.restart)
 			prefix_add_eor(peer, aid);
-	} else if (peer->conf.export_type == EXPORT_DEFAULT_ROUTE) {
+	} else if (peer->export_type == EXPORT_DEFAULT_ROUTE) {
 		up_generate_default(out_rules, peer, aid);
 		rde_up_dump_done(peer, aid);
 	} else {

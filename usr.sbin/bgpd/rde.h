@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.237 2021/03/02 09:45:07 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.238 2021/05/06 09:18:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -103,12 +103,14 @@ struct rde_peer {
 	u_int32_t			 up_nlricnt;
 	u_int32_t			 up_wcnt;
 	enum peer_state			 state;
+	enum export_type		 export_type;
 	u_int16_t			 loc_rib_id;
 	u_int16_t			 short_as;
 	u_int16_t			 mrt_idx;
 	u_int8_t			 reconf_out;	/* out filter changed */
 	u_int8_t			 reconf_rib;	/* rib changed */
 	u_int8_t			 throttled;
+	u_int8_t			 flags;
 };
 
 #define AS_SET			1
