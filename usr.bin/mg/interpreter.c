@@ -1,4 +1,4 @@
-/*      $OpenBSD: interpreter.c,v 1.28 2021/05/07 07:42:20 lum Exp $	*/
+/*      $OpenBSD: interpreter.c,v 1.29 2021/05/07 08:29:30 lum Exp $	*/
 /*
  * This file is in the public domain.
  *
@@ -224,8 +224,12 @@ foundparen(char *funstr, int llen, int lnum)
 			}
 			esc = spc = 0;
 		} else if (*p != ' ' && *p != '\t') {
-			if (begp == NULL)
+			if (begp == NULL) {
 				begp = p;
+				if (*begp == '"')
+					return(dobeep_num("First char of "\
+					    "expression error line:", lnm));
+			}
 			if (*p == '"') {
 				if (inquote == 0 && esc == 0) {
 					if (*prechr != ' ' && *prechr != '\t')
