@@ -1,4 +1,4 @@
-/*      $OpenBSD: interpreter.c,v 1.27 2021/05/06 14:16:12 lum Exp $	*/
+/*      $OpenBSD: interpreter.c,v 1.28 2021/05/07 07:42:20 lum Exp $	*/
 /*
  * This file is in the public domain.
  *
@@ -72,16 +72,16 @@
 static int	 multiarg(char *, char *, int);
 static int	 isvar(char **, char **, int);
 /*static int	 dofunc(char **, char **, int);*/
-static int	 founddef(char *, int, int, int);
-static int	 foundlst(char *, int, int);
+static int	 founddef(char *, int, int, int, int);
+static int	 foundlst(char *, int, int, int);
 static int	 expandvals(char *, char *, char *);
 static int	 foundfun(char *, int);
 static int	 doregex(char *, char *);
 static void	 clearexp(void);
-static int	 parse(char *, const char *, const char *, int, int);
-static int	 parsdef(char *, const char *, const char *, int, int);
-static int	 parsval(char *, const char *, const char *, int, int);
-static int	 parsexp(char *, const char *, const char *, int, int);
+static int	 parse(char *, const char *, const char *, int, int, int);
+static int	 parsdef(char *, const char *, const char *, int, int, int);
+static int	 parsval(char *, const char *, const char *, int, int, int);
+static int	 parsexp(char *, const char *, const char *, int, int, int);
 
 static int	 exitinterpreter(char *, char *, int);
 
@@ -126,8 +126,9 @@ foundparen(char *funstr, int llen, int lnum)
 	const char	*lrp = NULL;
 	char		*p, *begp = NULL, *endp = NULL, *regs, *prechr;
 	int     	 i, ret, pctr, expctr, blkid, inquote, esc;
+	int		 elen, spc;
 
-	pctr = expctr = inquote = esc = 0;
+	pctr = expctr = inquote = esc = elen = spc = 0;
 	blkid = 1;
 	lnm = lnum;
 
@@ -167,6 +168,9 @@ foundparen(char *funstr, int llen, int lnum)
 				    lnm));
 			return(dobeep_num("Error line:", lnm));
 		}
+		if (begp != NULL)
+			elen++;
+
 		if (*p == '\\') {
 			esc = 1;
 		} else if (*p == '(') {
@@ -178,11 +182,12 @@ foundparen(char *funstr, int llen, int lnum)
 						*endp = '\0';
 
 					ret = parse(begp, lrp, &lp, blkid,
-					    ++expctr);
+					    ++expctr, elen - spc);
 					if (!ret) {
 						cleanup();
 						return(ret);
 					}
+					elen = 0;
 				}
 				lrp = &lp;
 				begp = endp = NULL;
@@ -192,7 +197,7 @@ foundparen(char *funstr, int llen, int lnum)
 				return(dobeep_num("Opening and closing quote "\
 				    "char error line:", lnm));
 			}
-			esc = 0;
+			esc = spc = 0;
 		} else if (*p == ')') {
 			if (inquote == 0) {
 				if (begp != NULL) {
@@ -202,11 +207,12 @@ foundparen(char *funstr, int llen, int lnum)
 						*endp = '\0';
 
 					ret = parse(begp, lrp, &rp, blkid,
-					    ++expctr);
+					    ++expctr, elen - spc);
 					if (!ret) {
 						cleanup();
 						return(ret);
 					}
+					elen = 0;
 				}
 				lrp = &rp;
 				begp = endp = NULL;
@@ -216,7 +222,7 @@ foundparen(char *funstr, int llen, int lnum)
 				return(dobeep_num("Opening and closing quote "\
 				    "char error line:", lnm));
 			}
-			esc = 0;
+			esc = spc = 0;
 		} else if (*p != ' ' && *p != '\t') {
 			if (begp == NULL)
 				begp = p;
@@ -234,13 +240,19 @@ foundparen(char *funstr, int llen, int lnum)
 				return(dobeep_num("Parse error line:", lnm));
 			}
 			endp = NULL;
+			spc = 0;
 		} else if (endp == NULL && (*p == ' ' || *p == '\t')) {
-			*p = ' ';
-			endp = p;
-			esc = 0;
-		} else if (*p == '\t') {
-			if (inquote == 0)
+			if (inquote == 0) {
 				*p = ' ';
+				endp = p;
+				spc++;
+			}
+			esc = 0;
+		} else if (*p == '\t' || *p == ' ') {
+			if (inquote == 0) {
+				*p = ' ';
+				spc++;
+			}
 			esc = 0;
 		}
 
@@ -267,17 +279,18 @@ foundparen(char *funstr, int llen, int lnum)
 
 
 static int
-parse(char *begp, const char *par1, const char *par2, int blkid, int expctr)
+parse(char *begp, const char *par1, const char *par2, int blkid, int expctr,
+    int elen)
 {
 	char    *regs;
 	int 	 ret = FALSE;
 
 	if (strncmp(begp, "define", 6) == 0) {
-		ret = parsdef(begp, par1, par2, blkid, expctr);
+		ret = parsdef(begp, par1, par2, blkid, expctr, elen);
 		if (ret == TRUE || ret == FALSE)
 			return (ret);
 	} else if (strncmp(begp, "list", 4) == 0)
-		return(parsval(begp, par1, par2, blkid, expctr));
+		return(parsval(begp, par1, par2, blkid, expctr, elen));
 
 	regs = "^exit$";
 	if (doregex(regs, begp))
@@ -298,11 +311,12 @@ parse(char *begp, const char *par1, const char *par2, int blkid, int expctr)
 		/* function name as 3rd param screws up multiarg. */
 		return(excline(begp, 0, 0));
 
-	return (parsexp(begp, par1, par2, blkid, expctr));
+	return (parsexp(begp, par1, par2, blkid, expctr, elen));
 }
 
 static int
-parsdef(char *begp, const char *par1, const char *par2, int blkid, int expctr)
+parsdef(char *begp, const char *par1, const char *par2, int blkid, int expctr,
+    int elen)
 {
 	char    *regs;
 
@@ -320,14 +334,14 @@ parsdef(char *begp, const char *par1, const char *par2, int blkid, int expctr)
         regs = "^define[ ]+[A-Za-z][.0-9_A-Z+a-z-]*[ ]+.*$";
         if (doregex(regs, begp)) {
 		if (par1 == &lp && par2 == &rp && expctr == 1)
-			return(founddef(begp, blkid, expctr, 1));
+			return(founddef(begp, blkid, expctr, 1, elen));
 		return(dobeep_num("Invalid use of define line:", lnm));
 	}
 	/* Does the line have  '(define i(' */
         regs = "^define[ ]+[A-Za-z][.0-9_A-Z+a-z-]*[ ]*$";
         if (doregex(regs, begp)) {
 		if (par1 == &lp && par2 == &lp && expctr == 1)
-                	return(founddef(begp, blkid, expctr, 0));
+                	return(founddef(begp, blkid, expctr, 0, elen));
 		return(dobeep_num("Invalid use of 'define' line:", lnm));
 	}
 	/* Does the line have  '(define (' */
@@ -342,7 +356,8 @@ parsdef(char *begp, const char *par1, const char *par2, int blkid, int expctr)
 }
 
 static int
-parsval(char *begp, const char *par1, const char *par2, int blkid, int expctr)
+parsval(char *begp, const char *par1, const char *par2, int blkid, int expctr,
+    int elen)
 {
 	char    *regs;
 
@@ -359,7 +374,7 @@ parsval(char *begp, const char *par1, const char *par2, int blkid, int expctr)
 			return(dobeep_num("list with no-where to go.", lnm));
 
 		if (par1 == &lp && expctr > 1)
-			return(foundlst(begp, blkid, expctr));
+			return(foundlst(begp, blkid, expctr, elen));
 
 		return(dobeep_num("Invalid use of list line:", lnm));
 	}
@@ -367,7 +382,8 @@ parsval(char *begp, const char *par1, const char *par2, int blkid, int expctr)
 }
 
 static int
-parsexp(char *begp, const char *par1, const char *par2, int blkid, int expctr)
+parsexp(char *begp, const char *par1, const char *par2, int blkid, int expctr,
+    int elen)
 {
 	struct expentry *e1 = NULL;
 	PF		 funcp;
@@ -529,7 +545,7 @@ foundfun(char *defstr, int expctr)
 }
 
 static int
-foundlst(char *defstr, int blkid, int expctr)
+foundlst(char *defstr, int blkid, int expctr, int elen)
 {
 	char		*p;
 
@@ -544,7 +560,7 @@ foundlst(char *defstr, int blkid, int expctr)
  * 'define' strings follow the regex in parsdef().
  */
 static int
-founddef(char *defstr, int blkid, int expctr, int hasval)
+founddef(char *defstr, int blkid, int expctr, int hasval, int elen)
 {
 	struct varentry *vt, *v1 = NULL;
 	char		*p, *vnamep, *vendp = NULL, *valp;
