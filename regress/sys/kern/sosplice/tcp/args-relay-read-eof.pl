@@ -12,8 +12,8 @@ our %args = (
     relay => {
 	nonblocking => 1,
 	readblocking => 1,
-	sndbuf => 2**12,
 	rcvbuf => 2**12,
+	sndbuf => 2**12,
     },
     server => {
 	# wait until all buffers are filled and client sends eof

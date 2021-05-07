@@ -8,6 +8,7 @@ our %args = (
 	alarm => 1,
 	func => sub { solingerout(@_); write_stream(@_); },
 	len => 2**19,
+	sndbuf => 2**15,
 	nocheck => 1,
     },
     relay => {
@@ -19,6 +20,7 @@ our %args = (
     },
     server => {
 	func => sub { sleep 3; read_stream(@_); },
+	rcvbuf => 2**15,
 	nocheck => 1,
     },
     len => 131072,

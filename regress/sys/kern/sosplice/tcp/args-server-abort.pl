@@ -24,6 +24,7 @@ our %args = (
     },
     server => {
 	alarm => 3,
+	rcvbuf => 2**15,
 	nocheck => 1,
     },
     noecho => 1,

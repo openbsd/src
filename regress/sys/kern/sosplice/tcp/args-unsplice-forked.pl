@@ -6,8 +6,9 @@ use POSIX;
 
 our %args = (
     client => {
-	len => 2**17,
 	func => sub { errignore(@_); write_stream(@_); },
+	len => 2**17,
+	sndbuf => 2**15,
     },
     relay => {
 	func => sub {
@@ -43,6 +44,7 @@ our %args = (
     },
     server => {
 	func => sub { sleep 3; read_stream(@_); },
+	rcvbuf => 2**15,
     },
     noecho => 1,
     nocheck => 1,
