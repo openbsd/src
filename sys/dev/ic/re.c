@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.209 2021/05/07 00:37:36 jsg Exp $	*/
+/*	$OpenBSD: re.c,v 1.210 2021/05/07 09:13:19 jsg Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1662,7 +1662,7 @@ re_encap(struct rl_softc *sc, unsigned int idx, struct mbuf *m)
 	pad = 0;
 
 	/*
-	 * With some of the RealTek chips, using the checksum offload
+	 * With some of the Realtek chips, using the checksum offload
 	 * support in conjunction with the autopadding feature results
 	 * in the transmission of corrupt frames. For example, if we
 	 * need to send a really small IP fragment that's less than 60
