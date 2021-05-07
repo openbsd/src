@@ -1,4 +1,4 @@
-/*	$OpenBSD: printf.c,v 1.26 2016/11/18 15:53:16 schwarze Exp $	*/
+/*	$OpenBSD: printf.c,v 1.27 2021/05/07 14:31:27 martijn Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -275,7 +275,7 @@ static int
 print_escape(const char *str)
 {
 	const char *start = str;
-	int value;
+	int value = 0;
 	int c;
 
 	str++;
@@ -283,7 +283,7 @@ print_escape(const char *str)
 	switch (*str) {
 	case '0': case '1': case '2': case '3':
 	case '4': case '5': case '6': case '7':
-		for (c = 3, value = 0; c-- && isodigit(*str); str++) {
+		for (c = 3; c-- && isodigit(*str); str++) {
 			value <<= 3;
 			value += octtobin(*str);
 		}
@@ -293,13 +293,9 @@ print_escape(const char *str)
 
 	case 'x':
 		str++;
-		for (value = 0; isxdigit((unsigned char)*str); str++) {
+		for (c = 2; c-- && isxdigit((unsigned char)*str); str++) {
 			value <<= 4;
 			value += hextobin(*str);
-		}
-		if (value > UCHAR_MAX) {
-			warnx ("escape sequence out of range for character");
-			rval = 1;
 		}
 		putchar (value);
 		return str - start - 1;
