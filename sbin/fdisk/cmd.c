@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.100 2021/05/02 20:07:14 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.101 2021/05/07 22:15:13 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -167,7 +167,7 @@ Xgedit(char *args)
 	const char *errstr;
 	struct gpt_partition *gg;
 	char *name;
-	u_int16_t *utf;
+	uint16_t *utf;
 	int i, pn;
 
 	pn = strtonum(args, 0, NGPTPARTITIONS - 1, &errstr);

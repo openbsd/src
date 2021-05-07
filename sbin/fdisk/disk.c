@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.56 2018/04/26 15:55:14 guenther Exp $	*/
+/*	$OpenBSD: disk.c,v 1.57 2021/05/07 22:15:13 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -41,7 +41,7 @@ void
 DISK_open(int rw)
 {
 	struct stat st;
-	u_int64_t sz, spc;
+	uint64_t sz, spc;
 
 	disk.fd = opendev(disk.name, rw ? O_RDWR : O_RDONLY, OPENDEV_PART,
 	    NULL);
@@ -63,7 +63,7 @@ DISK_open(int rw)
 			disk.heads = dl.d_ntracks;
 			disk.sectors = dl.d_nsectors;
 			/* MBR handles only first UINT32_MAX sectors. */
-			spc = (u_int64_t)disk.heads * disk.sectors;
+			spc = (uint64_t)disk.heads * disk.sectors;
 			sz = DL_GETDSIZE(&dl);
 			if (sz > UINT32_MAX) {
 				disk.cylinders = UINT32_MAX / spc;

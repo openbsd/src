@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.67 2016/09/01 16:17:46 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.68 2021/05/07 22:15:13 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -34,7 +34,7 @@
 
 struct mbr initial_mbr;
 
-static int gpt_chk_mbr(struct dos_partition *, u_int64_t);
+static int gpt_chk_mbr(struct dos_partition *, uint64_t);
 
 int
 MBR_protective_mbr(struct mbr *mbr)
@@ -74,8 +74,8 @@ MBR_init_GPT(struct mbr *mbr)
 void
 MBR_init(struct mbr *mbr)
 {
-	extern u_int32_t b_arg;
-	u_int64_t adj;
+	extern uint32_t b_arg;
+	uint64_t adj;
 	daddr_t i;
 
 	/*
@@ -299,11 +299,11 @@ MBR_zapgpt(struct dos_mbr *dos_mbr, uint64_t lastsec)
  * NOTE: MS always uses a size of UINT32_MAX for the EFI partition!**
  */
 int
-gpt_chk_mbr(struct dos_partition *dp, u_int64_t dsize)
+gpt_chk_mbr(struct dos_partition *dp, uint64_t dsize)
 {
 	struct dos_partition *dp2;
 	int efi, found, i;
-	u_int32_t psize;
+	uint32_t psize;
 
 	found = efi = 0;
 	for (dp2=dp, i=0; i < NDOSPART; i++, dp2++) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.77 2017/03/26 00:22:49 sobrado Exp $	*/
+/*	$OpenBSD: part.c,v 1.78 2021/05/07 22:15:13 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -175,7 +175,7 @@ PRT_parse(struct dos_partition *prt, off_t offset, off_t reloff,
     struct prt *partn)
 {
 	off_t off;
-	u_int32_t t;
+	uint32_t t;
 
 	partn->flag = prt->dp_flag;
 	partn->shead = prt->dp_shd;
@@ -197,9 +197,9 @@ PRT_parse(struct dos_partition *prt, off_t offset, off_t reloff,
 	partn->bs = letoh32(prt->dp_start) + off;
 	partn->ns = letoh32(prt->dp_size);
 #else
-	memcpy(&t, &prt->dp_start, sizeof(u_int32_t));
+	memcpy(&t, &prt->dp_start, sizeof(uint32_t));
 	partn->bs = letoh32(t) + off;
-	memcpy(&t, &prt->dp_size, sizeof(u_int32_t));
+	memcpy(&t, &prt->dp_size, sizeof(uint32_t));
 	partn->ns = letoh32(t);
 #endif
 
@@ -226,8 +226,8 @@ PRT_make(struct prt *partn, off_t offset, off_t reloff,
     struct dos_partition *prt)
 {
 	off_t off;
-	u_int32_t ecsave, scsave;
-	u_int64_t t;
+	uint32_t ecsave, scsave;
+	uint64_t t;
 
 	/* Save (and restore below) cylinder info we may fiddle with. */
 	scsave = partn->scyl;
@@ -259,9 +259,9 @@ PRT_make(struct prt *partn, off_t offset, off_t reloff,
 	prt->dp_typ = partn->id & 0xFF;
 
 	t = htole64(partn->bs - off);
-	memcpy(&prt->dp_start, &t, sizeof(u_int32_t));
+	memcpy(&prt->dp_start, &t, sizeof(uint32_t));
 	t = htole64(partn->ns);
-	memcpy(&prt->dp_size, &t, sizeof(u_int32_t));
+	memcpy(&prt->dp_size, &t, sizeof(uint32_t));
 
 	partn->scyl = scsave;
 	partn->ecyl = ecsave;
@@ -300,9 +300,9 @@ PRT_print(int num, struct prt *partn, char *units)
 void
 PRT_fix_BN(struct prt *part, int pn)
 {
-	u_int32_t spt, tpc, spc;
-	u_int32_t start = 0;
-	u_int32_t end = 0;
+	uint32_t spt, tpc, spc;
+	uint32_t start = 0;
+	uint32_t end = 0;
 
 	/* Zero out entry if not used */
 	if (part->id == DOSPTYP_UNUSED) {
@@ -334,9 +334,9 @@ PRT_fix_BN(struct prt *part, int pn)
 void
 PRT_fix_CHS(struct prt *part)
 {
-	u_int32_t spt, tpc, spc;
-	u_int32_t start, end, size;
-	u_int32_t cyl, head, sect;
+	uint32_t spt, tpc, spc;
+	uint32_t start, end, size;
+	uint32_t cyl, head, sect;
 
 	/* Zero out entry if not used */
 	if (part->id == DOSPTYP_UNUSED || part->ns == 0) {

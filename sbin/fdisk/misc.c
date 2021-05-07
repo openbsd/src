@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.64 2021/01/31 14:24:47 naddy Exp $	*/
+/*	$OpenBSD: misc.c,v 1.65 2021/05/07 22:15:13 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -200,8 +200,8 @@ ask_yn(const char *str)
 /*
  * adapted from sbin/disklabel/editor.c
  */
-u_int64_t
-getuint64(char *prompt, u_int64_t oval, u_int64_t minval, u_int64_t maxval)
+uint64_t
+getuint64(char *prompt, uint64_t oval, uint64_t minval, uint64_t maxval)
 {
 	const int secsize = unit_types[SECTORS].conversion;
 	char buf[BUFSIZ], *endptr, *p, operator = '\0';
@@ -318,7 +318,7 @@ getuint64(char *prompt, u_int64_t oval, u_int64_t minval, u_int64_t maxval)
 		}
 	} while (1);
 
-	return((u_int64_t)d);
+	return((uint64_t)d);
 }
 
 char *
@@ -348,11 +348,11 @@ ask_string(const char *prompt, const char *oval)
  *  in Hacker's Delight), the Hacker's Assistant, and any code submitted
  *  by readers. Submitters implicitly agree to this."
  */
-u_int32_t
-crc32(const u_char *buf, const u_int32_t size)
+uint32_t
+crc32(const u_char *buf, const uint32_t size)
 {
 	int j;
-	u_int32_t i, byte, crc, mask;
+	uint32_t i, byte, crc, mask;
 
 	crc = 0xFFFFFFFF;
 
@@ -369,7 +369,7 @@ crc32(const u_char *buf, const u_int32_t size)
 }
 
 char *
-utf16le_to_string(u_int16_t *utf)
+utf16le_to_string(uint16_t *utf)
 {
 	static char name[GPTPARTNAMESIZE];
 	int i;
@@ -385,10 +385,10 @@ utf16le_to_string(u_int16_t *utf)
 	return (name);
 }
 
-u_int16_t *
+uint16_t *
 string_to_utf16le(char *ch)
 {
-	static u_int16_t utf[GPTPARTNAMESIZE];
+	static uint16_t utf[GPTPARTNAMESIZE];
 	int i;
 
 	for (i = 0; i < GPTPARTNAMESIZE; i++) {

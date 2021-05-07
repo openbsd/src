@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.104 2021/05/02 20:07:14 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.105 2021/05/07 22:15:13 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -41,7 +41,7 @@ static unsigned char builtin_mbr[] = {
 #include "mbrcode.h"
 };
 
-u_int32_t b_arg;
+uint32_t b_arg;
 int	y_flag;
 
 static void
@@ -75,7 +75,7 @@ main(int argc, char *argv[])
 	int e_flag = 0, g_flag = 0, i_flag = 0, u_flag = 0;
 	int verbosity = 0;
 	int c_arg = 0, h_arg = 0, s_arg = 0;
-	u_int32_t l_arg = 0;
+	uint32_t l_arg = 0;
 	char *query;
 #ifdef HAS_MBR
 	char *mbrfile = _PATH_MBR;

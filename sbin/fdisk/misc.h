@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.h,v 1.33 2015/11/21 16:45:41 krw Exp $	*/
+/*	$OpenBSD: misc.h,v 1.34 2021/05/07 22:15:13 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -35,9 +35,9 @@ int ask_num(const char *, int, int, int);
 int ask_pid(int, struct uuid *);
 char *ask_string(const char *, const char *);
 int ask_yn(const char *);
-u_int64_t getuint64(char *, u_int64_t, u_int64_t, u_int64_t);
-u_int32_t crc32(const u_char *, const u_int32_t);
-char *utf16le_to_string(u_int16_t *);
-u_int16_t *string_to_utf16le(char *);
+uint64_t getuint64(char *, uint64_t, uint64_t, uint64_t);
+uint32_t crc32(const u_char *, const uint32_t);
+char *utf16le_to_string(uint16_t *);
+uint16_t *string_to_utf16le(char *);
 
 #endif /* _MISC_H */
