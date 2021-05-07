@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxipio.c,v 1.12 2020/03/29 09:35:10 kettenis Exp $	*/
+/*	$OpenBSD: sxipio.c,v 1.13 2021/05/07 01:54:17 jsg Exp $	*/
 /*
  * Copyright (c) 2010 Miodrag Vallat.
  * Copyright (c) 2013 Artturi Alm
@@ -392,7 +392,7 @@ sxipio_config_pin(void *cookie, uint32_t *cells, int config)
 	uint32_t pin = cells[1];
 	int mux, off;
 
-	if (port > SXIPIO_NPORT || pin > 32)
+	if (port > SXIPIO_NPORT || pin >= 32)
 		return;
 
 	mux = (config & GPIO_CONFIG_OUTPUT) ? 1 : 0;
@@ -410,7 +410,7 @@ sxipio_get_pin(void *cookie, uint32_t *cells)
 	uint32_t reg;
 	int val;
 
-	if (port > SXIPIO_NPORT || pin > 32)
+	if (port > SXIPIO_NPORT || pin >= 32)
 		return 0;
 
 	reg = SXIREAD4(sc, SXIPIO_DAT(port));
@@ -430,7 +430,7 @@ sxipio_set_pin(void *cookie, uint32_t *cells, int val)
 	uint32_t flags = cells[2];
 	uint32_t reg;
 
-	if (port > SXIPIO_NPORT || pin > 32)
+	if (port > SXIPIO_NPORT || pin >= 32)
 		return;
 
 	reg = SXIREAD4(sc, SXIPIO_DAT(port));

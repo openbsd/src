@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvgpio.c,v 1.1 2018/03/20 21:23:38 kettenis Exp $	*/
+/*	$OpenBSD: mvgpio.c,v 1.2 2021/05/07 01:54:17 jsg Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -103,7 +103,7 @@ mvgpio_config_pin(void *cookie, uint32_t *cells, int config)
 	struct mvgpio_softc *sc = cookie;
 	uint32_t pin = cells[0];
 
-	if (pin > 32)
+	if (pin >= 32)
 		return;
 
 	if (config & GPIO_CONFIG_OUTPUT)
@@ -121,7 +121,7 @@ mvgpio_get_pin(void *cookie, uint32_t *cells)
 	uint32_t reg;
 	int val;
 
-	if (pin > 32)
+	if (pin >= 32)
 		return 0;
 
 	reg = HREAD4(sc, GPIO_DIN);
@@ -140,7 +140,7 @@ mvgpio_set_pin(void *cookie, uint32_t *cells, int val)
 	uint32_t pin = cells[0];
 	uint32_t flags = cells[1];
 
-	if (pin > 32)
+	if (pin >= 32)
 		return;
 
 	if (flags & GPIO_ACTIVE_LOW)

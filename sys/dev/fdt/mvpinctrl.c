@@ -1,4 +1,4 @@
-/* $OpenBSD: mvpinctrl.c,v 1.7 2020/05/22 10:06:59 patrick Exp $ */
+/* $OpenBSD: mvpinctrl.c,v 1.8 2021/05/07 01:54:17 jsg Exp $ */
 /*
  * Copyright (c) 2013,2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -278,7 +278,7 @@ mvpinctrl_config_pin(void *cookie, uint32_t *cells, int config)
 	struct mvpinctrl_softc *sc = cookie;
 	uint32_t pin = cells[0];
 
-	if (pin > 32)
+	if (pin >= 32)
 		return;
 
 	if (config & GPIO_CONFIG_OUTPUT)
@@ -296,7 +296,7 @@ mvpinctrl_get_pin(void *cookie, uint32_t *cells)
 	uint32_t reg;
 	int val;
 
-	if (pin > 32)
+	if (pin >= 32)
 		return 0;
 
 	reg = HREAD4(sc, GPIO_INPUT);
@@ -314,7 +314,7 @@ mvpinctrl_set_pin(void *cookie, uint32_t *cells, int val)
 	uint32_t pin = cells[0];
 	uint32_t flags = cells[1];
 
-	if (pin > 32)
+	if (pin >= 32)
 		return;
 
 	if (flags & GPIO_ACTIVE_LOW)

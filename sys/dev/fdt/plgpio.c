@@ -1,4 +1,4 @@
-/*	$OpenBSD: plgpio.c,v 1.1 2018/08/26 16:52:16 kettenis Exp $	*/
+/*	$OpenBSD: plgpio.c,v 1.2 2021/05/07 01:54:17 jsg Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -106,7 +106,7 @@ plgpio_config_pin(void *cookie, uint32_t *cells, int config)
 	struct plgpio_softc *sc = cookie;
 	uint32_t pin = cells[0];
 
-	if (pin > 8)
+	if (pin >= 8)
 		return;
 
 	if (config & GPIO_CONFIG_OUTPUT)
@@ -124,7 +124,7 @@ plgpio_get_pin(void *cookie, uint32_t *cells)
 	uint32_t reg;
 	int val;
 
-	if (pin > 8)
+	if (pin >= 8)
 		return 0;
 
 	reg = HREAD1(sc, GPIODATA(pin));
@@ -141,7 +141,7 @@ plgpio_set_pin(void *cookie, uint32_t *cells, int val)
 	uint32_t pin = cells[0];
 	uint32_t flags = cells[1];
 
-	if (pin > 8)
+	if (pin >= 8)
 		return;
 
 	if (flags & GPIO_ACTIVE_LOW)
