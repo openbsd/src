@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.208 2020/12/12 11:48:52 jan Exp $	*/
+/*	$OpenBSD: re.c,v 1.209 2021/05/07 00:37:36 jsg Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -248,6 +248,7 @@ static const struct re_revision {
 	{ RL_HWREV_8168E,       "RTL8168E/8111E" },
 	{ RL_HWREV_8168E_VL,	"RTL8168E/8111E-VL" },
 	{ RL_HWREV_8168EP,	"RTL8168EP/8111EP" },
+	{ RL_HWREV_8168FP,	"RTL8168FP/8111FP" },
 	{ RL_HWREV_8169,	"RTL8169" },
 	{ RL_HWREV_8169_8110SB,	"RTL8169/8110SB" },
 	{ RL_HWREV_8169_8110SBL, "RTL8169SBL" },
@@ -754,6 +755,7 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 		sc->rl_max_mtu = RL_JUMBO_MTU_9K;
 		break;
 	case RL_HWREV_8168EP:
+	case RL_HWREV_8168FP:
 	case RL_HWREV_8168G:
 	case RL_HWREV_8168GU:
 	case RL_HWREV_8168H:
