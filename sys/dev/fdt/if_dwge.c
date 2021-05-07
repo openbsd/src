@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwge.c,v 1.8 2020/12/17 19:50:06 kettenis Exp $	*/
+/*	$OpenBSD: if_dwge.c,v 1.9 2021/05/07 19:03:01 kettenis Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -89,6 +89,8 @@
 #define  GMAC_GMII_ADDR_GW		(1 << 1)
 #define  GMAC_GMII_ADDR_GB		(1 << 0)
 #define GMAC_GMII_DATA		0x0014
+#define GMAC_VERSION		0x0020
+#define  GMAC_VERSION_SNPS_MASK		0xff
 #define GMAC_INT_MASK		0x003c
 #define  GMAC_INT_MASK_PIM		(1 << 3)
 #define  GMAC_INT_MASK_RIM		(1 << 0)
@@ -131,6 +133,18 @@
 #define  GMAC_INT_ENA_RIE		(1 << 6)
 #define  GMAC_INT_ENA_TUE		(1 << 2)
 #define  GMAC_INT_ENA_TIE		(1 << 0)
+#define GMAC_AXI_BUS_MODE	0x1028
+#define  GMAC_AXI_BUS_MODE_WR_OSR_LMT_MASK	(0xf << 20)
+#define  GMAC_AXI_BUS_MODE_WR_OSR_LMT_SHIFT	20
+#define  GMAC_AXI_BUS_MODE_RD_OSR_LMT_MASK	(0xf << 16)
+#define  GMAC_AXI_BUS_MODE_RD_OSR_LMT_SHIFT	16
+#define  GMAC_AXI_BUS_MODE_BLEN_256		(1 << 7)
+#define  GMAC_AXI_BUS_MODE_BLEN_128		(1 << 6)
+#define  GMAC_AXI_BUS_MODE_BLEN_64		(1 << 5)
+#define  GMAC_AXI_BUS_MODE_BLEN_32		(1 << 4)
+#define  GMAC_AXI_BUS_MODE_BLEN_16		(1 << 3)
+#define  GMAC_AXI_BUS_MODE_BLEN_8		(1 << 2)
+#define  GMAC_AXI_BUS_MODE_BLEN_4		(1 << 1)
 
 /*
  * DWGE descriptors.
@@ -319,7 +333,8 @@ dwge_match(struct device *parent, void *cfdata, void *aux)
 	    OF_is_compatible(faa->fa_node, "rockchip,rk3288-gmac") ||
 	    OF_is_compatible(faa->fa_node, "rockchip,rk3308-mac") ||
 	    OF_is_compatible(faa->fa_node, "rockchip,rk3328-gmac") ||
-	    OF_is_compatible(faa->fa_node, "rockchip,rk3399-gmac"));
+	    OF_is_compatible(faa->fa_node, "rockchip,rk3399-gmac") ||
+	    OF_is_compatible(faa->fa_node, "snps,dwmac"));
 }
 
 void
@@ -329,7 +344,9 @@ dwge_attach(struct device *parent, struct device *self, void *aux)
 	struct fdt_attach_args *faa = aux;
 	struct ifnet *ifp;
 	uint32_t phy, phy_supply;
+	uint32_t axi_config;
 	uint32_t mode, pbl;
+	uint32_t version;
 	int node;
 
 	sc->sc_node = faa->fa_node;
@@ -358,6 +375,9 @@ dwge_attach(struct device *parent, struct device *self, void *aux)
 	reset_deassert(faa->fa_node, "stmmaceth");
 	delay(5000);
 
+	version = dwge_read(sc, GMAC_VERSION);
+	printf(": rev 0x%02x", version & GMAC_VERSION_SNPS_MASK);
+
 	/* Power up PHY. */
 	phy_supply = OF_getpropint(faa->fa_node, "phy-supply", 0);
 	if (phy_supply)
@@ -383,7 +403,7 @@ dwge_attach(struct device *parent, struct device *self, void *aux)
 	if (OF_getprop(faa->fa_node, "local-mac-address",
 	    &sc->sc_lladdr, ETHER_ADDR_LEN) != ETHER_ADDR_LEN)
 		dwge_lladdr_read(sc, sc->sc_lladdr);
-	printf(": address %s\n", ether_sprintf(sc->sc_lladdr));
+	printf(", address %s\n", ether_sprintf(sc->sc_lladdr));
 
 	timeout_set(&sc->sc_tick, dwge_tick, sc);
 	timeout_set(&sc->sc_rxto, dwge_rxtick, sc);
@@ -418,7 +438,7 @@ dwge_attach(struct device *parent, struct device *self, void *aux)
 	else if (OF_is_compatible(faa->fa_node, "rockchip,rk3399-gmac"))
 		dwge_setup_rockchip(sc);
 
-	if (OF_getproplen(faa->fa_node, "snps,force_thresh_dma_mode") == 0)
+	if (OF_getpropbool(faa->fa_node, "snps,force_thresh_dma_mode"))
 		sc->sc_force_thresh_dma_mode = 1;
 
 	dwge_reset(sc);
@@ -429,14 +449,63 @@ dwge_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Configure DMA engine. */
 	mode = dwge_read(sc, GMAC_BUS_MODE);
-	mode |= GMAC_BUS_MODE_8XPBL | GMAC_BUS_MODE_USP;
+	mode |= GMAC_BUS_MODE_USP;
+	if (!OF_getpropbool(faa->fa_node, "snps,no-pbl-x8"))
+		mode |= GMAC_BUS_MODE_8XPBL;
 	mode &= ~(GMAC_BUS_MODE_RPBL_MASK | GMAC_BUS_MODE_PBL_MASK);
 	pbl = OF_getpropint(faa->fa_node, "snps,pbl", 8);
 	mode |= pbl << GMAC_BUS_MODE_RPBL_SHIFT;
 	mode |= pbl << GMAC_BUS_MODE_PBL_SHIFT;
-	if (OF_getproplen(faa->fa_node, "snps,fixed-burst") == 0)
+	if (OF_getpropbool(faa->fa_node, "snps,fixed-burst"))
 		mode |= GMAC_BUS_MODE_FB;
 	dwge_write(sc, GMAC_BUS_MODE, mode);
+
+	/* Configure AXI master. */
+	axi_config = OF_getpropint(faa->fa_node, "snps,axi-config", 0);
+	node = OF_getnodebyphandle(axi_config);
+	if (node) {
+		uint32_t blen[7] = { 0 };
+		uint32_t osr_lmt;
+		int i;
+
+		mode = dwge_read(sc, GMAC_AXI_BUS_MODE);
+
+		osr_lmt = OF_getpropint(node, "snps,wr_osr_lmt", 1);
+		mode &= ~GMAC_AXI_BUS_MODE_WR_OSR_LMT_MASK;
+		mode |= (osr_lmt << GMAC_AXI_BUS_MODE_WR_OSR_LMT_SHIFT);
+		osr_lmt = OF_getpropint(node, "snps,rd_osr_lmt", 1);
+		mode &= ~GMAC_AXI_BUS_MODE_RD_OSR_LMT_MASK;
+		mode |= (osr_lmt << GMAC_AXI_BUS_MODE_RD_OSR_LMT_SHIFT);
+
+		OF_getpropintarray(node, "snps,blen", blen, sizeof(blen));
+		for (i = 0; i < nitems(blen); i++) {
+			switch (blen[i]) {
+			case 256:
+				mode |= GMAC_AXI_BUS_MODE_BLEN_256;
+				break;
+			case 128:
+				mode |= GMAC_AXI_BUS_MODE_BLEN_128;
+				break;
+			case 64:
+				mode |= GMAC_AXI_BUS_MODE_BLEN_64;
+				break;
+			case 32:
+				mode |= GMAC_AXI_BUS_MODE_BLEN_32;
+				break;
+			case 16:
+				mode |= GMAC_AXI_BUS_MODE_BLEN_16;
+				break;
+			case 8:
+				mode |= GMAC_AXI_BUS_MODE_BLEN_8;
+				break;
+			case 4:
+				mode |= GMAC_AXI_BUS_MODE_BLEN_4;
+				break;
+			}
+		}
+
+		dwge_write(sc, GMAC_AXI_BUS_MODE, mode);
+	}
 
 	mii_attach(self, &sc->sc_mii, 0xffffffff, sc->sc_phyloc,
 	    (sc->sc_phyloc == MII_PHY_ANY) ? 0 : MII_OFFSET_ANY, 0);
@@ -477,7 +546,7 @@ dwge_reset_phy(struct dwge_softc *sc)
 
 	/* Gather information. */
 	OF_getpropintarray(sc->sc_node, "snps,reset-gpio", gpio, len);
-	if (OF_getproplen(sc->sc_node, "snps-reset-active-low") == 0)
+	if (OF_getpropbool(sc->sc_node, "snps-reset-active-low"))
 		active = 0;
 	delays[0] = delays[1] = delays[2] = 0;
 	OF_getpropintarray(sc->sc_node, "snps,reset-delays-us", delays,
