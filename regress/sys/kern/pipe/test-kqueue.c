@@ -1,4 +1,4 @@
-/*	$OpenBSD: test-kqueue.c,v 1.2 2019/12/24 11:42:34 anton Exp $	*/
+/*	$OpenBSD: test-kqueue.c,v 1.3 2021/05/08 06:53:19 anton Exp $	*/
 
 /*
  * Copyright (c) 2019 Anton Lindqvist <anton@openbsd.org>
@@ -21,6 +21,8 @@
 #include <sys/time.h>
 
 #include <err.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <pthread.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -48,7 +50,7 @@ struct context {
 	pthread_mutex_t c_mtx;
 };
 
-static void ctx_setup(struct context *, enum kqueue_mode);
+static void ctx_setup(struct context *, enum kqueue_mode, int);
 static void ctx_teardown(struct context *);
 static int ctx_thread_alive(struct context *);
 static void ctx_thread_start(struct context *);
@@ -65,16 +67,18 @@ test_kqueue_read(void)
 {
 	struct context ctx;
 
-	ctx_setup(&ctx, KQUEUE_READ);
+	ctx_setup(&ctx, KQUEUE_READ, O_NONBLOCK);
 	ctx_thread_start(&ctx);
 
 	while (ctx_thread_alive(&ctx)) {
 		ssize_t n;
-		unsigned char c = 'r';
 
-		n = write(ctx.c_pipe[1], &c, 1);
-		if (n == -1)
+		n = write(ctx.c_pipe[1], &ctx.c_buf[0], 1);
+		if (n == -1) {
+			if (errno == EAGAIN)
+				continue;
 			err(1, "write");
+		}
 		if (n != 1)
 			errx(1, "write: %ld != 1", n);
 	}
@@ -92,7 +96,7 @@ test_kqueue_read_eof(void)
 {
 	struct context ctx;
 
-	ctx_setup(&ctx, KQUEUE_READ_EOF);
+	ctx_setup(&ctx, KQUEUE_READ_EOF, 0);
 	ctx_thread_start(&ctx);
 
 	while (ctx_thread_alive(&ctx)) {
@@ -117,7 +121,7 @@ test_kqueue_write(void)
 	struct context ctx;
 	ssize_t n;
 
-	ctx_setup(&ctx, KQUEUE_WRITE);
+	ctx_setup(&ctx, KQUEUE_WRITE, 0);
 
 	n = write(ctx.c_pipe[1], ctx.c_buf, ctx.c_bufsiz);
 	if (n == -1)
@@ -153,15 +157,20 @@ test_kqueue_write_eof(void)
 }
 
 static void
-ctx_setup(struct context *ctx, enum kqueue_mode mode)
+ctx_setup(struct context *ctx, enum kqueue_mode mode, int flags)
 {
 	int error;
 
 	ctx->c_mode = mode;
 	ctx->c_alive = 1;
 
-	if (pipe(ctx->c_pipe) == -1)
-		err(1, "pipe");
+	if (flags) {
+		if (pipe2(ctx->c_pipe, flags) == -1)
+			err(1, "pipe");
+	} else {
+		if (pipe(ctx->c_pipe) == -1)
+			err(1, "pipe");
+	}
 
 	ctx->c_kq = kqueue();
 	if (ctx->c_kq == -1)
