@@ -1,4 +1,4 @@
-/* $OpenBSD: _types.h,v 1.1 2021/04/23 02:42:16 drahn Exp $ */
+/* $OpenBSD: _types.h,v 1.2 2021/05/08 05:31:07 deraadt Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
 
 #if defined(_KERNEL)
 typedef struct label_t {
-	long val[13];
+	long val[14];
 } label_t;
 #endif
 
