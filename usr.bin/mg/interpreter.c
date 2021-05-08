@@ -1,4 +1,4 @@
-/*      $OpenBSD: interpreter.c,v 1.30 2021/05/08 09:27:35 lum Exp $	*/
+/*      $OpenBSD: interpreter.c,v 1.31 2021/05/08 12:57:41 lum Exp $	*/
 /*
  * This file is in the public domain.
  *
@@ -125,7 +125,8 @@ int
 foundparen(char *funstr, int llen, int lnum)
 {
 	const char	*lrp = NULL;
-	char		*p, *begp = NULL, *endp = NULL, *regs, *prechr;
+	char		*p, *begp = NULL, *endp = NULL, *prechr;
+	char		*lastchr = NULL;
 	int     	 i, ret, pctr, expctr, blkid, inquote, esc;
 	int		 elen, spc;
 
@@ -133,18 +134,6 @@ foundparen(char *funstr, int llen, int lnum)
 	blkid = 1;
 	lnm = lnum;
 
-	/*
-	 * Currently can't do () or (( at the moment,
-	 * just drop out - stops a segv. TODO.
-	 */
-	regs = "[(]+[\t ]*[)]+";
-        if (doregex(regs, funstr))
-		return(dobeep_num("Empty lists not supported at moment line",
-		    lnm));
-	regs = "[(]+[\t ]*[(]+";
-        if (doregex(regs, funstr))
-		return(dobeep_num("Multiple consecutive left parantheses "\
-		    "found line:", lnm));
 	/*
 	 * load expressions into a list called 'expentry', to be processd
 	 * when all are obtained.
@@ -175,6 +164,9 @@ foundparen(char *funstr, int llen, int lnum)
 		if (*p == '\\') {
 			esc = 1;
 		} else if (*p == '(') {
+			if (lastchr != NULL && *lastchr == '(')
+				return(dobeep_num("Multiple consecutive "\
+				    "left parantheses line", lnm));
 			if (inquote == 0) {
 				if (begp != NULL) {
 					if (endp == NULL)
@@ -200,6 +192,9 @@ foundparen(char *funstr, int llen, int lnum)
 			}
 			esc = spc = 0;
 		} else if (*p == ')') {
+			if (lastchr != NULL && *lastchr == '(')
+				return(dobeep_num("Empty parenthesis "\
+				    "not supported line", lnm));
 			if (inquote == 0) {
 				if (begp != NULL) {
 					if (endp == NULL)
@@ -260,6 +255,8 @@ foundparen(char *funstr, int llen, int lnum)
 			}
 			esc = 0;
 		}
+		if (*p != '\t' && *p != ' ' && inquote == 0)
+			lastchr = p;
 
 		if (pctr == 0) {
 			blkid++;
