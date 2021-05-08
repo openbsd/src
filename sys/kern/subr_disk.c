@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.238 2021/01/19 19:36:48 mvs Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.239 2021/05/08 16:41:24 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -697,7 +697,7 @@ gpt_get_fstype(struct uuid *uuid_part)
 {
 	static int init = 0;
 	static struct uuid uuid_openbsd, uuid_msdos, uuid_chromefs,
-	    uuid_linux, uuid_hfs, uuid_unused, uuid_efi_system;
+	    uuid_linux, uuid_hfs, uuid_unused, uuid_efi_system, uuid_bios_boot;
 	static const uint8_t gpt_uuid_openbsd[] = GPT_UUID_OPENBSD;
 	static const uint8_t gpt_uuid_msdos[] = GPT_UUID_MSDOS;
 	static const uint8_t gpt_uuid_chromerootfs[] = GPT_UUID_CHROMEROOTFS;
@@ -705,6 +705,7 @@ gpt_get_fstype(struct uuid *uuid_part)
 	static const uint8_t gpt_uuid_hfs[] = GPT_UUID_APPLE_HFS;
 	static const uint8_t gpt_uuid_unused[] = GPT_UUID_UNUSED;
 	static const uint8_t gpt_uuid_efi_system[] = GPT_UUID_EFI_SYSTEM;
+	static const uint8_t gpt_uuid_bios_boot[] = GPT_UUID_BIOS_BOOT;
 
 	if (init == 0) {
 		uuid_dec_be(gpt_uuid_openbsd, &uuid_openbsd);
@@ -714,6 +715,7 @@ gpt_get_fstype(struct uuid *uuid_part)
 		uuid_dec_be(gpt_uuid_hfs, &uuid_hfs);
 		uuid_dec_be(gpt_uuid_unused, &uuid_unused);
 		uuid_dec_be(gpt_uuid_efi_system, &uuid_efi_system);
+		uuid_dec_be(gpt_uuid_bios_boot, &uuid_bios_boot);
 		init = 1;
 	}
 
@@ -731,6 +733,8 @@ gpt_get_fstype(struct uuid *uuid_part)
 		return FS_HFS;
 	else if (!memcmp(uuid_part, &uuid_efi_system, sizeof(struct uuid)))
 		return FS_MSDOS;
+	else if (!memcmp(uuid_part, &uuid_bios_boot, sizeof(struct uuid)))
+		return FS_BOOT;
 	else
 		return FS_OTHER;
 }

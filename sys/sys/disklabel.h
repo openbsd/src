@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.77 2020/11/14 20:53:31 guenther Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.78 2021/05/08 16:41:25 krw Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.41 1996/05/10 23:07:37 mark Exp $	*/
 
 /*
@@ -441,6 +441,9 @@ struct gpt_partition {
 #define GPT_UUID_APPLE_UFS \
     { 0x55, 0x46, 0x53, 0x00, 0x00, 0x00, 0x11, 0xaa, \
       0xaa, 0x11, 0x00, 0x30, 0x65, 0x43, 0xec, 0xac }
+#define GPT_UUID_BIOS_BOOT \
+    { 0x21, 0x68, 0x61, 0x48, 0x64, 0x49, 0x6e, 0x6f, \
+      0x74, 0x4e, 0x65, 0x65, 0x64, 0x45, 0x46, 0x49 }
 
 /* DOS partition table -- located at start of some disks. */
 #define	DOS_LABELSECTOR 1
