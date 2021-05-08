@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.78 2021/05/07 22:15:13 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.79 2021/05/08 17:44:22 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -49,6 +49,7 @@ static const struct part_type {
 	{ 0x0A, "OS/2 Bootmgr"},   /* OS/2 Boot Manager or OPUS */
 	{ 0x0B, "FAT32       ", "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
 	{ 0x0C, "FAT32L      ", "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
+	{ 0x0D, "BIOS Boot   ", "21686148-6449-6e6f-744e-656564454649" },
 	{ 0x0E, "FAT16L      ", "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
 	{ 0x0F, "Extended LBA"},   /* Extended DOS LBA-mapped */
 	{ 0x10, "OPUS        "},   /* OPUS */
