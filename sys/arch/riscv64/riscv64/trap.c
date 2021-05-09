@@ -105,7 +105,6 @@ do_trap_supervisor(struct trapframe *frame)
 	}
 }
 
-
 void
 do_trap_user(struct trapframe *frame)
 {
@@ -162,27 +161,26 @@ do_trap_user(struct trapframe *frame)
 		svc_handler(frame);
 		break;
 	case EXCP_ILLEGAL_INSTRUCTION:
+		if ((frame->tf_sstatus & SSTATUS_FS_MASK) == SSTATUS_FS_OFF) {
+			if (fpu_valid_opcode(frame->tf_stval)) {
 
-	if ((frame->tf_sstatus & SSTATUS_FS_MASK) ==
-	    SSTATUS_FS_OFF) {
-		if(fpu_valid_opcode(frame->tf_stval)) {
+				/* XXX do this here or should it be in the
+				 * trap handler in the restore path?
+				 */
+				fpu_load(p);
 
-			/* XXX do this here or should it be in the
-			 * trap handler in the restore path?
-			 */
-			fpu_load(p);
-
-			frame->tf_sstatus &= ~SSTATUS_FS_MASK;
-			break;
+				frame->tf_sstatus &= ~SSTATUS_FS_MASK;
+				break;
+			}
 		}
-	}
-	printf("ILL at %lx scause %lx stval %lx\n", frame->tf_sepc, frame->tf_scause, frame->tf_stval);
+		printf("ILL at %lx scause %lx stval %lx\n", frame->tf_sepc,
+		    frame->tf_scause, frame->tf_stval);
 		sv.sival_ptr = (void *)frame->tf_stval;
 		trapsignal(p, SIGILL, 0, ILL_ILLTRP, sv);
 		userret(p);
 		break;
 	case EXCP_BREAKPOINT:
-	printf("BREAKPOINT\n");
+		printf("BREAKPOINT\n");
 		sv.sival_ptr = (void *)frame->tf_stval;
 		trapsignal(p, SIGTRAP, 0, TRAP_BRKPT, sv);
 		userret(p);
@@ -290,4 +288,3 @@ fatal:
 	panic("Fatal page fault at %#lx: %#08lx", frame->tf_sepc,
 	    (vaddr_t)sv.sival_ptr);
 }
-
