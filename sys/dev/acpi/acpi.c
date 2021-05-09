@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.397 2021/03/15 22:44:57 patrick Exp $ */
+/* $OpenBSD: acpi.c,v 1.398 2021/05/09 15:51:35 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1436,7 +1436,8 @@ acpi_read_pmreg(struct acpi_softc *sc, int reg, int offset)
 	 * For Hardware-reduced ACPI we also emulate PM1A_STS using
 	 * SLEEP_STATUS_REG.
 	 */
-	if (sc->sc_hw_reduced && reg == ACPIREG_PM1A_STS) {
+	if (sc->sc_hw_reduced && reg == ACPIREG_PM1A_STS &&
+	    sc->sc_fadt->sleep_status_reg.register_bit_width > 0) {
 		uint8_t value;
 
 		KASSERT(offset == 0);
@@ -1514,7 +1515,8 @@ acpi_write_pmreg(struct acpi_softc *sc, int reg, int offset, int regval)
 	 * For Hardware-reduced ACPI we also emulate PM1A_STS using
 	 * SLEEP_STATUS_REG.
 	 */
-	if (sc->sc_hw_reduced && reg == ACPIREG_PM1A_STS) {
+	if (sc->sc_hw_reduced && reg == ACPIREG_PM1A_STS &&
+	    sc->sc_fadt->sleep_status_reg.register_bit_width > 0) {
 		uint8_t value = (regval >> 8);
 
 		KASSERT(offset == 0);
@@ -1530,7 +1532,8 @@ acpi_write_pmreg(struct acpi_softc *sc, int reg, int offset, int regval)
 	 * For Hardware-reduced ACPI we also emulate PM1A_CNT using
 	 * SLEEP_CONTROL_REG.
 	 */
-	if (sc->sc_hw_reduced && reg == ACPIREG_PM1A_CNT) {
+	if (sc->sc_hw_reduced && reg == ACPIREG_PM1A_CNT &&
+	    sc->sc_fadt->sleep_control_reg.register_bit_width > 0) {
 		uint8_t value = (regval >> 8);
 
 		KASSERT(offset == 0);
@@ -1608,10 +1611,6 @@ acpi_map_pmregs(struct acpi_softc *sc)
 	bus_size_t size, access;
 	const char *name;
 	int reg;
-
-	/* Registers don't exist on Hardware-reduced ACPI. */
-	if (sc->sc_hw_reduced)
-		return;
 
 	for (reg = 0; reg < ACPIREG_MAXREG; reg++) {
 		size = 0;
