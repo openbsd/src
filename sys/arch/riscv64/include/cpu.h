@@ -275,7 +275,6 @@ intr_restore(u_long s)
 void	delay (unsigned);
 #define	DELAY(x)	delay(x)
 
-int fpu_valid_opcode(uint32_t);
 void fpu_save(struct proc *, struct trapframe *);
 void fpu_load(struct proc *);
 void fpu_discard(struct proc *p);

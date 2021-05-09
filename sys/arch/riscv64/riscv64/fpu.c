@@ -27,49 +27,6 @@ fpu_clear(struct fpreg *fp)
 	bzero(fp, sizeof (*fp));
 }
 
-// may look into optimizing this, bit map lookup ?
-
-int
-fpu_valid_opcode(uint32_t instr)
-{
-	int opcode = instr & 0x7f;
-	int valid = 0;
-
-	if ((opcode & 0x3) == 0x3) {
-		/* 32 bit instruction */
-		switch(opcode) {
-		case 0x07:	// LOAD-FP
-		case 0x27:	// STORE-FP
-		case 0x53:	// OP-FP
-			valid = 1;
-			break;
-		default:
-			;
-		}
-	} else {
-		/* 16 bit instruction */
-		int opcode16 = instr & 0xe003;
-		switch (opcode16) {
-		case 0x1000:	// C.FLD
-		case 0xa000:	// C.SLD
-			valid = 1;
-			break;
-		case 0x2002:	// C.FLDSP
-			// must verify dest register is float
-			valid = opcode16 & (1 << 11);
-			break;
-		case 0xa002:	// C.FSDSP
-			// must verify dest register is float
-			valid = opcode16 & (1 << 6);
-			break;
-		default:
-			;
-		}
-	}
-	//printf("FPU check requested %d\n", valid);
-	return valid;
-}
-
 void
 fpu_discard(struct proc *p)
 {

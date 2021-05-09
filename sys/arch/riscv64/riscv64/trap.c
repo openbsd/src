@@ -162,16 +162,9 @@ do_trap_user(struct trapframe *frame)
 		break;
 	case EXCP_ILLEGAL_INSTRUCTION:
 		if ((frame->tf_sstatus & SSTATUS_FS_MASK) == SSTATUS_FS_OFF) {
-			if (fpu_valid_opcode(frame->tf_stval)) {
-
-				/* XXX do this here or should it be in the
-				 * trap handler in the restore path?
-				 */
-				fpu_load(p);
-
-				frame->tf_sstatus &= ~SSTATUS_FS_MASK;
-				break;
-			}
+			fpu_load(p);
+			frame->tf_sstatus &= ~SSTATUS_FS_MASK;
+			break;
 		}
 		printf("ILL at %lx scause %lx stval %lx\n", frame->tf_sepc,
 		    frame->tf_scause, frame->tf_stval);
