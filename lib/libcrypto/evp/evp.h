@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.81 2021/03/31 16:47:01 tb Exp $ */
+/* $OpenBSD: evp.h,v 1.82 2021/05/09 14:25:40 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -617,7 +617,7 @@ int EVP_CipherFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *outm, int *outl);
 #ifndef LIBRESSL_INTERNAL
 int EVP_CipherFinal(EVP_CIPHER_CTX *ctx, unsigned char *outm, int *outl);
 #endif
-	
+
 int EVP_SignFinal(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *s,
     EVP_PKEY *pkey);
 
@@ -628,10 +628,20 @@ int EVP_DigestSignInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
     const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey);
 int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret, size_t *siglen);
 
+#if defined(LIBRESSL_INTERNAL)
+int EVP_DigestSign(EVP_MD_CTX *ctx, unsigned char *sigret, size_t *siglen,
+    const unsigned char *tbs, size_t tbslen);
+#endif
+
 int EVP_DigestVerifyInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
     const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey);
 int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig,
     size_t siglen);
+
+#if defined(LIBRESSL_INTERNAL)
+int EVP_DigestVerify(EVP_MD_CTX *ctx, const unsigned char *sigret,
+    size_t siglen, const unsigned char *tbs, size_t tbslen);
+#endif
 
 int EVP_OpenInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
     const unsigned char *ek, int ekl, const unsigned char *iv, EVP_PKEY *priv);

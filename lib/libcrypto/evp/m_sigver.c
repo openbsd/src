@@ -1,4 +1,4 @@
-/* $OpenBSD: m_sigver.c,v 1.8 2021/03/29 15:57:23 tb Exp $ */
+/* $OpenBSD: m_sigver.c,v 1.9 2021/05/09 14:25:40 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -187,6 +187,18 @@ EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret, size_t *siglen)
 }
 
 int
+EVP_DigestSign(EVP_MD_CTX *ctx, unsigned char *sigret, size_t *siglen,
+    const unsigned char *tbs, size_t tbslen)
+{
+	if (sigret != NULL) {
+		if (EVP_DigestSignUpdate(ctx, tbs, tbslen) <= 0)
+			return 0;
+	}
+
+	return EVP_DigestSignFinal(ctx, sigret, siglen);
+}
+
+int
 EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig, size_t siglen)
 {
 	EVP_MD_CTX tmp_ctx;
@@ -211,4 +223,14 @@ EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig, size_t siglen)
 	if (vctx || !r)
 		return r;
 	return EVP_PKEY_verify(ctx->pctx, sig, siglen, md, mdlen);
+}
+
+int
+EVP_DigestVerify(EVP_MD_CTX *ctx, const unsigned char *sigret, size_t siglen,
+    const unsigned char *tbs, size_t tbslen)
+{
+	if (EVP_DigestVerifyUpdate(ctx, tbs, tbslen) <= 0)
+		return -1;
+
+	return EVP_DigestVerifyFinal(ctx, sigret, siglen);
 }
