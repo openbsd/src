@@ -1011,3 +1011,4 @@ rpkiManifest	1010
 signedObject	1011
 rpkiNotify	1012
 id_ct_geofeedCSVwithCRLF	1013
+id_ct_signedChecklist		1014
