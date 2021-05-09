@@ -20,7 +20,8 @@
 #include <sys/user.h>
 #include "machine/asm.h"
 
-void fpu_clear(struct fpreg *fp)
+void
+fpu_clear(struct fpreg *fp)
 {
 	/* rounding mode set to 0, should be RND_NEAREST */
 	bzero(fp, sizeof (*fp));
@@ -28,7 +29,8 @@ void fpu_clear(struct fpreg *fp)
 
 // may look into optimizing this, bit map lookup ?
 
-int fpu_valid_opcode(uint32_t instr)
+int
+fpu_valid_opcode(uint32_t instr)
 {
 	int opcode = instr & 0x7f;
 	int valid = 0;
@@ -77,13 +79,13 @@ fpu_discard(struct proc *p)
 }
 
 void
-fpu_disable()
+fpu_disable(void)
 {
 	__asm volatile ("csrc sstatus, %0" :: "r"(SSTATUS_FS_MASK));
 }
 
 void
-fpu_enable_clean()
+fpu_enable_clean(void)
 {
 	__asm volatile ("csrc sstatus, %0" :: "r"(SSTATUS_FS_MASK));
 	__asm volatile ("csrs sstatus, %0" :: "r"(SSTATUS_FS_CLEAN));
