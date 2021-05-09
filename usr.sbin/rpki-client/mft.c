@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.32 2021/03/29 06:50:44 tb Exp $ */
+/*	$OpenBSD: mft.c,v 1.33 2021/05/09 11:25:32 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -129,7 +129,7 @@ mft_parse_filehash(struct parse *p, const ASN1_OCTET_STRING *os)
 	const ASN1_TYPE		*file, *hash;
 	char			*fn = NULL;
 	const unsigned char	*d = os->data;
-	size_t			 dsz = os->length, sz;
+	size_t			 dsz = os->length;
 	int			 rc = 0;
 	struct mftfile		*fent;
 
@@ -169,7 +169,7 @@ mft_parse_filehash(struct parse *p, const ASN1_OCTET_STRING *os)
 		warnx("%s: path components disallowed in filename: %s",
 		    p->fn, fn);
 		goto out;
-	} else if ((sz = strlen(fn)) <= 4) {
+	} else if (strlen(fn) <= 4) {
 		warnx("%s: filename must be large enough for suffix part: %s",
 		    p->fn, fn);
 		goto out;
