@@ -19,7 +19,7 @@ enum rrdp_task {
 };
 
 /* rrdp generic */
-char 	*xstrdup(const char *);
+char	*xstrdup(const char *);
 int	 hex_decode(const char *, char *, size_t);
 
 /* publish or withdraw element */
@@ -38,7 +38,7 @@ struct notification_xml;
 
 struct notification_xml	*new_notification_xml(XML_Parser,
 			    struct rrdp_session *, struct rrdp_session *);
-void		 	 free_notification_xml(struct notification_xml *);
+void			 free_notification_xml(struct notification_xml *);
 enum rrdp_task		 notification_done(struct notification_xml *,
 			    char *);
 const char		*notification_get_next(struct notification_xml *,
