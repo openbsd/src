@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.8 2021/05/06 17:03:57 job Exp $ */
+/*	$OpenBSD: parser.c,v 1.9 2021/05/09 11:18:57 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -95,10 +95,7 @@ proc_parser_roa(struct entity *entp,
 	 */
 	for (i = 0; i < sk_X509_CRL_num(crls); i++) {
 		X509_CRL *ci = sk_X509_CRL_value(crls, i);
-		if (ci->crl == NULL) {
-			err(1, "sk_X509_value failed");
-			goto out;
-		}
+
 		at = X509_CRL_get0_nextUpdate(ci);
 		if (at == NULL) {
 			err(1, "X509_CRL_get0_nextUpdate failed");
@@ -123,10 +120,7 @@ proc_parser_roa(struct entity *entp,
 	 */
 	for (i = 0; i < sk_X509_num(chain); i++) {
 		X509 *xi = sk_X509_value(chain, i);
-		if (xi->cert_info == NULL) {
-			err(1, "sk_X509_value failed");
-			goto out;
-		}
+
 		at = X509_get0_notAfter(xi);
 		if (at == NULL) {
 			err(1, "X509_get0_notafter failed");
