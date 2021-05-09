@@ -1,4 +1,4 @@
-/*	$OpenBSD: _setjmp.S,v 1.1 2021/04/28 15:28:54 drahn Exp $	*/
+/*	$OpenBSD: _setjmp.S,v 1.2 2021/05/09 21:26:06 drahn Exp $	*/
 /* 
  * Copyright (c) 2020 Dale Rahn <drahn@openbsd.org>
  *
@@ -23,38 +23,38 @@ ENTRY(_setjmp)
 	addi	sp, sp, -32
 	RETGUARD_SETUP(_setjmp, t6)
 
-	sd	sp, 8(a0)
+	sd	sp, (1 * 8)(a0)
 	/* Store the general purpose registers and ra */
-	sd	s0, 16(a0)
-	sd	s1, 24(a0)
-	sd	s2, 32(a0)
-	sd	s3, 40(a0)
-	sd	s4, 48(a0)
-	sd	s5, 56(a0)
-	sd	s6, 64(a0)
-	sd	s7, 72(a0)
-	sd	s8, 90(a0)
-	sd	s9, 98(a0)
-	sd	s10, 106(a0)
-	sd	s11, 112(a0)
-	sd	ra, 120(a0)
+	sd	s0, (2 * 8)(a0)
+	sd	s1, (3 * 8)(a0)
+	sd	s2, (4 * 8)(a0)
+	sd	s3, (5 * 8)(a0)
+	sd	s4, (6 * 8)(a0)
+	sd	s5, (7 * 8)(a0)
+	sd	s6, (8 * 8)(a0)
+	sd	s7, (9 * 8)(a0)
+	sd	s8, (10 * 8)(a0)
+	sd	s9, (11 * 8)(a0)
+	sd	s10, (12 * 8)(a0)
+	sd	s11, (13 * 8)(a0)
+	sd	ra, (14 * 8)(a0)
 
 #ifndef _STANDALONE
 	/* Store the fp registers */
-	fsd	fs0, 128(a0)
-	fsd	fs1, 136(a0)
-	fsd	fs2, 144(a0)
-	fsd	fs3, 152(a0)
-	fsd	fs4, 160(a0)
-	fsd	fs5, 168(a0)
-	fsd	fs6, 176(a0)
-	fsd	fs7, 184(a0)
-	fsd	fs8, 192(a0)
-	fsd	fs9, 200(a0)
-	fsd	fs10, 208(a0)
-	fsd	fs11, 216(a0)
+	fsd	fs0, (15 * 8)(a0)
+	fsd	fs1, (16 * 8)(a0)
+	fsd	fs2, (17 * 8)(a0)
+	fsd	fs3, (18 * 8)(a0)
+	fsd	fs4, (19 * 8)(a0)
+	fsd	fs5, (20 * 8)(a0)
+	fsd	fs6, (21 * 8)(a0)
+	fsd	fs7, (22 * 8)(a0)
+	fsd	fs8, (23 * 8)(a0)
+	fsd	fs9, (24 * 8)(a0)
+	fsd	fs10, (25 * 8)(a0)
+	fsd	fs11, (26 * 8)(a0)
 	frcsr	t0	
-	sd	t0, 232(a0)
+	sd	t0, (27 * 8)(a0)
 #endif
 
 	/* Return value */
@@ -69,44 +69,44 @@ ENTRY(_longjmp)
 	RETGUARD_LOAD_RANDOM(_longjmp, t6)
 
 	/* Restore the stack pointer */
-	ld	t0, 8(a0)
+	ld	t0, (1 * 8)(a0)
 	mv	sp, t0
 
 	/* Store the general purpose registers and ra */
-	ld	s0, 16(a0)
-	ld	s1, 24(a0)
-	ld	s2, 32(a0)
-	ld	s3, 40(a0)
-	ld	s4, 48(a0)
-	ld	s5, 56(a0)
-	ld	s6, 64(a0)
-	ld	s7, 72(a0)
-	ld	s8, 90(a0)
-	ld	s9, 98(a0)
-	ld	s10, 106(a0)
-	ld	s11, 112(a0)
-	sd	ra, 120(a0)
+	ld	s0, (2 * 8)(a0)
+	ld	s1, (3 * 8)(a0)
+	ld	s2, (4 * 8)(a0)
+	ld	s3, (5 * 8)(a0)
+	ld	s4, (6 * 8)(a0)
+	ld	s5, (7 * 8)(a0)
+	ld	s6, (8 * 8)(a0)
+	ld	s7, (9 * 8)(a0)
+	ld	s8, (10 * 8)(a0)
+	ld	s9, (11 * 8)(a0)
+	ld	s10, (12 * 8)(a0)
+	ld	s11, (13 * 8)(a0)
+	ld	ra, (14 * 8)(a0)
 
 #ifndef _STANDALONE
 	/* Store the fp registers */
-	fld	fs0, 128(a0)
-	fld	fs1, 136(a0)
-	fld	fs2, 144(a0)
-	fld	fs3, 152(a0)
-	fld	fs4, 160(a0)
-	fld	fs5, 168(a0)
-	fld	fs6, 176(a0)
-	fld	fs7, 184(a0)
-	fld	fs8, 192(a0)
-	fld	fs9, 200(a0)
-	fld	fs10, 208(a0)
-	fld	fs11, 216(a0)
-	ld	t0, 232(a0)
+	fld	fs0, (15 * 8)(a0)
+	fld	fs1, (16 * 8)(a0)
+	fld	fs2, (17 * 8)(a0)
+	fld	fs3, (18 * 8)(a0)
+	fld	fs4, (19 * 8)(a0)
+	fld	fs5, (20 * 8)(a0)
+	fld	fs6, (21 * 8)(a0)
+	fld	fs7, (22 * 8)(a0)
+	fld	fs8, (23 * 8)(a0)
+	fld	fs9, (24 * 8)(a0)
+	fld	fs10, (25 * 8)(a0)
+	fld	fs11, (26 * 8)(a0)
+	ld	t0, (27 * 8)(a0)
 	fscsr	t0	
 #endif
 
 	/* Load the return value */
-	add	a0, zero, 1
+	li	a0, 1
 	beqz	a1, 1f
 	mv	a0, a1
 1:
