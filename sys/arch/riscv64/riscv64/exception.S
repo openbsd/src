@@ -1,17 +1,37 @@
-/*
- * Copyright (c) 2020 Mengshi Li <mengshi.li.mars@gmail.com> 
+/*	$OpenBSD: exception.S,v 1.3 2021/05/10 05:58:20 jsg Exp $	*/
+
+/*-
+ * Copyright (c) 2015-2018 Ruslan Bukin <br@bsdpad.com>
+ * All rights reserved.
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * Portions of this software were developed by SRI International and the
+ * University of Cambridge Computer Laboratory under DARPA/AFRL contract
+ * FA8750-10-C-0237 ("CTSRD"), as part of the DARPA CRASH research programme.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
- * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
- * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * Portions of this software were developed by the University of Cambridge
+ * Computer Laboratory as part of the CTSRD Project, with support from the
+ * UK Higher Education Innovation Fund (HEIF).
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 
 #include "assym.h"
@@ -19,12 +39,12 @@
 #include <machine/trap.h>
 #include <machine/riscvreg.h>
 
-.macro save_registers el
+.macro save_registers mode
 	addi	sp, sp, -(TRAPFRAME_SIZEOF)
 
 	sd	ra, (TF_RA)(sp)
 
-.if \el == 0	/* We came from userspace. */
+.if \mode == 0	/* We came from userspace. */
 	sd	gp, (TF_GP)(sp)
 .option push
 .option norelax
@@ -67,7 +87,7 @@
 	sd	a6, (TF_A + 6 * 8)(sp)
 	sd	a7, (TF_A + 7 * 8)(sp)
 
-.if \el == 1
+.if \mode == 1
 	/* Store kernel sp */
 	li	t1, TRAPFRAME_SIZEOF
 	add	t0, sp, t1
@@ -83,7 +103,7 @@
 	sd	t0, (TF_SEPC)(sp)
 	csrr	t0, sstatus
 	sd	t0, (TF_SSTATUS)(sp)
-.if \el == 1
+.if \mode == 1
 	/* Disable user address access for supervisor mode exceptions. */
 	li	t0, SSTATUS_SUM
 	csrc	sstatus, t0
@@ -94,9 +114,9 @@
 	sd	t0, (TF_SCAUSE)(sp)
 .endm
 
-.macro restore_registers el
+.macro restore_registers mode
 	ld	t0, (TF_SSTATUS)(sp)
-.if \el == 0
+.if \mode == 0
 	/* Ensure user interrupts will be enabled on eret */
 	li	t1, SSTATUS_SPIE
 	or	t0, t0, t1
@@ -114,7 +134,7 @@
 	ld	t0, (TF_SEPC)(sp)
 	csrw	sepc, t0
 
-.if \el == 0
+.if \mode == 0
 	/* We go to userspace. Load user sp */
 	ld	t0, (TF_SP)(sp)
 	csrw	sscratch, t0
@@ -187,26 +207,26 @@
 2:
 .endm
 
-ENTRY(cpu_trap_handler)
+ENTRY(cpu_exception_handler)
 	csrrw	sp, sscratch, sp
 	beqz	sp, 1f
 	/* User mode detected */
-	j	cpu_trap_handler_user
+	j	cpu_exception_handler_user
 1:
 	/* Supervisor mode detected */
 	csrrw	sp, sscratch, sp
-	j	cpu_trap_handler_supervisor
-END(cpu_trap_handler)
+	j	cpu_exception_handler_supervisor
+END(cpu_exception_handler)
 
-ENTRY(cpu_trap_handler_supervisor)
+ENTRY(cpu_exception_handler_supervisor)
 	save_registers 1
 	mv	a0, sp
 	call	_C_LABEL(do_trap_supervisor)
 	restore_registers 1
 	sret
-END(cpu_trap_handler_supervisor)
+END(cpu_exception_handler_supervisor)
 
-ENTRY(cpu_trap_handler_user)
+ENTRY(cpu_exception_handler_user)
 	save_registers 0
 	mv	a0, sp
 	call	_C_LABEL(do_trap_user)
@@ -214,7 +234,7 @@ ENTRY(cpu_trap_handler_user)
 	restore_registers 0
 	csrrw	sp, sscratch, sp
 	sret
-END(cpu_trap_handler_user)
+END(cpu_exception_handler_user)
 
 ENTRY(syscall_return)
 	do_ast
