@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.macppc,v 1.101 2021/01/28 17:39:03 deraadt Exp $
+#	$OpenBSD: Makefile.macppc,v 1.102 2021/05/10 17:29:41 gkoehler Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -51,7 +51,7 @@ DEBUG?=		-g
 COPTIMIZE?=	-O2
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTIMIZE} ${COPTS} ${PIPE}
 AFLAGS=		-D_LOCORE ${CMACHFLAGS}
-LINKFLAGS=	-N -Ttext 100114 -e start --warn-common -nopie
+LINKFLAGS=	-N -T ld.script --warn-common -nopie
 
 .if ${MACHINE} == "powerpc64"
 CFLAGS+=	-m32

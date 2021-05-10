@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 2020/03/16 07:02:10 otto Exp $
+#	$OpenBSD: Makefile,v 1.21 2021/05/10 17:29:41 gkoehler Exp $
 #	$NetBSD: Makefile,v 1.2 1997/04/17 07:46:24 thorpej Exp $
 
 S=	${.CURDIR}/../../../..
@@ -31,18 +31,16 @@ SRCS+=		moddi3.c
 
 NEWVERSWHAT=	"OpenFirmware Boot"
 
-# For now...
+# Must match . in ld.script
 RELOC=		20000
-
-ENTRY=		_start
 
 CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
 CPPFLAGS+=	-DRELOC=0x${RELOC} -DCONSPEED=57600
 
 LIBS!=          cd $(.CURDIR)/$(R); $(MAKE) libdep
 
-${PROG}: ${OBJS} ${LIBSA} ${LIBZ}
-	${LD} -nopie -znorelro -N -X -Ttext ${RELOC} -e ${ENTRY} -o ${PROG} \
+${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ld.script
+	${LD} -nopie -znorelro -N -X -T ${.CURDIR}/ld.script -o ${PROG} \
 	    ${OBJS} ${LIBS}
 
 .include <bsd.prog.mk>

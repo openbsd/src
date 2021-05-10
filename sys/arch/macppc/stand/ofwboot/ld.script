@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.script,v 1.2 2021/05/10 17:29:41 gkoehler Exp $	*/
+/*	$OpenBSD: ld.script,v 1.1 2021/05/10 17:29:41 gkoehler Exp $	*/
 
 /*
  * Copyright (c) 2013 Mark Kettenis <kettenis@openbsd.org>
@@ -16,17 +16,17 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-ENTRY(start)
+ENTRY(_start)
 
 PHDRS
 {
 	text PT_LOAD;
-	openbsd_randomize PT_OPENBSD_RANDOMIZE;
 }
 
 SECTIONS
 {
-	. = 0x00100114;
+	/* Must match RELOC in Makefile */
+	. = 0x00020000;
 	.text :
 	{
 		*(.text)
@@ -43,11 +43,6 @@ SECTIONS
 	{
 		*(.data.rel.ro)
 	} :text
-
-	.openbsd.randomdata :
-	{
-		*(.openbsd.randomdata .openbsd.randomdata.*)
-	} :openbsd_randomize :text
 
 	.data :
 	{
