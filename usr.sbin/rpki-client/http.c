@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.32 2021/04/20 14:32:49 claudio Exp $  */
+/*	$OpenBSD: http.c,v 1.33 2021/05/10 15:12:33 claudio Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -1123,7 +1123,7 @@ read_more:
 		return WANT_POLLOUT;
 	}
 
-	if (s == 0 && conn->bufpos == 0) {
+	if (s == 0) {
 		if (conn->req)
 			warnx("%s: short read, connection closed",
 			    http_info(conn->req->uri));
