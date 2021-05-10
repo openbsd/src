@@ -1,4 +1,4 @@
-/* $OpenBSD: ecparam.c,v 1.20 2021/04/21 00:31:59 tb Exp $ */
+/* $OpenBSD: ecparam.c,v 1.21 2021/05/10 20:58:32 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -86,11 +86,6 @@
 #include <openssl/err.h>
 #include <openssl/pem.h>
 #include <openssl/x509.h>
-
-int EC_GROUP_get_curve_GF2m(const EC_GROUP *, BIGNUM *, BIGNUM *, BIGNUM *,
-    BN_CTX *);
-int EC_GROUP_get_curve_GFp(const EC_GROUP *, BIGNUM *, BIGNUM *, BIGNUM *,
-    BN_CTX *);
 
 static int ecparam_print_var(BIO *, BIGNUM *, const char *, int,
     unsigned char *);
@@ -426,15 +421,8 @@ ecparam_main(int argc, char **argv)
 		is_prime = (EC_METHOD_get_field_type(meth) ==
 		    NID_X9_62_prime_field);
 
-		if (is_prime) {
-			if (!EC_GROUP_get_curve_GFp(group, ec_p, ec_a,
-			    ec_b, NULL))
-				goto end;
-		} else {
-			if (!EC_GROUP_get_curve_GF2m(group, ec_p, ec_a,
-			    ec_b, NULL))
-				goto end;
-		}
+		if (!EC_GROUP_get_curve(group, ec_p, ec_a, ec_b, NULL))
+			goto end;
 
 		if ((point = EC_GROUP_get0_generator(group)) == NULL)
 			goto end;
