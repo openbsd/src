@@ -1047,6 +1047,7 @@ EC_GROUP_get0_seed
 EC_GROUP_get_asn1_flag
 EC_GROUP_get_basis_type
 EC_GROUP_get_cofactor
+EC_GROUP_get_curve
 EC_GROUP_get_curve_GF2m
 EC_GROUP_get_curve_GFp
 EC_GROUP_get_curve_name
@@ -1064,6 +1065,7 @@ EC_GROUP_new_curve_GF2m
 EC_GROUP_new_curve_GFp
 EC_GROUP_precompute_mult
 EC_GROUP_set_asn1_flag
+EC_GROUP_set_curve
 EC_GROUP_set_curve_GF2m
 EC_GROUP_set_curve_GFp
 EC_GROUP_set_curve_name
