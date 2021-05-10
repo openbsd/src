@@ -1,4 +1,4 @@
-/* $OpenBSD: dtls1.h,v 1.25 2021/03/31 16:59:32 tb Exp $ */
+/* $OpenBSD: dtls1.h,v 1.26 2021/05/10 17:10:57 tb Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -91,8 +91,7 @@ extern "C" {
 
 #define DTLS1_AL_HEADER_LENGTH                   2
 
-#ifndef OPENSSL_NO_SSL_INTERN
-
+#ifdef LIBRESSL_INTERNAL
 
 typedef struct dtls1_bitmap_st {
 	unsigned long map;		/* track 32 packets on 32-bit systems

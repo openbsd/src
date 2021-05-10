@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl3.h,v 1.52 2021/05/02 18:10:32 tb Exp $ */
+/* $OpenBSD: ssl3.h,v 1.53 2021/05/10 17:10:57 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -355,7 +355,7 @@ typedef struct ssl3_buffer_st {
 #define TLS1_FLAGS_FREEZE_TRANSCRIPT		0x0020
 #define SSL3_FLAGS_CCS_OK			0x0080
 
-#ifndef OPENSSL_NO_SSL_INTERN
+#ifdef LIBRESSL_INTERNAL
 
 struct ssl3_state_internal_st;
 

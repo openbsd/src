@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.189 2021/05/10 17:07:23 tb Exp $ */
+/* $OpenBSD: ssl.h,v 1.190 2021/05/10 17:10:57 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -377,7 +377,7 @@ typedef int (*tls_session_ticket_ext_cb_fn)(SSL *s, const unsigned char *data,
 typedef int (*tls_session_secret_cb_fn)(SSL *s, void *secret, int *secret_len,
     STACK_OF(SSL_CIPHER) *peer_ciphers, SSL_CIPHER **cipher, void *arg);
 
-#ifndef OPENSSL_NO_SSL_INTERN
+#ifdef LIBRESSL_INTERNAL
 
 /* used to hold info on the particular ciphers used */
 struct ssl_cipher_st {
@@ -639,7 +639,7 @@ typedef int (*GEN_SESSION_CB)(const SSL *ssl, unsigned char *id,
 
 typedef struct ssl_comp_st SSL_COMP;
 
-#ifndef OPENSSL_NO_SSL_INTERN
+#ifdef LIBRESSL_INTERNAL
 
 struct ssl_comp_st {
 	int id;
