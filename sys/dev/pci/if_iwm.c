@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.322 2021/05/05 05:47:11 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.323 2021/05/10 08:28:00 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -342,7 +342,7 @@ void	iwm_ampdu_rx_stop(struct ieee80211com *, struct ieee80211_node *,
 	    uint8_t);
 void	iwm_rx_ba_session_expired(void *);
 void	iwm_reorder_timer_expired(void *);
-void	iwm_sta_rx_agg(struct iwm_softc *, struct ieee80211_node *, uint8_t,
+int	iwm_sta_rx_agg(struct iwm_softc *, struct ieee80211_node *, uint8_t,
 	    uint16_t, uint16_t, int, int);
 int	iwm_ampdu_tx_start(struct ieee80211com *, struct ieee80211_node *,
 	    uint8_t);
@@ -423,6 +423,7 @@ const struct iwm_rate *iwm_tx_fill_cmd(struct iwm_softc *, struct iwm_node *,
 	    struct ieee80211_frame *, struct iwm_tx_cmd *);
 int	iwm_tx(struct iwm_softc *, struct mbuf *, struct ieee80211_node *, int);
 int	iwm_flush_tx_path(struct iwm_softc *, int);
+int	iwm_wait_tx_queues_empty(struct iwm_softc *);
 void	iwm_led_enable(struct iwm_softc *);
 void	iwm_led_disable(struct iwm_softc *);
 int	iwm_led_is_enabled(struct iwm_softc *);
@@ -442,6 +443,8 @@ int	iwm_enable_beacon_filter(struct iwm_softc *, struct iwm_node *);
 int	iwm_disable_beacon_filter(struct iwm_softc *);
 int	iwm_add_sta_cmd(struct iwm_softc *, struct iwm_node *, int);
 int	iwm_add_aux_sta(struct iwm_softc *);
+int	iwm_drain_sta(struct iwm_softc *sc, struct iwm_node *, int);
+int	iwm_flush_sta(struct iwm_softc *, struct iwm_node *);
 int	iwm_rm_sta_cmd(struct iwm_softc *, struct iwm_node *);
 uint16_t iwm_scan_rx_chain(struct iwm_softc *);
 uint32_t iwm_scan_rate_n_flags(struct iwm_softc *, int, int);
@@ -3101,7 +3104,7 @@ iwm_reorder_timer_expired(void *arg)
 
 #define IWM_MAX_RX_BA_SESSIONS 16
 
-void
+int
 iwm_sta_rx_agg(struct iwm_softc *sc, struct ieee80211_node *ni, uint8_t tid,
     uint16_t ssn, uint16_t winsize, int timeout_val, int start)
 {
@@ -3119,7 +3122,7 @@ iwm_sta_rx_agg(struct iwm_softc *sc, struct ieee80211_node *ni, uint8_t tid,
 	if (start && sc->sc_rx_ba_sessions >= IWM_MAX_RX_BA_SESSIONS) {
 		ieee80211_addba_req_refuse(ic, ni, tid);
 		splx(s);
-		return;
+		return 0;
 	}
 
 	memset(&cmd, 0, sizeof(cmd));
@@ -3146,12 +3149,13 @@ iwm_sta_rx_agg(struct iwm_softc *sc, struct ieee80211_node *ni, uint8_t tid,
 		cmdsize = sizeof(struct iwm_add_sta_cmd_v7);
 	err = iwm_send_cmd_pdu_status(sc, IWM_ADD_STA, cmdsize, &cmd,
 	    &status);
-
-	if (err || (status & IWM_ADD_STA_STATUS_MASK) != IWM_ADD_STA_SUCCESS) {
+	if (!err && (status & IWM_ADD_STA_STATUS_MASK) != IWM_ADD_STA_SUCCESS)
+		err = EIO;
+	if (err) {
 		if (start)
 			ieee80211_addba_req_refuse(ic, ni, tid);
 		splx(s);
-		return;
+		return err;
 	}
 
 	if (sc->sc_mqrx_supported) {
@@ -3160,7 +3164,7 @@ iwm_sta_rx_agg(struct iwm_softc *sc, struct ieee80211_node *ni, uint8_t tid,
 			if (!(status & IWM_ADD_STA_BAID_VALID_MASK)) {
 				ieee80211_addba_req_refuse(ic, ni, tid);
 				splx(s);
-				return;
+				return EIO;
 			}
 			baid = (status & IWM_ADD_STA_BAID_MASK) >>
 			    IWM_ADD_STA_BAID_SHIFT;
@@ -3168,13 +3172,13 @@ iwm_sta_rx_agg(struct iwm_softc *sc, struct ieee80211_node *ni, uint8_t tid,
 			    baid >= nitems(sc->sc_rxba_data)) {
 				ieee80211_addba_req_refuse(ic, ni, tid);
 				splx(s);
-				return;
+				return EIO;
 			}
 			rxba = &sc->sc_rxba_data[baid];
 			if (rxba->baid != IWM_RX_REORDER_DATA_INVALID_BAID) {
 				ieee80211_addba_req_refuse(ic, ni, tid);
 				splx(s);
-				return;
+				return 0;
 			}
 			rxba->sta_id = IWM_STATION_ID;
 			rxba->tid = tid;
@@ -3213,6 +3217,7 @@ iwm_sta_rx_agg(struct iwm_softc *sc, struct ieee80211_node *ni, uint8_t tid,
 		sc->sc_rx_ba_sessions--;
 
 	splx(s);
+	return 0;
 }
 
 void
@@ -3264,7 +3269,7 @@ iwm_updateedca(struct ieee80211com *ic)
 		iwm_add_task(sc, systq, &sc->mac_ctxt_task);
 }
 
-void
+int
 iwm_sta_tx_agg(struct iwm_softc *sc, struct ieee80211_node *ni, uint8_t tid,
     uint16_t ssn, uint16_t winsize, int start)
 {
@@ -3282,14 +3287,14 @@ iwm_sta_tx_agg(struct iwm_softc *sc, struct ieee80211_node *ni, uint8_t tid,
 
 	/* Ensure we can map this TID to an aggregation queue. */
 	if (tid >= IWM_MAX_TID_COUNT || qid > IWM_LAST_AGG_TX_QUEUE)
-		return;
+		return ENOSPC;
 
 	if (start) {
 		if ((sc->tx_ba_queue_mask & (1 << qid)) != 0)
-			return;
+			return 0;
 	} else {
 		if ((sc->tx_ba_queue_mask & (1 << qid)) == 0)
-			return;
+			return 0;
 	}
 
 	ring = &sc->txq[qid];
@@ -3311,6 +3316,9 @@ iwm_sta_tx_agg(struct iwm_softc *sc, struct ieee80211_node *ni, uint8_t tid,
 	} else {
 		in->tid_disable_ampdu |= ~(1 << tid);
 		/* Queue remains enabled in the TFD queue mask. */
+		err = iwm_flush_sta(sc, in);
+		if (err)
+			return err;
 	}
 
 	cmd.tfd_queue_msk |= htole32(in->tfd_queue_msk);
@@ -3323,7 +3331,7 @@ iwm_sta_tx_agg(struct iwm_softc *sc, struct ieee80211_node *ni, uint8_t tid,
 			if (start)
 				ieee80211_addba_resp_refuse(ic, ni, tid, 
 				    IEEE80211_STATUS_UNSPECIFIED);
-			return;
+			return EBUSY;
 		}
 		err = iwm_enable_txq(sc, IWM_STATION_ID, qid, fifo, 1, tid,
 		    ssn);
@@ -3334,7 +3342,7 @@ iwm_sta_tx_agg(struct iwm_softc *sc, struct ieee80211_node *ni, uint8_t tid,
 			if (start)
 				ieee80211_addba_resp_refuse(ic, ni, tid, 
 				    IEEE80211_STATUS_UNSPECIFIED);
-			return;
+			return err;
 		}
 		/*
 		 * If iwm_enable_txq() employed the SCD hardware bug
@@ -3363,7 +3371,7 @@ iwm_sta_tx_agg(struct iwm_softc *sc, struct ieee80211_node *ni, uint8_t tid,
 		if (start)
 			ieee80211_addba_resp_refuse(ic, ni, tid, 
 			    IEEE80211_STATUS_UNSPECIFIED);
-		return;
+		return err;
 	}
 
 	if (start) {
@@ -3380,6 +3388,8 @@ iwm_sta_tx_agg(struct iwm_softc *sc, struct ieee80211_node *ni, uint8_t tid,
 		    IWM_AGG_SSN_TO_TXQ_IDX(ba->ba_winend));
 		iwm_clear_oactive(sc, ring);
 	}
+
+	return 0;
 }
 
 void
@@ -3389,35 +3399,42 @@ iwm_ba_task(void *arg)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni = ic->ic_bss;
 	int s = splnet();
-	int tid;
+	int tid, err = 0;
 
-	for (tid = 0; tid < IWM_MAX_TID_COUNT; tid++) {
+	for (tid = 0; tid < IWM_MAX_TID_COUNT && !err; tid++) {
 		if (sc->sc_flags & IWM_FLAG_SHUTDOWN)
 			break;
 		if (sc->ba_rx.start_tidmask & (1 << tid)) {
 			struct ieee80211_rx_ba *ba = &ni->ni_rx_ba[tid];
-			iwm_sta_rx_agg(sc, ni, tid, ba->ba_winstart,
+			err = iwm_sta_rx_agg(sc, ni, tid, ba->ba_winstart,
 			    ba->ba_winsize, ba->ba_timeout_val, 1);
 			sc->ba_rx.start_tidmask &= ~(1 << tid);
 		} else if (sc->ba_rx.stop_tidmask & (1 << tid)) {
-			iwm_sta_rx_agg(sc, ni, tid, 0, 0, 0, 0);
+			err = iwm_sta_rx_agg(sc, ni, tid, 0, 0, 0, 0);
 			sc->ba_rx.stop_tidmask &= ~(1 << tid);
 		}
 	}
 
-	for (tid = 0; tid < IWM_MAX_TID_COUNT; tid++) {
+	for (tid = 0; tid < IWM_MAX_TID_COUNT && !err; tid++) {
 		if (sc->sc_flags & IWM_FLAG_SHUTDOWN)
 			break;
 		if (sc->ba_tx.start_tidmask & (1 << tid)) {
 			struct ieee80211_tx_ba *ba = &ni->ni_tx_ba[tid];
-			iwm_sta_tx_agg(sc, ni, tid, ba->ba_winstart,
+			err = iwm_sta_tx_agg(sc, ni, tid, ba->ba_winstart,
 			    ba->ba_winsize, 1);
 			sc->ba_tx.start_tidmask &= ~(1 << tid);
 		} else if (sc->ba_tx.stop_tidmask & (1 << tid)) {
-			iwm_sta_tx_agg(sc, ni, tid, 0, 0, 0);
+			err = iwm_sta_tx_agg(sc, ni, tid, 0, 0, 0);
 			sc->ba_tx.stop_tidmask &= ~(1 << tid);
 		}
 	}
+
+	/*
+	 * We "recover" from failure to start or stop a BA session
+	 * by resetting the device.
+	 */
+	if (err && (sc->sc_flags & IWM_FLAG_SHUTDOWN) == 0)
+		task_add(systq, &sc->init_task);
 
 	refcnt_rele_wake(&sc->task_refs);
 	splx(s);
@@ -5317,6 +5334,8 @@ iwm_txq_advance(struct iwm_softc *sc, struct iwm_tx_ring *ring, int idx)
 		}
 		ring->tail = (ring->tail + 1) % IWM_TX_RING_COUNT;
 	}
+
+	wakeup(ring);
 }
 
 void
@@ -6423,6 +6442,30 @@ iwm_flush_tx_path(struct iwm_softc *sc, int tfd_queue_msk)
 	return err;
 }
 
+#define IWM_FLUSH_WAIT_MS	2000
+
+int
+iwm_wait_tx_queues_empty(struct iwm_softc *sc)
+{
+	int i, err;
+
+	for (i = 0; i < IWM_MAX_QUEUES; i++) {
+		struct iwm_tx_ring *ring = &sc->txq[i];
+
+		if (i == sc->cmdqid)
+			continue;
+
+		while (ring->queued > 0) {
+			err = tsleep_nsec(ring, 0, "iwmflush",
+			    MSEC_TO_NSEC(IWM_FLUSH_WAIT_MS));
+			if (err)
+				return err;
+		}
+	}
+
+	return 0;
+}
+
 void
 iwm_led_enable(struct iwm_softc *sc)
 {
@@ -6754,6 +6797,83 @@ iwm_add_aux_sta(struct iwm_softc *sc)
 	if (!err && (status & IWM_ADD_STA_STATUS_MASK) != IWM_ADD_STA_SUCCESS)
 		err = EIO;
 
+	return err;
+}
+
+int
+iwm_drain_sta(struct iwm_softc *sc, struct iwm_node* in, int drain)
+{
+	struct iwm_add_sta_cmd cmd;
+	int err;
+	uint32_t status;
+	size_t cmdsize;
+
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.mac_id_n_color = htole32(IWM_FW_CMD_ID_AND_COLOR(in->in_id,
+	    in->in_color));
+	cmd.sta_id = IWM_STATION_ID;
+	cmd.add_modify = IWM_STA_MODE_MODIFY;
+	cmd.station_flags = drain ? htole32(IWM_STA_FLG_DRAIN_FLOW) : 0;
+	cmd.station_flags_msk = htole32(IWM_STA_FLG_DRAIN_FLOW);
+
+	if (isset(sc->sc_ucode_api, IWM_UCODE_TLV_API_STA_TYPE))
+		cmdsize = sizeof(cmd);
+	else
+		cmdsize = sizeof(struct iwm_add_sta_cmd_v7);
+
+	status = IWM_ADD_STA_SUCCESS;
+	err = iwm_send_cmd_pdu_status(sc, IWM_ADD_STA,
+	    cmdsize, &cmd, &status);
+	if (err) {
+		printf("%s: could not update sta (error %d)\n",
+		    DEVNAME(sc), err);
+		return err;
+	}
+
+	switch (status & IWM_ADD_STA_STATUS_MASK) {
+	case IWM_ADD_STA_SUCCESS:
+		break;
+	default:
+		err = EIO;
+		printf("%s: Couldn't %s draining for station\n",
+		    DEVNAME(sc), drain ? "enable" : "disable");
+		break;
+	}
+
+	return err;
+}
+
+int
+iwm_flush_sta(struct iwm_softc *sc, struct iwm_node *in)
+{
+	int err;
+
+	sc->sc_flags |= IWM_FLAG_TXFLUSH;
+
+	err = iwm_drain_sta(sc, in, 1);
+	if (err)
+		goto done;
+
+	err = iwm_flush_tx_path(sc, in->tfd_queue_msk);
+	if (err) {
+		printf("%s: could not flush Tx path (error %d)\n",
+		    DEVNAME(sc), err);
+		goto done;
+	}
+
+	err = iwm_wait_tx_queues_empty(sc);
+	if (err) {
+		printf("%s: Could not empty Tx queues (error %d)\n",
+		    DEVNAME(sc), err);
+#if 1
+		iwm_dump_driver_status(sc);
+#endif
+		goto done;
+	}
+
+	err = iwm_drain_sta(sc, in, 0);
+done:
+	sc->sc_flags &= ~IWM_FLAG_TXFLUSH;
 	return err;
 }
 
@@ -7938,13 +8058,15 @@ iwm_deauth(struct iwm_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct iwm_node *in = (void *)ic->ic_bss;
 	int err;
-	int tfd_queue_msk = in->tfd_queue_msk;
 
 	splassert(IPL_NET);
 
 	iwm_unprotect_session(sc, in);
 
 	if (sc->sc_flags & IWM_FLAG_STA_ACTIVE) {
+		err = iwm_flush_sta(sc, in);
+		if (err)
+			return err;
 		err = iwm_rm_sta_cmd(sc, in);
 		if (err) {
 			printf("%s: could not remove STA (error %d)\n",
@@ -7959,13 +8081,6 @@ iwm_deauth(struct iwm_softc *sc)
 		sc->ba_rx.stop_tidmask = 0;
 		sc->ba_tx.start_tidmask = 0;
 		sc->ba_tx.stop_tidmask = 0;
-	}
-
-	err = iwm_flush_tx_path(sc, tfd_queue_msk);
-	if (err) {
-		printf("%s: could not flush Tx path (error %d)\n",
-		    DEVNAME(sc), err);
-		return err;
 	}
 
 	if (sc->sc_flags & IWM_FLAG_BINDING_ACTIVE) {
@@ -8025,6 +8140,9 @@ iwm_disassoc(struct iwm_softc *sc)
 	splassert(IPL_NET);
 
 	if (sc->sc_flags & IWM_FLAG_STA_ACTIVE) {
+		err = iwm_flush_sta(sc, in);
+		if (err)
+			return err;
 		err = iwm_rm_sta_cmd(sc, in);
 		if (err) {
 			printf("%s: could not remove STA (error %d)\n",
@@ -9316,6 +9434,10 @@ iwm_start(struct ifnet *ifp)
 			break;
 		}
 
+		/* Don't queue additional frames while flushing Tx queues. */
+		if (sc->sc_flags & IWM_FLAG_TXFLUSH)
+			break;
+
 		/* need to send management frames even if we're not RUNning */
 		m = mq_dequeue(&ic->ic_mgtq);
 		if (m) {
@@ -9406,6 +9528,7 @@ iwm_stop(struct ifnet *ifp)
 	sc->sc_flags &= ~IWM_FLAG_TE_ACTIVE;
 	sc->sc_flags &= ~IWM_FLAG_HW_ERR;
 	sc->sc_flags &= ~IWM_FLAG_SHUTDOWN;
+	sc->sc_flags &= ~IWM_FLAG_TXFLUSH;
 
 	sc->sc_rx_ba_sessions = 0;
 	sc->ba_rx.start_tidmask = 0;

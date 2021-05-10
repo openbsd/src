@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.61 2021/05/03 08:41:25 stsp Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.62 2021/05/10 08:28:00 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -310,6 +310,7 @@ struct iwm_rx_ring {
 #define IWM_FLAG_HW_ERR		0x80	/* hardware error occurred */
 #define IWM_FLAG_SHUTDOWN	0x100	/* shutting down; new tasks forbidden */
 #define IWM_FLAG_BGSCAN		0x200	/* background scan in progress */
+#define IWM_FLAG_TXFLUSH	0x400	/* Tx queue flushing in progress */
 
 struct iwm_ucode_status {
 	uint32_t uc_error_event_table;
