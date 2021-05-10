@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolvd.c,v 1.11 2021/03/19 08:10:57 kn Exp $	*/
+/*	$OpenBSD: resolvd.c,v 1.12 2021/05/10 15:06:34 deraadt Exp $	*/
 /*
  * Copyright (c) 2021 Florian Obser <florian@openbsd.org>
  * Copyright (c) 2021 Theo de Raadt <deraadt@openbsd.org>
@@ -581,9 +581,6 @@ regen_resolvconf(char *why)
 		lwarn(_PATH_RESCONF_NEW);
 		return;
 	}
-
-	/* serial the file for debugging */
-	dprintf(fd, "# resolvd: serial %u\n", arc4random());
 
 #ifndef SMALL
 	if (unwind_running)
