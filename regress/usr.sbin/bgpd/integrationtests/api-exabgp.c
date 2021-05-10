@@ -72,7 +72,9 @@ main(int argc, char **argv)
 			n = read(0, buf, sizeof(buf));
 			if (n == -1)
 				err(1, "read stdin");
-			if (write(2, buf, n - 1) != n - 1)
+			if (n > 2 && strncmp(buf + n - 2, "\n\n", 2) == 0)
+				n--;
+			if (write(2, buf, n) != n)
 				errx(1, "bad write to stderr");
 			if (n > 8 && strncmp(buf, "shutdown", 8) == 0)
 				errx(0, "exabgp shutdown");
