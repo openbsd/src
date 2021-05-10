@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.121 2021/03/24 18:44:00 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.122 2021/05/10 17:03:57 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1597,6 +1597,12 @@ uint16_t
 SSL_CIPHER_get_value(const SSL_CIPHER *c)
 {
 	return ssl3_cipher_get_value(c);
+}
+
+const SSL_CIPHER *
+SSL_CIPHER_find(SSL *ssl, const unsigned char *ptr)
+{
+	return ssl->method->get_cipher_by_char(ptr);
 }
 
 int
