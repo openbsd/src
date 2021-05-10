@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid1c.c,v 1.2 2021/02/08 20:07:04 stsp Exp $ */
+/* $OpenBSD: softraid_raid1c.c,v 1.3 2021/05/10 08:17:07 stsp Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -53,9 +53,15 @@ int	sr_raid1c_create(struct sr_discipline *, struct bioc_createraid *,
 int	sr_raid1c_add_offline_chunks(struct sr_discipline *, int);
 int	sr_raid1c_assemble(struct sr_discipline *, struct bioc_createraid *,
 	    int, void *);
+int	sr_raid1c_alloc_resources(struct sr_discipline *);
+void	sr_raid1c_free_resources(struct sr_discipline *sd);
+int	sr_raid1c_ioctl(struct sr_discipline *sd, struct bioc_discipline *bd);
+int	sr_raid1c_meta_opt_handler(struct sr_discipline *,
+	    struct sr_meta_opt_hdr *);
 void	sr_raid1c_write(struct cryptop *);
 int	sr_raid1c_rw(struct sr_workunit *);
 int	sr_raid1c_dev_rw(struct sr_workunit *, struct sr_crypto_wu *);
+void	sr_raid1c_done(struct sr_workunit *wu);
 
 /* RAID1 functions */
 extern int	sr_raid1_init(struct sr_discipline *sd);
@@ -66,18 +72,22 @@ extern void	sr_raid1_set_chunk_state(struct sr_discipline *, int, int);
 extern void	sr_raid1_set_vol_state(struct sr_discipline *);
 
 /* CRYPTO raid functions */
-extern struct sr_crypto_wu *sr_crypto_prepare(struct sr_workunit *, int);
+extern struct sr_crypto_wu *sr_crypto_prepare(struct sr_workunit *,
+		    struct sr_crypto *, int);
 extern int	sr_crypto_meta_create(struct sr_discipline *,
-		    struct bioc_createraid *);
-extern int	sr_crypto_assemble(struct sr_discipline *,
-		    struct bioc_createraid *, int, void *);
-extern int	sr_crypto_alloc_resources(struct sr_discipline *);
-extern void	sr_crypto_free_resources(struct sr_discipline *);
-extern int	sr_crypto_ioctl(struct sr_discipline *,
-		    struct bioc_discipline *);
-extern int	sr_crypto_meta_opt_handler(struct sr_discipline *,
-		    struct sr_meta_opt_hdr *);
-void		sr_crypto_done(struct sr_workunit *);
+		    struct sr_crypto *, struct bioc_createraid *);
+extern int	sr_crypto_set_key(struct sr_discipline *,
+		    struct sr_crypto *, struct bioc_createraid *, int, void *);
+extern int	sr_crypto_alloc_resources_internal(struct sr_discipline *,
+		    struct sr_crypto *);
+extern void	sr_crypto_free_resources_internal(struct sr_discipline *,
+		    struct sr_crypto *);
+extern int	sr_crypto_ioctl_internal(struct sr_discipline *,
+		    struct sr_crypto *, struct bioc_discipline *);
+int		sr_crypto_meta_opt_handler_internal(struct sr_discipline *,
+		    struct sr_crypto *, struct sr_meta_opt_hdr *);
+void		sr_crypto_done_internal(struct sr_workunit *,
+		    struct sr_crypto *);
 
 /* Discipline initialisation. */
 void
@@ -94,17 +104,17 @@ sr_raid1c_discipline_init(struct sr_discipline *sd)
 	sd->sd_max_wu = SR_RAID1C_NOWU;
 
 	for (i = 0; i < SR_CRYPTO_MAXKEYS; i++)
-		sd->mds.mdd_crypto.scr_sid[i] = (u_int64_t)-1;
+		sd->mds.mdd_raid1c.sr1c_crypto.scr_sid[i] = (u_int64_t)-1;
 
 	/* Setup discipline specific function pointers. */
-	sd->sd_alloc_resources = sr_crypto_alloc_resources;
+	sd->sd_alloc_resources = sr_raid1c_alloc_resources;
 	sd->sd_assemble = sr_raid1c_assemble;
 	sd->sd_create = sr_raid1c_create;
-	sd->sd_free_resources = sr_crypto_free_resources;
-	sd->sd_ioctl_handler = sr_crypto_ioctl;
-	sd->sd_meta_opt_handler = sr_crypto_meta_opt_handler;
+	sd->sd_free_resources = sr_raid1c_free_resources;
+	sd->sd_ioctl_handler = sr_raid1c_ioctl;
+	sd->sd_meta_opt_handler = sr_raid1c_meta_opt_handler;
 	sd->sd_scsi_rw = sr_raid1c_rw;
-	sd->sd_scsi_done = sr_crypto_done;
+	sd->sd_scsi_done = sr_raid1c_done;
 	sd->sd_scsi_wu_done = sr_raid1_wu_done;
 	sd->sd_set_chunk_state = sr_raid1_set_chunk_state;
 	sd->sd_set_vol_state = sr_raid1_set_vol_state;
@@ -128,7 +138,7 @@ sr_raid1c_create(struct sr_discipline *sd, struct bioc_createraid *bc,
 	if (rv)
 		return rv;
 
-	return sr_crypto_meta_create(sd, bc);
+	return sr_crypto_meta_create(sd, &sd->mds.mdd_raid1c.sr1c_crypto, bc);
 }
 
 int
@@ -165,6 +175,7 @@ int
 sr_raid1c_assemble(struct sr_discipline *sd, struct bioc_createraid *bc,
     int no_chunk, void *data)
 {
+	struct sr_raid1c *mdd_raid1c = &sd->mds.mdd_raid1c;
 	int rv;
 
 	/* Create NODEV place-holders for missing chunks. */
@@ -176,9 +187,31 @@ sr_raid1c_assemble(struct sr_discipline *sd, struct bioc_createraid *bc,
 
 	rv = sr_raid1_assemble(sd, bc, no_chunk, NULL);
 	if (rv)
-		return rv;
+		return (rv);
 
-	return sr_crypto_assemble(sd, bc, no_chunk, data);
+	return sr_crypto_set_key(sd, &mdd_raid1c->sr1c_crypto, bc,
+	    no_chunk, data);
+}
+
+int
+sr_raid1c_ioctl(struct sr_discipline *sd, struct bioc_discipline *bd)
+{
+	struct sr_raid1c *mdd_raid1c = &sd->mds.mdd_raid1c;
+	return sr_crypto_ioctl_internal(sd, &mdd_raid1c->sr1c_crypto, bd);
+}
+
+int
+sr_raid1c_alloc_resources(struct sr_discipline *sd)
+{
+	struct sr_raid1c *mdd_raid1c = &sd->mds.mdd_raid1c;
+	return sr_crypto_alloc_resources_internal(sd, &mdd_raid1c->sr1c_crypto);
+}
+
+void
+sr_raid1c_free_resources(struct sr_discipline *sd)
+{
+	struct sr_raid1c *mdd_raid1c = &sd->mds.mdd_raid1c;
+	sr_crypto_free_resources_internal(sd, &mdd_raid1c->sr1c_crypto);
 }
 
 int
@@ -186,6 +219,7 @@ sr_raid1c_dev_rw(struct sr_workunit *wu, struct sr_crypto_wu *crwu)
 {
 	struct sr_discipline	*sd = wu->swu_dis;
 	struct scsi_xfer	*xs = wu->swu_xs;
+	struct sr_raid1c	*mdd_raid1c = &sd->mds.mdd_raid1c;
 	struct sr_ccb		*ccb;
 	struct uio		*uio;
 	struct sr_chunk		*scp;
@@ -204,7 +238,7 @@ sr_raid1c_dev_rw(struct sr_workunit *wu, struct sr_crypto_wu *crwu)
 			rt = 0;
 ragain:
 			/* interleave reads */
-			chunk = sd->mds.mdd_crypto.scr_raid1.sr1_counter++ %
+			chunk = mdd_raid1c->sr1c_raid1.sr1_counter++ %
 			    sd->sd_meta->ssdi.ssd_chunk_no;
 			scp = sd->sd_vol.sv_chunks[chunk];
 			switch (scp->src_meta.scm_status) {
@@ -299,9 +333,18 @@ sr_raid1c_write(struct cryptop *crp)
 }
 
 int
+sr_raid1c_meta_opt_handler(struct sr_discipline *sd, struct sr_meta_opt_hdr *om)
+{
+	struct sr_raid1c *mdd_raid1c = &sd->mds.mdd_raid1c;
+	return sr_crypto_meta_opt_handler_internal(sd,
+	    &mdd_raid1c->sr1c_crypto, om);
+}
+
+int
 sr_raid1c_rw(struct sr_workunit *wu)
 {
 	struct sr_crypto_wu	*crwu;
+	struct sr_raid1c	*mdd_raid1c;
 	daddr_t			blkno;
 	int			rv = 0;
 
@@ -313,7 +356,8 @@ sr_raid1c_rw(struct sr_workunit *wu)
 	
 	if (ISSET(wu->swu_xs->flags, SCSI_DATA_OUT) &&
 	    !ISSET(wu->swu_flags, SR_WUF_REBUILD)) {
-		crwu = sr_crypto_prepare(wu, 1);
+		mdd_raid1c = &wu->swu_dis->mds.mdd_raid1c;
+		crwu = sr_crypto_prepare(wu, &mdd_raid1c->sr1c_crypto, 1);
 		crwu->cr_crp->crp_callback = sr_raid1c_write;
 		rv = crypto_dispatch(crwu->cr_crp);
 		if (rv == 0)
@@ -322,4 +366,11 @@ sr_raid1c_rw(struct sr_workunit *wu)
 		rv = sr_raid1c_dev_rw(wu, NULL);
 
 	return (rv);
+}
+
+void
+sr_raid1c_done(struct sr_workunit *wu)
+{
+	struct sr_raid1c *mdd_raid1c = &wu->swu_dis->mds.mdd_raid1c;
+	sr_crypto_done_internal(wu, &mdd_raid1c->sr1c_crypto);
 }

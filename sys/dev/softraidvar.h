@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.172 2021/02/08 11:20:04 stsp Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.173 2021/05/10 08:17:07 stsp Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -468,8 +468,6 @@ struct sr_crypto {
 	u_int8_t		scr_key[SR_CRYPTO_MAXKEYS][SR_CRYPTO_KEYBYTES];
 	u_int8_t		scr_maskkey[SR_CRYPTO_MAXKEYBYTES];
 	u_int64_t		scr_sid[SR_CRYPTO_MAXKEYS];
-
-	struct sr_raid1		scr_raid1; /* for RAID1C */
 };
 
 #define SR_CONCAT_NOWU		16
@@ -478,7 +476,10 @@ struct sr_concat {
 
 /* RAID 1C */
 #define SR_RAID1C_NOWU		16
-/* Uses sr_crypto */
+struct sr_raid1c {
+	struct sr_crypto	sr1c_crypto;
+	struct sr_raid1		sr1c_raid1;
+};
 
 struct sr_chunk {
 	struct sr_meta_chunk	src_meta;	/* chunk meta data */
@@ -543,6 +544,7 @@ struct sr_discipline {
 	    struct sr_concat	mdd_concat;
 #ifdef CRYPTO
 	    struct sr_crypto	mdd_crypto;
+	    struct sr_raid1c	mdd_raid1c;
 #endif /* CRYPTO */
 	}			sd_dis_specific;/* dis specific members */
 #define mds			sd_dis_specific
@@ -731,10 +733,13 @@ void			sr_raid1c_discipline_init(struct sr_discipline *);
 
 /* Crypto discipline hooks. */
 int			sr_crypto_get_kdf(struct bioc_createraid *,
-			    struct sr_discipline *);
-int			sr_crypto_create_keys(struct sr_discipline *);
-struct sr_chunk *	sr_crypto_create_key_disk(struct sr_discipline *, dev_t);
-struct sr_chunk *	sr_crypto_read_key_disk(struct sr_discipline *, dev_t);
+			    struct sr_discipline *, struct sr_crypto *);
+int			sr_crypto_create_keys(struct sr_discipline *,
+			    struct sr_crypto *);
+struct sr_chunk *	sr_crypto_create_key_disk(struct sr_discipline *,
+			    struct sr_crypto *, dev_t);
+struct sr_chunk *	sr_crypto_read_key_disk(struct sr_discipline *,
+			    struct sr_crypto *, dev_t);
 
 /* Hibernate I/O function */
 int			sr_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr,
