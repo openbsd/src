@@ -18,7 +18,6 @@ neighbor 10.12.57.1 {
 
 	api {
 		processes [ reader ];
-		neighbor-changes;
 	}
 }
 
@@ -37,7 +36,6 @@ neighbor 10.12.57.1 {
 
 	api {
 		processes [ reader ];
-		neighbor-changes;
 	}
 }
 
@@ -53,6 +51,15 @@ neighbor 10.12.57.1 {
 	family {
 		ipv4 unicast;
 	}
+	api {
+		processes [ reader ];
+		neighbor-changes;
+		receive {
+			parsed;
+			update;
+			notification;
+		}
+	}
 }
 
 neighbor 10.12.57.1 {
@@ -66,5 +73,14 @@ neighbor 10.12.57.1 {
 
 	family {
 		ipv4 unicast;
+	}
+	api {
+		processes [ reader ];
+		neighbor-changes;
+		receive {
+			parsed;
+			update;
+			notification;
+		}
 	}
 }
