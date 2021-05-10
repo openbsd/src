@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.141 2020/12/16 21:11:35 bluhm Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.142 2021/05/10 00:52:15 guenther Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -341,7 +341,7 @@ void pmap_tlb_shoottlb(struct pmap *, int);
 #ifdef MULTIPROCESSOR
 void pmap_tlb_shootwait(void);
 #else
-#define	pmap_tlb_shootwait()
+#define	pmap_tlb_shootwait()		do { } while (0)
 #endif
 
 /*
@@ -3122,6 +3122,32 @@ volatile vaddr_t tlb_shoot_addr1 __attribute__((section(".kudata")));
 volatile vaddr_t tlb_shoot_addr2 __attribute__((section(".kudata")));
 volatile int tlb_shoot_first_pcid __attribute__((section(".kudata")));
 
+
+/* Obtain the "lock" for TLB shooting */
+static inline int
+pmap_start_tlb_shoot(long wait, const char *func)
+{
+	int s = splvm();
+
+	while (atomic_cas_ulong(&tlb_shoot_wait, 0, wait) != 0) {
+#ifdef MP_LOCKDEBUG
+		int nticks = __mp_lock_spinout;
+#endif
+		while (tlb_shoot_wait != 0) {
+			CPU_BUSY_CYCLE();
+#ifdef MP_LOCKDEBUG
+			if (--nticks <= 0) {
+				db_printf("%s: spun out", func);
+				db_enter();
+				nticks = __mp_lock_spinout;
+			}
+#endif
+		}
+	}
+
+	return s;
+}
+
 void
 pmap_tlb_shootpage(struct pmap *pm, vaddr_t va, int shootself)
 {
@@ -3141,24 +3167,8 @@ pmap_tlb_shootpage(struct pmap *pm, vaddr_t va, int shootself)
 	}
 
 	if (wait > 0) {
-		int s = splvm();
+		int s = pmap_start_tlb_shoot(wait, __func__);
 
-		while (atomic_cas_ulong(&tlb_shoot_wait, 0, wait) != 0) {
-#ifdef MP_LOCKDEBUG
-			int nticks = __mp_lock_spinout;
-#endif
-			while (tlb_shoot_wait != 0) {
-				CPU_BUSY_CYCLE();
-#ifdef MP_LOCKDEBUG
-
-				if (--nticks <= 0) {
-					db_printf("%s: spun out", __func__);
-					db_enter();
-					nticks = __mp_lock_spinout;
-				}
-#endif
-			}
-		}
 		tlb_shoot_first_pcid = is_kva ? PCID_KERN : PCID_PROC;
 		tlb_shoot_addr1 = va;
 		CPU_INFO_FOREACH(cii, ci) {
@@ -3203,24 +3213,8 @@ pmap_tlb_shootrange(struct pmap *pm, vaddr_t sva, vaddr_t eva, int shootself)
 	}
 
 	if (wait > 0) {
-		int s = splvm();
+		int s = pmap_start_tlb_shoot(wait, __func__);
 
-		while (atomic_cas_ulong(&tlb_shoot_wait, 0, wait) != 0) {
-#ifdef MP_LOCKDEBUG
-			int nticks = __mp_lock_spinout;
-#endif
-			while (tlb_shoot_wait != 0) {
-				CPU_BUSY_CYCLE();
-#ifdef MP_LOCKDEBUG
-
-				if (--nticks <= 0) {
-					db_printf("%s: spun out", __func__);
-					db_enter();
-					nticks = __mp_lock_spinout;
-				}
-#endif
-			}
-		}
 		tlb_shoot_first_pcid = is_kva ? PCID_KERN : PCID_PROC;
 		tlb_shoot_addr1 = sva;
 		tlb_shoot_addr2 = eva;
@@ -3275,24 +3269,7 @@ pmap_tlb_shoottlb(struct pmap *pm, int shootself)
 	}
 
 	if (wait) {
-		int s = splvm();
-
-		while (atomic_cas_ulong(&tlb_shoot_wait, 0, wait) != 0) {
-#ifdef MP_LOCKDEBUG
-			int nticks = __mp_lock_spinout;
-#endif
-			while (tlb_shoot_wait != 0) {
-				CPU_BUSY_CYCLE();
-#ifdef MP_LOCKDEBUG
-
-				if (--nticks <= 0) {
-					db_printf("%s: spun out", __func__);
-					db_enter();
-					nticks = __mp_lock_spinout;
-				}
-#endif
-			}
-		}
+		int s = pmap_start_tlb_shoot(wait, __func__);
 
 		CPU_INFO_FOREACH(cii, ci) {
 			if ((mask & (1ULL << ci->ci_cpuid)) == 0)
