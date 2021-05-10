@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.13 2021/05/07 22:15:13 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.14 2021/05/10 17:16:01 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -192,28 +192,24 @@ GPT_get_partition_table(off_t where)
 }
 
 void
-GPT_get_gpt(int which)
+GPT_read(int which)
 {
-	int privalid, altvalid;
+	int valid;
 
-	/*
-	 * primary header && primary partition table ||
-	 * alt header && alt partition table
-	 */
-	privalid = GPT_get_header(GPTSECTOR);
-	if (privalid == 0)
-		privalid = GPT_get_partition_table(gh.gh_part_lba);
-	if (which == 1 || (which == 0 && privalid == 0))
+	valid = GPT_get_header(GPTSECTOR);
+	if (valid == 0)
+		valid = GPT_get_partition_table(gh.gh_part_lba);
+	if (which == PRIMARYGPT || (which == ANYGPT && valid == 0))
 		return;
 
 	/* No valid GPT found. Zap any artifacts. */
 	memset(&gh, 0, sizeof(gh));
 	memset(&gp, 0, sizeof(gp));
 
-	altvalid = GPT_get_header(DL_GETDSIZE(&dl) - 1);
-	if (altvalid == 0)
-		altvalid = GPT_get_partition_table(gh.gh_part_lba);
-	if (which == 2 || altvalid == 0)
+	valid = GPT_get_header(DL_GETDSIZE(&dl) - 1);
+	if (valid == 0)
+		valid = GPT_get_partition_table(gh.gh_part_lba);
+	if (which == SECONDARYGPT || valid == 0)
 		return;
 
 	/* No valid GPT found. Zap any artifacts. */
@@ -239,7 +235,7 @@ GPT_print(char *units, int verbosity)
 		printf("%d-byte ", secsize);
 	printf("%s]\n", unit_types[u].lname);
 
-	if (verbosity) {
+	if (verbosity == VERBOSE) {
 		printf("GUID: ");
 		uuid_dec_le(&gh.gh_guid, &guid);
 		uuid_to_string(&guid, &guidstr, &status);
@@ -264,7 +260,7 @@ GPT_print_parthdr(int verbosity)
 {
 	printf("   #: type                                "
 	    " [       start:         size ]\n");
-	if (verbosity)
+	if (verbosity == VERBOSE)
 		printf("      guid                                 name\n");
 	printf("--------------------------------------------------------"
 	    "----------------\n");
@@ -289,7 +285,7 @@ GPT_print_part(int n, char *units, int verbosity)
 	    PRT_uuid_to_typename(&guid), letoh64(partn->gp_lba_start),
 	    size, unit_types[u].abbr);
 
-	if (verbosity) {
+	if (verbosity == VERBOSE) {
 		uuid_dec_le(&partn->gp_guid, &guid);
 		uuid_to_string(&guid, &guidstr, &status);
 		if (status != uuid_s_ok)

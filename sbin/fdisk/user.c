@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.52 2019/04/29 18:54:12 krw Exp $	*/
+/*	$OpenBSD: user.c,v 1.53 2021/05/10 17:16:01 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -80,7 +80,7 @@ USER_edit(off_t offset, off_t reloff)
 		memset(&gh, 0, sizeof(gh));
 		memset(&gp, 0, sizeof(gp));
 		if (MBR_protective_mbr(&mbr) == 0)
-			GPT_get_gpt(0);
+			GPT_read(ANYGPT);
 	}
 
 	printf("Enter 'help' for information\n");
@@ -153,19 +153,20 @@ USER_print_disk(int verbosity)
 			break;
 		MBR_parse(&dos_mbr, offset, firstoff, &mbr);
 		if (offset == 0) {
-		       if (verbosity || MBR_protective_mbr(&mbr) == 0) {
-				if (verbosity) {
+			if (verbosity == VERBOSE || MBR_protective_mbr(&mbr) ==
+			    0) {
+				if (verbosity == VERBOSE) {
 					printf("Primary GPT:\n");
-					GPT_get_gpt(1); /* Get Primary */
+					GPT_read(PRIMARYGPT);
 				}
 				if (letoh64(gh.gh_sig) == GPTSIGNATURE)
 					GPT_print("s", verbosity);
 				else
 					printf("\tNot Found\n");
-				if (verbosity) {
+				if (verbosity == VERBOSE) {
 					printf("\n");
 					printf("Secondary GPT:\n");
-					GPT_get_gpt(2); /* Get Secondary */
+					GPT_read(SECONDARYGPT);
 					if (letoh64(gh.gh_sig) == GPTSIGNATURE)
 						GPT_print("s", verbosity);
 					else

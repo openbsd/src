@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.105 2021/05/07 22:15:13 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.106 2021/05/10 17:16:01 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -73,7 +73,7 @@ main(int argc, char *argv[])
 	ssize_t len;
 	int ch, fd, error;
 	int e_flag = 0, g_flag = 0, i_flag = 0, u_flag = 0;
-	int verbosity = 0;
+	int verbosity = TERSE;
 	int c_arg = 0, h_arg = 0, s_arg = 0;
 	uint32_t l_arg = 0;
 	char *query;
@@ -146,7 +146,7 @@ main(int argc, char *argv[])
 			y_flag = 1;
 			break;
 		case 'v':
-			verbosity++;
+			verbosity = VERBOSE;
 			break;
 		default:
 			usage();
@@ -176,7 +176,7 @@ main(int argc, char *argv[])
 
 	/* Get the GPT if present. Either primary or secondary is ok. */
 	if (MBR_protective_mbr(&mbr) == 0)
-		GPT_get_gpt(0);
+		GPT_read(ANYGPT);
 
 	if (!(i_flag || u_flag || e_flag)) {
 		if (pledge("stdio", NULL) == -1)
