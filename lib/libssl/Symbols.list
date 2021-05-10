@@ -86,6 +86,7 @@ SSL_CTX_get_info_callback
 SSL_CTX_get_max_proto_version
 SSL_CTX_get_min_proto_version
 SSL_CTX_get_quiet_shutdown
+SSL_CTX_get_ssl_method
 SSL_CTX_get_timeout
 SSL_CTX_get_verify_callback
 SSL_CTX_get_verify_depth

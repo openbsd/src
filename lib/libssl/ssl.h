@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.187 2021/05/10 17:03:57 tb Exp $ */
+/* $OpenBSD: ssl.h,v 1.188 2021/05/10 17:05:26 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1217,6 +1217,8 @@ int SSL_get_min_proto_version(SSL *ssl);
 int SSL_get_max_proto_version(SSL *ssl);
 int SSL_set_min_proto_version(SSL *ssl, uint16_t version);
 int SSL_set_max_proto_version(SSL *ssl, uint16_t version);
+
+const SSL_METHOD *SSL_CTX_get_ssl_method(const SSL_CTX *ctx);
 
 #ifndef LIBRESSL_INTERNAL
 #define SSL_CTRL_SET_CURVES			SSL_CTRL_SET_GROUPS

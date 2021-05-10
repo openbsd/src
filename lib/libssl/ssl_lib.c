@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.255 2021/03/29 16:57:38 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.256 2021/05/10 17:05:26 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -3056,6 +3056,12 @@ SSL_set_max_proto_version(SSL *ssl, uint16_t version)
 	return ssl_version_set_max(ssl->method, version,
 	    ssl->internal->min_tls_version, &ssl->internal->max_tls_version,
 	    &ssl->internal->max_proto_version);
+}
+
+const SSL_METHOD *
+SSL_CTX_get_ssl_method(const SSL_CTX *ctx)
+{
+	return ctx->method;
 }
 
 static int
