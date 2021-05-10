@@ -1452,9 +1452,11 @@ EVP_DigestFinal
 EVP_DigestFinal_ex
 EVP_DigestInit
 EVP_DigestInit_ex
+EVP_DigestSign
 EVP_DigestSignFinal
 EVP_DigestSignInit
 EVP_DigestUpdate
+EVP_DigestVerify
 EVP_DigestVerifyFinal
 EVP_DigestVerifyInit
 EVP_ENCODE_CTX_free
