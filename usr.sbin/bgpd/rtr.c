@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr.c,v 1.2 2021/04/26 07:40:26 claudio Exp $ */
+/*	$OpenBSD: rtr.c,v 1.3 2021/05/11 12:09:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -214,6 +214,7 @@ rtr_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			if ((rs = rtr_get(imsg.hdr.peerid)) == NULL) {
 				log_warnx("IMSG_SOCKET_CONN: unknown rtr id %d",
 				    imsg.hdr.peerid);
+				close(fd);
 				break;
 			}
 			rtr_open(rs, fd);
