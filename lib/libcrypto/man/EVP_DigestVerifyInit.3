@@ -1,4 +1,4 @@
-.\"	$OpenBSD: EVP_DigestVerifyInit.3,v 1.9 2021/05/11 15:26:21 tb Exp $
+.\"	$OpenBSD: EVP_DigestVerifyInit.3,v 1.10 2021/05/11 15:31:13 tb Exp $
 .\"	OpenSSL fb552ac6 Sep 30 23:43:01 2009 +0000
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -191,6 +191,7 @@ In particular a return value of -2 indicates the operation is not
 supported by the public key algorithm.
 .Pp
 .Fn EVP_DigestVerifyFinal
+and
 .Fn EVP_DigestVerify
 return 1 for success; any other value indicates failure.
 A return value of 0 indicates that the signature did not verify
