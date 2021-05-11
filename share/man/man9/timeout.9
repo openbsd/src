@@ -1,4 +1,4 @@
-.\"	$OpenBSD: timeout.9,v 1.52 2021/04/26 20:32:30 mvs Exp $
+.\"	$OpenBSD: timeout.9,v 1.53 2021/05/11 13:29:25 cheloha Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 26 2021 $
+.Dd $Mdocdate: May 11 2021 $
 .Dt TIMEOUT_SET 9
 .Os
 .Sh NAME
@@ -194,11 +194,6 @@ but it will wait until any current execution of the timeout has completed.
 ensures that any current execution of the timeout in the argument
 .Fa to
 has completed before returning.
-If the timeout
-.Fa to
-has been initialised with
-.Fn timeout_set
-it will take the kernel lock.
 .Pp
 The
 .Fn timeout_pending
