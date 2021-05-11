@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.S,v 1.3 2021/05/10 14:54:14 deraadt Exp $ */
+/* $OpenBSD: locore.S,v 1.4 2021/05/11 13:56:28 deraadt Exp $ */
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
  * All rights reserved.
@@ -302,23 +302,13 @@ sigfillsiz:
 ENTRY(sigcode)
 	mv      a0, sp
 	addi    a0, a0, SF_SC //actual saved context
-
-1:
 	li      t0, SYS_sigreturn
 	ecall                //make a syscall from lower privilege to higher
-	
 	.globl _C_LABEL(sigcoderet)
 _C_LABEL(sigcoderet):
-	nop
-	nop
-
 	/* sigreturn failed, exit */
 	li      t0, SYS_exit
 	ecall
-	nop
-	nop
-
-	j       1b
 END(sigcode)
 	/* This may be copied to the stack, keep it 16-byte aligned */
 	.align  3
