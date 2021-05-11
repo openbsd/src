@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.33 2021/05/09 11:25:32 tb Exp $ */
+/*	$OpenBSD: mft.c,v 1.34 2021/05/11 11:32:51 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -70,6 +70,7 @@ generalizedtime_to_tm(const ASN1_GENERALIZEDTIME *gtime, struct tm *tm)
 	data = ASN1_STRING_get0_data(gtime);
 	len = ASN1_STRING_length(gtime);
 
+	memset(tm, 0, sizeof(*tm));
 	return ASN1_time_parse(data, len, tm, V_ASN1_GENERALIZEDTIME) ==
 	    V_ASN1_GENERALIZEDTIME;
 }

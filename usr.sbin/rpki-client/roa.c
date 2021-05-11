@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.18 2021/05/06 17:03:57 job Exp $ */
+/*	$OpenBSD: roa.c,v 1.19 2021/05/11 11:32:51 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -366,6 +366,7 @@ roa_parse(X509 **x509, const char *fn)
 		warnx("%s: X509_get0_notAfter failed", fn);
 		goto out;
 	}
+	memset(&expires_tm, 0, sizeof(expires_tm));
 	if (ASN1_time_parse(at->data, at->length, &expires_tm, 0) == -1) {
 		warnx("%s: ASN1_time_parse failed", fn);
 		goto out;

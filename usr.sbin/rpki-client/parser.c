@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.9 2021/05/09 11:18:57 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.10 2021/05/11 11:32:51 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -101,6 +101,7 @@ proc_parser_roa(struct entity *entp,
 			err(1, "X509_CRL_get0_nextUpdate failed");
 			goto out;
 		}
+		memset(&expires_tm, 0, sizeof(expires_tm));
 		if (ASN1_time_parse(at->data, at->length, &expires_tm,
 		    V_ASN1_UTCTIME) != V_ASN1_UTCTIME) {
 			err(1, "ASN1_time_parse failed");
@@ -126,6 +127,7 @@ proc_parser_roa(struct entity *entp,
 			err(1, "X509_get0_notafter failed");
 			goto out;
 		}
+		memset(&expires_tm, 0, sizeof(expires_tm));
 		if (ASN1_time_parse(at->data, at->length, &expires_tm,
 		    V_ASN1_UTCTIME) != V_ASN1_UTCTIME) {
 			err(1, "ASN1_time_parse failed");
