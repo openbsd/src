@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.133 2021/03/10 10:21:48 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.134 2021/05/11 08:39:32 stsp Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -555,6 +555,14 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node **pni)
 		ic->ic_stats.is_tx_nonode++;
 		goto bad;
 	}
+
+#ifndef IEEE80211_STA_ONLY
+	if (ic->ic_opmode == IEEE80211_M_HOSTAP && ni != ic->ic_bss &&
+	    ni->ni_state != IEEE80211_STA_ASSOC) {
+		ic->ic_stats.is_tx_nonode++;
+		goto bad;
+	}
+#endif
 
 	if ((ic->ic_flags & IEEE80211_F_RSNON) &&
 	    !ni->ni_port_valid &&
