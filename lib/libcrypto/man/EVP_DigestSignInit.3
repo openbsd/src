@@ -1,4 +1,4 @@
-.\"	$OpenBSD: EVP_DigestSignInit.3,v 1.8 2021/05/11 15:14:56 tb Exp $
+.\"	$OpenBSD: EVP_DigestSignInit.3,v 1.9 2021/05/11 18:57:17 tb Exp $
 .\"	OpenSSL 9b86974e Aug 17 15:21:33 2015 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -89,7 +89,7 @@
 .Fa "size_t tbslen"
 .Fc
 .Sh DESCRIPTION
-The EVP signature routines are a high level interface to digital
+The EVP signature routines are a high-level interface to digital
 signatures.
 .Pp
 .Fn EVP_DigestSignInit
@@ -115,6 +115,15 @@ the
 of the signing operation will be written to
 .Pf * Fa pctx :
 this can be used to set alternative signing options.
+Any existing value in
+.Pf * Fa pctx
+will be overwritten.
+The
+.Vt EVP_PKEY_CTX
+value returned must not be freed directly by the application.
+It will be freed automatically when the
+.Vt EVP_MD_CTX
+is freed.
 .Pp
 .Fn EVP_DigestSignUpdate
 hashes
@@ -176,7 +185,7 @@ and
 .\" it is the only way to sign data.
 .Pp
 The EVP interface to digital signatures should almost always be
-used in preference to the low level interfaces.
+used in preference to the low-level interfaces.
 This is because the code then becomes transparent to the algorithm used
 and much more flexible.
 .Pp
