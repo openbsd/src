@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidpp.c,v 1.13 2021/03/18 09:21:53 anton Exp $	*/
+/*	$OpenBSD: uhidpp.c,v 1.14 2021/05/11 16:40:57 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -605,6 +605,8 @@ uhidpp_device_connect(struct uhidpp_softc *sc, struct uhidpp_device *dev)
 		return;
 	}
 
+	dev->d_connected = 1;
+
 	sens = &dev->d_battery.b_sens[0];
 	strlcpy(sens->desc, "battery level", sizeof(sens->desc));
 	sens->type = SENSOR_PERCENT;
@@ -617,10 +619,16 @@ uhidpp_device_connect(struct uhidpp_softc *sc, struct uhidpp_device *dev)
 	sens->value = dev->d_battery.b_nlevels;
 	sensor_attach(&sc->sc_sensdev, sens);
 
-	if (sc->sc_senstsk == NULL)
+	if (sc->sc_senstsk == NULL) {
+		/*
+		 * The mutex must be temporarily released while calling
+		 * sensor_task_register() as it might end up sleeping.
+		 */
+		mtx_leave(&sc->sc_mtx);
 		sc->sc_senstsk = sensor_task_register(sc, uhidpp_refresh, 30);
+		mtx_enter(&sc->sc_mtx);
+	}
 
-	dev->d_connected = 1;
 	uhidpp_device_refresh(sc, dev);
 }
 
