@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.255 2021/01/13 16:28:49 cheloha Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.256 2021/05/11 21:45:33 dv Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -832,12 +832,12 @@ parse(char *string, int flags)
 				    newval);
 				if (len == -1) {
 					warnx("%s: hex string %s: invalid",
-					    string, newval);
+					    string, (char *)newval);
 					return;
 				}
 				if (len > sizeof(hex)) {
 					warnx("%s: hex string %s: too long",
-					    string, newval);
+					    string, (char *)newval);
 					return;
 				}
 
