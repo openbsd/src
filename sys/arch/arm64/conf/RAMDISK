@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.147 2021/04/17 21:19:40 sthen Exp $
+# $OpenBSD: RAMDISK,v 1.148 2021/05/11 13:25:26 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -253,6 +253,7 @@ rge*		at pci?			# Realtek 8125
 # PCI WiFi
 athn*		at pci?			# Atheros AR9k (802.11a/g/n)
 bwfm*		at pci?			# Broadcom FullMAC
+iwx*		at pci?			# Intel WiFi Link 22xxx
 
 # PCI SCSI
 ahci*		at pci? flags 0x0000	# AHCI SATA controllers
