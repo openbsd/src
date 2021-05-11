@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.55 2020/12/23 17:54:04 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.56 2021/05/11 18:21:12 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -436,6 +436,20 @@ pmap_slbd_alloc(pmap_t pm, vaddr_t va)
 	pmap_slbd_cache(pm, slbd);
 
 	return slbd;
+}
+
+int
+pmap_slbd_enter(pmap_t pm, vaddr_t va)
+{
+	struct slb_desc *slbd;
+
+	PMAP_VP_LOCK(pm);
+	slbd = pmap_slbd_lookup(pm, va);
+	if (slbd == NULL)
+		slbd = pmap_slbd_alloc(pm, va);
+	PMAP_VP_UNLOCK(pm);
+
+	return slbd ? 0 : EFAULT;
 }
 
 int
