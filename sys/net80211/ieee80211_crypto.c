@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.77 2020/12/10 12:53:03 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.78 2021/05/11 08:46:31 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -258,7 +258,8 @@ ieee80211_encrypt(struct ieee80211com *ic, struct mbuf *m0,
     struct ieee80211_key *k)
 {
 	if ((k->k_flags & IEEE80211_KEY_SWCRYPTO) == 0)
-		panic("%s: key unset for sw crypto: %d", __func__, k->k_id);
+		panic("%s: key unset for sw crypto: id=%d cipher=%d flags=0x%x",
+		    __func__, k->k_id, k->k_cipher, k->k_flags);
 
 	switch (k->k_cipher) {
 	case IEEE80211_CIPHER_WEP40:
