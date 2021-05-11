@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.S,v 1.4 2021/05/11 13:56:28 deraadt Exp $ */
+/* $OpenBSD: locore.S,v 1.5 2021/05/11 14:58:08 deraadt Exp $ */
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
  * All rights reserved.
@@ -54,7 +54,7 @@ _start_kern_bootstrap:
 	lla	gp, __global_pointer$
 .option pop
 
-	/* Get the physical address kernel loaded to */ 
+	/* Get the physical address kernel loaded to */
 	lla	t0, virt_map	//virt_map is a phy addr where its own va is stored.
 	ld	t1, 0(t0)
 	sub	t1, t1, t0	//t1 = t1 - t0 = va - pa, va<-->pa offset
@@ -62,7 +62,7 @@ _start_kern_bootstrap:
 	sub	s9, t2, t1	//s9 = physmem base of kernel
 
 	//registers passed by bbl.
-	/* 
+	/*
 	 * a0 = hart id
 	 * a1 = dtbp
 	 */
@@ -79,11 +79,11 @@ _start_kern_bootstrap:
 	/* Pick a hart to run the boot process. */
 	lla	t0, hart_lottery
 	li	t1, 1
-	//atomic memory operation, read-modify-write: 
-		//only the first hart can read 0 and modify it to 1, 
-		//all other harts will read 1.
+	//atomic memory operation, read-modify-write:
+	//only the first hart can read 0 and modify it to 1,
+	//all other harts will read 1.
 	amoadd.w t2, t1, (t0)
-	
+
 	/*
 	 * We must jump to mpentry in the non-BSP case because the offset is
 	 * too large to fit in a 12-bit branch immediate.
@@ -100,16 +100,16 @@ _start_kern_bootstrap:
 	/* Build PTE for 1 GiB identity-mapped gigapage */
 	lla	s1, pagetable_l1	//phy addr
 	mv	s2, s9			//phy addr
-	li      t0, 0xffffffffc0000000
-	and     s2, s2, t0
+	li	t0, 0xffffffffc0000000
+	and	s2, s2, t0
 	srli	s2, s2, PAGE_SHIFT	//12, 4K page
-	slli	t5, s2, PTE_PPN0_S	//10bit Phys Mem Attribute 
+	slli	t5, s2, PTE_PPN0_S	//10bit Phys Mem Attribute
 	li	t4, (PTE_KERN | PTE_X)	//flag bit
 	or	t6, t4, t5		//t6 now is PTE for a 1 GiB gigapage
 
 	/* Calculate VPN[2] for 1 GiB identity-mapped gigapage */
 	mv	a5, s9			//va -- identity mapped
-	srli	a5, a5, L1_SHIFT	//30,  remaining va[63:30]
+	srli	a5, a5, L1_SHIFT	//30, remaining va[63:30]
 	andi	a5, a5, 0x1ff		//only use va[38:30] as VPN[2], =0x002
 
 	/* Store L1 PTE entry */
@@ -118,14 +118,14 @@ _start_kern_bootstrap:
 	add	t0, s1, a5
 	mv	s8, t0		// Store address in L1 Page Table to unmap later
 	sd	t6, (t0)
-	
+
 	/* step1) Add L1 entry for kernel */
-	
+
 	//calc PTE based on pa
 	lla	s1, pagetable_l1	//phy addr
-	lla	s2, pagetable_l2	
+	lla	s2, pagetable_l2
 	srli	s2, s2, PAGE_SHIFT	//12, 4K page
-	slli	t5, s2, PTE_PPN0_S	//10bit Phys Mem Attribute 
+	slli	t5, s2, PTE_PPN0_S	//10bit Phys Mem Attribute
 	li	t4, PTE_V		//PTE valid
 	or	t6, t4, t5		//t6 now is the PTE for a level 2 page table
 
@@ -134,14 +134,14 @@ _start_kern_bootstrap:
 	srli	a5, a5, L1_SHIFT	//30
 	andi	a5, a5, 0x1ff		//va[38:30] as VPN[2],==0x100
 
-	/* Store L1 PTE entry */ 
+	/* Store L1 PTE entry */
 	li	a6, PTE_SIZE		//8 Bytes
 	mulw	a5, a5, a6		//distance in unit of bytes
 	add	t0, s1, a5		//s1 is L1 table base pa
-	sd	t6, (t0)		//PTE of a l2 page table is populated to l1 page table 
+	sd	t6, (t0)		//PTE of a l2 page table is populated to l1 page table
 
 
-	/* step2)  Level 2 superpages (512 x 2MiB) */ 	//mega pages: two-level page table
+	/* step2) Level 2 superpages (512 x 2MiB) */ //mega pages: two-level page table
 	lla	s1, pagetable_l2
 	//calc PTE
 	srli	t4, s9, L2_SHIFT	/* Div physmem base by 2 MiB */
@@ -153,28 +153,28 @@ _start_kern_bootstrap:
 	slli	t2, t4, PTE_PPN1_S	//19
 	or	t5, t0, t2		//PTE contructed
 	sd	t5, (s1)		/* Store PTE entry to position */
-	
+
 	//iterating
 	addi	s1, s1, PTE_SIZE
 	addi	t4, t4, 1
-	bltu	t4, t3, 2b		//512 entries 
+	bltu	t4, t3, 2b		//512 entries
 
 
-	/* step3)  Create an L1 entry for early devmap */
+	/* step3) Create an L1 entry for early devmap */
 	lla	s1, pagetable_l1	//pa
-	
+
 	//calculate PTE based on pa: (PPN) + privilege/permission + ...
 	lla	s2, pagetable_l2_devmap	/* Link to next level PN */ //pa
 	srli	s2, s2, PAGE_SHIFT	//12, --> PPN
 	slli	t5, s2, PTE_PPN0_S	//10, PMA
 	li	t4, PTE_V
 	or	t6, t4, t5		//PTE contructed
-	
+
 	//calculate VPN[2] index based on va
 	li	a5, (VM_MAX_KERNEL_ADDRESS - L2_SIZE)//devmap is at kernel mem top, va
 	srli	a5, a5, L1_SHIFT	//30
 	andi	a5, a5, 0x1ff		//index using va[38:30]
-	
+
 	/* Store single level1 PTE entry to position */
 	li	a6, PTE_SIZE
 	mulw	a5, a5, a6		//offset in Bytes
@@ -184,19 +184,19 @@ _start_kern_bootstrap:
 
 	/* step4) Create ONE L2 superpage 2MB for DTB */
 	lla	s1, pagetable_l2_devmap
-	
+
 	//calc PTE based on pa
 	mv	s2, a1			//passed by bbl
-	li      t0, 0xffffffffffe00000
-	and     s2, s2, t0
+	li	t0, 0xffffffffffe00000
+	and	s2, s2, t0
 	srli	s2, s2, PAGE_SHIFT	//12
 	slli	t2, s2, PTE_PPN0_S	//10
 	li	t0, (PTE_KERN)
 	or	t0, t0, t2		//PTE contructed
 
 	/* Store PTE entry to position */
-	li	a6, PTE_SIZE	
-	li	a5, 510			
+	li	a6, PTE_SIZE
+	li	a5, 510
 	mulw	a5, a5, a6
 	add	t1, s1, a5
 	sd	t0, (t1)
@@ -212,8 +212,8 @@ _start_kern_bootstrap:
 
 	/* Set page tables base register */
 	lla	s2, pagetable_l1	//pa
-	srli	s2, s2, PAGE_SHIFT	//12, --> PPN 
-	li	t0, SATP_MODE_SV39	//satp[63:60] = 1000b, enable paging! 
+	srli	s2, s2, PAGE_SHIFT	//12, --> PPN
+	li	t0, SATP_MODE_SV39	//satp[63:60] = 1000b, enable paging!
 	or	s2, s2, t0
 	sfence.vma			//Supervisor Fence for Virtual Memory, to flush TLB
 	csrw	satp, s2
@@ -243,7 +243,7 @@ va:
 	/* Initialize stack pointer */
 	la	s3, initstack_end
 	mv	sp, s3
-	
+
 	/* Allocate space for thread0 PCB and riscv_bootparams */
 	addi	sp, sp, -(PCB_SIZEOF + RISCV_BOOTPARAMS_SIZEOF) & ~STACKALIGNBYTES
 
@@ -273,9 +273,9 @@ va:
 	sd	t0, KERN_STACK(sp)
 
 	li	t0, (VM_MAX_KERNEL_ADDRESS - 2 * L2_SIZE) // XXX Why 2?
-	li      t1, 0x1fffff
-	and     t1, a1, t1
-	add     t0, t0, t1
+	li	t1, 0x1fffff
+	and	t1, a1, t1
+	add	t0, t0, t1
 	sd	t0, DTBP_VIRT(sp)
 	sd	a1, DTBP_PHYS(sp)
 
@@ -284,9 +284,9 @@ va:
 	call	_C_LABEL(main)		//defined in openbsd/kern/init_main.c
 
 	.data
-	.align  4
+	.align	4
 initstack:
-	.space  (PAGE_SIZE * KSTACK_PAGES)
+	.space	(PAGE_SIZE * KSTACK_PAGES)
 initstack_end:
 
 	.globl	sigfill
@@ -300,18 +300,18 @@ sigfillsiz:
 
 	.text
 ENTRY(sigcode)
-	mv      a0, sp
-	addi    a0, a0, SF_SC //actual saved context
-	li      t0, SYS_sigreturn
-	ecall                //make a syscall from lower privilege to higher
+	mv	a0, sp
+	addi	a0, a0, SF_SC //actual saved context
+	li	t0, SYS_sigreturn
+	ecall
 	.globl _C_LABEL(sigcoderet)
 _C_LABEL(sigcoderet):
 	/* sigreturn failed, exit */
-	li      t0, SYS_exit
+	li	t0, SYS_exit
 	ecall
 END(sigcode)
 	/* This may be copied to the stack, keep it 16-byte aligned */
-	.align  3
+	.align	3
 	.globl _C_LABEL(esigcode)
 _C_LABEL(esigcode):
 
@@ -332,7 +332,7 @@ pagetable_l2_devmap:
 
 	.align 3
 virt_map:
-	.quad   virt_map	
+	.quad	virt_map
 hart_lottery:
 	.space	4
 
@@ -370,12 +370,12 @@ ENTRY(mpentry)
 	beqz	t1, 1b			//see __riscv_boot_ap
 
 	/* Setup stack pointer */	//now kernel is ready
-	lla	t0, secondary_stacks  //pa, size: #core x #pages/kernel x pg_size
+	lla	t0, secondary_stacks	//pa, size: #core x #pages/kernel x pg_size
 	li	t1, (PAGE_SIZE * KSTACK_PAGES)	// size of kernel stack for one core
 	mulw	t2, t1, a0			//offset for this hart
 	add	t0, t0, t2			//end of stack for this hart
 	add	t0, t0, t1			//start of stack for this hart
-	sub	t0, t0, s9			//s9 is phymem base, t0 is now relative addr 
+	sub	t0, t0, s9			//s9 is phymem base, t0 is now relative addr
 	li	t1, KERNBASE			//t1 is virtual addr
 	add	sp, t0, t1			//now sp is set to the right virtual address.
 

@@ -47,7 +47,7 @@
 #define	T_BREAKPOINT	(EXCP_BREAKPOINT)
 #define	T_WATCHPOINT	(0)
 
-typedef vaddr_t 	db_addr_t;
+typedef vaddr_t		db_addr_t;
 typedef long		db_expr_t;
 
 typedef trapframe_t	db_regs_t;

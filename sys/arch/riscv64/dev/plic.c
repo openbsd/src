@@ -82,8 +82,8 @@ struct plic_intrhand {
  */
 struct plic_irqsrc {
 	TAILQ_HEAD(, plic_intrhand) is_list; /* handler list */
-	int 	is_irq_max;	/* IRQ to mask while handling */
-	int 	is_irq_min;	/* lowest IRQ when shared */
+	int	is_irq_max;	/* IRQ to mask while handling */
+	int	is_irq_min;	/* lowest IRQ when shared */
 };
 
 struct plic_context {
@@ -99,7 +99,7 @@ struct plic_softc {
 	struct plic_irqsrc	*sc_isrcs;
 	struct plic_context	sc_contexts[MAXCPUS];
 	int			sc_ndev;
-	struct interrupt_controller 	sc_intc;
+	struct interrupt_controller	sc_intc;
 };
 struct plic_softc *plic = NULL;
 
@@ -408,7 +408,7 @@ plic_intr_establish(int irqno, int level, int (*func)(void *),
 
 	if (irqno < 0 || irqno >= PLIC_MAX_IRQS)
 		panic("plic_intr_establish: bogus irqnumber %d: %s",
-		     irqno, name);
+		    irqno, name);
 	sie = disable_interrupts();
 
 	ih = malloc(sizeof *ih, M_DEVBUF, M_WAITOK);
@@ -466,7 +466,7 @@ plic_intr_route(void *cookie, int enable, struct cpu_info *ci)
 
 	int		irq = ih->ih_irq;
 	int		cpu = ci->ci_cpuid;
-	uint32_t 	min_pri = sc->sc_isrcs[irq].is_irq_min;
+	uint32_t	min_pri = sc->sc_isrcs[irq].is_irq_min;
 
 	if (enable == IRQ_ENABLE) {
 		plic_intr_enable_with_pri(irq, min_pri, cpu);
@@ -542,7 +542,7 @@ plic_setipl(int new)
 
 	restore_interrupts(sie);
 }
- 
+
  /*
   * update the max/min priority for an interrupt src,
   * and enforce the updated priority to plic.
@@ -551,10 +551,10 @@ plic_setipl(int new)
 void
 plic_calc_mask(void)
 {
-	struct cpu_info 	*ci = curcpu();
-	struct plic_softc 	*sc = plic;
-	struct plic_intrhand 	*ih;
-	int 			irq;
+	struct cpu_info		*ci = curcpu();
+	struct plic_softc	*sc = plic;
+	struct plic_intrhand	*ih;
+	int			irq;
 
 	/* PLIC irq 0 is reserved, thus we start from 1 */
 	for (irq = 1; irq <= sc->sc_ndev; irq++) {

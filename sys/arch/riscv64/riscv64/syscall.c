@@ -60,12 +60,12 @@ svc_handler(trapframe_t *frame)
 	code = frame->tf_t[0]; // Syscall code
 	callp = p->p_p->ps_emul->e_sysent;
 
-	switch (code) {	
+	switch (code) {
 	case SYS_syscall:
 		code = *ap++;
 		nap--;
 		break;
-        case SYS___syscall:
+	case SYS___syscall:
 		code = *ap++;
 		nap--;
 		break;

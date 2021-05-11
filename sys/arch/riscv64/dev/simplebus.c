@@ -339,7 +339,7 @@ simplebus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 
 		/* For each range. */
 		for (range = sc->sc_dmaranges; rlen >= rone;
-		     rlen -= rone, range += rone) {
+		    rlen -= rone, range += rone) {
 			/* Extract from and size, so we can see if we fit. */
 			rfrom = range[sc->sc_acells];
 			if (sc->sc_pacells == 2)

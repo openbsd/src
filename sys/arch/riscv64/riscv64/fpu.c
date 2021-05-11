@@ -122,7 +122,7 @@ fpu_save(struct proc *p, struct trapframe *frame)
 
 	/*
 	 * pcb->pcb_fpcpu and ci->ci_fpuproc are still valid
-	 * until some other fpu context steals either the cpu 
+	 * until some other fpu context steals either the cpu
 	 * context or another cpu steals the fpu context.
 	 */
 

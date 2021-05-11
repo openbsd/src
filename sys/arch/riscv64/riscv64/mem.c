@@ -244,12 +244,12 @@ mmmmap(dev_t dev, off_t off, int prot)
 int
 mmioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
-        switch (cmd) {
-        case FIONBIO:
-        case FIOASYNC:
-                /* handled by fd layer */
-                return 0;
-        }
+	switch (cmd) {
+	case FIONBIO:
+	case FIOASYNC:
+		/* handled by fd layer */
+		return 0;
+	}
 
 	return (EOPNOTSUPP);
 }

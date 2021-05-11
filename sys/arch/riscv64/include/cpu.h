@@ -142,8 +142,8 @@ struct cpu_info {
 #endif
 };
 
-#define CPUF_PRIMARY 		(1<<0)
-#define CPUF_AP	 		(1<<1)
+#define CPUF_PRIMARY		(1<<0)
+#define CPUF_AP			(1<<1)
 #define CPUF_IDENTIFY		(1<<2)
 #define CPUF_IDENTIFIED		(1<<3)
 #define CPUF_PRESENT		(1<<4)
@@ -154,7 +154,7 @@ static inline struct cpu_info *
 curcpu(void)
 {
 	struct cpu_info *__ci = NULL;
-        __asm __volatile("mv %0, tp" : "=&r"(__ci));
+	__asm __volatile("mv %0, tp" : "=&r"(__ci));
 	return (__ci);
 }
 
@@ -202,7 +202,7 @@ cpu_rnd_messybits(void)
 /*
  * Scheduling glue
  */
-#define aston(p)        ((p)->p_md.md_astpending = 1)
+#define aston(p)	((p)->p_md.md_astpending = 1)
 #define	setsoftast()	aston(curcpu()->ci_curproc)
 
 /*
@@ -212,12 +212,12 @@ cpu_rnd_messybits(void)
 
 #ifdef MULTIPROCESSOR
 void cpu_unidle(struct cpu_info *ci);
-#define signotify(p)            (aston(p), cpu_unidle((p)->p_cpu))
+#define signotify(p)	(aston(p), cpu_unidle((p)->p_cpu))
 void cpu_kick(struct cpu_info *);
 #else
 #define cpu_kick(ci)
 #define cpu_unidle(ci)
-#define signotify(p)            setsoftast()
+#define signotify(p)	setsoftast()
 #endif
 
 /*
@@ -225,7 +225,7 @@ void cpu_kick(struct cpu_info *);
  * or after the current trap/syscall if in system mode.
  */
 void need_resched(struct cpu_info *);
-#define clear_resched(ci) 	((ci)->ci_want_resched = 0)
+#define clear_resched(ci)	((ci)->ci_want_resched = 0)
 
 /*
  * Give a profiling tick to the current process when the user profiling

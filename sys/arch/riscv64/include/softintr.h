@@ -55,26 +55,26 @@ struct soft_intrhand {
 	TAILQ_ENTRY(soft_intrhand)
 		sih_q;
 	struct soft_intr *sih_intrhead;
-	void    (*sih_fn)(void *);
-	void    (*sih_fnwrap)(void *);
-	void    *sih_arg;
-	void    *sih_argwrap;
-	int     sih_pending;
+	void	(*sih_fn)(void *);
+	void	(*sih_fnwrap)(void *);
+	void	*sih_arg;
+	void	*sih_argwrap;
+	int	sih_pending;
 };
 
 struct soft_intr {
 	TAILQ_HEAD(, soft_intrhand)
 			softintr_q;
-	int             softintr_ssir;
-	struct mutex    softintr_lock;
+	int		softintr_ssir;
+	struct mutex	softintr_lock;
 };
 
-#define SOFTINTR_ESTABLISH_MPSAFE       0x01
+#define SOFTINTR_ESTABLISH_MPSAFE	0x01
 void    *softintr_establish_flags(int, void (*)(void *), void *, int);
-#define softintr_establish(i, f, a)                                     \
-        softintr_establish_flags(i, f, a, 0)
-#define softintr_establish_mpsafe(i, f, a)                              \
-        softintr_establish_flags(i, f, a, SOFTINTR_ESTABLISH_MPSAFE)
+#define softintr_establish(i, f, a)					\
+	softintr_establish_flags(i, f, a, 0)
+#define softintr_establish_mpsafe(i, f, a)				\
+	softintr_establish_flags(i, f, a, SOFTINTR_ESTABLISH_MPSAFE)
 void    softintr_disestablish(void *);
 void    softintr_init(void);
 void    softintr_dispatch(int);

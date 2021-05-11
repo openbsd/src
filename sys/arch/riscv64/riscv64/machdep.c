@@ -89,7 +89,7 @@ struct uvm_constraint_range *uvm_md_constraints[] = {
 };
 
 /* the following is used externally (sysctl_hw) */
-char    machine[] = MACHINE;            /* from <machine/param.h> */
+char    machine[] = MACHINE;		/* from <machine/param.h> */
 
 int safepri = 0;
 
@@ -260,7 +260,7 @@ cpu_startup(void)
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   VM_PHYS_SIZE, 0, FALSE, NULL);
+	    VM_PHYS_SIZE, 0, FALSE, NULL);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
@@ -303,7 +303,7 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		node = OF_finddevice("/");
 		len = OF_getproplen(node, "compatible");
 		if (len <= 0)
-			return (EOPNOTSUPP); 
+			return (EOPNOTSUPP);
 		compatible = malloc(len, M_TEMP, M_WAITOK | M_ZERO);
 		OF_getprop(node, "compatible", compatible, len);
 		compatible[len - 1] = 0;
@@ -418,7 +418,7 @@ need_resched(struct cpu_info *ci)
  * Size of memory segments, before any memory is stolen.
  */
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
-int     mem_cluster_cnt;
+int	mem_cluster_cnt;
 
 /*
  * cpu_dumpsize: calculate size of machine-dependent kernel core dump headers.
@@ -460,8 +460,8 @@ cpu_dump_mempagecnt(void)
  * These variables are needed by /sbin/savecore
  */
 u_long	dumpmag = 0x8fca0101;	/* magic number */
-int 	dumpsize = 0;		/* pages */
-long	dumplo = 0; 		/* blocks */
+int	dumpsize = 0;		/* pages */
+long	dumplo = 0;		/* blocks */
 
 /*
  * This is called by main to set dumplo and dumpsize.
@@ -794,7 +794,7 @@ initriscv(struct riscv_bootparams *rbp)
 	node = fdt_find_node("/reserved-memory");
 	if (node) {
 		for (node = fdt_child_node(node); node;
-		     node = fdt_next_node(node)) {
+		    node = fdt_next_node(node)) {
 			if (fdt_get_reg(node, 0, &reg))
 				continue;
 			if (reg.size == 0)

@@ -194,24 +194,24 @@
 	(__builtin_constant_p(val) && ((u_long)(val) < 32))
 
 #define csr_swap(csr, val)						\
-({	if (CSR_ZIMM(val))  						\
+({	if (CSR_ZIMM(val))						\
 		__asm __volatile("csrrwi %0, " #csr ", %1"		\
 				: "=r" (val) : "i" (val));		\
-	else 								\
+	else								\
 		__asm __volatile("csrrw %0, " #csr ", %1"		\
 				: "=r" (val) : "r" (val));		\
 	val;								\
 })
 
 #define csr_write(csr, val)						\
-({	if (CSR_ZIMM(val)) 						\
+({	if (CSR_ZIMM(val))						\
 		__asm __volatile("csrwi " #csr ", %0" :: "i" (val));	\
-	else 								\
+	else								\
 		__asm __volatile("csrw " #csr ", %0" ::  "r" (val));	\
 })
 
 #define csr_set(csr, val)						\
-({	if (CSR_ZIMM(val)) 						\
+({	if (CSR_ZIMM(val))						\
 		__asm __volatile("csrsi " #csr ", %0" :: "i" (val));	\
 	else								\
 		__asm __volatile("csrs " #csr ", %0" :: "r" (val));	\

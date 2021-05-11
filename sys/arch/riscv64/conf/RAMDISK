@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.8 2021/05/06 04:09:41 jsg Exp $
+# $OpenBSD: RAMDISK,v 1.9 2021/05/11 14:58:08 deraadt Exp $
 #
 # GENERIC machine description file
 #
@@ -73,7 +73,7 @@ gfrtc*		at fdt?
 dwmmc*		at fdt?
 sdmmc*		at dwmmc?
 
-scsibus*        at scsi?
+scsibus*	at scsi?
 sd*		at scsibus?
 cd*		at scsibus?
 ch*		at scsibus?

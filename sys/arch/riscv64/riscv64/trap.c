@@ -88,7 +88,7 @@ do_trap_supervisor(struct trapframe *frame)
 	case EXCP_BREAKPOINT:
 #ifdef DDB
 		// kdb_trap(exception, 0, frame);
-                db_trapper(frame->tf_sepc,0/*XXX*/, frame, exception);         
+		db_trapper(frame->tf_sepc,0/*XXX*/, frame, exception);
 #else
 		dump_regs(frame);
 		panic("No debugger in kernel.\n");
@@ -109,13 +109,13 @@ void
 do_trap_user(struct trapframe *frame)
 {
 	uint64_t exception;
-	union sigval sv; 
+	union sigval sv;
 	struct proc *p;
 	struct pcb *pcb;
 
 	p = curcpu()->ci_curproc;
 	p->p_addr->u_pcb.pcb_tf = frame;
-	pcb = curcpu()->ci_curpcb; 
+	pcb = curcpu()->ci_curpcb;
 
 	/* Ensure we came from usermode, interrupts disabled */
 	KASSERTMSG((csr_read(sstatus) & (SSTATUS_SPP | SSTATUS_SIE)) == 0,

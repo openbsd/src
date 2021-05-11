@@ -88,17 +88,17 @@ void dumpframe (char *msg, struct trapframe *tf, void *p)
 	int i;
 	printf("%s\n",msg);
 	printf("pc %lx ra %lx sp %lx tp %lx\n", tf->tf_sepc, tf->tf_ra, tf->tf_sp, tf->tf_tp);
-	for(i = 0; i < 7; i++) 
+	for(i = 0; i < 7; i++)
 		printf("%st%d %lx", (i==0)?"":", ", i, tf->tf_t[i]);
 	printf("\n");
-	for(i = 0; i < 12; i++) 
+	for(i = 0; i < 12; i++)
 		printf("%ss%d %lx", (i==0)?"":", ", i, tf->tf_s[i]);
 	printf("\n");
-	for(i = 0; i < 8; i++) 
+	for(i = 0; i < 8; i++)
 		printf("%sa%d %lx", (i==0)?"":", ", i, tf->tf_a[i]);
 	printf("\n");
 	if (p != NULL)
-	   printf("fp %p\n", p);
+		printf("fp %p\n", p);
 }
 
 /*

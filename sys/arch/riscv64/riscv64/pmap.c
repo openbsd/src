@@ -1029,7 +1029,7 @@ pmap_kpted_alloc(void)
 			if (pted == NULL)
 				return NULL;
 		}
-				
+
 		npted = PAGE_SIZE / sizeof(struct pte_desc);
 	}
 
@@ -1108,7 +1108,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 
 fail:
 	splx(s);
-	
+
 	return pmap_maxkvaddr;
 }
 

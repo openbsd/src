@@ -42,10 +42,10 @@
 /* cache flags */
 // XXX These are duplicated from arm64 and may need some reworking
 #define PMAP_CACHE_CI		(PMAP_MD0)		/* cache inhibit */
-#define PMAP_CACHE_WT		(PMAP_MD1)	 	/* writethru */
+#define PMAP_CACHE_WT		(PMAP_MD1)		/* writethru */
 #define PMAP_CACHE_WB		(PMAP_MD1|PMAP_MD0)	/* writeback */
 #define PMAP_CACHE_DEV		(PMAP_MD2)		/* device mapping */
-#define PMAP_CACHE_BITS		(PMAP_MD0|PMAP_MD1|PMAP_MD2)	
+#define PMAP_CACHE_BITS		(PMAP_MD0|PMAP_MD1|PMAP_MD2)
 
 #define PTED_VA_MANAGED_M	(PMAP_MD3)
 #define PTED_VA_WIRED_M		(PMAP_MD3 << 1)
@@ -87,7 +87,7 @@ extern paddr_t copy_dst_page;
 void pagezero(vaddr_t);
 
 extern struct pmap kernel_pmap_;
-#define pmap_kernel()   		(&kernel_pmap_)
+#define pmap_kernel()			(&kernel_pmap_)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 

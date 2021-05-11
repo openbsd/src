@@ -184,7 +184,7 @@ extern uint32_t riscv_smask[NIPL];
 
 #include <machine/softintr.h>
 
-void 	riscv_clock_register(void (*)(void), void (*)(u_int), void (*)(int),
+void	riscv_clock_register(void (*)(void), void (*)(u_int), void (*)(int),
     void (*)(void));
 
 /*

@@ -50,12 +50,12 @@ void	*riscv_intc_intr_establish(int, int, int (*)(void *),
 void	riscv_intc_intr_disestablish(void *);
 
 
-struct cfattach        intc_ca = {
-       sizeof (struct device), riscv_intc_match, riscv_intc_attach
+struct cfattach intc_ca = {
+	sizeof (struct device), riscv_intc_match, riscv_intc_attach
 };
 
 struct cfdriver intc_cd = {
-       NULL, "intc", DV_DULL
+	NULL, "intc", DV_DULL
 };
 
 int
@@ -64,7 +64,7 @@ riscv_intc_match(struct device *parent, void *match, void *aux)
 	struct fdt_attach_args *faa = aux;
 	int node = faa->fa_node;
 	return (OF_getproplen(node, "interrupt-controller") >= 0 &&
-		OF_is_compatible(node, "riscv,cpu-intc"));
+	    OF_is_compatible(node, "riscv,cpu-intc"));
 }
 
 void
@@ -105,8 +105,7 @@ riscv_intc_irq_handler(void *frame)
 {
 	int irq;
 	struct intrhand *ih;
-	struct trapframe *_frame;
-        _frame = (struct trapframe*) frame;
+	struct trapframe *_frame = (struct trapframe*) frame;
 
 	KASSERTMSG(_frame->tf_scause & EXCP_INTR,
 		"riscv_cpu_intr: wrong frame passed");
@@ -134,7 +133,7 @@ riscv_intc_intr_establish(int irqno, int dummy_level, int (*func)(void *),
 
 	if (irqno < 0 || irqno >= INTC_NIRQS)
 		panic("intc_intr_establish: bogus irqnumber %d: %s",
-		     irqno, name);
+		    irqno, name);
 	sie = disable_interrupts();
 
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
