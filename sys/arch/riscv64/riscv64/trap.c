@@ -77,7 +77,7 @@ do_trap_supervisor(struct trapframe *frame)
 	}
 
 	exception = (frame->tf_scause & EXCP_MASK);
-	switch(exception) {
+	switch (exception) {
 	case EXCP_FAULT_LOAD:
 	case EXCP_FAULT_STORE:
 	case EXCP_FAULT_FETCH:
@@ -147,7 +147,7 @@ do_trap_user(struct trapframe *frame)
 	    curcpu()->ci_curproc, frame->tf_sepc, frame->tf_ra, frame);
 #endif
 
-	switch(exception) {
+	switch (exception) {
 	case EXCP_FAULT_LOAD:
 	case EXCP_FAULT_STORE:
 	case EXCP_FAULT_FETCH:

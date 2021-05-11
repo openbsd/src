@@ -326,7 +326,7 @@ plic_irq_handler(void *frame)
 	pending = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 			PLIC_CLAIM(sc, cpu));
 
-	if(pending >= sc->sc_ndev) {
+	if (pending >= sc->sc_ndev) {
 		printf("plic0: pending %x\n", pending);
 		return 0;
 	}
@@ -617,7 +617,7 @@ plic_get_cpuid(int intc)
 	 */
 	parent_node = OF_parent(intc);
 	CPU_INFO_FOREACH(cii, ci) {
-		if(ci->ci_node == parent_node)
+		if (ci->ci_node == parent_node)
 			return ci->ci_cpuid;
 	}
 	return -1;
@@ -636,7 +636,7 @@ plic_set_priority(int irq, uint32_t pri)
 	 * is for IPI. They should NEVER be passed to plic.
 	 * So we calculate plic priority in the following way:
 	 */
-	if(pri <= 4 || pri >= 12)//invalid input
+	if (pri <= 4 || pri >= 12)//invalid input
 		prival = 0;//effectively disable this intr source
 	else
 		prival = pri - 4;
@@ -673,7 +673,7 @@ plic_intr_route_grid(int irq, int enable, int cpu)
 	struct plic_softc	*sc = plic;
 	uint32_t		val, mask;
 
-	if(irq == 0)
+	if (irq == 0)
 		return;
 
 	KASSERT(cpu < MAXCPUS);

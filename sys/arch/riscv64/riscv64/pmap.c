@@ -1986,7 +1986,7 @@ pmap_avail_fixup(void)
 	vaddr_t end;
 
 	mp = pmap_avail;
-	while(mp->size !=0) {
+	while (mp->size !=0) {
 		align = round_page(mp->start);
 		if (mp->start != align) {
 			pmap_remove_avail(mp->start, align);

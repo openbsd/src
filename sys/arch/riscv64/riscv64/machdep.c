@@ -507,7 +507,7 @@ sys_sysarch(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	int error = 0;
 
-	switch(SCARG(uap, op)) {
+	switch (SCARG(uap, op)) {
 	default:
 		error = EINVAL;
 		break;
@@ -875,7 +875,7 @@ process_kernel_args(void)
 			return;
 
 	while (*cp != 0) {
-		switch(*cp) {
+		switch (*cp) {
 		case 'a':
 			boothowto |= RB_ASKNAME;
 			break;
