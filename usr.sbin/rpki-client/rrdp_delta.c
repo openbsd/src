@@ -115,7 +115,7 @@ start_publish_withdraw_elem(struct delta_xml *dxml, const char **attr,
     int withdraw)
 {
 	XML_Parser p = dxml->parser;
-	char *uri, hash[SHA256_DIGEST_LENGTH];
+	char *uri = NULL, hash[SHA256_DIGEST_LENGTH];
 	int i, hasUri = 0, hasHash = 0;
 	enum publish_type pub = PUB_UPD;
 

@@ -351,7 +351,7 @@ enum rrdp_task
 notification_done(struct notification_xml *nxml, char *last_mod)
 {
 	struct delta_item *d;
-	long long s, last_s;
+	long long s, last_s = 0;
 
 	nxml->current->last_mod = last_mod;
 	nxml->current->session_id = xstrdup(nxml->session_id);

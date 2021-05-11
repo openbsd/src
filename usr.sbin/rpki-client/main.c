@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.140 2021/05/11 11:43:21 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.141 2021/05/11 11:48:02 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -861,8 +861,10 @@ main(int argc, char *argv[])
 
 		close(fd[0]);
 		rrdp = fd[1];
-	} else
+	} else {
 		rrdp = -1;
+		rrdppid = -1;
+	}
 
 	if (timeout) {
 		/*
