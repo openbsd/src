@@ -536,11 +536,19 @@ void riscv::getRISCVTargetFeatures(const Driver &D, const llvm::Triple &Triple,
   if (Args.hasArg(options::OPT_ffixed_x31))
     Features.push_back("+reserve-x31");
 
+#ifdef __OpenBSD__
+  // -mno-relax is default, unless -mrelax is specified.
+  if (Args.hasFlag(options::OPT_mrelax, options::OPT_mno_relax, false))
+    Features.push_back("+relax");
+  else
+    Features.push_back("-relax");
+#else
   // -mrelax is default, unless -mno-relax is specified.
   if (Args.hasFlag(options::OPT_mrelax, options::OPT_mno_relax, true))
     Features.push_back("+relax");
   else
     Features.push_back("-relax");
+#endif
 
   // GCC Compatibility: -mno-save-restore is default, unless -msave-restore is
   // specified.
