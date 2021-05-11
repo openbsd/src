@@ -1,4 +1,4 @@
-/* $OpenBSD: fenv.c,v 1.1 2021/04/27 00:31:34 drahn Exp $ */
+/* $OpenBSD: fenv.c,v 1.2 2021/05/11 12:05:13 jsg Exp $ */
 /*-
  * Copyright (c) 2004-2005 David Schultz <das@FreeBSD.ORG>
  * All rights reserved.
@@ -196,7 +196,7 @@ feholdexcept(fenv_t *envp)
 
 	__get_fcsr(r);
 	*envp  = r;
-	r &= ~_ROUND_MASK;
+	r &= ~FE_ALL_EXCEPT;
 	__set_fcsr(r);
 
 	return (0);
