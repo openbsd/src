@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.139 2021/04/19 17:04:35 deraadt Exp $ */
+/*	$OpenBSD: main.c,v 1.140 2021/05/11 11:43:21 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -692,12 +692,6 @@ main(int argc, char *argv[])
 
 	signal(SIGPIPE, SIG_IGN);
 
-	if (timeout) {
-		signal(SIGALRM, suicide);
-		/* Commit suicide eventually - cron will normally start a new one */
-		alarm(timeout);
-	}
-
 	if (cachedir == NULL) {
 		warnx("cache directory required");
 		goto usage;
@@ -739,6 +733,9 @@ main(int argc, char *argv[])
 		if (fchdir(cachefd) == -1)
 			err(1, "fchdir");
 
+		if (timeout)
+			alarm(timeout);
+
 		/* Only allow access to the cache directory. */
 		if (unveil(".", "r") == -1)
 			err(1, "%s: unveil", cachedir);
@@ -772,6 +769,9 @@ main(int argc, char *argv[])
 			/* change working directory to the cache directory */
 			if (fchdir(cachefd) == -1)
 				err(1, "fchdir");
+
+			if (timeout)
+				alarm(timeout);
 
 			if (pledge("stdio rpath proc exec unveil", NULL) == -1)
 				err(1, "pledge");
@@ -808,6 +808,9 @@ main(int argc, char *argv[])
 			/* change working directory to the cache directory */
 			if (fchdir(cachefd) == -1)
 				err(1, "fchdir");
+
+			if (timeout)
+				alarm(timeout);
 
 			if (pledge("stdio rpath inet dns recvfd", NULL) == -1)
 				err(1, "pledge");
@@ -846,6 +849,9 @@ main(int argc, char *argv[])
 			if (fchdir(cachefd) == -1)
 				err(1, "fchdir");
 
+			if (timeout)
+				alarm(timeout);
+
 			if (pledge("stdio recvfd", NULL) == -1)
 				err(1, "pledge");
 
@@ -857,6 +863,15 @@ main(int argc, char *argv[])
 		rrdp = fd[1];
 	} else
 		rrdp = -1;
+
+	if (timeout) {
+		/*
+		 * Commit suicide eventually
+		 * cron will normally start a new one
+		 */
+		alarm(timeout);
+		signal(SIGALRM, suicide);
+	}
 
 	/* TODO unveil cachedir and outputdir, no other access allowed */
 	if (pledge("stdio rpath wpath cpath fattr sendfd", NULL) == -1)
@@ -1027,6 +1042,7 @@ main(int argc, char *argv[])
 		}
 	}
 
+	signal(SIGALRM, SIG_DFL);
 	if (killme) {
 		syslog(LOG_CRIT|LOG_DAEMON,
 		    "excessive runtime (%d seconds), giving up", timeout);
