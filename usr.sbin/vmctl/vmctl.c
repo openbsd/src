@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.77 2021/03/22 18:50:11 kn Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.78 2021/05/12 20:13:00 dv Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -885,14 +885,6 @@ open_imagefile(int type, const char *imgfile_path, int flags,
 			} else if (ret == 0)
 				break;
 
-			/*
-			 * This might be called after unveil is already
-			 * locked but it is save to ignore the EPERM error
-			 * here as the subsequent open would fail as well.
-			 */
-			if ((ret = unveil(path, "r")) != 0 &&
-			    (ret != EPERM))
-				err(1, "unveil");
 			if ((basefd[i + 1] = open(path, O_RDONLY)) == -1) {
 				log_warn("%s: failed to open base %s",
 				    __func__, path);
@@ -951,4 +943,3 @@ create_imagefile(int type, const char *imgfile_path, const char *base_path,
 
 	return (ret);
 }
-

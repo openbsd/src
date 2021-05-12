@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.64 2021/04/02 19:07:18 dv Exp $	*/
+/*	$OpenBSD: main.c,v 1.65 2021/05/12 20:13:00 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -569,13 +569,9 @@ ctl_create(struct parse_result *res, int argc, char *argv[])
 		switch (ch) {
 		case 'b':
 			base = optarg;
-			if (unveil(base, "r") == -1)
-				err(1, "unveil");
 			break;
 		case 'i':
 			input = optarg;
-			if (unveil(input, "r") == -1)
-				err(1, "unveil");
 			break;
 		case 's':
 			if (parse_size(res, optarg) != 0)
@@ -594,19 +590,14 @@ ctl_create(struct parse_result *res, int argc, char *argv[])
 
 	type = parse_disktype(argv[0], &disk);
 
-	if (pledge("stdio rpath wpath cpath unveil", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath", NULL) == -1)
 		err(1, "pledge");
-	if (unveil(disk, "rwc") == -1)
-		err(1, "unveil");
 
 	if (input) {
 		if (base && input)
 			errx(1, "conflicting -b and -i arguments");
 		return ctl_convert(input, disk, type, res->size);
 	}
-
-	if (unveil(NULL, NULL))
-		err(1, "unveil");
 
 	if (base && type != VMDF_QCOW2)
 		errx(1, "base images require qcow2 disk format");
@@ -654,10 +645,6 @@ ctl_convert(const char *srcfile, const char *dstfile, int dsttype, size_t dstsiz
 		errstr = "failed to open source image file";
 		goto done;
 	}
-
-	/* We can only lock unveil after opening the disk and all base images */
-	if (unveil(NULL, NULL))
-		err(1, "unveil");
 
 	if (dstsize == 0)
 		dstsize = src.size;
