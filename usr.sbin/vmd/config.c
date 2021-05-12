@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.61 2021/03/29 23:37:01 dv Exp $	*/
+/*	$OpenBSD: config.c,v 1.62 2021/05/12 02:24:56 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -386,8 +386,8 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 				break;
 			if (n == -1) {
 				log_warnx("vm \"%s\" unable to read "
-				    "base %s for disk %s", vcp->vcp_name,
-				    base, vcp->vcp_disks[i]);
+				    "base for disk %s", vcp->vcp_name,
+				    vcp->vcp_disks[i]);
 				goto fail;
 			}
 			(void)strlcpy(path, base, sizeof(path));
