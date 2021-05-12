@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_CIPHER_get_name.3,v 1.11 2020/04/14 15:27:35 schwarze Exp $
+.\" $OpenBSD: SSL_CIPHER_get_name.3,v 1.12 2021/05/12 15:12:35 tb Exp $
 .\" full merge up to: OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\" selective merge up to: OpenSSL 61f805c1 Jan 16 01:01:46 2018 +0800
 .\"
@@ -52,7 +52,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 14 2020 $
+.Dd $Mdocdate: May 12 2021 $
 .Dt SSL_CIPHER_GET_NAME 3
 .Os
 .Sh NAME
@@ -64,6 +64,7 @@
 .Nm SSL_CIPHER_get_kx_nid ,
 .Nm SSL_CIPHER_get_auth_nid ,
 .Nm SSL_CIPHER_is_aead ,
+.Nm SSL_CIPHER_find ,
 .Nm SSL_CIPHER_get_id ,
 .Nm SSL_CIPHER_description
 .Nd get SSL_CIPHER properties
@@ -85,6 +86,8 @@
 .Fn SSL_CIPHER_get_auth_nid "const SSL_CIPHER *cipher"
 .Ft int
 .Fn SSL_CIPHER_is_aead "const SSL_CIPHER *cipher"
+.Ft const SSL_CIPHER *
+.Fn SSL_CIPHER_find "SSL *ssl" "const unsigned char *ptr"
 .Ft unsigned long
 .Fn SSL_CIPHER_get_id "const SSL_CIPHER *cipher"
 .Ft char *
@@ -156,6 +159,20 @@ and
 returns 1 if the
 .Fa cipher
 is AEAD (e.g. GCM or ChaCha20/Poly1305), or 0 if it is not AEAD.
+.Pp
+.Fn SSL_CIPHER_find
+returns a pointer to a
+.Vt SSL_CIPHER
+structure which has the cipher ID specified in
+.Fa ptr .
+The
+.Fa ptr
+parameter is an array of length two which stores the two-byte
+TLS cipher ID (as allocated by IANA) in network byte order.
+.Fa SSL_CIPHER_find
+returns
+.Dv NULL
+if an error occurs or the indicated cipher is not found.
 .Pp
 .Fn SSL_CIPHER_get_id
 returns the ID of the given
@@ -296,6 +313,13 @@ returns 1 if the
 .Fa cipher
 is AEAD or 0 otherwise.
 .Pp
+.Fn SSL_CIPHER_find
+returns a pointer to a valid
+.Vt SSL_CIPHER
+structure or
+.Dv NULL
+if an error occurred.
+.Pp
 .Fn SSL_CIPHER_get_id
 returns a 32-bit unsigned integer.
 .Pp
@@ -342,6 +366,9 @@ and
 .Fn SSL_CIPHER_is_aead
 first appeared in OpenSSL 1.1.0 and have been available since
 .Ox 6.3 .
+.Fn SSL_CIPHER_find
+first appeared in OpenSSL 1.1.0 and has been available since
+.Ox 7.0 .
 .Sh BUGS
 If
 .Fn SSL_CIPHER_description
