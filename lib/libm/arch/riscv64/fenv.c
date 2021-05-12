@@ -1,4 +1,4 @@
-/* $OpenBSD: fenv.c,v 1.2 2021/05/11 12:05:13 jsg Exp $ */
+/* $OpenBSD: fenv.c,v 1.3 2021/05/12 02:28:25 jsg Exp $ */
 /*-
  * Copyright (c) 2004-2005 David Schultz <das@FreeBSD.ORG>
  * All rights reserved.
@@ -29,10 +29,6 @@
 
 #include <fenv.h>
 #include <machine/ieeefp.h>
-
-/* We need to be able to map status flag positions to mask flag positions */
-#define	_FPUSW_SHIFT	8
-#define	_ENABLE_MASK	(FE_ALL_EXCEPT << _FPUSW_SHIFT)
 
 #define	__get_fcsr(r)	asm volatile("frcsr %0" : "=r" (r))
 #define	__set_fcsr(r)	asm volatile("fscsr %0" : "+r" (r))
@@ -146,7 +142,7 @@ fegetround(void)
 	fenv_t r;
 
 	__get_frm(r);
-	return ((r >> _ROUND_SHIFT) & _ROUND_MASK);
+	return (r & _ROUND_MASK);
 }
 DEF_STD(fegetround);
 

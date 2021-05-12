@@ -1,4 +1,4 @@
-/*	$OpenBSD: fenv.h,v 1.1 2021/04/23 02:42:16 drahn Exp $	*/
+/*	$OpenBSD: fenv.h,v 1.2 2021/05/12 02:28:25 jsg Exp $	*/
 
 /*
  * Copyright (c) 2011 Martynas Venckus <martynas@openbsd.org>
@@ -46,23 +46,23 @@
  * We use such values that allow direct bitwise operations on FPU registers.
  */
 #define	FE_TONEAREST		0x0
-#define	FE_UPWARD		0x1
+#define	FE_TOWARDZERO		0x1
 #define	FE_DOWNWARD		0x2
-#define	FE_TOWARDZERO		0x3
-#define	FE_TONEAREST_MAX	0x4
+#define	FE_UPWARD		0x3
+#define	FE_TONEARESTFROMZERO	0x4
 
 /*
  * The following symbol is simply the bitwise-inclusive OR of all floating-point
  * rounding direction constants defined above.
  */
-#define	_ROUND_MASK		(FE_TONEAREST | FE_UPWARD | FE_DOWNWARD | \
-				 FE_TOWARDZERO)
-#define	_ROUND_SHIFT		0
+#define	_ROUND_MASK		(FE_TONEAREST | FE_TOWARDZERO | FE_DOWNWARD | \
+				 FE_UPWARD | FE_TONEARESTFROMZERO)
+#define	_ROUND_SHIFT		5
 
 /*
  * fenv_t represents the entire floating-point environment.
  */
-typedef	unsigned long long	fenv_t;
+typedef	unsigned int		fenv_t;
 
 /*
  * The following constant represents the default floating-point environment
@@ -90,6 +90,6 @@ __END_DECLS
  * A floating-point control mode is a system variable whose value may be set by
  * the user to affect the subsequent behavior of floating-point arithmetic.
  */
-typedef	unsigned long long	fexcept_t;
+typedef	unsigned int		fexcept_t;
 
 #endif	/* !_MACHINE_FENV_H_ */
