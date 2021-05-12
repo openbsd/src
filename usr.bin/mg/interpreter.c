@@ -1,4 +1,4 @@
-/*      $OpenBSD: interpreter.c,v 1.31 2021/05/08 12:57:41 lum Exp $	*/
+/*      $OpenBSD: interpreter.c,v 1.32 2021/05/12 11:13:23 lum Exp $	*/
 /*
  * This file is in the public domain.
  *
@@ -79,7 +79,7 @@ static int	 expandvals(char *, char *, char *);
 static int	 foundfun(char *, int);
 static int	 doregex(char *, char *);
 static void	 clearexp(void);
-static int	 parse(char *, const char *, const char *, int, int, int);
+static int	 parse(char *, const char *, const char *, int, int, int, int);
 static int	 parsdef(char *, const char *, const char *, int, int, int);
 static int	 parsval(char *, const char *, const char *, int, int, int);
 static int	 parsexp(char *, const char *, const char *, int, int, int);
@@ -128,9 +128,9 @@ foundparen(char *funstr, int llen, int lnum)
 	char		*p, *begp = NULL, *endp = NULL, *prechr;
 	char		*lastchr = NULL;
 	int     	 i, ret, pctr, expctr, blkid, inquote, esc;
-	int		 elen, spc;
+	int		 elen, spc, ns;
 
-	pctr = expctr = inquote = esc = elen = spc = 0;
+	pctr = expctr = inquote = esc = elen = spc = ns = 0;
 	blkid = 1;
 	lnm = lnum;
 
@@ -169,13 +169,15 @@ foundparen(char *funstr, int llen, int lnum)
 				    "left parantheses line", lnm));
 			if (inquote == 0) {
 				if (begp != NULL) {
+					if (*prechr == ' ')
+						ns--;
 					if (endp == NULL)
 						*p = '\0';
 					else
 						*endp = '\0';
 
 					ret = parse(begp, lrp, &lp, blkid,
-					    ++expctr, elen - spc);
+					    ++expctr, elen - spc, ns);
 					if (!ret) {
 						cleanup();
 						return(ret);
@@ -197,13 +199,15 @@ foundparen(char *funstr, int llen, int lnum)
 				    "not supported line", lnm));
 			if (inquote == 0) {
 				if (begp != NULL) {
+					if (*prechr == ' ')
+						ns--;
 					if (endp == NULL)
 						*p = '\0';
 					else
 						*endp = '\0';
 
 					ret = parse(begp, lrp, &rp, blkid,
-					    ++expctr, elen - spc);
+					    ++expctr, elen - spc, ns);
 					if (!ret) {
 						cleanup();
 						return(ret);
@@ -246,6 +250,8 @@ foundparen(char *funstr, int llen, int lnum)
 				*p = ' ';
 				endp = p;
 				spc++;
+				if (begp != NULL)
+					ns++;
 			}
 			esc = 0;
 		} else if (*p == '\t' || *p == ' ') {
@@ -282,7 +288,7 @@ foundparen(char *funstr, int llen, int lnum)
 
 static int
 parse(char *begp, const char *par1, const char *par2, int blkid, int expctr,
-    int elen)
+    int elen, int ns)
 {
 	char    *regs;
 	int 	 ret = FALSE;
