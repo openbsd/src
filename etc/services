@@ -1,4 +1,4 @@
-# $OpenBSD: services,v 1.101 2021/05/12 06:45:30 jca Exp $
+# $OpenBSD: services,v 1.102 2021/05/12 06:50:33 jca Exp $
 #
 # Network services, Internet style
 # https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt
@@ -123,7 +123,7 @@ microsoft-ds	445/tcp				# Microsoft-DS
 microsoft-ds	445/udp				# Microsoft-DS
 kpasswd		464/tcp				# Kerberos 5 password changing
 kpasswd		464/udp				# Kerberos 5 password changing
-smtps		465/tcp				# mail message submission (TLS)
+submissions	465/tcp		smtps		# mail message submission (TLS)
 photuris	468/tcp				# Photuris Key Management
 photuris	468/udp
 isakmp		500/udp				# ISAKMP key management
