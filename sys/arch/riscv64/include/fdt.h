@@ -1,3 +1,5 @@
+/*	$OpenBSD: fdt.h,v 1.2 2021/05/12 01:20:52 jsg Exp $	*/
+
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *

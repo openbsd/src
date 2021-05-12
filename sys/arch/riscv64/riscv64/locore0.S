@@ -1,4 +1,5 @@
-/* $OpenBSD: locore0.S,2019/10/31 mengshi.li.mars@gmail.com */
+/*	$OpenBSD: locore0.S,v 1.2 2021/05/12 01:20:52 jsg Exp $	*/
+
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
  * All rights reserved.
@@ -26,7 +27,6 @@
  *
  * $FreeBSD: head/sys/arm64/arm64/locore.S 282867 2015-05-13 18:57:03Z zbb $
  */
-
 
 #include <sys/syscall.h>
 #include <machine/asm.h>

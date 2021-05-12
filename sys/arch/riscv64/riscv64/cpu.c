@@ -1,3 +1,5 @@
+/*	$OpenBSD: cpu.c,v 1.6 2021/05/12 01:20:52 jsg Exp $	*/
+
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>

@@ -1,3 +1,5 @@
+/*	$OpenBSD: trap.c,v 1.7 2021/05/12 01:20:52 jsg Exp $	*/
+
 /*
  * Copyright (c) 2020 Shivam Waghela <shivamwaghela@gmail.com>
  * Copyright (c) 2020 Brian Bamsch <bbamsch@google.com>

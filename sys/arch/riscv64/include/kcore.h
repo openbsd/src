@@ -1,4 +1,5 @@
-/*	$OpenBSD: kcore.h,v 1.1 2021/04/23 02:42:16 drahn Exp $	*/
+/*	$OpenBSD: kcore.h,v 1.2 2021/05/12 01:20:52 jsg Exp $	*/
+
 /* public domain */
 
 /* Make sure this is larger than DRAM_BLOCKS on all arm-based platforms */

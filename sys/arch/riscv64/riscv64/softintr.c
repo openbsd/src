@@ -1,3 +1,5 @@
+/*	$OpenBSD: softintr.c,v 1.3 2021/05/12 01:20:52 jsg Exp $	*/
+
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.

@@ -1,4 +1,5 @@
-/*	$OpenBSD: reloc.h,v 1.1 2021/04/23 02:42:16 drahn Exp $	*/
+/*	$OpenBSD: reloc.h,v 1.2 2021/05/12 01:20:52 jsg Exp $	*/
+
 /*
  * RISCV64 static relocation types.
  */
@@ -16,4 +17,3 @@
 #define R_RISCV_TLS_DTPREL64    9
 #define R_RISCV_TLS_TPREL32     10
 #define R_RISCV_TLS_TPREL64     11
-

@@ -1,3 +1,5 @@
+/*	$OpenBSD: intr.h,v 1.3 2021/05/12 01:20:52 jsg Exp $	*/
+
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
  *

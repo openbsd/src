@@ -1,3 +1,5 @@
+/*	$OpenBSD: tcb.h,v 1.3 2021/05/12 01:20:52 jsg Exp $	*/
+
 /*
  * Copyright (c) 2019 Brian Bamsch <bbamsch@google.com>
  * Copyright (c) 2011 Philip Guenther <guenther@openbsd.org>

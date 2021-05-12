@@ -1,4 +1,5 @@
-/* $OpenBSD: locore.S,v 1.5 2021/05/11 14:58:08 deraadt Exp $ */
+/*	$OpenBSD: locore.S,v 1.6 2021/05/12 01:20:52 jsg Exp $	*/
+
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
  * All rights reserved.

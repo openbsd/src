@@ -1,3 +1,5 @@
+/*	$OpenBSD: pmap.c,v 1.7 2021/05/12 01:20:52 jsg Exp $	*/
+
 /*
  * Copyright (c) 2019-2020 Brian Bamsch <bbamsch@google.com>
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>

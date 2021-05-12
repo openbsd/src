@@ -1,3 +1,5 @@
+/*	$OpenBSD: sig_machdep.c,v 1.3 2021/05/12 01:20:52 jsg Exp $	*/
+
 /*
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.

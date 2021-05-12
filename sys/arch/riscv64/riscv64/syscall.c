@@ -1,3 +1,5 @@
+/*	$OpenBSD: syscall.c,v 1.4 2021/05/12 01:20:52 jsg Exp $	*/
+
 /*
  * Copyright (c) 2020 Brian Bamsch <bbamsch@google.com>
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>

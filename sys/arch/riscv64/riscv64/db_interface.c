@@ -1,3 +1,5 @@
+/*	$OpenBSD: db_interface.c,v 1.3 2021/05/12 01:20:52 jsg Exp $	*/
+
 /*
  * Copyright (c) 1996 Scott K. Stevens
  *

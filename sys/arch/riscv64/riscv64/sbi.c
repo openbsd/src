@@ -1,3 +1,5 @@
+/*	$OpenBSD: sbi.c,v 1.4 2021/05/12 01:20:52 jsg Exp $	*/
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *

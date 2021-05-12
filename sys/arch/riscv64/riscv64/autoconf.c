@@ -1,3 +1,5 @@
+/*	$OpenBSD: autoconf.c,v 1.3 2021/05/12 01:20:52 jsg Exp $	*/
+
 /*
  * Copyright (c) 2009 Miodrag Vallat.
  *

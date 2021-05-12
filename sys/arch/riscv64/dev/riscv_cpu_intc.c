@@ -1,3 +1,5 @@
+/*	$OpenBSD: riscv_cpu_intc.c,v 1.6 2021/05/12 01:20:52 jsg Exp $	*/
+
 /*
  * Copyright (c) 2020, Mars Li <mengshi.li.mars@gmail.com>
  *

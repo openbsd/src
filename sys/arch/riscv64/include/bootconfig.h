@@ -1,3 +1,5 @@
+/*	$OpenBSD: bootconfig.h,v 1.3 2021/05/12 01:20:52 jsg Exp $	*/
+
 /*-
  * Copyright (c) 2015-2017 Ruslan Bukin <br@bsdpad.com>
  * All rights reserved.

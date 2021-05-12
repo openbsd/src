@@ -1,3 +1,5 @@
+/*	$OpenBSD: copyinout.S,v 1.2 2021/05/12 01:20:52 jsg Exp $	*/
+
 /*-
  * Copyright (c) 2015-2018 Ruslan Bukin <br@bsdpad.com>
  * Copyright (c) 2019 Mitchell Horne

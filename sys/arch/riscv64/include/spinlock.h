@@ -1,3 +1,5 @@
+/*	$OpenBSD: spinlock.h,v 1.2 2021/05/12 01:20:52 jsg Exp $	*/
+
 #ifndef _MACHINE_SPINLOCK_H_
 #define _MACHINE_SPINLOCK_H_
 

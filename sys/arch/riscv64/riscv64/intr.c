@@ -1,3 +1,5 @@
+/*	$OpenBSD: intr.c,v 1.4 2021/05/12 01:20:52 jsg Exp $	*/
+
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *

@@ -1,3 +1,5 @@
+/*	$OpenBSD: machdep.c,v 1.14 2021/05/12 01:20:52 jsg Exp $	*/
+
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>

@@ -1,3 +1,5 @@
+/*	$OpenBSD: atomic.h,v 1.2 2021/05/12 01:20:52 jsg Exp $	*/
+
 /* Public Domain */
 
 #ifndef _MACHINE_ATOMIC_H_

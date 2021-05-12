@@ -1,3 +1,5 @@
+/*	$OpenBSD: bus_space.c,v 1.2 2021/05/12 01:20:52 jsg Exp $	*/
+
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
  *

@@ -1,3 +1,5 @@
+/*	$OpenBSD: sbi.h,v 1.2 2021/05/12 01:20:52 jsg Exp $	*/
+
 /*-
  * Copyright (c) 2016-2017 Ruslan Bukin <br@bsdpad.com>
  * All rights reserved.

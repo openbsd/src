@@ -1,3 +1,5 @@
+/*	$OpenBSD: vm_machdep.c,v 1.3 2021/05/12 01:20:52 jsg Exp $	*/
+
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1982, 1986 The Regents of the University of California.

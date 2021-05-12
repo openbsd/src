@@ -1,3 +1,5 @@
+/*	$OpenBSD: kern.ldscript,v 1.2 2021/05/12 01:20:52 jsg Exp $	*/
+
 OUTPUT_ARCH(riscv64)
 
 /* Define how we want our ELF binary to look like. */

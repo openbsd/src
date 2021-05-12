@@ -1,3 +1,5 @@
+/*	$OpenBSD: support.S,v 1.2 2021/05/12 01:20:52 jsg Exp $	*/
+
 /*-
  * Copyright (c) 2015-2020 Ruslan Bukin <br@bsdpad.com>
  * All rights reserved.

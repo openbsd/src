@@ -1,4 +1,5 @@
-/* $OpenBSD: copystr.S,v 1.1 2021/04/23 02:42:17 drahn Exp $ */
+/*	$OpenBSD: copystr.S,v 1.2 2021/05/12 01:20:52 jsg Exp $	*/
+
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>

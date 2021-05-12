@@ -1,3 +1,5 @@
+/*	$OpenBSD: process_machdep.c,v 1.3 2021/05/12 01:20:52 jsg Exp $	*/
+
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *

@@ -1,3 +1,5 @@
+/*	$OpenBSD: signal.h,v 1.2 2021/05/12 01:20:52 jsg Exp $	*/
+
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
  *      The Regents of the University of California.  All rights reserved.

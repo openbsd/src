@@ -1,3 +1,5 @@
+/*	$OpenBSD: riscv64var.h,v 1.2 2021/05/12 01:20:52 jsg Exp $	*/
+
 /*
  * Copyright (c) 2020 Mengshi Li <mengshi.li.mars@gmail.com>
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>

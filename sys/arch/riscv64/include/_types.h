@@ -1,4 +1,5 @@
-/* $OpenBSD: _types.h,v 1.2 2021/05/08 05:31:07 deraadt Exp $ */
+/*	$OpenBSD: _types.h,v 1.3 2021/05/12 01:20:52 jsg Exp $ */
+
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
