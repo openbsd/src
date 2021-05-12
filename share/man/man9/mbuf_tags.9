@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mbuf_tags.9,v 1.41 2020/06/21 15:25:30 jmc Exp $
+.\"	$OpenBSD: mbuf_tags.9,v 1.42 2021/05/12 23:17:30 yasuoka Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -15,7 +15,7 @@
 .\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: June 21 2020 $
+.Dd $Mdocdate: May 12 2021 $
 .Dt M_TAG_GET 9
 .Os
 .Sh NAME
@@ -152,12 +152,6 @@ The tag contains a
 .Va struct pf_divert
 identifying the port, address and routing domain the packet should be
 diverted to.
-.It PACKET_TAG_PIPEX
-Used by
-.Xr pipex 4
-to cache its session information.
-The tag contains a
-.Va struct pipex_tag .
 .It PACKET_TAG_PF_REASSEMBLED
 Used by
 .Xr pf 4
@@ -258,7 +252,6 @@ The tag-manipulating code is contained in the file
 .Xr gre 4 ,
 .Xr ipsec 4 ,
 .Xr pf 4 ,
-.Xr pipex 4 ,
 .Xr mbuf 9
 .Sh HISTORY
 The packet tags first appeared in
