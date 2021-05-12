@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.370 2021/03/30 08:37:11 sashan Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.371 2021/05/12 08:09:33 mvs Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -856,10 +856,12 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 	int optval = 0;
 	struct proc *p = curproc; /* XXX */
 	int error = 0;
-	u_int rtid = 0;
+	u_int rtableid, rtid = 0;
 
 	if (level != IPPROTO_IP)
 		return (EINVAL);
+
+	rtableid = p->p_p->ps_rtableid;
 
 	switch (op) {
 	case PRCO_SETOPT:
@@ -1050,8 +1052,7 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 			if (inp->inp_rtableid == rtid)
 				break;
 			/* needs privileges to switch when already set */
-			if (p->p_p->ps_rtableid != rtid &&
-			    p->p_p->ps_rtableid != 0 &&
+			if (rtableid != rtid && rtableid != 0 &&
 			    (error = suser(p)) != 0)
 				break;
 			/* table must exist */

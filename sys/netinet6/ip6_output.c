@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.256 2021/03/10 10:21:49 jsg Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.257 2021/05/12 08:09:33 mvs Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -1059,7 +1059,7 @@ ip6_ctloutput(int op, struct socket *so, int level, int optname,
 	struct inpcb *inp = sotoinpcb(so);
 	int error, optval;
 	struct proc *p = curproc; /* For IPsec and rdomain */
-	u_int rtid = 0;
+	u_int rtableid, rtid = 0;
 
 	error = optval = 0;
 
@@ -1068,6 +1068,8 @@ ip6_ctloutput(int op, struct socket *so, int level, int optname,
 
 	if (level != IPPROTO_IPV6)
 		return (EINVAL);
+
+	rtableid = p->p_p->ps_rtableid;
 
 	switch (op) {
 	case PRCO_SETOPT:
@@ -1363,8 +1365,7 @@ do { \
 			if (inp->inp_rtableid == rtid)
 				break;
 			/* needs privileges to switch when already set */
-			if (p->p_p->ps_rtableid != rtid &&
-			    p->p_p->ps_rtableid != 0 &&
+			if (rtableid != rtid && rtableid != 0 &&
 			    (error = suser(p)) != 0)
 				break;
 			/* table must exist */

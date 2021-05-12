@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.311 2021/03/17 14:06:54 visa Exp $	*/
+/*	$OpenBSD: proc.h,v 1.312 2021/05/12 08:09:33 mvs Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -251,7 +251,7 @@ struct process {
 	vaddr_t	ps_sigcode;		/* User pointer to the signal code */
 	vaddr_t ps_sigcoderet;		/* User pointer to sigreturn retPC */
 	u_long	ps_sigcookie;
-	u_int	ps_rtableid;		/* Process routing table/domain. */
+	u_int	ps_rtableid;		/* [a] Process routing table/domain. */
 	char	ps_nice;		/* Process "nice" value. */
 
 	struct uprof {			/* profile arguments */
