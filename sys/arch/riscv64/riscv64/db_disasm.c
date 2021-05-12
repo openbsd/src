@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.4 2021/05/11 14:58:08 deraadt Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.5 2021/05/12 23:08:19 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2016-2018 Ruslan Bukin <br@bsdpad.com>
@@ -603,5 +603,6 @@ db_disasm(vaddr_t loc, int altfmt)
 		}
 	};
 
+	db_printf("\n");
 	return (loc + 2);
 }
