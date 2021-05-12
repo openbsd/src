@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.49 2021/04/27 10:13:04 inoguchi Exp $
+# $OpenBSD: appstest.sh,v 1.50 2021/05/12 10:39:13 inoguchi Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -1099,22 +1099,42 @@ function test_cms {
 	# --- CMS operations ---
 	section_message "CMS operations"
 
-	cms_txt=$user1_dir/cms.txt
-	cms_sig=$user1_dir/cms.sig
-	cms_enc=$user1_dir/cms.enc
-	cms_dec=$user1_dir/cms.dec
-	cms_sgr=$user1_dir/cms.sgr
-	cms_ver=$user1_dir/cms.ver
-	cms_out=$user1_dir/cms.out
-	cms_dct=$user1_dir/cms.dct
-	cms_dot=$user1_dir/cms.dot
-	cms_dgc=$user1_dir/cms.dgc
-	cms_dgv=$user1_dir/cms.dgv
-	cms_ede=$user1_dir/cms.ede
-	cms_edd=$user1_dir/cms.edd
-	cms_srp=$user1_dir/cms.srp
-	cms_pwe=$user1_dir/cms.pwe
-	cms_pwd=$user1_dir/cms.pwd
+	if [ $ecdsa_tests = 1 ] ; then
+		echo "Using ECDSA certificate"
+		type=ecdsa
+		cl_cert=$cl_ecdsa_cert
+		cl_key=$cl_ecdsa_key
+		sv_cert=$sv_ecdsa_cert
+		sv_key=$sv_ecdsa_key
+		sign_keyopt=
+		enc_keyopt=
+	else
+		echo "Using RSA certificate"
+		type=rsa
+		cl_cert=$cl_rsa_cert
+		cl_key="$cl_rsa_key -passin pass:$cl_rsa_pass"
+		sv_cert=$sv_rsa_cert
+		sv_key="$sv_rsa_key -passin pass:$sv_rsa_pass"
+		sign_keyopt="-keyopt rsa_padding_mode:pss"
+		enc_keyopt="-keyopt rsa_padding_mode:oaep"
+	fi
+
+	cms_txt=$user1_dir/cms_$type.txt
+	cms_sig=$user1_dir/cms_$type.sig
+	cms_enc=$user1_dir/cms_$type.enc
+	cms_dec=$user1_dir/cms_$type.dec
+	cms_sgr=$user1_dir/cms_$type.sgr
+	cms_ver=$user1_dir/cms_$type.ver
+	cms_out=$user1_dir/cms_$type.out
+	cms_dct=$user1_dir/cms_$type.dct
+	cms_dot=$user1_dir/cms_$type.dot
+	cms_dgc=$user1_dir/cms_$type.dgc
+	cms_dgv=$user1_dir/cms_$type.dgv
+	cms_ede=$user1_dir/cms_$type.ede
+	cms_edd=$user1_dir/cms_$type.edd
+	cms_srp=$user1_dir/cms_$type.srp
+	cms_pwe=$user1_dir/cms_$type.pwe
+	cms_pwd=$user1_dir/cms_$type.pwd
 
 	cat << __EOF__ > $cms_txt
 Hello Bob,
@@ -1127,9 +1147,8 @@ __EOF__
 
 	$openssl_bin cms -sign -in $cms_txt -text \
 		-out $cms_sig -outform smime \
-		-signer $cl_rsa_cert -inkey $cl_rsa_key -keyform pem \
-		-keyopt rsa_padding_mode:pss \
-		-passin pass:$cl_rsa_pass -md sha256 \
+		-signer $cl_cert -inkey $cl_key $sign_keyopt \
+		-keyform pem -md sha256 \
 		-from user1@test-dummy.com -to server@test-dummy.com \
 		-subject "test openssl cms" \
 		-receipt_request_from server@test-dummy.com \
@@ -1140,22 +1159,21 @@ __EOF__
 	start_message "cms ... encrypt message"
 
 	$openssl_bin cms -encrypt -aes256 -binary -in $cms_sig -inform smime \
-		-recip $sv_rsa_cert -keyopt rsa_padding_mode:oaep \
-		-out $cms_enc
+		-recip $sv_cert $enc_keyopt -out $cms_enc
 	check_exit_status $?
 
 	# decrypt
 	start_message "cms ... decrypt message"
 
 	$openssl_bin cms -decrypt -in $cms_enc -out $cms_dec \
-		-recip $sv_rsa_cert -inkey $sv_rsa_key -passin pass:$sv_rsa_pass
+		-recip $sv_cert -inkey $sv_key
 	check_exit_status $?
 
 	# verify
 	start_message "cms ... verify message"
 
 	$openssl_bin cms -verify -in $cms_dec \
-		-CAfile $ca_cert -certfile $cl_rsa_cert -nointern \
+		-CAfile $ca_cert -certfile $cl_cert -nointern \
 		-check_ss_sig -issuer_checks -policy_check -x509_strict \
 		-signer $cms_sgr -text -out $cms_ver -receipt_request_print \
 		> $cms_ver.log 2>&1
@@ -1222,15 +1240,14 @@ __EOF__
 	start_message "cms ... sign to receipt"
 
 	$openssl_bin cms -sign_receipt -in $cms_sig -out $cms_srp \
-		-signer $sv_rsa_cert -inkey $sv_rsa_key \
-		-passin pass:$sv_rsa_pass -md sha256
+		-signer $sv_cert -inkey $sv_key -md sha256
 	check_exit_status $?
 
 	# verify_receipt
 	start_message "cms ... verify receipt"
 
 	$openssl_bin cms -verify_receipt $cms_srp -rctform smime -in $cms_sig \
-		-CAfile $ca_cert -certfile $sv_rsa_cert
+		-CAfile $ca_cert -certfile $sv_cert
 	check_exit_status $?
 
 	# encrypt with pwri
@@ -1255,6 +1272,11 @@ function test_smime {
 	# --- S/MIME operations ---
 	section_message "S/MIME operations"
 
+	cl_cert=$cl_rsa_cert
+	cl_key="$cl_rsa_key -passin pass:$cl_rsa_pass"
+	sv_cert=$sv_rsa_cert
+	sv_key="$sv_rsa_key -passin pass:$sv_rsa_pass"
+
 	smime_txt=$user1_dir/smime.txt
 	smime_enc=$user1_dir/smime.enc
 	smime_sig=$user1_dir/smime.sig
@@ -1273,7 +1295,7 @@ __EOF__
 	start_message "smime ... encrypt message"
 
 	$openssl_bin smime -encrypt -aes256 -binary -in $smime_txt \
-		-out $smime_enc $sv_rsa_cert
+		-out $smime_enc $sv_cert
 	check_exit_status $?
 
 	# sign
@@ -1281,8 +1303,7 @@ __EOF__
 
 	$openssl_bin smime -sign -in $smime_enc -text -inform smime \
 		-out $smime_sig -outform smime \
-		-signer $cl_rsa_cert -inkey $cl_rsa_key -keyform pem \
-		-passin pass:$cl_rsa_pass -md sha256 \
+		-signer $cl_cert -inkey $cl_key -keyform pem -md sha256 \
 		-from user1@test-dummy.com -to server@test-dummy.com \
 		-subject "test openssl smime"
 	check_exit_status $?
@@ -1297,7 +1318,7 @@ __EOF__
 	start_message "smime ... verify message"
 
 	$openssl_bin smime -verify -in $smime_sig \
-		-CAfile $ca_cert -certfile $cl_rsa_cert -nointern \
+		-CAfile $ca_cert -certfile $cl_cert -nointern \
 		-check_ss_sig -issuer_checks -policy_check -x509_strict \
 		-signer $smime_sgr -text -out $smime_ver
 	check_exit_status $?
@@ -1306,7 +1327,7 @@ __EOF__
 	start_message "smime ... decrypt message"
 
 	$openssl_bin smime -decrypt -in $smime_ver -out $smime_dec \
-		-recip $sv_rsa_cert -inkey $sv_rsa_key -passin pass:$sv_rsa_pass
+		-recip $sv_cert -inkey $sv_key
 	check_exit_status $?
 
 	diff $smime_dec $smime_txt
