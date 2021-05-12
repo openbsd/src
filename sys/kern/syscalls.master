@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.215 2021/05/11 11:21:31 mvs Exp $
+;	$OpenBSD: syscalls.master,v 1.216 2021/05/12 15:04:48 mpi Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -212,18 +212,18 @@
 95	STD		{ int sys_fsync(int fd); }
 96	STD		{ int sys_setpriority(int which, id_t who, int prio); }
 97	STD NOLOCK	{ int sys_socket(int domain, int type, int protocol); }
-98	STD NOLOCK	{ int sys_connect(int s, const struct sockaddr *name, \
+98	STD		{ int sys_connect(int s, const struct sockaddr *name, \
 			    socklen_t namelen); }
 99	STD		{ int sys_getdents(int fd, void *buf, size_t buflen); }
 100	STD		{ int sys_getpriority(int which, id_t who); }
 101	STD NOLOCK	{ int sys_pipe2(int *fdp, int flags); }
 102	STD NOLOCK	{ int sys_dup3(int from, int to, int flags); }
 103	STD		{ int sys_sigreturn(struct sigcontext *sigcntxp); }
-104	STD NOLOCK	{ int sys_bind(int s, const struct sockaddr *name, \
+104	STD		{ int sys_bind(int s, const struct sockaddr *name, \
 			    socklen_t namelen); }
 105	STD		{ int sys_setsockopt(int s, int level, int name, \
 			    const void *val, socklen_t valsize); }
-106	STD NOLOCK	{ int sys_listen(int s, int backlog); }
+106	STD		{ int sys_listen(int s, int backlog); }
 107	STD		{ int sys_chflagsat(int fd, const char *path, \
 			    u_int flags, int atflags); }
 108	STD 		{ int sys_pledge(const char *promises, \
@@ -265,7 +265,7 @@
 133	STD NOLOCK	{ ssize_t sys_sendto(int s, const void *buf, \
 			    size_t len, int flags, const struct sockaddr *to, \
 			    socklen_t tolen); }
-134	STD NOLOCK	{ int sys_shutdown(int s, int how); }
+134	STD		{ int sys_shutdown(int s, int how); }
 135	STD NOLOCK	{ int sys_socketpair(int domain, int type, \
 			    int protocol, int *rsv); }
 136	STD		{ int sys_mkdir(const char *path, mode_t mode); }
