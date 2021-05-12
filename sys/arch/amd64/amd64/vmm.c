@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.281 2021/05/11 22:04:10 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.282 2021/05/12 04:00:46 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1130,7 +1130,7 @@ vm_find(uint32_t id, struct vm **res)
 			 * all VMs and is indicated by PLEDGE_PROC.
 			 */
 			if (((p->p_p->ps_pledge &
-			    (PLEDGE_VMM|PLEDGE_PROC)) == PLEDGE_VMM) &&
+			    (PLEDGE_VMM | PLEDGE_PROC)) == PLEDGE_VMM) &&
 			    (vm->vm_creator_pid != p->p_p->ps_pid))
 				return (pledge_fail(p, EPERM, PLEDGE_VMM));
 			*res = vm;
