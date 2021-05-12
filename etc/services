@@ -1,4 +1,4 @@
-# $OpenBSD: services,v 1.100 2021/05/05 11:49:17 sthen Exp $
+# $OpenBSD: services,v 1.101 2021/05/12 06:45:30 jca Exp $
 #
 # Network services, Internet style
 # https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt
@@ -296,7 +296,6 @@ kerberos_master	751/udp				# Kerberos 4 kadmin
 kerberos_master	751/tcp				# Kerberos 4 kadmin
 krb_prop	754/tcp		hprop		# Kerberos slave propagation
 krbupdate	760/tcp		kreg		# BSD Kerberos registration
-swat		901/tcp				# Samba Web Administration Tool
 datametrics	1645/udp
 ekshell2	2106/tcp			# Encrypted kshell - UColorado, Boulder
 webster		2627/tcp			# Network dictionary
