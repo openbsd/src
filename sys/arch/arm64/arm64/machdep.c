@@ -1,6 +1,7 @@
-/* $OpenBSD: machdep.c,v 1.62 2021/05/02 21:47:51 kettenis Exp $ */
+/* $OpenBSD: machdep.c,v 1.63 2021/05/12 17:43:26 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
+ * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -96,6 +97,12 @@ int safepri = 0;
 
 struct cpu_info cpu_info_primary;
 struct cpu_info *cpu_info[MAXCPUS] = { &cpu_info_primary };
+
+struct fdt_reg memreg[VM_PHYSSEG_MAX];
+int nmemreg;
+
+void memreg_add(const struct fdt_reg *);
+void memreg_remove(const struct fdt_reg *);
 
 static int
 atoi(const char *s)
@@ -264,7 +271,7 @@ cpu_startup(void)
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   VM_PHYS_SIZE, 0, FALSE, NULL);
+	    VM_PHYS_SIZE, 0, FALSE, NULL);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
@@ -307,7 +314,7 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		node = OF_finddevice("/");
 		len = OF_getproplen(node, "compatible");
 		if (len <= 0)
-			return (EOPNOTSUPP); 
+			return (EOPNOTSUPP);
 		compatible = malloc(len, M_TEMP, M_WAITOK | M_ZERO);
 		OF_getprop(node, "compatible", compatible, len);
 		compatible[len - 1] = 0;
@@ -759,6 +766,7 @@ initarm(struct arm64_bootparams *abp)
 	EFI_PHYSICAL_ADDRESS system_table = 0;
 	int (*map_func_save)(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 	    bus_space_handle_t *);
+	int i;
 
 	/*
 	 * Set the per-CPU pointer with a backup in tpidr_el1 to be
@@ -933,14 +941,13 @@ initarm(struct arm64_bootparams *abp)
 	/* Make all other physical memory available to UVM. */
 	if (mmap && mmap_desc_ver == EFI_MEMORY_DESCRIPTOR_VERSION) {
 		EFI_MEMORY_DESCRIPTOR *desc = mmap;
-		int i;
 
 		/*
 		 * Load all memory marked as EfiConventionalMemory,
 		 * EfiBootServicesCode or EfiBootServicesData.
 		 * Don't bother with blocks smaller than 64KB.  The
 		 * initial 64MB memory block should be marked as
-		 * EfiLoaderData so it won't be added again here.
+		 * EfiLoaderData so it won't be added here.
 		 */
 		for (i = 0; i < mmap_size / mmap_desc_size; i++) {
 			printf("type 0x%x pa 0x%llx va 0x%llx pages 0x%llx attr 0x%llx\n",
@@ -951,56 +958,38 @@ initarm(struct arm64_bootparams *abp)
 			     desc->Type == EfiBootServicesCode ||
 			     desc->Type == EfiBootServicesData) &&
 			    desc->NumberOfPages >= 16) {
-				uvm_page_physload(atop(desc->PhysicalStart),
-				    atop(desc->PhysicalStart) +
-				    desc->NumberOfPages,
-				    atop(desc->PhysicalStart),
-				    atop(desc->PhysicalStart) +
-				    desc->NumberOfPages, 0);
-				physmem += desc->NumberOfPages;
+				reg.addr = desc->PhysicalStart;
+				reg.size = ptoa(desc->NumberOfPages);
+				memreg_add(&reg);
 			}
 			desc = NextMemoryDescriptor(desc, mmap_desc_size);
 		}
 	} else {
-		paddr_t start, end;
-		int i;
-
 		node = fdt_find_node("/memory");
 		if (node == NULL)
 			panic("%s: no memory specified", __func__);
 
-		for (i = 0; i < VM_PHYSSEG_MAX; i++) {
+		for (i = 0; nmemreg < nitems(memreg); i++) {
 			if (fdt_get_reg(node, i, &reg))
 				break;
 			if (reg.size == 0)
 				continue;
-
-			start = reg.addr;
-			end = MIN(reg.addr + reg.size, (paddr_t)-PAGE_SIZE);
-
-			/*
-			 * The initial 64MB block is not excluded, so we need
-			 * to make sure we don't add it here.
-			 */
-			if (start < memend && end > memstart) {
-				if (start < memstart) {
-					uvm_page_physload(atop(start),
-					    atop(memstart), atop(start),
-					    atop(memstart), 0);
-					physmem += atop(memstart - start);
-				}
-				if (end > memend) {
-					uvm_page_physload(atop(memend),
-					    atop(end), atop(memend),
-					    atop(end), 0);
-					physmem += atop(end - memend);
-				}
-			} else {
-				uvm_page_physload(atop(start), atop(end),
-				    atop(start), atop(end), 0);
-				physmem += atop(end - start);
-			}
+			memreg_add(&reg);
 		}
+	}
+
+	/* Remove the initial 64MB block. */
+	reg.addr = memstart;
+	reg.size = memend - memstart;
+	memreg_remove(&reg);
+
+	for (i = 0; i < nmemreg; i++) {
+		paddr_t start = memreg[i].addr;
+		paddr_t end = start + memreg[i].size;
+
+		uvm_page_physload(atop(start), atop(end),
+		    atop(start), atop(end), 0);
+		physmem += atop(end - start);
 	}
 
 	/*
@@ -1150,7 +1139,7 @@ process_kernel_args(void)
 			return;
 
 	while (*cp != 0) {
-		switch(*cp) {
+		switch (*cp) {
 		case 'a':
 			boothowto |= RB_ASKNAME;
 			break;
@@ -1195,4 +1184,56 @@ pmap_bootstrap_bs_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
 	virtual_avail = va;
 
 	return 0;
+}
+
+void
+memreg_add(const struct fdt_reg *reg)
+{
+	if (nmemreg >= nitems(memreg))
+		return;
+
+	memreg[nmemreg++] = *reg;
+}
+
+void
+memreg_remove(const struct fdt_reg *reg)
+{
+	uint64_t start = reg->addr;
+	uint64_t end = reg->addr + reg->size;
+	int i, j;
+
+	for (i = 0; i < nmemreg; i++) {
+		uint64_t memstart = memreg[i].addr;
+		uint64_t memend = memreg[i].addr + memreg[i].size;
+
+		if (end <= memstart)
+			continue;
+		if (start >= memend)
+			continue;
+
+		if (start <= memstart)
+			memstart = MIN(end, memend);
+		if (end >= memend)
+			memend = MAX(start, memstart);
+
+		if (start > memstart && end < memend) {
+			if (nmemreg < nitems(memreg)) {
+				memreg[nmemreg].addr = end;
+				memreg[nmemreg].size = memend - end;
+				nmemreg++;
+			}
+			memend = start;
+		}
+		memreg[i].addr = memstart;
+		memreg[i].size = memend - memstart;
+	}
+
+	/* Remove empty slots. */
+	for (i = nmemreg - 1; i >= 0; i--) {
+		if (memreg[i].size == 0) {
+			for (j = i; (j + 1) < nmemreg; j++)
+				memreg[j] = memreg[j + 1];
+			nmemreg--;
+		}
+	}
 }
