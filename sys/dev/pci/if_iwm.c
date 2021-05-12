@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.323 2021/05/10 08:28:00 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.324 2021/05/12 10:05:57 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3312,9 +3312,9 @@ iwm_sta_tx_agg(struct iwm_softc *sc, struct ieee80211_node *ni, uint8_t tid,
 	if (start) {
 		/* Enable Tx aggregation for this queue. */
 		in->tid_disable_ampdu &= ~(1 << tid);
-		in->tfd_queue_msk |= htole32(1 << qid);
+		in->tfd_queue_msk |= (1 << qid);
 	} else {
-		in->tid_disable_ampdu |= ~(1 << tid);
+		in->tid_disable_ampdu |= (1 << tid);
 		/* Queue remains enabled in the TFD queue mask. */
 		err = iwm_flush_sta(sc, in);
 		if (err)
@@ -6677,7 +6677,7 @@ iwm_add_sta_cmd(struct iwm_softc *sc, struct iwm_node *in, int update)
 			qid = IWM_DQA_INJECT_MONITOR_QUEUE;
 		else
 			qid = IWM_AUX_QUEUE;
-		in->tfd_queue_msk |= htole32(1 << qid);
+		in->tfd_queue_msk |= (1 << qid);
 	} else {
 		int ac;
 		for (ac = 0; ac < EDCA_NUM_AC; ac++) {
@@ -6685,7 +6685,7 @@ iwm_add_sta_cmd(struct iwm_softc *sc, struct iwm_node *in, int update)
 			if (isset(sc->sc_enabled_capa,
 			    IWM_UCODE_TLV_CAPA_DQA_SUPPORT))
 				qid += IWM_DQA_MIN_MGMT_QUEUE;
-			in->tfd_queue_msk |= htole32(1 << qid);
+			in->tfd_queue_msk |= (1 << qid);
 		}
 	}
 	if (!update) {
@@ -8015,7 +8015,6 @@ iwm_auth(struct iwm_softc *sc)
 	sc->sc_flags |= IWM_FLAG_BINDING_ACTIVE;
 
 	in->tid_disable_ampdu = 0xffff;
-	in->tfd_queue_msk = 0;
 	err = iwm_add_sta_cmd(sc, in, 0);
 	if (err) {
 		printf("%s: could not add sta (error %d)\n",
@@ -8074,11 +8073,11 @@ iwm_deauth(struct iwm_softc *sc)
 			return err;
 		}
 		in->tid_disable_ampdu = 0xffff;
-		in->tfd_queue_msk = 0;
 		sc->sc_flags &= ~IWM_FLAG_STA_ACTIVE;
 		sc->sc_rx_ba_sessions = 0;
 		sc->ba_rx.start_tidmask = 0;
 		sc->ba_rx.stop_tidmask = 0;
+		sc->tx_ba_queue_mask = 0;
 		sc->ba_tx.start_tidmask = 0;
 		sc->ba_tx.stop_tidmask = 0;
 	}
@@ -8116,10 +8115,8 @@ iwm_assoc(struct iwm_softc *sc)
 
 	splassert(IPL_NET);
 
-	if (!update_sta) {
+	if (!update_sta)
 		in->tid_disable_ampdu = 0xffff;
-		in->tfd_queue_msk = 0;
-	}
 	err = iwm_add_sta_cmd(sc, in, update_sta);
 	if (err) {
 		printf("%s: could not %s STA (error %d)\n",
@@ -8150,11 +8147,11 @@ iwm_disassoc(struct iwm_softc *sc)
 			return err;
 		}
 		in->tid_disable_ampdu = 0xffff;
-		in->tfd_queue_msk = 0;
 		sc->sc_flags &= ~IWM_FLAG_STA_ACTIVE;
 		sc->sc_rx_ba_sessions = 0;
 		sc->ba_rx.start_tidmask = 0;
 		sc->ba_rx.stop_tidmask = 0;
+		sc->tx_ba_queue_mask = 0;
 		sc->ba_tx.start_tidmask = 0;
 		sc->ba_tx.stop_tidmask = 0;
 	}
@@ -9520,6 +9517,8 @@ iwm_stop(struct ifnet *ifp)
 	ifq_clr_oactive(&ifp->if_snd);
 
 	in->in_phyctxt = NULL;
+	in->tid_disable_ampdu = 0xffff;
+	in->tfd_queue_msk = 0;
 
 	sc->sc_flags &= ~(IWM_FLAG_SCANNING | IWM_FLAG_BGSCAN);
 	sc->sc_flags &= ~IWM_FLAG_MAC_ACTIVE;
