@@ -1,4 +1,4 @@
-/*	$Id: acctproc.c,v 1.20 2019/06/17 15:20:10 tb Exp $ */
+/*	$Id: acctproc.c,v 1.21 2021/05/13 07:10:57 tb Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -109,9 +109,9 @@ op_thumb_ec(EVP_PKEY *pkey)
 		warnx("BN_new");
 	else if ((Y = BN_new()) == NULL)
 		warnx("BN_new");
-	else if (!EC_POINT_get_affine_coordinates_GFp(EC_KEY_get0_group(ec),
+	else if (!EC_POINT_get_affine_coordinates(EC_KEY_get0_group(ec),
 	    EC_KEY_get0_public_key(ec), X, Y, NULL))
-		warnx("EC_POINT_get_affine_coordinates_GFp");
+		warnx("EC_POINT_get_affine_coordinates");
 	else if ((x = bn2string(X)) == NULL)
 		warnx("bn2string");
 	else if ((y = bn2string(Y)) == NULL)
@@ -237,9 +237,9 @@ op_sign_ec(char **prot, EVP_PKEY *pkey, const char *nonce, const char *url)
 		warnx("BN_new");
 	else if ((Y = BN_new()) == NULL)
 		warnx("BN_new");
-	else if (!EC_POINT_get_affine_coordinates_GFp(EC_KEY_get0_group(ec),
+	else if (!EC_POINT_get_affine_coordinates(EC_KEY_get0_group(ec),
 	    EC_KEY_get0_public_key(ec), X, Y, NULL))
-		warnx("EC_POINT_get_affine_coordinates_GFp");
+		warnx("EC_POINT_get_affine_coordinates");
 	else if ((x = bn2string(X)) == NULL)
 		warnx("bn2string");
 	else if ((y = bn2string(Y)) == NULL)
