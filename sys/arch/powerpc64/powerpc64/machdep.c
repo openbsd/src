@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.68 2021/04/15 07:28:37 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.69 2021/05/13 22:42:14 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -355,6 +355,23 @@ init_powernv(void *fdt, void *tocbase)
 void
 memreg_add(const struct fdt_reg *reg)
 {
+	int i;
+
+	for (i = 0; i < nmemreg; i++) {
+		if (reg->addr == memreg[i].addr + memreg[i].size) {
+			memreg[i].size += reg->size;
+			return;
+		}
+		if (reg->addr + reg->size == memreg[i].addr) {
+			memreg[i].addr = reg->addr;
+			memreg[i].size += reg->size;
+			return;
+		}
+	}
+
+	if (nmemreg >= nitems(memreg))
+		return;
+
 	memreg[nmemreg++] = *reg;
 }
 
