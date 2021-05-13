@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.7 2021/05/12 01:20:52 jsg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.8 2021/05/13 19:26:25 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Brian Bamsch <bbamsch@google.com>
@@ -1425,12 +1425,12 @@ void
 pmap_activate(struct proc *p)
 {
 	pmap_t pm = p->p_vmspace->vm_map.pmap;
-	int sie;
+	u_long sie;
 
-	sie = disable_interrupts();
+	sie = intr_disable();
 	if (p == curproc && pm != curcpu()->ci_curpm)
 		pmap_set_satp(p);
-	restore_interrupts(sie);
+	intr_restore(sie);
 }
 
 /*

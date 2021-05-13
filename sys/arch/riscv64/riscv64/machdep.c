@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.14 2021/05/12 01:20:52 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.15 2021/05/13 19:26:25 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -202,7 +202,7 @@ void
 cpu_idle_cycle(void)
 {
 	// Enable interrupts
-	enable_interrupts();
+	intr_enable();
 	// XXX Data Sync Barrier? (Maybe SFENCE???)
 	__asm volatile("wfi");
 }

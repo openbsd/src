@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.4 2021/05/12 01:20:52 jsg Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.5 2021/05/13 19:26:25 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Brian Bamsch <bbamsch@google.com>
@@ -56,7 +56,7 @@ svc_handler(trapframe_t *frame)
 
 	/* Re-enable interrupts if they were enabled previously */
 	if (__predict_true(frame->tf_scause & EXCP_INTR))
-		enable_interrupts();
+		intr_enable();
 
 	ap = &frame->tf_a[0]; // Pointer to first arg
 	code = frame->tf_t[0]; // Syscall code

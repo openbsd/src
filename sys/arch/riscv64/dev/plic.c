@@ -1,4 +1,4 @@
-/*	$OpenBSD: plic.c,v 1.5 2021/05/13 09:32:00 kettenis Exp $	*/
+/*	$OpenBSD: plic.c,v 1.6 2021/05/13 19:26:25 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020, Mars Li <mengshi.li.mars@gmail.com>
@@ -405,12 +405,11 @@ plic_intr_establish(int irqno, int level, int (*func)(void *),
 {
 	struct plic_softc *sc = plic;
 	struct plic_intrhand *ih;
-	int sie;
+	u_long sie;
 
 	if (irqno < 0 || irqno >= PLIC_MAX_IRQS)
 		panic("plic_intr_establish: bogus irqnumber %d: %s",
 		    irqno, name);
-	sie = disable_interrupts();
 
 	ih = malloc(sizeof *ih, M_DEVBUF, M_WAITOK);
 	ih->ih_func = func;
@@ -419,6 +418,8 @@ plic_intr_establish(int irqno, int level, int (*func)(void *),
 	ih->ih_flags = level & IPL_FLAGMASK;
 	ih->ih_irq = irqno;
 	ih->ih_name = name;
+
+	sie = intr_disable();
 
 	TAILQ_INSERT_TAIL(&sc->sc_isrcs[irqno].is_list, ih, ih_list);
 
@@ -432,7 +433,7 @@ plic_intr_establish(int irqno, int level, int (*func)(void *),
 
 	plic_calc_mask();
 
-	restore_interrupts(sie);
+	intr_restore(sie);
 	return (ih);
 }
 
@@ -449,14 +450,17 @@ plic_intr_disestablish(void *cookie)
 	struct plic_softc *sc = plic;
 	struct plic_intrhand *ih = cookie;
 	int irqno = ih->ih_irq;
-	int sie;
+	u_long sie;
 
-	sie = disable_interrupts();
+	sie = intr_disable();
+
 	TAILQ_REMOVE(&sc->sc_isrcs[irqno].is_list, ih, ih_list);
 	if (ih->ih_name != NULL)
 		evcount_detach(&ih->ih_count);
+
+	intr_restore(sie);
+
 	free(ih, M_DEVBUF, 0);
-	restore_interrupts(sie);
 }
 
 void
@@ -532,16 +536,16 @@ void
 plic_setipl(int new)
 {
 	struct cpu_info		*ci = curcpu();
-	uint64_t sie;
+	u_long sie;
 
 	/* disable here is only to keep hardware in sync with ci->ci_cpl */
-	sie = disable_interrupts();
+	sie = intr_disable();
 	ci->ci_cpl = new;
 
 	/* higher values are higher priority */
 	plic_set_threshold(ci->ci_cpuid, new);
 
-	restore_interrupts(sie);
+	intr_restore(sie);
 }
 
  /*
