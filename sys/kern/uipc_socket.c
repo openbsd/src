@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.259 2021/05/01 16:13:12 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.260 2021/05/13 18:06:54 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -503,7 +503,7 @@ restart:
 			if (so->so_proto->pr_flags & PR_CONNREQUIRED) {
 				if (!(resid == 0 && clen != 0))
 					snderr(ENOTCONN);
-			} else if (addr == 0)
+			} else if (addr == NULL)
 				snderr(EDESTADDRREQ);
 		}
 		space = sbspace(so, &so->so_snd);
@@ -847,7 +847,7 @@ dontblock:
 			if (paddr) {
 				*paddr = m;
 				so->so_rcv.sb_mb = m->m_next;
-				m->m_next = 0;
+				m->m_next = NULL;
 				m = so->so_rcv.sb_mb;
 			} else {
 				so->so_rcv.sb_mb = m_free(m);
