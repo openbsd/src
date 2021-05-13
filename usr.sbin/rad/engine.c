@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.18 2021/01/19 16:54:48 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.19 2021/05/13 11:22:15 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -480,8 +480,9 @@ parse_rs(struct imsg_ra_rs *rs)
 
 	len = rs->len;
 
-	if (!IN6_IS_ADDR_LINKLOCAL(&rs->from.sin6_addr)) {
-		log_warnx("RA from non link local address %s on %s", hbuf,
+	if (!(IN6_IS_ADDR_LINKLOCAL(&rs->from.sin6_addr) ||
+	    IN6_IS_ADDR_UNSPECIFIED(&rs->from.sin6_addr))) {
+		log_warnx("RA from invalid address %s on %s", hbuf,
 		    if_indextoname(rs->if_index, ifnamebuf));
 		return;
 	}
