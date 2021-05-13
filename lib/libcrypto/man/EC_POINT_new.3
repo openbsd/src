@@ -1,4 +1,4 @@
-.\" $OpenBSD: EC_POINT_new.3,v 1.12 2021/05/10 20:00:58 tb Exp $
+.\" $OpenBSD: EC_POINT_new.3,v 1.13 2021/05/13 05:52:28 tb Exp $
 .\" full merge up to: OpenSSL 50db8163 Jul 30 16:56:41 2018 +0100
 .\"
 .\" This file was written by Matt Caswell <matt@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 10 2021 $
+.Dd $Mdocdate: May 13 2021 $
 .Dt EC_POINT_NEW 3
 .Os
 .Sh NAME
@@ -557,6 +557,7 @@ and
 .Fn EC_POINT_hex2point
 first appeared in OpenSSL 0.9.8 and have been available since
 .Ox 4.5 .
+.Pp
 .Fn EC_POINT_set_affine_coordinates ,
 .Fn EC_POINT_get_affine_coordinates ,
 and
