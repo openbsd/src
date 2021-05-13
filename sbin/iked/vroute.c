@@ -1,4 +1,4 @@
-/*	$OpenBSD: vroute.c,v 1.8 2021/04/03 21:29:14 tobhe Exp $	*/
+/*	$OpenBSD: vroute.c,v 1.9 2021/05/13 15:20:48 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2021 Tobias Heider <tobhe@openbsd.org>
@@ -44,13 +44,36 @@ int vroute_setroute(struct iked *, uint8_t, struct sockaddr *, uint8_t,
 int vroute_doroute(struct iked *, int, int, int, uint8_t, struct sockaddr *,
     struct sockaddr *, struct sockaddr *, int *);
 int vroute_doaddr(struct iked *, char *, struct sockaddr *, struct sockaddr *, int);
+void vroute_cleanup(struct iked *);
+
+void vroute_insertaddr(struct iked *, int, struct sockaddr *, struct sockaddr *);
+void vroute_removeaddr(struct iked *, int, struct sockaddr *, struct sockaddr *);
+void vroute_insertroute(struct iked *, int, struct sockaddr *);
+void vroute_removeroute(struct iked *, int, struct sockaddr *);
+
+struct vroute_addr {
+	int				va_ifidx;
+	struct	sockaddr_storage	va_addr;
+	struct	sockaddr_storage	va_mask;
+	TAILQ_ENTRY(vroute_addr)	va_entry;
+};
+TAILQ_HEAD(vroute_addrs, vroute_addr);
+
+struct vroute_route {
+	int				vr_rdomain;
+	struct	sockaddr_storage	vr_dest;
+	TAILQ_ENTRY(vroute_route)	vr_entry;
+};
+TAILQ_HEAD(vroute_routes, vroute_route);
 
 struct iked_vroute_sc {
-	int	ivr_iosock;
-	int	ivr_iosock6;
-	int	ivr_rtsock;
-	int	ivr_rtseq;
-	pid_t	ivr_pid;
+	struct vroute_addrs	ivr_addrs;
+	struct vroute_routes	ivr_routes;
+	int			ivr_iosock;
+	int			ivr_iosock6;
+	int			ivr_rtsock;
+	int			ivr_rtseq;
+	pid_t			ivr_pid;
 };
 
 struct vroute_msg {
@@ -79,9 +102,38 @@ vroute_init(struct iked *env)
 	if ((ivr->ivr_rtsock = socket(AF_ROUTE, SOCK_RAW, AF_UNSPEC)) == -1)
 		fatal("%s: failed to create routing socket", __func__);
 
+	TAILQ_INIT(&ivr->ivr_addrs);
+	TAILQ_INIT(&ivr->ivr_routes);
+
 	ivr->ivr_pid = getpid();
 
 	env->sc_vroute = ivr;
+}
+
+void
+vroute_cleanup(struct iked *env)
+{
+	char			 ifname[IF_NAMESIZE];
+	struct iked_vroute_sc	*ivr = env->sc_vroute;
+	struct vroute_addr	*addr;
+	struct vroute_route	*route;
+
+	while ((addr = TAILQ_FIRST(&ivr->ivr_addrs))) {
+		if_indextoname(addr->va_ifidx, ifname);
+		vroute_doaddr(env, ifname,
+		    (struct sockaddr *)&addr->va_addr,
+		    (struct sockaddr *)&addr->va_mask, 0);
+		TAILQ_REMOVE(&ivr->ivr_addrs, addr, va_entry);
+		free(addr);
+	}
+
+	while ((route = TAILQ_FIRST(&ivr->ivr_routes))) {
+		vroute_doroute(env, RTF_UP | RTF_GATEWAY | RTF_STATIC,
+		    RTA_DST, route->vr_rdomain, RTM_DELETE,
+		    (struct sockaddr *)&route->vr_dest, NULL, NULL, NULL);
+		TAILQ_REMOVE(&ivr->ivr_routes, route, vr_entry);
+		free(route);
+	}
 }
 
 int
@@ -91,7 +143,7 @@ vroute_getaddr(struct iked *env, struct imsg *imsg)
 	struct sockaddr	*addr, *mask;
 	uint8_t			*ptr;
 	size_t			 left;
-	int			 af;
+	int			 af, add;
 	unsigned int		 ifidx;
 
 	ptr = imsg->data;
@@ -125,10 +177,82 @@ vroute_getaddr(struct iked *env, struct imsg *imsg)
 	ptr += sizeof(ifidx);
 	left -= sizeof(ifidx);
 
-	if_indextoname(ifidx, ifname);
+	add = (imsg->hdr.type == IMSG_IF_ADDADDR);
+	/* Store address for cleanup */
+	if (add)
+		vroute_insertaddr(env, ifidx, addr, mask);
+	else
+		vroute_removeaddr(env, ifidx, addr, mask);
 
-	return (vroute_doaddr(env, ifname, addr, mask,
-	    imsg->hdr.type == IMSG_IF_ADDADDR));
+	if_indextoname(ifidx, ifname);
+	return (vroute_doaddr(env, ifname, addr, mask, add));
+}
+
+void
+vroute_insertroute(struct iked *env, int rdomain, struct sockaddr *dest)
+{
+	struct iked_vroute_sc	*ivr = env->sc_vroute;
+	struct vroute_route	*route;
+
+	route = calloc(1, sizeof(*route));
+	if (route == NULL)
+		fatalx("%s: calloc.", __func__);
+
+	memcpy(&route->vr_dest, dest, dest->sa_len);
+	route->vr_rdomain = rdomain;
+
+	TAILQ_INSERT_TAIL(&ivr->ivr_routes, route, vr_entry);
+}
+
+void
+vroute_removeroute(struct iked *env, int rdomain, struct sockaddr *dest)
+{
+	struct iked_vroute_sc	*ivr = env->sc_vroute;
+	struct vroute_route	*route;
+
+	TAILQ_FOREACH(route, &ivr->ivr_routes, vr_entry) {
+		if (sockaddr_cmp(dest, (struct sockaddr *)&route->vr_dest, -1))
+			continue;
+		if (rdomain != route->vr_rdomain)
+			continue;
+		TAILQ_REMOVE(&ivr->ivr_routes, route, vr_entry);
+	}
+}
+
+void
+vroute_insertaddr(struct iked *env, int ifidx, struct sockaddr *addr,
+    struct sockaddr *mask)
+{
+	struct iked_vroute_sc	*ivr = env->sc_vroute;
+	struct vroute_addr	*vaddr;
+
+	vaddr = calloc(1, sizeof(*vaddr));
+	if (vaddr == NULL)
+		fatalx("%s: calloc.", __func__);
+
+	memcpy(&vaddr->va_addr, addr, addr->sa_len);
+	memcpy(&vaddr->va_mask, mask, mask->sa_len);
+	vaddr->va_ifidx = ifidx;
+
+	TAILQ_INSERT_TAIL(&ivr->ivr_addrs, vaddr, va_entry);
+}
+
+void
+vroute_removeaddr(struct iked *env, int ifidx, struct sockaddr *addr,
+    struct sockaddr *mask)
+{
+	struct iked_vroute_sc	*ivr = env->sc_vroute;
+	struct vroute_addr	*vaddr;
+
+	TAILQ_FOREACH(vaddr, &ivr->ivr_addrs, va_entry) {
+		if (sockaddr_cmp(addr, (struct sockaddr *)&vaddr->va_addr, -1))
+			continue;
+		if (sockaddr_cmp(mask, (struct sockaddr *)&vaddr->va_mask, -1))
+			continue;
+		if (ifidx != vaddr->va_ifidx)
+			continue;
+		TAILQ_REMOVE(&ivr->ivr_addrs, vaddr, va_entry);
+	}
 }
 
 int
@@ -269,6 +393,7 @@ vroute_getroute(struct iked *env, struct imsg *imsg)
 		type = RTM_ADD;
 		break;
 	case IMSG_VROUTE_DEL:
+		vroute_removeroute(env, rdomain, dest);
 		type = RTM_DELETE;
 		break;
 	}
@@ -322,6 +447,8 @@ vroute_getcloneroute(struct iked *env, struct imsg *imsg)
 
 	if (need_gw)
 		flags |= RTF_GATEWAY;
+
+	vroute_insertroute(env, rdomain, (struct sockaddr *)&dest);
 
 	/* Set explicit route to peer with gateway addr*/
 	addrs = RTA_DST | RTA_GATEWAY | RTA_NETMASK;

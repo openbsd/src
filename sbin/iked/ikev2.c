@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.319 2021/03/23 21:31:29 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.320 2021/05/13 15:20:48 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -219,6 +219,7 @@ ikev2_shutdown(struct privsep_proc *p)
 
 	ibuf_release(env->sc_certreq);
 	env->sc_certreq = NULL;
+	config_doreset(env, RESET_ALL);
 }
 
 int

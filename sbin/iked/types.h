@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.42 2021/02/13 16:14:12 tobhe Exp $	*/
+/*	$OpenBSD: types.h,v 1.43 2021/05/13 15:20:48 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -100,7 +100,6 @@ enum imsg_type {
 	IMSG_CTL_ACTIVE,
 	IMSG_CTL_PASSIVE,
 	IMSG_CTL_RESET_ID,
-	IMSG_CTL_EXIT,
 	IMSG_CTL_SHOW_SA,
 	IMSG_CTL_STATIC,
 	IMSG_COMPILE,
@@ -142,7 +141,6 @@ enum flushmode {
 	RESET_POLICY,
 	RESET_SA,
 	RESET_USER,
-	RESET_EXIT
 };
 
 #ifndef nitems

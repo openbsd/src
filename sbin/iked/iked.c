@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.56 2021/03/03 22:18:00 tobhe Exp $	*/
+/*	$OpenBSD: iked.c,v 1.57 2021/05/13 15:20:48 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -207,6 +207,7 @@ main(int argc, char *argv[])
 	event_dispatch();
 
 	log_debug("%d parent exiting", getpid());
+	parent_shutdown(env);
 
 	return (0);
 }
@@ -345,10 +346,8 @@ parent_sig_handler(int sig, short event, void *arg)
 		break;
 	case SIGTERM:
 	case SIGINT:
-		log_info("%s: stopping iked", __func__);
-		config_setreset(ps->ps_env, RESET_EXIT, PROC_IKEV2);
-		config_setreset(ps->ps_env, RESET_ALL, PROC_CERT);
-		break;
+		die = 1;
+		/* FALLTHROUGH */
 	case SIGCHLD:
 		do {
 			int len;
@@ -465,8 +464,6 @@ parent_dispatch_ikev2(int fd, struct privsep_proc *p, struct imsg *imsg)
 		return (vroute_getroute(env, imsg));
 	case IMSG_VROUTE_CLONE:
 		return (vroute_getcloneroute(env, imsg));
-	case IMSG_CTL_EXIT:
-		parent_shutdown(env);
 	default:
 		return (-1);
 	}
@@ -479,6 +476,7 @@ parent_shutdown(struct iked *env)
 {
 	proc_kill(&env->sc_ps);
 
+	vroute_cleanup(env);
 	free(env->sc_vroute);
 	free(env);
 
