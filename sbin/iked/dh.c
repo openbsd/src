@@ -1,4 +1,4 @@
-/*	$OpenBSD: dh.c,v 1.27 2021/02/04 20:38:26 tobhe Exp $	*/
+/*	$OpenBSD: dh.c,v 1.28 2021/05/13 14:01:35 tb Exp $	*/
 
 /*
  * Copyright (c) 2010-2014 Reyk Floeter <reyk@openbsd.org>
@@ -608,8 +608,7 @@ ec_point2raw(struct dh_group *group, const EC_POINT *point,
 	if ((ecgroup = EC_KEY_get0_group(group->ec)) == NULL)
 		goto done;
 
-	if (!EC_POINT_get_affine_coordinates_GFp(ecgroup,
-	    point, x, y, bnctx))
+	if (!EC_POINT_get_affine_coordinates(ecgroup, point, x, y, bnctx))
 		goto done;
 
 	xoff = xlen - BN_num_bytes(x);
@@ -669,8 +668,7 @@ ec_raw2point(struct dh_group *group, uint8_t *buf, size_t len)
 	if ((point = EC_POINT_new(ecgroup)) == NULL)
 		goto done;
 
-	if (!EC_POINT_set_affine_coordinates_GFp(ecgroup,
-	    point, x, y, bnctx))
+	if (!EC_POINT_set_affine_coordinates(ecgroup, point, x, y, bnctx))
 		goto done;
 
 	ret = 0;
