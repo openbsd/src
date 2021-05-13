@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.7 2021/05/12 01:20:52 jsg Exp $	*/
+/*	$OpenBSD: trap.c,v 1.8 2021/05/13 06:45:23 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Shivam Waghela <shivamwaghela@gmail.com>
@@ -142,7 +142,7 @@ do_trap_user(struct trapframe *frame)
 		return;
 	}
 
-	enable_interrupts();	//XXX allow preemption?
+	intr_enable();
 
 #if 0	// XXX Debug logging
 	printf( "do_trap_user: curproc: %p, sepc: %lx, ra: %lx frame: %p\n",
@@ -185,7 +185,7 @@ do_trap_user(struct trapframe *frame)
 		panic("Unknown userland exception %llx, trap value %lx\n",
 		    exception, frame->tf_stval);
 	}
-	disable_interrupts(); /* XXX -  ???  */
+
 	/* now that we will not context switch again,
 	 * see if we should enable FPU
 	 */
