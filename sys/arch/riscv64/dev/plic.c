@@ -1,4 +1,4 @@
-/*	$OpenBSD: plic.c,v 1.4 2021/05/12 01:20:52 jsg Exp $	*/
+/*	$OpenBSD: plic.c,v 1.5 2021/05/13 09:32:00 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020, Mars Li <mengshi.li.mars@gmail.com>
@@ -383,10 +383,9 @@ plic_irq_dispatch(uint32_t irq,	void *frame)
 		else
 			arg = frame;
 
-// comment for now, ?!
-//		enable_interrupts();	//XXX allow preemption?
+		intr_enable();
 		handled = ih->ih_func(arg);
-//		disable_interrupts();
+		intr_disable();
 		if (handled)
 			ih->ih_count.ec_count++;
 
