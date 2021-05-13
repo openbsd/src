@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.260 2021/05/13 18:06:54 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.261 2021/05/13 19:43:11 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1127,11 +1127,11 @@ sorflush(struct socket *so)
 	/* with SB_NOINTR and M_WAITOK sblock() must not fail */
 	KASSERT(error == 0);
 	socantrcvmore(so);
-	sbunlock(so, sb);
 	m = sb->sb_mb;
 	memset(&sb->sb_startzero, 0,
 	     (caddr_t)&sb->sb_endzero - (caddr_t)&sb->sb_startzero);
 	sb->sb_timeo_nsecs = INFSLP;
+	sbunlock(so, sb);
 	if (pr->pr_flags & PR_RIGHTS && pr->pr_domain->dom_dispose)
 		(*pr->pr_domain->dom_dispose)(m);
 	m_purge(m);
