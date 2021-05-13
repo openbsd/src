@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.189 2021/05/13 17:02:31 mvs Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.190 2021/05/13 17:31:59 mvs Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -645,7 +645,7 @@ sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 			    mp->msg_controllen);
 #endif
 	} else
-		control = 0;
+		control = NULL;
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_GENIO)) {
 		ktriov = mallocarray(auio.uio_iovcnt, sizeof(struct iovec),
