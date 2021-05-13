@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.278 2020/11/19 13:45:15 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.279 2021/05/13 02:22:33 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -478,7 +478,7 @@ scsi_io_get(struct scsi_iopool *iopl, int flags)
 		return NULL;
 
 	/* otherwise sleep until we get one */
-scsi_ioh_set(&ioh, iopl, scsi_io_get_done, &m);
+	scsi_ioh_set(&ioh, iopl, scsi_io_get_done, &m);
 	scsi_ioh_add(&ioh);
 	scsi_move(&m);
 
