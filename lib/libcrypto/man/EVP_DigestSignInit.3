@@ -1,4 +1,4 @@
-.\"	$OpenBSD: EVP_DigestSignInit.3,v 1.9 2021/05/11 18:57:17 tb Exp $
+.\"	$OpenBSD: EVP_DigestSignInit.3,v 1.10 2021/05/13 06:00:53 tb Exp $
 .\"	OpenSSL 9b86974e Aug 17 15:21:33 2015 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 11 2021 $
+.Dd $Mdocdate: May 13 2021 $
 .Dt EVP_DIGESTSIGNINIT 3
 .Os
 .Sh NAME
@@ -243,6 +243,7 @@ and
 .Fn EVP_DigestSignFinal
 first appeared in OpenSSL 1.0.0 and have been available since
 .Ox 4.9 .
+.Pp
 .Fn EVP_DigestSign
 first appeared in OpenSSL 1.1.1 and has been available since
 .Ox 7.0 .
