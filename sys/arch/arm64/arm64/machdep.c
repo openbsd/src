@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.63 2021/05/12 17:43:26 kettenis Exp $ */
+/* $OpenBSD: machdep.c,v 1.64 2021/05/13 16:08:16 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
@@ -1189,6 +1189,20 @@ pmap_bootstrap_bs_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
 void
 memreg_add(const struct fdt_reg *reg)
 {
+	int i;
+
+	for (i = 0; i < nmemreg; i++) {
+		if (reg->addr == memreg[i].addr + memreg[i].size) {
+			memreg[i].size += reg->size;
+			return;
+		}
+		if (reg->addr + reg->size == memreg[i].addr) {
+			memreg[i].addr = reg->addr;
+			memreg[i].size += reg->size;
+			return;
+		}
+	}
+
 	if (nmemreg >= nitems(memreg))
 		return;
 
