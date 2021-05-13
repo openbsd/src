@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.S,v 1.3 2021/05/10 05:58:20 jsg Exp $	*/
+/*	$OpenBSD: exception.S,v 1.4 2021/05/13 06:44:11 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2015-2018 Ruslan Bukin <br@bsdpad.com>
@@ -183,9 +183,8 @@
 .endm
 
 .macro	do_ast
-	/* Disable interrupts */
-	csrr	a4, sstatus
 1:
+	/* Disable interrupts */
 	csrci	sstatus, (SSTATUS_SIE)
 
 	/* Check for astpending */
@@ -196,8 +195,8 @@
 
 	sw	x0, P_ASTPENDING(a1)
 
-	/* Restore interrupts */
-	csrw	sstatus, a4
+	/* Enable interrupts */
+	csrsi	sstatus, (SSTATUS_SIE)
 
 	/* handle the ast */
 	mv	a0, sp
