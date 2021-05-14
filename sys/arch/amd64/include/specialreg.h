@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.89 2021/03/29 12:39:02 dv Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.90 2021/05/14 16:44:38 cheloha Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -352,6 +352,7 @@
 #define MSR_EBC_FREQUENCY_ID    0x02c   /* Pentium 4 only */
 #define	MSR_TEST_CTL		0x033
 #define MSR_IA32_FEATURE_CONTROL 0x03a
+#define MSR_TSC_ADJUST		0x03b
 #define MSR_SPEC_CTRL		0x048	/* Speculation Control IBRS / STIBP */
 #define SPEC_CTRL_IBRS		(1ULL << 0)
 #define SPEC_CTRL_STIBP		(1ULL << 1)
