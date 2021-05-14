@@ -1,4 +1,4 @@
-/*	$OpenBSD: _setjmp.S,v 1.2 2021/05/09 21:26:06 drahn Exp $	*/
+/*	$OpenBSD: _setjmp.S,v 1.3 2021/05/14 00:57:03 drahn Exp $	*/
 /* 
  * Copyright (c) 2020 Dale Rahn <drahn@openbsd.org>
  *
@@ -20,7 +20,6 @@
 #include <machine/setjmp.h>
 
 ENTRY(_setjmp)
-	addi	sp, sp, -32
 	RETGUARD_SETUP(_setjmp, t6)
 
 	sd	sp, (1 * 8)(a0)
@@ -60,7 +59,6 @@ ENTRY(_setjmp)
 	/* Return value */
 	mv	a0, x0
 	RETGUARD_CHECK(_setjmp, t6)
-	addi sp, sp, 32
 	ret
 END_STRONG(_setjmp)
 
