@@ -1,22 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.148 2021/05/11 13:25:26 patrick Exp $
-#
-# GENERIC machine description file
-#
-# This machine description file is used to generate the default OpenBSD
-# kernel.  The generic kernel does not include all options, subsystems
-# and device drivers, but should be useful for most applications.
-#
-# The machine description file can be customised for your specific
-# machine to reduce the kernel size and improve its performance.
-#
-# For further information on compiling OpenBSD kernels, see the config(8)
-# man page.
-#
-# For further information on hardware support for this architecture, see
-# the intro(4) man page.  For further information about kernel options
-# for this architecture, see the options(4) man page.  For an explanation
-# of each device driver in this file see the section 4 man page for the
-# device.
+# $OpenBSD: RAMDISK,v 1.149 2021/05/14 08:10:39 jsg Exp $
 
 machine		arm64
 maxusers	4
