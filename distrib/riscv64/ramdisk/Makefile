@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2021/04/27 23:57:38 drahn Exp $
+#	$OpenBSD: Makefile,v 1.2 2021/05/14 01:18:52 drahn Exp $
 
 FS=		miniroot${OSrev}.img
 FSSIZE=		67584
@@ -17,7 +17,7 @@ MOUNT_ARGS_msdos=-o-l
 LISTS=		${.CURDIR}/list
 UTILS=		${.CURDIR}/../../miniroot
 
-MRFSDISKTYPE=	rdrootc
+MRFSDISKTYPE=	rdroot
 MRMAKEFSARGS=	-o disklabel=${MRFSDISKTYPE},minfree=0,density=8192
 
 all: ${FS}
@@ -66,7 +66,7 @@ mr.fs: instbin
 	makefs ${MRMAKEFSARGS} $@ $@.d
 
 instbin.mk instbin.cache instbin.c: instbin.conf
-	crunchgen -O obj.${HOST}.${MACHINE} -E -D ${.CURDIR}/../../.. -L /usr/cross/riscv64/usr/lib \
+	crunchgen -E -D ${.CURDIR}/../../.. -L /usr/cross/riscv64/usr/lib \
 	    -c instbin.c -e instbin -m instbin.mk instbin.conf
 
 instbin: instbin.mk instbin.cache instbin.c
