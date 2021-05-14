@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.22 2021/04/28 12:55:37 patrick Exp $
+# $OpenBSD: Makefile.inc,v 1.23 2021/05/14 02:29:00 drahn Exp $
 
 CLANG_SRCS?=	${.CURDIR}/../../../llvm/clang
 LLDB_SRCS?=	${.CURDIR}/../../../llvm/lldb
@@ -14,6 +14,10 @@ BOOTSTRAP_CLANG?=no
 .if ${BOOTSTRAP_CLANG} == "yes"
 CC=		egcc
 CXX=		eg++
+.endif
+
+.if ${MACHINE_ARCH} == "riscv64" 
+LDSTATIC=-static
 .endif
 
 DEBUG=
