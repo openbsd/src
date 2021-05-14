@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.3 2021/05/12 01:20:52 jsg Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.4 2021/05/14 06:48:52 jsg Exp $	*/
 
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -48,7 +48,6 @@
 
 #include <machine/pcb.h>
 #include <machine/reg.h>
-#include <machine/riscvreg.h>
 
 int
 process_read_regs(struct proc *p, struct reg *regs)

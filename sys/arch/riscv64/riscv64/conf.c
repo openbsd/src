@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.7 2021/05/12 01:20:52 jsg Exp $	*/
+/*	$OpenBSD: conf.c,v 1.8 2021/05/14 06:48:52 jsg Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -35,7 +35,6 @@
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
-#include <sys/vnode.h>
 
 #include <machine/conf.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.3 2021/05/12 01:20:52 jsg Exp $	*/
+/*	$OpenBSD: mem.c,v 1.4 2021/05/14 06:48:52 jsg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -73,17 +73,14 @@
  */
 
 #include <sys/param.h>
-#include <sys/conf.h>
 #include <sys/buf.h>
 #include <sys/filio.h>
 #include <sys/systm.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
-#include <sys/fcntl.h>
 #include <sys/rwlock.h>
 
-#include <machine/cpu.h>
 #include <machine/conf.h>
 
 #include <uvm/uvm_extern.h>

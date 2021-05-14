@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.15 2021/05/13 19:26:25 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.16 2021/05/14 06:48:52 jsg Exp $	*/
 
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -28,14 +28,11 @@
 #include <sys/user.h>
 #include <sys/conf.h>
 #include <sys/kcore.h>
-#include <sys/core.h>
 #include <sys/msgbuf.h>
 #include <sys/buf.h>
-#include <sys/termios.h>
 #include <sys/sensors.h>
 #include <sys/malloc.h>
 #include <sys/syscallargs.h>
-#include <sys/stdarg.h>
 
 #include <net/if.h>
 #include <uvm/uvm.h>

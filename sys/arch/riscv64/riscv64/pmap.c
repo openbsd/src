@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.8 2021/05/13 19:26:25 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.9 2021/05/14 06:48:52 jsg Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Brian Bamsch <bbamsch@google.com>
@@ -18,9 +18,7 @@
  */
 
 #include <sys/param.h>
-#include <sys/malloc.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/systm.h>
 #include <sys/pool.h>
 #include <sys/atomic.h>
@@ -30,12 +28,7 @@
 #include "machine/vmparam.h"
 #include "machine/pmap.h"
 #include "machine/cpufunc.h"
-#include "machine/pcb.h"
 #include "machine/riscvreg.h"
-
-#include <machine/db_machdep.h>
-#include <ddb/db_extern.h>
-#include <ddb/db_output.h>
 
 void pmap_set_satp(struct proc *);
 void pmap_free_asid(pmap_t);

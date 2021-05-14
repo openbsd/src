@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.6 2021/05/12 01:20:52 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.7 2021/05/14 06:48:52 jsg Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -24,7 +24,6 @@
 #include <sys/sysctl.h>
 
 #include <machine/fdt.h>
-#include <machine/riscvreg.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>

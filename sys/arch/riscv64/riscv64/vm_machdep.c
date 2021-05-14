@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.3 2021/05/12 01:20:52 jsg Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.4 2021/05/14 06:48:52 jsg Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -40,18 +40,12 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
-#include <sys/vnode.h>
 #include <sys/buf.h>
 #include <sys/user.h>
-#include <sys/exec.h>
-#include <sys/ptrace.h>
-#include <sys/signalvar.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
-#include <machine/reg.h>
 
 /*
  * Finish a fork operation, with process p2 nearly set up.

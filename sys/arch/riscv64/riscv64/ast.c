@@ -1,4 +1,4 @@
-/*	$OpenBSD: ast.c,v 1.2 2021/05/12 01:20:52 jsg Exp $	*/
+/*	$OpenBSD: ast.c,v 1.3 2021/05/14 06:48:52 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
@@ -19,10 +19,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/signalvar.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <sys/signal.h>
 #include <sys/syscall.h>
 #include <sys/syscall_mi.h>
 #include <machine/pcb.h>

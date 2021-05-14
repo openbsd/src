@@ -1,4 +1,4 @@
-/*	$OpenBSD: riscv_cpu_intc.c,v 1.7 2021/05/13 19:26:25 kettenis Exp $	*/
+/*	$OpenBSD: riscv_cpu_intc.c,v 1.8 2021/05/14 06:48:52 jsg Exp $	*/
 
 /*
  * Copyright (c) 2020, Mars Li <mengshi.li.mars@gmail.com>
@@ -18,19 +18,14 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/queue.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/evcount.h>
 
-#include <machine/bus.h>
 #include <machine/fdt.h>
 #include <machine/riscvreg.h>
 
 #include <dev/ofw/openfirm.h>
-#include <dev/ofw/fdt.h>
 
-#include "riscv64/dev/plic.h"
 #include "riscv_cpu_intc.h"
 
 struct intrhand {

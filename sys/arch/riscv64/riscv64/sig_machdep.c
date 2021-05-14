@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.3 2021/05/12 01:20:52 jsg Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.4 2021/05/14 06:48:52 jsg Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -72,7 +72,6 @@
 #include <sys/systm.h>
 #include <sys/user.h>
 
-#include <machine/riscvreg.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/pcb.h>

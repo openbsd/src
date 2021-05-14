@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.5 2021/05/13 19:26:25 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.6 2021/05/14 06:48:52 jsg Exp $	*/
 
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
@@ -18,13 +18,10 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/timetc.h>
 #include <sys/malloc.h>
 
-#include <dev/clock_subr.h>
 #include <machine/cpu.h>
 #include <machine/intr.h>
-#include <machine/frame.h>
 
 #include <dev/ofw/openfirm.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.8 2021/05/13 06:45:23 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.9 2021/05/14 06:48:52 jsg Exp $	*/
 
 /*
  * Copyright (c) 2020 Shivam Waghela <shivamwaghela@gmail.com>
@@ -25,8 +25,6 @@
 #include <sys/user.h>
 #include <sys/signalvar.h>
 #include <sys/siginfo.h>
-#include <sys/syscall.h>
-#include <sys/syscall_mi.h>
 
 #include <machine/riscvreg.h>
 #include <machine/syscall.h>

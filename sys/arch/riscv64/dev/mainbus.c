@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.6 2021/05/12 01:20:52 jsg Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.7 2021/05/14 06:48:52 jsg Exp $ */
 
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
@@ -19,7 +19,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.4 2021/05/12 01:20:52 jsg Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.5 2021/05/14 06:48:52 jsg Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -56,7 +56,6 @@
  */
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>

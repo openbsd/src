@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.3 2021/05/12 01:20:52 jsg Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.4 2021/05/14 06:48:52 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -18,7 +18,6 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/disklabel.h>
 #include <sys/reboot.h>
 #include <sys/hibernate.h>
 #include <sys/systm.h>
@@ -30,8 +29,6 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #endif
-
-#include <machine/bootconfig.h>
 
 extern void dumpconf(void);
 
