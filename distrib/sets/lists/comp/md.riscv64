@@ -1,3 +1,5 @@
+./usr/bin/addr2line
+./usr/bin/readelf
 ./usr/include/ieeefp.h
 ./usr/include/riscv64
 ./usr/include/riscv64/_float.h
@@ -47,3 +49,4 @@
 ./usr/include/riscv64/trap.h
 ./usr/include/riscv64/vmparam.h
 ./usr/libdata/ldscripts
+./usr/share/info/bfd.info

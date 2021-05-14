@@ -1,13 +1,11 @@
 ./etc/examples/wsconsctl.conf
 ./sbin/kbd
 ./sbin/wsconsctl
-./usr/bin/addr2line
 ./usr/bin/clang
 ./usr/bin/clang++
 ./usr/bin/clang-cpp
 ./usr/bin/ld.lld
 ./usr/bin/objcopy
-./usr/bin/readelf
 ./usr/lib/crtbegin.o
 ./usr/lib/crtbeginS.o
 ./usr/lib/crtend.o
@@ -426,11 +424,3 @@
 ./usr/mdec/BOOTRISCV64.EFI
 ./usr/sbin/eeprom
 ./usr/sbin/wsconscfg
-./usr/share/info/bfd.info
-./usr/share/info/configure.info
-./usr/share/info/gprof.info
-./usr/share/man/man1/c++.1
-./usr/share/man/man1/cc.1
-./usr/share/man/man1/clang.1
-./usr/share/man/man1/ld.lld.1
-./usr/share/man/man1/llvm-config.1
