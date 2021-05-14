@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.102 2021/05/10 17:16:01 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.103 2021/05/14 15:31:01 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -45,7 +45,9 @@ int
 Xreinit(char *args, struct mbr *mbr)
 {
 	struct dos_mbr dos_mbr;
-	int dogpt;
+	int efi, dogpt;
+
+	efi = MBR_protective_mbr(mbr);
 
 	if (strncasecmp(args, "gpt", 3) == 0)
 		dogpt = 1;
@@ -54,7 +56,7 @@ Xreinit(char *args, struct mbr *mbr)
 	else if (strlen(args) > 0) {
 		printf("Unrecognized modifier '%s'\n", args);
 		return (CMD_CONT);
-	} else if (MBR_protective_mbr(mbr) == 0)
+	} else if (efi != -1)
 		dogpt = 1;
 	else
 		dogpt = 0;
@@ -393,8 +395,10 @@ Xselect(char *args, struct mbr *mbr)
 int
 Xprint(char *args, struct mbr *mbr)
 {
+	int efi;
 
-	if (MBR_protective_mbr(mbr) == 0 && letoh64(gh.gh_sig) == GPTSIGNATURE)
+	efi = MBR_protective_mbr(mbr);
+	if (efi != -1 && letoh64(gh.gh_sig) == GPTSIGNATURE)
 		GPT_print(args, VERBOSE);
 	else
 		MBR_print(mbr, args);

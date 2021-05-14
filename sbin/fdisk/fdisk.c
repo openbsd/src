@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.106 2021/05/10 17:16:01 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.107 2021/05/14 15:31:01 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -71,7 +71,7 @@ int
 main(int argc, char *argv[])
 {
 	ssize_t len;
-	int ch, fd, error;
+	int ch, fd, efi, error;
 	int e_flag = 0, g_flag = 0, i_flag = 0, u_flag = 0;
 	int verbosity = TERSE;
 	int c_arg = 0, h_arg = 0, s_arg = 0;
@@ -175,7 +175,8 @@ main(int argc, char *argv[])
 	MBR_parse(&dos_mbr, 0, 0, &mbr);
 
 	/* Get the GPT if present. Either primary or secondary is ok. */
-	if (MBR_protective_mbr(&mbr) == 0)
+	efi = MBR_protective_mbr(&mbr);
+	if (efi != -1)
 		GPT_read(ANYGPT);
 
 	if (!(i_flag || u_flag || e_flag)) {

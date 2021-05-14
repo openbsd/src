@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.68 2021/05/07 22:15:13 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.69 2021/05/14 15:31:01 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -289,39 +289,36 @@ MBR_zapgpt(struct dos_mbr *dos_mbr, uint64_t lastsec)
 }
 
 /*
- * Returns 0 if the MBR with the provided partition array is a GPT protective
- * MBR, and returns 1 otherwise. A GPT protective MBR would have one and only
- * one MBR partition, an EFI partition that either covers the whole disk or as
- * much of it as is possible with a 32bit size field.
+ * Return the index into dp[] of the EFI GPT (0xEE) partition, or -1 if no such
+ * partition exists.
  *
  * Taken from kern/subr_disk.c.
  *
- * NOTE: MS always uses a size of UINT32_MAX for the EFI partition!**
  */
 int
-gpt_chk_mbr(struct dos_partition *dp, uint64_t dsize)
+gpt_chk_mbr(struct dos_partition *dp, u_int64_t dsize)
 {
 	struct dos_partition *dp2;
-	int efi, found, i;
-	uint32_t psize;
+	int efi, eficnt, found, i;
+	u_int32_t psize;
 
-	found = efi = 0;
+	found = efi = eficnt = 0;
 	for (dp2=dp, i=0; i < NDOSPART; i++, dp2++) {
 		if (dp2->dp_typ == DOSPTYP_UNUSED)
 			continue;
 		found++;
 		if (dp2->dp_typ != DOSPTYP_EFI)
 			continue;
+		if (letoh32(dp2->dp_start) != GPTSECTOR)
+			continue;
 		psize = letoh32(dp2->dp_size);
-		if (psize == (dsize - 1) ||
-		    psize == UINT32_MAX) {
-			if (letoh32(dp2->dp_start) == 1)
-				efi++;
+		if (psize == (dsize - 1) || psize == UINT32_MAX) {
+			efi = i;
+			eficnt++;
 		}
 	}
-	if (found == 1 && efi == 1)
-		return (0);
+	if (found == 1 && eficnt == 1)
+		return (efi);
 
-	return (1);
+	return (-1);
 }
-

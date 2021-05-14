@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.53 2021/05/10 17:16:01 krw Exp $	*/
+/*	$OpenBSD: user.c,v 1.54 2021/05/14 15:31:01 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -63,7 +63,7 @@ USER_edit(off_t offset, off_t reloff)
 	struct dos_mbr dos_mbr;
 	struct mbr mbr;
 	char *cmd, *args;
-	int i, st, error;
+	int i, st, efi, error;
 
 	/* One level deeper */
 	editlevel += 1;
@@ -79,7 +79,8 @@ USER_edit(off_t offset, off_t reloff)
 	if (editlevel == 1) {
 		memset(&gh, 0, sizeof(gh));
 		memset(&gp, 0, sizeof(gp));
-		if (MBR_protective_mbr(&mbr) == 0)
+		efi = MBR_protective_mbr(&mbr);
+		if (efi != -1)
 			GPT_read(ANYGPT);
 	}
 
@@ -141,7 +142,7 @@ void
 USER_print_disk(int verbosity)
 {
 	off_t offset, firstoff;
-	int i, error;
+	int i, efi, error;
 	struct dos_mbr dos_mbr;
 	struct mbr mbr;
 
@@ -153,8 +154,8 @@ USER_print_disk(int verbosity)
 			break;
 		MBR_parse(&dos_mbr, offset, firstoff, &mbr);
 		if (offset == 0) {
-			if (verbosity == VERBOSE || MBR_protective_mbr(&mbr) ==
-			    0) {
+			efi = MBR_protective_mbr(&mbr);
+			if (verbosity == VERBOSE || efi != -1) {
 				if (verbosity == VERBOSE) {
 					printf("Primary GPT:\n");
 					GPT_read(PRIMARYGPT);

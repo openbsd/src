@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.239 2021/05/08 16:41:24 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.240 2021/05/14 15:31:01 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -330,13 +330,13 @@ int
 readdoslabel(struct buf *bp, void (*strat)(struct buf *),
     struct disklabel *lp, daddr_t *partoffp, int spoofonly)
 {
+	struct dos_partition dp[NDOSPART], *dp2;
 	struct disklabel *gptlp;
 	u_int64_t dospartoff = 0, dospartend = DL_GETBEND(lp);
-	int i, ourpart = -1, wander = 1, n = 0, loop = 0, offset;
-	struct dos_partition dp[NDOSPART], *dp2;
 	u_int64_t sector = DOSBBSECTOR;
 	u_int32_t extoff = 0;
-	int error;
+	int ourpart = -1, wander = 1, n = 0, loop = 0;
+	int efi, error, i, offset;
 
 	if (lp->d_secpercyl == 0)
 		return (EINVAL);	/* invalid label */
@@ -374,7 +374,8 @@ readdoslabel(struct buf *bp, void (*strat)(struct buf *),
 			if (mbrtest != 0x55aa)
 				goto notmbr;
 
-			if (gpt_chk_mbr(dp, DL_GETDSIZE(lp)) != 0)
+			efi = gpt_chk_mbr(dp, DL_GETDSIZE(lp));
+			if (efi == -1)
 				goto notgpt;
 
 			gptlp = malloc(sizeof(struct disklabel), M_DEVBUF,
@@ -584,38 +585,37 @@ notfat:
 }
 
 /*
- * Returns 0 if the MBR with the provided partition array is a GPT protective
- * MBR, and returns 1 otherwise. A GPT protective MBR would have one and only
- * one MBR partition, an EFI partition that either covers the whole disk or as
- * much of it as is possible with a 32bit size field.
+ * Return the index into dp[] of the EFI GPT (0xEE) partition, or -1 if no such
+ * partition exists.
  *
- * NOTE: MS always uses a size of UINT32_MAX for the EFI partition!**
+ * Copied into sbin/fdisk/mbr.c.
  */
 int
 gpt_chk_mbr(struct dos_partition *dp, u_int64_t dsize)
 {
 	struct dos_partition *dp2;
-	int efi, found, i;
+	int efi, eficnt, found, i;
 	u_int32_t psize;
 
-	found = efi = 0;
+	found = efi = eficnt = 0;
 	for (dp2=dp, i=0; i < NDOSPART; i++, dp2++) {
 		if (dp2->dp_typ == DOSPTYP_UNUSED)
 			continue;
 		found++;
 		if (dp2->dp_typ != DOSPTYP_EFI)
 			continue;
+		if (letoh32(dp2->dp_start) != GPTSECTOR)
+			continue;
 		psize = letoh32(dp2->dp_size);
-		if (psize == (dsize - 1) ||
-		    psize == UINT32_MAX) {
-			if (letoh32(dp2->dp_start) == 1)
-				efi++;
+		if (psize == (dsize - 1) || psize == UINT32_MAX) {
+			efi = i;
+			eficnt++;
 		}
 	}
-	if (found == 1 && efi == 1)
-		return (0);
+	if (found == 1 && eficnt == 1)
+		return (efi);
 
-	return (1);
+	return (-1);
 }
 
 int
