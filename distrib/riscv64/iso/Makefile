@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2021/05/11 15:18:48 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.2 2021/05/14 02:21:34 drahn Exp $
 
 FS=		install${OSrev}.img
 FSSIZE=		1032192
@@ -11,7 +11,7 @@ RELDIR?=	/home/rel-${MACHINE}
 
 BASE=		${RELDIR}/base${OSrev}.tgz ${RELDIR}/comp${OSrev}.tgz \
 		${RELDIR}/game${OSrev}.tgz ${RELDIR}/man${OSrev}.tgz \
-		${RELDIR}/bsd ${RELDIR}/bsd.mp ${RELDIR}/bsd.rd \
+		${RELDIR}/bsd ${RELDIR}/bsd.rd \
 		${RELDIR}/INSTALL.${MACHINE}
 XBASE=		${RELXDIR}/xbase${OSrev}.tgz ${RELXDIR}/xfont${OSrev}.tgz \
 		${RELXDIR}/xshare${OSrev}.tgz ${RELXDIR}/xserv${OSrev}.tgz
@@ -34,7 +34,7 @@ ${FS}: ${BASE} ${XBASE}
 	newfs -t msdos ${NEWFS_ARGS_msdos} /dev/r`cat vnd`i
 	mount ${MOUNT_ARGS_msdos} /dev/`cat vnd`i ${MOUNT_POINT}
 	mkdir -p ${MOUNT_POINT}/efi/boot
-	cp /usr/mdec/BOOTAA64.EFI ${MOUNT_POINT}/efi/boot/bootaa64.efi
+	cp /usr/mdec/BOOTRISCV64.EFI ${MOUNT_POINT}/efi/boot/bootriscv64.efi
 	echo bootriscv64.efi > ${MOUNT_POINT}/efi/boot/startup.nsh
 	umount ${MOUNT_POINT}
 
