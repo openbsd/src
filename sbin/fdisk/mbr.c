@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.69 2021/05/14 15:31:01 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.70 2021/05/14 21:11:15 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -300,10 +300,10 @@ gpt_chk_mbr(struct dos_partition *dp, u_int64_t dsize)
 {
 	struct dos_partition *dp2;
 	int efi, eficnt, found, i;
-	u_int32_t psize;
+	uint32_t psize;
 
 	found = efi = eficnt = 0;
-	for (dp2=dp, i=0; i < NDOSPART; i++, dp2++) {
+	for (dp2 = dp, i = 0; i < NDOSPART; i++, dp2++) {
 		if (dp2->dp_typ == DOSPTYP_UNUSED)
 			continue;
 		found++;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.240 2021/05/14 15:31:01 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.241 2021/05/14 21:11:15 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -105,7 +105,7 @@ void disk_attach_callback(void *);
 
 int spoofgptlabel(struct buf *, void (*)(struct buf *), struct disklabel *);
 
-int gpt_chk_mbr(struct dos_partition *, u_int64_t);
+int gpt_chk_mbr(struct dos_partition *, uint64_t);
 int gpt_chk_hdr(struct gpt_header *, struct disklabel *);
 int gpt_chk_parts(struct gpt_header *, struct gpt_partition *);
 int gpt_get_fstype(struct uuid *);
@@ -591,14 +591,14 @@ notfat:
  * Copied into sbin/fdisk/mbr.c.
  */
 int
-gpt_chk_mbr(struct dos_partition *dp, u_int64_t dsize)
+gpt_chk_mbr(struct dos_partition *dp, uint64_t dsize)
 {
 	struct dos_partition *dp2;
 	int efi, eficnt, found, i;
-	u_int32_t psize;
+	uint32_t psize;
 
 	found = efi = eficnt = 0;
-	for (dp2=dp, i=0; i < NDOSPART; i++, dp2++) {
+	for (dp2 = dp, i = 0; i < NDOSPART; i++, dp2++) {
 		if (dp2->dp_typ == DOSPTYP_UNUSED)
 			continue;
 		found++;
