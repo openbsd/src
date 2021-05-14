@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.riscv64,v 1.6 2021/05/12 01:20:52 jsg Exp $
+#	$OpenBSD: Makefile.riscv64,v 1.7 2021/05/14 03:01:24 drahn Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -11,7 +11,7 @@
 .include <bsd.own.mk>
 
 SIZE?=	size
-STRIP?=	llvm-strip
+STRIP?=	strip
 
 # source tree is located via $S relative to the compilation directory
 .ifndef S
@@ -28,8 +28,8 @@ CWARNFLAGS=	-Werror -Wall -Wimplicit-function-declaration \
 		-Wno-constant-conversion -Wno-address-of-packed-member \
 		-Wframe-larger-than=2047
 
-CMACHFLAGS=	--target=riscv64-unknown-openbsd6.6 -march=rv64gc \
-		-fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -mno-relax \
+CMACHFLAGS=	--target=riscv64-unknown-openbsd -march=rv64gc \
+		-fno-omit-frame-pointer -mno-omit-leaf-frame-pointer \
 		-mcmodel=medany
 CMACHFLAGS+=	-ffreestanding ${NOPIE_FLAGS}
 SORTR=		sort -R
@@ -172,16 +172,5 @@ install: update-link hardlink-obsd newinstall
 RAM_ADDR?=0x40000000
 #KERNEL_LOAD_ADDR!=echo "x = hex(${KERNEL_BASE_PHYS} + ${RAM_ADDR}); print x" | python
 KERNEL_LOAD_ADDR=0x40200000
-
-# until we get native booting working, put this in the tree.
-bsdrd.umg: bsd.rd
-	mkuboot -a arm -o linux -e ${KERNEL_LOAD_ADDR} -l ${KERNEL_LOAD_ADDR} bsd.rd bsdrd.umg
-
-bsd.umg: bsd
-	mkuboot -a arm -o linux -e ${KERNEL_LOAD_ADDR} -l ${KERNEL_LOAD_ADDR} bsd bsd.umg
-
-bsd.rd: bsd
-	cp -p bsd bsd.rd
-	rdsetroot bsd.rd $S/../distrib/${_mach}/ramdisk/mr.fs
 
 %RULES
