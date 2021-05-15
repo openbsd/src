@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_data.c,v 1.40 2020/01/11 20:48:13 schwarze Exp $ */
+/*	$OpenBSD: tbl_data.c,v 1.41 2021/05/15 17:16:38 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011,2015,2017,2018,2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -242,10 +242,11 @@ tbl_data(struct tbl_node *tbl, int ln, const char *p, int pos)
 	struct tbl_cell	*cp;
 	struct tbl_span	*sp;
 
-	rp = (sp = tbl->last_span) == NULL ? tbl->first_row :
-	    sp->pos == TBL_SPAN_DATA && sp->layout->next != NULL ?
-	    sp->layout->next : sp->layout;
-
+	for (sp = tbl->last_span; sp != NULL; sp = sp->prev)
+		if (sp->pos == TBL_SPAN_DATA)
+			break;
+	rp = sp == NULL ? tbl->first_row :
+	    sp->layout->next == NULL ? sp->layout : sp->layout->next;
 	assert(rp != NULL);
 
 	if (p[1] == '\0') {
