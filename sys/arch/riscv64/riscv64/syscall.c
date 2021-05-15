@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.6 2021/05/14 06:48:52 jsg Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.7 2021/05/15 13:56:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2020 Brian Bamsch <bbamsch@google.com>
@@ -125,8 +125,7 @@ child_return(arg)
 
 	frame->tf_a[0] = 0;
 	frame->tf_a[1] = 1;
-	// XXX How to signal error?
-	frame->tf_t[0] = 0;
+	frame->tf_t[0] = 0;			/* no error */
 
 	KERNEL_UNLOCK();
 
