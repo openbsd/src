@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.14 2021/05/10 17:16:01 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.15 2021/05/15 00:01:21 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -196,25 +196,30 @@ GPT_read(int which)
 {
 	int valid;
 
-	valid = GPT_get_header(GPTSECTOR);
+	switch (which) {
+	case PRIMARYGPT:
+		valid = GPT_get_header(GPTSECTOR);
+		break;
+	case SECONDARYGPT:
+		valid = GPT_get_header(DL_GETDSIZE(&dl) - 1);
+		break;
+	case ANYGPT:
+		valid = GPT_get_header(GPTSECTOR);
+		if (valid != 0 || GPT_get_partition_table(gh.gh_part_lba) != 0)
+			valid = GPT_get_header(DL_GETDSIZE(&dl) - 1);
+		break;
+	default:
+		return;
+	}
+
 	if (valid == 0)
 		valid = GPT_get_partition_table(gh.gh_part_lba);
-	if (which == PRIMARYGPT || (which == ANYGPT && valid == 0))
-		return;
 
-	/* No valid GPT found. Zap any artifacts. */
-	memset(&gh, 0, sizeof(gh));
-	memset(&gp, 0, sizeof(gp));
-
-	valid = GPT_get_header(DL_GETDSIZE(&dl) - 1);
-	if (valid == 0)
-		valid = GPT_get_partition_table(gh.gh_part_lba);
-	if (which == SECONDARYGPT || valid == 0)
-		return;
-
-	/* No valid GPT found. Zap any artifacts. */
-	memset(&gh, 0, sizeof(gh));
-	memset(&gp, 0, sizeof(gp));
+	if (valid != 0) {
+		/* No valid GPT found. Zap any artifacts. */
+		memset(&gh, 0, sizeof(gh));
+		memset(&gp, 0, sizeof(gp));
+	}
 }
 
 void
