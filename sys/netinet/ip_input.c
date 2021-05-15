@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.359 2021/04/30 13:52:48 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.360 2021/05/15 08:07:20 yasuoka Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1790,6 +1790,8 @@ ip_send_do_dispatch(void *xmq, int flags)
 	struct mbuf_queue *mq = xmq;
 	struct mbuf *m;
 	struct mbuf_list ml;
+	struct m_tag *mtag;
+	u_int32_t ipsecflowinfo = 0;
 
 	mq_delist(mq, &ml);
 	if (ml_empty(&ml))
@@ -1797,7 +1799,12 @@ ip_send_do_dispatch(void *xmq, int flags)
 
 	NET_LOCK();
 	while ((m = ml_dequeue(&ml)) != NULL) {
-		ip_output(m, NULL, NULL, flags, NULL, NULL, 0);
+		if ((mtag = m_tag_find(m, PACKET_TAG_IPSEC_FLOWINFO, NULL))
+		    != NULL) {
+			ipsecflowinfo = *(u_int32_t *)(mtag + 1);
+			m_tag_delete(m, mtag);
+		}
+		ip_output(m, NULL, NULL, flags, NULL, NULL, ipsecflowinfo);
 	}
 	NET_UNLOCK();
 }

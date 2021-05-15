@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.132 2021/03/10 10:21:48 jsg Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.133 2021/05/15 08:07:20 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -1628,6 +1628,7 @@ pipex_l2tp_output(struct mbuf *m0, struct pipex_session *session)
 #ifdef INET6
 	struct ip6_hdr *ip6;
 #endif
+	struct m_tag *mtag;
 
 	hlen = sizeof(struct pipex_l2tp_header) +
 	    ((pipex_session_is_l2tp_data_sequencing_on(session))
@@ -1704,6 +1705,15 @@ pipex_l2tp_output(struct mbuf *m0, struct pipex_session *session)
 		ip->ip_tos = 0;
 		ip->ip_off = 0;
 
+		if (session->proto.l2tp.ipsecflowinfo > 0) {
+			if ((mtag = m_tag_get(PACKET_TAG_IPSEC_FLOWINFO,
+			    sizeof(u_int32_t), M_NOWAIT)) == NULL)
+				goto drop;
+			*(u_int32_t *)(mtag + 1) =
+			    session->proto.l2tp.ipsecflowinfo;
+			m_tag_prepend(m0, mtag);
+		}
+
 		ip_send(m0);
 		break;
 #ifdef INET6
@@ -1733,6 +1743,7 @@ pipex_l2tp_output(struct mbuf *m0, struct pipex_session *session)
 
 	return;
 drop:
+	m_freem(m0);
 	session->stat.oerrors++;
 }
 

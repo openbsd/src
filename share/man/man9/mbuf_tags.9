@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mbuf_tags.9,v 1.42 2021/05/12 23:17:30 yasuoka Exp $
+.\"	$OpenBSD: mbuf_tags.9,v 1.43 2021/05/15 08:07:20 yasuoka Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -15,7 +15,7 @@
 .\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: May 12 2021 $
+.Dd $Mdocdate: May 15 2021 $
 .Dt M_TAG_GET 9
 .Os
 .Sh NAME
@@ -122,6 +122,11 @@ The tag contains a
 identifying the security association applied to the packet.
 This tag is primarily used to detect and avoid loops in IPsec
 processing on output.
+.It PACKET_TAG_IPSEC_FLOWINFO
+Used by the IPv4 stack to specify the IPsec flow of an output IP packet.
+The tag contains a
+.Va u_int32_t
+identifying the IPsec flow.
 .It PACKET_TAG_WIREGUARD
 Used by the
 .Xr wg 4
