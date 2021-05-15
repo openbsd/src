@@ -1,8 +1,5 @@
-/* $OpenBSD: ldscript.arm64,v 1.2 2018/08/30 14:39:46 patrick Exp $ */
-/*
-OUTPUT_FORMAT("elf64-aarch64-freebsd", "elf64-aarch64-freebsd", "elf64-aarch64-freebsd")
-*/
-OUTPUT_ARCH(aarch64)
+/* $OpenBSD: ldscript.arm64,v 1.3 2021/05/15 14:20:11 kettenis Exp $ */
+
 ENTRY(_start)
 SECTIONS
 {
