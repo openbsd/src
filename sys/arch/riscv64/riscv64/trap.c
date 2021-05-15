@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.10 2021/05/15 14:05:36 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.11 2021/05/15 20:12:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2020 Shivam Waghela <shivamwaghela@gmail.com>
@@ -34,7 +34,8 @@
 void do_trap_supervisor(struct trapframe *);
 void do_trap_user(struct trapframe *);
 
-static void data_abort(struct trapframe *, int);
+static void udata_abort(struct trapframe *);
+static void kdata_abort(struct trapframe *);
 
 static void
 dump_regs(struct trapframe *frame)
@@ -83,7 +84,7 @@ do_trap_supervisor(struct trapframe *frame)
 	case EXCP_FAULT_FETCH:
 	case EXCP_STORE_PAGE_FAULT:
 	case EXCP_LOAD_PAGE_FAULT:
-		data_abort(frame, 0);
+		kdata_abort(frame);
 		break;
 	case EXCP_BREAKPOINT:
 #ifdef DDB
@@ -91,17 +92,17 @@ do_trap_supervisor(struct trapframe *frame)
 		db_trapper(frame->tf_sepc,0/*XXX*/, frame, exception);
 #else
 		dump_regs(frame);
-		panic("No debugger in kernel.\n");
+		panic("No debugger in kernel.");
 #endif
 		break;
 	case EXCP_ILLEGAL_INSTRUCTION:
 		dump_regs(frame);
-		panic("Illegal instruction at 0x%016lx\n", frame->tf_sepc);
+		panic("Illegal instruction at 0x%016lx", frame->tf_sepc);
 		break;
 	default:
 		dump_regs(frame);
-		panic("Unknown kernel exception %llx trap value %lx\n",
-		    exception, frame->tf_stval);
+		panic("Unknown kernel exception %llx trap value pc 0x%lx stval %lx",
+		    exception, frame->tf_sepc, frame->tf_stval);
 	}
 }
 
@@ -147,6 +148,8 @@ do_trap_user(struct trapframe *frame)
 	    curcpu()->ci_curproc, frame->tf_sepc, frame->tf_ra, frame);
 #endif
 
+	refreshcreds(p);
+
 	switch (exception) {
 	case EXCP_FAULT_LOAD:
 	case EXCP_FAULT_STORE:
@@ -154,7 +157,7 @@ do_trap_user(struct trapframe *frame)
 	case EXCP_STORE_PAGE_FAULT:
 	case EXCP_LOAD_PAGE_FAULT:
 	case EXCP_INST_PAGE_FAULT:
-		data_abort(frame, 1);
+		udata_abort(frame);
 		break;
 	case EXCP_USER_ECALL:
 		frame->tf_sepc += 4;	/* Next instruction */
@@ -170,17 +173,15 @@ do_trap_user(struct trapframe *frame)
 		    frame->tf_scause, frame->tf_stval);
 		sv.sival_ptr = (void *)frame->tf_stval;
 		trapsignal(p, SIGILL, 0, ILL_ILLTRP, sv);
-		userret(p);
 		break;
 	case EXCP_BREAKPOINT:
 		printf("BREAKPOINT\n");
 		sv.sival_ptr = (void *)frame->tf_stval;
 		trapsignal(p, SIGTRAP, 0, TRAP_BRKPT, sv);
-		userret(p);
 		break;
 	default:
 		dump_regs(frame);
-		panic("Unknown userland exception %llx, trap value %lx\n",
+		panic("Unknown userland exception %llx, trap value %lx",
 		    exception, frame->tf_stval);
 	}
 
@@ -193,28 +194,14 @@ do_trap_user(struct trapframe *frame)
 		//printf ("FPU enabled userland %p %p\n",
 		//    pcb->pcb_fpcpu, curcpu()->ci_fpuproc);
 	}
+
+	userret(p);
 }
 
-static void
-data_abort(struct trapframe *frame, int usermode)
+static inline vm_prot_t
+accesstype(struct trapframe *frame)
 {
-	struct vm_map *map;
-	uint64_t stval;
-	union sigval sv;
-	struct pcb *pcb;
-	vm_prot_t ftype;
-	vaddr_t va;
-	struct proc *p;
-	int error, sig, code, access_type;
-
-	pcb = curcpu()->ci_curpcb;
-	p = curcpu()->ci_curproc;
-	stval = frame->tf_stval;
-
-	va = trunc_page(stval);
-
-	//if (va >= VM_MAXUSER_ADDRESS)
-	//	curcpu()->ci_flush_bp();
+	vm_prot_t access_type;
 
 	if ((frame->tf_scause == EXCP_FAULT_STORE) ||
 	    (frame->tf_scause == EXCP_STORE_PAGE_FAULT)) {
@@ -224,60 +211,100 @@ data_abort(struct trapframe *frame, int usermode)
 	} else {
 		access_type = PROT_READ;
 	}
+	return access_type;
+}
 
-	ftype = VM_FAULT_INVALID; // should check for failed permissions.
+static void
+udata_abort(struct trapframe *frame)
+{
+	struct vm_map *map;
+	uint64_t stval = frame->tf_stval;
+	union sigval sv;
+	struct pcb *pcb;
+	vm_prot_t access_type = accesstype(frame);
+	vaddr_t va;
+	struct proc *p;
+	int error, sig, code;
 
-	if (usermode)
-		map = &p->p_vmspace->vm_map;
-	else if (stval >= VM_MAX_USER_ADDRESS)
+	pcb = curcpu()->ci_curpcb;
+	p = curcpu()->ci_curproc;
+
+	va = trunc_page(stval);
+
+	map = &p->p_vmspace->vm_map;
+
+	if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p),
+	    "[%s]%d/%d sp=%lx inside %lx-%lx: not MAP_STACK\n",
+	    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
+		return;
+
+	/* Handle referenced/modified emulation */
+	if (pmap_fault_fixup(map->pmap, va, access_type))
+		return;
+
+	error = uvm_fault(map, va, 0, access_type);
+
+	if (error == 0) {
+		uvm_grow(p, va);
+		return;
+	}
+
+	if (error == ENOMEM) {
+		sig = SIGKILL;
+		code = 0;
+	} else if (error == EIO) {
+		sig = SIGBUS;
+		code = BUS_OBJERR;
+	} else if (error == EACCES) {
+		sig = SIGSEGV;
+		code = SEGV_ACCERR;
+	} else {
+		sig = SIGSEGV;
+		code = SEGV_MAPERR;
+	}
+	sv.sival_ptr = (void *)stval;
+	trapsignal(p, sig, 0, code, sv);
+}
+
+static void
+kdata_abort(struct trapframe *frame)
+{
+	struct vm_map *map;
+	uint64_t stval = frame->tf_stval;
+	struct pcb *pcb;
+	vm_prot_t access_type = accesstype(frame);
+	vaddr_t va;
+	struct proc *p;
+	int error;
+
+	pcb = curcpu()->ci_curpcb;
+	p = curcpu()->ci_curproc;
+
+	va = trunc_page(stval);
+
+	if (stval >= VM_MAX_USER_ADDRESS)
 		map = kernel_map;
 	else {
-		if (pcb->pcb_onfault == 0)
-			goto fatal;
 		map = &p->p_vmspace->vm_map;
 	}
 
-	if (pmap_fault_fixup(map->pmap, va, ftype))
-		goto done;
+	/* Handle referenced/modified emulation */
+	if (!pmap_fault_fixup(map->pmap, va, access_type)) {
+		error = uvm_fault(map, va, 0, access_type);
 
-	KERNEL_LOCK();
-	error = uvm_fault(map, va, ftype, access_type);
-	KERNEL_UNLOCK();
-
-	if (error != 0) {
-		if (usermode) {
-			if (error == ENOMEM) {
-				sig = SIGKILL;
-				code = 0;
-			} else if (error == EIO) {
-				sig = SIGBUS;
-				code = BUS_OBJERR;
-			} else if (error == EACCES) {
-				sig = SIGSEGV;
-				code = SEGV_ACCERR;
-			} else {
-				sig = SIGSEGV;
-				code = SEGV_MAPERR;
-			}
-			sv.sival_ptr = (void *)stval;
-			trapsignal(p, sig, 0, code, sv);
-		} else {
-			if (curcpu()->ci_idepth == 0 && pcb->pcb_onfault != 0) {
-				frame->tf_a[0] = error;
-				frame->tf_sepc = (register_t)pcb->pcb_onfault;
-				return;
-			}
-			goto fatal;
-		}
+		if (error == 0 && map != kernel_map)
+			uvm_grow(p, va);
 	}
 
-done:
-	if (usermode)
-		userret(p);
-	return;
-
-fatal:
-	dump_regs(frame);
-	panic("Fatal page fault at %#lx: %#08lx", frame->tf_sepc,
-	    (vaddr_t)sv.sival_ptr);
+	if (error != 0) {
+		if (curcpu()->ci_idepth == 0 &&
+		    pcb->pcb_onfault != 0) {
+			frame->tf_a[0] = error;
+			frame->tf_sepc = (register_t)pcb->pcb_onfault;
+			return;
+		}
+		dump_regs(frame);
+		panic("Fatal page fault at %#lx: %#08lx", frame->tf_sepc,
+		    (vaddr_t)stval);
+	}
 }
