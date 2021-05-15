@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.79 2021/05/08 17:44:22 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.80 2021/05/15 19:44:15 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -20,6 +20,7 @@
 #include <sys/disklabel.h>
 
 #include <err.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -197,11 +198,15 @@ PRT_parse(struct dos_partition *prt, off_t offset, off_t reloff,
 #if 0 /* XXX */
 	partn->bs = letoh32(prt->dp_start) + off;
 	partn->ns = letoh32(prt->dp_size);
+	if (partn->id == DOSPTYP_EFI && partn == UINT32_MAX)
+		partn->ns = DL_GETDSIZE(&dl) - partn->bs;
 #else
 	memcpy(&t, &prt->dp_start, sizeof(uint32_t));
 	partn->bs = letoh32(t) + off;
 	memcpy(&t, &prt->dp_size, sizeof(uint32_t));
 	partn->ns = letoh32(t);
+	if (partn->id == DOSPTYP_EFI && partn->ns == UINT32_MAX)
+		partn->ns = DL_GETDSIZE(&dl) - partn->bs;
 #endif
 
 	PRT_fix_CHS(partn);
@@ -261,7 +266,11 @@ PRT_make(struct prt *partn, off_t offset, off_t reloff,
 
 	t = htole64(partn->bs - off);
 	memcpy(&prt->dp_start, &t, sizeof(uint32_t));
-	t = htole64(partn->ns);
+	if (partn->id == DOSPTYP_EFI && (partn->bs + partn->ns) >
+	    DL_GETDSIZE(&dl))
+		t = htole64(UINT32_MAX);
+	else
+		t = htole64(partn->ns);
 	memcpy(&prt->dp_size, &t, sizeof(uint32_t));
 
 	partn->scyl = scsave;
