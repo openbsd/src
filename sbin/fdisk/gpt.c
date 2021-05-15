@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.15 2021/05/15 00:01:21 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.16 2021/05/15 22:06:43 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -388,33 +388,31 @@ GPT_write(void)
 	const int secsize = unit_types[SECTORS].conversion;
 	ssize_t len;
 	off_t off;
-	uint64_t altgh, altgp;
+	uint64_t altgh, altgp, prigh, prigp;
 
 	/* Assume we always write full-size partition table. XXX */
+	prigh = GPTSECTOR;
+	prigp = prigh + 1;
 	altgh = DL_GETDSIZE(&dl) - 1;
 	altgp = DL_GETDSIZE(&dl) - 1 - (sizeof(gp) / secsize);
 
-	/*
-	 * Place the new GPT header at the start of sectors 1 and
-	 * DL_GETDSIZE(lp)-1 and write the sectors back.
-	 */
-	gh.gh_lba_self = htole64(1);
+	gh.gh_lba_self = htole64(prigh);
 	gh.gh_lba_alt = htole64(altgh);
-	gh.gh_part_lba = htole64(2);
+	gh.gh_part_lba = htole64(prigp);
 	gh.gh_part_csum = crc32((unsigned char *)&gp, sizeof(gp));
 	gh.gh_csum = 0;
 	gh.gh_csum = crc32((unsigned char *)&gh, letoh32(gh.gh_size));
 
-	secbuf = DISK_readsector(1);
+	secbuf = DISK_readsector(prigh);
 	if (secbuf == NULL)
 		return (-1);
 
 	memcpy(secbuf, &gh, sizeof(gh));
-	DISK_writesector(secbuf, 1);
+	DISK_writesector(secbuf, prigh);
 	free(secbuf);
 
 	gh.gh_lba_self = htole64(altgh);
-	gh.gh_lba_alt = htole64(1);
+	gh.gh_lba_alt = htole64(prigh);
 	gh.gh_part_lba = htole64(altgp);
 	gh.gh_csum = 0;
 	gh.gh_csum = crc32((unsigned char *)&gh, letoh32(gh.gh_size));
@@ -428,14 +426,11 @@ GPT_write(void)
 	free(secbuf);
 
 	/*
-	 * Write partition table after primary header
-	 * (i.e. at sector 1) and before alt header
-	 * (i.e. ending in sector before alt header.
 	 * XXX ALWAYS NGPTPARTITIONS!
 	 * XXX ASSUME gp is multiple of sector size!
 	 */
-	off = lseek(disk.fd, secsize * 2, SEEK_SET);
-	if (off == secsize * 2)
+	off = lseek(disk.fd, secsize * prigp, SEEK_SET);
+	if (off == secsize * prigp)
 		len = write(disk.fd, &gp, sizeof(gp));
 	else
 		len = -1;
