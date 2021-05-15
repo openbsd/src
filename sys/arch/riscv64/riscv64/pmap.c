@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.9 2021/05/14 06:48:52 jsg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.10 2021/05/15 14:05:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Brian Bamsch <bbamsch@google.com>
@@ -1709,7 +1709,7 @@ pmap_pte_remove(struct pte_desc *pted, int remove_pted)
  * for this emulation, or to tell the caller that it's a legit fault.
  */
 int
-pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
+pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype)
 {
 	struct pte_desc *pted;
 	struct vm_page *pg;

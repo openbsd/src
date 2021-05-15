@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.4 2021/05/12 01:20:52 jsg Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.5 2021/05/15 14:05:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Brian Bamsch <bbamsch@google.com>
@@ -110,7 +110,7 @@ struct pv_entry;
 
 /* investigate */
 #define pmap_unuse_final(p)		do { /* nothing */ } while (0)
-int	pmap_fault_fixup(pmap_t, vaddr_t, vm_prot_t, int);
+int	pmap_fault_fixup(pmap_t, vaddr_t, vm_prot_t);
 void	pmap_postinit(void);
 
 #endif /* _KERNEL && !_LOCORE */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.9 2021/05/14 06:48:52 jsg Exp $	*/
+/*	$OpenBSD: trap.c,v 1.10 2021/05/15 14:05:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2020 Shivam Waghela <shivamwaghela@gmail.com>
@@ -237,7 +237,7 @@ data_abort(struct trapframe *frame, int usermode)
 		map = &p->p_vmspace->vm_map;
 	}
 
-	if (pmap_fault_fixup(map->pmap, va, ftype, usermode))
+	if (pmap_fault_fixup(map->pmap, va, ftype))
 		goto done;
 
 	KERNEL_LOCK();
