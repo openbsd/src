@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.19 2021/02/17 12:11:45 kettenis Exp $ */
+/* $OpenBSD: cpu.h,v 1.20 2021/05/15 11:30:27 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -255,15 +255,6 @@ void svc_handler	(trapframe_t *);
 void board_startup(void);
 
 // functions to manipulate interrupt state
-static __inline uint32_t
-get_daif(void)
-{
-	uint32_t daif;
-	
-	__asm volatile ("mrs %x0, daif": "=r"(daif));
-	return daif;
-}
-
 static __inline void
 restore_daif(uint32_t daif)
 {
@@ -290,18 +281,6 @@ disable_irq_daif_ret(void)
 	__asm volatile ("msr daifset, #3");
 	return daif;
 }
-
-#define get_interrupts(mask)						\
-	(__get_daif())
-
-#define disable_interrupts()						\
-	disable_irq_daif_ret()
-
-#define enable_interrupts()						\
-	enable_irq_daif()
-
-#define restore_interrupts(old_daif)					\
-	restore_daif(old_daif)
 
 static inline void
 intr_enable(void)

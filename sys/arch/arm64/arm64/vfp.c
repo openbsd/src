@@ -1,4 +1,4 @@
-/* $OpenBSD: vfp.c,v 1.4 2018/07/02 07:23:37 kettenis Exp $ */
+/* $OpenBSD: vfp.c,v 1.5 2021/05/15 11:30:27 kettenis Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -142,7 +142,7 @@ vfp_enable(void)
 
 	if (curproc->p_addr->u_pcb.pcb_fpcpu == ci &&
 	    ci->ci_fpuproc == curproc) {
-		disable_interrupts();
+		intr_disable();
 
 		/* FPU state is still valid, just enable and go */
 		set_vfp_enable(1);
@@ -155,10 +155,10 @@ vfp_load(struct proc *p)
 	struct cpu_info *ci = curcpu();
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	uint32_t scratch = 0;
-	int psw;
+	u_long psw;
 
 	/* do not allow a partially synced state here */
-	psw = disable_interrupts();
+	psw = intr_disable();
 
 	/*
 	 * p->p_pcb->pcb_fpucpu _may_ not be NULL here, but the FPU state
@@ -215,7 +215,7 @@ vfp_load(struct proc *p)
 	/* disable until return to userland */
 	set_vfp_enable(0);
 
-	restore_interrupts(psw);
+	intr_restore(psw);
 }
 
 

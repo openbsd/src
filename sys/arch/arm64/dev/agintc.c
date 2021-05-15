@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.31 2021/05/05 12:02:21 kettenis Exp $ */
+/* $OpenBSD: agintc.c,v 1.32 2021/05/15 11:30:27 kettenis Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -275,19 +275,19 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 	struct fdt_attach_args	*faa = aux;
 	struct cpu_info		*ci;
 	CPU_INFO_ITERATOR	 cii;
+	u_long			 psw;
 	uint32_t		 typer;
 	uint32_t		 nsacr, oldnsacr;
 	uint32_t		 pmr, oldpmr;
 	uint32_t		 ctrl, bits;
 	uint32_t		 affinity;
 	int			 i, nbits, nintr;
-	int			 psw;
 	int			 offset, nredist;
 #ifdef MULTIPROCESSOR
 	int			 nipi, ipiirq[2];
 #endif
 
-	psw = disable_interrupts();
+	psw = intr_disable();
 	arm_init_smask();
 
 	sc->sc_iot = faa->fa_iot;
@@ -604,7 +604,7 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ic.ic_barrier = agintc_intr_barrier;
 	arm_intr_register_fdt(&sc->sc_ic);
 
-	restore_interrupts(psw);
+	intr_restore(psw);
 
 	/* Attach ITS. */
 	simplebus_attach(parent, &sc->sc_sbus.sc_dev, faa);
@@ -673,7 +673,7 @@ agintc_cpuinit(void)
 	__asm volatile("msr "STR(ICC_PMR)", %x0" :: "r"(0xff));
 	__asm volatile("msr "STR(ICC_BPR1)", %x0" :: "r"(0));
 	__asm volatile("msr "STR(ICC_IGRPEN1)", %x0" :: "r"(1));
-	enable_interrupts();
+	intr_enable();
 }
 
 void
@@ -700,18 +700,18 @@ agintc_setipl(int ipl)
 {
 	struct agintc_softc	*sc = agintc_sc;
 	struct cpu_info		*ci = curcpu();
-	int			 psw;
+	u_long			 psw;
 	uint32_t		 prival;
 
 	/* disable here is only to keep hardware in sync with ci->ci_cpl */
-	psw = disable_interrupts();
+	psw = intr_disable();
 	ci->ci_cpl = ipl;
 
 	prival = ((0xff - ipl) << sc->sc_pmr_shift) & 0xff;
 	__asm volatile("msr "STR(ICC_PMR)", %x0" : : "r" (prival));
 	__isb();
 
-	restore_interrupts(psw);
+	intr_restore(psw);
 }
 
 void
@@ -925,9 +925,9 @@ agintc_run_handler(struct intrhand *ih, void *frame, int s)
 	else
 		arg = frame;
 
-	enable_interrupts();
+	intr_enable();
 	handled = ih->ih_func(arg);
-	disable_interrupts();
+	intr_disable();
 	if (handled)
 		ih->ih_count.ec_count++;
 
@@ -1027,7 +1027,7 @@ agintc_intr_establish(int irqno, int type, int level, struct cpu_info *ci,
 {
 	struct agintc_softc	*sc = agintc_sc;
 	struct intrhand		*ih;
-	int			 psw;
+	u_long			 psw;
 
 	if (irqno < 0 || (irqno >= sc->sc_nintr && irqno < LPI_BASE) ||
 	    irqno >= LPI_BASE + sc->sc_nlpi)
@@ -1046,13 +1046,13 @@ agintc_intr_establish(int irqno, int type, int level, struct cpu_info *ci,
 	ih->ih_name = name;
 	ih->ih_ci = ci;
 
-	psw = disable_interrupts();
+	psw = intr_disable();
 
 	if (irqno < LPI_BASE) {
 		if (!TAILQ_EMPTY(&sc->sc_handler[irqno].iq_list) &&
 		    sc->sc_handler[irqno].iq_ci != ci) {
+			intr_restore(psw);
 			free(ih, M_DEVBUF, sizeof *ih);
-			restore_interrupts(psw);
 			return NULL;
 		}
 		TAILQ_INSERT_TAIL(&sc->sc_handler[irqno].iq_list, ih, ih_list);
@@ -1081,7 +1081,7 @@ agintc_intr_establish(int irqno, int type, int level, struct cpu_info *ci,
 		__asm volatile("dsb sy");
 	}
 
-	restore_interrupts(psw);
+	intr_restore(psw);
 	return (ih);
 }
 
@@ -1091,9 +1091,9 @@ agintc_intr_disestablish(void *cookie)
 	struct agintc_softc	*sc = agintc_sc;
 	struct intrhand		*ih = cookie;
 	int			 irqno = ih->ih_irq;
-	int			 psw;
+	u_long			 psw;
 
-	psw = disable_interrupts();
+	psw = intr_disable();
 
 	TAILQ_REMOVE(&sc->sc_handler[irqno].iq_list, ih, ih_list);
 	if (ih->ih_name != NULL)
@@ -1101,7 +1101,7 @@ agintc_intr_disestablish(void *cookie)
 
 	agintc_calc_irq(sc, irqno);
 
-	restore_interrupts(psw);
+	intr_restore(psw);
 
 	free(ih, M_DEVBUF, 0);
 }

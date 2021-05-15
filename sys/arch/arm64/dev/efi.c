@@ -1,4 +1,4 @@
-/*	$OpenBSD: efi.c,v 1.9 2021/03/11 11:16:56 jsg Exp $	*/
+/*	$OpenBSD: efi.c,v 1.10 2021/05/15 11:30:27 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -49,7 +49,7 @@ struct efi_softc {
 	struct device	sc_dev;
 	struct pmap	*sc_pm;
 	EFI_RUNTIME_SERVICES *sc_rs;
-	int		sc_psw;
+	u_long		sc_psw;
 
 	struct todr_chip_handle sc_todr;
 };
@@ -227,7 +227,7 @@ efi_enter(struct efi_softc *sc)
 {
 	struct pmap *pm = sc->sc_pm;
 
-	sc->sc_psw = disable_interrupts();
+	sc->sc_psw = intr_disable();
 	WRITE_SPECIALREG(ttbr0_el1, pmap_kernel()->pm_pt0pa);
 	__asm volatile("isb");
 	cpu_setttb(pm->pm_asid, pm->pm_pt0pa);
@@ -245,7 +245,7 @@ efi_leave(struct efi_softc *sc)
 	WRITE_SPECIALREG(ttbr0_el1, pmap_kernel()->pm_pt0pa);
 	__asm volatile("isb");
 	cpu_setttb(pm->pm_asid, pm->pm_pt0pa);
-	restore_interrupts(sc->sc_psw);
+	intr_restore(sc->sc_psw);
 }
 
 int

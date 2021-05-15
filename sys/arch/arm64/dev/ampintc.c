@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.21 2021/02/17 12:11:45 kettenis Exp $ */
+/* $OpenBSD: ampintc.c,v 1.22 2021/05/15 11:30:27 kettenis Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -367,7 +367,7 @@ ampintc_attach(struct device *parent, struct device *self, void *aux)
 	/* enable interrupts */
 	bus_space_write_4(sc->sc_iot, sc->sc_d_ioh, ICD_DCR, 3);
 	bus_space_write_4(sc->sc_iot, sc->sc_p_ioh, ICPICR, 1);
-	enable_interrupts();
+	intr_enable();
 
 	sc->sc_ic.ic_node = faa->fa_node;
 	sc->sc_ic.ic_cookie = self;
@@ -403,16 +403,16 @@ ampintc_setipl(int new)
 {
 	struct cpu_info		*ci = curcpu();
 	struct ampintc_softc	*sc = ampintc;
-	int			 psw;
+	u_long			 psw;
 
 	/* disable here is only to keep hardware in sync with ci->ci_cpl */
-	psw = disable_interrupts();
+	psw = intr_disable();
 	ci->ci_cpl = new;
 
 	/* low values are higher priority thus IPL_HIGH - pri */
 	bus_space_write_4(sc->sc_iot, sc->sc_p_ioh, ICPIPMR,
 	    (IPL_HIGH - new) << ICMIPMR_SH);
-	restore_interrupts(psw);
+	intr_restore(psw);
 }
 
 void
@@ -695,9 +695,9 @@ ampintc_irq_handler(void *frame)
 		else
 			arg = frame;
 
-		enable_interrupts();
+		intr_enable();
 		handled = ih->ih_func(arg);
-		disable_interrupts();
+		intr_disable();
 		if (handled)
 			ih->ih_count.ec_count++;
 
@@ -745,7 +745,7 @@ ampintc_intr_establish(int irqno, int type, int level, struct cpu_info *ci,
 {
 	struct ampintc_softc	*sc = ampintc;
 	struct intrhand		*ih;
-	int			 psw;
+	u_long			 psw;
 
 	if (irqno < 0 || irqno >= sc->sc_nintr)
 		panic("ampintc_intr_establish: bogus irqnumber %d: %s",
@@ -771,12 +771,12 @@ ampintc_intr_establish(int irqno, int type, int level, struct cpu_info *ci,
 	ih->ih_name = name;
 	ih->ih_ci = ci;
 
-	psw = disable_interrupts();
+	psw = intr_disable();
 
 	if (!TAILQ_EMPTY(&sc->sc_handler[irqno].iq_list) &&
 	    sc->sc_handler[irqno].iq_ci != ci) {
 		free(ih, M_DEVBUF, sizeof(*ih));
-		restore_interrupts(psw);
+		intr_restore(psw);
 		return NULL;
 	}
 
@@ -794,7 +794,7 @@ ampintc_intr_establish(int irqno, int type, int level, struct cpu_info *ci,
 	ampintc_intr_config(irqno, type);
 	ampintc_calc_mask();
 
-	restore_interrupts(psw);
+	intr_restore(psw);
 	return (ih);
 }
 
@@ -803,23 +803,24 @@ ampintc_intr_disestablish(void *cookie)
 {
 	struct ampintc_softc	*sc = ampintc;
 	struct intrhand		*ih = cookie;
-	int			 psw;
+	u_long			 psw;
 
 #ifdef DEBUG_INTC
 	printf("ampintc_intr_disestablish irq %d level %d [%s]\n",
 	    ih->ih_irq, ih->ih_ipl, ih->ih_name);
 #endif
 
-	psw = disable_interrupts();
+	psw = intr_disable();
 
 	TAILQ_REMOVE(&sc->sc_handler[ih->ih_irq].iq_list, ih, ih_list);
 	if (ih->ih_name != NULL)
 		evcount_detach(&ih->ih_count);
-	free(ih, M_DEVBUF, sizeof(*ih));
 
 	ampintc_calc_mask();
 
-	restore_interrupts(psw);
+	intr_restore(psw);
+
+	free(ih, M_DEVBUF, sizeof(*ih));
 }
 
 const char *

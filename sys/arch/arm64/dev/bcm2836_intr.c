@@ -1,4 +1,4 @@
-/* $OpenBSD: bcm2836_intr.c,v 1.10 2021/02/17 12:11:45 kettenis Exp $ */
+/* $OpenBSD: bcm2836_intr.c,v 1.11 2021/05/15 11:30:27 kettenis Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2015 Patrick Wildt <patrick@blueri.se>
@@ -230,7 +230,7 @@ bcm_intc_attach(struct device *parent, struct device *self, void *aux)
 	intr_send_ipi_func = bcm_intc_send_ipi;
 	
 	bcm_intc_setipl(IPL_HIGH);  /* XXX ??? */
-	enable_interrupts();
+	intr_enable();
 }
 
 void
@@ -357,9 +357,9 @@ bcm_intc_setipl(int new)
 {
 	struct cpu_info *ci = curcpu();
 	struct bcm_intc_softc *sc = bcm_intc;
-	int psw;
+	u_long psw;
 
-	psw = disable_interrupts();
+	psw = intr_disable();
 	ci->ci_cpl = new;
 	if (cpu_number() == 0) {
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, INTC_DISABLE_BANK0,
@@ -380,7 +380,7 @@ bcm_intc_setipl(int new)
 	    ARM_LOCAL_INT_TIMER(cpu_number()),
 	    sc->sc_bcm_intc_imask[3][ci->ci_cpl] &
 	    sc->sc_localcoremask[cpu_number()]);
-	restore_interrupts(psw);
+	intr_restore(psw);
 }
 
 int
@@ -484,9 +484,9 @@ bcm_intc_call_handler(int irq, void *frame)
 		else
 			arg = frame;
 
-		enable_interrupts();
+		intr_enable();
 		handled = ih->ih_func(arg);
-		disable_interrupts();
+		intr_disable();
 		if (handled)
 			ih->ih_count.ec_count++;
 
@@ -553,7 +553,7 @@ bcm_intc_intr_establish(int irqno, int level, struct cpu_info *ci,
 {
 	struct bcm_intc_softc *sc = bcm_intc;
 	struct intrhand *ih;
-	int psw;
+	u_long psw;
 
 	if (irqno < 0 || irqno >= INTC_NIRQ)
 		panic("bcm_intc_intr_establish: bogus irqnumber %d: %s",
@@ -562,7 +562,7 @@ bcm_intc_intr_establish(int irqno, int level, struct cpu_info *ci,
 	if (ci != NULL && !CPU_IS_PRIMARY(ci))
 		return NULL;
 
-	psw = disable_interrupts();
+	psw = intr_disable();
 
 	ih = malloc(sizeof *ih, M_DEVBUF, M_WAITOK);
 	ih->ih_func = func;
@@ -586,7 +586,7 @@ bcm_intc_intr_establish(int irqno, int level, struct cpu_info *ci,
 #endif
 	bcm_intc_calc_mask();
 
-	restore_interrupts(psw);
+	intr_restore(psw);
 	return (ih);
 }
 
@@ -596,14 +596,15 @@ bcm_intc_intr_disestablish(void *cookie)
 	struct bcm_intc_softc *sc = bcm_intc;
 	struct intrhand *ih = cookie;
 	int irqno = ih->ih_irq;
-	int psw;
+	u_long psw;
 
-	psw = disable_interrupts();
+	psw = intr_disable();
 	TAILQ_REMOVE(&sc->sc_bcm_intc_handler[irqno].is_list, ih, ih_list);
 	if (ih->ih_name != NULL)
 		evcount_detach(&ih->ih_count);
+	intr_restore(psw);
+
 	free(ih, M_DEVBUF, 0);
-	restore_interrupts(psw);
 }
 
 void

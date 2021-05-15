@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.c,v 1.21 2021/03/11 11:16:55 jsg Exp $ */
+/* $OpenBSD: intr.c,v 1.22 2021/05/15 11:30:27 kettenis Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -665,18 +665,18 @@ void
 arm_do_pending_intr(int pcpl)
 {
 	struct cpu_info *ci = curcpu();
-	int oldirqstate;
+	u_long oldirqstate;
 
-	oldirqstate = disable_interrupts();
+	oldirqstate = intr_disable();
 
 #define DO_SOFTINT(si, ipl) \
 	if ((ci->ci_ipending & arm_smask[pcpl]) &	\
-	    SI_TO_IRQBIT(si)) {						\
-		ci->ci_ipending &= ~SI_TO_IRQBIT(si);			\
-		arm_intr_func.setipl(ipl);				\
-		restore_interrupts(oldirqstate);			\
-		softintr_dispatch(si);					\
-		oldirqstate = disable_interrupts();			\
+	    SI_TO_IRQBIT(si)) {				\
+		ci->ci_ipending &= ~SI_TO_IRQBIT(si);	\
+		arm_intr_func.setipl(ipl);		\
+		intr_restore(oldirqstate);		\
+		softintr_dispatch(si);			\
+		oldirqstate = intr_disable();		\
 	}
 
 	do {
@@ -688,7 +688,7 @@ arm_do_pending_intr(int pcpl)
 
 	/* Don't use splx... we are here already! */
 	arm_intr_func.setipl(pcpl);
-	restore_interrupts(oldirqstate);
+	intr_restore(oldirqstate);
 }
 
 void
