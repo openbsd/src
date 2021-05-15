@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.riscv64,v 1.8 2021/05/15 20:05:05 deraadt Exp $
+#	$OpenBSD: Makefile.riscv64,v 1.9 2021/05/15 20:51:12 kettenis Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -28,10 +28,10 @@ CWARNFLAGS=	-Werror -Wall -Wimplicit-function-declaration \
 		-Wno-constant-conversion -Wno-address-of-packed-member \
 		-Wframe-larger-than=2047
 
-CMACHFLAGS=	--target=riscv64-unknown-openbsd -march=rv64gc \
-		-fno-omit-frame-pointer -mno-omit-leaf-frame-pointer \
-		-mcmodel=medany
+CMACHFLAGS=	-march=rv64gc -mcmodel=medany -mno-relax \
+		-fno-omit-frame-pointer -mno-omit-leaf-frame-pointer
 CMACHFLAGS+=	-ffreestanding ${NOPIE_FLAGS}
+CMACHFLAGS+=	-target riscv64-unknown-openbsd
 SORTR=		sort -R
 .if ${IDENT:M-DNO_PROPOLICE}
 CMACHFLAGS+=	-fno-stack-protector
