@@ -1,4 +1,4 @@
-/*	$OpenBSD: copystr.S,v 1.2 2021/05/12 01:20:52 jsg Exp $	*/
+/*	$OpenBSD: copystr.S,v 1.3 2021/05/15 20:14:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
@@ -98,7 +98,7 @@ ENTRY(copyinstr)
 	mv	a5, x0
 
 	li	t1, VM_MAXUSER_ADDRESS
-1:	bgt	a0, t1, .Lcopyiostrfault_user
+1:	bgtu	a0, t1, .Lcopyiostrfault_user
 	lb	t0, 0(a0)
 	addi	a0, a0, 1
 	sb	t0, 0(a1)
@@ -129,7 +129,7 @@ ENTRY(copyoutstr)
 	mv	a5, x0
 
 	li	t1, VM_MAXUSER_ADDRESS
-1:	bgt	a1, t1, .Lcopyiostrfault_user
+1:	bgtu	a1, t1, .Lcopyiostrfault_user
 	lb	t0, 0(a0)
 	addi	a0, a0, 1
 	sb	t0, 0(a1)
