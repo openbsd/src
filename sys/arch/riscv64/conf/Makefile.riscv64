@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.riscv64,v 1.7 2021/05/14 03:01:24 drahn Exp $
+#	$OpenBSD: Makefile.riscv64,v 1.8 2021/05/15 20:05:05 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -144,7 +144,7 @@ cleandir: clean
 depend obj:
 
 locore0.o: ${_archdir}/${_arch}/locore0.S assym.h
-copy.o copystr.o copyinout.o: assym.h
+copy.o copystr.o: assym.h
 pagezero.o: assym.h
 cpuswitch.o exception.o support.o: assym.h
 locore.o trampoline.o: assym.h
