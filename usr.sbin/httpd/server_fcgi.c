@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.84 2020/09/12 07:34:17 yasuoka Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.85 2021/05/15 15:08:31 florian Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -660,7 +660,6 @@ server_fcgi_header(struct client *clt, unsigned int code)
 	    kv_add(&resp->http_headers, "Date", tmbuf) == NULL))
 		return (-1);
 
-	/* Write initial header (fcgi might append more) */
 	if (server_writeresponse_http(clt) == -1 ||
 	    server_bufferevent_print(clt, "\r\n") == -1 ||
 	    server_headers(clt, resp, server_writeheader_http, NULL) == -1 ||
