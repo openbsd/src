@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.103 2021/05/14 15:31:01 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.104 2021/05/15 15:59:15 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -410,7 +410,7 @@ int
 Xwrite(char *args, struct mbr *mbr)
 {
 	struct dos_mbr dos_mbr;
-	int i, n;
+	int efi, i, n;
 
 	for (i = 0, n = 0; i < NDOSPART; i++)
 		if (mbr->part[i].id == 0xA6)
@@ -431,7 +431,8 @@ Xwrite(char *args, struct mbr *mbr)
 
 	if (letoh64(gh.gh_sig) == GPTSIGNATURE) {
 		printf("Writing GPT.\n");
-		if (GPT_write() == -1) {
+		efi = MBR_protective_mbr(mbr);
+		if (efi == -1 || GPT_write() == -1) {
 			warn("error writing GPT");
 			return (CMD_CONT);
 		}
