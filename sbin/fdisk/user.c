@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.54 2021/05/14 15:31:01 krw Exp $	*/
+/*	$OpenBSD: user.c,v 1.55 2021/05/15 15:20:17 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -155,27 +155,35 @@ USER_print_disk(int verbosity)
 		MBR_parse(&dos_mbr, offset, firstoff, &mbr);
 		if (offset == 0) {
 			efi = MBR_protective_mbr(&mbr);
-			if (verbosity == VERBOSE || efi != -1) {
+			if (efi == -1) {
+				/* No valid 0xEE partition means no GPT. */
 				if (verbosity == VERBOSE) {
-					printf("Primary GPT:\n");
-					GPT_read(PRIMARYGPT);
+					printf("Primary GPT:\nNot Found\n");
+					printf("\nSecondary GPT:\nNot Found\n");
 				}
+			} else if (verbosity == TERSE) {
+				/* Should already have read one of Primary/Secondary GPT. */
+				if (letoh64(gh.gh_sig) == GPTSIGNATURE) {
+					GPT_print("s", verbosity);
+					return;
+				}
+			} else {
+				/*. Read & print both primary and secondary GPT. */
+				printf("Primary GPT:\n");
+				GPT_read(PRIMARYGPT);
 				if (letoh64(gh.gh_sig) == GPTSIGNATURE)
 					GPT_print("s", verbosity);
 				else
 					printf("\tNot Found\n");
-				if (verbosity == VERBOSE) {
-					printf("\n");
-					printf("Secondary GPT:\n");
-					GPT_read(SECONDARYGPT);
-					if (letoh64(gh.gh_sig) == GPTSIGNATURE)
-						GPT_print("s", verbosity);
-					else
-						printf("\tNot Found\n");
-					printf("\nMBR:\n");
-				} else
-					break;
-		       }
+				printf("\nSecondary GPT:\n");
+				GPT_read(SECONDARYGPT);
+				if (letoh64(gh.gh_sig) == GPTSIGNATURE)
+					GPT_print("s", verbosity);
+				else
+					printf("\tNot Found\n");
+			}
+			if (verbosity == VERBOSE)
+				printf("\nMBR:\n");
 		}
 
 		MBR_print(&mbr, NULL);
