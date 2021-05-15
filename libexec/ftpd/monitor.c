@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.26 2019/06/28 13:32:53 deraadt Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.27 2021/05/15 13:37:43 jan Exp $	*/
 
 /*
  * Copyright (c) 2004 Moritz Jodeit <moritz@openbsd.org>
@@ -295,11 +295,17 @@ handle_cmds(void)
 				    sizeof(slavequit));
 				break;
 			case AUTH_SLAVE:
+				if (pledge("stdio rpath wpath cpath inet recvfd"
+				   " sendfd proc tty getpw", NULL) == -1)
+					fatalx("pledge");
 				/* User-privileged slave */
 				debugmsg("user-privileged slave started");
 				return;
 				/* NOTREACHED */
 			case AUTH_MONITOR:
+				if (pledge("stdio inet sendfd recvfd proc",
+				    NULL) == -1)
+					fatalx("pledge");
 				/* Post-auth monitor */
 				debugmsg("monitor went into post-auth phase");
 				state = POSTAUTH;
