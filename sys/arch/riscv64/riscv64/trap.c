@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.11 2021/05/15 20:12:24 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.12 2021/05/15 20:20:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2020 Shivam Waghela <shivamwaghela@gmail.com>
@@ -275,7 +275,7 @@ kdata_abort(struct trapframe *frame)
 	vm_prot_t access_type = accesstype(frame);
 	vaddr_t va;
 	struct proc *p;
-	int error;
+	int error = 0;
 
 	pcb = curcpu()->ci_curpcb;
 	p = curcpu()->ci_curproc;
