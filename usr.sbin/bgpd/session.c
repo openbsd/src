@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.414 2021/05/06 09:18:54 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.415 2021/05/16 09:09:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1636,7 +1636,7 @@ session_neighbor_rrefresh(struct peer *p)
 {
 	u_int8_t	i;
 
-	if (!p->capa.peer.refresh)
+	if (!p->capa.neg.refresh)
 		return (-1);
 
 	for (i = 0; i < AID_MAX; i++) {
@@ -2257,6 +2257,11 @@ parse_refresh(struct peer *peer)
 		return (0);
 	}
 
+	if (!peer->capa.neg.refresh) {
+		log_peer_warnx(&peer->conf, "peer sent unexpected refresh");
+		return (0);
+	}
+
 	if (imsg_rde(IMSG_REFRESH, peer->conf.id, &aid, sizeof(aid)) == -1)
 		return (-1);
 
@@ -2546,16 +2551,15 @@ capa_neg_calc(struct peer *p)
 {
 	u_int8_t	i, hasmp = 0;
 
-	/* refresh: does not realy matter here, use peer setting */
-	p->capa.neg.refresh = p->capa.peer.refresh;
+	/* a capability is accepted only if both sides announced it */
 
-	/* as4byte: both side must announce capability */
-	if (p->capa.ann.as4byte && p->capa.peer.as4byte)
-		p->capa.neg.as4byte = 1;
-	else
-		p->capa.neg.as4byte = 0;
+	p->capa.neg.refresh =
+	    (p->capa.ann.refresh && p->capa.peer.refresh) != 0;
 
-	/* MP: both side must announce capability */
+	p->capa.neg.as4byte =
+	    (p->capa.ann.as4byte && p->capa.peer.as4byte) != 0;
+
+	/* MP: both side must agree on the AFI,SAFI pair */
 	for (i = 0; i < AID_MAX; i++) {
 		if (p->capa.ann.mp[i] && p->capa.peer.mp[i])
 			p->capa.neg.mp[i] = 1;
@@ -2569,18 +2573,21 @@ capa_neg_calc(struct peer *p)
 		p->capa.neg.mp[AID_INET] = 1;
 
 	/*
-	 * graceful restart: only the peer capabilities are of interest here.
+	 * graceful restart: the peer capabilities are of interest here.
 	 * It is necessary to compare the new values with the previous ones
 	 * and act acordingly. AFI/SAFI that are not part in the MP capability
 	 * are treated as not being present.
+	 * Also make sure that a flush happens if the session stopped
+	 * supporting graceful restart.
 	 */
 
 	for (i = 0; i < AID_MAX; i++) {
 		int8_t	negflags;
 
 		/* disable GR if the AFI/SAFI is not present */
-		if (p->capa.peer.grestart.flags[i] & CAPA_GR_PRESENT &&
-		    p->capa.neg.mp[i] == 0)
+		if (p->capa.ann.grestart.restart == 0 ||
+		    (p->capa.peer.grestart.flags[i] & CAPA_GR_PRESENT &&
+		    p->capa.neg.mp[i] == 0))
 			p->capa.peer.grestart.flags[i] = 0;	/* disable */
 		/* look at current GR state and decide what to do */
 		negflags = p->capa.neg.grestart.flags[i];
@@ -2600,6 +2607,8 @@ capa_neg_calc(struct peer *p)
 	}
 	p->capa.neg.grestart.timeout = p->capa.peer.grestart.timeout;
 	p->capa.neg.grestart.restart = p->capa.peer.grestart.restart;
+	if (p->capa.ann.grestart.restart == 0)
+		p->capa.neg.grestart.restart = 0;
 
 	return (0);
 }
