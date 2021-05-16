@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srtp.c,v 1.26 2020/10/11 02:44:27 tb Exp $ */
+/* $OpenBSD: d1_srtp.c,v 1.27 2021/05/16 08:24:21 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -118,6 +118,7 @@
 #include <stdio.h>
 
 #include <openssl/objects.h>
+#include <openssl/opensslconf.h>
 
 #include "ssl_locl.h"
 

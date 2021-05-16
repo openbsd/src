@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.c,v 1.23 2021/03/10 18:27:02 jsing Exp $ */
+/* $OpenBSD: ssl_sigalgs.c,v 1.24 2021/05/16 08:24:21 jsing Exp $ */
 /*
  * Copyright (c) 2018-2020 Bob Beck <beck@openbsd.org>
  *
@@ -18,6 +18,7 @@
 #include <stdlib.h>
 
 #include <openssl/evp.h>
+#include <openssl/opensslconf.h>
 
 #include "bytestring.h"
 #include "ssl_locl.h"

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.108 2021/05/02 17:46:58 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.109 2021/05/16 08:24:21 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -157,13 +157,15 @@
 #include <openssl/curve25519.h>
 #include <openssl/evp.h>
 #include <openssl/dh.h>
-#ifndef OPENSSL_NO_GOST
-#include <openssl/gost.h>
-#endif
 #include <openssl/hmac.h>
 #include <openssl/md5.h>
 #include <openssl/objects.h>
+#include <openssl/opensslconf.h>
 #include <openssl/x509.h>
+
+#ifndef OPENSSL_NO_GOST
+#include <openssl/gost.h>
+#endif
 
 #include "bytestring.h"
 #include "ssl_sigalgs.h"

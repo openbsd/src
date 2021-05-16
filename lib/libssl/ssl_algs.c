@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_algs.c,v 1.28 2019/04/04 16:44:24 jsing Exp $ */
+/* $OpenBSD: ssl_algs.c,v 1.29 2021/05/16 08:24:21 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,6 +60,7 @@
 
 #include <openssl/lhash.h>
 #include <openssl/objects.h>
+#include <openssl/opensslconf.h>
 
 #include "ssl_locl.h"
 

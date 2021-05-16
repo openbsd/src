@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.122 2021/05/10 17:03:57 tb Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.123 2021/05/16 08:24:21 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -143,6 +143,7 @@
 #include <stdio.h>
 
 #include <openssl/objects.h>
+#include <openssl/opensslconf.h>
 
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
