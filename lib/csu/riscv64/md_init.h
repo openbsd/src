@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.1 2021/04/28 00:11:11 drahn Exp $ */
+/* $OpenBSD: md_init.h,v 1.2 2021/05/16 16:00:50 drahn Exp $ */
 /*
  * Copyright (c) 2020 Dale Rahn <drahn@openbsd.org>
  *
@@ -62,7 +62,6 @@
 	"	.type	__start, @function				\n" \
 	"_start:							\n" \
 	"__start:							\n" \
-	"	mv	a3, a2	# cleanup 				\n" \
 	"/* Get argc/argv/envp from stack */				\n" \
 	"	ld	a0, (sp)					\n" \
 	"	addi	a1, sp, 0x8					\n" \

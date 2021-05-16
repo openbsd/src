@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.1 2021/04/28 15:16:26 drahn Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.2 2021/05/16 16:00:50 drahn Exp $ */
 
 /*
  * Copyright (c) 2016,2021 Dale Rahn <drahn@openbsd.org>
@@ -66,7 +66,7 @@ _dl_start:
 	mv	sp, fp				// move stack back
 	mv	fp, zero			// clear frame back pointer
 
-2:	auipc	a3, %got_pcrel_hi(_dl_dtors)		/* cleanup */
+2:	auipc	a3, %pcrel_hi(_dl_dtors)		/* cleanup */
 	addi	a3, a3, %pcrel_lo(2b)
 
 	jr	a0
