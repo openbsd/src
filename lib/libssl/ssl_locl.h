@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.346 2021/05/16 13:56:31 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.347 2021/05/16 15:49:01 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1046,28 +1046,6 @@ typedef struct sess_cert_st {
 				 SSL_ENC_FLAG_TLS1_2_CIPHERS)
 #define TLSV1_3_ENC_FLAGS	(SSL_ENC_FLAG_SIGALGS		| \
 				 SSL_ENC_FLAG_TLS1_3_CIPHERS)
-
-/*
- * ssl_aead_ctx_st contains information about an AEAD that is being used to
- * encrypt an SSL connection.
- */
-struct ssl_aead_ctx_st {
-	EVP_AEAD_CTX ctx;
-	/*
-	 * fixed_nonce contains any bytes of the nonce that are fixed for all
-	 * records.
-	 */
-	unsigned char fixed_nonce[12];
-	unsigned char fixed_nonce_len;
-	unsigned char variable_nonce_len;
-	unsigned char xor_fixed_nonce;
-	unsigned char tag_len;
-	/*
-	 * variable_nonce_in_record is non-zero if the variable nonce
-	 * for a record is included as a prefix before the ciphertext.
-	 */
-	char variable_nonce_in_record;
-};
 
 extern const SSL_CIPHER ssl3_ciphers[];
 
