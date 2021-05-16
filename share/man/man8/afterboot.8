@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.168 2020/12/29 12:28:23 mglocker Exp $
+.\"	$OpenBSD: afterboot.8,v 1.169 2021/05/16 06:46:57 paco Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 29 2020 $
+.Dd $Mdocdate: May 16 2021 $
 .Dt AFTERBOOT 8
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
 .Os
@@ -417,6 +417,17 @@ Normal recording can be enabled by adding the following directives to
 .Bd -literal -offset indent
 kern.audio.record=1
 kern.video.record=1
+.Ed
+.Ss Power management
+If the BIOS supports it,
+.Xr apmd 8
+can be configured to act on different events and adjust device performance.
+In the following example it is configured to start on boot in automatic
+performance adjustment mode and suspend the system if no AC is connected and
+the estimated battery life is equal or below 15%:
+.Bd -literal -offset indent
+# rcctl set apmd status on
+# rcctl set apmd flags -A -z 15
 .Ed
 .Ss Mail aliases
 Edit
