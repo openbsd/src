@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid6.c,v 1.71 2016/04/12 16:26:54 krw Exp $ */
+/* $OpenBSD: softraid_raid6.c,v 1.72 2021/05/16 15:12:37 deraadt Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -219,8 +219,8 @@ sr_raid6_set_chunk_state(struct sr_discipline *sd, int c, int new_state)
 	default:
 die:
 		splx(s); /* XXX */
-		panic("%s: %s: %s: invalid chunk state transition "
-		    "%d -> %d", DEVNAME(sd->sd_sc),
+		panic("%s: %s: %s: invalid chunk state transition %d -> %d",
+		    DEVNAME(sd->sd_sc),
 		    sd->sd_meta->ssd_devname,
 		    sd->sd_vol.sv_chunks[c]->src_meta.scmi.scm_devname,
 		    old_state, new_state);
