@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.4 2021/05/14 06:48:52 jsg Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.5 2021/05/16 06:20:29 jsg Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -176,5 +176,5 @@ vunmapbuf(struct buf *bp, vsize_t len)
 	pmap_update(pmap_kernel());
 	km_free((void *)addr, len, &kv_physwait, &kp_none);
 	bp->b_data = bp->b_saveaddr;
-	bp->b_saveaddr = 0;
+	bp->b_saveaddr = NULL;
 }

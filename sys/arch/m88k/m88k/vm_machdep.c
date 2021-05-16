@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.25 2017/02/12 04:55:08 guenther Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.26 2021/05/16 06:20:29 jsg Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -187,5 +187,5 @@ vunmapbuf(bp, len)
 	pmap_update(vm_map_pmap(phys_map));
 	uvm_km_free_wakeup(phys_map, addr, len);
 	bp->b_data = bp->b_saveaddr;
-	bp->b_saveaddr = 0;
+	bp->b_saveaddr = NULL;
 }
