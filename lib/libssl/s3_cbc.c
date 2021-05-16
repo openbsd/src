@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_cbc.c,v 1.23 2020/10/03 17:35:16 jsing Exp $ */
+/* $OpenBSD: s3_cbc.c,v 1.24 2021/05/16 14:10:43 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2012 The OpenSSL Project.  All rights reserved.
  *
@@ -53,10 +53,10 @@
  *
  */
 
-#include "ssl_locl.h"
-
 #include <openssl/md5.h>
 #include <openssl/sha.h>
+
+#include "ssl_locl.h"
 
 /* MAX_HASH_BIT_COUNT_BYTES is the maximum number of bytes in the hash's length
  * field. (SHA-384/512 have 128-bit length.) */

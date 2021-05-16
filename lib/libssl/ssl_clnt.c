@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.98 2021/05/16 13:56:30 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.99 2021/05/16 14:10:43 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -152,8 +152,6 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "ssl_locl.h"
-
 #include <openssl/bn.h>
 #include <openssl/buffer.h>
 #include <openssl/curve25519.h>
@@ -172,6 +170,7 @@
 
 #include "bytestring.h"
 #include "dtls_locl.h"
+#include "ssl_locl.h"
 #include "ssl_sigalgs.h"
 #include "ssl_tlsext.h"
 

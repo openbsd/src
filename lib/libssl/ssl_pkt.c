@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.42 2021/05/02 17:46:58 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.43 2021/05/16 14:10:43 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -112,12 +112,11 @@
 #include <errno.h>
 #include <stdio.h>
 
-#include "ssl_locl.h"
-
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
 
 #include "bytestring.h"
+#include "ssl_locl.h"
 
 static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
     unsigned int len);

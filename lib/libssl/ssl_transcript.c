@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_transcript.c,v 1.4 2021/05/02 16:00:33 jsing Exp $ */
+/* $OpenBSD: ssl_transcript.c,v 1.5 2021/05/16 14:10:43 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -15,9 +15,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "ssl_locl.h"
-
 #include <openssl/ssl.h>
+
+#include "ssl_locl.h"
 
 int
 tls1_transcript_hash_init(SSL *s)

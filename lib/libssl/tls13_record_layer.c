@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.59 2021/03/21 17:25:17 jsing Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.60 2021/05/16 14:10:43 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -16,7 +16,6 @@
  */
 
 #include "ssl_locl.h"
-
 #include "tls13_internal.h"
 #include "tls13_record.h"
 
