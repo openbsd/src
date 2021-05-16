@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_lib.c,v 1.53 2021/02/20 07:29:07 jsing Exp $ */
+/* $OpenBSD: d1_lib.c,v 1.54 2021/05/16 13:56:30 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -67,6 +67,7 @@
 
 #include <openssl/objects.h>
 
+#include "dtls_locl.h"
 #include "pqueue.h"
 #include "ssl_locl.h"
 

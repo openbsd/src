@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.109 2021/05/16 08:24:21 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.110 2021/05/16 13:56:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -168,6 +168,7 @@
 #endif
 
 #include "bytestring.h"
+#include "dtls_locl.h"
 #include "ssl_sigalgs.h"
 #include "ssl_tlsext.h"
 

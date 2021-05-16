@@ -1,4 +1,4 @@
-/* $OpenBSD: dtls1.h,v 1.26 2021/05/10 17:10:57 tb Exp $ */
+/* $OpenBSD: dtls1.h,v 1.27 2021/05/16 13:56:30 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -90,90 +90,6 @@ extern "C" {
 #define DTLS1_CCS_HEADER_LENGTH                  1
 
 #define DTLS1_AL_HEADER_LENGTH                   2
-
-#ifdef LIBRESSL_INTERNAL
-
-typedef struct dtls1_bitmap_st {
-	unsigned long map;		/* track 32 packets on 32-bit systems
-					   and 64 - on 64-bit systems */
-	unsigned char max_seq_num[8];	/* max record number seen so far,
-					   64-bit value in big-endian
-					   encoding */
-} DTLS1_BITMAP;
-
-struct dtls1_retransmit_state {
-	EVP_CIPHER_CTX *enc_write_ctx;	/* cryptographic state */
-	EVP_MD_CTX *write_hash;		/* used for mac generation */
-	SSL_SESSION *session;
-	unsigned short epoch;
-};
-
-struct hm_header_st {
-	unsigned char type;
-	unsigned long msg_len;
-	unsigned short seq;
-	unsigned long frag_off;
-	unsigned long frag_len;
-	unsigned int is_ccs;
-	struct dtls1_retransmit_state saved_retransmit_state;
-};
-
-struct ccs_header_st {
-	unsigned char type;
-	unsigned short seq;
-};
-
-struct dtls1_timeout_st {
-	/* Number of read timeouts so far */
-	unsigned int read_timeouts;
-
-	/* Number of write timeouts so far */
-	unsigned int write_timeouts;
-
-	/* Number of alerts received so far */
-	unsigned int num_alerts;
-};
-
-struct _pqueue;
-
-typedef struct record_pqueue_st {
-	unsigned short epoch;
-	struct _pqueue *q;
-} record_pqueue;
-
-typedef struct hm_fragment_st {
-	struct hm_header_st msg_header;
-	unsigned char *fragment;
-	unsigned char *reassembly;
-} hm_fragment;
-
-struct dtls1_state_internal_st;
-
-typedef struct dtls1_state_st {
-	/* Buffered (sent) handshake records */
-	struct _pqueue *sent_messages;
-
-	/* Indicates when the last handshake msg or heartbeat sent will timeout */
-	struct timeval next_timeout;
-
-	/* Timeout duration */
-	unsigned short timeout_duration;
-
-	struct dtls1_state_internal_st *internal;
-} DTLS1_STATE;
-
-#ifndef LIBRESSL_INTERNAL
-
-typedef struct dtls1_record_data_st {
-	unsigned char *packet;
-	unsigned int   packet_length;
-	SSL3_BUFFER    rbuf;
-	SSL3_RECORD    rrec;
-} DTLS1_RECORD_DATA;
-
-#endif
-
-#endif
 
 /* Timeout multipliers (timeout slice is defined in apps/timeouts.h */
 #define DTLS1_TMO_READ_COUNT                      2

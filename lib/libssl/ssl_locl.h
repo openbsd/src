@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.345 2021/05/16 10:55:17 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.346 2021/05/16 13:56:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -979,74 +979,6 @@ typedef struct ssl3_state_internal_st {
 } SSL3_STATE_INTERNAL;
 #define S3I(s) (s->s3->internal)
 
-typedef struct dtls1_record_data_internal_st {
-	unsigned char *packet;
-	unsigned int packet_length;
-	SSL3_BUFFER_INTERNAL rbuf;
-	SSL3_RECORD_INTERNAL rrec;
-} DTLS1_RECORD_DATA_INTERNAL;
-
-typedef struct dtls1_state_internal_st {
-	unsigned int send_cookie;
-	unsigned char cookie[DTLS1_COOKIE_LENGTH];
-	unsigned char rcvd_cookie[DTLS1_COOKIE_LENGTH];
-	unsigned int cookie_len;
-
-	/*
-	 * The current data and handshake epoch.  This is initially
-	 * undefined, and starts at zero once the initial handshake is
-	 * completed
-	 */
-	unsigned short r_epoch;
-
-	/* records being received in the current epoch */
-	DTLS1_BITMAP bitmap;
-
-	/* renegotiation starts a new set of sequence numbers */
-	DTLS1_BITMAP next_bitmap;
-
-	/* handshake message numbers */
-	unsigned short handshake_write_seq;
-	unsigned short next_handshake_write_seq;
-
-	unsigned short handshake_read_seq;
-
-	/* Received handshake records (processed and unprocessed) */
-	record_pqueue unprocessed_rcds;
-	record_pqueue processed_rcds;
-
-	/* Buffered handshake messages */
-	struct _pqueue *buffered_messages;
-
-	/* Buffered application records.
-	 * Only for records between CCS and Finished
-	 * to prevent either protocol violation or
-	 * unnecessary message loss.
-	 */
-	record_pqueue buffered_app_data;
-
-	/* Is set when listening for new connections with dtls1_listen() */
-	unsigned int listen;
-
-	unsigned int mtu; /* max DTLS packet size */
-
-	struct hm_header_st w_msg_hdr;
-	struct hm_header_st r_msg_hdr;
-
-	struct dtls1_timeout_st timeout;
-
-	/* storage for Alert/Handshake protocol data received but not
-	 * yet processed by ssl3_read_bytes: */
-	unsigned char alert_fragment[DTLS1_AL_HEADER_LENGTH];
-	unsigned int alert_fragment_len;
-	unsigned char handshake_fragment[DTLS1_HM_HEADER_LENGTH];
-	unsigned int handshake_fragment_len;
-
-	unsigned int retransmitting;
-	unsigned int change_cipher_spec_ok;
-} DTLS1_STATE_INTERNAL;
-#define D1I(s) (s->d1->internal)
-
 typedef struct cert_st {
 	/* Current active set */
 	CERT_PKEY *key; /* ALWAYS points to an element of the pkeys array
@@ -1270,42 +1202,11 @@ int ssl3_record_write(SSL *s, int type);
 
 int ssl3_do_change_cipher_spec(SSL *ssl);
 
-int dtls1_do_write(SSL *s, int type);
 int ssl3_packet_read(SSL *s, int plen);
 int ssl3_packet_extend(SSL *s, int plen);
 int ssl_server_legacy_first_packet(SSL *s);
-int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek);
 int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
     unsigned int len);
-void dtls1_set_message_header(SSL *s, unsigned char mt, unsigned long len,
-    unsigned long frag_off, unsigned long frag_len);
-void dtls1_set_message_header_int(SSL *s, unsigned char mt,
-    unsigned long len, unsigned short seq_num, unsigned long frag_off,
-    unsigned long frag_len);
-
-int dtls1_write_app_data_bytes(SSL *s, int type, const void *buf, int len);
-int dtls1_write_bytes(SSL *s, int type, const void *buf, int len);
-
-int dtls1_read_failed(SSL *s, int code);
-int dtls1_buffer_message(SSL *s, int ccs);
-int dtls1_retransmit_message(SSL *s, unsigned short seq,
-    unsigned long frag_off, int *found);
-int dtls1_get_queue_priority(unsigned short seq, int is_ccs);
-int dtls1_retransmit_buffered_messages(SSL *s);
-void dtls1_clear_record_buffer(SSL *s);
-int dtls1_get_message_header(unsigned char *data,
-    struct hm_header_st *msg_hdr);
-void dtls1_get_ccs_header(unsigned char *data, struct ccs_header_st *ccs_hdr);
-void dtls1_reset_read_seq_numbers(SSL *s);
-struct timeval* dtls1_get_timeout(SSL *s, struct timeval* timeleft);
-int dtls1_check_timeout_num(SSL *s);
-int dtls1_handle_timeout(SSL *s);
-const SSL_CIPHER *dtls1_get_cipher(unsigned int u);
-void dtls1_start_timer(SSL *s);
-void dtls1_stop_timer(SSL *s);
-int dtls1_is_timer_expired(SSL *s);
-void dtls1_double_timeout(SSL *s);
-unsigned int dtls1_min_mtu(void);
 
 /* some client-only functions */
 int ssl3_send_client_hello(SSL *s);
@@ -1346,15 +1247,6 @@ int ssl_kex_derive_ecdhe_ecp(EC_KEY *ecdh, EC_KEY *ecdh_peer,
 int tls1_new(SSL *s);
 void tls1_free(SSL *s);
 void tls1_clear(SSL *s);
-
-int dtls1_new(SSL *s);
-void dtls1_free(SSL *s);
-void dtls1_clear(SSL *s);
-long dtls1_ctrl(SSL *s, int cmd, long larg, void *parg);
-
-long dtls1_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok);
-int dtls1_get_record(SSL *s);
-int dtls1_dispatch_alert(SSL *s);
 
 int ssl_init_wbio_buffer(SSL *s, int push);
 void ssl_free_wbio_buffer(SSL *s);

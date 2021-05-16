@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_methods.c,v 1.24 2021/03/31 16:59:32 tb Exp $ */
+/* $OpenBSD: ssl_methods.c,v 1.25 2021/05/16 13:56:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#include "dtls_locl.h"
 #include "ssl_locl.h"
 #include "tls13_internal.h"
 
