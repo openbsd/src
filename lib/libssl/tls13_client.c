@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.77 2021/03/29 16:46:09 jsing Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.78 2021/05/16 10:55:17 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -20,6 +20,7 @@
 #include <openssl/ssl3.h>
 
 #include "bytestring.h"
+#include "ssl_sigalgs.h"
 #include "ssl_tlsext.h"
 #include "tls13_handshake.h"
 #include "tls13_internal.h"

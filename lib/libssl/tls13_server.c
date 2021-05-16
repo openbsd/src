@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.74 2021/03/29 16:46:09 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.75 2021/05/16 10:55:17 jsing Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -19,6 +19,7 @@
 #include <openssl/x509v3.h>
 
 #include "ssl_locl.h"
+#include "ssl_sigalgs.h"
 #include "ssl_tlsext.h"
 
 #include "tls13_handshake.h"

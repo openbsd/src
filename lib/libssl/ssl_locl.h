@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.344 2021/05/16 08:24:21 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.345 2021/05/16 10:55:17 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -162,7 +162,6 @@
 #include <openssl/stack.h>
 
 #include "bytestring.h"
-#include "ssl_sigalgs.h"
 #include "tls13_internal.h"
 
 __BEGIN_HIDDEN_DECLS
@@ -416,6 +415,8 @@ typedef struct cert_pkey_st {
 	EVP_PKEY *privatekey;
 	STACK_OF(X509) *chain;
 } CERT_PKEY;
+
+struct ssl_sigalg;
 
 typedef struct ssl_handshake_tls12_st {
 	/* Used when SSL_ST_FLUSH_DATA is entered. */
