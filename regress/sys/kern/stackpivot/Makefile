@@ -3,6 +3,7 @@
     ${MACHINE} != "amd64" && \
     ${MACHINE} != "i386" && \
     ${MACHINE} != "powerpc64" && \
+    ${MACHINE} != "riscv64" && \
     ${MACHINE_ARCH} != "powerpc" && \
     ${MACHINE_ARCH} != "mips64" && \
     ${MACHINE_ARCH} != "mips64el"

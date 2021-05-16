@@ -1,4 +1,4 @@
-/*	$OpenBSD: testfly.S,v 1.8 2020/07/06 07:31:19 kettenis Exp $	*/
+/*	$OpenBSD: testfly.S,v 1.9 2021/05/16 03:23:48 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002,2003 Michael Shalayeff
@@ -62,6 +62,12 @@ END(testfly)
 LEAF(testfly, 0)
 	jr	ra
 	nop
+END(testfly)
+#endif
+
+#ifdef __riscv64
+ENTRY(testfly)
+	jr	ra
 END(testfly)
 #endif
 
