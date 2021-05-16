@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.h,v 1.13 2017/08/27 12:42:22 kettenis Exp $	*/
+/*	$OpenBSD: armv7_machdep.h,v 1.14 2021/05/16 03:39:28 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -23,7 +23,7 @@ void platform_powerdown(void);
 void platform_watchdog_reset(void);
 void platform_init_cons(void);
 void platform_init_mainbus(struct device *);
-struct board_dev *platform_board_devs();
+struct board_dev *platform_board_devs(void);
 extern void (*cpuresetfn)(void);
 extern void (*powerdownfn)(void);
 

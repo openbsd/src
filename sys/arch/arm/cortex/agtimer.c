@@ -1,4 +1,4 @@
-/* $OpenBSD: agtimer.c,v 1.13 2021/03/25 04:12:00 jsg Exp $ */
+/* $OpenBSD: agtimer.c,v 1.14 2021/05/16 03:39:27 jsg Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
@@ -270,7 +270,7 @@ agtimer_set_clockrate(int32_t new_frequency)
 }
 
 void
-agtimer_cpu_initclocks()
+agtimer_cpu_initclocks(void)
 {
 	struct agtimer_softc	*sc = agtimer_cd.cd_devs[0];
 	struct agtimer_pcpu_softc *pc = &sc->sc_pstat[CPU_INFO_UNIT(curcpu())];

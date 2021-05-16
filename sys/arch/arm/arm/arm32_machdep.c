@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm32_machdep.c,v 1.61 2021/03/25 04:12:00 jsg Exp $	*/
+/*	$OpenBSD: arm32_machdep.c,v 1.62 2021/05/16 03:39:27 jsg Exp $	*/
 /*	$NetBSD: arm32_machdep.c,v 1.42 2003/12/30 12:33:15 pk Exp $	*/
 
 /*
@@ -172,7 +172,7 @@ arm32_vector_init(vaddr_t va, int which)
  */
 
 void
-halt()
+halt(void)
 {
 	while (1)
 		cpu_sleep(0);
@@ -219,7 +219,7 @@ bootsync(int howto)
  *
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	u_int loop;
 	paddr_t minaddr;

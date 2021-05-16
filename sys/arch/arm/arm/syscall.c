@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.22 2021/03/25 04:12:00 jsg Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.23 2021/05/16 03:39:27 jsg Exp $	*/
 /*	$NetBSD: syscall.c,v 1.24 2003/11/14 19:03:17 scw Exp $	*/
 
 /*-
@@ -181,8 +181,7 @@ swi_handler(trapframe_t *frame)
 }
 
 void
-child_return(arg)
-	void *arg;
+child_return(void *arg)
 {
 	struct proc *p = arg;
 	struct trapframe *frame = p->p_addr->u_pcb.pcb_tf;

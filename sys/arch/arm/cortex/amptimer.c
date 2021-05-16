@@ -1,4 +1,4 @@
-/* $OpenBSD: amptimer.c,v 1.12 2021/03/25 04:12:00 jsg Exp $ */
+/* $OpenBSD: amptimer.c,v 1.13 2021/05/16 03:39:27 jsg Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -340,7 +340,7 @@ amptimer_set_clockrate(int32_t new_frequency)
 }
 
 void
-amptimer_cpu_initclocks()
+amptimer_cpu_initclocks(void)
 {
 	struct amptimer_softc	*sc = amptimer_cd.cd_devs[0];
 	struct amptimer_pcpu_softc *pc = &sc->sc_pstat[CPU_INFO_UNIT(curcpu())];

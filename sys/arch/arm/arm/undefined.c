@@ -1,4 +1,4 @@
-/*	$OpenBSD: undefined.c,v 1.15 2021/03/25 04:12:00 jsg Exp $	*/
+/*	$OpenBSD: undefined.c,v 1.16 2021/05/16 03:39:27 jsg Exp $	*/
 /*	$NetBSD: undefined.c,v 1.22 2003/11/29 22:21:29 bjh21 Exp $	*/
 
 /*
@@ -121,7 +121,7 @@ gdb_trapper(u_int addr, u_int insn, struct trapframe *frame, int code, uint32_t 
 static struct undefined_handler gdb_uh;
 
 void
-undefined_init()
+undefined_init(void)
 {
 	int loop;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.c,v 1.56 2021/03/25 04:12:00 jsg Exp $	*/
+/*	$OpenBSD: cpufunc.c,v 1.57 2021/05/16 03:39:27 jsg Exp $	*/
 /*	$NetBSD: cpufunc.c,v 1.65 2003/11/05 12:53:15 scw Exp $	*/
 
 /*
@@ -252,7 +252,7 @@ arm_get_cachetype_cp15v7(void)
 /* 
  */
 void
-armv7_idcache_wbinv_all()
+armv7_idcache_wbinv_all(void)
 {
 	uint32_t arg;
 	arg = 0;
@@ -262,7 +262,7 @@ armv7_idcache_wbinv_all()
 
 /* brute force cache flushing */
 void
-armv7_dcache_wbinv_all()
+armv7_dcache_wbinv_all(void)
 {
 	int sets, ways, lvl;
 	int nsets, nways;
@@ -307,7 +307,7 @@ armv7_dcache_wbinv_all()
  */
 
 int
-set_cpufuncs()
+set_cpufuncs(void)
 {
 	cputype = cpufunc_id();
 	cputype &= CPU_ID_CPU_MASK;
@@ -355,7 +355,7 @@ set_cpufuncs()
  */
 
 void
-armv7_setup()
+armv7_setup(void)
 {
 	uint32_t auxctrl, auxctrlmask;
 	uint32_t cpuctrl, cpuctrlmask;

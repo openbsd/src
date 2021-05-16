@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.32 2019/11/07 21:54:49 patrick Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.33 2021/05/16 03:39:27 jsg Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.29 2003/09/06 09:08:35 rearnsha Exp $	*/
 
 /*
@@ -283,7 +283,7 @@ __set_cpsr_c(u_int bic, u_int eor)
 }
 
 static __inline u_int32_t
-__get_cpsr()
+__get_cpsr(void)
 {
 	u_int32_t	ret;
 

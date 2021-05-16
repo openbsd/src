@@ -1,4 +1,4 @@
-/*	$OpenBSD: dmtimer.c,v 1.11 2021/03/25 04:12:01 jsg Exp $	*/
+/*	$OpenBSD: dmtimer.c,v 1.12 2021/05/16 03:39:28 jsg Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Raphael Graf <r@undefined.ch>
@@ -294,7 +294,7 @@ dmtimer_intr(void *frame)
  */
 
 void
-dmtimer_cpu_initclocks()
+dmtimer_cpu_initclocks(void)
 {
 	struct dmtimer_softc	*sc = dmtimer_cd.cd_devs[1];
 

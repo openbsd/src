@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.6 2021/03/25 04:12:00 jsg Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.7 2021/05/16 03:39:27 jsg Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.6 2003/07/15 00:24:42 lukem Exp $	*/
 
 /*
@@ -56,10 +56,7 @@ static int arm32_sync_icache (struct proc *, char *, register_t *);
 static int arm32_drain_writebuf (struct proc *, char *, register_t *);
 
 static int
-arm32_sync_icache(p, args, retval)
-	struct proc *p;
-	char *args;
-	register_t *retval;
+arm32_sync_icache(struct proc *p, char *args, register_t *retval)
 {
 	struct arm_sync_icache_args ua;
 	struct vm_map *map = &p->p_vmspace->vm_map;
@@ -108,10 +105,7 @@ out:
 }
 
 static int
-arm32_drain_writebuf(p, args, retval)
-	struct proc *p;
-	char *args;
-	register_t *retval;
+arm32_drain_writebuf(struct proc *p, char *args, register_t *retval)
 {
 	/* No args. */
 
@@ -122,10 +116,7 @@ arm32_drain_writebuf(p, args, retval)
 }
 
 int
-sys_sysarch(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_sysarch(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_sysarch_args /* {
 		syscallarg(int) op;

@@ -1,4 +1,4 @@
-/* $OpenBSD: omap.c,v 1.22 2021/04/02 03:02:46 tb Exp $ */
+/* $OpenBSD: omap.c,v 1.23 2021/05/16 03:39:28 jsg Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.org>
  *
@@ -26,9 +26,9 @@
 #include <dev/ofw/fdt.h>
 
 int	omap_match(struct device *, void *, void *);
-void	omap3_init();
-void	omap4_init();
-void	am335x_init();
+void	omap3_init(void);
+void	omap4_init(void);
+void	am335x_init(void);
 
 struct cfattach omap_ca = {
 	sizeof(struct armv7_softc), omap_match, armv7_attach
