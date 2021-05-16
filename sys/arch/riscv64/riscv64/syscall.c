@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.7 2021/05/15 13:56:56 deraadt Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.8 2021/05/16 03:29:35 jsg Exp $	*/
 
 /*
  * Copyright (c) 2020 Brian Bamsch <bbamsch@google.com>
@@ -117,8 +117,7 @@ svc_handler(trapframe_t *frame)
 }
 
 void
-child_return(arg)
-	void *arg;
+child_return(void *arg)
 {
 	struct proc *p = arg;
 	struct trapframe *frame = process_frame(p);;
