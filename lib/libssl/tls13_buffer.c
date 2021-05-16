@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_buffer.c,v 1.4 2021/05/16 14:10:43 jsing Exp $ */
+/* $OpenBSD: tls13_buffer.c,v 1.5 2021/05/16 14:19:04 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -16,7 +16,6 @@
  */
 
 #include "bytestring.h"
-#include "ssl_locl.h"
 #include "tls13_internal.h"
 
 struct tls13_buffer {

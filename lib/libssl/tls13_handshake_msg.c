@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_handshake_msg.c,v 1.2 2019/11/20 16:21:20 beck Exp $ */
+/* $OpenBSD: tls13_handshake_msg.c,v 1.3 2021/05/16 14:19:04 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -16,7 +16,6 @@
  */
 
 #include "bytestring.h"
-#include "ssl_locl.h"
 #include "tls13_internal.h"
 
 #define TLS13_HANDSHAKE_MSG_HEADER_LEN	4
