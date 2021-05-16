@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcmp.c,v 1.11 2017/01/24 08:09:05 kettenis Exp $	*/
+/*	$OpenBSD: bcmp.c,v 1.12 2021/05/16 04:45:58 jsg Exp $	*/
 
 /*
  * Copyright (c) 1987 Regents of the University of California.
@@ -39,9 +39,9 @@
 int
 bcmp(b1, b2, length)
 	const void *b1, *b2;
-	register size_t length;
+	size_t length;
 {
-	register char *p1, *p2;
+	char *p1, *p2;
 
 	if (length == 0)
 		return(0);
