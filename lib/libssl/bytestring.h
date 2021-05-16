@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytestring.h,v 1.17 2018/08/16 18:39:37 jsing Exp $	*/
+/*	$OpenBSD: bytestring.h,v 1.18 2021/05/16 08:32:49 jsing Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -19,8 +19,6 @@
 
 #include <sys/types.h>
 #include <stdint.h>
-
-#include <openssl/opensslconf.h>
 
 __BEGIN_HIDDEN_DECLS
 

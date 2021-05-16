@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs_ber.c,v 1.9 2016/12/03 12:34:35 jsing Exp $	*/
+/*	$OpenBSD: bs_ber.c,v 1.10 2021/05/16 08:32:49 jsing Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -15,8 +15,6 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
 
 #include <string.h>
-
-#include <openssl/opensslconf.h>
 
 #include "bytestring.h"
 

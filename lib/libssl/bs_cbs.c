@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs_cbs.c,v 1.18 2019/01/23 22:20:40 beck Exp $	*/
+/*	$OpenBSD: bs_cbs.c,v 1.19 2021/05/16 08:32:49 jsing Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -16,10 +16,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-
-#include <openssl/opensslconf.h>
-#include <openssl/buffer.h>
-#include <openssl/crypto.h>
 
 #include "bytestring.h"
 
