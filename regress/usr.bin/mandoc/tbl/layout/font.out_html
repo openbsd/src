@@ -1,0 +1,10 @@
+<table class="tbl" style="border-style: solid;">
+  <tr style="border-bottom-style: solid;">
+    <td><b>bold</b></td>
+    <td style="text-align: right;">roman</td>
+  </tr>
+  <tr>
+    <td>roman</td>
+    <td style="text-align: right;"><i>italic</i></td>
+  </tr>
+</table>

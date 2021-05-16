@@ -1,0 +1,16 @@
+.\" $OpenBSD: font.in,v 1.1 2021/05/16 22:23:57 schwarze Exp $
+.TH TBL-LAYOUT-FONT 1 "May 16, 2021"
+.SH NAME
+tbl-layout-font \- font modifiers in the table layout
+.SH DESCRIPTION
+BEGINTEST
+.TS
+box tab(:);
+lb r
+l ri.
+bold:roman
+_
+roman:italic
+.TE
+.PP
+ENDTEST

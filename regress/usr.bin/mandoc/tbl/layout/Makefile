@@ -1,9 +1,10 @@
-# $OpenBSD: Makefile,v 1.7 2020/09/01 18:24:10 schwarze Exp $
+# $OpenBSD: Makefile,v 1.8 2021/05/16 22:23:57 schwarze Exp $
 
-REGRESS_TARGETS	 = badspan center complex empty emptycol emptyline
+REGRESS_TARGETS	 = badspan center complex empty emptycol emptyline font
 REGRESS_TARGETS	+= lines lines-nogroff numbers
 REGRESS_TARGETS	+= shortlines spacing spacing-nogroff span
 LINT_TARGETS	 = badspan complex empty spacing-nogroff
+HTML_TARGETS	 = font
 
 # groff-1.22.4 defects:
 # - When the layout is completely empty,
