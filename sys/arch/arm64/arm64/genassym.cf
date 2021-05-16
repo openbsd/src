@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.6 2018/03/29 19:25:39 patrick Exp $
+#	$OpenBSD: genassym.cf,v 1.7 2021/05/16 10:40:24 jsg Exp $
 #	$NetBSD: genassym.cf,v 1.27 2003/11/04 10:33:16 dsl Exp$
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -33,22 +33,11 @@
 
 include <sys/param.h>
 include <sys/proc.h>
-include <sys/systm.h>
-include <sys/mbuf.h>
-include <sys/resourcevar.h>
-include <sys/device.h>
-include <sys/user.h>
-include <sys/signal.h>
-include <sys/mbuf.h>
-include <sys/socketvar.h>
-include <netinet/in.h>
-include <netinet/ip.h>
 
 include <machine/cpu.h>
 include <machine/intr.h>
-include <uvm/uvm_extern.h>
-
 include <machine/frame.h>
+include <machine/pcb.h>
 
 struct	sigframe
 member	sf_sc
