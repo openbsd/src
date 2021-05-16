@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.95 2021/03/11 11:16:58 jsg Exp $ */
+/*	$OpenBSD: machdep.c,v 1.96 2021/05/16 15:10:19 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2014 Miodrag Vallat.
@@ -1296,7 +1296,7 @@ hw_cpu_hatch(struct cpu_info *ci)
 		break;
 #endif
 	default:
-		panic("%s: unhandled Loongson version %x\n", __func__,
+		panic("%s: unhandled Loongson version %x", __func__,
 		    loongson_ver);
 	}
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: bcm2836_intr.c,v 1.5 2020/07/14 15:34:15 patrick Exp $ */
+/* $OpenBSD: bcm2836_intr.c,v 1.6 2021/05/16 15:10:19 deraadt Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2015 Patrick Wildt <patrick@blueri.se>
@@ -168,10 +168,10 @@ bcm_intc_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	node = OF_finddevice("/soc/local_intc");
 	if (node == -1)
-		panic("%s: can't find ARM control logic\n", __func__);
+		panic("%s: can't find ARM control logic", __func__);
 
 	if (OF_getpropintarray(node, "reg", reg, sizeof(reg)) != sizeof(reg))
-		panic("%s: can't map ARM control logic\n", __func__);
+		panic("%s: can't map ARM control logic", __func__);
 
 	if (bus_space_map(sc->sc_iot, reg[0], reg[1], 0, &sc->sc_lioh))
 		panic("%s: bus_space_map failed!", __func__);

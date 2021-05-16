@@ -1,4 +1,4 @@
-/*	$OpenBSD: dmtimer.c,v 1.12 2021/05/16 03:39:28 jsg Exp $	*/
+/*	$OpenBSD: dmtimer.c,v 1.13 2021/05/16 15:10:19 deraadt Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Raphael Graf <r@undefined.ch>
@@ -155,7 +155,7 @@ dmtimer_attach(struct device *parent, struct device *self, void *args)
 
 	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
 	    aa->aa_dev->mem[0].size, 0, &ioh))
-		panic("%s: bus_space_map failed!\n", __func__);
+		panic("%s: bus_space_map failed!", __func__);
 
 
 	prcm_setclock(1, PRCM_CLK_SPEED_32);

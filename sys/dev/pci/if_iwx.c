@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.55 2021/05/06 09:19:28 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.56 2021/05/16 15:10:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5847,7 +5847,7 @@ iwx_mac_ctxt_cmd_common(struct iwx_softc *sc, struct iwx_node *in,
 	else if (ic->ic_opmode == IEEE80211_M_STA)
 		cmd->mac_type = htole32(IWX_FW_MAC_TYPE_BSS_STA);
 	else
-		panic("unsupported operating mode %d\n", ic->ic_opmode);
+		panic("unsupported operating mode %d", ic->ic_opmode);
 	cmd->tsf_id = htole32(IWX_TSF_ID_A);
 
 	IEEE80211_ADDR_COPY(cmd->node_addr, ic->ic_myaddr);

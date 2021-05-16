@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.212 2021/04/24 09:44:44 mpi Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.213 2021/05/16 15:10:19 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -1404,7 +1404,7 @@ pmap_pinit_pd_86(struct pmap *pmap)
 
 		if (!pmap_extract(pmap_kernel(), (vaddr_t)pmap->pm_pdir_intel,
 		    &pmap->pm_pdirpa_intel))
-			panic("%s: unknown PA mapping for meltdown PD\n",
+			panic("%s: unknown PA mapping for meltdown PD",
 			    __func__);
 
 		/* Copy PDEs from pmap_kernel's U-K view */
@@ -2530,7 +2530,7 @@ pmap_enter_special_86(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int32_t flags)
 			panic("%s: kernel_map out of virtual space!", __func__);
 		if (!pmap_extract(pmap, pmap->pm_pdir_intel,
 		    &pmap->pm_pdirpa_intel))
-			panic("%s: can't locate PD page\n", __func__);
+			panic("%s: can't locate PD page", __func__);
 	}
 
 	DPRINTF("%s: pm_pdir_intel 0x%x pm_pdirpa_intel 0x%x\n", __func__,
@@ -2544,7 +2544,7 @@ pmap_enter_special_86(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int32_t flags)
 	    flags, l2idx, l1idx);
 
 	if ((pd = (pd_entry_t *)pmap->pm_pdir_intel) == NULL)
-		panic("%s: PD not initialized for pmap @ %p\n", __func__, pmap);
+		panic("%s: PD not initialized for pmap @ %p", __func__, pmap);
 
 	/* npa = physaddr of PT page */
 	npa = pd[l2idx] & PMAP_PA_MASK;

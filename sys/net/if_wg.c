@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wg.c,v 1.16 2021/03/10 10:21:48 jsg Exp $ */
+/*	$OpenBSD: if_wg.c,v 1.17 2021/05/16 15:10:20 deraadt Exp $ */
 
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
@@ -1356,7 +1356,7 @@ wg_handshake(struct wg_softc *sc, struct mbuf *m)
 			    &t->t_endpoint);
 			goto error;
 		} else if (res != 0) {
-			panic("unexpected response: %d\n", res);
+			panic("unexpected response: %d", res);
 		}
 
 		if (noise_consume_initiation(&sc->sc_local, &remote,
@@ -1392,7 +1392,7 @@ wg_handshake(struct wg_softc *sc, struct mbuf *m)
 			    &t->t_endpoint);
 			goto error;
 		} else if (res != 0) {
-			panic("unexpected response: %d\n", res);
+			panic("unexpected response: %d", res);
 		}
 
 		if ((remote = wg_index_get(sc, resp->r_idx)) == NULL) {
@@ -1532,7 +1532,7 @@ wg_encap(struct wg_softc *sc, struct mbuf *m)
 	} else if (__predict_false(res == ESTALE)) {
 		wg_timers_event_want_initiation(&peer->p_timers);
 	} else if (__predict_false(res != 0)) {
-		panic("unexpected result: %d\n", res);
+		panic("unexpected result: %d", res);
 	}
 
 	/* A packet with length 0 is a keepalive packet */
@@ -1596,7 +1596,7 @@ wg_decap(struct wg_softc *sc, struct mbuf *m)
 	} else if (__predict_false(res == ESTALE)) {
 		wg_timers_event_want_initiation(&peer->p_timers);
 	} else if (__predict_false(res != 0)) {
-		panic("unexpected response: %d\n", res);
+		panic("unexpected response: %d", res);
 	}
 
 	wg_peer_set_endpoint_from_tag(peer, t);

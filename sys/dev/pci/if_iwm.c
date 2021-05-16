@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.324 2021/05/12 10:05:57 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.325 2021/05/16 15:10:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3730,7 +3730,7 @@ iwm_parse_nvm_sections(struct iwm_softc *sc, struct iwm_nvm_section *sections)
 		phy_sku = (const uint16_t *)
 		    sections[IWM_NVM_SECTION_TYPE_PHY_SKU].data;
 	} else {
-		panic("unknown device family %d\n", sc->sc_device_family);
+		panic("unknown device family %d", sc->sc_device_family);
 	}
 
 	sw = (const uint16_t *)sections[IWM_NVM_SECTION_TYPE_SW].data;
@@ -7636,7 +7636,7 @@ iwm_mac_ctxt_cmd_common(struct iwm_softc *sc, struct iwm_node *in,
 	else if (ic->ic_opmode == IEEE80211_M_STA)
 		cmd->mac_type = htole32(IWM_FW_MAC_TYPE_BSS_STA);
 	else
-		panic("unsupported operating mode %d\n", ic->ic_opmode);
+		panic("unsupported operating mode %d", ic->ic_opmode);
 	cmd->tsf_id = htole32(IWM_TSF_ID_A);
 
 	IEEE80211_ADDR_COPY(cmd->node_addr, ic->ic_myaddr);

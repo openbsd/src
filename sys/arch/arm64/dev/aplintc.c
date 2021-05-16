@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplintc.c,v 1.3 2021/04/21 18:11:17 kettenis Exp $	*/
+/*	$OpenBSD: aplintc.c,v 1.4 2021/05/16 15:10:19 deraadt Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis
  *
@@ -218,7 +218,7 @@ aplintc_irq_handler(void *frame)
 	}
 
 	if (irq >= sc->sc_nirq)
-		panic("%s: unexpected irq %d\n", __func__, irq);
+		panic("%s: unexpected irq %d", __func__, irq);
 
 	if (sc->sc_irq_handler[irq] == NULL)
 		return;
@@ -358,13 +358,13 @@ aplintc_intr_establish(void *cookie, int *cell, int level,
 	if (type == 0) {
 		KASSERT(level != (IPL_CLOCK | IPL_MPSAFE));
 		if (irq >= sc->sc_nirq) {
-			panic("%s: bogus irq number %d\n",
+			panic("%s: bogus irq number %d",
 			    sc->sc_dev.dv_xname, irq);
 		}
 	} else if (type == 1) {
 		KASSERT(level == (IPL_CLOCK | IPL_MPSAFE));
 		if (irq >= 4)
-			panic("%s: bogus fiq number %d\n",
+			panic("%s: bogus fiq number %d",
 			    sc->sc_dev.dv_xname, irq);
 	} else {
 		panic("%s: bogus irq type %d",
@@ -450,7 +450,7 @@ aplintc_handle_ipi(struct aplintc_softc *sc, uint32_t irq)
 	struct cpu_info *ci = curcpu();
 
 	if (irq != AIC_EVENT_IPI_OTHER)
-		panic("%s: unexpected irq %d\n", __func__, irq);
+		panic("%s: unexpected irq %d", __func__, irq);
 
 	HWRITE4(sc, AIC_IPI_ACK, AIC_IPI_OTHER);
 

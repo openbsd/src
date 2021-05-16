@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherip.c,v 1.48 2021/01/09 21:00:58 gnezdo Exp $	*/
+/*	$OpenBSD: if_etherip.c,v 1.49 2021/05/16 15:10:20 deraadt Exp $	*/
 /*
  * Copyright (c) 2015 Kazuya GODA <goda@openbsd.org>
  *
@@ -793,7 +793,7 @@ etherip_ip_cmp(int af, const union etherip_addr *a, const union etherip_addr *b)
 		return (memcmp(&a->in4, &b->in4, sizeof(a->in4)));
 		break;
 	default:
-		panic("%s: unsupported af %d\n", __func__, af);
+		panic("%s: unsupported af %d", __func__, af);
 	}
 
 	return (0);

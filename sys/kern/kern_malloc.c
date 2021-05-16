@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.145 2021/04/21 10:02:05 mpi Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.146 2021/05/16 15:10:20 deraadt Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -196,7 +196,7 @@ malloc(size_t size, int type, int flags)
 			return (NULL);
 		} else
 			panic("malloc: allocation too large, "
-			    "type = %d, size = %lu\n", type, size);
+			    "type = %d, size = %lu", type, size);
 	}
 
 	indx = BUCKETINDX(size);

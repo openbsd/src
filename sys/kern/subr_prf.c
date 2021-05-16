@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.102 2020/11/28 17:53:05 deraadt Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.103 2021/05/16 15:10:20 deraadt Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -869,7 +869,7 @@ reswitch:	switch (ch) {
 			base = DEC;
 			goto number;
 		case 'n':
-			panic("no %%n support\n");
+			panic("no %%n support");
 			break;
 		case 'O':
 			flags |= LONGINT;

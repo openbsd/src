@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiintc.c,v 1.8 2021/03/25 04:12:01 jsg Exp $	*/
+/*	$OpenBSD: sxiintc.c,v 1.9 2021/05/16 15:10:19 deraadt Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -379,7 +379,7 @@ sxiintc_intr_establish(int irq, int level, struct cpu_info *ci,
 	uint32_t er;
 
 	if (irq <= 0 || irq >= NIRQ)
-		panic("intr_establish: bogus irq %d %s\n", irq, name);
+		panic("intr_establish: bogus irq %d %s", irq, name);
 
 	if (ci == NULL)
 		ci = &cpu_info_primary;

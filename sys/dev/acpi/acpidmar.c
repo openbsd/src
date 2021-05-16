@@ -630,7 +630,7 @@ domain_load_map(struct domain *dom, bus_dmamap_t map, int flags, int pteflag, co
 			panic("domain_load_map: extent_alloc");
 		}
 		if (res == -1) {
-			panic("got -1 address\n");
+			panic("got -1 address");
 		}
 		mtx_leave(&dom->exlck);
 
@@ -914,7 +914,7 @@ iommu_alloc_page(struct iommu_softc *iommu, paddr_t *paddr)
 	*paddr = 0;
 	va = km_alloc(VTD_PAGE_SIZE, &kv_page, &kp_zero, &kd_nowait);
 	if (va == NULL) {
-		panic("can't allocate page\n");
+		panic("can't allocate page");
 	}
 	pmap_extract(pmap_kernel(), (vaddr_t)va, paddr);
 	return (va);
@@ -2502,7 +2502,7 @@ acpiivrs_init(struct acpidmar_softc *sc, struct acpi_ivrs *ivrs)
 	if (!sc->sc_hwdte) {
 		sc->sc_hwdte = iommu_alloc_hwdte(sc, HWDTE_SIZE, &sc->sc_hwdtep);
 		if (sc->sc_hwdte == NULL)
-			panic("Can't allocate HWDTE!\n");
+			panic("Can't allocate HWDTE!");
 	}
 
 	domain_map_page = domain_map_page_amd;

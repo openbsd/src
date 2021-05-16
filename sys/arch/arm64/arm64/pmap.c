@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.76 2021/03/17 12:03:40 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.77 2021/05/16 15:10:19 deraadt Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -752,7 +752,7 @@ _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
 
 	/* Do not have pted for this, get one and put it in VP */
 	if (pted == NULL) {
-		panic("pted not preallocated in pmap_kernel() va %lx pa %lx\n",
+		panic("pted not preallocated in pmap_kernel() va %lx pa %lx",
 		    va, pa);
 	}
 
@@ -1462,10 +1462,10 @@ pmap_set_l1(struct pmap *pm, uint64_t va, struct pmapvp1 *l1_va)
 	int idx0;
 
 	if (pmap_extract(pmap_kernel(), (vaddr_t)l1_va, &l1_pa) == 0)
-		panic("unable to find vp pa mapping %p\n", l1_va);
+		panic("unable to find vp pa mapping %p", l1_va);
 
 	if (l1_pa & (Lx_TABLE_ALIGN-1))
-		panic("misaligned L2 table\n");
+		panic("misaligned L2 table");
 
 	pg_entry = VP_Lx(l1_pa);
 
@@ -1483,10 +1483,10 @@ pmap_set_l2(struct pmap *pm, uint64_t va, struct pmapvp1 *vp1,
 	int idx1;
 
 	if (pmap_extract(pmap_kernel(), (vaddr_t)l2_va, &l2_pa) == 0)
-		panic("unable to find vp pa mapping %p\n", l2_va);
+		panic("unable to find vp pa mapping %p", l2_va);
 
 	if (l2_pa & (Lx_TABLE_ALIGN-1))
-		panic("misaligned L2 table\n");
+		panic("misaligned L2 table");
 
 	pg_entry = VP_Lx(l2_pa);
 
@@ -1504,10 +1504,10 @@ pmap_set_l3(struct pmap *pm, uint64_t va, struct pmapvp2 *vp2,
 	int idx2;
 
 	if (pmap_extract(pmap_kernel(), (vaddr_t)l3_va, &l3_pa) == 0)
-		panic("unable to find vp pa mapping %p\n", l3_va);
+		panic("unable to find vp pa mapping %p", l3_va);
 
 	if (l3_pa & (Lx_TABLE_ALIGN-1))
-		panic("misaligned L2 table\n");
+		panic("misaligned L2 table");
 
 	pg_entry = VP_Lx(l3_pa);
 
@@ -2004,7 +2004,7 @@ pmap_clear_modify(struct vm_page *pg)
 	mtx_enter(&pg->mdpage.pv_mtx);
 	LIST_FOREACH(pted, &(pg->mdpage.pv_list), pted_pv_list) {
 		if (pmap_vp_lookup(pted->pted_pmap, pted->pted_va & ~PAGE_MASK, &pl3) == NULL)
-			panic("failed to look up pte\n");
+			panic("failed to look up pte");
 		*pl3  |= ATTR_AP(2);
 		pted->pted_pte &= ~PROT_WRITE;
 

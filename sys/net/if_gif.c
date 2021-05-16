@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.132 2021/02/20 04:58:29 dlg Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.133 2021/05/16 15:10:20 deraadt Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -910,7 +910,7 @@ gif_ip_cmp(int af, const union gif_addr *a, const union gif_addr *b)
 	case AF_INET:
 		return (memcmp(&a->in4, &b->in4, sizeof(a->in4)));
 	default:
-		panic("%s: unsupported af %d\n", __func__, af);
+		panic("%s: unsupported af %d", __func__, af);
 	}
 
 	return (0);

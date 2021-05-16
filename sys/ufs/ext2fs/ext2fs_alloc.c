@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_alloc.c,v 1.38 2021/03/11 13:31:35 jsg Exp $	*/
+/*	$OpenBSD: ext2fs_alloc.c,v 1.39 2021/05/16 15:10:20 deraadt Exp $	*/
 /*	$NetBSD: ext2fs_alloc.c,v 1.10 2001/07/05 08:38:27 toshii Exp $	*/
 
 /*
@@ -368,7 +368,7 @@ ext2fs_alloccg(struct inode *ip, int cg, u_int32_t bpref, int size)
  gotit:
 #ifdef DIAGNOSTIC
 	if (isset(bbp, bno)) {
-		panic("%s: dup alloc: cg=%d bno=%u fs=%s\n",
+		panic("%s: dup alloc: cg=%d bno=%u fs=%s",
 		    __func__, cg, bno, fs->e2fs_fsmnt);
 	}
 #endif
@@ -481,7 +481,7 @@ ext2fs_blkfree(struct inode *ip, u_int32_t bno)
 	bbp = (char *)bp->b_data;
 	bno = dtogd(fs, bno);
 	if (isclr(bbp, bno))
-		panic("%s: freeing free block: dev = 0x%x, block = %u, fs = %s\n",
+		panic("%s: freeing free block: dev = 0x%x, block = %u, fs = %s",
 		    __func__, ip->i_dev, bno, fs->e2fs_fsmnt);
 
 	clrbit(bbp, bno);

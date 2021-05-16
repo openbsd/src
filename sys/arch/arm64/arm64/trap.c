@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.37 2021/05/15 11:30:27 kettenis Exp $ */
+/* $OpenBSD: trap.c,v 1.38 2021/05/16 15:10:19 deraadt Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -237,7 +237,7 @@ do_el1h_sync(struct trapframe *frame)
 		db_trapper(frame->tf_elr, 0/*XXX*/, frame, exception);
 		}
 #else
-		panic("No debugger in kernel.\n");
+		panic("No debugger in kernel.");
 #endif
 		break;
 	default:
@@ -248,7 +248,7 @@ do_el1h_sync(struct trapframe *frame)
 		db_trapper(frame->tf_elr, 0/*XXX*/, frame, exception);
 		}
 #endif
-		panic("Unknown kernel exception %x esr_el1 %llx lr %lxpc %lx\n",
+		panic("Unknown kernel exception %x esr_el1 %llx lr %lxpc %lx",
 		    exception,
 		    esr, frame->tf_lr, frame->tf_elr);
 	}
@@ -317,7 +317,7 @@ do_el0_sync(struct trapframe *frame)
 		trapsignal(p, SIGTRAP, 0, TRAP_TRACE, sv);
 		break;
 	default:
-		// panic("Unknown userland exception %x esr_el1 %lx\n", exception,
+		// panic("Unknown userland exception %x esr_el1 %lx", exception,
 		//    esr);
 		// USERLAND MUST NOT PANIC MACHINE
 		{

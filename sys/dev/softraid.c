@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.418 2021/02/08 11:20:03 stsp Exp $ */
+/* $OpenBSD: softraid.c,v 1.419 2021/05/16 15:10:19 deraadt Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -837,8 +837,8 @@ sr_meta_opt_load(struct sr_softc *sc, struct sr_metadata *sm,
 			    SR_OLD_META_OPT_SIZE - MD5_DIGEST_LENGTH);
 			if (bcmp(&checksum, (void *)omh + SR_OLD_META_OPT_MD5,
 			    sizeof(checksum)))
-				panic("%s: invalid optional metadata "
-				    "checksum", DEVNAME(sc));
+				panic("%s: invalid optional metadata checksum",
+				    DEVNAME(sc));
 
 			/* Determine correct length. */
 			switch (omh->som_type) {
@@ -853,8 +853,8 @@ sr_meta_opt_load(struct sr_softc *sc, struct sr_metadata *sm,
 				    sizeof(struct sr_meta_keydisk);
 				break;
 			default:
-				panic("unknown old optional metadata "
-				    "type %u\n", omh->som_type);
+				panic("unknown old optional metadata type %u",
+				    omh->som_type);
 			}
 
 			omi->omi_som = malloc(omh->som_length, M_DEVBUF,
@@ -4209,7 +4209,7 @@ sr_schedule_wu(struct sr_workunit *wu)
 		goto start;
 
 	if (wu->swu_state != SR_WU_INPROGRESS)
-		panic("sr_schedule_wu: work unit not in progress (state %i)\n",
+		panic("sr_schedule_wu: work unit not in progress (state %i)",
 		    wu->swu_state);
 
 	/* Walk queue backwards and fill in collider if we have one. */
@@ -4341,8 +4341,8 @@ sr_set_chunk_state(struct sr_discipline *sd, int c, int new_state)
 	default:
 die:
 		splx(s); /* XXX */
-		panic("%s: %s: %s: invalid chunk state transition "
-		    "%d -> %d", DEVNAME(sd->sd_sc),
+		panic("%s: %s: %s: invalid chunk state transition %d -> %d",
+		    DEVNAME(sd->sd_sc),
 		    sd->sd_meta->ssd_devname,
 		    sd->sd_vol.sv_chunks[c]->src_meta.scmi.scm_devname,
 		    old_state, new_state);
@@ -4407,8 +4407,8 @@ sr_set_vol_state(struct sr_discipline *sd)
 
 	default:
 die:
-		panic("%s: %s: invalid volume state transition "
-		    "%d -> %d", DEVNAME(sd->sd_sc),
+		panic("%s: %s: invalid volume state transition %d -> %d",
+		    DEVNAME(sd->sd_sc),
 		    sd->sd_meta->ssd_devname,
 		    old_state, new_state);
 		/* NOTREACHED */

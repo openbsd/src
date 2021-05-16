@@ -641,7 +641,7 @@ hvn_txeof(struct hvn_softc *sc, uint64_t tid)
 	txd = &sc->sc_tx_desc[id];
 
 	if ((m = txd->txd_buf) == NULL)
-		panic("%s: no mbuf @%u\n", sc->sc_dev.dv_xname, id);
+		panic("%s: no mbuf @%u", sc->sc_dev.dv_xname, id);
 	txd->txd_buf = NULL;
 
 	bus_dmamap_sync(sc->sc_dmat, txd->txd_dmap, 0, 0,

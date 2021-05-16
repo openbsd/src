@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.62 2021/04/29 15:34:22 bluhm Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.63 2021/05/16 15:10:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Michael Shalayeff
@@ -1003,14 +1003,14 @@ pmap_pinit_pd_pae(struct pmap *pmap)
 			panic("%s: kernel_map out of virtual space!", __func__);
 		if (!pmap_extract(pmap_kernel(),
 		    (vaddr_t)&pmap->pm_pdidx_intel, &pmap->pm_pdirpa_intel))
-			panic("%s: can't locate PDPT\n", __func__);
+			panic("%s: can't locate PDPT", __func__);
 		pmap->pm_pdir_intel = va;
 
 		for (i = 0; i < 4; i++) {
 			pmap->pm_pdidx_intel[i] = 0;
 			if (!pmap_extract(pmap, va + i * NBPG,
 			    (paddr_t *)&pmap->pm_pdidx_intel[i]))
-				panic("%s: can't locate PD page\n", __func__);
+				panic("%s: can't locate PD page", __func__);
 			pmap->pm_pdidx_intel[i] |= PG_V;
 			DPRINTF("%s: pm_pdidx_intel[%d] = 0x%llx\n", __func__,
 			    i, pmap->pm_pdidx_intel[i]);
@@ -1943,13 +1943,13 @@ pmap_enter_special_pae(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int32_t flags)
 		pmap->pm_pdir_intel = vapd;
 		if (!pmap_extract(pmap, (vaddr_t)&pmap->pm_pdidx_intel,
 		    &pmap->pm_pdirpa_intel))
-			panic("%s: can't locate PDPT\n", __func__);
+			panic("%s: can't locate PDPT", __func__);
 
 		for (i = 0; i < 4; i++) {
 			pmap->pm_pdidx_intel[i] = 0;
 			if (!pmap_extract(pmap, vapd + i*NBPG,
 			    (paddr_t *)&pmap->pm_pdidx_intel[i]))
-				panic("%s: can't locate PD page\n", __func__);
+				panic("%s: can't locate PD page", __func__);
 
 			/* ensure PDPs are wired down XXX hshoexer why? */
 			pdppg = PHYS_TO_VM_PAGE(pmap->pm_pdidx_intel[i]);
@@ -1977,7 +1977,7 @@ pmap_enter_special_pae(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int32_t flags)
 	    flags, l2idx, l1idx);
 
 	if ((pd = (pd_entry_t *)pmap->pm_pdir_intel) == 0)
-		panic("%s: PD not initialized for pmap @ %p\n", __func__, pmap);
+		panic("%s: PD not initialized for pmap @ %p", __func__, pmap);
 
 	/* npa = phsyaddr of PT page */
 	npa = pd[l2idx] & PMAP_PA_MASK;

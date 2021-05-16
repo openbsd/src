@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.81 2021/03/11 11:17:00 jsg Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.82 2021/05/16 15:10:19 deraadt Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -742,7 +742,7 @@ iommu_dvmamap_load(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 			paddr_t pa;
 
 			if (pmap_extract(pmap, a, &pa) == FALSE)
-				panic("iomap pmap error addr 0x%lx\n", a);
+				panic("iomap pmap error addr 0x%lx", a);
 
 			err = iommu_iomap_insert_page(ims, pa);
 			if (err) {
@@ -824,7 +824,7 @@ iommu_dvmamap_load(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 
 			/* Yuck... Redoing the same pmap_extract... */
 			if (pmap_extract(pmap, a, &pa) == FALSE)
-				panic("iomap pmap error addr 0x%lx\n", a);
+				panic("iomap pmap error addr 0x%lx", a);
 
 			pgstart = pa | (MAX(a, addr) & PAGE_MASK);
 			pgend = pa | (MIN(a + PAGE_SIZE - 1,

@@ -1,4 +1,4 @@
-/* $OpenBSD: smmu.c,v 1.13 2021/04/03 15:59:08 patrick Exp $ */
+/* $OpenBSD: smmu.c,v 1.14 2021/05/16 15:10:19 deraadt Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
@@ -814,10 +814,10 @@ smmu_set_l1(struct smmu_domain *dom, uint64_t va, struct smmuvp1 *l1_va)
 	int idx0;
 
 	if (pmap_extract(pmap_kernel(), (vaddr_t)l1_va, &l1_pa) == 0)
-		panic("unable to find vp pa mapping %p\n", l1_va);
+		panic("unable to find vp pa mapping %p", l1_va);
 
 	if (l1_pa & (Lx_TABLE_ALIGN-1))
-		panic("misaligned L2 table\n");
+		panic("misaligned L2 table");
 
 	pg_entry = VP_Lx(l1_pa);
 
@@ -835,10 +835,10 @@ smmu_set_l2(struct smmu_domain *dom, uint64_t va, struct smmuvp1 *vp1,
 	int idx1;
 
 	if (pmap_extract(pmap_kernel(), (vaddr_t)l2_va, &l2_pa) == 0)
-		panic("unable to find vp pa mapping %p\n", l2_va);
+		panic("unable to find vp pa mapping %p", l2_va);
 
 	if (l2_pa & (Lx_TABLE_ALIGN-1))
-		panic("misaligned L2 table\n");
+		panic("misaligned L2 table");
 
 	pg_entry = VP_Lx(l2_pa);
 
@@ -856,10 +856,10 @@ smmu_set_l3(struct smmu_domain *dom, uint64_t va, struct smmuvp2 *vp2,
 	int idx2;
 
 	if (pmap_extract(pmap_kernel(), (vaddr_t)l3_va, &l3_pa) == 0)
-		panic("unable to find vp pa mapping %p\n", l3_va);
+		panic("unable to find vp pa mapping %p", l3_va);
 
 	if (l3_pa & (Lx_TABLE_ALIGN-1))
-		panic("misaligned L2 table\n");
+		panic("misaligned L2 table");
 
 	pg_entry = VP_Lx(l3_pa);
 

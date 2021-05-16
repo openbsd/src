@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.130 2020/07/10 13:26:37 patrick Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.131 2021/05/16 15:10:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -6214,7 +6214,7 @@ bwi_setup_desc32(struct bwi_softc *sc, struct bwi_desc32 *desc_array,
 	uint32_t ctrl, addr, addr_hi, addr_lo;
 
 	if (sc->sc_bus_space == BWI_BUS_SPACE_30BIT && paddr >= 0x40000000)
-		panic("bad paddr 0x%lx\n", (long)paddr);
+		panic("bad paddr 0x%lx", (long)paddr);
 
 	addr_lo = __SHIFTOUT(paddr, BWI_DESC32_A_ADDR_MASK);
 	addr_hi = __SHIFTOUT(paddr, BWI_DESC32_A_FUNC_MASK);

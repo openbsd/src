@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.152 2021/05/05 07:29:01 mpi Exp $	*/
+/*	$OpenBSD: trap.c,v 1.153 2021/05/16 15:10:19 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -211,7 +211,7 @@ kpageflttrap(struct trapframe *frame, uint32_t cr2)
 	if (error) {
 		if (pcb->pcb_onfault == NULL) {
 			/* bad memory access in the kernel */
-			panic("uvm_fault(%p, 0x%lx, 0, %d) -> %x\n",
+			panic("uvm_fault(%p, 0x%lx, 0, %d) -> %x",
 			    map, va, access_type, error);
 			return 0;
 		}

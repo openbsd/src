@@ -1,4 +1,4 @@
-/* $OpenBSD: prcm.c,v 1.16 2021/03/25 04:12:01 jsg Exp $ */
+/* $OpenBSD: prcm.c,v 1.17 2021/05/16 15:10:19 deraadt Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -332,7 +332,7 @@ prcm_v3_bit(int mod)
 	case PRCM_I2C2:
 		return PRCM_CLK_EN_I2C3;
 	default:
-		panic("%s: module not found\n", __func__);
+		panic("%s: module not found", __func__);
 	}
 }
 
@@ -379,7 +379,7 @@ prcm_am335x_clkctrl(int mod)
 	case PRCM_RNG:
 		return PRCM_AM335X_RNG_CLKCTRL;
 	default:
-		panic("%s: module not found\n", __func__);
+		panic("%s: module not found", __func__);
 	}
 }
 
@@ -475,7 +475,7 @@ prcm_v4_enablemodule(struct prcm_softc *sc, int mod)
 			/* XXX */
 			break;
 	default:
-		panic("%s: module not found\n", __func__);
+		panic("%s: module not found", __func__);
 	}
 }
 
