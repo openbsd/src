@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.77 2021/05/16 15:10:19 deraadt Exp $ */
+/* $OpenBSD: pmap.c,v 1.78 2021/05/16 17:41:30 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -1857,13 +1857,6 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype)
 	/* If it's unmanaged, it must not fault. */
 	pg = PHYS_TO_VM_PAGE(pa);
 	if (pg == NULL)
-		goto done;
-
-	/*
-	 * Check based on fault type for mod/ref emulation.
-	 * if L3 entry is zero, it is not a possible fixup
-	 */
-	if (*pl3 == 0)
 		goto done;
 
 	/*
