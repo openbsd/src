@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.arm64,v 1.37 2021/01/28 17:39:02 deraadt Exp $
+#	$OpenBSD: Makefile.arm64,v 1.38 2021/05/16 02:01:33 jsg Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -184,21 +184,5 @@ install: update-link hardlink-obsd newinstall
 .  endif
 . endfor
 .endif
-
-## for qemu this is where ram is located
-RAM_ADDR?=0x40000000
-#KERNEL_LOAD_ADDR!=echo "x = hex(${KERNEL_BASE_PHYS} + ${RAM_ADDR}); print x" | python
-KERNEL_LOAD_ADDR=0x40200000
-
-# until we get native booting working, put this in the tree.
-bsdrd.umg: bsd.rd
-	mkuboot -a arm -o linux -e ${KERNEL_LOAD_ADDR} -l ${KERNEL_LOAD_ADDR} bsd.rd bsdrd.umg
-
-bsd.umg: bsd
-	mkuboot -a arm -o linux -e ${KERNEL_LOAD_ADDR} -l ${KERNEL_LOAD_ADDR} bsd bsd.umg
-
-bsd.rd: bsd
-	cp -p bsd bsd.rd
-	rdconfig bsd.rd $S/../distrib/${_mach}/ramdisk/mr.fs
 
 %RULES
