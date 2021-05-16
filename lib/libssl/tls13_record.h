@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record.h,v 1.3 2019/01/21 00:24:19 jsing Exp $ */
+/* $OpenBSD: tls13_record.h,v 1.4 2021/05/16 14:20:29 jsing Exp $ */
 /*
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -19,7 +19,6 @@
 #define HEADER_TLS13_RECORD_H
 
 #include "bytestring.h"
-#include "tls13_internal.h"
 
 __BEGIN_HIDDEN_DECLS
 
