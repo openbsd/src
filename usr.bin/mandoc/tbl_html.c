@@ -1,7 +1,7 @@
-/*	$OpenBSD: tbl_html.c,v 1.28 2019/03/17 18:20:07 schwarze Exp $ */
+/*	$OpenBSD: tbl_html.c,v 1.29 2021/05/16 18:08:37 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2014, 2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2014,2015,2017,2018,2021 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -117,6 +117,7 @@ print_tbl(struct html *h, const struct tbl_span *sp)
 	const char		*hspans, *vspans, *halign, *valign;
 	const char		*bborder, *lborder, *rborder;
 	char			 hbuf[4], vbuf[4];
+	enum mandoc_esc		 save_font;
 	int			 i;
 
 	if (h->tblt == NULL)
@@ -238,8 +239,15 @@ print_tbl(struct html *h, const struct tbl_span *sp)
 		    "vertical-align", valign,
 		    "text-align", halign,
 		    "border-right-style", rborder);
-		if (dp->string != NULL)
+		if (dp->string != NULL) {
+			save_font = h->metac;
+			if (dp->layout->flags & TBL_CELL_BOLD)
+				html_setfont(h, ESCAPE_FONTBOLD);
+			else if (dp->layout->flags & TBL_CELL_ITALIC)
+				html_setfont(h, ESCAPE_FONTITALIC);
 			print_text(h, dp->string);
+			html_setfont(h, save_font);
+		}
 	}
 
 	print_tagq(h, tt);

@@ -1,4 +1,4 @@
-/* $OpenBSD: html.c,v 1.142 2020/10/16 17:22:38 schwarze Exp $ */
+/* $OpenBSD: html.c,v 1.143 2021/05/16 18:08:37 schwarze Exp $ */
 /*
  * Copyright (c) 2011-2015, 2017-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -138,6 +138,7 @@ html_alloc(const struct manoutput *outopts)
 	h = mandoc_calloc(1, sizeof(struct html));
 
 	h->tag = NULL;
+	h->metac = h->metal = ESCAPE_FONTROMAN;
 	h->style = outopts->style;
 	if ((h->base_man1 = outopts->man) == NULL)
 		h->base_man2 = NULL;
