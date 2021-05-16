@@ -1,4 +1,4 @@
-/* $OpenBSD: tls12_record_layer.c,v 1.28 2021/05/05 19:52:00 jsing Exp $ */
+/* $OpenBSD: tls12_record_layer.c,v 1.29 2021/05/16 15:21:10 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -48,23 +48,17 @@ tls12_record_protection_new(void)
 static void
 tls12_record_protection_clear(struct tls12_record_protection *rp)
 {
-	memset(rp->seq_num, 0, sizeof(rp->seq_num));
-
 	if (rp->aead_ctx != NULL) {
 		EVP_AEAD_CTX_cleanup(&rp->aead_ctx->ctx);
 		freezero(rp->aead_ctx, sizeof(*rp->aead_ctx));
-		rp->aead_ctx = NULL;
 	}
 
 	EVP_CIPHER_CTX_free(rp->cipher_ctx);
-	rp->cipher_ctx = NULL;
-
 	EVP_MD_CTX_free(rp->hash_ctx);
-	rp->hash_ctx = NULL;
 
 	freezero(rp->mac_key, rp->mac_key_len);
-	rp->mac_key = NULL;
-	rp->mac_key_len = 0;
+
+	memset(rp, 0, sizeof(*rp));
 }
 
 static void
