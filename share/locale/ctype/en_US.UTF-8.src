@@ -1,4 +1,4 @@
-/*	$OpenBSD: en_US.UTF-8.src,v 1.11 2021/05/16 22:38:31 afresh1 Exp $	*/
+/*	$OpenBSD: en_US.UTF-8.src,v 1.12 2021/05/16 22:48:05 afresh1 Exp $	*/
 
 /*
  * COPYRIGHT AND PERMISSION NOTICE
@@ -6458,7 +6458,7 @@ SWIDTH0   0xe0100 - 0xe01ef
 GRAPH     0xf0000 - 0xffffd
 PRINT     0xf0000 - 0xffffd
 SPECIAL   0xf0000 - 0xffffd
-SWIDTH0   0xf0000 - 0xffffd
+SWIDTH1   0xf0000 - 0xffffd
 
 
 /*
@@ -6468,7 +6468,7 @@ SWIDTH0   0xf0000 - 0xffffd
 GRAPH     0x100000 - 0x10fffd
 PRINT     0x100000 - 0x10fffd
 SPECIAL   0x100000 - 0x10fffd
-SWIDTH0   0x100000 - 0x10fffd
+SWIDTH1   0x100000 - 0x10fffd
 
 
 /*
