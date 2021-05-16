@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwgpio.c,v 1.2 2020/12/07 17:34:49 gnezdo Exp $	*/
+/*	$OpenBSD: dwgpio.c,v 1.3 2021/05/16 08:50:59 jsg Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis
  *
@@ -90,7 +90,7 @@ const char *dwgpio_hids[] = {
 int	dwgpio_found_hid(struct aml_node *, void *);
 int	dwgpio_read_pin(void *, int);
 void	dwgpio_write_pin(void *, int, int);
-void	dwgpio_intr_establish(void *, int, int, int (*)(), void *);
+void	dwgpio_intr_establish(void *, int, int, int (*)(void *), void *);
 int	dwgpio_pin_intr(struct dwgpio_softc *, int);
 int	dwgpio_intr(void *);
 

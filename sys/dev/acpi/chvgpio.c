@@ -1,4 +1,4 @@
-/*	$OpenBSD: chvgpio.c,v 1.9 2020/05/22 10:16:37 kettenis Exp $	*/
+/*	$OpenBSD: chvgpio.c,v 1.10 2021/05/16 08:50:59 jsg Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -145,7 +145,7 @@ const int chv_southeast_pins[] = {
 int	chvgpio_check_pin(struct chvgpio_softc *, int);
 int	chvgpio_read_pin(void *, int);
 void	chvgpio_write_pin(void *, int, int);
-void	chvgpio_intr_establish(void *, int, int, int (*)(), void *);
+void	chvgpio_intr_establish(void *, int, int, int (*)(void *), void *);
 int	chvgpio_intr(void *);
 int	chvgpio_opreg_handler(void *, int, uint64_t, int, uint64_t *);
 

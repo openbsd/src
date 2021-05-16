@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytgpio.c,v 1.14 2020/05/22 10:16:37 kettenis Exp $	*/
+/*	$OpenBSD: bytgpio.c,v 1.15 2021/05/16 08:50:59 jsg Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -101,7 +101,7 @@ const int byt_sus_pins[] = {
 
 int	bytgpio_read_pin(void *, int);
 void	bytgpio_write_pin(void *, int, int);
-void	bytgpio_intr_establish(void *, int, int, int (*)(), void *);
+void	bytgpio_intr_establish(void *, int, int, int (*)(void *), void *);
 int	bytgpio_intr(void *);
 
 int

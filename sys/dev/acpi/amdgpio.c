@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdgpio.c,v 1.4 2020/06/20 18:06:22 krw Exp $	*/
+/*	$OpenBSD: amdgpio.c,v 1.5 2021/05/16 08:50:59 jsg Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  * Copyright (c) 2019 James Hastings
@@ -83,7 +83,7 @@ const char *amdgpio_hids[] = {
 
 int	amdgpio_read_pin(void *, int);
 void	amdgpio_write_pin(void *, int, int);
-void	amdgpio_intr_establish(void *, int, int, int (*)(), void *);
+void	amdgpio_intr_establish(void *, int, int, int (*)(void *), void *);
 int	amdgpio_pin_intr(struct amdgpio_softc *, int);
 int	amdgpio_intr(void *);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchgpio.c,v 1.1 2020/11/15 16:47:12 kettenis Exp $	*/
+/*	$OpenBSD: pchgpio.c,v 1.2 2021/05/16 08:50:59 jsg Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis
  * Copyright (c) 2020 James Hastings
@@ -134,7 +134,7 @@ struct pchgpio_match pchgpio_devices[] = {
 
 int	pchgpio_read_pin(void *, int);
 void	pchgpio_write_pin(void *, int, int);
-void	pchgpio_intr_establish(void *, int, int, int (*)(), void *);
+void	pchgpio_intr_establish(void *, int, int, int (*)(void *), void *);
 int	pchgpio_intr(void *);
 
 int
