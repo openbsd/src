@@ -1,4 +1,4 @@
-/*	$OpenBSD: ptrace.c,v 1.9 2020/07/06 07:31:51 kettenis Exp $	*/
+/*	$OpenBSD: ptrace.c,v 1.10 2021/05/17 15:28:24 deraadt Exp $	*/
 /*
  * Copyright (c) 2004, Mark Kettenis.
  * Copyright (c) 2004, Miodrag Vallat.
@@ -77,6 +77,8 @@ main(void)
 		regs.r_pc |= 0x03;
 #elif defined(__powerpc__)
 		regs.pc |= 0x03;
+#elif defined(__riscv)
+		regs.r_sepc |= 0x01;
 #elif defined(__sh__)
 		regs.r_spc |= 0x01;
 #elif defined( __sparcv9__)
