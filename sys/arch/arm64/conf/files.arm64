@@ -1,4 +1,4 @@
-# $OpenBSD: files.arm64,v 1.38 2021/02/28 21:40:11 patrick Exp $
+# $OpenBSD: files.arm64,v 1.39 2021/05/17 19:43:38 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 128
@@ -155,10 +155,6 @@ file	arch/arm64/dev/aplpcie.c		aplpcie
 device	bcmintc
 attach	bcmintc at fdt
 file	arch/arm64/dev/bcm2836_intr.c		bcmintc
-
-device	pciecam: pcibus
-attach	pciecam at fdt
-file	arch/arm64/dev/pciecam.c		pciecam
 
 device	smmu
 attach	smmu at fdt with smmu_fdt
