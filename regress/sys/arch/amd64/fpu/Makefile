@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.2 2020/12/17 00:51:12 bluhm Exp $
+# $OpenBSD: Makefile,v 1.3 2021/05/17 13:54:42 bluhm Exp $
 
 PROGS =		fenv fdump fdfl feget fxproc0
 SRCS_fenv =	fenv.S
-LDADD_fenv =	-nostdlib -nopie
+LDADD_fenv =	-nopie -nostdlib -static
 LDADD_fdfl =	-lm
 LDADD_feget =	-lm
 LDADD_fxproc0 =	-lkvm
