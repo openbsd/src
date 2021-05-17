@@ -1,4 +1,4 @@
-/*	$Id: extern.h,v 1.36 2021/03/31 19:45:16 job Exp $ */
+/*	$Id: extern.h,v 1.37 2021/05/17 11:54:14 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -40,6 +40,19 @@
  */
 #define	CSUM_LENGTH_PHASE1 (2)
 #define	CSUM_LENGTH_PHASE2 (16)
+
+/*
+ * Rsync error codes.
+ */
+#define ERR_SYNTAX	1
+#define ERR_PROTOCOL	2
+#define ERR_SOCK_IO	10
+#define ERR_FILE_IO	11
+#define ERR_WIREPROTO	12
+#define ERR_IPC		14	/* catchall for any kind of syscall error */
+#define ERR_TERMIMATED	16
+#define ERR_WAITPID	21
+#define ERR_NOMEM	22
 
 /*
  * Use this for --timeout.
