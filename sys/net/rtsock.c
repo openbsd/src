@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.314 2021/05/17 17:06:51 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.315 2021/05/17 17:58:35 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -124,12 +124,10 @@ int	rtm_getifa(struct rt_addrinfo *, unsigned int);
 int	rtm_output(struct rt_msghdr *, struct rtentry **, struct rt_addrinfo *,
 	    uint8_t, unsigned int);
 struct rt_msghdr *rtm_report(struct rtentry *, u_char, int, int);
-int		 rtm_embedscope(struct sockaddr *);
-void		 rtm_recoverscope(struct sockaddr *);
-int		 rtm_xaddrs(caddr_t, caddr_t, struct rt_addrinfo *);
 struct mbuf	*rtm_msg1(int, struct rt_addrinfo *);
 int		 rtm_msg2(int, int, struct rt_addrinfo *, caddr_t,
 		     struct walkarg *);
+int		 rtm_xaddrs(caddr_t, caddr_t, struct rt_addrinfo *);
 int		 rtm_validate_proposal(struct rt_addrinfo *);
 void		 rtm_setmetrics(u_long, const struct rt_metrics *,
 		     struct rt_kmetrics *);
@@ -1381,47 +1379,6 @@ rtm_getmetrics(const struct rt_kmetrics *in, struct rt_metrics *out)
 	out->rmx_pksent = in->rmx_pksent;
 }
 
-int
-rtm_embedscope(struct sockaddr *sa)
-{
-#ifdef INET6
-	struct sockaddr_in6 *sin6;
-	struct in6_addr in6;
-	int error;
-
-	if (sa->sa_family == AF_INET6) {
-		sin6 = satosin6(sa);
-		if (IN6_IS_SCOPE_EMBED(&sin6->sin6_addr)) {
-			error = in6_embedscope(&in6, sin6, NULL);
-			if (error)
-				return error;
-			sin6->sin6_addr = in6;
-			sin6->sin6_scope_id = 0;
-		}
-	}
-#endif
-	return 0;
-}
-void
-rtm_recoverscope(struct sockaddr *sa)
-{
-#ifdef INET6
-	struct sockaddr_in6 *sin6;
-
-	if (sa->sa_family == AF_INET6) {
-		sin6 = satosin6(sa);
-		if (IN6_IS_SCOPE_EMBED(&sin6->sin6_addr) &&
-		    sin6->sin6_scope_id == 0) {
-			u_int32_t scopeid = ntohs(sin6->sin6_addr.s6_addr16[1]);
-			if (scopeid) {
-				sin6->sin6_addr.s6_addr16[1] = 0;
-				sin6->sin6_scope_id = scopeid;
-			}
-		}
-	}
-#endif
-}
-
 #define ROUNDUP(a) \
 	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 #define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
@@ -1430,7 +1387,7 @@ int
 rtm_xaddrs(caddr_t cp, caddr_t cplim, struct rt_addrinfo *rtinfo)
 {
 	struct sockaddr	*sa;
-	int		 i, error;
+	int		 i;
 
 	/*
 	 * Parse address bits, split address storage in chunks, and
@@ -1561,9 +1518,8 @@ rtm_xaddrs(caddr_t cp, caddr_t cplim, struct rt_addrinfo *rtinfo)
 			len = strnlen(sa->sa_data, maxlen);
 			if (len >= maxlen || 2 + len >= sa->sa_len)
 				return (EINVAL);
+			break;
 		}
-		if ((error = rtm_embedscope(sa)) != 0)
-			return (error);
 	}
 	return (0);
 }
@@ -1580,31 +1536,25 @@ rtm_msg1(int type, struct rt_addrinfo *rtinfo)
 	switch (type) {
 	case RTM_DELADDR:
 	case RTM_NEWADDR:
-		hlen = sizeof(struct ifa_msghdr);
+		len = sizeof(struct ifa_msghdr);
 		break;
 	case RTM_IFINFO:
-		hlen = sizeof(struct if_msghdr);
+		len = sizeof(struct if_msghdr);
 		break;
 	case RTM_IFANNOUNCE:
-		hlen = sizeof(struct if_announcemsghdr);
+		len = sizeof(struct if_announcemsghdr);
 		break;
 #ifdef BFD
 	case RTM_BFD:
-		hlen = sizeof(struct bfd_msghdr);
+		len = sizeof(struct bfd_msghdr);
 		break;
 #endif
 	case RTM_80211INFO:
-		hlen = sizeof(struct if_ieee80211_msghdr);
+		len = sizeof(struct if_ieee80211_msghdr);
 		break;
 	default:
-		hlen = sizeof(struct rt_msghdr);
+		len = sizeof(struct rt_msghdr);
 		break;
-	}
-	len = hlen;
-	for (i = 0; i < RTAX_MAX; i++) {
-		if (rtinfo == NULL || (sa = rtinfo->rti_info[i]) == NULL)
-			continue;
-		len += ROUNDUP(sa->sa_len);
 	}
 	if (len > MCLBYTES)
 		panic("rtm_msg1");
@@ -1618,23 +1568,19 @@ rtm_msg1(int type, struct rt_addrinfo *rtinfo)
 	}
 	if (m == NULL)
 		return (m);
-	m->m_pkthdr.len = m->m_len = len;
+	m->m_pkthdr.len = m->m_len = hlen = len;
 	m->m_pkthdr.ph_ifidx = 0;
 	rtm = mtod(m, struct rt_msghdr *);
 	bzero(rtm, len);
-	len = hlen;
 	for (i = 0; i < RTAX_MAX; i++) {
-		caddr_t cp;
 		if (rtinfo == NULL || (sa = rtinfo->rti_info[i]) == NULL)
 			continue;
 		rtinfo->rti_addrs |= (1 << i);
 		dlen = ROUNDUP(sa->sa_len);
-		if (m_copyback(m, len, sa->sa_len, sa, M_NOWAIT)) {
+		if (m_copyback(m, len, dlen, sa, M_NOWAIT)) {
 			m_freem(m);
 			return (NULL);
 		}
-		cp = mtod(m, caddr_t) + len;
-		rtm_recoverscope((struct sockaddr *)cp);
 		len += dlen;
 	}
 	rtm->rtm_msglen = len;
@@ -1677,9 +1623,7 @@ again:
 		rtinfo->rti_addrs |= (1 << i);
 		dlen = ROUNDUP(sa->sa_len);
 		if (cp) {
-			bcopy(sa, cp, sa->sa_len);
-			bzero(cp + sa->sa_len, dlen - sa->sa_len);
-			rtm_recoverscope((struct sockaddr *)cp);
+			bcopy(sa, cp, (size_t)dlen);
 			cp += dlen;
 		}
 		len += dlen;
