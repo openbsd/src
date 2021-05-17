@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.2 2021/05/09 21:26:06 drahn Exp $	*/
+/*	$OpenBSD: setjmp.S,v 1.3 2021/05/17 15:06:09 deraadt Exp $	*/
 /* 
  * Copyright (c) 2020 Dale Rahn <drahn@openbsd.org>
  *
@@ -19,7 +19,6 @@
 #include <machine/setjmp.h>
 
 ENTRY(setjmp)
-
 	RETGUARD_SETUP(setjmp, t6)
 	mv	a2, a0 				/* save jmpbuf in a2 */
 	/* Store the signal mask */
