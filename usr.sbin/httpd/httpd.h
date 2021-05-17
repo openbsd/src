@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.156 2021/04/20 21:11:56 dv Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.157 2021/05/17 09:26:52 florian Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -300,6 +300,7 @@ struct fcgi_data {
 	int			 end;
 	int			 status;
 	int			 headersdone;
+	int			 headerssent;
 };
 
 struct range {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.85 2021/05/15 15:08:31 florian Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.86 2021/05/17 09:26:52 florian Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -114,6 +114,7 @@ server_fcgi(struct httpd *env, struct client *clt)
 	clt->clt_fcgi.toread = sizeof(struct fcgi_record_header);
 	clt->clt_fcgi.status = 200;
 	clt->clt_fcgi.headersdone = 0;
+	clt->clt_fcgi.headerssent = 0;
 
 	if (clt->clt_srvevb != NULL)
 		evbuffer_free(clt->clt_srvevb);
@@ -544,22 +545,20 @@ server_fcgi_read(struct bufferevent *bev, void *arg)
 				if (!clt->clt_fcgi.headersdone) {
 					clt->clt_fcgi.headersdone =
 					    server_fcgi_getheaders(clt);
-					if (clt->clt_fcgi.headersdone) {
-						if (server_fcgi_header(clt,
-						    clt->clt_fcgi.status)
-						    == -1) {
-							server_abort_http(clt,
-							    500,
-							    "malformed fcgi "
-							    "headers");
-							return;
-						}
-					}
 					if (!EVBUFFER_LENGTH(clt->clt_srvevb))
 						break;
 				}
 				/* FALLTHROUGH */
 			case FCGI_END_REQUEST:
+				if (clt->clt_fcgi.headersdone &&
+				    !clt->clt_fcgi.headerssent) {
+					if (server_fcgi_header(clt,
+					    clt->clt_fcgi.status) == -1) {
+						server_abort_http(clt, 500,
+						    "malformed fcgi headers");
+						return;
+					}
+				}
 				if (server_fcgi_writechunk(clt) == -1) {
 					server_abort_http(clt, 500,
 					    "encoding error");
@@ -600,6 +599,8 @@ server_fcgi_header(struct client *clt, unsigned int code)
 	char			 tmbuf[32];
 	struct kv		*kv, *cl, key;
 
+	clt->clt_fcgi.headerssent = 1;
+
 	if (desc == NULL || (error = server_httperror_byid(code)) == NULL)
 		return (-1);
 
@@ -614,6 +615,12 @@ server_fcgi_header(struct client *clt, unsigned int code)
 	/* Add headers */
 	if (kv_add(&resp->http_headers, "Server", HTTPD_SERVERNAME) == NULL)
 		return (-1);
+
+	if (clt->clt_fcgi.type == FCGI_END_REQUEST ||
+	    EVBUFFER_LENGTH(clt->clt_srvevb) == 0) {
+		/* Can't chunk encode an empty body. */
+		clt->clt_fcgi.chunked = 0;
+	}
 
 	/* Set chunked encoding */
 	if (clt->clt_fcgi.chunked) {
