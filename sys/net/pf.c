@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1116 2021/04/27 09:38:29 sashan Exp $ */
+/*	$OpenBSD: pf.c,v 1.1117 2021/05/17 23:01:26 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -7373,14 +7373,21 @@ pf_state_key_link_reverse(struct pf_state_key *sk, struct pf_state_key *skrev)
 	old_reverse = atomic_cas_ptr(&sk->reverse, NULL, skrev);
 	if (old_reverse != NULL)
 		KASSERT(old_reverse == skrev);
-	else
+	else {
 		pf_state_key_ref(skrev);
 
-	old_reverse = atomic_cas_ptr(&skrev->reverse, NULL, sk);
-	if (old_reverse != NULL)
-		KASSERT(old_reverse == sk);
-	else
+		/*
+		 * NOTE: if sk == skrev, then KASSERT() below holds true, we
+		 * still want to grab a reference in such case, because
+		 * pf_state_key_unlink_reverse() does not check whether keys
+		 * are identical or not.
+		 */
+		old_reverse = atomic_cas_ptr(&skrev->reverse, NULL, sk);
+		if (old_reverse != NULL)
+			KASSERT(old_reverse == sk);
+
 		pf_state_key_ref(sk);
+	}
 }
 
 #if NPFLOG > 0
