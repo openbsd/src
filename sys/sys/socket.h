@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.99 2020/10/29 21:15:27 denis Exp $	*/
+/*	$OpenBSD: socket.h,v 1.100 2021/05/17 17:54:31 claudio Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -380,6 +380,34 @@ struct sockpeercred {
 	{ "table", CTLTYPE_STRUCT }, \
 	{ "ifnames", CTLTYPE_STRUCT }, \
 	{ "source", CTLTYPE_STRUCT }, \
+}
+
+/*
+ * PF_UNIX - unix socket tunables
+ */
+#define NET_UNIX_INFLIGHT	6
+#define NET_UNIX_DEFERRED	7
+#define NET_UNIX_MAXID		8
+
+#define CTL_NET_UNIX_NAMES { \
+	{ 0, 0 }, \
+	{ "stream", CTLTYPE_NODE }, \
+	{ "dgram", CTLTYPE_NODE }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ "seqpacket", CTLTYPE_NODE }, \
+	{ "inflight", CTLTYPE_INT }, \
+	{ "deferred", CTLTYPE_INT }, \
+}
+
+#define UNPCTL_RECVSPACE	1
+#define UNPCTL_SENDSPACE	2
+#define NET_UNIX_PROTO_MAXID	3
+
+#define CTL_NET_UNIX_PROTO_NAMES { \
+	{ 0, 0 }, \
+	{ "recvspace", CTLTYPE_INT }, \
+	{ "sendspace", CTLTYPE_INT }, \
 }
 
 /*

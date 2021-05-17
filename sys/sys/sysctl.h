@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.217 2021/05/04 21:57:15 bluhm Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.218 2021/05/17 17:54:31 claudio Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -1076,6 +1076,7 @@ int pflow_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 int pipex_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 int mpls_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 int pf_sysctl(void *, size_t *, void *, size_t);
+int uipc_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 
 #else	/* !_KERNEL */
 
