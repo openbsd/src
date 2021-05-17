@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.235 2021/05/17 08:02:20 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.236 2021/05/17 11:44:22 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -703,6 +703,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 	if_input(ifp, &ml);
 }
 
+#ifdef notyet
 /*
  * Handle defragmentation (see 9.5 and Annex C).  We support the concurrent
  * reception of fragments of three fragmented MSDUs or MMPDUs.
@@ -792,6 +793,7 @@ ieee80211_defrag_timeout(void *arg)
 
 	splx(s);
 }
+#endif
 
 /*
  * Process a received data MPDU related to a specific HT-immediate Block Ack

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.103 2021/04/29 21:43:47 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.104 2021/05/17 11:44:22 stsp Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -332,8 +332,10 @@ struct ieee80211com {
 	enum ieee80211_cipher	ic_rsngroupcipher;
 	enum ieee80211_cipher	ic_rsngroupmgmtcipher;
 
+#ifdef notyet
 	struct ieee80211_defrag	ic_defrag[IEEE80211_DEFRAG_SIZE];
 	int			ic_defrag_cur;
+#endif
 
 	u_int8_t		*ic_tim_bitmap;
 	u_int			ic_tim_len;
