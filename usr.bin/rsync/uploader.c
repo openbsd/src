@@ -1,4 +1,4 @@
-/*	$Id: uploader.c,v 1.27 2021/05/17 12:11:05 claudio Exp $ */
+/*	$Id: uploader.c,v 1.28 2021/05/17 12:15:48 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2019 Florian Obser <florian@openbsd.org>
@@ -194,6 +194,11 @@ pre_link(struct upload *p, struct sess *sess)
 
 	assert(p->rootfd != -1);
 	rc = fstatat(p->rootfd, f->path, &st, AT_SYMLINK_NOFOLLOW);
+
+	if (rc == -1 && errno != ENOENT) {
+		ERR("%s: fstatat", f->path);
+		return -1;
+	}
 	if (rc != -1 && !S_ISLNK(st.st_mode)) {
 		if (S_ISDIR(st.st_mode) &&
 		    unlinkat(p->rootfd, f->path, AT_REMOVEDIR) == -1) {
@@ -201,9 +206,6 @@ pre_link(struct upload *p, struct sess *sess)
 			return -1;
 		}
 		rc = -1;
-	} else if (rc == -1 && errno != ENOENT) {
-		ERR("%s: fstatat", f->path);
-		return -1;
 	}
 
 	/*
@@ -297,6 +299,10 @@ pre_dev(struct upload *p, struct sess *sess)
 	assert(p->rootfd != -1);
 	rc = fstatat(p->rootfd, f->path, &st, AT_SYMLINK_NOFOLLOW);
 
+	if (rc == -1 && errno != ENOENT) {
+		ERR("%s: fstatat", f->path);
+		return -1;
+	}
 	if (rc != -1 && !(S_ISBLK(st.st_mode) || S_ISCHR(st.st_mode))) {
 		if (S_ISDIR(st.st_mode) &&
 		    unlinkat(p->rootfd, f->path, AT_REMOVEDIR) == -1) {
@@ -304,9 +310,6 @@ pre_dev(struct upload *p, struct sess *sess)
 			return -1;
 		}
 		rc = -1;
-	} else if (rc == -1 && errno != ENOENT) {
-		ERR("%s: fstatat", f->path);
-		return -1;
 	}
 
 	/* Make sure existing device is of the correct type. */
@@ -385,6 +388,10 @@ pre_fifo(struct upload *p, struct sess *sess)
 	assert(p->rootfd != -1);
 	rc = fstatat(p->rootfd, f->path, &st, AT_SYMLINK_NOFOLLOW);
 
+	if (rc == -1 && errno != ENOENT) {
+		ERR("%s: fstatat", f->path);
+		return -1;
+	}
 	if (rc != -1 && !S_ISFIFO(st.st_mode)) {
 		if (S_ISDIR(st.st_mode) &&
 		    unlinkat(p->rootfd, f->path, AT_REMOVEDIR) == -1) {
@@ -392,9 +399,6 @@ pre_fifo(struct upload *p, struct sess *sess)
 			return -1;
 		}
 		rc = -1;
-	} else if (rc == -1 && errno != ENOENT) {
-		ERR("%s: fstatat", f->path);
-		return -1;
 	}
 
 	if (rc == -1) {
@@ -461,6 +465,10 @@ pre_sock(struct upload *p, struct sess *sess)
 	assert(p->rootfd != -1);
 	rc = fstatat(p->rootfd, f->path, &st, AT_SYMLINK_NOFOLLOW);
 
+	if (rc == -1 && errno != ENOENT) {
+		ERR("%s: fstatat", f->path);
+		return -1;
+	}
 	if (rc != -1 && !S_ISSOCK(st.st_mode)) {
 		if (S_ISDIR(st.st_mode) &&
 		    unlinkat(p->rootfd, f->path, AT_REMOVEDIR) == -1) {
@@ -468,9 +476,6 @@ pre_sock(struct upload *p, struct sess *sess)
 			return -1;
 		}
 		rc = -1;
-	} else if (rc == -1 && errno != ENOENT) {
-		ERR("%s: fstatat", f->path);
-		return -1;
 	}
 
 	if (rc == -1) {
@@ -533,7 +538,8 @@ pre_dir(const struct upload *p, struct sess *sess)
 	if (rc == -1 && errno != ENOENT) {
 		ERR("%s: fstatat", f->path);
 		return -1;
-	} else if (rc != -1 && !S_ISDIR(st.st_mode)) {
+	}
+	if (rc != -1 && !S_ISDIR(st.st_mode)) {
 		ERRX("%s: not a directory", f->path);
 		return -1;
 	} else if (rc != -1) {
@@ -674,7 +680,7 @@ pre_file(const struct upload *p, int *filefd, struct stat *st,
 		ERR("%s: fstatat", f->path);
 		return -1;
 	}
-	if (rc != -1 && !S_ISREG(st->st_mode)) {
+	if (!S_ISREG(st->st_mode)) {
 		if (S_ISDIR(st->st_mode) &&
 		    unlinkat(p->rootfd, f->path, AT_REMOVEDIR) == -1) {
 			ERR("%s: unlinkat", f->path);
@@ -683,6 +689,7 @@ pre_file(const struct upload *p, int *filefd, struct stat *st,
 		return 1;
 	}
 
+	/* quick check if file is the same */
 	if (st->st_size == f->st.size &&
 	    st->st_mtime == f->st.mtime) {
 		LOG3("%s: skipping: up to date", f->path);
