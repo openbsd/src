@@ -1,4 +1,4 @@
-/* $OpenBSD: misc.c,v 1.2 2021/03/22 11:14:42 claudio Exp $ */
+/* $OpenBSD: misc.c,v 1.3 2021/05/17 12:02:58 claudio Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2005,2006 Damien Miller.  All rights reserved.
@@ -45,7 +45,7 @@ addargs(arglist *args, const char *fmt, ...)
 	r = vasprintf(&cp, fmt, ap);
 	va_end(ap);
 	if (r == -1)
-		err(1, "addargs: argument too long");
+		err(ERR_NOMEM, "addargs: argument too long");
 
 	nalloc = args->nalloc;
 	if (args->list == NULL) {
@@ -54,9 +54,10 @@ addargs(arglist *args, const char *fmt, ...)
 	} else if (args->num+2 >= nalloc)
 		nalloc *= 2;
 
-	args->list = recallocarray(args->list, args->nalloc, nalloc, sizeof(char *));
+	args->list = recallocarray(args->list, args->nalloc, nalloc,
+	    sizeof(char *));
 	if (!args->list)
-		err(1, "malloc");
+		err(ERR_NOMEM, NULL);
 	args->nalloc = nalloc;
 	args->list[args->num++] = cp;
 	args->list[args->num] = NULL;

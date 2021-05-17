@@ -1,4 +1,4 @@
-/*	$Id: fargs.c,v 1.17 2019/05/08 20:00:25 benno Exp $ */
+/*	$Id: fargs.c,v 1.18 2021/05/17 12:02:58 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -17,6 +17,7 @@
 #include <sys/stat.h>
 
 #include <assert.h>
+#include <err.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -51,7 +52,7 @@ fargs_cmdline(struct sess *sess, const struct fargs *f, size_t *skip)
 		if (sess->opts->ssh_prog) {
 			ap = strdup(sess->opts->ssh_prog);
 			if (ap == NULL)
-				goto out;
+				err(ERR_NOMEM, NULL);
 
 			while ((arg = strsep(&ap, " \t")) != NULL) {
 				if (arg[0] == '\0') {
@@ -127,8 +128,4 @@ fargs_cmdline(struct sess *sess, const struct fargs *f, size_t *skip)
 		addargs(&args, "%s", f->sink);
 
 	return args.list;
-out:
-	freeargs(&args);
-	ERR("calloc");
-	return NULL;
 }

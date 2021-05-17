@@ -1,4 +1,4 @@
-/*	$Id: socket.c,v 1.29 2021/03/31 19:45:16 job Exp $ */
+/*	$Id: socket.c,v 1.30 2021/05/17 12:02:58 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -281,7 +281,7 @@ rsync_connect(const struct opts *opts, int *sd, const struct fargs *f)
 
 	if (pledge("stdio unix rpath wpath cpath dpath inet fattr chown dns getpw unveil",
 	    NULL) == -1)
-		err(1, "pledge");
+		err(ERR_IPC, "pledge");
 
 	memset(&sess, 0, sizeof(struct sess));
 	sess.opts = opts;
@@ -365,7 +365,7 @@ rsync_socket(const struct opts *opts, int sd, const struct fargs *f)
 
 	if (pledge("stdio unix rpath wpath cpath dpath fattr chown getpw unveil",
 	    NULL) == -1)
-		err(1, "pledge");
+		err(ERR_IPC, "pledge");
 
 	memset(&sess, 0, sizeof(struct sess));
 	sess.lver = RSYNC_PROTOCOL;
@@ -374,10 +374,7 @@ rsync_socket(const struct opts *opts, int sd, const struct fargs *f)
 	assert(f->host != NULL);
 	assert(f->module != NULL);
 
-	if ((args = fargs_cmdline(&sess, f, &skip)) == NULL) {
-		ERRX1("fargs_cmdline");
-		exit(1);
-	}
+	args = fargs_cmdline(&sess, f, &skip);
 
 	/* Initiate with the rsyncd version and module request. */
 
