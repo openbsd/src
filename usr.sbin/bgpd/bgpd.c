@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.236 2021/05/11 07:57:24 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.237 2021/05/17 10:47:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -74,6 +74,7 @@ struct connect_elm {
 TAILQ_HEAD( ,connect_elm)	connect_queue = \
 				    TAILQ_HEAD_INITIALIZER(connect_queue);
 u_int				connect_cnt;
+#define MAX_CONNECT_CNT		32
 
 void
 sighdlr(int sig)
@@ -1303,6 +1304,12 @@ bgpd_rtr_connect(struct rtr_config *r)
 	struct connect_elm *ce;
 	struct sockaddr *sa;
 	socklen_t len;
+
+	if (connect_cnt >= MAX_CONNECT_CNT) {
+		log_warnx("rtr %s: too many concurrent connection requests",
+		    r->descr);
+		return;
+	}
 
 	if ((ce = calloc(1, sizeof(*ce))) == NULL) {
 		log_warn("rtr %s", r->descr);
