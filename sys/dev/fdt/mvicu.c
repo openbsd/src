@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvicu.c,v 1.6 2020/07/17 08:07:34 patrick Exp $	*/
+/*	$OpenBSD: mvicu.c,v 1.7 2021/05/17 17:25:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -200,7 +200,7 @@ mvicu_intr_establish(void *cookie, int *cell, int level,
 	struct mvicu_subnode *sn = cookie;
 	struct mvicu_softc *sc = sn->sn_sc;
 	struct interrupt_controller *ic = sn->sn_parent_ic;
-	struct arm_intr_handle *ih;
+	struct machine_intr_handle *ih;
 	uint32_t idx, flags;
 	uint64_t addr, data;
 	int edge = 0;
@@ -277,7 +277,7 @@ mvicu_intr_disestablish(void *cookie)
 void
 mvicu_intr_barrier(void *cookie)
 {
-	struct arm_intr_handle *ih = cookie;
+	struct machine_intr_handle *ih = cookie;
 	struct interrupt_controller *ic = ih->ih_ic;
 
 	ic->ic_barrier(ih->ih_ih);

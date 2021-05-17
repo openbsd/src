@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.c,v 1.22 2021/05/15 11:30:27 kettenis Exp $ */
+/* $OpenBSD: intr.c,v 1.23 2021/05/17 17:25:13 kettenis Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -343,7 +343,7 @@ arm_intr_establish_fdt_idx_cpu(int node, int idx, int level, struct cpu_info *ci
 	struct interrupt_controller *ic;
 	int i, len, ncells, extended = 1;
 	uint32_t *cell, *cells, phandle;
-	struct arm_intr_handle *ih;
+	struct machine_intr_handle *ih;
 	void *val = NULL;
 
 	len = OF_getproplen(node, "interrupts-extended");
@@ -424,7 +424,7 @@ arm_intr_establish_fdt_imap_cpu(int node, int *reg, int nreg, int level,
     struct cpu_info *ci, int (*func)(void *), void *cookie, char *name)
 {
 	struct interrupt_controller *ic;
-	struct arm_intr_handle *ih;
+	struct machine_intr_handle *ih;
 	uint32_t *cell;
 	uint32_t map_mask[4], *map;
 	int len, acells, ncells;
@@ -498,7 +498,7 @@ arm_intr_establish_fdt_msi_cpu(int node, uint64_t *addr, uint64_t *data,
     char *name)
 {
 	struct interrupt_controller *ic;
-	struct arm_intr_handle *ih;
+	struct machine_intr_handle *ih;
 	uint32_t phandle;
 	void *val = NULL;
 
@@ -524,7 +524,7 @@ arm_intr_establish_fdt_msi_cpu(int node, uint64_t *addr, uint64_t *data,
 void
 arm_intr_disestablish_fdt(void *cookie)
 {
-	struct arm_intr_handle *ih = cookie;
+	struct machine_intr_handle *ih = cookie;
 	struct interrupt_controller *ic = ih->ih_ic;
 
 	ic->ic_disestablish(ih->ih_ih);
@@ -534,7 +534,7 @@ arm_intr_disestablish_fdt(void *cookie)
 void
 arm_intr_enable(void *cookie)
 {
-	struct arm_intr_handle *ih = cookie;
+	struct machine_intr_handle *ih = cookie;
 	struct interrupt_controller *ic = ih->ih_ic;
 
 	KASSERT(ic->ic_enable != NULL);
@@ -544,7 +544,7 @@ arm_intr_enable(void *cookie)
 void
 arm_intr_disable(void *cookie)
 {
-	struct arm_intr_handle *ih = cookie;
+	struct machine_intr_handle *ih = cookie;
 	struct interrupt_controller *ic = ih->ih_ic;
 
 	KASSERT(ic->ic_disable != NULL);
@@ -561,7 +561,7 @@ arm_intr_parent_establish_fdt(void *cookie, int *cell, int level,
     struct cpu_info *ci, int (*func)(void *), void *arg, char *name)
 {
 	struct interrupt_controller *ic = cookie;
-	struct arm_intr_handle *ih;
+	struct machine_intr_handle *ih;
 	uint32_t phandle;
 	void *val;
 
@@ -587,7 +587,7 @@ arm_intr_parent_establish_fdt(void *cookie, int *cell, int level,
 void
 arm_intr_parent_disestablish_fdt(void *cookie)
 {
-	struct arm_intr_handle *ih = cookie;
+	struct machine_intr_handle *ih = cookie;
 	struct interrupt_controller *ic = ih->ih_ic;
 
 	ic->ic_disestablish(ih->ih_ih);
@@ -597,7 +597,7 @@ arm_intr_parent_disestablish_fdt(void *cookie)
 void
 arm_intr_route(void *cookie, int enable, struct cpu_info *ci)
 {
-	struct arm_intr_handle *ih = cookie;
+	struct machine_intr_handle *ih = cookie;
 	struct interrupt_controller *ic = ih->ih_ic;
 
 	if (ic->ic_route)
@@ -857,7 +857,7 @@ setstatclockrate(int new)
 void
 intr_barrier(void *cookie)
 {
-	struct arm_intr_handle *ih = cookie;
+	struct machine_intr_handle *ih = cookie;
 	struct interrupt_controller *ic = ih->ih_ic;
 
 	ic->ic_barrier(ih->ih_ih);

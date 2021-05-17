@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcm2711_pcie.c,v 1.5 2021/02/25 23:07:49 patrick Exp $	*/
+/*	$OpenBSD: bcm2711_pcie.c,v 1.6 2021/05/17 17:25:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -69,7 +69,7 @@ struct bcmpcie_softc {
 	struct bus_space	sc_bus_iot;
 	struct bus_space	sc_bus_memt;
 
-	struct arm64_pci_chipset sc_pc;
+	struct machine_pci_chipset sc_pc;
 	int			sc_bus;
 };
 

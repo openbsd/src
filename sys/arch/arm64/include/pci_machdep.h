@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.9 2021/03/22 20:30:21 patrick Exp $ */
+/*	$OpenBSD: pci_machdep.h,v 1.10 2021/05/17 17:25:13 kettenis Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -26,7 +26,7 @@
  *
  */
 
-typedef struct arm64_pci_chipset *pci_chipset_tag_t;
+typedef struct machine_pci_chipset *pci_chipset_tag_t;
 typedef u_long pcitag_t;
 
 /* Supported interrupt types. */
@@ -46,10 +46,10 @@ typedef struct {
 struct pci_attach_args;
 
 /*
- * arm64-specific PCI structure and type definitions.
+ * Machine-specific PCI structure and type definitions.
  * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
  */
-struct arm64_pci_chipset {
+struct machine_pci_chipset {
 	void		*pc_conf_v;
 	void		(*pc_attach_hook)(struct device *,
 			    struct device *, struct pcibus_attach_args *);

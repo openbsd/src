@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.17 2021/02/17 12:11:45 kettenis Exp $ */
+/*	$OpenBSD: intr.h,v 1.18 2021/05/17 17:25:13 kettenis Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -89,7 +89,7 @@ void	arm_do_pending_intr(int);
 void	arm_set_intr_handler(int (*)(int), int (*)(int), void (*)(int),
 	    void (*)(int), void (*)(void *), void (*)(void *));
 
-struct arm_intr_handle {
+struct machine_intr_handle {
 	struct interrupt_controller *ih_ic;
 	void *ih_ih;
 };

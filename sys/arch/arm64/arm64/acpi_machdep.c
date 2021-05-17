@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.14 2021/03/16 18:31:16 patrick Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.15 2021/05/17 17:25:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -142,7 +142,7 @@ acpi_intr_establish(int irq, int flags, int level,
     int (*func)(void *), void *arg, const char *name)
 {
 	struct interrupt_controller *ic;
-	struct arm_intr_handle *aih;
+	struct machine_intr_handle *aih;
 	uint32_t interrupt[3];
 	void *cookie;
 
@@ -183,7 +183,7 @@ acpi_intr_establish(int irq, int flags, int level,
 void
 acpi_intr_disestablish(void *cookie)
 {
-	struct arm_intr_handle *aih = cookie;
+	struct machine_intr_handle *aih = cookie;
 	struct interrupt_controller *ic = aih->ih_ic;
 
 	ic->ic_disestablish(aih->ih_ih);

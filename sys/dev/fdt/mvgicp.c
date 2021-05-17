@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvgicp.c,v 1.3 2020/07/17 08:07:34 patrick Exp $	*/
+/*	$OpenBSD: mvgicp.c,v 1.4 2021/05/17 17:25:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Patrick Wildt <patrick@blueri.se>
  *
@@ -125,7 +125,7 @@ mvgicp_intr_establish(void *self, uint64_t *addr, uint64_t *data,
 {
 	struct mvgicp_softc *sc = (struct mvgicp_softc *)self;
 	struct interrupt_controller *ic = sc->sc_parent_ic;
-	struct arm_intr_handle *ih;
+	struct machine_intr_handle *ih;
 	uint32_t interrupt[3];
 	uint32_t flags;
 	void *cookie;
@@ -178,7 +178,7 @@ mvgicp_intr_establish(void *self, uint64_t *addr, uint64_t *data,
 void
 mvgicp_intr_disestablish(void *cookie)
 {
-	struct arm_intr_handle *ih = *(void **)cookie;
+	struct machine_intr_handle *ih = *(void **)cookie;
 	struct interrupt_controller *ic = ih->ih_ic;
 
 	ic->ic_disestablish(ih->ih_ih);
@@ -189,7 +189,7 @@ mvgicp_intr_disestablish(void *cookie)
 void
 mvgicp_intr_barrier(void *cookie)
 {
-	struct arm_intr_handle *ih = *(void **)cookie;
+	struct machine_intr_handle *ih = *(void **)cookie;
 	struct interrupt_controller *ic = ih->ih_ic;
 
 	ic->ic_barrier(ih->ih_ih);

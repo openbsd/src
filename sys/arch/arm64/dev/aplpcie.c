@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplpcie.c,v 1.1 2021/02/26 11:09:23 kettenis Exp $	*/
+/*	$OpenBSD: aplpcie.c,v 1.2 2021/05/17 17:25:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -80,7 +80,7 @@ struct aplpcie_softc {
 	struct bus_space	sc_bus_iot;
 	struct bus_space	sc_bus_memt;
 	
-	struct arm64_pci_chipset sc_pc;
+	struct machine_pci_chipset sc_pc;
 	struct extent		*sc_busex;
 	struct extent		*sc_memex;
 	struct extent		*sc_pmemex;

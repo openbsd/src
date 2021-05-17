@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwpcie.c,v 1.28 2021/03/22 20:30:21 patrick Exp $	*/
+/*	$OpenBSD: dwpcie.c,v 1.29 2021/05/17 17:25:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -215,7 +215,7 @@ struct dwpcie_softc {
 	struct bus_space	sc_bus_iot;
 	struct bus_space	sc_bus_memt;
 
-	struct arm64_pci_chipset sc_pc;
+	struct machine_pci_chipset sc_pc;
 	int			sc_bus;
 
 	int			sc_num_viewport;
@@ -226,9 +226,9 @@ struct dwpcie_softc {
 };
 
 struct dwpcie_intr_handle {
-	struct arm_intr_handle	 pih_ih;
-	bus_dma_tag_t		 pih_dmat;
-	bus_dmamap_t		 pih_map;
+	struct machine_intr_handle pih_ih;
+	bus_dma_tag_t		pih_dmat;
+	bus_dmamap_t		pih_map;
 };
 
 int dwpcie_match(struct device *, void *, void *);

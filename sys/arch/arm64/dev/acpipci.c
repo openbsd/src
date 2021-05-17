@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpipci.c,v 1.28 2021/03/22 20:30:21 patrick Exp $	*/
+/*	$OpenBSD: acpipci.c,v 1.29 2021/05/17 17:25:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -46,7 +46,7 @@ struct acpipci_mcfg {
 	bus_space_tag_t	am_iot;
 	bus_space_handle_t am_ioh;
 
-	struct arm64_pci_chipset am_pc;
+	struct machine_pci_chipset am_pc;
 };
 
 struct acpipci_trans {
@@ -80,9 +80,9 @@ struct acpipci_softc {
 };
 
 struct acpipci_intr_handle {
-	struct arm_intr_handle	 aih_ih;
-	bus_dma_tag_t		 aih_dmat;
-	bus_dmamap_t		 aih_map;
+	struct machine_intr_handle aih_ih;
+	bus_dma_tag_t		aih_dmat;
+	bus_dmamap_t		aih_map;
 };
 
 int	acpipci_match(struct device *, void *, void *);
@@ -678,7 +678,7 @@ acpipci_dummy_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 {
 }
 
-struct arm64_pci_chipset acpipci_dummy_chipset = {
+struct machine_pci_chipset acpipci_dummy_chipset = {
 	.pc_attach_hook = acpipci_attach_hook,
 	.pc_bus_maxdevs = acpipci_bus_maxdevs,
 	.pc_make_tag = acpipci_make_tag,
