@@ -1,4 +1,4 @@
-/*	$OpenBSD: workqueue.h,v 1.4 2021/02/14 03:42:55 jsg Exp $	*/
+/*	$OpenBSD: workqueue.h,v 1.5 2021/05/17 00:17:26 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -95,7 +95,8 @@ queue_work(struct workqueue_struct *wq, struct work_struct *work)
 static inline void
 cancel_work_sync(struct work_struct *work)
 {
-	task_del(work->tq, &work->task);
+	if (work->tq != NULL)
+		task_del(work->tq, &work->task);
 }
 
 #define work_pending(work)	task_pending(&(work)->task)
@@ -169,6 +170,8 @@ mod_delayed_work(struct workqueue_struct *wq,
 static inline bool
 cancel_delayed_work(struct delayed_work *dwork)
 {
+	if (dwork->tq == NULL)
+		return false;
 	if (timeout_del(&dwork->to))
 		return true;
 	return task_del(dwork->tq, &dwork->work.task);
@@ -177,6 +180,8 @@ cancel_delayed_work(struct delayed_work *dwork)
 static inline bool
 cancel_delayed_work_sync(struct delayed_work *dwork)
 {
+	if (dwork->tq == NULL)
+		return false;
 	if (timeout_del(&dwork->to))
 		return true;
 	return task_del(dwork->tq, &dwork->work.task);
