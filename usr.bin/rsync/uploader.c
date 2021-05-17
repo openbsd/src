@@ -1,4 +1,4 @@
-/*	$Id: uploader.c,v 1.26 2021/05/17 11:49:01 claudio Exp $ */
+/*	$Id: uploader.c,v 1.27 2021/05/17 12:11:05 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2019 Florian Obser <florian@openbsd.org>
@@ -905,6 +905,7 @@ rsync_uploader(struct upload *u, int *fileinfd,
 			ERR("malloc");
 			close(*fileinfd);
 			*fileinfd = -1;
+			free(blk.blks);
 			return -1;
 		}
 
@@ -917,6 +918,7 @@ rsync_uploader(struct upload *u, int *fileinfd,
 				close(*fileinfd);
 				*fileinfd = -1;
 				free(mbuf);
+				free(blk.blks);
 				return -1;
 			}
 			init_blk(&blk.blks[i], &blk, offs, i, mbuf, sess);
@@ -959,6 +961,7 @@ rsync_uploader(struct upload *u, int *fileinfd,
 	if (u->bufsz > u->bufmax) {
 		if ((bufp = realloc(u->buf, u->bufsz)) == NULL) {
 			ERR("realloc");
+			free(blk.blks);
 			return -1;
 		}
 		u->buf = bufp;
