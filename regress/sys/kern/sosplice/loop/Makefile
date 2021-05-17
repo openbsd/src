@@ -1,7 +1,27 @@
-# $OpenBSD: Makefile,v 1.3 2021/01/09 15:39:37 bluhm Exp $
+# $OpenBSD: Makefile,v 1.4 2021/05/17 13:13:27 bluhm Exp $
 
 # Create chains and loops of spliced tcp and udp sockets.
 # Send data through them and check that MAXLOOP is triggered in kernel.
+
+# The following ports must be installed for the regression tests:
+# p5-BSD-Socket-Splice	perl interface to OpenBSD socket splicing
+#
+# Check wether all required perl packages are installed.  If some
+# are missing print a warning and skip the tests, but do not fail.
+
+.if ! (make(clean) || make(cleandir) || make(obj))
+
+PERL_REQUIRE !=	perl -Mstrict -Mwarnings -e ' \
+    eval { require BSD::Socket::Splice } or print $@; \
+'
+.if ! empty (PERL_REQUIRE)
+regress:
+	@echo "${PERL_REQUIRE}"
+	@echo Install these Perl modules for additional tests.
+	@echo SKIPPED
+.endif
+
+.endif
 
 TARGETS =
 VERBOSE ?=
