@@ -1,4 +1,4 @@
-/*	$Id: client.c,v 1.15 2019/05/08 20:00:25 benno Exp $ */
+/*	$Id: client.c,v 1.16 2021/05/17 11:59:09 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -43,7 +43,7 @@ rsync_client(const struct opts *opts, int fd, const struct fargs *f)
 
 	if (pledge("stdio unix rpath wpath cpath dpath fattr chown getpw unveil",
 	    NULL) == -1)
-		err(1, "pledge");
+		err(ERR_IPC, "pledge");
 
 	memset(&sess, 0, sizeof(struct sess));
 	sess.opts = opts;

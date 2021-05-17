@@ -1,4 +1,4 @@
-/*	$Id: receiver.c,v 1.26 2021/05/06 07:29:59 claudio Exp $ */
+/*	$Id: receiver.c,v 1.27 2021/05/17 11:59:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -20,6 +20,7 @@
 #include <sys/stat.h>
 
 #include <assert.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <inttypes.h>
@@ -180,15 +181,12 @@ rsync_receiver(struct sess *sess, int fdin, int fdout, const char *root)
 	struct upload	*ul = NULL;
 	mode_t		 oumask;
 
-	if (pledge("stdio unix rpath wpath cpath dpath fattr chown getpw unveil", NULL) == -1) {
-		ERR("pledge");
-		goto out;
-	}
+	if (pledge("stdio unix rpath wpath cpath dpath fattr chown getpw unveil", NULL) == -1)
+		err(ERR_IPC, "pledge");
 
 	/* Client sends zero-length exclusions. */
 
-	if (!sess->opts->server &&
-	     !io_write_int(sess, fdout, 0)) {
+	if (!sess->opts->server && !io_write_int(sess, fdout, 0)) {
 		ERRX1("io_write_int");
 		goto out;
 	}
@@ -240,14 +238,10 @@ rsync_receiver(struct sess *sess, int fdin, int fdout, const char *root)
 	 */
 
 	if (!sess->opts->dry_run) {
-		if ((tofree = strdup(root)) == NULL) {
-			ERR("strdup");
-			goto out;
-		} else if (mkpath(tofree) < 0) {
-			ERRX1("%s: mkpath", root);
-			free(tofree);
-			goto out;
-		}
+		if ((tofree = strdup(root)) == NULL)
+			err(ERR_NOMEM, NULL);
+		if (mkpath(tofree) < 0)
+			err(ERR_FILE_IO, "%s: mkpath", tofree);
 		free(tofree);
 	}
 
@@ -260,10 +254,8 @@ rsync_receiver(struct sess *sess, int fdin, int fdout, const char *root)
 
 	if (!sess->opts->dry_run) {
 		dfd = open(root, O_RDONLY | O_DIRECTORY, 0);
-		if (dfd == -1) {
-			ERR("%s: open", root);
-			goto out;
-		}
+		if (dfd == -1)
+			err(ERR_FILE_IO, "%s: open", root);
 	}
 
 	/*
@@ -285,13 +277,10 @@ rsync_receiver(struct sess *sess, int fdin, int fdout, const char *root)
 	 * writing into other parts of the file-system.
 	 */
 
-	if (unveil(root, "rwc") == -1) {
-		ERR("%s: unveil", root);
-		goto out;
-	} else if (unveil(NULL, NULL) == -1) {
-		ERR("%s: unveil", root);
-		goto out;
-	}
+	if (unveil(root, "rwc") == -1)
+		err(ERR_IPC, "%s: unveil", root);
+	if (unveil(NULL, NULL) == -1)
+		err(ERR_IPC, "unveil");
 
 	/* If we have a local set, go for the deletion. */
 
