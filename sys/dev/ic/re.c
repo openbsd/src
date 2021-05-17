@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.210 2021/05/07 09:13:19 jsg Exp $	*/
+/*	$OpenBSD: re.c,v 1.211 2021/05/17 11:59:53 visa Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1280,6 +1280,8 @@ re_rxeof(struct rl_softc *sc)
 		if ((sc->rl_flags & RL_FLAG_JUMBOV2) != 0 &&
 		    (rxstat & (RL_RDESC_STAT_SOF | RL_RDESC_STAT_EOF)) !=
 		    (RL_RDESC_STAT_SOF | RL_RDESC_STAT_EOF)) {
+			ifp->if_ierrors++;
+			m_freem(m);
 			continue;
 		} else if (!(rxstat & RL_RDESC_STAT_EOF)) {
 			m->m_len = RL_FRAMELEN(sc->rl_max_mtu);
@@ -1328,6 +1330,7 @@ re_rxeof(struct rl_softc *sc)
 				m_freem(sc->rl_head);
 				sc->rl_head = sc->rl_tail = NULL;
 			}
+			m_freem(m);
 			continue;
 		}
 
