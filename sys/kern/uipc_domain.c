@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_domain.c,v 1.57 2019/07/03 10:19:45 dlg Exp $	*/
+/*	$OpenBSD: uipc_domain.c,v 1.58 2021/05/17 17:06:51 claudio Exp $	*/
 /*	$NetBSD: uipc_domain.c,v 1.14 1996/02/09 19:00:44 christos Exp $	*/
 
 /*
@@ -211,6 +211,9 @@ net_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (0);
 	if (family == PF_LINK)
 		return (net_link_sysctl(name + 1, namelen - 1, oldp, oldlenp,
+		    newp, newlen));
+	if (family == PF_UNIX)
+		return (uipc_sysctl(name + 1, namelen - 1, oldp, oldlenp,
 		    newp, newlen));
 #if NBPFILTER > 0
 	if (family == PF_BPF)
