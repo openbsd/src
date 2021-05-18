@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.283 2021/05/17 23:36:40 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.284 2021/05/18 00:05:20 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4882,8 +4882,8 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 #endif /* VMM_DEBUG */
 			ret = EINVAL;
 		} else {
-			printf("%s: failed launch for unknown reason %d\n",
-			    __func__, ret);
+			printf("%s: failed %s for unknown reason %d\n",
+			    __func__, resume ? "vmresume" : "vmlaunch", ret);
 #ifdef VMM_DEBUG
 			vmx_vcpu_dump_regs(vcpu);
 			dump_vcpu(vcpu);
@@ -7596,6 +7596,9 @@ vmx_instruction_error_decode(uint32_t code)
 	case 20: return "VMCALL: invalid VM exit control fields";
 	case 26: return "VM entry: blocked by MOV SS";
 	case 28: return "Invalid operand to INVEPT/INVVPID";
+	case 0x80000021: return "VM entry: invalid guest state";
+	case 0x80000022: return "VM entry: failure due to MSR loading";
+	case 0x80000029: return "VM entry: machine-check event";
 	default: return "unknown";
 	}
 }
