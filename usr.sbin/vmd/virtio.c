@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.86 2021/04/22 18:40:21 dv Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.87 2021/05/18 11:06:43 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -232,8 +232,7 @@ viornd_notifyq(void)
 
 	if (rnd_data != NULL) {
 		arc4random_buf(rnd_data, desc[avail->ring[aidx]].len);
-		if (write_mem(desc[avail->ring[aidx]].addr,
-		    rnd_data, desc[avail->ring[aidx]].len)) {
+		if (write_mem(desc[avail->ring[aidx]].addr, rnd_data, sz)) {
 			log_warnx("viornd: can't write random data @ "
 			    "0x%llx",
 			    desc[avail->ring[aidx]].addr);
@@ -365,6 +364,12 @@ vioblk_start_read(struct vioblk_dev *dev, off_t sector, size_t sz)
 {
 	struct ioinfo *info;
 
+	/* Limit to 64M for now */
+	if (sz > (1 << 26)) {
+		log_warnx("%s: read size exceeded 64M", __func__);
+		return (NULL);
+	}
+
 	info = calloc(1, sizeof(*info));
 	if (!info)
 		goto nomem;
@@ -405,9 +410,16 @@ vioblk_start_write(struct vioblk_dev *dev, off_t sector,
 {
 	struct ioinfo *info;
 
+	/* Limit to 64M for now */
+	if (len > (1 << 26)) {
+		log_warnx("%s: write size exceeded 64M", __func__);
+		return (NULL);
+	}
+
 	info = calloc(1, sizeof(*info));
 	if (!info)
 		goto nomem;
+
 	info->buf = malloc(len);
 	if (info->buf == NULL)
 		goto nomem;
@@ -415,7 +427,7 @@ vioblk_start_write(struct vioblk_dev *dev, off_t sector,
 	info->offset = sector * VIRTIO_BLK_SECTOR_SIZE;
 	info->file = &dev->file;
 
-	if (read_mem(addr, info->buf, len)) {
+	if (read_mem(addr, info->buf, info->len)) {
 		vioblk_free_info(info);
 		return NULL;
 	}
@@ -443,7 +455,6 @@ vioblk_finish_write(struct ioinfo *info)
 
 /*
  * XXX in various cases, ds should be set to VIRTIO_BLK_S_IOERR, if we can
- * XXX cant trust ring data from VM, be extra cautious.
  */
 int
 vioblk_notifyq(struct vioblk_dev *dev)
@@ -507,7 +518,7 @@ vioblk_notifyq(struct vioblk_dev *dev)
 		}
 
 		/* Read command from descriptor ring */
-		if (read_mem(cmd_desc->addr, &cmd, cmd_desc->len)) {
+		if (read_mem(cmd_desc->addr, &cmd, sizeof(cmd))) {
 			log_warnx("vioblk: command read_mem error @ 0x%llx",
 			    cmd_desc->addr);
 			goto out;
@@ -544,7 +555,7 @@ vioblk_notifyq(struct vioblk_dev *dev)
 				}
 
 				if (write_mem(secdata_desc->addr, secdata,
-				    secdata_desc->len)) {
+					secdata_desc->len)) {
 					log_warnx("can't write sector "
 					    "data to gpa @ 0x%llx",
 					    secdata_desc->addr);
@@ -574,7 +585,7 @@ vioblk_notifyq(struct vioblk_dev *dev)
 			ds_desc = secdata_desc;
 
 			ds = VIRTIO_BLK_S_OK;
-			if (write_mem(ds_desc->addr, &ds, ds_desc->len)) {
+			if (write_mem(ds_desc->addr, &ds, sizeof(ds))) {
 				log_warnx("can't write device status data @ "
 				    "0x%llx", ds_desc->addr);
 				dump_descriptor_chain(desc, cmd_desc_idx);
@@ -659,7 +670,7 @@ vioblk_notifyq(struct vioblk_dev *dev)
 			ds_desc = secdata_desc;
 
 			ds = VIRTIO_BLK_S_OK;
-			if (write_mem(ds_desc->addr, &ds, ds_desc->len)) {
+			if (write_mem(ds_desc->addr, &ds, sizeof(ds))) {
 				log_warnx("wr vioblk: can't write device "
 				    "status data @ 0x%llx", ds_desc->addr);
 				dump_descriptor_chain(desc, cmd_desc_idx);
@@ -685,7 +696,7 @@ vioblk_notifyq(struct vioblk_dev *dev)
 			ds_desc = &desc[ds_desc_idx];
 
 			ds = VIRTIO_BLK_S_OK;
-			if (write_mem(ds_desc->addr, &ds, ds_desc->len)) {
+			if (write_mem(ds_desc->addr, &ds, sizeof(ds))) {
 				log_warnx("fl vioblk: "
 				    "can't write device status "
 				    "data @ 0x%llx", ds_desc->addr);
@@ -1119,7 +1130,7 @@ vionet_enq_rx(struct vionet_dev *dev, char *pkt, size_t sz, int *spc)
 
 	ret = 0;
 
-	if (sz < 1) {
+	if (sz < 1 || sz > IP_MAXPACKET + ETHER_HDR_LEN) {
 		log_warn("%s: invalid packet size", __func__);
 		return (0);
 	}
@@ -1173,7 +1184,7 @@ vionet_enq_rx(struct vionet_dev *dev, char *pkt, size_t sz, int *spc)
 
 	/* Write out virtio header */
 	if (write_mem(hdr_desc->addr, &hdr, sizeof(struct virtio_net_hdr))) {
-		log_warnx("vionet: rx enq header write_mem error @ "
+	    log_warnx("vionet: rx enq header write_mem error @ "
 		    "0x%llx", hdr_desc->addr);
 		goto out;
 	}
@@ -1187,7 +1198,7 @@ vionet_enq_rx(struct vionet_dev *dev, char *pkt, size_t sz, int *spc)
 
 	if (rem >= sz) {
 		if (write_mem(hdr_desc->addr + sizeof(struct virtio_net_hdr),
-		    pkt, sz)) {
+			pkt, sz)) {
 			log_warnx("vionet: rx enq packet write_mem error @ "
 			    "0x%llx", pkt_desc->addr);
 			goto out;
@@ -1416,8 +1427,6 @@ vionet_notifyq(struct vionet_dev *dev)
 
 /*
  * Must be called with dev->mutex acquired.
- *
- * XXX cant trust ring data from VM, be extra cautious.
  */
 int
 vionet_notify_tx(struct vionet_dev *dev)
@@ -1425,7 +1434,7 @@ vionet_notify_tx(struct vionet_dev *dev)
 	uint64_t q_gpa;
 	uint32_t vr_sz;
 	uint16_t idx, pkt_desc_idx, hdr_desc_idx, dxx, cnt;
-	size_t pktsz;
+	size_t pktsz, chunk_size = 0;
 	ssize_t dhcpsz;
 	int ret, num_enq, ofs, spc;
 	char *vr, *pkt, *dhcppkt;
@@ -1520,9 +1529,16 @@ vionet_notify_tx(struct vionet_dev *dev)
 				goto out;
 			}
 
+			/* Check we don't read beyond allocated pktsz */
+			if (pkt_desc->len > pktsz - ofs) {
+				log_warnx("%s: descriptor len past pkt len",
+				    __func__);
+				chunk_size = pktsz - ofs - pkt_desc->len;
+			} else
+				chunk_size = pkt_desc->len;
+
 			/* Read packet from descriptor ring */
-			if (read_mem(pkt_desc->addr, pkt + ofs,
-			    pkt_desc->len)) {
+			if (read_mem(pkt_desc->addr, pkt + ofs, chunk_size)) {
 				log_warnx("vionet: packet read_mem error "
 				    "@ 0x%llx", pkt_desc->addr);
 				goto out;
@@ -1540,9 +1556,15 @@ vionet_notify_tx(struct vionet_dev *dev)
 			goto out;
 		}
 
+		/* Check we don't read beyond allocated pktsz */
+		if (pkt_desc->len > pktsz - ofs) {
+			log_warnx("%s: descriptor len past pkt len", __func__);
+			chunk_size = pktsz - ofs - pkt_desc->len;
+		} else
+			chunk_size = pkt_desc->len;
+
 		/* Read packet from descriptor ring */
-		if (read_mem(pkt_desc->addr, pkt + ofs,
-		    pkt_desc->len)) {
+		if (read_mem(pkt_desc->addr, pkt + ofs, chunk_size)) {
 			log_warnx("vionet: packet read_mem error @ "
 			    "0x%llx", pkt_desc->addr);
 			goto out;
