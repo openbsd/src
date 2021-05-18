@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1967 2021/04/18 00:21:53 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.1968 2021/05/18 08:16:11 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -27080,6 +27080,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "8580",
 	},
 	{
+	    PCI_VENDOR_QUECTEL, PCI_PRODUCT_QUECTEL_EM120R_GL,
+	    "EM120R-GL",
+	},
+	{
 	    PCI_VENDOR_QUMRANET, PCI_PRODUCT_QUMRANET_VIO_NET,
 	    "Virtio Network",
 	},
@@ -28066,6 +28070,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_SAMSUNG2, PCI_PRODUCT_SAMSUNG2_SM981_NVME,
 	    "SM981/PM981 NVMe",
+	},
+	{
+	    PCI_VENDOR_SAMSUNG2, PCI_PRODUCT_SAMSUNG2_PM9A1_NVME,
+	    "PM9A1 NVMe",
 	},
 	{
 	    PCI_VENDOR_SAMSUNG2, PCI_PRODUCT_SAMSUNG2_NVME_171X,
@@ -33038,6 +33046,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_SSSTC,
 	    "SSSTC",
+	},
+	{
+	    PCI_VENDOR_QUECTEL,
+	    "Quectel",
 	},
 	{
 	    PCI_VENDOR_TEHUTI,

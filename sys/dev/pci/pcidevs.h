@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1967 2021/04/18 00:21:53 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.1968 2021/05/18 08:16:11 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -350,6 +350,7 @@
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram */
 #define	PCI_VENDOR_AMPERE	0x1def		/* Ampere */
 #define	PCI_VENDOR_SSSTC	0x1e95		/* SSSTC */
+#define	PCI_VENDOR_QUECTEL	0x1eac		/* Quectel */
 #define	PCI_VENDOR_TEHUTI	0x1fc9		/* Tehuti Networks */
 #define	PCI_VENDOR_SUNIX2	0x1fd4		/* Sunix */
 #define	PCI_VENDOR_KINGSTON	0x2646		/* Kingston */
@@ -7590,6 +7591,9 @@
 #define	PCI_PRODUCT_QUANTUMDESIGNS_8500	0x0001		/* 8500 */
 #define	PCI_PRODUCT_QUANTUMDESIGNS_8580	0x0002		/* 8580 */
 
+/* Quectel products */
+#define	PCI_PRODUCT_QUECTEL_EM120R_GL	0x1001		/* EM120R-GL */
+
 /* Qumranet products */
 #define	PCI_PRODUCT_QUMRANET_VIO_NET	0x1000		/* Virtio Network */
 #define	PCI_PRODUCT_QUMRANET_VIO_BLOCK	0x1001		/* Virtio Storage */
@@ -7866,6 +7870,7 @@
 #define	PCI_PRODUCT_SAMSUNG2_SM951_NVME	0xa802		/* SM951/PM951 NVMe */
 #define	PCI_PRODUCT_SAMSUNG2_SM961_NVME	0xa804		/* SM961/PM961 NVMe */
 #define	PCI_PRODUCT_SAMSUNG2_SM981_NVME	0xa808		/* SM981/PM981 NVMe */
+#define	PCI_PRODUCT_SAMSUNG2_PM9A1_NVME	0xa80a		/* PM9A1 NVMe */
 #define	PCI_PRODUCT_SAMSUNG2_NVME_171X	0xa820		/* NVMe */
 #define	PCI_PRODUCT_SAMSUNG2_NVME_172X	0xa821		/* NVMe */
 #define	PCI_PRODUCT_SAMSUNG2_NVME_172X_A_B	0xa822		/* NVMe */
