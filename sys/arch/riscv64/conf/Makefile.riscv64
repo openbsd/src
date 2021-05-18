@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.riscv64,v 1.9 2021/05/15 20:51:12 kettenis Exp $
+#	$OpenBSD: Makefile.riscv64,v 1.10 2021/05/18 12:24:12 jsg Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -11,7 +11,7 @@
 .include <bsd.own.mk>
 
 SIZE?=	size
-STRIP?=	strip
+STRIP?=	ctfstrip
 
 # source tree is located via $S relative to the compilation directory
 .ifndef S
