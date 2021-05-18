@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.3 2021/05/12 01:20:52 jsg Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.4 2021/05/18 09:14:49 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2014 Andrew Turner
@@ -92,10 +92,6 @@ extern int64_t icache_line_size;
 extern void (*cpu_dcache_wbinv_range)(paddr_t, psize_t);
 extern void (*cpu_dcache_inv_range)(paddr_t, psize_t);
 extern void (*cpu_dcache_wb_range)(paddr_t, psize_t);
-
-#define	cpu_idcache_wbinv_range(a, s)
-#define	cpu_icache_sync_range(a, s)
-#define	cpu_icache_sync_range_checked(a, s)
 
 static __inline void
 load_satp(uint64_t val)

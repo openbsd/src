@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.10 2021/05/15 14:05:35 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.11 2021/05/18 09:14:49 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Brian Bamsch <bbamsch@google.com>
@@ -448,7 +448,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	struct vm_page *pg;
 	int error;
 	int cache = PMAP_CACHE_WB;
-	int need_sync = 0;
+	int need_sync;
 
 	if (pa & PMAP_NOCACHE)
 		cache = PMAP_CACHE_CI;
@@ -517,11 +517,9 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	if (pg != NULL && (flags & PROT_EXEC)) {
 		need_sync = ((pg->pg_flags & PG_PMAP_EXE) == 0);
 		atomic_setbits_int(&pg->pg_flags, PG_PMAP_EXE);
+		if (need_sync)
+			fence_i();
 	}
-
-	if (need_sync && (pm == pmap_kernel() || (curproc &&
-	    curproc->p_vmspace->vm_map.pmap == pm)))
-		cpu_icache_sync_range(va & ~PAGE_MASK, PAGE_SIZE);
 
 	error = 0;
 out:
@@ -629,8 +627,6 @@ _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
 	pmap_pte_insert(pted);
 
 	tlb_flush(pm, va & ~PAGE_MASK);
-	if (cache == PMAP_CACHE_CI || cache == PMAP_CACHE_DEV)
-		cpu_idcache_wbinv_range(va & ~PAGE_MASK, PAGE_SIZE);
 }
 
 void
@@ -1574,43 +1570,7 @@ pmap_init(void)
 void
 pmap_proc_iflush(struct process *pr, vaddr_t va, vsize_t len)
 {
-	struct pmap *pm = vm_map_pmap(&pr->ps_vmspace->vm_map);
-	vaddr_t kva = zero_page + cpu_number() * PAGE_SIZE;
-	paddr_t pa;
-	vsize_t clen;
-	vsize_t off;
-
-	/*
-	 * If we're caled for the current processes, we can simply
-	 * flush the data cache to the point of unification and
-	 * invalidate the instruction cache.
-	 */
-	if (pr == curproc->p_p) {
-		cpu_icache_sync_range(va, len);
-		return;
-	}
-
-	/*
-	 * Flush and invalidate through an aliased mapping.  This
-	 * assumes the instruction cache is PIPT.  That is only true
-	 * for some of the hardware we run on.
-	 */
-	while (len > 0) {
-		/* add one to always round up to the next page */
-		clen = round_page(va + 1) - va;
-		if (clen > len)
-			clen = len;
-
-		off = va - trunc_page(va);
-		if (pmap_extract(pm, trunc_page(va), &pa)) {
-			pmap_kenter_pa(kva, pa, PROT_READ|PROT_WRITE);
-			cpu_icache_sync_range(kva + off, clen);
-			pmap_kremove_pg(kva);
-		}
-
-		len -= clen;
-		va += clen;
-	}
+	fence_i();
 }
 
 void
@@ -1715,7 +1675,7 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype)
 	struct vm_page *pg;
 	paddr_t pa;
 	pt_entry_t *pl3 = NULL;
-	int need_sync = 0;
+	int need_sync;
 	int retcode = 0;
 
 	pmap_lock(pm);
@@ -1805,7 +1765,7 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype)
 		need_sync = ((pg->pg_flags & PG_PMAP_EXE) == 0);
 		atomic_setbits_int(&pg->pg_flags, PG_PMAP_EXE);
 		if (need_sync)
-			cpu_icache_sync_range(va & ~PAGE_MASK, PAGE_SIZE);
+			fence_i();
 	}
 
 	retcode = 1;
