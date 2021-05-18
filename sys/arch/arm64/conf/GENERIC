@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.196 2021/05/11 13:25:26 patrick Exp $
+# $OpenBSD: GENERIC,v 1.197 2021/05/18 14:25:59 kevlo Exp $
 #
 # GENERIC machine description file
 #
@@ -421,6 +421,7 @@ urtw*		at uhub?		# Realtek 8187
 rsu*		at uhub?		# Realtek RTL8188SU/RTL8191SU/RTL8192SU
 urtwn*		at uhub?		# Realtek RTL8188CU/RTL8192CU
 udcf*		at uhub?		# Gude Expert mouseCLOCK
+umb*		at uhub?		# Mobile Broadband Interface Model
 uthum*		at uhidev?		# TEMPerHUM sensor
 ugold*		at uhidev?		# gold TEMPer sensor
 utrh*		at uhidev?		# USBRH sensor
