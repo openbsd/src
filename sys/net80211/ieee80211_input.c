@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.236 2021/05/17 11:44:22 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.237 2021/05/18 08:10:45 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -382,6 +382,20 @@ ieee80211_inputm(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 			ieee80211_input_ba(ic, m, ni, tid, rxi, ml);
 			return;	/* don't free m! */
 		}
+	}
+
+	/*
+	 * We do not yet support fragments. Drop any fragmented packets.
+	 * Counter-measure against attacks where an arbitrary packet is
+	 * injected via a fragment with attacker-controlled content.
+	 * See https://papers.mathyvanhoef.com/usenix2021.pdf
+	 * Section 6.8 "Treating fragments as full frames"
+	 */
+	if (ieee80211_has_seq(wh)) {
+		uint16_t rxseq = letoh16(*(const u_int16_t *)wh->i_seq);
+		if ((wh->i_fc[1] & IEEE80211_FC1_MORE_FRAG) ||
+		    (rxseq & IEEE80211_SEQ_FRAG_MASK))
+			goto err;
 	}
 
 	/* duplicate detection (see 9.2.9) */
