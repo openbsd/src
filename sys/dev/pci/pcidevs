@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1967 2021/04/18 00:21:53 deraadt Exp $
+$OpenBSD: pcidevs,v 1.1968 2021/05/18 08:16:11 kettenis Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -345,6 +345,7 @@ vendor	ROCKCHIP	0x1d87	Rockchip
 vendor	TEKRAM2		0x1de1	Tekram
 vendor	AMPERE		0x1def	Ampere
 vendor	SSSTC		0x1e95	SSSTC
+vendor	QUECTEL		0x1eac	Quectel
 vendor	TEHUTI		0x1fc9	Tehuti Networks
 vendor	SUNIX2		0x1fd4	Sunix
 vendor	KINGSTON	0x2646	Kingston
@@ -7585,6 +7586,9 @@ product QUANCOM PWDOG1		0x0010	PWDOG1
 product QUANTUMDESIGNS 8500	0x0001	8500
 product QUANTUMDESIGNS 8580	0x0002	8580
 
+/* Quectel products */
+product QUECTEL EM120R_GL	0x1001	EM120R-GL
+
 /* Qumranet products */
 product QUMRANET VIO_NET	0x1000	Virtio Network
 product QUMRANET VIO_BLOCK	0x1001	Virtio Storage
@@ -7861,6 +7865,7 @@ product SAMSUNG2 SM951_AHCI	0xa801	SM951 AHCI
 product SAMSUNG2 SM951_NVME	0xa802	SM951/PM951 NVMe
 product SAMSUNG2 SM961_NVME	0xa804	SM961/PM961 NVMe
 product SAMSUNG2 SM981_NVME	0xa808	SM981/PM981 NVMe
+product SAMSUNG2 PM9A1_NVME	0xa80a	PM9A1 NVMe
 product SAMSUNG2 NVME_171X	0xa820	NVMe
 product SAMSUNG2 NVME_172X	0xa821	NVMe
 product SAMSUNG2 NVME_172X_A_B	0xa822	NVMe
