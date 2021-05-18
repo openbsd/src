@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.160 2020/06/11 16:00:10 ratchov Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.161 2021/05/18 10:02:00 ratchov Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -35,6 +35,7 @@
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
+#include <dev/usb/usb_mem.h>
 
 #ifdef UAUDIO_DEBUG
 #define DPRINTF(...)				\
@@ -3173,6 +3174,8 @@ uaudio_pdata_copy(struct uaudio_softc *sc)
 		}
 		s->ubuf_pos += count;
 		if (s->ubuf_pos == xfer->size) {
+			usb_syncmem(&xfer->usb_xfer->dmabuf, 0, xfer->size,
+			    BUS_DMASYNC_PREWRITE);
 			s->ubuf_pos = 0;
 #ifdef DIAGNOSTIC
 			if (s->ubuf_xfer == s->nxfers) {
