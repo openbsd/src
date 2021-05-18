@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.150 2021/05/17 19:43:37 kettenis Exp $
+#	$OpenBSD: files.fdt,v 1.151 2021/05/18 11:39:37 kettenis Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -10,10 +10,6 @@ file	dev/fdt/pinctrl.c		pinctrl
 device	graphaudio: audio
 attach	graphaudio at fdt
 file	dev/fdt/graphaudio.c		graphaudio
-
-device	pciecam: pcibus
-attach	pciecam at fdt
-file	dev/fdt/pciecam.c		pciecam
 
 device	simpleamp
 attach	simpleamp at fdt
