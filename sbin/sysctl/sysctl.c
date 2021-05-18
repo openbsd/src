@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.256 2021/05/11 21:45:33 dv Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.257 2021/05/18 05:25:40 claudio Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -196,6 +196,7 @@ void usage(void);
 int findname(char *, char *, char **, struct list *);
 int sysctl_inet(char *, char **, int *, int, int *);
 int sysctl_inet6(char *, char **, int *, int, int *);
+int sysctl_unix(char *, char **, int *, int, int *);
 int sysctl_link(char *, char **, int *, int, int *);
 int sysctl_bpf(char *, char **, int *, int, int *);
 int sysctl_mpls(char *, char **, int *, int, int *);
@@ -673,6 +674,12 @@ parse(char *string, int flags)
 				    string);
 				return;
 			}
+			break;
+		}
+		if (mib[1] == PF_UNIX) {
+			len = sysctl_unix(string, &bufp, mib, flags, &type);
+			if (len < 0)
+				return;
 			break;
 		}
 		if (mib[1] == PF_LINK) {
@@ -2280,6 +2287,48 @@ sysctl_inet6(char *string, char **bufpp, int mib[], int flags, int *typep)
 		*typep = lp->list[tindx].ctl_type;
 		return(5);
 	}
+	return (4);
+}
+
+/* handle net.unix requests */
+struct ctlname netunixname[] = CTL_NET_UNIX_NAMES;
+struct ctlname netunixprotoname[] = CTL_NET_UNIX_PROTO_NAMES;
+struct list netunixlist = { netunixname, NET_UNIX_MAXID };
+struct list netunixvars[] = {
+	[SOCK_STREAM] = { netunixprotoname, NET_UNIX_PROTO_MAXID },
+	[SOCK_DGRAM] = { netunixprotoname, NET_UNIX_PROTO_MAXID },
+	[SOCK_SEQPACKET] = { netunixprotoname, NET_UNIX_PROTO_MAXID },
+	[NET_UNIX_MAXID] = { 0, 0 },
+};
+
+int
+sysctl_unix(char *string, char **bufpp, int mib[], int flags, int *typep)
+{
+	struct list *lp;
+	int indx;
+
+	if (*bufpp == NULL) {
+		listall(string, &netunixlist);
+		return (-1);
+	}
+	if ((indx = findname(string, "third", bufpp, &netunixlist)) == -1)
+		return (-1);
+	mib[2] = indx;
+	*typep = netunixname[indx].ctl_type;
+
+	if (indx < NET_UNIX_MAXID && netunixvars[indx].list != NULL)
+		lp = &netunixvars[indx];
+	else
+		return (3);
+
+	if (*bufpp == NULL) {
+		listall(string, lp);
+		return (-1);
+	}
+	if ((indx = findname(string, "fourth", bufpp, lp)) == -1)
+		return (-1);
+	mib[3] = indx;
+	*typep = lp->list[indx].ctl_type;
 	return (4);
 }
 
