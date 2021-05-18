@@ -1,7 +1,7 @@
-/*	$OpenBSD: tbl_data.c,v 1.41 2021/05/15 17:16:38 schwarze Exp $ */
+/*	$OpenBSD: tbl_data.c,v 1.42 2021/05/18 13:22:37 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2011,2015,2017,2018,2019 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011,2015,2017-2019,2021 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -44,6 +44,7 @@ getdata(struct tbl_node *tbl, struct tbl_span *dp,
 	struct tbl_dat	*dat, *pdat;
 	struct tbl_cell	*cp;
 	struct tbl_span	*pdp;
+	const char	*ccp;
 	int		 sv;
 
 	/*
@@ -52,8 +53,11 @@ getdata(struct tbl_node *tbl, struct tbl_span *dp,
 	 */
 
 	sv = *pos;
-	while (p[*pos] != '\0' && p[*pos] != tbl->opts.tab)
-		(*pos)++;
+	ccp = p + sv;
+	while (*ccp != '\0' && *ccp != tbl->opts.tab)
+		if (*ccp++ == '\\')
+			mandoc_escape(&ccp, NULL, NULL);
+	*pos = ccp - p;
 
 	/* Advance to the next layout cell, skipping spanners. */
 
