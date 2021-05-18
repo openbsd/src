@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.11 2021/05/18 09:14:49 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.12 2021/05/18 12:26:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Brian Bamsch <bbamsch@google.com>
@@ -606,7 +606,7 @@ _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
 
 	/* Do not have pted for this, get one and put it in VP */
 	if (pted == NULL) {
-		panic("pted not preallocated in pmap_kernel() va %lx pa %lx\n",
+		panic("pted not preallocated in pmap_kernel() va %lx pa %lx",
 		    va, pa);
 	}
 
@@ -1341,7 +1341,7 @@ pmap_set_l1(struct pmap *pm, uint64_t va, struct pmapvp1 *l1_va, paddr_t l1_pa)
 	}
 
 	if (l1_pa & (Lx_TABLE_ALIGN-1))
-		panic("misaligned L2 table\n");
+		panic("misaligned L2 table");
 
 	pg_entry = VP_Lx(l1_pa);
 
@@ -1367,7 +1367,7 @@ pmap_set_l2(struct pmap *pm, uint64_t va, struct pmapvp2 *l2_va, paddr_t l2_pa)
 	}
 
 	if (l2_pa & (Lx_TABLE_ALIGN-1))
-		panic("misaligned L2 table\n");
+		panic("misaligned L2 table");
 
 	pg_entry = VP_Lx(l2_pa);
 
@@ -1395,7 +1395,7 @@ pmap_set_l3(struct pmap *pm, uint64_t va, struct pmapvp3 *l3_va, paddr_t l3_pa)
 	}
 
 	if (l3_pa & (Lx_TABLE_ALIGN-1))
-		panic("misaligned L2 table\n");
+		panic("misaligned L2 table");
 
 	pg_entry = VP_Lx(l3_pa);
 
@@ -1842,7 +1842,7 @@ pmap_clear_modify(struct vm_page *pg)
 	mtx_enter(&pg->mdpage.pv_mtx);
 	LIST_FOREACH(pted, &(pg->mdpage.pv_list), pted_pv_list) {
 		if (pmap_vp_lookup(pted->pted_pmap, pted->pted_va & ~PAGE_MASK, &pl3) == NULL)
-			panic("failed to look up pte\n");
+			panic("failed to look up pte");
 		*pl3 &= ~PTE_W;
 		pted->pted_pte &= ~PROT_WRITE;
 
@@ -2072,7 +2072,7 @@ pmap_steal_avail(size_t size, int align, void **kva)
 			}
 		}
 	}
-	panic ("unable to allocate region with size %lx align %x",
+	panic("unable to allocate region with size %lx align %x",
 	    size, align);
 }
 
