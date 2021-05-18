@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.739 2021/04/25 15:58:01 stsp Exp $
+$OpenBSD: usbdevs,v 1.740 2021/05/18 14:23:03 kevlo Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -644,6 +644,7 @@ vendor THINGM		0x27b8	ThingM
 vendor ASUSTEK		0x2821	ASUSTeK Computer
 vendor PIONEERDJ	0x2b73	Pioneer DJ
 vendor PLANEX		0x2c02	Planex Communications
+vendor QUECTEL		0x2c7c	Quectel
 vendor CLUB3D		0x2d1c	Club 3D
 vendor CLEVO		0x30da	CLEVO
 vendor DYNABOOK		0x30f3	Dynabook
@@ -3679,6 +3680,9 @@ product QUALCOMM2 MSM_PHONE	0x6000	CDMA MSM phone
 product QUANTA RT3070		0x0304	RT3070
 product QUANTA2 UMASS		0x1000	Quanta USB MSM (umass mode)
 product QUANTA2 Q101		0xea02	Quanta Q101 HSDPA USB modem
+
+/* Quectel products */
+product QUECTEL EC25		0x0125	EC25 LTE
 
 /* Quickshot products */
 product QUICKSHOT STRIKEPAD	0x6238	USB StrikePad

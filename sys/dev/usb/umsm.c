@@ -1,4 +1,4 @@
-/*	$OpenBSD: umsm.c,v 1.118 2020/07/31 10:49:33 mglocker Exp $	*/
+/*	$OpenBSD: umsm.c,v 1.119 2021/05/18 14:23:03 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>
@@ -172,6 +172,8 @@ static const struct umsm_type umsm_devs[] = {
 
 	{{ USB_VENDOR_QUANTA2, USB_PRODUCT_QUANTA2_UMASS }, DEV_UMASS4},
 	{{ USB_VENDOR_QUANTA2, USB_PRODUCT_QUANTA2_Q101 }, 0},
+
+	{{ USB_VENDOR_QUECTEL, USB_PRODUCT_QUECTEL_EC25 }, 0},
 
 	{{ USB_VENDOR_ZTE, USB_PRODUCT_ZTE_AC2746 }, 0},
 	{{ USB_VENDOR_ZTE, USB_PRODUCT_ZTE_UMASS_INSTALLER }, DEV_UMASS4},
