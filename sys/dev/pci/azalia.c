@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.260 2021/04/20 04:30:05 ratchov Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.261 2021/05/19 05:28:09 jsg Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -469,6 +469,7 @@ azalia_configure_pci(azalia_t *az)
 	case PCI_PRODUCT_INTEL_400SERIES_CAVS:
 	case PCI_PRODUCT_INTEL_400SERIES_LP_HDA:
 	case PCI_PRODUCT_INTEL_495SERIES_LP_HDA:
+	case PCI_PRODUCT_INTEL_500SERIES_HDA:
 	case PCI_PRODUCT_INTEL_500SERIES_LP_HDA:
 	case PCI_PRODUCT_INTEL_C600_HDA:
 	case PCI_PRODUCT_INTEL_C610_HDA_1:
