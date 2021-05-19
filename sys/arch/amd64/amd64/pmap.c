@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.142 2021/05/10 00:52:15 guenther Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.143 2021/05/19 17:46:36 patrick Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -698,6 +698,14 @@ pmap_bootstrap(paddr_t first_avail, paddr_t max_pa)
 		CPUID_LEAF(0x7, 0, dummy, ebx, dummy, dummy);
 		if (ebx & SEFF0EBX_INVPCID) {
 			pmap_use_pcid = 1;
+			/*
+			 * We cannot use global mappings because
+			 * invpcid function 0 does not invalidate global
+			 * mappings. The hardware can cache kernel
+			 * mappings based on PCID_KERN, i.e. there is no
+			 * need for global mappings.
+			 */
+			pg_g_kern = 0;
 			lcr4( rcr4() | CR4_PCIDE );
 			cr3_pcid_proc = PCID_PROC;
 			cr3_pcid_temp = PCID_TEMP;
