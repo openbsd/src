@@ -1,4 +1,4 @@
-/* $OpenBSD: pciecam.c,v 1.1 2021/05/17 19:43:37 kettenis Exp $ */
+/* $OpenBSD: pciecam.c,v 1.2 2021/05/19 20:10:38 kettenis Exp $ */
 /*
  * Copyright (c) 2013,2017 Patrick Wildt <patrick@blueri.se>
  *
@@ -262,7 +262,10 @@ pciecam_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_pc = &sc->sc_pc;
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = 0;
-	pba.pba_flags |= PCI_FLAGS_MSI_ENABLED;
+
+	if (OF_getproplen(sc->sc_node, "msi-map") > 0 ||
+	    OF_getproplen(sc->sc_node, "msi-parent") > 0)
+		pba.pba_flags |= PCI_FLAGS_MSI_ENABLED;
 
 	config_found(self, &pba, NULL);
 }
