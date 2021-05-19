@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.4 2021/05/14 06:48:52 jsg Exp $	*/
+/*	$OpenBSD: mem.c,v 1.5 2021/05/19 20:35:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -88,7 +88,6 @@
 caddr_t zeropage;
 
 /* open counter for aperture */
-// XXX What is aperture?
 #ifdef APERTURE
 static int ap_open_count = 0;
 extern int allowaperture;
