@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.8 2021/05/14 06:48:52 jsg Exp $	*/
+/*	$OpenBSD: conf.c,v 1.9 2021/05/19 20:37:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -46,7 +46,6 @@
 
 struct bdevsw	bdevsw[] =
 {
-	/* XXX no riscv machine will have this but we are using arm64 as a template */
 	bdev_notdef(),			/* */
 	bdev_swap_init(1,sw),		/* 1: swap pseudo-device */
 	bdev_notdef(),			/* 2: was floppy diskette */
