@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.16 2021/05/15 22:06:43 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.17 2021/05/19 21:49:07 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -147,10 +147,10 @@ GPT_get_header(off_t where)
 }
 
 int
-GPT_get_partition_table(off_t where)
+GPT_get_partition_table(void)
 {
 	ssize_t len;
-	off_t off;
+	off_t off, where;
 	int secs;
 	uint32_t checksum, partspersec;
 
@@ -167,7 +167,7 @@ GPT_get_partition_table(off_t where)
 
 	memset(&gp, 0, sizeof(gp));
 
-	where *= dl.d_secsize;
+	where = letoh64(gh.gh_part_lba) * dl.d_secsize;
 	off = lseek(disk.fd, where, SEEK_SET);
 	if (off == -1) {
 		DPRINTF("seek to gpt partition table @ sector %llu failed\n",
@@ -205,7 +205,7 @@ GPT_read(int which)
 		break;
 	case ANYGPT:
 		valid = GPT_get_header(GPTSECTOR);
-		if (valid != 0 || GPT_get_partition_table(gh.gh_part_lba) != 0)
+		if (valid != 0 || GPT_get_partition_table() != 0)
 			valid = GPT_get_header(DL_GETDSIZE(&dl) - 1);
 		break;
 	default:
@@ -213,7 +213,7 @@ GPT_read(int which)
 	}
 
 	if (valid == 0)
-		valid = GPT_get_partition_table(gh.gh_part_lba);
+		valid = GPT_get_partition_table();
 
 	if (valid != 0) {
 		/* No valid GPT found. Zap any artifacts. */
