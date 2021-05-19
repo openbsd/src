@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.168 2021/05/16 15:10:20 deraadt Exp $	*/
+/*	$OpenBSD: tty.c,v 1.169 2021/05/19 18:10:45 kettenis Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -2157,7 +2157,7 @@ empty:		ttyprintf(tp, "empty foreground process group\n");
 		fixpt_t pctcpu, pctcpu2;
 		int run, run2;
 		int calc_pctcpu;
-		long rss;
+		long rss = 0;
 
 		/*
 		 * Pick the most active process:
@@ -2194,8 +2194,9 @@ update_pickpr:
 
 		/* Calculate percentage cpu, resident set size. */
 		calc_pctcpu = (pctcpu * 10000 + FSCALE / 2) >> FSHIFT;
-		rss = (pickpr->ps_flags & (PS_EMBRYO | PS_ZOMBIE)) ? 0 :
-		    vm_resident_count(pickpr->ps_vmspace);
+		if ((pickpr->ps_flags & (PS_EMBRYO | PS_ZOMBIE)) == 0 &&
+		    pickpr->ps_vmspace != NULL)
+			rss = vm_resident_count(pickpr->ps_vmspace);
 
 		calctsru(&pickpr->ps_tu, &utime, &stime, NULL);
 
