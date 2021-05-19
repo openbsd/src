@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.17 2021/05/16 10:38:53 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.18 2021/05/19 21:23:20 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -435,19 +435,6 @@ cpu_dumpsize(void)
 	return (1);
 }
 
-int64_t dcache_line_size;	/* The minimum D cache line size */
-int64_t icache_line_size;	/* The minimum I cache line size */
-int64_t idcache_line_size;	/* The minimum cache line size */
-
-void
-cache_setup(void)
-{
-// XXX TODO CMPE, following freebsd
-	dcache_line_size = 0;
-	icache_line_size = 0;
-	idcache_line_size = 0;
-}
-
 u_long
 cpu_dump_mempagecnt(void)
 {
@@ -641,7 +628,6 @@ initriscv(struct riscv_bootparams *rbp)
 	}
 
 	sbi_init();
-	cache_setup();//dummy for now
 
 	process_kernel_args();
 
