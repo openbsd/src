@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2021/05/14 01:18:52 drahn Exp $
+#	$OpenBSD: Makefile,v 1.3 2021/05/19 23:15:21 drahn Exp $
 
 FS=		miniroot${OSrev}.img
 FSSIZE=		67584
@@ -66,7 +66,7 @@ mr.fs: instbin
 	makefs ${MRMAKEFSARGS} $@ $@.d
 
 instbin.mk instbin.cache instbin.c: instbin.conf
-	crunchgen -E -D ${.CURDIR}/../../.. -L /usr/cross/riscv64/usr/lib \
+	crunchgen -E -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib \
 	    -c instbin.c -e instbin -m instbin.mk instbin.conf
 
 instbin: instbin.mk instbin.cache instbin.c
