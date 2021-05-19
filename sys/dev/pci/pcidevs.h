@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1968 2021/05/18 08:16:11 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1969 2021/05/19 02:14:11 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1965,11 +1965,13 @@
 #define	PCI_PRODUCT_ATI_ARCTURUS_3	0x738e		/* Arcturus */
 #define	PCI_PRODUCT_ATI_ARCTURUS_4	0x7390		/* Arcturus */
 #define	PCI_PRODUCT_ATI_SIENNA_CICHLID_1	0x73a0		/* Navi 21 */
-#define	PCI_PRODUCT_ATI_SIENNA_CICHLID_2	0x73a2		/* Navi 21 */
-#define	PCI_PRODUCT_ATI_SIENNA_CICHLID_3	0x73a3		/* Navi 21 */
-#define	PCI_PRODUCT_ATI_SIENNA_CICHLID_4	0x73ab		/* Navi 21 */
-#define	PCI_PRODUCT_ATI_SIENNA_CICHLID_5	0x73ae		/* Navi 21 */
-#define	PCI_PRODUCT_ATI_SIENNA_CICHLID_6	0x73bf		/* Navi 21 */
+#define	PCI_PRODUCT_ATI_SIENNA_CICHLID_2	0x73a1		/* Navi 21 */
+#define	PCI_PRODUCT_ATI_SIENNA_CICHLID_3	0x73a2		/* Navi 21 */
+#define	PCI_PRODUCT_ATI_SIENNA_CICHLID_4	0x73a3		/* Navi 21 */
+#define	PCI_PRODUCT_ATI_SIENNA_CICHLID_5	0x73ab		/* Navi 21 */
+#define	PCI_PRODUCT_ATI_SIENNA_CICHLID_6	0x73ae		/* Navi 21 */
+#define	PCI_PRODUCT_ATI_SIENNA_CICHLID_7	0x73af		/* Navi 21 */
+#define	PCI_PRODUCT_ATI_SIENNA_CICHLID_8	0x73bf		/* Navi 21 */
 #define	PCI_PRODUCT_ATI_NAVY_FLOUNDER_1	0x73c0		/* Navi 22 */
 #define	PCI_PRODUCT_ATI_NAVY_FLOUNDER_2	0x73c1		/* Navi 22 */
 #define	PCI_PRODUCT_ATI_NAVY_FLOUNDER_3	0x73c3		/* Navi 22 */
@@ -3489,8 +3491,9 @@
 #define	PCI_PRODUCT_INTEL_CORE4G_M_ULT_GT3	0x0a26		/* HD Graphics 5000 */
 #define	PCI_PRODUCT_INTEL_CORE4G_S_ULT_GT3	0x0a2a		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_CORE4G_R_ULT_GT3_1	0x0a2b		/* HD Graphics */
-#define	PCI_PRODUCT_INTEL_CORE4G_R_ULT_GT3_2	0x0a2e		/* Iris Graphics 5100 */
+#define	PCI_PRODUCT_INTEL_CORE4G_R_ULT_GT3_2	0x0a2e		/* Iris 5100 */
 #define	PCI_PRODUCT_INTEL_NVME_5	0x0a54		/* SSD DC */
+#define	PCI_PRODUCT_INTEL_BXT_IGD_1	0x0a84		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_GMA3600_0	0x0be0		/* GMA 3600 */
 #define	PCI_PRODUCT_INTEL_D2000_IGD	0x0be1		/* Atom D2000/N2000 Video */
 #define	PCI_PRODUCT_INTEL_GMA3600_2	0x0be2		/* GMA 3600 */
@@ -4012,35 +4015,45 @@
 #define	PCI_PRODUCT_INTEL_CORE5G_M_GT2_3	0x161b		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_CORE5G_D_GT2_2	0x161d		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_CORE5G_M_GT2_4	0x161e		/* HD Graphics 5300 */
-#define	PCI_PRODUCT_INTEL_CORE5G_M_GT3_1	0x1622		/* Iris Pro Graphics 6200 */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_GT3_1	0x1622		/* Iris Pro 6200 */
 #define	PCI_PRODUCT_INTEL_CORE5G_M_GT3_15W	0x1626		/* HD Graphics 6000 */
-#define	PCI_PRODUCT_INTEL_CORE5G_D_GT3_1	0x162a		/* Iris Pro Graphics P6300 */
-#define	PCI_PRODUCT_INTEL_CORE5G_M_GT3_28W	0x162b		/* Iris Graphics 6100 */
+#define	PCI_PRODUCT_INTEL_CORE5G_D_GT3_1	0x162a		/* Iris Pro P6300 */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_GT3_28W	0x162b		/* Iris 6100 */
 #define	PCI_PRODUCT_INTEL_CORE5G_D_GT3_2	0x162d		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_CORE5G_M_GT3_4	0x162e		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_ADAPTIVE_VF	0x1889		/* Adaptive VF */
 #define	PCI_PRODUCT_INTEL_CORE6G_H_HB_D	0x1900		/* Core 6G Host */
 #define	PCI_PRODUCT_INTEL_CORE6G_H_PCIE_X16	0x1901		/* Core 6G PCIE */
-#define	PCI_PRODUCT_INTEL_CORE6G_S_GT1	0x1902		/* HD Graphics 510 */
+#define	PCI_PRODUCT_INTEL_CORE6G_S_GT1_1	0x1902		/* HD Graphics 510 */
 #define	PCI_PRODUCT_INTEL_CORE6G_THERM	0x1903		/* Core 6G Thermal */
 #define	PCI_PRODUCT_INTEL_CORE6G_U_HB	0x1904		/* Core 6G Host */
 #define	PCI_PRODUCT_INTEL_CORE6G_H_PCIE_X8	0x1905		/* Core 6G PCIE */
-#define	PCI_PRODUCT_INTEL_CORE6G_U_GT1	0x1906		/* HD Graphics 510 */
+#define	PCI_PRODUCT_INTEL_CORE6G_U_GT1_1	0x1906		/* HD Graphics 510 */
 #define	PCI_PRODUCT_INTEL_CORE6G_H_PCIE_X4	0x1909		/* Core 6G PCIE */
+#define	PCI_PRODUCT_INTEL_CORE6G_S_GT1_2	0x190a		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CORE6G_H_GT1	0x190b		/* HD Graphics 510 */
 #define	PCI_PRODUCT_INTEL_CORE6G_Y_HB	0x190c		/* Core 6G Host */
+#define	PCI_PRODUCT_INTEL_CORE6G_U_GT1_2	0x190e		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_CORE6G_S_HB_DUAL	0x190f		/* Core 6G Host */
 #define	PCI_PRODUCT_INTEL_CORE6G_H_HB_Q	0x1910		/* Core 6G Host */
 #define	PCI_PRODUCT_INTEL_CORE_GMM_1	0x1911		/* Core GMM */
-#define	PCI_PRODUCT_INTEL_CORE6G_S_GT2	0x1912		/* HD Graphics 530 */
+#define	PCI_PRODUCT_INTEL_CORE6G_S_GT2_1	0x1912		/* HD Graphics 530 */
 #define	PCI_PRODUCT_INTEL_CORE6G_U_GT2	0x1916		/* HD Graphics 520 */
 #define	PCI_PRODUCT_INTEL_XEONE3_1200V5_HB	0x1918		/* Xeon E3-1200 v5 Host */
+#define	PCI_PRODUCT_INTEL_CORE6G_S_GT2_2	0x191a		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_CORE6G_H_GT2	0x191b		/* HD Graphics 530 */
 #define	PCI_PRODUCT_INTEL_XEONE3_1200V5_GT2	0x191d		/* HD Graphics P530 */
 #define	PCI_PRODUCT_INTEL_CORE6G_Y_GT2	0x191e		/* HD Graphics 515 */
 #define	PCI_PRODUCT_INTEL_CORE6G_HB	0x191f		/* Core 6G Host */
-#define	PCI_PRODUCT_INTEL_CORE6G_U_GT3	0x1926		/* Iris 540/550 */
-#define	PCI_PRODUCT_INTEL_CORE6G_U_GT3E	0x1927		/* Iris Graphics 550 */
-#define	PCI_PRODUCT_INTEL_CORE6G_S_GT4_1	0x193a		/* Iris Pro P580 */
+#define	PCI_PRODUCT_INTEL_CORE6G_U_GT2F	0x1921		/* HD Graphics 520 */
+#define	PCI_PRODUCT_INTEL_CORE6G_U_GT3_1	0x1923		/* HD Graphics 535 */
+#define	PCI_PRODUCT_INTEL_CORE6G_U_GT3_2	0x1926		/* Iris 540/550 */
+#define	PCI_PRODUCT_INTEL_CORE6G_U_GT3E	0x1927		/* Iris 550 */
+#define	PCI_PRODUCT_INTEL_CORE6G_S_GT4	0x192a		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CORE6G_H_GT3	0x192b		/* Iris 555 */
+#define	PCI_PRODUCT_INTEL_CORE6G_S_GT3	0x192d		/* Iris P555 */
+#define	PCI_PRODUCT_INTEL_CORE6G_D_GT4	0x1932		/* Iris Pro 580 */
+#define	PCI_PRODUCT_INTEL_CORE6G_S_GT4E	0x193a		/* Iris Pro P580 */
 #define	PCI_PRODUCT_INTEL_CORE6G_H_GT4	0x193b		/* Iris Pro 580 */
 #define	PCI_PRODUCT_INTEL_CORE6G_S_GT4_2	0x193d		/* Iris Pro P580 */
 #define	PCI_PRODUCT_INTEL_80960RP_ATU	0x1960		/* 80960RP ATU */
@@ -4084,6 +4097,8 @@
 #define	PCI_PRODUCT_INTEL_82845_AGP	0x1a31		/* 82845 AGP */
 #define	PCI_PRODUCT_INTEL_IOAT	0x1a38		/* I/OAT */
 #define	PCI_PRODUCT_INTEL_82597EX_SR	0x1a48		/* 82597EX */
+#define	PCI_PRODUCT_INTEL_BXT_IGD_2	0x1a84		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_BXT_IGD_3	0x1a85		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_82597EX_LR	0x1b48		/* 82597EX */
 #define	PCI_PRODUCT_INTEL_6SERIES_SATA_1	0x1c00		/* 6 Series SATA */
 #define	PCI_PRODUCT_INTEL_6SERIES_SATA_2	0x1c01		/* 6 Series SATA */
@@ -5255,9 +5270,13 @@
 #define	PCI_PRODUCT_INTEL_CFL_H_GT1	0x3e9c		/* UHD Graphics 610 */
 #define	PCI_PRODUCT_INTEL_WHL_U_GT2_1	0x3ea0		/* UHD Graphics 620 */
 #define	PCI_PRODUCT_INTEL_WHL_U_GT1_1	0x3ea1		/* UHD Graphics 610 */
-#define	PCI_PRODUCT_INTEL_CFL_U_GT3_1	0x3ea5		/* Iris Plus Graphics 655 */
-#define	PCI_PRODUCT_INTEL_CFL_U_GT3_2	0x3ea6		/* Iris Plus Graphics 645 */
-#define	PCI_PRODUCT_INTEL_CFL_U_GT3_4	0x3ea8		/* Iris Plus Graphics 655 */
+#define	PCI_PRODUCT_INTEL_WHL_U_GT3	0x3ea2		/* UHD Graphics */
+#define	PCI_PRODUCT_INTEL_WHL_U_GT2_2	0x3ea3		/* UHD Graphics */
+#define	PCI_PRODUCT_INTEL_WHL_U_GT1_2	0x3ea4		/* UHD Graphics */
+#define	PCI_PRODUCT_INTEL_CFL_U_GT3_1	0x3ea5		/* Iris Plus 655 */
+#define	PCI_PRODUCT_INTEL_CFL_U_GT3_2	0x3ea6		/* Iris Plus 645 */
+#define	PCI_PRODUCT_INTEL_CFL_U_GT3_3	0x3ea7		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CFL_U_GT3_4	0x3ea8		/* Iris Plus 655 */
 #define	PCI_PRODUCT_INTEL_CFL_U_GT2_2	0x3ea9		/* UHD Graphics 620 */
 #define	PCI_PRODUCT_INTEL_CORE8G_S_D_HB_6C	0x3ec2		/* Core 8G Host */
 #define	PCI_PRODUCT_INTEL_CORE8G_H_HB_6C	0x3ec4		/* Core 8G Host */
@@ -5349,15 +5368,19 @@
 #define	PCI_PRODUCT_INTEL_I219_LM19	0x550c		/* I219-LM */
 #define	PCI_PRODUCT_INTEL_I219_V19	0x550d		/* I219-V */
 #define	PCI_PRODUCT_INTEL_QEMU_NVME	0x5845		/* QEMU NVM Express Controller */
-#define	PCI_PRODUCT_INTEL_CORE7G_S_GT1	0x5902		/* HD Graphics 610 */
+#define	PCI_PRODUCT_INTEL_CORE7G_D_GT1	0x5902		/* HD Graphics 610 */
 #define	PCI_PRODUCT_INTEL_CORE7G_U_HB	0x5904		/* Core 7G Host */
 #define	PCI_PRODUCT_INTEL_CORE7G_U_GT1	0x5906		/* HD Graphics 610 */
+#define	PCI_PRODUCT_INTEL_CORE7G_H_GT1_1	0x5908		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CORE7G_S_GT1	0x590a		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CORE7G_H_GT1_2	0x590b		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_CORE7G_Y_HB	0x590c		/* Core 7G Host */
 #define	PCI_PRODUCT_INTEL_CORE7G_Y_GT1	0x590e		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_CORE7G_S_HB_2C	0x590f		/* Core 7G Host */
 #define	PCI_PRODUCT_INTEL_XEONE3_1200V6_HB2	0x5910		/* Xeon E3-1200 v6/7 Host */
 #define	PCI_PRODUCT_INTEL_CORE_GMM_2	0x5911		/* Core GMM */
 #define	PCI_PRODUCT_INTEL_KBL_S_GT2	0x5912		/* HD Graphics 630 */
+#define	PCI_PRODUCT_INTEL_KBL_U_GT15	0x5913		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_CORE8G_U_HB	0x5914		/* Core 8G Host */
 #define	PCI_PRODUCT_INTEL_CORE7G_IMGU	0x5915		/* Core 7G Imaging Unit */
 #define	PCI_PRODUCT_INTEL_CORE7G_U_GT2_1	0x5916		/* HD Graphics 620 */
@@ -5369,8 +5392,11 @@
 #define	PCI_PRODUCT_INTEL_CORE7G_U_GT2_2	0x591d		/* HD Graphics P630 */
 #define	PCI_PRODUCT_INTEL_CORE7G_Y_GT2	0x591e		/* HD Graphics 615 */
 #define	PCI_PRODUCT_INTEL_CORE7G_S_HB_4C	0x591f		/* Core 7G Host */
-#define	PCI_PRODUCT_INTEL_CORE7G_U_GT3_15W	0x5926		/* Iris Plus Graphics 640 */
-#define	PCI_PRODUCT_INTEL_CORE7G_U_GT3_28W	0x5927		/* Iris Plus Graphics 650 */
+#define	PCI_PRODUCT_INTEL_KBL_U_GT2F	0x5921		/* HD Graphics 620 */
+#define	PCI_PRODUCT_INTEL_KBL_U_GT3	0x5923		/* HD Graphics 635 */
+#define	PCI_PRODUCT_INTEL_CORE7G_U_GT3_15W	0x5926		/* Iris Plus 640 */
+#define	PCI_PRODUCT_INTEL_CORE7G_U_GT3_28W	0x5927		/* Iris Plus 650 */
+#define	PCI_PRODUCT_INTEL_KBL_H_GT4	0x593b		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_APOLLOLAKE_IGD_1	0x5a84		/* HD Graphics 505 */
 #define	PCI_PRODUCT_INTEL_APOLLOLAKE_IGD_2	0x5a85		/* HD Graphics 500 */
 #define	PCI_PRODUCT_INTEL_APOLLOLAKE_HDA	0x5a98		/* Apollo Lake HD Audio */
@@ -5569,6 +5595,7 @@
 #define	PCI_PRODUCT_INTEL_82451NX	0x84ca		/* 82451NX Mem & IO */
 #define	PCI_PRODUCT_INTEL_82454NX	0x84cb		/* 82454NX PXB */
 #define	PCI_PRODUCT_INTEL_AML_KBL_Y_GT2_2	0x87c0		/* UHD Graphics 617 */
+#define	PCI_PRODUCT_INTEL_AML_CFL_Y_GT2	0x87ca		/* UHD Graphics */
 #define	PCI_PRODUCT_INTEL_EG20T_PCIE	0x8800		/* EG20T PCIE */
 #define	PCI_PRODUCT_INTEL_EG20T_PH	0x8801		/* EG20T Packet Hub */
 #define	PCI_PRODUCT_INTEL_EG20T_GBE	0x8802		/* EG20T Ethernet */
@@ -5598,17 +5625,17 @@
 #define	PCI_PRODUCT_INTEL_82802AC	0x89ac		/* 82802AC Firmware Hub 8Mbit */
 #define	PCI_PRODUCT_INTEL_82802AB	0x89ad		/* 82802AB Firmware Hub 4Mbit */
 #define	PCI_PRODUCT_INTEL_ICL_GT2_1	0x8a50		/* HD Graphics */
-#define	PCI_PRODUCT_INTEL_ICL_GT2_2	0x8a51		/* Iris Plus Graphics */
-#define	PCI_PRODUCT_INTEL_ICL_GT2_3	0x8a52		/* Iris Plus Graphics */
-#define	PCI_PRODUCT_INTEL_ICL_GT2_4	0x8a53		/* Iris Plus Graphics */
-#define	PCI_PRODUCT_INTEL_ICL_GT15_1	0x8a54		/* Iris Plus Graphics */
+#define	PCI_PRODUCT_INTEL_ICL_GT2_2	0x8a51		/* Iris Plus */
+#define	PCI_PRODUCT_INTEL_ICL_GT2_3	0x8a52		/* Iris Plus */
+#define	PCI_PRODUCT_INTEL_ICL_GT2_4	0x8a53		/* Iris Plus */
+#define	PCI_PRODUCT_INTEL_ICL_GT15_1	0x8a54		/* Iris Plus */
 #define	PCI_PRODUCT_INTEL_ICL_GT1_1	0x8a56		/* UHD Graphics */
 #define	PCI_PRODUCT_INTEL_ICL_GT15_2	0x8a57		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_ICL_GT1_2	0x8a58		/* UHD Graphics */
 #define	PCI_PRODUCT_INTEL_ICL_GT15_3	0x8a59		/* HD Graphics */
-#define	PCI_PRODUCT_INTEL_ICL_GT15_4	0x8a5a		/* Iris Plus Graphics */
+#define	PCI_PRODUCT_INTEL_ICL_GT15_4	0x8a5a		/* Iris Plus */
 #define	PCI_PRODUCT_INTEL_ICL_GT1_3	0x8a5b		/* HD Graphics */
-#define	PCI_PRODUCT_INTEL_ICL_GT15_5	0x8a5c		/* Iris Plus Graphics */
+#define	PCI_PRODUCT_INTEL_ICL_GT15_5	0x8a5c		/* Iris Plus */
 #define	PCI_PRODUCT_INTEL_ICL_GT1_4	0x8a5d		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_ICL_GT1_5	0x8a70		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_ICL_GT_05_1	0x8a71		/* HD Graphics */
