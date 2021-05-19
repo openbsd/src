@@ -1,4 +1,4 @@
-/*	$OpenBSD: plic.c,v 1.6 2021/05/13 19:26:25 kettenis Exp $	*/
+/*	$OpenBSD: plic.c,v 1.7 2021/05/19 17:39:49 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020, Mars Li <mengshi.li.mars@gmail.com>
@@ -75,6 +75,7 @@ struct plic_intrhand {
 	int ih_irq;			/* IRQ number */
 	struct evcount	ih_count;
 	char *ih_name;
+	struct cpu_info *ih_ci;
 };
 
 /*
@@ -109,12 +110,13 @@ int	plic_match(struct device *, void *, void *);
 void	plic_attach(struct device *, struct device *, void *);
 int	plic_irq_handler(void *);
 int	plic_irq_dispatch(uint32_t, void *);
-void	*plic_intr_establish(int, int, int (*)(void *),
-		void *, char *);
-void	*plic_intr_establish_fdt(void *, int *, int, int (*)(void *),
-		void *, char *);
+void	*plic_intr_establish(int, int, struct cpu_info *,
+	    int (*)(void *), void *, char *);
+void	*plic_intr_establish_fdt(void *, int *, int, struct cpu_info *,
+	    int (*)(void *), void *, char *);
 void	plic_intr_disestablish(void *);
 void	plic_intr_route(void *, int, struct cpu_info *);
+void	plic_intr_barrier(void *);
 
 void	plic_splx(int);
 int	plic_spllower(int);
@@ -308,6 +310,7 @@ plic_attach(struct device *parent, struct device *dev, void *aux)
 	sc->sc_intc.ic_disestablish = plic_intr_disestablish;
 	sc->sc_intc.ic_route = plic_intr_route;
 	// sc->sc_intc.ic_cpu_enable = XXX Per-CPU Initialization?
+	sc->sc_intc.ic_barrier = plic_intr_barrier;
 
 	riscv_intr_register_fdt(&sc->sc_intc);
 
@@ -400,8 +403,8 @@ plic_irq_dispatch(uint32_t irq,	void *frame)
 }
 
 void *
-plic_intr_establish(int irqno, int level, int (*func)(void *),
-    void *arg, char *name)
+plic_intr_establish(int irqno, int level, struct cpu_info *ci,
+    int (*func)(void *), void *arg, char *name)
 {
 	struct plic_softc *sc = plic;
 	struct plic_intrhand *ih;
@@ -411,6 +414,9 @@ plic_intr_establish(int irqno, int level, int (*func)(void *),
 		panic("plic_intr_establish: bogus irqnumber %d: %s",
 		    irqno, name);
 
+	if (ci == NULL)
+		ci = &cpu_info_primary;
+
 	ih = malloc(sizeof *ih, M_DEVBUF, M_WAITOK);
 	ih->ih_func = func;
 	ih->ih_arg = arg;
@@ -418,6 +424,7 @@ plic_intr_establish(int irqno, int level, int (*func)(void *),
 	ih->ih_flags = level & IPL_FLAGMASK;
 	ih->ih_irq = irqno;
 	ih->ih_name = name;
+	ih->ih_ci = ci;
 
 	sie = intr_disable();
 
@@ -439,9 +446,9 @@ plic_intr_establish(int irqno, int level, int (*func)(void *),
 
 void *
 plic_intr_establish_fdt(void *cookie, int *cell, int level,
-    int (*func)(void *), void *arg, char *name)
+    struct cpu_info *ci, int (*func)(void *), void *arg, char *name)
 {
-	return plic_intr_establish(cell[0], level, func, arg, name);
+	return plic_intr_establish(cell[0], level, ci, func, arg, name);
 }
 
 void
@@ -478,6 +485,14 @@ plic_intr_route(void *cookie, int enable, struct cpu_info *ci)
 	} else {
 		plic_intr_route_grid(irq, IRQ_DISABLE, cpu);
 	}
+}
+
+void
+plic_intr_barrier(void *cookie)
+{
+	struct plic_intrhand *ih = cookie;
+
+	sched_barrier(ih->ih_ci);
 }
 
 void

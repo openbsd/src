@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.4 2021/05/13 19:26:25 kettenis Exp $	*/
+/*	$OpenBSD: intr.h,v 1.5 2021/05/19 17:39:50 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -116,6 +116,11 @@ void	 riscv_set_intr_func(int (*raise)(int), int (*lower)(int),
     void (*x)(int), void (*setipl)(int));
 void	 riscv_set_intr_handler(void (*intr_handle)(void *));
 
+struct machine_intr_handle {
+	struct interrupt_controller *ih_ic;
+	void *ih_ih;
+};
+
 struct riscv_intr_func {
 	int (*raise)(int);
 	int (*lower)(int);
@@ -165,13 +170,16 @@ struct cpu_info;
 struct interrupt_controller {
 	int	ic_node;
 	void	*ic_cookie;
-	void	*(*ic_establish)(void *, int *, int, int (*)(void *),
-		    void *, char *);
+	void	*(*ic_establish)(void *, int *, int, struct cpu_info *,
+		    int (*)(void *), void *, char *);
+	void	*(*ic_establish_msi)(void *, uint64_t *, uint64_t *, int,
+		    struct cpu_info *, int (*)(void *), void *, char *);
 	void	 (*ic_disestablish)(void *);
 	void	 (*ic_enable)(void *);
 	void	 (*ic_disable)(void *);
 	void	 (*ic_route)(void *, int, struct cpu_info *);
 	void	 (*ic_cpu_enable)(void);
+	void	 (*ic_barrier)(void *);
 
 	LIST_ENTRY(interrupt_controller) ic_list;
 	uint32_t ic_phandle;
@@ -184,6 +192,14 @@ void	*riscv_intr_establish_fdt(int, int, int (*)(void *),
 	    void *, char *);
 void	*riscv_intr_establish_fdt_idx(int, int, int, int (*)(void *),
 	    void *, char *);
+void	*riscv_intr_establish_fdt_idx_cpu(int, int, int, struct cpu_info *,
+	    int (*)(void *), void *, char *);
+void	*riscv_intr_establish_fdt_imap_cpu(int, int *, int, int,
+	    struct cpu_info *, int (*)(void *), void *, char *);
+void	*riscv_intr_establish_fdt_msi(int, uint64_t *, uint64_t *, int,
+	    int (*)(void *), void *, char *);
+void	*riscv_intr_establish_fdt_msi_cpu(int, uint64_t *, uint64_t *, int,
+	    struct cpu_info *, int (*)(void *), void *, char *);
 void	 riscv_intr_disestablish_fdt(void *);
 void	 riscv_intr_enable(void *);
 void	 riscv_intr_disable(void *);

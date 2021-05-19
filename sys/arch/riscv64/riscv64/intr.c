@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.6 2021/05/14 06:48:52 jsg Exp $	*/
+/*	$OpenBSD: intr.c,v 1.7 2021/05/19 17:39:50 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
@@ -26,10 +26,12 @@
 #include <dev/ofw/openfirm.h>
 
 uint32_t riscv_intr_get_parent(int);
+uint32_t riscv_intr_map_msi(int, uint64_t *);
 
-void *riscv_intr_prereg_establish_fdt(void *, int *, int, int (*)(void *),
-    void *, char *);
+void *riscv_intr_prereg_establish_fdt(void *, int *, int, struct cpu_info *,
+    int (*)(void *), void *, char *);
 void riscv_intr_prereg_disestablish_fdt(void *);
+void riscv_intr_prereg_barrier_fdt(void *);
 
 int riscv_dflt_splraise(int);
 int riscv_dflt_spllower(int);
@@ -49,6 +51,12 @@ struct riscv_intr_func riscv_intr_func = {
 	riscv_dflt_setipl
 };
 
+void
+riscv_dflt_intr(void *frame)
+{
+	panic("%s", __func__);
+}
+
 void (*riscv_intr_dispatch)(void *) = riscv_dflt_intr;
 
 void
@@ -57,14 +65,8 @@ riscv_cpu_intr(void *frame)
 	struct cpu_info	*ci = curcpu();
 
 	ci->ci_idepth++;
-	riscv_intr_dispatch(frame);
+	(*riscv_intr_dispatch)(frame);
 	ci->ci_idepth--;
-}
-
-void
-riscv_dflt_intr(void *frame)
-{
-	panic("riscv_dflt_intr() called");
 }
 
 /*
@@ -80,6 +82,71 @@ riscv_intr_get_parent(int node)
 		node = OF_parent(node);
 	}
 
+	return phandle;
+}
+
+uint32_t
+riscv_intr_map_msi(int node, uint64_t *data)
+{
+	uint64_t msi_base;
+	uint32_t phandle = 0;
+	uint32_t *cell;
+	uint32_t *map;
+	uint32_t mask, rid_base, rid;
+	int i, len, length, mcells, ncells;
+
+	len = OF_getproplen(node, "msi-map");
+	if (len <= 0) {
+		while (node && !phandle) {
+			phandle = OF_getpropint(node, "msi-parent", 0);
+			node = OF_parent(node);
+		}
+
+		return phandle;
+	}
+
+	map = malloc(len, M_TEMP, M_WAITOK);
+	OF_getpropintarray(node, "msi-map", map, len);
+
+	mask = OF_getpropint(node, "msi-map-mask", 0xffff);
+	rid = *data & mask;
+
+	cell = map;
+	ncells = len / sizeof(uint32_t);
+	while (ncells > 1) {
+		node = OF_getnodebyphandle(cell[1]);
+		if (node == 0)
+			goto out;
+
+		/*
+		 * Some device trees (e.g. those for the Rockchip
+		 * RK3399 boards) are missing a #msi-cells property.
+		 * Assume the msi-specifier uses a single cell in that
+		 * case.
+		 */
+		mcells = OF_getpropint(node, "#msi-cells", 1);
+		if (ncells < mcells + 3)
+			goto out;
+
+		rid_base = cell[0];
+		length = cell[2 + mcells];
+		msi_base = cell[2];
+		for (i = 1; i < mcells; i++) {
+			msi_base <<= 32;
+			msi_base |= cell[2 + i];
+		}
+		if (rid >= rid_base && rid < rid_base + length) {
+			*data = msi_base + (rid - rid_base);
+			phandle = cell[1];
+			break;
+		}
+
+		cell += (3 + mcells);
+		ncells -= (3 + mcells);
+	}
+
+out:
+	free(map, M_TEMP, len);
 	return phandle;
 }
 
@@ -104,6 +171,7 @@ struct intr_prereg {
 	uint32_t ip_cell[MAX_INTERRUPT_CELLS];
 
 	int ip_level;
+	struct cpu_info *ip_ci;
 	int (*ip_func)(void *);
 	void *ip_arg;
 	char *ip_name;
@@ -117,7 +185,7 @@ LIST_HEAD(, intr_prereg) prereg_interrupts =
 
 void *
 riscv_intr_prereg_establish_fdt(void *cookie, int *cell, int level,
-    int (*func)(void *), void *arg, char *name)
+    struct cpu_info *ci, int (*func)(void *), void *arg, char *name)
 {
 	struct interrupt_controller *ic = cookie;
 	struct intr_prereg *ip;
@@ -128,6 +196,7 @@ riscv_intr_prereg_establish_fdt(void *cookie, int *cell, int level,
 	for (i = 0; i < ic->ic_cells; i++)
 		ip->ip_cell[i] = cell[i];
 	ip->ip_level = level;
+	ip->ip_ci = ci;
 	ip->ip_func = func;
 	ip->ip_arg = arg;
 	ip->ip_name = name;
@@ -152,6 +221,16 @@ riscv_intr_prereg_disestablish_fdt(void *cookie)
 }
 
 void
+riscv_intr_prereg_barrier_fdt(void *cookie)
+{
+	struct intr_prereg *ip = cookie;
+	struct interrupt_controller *ic = ip->ip_ic;
+
+	if (ip->ip_ic != NULL && ip->ip_ih != NULL)
+		ic->ic_barrier(ip->ip_ih);
+}
+
+void
 riscv_intr_init_fdt_recurse(int node)
 {
 	struct interrupt_controller *ic;
@@ -163,6 +242,7 @@ riscv_intr_init_fdt_recurse(int node)
 		ic->ic_cookie = ic;
 		ic->ic_establish = riscv_intr_prereg_establish_fdt;
 		ic->ic_disestablish = riscv_intr_prereg_disestablish_fdt;
+		ic->ic_barrier = riscv_intr_prereg_barrier_fdt;
 		riscv_intr_register_fdt(ic);
 	}
 
@@ -204,7 +284,7 @@ riscv_intr_register_fdt(struct interrupt_controller *ic)
 		if (ic->ic_establish)/* riscv_cpu_intc sets this to NULL */
 		{
 			ip->ip_ih = ic->ic_establish(ic->ic_cookie, ip->ip_cell,
-					ip->ip_level, ip->ip_func, ip->ip_arg, ip->ip_name);
+			    ip->ip_level, ip->ip_ci, ip->ip_func, ip->ip_arg, ip->ip_name);
 			if (ip->ip_ih == NULL)
 				printf("can't establish interrupt %s\n", ip->ip_name);
 		}
@@ -212,11 +292,6 @@ riscv_intr_register_fdt(struct interrupt_controller *ic)
 		LIST_REMOVE(ip, ip_list);
 	}
 }
-
-struct riscv_intr_handle {
-	struct interrupt_controller *ih_ic;
-	void *ih_ih;
-};
 
 void *
 riscv_intr_establish_fdt(int node, int level, int (*func)(void *),
@@ -226,13 +301,29 @@ riscv_intr_establish_fdt(int node, int level, int (*func)(void *),
 }
 
 void *
+riscv_intr_establish_fdt_cpu(int node, int level, struct cpu_info *ci,
+    int (*func)(void *), void *cookie, char *name)
+{
+	return riscv_intr_establish_fdt_idx_cpu(node, 0, level, ci, func,
+	    cookie, name);
+}
+
+void *
 riscv_intr_establish_fdt_idx(int node, int idx, int level, int (*func)(void *),
     void *cookie, char *name)
+{
+	return riscv_intr_establish_fdt_idx_cpu(node, idx, level, NULL, func,
+	    cookie, name);
+}
+
+void *
+riscv_intr_establish_fdt_idx_cpu(int node, int idx, int level,
+    struct cpu_info *ci, int (*func)(void *), void *cookie, char *name)
 {
 	struct interrupt_controller *ic;
 	int i, len, ncells, extended = 1;
 	uint32_t *cell, *cells, phandle;
-	struct riscv_intr_handle *ih;
+	struct machine_intr_handle *ih;
 	void *val = NULL;
 
 	len = OF_getproplen(node, "interrupts-extended");
@@ -280,7 +371,7 @@ riscv_intr_establish_fdt_idx(int node, int idx, int level, int (*func)(void *),
 
 		if (i == idx && ncells >= ic->ic_cells && ic->ic_establish) {
 			val = ic->ic_establish(ic->ic_cookie, cell, level,
-			    func, cookie, name);
+			    ci, func, cookie, name);
 			break;
 		}
 
@@ -300,10 +391,104 @@ riscv_intr_establish_fdt_idx(int node, int idx, int level, int (*func)(void *),
 	return ih;
 }
 
+void *
+riscv_intr_establish_fdt_imap_cpu(int node, int *reg, int nreg, int level,
+    struct cpu_info *ci, int (*func)(void *), void *cookie, char *name)
+{
+	struct interrupt_controller *ic;
+	struct machine_intr_handle *ih;
+	uint32_t *cell;
+	uint32_t map_mask[4], *map;
+	int len, acells, ncells;
+	void *val = NULL;
+
+	if (nreg != sizeof(map_mask))
+		return NULL;
+
+	if (OF_getpropintarray(node, "interrupt-map-mask", map_mask,
+	    sizeof(map_mask)) != sizeof(map_mask))
+		return NULL;
+
+	len = OF_getproplen(node, "interrupt-map");
+	if (len <= 0)
+		return NULL;
+
+	map = malloc(len, M_DEVBUF, M_WAITOK);
+	OF_getpropintarray(node, "interrupt-map", map, len);
+
+	cell = map;
+	ncells = len / sizeof(uint32_t);
+	while (ncells > 5) {
+		LIST_FOREACH(ic, &interrupt_controllers, ic_list) {
+			if (ic->ic_phandle == cell[4])
+				break;
+		}
+
+		if (ic == NULL)
+			break;
+
+		acells = OF_getpropint(ic->ic_node, "#address-cells", 0);
+		if (ncells >= (5 + acells + ic->ic_cells) &&
+		    (reg[0] & map_mask[0]) == cell[0] &&
+		    (reg[1] & map_mask[1]) == cell[1] &&
+		    (reg[2] & map_mask[2]) == cell[2] &&
+		    (reg[3] & map_mask[3]) == cell[3] &&
+		    ic->ic_establish) {
+			val = ic->ic_establish(ic->ic_cookie, &cell[5 + acells],
+			    level, ci, func, cookie, name);
+			break;
+		}
+
+		cell += (5 + acells + ic->ic_cells);
+		ncells -= (5 + acells + ic->ic_cells);
+	}
+
+	if (val == NULL) {
+		free(map, M_DEVBUF, len);
+		return NULL;
+	}
+
+	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
+	ih->ih_ic = ic;
+	ih->ih_ih = val;
+
+	free(map, M_DEVBUF, len);
+	return ih;
+}
+
+void *
+riscv_intr_establish_fdt_msi_cpu(int node, uint64_t *addr, uint64_t *data,
+    int level, struct cpu_info *ci, int (*func)(void *), void *cookie,
+    char *name)
+{
+	struct interrupt_controller *ic;
+	struct machine_intr_handle *ih;
+	uint32_t phandle;
+	void *val = NULL;
+
+	phandle = riscv_intr_map_msi(node, data);
+	LIST_FOREACH(ic, &interrupt_controllers, ic_list) {
+		if (ic->ic_phandle == phandle)
+			break;
+	}
+
+	if (ic == NULL || ic->ic_establish_msi == NULL)
+		return NULL;
+
+	val = ic->ic_establish_msi(ic->ic_cookie, addr, data,
+	    level, ci, func, cookie, name);
+
+	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
+	ih->ih_ic = ic;
+	ih->ih_ih = val;
+
+	return ih;
+}
+
 void
 riscv_intr_disestablish_fdt(void *cookie)
 {
-	struct riscv_intr_handle *ih = cookie;
+	struct machine_intr_handle *ih = cookie;
 	struct interrupt_controller *ic = ih->ih_ic;
 
 	ic->ic_disestablish(ih->ih_ih);
@@ -313,7 +498,7 @@ riscv_intr_disestablish_fdt(void *cookie)
 void
 riscv_intr_enable(void *cookie)
 {
-	struct riscv_intr_handle *ih = cookie;
+	struct machine_intr_handle *ih = cookie;
 	struct interrupt_controller *ic = ih->ih_ic;
 
 	KASSERT(ic->ic_enable != NULL);
@@ -323,7 +508,7 @@ riscv_intr_enable(void *cookie)
 void
 riscv_intr_disable(void *cookie)
 {
-	struct riscv_intr_handle *ih = cookie;
+	struct machine_intr_handle *ih = cookie;
 	struct interrupt_controller *ic = ih->ih_ic;
 
 	KASSERT(ic->ic_disable != NULL);
@@ -333,7 +518,7 @@ riscv_intr_disable(void *cookie)
 void
 riscv_intr_route(void *cookie, int enable, struct cpu_info *ci)
 {
-	struct riscv_intr_handle *ih = cookie;
+	struct machine_intr_handle *ih = cookie;
 	struct interrupt_controller *ic = ih->ih_ic;
 
 	if (ic->ic_route)
@@ -516,9 +701,12 @@ riscv_splassert_check(int wantipl, const char *func)
 #endif
 
 void
-intr_barrier(void *ih)
+intr_barrier(void *cookie)
 {
-	sched_barrier(NULL);
+	struct machine_intr_handle *ih = cookie;
+	struct interrupt_controller *ic = ih->ih_ic;
+
+	ic->ic_barrier(ih->ih_ih);
 }
 
 /*
