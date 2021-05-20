@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.95 2021/04/22 11:54:32 mpi Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.96 2021/05/20 08:03:35 mpi Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -351,58 +351,16 @@ uao_set_swslot(struct uvm_object *uobj, int pageidx, int slot)
 static void
 uao_free(struct uvm_aobj *aobj)
 {
+	struct uvm_object *uobj = &aobj->u_obj;
+
+	uao_dropswap_range(uobj, 0, 0);
 
 	if (UAO_USES_SWHASH(aobj)) {
-		int i, hashbuckets = aobj->u_swhashmask + 1;
-
 		/*
-		 * free the swslots from each hash bucket,
-		 * then the hash bucket, and finally the hash table itself.
+		 * free the hash table itself.
 		 */
-		for (i = 0; i < hashbuckets; i++) {
-			struct uao_swhash_elt *elt, *next;
-
-			for (elt = LIST_FIRST(&aobj->u_swhash[i]);
-			     elt != NULL;
-			     elt = next) {
-				int j;
-
-				for (j = 0; j < UAO_SWHASH_CLUSTER_SIZE; j++) {
-					int slot = elt->slots[j];
-
-					if (slot == 0) {
-						continue;
-					}
-					uvm_swap_free(slot, 1);
-					/*
-					 * this page is no longer
-					 * only in swap.
-					 */
-					atomic_dec_int(&uvmexp.swpgonly);
-				}
-
-				next = LIST_NEXT(elt, list);
-				pool_put(&uao_swhash_elt_pool, elt);
-			}
-		}
-
 		hashfree(aobj->u_swhash, UAO_SWHASH_BUCKETS(aobj->u_pages), M_UVMAOBJ);
 	} else {
-		int i;
-
-		/*
-		 * free the array
-		 */
-		for (i = 0; i < aobj->u_pages; i++) {
-			int slot = aobj->u_swslots[i];
-
-			if (slot) {
-				uvm_swap_free(slot, 1);
-
-				/* this page is no longer only in swap. */
-				atomic_dec_int(&uvmexp.swpgonly);
-			}
-		}
 		free(aobj->u_swslots, M_UVMAOBJ, aobj->u_pages * sizeof(int));
 	}
 
@@ -1487,9 +1445,6 @@ uao_pagein_page(struct uvm_aobj *aobj, int pageidx)
 }
 
 /*
- * XXX pedro: Once we are comfortable enough with this function, we can adapt
- * uao_free() to use it.
- *
  * uao_dropswap_range: drop swapslots in the range.
  *
  * => aobj must be locked and is returned locked.
