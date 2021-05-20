@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmp.h,v 1.16 2020/06/30 17:11:49 martijn Exp $	*/
+/*	$OpenBSD: snmp.h,v 1.17 2021/05/20 08:53:12 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -77,7 +77,7 @@ enum snmp_version {
 	SNMP_V3			= 3
 };
 
-enum snmp_context {
+enum snmp_pdutype {
 	SNMP_C_GETREQ		= 0,
 	SNMP_C_GETNEXTREQ	= 1,
 	SNMP_C_GETRESP		= 2,

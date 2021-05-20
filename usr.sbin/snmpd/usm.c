@@ -1,4 +1,4 @@
-/*	$OpenBSD: usm.c,v 1.18 2021/02/22 11:31:09 martijn Exp $	*/
+/*	$OpenBSD: usm.c,v 1.19 2021/05/20 08:53:12 martijn Exp $	*/
 
 /*
  * Copyright (c) 2012 GeNUA mbH
@@ -548,7 +548,7 @@ usm_make_report(struct snmp_message *msg)
 {
 	struct ber_oid		 usmstat = OID(MIB_usmStats, 0, 0);
 
-	msg->sm_context = SNMP_C_REPORT;
+	msg->sm_pdutype = SNMP_C_REPORT;
 	usmstat.bo_id[OIDIDX_usmStats] = msg->sm_usmerr;
 	usmstat.bo_n = OIDIDX_usmStats + 2;
 	if (msg->sm_varbindresp != NULL)

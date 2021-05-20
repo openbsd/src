@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.94 2021/02/05 10:30:45 martijn Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.95 2021/05/20 08:53:12 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -384,7 +384,7 @@ struct snmp_message {
 	socklen_t		 sm_slen;
 	int			 sm_sock_tcp;
 	int			 sm_aflags;
-	int			 sm_type;
+	enum snmp_pdutype	 sm_pdutype;
 	struct event		 sm_sockev;
 	char			 sm_host[HOST_NAME_MAX+1];
 	in_port_t		 sm_port;
@@ -405,7 +405,6 @@ struct snmp_message {
 
 	/* V1, V2c */
 	char			 sm_community[SNMPD_MAXCOMMUNITYLEN];
-	int			 sm_context;
 
 	/* V3 */
 	long long		 sm_msgid;

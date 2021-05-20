@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.70 2021/02/22 11:31:09 martijn Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.71 2021/05/20 08:53:12 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -41,6 +41,7 @@
 #include "mib.h"
 
 void	 snmpe_init(struct privsep *, struct privsep_proc *, void *);
+const char *snmpe_pdutype2string(enum snmp_pdutype);
 int	 snmpe_parse(struct snmp_message *);
 void	 snmpe_tryparse(int, struct snmp_message *);
 int	 snmpe_parsevarbinds(struct snmp_message *);
@@ -194,6 +195,36 @@ snmpe_bind(struct address *addr)
 	return (-1);
 }
 
+const char *
+snmpe_pdutype2string(enum snmp_pdutype pdutype)
+{
+	static char unknown[sizeof("Unknown (4294967295)")];
+
+	switch (pdutype) {
+	case SNMP_C_GETREQ:
+		return "GetRequest";
+	case SNMP_C_GETNEXTREQ:
+		return "GetNextRequest";
+	case SNMP_C_GETRESP:
+		return "Response";
+	case SNMP_C_SETREQ:
+		return "SetRequest";
+	case SNMP_C_TRAP:
+		return "Trap";
+	case SNMP_C_GETBULKREQ:
+		return "GetBulkRequest";
+	case SNMP_C_INFORMREQ:
+		return "InformRequest";
+	case SNMP_C_TRAPV2:
+		return "SNMPv2-Trap";
+	case SNMP_C_REPORT:
+		return "Report";
+	}
+
+	snprintf(unknown, sizeof(unknown), "Unknown (%u)", pdutype);
+	return unknown;
+}
+
 int
 snmpe_parse(struct snmp_message *msg)
 {
@@ -202,7 +233,6 @@ snmpe_parse(struct snmp_message *msg)
 	struct ber_element	*a;
 	long long		 ver, req;
 	long long		 errval, erridx;
-	unsigned int		 type;
 	u_int			 class;
 	char			*comn;
 	char			*flagstr, *ctxname;
@@ -271,15 +301,15 @@ snmpe_parse(struct snmp_message *msg)
 		goto fail;
 	}
 
-	if (ober_scanf_elements(msg->sm_pdu, "t{e", &class, &type, &a) != 0)
+	if (ober_scanf_elements(msg->sm_pdu, "t{e", &class, &(msg->sm_pdutype),
+	    &a) != 0)
 		goto parsefail;
 
 	/* SNMP PDU context */
 	if (class != BER_CLASS_CONTEXT)
 		goto parsefail;
 
-	msg->sm_type = type;
-	switch (type) {
+	switch (msg->sm_pdutype) {
 	case SNMP_C_GETBULKREQ:
 		if (msg->sm_version == SNMP_V1) {
 			stats->snmp_inbadversions++;
@@ -294,7 +324,7 @@ snmpe_parse(struct snmp_message *msg)
 		/* FALLTHROUGH */
 
 	case SNMP_C_GETNEXTREQ:
-		if (type == SNMP_C_GETNEXTREQ)
+		if (msg->sm_pdutype == SNMP_C_GETNEXTREQ)
 			stats->snmp_ingetnexts++;
 		if (!(msg->sm_aflags & ADDRESS_FLAG_READ)) {
 			msg->sm_errstr = "read requests disabled";
@@ -308,7 +338,6 @@ snmpe_parse(struct snmp_message *msg)
 			msg->sm_errstr = "wrong read community";
 			goto fail;
 		}
-		msg->sm_context = type;
 		break;
 
 	case SNMP_C_SETREQ:
@@ -327,7 +356,6 @@ snmpe_parse(struct snmp_message *msg)
 			msg->sm_errstr = "wrong write community";
 			goto fail;
 		}
-		msg->sm_context = type;
 		break;
 
 	case SNMP_C_GETRESP:
@@ -341,7 +369,7 @@ snmpe_parse(struct snmp_message *msg)
 			goto parsefail;
 		}
 	case SNMP_C_TRAPV2:
-		if (type == SNMP_C_TRAPV2 &&
+		if (msg->sm_pdutype == SNMP_C_TRAPV2 &&
 		    !(msg->sm_version == SNMP_V2 ||
 		    msg->sm_version != SNMP_V3)) {
 			msg->sm_errstr = "trapv2 request on !SNMPv2C or "
@@ -370,23 +398,17 @@ snmpe_parse(struct snmp_message *msg)
 			goto fail;
 		/* Shortcircuit */
 		return 0;
-
 	default:
 		msg->sm_errstr = "invalid context";
 		goto parsefail;
 	}
 
 	/* SNMP PDU */
-	if (ober_scanf_elements(a, "iiie{et}$",
+	if (ober_scanf_elements(a, "iiie{e{}}$",
 	    &req, &errval, &erridx, &msg->sm_pduend,
-	    &msg->sm_varbind, &class, &type) != 0) {
+	    &msg->sm_varbind) != 0) {
 		stats->snmp_silentdrops++;
 		msg->sm_errstr = "invalid PDU";
-		goto fail;
-	}
-	if (class != BER_CLASS_UNIVERSAL || type != BER_TYPE_SEQUENCE) {
-		stats->snmp_silentdrops++;
-		msg->sm_errstr = "invalid varbind";
 		goto fail;
 	}
 
@@ -396,16 +418,18 @@ snmpe_parse(struct snmp_message *msg)
 
 	print_host(ss, msg->sm_host, sizeof(msg->sm_host));
 	if (msg->sm_version == SNMP_V3)
-		log_debug("%s: %s:%hd: SNMPv3 context %d, flags %#x, "
+		log_debug("%s: %s:%hd: SNMPv3 pdutype %s, flags %#x, "
 		    "secmodel %lld, user '%s', ctx-engine %s, ctx-name '%s', "
 		    "request %lld", __func__, msg->sm_host, msg->sm_port,
-		    msg->sm_context, msg->sm_flags, msg->sm_secmodel,
-		    msg->sm_username, tohexstr(msg->sm_ctxengineid,
-		    msg->sm_ctxengineid_len), msg->sm_ctxname, msg->sm_request);
+		    snmpe_pdutype2string(msg->sm_pdutype), msg->sm_flags,
+		    msg->sm_secmodel, msg->sm_username,
+		    tohexstr(msg->sm_ctxengineid, msg->sm_ctxengineid_len),
+		    msg->sm_ctxname, msg->sm_request);
 	else
-		log_debug("%s: %s:%hd: SNMPv%d '%s' context %d request %lld",
+		log_debug("%s: %s:%hd: SNMPv%d '%s' pdutype %s request %lld",
 		    __func__, msg->sm_host, msg->sm_port, msg->sm_version + 1,
-		    msg->sm_community, msg->sm_context, msg->sm_request);
+		    msg->sm_community, snmpe_pdutype2string(msg->sm_pdutype),
+		    msg->sm_request);
 
 	return (0);
 
@@ -451,7 +475,7 @@ snmpe_parsevarbinds(struct snmp_message *msg)
 		 * XXX intotalreqvars should only be incremented after all are
 		 * succeeded
 		 */
-		switch (msg->sm_context) {
+		switch (msg->sm_pdutype) {
 		case SNMP_C_GETNEXTREQ:
 			if ((rvarbind = ober_add_sequence(NULL)) == NULL)
 				goto varfail;
@@ -766,8 +790,8 @@ snmpe_recvmsg(int fd, short sig, void *arg)
 void
 snmpe_dispatchmsg(struct snmp_message *msg)
 {
-	if (msg->sm_type == SNMP_C_TRAP ||
-	    msg->sm_type == SNMP_C_TRAPV2) {
+	if (msg->sm_pdutype == SNMP_C_TRAP ||
+	    msg->sm_pdutype == SNMP_C_TRAPV2) {
 		snmp_msgfree(msg);
 		return;
 	}
@@ -776,7 +800,7 @@ snmpe_dispatchmsg(struct snmp_message *msg)
 	(void) snmpe_parsevarbinds(msg);
 
 	/* respond directly */
-	msg->sm_context = SNMP_C_GETRESP;
+	msg->sm_pdutype = SNMP_C_GETRESP;
 	snmpe_response(msg);
 }
 
@@ -888,7 +912,7 @@ snmpe_encode(struct snmp_message *msg)
 	}
 
 	if (!ober_printf_elements(epdu, "tiii{e}", BER_CLASS_CONTEXT,
-	    msg->sm_context, msg->sm_request,
+	    msg->sm_pdutype, msg->sm_request,
 	    msg->sm_error, msg->sm_errorindex,
 	    msg->sm_varbindresp)) {
 		ober_free_elements(pdu);
