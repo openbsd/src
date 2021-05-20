@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.3 2021/05/13 08:44:18 jsg Exp $	*/
+/*	$OpenBSD: signal.h,v 1.4 2021/05/20 15:14:30 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -57,6 +57,10 @@ struct sigcontext {
 	__register_t	sc_s[12];
 	__register_t	sc_a[8];
 	__register_t	sc_sepc;
+
+	/* 64 bit floats as well as integer registers */
+	__register_t	sc_f[32];	/* floating-point registers */
+	__register_t	sc_fcsr;	/* floating-point control register */
 
 	long	sc_cookie;
 };
