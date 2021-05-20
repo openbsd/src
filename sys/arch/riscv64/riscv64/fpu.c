@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.7 2021/05/12 01:20:52 jsg Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.8 2021/05/20 04:22:33 drahn Exp $	*/
 
 /*
  * Copyright (c) 2020 Dale Rahn <drahn@openbsd.org>
@@ -83,6 +83,7 @@ fpu_save(struct proc *p, struct trapframe *frame)
 		/* fallthru */
 	}
 
+	fpu_enable_clean();
 	__asm volatile("frcsr	%0" : "=r"(fcsr));
 
 	fp->fp_fcsr = fcsr;
@@ -129,7 +130,7 @@ fpu_save(struct proc *p, struct trapframe *frame)
 	 */
 
 	p->p_addr->u_pcb.pcb_tf->tf_sstatus &= ~SSTATUS_FS_MASK;
-	void fpu_enable_disable();
+	fpu_disable();
 }
 
 void
@@ -145,6 +146,10 @@ fpu_load(struct proc *p)
 	 * Verify that context is not already loaded
 	 */
 	if (pcb->pcb_fpcpu == ci && ci->ci_fpuproc == p) {
+		/* fpu state loaded, enable it */
+		if ((pcb->pcb_tf->tf_sstatus & SSTATUS_FS_MASK) ==
+		    SSTATUS_FS_OFF)
+			pcb->pcb_tf->tf_sstatus |= SSTATUS_FS_CLEAN;
 		return;
 	}
 	//printf("FPU load requested %p %p \n", ci, p);
@@ -199,6 +204,7 @@ fpu_load(struct proc *p)
 	 */
 	pcb->pcb_fpcpu = ci;
 	ci->ci_fpuproc = p;
+	p->p_addr->u_pcb.pcb_tf->tf_sstatus |= SSTATUS_FS_CLEAN;
 
-	void fpu_enable_disable();
+	fpu_disable();
 }

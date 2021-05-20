@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.5 2021/05/16 06:20:29 jsg Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.6 2021/05/20 04:22:33 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -61,7 +61,10 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 	struct trapframe *tf;
 	struct switchframe *sf;
 
-	// Does any flushing need to be done if process was running?
+	/* If the FPU is enabled, allow fpu_save to store data if needed */
+	if (pcb->pcb_flags & PCB_FPU) {
+		fpu_save(p1, p1->p_addr->u_pcb.pcb_tf);
+	}
 
 	/* Copy the pcb. */
 	*pcb = p1->p_addr->u_pcb;

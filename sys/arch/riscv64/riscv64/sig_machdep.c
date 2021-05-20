@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.4 2021/05/14 06:48:52 jsg Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.5 2021/05/20 04:22:33 drahn Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -117,6 +117,7 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 	struct trapframe *tf;
 	struct sigframe *fp, frame;
 	struct sigacts *psp = p->p_p->ps_sigacts;
+	struct fpreg *fpreg;
 	siginfo_t *sip = NULL;
 	int i;
 
@@ -157,8 +158,14 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 	/* Save signal mask. */
 	frame.sf_sc.sc_mask = mask;
 
-	/* XXX Save floating point context */
-	/* XXX! */
+	if (p->p_addr->u_pcb.pcb_flags & PCB_FPU) {
+		fpu_save(p, tf);
+		fpreg = &p->p_addr->u_pcb.pcb_fpstate;
+		for (i=0; i < 32; i++) {
+			frame.sf_sc.sc_f[i] = fpreg->fp_f[i];
+		}
+		frame.sf_sc.sc_fcsr = fpreg->fp_fcsr;
+	}
 
 	if (psp->ps_siginfo & sigmask(sig)) {
 		sip = &fp->sf_si;
@@ -211,6 +218,7 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	struct sigcontext ksc, *scp = SCARG(uap, sigcntxp);
 	struct trapframe *tf;
+	struct fpreg     *fpreg;
 	int i;
 
 	if (PROC_PC(p) != p->p_p->ps_sigcoderet) {
@@ -231,19 +239,6 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	(void)copyout(&ksc.sc_cookie, (caddr_t)scp +
 	    offsetof(struct sigcontext, sc_cookie), sizeof (ksc.sc_cookie));
 
-	/*
-	 * Make sure the processor mode has not been tampered with and
-	 * interrupts have not been disabled.
-	 */
-#if 0
-	/* XXX include sanity check */
-	if ((ksc.sc_spsr & PSR_M_MASK) != PSR_M_EL0t ||
-	    (ksc.sc_spsr & (PSR_I | PSR_F)) != 0)
-		return (EINVAL);
-#endif
-
-	/* XXX Restore floating point context */
-
 	/* Restore register context. */
 	tf = process_frame(p);
 	for (i=0; i < 7; i++)
@@ -256,6 +251,18 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	tf->tf_sp = ksc.sc_sp;
 	tf->tf_tp = ksc.sc_tp;
 	tf->tf_sepc = ksc.sc_sepc;
+
+	if (p->p_addr->u_pcb.pcb_flags & PCB_FPU) {
+		fpreg = &p->p_addr->u_pcb.pcb_fpstate;
+		for (i=0; i < 32; i++) {
+			fpreg->fp_f[i] = ksc.sc_f[i];
+		}
+		fpreg->fp_fcsr = ksc.sc_fcsr;
+
+		/* force disable and discard FPU contents */
+		tf->tf_sstatus &= ~SSTATUS_FS_MASK; /* disable fpu */
+		fpu_discard(p);
+	}
 
 	//dumpframe ("after", tf, 0);
 

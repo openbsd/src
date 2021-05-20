@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.S,v 1.4 2021/05/13 06:44:11 kettenis Exp $	*/
+/*	$OpenBSD: exception.S,v 1.5 2021/05/20 04:22:33 drahn Exp $	*/
 
 /*-
  * Copyright (c) 2015-2018 Ruslan Bukin <br@bsdpad.com>
@@ -108,6 +108,8 @@
 	li	t0, SSTATUS_SUM
 	csrc	sstatus, t0
 .endif
+	li	t0, SSTATUS_FS_MASK
+	csrc	sstatus, t0
 	csrr	t0, stval
 	sd	t0, (TF_STVAL)(sp)
 	csrr	t0, scause

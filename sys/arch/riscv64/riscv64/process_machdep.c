@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.4 2021/05/14 06:48:52 jsg Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.5 2021/05/20 04:22:33 drahn Exp $	*/
 
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -73,6 +73,13 @@ process_read_regs(struct proc *p, struct reg *regs)
 int
 process_read_fpregs(struct proc *p, struct fpreg *regs)
 {
+	struct trapframe *tf = p->p_addr->u_pcb.pcb_tf;
+
+	if ((tf->tf_sstatus & SSTATUS_FS_MASK) == SSTATUS_FS_DIRTY) {
+		tf->tf_sstatus &= ~SSTATUS_FS_MASK; /* disable fpu */
+		fpu_save(p, tf);
+	}
+
 	if (p->p_addr->u_pcb.pcb_flags & PCB_FPU)
 		memcpy(regs, &p->p_addr->u_pcb.pcb_fpstate, sizeof(*regs));
 	else
@@ -96,8 +103,10 @@ process_write_regs(struct proc *p, struct reg *regs)
 	tf->tf_gp = regs->r_gp;
 	tf->tf_tp = regs->r_tp; //XXX
 	tf->tf_sepc = regs->r_sepc;
+
 	//p->p_addr->u_pcb.pcb_tcb = (void *)regs->r_tp;//XXX why? freebsd just copied r_tp to tf_tp
-	//XXX should we add r_sepc and sstatus also?
+
+
 	return(0);
 }
 
@@ -105,9 +114,15 @@ process_write_regs(struct proc *p, struct reg *regs)
 int
 process_write_fpregs(struct proc *p,  struct fpreg *regs)
 {
+	struct cpu_info *ci = curcpu();
+	struct trapframe *tf = p->p_addr->u_pcb.pcb_tf;
+
 	p->p_addr->u_pcb.pcb_flags |= PCB_FPU;
 	memcpy(&p->p_addr->u_pcb.pcb_fpstate, regs,
 	    sizeof(p->p_addr->u_pcb.pcb_fpstate));
+
+	tf->tf_sstatus &= ~SSTATUS_FS_MASK; /* disable fpu */
+	fpu_discard(p);
 	return(0);
 }
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.18 2021/05/19 21:23:20 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.19 2021/05/20 04:22:33 drahn Exp $	*/
 
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -279,6 +279,37 @@ cpu_startup(void)
 #else
 		printf("kernel does not support -c; continuing..\n");
 #endif
+	}
+}
+
+/*
+ * Move parts of cpu_switchto into C, too difficult in asm
+ */
+
+void    cpu_switchto_asm(struct proc *, struct proc *);
+
+void
+cpu_switchto(struct proc *old, struct proc *new)
+{
+	struct cpu_info *ci = curcpu();
+	struct trapframe *tf;
+	struct pcb *pcb;
+
+	/* old may be NULL, do not save context */
+	if (old != NULL) {
+		tf = old->p_addr->u_pcb.pcb_tf;
+		if ((tf->tf_sstatus & SSTATUS_FS_MASK) == SSTATUS_FS_DIRTY) {
+			fpu_save(old, tf);
+		}
+	}
+
+	cpu_switchto_asm(old, new);
+
+	pcb = ci->ci_curpcb;
+	tf = new->p_addr->u_pcb.pcb_tf;
+	if (pcb->pcb_fpcpu == ci && ci->ci_fpuproc == new) {
+		/* If fpu state is already loaded, allow it to be used */
+		tf->tf_sstatus |= SSTATUS_FS_CLEAN;
 	}
 }
 

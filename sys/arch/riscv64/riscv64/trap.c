@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.12 2021/05/15 20:20:35 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.13 2021/05/20 04:22:33 drahn Exp $	*/
 
 /*
  * Copyright (c) 2020 Shivam Waghela <shivamwaghela@gmail.com>
@@ -125,19 +125,11 @@ do_trap_user(struct trapframe *frame)
 	KASSERTMSG((csr_read(sstatus) & (SSTATUS_SUM)) == 0,
 	    "Came from U mode with SUM enabled");
 
-	/* Save fpu context before (possibly) calling interrupt handler.
-	 * Could end up context switching in interrupt handler.
-	 */
-	fpu_save(p, frame);
-
 	exception = (frame->tf_scause & EXCP_MASK);
 	if (frame->tf_scause & EXCP_INTR) {
 		/* Interrupt */
 		riscv_cpu_intr(frame);
-		frame->tf_sstatus &= ~SSTATUS_FS_MASK;
-		if (pcb->pcb_fpcpu == curcpu() && curcpu()->ci_fpuproc == p) {
-			frame->tf_sstatus |= SSTATUS_FS_CLEAN;
-		}
+
 		return;
 	}
 
@@ -166,7 +158,6 @@ do_trap_user(struct trapframe *frame)
 	case EXCP_ILLEGAL_INSTRUCTION:
 		if ((frame->tf_sstatus & SSTATUS_FS_MASK) == SSTATUS_FS_OFF) {
 			fpu_load(p);
-			frame->tf_sstatus &= ~SSTATUS_FS_MASK;
 			break;
 		}
 		printf("ILL at %lx scause %lx stval %lx\n", frame->tf_sepc,
@@ -183,16 +174,6 @@ do_trap_user(struct trapframe *frame)
 		dump_regs(frame);
 		panic("Unknown userland exception %llx, trap value %lx",
 		    exception, frame->tf_stval);
-	}
-
-	/* now that we will not context switch again,
-	 * see if we should enable FPU
-	 */
-	frame->tf_sstatus &= ~SSTATUS_FS_MASK;
-	if (pcb->pcb_fpcpu == curcpu() && curcpu()->ci_fpuproc == p) {
-		frame->tf_sstatus |= SSTATUS_FS_CLEAN;
-		//printf ("FPU enabled userland %p %p\n",
-		//    pcb->pcb_fpcpu, curcpu()->ci_fpuproc);
 	}
 
 	userret(p);

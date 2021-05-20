@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.8 2021/05/16 03:29:35 jsg Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.9 2021/05/20 04:22:33 drahn Exp $	*/
 
 /*
  * Copyright (c) 2020 Brian Bamsch <bbamsch@google.com>
@@ -47,9 +47,6 @@ svc_handler(trapframe_t *frame)
 	register_t *ap, *args, copyargs[MAXARGS], rval[2];
 
 	uvmexp.syscalls++;
-
-	/* Before enabling interrupts, save FPU state */
-	fpu_save(p, frame);
 
 	/* Re-enable interrupts if they were enabled previously */
 	if (__predict_true(frame->tf_scause & EXCP_INTR))

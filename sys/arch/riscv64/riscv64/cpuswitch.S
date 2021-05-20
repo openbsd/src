@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuswitch.S,v 1.2 2021/05/12 01:20:52 jsg Exp $	*/
+/*	$OpenBSD: cpuswitch.S,v 1.3 2021/05/20 04:22:33 drahn Exp $	*/
 
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
@@ -25,7 +25,7 @@
  *      a0	'struct proc *' of the old context
  *      a1	'struct proc *' of the new context
  */
-ENTRY(cpu_switchto)
+ENTRY(cpu_switchto_asm)
 	// check if old context needs to be saved
 	beqz	a0, 1f
 
@@ -93,7 +93,7 @@ ENTRY(cpu_switchto)
 	addi	sp, sp, SWITCHFRAME_SIZEOF
 	RETGUARD_CHECK(cpu_switchto, a7)
 	ret
-END(cpu_switch)
+END(cpu_switch_asm)
 
 
 ENTRY(proc_trampoline)
