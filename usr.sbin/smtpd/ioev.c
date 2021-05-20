@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioev.c,v 1.45 2021/04/05 15:50:11 eric Exp $	*/
+/*	$OpenBSD: ioev.c,v 1.46 2021/05/20 07:33:32 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -64,7 +64,6 @@ struct io {
 	int		 state;
 	struct event	 ev;
 	struct tls	*tls;
-	char		*name;
 
 	const char	*error; /* only valid immediately on callback */
 };
@@ -280,7 +279,6 @@ io_free(struct io *io)
 		io->sock = -1;
 	}
 
-	free(io->name);
 	iobuf_clear(&io->iobuf);
 	free(io);
 }
@@ -817,14 +815,14 @@ io_connect_tls(struct io *io, struct tls *tls, const char *hostname)
 	if (io->tls)
 		errx(1, "io_connect_tls: TLS already started");
 
-	if (hostname) {
-		if ((io->name = strdup(hostname)) == NULL)
-			err(1, "io_connect_tls");
+	if (tls_connect_socket(tls, io->sock, hostname) == -1) {
+		io->error = tls_error(tls);
+		return (-1);
 	}
 
 	io->tls = tls;
 	io->state = IO_STATE_CONNECT_TLS;
-	io_reset(io, EV_WRITE, io_dispatch_connect_tls);
+	io_reset(io, EV_READ|EV_WRITE, io_dispatch_handshake_tls);
 
 	return (0);
 }
@@ -840,9 +838,14 @@ io_accept_tls(struct io *io, struct tls *tls)
 
 	if (io->tls)
 		errx(1, "io_accept_tls: TLS already started");
-	io->tls = tls;
+
+	if (tls_accept_socket(tls, &io->tls, io->sock) == -1) {
+		io->error = tls_error(tls);
+		return (-1);
+	}
+
 	io->state = IO_STATE_ACCEPT_TLS;
-	io_reset(io, EV_READ, io_dispatch_accept_tls);
+	io_reset(io, EV_READ|EV_WRITE, io_dispatch_handshake_tls);
 
 	return (0);
 }
@@ -877,60 +880,6 @@ io_dispatch_handshake_tls(int fd, short event, void *humppa)
  leave:
 	io_frame_leave(io);
 	return;
-}
-
-void
-io_dispatch_accept_tls(int fd, short event, void *humppa)
-{
-	struct io	*io = humppa;
-	struct tls      *tls = io->tls;
-	int		 ret;
-
-	io_frame_enter("io_dispatch_accept_tls", io, event);
-
-	/* Replaced by TLS context for accepted socket on success. */
-	io->tls = NULL;
-
-	if (event == EV_TIMEOUT) {
-		io_callback(io, IO_TIMEOUT);
-		goto leave;
-	}
-
-	if ((ret = tls_accept_socket(tls, &io->tls, io->sock)) == 0) {
-		io_reset(io, EV_READ|EV_WRITE, io_dispatch_handshake_tls);
-		goto leave;
-	}
-	io->error = tls_error(tls);
-	io_callback(io, IO_ERROR);
-
- leave:
-	io_frame_leave(io);
-	return;
-}
-
-void
-io_dispatch_connect_tls(int fd, short event, void *humppa)
-{
-	struct io	*io = humppa;
-	int		 ret;
-
-	io_frame_enter("io_dispatch_connect_tls", io, event);
-
-	if (event == EV_TIMEOUT) {
-		io_callback(io, IO_TIMEOUT);
-		goto leave;
-	}
-
-	if ((ret = tls_connect_socket(io->tls, io->sock, io->name)) == 0) {
-		io_reset(io, EV_READ|EV_WRITE, io_dispatch_handshake_tls);
-		goto leave;
-	}
-
-	io->error = tls_error(io->tls);
-	io_callback(io, IO_ERROR);
-
- leave:
-	io_frame_leave(io);
 }
 
 void
@@ -1017,37 +966,20 @@ io_dispatch_write_tls(int fd, short event, void *humppa)
 void
 io_reload_tls(struct io *io)
 {
-	short	ev = 0;
-	void	(*dispatch)(int, short, void*) = NULL;
-
-	switch (io->state) {
-	case IO_STATE_CONNECT_TLS:
-		ev = EV_WRITE;
-		dispatch = io_dispatch_connect_tls;
-		break;
-	case IO_STATE_ACCEPT_TLS:
-		ev = EV_READ;
-		dispatch = io_dispatch_accept_tls;
-		break;
-	case IO_STATE_UP:
-		ev = 0;
-		if (IO_READING(io) && !(io->flags & IO_PAUSE_IN)) {
-			ev = EV_READ;
-			dispatch = io_dispatch_read_tls;
-		}
-		else if (IO_WRITING(io) && !(io->flags & IO_PAUSE_OUT) &&
-		    io_queued(io)) {
-			ev = EV_WRITE;
-			dispatch = io_dispatch_write_tls;
-		}
-		if (!ev)
-			return; /* paused */
-		break;
-	default:
+	if (io->state != IO_STATE_UP)
 		errx(1, "io_reload_tls: bad state");
+
+	if (IO_READING(io) && !(io->flags & IO_PAUSE_IN)) {
+		io_reset(io, EV_READ, io_dispatch_read_tls);
+		return;
 	}
 
-	io_reset(io, ev, dispatch);
+	if (IO_WRITING(io) && !(io->flags & IO_PAUSE_OUT) && io_queued(io)) {
+		io_reset(io, EV_WRITE, io_dispatch_write_tls);
+		return;
+	}
+
+	/* paused */
 }
 
 #endif /* IO_TLS */

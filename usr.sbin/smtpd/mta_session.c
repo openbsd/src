@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.140 2021/03/07 20:56:41 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.141 2021/05/20 07:33:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1596,7 +1596,11 @@ mta_tls_init(struct mta_session *s)
 		return;
 	}
 
-	io_connect_tls(s->io, tls, s->mxname);
+	if (io_connect_tls(s->io, tls, s->mxname) == -1) {
+		log_info("%016"PRIx64" mta closing reason=tls-connect-failed", s->id);
+		tls_free(tls);
+		mta_free(s);
+	}
 }
 
 static void
