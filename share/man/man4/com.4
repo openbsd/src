@@ -1,4 +1,4 @@
-.\"	$OpenBSD: com.4,v 1.47 2021/05/01 16:11:09 visa Exp $
+.\"	$OpenBSD: com.4,v 1.48 2021/05/20 00:55:15 jsg Exp $
 .\"	$NetBSD: com.4,v 1.5 1996/03/16 00:07:08 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -33,7 +33,7 @@
 .\"
 .\"     from: @(#)dca.4	5.2 (Berkeley) 3/27/91
 .\"
-.Dd $Mdocdate: May 1 2021 $
+.Dd $Mdocdate: May 20 2021 $
 .Dt COM 4
 .Os
 .Sh NAME
@@ -86,6 +86,9 @@
 .Cd "com* at cardbus?"
 .Pp
 .Cd "# octeon"
+.Cd "com* at fdt?"
+.Pp
+.Cd "# riscv64"
 .Cd "com* at fdt?"
 .Pp
 .Cd "# sparc64"

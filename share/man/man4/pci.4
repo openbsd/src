@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.385 2021/05/01 16:11:09 visa Exp $
+.\"	$OpenBSD: pci.4,v 1.386 2021/05/20 00:55:15 jsg Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 1 2021 $
+.Dd $Mdocdate: May 20 2021 $
 .Dt PCI 4
 .Os
 .Sh NAME
@@ -79,6 +79,9 @@
 .Pp
 .Cd "# octeon"
 .Cd "pci* at octpcie?"
+.Pp
+.Cd "# riscv64"
+.Cd "pci* at pciecam?"
 .Pp
 .Cd "# sparc64"
 .Cd "pci* at psycho?"
