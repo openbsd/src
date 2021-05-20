@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.415 2021/04/15 13:42:33 bluhm Exp $ */
+/*	$OpenBSD: parse.y,v 1.416 2021/05/20 10:06:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3998,6 +3998,7 @@ add_mrtconfig(enum mrt_type type, char *name, int timeout, struct peer *p,
 		fatal("add_mrtconfig");
 
 	n->type = type;
+	n->state = MRT_STATE_OPEN;
 	if (strlcpy(MRT2MC(n)->name, name, sizeof(MRT2MC(n)->name)) >=
 	    sizeof(MRT2MC(n)->name)) {
 		yyerror("filename \"%s\" too long: max %zu",
@@ -4012,7 +4013,7 @@ add_mrtconfig(enum mrt_type type, char *name, int timeout, struct peer *p,
 			n->group_id = p->conf.id;
 		} else {
 			n->peer_id = p->conf.id;
-			n->group_id = 0;
+			n->group_id = p->conf.groupid;
 		}
 	}
 	if (rib) {
