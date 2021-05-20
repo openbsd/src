@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.97 2021/05/06 09:23:42 claudio Exp $
+.\" $OpenBSD: bgpctl.8,v 1.98 2021/05/20 10:03:43 claudio Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 6 2021 $
+.Dd $Mdocdate: May 20 2021 $
 .Dt BGPCTL 8
 .Os
 .Sh NAME
@@ -267,11 +267,11 @@ Show more detailed output for matching routes.
 Limit the output to the given address family.
 .It Cm file Ar name
 Read the MRT dump from file
+.Ar name
+instead of using stdin.
 .It Cm peers
 Print the neighbor table of MRT TABLE_DUMP_V2 dumps.
 Using this on other table dumps will only show the neighbor of the first entry.
-.Ar name
-instead of using stdin.
 .El
 .Pp
 Multiple options and filters can be used at the same time.
