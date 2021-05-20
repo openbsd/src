@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.120 2021/05/05 07:29:01 mpi Exp $	*/
+/*	$OpenBSD: trap.c,v 1.121 2021/05/20 12:34:35 bluhm Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -235,7 +235,7 @@ trap(struct trapframe *frame)
 	faultbuf *fb;
 	struct vm_map *map;
 	vaddr_t va;
-	int ftype, vftype;
+	int access_type;
 	struct sysent *callp;
 	size_t argsize;
 	register_t code, error;
@@ -278,12 +278,11 @@ trap(struct trapframe *frame)
 				return;
 		}
 		if (frame->dsisr & DSISR_STORE)
-			ftype = PROT_READ | PROT_WRITE;
+			access_type = PROT_WRITE;
 		else
-			ftype = PROT_READ;
+			access_type = PROT_READ;
 
-		error = uvm_fault(map, trunc_page(va), 0, ftype);
-
+		error = uvm_fault(map, trunc_page(va), 0, access_type);
 		if (error == 0)
 			return;
 
@@ -310,15 +309,13 @@ trap(struct trapframe *frame)
 		    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
 			goto out;
 
-		if (frame->dsisr & DSISR_STORE) {
-			ftype = PROT_READ | PROT_WRITE;
-			vftype = PROT_WRITE;
-		} else
-			vftype = ftype = PROT_READ;
+		if (frame->dsisr & DSISR_STORE)
+			access_type = PROT_WRITE;
+		else
+			access_type = PROT_READ;
 
 		error = uvm_fault(&p->p_vmspace->vm_map,
-		    trunc_page(frame->dar), 0, ftype);
-
+		    trunc_page(frame->dar), 0, access_type);
 		if (error == 0) {
 			uvm_grow(p, frame->dar);
 			break;
@@ -326,9 +323,9 @@ trap(struct trapframe *frame)
 
 		/*
 		 * keep this for later in case we want it later.
-		*/
+		 */
 		sv.sival_int = frame->dar;
-		trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, sv);
+		trapsignal(p, SIGSEGV, access_type, SEGV_MAPERR, sv);
 		break;
 
 	case EXC_ISI|EXC_USER:
@@ -337,10 +334,10 @@ trap(struct trapframe *frame)
 		    frame->srr0, 0, 1))
 			break;
 
-		ftype = PROT_READ | PROT_EXEC;
+		access_type = PROT_READ | PROT_EXEC;
 
 		error = uvm_fault(&p->p_vmspace->vm_map,
-		    trunc_page(frame->srr0), 0, ftype);
+		    trunc_page(frame->srr0), 0, access_type);
 
 		if (error == 0) {
 			uvm_grow(p, frame->srr0);
