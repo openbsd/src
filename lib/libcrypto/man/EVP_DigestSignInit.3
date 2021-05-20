@@ -1,4 +1,4 @@
-.\"	$OpenBSD: EVP_DigestSignInit.3,v 1.10 2021/05/13 06:00:53 tb Exp $
+.\"	$OpenBSD: EVP_DigestSignInit.3,v 1.11 2021/05/20 14:41:47 tb Exp $
 .\"	OpenSSL 9b86974e Aug 17 15:21:33 2015 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 13 2021 $
+.Dd $Mdocdate: May 20 2021 $
 .Dt EVP_DIGESTSIGNINIT 3
 .Os
 .Sh NAME
@@ -225,9 +225,7 @@ signature for any set of parameters.
 .Fn EVP_DigestSignFinal ,
 and
 .Fn EVP_DigestSign
-return 1 for success and 0 or a negative value for failure.
-In particular, a return value of -2 indicates the operation is not
-supported by the public key algorithm.
+return 1 for success and 0 for failure.
 .Pp
 The error codes can be obtained from
 .Xr ERR_get_error 3 .
