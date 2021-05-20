@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.71 2021/04/05 18:26:46 dv Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.72 2021/05/20 17:33:44 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -637,6 +637,7 @@ struct vm_mprotect_ept_params {
 
 /*
  * SEFF flags - copy from host minus:
+ *  TSC_ADJUST (SEFF0EBX_TSC_ADJUST)
  *  SGX (SEFF0EBX_SGX)
  *  HLE (SEFF0EBX_HLE)
  *  INVPCID (SEFF0EBX_INVPCID)
@@ -655,7 +656,8 @@ struct vm_mprotect_ept_params {
  *  PT (SEFF0EBX_PT)
  *  AVX512VBMI (SEFF0ECX_AVX512VBMI)
  */
-#define VMM_SEFF0EBX_MASK ~(SEFF0EBX_SGX | SEFF0EBX_HLE | SEFF0EBX_INVPCID | \
+#define VMM_SEFF0EBX_MASK ~(SEFF0EBX_TSC_ADJUST | SEFF0EBX_SGX | \
+    SEFF0EBX_HLE | SEFF0EBX_INVPCID | \
     SEFF0EBX_RTM | SEFF0EBX_PQM | SEFF0EBX_MPX | \
     SEFF0EBX_PCOMMIT | SEFF0EBX_PT | \
     SEFF0EBX_AVX512F | SEFF0EBX_AVX512DQ | \
