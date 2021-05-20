@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.7 2021/05/14 06:48:52 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.8 2021/05/20 18:28:15 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -90,6 +90,7 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 	struct cpu_info *ci;
+	int node, level;
 
 	KASSERT(faa->fa_nreg > 0);
 
@@ -163,7 +164,6 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		 * cpu-embedded interrupt controller
 		 */
 		struct fdt_attach_args	 fa_intc;
-		int node;
 		for (node = OF_child(faa->fa_node); node; node = OF_peer(node)) {
 			fa_intc.fa_node = node;
 			/* no specifying match func, will call cfdata's match func*/
@@ -173,6 +173,56 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 #ifdef MULTIPROCESSOR
 	}
 #endif
+
+	node = faa->fa_node;
+
+	level = 1;
+
+	while (node) {
+		const char *unit = "KB";
+		uint32_t line, iline, dline;
+		uint32_t size, isize, dsize;
+		uint32_t ways, iways, dways;
+		uint32_t cache;
+
+		line = OF_getpropint(node, "cache-block-size", 0);
+		size = OF_getpropint(node, "cache-size", 0);
+		ways = OF_getpropint(node, "cache-sets", 0);
+		iline = OF_getpropint(node, "i-cache-block-size", line);
+		isize = OF_getpropint(node, "i-cache-size", size) / 1024;
+		iways = OF_getpropint(node, "i-cache-sets", ways);
+		dline = OF_getpropint(node, "d-cache-block-size", line);
+		dsize = OF_getpropint(node, "d-cache-size", size) / 1024;
+		dways = OF_getpropint(node, "d-cache-sets", ways);
+
+		if (isize == 0 && dsize == 0)
+			break;
+
+		/* Print large cache sizes in MB. */
+		if (isize > 4096 && dsize > 4096) {
+			unit = "MB";
+			isize /= 1024;
+			dsize /= 1024;
+		}
+
+		printf("%s:", dev->dv_xname);
+		
+		if (OF_getproplen(node, "cache-unified") == 0) {
+			printf(" %d%s %db/line %d-way L%d cache",
+			    isize, unit, iline, iways, level);
+		} else {
+			printf(" %d%s %db/line %d-way L%d I-cache",
+			    isize, unit, iline, iways, level);
+			printf(", %d%s %db/line %d-way L%d D-cache",
+			    dsize, unit, dline, dways, level);
+		}
+
+		cache = OF_getpropint(node, "next-level-cache", 0);
+		node = OF_getnodebyphandle(cache);
+		level++;
+
+		printf("\n");
+	}
 }
 
 int
