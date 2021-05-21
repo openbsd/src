@@ -1,4 +1,4 @@
-/*	$OpenBSD: fork-exit.c,v 1.4 2021/05/21 20:21:10 bluhm Exp $	*/
+/*	$OpenBSD: fork-exit.c,v 1.5 2021/05/21 20:42:21 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2021 Alexander Bluhm <bluhm@openbsd.org>
@@ -236,7 +236,7 @@ main(int argc, char *argv[])
 			break;
 		case 's':
 			stack = strtonum(optarg, 0,
-			    (INT_MAX - 2) / (4096 + 32), &errstr);
+			    (INT_MAX / (4096 + 32)) - 2, &errstr);
 			if (errstr != NULL)
 				errx(1, "number of stack allocations is %s: %s",
 				    errstr, optarg);
