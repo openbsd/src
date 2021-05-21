@@ -1,4 +1,4 @@
-/* 	$OpenBSD: test_argv.c,v 1.1 2021/03/19 04:23:50 djm Exp $ */
+/* 	$OpenBSD: test_argv.c,v 1.2 2021/05/21 04:03:47 djm Exp $ */
 /*
  * Regress test for misc argv handling functions.
  *
@@ -53,6 +53,7 @@ test_argv(void)
 	ASSERT_INT_EQ(ac, 0);
 	ASSERT_PTR_NE(av, NULL);
 	ASSERT_PTR_EQ(av[0], NULL);
+	RESET_ARGV();
 	TEST_DONE();
 
 	TEST_START("trivial args");
@@ -69,6 +70,7 @@ test_argv(void)
 	ASSERT_STRING_EQ(av[0], "smiley");
 	ASSERT_STRING_EQ(av[1], "leamas");
 	ASSERT_PTR_EQ(av[2], NULL);
+	RESET_ARGV();
 	TEST_DONE();
 
 	TEST_START("quoted");
@@ -98,6 +100,7 @@ test_argv(void)
 	ASSERT_STRING_EQ(av[0], "smiley leamas");
 	ASSERT_STRING_EQ(av[1], "liz");
 	ASSERT_PTR_EQ(av[2], NULL);
+	RESET_ARGV();
 	TEST_DONE();
 
 	TEST_START("escaped");
@@ -133,6 +136,7 @@ test_argv(void)
 	ASSERT_STRING_EQ(av[0], "leamas\\");
 	ASSERT_STRING_EQ(av[1], "\\smiley");
 	ASSERT_PTR_EQ(av[2], NULL);
+	RESET_ARGV();
 	TEST_DONE();
 
 	/* XXX test char *argv_assemble(int argc, char **argv) */
