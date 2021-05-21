@@ -1,4 +1,4 @@
-/*	$OpenBSD: profile.h,v 1.3 2021/05/12 01:20:52 jsg Exp $	*/
+/*	$OpenBSD: profile.h,v 1.4 2021/05/21 16:49:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
@@ -89,4 +89,4 @@ __asm__ ("mrs %x0,daif; msr daifset, #0x2": "=r"(s));
 #define	MCOUNT_EXIT						\
 __asm__ ("msr daif, %x0":: "r"(s));
 
-#endif // _KERNEL
+#endif
