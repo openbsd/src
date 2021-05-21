@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.32 2021/05/15 11:30:27 kettenis Exp $ */
+/* $OpenBSD: agintc.c,v 1.33 2021/05/21 18:53:12 kettenis Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -925,9 +925,7 @@ agintc_run_handler(struct intrhand *ih, void *frame, int s)
 	else
 		arg = frame;
 
-	intr_enable();
 	handled = ih->ih_func(arg);
-	intr_disable();
 	if (handled)
 		ih->ih_count.ec_count++;
 
@@ -976,7 +974,9 @@ agintc_irq_handler(void *frame)
 			return;
 		
 		s = agintc_splraise(ih->ih_ipl);
+		intr_enable();
 		agintc_run_handler(ih, frame, s);
+		intr_disable();
 		agintc_eoi(irq);
 
 		agintc_splx(s);
@@ -985,9 +985,11 @@ agintc_irq_handler(void *frame)
 
 	pri = sc->sc_handler[irq].iq_irq_max;
 	s = agintc_splraise(pri);
+	intr_enable();
 	TAILQ_FOREACH(ih, &sc->sc_handler[irq].iq_list, ih_list) {
 		agintc_run_handler(ih, frame, s);
 	}
+	intr_disable();
 	agintc_eoi(irq);
 
 	agintc_splx(s);
