@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.70 2021/05/14 21:11:15 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.71 2021/05/21 19:09:46 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -41,6 +41,9 @@ MBR_protective_mbr(struct mbr *mbr)
 {
 	struct dos_partition dp[NDOSPART], dos_partition;
 	int i;
+
+	if (mbr->offset != 0)
+		return (-1);
 
 	for (i = 0; i < NDOSPART; i++) {
 		PRT_make(&mbr->part[i], mbr->offset, mbr->reloffset,
