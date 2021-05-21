@@ -20,7 +20,7 @@ our %args = (
     syslogd => {
 	ktrace => {
 	    qr/syslogd  PSIG  SIGHUP caught handler/ => 2,
-	    qr/syslogd  RET   execve 0/ => 2,
+	    qr/syslogd  RET   execve \d+/ => 2,
 	},
 	loggrep => {
 	    qr/syslogd: restarted/ => 1,
