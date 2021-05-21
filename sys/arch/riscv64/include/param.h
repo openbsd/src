@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.2 2021/05/12 01:20:52 jsg Exp $	*/
+/*	$OpenBSD: param.h,v 1.3 2021/05/21 16:50:48 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -32,8 +32,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _MACHINE_PARAM_H_
-#define _MACHINE_PARAM_H_
+#ifndef	_MACHINE_PARAM_H_
+#define	_MACHINE_PARAM_H_
 
 #ifdef _KERNEL
 #ifndef _LOCORE
@@ -41,48 +41,42 @@
 #endif
 #endif
 
-#define _MACHINE	riscv64
-#define MACHINE		"riscv64"
-#define _MACHINE_ARC	riscv64
-#define MACHINE_ARCH	"riscv64"
-#define MID_MACHINE	MID_RISCV64
+#define	_MACHINE	riscv64
+#define	MACHINE		"riscv64"
+#define	_MACHINE_ARC	riscv64
+#define	MACHINE_ARCH	"riscv64"
+#define	MID_MACHINE	MID_RISCV64
 
-#define PAGE_SHIFT	12
-#define PAGE_SIZE	(1 << PAGE_SHIFT)
-#define PAGE_MASK	(PAGE_SIZE - 1)
+#define	PAGE_SHIFT	12
+#define	PAGE_SIZE	(1 << PAGE_SHIFT)
+#define	PAGE_MASK	(PAGE_SIZE - 1)
 
 #ifdef _KERNEL
 
-#define NBPG		PAGE_SIZE		/* bytes/page */
-#define PGSHIFT		PAGE_SHIFT		/* LOG2(PAGE_SIZE) */
-#define PGOFSET		PAGE_MASK		/* byte offset into page */
+#define	NBPG		PAGE_SIZE		/* bytes/page */
+#define	PGSHIFT		PAGE_SHIFT		/* LOG2(PAGE_SIZE) */
+#define	PGOFSET		PAGE_MASK		/* byte offset into page */
 
-#define UPAGES		5			/* XXX pages of u-area */
-#define USPACE		(UPAGES * PAGE_SIZE)	/* XXX total size of u-area */
-#define USPACE_ALIGN	0			/* XXX u-area alignment 0-none */
+#define	UPAGES		5			/* pages of u-area */
+#define	USPACE		(UPAGES * PAGE_SIZE)	/* total size of u-area */
+#define	USPACE_ALIGN	0			/* u-area alignment 0-none */
 
-#define NMBCLUSTERS	(64 * 1024)		/* XXX max cluster allocation */
+#define	NMBCLUSTERS	(64 * 1024)		/* max cluster allocation */
 
-#ifndef MSGBUFSIZE
-#define MSGBUFSIZE	(16 * PAGE_SIZE)	/* XXX default message buffer size */
-#endif
-
-#ifndef KSTACK_PAGES
-#define KSTACK_PAGES	4			/*pages of kernel stack, with pcb*/
+#ifndef	MSGBUFSIZE
+#define	MSGBUFSIZE	(16 * PAGE_SIZE)	/* default message buffer size */
 #endif
 
 /*
- * XXX Maximum size of the kernel malloc arena in PAGE_SIZE-sized
+ * Maximum size of the kernel malloc arena in PAGE_SIZE-sized
  * logical pages.
  */
-#define NKMEMPAGES_MAX_DEFAULT	((128 * 1024 * 1024) >> PAGE_SHIFT)
+#define	NKMEMPAGES_MAX_DEFAULT	((128 * 1024 * 1024) >> PAGE_SHIFT)
 
-#define STACKALIGNBYTES		(16 - 1)
-#define STACKALIGN(p)		((u_long)(p) &~ STACKALIGNBYTES)
+#define	STACKALIGNBYTES		(16 - 1)
+#define	STACKALIGN(p)		((u_long)(p) &~ STACKALIGNBYTES)
 
-// XXX Advanced Configuration and Power Interface
 #define __HAVE_ACPI
-// XXX Flattened Device Tree
 #define __HAVE_FDT
 
 #endif /* _KERNEL */

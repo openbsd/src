@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.6 2021/05/12 01:20:52 jsg Exp $	*/
+/*	$OpenBSD: locore.S,v 1.7 2021/05/21 16:50:48 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
@@ -287,7 +287,7 @@ va:
 	.data
 	.align	4
 initstack:
-	.space	(PAGE_SIZE * KSTACK_PAGES)
+	.space	USPACE
 initstack_end:
 
 	.globl	sigfill
