@@ -1,4 +1,4 @@
-/*	$OpenBSD: fork-exit.c,v 1.3 2021/05/04 13:24:49 bluhm Exp $	*/
+/*	$OpenBSD: fork-exit.c,v 1.4 2021/05/21 20:21:10 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2021 Alexander Bluhm <bluhm@openbsd.org>
@@ -113,19 +113,31 @@ run_thread(void *arg)
 static void
 create_threads(void)
 {
+	pthread_attr_t tattr;
 	pthread_t *thrs;
 	int i, error;
 
+	error = pthread_attr_init(&tattr);
+	if (error)
+		errc(1, error, "pthread_attr_init");
+	if (stack) {
+		/* thread start and function call overhead needs a bit more */
+		error = pthread_attr_setstacksize(&tattr,
+		    (stack + 2) * (4096 + 32));
+		if (error)
+			errc(1, error, "pthread_attr_setstacksize");
+	}
+
 	error = pthread_barrier_init(&thread_barrier, NULL, threads + 1);
 	if (error)
-		errc(1, errno, "pthread_barrier_init");
+		errc(1, error, "pthread_barrier_init");
 
 	thrs = reallocarray(NULL, threads, sizeof(pthread_t));
 	if (thrs == NULL)
 		err(1, "thrs");
 
 	for (i = 0; i < threads; i++) {
-		error = pthread_create(&thrs[i], NULL, run_thread, NULL);
+		error = pthread_create(&thrs[i], &tattr, run_thread, NULL);
 		if (error)
 			errc(1, error, "pthread_create");
 	}
@@ -217,13 +229,14 @@ main(int argc, char *argv[])
 				    errstr, optarg);
 			break;
 		case 'p':
-			procs = strtonum(optarg, 0, INT_MAX, &errstr);
+			procs = strtonum(optarg, 0, INT_MAX / 4096, &errstr);
 			if (errstr != NULL)
 				errx(1, "number of procs is %s: %s", errstr,
 				    optarg);
 			break;
 		case 's':
-			stack = strtonum(optarg, 0, INT_MAX, &errstr);
+			stack = strtonum(optarg, 0,
+			    (INT_MAX - 2) / (4096 + 32), &errstr);
 			if (errstr != NULL)
 				errx(1, "number of stack allocations is %s: %s",
 				    errstr, optarg);
