@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlpinctrl.c,v 1.9 2020/12/29 15:57:29 kettenis Exp $	*/
+/*	$OpenBSD: amlpinctrl.c,v 1.10 2021/05/21 15:37:54 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -89,6 +89,7 @@
 #define GPIOAO_11	11
 #define GPIOE_0		12
 #define GPIOE_1		13
+#define GPIOE_2		14
 
 #define PERIPHS_PIN_MUX_0		0xb0
 #define PERIPHS_PIN_MUX_3		0xb3
@@ -331,6 +332,7 @@ struct aml_pin_group aml_g12a_ao_pin_groups[] = {
 	/* GPIOE */
 	{ "pwm_ao_b", GPIOE_0, 3, "pwm_ao_b" },
 	{ "pwm_ao_d_e", GPIOE_1, 3, "pwm_ao_d" },
+	{ "pwm_a_e", GPIOE_2, 3, "pwm_a_e" },
 
 	{ }
 };
