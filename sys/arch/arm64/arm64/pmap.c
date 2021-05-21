@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.78 2021/05/16 17:41:30 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.79 2021/05/21 14:41:57 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -765,11 +765,7 @@ _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
 	/* Calculate PTE */
 	pmap_fill_pte(pm, va, pa, pted, prot, flags, cache);
 
-	/*
-	 * Insert into table
-	 * We were told to map the page, probably called from vm_fault,
-	 * so map the page!
-	 */
+	/* Insert into table */
 	pmap_pte_insert(pted);
 
 	ttlb_flush(pm, va & ~PAGE_MASK);
@@ -1739,8 +1735,6 @@ pmap_proc_iflush(struct process *pr, vaddr_t va, vsize_t len)
 void
 pmap_pte_insert(struct pte_desc *pted)
 {
-	/* put entry into table */
-	/* need to deal with ref/change here */
 	pmap_t pm = pted->pted_pmap;
 	uint64_t *pl3;
 
@@ -1799,8 +1793,6 @@ pmap_pte_update(struct pte_desc *pted, uint64_t *pl3)
 void
 pmap_pte_remove(struct pte_desc *pted, int remove_pted)
 {
-	/* put entry into table */
-	/* need to deal with ref/change here */
 	struct pmapvp1 *vp1;
 	struct pmapvp2 *vp2;
 	struct pmapvp3 *vp3;
@@ -1831,7 +1823,7 @@ pmap_pte_remove(struct pte_desc *pted, int remove_pted)
 
 /*
  * This function exists to do software referenced/modified emulation.
- * It's purpose is to tell the caller that a fault was generated either
+ * Its purpose is to tell the caller that a fault was generated either
  * for this emulation, or to tell the caller that it's a legit fault.
  */
 int
@@ -1990,17 +1982,13 @@ int
 pmap_clear_modify(struct vm_page *pg)
 {
 	struct pte_desc *pted;
-	uint64_t *pl3 = NULL;
 
 	atomic_clearbits_int(&pg->pg_flags, PG_PMAP_MOD);
 
 	mtx_enter(&pg->mdpage.pv_mtx);
 	LIST_FOREACH(pted, &(pg->mdpage.pv_list), pted_pv_list) {
-		if (pmap_vp_lookup(pted->pted_pmap, pted->pted_va & ~PAGE_MASK, &pl3) == NULL)
-			panic("failed to look up pte");
-		*pl3  |= ATTR_AP(2);
 		pted->pted_pte &= ~PROT_WRITE;
-
+		pmap_pte_insert(pted);
 		ttlb_flush(pted->pted_pmap, pted->pted_va & ~PAGE_MASK);
 	}
 	mtx_leave(&pg->mdpage.pv_mtx);
