@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.2 2021/05/12 01:20:52 jsg Exp $	*/
+/*	$OpenBSD: syscall.h,v 1.3 2021/05/21 16:49:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2020 Brian Bamsch <bbamsch@google.com>
@@ -21,7 +21,6 @@
 
 #ifdef _KERNEL
 
-// syscall.c
 void svc_handler	(trapframe_t *);
 
 #endif
