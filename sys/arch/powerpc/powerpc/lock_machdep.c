@@ -1,6 +1,7 @@
-/*	$OpenBSD: lock_machdep.c,v 1.9 2020/04/15 08:09:00 mpi Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.10 2021/05/21 00:39:35 gkoehler Exp $	*/
 
 /*
+ * Copyright (c) 2021 George Koehler <gkoehler@openbsd.org>
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -22,9 +23,20 @@
 #include <sys/atomic.h>
 
 #include <machine/cpu.h>
-#include <machine/psl.h>
 
 #include <ddb/db_output.h>
+
+/*
+ * If __ppc_lock() crosses a page boundary in the kernel text, then it
+ * may cause a page fault (on G5 with ppc_nobat), and pte_spill_r()
+ * would recursively call __ppc_lock().  The lock must be in a valid
+ * state when the page fault happens.  We acquire or release the lock
+ * with a 32-bit atomic write to mpl_owner, so the lock is always in a
+ * valid state, before or after the write.
+ *
+ * Acquired the lock:	mpl->mpl_cpu == curcpu()
+ * Released the lock:	mpl->mpl_cpu == NULL
+ */
 
 void
 __ppc_lock_init(struct __ppc_lock *lock)
@@ -46,12 +58,12 @@ static __inline void
 __ppc_lock_spin(struct __ppc_lock *mpl)
 {
 #ifndef MP_LOCKDEBUG
-	while (mpl->mpl_count != 0)
+	while (mpl->mpl_cpu != NULL)
 		CPU_BUSY_CYCLE();
 #else
 	int nticks = __mp_lock_spinout;
 
-	while (mpl->mpl_count != 0 && --nticks > 0)
+	while (mpl->mpl_cpu != NULL && --nticks > 0)
 		CPU_BUSY_CYCLE();
 
 	if (nticks == 0) {
@@ -65,32 +77,33 @@ void
 __ppc_lock(struct __ppc_lock *mpl)
 {
 	/*
-	 * Please notice that mpl_count gets incremented twice for the
-	 * first lock. This is on purpose. The way we release the lock
-	 * in mp_unlock is to decrement the mpl_count and then check if
-	 * the lock should be released. Since mpl_count is what we're
-	 * spinning on, decrementing it in mpl_unlock to 0 means that
-	 * we can't clear mpl_cpu, because we're no longer holding the
-	 * lock. In theory mpl_cpu doesn't need to be cleared, but it's
-	 * safer to clear it and besides, setting mpl_count to 2 on the
-	 * first lock makes most of this code much simpler.
+	 * Please notice that mpl_count stays at 0 for the first lock.
+	 * A page fault might recursively call __ppc_lock() after we
+	 * set mpl_cpu, but before we can increase mpl_count.
+	 *
+	 * After we acquire the lock, we need a "bc; isync" memory
+	 * barrier, but we might not reach the barrier before the next
+	 * page fault.  Then the fault's recursive __ppc_lock() must
+	 * have a barrier.  membar_enter() is just "isync" and must
+	 * come after a conditional branch for holding the lock.
 	 */
 
 	while (1) {
-		int s;
+		struct cpu_info *owner = mpl->mpl_cpu;
+		struct cpu_info *ci = curcpu();
 
-		s = ppc_intr_disable();
-		if (atomic_cas_ulong(&mpl->mpl_count, 0, 1) == 0) {
+		if (owner == NULL) {
+			/* Try to acquire the lock. */
+			if (atomic_cas_ptr(&mpl->mpl_cpu, NULL, ci) == NULL) {
+				membar_enter();
+				break;
+			}
+		} else if (owner == ci) {
+			/* We hold the lock, but might need a barrier. */
 			membar_enter();
-			mpl->mpl_cpu = curcpu();
-		}
-
-		if (mpl->mpl_cpu == curcpu()) {
 			mpl->mpl_count++;
-			ppc_intr_enable(s);
 			break;
 		}
-		ppc_intr_enable(s);
 
 		__ppc_lock_spin(mpl);
 	}
@@ -99,8 +112,6 @@ __ppc_lock(struct __ppc_lock *mpl)
 void
 __ppc_unlock(struct __ppc_lock *mpl)
 {
-	int s;
-
 #ifdef MP_LOCKDEBUG
 	if (mpl->mpl_cpu != curcpu()) {
 		db_printf("__ppc_unlock(%p): not held lock\n", mpl);
@@ -108,63 +119,16 @@ __ppc_unlock(struct __ppc_lock *mpl)
 	}
 #endif
 
-	s = ppc_intr_disable();
-	if (--mpl->mpl_count == 1) {
-		mpl->mpl_cpu = NULL;
+	/*
+	 * If we get a page fault after membar_exit() and before
+	 * releasing the lock, then then recursive call to
+	 * __ppc_unlock() must also membar_exit().
+	 */
+	if (mpl->mpl_count == 0) {
 		membar_exit();
-		mpl->mpl_count = 0;
+		mpl->mpl_cpu = NULL;	/* Release the lock. */
+	} else {
+		membar_exit();
+		mpl->mpl_count--;
 	}
-	ppc_intr_enable(s);
-}
-
-int
-__ppc_release_all(struct __ppc_lock *mpl)
-{
-	int rv = mpl->mpl_count - 1;
-	int s;
-
-#ifdef MP_LOCKDEBUG
-	if (mpl->mpl_cpu != curcpu()) {
-		db_printf("__ppc_release_all(%p): not held lock\n", mpl);
-		db_enter();
-	}
-#endif
-
-	s = ppc_intr_disable();
-	mpl->mpl_cpu = NULL;
-	membar_exit();
-	mpl->mpl_count = 0;
-	ppc_intr_enable(s);
-
-	return (rv);
-}
-
-int
-__ppc_release_all_but_one(struct __ppc_lock *mpl)
-{
-	int rv = mpl->mpl_count - 2;
-
-#ifdef MP_LOCKDEBUG
-	if (mpl->mpl_cpu != curcpu()) {
-		db_printf("__ppc_release_all_but_one(%p): not held lock\n", mpl);
-		db_enter();
-	}
-#endif
-
-	mpl->mpl_count = 2;
-
-	return (rv);
-}
-
-void
-__ppc_acquire_count(struct __ppc_lock *mpl, int count)
-{
-	while (count--)
-		__ppc_lock(mpl);
-}
-
-int
-__ppc_lock_held(struct __ppc_lock *mpl, struct cpu_info *ci)
-{
-	return mpl->mpl_cpu == ci;
 }

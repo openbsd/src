@@ -1,4 +1,4 @@
-/*	$OpenBSD: mplock.h,v 1.4 2020/04/15 08:09:00 mpi Exp $	*/
+/*	$OpenBSD: mplock.h,v 1.5 2021/05/21 00:39:35 gkoehler Exp $	*/
 
 /*
  * Copyright (c) 2004 Niklas Hallqvist.  All rights reserved.
@@ -30,13 +30,14 @@
 #define __USE_MI_MPLOCK
 
 /*
+ * __ppc_lock exists because pte_spill_r() can't use __mp_lock.
  * Really simple spinlock implementation with recursive capabilities.
  * Correctness is paramount, no fancyness allowed.
  */
 
 struct __ppc_lock {
-	volatile struct cpu_info *mpl_cpu;
-	volatile long		mpl_count;
+	struct cpu_info *volatile	mpl_cpu;
+	long				mpl_count;
 };
 
 #ifndef _LOCORE
@@ -44,10 +45,6 @@ struct __ppc_lock {
 void __ppc_lock_init(struct __ppc_lock *);
 void __ppc_lock(struct __ppc_lock *);
 void __ppc_unlock(struct __ppc_lock *);
-int __ppc_release_all(struct __ppc_lock *);
-int __ppc_release_all_but_one(struct __ppc_lock *);
-void __ppc_acquire_count(struct __ppc_lock *, int);
-int __ppc_lock_held(struct __ppc_lock *, struct cpu_info *);
 
 #endif
 
