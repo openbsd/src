@@ -1,4 +1,4 @@
-/*	$OpenBSD: sfcc.c,v 1.1 2021/05/05 19:26:51 kettenis Exp $	*/
+/*	$OpenBSD: sfcc.c,v 1.2 2021/05/22 17:07:28 drahn Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -98,7 +98,7 @@ sfcc_cache_wbinv_range(paddr_t pa, paddr_t len)
 	struct sfcc_softc *sc = sfcc_sc;
 
 	len += pa & (sc->sc_line_size - 1);
-	pa &= ~(sc->sc_line_size - 1);
+	pa &= ~((paddr_t)sc->sc_line_size - 1);
 
 	__asm volatile ("fence iorw,iorw" ::: "memory");
 	while (len > 0) {
