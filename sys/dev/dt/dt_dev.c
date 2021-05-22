@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_dev.c,v 1.13 2021/04/23 07:21:02 bluhm Exp $ */
+/*	$OpenBSD: dt_dev.c,v 1.14 2021/05/22 21:25:38 bluhm Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -565,7 +565,7 @@ dt_pcb_filter(struct dt_pcb *dp)
 		var = p->p_p->ps_pid;
 		break;
 	case DT_FV_TID:
-		var = p->p_tid;
+		var = p->p_tid + THREAD_PID_OFFSET;
 		break;
 	case DT_FV_NONE:
 		break;
@@ -621,7 +621,7 @@ dt_pcb_ring_get(struct dt_pcb *dp, int profiling)
 	dtev->dtev_pbn = dp->dp_dtp->dtp_pbn;
 	dtev->dtev_cpu = cpu_number();
 	dtev->dtev_pid = p->p_p->ps_pid;
-	dtev->dtev_tid = p->p_tid;
+	dtev->dtev_tid = p->p_tid + THREAD_PID_OFFSET;
 	nanotime(&dtev->dtev_tsp);
 
 	if (ISSET(dp->dp_evtflags, DTEVT_EXECNAME))
