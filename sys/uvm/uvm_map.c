@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.274 2021/03/26 13:40:05 mpi Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.275 2021/05/22 08:38:29 mpi Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -491,12 +491,13 @@ uvm_mapent_addr_remove(struct vm_map *map, struct vm_map_entry *entry)
 /*
  * uvm_map_reference: add reference to a map
  *
- * XXX check map reference counter lock
+ * => map need not be locked
  */
-#define uvm_map_reference(_map)						\
-	do {								\
-		map->ref_count++;					\
-	} while (0)
+void
+uvm_map_reference(struct vm_map *map)
+{
+	atomic_inc_int(&map->ref_count);
+}
 
 /*
  * Calculate the dused delta.
@@ -4292,7 +4293,7 @@ uvm_map_deallocate(vm_map_t map)
 	int c;
 	struct uvm_map_deadq dead;
 
-	c = --map->ref_count;
+	c = atomic_dec_int_nv(&map->ref_count);
 	if (c > 0) {
 		return;
 	}

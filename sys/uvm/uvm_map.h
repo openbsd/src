@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.h,v 1.69 2021/03/12 14:15:49 jsg Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.70 2021/05/22 08:38:29 mpi Exp $	*/
 /*	$NetBSD: uvm_map.h,v 1.24 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -259,6 +259,7 @@ RBT_PROTOTYPE(uvm_map_addr, vm_map_entry, daddrs.addr_entry,
  * read_locks and write_locks are used in lock debugging code.
  *
  *  Locks used to protect struct members in this file:
+ *	a	atomic operations
  *	I	immutable after creation or exec(2)
  *	v	`vm_map_lock' (this map `lock' or `mtx')
  */
@@ -272,7 +273,7 @@ struct vm_map {
 	struct uvm_map_addr	addr;		/* [v] Entry tree, by addr */
 
 	vsize_t			size;		/* virtual size */
-	int			ref_count;	/* Reference count */
+	int			ref_count;	/* [a] Reference count */
 	int			flags;		/* flags */
 	struct mutex		flags_lock;	/* flags lock */
 	unsigned int		timestamp;	/* Version number */
