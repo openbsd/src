@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2020/12/30 21:40:33 kn Exp $
+#	$OpenBSD: Makefile,v 1.11 2021/05/22 18:38:40 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -104,7 +104,7 @@ run-stack-frag_mf1end.py:
 	# the stack allows fragments with MF together with fragments without MF
 	@echo DISABLED
 
-run-stack-frag_queuelimit.py:
+run-stack-frag_queuelimit.py run-stack-frag_overlimit.py:
 	# the stack does not limit the amount of fragments during reassembly
 	@echo DISABLED
 
