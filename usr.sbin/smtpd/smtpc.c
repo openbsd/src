@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpc.c,v 1.15 2021/04/10 10:19:19 eric Exp $	*/
+/*	$OpenBSD: smtpc.c,v 1.16 2021/05/22 09:09:07 eric Exp $	*/
 
 /*
  * Copyright (c) 2018 Eric Faurot <eric@openbsd.org>
@@ -48,14 +48,48 @@ static struct smtp_mail mail;
 static const char *servname = NULL;
 static struct tls_config *tls_config;
 
+static const char *protocols = NULL;
+static const char *ciphers = NULL;
+
 static void
 usage(void)
 {
 	extern char *__progname;
 
 	fprintf(stderr, "usage: %s [-Chnv] [-a authfile] [-F from] [-H helo] "
-	    "[-s server] [recipient ...]\n", __progname);
+	    "[-s server] [-T params] [recipient ...]\n", __progname);
 	exit(1);
+}
+
+static void
+parse_tls_options(char *opt)
+{
+	static char * const tokens[] = {
+#define CIPHERS 0
+		"ciphers",
+#define PROTOCOLS 1
+		"protocols",
+		NULL };
+	char *value;
+
+	while (*opt) {
+		switch (getsubopt(&opt, tokens, &value)) {
+		case CIPHERS:
+			if (value == NULL)
+				fatalx("missing value for ciphers");
+			ciphers = value;
+			break;
+		case PROTOCOLS:
+			if (value == NULL)
+				fatalx("missing value for protocols");
+			protocols = value;
+			break;
+		case -1:
+			if (suboptarg)
+				fatalx("invalid TLS option \"%s\"", suboptarg);
+			fatalx("missing TLS option");
+		}
+	}
 }
 
 int
@@ -64,6 +98,7 @@ main(int argc, char **argv)
 	char hostname[256];
 	FILE *authfile;
 	int ch, i;
+	uint32_t protos;
 	char *server = "localhost";
 	char *authstr = NULL;
 	size_t alloc = 0;
@@ -91,7 +126,7 @@ main(int argc, char **argv)
 	memset(&mail, 0, sizeof(mail));
 	mail.from = pw->pw_name;
 
-	while ((ch = getopt(argc, argv, "CF:H:S:a:hns:v")) != -1) {
+	while ((ch = getopt(argc, argv, "CF:H:S:T:a:hns:v")) != -1) {
 		switch (ch) {
 		case 'C':
 			params.tls_verify = 0;
@@ -104,6 +139,9 @@ main(int argc, char **argv)
 			break;
 		case 'S':
 			servname = optarg;
+			break;
+		case 'T':
+			parse_tls_options(optarg);
 			break;
 		case 'a':
 			if ((authfile = fopen(optarg, "r")) == NULL)
@@ -159,6 +197,17 @@ main(int argc, char **argv)
 	tls_config = tls_config_new();
 	if (tls_config == NULL)
 		fatal("tls_config_new");
+
+	if (protocols) {
+		if (tls_config_parse_protocols(&protos, protocols) == -1)
+			fatalx("failed to parse protocol '%s'", protocols);
+		if (tls_config_set_protocols(tls_config, protos) == -1)
+			fatalx("tls_config_set_protocols: %s",
+			    tls_config_error(tls_config));
+	}
+	if (ciphers && tls_config_set_ciphers(tls_config, ciphers) == -1)
+		fatalx("tls_config_set_ciphers: %s",
+		    tls_config_error(tls_config));
 	if (tls_config_set_ca_file(tls_config, tls_default_ca_cert_file()) == -1)
 		fatal("tls_set_ca_file");
 	if (!params.tls_verify) {

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtp.1,v 1.9 2021/02/13 08:07:48 jmc Exp $
+.\"	$OpenBSD: smtp.1,v 1.10 2021/05/22 09:09:07 eric Exp $
 .\"
 .\" Copyright (c) 2018, Eric Faurot <eric@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 13 2021 $
+.Dd $Mdocdate: May 22 2021 $
 .Dt SMTP 1
 .Os
 .Sh NAME
@@ -27,6 +27,7 @@
 .Op Fl F Ar from
 .Op Fl H Ar helo
 .Op Fl s Ar server
+.Op Fl T Ar params
 .Op Ar recipient ...
 .Sh DESCRIPTION
 The
@@ -91,6 +92,26 @@ SMTP session with forced TLS on connection.
 .Pp
 Defaults to
 .Dq smtp://localhost:25 .
+.It Fl T Ar params
+Set specific parameters for TLS sessions.
+The
+.Ar params
+string is a comma or space separated list of options.
+The available options are:
+.Bl -tag -width Ds
+.It protocols Ns = Ns Ar value
+Specify the protocols to use.
+Refer to
+.Xr tls_config_parse_protocols 3
+for
+.Ar value .
+.It ciphers Ns = Ns Ar value
+Specify the allowed ciphers.
+Refer to
+.Xr tls_config_set_ciphers 3
+for
+.Ar value .
+.El
 .It Fl v
 Be more verbose.
 This option can be specified multiple times.
