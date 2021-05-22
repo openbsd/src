@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtp.1,v 1.10 2021/05/22 09:09:07 eric Exp $
+.\"	$OpenBSD: smtp.1,v 1.11 2021/05/22 12:16:06 eric Exp $
 .\"
 .\" Copyright (c) 2018, Eric Faurot <eric@openbsd.org>
 .\"
@@ -99,16 +99,16 @@ The
 string is a comma or space separated list of options.
 The available options are:
 .Bl -tag -width Ds
-.It protocols Ns = Ns Ar value
-Specify the protocols to use.
-Refer to
-.Xr tls_config_parse_protocols 3
-for
-.Ar value .
 .It ciphers Ns = Ns Ar value
 Specify the allowed ciphers.
 Refer to
 .Xr tls_config_set_ciphers 3
+for
+.Ar value .
+.It protocols Ns = Ns Ar value
+Specify the protocols to use.
+Refer to
+.Xr tls_config_parse_protocols 3
 for
 .Ar value .
 .El
