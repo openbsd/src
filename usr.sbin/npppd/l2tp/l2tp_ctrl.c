@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2tp_ctrl.c,v 1.25 2021/03/29 03:54:39 yasuoka Exp $	*/
+/*	$OpenBSD: l2tp_ctrl.c,v 1.26 2021/05/22 08:29:57 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file Control connection processing functions for L2TP LNS */
-/* $Id: l2tp_ctrl.c,v 1.25 2021/03/29 03:54:39 yasuoka Exp $ */
+/* $Id: l2tp_ctrl.c,v 1.26 2021/05/22 08:29:57 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/socket.h>
@@ -52,7 +52,6 @@
 #endif
 
 #include "time_utils.h"
-#include "ipsec_util.h"
 #include "bytebuf.h"
 #include "hash.h"
 #include "debugutil.h"
@@ -69,9 +68,6 @@
 static int		 l2tp_ctrl_init(l2tp_ctrl *, l2tpd *, struct sockaddr *, struct sockaddr *, void *);
 static void		 l2tp_ctrl_reload(l2tp_ctrl *);
 static int		 l2tp_ctrl_send_disconnect_notify(l2tp_ctrl *);
-#if 0
-static void		 l2tp_ctrl_purge_ipsec_sa(l2tp_ctrl *);
-#endif
 static void		 l2tp_ctrl_timeout(int, short, void *);
 static int		 l2tp_ctrl_resend_una_packets(l2tp_ctrl *, bool);
 static void		 l2tp_ctrl_destroy_all_calls(l2tp_ctrl *);
@@ -330,10 +326,6 @@ cleanup:
 			if (l2tp_ctrl_disconnect_all_calls(_this, 1) > 0)
 				break;
 		}
-#if 0
-		if (L2TP_CTRL_CONF(_this)e_ipsec_sa != 0)
-			l2tp_ctrl_purge_ipsec_sa(_this);
-#endif
 
 		l2tp_ctrl_log(_this, LOG_NOTICE, "logtype=Finished");
 
@@ -367,92 +359,6 @@ cleanup:
 
 	return 1;
 }
-
-#if 0
-/** Delete the IPsec SA for disconnection */
-static void
-l2tp_ctrl_purge_ipsec_sa(l2tp_ctrl *_this)
-{
-	int is_natt, proto;
-	struct sockaddr_storage peer, sock;
-	hash_link *hl;
-#ifdef USE_LIBSOCKUTIL
-	struct in_ipsec_sa_cookie *ipsec_sa_cookie;
-#endif
-	l2tp_ctrl *anot;
-
-	/*
-	 * Search another tunnel that uses the same IPsec SA
-	 * by lineer.
-	 */
-	for (hl = hash_first(_this->l2tpd->ctrl_map);
-	    hl != NULL; hl = hash_next(_this->l2tpd->ctrl_map)) {
-		anot = hl->item;
-		if (anot == _this)
-			continue;
-
-		if (_this->peer.ss_family != anot->peer.ss_family)
-			continue;
-		if (_this->peer.ss_family == AF_INET) {
-			if (SIN(&_this->peer)->sin_addr.s_addr !=
-			    SIN(&anot->peer)->sin_addr.s_addr)
-				continue;
-		} else if (_this->peer.ss_family == AF_INET6) {
-			if (!IN6_ARE_ADDR_EQUAL(
-			    &(SIN6(&_this->peer)->sin6_addr),
-			    &(SIN6(&anot->peer)->sin6_addr)))
-				continue;
-		}
-#ifdef USE_LIBSOCKUTIL
-		if (_this->sa_cookie != NULL && anot->sa_cookie != NULL) {
-			/* Both tunnels belong the same NAT box.  */
-
-			if (memcmp(_this->sa_cookie, anot->sa_cookie,
-			    sizeof(struct in_ipsec_sa_cookie)) != 0)
-				/* Different hosts behind the NAT box.  */
-				continue;
-
-			/* The SA is shared by another tunnels by one host. */
-			return;	/* don't purge the sa */
-
-		} else if (_this->sa_cookie != NULL || anot->sa_cookie != NULL)
-			/* Only one is behind the NAT */
-			continue;
-#endif
-		return;	/* don't purge the sa */
-	}
-
-#if defined(USE_LIBSOCKUTIL)  && defined(IP_IPSEC_SA_COOKIE)
-	is_natt = (_this->sa_cookie != NULL)? 1 : 0;
-#else
-	is_natt = 0;
-#endif
-	proto = 0;
-	memcpy(&peer, &_this->peer, _this->peer.ss_len);
-	memcpy(&sock, &_this->sock, _this->sock.ss_len);
-	if (!is_natt)
-		SIN(&peer)->sin_port = SIN(&sock)->sin_port = 0;
-#if defined(USE_LIBSOCKUTIL)  && defined(IP_IPSEC_SA_COOKIE)
-	else {
-		ipsec_sa_cookie = _this->sa_cookie;
-		SIN(&peer)->sin_port = ipsec_sa_cookie->remote_port;
-		SIN(&sock)->sin_port = ipsec_sa_cookie->local_port;
-#if 1
-		/*
-		 * XXX: As RFC 2367, protocol should be specified if the port
-		 * XXX: number is non-zero.
-		 */
-		proto = 0;
-#else
-		proto = IPPROTO_UDP;
-#endif
-	}
-#endif
-	if (ipsec_util_purge_transport_sa((struct sockaddr *)&peer,
-	    (struct sockaddr *)&sock, proto, IPSEC_UTIL_DIRECTION_BOTH) != 0)
-		l2tp_ctrl_log(_this, LOG_NOTICE, "failed to purge IPsec SA");
-}
-#endif
 
 /* timeout processing */
 static void
