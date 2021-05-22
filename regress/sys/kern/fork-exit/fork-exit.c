@@ -1,4 +1,4 @@
-/*	$OpenBSD: fork-exit.c,v 1.5 2021/05/21 20:42:21 bluhm Exp $	*/
+/*	$OpenBSD: fork-exit.c,v 1.6 2021/05/22 15:49:36 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2021 Alexander Bluhm <bluhm@openbsd.org>
@@ -123,7 +123,7 @@ create_threads(void)
 	if (stack) {
 		/* thread start and function call overhead needs a bit more */
 		error = pthread_attr_setstacksize(&tattr,
-		    (stack + 2) * (4096 + 32));
+		    (stack + 2) * (4096 + 64));
 		if (error)
 			errc(1, error, "pthread_attr_setstacksize");
 	}
@@ -236,7 +236,7 @@ main(int argc, char *argv[])
 			break;
 		case 's':
 			stack = strtonum(optarg, 0,
-			    (INT_MAX / (4096 + 32)) - 2, &errstr);
+			    (INT_MAX / (4096 + 64)) - 2, &errstr);
 			if (errstr != NULL)
 				errx(1, "number of stack allocations is %s: %s",
 				    errstr, optarg);
