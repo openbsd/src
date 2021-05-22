@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.230 2021/05/20 15:21:03 jan Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.231 2021/05/22 14:30:46 jan Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -568,7 +568,6 @@ main(int argc, char *argv[])
 			line[strcspn(line, "\n")] = '\0';
 			lreply(530, "%s", line);
 		}
-		(void) fflush(stdout);
 		(void) fclose(fp);
 		reply(530, "System not available.");
 		exit(0);
@@ -578,7 +577,6 @@ main(int argc, char *argv[])
 			line[strcspn(line, "\n")] = '\0';
 			lreply(220, "%s", line);
 		}
-		(void) fflush(stdout);
 		(void) fclose(fp);
 		/* reply(220,) must follow */
 	}
@@ -1078,7 +1076,6 @@ pass(char *passwd)
 			line[strcspn(line, "\n")] = '\0';
 			lreply(230, "%s", line);
 		}
-		(void) fflush(stdout);
 		(void) fclose(fp);
 	}
 	free(motd);
@@ -2029,7 +2026,6 @@ cwd(char *path)
 				line[strcspn(line, "\n")] = '\0';
 				lreply(250, "%s", line);
 			}
-			(void) fflush(stdout);
 			(void) fclose(message);
 		}
 		ack("CWD");
