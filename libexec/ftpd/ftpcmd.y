@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.70 2021/05/20 15:21:03 jan Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.71 2021/05/22 14:25:30 jan Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -1434,10 +1434,8 @@ upper(s)
 {
 	char *p;
 
-	for (p = s; *p; p++) {
-		if (islower((unsigned char)*p))
-			*p = (char)toupper((unsigned char)*p);
-	}
+	for (p = s; *p; p++)
+		*p = (char)toupper((unsigned char)*p);
 }
 
 static void
