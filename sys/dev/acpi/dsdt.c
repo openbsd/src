@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.262 2021/03/30 16:49:58 kettenis Exp $ */
+/* $OpenBSD: dsdt.c,v 1.263 2021/05/22 13:13:14 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -2527,7 +2527,7 @@ aml_rwgpio(struct aml_value *conn, int bpos, int blen, struct aml_value *val,
 #ifndef SMALL_KERNEL
 
 void
-aml_rwgsb(struct aml_value *conn, int alen, int bpos, int blen,
+aml_rwgsb(struct aml_value *conn, int len, int bpos, int blen,
     struct aml_value *val, int mode, int flag)
 {
 	union acpi_resource *crs = (union acpi_resource *)conn->v_buffer;
@@ -2535,17 +2535,17 @@ aml_rwgsb(struct aml_value *conn, int alen, int bpos, int blen,
 	i2c_tag_t tag;
 	i2c_op_t op;
 	i2c_addr_t addr;
-	int cmdlen, buflen, acclen;
-	uint8_t cmd;
+	int cmdlen, buflen;
+	uint8_t cmd[2];
 	uint8_t *buf;
-	int pos, err;
+	int err;
 
 	if (conn->type != AML_OBJTYPE_BUFFER || conn->length < 5 ||
 	    AML_CRSTYPE(crs) != LR_SERBUS || AML_CRSLEN(crs) > conn->length ||
 	    crs->lr_i2cbus.revid != 1 || crs->lr_i2cbus.type != LR_SERBUS_I2C)
 		aml_die("Invalid GenericSerialBus");
 	if (AML_FIELD_ACCESS(flag) != AML_FIELD_BUFFERACC ||
-	    bpos & 0x3 || (blen % 8) != 0)
+	    bpos & 0x3 || (blen % 8) != 0 || blen > 16)
 		aml_die("Invalid GenericSerialBus access");
 
 	node = aml_searchname(conn->node,
@@ -2556,32 +2556,27 @@ aml_rwgsb(struct aml_value *conn, int alen, int bpos, int blen,
 		switch (AML_FIELD_ATTR(flag)) {
 		case 0x02:	/* AttribQuick */
 			cmdlen = 0;
-			buflen = acclen = 0;
+			buflen = 0;
 			break;
 		case 0x04:	/* AttribSendReceive */
 			cmdlen = 0;
-			acclen = 1;
-			buflen = blen / 8;
+			buflen = 1;
 			break;
 		case 0x06:	/* AttribByte */
-			cmdlen = 1;
-			acclen = 1;
-			buflen = blen / 8;
+			cmdlen = blen / 8;
+			buflen = 1;
 			break;
 		case 0x08:	/* AttribWord */
-			cmdlen = 1;
-			acclen = 2;
-			buflen = blen / 8;
+			cmdlen = blen / 8;
+			buflen = 2;
 			break;
 		case 0x0b:	/* AttribBytes */
-			cmdlen = 1;
-			acclen = alen;
-			buflen = blen / 8;
+			cmdlen = blen / 8;
+			buflen = len;
 			break;
 		case 0x0e:	/* AttribRawBytes */
 			cmdlen = 0;
-			acclen = alen;
-			buflen = blen / 8;
+			buflen = len;
 			break;
 		default:
 			aml_die("unsupported access type 0x%x", flag);
@@ -2589,12 +2584,12 @@ aml_rwgsb(struct aml_value *conn, int alen, int bpos, int blen,
 		}
 		break;
 	case 1:			/* AttribBytes */
-		cmdlen = 1;
-		acclen = buflen = AML_FIELD_ATTR(flag);
+		cmdlen = blen / 8;
+		buflen = AML_FIELD_ATTR(flag);
 		break;
 	case 2:			/* AttribRawBytes */
 		cmdlen = 0;
-		acclen = buflen = AML_FIELD_ATTR(flag);
+		buflen = AML_FIELD_ATTR(flag);
 		break;
 	default:
 		aml_die("unsupported access type 0x%x", flag);
@@ -2621,16 +2616,11 @@ aml_rwgsb(struct aml_value *conn, int alen, int bpos, int blen,
 
 	tag = node->i2c;
 	addr = crs->lr_i2cbus._adr;
-	cmd = bpos >> 3;
+	cmd[0] = bpos >> 3;
+	cmd[1] = bpos >> 11;
 
 	iic_acquire_bus(tag, 0);
-	for (pos = 0; pos < buflen; pos += acclen) {
-		err = iic_exec(tag, op, addr, &cmd, cmdlen,
-		    &buf[pos + 2], acclen, 0);
-		if (err)
-			break;
-		cmd++;
-	}
+	err = iic_exec(tag, op, addr, &cmd, cmdlen, &buf[2], buflen, 0);
 	iic_release_bus(tag, 0);
 
 	/*
@@ -2650,14 +2640,14 @@ aml_rwgsb(struct aml_value *conn, int alen, int bpos, int blen,
  */
 
 void
-aml_rwgsb(struct aml_value *conn, int alen, int bpos, int blen,
+aml_rwgsb(struct aml_value *conn, int len, int bpos, int blen,
     struct aml_value *val, int mode, int flag)
 {
 	int buflen;
 	uint8_t *buf;
 
 	if (AML_FIELD_ACCESS(flag) != AML_FIELD_BUFFERACC ||
-	    bpos & 0x3 || (blen % 8) != 0)
+	    bpos & 0x3 || (blen % 8) != 0 || blen > 16)
 		aml_die("Invalid GenericSerialBus access");
 
 	switch (((flag >> 6) & 0x3)) {
@@ -2668,10 +2658,14 @@ aml_rwgsb(struct aml_value *conn, int alen, int bpos, int blen,
 			break;
 		case 0x04:	/* AttribSendReceive */
 		case 0x06:	/* AttribByte */
+			buflen = 1;
+			break;
 		case 0x08:	/* AttribWord */
+			buflen = 2;
+			break;
 		case 0x0b:	/* AttribBytes */
 		case 0x0e:	/* AttribRawBytes */
-			buflen = blen / 8;
+			buflen = len;
 			break;
 		default:
 			aml_die("unsupported access type 0x%x", flag);
