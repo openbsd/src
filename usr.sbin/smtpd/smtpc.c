@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpc.c,v 1.16 2021/05/22 09:09:07 eric Exp $	*/
+/*	$OpenBSD: smtpc.c,v 1.17 2021/05/23 15:57:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2018 Eric Faurot <eric@openbsd.org>
@@ -48,6 +48,8 @@ static struct smtp_mail mail;
 static const char *servname = NULL;
 static struct tls_config *tls_config;
 
+static int nosni = 0;
+static const char *cafile = NULL;
 static const char *protocols = NULL;
 static const char *ciphers = NULL;
 
@@ -65,24 +67,52 @@ static void
 parse_tls_options(char *opt)
 {
 	static char * const tokens[] = {
-#define CIPHERS 0
+#define CAFILE 0
+		"cafile",
+#define CIPHERS 1
 		"ciphers",
-#define PROTOCOLS 1
+#define NOSNI 2
+		"nosni",
+#define NOVERIFY 3
+		"noverify",
+#define PROTOCOLS 4
 		"protocols",
+#define SERVERNAME 5
+		"servername",
 		NULL };
 	char *value;
 
 	while (*opt) {
 		switch (getsubopt(&opt, tokens, &value)) {
+		case CAFILE:
+			if (value == NULL)
+				fatalx("missing value for cafile");
+			cafile = value;
+			break;
 		case CIPHERS:
 			if (value == NULL)
 				fatalx("missing value for ciphers");
 			ciphers = value;
 			break;
+		case NOSNI:
+			if (value != NULL)
+				fatalx("no value expected for nosni");
+			nosni = 1;
+			break;
+		case NOVERIFY:
+			if (value != NULL)
+				fatalx("no value expected for noverify");
+			params.tls_verify = 0;
+			break;
 		case PROTOCOLS:
 			if (value == NULL)
 				fatalx("missing value for protocols");
 			protocols = value;
+			break;
+		case SERVERNAME:
+			if (value == NULL)
+				fatalx("missing value for servername");
+			servname = value;
 			break;
 		case -1:
 			if (suboptarg)
@@ -208,7 +238,10 @@ main(int argc, char **argv)
 	if (ciphers && tls_config_set_ciphers(tls_config, ciphers) == -1)
 		fatalx("tls_config_set_ciphers: %s",
 		    tls_config_error(tls_config));
-	if (tls_config_set_ca_file(tls_config, tls_default_ca_cert_file()) == -1)
+
+	if (cafile == NULL)
+		cafile = tls_default_ca_cert_file();
+	if (tls_config_set_ca_file(tls_config, cafile) == -1)
 		fatal("tls_set_ca_file");
 	if (!params.tls_verify) {
 		tls_config_insecure_noverifycert(tls_config);
@@ -332,7 +365,8 @@ parse_server(char *server)
 
 	if (servname == NULL)
 		servname = host;
-	params.tls_servname = servname;
+	if (nosni == 0)
+		params.tls_servname = servname;
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;

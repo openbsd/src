@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtp.1,v 1.12 2021/05/22 22:30:57 eric Exp $
+.\"	$OpenBSD: smtp.1,v 1.13 2021/05/23 15:57:32 eric Exp $
 .\"
 .\" Copyright (c) 2018, Eric Faurot <eric@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 22 2021 $
+.Dd $Mdocdate: May 23 2021 $
 .Dt SMTP 1
 .Os
 .Sh NAME
@@ -53,6 +53,10 @@ This option requires a TLS or STARTTLS
 .Ar server .
 .It Fl C
 Do not require server certificate to be valid.
+This flag is deprecated.
+Use
+.Dq Fl T Cm noverify
+instead.
 .It Fl F Ar from
 Set the return-path (MAIL FROM) for the SMTP transaction.
 Default to the current username.
@@ -105,12 +109,21 @@ Refer to
 .Xr tls_config_set_ciphers 3
 for
 .Ar value .
+.It Cm nosni
+Disable Server Name Indication (SNI).
+.It Cm noverify
+Do not require server certificate to be valid.
 .It Cm protocols Ns = Ns Ar value
 Specify the protocols to use.
 Refer to
 .Xr tls_config_parse_protocols 3
 for
 .Ar value .
+.It Cm servername Ns = Ns Ar value
+Use
+.Ar value
+for Server Name Indication (SNI).
+Defaults to the specified server hostname.
 .El
 .It Fl v
 Be more verbose.
