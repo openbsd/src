@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.71 2021/05/22 14:25:30 jan Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.72 2021/05/23 17:01:21 jan Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -1065,8 +1065,8 @@ struct tab sitetab[] = {
 
 static void	 help(struct tab *, char *);
 static struct tab *
-		 lookup(struct tab *, char *);
-static void	 sizecmd(char *);
+		 lookup(struct tab *, const char *);
+static void	 sizecmd(const char *);
 static int	 yylex(void);
 
 extern int epsvall;
@@ -1074,7 +1074,7 @@ extern int epsvall;
 static struct tab *
 lookup(p, cmd)
 	struct tab *p;
-	char *cmd;
+	const char *cmd;
 {
 
 	for (; p->name != NULL; p++)
@@ -1505,7 +1505,7 @@ help(ctab, s)
 
 static void
 sizecmd(filename)
-	char *filename;
+	const char *filename;
 {
 	switch (type) {
 	case TYPE_L:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.22 2021/05/20 15:21:03 jan Exp $	*/
+/*	$OpenBSD: extern.h,v 1.23 2021/05/23 17:01:21 jan Exp $	*/
 /*	$NetBSD: extern.h,v 1.2 1995/04/11 02:44:49 cgd Exp $	*/
 
 /*
@@ -64,38 +64,38 @@
 void	blkfree(char **);
 char  **copyblk(char **);
 void	cwd(char *);
-void	delete(char *);
+void	delete(const char *);
 void	dologout(int);
-void	fatal(char *);
+void	fatal(const char *);
 int	ftpd_pclose(FILE *, pid_t);
 FILE   *ftpd_ls(const char *, pid_t *);
 int     get_line(char *, int);
-void	ftpdlogwtmp(char *, char *, char *);
+void	ftpdlogwtmp(const char *, const char *, const char *);
 void	lreply(int, const char *, ...);
-void	makedir(char *);
-void	nack(char *);
+void	makedir(const char *);
+void	nack(const char *);
 enum auth_ret
 	pass(char *);
 void	passive(void);
 int	epsvproto2af(int);
 int	af2epsvproto(int);
-void	long_passive(char *, int);
+void	long_passive(const char *, int);
 int	extended_port(const char *);
 void	epsv_protounsupp(const char *);
-void	perror_reply(int, char *);
+void	perror_reply(int, const char *);
 void	pwd(void);
-void	removedir(char *);
-void	renamecmd(char *, char *);
+void	removedir(const char *);
+void	renamecmd(const char *, const char *);
 char   *renamefrom(char *);
 void	reply(int, const char *, ...);
 void	reply_r(int, const char *, ...);
 enum ret_cmd { RET_FILE, RET_LIST };
-void	retrieve(enum ret_cmd, char *);
+void	retrieve(enum ret_cmd, const char *);
 void	send_file_list(char *);
 void	setproctitle(const char *, ...);
 void	statcmd(void);
-void	statfilecmd(char *);
-void	store(char *, char *, int);
+void	statfilecmd(const char *);
+void	store(const char *, const char *, int);
 void	upper(char *);
 void	user(char *);
 void	yyerror(char *);
