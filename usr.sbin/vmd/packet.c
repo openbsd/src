@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.1 2017/04/19 15:38:32 reyk Exp $	*/
+/*	$OpenBSD: packet.c,v 1.2 2021/05/23 22:43:36 dv Exp $	*/
 
 /* Packet assembly code, originally contributed by Archie Cobbs. */
 
@@ -220,12 +220,6 @@ decode_udp_ip_header(unsigned char *buf, size_t buflen,
 	unsigned char *data;
 	u_int32_t ip_len;
 	u_int32_t sum, usum;
-	static unsigned int ip_packets_seen;
-	static unsigned int ip_packets_bad_checksum;
-	static unsigned int udp_packets_seen;
-	static unsigned int udp_packets_bad_checksum;
-	static unsigned int udp_packets_length_checked;
-	static unsigned int udp_packets_length_overflow;
 	int len;
 
 	/* Assure that an entire IP header is within the buffer. */
@@ -236,17 +230,11 @@ decode_udp_ip_header(unsigned char *buf, size_t buflen,
 		return (-1);
 
 	ip = (struct ip *)(buf + offset);
-	ip_packets_seen++;
+	if (ip->ip_p != IPPROTO_UDP)
+		return (-1);
 
 	/* Check the IP header checksum - it should be zero. */
 	if (wrapsum(checksum(buf + offset, ip_len, 0)) != 0) {
-		ip_packets_bad_checksum++;
-		if (ip_packets_seen > 4 && ip_packets_bad_checksum != 0 &&
-		    (ip_packets_seen / ip_packets_bad_checksum) < 2) {
-			log_info("%u bad IP checksums seen in %u packets",
-			    ip_packets_bad_checksum, ip_packets_seen);
-			ip_packets_seen = ip_packets_bad_checksum = 0;
-		}
 		return (-1);
 	}
 
@@ -274,7 +262,6 @@ decode_udp_ip_header(unsigned char *buf, size_t buflen,
 	if (buflen < offset + ip_len + sizeof(*udp))
 		return (-1);
 	udp = (struct udphdr *)(buf + offset + ip_len);
-	udp_packets_seen++;
 
 	/* Assure that the entire UDP packet is within the buffer. */
 	if (buflen < offset + ip_len + ntohs(udp->uh_ulen))
@@ -286,20 +273,8 @@ decode_udp_ip_header(unsigned char *buf, size_t buflen,
 	 * UDP header and the data. If the UDP checksum field is zero,
 	 * we're not supposed to do a checksum.
 	 */
-	udp_packets_length_checked++;
 	len = ntohs(udp->uh_ulen) - sizeof(*udp);
 	if ((len < 0) || (len + data > buf + buflen)) {
-		udp_packets_length_overflow++;
-		if (udp_packets_length_checked > 4 &&
-		    udp_packets_length_overflow != 0 &&
-		    (udp_packets_length_checked /
-		    udp_packets_length_overflow) < 2) {
-			log_info("%u udp packets in %u too long - dropped",
-			    udp_packets_length_overflow,
-			    udp_packets_length_checked);
-			udp_packets_length_overflow =
-			    udp_packets_length_checked = 0;
-		}
 		return (-1);
 	}
 	if (len + data != buf + buflen)
@@ -313,15 +288,7 @@ decode_udp_ip_header(unsigned char *buf, size_t buflen,
 	    2 * sizeof(ip->ip_src),
 	    IPPROTO_UDP + (u_int32_t)ntohs(udp->uh_ulen)))));
 
-	udp_packets_seen++;
 	if (usum && usum != sum) {
-		udp_packets_bad_checksum++;
-		if (udp_packets_seen > 4 && udp_packets_bad_checksum != 0 &&
-		    (udp_packets_seen / udp_packets_bad_checksum) < 2) {
-			log_info("%u bad udp checksums in %u packets",
-			    udp_packets_bad_checksum, udp_packets_seen);
-			udp_packets_seen = udp_packets_bad_checksum = 0;
-		}
 		return (-1);
 	}
 
