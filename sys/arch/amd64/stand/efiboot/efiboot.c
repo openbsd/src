@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.36 2020/10/30 19:39:00 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.37 2021/05/23 20:30:42 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -58,7 +58,7 @@ u_long			 efi_loadaddr;
 int	 efi_device_path_depth(EFI_DEVICE_PATH *dp, int);
 int	 efi_device_path_ncmp(EFI_DEVICE_PATH *, EFI_DEVICE_PATH *, int);
 static void	 efi_heap_init(void);
-static void	 efi_memprobe_internal(void);
+static int	 efi_memprobe_internal(void);
 static void	 efi_video_init(void);
 static void	 efi_video_reset(void);
 static EFI_STATUS
@@ -281,7 +281,7 @@ efi_device_path_ncmp(EFI_DEVICE_PATH *dpa, EFI_DEVICE_PATH *dpb, int deptn)
 /***********************************************************************
  * Memory
  ***********************************************************************/
-bios_memmap_t		 bios_memmap[64];
+bios_memmap_t		 bios_memmap[128];
 bios_efiinfo_t		 bios_efiinfo;
 
 static void
@@ -304,6 +304,7 @@ efi_memprobe(void)
 	EFI_STATUS	 status;
 	EFI_PHYSICAL_ADDRESS
 			 addr = 0x10000000ULL;	/* Below 256MB */
+	int		 error;
 
 	status = EFI_CALL(BS->AllocatePages, AllocateMaxAddress, EfiLoaderData,
 	    EFI_SIZE_TO_PAGES(KERN_LOADSPACE_SIZE), &addr);
@@ -312,7 +313,7 @@ efi_memprobe(void)
 	efi_loadaddr = addr;
 
 	printf(" mem[");
-	efi_memprobe_internal();
+	error = efi_memprobe_internal();
 	for (bm = bios_memmap; bm->type != BIOS_MAP_END; bm++) {
 		if (bm->type == BIOS_MAP_FREE && bm->size > 12 * 1024) {
 			if (n++ != 0)
@@ -323,10 +324,12 @@ efi_memprobe(void)
 				printf("%uK", bm->size / 1024);
 		}
 	}
+	if (error == E2BIG)
+		printf(" overflow");
 	printf("]");
 }
 
-static void
+static int
 efi_memprobe_internal(void)
 {
 	EFI_STATUS		 status;
@@ -335,6 +338,7 @@ efi_memprobe_internal(void)
 	EFI_MEMORY_DESCRIPTOR	*mm0, *mm;
 	int			 i, n;
 	bios_memmap_t		*bm, bm0;
+	int			 error = 0;
 
 	cnvmem = extmem = 0;
 	bios_memmap[0].type = BIOS_MAP_END;
@@ -395,6 +399,10 @@ efi_memprobe_internal(void)
 			}
 		}
 		if (bm->type == BIOS_MAP_END) {
+			if (bm == &bios_memmap[nitems(bios_memmap) - 1]) {
+				error = E2BIG;
+				break;
+			}
 			*bm = bm0;
 			(++bm)->type = BIOS_MAP_END;
 		}
@@ -412,6 +420,8 @@ efi_memprobe_internal(void)
 	bios_efiinfo.mmap_desc_size = mmsiz;
 	bios_efiinfo.mmap_size = siz;
 	bios_efiinfo.mmap_start = (uintptr_t)mm0;
+
+	return error;
 }
 
 /***********************************************************************
