@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtp.1,v 1.13 2021/05/23 15:57:32 eric Exp $
+.\"	$OpenBSD: smtp.1,v 1.14 2021/05/23 16:12:56 eric Exp $
 .\"
 .\" Copyright (c) 2018, Eric Faurot <eric@openbsd.org>
 .\"
@@ -103,6 +103,10 @@ The
 string is a comma or space separated list of options.
 The available options are:
 .Bl -tag -width Ds
+.It Cm cafile Ns = Ns Ar filename
+Use
+.Ar filename
+as root certificates file instead of the system default.
 .It Cm ciphers Ns = Ns Ar value
 Specify the allowed ciphers.
 Refer to
