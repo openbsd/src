@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vio.4,v 1.15 2015/09/24 13:11:48 sobrado Exp $
+.\"     $OpenBSD: vio.4,v 1.16 2021/05/24 17:29:56 dv Exp $
 .\"
 .\" Copyright (c) 2012 Stefan Fritsch <sf@sfritsch.de>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 24 2015 $
+.Dd $Mdocdate: May 24 2021 $
 .Dt VIO 4
 .Os
 .Sh NAME
@@ -27,7 +27,8 @@ The
 .Nm
 driver provides support for the
 .Xr virtio 4
-network interface provided by bhyve, KVM, QEMU, and VirtualBox.
+network interface provided by bhyve, KVM, QEMU, VirtualBox, and
+.Xr vmd 8 .
 .Pp
 Setting the bit 0x2 in the flags disables the RingEventIndex feature.
 This can be tried as a workaround for possible bugs in host implementations of
