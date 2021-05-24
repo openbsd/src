@@ -1,4 +1,4 @@
-/*	$OpenBSD: apldart.c,v 1.2 2021/03/29 17:04:00 kettenis Exp $	*/
+/*	$OpenBSD: apldart.c,v 1.3 2021/05/24 18:38:29 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -72,18 +72,19 @@ apldart_trunc_page(paddr_t pa)
 }
 
 #define HREAD4(sc, reg)							\
-	(bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg)))
+	(bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh[0], (reg)))
 #define HWRITE4(sc, reg, val)						\
-	bus_space_write_4((sc)->sc_iot, (sc)->sc_ioh, (reg), (val))
+	apldart_write(sc, (reg), (val))
 
 struct apldart_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
-	bus_space_handle_t	sc_ioh;
+	bus_space_handle_t	sc_ioh[2];
 	bus_dma_tag_t		sc_dmat;
 
 	uint32_t		sc_sid_mask;
 	int			sc_nsid;
+	int			sc_subdart;
 
 	bus_addr_t		sc_dvabase;
 	bus_addr_t		sc_dvaend;
@@ -150,6 +151,8 @@ int	apldart_dmamap_load_raw(bus_dma_tag_t, bus_dmamap_t,
 	    bus_dma_segment_t *, int, bus_size_t, int);
 void	apldart_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
 
+void	apldart_write(struct apldart_softc *sc, bus_size_t, uint32_t);
+
 int
 apldart_match(struct device *parent, void *match, void *aux)
 {
@@ -175,17 +178,23 @@ apldart_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_iot = faa->fa_iot;
 	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
-	    faa->fa_reg[0].size, 0, &sc->sc_ioh)) {
+	    faa->fa_reg[0].size, 0, &sc->sc_ioh[0])) {
 		printf(": can't map registers\n");
 		return;
+	}
+
+	if (faa->fa_nreg > 1) {
+		if (bus_space_map(sc->sc_iot, faa->fa_reg[1].addr,
+		    faa->fa_reg[1].size, 0, &sc->sc_ioh[1])) {
+			printf(": can't map registers\n");
+			return;
+		}
+		sc->sc_subdart = 1;
 	}
 
 	sc->sc_dmat = faa->fa_dmat;
 
 	printf("\n");
-
-	if (OF_getproplen(faa->fa_node, "pcie-dart") != 0)
-		return;
 
 	sc->sc_sid_mask = OF_getpropint(faa->fa_node, "sid-mask", 0xffff);
 	sc->sc_nsid = fls(sc->sc_sid_mask);
@@ -562,4 +571,12 @@ apldart_dmamem_free(bus_dma_tag_t dmat, struct apldart_dmamem *adm)
 	bus_dmamem_free(dmat, &adm->adm_seg, 1);
 	bus_dmamap_destroy(dmat, adm->adm_map);
 	free(adm, M_DEVBUF, sizeof(*adm));
+}
+
+void
+apldart_write(struct apldart_softc *sc, bus_size_t offset, uint32_t value)
+{
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh[0], offset, value);
+	if (sc->sc_subdart)
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh[1], offset, value);
 }
