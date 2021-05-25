@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.520 2021/05/06 09:18:54 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.521 2021/05/25 14:18:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1918,27 +1918,11 @@ bad_flags:
 			goto bad_flags;
 		if ((error = aspath_verify(p, attr_len, 1,
 		    rde_no_as_set(peer))) != 0) {
-			/*
-			 * XXX RFC does not specify how to handle errors.
-			 * XXX Instead of dropping the session because of a
-			 * XXX bad path just mark the full update as having
-			 * XXX a parse error which makes the update no longer
-			 * XXX eligible and will not be considered for routing
-			 * XXX or redistribution.
-			 * XXX We follow draft-ietf-idr-optional-transitive
-			 * XXX by looking at the partial bit.
-			 * XXX Consider soft errors similar to a partial attr.
-			 */
-			if (flags & ATTR_PARTIAL || error == AS_ERR_SOFT) {
-				a->flags |= F_ATTR_PARSE_ERR;
-				log_peer_warnx(&peer->conf, "bad AS4_PATH, "
-				    "path invalidated and prefix withdrawn");
-				goto optattr;
-			} else {
-				rde_update_err(peer, ERR_UPDATE, ERR_UPD_ASPATH,
-				    NULL, 0);
-				return (-1);
-			}
+			/* As per RFC6793 use "attribute discard" here. */
+			log_peer_warnx(&peer->conf, "bad AS4_PATH, "
+			    "attribute discarded");
+			plen += attr_len;
+			break;
 		}
 		a->flags |= F_ATTR_AS4BYTE_NEW;
 		goto optattr;
