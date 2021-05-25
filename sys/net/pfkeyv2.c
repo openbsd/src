@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.211 2021/05/04 09:28:04 mvs Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.212 2021/05/25 09:55:22 bluhm Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -121,11 +121,6 @@ static const struct sadb_alg calgs[] = {
 	{ SADB_X_CALG_DEFLATE, 0, 0, 0},
 	{ SADB_X_CALG_LZS, 0, 0, 0}
 };
-
-extern uint64_t sadb_exts_allowed_out[SADB_MAX+1];
-extern uint64_t sadb_exts_required_out[SADB_MAX+1];
-
-extern struct pool ipsec_policy_pool;
 
 struct pool pkpcb_pool;
 #define PFKEY_MSG_MAXSZ 4096
