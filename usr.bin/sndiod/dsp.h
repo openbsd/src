@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsp.h,v 1.9 2021/01/12 15:46:53 naddy Exp $	*/
+/*	$OpenBSD: dsp.h,v 1.10 2021/05/25 08:06:12 ratchov Exp $	*/
 /*
  * Copyright (c) 2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -34,56 +34,13 @@
 #if ADATA_BITS == 16
 
 #define ADATA_MUL(x,y)		(((int)(x) * (int)(y)) >> (ADATA_BITS - 1))
-#define ADATA_MULDIV(x,y,z)	((int)(x) * (int)(y) / (int)(z))
 
 typedef short adata_t;
 
 #elif ADATA_BITS == 24
 
-#if defined(__i386__) && defined(__GNUC__)
-
-static inline int
-fp24_mul(int x, int a)
-{
-	int res;
-
-	asm volatile (
-		"imull	%2\n\t"
-		"shrdl $23, %%edx, %%eax\n\t"
-		: "=a" (res)
-		: "a" (x), "r" (a)
-		: "%edx"
-		);
-	return res;
-}
-
-static inline int
-fp24_muldiv(int x, int a, int b)
-{
-	int res;
-
-	asm volatile (
-		"imull %2\n\t"
-		"idivl %3\n\t"
-		: "=a" (res)
-		: "a" (x), "d" (a), "r" (b)
-		);
-	return res;
-}
-
-#define ADATA_MUL(x,y)		fp24_mul(x, y)
-#define ADATA_MULDIV(x,y,z)	fp24_muldiv(x, y, z);
-
-#elif defined(__amd64__) || defined(__sparc64__)
-
 #define ADATA_MUL(x,y)		\
 	((int)(((long long)(x) * (long long)(y)) >> (ADATA_BITS - 1)))
-#define ADATA_MULDIV(x,y,z)	\
-	((int)((long long)(x) * (long long)(y) / (long long)(z)))
-
-#else
-#error "no 24-bit code for this architecture"
-#endif
 
 typedef int adata_t;
 
