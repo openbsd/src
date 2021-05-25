@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_proto.c,v 1.18 2019/07/15 12:28:06 bluhm Exp $	*/
+/*	$OpenBSD: uipc_proto.c,v 1.19 2021/05/25 22:45:09 bluhm Exp $	*/
 /*	$NetBSD: uipc_proto.c,v 1.8 1996/02/13 21:10:47 christos Exp $	*/
 
 /*-
@@ -44,8 +44,6 @@
  * Definitions of protocols supported in the UNIX domain.
  */
 
-extern	struct domain unixdomain;		/* or at least forward */
-
 struct protosw unixsw[] = {
 {
   .pr_type	= SOCK_STREAM,
@@ -76,7 +74,7 @@ struct protosw unixsw[] = {
 }
 };
 
-struct domain unixdomain = {
+const struct domain unixdomain = {
   .dom_family = AF_UNIX,
   .dom_name = "unix",
   .dom_init = unp_init,

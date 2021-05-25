@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.398 2021/03/10 10:21:48 jsg Exp $	*/
+/*	$OpenBSD: route.c,v 1.399 2021/05/25 22:45:09 bluhm Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1061,7 +1061,7 @@ rt_copysa(struct sockaddr *src, struct sockaddr *mask, struct sockaddr **dst)
 	static const u_char maskarray[] = {
 	    0x0, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe };
 	struct sockaddr *ndst;
-	struct domain *dp;
+	const struct domain *dp;
 	u_char *csrc, *cdst;
 	int i, plen;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.640 2021/03/26 22:41:06 mvs Exp $	*/
+/*	$OpenBSD: if.c,v 1.641 2021/05/25 22:45:09 bluhm Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -501,7 +501,7 @@ if_free_sadl(struct ifnet *ifp)
 void
 if_attachdomain(struct ifnet *ifp)
 {
-	struct domain *dp;
+	const struct domain *dp;
 	int i, s;
 
 	s = splnet();
@@ -1010,7 +1010,7 @@ if_detach(struct ifnet *ifp)
 {
 	struct ifaddr *ifa;
 	struct ifg_list *ifg;
-	struct domain *dp;
+	const struct domain *dp;
 	int i, s;
 
 	/* Undo pseudo-driver changes. */

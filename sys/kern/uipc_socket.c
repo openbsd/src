@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.261 2021/05/13 19:43:11 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.262 2021/05/25 22:45:09 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1821,7 +1821,8 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m)
 			if (so->so_proto->pr_domain &&
 			    so->so_proto->pr_domain->dom_protosw &&
 			    so->so_proto->pr_ctloutput) {
-				struct domain *dom = so->so_proto->pr_domain;
+				const struct domain *dom =
+				    so->so_proto->pr_domain;
 
 				level = dom->dom_protosw->pr_protocol;
 				error = (*so->so_proto->pr_ctloutput)
@@ -1961,7 +1962,8 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf *m)
 			if (so->so_proto->pr_domain &&
 			    so->so_proto->pr_domain->dom_protosw &&
 			    so->so_proto->pr_ctloutput) {
-				struct domain *dom = so->so_proto->pr_domain;
+				const struct domain *dom =
+				    so->so_proto->pr_domain;
 
 				level = dom->dom_protosw->pr_protocol;
 				error = (*so->so_proto->pr_ctloutput)

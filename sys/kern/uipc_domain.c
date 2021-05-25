@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_domain.c,v 1.58 2021/05/17 17:06:51 claudio Exp $	*/
+/*	$OpenBSD: uipc_domain.c,v 1.59 2021/05/25 22:45:09 bluhm Exp $	*/
 /*	$NetBSD: uipc_domain.c,v 1.14 1996/02/09 19:00:44 christos Exp $	*/
 
 /*
@@ -45,14 +45,7 @@
 #include "bpfilter.h"
 #include "pflow.h"
 
-extern struct domain mplsdomain;
-extern struct domain pfkeydomain;
-extern struct domain inet6domain;
-extern struct domain inetdomain;
-extern struct domain unixdomain;
-extern struct domain routedomain;
-
-struct domain *domains[] = {
+const struct domain *const domains[] = {
 #ifdef MPLS
 	&mplsdomain,
 #endif
@@ -70,12 +63,12 @@ struct domain *domains[] = {
 
 void		pffasttimo(void *);
 void		pfslowtimo(void *);
-struct domain *	pffinddomain(int);
+const struct domain *	pffinddomain(int);
 
 void
 domaininit(void)
 {
-	struct domain *dp;
+	const struct domain *dp;
 	const struct protosw *pr;
 	static struct timeout pffast_timeout;
 	static struct timeout pfslow_timeout;
@@ -105,10 +98,10 @@ domaininit(void)
 	timeout_add(&pfslow_timeout, 1);
 }
 
-struct domain *
+const struct domain *
 pffinddomain(int family)
 {
-	struct domain *dp;
+	const struct domain *dp;
 	int i;
 
 	for (i = 0; (dp = domains[i]) != NULL; i++) {
@@ -121,7 +114,7 @@ pffinddomain(int family)
 const struct protosw *
 pffindtype(int family, int type)
 {
-	struct domain *dp;
+	const struct domain *dp;
 	const struct protosw *pr;
 
 	dp = pffinddomain(family);
@@ -137,7 +130,7 @@ pffindtype(int family, int type)
 const struct protosw *
 pffindproto(int family, int protocol, int type)
 {
-	struct domain *dp;
+	const struct domain *dp;
 	const struct protosw *pr;
 	const struct protosw *maybe = NULL;
 
@@ -194,7 +187,7 @@ int
 net_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen, struct proc *p)
 {
-	struct domain *dp;
+	const struct domain *dp;
 	const struct protosw *pr;
 	int error, family, protocol;
 
@@ -254,7 +247,7 @@ net_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 void
 pfctlinput(int cmd, struct sockaddr *sa)
 {
-	struct domain *dp;
+	const struct domain *dp;
 	const struct protosw *pr;
 	int i;
 
@@ -271,7 +264,7 @@ void
 pfslowtimo(void *arg)
 {
 	struct timeout *to = (struct timeout *)arg;
-	struct domain *dp;
+	const struct domain *dp;
 	const struct protosw *pr;
 	int i;
 
@@ -287,7 +280,7 @@ void
 pffasttimo(void *arg)
 {
 	struct timeout *to = (struct timeout *)arg;
-	struct domain *dp;
+	const struct domain *dp;
 	const struct protosw *pr;
 	int i;
 

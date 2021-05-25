@@ -1,4 +1,4 @@
-/*	$OpenBSD: protosw.h,v 1.31 2018/01/23 20:49:58 bluhm Exp $	*/
+/*	$OpenBSD: protosw.h,v 1.32 2021/05/25 22:45:10 bluhm Exp $	*/
 /*	$NetBSD: protosw.h,v 1.10 1996/04/09 20:55:32 cgd Exp $	*/
 
 /*-
@@ -61,7 +61,7 @@ struct proc;
 
 struct protosw {
 	short	pr_type;		/* socket type used for */
-	struct	domain *pr_domain;	/* domain protocol a member of */
+	const	struct domain *pr_domain; /* domain protocol a member of */
 	short	pr_protocol;		/* protocol number */
 	short	pr_flags;		/* see below */
 
