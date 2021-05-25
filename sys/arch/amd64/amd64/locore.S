@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.122 2020/11/03 18:19:31 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.123 2021/05/25 17:07:55 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -378,7 +378,7 @@ ENTRY(cpu_switchto)
 	addq	$PCB_SAVEFPU,%rdi
 #endif
 	CODEPATCH_START
-	.byte 0x48; fxsave	(%rdi)		/* really fxsave64 */
+	fxsave64	(%rdi)
 	CODEPATCH_END(CPTAG_XSAVE)
 
 switch_exited:
@@ -388,7 +388,7 @@ switch_exited:
 	addq	$PCB_SAVEFPU,%rdi
 #endif
 	CODEPATCH_START
-	.byte 0x48; fxrstor	(%rdi)		/* really fxrstor64 */
+	fxrstor64	(%rdi)
 	CODEPATCH_END(CPTAG_XRSTOR)
 	andl	$~CPUF_USERXSTATE,CPUVAR(FLAGS)
 
@@ -708,7 +708,7 @@ KUTEXT_PAGE_END
 #endif
 	/* untouched state so can't fault */
 	CODEPATCH_START
-	.byte 0x48; fxrstor	(%rdi)		/* really fxrstor64 */
+	fxrstor64	(%rdi)
 	CODEPATCH_END(CPTAG_XRSTOR)
 #if PCB_SAVEFPU != 0
 	subq	$PCB_SAVEFPU,%rdi
@@ -921,7 +921,7 @@ KTEXT_PAGE_END
 	addq	$PCB_SAVEFPU,%rdi
 #endif
 	CODEPATCH_START
-	.byte 0x48; fxrstor	(%rdi)		/* really fxrstor64 */
+	fxrstor64	(%rdi)
 	CODEPATCH_END(CPTAG_XRSTOR)
 	movq	$T_PROTFLT,TF_TRAPNO(%rsp)
 	jmp	recall_trap
@@ -1037,7 +1037,7 @@ ENTRY(xrstor_user)
 	.globl	xrstor_fault
 xrstor_fault:
 	CODEPATCH_START
-	.byte 0x48; fxrstor	(%rdi)		/* really fxrstor64 */
+	fxrstor64	(%rdi)
 	CODEPATCH_END(CPTAG_XRSTOR)
 	xorl	%eax, %eax
 	RETGUARD_CHECK(xrstor_user, r11)
@@ -1054,7 +1054,7 @@ ENTRY(fpusave)
 	movl	%edx,%eax
 	shrq	$32,%rdx
 	CODEPATCH_START
-	.byte 0x48; fxsave	(%rdi)		/* really fxsave64 */
+	fxsave64	(%rdi)
 	CODEPATCH_END(CPTAG_XSAVE)
 	RETGUARD_CHECK(fpusave, r11)
 	ret
@@ -1066,14 +1066,14 @@ ENTRY(fpusavereset)
 	movl	%edx,%eax
 	shrq	$32,%rdx
 	CODEPATCH_START
-	.byte 0x48; fxsave	(%rdi)		/* really fxsave64 */
+	fxsave64	(%rdi)
 	CODEPATCH_END(CPTAG_XSAVE)
 	movq	proc0paddr(%rip),%rdi
 #if PCB_SAVEFPU != 0
 	addq	$PCB_SAVEFPU,%rdi
 #endif
 	CODEPATCH_START
-	.byte 0x48; fxrstor	(%rdi)		/* really fxrstor64 */
+	fxrstor64	(%rdi)
 	CODEPATCH_END(CPTAG_XRSTOR)
 	RETGUARD_CHECK(fpusavereset, r11)
 	ret
@@ -1100,15 +1100,15 @@ END(xsetbv_user)
 	.section .rodata
 	.globl	_C_LABEL(_xrstor)
 _C_LABEL(_xrstor):
-	.byte 0x48; xrstor	(%rdi)		/* really xrstor64 */
+	xrstor64	(%rdi)
 
 	.globl	_C_LABEL(_xsave)
 _C_LABEL(_xsave):
-	.byte 0x48; xsave	(%rdi)		/* really xsave64 */
+	xsave64	(%rdi)
 
 	.globl	_C_LABEL(_xsaveopt)
 _C_LABEL(_xsaveopt):
-	.byte 0x48; xsaveopt	(%rdi)		/* really xsaveopt64 */
+	xsaveopt64	(%rdi)
 
 	.globl	_C_LABEL(_pcid_set_reuse)
 _C_LABEL(_pcid_set_reuse):
