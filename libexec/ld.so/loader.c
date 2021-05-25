@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.191 2021/03/16 18:03:06 kurt Exp $ */
+/*	$OpenBSD: loader.c,v 1.192 2021/05/25 17:01:36 kn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -464,6 +464,7 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 	int failed;
 	struct dep_node *n;
 	Elf_Addr minva, maxva, exe_loff, exec_end, cur_exec_end;
+	Elf_Addr relro_addr = 0, relro_size = 0;
 	Elf_Phdr *ptls = NULL;
 	int align;
 
@@ -552,8 +553,8 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 			ptls = phdp;
 			break;
 		case PT_GNU_RELRO:
-			exe_obj->relro_addr = phdp->p_vaddr + exe_loff;
-			exe_obj->relro_size = phdp->p_memsz;
+			relro_addr = phdp->p_vaddr + exe_loff;
+			relro_size = phdp->p_memsz;
 			break;
 		}
 		phdp++;
@@ -561,6 +562,8 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 	exe_obj->load_list = load_list;
 	exe_obj->obj_flags |= DF_1_GLOBAL;
 	exe_obj->load_size = maxva - minva;
+	exe_obj->relro_addr = relro_addr;
+	exe_obj->relro_size = relro_size;
 	_dl_set_sod(exe_obj->load_name, &exe_obj->sod);
 
 #ifdef __i386__
@@ -638,7 +641,7 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 		debug_map->r_ldbase = dyn_loff;
 		_dl_debug_map = debug_map;
 #ifdef __mips__
-		Elf_Addr relro_addr = exe_obj->relro_addr;
+		relro_addr = exe_obj->relro_addr;
 		if (dynp->d_tag == DT_DEBUG &&
 		    ((Elf_Addr)map_link + sizeof(*map_link) <= relro_addr ||
 		     (Elf_Addr)map_link >= relro_addr + exe_obj->relro_size)) {
