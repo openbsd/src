@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.213 2021/05/25 22:45:09 bluhm Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.214 2021/05/26 08:28:34 mvs Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -246,7 +246,7 @@ pfkey_init(void)
 	rw_init(&pkptable.pkp_lk, "pfkey");
 	SRPL_INIT(&pkptable.pkp_list);
 	pool_init(&pkpcb_pool, sizeof(struct pkpcb), 0,
-	    IPL_NONE, PR_WAITOK, "pkpcb", NULL);
+	    IPL_SOFTNET, PR_WAITOK, "pkpcb", NULL);
 	pool_init(&ipsec_policy_pool, sizeof(struct ipsec_policy), 0,
 	    IPL_SOFTNET, 0, "ipsec policy", NULL);
 }
@@ -315,8 +315,10 @@ pfkeyv2_detach(struct socket *so)
 	    kcb_list);
 	rw_exit(&pkptable.pkp_lk);
 
+	sounlock(so, SL_LOCKED);
 	/* wait for all references to drop */
 	refcnt_finalize(&kp->kcb_refcnt, "pfkeyrefs");
+	solock(so);
 
 	so->so_pcb = NULL;
 	KASSERT((so->so_state & SS_NOFDREF) == 0);
@@ -430,7 +432,14 @@ pfkeyv2_output(struct mbuf *mbuf, struct socket *so,
 
 	m_copydata(mbuf, 0, mbuf->m_pkthdr.len, message);
 
+	/*
+	 * The socket can't be closed concurrently because the file
+	 * descriptor reference is still held.
+	 */
+
+	sounlock(so, SL_LOCKED);
 	error = pfkeyv2_send(so, message, mbuf->m_pkthdr.len);
+	solock(so);
 
 ret:
 	m_freem(mbuf);
