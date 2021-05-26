@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tpmr.c,v 1.24 2021/03/05 06:44:09 dlg Exp $ */
+/*	$OpenBSD: if_tpmr.c,v 1.25 2021/05/26 06:44:28 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -247,15 +247,20 @@ tpmr_pf(struct ifnet *ifp0, int dir, struct mbuf *m)
 {
 	struct ether_header *eh, copy;
 	sa_family_t af = AF_UNSPEC;
+	void (*ip_input)(struct ifnet *, struct mbuf *) = NULL;
 
 	eh = mtod(m, struct ether_header *);
 	switch (ntohs(eh->ether_type)) {
 	case ETHERTYPE_IP:
 		af = AF_INET;
+		ip_input = ipv4_input;
 		break;
+#ifdef INET6
 	case ETHERTYPE_IPV6:
 		af = AF_INET6;
+		ip_input = ipv6_input;
 		break;
+#endif
 	default:
 		return (m);
 	}
@@ -269,6 +274,11 @@ tpmr_pf(struct ifnet *ifp0, int dir, struct mbuf *m)
 	}
 	if (m == NULL)
 		return (NULL);
+
+	if (dir == PF_IN && ISSET(m->m_pkthdr.pf.flags, PF_TAG_DIVERTED)) {
+		(*ip_input)(ifp0, m);
+		return (NULL);
+	}
 
 	m = m_prepend(m, sizeof(*eh), M_DONTWAIT);
 	if (m == NULL)
