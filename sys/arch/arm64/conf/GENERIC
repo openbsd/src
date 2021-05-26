@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.198 2021/05/24 18:40:19 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.199 2021/05/26 20:52:21 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -138,6 +138,8 @@ apldwusb*	at fdt?
 aplintc*	at fdt? early 1
 aplpcie*	at fdt?
 pci*		at aplpcie?
+aplspmi*	at fdt?
+aplpmu*		at aplspmi?
 exuart*		at fdt?
 
 # iMX
