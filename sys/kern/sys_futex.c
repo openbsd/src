@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_futex.c,v 1.17 2021/03/10 10:21:47 jsg Exp $ */
+/*	$OpenBSD: sys_futex.c,v 1.18 2021/05/26 18:11:59 kettenis Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -98,6 +98,7 @@ sys_futex(struct proc *p, void *v, register_t *retval)
 	const struct timespec *timeout = SCARG(uap, timeout);
 	void *g = SCARG(uap, g);
 	int flags = 0;
+	int error = 0;
 
 	if (op & FUTEX_PRIVATE_FLAG)
 		flags |= FT_PRIVATE;
@@ -107,7 +108,7 @@ sys_futex(struct proc *p, void *v, register_t *retval)
 	case FUTEX_WAIT_PRIVATE:
 		KERNEL_LOCK();
 		rw_enter_write(&ftlock);
-		*retval = futex_wait(uaddr, val, timeout, flags);
+		error = futex_wait(uaddr, val, timeout, flags);
 		rw_exit_write(&ftlock);
 		KERNEL_UNLOCK();
 		break;
@@ -124,11 +125,11 @@ sys_futex(struct proc *p, void *v, register_t *retval)
 		rw_exit_write(&ftlock);
 		break;
 	default:
-		*retval = ENOSYS;
+		error = ENOSYS;
 		break;
 	}
 
-	return 0;
+	return error;
 }
 
 /*

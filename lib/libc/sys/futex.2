@@ -1,4 +1,4 @@
-.\" $OpenBSD: futex.2,v 1.5 2019/01/18 05:06:37 cheloha Exp $
+.\" $OpenBSD: futex.2,v 1.6 2021/05/26 18:11:59 kettenis Exp $
 .\"
 .\" Copyright (c) 2017 Martin Pieuchot
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 18 2019 $
+.Dd $Mdocdate: May 26 2021 $
 .Dt FUTEX 2
 .Os
 .Sh NAME
@@ -98,7 +98,10 @@ returns zero if woken by a matching
 .Dv FUTEX_WAKE
 or
 .Dv FUTEX_REQUEUE
-call, otherwise an error number is returned to indicate the error.
+call.
+Otherwise, a value of \-1 is returned and
+.Va errno
+is set to indicate the error.
 .Sh ERRORS
 .Fn futex
 will fail if:
