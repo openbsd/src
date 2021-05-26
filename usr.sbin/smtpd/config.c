@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.55 2021/04/09 16:43:43 eric Exp $	*/
+/*	$OpenBSD: config.c,v 1.56 2021/05/26 07:05:50 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -285,7 +285,6 @@ purge_config(uint8_t what)
 		while (dict_poproot(env->sc_pki_dict, (void **)&p)) {
 			freezero(p->pki_cert, p->pki_cert_len);
 			freezero(p->pki_key, p->pki_key_len);
-			EVP_PKEY_free(p->pki_pkey);
 			free(p);
 		}
 		free(env->sc_pki_dict);
@@ -298,8 +297,6 @@ purge_config(uint8_t what)
 			p->pki_cert = NULL;
 			freezero(p->pki_key, p->pki_key_len);
 			p->pki_key = NULL;
-			EVP_PKEY_free(p->pki_pkey);
-			p->pki_pkey = NULL;
 		}
 	}
 }

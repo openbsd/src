@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.94 2021/03/05 12:37:32 eric Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.95 2021/05/26 07:05:50 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -65,41 +65,7 @@ ssl_init(void)
 	inited = 1;
 }
 
-int
-ssl_setup(SSL_CTX **ctxp, struct pki *pki,
-    int (*sni_cb)(SSL *,int *,void *), const char *ciphers)
-{
-	SSL_CTX	*ctx;
-	uint8_t sid[SSL_MAX_SID_CTX_LENGTH];
-
-	ctx = ssl_ctx_create(pki->pki_name, pki->pki_cert, pki->pki_cert_len, ciphers);
-
-	/*
-	 * Set session ID context to a random value.  We don't support
-	 * persistent caching of sessions so it is OK to set a temporary
-	 * session ID context that is valid during run time.
-	 */
-	arc4random_buf(sid, sizeof(sid));
-	if (!SSL_CTX_set_session_id_context(ctx, sid, sizeof(sid)))
-		goto err;
-
-	if (sni_cb)
-		SSL_CTX_set_tlsext_servername_callback(ctx, sni_cb);
-
-	SSL_CTX_set_dh_auto(ctx, pki->pki_dhe);
-
-	SSL_CTX_set_ecdh_auto(ctx, 1);
-
-	*ctxp = ctx;
-	return 1;
-
-err:
-	SSL_CTX_free(ctx);
-	ssl_error("ssl_setup");
-	return 0;
-}
-
-char *
+static char *
 ssl_load_file(const char *name, off_t *len, mode_t perm)
 {
 	struct stat	 st;
@@ -177,7 +143,7 @@ end:
 	return ret;
 }
 
-char *
+static char *
 ssl_load_key(const char *name, off_t *len, char *pass, mode_t perm, const char *pkiname)
 {
 	FILE		*fp = NULL;
@@ -253,53 +219,6 @@ fail:
 	return (NULL);
 }
 
-SSL_CTX *
-ssl_ctx_create(const char *pkiname, char *cert, off_t cert_len, const char *ciphers)
-{
-	SSL_CTX	*ctx;
-	size_t	 pkinamelen = 0;
-
-	ctx = SSL_CTX_new(SSLv23_method());
-	if (ctx == NULL) {
-		ssl_error("ssl_ctx_create");
-		fatal("ssl_ctx_create: could not create SSL context");
-	}
-
-	SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_OFF);
-	SSL_CTX_set_timeout(ctx, SSL_SESSION_TIMEOUT);
-	SSL_CTX_set_options(ctx,
-	    SSL_OP_ALL | SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_TICKET);
-	SSL_CTX_set_options(ctx,
-	    SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION);
-	SSL_CTX_set_options(ctx, SSL_OP_NO_CLIENT_RENEGOTIATION);
-	SSL_CTX_set_options(ctx, SSL_OP_CIPHER_SERVER_PREFERENCE);
-
-	if (ciphers == NULL)
-		ciphers = SSL_CIPHERS;
-	if (!SSL_CTX_set_cipher_list(ctx, ciphers)) {
-		ssl_error("ssl_ctx_create");
-		fatal("ssl_ctx_create: could not set cipher list");
-	}
-
-	if (cert != NULL) {
-		if (pkiname != NULL)
-			pkinamelen = strlen(pkiname) + 1;
-		if (!SSL_CTX_use_certificate_chain_mem(ctx, cert, cert_len)) {
-			ssl_error("ssl_ctx_create");
-			fatal("ssl_ctx_create: invalid certificate chain");
-		} else if (!ssl_ctx_fake_private_key(ctx,
-		    pkiname, pkinamelen, cert, cert_len, NULL, NULL)) {
-			ssl_error("ssl_ctx_create");
-			fatal("ssl_ctx_create: could not fake private key");
-		} else if (!SSL_CTX_check_private_key(ctx)) {
-			ssl_error("ssl_ctx_create");
-			fatal("ssl_ctx_create: invalid private key");
-		}
-	}
-
-	return (ctx);
-}
-
 int
 ssl_load_certificate(struct pki *p, const char *pathname)
 {
@@ -329,19 +248,6 @@ ssl_load_cafile(struct ca *c, const char *pathname)
 	return 1;
 }
 
-const char *
-ssl_to_text(const SSL *ssl)
-{
-	static char buf[256];
-
-	(void)snprintf(buf, sizeof buf, "%s:%s:%d",
-	    SSL_get_version(ssl),
-	    SSL_get_cipher_name(ssl),
-	    SSL_get_cipher_bits(ssl, NULL));
-
-	return (buf);
-}
-
 void
 ssl_error(const char *where)
 {
@@ -352,103 +258,6 @@ ssl_error(const char *where)
 		ERR_error_string_n(code, errbuf, sizeof(errbuf));
 		log_debug("debug: SSL library error: %s: %s", where, errbuf);
 	}
-}
-
-int
-ssl_load_pkey(const void *data, size_t datalen, char *buf, off_t len,
-    X509 **x509ptr, EVP_PKEY **pkeyptr)
-{
-	BIO		*in;
-	X509		*x509 = NULL;
-	EVP_PKEY	*pkey = NULL;
-	RSA		*rsa = NULL;
-	EC_KEY		*eckey = NULL;
-	void		*exdata = NULL;
-
-	if ((in = BIO_new_mem_buf(buf, len)) == NULL) {
-		SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY, ERR_R_BUF_LIB);
-		return (0);
-	}
-
-	if ((x509 = PEM_read_bio_X509(in, NULL,
-	    ssl_password_cb, NULL)) == NULL) {
-		SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY, ERR_R_PEM_LIB);
-		goto fail;
-	}
-
-	if ((pkey = X509_get_pubkey(x509)) == NULL) {
-		SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY, ERR_R_X509_LIB);
-		goto fail;
-	}
-
-	BIO_free(in);
-	in = NULL;
-
-	if (data != NULL && datalen) {
-		if (((rsa = EVP_PKEY_get1_RSA(pkey)) == NULL &&
-			(eckey = EVP_PKEY_get1_EC_KEY(pkey)) == NULL) ||
-		    (exdata = malloc(datalen)) == NULL) {
-			SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY, ERR_R_EVP_LIB);
-			goto fail;
-		}
-
-		memcpy(exdata, data, datalen);
-		if (rsa)
-			RSA_set_ex_data(rsa, 0, exdata);
-		if (eckey)
-			ECDSA_set_ex_data(eckey, 0, exdata);
-		RSA_free(rsa); /* dereference, will be cleaned up with pkey */
-		EC_KEY_free(eckey); /* dereference, will be cleaned up with pkey */
-	}
-
-	*x509ptr = x509;
-	*pkeyptr = pkey;
-
-	return (1);
-
- fail:
-	RSA_free(rsa);
-	EC_KEY_free(eckey);
-	BIO_free(in);
-	EVP_PKEY_free(pkey);
-	X509_free(x509);
-	free(exdata);
-
-	return (0);
-}
-
-int
-ssl_ctx_fake_private_key(SSL_CTX *ctx, const void *data, size_t datalen,
-    char *buf, off_t len, X509 **x509ptr, EVP_PKEY **pkeyptr)
-{
-	int		 ret = 0;
-	EVP_PKEY	*pkey = NULL;
-	X509		*x509 = NULL;
-
-	if (!ssl_load_pkey(data, datalen, buf, len, &x509, &pkey))
-		return (0);
-
-	/*
-	 * Use the public key as the "private" key - the secret key
-	 * parameters are hidden in an extra process that will be
-	 * contacted by the RSA engine.  The SSL/TLS library needs at
-	 * least the public key parameters in the current process.
-	 */
-	ret = SSL_CTX_use_PrivateKey(ctx, pkey);
-	if (!ret)
-		SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY, ERR_LIB_SSL);
-
-	if (pkeyptr != NULL)
-		*pkeyptr = pkey;
-	else
-		EVP_PKEY_free(pkey);
-
-	if (x509ptr != NULL)
-		*x509ptr = x509;
-	else
-		X509_free(x509);
-
-	return (ret);
 }
 
 static void
