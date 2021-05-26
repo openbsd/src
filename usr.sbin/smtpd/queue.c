@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.191 2020/12/31 08:27:15 martijn Exp $	*/
+/*	$OpenBSD: queue.c,v 1.192 2021/05/26 18:08:55 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -24,7 +24,6 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 
-#include <err.h>
 #include <event.h>
 #include <imsg.h>
 #include <inttypes.h>
@@ -525,7 +524,7 @@ queue_imsg(struct mproc *p, struct imsg *imsg)
 		return;
 	}
 
-	errx(1, "queue_imsg: unexpected %s imsg", imsg_to_str(imsg->hdr.type));
+	fatalx("queue_imsg: unexpected %s imsg", imsg_to_str(imsg->hdr.type));
 }
 
 static void
@@ -674,7 +673,7 @@ queue(void)
 	evtimer_add(&ev_qload, &tv);
 
 	if (pledge("stdio rpath wpath cpath flock recvfd sendfd", NULL) == -1)
-		err(1, "pledge");
+		fatal("pledge");
 
 	event_dispatch();
 	fatalx("exited event loop");

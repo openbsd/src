@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.141 2019/10/03 08:50:08 gilles Exp $	*/
+/*	$OpenBSD: mda.c,v 1.142 2021/05/26 18:08:55 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -25,7 +25,6 @@
 #include <sys/socket.h>
 
 #include <ctype.h>
-#include <err.h>
 #include <errno.h>
 #include <event.h>
 #include <imsg.h>
@@ -380,7 +379,7 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 		return;
 	}
 
-	errx(1, "mda_imsg: unexpected %s imsg", imsg_to_str(imsg->hdr.type));
+	fatalx("mda_imsg: unexpected %s imsg", imsg_to_str(imsg->hdr.type));
 }
 
 void

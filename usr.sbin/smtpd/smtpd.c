@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.338 2021/04/21 07:54:10 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.339 2021/05/26 18:08:55 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -29,7 +29,6 @@
 
 #include <bsd_auth.h>
 #include <dirent.h>
-#include <err.h>
 #include <errno.h>
 #include <event.h>
 #include <fcntl.h>
@@ -270,7 +269,7 @@ parent_imsg(struct mproc *p, struct imsg *imsg)
 		return;
 	}
 
-	errx(1, "parent_imsg: unexpected %s imsg from %s",
+	fatalx("parent_imsg: unexpected %s imsg from %s",
 	    imsg_to_str(imsg->hdr.type), proc_title(p->proc));
 }
 
@@ -485,17 +484,16 @@ main(int argc, char *argv[])
 	char		*rexec = NULL;
 	struct smtpd	*conf;
 
-	if ((conf = config_default()) == NULL)
-		err(1, NULL);
-
-	env = conf;
-
 	flags = 0;
 	opts = 0;
 	debug = 0;
 	tracing = 0;
 
 	log_init(1, LOG_MAIL);
+
+	if ((conf = config_default()) == NULL)
+		fatal("config_default");
+	env = conf;
 
 	TAILQ_INIT(&offline_q);
 
@@ -617,7 +615,7 @@ main(int argc, char *argv[])
 
 	if (strlcpy(env->sc_conffile, conffile, PATH_MAX)
 	    >= PATH_MAX)
-		errx(1, "config file exceeds PATH_MAX");
+		fatalx("config file exceeds PATH_MAX");
 
 	if (env->sc_opts & SMTPD_OPT_NOACTION) {
 		if (env->sc_queue_key &&
@@ -636,7 +634,7 @@ main(int argc, char *argv[])
 
 	/* check for root privileges */
 	if (geteuid())
-		errx(1, "need root privileges");
+		fatalx("need root privileges");
 
 	log_init(foreground_log, LOG_MAIL);
 	log_trace_verbose(tracing);
@@ -648,7 +646,7 @@ main(int argc, char *argv[])
 	log_debug("debug: using \"%s\" stat backend", backend_stat);
 
 	if (env->sc_hostname[0] == '\0')
-		errx(1, "machine does not have a hostname set");
+		fatalx("machine does not have a hostname set");
 	env->sc_uptime = time(NULL);
 
 	if (rexec == NULL) {
@@ -660,12 +658,12 @@ main(int argc, char *argv[])
 
 				password = getpass("queue key: ");
 				if (password == NULL)
-					err(1, "getpass");
+					fatal("getpass");
 
 				env->sc_queue_key = strdup(password);
 				explicit_bzero(password, strlen(password));
 				if (env->sc_queue_key == NULL)
-					err(1, "strdup");
+					fatal("strdup");
 			}
 			else {
 				char   *buf = NULL;
@@ -674,7 +672,7 @@ main(int argc, char *argv[])
 
 				if (strcasecmp(env->sc_queue_key, "stdin") == 0) {
 					if ((len = getline(&buf, &sz, stdin)) == -1)
-						err(1, "getline");
+						fatal("getline");
 					if (buf[len - 1] == '\n')
 						buf[len - 1] = '\0';
 					env->sc_queue_key = buf;
@@ -686,7 +684,7 @@ main(int argc, char *argv[])
 
 		if (!foreground)
 			if (daemon(0, 0) == -1)
-				err(1, "failed to daemonize");
+				fatal("failed to daemonize");
 
 		/* setup all processes */
 
@@ -756,7 +754,7 @@ main(int argc, char *argv[])
 
 		env->sc_stat = stat_backend_lookup(backend_stat);
 		if (env->sc_stat == NULL)
-			errx(1, "could not find stat backend \"%s\"", backend_stat);
+			fatalx("could not find stat backend \"%s\"", backend_stat);
 
 		return control();
 	}
@@ -783,7 +781,7 @@ main(int argc, char *argv[])
 			env->sc_comp = compress_backend_lookup("gzip");
 
 		if (!queue_init(backend_queue, 1))
-			errx(1, "could not initialize queue backend");
+			fatalx("could not initialize queue backend");
 
 		return queue();
 	}
@@ -1088,7 +1086,7 @@ smtpd(void) {
 
 	if (pledge("stdio rpath wpath cpath fattr tmppath "
 	    "getpw sendfd proc exec id inet chown unix", NULL) == -1)
-		err(1, "pledge");
+		fatal("pledge");
 
 	event_dispatch();
 	fatalx("exited event loop");
@@ -1189,7 +1187,7 @@ fork_proc_backend(const char *key, const char *conf, const char *procname)
 			procname = name;
 
 		execl(path, procname, arg, (char *)NULL);
-		err(1, "execl: %s", path);
+		fatal("execl: %s", path);
 	}
 
 	/* parent process */
@@ -1310,24 +1308,24 @@ fork_filter_process(const char *name, const char *command, const char *user, con
 	if (user == NULL)
 		user = SMTPD_USER;
 	if ((pw = getpwnam(user)) == NULL)
-		err(1, "getpwnam");
+		fatal("getpwnam");
 
 	if (group) {
 		if ((gr = getgrnam(group)) == NULL)
-			err(1, "getgrnam");
+			fatal("getgrnam");
 	}
 	else {
 		if ((gr = getgrgid(pw->pw_gid)) == NULL)
-			err(1, "getgrgid");
+			fatal("getgrgid");
 	}
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, sp) == -1)
-		err(1, "socketpair");
+		fatal("socketpair");
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, errfd) == -1)
-		err(1, "socketpair");
+		fatal("socketpair");
 
 	if ((pid = fork()) == -1)
-		err(1, "fork");
+		fatal("fork");
 
 	/* parent passes the child fd over to lka */
 	if (pid > 0) {
@@ -1351,24 +1349,24 @@ fork_filter_process(const char *name, const char *command, const char *user, con
 
 	if (chroot_path) {
 		if (chroot(chroot_path) != 0 || chdir("/") != 0)
-			err(1, "chroot: %s", chroot_path);
+			fatal("chroot: %s", chroot_path);
 	}
 
 	if (setgroups(1, &gr->gr_gid) ||
 	    setresgid(gr->gr_gid, gr->gr_gid, gr->gr_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
-		err(1, "fork_filter_process: cannot drop privileges");
+		fatal("fork_filter_process: cannot drop privileges");
 
 	if (closefrom(STDERR_FILENO + 1) == -1)
-		err(1, "closefrom");
+		fatal("closefrom");
 	if (setsid() == -1)
-		err(1, "setsid");
+		fatal("setsid");
 	if (signal(SIGPIPE, SIG_DFL) == SIG_ERR ||
 	    signal(SIGINT, SIG_DFL) == SIG_ERR ||
 	    signal(SIGTERM, SIG_DFL) == SIG_ERR ||
 	    signal(SIGCHLD, SIG_DFL) == SIG_ERR ||
 	    signal(SIGHUP, SIG_DFL) == SIG_ERR)
-		err(1, "signal");
+		fatal("signal");
 
 	if (command[0] == '/')
 		execr = snprintf(exec, sizeof(exec), "exec %s", command);
@@ -1376,7 +1374,7 @@ fork_filter_process(const char *name, const char *command, const char *user, con
 		execr = snprintf(exec, sizeof(exec), "exec %s/%s", 
 		    PATH_LIBEXEC, command);
 	if (execr >= (int) sizeof(exec))
-		errx(1, "%s: exec path too long", name);
+		fatalx("%s: exec path too long", name);
 
 	/*
 	 * Wait for lka to acknowledge that it received the fd.
@@ -1387,9 +1385,9 @@ fork_filter_process(const char *name, const char *command, const char *user, con
 	 * never going to be read from we can shutdown(2) the write-end in lka.
 	 */
 	if (read(STDERR_FILENO, &buf, 1) != 0)
-		errx(1, "lka didn't properly close write end of error socket");
+		fatalx("lka didn't properly close write end of error socket");
 	if (system(exec) == -1)
-		err(1, NULL);
+		fatal("system");
 
 	/* there's no successful exit from a processor */
 	_exit(1);
@@ -1521,25 +1519,25 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 		mda_mbox_init(deliver);
 
 	if (chdir(pw_dir) == -1 && chdir("/") == -1)
-		err(1, "chdir");
+		fatal("chdir");
 	if (setgroups(1, &pw_gid) ||
 	    setresgid(pw_gid, pw_gid, pw_gid) ||
 	    setresuid(pw_uid, pw_uid, pw_uid))
-		err(1, "forkmda: cannot drop privileges");
+		fatal("forkmda: cannot drop privileges");
 	if (dup2(pipefd[0], STDIN_FILENO) == -1 ||
 	    dup2(allout, STDOUT_FILENO) == -1 ||
 	    dup2(allout, STDERR_FILENO) == -1)
-		err(1, "forkmda: dup2");
+		fatal("forkmda: dup2");
 	if (closefrom(STDERR_FILENO + 1) == -1)
-		err(1, "closefrom");
+		fatal("closefrom");
 	if (setsid() == -1)
-		err(1, "setsid");
+		fatal("setsid");
 	if (signal(SIGPIPE, SIG_DFL) == SIG_ERR ||
 	    signal(SIGINT, SIG_DFL) == SIG_ERR ||
 	    signal(SIGTERM, SIG_DFL) == SIG_ERR ||
 	    signal(SIGCHLD, SIG_DFL) == SIG_ERR ||
 	    signal(SIGHUP, SIG_DFL) == SIG_ERR)
-		err(1, "signal");
+		fatal("signal");
 
 	/* avoid hangs by setting 5m timeout */
 	alarm(300);

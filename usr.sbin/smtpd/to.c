@@ -1,4 +1,4 @@
-/*	$OpenBSD: to.c,v 1.46 2021/03/05 12:37:32 eric Exp $	*/
+/*	$OpenBSD: to.c,v 1.47 2021/05/26 18:08:55 eric Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -29,7 +29,6 @@
 #include <arpa/inet.h>
 
 #include <ctype.h>
-#include <err.h>
 #include <errno.h>
 #include <event.h>
 #include <fcntl.h>

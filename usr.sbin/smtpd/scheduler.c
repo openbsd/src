@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler.c,v 1.60 2018/12/30 23:09:58 guenther Exp $	*/
+/*	$OpenBSD: scheduler.c,v 1.61 2021/05/26 18:08:55 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -27,7 +27,6 @@
 
 #include <ctype.h>
 #include <dirent.h>
-#include <err.h>
 #include <errno.h>
 #include <event.h>
 #include <imsg.h>
@@ -400,7 +399,7 @@ scheduler_imsg(struct mproc *p, struct imsg *imsg)
 		return;
 	}
 
-	errx(1, "scheduler_imsg: unexpected %s imsg",
+	fatalx("scheduler_imsg: unexpected %s imsg",
 	    imsg_to_str(imsg->hdr.type));
 }
 
@@ -429,7 +428,7 @@ scheduler(void)
 
 	backend = scheduler_backend_lookup(backend_scheduler);
 	if (backend == NULL)
-		errx(1, "cannot find scheduler backend \"%s\"",
+		fatalx("cannot find scheduler backend \"%s\"",
 		    backend_scheduler);
 
 	purge_config(PURGE_EVERYTHING & ~PURGE_DISPATCHERS);
@@ -471,7 +470,7 @@ scheduler(void)
 	scheduler_reset_events();
 
 	if (pledge("stdio", NULL) == -1)
-		err(1, "pledge");
+		fatal("pledge");
 
 	event_dispatch();
 	fatalx("exited event loop");

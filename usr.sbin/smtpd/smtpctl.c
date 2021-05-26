@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.167 2020/02/24 16:16:07 millert Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.168 2021/05/26 18:08:55 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -761,7 +761,6 @@ do_show_queue(int argc, struct parameter *argv)
 	now = time(NULL);
 
 	if (!srv_connect()) {
-		log_init(1, LOG_MAIL);
 		queue_init("fs", 0);
 		if (chroot(PATH_SPOOL) == -1 || chdir("/") == -1)
 			err(1, "%s", PATH_SPOOL);
@@ -1043,6 +1042,8 @@ main(int argc, char **argv)
 	gid_t		 gid;
 	int		 privileged;
 	char		*argv_mailq[] = { "show", "queue", NULL };
+
+	log_init(1, LOG_MAIL);
 
 	sendmail_compat(argc, argv);
 	privileged = geteuid() == 0;

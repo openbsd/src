@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.238 2021/04/09 16:43:43 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.239 2021/05/26 18:08:55 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -25,7 +25,6 @@
 #include <sys/socket.h>
 
 #include <ctype.h>
-#include <err.h>
 #include <errno.h>
 #include <event.h>
 #include <imsg.h>
@@ -466,7 +465,7 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 		return;
 	}
 
-	errx(1, "mta_imsg: unexpected %s imsg", imsg_to_str(imsg->hdr.type));
+	fatalx("mta_imsg: unexpected %s imsg", imsg_to_str(imsg->hdr.type));
 }
 
 void
@@ -506,21 +505,21 @@ mta_setup_dispatcher(struct dispatcher *dispatcher)
 	if (remote->tls_ciphers)
 		ciphers = remote->tls_ciphers;
 	if (ciphers && tls_config_set_ciphers(config, ciphers) == -1)
-		err(1, "%s", tls_config_error(config));
+		fatal("%s", tls_config_error(config));
 
 	if (remote->tls_protocols) {
 		if (tls_config_parse_protocols(&protos,
 		    remote->tls_protocols) == -1)
-			err(1, "failed to parse protocols \"%s\"",
+			fatal("failed to parse protocols \"%s\"",
 			    remote->tls_protocols);
 		if (tls_config_set_protocols(config, protos) == -1)
-			err(1, "%s", tls_config_error(config));
+			fatal("%s", tls_config_error(config));
 	}
 
 	if (remote->pki) {
 		pki = dict_get(env->sc_pki_dict, remote->pki);
 		if (pki == NULL)
-			err(1, "client pki \"%s\" not found ", remote->pki);
+			fatal("client pki \"%s\" not found ", remote->pki);
 
 		tls_config_set_dheparams(config, dheparams[pki->pki_dhe]);
 		tls_config_use_fake_private_key(config);
@@ -1549,7 +1548,7 @@ mta_flush(struct mta_relay *relay, int fail, const char *error)
 	    mta_relay_to_text(relay), fail, error);
 
 	if (fail != IMSG_MTA_DELIVERY_TEMPFAIL && fail != IMSG_MTA_DELIVERY_PERMFAIL)
-		errx(1, "unexpected delivery status %d", fail);
+		fatalx("unexpected delivery status %d", fail);
 
 	n = 0;
 	while ((task = TAILQ_FIRST(&relay->tasks))) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: limit.c,v 1.5 2016/06/15 19:59:03 gilles Exp $	*/
+/*	$OpenBSD: limit.c,v 1.6 2021/05/26 18:08:55 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -22,7 +22,6 @@
 #include <sys/socket.h>
 
 #include <ctype.h>
-#include <err.h>
 #include <event.h>
 #include <fcntl.h>
 #include <imsg.h>

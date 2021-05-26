@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.245 2021/04/21 07:54:10 eric Exp $	*/
+/*	$OpenBSD: lka.c,v 1.246 2021/05/26 18:08:55 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -28,7 +28,6 @@
 #include <netinet/in.h>
 
 #include <ctype.h>
-#include <err.h>
 #include <errno.h>
 #include <event.h>
 #include <imsg.h>
@@ -313,7 +312,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 		/* revoke proc & exec */
 		if (pledge("stdio rpath inet dns getpw recvfd sendfd",
 			NULL) == -1)
-			err(1, "pledge");
+			fatal("pledge");
 
 		/* setup proc registering task */
 		evtimer_set(&ev_proc_ready, proc_timeout, &ev_proc_ready);
@@ -637,7 +636,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 
 	}
 
-	errx(1, "lka_imsg: unexpected %s imsg", imsg_to_str(imsg->hdr.type));
+	fatalx("lka_imsg: unexpected %s imsg", imsg_to_str(imsg->hdr.type));
 }
 
 static void
@@ -705,7 +704,7 @@ lka(void)
 
 	/* proc & exec will be revoked before serving requests */
 	if (pledge("stdio rpath inet dns getpw recvfd sendfd proc exec", NULL) == -1)
-		err(1, "pledge");
+		fatal("pledge");
 
 	event_dispatch();
 	fatalx("exited event loop");

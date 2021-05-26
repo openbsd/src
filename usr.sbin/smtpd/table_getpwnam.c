@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_getpwnam.c,v 1.12 2018/12/27 14:23:41 eric Exp $	*/
+/*	$OpenBSD: table_getpwnam.c,v 1.13 2021/05/26 18:08:55 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -22,7 +22,6 @@
 #include <sys/socket.h>
 
 #include <ctype.h>
-#include <err.h>
 #include <errno.h>
 #include <event.h>
 #include <fcntl.h>

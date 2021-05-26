@@ -1,4 +1,4 @@
-/*	$OpenBSD: mproc.c,v 1.37 2020/12/20 14:06:12 martijn Exp $	*/
+/*	$OpenBSD: mproc.c,v 1.38 2021/05/26 18:08:55 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@faurot.net>
@@ -26,7 +26,6 @@
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
 
-#include <err.h>
 #include <errno.h>
 #include <event.h>
 #include <imsg.h>
@@ -64,7 +63,7 @@ mproc_fork(struct mproc *p, const char *path, char *argv[])
 			exit(1);
 
 		execv(path, argv);
-		err(1, "execv: %s", path);
+		fatal("execv: %s", path);
 	}
 
 	/* parent process */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_db.c,v 1.22 2021/01/23 16:11:11 rob Exp $	*/
+/*	$OpenBSD: table_db.c,v 1.23 2021/05/26 18:08:55 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -27,7 +27,6 @@
 
 #include <db.h>
 #include <ctype.h>
-#include <err.h>
 #include <event.h>
 #include <fcntl.h>
 #include <imsg.h>
@@ -261,7 +260,7 @@ table_db_get_entry(void *hdl, const char *key, size_t *len)
 
 	/* workaround the stupidity of the DB interface */
 	if (strlcpy(pkey, key, sizeof pkey) >= sizeof pkey)
-		errx(1, "table_db_get_entry: key too long");
+		fatalx("table_db_get_entry: key too long");
 	dbk.data = pkey;
 	dbk.size = strlen(pkey) + 1;
 

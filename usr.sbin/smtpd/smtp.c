@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.169 2021/04/09 16:43:43 eric Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.170 2021/05/26 18:08:55 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -23,7 +23,6 @@
 #include <sys/tree.h>
 #include <sys/socket.h>
 
-#include <err.h>
 #include <errno.h>
 #include <event.h>
 #include <imsg.h>
@@ -117,7 +116,7 @@ smtp_imsg(struct mproc *p, struct imsg *imsg)
 		return;
 	}
 
-	errx(1, "smtp_imsg: unexpected %s imsg", imsg_to_str(imsg->hdr.type));
+	fatalx("smtp_imsg: unexpected %s imsg", imsg_to_str(imsg->hdr.type));
 }
 
 void
@@ -182,14 +181,14 @@ smtp_setup_listener_tls(struct listener *l)
 	if (l->tls_ciphers)
 		ciphers = l->tls_ciphers;
 	if (ciphers && tls_config_set_ciphers(config, ciphers) == -1)
-		err(1, "%s", tls_config_error(config));
+		fatal("%s", tls_config_error(config));
 
 	if (l->tls_protocols) {
 		if (tls_config_parse_protocols(&protos, l->tls_protocols) == -1)
-			err(1, "failed to parse protocols \"%s\"",
+			fatal("failed to parse protocols \"%s\"",
 			    l->tls_protocols);
 		if (tls_config_set_protocols(config, protos) == -1)
-			err(1, "%s", tls_config_error(config));
+			fatal("%s", tls_config_error(config));
 	}
 
 	pki = l->pki[0];

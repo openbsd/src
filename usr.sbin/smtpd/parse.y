@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.287 2021/04/09 16:43:43 eric Exp $	*/
+/*	$OpenBSD: parse.y,v 1.288 2021/05/26 18:08:55 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -34,7 +34,6 @@
 #include <arpa/inet.h>
 
 #include <ctype.h>
-#include <err.h>
 #include <errno.h>
 #include <event.h>
 #include <ifaddrs.h>
@@ -1894,7 +1893,7 @@ STRING	{
 	filter_config->chain_size += 1;
 	filter_config->chain = reallocarray(filter_config->chain, filter_config->chain_size, sizeof(char *));
 	if (filter_config->chain == NULL)
-		err(1, NULL);
+		fatal("reallocarray");
 	filter_config->chain[filter_config->chain_size - 1] = $1;
 }
 ;
@@ -2846,7 +2845,7 @@ lungetc(int c)
 	if (file->ungetpos >= file->ungetsize) {
 		void *p = reallocarray(file->ungetbuf, file->ungetsize, 2);
 		if (p == NULL)
-			err(1, "%s", __func__);
+			fatal("%s", __func__);
 		file->ungetbuf = p;
 		file->ungetsize *= 2;
 	}
@@ -2956,7 +2955,7 @@ top:
 		}
 		yylval.v.string = strdup(buf);
 		if (yylval.v.string == NULL)
-			err(1, "%s", __func__);
+			fatal("%s", __func__);
 		return (STRING);
 	}
 
@@ -3021,7 +3020,7 @@ nodigits:
 		*p = '\0';
 		if ((token = lookup(buf)) == STRING)
 			if ((yylval.v.string = strdup(buf)) == NULL)
-				err(1, "%s", __func__);
+				fatal("%s", __func__);
 		return (token);
 	}
 	if (c == '\n') {
@@ -3215,7 +3214,7 @@ cmdline_symset(char *s)
 		return (-1);
 	sym = strndup(s, val - s);
 	if (sym == NULL)
-		errx(1, "%s: strndup", __func__);
+		fatalx("%s: strndup", __func__);
 	ret = symset(sym, val + 1, 1);
 	free(sym);
 
@@ -3254,15 +3253,15 @@ create_if_listener(struct listen_opts *lo)
 	uint16_t	flags;
 
 	if (lo->port != 0 && lo->ssl == F_SSL)
-		errx(1, "invalid listen option: tls/smtps on same port");
+		fatalx("invalid listen option: tls/smtps on same port");
 
 	if (lo->auth != 0 && !lo->ssl)
-		errx(1, "invalid listen option: auth requires tls/smtps");
+		fatalx("invalid listen option: auth requires tls/smtps");
 
 	if (lo->pkicount && !lo->ssl)
-		errx(1, "invalid listen option: pki requires tls/smtps");
+		fatalx("invalid listen option: pki requires tls/smtps");
 	if (lo->pkicount == 0 && lo->ssl)
-		errx(1, "invalid listen option: pki required for tls/smtps");
+		fatalx("invalid listen option: pki required for tls/smtps");
 
 	flags = lo->flags;
 
@@ -3293,7 +3292,7 @@ create_if_listener(struct listen_opts *lo)
 	if (host_dns(lo))
 		return;
 
-	errx(1, "invalid virtual ip or interface: %s", lo->ifx);
+	fatalx("invalid virtual ip or interface: %s", lo->ifx);
 }
 
 static void
@@ -3609,23 +3608,23 @@ is_if_in_group(const char *ifname, const char *groupname)
 	int			 ret = 0;
 
 	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
-		err(1, "socket");
+		fatal("socket");
 
         memset(&ifgr, 0, sizeof(ifgr));
         if (strlcpy(ifgr.ifgr_name, ifname, IFNAMSIZ) >= IFNAMSIZ)
-		errx(1, "interface name too large");
+		fatalx("interface name too large");
 
         if (ioctl(s, SIOCGIFGROUP, (caddr_t)&ifgr) == -1) {
                 if (errno == EINVAL || errno == ENOTTY)
 			goto end;
-		err(1, "SIOCGIFGROUP");
+		fatal("SIOCGIFGROUP");
         }
 
         len = ifgr.ifgr_len;
         ifgr.ifgr_groups = xcalloc(len/sizeof(struct ifg_req),
 		sizeof(struct ifg_req));
         if (ioctl(s, SIOCGIFGROUP, (caddr_t)&ifgr) == -1)
-                err(1, "SIOCGIFGROUP");
+                fatal("SIOCGIFGROUP");
 
         ifg = ifgr.ifgr_groups;
         for (; ifg && len >= sizeof(struct ifg_req); ifg++) {

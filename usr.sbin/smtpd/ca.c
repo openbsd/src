@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.38 2021/03/05 12:37:32 eric Exp $	*/
+/*	$OpenBSD: ca.c,v 1.39 2021/05/26 18:08:55 eric Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -22,7 +22,6 @@
 #include <sys/socket.h>
 #include <sys/tree.h>
 
-#include <err.h>
 #include <imsg.h>
 #include <limits.h>
 #include <pwd.h>
@@ -117,7 +116,7 @@ ca(void)
 	mproc_disable(p_dispatcher);
 
 	if (pledge("stdio", NULL) == -1)
-		err(1, "pledge");
+		fatal("pledge");
 
 	event_dispatch();
 	fatalx("exited event loop");
@@ -333,7 +332,7 @@ ca_imsg(struct mproc *p, struct imsg *imsg)
 		return;
 	}
 
-	errx(1, "ca_imsg: unexpected %s imsg", imsg_to_str(imsg->hdr.type));
+	fatalx("ca_imsg: unexpected %s imsg", imsg_to_str(imsg->hdr.type));
 }
 
 /*

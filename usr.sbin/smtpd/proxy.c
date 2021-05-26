@@ -19,7 +19,6 @@
 #include <sys/tree.h>
 #include <sys/un.h>
 
-#include <err.h>
 #include <errno.h>
 #include <event.h>
 #include <imsg.h>

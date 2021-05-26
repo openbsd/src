@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.83 2020/12/31 08:27:15 martijn Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.84 2021/05/26 18:08:55 eric Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@poolp.org>
@@ -23,7 +23,6 @@
 #include <sys/tree.h>
 #include <sys/socket.h>
 
-#include <err.h>
 #include <errno.h>
 #include <event.h>
 #include <imsg.h>
@@ -141,7 +140,7 @@ bounce_add(uint64_t evpid)
 	}
 
 	if (evp.type != D_BOUNCE)
-		errx(1, "bounce: evp:%016" PRIx64 " is not of type D_BOUNCE!",
+		fatalx("bounce: evp:%016" PRIx64 " is not of type D_BOUNCE!",
 		    evp.id);
 
 	key.msgid = evpid_to_msgid(evpid);

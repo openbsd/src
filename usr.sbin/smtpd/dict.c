@@ -1,4 +1,4 @@
-/*	$OpenBSD: dict.c,v 1.6 2018/12/23 16:06:24 gilles Exp $	*/
+/*	$OpenBSD: dict.c,v 1.7 2021/05/26 18:08:55 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -20,12 +20,12 @@
 #include <sys/types.h>
 #include <sys/tree.h>
 
-#include <err.h>
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
 
 #include "dict.h"
+#include "log.h"
 
 struct dictentry {
 	SPLAY_ENTRY(dictentry)	entry;
@@ -72,7 +72,7 @@ dict_set(struct dict *d, const char *k, void *data)
 	key.key = k;
 	if ((entry = SPLAY_FIND(_dict, &d->dict, &key)) == NULL) {
 		if ((entry = dict_alloc(k, data)) == NULL)
-			err(1, "dict_set: malloc");
+			fatal("dict_set: malloc");
 		SPLAY_INSERT(_dict, &d->dict, entry);
 		old = NULL;
 		d->count += 1;
@@ -90,9 +90,9 @@ dict_xset(struct dict *d, const char * k, void *data)
 	struct dictentry	*entry;
 
 	if ((entry = dict_alloc(k, data)) == NULL)
-		err(1, "dict_xset: malloc");
+		fatal("dict_xset: malloc");
 	if (SPLAY_INSERT(_dict, &d->dict, entry))
-		errx(1, "dict_xset(%p, %s)", d, k);
+		fatalx("dict_xset(%p, %s)", d, k);
 	d->count += 1;
 }
 
@@ -115,7 +115,7 @@ dict_xget(struct dict *d, const char *k)
 
 	key.key = k;
 	if ((entry = SPLAY_FIND(_dict, &d->dict, &key)) == NULL)
-		errx(1, "dict_xget(%p, %s)", d, k);
+		fatalx("dict_xget(%p, %s)", d, k);
 
 	return (entry->data);
 }
@@ -146,7 +146,7 @@ dict_xpop(struct dict *d, const char *k)
 
 	key.key = k;
 	if ((entry = SPLAY_FIND(_dict, &d->dict, &key)) == NULL)
-		errx(1, "dict_xpop(%p, %s)", d, k);
+		fatalx("dict_xpop(%p, %s)", d, k);
 
 	data = entry->data;
 	SPLAY_REMOVE(_dict, &d->dict, entry);
@@ -252,7 +252,7 @@ dict_merge(struct dict *dst, struct dict *src)
 		entry = SPLAY_ROOT(&src->dict);
 		SPLAY_REMOVE(_dict, &src->dict, entry);
 		if (SPLAY_INSERT(_dict, &dst->dict, entry))
-			errx(1, "dict_merge: duplicate");
+			fatalx("dict_merge: duplicate");
 	}
 	dst->count += src->count;
 	src->count = 0;
