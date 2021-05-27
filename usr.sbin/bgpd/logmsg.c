@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.4 2019/02/18 09:43:57 claudio Exp $ */
+/*	$OpenBSD: logmsg.c,v 1.5 2021/05/27 08:27:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -175,6 +175,12 @@ log_notification(const struct peer *peer, u_int8_t errcode, u_int8_t subcode,
 			uk = 1;
 		else
 			suberrname = suberr_fsm_names[subcode];
+		break;
+	case ERR_RREFRESH:
+		if (subcode >= sizeof(suberr_rrefresh_names)/sizeof(char *))
+			uk = 1;
+		else
+			suberrname = suberr_rrefresh_names[subcode];
 		break;
 	default:
 		logit(LOG_ERR, "%s: %s notification, unknown errcode "

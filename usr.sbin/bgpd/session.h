@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.150 2021/02/16 08:29:16 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.151 2021/05/27 08:27:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -34,7 +34,8 @@
 #define	MSGSIZE_OPEN_MIN		29
 #define	MSGSIZE_UPDATE_MIN		23
 #define	MSGSIZE_KEEPALIVE		MSGSIZE_HEADER
-#define	MSGSIZE_RREFRESH		MSGSIZE_HEADER + 4
+#define	MSGSIZE_RREFRESH		(MSGSIZE_HEADER + 4)
+#define	MSGSIZE_RREFRESH_MIN		MSGSIZE_RREFRESH
 #define	MSG_PROCESS_LIMIT		25
 #define	SESSION_CLEAR_DELAY		5
 
@@ -106,11 +107,13 @@ enum opt_params {
 };
 
 enum capa_codes {
-	CAPA_NONE,
-	CAPA_MP,
-	CAPA_REFRESH,
+	CAPA_NONE = 0,
+	CAPA_MP = 1,
+	CAPA_REFRESH = 2,
 	CAPA_RESTART = 64,
-	CAPA_AS4BYTE = 65
+	CAPA_AS4BYTE = 65,
+	CAPA_ADD_PATH = 69,
+	CAPA_ENHANCED_RR = 70,
 };
 
 struct bgp_msg {
@@ -158,6 +161,12 @@ struct peer_stats {
 	unsigned long long	 msg_sent_notification;
 	unsigned long long	 msg_sent_keepalive;
 	unsigned long long	 msg_sent_rrefresh;
+	unsigned long long	 refresh_rcvd_req;
+	unsigned long long	 refresh_rcvd_borr;
+	unsigned long long	 refresh_rcvd_eorr;
+	unsigned long long	 refresh_sent_req;
+	unsigned long long	 refresh_sent_borr;
+	unsigned long long	 refresh_sent_eorr;
 	unsigned long long	 prefix_rcvd_update;
 	unsigned long long	 prefix_rcvd_withdraw;
 	unsigned long long	 prefix_rcvd_eor;

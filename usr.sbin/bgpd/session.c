@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.417 2021/05/27 08:20:39 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.418 2021/05/27 08:27:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -68,7 +68,7 @@ void	session_tcp_established(struct peer *);
 void	session_capa_ann_none(struct peer *);
 int	session_capa_add(struct ibuf *, u_int8_t, u_int8_t);
 int	session_capa_add_mp(struct ibuf *, u_int8_t);
-int	session_capa_add_gr(struct peer *, struct ibuf *, u_int8_t);
+int	session_capa_add_afi(struct peer *, struct ibuf *, u_int8_t, u_int8_t);
 struct bgp_msg	*session_newmsg(enum msg_type, u_int16_t);
 int	session_sendmsg(struct bgp_msg *, struct peer *);
 void	session_open(struct peer *);
@@ -76,7 +76,7 @@ void	session_keepalive(struct peer *);
 void	session_update(u_int32_t, void *, size_t);
 void	session_notification(struct peer *, u_int8_t, u_int8_t, void *,
 	    ssize_t);
-void	session_rrefresh(struct peer *, u_int8_t);
+void	session_rrefresh(struct peer *, u_int8_t, u_int8_t);
 int	session_graceful_restart(struct peer *);
 int	session_graceful_stop(struct peer *);
 int	session_dispatch_msg(struct pollfd *, struct peer *);
@@ -84,7 +84,7 @@ void	session_process_msg(struct peer *);
 int	parse_header(struct peer *, u_char *, u_int16_t *, u_int8_t *);
 int	parse_open(struct peer *);
 int	parse_update(struct peer *);
-int	parse_refresh(struct peer *);
+int	parse_rrefresh(struct peer *);
 int	parse_notification(struct peer *);
 int	parse_capabilities(struct peer *, u_char *, u_int16_t, u_int32_t *);
 int	capa_neg_calc(struct peer *);
@@ -1329,20 +1329,17 @@ session_capa_add_mp(struct ibuf *buf, u_int8_t aid)
 }
 
 int
-session_capa_add_gr(struct peer *p, struct ibuf *b, u_int8_t aid)
+session_capa_add_afi(struct peer *p, struct ibuf *b, u_int8_t aid,
+    u_int8_t flags)
 {
 	u_int		errs = 0;
 	u_int16_t	afi;
-	u_int8_t	flags, safi;
+	u_int8_t	safi;
 
 	if (aid2afi(aid, &afi, &safi)) {
-		log_warn("session_capa_add_gr: bad AID");
+		log_warn("session_capa_add_afi: bad AID");
 		return (1);
 	}
-	if (p->capa.neg.grestart.flags[aid] & CAPA_GR_RESTARTING)
-		flags = CAPA_GR_F_FLAG;
-	else
-		flags = 0;
 
 	afi = htons(afi);
 	errs += ibuf_add(b, &afi, sizeof(afi));
@@ -1459,7 +1456,7 @@ session_open(struct peer *p)
 		errs += ibuf_add(opb, &hdr, sizeof(hdr));
 	}
 
-	/* 4-bytes AS numbers, draft-ietf-idr-as4bytes-13 */
+	/* 4-bytes AS numbers, RFC6793 */
 	if (p->capa.ann.as4byte) {	/* 4 bytes data */
 		u_int32_t	nas;
 
@@ -1467,6 +1464,32 @@ session_open(struct peer *p)
 		errs += session_capa_add(opb, CAPA_AS4BYTE, sizeof(nas));
 		errs += ibuf_add(opb, &nas, sizeof(nas));
 	}
+
+	/* advertisement of multiple paths, RFC7911 */
+	if (p->capa.ann.add_path[0]) {	/* variable */
+		u_int8_t	aplen;
+
+		if (mpcapa)
+			aplen = 2 + 4 * mpcapa;
+		else	/* AID_INET */
+			aplen = 2 + 4;
+		errs += session_capa_add(opb, CAPA_ADD_PATH, aplen);
+		if (mpcapa) {
+			for (i = AID_MIN; i < AID_MAX; i++) {
+				if (p->capa.ann.mp[i]) {
+					errs += session_capa_add_afi(p, opb,
+					    i, p->capa.ann.add_path[i]);
+				}
+			}
+		} else {	/* AID_INET */
+			errs += session_capa_add_afi(p, opb, AID_INET,
+			    p->capa.ann.add_path[AID_INET]);
+		}
+	}
+
+	/* enhanced route-refresh, RFC6793 */
+	if (p->capa.ann.enhanced_rr)	/* no data */
+		errs += session_capa_add(opb, CAPA_ENHANCED_RR, 0);
 
 	if (ibuf_size(opb))
 		optparamlen = ibuf_size(opb) + sizeof(op_type) +
@@ -1581,6 +1604,13 @@ session_notification(struct peer *p, u_int8_t errcode, u_int8_t subcode,
 
 	log_notification(p, errcode, subcode, data, datalen, "sending");
 
+	/* cap to maximum size */
+	if (datalen > MAX_PKTSIZE - MSGSIZE_NOTIFICATION_MIN) {
+		log_peer_warnx(&p->conf,
+		    "oversized notification, data trunkated");
+		datalen = MAX_PKTSIZE - MSGSIZE_NOTIFICATION_MIN;
+	}
+
 	if ((buf = session_newmsg(NOTIFICATION,
 	    MSGSIZE_NOTIFICATION_MIN + datalen)) == NULL) {
 		bgp_fsm(p, EVNT_CON_FATAL);
@@ -1615,24 +1645,42 @@ session_neighbor_rrefresh(struct peer *p)
 {
 	u_int8_t	i;
 
-	if (!p->capa.neg.refresh)
+	if (!p->capa.neg.refresh && !p->capa.peer.enhanced_rr)
 		return (-1);
 
 	for (i = 0; i < AID_MAX; i++) {
 		if (p->capa.peer.mp[i] != 0)
-			session_rrefresh(p, i);
+			session_rrefresh(p, i, ROUTE_REFRESH_REQUEST);
 	}
 
 	return (0);
 }
 
 void
-session_rrefresh(struct peer *p, u_int8_t aid)
+session_rrefresh(struct peer *p, u_int8_t aid, u_int8_t subtype)
 {
 	struct bgp_msg		*buf;
 	int			 errs = 0;
 	u_int16_t		 afi;
-	u_int8_t		 safi, null8 = 0;
+	u_int8_t		 safi;
+
+	switch (subtype) {
+	case ROUTE_REFRESH_REQUEST:
+		p->stats.refresh_sent_req++;
+		break;
+	case ROUTE_REFRESH_BEGIN_RR:
+	case ROUTE_REFRESH_END_RR:
+		/* requires enhanced route refresh */
+		if (!p->capa.neg.enhanced_rr)
+			return;
+		if (subtype == ROUTE_REFRESH_BEGIN_RR)
+			p->stats.refresh_sent_borr++;
+		else
+			p->stats.refresh_sent_eorr++;
+		break;
+	default:
+		fatalx("session_rrefresh: bad subtype %d", subtype);
+	}
 
 	if (aid2afi(aid, &afi, &safi) == -1)
 		fatalx("session_rrefresh: bad afi/safi pair");
@@ -1644,7 +1692,7 @@ session_rrefresh(struct peer *p, u_int8_t aid)
 
 	afi = htons(afi);
 	errs += ibuf_add(buf->buf, &afi, sizeof(afi));
-	errs += ibuf_add(buf->buf, &null8, sizeof(null8));
+	errs += ibuf_add(buf->buf, &subtype, sizeof(subtype));
 	errs += ibuf_add(buf->buf, &safi, sizeof(safi));
 
 	if (errs) {
@@ -1865,7 +1913,7 @@ session_process_msg(struct peer *p)
 			p->stats.msg_rcvd_keepalive++;
 			break;
 		case RREFRESH:
-			parse_refresh(p);
+			parse_rrefresh(p);
 			p->stats.msg_rcvd_rrefresh++;
 			break;
 		default:	/* cannot happen */
@@ -1966,7 +2014,7 @@ parse_header(struct peer *peer, u_char *data, u_int16_t *len, u_int8_t *type)
 		}
 		break;
 	case RREFRESH:
-		if (*len != MSGSIZE_RREFRESH) {
+		if (*len < MSGSIZE_RREFRESH_MIN) {
 			log_peer_warnx(&peer->conf,
 			    "received RREFRESH: illegal len: %u byte", *len);
 			session_notification(peer, ERR_HEADER, ERR_HDR_LEN,
@@ -2206,11 +2254,16 @@ parse_update(struct peer *peer)
 }
 
 int
-parse_refresh(struct peer *peer)
+parse_rrefresh(struct peer *peer)
 {
-	u_char		*p;
-	u_int16_t	 afi;
-	u_int8_t	 aid, safi;
+	u_int16_t afi, datalen;
+	u_int8_t aid, safi, subtype;
+	u_char *p;
+
+	p = peer->rbuf->rptr;
+	p += MSGSIZE_HEADER_MARKER;
+	memcpy(&datalen, p, sizeof(datalen));
+	datalen = ntohs(datalen);
 
 	p = peer->rbuf->rptr;
 	p += MSGSIZE_HEADER;	/* header is already checked */
@@ -2224,10 +2277,59 @@ parse_refresh(struct peer *peer)
 	memcpy(&afi, p, sizeof(afi));
 	afi = ntohs(afi);
 	p += 2;
-	/* reserved, 1 byte */
+	/* subtype, 1 byte */
+	subtype = *p;
 	p += 1;
 	/* safi, 1 byte */
-	memcpy(&safi, p, sizeof(safi));
+	safi = *p;
+
+	/* check subtype if peer announced enhanced route refresh */
+	if (peer->capa.neg.enhanced_rr) {
+		switch (subtype) {
+		case ROUTE_REFRESH_REQUEST:
+			/* no ORF support, so no oversized RREFRESH msgs */
+			if (datalen != MSGSIZE_RREFRESH) {
+				log_peer_warnx(&peer->conf,
+				    "received RREFRESH: illegal len: %u byte",
+				    datalen);
+				datalen = htons(datalen);
+				session_notification(peer, ERR_HEADER,
+				    ERR_HDR_LEN, &datalen, sizeof(datalen));
+				bgp_fsm(peer, EVNT_CON_FATAL);
+				return (-1);
+			}
+			peer->stats.refresh_rcvd_req++;
+			break;
+		case ROUTE_REFRESH_BEGIN_RR:
+		case ROUTE_REFRESH_END_RR:
+			/* special handling for RFC7313 */
+			if (datalen != MSGSIZE_RREFRESH) {
+				log_peer_warnx(&peer->conf,
+				    "received RREFRESH: illegal len: %u byte",
+				    datalen);
+				p = peer->rbuf->rptr;
+				p += MSGSIZE_HEADER;
+				datalen -= MSGSIZE_HEADER;
+				session_notification(peer, ERR_RREFRESH,
+				    ERR_RR_INV_LEN, p, datalen);
+				bgp_fsm(peer, EVNT_CON_FATAL);
+				return (-1);
+			}
+			if (subtype == ROUTE_REFRESH_BEGIN_RR)
+				peer->stats.refresh_rcvd_borr++;
+			else
+				peer->stats.refresh_rcvd_eorr++;
+			break;
+		default:
+			log_peer_warnx(&peer->conf, "peer sent bad refresh, "
+			    "bad subtype %d", subtype);
+			return (0);
+		}
+	} else {
+		/* force subtype to default */
+		subtype = ROUTE_REFRESH_REQUEST;
+		peer->stats.refresh_rcvd_req++;
+	}
 
 	/* afi/safi unchecked -	unrecognized values will be ignored anyway */
 	if (afi2aid(afi, safi, &aid) == -1) {
@@ -2236,7 +2338,7 @@ parse_refresh(struct peer *peer)
 		return (0);
 	}
 
-	if (!peer->capa.neg.refresh) {
+	if (!peer->capa.neg.refresh && !peer->capa.neg.enhanced_rr) {
 		log_peer_warnx(&peer->conf, "peer sent unexpected refresh");
 		return (0);
 	}
@@ -2334,6 +2436,18 @@ parse_notification(struct peer *peer)
 				log_peer_warnx(&peer->conf,
 				    "disabling 4-byte AS num capability");
 				break;
+			case CAPA_ADD_PATH:
+				memset(peer->capa.ann.add_path, 0,
+				    sizeof(peer->capa.ann.add_path));
+				log_peer_warnx(&peer->conf,
+				    "disabling ADD-PATH capability");
+				break;
+			case CAPA_ENHANCED_RR:
+				peer->capa.ann.enhanced_rr = 0;
+				log_peer_warnx(&peer->conf,
+				    "disabling enhanced route refresh "
+				    "capability");
+				break;
 			default:	/* should not happen... */
 				log_peer_warnx(&peer->conf, "received "
 				    "\"unsupported capability\" notification "
@@ -2392,7 +2506,7 @@ parse_capabilities(struct peer *peer, u_char *d, u_int16_t dlen, u_int32_t *as)
 	u_int16_t	 gr_header;
 	u_int8_t	 safi;
 	u_int8_t	 aid;
-	u_int8_t	 gr_flags;
+	u_int8_t	 flags;
 	u_int8_t	 capa_code;
 	u_int8_t	 capa_len;
 	u_int8_t	 i;
@@ -2476,7 +2590,8 @@ parse_capabilities(struct peer *peer, u_char *d, u_int16_t dlen, u_int32_t *as)
 			for (i = 2; i <= capa_len - 4; i += 4) {
 				memcpy(&afi, capa_val + i, sizeof(afi));
 				afi = ntohs(afi);
-				memcpy(&safi, capa_val + i + 2, sizeof(safi));
+				safi = capa_val[i + 2];
+				flags = capa_val[i + 3];
 				if (afi2aid(afi, safi, &aid) == -1) {
 					log_peer_warnx(&peer->conf,
 					    "Received graceful restart capa: "
@@ -2484,11 +2599,9 @@ parse_capabilities(struct peer *peer, u_char *d, u_int16_t dlen, u_int32_t *as)
 					    afi, safi);
 					continue;
 				}
-				memcpy(&gr_flags, capa_val + i + 3,
-				    sizeof(gr_flags));
 				peer->capa.peer.grestart.flags[aid] |=
 				    CAPA_GR_PRESENT;
-				if (gr_flags & CAPA_GR_F_FLAG)
+				if (flags & CAPA_GR_F_FLAG)
 					peer->capa.peer.grestart.flags[aid] |=
 					    CAPA_GR_FORWARD;
 				if (gr_header & CAPA_GR_R_FLAG)
@@ -2517,6 +2630,43 @@ parse_capabilities(struct peer *peer, u_char *d, u_int16_t dlen, u_int32_t *as)
 			}
 			peer->capa.peer.as4byte = 1;
 			break;
+		case CAPA_ADD_PATH:
+			if (capa_len % 4 != 0) {
+				log_peer_warnx(&peer->conf,
+				    "Bad ADD-PATH capability length: "
+				    "%u", capa_len);
+				memset(peer->capa.peer.add_path, 0,
+				    sizeof(peer->capa.peer.add_path));
+				break;
+			}
+			for (i = 0; i <= capa_len - 4; i += 4) {
+				memcpy(&afi, capa_val + i, sizeof(afi));
+				afi = ntohs(afi);
+				safi = capa_val[i + 2];
+				flags = capa_val[i + 3];
+				if (afi2aid(afi, safi, &aid) == -1) {
+					log_peer_warnx(&peer->conf,
+					    "Received ADD-PATH capa: "
+					    " unknown AFI %u, safi %u pair",
+					    afi, safi);
+					memset(peer->capa.peer.add_path, 0,
+					    sizeof(peer->capa.peer.add_path));
+					break;
+				}
+				if (flags & ~CAPA_AP_BIDIR) {
+					log_peer_warnx(&peer->conf,
+					    "Received ADD-PATH capa: "
+					    " bad flags %x", flags);
+					memset(peer->capa.peer.add_path, 0,
+					    sizeof(peer->capa.peer.add_path));
+					break;
+				}
+				peer->capa.peer.add_path[aid] = flags;
+			}
+			break;
+		case CAPA_ENHANCED_RR:
+			peer->capa.peer.enhanced_rr = 1;
+			break;
 		default:
 			break;
 		}
@@ -2534,6 +2684,8 @@ capa_neg_calc(struct peer *p)
 
 	p->capa.neg.refresh =
 	    (p->capa.ann.refresh && p->capa.peer.refresh) != 0;
+	p->capa.neg.enhanced_rr =
+	    (p->capa.ann.enhanced_rr && p->capa.peer.enhanced_rr) != 0;
 
 	p->capa.neg.as4byte =
 	    (p->capa.ann.as4byte && p->capa.peer.as4byte) != 0;
@@ -2588,6 +2740,25 @@ capa_neg_calc(struct peer *p)
 	p->capa.neg.grestart.restart = p->capa.peer.grestart.restart;
 	if (p->capa.ann.grestart.restart == 0)
 		p->capa.neg.grestart.restart = 0;
+
+
+	/*
+	 * ADD-PATH: set only those bits where both sides agree.
+	 * For this compare our send bit with the recv bit from the peer
+	 * and vice versa.
+	 * The flags are stored from this systems view point.
+	 */
+	memset(p->capa.neg.add_path, 0, sizeof(p->capa.neg.add_path));
+	if (p->capa.ann.add_path[0]) {
+		for (i = AID_MIN; i < AID_MAX; i++) {
+			if ((p->capa.ann.add_path[i] & CAPA_AP_RECV) &&
+			    (p->capa.peer.add_path[i] & CAPA_AP_SEND))
+				p->capa.neg.add_path[i] |= CAPA_AP_RECV;
+			if ((p->capa.ann.add_path[i] & CAPA_AP_SEND) &&
+			    (p->capa.peer.add_path[i] & CAPA_AP_RECV))
+				p->capa.neg.add_path[i] |= CAPA_AP_SEND;
+		}
+	}
 
 	return (0);
 }

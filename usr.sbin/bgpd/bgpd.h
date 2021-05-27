@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.413 2021/03/02 09:45:07 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.414 2021/05/27 08:27:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -352,16 +352,23 @@ struct capabilities {
 	int8_t	mp[AID_MAX];		/* multiprotocol extensions, RFC 4760 */
 	int8_t	refresh;		/* route refresh, RFC 2918 */
 	int8_t	as4byte;		/* 4-byte ASnum, RFC 4893 */
+	int8_t	enhanced_rr;		/* enhanced route refresh, RFC 7313 */
+	int8_t	add_path[AID_MAX];	/* ADD_PATH, RFC 7911 */
 };
 
+/* flags for RFC4724 - graceful restart */
 #define	CAPA_GR_PRESENT		0x01
 #define	CAPA_GR_RESTART		0x02
 #define	CAPA_GR_FORWARD		0x04
 #define	CAPA_GR_RESTARTING	0x08
-
 #define	CAPA_GR_TIMEMASK	0x0fff
 #define	CAPA_GR_R_FLAG		0x8000
 #define	CAPA_GR_F_FLAG		0x80
+
+/* flags for RFC7911 - enhanced router refresh */
+#define	CAPA_AP_RECV		0x01
+#define	CAPA_AP_SEND		0x02
+#define	CAPA_AP_BIDIR		0x03
 
 struct peer_config {
 	struct bgpd_addr	 remote_addr;
@@ -595,7 +602,8 @@ enum err_codes {
 	ERR_UPDATE,
 	ERR_HOLDTIMEREXPIRED,
 	ERR_FSM,
-	ERR_CEASE
+	ERR_CEASE,
+	ERR_RREFRESH
 };
 
 enum suberr_update {
@@ -624,6 +632,10 @@ enum suberr_cease {
 	ERR_CEASE_RSRC_EXHAUST,
 	ERR_CEASE_HARD_RESET,
 	ERR_CEASE_MAX_SENT_PREFIX
+};
+
+enum suberr_rrefresh {
+	ERR_RR_INV_LEN = 1
 };
 
 struct kroute_node;
@@ -712,6 +724,14 @@ struct session_up {
 	u_int32_t		remote_bgpid;
 	u_int16_t		short_as;
 };
+
+struct route_refresh {
+	u_int8_t		aid;
+	u_int8_t		subtype;
+};
+#define ROUTE_REFRESH_REQUEST	0
+#define ROUTE_REFRESH_BEGIN_RR	1
+#define ROUTE_REFRESH_END_RR	2
 
 struct pftable_msg {
 	struct bgpd_addr	addr;
@@ -1457,7 +1477,8 @@ static const char * const errnames[] = {
 	"error in UPDATE message",
 	"HoldTimer expired",
 	"Finite State Machine error",
-	"Cease"
+	"Cease",
+	"error in ROUTE-REFRESH message"
 };
 
 static const char * const suberr_header_names[] = {
@@ -1514,6 +1535,11 @@ static const char * const suberr_cease_names[] = {
 	"resource exhaustion",
 	"hard reset",
 	"sent max-prefix exceeded"
+};
+
+static const char * const suberr_rrefresh_names[] = {
+	"none",
+	"invalid message length"
 };
 
 static const char * const ctl_res_strerror[] = {
