@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.8 2021/05/27 13:59:44 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.9 2021/05/27 14:32:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -43,6 +43,18 @@ struct iq {
 };
 
 extern struct filter_head      *out_rules;
+
+int
+peer_has_as4byte(struct rde_peer *peer)
+{
+	return (peer->capa.as4byte);
+}
+
+int
+peer_accept_no_as_set(struct rde_peer *peer)
+{
+	return (peer->flags & PEERFLAG_NO_AS_SET);
+}
 
 void
 peer_init(u_int32_t hashsize)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.128 2021/05/27 08:45:24 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.129 2021/05/27 14:32:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -371,7 +371,7 @@ up_generate_attr(u_char *buf, int len, struct rde_peer *peer,
 				pdata = aspath_prepend(asp->aspath,
 				    peer->conf.local_as, 1, &plen);
 
-			if (!rde_as4byte(peer))
+			if (!peer_has_as4byte(peer))
 				pdata = aspath_deflate(pdata, &plen,
 				    &neednewpath);
 
@@ -498,7 +498,7 @@ up_generate_attr(u_char *buf, int len, struct rde_peer *peer,
 		case ATTR_AGGREGATOR:
 			if (oa == NULL || oa->type != type)
 				break;
-			if (!rde_as4byte(peer)) {
+			if (!peer_has_as4byte(peer)) {
 				/* need to deflate the aggregator */
 				u_int8_t	t[6];
 				u_int16_t	tas;

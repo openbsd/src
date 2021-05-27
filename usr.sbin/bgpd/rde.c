@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.522 2021/05/27 08:38:42 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.523 2021/05/27 14:32:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -81,7 +81,6 @@ static void	 rde_softreconfig_sync_reeval(struct rib_entry *, void *);
 static void	 rde_softreconfig_sync_fib(struct rib_entry *, void *);
 static void	 rde_softreconfig_sync_done(void *, u_int8_t);
 static void	 rde_roa_reload(void);
-static int	 rde_no_as_set(struct rde_peer *);
 int		 rde_update_queue_pending(void);
 void		 rde_update_queue_runner(void);
 void		 rde_update6_queue_runner(u_int8_t);
@@ -1661,8 +1660,8 @@ bad_flags:
 	case ATTR_ASPATH:
 		if (!CHECK_FLAGS(flags, ATTR_WELL_KNOWN, 0))
 			goto bad_flags;
-		error = aspath_verify(p, attr_len, rde_as4byte(peer),
-		    rde_no_as_set(peer));
+		error = aspath_verify(p, attr_len, peer_has_as4byte(peer),
+		    peer_accept_no_as_set(peer));
 		if (error == AS_ERR_SOFT) {
 			/*
 			 * soft errors like unexpected segment types are
@@ -1677,7 +1676,7 @@ bad_flags:
 		}
 		if (a->flags & F_ATTR_ASPATH)
 			goto bad_list;
-		if (rde_as4byte(peer)) {
+		if (peer_has_as4byte(peer)) {
 			npath = p;
 			nlen = attr_len;
 		} else {
@@ -1761,8 +1760,8 @@ bad_flags:
 			goto bad_flags;
 		goto optattr;
 	case ATTR_AGGREGATOR:
-		if ((!rde_as4byte(peer) && attr_len != 6) ||
-		    (rde_as4byte(peer) && attr_len != 8)) {
+		if ((!peer_has_as4byte(peer) && attr_len != 6) ||
+		    (peer_has_as4byte(peer) && attr_len != 8)) {
 			/*
 			 * ignore attribute in case of error as per
 			 * RFC 7606
@@ -1775,7 +1774,7 @@ bad_flags:
 		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL|ATTR_TRANSITIVE,
 		    ATTR_PARTIAL))
 			goto bad_flags;
-		if (!rde_as4byte(peer)) {
+		if (!peer_has_as4byte(peer)) {
 			/* need to inflate aggregator AS to 4-byte */
 			u_char	t[8];
 			t[0] = t[1] = 0;
@@ -1921,7 +1920,7 @@ bad_flags:
 		    ATTR_PARTIAL))
 			goto bad_flags;
 		if ((error = aspath_verify(p, attr_len, 1,
-		    rde_no_as_set(peer))) != 0) {
+		    peer_accept_no_as_set(peer))) != 0) {
 			/* As per RFC6793 use "attribute discard" here. */
 			log_peer_warnx(&peer->conf, "bad AS4_PATH, "
 			    "attribute discarded");
@@ -2170,7 +2169,7 @@ rde_as4byte_fixup(struct rde_peer *peer, struct rde_aspath *a)
 	nasp = attr_optget(a, ATTR_AS4_PATH);
 	naggr = attr_optget(a, ATTR_AS4_AGGREGATOR);
 
-	if (rde_as4byte(peer)) {
+	if (peer_has_as4byte(peer)) {
 		/* NEW session using 4-byte ASNs */
 		if (nasp) {
 			log_peer_warnx(&peer->conf, "uses 4-byte ASN "
@@ -3739,18 +3738,6 @@ int
 rde_decisionflags(void)
 {
 	return (conf->flags & BGPD_FLAG_DECISION_MASK);
-}
-
-int
-rde_as4byte(struct rde_peer *peer)
-{
-	return (peer->capa.as4byte);
-}
-
-static int
-rde_no_as_set(struct rde_peer *peer)
-{
-	return (peer->flags & PEERFLAG_NO_AS_SET);
 }
 
 /* End-of-RIB marker, RFC 4724 */
