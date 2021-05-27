@@ -1,4 +1,4 @@
-/* $OpenBSD: vga.c,v 1.73 2020/05/25 09:55:48 jsg Exp $ */
+/* $OpenBSD: vga.c,v 1.74 2021/05/27 23:24:40 cheloha Exp $ */
 /* $NetBSD: vga.c,v 1.28.2.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*-
@@ -254,7 +254,7 @@ void	vga_scrollback(void *, void *, int);
 void	vga_burner(void *v, u_int on, u_int flags);
 int	vga_getchar(void *, int, int, struct wsdisplay_charcell *);
 
-void vga_doswitch(struct vga_config *);
+void vga_doswitch(void *);
 
 const struct wsdisplay_accessops vga_accessops = {
 	.ioctl = vga_ioctl,
@@ -763,8 +763,7 @@ vga_show_screen(void *v, void *cookie, int waitok, void (*cb)(void *, int, int),
 	vc->switchcb = cb;
 	vc->switchcbarg = cbarg;
 	if (cb) {
-		timeout_set(&vc->vc_switch_timeout,
-		    (void(*)(void *))vga_doswitch, vc);
+		timeout_set(&vc->vc_switch_timeout, vga_doswitch, vc);
 		timeout_add(&vc->vc_switch_timeout, 0);
 		return (EAGAIN);
 	}
@@ -774,8 +773,9 @@ vga_show_screen(void *v, void *cookie, int waitok, void (*cb)(void *, int, int),
 }
 
 void
-vga_doswitch(struct vga_config *vc)
+vga_doswitch(void *arg)
 {
+	struct vga_config *vc = arg;
 	struct vgascreen *scr, *oldscr;
 	struct vga_handle *vh = &vc->hdl;
 	const struct wsscreen_descr *type;
