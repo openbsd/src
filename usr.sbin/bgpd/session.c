@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.418 2021/05/27 08:27:48 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.419 2021/05/27 09:10:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1487,7 +1487,7 @@ session_open(struct peer *p)
 		}
 	}
 
-	/* enhanced route-refresh, RFC6793 */
+	/* enhanced route-refresh, RFC7313 */
 	if (p->capa.ann.enhanced_rr)	/* no data */
 		errs += session_capa_add(opb, CAPA_ENHANCED_RR, 0);
 
