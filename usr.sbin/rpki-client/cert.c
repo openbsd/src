@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.29 2021/05/27 09:01:08 job Exp $ */
+/*	$OpenBSD: cert.c,v 1.30 2021/05/27 09:41:02 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -436,7 +436,7 @@ sbgp_asrange(struct parse *p, const unsigned char *d, size_t dsz)
 		goto out;
 	}
 	if (!as_id_parse(t->value.integer, &as.range.min)) {
-		warnx("%s: RFC 3770 section 3.2.3.8 (via RFC 1930): "
+		warnx("%s: RFC 3779 section 3.2.3.8 (via RFC 1930): "
 		    "malformed AS identifier", p->fn);
 		return 0;
 	}
@@ -449,7 +449,7 @@ sbgp_asrange(struct parse *p, const unsigned char *d, size_t dsz)
 		goto out;
 	}
 	if (!as_id_parse(t->value.integer, &as.range.max)) {
-		warnx("%s: RFC 3770 section 3.2.3.8 (via RFC 1930): "
+		warnx("%s: RFC 3779 section 3.2.3.8 (via RFC 1930): "
 		    "malformed AS identifier", p->fn);
 		return 0;
 	}
@@ -484,12 +484,12 @@ sbgp_asid(struct parse *p, const ASN1_INTEGER *i)
 	as.type = CERT_AS_ID;
 
 	if (!as_id_parse(i, &as.id)) {
-		warnx("%s: RFC 3770 section 3.2.3.10 (via RFC 1930): "
+		warnx("%s: RFC 3779 section 3.2.3.10 (via RFC 1930): "
 		    "malformed AS identifier", p->fn);
 		return 0;
 	}
 	if (as.id == 0) {
-		warnx("%s: RFC 3770 section 3.2.3.10 (via RFC 1930): "
+		warnx("%s: RFC 3779 section 3.2.3.10 (via RFC 1930): "
 		    "AS identifier zero is reserved", p->fn);
 		return 0;
 	}
