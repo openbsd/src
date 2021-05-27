@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplpmu.c,v 1.1 2021/05/26 20:52:21 kettenis Exp $	*/
+/*	$OpenBSD: aplpmu.c,v 1.2 2021/05/27 08:10:12 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -26,8 +26,6 @@
 #include <dev/fdt/spmivar.h>
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/fdt.h>
-
-extern todr_chip_handle_t todr_handle;
 
 /*
  * This driver is based on preliminary device tree bindings and will
@@ -102,7 +100,7 @@ aplpmu_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_todr.cookie = sc;
 	sc->sc_todr.todr_gettime = aplpmu_gettime;
 	sc->sc_todr.todr_settime = aplpmu_settime;
-	todr_handle = &sc->sc_todr;
+	todr_attach(&sc->sc_todr);
 }
 
 int
