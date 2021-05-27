@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.28 2021/03/05 17:15:19 claudio Exp $ */
+/*	$OpenBSD: cert.c,v 1.29 2021/05/27 09:01:08 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -564,7 +564,7 @@ sbgp_asnum(struct parse *p, const unsigned char *d, size_t dsz)
 				goto out;
 			break;
 		default:
-			warnx("%s: RFC 3779 section 3.2.3.4: IPAddressOrRange: "
+			warnx("%s: RFC 3779 section 3.2.3.5: ASIdOrRange: "
 			    "want ASN.1 sequence or integer, have %s (NID %d)",
 			    p->fn, ASN1_tag2str(tt->type), tt->type);
 			goto out;
