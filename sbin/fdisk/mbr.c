@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.71 2021/05/21 19:09:46 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.72 2021/05/27 14:27:41 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -315,7 +315,7 @@ gpt_chk_mbr(struct dos_partition *dp, u_int64_t dsize)
 		if (letoh32(dp2->dp_start) != GPTSECTOR)
 			continue;
 		psize = letoh32(dp2->dp_size);
-		if (psize == (dsize - 1) || psize == UINT32_MAX) {
+		if (psize <= (dsize - 1) || psize == UINT32_MAX) {
 			efi = i;
 			eficnt++;
 		}
