@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.17 2021/05/26 02:38:01 dlg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.18 2021/05/27 03:43:23 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -539,6 +539,8 @@ veb_pf(struct ifnet *ifp0, int dir, struct mbuf *m)
 		return (NULL);
 
 	if (dir == PF_IN && ISSET(m->m_pkthdr.pf.flags, PF_TAG_DIVERTED)) {
+		pf_mbuf_unlink_state_key(m);
+		pf_mbuf_unlink_inpcb(m);
 		(*ip_input)(ifp0, m);
 		return (NULL);
 	}
