@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.416 2021/05/27 07:52:54 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.417 2021/05/27 08:20:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -2571,7 +2571,7 @@ capa_neg_calc(struct peer *p)
 		negflags = p->capa.neg.grestart.flags[i];
 		p->capa.neg.grestart.flags[i] = p->capa.peer.grestart.flags[i];
 		if (negflags & CAPA_GR_RESTARTING) {
-			if (p->capa.ann.grestart.restart != 0 ||
+			if (p->capa.ann.grestart.restart != 0 &&
 			    p->capa.peer.grestart.flags[i] & CAPA_GR_FORWARD) {
 				p->capa.neg.grestart.flags[i] |=
 				    CAPA_GR_RESTARTING;
