@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.523 2021/05/27 14:32:08 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.524 2021/05/27 16:32:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1077,6 +1077,8 @@ rde_dispatch_imsg_peer(struct rde_peer *peer, void *bula)
 
 	switch (imsg.hdr.type) {
 	case IMSG_UPDATE:
+		if (peer->state != PEER_UP)
+			break;
 		rde_update_dispatch(peer, &imsg);
 		break;
 	case IMSG_SESSION_UP:
