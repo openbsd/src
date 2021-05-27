@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.7 2021/05/06 09:18:54 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.8 2021/05/27 13:59:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -398,13 +398,13 @@ peer_flush(struct rde_peer *peer, u_int8_t aid, time_t staletime)
 
 /*
  * During graceful restart mark a peer as stale if the session goes down.
- * For the specified AID the Adj-RIB-Out as marked stale and the staletime
+ * For the specified AID the Adj-RIB-Out is marked stale and the staletime
  * is set to the current timestamp for identifying stale routes in Adj-RIB-In.
  */
 void
 peer_stale(struct rde_peer *peer, u_int8_t aid)
 {
-	time_t			 now;
+	time_t now;
 
 	/* flush the now even staler routes out */
 	if (peer->staletime[aid])
