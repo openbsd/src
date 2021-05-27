@@ -149,6 +149,7 @@
 ./usr/include/dev/fdt/rkclock_clocks.h
 ./usr/include/dev/fdt/rkdrm.h
 ./usr/include/dev/fdt/rsbvar.h
+./usr/include/dev/fdt/spmivar.h
 ./usr/include/dev/fdt/sunxireg.h
 ./usr/include/dev/fdt/sxiccmu_clocks.h
 ./usr/include/dev/fdt/sxipio_pins.h
