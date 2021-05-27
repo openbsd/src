@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.419 2021/05/27 09:10:03 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.420 2021/05/27 09:15:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1645,11 +1645,11 @@ session_neighbor_rrefresh(struct peer *p)
 {
 	u_int8_t	i;
 
-	if (!p->capa.neg.refresh && !p->capa.peer.enhanced_rr)
+	if (!(p->capa.neg.refresh || p->capa.neg.enhanced_rr))
 		return (-1);
 
 	for (i = 0; i < AID_MAX; i++) {
-		if (p->capa.peer.mp[i] != 0)
+		if (p->capa.neg.mp[i] != 0)
 			session_rrefresh(p, i, ROUTE_REFRESH_REQUEST);
 	}
 
