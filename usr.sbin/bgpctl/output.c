@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.16 2021/04/26 18:23:20 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.17 2021/05/27 08:29:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -147,6 +147,34 @@ show_neighbor_capa_mp(struct capabilities *capa)
 }
 
 static void
+show_neighbor_capa_add_path(struct capabilities *capa)
+{
+	const char	*mode;
+	int		comma;
+	u_int8_t	i;
+
+	printf("    Add-path: ");
+	for (i = 0, comma = 0; i < AID_MAX; i++) {
+		switch (capa->add_path[i]) {
+		case 0:
+		default:
+			continue;
+		case CAPA_AP_RECV:
+			mode = "recv";
+			break;
+		case CAPA_AP_SEND:
+			mode = "send";
+			break;
+		case CAPA_AP_BIDIR:
+			mode = "bidir";
+		}
+		printf("%s%s %s", comma ? ", " : "", aid2str(i), mode);
+		comma = 1;
+	}
+	printf("\n");
+}
+
+static void
 show_neighbor_capa_restart(struct capabilities *capa)
 {
 	int		comma;
@@ -202,6 +230,13 @@ show_neighbor_msgstats(struct peer *p)
 	    p->stats.prefix_sent_withdraw, p->stats.prefix_rcvd_withdraw);
 	printf("  %-15s %10llu %10llu\n", "End-of-Rib",
 	    p->stats.prefix_sent_eor, p->stats.prefix_rcvd_eor);
+	printf("  Route Refresh statistics:\n");
+	printf("  %-15s %10llu %10llu\n", "Request",
+	    p->stats.refresh_sent_req, p->stats.refresh_rcvd_req);
+	printf("  %-15s %10llu %10llu\n", "Begin-of-RR",
+	    p->stats.refresh_sent_borr, p->stats.refresh_rcvd_borr);
+	printf("  %-15s %10llu %10llu\n", "End-of-RR",
+	    p->stats.refresh_sent_eorr, p->stats.refresh_rcvd_eorr);
 }
 
 static void
@@ -210,7 +245,7 @@ show_neighbor_full(struct peer *p, struct parse_result *res)
 	const char		*errstr;
 	struct in_addr		 ina;
 	char			*s;
-	int			 hascapamp = 0;
+	int			 hascapamp, hascapaap;
 	u_int8_t		 i;
 
 	if ((p->conf.remote_addr.aid == AID_INET &&
@@ -279,35 +314,57 @@ show_neighbor_full(struct peer *p, struct parse_result *res)
 	    fmt_monotime(p->stats.last_read),
 	    p->holdtime, p->holdtime/3);
 	printf("  Last write %s\n", fmt_monotime(p->stats.last_write));
-	for (i = 0; i < AID_MAX; i++)
+
+	hascapamp = 0;
+	hascapaap = 0;
+	for (i = AID_MIN; i < AID_MAX; i++) {
 		if (p->capa.peer.mp[i])
 			hascapamp = 1;
-	if (hascapamp || p->capa.peer.refresh ||
-	    p->capa.peer.grestart.restart || p->capa.peer.as4byte) {
+		if (p->capa.peer.add_path[i])
+			hascapaap = 1;
+	}
+	if (hascapamp || hascapaap || p->capa.peer.grestart.restart ||
+	    p->capa.peer.refresh || p->capa.peer.enhanced_rr ||
+	    p->capa.peer.as4byte) {
 		printf("  Neighbor capabilities:\n");
 		if (hascapamp)
 			show_neighbor_capa_mp(&p->capa.peer);
-		if (p->capa.peer.refresh)
-			printf("    Route Refresh\n");
-		if (p->capa.peer.grestart.restart)
-			show_neighbor_capa_restart(&p->capa.peer);
 		if (p->capa.peer.as4byte)
 			printf("    4-byte AS numbers\n");
+		if (p->capa.peer.refresh)
+			printf("    Route Refresh\n");
+		if (p->capa.peer.enhanced_rr)
+			printf("    Enhanced Route Refresh\n");
+		if (p->capa.peer.grestart.restart)
+			show_neighbor_capa_restart(&p->capa.peer);
+		if (hascapaap)
+			show_neighbor_capa_add_path(&p->capa.peer);
 	}
-	for (i = 0; i < AID_MAX; i++)
+
+	hascapamp = 0;
+	hascapaap = 0;
+	for (i = AID_MIN; i < AID_MAX; i++) {
 		if (p->capa.neg.mp[i])
 			hascapamp = 1;
-	if (hascapamp || p->capa.neg.refresh ||
-	    p->capa.neg.grestart.restart || p->capa.neg.as4byte) {
+		if (p->capa.neg.add_path[i])
+			hascapaap = 1;
+	}
+	if (hascapamp || hascapaap || p->capa.neg.grestart.restart ||
+	    p->capa.neg.refresh || p->capa.neg.enhanced_rr ||
+	    p->capa.neg.as4byte) {
 		printf("  Negotiated capabilities:\n");
 		if (hascapamp)
 			show_neighbor_capa_mp(&p->capa.neg);
-		if (p->capa.neg.refresh)
-			printf("    Route Refresh\n");
-		if (p->capa.neg.grestart.restart)
-			show_neighbor_capa_restart(&p->capa.neg);
 		if (p->capa.neg.as4byte)
 			printf("    4-byte AS numbers\n");
+		if (p->capa.neg.refresh)
+			printf("    Route Refresh\n");
+		if (p->capa.neg.enhanced_rr)
+			printf("    Enhanced Route Refresh\n");
+		if (p->capa.neg.grestart.restart)
+			show_neighbor_capa_restart(&p->capa.neg);
+		if (hascapaap)
+			show_neighbor_capa_add_path(&p->capa.neg);
 	}
 	printf("\n");
 

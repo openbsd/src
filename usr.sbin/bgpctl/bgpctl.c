@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.267 2021/05/03 14:01:56 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.268 2021/05/27 08:29:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1350,6 +1350,13 @@ print_capability(u_int8_t capa_code, u_char *p, u_int8_t len)
 			printf("AS %u", as);
 		} else
 			printf("bad length");
+		break;
+	case CAPA_ADD_PATH:
+		printf("add-path capability");
+		/* XXX there is more needed here */
+		break;
+	case CAPA_ENHANCED_RR:
+		printf("enhanced route refresh capability");
 		break;
 	default:
 		printf("unknown capability %u length %u", capa_code, len);
