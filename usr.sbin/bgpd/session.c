@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.415 2021/05/16 09:09:11 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.416 2021/05/27 07:52:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1443,41 +1443,20 @@ session_open(struct peer *p)
 	/* graceful restart and End-of-RIB marker, RFC 4724 */
 	if (p->capa.ann.grestart.restart) {
 		int		rst = 0;
-		u_int16_t	hdr;
-		u_int8_t	grlen;
+		u_int16_t	hdr = 0;
 
-		if (mpcapa) {
-			grlen = 2 + 4 * mpcapa;
-			for (i = 0; i < AID_MAX; i++) {
-				if (p->capa.neg.grestart.flags[i] &
-				    CAPA_GR_RESTARTING)
-					rst++;
-			}
-		} else {	/* AID_INET */
-			grlen = 2 + 4;
-			if (p->capa.neg.grestart.flags[AID_INET] &
-			    CAPA_GR_RESTARTING)
+		for (i = 0; i < AID_MAX; i++) {
+			if (p->capa.neg.grestart.flags[i] & CAPA_GR_RESTARTING)
 				rst++;
 		}
 
-		hdr = conf->holdtime;		/* default timeout */
-		/* if client does graceful restart don't set R flag */
+		/* Only set the R-flag if no graceful restart is ongoing */
 		if (!rst)
 			hdr |= CAPA_GR_R_FLAG;
 		hdr = htons(hdr);
 
-		errs += session_capa_add(opb, CAPA_RESTART, grlen);
+		errs += session_capa_add(opb, CAPA_RESTART, sizeof(hdr));
 		errs += ibuf_add(opb, &hdr, sizeof(hdr));
-
-		if (mpcapa) {
-			for (i = 0; i < AID_MAX; i++) {
-				if (p->capa.ann.mp[i]) {
-					errs += session_capa_add_gr(p, opb, i);
-				}
-			}
-		} else {	/* AID_INET */
-			errs += session_capa_add_gr(p, opb, AID_INET);
-		}
 	}
 
 	/* 4-bytes AS numbers, draft-ietf-idr-as4bytes-13 */
@@ -2585,24 +2564,24 @@ capa_neg_calc(struct peer *p)
 		int8_t	negflags;
 
 		/* disable GR if the AFI/SAFI is not present */
-		if (p->capa.ann.grestart.restart == 0 ||
-		    (p->capa.peer.grestart.flags[i] & CAPA_GR_PRESENT &&
+		if ((p->capa.peer.grestart.flags[i] & CAPA_GR_PRESENT &&
 		    p->capa.neg.mp[i] == 0))
 			p->capa.peer.grestart.flags[i] = 0;	/* disable */
 		/* look at current GR state and decide what to do */
 		negflags = p->capa.neg.grestart.flags[i];
 		p->capa.neg.grestart.flags[i] = p->capa.peer.grestart.flags[i];
 		if (negflags & CAPA_GR_RESTARTING) {
-			if (!(p->capa.peer.grestart.flags[i] &
-			    CAPA_GR_FORWARD)) {
+			if (p->capa.ann.grestart.restart != 0 ||
+			    p->capa.peer.grestart.flags[i] & CAPA_GR_FORWARD) {
+				p->capa.neg.grestart.flags[i] |=
+				    CAPA_GR_RESTARTING;
+			} else {
 				if (imsg_rde(IMSG_SESSION_FLUSH, p->conf.id,
 				    &i, sizeof(i)) == -1)
 					return (-1);
 				log_peer_warnx(&p->conf, "graceful restart of "
 				    "%s, not restarted, flushing", aid2str(i));
-			} else
-				p->capa.neg.grestart.flags[i] |=
-				    CAPA_GR_RESTARTING;
+			}
 		}
 	}
 	p->capa.neg.grestart.timeout = p->capa.peer.grestart.timeout;
