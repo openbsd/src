@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.127 2021/05/06 09:18:54 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.128 2021/05/27 08:45:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -101,17 +101,23 @@ up_generate_updates(struct filter_head *rules, struct rde_peer *peer,
 	struct filterstate	state;
 	struct bgpd_addr	addr;
 	int			need_withdraw;
+	uint8_t			prefixlen;
+
+	if (new == NULL) {
+		if (old == NULL)
+			/* no prefix to update or withdraw */
+			return;
+		pt_getaddr(old->pt, &addr);
+		prefixlen = old->pt->prefixlen;
+	} else {
+		pt_getaddr(new->pt, &addr);
+		prefixlen = new->pt->prefixlen;
+	}
 
 again:
 	if (new == NULL) {
-		if (old == NULL)
-			/* no prefix to withdraw */
-			return;
-
 		/* withdraw prefix */
-		pt_getaddr(old->pt, &addr);
-		if (prefix_adjout_withdraw(peer, &addr,
-		    old->pt->prefixlen) == 1) {
+		if (prefix_adjout_withdraw(peer, &addr, prefixlen) == 1) {
 			peer->prefix_out_cnt--;
 			peer->up_wcnt++;
 		}
@@ -143,10 +149,8 @@ again:
 		rde_filterstate_prep(&state, prefix_aspath(new),
 		    prefix_communities(new), prefix_nexthop(new),
 		    prefix_nhflags(new));
-		pt_getaddr(new->pt, &addr);
 		if (rde_filter(rules, peer, prefix_peer(new), &addr,
-		    new->pt->prefixlen, prefix_vstate(new), &state) ==
-		    ACTION_DENY) {
+		    prefixlen, prefix_vstate(new), &state) == ACTION_DENY) {
 			rde_filterstate_clean(&state);
 			if (peer->flags & PEERFLAG_EVALUATE_ALL)
 				new = LIST_NEXT(new, entry.list.rib);
