@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.521 2021/05/25 14:18:44 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.522 2021/05/27 08:38:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -113,6 +113,7 @@ volatile sig_atomic_t	 rde_quit = 0;
 struct filter_head	*out_rules, *out_rules_tmp;
 struct rde_memstats	 rdemem;
 int			 softreconfig;
+static int		 rde_eval_all;
 
 extern struct rde_peer_head	 peerlist;
 extern struct rde_peer		*peerself;
@@ -400,6 +401,9 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 				fatalx("incorrect size of session request");
 			memcpy(&pconf, imsg.data, sizeof(pconf));
 			peer_add(imsg.hdr.peerid, &pconf);
+			/* make sure rde_eval_all is on if needed. */
+			if (pconf.flags & PEERFLAG_EVALUATE_ALL)
+				rde_eval_all = 1;
 			break;
 		case IMSG_NETWORK_ADD:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
@@ -2868,8 +2872,6 @@ rde_send_kroute(struct rib *rib, struct prefix *new, struct prefix *old)
 /*
  * update specific functions
  */
-static int rde_eval_all;
-
 int
 rde_evaluate_all(void)
 {
@@ -2899,17 +2901,13 @@ rde_generate_updates(struct rib *rib, struct prefix *new, struct prefix *old,
 	else
 		aid = old->pt->aid;
 
-	rde_eval_all = 0;
 	LIST_FOREACH(peer, &peerlist, peer_l) {
 		/* skip ourself */
 		if (peer == peerself)
 			continue;
 		if (peer->state != PEER_UP)
 			continue;
-		/* handle evaluate all, keep track if it is needed */
-		if (peer->flags & PEERFLAG_EVALUATE_ALL)
-			rde_eval_all = 1;
-		else if (eval_all)
+		if ((peer->flags & PEERFLAG_EVALUATE_ALL) == 0 && eval_all)
 			/* skip default peers if the best path didn't change */
 			continue;
 		/* skip peers using a different rib */
@@ -3271,9 +3269,12 @@ rde_reload_done(void)
 
 	rde_filter_calc_skip_steps(out_rules);
 
+	/* make sure that rde_eval_all is correctly set after a config change */
+	rde_eval_all = 0;
+
 	/* check if filter changed */
 	LIST_FOREACH(peer, &peerlist, peer_l) {
-		if (peer->conf.id == 0)
+		if (peer->conf.id == 0)	/* ignore peerself*/
 			continue;
 		peer->reconf_out = 0;
 		peer->reconf_rib = 0;
@@ -3303,6 +3304,8 @@ rde_reload_done(void)
 		}
 		peer->export_type = peer->conf.export_type;
 		peer->flags = peer->conf.flags;
+		if (peer->flags & PEERFLAG_EVALUATE_ALL)
+			rde_eval_all = 1;
 
 		if (peer->reconf_rib) {
 			if (prefix_dump_new(peer, AID_UNSPEC,
@@ -3320,6 +3323,7 @@ rde_reload_done(void)
 			peer->reconf_out = 1;
 		}
 	}
+
 	/* bring ribs in sync */
 	for (rid = 0; rid < rib_size; rid++) {
 		struct rib *rib = rib_byid(rid);
