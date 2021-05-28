@@ -1,8 +1,4 @@
-#	$OpenBSD: files.imx,v 1.31 2020/04/23 22:14:49 patrick Exp $
-
-device imxdog
-attach imxdog at fdt
-file	arch/armv7/imx/imxdog.c		imxdog
+#	$OpenBSD: files.imx,v 1.32 2021/05/28 11:50:18 patrick Exp $
 
 device imxahci: scsi, atascsi
 attach imxahci at fdt
