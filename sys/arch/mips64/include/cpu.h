@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.132 2021/05/05 15:29:19 visa Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.133 2021/05/28 16:33:36 visa Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -182,11 +182,6 @@ struct cpu_info {
 	u_int32_t	ci_cpu_counter_interval; /* # of counter ticks/tick */
 
 	u_int32_t	ci_pendingticks;
-
-#ifdef TGT_ORIGIN
-	u_int16_t	ci_nasid;
-	u_int16_t	ci_slice;
-#endif
 
 	struct pmap	*ci_curpmap;
 	uint		ci_intrdepth;		/* interrupt depth */
