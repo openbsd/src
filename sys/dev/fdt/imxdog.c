@@ -1,4 +1,4 @@
-/* $OpenBSD: imxdog.c,v 1.2 2021/05/28 13:03:55 patrick Exp $ */
+/* $OpenBSD: imxdog.c,v 1.3 2021/05/28 13:08:37 patrick Exp $ */
 /*
  * Copyright (c) 2012-2013,2021 Patrick Wildt <patrick@blueri.se>
  *
@@ -38,7 +38,7 @@ extern void (*cpuresetfn)(void);
 #define WICR		0x06
 #define WMCR		0x08
 
-#define WDOG_TIMEOUT_CALLBACK		120
+#define WDOG_TIMEOUT_CALLBACK		60
 #define WDOG_MAX_TIMEOUT_SEC		128
 
 struct imxdog_softc {
