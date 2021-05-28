@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.91 2021/02/25 07:30:36 jan Exp $ */
+/*	$OpenBSD: nvme.c,v 1.92 2021/05/28 01:51:11 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -117,10 +117,6 @@ void	nvme_scsi_inquiry(struct scsi_xfer *);
 void	nvme_scsi_capacity16(struct scsi_xfer *);
 void	nvme_scsi_capacity(struct scsi_xfer *);
 
-#define nvme_read4(_s, _r) \
-	bus_space_read_4((_s)->sc_iot, (_s)->sc_ioh, (_r))
-#define nvme_write4(_s, _r, _v) \
-	bus_space_write_4((_s)->sc_iot, (_s)->sc_ioh, (_r), (_v))
 /*
  * Some controllers, at least Apple NVMe, always require split
  * transfers, so don't use bus_space_{read,write}_8() on LP64.

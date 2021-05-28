@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvmevar.h,v 1.20 2020/07/22 13:16:04 krw Exp $ */
+/*	$OpenBSD: nvmevar.h,v 1.21 2021/05/28 01:51:11 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -106,5 +106,10 @@ int	nvme_attach(struct nvme_softc *);
 int	nvme_activate(struct nvme_softc *, int);
 int	nvme_intr(void *);
 int	nvme_intr_intx(void *);
+
+#define nvme_read4(_s, _r) \
+	bus_space_read_4((_s)->sc_iot, (_s)->sc_ioh, (_r))
+#define nvme_write4(_s, _r, _v) \
+	bus_space_write_4((_s)->sc_iot, (_s)->sc_ioh, (_r), (_v))
 
 #define DEVNAME(_sc) ((_sc)->sc_dev.dv_xname)
