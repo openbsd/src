@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplns.c,v 1.1 2021/05/28 04:36:33 dlg Exp $ */
+/*	$OpenBSD: aplns.c,v 1.2 2021/05/28 04:56:07 dlg Exp $ */
 /*
  * Copyright (c) 2014, 2021 David Gwynne <dlg@openbsd.org>
  *
@@ -124,6 +124,9 @@ uint32_t	nvme_ans_sq_enter(struct nvme_softc *,
 void		nvme_ans_sq_leave(struct nvme_softc *,
 		    struct nvme_queue *, struct nvme_ccb *);
 
+void		nvme_ans_cq_done(struct nvme_softc *,
+		    struct nvme_queue *, struct nvme_ccb *);
+
 static const struct nvme_ops nvme_ans_ops = {
 	.op_enable		= nvme_ans_enable,
 
@@ -134,6 +137,8 @@ static const struct nvme_ops nvme_ans_ops = {
 	.op_sq_leave		= nvme_ans_sq_leave,
 	.op_sq_enter_locked	= nvme_ans_sq_enter,
 	.op_sq_leave_locked	= nvme_ans_sq_leave,
+
+	.op_cq_done		= nvme_ans_cq_done,
 };
 
 int
