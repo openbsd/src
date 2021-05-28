@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.190 2021/05/13 17:31:59 mvs Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.191 2021/05/28 16:24:53 visa Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -308,7 +308,7 @@ doaccept(struct proc *p, int sock, struct sockaddr *name, socklen_t *anamelen,
 	    : (flags & SOCK_NONBLOCK ? FNONBLOCK : 0);
 
 	/* connection has been removed from the listen queue */
-	KNOTE(&head->so_rcv.sb_sel.si_note, NOTE_SUBMIT);
+	KNOTE(&head->so_rcv.sb_sel.si_note, 0);
 
 	fp->f_type = DTYPE_SOCKET;
 	fp->f_flag = FREAD | FWRITE | nflag;
