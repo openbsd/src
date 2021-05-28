@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvmevar.h,v 1.25 2021/05/28 02:03:11 dlg Exp $ */
+/*	$OpenBSD: nvmevar.h,v 1.26 2021/05/28 02:34:38 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -69,8 +69,31 @@ struct nvme_namespace {
 	struct nvm_identify_namespace *ident;
 };
 
+struct nvme_ops {
+	void		(*op_enable)(struct nvme_softc *);
+
+	int		(*op_q_alloc)(struct nvme_softc *,
+			      struct nvme_queue *);
+	void		(*op_q_free)(struct nvme_softc *,
+			      struct nvme_queue *);
+
+	uint32_t	(*op_sq_enter)(struct nvme_softc *,
+			      struct nvme_queue *, struct nvme_ccb *);
+	void		(*op_sq_leave)(struct nvme_softc *,
+			      struct nvme_queue *, struct nvme_ccb *);
+	uint32_t	(*op_sq_enter_locked)(struct nvme_softc *,
+			      struct nvme_queue *, struct nvme_ccb *);
+	void		(*op_sq_leave_locked)(struct nvme_softc *,
+			      struct nvme_queue *, struct nvme_ccb *);
+
+	void		(*op_cq_done)(struct nvme_softc *,
+			      struct nvme_queue *, struct nvme_ccb *);
+};
+
 struct nvme_softc {
 	struct device		sc_dev;
+
+	const struct nvme_ops	*sc_ops;
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
