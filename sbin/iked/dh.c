@@ -1,4 +1,4 @@
-/*	$OpenBSD: dh.c,v 1.28 2021/05/13 14:01:35 tb Exp $	*/
+/*	$OpenBSD: dh.c,v 1.29 2021/05/28 18:01:39 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2014 Reyk Floeter <reyk@openbsd.org>
@@ -35,6 +35,7 @@
 
 #include "dh.h"
 #include "iked.h"
+#include "crypto_api.h"
 
 int	dh_init(struct dh_group *);
 int	dh_getlen(struct dh_group *);
@@ -76,6 +77,19 @@ extern int crypto_scalarmult_curve25519(unsigned char a[CURVE25519_SIZE],
 	__attribute__((__bounded__(__minbytes__, 1, CURVE25519_SIZE)))
 	__attribute__((__bounded__(__minbytes__, 2, CURVE25519_SIZE)))
 	__attribute__((__bounded__(__minbytes__, 3, CURVE25519_SIZE)));
+
+/* SNTRUP761 with X25519 */
+int	kemsx_init(struct dh_group *);
+int	kemsx_getlen(struct dh_group *);
+int	kemsx_create_exchange2(struct dh_group *, struct ibuf **, struct ibuf *);
+int	kemsx_create_shared2(struct dh_group *, struct ibuf **, struct ibuf *);
+
+struct kemsx_key {
+	uint8_t		kemkey[crypto_kem_sntrup761_BYTES];
+	uint8_t		secret[crypto_kem_sntrup761_SECRETKEYBYTES];
+	uint8_t		public[crypto_kem_sntrup761_PUBLICKEYBYTES];
+	uint8_t		initiator;
+};
 
 const struct group_id ike_groups[] = {
 	{ GROUP_MODP, 1, 768,
@@ -253,7 +267,13 @@ const struct group_id ike_groups[] = {
 	{ GROUP_ECP, 28, 256, NULL, NULL, NID_brainpoolP256r1 },
 	{ GROUP_ECP, 29, 384, NULL, NULL, NID_brainpoolP384r1 },
 	{ GROUP_ECP, 30, 512, NULL, NULL, NID_brainpoolP512r1 },
-	{ GROUP_CURVE25519, 31, CURVE25519_SIZE * 8 }
+	{ GROUP_CURVE25519, 31, CURVE25519_SIZE * 8 },
+	/* "Private use" extensions */
+	/* PQC KEM */
+	{ GROUP_SNTRUP761X25519, 1035,
+	   (MAX(crypto_kem_sntrup761_PUBLICKEYBYTES,
+	        crypto_kem_sntrup761_CIPHERTEXTBYTES) +
+	    CURVE25519_SIZE) * 8 }
 };
 
 void
@@ -273,6 +293,7 @@ group_free(struct dh_group *group)
 	if (group->ec != NULL)
 		EC_KEY_free(group->ec);
 	freezero(group->curve25519, sizeof(struct curve25519_key));
+	freezero(group->kemsx, sizeof(struct kemsx_key));
 	group->spec = NULL;
 	free(group);
 }
@@ -311,6 +332,12 @@ group_get(uint32_t id)
 		group->getlen = ec25519_getlen;
 		group->exchange = ec25519_create_exchange;
 		group->shared = ec25519_create_shared;
+		break;
+	case GROUP_SNTRUP761X25519:
+		group->init = kemsx_init;
+		group->getlen = kemsx_getlen;
+		group->exchange2 = kemsx_create_exchange2;
+		group->shared2 = kemsx_create_shared2;
 		break;
 	default:
 		group_free(group);
@@ -368,6 +395,8 @@ dh_create_exchange(struct dh_group *group, struct ibuf **bufp, struct ibuf *iexc
 	struct ibuf *buf;
 
 	*bufp = NULL;
+	if (group->exchange2)
+		return (group->exchange2(group, bufp, iexchange));
 	buf = ibuf_new(NULL, dh_getlen(group));
 	if (buf == NULL)
 		return -1;
@@ -381,6 +410,8 @@ dh_create_shared(struct dh_group *group, struct ibuf **secretp, struct ibuf *exc
 	struct ibuf *buf;
 
 	*secretp = NULL;
+	if (group->shared2)
+		return (group->shared2(group, secretp, exchange));
 	if (exchange == NULL ||
 	    (ssize_t)ibuf_size(exchange) != dh_getlen(group))
 		return -1;
@@ -727,5 +758,134 @@ ec25519_create_shared(struct dh_group *group, uint8_t *shared, uint8_t *public)
 	struct curve25519_key	*curve25519 = group->curve25519;
 
 	crypto_scalarmult_curve25519(shared, curve25519->secret, public);
+	return (0);
+}
+
+/* combine sntrup761 with curve25519 */
+
+int
+kemsx_init(struct dh_group *group)
+{
+	/* delayed until kemsx_create_exchange2 */
+	return (0);
+}
+
+int
+kemsx_getlen(struct dh_group *group)
+{
+	return (0);
+}
+
+int
+kemsx_create_exchange2(struct dh_group *group, struct ibuf **bufp,
+    struct ibuf *iexchange)
+{
+	struct kemsx_key	*kemsx;
+	struct curve25519_key	*curve25519;
+	struct ibuf		*buf = NULL;
+	u_char *cp, *pk;
+	size_t have, need;
+
+	if (ec25519_init(group) == -1)
+		return (-1);
+	if (group->curve25519 == NULL)
+		return (-1);
+	if ((kemsx = calloc(1, sizeof(*kemsx))) == NULL)
+		return (-1);
+	group->kemsx = kemsx;
+
+	if (iexchange == NULL) {
+		kemsx->initiator = 1;
+		crypto_kem_sntrup761_keypair(kemsx->public, kemsx->secret);
+		/* output */
+		need = crypto_kem_sntrup761_PUBLICKEYBYTES +
+		    CURVE25519_SIZE;
+		buf = ibuf_new(NULL, need);
+		if (buf == NULL)
+			return -1;
+		cp = buf->buf;
+		memcpy(cp, kemsx->public,
+		    crypto_kem_sntrup761_PUBLICKEYBYTES);
+		cp += crypto_kem_sntrup761_PUBLICKEYBYTES;
+	} else {
+		kemsx->initiator = 0;
+		/* input */
+		have = ibuf_size(iexchange);
+		need = crypto_kem_sntrup761_PUBLICKEYBYTES +
+		    CURVE25519_SIZE;
+		if (have != need)
+			return -1;
+		/* output */
+		need = crypto_kem_sntrup761_CIPHERTEXTBYTES +
+		    CURVE25519_SIZE;
+		buf = ibuf_new(NULL, need);
+		if (buf == NULL)
+			return -1;
+		cp = buf->buf;
+		pk = iexchange->buf;
+		crypto_kem_sntrup761_enc(cp, kemsx->kemkey, pk);
+		cp += crypto_kem_sntrup761_CIPHERTEXTBYTES;
+	}
+	curve25519 = group->curve25519;
+	memcpy(cp, curve25519->public, CURVE25519_SIZE);
+	*bufp = buf;
+	return (0);
+}
+
+int
+kemsx_create_shared2(struct dh_group *group, struct ibuf **sharedp,
+    struct ibuf *exchange)
+{
+	struct curve25519_key	*curve25519 = group->curve25519;
+	struct kemsx_key	*kemsx = group->kemsx;
+	struct ibuf		*buf = NULL;
+	EVP_MD_CTX		*ctx = NULL;
+	u_int8_t		*cp;
+	u_int8_t		 shared[CURVE25519_SIZE];
+	size_t			 have, need;
+	u_int			 len;
+
+	*sharedp = NULL;
+	if (kemsx == NULL)
+		return (-1);
+	if (exchange == NULL)
+		return (-1);
+
+	have = ibuf_size(exchange);
+	cp = exchange->buf;
+	if (kemsx->initiator) {
+		/* input */
+		need = crypto_kem_sntrup761_CIPHERTEXTBYTES +
+		    CURVE25519_SIZE;
+		if (have != need)
+			return (-1);
+		crypto_kem_sntrup761_dec(kemsx->kemkey, cp, kemsx->secret);
+		cp += crypto_kem_sntrup761_CIPHERTEXTBYTES;
+	} else {
+		/* input, should have been checked before */
+		need = crypto_kem_sntrup761_PUBLICKEYBYTES +
+		    CURVE25519_SIZE;
+		if (have != need)
+			return (-1);
+		cp += crypto_kem_sntrup761_PUBLICKEYBYTES;
+	}
+	crypto_scalarmult_curve25519(shared, curve25519->secret, cp);
+
+	/* result is hash of concatenation of KEM key and DH shared secret */
+	len = SHA512_DIGEST_LENGTH;
+	buf = ibuf_new(NULL, len);
+	if (buf == NULL)
+		return (-1);
+	if ((ctx = EVP_MD_CTX_new()) == NULL ||
+	    EVP_DigestInit_ex(ctx, EVP_sha512(), NULL) != 1 ||
+	    EVP_DigestUpdate(ctx, kemsx->kemkey, sizeof(kemsx->kemkey)) != 1 ||
+	    EVP_DigestUpdate(ctx, shared, sizeof(shared)) != 1 ||
+	    EVP_DigestFinal_ex(ctx, buf->buf, &len) != 1) {
+		EVP_MD_CTX_free(ctx);
+		ibuf_free(buf);
+		return (-1);
+	}
+	EVP_MD_CTX_free(ctx);
+	*sharedp = buf;
 	return (0);
 }
