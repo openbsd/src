@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhtest.c,v 1.4 2021/02/04 20:45:13 tobhe Exp $	*/
+/*	$OpenBSD: dhtest.c,v 1.5 2021/05/28 21:09:01 tobhe Exp $	*/
 /*	$EOM: dhtest.c,v 1.1 1998/07/18 21:14:20 provos Exp $	*/
 
 /*
@@ -62,8 +62,9 @@ main(void)
 	group_init();
 
 	for (id = 0; id < 0xffff; id++) {
-		if ((group = group_get(id)) == NULL ||
-		    (group2 = group_get(id)) == NULL)
+		if (((group = group_get(id)) == NULL ||
+		    (group2 = group_get(id)) == NULL) ||
+		    group->spec->type == GROUP_SNTRUP761X25519)
 			continue;
 
 		dh_create_exchange(group, &buf, NULL);
