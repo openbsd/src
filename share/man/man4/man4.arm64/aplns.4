@@ -1,6 +1,6 @@
-.\"	$OpenBSD: nvme.4,v 1.3 2021/05/28 04:49:44 dlg Exp $
+.\"	$OpenBSD: aplns.4,v 1.1 2021/05/28 04:49:44 dlg Exp $
 .\"
-.\" Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
+.\" Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,37 +15,24 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd $Mdocdate: May 28 2021 $
-.Dt NVME 4
+.Dt APLNS 4 arm64
 .Os
 .Sh NAME
-.Nm nvme
-.Nd Non-Volatile Memory Host Controller Interface
+.Nm aplns
+.Nd Apple NVME Storage controller
 .Sh SYNOPSIS
-.Cd "nvme* at pci?"
-.Cd "nvme* at aplns?                # arm64"
+.Cd "aplns* at fdt?"
+.Cd "nvme* at aplns?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for NVMe, or NVM Express,
-storage controllers conforming to the
-Non-Volatile Memory Host Controller Interface specification.
-.Pp
-Although the NVMe specification provides its own command set, the
-.Nm
-driver provides access to the storage via a SCSI translation layer.
+driver provides support for the NVME Storage controller found on
+various Apple SoCs.
 .Sh SEE ALSO
-.Xr aplns 4 ,
 .Xr intro 4 ,
-.Xr pci 4 ,
-.Xr scsi 4
+.Xr nvme 4
 .Sh HISTORY
 The
 .Nm
 driver first appeared in
-.Ox 6.0 .
-.Sh AUTHORS
-.An -nosplit
-The
-.Nm
-driver was written by
-.An David Gwynne Aq Mt dlg@openbsd.org .
+.Ox 7.0 .
