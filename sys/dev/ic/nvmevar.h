@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvmevar.h,v 1.26 2021/05/28 02:34:38 dlg Exp $ */
+/*	$OpenBSD: nvmevar.h,v 1.27 2021/05/28 04:39:54 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -56,6 +56,7 @@ struct nvme_queue {
 	struct mutex		q_cq_mtx;
 	struct nvme_dmamem	*q_sq_dmamem;
 	struct nvme_dmamem	*q_cq_dmamem;
+	struct nvme_dmamem	*q_nvmmu_dmamem; /* for aplns(4) */
 	bus_size_t 		q_sqtdbl; /* submission queue tail doorbell */
 	bus_size_t 		q_cqhdbl; /* completion queue head doorbell */
 	u_int16_t		q_id;
