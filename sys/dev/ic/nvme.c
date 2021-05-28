@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.95 2021/05/28 02:03:11 dlg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.96 2021/05/28 03:05:01 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -112,6 +112,27 @@ void	nvme_scsi_inquiry(struct scsi_xfer *);
 void	nvme_scsi_capacity16(struct scsi_xfer *);
 void	nvme_scsi_capacity(struct scsi_xfer *);
 
+uint32_t	nvme_op_sq_enter(struct nvme_softc *,
+		    struct nvme_queue *, struct nvme_ccb *);
+void		nvme_op_sq_leave(struct nvme_softc *,
+		    struct nvme_queue *, struct nvme_ccb *);
+uint32_t	nvme_op_sq_enter_locked(struct nvme_softc *,
+		    struct nvme_queue *, struct nvme_ccb *);
+void		nvme_op_sq_leave_locked(struct nvme_softc *,
+		    struct nvme_queue *, struct nvme_ccb *);
+
+void		nvme_op_cq_done(struct nvme_softc *,
+		    struct nvme_queue *, struct nvme_ccb *);
+
+static const struct nvme_ops nvme_ops = {
+	.op_sq_enter		= nvme_op_sq_enter,
+	.op_sq_leave		= nvme_op_sq_leave,
+	.op_sq_enter_locked	= nvme_op_sq_enter_locked,
+	.op_sq_leave_locked	= nvme_op_sq_leave_locked,
+
+	.op_cq_done		= nvme_op_cq_done,
+};
+
 /*
  * Some controllers, at least Apple NVMe, always require split
  * transfers, so don't use bus_space_{read,write}_8() on LP64.
@@ -210,6 +231,9 @@ nvme_enable(struct nvme_softc *sc)
 	if (ISSET(cc, NVME_CC_EN))
 		return (nvme_ready(sc, NVME_CSTS_RDY));
 
+	if (sc->sc_ops->op_enable != NULL)
+		sc->sc_ops->op_enable(sc);
+
 	nvme_write4(sc, NVME_AQA, NVME_AQA_ACQS(sc->sc_admin_q->q_entries) |
 	    NVME_AQA_ASQS(sc->sc_admin_q->q_entries));
 	nvme_barrier(sc, 0, sc->sc_ios, BUS_SPACE_BARRIER_WRITE);
@@ -269,6 +293,8 @@ nvme_attach(struct nvme_softc *sc)
 	mtx_init(&sc->sc_ccb_mtx, IPL_BIO);
 	SIMPLEQ_INIT(&sc->sc_ccb_list);
 	scsi_iopool_init(&sc->sc_iopool, sc, nvme_ccb_get, nvme_ccb_put);
+	if (sc->sc_ops == NULL)
+		sc->sc_ops = &nvme_ops;
 
 	reg = nvme_read4(sc, NVME_VS);
 	if (reg == 0xffffffff) {
@@ -868,6 +894,42 @@ nvme_scsi_free(struct scsi_link *link)
 	free(identify, M_DEVBUF, sizeof(*identify));
 }
 
+uint32_t
+nvme_op_sq_enter(struct nvme_softc *sc,
+    struct nvme_queue *q, struct nvme_ccb *ccb)
+{
+	mtx_enter(&q->q_sq_mtx);
+	return (nvme_op_sq_enter_locked(sc, q, ccb));
+}
+
+uint32_t
+nvme_op_sq_enter_locked(struct nvme_softc *sc,
+    struct nvme_queue *q, struct nvme_ccb *ccb)
+{
+	return (q->q_sq_tail);
+}
+
+void
+nvme_op_sq_leave_locked(struct nvme_softc *sc,
+    struct nvme_queue *q, struct nvme_ccb *ccb)
+{
+	uint32_t tail;
+
+	tail = ++q->q_sq_tail;
+	if (tail >= q->q_entries)
+		tail = 0;
+	q->q_sq_tail = tail;
+	nvme_write4(sc, q->q_sqtdbl, tail);
+}
+
+void
+nvme_op_sq_leave(struct nvme_softc *sc,
+    struct nvme_queue *q, struct nvme_ccb *ccb)
+{
+	nvme_op_sq_leave_locked(sc, q, ccb);
+	mtx_leave(&q->q_sq_mtx);
+}
+
 void
 nvme_q_submit(struct nvme_softc *sc, struct nvme_queue *q, struct nvme_ccb *ccb,
     void (*fill)(struct nvme_softc *, struct nvme_ccb *, void *))
@@ -875,10 +937,7 @@ nvme_q_submit(struct nvme_softc *sc, struct nvme_queue *q, struct nvme_ccb *ccb,
 	struct nvme_sqe *sqe = NVME_DMA_KVA(q->q_sq_dmamem);
 	u_int32_t tail;
 
-	mtx_enter(&q->q_sq_mtx);
-	tail = q->q_sq_tail;
-	if (++q->q_sq_tail >= q->q_entries)
-		q->q_sq_tail = 0;
+	tail = sc->sc_ops->op_sq_enter(sc, q, ccb);
 
 	sqe += tail;
 
@@ -890,8 +949,7 @@ nvme_q_submit(struct nvme_softc *sc, struct nvme_queue *q, struct nvme_ccb *ccb,
 	bus_dmamap_sync(sc->sc_dmat, NVME_DMA_MAP(q->q_sq_dmamem),
 	    sizeof(*sqe) * tail, sizeof(*sqe), BUS_DMASYNC_PREWRITE);
 
-	nvme_write4(sc, q->q_sqtdbl, q->q_sq_tail);
-	mtx_leave(&q->q_sq_mtx);
+	sc->sc_ops->op_sq_leave(sc, q, ccb);
 }
 
 struct nvme_poll_state {
@@ -967,6 +1025,13 @@ nvme_empty_done(struct nvme_softc *sc, struct nvme_ccb *ccb,
 {
 }
 
+void
+nvme_op_cq_done(struct nvme_softc *sc,
+    struct nvme_queue *q, struct nvme_ccb *ccb)
+{
+	/* nop */
+}
+
 int
 nvme_q_complete(struct nvme_softc *sc, struct nvme_queue *q)
 {
@@ -991,6 +1056,7 @@ nvme_q_complete(struct nvme_softc *sc, struct nvme_queue *q)
 		membar_consumer();
 
 		ccb = &sc->sc_ccbs[cqe->cid];
+		sc->sc_ops->op_cq_done(sc, q, ccb);
 		ccb->ccb_done(sc, ccb, cqe);
 
 		if (++head >= q->q_entries) {
@@ -1289,11 +1355,18 @@ nvme_q_alloc(struct nvme_softc *sc, u_int16_t id, u_int entries, u_int dstrd)
 	q->q_cq_head = 0;
 	q->q_cq_phase = NVME_CQE_PHASE;
 
+	if (sc->sc_ops->op_q_alloc != NULL) {
+		if (sc->sc_ops->op_q_alloc(sc, q) != 0)
+			goto free_cq;
+	}
+
 	nvme_dmamem_sync(sc, q->q_sq_dmamem, BUS_DMASYNC_PREWRITE);
 	nvme_dmamem_sync(sc, q->q_cq_dmamem, BUS_DMASYNC_PREREAD);
 
 	return (q);
 
+free_cq:
+	nvme_dmamem_free(sc, q->q_cq_dmamem);
 free_sq:
 	nvme_dmamem_free(sc, q->q_sq_dmamem);
 free:
@@ -1307,9 +1380,6 @@ nvme_q_reset(struct nvme_softc *sc, struct nvme_queue *q)
 {
 	memset(NVME_DMA_KVA(q->q_sq_dmamem), 0, NVME_DMA_LEN(q->q_sq_dmamem));
 	memset(NVME_DMA_KVA(q->q_cq_dmamem), 0, NVME_DMA_LEN(q->q_cq_dmamem));
-
-	q->q_sqtdbl = NVME_SQTDBL(q->q_id, sc->sc_dstrd);
-	q->q_cqhdbl = NVME_CQHDBL(q->q_id, sc->sc_dstrd);
 
 	q->q_sq_tail = 0;
 	q->q_cq_head = 0;
@@ -1326,6 +1396,10 @@ nvme_q_free(struct nvme_softc *sc, struct nvme_queue *q)
 {
 	nvme_dmamem_sync(sc, q->q_cq_dmamem, BUS_DMASYNC_POSTREAD);
 	nvme_dmamem_sync(sc, q->q_sq_dmamem, BUS_DMASYNC_POSTWRITE);
+
+	if (sc->sc_ops->op_q_alloc != NULL)
+		sc->sc_ops->op_q_free(sc, q);
+
 	nvme_dmamem_free(sc, q->q_cq_dmamem);
 	nvme_dmamem_free(sc, q->q_sq_dmamem);
 	free(q, M_DEVBUF, sizeof *q);
@@ -1430,9 +1504,7 @@ nvme_hibernate_admin_cmd(struct nvme_softc *sc, struct nvme_sqe *sqe,
 	u_int16_t flags;
 
 	/* submit command */
-	tail = q->q_sq_tail;
-	if (++q->q_sq_tail >= q->q_entries)
-		q->q_sq_tail = 0;
+	tail = sc->sc_ops->op_sq_enter_locked(sc, q, /* XXX ccb */ NULL);
 
 	asqe += tail;
 	bus_dmamap_sync(sc->sc_dmat, NVME_DMA_MAP(q->q_sq_dmamem),
@@ -1442,7 +1514,8 @@ nvme_hibernate_admin_cmd(struct nvme_softc *sc, struct nvme_sqe *sqe,
 	bus_dmamap_sync(sc->sc_dmat, NVME_DMA_MAP(q->q_sq_dmamem),
 	    sizeof(*sqe) * tail, sizeof(*sqe), BUS_DMASYNC_PREWRITE);
 
-	nvme_write4(sc, q->q_sqtdbl, q->q_sq_tail);
+	nvme_write4(sc, q->q_sqtdbl, tail);
+	sc->sc_ops->op_sq_leave_locked(sc, q, /* XXX ccb */ NULL);
 
 	/* wait for completion */
 	acqe += q->q_cq_head;
