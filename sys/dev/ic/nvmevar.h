@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvmevar.h,v 1.23 2021/05/28 01:57:20 dlg Exp $ */
+/*	$OpenBSD: nvmevar.h,v 1.24 2021/05/28 01:58:27 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -112,8 +112,9 @@ int	nvme_intr_intx(void *);
 #define nvme_write4(_s, _r, _v) \
 	bus_space_write_4((_s)->sc_iot, (_s)->sc_ioh, (_r), (_v))
 
-u_int64_t	nvme_read8(struct nvme_softc *, bus_size_t);
-void		nvme_write8(struct nvme_softc *, bus_size_t, u_int64_t);
+u_int64_t
+	nvme_read8(struct nvme_softc *, bus_size_t);
+void	nvme_write8(struct nvme_softc *, bus_size_t, u_int64_t);
 
 #define nvme_barrier(_s, _r, _l, _f) \
 	bus_space_barrier((_s)->sc_iot, (_s)->sc_ioh, (_r), (_l), (_f))
