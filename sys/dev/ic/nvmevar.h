@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvmevar.h,v 1.24 2021/05/28 01:58:27 dlg Exp $ */
+/*	$OpenBSD: nvmevar.h,v 1.25 2021/05/28 02:03:11 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -102,6 +102,8 @@ struct nvme_softc {
 	struct scsi_iopool	sc_iopool;
 };
 
+#define DEVNAME(_sc) ((_sc)->sc_dev.dv_xname)
+
 int	nvme_attach(struct nvme_softc *);
 int	nvme_activate(struct nvme_softc *, int);
 int	nvme_intr(void *);
@@ -119,4 +121,7 @@ void	nvme_write8(struct nvme_softc *, bus_size_t, u_int64_t);
 #define nvme_barrier(_s, _r, _l, _f) \
 	bus_space_barrier((_s)->sc_iot, (_s)->sc_ioh, (_r), (_l), (_f))
 
-#define DEVNAME(_sc) ((_sc)->sc_dev.dv_xname)
+struct nvme_dmamem *
+	nvme_dmamem_alloc(struct nvme_softc *, size_t);
+void	nvme_dmamem_free(struct nvme_softc *, struct nvme_dmamem *);
+void	nvme_dmamem_sync(struct nvme_softc *, struct nvme_dmamem *, int);

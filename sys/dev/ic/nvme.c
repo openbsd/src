@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.94 2021/05/28 01:57:20 dlg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.95 2021/05/28 02:03:11 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -78,11 +78,6 @@ void	nvme_q_submit(struct nvme_softc *,
 	    void (*)(struct nvme_softc *, struct nvme_ccb *, void *));
 int	nvme_q_complete(struct nvme_softc *, struct nvme_queue *);
 void	nvme_q_free(struct nvme_softc *, struct nvme_queue *);
-
-struct nvme_dmamem *
-	nvme_dmamem_alloc(struct nvme_softc *, size_t);
-void	nvme_dmamem_free(struct nvme_softc *, struct nvme_dmamem *);
-void	nvme_dmamem_sync(struct nvme_softc *, struct nvme_dmamem *, int);
 
 void	nvme_scsi_cmd(struct scsi_xfer *);
 void	nvme_minphys(struct buf *, struct scsi_link *);
