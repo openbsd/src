@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.200 2021/05/28 04:37:32 dlg Exp $
+# $OpenBSD: GENERIC,v 1.201 2021/05/28 13:04:42 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -149,6 +149,7 @@ imxccm*		at fdt? early 1
 imxiomuxc*	at fdt? early 1
 imxanatop*	at fdt? early 1
 imxsrc*		at fdt? early 1
+imxdog*		at fdt?
 imxdwusb*	at fdt?
 imxehci*	at fdt?
 usb*		at imxehci?

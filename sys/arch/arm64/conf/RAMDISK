@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.151 2021/05/26 20:52:21 kettenis Exp $
+# $OpenBSD: RAMDISK,v 1.152 2021/05/28 13:04:42 patrick Exp $
 
 machine		arm64
 maxusers	4
@@ -111,6 +111,7 @@ imxccm*		at fdt? early 1
 imxiomuxc*	at fdt? early 1
 imxanatop*	at fdt? early 1
 imxsrc*		at fdt? early 1
+imxdog*		at fdt?
 imxdwusb*	at fdt?
 imxehci*	at fdt?
 usb*		at imxehci?
