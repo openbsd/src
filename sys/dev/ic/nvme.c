@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.93 2021/05/28 01:54:43 dlg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.94 2021/05/28 01:57:20 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -151,8 +151,6 @@ nvme_write8(struct nvme_softc *sc, bus_size_t r, u_int64_t v)
 	nvme_write4(sc, r + 4, a[0]);
 #endif
 }
-#define nvme_barrier(_s, _r, _l, _f) \
-	bus_space_barrier((_s)->sc_iot, (_s)->sc_ioh, (_r), (_l), (_f))
 
 void
 nvme_dumpregs(struct nvme_softc *sc)
