@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.137 2021/04/30 13:25:24 visa Exp $
+#	$OpenBSD: GENERIC,v 1.138 2021/05/28 15:52:11 visa Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -212,6 +212,7 @@ rktemp*		at fdt?
 dwdog*		at fdt?
 
 # Xilinx Zynq-7000
+cad*		at fdt?			# Ethernet controller
 cduart*		at fdt?
 zqclock*	at fdt?
 zqreset*	at fdt?
