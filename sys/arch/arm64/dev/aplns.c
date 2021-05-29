@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplns.c,v 1.2 2021/05/28 04:56:07 dlg Exp $ */
+/*	$OpenBSD: aplns.c,v 1.3 2021/05/29 08:10:11 kettenis Exp $ */
 /*
  * Copyright (c) 2014, 2021 David Gwynne <dlg@openbsd.org>
  *
@@ -197,8 +197,7 @@ int
 nvme_ans_q_alloc(struct nvme_softc *sc,
     struct nvme_queue *q)
 {
-	bus_size_t db = ANS_LINEAR_IOSQ_DB;
-	bus_size_t base = ANS_NVMMU_BASE_IOSQ;
+	bus_size_t db, base;
 
 	KASSERT(q->q_entries <= (ANS_NVMMU_TCB_SIZE / ANS_NVMMU_TCB_PITCH));
 
@@ -211,7 +210,8 @@ nvme_ans_q_alloc(struct nvme_softc *sc,
 
 	switch (q->q_id) {
 	case NVME_IO_Q:
-	case NVME_HIB_Q:
+		db = ANS_LINEAR_IOSQ_DB;
+		base = ANS_NVMMU_BASE_IOSQ;
 		break;
 	case NVME_ADMIN_Q:
 		db = ANS_LINEAR_ASQ_DB;
