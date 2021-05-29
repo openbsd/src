@@ -1,4 +1,4 @@
-/*	$OpenBSD: timeout.h,v 1.40 2020/10/15 20:03:44 cheloha Exp $	*/
+/*	$OpenBSD: timeout.h,v 1.41 2021/05/29 01:32:49 cheloha Exp $	*/
 /*
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -26,30 +26,6 @@
 
 #ifndef _SYS_TIMEOUT_H_
 #define _SYS_TIMEOUT_H_
-
-/*
- * Interface for handling time driven events in the kernel.
- *
- * The basic component of this API is the struct timeout. The user should not
- * touch the internals of this structure, but it's the users responsibility
- * to allocate and deallocate timeouts.
- *
- * The functions used to manipulate timeouts are:
- *  - timeout_set(timeout, function, argument)
- *      Initializes a timeout struct to call the function with the argument.
- *      A timeout only needs to be initialized once.
- *  - timeout_add(timeout, ticks)
- *      Schedule this timeout to run in "ticks" ticks (there are hz ticks in
- *      one second). You may not touch the timeout with timeout_set once the
- *      timeout is scheduled. A second call to timeout_add with an already
- *      scheduled timeout will cause the old timeout to be canceled and the
- *      new will be scheduled.
- *  - timeout_del(timeout)
- *      Remove the timeout from the timeout queue. It's legal to remove
- *      a timeout that has already happened.
- *
- * These functions may be called in interrupt context (anything below splhigh).
- */
 
 #include <sys/time.h>
 
