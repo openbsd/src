@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.96 2021/05/28 03:05:01 dlg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.97 2021/05/29 08:07:43 kettenis Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -367,11 +367,13 @@ nvme_attach(struct nvme_softc *sc)
 		goto free_q;
 	}
 
+#ifdef HIBERNATE
 	sc->sc_hib_q = nvme_q_alloc(sc, NVME_HIB_Q, 4, sc->sc_dstrd);
 	if (sc->sc_hib_q == NULL) {
 		printf("%s: unable to allocate hibernate io queue\n", DEVNAME(sc));
 		goto free_q;
 	}
+#endif
 
 	nvme_write4(sc, NVME_INTMC, 1);
 
