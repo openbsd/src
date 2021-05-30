@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.16 2021/05/11 18:21:12 kettenis Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.17 2021/05/30 15:08:08 visa Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -18,6 +18,9 @@
 
 #ifndef _MACHINE_PMAP_H_
 #define _MACHINE_PMAP_H_
+
+#include <sys/mutex.h>
+#include <sys/queue.h>
 
 #ifdef _KERNEL
 
@@ -79,9 +82,6 @@ struct pte *pmap_get_kernel_pte(vaddr_t);
 #endif
 
 #endif	/* _KERNEL */
-
-#include <sys/mutex.h>
-#include <sys/queue.h>
 
 struct vm_page_md {
 	struct mutex pv_mtx;
