@@ -1,4 +1,4 @@
-/*     $OpenBSD: bcm2835_mbox.c,v 1.1 2020/04/19 14:51:52 tobhe Exp $ */
+/*     $OpenBSD: bcm2835_mbox.c,v 1.2 2021/05/30 15:05:33 visa Exp $ */
 
 /*
  * Copyright (c) 2020 Tobias Heider <tobhe@openbsd.org>
@@ -48,6 +48,7 @@
 
 #include <sys/types.h>
 #include <sys/systm.h>
+#include <sys/mutex.h>
 
 #include <machine/bus.h>
 #include <machine/fdt.h>

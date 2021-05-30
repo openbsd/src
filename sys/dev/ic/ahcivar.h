@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahcivar.h,v 1.10 2017/08/21 21:43:46 jmatthew Exp $ */
+/*	$OpenBSD: ahcivar.h,v 1.11 2021/05/30 15:05:33 visa Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -18,6 +18,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/mutex.h>
 #include <sys/timeout.h>
 #include <dev/ata/atascsi.h>
 #include <dev/ata/pmreg.h>

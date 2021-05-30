@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.35 2019/11/06 07:34:35 mpi Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.36 2021/05/30 15:05:32 visa Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /*
@@ -36,6 +36,7 @@
 #include <sys/param.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
+#include <sys/mutex.h>
 
 #include <uvm/uvm_extern.h>
 

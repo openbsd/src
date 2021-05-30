@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.6 2019/11/07 15:58:39 mpi Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.7 2021/05/30 15:05:32 visa Exp $	*/
 /*      $NetBSD: db_interface.c,v 1.12 2001/07/22 11:29:46 wiz Exp $ */
 
 /*
@@ -32,6 +32,7 @@
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
+#include <sys/mutex.h>
 
 #include <dev/cons.h>
 

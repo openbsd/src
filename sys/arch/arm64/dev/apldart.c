@@ -1,4 +1,4 @@
-/*	$OpenBSD: apldart.c,v 1.3 2021/05/24 18:38:29 kettenis Exp $	*/
+/*	$OpenBSD: apldart.c,v 1.4 2021/05/30 15:05:32 visa Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -20,6 +20,7 @@
 #include <sys/device.h>
 #include <sys/extent.h>
 #include <sys/malloc.h>
+#include <sys/mutex.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>

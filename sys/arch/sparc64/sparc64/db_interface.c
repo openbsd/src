@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.55 2020/01/30 08:51:27 mpi Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.56 2021/05/30 15:05:33 visa Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -35,6 +35,7 @@
 #include <sys/reboot.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
+#include <sys/mutex.h>
 
 #include <dev/cons.h>
 

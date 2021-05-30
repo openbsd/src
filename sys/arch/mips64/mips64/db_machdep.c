@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.56 2021/05/01 16:11:11 visa Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.57 2021/05/30 15:05:32 visa Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -28,6 +28,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/mutex.h>
 #include <sys/proc.h>
 #include <dev/cons.h>
 
