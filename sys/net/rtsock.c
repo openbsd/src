@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.316 2021/05/25 22:45:09 bluhm Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.317 2021/05/30 21:01:27 bluhm Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -2356,7 +2356,7 @@ rt_setsource(unsigned int rtableid, struct sockaddr *src)
  * Definitions of protocols supported in the ROUTE domain.
  */
 
-struct protosw routesw[] = {
+const struct protosw routesw[] = {
 {
   .pr_type	= SOCK_RAW,
   .pr_domain	= &routedomain,
