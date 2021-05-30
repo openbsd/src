@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.184 2021/04/20 04:31:54 ratchov Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.185 2021/05/30 03:18:38 jsg Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -209,6 +209,9 @@ azalia_codec_init_vtbl(codec_t *this)
 			this->name = "Realtek ALC3235";
 		else
 			this->name = "Realtek ALC293";
+		break;
+	case 0x10ec0294:
+		this->name = "Realtek ALC294";
 		break;
 	case 0x10ec0295:
 		if (PCI_VENDOR(this->subid) == PCI_VENDOR_DELL)
