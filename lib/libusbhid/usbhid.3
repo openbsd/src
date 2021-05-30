@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usbhid.3,v 1.21 2020/10/24 10:33:44 jmc Exp $
+.\"	$OpenBSD: usbhid.3,v 1.22 2021/05/30 19:54:52 jcs Exp $
 .\"	$NetBSD: usbhid.3,v 1.5 2002/02/07 07:00:52 ross Exp $
 .\"
 .\" Copyright (c) 1999, 2001 Lennart Augustsson <augustss@netbsd.org>
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 24 2020 $
+.Dd $Mdocdate: May 30 2021 $
 .Dt USBHID 3
 .Os
 .Sh NAME
@@ -33,6 +33,7 @@
 .Nm hid_get_report_desc ,
 .Nm hid_use_report_desc ,
 .Nm hid_dispose_report_desc ,
+.Nm hid_get_report_desc_data ,
 .Nm hid_start_parse ,
 .Nm hid_end_parse ,
 .Nm hid_get_item ,
@@ -55,6 +56,8 @@
 .Fn hid_use_report_desc "unsigned char *data" "unsigned int size"
 .Ft void
 .Fn hid_dispose_report_desc "report_desc_t d"
+.Ft void
+.Fn hid_get_report_desc_data "report_desc_t d" "uint8_t **data" "uint32_t *size"
 .Ft hid_data_t
 .Fn hid_start_parse "report_desc_t d" "int kindset" "int id"
 .Ft void
@@ -104,7 +107,8 @@ with a file descriptor obtained by opening a
 device.
 Alternatively a data buffer containing the report descriptor can be passed into
 .Fn hid_use_report_desc .
-The data is copied into an internal structure.
+The data is copied into an internal structure which can be accessed with
+.Fn hid_get_report_desc_data .
 When the report descriptor is no longer needed it should be freed by calling
 .Fn hid_dispose_report_desc .
 The type

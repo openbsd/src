@@ -1,4 +1,4 @@
-/*	$OpenBSD: descr.c,v 1.7 2019/06/28 13:32:42 deraadt Exp $	*/
+/*	$OpenBSD: descr.c,v 1.8 2021/05/30 19:54:52 jcs Exp $	*/
 /*	$NetBSD: descr.c,v 1.2 2002/02/20 20:31:07 christos Exp $	*/
 
 /*
@@ -70,4 +70,11 @@ hid_dispose_report_desc(report_desc_t r)
 {
 
 	free(r);
+}
+
+void
+hid_get_report_desc_data(report_desc_t d, uint8_t **data, uint32_t *size)
+{
+	*data = d->data;
+	*size = d->size;
 }
