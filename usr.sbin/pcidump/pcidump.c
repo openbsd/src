@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.63 2021/03/05 20:06:39 jan Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.64 2021/05/30 02:24:43 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -1180,6 +1180,14 @@ static const struct pci_subclass pci_subclass_display[] = {
 	{ PCI_SUBCLASS_DISPLAY_MISC,		"Miscellaneous"	},
 };
 
+static const struct pci_subclass pci_subclass_multimedia[] = {
+	{ PCI_SUBCLASS_MULTIMEDIA_VIDEO,	"Video"		},
+	{ PCI_SUBCLASS_MULTIMEDIA_AUDIO,	"Audio"		},
+	{ PCI_SUBCLASS_MULTIMEDIA_TELEPHONY,	"Telephony"	},
+	{ PCI_SUBCLASS_MULTIMEDIA_HDAUDIO,	"HD Audio"	},
+	{ PCI_SUBCLASS_MULTIMEDIA_MISC,		"Miscellaneous"	},
+};
+
 static const struct pci_subclass pci_subclass_memory[] = {
 	{ PCI_SUBCLASS_MEMORY_RAM,		"RAM"		},
 	{ PCI_SUBCLASS_MEMORY_FLASH,		"Flash"		},
@@ -1315,6 +1323,8 @@ static const struct pci_class pci_classes[] = {
 	    pci_subclass_network),
 	CLASS(PCI_CLASS_DISPLAY,	"Display",
 	    pci_subclass_display),
+	CLASS(PCI_CLASS_MULTIMEDIA,	"Multimedia",
+	    pci_subclass_multimedia),
 	CLASS(PCI_CLASS_MEMORY,		"Memory",
 	    pci_subclass_memory),
 	CLASS(PCI_CLASS_BRIDGE,		"Bridge",
