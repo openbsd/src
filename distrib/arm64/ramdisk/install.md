@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.15 2021/04/17 21:19:40 sthen Exp $
+#	$OpenBSD: install.md,v 1.16 2021/05/30 18:57:22 kettenis Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -114,8 +114,31 @@ __EOT
 			newfs -t ${bootfstype} ${newfs_args} ${_disk}i
 			return ;;
 		[eE]*)
-			# Manually configure the MBR.
-			cat <<__EOT
+			if disk_has $_disk gpt; then
+				# Manually configure the GPT.
+				cat <<__EOT
+
+You will now create two GPT partitions. The first must have an id
+of 'EF' and be large enough to contain the OpenBSD boot programs,
+at least 32768 blocks. The second must have an id of 'A6' and will
+contain your OpenBSD data. Neither may overlap other partitions.
+Inside the fdisk command, the 'manual' command describes the fdisk
+commands in detail.
+
+$(fdisk $_disk)
+__EOT
+				fdisk -e $_disk
+
+				if ! disk_has $_disk gpt openbsd; then
+					echo -n "No OpenBSD partition in GPT,"
+				elif ! disk_has $_disk gpt efisys; then
+					echo -n "No EFI Sys partition in GPT,"
+				else
+					return
+				fi
+			else
+				# Manually configure the MBR.
+				cat <<__EOT
 
 You will now create one MBR partition to contain your OpenBSD data
 and one MBR partition on which the OpenBSD boot program is located.
@@ -128,9 +151,11 @@ partition on the disk.
 
 $(fdisk ${_disk})
 __EOT
-			fdisk -e ${_disk}
-			disk_has $_disk mbr openbsd && return
-			echo No OpenBSD partition in MBR, try again. ;;
+				fdisk -e ${_disk}
+				disk_has $_disk mbr openbsd && return
+				echo -n "No OpenBSD partition in MBR,"
+			fi
+			echo "try again." ;;
 		esac
 	done
 }
