@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.151 2020/12/23 20:45:02 cheloha Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.152 2021/05/31 12:45:33 visa Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -396,7 +396,7 @@ sys_settimeofday(struct proc *p, void *v, register_t *retval)
 }
 
 #define ADJFREQ_MAX (500000000LL << 32)
-#define ADJFREQ_MIN (-500000000LL << 32)
+#define ADJFREQ_MIN (-ADJFREQ_MAX)
 
 int
 sys_adjfreq(struct proc *p, void *v, register_t *retval)
