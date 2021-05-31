@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.212 2021/04/05 20:45:49 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.213 2021/05/31 21:06:48 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -490,9 +490,6 @@ uvideo_match(struct device *parent, void *match, void *aux)
 	/* quirk devices */
 	quirk = uvideo_lookup(uaa->vendor, uaa->product);
 	if (quirk != NULL) {
-		if (quirk->flags & UVIDEO_FLAG_NOATTACH)
-			return (UMATCH_NONE);
-
 		if (quirk->flags & UVIDEO_FLAG_REATTACH)
 			return (UMATCH_VENDOR_PRODUCT_CONF_IFACE);
 
@@ -577,6 +574,11 @@ uvideo_attach(struct device *parent, struct device *self, void *aux)
 
 	/* maybe the device has quirks */
 	sc->sc_quirk = uvideo_lookup(uaa->vendor, uaa->product);
+
+	if (sc->sc_quirk && sc->sc_quirk->flags & UVIDEO_FLAG_NOATTACH) {
+		printf("%s: device not supported\n", DEVNAME(sc));
+		return;
+	}
 
 	if (sc->sc_quirk && sc->sc_quirk->ucode_name)
 		config_mountroot(self, uvideo_attach_hook);
