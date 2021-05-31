@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.72 2021/05/23 17:01:21 jan Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.73 2021/05/31 16:18:01 jan Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -1072,9 +1072,7 @@ static int	 yylex(void);
 extern int epsvall;
 
 static struct tab *
-lookup(p, cmd)
-	struct tab *p;
-	const char *cmd;
+lookup(struct tab *p, const char *cmd)
 {
 
 	for (; p->name != NULL; p++)
@@ -1089,9 +1087,7 @@ lookup(p, cmd)
  * get_line - a hacked up version of fgets to ignore TELNET escape codes.
  */
 int
-get_line(s, n)
-	char *s;
-	int n;
+get_line(char *s, int n)
 {
 	int c;
 	char *cs;
@@ -1176,8 +1172,7 @@ get_line(s, n)
 
 /*ARGSUSED*/
 void
-toolong(signo)
-	int signo;
+toolong(int signo)
 {
 	struct syslog_data sdata = SYSLOG_DATA_INIT;
 
@@ -1190,7 +1185,7 @@ toolong(signo)
 }
 
 static int
-yylex()
+yylex(void)
 {
 	static int cpos;
 	char *cp, *cp2;
@@ -1429,8 +1424,7 @@ yylex()
 }
 
 void
-upper(s)
-	char *s;
+upper(char *s)
 {
 	char *p;
 
@@ -1439,9 +1433,7 @@ upper(s)
 }
 
 static void
-help(ctab, s)
-	struct tab *ctab;
-	char *s;
+help(struct tab *ctab, char *s)
 {
 	struct tab *c;
 	int width, NCMDS;
@@ -1504,8 +1496,7 @@ help(ctab, s)
 }
 
 static void
-sizecmd(filename)
-	const char *filename;
+sizecmd(const char *filename)
 {
 	switch (type) {
 	case TYPE_L:
