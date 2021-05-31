@@ -1,5 +1,5 @@
-/*	$OpenBSD: t_sendrecv.c,v 1.1.1.1 2019/11/19 19:57:04 bluhm Exp $	*/
-/*	$NetBSD: t_sendrecv.c,v 1.6 2019/02/03 03:19:28 mrg Exp $	*/
+/*	$OpenBSD: t_sendrecv.c,v 1.2 2021/05/31 16:56:27 bluhm Exp $	*/
+/*	$NetBSD: t_sendrecv.c,v 1.8 2021/03/28 17:30:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "macros.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sendrecv.c,v 1.6 2019/02/03 03:19:28 mrg Exp $");
+__RCSID("$NetBSD: t_sendrecv.c,v 1.8 2021/03/28 17:30:01 christos Exp $");
 
 #include "atf-c.h"
 #include <sys/types.h>
@@ -44,8 +44,8 @@ __RCSID("$NetBSD: t_sendrecv.c,v 1.6 2019/02/03 03:19:28 mrg Exp $");
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <sched.h>
+#include <unistd.h>
 #include <signal.h>
 
 
@@ -66,61 +66,66 @@ handle_sigchld(__unused int pid)
 }
 
 static void
-sender(int fd)
+sender(int sd)
 {
 	union packet p;
 	ssize_t n;
 	p.seq = 0;
 	for (size_t i = 0; i < COUNT; i++) {
-		for (; (n = send(fd, &p, sizeof(p), 0)) == sizeof(p);
+		for (; (n = send(sd, &p, sizeof(p), 0)) == sizeof(p);
 		    p.seq++)
 			continue;
-		printf(">>%zd %d %ju\n", n, errno, p.seq);
+//		printf(">>%zd %d %ju\n", n, errno, p.seq);
 		ATF_REQUIRE_MSG(errno == ENOBUFS, "send %s", strerror(errno));
-//		sched_yield();
 	}
-	printf("sender done\n");
+	close(sd);
+//	printf("sender done\n");
 }
 
 static void
-receiver(int fd)
+receiver(int sd)
 {
 	union packet p;
 	ssize_t n;
 	uintmax_t seq = 0;
 
-	do {
+	for (size_t i = 0; i < COUNT; i++) {
 		if (rdied)
 			return;
-		while ((n = recv(fd, &p, sizeof(p), 0), sizeof(p))
+		while ((n = recv(sd, &p, sizeof(p), 0), sizeof(p))
 		    == sizeof(p))
 		{
 			if (rdied)
 				return;
 			if (p.seq != seq)
 				printf("%ju != %ju\n", p.seq, seq);
+			if (seq % 10 == 0)
+				sched_yield();
 			seq = p.seq + 1;
 		}
-		printf("<<%zd %d %ju\n", n, errno, seq);
+//		printf("<<%zd %d %ju\n", n, errno, seq);
 		if (n == 0)
 			return;
 		ATF_REQUIRE_EQ(n, -1);
 		ATF_REQUIRE_MSG(errno == ENOBUFS, "recv %s", strerror(errno));
-	} while (p.seq < COUNT);
+	}
+	close(sd);
 }
 
 static void
 sendrecv(int rerror)
 {
-	int fd[2], error;
+	int fd[2], sd[2], error;
+	char c = 0;
 	struct sigaction sa;
 
-	error = socketpair(AF_UNIX, SOCK_DGRAM, 0, fd);
-//	error = pipe(fd);
+	error = socketpair(AF_UNIX, SOCK_DGRAM, 0, sd);
 	ATF_REQUIRE_MSG(error != -1, "socketpair failed (%s)", strerror(errno));
+	error = pipe(fd);
+	ATF_REQUIRE_MSG(error != -1, "pipe failed (%s)", strerror(errno));
 
-	for (size_t i = 0; i < __arraycount(fd); i++) {
-		error = setsockopt(fd[i], SOL_SOCKET, SO_RERROR, &rerror,
+	for (size_t i = 0; i < __arraycount(sd); i++) {
+		error = setsockopt(sd[i], SOL_SOCKET, SO_RERROR, &rerror,
 		    sizeof(rerror));
 		ATF_REQUIRE_MSG(error != -1,
 		    "setsockopt(SO_RERROR) failed (%s)", strerror(errno));
@@ -137,17 +142,18 @@ sendrecv(int rerror)
 	switch (fork()) {
 	case -1:
 		ATF_REQUIRE_MSG(errno == 0,
-		    "socketpair failed (%s)", strerror(errno));
+		    "fork failed (%s)", strerror(errno));
 		__unreachable();
 		/*NOTREACHED*/
 	case 0:
-		sched_yield();
-		sender(fd[0]);
-		close(fd[0]);
+		read(fd[1], &c, sizeof(c));
+		sender(sd[0]);
+		close(sd[0]);
 		exit(EXIT_SUCCESS);
 		/*NOTREACHED*/
 	default:
-		receiver(fd[1]);
+		write(fd[0], &c, sizeof(c));
+		receiver(sd[1]);
 		return;
 	}
 }
