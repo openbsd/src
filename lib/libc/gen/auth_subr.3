@@ -1,4 +1,4 @@
-.\"	$OpenBSD: auth_subr.3,v 1.24 2019/12/21 06:01:09 jsg Exp $
+.\"	$OpenBSD: auth_subr.3,v 1.25 2021/05/31 19:54:04 millert Exp $
 .\"
 .\" Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	BSDI $From: auth_subr.3,v 2.5 2000/03/30 19:11:27 polk Exp $
-.Dd $Mdocdate: December 21 2019 $
+.Dd $Mdocdate: May 31 2021 $
 .Dt AUTH_OPEN 3
 .Os
 .Sh NAME
@@ -189,11 +189,6 @@ the following parameters:
 .Bl -tag -width indent
 .It Ar path
 The full path name of the login script to run.
-The call will fail if
-.Ar path
-does not pass the requirements of the
-.Xr secure_path 3
-function.
 .It Ar ...
 The remaining arguments, which should be of type
 .Vt char *
