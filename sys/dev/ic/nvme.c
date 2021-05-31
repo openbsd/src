@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.97 2021/05/29 08:07:43 kettenis Exp $ */
+/*	$OpenBSD: nvme.c,v 1.98 2021/05/31 04:13:42 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -298,11 +298,11 @@ nvme_attach(struct nvme_softc *sc)
 
 	reg = nvme_read4(sc, NVME_VS);
 	if (reg == 0xffffffff) {
-		printf(", invalid mapping\n");
+		printf("invalid mapping\n");
 		return (1);
 	}
 
-	printf(", NVMe %d.%d\n", NVME_VS_MJR(reg), NVME_VS_MNR(reg));
+	printf("NVMe %d.%d\n", NVME_VS_MJR(reg), NVME_VS_MNR(reg));
 
 	cap = nvme_read8(sc, NVME_CAP);
 	sc->sc_dstrd = NVME_CAP_DSTRD(cap);

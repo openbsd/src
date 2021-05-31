@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme_pci.c,v 1.8 2019/06/27 17:55:42 kettenis Exp $ */
+/*	$OpenBSD: nvme_pci.c,v 1.9 2021/05/31 04:13:42 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -95,20 +95,22 @@ nvme_pci_attach(struct device *parent, struct device *self, void *aux)
 	psc->psc_pc = pa->pa_pc;
 	sc->sc_dmat = pa->pa_dmat;
 
+	printf(": ");
+
 	if (pci_matchbyid(pa, nvme_msi_blacklist, nitems(nvme_msi_blacklist)))
 		CLR(pa->pa_flags, PCI_FLAGS_MSI_ENABLED);
 
 	maptype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, NVME_PCI_BAR);
 	if (pci_mapreg_map(pa, NVME_PCI_BAR, maptype, 0,
 	    &sc->sc_iot, &sc->sc_ioh, NULL, &sc->sc_ios, 0) != 0) {
-		printf(": unable to map registers\n");
+		printf("unable to map registers\n");
 		return;
 	}
 
 	if (pci_intr_map_msix(pa, 0, &ih) != 0 &&
 	    pci_intr_map_msi(pa, &ih) != 0) {
 		if (pci_intr_map(pa, &ih) != 0) {
-			printf(": unable to map interrupt\n");
+			printf("unable to map interrupt\n");
 			goto unmap;
 		}
 		msi = 0;
@@ -117,11 +119,11 @@ nvme_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,
 	    msi ? nvme_intr : nvme_intr_intx, sc, DEVNAME(sc));
 	if (sc->sc_ih == NULL) {
-		printf(": unable to establish interrupt\n");
+		printf("unable to establish interrupt\n");
 		goto unmap;
 	}
 
-	printf(": %s", pci_intr_string(pa->pa_pc, ih));
+	printf("%s, ", pci_intr_string(pa->pa_pc, ih));
 	if (nvme_attach(sc) != 0) {
 		/* error printed by nvme_attach() */
 		goto disestablish;
