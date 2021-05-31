@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.98 2021/05/31 04:13:42 dlg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.99 2021/05/31 04:48:35 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -141,15 +141,9 @@ u_int64_t
 nvme_read8(struct nvme_softc *sc, bus_size_t r)
 {
 	u_int64_t v;
-	u_int32_t *a = (u_int32_t *)&v;
 
-#if _BYTE_ORDER == _LITTLE_ENDIAN
-	a[0] = nvme_read4(sc, r);
-	a[1] = nvme_read4(sc, r + 4);
-#else /* _BYTE_ORDER == _LITTLE_ENDIAN */
-	a[1] = nvme_read4(sc, r);
-	a[0] = nvme_read4(sc, r + 4);
-#endif
+	v = (u_int64_t)nvme_read4(sc, r) | 
+	    (u_int64_t)nvme_read4(sc, r + 4) << 32;
 
 	return (v);
 }
@@ -157,15 +151,8 @@ nvme_read8(struct nvme_softc *sc, bus_size_t r)
 void
 nvme_write8(struct nvme_softc *sc, bus_size_t r, u_int64_t v)
 {
-	u_int32_t *a = (u_int32_t *)&v;
-
-#if _BYTE_ORDER == _LITTLE_ENDIAN
-	nvme_write4(sc, r, a[0]);
-	nvme_write4(sc, r + 4, a[1]);
-#else /* _BYTE_ORDER == _LITTLE_ENDIAN */
-	nvme_write4(sc, r, a[1]);
-	nvme_write4(sc, r + 4, a[0]);
-#endif
+	nvme_write4(sc, r, v);
+	nvme_write4(sc, r + 4, v >> 32);
 }
 
 void
