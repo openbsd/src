@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.56 2021/05/16 15:10:20 deraadt Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.57 2021/05/31 08:43:07 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -1454,11 +1454,6 @@ iwx_nic_lock(struct iwx_softc *sc)
 void
 iwx_nic_assert_locked(struct iwx_softc *sc)
 {
-	uint32_t reg = IWX_READ(sc, IWX_CSR_GP_CNTRL);
-	if ((reg & IWX_CSR_GP_CNTRL_REG_FLAG_MAC_CLOCK_READY) == 0)
-		panic("%s: mac clock not ready", DEVNAME(sc));
-	if (reg & IWX_CSR_GP_CNTRL_REG_FLAG_GOING_TO_SLEEP)
-		panic("%s: mac gone to sleep", DEVNAME(sc));
 	if (sc->sc_nic_locks <= 0)
 		panic("%s: nic locks counter %d", DEVNAME(sc), sc->sc_nic_locks);
 }
