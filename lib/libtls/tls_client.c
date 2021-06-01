@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_client.c,v 1.45 2018/03/19 16:34:47 jsing Exp $ */
+/* $OpenBSD: tls_client.c,v 1.46 2021/06/01 20:14:17 tb Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -279,6 +279,7 @@ static int
 tls_connect_common(struct tls *ctx, const char *servername)
 {
 	union tls_addr addrbuf;
+	size_t servername_len;
 	int rv = -1;
 
 	if ((ctx->flags & TLS_CLIENT) == 0) {
@@ -291,6 +292,17 @@ tls_connect_common(struct tls *ctx, const char *servername)
 			tls_set_errorx(ctx, "out of memory");
 			goto err;
 		}
+
+		/*
+		 * If there's a trailing dot, remove it. While an FQDN includes
+		 * the terminating dot representing the zero-length label of
+		 * the root (RFC 8499, section 2), the SNI explicitly does not
+		 * include it (RFC 6066, section 3).
+		 */
+		servername_len = strlen(ctx->servername);
+		if (servername_len > 0 &&
+		    ctx->servername[servername_len - 1] == '.')
+			ctx->servername[servername_len - 1] = '\0';
 	}
 
 	if ((ctx->ssl_ctx = SSL_CTX_new(SSLv23_client_method())) == NULL) {
@@ -306,7 +318,7 @@ tls_connect_common(struct tls *ctx, const char *servername)
 		goto err;
 
 	if (ctx->config->verify_name) {
-		if (servername == NULL) {
+		if (ctx->servername == NULL) {
 			tls_set_errorx(ctx, "server name not specified");
 			goto err;
 		}
@@ -353,10 +365,11 @@ tls_connect_common(struct tls *ctx, const char *servername)
 	 * RFC4366 (SNI): Literal IPv4 and IPv6 addresses are not
 	 * permitted in "HostName".
 	 */
-	if (servername != NULL &&
-	    inet_pton(AF_INET, servername, &addrbuf) != 1 &&
-	    inet_pton(AF_INET6, servername, &addrbuf) != 1) {
-		if (SSL_set_tlsext_host_name(ctx->ssl_conn, servername) == 0) {
+	if (ctx->servername != NULL &&
+	    inet_pton(AF_INET, ctx->servername, &addrbuf) != 1 &&
+	    inet_pton(AF_INET6, ctx->servername, &addrbuf) != 1) {
+		if (SSL_set_tlsext_host_name(ctx->ssl_conn,
+		    ctx->servername) == 0) {
 			tls_set_errorx(ctx, "server name indication failure");
 			goto err;
 		}
