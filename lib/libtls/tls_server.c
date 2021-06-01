@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_server.c,v 1.45 2019/05/13 22:36:01 bcook Exp $ */
+/* $OpenBSD: tls_server.c,v 1.46 2021/06/01 19:49:17 tb Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -109,7 +109,7 @@ tls_servername_cb(SSL *ssl, int *al, void *arg)
             inet_pton(AF_INET6, name, &addrbuf) == 1)
 		return (SSL_TLSEXT_ERR_NOACK);
 
-	free((char *)conn_ctx->servername);
+	free(conn_ctx->servername);
 	if ((conn_ctx->servername = strdup(name)) == NULL)
 		goto err;
 
