@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_client.c,v 1.46 2021/06/01 20:14:17 tb Exp $ */
+/* $OpenBSD: tls_client.c,v 1.47 2021/06/01 20:26:11 tb Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -362,7 +362,7 @@ tls_connect_common(struct tls *ctx, const char *servername)
 	}
 
 	/*
-	 * RFC4366 (SNI): Literal IPv4 and IPv6 addresses are not
+	 * RFC 6066 (SNI): Literal IPv4 and IPv6 addresses are not
 	 * permitted in "HostName".
 	 */
 	if (ctx->servername != NULL &&
