@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.62 2021/05/10 08:28:00 stsp Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.63 2021/06/01 13:21:08 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -545,7 +545,9 @@ struct iwm_softc {
 	int sc_capa_n_scan_channels;
 	uint8_t sc_ucode_api[howmany(IWM_NUM_UCODE_TLV_API, NBBY)];
 	uint8_t sc_enabled_capa[howmany(IWM_NUM_UCODE_TLV_CAPA, NBBY)];
-	char sc_fw_mcc[3];
+#define IWM_MAX_FW_CMD_VERSIONS	64
+	struct iwm_fw_cmd_version cmd_versions[IWM_MAX_FW_CMD_VERSIONS];
+	int n_cmd_versions;
 
 	int sc_intmask;
 	int sc_flags;
@@ -618,6 +620,9 @@ struct iwm_softc {
 
 	int sc_mqrx_supported;
 	int sc_integrated;
+	int sc_ltr_delay;
+	int sc_xtal_latency;
+	int sc_low_latency_xtal;
 
 	/*
 	 * Paging parameters - All of the parameters should be set by the
