@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkuboot.c,v 1.9 2019/06/28 13:32:48 deraadt Exp $	*/
+/*	$OpenBSD: mkuboot.c,v 1.10 2021/06/01 02:59:01 jsg Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -36,7 +36,6 @@
 #define IH_ARCH_ALPHA           1       /* Alpha        */
 #define IH_ARCH_ARM             2       /* ARM          */
 #define IH_ARCH_I386            3       /* Intel x86    */
-#define IH_ARCH_IA64            4       /* IA64         */
 #define IH_ARCH_MIPS            5       /* MIPS         */
 #define IH_ARCH_MIPS64          6       /* MIPS  64 Bit */
 #define IH_ARCH_PPC             7       /* PowerPC      */
@@ -45,6 +44,7 @@
 #define IH_ARCH_SPARC64         11      /* Sparc 64 Bit */
 #define IH_ARCH_M68K            12      /* M68K         */
 #define IH_ARCH_ARM64           22      /* AARCH64      */
+#define IH_ARCH_X86_64          24      /* AMD64        */
 
 #define IH_TYPE_STANDALONE	1 /* Standalone */
 #define IH_TYPE_KERNEL		2 /* OS Kernel Image */
@@ -98,7 +98,7 @@ struct arch_map {
 static const struct arch_map archmap[] = {
     { IH_ARCH_ARM64,	"aarch64" },
     { IH_ARCH_ALPHA,	"alpha" },
-    { IH_ARCH_IA64,	"amd64" },
+    { IH_ARCH_X86_64,	"amd64" },
     { IH_ARCH_ARM,	"arm" },
     { IH_ARCH_I386,	"i386" },
     { IH_ARCH_M68K,	"m68k" },
