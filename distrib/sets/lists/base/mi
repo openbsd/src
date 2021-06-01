@@ -675,7 +675,7 @@
 ./usr/lib/libtermcap.so.14.0
 ./usr/lib/libtermlib.so.14.0
 ./usr/lib/libtls.so.21.0
-./usr/lib/libusbhid.so.7.0
+./usr/lib/libusbhid.so.7.1
 ./usr/lib/libutil.so.15.0
 ./usr/lib/libz.so.5.0
 ./usr/lib/locate
