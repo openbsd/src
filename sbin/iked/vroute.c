@@ -1,4 +1,4 @@
-/*	$OpenBSD: vroute.c,v 1.9 2021/05/13 15:20:48 tobhe Exp $	*/
+/*	$OpenBSD: vroute.c,v 1.10 2021/06/01 20:57:12 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2021 Tobias Heider <tobhe@openbsd.org>
@@ -48,8 +48,8 @@ void vroute_cleanup(struct iked *);
 
 void vroute_insertaddr(struct iked *, int, struct sockaddr *, struct sockaddr *);
 void vroute_removeaddr(struct iked *, int, struct sockaddr *, struct sockaddr *);
-void vroute_insertroute(struct iked *, int, struct sockaddr *);
-void vroute_removeroute(struct iked *, int, struct sockaddr *);
+void vroute_insertroute(struct iked *, int, struct sockaddr *, struct sockaddr *);
+void vroute_removeroute(struct iked *, int, struct sockaddr *, struct sockaddr *);
 
 struct vroute_addr {
 	int				va_ifidx;
@@ -61,7 +61,9 @@ TAILQ_HEAD(vroute_addrs, vroute_addr);
 
 struct vroute_route {
 	int				vr_rdomain;
+	int				vr_flags;
 	struct	sockaddr_storage	vr_dest;
+	struct	sockaddr_storage	vr_mask;
 	TAILQ_ENTRY(vroute_route)	vr_entry;
 };
 TAILQ_HEAD(vroute_routes, vroute_route);
@@ -129,8 +131,10 @@ vroute_cleanup(struct iked *env)
 
 	while ((route = TAILQ_FIRST(&ivr->ivr_routes))) {
 		vroute_doroute(env, RTF_UP | RTF_GATEWAY | RTF_STATIC,
-		    RTA_DST, route->vr_rdomain, RTM_DELETE,
-		    (struct sockaddr *)&route->vr_dest, NULL, NULL, NULL);
+		    route->vr_flags, route->vr_rdomain, RTM_DELETE,
+		    (struct sockaddr *)&route->vr_dest,
+		    (struct sockaddr *)&route->vr_mask,
+		    NULL, NULL);
 		TAILQ_REMOVE(&ivr->ivr_routes, route, vr_entry);
 		free(route);
 	}
@@ -189,7 +193,8 @@ vroute_getaddr(struct iked *env, struct imsg *imsg)
 }
 
 void
-vroute_insertroute(struct iked *env, int rdomain, struct sockaddr *dest)
+vroute_insertroute(struct iked *env, int rdomain, struct sockaddr *dest,
+    struct sockaddr *mask)
 {
 	struct iked_vroute_sc	*ivr = env->sc_vroute;
 	struct vroute_route	*route;
@@ -198,20 +203,33 @@ vroute_insertroute(struct iked *env, int rdomain, struct sockaddr *dest)
 	if (route == NULL)
 		fatalx("%s: calloc.", __func__);
 
-	memcpy(&route->vr_dest, dest, dest->sa_len);
+	if (dest != NULL) {
+		route->vr_flags |= RTA_DST;
+		memcpy(&route->vr_dest, dest, dest->sa_len);
+	}
+	if (mask != NULL) {
+		route->vr_flags |= RTA_NETMASK;
+		memcpy(&route->vr_mask, mask, mask->sa_len);
+	}
 	route->vr_rdomain = rdomain;
 
 	TAILQ_INSERT_TAIL(&ivr->ivr_routes, route, vr_entry);
 }
 
 void
-vroute_removeroute(struct iked *env, int rdomain, struct sockaddr *dest)
+vroute_removeroute(struct iked *env, int rdomain, struct sockaddr *dest,
+    struct sockaddr *mask)
 {
 	struct iked_vroute_sc	*ivr = env->sc_vroute;
 	struct vroute_route	*route;
 
 	TAILQ_FOREACH(route, &ivr->ivr_routes, vr_entry) {
 		if (sockaddr_cmp(dest, (struct sockaddr *)&route->vr_dest, -1))
+			continue;
+		if (mask && !(route->vr_flags & RTA_NETMASK))
+			continue;
+		if (mask &&
+		    sockaddr_cmp(mask, (struct sockaddr *)&route->vr_mask, -1))
 			continue;
 		if (rdomain != route->vr_rdomain)
 			continue;
@@ -393,11 +411,14 @@ vroute_getroute(struct iked *env, struct imsg *imsg)
 		type = RTM_ADD;
 		break;
 	case IMSG_VROUTE_DEL:
-		vroute_removeroute(env, rdomain, dest);
 		type = RTM_DELETE;
 		break;
 	}
 
+	if (type == RTM_ADD)
+		vroute_insertroute(env, rdomain, dest, mask);
+	else
+		vroute_removeroute(env, rdomain, dest, mask);
 	return (vroute_doroute(env, flags, addrs, rdomain, type,
 	    dest, mask, gateway, NULL));
 }
@@ -434,7 +455,7 @@ vroute_getcloneroute(struct iked *env, struct imsg *imsg)
 	dst = (struct sockaddr *)ptr;
 	if (left < dst->sa_len)
 		return (-1);
-	memcpy(&dest, ptr, dst->sa_len);
+	memcpy(&dest, dst, dst->sa_len);
 	ptr += dst->sa_len;
 	left -= dst->sa_len;
 
@@ -448,12 +469,15 @@ vroute_getcloneroute(struct iked *env, struct imsg *imsg)
 	if (need_gw)
 		flags |= RTF_GATEWAY;
 
-	vroute_insertroute(env, rdomain, (struct sockaddr *)&dest);
+	memcpy(&dest, dst, dst->sa_len);
+	socket_setport((struct sockaddr *)&dest, 0);
+	vroute_insertroute(env, rdomain, (struct sockaddr *)&dest, NULL);
 
 	/* Set explicit route to peer with gateway addr*/
 	addrs = RTA_DST | RTA_GATEWAY | RTA_NETMASK;
 	return (vroute_doroute(env, flags, addrs, rdomain, RTM_ADD,
-	    dst, (struct sockaddr *)&mask, (struct sockaddr *)&addr, NULL));
+	    (struct sockaddr *)&dest, (struct sockaddr *)&mask,
+	    (struct sockaddr *)&addr, NULL));
 }
 
 int
