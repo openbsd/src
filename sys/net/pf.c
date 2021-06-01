@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1117 2021/05/17 23:01:26 sashan Exp $ */
+/*	$OpenBSD: pf.c,v 1.1118 2021/06/01 09:57:11 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1335,7 +1335,7 @@ pf_purge_expired_src_nodes(void)
 	PF_ASSERT_LOCKED();
 
 	for (cur = RB_MIN(pf_src_tree, &tree_src_tracking); cur; cur = next) {
-	next = RB_NEXT(pf_src_tree, &tree_src_tracking, cur);
+		next = RB_NEXT(pf_src_tree, &tree_src_tracking, cur);
 
 		if (cur->states == 0 && cur->expire <= getuptime()) {
 			next = RB_NEXT(pf_src_tree, &tree_src_tracking, cur);
@@ -3440,7 +3440,7 @@ pf_set_rt_ifp(struct pf_state *s, struct pf_addr *saddr, sa_family_t af,
 	if (!r->rt)
 		return (0);
 
-	rv = pf_map_addr(af, r, saddr, &s->rt_addr, NULL, sns, 
+	rv = pf_map_addr(af, r, saddr, &s->rt_addr, NULL, sns,
 	    &r->route, PF_SN_ROUTE);
 	if (rv == 0)
 		s->rt = r->rt;
