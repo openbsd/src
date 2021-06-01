@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.242 2021/05/27 14:27:41 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.243 2021/06/01 22:54:43 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -749,17 +749,17 @@ spoofgptlabel(struct buf *bp, void (*strat)(struct buf *),
 	static const u_int8_t gpt_uuid_openbsd[] = GPT_UUID_OPENBSD;
 	struct gpt_header gh;
 	struct uuid uuid_part, uuid_openbsd;
-	struct gpt_partition *gp, *gp_tmp;
+	struct gpt_partition *gp;
 	struct partition *pp;
 	size_t gpsz;
-	u_int64_t ghlbaend, ghlbastart, gptpartoff, gptpartend, sector;
+	u_int64_t ghlbaend, ghlbastart, sector;
 	u_int64_t start, end;
-	int i, altheader = 0, error, n;
+	int i, error, found, n;
 	uint32_t ghpartnum;
 
 	uuid_dec_be(gpt_uuid_openbsd, &uuid_openbsd);
 
-	for (sector = GPTSECTOR; ; sector = DL_GETDSIZE(lp)-1, altheader = 1) {
+	for (sector = GPTSECTOR; ; sector = DL_GETDSIZE(lp) - 1) {
 		uint64_t ghpartlba;
 		uint32_t ghpartsize;
 		uint32_t ghpartspersec;
@@ -773,7 +773,7 @@ spoofgptlabel(struct buf *bp, void (*strat)(struct buf *),
 		bcopy(bp->b_data, &gh, sizeof(gh));
 
 		if (gpt_chk_hdr(&gh, lp)) {
-			if (altheader) {
+			if (sector != GPTSECTOR) {
 				DPRINTF("alternate header also broken\n");
 				return (EINVAL);
 			}
@@ -798,9 +798,8 @@ spoofgptlabel(struct buf *bp, void (*strat)(struct buf *),
 		* XXX:	Fails if # of partition entries is not a multiple of
 		*	ghpartspersec.
 		*/
-		sector = ghpartlba;
-		for (i = 0; i < ghpartnum / ghpartspersec; i++, sector++) {
-			error = readdisksector(bp, strat, lp, sector);
+		for (i = 0; i < ghpartnum / ghpartspersec; i++) {
+			error = readdisksector(bp, strat, lp, ghpartlba + i);
 			if (error) {
 				free(gp, M_DEVBUF, gpsz);
 				return (error);
@@ -812,7 +811,7 @@ spoofgptlabel(struct buf *bp, void (*strat)(struct buf *),
 
 		if (gpt_chk_parts(&gh, gp)) {
 			free(gp, M_DEVBUF, gpsz);
-			if (altheader) {
+			if (letoh64(gh.gh_lba_self) != GPTSECTOR) {
 				DPRINTF("alternate partition entries are also "
 				    "broken\n");
 				return (EINVAL);
@@ -823,43 +822,33 @@ spoofgptlabel(struct buf *bp, void (*strat)(struct buf *),
 	}
 
 	/* Find OpenBSD partition and spoof others along the way. */
-	n = 0;
-	gptpartoff = 0;
-	gptpartend = DL_GETBEND(lp);
-	for (gp_tmp = gp, i = 0; i < ghpartnum; gp_tmp++, i++) {
-		start = letoh64(gp_tmp->gp_lba_start);
-		end = letoh64(gp_tmp->gp_lba_end);
+	DL_SETBSTART(lp, ghlbastart);
+	DL_SETBEND(lp, ghlbaend + 1);
+	found = 0;
+	n = 'i' - 'a';	/* Start spoofing at 'i', a.k.a. 8. */
+	for (i = 0; i < ghpartnum; i++) {
+		start = letoh64(gp[i].gp_lba_start);
+		end = letoh64(gp[i].gp_lba_end);
 		if (start > end || start < ghlbastart || end > ghlbaend)
 			continue; /* entry invalid */
 
-		uuid_dec_le(&gp_tmp->gp_type, &uuid_part);
-		if (!memcmp(&uuid_part, &uuid_openbsd, sizeof(struct uuid))) {
-			if (gptpartoff == 0) {
-				gptpartoff = start;
-				gptpartend = end + 1;
+		uuid_dec_le(&gp[i].gp_type, &uuid_part);
+		if (memcmp(&uuid_part, &uuid_openbsd, sizeof(struct uuid)) == 0) {
+			if (found == 0) {
+				found = 1;
+				DL_SETBSTART(lp, start);
+				DL_SETBEND(lp, end + 1);
 			}
-			continue; /* Do *NOT* spoof OpenBSD partitions! */
+		} else if (n < MAXPARTITIONS) {
+			pp = &lp->d_partitions[n];
+			n++;
+			pp->p_fstype = gpt_get_fstype(&uuid_part);
+			DL_SETPOFFSET(pp, start);
+			DL_SETPSIZE(pp, end - start + 1);
 		}
-
-		 /*
-		 * Don't try to spoof more than 8 partitions, i.e.
-		 * 'i' -'p'.
-		 */
-		if (n >= 8)
-			continue;
-
-		pp = &lp->d_partitions[8+n];
-		n++;
-		pp->p_fstype = gpt_get_fstype(&uuid_part);
-		DL_SETPOFFSET(pp, start);
-		DL_SETPSIZE(pp, end - start + 1);
 	}
 
 	free(gp, M_DEVBUF, gpsz);
-
-	DL_SETBSTART(lp, gptpartoff);
-	DL_SETBEND(lp, (gptpartend < DL_GETDSIZE(lp)) ? gptpartend :
-	    DL_GETDSIZE(lp));
 
 	return (0);
 }
