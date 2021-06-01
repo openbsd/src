@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.123 2021/05/25 17:07:55 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.124 2021/06/01 21:12:11 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -342,6 +342,7 @@ ENTRY(cpu_switchto)
 	shrq	$32,%rdx
 
 	/* If old proc exited, don't bother. */
+	xorl	%ecx,%ecx
 	testq	%r13,%r13
 	jz	switch_exited
 
@@ -349,18 +350,19 @@ ENTRY(cpu_switchto)
 	 * Save old context.
 	 *
 	 * Registers:
-	 *   %rax, %rcx - scratch
+	 *   %rax - scratch
 	 *   %r13 - old proc, then old pcb
+	 *   %rcx - old pmap if not P_SYSTEM
 	 *   %r12 - new proc
 	 *   %r9d - cpuid
 	 */
 
+	/* remember the pmap if not P_SYSTEM */
+	testl	$P_SYSTEM,P_FLAG(%r13)
 	movq	P_ADDR(%r13),%r13
-
-	/* clear the old pmap's bit for the cpu */
+	jnz	0f
 	movq	PCB_PMAP(%r13),%rcx
-	lock
-	btrq	%r9,PM_CPUS(%rcx)
+0:
 
 	/* Save stack pointers. */
 	movq	%rsp,PCB_RSP(%r13)
@@ -416,14 +418,24 @@ restore_saved:
 	 * Restore saved context.
 	 *
 	 * Registers:
-	 *   %rax, %rcx, %rdx - scratch
-	 *   %r13 - new pcb
+	 *   %rax, %rdx - scratch
+	 *   %rcx - old pmap if not P_SYSTEM
 	 *   %r12 - new process
+	 *   %r13 - new pcb
+	 *   %rbx - new pmap if not P_SYSTEM
 	 */
+
+	movq	P_ADDR(%r12),%r13
+
+	/* remember the pmap if not P_SYSTEM */
+	xorl	%ebx,%ebx
+	testl	$P_SYSTEM,P_FLAG(%r12)
+	jnz	1f
+	movq	PCB_PMAP(%r13),%rbx
+1:
 
 	/* No interrupts while loading new state. */
 	cli
-	movq	P_ADDR(%r12),%r13
 
 	/* Restore stack pointers. */
 	movq	PCB_RSP(%r13),%rsp
@@ -438,7 +450,24 @@ restore_saved:
 	movq	PCB_CR3(%r13),%rax	/* flags from cmpq unchanged */
 	jz	.Lsame_cr3
 
+	/* set the new pmap's bit for the cpu */
+	testq	%rbx,%rbx
+	jz	.Lno_new_pmap
+	lock
+	btsq	%r9,PM_CPUS(%rbx)
+#ifdef DIAGNOSTIC
+	jc	_C_LABEL(switch_pmcpu_set)
+#endif
+.Lno_new_pmap:
+
 	movq	%rax,%cr3			/* %rax used below too */
+
+	/* clear the old pmap's bit for the cpu */
+	testq	%rcx,%rcx
+	jz	.Lno_old_pmap
+	lock
+	btrq	%r9,PM_CPUS(%rcx)
+.Lno_old_pmap:
 
 .Lsame_cr3:
 	/*
@@ -451,14 +480,13 @@ restore_saved:
 	RET_STACK_REFILL_WITH_RCX
 
 	/* Don't bother with the rest if switching to a system process. */
-	testl	$P_SYSTEM,P_FLAG(%r12)
-	jnz	switch_restored
+	testq	%rbx,%rbx
+	jz	switch_restored
 
 	/* record the bits needed for future U-->K transition */
 	movq	PCB_KSTACK(%r13),%rdx
 	subq	$FRAMESIZE,%rdx
 	movq	%rdx,CPUVAR(KERN_RSP)
-	movq	PCB_PMAP(%r13),%rcx
 
 	CODEPATCH_START
 	/*
@@ -466,19 +494,12 @@ restore_saved:
 	 * then record them in cpu_info for easy access in syscall and
 	 * interrupt trampolines.
 	 */
-	movq	PM_PDIRPA_INTEL(%rcx),%rdx
+	movq	PM_PDIRPA_INTEL(%rbx),%rdx
 	orq	cr3_reuse_pcid,%rax
 	orq	cr3_pcid_proc_intel,%rdx
 	movq	%rax,CPUVAR(KERN_CR3)
 	movq	%rdx,CPUVAR(USER_CR3)
 	CODEPATCH_END(CPTAG_MELTDOWN_NOP)
-
-	/* set the new pmap's bit for the cpu */
-	lock
-	btsq	%r9,PM_CPUS(%rcx)
-#ifdef DIAGNOSTIC
-	jc	_C_LABEL(switch_pmcpu_set)
-#endif
 
 switch_restored:
 	SET_CURPCB(%r13)
