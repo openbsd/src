@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.57 2021/05/31 08:43:07 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.58 2021/06/01 12:33:54 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -987,6 +987,8 @@ iwx_read_firmware(struct iwx_softc *sc)
 	sc->sc_capaflags = 0;
 	sc->sc_capa_n_scan_channels = IWX_DEFAULT_SCAN_CHANNELS;
 	memset(sc->sc_enabled_capa, 0, sizeof(sc->sc_enabled_capa));
+	memset(sc->sc_ucode_api, 0, sizeof(sc->sc_ucode_api));
+	sc->n_cmd_versions = 0;
 
 	uhdr = (void *)fw->fw_rawdata;
 	if (*(uint32_t *)fw->fw_rawdata != 0
