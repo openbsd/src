@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.363 2021/02/09 23:37:54 patrick Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.364 2021/06/02 07:46:22 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -692,10 +692,10 @@ pf_commit_queues(void)
 	struct pf_queuehead	*qswap;
 	int error;
 
-        /* swap */
-        qswap = pf_queues_active;
-        pf_queues_active = pf_queues_inactive;
-        pf_queues_inactive = qswap;
+	/* swap */
+	qswap = pf_queues_active;
+	pf_queues_active = pf_queues_inactive;
+	pf_queues_inactive = qswap;
 
 	error = pf_create_queues();
 	if (error != 0) {
@@ -704,7 +704,7 @@ pf_commit_queues(void)
 		return (error);
 	}
 
-        pf_free_queues(pf_queues_inactive);
+	pf_free_queues(pf_queues_inactive);
 
 	return (0);
 }
@@ -1584,7 +1584,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		u_int16_t		 srcport, dstport;
 		struct pfioc_state_kill	*psk = (struct pfioc_state_kill *)addr;
 		u_int			 i, killed = 0;
-		const int 		 dirs[] = { PF_IN, PF_OUT };
+		const int		 dirs[] = { PF_IN, PF_OUT };
 		int			 sidx, didx;
 
 		if (psk->psk_pfcmp.id) {
