@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tpmr.c,v 1.27 2021/06/02 00:44:18 dlg Exp $ */
+/*	$OpenBSD: if_tpmr.c,v 1.28 2021/06/02 01:30:30 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -324,13 +324,15 @@ tpmr_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport)
 	struct tpmr_port *p = brport;
 	struct tpmr_softc *sc = p->p_tpmr;
 	struct ifnet *ifp = &sc->sc_if;
+	unsigned int iff;
 	struct tpmr_port *pn;
 	int len;
 #if NBPFILTER > 0
 	caddr_t if_bpf;
 #endif
 
-	if (!ISSET(ifp->if_flags, IFF_RUNNING))
+	iff = READ_ONCE(ifp->if_flags);
+	if (!ISSET(iff, IFF_RUNNING))
 		goto drop;
 
 #if NVLAN > 0
@@ -347,16 +349,16 @@ tpmr_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport)
 	}
 #endif
 
-	if (!ISSET(ifp->if_flags, IFF_LINK2) &&
+	if (!ISSET(iff, IFF_LINK2) &&
 	    tpmr_vlan_filter(m))
 		goto drop;
 
-	if (!ISSET(ifp->if_flags, IFF_LINK0) &&
+	if (!ISSET(iff, IFF_LINK0) &&
 	    tpmr_8021q_filter(m, dst))
 		goto drop;
 
 #if NPF > 0
-	if (!ISSET(ifp->if_flags, IFF_LINK1) &&
+	if (!ISSET(iff, IFF_LINK1) &&
 	    (m = tpmr_pf(ifp0, PF_IN, m)) == NULL)
 		return (NULL);
 #endif
@@ -380,7 +382,7 @@ tpmr_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport)
 		struct ifnet *ifpn = pn->p_ifp0;
 
 #if NPF > 0
-		if (!ISSET(ifp->if_flags, IFF_LINK1) &&
+		if (!ISSET(iff, IFF_LINK1) &&
 		    (m = tpmr_pf(ifpn, PF_OUT, m)) == NULL)
 			;
 		else
