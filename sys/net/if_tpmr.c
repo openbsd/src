@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tpmr.c,v 1.28 2021/06/02 01:30:30 dlg Exp $ */
+/*	$OpenBSD: if_tpmr.c,v 1.29 2021/06/02 01:36:10 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -324,6 +324,7 @@ tpmr_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport)
 	struct tpmr_port *p = brport;
 	struct tpmr_softc *sc = p->p_tpmr;
 	struct ifnet *ifp = &sc->sc_if;
+	struct ifnet *ifpn;
 	unsigned int iff;
 	struct tpmr_port *pn;
 	int len;
@@ -374,27 +375,24 @@ tpmr_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport)
 	}
 #endif
 
-	smr_read_enter();
+	SMR_ASSERT_CRITICAL(); /* ether_input calls us in a crit section */
 	pn = SMR_PTR_GET(&sc->sc_ports[!p->p_slot]);
 	if (pn == NULL)
-		m_freem(m);
-	else {
-		struct ifnet *ifpn = pn->p_ifp0;
+		goto drop;
 
+	ifpn = pn->p_ifp0;
 #if NPF > 0
-		if (!ISSET(iff, IFF_LINK1) &&
-		    (m = tpmr_pf(ifpn, PF_OUT, m)) == NULL)
-			;
-		else
+	if (!ISSET(iff, IFF_LINK1) &&
+	    (m = tpmr_pf(ifpn, PF_OUT, m)) == NULL)
+		return (NULL);
 #endif
-		if (if_enqueue(ifpn, m))
-			counters_inc(ifp->if_counters, ifc_oerrors);
-		else {
-			counters_pkt(ifp->if_counters,
-			    ifc_opackets, ifc_obytes, len);
-		}
+
+	if (if_enqueue(ifpn, m))
+		counters_inc(ifp->if_counters, ifc_oerrors);
+	else {
+		counters_pkt(ifp->if_counters,
+		    ifc_opackets, ifc_obytes, len);
 	}
-	smr_read_leave();
 
 	return (NULL);
 
