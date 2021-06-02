@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.44 2020/12/12 11:48:52 jan Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.45 2021/06/02 21:41:38 kettenis Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -1354,7 +1354,9 @@ mvpp2_port_attach(struct device *parent, struct device *self, void *aux)
 
 	phy_mode = malloc(len, M_TEMP, M_WAITOK);
 	OF_getprop(sc->sc_node, "phy-mode", phy_mode, len);
-	if (!strncmp(phy_mode, "10gbase-kr", strlen("10gbase-kr")))
+	if (!strncmp(phy_mode, "10gbase-r", strlen("10gbase-r")))
+		sc->sc_phy_mode = PHY_MODE_10GBASER;
+	else if (!strncmp(phy_mode, "10gbase-kr", strlen("10gbase-kr")))
 		sc->sc_phy_mode = PHY_MODE_10GBASER;
 	else if (!strncmp(phy_mode, "2500base-x", strlen("2500base-x")))
 		sc->sc_phy_mode = PHY_MODE_2500BASEX;
