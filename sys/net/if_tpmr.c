@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tpmr.c,v 1.26 2021/05/27 03:46:15 dlg Exp $ */
+/*	$OpenBSD: if_tpmr.c,v 1.27 2021/06/02 00:44:18 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -242,23 +242,40 @@ tpmr_8021q_filter(const struct mbuf *m, uint64_t dst)
 }
 
 #if NPF > 0
+struct tpmr_pf_ip_family {
+	sa_family_t	   af;
+	struct mbuf	*(*ip_check)(struct ifnet *, struct mbuf *);
+	void		 (*ip_input)(struct ifnet *, struct mbuf *);
+};
+
+static const struct tpmr_pf_ip_family tpmr_pf_ipv4 = {
+	.af		= AF_INET,
+	.ip_check	= ipv4_check,
+	.ip_input	= ipv4_input,
+};
+
+#ifdef INET6
+static const struct tpmr_pf_ip_family tpmr_pf_ipv6 = {
+	.af		= AF_INET6,
+	.ip_check	= ipv6_check,
+	.ip_input	= ipv6_input,
+};
+#endif
+
 static struct mbuf *
 tpmr_pf(struct ifnet *ifp0, int dir, struct mbuf *m)
 {
 	struct ether_header *eh, copy;
-	sa_family_t af = AF_UNSPEC;
-	void (*ip_input)(struct ifnet *, struct mbuf *) = NULL;
+	const struct tpmr_pf_ip_family *fam;
 
 	eh = mtod(m, struct ether_header *);
 	switch (ntohs(eh->ether_type)) {
 	case ETHERTYPE_IP:
-		af = AF_INET;
-		ip_input = ipv4_input;
+		fam = &tpmr_pf_ipv4;
 		break;
 #ifdef INET6
 	case ETHERTYPE_IPV6:
-		af = AF_INET6;
-		ip_input = ipv6_input;
+		fam = &tpmr_pf_ipv6;
 		break;
 #endif
 	default:
@@ -268,7 +285,13 @@ tpmr_pf(struct ifnet *ifp0, int dir, struct mbuf *m)
 	copy = *eh;
 	m_adj(m, sizeof(*eh));
 
-	if (pf_test(af, dir, ifp0, &m) != PF_PASS) {
+	if (dir == PF_IN) {
+		m = (*fam->ip_check)(ifp0, m);
+		if (m == NULL)
+			return (NULL);
+	}
+
+	if (pf_test(fam->af, dir, ifp0, &m) != PF_PASS) {
 		m_freem(m);
 		return (NULL);
 	}
@@ -278,7 +301,7 @@ tpmr_pf(struct ifnet *ifp0, int dir, struct mbuf *m)
 	if (dir == PF_IN && ISSET(m->m_pkthdr.pf.flags, PF_TAG_DIVERTED)) {
 		pf_mbuf_unlink_state_key(m);
 		pf_mbuf_unlink_inpcb(m);
-		(*ip_input)(ifp0, m);
+		(*fam->ip_input)(ifp0, m);
 		return (NULL);
 	}
 

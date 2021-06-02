@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.18 2021/05/27 03:43:23 dlg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.19 2021/06/02 00:44:18 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -495,12 +495,31 @@ veb_rule_filter(struct veb_port *p, int dir, struct mbuf *m,
 }
 
 #if NPF > 0
+struct veb_pf_ip_family {
+	sa_family_t	   af;
+	struct mbuf	*(*ip_check)(struct ifnet *, struct mbuf *);
+	void		 (*ip_input)(struct ifnet *, struct mbuf *);
+};
+
+static const struct veb_pf_ip_family veb_pf_ipv4 = {
+	.af		= AF_INET,
+	.ip_check	= ipv4_check,
+	.ip_input	= ipv4_input,
+};
+
+#ifdef INET6
+static const struct veb_pf_ip_family veb_pf_ipv6 = {
+	.af		= AF_INET6,
+	.ip_check	= ipv6_check,
+	.ip_input	= ipv6_input,
+};
+#endif
+
 static struct mbuf *
 veb_pf(struct ifnet *ifp0, int dir, struct mbuf *m)
 {
 	struct ether_header *eh, copy;
-	sa_family_t af = AF_UNSPEC;
-	void (*ip_input)(struct ifnet *, struct mbuf *) = NULL;
+	const struct veb_pf_ip_family *fam;
 
 	/*
 	 * pf runs on vport interfaces when they enter or leave the
@@ -515,13 +534,11 @@ veb_pf(struct ifnet *ifp0, int dir, struct mbuf *m)
 	eh = mtod(m, struct ether_header *);
 	switch (ntohs(eh->ether_type)) {
 	case ETHERTYPE_IP:
-		af = AF_INET;
-		ip_input = ipv4_input;
+		fam = &veb_pf_ipv4;
 		break;
 #ifdef INET6
 	case ETHERTYPE_IPV6:
-		af = AF_INET6;
-		ip_input = ipv6_input;
+		fam = &veb_pf_ipv6;
 		break;
 #endif
 	default:
@@ -531,7 +548,13 @@ veb_pf(struct ifnet *ifp0, int dir, struct mbuf *m)
 	copy = *eh;
 	m_adj(m, sizeof(*eh));
 
-	if (pf_test(af, dir, ifp0, &m) != PF_PASS) {
+	if (dir == PF_IN) {
+		m = (*fam->ip_check)(ifp0, m);
+		if (m == NULL)
+			return (NULL);
+	}
+
+	if (pf_test(fam->af, dir, ifp0, &m) != PF_PASS) {
 		m_freem(m);
 		return (NULL);
 	}
@@ -541,7 +564,7 @@ veb_pf(struct ifnet *ifp0, int dir, struct mbuf *m)
 	if (dir == PF_IN && ISSET(m->m_pkthdr.pf.flags, PF_TAG_DIVERTED)) {
 		pf_mbuf_unlink_state_key(m);
 		pf_mbuf_unlink_inpcb(m);
-		(*ip_input)(ifp0, m);
+		(*fam->ip_input)(ifp0, m);
 		return (NULL);
 	}
 
