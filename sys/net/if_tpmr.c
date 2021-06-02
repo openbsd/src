@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tpmr.c,v 1.29 2021/06/02 01:36:10 dlg Exp $ */
+/*	$OpenBSD: if_tpmr.c,v 1.30 2021/06/02 01:37:10 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -368,7 +368,7 @@ tpmr_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport)
 	counters_pkt(ifp->if_counters, ifc_ipackets, ifc_ibytes, len);
 
 #if NBPFILTER > 0
-	if_bpf = ifp->if_bpf;
+	if_bpf = READ_ONCE(ifp->if_bpf);
 	if (if_bpf) {
 		if (bpf_mtap(if_bpf, m, 0))
 			goto drop;
