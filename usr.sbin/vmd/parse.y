@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.56 2020/09/23 19:18:18 martijn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.57 2021/06/02 14:40:46 dv Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -693,6 +693,9 @@ lladdr		: STRING			{
 			free($1);
 
 			memcpy($$, ea, ETHER_ADDR_LEN);
+		}
+		| /* empty */ {
+			memset($$, 0, ETHER_ADDR_LEN);
 		}
 		;
 
