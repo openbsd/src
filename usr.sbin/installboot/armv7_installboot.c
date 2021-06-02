@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_installboot.c,v 1.7 2021/06/02 16:12:18 kettenis Exp $	*/
+/*	$OpenBSD: armv7_installboot.c,v 1.8 2021/06/02 22:44:27 krw Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -274,12 +274,11 @@ gpt_chk_mbr(struct dos_partition *dp, u_int64_t dsize)
 		found++;
 		if (dp2->dp_typ != DOSPTYP_EFI)
 			continue;
+		if (letoh32(dp2->dp_start) != GPTSECTOR)
+			continue
 		psize = letoh32(dp2->dp_size);
-		if (psize == (dsize - 1) ||
-		    psize == UINT32_MAX) {
-			if (letoh32(dp2->dp_start) == 1)
-				efi++;
-		}
+		if (psize <= (dsize - GPTSECTOR) || psize == UINT32_MAX)
+			efi++;
 	}
 	if (found == 1 && efi == 1)
 		return (0);

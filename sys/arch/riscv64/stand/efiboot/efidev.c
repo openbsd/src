@@ -1,4 +1,4 @@
-/*	$OpenBSD: efidev.c,v 1.1 2021/04/28 19:01:00 drahn Exp $	*/
+/*	$OpenBSD: efidev.c,v 1.2 2021/06/02 22:44:27 krw Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -150,12 +150,11 @@ gpt_chk_mbr(struct dos_partition *dp, u_int64_t dsize)
 		found++;
 		if (dp2->dp_typ != DOSPTYP_EFI)
 			continue;
+		if (letoh32(dp2->dp_start) != GPTSECTOR)
+			continue;
 		psize = letoh32(dp2->dp_size);
-		if (psize == (dsize - 1) ||
-		    psize == UINT32_MAX) {
-			if (letoh32(dp2->dp_start) == 1)
-				efi++;
-		}
+		if (psize <= (dsize - GPTSECTOR) || psize == UINT32_MAX)
+			efi++;
 	}
 	if (found == 1 && efi == 1)
 		return (0);
@@ -283,8 +282,8 @@ findopenbsd_gpt(efi_diskinfo_t ed, const char **err)
 		return (-1);
 	}
 
-	/* LBA1: GPT Header */
-	lba = 1;
+	/* GPT Header */
+	lba = GPTSECTOR;
 	status = efid_io(F_READ, ed, EFI_SECTOBLK(ed, lba), EFI_BLKSPERSEC(ed),
 	    buf);
 	if (EFI_ERROR(status)) {

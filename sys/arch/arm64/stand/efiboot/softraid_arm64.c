@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid_arm64.c,v 1.2 2020/12/09 18:10:18 krw Exp $	*/
+/*	$OpenBSD: softraid_arm64.c,v 1.3 2021/06/02 22:44:27 krw Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -402,12 +402,11 @@ gpt_chk_mbr(struct dos_partition *dp, u_int64_t dsize)
 		found++;
 		if (dp2->dp_typ != DOSPTYP_EFI)
 			continue;
+		if (letoh32(dp2->dp_start) != GPTSECTOR)
+			continue;
 		psize = letoh32(dp2->dp_size);
-		if (psize == (dsize - 1) ||
-		    psize == UINT32_MAX) {
-			if (letoh32(dp2->dp_start) == 1)
-				efi++;
-		}
+		if (psize <= (dsize - GPTSECTOR) || psize == UINT32_MAX)
+			efi++;
 	}
 	if (found == 1 && efi == 1)
 		return (0);
@@ -455,8 +454,8 @@ findopenbsd_gpt(struct sr_boot_volume *bv, const char **err)
 	}
 	bzero(buf, bv->sbv_secsize);
 
-	/* LBA1: GPT Header */
-	lba = 1;
+	/* GPT Header */
+	lba = GPTSECTOR;
 	sr_strategy(bv, F_READ, lba * (bv->sbv_secsize / DEV_BSIZE), DEV_BSIZE,
 	    buf, NULL);
 	memcpy(&gh, buf, sizeof(gh));

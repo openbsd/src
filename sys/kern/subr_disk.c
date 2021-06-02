@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.243 2021/06/01 22:54:43 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.244 2021/06/02 22:44:27 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -607,7 +607,7 @@ gpt_chk_mbr(struct dos_partition *dp, uint64_t dsize)
 		if (letoh32(dp2->dp_start) != GPTSECTOR)
 			continue;
 		psize = letoh32(dp2->dp_size);
-		if (psize <= (dsize - 1) || psize == UINT32_MAX) {
+		if (psize <= (dsize - GPTSECTOR) || psize == UINT32_MAX) {
 			efi = i;
 			eficnt++;
 		}
