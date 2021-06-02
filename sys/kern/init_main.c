@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.306 2021/02/08 10:51:01 mpi Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.307 2021/06/02 13:56:28 visa Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -71,6 +71,7 @@
 #include <sys/msg.h>
 #endif
 #include <sys/domain.h>
+#include <sys/event.h>
 #include <sys/msgbuf.h>
 #include <sys/mbuf.h>
 #include <sys/pipe.h>
@@ -148,7 +149,6 @@ void	crypto_init(void);
 void	db_ctf_init(void);
 void	prof_init(void);
 void	init_exec(void);
-void	kqueue_init(void);
 void	futex_init(void);
 void	taskq_init(void);
 void	timeout_proc_init(void);
@@ -432,7 +432,9 @@ main(void *framep)
 	prof_init();
 #endif
 
-	mbcpuinit();	/* enable per cpu mbuf data */
+	/* Enable per-CPU data. */
+	mbcpuinit();
+	kqueue_init_percpu();
 	uvm_init_percpu();
 
 	/* init exec and emul */

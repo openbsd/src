@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.163 2021/04/22 15:30:12 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.164 2021/06/02 13:56:28 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -70,7 +70,6 @@
 
 struct	kqueue *kqueue_alloc(struct filedesc *);
 void	kqueue_terminate(struct proc *p, struct kqueue *);
-void	kqueue_init(void);
 void	KQREF(struct kqueue *);
 void	KQRELE(struct kqueue *);
 
@@ -229,6 +228,12 @@ kqueue_init(void)
 	    PR_WAITOK, "kqueuepl", NULL);
 	pool_init(&knote_pool, sizeof(struct knote), 0, IPL_MPFLOOR,
 	    PR_WAITOK, "knotepl", NULL);
+}
+
+void
+kqueue_init_percpu(void)
+{
+	pool_cache_init(&knote_pool);
 }
 
 int
