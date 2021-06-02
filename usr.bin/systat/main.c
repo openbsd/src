@@ -1,4 +1,4 @@
-/* $OpenBSD: main.c,v 1.73 2021/01/30 08:44:42 martijn Exp $	 */
+/* $OpenBSD: main.c,v 1.74 2021/06/02 08:32:22 martijn Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -284,8 +284,7 @@ cmd_compat(const char *buf)
 	const char *s;
 
 	if (strcasecmp(buf, "help") == 0) {
-		show_help();
-		need_update = 1;
+		message_toggle(MESSAGE_HELP);
 		return;
 	}
 	if (strcasecmp(buf, "quit") == 0 || strcasecmp(buf, "q") == 0) {
@@ -304,8 +303,7 @@ cmd_compat(const char *buf)
 		return;
 	}
 	if (strncasecmp(buf, "order", 5) == 0) {
-		show_order();
-		need_update = 1;
+		message_toggle(MESSAGE_ORDER);
 		return;
 	}
 	if (strncasecmp(buf, "human", 5) == 0) {
@@ -358,12 +356,10 @@ keyboard_callback(int ch)
 	case '?':
 		/* FALLTHROUGH */
 	case 'h':
-		show_help();
-		need_update = 1;
+		message_toggle(MESSAGE_HELP);
 		break;
 	case CTRL_G:
-		show_view();
-		need_update = 1;
+		message_toggle(MESSAGE_VIEW);
 		break;
 	case 'l':
 		command_set(&cm_count, NULL);

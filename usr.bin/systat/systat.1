@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.119 2020/06/22 13:17:54 kn Exp $
+.\"	$OpenBSD: systat.1,v 1.120 2021/06/02 08:32:22 martijn Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: June 22 2020 $
+.Dd $Mdocdate: June 2 2021 $
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -175,6 +175,8 @@ line typed as a command.
 While entering a command the
 current character erase, word erase, and line kill characters
 may be used.
+.It Ic h
+Toggle printing the names of the available views on the command line.
 .It Ic o
 Select the next ordering which sorts the rows according to a
 combination of columns.
@@ -201,7 +203,7 @@ Jump to the end of the current view.
 .It Ic ^F | Aq Ic left arrow
 Select the next view.
 .It Ic ^G
-Print the name of the current
+Toggle printing the name of the current
 view being shown and the refresh interval.
 .It Ic ^L
 Refresh the screen.
@@ -220,11 +222,11 @@ The following commands are interpreted by the
 command interpreter.
 .Bl -tag -width Ds
 .It Ic help
-Print the names of the available views on the command line.
+Toggle printing the names of the available views on the command line.
 .It Ic human
 Toggle human readable mode, where applicable.
 .It Ic order
-Print the names of the available orderings on the command line.
+Toggle printing the names of the available orderings on the command line.
 .It Ic quit
 Quit
 .Nm .

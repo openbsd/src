@@ -1,4 +1,4 @@
-/* $OpenBSD: engine.c,v 1.27 2021/02/06 06:19:28 tb Exp $	 */
+/* $OpenBSD: engine.c,v 1.28 2021/06/02 08:32:22 martijn Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -91,6 +91,8 @@ char cmdbuf[MAX_LINE_BUF];
 int cmd_len = -1;
 struct command *curr_cmd = NULL;
 char *curr_message = NULL;
+enum message_mode message_mode = MESSAGE_NONE;
+int message_cont = 1;
 
 void print_cmdline(void);
 
@@ -1145,14 +1147,26 @@ command_set(struct command *cmd, const char *init)
 	return prev;
 }
 
+void
+message_toggle(enum message_mode mode)
+{
+	message_mode = message_mode != mode ? mode : MESSAGE_NONE;
+	need_update = 1;
+	message_cont = 1;
+}
+
 const char *
-message_set(const char *msg) {
-	char *prev = curr_message;
-	if (msg)
+message_set(const char *msg)
+{
+	free(curr_message);
+
+	if (msg) {
 		curr_message = strdup(msg);
-	else
+		message_cont = 0;
+	} else {
 		curr_message = NULL;
-	free(prev);
+		message_cont = 1;
+	}
 	return NULL;
 }
 
@@ -1361,6 +1375,22 @@ engine_loop(int countmax)
 			if (!averageonly ||
 			    (averageonly && count == countmax - 1))
 				disp_update();
+			if (message_cont) {
+				switch (message_mode) {
+				case MESSAGE_NONE:
+					message_set(NULL);
+					break;
+				case MESSAGE_HELP:
+					show_help();
+					break;
+				case MESSAGE_VIEW:
+					show_view();
+					break;
+				case MESSAGE_ORDER:
+					show_order();
+					break;
+				}
+			}
 			end_page();
 			need_update = 0;
 			if (countmax && ++count >= countmax)

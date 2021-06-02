@@ -1,4 +1,4 @@
-/* $OpenBSD: engine.h,v 1.12 2020/01/12 20:51:08 martijn Exp $	 */
+/* $OpenBSD: engine.h,v 1.13 2021/06/02 08:32:22 martijn Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -95,6 +95,12 @@ struct command {
 	void ( *exec)(const char *);
 };
 
+enum message_mode {
+	MESSAGE_NONE,
+	MESSAGE_HELP,
+	MESSAGE_VIEW,
+	MESSAGE_ORDER
+};
 
 void tb_start(void);
 
@@ -133,6 +139,9 @@ void prev_view(void);
 int foreach_order(void (*callback)(order_type *));
 void set_order(const char *opt);
 void next_order(void);
+void show_help(void);
+void show_view(void);
+void show_order(void);
 
 void setup_term(int maxpr);
 int check_termcap(void);
@@ -141,6 +150,7 @@ void engine_initialize(void);
 void engine_loop(int countmax);
 
 struct command *command_set(struct command *cmd, const char *init);
+void message_toggle(enum message_mode);
 const char *message_set(const char *msg);
 
 void foreach_view(void (*callback)(field_view *));
