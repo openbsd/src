@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.235 2021/06/02 00:20:50 dlg Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.236 2021/06/02 00:27:03 dlg Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -266,7 +266,7 @@ bad:
 int
 ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 {
-	struct mbuf *m = *mp;
+	struct mbuf *m;
 	struct ip6_hdr *ip6;
 	struct sockaddr_in6 sin6;
 	struct rtentry *rt = NULL;
