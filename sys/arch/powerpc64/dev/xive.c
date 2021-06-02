@@ -1,4 +1,4 @@
-/*	$OpenBSD: xive.c,v 1.15 2020/10/10 17:05:55 kettenis Exp $	*/
+/*	$OpenBSD: xive.c,v 1.16 2021/06/02 19:38:14 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -367,6 +367,31 @@ xive_setipl(int new)
 }
 
 void
+xive_run_handler(struct intrhand *ih)
+{
+	int handled;
+
+#ifdef MULTIPROCESSOR
+	int need_lock;
+
+	if (ih->ih_flags & IPL_MPSAFE)
+		need_lock = 0;
+	else
+		need_lock = (ih->ih_ipl < IPL_SCHED);
+
+	if (need_lock)
+		KERNEL_LOCK();
+#endif
+	handled = ih->ih_func(ih->ih_arg);
+	if (handled)
+		ih->ih_count.ec_count++;
+#ifdef MULTIPROCESSOR
+	if (need_lock)
+		KERNEL_UNLOCK();
+#endif
+}
+
+void
 xive_hvi(struct trapframe *frame)
 {
 	struct xive_softc *sc = xive_sc;
@@ -376,7 +401,6 @@ xive_hvi(struct trapframe *frame)
 	uint32_t *event;
 	uint32_t lirq;
 	int old, new;
-	int handled;
 	uint16_t ack, he;
 	uint8_t cppr;
 
@@ -415,26 +439,9 @@ xive_hvi(struct trapframe *frame)
 			KASSERT(lirq < XIVE_NUM_IRQS);
 			ih = sc->sc_handler[lirq];
 			if (ih != NULL) {
-#ifdef MULTIPROCESSOR
-				int need_lock;
-
-				if (ih->ih_flags & IPL_MPSAFE)
-					need_lock = 0;
-				else
-					need_lock = (ih->ih_ipl < IPL_SCHED);
-
-				if (need_lock)
-					KERNEL_LOCK();
-#endif
 				intr_enable();
-				handled = ih->ih_func(ih->ih_arg);
+				xive_run_handler(ih);
 				intr_disable();
-				if (handled)
-					ih->ih_count.ec_count++;
-#ifdef MULTIPROCESSOR
-				if (need_lock)
-					KERNEL_UNLOCK();
-#endif
 				xive_eoi(sc, ih);
 			}
 			eq->eq_idx = (eq->eq_idx + 1) & XIVE_EQ_IDX_MASK;
