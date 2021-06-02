@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.354 2021/03/05 06:44:09 dlg Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.355 2021/06/02 00:40:51 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1674,61 +1674,12 @@ bridge_ip(struct ifnet *brifp, int dir, struct ifnet *ifp,
 	switch (etype) {
 
 	case ETHERTYPE_IP:
-		if (m->m_pkthdr.len < sizeof(struct ip))
-			goto dropit;
-
-		/* Copy minimal header, and drop invalids */
-		if (m->m_len < sizeof(struct ip) &&
-		    (m = m_pullup(m, sizeof(struct ip))) == NULL) {
-			ipstat_inc(ips_toosmall);
+		m = ipv4_check(ifp, m);
+		if (m == NULL)
 			return (NULL);
-		}
+
 		ip = mtod(m, struct ip *);
-
-		if (ip->ip_v != IPVERSION) {
-			ipstat_inc(ips_badvers);
-			goto dropit;
-		}
-
-		hlen = ip->ip_hl << 2;	/* get whole header length */
-		if (hlen < sizeof(struct ip)) {
-			ipstat_inc(ips_badhlen);
-			goto dropit;
-		}
-
-		if (hlen > m->m_len) {
-			if ((m = m_pullup(m, hlen)) == NULL) {
-				ipstat_inc(ips_badhlen);
-				return (NULL);
-			}
-			ip = mtod(m, struct ip *);
-		}
-
-		if ((m->m_pkthdr.csum_flags & M_IPV4_CSUM_IN_OK) == 0) {
-			if (m->m_pkthdr.csum_flags & M_IPV4_CSUM_IN_BAD) {
-				ipstat_inc(ips_badsum);
-				goto dropit;
-			}
-
-			ipstat_inc(ips_inswcsum);
-			if (in_cksum(m, hlen) != 0) {
-				ipstat_inc(ips_badsum);
-				goto dropit;
-			}
-		}
-
-		if (ntohs(ip->ip_len) < hlen)
-			goto dropit;
-
-		if (m->m_pkthdr.len < ntohs(ip->ip_len))
-			goto dropit;
-		if (m->m_pkthdr.len > ntohs(ip->ip_len)) {
-			if (m->m_len == m->m_pkthdr.len) {
-				m->m_len = ntohs(ip->ip_len);
-				m->m_pkthdr.len = ntohs(ip->ip_len);
-			} else
-				m_adj(m, ntohs(ip->ip_len) - m->m_pkthdr.len);
-		}
+		hlen = ip->ip_hl << 2;
 
 #ifdef IPSEC
 		if ((brifp->if_flags & IFF_LINK2) == IFF_LINK2 &&
@@ -1772,23 +1723,10 @@ bridge_ip(struct ifnet *brifp, int dir, struct ifnet *ifp,
 		break;
 
 #ifdef INET6
-	case ETHERTYPE_IPV6: {
-		struct ip6_hdr *ip6;
-
-		if (m->m_len < sizeof(struct ip6_hdr)) {
-			if ((m = m_pullup(m, sizeof(struct ip6_hdr)))
-			    == NULL) {
-				ip6stat_inc(ip6s_toosmall);
-				return (NULL);
-			}
-		}
-
-		ip6 = mtod(m, struct ip6_hdr *);
-
-		if ((ip6->ip6_vfc & IPV6_VERSION_MASK) != IPV6_VERSION) {
-			ip6stat_inc(ip6s_badvers);
-			goto dropit;
-		}
+	case ETHERTYPE_IPV6:
+		m = ipv6_check(ifp, m);
+		if (m == NULL)
+			return (NULL);
 
 #ifdef IPSEC
 		hlen = sizeof(struct ip6_hdr);
@@ -1819,7 +1757,6 @@ bridge_ip(struct ifnet *brifp, int dir, struct ifnet *ifp,
 #endif /* NPF > 0 */
 
 		break;
-	}
 #endif /* INET6 */
 
 	default:
