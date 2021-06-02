@@ -1,4 +1,4 @@
-/*	$OpenBSD: agentx.c,v 1.9 2021/05/01 16:44:17 martijn Exp $ */
+/*	$OpenBSD: agentx.c,v 1.10 2021/06/02 08:40:09 martijn Exp $ */
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
  *
@@ -675,7 +675,7 @@ agentx_context_object_nfind(struct agentx_context *axc,
 
 	axo = RB_NFIND(axc_objects, &(axc->axc_objects), &axo_search);
 	if (!inclusive && axo != NULL &&
-	    ax_oid_cmp(&(axo_search.axo_oid), &(axo->axo_oid)) <= 0) {
+	    ax_oid_cmp(&(axo->axo_oid), &(axo_search.axo_oid)) <= 0) {
 		axo = RB_NEXT(axc_objects, &(axc->axc_objects), axo);
 	}
 
