@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.99 2021/05/31 04:48:35 dlg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.100 2021/06/02 19:11:02 patrick Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -629,7 +629,7 @@ nvme_scsi_io(struct scsi_xfer *xs, int dir)
 		bus_dmamap_sync(sc->sc_dmat,
 		    NVME_DMA_MAP(sc->sc_ccb_prpls),
 		    ccb->ccb_prpl_off,
-		    sizeof(*ccb->ccb_prpl) * dmap->dm_nsegs - 1,
+		    sizeof(*ccb->ccb_prpl) * (dmap->dm_nsegs - 1),
 		    BUS_DMASYNC_PREWRITE);
 	}
 
@@ -691,7 +691,7 @@ nvme_scsi_io_done(struct nvme_softc *sc, struct nvme_ccb *ccb,
 		bus_dmamap_sync(sc->sc_dmat,
 		    NVME_DMA_MAP(sc->sc_ccb_prpls),
 		    ccb->ccb_prpl_off,
-		    sizeof(*ccb->ccb_prpl) * dmap->dm_nsegs - 1,
+		    sizeof(*ccb->ccb_prpl) * (dmap->dm_nsegs - 1),
 		    BUS_DMASYNC_POSTWRITE);
 	}
 
