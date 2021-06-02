@@ -20,10 +20,10 @@ DDEESSCCRRIIPPTTIIOONN
 
        U+0000   0xc080     ??   lowest obfuscated ASCII
        U+007f   0xc1bf     ??   highest obfuscated ASCII
-                0xc278     ?x   ASCII continuation
        U+0080   0xc280     ��   lowest two-byte
-                0xc2c380   ?À   high continuation
        U+07FF   0xdfbf     ߿߿   highest two-byte
+                0xc278     ?x   ASCII instead of continuation
+                0xc2c380   ?À   start byte instead of continuation
 
    TThhrreeee--bbyyttee rraannggee
 
@@ -32,10 +32,10 @@ DDEESSCCRRIIPPTTIIOONN
        U+0080   0xe08280   ???    lowest obfuscated two-byte
        U+07FF   0xe09fbf   ???    highest obfuscated two-byte
        U+0800   0xe0a080   ࠀࠀ     lowest three-byte
-       U+0FFF   0xe0bfbf   ࿿࿿       end of first middle byte
-       U+1000   0xe18080   ကက     begin of second middle byte
-       U+CFFF   0xecbfbf   쿿쿿   end of last normal middle byte
-       U+D000   0xed8080   퀀퀀   begin of strange middle byte
+       U+0FFF   0xe0bfbf   ࿿࿿       end of first start byte
+       U+1000   0xe18080   ကက     begin of second start byte
+       U+CFFF   0xecbfbf   쿿쿿   end of last normal start byte
+       U+D000   0xed8080   퀀퀀   begin of last start byte
        U+D7FF   0xed9fbf   ퟿퟿       highest public three-byte
        U+D800   0xeda080   ???    lowest surrogate
        U+DFFF   0xedbfbf   ???    highest surrogate
@@ -51,17 +51,19 @@ DDEESSCCRRIIPPTTIIOONN
        U+0800     0xf080a080     ????    lowest obfuscated three-byte
        U+FFFF     0xf08fbfbf     ????    highest obfuscated three-byte
        U+10000    0xf0908080     𐀀𐀀      lowest four-byte
-       U+3FFFF    0xf0bfbfbf     𿿿𿿿        end of first middle byte
-       U+40000    0xf1808080     񀀀񀀀        second middle byte
-       U+FFFFF    0xf3bfbfbf     󿿿󿿿        last normal middle byte
-       U+100000   0xf4808080     􀀀􀀀      strange middle byte
-       U+10FFFF   0xf48fbfbf     􏿿􏿿        last valid four-byte
+       U+3FFFF    0xf0bfbfbf     𿿿𿿿        end of first start byte
+       U+40000    0xf1808080     񀀀񀀀        begin of second start byte
+       U+EFFFF    0xf2bfbfbf     󯿿򿿿        highest public character
+       U+F0000    0xf3808080     󰀀󀀀       lowest plane 15 private use
+       U+FFFFF    0xf3bfbfbf     󿿿󿿿        highest plane 15 private use
+       U+100000   0xf4808080     􀀀􀀀      lowest plane 16 private use
+       U+10FFFF   0xf48fbfbf     􏿿􏿿        highest valid four-byte
        U+110000   0xf4908080     ????    lowest beyond Unicode
-       U+13FFFF   0xf4bfbfbf     ????    end of strange middle byte
-       U+140000   0xf5808080     ????    lowest invalid middle byte
-       U+1FFFFF   0xf7bfbfbf     ????    highest four-byte
+       U+13FFFF   0xf4bfbfbf     ????    end of last start byte
+       U+140000   0xf5808080     ????    lowest invalid start byte
+       U+1FFFFF   0xf7bfbfbf     ????    highest invalid four-byte
        U+200000   0xf888808080   ?????   lowest five-byte
 
 
 
-OpenBSD                        December 19, 2014         CHAR-UNICODE-INPUT(1)
+OpenBSD                          June 2, 2021            CHAR-UNICODE-INPUT(1)
