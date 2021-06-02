@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.234 2021/05/17 10:09:53 claudio Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.235 2021/06/02 00:20:50 dlg Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -172,28 +172,16 @@ ipv6_input(struct ifnet *ifp, struct mbuf *m)
 	KASSERT(nxt == IPPROTO_DONE);
 }
 
-int
-ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
+struct mbuf *
+ipv6_check(struct ifnet *ifp, struct mbuf *m)
 {
-	struct mbuf *m = *mp;
 	struct ip6_hdr *ip6;
-	struct sockaddr_in6 sin6;
-	struct rtentry *rt = NULL;
-	int ours = 0;
-	u_int16_t src_scope, dst_scope;
-#if NPF > 0
-	struct in6_addr odst;
-#endif
-	int srcrt = 0;
 
-	KASSERT(*offp == 0);
-
-	ip6stat_inc(ip6s_total);
-
-	if (m->m_len < sizeof(struct ip6_hdr)) {
-		if ((m = *mp = m_pullup(m, sizeof(struct ip6_hdr))) == NULL) {
+	if (m->m_len < sizeof(*ip6)) {
+		m = m_pullup(m, sizeof(*ip6));
+		if (m == NULL) {
 			ip6stat_inc(ip6s_toosmall);
-			goto bad;
+			return (NULL);
 		}
 	}
 
@@ -203,13 +191,6 @@ ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 		ip6stat_inc(ip6s_badvers);
 		goto bad;
 	}
-
-#if NCARP > 0
-	if (carp_lsdrop(ifp, m, AF_INET6, ip6->ip6_src.s6_addr32,
-	    ip6->ip6_dst.s6_addr32, (ip6->ip6_nxt == IPPROTO_ICMPV6 ? 0 : 1)))
-		goto bad;
-#endif
-	ip6stat_inc(ip6s_nxthist + ip6->ip6_nxt);
 
 	/*
 	 * Check against address spoofing/corruption.
@@ -225,8 +206,8 @@ ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 	if ((IN6_IS_ADDR_LOOPBACK(&ip6->ip6_src) ||
 	    IN6_IS_ADDR_LOOPBACK(&ip6->ip6_dst)) &&
 	    (ifp->if_flags & IFF_LOOPBACK) == 0) {
-		    ip6stat_inc(ip6s_badscope);
-		    goto bad;
+		ip6stat_inc(ip6s_badscope);
+		goto bad;
 	}
 	/* Drop packets if interface ID portion is already filled. */
 	if (((IN6_IS_SCOPE_EMBED(&ip6->ip6_src) && ip6->ip6_src.s6_addr16[1]) ||
@@ -275,6 +256,41 @@ ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 		ip6stat_inc(ip6s_badscope);
 		goto bad;
 	}
+
+	return (m);
+bad:
+	m_freem(m);
+	return (NULL);
+}
+
+int
+ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
+{
+	struct mbuf *m = *mp;
+	struct ip6_hdr *ip6;
+	struct sockaddr_in6 sin6;
+	struct rtentry *rt = NULL;
+	int ours = 0;
+	u_int16_t src_scope, dst_scope;
+#if NPF > 0
+	struct in6_addr odst;
+#endif
+	int srcrt = 0;
+
+	KASSERT(*offp == 0);
+
+	ip6stat_inc(ip6s_total);
+
+	m = *mp = ipv6_check(ifp, *mp);
+	if (m == NULL)
+		goto bad;
+
+#if NCARP > 0
+	if (carp_lsdrop(ifp, m, AF_INET6, ip6->ip6_src.s6_addr32,
+	    ip6->ip6_dst.s6_addr32, (ip6->ip6_nxt == IPPROTO_ICMPV6 ? 0 : 1)))
+		goto bad;
+#endif
+	ip6stat_inc(ip6s_nxthist + ip6->ip6_nxt);
 
 	/*
 	 * If the packet has been received on a loopback interface it
