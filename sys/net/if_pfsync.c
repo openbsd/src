@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.288 2021/03/10 10:21:48 jsg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.289 2021/06/02 21:49:31 sashan Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -2348,8 +2348,6 @@ pfsync_q_ins(struct pf_state *st, int q)
 {
 	struct pfsync_softc *sc = pfsyncif;
 	size_t nlen, sc_len;
-
-	KASSERT(st->sync_state == PFSYNC_S_NONE);
 
 #if defined(PFSYNC_DEBUG)
 	if (sc->sc_len < PFSYNC_MINPKT)
