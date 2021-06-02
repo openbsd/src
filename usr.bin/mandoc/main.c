@@ -1,6 +1,6 @@
-/* $OpenBSD: main.c,v 1.256 2021/02/19 19:49:49 kn Exp $ */
+/* $OpenBSD: main.c,v 1.257 2021/06/02 18:27:36 schwarze Exp $ */
 /*
- * Copyright (c) 2010-2012, 2014-2020 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010-2012, 2014-2021 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Joerg Sonnenberger <joerg@netbsd.org>
  *
@@ -92,7 +92,7 @@ struct	outstate {
 
 int			  mandocdb(int, char *[]);
 
-static	void		  check_xr(void);
+static	void		  check_xr(struct manpaths *);
 static	int		  fs_lookup(const struct manpaths *,
 				size_t ipath, const char *,
 				const char *, const char *,
@@ -103,7 +103,7 @@ static	int		  fs_search(const struct mansearch *,
 static	void		  glob_esc(char **, const char *, const char *);
 static	void		  outdata_alloc(struct outstate *, struct manoutput *);
 static	void		  parse(struct mparse *, int, const char *,
-				struct outstate *, struct manoutput *);
+				struct outstate *, struct manconf *);
 static	void		  passthrough(int, int);
 static	void		  process_onefile(struct mparse *, struct manpage *,
 				int, struct outstate *, struct manconf *);
@@ -430,7 +430,8 @@ main(int argc, char *argv[])
 
 	/* Read the configuration file. */
 
-	if (search.argmode != ARG_FILE)
+	if (search.argmode != ARG_FILE ||
+	    mandoc_msg_getmin() == MANDOCERR_STYLE)
 		manconf_parse(&conf, conf_file, defpaths, auxpaths);
 
 	/* man(1): Resolve each name individually. */
@@ -841,7 +842,7 @@ process_onefile(struct mparse *mp, struct manpage *resp, int startdir,
 	}
 
 	if (resp->form == FORM_SRC)
-		parse(mp, fd, resp->file, outst, &conf->output);
+		parse(mp, fd, resp->file, outst, conf);
 	else {
 		passthrough(fd, conf->output.synopsisonly);
 		outst->had_output = 1;
@@ -862,8 +863,9 @@ process_onefile(struct mparse *mp, struct manpage *resp, int startdir,
 
 static void
 parse(struct mparse *mp, int fd, const char *file,
-    struct outstate *outst, struct manoutput *outconf)
+    struct outstate *outst, struct manconf *conf)
 {
+	static struct manpaths	 basepaths;
 	static int		 previous;
 	struct roff_meta	*meta;
 
@@ -889,7 +891,7 @@ parse(struct mparse *mp, int fd, const char *file,
 		return;
 
 	if (outst->outdata == NULL)
-		outdata_alloc(outst, outconf);
+		outdata_alloc(outst, &conf->output);
 	else if (outst->outtype == OUTT_HTML)
 		html_reset(outst->outdata);
 
@@ -946,23 +948,24 @@ parse(struct mparse *mp, int fd, const char *file,
 			break;
 		}
 	}
-	if (outconf->tag != NULL && outconf->tag_found == 0 &&
-	    tag_exists(outconf->tag))
-		outconf->tag_found = 1;
-	if (mandoc_msg_getmin() < MANDOCERR_STYLE)
-		check_xr();
+	if (conf->output.tag != NULL && conf->output.tag_found == 0 &&
+	    tag_exists(conf->output.tag))
+		conf->output.tag_found = 1;
+
+	if (mandoc_msg_getmin() < MANDOCERR_STYLE) {
+		if (basepaths.sz == 0)
+			manpath_base(&basepaths);
+		check_xr(&basepaths);
+	} else if (mandoc_msg_getmin() < MANDOCERR_WARNING)
+		check_xr(&conf->manpath);
 }
 
 static void
-check_xr(void)
+check_xr(struct manpaths *paths)
 {
-	static struct manpaths	 paths;
 	struct mansearch	 search;
 	struct mandoc_xr	*xr;
 	size_t			 sz;
-
-	if (paths.sz == 0)
-		manpath_base(&paths);
 
 	for (xr = mandoc_xr_get(); xr != NULL; xr = xr->next) {
 		if (xr->line == -1)
@@ -972,9 +975,9 @@ check_xr(void)
 		search.outkey = NULL;
 		search.argmode = ARG_NAME;
 		search.firstmatch = 1;
-		if (mansearch(&search, &paths, 1, &xr->name, NULL, &sz))
+		if (mansearch(&search, paths, 1, &xr->name, NULL, &sz))
 			continue;
-		if (fs_search(&search, &paths, xr->name, NULL, &sz) != -1)
+		if (fs_search(&search, paths, xr->name, NULL, &sz) != -1)
 			continue;
 		if (xr->count == 1)
 			mandoc_msg(MANDOCERR_XR_BAD, xr->line,

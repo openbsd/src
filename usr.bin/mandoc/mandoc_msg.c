@@ -1,4 +1,4 @@
-/* $OpenBSD: mandoc_msg.c,v 1.10 2020/09/01 18:24:10 schwarze Exp $ */
+/* $OpenBSD: mandoc_msg.c,v 1.11 2021/06/02 18:27:37 schwarze Exp $ */
 /*
  * Copyright (c) 2014-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -53,7 +53,6 @@ static	const char *const type_message[MANDOCERR_MAX] = {
 	"unknown architecture",
 	"operating system explicitly specified",
 	"RCS id missing",
-	"referenced manual not found",
 
 	"generic style suggestion",
 
@@ -67,6 +66,7 @@ static	const char *const type_message[MANDOCERR_MAX] = {
 	"consider using OS macro",
 	"errnos out of order",
 	"duplicate errno",
+	"referenced manual not found",
 	"trailing delimiter",
 	"no blank before trailing delimiter",
 	"fill mode already enabled, skipping",
