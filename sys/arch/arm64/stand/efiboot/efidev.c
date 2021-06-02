@@ -1,4 +1,4 @@
-/*	$OpenBSD: efidev.c,v 1.6 2020/12/09 18:10:18 krw Exp $	*/
+/*	$OpenBSD: efidev.c,v 1.7 2021/06/02 15:31:15 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -75,15 +75,24 @@ efid_init(struct diskinfo *dip, void *handle)
 static EFI_STATUS
 efid_io(int rw, efi_diskinfo_t ed, u_int off, int nsect, void *buf)
 {
-	EFI_STATUS status = EFI_SUCCESS;
+	u_int blks, start, end;
 	EFI_PHYSICAL_ADDRESS addr;
+	EFI_STATUS status;
 	caddr_t data;
+	size_t size;
 
-	if (ed->blkio->Media->BlockSize != DEV_BSIZE)
+	/* block count of the intrisic block size in DEV_BSIZE */
+	blks = EFI_BLKSPERSEC(ed);
+	if (blks == 0)
+		/* block size < 512.  HP Stream 13 actually has such a disk. */
 		return (EFI_UNSUPPORTED);
 
-	status = BS->AllocatePages(AllocateAnyPages, EfiLoaderData,
-	    EFI_SIZE_TO_PAGES(nsect * DEV_BSIZE), &addr);
+	start = off / blks;
+	end = (off + nsect + blks - 1) / blks;
+	size = (end - start) * ed->blkio->Media->BlockSize;
+
+	status = EFI_CALL(BS->AllocatePages, AllocateAnyPages, EfiLoaderData,
+	    EFI_SIZE_TO_PAGES(size), &addr);
 	if (EFI_ERROR(status))
 		goto on_eio;
 	data = (caddr_t)(uintptr_t)addr;
@@ -91,27 +100,32 @@ efid_io(int rw, efi_diskinfo_t ed, u_int off, int nsect, void *buf)
 	switch (rw) {
 	case F_READ:
 		status = EFI_CALL(ed->blkio->ReadBlocks,
-		    ed->blkio, ed->mediaid, off,
-		    nsect * DEV_BSIZE, data);
+		    ed->blkio, ed->mediaid, start, size, data);
 		if (EFI_ERROR(status))
 			goto on_eio;
-		memcpy(buf, data, nsect * DEV_BSIZE);
+		memcpy(buf, data + DEV_BSIZE * (off - start * blks),
+		    DEV_BSIZE * nsect);
 		break;
 	case F_WRITE:
 		if (ed->blkio->Media->ReadOnly)
 			goto on_eio;
-		memcpy(data, buf, nsect * DEV_BSIZE);
+		if (off % blks != 0 || nsect % blks != 0) {
+			status = EFI_CALL(ed->blkio->ReadBlocks,
+			    ed->blkio, ed->mediaid, start, size, data);
+			if (EFI_ERROR(status))
+				goto on_eio;
+		}
+		memcpy(data + DEV_BSIZE * (off - start * blks), buf,
+		    DEV_BSIZE * nsect);
 		status = EFI_CALL(ed->blkio->WriteBlocks,
-		    ed->blkio, ed->mediaid, off,
-		    nsect * DEV_BSIZE, data);
+		    ed->blkio, ed->mediaid, start, size, data);
 		if (EFI_ERROR(status))
 			goto on_eio;
 		break;
 	}
-	return (EFI_SUCCESS);
 
 on_eio:
-	BS->FreePages(addr, EFI_SIZE_TO_PAGES(nsect * DEV_BSIZE));
+	EFI_CALL(BS->FreePages, addr, EFI_SIZE_TO_PAGES(size));
 
 	return (status);
 }
