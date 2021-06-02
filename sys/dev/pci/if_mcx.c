@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.100 2021/02/25 02:48:20 dlg Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.101 2021/06/02 19:16:11 patrick Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -6800,20 +6800,20 @@ mcx_process_rx(struct mcx_softc *sc, struct mcx_rx *rx,
 {
 	struct mcx_slot *ms;
 	struct mbuf *m;
-	uint32_t flags;
+	uint32_t flags, len;
 	int slot;
 
+	len = bemtoh32(&cqe->cq_byte_cnt);
 	slot = betoh16(cqe->cq_wqe_count) % (1 << MCX_LOG_RQ_SIZE);
 
 	ms = &rx->rx_slots[slot];
-	bus_dmamap_sync(sc->sc_dmat, ms->ms_map, 0, ms->ms_map->dm_mapsize,
-	    BUS_DMASYNC_POSTREAD);
+	bus_dmamap_sync(sc->sc_dmat, ms->ms_map, 0, len, BUS_DMASYNC_POSTREAD);
 	bus_dmamap_unload(sc->sc_dmat, ms->ms_map);
 
 	m = ms->ms_m;
 	ms->ms_m = NULL;
 
-	m->m_pkthdr.len = m->m_len = bemtoh32(&cqe->cq_byte_cnt);
+	m->m_pkthdr.len = m->m_len = len;
 
 	if (cqe->cq_rx_hash_type) {
 		m->m_pkthdr.ph_flowid = betoh32(cqe->cq_rx_hash);
