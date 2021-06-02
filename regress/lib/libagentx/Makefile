@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2021/05/01 16:55:14 martijn Exp $
+# $OpenBSD: Makefile,v 1.8 2021/06/02 08:41:16 martijn Exp $
 
 .if ! exists(/usr/local/sbin/snmpd)
 regress:
@@ -42,12 +42,6 @@ start: stop snmpd.conf agentx
 
 stop:
 	-pkill -xf "${SNMPD_CMD}"
-
-REGRESS_EXPECTED_FAILURES=	getnext_indexoid_0 getnext_indexoid_1
-REGRESS_EXPECTED_FAILURES+=	getnext_indexoid_1_3_6_1_4_1_30155_100_0
-REGRESS_EXPECTED_FAILURES+=	getnext_indexoid_1_3_6_1_4_1_30155_100_0_tail
-REGRESS_EXPECTED_FAILURES+=	getnext_indexoid_1_3_6_1_4_1_30155_100_1_tail
-REGRESS_EXPECTED_FAILURES+=	getnext_indexoid_1_3_6_1_4_1_30155_100_4294967294
 
 REGRESS_TARGETS+=	walk
 CLEANFILES+=		walk.run.out walk.run.err
