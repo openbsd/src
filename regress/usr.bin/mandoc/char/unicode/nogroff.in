@@ -1,5 +1,5 @@
-.\" $OpenBSD: nogroff.in,v 1.5 2017/07/04 14:53:23 schwarze Exp $
-.TH CHAR-UNICODE-NOGROFF 1 "October 28, 2014"
+.\" $OpenBSD: nogroff.in,v 1.6 2021/06/02 17:36:59 schwarze Exp $
+.TH CHAR-UNICODE-NOGROFF 1 "June 2, 2021"
 .SH NAME
 char-unicode-nogroff \- characters handled differently by groff
 .SH DESCRIPTION
@@ -24,6 +24,10 @@ BEGINTEST
 \[u009F]\N'159'	<control> APPLICATION PROGRAM COMMAND
 \[u226A]\(<<	MUCH LESS-THAN
 \[u226B]\(>>	MUCH GREATER-THAN
+\[uD7FB]	HANGUL JONGSEONG PHIEUPH-THIEUTH
+\[uE000]	<Private Use, First>
+\[uF8FF]	<Private Use, Last>
+\[uF900]	CJK COMPATIBILITY IDEOGRAPH-F900
 \[uFB00]\(ff	LATIN SMALL LIGATURE FF
 \[uFB01]\(fi	LATIN SMALL LIGATURE FI
 \[uFB02]\(fl	LATIN SMALL LIGATURE FL
@@ -33,6 +37,10 @@ BEGINTEST
 \[uFFFE]	<undefined>
 \[uFFFF]	<undefined>
 \[u10000]	LINEAR B SYLLABLE B008 A
+\[uE01EF]	VARIATION SELECTOR-256
+\[uEFFFE]	<undefined>
+\[uEFFFF]	<undefined>
+\[uF0000]	<Plane 15 Private Use, First>
 \[uFFFFD]	<Plane 15 Private Use, Last>
 \[uFFFFE]	<undefined>
 \[uFFFFF]	<undefined>
