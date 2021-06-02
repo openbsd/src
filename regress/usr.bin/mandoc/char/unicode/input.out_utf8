@@ -54,7 +54,7 @@ DDEESSCCRRIIPPTTIIOONN
        U+3FFFF    0xf0bfbfbf     𿿿𿿿        end of first middle byte
        U+40000    0xf1808080     񀀀񀀀        second middle byte
        U+FFFFF    0xf3bfbfbf     󿿿󿿿        last normal middle byte
-       U+100000   0xf4808080     􀀀􀀀        strange middle byte
+       U+100000   0xf4808080     􀀀􀀀      strange middle byte
        U+10FFFF   0xf48fbfbf     􏿿􏿿        last valid four-byte
        U+110000   0xf4908080     ????    lowest beyond Unicode
        U+13FFFF   0xf4bfbfbf     ????    end of strange middle byte
