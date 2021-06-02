@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.140 2021/01/18 12:22:40 sthen Exp $	*/
+/*	$OpenBSD: in.h,v 1.141 2021/06/02 00:09:57 dlg Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -772,6 +772,8 @@ struct ifaddr;
 struct in_ifaddr;
 
 void	   ipv4_input(struct ifnet *, struct mbuf *);
+struct mbuf *
+	   ipv4_check(struct ifnet *, struct mbuf *);
 
 int	   in_broadcast(struct in_addr, u_int);
 int	   in_canforward(struct in_addr);
