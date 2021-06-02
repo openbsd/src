@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.30 2020/09/25 14:42:39 deraadt Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.31 2021/06/02 00:39:27 cheloha Exp $	*/
 /*	$NetBSD: cpu.h,v 1.41 2006/01/21 04:24:12 uwe Exp $	*/
 
 /*-
@@ -70,6 +70,8 @@ struct cpu_info {
 #endif
 
 	int	ci_want_resched;
+
+	char	ci_panicbuf[512];
 };
 
 extern struct cpu_info cpu_info_store;

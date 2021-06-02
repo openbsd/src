@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.68 2020/05/31 06:23:57 dlg Exp $ */
+/*	$OpenBSD: cpu.h,v 1.69 2021/06/02 00:39:26 cheloha Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -177,6 +177,7 @@ struct cpu_info {
 #ifdef GPROF
 	struct gmonparam *ci_gmon;
 #endif
+	char		 ci_panicbuf[512];
 };
 
 extern cpuid_t master_cpu;

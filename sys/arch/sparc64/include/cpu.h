@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.96 2020/09/14 20:28:41 deraadt Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.97 2021/06/02 00:39:27 cheloha Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -164,6 +164,7 @@ struct cpu_info {
 #ifdef GPROF
 	struct gmonparam *ci_gmon;
 #endif
+	char			ci_panicbuf[512];
 };
 
 #define CPUF_RUNNING	0x0001		/* CPU is running */

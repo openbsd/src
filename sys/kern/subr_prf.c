@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.103 2021/05/16 15:10:20 deraadt Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.104 2021/06/02 00:39:25 cheloha Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -99,7 +99,6 @@ struct mutex kprintf_mutex =
 extern	int log_open;	/* subr_log: is /dev/klog open? */
 const	char *panicstr; /* arg to first call to panic (used as a flag
 			   to indicate that panic has already been called). */
-const	char *faultstr; /* page fault string */
 #ifdef DDB
 /*
  * Enter ddb on panic.
@@ -173,6 +172,18 @@ tablefull(const char *tab)
 }
 
 /*
+ * If we have panicked, prefer db_printf() and db_vprintf() where
+ * available.
+ */
+#ifdef DDB
+#define panic_printf(...)	db_printf(__VA_ARGS__)
+#define panic_vprintf(...)	db_vprintf(__VA_ARGS__)
+#else
+#define panic_printf(...)	printf(__VA_ARGS__)
+#define panic_vprintf(...)	vprintf(__VA_ARGS__)
+#endif
+
+/*
  * panic: handle an unresolvable fatal error
  *
  * prints "panic: <message>" and reboots.   if called twice (i.e. recursive
@@ -183,31 +194,37 @@ tablefull(const char *tab)
 void
 panic(const char *fmt, ...)
 {
-	static char panicbuf[512];
+	struct cpu_info *ci = curcpu();
 	int bootopt;
 	va_list ap;
+
+	bootopt = RB_AUTOBOOT | RB_DUMP;
+	if (atomic_cas_ptr(&panicstr, NULL, ci->ci_panicbuf) != NULL)
+		bootopt |= RB_NOSYNC;
 
 	/* do not trigger assertions, we know that we are inconsistent */
 	splassert_ctl = 0;
 
-	/* make sure we see kernel printf output */
-	printf_flags |= TOCONS;
+#ifdef BOOT_QUIET
+	printf_flags |= TOCONS;	/* make sure we see kernel printf output */
+#endif
 
-	bootopt = RB_AUTOBOOT | RB_DUMP;
-	va_start(ap, fmt);
-	if (panicstr)
-		bootopt |= RB_NOSYNC;
-	else {
-		vsnprintf(panicbuf, sizeof panicbuf, fmt, ap);
-		panicstr = panicbuf;
+	/*
+	 * All panic messages are printed, but only the first panic on a
+	 * given CPU is written to its panicbuf.
+	 */
+	if (ci->ci_panicbuf[0] == '\0') {
+		va_start(ap, fmt);
+		vsnprintf(ci->ci_panicbuf, sizeof(ci->ci_panicbuf), fmt, ap);
+		va_end(ap);
+		panic_printf("panic: %s\n", ci->ci_panicbuf);
+	} else {
+		panic_printf("panic: ");
+		va_start(ap, fmt);
+		panic_vprintf(fmt, ap);
+		va_end(ap);
+		panic_printf("\n");
 	}
-	va_end(ap);
-
-	printf("panic: ");
-	va_start(ap, fmt);
-	vprintf(fmt, ap);
-	printf("\n");
-	va_end(ap);
 
 #ifdef DDB
 	if (db_panic)

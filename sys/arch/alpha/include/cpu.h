@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.63 2020/06/05 14:25:05 naddy Exp $ */
+/* $OpenBSD: cpu.h,v 1.64 2021/06/02 00:39:26 cheloha Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -213,6 +213,7 @@ struct cpu_info {
 #ifdef GPROF
 	struct gmonparam *ci_gmon;
 #endif
+	char ci_panicbuf[512];
 };
 
 #define	CPUF_PRIMARY	0x01		/* CPU is primary CPU */

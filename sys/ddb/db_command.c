@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.90 2020/10/26 18:53:20 deraadt Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.91 2021/06/02 00:39:25 cheloha Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /*
@@ -468,14 +468,20 @@ db_nfsnode_print_cmd(db_expr_t addr, int have_addr, db_expr_t count,
 void
 db_show_panic_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
-	if (panicstr)
-		db_printf("%s\n", panicstr);
-	else if (faultstr) {
-		db_printf("kernel page fault\n");
-		db_printf("%s\n", faultstr);
-		db_stack_trace_print(addr, have_addr, 1, modif, db_printf);
+	struct cpu_info *ci;
+	char *prefix;
+	CPU_INFO_ITERATOR cii;
+	int panicked = 0;
+
+	CPU_INFO_FOREACH(cii, ci) {
+		if (ci->ci_panicbuf[0] != '\0') {
+			prefix = (panicstr == ci->ci_panicbuf) ? "*" : " ";
+			db_printf("%scpu%d: %s\n",
+			    prefix, CPU_INFO_UNIT(ci), ci->ci_panicbuf);
+			panicked = 1;
+		}
 	}
-	else
+	if (!panicked)
 		db_printf("the kernel did not panic\n");	/* yet */
 }
 

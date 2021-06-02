@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.88 2021/05/05 07:29:00 mpi Exp $	*/
+/*	$OpenBSD: trap.c,v 1.89 2021/06/02 00:39:26 cheloha Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -87,6 +87,7 @@
 #include <machine/psl.h>
 #include <machine/trap.h>
 #ifdef DDB
+#include <ddb/db_output.h>
 #include <machine/db_machdep.h>
 #endif
 
@@ -135,20 +136,21 @@ static inline void debug_trap(struct trapframe *_frame, struct proc *_p,
     long _type);
 
 static inline void
-fault(const char *format, ...)
+fault(const char *fmt, ...)
 {
-	static char faultbuf[512];
+	struct cpu_info *ci = curcpu();
 	va_list ap;
 
-	/*
-	 * Save the fault info for DDB.  Kernel lock protects
-	 * faultbuf from being overwritten by another CPU.
-	 */
-	va_start(ap, format);
-	vsnprintf(faultbuf, sizeof faultbuf, format, ap);
+	atomic_cas_ptr(&panicstr, NULL, ci->ci_panicbuf);
+
+	va_start(ap, fmt);
+	vsnprintf(ci->ci_panicbuf, sizeof(ci->ci_panicbuf), fmt, ap);
 	va_end(ap);
-	printf("%s\n", faultbuf);
-	faultstr = faultbuf;
+#ifdef DDB
+	db_printf("%s\n", ci->ci_panicbuf);
+#else
+	printf("%s\n", ci->ci_panicbuf);
+#endif
 }
 
 static inline int

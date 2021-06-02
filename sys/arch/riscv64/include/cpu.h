@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.6 2021/05/12 01:20:52 jsg Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.7 2021/06/02 00:39:27 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2019 Mike Larkin <mlarkin@openbsd.org>
@@ -142,6 +142,7 @@ struct cpu_info {
 #ifdef GPROF
 	struct gmonparam	*ci_gmon;
 #endif
+	char			ci_panicbuf[512];
 };
 
 #define CPUF_PRIMARY		(1<<0)
