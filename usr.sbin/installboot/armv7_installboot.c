@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_installboot.c,v 1.6 2020/07/22 05:06:38 deraadt Exp $	*/
+/*	$OpenBSD: armv7_installboot.c,v 1.7 2021/06/02 16:12:18 kettenis Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -47,13 +47,16 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
+#include <uuid.h>
 
 #include "installboot.h"
 
 static void	write_filesystem(struct disklabel *, char);
+static int	findgptefisys(int, struct disklabel *);
 static int	findmbrfat(int, struct disklabel *);
 
 void
@@ -81,6 +84,12 @@ md_installboot(int devfd, char *dev)
 	/* Warn on unknown disklabel types. */
 	if (dl.d_type == 0)
 		warnx("disklabel type unknown");
+
+	part = findgptefisys(devfd, &dl);
+	if (part != -1) {
+		write_filesystem(&dl, (char)part);
+		return;
+	}
 
 	part = findmbrfat(devfd, &dl);
 	if (part != -1) {
@@ -241,6 +250,140 @@ rmdir:
 
 	if (rslt == -1)
 		exit(1);
+}
+
+/*
+ * Returns 0 if the MBR with the provided partition array is a GPT protective
+ * MBR, and returns 1 otherwise. A GPT protective MBR would have one and only
+ * one MBR partition, an EFI partition that either covers the whole disk or as
+ * much of it as is possible with a 32bit size field.
+ *
+ * NOTE: MS always uses a size of UINT32_MAX for the EFI partition!**
+ */
+static int
+gpt_chk_mbr(struct dos_partition *dp, u_int64_t dsize)
+{
+	struct dos_partition *dp2;
+	int efi, found, i;
+	u_int32_t psize;
+
+	found = efi = 0;
+	for (dp2=dp, i=0; i < NDOSPART; i++, dp2++) {
+		if (dp2->dp_typ == DOSPTYP_UNUSED)
+			continue;
+		found++;
+		if (dp2->dp_typ != DOSPTYP_EFI)
+			continue;
+		psize = letoh32(dp2->dp_size);
+		if (psize == (dsize - 1) ||
+		    psize == UINT32_MAX) {
+			if (letoh32(dp2->dp_start) == 1)
+				efi++;
+		}
+	}
+	if (found == 1 && efi == 1)
+		return (0);
+
+	return (1);
+}
+
+int
+findgptefisys(int devfd, struct disklabel *dl)
+{
+	struct gpt_partition	 gp[NGPTPARTITIONS];
+	struct gpt_header	 gh;
+	struct dos_partition	 dp[NDOSPART];
+	struct uuid		 efisys_uuid;
+	const char		 efisys_uuid_code[] = GPT_UUID_EFI_SYSTEM;
+	off_t			 off;
+	ssize_t			 len;
+	u_int64_t		 start;
+	int			 i;
+	uint32_t		 orig_csum, new_csum;
+	uint32_t		 ghsize, ghpartsize, ghpartnum, ghpartspersec;
+	u_int8_t		*secbuf;
+
+	/* Prepare EFI System UUID */
+	uuid_dec_be(efisys_uuid_code, &efisys_uuid);
+
+	if ((secbuf = malloc(dl->d_secsize)) == NULL)
+		err(1, NULL);
+
+	/* Check that there is a protective MBR. */
+	len = pread(devfd, secbuf, dl->d_secsize, 0);
+	if (len != dl->d_secsize)
+		err(4, "can't read mbr");
+	memcpy(dp, &secbuf[DOSPARTOFF], sizeof(dp));
+	if (gpt_chk_mbr(dp, DL_GETDSIZE(dl))) {
+		free(secbuf);
+		return (-1);
+	}
+
+	/* Check GPT Header. */
+	off = dl->d_secsize;	/* Read header from sector 1. */
+	len = pread(devfd, secbuf, dl->d_secsize, off);
+	if (len != dl->d_secsize)
+		err(4, "can't pread gpt header");
+
+	memcpy(&gh, secbuf, sizeof(gh));
+	free(secbuf);
+
+	/* Check signature */
+	if (letoh64(gh.gh_sig) != GPTSIGNATURE)
+		return (-1);
+
+	if (letoh32(gh.gh_rev) != GPTREVISION)
+		return (-1);
+
+	ghsize = letoh32(gh.gh_size);
+	if (ghsize < GPTMINHDRSIZE || ghsize > sizeof(struct gpt_header))
+		return (-1);
+
+	/* Check checksum */
+	orig_csum = gh.gh_csum;
+	gh.gh_csum = 0;
+	new_csum = crc32((unsigned char *)&gh, ghsize);
+	gh.gh_csum = orig_csum;
+	if (letoh32(orig_csum) != new_csum)
+		return (-1);
+
+	off = letoh64(gh.gh_part_lba) * dl->d_secsize;
+	ghpartsize = letoh32(gh.gh_part_size);
+	ghpartspersec = dl->d_secsize / ghpartsize;
+	ghpartnum = letoh32(gh.gh_part_num);
+	if ((secbuf = malloc(dl->d_secsize)) == NULL)
+		err(1, NULL);
+	for (i = 0; i < (ghpartnum + ghpartspersec - 1) / ghpartspersec; i++) {
+		len = pread(devfd, secbuf, dl->d_secsize, off);
+		if (len != dl->d_secsize) {
+			free(secbuf);
+			return (-1);
+		}
+		memcpy(gp + i * ghpartspersec, secbuf,
+		    ghpartspersec * sizeof(struct gpt_partition));
+		off += dl->d_secsize;
+	}
+	free(secbuf);
+	new_csum = crc32((unsigned char *)&gp, ghpartnum * ghpartsize);
+	if (new_csum != letoh32(gh.gh_part_csum))
+		return (-1);
+
+	start = 0;
+	for (i = 0; i < ghpartnum && start == 0; i++) {
+		if (memcmp(&gp[i].gp_type, &efisys_uuid,
+		    sizeof(struct uuid)) == 0)
+			start = letoh64(gp[i].gp_lba_start);
+	}
+
+	if (start) {
+		for (i = 0; i < MAXPARTITIONS; i++) {
+			if (DL_GETPSIZE(&dl->d_partitions[i]) > 0 &&
+			    DL_GETPOFFSET(&dl->d_partitions[i]) == start)
+				return ('a' + i);
+		}
+	}
+
+	return (-1);
 }
 
 int
