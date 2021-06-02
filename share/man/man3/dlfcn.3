@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dlfcn.3,v 1.30 2020/12/03 22:47:22 jmc Exp $
+.\"	$OpenBSD: dlfcn.3,v 1.31 2021/06/02 07:29:03 semarie Exp $
 .\"	$NetBSD: dlfcn.3,v 1.3 1996/01/09 19:43:34 pk Exp $
 .\"
 .\" Copyright (c) 1995 Paul Kranenburg
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 3 2020 $
+.Dd $Mdocdate: June 2 2021 $
 .Dt DLOPEN 3
 .Os
 .Sh NAME
@@ -123,6 +123,14 @@ To specify both resolution time and visibility, bitwise inclusive OR one of
 each of the above values together.
 If an object was opened with RTLD_LOCAL and later opened with RTLD_GLOBAL,
 then it is promoted to RTLD_GLOBAL.
+.Pp
+Additionally, the following flag may be ORed into the mode argument:
+.Pp
+.Bl -tag -width "RTLD_NODELETE" -compact -offset indent
+.It Sy RTLD_NODELETE
+Prevents unload of the loaded object on
+.Fn dlclose .
+.El
 .Pp
 The main executable's symbols are normally invisible to
 .Fn dlopen

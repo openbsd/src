@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.h,v 1.14 2017/11/28 17:19:47 kettenis Exp $	*/
+/*	$OpenBSD: dlfcn.h,v 1.15 2021/06/02 07:29:03 semarie Exp $	*/
 /*	$NetBSD: dlfcn.h,v 1.2 1995/06/05 19:38:00 pk Exp $	*/
 
 /*
@@ -42,6 +42,7 @@
 #define RTLD_GLOBAL	0x100
 #define RTLD_LOCAL	0x000
 #define RTLD_TRACE	0x200
+#define RTLD_NODELETE	0x400
 
 /*
  * Special handle arguments for dlsym().
