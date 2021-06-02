@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.191 2021/05/28 16:24:53 visa Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.192 2021/06/02 11:30:23 mvs Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -1171,13 +1171,14 @@ sys_setrtable(struct proc *p, void *v, register_t *retval)
 	struct sys_setrtable_args /* {
 		syscallarg(int) rtableid;
 	} */ *uap = v;
+	u_int ps_rtableid = p->p_p->ps_rtableid;
 	int rtableid, error;
 
 	rtableid = SCARG(uap, rtableid);
 
-	if (p->p_p->ps_rtableid == (u_int)rtableid)
+	if (ps_rtableid == rtableid)
 		return (0);
-	if (p->p_p->ps_rtableid != 0 && (error = suser(p)) != 0)
+	if (ps_rtableid != 0 && (error = suser(p)) != 0)
 		return (error);
 	if (rtableid < 0 || !rtable_exists((u_int)rtableid))
 		return (EINVAL);
