@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.80 2021/05/15 19:44:15 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.81 2021/06/03 15:05:55 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -114,6 +114,9 @@ static const struct part_type {
 	{ 0xA9, "NetBSD      ", "516e7cb4-6ecf-11d6-8ff8-00022d09712b" },
 	{ 0xAB, "MacOS X boot", "426f6f74-0000-11aa-aa11-00306543ecac" },
 	{ 0xAF, "MacOS X HFS+", "48465300-0000-11aa-aa11-00306543ecac" },
+	{ 0xB0, "APFS        ", "7c3457ef-0000-11aa-aa11-00306543ecac" },
+	{ 0xB1, "APFS ISC    ", "69646961-6700-11aa-aa11-00306543ecac" },
+	{ 0xB2, "APFS Recovry", "52637672-7900-11aa-aa11-00306543ecac" },
 	{ 0xB7, "BSDI filesy*"},   /* BSDI BSD/386 filesystem */
 	{ 0xB8, "BSDI swap   "},   /* BSDI BSD/386 swap */
 	{ 0xBF, "Solaris     ", "6a85cf4d-1dd2-11b2-99a6-080020736631" },

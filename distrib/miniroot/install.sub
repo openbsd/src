@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1164 2021/05/03 11:34:55 sthen Exp $
+#	$OpenBSD: install.sub,v 1.1165 2021/06/03 15:05:55 krw Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -380,6 +380,9 @@ disk_has() {
 	# Patterns for partition-table-types and partition-types.
 	local _p_gpt='Usable LBA:'
 	local _p_gpt_openbsd='^[ *]...: OpenBSD '
+	local _p_gpt_apfs='^[ *]...: APFS '
+	local _p_gpt_apfsisc='^[ *]...: APFS ISC '
+	local _p_gpt_apfsrecovery='^[ *]...: APFS Recovry '
 	local _p_gpt_efisys='^[ *]...: EFI Sys '
 	local _p_hfs='^Partition map '
 	local _p_hfs_openbsd=' OpenBSD OpenBSD '
