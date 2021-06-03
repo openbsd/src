@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.141 2021/05/11 11:48:02 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.142 2021/06/03 15:10:05 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -701,9 +701,9 @@ main(int argc, char *argv[])
 		goto usage;
 	}
 
-	if ((cachefd = open(cachedir, O_RDONLY, 0)) == -1)
+	if ((cachefd = open(cachedir, O_RDONLY | O_DIRECTORY, 0)) == -1)
 		err(1, "cache directory %s", cachedir);
-	if ((outdirfd = open(outputdir, O_RDONLY, 0)) == -1)
+	if ((outdirfd = open(outputdir, O_RDONLY | O_DIRECTORY, 0)) == -1)
 		err(1, "output directory %s", outputdir);
 
 	if (outformats == 0)
