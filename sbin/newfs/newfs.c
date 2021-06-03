@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.114 2020/05/19 12:49:51 sthen Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.115 2021/06/03 06:42:03 otto Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -191,6 +191,7 @@ main(int argc, char *argv[])
 	const char *errstr;
 	long long fssize_input = 0;
 	int fssize_usebytes = 0;
+	int defaultfsize;
 	u_int64_t nsecs;
 
 	if (strstr(__progname, "mfs"))
@@ -468,6 +469,7 @@ havelabel:
 	fssize = nsecs * (sectorsize / DEV_BSIZE);
 	if (oflagset == 0 && fssize >= INT_MAX)
 		Oflag = 2;	/* FFS2 */
+	defaultfsize = fsize == 0;
 	if (fsize == 0) {
 		fsize = DISKLABELV1_FFS_FSIZE(pp->p_fragblock);
 		if (fsize <= 0)
@@ -478,8 +480,13 @@ havelabel:
 		if (bsize <= 0)
 			bsize = MINIMUM(DFL_BLKSIZE, 8 * fsize);
 	}
-	if (density == 0)
+	if (density == 0) {
 		density = NFPI * fsize;
+		/* large sectors lead to fewer inodes due to large fsize,
+		   compensate */
+		if (defaultfsize && sectorsize > DEV_BSIZE)
+			density /= 2;
+	}
 	if (minfree < MINFREE && opt != FS_OPTSPACE && reqopt == -1) {
 		warnx("warning: changing optimization to space "
 		    "because minfree is less than %d%%\n", MINFREE);
