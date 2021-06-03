@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.361 2021/06/02 00:09:57 dlg Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.362 2021/06/03 01:55:52 dlg Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -287,8 +287,8 @@ ipv4_check(struct ifnet *ifp, struct mbuf *m)
 		}
 	}
 
-	if ((m->m_pkthdr.csum_flags & M_IPV4_CSUM_IN_OK) == 0) {
-		if (m->m_pkthdr.csum_flags & M_IPV4_CSUM_IN_BAD) {
+	if (!ISSET(m->m_pkthdr.csum_flags, M_IPV4_CSUM_IN_OK)) {
+		if (ISSET(m->m_pkthdr.csum_flags, M_IPV4_CSUM_IN_BAD)) {
 			ipstat_inc(ips_badsum);
 			goto bad;
 		}
@@ -298,6 +298,8 @@ ipv4_check(struct ifnet *ifp, struct mbuf *m)
 			ipstat_inc(ips_badsum);
 			goto bad;
 		}
+
+		SET(m->m_pkthdr.csum_flags, M_IPV4_CSUM_IN_OK);
 	}
 
 	/* Retrieve the packet length. */
