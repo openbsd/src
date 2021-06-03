@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvppreg.h,v 1.15 2020/11/08 00:49:41 patrick Exp $	*/
+/*	$OpenBSD: if_mvppreg.h,v 1.16 2021/06/03 21:42:23 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -993,6 +993,10 @@ enum mvpp2_prs_l3_cast {
 #define MVPP2_PRS_MCAST_VAL		BIT(0)
 #define MVPP2_PRS_UCAST_VAL		0x0
 
+#define MVPP2_PRS_MAC_RANGE_SIZE	80
+#define MVPP2_PRS_MAC_UC_FILT_MAX	4
+#define MVPP2_PRS_MAC_MC_FILT_MAX	21
+
 /*
  * Tcam structure:
  * - lookup ID - 4 bits
@@ -1014,7 +1018,10 @@ enum mvpp2_prs_l3_cast {
 /* Tcam entries ID */
 #define MVPP2_PE_DROP_ALL		0
 #define MVPP2_PE_FIRST_FREE_TID		1
-#define MVPP2_PE_LAST_FREE_TID		(MVPP2_PRS_TCAM_SRAM_SIZE - 31)
+#define MVPP2_PE_LAST_FREE_TID		(MVPP2_PE_MAC_RANGE_START - 1)
+#define MVPP2_PE_MAC_RANGE_END		(MVPP2_PRS_TCAM_SRAM_SIZE - 31)
+#define MVPP2_PE_MAC_RANGE_START	(MVPP2_PE_MAC_RANGE_END - \
+						MVPP2_PRS_MAC_RANGE_SIZE + 1)
 #define MVPP2_PE_IP6_EXT_PROTO_UN	(MVPP2_PRS_TCAM_SRAM_SIZE - 30)
 #define MVPP2_PE_IP6_ADDR_UN		(MVPP2_PRS_TCAM_SRAM_SIZE - 29)
 #define MVPP2_PE_IP4_ADDR_UN		(MVPP2_PRS_TCAM_SRAM_SIZE - 28)
