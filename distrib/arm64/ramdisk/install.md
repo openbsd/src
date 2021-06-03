@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.16 2021/05/30 18:57:22 kettenis Exp $
+#	$OpenBSD: install.md,v 1.17 2021/06/03 17:08:56 kettenis Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,9 +39,9 @@ MOUNT_ARGS_msdos="-o-l"
 md_installboot() {
 	local _disk=/dev/$1 _mdec _plat
 
-	case $(sysctl -n hw.product) in
-	Pine64*(+))			_plat=pine64;;
-	*'Raspberry Pi'*)		_plat=rpi;;
+	case $(sysctl -n machdep.compatible) in
+	pine64,pine64*(+))	_plat=pine64;;
+	raspberrypi,*)		_plat=rpi;
 	esac
 
 	# Mount MSDOS partition, extract U-Boot and copy UEFI boot program
@@ -73,7 +73,11 @@ md_installboot() {
 }
 
 md_prep_fdisk() {
-	local _disk=$1 _d
+	local _disk=$1 _d _plat
+
+	case $(sysctl -n machdep.compatible) in
+	apple,*)	_plat=apple;;
+	esac
 
 	local bootparttype="C"
 	local bootsectorstart="32768"
@@ -86,6 +90,9 @@ md_prep_fdisk() {
 		_d=whole
 		if disk_has $_disk mbr; then
 			fdisk $_disk
+		elif disk_has $_disk gpt; then
+		     	fdisk $_disk
+			[[ $_plat == apple ]] && _d=edit
 		else
 			echo "MBR has invalid signature; not showing it."
 		fi
