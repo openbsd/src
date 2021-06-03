@@ -29,10 +29,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login_cap.3,v 1.17 2015/11/10 23:48:18 jmc Exp $
+.\" $OpenBSD: login_cap.3,v 1.18 2021/06/03 13:38:18 deraadt Exp $
 .\" BSDI $From: login_cap.3,v 1.4 1997/11/07 16:22:27 jch Exp $
 .\"
-.Dd $Mdocdate: November 10 2015 $
+.Dd $Mdocdate: June 3 2021 $
 .Dt LOGIN_GETCLASS 3
 .Os
 .Sh NAME
@@ -44,7 +44,6 @@
 .Nm login_getcapstr ,
 .Nm login_getcaptime ,
 .Nm login_close ,
-.Nm secure_path ,
 .Nm setclasscontext ,
 .Nm setusercontext
 .Nd query login.conf database about a user class
@@ -67,8 +66,6 @@
 .Fn login_getcaptime "login_cap_t *lc" "char *cap" "quad_t def" "quad_t err"
 .Ft void
 .Fn login_close "login_cap_t *lc"
-.Ft int
-.Fn secure_path "char *path"
 .Ft int
 .Fn setclasscontext "char *class" "unsigned int flags"
 .Ft int
@@ -172,13 +169,6 @@ It returns a non-zero value if
 .Ar cap ,
 with no value, was found,
 zero otherwise.
-.Pp
-The
-.Fn secure_path
-function takes a path name and returns 0 if the path name is secure, \-1
-if not.
-To be secure a path must exist, be a regular file (and not a directory),
-owned by root, and only writable by the owner (root).
 .Pp
 The
 .Fn setclasscontext
