@@ -739,7 +739,6 @@ readdir_r
 readpassphrase
 rewinddir
 scandir
-secure_path
 seekdir
 setclasscontext
 setdomainname

@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.h,v 1.1 2015/09/13 19:58:50 guenther Exp $	*/
+/*	$OpenBSD: login_cap.h,v 1.2 2021/06/03 13:19:45 deraadt Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -28,7 +28,6 @@ PROTO_NORMAL(login_getcapstr);
 PROTO_NORMAL(login_getcaptime);
 PROTO_NORMAL(login_getclass);
 PROTO_NORMAL(login_getstyle);
-PROTO_NORMAL(secure_path);
 PROTO_DEPRECATED(setclasscontext);
 PROTO_NORMAL(setusercontext);
 

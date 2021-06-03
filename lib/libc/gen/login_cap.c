@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.c,v 1.38 2019/10/18 17:14:08 tedu Exp $	*/
+/*	$OpenBSD: login_cap.c,v 1.39 2021/06/03 13:19:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Todd C. Miller <millert@openbsd.org>
@@ -976,32 +976,6 @@ multiply(u_quad_t n1, u_quad_t n2)
 
 	return (m);
 }
-
-int
-secure_path(char *path)
-{
-	struct stat sb;
-
-	/*
-	 * If not a regular file, or is owned/writeable by someone
-	 * other than root, quit.
-	 */
-	if (lstat(path, &sb) == -1) {
-		syslog(LOG_ERR, "cannot stat %s: %m", path);
-		return (-1);
-	} else if (!S_ISREG(sb.st_mode)) {
-		syslog(LOG_ERR, "%s: not a regular file", path);
-		return (-1);
-	} else if (sb.st_uid != 0) {
-		syslog(LOG_ERR, "%s: not owned by root", path);
-		return (-1);
-	} else if (sb.st_mode & (S_IWGRP | S_IWOTH)) {
-		syslog(LOG_ERR, "%s: writable by non-root", path);
-		return (-1);
-	}
-	return (0);
-}
-DEF_WEAK(secure_path);
 
 /*
  * Check whether or not a tilde in a string should be expanded.
