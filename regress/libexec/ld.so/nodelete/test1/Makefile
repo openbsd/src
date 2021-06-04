@@ -1,4 +1,6 @@
-#	$OpenBSD: Makefile,v 1.1 2021/06/02 07:32:34 semarie Exp $
+#	$OpenBSD: Makefile,v 1.2 2021/06/04 10:01:49 semarie Exp $
+
+.include <bsd.obj.mk>
 
 PROG =	test1
 
