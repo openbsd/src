@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.13 2021/06/03 17:05:41 kettenis Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.14 2021/06/04 00:29:15 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009 Theo de Raadt <deraadt@openbsd.org>
@@ -19,6 +19,7 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <sys/sysctl.h>
 #include <sys/uio.h>
 
