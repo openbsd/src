@@ -598,7 +598,15 @@ static const struct intel_device_info chv_info = {
 	.has_logical_ring_contexts = 0,
 #endif
 	.display.has_gmch = 1,
+#ifdef __linux__
 	.ppgtt_type = INTEL_PPGTT_ALIASING,
+#else
+	/*
+	 * Enabling aliasing ppgtt results in struct gen6_ppgtt
+	 * being overwritten.
+	 */
+	.ppgtt_type = INTEL_PPGTT_NONE,
+#endif
 	.ppgtt_size = 32,
 	.has_reset_engine = 1,
 	.has_snoop = true,
