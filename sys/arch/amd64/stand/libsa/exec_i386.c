@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.33 2021/03/11 11:16:55 jsg Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.34 2021/06/05 13:32:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Michael Shalayeff
@@ -74,7 +74,6 @@ extern char end[], _start[];
 
 caddr_t pt_base_addr;
 
-#define PAGE_MASK		(PAGE_SIZE - 1)
 #define LONG_KERN_PML4_ADDR1	0x1000
 #define LONG_KERN_PML4_ADDR2	(((uint64_t)(end) + PAGE_MASK) & ~PAGE_MASK)
 
