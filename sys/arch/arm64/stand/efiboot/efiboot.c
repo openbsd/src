@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.32 2021/03/26 23:29:21 kn Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.33 2021/06/06 23:56:55 krw Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -41,7 +41,6 @@
 
 #include "efidev.h"
 #include "efiboot.h"
-#include "eficall.h"
 #include "fdt.h"
 
 EFI_SYSTEM_TABLE	*ST;
@@ -84,13 +83,13 @@ efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 	IH = image;
 
 	/* disable reset by watchdog after 5 minutes */
-	EFI_CALL(BS->SetWatchdogTimer, 0, 0, 0, NULL);
+	BS->SetWatchdogTimer(0, 0, 0, NULL);
 
-	status = EFI_CALL(BS->HandleProtocol, image, &imgp_guid,
+	status = BS->HandleProtocol(image, &imgp_guid,
 	    (void **)&imgp);
 	if (status == EFI_SUCCESS)
-		status = EFI_CALL(BS->HandleProtocol, imgp->DeviceHandle,
-		    &devp_guid, (void **)&dp);
+		status = BS->HandleProtocol(imgp->DeviceHandle, &devp_guid,
+		    (void **)&dp);
 	if (status == EFI_SUCCESS)
 		efi_bootdp = dp;
 
@@ -210,7 +209,7 @@ efi_heap_init(void)
 {
 	EFI_STATUS	 status;
 
-	status = EFI_CALL(BS->AllocatePages, AllocateAnyPages, EfiLoaderData,
+	status = BS->AllocatePages(AllocateAnyPages, EfiLoaderData,
 	    EFI_SIZE_TO_PAGES(heapsiz), &heap);
 	if (status != EFI_SUCCESS)
 		panic("BS->AllocatePages()");
@@ -234,11 +233,11 @@ efi_diskprobe(void)
 	TAILQ_INIT(&disklist);
 
 	sz = 0;
-	status = EFI_CALL(BS->LocateHandle, ByProtocol, &blkio_guid, 0, &sz, 0);
+	status = BS->LocateHandle(ByProtocol, &blkio_guid, 0, &sz, 0);
 	if (status == EFI_BUFFER_TOO_SMALL) {
 		handles = alloc(sz);
-		status = EFI_CALL(BS->LocateHandle, ByProtocol, &blkio_guid,
-		    0, &sz, handles);
+		status = BS->LocateHandle(ByProtocol, &blkio_guid, 0, &sz,
+		    handles);
 	}
 	if (handles == NULL || EFI_ERROR(status))
 		return;
@@ -256,7 +255,7 @@ efi_diskprobe(void)
 		depth = 1;
 
 	for (i = 0; i < sz / sizeof(EFI_HANDLE); i++) {
-		status = EFI_CALL(BS->HandleProtocol, handles[i], &blkio_guid,
+		status = BS->HandleProtocol(handles[i], &blkio_guid,
 		    (void **)&blkio);
 		if (EFI_ERROR(status))
 			panic("BS->HandleProtocol() returns %d", status);
@@ -269,7 +268,7 @@ efi_diskprobe(void)
 
 		if (efi_bootdp == NULL || depth == -1 || bootdev != 0)
 			goto next;
-		status = EFI_CALL(BS->HandleProtocol, handles[i], &devp_guid,
+		status = BS->HandleProtocol(handles[i], &devp_guid,
 		    (void **)&dp);
 		if (EFI_ERROR(status))
 			goto next;
@@ -382,7 +381,7 @@ efi_framebuffer(void)
 		}
 	}
 
-	status = EFI_CALL(BS->LocateProtocol, &gop_guid, NULL, (void **)&gop);
+	status = BS->LocateProtocol(&gop_guid, NULL, (void **)&gop);
 	if (status != EFI_SUCCESS)
 		return;
 
@@ -628,7 +627,7 @@ efi_cleanup(void)
 	for (retry = 1; retry >= 0; retry--) {
 		efi_memprobe_internal();	/* sync the current map */
 		efi_updatefdt();
-		status = EFI_CALL(BS->ExitBootServices, IH, mmap_key);
+		status = BS->ExitBootServices(IH, mmap_key);
 		if (status == EFI_SUCCESS)
 			break;
 		if (retry == 0)
@@ -886,12 +885,11 @@ efi_memprobe_internal(void)
 	free(mmap, mmap_ndesc * mmap_descsiz);
 
 	siz = 0;
-	status = EFI_CALL(BS->GetMemoryMap, &siz, NULL, &mapkey, &mmsiz,
-	    &mmver);
+	status = BS->GetMemoryMap(&siz, NULL, &mapkey, &mmsiz, &mmver);
 	if (status != EFI_BUFFER_TOO_SMALL)
 		panic("cannot get the size of memory map");
 	mm = alloc(siz);
-	status = EFI_CALL(BS->GetMemoryMap, &siz, mm, &mapkey, &mmsiz, &mmver);
+	status = BS->GetMemoryMap(&siz, mm, &mapkey, &mmsiz, &mmver);
 	if (status != EFI_SUCCESS)
 		panic("cannot get the memory map");
 	n = siz / mmsiz;
@@ -936,8 +934,8 @@ efi_memprobe_find(UINTN pages, UINTN align, EFI_PHYSICAL_ADDRESS *addr)
 			if (paddr & (align - 1))
 				continue;
 
-			if (EFI_CALL(BS->AllocatePages, AllocateAddress,
-			    EfiLoaderData, pages, &paddr) == EFI_SUCCESS) {
+			if (BS->AllocatePages(AllocateAddress, EfiLoaderData,
+			    pages, &paddr) == EFI_SUCCESS) {
 				*addr = paddr;
 				return EFI_SUCCESS;
 			}
@@ -1009,7 +1007,7 @@ Xdtb_efi(void)
 int
 Xexit_efi(void)
 {
-	EFI_CALL(BS->Exit, IH, 0, 0, NULL);
+	BS->Exit(IH, 0, 0, NULL);
 	for (;;)
 		continue;
 	return (0);
@@ -1018,6 +1016,6 @@ Xexit_efi(void)
 int
 Xpoweroff_efi(void)
 {
-	EFI_CALL(RS->ResetSystem, EfiResetShutdown, EFI_SUCCESS, 0, NULL);
+	RS->ResetSystem(EfiResetShutdown, EFI_SUCCESS, 0, NULL);
 	return (0);
 }

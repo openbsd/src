@@ -1,4 +1,4 @@
-/*	$OpenBSD: efidev.c,v 1.8 2021/06/02 22:44:27 krw Exp $	*/
+/*	$OpenBSD: efidev.c,v 1.9 2021/06/06 23:56:55 krw Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -36,7 +36,6 @@
 #include "libsa.h"
 
 #include <efi.h>
-#include "eficall.h"
 
 extern EFI_BOOT_SERVICES *BS;
 
@@ -91,7 +90,7 @@ efid_io(int rw, efi_diskinfo_t ed, u_int off, int nsect, void *buf)
 	end = (off + nsect + blks - 1) / blks;
 	size = (end - start) * ed->blkio->Media->BlockSize;
 
-	status = EFI_CALL(BS->AllocatePages, AllocateAnyPages, EfiLoaderData,
+	status = BS->AllocatePages(AllocateAnyPages, EfiLoaderData,
 	    EFI_SIZE_TO_PAGES(size), &addr);
 	if (EFI_ERROR(status))
 		goto on_eio;
@@ -99,8 +98,8 @@ efid_io(int rw, efi_diskinfo_t ed, u_int off, int nsect, void *buf)
 
 	switch (rw) {
 	case F_READ:
-		status = EFI_CALL(ed->blkio->ReadBlocks,
-		    ed->blkio, ed->mediaid, start, size, data);
+		status = ed->blkio->ReadBlocks(ed->blkio, ed->mediaid, start,
+		    size, data);
 		if (EFI_ERROR(status))
 			goto on_eio;
 		memcpy(buf, data + DEV_BSIZE * (off - start * blks),
@@ -110,22 +109,22 @@ efid_io(int rw, efi_diskinfo_t ed, u_int off, int nsect, void *buf)
 		if (ed->blkio->Media->ReadOnly)
 			goto on_eio;
 		if (off % blks != 0 || nsect % blks != 0) {
-			status = EFI_CALL(ed->blkio->ReadBlocks,
-			    ed->blkio, ed->mediaid, start, size, data);
+			status = ed->blkio->ReadBlocks(ed->blkio, ed->mediaid,
+			    start, size, data);
 			if (EFI_ERROR(status))
 				goto on_eio;
 		}
 		memcpy(data + DEV_BSIZE * (off - start * blks), buf,
 		    DEV_BSIZE * nsect);
-		status = EFI_CALL(ed->blkio->WriteBlocks,
-		    ed->blkio, ed->mediaid, start, size, data);
+		status = ed->blkio->WriteBlocks(ed->blkio, ed->mediaid, start,
+		    size, data);
 		if (EFI_ERROR(status))
 			goto on_eio;
 		break;
 	}
 
 on_eio:
-	EFI_CALL(BS->FreePages, addr, EFI_SIZE_TO_PAGES(size));
+	BS->FreePages(addr, EFI_SIZE_TO_PAGES(size));
 
 	return (status);
 }

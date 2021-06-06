@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiacpi.c,v 1.11 2021/03/23 09:41:12 patrick Exp $	*/
+/*	$OpenBSD: efiacpi.c,v 1.12 2021/06/06 23:56:55 krw Exp $	*/
 
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -21,7 +21,6 @@
 #include <efi.h>
 #include <efiapi.h>
 
-#include "eficall.h"
 #include "fdt.h"
 #include "libsa.h"
 
