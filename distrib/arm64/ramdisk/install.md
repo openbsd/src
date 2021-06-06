@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.17 2021/06/03 17:08:56 kettenis Exp $
+#	$OpenBSD: install.md,v 1.18 2021/06/06 18:58:14 kettenis Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,10 +44,14 @@ md_installboot() {
 	raspberrypi,*)		_plat=rpi;
 	esac
 
-	# Mount MSDOS partition, extract U-Boot and copy UEFI boot program
+	if ! installboot -r /mnt ${1}; then
+		echo "\nFailed to install bootblocks."
+		echo "You will not be able to boot OpenBSD from ${1}."
+		exit
+	fi
+
+	# Mount MSDOS partition to do some final tweaks
 	mount ${MOUNT_ARGS_msdos} ${_disk}i /mnt/mnt
-	mkdir -p /mnt/mnt/efi/boot
-	cp /mnt/usr/mdec/BOOTAA64.EFI /mnt/mnt/efi/boot/bootaa64.efi
 	echo bootaa64.efi > /mnt/mnt/efi/boot/startup.nsh
 
 	_mdec=/usr/mdec/$_plat
