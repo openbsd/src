@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.115 2021/04/06 06:28:38 jmc Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.116 2021/06/06 21:59:20 tb Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 6 2021 $
+.Dd $Mdocdate: June 6 2021 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -798,6 +798,7 @@ server "www.example.com" {
 	listen on 10.0.0.1 tls port 443
 }
 .Ed
+.Pp
 The request can also be rewritten with the
 .Ic request rewrite
 directive:
