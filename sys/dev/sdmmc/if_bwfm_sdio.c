@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_sdio.c,v 1.39 2021/02/26 00:07:41 patrick Exp $ */
+/* $OpenBSD: if_bwfm_sdio.c,v 1.40 2021/06/06 10:48:30 aoyama Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -360,6 +360,14 @@ bwfm_sdio_preinit(struct bwfm_softc *bwfm)
 
 	switch (bwfm->sc_chip.ch_chip)
 	{
+	case BRCM_CC_43241_CHIP_ID:
+		if (bwfm->sc_chip.ch_chiprev <= 4)
+			chip = "43241b0";
+		else if (bwfm->sc_chip.ch_chiprev == 5)
+			chip = "43241b4";
+		else
+			chip = "43241b5";
+		break;
 	case BRCM_CC_4330_CHIP_ID:
 		chip = "4330";
 		break;
