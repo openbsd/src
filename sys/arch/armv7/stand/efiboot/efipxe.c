@@ -1,4 +1,4 @@
-/*	$OpenBSD: efipxe.c,v 1.7 2021/03/11 11:16:56 jsg Exp $	*/
+/*	$OpenBSD: efipxe.c,v 1.8 2021/06/07 21:18:31 krw Exp $	*/
 /*
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
  *
@@ -35,7 +35,6 @@
 
 #include <efi.h>
 #include <efiapi.h>
-#include "eficall.h"
 #include "efiboot.h"
 #include "disk.h"
 
@@ -83,16 +82,16 @@ efi_pxeprobe(void)
 	if (efi_bootdp == NULL)
 		return;
 
-	status = EFI_CALL(BS->LocateHandleBuffer, ByProtocol, &pxe_guid, NULL,
-	    &nhandles, &handles);
+	status = BS->LocateHandleBuffer(ByProtocol, &pxe_guid, NULL, &nhandles,
+	    &handles);
 	if (status != EFI_SUCCESS)
 		return;
 
 	for (i = 0; i < nhandles; i++) {
 		EFI_PXE_BASE_CODE_DHCPV4_PACKET *dhcp;
 
-		status = EFI_CALL(BS->HandleProtocol, handles[i],
-		    &devp_guid, (void **)&dp0);
+		status = BS->HandleProtocol(handles[i], &devp_guid,
+		    (void **)&dp0);
 		if (status != EFI_SUCCESS)
 			continue;
 
@@ -100,12 +99,12 @@ efi_pxeprobe(void)
 		if (depth == -1 || efi_device_path_ncmp(efi_bootdp, dp0, depth))
 			continue;
 
-		status = EFI_CALL(BS->HandleProtocol, handles[i], &net_guid,
+		status = BS->HandleProtocol(handles[i], &net_guid,
 		    (void **)&net);
 		if (status != EFI_SUCCESS)
 			continue;
 
-		status = EFI_CALL(BS->HandleProtocol, handles[i], &pxe_guid,
+		status = BS->HandleProtocol(handles[i], &pxe_guid,
 		    (void **)&pxe);
 		if (status != EFI_SUCCESS)
 			continue;
@@ -114,8 +113,8 @@ efi_pxeprobe(void)
 			continue;
 
 		if (pxe->Mtftp != NULL) {
-			status = EFI_CALL(pxe->Mtftp, NULL, 0, NULL,
-			    FALSE, NULL, NULL, NULL, NULL, NULL, FALSE);
+			status = pxe->Mtftp(NULL, 0, NULL, FALSE, NULL, NULL,
+			    NULL, NULL, NULL, FALSE);
 			if (status != EFI_UNSUPPORTED)
 				use_mtftp = 1;
 		}
@@ -165,8 +164,8 @@ mtftp_open(char *path, struct open_file *f)
 	memset(tftpfile, 0, sizeof(*tftpfile));
 
 	memcpy(&dstip, &servip, sizeof(servip));
-	status = EFI_CALL(PXE->Mtftp, PXE, EFI_PXE_BASE_CODE_TFTP_GET_FILE_SIZE,
-	    NULL, FALSE, &size, NULL, &dstip, path, NULL, FALSE);
+	status = PXE->Mtftp(PXE, EFI_PXE_BASE_CODE_TFTP_GET_FILE_SIZE, NULL,
+	    FALSE, &size, NULL, &dstip, path, NULL, FALSE);
 	if (status != EFI_SUCCESS) {
 		free(tftpfile, sizeof(*tftpfile));
 		return ENOENT;
@@ -176,7 +175,7 @@ mtftp_open(char *path, struct open_file *f)
 	if (tftpfile->inbufsize == 0)
 		goto out;
 
-	status = EFI_CALL(BS->AllocatePages, AllocateAnyPages, EfiLoaderData,
+	status = BS->AllocatePages(AllocateAnyPages, EfiLoaderData,
 	    EFI_SIZE_TO_PAGES(tftpfile->inbufsize), &addr);
 	if (status != EFI_SUCCESS) {
 		free(tftpfile, sizeof(*tftpfile));
@@ -184,7 +183,7 @@ mtftp_open(char *path, struct open_file *f)
 	}
 	tftpfile->inbuf = (unsigned char *)((paddr_t)addr);
 
-	status = EFI_CALL(PXE->Mtftp, PXE, EFI_PXE_BASE_CODE_TFTP_READ_FILE,
+	status = PXE->Mtftp(PXE, EFI_PXE_BASE_CODE_TFTP_READ_FILE,
 	    tftpfile->inbuf, FALSE, &size, NULL, &dstip, path, NULL, FALSE);
 	if (status != EFI_SUCCESS) {
 		free(tftpfile, sizeof(*tftpfile));
@@ -201,7 +200,7 @@ mtftp_close(struct open_file *f)
 	struct mtftp_handle *tftpfile = f->f_fsdata;
 
 	if (tftpfile->inbuf != NULL)
-		EFI_CALL(BS->FreePages, (paddr_t)tftpfile->inbuf,
+		BS->FreePages((paddr_t)tftpfile->inbuf,
 		    EFI_SIZE_TO_PAGES(tftpfile->inbufsize));
 	free(tftpfile, sizeof(*tftpfile));
 	return 0;
@@ -328,14 +327,13 @@ tftpopen(struct open_file *f, ...)
 		return 1;
 
 	if (!use_mtftp) {
-		status = EFI_CALL(BS->AllocatePages, AllocateAnyPages,
-		    EfiLoaderData, EFI_SIZE_TO_PAGES(RECV_SIZE), &txbuf);
+		status = BS->AllocatePages(AllocateAnyPages, EfiLoaderData,
+		    EFI_SIZE_TO_PAGES(RECV_SIZE), &txbuf);
 		if (status != EFI_SUCCESS)
 			return ENOMEM;
 
 		if ((tftpdev_sock = netif_open("efinet")) < 0) {
-			EFI_CALL(BS->FreePages, txbuf,
-			    EFI_SIZE_TO_PAGES(RECV_SIZE));
+			BS->FreePages(txbuf, EFI_SIZE_TO_PAGES(RECV_SIZE));
 			return ENXIO;
 		}
 
@@ -352,7 +350,7 @@ tftpclose(struct open_file *f)
 
 	if (!use_mtftp) {
 		ret = netif_close(*(int *)f->f_devdata);
-		EFI_CALL(BS->FreePages, txbuf, EFI_SIZE_TO_PAGES(RECV_SIZE));
+		BS->FreePages(txbuf, EFI_SIZE_TO_PAGES(RECV_SIZE));
 		txbuf = 0;
 	}
 
@@ -417,19 +415,18 @@ efinet_init(struct iodesc *desc, void *v)
 		return;
 
 	if (net->Mode->State == EfiSimpleNetworkStopped) {
-		status = EFI_CALL(net->Start, net);
+		status = net->Start(net);
 		if (status != EFI_SUCCESS)
 			return;
 	}
 
 	if (net->Mode->State != EfiSimpleNetworkInitialized) {
-		status = EFI_CALL(net->Initialize, net, 0, 0);
+		status = net->Initialize(net, 0, 0);
 		if (status != EFI_SUCCESS)
 			return;
 	}
 
-	EFI_CALL(net->ReceiveFilters, net,
-	    EFI_SIMPLE_NETWORK_RECEIVE_UNICAST |
+	net->ReceiveFilters(net, EFI_SIMPLE_NETWORK_RECEIVE_UNICAST |
 	    EFI_SIMPLE_NETWORK_RECEIVE_BROADCAST,
 	    0, FALSE, 0, NULL);
 
@@ -461,8 +458,7 @@ efinet_get(struct iodesc *desc, void *pkt, size_t len, time_t tmo)
 	status = EFI_NOT_READY;
 	while ((getsecs() - t) < tmo) {
 		pktsz = bufsz;
-		status = EFI_CALL(net->Receive, net, NULL, &pktsz, ptr,
-		    NULL, NULL, NULL);
+		status = net->Receive(net, NULL, &pktsz, ptr, NULL, NULL, NULL);
 		if (status == EFI_SUCCESS)
 			break;
 		if (status != EFI_NOT_READY)
@@ -493,14 +489,13 @@ efinet_put(struct iodesc *desc, void *pkt, size_t len)
 		goto out;
 
 	memcpy((void *)txbuf, pkt, len);
-	status = EFI_CALL(net->Transmit, net, 0, len, (void *)txbuf,
-	    NULL, NULL, NULL);
+	status = net->Transmit(net, 0, len, (void *)txbuf, NULL, NULL, NULL);
 	if (status != EFI_SUCCESS)
 		goto out;
 
 	buf = NULL;
 	while (status == EFI_SUCCESS) {
-		status = EFI_CALL(net->GetStatus, net, NULL, &buf);
+		status = net->GetStatus(net, NULL, &buf);
 		if (buf)
 			break;
 	}
@@ -520,5 +515,5 @@ efinet_end(struct netif *nif)
 	if (net == NULL)
 		return;
 
-	EFI_CALL(net->Shutdown, net);
+	net->Shutdown(net);
 }

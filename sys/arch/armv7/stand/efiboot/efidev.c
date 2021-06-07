@@ -1,4 +1,4 @@
-/*	$OpenBSD: efidev.c,v 1.7 2021/06/02 22:44:27 krw Exp $	*/
+/*	$OpenBSD: efidev.c,v 1.8 2021/06/07 21:18:31 krw Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -36,7 +36,6 @@
 #include "libsa.h"
 
 #include <efi.h>
-#include "eficall.h"
 
 extern EFI_BOOT_SERVICES *BS;
 
@@ -90,8 +89,7 @@ efid_io(int rw, efi_diskinfo_t ed, u_int off, int nsect, void *buf)
 
 	switch (rw) {
 	case F_READ:
-		status = EFI_CALL(ed->blkio->ReadBlocks,
-		    ed->blkio, ed->mediaid, off,
+		status = ed->blkio->ReadBlocks(ed->blkio, ed->mediaid, off,
 		    nsect * DEV_BSIZE, data);
 		if (EFI_ERROR(status))
 			goto on_eio;
@@ -101,8 +99,7 @@ efid_io(int rw, efi_diskinfo_t ed, u_int off, int nsect, void *buf)
 		if (ed->blkio->Media->ReadOnly)
 			goto on_eio;
 		memcpy(data, buf, nsect * DEV_BSIZE);
-		status = EFI_CALL(ed->blkio->WriteBlocks,
-		    ed->blkio, ed->mediaid, off,
+		status = ed->blkio->WriteBlocks(ed->blkio, ed->mediaid, off,
 		    nsect * DEV_BSIZE, data);
 		if (EFI_ERROR(status))
 			goto on_eio;
