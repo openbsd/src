@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.97 2021/05/21 10:59:02 mvs Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.98 2021/06/07 09:10:32 mpi Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -147,7 +147,6 @@ struct socket {
 #define	SS_ISDISCONNECTED	0x800	/* socket disconnected from peer */
 
 #define	SS_PRIV			0x080	/* privileged for broadcast, raw... */
-#define	SS_ASYNC		0x200	/* async i/o notify */
 #define	SS_CONNECTOUT		0x1000	/* connect, not accept, at this end */
 #define	SS_ISSENDING		0x2000	/* hint for lower layer */
 #define	SS_DNS			0x4000	/* created using SOCK_DNS socket(2) */

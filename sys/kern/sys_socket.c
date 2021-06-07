@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_socket.c,v 1.45 2020/02/22 11:58:29 anton Exp $	*/
+/*	$OpenBSD: sys_socket.c,v 1.46 2021/06/07 09:10:32 mpi Exp $	*/
 /*	$NetBSD: sys_socket.c,v 1.13 1995/08/12 23:59:09 mycroft Exp $	*/
 
 /*
@@ -96,11 +96,9 @@ soo_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 	case FIOASYNC:
 		s = solock(so);
 		if (*(int *)data) {
-			so->so_state |= SS_ASYNC;
 			so->so_rcv.sb_flags |= SB_ASYNC;
 			so->so_snd.sb_flags |= SB_ASYNC;
 		} else {
-			so->so_state &= ~SS_ASYNC;
 			so->so_rcv.sb_flags &= ~SB_ASYNC;
 			so->so_snd.sb_flags &= ~SB_ASYNC;
 		}

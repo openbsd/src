@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.110 2021/05/26 08:28:34 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.111 2021/06/07 09:10:32 mpi Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -409,7 +409,7 @@ sbunlock(struct socket *so, struct sockbuf *sb)
 /*
  * Wakeup processes waiting on a socket buffer.
  * Do asynchronous notification via SIGIO
- * if the socket has the SS_ASYNC flag set.
+ * if the socket buffer has the SB_ASYNC flag set.
  */
 void
 sowakeup(struct socket *so, struct sockbuf *sb)
@@ -421,7 +421,7 @@ sowakeup(struct socket *so, struct sockbuf *sb)
 		sb->sb_flags &= ~SB_WAIT;
 		wakeup(&sb->sb_cc);
 	}
-	if (so->so_state & SS_ASYNC)
+	if (sb->sb_flags & SB_ASYNC)
 		pgsigio(&so->so_sigio, SIGIO, 0);
 	selwakeup(&sb->sb_sel);
 }
