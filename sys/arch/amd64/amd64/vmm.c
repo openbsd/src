@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.284 2021/05/18 00:05:20 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.285 2021/06/07 13:55:54 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -28,6 +28,7 @@
 #include <sys/rwlock.h>
 #include <sys/pledge.h>
 #include <sys/memrange.h>
+#include <sys/tracepoint.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -4704,6 +4705,8 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 			invvpid(IA32_VMX_INVVPID_SINGLE_CTX_GLB, &vid);
 		}
 
+		TRACEPOINT(vmm, guest_enter, vcpu, vrp);
+
 		/* Start / resume the VCPU */
 #ifdef VMM_DEBUG
 		KERNEL_ASSERT_LOCKED();
@@ -4755,6 +4758,8 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 				break;
                         }
 		}
+
+		TRACEPOINT(vmm, guest_exit, vcpu, vrp, exit_reason);
 
 		if (ret || exitinfo != VMX_EXIT_INFO_COMPLETE ||
 		    exit_reason != VMX_EXIT_EXTINT) {
@@ -7059,6 +7064,8 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 			vcpu->vc_event = 0;
 		}
 
+		TRACEPOINT(vmm, guest_enter, vcpu, vrp);
+
 		/* Start / resume the VCPU */
 #ifdef VMM_DEBUG
 		KERNEL_ASSERT_LOCKED();
@@ -7102,6 +7109,8 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 			exit_reason = vmcb->v_exitcode;
 			vcpu->vc_gueststate.vg_exit_reason = exit_reason;
 		}
+
+		TRACEPOINT(vmm, guest_exit, vcpu, vrp, exit_reason);
 
 		/* If we exited successfully ... */
 		if (ret == 0) {
