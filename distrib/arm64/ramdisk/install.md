@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.18 2021/06/06 18:58:14 kettenis Exp $
+#	$OpenBSD: install.md,v 1.19 2021/06/07 07:38:55 kettenis Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -103,6 +103,10 @@ md_prep_fdisk() {
 		ask "Use (W)hole disk or (E)dit the MBR?" "$_d"
 		case $resp in
 		[wW]*)
+			if disk_has $_disk gpt apfsisc; then
+				echo "(W)hole disk can not be used on Apple NVMe storage!"
+				continue
+			fi
 			echo -n "Creating a ${bootfstype} partition and an OpenBSD partition for rest of $_disk..."
 			fdisk -e ${_disk} <<__EOT >/dev/null
 reinit
