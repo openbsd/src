@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.35 2021/04/22 09:36:39 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.36 2021/06/07 12:55:19 dv Exp $ */
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -1179,6 +1179,9 @@ ba2long(struct bt_arg *ba, struct dt_evt *dtev)
 		break;
 	case B_AT_BI_TID:
 		val = dtev->dtev_tid;
+		break;
+	case B_AT_BI_CPU:
+		val = dtev->dtev_cpu;
 		break;
 	case B_AT_BI_NSECS:
 		val = builtin_nsecs(dtev);
