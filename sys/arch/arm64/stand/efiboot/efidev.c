@@ -1,4 +1,4 @@
-/*	$OpenBSD: efidev.c,v 1.9 2021/06/06 23:56:55 krw Exp $	*/
+/*	$OpenBSD: efidev.c,v 1.10 2021/06/07 13:38:58 krw Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -80,7 +80,7 @@ efid_io(int rw, efi_diskinfo_t ed, u_int off, int nsect, void *buf)
 	caddr_t data;
 	size_t size;
 
-	/* block count of the intrisic block size in DEV_BSIZE */
+	/* block count of the intrinsic block size in DEV_BSIZE */
 	blks = EFI_BLKSPERSEC(ed);
 	if (blks == 0)
 		/* block size < 512.  HP Stream 13 actually has such a disk. */
