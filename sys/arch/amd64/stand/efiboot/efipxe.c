@@ -1,4 +1,4 @@
-/*	$OpenBSD: efipxe.c,v 1.9 2021/03/11 11:16:55 jsg Exp $	*/
+/*	$OpenBSD: efipxe.c,v 1.10 2021/06/07 00:04:20 krw Exp $	*/
 /*
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
  *
@@ -26,7 +26,6 @@
 
 #include <efi.h>
 #include <efiapi.h>
-#include "eficall.h"
 #include "efiboot.h"
 
 extern EFI_BOOT_SERVICES	*BS;
@@ -60,16 +59,16 @@ efi_pxeprobe(void)
 	if (efi_bootdp == NULL)
 		return;
 
-	status = EFI_CALL(BS->LocateHandleBuffer, ByProtocol, &pxe_guid, NULL,
-	    &nhandles, &handles);
+	status = BS->LocateHandleBuffer(ByProtocol, &pxe_guid, NULL, &nhandles,
+	    &handles);
 	if (status != EFI_SUCCESS)
 		return;
 
 	for (i = 0; i < nhandles; i++) {
 		EFI_PXE_BASE_CODE_DHCPV4_PACKET *dhcp;
 
-		status = EFI_CALL(BS->HandleProtocol, handles[i],
-		    &devp_guid, (void **)&dp0);
+		status = BS->HandleProtocol(handles[i], &devp_guid,
+		    (void **)&dp0);
 		if (status != EFI_SUCCESS)
 			continue;
 
@@ -77,7 +76,7 @@ efi_pxeprobe(void)
 		if (depth == -1 || efi_device_path_ncmp(efi_bootdp, dp0, depth))
 			continue;
 
-		status = EFI_CALL(BS->HandleProtocol, handles[i], &pxe_guid,
+		status = BS->HandleProtocol(handles[i], &pxe_guid,
 		    (void **)&pxe);
 		if (status != EFI_SUCCESS)
 			continue;
@@ -138,8 +137,8 @@ tftp_open(char *path, struct open_file *f)
 		return ENOMEM;
 	memset(tftpfile, 0, sizeof(*tftpfile));
 
-	status = EFI_CALL(PXE->Mtftp, PXE, EFI_PXE_BASE_CODE_TFTP_GET_FILE_SIZE,
-	    NULL, FALSE, &size, NULL, &servip, path, NULL, FALSE);
+	status = PXE->Mtftp(PXE, EFI_PXE_BASE_CODE_TFTP_GET_FILE_SIZE, NULL,
+	    FALSE, &size, NULL, &servip, path, NULL, FALSE);
 	if (status != EFI_SUCCESS) {
 		free(tftpfile, sizeof(*tftpfile));
 		return ENOENT;
@@ -149,7 +148,7 @@ tftp_open(char *path, struct open_file *f)
 	if (tftpfile->inbufsize == 0)
 		goto out;
 
-	status = EFI_CALL(BS->AllocatePages, AllocateAnyPages, EfiLoaderData,
+	status = BS->AllocatePages(AllocateAnyPages, EfiLoaderData,
 	    EFI_SIZE_TO_PAGES(tftpfile->inbufsize), &addr);
 	if (status != EFI_SUCCESS) {
 		free(tftpfile, sizeof(*tftpfile));
@@ -157,7 +156,7 @@ tftp_open(char *path, struct open_file *f)
 	}
 	tftpfile->inbuf = (unsigned char *)((paddr_t)addr);
 
-	status = EFI_CALL(PXE->Mtftp, PXE, EFI_PXE_BASE_CODE_TFTP_READ_FILE,
+	status = PXE->Mtftp(PXE, EFI_PXE_BASE_CODE_TFTP_READ_FILE,
 	    tftpfile->inbuf, FALSE, &size, NULL, &servip, path, NULL, FALSE);
 	if (status != EFI_SUCCESS) {
 		free(tftpfile, sizeof(*tftpfile));
@@ -174,7 +173,7 @@ tftp_close(struct open_file *f)
 	struct tftp_handle *tftpfile = f->f_fsdata;
 
 	if (tftpfile->inbuf != NULL)
-		EFI_CALL(BS->FreePages, (paddr_t)tftpfile->inbuf,
+		BS->FreePages((paddr_t)tftpfile->inbuf,
 		    EFI_SIZE_TO_PAGES(tftpfile->inbufsize));
 	free(tftpfile, sizeof(*tftpfile));
 	return 0;

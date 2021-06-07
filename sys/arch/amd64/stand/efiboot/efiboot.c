@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.37 2021/05/23 20:30:42 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.38 2021/06/07 00:04:20 krw Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -36,7 +36,6 @@
 
 #include "efidev.h"
 #include "efiboot.h"
-#include "eficall.h"
 #include "run_i386.h"
 
 #define	KERN_LOADSPACE_SIZE	(64 * 1024 * 1024)
@@ -85,16 +84,15 @@ efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 	IH = image;
 
 	/* disable reset by watchdog after 5 minutes */
-	EFI_CALL(BS->SetWatchdogTimer, 0, 0, 0, NULL);
+	BS->SetWatchdogTimer(0, 0, 0, NULL);
 
 	efi_video_init();
 	efi_heap_init();
 
-	status = EFI_CALL(BS->HandleProtocol, image, &imgp_guid,
-	    (void **)&imgp);
+	status = BS->HandleProtocol(image, &imgp_guid, (void **)&imgp);
 	if (status == EFI_SUCCESS)
-		status = EFI_CALL(BS->HandleProtocol, imgp->DeviceHandle,
-		    &devp_guid, (void **)&dp0);
+		status = BS->HandleProtocol(imgp->DeviceHandle, &devp_guid,
+		    (void **)&dp0);
 	if (status == EFI_SUCCESS) {
 		for (dp = dp0; !IsDevicePathEnd(dp);
 		    dp = NextDevicePathNode(dp)) {
@@ -160,7 +158,7 @@ efi_cleanup(void)
 	/* retry once in case of failure */
 	for (retry = 1; retry >= 0; retry--) {
 		efi_memprobe_internal();	/* sync the current map */
-		status = EFI_CALL(BS->ExitBootServices, IH, mmap_key);
+		status = BS->ExitBootServices(IH, mmap_key);
 		if (status == EFI_SUCCESS)
 			break;
 		if (retry == 0)
@@ -188,10 +186,10 @@ efi_diskprobe(void)
 	TAILQ_INIT(&efi_disklist);
 
 	sz = 0;
-	status = EFI_CALL(BS->LocateHandle, ByProtocol, &blkio_guid, 0, &sz, 0);
+	status = BS->LocateHandle(ByProtocol, &blkio_guid, 0, &sz, 0);
 	if (status == EFI_BUFFER_TOO_SMALL) {
 		handles = alloc(sz);
-		status = EFI_CALL(BS->LocateHandle, ByProtocol, &blkio_guid,
+		status = BS->LocateHandle(ByProtocol, &blkio_guid,
 		    0, &sz, handles);
 	}
 	if (handles == NULL || EFI_ERROR(status))
@@ -210,7 +208,7 @@ efi_diskprobe(void)
 		depth = 1;
 
 	for (i = 0; i < sz / sizeof(EFI_HANDLE); i++) {
-		status = EFI_CALL(BS->HandleProtocol, handles[i], &blkio_guid,
+		status = BS->HandleProtocol(handles[i], &blkio_guid,
 		    (void **)&blkio);
 		if (EFI_ERROR(status))
 			panic("BS->HandleProtocol() returns %d", status);
@@ -223,7 +221,7 @@ efi_diskprobe(void)
 
 		if (efi_bootdp == NULL || depth == -1 || bootdev != 0)
 			goto next;
-		status = EFI_CALL(BS->HandleProtocol, handles[i], &devp_guid,
+		status = BS->HandleProtocol(handles[i], &devp_guid,
 		    (void **)&dp);
 		if (EFI_ERROR(status))
 			goto next;
@@ -290,7 +288,7 @@ efi_heap_init(void)
 	EFI_STATUS	 status;
 
 	heap = HEAP_LIMIT;
-	status = EFI_CALL(BS->AllocatePages, AllocateMaxAddress, EfiLoaderData,
+	status = BS->AllocatePages(AllocateMaxAddress, EfiLoaderData,
 	    EFI_SIZE_TO_PAGES(heapsiz), &heap);
 	if (status != EFI_SUCCESS)
 		panic("BS->AllocatePages()");
@@ -306,7 +304,7 @@ efi_memprobe(void)
 			 addr = 0x10000000ULL;	/* Below 256MB */
 	int		 error;
 
-	status = EFI_CALL(BS->AllocatePages, AllocateMaxAddress, EfiLoaderData,
+	status = BS->AllocatePages(AllocateMaxAddress, EfiLoaderData,
 	    EFI_SIZE_TO_PAGES(KERN_LOADSPACE_SIZE), &addr);
 	if (status != EFI_SUCCESS)
 		panic("BS->AllocatePages()");
@@ -347,12 +345,11 @@ efi_memprobe_internal(void)
 		free((void *)bios_efiinfo.mmap_start, bios_efiinfo.mmap_size);
 
 	siz = 0;
-	status = EFI_CALL(BS->GetMemoryMap, &siz, NULL, &mapkey, &mmsiz,
-	    &mmver);
+	status = BS->GetMemoryMap(&siz, NULL, &mapkey, &mmsiz, &mmver);
 	if (status != EFI_BUFFER_TOO_SMALL)
 		panic("cannot get the size of memory map");
 	mm0 = alloc(siz);
-	status = EFI_CALL(BS->GetMemoryMap, &siz, mm0, &mapkey, &mmsiz, &mmver);
+	status = BS->GetMemoryMap(&siz, mm0, &mapkey, &mmsiz, &mmver);
 	if (status != EFI_SUCCESS)
 		panic("cannot get the memory map");
 	n = siz / mmsiz;
@@ -449,15 +446,13 @@ efi_video_init(void)
 	EFI_STATUS			 status;
 
 	conout = ST->ConOut;
-	status = EFI_CALL(BS->LocateProtocol, &con_guid, NULL,
-	    (void **)&conctrl);
+	status = BS->LocateProtocol(&con_guid, NULL, (void **)&conctrl);
 	if (status == EFI_SUCCESS)
-		(void)EFI_CALL(conctrl->SetMode, conctrl,
-			EfiConsoleControlScreenText);
+		conctrl->SetMode(conctrl, EfiConsoleControlScreenText);
 	mode80x25 = -1;
 	mode100x31 = -1;
 	for (i = 0; i < conout->Mode->MaxMode; i++) {
-		status = EFI_CALL(conout->QueryMode, conout, i, &cols, &rows);
+		status = conout->QueryMode(conout, i, &cols, &rows);
 		if (EFI_ERROR(status))
 			continue;
 		if (mode80x25 < 0 && cols == 80 && rows == 25)
@@ -470,9 +465,9 @@ efi_video_init(void)
 		}
 	}
 	if (mode100x31 >= 0)
-		EFI_CALL(conout->SetMode, conout, mode100x31);
+		conout->SetMode(conout, mode100x31);
 	else if (mode80x25 >= 0)
-		EFI_CALL(conout->SetMode, conout, mode80x25);
+		conout->SetMode(conout, mode80x25);
 	conin = ST->ConIn;
 	efi_video_reset();
 }
@@ -480,10 +475,9 @@ efi_video_init(void)
 static void
 efi_video_reset(void)
 {
-	EFI_CALL(conout->EnableCursor, conout, TRUE);
-	EFI_CALL(conout->SetAttribute, conout,
-	    EFI_TEXT_ATTR(EFI_LIGHTGRAY, EFI_BLACK));
-	EFI_CALL(conout->ClearScreen, conout);
+	conout->EnableCursor(conout, TRUE);
+	conout->SetAttribute(conout, EFI_TEXT_ATTR(EFI_LIGHTGRAY, EFI_BLACK));
+	conout->ClearScreen(conout);
 }
 
 void
@@ -514,12 +508,12 @@ efi_cons_getc(dev_t dev)
 		return (r);
 	}
 
-	status = EFI_CALL(conin->ReadKeyStroke, conin, &key);
+	status = conin->ReadKeyStroke(conin, &key);
 	while (status == EFI_NOT_READY || key.UnicodeChar == 0) {
 		if (dev & 0x80)
 			return (0);
-		EFI_CALL(BS->WaitForEvent, 1, &conin->WaitForKey, &dummy);
-		status = EFI_CALL(conin->ReadKeyStroke, conin, &key);
+		BS->WaitForEvent(1, &conin->WaitForKey, &dummy);
+		status = conin->ReadKeyStroke(conin, &key);
 	}
 
 	if (dev & 0x80)
@@ -539,7 +533,7 @@ efi_cons_putc(dev_t dev, int c)
 	buf[0] = c;
 	buf[1] = 0;
 
-	EFI_CALL(conout->OutputString, conout, buf);
+	conout->OutputString(conout, buf);
 }
 
 int
@@ -650,10 +644,10 @@ efi_com_probe(struct consdev *cn)
 	cn->cn_dev = makedev(8, 0);
 
 	sz = 0;
-	status = EFI_CALL(BS->LocateHandle, ByProtocol, &serio_guid, 0, &sz, 0);
+	status = BS->LocateHandle(ByProtocol, &serio_guid, 0, &sz, 0);
 	if (status == EFI_BUFFER_TOO_SMALL) {
 		handles = alloc(sz);
-		status = EFI_CALL(BS->LocateHandle, ByProtocol, &serio_guid,
+		status = BS->LocateHandle(ByProtocol, &serio_guid,
 		    0, &sz, handles);
 	}
 	if (handles == NULL || EFI_ERROR(status)) {
@@ -667,7 +661,7 @@ efi_com_probe(struct consdev *cn)
 		 * UID 0-3 map to legacy COM[1-4] and they use the legacy
 		 * port address.
 		 */
-		status = EFI_CALL(BS->HandleProtocol, handles[i], &devp_guid,
+		status = BS->HandleProtocol(handles[i], &devp_guid,
 		    (void **)&dp0);
 		if (EFI_ERROR(status))
 			continue;
@@ -686,7 +680,7 @@ efi_com_probe(struct consdev *cn)
 			continue;
 
 		/* Prepare SERIAL_IO_INTERFACE */
-		status = EFI_CALL(BS->HandleProtocol, handles[i], &serio_guid,
+		status = BS->HandleProtocol(handles[i], &serio_guid,
 		    (void **)&serio);
 		if (EFI_ERROR(status))
 			continue;
@@ -720,8 +714,8 @@ comspeed(dev_t dev, int sp)
 		return pio_comspeed(dev, sp);
 
 	if (serio->Mode->BaudRate != sp) {
-		status = EFI_CALL(serio->SetAttributes, serio,
-		    sp, serio->Mode->ReceiveFifoDepth,
+		status = serio->SetAttributes(serio, sp,
+		    serio->Mode->ReceiveFifoDepth,
 		    serio->Mode->Timeout, serio->Mode->Parity,
 		    serio->Mode->DataBits, serio->Mode->StopBits);
 		if (EFI_ERROR(status)) {
@@ -773,7 +767,7 @@ efi_com_getc(dev_t dev)
 
 	for (;;) {
 		sz = 1;
-		status = EFI_CALL(serio->Read, serio, &sz, &buf);
+		status = serio->Read(serio, &sz, &buf);
 		if (status == EFI_SUCCESS && sz > 0)
 			break;
 		if (status != EFI_TIMEOUT && EFI_ERROR(status))
@@ -801,7 +795,7 @@ efi_com_putc(dev_t dev, int c)
 	}
 	serio = serios[minor(dev)];
 	buf = c;
-	EFI_CALL(serio->Write, serio, &sz, &buf);
+	serio->Write(serio, &sz, &buf);
 }
 
 /***********************************************************************
@@ -824,7 +818,7 @@ efi_gop_setmode(int mode)
 {
 	EFI_STATUS	status;
 
-	status = EFI_CALL(gop->SetMode, gop, mode);
+	status = gop->SetMode(gop, mode);
 	if (EFI_ERROR(status) || gop->Mode->Mode != mode)
 		printf("GOP SetMode() failed (%d)\n", status);
 
@@ -859,13 +853,11 @@ efi_makebootargs(void)
 	/*
 	 * Frame buffer
 	 */
-	status = EFI_CALL(BS->LocateProtocol, &gop_guid, NULL,
-	    (void **)&gop);
+	status = BS->LocateProtocol(&gop_guid, NULL, (void **)&gop);
 	if (!EFI_ERROR(status)) {
 		if (gopmode < 0) {
 			for (i = 0; i < gop->Mode->MaxMode; i++) {
-				status = EFI_CALL(gop->QueryMode, gop,
-				    i, &sz, &gopi);
+				status = gop->QueryMode(gop, i, &sz, &gopi);
 				if (EFI_ERROR(status))
 					continue;
 				gopsiz = gopi->HorizontalResolution *
@@ -932,7 +924,7 @@ _rtt(void)
 	printf("Hit any key to reboot\n");
 	efi_cons_getc(0);
 #endif
-	EFI_CALL(RS->ResetSystem, EfiResetCold, EFI_SUCCESS, 0, NULL);
+	RS->ResetSystem(EfiResetCold, EFI_SUCCESS, 0, NULL);
 	for (;;)
 		continue;
 }
@@ -949,7 +941,7 @@ getsecs(void)
 	};
 #define isleap(_y) (((_y) % 4) == 0 && (((_y) % 100) != 0 || ((_y) % 400) == 0))
 
-	EFI_CALL(ST->RuntimeServices->GetTime, &t, NULL);
+	ST->RuntimeServices->GetTime(&t, NULL);
 
 	/* Calc days from UNIX epoch */
 	r = (t.Year - 1970) * 365;
@@ -989,7 +981,7 @@ sleep(u_int i)
 int
 Xexit_efi(void)
 {
-	EFI_CALL(BS->Exit, IH, 0, 0, NULL);
+	BS->Exit(IH, 0, 0, NULL);
 	for (;;)
 		continue;
 	return (0);
@@ -1004,7 +996,7 @@ Xvideo_efi(void)
 		mode = strtol(cmd.argv[1], NULL, 10);
 		if (0 <= mode && mode < nitems(efi_video) &&
 		    efi_video[mode].cols > 0) {
-			EFI_CALL(conout->SetMode, conout, mode);
+			conout->SetMode(conout, mode);
 			efi_video_reset();
 		}
 	} else {
@@ -1025,7 +1017,7 @@ Xvideo_efi(void)
 int
 Xpoweroff_efi(void)
 {
-	EFI_CALL(RS->ResetSystem, EfiResetShutdown, EFI_SUCCESS, 0, NULL);
+	RS->ResetSystem(EfiResetShutdown, EFI_SUCCESS, 0, NULL);
 	return (0);
 }
 
@@ -1038,16 +1030,14 @@ Xgop_efi(void)
 	EFI_GRAPHICS_OUTPUT_MODE_INFORMATION
 			*gopi;
 
-	status = EFI_CALL(BS->LocateProtocol, &gop_guid, NULL,
-	    (void **)&gop);
+	status = BS->LocateProtocol(&gop_guid, NULL, (void **)&gop);
 	if (EFI_ERROR(status))
 		return (0);
 
 	if (cmd.argc >= 2) {
 		mode = strtol(cmd.argv[1], NULL, 10);
 		if (0 <= mode && mode < gop->Mode->MaxMode) {
-			status = EFI_CALL(gop->QueryMode, gop, mode,
-			    &sz, &gopi);
+			status = gop->QueryMode(gop, mode, &sz, &gopi);
 			if (!EFI_ERROR(status)) {
 				if (efi_gop_setmode(mode) == EFI_SUCCESS)
 					gopmode = mode;
@@ -1055,7 +1045,7 @@ Xgop_efi(void)
 		}
 	} else {
 		for (i = 0; i < gop->Mode->MaxMode; i++) {
-			status = EFI_CALL(gop->QueryMode, gop, i, &sz, &gopi);
+			status = gop->QueryMode(gop, i, &sz, &gopi);
 			if (EFI_ERROR(status))
 				continue;
 			printf("Mode %d: %d x %d (stride = %d)\n", i,

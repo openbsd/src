@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.5 2020/09/01 18:03:09 patrick Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.6 2021/06/07 00:04:20 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Michael Shalayeff
@@ -49,7 +49,6 @@
 
 #include <efi.h>
 #include <efiapi.h>
-#include "eficall.h"
 #include "efiboot.h"
 
 extern EFI_BOOT_SERVICES	*BS;
@@ -213,7 +212,7 @@ ucode_load(void)
 
 	buflen = sb.st_size;
 	addr = 16 * 1024 * 1024;
-	if (EFI_CALL(BS->AllocatePages, AllocateMaxAddress, EfiLoaderData,
+	if (BS->AllocatePages(AllocateMaxAddress, EfiLoaderData,
 	    EFI_SIZE_TO_PAGES(buflen), &addr) != EFI_SUCCESS) {
 		printf("cannot allocate memory for ucode\n");
 		return;

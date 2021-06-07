@@ -1,4 +1,4 @@
-/*	$OpenBSD: efidev.c,v 1.34 2021/06/02 22:44:26 krw Exp $	*/
+/*	$OpenBSD: efidev.c,v 1.35 2021/06/07 00:04:20 krw Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -44,7 +44,6 @@
 #endif
 
 #include <efi.h>
-#include "eficall.h"
 
 extern int debug;
 
@@ -110,8 +109,7 @@ efid_io(int rw, efi_diskinfo_t ed, u_int off, int nsect, void *buf)
 
 	switch (rw) {
 	case F_READ:
-		status = EFI_CALL(ed->blkio->ReadBlocks,
-		    ed->blkio, ed->mediaid, start,
+		status = ed->blkio->ReadBlocks(ed->blkio, ed->mediaid, start,
 		    (end - start) * ed->blkio->Media->BlockSize, ibuf);
 		if (EFI_ERROR(status))
 			goto on_eio;
@@ -120,16 +118,15 @@ efid_io(int rw, efi_diskinfo_t ed, u_int off, int nsect, void *buf)
 		break;
 	case F_WRITE:
 		if (off % blks != 0 || nsect % blks != 0) {
-			status = EFI_CALL(ed->blkio->ReadBlocks,
-			    ed->blkio, ed->mediaid, start,
-			    (end - start) * ed->blkio->Media->BlockSize, ibuf);
+			status = ed->blkio->ReadBlocks(ed->blkio, ed->mediaid,
+			    start, (end - start) * ed->blkio->Media->BlockSize,
+			    ibuf);
 			if (EFI_ERROR(status))
 				goto on_eio;
 		}
 		memcpy(ibuf + DEV_BSIZE * (off - start * blks), buf,
 		    DEV_BSIZE * nsect);
-		status = EFI_CALL(ed->blkio->WriteBlocks,
-		    ed->blkio, ed->mediaid, start,
+		status = ed->blkio->WriteBlocks(ed->blkio, ed->mediaid, start,
 		    (end - start) * ed->blkio->Media->BlockSize, ibuf);
 		if (EFI_ERROR(status))
 			goto on_eio;
