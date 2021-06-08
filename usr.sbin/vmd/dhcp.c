@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.9 2021/03/29 23:37:01 dv Exp $	*/
+/*	$OpenBSD: dhcp.c,v 1.10 2021/06/08 14:37:48 dv Exp $	*/
 
 /*
  * Copyright (c) 2017 Reyk Floeter <reyk@openbsd.org>
@@ -21,6 +21,8 @@
 
 #include <net/if.h>
 #include <netinet/in.h>
+#include <netinet/ip.h>
+#include <netinet/udp.h>
 #include <netinet/if_ether.h>
 #include <arpa/inet.h>
 
@@ -34,6 +36,10 @@
 #include "dhcp.h"
 #include "virtio.h"
 
+#define OPTIONS_OFFSET	offsetof(struct dhcp_packet, options)
+#define OPTIONS_MAX_LEN	\
+	(1500 - sizeof(struct ip) - sizeof(struct udphdr) - OPTIONS_OFFSET)
+
 static const uint8_t broadcast[6] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 extern struct vmd *env;
 
@@ -41,7 +47,8 @@ ssize_t
 dhcp_request(struct vionet_dev *dev, char *buf, size_t buflen, char **obuf)
 {
 	unsigned char		*respbuf = NULL, *op, *oe, dhcptype = 0;
-	ssize_t			 offset, respbuflen = 0;
+	unsigned char		*opts = NULL;
+	ssize_t			 offset, optslen, respbuflen = 0;
 	struct packet_ctx	 pc;
 	struct dhcp_packet	 req, resp;
 	struct in_addr		 server_addr, mask, client_addr, requested_addr;
@@ -50,7 +57,8 @@ dhcp_request(struct vionet_dev *dev, char *buf, size_t buflen, char **obuf)
 	struct vmd_vm		*vm;
 	const char		*hostname = NULL;
 
-	if (buflen < (ssize_t)(BOOTP_MIN_LEN + sizeof(struct ether_header)))
+	if (buflen < BOOTP_MIN_LEN + ETHER_HDR_LEN ||
+	    buflen > 1500 + ETHER_HDR_LEN)
 		return (-1);
 
 	memset(&pc, 0, sizeof(pc));
@@ -71,8 +79,11 @@ dhcp_request(struct vionet_dev *dev, char *buf, size_t buflen, char **obuf)
 	    ntohs(ss2sin(&pc.pc_dst)->sin_port) != SERVER_PORT)
 		return (-1);
 
+	/* Only populate the base DHCP fields. Options are parsed separately. */
+	if ((size_t)offset + OPTIONS_OFFSET > buflen)
+		return (-1);
 	memset(&req, 0, sizeof(req));
-	memcpy(&req, buf + offset, buflen - offset);
+	memcpy(&req, buf + offset, OPTIONS_OFFSET);
 
 	if (req.op != BOOTREQUEST ||
 	    req.htype != pc.pc_htype ||
@@ -84,27 +95,37 @@ dhcp_request(struct vionet_dev *dev, char *buf, size_t buflen, char **obuf)
 	if (req.ciaddr.s_addr != 0 || req.file[0] != '\0' || req.hops != 0)
 		return (-1);
 
-	/* Get a few DHCP options (best effort as we fall back to BOOTP) */
-	if (memcmp(&req.options,
-	    DHCP_OPTIONS_COOKIE, DHCP_OPTIONS_COOKIE_LEN) == 0) {
-		memset(&requested_addr, 0, sizeof(requested_addr));
-		op = req.options + DHCP_OPTIONS_COOKIE_LEN;
-		oe = req.options + sizeof(req.options);
-		while (*op != DHO_END && op < oe) {
-			if (op[0] == DHO_PAD) {
-				op++;
-				continue;
+	/*
+	 * If packet has data that could be DHCP options, check for the cookie
+	 * and then see if the region is still long enough to contain at least
+	 * one variable length option (3 bytes). If not, fallback to BOOTP.
+	 */
+	optslen = buflen - offset - OPTIONS_OFFSET;
+	if (optslen > DHCP_OPTIONS_COOKIE_LEN + 3 &&
+	    optslen < (ssize_t)OPTIONS_MAX_LEN) {
+		opts = buf + offset + OPTIONS_OFFSET;
+
+		if (memcmp(opts, DHCP_OPTIONS_COOKIE,
+			DHCP_OPTIONS_COOKIE_LEN) == 0) {
+			memset(&requested_addr, 0, sizeof(requested_addr));
+			op = opts + DHCP_OPTIONS_COOKIE_LEN;
+			oe = opts + optslen;
+			while (*op != DHO_END && op + 1 < oe) {
+				if (op[0] == DHO_PAD) {
+					op++;
+					continue;
+				}
+				if (op + 2 + op[1] > oe)
+					break;
+				if (op[0] == DHO_DHCP_MESSAGE_TYPE &&
+				    op[1] == 1)
+					dhcptype = op[2];
+				else if (op[0] == DHO_DHCP_REQUESTED_ADDRESS &&
+				    op[1] == sizeof(requested_addr))
+					memcpy(&requested_addr, &op[2],
+					    sizeof(requested_addr));
+				op += 2 + op[1];
 			}
-			if (op + 1 + op[1] >= oe)
-				break;
-			if (op[0] == DHO_DHCP_MESSAGE_TYPE &&
-			    op[1] == 1)
-				dhcptype = op[2];
-			else if (op[0] == DHO_DHCP_REQUESTED_ADDRESS &&
-			    op[1] == sizeof(requested_addr))
-				memcpy(&requested_addr, &op[2],
-				    sizeof(requested_addr));
-			op += 2 + op[1];
 		}
 	}
 
@@ -143,8 +164,7 @@ dhcp_request(struct vionet_dev *dev, char *buf, size_t buflen, char **obuf)
 	if (*obuf != NULL)
 		goto fail;
 
-	buflen = 0;
-	respbuflen = DHCP_MTU_MAX;
+	respbuflen = sizeof(resp);
 	if ((respbuf = calloc(1, respbuflen)) == NULL)
 		goto fail;
 
@@ -158,14 +178,9 @@ dhcp_request(struct vionet_dev *dev, char *buf, size_t buflen, char **obuf)
 		goto fail;
 	}
 
-	/* BOOTP uses a 64byte vendor field instead of the DHCP options */
-	resplen = BOOTP_MIN_LEN;
-
 	/* Add BOOTP Vendor Extensions (DHCP options) */
-	o = 0;
-	memcpy(&resp.options,
-	    DHCP_OPTIONS_COOKIE, DHCP_OPTIONS_COOKIE_LEN);
-	o+= DHCP_OPTIONS_COOKIE_LEN;
+	memcpy(&resp.options, DHCP_OPTIONS_COOKIE, DHCP_OPTIONS_COOKIE_LEN);
+	o = DHCP_OPTIONS_COOKIE_LEN;
 
 	/* Did we receive a DHCP request or was it just BOOTP? */
 	if (dhcptype) {
@@ -216,8 +231,13 @@ dhcp_request(struct vionet_dev *dev, char *buf, size_t buflen, char **obuf)
 	memcpy(&resp.options[o], &server_addr, sizeof(server_addr));
 	o += sizeof(server_addr);
 
-	if (hostname != NULL) {
-		len = strlen(hostname);
+	if (hostname != NULL && (len = strlen(hostname)) > 1) {
+		/* Check if there's still room for the option type and len (2),
+		 * hostname, and a final to-be-added DHO_END (1). */
+		if (o + 2 + len + 1 > sizeof(resp.options)) {
+			log_debug("%s: hostname too long", __func__);
+			goto fail;
+		}
 		resp.options[o++] = DHO_HOST_NAME;
 		resp.options[o++] = len;
 		memcpy(&resp.options[o], hostname, len);
@@ -226,7 +246,7 @@ dhcp_request(struct vionet_dev *dev, char *buf, size_t buflen, char **obuf)
 
 	resp.options[o++] = DHO_END;
 
-	resplen = offsetof(struct dhcp_packet, options) + o;
+	resplen = OPTIONS_OFFSET + o;
 
 	/* Minimum packet size */
 	if (resplen < BOOTP_MIN_LEN)
@@ -245,5 +265,5 @@ dhcp_request(struct vionet_dev *dev, char *buf, size_t buflen, char **obuf)
 	return (respbuflen);
  fail:
 	free(respbuf);
-	return (0);
+	return (-1);
 }
