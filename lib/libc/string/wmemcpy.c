@@ -33,7 +33,7 @@
 #include <wchar.h>
 
 wchar_t *
-wmemcpy(wchar_t *d, const wchar_t *s, size_t n)
+wmemcpy(wchar_t * __restrict d, const wchar_t * __restrict s, size_t n)
 {
 
 	return (wchar_t *)memcpy(d, s, n * sizeof(wchar_t));
