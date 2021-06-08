@@ -40,7 +40,7 @@
 .Sh SYNOPSIS
 .In string.h
 .Ft void *
-.Fn memcpy "void *dst" "const void *src" "size_t len"
+.Fn memcpy "void * restrict dst" "const void * restrict src" "size_t len"
 .Sh DESCRIPTION
 The
 .Fn memcpy
