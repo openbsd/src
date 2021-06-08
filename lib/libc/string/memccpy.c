@@ -32,7 +32,7 @@
 #include <string.h>
 
 void *
-memccpy(void * restricted t, const void * restricted f, int c, size_t n)
+memccpy(void * __restrict t, const void * __restrict f, int c, size_t n)
 {
 
 	if (n) {
