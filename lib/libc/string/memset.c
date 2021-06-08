@@ -38,7 +38,6 @@ memset(void *dst, int c, size_t n)
 {
 	if (n != 0) {
 		unsigned char *d = dst;
-
 		const unsigned char uc = (unsigned char)c;
 
 		do
