@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.93 2021/06/08 17:22:00 tb Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.94 2021/06/08 19:34:44 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -353,11 +353,11 @@ tlsext_ecpf_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 	CBS ecpf;
 
 	if (!CBS_get_u8_length_prefixed(cbs, &ecpf))
-		goto err;
+		return 0;
 	if (CBS_len(&ecpf) == 0)
-		goto err;
+		return 0;
 	if (CBS_len(cbs) != 0)
-		goto err;
+		return 0;
 
 	/* Must contain uncompressed (0) - RFC 8422, section 5.1.2. */
 	if (!CBS_contains_zero_byte(&ecpf)) {
@@ -375,10 +375,6 @@ tlsext_ecpf_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 	}
 
 	return 1;
-
- err:
-	*alert = SSL_AD_DECODE_ERROR;
-	return 0;
 }
 
 int
