@@ -7,7 +7,7 @@
 #include <string.h>
 
 size_t
-strxfrm_l(char *dst, const char *src, size_t n,
+strxfrm_l(char * restrict dst, const char * restrict src, size_t n,
     locale_t locale __attribute__((__unused__)))
 {
 	return strxfrm(dst, src, n);
