@@ -34,13 +34,12 @@
 wchar_t	*
 wmemset(wchar_t *s, wchar_t c, size_t n)
 {
-	wchar_t *p;
+	wchar_t * const p = s;
 
-	p = s;
 	for (; n != 0; n--) {
-		*p = c;
-		p++;
+		*s++ = c;
 	}
-	return s;
+
+	return p;
 }
 DEF_STRONG(wmemset);
