@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: generate_pkgconfig.sh,v 1.9 2016/09/03 12:42:42 beck Exp $
+# $OpenBSD: generate_pkgconfig.sh,v 1.10 2021/06/08 11:19:39 inoguchi Exp $
 #
 # Copyright (c) 2010,2011 Jasper Lievisse Adriaanse <jasper@openbsd.org>
 #
@@ -65,11 +65,11 @@ exec_prefix=\${prefix}
 libdir=\${exec_prefix}/lib
 includedir=\${prefix}/include
 
-Name: OpenSSL
+Name: OpenSSL-libssl
 Description: Secure Sockets Layer and cryptography libraries
 Version: ${lib_version}
-Requires: 
-Libs: -L\${libdir} -lssl -lcrypto
+Requires.private: libcrypto
+Libs: -L\${libdir} -lssl
 Cflags: -I\${includedir}
 __EOF__
 
@@ -84,7 +84,5 @@ includedir=\${prefix}/include
 Name: OpenSSL
 Description: Secure Sockets Layer and cryptography libraries and tools
 Version: ${lib_version}
-Requires: 
-Libs: -L\${libdir} -lssl -lcrypto
-Cflags: -I\${includedir}
+Requires: libssl libcrypto
 __EOF__
