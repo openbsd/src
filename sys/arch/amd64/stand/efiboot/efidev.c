@@ -1,4 +1,4 @@
-/*	$OpenBSD: efidev.c,v 1.36 2021/06/07 13:38:58 krw Exp $	*/
+/*	$OpenBSD: efidev.c,v 1.37 2021/06/08 02:45:49 krw Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -46,6 +46,7 @@
 #include <efi.h>
 
 extern int debug;
+extern EFI_BOOT_SERVICES *BS;
 
 #include "efidev.h"
 #include "biosdev.h"	/* for dklookup() */
@@ -85,8 +86,8 @@ efid_io(int rw, efi_diskinfo_t ed, u_int off, int nsect, void *buf)
 {
 	u_int		 blks, start, end;
 	EFI_STATUS	 status = EFI_SUCCESS;
-	static u_char	*ibuf = NULL;
-	static u_int	 ibufsz = 0;
+	EFI_PHYSICAL_ADDRESS	 addr;
+	caddr_t		 ibuf;
 
 	/* block count of the intrinsic block size in DEV_BSIZE */
 	blks = EFI_BLKSPERSEC(ed);
@@ -97,15 +98,12 @@ efid_io(int rw, efi_diskinfo_t ed, u_int off, int nsect, void *buf)
 	start = off / blks;
 	end = (off + nsect + blks - 1) / blks;
 
-	/* always use an aligned buffer as some media require this */
-	if (ibuf && ibufsz < (end - start) * ed->blkio->Media->BlockSize) {
-		free(ibuf, ibufsz);
-		ibuf = NULL;
-	}
-	if (ibuf == NULL) {
-		ibufsz = (end - start) * ed->blkio->Media->BlockSize;
-		ibuf = alloc(ibufsz);
-	}
+	status = BS->AllocatePages(AllocateAnyPages, EfiLoaderData,
+	    EFI_SIZE_TO_PAGES((end - start) * ed->blkio->Media->BlockSize),
+	    &addr);
+	if (EFI_ERROR(status))
+		goto on_eio;
+	ibuf = (caddr_t)(uintptr_t)addr;
 
 	switch (rw) {
 	case F_READ:
@@ -132,9 +130,10 @@ efid_io(int rw, efi_diskinfo_t ed, u_int off, int nsect, void *buf)
 			goto on_eio;
 		break;
 	}
-	return (EFI_SUCCESS);
 
 on_eio:
+	BS->FreePages(addr, EFI_SIZE_TO_PAGES((end - start) *
+	    ed->blkio->Media->BlockSize));
 	return (status);
 }
 
