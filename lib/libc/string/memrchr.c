@@ -28,9 +28,11 @@ memrchr(const void *s, int c, size_t n)
 	const unsigned char *cp;
 
 	if (n != 0) {
-		cp = (unsigned char *)s + n;
+		const unsigned char cp = (unsigned char *)(s + n);
+
+		const unsigned char uc = (unsigned char)c;
 		do {
-			if (*(--cp) == (unsigned char)c)
+			if (*(--cp) == uc)
 				return((void *)cp);
 		} while (--n != 0);
 	}
