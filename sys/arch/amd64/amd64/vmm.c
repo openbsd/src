@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.285 2021/06/07 13:55:54 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.286 2021/06/08 23:18:43 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1466,8 +1466,7 @@ vm_create(struct vm_create_params *vcp, struct proc *p)
 	rw_enter_write(&vmm_softc->vm_lock);
 
 	if (vm_impl_init(vm, p)) {
-		printf("failed to init arch-specific features for vm 0x%p\n",
-		    vm);
+		printf("failed to init arch-specific features for vm %p\n", vm);
 		vm_teardown(vm);
 		rw_exit_write(&vmm_softc->vm_lock);
 		return (ENOMEM);
@@ -1485,7 +1484,7 @@ vm_create(struct vm_create_params *vcp, struct proc *p)
 		vcpu = pool_get(&vcpu_pool, PR_WAITOK | PR_ZERO);
 		vcpu->vc_parent = vm;
 		if ((ret = vcpu_init(vcpu)) != 0) {
-			printf("failed to init vcpu %d for vm 0x%p\n", i, vm);
+			printf("failed to init vcpu %d for vm %p\n", i, vm);
 			vm_teardown(vm);
 			vmm_softc->vm_idx--;
 			rw_exit_write(&vmm_softc->vm_lock);
