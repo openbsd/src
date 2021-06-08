@@ -27,7 +27,7 @@
  * If retval >= siz, truncation occurred.
  */
 size_t
-wcslcat(wchar_t * restrict dst, const wchar_t * restrict src, size_t dsize)
+wcslcat(wchar_t * __restrict dst, const wchar_t * __restrict src, size_t dsize)
 {
 	const wchar_t *odst = dst;
 	const wchar_t *osrc = src;
