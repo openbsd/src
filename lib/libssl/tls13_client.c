@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.79 2021/05/16 14:10:43 jsing Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.80 2021/06/08 18:13:50 tb Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -404,8 +404,8 @@ tls13_server_hello_retry_request_recv(struct tls13_ctx *ctx, CBS *cbs)
 		return 0;
 
 	/*
-	 * This may have been a TLSv1.2 or earlier ServerHello that just happened
-	 * to have matching server random...
+	 * This may have been a TLSv1.2 or earlier ServerHello that just
+	 * happened to have matching server random...
 	 */
 	if (ctx->hs->tls13.use_legacy)
 		return tls13_use_legacy_client(ctx);
