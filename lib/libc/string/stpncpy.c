@@ -35,7 +35,7 @@
 #include <string.h>
 
 char *
-stpncpy(char *dst, const char *src, size_t n)
+stpncpy(char * restrict dst, const char * restrict src, size_t n)
 {
 	if (n != 0) {
 		char *d = dst;
