@@ -30,7 +30,7 @@
 #include <string.h>
 
 char *
-strtok(char *s, const char *delim)
+strtok(char * restrict s, const char * restrict delim)
 {
 	static char *last;
 
@@ -39,7 +39,7 @@ strtok(char *s, const char *delim)
 DEF_STRONG(strtok);
 
 char *
-strtok_r(char *s, const char *delim, char **last)
+strtok_r(char * restrict s, const char * restrict delim, char ** restrict last)
 {
 	const char *spanp;
 	int c, sc;
