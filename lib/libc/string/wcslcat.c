@@ -27,25 +27,24 @@
  * If retval >= siz, truncation occurred.
  */
 size_t
-wcslcat(wchar_t *dst, const wchar_t *src, size_t dsize)
+wcslcat(wchar_t * restrict dst, const wchar_t * restrict src, size_t dsize)
 {
 	const wchar_t *odst = dst;
 	const wchar_t *osrc = src;
-	size_t n = dsize;
+	size_t n;
 	size_t dlen;
 
 	/* Find the end of dst and adjust bytes left but don't go past end. */
-	while (n-- != 0 && *dst != L'\0')
+	for (n = dsize; n-- != 0 && *dst != L'\0'; n--)
 		dst++;
 	dlen = dst - odst;
 	n = dsize - dlen;
 
-	if (n-- == 0)
+	if (n == 0)
 		return(dlen + wcslen(src));
 	while (*src != L'\0') {
-		if (n != 0) {
+		if (--n != 0) {
 			*dst++ = *src;
-			n--;
 		}
 		src++;
 	}
