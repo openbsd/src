@@ -37,7 +37,7 @@ __warn_references(stpcpy,
 #endif
 
 char *
-stpcpy(char *to, const char *from)
+stpcpy(char * restrict to, const char * restrict from)
 {
 	for (; (*to = *from) != '\0'; ++from, ++to);
 	return(to);
