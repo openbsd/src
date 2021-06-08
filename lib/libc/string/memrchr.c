@@ -25,11 +25,8 @@
 void *
 memrchr(const void *s, int c, size_t n)
 {
-	const unsigned char *cp;
-
 	if (n != 0) {
-		const unsigned char cp = (unsigned char *)(s + n);
-
+		const unsigned char *cp = (unsigned char *)(s + n);
 		const unsigned char uc = (unsigned char)c;
 		do {
 			if (*(--cp) == uc)
