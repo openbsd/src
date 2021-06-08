@@ -38,7 +38,7 @@
  * are written at dst (at most n+1 bytes being appended).  Return dst.
  */
 char *
-strncat(char *dst, const char *src, size_t n)
+strncat(char * restrict dst, const char * restrict src, size_t n)
 {
 	if (n != 0) {
 		char *d = dst;
@@ -47,11 +47,11 @@ strncat(char *dst, const char *src, size_t n)
 		while (*d != 0)
 			d++;
 		do {
-			if ((*d = *s++) == 0)
+			if ((*d = *s++) == '\0')
 				break;
 			d++;
 		} while (--n != 0);
-		*d = 0;
+		*d = '\0';
 	}
 	return (dst);
 }
