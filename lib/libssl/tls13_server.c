@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.76 2021/05/16 14:10:43 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.77 2021/06/08 17:41:52 tb Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -165,6 +165,9 @@ tls13_client_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 	}
 	ctx->hs->negotiated_tls_version = TLS1_3_VERSION;
 
+	/* Ensure we send subsequent alerts with the correct record version. */
+	tls13_record_layer_set_legacy_version(ctx->rl, TLS1_2_VERSION);
+
 	/* Add decoded values to the current ClientHello hash */
 	if (!tls13_clienthello_hash_init(ctx)) {
 		ctx->alert = TLS13_ALERT_INTERNAL_ERROR;
@@ -281,8 +284,6 @@ tls13_client_hello_recv(struct tls13_ctx *ctx, CBS *cbs)
 	/* See if we switched back to the legacy client method. */
 	if (s->method->internal->version < TLS1_3_VERSION)
 		return 1;
-
-	tls13_record_layer_set_legacy_version(ctx->rl, TLS1_2_VERSION);
 
 	/*
 	 * If a matching key share was provided, we do not need to send a
