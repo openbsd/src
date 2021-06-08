@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.61 2021/05/16 14:19:04 jsing Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.62 2021/06/08 18:05:47 tb Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -826,11 +826,17 @@ tls13_record_layer_read_record(struct tls13_record_layer *rl)
 		return ret;
 	}
 
-	if (rl->legacy_version == TLS1_2_VERSION &&
-	    tls13_record_version(rl->rrec) != TLS1_2_VERSION)
-		return tls13_send_alert(rl, TLS13_ALERT_PROTOCOL_VERSION);
-
 	content_type = tls13_record_content_type(rl->rrec);
+
+	/*
+	 * In response to a client hello we may receive an alert in a
+	 * record with a legacy version. Otherwise enforce that the
+	 * legacy record version is 0x0303 per RFC 8446, section 5.1.
+	 */
+	if (rl->legacy_version == TLS1_2_VERSION &&
+	    tls13_record_version(rl->rrec) != TLS1_2_VERSION &&
+	    (content_type != SSL3_RT_ALERT || !rl->legacy_alerts_allowed))
+		return tls13_send_alert(rl, TLS13_ALERT_PROTOCOL_VERSION);
 
 	/*
 	 * Bag of hacks ahead... after the first ClientHello message has been
