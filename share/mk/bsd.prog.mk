@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.prog.mk,v 1.82 2020/09/22 10:31:46 martijn Exp $
+#	$OpenBSD: bsd.prog.mk,v 1.83 2021/06/09 19:44:55 mortimer Exp $
 #	$NetBSD: bsd.prog.mk,v 1.55 1996/04/08 21:19:26 jtc Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
@@ -35,6 +35,7 @@ LIBCURSES?=	${DESTDIR}/usr/lib/libcurses.a
 LIBEDIT?=	${DESTDIR}/usr/lib/libedit.a
 LIBELF?=	${DESTDIR}/usr/lib/libelf.a
 LIBEVENT?=	${DESTDIR}/usr/lib/libevent.a
+LIBEXECINFO?=	${DESTDIR}/usr/lib/libexecinfo.a
 LIBEXPAT?=	${DESTDIR}/usr/lib/libexpat.a
 LIBFIDO2?=	${DESTDIR}/usr/lib/libfido2.a
 LIBFORM?=	${DESTDIR}/usr/lib/libform.a

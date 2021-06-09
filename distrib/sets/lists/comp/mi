@@ -875,6 +875,7 @@
 ./usr/include/eti.h
 ./usr/include/event.h
 ./usr/include/evutil.h
+./usr/include/execinfo.h
 ./usr/include/expat.h
 ./usr/include/expat_external.h
 ./usr/include/fcntl.h
@@ -1501,6 +1502,8 @@
 ./usr/lib/libelf_p.a
 ./usr/lib/libevent.a
 ./usr/lib/libevent_p.a
+./usr/lib/libexecinfo.a
+./usr/lib/libexecinfo_p.a
 ./usr/lib/libexpat.a
 ./usr/lib/libexpat_p.a
 ./usr/lib/libfido2.a
@@ -2201,6 +2204,7 @@
 ./usr/share/man/man3/auth_subr.3
 ./usr/share/man/man3/authenticate.3
 ./usr/share/man/man3/authnone_create.3
+./usr/share/man/man3/backtrace.3
 ./usr/share/man/man3/basename.3
 ./usr/share/man/man3/bcmp.3
 ./usr/share/man/man3/bcopy.3

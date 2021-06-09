@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.228 2021/01/02 20:04:36 patrick Exp $
+#	$OpenBSD: Makefile,v 1.229 2021/06/09 19:44:55 mortimer Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -49,7 +49,7 @@ RDIRS=	../lib/libagentx ../lib/libcbor ../lib/libcurses ../lib/libedit \
 	../lib/libradius \
 	../lib/libskey ../lib/libssl  ../lib/libtls \
 	../lib/libusbhid ../lib/libutil ../lib/libz \
-	../usr.bin/lex ../gnu/lib/libreadline \
+	../usr.bin/lex ../gnu/lib/libexecinfo ../gnu/lib/libreadline \
 	../sys/arch/${MACHINE}
 
 .if ${BUILD_GCC3:L} == "yes"
