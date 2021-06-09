@@ -37,9 +37,9 @@ __warn_references(strcat,
 #endif
 
 char *
-strcat(char * restrict s, const char * restrict append)
+strcat(char * __restrict s, const char * __restrict append)
 {
-	char *save = s;
+	char * const save = s;
 
 	for (; *s; ++s);
 	while ((*s++ = *append++) != '\0');
