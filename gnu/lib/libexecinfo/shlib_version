@@ -1,0 +1,3 @@
+#	$OpenBSD: shlib_version,v 1.1 2021/06/09 19:37:43 mortimer Exp $
+major=3
+minor=0
