@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.206 2021/02/25 02:48:21 dlg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.207 2021/06/09 03:24:54 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -355,7 +355,7 @@ vlan_inject(struct mbuf *m, uint16_t type, uint16_t tag)
 	CLR(m->m_flags, M_VLANTAG);
 
 	return (m);
- }
+}
 
 struct mbuf *
 vlan_input(struct ifnet *ifp0, struct mbuf *m)
