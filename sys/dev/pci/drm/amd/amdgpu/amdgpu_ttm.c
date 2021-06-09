@@ -1870,11 +1870,11 @@ int amdgpu_ttm_init(struct amdgpu_device *adev)
 	    adev->gmc.visible_vram_size,
 	    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE,
 	    &adev->mman.aper_bsh)) {
-		DRM_ERROR("Failed to remap VRAM\n");
-		return -ENOMEM;
+		adev->mman.aper_base_kaddr = NULL;
+	} else {
+		adev->mman.aper_base_kaddr = bus_space_vaddr(adev->memt,
+		    adev->mman.aper_bsh);
 	}
-	adev->mman.aper_base_kaddr = bus_space_vaddr(adev->memt,
-	    adev->mman.aper_bsh);
 #endif
 #endif
 
