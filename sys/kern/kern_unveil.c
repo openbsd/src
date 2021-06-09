@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_unveil.c,v 1.40 2021/03/10 10:21:47 jsg Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.41 2021/06/09 17:52:47 semarie Exp $	*/
 
 /*
  * Copyright (c) 2017-2019 Bob Beck <beck@openbsd.org>
@@ -719,11 +719,6 @@ unveil_flagmatch(struct nameidata *ni, u_char flags)
 				ni->ni_unveil_eacces = 1;
 			return 0;
 		}
-	}
-	if (ni->ni_unveil & UNVEIL_INSPECT) {
-#ifdef DEBUG_UNVEIL
-		printf("any unveil allows UNVEIL_INSPECT\n");
-#endif
 	}
 	return 1;
 }

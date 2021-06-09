@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.272 2021/04/30 02:06:22 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.273 2021/06/09 17:52:47 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -623,8 +623,7 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *origpath)
 		/* when avoiding YP mode, getpw* functions touch this */
 		if (ni->ni_pledge == PLEDGE_RPATH &&
 		    strcmp(path, "/var/run/ypbind.lock") == 0) {
-			if ((p->p_p->ps_pledge & PLEDGE_GETPW) ||
-			    (ni->ni_unveil == UNVEIL_INSPECT)) {
+			if (p->p_p->ps_pledge & PLEDGE_GETPW) {
 				ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
 				return (0);
 			} else
