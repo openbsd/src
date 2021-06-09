@@ -37,7 +37,7 @@ __warn_references(wcscat,
 #endif
 
 wchar_t *
-wcscat(wchar_t *s1, const wchar_t *s2)
+wcscat(wchar_t * restrict s1, const wchar_t * restrict s2)
 {
 	wchar_t *p;
 	wchar_t *q;

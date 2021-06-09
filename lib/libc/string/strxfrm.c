@@ -39,7 +39,7 @@
  * on the original untransformed strings would return.
  */
 size_t
-strxfrm(char *dst, const char *src, size_t n)
+strxfrm(char * restrict dst, const char * restrict src, size_t n)
 {
 
 	/*

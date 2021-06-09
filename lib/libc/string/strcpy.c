@@ -37,7 +37,7 @@ __warn_references(strcpy,
 #endif
 
 char *
-strcpy(char *to, const char *from)
+strcpy(char * restrict to, const char * restrict from)
 {
 	char *save = to;
 

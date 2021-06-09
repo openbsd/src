@@ -32,20 +32,19 @@
 #include <wchar.h>
 
 wchar_t *
-wcsncpy(wchar_t *s1, const wchar_t *s2, size_t n)
+wcsncpy(wchar_t * __restrict s1, const wchar_t * __restrict s2, size_t n)
 {
-	wchar_t *p;
+	wchar_t * const p = s1;
 
-	p = s1;
 	while (n && *s2) {
-		*p++ = *s2++;
+		*s1++ = *s2++;
 		n--;
 	}
 	while (n) {
-		*p++ = L'\0';
+		*s1++ = L'\0';
 		n--;
 	}
 
-	return s1;
+	return p;
 }
 DEF_STRONG(wcsncpy);

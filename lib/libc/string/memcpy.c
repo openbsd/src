@@ -39,7 +39,7 @@
  * sizeof(word) MUST BE A POWER OF TWO
  * SO THAT wmask BELOW IS ALL ONES
  */
-typedef	long word;		/* "word" used for optimal copy speed */
+typedef	unsigned long word;		/* "word" used for optimal copy speed */
 
 #define	wsize	sizeof(word)
 #define	wmask	(wsize - 1)
@@ -50,7 +50,7 @@ static const char backwards_msg[] = ": backwards memcpy";
  * Copy a block of memory, not handling overlap.
  */
 void *
-memcpy(void *dst0, const void *src0, size_t length)
+memcpy(void * restrict dst0, const void * restrict src0, size_t length)
 {
 	char *dst = dst0;
 	const char *src = src0;
@@ -83,13 +83,13 @@ memcpy(void *dst0, const void *src0, size_t length)
 	/*
 	 * Copy forward.
 	 */
-	t = (long)src;	/* only need low bits */
-	if ((t | (long)dst) & wmask) {
+	t = (word)src;	/* only need low bits */
+	if ((t | (word)dst) & wmask) {
 		/*
 		 * Try to align operands.  This cannot be done
 		 * unless the low bits match.
 		 */
-		if ((t ^ (long)dst) & wmask || length < wsize)
+		if ((t ^ (word)dst) & wmask || length < wsize)
 			t = length;
 		else
 			t = wsize - (t & wmask);

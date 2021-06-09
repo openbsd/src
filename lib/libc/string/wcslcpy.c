@@ -25,7 +25,7 @@
  * Returns wcslen(src); if retval >= dsize, truncation occurred.
  */
 size_t
-wcslcpy(wchar_t *dst, const wchar_t *src, size_t dsize)
+wcslcpy(wchar_t * __restrict dst, const wchar_t * __restrict src, size_t dsize)
 {
 	const wchar_t *osrc = src;
 	size_t nleft = dsize;

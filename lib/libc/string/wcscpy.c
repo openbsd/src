@@ -37,7 +37,7 @@ __warn_references(wcscpy,
 #endif
 
 wchar_t *
-wcscpy(wchar_t *s1, const wchar_t *s2)
+wcscpy(wchar_t * restrict s1, const wchar_t * restrict s2)
 {
 	wchar_t *p;
 	const wchar_t *q;
