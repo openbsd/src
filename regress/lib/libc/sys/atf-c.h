@@ -1,4 +1,4 @@
-/*	$OpenBSD: atf-c.h,v 1.1.1.1 2019/11/19 19:57:03 bluhm Exp $	*/
+/*	$OpenBSD: atf-c.h,v 1.2 2021/06/09 19:42:46 mortimer Exp $	*/
 /*
  * Copyright (c) 2019 Moritz Buhl <openbsd@moritzbuhl.de>
  *
@@ -76,6 +76,7 @@ ATF_TC_FUNCTIONS(fn)
 #define ATF_CHECK		ATF_REQUIRE
 #define ATF_CHECK_MSG		ATF_REQUIRE_MSG
 #define ATF_CHECK_EQ		ATF_REQUIRE_EQ
+#define ATF_CHECK_STREQ	ATF_REQUIRE_STREQ
 
 #define atf_req(exp, err, msg, ...)					\
 	atf_require(exp, err, #exp, __FILE__, __LINE__, NULL)
@@ -85,6 +86,8 @@ ATF_TC_FUNCTIONS(fn)
 #define ATF_REQUIRE_EQ(a, b)		atf_req((a) == (b), -1, NULL)
 #define ATF_REQUIRE_EQ_MSG(a, b, fmt, ...)				\
 	atf_req((a) == (b), -1, fmt, ##__VA_ARGS__)
+#define ATF_REQUIRE_STREQ(x, y) \
+	ATF_REQUIRE_MSG(strcmp(x, y) == 0, "%s != %s (%s != %s)", #x, #y, x, y)
 
 #define atf_tc_fail_nonfatal(fmt, ...)	atf_tc_fail(fmt, ##__VA_ARGS__)
 #define atf_tc_expect_fail(fmt, ...)	\
