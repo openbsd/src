@@ -1,4 +1,4 @@
-#	$OpenBSD: Pledge.pm,v 1.5 2019/12/30 02:15:17 afresh1 Exp $	#
+#	$OpenBSD: Pledge.pm,v 1.6 2021/06/09 23:21:34 afresh1 Exp $	#
 package OpenBSD::Pledge;
 
 use 5.020002;
@@ -6,11 +6,9 @@ use strict;
 use warnings;
 
 use parent 'Exporter';
-our %EXPORT_TAGS = ( 'all' => [qw( pledge pledgenames )] );
-our @EXPORT_OK   = ( @{ $EXPORT_TAGS{'all'} } );
-our @EXPORT      = qw( pledge );                           ## no critic 'export'
+our @EXPORT = qw( pledge );    ## no critic 'export'
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 require XSLoader;
 XSLoader::load( 'OpenBSD::Pledge', $VERSION );
@@ -60,8 +58,6 @@ interfaces.
 
 Exports L</pledge> by default.
 
-C<:all> will also export L</pledgenames>
-
 =head1 FUNCTIONS
 
 =head2 pledge
@@ -74,10 +70,6 @@ The "stdio" promise is always implied,
 as L<perl(1)> itself is useless without it.
 
 Returns true on success, returns false and sets $! on failure
-
-=head2 pledgenames
-
-Returns a list of the possible promises you can pass to L</pledge>.
 
 =head1 BUGS AND LIMITATIONS
 
@@ -92,11 +84,11 @@ L<http://man.openbsd.org/pledge.2>
 
 =head1 AUTHOR
 
-Andrew Fresh, E<lt>afresh1@OpenBSD.orgE<gt>
+Andrew Hewus Fresh, E<lt>afresh1@OpenBSD.orgE<gt>
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright (C) 2015 by Andrew Fresh E<lt>afresh1@OpenBSD.orgE<gt>
+Copyright (C) 2015,2021 by Andrew Hewus Fresh E<lt>afresh1@OpenBSD.orgE<gt>
 
 Permission to use, copy, modify, and distribute this software for any
 purpose with or without fee is hereby granted, provided that the above

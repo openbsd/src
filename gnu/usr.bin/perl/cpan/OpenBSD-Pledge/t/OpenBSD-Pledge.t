@@ -1,4 +1,4 @@
-#	$OpenBSD: OpenBSD-Pledge.t,v 1.3 2017/09/09 14:53:57 afresh1 Exp $	#
+#	$OpenBSD: OpenBSD-Pledge.t,v 1.4 2021/06/09 23:21:34 afresh1 Exp $	#
 ## no critic 'version'
 ## no critic 'package'
 # Before 'make install' is performed this script should be runnable with
@@ -21,21 +21,6 @@ BEGIN { use_ok('OpenBSD::Pledge') }
 
 ## no critic 'private'
 ## no critic 'punctuation'
-#########################
-# PLEDGENAMES
-#########################
-
-# Here we just test that we get a small subset of names back
-# because there is no point in failing if someone adds new names.
-
-my %names = map { $_ => 1 } OpenBSD::Pledge::pledgenames();
-ok $names{$_}, "$_ pledge name exists" for qw(
-    stdio
-    rpath
-    wpath
-    cpath
-);
-
 #########################
 # _PLEDGE
 #########################

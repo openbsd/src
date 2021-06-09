@@ -1,7 +1,7 @@
-/*	$OpenBSD: Pledge.xs,v 1.2 2017/09/09 14:53:57 afresh1 Exp $	*/
+/*	$OpenBSD: Pledge.xs,v 1.3 2021/06/09 23:21:34 afresh1 Exp $	*/
 
 /*
- * Copyright (c) 2015 Andrew Fresh <afresh1@openbsd.org>
+ * Copyright (c) 2015,2021 Andrew Hewus Fresh <afresh1@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -21,21 +21,7 @@
 #include "perl.h"
 #include "XSUB.h"
 
-#define PLEDGENAMES
-#include <sys/pledge.h>
-
 MODULE = OpenBSD::Pledge		PACKAGE = OpenBSD::Pledge
-
-AV *
-pledgenames()
-    INIT:
-	int i;
-    CODE:
-	for (i = 0; pledgenames[i].bits != 0; i++)
-		XPUSHs( sv_2mortal(
-		     newSVpv(pledgenames[i].name, strlen(pledgenames[i].name))
-		) );
-	XSRETURN(i);
 
 int
 _pledge(const char * promises)
