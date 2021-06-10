@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.17 2021/05/19 21:49:07 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.18 2021/06/10 14:53:27 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -257,7 +257,6 @@ GPT_print(char *units, int verbosity)
 			continue;
 		GPT_print_part(i, units, verbosity);
 	}
-
 }
 
 void
