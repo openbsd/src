@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.134 2021/06/10 07:50:03 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.135 2021/06/10 07:52:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -41,7 +41,7 @@
 	" 'Kill' 'X' {kill-window}" \
 	" 'Respawn' 'R' {respawn-window -k}" \
 	" '#{?pane_marked,Unmark,Mark}' 'm' {select-pane -m}" \
-	" 'Rename' 'n' {command-prompt -I \"#W\" \"rename-window -- '%%'\"}" \
+	" 'Rename' 'n' {command-prompt -FI \"#W\" \"rename-window -t#{window_id} -- '%%'\"}" \
 	" ''" \
 	" 'New After' 'w' {new-window -a}" \
 	" 'New At End' 'W' {new-window}"
