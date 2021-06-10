@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1105 2021/06/10 07:33:41 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1106 2021/06/10 07:36:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -794,6 +794,14 @@ struct style {
 	enum style_default_type	default_type;
 };
 
+/* Cursor style. */
+enum screen_cursor_style {
+	SCREEN_CURSOR_DEFAULT,
+	SCREEN_CURSOR_BLOCK,
+	SCREEN_CURSOR_UNDERLINE,
+	SCREEN_CURSOR_BAR
+};
+
 /* Virtual screen. */
 struct screen_sel;
 struct screen_titles;
@@ -807,8 +815,8 @@ struct screen {
 	u_int				 cx;	  /* cursor x */
 	u_int				 cy;	  /* cursor y */
 
-	u_int				 cstyle;  /* cursor style */
-	char				*ccolour; /* cursor colour string */
+	enum screen_cursor_style	 cstyle;  /* cursor style */
+	char				*ccolour; /* cursor colour */
 
 	u_int				 rupper;  /* scroll region top */
 	u_int				 rlower;  /* scroll region bottom */
@@ -1296,7 +1304,7 @@ struct tty {
 
 	u_int		 cx;
 	u_int		 cy;
-	u_int		 cstyle;
+	enum screen_cursor_style cstyle;
 	char		*ccolour;
 
 	int		 oflag;
