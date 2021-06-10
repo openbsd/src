@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.104 2021/05/15 15:59:15 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.105 2021/06/10 15:01:34 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -165,7 +165,7 @@ Xswap(char *args, struct mbr *mbr)
 int
 Xgedit(char *args)
 {
-	struct gpt_partition oldpart;
+	struct gpt_partition oldgg;
 	const char *errstr;
 	struct gpt_partition *gg;
 	char *name;
@@ -178,11 +178,11 @@ Xgedit(char *args)
 		return (CMD_CONT);
 	}
 	gg = &gp[pn];
-	oldpart = *gg;
+	oldgg = *gg;
 
 	Xgsetpid(args);
 	if (uuid_is_nil(&gg->gp_type, NULL)) {
-		if (uuid_is_nil(&oldpart.gp_type, NULL) == 0) {
+		if (uuid_is_nil(&oldgg.gp_type, NULL) == 0) {
 			memset(gg, 0, sizeof(struct gpt_partition));
 			printf("Partition %d is disabled.\n", pn);
 		}
@@ -191,7 +191,7 @@ Xgedit(char *args)
 
 	if (GPT_get_lba_start(pn) == -1 ||
 	    GPT_get_lba_end(pn) == -1) {
-		*gg = oldpart;
+		*gg = oldgg;
 		goto done;
 	}
 
@@ -213,7 +213,7 @@ Xgedit(char *args)
 	}
 
 done:
-	if (memcmp(gg, &oldpart, sizeof(*gg)))
+	if (memcmp(gg, &oldgg, sizeof(*gg)))
 		return (CMD_DIRTY);
 	else
 		return (CMD_CONT);
@@ -222,7 +222,7 @@ done:
 int
 Xedit(char *args, struct mbr *mbr)
 {
-	struct prt oldpart;
+	struct prt oldpp;
 	const char *errstr;
 	struct prt *pp;
 	int pn;
@@ -236,11 +236,11 @@ Xedit(char *args, struct mbr *mbr)
 		return (CMD_CONT);
 	}
 	pp = &mbr->part[pn];
-	oldpart = *pp;
+	oldpp = *pp;
 
 	Xsetpid(args, mbr);
 	if (pp->id == DOSPTYP_UNUSED) {
-		if (oldpart.id != DOSPTYP_UNUSED) {
+		if (oldpp.id != DOSPTYP_UNUSED) {
 			memset(pp, 0, sizeof(*pp));
 			printf("Partition %d is disabled.\n", pn);
 		}
@@ -277,7 +277,7 @@ Xedit(char *args, struct mbr *mbr)
 	}
 
 done:
-	if (memcmp(pp, &oldpart, sizeof(*pp)))
+	if (memcmp(pp, &oldpp, sizeof(*pp)))
 		return (CMD_DIRTY);
 	else
 		return (CMD_CONT);
