@@ -1,4 +1,4 @@
-/*	$OpenBSD: builtin.c,v 1.1 2021/06/09 19:37:43 mortimer Exp $	*/
+/*	$OpenBSD: builtin.c,v 1.2 2021/06/10 23:44:05 jca Exp $	*/
 
 /*
  * Copyright (c) 2021 Todd Mortimer <mortimer@openbsd.org>
@@ -21,5 +21,5 @@
 size_t
 backtrace(void **trace, size_t len)
 {
-  return 0;
+	return 0;
 }
