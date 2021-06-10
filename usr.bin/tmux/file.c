@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.10 2021/02/12 06:52:48 nicm Exp $ */
+/* $OpenBSD: file.c,v 1.11 2021/06/10 07:51:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -506,14 +506,14 @@ file_write_error_callback(__unused struct bufferevent *bev, __unused short what,
 
 	log_debug("write error file %d", cf->stream);
 
-	if (cf->cb != NULL)
-		cf->cb(NULL, NULL, 0, -1, NULL, cf->data);
-
 	bufferevent_free(cf->event);
 	cf->event = NULL;
 
 	close(cf->fd);
 	cf->fd = -1;
+
+	if (cf->cb != NULL)
+		cf->cb(NULL, NULL, 0, -1, NULL, cf->data);
 }
 
 /* Client file write callback. */
