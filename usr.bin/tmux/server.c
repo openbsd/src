@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.197 2021/03/11 07:08:18 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.198 2021/06/10 07:45:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -161,7 +161,8 @@ server_tidy_event(__unused int fd, __unused short events, __unused void *data)
 
     format_tidy_jobs();
 
-    log_debug("%s: took %llu milliseconds", __func__, get_timer() - t);
+    log_debug("%s: took %llu milliseconds", __func__,
+        (unsigned long long)(get_timer() - t));
     evtimer_add(&server_ev_tidy, &tv);
 }
 
