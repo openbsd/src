@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.107 2021/06/10 18:41:52 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.108 2021/06/10 21:28:43 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -500,23 +500,16 @@ int
 Xflag(char *args, struct mbr *mbr)
 {
 	const char *errstr;
-	int i, maxpn, pn = -1;
+	int i, pn;
 	long long val = -1;
 	char *part, *flag;
 
 	flag = args;
 	part = strsep(&flag, " \t");
 
-	if (letoh64(gh.gh_sig) == GPTSIGNATURE)
-		maxpn = NGPTPARTITIONS - 1;
-	else
-		maxpn = NDOSPART - 1;
-
-	pn = strtonum(part, 0, maxpn, &errstr);
-	if (errstr) {
-		printf("partition number is %s: %s.\n", errstr, part);
+	pn = parsepn(part);
+	if (pn == -1)
 		return (CMD_CONT);
-	}
 
 	if (flag != NULL) {
 		/* Set flag to value provided. */
