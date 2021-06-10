@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.35 2021/04/26 22:58:27 dv Exp $	*/
+/*	$OpenBSD: control.c,v 1.36 2021/06/10 19:50:05 dv Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -154,9 +154,8 @@ control_dispatch_vmd(int fd, struct privsep_proc *p, struct imsg *imsg)
 			if (notify->ctl_vmid != vmr.vmr_id)
 				continue;
 			if ((c = control_connbyfd(notify->ctl_fd)) != NULL) {
-				/* XXX vmctl expects *_RESPONSE, not *_EVENT */
-				imsg_compose_event(&c->iev,
-				    IMSG_VMDOP_TERMINATE_VM_RESPONSE,
+				/* Forward to the vmctl(8) client */
+				imsg_compose_event(&c->iev, imsg->hdr.type,
 				    0, 0, -1, imsg->data, IMSG_DATA_SIZE(imsg));
 				TAILQ_REMOVE(&ctl_notify_q, notify, entry);
 				free(notify);

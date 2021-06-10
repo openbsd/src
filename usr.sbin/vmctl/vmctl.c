@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.78 2021/05/12 20:13:00 dv Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.79 2021/06/10 19:50:05 dv Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -460,9 +460,10 @@ terminate_vm(uint32_t terminate_id, const char *name, unsigned int flags)
 /*
  * terminate_vm_complete
  *
- * Callback function invoked when we are expecting an
- * IMSG_VMDOP_TERMINATE_VM_RESPONSE message indicating the completion of
- * a terminate vm operation.
+ * Callback function invoked when we are waiting for the response from an
+ * IMSG_VMDOP_TERMINATE_VM_REQUEST. We expect a reply of either an
+ * IMSG_VMDOP_TERMINATE_VM_EVENT indicating the termination of a vm or an
+ * IMSG_VMDOP_TERMINATE_VM_RESPONSE with a success/failure result.
  *
  * Parameters:
  *  imsg : response imsg received from vmd
@@ -484,41 +485,50 @@ terminate_vm_complete(struct imsg *imsg, int *ret, unsigned int flags)
 	struct vmop_result *vmr;
 	int res;
 
-	if (imsg->hdr.type == IMSG_VMDOP_TERMINATE_VM_RESPONSE) {
+	switch (imsg->hdr.type) {
+	case IMSG_VMDOP_TERMINATE_VM_RESPONSE:
+		IMSG_SIZE_CHECK(imsg, &vmr);
 		vmr = (struct vmop_result *)imsg->data;
 		res = vmr->vmr_result;
-		if (res) {
-			switch (res) {
-			case VMD_VM_STOP_INVALID:
-				fprintf(stderr,
-				    "cannot stop vm that is not running\n");
-				*ret = EINVAL;
-				break;
-			case ENOENT:
-				fprintf(stderr, "vm not found\n");
-				*ret = EIO;
-				break;
-			case EINTR:
-				fprintf(stderr, "interrupted call\n");
-				*ret = EIO;
-				break;
-			default:
-				errno = res;
-				fprintf(stderr, "failed: %s\n",
-				    strerror(res));
-				*ret = EIO;
-			}
-		} else if (flags & VMOP_WAIT) {
+
+		switch (res) {
+		case 0:
+			fprintf(stderr, "requested to shutdown vm %d\n",
+			    vmr->vmr_id);
+			*ret = 0;
+			break;
+		case VMD_VM_STOP_INVALID:
+			fprintf(stderr,
+			    "cannot stop vm that is not running\n");
+			*ret = EINVAL;
+			break;
+		case ENOENT:
+			fprintf(stderr, "vm not found\n");
+			*ret = EIO;
+			break;
+		case EINTR:
+			fprintf(stderr, "interrupted call\n");
+			*ret = EIO;
+			break;
+		default:
+			errno = res;
+			fprintf(stderr, "failed: %s\n",
+			    strerror(res));
+			*ret = EIO;
+		}
+		break;
+	case IMSG_VMDOP_TERMINATE_VM_EVENT:
+		IMSG_SIZE_CHECK(imsg, &vmr);
+		vmr = (struct vmop_result *)imsg->data;
+		if (flags & VMOP_WAIT) {
 			fprintf(stderr, "terminated vm %d\n", vmr->vmr_id);
 		} else if (flags & VMOP_FORCE) {
 			fprintf(stderr, "forced to terminate vm %d\n",
 			    vmr->vmr_id);
-		} else {
-			fprintf(stderr, "requested to shutdown vm %d\n",
-			    vmr->vmr_id);
-			*ret = 0;
 		}
-	} else {
+		*ret = 0;
+		break;
+	default:
 		fprintf(stderr, "unexpected response received from vmd\n");
 		*ret = EINVAL;
 	}
