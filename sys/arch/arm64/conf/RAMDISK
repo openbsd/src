@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.153 2021/05/29 08:50:07 kettenis Exp $
+# $OpenBSD: RAMDISK,v 1.154 2021/06/10 06:54:42 fcambus Exp $
 
 machine		arm64
 maxusers	4
@@ -8,6 +8,10 @@ option		USBVERBOSE
 option		SMALL_KERNEL
 option		NO_PROPOLICE
 option		BOOT_CONFIG
+
+option		FONT_SPLEEN8x16
+option		FONT_SPLEEN12x24
+option		FONT_SPLEEN16x32
 
 option		RAMDISK_HOOKS
 option		MINIROOTSIZE=24576

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.190 2020/12/27 23:05:37 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.191 2021/06/10 06:54:42 fcambus Exp $
 
 machine		amd64
 maxusers	4
@@ -19,6 +19,10 @@ option		UDF
 option		MSDOSFS
 option		INET6
 option		CRYPTO
+
+option		FONT_SPLEEN8x16
+option		FONT_SPLEEN12x24
+option		FONT_SPLEEN16x32
 
 option		RAMDISK_HOOKS
 option		MINIROOTSIZE=7360
