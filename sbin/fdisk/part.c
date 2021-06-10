@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.81 2021/06/03 15:05:55 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.82 2021/06/10 16:09:17 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -30,7 +30,8 @@
 #include "misc.h"
 #include "part.h"
 
-int	PRT_check_chs(struct prt *partn);
+int		 check_chs(struct prt *partn);
+const char	*ascii_id(int);
 
 static const struct part_type {
 	int	type;
@@ -162,7 +163,7 @@ PRT_printall(void)
 }
 
 const char *
-PRT_ascii_id(int id)
+ascii_id(int id)
 {
 	static char unknown[] = "<Unknown ID>";
 	int i;
@@ -216,7 +217,7 @@ PRT_parse(struct dos_partition *prt, off_t offset, off_t reloff,
 }
 
 int
-PRT_check_chs(struct prt *partn)
+check_chs(struct prt *partn)
 {
 	if ( (partn->shead > 255) ||
 		(partn->ssect >63) ||
@@ -251,7 +252,7 @@ PRT_make(struct prt *partn, off_t offset, off_t reloff,
 	else
 		off = offset;
 
-	if (PRT_check_chs(partn)) {
+	if (check_chs(partn)) {
 		prt->dp_shd = partn->shead & 0xFF;
 		prt->dp_ssect = (partn->ssect & 0x3F) |
 		    ((partn->scyl & 0x300) >> 2);
@@ -306,7 +307,7 @@ PRT_print(int num, struct prt *partn, char *units)
 		    partn->ecyl, partn->ehead, partn->esect,
 		    partn->bs, size,
 		    unit_types[i].abbr,
-		    PRT_ascii_id(partn->id));
+		    ascii_id(partn->id));
 	}
 }
 

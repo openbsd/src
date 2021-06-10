@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.105 2021/06/10 15:01:34 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.106 2021/06/10 16:09:17 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -37,9 +37,8 @@
 
 int reinited;
 
-/* Some helper functions for GPT handling. */
-int Xgedit(char *);
-int Xgsetpid(char *);
+int gedit(char *);
+int gsetpid(char *);
 
 int
 Xreinit(char *args, struct mbr *mbr)
@@ -163,7 +162,7 @@ Xswap(char *args, struct mbr *mbr)
 }
 
 int
-Xgedit(char *args)
+gedit(char *args)
 {
 	struct gpt_partition oldgg;
 	const char *errstr;
@@ -180,7 +179,7 @@ Xgedit(char *args)
 	gg = &gp[pn];
 	oldgg = *gg;
 
-	Xgsetpid(args);
+	gsetpid(args);
 	if (uuid_is_nil(&gg->gp_type, NULL)) {
 		if (uuid_is_nil(&oldgg.gp_type, NULL) == 0) {
 			memset(gg, 0, sizeof(struct gpt_partition));
@@ -228,7 +227,7 @@ Xedit(char *args, struct mbr *mbr)
 	int pn;
 
 	if (letoh64(gh.gh_sig) == GPTSIGNATURE)
-		return (Xgedit(args));
+		return (gedit(args));
 
 	pn = strtonum(args, 0, 3, &errstr);
 	if (errstr) {
@@ -284,7 +283,7 @@ done:
 }
 
 int
-Xgsetpid(char *args)
+gsetpid(char *args)
 {
 	const char *errstr;
 	struct uuid guid;
@@ -329,7 +328,7 @@ Xsetpid(char *args, struct mbr *mbr)
 	struct prt *pp;
 
 	if (letoh64(gh.gh_sig) == GPTSIGNATURE)
-		return (Xgsetpid(args));
+		return (gsetpid(args));
 
 	pn = strtonum(args, 0, 3, &errstr);
 	if (errstr) {
