@@ -1,11 +1,10 @@
-#	$OpenBSD: Makefile,v 1.22 2021/06/09 19:42:46 mortimer Exp $
+#	$OpenBSD: Makefile,v 1.23 2021/06/10 23:40:46 jca Exp $
 
 SUBDIR+=	csu
 SUBDIR+=	libc
 SUBDIR+=	libcrypto
 SUBDIR+=	libedit
 SUBDIR+=	libevent
-SUBDIR+=	libexecinfo
 SUBDIR+=	libexpat
 SUBDIR+=	libfuse
 SUBDIR+=	libm
