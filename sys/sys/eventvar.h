@@ -1,4 +1,4 @@
-/*	$OpenBSD: eventvar.h,v 1.11 2021/01/17 05:56:32 visa Exp $	*/
+/*	$OpenBSD: eventvar.h,v 1.12 2021/06/10 15:10:56 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -31,6 +31,7 @@
 #ifndef _SYS_EVENTVAR_H_
 #define _SYS_EVENTVAR_H_
 
+#include <sys/mutex.h>
 #include <sys/task.h>
 
 #define KQ_NEVENTS	8		/* minimize copy{in,out} calls */
@@ -38,24 +39,29 @@
 
 /*
  * Locking:
+ *	I	immutable after creation
  *	a	atomic operations
+ *	q	kq_lock
  */
 struct kqueue {
-	TAILQ_HEAD(, knote) kq_head;		/* list of pending event */
-	int		kq_count;		/* number of pending events */
-	u_int		kq_refs;		/* [a] number of references */
+	struct		mutex kq_lock;		/* lock for queue access */
+	TAILQ_HEAD(, knote) kq_head;		/* [q] list of pending event */
+	int		kq_count;		/* [q] # of pending events */
+	u_int		kq_refs;		/* [a] # of references */
 	struct		selinfo kq_sel;
-	struct		filedesc *kq_fdp;
+	struct		filedesc *kq_fdp;	/* [I] fd table of this kq */
 
 	LIST_ENTRY(kqueue) kq_next;
 
-	int		kq_knlistsize;		/* size of kq_knlist */
-	struct		knlist *kq_knlist;	/* list of attached knotes */
-	u_long		kq_knhashmask;		/* size of kq_knhash */
-	struct		knlist *kq_knhash;	/* hash table for attached knotes */
+	int		kq_knlistsize;		/* [q] size of kq_knlist */
+	struct		knlist *kq_knlist;	/* [q] list of
+						 *     attached knotes */
+	u_long		kq_knhashmask;		/* [q] size of kq_knhash */
+	struct		knlist *kq_knhash;	/* [q] hash table for
+						 *     attached knotes */
 	struct		task kq_task;		/* deferring of activation */
 
-	int		kq_state;
+	int		kq_state;		/* [q] */
 #define KQ_SEL		0x01
 #define KQ_SLEEP	0x02
 #define KQ_DYING	0x04
