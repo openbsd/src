@@ -1,4 +1,4 @@
-/*	$OpenBSD: efidev.c,v 1.37 2021/06/08 02:45:49 krw Exp $	*/
+/*	$OpenBSD: efidev.c,v 1.38 2021/06/10 18:05:20 krw Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -84,10 +84,11 @@ efid_init(struct diskinfo *dip, void *handle)
 static EFI_STATUS
 efid_io(int rw, efi_diskinfo_t ed, u_int off, int nsect, void *buf)
 {
-	u_int		 blks, start, end;
-	EFI_STATUS	 status = EFI_SUCCESS;
-	EFI_PHYSICAL_ADDRESS	 addr;
-	caddr_t		 ibuf;
+	u_int blks, start, end;
+	EFI_PHYSICAL_ADDRESS addr;
+	EFI_STATUS status;
+	caddr_t data;
+	size_t size;
 
 	/* block count of the intrinsic block size in DEV_BSIZE */
 	blks = EFI_BLKSPERSEC(ed);
@@ -97,43 +98,44 @@ efid_io(int rw, efi_diskinfo_t ed, u_int off, int nsect, void *buf)
 
 	start = off / blks;
 	end = (off + nsect + blks - 1) / blks;
+	size = (end - start) * ed->blkio->Media->BlockSize;
 
 	status = BS->AllocatePages(AllocateAnyPages, EfiLoaderData,
-	    EFI_SIZE_TO_PAGES((end - start) * ed->blkio->Media->BlockSize),
-	    &addr);
+	    EFI_SIZE_TO_PAGES(size), &addr);
 	if (EFI_ERROR(status))
 		goto on_eio;
-	ibuf = (caddr_t)(uintptr_t)addr;
+	data = (caddr_t)(uintptr_t)addr;
 
 	switch (rw) {
 	case F_READ:
 		status = ed->blkio->ReadBlocks(ed->blkio, ed->mediaid, start,
-		    (end - start) * ed->blkio->Media->BlockSize, ibuf);
+		    size, data);
 		if (EFI_ERROR(status))
 			goto on_eio;
-		memcpy(buf, ibuf + DEV_BSIZE * (off - start * blks),
+		memcpy(buf, data + DEV_BSIZE * (off - start * blks),
 		    DEV_BSIZE * nsect);
 		break;
 	case F_WRITE:
+		if (ed->blkio->Media->ReadOnly)
+			goto on_eio;
 		if (off % blks != 0 || nsect % blks != 0) {
 			status = ed->blkio->ReadBlocks(ed->blkio, ed->mediaid,
-			    start, (end - start) * ed->blkio->Media->BlockSize,
-			    ibuf);
+			    start, size, data);
 			if (EFI_ERROR(status))
 				goto on_eio;
 		}
-		memcpy(ibuf + DEV_BSIZE * (off - start * blks), buf,
+		memcpy(data + DEV_BSIZE * (off - start * blks), buf,
 		    DEV_BSIZE * nsect);
 		status = ed->blkio->WriteBlocks(ed->blkio, ed->mediaid, start,
-		    (end - start) * ed->blkio->Media->BlockSize, ibuf);
+		    size, data);
 		if (EFI_ERROR(status))
 			goto on_eio;
 		break;
 	}
 
 on_eio:
-	BS->FreePages(addr, EFI_SIZE_TO_PAGES((end - start) *
-	    ed->blkio->Media->BlockSize));
+	BS->FreePages(addr, EFI_SIZE_TO_PAGES(size));
+
 	return (status);
 }
 
