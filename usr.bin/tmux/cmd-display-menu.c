@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-menu.c,v 1.23 2021/03/02 10:56:45 nicm Exp $ */
+/* $OpenBSD: cmd-display-menu.c,v 1.24 2021/06/10 07:22:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -206,7 +206,7 @@ cmd_display_menu_get_position(struct client *tc, struct cmdq_item *item,
 	if (xp == NULL || strcmp(xp, "C") == 0)
 		xp = "#{popup_centre_x}";
 	else if (strcmp(xp, "R") == 0)
-		xp = "#{popup_right}";
+		xp = "#{popup_pane_right}";
 	else if (strcmp(xp, "P") == 0)
 		xp = "#{popup_pane_left}";
 	else if (strcmp(xp, "M") == 0)
