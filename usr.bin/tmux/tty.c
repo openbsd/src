@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.391 2021/06/10 07:36:47 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.392 2021/06/10 07:43:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -665,8 +665,12 @@ tty_update_mode(struct tty *tty, int mode, struct screen *s)
 		mode &= ~MODE_CURSOR;
 
 	changed = mode ^ tty->mode;
-	if (changed != 0)
-		log_debug("%s: update mode %x to %x", c->name, tty->mode, mode);
+	if (log_get_level() != 0 && changed != 0) {
+		log_debug("%s: current mode %s", c->name,
+		    screen_mode_to_string(tty->mode));
+		log_debug("%s: setting mode %s", c->name,
+		    screen_mode_to_string(mode));
+	}
 
 	if (s != NULL) {
 		if (strcmp(s->ccolour, tty->ccolour) != 0)

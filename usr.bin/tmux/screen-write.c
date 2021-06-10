@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.193 2021/01/29 09:48:43 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.194 2021/06/10 07:43:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -769,6 +769,9 @@ screen_write_mode_set(struct screen_write_ctx *ctx, int mode)
 	struct screen	*s = ctx->s;
 
 	s->mode |= mode;
+
+	if (log_get_level() != 0)
+		log_debug("%s: %s", __func__, screen_mode_to_string(mode));
 }
 
 /* Clear a mode. */
@@ -778,6 +781,9 @@ screen_write_mode_clear(struct screen_write_ctx *ctx, int mode)
 	struct screen	*s = ctx->s;
 
 	s->mode &= ~mode;
+
+	if (log_get_level() != 0)
+		log_debug("%s: %s", __func__, screen_mode_to_string(mode));
 }
 
 /* Cursor up by ny. */

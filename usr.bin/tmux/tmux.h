@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1107 2021/06/10 07:38:28 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1108 2021/06/10 07:43:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2749,6 +2749,7 @@ void	 screen_select_cell(struct screen *, struct grid_cell *,
 	     const struct grid_cell *);
 void	 screen_alternate_on(struct screen *, struct grid_cell *, int);
 void	 screen_alternate_off(struct screen *, struct grid_cell *, int);
+const char *screen_mode_to_string(int);
 
 /* window.c */
 extern struct windows windows;
