@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-session.c,v 1.135 2020/06/01 09:43:01 nicm Exp $ */
+/* $OpenBSD: cmd-new-session.c,v 1.136 2021/06/10 07:24:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -269,6 +269,7 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 	memset(&sc, 0, sizeof sc);
 	sc.item = item;
 	sc.s = s;
+	sc.tc = c;
 
 	sc.name = args_get(args, 'n');
 	sc.argc = args->argc;

@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.221 2021/04/12 09:36:12 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.222 2021/06/10 07:24:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -226,6 +226,8 @@ status_line_size(struct client *c)
 
 	if (c->flags & (CLIENT_STATUSOFF|CLIENT_CONTROL))
 		return (0);
+	if (s == NULL)
+		return (options_get_number(global_s_options, "status"));
 	return (s->statuslines);
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.270 2021/03/11 06:31:05 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.271 2021/06/10 07:24:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -331,6 +331,8 @@ window_create(u_int sx, u_int sy, u_int xpixel, u_int ypixel)
 
 	window_update_activity(w);
 
+	log_debug("%s: @%u create %ux%u (%ux%u)", __func__, w->id, sx, sy,
+	    w->xpixel, w->ypixel);
 	return (w);
 }
 
