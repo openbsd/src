@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.106 2021/06/10 16:09:17 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.107 2021/06/10 18:41:52 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -39,6 +39,7 @@ int reinited;
 
 int gedit(char *);
 int gsetpid(char *);
+int parsepn(char *);
 
 int
 Xreinit(char *args, struct mbr *mbr)
@@ -113,35 +114,21 @@ Xdisk(char *args, struct mbr *mbr)
 int
 Xswap(char *args, struct mbr *mbr)
 {
-	const char *errstr;
 	char *from, *to;
-	int pf, pt, maxpn;
+	int pf, pt;
 	struct prt pp;
 	struct gpt_partition gg;
 
 	to = args;
 	from = strsep(&to, " \t");
 
-	if (to == NULL) {
-		printf("partition number is invalid:\n");
+	pt = parsepn(to);
+	if (pt == -1)
 		return (CMD_CONT);
-	}
 
-	if (letoh64(gh.gh_sig) == GPTSIGNATURE)
-		maxpn = NGPTPARTITIONS - 1;
-	else
-		maxpn = NDOSPART - 1;
-
-	pf = strtonum(from, 0, maxpn, &errstr);
-	if (errstr) {
-		printf("partition number is %s: %s\n", errstr, from);
+	pf = parsepn(from);
+	if (pf == -1)
 		return (CMD_CONT);
-	}
-	pt = strtonum(to, 0, maxpn, &errstr);
-	if (errstr) {
-		printf("partition number is %s: %s\n", errstr, to);
-		return (CMD_CONT);
-	}
 
 	if (pt == pf) {
 		printf("%d same partition as %d, doing nothing.\n", pt, pf);
@@ -165,17 +152,14 @@ int
 gedit(char *args)
 {
 	struct gpt_partition oldgg;
-	const char *errstr;
 	struct gpt_partition *gg;
 	char *name;
 	uint16_t *utf;
 	int i, pn;
 
-	pn = strtonum(args, 0, NGPTPARTITIONS - 1, &errstr);
-	if (errstr) {
-		printf("partition number is %s: %s\n", errstr, args);
+	pn = parsepn(args);
+	if (pn == -1)
 		return (CMD_CONT);
-	}
 	gg = &gp[pn];
 	oldgg = *gg;
 
@@ -219,21 +203,43 @@ done:
 }
 
 int
+parsepn(char *pnstr)
+{
+	const char *errstr;
+	int maxpn, pn;
+
+	if (pnstr == NULL) {
+		printf("no partition number\n");
+		return -1;
+	}
+
+	if (letoh64(gh.gh_sig) == GPTSIGNATURE)
+		maxpn = letoh32(gh.gh_part_num) - 1;
+	else
+		maxpn = NDOSPART - 1;
+
+	pn = strtonum(pnstr, 0, maxpn, &errstr);
+	if (errstr) {
+		printf("partition number is %s: %s\n", errstr, pnstr);
+		return -1;
+	}
+
+	return pn;
+}
+
+int
 Xedit(char *args, struct mbr *mbr)
 {
 	struct prt oldpp;
-	const char *errstr;
 	struct prt *pp;
 	int pn;
 
 	if (letoh64(gh.gh_sig) == GPTSIGNATURE)
 		return (gedit(args));
 
-	pn = strtonum(args, 0, 3, &errstr);
-	if (errstr) {
-		printf("partition number is %s: %s\n", errstr, args);
+	pn = parsepn(args);
+	if (pn == -1)
 		return (CMD_CONT);
-	}
 	pp = &mbr->part[pn];
 	oldpp = *pp;
 
@@ -323,18 +329,15 @@ gsetpid(char *args)
 int
 Xsetpid(char *args, struct mbr *mbr)
 {
-	const char *errstr;
 	int pn, num;
 	struct prt *pp;
 
 	if (letoh64(gh.gh_sig) == GPTSIGNATURE)
 		return (gsetpid(args));
 
-	pn = strtonum(args, 0, 3, &errstr);
-	if (errstr) {
-		printf("partition number is %s: %s\n", errstr, args);
+	pn = parsepn(args);
+	if (pn == -1)
 		return (CMD_CONT);
-	}
 	pp = &mbr->part[pn];
 
 	/* Print out current table entry */
@@ -354,16 +357,13 @@ Xsetpid(char *args, struct mbr *mbr)
 int
 Xselect(char *args, struct mbr *mbr)
 {
-	const char *errstr;
 	static off_t firstoff = 0;
 	off_t off;
 	int pn;
 
-	pn = strtonum(args, 0, 3, &errstr);
-	if (errstr) {
-		printf("partition number is %s: %s\n", errstr, args);
+	pn = parsepn(args);
+	if (pn == -1)
 		return (CMD_CONT);
-	}
 
 	off = mbr->part[pn].bs;
 
