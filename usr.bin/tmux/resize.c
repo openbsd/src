@@ -1,4 +1,4 @@
-/* $OpenBSD: resize.c,v 1.43 2021/06/10 07:24:45 nicm Exp $ */
+/* $OpenBSD: resize.c,v 1.44 2021/06/10 07:29:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -136,7 +136,7 @@ clients_calculate_size(int type, int current, struct client *c,
 	 * For latest, count the number of clients with this window. We only
 	 * care if there is more than one.
 	 */
-	if (type == WINDOW_SIZE_LATEST)
+	if (type == WINDOW_SIZE_LATEST && w != NULL)
 		n = clients_with_window(w);
 
 	/* Loop over the clients and work out the size. */
