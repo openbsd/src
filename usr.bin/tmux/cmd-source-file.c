@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-source-file.c,v 1.48 2020/09/01 09:19:01 nicm Exp $ */
+/* $OpenBSD: cmd-source-file.c,v 1.49 2021/06/10 07:53:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Tiago Cunha <me@tiagocunha.org>
@@ -68,7 +68,9 @@ cmd_source_file_complete(struct client *c, struct cmd_source_file_data *cdata)
 	struct cmdq_item	*new_item;
 
 	if (cfg_finished) {
-		if (cdata->retval == CMD_RETURN_ERROR && c->session == NULL)
+		if (cdata->retval == CMD_RETURN_ERROR &&
+		    c != NULL &&
+		    c->session == NULL)
 			c->retval = 1;
 		new_item = cmdq_get_callback(cmd_source_file_complete_cb, NULL);
 		cmdq_insert_after(cdata->after, new_item);
