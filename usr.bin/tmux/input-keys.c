@@ -1,4 +1,4 @@
-/* $OpenBSD: input-keys.c,v 1.83 2021/04/09 07:02:00 nicm Exp $ */
+/* $OpenBSD: input-keys.c,v 1.84 2021/06/10 07:38:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -477,7 +477,7 @@ input_key(struct screen *s, struct bufferevent *bev, key_code key)
 		input_key_write(__func__, bev, &ud.data[0], 1);
 		return (0);
 	}
-	if (justkey > 0x7f && justkey < KEYC_BASE) {
+	if (KEYC_IS_UNICODE(justkey)) {
 		if (key & KEYC_META)
 			input_key_write(__func__, bev, "\033", 1);
 		utf8_to_data(justkey, &ud);

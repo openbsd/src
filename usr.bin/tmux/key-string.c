@@ -1,4 +1,4 @@
-/* $OpenBSD: key-string.c,v 1.66 2021/06/10 07:21:09 nicm Exp $ */
+/* $OpenBSD: key-string.c,v 1.67 2021/06/10 07:38:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -238,7 +238,7 @@ key_string_lookup_string(const char *string)
 	}
 
 	/* Convert the standard control keys. */
-	if (key < KEYC_BASE &&
+	if (key <= 127 &&
 	    (modifiers & KEYC_CTRL) &&
 	    strchr(other, key) == NULL &&
 	    key != 9 &&
@@ -368,8 +368,8 @@ key_string_lookup_key(key_code key, int with_flags)
 		goto out;
 	}
 
-	/* Is this a UTF-8 key? */
-	if (key > 127 && key < KEYC_BASE) {
+	/* Is this a Unicode key? */
+	if (KEYC_IS_UNICODE(key)) {
 		utf8_to_data(key, &ud);
 		off = strlen(out);
 		memcpy(out + off, ud.data, ud.size);
