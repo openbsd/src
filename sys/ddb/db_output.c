@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_output.c,v 1.36 2021/02/09 14:37:13 jcs Exp $	*/
+/*	$OpenBSD: db_output.c,v 1.37 2021/06/10 12:33:48 bluhm Exp $	*/
 /*	$NetBSD: db_output.c,v 1.13 1996/04/01 17:27:14 christos Exp $	*/
 
 /*
@@ -31,6 +31,7 @@
  * Printf and character output for debugger.
  */
 #include <sys/param.h>
+#include <sys/atomic.h>
 #include <sys/stdarg.h>
 #include <sys/systm.h>
 #include <sys/stacktrace.h>
@@ -224,19 +225,24 @@ db_format(char *buf, size_t bufsize, long val, int format, int alt, int width)
 void
 db_stack_dump(void)
 {
-	static volatile int intrace;
+	static struct cpu_info *intrace = NULL;
+	struct cpu_info *tracing, *ci = curcpu();
 
-	if (intrace) {
-		printf("Faulted in traceback, aborting...\n");
+	tracing = atomic_cas_ptr(&intrace, NULL, ci);
+	if (tracing != NULL) {
+		if (tracing == ci)
+			printf("Faulted in traceback, aborting...\n");
+		else
+			printf("Parallel traceback, suppressed...\n");
 		return;
 	}
 
-	intrace = 1;
 	printf("Starting stack trace...\n");
 	db_stack_trace_print((db_expr_t)__builtin_frame_address(0), 1,
 	    256 /* low limit */, "", printf);
 	printf("End of stack trace.\n");
-	intrace = 0;
+	membar_producer();
+	intrace = NULL;
 }
 
 void
