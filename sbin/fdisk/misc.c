@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.65 2021/05/07 22:15:13 krw Exp $	*/
+/*	$OpenBSD: misc.c,v 1.66 2021/06/10 15:21:19 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -369,7 +369,7 @@ crc32(const u_char *buf, const uint32_t size)
 }
 
 char *
-utf16le_to_string(uint16_t *utf)
+utf16le_to_string(const uint16_t *utf)
 {
 	static char name[GPTPARTNAMESIZE];
 	int i;
@@ -386,7 +386,7 @@ utf16le_to_string(uint16_t *utf)
 }
 
 uint16_t *
-string_to_utf16le(char *ch)
+string_to_utf16le(const char *ch)
 {
 	static uint16_t utf[GPTPARTNAMESIZE];
 	int i;
