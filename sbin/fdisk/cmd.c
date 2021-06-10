@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.108 2021/06/10 21:28:43 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.109 2021/06/10 22:27:37 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -291,16 +291,13 @@ done:
 int
 gsetpid(char *args)
 {
-	const char *errstr;
 	struct uuid guid;
 	struct gpt_partition *gg;
 	int pn, num, status;
 
-	pn = strtonum(args, 0, NGPTPARTITIONS - 1, &errstr);
-	if (errstr) {
-		printf("partition number is %s: %s\n", errstr, args);
+	pn = parsepn(args);
+	if (pn == -1)
 		return (CMD_CONT);
-	}
 	gg = &gp[pn];
 
 	/* Print out current table entry */
