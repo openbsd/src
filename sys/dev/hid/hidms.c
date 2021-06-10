@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidms.c,v 1.6 2021/01/10 16:32:48 thfr Exp $ */
+/*	$OpenBSD: hidms.c,v 1.7 2021/06/10 13:34:37 jcs Exp $ */
 /*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -76,10 +76,9 @@ hidms_setup(struct device *self, struct hidms *ms, uint32_t quirks,
 	ms->sc_flags = quirks;
 
 	if (!hid_locate(desc, dlen, HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_X), id,
-	    hid_input, &ms->sc_loc_x, &flags)) {
-		printf("\n%s: mouse has no X report\n", self->dv_xname);
-		return ENXIO;
-	}
+	    hid_input, &ms->sc_loc_x, &flags))
+		ms->sc_loc_x.size = 0;
+
 	switch(flags & MOUSE_FLAGS_MASK) {
 	case 0:
 		ms->sc_flags |= HIDMS_ABSX;
@@ -93,10 +92,9 @@ hidms_setup(struct device *self, struct hidms *ms, uint32_t quirks,
 	}
 
 	if (!hid_locate(desc, dlen, HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_Y), id,
-	    hid_input, &ms->sc_loc_y, &flags)) {
-		printf("\n%s: mouse has no Y report\n", self->dv_xname);
-		return ENXIO;
-	}
+	    hid_input, &ms->sc_loc_y, &flags))
+		ms->sc_loc_y.size = 0;
+
 	switch(flags & MOUSE_FLAGS_MASK) {
 	case 0:
 		ms->sc_flags |= HIDMS_ABSY;
@@ -282,7 +280,7 @@ hidms_attach(struct hidms *ms, const struct wsmouse_accessops *ops)
 #endif
 
 	printf(": %d button%s",
-	    ms->sc_num_buttons, ms->sc_num_buttons <= 1 ? "" : "s");
+	    ms->sc_num_buttons, ms->sc_num_buttons == 1 ? "" : "s");
 	switch (ms->sc_flags & (HIDMS_Z | HIDMS_W)) {
 	case HIDMS_Z:
 		printf(", Z dir");
