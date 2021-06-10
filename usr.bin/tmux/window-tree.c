@@ -1,4 +1,4 @@
-/* $OpenBSD: window-tree.c,v 1.54 2021/04/12 06:50:25 nicm Exp $ */
+/* $OpenBSD: window-tree.c,v 1.55 2021/06/10 07:50:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1296,7 +1296,7 @@ window_tree_key(struct window_mode_entry *wme, struct client *c,
 		data->references++;
 		status_prompt_set(c, NULL, prompt, "",
 		    window_tree_kill_current_callback, window_tree_command_free,
-		    data, PROMPT_SINGLE|PROMPT_NOFORMAT);
+		    data, PROMPT_SINGLE|PROMPT_NOFORMAT, PROMPT_TYPE_COMMAND);
 		free(prompt);
 		break;
 	case 'X':
@@ -1307,7 +1307,7 @@ window_tree_key(struct window_mode_entry *wme, struct client *c,
 		data->references++;
 		status_prompt_set(c, NULL, prompt, "",
 		    window_tree_kill_tagged_callback, window_tree_command_free,
-		    data, PROMPT_SINGLE|PROMPT_NOFORMAT);
+		    data, PROMPT_SINGLE|PROMPT_NOFORMAT, PROMPT_TYPE_COMMAND);
 		free(prompt);
 		break;
 	case ':':
@@ -1319,7 +1319,7 @@ window_tree_key(struct window_mode_entry *wme, struct client *c,
 		data->references++;
 		status_prompt_set(c, NULL, prompt, "",
 		    window_tree_command_callback, window_tree_command_free,
-		    data, PROMPT_NOFORMAT);
+		    data, PROMPT_NOFORMAT, PROMPT_TYPE_COMMAND);
 		free(prompt);
 		break;
 	case '\r':

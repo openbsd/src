@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-tree.c,v 1.53 2021/04/12 09:36:12 nicm Exp $ */
+/* $OpenBSD: mode-tree.c,v 1.54 2021/06/10 07:50:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1168,7 +1168,7 @@ mode_tree_key(struct mode_tree_data *mtd, struct client *c, key_code *key,
 		mtd->references++;
 		status_prompt_set(c, NULL, "(search) ", "",
 		    mode_tree_search_callback, mode_tree_search_free, mtd,
-		    PROMPT_NOFORMAT);
+		    PROMPT_NOFORMAT, PROMPT_TYPE_SEARCH);
 		break;
 	case 'n':
 		mode_tree_search_set(mtd);
@@ -1177,7 +1177,7 @@ mode_tree_key(struct mode_tree_data *mtd, struct client *c, key_code *key,
 		mtd->references++;
 		status_prompt_set(c, NULL, "(filter) ", mtd->filter,
 		    mode_tree_filter_callback, mode_tree_filter_free, mtd,
-		    PROMPT_NOFORMAT);
+		    PROMPT_NOFORMAT, PROMPT_TYPE_SEARCH);
 		break;
 	case 'v':
 		mtd->preview = !mtd->preview;

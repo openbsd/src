@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.163 2020/06/29 15:53:28 bket Exp $ */
+/* $OpenBSD: cmd.c,v 1.164 2021/06/10 07:50:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -36,6 +36,7 @@ extern const struct cmd_entry cmd_choose_buffer_entry;
 extern const struct cmd_entry cmd_choose_client_entry;
 extern const struct cmd_entry cmd_choose_tree_entry;
 extern const struct cmd_entry cmd_clear_history_entry;
+extern const struct cmd_entry cmd_clear_prompt_history_entry;
 extern const struct cmd_entry cmd_clock_mode_entry;
 extern const struct cmd_entry cmd_command_prompt_entry;
 extern const struct cmd_entry cmd_confirm_before_entry;
@@ -105,6 +106,7 @@ extern const struct cmd_entry cmd_show_environment_entry;
 extern const struct cmd_entry cmd_show_hooks_entry;
 extern const struct cmd_entry cmd_show_messages_entry;
 extern const struct cmd_entry cmd_show_options_entry;
+extern const struct cmd_entry cmd_show_prompt_history_entry;
 extern const struct cmd_entry cmd_show_window_options_entry;
 extern const struct cmd_entry cmd_source_file_entry;
 extern const struct cmd_entry cmd_split_window_entry;
@@ -127,6 +129,7 @@ const struct cmd_entry *cmd_table[] = {
 	&cmd_choose_client_entry,
 	&cmd_choose_tree_entry,
 	&cmd_clear_history_entry,
+	&cmd_clear_prompt_history_entry,
 	&cmd_clock_mode_entry,
 	&cmd_command_prompt_entry,
 	&cmd_confirm_before_entry,
@@ -195,6 +198,7 @@ const struct cmd_entry *cmd_table[] = {
 	&cmd_show_hooks_entry,
 	&cmd_show_messages_entry,
 	&cmd_show_options_entry,
+	&cmd_show_prompt_history_entry,
 	&cmd_show_window_options_entry,
 	&cmd_source_file_entry,
 	&cmd_split_window_entry,

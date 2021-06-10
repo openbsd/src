@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.141 2021/06/10 07:24:10 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.142 2021/06/10 07:50:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -300,6 +300,15 @@ const struct options_table_entry options_table[] = {
 	  .maximum = INT_MAX,
 	  .default_num = 1000,
 	  .text = "Maximum number of server messages to keep."
+	},
+
+	{ .name = "prompt-history-limit",
+	  .type = OPTIONS_TABLE_NUMBER,
+	  .scope = OPTIONS_TABLE_SERVER,
+	  .minimum = 0,
+	  .maximum = INT_MAX,
+	  .default_num = 100,
+	  .text = "Maximum number of commands to keep in history."
 	},
 
 	{ .name = "set-clipboard",
