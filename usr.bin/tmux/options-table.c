@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.142 2021/06/10 07:50:03 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.143 2021/06/10 07:56:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -755,7 +755,11 @@ const struct options_table_entry options_table[] = {
 	{ .name = "word-separators",
 	  .type = OPTIONS_TABLE_STRING,
 	  .scope = OPTIONS_TABLE_SESSION,
-	  .default_str = " ",
+	  /*
+	   * The set of non-alphanumeric printable ASCII characters minus the
+	   * underscore.
+	   */
+	  .default_str = "!\"#$%&'()*+,-./:;<=>?@[\\]^`{|}~",
 	  .text = "Characters considered to separate words."
 	},
 
