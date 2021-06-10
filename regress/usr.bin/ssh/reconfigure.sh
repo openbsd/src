@@ -1,4 +1,4 @@
-#	$OpenBSD: reconfigure.sh,v 1.7 2021/06/10 03:45:31 dtucker Exp $
+#	$OpenBSD: reconfigure.sh,v 1.8 2021/06/10 09:43:51 dtucker Exp $
 #	Placed in the Public Domain.
 
 tid="simple connect after reconfigure"
@@ -12,7 +12,7 @@ if [ $? -ne 0 ]; then
 	fail "ssh connect with failed before reconfigure"
 fi
 
-PID=`cat $PIDFILE`
+PID=`$SUDO cat $PIDFILE`
 rm -f $PIDFILE
 $SUDO kill -HUP $PID
 
