@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.188 2021/02/18 13:30:24 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.189 2021/06/10 07:24:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1390,6 +1390,8 @@ input_csi_dispatch(struct input_ctx *ictx)
 	case INPUT_CSI_MODSET:
 		n = input_get(ictx, 0, 0, 0);
 		m = input_get(ictx, 1, 0, 0);
+		if (options_get_number(global_options, "extended-keys") == 2)
+			break;
 		if (n == 0 || (n == 4 && m == 0))
 			screen_write_mode_clear(sctx, MODE_KEXTENDED);
 		else if (n == 4 && (m == 1 || m == 2))

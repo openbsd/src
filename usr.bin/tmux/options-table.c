@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.140 2021/03/11 06:41:04 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.141 2021/06/10 07:24:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -74,6 +74,9 @@ static const char *options_table_remain_on_exit_list[] = {
 };
 static const char *options_table_detach_on_destroy_list[] = {
 	"off", "on", "no-detached", NULL
+};
+static const char *options_table_extended_keys_list[] = {
+	"off", "on", "always", NULL
 };
 
 /* Status line format. */
@@ -267,8 +270,9 @@ const struct options_table_entry options_table[] = {
 	},
 
 	{ .name = "extended-keys",
-	  .type = OPTIONS_TABLE_FLAG,
+	  .type = OPTIONS_TABLE_CHOICE,
 	  .scope = OPTIONS_TABLE_SERVER,
+	  .choices = options_table_extended_keys_list,
 	  .default_num = 0,
 	  .text = "Whether to request extended key sequences from terminals "
 	          "that support it."
