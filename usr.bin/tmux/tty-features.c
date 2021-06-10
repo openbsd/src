@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-features.c,v 1.18 2020/10/05 09:53:01 nicm Exp $ */
+/* $OpenBSD: tty-features.c,v 1.19 2021/06/10 07:28:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -218,9 +218,13 @@ static const struct tty_feature tty_feature_margins = {
 };
 
 /* Terminal supports DECFRA rectangle fill. */
+static const char *tty_feature_rectfill_capabilities[] = {
+	"Rect",
+	NULL
+};
 static const struct tty_feature tty_feature_rectfill = {
 	"rectfill",
-	NULL,
+	tty_feature_rectfill_capabilities,
 	TERM_DECFRA
 };
 
@@ -351,8 +355,13 @@ tty_default_features(int *feat, const char *name, u_int version)
 			      ",cstyle,extkeys,margins,sync"
 		},
 		{ .name = "XTerm",
+		  /*
+		   * xterm also supports DECSLRM and DECFRA, but they can be
+		   * disabled so not set it here - they will be added if
+		   * secondary DA shows VT420.
+		   */
 		  .features = TTY_FEATURES_BASE_MODERN_XTERM
-			      ",ccolour,cstyle,extkeys,focus,margins,rectfill"
+			      ",ccolour,cstyle,extkeys,focus"
 		}
 	};
 	u_int	i;
