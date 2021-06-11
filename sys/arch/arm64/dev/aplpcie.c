@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplpcie.c,v 1.2 2021/05/17 17:25:13 kettenis Exp $	*/
+/*	$OpenBSD: aplpcie.c,v 1.3 2021/06/11 12:23:52 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -317,11 +317,40 @@ aplpcie_bus_maxdevs(void *v, int bus)
 	return 32;
 }
 
+int
+aplpcie_find_node(int node, int bus, int device, int function)
+{
+	uint32_t reg[5];
+	uint32_t phys_hi;
+	int child;
+
+	phys_hi = ((bus << 16) | (device << 11) | (function << 8));
+
+	for (child = OF_child(node); child; child = OF_peer(child)) {
+		if (OF_getpropintarray(child, "reg",
+		    reg, sizeof(reg)) != sizeof(reg))
+			continue;
+
+		if (reg[0] == phys_hi)
+			return child;
+
+		node = aplpcie_find_node(child, bus, device, function);
+		if (node)
+			return node;
+	}
+
+	return 0;
+}
+
 pcitag_t
 aplpcie_make_tag(void *v, int bus, int device, int function)
 {
-	/* Return ECAM address. */
-	return ((bus << 20) | (device << 15) | (function << 12));
+	struct aplpcie_softc *sc = v;
+	int node;
+
+	node = aplpcie_find_node(sc->sc_node, bus, device, function);
+	return (((pcitag_t)node << 32) |
+	    (bus << 20) | (device << 15) | (function << 12));
 }
 
 void
@@ -346,6 +375,7 @@ aplpcie_conf_read(void *v, pcitag_t tag, int reg)
 {
 	struct aplpcie_softc *sc = v;
 
+	tag = PCITAG_OFFSET(tag);
 	return HREAD4(sc, tag | reg);
 }
 
@@ -354,6 +384,7 @@ aplpcie_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 {
 	struct aplpcie_softc *sc = v;
 
+	tag = PCITAG_OFFSET(tag);
 	HWRITE4(sc, tag | reg, data);
 }
 
