@@ -1,4 +1,4 @@
-/*	$OpenBSD: futex.c,v 1.3 2018/08/26 06:50:30 visa Exp $ */
+/*	$OpenBSD: futex.c,v 1.4 2021/06/11 10:30:36 kettenis Exp $ */
 /*
  * Copyright (c) 2017 Martin Pieuchot
  *
@@ -48,16 +48,20 @@ main(int argc, char *argv[])
 	int fd, i, status;
 
 	/* Invalid operation */
-	assert(futex(&lock, 0xFFFF, 0, 0, NULL) == ENOSYS);
+	assert(futex(&lock, 0xFFFF, 0, 0, NULL) == -1);
+	assert(errno == ENOSYS);
 
 	/* Incorrect pointer */
-	assert(futex_twait((void *)0xdeadbeef, 1, 0, NULL, 0) == EFAULT);
+	assert(futex_twait((void *)0xdeadbeef, 1, 0, NULL, 0) == -1);
+	assert(errno == EFAULT);
 
 	/* If (lock != 1) return EAGAIN */
-	assert(futex_twait(&lock, 1, 0, NULL, 0) == EAGAIN);
+	assert(futex_twait(&lock, 1, 0, NULL, 0) == -1);
+	assert(errno == EAGAIN);
 
 	/* Deadlock for 5000ns */
-	assert(futex_twait(&lock, 0, CLOCK_REALTIME, &tmo, 0) == ETIMEDOUT);
+	assert(futex_twait(&lock, 0, CLOCK_REALTIME, &tmo, 0) == -1);
+	assert(errno == ETIMEDOUT);
 
 	/* Interrupt a thread waiting on a futex. */
 	memset(&sa, 0, sizeof(sa));
@@ -110,7 +114,8 @@ main(int argc, char *argv[])
 			tmo.tv_sec = 0;
 			tmo.tv_nsec = 200000000;
 			assert(futex_twait(shlock, 0, CLOCK_REALTIME, &tmo,
-			    (i & 2) ? FUTEX_PRIVATE_FLAG : 0) == ETIMEDOUT);
+			    (i & 2) ? FUTEX_PRIVATE_FLAG : 0) == -1);
+			assert(errno == ETIMEDOUT);
 			assert(waitpid(pid, &status, 0) == pid);
 			assert(WIFEXITED(status));
 			assert(WEXITSTATUS(status) == 0);
@@ -131,7 +136,8 @@ void *
 signaled(void *arg)
 {
 	/* Wait until receiving a signal. */
-	assert(futex_twait(&lock, 0, 0, NULL, 0) == EINTR);
+	assert(futex_twait(&lock, 0, 0, NULL, 0) == -1);
+	assert(errno == EINTR);
 	return NULL;
 }
 
