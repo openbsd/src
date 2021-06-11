@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.111 2021/06/11 14:02:22 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.112 2021/06/11 16:22:46 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -38,7 +38,9 @@
 int reinited;
 
 int gedit(int);
+int edit(int, struct mbr *);
 int gsetpid(int);
+int setpid(int, struct mbr *);
 int parsepn(char *);
 
 int
@@ -227,23 +229,15 @@ parsepn(char *pnstr)
 }
 
 int
-Xedit(char *args, struct mbr *mbr)
+edit(int pn, struct mbr *mbr)
 {
 	struct prt oldpp;
 	struct prt *pp;
-	int pn;
-
-	pn = parsepn(args);
-	if (pn == -1)
-		return (CMD_CONT);
-
-	if (letoh64(gh.gh_sig) == GPTSIGNATURE)
-		return (gedit(pn));
 
 	pp = &mbr->part[pn];
 	oldpp = *pp;
 
-	Xsetpid(args, mbr);
+	setpid(pn, mbr);
 	if (pp->id == DOSPTYP_UNUSED) {
 		if (oldpp.id != DOSPTYP_UNUSED) {
 			memset(pp, 0, sizeof(*pp));
@@ -289,6 +283,21 @@ done:
 }
 
 int
+Xedit(char *args, struct mbr *mbr)
+{
+	int pn;
+
+	pn = parsepn(args);
+	if (pn == -1)
+		return (CMD_CONT);
+
+	if (letoh64(gh.gh_sig) == GPTSIGNATURE)
+		return (gedit(pn));
+	else
+		return (edit(pn, mbr));
+}
+
+int
 gsetpid(int pn)
 {
 	struct uuid guid;
@@ -321,17 +330,10 @@ gsetpid(int pn)
 }
 
 int
-Xsetpid(char *args, struct mbr *mbr)
+setpid(int pn, struct mbr *mbr)
 {
 	struct prt *pp;
-	int pn, num;
-
-	pn = parsepn(args);
-	if (pn == -1)
-		return (CMD_CONT);
-
-	if (letoh64(gh.gh_sig) == GPTSIGNATURE)
-		return (gsetpid(pn));
+	int num;
 
 	pp = &mbr->part[pn];
 
@@ -347,6 +349,21 @@ Xsetpid(char *args, struct mbr *mbr)
 	pp->id = num;
 
 	return (CMD_DIRTY);
+}
+
+int
+Xsetpid(char *args, struct mbr *mbr)
+{
+	int pn;
+
+	pn = parsepn(args);
+	if (pn == -1)
+		return (CMD_CONT);
+
+	if (letoh64(gh.gh_sig) == GPTSIGNATURE)
+		return (gsetpid(pn));
+	else
+		return (setpid(pn, mbr));
 }
 
 int
