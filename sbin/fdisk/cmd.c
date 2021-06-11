@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.110 2021/06/11 00:14:50 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.111 2021/06/11 14:02:22 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -160,18 +160,19 @@ gedit(int pn)
 	gg = &gp[pn];
 	oldgg = *gg;
 
-	gsetpid(pn);
-	if (uuid_is_nil(&gg->gp_type, NULL)) {
-		if (uuid_is_nil(&oldgg.gp_type, NULL) == 0) {
-			memset(gg, 0, sizeof(struct gpt_partition));
-			printf("Partition %d is disabled.\n", pn);
-		}
+	if (gsetpid(pn) == CMD_CONT)
 		goto done;
+
+	if (uuid_is_nil(&gg->gp_type, NULL)) {
+		if (uuid_is_nil(&oldgg.gp_type, NULL))
+			goto done;
+		memset(gg, 0, sizeof(struct gpt_partition));
+		printf("Partition %d is disabled.\n", pn);
+		return (CMD_DIRTY);
 	}
 
 	if (GPT_get_lba_start(pn) == -1 ||
 	    GPT_get_lba_end(pn) == -1) {
-		*gg = oldgg;
 		goto done;
 	}
 
@@ -192,11 +193,12 @@ gedit(int pn)
 			break;
 	}
 
-done:
 	if (memcmp(gg, &oldgg, sizeof(*gg)))
 		return (CMD_DIRTY);
-	else
-		return (CMD_CONT);
+
+ done:
+	*gg = oldgg;
+	return (CMD_CONT);
 }
 
 int
