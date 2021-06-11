@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.87 2021/05/18 11:06:43 dv Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.88 2021/06/11 21:46:00 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -585,27 +585,6 @@ vioblk_notifyq(struct vioblk_dev *dev)
 			ds_desc = secdata_desc;
 
 			ds = VIRTIO_BLK_S_OK;
-			if (write_mem(ds_desc->addr, &ds, sizeof(ds))) {
-				log_warnx("can't write device status data @ "
-				    "0x%llx", ds_desc->addr);
-				dump_descriptor_chain(desc, cmd_desc_idx);
-				goto out;
-			}
-
-			ret = 1;
-			dev->cfg.isr_status = 1;
-			used->ring[used->idx & VIOBLK_QUEUE_MASK].id =
-			    cmd_desc_idx;
-			used->ring[used->idx & VIOBLK_QUEUE_MASK].len =
-			    cmd_desc->len;
-			used->idx++;
-
-			dev->vq[dev->cfg.queue_notify].last_avail = avail->idx &
-			    VIOBLK_QUEUE_MASK;
-
-			if (write_mem(q_gpa, vr, vr_sz)) {
-				log_warnx("vioblk: error writing vio ring");
-			}
 			break;
 		case VIRTIO_BLK_T_OUT:
 			secdata_desc_idx = cmd_desc->next & VIOBLK_QUEUE_MASK;
@@ -670,25 +649,6 @@ vioblk_notifyq(struct vioblk_dev *dev)
 			ds_desc = secdata_desc;
 
 			ds = VIRTIO_BLK_S_OK;
-			if (write_mem(ds_desc->addr, &ds, sizeof(ds))) {
-				log_warnx("wr vioblk: can't write device "
-				    "status data @ 0x%llx", ds_desc->addr);
-				dump_descriptor_chain(desc, cmd_desc_idx);
-				goto out;
-			}
-
-			ret = 1;
-			dev->cfg.isr_status = 1;
-			used->ring[used->idx & VIOBLK_QUEUE_MASK].id =
-			    cmd_desc_idx;
-			used->ring[used->idx & VIOBLK_QUEUE_MASK].len =
-			    cmd_desc->len;
-			used->idx++;
-
-			dev->vq[dev->cfg.queue_notify].last_avail = avail->idx &
-			    VIOBLK_QUEUE_MASK;
-			if (write_mem(q_gpa, vr, vr_sz))
-				log_warnx("wr vioblk: error writing vio ring");
 			break;
 		case VIRTIO_BLK_T_FLUSH:
 		case VIRTIO_BLK_T_FLUSH_OUT:
@@ -696,60 +656,34 @@ vioblk_notifyq(struct vioblk_dev *dev)
 			ds_desc = &desc[ds_desc_idx];
 
 			ds = VIRTIO_BLK_S_OK;
-			if (write_mem(ds_desc->addr, &ds, sizeof(ds))) {
-				log_warnx("fl vioblk: "
-				    "can't write device status "
-				    "data @ 0x%llx", ds_desc->addr);
-				dump_descriptor_chain(desc, cmd_desc_idx);
-				goto out;
-			}
-
-			ret = 1;
-			dev->cfg.isr_status = 1;
-			used->ring[used->idx & VIOBLK_QUEUE_MASK].id =
-			    cmd_desc_idx;
-			used->ring[used->idx & VIOBLK_QUEUE_MASK].len =
-			    cmd_desc->len;
-			used->idx++;
-
-			dev->vq[dev->cfg.queue_notify].last_avail = avail->idx &
-			    VIOBLK_QUEUE_MASK;
-			if (write_mem(q_gpa, vr, vr_sz)) {
-				log_warnx("fl vioblk: error writing vio ring");
-			}
 			break;
 		default:
 			log_warnx("%s: unsupported command 0x%x", __func__,
 			    cmd.type);
-
 			ds_desc_idx = cmd_desc->next & VIOBLK_QUEUE_MASK;
 			ds_desc = &desc[ds_desc_idx];
 
 			ds = VIRTIO_BLK_S_UNSUPP;
-			if (write_mem(ds_desc->addr, &ds, ds_desc->len)) {
-				log_warnx("%s: get id : can't write device "
-				    "status data @ 0x%llx", __func__,
-				    ds_desc->addr);
-				dump_descriptor_chain(desc, cmd_desc_idx);
-				goto out;
-			}
-
-			ret = 1;
-			dev->cfg.isr_status = 1;
-			used->ring[used->idx & VIOBLK_QUEUE_MASK].id =
-			    cmd_desc_idx;
-			used->ring[used->idx & VIOBLK_QUEUE_MASK].len =
-			    cmd_desc->len;
-			used->idx++;
-
-			dev->vq[dev->cfg.queue_notify].last_avail = avail->idx &
-			    VIOBLK_QUEUE_MASK;
-			if (write_mem(q_gpa, vr, vr_sz)) {
-				log_warnx("%s: get id : error writing vio ring",
-				    __func__);
-			}
 			break;
 		}
+
+		if (write_mem(ds_desc->addr, &ds, ds_desc->len)) {
+			log_warnx("%s: can't write device status data @ 0x%llx",
+			    __func__, ds_desc->addr);
+			dump_descriptor_chain(desc, cmd_desc_idx);
+			goto out;
+		}
+
+		ret = 1;
+		dev->cfg.isr_status = 1;
+		used->ring[used->idx & VIOBLK_QUEUE_MASK].id = cmd_desc_idx;
+		used->ring[used->idx & VIOBLK_QUEUE_MASK].len = cmd_desc->len;
+		used->idx++;
+
+		dev->vq[dev->cfg.queue_notify].last_avail = avail->idx &
+		    VIOBLK_QUEUE_MASK;
+		if (write_mem(q_gpa, vr, vr_sz))
+			log_warnx("%s: error writing vio ring", __func__);
 
 		idx = (idx + 1) & VIOBLK_QUEUE_MASK;
 	}
