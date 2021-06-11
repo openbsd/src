@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_both.c,v 1.74 2021/06/11 11:29:44 jsing Exp $ */
+/* $OpenBSD: d1_both.c,v 1.75 2021/06/11 17:29:48 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -841,7 +841,7 @@ dtls1_get_message_fragment(SSL *s, int st1, int stn, long max, int *ok)
 	 * handshake to fail
 	 */
 	if (i != (int)frag_len) {
-		al = SSL3_AD_ILLEGAL_PARAMETER;
+		al = SSL_AD_ILLEGAL_PARAMETER;
 		SSLerror(s, SSL_R_SSLV3_ALERT_ILLEGAL_PARAMETER);
 		goto fatal_err;
 	}
