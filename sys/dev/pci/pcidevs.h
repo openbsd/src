@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1970 2021/05/19 05:20:48 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1971 2021/06/11 15:42:36 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -6338,6 +6338,7 @@
 #define	PCI_PRODUCT_INTEL_CORE_SCRATCH	0xd156		/* Core Scratch */
 #define	PCI_PRODUCT_INTEL_CORE_CONTROL	0xd157		/* Core Control */
 #define	PCI_PRODUCT_INTEL_CORE_MISC	0xd158		/* Core Misc */
+#define	PCI_PRODUCT_INTEL_500SERIES_HDA_2	0xf0c8		/* 500 Series HD Audio */
 #define	PCI_PRODUCT_INTEL_NVME_2	0xf1a5		/* NVMe */
 #define	PCI_PRODUCT_INTEL_NVME_3	0xf1a6		/* NVMe */
 #define	PCI_PRODUCT_INTEL_NVME_4	0xf1a8		/* NVMe */
