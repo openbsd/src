@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_ssl.c,v 1.29 2018/08/24 20:30:21 tb Exp $ */
+/* $OpenBSD: bio_ssl.c,v 1.30 2021/06/11 11:13:53 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -509,7 +509,7 @@ BIO_new_buffer_ssl_connect(SSL_CTX *ctx)
 		goto err;
 	return (ret);
 
-err:
+ err:
 	BIO_free(buf);
 	BIO_free(ssl);
 	return (NULL);
@@ -528,7 +528,7 @@ BIO_new_ssl_connect(SSL_CTX *ctx)
 		goto err;
 	return (ret);
 
-err:
+ err:
 	BIO_free(con);
 	BIO_free(ssl);
 	return (NULL);
@@ -553,7 +553,7 @@ BIO_new_ssl(SSL_CTX *ctx, int client)
 	BIO_set_ssl(ret, ssl, BIO_CLOSE);
 	return (ret);
 
-err:
+ err:
 	BIO_free(ret);
 	return (NULL);
 }

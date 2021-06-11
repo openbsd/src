@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.147 2021/05/16 14:10:43 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.148 2021/06/11 11:13:53 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -482,14 +482,14 @@ tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,
 	    val, vallen, NULL, 0, NULL, 0, NULL, 0, NULL, 0, out, olen);
 
 	goto ret;
-err1:
+ err1:
 	SSLerror(s, SSL_R_TLS_ILLEGAL_EXPORTER_LABEL);
 	rv = 0;
 	goto ret;
-err2:
+ err2:
 	SSLerror(s, ERR_R_MALLOC_FAILURE);
 	rv = 0;
-ret:
+ ret:
 	free(val);
 
 	return (rv);

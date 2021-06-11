@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.180 2021/05/16 14:10:43 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.181 2021/06/11 11:13:53 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -668,7 +668,7 @@ ssl_check_clienthello_tlsext_late(SSL *s)
 	} else
 		s->internal->tlsext_status_expected = 0;
 
-err:
+ err:
 	switch (ret) {
 	case SSL_TLSEXT_ERR_ALERT_FATAL:
 		ssl3_send_alert(s, SSL3_AL_FATAL, al);

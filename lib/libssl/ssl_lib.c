@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.259 2021/05/16 14:10:43 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.260 2021/06/11 11:13:53 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -667,7 +667,7 @@ SSL_set_fd(SSL *s, int fd)
 	BIO_set_fd(bio, fd, BIO_NOCLOSE);
 	SSL_set_bio(s, bio, bio);
 	ret = 1;
-err:
+ err:
 	return (ret);
 }
 
@@ -690,7 +690,7 @@ SSL_set_wfd(SSL *s, int fd)
 	} else
 		SSL_set_bio(s, SSL_get_rbio(s), SSL_get_rbio(s));
 	ret = 1;
-err:
+ err:
 	return (ret);
 }
 
@@ -713,7 +713,7 @@ SSL_set_rfd(SSL *s, int fd)
 	} else
 		SSL_set_bio(s, SSL_get_wbio(s), SSL_get_wbio(s));
 	ret = 1;
-err:
+ err:
 	return (ret);
 }
 

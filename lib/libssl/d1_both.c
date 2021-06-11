@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_both.c,v 1.72 2021/05/16 14:10:43 jsing Exp $ */
+/* $OpenBSD: d1_both.c,v 1.73 2021/06/11 11:13:53 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -396,7 +396,7 @@ dtls1_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 	msg_hdr = &D1I(s)->r_msg_hdr;
 	memset(msg_hdr, 0, sizeof(struct hm_header_st));
 
-again:
+ again:
 	i = dtls1_get_message_fragment(s, st1, stn, max, ok);
 	if (i == DTLS1_HM_BAD_FRAGMENT ||
 	    i == DTLS1_HM_FRAGMENT_RETRY)  /* bad fragment received */
@@ -644,7 +644,7 @@ dtls1_reassemble_fragment(SSL *s, struct hm_header_st* msg_hdr, int *ok)
 
 	return DTLS1_HM_FRAGMENT_RETRY;
 
-err:
+ err:
 	if (item == NULL && frag != NULL)
 		dtls1_hm_fragment_free(frag);
 	*ok = 0;
@@ -731,7 +731,7 @@ dtls1_process_out_of_seq_message(SSL *s, struct hm_header_st* msg_hdr, int *ok)
 
 	return DTLS1_HM_FRAGMENT_RETRY;
 
-err:
+ err:
 	if (item == NULL && frag != NULL)
 		dtls1_hm_fragment_free(frag);
 	*ok = 0;
@@ -747,7 +747,7 @@ dtls1_get_message_fragment(SSL *s, int st1, int stn, long max, int *ok)
 	int i, al;
 	struct hm_header_st msg_hdr;
 
-again:
+ again:
 	/* see if we have the required fragment already */
 	if ((frag_len = dtls1_retrieve_buffered_fragment(s, max, ok)) || *ok) {
 		if (*ok)

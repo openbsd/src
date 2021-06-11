@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_both.c,v 1.31 2021/05/16 13:56:30 jsing Exp $ */
+/* $OpenBSD: ssl_both.c,v 1.32 2021/06/11 11:13:53 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -556,7 +556,7 @@ ssl_cert_type(X509 *x, EVP_PKEY *pkey)
 		ret = SSL_PKEY_GOST01;
 	}
 
-err:
+ err:
 	if (!pkey)
 		EVP_PKEY_free(pk);
 	return (ret);
@@ -638,7 +638,7 @@ ssl3_setup_init_buffer(SSL *s)
 	s->internal->init_buf = buf;
 	return (1);
 
-err:
+ err:
 	BUF_MEM_free(buf);
 	return (0);
 }
@@ -678,7 +678,7 @@ ssl3_setup_read_buffer(SSL *s)
 	s->internal->packet = S3I(s)->rbuf.buf;
 	return 1;
 
-err:
+ err:
 	SSLerror(s, ERR_R_MALLOC_FAILURE);
 	return 0;
 }
@@ -711,7 +711,7 @@ ssl3_setup_write_buffer(SSL *s)
 
 	return 1;
 
-err:
+ err:
 	SSLerror(s, ERR_R_MALLOC_FAILURE);
 	return 0;
 }
