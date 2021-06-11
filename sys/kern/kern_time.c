@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.152 2021/05/31 12:45:33 visa Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.153 2021/06/11 16:36:34 cheloha Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -51,6 +51,8 @@
 #include <sys/syscallargs.h>
 
 #include <dev/clock_subr.h>
+
+int itimerfix(struct itimerval *);
 
 /* 
  * Time of day and interval timer support.
@@ -628,10 +630,9 @@ sys_setitimer(struct proc *p, void *v, register_t *retval)
 		error = copyin(SCARG(uap, itv), &aitv, sizeof(aitv));
 		if (error)
 			return error;
-		if (itimerfix(&aitv.it_value) || itimerfix(&aitv.it_interval))
-			return EINVAL;
-		if (!timerisset(&aitv.it_value))
-			timerclear(&aitv.it_interval);
+		error = itimerfix(&aitv);
+		if (error)
+			return error;
 		newitvp = &aitv;
 	}
 	if (SCARG(uap, oitv) != NULL) {
@@ -701,21 +702,32 @@ out:
 }
 
 /*
- * Check that a proposed value to load into the .it_value or
- * .it_interval part of an interval timer is acceptable.
+ * Check if the given setitimer(2) input is valid.  Clear it_interval
+ * if it_value is unset.  Round it_interval up to the minimum interval
+ * if necessary.
  */
 int
-itimerfix(struct timeval *tv)
+itimerfix(struct itimerval *itv)
 {
+	struct timeval min_interval = { .tv_sec = 0, .tv_usec = tick };
 
-	if (tv->tv_sec < 0 || tv->tv_sec > 100000000 ||
-	    tv->tv_usec < 0 || tv->tv_usec >= 1000000)
-		return (EINVAL);
+	if (itv->it_value.tv_sec < 0 || !timerisvalid(&itv->it_value))
+		return EINVAL;
+	if (itv->it_value.tv_sec > 100000000)
+		return EINVAL;
+	if (itv->it_interval.tv_sec < 0 || !timerisvalid(&itv->it_interval))
+		return EINVAL;
+	if (itv->it_interval.tv_sec > 100000000)
+		return EINVAL;
 
-	if (tv->tv_sec == 0 && tv->tv_usec != 0 && tv->tv_usec < tick)
-		tv->tv_usec = tick;
+	if (!timerisset(&itv->it_value))
+		timerclear(&itv->it_interval);
+	if (timerisset(&itv->it_interval)) {
+		if (timercmp(&itv->it_interval, &min_interval, <))
+			itv->it_interval = min_interval;
+	}
 
-	return (0);
+	return 0;
 }
 
 /*
