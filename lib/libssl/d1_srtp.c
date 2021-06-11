@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srtp.c,v 1.28 2021/05/16 13:56:30 jsing Exp $ */
+/* $OpenBSD: d1_srtp.c,v 1.29 2021/06/11 15:28:13 landry Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -135,6 +135,14 @@ static const SRTP_PROTECTION_PROFILE srtp_known_profiles[] = {
 	{
 		"SRTP_AES128_CM_SHA1_32",
 		SRTP_AES128_CM_SHA1_32,
+	},
+	{
+		"SRTP_AEAD_AES_128_GCM",
+		SRTP_AEAD_AES_128_GCM,
+	},
+	{
+		"SRTP_AEAD_AES_256_GCM",
+		SRTP_AEAD_AES_256_GCM,
 	},
 	{0}
 };
