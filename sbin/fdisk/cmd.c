@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.109 2021/06/10 22:27:37 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.110 2021/06/11 00:14:50 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -37,8 +37,8 @@
 
 int reinited;
 
-int gedit(char *);
-int gsetpid(char *);
+int gedit(int);
+int gsetpid(int);
 int parsepn(char *);
 
 int
@@ -149,21 +149,18 @@ Xswap(char *args, struct mbr *mbr)
 }
 
 int
-gedit(char *args)
+gedit(int pn)
 {
 	struct gpt_partition oldgg;
 	struct gpt_partition *gg;
 	char *name;
 	uint16_t *utf;
-	int i, pn;
+	int i;
 
-	pn = parsepn(args);
-	if (pn == -1)
-		return (CMD_CONT);
 	gg = &gp[pn];
 	oldgg = *gg;
 
-	gsetpid(args);
+	gsetpid(pn);
 	if (uuid_is_nil(&gg->gp_type, NULL)) {
 		if (uuid_is_nil(&oldgg.gp_type, NULL) == 0) {
 			memset(gg, 0, sizeof(struct gpt_partition));
@@ -234,12 +231,13 @@ Xedit(char *args, struct mbr *mbr)
 	struct prt *pp;
 	int pn;
 
-	if (letoh64(gh.gh_sig) == GPTSIGNATURE)
-		return (gedit(args));
-
 	pn = parsepn(args);
 	if (pn == -1)
 		return (CMD_CONT);
+
+	if (letoh64(gh.gh_sig) == GPTSIGNATURE)
+		return (gedit(pn));
+
 	pp = &mbr->part[pn];
 	oldpp = *pp;
 
@@ -289,15 +287,12 @@ done:
 }
 
 int
-gsetpid(char *args)
+gsetpid(int pn)
 {
 	struct uuid guid;
 	struct gpt_partition *gg;
-	int pn, num, status;
+	int num, status;
 
-	pn = parsepn(args);
-	if (pn == -1)
-		return (CMD_CONT);
 	gg = &gp[pn];
 
 	/* Print out current table entry */
@@ -326,15 +321,16 @@ gsetpid(char *args)
 int
 Xsetpid(char *args, struct mbr *mbr)
 {
-	int pn, num;
 	struct prt *pp;
-
-	if (letoh64(gh.gh_sig) == GPTSIGNATURE)
-		return (gsetpid(args));
+	int pn, num;
 
 	pn = parsepn(args);
 	if (pn == -1)
 		return (CMD_CONT);
+
+	if (letoh64(gh.gh_sig) == GPTSIGNATURE)
+		return (gsetpid(pn));
+
 	pp = &mbr->part[pn];
 
 	/* Print out current table entry */
