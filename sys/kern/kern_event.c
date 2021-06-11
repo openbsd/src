@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.165 2021/06/10 15:10:56 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.166 2021/06/11 04:29:54 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -466,18 +466,18 @@ filt_timerdetach(struct knote *kn)
 int
 filt_timermodify(struct kevent *kev, struct knote *kn)
 {
+	struct kqueue *kq = kn->kn_kq;
 	struct timeout *to = kn->kn_hook;
-	int s;
 
 	/* Reset the timer. Any pending events are discarded. */
 
 	timeout_del_barrier(to);
 
-	s = splhigh();
+	mtx_enter(&kq->kq_lock);
 	if (kn->kn_status & KN_QUEUED)
 		knote_dequeue(kn);
 	kn->kn_status &= ~KN_ACTIVE;
-	splx(s);
+	mtx_leave(&kq->kq_lock);
 
 	kn->kn_data = 0;
 	knote_modify(kev, kn);
