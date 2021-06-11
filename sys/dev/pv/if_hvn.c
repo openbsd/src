@@ -1470,7 +1470,10 @@ hvn_rndis_input(struct hvn_softc *sc, uint64_t tid, void *arg)
 	}
 	hvn_nvs_ack(sc, tid);
 
-	if_input(ifp, &ml);
+	if (ifp->if_flags & IFF_RUNNING)
+		if_input(ifp, &ml);
+	else
+		ml_purge(&ml);
 }
 
 static inline struct mbuf *
