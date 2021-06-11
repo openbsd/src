@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.18 2021/06/10 14:53:27 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.19 2021/06/11 20:28:12 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -44,6 +44,7 @@ struct gpt_partition gp[NGPTPARTITIONS];
 
 struct gpt_partition	**sort_gpt(void);
 int			  lba_start_cmp(const void *e1, const void *e2);
+int			  lba_free(uint64_t *, uint64_t *);
 
 int
 GPT_get_header(off_t where)
@@ -499,42 +500,64 @@ sort_gpt(void)
 }
 
 int
-GPT_get_lba_start(unsigned int pn)
+lba_free(uint64_t *start, uint64_t *end)
 {
 	struct gpt_partition	**sgp;
 	uint64_t		  bs, bigbs, nextbs, ns;
 	unsigned int		  i;
+
+	sgp = sort_gpt();
+	if (sgp == NULL)
+		return -1;
+
+	bs = letoh64(gh.gh_lba_start);
+	ns = letoh64(gh.gh_lba_end) - bs + 1;
+
+	if (sgp[0] != NULL) {
+		bigbs = bs;
+		ns = 0;
+		for (i = 0; sgp[i] != NULL; i++) {
+			nextbs = letoh64(sgp[i]->gp_lba_start);
+			if (bs < nextbs && ns < nextbs - bs) {
+				ns = nextbs - bs;
+				bigbs = bs;
+			}
+			bs = letoh64(sgp[i]->gp_lba_end) + 1;
+		}
+		nextbs = letoh64(gh.gh_lba_end) + 1;
+		if (bs < nextbs && ns < nextbs - bs) {
+			ns = nextbs - bs;
+			bigbs = bs;
+		}
+		bs = bigbs;
+	}
+
+	if (ns == 0)
+		return -1;
+
+	if (start != NULL)
+		*start = bs;
+	if (end != NULL)
+		*end = bs + ns - 1;
+
+	return 0;
+}
+
+int
+GPT_get_lba_start(unsigned int pn)
+{
+	uint64_t		  bs;
+	unsigned int		  i;
+	int			  rslt;
 
 	bs = letoh64(gh.gh_lba_start);
 
 	if (letoh64(gp[pn].gp_lba_start) >= bs) {
 		bs = letoh64(gp[pn].gp_lba_start);
 	} else {
-		sgp = sort_gpt();
-		if (sgp == NULL)
+		rslt = lba_free(&bs, NULL);
+		if (rslt == -1)
 			return -1;
-		if (sgp[0] != NULL) {
-			bigbs = bs;
-			ns = 0;
-			for (i = 0; sgp[i] != NULL; i++) {
-				nextbs = letoh64(sgp[i]->gp_lba_start);
-				if (bs < nextbs && ns < nextbs - bs) {
-					ns = nextbs - bs;
-					bigbs = bs;
-				}
-				bs = letoh64(sgp[i]->gp_lba_end) + 1;
-			}
-			nextbs = letoh64(gh.gh_lba_end) + 1;
-			if (bs < nextbs && ns < nextbs - bs) {
-				ns = nextbs - bs;
-				bigbs = bs;
-			}
-			if (ns == 0) {
-				printf("no space for partition %u\n", pn);
-				return -1;
-			}
-			bs = bigbs;
-		}
 	}
 
 	bs = getuint64("Partition offset", bs, letoh64(gh.gh_lba_start),
