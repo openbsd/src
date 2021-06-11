@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.19 2021/06/11 20:28:12 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.20 2021/06/11 23:49:49 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -556,8 +556,10 @@ GPT_get_lba_start(unsigned int pn)
 		bs = letoh64(gp[pn].gp_lba_start);
 	} else {
 		rslt = lba_free(&bs, NULL);
-		if (rslt == -1)
+		if (rslt == -1) {
+			printf("no space for partition %u\n", pn);
 			return -1;
+		}
 	}
 
 	bs = getuint64("Partition offset", bs, letoh64(gh.gh_lba_start),
