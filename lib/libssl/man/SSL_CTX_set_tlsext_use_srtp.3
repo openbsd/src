@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_CTX_set_tlsext_use_srtp.3,v 1.5 2021/06/11 15:28:14 landry Exp $
+.\" $OpenBSD: SSL_CTX_set_tlsext_use_srtp.3,v 1.6 2021/06/11 19:41:39 jmc Exp $
 .\" full merge up to: OpenSSL b0edda11 Mar 20 13:00:17 2018 +0000
 .\"
 .\" This file was written by Matt Caswell <matt@openssl.org>.
@@ -80,12 +80,12 @@
 .Sh DESCRIPTION
 SRTP is the Secure Real-Time Transport Protocol.
 OpenSSL implements support for the "use_srtp" DTLS extension
-defined in RFC5764.
+defined in RFC 5764.
 This provides a mechanism for establishing SRTP keying material,
 algorithms and parameters using DTLS.
 This capability may be used as part of an implementation that
-conforms to RFC5763.
-OpenSSL does not implement SRTP itself or RFC5763.
+conforms to RFC 5763.
+OpenSSL does not implement SRTP itself or RFC 5763.
 Note that OpenSSL does not support the use of SRTP Master Key
 Identifiers (MKIs).
 Also note that this extension is only supported in DTLS.
@@ -110,13 +110,13 @@ SRTP protection profile names.
 The currently supported protection profile names are:
 .Bl -tag -width Ds
 .It Dv SRTP_AES128_CM_SHA1_80
-This corresponds to SRTP_AES128_CM_HMAC_SHA1_80 defined in RFC5764.
+This corresponds to SRTP_AES128_CM_HMAC_SHA1_80 defined in RFC 5764.
 .It Dv SRTP_AES128_CM_SHA1_32
-This corresponds to SRTP_AES128_CM_HMAC_SHA1_32 defined in RFC5764.
+This corresponds to SRTP_AES128_CM_HMAC_SHA1_32 defined in RFC 5764.
 .It Dv SRTP_AEAD_AES_128_GCM
-This corresponds to SRTP_AEAD_AES_128_GCM defined in RFC7714.
+This corresponds to SRTP_AEAD_AES_128_GCM defined in RFC 7714.
 .It Dv SRTP_AEAD_AES_256_GCM
-This corresponds to SRTP_AEAD_AES_256_GCM defined in RFC7714.
+This corresponds to SRTP_AEAD_AES_256_GCM defined in RFC 7714.
 .El
 .Pp
 Supplying an unrecognised protection profile name results in an error.
