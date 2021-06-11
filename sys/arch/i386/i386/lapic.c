@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.47 2018/07/30 14:19:12 kettenis Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.48 2021/06/11 05:33:16 jsg Exp $	*/
 /* $NetBSD: lapic.c,v 1.1.2.8 2000/02/23 06:10:50 sommerfeld Exp $ */
 
 /*-
@@ -160,8 +160,7 @@ lapic_set_lvt(void)
 		 *    Family 0Fh Processors"
 		 *   #32559 revision 3.00
 		 */
-		if ((cpu_id & 0x00000f00) == 0x00000f00 &&
-		    (cpu_id & 0x0fff0000) >= 0x00040000) {
+		if (ci->ci_family == 0xf || ci->ci_family == 0x10) {
 			uint64_t msr;
 
 			msr = rdmsr(MSR_INT_PEN_MSG);
