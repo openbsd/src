@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.27 2020/03/08 09:40:52 visa Exp $
+#	$OpenBSD: Makefile,v 1.28 2021/06/12 13:30:14 visa Exp $
 
 PROG=	kqueue-test
 CFLAGS+=-Wall
@@ -36,6 +36,8 @@ kq-timer: ${PROG}
 	./${PROG} -i
 kq-invalid-timer: ${PROG}
 	./${PROG} -I
+kq-reset-timer: ${PROG}
+	./${PROG} -j
 kq-regress-1: ${PROG}
 	./${PROG} -R1
 kq-regress-2: ${PROG}
@@ -61,6 +63,7 @@ TESTS+=	kq-regress-2
 TESTS+=	kq-regress-3
 TESTS+=	kq-regress-4
 TESTS+=	kq-regress-5
+TESTS+=	kq-reset-timer
 TESTS+=	kq-signal
 TESTS+=	kq-timer
 

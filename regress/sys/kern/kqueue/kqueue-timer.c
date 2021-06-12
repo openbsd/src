@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue-timer.c,v 1.3 2018/05/22 19:15:22 cheloha Exp $	*/
+/*	$OpenBSD: kqueue-timer.c,v 1.4 2021/06/12 13:30:14 visa Exp $	*/
 /*
  * Copyright (c) 2015 Bret Stephen Lambert <blambert@openbsd.org>
  *
@@ -23,6 +23,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "main.h"
@@ -94,6 +95,61 @@ do_invalid_timer(void)
 		    warn("kevent: timeout %lld %ld",
 		    (long long)invalid_ts[i].tv_sec, invalid_ts[i].tv_nsec));
 	}
+
+	return (0);
+}
+
+int
+do_reset_timer(void)
+{
+	int kq, msecs, n;
+	struct kevent ev;
+	struct timespec ts, start, end;
+
+	ASS((kq = kqueue()) >= 0,
+	    warn("kqueue"));
+
+	clock_gettime(CLOCK_MONOTONIC, &start);
+
+	memset(&ev, 0, sizeof(ev));
+	ev.filter = EVFILT_TIMER;
+	ev.flags = EV_ADD | EV_ENABLE | EV_ONESHOT;
+	ev.data = 10;
+
+	n = kevent(kq, &ev, 1, NULL, 0, NULL);
+	ASSX(n != -1);
+
+	/* Let the timer expire. */
+	usleep(100000);
+
+	/* Reset the expired timer. */
+	ev.data = 60000;
+	n = kevent(kq, &ev, 1, NULL, 0, NULL);
+	ASSX(n != -1);
+
+	/* Check that no event is pending. */
+	ts.tv_sec = 0;
+	ts.tv_nsec = 0;
+	n = kevent(kq, NULL, 0, &ev, 1, &ts);
+	ASSX(n == 0);
+
+	/* Reset again for quick expiry. */
+	memset(&ev, 0, sizeof(ev));
+	ev.filter = EVFILT_TIMER;
+	ev.flags = EV_ADD | EV_ENABLE | EV_ONESHOT;
+	ev.data = 100;
+	n = kevent(kq, &ev, 1, NULL, 0, NULL);
+	ASSX(n != -1);
+
+	/* Wait for expiry. */
+	n = kevent(kq, NULL, 0, &ev, 1, NULL);
+	ASSX(n == 1);
+
+	clock_gettime(CLOCK_MONOTONIC, &end);
+	timespecsub(&end, &start, &ts);
+	msecs = ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+	ASSX(msecs > 200);
+	ASSX(msecs < 5000);	/* allow wide margin */
 
 	return (0);
 }

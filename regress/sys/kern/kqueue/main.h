@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.h,v 1.5 2019/03/04 19:33:42 anton Exp $	*/
+/*	$OpenBSD: main.h,v 1.6 2021/06/12 13:30:14 visa Exp $	*/
 /*
  *	Written by Alexaner Bluhm <bluhm@openbsd.org> 2016 Public Domain
  */
@@ -24,6 +24,7 @@ int do_process(void);
 int do_pty(int);
 int do_random(void);
 int do_regress(int);
+int do_reset_timer(void);
 int do_signal(void);
 int do_timer(void);
 int do_tun(void);
