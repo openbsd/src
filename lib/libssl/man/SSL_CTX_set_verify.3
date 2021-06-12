@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_CTX_set_verify.3,v 1.8 2020/09/17 08:04:22 schwarze Exp $
+.\" $OpenBSD: SSL_CTX_set_verify.3,v 1.9 2021/06/12 16:59:53 jmc Exp $
 .\" full merge up to: OpenSSL 9b86974e Aug 17 15:21:33 2015 -0400
 .\" selective merge up to: OpenSSL 1cb7eff4 Sep 10 13:56:40 2019 +0100
 .\"
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 17 2020 $
+.Dd $Mdocdate: June 12 2021 $
 .Dt SSL_CTX_SET_VERIFY 3
 .Os
 .Sh NAME
@@ -146,11 +146,11 @@ The verification of certificates can be controlled by a set of bitwise ORed
 flags:
 .Bl -tag -width Ds
 .It Dv SSL_VERIFY_NONE
-.Em Server mode:
+.Em Server mode :
 the server will not send a client certificate request to the client,
 so the client will not send a certificate.
 .Pp
-.Em Client mode:
+.Em Client mode :
 if not using an anonymous cipher (by default disabled),
 the server will send a certificate which will be checked.
 The result of the certificate verification process can be checked after the
@@ -159,7 +159,7 @@ TLS/SSL handshake using the
 function.
 The handshake will be continued regardless of the verification result.
 .It Dv SSL_VERIFY_PEER
-.Em Server mode:
+.Em Server mode :
 the server sends a client certificate request to the client.
 The certificate returned (if any) is checked.
 If the verification process fails,
@@ -171,7 +171,7 @@ and
 .Dv SSL_VERIFY_CLIENT_ONCE
 flags.
 .Pp
-.Em Client mode:
+.Em Client mode :
 the server certificate is verified.
 If the verification process fails,
 the TLS/SSL handshake is immediately terminated with an alert message
@@ -180,7 +180,7 @@ If no server certificate is sent, because an anonymous cipher is used,
 .Dv SSL_VERIFY_PEER
 is ignored.
 .It Dv SSL_VERIFY_FAIL_IF_NO_PEER_CERT
-.Em Server mode:
+.Em Server mode :
 if the client did not return a certificate, the TLS/SSL
 handshake is immediately terminated with a
 .Dq handshake failure
@@ -188,16 +188,16 @@ alert.
 This flag must be used together with
 .Dv SSL_VERIFY_PEER .
 .Pp
-.Em Client mode:
+.Em Client mode :
 ignored
 .It Dv SSL_VERIFY_CLIENT_ONCE
-.Em Server mode:
+.Em Server mode :
 only request a client certificate on the initial TLS/SSL handshake.
 Do not ask for a client certificate again in case of a renegotiation.
 This flag must be used together with
 .Dv SSL_VERIFY_PEER .
 .Pp
-.Em Client mode:
+.Em Client mode :
 ignored
 .El
 .Pp
