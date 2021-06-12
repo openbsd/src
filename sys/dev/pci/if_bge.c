@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.394 2021/04/19 17:03:49 kettenis Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.395 2021/06/12 09:26:47 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -96,8 +96,7 @@
 #include <net/bpf.h>
 #endif
 
-#ifdef __sparc64__
-#include <sparc64/autoconf.h>
+#if defined(__sparc64__) || defined(__HAVE_FDT)
 #include <dev/ofw/openfirm.h>
 #endif
 
@@ -2890,8 +2889,8 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 
 	bge_chipinit(sc);
 
-#ifdef __sparc64__
-	if (!gotenaddr) {
+#if defined(__sparc64__) || defined(__HAVE_FDT)
+	if (!gotenaddr && PCITAG_NODE(pa->pa_tag)) {
 		if (OF_getprop(PCITAG_NODE(pa->pa_tag), "local-mac-address",
 		    sc->arpcom.ac_enaddr, ETHER_ADDR_LEN) == ETHER_ADDR_LEN)
 			gotenaddr = 1;
