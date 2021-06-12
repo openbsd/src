@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.20 2021/06/11 23:49:49 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.21 2021/06/12 00:47:29 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -388,18 +388,23 @@ GPT_write(void)
 	const int secsize = unit_types[SECTORS].conversion;
 	ssize_t len;
 	off_t off;
-	uint64_t altgh, altgp, prigh, prigp;
+	uint64_t altgh, altgp, prigh, prigp, gpbytes;
 
-	/* Assume we always write full-size partition table. XXX */
+	/*
+	 * XXX Assume we always write full-size partition table.
+	 * XXX Assume size of gp is multiple of sector size.
+	 */
+	gpbytes = sizeof(gp);
+
 	prigh = GPTSECTOR;
 	prigp = prigh + 1;
 	altgh = DL_GETDSIZE(&dl) - 1;
-	altgp = DL_GETDSIZE(&dl) - 1 - (sizeof(gp) / secsize);
+	altgp = DL_GETDSIZE(&dl) - 1 - (gpbytes / secsize);
 
 	gh.gh_lba_self = htole64(prigh);
 	gh.gh_lba_alt = htole64(altgh);
 	gh.gh_part_lba = htole64(prigp);
-	gh.gh_part_csum = crc32((unsigned char *)&gp, sizeof(gp));
+	gh.gh_part_csum = crc32((unsigned char *)&gp, gpbytes);
 	gh.gh_csum = 0;
 	gh.gh_csum = crc32((unsigned char *)&gh, letoh32(gh.gh_size));
 
@@ -425,27 +430,23 @@ GPT_write(void)
 	DISK_writesector(secbuf, altgh);
 	free(secbuf);
 
-	/*
-	 * XXX ALWAYS NGPTPARTITIONS!
-	 * XXX ASSUME gp is multiple of sector size!
-	 */
 	off = lseek(disk.fd, secsize * prigp, SEEK_SET);
 	if (off == secsize * prigp)
-		len = write(disk.fd, &gp, sizeof(gp));
+		len = write(disk.fd, &gp, gpbytes);
 	else
 		len = -1;
-	if (len == -1 || len != sizeof(gp)) {
+	if (len == -1 || len != gpbytes) {
 		errno = EIO;
 		return (-1);
 	}
 
 	off = lseek(disk.fd, secsize * altgp, SEEK_SET);
 	if (off == secsize * altgp)
-		len = write(disk.fd, &gp, sizeof(gp));
+		len = write(disk.fd, &gp, gpbytes);
 	else
 		len = -1;
 
-	if (len == -1 || len != sizeof(gp)) {
+	if (len == -1 || len != gpbytes) {
 		errno = EIO;
 		return (-1);
 	}
