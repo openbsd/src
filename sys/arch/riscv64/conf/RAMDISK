@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.14 2021/06/12 16:30:16 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.15 2021/06/12 23:58:24 drahn Exp $
 
 machine		riscv64
 maxusers	4
@@ -34,6 +34,7 @@ intc0		at cpu0
 
 # NS16550 compatible serial ports
 com*		at fdt?
+sfuart*		at fdt?
 
 virtio*		at fdt?
 virtio*		at pci?

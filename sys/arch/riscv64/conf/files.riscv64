@@ -1,4 +1,4 @@
-#	$OpenBSD: files.riscv64,v 1.10 2021/05/19 19:32:25 kettenis Exp $
+#	$OpenBSD: files.riscv64,v 1.11 2021/06/12 23:58:24 drahn Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -88,6 +88,11 @@ file	arch/riscv64/dev/plic.c			plic
 device	sfcc
 attach	sfcc at fdt
 file	arch/riscv64/dev/sfcc.c			sfcc
+
+# SiFive uart
+device	sfuart
+attach	sfuart at fdt
+file	arch/riscv64/dev/sfuart.c		sfuart
 
 # Paravirtual device bus and virtio
 include "dev/pv/files.pv"
