@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_check_purpose.3,v 1.1 2019/08/22 15:15:35 schwarze Exp $
+.\" $OpenBSD: X509_check_purpose.3,v 1.2 2021/06/12 17:04:41 jmc Exp $
 .\" Copyright (c) 2019 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 22 2019 $
+.Dd $Mdocdate: June 12 2021 $
 .Dt X509_CHECK_PURPOSE 3
 .Os
 .Sh NAME
@@ -362,7 +362,7 @@ is non-zero, the following values can also be returned:
 .Fa certificate
 can be used as a CA for the
 .Fa purpose .
-.It 3 Ta Success Ta The Fa certificate No is a version 1 CA.
+.It 3 Ta Success Ta The Fa certificate No is a version 1 CA .
 .It 4 Ta Success Ta The Key Usage allows Dv keyCertSign .
 .It 5 Ta Success Ta A Netscape Cert Type allows usage as a CA.
 .El
