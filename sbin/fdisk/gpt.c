@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.21 2021/06/12 00:47:29 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.22 2021/06/12 14:10:01 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -45,6 +45,7 @@ struct gpt_partition gp[NGPTPARTITIONS];
 struct gpt_partition	**sort_gpt(void);
 int			  lba_start_cmp(const void *e1, const void *e2);
 int			  lba_free(uint64_t *, uint64_t *);
+int			  add_partition(const uint8_t *, const char *, uint64_t);
 
 int
 GPT_get_header(off_t where)
@@ -303,12 +304,73 @@ GPT_print_part(int n, char *units, int verbosity)
 }
 
 int
+add_partition(const uint8_t *beuuid, const char *name, uint64_t sectors)
+{
+	struct uuid uuid, gp_type;
+	int rslt;
+	uint64_t end, freesectors, start;
+	uint32_t status, pn, pncnt;
+
+	uuid_dec_be(beuuid, &uuid);
+	uuid_enc_le(&gp_type, &uuid);
+
+	pncnt = letoh32(gh.gh_part_num);
+	for (pn = 0; pn < pncnt; pn++) {
+		if (uuid_is_nil(&gp[pn].gp_type, NULL))
+			break;
+	}
+	if (pn == pncnt)
+		goto done;
+
+	rslt = lba_free(&start, &end);
+	if (rslt == -1)
+		goto done;
+
+	if (start % 64)
+		start += (64 - start % 64);
+	if (start >= end)
+		goto done;
+
+	freesectors = end - start + 1;
+
+	if (sectors == 0)
+		sectors = freesectors;
+
+	if (freesectors < sectors)
+		goto done;
+	else if (freesectors > sectors)
+		end = start + sectors - 1;
+
+	gp[pn].gp_type = gp_type;
+	gp[pn].gp_lba_start = htole64(start);
+	gp[pn].gp_lba_end = htole64(end);
+	memcpy(gp[pn].gp_name, string_to_utf16le(name),
+	    sizeof(gp[pn].gp_name));
+
+	uuid_create(&uuid, &status);
+	if (status != uuid_s_ok)
+		goto done;
+
+	uuid_enc_le(&gp[pn].gp_guid, &uuid);
+	gh.gh_part_csum = crc32((unsigned char *)&gp, sizeof(gp));
+	gh.gh_csum = crc32((unsigned char *)&gh, sizeof(gh));
+
+	return 0;
+
+ done:
+	if (pn != pncnt)
+		memset(&gp[pn], 0, sizeof(gp[pn]));
+	printf("unable to add %s\n", name);
+	return 1;
+}
+
+int
 GPT_init(void)
 {
 	extern uint32_t b_arg;
 	const int secsize = unit_types[SECTORS].conversion;
 	struct uuid guid;
-	int needed;
+	int needed, rslt;
 	uint32_t status;
 	const uint8_t gpt_uuid_efi_system[] = GPT_UUID_EFI_SYSTEM;
 	const uint8_t gpt_uuid_openbsd[] = GPT_UUID_OPENBSD;
@@ -339,46 +401,17 @@ GPT_init(void)
 		return (1);
 	uuid_enc_le(&gh.gh_guid, &guid);
 
+	rslt = 0;
 #if defined(__i386__) || defined(__amd64__)
 	if (b_arg > 0) {
-		/* Add an EFI system partition on i386/amd64. */
-		uuid_dec_be(gpt_uuid_efi_system, &guid);
-		uuid_enc_le(&gp[1].gp_type, &guid);
-		uuid_create(&guid, &status);
-		if (status != uuid_s_ok)
-			return (1);
-		uuid_enc_le(&gp[1].gp_guid, &guid);
-		gp[1].gp_lba_start = gh.gh_lba_start;
-		gp[1].gp_lba_end = htole64(letoh64(gh.gh_lba_start)+b_arg - 1);
-		memcpy(gp[1].gp_name, string_to_utf16le("EFI System Area"),
-		    sizeof(gp[1].gp_name));
-	}
-#endif
-	uuid_dec_be(gpt_uuid_openbsd, &guid);
-	uuid_enc_le(&gp[3].gp_type, &guid);
-	uuid_create(&guid, &status);
-	if (status != uuid_s_ok)
-		return (1);
-	uuid_enc_le(&gp[3].gp_guid, &guid);
-	gp[3].gp_lba_start = gh.gh_lba_start;
-#if defined(__i386__) || defined(__amd64__)
-	if (b_arg > 0) {
-		gp[3].gp_lba_start = htole64(letoh64(gp[3].gp_lba_start) +
+		rslt = add_partition(gpt_uuid_efi_system, "EFI System Area",
 		    b_arg);
-		if (letoh64(gp[3].gp_lba_start) % 64)
-			gp[3].gp_lba_start =
-			    htole64(letoh64(gp[3].gp_lba_start) +
-			    (64 - letoh64(gp[3].gp_lba_start) % 64));
 	}
 #endif
-	gp[3].gp_lba_end = gh.gh_lba_end;
-	memcpy(gp[3].gp_name, string_to_utf16le("OpenBSD Area"),
-	    sizeof(gp[3].gp_name));
+	if (rslt == 0)
+		rslt = add_partition(gpt_uuid_openbsd, "OpenBSD Area", 0);
 
-	gh.gh_part_csum = crc32((unsigned char *)&gp, sizeof(gp));
-	gh.gh_csum = crc32((unsigned char *)&gh, sizeof(gh));
-
-	return 0;
+	return rslt;
 }
 
 int
