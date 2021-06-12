@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.22 2021/06/12 14:10:01 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.23 2021/06/12 14:28:30 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -402,12 +402,10 @@ GPT_init(void)
 	uuid_enc_le(&gh.gh_guid, &guid);
 
 	rslt = 0;
-#if defined(__i386__) || defined(__amd64__)
 	if (b_arg > 0) {
 		rslt = add_partition(gpt_uuid_efi_system, "EFI System Area",
 		    b_arg);
 	}
-#endif
 	if (rslt == 0)
 		rslt = add_partition(gpt_uuid_openbsd, "OpenBSD Area", 0);
 
