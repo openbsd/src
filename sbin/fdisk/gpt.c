@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.23 2021/06/12 14:28:30 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.24 2021/06/12 17:19:13 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -46,9 +46,11 @@ struct gpt_partition	**sort_gpt(void);
 int			  lba_start_cmp(const void *e1, const void *e2);
 int			  lba_free(uint64_t *, uint64_t *);
 int			  add_partition(const uint8_t *, const char *, uint64_t);
+int			  get_header(off_t);
+int			  get_partition_table(void);
 
 int
-GPT_get_header(off_t where)
+get_header(off_t where)
 {
 	char *secbuf;
 	uint64_t partlastlba;
@@ -149,7 +151,7 @@ GPT_get_header(off_t where)
 }
 
 int
-GPT_get_partition_table(void)
+get_partition_table(void)
 {
 	ssize_t len;
 	off_t off, where;
@@ -200,22 +202,22 @@ GPT_read(int which)
 
 	switch (which) {
 	case PRIMARYGPT:
-		valid = GPT_get_header(GPTSECTOR);
+		valid = get_header(GPTSECTOR);
 		break;
 	case SECONDARYGPT:
-		valid = GPT_get_header(DL_GETDSIZE(&dl) - 1);
+		valid = get_header(DL_GETDSIZE(&dl) - 1);
 		break;
 	case ANYGPT:
-		valid = GPT_get_header(GPTSECTOR);
-		if (valid != 0 || GPT_get_partition_table() != 0)
-			valid = GPT_get_header(DL_GETDSIZE(&dl) - 1);
+		valid = get_header(GPTSECTOR);
+		if (valid != 0 || get_partition_table() != 0)
+			valid = get_header(DL_GETDSIZE(&dl) - 1);
 		break;
 	default:
 		return;
 	}
 
 	if (valid == 0)
-		valid = GPT_get_partition_table();
+		valid = get_partition_table();
 
 	if (valid != 0) {
 		/* No valid GPT found. Zap any artifacts. */
