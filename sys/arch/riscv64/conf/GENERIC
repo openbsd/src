@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.12 2021/05/19 19:32:25 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.13 2021/06/12 16:30:16 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -63,6 +63,8 @@ ukphy*		at mii?
 dwmmc*		at fdt?
 sdmmc*		at dwmmc?
 
+dwpcie*		at fdt?
+pci*		at dwpcie?
 pciecam*	at fdt?
 pci*		at pciecam?
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.13 2021/05/19 23:29:42 jsg Exp $
+#	$OpenBSD: RAMDISK,v 1.14 2021/06/12 16:30:16 kettenis Exp $
 
 machine		riscv64
 maxusers	4
@@ -59,6 +59,8 @@ ukphy*		at mii?
 dwmmc*		at fdt?
 sdmmc*		at dwmmc?
 
+dwpcie*		at fdt?
+pci*		at dwpcie?
 pciecam*	at fdt?
 pci*		at pciecam?
 

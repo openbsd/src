@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwpcie.c,v 1.29 2021/05/17 17:25:13 kettenis Exp $	*/
+/*	$OpenBSD: dwpcie.c,v 1.30 2021/06/12 16:30:16 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -250,7 +250,8 @@ dwpcie_match(struct device *parent, void *match, void *aux)
 	return (OF_is_compatible(faa->fa_node, "amlogic,g12a-pcie") ||
 	    OF_is_compatible(faa->fa_node, "marvell,armada8k-pcie") ||
 	    OF_is_compatible(faa->fa_node, "fsl,imx8mm-pcie") ||
-	    OF_is_compatible(faa->fa_node, "fsl,imx8mq-pcie"));
+	    OF_is_compatible(faa->fa_node, "fsl,imx8mq-pcie") ||
+	    OF_is_compatible(faa->fa_node, "sifive,fu740-pcie"));
 }
 
 void	dwpcie_attach_deferred(struct device *);
