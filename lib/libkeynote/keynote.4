@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.4,v 1.36 2017/06/10 14:31:59 schwarze Exp $
+.\" $OpenBSD: keynote.4,v 1.37 2021/06/12 06:39:17 jmc Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -20,7 +20,7 @@
 .\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: June 10 2017 $
+.Dd $Mdocdate: June 12 2021 $
 .Dt KEYNOTE 4
 .\" .TH KeyNote 4 local
 .Os
@@ -233,8 +233,7 @@ simply by digitally signing them.
 KeyNote is designed to encourage the creation of human-readable
 policies and credentials that are amenable to transmission and storage
 over a variety of media.
-Its assertion syntax is inspired by the format of RFC822-style message
-headers.
+Its assertion syntax is inspired by the format of RFC 822 message headers.
 A KeyNote assertion contains a sequence of sections, called
 .Sq fields ,
 each of which specifying one aspect of the assertion's semantics.
