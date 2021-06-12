@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.24 2021/06/12 17:19:13 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.25 2021/06/12 17:49:00 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -48,6 +48,8 @@ int			  lba_free(uint64_t *, uint64_t *);
 int			  add_partition(const uint8_t *, const char *, uint64_t);
 int			  get_header(off_t);
 int			  get_partition_table(void);
+int			  init_gh(void);
+int			  init_gp(void);
 
 int
 get_header(off_t where)
@@ -367,21 +369,19 @@ add_partition(const uint8_t *beuuid, const char *name, uint64_t sectors)
 }
 
 int
-GPT_init(void)
+init_gh(void)
 {
-	extern uint32_t b_arg;
-	const int secsize = unit_types[SECTORS].conversion;
-	struct uuid guid;
-	int needed, rslt;
-	uint32_t status;
-	const uint8_t gpt_uuid_efi_system[] = GPT_UUID_EFI_SYSTEM;
-	const uint8_t gpt_uuid_openbsd[] = GPT_UUID_OPENBSD;
+	const int		secsize = unit_types[SECTORS].conversion;
+	struct gpt_header	oldgh;
+	struct uuid		guid;
+	int			needed;
+	uint32_t		status;
 
-	memset(&gh, 0, sizeof(gh));
-	memset(&gp, 0, sizeof(gp));
+	memcpy(&oldgh, &gh, sizeof(oldgh));
 
-	needed = sizeof(gp) / secsize + 2;
-	/* Start on 64 sector boundary */
+	needed = sizeof(gh) / secsize + 2;
+
+	/* Start usable LBA area on 64 sector boundary. */
 	if (needed % 64)
 		needed += (64 - (needed % 64));
 
@@ -399,9 +399,25 @@ GPT_init(void)
 	gh.gh_part_size = htole32(GPTMINPARTSIZE);
 
 	uuid_create(&guid, &status);
-	if (status != uuid_s_ok)
-		return (1);
+	if (status != uuid_s_ok) {
+		memcpy(&gh, &oldgh, sizeof(gh));
+		return 1;
+	}
+
 	uuid_enc_le(&gh.gh_guid, &guid);
+	return 0;
+}
+
+int
+init_gp(void)
+{
+	extern uint32_t b_arg;
+	const uint8_t gpt_uuid_efi_system[] = GPT_UUID_EFI_SYSTEM;
+	const uint8_t gpt_uuid_openbsd[] = GPT_UUID_OPENBSD;
+	struct gpt_partition oldgp[NGPTPARTITIONS];
+	int rslt;
+
+	memcpy(&oldgp, &gp, sizeof(oldgp));
 
 	rslt = 0;
 	if (b_arg > 0) {
@@ -410,6 +426,21 @@ GPT_init(void)
 	}
 	if (rslt == 0)
 		rslt = add_partition(gpt_uuid_openbsd, "OpenBSD Area", 0);
+
+	if (rslt != 0)
+		memcpy(&gp, &oldgp, sizeof(gp));
+
+	return rslt;
+}
+
+int
+GPT_init(void)
+{
+	int rslt;
+
+	rslt = init_gh();
+	if (rslt == 0)
+		rslt = init_gp();
 
 	return rslt;
 }
