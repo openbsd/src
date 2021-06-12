@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_CTX_set_options.3,v 1.14 2021/06/11 19:41:39 jmc Exp $
+.\" $OpenBSD: SSL_CTX_set_options.3,v 1.15 2021/06/12 11:02:20 tb Exp $
 .\" full merge up to: OpenSSL 7946ab33 Dec 6 17:56:41 2015 +0100
 .\" selective merge up to: OpenSSL edb79c3a Mar 29 10:07:14 2017 +1000
 .\"
@@ -52,7 +52,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 11 2021 $
+.Dd $Mdocdate: June 12 2021 $
 .Dt SSL_CTX_SET_OPTIONS 3
 .Os
 .Sh NAME
@@ -202,8 +202,9 @@ When performing renegotiation as a server, always start a new session (i.e.,
 session resumption requests are only accepted in the initial handshake).
 This option is not needed for clients.
 .It Dv SSL_OP_NO_TICKET
-Normally clients and servers will, where possible, transparently make use of
-RFC4507bis tickets for stateless session resumption.
+Normally clients and servers using TLSv1.2 and earlier will, where possible,
+transparently make use of
+RFC 5077 tickets for stateless session resumption.
 .Pp
 If this option is set this functionality is disabled and tickets will not be
 used by clients or servers.
