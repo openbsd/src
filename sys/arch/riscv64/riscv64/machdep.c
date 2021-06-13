@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.19 2021/05/20 04:22:33 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.20 2021/06/13 16:27:15 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -177,6 +177,7 @@ fdt_find_cons(const char *name)
 }
 
 void	com_fdt_init_cons(void);
+void	sfuart_init_cons(void);
 
 void
 consinit(void)
@@ -187,7 +188,9 @@ consinit(void)
 		return;
 
 	consinit_called = 1;
+
 	com_fdt_init_cons();
+	sfuart_init_cons();
 }
 
 void
