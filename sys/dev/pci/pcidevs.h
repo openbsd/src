@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1971 2021/06/11 15:42:36 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1972 2021/06/13 12:43:15 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -386,6 +386,7 @@
 #define	PCI_VENDOR_ENDACE	0xeace		/* Endace */
 #define	PCI_VENDOR_BELKIN	0xec80		/* Belkin Components */
 #define	PCI_VENDOR_ARC	0xedd8		/* ARC Logic */
+#define	PCI_VENDOR_SIFIVE	0xf15e		/* SiFive */
 #define	PCI_VENDOR_INVALID	0xffff		/* INVALID VENDOR ID */
 
 /*
@@ -1118,6 +1119,7 @@
 #define	PCI_PRODUCT_ASMEDIA_ASM1184E	0x1184		/* ASM1184e */
 #define	PCI_PRODUCT_ASMEDIA_ASM1042AE	0x1242		/* ASM1042AE xHCI */
 #define	PCI_PRODUCT_ASMEDIA_ASM1143	0x1343		/* ASM1143 xHCI */
+#define	PCI_PRODUCT_ASMEDIA_ASM2824	0x2824		/* ASM2824 */
 
 /* ASPEED Technology products */
 #define	PCI_PRODUCT_ASPEED_AST1150	0x1150		/* AST1150 PCI */
@@ -8014,6 +8016,9 @@
 #define	PCI_PRODUCT_SGSTHOMSON_1764	0x0009		/* STG 1764 */
 #define	PCI_PRODUCT_SGSTHOMSON_KYROII	0x0010		/* Kyro-II */
 #define	PCI_PRODUCT_SGSTHOMSON_1764X	0x1746		/* STG 1764X */
+
+/* SiFive products */
+#define	PCI_PRODUCT_SIFIVE_PCIE	0x0000		/* PCIe */
 
 /* Sigma Designs */
 #define	PCI_PRODUCT_SIGMA_64GX	0x6401		/* 64GX */

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1971 2021/06/11 15:42:36 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1972 2021/06/13 12:43:15 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -2666,6 +2666,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ASMEDIA, PCI_PRODUCT_ASMEDIA_ASM1143,
 	    "ASM1143 xHCI",
+	},
+	{
+	    PCI_VENDOR_ASMEDIA, PCI_PRODUCT_ASMEDIA_ASM2824,
+	    "ASM2824",
 	},
 	{
 	    PCI_VENDOR_ASPEED, PCI_PRODUCT_ASPEED_AST1150,
@@ -28600,6 +28604,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "STG 1764X",
 	},
 	{
+	    PCI_VENDOR_SIFIVE, PCI_PRODUCT_SIFIVE_PCIE,
+	    "PCIe",
+	},
+	{
 	    PCI_VENDOR_SIGMA, PCI_PRODUCT_SIGMA_64GX,
 	    "64GX",
 	},
@@ -33582,6 +33590,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_ARC,
 	    "ARC Logic",
+	},
+	{
+	    PCI_VENDOR_SIFIVE,
+	    "SiFive",
 	},
 	{
 	    PCI_VENDOR_INVALID,
