@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl3.h,v 1.53 2021/05/10 17:10:57 tb Exp $ */
+/* $OpenBSD: ssl3.h,v 1.54 2021/06/13 15:47:11 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -297,6 +297,7 @@ extern "C" {
 #define SSL3_AL_WARNING			1
 #define SSL3_AL_FATAL			2
 
+#ifndef LIBRESSL_INTERNAL
 #define SSL3_AD_CLOSE_NOTIFY		 0
 #define SSL3_AD_UNEXPECTED_MESSAGE	10	/* fatal */
 #define SSL3_AD_BAD_RECORD_MAC		20	/* fatal */
@@ -309,6 +310,7 @@ extern "C" {
 #define SSL3_AD_CERTIFICATE_EXPIRED	45
 #define SSL3_AD_CERTIFICATE_UNKNOWN	46
 #define SSL3_AD_ILLEGAL_PARAMETER	47	/* fatal */
+#endif
 
 #define TLS1_HB_REQUEST		1
 #define TLS1_HB_RESPONSE	2
