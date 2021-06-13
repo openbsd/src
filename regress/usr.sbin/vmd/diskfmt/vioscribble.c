@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscribble.c,v 1.2 2018/10/08 16:32:01 reyk Exp $	*/
+/*	$OpenBSD: vioscribble.c,v 1.3 2021/06/13 21:43:35 dv Exp $	*/
 
 /*
  * Copyright (c) 2018 Ori Bernstein <ori@eigenstate.org>
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* 
+/*
  * Quick hack of a program to try to test vioqcow2.c against
  * vioraw.c.
  *
@@ -51,7 +51,6 @@
 #include <assert.h>
 #include <err.h>
 
-#include "pci.h"
 #include "vmd.h"
 #include "vmm.h"
 #include "virtio.h"
@@ -64,43 +63,6 @@ struct virtio_backing rawfile;
 
 /* We expect the scribble disks to be 4g in size */
 #define DISKSZ	(4ull*1024ull*1024ull*1024ull)
-
-/* functions that io code depends on */
-
-void
-log_debug(const char *emsg, ...)
-{
-	if (verbose) {
-		va_list ap;
-
-		va_start(ap, emsg);
-		vfprintf(stdout, emsg, ap);
-		fprintf(stdout, "\n");
-		va_end(ap);
-	}
-}
-
-void
-log_warnx(const char *emsg, ...)
-{
-	va_list ap;
-
-	va_start(ap, emsg);
-	vfprintf(stdout, emsg, ap);
-	fprintf(stdout, "\n");
-	va_end(ap);
-}
-
-void
-log_warn(const char *emsg, ...)
-{
-	va_list ap;
-
-	va_start(ap, emsg);
-	vfprintf(stdout, emsg, ap);
-	fprintf(stdout, "\n");
-	va_end(ap);
-}
 
 static void
 fill(size_t off, char *buf, size_t len)
@@ -120,13 +82,13 @@ main(int argc, char **argv)
 	off_t len, off, qcsz, rawsz;
 
 	verbose = !!getenv("VERBOSE");
-	qcfd = open("scribble.qc2", O_RDWR);
+	qcfd = open("scribble.qcow2", O_RDWR);
 	rawfd = open("scribble.raw", O_RDWR);
 	if (qcfd == -1)
 		err(1, "unable to open qcow");
-	if (virtio_init_qcow2(&qcowfile, &qcsz, &qcfd, 1) == -1)
+	if (virtio_qcow2_init(&qcowfile, &qcsz, &qcfd, 1) == -1)
 		err(1, "unable to init qcow");
-	if (rawfd == -1 || virtio_init_raw(&rawfile, &rawsz, &rawfd, 1) == -1)
+	if (rawfd == -1 || virtio_raw_init(&rawfile, &rawsz, &rawfd, 1) == -1)
 		err(1, "unable to open raw");
 
 	srandom_deterministic(123);

@@ -1,31 +1,29 @@
-#	$OpenBSD: Makefile,v 1.2 2018/10/08 16:32:01 reyk Exp $
+#	$OpenBSD: Makefile,v 1.3 2021/06/13 21:43:35 dv Exp $
 
 # This regression test creates a raw disk image and a
 # qcow disk image, and scribbles the same data to both
 # of them. It verifies that they both have the same
 # result.
-#
-# In order for this test to work, qemu must be installed
-# in order to create the disk images.
 
-VMD_DIR=$(BSDSRCDIR)/usr.sbin/vmd/
+VMD_DIR=$(BSDSRCDIR)/usr.sbin/vmd
 
 PROG=vioscribble
-SRCS=vioscribble.c vioqcow2.c vioraw.c
+SRCS=vioscribble.c vioqcow2.c vioraw.c log.c
 CFLAGS+=-I$(VMD_DIR) -pthread
 LDFLAGS+=-pthread
 
 run-regress-vioscribble: scribble-images
 
 scribble-images:
-	rm -f scribble.raw scribble.qc2
-	vmctl create scribble.raw -s 4G
-	qemu-img create -f qcow2 scribble.qc2 4G
+	rm -f scribble.raw scribble.qcow2
+	vmctl create -s 4G scribble.raw
+	vmctl create -s 4G scribble.qcow2
 
 
 .PHONY: ${REGRESS_TARGETS} scribble-images
 
 .include <bsd.regress.mk>
 
-vioqcow2.c vioraw.c: $(VMD_DIR)/vioqcow2.c $(VMD_DIR)/vioraw.c
-	cp $(VMD_DIR)/vioqcow2.c $(VMD_DIR)/vioraw.c .
+vioqcow2.c vioraw.c log.c: $(VMD_DIR)/vioqcow2.c $(VMD_DIR)/vioraw.c \
+				$(VMD_DIR)/log.c
+	cp $(VMD_DIR)/vioqcow2.c $(VMD_DIR)/vioraw.c $(VMD_DIR)/log.c .

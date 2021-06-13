@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.2 2019/01/29 21:08:12 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.3 2021/06/13 21:43:35 dv Exp $
 
 .if ${MACHINE} == "amd64"
 SUBDIR =
-SUBDIR += config
+SUBDIR += config diskfmt
 
 .elif make(regress) || make(all)
 ${.TARGETS}:
