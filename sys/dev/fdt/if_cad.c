@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cad.c,v 1.1 2021/05/28 15:52:11 visa Exp $	*/
+/*	$OpenBSD: if_cad.c,v 1.2 2021/06/13 02:56:48 drahn Exp $	*/
 
 /*
  * Copyright (c) 2021 Visa Hankala
@@ -345,7 +345,8 @@ cad_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "cdns,gem");
+	return (OF_is_compatible(faa->fa_node, "cdns,gem") ||
+	    OF_is_compatible(faa->fa_node, "sifive,fu740-c000-gem"));
 }
 
 void
