@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.27 2021/06/13 13:24:45 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.28 2021/06/13 13:48:00 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -55,7 +55,7 @@ int
 get_header(off_t where)
 {
 	char *secbuf;
-	uint64_t partlastlba;
+	uint64_t partlastlba, partslen, lba_end;
 	int partspersec;
 	uint32_t orig_gh_csum, new_gh_csum;
 
@@ -112,10 +112,14 @@ get_header(off_t where)
 		return (1);
 	}
 
-	if (letoh64(gh.gh_lba_end) >= DL_GETDSIZE(&dl)) {
-		DPRINTF("gpt last usable LBA: expected < %lld, got %llu\n",
-		    DL_GETDSIZE(&dl), letoh64(gh.gh_lba_end));
-		return (1);
+	/* XXX Assume part_num * part_size is multiple of secsize. */
+	partslen = letoh32(gh.gh_part_num) * letoh32(gh.gh_part_size) /
+	    dl.d_secsize;
+	lba_end = DL_GETDSIZE(&dl) - partslen - 2;
+	if (letoh64(gh.gh_lba_end) > lba_end) {
+		DPRINTF("gpt last usable LBA: reduced from %llu to %llu\n",
+		    letoh64(gh.gh_lba_end), lba_end);
+		gh.gh_lba_end = htole64(lba_end);
 	}
 
 	if (letoh64(gh.gh_lba_start) >= letoh64(gh.gh_lba_end)) {
