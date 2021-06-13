@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.84 2021/06/13 14:14:56 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.85 2021/06/13 23:53:51 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -118,8 +118,8 @@ static const struct part_type {
 	{ 0xB0, "APFS        ", "7c3457ef-0000-11aa-aa11-00306543ecac" },
 	{ 0xB1, "APFS ISC    ", "69646961-6700-11aa-aa11-00306543ecac" },
 	{ 0xB2, "APFS Recovry", "52637672-7900-11aa-aa11-00306543ecac" },
-	{ 0xB3, "HiFive! FSBL", "5b193300-fc78-40cd-8002-e86c45580b47" },
-	{ 0xB4, "HiFive! BBL ", "2e54b353-1271-4842-806f-e436d6af6985" },
+	{ 0xB3, "HiFive FSBL ", "5b193300-fc78-40cd-8002-e86c45580b47" },
+	{ 0xB4, "HiFive BBL  ", "2e54b353-1271-4842-806f-e436d6af6985" },
 	{ 0xB7, "BSDI filesy*"},   /* BSDI BSD/386 filesystem */
 	{ 0xB8, "BSDI swap   "},   /* BSDI BSD/386 swap */
 	{ 0xBF, "Solaris     ", "6a85cf4d-1dd2-11b2-99a6-080020736631" },
