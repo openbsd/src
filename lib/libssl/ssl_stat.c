@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_stat.c,v 1.15 2021/06/11 17:29:48 jsing Exp $ */
+/* $OpenBSD: ssl_stat.c,v 1.16 2021/06/13 15:29:19 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -593,9 +593,6 @@ SSL_alert_desc_string(int value)
 	case SSL_AD_HANDSHAKE_FAILURE:
 		str = "HF";
 		break;
-	case SSL_AD_NO_CERTIFICATE:
-		str = "NC";
-		break;
 	case SSL_AD_BAD_CERTIFICATE:
 		str = "BC";
 		break;
@@ -614,9 +611,6 @@ SSL_alert_desc_string(int value)
 	case SSL_AD_ILLEGAL_PARAMETER:
 		str = "IP";
 		break;
-	case SSL_AD_DECRYPTION_FAILED:
-		str = "DC";
-		break;
 	case SSL_AD_RECORD_OVERFLOW:
 		str = "RO";
 		break;
@@ -631,9 +625,6 @@ SSL_alert_desc_string(int value)
 		break;
 	case SSL_AD_DECRYPT_ERROR:
 		str = "CY";
-		break;
-	case SSL_AD_EXPORT_RESTRICTION:
-		str = "ER";
 		break;
 	case SSL_AD_PROTOCOL_VERSION:
 		str = "PV";
@@ -696,9 +687,6 @@ SSL_alert_desc_string_long(int value)
 	case SSL_AD_HANDSHAKE_FAILURE:
 		str = "handshake failure";
 		break;
-	case SSL_AD_NO_CERTIFICATE:
-		str = "no certificate";
-		break;
 	case SSL_AD_BAD_CERTIFICATE:
 		str = "bad certificate";
 		break;
@@ -717,9 +705,6 @@ SSL_alert_desc_string_long(int value)
 	case SSL_AD_ILLEGAL_PARAMETER:
 		str = "illegal parameter";
 		break;
-	case SSL_AD_DECRYPTION_FAILED:
-		str = "decryption failed";
-		break;
 	case SSL_AD_RECORD_OVERFLOW:
 		str = "record overflow";
 		break;
@@ -734,9 +719,6 @@ SSL_alert_desc_string_long(int value)
 		break;
 	case SSL_AD_DECRYPT_ERROR:
 		str = "decrypt error";
-		break;
-	case SSL_AD_EXPORT_RESTRICTION:
-		str = "export restriction";
 		break;
 	case SSL_AD_PROTOCOL_VERSION:
 		str = "protocol version";

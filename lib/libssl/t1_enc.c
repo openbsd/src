@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.148 2021/06/11 11:13:53 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.149 2021/06/13 15:29:19 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -505,16 +505,12 @@ tls1_alert_code(int code)
 		return (SSL3_AD_UNEXPECTED_MESSAGE);
 	case SSL_AD_BAD_RECORD_MAC:
 		return (SSL3_AD_BAD_RECORD_MAC);
-	case SSL_AD_DECRYPTION_FAILED:
-		return (TLS1_AD_DECRYPTION_FAILED);
 	case SSL_AD_RECORD_OVERFLOW:
 		return (TLS1_AD_RECORD_OVERFLOW);
 	case SSL_AD_DECOMPRESSION_FAILURE:
 		return (SSL3_AD_DECOMPRESSION_FAILURE);
 	case SSL_AD_HANDSHAKE_FAILURE:
 		return (SSL3_AD_HANDSHAKE_FAILURE);
-	case SSL_AD_NO_CERTIFICATE:
-		return (-1);
 	case SSL_AD_BAD_CERTIFICATE:
 		return (SSL3_AD_BAD_CERTIFICATE);
 	case SSL_AD_UNSUPPORTED_CERTIFICATE:
@@ -535,8 +531,6 @@ tls1_alert_code(int code)
 		return (TLS1_AD_DECODE_ERROR);
 	case SSL_AD_DECRYPT_ERROR:
 		return (TLS1_AD_DECRYPT_ERROR);
-	case SSL_AD_EXPORT_RESTRICTION:
-		return (TLS1_AD_EXPORT_RESTRICTION);
 	case SSL_AD_PROTOCOL_VERSION:
 		return (TLS1_AD_PROTOCOL_VERSION);
 	case SSL_AD_INSUFFICIENT_SECURITY:
