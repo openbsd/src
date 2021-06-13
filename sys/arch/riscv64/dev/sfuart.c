@@ -1,4 +1,4 @@
-/*	$OpenBSD: sfuart.c,v 1.1 2021/06/12 23:58:24 drahn Exp $	*/
+/*	$OpenBSD: sfuart.c,v 1.2 2021/06/13 09:19:14 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -30,28 +30,29 @@
 #include <dev/ofw/fdt.h>
 #include <dev/ofw/openfirm.h>
 
-#define UART_TX				0x0000
-#define  UART_TX_FULL			(1<<31)
-#define UART_RX				0x0004
-#define  UART_RX_EMPTY			(1<<31)
+#define UART_TXDATA			0x0000
+#define  UART_TXDATA_FULL		(1U << 31)
+#define UART_RXDATA			0x0004
+#define  UART_RXDATA_EMPTY		(1U << 31)
 #define UART_TXCTRL			0x0008
-#define  UART_TXCTRL_EN			(1 << 0)
+#define  UART_TXCTRL_TXEN		(1 << 0)
 #define  UART_TXCTRL_NSTOP		(1 << 1)
-#define  UART_TXCTRL_TXCNT_SH		(16)
-#define  UART_TXCTRL_TXCNT		(7 << 16)	// Watermark level
+#define  UART_TXCTRL_TXCNT_SHIFT	16
+#define  UART_TXCTRL_TXCNT_MASK		(7 << 16)
 #define UART_RXCTRL			0x000c
-#define  UART_RXCTRL_EN			(1 << 0)
-#define  UART_RXCTRL_RXCNT_SH		(16)
-#define  UART_RXCTRL_RXCNT		(7 << 16)	// Watermark level
+#define  UART_RXCTRL_RXEN		(1 << 0)
+#define  UART_RXCTRL_RXCNT_SHIFT	16
+#define  UART_RXCTRL_RXCNT_MASK		(7 << 16)
 #define UART_IE				0x0010
-#define	 UART_IE_TX			(1<<0)
-#define	 UART_IE_RX			(1<<1)
-#define UART_IP				0x0010
-#define	 UART_IP_TX			(1<<0)
-#define	 UART_IP_RX			(1<<1)
-#define UART_BAUD			0x0010
+#define  UART_IE_TXWM			(1 << 0)
+#define  UART_IE_RXWM			(1 << 1)
+#define UART_IP				0x0014
+#define  UART_IP_TXWM			(1 << 0)
+#define  UART_IP_RXWM			(1 << 1)
+#define UART_DIV			0x0018
 
-#define UART_SPACE			24
+#define UART_SPACE			28
+#define UART_FIFO_SIZE			8
 
 #define HREAD4(sc, reg)							\
 	(bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg)))
@@ -85,12 +86,8 @@ struct sfuart_softc {
 	int			sc_halt;
 	int			sc_cua;
 	int	 		*sc_ibuf, *sc_ibufp, *sc_ibufhigh, *sc_ibufend;
-#define SFUART_IBUFSIZE	128
+#define SFUART_IBUFSIZE		128
 #define SFUART_IHIGHWATER	100
-/* watermark levels (fifo is only 8 bytes) */
-#define SFUART_TXWM		4
-#define SFUART_RXWM		0 
-
 	int			sc_ibufs[2][SFUART_IBUFSIZE];
 };
 
@@ -184,7 +181,6 @@ sfuart_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	printf("\n");
-
 }
 
 int
@@ -193,28 +189,24 @@ sfuart_intr(void *arg)
 	struct sfuart_softc *sc = arg;
 	struct tty *tp = sc->sc_tty;
 	int *p;
-	u_int32_t ip_stat;
 	uint32_t val;
-	int c;
-	int handled = 0;
+	int c, handled = 0;
 
 	if (tp == NULL)
 		return 0;
 
-	ip_stat = HREAD4(sc, UART_IP);
-	if (!ISSET(HREAD4(sc, UART_TX), UART_TX_FULL) &&
+	if (!ISSET(HREAD4(sc, UART_TXDATA), UART_TXDATA_FULL) &&
 	    ISSET(tp->t_state, TS_BUSY)) {
 		CLR(tp->t_state, TS_BUSY | TS_FLUSH);
 		if (sc->sc_halt > 0)
 			wakeup(&tp->t_outq);
 		(*linesw[tp->t_line].l_start)(tp);
-		if (ip_stat & UART_IP_TX)
-			handled = 1;
+		handled = 1;
 	}
 
 	p = sc->sc_ibufp;
-	val = HREAD4(sc, UART_RX);
-	while (!ISSET(val, UART_RX_EMPTY)) {
+	val = HREAD4(sc, UART_RXDATA);
+	while (!ISSET(val, UART_RXDATA_EMPTY)) {
 		c = val & 0xff;
 
 		if (p >= sc->sc_ibufend)
@@ -222,10 +214,8 @@ sfuart_intr(void *arg)
 		else
 			*p++ = c;
 
-		if (ip_stat & UART_IP_RX)
-			handled = 1;
-
-		val = HREAD4(sc, UART_RX);
+		val = HREAD4(sc, UART_RXDATA);
+		handled = 1;
 	}
 	if (sc->sc_ibufp != p) {
 		sc->sc_ibufp = p;
@@ -297,7 +287,7 @@ sfuart_param(struct tty *tp, struct termios *t)
 
 			sc->sc_halt++;
 			error = ttysleep(tp, &tp->t_outq,
-			    TTOPRI | PCATCH, "amluprm");
+			    TTOPRI | PCATCH, "sfuprm");
 			sc->sc_halt--;
 			if (error) {
 				sfuart_start(tp);
@@ -329,17 +319,17 @@ sfuart_start(struct tty *tp)
 		goto out;
 	ttwakeupwr(tp);
 	if (tp->t_outq.c_cc == 0) {
-		HCLR4(sc, UART_IE, UART_IE_TX);
+		HCLR4(sc, UART_IE, UART_IE_TXWM);
 		goto out;
 	}
 	SET(tp->t_state, TS_BUSY);
 
-	stat = HREAD4(sc, UART_TX);
-	while ((stat & UART_TX_FULL) == 0 && tp->t_outq.c_cc != 0) {
-		HWRITE4(sc, UART_TX, getc(&tp->t_outq));
-		stat = HREAD4(sc, UART_TX);
+	stat = HREAD4(sc, UART_TXDATA);
+	while ((stat & UART_TXDATA_FULL) == 0 && tp->t_outq.c_cc != 0) {
+		HWRITE4(sc, UART_TXDATA, getc(&tp->t_outq));
+		stat = HREAD4(sc, UART_TXDATA);
 	}
-	HSET4(sc, UART_IE, UART_IE_TX);
+	HSET4(sc, UART_IE, UART_IE_TXWM);
 out:
 	splx(s);
 }
@@ -385,13 +375,16 @@ sfuartopen(dev_t dev, int flag, int mode, struct proc *p)
 		sc->sc_ibufhigh = sc->sc_ibuf + SFUART_IHIGHWATER;
 		sc->sc_ibufend = sc->sc_ibuf + SFUART_IBUFSIZE;
 
-		/* enable transmit */
-		HSET4(sc, UART_TXCTRL, UART_TXCTRL_EN | (SFUART_TXWM << UART_RXCTRL_RXCNT_SH));
-		/* enable transmit */
-		HSET4(sc, UART_RXCTRL, UART_RXCTRL_EN | (SFUART_RXWM << UART_RXCTRL_RXCNT_SH));
+		/* Enable transmit. */
+		HWRITE4(sc, UART_TXCTRL, UART_TXCTRL_TXEN |
+		    ((UART_FIFO_SIZE / 2) << UART_TXCTRL_TXCNT_SHIFT));
 
-		/* Enable interrupts */
-		HSET4(sc, UART_IE, UART_IE_RX);
+		/* Enable receive. */
+		HWRITE4(sc, UART_RXCTRL, UART_RXCTRL_RXEN |
+		    (0 << UART_RXCTRL_RXCNT_SHIFT));
+
+		/* Enable interrupts. */
+		HSET4(sc, UART_IE, UART_IE_RXWM);
 
 		/* No carrier detect support. */
 		SET(tp->t_state, TS_CARR_ON);
@@ -450,7 +443,7 @@ sfuartclose(dev_t dev, int flag, int mode, struct proc *p)
 	s = spltty();
 	if (!ISSET(tp->t_state, TS_WOPEN)) {
 		/* Disable interrupts */
-		HCLR4(sc, UART_IE, UART_IE_TX | UART_IE_RX);
+		HCLR4(sc, UART_IE, UART_IE_TXWM | UART_IE_RXWM);
 	}
 	CLR(tp->t_state, TS_BUSY | TS_FLUSH);
 	sc->sc_cua = 0;
@@ -583,26 +576,24 @@ sfuartcnattach(bus_space_tag_t iot, bus_addr_t iobase)
 int
 sfuartcngetc(dev_t dev)
 {
-	uint8_t c;
 	uint32_t val;
 	
 	do {
-		val = bus_space_read_4(sfuartconsiot, sfuartconsioh, UART_RX);
-		if (val & UART_RX_EMPTY) 
+		val = bus_space_read_4(sfuartconsiot, sfuartconsioh, UART_RXDATA);
+		if (val & UART_RXDATA_EMPTY)
 			CPU_BUSY_CYCLE();
-		else 
-			c = val;
-	} while ((val & UART_RX_EMPTY));
-	return c;
+	} while ((val & UART_RXDATA_EMPTY));
+
+	return (val & 0xff);
 }
 
 void
 sfuartcnputc(dev_t dev, int c)
 {
-	while (bus_space_read_4(sfuartconsiot, sfuartconsioh, UART_TX &
-	    UART_TX_FULL))
+	while (bus_space_read_4(sfuartconsiot, sfuartconsioh, UART_TXDATA) &
+	    UART_TXDATA_FULL)
 		CPU_BUSY_CYCLE();
-	bus_space_write_4(sfuartconsiot, sfuartconsioh, UART_TX, c);
+	bus_space_write_4(sfuartconsiot, sfuartconsioh, UART_TXDATA, c);
 }
 
 void
