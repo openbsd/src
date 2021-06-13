@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.83 2021/06/12 18:35:37 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.84 2021/06/13 14:14:56 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -36,7 +36,7 @@ const char	*ascii_id(int);
 static const struct part_type {
 	int	type;
 	char	sname[14];
-	char	guid[37];
+	char	guid[UUID_STR_LEN + 1];
 } part_types[] = {
 	{ 0x00, "unused      ", "00000000-0000-0000-0000-000000000000" },
 	{ 0x01, "FAT12       ", "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
@@ -391,7 +391,7 @@ PRT_fix_CHS(struct prt *part)
 char *
 PRT_uuid_to_typename(struct uuid *uuid)
 {
-	static char partition_type[37];	/* Room for a GUID if needed. */
+	static char partition_type[UUID_STR_LEN + 1];
 	char *uuidstr = NULL;
 	int i, entries, status;
 

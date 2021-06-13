@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.66 2021/06/10 15:21:19 krw Exp $	*/
+/*	$OpenBSD: misc.c,v 1.67 2021/06/13 14:14:56 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -324,7 +324,7 @@ getuint64(char *prompt, uint64_t oval, uint64_t minval, uint64_t maxval)
 char *
 ask_string(const char *prompt, const char *oval)
 {
-	static char buf[37];
+	static char buf[UUID_STR_LEN + 1];
 
 	buf[0] = '\0';
 	printf("%s: [%s] ", prompt, oval ? oval : "");
