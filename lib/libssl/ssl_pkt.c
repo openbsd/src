@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.43 2021/05/16 14:10:43 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.44 2021/06/13 15:34:41 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1181,10 +1181,6 @@ ssl3_do_change_cipher_spec(SSL *s)
 int
 ssl3_send_alert(SSL *s, int level, int desc)
 {
-	/* Map tls/ssl alert value to correct one */
-	desc = tls1_alert_code(desc);
-	if (desc < 0)
-		return -1;
 	/* If a fatal one, remove from cache */
 	if ((level == 2) && (s->session != NULL))
 		SSL_CTX_remove_session(s->ctx, s->session);

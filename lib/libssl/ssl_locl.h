@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.347 2021/05/16 15:49:01 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.348 2021/06/13 15:34:41 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1257,7 +1257,6 @@ int tls1_generate_key_block(SSL *s, uint8_t *key_block, size_t key_block_len);
 int tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,
     const char *label, size_t llen, const unsigned char *p, size_t plen,
     int use_context);
-int tls1_alert_code(int code);
 int ssl_ok(SSL *s);
 
 int tls12_derive_finished(SSL *s);
