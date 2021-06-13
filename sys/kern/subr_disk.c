@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.244 2021/06/02 22:44:27 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.245 2021/06/13 13:17:59 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -650,7 +650,6 @@ gpt_chk_hdr(struct gpt_header *gh, struct disklabel *lp)
 		return (EINVAL);
 
 	if (ghlbastart >= DL_GETDSIZE(lp) ||
-	    ghlbaend >= DL_GETDSIZE(lp) ||
 	    ghpartlba >= DL_GETDSIZE(lp))
 		return (EINVAL);
 
@@ -668,11 +667,6 @@ gpt_chk_hdr(struct gpt_header *gh, struct disklabel *lp)
 	if (ghpartsize != GPTMINPARTSIZE) {
 		DPRINTF("partition sizes larger than %d bytes are not "
 		    "supported", GPTMINPARTSIZE);
-		return (EINVAL);
-	}
-
-	if (letoh64(gh->gh_lba_alt) >= DL_GETDSIZE(lp)) {
-		DPRINTF("alternate header's position is bogus\n");
 		return (EINVAL);
 	}
 
