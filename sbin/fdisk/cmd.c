@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.112 2021/06/11 16:22:46 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.113 2021/06/13 14:39:05 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -301,10 +301,11 @@ int
 gsetpid(int pn)
 {
 	struct uuid guid;
-	struct gpt_partition *gg;
+	struct gpt_partition *gg, oldgg;
 	int num, status;
 
 	gg = &gp[pn];
+	oldgg = *gg;
 
 	/* Print out current table entry */
 	GPT_print_parthdr(TERSE);
@@ -321,12 +322,17 @@ gsetpid(int pn)
 		uuid_create(&guid, &status);
 		if (status != uuid_s_ok) {
 			printf("could not create guid for partition\n");
-			return (CMD_CONT);
+			goto done;
 		}
 		uuid_enc_le(&gg->gp_guid, &guid);
 	}
 
-	return (CMD_DIRTY);
+	if (memcmp(gg, &oldgg, sizeof(*gg)))
+		return (CMD_DIRTY);
+
+ done:
+	*gg = oldgg;
+	return (CMD_CONT);
 }
 
 int
