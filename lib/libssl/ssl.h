@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.193 2021/06/13 15:47:11 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.194 2021/06/13 15:51:10 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1023,6 +1023,7 @@ int PEM_write_SSL_SESSION(FILE *fp, SSL_SESSION *x);
 #define SSL_AD_INAPPROPRIATE_FALLBACK		86
 #define SSL_AD_USER_CANCELLED			90
 #define SSL_AD_NO_RENEGOTIATION			100	/* Removed in TLSv1.3 */
+#define SSL_AD_MISSING_EXTENSION		109	/* Added in TLSv1.3. */
 #define SSL_AD_UNSUPPORTED_EXTENSION		110
 #define SSL_AD_CERTIFICATE_UNOBTAINABLE		111	/* Removed in TLSv1.3 */
 #define SSL_AD_UNRECOGNIZED_NAME		112

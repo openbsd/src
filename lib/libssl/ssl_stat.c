@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_stat.c,v 1.16 2021/06/13 15:29:19 jsing Exp $ */
+/* $OpenBSD: ssl_stat.c,v 1.17 2021/06/13 15:51:10 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -641,6 +641,9 @@ SSL_alert_desc_string(int value)
 	case SSL_AD_NO_RENEGOTIATION:
 		str = "NR";
 		break;
+	case SSL_AD_MISSING_EXTENSION:
+		str = "ME";
+		break;
 	case SSL_AD_UNSUPPORTED_EXTENSION:
 		str = "UE";
 		break;
@@ -734,6 +737,9 @@ SSL_alert_desc_string_long(int value)
 		break;
 	case SSL_AD_NO_RENEGOTIATION:
 		str = "no renegotiation";
+		break;
+	case SSL_AD_MISSING_EXTENSION:
+		str = "missing extension";
 		break;
 	case SSL_AD_UNSUPPORTED_EXTENSION:
 		str = "unsupported extension";
