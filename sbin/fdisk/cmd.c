@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.113 2021/06/13 14:39:05 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.114 2021/06/13 15:32:36 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -197,6 +197,8 @@ gedit(int pn)
 
 	if (memcmp(gg, &oldgg, sizeof(*gg)))
 		return (CMD_DIRTY);
+	else
+		return (CMD_CLEAN);
 
  done:
 	*gg = oldgg;
@@ -329,6 +331,8 @@ gsetpid(int pn)
 
 	if (memcmp(gg, &oldgg, sizeof(*gg)))
 		return (CMD_DIRTY);
+	else
+		return (CMD_CLEAN);
 
  done:
 	*gg = oldgg;
