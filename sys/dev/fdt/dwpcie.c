@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwpcie.c,v 1.30 2021/06/12 16:30:16 kettenis Exp $	*/
+/*	$OpenBSD: dwpcie.c,v 1.31 2021/06/14 20:54:04 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -182,16 +182,14 @@ struct dwpcie_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
-	bus_space_handle_t	sc_cfg0_ioh;
-	bus_space_handle_t	sc_cfg1_ioh;
 	bus_dma_tag_t		sc_dmat;
 
 	bus_addr_t		sc_ctrl_base;
 	bus_size_t		sc_ctrl_size;
-	bus_addr_t		sc_cfg0_base;
-	bus_size_t		sc_cfg0_size;
-	bus_addr_t		sc_cfg1_base;
-	bus_size_t		sc_cfg1_size;
+
+	bus_addr_t		sc_conf_base;
+	bus_size_t		sc_conf_size;
+	bus_space_handle_t	sc_conf_ioh;
 
 	bus_addr_t		sc_glue_base;
 	bus_size_t		sc_glue_size;
@@ -319,10 +317,8 @@ dwpcie_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->sc_cfg0_base = faa->fa_reg[config].addr;
-	sc->sc_cfg0_size = faa->fa_reg[config].size / 2;
-	sc->sc_cfg0_base = faa->fa_reg[config].addr + sc->sc_cfg0_size;
-	sc->sc_cfg1_size = sc->sc_cfg0_size;
+	sc->sc_conf_base = faa->fa_reg[config].addr;
+	sc->sc_conf_size = faa->fa_reg[config].size;
 
 	if (OF_is_compatible(faa->fa_node, "amlogic,g12a-pcie")) {
 		glue = OF_getindex(faa->fa_node, "cfg", "reg-names");
@@ -393,18 +389,8 @@ dwpcie_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (bus_space_map(sc->sc_iot, sc->sc_cfg0_base,
-	    sc->sc_cfg1_size, 0, &sc->sc_cfg0_ioh)) {
-		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ctrl_size);
-		free(sc->sc_ranges, M_TEMP, sc->sc_nranges *
-		    sizeof(struct dwpcie_range));
-		printf(": can't map config registers\n");
-		return;
-	}
-
-	if (bus_space_map(sc->sc_iot, sc->sc_cfg1_base,
-	    sc->sc_cfg1_size, 0, &sc->sc_cfg1_ioh)) {
-		bus_space_unmap(sc->sc_iot, sc->sc_cfg0_ioh, sc->sc_cfg0_size);
+	if (bus_space_map(sc->sc_iot, sc->sc_conf_base,
+	    sc->sc_conf_size, 0, &sc->sc_conf_ioh)) {
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ctrl_size);
 		free(sc->sc_ranges, M_TEMP, sc->sc_nranges *
 		    sizeof(struct dwpcie_range));
@@ -441,8 +427,7 @@ dwpcie_attach_deferred(struct device *self)
 	    OF_is_compatible(sc->sc_node, "fsl,imx8mq-pcie"))
 		error = dwpcie_imx8mq_init(sc);
 	if (error != 0) {
-		bus_space_unmap(sc->sc_iot, sc->sc_cfg1_ioh, sc->sc_cfg1_size);
-		bus_space_unmap(sc->sc_iot, sc->sc_cfg0_ioh, sc->sc_cfg0_size);
+		bus_space_unmap(sc->sc_iot, sc->sc_conf_ioh, sc->sc_conf_size);
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ctrl_size);
 		free(sc->sc_ranges, M_TEMP, sc->sc_nranges *
 		    sizeof(struct dwpcie_range));
@@ -1111,18 +1096,20 @@ dwpcie_conf_read(void *v, pcitag_t tag, int reg)
 	if (bus == sc->sc_bus + 1) {
 		dwpcie_atu_config(sc, IATU_VIEWPORT_INDEX1,
 		    IATU_REGION_CTRL_1_TYPE_CFG0,
-		    sc->sc_cfg0_base, tag, sc->sc_cfg0_size);
-		ret = bus_space_read_4(sc->sc_iot, sc->sc_cfg0_ioh, reg);
+		    sc->sc_conf_base, tag, sc->sc_conf_size);
 	} else {
 		dwpcie_atu_config(sc, IATU_VIEWPORT_INDEX1,
 		    IATU_REGION_CTRL_1_TYPE_CFG1,
-		    sc->sc_cfg1_base, tag, sc->sc_cfg1_size);
-		ret = bus_space_read_4(sc->sc_iot, sc->sc_cfg1_ioh, reg);
+		    sc->sc_conf_base, tag, sc->sc_conf_size);
 	}
-	if (sc->sc_num_viewport <= 2)
+
+	ret = bus_space_read_4(sc->sc_iot, sc->sc_conf_ioh, reg);
+
+	if (sc->sc_num_viewport <= 2) {
 		dwpcie_atu_config(sc, IATU_VIEWPORT_INDEX1,
 		    IATU_REGION_CTRL_1_TYPE_IO, sc->sc_io_base,
 		    sc->sc_io_bus_addr, sc->sc_io_size);
+	}
 
 	return ret;
 }
@@ -1143,18 +1130,20 @@ dwpcie_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 	if (bus == sc->sc_bus + 1) {
 		dwpcie_atu_config(sc, IATU_VIEWPORT_INDEX1,
 		    IATU_REGION_CTRL_1_TYPE_CFG0,
-		    sc->sc_cfg0_base, tag, sc->sc_cfg0_size);
-		bus_space_write_4(sc->sc_iot, sc->sc_cfg0_ioh, reg, data);
+		    sc->sc_conf_base, tag, sc->sc_conf_size);
 	} else {
 		dwpcie_atu_config(sc, IATU_VIEWPORT_INDEX1,
 		    IATU_REGION_CTRL_1_TYPE_CFG1,
-		    sc->sc_cfg1_base, tag, sc->sc_cfg1_size);
-		bus_space_write_4(sc->sc_iot, sc->sc_cfg1_ioh, reg, data);
+		    sc->sc_conf_base, tag, sc->sc_conf_size);
 	}
-	if (sc->sc_num_viewport <= 2)
+
+	bus_space_write_4(sc->sc_iot, sc->sc_conf_ioh, reg, data);
+
+	if (sc->sc_num_viewport <= 2) {
 		dwpcie_atu_config(sc, IATU_VIEWPORT_INDEX1,
 		    IATU_REGION_CTRL_1_TYPE_IO, sc->sc_io_base,
 		    sc->sc_io_bus_addr, sc->sc_io_size);
+	}
 }
 
 int
