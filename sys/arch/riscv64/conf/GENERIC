@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.16 2021/06/14 03:04:02 drahn Exp $
+#	$OpenBSD: GENERIC,v 1.17 2021/06/14 03:50:23 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -60,7 +60,6 @@ gfrtc*		at fdt?
 
 cad*		at fdt?
 dwge*		at fdt?
-ukphy*		at mii?
 
 dwmmc*		at fdt?
 sdmmc*		at dwmmc?
@@ -76,10 +75,10 @@ pci*		at ppb?
 
 # PCI Ethernet
 em*             at pci?                 # Intel Pro/1000 Ethernet
+bge*		at pci?			# Broadcom BCM57xx (aka Tigon3)
 
-
-# NVME
-nvme*		at pci?
+nvme*		at pci?			# NVMe controllers
+ahci*		at pci?			# AHCI SATA controllers
 
 scsibus*	at scsi?
 sd*		at scsibus?
@@ -87,10 +86,13 @@ cd*		at scsibus?
 ch*		at scsibus?
 uk*		at scsibus?
 
-#USB
+# USB Controllers
 xhci*           at pci?
+
+# USB bus support
 usb*            at xhci?
 
+# USB devices
 uhub*           at usb?
 uhub*           at uhub?
 #uhidev*         at uhub?

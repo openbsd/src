@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.17 2021/06/14 03:04:02 drahn Exp $
+#	$OpenBSD: RAMDISK,v 1.18 2021/06/14 03:50:23 deraadt Exp $
 
 machine		riscv64
 maxusers	4
@@ -56,8 +56,6 @@ gfrtc*		at fdt?
 
 cad*		at fdt?
 dwge*		at fdt?
-ciphy*		at mii?
-ukphy*		at mii?
 
 dwmmc*		at fdt?
 sdmmc*		at dwmmc?
@@ -71,8 +69,12 @@ pci*		at pciecam?
 ppb*		at pci?		# PCI-PCI bridges
 pci*		at ppb?
 
-# NVME
-nvme*		at pci?
+# PCI Ethernet
+em*             at pci?                 # Intel Pro/1000 Ethernet
+bge*		at pci?			# Broadcom BCM57xx (aka Tigon3)
+
+nvme*		at pci?			# NVMe controllers
+ahci*		at pci?			# AHCI SATA controllers
 
 scsibus*	at scsi?
 sd*		at scsibus?
@@ -80,10 +82,13 @@ cd*		at scsibus?
 ch*		at scsibus?
 uk*		at scsibus?
 
-#USB
+# USB Controllers
 xhci*           at pci?
+
+# USB bus support
 usb*            at xhci?
 
+# USB devices
 uhub*           at usb?
 uhub*           at uhub?
 #uhidev*         at uhub?
@@ -118,6 +123,15 @@ uath*           at uhub?                # Atheros AR5005UG/AR5005UX
 otus*           at uhub?                # Atheros AR9001U
 athn*           at uhub?                # Atheros AR9002U
 bwfm*           at uhub?                # Broadcom FullMAC
+
+amphy*          at mii?                 # AMD 79C873 PHYs
+atphy*          at mii?                 # Attansic F1 PHYs
+brgphy*         at mii?                 # Broadcom Gigabit PHYs
+eephy*          at mii?                 # Marvell 88E1000 series PHY
+rgephy*         at mii?                 # Realtek 8169S/8110S PHY
+rlphy*          at mii?                 # Realtek 8139 internal PHYs
+ukphy*          at mii?                 # "unknown" PHYs
+urlphy*         at mii?                 # Realtek RTL8150L internal PHY
 
 pseudo-device	loop 1
 pseudo-device	vlan
