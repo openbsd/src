@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp.c,v 1.9 2021/04/21 09:36:06 claudio Exp $ */
+/*	$OpenBSD: rrdp.c,v 1.10 2021/06/14 10:01:23 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -440,8 +440,9 @@ rrdp_input_handler(int fd)
 		if (infd != -1)
 			errx(1, "received unexpected fd %d", infd);
 		io_simple_read(fd, &ok, sizeof(ok));
-		if (ok == 0)
+		if (ok != 1) {
 			s->file_failed++;
+		}
 		s->file_pending--;
 		if (s->file_pending == 0)
 			rrdp_finished(s);
@@ -663,17 +664,20 @@ publish_done(struct rrdp *s, struct publish_xml *pxml)
 		if ((base64_decode(pxml->data, &data, &datasz)) == -1)
 			return -1;
 
-	if ((b = ibuf_dynamic(256, UINT_MAX)) == NULL)
-		err(1, NULL);
-	io_simple_buffer(b, &type, sizeof(type));
-	io_simple_buffer(b, &s->id, sizeof(s->id));
-	io_simple_buffer(b, &pxml->type, sizeof(pxml->type));
-	if (pxml->type != PUB_ADD)
-		io_simple_buffer(b, &pxml->hash, sizeof(pxml->hash));
-	io_str_buffer(b, pxml->uri);
-	io_buf_buffer(b, data, datasz);
-	ibuf_close(&msgq, b);
-	s->file_pending++;
+	/* only send files if the fetch did not fail already */
+	if (s->file_failed == 0) {
+		if ((b = ibuf_dynamic(256, UINT_MAX)) == NULL)
+			err(1, NULL);
+		io_simple_buffer(b, &type, sizeof(type));
+		io_simple_buffer(b, &s->id, sizeof(s->id));
+		io_simple_buffer(b, &pxml->type, sizeof(pxml->type));
+		if (pxml->type != PUB_ADD)
+			io_simple_buffer(b, &pxml->hash, sizeof(pxml->hash));
+		io_str_buffer(b, pxml->uri);
+		io_buf_buffer(b, data, datasz);
+		ibuf_close(&msgq, b);
+		s->file_pending++;
+	}
 
 	free(data);
 	free_publish_xml(pxml);

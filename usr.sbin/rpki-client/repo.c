@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.7 2021/05/04 08:16:36 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.8 2021/06/14 10:01:23 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -247,7 +247,7 @@ rsync_dir(const char *uri, const char *dir)
  * Function to create all missing directories to a path.
  * This functions alters the path temporarily.
  */
-static void
+static int
 repo_mkpath(char *file)
 {
 	char *slash;
@@ -256,9 +256,12 @@ repo_mkpath(char *file)
 	slash = strrchr(file, '/');
 	assert(slash != NULL);
 	*slash = '\0';
-	if (mkpath(file) == -1)
-		err(1, "%s", file);
+	if (mkpath(file) == -1) {
+		warn("mkpath %s", file);
+		return -1;
+	}
 	*slash = '/';
+	return 0;
 }
 
 /*
@@ -340,8 +343,9 @@ ta_fetch(struct tarepo *tr)
 		tr->temp = ta_filename(tr, 1);
 		fd = mkostemp(tr->temp, O_CLOEXEC);
 		if (fd == -1) {
-			err(1, "mkostemp: %s", tr->temp);
-			/* XXX switch to soft fail and restart with next file */
+			warn("mkostemp: %s", tr->temp);
+			http_finish(tr->id, HTTP_FAILED, NULL);
+			return;
 		}
 		if (fchmod(fd, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH) == -1)
 			warn("fchmod: %s", tr->temp);
@@ -376,16 +380,17 @@ ta_get(struct tal *tal)
 	tal->urisz = 0;
 	tal->uri = NULL;
 
-	/* create base directory */
-	if (mkpath(tr->basedir) == -1)
-		err(1, "%s", tr->basedir);
-
 	if (noop) {
 		tr->state = REPO_DONE;
 		logx("ta/%s: using cache", tr->descr);
 		/* there is nothing in the queue so no need to flush */
-	} else
+	} else {
+		/* try to create base directory */
+		if (mkpath(tr->basedir) == -1)
+			warn("mkpath %s", tr->basedir);
+
 		ta_fetch(tr);
+	}
 
 	return tr;
 }
@@ -440,15 +445,18 @@ rsync_get(const char *uri)
 	rr->repouri = repo;
 	rr->basedir = rsync_dir(repo, "rsync");
 
-	/* create base directory */
-	if (mkpath(rr->basedir) == -1)
-		err(1, "%s", rr->basedir);
-
 	if (noop) {
 		rr->state = REPO_DONE;
 		logx("%s: using cache", rr->basedir);
 		/* there is nothing in the queue so no need to flush */
 	} else {
+		/* create base directory */
+		if (mkpath(rr->basedir) == -1) {
+			warn("mkpath %s", rr->basedir);
+			rsync_finish(rr->id, 0);
+			return rr;
+		}
+
 		logx("%s: pulling from %s", rr->basedir, rr->repouri);
 		rsync_fetch(rr->id, rr->repouri, rr->basedir);
 	}
@@ -480,7 +488,7 @@ rsync_free(void)
 	}
 }
 
-static void rrdprepo_fetch(struct rrdprepo *);
+static int rrdprepo_fetch(struct rrdprepo *);
 
 static struct rrdprepo *
 rrdp_get(const char *uri)
@@ -507,17 +515,23 @@ rrdp_get(const char *uri)
 	RB_INIT(&rr->added);
 	RB_INIT(&rr->deleted);
 
-	/* create base directory */
-	if (mkpath(rr->basedir) == -1)
-		err(1, "%s", rr->basedir);
-
 	if (noop) {
 		rr->state = REPO_DONE;
 		logx("%s: using cache", rr->notifyuri);
 		/* there is nothing in the queue so no need to flush */
 	} else {
+		/* create base directory */
+		if (mkpath(rr->basedir) == -1) {
+			warn("mkpath %s", rr->basedir);
+			rrdp_finish(rr->id, 0);
+			return rr;
+		}
+		if (rrdprepo_fetch(rr) == -1) {
+			rrdp_finish(rr->id, 0);
+			return rr;
+		}
+
 		logx("%s: pulling from %s", rr->notifyuri, "network");
-		rrdprepo_fetch(rr);
 	}
 
 	return rr;
@@ -602,23 +616,6 @@ repo_state(struct repo *rp)
 	errx(1, "%s: bad repo", rp->repouri);
 }
 
-#if 0
-/*
- * locate a repository by ID.
- */
-static struct repo *
-repo_find(size_t id)
-{
-	struct repo *rp;
-
-	SLIST_FOREACH(rp, &repos, entry)
-		if (id == rp->id)
-			break;
-	return rp;
-}
-#endif
-
-
 /*
  * Parse the RRDP state file if it exists and set the session struct
  * based on that information.
@@ -700,8 +697,10 @@ rrdp_save_state(size_t id, struct rrdp_session *state)
 	file = rrdp_state_filename(rr, 0);
 	temp = rrdp_state_filename(rr, 1);
 
-	if ((fd = mkostemp(temp, O_CLOEXEC)) == -1)
-		err(1, "%s: mkostemp: %s", rr->basedir, temp);
+	if ((fd = mkostemp(temp, O_CLOEXEC)) == -1) {
+		warn("mkostemp %s", temp);
+		goto fail;
+	}
 	(void) fchmod(fd, 0644);
 	f = fdopen(fd, "w");
 	if (f == NULL)
@@ -736,6 +735,12 @@ fail:
 	free(file);
 }
 
+/*
+ * Write a file into the temporary RRDP dir but only after checking
+ * its hash (if required). The function also makes sure that the file
+ * tracking is properly adjusted.
+ * Returns 1 on success, 0 if the repo is corrupt, -1 on IO error
+ */
 int
 rrdp_handle_file(size_t id, enum publish_type pt, char *uri,
     char *hash, size_t hlen, char *data, size_t dlen)
@@ -744,17 +749,13 @@ rrdp_handle_file(size_t id, enum publish_type pt, char *uri,
 	struct filepath *fp;
 	ssize_t s;
 	char *fn;
-	int fd;
+	int fd = -1;
 
 	rr = rrdp_find(id);
 	if (rr == NULL)
 		errx(1, "non-existant rrdp repo %zu", id);
-
-	/* belt and suspenders */
-	if (!valid_uri(uri, strlen(uri), "rsync://")) {
-		warnx("%s: bad file URI", rr->basedir);
-		return 0;
-	}
+	if (rr->state == REPO_FAILED)
+		return -1;
 
 	if (pt == PUB_UPD || pt == PUB_DEL) {
 		if (filepath_exists(&rr->deleted, uri)) {
@@ -789,55 +790,62 @@ rrdp_handle_file(size_t id, enum publish_type pt, char *uri,
 		if ((fn = rrdp_filename(rr, uri, 1)) == NULL)
 			return 0;
 
-		repo_mkpath(fn);
+		if (repo_mkpath(fn) == -1)
+			goto fail;
+
 		fd = open(fn, O_WRONLY|O_CREAT|O_TRUNC, 0644);
 		if (fd == -1) {
 			warn("open %s", fn);
-			free(fn);
-			return 0;
+			goto fail;
 		}
 
 		if ((s = write(fd, data, dlen)) == -1) {
 			warn("write %s", fn);
-			free(fn);
-			close(fd);
-			return 0;
+			goto fail;
 		}
 		close(fd);
-		if ((size_t)s != dlen) {
-			warnx("short write %s", fn);
-			free(fn);
-			return 0;
-		}
+		if ((size_t)s != dlen)	/* impossible */
+			errx(1, "short write %s", fn);
 		free(fn);
 		filepath_add(&rr->added, uri);
 	}
 
 	return 1;
+
+fail:
+	rr->state = REPO_FAILED;
+	if (fd != -1)
+		close(fd);
+	free(fn);
+	return -1;
 }
 
 /*
  * Initiate a RRDP sync, create the required temporary directory and
  * parse a possible state file before sending the request to the RRDP process.
  */
-static void
+static int
 rrdprepo_fetch(struct rrdprepo *rr)
 {
 	struct rrdp_session state = { 0 };
 
 	if (asprintf(&rr->temp, "%s.XXXXXXXX", rr->basedir) == -1)
 		err(1, NULL);
-	if (mkdtemp(rr->temp) == NULL)
-		err(1, "mkdtemp %s", rr->temp);
+	if (mkdtemp(rr->temp) == NULL) {
+		warn("mkdtemp %s", rr->temp);
+		return -1;
+	}
 
 	rrdp_parse_state(rr, &state);
 	rrdp_fetch(rr->id, rr->notifyuri, rr->notifyuri, &state);
 
 	free(state.session_id);
 	free(state.last_mod);
+
+	return 0;
 }
 
-static void
+static int
 rrdp_merge_repo(struct rrdprepo *rr)
 {
 	struct filepath *fp, *nfp;
@@ -850,14 +858,26 @@ rrdp_merge_repo(struct rrdprepo *rr)
 		if (fn == NULL || rfn == NULL)
 			errx(1, "bad filepath");	/* should not happen */
 
-		repo_mkpath(rfn);
-		if (rename(fn, rfn) == -1)
-			warn("%s: rename", rfn);
+		if (repo_mkpath(rfn) == -1) {
+			goto fail;
+		}
+
+		if (rename(fn, rfn) == -1) {
+			warn("rename %s", rfn);
+			goto fail;
+		}
 
 		free(rfn);
 		free(fn);
 		filepath_put(&rr->added, fp);
 	}
+
+	return 1;
+
+fail:
+	free(rfn);
+	free(fn);
+	return 0;
 }
 
 static void
@@ -871,7 +891,7 @@ rrdp_clean_temp(struct rrdprepo *rr)
 	RB_FOREACH_SAFE(fp, filepath_tree, &rr->added, nfp) {
 		if ((fn = rrdp_filename(rr, fp->file, 1)) != NULL) {
 			if (unlink(fn) == -1)
-				warn("%s: unlink", fn);
+				warn("unlink %s", fn);
 			free(fn);
 		}
 		filepath_put(&rr->added, fp);
@@ -945,15 +965,14 @@ rrdp_finish(size_t id, int ok)
 	if (rr == NULL)
 		errx(1, "unknown RRDP repo %zu", id);
 
-	if (ok) {
-		rrdp_merge_repo(rr);
+	if (ok && rrdp_merge_repo(rr)) {
 		logx("%s: loaded from network", rr->notifyuri);
 		rr->state = REPO_DONE;
 		stats.rrdp_repos++;
 		SLIST_FOREACH(rp, &repos, entry)
 			if (rp->rrdp == rr)
 				entityq_flush(&rp->queue, rp);
-	} else {
+	} else if (!ok) {
 		rrdp_clean_temp(rr);
 		stats.rrdp_fails++;
 		rr->state = REPO_FAILED;
@@ -967,6 +986,14 @@ rrdp_finish(size_t id, int ok)
 				if (repo_state(rp) != REPO_LOADING)
 					entityq_flush(&rp->queue, rp);
 			}
+	} else {
+		rrdp_clean_temp(rr);
+		stats.rrdp_fails++;
+		rr->state = REPO_FAILED;
+		logx("%s: load from network failed", rr->notifyuri);
+		SLIST_FOREACH(rp, &repos, entry)
+			if (rp->rrdp == rr)
+				entityq_flush(&rp->queue, rp);
 	}
 }
 
@@ -1001,7 +1028,7 @@ http_finish(size_t id, enum http_result res, const char *last_mod)
 		tr->state = REPO_DONE;
 		stats.http_repos++;
 	} else {
-		if (unlink(tr->temp) == -1)
+		if (unlink(tr->temp) == -1 && errno != ENOENT)
 			warn("unlink %s", tr->temp);
 
 		if (++tr->uriidx < tr->urisz) {
