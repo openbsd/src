@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_server.c,v 1.46 2021/06/01 19:49:17 tb Exp $ */
+/* $OpenBSD: tls_server.c,v 1.47 2021/06/14 03:53:59 tb Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -133,7 +133,7 @@ tls_servername_cb(SSL *ssl, int *al, void *arg)
 	 * There is no way to tell libssl that an internal failure occurred.
 	 * The only option we have is to return a fatal alert.
 	 */
-	*al = TLS1_AD_INTERNAL_ERROR;
+	*al = SSL_AD_INTERNAL_ERROR;
 	return (SSL_TLSEXT_ERR_ALERT_FATAL);
 }
 
