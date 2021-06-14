@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.19 2021/05/11 11:32:51 claudio Exp $ */
+/*	$OpenBSD: roa.c,v 1.20 2021/06/14 12:08:50 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -268,25 +268,9 @@ roa_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 	/* RFC 6482, section 3.1. */
 
 	if (sz == 3) {
-		t = sk_ASN1_TYPE_value(seq, i++);
-
-		/*
-		 * This check with ASN1_INTEGER_get() is fine since
-		 * we're looking for a value of zero anyway, so any
-		 * overflowing number will be definition be wrong.
-		 */
-
-		if (t->type != V_ASN1_INTEGER) {
-			warnx("%s: RFC 6482 section 3.1: version: "
-			    "want ASN.1 integer, have %s (NID %d)",
-			    p->fn, ASN1_tag2str(t->type), t->type);
-			goto out;
-		} else if (ASN1_INTEGER_get(t->value.integer) != 0) {
-			warnx("%s: RFC 6482 section 3.1: version: "
-			    "want version 0, have %ld",
-			    p->fn, ASN1_INTEGER_get(t->value.integer));
-			goto out;
-		}
+		warnx("%s: RFC 6482 section 3 and X.690, 11.5: not expecting "
+		    "version field, as only version 0 is supported", p->fn);
+		goto out;
 	}
 
 	/*
