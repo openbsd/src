@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.17 2021/06/14 03:50:23 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.18 2021/06/14 06:03:50 jsg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -74,11 +74,11 @@ ppb*		at pci?		# PCI-PCI bridges
 pci*		at ppb?
 
 # PCI Ethernet
-em*             at pci?                 # Intel Pro/1000 Ethernet
-bge*		at pci?			# Broadcom BCM57xx (aka Tigon3)
+em*		at pci?		# Intel Pro/1000 Ethernet
+bge*		at pci?		# Broadcom BCM57xx (aka Tigon3)
 
-nvme*		at pci?			# NVMe controllers
-ahci*		at pci?			# AHCI SATA controllers
+nvme*		at pci?		# NVMe controllers
+ahci*		at pci?		# AHCI SATA controllers
 
 scsibus*	at scsi?
 sd*		at scsibus?
@@ -87,55 +87,55 @@ ch*		at scsibus?
 uk*		at scsibus?
 
 # USB Controllers
-xhci*           at pci?
+xhci*		at pci?
 
 # USB bus support
-usb*            at xhci?
+usb*		at xhci?
 
 # USB devices
-uhub*           at usb?
-uhub*           at uhub?
-#uhidev*         at uhub?
-#ukbd*           at uhidev?
-#wskbd*          at ukbd? mux 1
-umass*          at uhub?
-aue*            at uhub?                # ADMtek AN986 Pegasus Ethernet
-atu*            at uhub?                # Atmel AT76c50x based 802.11b
-axe*            at uhub?                # ASIX Electronics AX88172 USB Ethernet
-axen*           at uhub?                # ASIX Electronics AX88179 USB Ethernet
-cue*            at uhub?                # CATC USB-EL1201A based Ethernet
-kue*            at uhub?                # Kawasaki KL5KUSB101B based Ethernet
-smsc*           at uhub?                # SMSC LAN95xx Ethernet
-cdce*           at uhub?                # CDC Ethernet
-udav*           at uhub?                # Davicom DM9601 based Ethernet
-mos*            at uhub?                # MOSCHIP MCS7730/7830 10/100 Ethernet
-mue*            at uhub?                # Microchip LAN75xx/LAN78xx Ethernet
-url*            at uhub?                # Realtek RTL8150L based adapters
-ure*            at uhub?                # Realtek RTL8152 based adapters
-wi*             at uhub?                # WaveLAN IEEE 802.11DS
-upl*            at uhub?                # Prolific PL2301/PL2302 host-to-host
-ugl*            at uhub?                # Genesys Logic GL620USB-A host-to-host
-ural*           at uhub?                # Ralink RT2500
-rum*            at uhub?                # Ralink RT2501USB/RT2601USB
-run*            at uhub?                # Ralink RT2700U/RT2800U/RT3000U
-zyd*            at uhub?                # Zydas ZD1211
-upgt*           at uhub?                # Conexant/Intersil PrismGT SoftMAC USB
-urtw*           at uhub?                # Realtek 8187
-urtwn*          at uhub?                # Realtek RTL8188CU/RTL8192CU
-rsu*            at uhub?                # Realtek RTL8188SU/RTL8191SU/RTL8192SU
-uath*           at uhub?                # Atheros AR5005UG/AR5005UX
-otus*           at uhub?                # Atheros AR9001U
-athn*           at uhub?                # Atheros AR9002U
-bwfm*           at uhub?                # Broadcom FullMAC
+uhub*		at usb?
+uhub*		at uhub?
+#uhidev*	at uhub?
+#ukbd*		at uhidev?
+#wskbd*		at ukbd? mux 1
+umass*		at uhub?
+aue*		at uhub?	# ADMtek AN986 Pegasus Ethernet
+atu*		at uhub?	# Atmel AT76c50x based 802.11b
+axe*		at uhub?	# ASIX Electronics AX88172 USB Ethernet
+axen*		at uhub?	# ASIX Electronics AX88179 USB Ethernet
+cue*		at uhub?	# CATC USB-EL1201A based Ethernet
+kue*		at uhub?	# Kawasaki KL5KUSB101B based Ethernet
+smsc*		at uhub?	# SMSC LAN95xx Ethernet
+cdce*		at uhub?	# CDC Ethernet
+udav*		at uhub?	# Davicom DM9601 based Ethernet
+mos*		at uhub?	# MOSCHIP MCS7730/7830 10/100 Ethernet
+mue*		at uhub?	# Microchip LAN75xx/LAN78xx Ethernet
+url*		at uhub?	# Realtek RTL8150L based adapters
+ure*		at uhub?	# Realtek RTL8152 based adapters
+wi*		at uhub?	# WaveLAN IEEE 802.11DS
+upl*		at uhub?	# Prolific PL2301/PL2302 host-to-host
+ugl*		at uhub?	# Genesys Logic GL620USB-A host-to-host
+ural*		at uhub?	# Ralink RT2500
+rum*		at uhub?	# Ralink RT2501USB/RT2601USB
+run*		at uhub?	# Ralink RT2700U/RT2800U/RT3000U
+zyd*		at uhub?	# Zydas ZD1211
+upgt*		at uhub?	# Conexant/Intersil PrismGT SoftMAC USB
+urtw*		at uhub?	# Realtek 8187
+urtwn*		at uhub?	# Realtek RTL8188CU/RTL8192CU
+rsu*		at uhub?	# Realtek RTL8188SU/RTL8191SU/RTL8192SU
+uath*		at uhub?	# Atheros AR5005UG/AR5005UX
+otus*		at uhub?	# Atheros AR9001U
+athn*		at uhub?	# Atheros AR9002U
+bwfm*		at uhub?	# Broadcom FullMAC
 
-amphy*          at mii?                 # AMD 79C873 PHYs
-atphy*          at mii?                 # Attansic F1 PHYs
-brgphy*         at mii?                 # Broadcom Gigabit PHYs
-eephy*          at mii?                 # Marvell 88E1000 series PHY
-rgephy*         at mii?                 # Realtek 8169S/8110S PHY
-rlphy*          at mii?                 # Realtek 8139 internal PHYs
-ukphy*          at mii?                 # "unknown" PHYs
-urlphy*         at mii?                 # Realtek RTL8150L internal PHY
+amphy*		at mii?		# AMD 79C873 PHYs
+atphy*		at mii?		# Attansic F1 PHYs
+brgphy*		at mii?		# Broadcom Gigabit PHYs
+eephy*		at mii?		# Marvell 88E1000 series PHY
+rgephy*		at mii?		# Realtek 8169S/8110S PHY
+rlphy*		at mii?		# Realtek 8139 internal PHYs
+ukphy*		at mii?		# "unknown" PHYs
+urlphy*		at mii?		# Realtek RTL8150L internal PHY
 
 # Pseudo-Devices
 pseudo-device	openprom
