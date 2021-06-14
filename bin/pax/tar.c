@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.68 2019/06/24 03:33:09 deraadt Exp $	*/
+/*	$OpenBSD: tar.c,v 1.69 2021/06/14 00:36:13 deraadt Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -732,7 +732,7 @@ reset:
 	/* Process Extended headers. */
 	if (hd->typeflag == XHDRTYPE || hd->typeflag == GHDRTYPE) {
 		if (rd_xheader(arcn, hd->typeflag == GHDRTYPE,
-		    (off_t)asc_ul(hd->size, sizeof(hd->size), OCT)) < 0)
+		    (off_t)asc_ull(hd->size, sizeof(hd->size), OCT)) < 0)
 			return (-1);
 
 		/* Update and check the ustar header. */
