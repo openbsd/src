@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.114 2021/06/13 15:32:36 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.115 2021/06/14 17:34:06 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -34,8 +34,6 @@
 #include "gpt.h"
 #include "user.h"
 #include "cmd.h"
-
-int reinited;
 
 int gedit(int);
 int edit(int, struct mbr *);
@@ -75,7 +73,6 @@ Xreinit(char *args, struct mbr *mbr)
 		MBR_init(mbr);
 		MBR_print(mbr, "s");
 	}
-	reinited = 1;
 
 	printf("Use 'write' to update disk.\n");
 
