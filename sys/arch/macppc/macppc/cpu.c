@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.83 2020/05/29 04:42:24 deraadt Exp $ */
+/*	$OpenBSD: cpu.c,v 1.84 2021/06/14 06:10:44 matthieu Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -275,6 +275,9 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 		snprintf(cpu_model, sizeof(cpu_model), "Version %x", cpu);
 		break;
 	}
+#ifndef ALTIVEC			/* altivec support absent from kernel */
+	ppc_altivec = 0;
+#endif
 	snprintf(cpu_model + strlen(cpu_model),
 	    sizeof(cpu_model) - strlen(cpu_model),
 	    " (Revision 0x%x)", pvr & 0xffff);
