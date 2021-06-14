@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpd.conf.5,v 1.47 2021/03/09 18:18:55 martijn Exp $
+.\" $OpenBSD: snmpd.conf.5,v 1.48 2021/06/14 12:28:58 sthen Exp $
 .\"
 .\" Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 9 2021 $
+.Dd $Mdocdate: June 14 2021 $
 .Dt SNMPD.CONF 5
 .Os
 .Sh NAME
@@ -101,14 +101,14 @@ Specify the local address
 should listen on for incoming SNMP messages.
 The
 .Ic read
-flag specifies if the listen statement accepts get, getnext and bulkget
+flag specifies if the listen address accepts get, getnext and bulkget
 requests.
 The
 .Ic write
-flag specifies if the listen statement accepts set requests
-and
+flag specifies if the listen address accepts set requests
+and the
 .Ic notify
-flags specifes if the listen statements accepts trapv1 and trapv2 requests.
+flag specifies if the listen address accepts trapv1 and trapv2 requests.
 Multiple
 .Ic listen on
 statements are supported.
