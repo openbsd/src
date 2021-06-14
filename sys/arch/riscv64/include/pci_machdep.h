@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.2 2021/06/14 03:48:41 deraadt Exp $ */
+/*	$OpenBSD: pci_machdep.h,v 1.3 2021/06/14 08:19:39 kettenis Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -27,7 +27,7 @@
  */
 
 typedef struct machine_pci_chipset *pci_chipset_tag_t;
-typedef u_long pcitag_t;
+typedef uint64_t pcitag_t;
 
 #define PCITAG_NODE(x)		((x) >> 32)
 #define PCITAG_OFFSET(x)	((x) & 0xffffffff)
