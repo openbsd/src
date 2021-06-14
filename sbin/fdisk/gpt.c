@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.28 2021/06/13 13:48:00 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.29 2021/06/14 12:46:47 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -382,6 +382,7 @@ init_gh(void)
 	uint32_t		status;
 
 	memcpy(&oldgh, &gh, sizeof(oldgh));
+	memset(&gh, 0, sizeof(gh));
 
 	needed = sizeof(gp) / secsize + 2;
 
@@ -422,6 +423,7 @@ init_gp(void)
 	int rslt;
 
 	memcpy(&oldgp, &gp, sizeof(oldgp));
+	memset(&gp, 0, sizeof(gp));
 
 	rslt = 0;
 	if (b_arg > 0) {
