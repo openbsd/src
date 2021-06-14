@@ -1,4 +1,4 @@
-#	$OpenBSD: files.riscv64,v 1.11 2021/06/12 23:58:24 drahn Exp $
+#	$OpenBSD: files.riscv64,v 1.12 2021/06/14 03:04:02 drahn Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -125,3 +125,7 @@ include "scsi/files.scsi"
 device	pciecam: pcibus
 attach	pciecam at fdt
 file	dev/fdt/pciecam.c			pciecam
+
+# Machine-independent USB drivers
+include "dev/usb/files.usb"
+
