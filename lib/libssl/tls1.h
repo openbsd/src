@@ -1,4 +1,4 @@
-/* $OpenBSD: tls1.h,v 1.44 2021/06/14 02:04:11 deraadt Exp $ */
+/* $OpenBSD: tls1.h,v 1.45 2021/06/14 05:32:10 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -195,9 +195,7 @@ extern "C" {
 #define TLS1_AD_EXPORT_RESTRICTION		60	/* fatal */
 #define TLS1_AD_PROTOCOL_VERSION		70	/* fatal */
 #define TLS1_AD_INSUFFICIENT_SECURITY		71	/* fatal */
-#endif
 #define TLS1_AD_INTERNAL_ERROR			80	/* fatal */
-#ifndef LIBRESSL_INTERNAL
 /* Code 86 from RFC 7507. */
 #define TLS1_AD_INAPPROPRIATE_FALLBACK		86	/* fatal */
 #define TLS1_AD_USER_CANCELLED			90
