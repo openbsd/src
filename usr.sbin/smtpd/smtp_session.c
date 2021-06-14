@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.430 2021/05/20 07:33:32 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.431 2021/06/14 17:58:16 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -19,23 +19,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
-#include <sys/queue.h>
-#include <sys/tree.h>
-#include <sys/socket.h>
-#include <sys/uio.h>
-
-#include <netinet/in.h>
-
 #include <ctype.h>
 #include <errno.h>
-#include <event.h>
-#include <imsg.h>
-#include <limits.h>
 #include <inttypes.h>
-#include <openssl/ssl.h>
-#include <resolv.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <tls.h>
@@ -44,7 +30,6 @@
 
 #include "smtpd.h"
 #include "log.h"
-#include "ssl.h"
 #include "rfc5322.h"
 
 #define	SMTP_LINE_MAX			65535

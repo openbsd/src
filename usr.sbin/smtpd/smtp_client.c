@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_client.c,v 1.15 2021/03/05 12:37:32 eric Exp $	*/
+/*	$OpenBSD: smtp_client.c,v 1.16 2021/06/14 17:58:16 eric Exp $	*/
 
 /*
  * Copyright (c) 2018 Eric Faurot <eric@openbsd.org>
@@ -25,7 +25,6 @@
 #include <errno.h>
 #include <limits.h>
 #include <resolv.h>
-#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat_ramstat.c,v 1.11 2018/05/31 21:06:12 gilles Exp $	*/
+/*	$OpenBSD: stat_ramstat.c,v 1.12 2021/06/14 17:58:16 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -16,21 +16,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/queue.h>
-#include <sys/tree.h>
-
-#include <event.h>
-#include <imsg.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <limits.h>
 
 #include "smtpd.h"
-#include "log.h"
-
 
 static void	ramstat_init(void);
 static void	ramstat_close(void);

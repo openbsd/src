@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfc5322.c,v 1.2 2018/10/24 18:59:29 gilles Exp $	*/
+/*	$OpenBSD: rfc5322.c,v 1.3 2021/06/14 17:58:16 eric Exp $	*/
 
 /*
  * Copyright (c) 2018 Eric Faurot <eric@openbsd.org>
@@ -16,7 +16,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <ctype.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdlib.h>

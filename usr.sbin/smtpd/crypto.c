@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.c,v 1.9 2021/01/23 16:11:11 rob Exp $	 */
+/* $OpenBSD: crypto.c,v 1.10 2021/06/14 17:58:15 eric Exp $	 */
 
 /*
  * Copyright (c) 2013 Gilles Chehade <gilles@openbsd.org>
@@ -16,14 +16,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
 #include <sys/stat.h>
 
-#include <stdlib.h>
-#include <string.h>
-
 #include <openssl/evp.h>
-
+#include <string.h>
 
 #define	CRYPTO_BUFFER_SIZE	16384
 

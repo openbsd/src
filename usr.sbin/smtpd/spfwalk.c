@@ -18,22 +18,19 @@
 #include <sys/socket.h>
 #include <sys/tree.h>
 
-#include <arpa/inet.h>
-#include <arpa/nameser.h>
 #include <netinet/in.h>
-#include <netdb.h>
 
+#include <arpa/inet.h>
 #include <asr.h>
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <event.h>
-#include <imsg.h>
 #include <limits.h>
+#include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <strings.h>
 #include <unistd.h>
 
 #include "smtpd-defines.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: to.c,v 1.47 2021/05/26 18:08:55 eric Exp $	*/
+/*	$OpenBSD: to.c,v 1.48 2021/06/14 17:58:16 eric Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -18,34 +18,14 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
-#include <sys/queue.h>
-#include <sys/tree.h>
-#include <sys/socket.h>
-#include <sys/stat.h>
-#include <sys/resource.h>
-
-#include <netinet/in.h>
 #include <arpa/inet.h>
-
 #include <ctype.h>
 #include <errno.h>
-#include <event.h>
-#include <fcntl.h>
-#include <imsg.h>
-#include <limits.h>
-#include <inttypes.h>
-#include <netdb.h>
-#include <pwd.h>
-#include <stdarg.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #if IO_TLS
 #include <tls.h>
 #endif
-#include <unistd.h>
 
 #include "smtpd.h"
 #include "log.h"

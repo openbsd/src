@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.153 2021/03/31 19:09:19 eric Exp $	*/
+/*	$OpenBSD: util.c,v 1.154 2021/06/14 17:58:16 eric Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -19,34 +19,20 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
-#include <sys/queue.h>
-#include <sys/tree.h>
-#include <sys/socket.h>
 #include <sys/stat.h>
-#include <sys/resource.h>
 
 #include <netinet/in.h>
-#include <arpa/inet.h>
 
+#include <arpa/inet.h>
 #include <ctype.h>
 #include <errno.h>
-#include <event.h>
-#include <fcntl.h>
 #include <fts.h>
-#include <imsg.h>
-#include <inttypes.h>
 #include <libgen.h>
-#include <netdb.h>
-#include <pwd.h>
-#include <limits.h>
 #include <resolv.h>
 #include <stdarg.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
-#include <time.h>
 #include <unistd.h>
 
 #include "smtpd.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.170 2021/05/26 18:08:55 eric Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.171 2021/06/14 17:58:16 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -18,25 +18,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
-#include <sys/queue.h>
-#include <sys/tree.h>
-#include <sys/socket.h>
-
 #include <errno.h>
-#include <event.h>
-#include <imsg.h>
-#include <netdb.h>
-#include <pwd.h>
-#include <signal.h>
-#include <limits.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <tls.h>
 #include <unistd.h>
-
-#include <openssl/ssl.h>
 
 #include "smtpd.h"
 #include "log.h"

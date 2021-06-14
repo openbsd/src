@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda_mbox.c,v 1.2 2020/02/03 15:41:22 gilles Exp $	*/
+/*	$OpenBSD: mda_mbox.c,v 1.3 2021/06/14 17:58:15 eric Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -16,27 +16,15 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/queue.h>
-#include <sys/tree.h>
-#include <sys/socket.h>
 
 #include <err.h>
 #include <errno.h>
-#include <event.h>
 #include <fcntl.h>
-#include <imsg.h>
 #include <paths.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sysexits.h>
 #include <unistd.h>
-#include <limits.h>
 
 #include "smtpd.h"
-
 
 void
 mda_mbox(struct deliver *deliver)

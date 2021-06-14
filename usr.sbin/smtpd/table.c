@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.49 2020/12/23 08:12:14 martijn Exp $	*/
+/*	$OpenBSD: table.c,v 1.50 2021/06/14 17:58:16 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -17,25 +17,15 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
-#include <sys/queue.h>
-#include <sys/tree.h>
-#include <sys/socket.h>
 #include <sys/stat.h>
 
-#include <netinet/in.h>
-#include <arpa/inet.h>
 #include <net/if.h>
 
+#include <arpa/inet.h>
 #include <errno.h>
-#include <event.h>
-#include <imsg.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <regex.h>
-#include <limits.h>
+#include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 #include "smtpd.h"
 #include "log.h"

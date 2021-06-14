@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.668 2021/04/21 07:54:10 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.669 2021/06/14 17:58:16 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -22,9 +22,15 @@
 #define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
 #endif
 
-#include <netinet/in.h>
-#include <netdb.h>
+#include <sys/queue.h>
+#include <sys/tree.h>
+#include <sys/socket.h>
+
 #include <event.h>
+#include <imsg.h>
+#include <limits.h>
+#include <netdb.h>
+#include <stdio.h>
 
 #include "smtpd-defines.h"
 #include "smtpd-api.h"

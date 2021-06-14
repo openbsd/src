@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.95 2021/05/26 07:05:50 eric Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.96 2021/06/14 17:58:16 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -18,30 +18,15 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
-#include <sys/queue.h>
-#include <sys/tree.h>
-#include <sys/socket.h>
 #include <sys/stat.h>
 
-#include <ctype.h>
-#include <event.h>
 #include <fcntl.h>
-#include <imsg.h>
 #include <limits.h>
-#include <pwd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-
-#include <openssl/ssl.h>
 #include <openssl/engine.h>
 #include <openssl/err.h>
-#include <openssl/rsa.h>
-#include <openssl/ecdsa.h>
-#include <openssl/dh.h>
-#include <openssl/bn.h>
+#include <openssl/ssl.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "log.h"
 #include "ssl.h"

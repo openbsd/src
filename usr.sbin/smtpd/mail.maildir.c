@@ -18,10 +18,8 @@
 #define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
 #endif
 
-#include <sys/types.h>
 #include <sys/stat.h>
 
-#include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -30,7 +28,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include <sysexits.h>
 #include <unistd.h>
 

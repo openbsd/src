@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpc.c,v 1.17 2021/05/23 15:57:32 eric Exp $	*/
+/*	$OpenBSD: smtpc.c,v 1.18 2021/06/14 17:58:16 eric Exp $	*/
 
 /*
  * Copyright (c) 2018 Eric Faurot <eric@openbsd.org>
@@ -16,15 +16,11 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
 #include <sys/socket.h>
 
 #include <event.h>
-#include <limits.h>
 #include <netdb.h>
 #include <pwd.h>
-#include <resolv.h>
-#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

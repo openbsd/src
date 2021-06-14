@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat_backend.c,v 1.11 2018/12/27 10:35:26 gilles Exp $	*/
+/*	$OpenBSD: stat_backend.c,v 1.12 2021/06/14 17:58:16 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -16,18 +16,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/queue.h>
-#include <sys/tree.h>
-
-#include <event.h>
-#include <imsg.h>
-#include <stdio.h>
-#include <string.h>
-#include <limits.h>
-
-#include "log.h"
 #include "smtpd.h"
 
 extern struct stat_backend	stat_backend_ramstat;

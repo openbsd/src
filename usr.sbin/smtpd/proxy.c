@@ -14,24 +14,14 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/tree.h>
 #include <sys/un.h>
 
-#include <errno.h>
-#include <event.h>
-#include <imsg.h>
 #include <inttypes.h>
-#include <limits.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
-#include "log.h"
 #include "smtpd.h"
-
+#include "log.h"
 
 /*
  * The PROXYv2 protocol is described here:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda_variables.c,v 1.6 2019/09/19 07:35:36 gilles Exp $	*/
+/*	$OpenBSD: mda_variables.c,v 1.7 2021/06/14 17:58:15 eric Exp $	*/
 
 /*
  * Copyright (c) 2011-2017 Gilles Chehade <gilles@poolp.org>
@@ -17,19 +17,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
-#include <sys/queue.h>
-#include <sys/tree.h>
-#include <sys/socket.h>
-
-#include <netinet/in.h>
-
-#include <imsg.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <limits.h>
 
 #include "smtpd.h"
 #include "log.h"
