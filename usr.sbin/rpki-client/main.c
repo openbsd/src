@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.142 2021/06/03 15:10:05 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.143 2021/06/14 09:54:15 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -15,11 +15,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/resource.h>
+#include <sys/statvfs.h>
 #include <sys/tree.h>
-#include <sys/types.h>
 #include <sys/wait.h>
 
 #include <assert.h>
@@ -579,6 +580,31 @@ tal_load_default(const char *tals[], size_t max)
 	return s;
 }
 
+static void
+check_fs_size(int fd, const char *cachedir)
+{
+	struct statvfs	fs;
+	const long long minsize = 500 * 1024 * 1024;
+	const long long minnode = 300 * 1000;
+
+	if (fstatvfs(fd, &fs) == -1)
+		err(1, "statfs %s", cachedir);
+
+	if (fs.f_bavail < minsize / fs.f_frsize || fs.f_favail < minnode) {
+		fprintf(stderr, "WARNING: rpki-client may need more than "
+		    "the availabe disk space\n"
+		    "on the file-system holding %s.\n", cachedir);
+		fprintf(stderr, "available space: %lldkB, "
+		    "suggested minimum %lldkB\n",
+		    (long long)fs.f_bavail * fs.f_frsize / 1024,
+		    minsize / 1024);
+		fprintf(stderr, "available inodes %lld, "
+		    "suggested minimum %lld\n\n",
+		    (long long)fs.f_favail, minnode);
+		fflush(stderr);
+	}
+}
+
 void
 suicide(int sig __attribute__((unused)))
 {
@@ -705,6 +731,8 @@ main(int argc, char *argv[])
 		err(1, "cache directory %s", cachedir);
 	if ((outdirfd = open(outputdir, O_RDONLY | O_DIRECTORY, 0)) == -1)
 		err(1, "output directory %s", outputdir);
+
+	check_fs_size(cachefd, cachedir);
 
 	if (outformats == 0)
 		outformats = FORMAT_OPENBGPD;
