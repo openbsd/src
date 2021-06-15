@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.96 2021/05/20 08:03:35 mpi Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.97 2021/06/15 16:38:09 mpi Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -143,7 +143,7 @@ struct pool uvm_aobj_pool;
 
 static struct uao_swhash_elt	*uao_find_swhash_elt(struct uvm_aobj *, int,
 				     boolean_t);
-static int			 uao_find_swslot(struct uvm_aobj *, int);
+static int			 uao_find_swslot(struct uvm_object *, int);
 static boolean_t		 uao_flush(struct uvm_object *, voff_t,
 				     voff_t, int);
 static void			 uao_free(struct uvm_aobj *);
@@ -242,8 +242,11 @@ uao_find_swhash_elt(struct uvm_aobj *aobj, int pageidx, boolean_t create)
  * uao_find_swslot: find the swap slot number for an aobj/pageidx
  */
 inline static int
-uao_find_swslot(struct uvm_aobj *aobj, int pageidx)
+uao_find_swslot(struct uvm_object *uobj, int pageidx)
 {
+	struct uvm_aobj *aobj = (struct uvm_aobj *)uobj;
+
+	KASSERT(UVM_OBJ_IS_AOBJ(uobj));
 
 	/*
 	 * if noswap flag is set, then we never return a slot
@@ -284,6 +287,7 @@ uao_set_swslot(struct uvm_object *uobj, int pageidx, int slot)
 	int oldslot;
 
 	KERNEL_ASSERT_LOCKED();
+	KASSERT(UVM_OBJ_IS_AOBJ(uobj));
 
 	/*
 	 * if noswap flag is set, then we can't set a slot
@@ -353,6 +357,7 @@ uao_free(struct uvm_aobj *aobj)
 {
 	struct uvm_object *uobj = &aobj->u_obj;
 
+	KASSERT(UVM_OBJ_IS_AOBJ(uobj));
 	uao_dropswap_range(uobj, 0, 0);
 
 	if (UAO_USES_SWHASH(aobj)) {
@@ -881,6 +886,7 @@ uao_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 	struct vm_page *pp;
 	voff_t curoff;
 
+	KASSERT(UVM_OBJ_IS_AOBJ(uobj));
 	KERNEL_ASSERT_LOCKED();
 
 	if (flags & PGO_ALLPAGES) {
@@ -1007,6 +1013,7 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 	int lcv, gotpages, maxpages, swslot, rv, pageidx;
 	boolean_t done;
 
+	KASSERT(UVM_OBJ_IS_AOBJ(uobj));
 	KERNEL_ASSERT_LOCKED();
 
 	/*
@@ -1036,7 +1043,7 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
  			 * if page is new, attempt to allocate the page,
 			 * zero-fill'd.
  			 */
-			if (ptmp == NULL && uao_find_swslot(aobj,
+			if (ptmp == NULL && uao_find_swslot(uobj,
 			    current_offset >> PAGE_SHIFT) == 0) {
 				ptmp = uvm_pagealloc(uobj, current_offset,
 				    NULL, UVM_PGA_ZERO);
@@ -1175,7 +1182,7 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
  		 * we have a "fake/busy/clean" page that we just allocated.  
  		 * do the needed "i/o", either reading from swap or zeroing.
  		 */
-		swslot = uao_find_swslot(aobj, pageidx);
+		swslot = uao_find_swslot(uobj, pageidx);
 
 		/* just zero the page if there's nothing in swap.  */
 		if (swslot == 0) {
@@ -1240,6 +1247,8 @@ int
 uao_dropswap(struct uvm_object *uobj, int pageidx)
 {
 	int slot;
+
+	KASSERT(UVM_OBJ_IS_AOBJ(uobj));
 
 	slot = uao_set_swslot(uobj, pageidx, 0);
 	if (slot) {
@@ -1456,6 +1465,7 @@ uao_dropswap_range(struct uvm_object *uobj, voff_t start, voff_t end)
 	struct uvm_aobj *aobj = (struct uvm_aobj *)uobj;
 	int swpgonlydelta = 0;
 
+	KASSERT(UVM_OBJ_IS_AOBJ(uobj));
 	/* KASSERT(mutex_owned(uobj->vmobjlock)); */
 
 	if (end == 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_object.h,v 1.24 2020/10/21 09:08:14 mpi Exp $	*/
+/*	$OpenBSD: uvm_object.h,v 1.25 2021/06/15 16:38:09 mpi Exp $	*/
 /*	$NetBSD: uvm_object.h,v 1.11 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -82,12 +82,15 @@ RBT_PROTOTYPE(uvm_objtree, vm_page, objt, uvm_pagecmp)
 #define	UVM_OBJ_IS_VNODE(uobj)						\
 	((uobj)->pgops == &uvm_vnodeops)
 
-#define UVM_OBJ_IS_DEVICE(uobj)						\
+#define	UVM_OBJ_IS_DEVICE(uobj)						\
 	((uobj)->pgops == &uvm_deviceops)
 
 #define	UVM_OBJ_IS_VTEXT(uobj)						\
 	((uobj)->pgops == &uvm_vnodeops &&				\
 	 ((struct vnode *)uobj)->v_flag & VTEXT)
+
+#define	UVM_OBJ_IS_AOBJ(uobj)						\
+	((uobj)->pgops == &aobj_pager)
 
 void	uvm_objinit(struct uvm_object *, const struct uvm_pagerops *, int);
 int	uvm_objwire(struct uvm_object *, voff_t, voff_t, struct pglist *);
