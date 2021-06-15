@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.2 2021/05/23 22:43:36 dv Exp $	*/
+/*	$OpenBSD: packet.c,v 1.3 2021/06/15 10:38:53 claudio Exp $	*/
 
 /* Packet assembly code, originally contributed by Archie Cobbs. */
 
@@ -169,6 +169,8 @@ decode_hw_header(unsigned char *buf, size_t buflen,
     size_t offset, struct packet_ctx *pc, unsigned int intfhtype)
 {
 	u_int32_t ip_len;
+	u_int16_t ether_type;
+	struct ether_header *eh;
 	struct ip *ip;
 
 	switch (intfhtype) {
@@ -196,9 +198,14 @@ decode_hw_header(unsigned char *buf, size_t buflen,
 		if (buflen < offset + ETHER_HDR_LEN)
 			return (-1);
 
-		memcpy(pc->pc_dmac, buf + offset, ETHER_ADDR_LEN);
-		memcpy(pc->pc_smac, buf + offset + ETHER_ADDR_LEN,
-		    ETHER_ADDR_LEN);
+		eh = (struct ether_header *)(buf + offset);
+		memcpy(pc->pc_dmac, eh->ether_dhost, ETHER_ADDR_LEN);
+		memcpy(pc->pc_smac, eh->ether_shost, ETHER_ADDR_LEN);
+		memcpy(&ether_type, &eh->ether_type, sizeof(ether_type));
+
+		if (ether_type != htons(ETHERTYPE_IP))
+			return (-1);
+
 		offset += ETHER_HDR_LEN;
 
 		pc->pc_htype = ARPHRD_ETHER;
@@ -225,18 +232,20 @@ decode_udp_ip_header(unsigned char *buf, size_t buflen,
 	/* Assure that an entire IP header is within the buffer. */
 	if (buflen < offset + sizeof(*ip))
 		return (-1);
-	ip_len = (buf[offset] & 0xf) << 2;
-	if (buflen < offset + ip_len)
+	ip = (struct ip *)(buf + offset);
+	if (ip->ip_v != IPVERSION)
+		return (-1);
+	ip_len = ip->ip_hl << 2;
+	if (ip_len < sizeof(struct ip) ||
+	    buflen < offset + ip_len)
 		return (-1);
 
-	ip = (struct ip *)(buf + offset);
 	if (ip->ip_p != IPPROTO_UDP)
 		return (-1);
 
 	/* Check the IP header checksum - it should be zero. */
-	if (wrapsum(checksum(buf + offset, ip_len, 0)) != 0) {
+	if (wrapsum(checksum(buf + offset, ip_len, 0)) != 0)
 		return (-1);
-	}
 
 	pc->pc_src.ss_len = sizeof(struct sockaddr_in);
 	pc->pc_src.ss_family = AF_INET;
@@ -288,9 +297,8 @@ decode_udp_ip_header(unsigned char *buf, size_t buflen,
 	    2 * sizeof(ip->ip_src),
 	    IPPROTO_UDP + (u_int32_t)ntohs(udp->uh_ulen)))));
 
-	if (usum && usum != sum) {
+	if (usum && usum != sum)
 		return (-1);
-	}
 
 	ss2sin(&pc->pc_src)->sin_port = udp->uh_sport;
 	ss2sin(&pc->pc_dst)->sin_port = udp->uh_dport;
