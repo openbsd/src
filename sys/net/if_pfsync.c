@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.290 2021/06/15 05:06:24 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.291 2021/06/15 08:36:19 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -2065,6 +2065,8 @@ pfsync_deferrals_tmo(void *arg)
 	struct pfsync_deferral *pd;
 	struct timeval now, tv;
 	struct pfsync_deferrals pds = TAILQ_HEAD_INITIALIZER(pds);
+
+	getmicrouptime(&now);
 
 	mtx_enter(&sc->sc_deferrals_mtx);
 	for (;;) {
