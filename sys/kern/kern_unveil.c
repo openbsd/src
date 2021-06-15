@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_unveil.c,v 1.41 2021/06/09 17:52:47 semarie Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.42 2021/06/15 18:42:23 claudio Exp $	*/
 
 /*
  * Copyright (c) 2017-2019 Bob Beck <beck@openbsd.org>
@@ -270,7 +270,6 @@ unveil_copy(struct process *parent, struct process *child)
 		child->ps_uvpcwd = child->ps_uvpaths +
 		    (parent->ps_uvpcwd - parent->ps_uvpaths);
 	child->ps_uvdone = parent->ps_uvdone;
-	child->ps_uvshrink = parent->ps_uvshrink;
 }
 
 /*
@@ -353,65 +352,22 @@ struct unveil *
 unveil_lookup(struct vnode *vp, struct process *pr, ssize_t *position)
 {
 	struct unveil *uv = pr->ps_uvpaths;
-	ssize_t l, r;
+	ssize_t i;
+
 	if (position != NULL)
 		*position = -1;
 
 	if (vp->v_uvcount == 0)
 		return NULL;
 
-	/*
-	 * shrink if told to do so to remove dead vnodes.
-	 */
-	if (pr->ps_uvshrink) {
-		size_t i = 0, j;
-
-		while (i < pr->ps_uvvcount) {
-			if (uv[i].uv_vp == NULL)  {
-				pr->ps_uvncount -= unveil_delete_names(&uv[i]);
-				for (j = i + 1; j < pr->ps_uvvcount; j++)
-					uv[j - 1] = uv[j];
-				pr->ps_uvvcount--;
-				for (j = 0; j < pr->ps_uvvcount; j++) {
-					if (uv[j].uv_cover == i) {
-						/*
-						 * anything covered by
-						 * this one will be nuked
-						 * on unmount as well.
-						 */
-						uv[j].uv_cover = -1;
-					}
-					else if (uv[j].uv_cover > i)
-						uv[j].uv_cover--;
-				}
-			}
-			i++;
-		}
-		pr->ps_uvshrink = 0;
-	}
-
-	if (pr->ps_uvvcount == 0)
-		return NULL;
-
-	l = 0;
-	r = pr->ps_uvvcount - 1;
-	while (l <= r) {
-		size_t m = l + (r - l)/2;
-#ifdef DEBUG_UNVEIL
-		printf("unveil: checking vnode %p vs. unveil vnode %p\n",
-		   vp, uv[m].uv_vp);
-#endif
-		if (vp == uv[m].uv_vp) {
-			KASSERT(uv[m].uv_vp->v_uvcount > 0);
-			KASSERT(uv[m].uv_vp->v_usecount > 0);
+	for (i = 0; i < pr->ps_uvvcount; i++) {
+		if (vp == uv[i].uv_vp) {
+			KASSERT(uv[i].uv_vp->v_uvcount > 0);
+			KASSERT(uv[i].uv_vp->v_usecount > 0);
 			if (position != NULL)
-				*position = m;
-			return &uv[m];
+				*position = i;
+			return &uv[i];
 		}
-		if (vp > uv[m].uv_vp)
-			l = m + 1;
-		else
-			r = m - 1;
 	}
 	return NULL;
 }
@@ -468,18 +424,7 @@ unveil_add_vnode(struct proc *p, struct vnode *vp)
 
 	KASSERT(pr->ps_uvvcount < UNVEIL_MAX_VNODES);
 
-	for (i = pr->ps_uvvcount;
-	     i > 0 && pr->ps_uvpaths[i - 1].uv_vp > vp;
-	     i--) {
-		pr->ps_uvpaths[i] = pr->ps_uvpaths[i - 1];
-	}
-
-	/* adjust the covers to account for our addition  */
-	for (j = 0; j < pr->ps_uvvcount; j++) {
-		if (pr->ps_uvpaths[i].uv_cover >= i)
-			pr->ps_uvpaths[i].uv_cover++;
-	}
-
+	i = pr->ps_uvvcount;
 	uv = &pr->ps_uvpaths[i];
 	rw_init(&uv->uv_lock, "unveil");
 	RBT_INIT(unvname_rbt, &uv->uv_names);
@@ -997,7 +942,6 @@ unveil_removevnode(struct vnode *vp)
 			printf("unveil_removevnode vnode %p now count %d\n",
 			    vp, vp->v_uvcount);
 #endif
-			pr->ps_uvshrink = 1;
 			if (vp->v_uvcount > 0) {
 				vrele(vp);
 				vp->v_uvcount--;
