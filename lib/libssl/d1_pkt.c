@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.97 2021/06/11 11:13:53 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.98 2021/06/15 19:09:03 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -1160,19 +1160,12 @@ dtls1_dispatch_alert(SSL *s)
 {
 	int i, j;
 	void (*cb)(const SSL *ssl, int type, int val) = NULL;
-	unsigned char buf[DTLS1_AL_HEADER_LENGTH];
-	unsigned char *ptr = &buf[0];
 
 	S3I(s)->alert_dispatch = 0;
 
-	memset(buf, 0, sizeof(buf));
-	*ptr++ = S3I(s)->send_alert[0];
-	*ptr++ = S3I(s)->send_alert[1];
-
-	i = do_dtls1_write(s, SSL3_RT_ALERT, &buf[0], sizeof(buf));
+	i = do_dtls1_write(s, SSL3_RT_ALERT, &S3I(s)->send_alert[0], 2);
 	if (i <= 0) {
 		S3I(s)->alert_dispatch = 1;
-		/* fprintf( stderr, "not done with alert\n" ); */
 	} else {
 		if (S3I(s)->send_alert[0] == SSL3_AL_FATAL)
 			(void)BIO_flush(s->wbio);
