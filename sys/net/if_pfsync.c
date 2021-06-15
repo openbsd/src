@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.291 2021/06/15 08:36:19 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.292 2021/06/15 10:10:22 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -92,6 +92,8 @@
 
 #include "bpfilter.h"
 #include "pfsync.h"
+
+#define PFSYNC_DEFER_NSEC 20000000ULL
 
 #define PFSYNC_MINPKT ( \
 	sizeof(struct ip) + \
@@ -187,7 +189,7 @@ struct pfsync_deferral {
 	TAILQ_ENTRY(pfsync_deferral)		 pd_entry;
 	struct pf_state				*pd_st;
 	struct mbuf				*pd_m;
-	struct timeval				 pd_deadline;
+	uint64_t				 pd_deadline;
 };
 TAILQ_HEAD(pfsync_deferrals, pfsync_deferral);
 
@@ -1933,9 +1935,7 @@ pfsync_defer(struct pf_state *st, struct mbuf *m)
 {
 	struct pfsync_softc *sc = pfsyncif;
 	struct pfsync_deferral *pd;
-	struct timeval now;
 	unsigned int sched;
-	static const struct timeval defer = { 0, 20000 };
 
 	NET_ASSERT_LOCKED();
 
@@ -1966,8 +1966,7 @@ pfsync_defer(struct pf_state *st, struct mbuf *m)
 	pd->pd_st = pf_state_ref(st);
 	pd->pd_m = m;
 
-	getmicrouptime(&now);
-	timeradd(&now, &defer, &pd->pd_deadline);
+	pd->pd_deadline = getnsecuptime() + PFSYNC_DEFER_NSEC;
 
 	mtx_enter(&sc->sc_deferrals_mtx);
 	sched = TAILQ_EMPTY(&sc->sc_deferrals);
@@ -1977,7 +1976,7 @@ pfsync_defer(struct pf_state *st, struct mbuf *m)
 	mtx_leave(&sc->sc_deferrals_mtx);
 
 	if (sched)
-		timeout_add_tv(&sc->sc_deferrals_tmo, &defer);
+		timeout_add_nsec(&sc->sc_deferrals_tmo, PFSYNC_DEFER_NSEC);
 
 	schednetisr(NETISR_PFSYNC);
 
@@ -2063,10 +2062,10 @@ pfsync_deferrals_tmo(void *arg)
 {
 	struct pfsync_softc *sc = arg;
 	struct pfsync_deferral *pd;
-	struct timeval now, tv;
+	uint64_t now, nsec = 0;
 	struct pfsync_deferrals pds = TAILQ_HEAD_INITIALIZER(pds);
 
-	getmicrouptime(&now);
+	now = getnsecuptime();
 
 	mtx_enter(&sc->sc_deferrals_mtx);
 	for (;;) {
@@ -2074,8 +2073,8 @@ pfsync_deferrals_tmo(void *arg)
 		if (pd == NULL)
 			break;
 
-		if (timercmp(&now, &pd->pd_deadline, <)) {
-			timersub(&now, &pd->pd_deadline, &tv);
+		if (now < pd->pd_deadline) {
+			nsec = pd->pd_deadline - now;
 			break;
 		}
 
@@ -2085,9 +2084,9 @@ pfsync_deferrals_tmo(void *arg)
 	}
 	mtx_leave(&sc->sc_deferrals_mtx);
 
-	if (pd != NULL) {
+	if (nsec > 0) {
 		/* we were looking at a pd, but it wasn't old enough */
-		timeout_add_tv(&sc->sc_deferrals_tmo, &tv);
+		timeout_add_nsec(&sc->sc_deferrals_tmo, nsec);
 	}
 
 	if (TAILQ_EMPTY(&pds))
