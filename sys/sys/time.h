@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.59 2021/06/11 16:36:34 cheloha Exp $	*/
+/*	$OpenBSD: time.h,v 1.60 2021/06/15 05:24:47 dlg Exp $	*/
 /*	$NetBSD: time.h,v 1.18 1996/04/23 10:29:33 mycroft Exp $	*/
 
 /*
@@ -290,6 +290,7 @@ void	binuptime(struct bintime *);
 void	nanouptime(struct timespec *);
 void	microuptime(struct timeval *);
 
+void	getbinuptime(struct bintime *);
 void	getnanouptime(struct timespec *);
 void	getmicrouptime(struct timeval *);
 
@@ -302,6 +303,9 @@ void	nanoruntime(struct timespec *);
 
 time_t	gettime(void);
 time_t	getuptime(void);
+
+uint64_t	nsecuptime(void);
+uint64_t	getnsecuptime(void);
 
 struct proc;
 int	clock_gettime(struct proc *, clockid_t, struct timespec *);

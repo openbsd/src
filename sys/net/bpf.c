@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.204 2021/04/23 03:43:19 dlg Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.205 2021/06/15 05:24:47 dlg Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -419,19 +419,6 @@ bpfclose(dev_t dev, int flag, int mode, struct proc *p)
 	(d)->bd_sbuf = (d)->bd_fbuf; \
 	(d)->bd_slen = 0; \
 	(d)->bd_fbuf = NULL;
-
-/*
- * TODO Move nsecuptime() into kern_tc.c and document it when we have
- * more users elsewhere in the kernel.
- */
-static uint64_t
-nsecuptime(void)
-{
-	struct timespec now;
-
-	nanouptime(&now);
-	return TIMESPEC_TO_NSEC(&now);
-}
 
 /*
  *  bpfread - read next chunk of packets from buffers

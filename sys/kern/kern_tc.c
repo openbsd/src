@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.72 2021/04/30 13:52:48 bluhm Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.73 2021/06/15 05:24:46 dlg Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -196,6 +196,21 @@ binuptime(struct bintime *bt)
 }
 
 void
+getbinuptime(struct bintime *bt)
+{
+	struct timehands *th;
+	u_int gen;
+
+	do {
+		th = timehands;
+		gen = th->th_generation;
+		membar_consumer();
+		*bt = th->th_offset;
+		membar_consumer();
+	} while (gen == 0 || gen != th->th_generation);
+}
+
+void
 nanouptime(struct timespec *tsp)
 {
 	struct bintime bt;
@@ -233,6 +248,34 @@ getuptime(void)
 
 	return now;
 #endif
+}
+
+uint64_t
+nsecuptime(void)
+{
+	struct bintime bt;
+	uint64_t nsec;
+
+	binuptime(&bt);
+
+	nsec = (1000000000ULL * (bt.frac >> 32)) >> 32;
+	nsec += bt.sec * 1000000000ULL;
+
+	return (nsec);
+}
+
+uint64_t
+getnsecuptime(void)
+{
+	struct bintime bt;
+	uint64_t nsec;
+
+	getbinuptime(&bt);
+
+	nsec = (1000000000ULL * (bt.frac >> 32)) >> 32;
+	nsec += bt.sec * 1000000000ULL;
+
+	return (nsec);
 }
 
 void

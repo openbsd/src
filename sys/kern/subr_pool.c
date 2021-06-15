@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.233 2021/03/10 10:21:47 jsg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.234 2021/06/15 05:24:46 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -271,19 +271,6 @@ struct task pool_gc_task = TASK_INITIALIZER(pool_gc_pages, NULL);
 
 #define POOL_WAIT_FREE	SEC_TO_NSEC(1)
 #define POOL_WAIT_GC	SEC_TO_NSEC(8)
-
-/*
- * TODO Move getnsecuptime() to kern_tc.c and document it when we
- * have callers in other modules.
- */
-static uint64_t
-getnsecuptime(void)
-{
-	struct timespec now;
-
-	getnanouptime(&now);
-	return TIMESPEC_TO_NSEC(&now);
-}
 
 RBT_PROTOTYPE(phtree, pool_page_header, ph_node, phtree_compare);
 
