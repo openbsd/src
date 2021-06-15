@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.3 2021/05/12 01:20:52 jsg Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.4 2021/06/15 09:52:04 matthieu Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -53,7 +53,7 @@
 #define	DFLDSIZ		((paddr_t)128*1024*1024)	/* initial data size limit */
 #endif
 #ifndef MAXDSIZ
-#define	MAXDSIZ		((paddr_t)1*1024*1024*1024)	/* max data size */
+#define	MAXDSIZ		((paddr_t)16*1024*1024*1024)	/* max data size */
 #endif
 #ifndef BRKSIZ
 #define	BRKSIZ		((paddr_t)1*1024*1024*1024)	/* heap gap size */
