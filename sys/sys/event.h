@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.55 2021/06/02 13:56:28 visa Exp $	*/
+/*	$OpenBSD: event.h,v 1.56 2021/06/16 14:26:30 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -228,6 +228,7 @@ struct filterops {
  * Locking:
  *	I	immutable after creation
  *	o	object lock
+ *	q	kn_kq->kq_lock
  */
 struct knote {
 	SLIST_ENTRY(knote)	kn_link;	/* for fd */
@@ -235,7 +236,7 @@ struct knote {
 	TAILQ_ENTRY(knote)	kn_tqe;
 	struct			kqueue *kn_kq;	/* [I] which queue we are on */
 	struct			kevent kn_kevent;
-	int			kn_status;
+	int			kn_status;	/* [q] */
 	int			kn_sfflags;	/* [o] saved filter flags */
 	__int64_t		kn_sdata;	/* [o] saved data field */
 	union {

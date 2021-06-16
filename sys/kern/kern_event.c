@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.166 2021/06/11 04:29:54 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.167 2021/06/16 14:26:30 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -328,10 +328,15 @@ filt_procattach(struct knote *kn)
 void
 filt_procdetach(struct knote *kn)
 {
+	struct kqueue *kq = kn->kn_kq;
 	struct process *pr = kn->kn_ptr.p_process;
-	int s;
+	int s, status;
 
-	if (kn->kn_status & KN_DETACHED)
+	mtx_enter(&kq->kq_lock);
+	status = kn->kn_status;
+	mtx_leave(&kq->kq_lock);
+
+	if (status & KN_DETACHED)
 		return;
 
 	s = splhigh();
@@ -342,6 +347,7 @@ filt_procdetach(struct knote *kn)
 int
 filt_proc(struct knote *kn, long hint)
 {
+	struct kqueue *kq = kn->kn_kq;
 	u_int event;
 
 	/*
@@ -363,8 +369,11 @@ filt_proc(struct knote *kn, long hint)
 		struct process *pr = kn->kn_ptr.p_process;
 		int s;
 
-		s = splhigh();
+		mtx_enter(&kq->kq_lock);
 		kn->kn_status |= KN_DETACHED;
+		mtx_leave(&kq->kq_lock);
+
+		s = splhigh();
 		kn->kn_flags |= (EV_EOF | EV_ONESHOT);
 		kn->kn_data = W_EXITCODE(pr->ps_xexit, pr->ps_xsig);
 		klist_remove_locked(&pr->ps_klist, kn);
@@ -391,7 +400,7 @@ filt_proc(struct knote *kn, long hint)
 		kev.fflags = kn->kn_sfflags;
 		kev.data = kn->kn_id;			/* parent */
 		kev.udata = kn->kn_udata;		/* preserve udata */
-		error = kqueue_register(kn->kn_kq, &kev, NULL);
+		error = kqueue_register(kq, &kev, NULL);
 		if (error)
 			kn->kn_fflags |= NOTE_TRACKERR;
 	}
