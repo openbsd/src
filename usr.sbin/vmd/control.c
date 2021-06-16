@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.36 2021/06/10 19:50:05 dv Exp $	*/
+/*	$OpenBSD: control.c,v 1.37 2021/06/16 16:55:02 dv Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -29,10 +29,10 @@
 #include <errno.h>
 #include <event.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <signal.h>
 
 #include "proc.h"
 #include "vmd.h"

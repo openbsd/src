@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioraw.c,v 1.5 2018/11/26 10:39:30 reyk Exp $	*/
+/*	$OpenBSD: vioraw.c,v 1.6 2021/06/16 16:55:02 dv Exp $	*/
 /*
  * Copyright (c) 2018 Ori Bernstein <ori@eigenstate.org>
  *
@@ -18,16 +18,11 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include <machine/vmmvar.h>
-#include <dev/pci/pcireg.h>
-
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
 
-#include "vmd.h"
-#include "vmm.h"
 #include "virtio.h"
 
 static ssize_t

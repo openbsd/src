@@ -1,4 +1,4 @@
-/* $OpenBSD: mc146818.c,v 1.23 2021/03/29 13:09:41 dv Exp $ */
+/* $OpenBSD: mc146818.c,v 1.24 2021/06/16 16:55:02 dv Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -28,12 +28,11 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "vmd.h"
-#include "mc146818.h"
-#include "proc.h"
-#include "virtio.h"
-#include "vmm.h"
 #include "atomicio.h"
+#include "mc146818.h"
+#include "virtio.h"
+#include "vmd.h"
+#include "vmm.h"
 
 #define MC_DIVIDER_MASK 0xe0
 #define MC_RATE_MASK 0xf

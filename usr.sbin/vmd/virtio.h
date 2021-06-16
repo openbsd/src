@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.h,v 1.38 2021/04/21 18:27:36 dv Exp $	*/
+/*	$OpenBSD: virtio.h,v 1.39 2021/06/16 16:55:02 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -16,7 +16,16 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/types.h>
+
 #include <dev/pv/virtioreg.h>
+
+#include <event.h>
+
+#include "vmd.h"
+
+#ifndef _VIRTIO_H_
+#define _VIRTIO_H_
 
 #define VIRTQUEUE_ALIGN(n)	(((n)+(VIRTIO_PAGE_SIZE-1))&    \
 				    ~(VIRTIO_PAGE_SIZE-1))
@@ -322,3 +331,5 @@ void vioscsi_update_qa(struct vioscsi_dev *);
 int vioscsi_notifyq(struct vioscsi_dev *);
 void virtio_stop(struct vm_create_params *vcp);
 void virtio_start(struct vm_create_params *vcp);
+
+#endif /* _VIRTIO_H_ */

@@ -1,4 +1,4 @@
-/* $OpenBSD: atomicio.h,v 1.1 2017/05/08 09:08:40 reyk Exp $ */
+/* $OpenBSD: atomicio.h,v 1.2 2021/06/16 16:55:02 dv Exp $ */
 
 /*
  * Copyright (c) 2006 Damien Miller.  All rights reserved.
@@ -25,6 +25,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/uio.h>
 
 #ifndef _ATOMICIO_H
 #define _ATOMICIO_H

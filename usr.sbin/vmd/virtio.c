@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.88 2021/06/11 21:46:00 dv Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.89 2021/06/16 16:55:02 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -40,13 +40,12 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "atomicio.h"
 #include "pci.h"
+#include "vioscsi.h"
+#include "virtio.h"
 #include "vmd.h"
 #include "vmm.h"
-#include "virtio.h"
-#include "vioscsi.h"
-#include "loadfile.h"
-#include "atomicio.h"
 
 extern char *__progname;
 struct viornd_dev viornd;

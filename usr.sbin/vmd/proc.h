@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.19 2021/04/20 21:11:56 dv Exp $	*/
+/*	$OpenBSD: proc.h,v 1.20 2021/06/16 16:55:02 dv Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -16,12 +16,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/socket.h>
 #include <sys/queue.h>
+#include <sys/socket.h>
 #include <sys/uio.h>
 
-#include <imsg.h>
 #include <event.h>
+#include <imsg.h>
 
 #ifndef _PROC_H
 #define _PROC_H

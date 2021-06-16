@@ -1,4 +1,4 @@
-/*	$OpenBSD: fw_cfg.c,v 1.2 2019/10/11 15:25:40 jsg Exp $	*/
+/*	$OpenBSD: fw_cfg.c,v 1.3 2021/06/16 16:55:02 dv Exp $	*/
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
  *
@@ -23,7 +23,6 @@
 #include <unistd.h>
 
 #include "atomicio.h"
-#include "proc.h"
 #include "vmd.h"
 #include "vmm.h"
 #include "fw_cfg.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fw_cfg.h,v 1.1 2018/12/10 21:30:33 claudio Exp $	*/
+/*	$OpenBSD: fw_cfg.h,v 1.2 2021/06/16 16:55:02 dv Exp $	*/
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
  *
@@ -15,6 +15,11 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "vmd.h"
+
+#ifndef _FW_CFG_H_
+#define _FW_CFG_H_
+
 #define	FW_CFG_IO_SELECT	0x510
 #define	FW_CFG_IO_DATA		0x511
 #define	FW_CFG_IO_DMA_ADDR_HIGH	0x514
@@ -26,3 +31,5 @@ int	fw_cfg_restore(int);
 uint8_t	vcpu_exit_fw_cfg(struct vm_run_params *);
 uint8_t	vcpu_exit_fw_cfg_dma(struct vm_run_params *);
 void	fw_cfg_add_file(const char *, const void *, size_t);
+
+#endif /* _FW_CFG_H_ */

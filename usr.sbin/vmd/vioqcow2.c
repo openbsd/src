@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioqcow2.c,v 1.15 2021/04/29 23:27:10 dv Exp $	*/
+/*	$OpenBSD: vioqcow2.c,v 1.16 2021/06/16 16:55:02 dv Exp $	*/
 
 /*
  * Copyright (c) 2018 Ori Bernstein <ori@eigenstate.org>
@@ -19,20 +19,18 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include <machine/vmmvar.h>
 #include <dev/pci/pcireg.h>
+#include <machine/vmmvar.h>
 
+#include <assert.h>
+#include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <libgen.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <fcntl.h>
-#include <assert.h>
-#include <libgen.h>
-#include <err.h>
-#include <errno.h>
 
-#include "vmd.h"
-#include "vmm.h"
 #include "virtio.h"
 
 #define QCOW2_COMPRESSED	0x4000000000000000ull

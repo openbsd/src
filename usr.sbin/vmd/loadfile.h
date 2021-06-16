@@ -1,5 +1,5 @@
 /*	$NetBSD: loadfile.h,v 1.1 1999/04/28 09:08:50 christos Exp $	 */
-/*	$OpenBSD: loadfile.h,v 1.14 2021/04/05 18:09:48 dv Exp $	 */
+/*	$OpenBSD: loadfile.h,v 1.15 2021/06/16 16:55:02 dv Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,6 +31,11 @@
  */
 
 #include <zlib.h>
+
+#include "vmd.h"
+
+#ifndef _LOADFILE_H_
+#define _LOADFILE_H_
 
 /*
  * Array indices in the u_long position array
@@ -78,3 +83,5 @@
 int loadfile_elf(gzFile, struct vm_create_params *, struct vcpu_reg_state *);
 
 size_t mread(gzFile, paddr_t, size_t);
+
+#endif /* _LOADFILE_H_ */

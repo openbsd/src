@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.28 2019/10/16 02:47:34 mlarkin Exp $	*/
+/*	$OpenBSD: pci.c,v 1.29 2021/06/16 16:55:02 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -25,6 +25,7 @@
 
 #include <string.h>
 #include <unistd.h>
+
 #include "vmd.h"
 #include "pci.h"
 #include "vmm.h"

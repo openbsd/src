@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.h,v 1.8 2020/09/08 20:09:43 kettenis Exp $	*/
+/*	$OpenBSD: pci.h,v 1.9 2021/06/16 16:55:02 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -15,6 +15,15 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <sys/types.h>
+
+#include <dev/pci/pcireg.h>
+
+#include "vmd.h"
+
+#ifndef _PCI_H_
+#define _PCI_H_
 
 #define PCI_MODE1_ENABLE	0x80000000UL
 #define PCI_MODE1_ADDRESS_REG	0x0cf8
@@ -94,3 +103,5 @@ int pci_set_bar_fn(uint8_t, uint8_t, void *, void *);
 uint8_t pci_get_dev_irq(uint8_t);
 int pci_dump(int);
 int pci_restore(int);
+
+#endif /* _PCI_H_ */
