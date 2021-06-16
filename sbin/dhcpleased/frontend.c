@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.11 2021/05/01 11:51:59 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.12 2021/06/16 14:08:38 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -779,9 +779,9 @@ build_packet(uint8_t message_type, uint32_t xid, struct ether_addr *hw_address,
 	static uint8_t	 dhcp_client_id[] = {DHO_DHCP_CLIENT_IDENTIFIER, 7,
 		HTYPE_ETHER, 0, 0, 0, 0, 0, 0};
 	static uint8_t	 dhcp_req_list[] = {DHO_DHCP_PARAMETER_REQUEST_LIST,
-		7, DHO_SUBNET_MASK, DHO_ROUTERS, DHO_DOMAIN_NAME_SERVERS,
+		8, DHO_SUBNET_MASK, DHO_ROUTERS, DHO_DOMAIN_NAME_SERVERS,
 		DHO_HOST_NAME, DHO_DOMAIN_NAME, DHO_BROADCAST_ADDRESS,
-		DHO_DOMAIN_SEARCH};
+		DHO_DOMAIN_SEARCH, DHO_CLASSLESS_STATIC_ROUTES};
 	static uint8_t	 dhcp_requested_address[] = {DHO_DHCP_REQUESTED_ADDRESS,
 		4, 0, 0, 0, 0};
 	static uint8_t	 dhcp_server_identifier[] = {DHO_DHCP_SERVER_IDENTIFIER,
