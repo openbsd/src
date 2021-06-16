@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.75 2021/06/10 15:30:49 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.76 2021/06/16 15:40:47 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -245,50 +245,6 @@ MBR_write(off_t where, struct dos_mbr *dos_mbr)
 	free(secbuf);
 
 	return (0);
-}
-
-/*
- * If *dos_mbr has a 0xee or 0xef partition, nothing needs to happen. If no
- * such partition is present but the first or last sector on the disk has a
- * GPT, zero the GPT to ensure the MBR takes priority and fewer BIOSes get
- * confused.
- */
-void
-MBR_zapgpt(struct dos_mbr *dos_mbr, uint64_t lastsec)
-{
-	struct dos_partition dos_parts[NDOSPART];
-	char *secbuf;
-	uint64_t sig;
-	int i;
-
-	memcpy(dos_parts, dos_mbr->dmbr_parts, sizeof(dos_parts));
-
-	for (i = 0; i < NDOSPART; i++)
-		if ((dos_parts[i].dp_typ == DOSPTYP_EFI) ||
-		    (dos_parts[i].dp_typ == DOSPTYP_EFISYS))
-			return;
-
-	secbuf = DISK_readsector(GPTSECTOR);
-	if (secbuf == NULL)
-		return;
-
-	memcpy(&sig, secbuf, sizeof(sig));
-	if (letoh64(sig) == GPTSIGNATURE) {
-		memset(secbuf, 0, sizeof(sig));
-		DISK_writesector(secbuf, GPTSECTOR);
-	}
-	free(secbuf);
-
-	secbuf = DISK_readsector(lastsec);
-	if (secbuf == NULL)
-		return;
-
-	memcpy(&sig, secbuf, sizeof(sig));
-	if (letoh64(sig) == GPTSIGNATURE) {
-		memset(secbuf, 0, sizeof(sig));
-		DISK_writesector(secbuf, lastsec);
-	}
-	free(secbuf);
 }
 
 /*

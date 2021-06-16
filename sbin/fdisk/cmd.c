@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.115 2021/06/14 17:34:06 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.116 2021/06/16 15:40:47 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -45,9 +45,9 @@ int
 Xreinit(char *args, struct mbr *mbr)
 {
 	struct dos_mbr dos_mbr;
-	int efi, dogpt;
+	int dogpt;
 
-	efi = MBR_protective_mbr(mbr);
+	dogpt = 0;
 
 	if (strncasecmp(args, "gpt", 3) == 0)
 		dogpt = 1;
@@ -56,10 +56,7 @@ Xreinit(char *args, struct mbr *mbr)
 	else if (strlen(args) > 0) {
 		printf("Unrecognized modifier '%s'\n", args);
 		return (CMD_CONT);
-	} else if (efi != -1)
-		dogpt = 1;
-	else
-		dogpt = 0;
+	}
 
 	MBR_make(&initial_mbr, &dos_mbr);
 	MBR_parse(&dos_mbr, mbr->offset, mbr->reloffset, mbr);
@@ -455,8 +452,7 @@ Xwrite(char *args, struct mbr *mbr)
 			return (CMD_CONT);
 		}
 	} else {
-		/* Ensure any on-disk GPT headers are zeroed. */
-		MBR_zapgpt(&dos_mbr, DL_GETDSIZE(&dl) - 1);
+		GPT_zap_headers();
 	}
 
 	/* Refresh in memory copy to reflect what was just written. */

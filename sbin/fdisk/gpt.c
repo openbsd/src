@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.29 2021/06/14 12:46:47 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.30 2021/06/16 15:40:47 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -449,6 +449,35 @@ GPT_init(void)
 		rslt = init_gp();
 
 	return rslt;
+}
+
+void
+GPT_zap_headers(void)
+{
+	char *secbuf;
+	uint64_t sig;
+
+	secbuf = DISK_readsector(GPTSECTOR);
+	if (secbuf == NULL)
+		return;
+
+	memcpy(&sig, secbuf, sizeof(sig));
+	if (letoh64(sig) == GPTSIGNATURE) {
+		memset(secbuf, 0, dl.d_secsize);
+		DISK_writesector(secbuf, GPTSECTOR);
+	}
+	free(secbuf);
+
+	secbuf = DISK_readsector(DL_GETDSIZE(&dl) - 1);
+	if (secbuf == NULL)
+		return;
+
+	memcpy(&sig, secbuf, sizeof(sig));
+	if (letoh64(sig) == GPTSIGNATURE) {
+		memset(secbuf, 0, dl.d_secsize);
+		DISK_writesector(secbuf, DL_GETDSIZE(&dl) - 1);
+	}
+	free(secbuf);
 }
 
 int

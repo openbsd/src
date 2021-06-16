@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.h,v 1.30 2021/05/20 14:27:14 krw Exp $	*/
+/*	$OpenBSD: mbr.h,v 1.31 2021/06/16 15:40:47 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -36,7 +36,6 @@ void MBR_init(struct mbr *);
 void MBR_init_GPT(struct mbr *);
 int MBR_read(off_t, struct dos_mbr *);
 int MBR_write(off_t, struct dos_mbr *);
-void MBR_zapgpt(struct dos_mbr *, uint64_t);
 int MBR_protective_mbr(struct mbr *);
 
 #endif /* _MBR_H */

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.96 2021/01/30 15:15:20 naddy Exp $
+.\"	$OpenBSD: fdisk.8,v 1.97 2021/06/16 15:40:47 krw Exp $
 .\"
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 30 2021 $
+.Dd $Mdocdate: June 16 2021 $
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -371,19 +371,11 @@ Display this manual page.
 .It Cm reinit Op Cm gpt | Cm mbr
 Initialize the currently selected, in-memory copy of the
 boot block.
+.Pp
+By default an MBR is initialized.
 If
 .Cm gpt
 is specified a protective MBR and a GPT are initialized.
-If
-.Cm mbr
-is specified only an MBR is initialized.
-If neither
-.Cm mbr
-nor
-.Cm gpt
-are specified then a protective MBR and a GPT are initialized if a protective
-MBR already exists.
-Otherwise only an MBR is initialized.
 .It Cm disk
 Display the current drive geometry that
 .Nm
