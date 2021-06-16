@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.113 2021/03/26 13:40:05 mpi Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.114 2021/06/16 09:02:21 mpi Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -232,7 +232,7 @@ uvn_attach(struct vnode *vp, vm_prot_t accessprot)
 #endif
 
 	/* now set up the uvn. */
-	uvm_objinit(&uvn->u_obj, &uvm_vnodeops, 1);
+	uvm_obj_init(&uvn->u_obj, &uvm_vnodeops, 1);
 	oldflags = uvn->u_flags;
 	uvn->u_flags = UVM_VNODE_VALID|UVM_VNODE_CANPERSIST;
 	uvn->u_nio = 0;

@@ -1287,7 +1287,7 @@ int ttm_bo_init_reserved(struct ttm_bo_device *bdev,
 	}
 	bo->destroy = destroy ? destroy : ttm_bo_default_destroy;
 
-	uvm_objinit(&bo->base.uobj, NULL, 0);
+	uvm_obj_init(&bo->base.uobj, NULL, 0);
 	kref_init(&bo->kref);
 	INIT_LIST_HEAD(&bo->lru);
 	INIT_LIST_HEAD(&bo->ddestroy);

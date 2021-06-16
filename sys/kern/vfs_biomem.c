@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_biomem.c,v 1.48 2020/04/15 16:46:34 kettenis Exp $ */
+/*	$OpenBSD: vfs_biomem.c,v 1.49 2021/06/16 09:02:21 mpi Exp $ */
 
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
@@ -259,7 +259,7 @@ buf_alloc_pages(struct buf *bp, vsize_t size)
 	KASSERT(bp->b_data == NULL);
 	splassert(IPL_BIO);
 
-	uvm_objinit(&bp->b_uobj, NULL, 1);
+	uvm_obj_init(&bp->b_uobj, NULL, 1);
 
 	/*
 	 * Attempt to allocate with NOWAIT. if we can't, then throw
@@ -316,7 +316,7 @@ buf_free_pages(struct buf *bp)
 	CLR(bp->b_flags, B_DMA);
 
 	/* XXX refactor to do this without splbio later */
-	uvm_objfree(uobj);
+	uvm_obj_free(uobj);
 }
 
 /* Reallocate a buf into a particular pmem range specified by "where". */

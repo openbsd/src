@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.143 2021/05/19 17:46:36 patrick Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.144 2021/06/16 09:02:21 mpi Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -672,7 +672,7 @@ pmap_bootstrap(paddr_t first_avail, paddr_t max_pa)
 
 	kpm = pmap_kernel();
 	for (i = 0; i < PTP_LEVELS - 1; i++) {
-		uvm_objinit(&kpm->pm_obj[i], NULL, 1);
+		uvm_obj_init(&kpm->pm_obj[i], NULL, 1);
 		kpm->pm_ptphint[i] = NULL;
 	}
 	memset(&kpm->pm_list, 0, sizeof(kpm->pm_list));  /* pm_list not used */
@@ -1308,7 +1308,7 @@ pmap_create(void)
 
 	/* init uvm_object */
 	for (i = 0; i < PTP_LEVELS - 1; i++) {
-		uvm_objinit(&pmap->pm_obj[i], NULL, 1);
+		uvm_obj_init(&pmap->pm_obj[i], NULL, 1);
 		pmap->pm_ptphint[i] = NULL;
 	}
 	pmap->pm_stats.wired_count = 0;

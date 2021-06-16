@@ -88,7 +88,7 @@ static int i915_gem_object_get_pages_phys(struct drm_i915_gem_object *obj)
 #else
 		struct pglist plist;
 		TAILQ_INIT(&plist);
-		if (uvm_objwire(obj->base.uao, i * PAGE_SIZE,
+		if (uvm_obj_wire(obj->base.uao, i * PAGE_SIZE,
 				(i + 1) * PAGE_SIZE, &plist))
 			goto err_st;
 		page = TAILQ_FIRST(&plist);
@@ -102,7 +102,7 @@ static int i915_gem_object_get_pages_phys(struct drm_i915_gem_object *obj)
 #ifdef __linux__
 		put_page(page);
 #else
-		uvm_objunwire(obj->base.uao, i * PAGE_SIZE,
+		uvm_obj_unwire(obj->base.uao, i * PAGE_SIZE,
 			      (i + 1) * PAGE_SIZE);
 #endif
 		dst += PAGE_SIZE;
@@ -159,7 +159,7 @@ i915_gem_object_put_pages_phys(struct drm_i915_gem_object *obj,
 #else
 			struct pglist plist;
 			TAILQ_INIT(&plist);
-			if (uvm_objwire(obj->base.uao, i * PAGE_SIZE,
+			if (uvm_obj_wire(obj->base.uao, i * PAGE_SIZE,
 					(i + 1) * PAGE_SIZE, &plist))
 				continue;
 			page = TAILQ_FIRST(&plist);
@@ -176,7 +176,7 @@ i915_gem_object_put_pages_phys(struct drm_i915_gem_object *obj,
 				mark_page_accessed(page);
 			put_page(page);
 #else
-			uvm_objunwire(obj->base.uao, i * PAGE_SIZE,
+			uvm_obj_unwire(obj->base.uao, i * PAGE_SIZE,
 				      (i + 1) * PAGE_SIZE);
 #endif
 

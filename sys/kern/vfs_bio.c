@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.205 2021/03/10 10:21:47 jsg Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.206 2021/06/16 09:02:21 mpi Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -560,7 +560,7 @@ bread_cluster_callback(struct buf *bp)
 		struct uvm_object *oldobj = &bp->b_uobj;
 		int page;
 
-		uvm_objinit(newobj, NULL, 1);
+		uvm_obj_init(newobj, NULL, 1);
 		for (page = 0; page < atop(xbpp[i]->b_bufsize); page++) {
 			struct vm_page *pg = uvm_pagelookup(oldobj,
 			    xbpp[i]->b_poffs + ptoa(page));

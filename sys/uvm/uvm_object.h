@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_object.h,v 1.25 2021/06/15 16:38:09 mpi Exp $	*/
+/*	$OpenBSD: uvm_object.h,v 1.26 2021/06/16 09:02:21 mpi Exp $	*/
 /*	$NetBSD: uvm_object.h,v 1.11 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -92,10 +92,10 @@ RBT_PROTOTYPE(uvm_objtree, vm_page, objt, uvm_pagecmp)
 #define	UVM_OBJ_IS_AOBJ(uobj)						\
 	((uobj)->pgops == &aobj_pager)
 
-void	uvm_objinit(struct uvm_object *, const struct uvm_pagerops *, int);
-int	uvm_objwire(struct uvm_object *, voff_t, voff_t, struct pglist *);
-void	uvm_objunwire(struct uvm_object *, voff_t, voff_t);
-void	uvm_objfree(struct uvm_object *);
+void	uvm_obj_init(struct uvm_object *, const struct uvm_pagerops *, int);
+int	uvm_obj_wire(struct uvm_object *, voff_t, voff_t, struct pglist *);
+void	uvm_obj_unwire(struct uvm_object *, voff_t, voff_t);
+void	uvm_obj_free(struct uvm_object *);
 
 #endif /* _KERNEL */
 

@@ -312,7 +312,7 @@ int drm_gem_object_init(struct drm_device *dev,
 	drm_gem_private_object_init(dev, obj, size);
 	
 	obj->uao = uao_create(size, 0);
-	uvm_objinit(&obj->uobj, &drm_pgops, 1);
+	uvm_obj_init(&obj->uobj, &drm_pgops, 1);
 	
 	obj->filp = (void *)obj->uao;
 

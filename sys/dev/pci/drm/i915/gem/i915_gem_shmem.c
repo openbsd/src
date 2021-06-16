@@ -161,7 +161,7 @@ rebuild_st:
 	sg_page_sizes = 0;
 
 	TAILQ_INIT(&plist);
-	if (uvm_objwire(obj->base.uao, 0, obj->base.size, &plist)) {
+	if (uvm_obj_wire(obj->base.uao, 0, obj->base.size, &plist)) {
 		sg_free_table(st);
 		kfree(st);
 		return -ENOMEM;
@@ -198,7 +198,7 @@ rebuild_st:
 			for_each_sgt_page(page, sgt_iter, st)
 				put_page(page);
 #else
-			uvm_objunwire(obj->base.uao, 0, obj->base.size);
+			uvm_obj_unwire(obj->base.uao, 0, obj->base.size);
 #endif
 			sg_free_table(st);
 
@@ -237,7 +237,7 @@ err_pages:
 	}
 #else
 err_pages:
-	uvm_objunwire(obj->base.uao, 0, obj->base.size);
+	uvm_obj_unwire(obj->base.uao, 0, obj->base.size);
 #endif
 	sg_free_table(st);
 	kfree(st);
@@ -377,7 +377,7 @@ shmem_put_pages(struct drm_i915_gem_object *obj, struct sg_table *pages)
 	if (pagevec_count(&pvec))
 		check_release_pagevec(&pvec);
 #else
-	uvm_objunwire(obj->base.uao, 0, obj->base.size);
+	uvm_obj_unwire(obj->base.uao, 0, obj->base.size);
 #endif
 	obj->mm.dirty = false;
 
@@ -455,7 +455,7 @@ shmem_pwrite(struct drm_i915_gem_object *obj,
 #else
 		struct pglist plist;
 		TAILQ_INIT(&plist);
-		if (uvm_objwire(obj->base.uao, trunc_page(offset),
+		if (uvm_obj_wire(obj->base.uao, trunc_page(offset),
 		    trunc_page(offset) + PAGE_SIZE, &plist)) {
 			err = -ENOMEM;
 			return err;
@@ -476,7 +476,7 @@ shmem_pwrite(struct drm_i915_gem_object *obj,
 		if (err < 0)
 			return err;
 #else
-		uvm_objunwire(obj->base.uao, trunc_page(offset),
+		uvm_obj_unwire(obj->base.uao, trunc_page(offset),
 		    trunc_page(offset) + PAGE_SIZE);
 #endif
 

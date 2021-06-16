@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_object.c,v 1.18 2020/11/24 13:49:09 mpi Exp $	*/
+/*	$OpenBSD: uvm_object.c,v 1.19 2021/06/16 09:02:21 mpi Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -45,10 +45,10 @@
 #define	FETCH_PAGECOUNT	16
 
 /*
- * uvm_objinit: initialise a uvm object.
+ * uvm_obj_init: initialise a uvm object.
  */
 void
-uvm_objinit(struct uvm_object *uobj, const struct uvm_pagerops *pgops, int refs)
+uvm_obj_init(struct uvm_object *uobj, const struct uvm_pagerops *pgops, int refs)
 {
 	uobj->pgops = pgops;
 	RBT_INIT(uvm_objtree, &uobj->memt);
@@ -58,7 +58,7 @@ uvm_objinit(struct uvm_object *uobj, const struct uvm_pagerops *pgops, int refs)
 
 #ifndef SMALL_KERNEL
 /*
- * uvm_objwire: wire the pages of entire uobj
+ * uvm_obj_wire: wire the pages of entire uobj
  *
  * => caller must pass page-aligned start and end values
  * => if the caller passes in a pageq pointer, we'll return a list of
@@ -66,7 +66,7 @@ uvm_objinit(struct uvm_object *uobj, const struct uvm_pagerops *pgops, int refs)
  */
 
 int
-uvm_objwire(struct uvm_object *uobj, voff_t start, voff_t end,
+uvm_obj_wire(struct uvm_object *uobj, voff_t start, voff_t end,
     struct pglist *pageq)
 {
 	int i, npages, left, error;
@@ -120,7 +120,7 @@ uvm_objwire(struct uvm_object *uobj, voff_t start, voff_t end,
 
 error:
 	/* Unwire the pages which have been wired */
-	uvm_objunwire(uobj, start, offset);
+	uvm_obj_unwire(uobj, start, offset);
 
 	return error;
 }
@@ -132,7 +132,7 @@ error:
  */
 
 void
-uvm_objunwire(struct uvm_object *uobj, voff_t start, voff_t end)
+uvm_obj_unwire(struct uvm_object *uobj, voff_t start, voff_t end)
 {
 	struct vm_page *pg;
 	off_t offset;
@@ -151,11 +151,11 @@ uvm_objunwire(struct uvm_object *uobj, voff_t start, voff_t end)
 #endif /* !SMALL_KERNEL */
 
 /*
- * uvm_objfree: free all pages in a uvm object, used by the buffer
+ * uvm_obj_free: free all pages in a uvm object, used by the buffer
  * cache to free all pages attached to a buffer.
  */
 void
-uvm_objfree(struct uvm_object *uobj)
+uvm_obj_free(struct uvm_object *uobj)
 {
 	struct vm_page *pg;
 	struct pglist pgl;
