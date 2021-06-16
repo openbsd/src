@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.800 2021/06/13 02:45:23 jsg Exp $
+#	$OpenBSD: Makefile,v 1.801 2021/06/16 16:48:07 kettenis Exp $
 
 MAN=	aac.4 abcrtc.4 abl.4 ac97.4 acphy.4 acrtc.4 \
 	acpi.4 acpiac.4 acpials.4 acpiasus.4 acpibat.4 \
@@ -27,6 +27,7 @@ MAN=	aac.4 abcrtc.4 abl.4 ac97.4 acphy.4 acrtc.4 \
 	cduart.4 cfxga.4 \
 	ch.4 chvgpio.4 ciphy.4 ciss.4 clcs.4 clct.4 cmpci.4 \
 	com.4 cue.4 cwfg.4 cy.4 cz.4 \
+	dapmic.4 \
 	dc.4 dcphy.4 ddb.4 de.4 diskmap.4 divert.4 drm.4 dsxrtc.4 dt.4 \
 	dwctwo.4 dwdog.4 dwge.4 dwgpio.4 dwiic.4 dwmmc.4 dwpcie.4 dwxe.4 \
 	eap.4 ec.4 eephy.4 ef.4 eg.4 ehci.4 eisa.4 el.4 em.4 emc.4 gcu.4 \
@@ -57,8 +58,8 @@ MAN=	aac.4 abcrtc.4 abl.4 ac97.4 acphy.4 acrtc.4 \
 	mvtemp.4 mvsw.4 mvuart.4 myx.4 \
 	ne.4 neo.4 nep.4 netintro.4 nfe.4 nge.4 nmea.4 \
 	nsclpcsio.4 nsgphy.4 nsphy.4 nsphyter.4 null.4 nviic.4 nvme.4 nvt.4 \
-	oce.4 ohci.4 onewire.4 oosiop.4 openprom.4 options.4 osiop.4 otus.4 \
-	owid.4 owctr.4 owsbm.4 owtemp.4 \
+	oce.4 ociic.4 ohci.4 onewire.4 oosiop.4 openprom.4 options.4 \
+	osiop.4 otus.4 owid.4 owctr.4 owsbm.4 owtemp.4 \
 	pair.4 pcagpio.4 pcaled.4 pcamux.4 \
 	pcdisplay.4 pchb.4 pchtemp.4 pci.4 pcib.4 \
 	pcfadc.4 pcfiic.4 pcfrtc.4 pchgpio.4 pciide.4 pckbc.4 pckbd.4 \
