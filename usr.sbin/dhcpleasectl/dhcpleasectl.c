@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleasectl.c,v 1.3 2021/03/23 17:46:20 florian Exp $	*/
+/*	$OpenBSD: dhcpleasectl.c,v 1.4 2021/06/16 14:06:18 florian Exp $	*/
 
 /*
  * Copyright (c) 2021 Florian Obser <florian@openbsd.org>
@@ -181,7 +181,7 @@ show_interface_msg(struct imsg *imsg)
 	char			 buf[IF_NAMESIZE], *bufp;
 	char			 ipbuf[INET_ADDRSTRLEN];
 	char			 maskbuf[INET_ADDRSTRLEN];
-	char			 routerbuf[INET_ADDRSTRLEN];
+	char			 gwbuf[INET_ADDRSTRLEN];
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_INTERFACE_INFO:
@@ -210,19 +210,28 @@ show_interface_msg(struct imsg *imsg)
 			timespecsub(&now, &cei->request_time, &diff);
 			memset(ipbuf, 0, sizeof(ipbuf));
 			memset(maskbuf, 0, sizeof(maskbuf));
-			memset(routerbuf, 0, sizeof(routerbuf));
+			memset(gwbuf, 0, sizeof(gwbuf));
 			if (inet_ntop(AF_INET, &cei->requested_ip, ipbuf,
 			    sizeof(ipbuf)) == NULL)
 				ipbuf[0] = '\0';
 			if (inet_ntop(AF_INET, &cei->mask, maskbuf,
 			    sizeof(maskbuf)) == NULL)
 				maskbuf[0] = '\0';
-			if (inet_ntop(AF_INET, &cei->router, routerbuf,
-			    sizeof(routerbuf)) == NULL)
-				routerbuf[0] = '\0';
 			printf("\t    IP: %s/%s\n", ipbuf, maskbuf);
-			if (cei->router.s_addr != INADDR_ANY)
-				printf("\trouter: %s\n", routerbuf);
+			for (i = 0; i < cei->routes_len; i++) {
+				if (inet_ntop(AF_INET, &cei->routes[i].dst,
+				    ipbuf, sizeof(ipbuf)) == NULL)
+					ipbuf[0] = '\0';
+				if (inet_ntop(AF_INET, &cei->routes[i].mask,
+				    maskbuf, sizeof(maskbuf)) == NULL)
+					maskbuf[0] = '\0';
+				if (inet_ntop(AF_INET, &cei->routes[i].gw,
+				    gwbuf, sizeof(gwbuf)) == NULL)
+					gwbuf[0] = '\0';
+
+				printf("\t%s\t%s/%s - %s\n", i == 0 ? "routes:"
+				    : "", ipbuf, maskbuf, gwbuf);
+			}
 			if (cei->nameservers[0].s_addr != INADDR_ANY) {
 				printf("\t   DNS:");
 				for (i = 0; i < MAX_RDNS_COUNT &&

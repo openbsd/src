@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleased.h,v 1.4 2021/04/10 17:22:34 florian Exp $	*/
+/*	$OpenBSD: dhcpleased.h,v 1.5 2021/06/16 14:06:17 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -29,6 +29,9 @@
 /* MAXDNAME from arpa/namesr.h */
 #define	DHCPLEASED_MAX_DNSSL	1025
 #define	MAX_RDNS_COUNT		8 /* max nameserver in a RTM_PROPOSAL */
+
+/* A 1500 bytes packet can hold less than 300 classless static routes */
+#define	MAX_DHCP_ROUTES		256
 
 #define	DHCP_COOKIE		{99, 130, 83, 99}
 
@@ -168,6 +171,12 @@ struct imsgev {
 	short		 events;
 };
 
+struct dhcp_route {
+	struct in_addr		 dst;
+	struct in_addr		 mask;
+	struct in_addr		 gw;
+};
+
 enum imsg_type {
 	IMSG_NONE,
 #ifndef	SMALL
@@ -207,7 +216,8 @@ struct ctl_engine_info {
 	struct in_addr		dhcp_server; /* for unicast */
 	struct in_addr		requested_ip;
 	struct in_addr		mask;
-	struct in_addr		router;
+	struct dhcp_route	routes[MAX_DHCP_ROUTES];
+	int			routes_len;
 	struct in_addr		nameservers[MAX_RDNS_COUNT];
 	uint32_t		lease_time;
 	uint32_t		renewal_time;

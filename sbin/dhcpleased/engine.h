@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.h,v 1.1 2021/02/26 16:16:37 florian Exp $	*/
+/*	$OpenBSD: engine.h,v 1.2 2021/06/16 14:06:17 florian Exp $	*/
 
 /*
  * Copyright (c) 2021 Florian Obser <florian@openbsd.org>
@@ -18,11 +18,11 @@
 
 struct imsg_configure_interface {
 	uint32_t		 if_index;
+	int			 rdomain;
 	struct in_addr		 addr;
 	struct in_addr		 mask;
-	struct in_addr		 router;
-	int			 rdomain;
-
+	struct dhcp_route	 routes[MAX_DHCP_ROUTES];
+	int			 routes_len;
 };
 
 void		 engine(int, int);
