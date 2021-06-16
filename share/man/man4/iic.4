@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iic.4,v 1.115 2020/11/13 10:14:53 patrick Exp $
+.\"	$OpenBSD: iic.4,v 1.116 2021/06/16 16:41:42 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 13 2020 $
+.Dd $Mdocdate: June 16 2021 $
 .Dt IIC 4
 .Os
 .Sh NAME
@@ -46,6 +46,7 @@
 .Cd "iic* at mviic?                 # arm64"
 .Cd "iic* at rkiic?                 # arm64 armv7"
 .Cd "iic* at sxitwi?                # arm64 armv7"
+.Cd "iic* at ociic?                 # riscv64"
 .Sh DESCRIPTION
 .Tn I2C
 is a two-wire bus developed by Philips used for connecting
@@ -112,6 +113,8 @@ Apple Kauai I2C controller
 Marvell Armada 3700 I2C Controller
 .It Xr nviic 4
 NVIDIA nForce2/3/4 SMBus controller
+.It Xr ociic 4
+OpenCores I2C controller
 .It Xr octiic 4
 OCTEON two-wire serial interface
 .It Xr pcfiic 4
@@ -171,6 +174,8 @@ Bosch motion sensor
 Intel Crystal Cove Power Management IC
 .It Xr cwfg 4
 CellWise CW201x fuel gauge
+.It Xr dapmic 4
+Dialog DA9063 Power Management IC
 .It Xr dsxrtc 4
 Maxim DS3231/DS3232 real-time clock
 .It Xr ecadc 4
