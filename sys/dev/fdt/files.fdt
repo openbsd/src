@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.153 2021/05/28 15:52:11 visa Exp $
+#	$OpenBSD: files.fdt,v 1.154 2021/06/16 12:37:24 kettenis Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -160,6 +160,11 @@ file	dev/fdt/exuart.c		exuart
 device	gfrtc
 attach	gfrtc at fdt
 file	dev/fdt/gfrtc.c			gfrtc
+
+# OpenCores I2C controller
+device	ociic: i2cbus
+attach	ociic at fdt
+file	dev/fdt/ociic.c			ociic
 
 # ARM PrimeCell PL061 General Purpose Input/Output
 device	plgpio
@@ -574,3 +579,8 @@ file	dev/fdt/es8316ac.c		escodec
 device	cwfg
 attach	cwfg at i2c
 file	dev/fdt/cwfg.c			cwfg
+
+# Dialog DA9063 PMIC
+device	dapmic
+attach	dapmic at i2c
+file	dev/fdt/dapmic.c		dapmic
