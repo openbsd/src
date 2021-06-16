@@ -1,4 +1,4 @@
-/* $OpenBSD: key-string.c,v 1.67 2021/06/10 07:38:28 nicm Exp $ */
+/* $OpenBSD: key-string.c,v 1.68 2021/06/16 08:37:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -183,6 +183,8 @@ key_string_lookup_string(const char *string)
 	if (string[0] == '0' && string[1] == 'x') {
 		if (sscanf(string + 2, "%x", &u) != 1)
 			return (KEYC_UNKNOWN);
+		if (u < 32)
+			return (u);
 		mlen = wctomb(m, u);
 		if (mlen <= 0 || mlen > MB_LEN_MAX)
 			return (KEYC_UNKNOWN);
