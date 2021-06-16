@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.268 2021/05/27 08:29:06 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.269 2021/06/16 16:24:11 job Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -39,6 +39,7 @@
 #include "bgpd.h"
 #include "session.h"
 #include "rde.h"
+#include "version.h"
 
 #include "bgpctl.h"
 #include "parser.h"
@@ -94,7 +95,7 @@ main(int argc, char *argv[])
 	if (asprintf(&sockname, "%s.%d", SOCKET_NAME, tableid) == -1)
 		err(1, "asprintf");
 
-	while ((ch = getopt(argc, argv, "jns:")) != -1) {
+	while ((ch = getopt(argc, argv, "jns:V")) != -1) {
 		switch (ch) {
 		case 'n':
 			if (++nodescr > 1)
@@ -106,6 +107,9 @@ main(int argc, char *argv[])
 		case 's':
 			sockname = optarg;
 			break;
+		case 'V':
+			fprintf(stderr, "OpenBGPD %s\n", BGPD_VERSION);
+			return 0;
 		default:
 			usage();
 			/* NOTREACHED */

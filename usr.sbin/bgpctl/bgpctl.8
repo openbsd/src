@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.98 2021/05/20 10:03:43 claudio Exp $
+.\" $OpenBSD: bgpctl.8,v 1.99 2021/06/16 16:24:12 job Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 20 2021 $
+.Dd $Mdocdate: June 16 2021 $
 .Dt BGPCTL 8
 .Os
 .Sh NAME
@@ -22,7 +22,7 @@
 .Nd control the Border Gateway Protocol daemon
 .Sh SYNOPSIS
 .Nm bgpctl
-.Op Fl jn
+.Op Fl jnV
 .Op Fl s Ar socket
 .Ar command
 .Op Ar argument ...
@@ -60,6 +60,8 @@ To administer
 in a different routing domain, run
 .Nm
 in said routing domain.
+.It Fl V
+Show the version and exit.
 .El
 .Pp
 The commands are as follows:

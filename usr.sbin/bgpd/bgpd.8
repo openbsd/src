@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.8,v 1.67 2021/05/25 14:18:44 claudio Exp $
+.\" $OpenBSD: bgpd.8,v 1.68 2021/06/16 16:24:12 job Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 25 2021 $
+.Dd $Mdocdate: June 16 2021 $
 .Dt BGPD 8
 .Os
 .Sh NAME
@@ -23,7 +23,7 @@
 .Sh SYNOPSIS
 .Nm bgpd
 .Bk -words
-.Op Fl cdnv
+.Op Fl cdnvV
 .Op Fl D Ar macro Ns = Ns Ar value
 .Op Fl f Ar file
 .Ek
@@ -203,6 +203,8 @@ Configtest mode.
 Only check the configuration file for validity.
 .It Fl v
 Produce more verbose output.
+.It Fl V
+Show the version and exit.
 .El
 .Sh FILES
 .Bl -tag -width "/var/run/bgpd.sock.<rdomain>" -compact

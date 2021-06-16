@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.237 2021/05/17 10:47:07 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.238 2021/06/16 16:24:12 job Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -36,6 +36,7 @@
 #include "bgpd.h"
 #include "session.h"
 #include "log.h"
+#include "version.h"
 
 void		sighdlr(int);
 __dead void	usage(void);
@@ -145,7 +146,7 @@ main(int argc, char *argv[])
 	if (saved_argv0 == NULL)
 		saved_argv0 = "bgpd";
 
-	while ((ch = getopt(argc, argv, "cdD:f:nRSTv")) != -1) {
+	while ((ch = getopt(argc, argv, "cdD:f:nRSTvV")) != -1) {
 		switch (ch) {
 		case 'c':
 			cmd_opts |= BGPD_OPT_FORCE_DEMOTE;
@@ -178,6 +179,9 @@ main(int argc, char *argv[])
 		case 'T':
 			proc = PROC_RTR;
 			break;
+		case 'V':
+			fprintf(stderr, "OpenBGPD %s\n", BGPD_VERSION);
+			return 0;
 		default:
 			usage();
 			/* NOTREACHED */
