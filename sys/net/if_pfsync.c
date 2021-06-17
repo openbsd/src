@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.292 2021/06/15 10:10:22 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.293 2021/06/17 00:18:09 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1991,10 +1991,8 @@ pfsync_undefer_notify(struct pfsync_deferral *pd)
 
 	if (st->rt == PF_ROUTETO) {
 		if (pf_setup_pdesc(&pdesc, st->key[PF_SK_WIRE]->af,
-		    st->direction, st->kif, pd->pd_m, NULL) != PF_PASS) {
-			m_freem(pd->pd_m);
+		    st->direction, st->kif, pd->pd_m, NULL) != PF_PASS)
 			return;
-		}
 		switch (st->key[PF_SK_WIRE]->af) {
 		case AF_INET:
 			pf_route(&pdesc, st);
@@ -2032,8 +2030,7 @@ pfsync_free_deferral(struct pfsync_deferral *pd)
 	struct pfsync_softc *sc = pfsyncif;
 
 	pf_state_unref(pd->pd_st);
-	if (pd->pd_m != NULL)
-		m_freem(pd->pd_m);
+	m_freem(pd->pd_m);
 	pool_put(&sc->sc_pool, pd);
 }
 
@@ -2048,10 +2045,7 @@ pfsync_undefer(struct pfsync_deferral *pd, int drop)
 		return;
 
 	CLR(pd->pd_st->state_flags, PFSTATE_ACK);
-	if (drop) {
-		m_freem(pd->pd_m);
-		pd->pd_m = NULL;
-	} else
+	if (!drop)
 		pfsync_undefer_notify(pd);
 
 	pfsync_free_deferral(pd);
