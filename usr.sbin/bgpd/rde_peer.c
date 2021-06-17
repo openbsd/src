@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.9 2021/05/27 14:32:08 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.10 2021/06/17 08:45:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -298,11 +298,19 @@ rde_up_dump_upcall(struct rib_entry *re, void *ptr)
 {
 	struct rde_peer		*peer = ptr;
 
+	if (peer->state != PEER_UP)
+		return;
 	if (re->rib_id != peer->loc_rib_id)
 		fatalx("%s: Unexpected RIB %u != %u.", __func__, re->rib_id,
 		    peer->loc_rib_id);
+	if (peer->capa.mp[re->prefix->aid] == 0)
+		fatalx("%s: Unexpected %s prefix", __func__,
+		    aid2str(re->prefix->aid));
+
+	/* no eligible prefix, not even for 'evaluate all' */
 	if (re->active == NULL)
 		return;
+
 	up_generate_updates(out_rules, peer, re->active, NULL);
 }
 
