@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp-fpu.c,v 1.6 2020/10/19 08:50:35 kettenis Exp $	*/
+/*	$OpenBSD: setjmp-fpu.c,v 1.7 2021/06/17 12:55:38 kettenis Exp $	*/
 
 #include <err.h>
 #include <fenv.h>
@@ -42,7 +42,7 @@ TEST_SETJMP(void)
 		rv = fegetround();
 		if (rv != FE_UPWARD)
 			errx(1, "fegetround returned %d, not FE_UPWARD", rv);
-#if !defined(__arm__) && !defined(__aarch64__)
+#if !defined(__arm__) && !defined(__aarch64__) && !defined(__riscv)
 		rv = fegetexcept();
 		if (rv != FE_DIVBYZERO)
 			errx(1, "fegetexcept returned %d, not FE_DIVBYZERO",

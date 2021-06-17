@@ -1,4 +1,4 @@
-/*	$OpenBSD: fenv.c,v 1.7 2019/12/21 10:05:55 kettenis Exp $	*/
+/*	$OpenBSD: fenv.c,v 1.8 2021/06/17 12:55:38 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2004 David Schultz <das@FreeBSD.org>
@@ -322,7 +322,7 @@ test_fegsetenv(void)
 static void
 test_masking(void)
 {
-#if !defined(__arm__) && !defined(__aarch64__)
+#if !defined(__arm__) && !defined(__aarch64__) && !defined(__riscv)
 	struct sigaction act;
 	int except, i, pass, raise, status;
 
@@ -465,7 +465,7 @@ test_feholdupdate(void)
 				assert(0);
 			}
 		}
-#if defined(__arm__) || defined(__aarch64__)
+#if defined(__arm__) || defined(__aarch64__) || defined(__riscv)
 		break;
 #endif
 	}

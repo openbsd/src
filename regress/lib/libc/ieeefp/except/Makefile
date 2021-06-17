@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.6 2020/10/18 17:40:06 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.7 2021/06/17 12:55:38 kettenis Exp $
 
 PROG=except
 
 REGRESS_TARGETS+= fltdiv fltinv fltovf fltund
 
-.if ${MACHINE} == arm64 || ${MACHINE} == armv7
+.if ${MACHINE} == arm64 || ${MACHINE} == armv7 || ${MACHINE} == riscv64
 # Floating-point exceptions are optional and absent on most hardware
 REGRESS_EXPECTED_FAILURES+= fltdiv fltinv fltovf fltund
 .endif
