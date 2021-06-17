@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.132 2020/04/14 20:58:12 kettenis Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.133 2021/06/17 09:29:36 kettenis Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.129 2020/04/14 20:57:22 kettenis Exp 
+ *	OpenBSD: miidevs,v 1.130 2021/06/17 09:29:01 kettenis Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -221,6 +221,8 @@
 #define	MII_STR_xxBROADCOM3_BCM5720C	"BCM5720C 10/100/1000baseT PHY"
 #define	MII_MODEL_xxBROADCOM4_BCM54210E	0x000a
 #define	MII_STR_xxBROADCOM4_BCM54210E	"BCM54210E 10/100/1000baseT PHY"
+#define	MII_MODEL_xxBROADCOM4_BCM5725	0x0038
+#define	MII_STR_xxBROADCOM4_BCM5725	"BCM5725 10/100/1000baseT PHY"
 #define	MII_MODEL_BROADCOM_BCM5400	0x0004
 #define	MII_STR_BROADCOM_BCM5400	"BCM5400 1000baseT PHY"
 #define	MII_MODEL_BROADCOM_BCM5401	0x0005
