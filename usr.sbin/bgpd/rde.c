@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.525 2021/06/17 08:43:06 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.526 2021/06/17 10:28:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2879,6 +2879,28 @@ rde_evaluate_all(void)
 	return rde_eval_all;
 }
 
+static int
+rde_skip_peer(struct rde_peer *peer, u_int16_t rib_id, u_int8_t aid)
+{
+	/* skip ourself */
+	if (peer == peerself)
+		return 1;
+	if (peer->state != PEER_UP)
+		return 1;
+	/* skip peers using a different rib */
+	if (peer->loc_rib_id != rib_id)
+		return 1;
+	/* check if peer actually supports the address family */
+	if (peer->capa.mp[aid] == 0)
+		return 1;
+	/* skip peers with special export types */
+	if (peer->export_type == EXPORT_NONE ||
+	    peer->export_type == EXPORT_DEFAULT_ROUTE)
+		return 1;
+
+	return 0;
+}
+
 void
 rde_generate_updates(struct rib *rib, struct prefix *new, struct prefix *old,
     int eval_all)
@@ -2903,20 +2925,7 @@ rde_generate_updates(struct rib *rib, struct prefix *new, struct prefix *old,
 		aid = old->pt->aid;
 
 	LIST_FOREACH(peer, &peerlist, peer_l) {
-		/* skip ourself */
-		if (peer == peerself)
-			continue;
-		if (peer->state != PEER_UP)
-			continue;
-		/* skip peers using a different rib */
-		if (peer->loc_rib_id != rib->id)
-			continue;
-		/* check if peer actually supports the address family */
-		if (peer->capa.mp[aid] == 0)
-			continue;
-		/* skip peers with special export types */
-		if (peer->export_type == EXPORT_NONE ||
-		    peer->export_type == EXPORT_DEFAULT_ROUTE)
+		if (rde_skip_peer(peer, rib->id, aid))
 			continue;
 		/* skip regular peers if the best path didn't change */
 		if ((peer->flags & PEERFLAG_EVALUATE_ALL) == 0 && eval_all)
@@ -3571,20 +3580,7 @@ rde_softreconfig_out(struct rib_entry *re, void *bula)
 		return;
 
 	LIST_FOREACH(peer, &peerlist, peer_l) {
-		/* skip ourself */
-		if (peer == peerself)
-			continue;
-		if (peer->state != PEER_UP)
-			continue;
-		/* skip peers using a different rib */
-		if (peer->loc_rib_id != p->re->rib_id)
-			continue;
-		/* check if peer actually supports the address family */
-		if (peer->capa.mp[aid] == 0)
-			continue;
-		/* skip peers with special export types */
-		if (peer->export_type == EXPORT_NONE ||
-		    peer->export_type == EXPORT_DEFAULT_ROUTE)
+		if (rde_skip_peer(peer, re->rib_id, aid))
 			continue;
 		/* skip peers which don't need to reconfigure */
 		if (peer->reconf_out == 0)
