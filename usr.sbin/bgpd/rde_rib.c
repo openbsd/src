@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.221 2021/05/04 09:27:09 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.222 2021/06/17 08:16:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1940,7 +1940,7 @@ nexthop_hash(struct bgpd_addr *nexthop)
 		    sizeof(struct in6_addr));
 		break;
 	default:
-		fatalx("nexthop_hash: unsupported AF");
+		fatalx("nexthop_hash: unsupported AID %d", nexthop->aid);
 	}
 	return (&nexthoptable.nexthop_hashtbl[h & nexthoptable.nexthop_hashmask]);
 }
