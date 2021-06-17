@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.239 2021/05/27 14:32:08 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.240 2021/06/17 16:05:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -107,6 +107,8 @@ struct rde_peer {
 	u_int16_t			 loc_rib_id;
 	u_int16_t			 short_as;
 	u_int16_t			 mrt_idx;
+	u_int8_t			 recv_eor;	/* bitfield per AID */
+	u_int8_t			 sent_eor;	/* bitfield per AID */
 	u_int8_t			 reconf_out;	/* out filter changed */
 	u_int8_t			 reconf_rib;	/* rib changed */
 	u_int8_t			 throttled;
@@ -378,6 +380,7 @@ void		rde_generate_updates(struct rib *, struct prefix *,
 		    struct prefix *, int);
 u_int32_t	rde_local_as(void);
 int		rde_decisionflags(void);
+void		rde_peer_send_rrefresh(struct rde_peer *, u_int8_t, u_int8_t);
 int		rde_match_peer(struct rde_peer *, struct ctl_neighbor *);
 
 /* rde_peer.c */
@@ -395,6 +398,7 @@ void		 peer_down(struct rde_peer *, void *);
 void		 peer_flush(struct rde_peer *, u_int8_t, time_t);
 void		 peer_stale(struct rde_peer *, u_int8_t);
 void		 peer_dump(struct rde_peer *, u_int8_t);
+void		 peer_begin_rrefresh(struct rde_peer *, u_int8_t);
 
 void		 peer_imsg_push(struct rde_peer *, struct imsg *);
 int		 peer_imsg_pop(struct rde_peer *, struct imsg *);

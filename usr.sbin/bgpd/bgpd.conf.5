@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.210 2021/05/06 09:21:35 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.211 2021/06/17 16:05:25 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 6 2021 $
+.Dd $Mdocdate: June 17 2021 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -829,6 +829,16 @@ capability negotiation is disabled during the establishment of the session.
 This can be helpful to connect to old or broken BGP implementations.
 The default is
 .Ic yes .
+.Pp
+.It Xo
+.Ic announce enhanced refresh
+.Pq Ic yes Ns | Ns Ic no
+.Xc
+If set to
+.Ic yes ,
+the enhanced route refresh capability is announced.
+The default is
+.Ic no .
 .Pp
 .It Xo
 .Ic announce refresh

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.10 2021/06/17 08:45:37 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.11 2021/06/17 16:05:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -36,6 +36,9 @@ struct peer_table {
 
 struct rde_peer_head	 peerlist;
 struct rde_peer		*peerself;
+
+CTASSERT(sizeof(peerself->recv_eor) * 8 > AID_MAX);
+CTASSERT(sizeof(peerself->sent_eor) * 8 > AID_MAX);
 
 struct iq {
 	SIMPLEQ_ENTRY(iq)	entry;
@@ -353,6 +356,15 @@ peer_up(struct rde_peer *peer, struct session_up *sup)
 	peer->local_v6_addr = sup->local_v6_addr;
 	memcpy(&peer->capa, &sup->capa, sizeof(peer->capa));
 
+	/* clear eor markers depending on GR flags */
+	if (peer->capa.grestart.restart) {
+		peer->sent_eor = 0;
+		peer->recv_eor = 0;
+	} else {
+		/* no EOR expected */
+		peer->sent_eor = ~0;
+		peer->recv_eor = ~0;
+	}
 	peer->state = PEER_UP;
 
 	for (i = 0; i < AID_MAX; i++) {
@@ -451,6 +463,9 @@ peer_stale(struct rde_peer *peer, u_int8_t aid)
 void
 peer_dump(struct rde_peer *peer, u_int8_t aid)
 {
+	if (peer->capa.enhanced_rr && (peer->sent_eor & (1 << aid)))
+		rde_peer_send_rrefresh(peer, aid, ROUTE_REFRESH_BEGIN_RR);
+
 	if (peer->export_type == EXPORT_NONE) {
 		/* nothing to send apart from the marker */
 		if (peer->capa.grestart.restart)
@@ -465,6 +480,27 @@ peer_dump(struct rde_peer *peer, u_int8_t aid)
 		/* throttle peer until dump is done */
 		peer->throttled = 1;
 	}
+}
+
+/*
+ * Start of an enhanced route refresh. Mark all routes as stale.
+ * Once the route refresh ends a End of Route Refresh message is sent
+ * which calls peer_flush() to remove all stale routes.
+ */
+void
+peer_begin_rrefresh(struct rde_peer *peer, u_int8_t aid)
+{
+	time_t now;
+
+	/* flush the now even staler routes out */
+	if (peer->staletime[aid])
+		peer_flush(peer, aid, peer->staletime[aid]);
+
+	peer->staletime[aid] = now = getmonotime();
+
+	/* make sure new prefixes start on a higher timestamp */
+	while (now >= getmonotime())
+		sleep(1);
 }
 
 /*

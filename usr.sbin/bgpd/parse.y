@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.416 2021/05/20 10:06:20 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.417 2021/06/17 16:05:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -204,7 +204,7 @@ typedef struct {
 %token	GROUP NEIGHBOR NETWORK
 %token	EBGP IBGP
 %token	LOCALAS REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE MAXPREFIX RESTART
-%token	ANNOUNCE CAPABILITIES REFRESH AS4BYTE CONNECTRETRY
+%token	ANNOUNCE CAPABILITIES REFRESH AS4BYTE CONNECTRETRY ENHANCED
 %token	DEMOTE ENFORCE NEIGHBORAS ASOVERRIDE REFLECTOR DEPEND DOWN
 %token	DUMP IN OUT SOCKET RESTRICTED
 %token	LOG TRANSPARENT
@@ -1445,6 +1445,9 @@ peeropts	: REMOTEAS as4number	{
 		}
 		| ANNOUNCE REFRESH yesno {
 			curpeer->conf.capabilities.refresh = $3;
+		}
+		| ANNOUNCE ENHANCED REFRESH yesno {
+			curpeer->conf.capabilities.enhanced_rr = $4;
 		}
 		| ANNOUNCE RESTART yesno {
 			curpeer->conf.capabilities.grestart.restart = $3;
@@ -2898,6 +2901,7 @@ lookup(char *s)
 		{ "dump",		DUMP},
 		{ "ebgp",		EBGP},
 		{ "enforce",		ENFORCE},
+		{ "enhanced",		ENHANCED },
 		{ "esp",		ESP},
 		{ "evaluate",		EVALUATE},
 		{ "export",		EXPORT},

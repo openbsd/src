@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.526 2021/06/17 10:28:36 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.527 2021/06/17 16:05:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1068,6 +1068,7 @@ rde_dispatch_imsg_rtr(struct imsgbuf *ibuf)
 void
 rde_dispatch_imsg_peer(struct rde_peer *peer, void *bula)
 {
+	struct route_refresh rr;
 	struct session_up sup;
 	struct imsg imsg;
 	u_int8_t aid;
@@ -1097,7 +1098,6 @@ rde_dispatch_imsg_peer(struct rde_peer *peer, void *bula)
 	case IMSG_SESSION_STALE:
 	case IMSG_SESSION_FLUSH:
 	case IMSG_SESSION_RESTARTED:
-	case IMSG_REFRESH:
 		if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(aid)) {
 			log_warnx("%s: wrong imsg len", __func__);
 			break;
@@ -1119,8 +1119,44 @@ rde_dispatch_imsg_peer(struct rde_peer *peer, void *bula)
 			if (peer->staletime[aid])
 				peer_flush(peer, aid, peer->staletime[aid]);
 			break;
-		case IMSG_REFRESH:
-			peer_dump(peer, aid);
+		}
+		break;
+	case IMSG_REFRESH:
+		if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(rr)) {
+			log_warnx("%s: wrong imsg len", __func__);
+			break;
+		}
+		memcpy(&rr, imsg.data, sizeof(rr));
+		if (rr.aid >= AID_MAX) {
+			log_warnx("%s: bad AID", __func__);
+			break;
+		}
+		switch (rr.subtype) {
+		case ROUTE_REFRESH_REQUEST:
+			peer_dump(peer, rr.aid);
+			break;
+		case ROUTE_REFRESH_BEGIN_RR:
+			/* check if graceful restart EOR was received */
+			if ((peer->recv_eor & (1 << rr.aid)) == 0) {
+				log_peer_warnx(&peer->conf,
+				    "received %s BoRR before EoR",
+				    aid2str(rr.aid));
+				break;
+			}
+			peer_begin_rrefresh(peer, rr.aid);
+			break;
+		case ROUTE_REFRESH_END_RR:
+			if ((peer->recv_eor & (1 << rr.aid)) != 0 &&
+			    peer->staletime[rr.aid])
+				peer_flush(peer, rr.aid,
+				    peer->staletime[rr.aid]);
+			else
+				log_peer_warnx(&peer->conf,
+				    "received unexpected %s EoRR",
+				    aid2str(rr.aid));
+			break;
+		default:
+			log_warnx("%s: bad subtype %d", __func__, rr.subtype);
 			break;
 		}
 		break;
@@ -3016,8 +3052,14 @@ rde_update_queue_runner(void)
 					    __func__, __LINE__);
 				sent++;
 			}
-			if (eor)
-				rde_peer_send_eor(peer, AID_INET);
+			if (eor) {
+				int sent_eor = peer->sent_eor & (1 << AID_INET);
+				if (peer->capa.grestart.restart && !sent_eor)
+					rde_peer_send_eor(peer, AID_INET);
+				if (peer->capa.enhanced_rr && sent_eor)
+					rde_peer_send_rrefresh(peer, AID_INET,
+					    ROUTE_REFRESH_END_RR);
+			}
 		}
 		max -= sent;
 	} while (sent != 0 && max > 0);
@@ -3067,7 +3109,12 @@ rde_update6_queue_runner(u_int8_t aid)
 				continue;
 			len = sizeof(queue_buf) - MSGSIZE_HEADER;
 			if (up_is_eor(peer, aid)) {
-				rde_peer_send_eor(peer, aid);
+				int sent_eor = peer->sent_eor & (1 << aid);
+				if (peer->capa.grestart.restart && !sent_eor)
+					rde_peer_send_eor(peer, aid);
+				if (peer->capa.enhanced_rr && sent_eor)
+					rde_peer_send_rrefresh(peer, aid,
+					    ROUTE_REFRESH_END_RR);
 				continue;
 			}
 			r = up_dump_mp_reach(queue_buf, len, peer, aid);
@@ -3765,6 +3812,7 @@ static void
 rde_peer_recv_eor(struct rde_peer *peer, u_int8_t aid)
 {
 	peer->prefix_rcvd_eor++;
+	peer->recv_eor |= 1 << aid;
 
 	/*
 	 * First notify SE to avert a possible race with the restart timeout.
@@ -3789,6 +3837,7 @@ rde_peer_send_eor(struct rde_peer *peer, u_int8_t aid)
 	u_int8_t	safi;
 
 	peer->prefix_sent_eor++;
+	peer->sent_eor |= 1 << aid;
 
 	if (aid == AID_INET) {
 		u_char null[4];
@@ -3823,6 +3872,33 @@ rde_peer_send_eor(struct rde_peer *peer, u_int8_t aid)
 
 	log_peer_info(&peer->conf, "sending %s EOR marker",
 	    aid2str(aid));
+}
+
+void
+rde_peer_send_rrefresh(struct rde_peer *peer, u_int8_t aid, u_int8_t subtype)
+{
+	struct route_refresh rr;
+
+	/* not strickly needed, the SE checks as well */
+        if (peer->capa.enhanced_rr == 0)
+		return;
+
+	switch (subtype) {
+	case ROUTE_REFRESH_END_RR:
+	case ROUTE_REFRESH_BEGIN_RR:
+		break;
+	default:
+		fatalx("%s unexpected subtype %d", __func__, subtype);
+	}
+
+	rr.aid = aid;
+	rr.subtype = subtype;
+
+	if (imsg_compose(ibuf_se, IMSG_REFRESH, peer->conf.id, 0, -1,
+	    &rr, sizeof(rr)) == -1)
+
+	log_peer_info(&peer->conf, "sending %s %s marker",
+	    aid2str(aid), subtype == ROUTE_REFRESH_END_RR ? "EoRR" : "BoRR");
 }
 
 /*
