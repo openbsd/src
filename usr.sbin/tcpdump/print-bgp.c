@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-bgp.c,v 1.29 2019/07/03 03:24:03 deraadt Exp $	*/
+/*	$OpenBSD: print-bgp.c,v 1.30 2021/06/17 15:59:23 job Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -97,7 +97,7 @@ struct bgp_route_refresh {
 	u_int16_t len;
 	u_int8_t type;
 	u_int8_t afi[2]; /* unaligned; should be u_int16_t */
-	u_int8_t res;
+	u_int8_t subtype;
 	u_int8_t safi;
 };
 #define BGP_ROUTE_REFRESH_SIZE          23
@@ -189,6 +189,7 @@ static const char *bgp_capcode[] = {
 	/* 67: [Chen] */ "DYNAMIC_CAPABILITY",
 	/* 68: [Appanna] */ "MULTISESSION",
 	/* 69: [draft-ietf-idr-add-paths] */ "ADD-PATH",
+	/* 70: RFC7313 */ "ENHANCED_ROUTE_REFRESH"
 };
 
 #define bgp_capcode(x) \
@@ -199,7 +200,7 @@ static const char *bgpnotify_major[] = {
 	NULL, "Message Header Error",
 	"OPEN Message Error", "UPDATE Message Error",
 	"Hold Timer Expired", "Finite State Machine Error",
-	"Cease", "Capability Message Error",
+	"Cease", "ROUTE_REFRESH Message Error",
 };
 #define bgp_notify_major(x) \
 	num_or_str(bgpnotify_major, \
@@ -323,6 +324,11 @@ static const char *afnumber[] = AFNUM_NAME_STR;
 		num_or_str(afnumber, \
 			sizeof(afnumber)/sizeof(afnumber[0]), (x)))
 
+static const char *refreshtype[] = {
+	"Request", "BoRR", "EoRR"
+};
+#define refresh_subtype(x) \
+	num_or_str(refreshtype, sizeof(refreshtype)/sizeof(refreshtype[0]), (x))
 
 static const char *
 num_or_str(const char **table, size_t siz, int value)
@@ -1069,7 +1075,8 @@ bgp_route_refresh_print(const u_char *dat, int length)
 
 	bgp_route_refresh_header = (const struct bgp_route_refresh *)dat;
 
-	printf(" (%s %s)",
+	printf(" %s (%s %s)",
+	    refresh_subtype(bgp_route_refresh_header->subtype),
 	    af_name(EXTRACT_16BITS(&bgp_route_refresh_header->afi)),
 	    bgp_attr_nlri_safi(bgp_route_refresh_header->safi));
 
