@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.276 2021/06/15 16:35:21 mpi Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.277 2021/06/17 16:10:39 mpi Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -1571,15 +1571,9 @@ uvm_unmap_detach(struct uvm_map_deadq *deadq, int flags)
 
 	TAILQ_FOREACH_SAFE(entry, deadq, dfree.deadq, tmp) {
 		/* Skip entries for which we have to grab the kernel lock. */
-		if (UVM_ET_ISSUBMAP(entry) || UVM_ET_ISOBJ(entry))
+		if (entry->aref.ar_amap || UVM_ET_ISSUBMAP(entry) ||
+		    UVM_ET_ISOBJ(entry))
 			continue;
-
-		/* Drop reference to amap, if we've got one. */
-		if (entry->aref.ar_amap)
-			amap_unref(entry->aref.ar_amap,
-			    entry->aref.ar_pageoff,
-			    atop(entry->end - entry->start),
-			    flags & AMAP_REFALL);
 
 		TAILQ_REMOVE(deadq, entry, dfree.deadq);
 		uvm_mapent_free(entry);
@@ -1592,6 +1586,12 @@ uvm_unmap_detach(struct uvm_map_deadq *deadq, int flags)
 	while ((entry = TAILQ_FIRST(deadq)) != NULL) {
 		if (waitok)
 			uvm_pause();
+		/* Drop reference to amap, if we've got one. */
+		if (entry->aref.ar_amap)
+			amap_unref(entry->aref.ar_amap,
+			    entry->aref.ar_pageoff,
+			    atop(entry->end - entry->start),
+			    flags & AMAP_REFALL);
 
 		/* Drop reference to our backing object, if we've got one. */
 		if (UVM_ET_ISSUBMAP(entry)) {
