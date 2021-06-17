@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.89 2021/06/16 16:55:02 dv Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.90 2021/06/17 22:03:33 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -517,6 +517,11 @@ vioblk_notifyq(struct vioblk_dev *dev)
 		}
 
 		/* Read command from descriptor ring */
+		if (cmd_desc->flags & VRING_DESC_F_WRITE) {
+			log_warnx("vioblk: unexpected writable cmd descriptor "
+			    "%d", cmd_desc_idx);
+			goto out;
+		}
 		if (read_mem(cmd_desc->addr, &cmd, sizeof(cmd))) {
 			log_warnx("vioblk: command read_mem error @ 0x%llx",
 			    cmd_desc->addr);
@@ -540,6 +545,13 @@ vioblk_notifyq(struct vioblk_dev *dev)
 			do {
 				struct ioinfo *info;
 				const uint8_t *secdata;
+
+				if ((secdata_desc->flags & VRING_DESC_F_WRITE)
+				    == 0) {
+					log_warnx("vioblk: unwritable data "
+					    "descriptor %d", secdata_desc_idx);
+					goto out;
+				}
 
 				info = vioblk_start_read(dev,
 				    cmd.sector + secbias, secdata_desc->len);
@@ -607,6 +619,13 @@ vioblk_notifyq(struct vioblk_dev *dev)
 			do {
 				struct ioinfo *info;
 
+				if (secdata_desc->flags & VRING_DESC_F_WRITE) {
+					log_warnx("wr vioblk: unexpected "
+					    "writable data descriptor %d",
+					    secdata_desc_idx);
+					goto out;
+				}
+
 				info = vioblk_start_write(dev,
 				    cmd.sector + secbias,
 				    secdata_desc->addr, secdata_desc->len);
@@ -654,7 +673,35 @@ vioblk_notifyq(struct vioblk_dev *dev)
 			ds_desc_idx = cmd_desc->next & VIOBLK_QUEUE_MASK;
 			ds_desc = &desc[ds_desc_idx];
 
-			ds = VIRTIO_BLK_S_OK;
+			ds = VIRTIO_BLK_S_UNSUPP;
+			break;
+		case VIRTIO_BLK_T_GET_ID:
+			secdata_desc_idx = cmd_desc->next & VIOBLK_QUEUE_MASK;
+			secdata_desc = &desc[secdata_desc_idx];
+
+			/*
+			 * We don't support this command yet. While it's not
+			 * officially part of the virtio spec (will be in v1.2)
+			 * there's no feature to negotiate. Linux drivers will
+			 * often send this command regardless.
+			 *
+			 * When the command is received, it should appear as a
+			 * chain of 3 descriptors, similar to the IN/OUT
+			 * commands. The middle descriptor should have have a
+			 * length of VIRTIO_BLK_ID_BYTES bytes.
+			 */
+			if ((secdata_desc->flags & VRING_DESC_F_NEXT) == 0) {
+				log_warnx("id vioblk: unchained vioblk data "
+				    "descriptor received (idx %d)",
+				    cmd_desc_idx);
+				goto out;
+			}
+
+			/* Skip the data descriptor. */
+			ds_desc_idx = secdata_desc->next & VIOBLK_QUEUE_MASK;
+			ds_desc = &desc[ds_desc_idx];
+
+			ds = VIRTIO_BLK_S_UNSUPP;
 			break;
 		default:
 			log_warnx("%s: unsupported command 0x%x", __func__,
@@ -666,6 +713,11 @@ vioblk_notifyq(struct vioblk_dev *dev)
 			break;
 		}
 
+		if ((ds_desc->flags & VRING_DESC_F_WRITE) == 0) {
+			log_warnx("%s: ds descriptor %d unwritable", __func__,
+			    ds_desc_idx);
+			goto out;
+		}
 		if (write_mem(ds_desc->addr, &ds, ds_desc->len)) {
 			log_warnx("%s: can't write device status data @ 0x%llx",
 			    __func__, ds_desc->addr);
