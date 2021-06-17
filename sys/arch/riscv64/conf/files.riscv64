@@ -1,4 +1,4 @@
-#	$OpenBSD: files.riscv64,v 1.13 2021/06/14 03:50:23 deraadt Exp $
+#	$OpenBSD: files.riscv64,v 1.14 2021/06/17 16:10:50 kettenis Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -88,6 +88,11 @@ file	arch/riscv64/dev/plic.c			plic
 device	sfcc
 attach	sfcc at fdt
 file	arch/riscv64/dev/sfcc.c			sfcc
+
+# SiFive PRCI
+device	sfclock
+attach	sfclock at fdt
+file	arch/riscv64/dev/sfclock.c		sfclock
 
 # SiFive uart
 device	sfuart
