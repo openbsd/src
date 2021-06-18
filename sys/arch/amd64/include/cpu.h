@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.138 2021/06/02 00:39:26 cheloha Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.139 2021/06/18 06:17:28 guenther Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -121,6 +121,7 @@ struct cpu_info {
 	char		ci_mds_tmp[32];		/* 32byte aligned */
 	void		*ci_mds_buf;
 
+	struct pmap *ci_proc_pmap;	/* last userspace pmap */
 	struct pcb *ci_curpcb;
 	struct pcb *ci_idle_pcb;
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.41 2019/06/11 15:23:41 mpi Exp $
+#	$OpenBSD: genassym.cf,v 1.42 2021/06/18 06:17:28 guenther Exp $
 #	Written by Artur Grabowski art@openbsd.org, Public Domain
 
 include <sys/param.h>
@@ -95,8 +95,6 @@ member	pcb_pmap
 member	pcb_savefpu
 
 struct pmap
-member	pm_cpus
-member	pm_pdirpa
 member	pm_pdirpa_intel
 
 struct x86_64_tss
@@ -109,6 +107,7 @@ member  CPU_INFO_CPUID		ci_cpuid
 member  CPU_INFO_APICID		ci_apicid
 member  CPU_INFO_RESCHED	ci_want_resched
 member  CPU_INFO_CURPROC	ci_curproc
+member  CPU_INFO_PROC_PMAP	ci_proc_pmap
 member  CPU_INFO_CURPCB		ci_curpcb
 member  CPU_INFO_IDLE_PCB	ci_idle_pcb
 member	CPU_INFO_ILEVEL		ci_ilevel

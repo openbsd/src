@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.77 2020/01/24 05:27:32 kettenis Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.78 2021/06/18 06:17:28 guenther Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -313,7 +313,6 @@ struct pmap {
 					/* pointer to a PTP in our pmap */
 	struct pmap_statistics pm_stats;  /* pmap stats (lck by object lock) */
 
-	u_int64_t pm_cpus;		/* mask of CPUs using pmap */
 	int pm_type;			/* Type of pmap this is (PMAP_TYPE_x) */
 	uint64_t eptp;			/* cached EPTP (used by vmm) */
 };

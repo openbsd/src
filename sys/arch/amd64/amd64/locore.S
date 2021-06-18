@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.124 2021/06/01 21:12:11 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.125 2021/06/18 06:17:28 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -445,29 +445,23 @@ restore_saved:
 	RETGUARD_SETUP_OFF(cpu_switchto, r11, 6*8)
 
 	/* don't switch cr3 to the same thing it already was */
-	movq	%cr3,%rax
-	cmpq	PCB_CR3(%r13),%rax
-	movq	PCB_CR3(%r13),%rax	/* flags from cmpq unchanged */
+	movq	PCB_CR3(%r13),%rax
+	movq	%cr3,%rdi
+	xorq	%rax,%rdi
+	btrq	$63,%rdi	/* ignore CR3_REUSE_PCID */
+	testq	%rdi,%rdi
 	jz	.Lsame_cr3
 
-	/* set the new pmap's bit for the cpu */
-	testq	%rbx,%rbx
-	jz	.Lno_new_pmap
-	lock
-	btsq	%r9,PM_CPUS(%rbx)
 #ifdef DIAGNOSTIC
-	jc	_C_LABEL(switch_pmcpu_set)
+	/* verify ci_proc_pmap had been updated properly */
+	cmpq	%rcx,CPUVAR(PROC_PMAP)
+	jnz	.Lbogus_proc_pmap
 #endif
-.Lno_new_pmap:
+	/* record which pmap this CPU should get IPIs for */
+	movq	%rbx,CPUVAR(PROC_PMAP)
 
+.Lset_cr3:
 	movq	%rax,%cr3			/* %rax used below too */
-
-	/* clear the old pmap's bit for the cpu */
-	testq	%rcx,%rcx
-	jz	.Lno_old_pmap
-	lock
-	btrq	%r9,PM_CPUS(%rcx)
-.Lno_old_pmap:
 
 .Lsame_cr3:
 	/*
@@ -514,6 +508,18 @@ switch_restored:
 	popq	%rbx
 	RETGUARD_CHECK(cpu_switchto, r11)
 	ret
+
+#ifdef DIAGNOSTIC
+	.globl	_C_LABEL(panic)
+.Lbogus_proc_pmap:
+	leaq	bogus_proc_pmap,%rdi
+	call	_C_LABEL(panic)
+	int3	/* NOTREACHED */
+	.pushsection .rodata
+bogus_proc_pmap:
+	.asciz	"curcpu->ci_proc_pmap didn't point to previous pmap"
+	.popsection
+#endif /* DIAGNOSTIC */
 END(cpu_switchto)
 
 ENTRY(cpu_idle_enter)
@@ -539,20 +545,6 @@ ENTRY(cpu_idle_cycle)
 	ret
 END(cpu_idle_cycle)
 
-	.globl	_C_LABEL(panic)
-
-#ifdef DIAGNOSTIC
-NENTRY(switch_pmcpu_set)
-	leaq	switch_active(%rip),%rdi
-	call	_C_LABEL(panic)
-END(switch_pmcpu_set)
-	/* NOTREACHED */
-
-	.section .rodata
-switch_active:
-	.asciz	"activate already active pmap"
-	.text
-#endif /* DIAGNOSTIC */
 /*
  * savectx(struct pcb *pcb);
  * Update pcb, saving current processor state.
