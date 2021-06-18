@@ -1,4 +1,4 @@
-/* $OpenBSD: dtlstest.c,v 1.8 2021/05/03 23:44:05 inoguchi Exp $ */
+/* $OpenBSD: dtlstest.c,v 1.9 2021/06/18 18:26:38 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -308,7 +308,6 @@ dtls_client(int sock, struct sockaddr_in *server_sin, long mtu)
 
 	if ((ssl_ctx = SSL_CTX_new(DTLS_method())) == NULL)
 		errx(1, "client context");
-	SSL_CTX_set_read_ahead(ssl_ctx, 1);
 
 	if ((ssl = SSL_new(ssl_ctx)) == NULL)
 		errx(1, "client ssl");
@@ -346,7 +345,6 @@ dtls_server(int sock, long options, long mtu)
 	SSL_CTX_set_cookie_verify_cb(ssl_ctx, dtls_cookie_verify);
 	SSL_CTX_set_dh_auto(ssl_ctx, 2);
 	SSL_CTX_set_options(ssl_ctx, options);
-	SSL_CTX_set_read_ahead(ssl_ctx, 1);
 
 	if (SSL_CTX_use_certificate_file(ssl_ctx, server_cert_file,
 	    SSL_FILETYPE_PEM) != 1) {
