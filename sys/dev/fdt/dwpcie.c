@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwpcie.c,v 1.31 2021/06/14 20:54:04 kettenis Exp $	*/
+/*	$OpenBSD: dwpcie.c,v 1.32 2021/06/18 12:12:22 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -477,6 +477,10 @@ dwpcie_attach_deferred(struct device *self)
 	/* Clear BAR as U-Boot seems to leave garbage in it. */
 	HWRITE4(sc, PCI_MAPREG_START, PCI_MAPREG_MEM_TYPE_64BIT);
 	HWRITE4(sc, PCI_MAPREG_START + 4, 0);
+
+	/* Enable 32-bit I/O addressing. */
+	HSET4(sc, PPB_REG_IOSTATUS,
+	    PPB_IO_32BIT | (PPB_IO_32BIT << PPB_IOLIMIT_SHIFT));
 
 	/* Make sure read-only bits are write-protected. */
 	HCLR4(sc, MISC_CONTROL_1, MISC_CONTROL_1_DBI_RO_WR_EN);
