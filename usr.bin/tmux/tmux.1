@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.843 2021/06/10 13:12:31 jmc Exp $
+.\" $OpenBSD: tmux.1,v 1.844 2021/06/18 07:46:54 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 10 2021 $
+.Dd $Mdocdate: June 18 2021 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -2102,9 +2102,11 @@ The following keys may be used in tree mode:
 .It Li "q" Ta "Exit mode"
 .El
 .Pp
-After a session, window or pane is chosen,
+After a session, window or pane is chosen, the first instance of
 .Ql %%
-is replaced by the target in
+and all instances of
+.Ql %1
+are replaced by the target in
 .Ar template
 and the result executed as a command.
 If
