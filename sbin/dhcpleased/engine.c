@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.15 2021/06/16 14:06:17 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.16 2021/06/18 11:44:48 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -1461,6 +1461,7 @@ parse_lease(struct dhcpleased_iface *iface, struct imsg_ifinfo *imsg_ifinfo)
 void
 log_dhcp_hdr(struct dhcp_hdr *dhcp_hdr)
 {
+#ifndef	SMALL
 	char	 hbuf[INET_ADDRSTRLEN];
 
 	log_debug("dhcp_hdr op: %s (%d)", dhcp_hdr->op == DHCP_BOOTREQUEST ?
@@ -1490,6 +1491,7 @@ log_dhcp_hdr(struct dhcp_hdr *dhcp_hdr)
 	    dhcp_hdr->chaddr[12], dhcp_hdr->chaddr[13], dhcp_hdr->chaddr[14],
 	    dhcp_hdr->chaddr[15]);
 	/* ignore sname and file, if we ever print it use strvis(3) */
+#endif
 }
 
 const char *
