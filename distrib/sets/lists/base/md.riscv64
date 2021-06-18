@@ -423,4 +423,5 @@
 ./usr/local/libdata/perl5/site_perl/riscv64-openbsd
 ./usr/mdec/BOOTRISCV64.EFI
 ./usr/sbin/eeprom
+./usr/sbin/pcidump
 ./usr/sbin/wsconscfg
