@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.153 2021/06/11 16:36:34 cheloha Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.154 2021/06/18 15:59:14 cheloha Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -709,15 +709,16 @@ out:
 int
 itimerfix(struct itimerval *itv)
 {
+	static const struct timeval max = { .tv_sec = UINT_MAX, .tv_usec = 0 };
 	struct timeval min_interval = { .tv_sec = 0, .tv_usec = tick };
 
 	if (itv->it_value.tv_sec < 0 || !timerisvalid(&itv->it_value))
 		return EINVAL;
-	if (itv->it_value.tv_sec > 100000000)
+	if (timercmp(&itv->it_value, &max, >))
 		return EINVAL;
 	if (itv->it_interval.tv_sec < 0 || !timerisvalid(&itv->it_interval))
 		return EINVAL;
-	if (itv->it_interval.tv_sec > 100000000)
+	if (timercmp(&itv->it_interval, &max, >))
 		return EINVAL;
 
 	if (!timerisset(&itv->it_value))
