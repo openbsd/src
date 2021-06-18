@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.173 2020/09/01 01:53:34 gnezdo Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.174 2021/06/18 15:34:21 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -375,6 +375,8 @@ ipsec_input_cb(struct cryptop *crp)
 	struct mbuf *m = (struct mbuf *) crp->crp_buf;
 	struct tdb *tdb = NULL;
 	int clen, error;
+
+	KERNEL_ASSERT_LOCKED();
 
 	if (m == NULL) {
 		DPRINTF(("%s: bogus returned buffer from crypto\n", __func__));

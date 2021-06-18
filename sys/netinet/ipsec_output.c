@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.79 2021/03/10 10:21:49 jsg Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.80 2021/06/18 15:34:21 bluhm Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -390,6 +390,8 @@ ipsec_output_cb(struct cryptop *crp)
 	struct mbuf *m = (struct mbuf *) crp->crp_buf;
 	struct tdb *tdb = NULL;
 	int error, ilen, olen;
+
+	KERNEL_ASSERT_LOCKED();
 
 	if (m == NULL) {
 		DPRINTF(("%s: bogus returned buffer from crypto\n", __func__));
