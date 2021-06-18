@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.395 2021/06/12 09:26:47 kettenis Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.396 2021/06/18 06:53:42 jsg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -392,6 +392,7 @@ static const struct bge_revision {
 	{ BGE_CHIPID_BCM5761_A0, "BCM5761 A0" },
 	{ BGE_CHIPID_BCM5761_A1, "BCM5761 A1" },
 	{ BGE_CHIPID_BCM5762_A0, "BCM5762 A0" },
+	{ BGE_CHIPID_BCM5762_B0, "BCM5762 B0" },
 	{ BGE_CHIPID_BCM5784_A0, "BCM5784 A0" },
 	{ BGE_CHIPID_BCM5784_A1, "BCM5784 A1" },
 	/* the 5754 and 5787 share the same ASIC ID */
