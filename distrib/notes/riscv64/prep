@@ -1,8 +1,16 @@
-dnl	$OpenBSD: prep,v 1.1 2021/05/02 23:48:14 drahn Exp $
+dnl	$OpenBSD: prep,v 1.2 2021/06/18 21:32:06 drahn Exp $
 Please be aware that OpenBSD support for this platform is far from
-complete.
+complete, however progress is being made.
 
-Qemu with opensbi and u-boot is the only tested environment.
+HiFive Unmatched
+
+Copy install{:==:}OSrev.img to a USB stick, and boot with both it and the
+vendor provided uSD card (unmodified) inserted. This should enable firmware
+and U-Boot to be loaded from uSD and OpenBSD bootloader and kernel to be
+loaded from USB stick. At this time onboard Ethernet is not well supported,
+so PCIe or USB Ethernet device will be required.
+
+QEMU with OpenSBI and U-Boot
 
 OpenBSD can be installed onto a disk by copying the miniroot for your
 board "miniroot{:--:}OSrev.img" image to an SD card.
