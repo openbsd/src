@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.20 2021/06/13 16:27:15 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.21 2021/06/18 21:52:47 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -304,16 +304,20 @@ cpu_switchto(struct proc *old, struct proc *new)
 		if ((tf->tf_sstatus & SSTATUS_FS_MASK) == SSTATUS_FS_DIRTY) {
 			fpu_save(old, tf);
 		}
+		tf->tf_sstatus &= ~SSTATUS_FS_MASK;
 	}
 
 	cpu_switchto_asm(old, new);
 
 	pcb = ci->ci_curpcb;
 	tf = new->p_addr->u_pcb.pcb_tf;
+#if 0
+	/* XXX this optimization is subtly broken */	
 	if (pcb->pcb_fpcpu == ci && ci->ci_fpuproc == new) {
 		/* If fpu state is already loaded, allow it to be used */
 		tf->tf_sstatus |= SSTATUS_FS_CLEAN;
 	}
+#endif
 }
 
 /*
