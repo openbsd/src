@@ -1,4 +1,4 @@
-/*	$OpenBSD: timeout.h,v 1.41 2021/05/29 01:32:49 cheloha Exp $	*/
+/*	$OpenBSD: timeout.h,v 1.42 2021/06/19 02:05:33 cheloha Exp $	*/
 /*
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -88,24 +88,24 @@ int timeout_sysctl(void *, size_t *, void *, size_t);
 #define KCLOCK_UPTIME	0		/* uptime clock; time since boot */
 #define KCLOCK_MAX	1
 
-#define __TIMEOUT_INITIALIZER(fn, arg, flags, kclock) {			\
+#define __TIMEOUT_INITIALIZER(_fn, _arg, _kclock, _flags) {		\
 	.to_list = { NULL, NULL },					\
 	.to_abstime = { .tv_sec = 0, .tv_nsec = 0 },			\
-	.to_func = (fn),						\
-	.to_arg = (arg),						\
+	.to_func = (_fn),						\
+	.to_arg = (_arg),						\
 	.to_time = 0,							\
-	.to_flags = (flags) | TIMEOUT_INITIALIZED,			\
-	.to_kclock = (kclock)						\
+	.to_flags = (_flags) | TIMEOUT_INITIALIZED,			\
+	.to_kclock = (_kclock)						\
 }
 
-#define TIMEOUT_INITIALIZER_KCLOCK(fn, arg, flags, kclock)		\
-    __TIMEOUT_INITIALIZER((fn), (args), (flags) | TIMEOUT_KCLOCK, (kclock))
+#define TIMEOUT_INITIALIZER_KCLOCK(_fn, _arg, _kclock, _flags)		\
+    __TIMEOUT_INITIALIZER((_fn), (_args), (_kclock), (_flags) | TIMEOUT_KCLOCK)
 
-#define TIMEOUT_INITIALIZER_FLAGS(fn, arg, flags)			\
-    __TIMEOUT_INITIALIZER((fn), (args), (flags), KCLOCK_NONE)
+#define TIMEOUT_INITIALIZER_FLAGS(_fn, _arg, _flags)			\
+    __TIMEOUT_INITIALIZER((_fn), (_args), KCLOCK_NONE, (_flags))
 
 #define TIMEOUT_INITIALIZER(_f, _a)					\
-    __TIMEOUT_INITIALIZER((_f), (_a), 0, KCLOCK_NONE)
+    __TIMEOUT_INITIALIZER((_f), (_a), KCLOCK_NONE, 0)
 
 void timeout_set(struct timeout *, void (*)(void *), void *);
 void timeout_set_flags(struct timeout *, void (*)(void *), void *, int);

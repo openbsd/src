@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.84 2021/05/11 13:29:25 cheloha Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.85 2021/06/19 02:05:33 cheloha Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -253,38 +253,38 @@ timeout_proc_init(void)
 }
 
 static inline void
-_timeout_set(struct timeout *to, void (*fn)(void *), void *arg, int flags,
-    int kclock)
+_timeout_set(struct timeout *to, void (*fn)(void *), void *arg, int kclock,
+    int flags)
 {
 	to->to_func = fn;
 	to->to_arg = arg;
-	to->to_flags = flags | TIMEOUT_INITIALIZED;
 	to->to_kclock = kclock;
+	to->to_flags = flags | TIMEOUT_INITIALIZED;
 }
 
 void
 timeout_set(struct timeout *new, void (*fn)(void *), void *arg)
 {
-	_timeout_set(new, fn, arg, 0, KCLOCK_NONE);
+	_timeout_set(new, fn, arg, KCLOCK_NONE, 0);
 }
 
 void
 timeout_set_flags(struct timeout *to, void (*fn)(void *), void *arg, int flags)
 {
-	_timeout_set(to, fn, arg, flags, KCLOCK_NONE);
+	_timeout_set(to, fn, arg, KCLOCK_NONE, flags);
 }
 
 void
 timeout_set_proc(struct timeout *new, void (*fn)(void *), void *arg)
 {
-	_timeout_set(new, fn, arg, TIMEOUT_PROC, KCLOCK_NONE);
+	_timeout_set(new, fn, arg, KCLOCK_NONE, TIMEOUT_PROC);
 }
 
 void
 timeout_set_kclock(struct timeout *to, void (*fn)(void *), void *arg,
-    int flags, int kclock)
+    int kclock, int flags)
 {
-	_timeout_set(to, fn, arg, flags | TIMEOUT_KCLOCK, kclock);
+	_timeout_set(to, fn, arg, kclock, flags | TIMEOUT_KCLOCK);
 }
 
 int
