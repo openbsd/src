@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.60 2021/06/15 05:24:47 dlg Exp $	*/
+/*	$OpenBSD: time.h,v 1.61 2021/06/19 13:49:39 cheloha Exp $	*/
 /*	$NetBSD: time.h,v 1.18 1996/04/23 10:29:33 mycroft Exp $	*/
 
 /*
@@ -222,11 +222,17 @@ bintimesub(const struct bintime *bt, const struct bintime *ct,
  *   time_second ticks after N.999999999 not after N.4999999999
  */
 
+static inline uint32_t
+FRAC_TO_NSEC(uint64_t frac)
+{
+	return ((frac >> 32) * 1000000000ULL) >> 32;
+}
+
 static inline void
 BINTIME_TO_TIMESPEC(const struct bintime *bt, struct timespec *ts)
 {
 	ts->tv_sec = bt->sec;
-	ts->tv_nsec = (long)(((uint64_t)1000000000 * (uint32_t)(bt->frac >> 32)) >> 32);
+	ts->tv_nsec = FRAC_TO_NSEC(bt->frac);
 }
 
 static inline void
@@ -410,6 +416,12 @@ TIMESPEC_TO_NSEC(const struct timespec *ts)
 	if (ts->tv_sec > (UINT64_MAX - ts->tv_nsec) / 1000000000ULL)
 		return UINT64_MAX;
 	return ts->tv_sec * 1000000000ULL + ts->tv_nsec;
+}
+
+static inline uint64_t
+BINTIME_TO_NSEC(const struct bintime *bt)
+{
+	return bt->sec * 1000000000ULL + FRAC_TO_NSEC(bt->frac);
 }
 
 #else /* !_KERNEL */

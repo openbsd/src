@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.73 2021/06/15 05:24:46 dlg Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.74 2021/06/19 13:49:39 cheloha Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -254,28 +254,18 @@ uint64_t
 nsecuptime(void)
 {
 	struct bintime bt;
-	uint64_t nsec;
 
 	binuptime(&bt);
-
-	nsec = (1000000000ULL * (bt.frac >> 32)) >> 32;
-	nsec += bt.sec * 1000000000ULL;
-
-	return (nsec);
+	return BINTIME_TO_NSEC(&bt);
 }
 
 uint64_t
 getnsecuptime(void)
 {
 	struct bintime bt;
-	uint64_t nsec;
 
 	getbinuptime(&bt);
-
-	nsec = (1000000000ULL * (bt.frac >> 32)) >> 32;
-	nsec += bt.sec * 1000000000ULL;
-
-	return (nsec);
+	return BINTIME_TO_NSEC(&bt);
 }
 
 void
@@ -567,8 +557,7 @@ tc_setclock(const struct timespec *ts)
 #ifndef SMALL_KERNEL
 	/* convert the bintime to ticks */
 	bintimesub(&new_naptime, &old_naptime, &elapsed);
-	adj_ticks = (uint64_t)hz * elapsed.sec +
-	    (((uint64_t)1000000 * (uint32_t)(elapsed.frac >> 32)) >> 32) / tick;
+	adj_ticks = BINTIME_TO_NSEC(&elapsed) / tick_nsec;
 	if (adj_ticks > 0) {
 		if (adj_ticks > INT_MAX)
 			adj_ticks = INT_MAX;
