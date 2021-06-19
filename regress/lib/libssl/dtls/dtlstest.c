@@ -1,6 +1,6 @@
-/* $OpenBSD: dtlstest.c,v 1.9 2021/06/18 18:26:38 jsing Exp $ */
+/* $OpenBSD: dtlstest.c,v 1.10 2021/06/19 15:33:37 jsing Exp $ */
 /*
- * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
+ * Copyright (c) 2020, 2021 Joel Sing <jsing@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -47,12 +47,19 @@ hexdump(const unsigned char *buf, size_t len)
 		fprintf(stderr, "\n");
 }
 
-#define BIO_C_DROP_PACKET	1000
-#define BIO_C_DROP_RANDOM	1001
+#define BIO_C_DELAY_COUNT	1000
+#define BIO_C_DELAY_FLUSH	1001
+#define BIO_C_DELAY_PACKET	1002
+#define BIO_C_DROP_PACKET	1003
+#define BIO_C_DROP_RANDOM	1004
 
 struct bio_packet_monkey_ctx {
+	unsigned int delay_count;
+	unsigned int delay_mask;
 	unsigned int drop_rand;
 	unsigned int drop_mask;
+	uint8_t *delayed_msg;
+	size_t delayed_msg_len;
 };
 
 static int
@@ -80,9 +87,31 @@ bio_packet_monkey_free(BIO *bio)
 		return 1;
 
 	ctx = bio->ptr;
+	free(ctx->delayed_msg);
 	free(ctx);
 
 	return 1;
+}
+
+static int
+bio_packet_monkey_delay_flush(BIO *bio)
+{
+	struct bio_packet_monkey_ctx *ctx = bio->ptr;
+
+	if (ctx->delayed_msg == NULL)
+		return 1;
+
+	if (debug)
+		fprintf(stderr, "DEBUG: flushing delayed packet...\n");
+	if (debug > 1)
+		hexdump(ctx->delayed_msg, ctx->delayed_msg_len);
+
+	BIO_write(bio->next_bio, ctx->delayed_msg, ctx->delayed_msg_len);
+
+	free(ctx->delayed_msg);
+	ctx->delayed_msg = NULL;
+
+	return BIO_ctrl(bio->next_bio, BIO_CTRL_FLUSH, 0, NULL);
 }
 
 static long
@@ -93,6 +122,21 @@ bio_packet_monkey_ctrl(BIO *bio, int cmd, long num, void *ptr)
 	ctx = bio->ptr;
 
 	switch (cmd) {
+	case BIO_C_DELAY_COUNT:
+		if (num < 1 || num > 31)
+			return 0;
+		ctx->delay_count = num;
+		return 1;
+
+	case BIO_C_DELAY_FLUSH:
+		return bio_packet_monkey_delay_flush(bio);
+
+	case BIO_C_DELAY_PACKET:
+		if (num < 1 || num > 31)
+			return 0;
+		ctx->delay_mask |= 1 << ((unsigned int)num - 1);
+		return 1;
+
 	case BIO_C_DROP_PACKET:
 		if (num < 1 || num > 31)
 			return 0;
@@ -123,6 +167,13 @@ bio_packet_monkey_read(BIO *bio, char *out, int out_len)
 
 	ret = BIO_read(bio->next_bio, out, out_len);
 
+	if (ret > 0) {
+		if (debug)
+			fprintf(stderr, "DEBUG: read packet...\n");
+		if (debug > 1)
+			hexdump(out, ret);
+	}
+
 	BIO_clear_retry_flags(bio);
 	if (ret <= 0 && BIO_should_retry(bio->next_bio))
 		BIO_set_retry_read(bio);
@@ -134,26 +185,67 @@ static int
 bio_packet_monkey_write(BIO *bio, const char *in, int in_len)
 {
 	struct bio_packet_monkey_ctx *ctx = bio->ptr;
-	int drop = 0;
+	const char *label = "writing";
+	int delay = 0, drop = 0;
 	int ret;
 
 	if (ctx == NULL || bio->next_bio == NULL)
 		return 0;
 
+	if (ctx->delayed_msg != NULL && ctx->delay_count > 0)
+		ctx->delay_count--;
+
+	if (ctx->delayed_msg != NULL && ctx->delay_count == 0) {
+		if (debug)
+			fprintf(stderr, "DEBUG: writing delayed packet...\n");
+		if (debug > 1)
+			hexdump(ctx->delayed_msg, ctx->delayed_msg_len);
+
+		ret = BIO_write(bio->next_bio, ctx->delayed_msg,
+		    ctx->delayed_msg_len);
+
+		BIO_clear_retry_flags(bio);
+		if (ret <= 0 && BIO_should_retry(bio->next_bio)) {
+			BIO_set_retry_write(bio);
+			return (ret);
+		}
+
+		free(ctx->delayed_msg);
+		ctx->delayed_msg = NULL;
+	}
+		
+	if (ctx->delay_mask > 0) {
+		delay = ctx->delay_mask & 1;
+		ctx->delay_mask >>= 1;
+	}
 	if (ctx->drop_rand > 0) {
 		drop = arc4random_uniform(ctx->drop_rand) == 0;
 	} else if (ctx->drop_mask > 0) {
 		drop = ctx->drop_mask & 1;
 		ctx->drop_mask >>= 1;
 	}
-	if (debug) {
-		fprintf(stderr, "DEBUG: %s packet...\n",
-		    drop ? "dropping" : "writing");
-		if (debug > 1)
-			hexdump(in, in_len);
-	}
+
+	if (delay)
+		label = "delaying";
+	if (drop)
+		label = "dropping";
+	if (debug)
+		fprintf(stderr, "DEBUG: %s packet...\n", label);
+	if (debug > 1)
+		hexdump(in, in_len);
+
 	if (drop)
 		return in_len;
+
+	if (delay) {
+		if (ctx->delayed_msg != NULL)
+			return 0;
+		if ((ctx->delayed_msg = calloc(1, in_len)) == NULL)
+			return 0;
+		memcpy(ctx->delayed_msg, in, in_len);
+		ctx->delayed_msg_len = in_len;
+		return in_len;
+	}
 
 	ret = BIO_write(bio->next_bio, in, in_len);
 
@@ -192,6 +284,23 @@ BIO_new_packet_monkey(void)
 {
 	return BIO_new(BIO_f_packet_monkey());
 }
+
+static int
+BIO_packet_monkey_delay(BIO *bio, int num, int count)
+{
+	if (!BIO_ctrl(bio, BIO_C_DELAY_COUNT, count, NULL))
+		return 0;
+
+	return BIO_ctrl(bio, BIO_C_DELAY_PACKET, num, NULL);
+}
+
+#if 0
+static int
+BIO_packet_monkey_delay_flush(BIO *bio)
+{
+	return BIO_ctrl(bio, BIO_C_DELAY_FLUSH, 0, NULL);
+}
+#endif
 
 static int
 BIO_packet_monkey_drop(BIO *bio, int num)
@@ -519,7 +628,13 @@ do_client_server_loop(SSL *client, ssl_func client_func, SSL *server,
 	return client_done && server_done;
 }
 
+#define MAX_PACKET_DELAYS 32
 #define MAX_PACKET_DROPS 32
+
+struct dtls_delay {
+	uint8_t packet;
+	uint8_t count;
+};
 
 struct dtls_test {
 	const unsigned char *desc;
@@ -527,6 +642,8 @@ struct dtls_test {
 	long ssl_options;
 	int client_bbio_off;
 	int server_bbio_off;
+	struct dtls_delay client_delays[MAX_PACKET_DELAYS];
+	struct dtls_delay server_delays[MAX_PACKET_DELAYS];
 	uint8_t client_drops[MAX_PACKET_DROPS];
 	uint8_t server_drops[MAX_PACKET_DROPS];
 };
@@ -621,12 +738,20 @@ static const struct dtls_test dtls_tests[] = {
 		.client_bbio_off = 1,
 		.client_drops = { 4 },
 	},
+	{
+		/* Send CCS after client Finished. */
+		.desc = "DTLS with delayed client CCS",
+		.ssl_options = 0,
+		.client_bbio_off = 1,
+		.client_delays = { { 3, 2 } },
+	},
 };
 
 #define N_DTLS_TESTS (sizeof(dtls_tests) / sizeof(*dtls_tests))
 
 static void
-dtlstest_packet_monkey(SSL *ssl, const uint8_t drops[])
+dtlstest_packet_monkey(SSL *ssl, const struct dtls_delay delays[],
+    const uint8_t drops[])
 {
 	BIO *bio_monkey;
 	BIO *bio;
@@ -634,6 +759,14 @@ dtlstest_packet_monkey(SSL *ssl, const uint8_t drops[])
 
 	if ((bio_monkey = BIO_new_packet_monkey()) == NULL)
 		errx(1, "packet monkey");
+
+	for (i = 0; i < MAX_PACKET_DELAYS; i++) {
+		if (delays[i].packet == 0)
+			break;
+		if (!BIO_packet_monkey_delay(bio_monkey, delays[i].packet,
+		    delays[i].count))
+			errx(1, "delay failure");
+	}
 
 	for (i = 0; i < MAX_PACKET_DROPS; i++) {
 		if (drops[i] == 0)
@@ -676,8 +809,8 @@ dtlstest(const struct dtls_test *dt)
 	if (dt->server_bbio_off)
 		SSL_set_info_callback(server, dtls_info_callback);
 
-	dtlstest_packet_monkey(client, dt->client_drops);
-	dtlstest_packet_monkey(server, dt->server_drops);
+	dtlstest_packet_monkey(client, dt->client_delays, dt->client_drops);
+	dtlstest_packet_monkey(server, dt->server_delays, dt->server_drops);
 
 	pfd[0].fd = client_sock;
 	pfd[0].events = POLLOUT;
