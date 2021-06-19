@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.98 2021/06/15 19:09:03 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.99 2021/06/19 17:21:39 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -1191,6 +1191,7 @@ dtls1_dispatch_alert(SSL *s)
 static DTLS1_BITMAP *
 dtls1_get_bitmap(SSL *s, SSL3_RECORD_INTERNAL *rr, unsigned int *is_next_epoch)
 {
+	uint16_t next_epoch = D1I(s)->r_epoch + 1;
 
 	*is_next_epoch = 0;
 
@@ -1199,7 +1200,7 @@ dtls1_get_bitmap(SSL *s, SSL3_RECORD_INTERNAL *rr, unsigned int *is_next_epoch)
 		return &D1I(s)->bitmap;
 
 	/* Only HM and ALERT messages can be from the next epoch */
-	else if (rr->epoch == (unsigned long)(D1I(s)->r_epoch + 1) &&
+	else if (rr->epoch == next_epoch &&
 		(rr->type == SSL3_RT_HANDSHAKE || rr->type == SSL3_RT_ALERT)) {
 		*is_next_epoch = 1;
 		return &D1I(s)->next_bitmap;
