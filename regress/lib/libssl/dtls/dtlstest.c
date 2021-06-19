@@ -1,4 +1,4 @@
-/* $OpenBSD: dtlstest.c,v 1.12 2021/06/19 16:29:51 jsing Exp $ */
+/* $OpenBSD: dtlstest.c,v 1.13 2021/06/19 17:11:34 jsing Exp $ */
 /*
  * Copyright (c) 2020, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -27,6 +27,8 @@
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 
+#include "ssl_locl.h"
+
 const char *server_ca_file;
 const char *server_cert_file;
 const char *server_key_file;
@@ -34,6 +36,9 @@ const char *server_key_file;
 char dtls_cookie[32];
 
 int debug = 0;
+
+void tls12_record_layer_set_initial_epoch(struct tls12_record_layer *rl,
+    uint16_t epoch);
 
 static void
 hexdump(const unsigned char *buf, size_t len)
@@ -740,6 +745,7 @@ struct dtls_test {
 	long ssl_options;
 	int client_bbio_off;
 	int server_bbio_off;
+	uint16_t initial_epoch;
 	int write_after_accept;
 	int shutdown_after_accept;
 	struct dtls_delay client_delays[MAX_PACKET_DELAYS];
@@ -752,6 +758,16 @@ static const struct dtls_test dtls_tests[] = {
 	{
 		.desc = "DTLS without cookies",
 		.ssl_options = 0,
+	},
+	{
+		.desc = "DTLS without cookies (initial epoch 0xfffe)",
+		.ssl_options = 0,
+		.initial_epoch = 0xfffe,
+	},
+	{
+		.desc = "DTLS without cookies (initial epoch 0xffff)",
+		.ssl_options = 0,
+		.initial_epoch = 0xffff,
 	},
 	{
 		.desc = "DTLS with cookies",
@@ -860,6 +876,22 @@ static const struct dtls_test dtls_tests[] = {
 		.write_after_accept = 1,
 	},
 	{
+		.desc = "DTLS with delayed server CCS (initial epoch 0xfffe)",
+		.ssl_options = SSL_OP_NO_TICKET,
+		.server_bbio_off = 1,
+		.initial_epoch = 0xfffe,
+		.server_delays = { { 5, 2 } },
+		.write_after_accept = 1,
+	},
+	{
+		.desc = "DTLS with delayed server CCS (initial epoch 0xffff)",
+		.ssl_options = SSL_OP_NO_TICKET,
+		.server_bbio_off = 1,
+		.initial_epoch = 0xffff,
+		.server_delays = { { 5, 2 } },
+		.write_after_accept = 1,
+	},
+	{
 		/* Send Finished after app data - this is currently buffered. */
 		.desc = "DTLS with delayed server Finished",
 		.ssl_options = SSL_OP_NO_TICKET,
@@ -932,8 +964,14 @@ dtlstest(const struct dtls_test *dt)
 
 	if ((client = dtls_client(client_sock, &server_sin, dt->mtu)) == NULL)
 		goto failure;
+
 	if ((server = dtls_server(server_sock, dt->ssl_options, dt->mtu)) == NULL)
 		goto failure;
+
+	tls12_record_layer_set_initial_epoch(client->internal->rl,
+	    dt->initial_epoch);
+	tls12_record_layer_set_initial_epoch(server->internal->rl,
+	    dt->initial_epoch);
 
 	if (dt->client_bbio_off)
 		SSL_set_info_callback(client, dtls_info_callback);
