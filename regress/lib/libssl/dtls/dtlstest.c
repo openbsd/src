@@ -1,4 +1,4 @@
-/* $OpenBSD: dtlstest.c,v 1.13 2021/06/19 17:11:34 jsing Exp $ */
+/* $OpenBSD: dtlstest.c,v 1.14 2021/06/19 18:28:51 tb Exp $ */
 /*
  * Copyright (c) 2020, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -218,7 +218,7 @@ bio_packet_monkey_write(BIO *bio, const char *in, int in_len)
 		free(ctx->delayed_msg);
 		ctx->delayed_msg = NULL;
 	}
-		
+
 	if (ctx->delay_mask > 0) {
 		delay = ctx->delay_mask & 1;
 		ctx->delay_mask >>= 1;
@@ -458,8 +458,7 @@ dtls_server(int sock, long options, long mtu)
 	SSL_CTX_set_dh_auto(ssl_ctx, 2);
 	SSL_CTX_set_options(ssl_ctx, options);
 
-	if (SSL_CTX_use_certificate_file(ssl_ctx, server_cert_file,
-	    SSL_FILETYPE_PEM) != 1) {
+	if (SSL_CTX_use_certificate_chain_file(ssl_ctx, server_cert_file) != 1) {
 		fprintf(stderr, "FAIL: Failed to load server certificate");
 		goto failure;
 	}
@@ -472,6 +471,10 @@ dtls_server(int sock, long options, long mtu)
 	if ((ssl = SSL_new(ssl_ctx)) == NULL)
 		errx(1, "server ssl");
 
+	if (SSL_use_certificate_chain_file(ssl, server_cert_file) != 1) {
+		fprintf(stderr, "FAIL: Failed to load server certificate");
+		goto failure;
+	}
 	SSL_set_bio(ssl, bio, bio);
 	bio = NULL;
 
