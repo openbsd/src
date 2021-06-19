@@ -1,4 +1,4 @@
-/* $OpenBSD: tls12_record_layer.c,v 1.31 2021/06/14 14:22:52 jsing Exp $ */
+/* $OpenBSD: tls12_record_layer.c,v 1.32 2021/06/19 16:52:47 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -161,6 +161,7 @@ tls12_record_protection_mac_len(struct tls12_record_protection *rp,
 
 struct tls12_record_layer {
 	uint16_t version;
+	uint16_t initial_epoch;
 	int dtls;
 
 	uint8_t alert_desc;
@@ -283,6 +284,19 @@ tls12_record_layer_set_version(struct tls12_record_layer *rl, uint16_t version)
 	rl->dtls = ((version >> 8) == DTLS1_VERSION_MAJOR);
 }
 
+void
+tls12_record_layer_set_initial_epoch(struct tls12_record_layer *rl,
+    uint16_t epoch)
+{
+	rl->initial_epoch = epoch;
+}
+
+uint16_t
+tls12_record_layer_initial_epoch(struct tls12_record_layer *rl)
+{
+	return rl->initial_epoch;
+}
+
 uint16_t
 tls12_record_layer_write_epoch(struct tls12_record_layer *rl)
 {
@@ -324,12 +338,14 @@ void
 tls12_record_layer_clear_read_state(struct tls12_record_layer *rl)
 {
 	tls12_record_protection_clear(rl->read);
+	rl->read->epoch = rl->initial_epoch;
 }
 
 void
 tls12_record_layer_clear_write_state(struct tls12_record_layer *rl)
 {
 	tls12_record_protection_clear(rl->write);
+	rl->write->epoch = rl->initial_epoch;
 
 	tls12_record_protection_free(rl->write_previous);
 	rl->write_previous = NULL;

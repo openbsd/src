@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.348 2021/06/13 15:34:41 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.349 2021/06/19 16:52:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -548,6 +548,9 @@ void tls12_record_layer_set_cipher_hash(struct tls12_record_layer *rl,
     const EVP_MD *mac_hash);
 void tls12_record_layer_set_version(struct tls12_record_layer *rl,
     uint16_t version);
+void tls12_record_layer_set_initial_epoch(struct tls12_record_layer *rl,
+    uint16_t epoch);
+uint16_t tls12_record_layer_initial_epoch(struct tls12_record_layer *rl);
 uint16_t tls12_record_layer_write_epoch(struct tls12_record_layer *rl);
 int tls12_record_layer_use_write_epoch(struct tls12_record_layer *rl,
     uint16_t epoch);
