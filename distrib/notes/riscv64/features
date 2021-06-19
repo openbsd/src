@@ -1,12 +1,12 @@
-dnl	$OpenBSD: features,v 1.1 2021/05/02 23:48:14 drahn Exp $
+dnl	$OpenBSD: features,v 1.2 2021/06/19 03:10:17 jsg Exp $
 dnl
 dnl This file lists almost all the conditional features of this port,
 dnl which are used to provide accurate installation notes.
 dnl
 dnl Information about the installer script features should be in sync with
-dnl	src/distrib/arm64/ramdisk/install.md
+dnl	src/distrib/riscv64/ramdisk/install.md
 dnl and the list files in
-dnl	src/distrib/arm64/ramdisk/list
+dnl	src/distrib/riscv64/ramdisk/list
 dnl
 dnl ====
 dnl
