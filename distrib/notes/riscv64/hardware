@@ -1,4 +1,6 @@
-dnl	$OpenBSD: hardware,v 1.1 2021/05/02 23:48:14 drahn Exp $
+dnl	$OpenBSD: hardware,v 1.2 2021/06/19 14:34:19 jsg Exp $
 The following machines are targeted by OpenBSD/MACHINE:
 
-	Qemu riscv64
+	BeagleBoard BeagleV Starlight
+	Microsemi PolarFire SoC Icicle Kit
+	SiFive HiFive Unmatched
