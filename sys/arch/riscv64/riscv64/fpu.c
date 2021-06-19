@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.8 2021/05/20 04:22:33 drahn Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.9 2021/06/19 22:11:08 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Dale Rahn <drahn@openbsd.org>
@@ -142,14 +142,14 @@ fpu_load(struct proc *p)
 	struct fpreg *fp = &p->p_addr->u_pcb.pcb_fpstate;
 	register void *ptr = fp->fp_f;
 
+	KASSERT((pcb->pcb_tf->tf_sstatus & SSTATUS_FS_MASK) == SSTATUS_FS_OFF);
+
 	/*
 	 * Verify that context is not already loaded
 	 */
 	if (pcb->pcb_fpcpu == ci && ci->ci_fpuproc == p) {
 		/* fpu state loaded, enable it */
-		if ((pcb->pcb_tf->tf_sstatus & SSTATUS_FS_MASK) ==
-		    SSTATUS_FS_OFF)
-			pcb->pcb_tf->tf_sstatus |= SSTATUS_FS_CLEAN;
+		pcb->pcb_tf->tf_sstatus |= SSTATUS_FS_CLEAN;
 		return;
 	}
 	//printf("FPU load requested %p %p \n", ci, p);
