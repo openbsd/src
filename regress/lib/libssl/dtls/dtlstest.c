@@ -1,4 +1,4 @@
-/* $OpenBSD: dtlstest.c,v 1.10 2021/06/19 15:33:37 jsing Exp $ */
+/* $OpenBSD: dtlstest.c,v 1.11 2021/06/19 15:52:41 jsing Exp $ */
 /*
  * Copyright (c) 2020, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -705,7 +705,10 @@ static const struct dtls_test dtls_tests[] = {
 	/*
 	 * These two result in the server accept completing and the
 	 * client looping on a timeout. Presumably the server should not
-	 * complete until the client Finished is received...
+	 * complete until the client Finished is received... this due to
+	 * a flaw in the DTLSv1.0 specification, which is addressed in
+	 * DTLSv1.2 (see references to "last flight" in RFC 6347 section
+	 * 4.2.4). Our DTLS server code still needs to support this.
 	 */
 	{
 		.desc = "DTLS with dropped server CCS",
