@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsetjmp.S,v 1.3 2021/05/17 15:06:09 deraadt Exp $	*/
+/*	$OpenBSD: sigsetjmp.S,v 1.4 2021/06/20 20:43:50 kettenis Exp $	*/
 /* 
  * Copyright (c) 2020 Dale Rahn <drahn@openbsd.org>
  *
@@ -21,15 +21,14 @@
 ENTRY(sigsetjmp)
 	RETGUARD_SETUP(setjmp, t6)
 	mv	a2, a0 				/* save jmpbuf in a2 */
-	li	a0, 0
+	sw	a1, (0 * 8)(a2)
 	beqz	a1, 1f
 	/* Store the signal mask */
-	li	a1, 0
 	li	a0, 1				/* SIG_BLOCK */
+	li	a1, 0
 	SYSTRAP(sigprocmask)
-1:
 	sw	a0, (_JB_SIGMASK * 8)(a2)	/* oset */
-
+1:
 	mv	a0, a2
 	sd	sp, (1 * 8)(a0)
 
@@ -76,12 +75,12 @@ ENTRY(siglongjmp)
 	RETGUARD_LOAD_RANDOM(longjmp, t6)
 	mv	a2, a0				/* move jmpbuf */
 	mv	a3, a1				/* final return value */
-
-	/* Restore the signal mask */
-	lw	a1, (_JB_SIGMASK * 8)(a2)	/* set */
+	lw	a1, (0 * 8)(a2)
 	beqz	a1, 1f
 
+	/* Restore the signal mask */
 	li	a0, 3				/* SIG_SETMASK */
+	lw	a1, (_JB_SIGMASK * 8)(a2)	/* set */
 	SYSTRAP(sigprocmask)
 1:
 
