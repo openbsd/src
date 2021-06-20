@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.211 2020/12/23 17:22:07 krw Exp $
+#	$OpenBSD: netstart,v 1.212 2021/06/20 08:31:03 florian Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -36,6 +36,11 @@ parse_hn_line() {
 		return
 		;;
 	inet)	((${#_c[*]} > 1)) || return
+		if [[ ${_c[_name]} == autoconf ]]; then
+			_cmds[${#_cmds[*]}]="ifconfig $_if ${_c[@]}"
+			V4_DHCPCONF=true
+			return
+		fi
 		[[ ${_c[_name]} == alias ]] && _mask=3 _bc=4
 		[[ -n ${_c[_mask]} ]] && _c[_mask]="netmask ${_c[_mask]}"
 		if [[ -n ${_c[_bc]} ]]; then
