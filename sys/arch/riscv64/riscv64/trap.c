@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.14 2021/06/18 21:05:16 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.15 2021/06/20 17:57:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2020 Shivam Waghela <shivamwaghela@gmail.com>
@@ -90,7 +90,6 @@ do_trap_supervisor(struct trapframe *frame)
 		break;
 	case EXCP_BREAKPOINT:
 #ifdef DDB
-		// kdb_trap(exception, 0, frame);
 		db_trapper(frame->tf_sepc,0/*XXX*/, frame, exception);
 #else
 		dump_regs(frame);
@@ -113,12 +112,9 @@ do_trap_user(struct trapframe *frame)
 {
 	uint64_t exception;
 	union sigval sv;
-	struct proc *p;
-	struct pcb *pcb;
+	struct proc *p = curcpu()->ci_curproc;
 
-	p = curcpu()->ci_curproc;
 	p->p_addr->u_pcb.pcb_tf = frame;
-	pcb = curcpu()->ci_curpcb;
 
 	/* Ensure we came from usermode, interrupts disabled */
 	KASSERTMSG((csr_read(sstatus) & (SSTATUS_SPP | SSTATUS_SIE)) == 0,
@@ -127,23 +123,16 @@ do_trap_user(struct trapframe *frame)
 	KASSERTMSG((csr_read(sstatus) & (SSTATUS_SUM)) == 0,
 	    "Came from U mode with SUM enabled");
 
-	exception = (frame->tf_scause & EXCP_MASK);
 	if (frame->tf_scause & EXCP_INTR) {
 		/* Interrupt */
 		riscv_cpu_intr(frame);
-
 		return;
 	}
 
 	intr_enable();
-
-#if 0	// XXX Debug logging
-	printf( "do_trap_user: curproc: %p, sepc: %lx, ra: %lx frame: %p\n",
-	    curcpu()->ci_curproc, frame->tf_sepc, frame->tf_ra, frame);
-#endif
-
 	refreshcreds(p);
 
+	exception = (frame->tf_scause & EXCP_MASK);
 	switch (exception) {
 	case EXCP_FAULT_LOAD:
 	case EXCP_FAULT_STORE:
@@ -203,13 +192,11 @@ udata_abort(struct trapframe *frame)
 	struct vm_map *map;
 	uint64_t stval = frame->tf_stval;
 	union sigval sv;
-	struct pcb *pcb;
 	vm_prot_t access_type = accesstype(frame);
 	vaddr_t va;
 	struct proc *p;
 	int error, sig, code;
 
-	pcb = curcpu()->ci_curpcb;
 	p = curcpu()->ci_curproc;
 
 	va = trunc_page(stval);
