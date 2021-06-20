@@ -1,4 +1,4 @@
-/*	$OpenBSD: usm.c,v 1.19 2021/05/20 08:53:12 martijn Exp $	*/
+/*	$OpenBSD: usm.c,v 1.20 2021/06/20 19:55:48 martijn Exp $	*/
 
 /*
  * Copyright (c) 2012 GeNUA mbH
@@ -175,6 +175,27 @@ usm_newuser(char *name, const char **errp)
 	up->uu_name = name;
 	SLIST_INSERT_HEAD(&usmuserlist, up, uu_next);
 	return up;
+}
+
+const struct usmuser *
+usm_check_mincred(int minlevel, const char **errstr)
+{
+	struct usmuser *up;
+
+	if (minlevel == 0)
+		return NULL;
+
+	SLIST_FOREACH(up, &usmuserlist, uu_next) {
+		if (minlevel & SNMP_MSGFLAG_PRIV && up->uu_privkey == NULL) {
+			*errstr = "missing enckey";
+			return up;
+		}
+		if (minlevel & SNMP_MSGFLAG_AUTH && up->uu_authkey == NULL) {
+			*errstr = "missing authkey";
+			return up;
+		}
+	}
+	return NULL;
 }
 
 struct usmuser *

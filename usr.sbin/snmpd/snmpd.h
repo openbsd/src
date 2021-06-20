@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.95 2021/05/20 08:53:12 martijn Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.96 2021/06/20 19:55:48 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -498,9 +498,16 @@ struct address {
 };
 TAILQ_HEAD(addresslist, address);
 
-#define ADDRESS_FLAG_READ 0x1
-#define ADDRESS_FLAG_WRITE 0x2
-#define ADDRESS_FLAG_NOTIFY 0x4
+#define ADDRESS_FLAG_READ	0x01
+#define ADDRESS_FLAG_WRITE	0x02
+#define ADDRESS_FLAG_NOTIFY	0x04
+#define ADDRESS_FLAG_PERM	\
+    (ADDRESS_FLAG_READ | ADDRESS_FLAG_WRITE | ADDRESS_FLAG_NOTIFY)
+#define ADDRESS_FLAG_SNMPV1	0x10
+#define ADDRESS_FLAG_SNMPV2	0x20
+#define ADDRESS_FLAG_SNMPV3	0x40
+#define ADDRESS_FLAG_MPS	\
+    (ADDRESS_FLAG_SNMPV1 | ADDRESS_FLAG_SNMPV2 | ADDRESS_FLAG_SNMPV3)
 
 struct trap_address {
 	struct sockaddr_storage	 ss;
@@ -576,7 +583,6 @@ struct snmpd {
 	int			 sc_pfaddrfilter;
 
 	int			 sc_min_seclevel;
-	int			 sc_readonly;
 	int			 sc_traphandler;
 
 	struct privsep		 sc_ps;
@@ -740,6 +746,7 @@ struct ber_element *usm_encode(struct snmp_message *, struct ber_element *);
 struct ber_element *usm_encrypt(struct snmp_message *, struct ber_element *);
 void		 usm_finalize_digest(struct snmp_message *, char *, ssize_t);
 void		 usm_make_report(struct snmp_message *);
+const struct usmuser *usm_check_mincred(int, const char **);
 
 /* proc.c */
 enum privsep_procid

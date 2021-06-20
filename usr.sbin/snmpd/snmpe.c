@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.71 2021/05/20 08:53:12 martijn Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.72 2021/06/20 19:55:48 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -254,19 +254,31 @@ snmpe_parse(struct snmp_message *msg)
 	msg->sm_version = ver;
 	switch (msg->sm_version) {
 	case SNMP_V1:
-	case SNMP_V2:
-		if (env->sc_min_seclevel != 0)
+		if (!(msg->sm_aflags & ADDRESS_FLAG_SNMPV1)) {
+			msg->sm_errstr = "SNMPv1 disabled";
 			goto badversion;
+		}
+	case SNMP_V2:
+		if (msg->sm_version == SNMP_V2 &&
+		    !(msg->sm_aflags & ADDRESS_FLAG_SNMPV2)) {
+			msg->sm_errstr = "SNMPv2c disabled";
+			goto badversion;
+		}
 		if (ober_scanf_elements(a, "seS$", &comn, &msg->sm_pdu) != 0)
 			goto parsefail;
 		if (strlcpy(msg->sm_community, comn,
-		    sizeof(msg->sm_community)) >= sizeof(msg->sm_community)) {
+		    sizeof(msg->sm_community)) >= sizeof(msg->sm_community) ||
+		    msg->sm_community[0] == '\0') {
 			stats->snmp_inbadcommunitynames++;
-			msg->sm_errstr = "community name too long";
+			msg->sm_errstr = "invalid community name";
 			goto fail;
 		}
 		break;
 	case SNMP_V3:
+		if (!(msg->sm_aflags & ADDRESS_FLAG_SNMPV3)) {
+			msg->sm_errstr = "SNMPv3 disabled";
+			goto badversion;
+		}
 		if (ober_scanf_elements(a, "{iisi$}e",
 		    &msg->sm_msgid, &msg->sm_max_msg_size, &flagstr,
 		    &msg->sm_secmodel, &a) != 0)
@@ -295,9 +307,9 @@ snmpe_parse(struct snmp_message *msg)
 		msg->sm_ctxname[len] = '\0';
 		break;
 	default:
-	badversion:
+		msg->sm_errstr = "unsupported snmp version";
+badversion:
 		stats->snmp_inbadversions++;
-		msg->sm_errstr = "bad snmp version";
 		goto fail;
 	}
 
@@ -332,8 +344,7 @@ snmpe_parse(struct snmp_message *msg)
 		}
 		if (msg->sm_version != SNMP_V3 &&
 		    strcmp(env->sc_rdcommunity, msg->sm_community) != 0 &&
-		    (env->sc_readonly ||
-		    strcmp(env->sc_rwcommunity, msg->sm_community) != 0)) {
+		    strcmp(env->sc_rwcommunity, msg->sm_community) != 0) {
 			stats->snmp_inbadcommunitynames++;
 			msg->sm_errstr = "wrong read community";
 			goto fail;
@@ -347,8 +358,7 @@ snmpe_parse(struct snmp_message *msg)
 			goto fail;
 		}
 		if (msg->sm_version != SNMP_V3 &&
-		    (env->sc_readonly ||
-		    strcmp(env->sc_rwcommunity, msg->sm_community) != 0)) {
+		    strcmp(env->sc_rwcommunity, msg->sm_community) != 0) {
 			if (strcmp(env->sc_rdcommunity, msg->sm_community) != 0)
 				stats->snmp_inbadcommunitynames++;
 			else
@@ -498,16 +508,13 @@ snmpe_parsevarbinds(struct snmp_message *msg)
 			stats->snmp_intotalreqvars++;
 			break;
 		case SNMP_C_SETREQ:
-			if (snmpd_env->sc_readonly == 0) {
-				/*
-				 * XXX A set varbind should only be committed if
-				 * all variables are staged
-				 */
-				if (mps_setreq(msg, value, &o) == 0) {
-					/* XXX Adjust after fixing staging */
-					stats->snmp_intotalsetvars++;
-					break;
-				}
+			/*
+			 * XXX A set varbind should only be committed if
+			 * all variables are staged
+			 */
+			if (mps_setreq(msg, value, &o) == 0) {
+				stats->snmp_intotalsetvars++;
+				break;
 			}
 			msg->sm_error = SNMP_ERROR_READONLY;
 			goto varfail;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.63 2021/01/22 06:33:26 martijn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.64 2021/06/20 19:55:48 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -120,10 +120,10 @@ typedef struct {
 %}
 
 %token	INCLUDE
-%token  LISTEN ON READ WRITE NOTIFY
+%token  LISTEN ON READ WRITE NOTIFY SNMPV1 SNMPV2 SNMPV3
 %token	SYSTEM CONTACT DESCR LOCATION NAME OBJECTID SERVICES RTFILTER
 %token	READONLY READWRITE OCTETSTRING INTEGER COMMUNITY TRAP RECEIVER
-%token	SECLEVEL NONE AUTH ENC USER AUTHKEY ENCKEY ERROR DISABLED
+%token	SECLEVEL NONE AUTH ENC USER AUTHKEY ENCKEY ERROR
 %token	HANDLE DEFAULT SRCADDR TCP UDP PFADDRFILTER PORT
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
@@ -216,9 +216,6 @@ main		: LISTEN ON listenproto
 			}
 			free($3);
 		}
-		| READWRITE DISABLED {
-			conf->sc_readonly = 1;
- 		}
 		| TRAP COMMUNITY STRING		{
 			if (strlcpy(conf->sc_trcommunity, $3,
 			    sizeof(conf->sc_trcommunity)) >=
@@ -287,6 +284,9 @@ listenopts	: /* empty */ { $$ = 0; }
 listenopt	: READ { $$ = ADDRESS_FLAG_READ; }
 		| WRITE { $$ = ADDRESS_FLAG_WRITE; }
 		| NOTIFY { $$ = ADDRESS_FLAG_NOTIFY; }
+		| SNMPV1 { $$ = ADDRESS_FLAG_SNMPV1; }
+		| SNMPV2 { $$ = ADDRESS_FLAG_SNMPV2; }
+		| SNMPV3 { $$ = ADDRESS_FLAG_SNMPV3; }
 		;
 
 listen_udp	: STRING port listenopts	{
@@ -295,7 +295,8 @@ listen_udp	: STRING port listenopts	{
 			char *port = $2;
 
 			if (port == NULL) {
-				if ($3 == ADDRESS_FLAG_NOTIFY)
+				if (($3 & ADDRESS_FLAG_PERM) ==
+				    ADDRESS_FLAG_NOTIFY)
 					port = SNMPTRAP_PORT;
 				else
 					port = SNMP_PORT;
@@ -328,7 +329,8 @@ listen_tcp	: STRING port listenopts	{
 			char *port = $2;
 
 			if (port == NULL) {
-				if ($3 == ADDRESS_FLAG_NOTIFY)
+				if (($3 & ADDRESS_FLAG_PERM) ==
+				    ADDRESS_FLAG_NOTIFY)
 					port = SNMPTRAP_PORT;
 				else
 					port = SNMP_PORT;
@@ -711,7 +713,6 @@ lookup(char *s)
 		{ "contact",			CONTACT },
 		{ "default",			DEFAULT },
 		{ "description",		DESCR },
-		{ "disabled",			DISABLED},
 		{ "enc",			ENC },
 		{ "enckey",			ENCKEY },
 		{ "filter-pf-addresses",	PFADDRFILTER },
@@ -733,6 +734,9 @@ lookup(char *s)
 		{ "receiver",			RECEIVER },
 		{ "seclevel",			SECLEVEL },
 		{ "services",			SERVICES },
+		{ "snmpv1",			SNMPV1 },
+		{ "snmpv2c",			SNMPV2 },
+		{ "snmpv3",			SNMPV3 },
 		{ "source-address",		SRCADDR },
 		{ "string",			OCTETSTRING },
 		{ "system",			SYSTEM },
@@ -1102,7 +1106,10 @@ parse_config(const char *filename, u_int flags)
 	struct sockaddr_storage ss;
 	struct sym	*sym, *next;
 	struct address	*h;
-	int found;
+	struct trap_address	*tr;
+	const struct usmuser	*up;
+	const char	*errstr;
+	int		 found;
 
 	if ((conf = calloc(1, sizeof(*conf))) == NULL) {
 		log_warn("%s", __func__);
@@ -1112,10 +1119,8 @@ parse_config(const char *filename, u_int flags)
 	conf->sc_flags = flags;
 	conf->sc_confpath = filename;
 	TAILQ_INIT(&conf->sc_addresses);
-	strlcpy(conf->sc_rdcommunity, "public", SNMPD_MAXCOMMUNITYLEN);
-	strlcpy(conf->sc_rwcommunity, "private", SNMPD_MAXCOMMUNITYLEN);
-	strlcpy(conf->sc_trcommunity, "public", SNMPD_MAXCOMMUNITYLEN);
 	TAILQ_INIT(&conf->sc_trapreceivers);
+	conf->sc_min_seclevel = SNMP_MSGFLAG_AUTH | SNMP_MSGFLAG_PRIV;
 
 	if ((file = pushfile(filename, 0)) == NULL) {
 		free(conf);
@@ -1141,6 +1146,10 @@ parse_config(const char *filename, u_int flags)
 		if (listen_add(&ss, SOCK_DGRAM, 0) == -1)
 			fatal("calloc");
 	}
+
+	if ((up = usm_check_mincred(conf->sc_min_seclevel, &errstr)) != NULL)
+		fatalx("user '%s': %s", up->uu_name, errstr);
+
 	found = 0;
 	TAILQ_FOREACH(h, &conf->sc_addresses, entry) {
 		if (h->flags & ADDRESS_FLAG_NOTIFY)
@@ -1155,6 +1164,16 @@ parse_config(const char *filename, u_int flags)
 		log_warnx("notify listener needs at least one trap handler");
 		free(conf);
 		return (NULL);
+	}
+
+	if (conf->sc_trcommunity[0] == '\0') {
+		TAILQ_FOREACH(tr, &conf->sc_trapreceivers, entry) {
+			if (tr->sa_community == NULL) {
+				log_warnx("trap receiver: missing community");
+				free(conf);
+				return (NULL);
+			}
+		}
 	}
 
 	/* Free macros and check which have not been used. */
@@ -1299,12 +1318,14 @@ listen_add(struct sockaddr_storage *ss, int type, int flags)
 		h->port = ntohs(sin6->sin6_port);
 	}
 	h->type = type;
-	if ((h->flags = flags) == 0) {
+	if (((h->flags = flags) & ADDRESS_FLAG_PERM) == 0) {
 		if (h->port == 162)
-			h->flags = ADDRESS_FLAG_NOTIFY;
+			h->flags |= ADDRESS_FLAG_NOTIFY;
 		else
-			h->flags = ADDRESS_FLAG_READ | ADDRESS_FLAG_WRITE;
+			h->flags |= ADDRESS_FLAG_READ | ADDRESS_FLAG_WRITE;
 	}
+	if ((h->flags & ADDRESS_FLAG_MPS) == 0)
+		h->flags |= ADDRESS_FLAG_SNMPV3;
 	TAILQ_INSERT_TAIL(&(conf->sc_addresses), h, entry);
 
 	return 0;

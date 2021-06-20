@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpd.conf.5,v 1.48 2021/06/14 12:28:58 sthen Exp $
+.\" $OpenBSD: snmpd.conf.5,v 1.49 2021/06/20 19:55:48 martijn Exp $
 .\"
 .\" Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 14 2021 $
+.Dd $Mdocdate: June 20 2021 $
 .Dt SNMPD.CONF 5
 .Os
 .Sh NAME
@@ -95,20 +95,30 @@ Routing table information will not be available, but CPU use will be
 reduced during bulk updates.
 The default is
 .Ic no .
-.It Ic listen on Oo Ic tcp | udp Oc Ar address Oo Ic port Ar port Oc Op Ic read | Ic write | Ic notify
+.It Ic listen on Oo Ic tcp | udp Oc Ar address Oo Ic port Ar port Oc Op Ar flags
 Specify the local address
 .Xr snmpd 8
 should listen on for incoming SNMP messages.
+.Pp
 The
-.Ic read
-flag specifies if the listen address accepts get, getnext and bulkget
+.Ar flags
+are as follows:
+.Bl -tag -width Ds
+.It Ic read
+Specifies if the listen address accepts get, getnext and bulkget
 requests.
-The
-.Ic write
-flag specifies if the listen address accepts set requests
-and the
-.Ic notify
-flag specifies if the listen address accepts trapv1 and trapv2 requests.
+.It Ic write
+Specifies if the listen address accepts set requests.
+.It Ic notify
+Specifies if the listen address accepts trapv1 and trapv2 requests.
+.It Ic snmpv1
+Enables SNMPv1 subsystem on the listen address.
+.It Ic snmpv2c
+Enables SNMPv2c subsystem on the listen address.
+.It Ic snmpv3
+Enables SNMPv3 subsystem on the listen address.
+.El
+.Pp
 Multiple
 .Ic listen on
 statements are supported.
@@ -118,17 +128,19 @@ The default
 .Ar port
 is 161, unless
 .Ic notify
-is the only listen flags
-which sets the
+is the only permission flag; which sets the
 .Ar port
 to 162.
-If no flags are specified it defaults to
+If no permission flags are specified it defaults to
 .Dq Ic read Ic write ,
 or
 .Ic notify
 when
 .Ar port
 is 162.
+If no subsystem flags are specified it defaults to
+.Ic snmpv3 .
+.Pp
 Having
 .Ic notify
 set requires at least one
@@ -136,20 +148,17 @@ set requires at least one
 statement.
 .It Ic read-only community Ar string
 Specify the name of the read-only community.
-The default value is
-.Ar public .
-.It Ic read-write Pq Ic community Ar string Ic | disabled
-Specify the name of the read-write community, or disallow writes completely.
-The default value is
-.Ar private .
+There is no default value.
+.It Ic read-write Ic community Ar string
+Specify the name of the read-write community.
+There is no default value.
 .It Ic seclevel Pq Ic none | auth | enc
 Specify the lowest security level that
 .Xr snmpd 8
-accepts:
+accepts on SNMPv3:
 .Bl -tag -width "auth" -offset ident
 .It Ic none
 Both authentication and encryption of messages is optional.
-This is the default value.
 .It Ic auth
 Authentication of messages is mandatory.
 .Xr snmpd 8
@@ -158,13 +167,8 @@ Encryption of messages is optional.
 .It Ic enc
 Messages must be encrypted and must have a valid digest for authentication.
 Otherwise they will be discarded.
+This is the default value.
 .El
-.Pp
-If the chosen value is different from
-.Ic none
-.Xr snmpd 8
-will accept only SNMPv3 requests since older versions neither support
-authentication nor encryption.
 .It Ic system contact Ar string
 Specify the name or description of the system contact, typically a
 name or an email address.
@@ -206,8 +210,7 @@ description in the SNMP MIB for details.
 .\"XXX describe the complicated services alg here
 .It Ic trap community Ar string
 Specify the name of the trap community.
-The default value is
-.Ar public .
+There is no default value.
 .It Ic trap handle Ar oid Qq Ar command
 Execute
 .Ic command
@@ -326,10 +329,12 @@ Example configuration file.
 .Sh EXAMPLES
 The following example will tell
 .Xr snmpd 8
-to listen on localhost, override the default system OID, set the
-magic services value and provides some custom OID values:
+to listen on localhost for SNMPv2c messages only with the public community,
+override the default system OID, set the magic services value and provides some
+custom OID values:
 .Bd -literal -offset indent
-listen on 127.0.0.1
+listen on 127.0.0.1 snmpv2c
+read-only community public
 
 system oid 1.3.6.1.4.1.30155.23.2
 system services 74
