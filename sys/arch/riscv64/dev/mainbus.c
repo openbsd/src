@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.7 2021/05/14 06:48:52 jsg Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.8 2021/06/20 16:51:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
@@ -303,6 +303,10 @@ mainbus_attach_cpus(struct device *self, cfmatch_t match)
 
 	ncpusfound = 0;
 	for (node = OF_child(node); node != 0; node = OF_peer(node)) {
+		if (OF_getprop(node, "status", buf, sizeof(buf)) > 0 &&
+		    strcmp(buf, "disabled") == 0)
+			continue;
+
 		if (OF_getprop(node, "device_type", buf, sizeof(buf)) > 0 &&
 		    strcmp(buf, "cpu") == 0)
 			ncpusfound++;
