@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.67 2021/06/13 14:14:56 krw Exp $	*/
+/*	$OpenBSD: misc.c,v 1.68 2021/06/20 18:44:19 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -22,6 +22,7 @@
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -400,4 +401,53 @@ string_to_utf16le(const char *ch)
 		utf[i - 1] = 0;
 
 	return (utf);
+}
+
+void
+parse_b(const char *arg, uint32_t *blocks, uint32_t *offset, uint8_t *type)
+{
+	const char *errstr;
+	char *poffset, *ptype;
+	uint32_t blockcount, blockoffset;
+	uint8_t partitiontype;
+
+	blockoffset = 64;
+	partitiontype = DOSPTYP_EFISYS;
+	ptype = NULL;
+
+	/* First number: # of sectors in boot partition. */
+	poffset = strchr(arg, '@');
+	if (poffset != NULL)
+		*poffset++ = '\0';
+	if (poffset != NULL) {
+		ptype = strchr(poffset, ':');
+		if (ptype != NULL)
+			*ptype++ = '\0';
+	}
+
+	blockcount = strtonum(arg, 64, UINT32_MAX, &errstr);
+	if (errstr)
+		errx(1, "Block argument %s [64..%u].",
+		    errstr, UINT32_MAX);
+
+	if (poffset == NULL)
+		goto done;
+
+	blockoffset = strtonum(poffset, 64, UINT32_MAX, &errstr);
+	if (errstr)
+		errx(1, "Block offset argument %s "
+		    "[64..%u].", errstr, UINT32_MAX);
+
+	if (ptype == NULL)
+		goto done;
+
+	if (strlen(ptype) != 2 || !(isxdigit(*ptype) && isxdigit(*(ptype + 1))))
+		errx(1, "Block type is not 2 digit hex value");
+
+	partitiontype = strtol(ptype, NULL, 16);
+
+ done:
+	*blocks = blockcount;
+	*offset = blockoffset;
+	*type = partitiontype;
 }

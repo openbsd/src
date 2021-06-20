@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.30 2021/06/16 15:40:47 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.31 2021/06/20 18:44:19 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -416,7 +416,7 @@ init_gh(void)
 int
 init_gp(void)
 {
-	extern uint32_t b_arg;
+	extern uint32_t b_sectors;
 	const uint8_t gpt_uuid_efi_system[] = GPT_UUID_EFI_SYSTEM;
 	const uint8_t gpt_uuid_openbsd[] = GPT_UUID_OPENBSD;
 	struct gpt_partition oldgp[NGPTPARTITIONS];
@@ -426,9 +426,9 @@ init_gp(void)
 	memset(&gp, 0, sizeof(gp));
 
 	rslt = 0;
-	if (b_arg > 0) {
+	if (b_sectors > 0) {
 		rslt = add_partition(gpt_uuid_efi_system, "EFI System Area",
-		    b_arg);
+		    b_sectors);
 	}
 	if (rslt == 0)
 		rslt = add_partition(gpt_uuid_openbsd, "OpenBSD Area", 0);

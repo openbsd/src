@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.108 2021/06/14 17:34:06 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.109 2021/06/20 18:44:19 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -41,8 +41,9 @@ static unsigned char builtin_mbr[] = {
 #include "mbrcode.h"
 };
 
-uint32_t b_arg;
-int	y_flag;
+uint32_t b_sectors, b_offset;
+uint8_t b_type;
+int y_flag;
 
 static void
 usage(void)
@@ -127,10 +128,7 @@ main(int argc, char *argv[])
 			g_flag = 1;
 			break;
 		case 'b':
-			b_arg = strtonum(optarg, 64, UINT32_MAX, &errstr);
-			if (errstr)
-				errx(1, "Block argument %s [64..%u].", errstr,
-				    UINT32_MAX);
+			parse_b(optarg, &b_sectors, &b_offset, &b_type);
 			break;
 		case 'l':
 			l_arg = strtonum(optarg, 64, UINT32_MAX, &errstr);
@@ -157,7 +155,7 @@ main(int argc, char *argv[])
 
 	/* Argument checking */
 	if (argc != 1 || (i_flag && u_flag) ||
-	    (i_flag == 0 && (b_arg || g_flag)) ||
+	    (i_flag == 0 && (b_sectors || g_flag)) ||
 	    ((c_arg | h_arg | s_arg) && !(c_arg && h_arg && s_arg)) ||
 	    ((c_arg | h_arg | s_arg) && l_arg))
 		usage();

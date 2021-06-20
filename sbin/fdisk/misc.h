@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.h,v 1.35 2021/06/10 15:21:19 krw Exp $	*/
+/*	$OpenBSD: misc.h,v 1.36 2021/06/20 18:44:19 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -39,5 +39,6 @@ uint64_t getuint64(char *, uint64_t, uint64_t, uint64_t);
 uint32_t crc32(const u_char *, const uint32_t);
 char *utf16le_to_string(const uint16_t *);
 uint16_t *string_to_utf16le(const char *);
+void parse_b(const char *, uint32_t *, uint32_t *, uint8_t *);
 
 #endif /* _MISC_H */

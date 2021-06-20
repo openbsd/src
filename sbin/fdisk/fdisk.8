@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.97 2021/06/16 15:40:47 krw Exp $
+.\"	$OpenBSD: fdisk.8,v 1.98 2021/06/20 18:44:19 krw Exp $
 .\"
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 16 2021 $
+.Dd $Mdocdate: June 20 2021 $
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -25,7 +25,7 @@
 .Nm fdisk
 .Op Fl egvy
 .Op Fl i | u
-.Op Fl b Ar blocks
+.Op Fl b Ar blocks Op @ Ns Ar offset Ns Op : Ns Ar type
 .Oo
 .Fl c Ar cylinders
 .Fl h Ar heads
@@ -58,11 +58,20 @@ at install time.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl b Ar blocks
-A special boot partition of the specified size will be written to disk
-on architectures that need one.
+.It Fl b Ar blocks Op @ Ns Ar offset Ns Op : Ns Ar type
+A special boot partition of the specified size, offset and type will be written to disk.
+The
+.Ox
+partition will follow the boot partition and use the remaining space on the disk.
+.Pp
 Only valid with
 .Fl i .
+If
+.Fl g
+is specified only the
+.Ar blocks
+value will be used, with the boot partition being placed at the first available LBA and
+given the type EFI SYS.
 .It Xo
 .Fl c Ar cylinders
 .Fl h Ar heads

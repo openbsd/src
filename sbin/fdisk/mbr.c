@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.76 2021/06/16 15:40:47 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.77 2021/06/20 18:44:19 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -77,7 +77,8 @@ MBR_init_GPT(struct mbr *mbr)
 void
 MBR_init(struct mbr *mbr)
 {
-	extern uint32_t b_arg;
+	extern uint32_t b_sectors, b_offset;
+	extern uint8_t b_type;
 	uint64_t adj;
 	daddr_t daddr;
 
@@ -132,14 +133,14 @@ MBR_init(struct mbr *mbr)
 	}
 	/* Fix up start/length fields */
 	PRT_fix_BN(&mbr->part[3], 3);
-#endif
-#if defined(__i386__) || defined(__amd64__)
-	if (b_arg > 0) {
-		/* Add an EFI system partition on i386/amd64. */
-		mbr->part[0].id = DOSPTYP_EFISYS;
-		mbr->part[0].bs = 64;
-		mbr->part[0].ns = b_arg;
+#else
+	if (b_sectors > 0) {
+		mbr->part[0].flag = DOSACTIVE;
+		mbr->part[0].id = b_type;
+		mbr->part[0].bs = b_offset;
+		mbr->part[0].ns = b_sectors;
 		PRT_fix_CHS(&mbr->part[0]);
+		mbr->part[3].flag = 0;
 		mbr->part[3].ns += mbr->part[3].bs;
 		mbr->part[3].bs = mbr->part[0].bs + mbr->part[0].ns;
 		mbr->part[3].ns -= mbr->part[3].bs;
