@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: snmpd.sh,v 1.13 2021/01/22 06:35:26 martijn Exp $
+# $OpenBSD: snmpd.sh,v 1.14 2021/06/20 20:06:43 martijn Exp $
 #/*
 # * Copyright (c) Rob Pierce <rob@openbsd.org>
 # *
@@ -64,13 +64,18 @@ echo "\nConfiguration: default community strings, trap receiver, trap handle\n"
 cat > ${OBJDIR}/snmpd.conf <<EOF
 # This is config template (1) for snmpd regression testing
 # Restrict daemon to listen on localhost only
-listen on 127.0.0.1
-listen on 127.0.0.1 notify
-listen on ::1
-listen on ::1 notify
+listen on 127.0.0.1 snmpv1 snmpv2c snmpv3
+listen on 127.0.0.1 snmpv2c notify
+listen on ::1 snmpv1 snmpv2c snmpv3
+listen on ::1 snmpv2c notify
 
 # Specify a number of trap receivers
 trap receiver localhost
+
+# Specify communities
+read-only community public
+read-write community private
+trap community public
 
 trap handle 1.2.3.4 "/usr/bin/touch ${TMPFILE}"
 EOF
@@ -130,7 +135,7 @@ carp_allow="$(eval $snmp_command)"
 carp_allow="${carp_allow##.1.3.6.1.4.1.30155.6.1.1.0 }"
 if [ "$carp" -ne "$carp_allow" ]
 then
-	echo "Retrieval of carp.allow with default ro cummunity string failed."
+	echo "Retrieval of carp.allow with default ro community string failed."
 	FAILED=1
 fi
 
@@ -177,7 +182,7 @@ listen on ::1
 
 seclevel auth
 
-user "hans" authkey "password123"
+user "hans" authkey "password123" auth hmac-sha1
 EOF
 
 (cd ${OBJDIR} && nohup snmpd -dvf ./snmpd.conf > snmpd.log 2>&1) &
@@ -224,7 +229,7 @@ listen on ::1
 
 seclevel enc
 
-user "hans" authkey "password123" enc aes enckey "321drowssap"
+user "hans" authkey "password123" auth hmac-sha1 enc aes enckey "321drowssap"
 EOF
 
 (cd ${OBJDIR} && nohup snmpd -dvf ./snmpd.conf > snmpd.log 2>&1) &
@@ -258,8 +263,8 @@ boe="$(printf '\303')"
 cat > ${OBJDIR}/snmpd.conf <<EOF
 # This is config template (4) for snmpd regression testing
 # Restrict daemon to listen on localhost only
-listen on 127.0.0.1
-listen on ::1
+listen on 127.0.0.1 snmpv1 snmpv2c
+listen on ::1 snmpv1 snmpv2c
 
 read-only community non-default-ro
 
@@ -288,7 +293,7 @@ carp_allow="$(eval $snmp_command)"
 carp_allow="${carp_allow##.iso.org.dod.internet.private.enterprises.openBSD.carpMIBObjects.carpSysctl.carpAllow.0 = }"
 if [ "$carp" -ne "$carp_allow" ]
 then
-	echo "Retrieval test with default ro cummunity string failed."
+	echo "Retrieval test with default ro community string failed."
 	FAILED=1
 fi
 
