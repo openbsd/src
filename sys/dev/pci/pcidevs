@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1972 2021/06/13 12:43:15 jsg Exp $
+$OpenBSD: pcidevs,v 1.1973 2021/06/20 06:40:12 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -302,6 +302,7 @@ vendor	ALTIMA		0x173b	Altima
 vendor	ANTARES		0x1754	Antares Microsystems
 vendor	CAVIUM		0x177d	Cavium
 vendor	BELKIN2		0x1799	Belkin
+vendor	GENESYS		0x17a0	Genesys Logic
 vendor	LENOVO		0x17aa	Lenovo
 vendor	HAWKING		0x17b3	Hawking Technology
 vendor	NETCHIP		0x17cc	NetChip Technology
@@ -3039,6 +3040,9 @@ product FUTUREDOMAIN TMC_18C30	0x0000	TMC-18C30
 /* Guillemot products */
 product GEMTEK PR103		0x1001	PR103
 
+/* Genesys Logic products */
+product GENESYS GL9755		0x9755	GL9755
+
 /* Global Sun Technology products */
 product GLOBALSUN GL24110P03	0x1100	GL24110P03
 product GLOBALSUN GL24110P	0x1101	GL24110P
@@ -3979,6 +3983,9 @@ product INTEL I219_V9		0x15e2	I219-V
 product INTEL I219_LM5		0x15e3	I219-LM
 product INTEL X550EM_A_1G_T	0x15e4	X553 SGMII
 product INTEL X550EM_A_1G_T_L	0x15e5	X553 SGMII
+product INTEL JHL7340_PCIE	0x15e7	JHL7340 Thunderbolt 3
+product INTEL JHL7340		0x15e8	JHL7340 Thunderbolt 3
+product INTEL JHL7340_XHCI	0x15e9	JHL7340 Thunderbolt 3
 product INTEL JHL7540_PCIE	0x15ea	JHL7540 Thunderbolt 3
 product INTEL JHL7540     	0x15eb	JHL7540 Thunderbolt 3
 product INTEL JHL7540_XHCI	0x15ec	JHL7540 Thunderbolt 3
