@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmp.1,v 1.17 2021/03/23 22:07:36 martijn Exp $
+.\" $OpenBSD: snmp.1,v 1.18 2021/06/20 20:02:14 martijn Exp $
 .\"
 .\" Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 23 2021 $
+.Dd $Mdocdate: June 20 2021 $
 .Dt SNMP 1
 .Os
 .Sh NAME
@@ -197,7 +197,7 @@ Options are
 or
 .Cm SHA-512 .
 This option defaults to
-.Cm MD5 .
+.Cm SHA-256 .
 This option is only used by
 .Fl v Cm 3 .
 .It Fl C Ar appopt
@@ -439,6 +439,8 @@ protocol.
 Options are
 .Cm DES
 and
+.Cm AES .
+This option defaults to
 .Cm AES .
 This option is only used by
 .Fl v Cm 3 .
