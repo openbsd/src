@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpd.conf.5,v 1.49 2021/06/20 19:55:48 martijn Exp $
+.\" $OpenBSD: snmpd.conf.5,v 1.50 2021/06/20 19:59:42 martijn Exp $
 .\"
 .\" Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -279,7 +279,7 @@ must be either
 or
 .Ic hmac-sha512 .
 If omitted the default is
-.Ic hmac-sha1 .
+.Ic hmac-sha256 .
 .Pp
 With
 .Ic enckey
@@ -295,7 +295,7 @@ algorithm can be either
 or
 .Ic aes
 and defaults to
-.Ic des .
+.Ic aes .
 .Pp
 Any user account that has encryption enabled requires authentication to
 be enabled too.
@@ -355,7 +355,7 @@ algorithm.
 seclevel enc
 
 user "hans" authkey "password123" enc aes enckey "321drowssap"
-user "sophie" authkey "password456" enckey "654drowssap"
+user "sophie" authkey "password456" enc des enckey "654drowssap"
 .Ed
 .Sh SEE ALSO
 .Xr snmp 1 ,

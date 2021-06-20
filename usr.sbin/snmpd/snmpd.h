@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.96 2021/06/20 19:55:48 martijn Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.97 2021/06/20 19:59:42 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -529,7 +529,7 @@ enum usmauth {
 	AUTH_SHA512	/* usmHMAC384SHA512AuthProtocol. RFC7860 */
 };
 
-#define AUTH_DEFAULT	AUTH_SHA1	/* Default digest */
+#define AUTH_DEFAULT	AUTH_SHA256	/* Default digest */
 
 enum usmpriv {
 	PRIV_NONE = 0,
@@ -537,7 +537,7 @@ enum usmpriv {
 	PRIV_AES	/* CFB128-AES-128, RFC3826 */
 };
 
-#define PRIV_DEFAULT	PRIV_DES	/* Default cipher */
+#define PRIV_DEFAULT	PRIV_AES	/* Default cipher */
 
 struct usmuser {
 	char			*uu_name;
