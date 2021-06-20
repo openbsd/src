@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt_scaled.c,v 1.19 2020/10/12 22:08:34 deraadt Exp $	*/
+/*	$OpenBSD: fmt_scaled.c,v 1.20 2021/06/20 14:08:42 tb Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Ian F. Darwin.  All rights reserved.
@@ -149,10 +149,8 @@ scan_scaled(char *scaled, long long *result)
 		}
 	}
 
-	if (sign) {
+	if (sign)
 		whole *= sign;
-		fpart *= sign;
-	}
 
 	/* If no scale factor given, we're done. fraction is discarded. */
 	if (!*p) {
@@ -196,7 +194,10 @@ scan_scaled(char *scaled, long long *result)
 				for (i = 0; i < fract_digits -1; i++)
 					fpart /= 10;
 			}
-			whole += fpart;
+			if (sign == -1)
+				whole -= fpart;
+			else
+				whole += fpart;
 			*result = whole;
 			return 0;
 		}
