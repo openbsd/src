@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1972 2021/06/13 12:43:15 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1973 2021/06/20 06:40:12 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -9728,6 +9728,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PR103",
 	},
 	{
+	    PCI_VENDOR_GENESYS, PCI_PRODUCT_GENESYS_GL9755,
+	    "GL9755",
+	},
+	{
 	    PCI_VENDOR_GLOBALSUN, PCI_PRODUCT_GLOBALSUN_GL24110P03,
 	    "GL24110P03",
 	},
@@ -13338,6 +13342,18 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X550EM_A_1G_T_L,
 	    "X553 SGMII",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_JHL7340_PCIE,
+	    "JHL7340 Thunderbolt 3",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_JHL7340,
+	    "JHL7340 Thunderbolt 3",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_JHL7340_XHCI,
+	    "JHL7340 Thunderbolt 3",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_JHL7540_PCIE,
@@ -33274,6 +33290,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_BELKIN2,
 	    "Belkin",
+	},
+	{
+	    PCI_VENDOR_GENESYS,
+	    "Genesys Logic",
 	},
 	{
 	    PCI_VENDOR_LENOVO,

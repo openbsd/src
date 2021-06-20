@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1972 2021/06/13 12:43:15 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1973 2021/06/20 06:40:12 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -307,6 +307,7 @@
 #define	PCI_VENDOR_ANTARES	0x1754		/* Antares Microsystems */
 #define	PCI_VENDOR_CAVIUM	0x177d		/* Cavium */
 #define	PCI_VENDOR_BELKIN2	0x1799		/* Belkin */
+#define	PCI_VENDOR_GENESYS	0x17a0		/* Genesys Logic */
 #define	PCI_VENDOR_LENOVO	0x17aa		/* Lenovo */
 #define	PCI_VENDOR_HAWKING	0x17b3		/* Hawking Technology */
 #define	PCI_VENDOR_NETCHIP	0x17cc		/* NetChip Technology */
@@ -3044,6 +3045,9 @@
 /* Guillemot products */
 #define	PCI_PRODUCT_GEMTEK_PR103	0x1001		/* PR103 */
 
+/* Genesys Logic products */
+#define	PCI_PRODUCT_GENESYS_GL9755	0x9755		/* GL9755 */
+
 /* Global Sun Technology products */
 #define	PCI_PRODUCT_GLOBALSUN_GL24110P03	0x1100		/* GL24110P03 */
 #define	PCI_PRODUCT_GLOBALSUN_GL24110P	0x1101		/* GL24110P */
@@ -3984,6 +3988,9 @@
 #define	PCI_PRODUCT_INTEL_I219_LM5	0x15e3		/* I219-LM */
 #define	PCI_PRODUCT_INTEL_X550EM_A_1G_T	0x15e4		/* X553 SGMII */
 #define	PCI_PRODUCT_INTEL_X550EM_A_1G_T_L	0x15e5		/* X553 SGMII */
+#define	PCI_PRODUCT_INTEL_JHL7340_PCIE	0x15e7		/* JHL7340 Thunderbolt 3 */
+#define	PCI_PRODUCT_INTEL_JHL7340	0x15e8		/* JHL7340 Thunderbolt 3 */
+#define	PCI_PRODUCT_INTEL_JHL7340_XHCI	0x15e9		/* JHL7340 Thunderbolt 3 */
 #define	PCI_PRODUCT_INTEL_JHL7540_PCIE	0x15ea		/* JHL7540 Thunderbolt 3 */
 #define	PCI_PRODUCT_INTEL_JHL7540	0x15eb		/* JHL7540 Thunderbolt 3 */
 #define	PCI_PRODUCT_INTEL_JHL7540_XHCI	0x15ec		/* JHL7540 Thunderbolt 3 */
