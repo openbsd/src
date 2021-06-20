@@ -1,4 +1,4 @@
-/* $OpenBSD: fmt_test.c,v 1.16 2020/02/14 19:17:34 schwarze Exp $ */
+/* $OpenBSD: fmt_test.c,v 1.17 2021/06/20 14:09:59 tb Exp $ */
 
 /*
  * Combined tests for fmt_scaled and scan_scaled.
@@ -169,6 +169,8 @@ struct {					/* the test cases */
 	{ "-2K",	-2048LL, 0 },		/* negatives */
 	{ "-2.2K",	-2252LL, 0 },	/* neg with fract */
 	{ "4.5k", 4608, 0 },
+	{ "3.333755555555t", 3665502936412, 0 },
+	{ "-3.333755555555t", -3665502936412, 0 },
 	{ "4.5555555555555555K", 4664, 0 },
 	{ "4.5555555555555555555K", 4664, 0 },	/* handle enough digits? */
 	{ "4.555555555555555555555555555555K", 4664, 0 }, /* ignores extra digits? */
