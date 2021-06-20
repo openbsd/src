@@ -1,4 +1,4 @@
-/*	$OpenBSD: sfuart.c,v 1.2 2021/06/13 09:19:14 kettenis Exp $	*/
+/*	$OpenBSD: sfuart.c,v 1.3 2021/06/20 17:55:37 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -29,6 +29,7 @@
 
 #include <dev/ofw/fdt.h>
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_clock.h>
 
 #define UART_TXDATA			0x0000
 #define  UART_TXDATA_FULL		(1U << 31)
@@ -75,6 +76,8 @@ struct sfuart_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+
+	uint32_t		sc_frequency;
 
 	struct soft_intrhand	*sc_si;
 	void			*sc_ih;
@@ -157,6 +160,7 @@ sfuart_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	sc->sc_frequency = clock_get_frequency(faa->fa_node, NULL);
 	if (faa->fa_node == stdout_node) {
 		/* Locate the major number. */
 		for (maj = 0; maj < nchrdev; maj++)
@@ -267,6 +271,7 @@ sfuart_param(struct tty *tp, struct termios *t)
 {
 	struct sfuart_softc *sc = sfuart_sc(tp->t_dev);
 	int ospeed = t->c_ospeed;
+	uint32_t div;
 
 	/* Check requested parameters. */
 	if (ospeed < 0 || (t->c_ispeed && t->c_ispeed != t->c_ospeed))
@@ -294,6 +299,11 @@ sfuart_param(struct tty *tp, struct termios *t)
 				return error;
 			}
 		}
+
+		div = (sc->sc_frequency + ospeed / 2) / ospeed;
+		if (div < 16 || div > 65536)
+			return EINVAL;
+		HWRITE4(sc, UART_DIV, div - 1);
 	}
 
 	tp->t_ispeed = t->c_ispeed;
@@ -365,7 +375,7 @@ sfuartopen(dev_t dev, int flag, int mode, struct proc *p)
 		tp->t_lflag = TTYDEF_LFLAG;
 		tp->t_ispeed = tp->t_ospeed =
 		    sc->sc_conspeed ? sc->sc_conspeed : B115200;
-		
+
 		s = spltty();
 
 		sfuart_param(tp, &tp->t_termios);
@@ -460,7 +470,7 @@ sfuartread(dev_t dev, struct uio *uio, int flag)
 
 	if (tp == NULL)
 		return ENODEV;
-	
+
 	return (*linesw[tp->t_line].l_read)(tp, uio, flag);
 }
 
@@ -471,7 +481,7 @@ sfuartwrite(dev_t dev, struct uio *uio, int flag)
 
 	if (tp == NULL)
 		return ENODEV;
-	
+
 	return (*linesw[tp->t_line].l_write)(tp, uio, flag);
 }
 
@@ -577,7 +587,7 @@ int
 sfuartcngetc(dev_t dev)
 {
 	uint32_t val;
-	
+
 	do {
 		val = bus_space_read_4(sfuartconsiot, sfuartconsioh, UART_RXDATA);
 		if (val & UART_RXDATA_EMPTY)
