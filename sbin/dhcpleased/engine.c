@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.16 2021/06/18 11:44:48 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.17 2021/06/20 08:31:45 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -101,6 +101,10 @@ struct dhcpleased_iface {
 	struct in_addr			 dhcp_server; /* for unicast */
 	struct in_addr			 requested_ip;
 	struct in_addr			 mask;
+	struct in_addr			 siaddr;
+	char				 file[4 * DHCP_FILE_LEN + 1];
+	char				 hostname[4 * 255 + 1];
+	char				 domainname[4 * 255 + 1];
 	struct dhcp_route		 routes[MAX_DHCP_ROUTES];
 	int				 routes_len;
 	struct in_addr			 nameservers[MAX_RDNS_COUNT];
@@ -615,7 +619,8 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 	char			 hbuf_src[INET_ADDRSTRLEN];
 	char			 hbuf_dst[INET_ADDRSTRLEN];
 	char			 hbuf[INET_ADDRSTRLEN];
-	char			 vis_buf[4 * 255 + 1];
+	char			 domainname[4 * 255 + 1];
+	char			 hostname[4 * 255 + 1];
 	char			 ifnamebuf[IF_NAMESIZE], *if_name;
 
 	if (bcast_mac.ether_addr_octet[0] == 0)
@@ -872,13 +877,21 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 			p += dho_len;
 			rem -= dho_len;
 			break;
+		case DHO_HOST_NAME:
+			if ( dho_len < 1)
+				goto wrong_length;
+			strvisx(hostname, p, dho_len, VIS_SAFE);
+			if (log_getverbose() > 1)
+				log_debug("DHO_HOST_NAME: %s", hostname);
+			p += dho_len;
+			rem -= dho_len;
+			break;
 		case DHO_DOMAIN_NAME:
 			if ( dho_len < 1)
 				goto wrong_length;
-			if (log_getverbose() > 1) {
-				strvisx(vis_buf, p, dho_len, VIS_SAFE);
-				log_debug("DHO_DOMAIN_NAME: %s", vis_buf);
-			}
+			strvisx(domainname, p, dho_len, VIS_SAFE);
+			if (log_getverbose() > 1)
+				log_debug("DHO_DOMAIN_NAME: %s", domainname);
 			p += dho_len;
 			rem -= dho_len;
 			break;
@@ -1071,6 +1084,16 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 		iface->rebinding_time = rebinding_time;
 		memcpy(iface->nameservers, nameservers,
 		    sizeof(iface->nameservers));
+
+		iface->siaddr.s_addr = dhcp_hdr->siaddr.s_addr;
+
+		/* we made sure this is a string futher up */
+		strnvis(iface->file, dhcp_hdr->file, sizeof(iface->file),
+		    VIS_SAFE);
+
+		strlcpy(iface->domainname, domainname,
+		    sizeof(iface->domainname));
+		strlcpy(iface->hostname, hostname, sizeof(iface->hostname));
 		state_transition(iface, IF_BOUND);
 		break;
 	case DHCPNAK:
@@ -1330,6 +1353,10 @@ send_configure_interface(struct dhcpleased_iface *iface)
 	imsg.rdomain = iface->rdomain;
 	imsg.addr.s_addr = iface->requested_ip.s_addr;
 	imsg.mask.s_addr = iface->mask.s_addr;
+	imsg.siaddr.s_addr = iface->siaddr.s_addr;
+	strlcpy(imsg.file, iface->file, sizeof(imsg.file));
+	strlcpy(imsg.domainname, iface->domainname, sizeof(imsg.domainname));
+	strlcpy(imsg.hostname, iface->hostname, sizeof(imsg.hostname));
 	imsg.routes_len = iface->routes_len;
 	memcpy(imsg.routes, iface->routes, sizeof(imsg.routes));
 	engine_imsg_compose_main(IMSG_CONFIGURE_INTERFACE, 0, &imsg,
@@ -1350,6 +1377,10 @@ send_deconfigure_interface(struct dhcpleased_iface *iface)
 	imsg.rdomain = iface->rdomain;
 	imsg.addr.s_addr = iface->requested_ip.s_addr;
 	imsg.mask.s_addr = iface->mask.s_addr;
+	imsg.siaddr.s_addr = iface->siaddr.s_addr;
+	strlcpy(imsg.file, iface->file, sizeof(imsg.file));
+	strlcpy(imsg.domainname, iface->domainname, sizeof(imsg.domainname));
+	strlcpy(imsg.hostname, iface->hostname, sizeof(imsg.hostname));
 	imsg.routes_len = iface->routes_len;
 	memcpy(imsg.routes, iface->routes, sizeof(imsg.routes));
 	engine_imsg_compose_main(IMSG_DECONFIGURE_INTERFACE, 0, &imsg,
@@ -1446,10 +1477,10 @@ parse_lease(struct dhcpleased_iface *iface, struct imsg_ifinfo *imsg_ifinfo)
 
 	iface->requested_ip.s_addr = INADDR_ANY;
 
-	if ((p = strstr(imsg_ifinfo->lease, LEASE_PREFIX)) == NULL)
+	if ((p = strstr(imsg_ifinfo->lease, LEASE_IP_PREFIX)) == NULL)
 		return;
 
-	p += sizeof(LEASE_PREFIX) - 1;
+	p += sizeof(LEASE_IP_PREFIX) - 1;
 	if ((p1 = strchr(p, '\n')) == NULL)
 		return;
 	*p1 = '\0';

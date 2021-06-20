@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleased.c,v 1.12 2021/06/16 14:06:17 florian Exp $	*/
+/*	$OpenBSD: dhcpleased.c,v 1.13 2021/06/20 08:31:45 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -626,7 +626,8 @@ configure_interface(struct imsg_configure_interface *imsg)
 	struct sockaddr_in	*req_sin_addr, *req_sin_mask;
 	int			 found = 0, udpsock, opt = 1, len, fd = -1;
 	char			*if_name;
-	char			 ntop_buf[INET_ADDRSTRLEN];
+	char			 ip_ntop_buf[INET_ADDRSTRLEN];
+	char			 nextserver_ntop_buf[INET_ADDRSTRLEN];
 	char			 lease_buf[LEASE_SIZE];
 	char			 lease_file_buf[sizeof(_PATH_LEASE) +
 	    IF_NAMESIZE];
@@ -723,12 +724,21 @@ configure_interface(struct imsg_configure_interface *imsg)
 	if (no_lease_files)
 		return;
 
-	if (inet_ntop(AF_INET, &imsg->addr, ntop_buf, sizeof(ntop_buf)) ==
+	if (inet_ntop(AF_INET, &imsg->addr, ip_ntop_buf, sizeof(ip_ntop_buf)) ==
 	    NULL) {
 		log_warn("%s: inet_ntop", __func__);
 		return;
 	}
 
+	if (imsg->siaddr.s_addr == INADDR_ANY)
+		nextserver_ntop_buf[0] = '\0';
+	else {
+		if (inet_ntop(AF_INET, &imsg->siaddr, nextserver_ntop_buf,
+		    sizeof(nextserver_ntop_buf)) == NULL) {
+			log_warn("%s: inet_ntop", __func__);
+			return;
+		}
+	}
 	len = snprintf(lease_file_buf, sizeof(lease_file_buf), "%s%s",
 	    _PATH_LEASE, if_name);
 	if ( len == -1 || (size_t) len >= sizeof(lease_file_buf)) {
@@ -737,11 +747,15 @@ configure_interface(struct imsg_configure_interface *imsg)
 		return;
 	}
 
-	len = snprintf(lease_buf, sizeof(lease_buf), "%s%s\n", LEASE_PREFIX,
-	    ntop_buf);
+	len = snprintf(lease_buf, sizeof(lease_buf),
+	    "%s\n%s%s\n%s%s\n%s%s\n%s%s\n%s%s\n",
+	    LEASE_VERSION, LEASE_IP_PREFIX, ip_ntop_buf,
+	    LEASE_NEXTSERVER_PREFIX, nextserver_ntop_buf, LEASE_BOOTFILE_PREFIX,
+	    imsg->file, LEASE_HOSTNAME_PREFIX, imsg->hostname,
+	    LEASE_DOMAIN_PREFIX, imsg->domainname);
 	if ( len == -1 || (size_t) len >= sizeof(lease_buf)) {
 		log_warnx("%s: failed to encode lease for %s", __func__,
-		    ntop_buf);
+		    ip_ntop_buf);
 		return;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleased.h,v 1.5 2021/06/16 14:06:17 florian Exp $	*/
+/*	$OpenBSD: dhcpleased.h,v 1.6 2021/06/20 08:31:45 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -24,8 +24,13 @@
 #define	SERVER_PORT		67
 #define	CLIENT_PORT		68
 #define	_PATH_LEASE		"/var/db/dhcpleased/"
-#define	LEASE_PREFIX		"version: 1\nip: "
-#define	LEASE_SIZE		sizeof(LEASE_PREFIX"xxx.xxx.xxx.xxx\n")
+#define	LEASE_VERSION		"version: 2"
+#define	LEASE_IP_PREFIX		"ip: "
+#define	LEASE_NEXTSERVER_PREFIX	"next-server: "
+#define	LEASE_BOOTFILE_PREFIX	"filename: "
+#define	LEASE_HOSTNAME_PREFIX	"host-name: "
+#define	LEASE_DOMAIN_PREFIX	"domain-name: "
+#define	LEASE_SIZE		4096
 /* MAXDNAME from arpa/namesr.h */
 #define	DHCPLEASED_MAX_DNSSL	1025
 #define	MAX_RDNS_COUNT		8 /* max nameserver in a RTM_PROPOSAL */
