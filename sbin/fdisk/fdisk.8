@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.98 2021/06/20 18:44:19 krw Exp $
+.\"	$OpenBSD: fdisk.8,v 1.99 2021/06/20 18:47:37 deraadt Exp $
 .\"
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
@@ -25,7 +25,7 @@
 .Nm fdisk
 .Op Fl egvy
 .Op Fl i | u
-.Op Fl b Ar blocks Op @ Ns Ar offset Ns Op : Ns Ar type
+.Op Fl b Ar blocks Ns Op @ Ns Ar offset Ns Op : Ns Ar type
 .Oo
 .Fl c Ar cylinders
 .Fl h Ar heads
@@ -58,7 +58,7 @@ at install time.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl b Ar blocks Op @ Ns Ar offset Ns Op : Ns Ar type
+.It Fl b Ar blocks Ns Op @ Ns Ar offset Ns Op : Ns Ar type
 A special boot partition of the specified size, offset and type will be written to disk.
 The
 .Ox
