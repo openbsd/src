@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2021/03/09 17:38:24 martijn Exp $
+# $OpenBSD: Makefile,v 1.2 2021/06/20 20:08:19 martijn Exp $
 
 SNMP?=			/usr/bin/snmp
 SNMPD?=			/usr/sbin/snmpd -f ${.OBJDIR}/snmpd.conf
@@ -23,11 +23,14 @@ snmpd.conf: Makefile
 	printf 'listen_addr="127.0.0.1"\n' > snmpd.conf
 	printf 'listen6_addr="::1"\n\n' >> snmpd.conf
 	printf '# Restrict daemon to listen on localhost only\n' >> snmpd.conf
-	printf 'listen on $$listen_addr\n' >> snmpd.conf
-	printf 'listen on tcp $$listen_addr\n' >> snmpd.conf
-	printf 'listen on $$listen6_addr\n' >> snmpd.conf
-	printf 'listen on tcp $$listen6_addr\n' >> snmpd.conf
-	printf 'listen on $$listen_addr notify\n\n' >> snmpd.conf
+	printf 'listen on $$listen_addr snmpv1 snmpv2c snmpv3\n' >> snmpd.conf
+	printf 'listen on tcp $$listen_addr snmpv1 snmpv2c snmpv3\n' >> snmpd.conf
+	printf 'listen on $$listen6_addr snmpv1 snmpv2c snmpv3\n' >> snmpd.conf
+	printf 'listen on tcp $$listen6_addr snmpv1 snmpv2c snmpv3\n' >> snmpd.conf
+	printf 'listen on $$listen_addr notify snmpv1 snmpv2c snmpv3\n\n' >> snmpd.conf
+	printf 'read-only community public\n' >> snmpd.conf
+	printf 'read-write community private\n' >> snmpd.conf
+	printf 'trap community public\n\n' >> snmpd.conf
 	printf '# (ab)use sysContact for DisplayString (255a) testing\n' >> snmpd.conf
 	printf 'system contact "Reyk Fl\303\266ter"\n' >> snmpd.conf
 	printf 'system services 74\n\n' >> snmpd.conf
