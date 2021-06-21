@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.362 2021/06/03 01:55:52 dlg Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.363 2021/06/21 22:09:14 jca Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -353,6 +353,8 @@ ip_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 	if (m == NULL)
 		goto bad;
 
+	ip = mtod(m, struct ip *);
+
 #if NCARP > 0
 	if (carp_lsdrop(ifp, m, AF_INET, &ip->ip_src.s_addr,
 	    &ip->ip_dst.s_addr, (ip->ip_p == IPPROTO_ICMP ? 0 : 1)))
@@ -371,9 +373,10 @@ ip_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 		goto bad;
 
 	ip = mtod(m, struct ip *);
-	hlen = ip->ip_hl << 2;
 	pfrdr = (pfrdr != ip->ip_dst.s_addr);
 #endif
+
+	hlen = ip->ip_hl << 2;
 
 	/*
 	 * Process options and, if not destined for us,
