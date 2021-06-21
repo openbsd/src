@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.9 2021/05/20 04:22:33 drahn Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.10 2021/06/21 14:39:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2020 Brian Bamsch <bbamsch@google.com>
@@ -52,8 +52,8 @@ svc_handler(trapframe_t *frame)
 	if (__predict_true(frame->tf_scause & EXCP_INTR))
 		intr_enable();
 
-	ap = &frame->tf_a[0]; // Pointer to first arg
-	code = frame->tf_t[0]; // Syscall code
+	ap = &frame->tf_a[0];
+	code = frame->tf_t[0];
 	callp = p->p_p->ps_emul->e_sysent;
 
 	switch (code) {
