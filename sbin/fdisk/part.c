@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.86 2021/06/21 02:05:30 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.87 2021/06/21 13:17:20 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -152,7 +152,9 @@ static const struct protected_guid {
 	{ "2e54b353-1271-4842-806f-e436d6af6985" },	/* HiFive BBL	*/
 };
 
-#define	nitems(_a)	((sizeof(_a)) / sizeof((_a)[0]))
+#ifndef nitems
+#define	nitems(_a)	(sizeof((_a)) / sizeof((_a)[0]))
+#endif
 
 int
 PRT_protected_guid(struct uuid *leuuid)
