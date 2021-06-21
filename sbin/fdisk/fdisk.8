@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.100 2021/06/20 19:40:06 jmc Exp $
+.\"	$OpenBSD: fdisk.8,v 1.101 2021/06/21 02:05:30 krw Exp $
 .\"
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 20 2021 $
+.Dd $Mdocdate: June 21 2021 $
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -23,12 +23,11 @@
 .Nd partition table maintenance program
 .Sh SYNOPSIS
 .Nm fdisk
-.Op Fl egvy
-.Op Fl i | u
+.Op Fl ey
+.Op Fl i Oo Fl g Oc | Fl u | Fl A | Fl v
 .Op Fl b Ar blocks Ns Op @ Ns Ar offset Ns Op : Ns Ar type
-.Op Fl c Ar cylinders Fl h Ar heads Fl s Ar sectors
+.Op Fl l Ar blocks | Fl c Ar cylinders Fl h Ar heads Fl s Ar sectors
 .Op Fl f Ar mbrfile
-.Op Fl l Ar blocks
 .Ar disk
 .Sh DESCRIPTION
 .Nm fdisk
@@ -54,17 +53,33 @@ at install time.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl A
+Allocates the largest chunks of free space in an existing GPT to the
+.Ox
+partition
+and the optional
+.Fl b
+partition.
+The free space is maximized by deleting
+all existing partitions except the boot partitions
+.Sq APFS ISC ,
+.Sq APFS ,
+.Sq APFS Recovry ,
+.Sq HiFive FSBL
+and
+.Sq HiFive BBL .
 .It Fl b Ar blocks Ns Op @ Ns Ar offset Ns Op : Ns Ar type
 A special boot partition of the specified size, offset and type will be written to disk.
 The
 .Ox
 partition will follow the boot partition and use the remaining space on the disk.
 .Pp
-Only valid with
-.Fl i .
-If
-.Fl g
-is specified only the
+Can only be used when initializing a disk with
+.Fl i Op Fl g
+or
+.Fl A .
+If a GPT is being initialized
+only the
 .Ar blocks
 value will be used, with the boot partition being placed at the first available LBA and
 given the type EFI SYS.
@@ -85,11 +100,6 @@ or values that
 .Em /boot
 has passed to the kernel.
 .Pp
-Only one of
-.Fl chs
-or
-.Fl l
-can be specified.
 .It Fl e
 Use the
 .Nm
@@ -108,8 +118,6 @@ The default GPT will have a single
 partition containing all available space not allocated by a
 .Fl b
 specification.
-Only valid with
-.Fl i .
 .It Fl i
 Requests that the partition table data be re-initialized.
 In this mode,
@@ -129,21 +137,9 @@ In the default template, MBR partition number 3 will be configured as an
 MBR partition containing all available space not allocated by a
 .Fl b
 specification.
-.Pp
-Only one of
-.Fl i
-or
-.Fl u
-can be specified.
 .It Fl l Ar blocks
 Specify the number of blocks in the disk, and force the MBR to be in LBA
 mode only.
-.Pp
-Only one of
-.Fl chs
-or
-.Fl l
-can be specified.
 .It Fl u
 Update MBR bootcode, preserving existing MBR partition table.
 The MBR bootcode extends from offset 0x000 to the start of the MBR partition
@@ -155,16 +151,9 @@ This is useful for writing new MBR bootcode onto an existing drive, and is
 equivalent to the DOS command
 .Dq FDISK /MBR .
 Note that this option will overwrite the NT disk signature, if present.
-.Pp
-Only one of
-.Fl i
-or
-.Fl u
-can be specified.
 .It Fl v
 Print the contents of the MBR, the Primary GPT and the Secondary GPT.
 Also print more detailed GPT header and partition entry information.
-Cannot be used with
 .Fl i ,
 .Fl u ,
 or

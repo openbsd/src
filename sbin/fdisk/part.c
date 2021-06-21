@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.85 2021/06/13 23:53:51 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.86 2021/06/21 02:05:30 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -141,6 +141,47 @@ static const struct part_type {
 	{ 0xF4, "SpeedStor   "},   /* SpeedStor >1024 cyl. or LANstep or IBM PS/2 IML */
 	{ 0xFF, "Xenix BBT   "},   /* Xenix Bad Block Table */
 };
+
+static const struct protected_guid {
+	char	guid[UUID_STR_LEN + 1];
+} protected_guid[] = {
+	{ "7c3457ef-0000-11aa-aa11-00306543ecac" },	/* APFS		*/
+	{ "69646961-6700-11aa-aa11-00306543ecac" },	/* APFS ISC	*/
+	{ "52637672-7900-11aa-aa11-00306543ecac" },	/* APFS Recovry */
+	{ "5b193300-fc78-40cd-8002-e86c45580b47" },	/* HiFive FSBL	*/
+	{ "2e54b353-1271-4842-806f-e436d6af6985" },	/* HiFive BBL	*/
+};
+
+#define	nitems(_a)	((sizeof(_a)) / sizeof((_a)[0]))
+
+int
+PRT_protected_guid(struct uuid *leuuid)
+{
+	struct uuid	 uuid;
+	char		*str = NULL;
+	int		 rslt;
+	unsigned int	 i;
+	uint32_t	 status;
+
+	uuid_dec_le(leuuid, &uuid);
+	uuid_to_string(&uuid, &str, &status);
+	if (status != uuid_s_ok) {
+		rslt = 1;
+		goto done;
+	}
+
+	rslt = 0;
+	for(i = 0; i < nitems(protected_guid); i++) {
+		if (strncmp(str, protected_guid[i].guid, UUID_STR_LEN) == 0) {
+			rslt = 1;
+			break;
+		}
+	}
+
+ done:
+	free(str);
+	return rslt;
+}
 
 void
 PRT_printall(void)

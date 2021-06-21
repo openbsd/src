@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.116 2021/06/16 15:40:47 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.117 2021/06/21 02:05:30 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -307,12 +307,25 @@ gsetpid(int pn)
 	GPT_print_parthdr(TERSE);
 	GPT_print_part(pn, "s", TERSE);
 
+	if (PRT_protected_guid(&gg->gp_type)) {
+		uuid_dec_le(&gg->gp_type, &guid);
+		printf("can't edit partition type %s\n",
+		    PRT_uuid_to_typename(&guid));
+		goto done;
+	}
+
 	/* Ask for partition type or GUID. */
 	uuid_dec_le(&gg->gp_type, &guid);
 	num = ask_pid(PRT_uuid_to_type(&guid), &guid);
 	if (num <= 0xff)
 		guid = *(PRT_type_to_uuid(num));
 	uuid_enc_le(&gg->gp_type, &guid);
+	if (PRT_protected_guid(&gg->gp_type)) {
+		uuid_dec_le(&gg->gp_type, &guid);
+		printf("can't change partition type to %s\n",
+		    PRT_uuid_to_typename(&guid));
+		goto done;
+	}
 
 	if (uuid_is_nil(&gg->gp_guid, NULL)) {
 		uuid_create(&guid, &status);
