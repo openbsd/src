@@ -29,6 +29,7 @@
 ./usr/include/riscv64/openpromio.h
 ./usr/include/riscv64/param.h
 ./usr/include/riscv64/pcb.h
+./usr/include/riscv64/pci_machdep.h
 ./usr/include/riscv64/pmap.h
 ./usr/include/riscv64/proc.h
 ./usr/include/riscv64/profile.h
