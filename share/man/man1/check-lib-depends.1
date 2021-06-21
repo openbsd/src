@@ -1,4 +1,4 @@
-.\"	$OpenBSD: check-lib-depends.1,v 1.4 2019/12/23 02:09:46 kmos Exp $
+.\"	$OpenBSD: check-lib-depends.1,v 1.5 2021/06/21 15:17:32 espie Exp $
 .\"
 .\" Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 23 2019 $
+.Dd $Mdocdate: June 21 2021 $
 .Dt CHECK-LIB-DEPENDS 1
 .Os
 .Sh NAME
@@ -22,7 +22,7 @@
 .Nd scan port for shared libraries
 .Sh SYNOPSIS
 .Nm check-lib-depends
-.Op Fl fimoqx
+.Op Fl fimqx
 .Op Fl B Ar destdir
 .Op Fl d Ar pkgrepo
 .Op Fl D Ar directory
@@ -53,9 +53,7 @@ actually consists of two distinct stages:
 .It
 scan all binaries inside a package to extract libraries and rpaths,
 using
-.Xr objdump 1
-or
-.Xr ldd 1 .
+.Xr objdump 1 .
 .It
 compare those libraries against the port's registered dependencies
 and report problems.
@@ -92,14 +90,6 @@ a mandatory dependency of C++ libraries on some architectures.
 Read packing-list from standard input.
 .It Fl m
 Always show progress-meter, even if not run from terminal.
-.It Fl o
-Scan binaries using
-.Xr ldd 1 ,
-which also works for old a.out binaries, instead of
-.Xr objdump 1 ,
-which only works for
-.Xr elf 5
-binaries.
 .It Fl O Ar dest
 Save result of first stage in file
 .Ar dest .
