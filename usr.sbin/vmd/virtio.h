@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.h,v 1.39 2021/06/16 16:55:02 dv Exp $	*/
+/*	$OpenBSD: virtio.h,v 1.40 2021/06/21 02:38:18 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -19,6 +19,7 @@
 #include <sys/types.h>
 
 #include <dev/pv/virtioreg.h>
+#include <net/if_tun.h>
 
 #include <event.h>
 
@@ -44,6 +45,11 @@
 
 #define VIONET_QUEUE_SIZE	256
 #define VIONET_QUEUE_MASK	(VIONET_QUEUE_SIZE - 1)
+
+/* Virtio network device is backed by tap(4), so inherit limits */
+#define VIONET_HARD_MTU		TUNMRU
+#define VIONET_MIN_TXLEN	ETHER_HDR_LEN
+#define VIONET_MAX_TXLEN	VIONET_HARD_MTU + ETHER_HDR_LEN
 
 /* VMM Control Interface shutdown timeout (in seconds) */
 #define VMMCI_TIMEOUT		3
