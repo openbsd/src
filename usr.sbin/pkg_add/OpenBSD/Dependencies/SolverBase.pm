@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SolverBase.pm,v 1.12 2019/06/09 09:36:25 espie Exp $
+# $OpenBSD: SolverBase.pm,v 1.13 2021/06/21 14:36:48 espie Exp $
 #
 # Copyright (c) 2005-2018 Marc Espie <espie@openbsd.org>
 #
@@ -51,7 +51,11 @@ sub lookup
 			push(@{$self->{todo}}, $dep2) unless $done->{$dep2};
 		}
 		$known->{$dep} = 1;
-		if ($self->find_in_new_source($solver, $state, $obj, $dep)) {
+		if ($dep ne 'BaseSystem' && # XXX fake dependency
+		    # updated package -> base system, don't bother looking
+		    # (at this point there should be a fake handle but it's
+		    # simpler to just test rather than retrofit everything)
+		    $self->find_in_new_source($solver, $state, $obj, $dep)) {
 			$dependencies->{$dep} = 2;
 			return 1;
 		}
