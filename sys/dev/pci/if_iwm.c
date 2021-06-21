@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.328 2021/06/01 18:03:56 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.329 2021/06/21 10:19:21 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -4876,7 +4876,6 @@ iwm_rx_reorder(struct iwm_softc *sc, struct mbuf *m, int chanidx,
 
 	type = wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
 	subtype = wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
-	ni = ieee80211_find_rxnode(ic, wh);
 
 	/*
 	 * We are only interested in Block Ack requests and unicast QoS data.
@@ -4918,6 +4917,7 @@ iwm_rx_reorder(struct iwm_softc *sc, struct mbuf *m, int chanidx,
 		buffer->valid = 1;
 	}
 
+	ni = ieee80211_find_rxnode(ic, wh);
 	if (type == IEEE80211_FC0_TYPE_CTL &&
 	    subtype == IEEE80211_FC0_SUBTYPE_BAR) {
 		iwm_release_frames(sc, ni, rxba, buffer, nssn, ml);
@@ -4958,6 +4958,7 @@ iwm_rx_reorder(struct iwm_softc *sc, struct mbuf *m, int chanidx,
 		if (iwm_is_sn_less(buffer->head_sn, nssn, buffer->buf_size) &&
 		   (!is_amsdu || last_subframe))
 			buffer->head_sn = nssn;
+		ieee80211_release_node(ic, ni);
 		return 0;
 	}
 
@@ -4972,6 +4973,7 @@ iwm_rx_reorder(struct iwm_softc *sc, struct mbuf *m, int chanidx,
 	if (!buffer->num_stored && sn == buffer->head_sn) {
 		if (!is_amsdu || last_subframe)
 			buffer->head_sn = (buffer->head_sn + 1) & 0xfff;
+		ieee80211_release_node(ic, ni);
 		return 0;
 	}
 
@@ -5027,10 +5029,12 @@ iwm_rx_reorder(struct iwm_softc *sc, struct mbuf *m, int chanidx,
 	if (!is_amsdu || last_subframe)
 		iwm_release_frames(sc, ni, rxba, buffer, nssn, ml);
 
+	ieee80211_release_node(ic, ni);
 	return 1;
 
 drop:
 	m_freem(m);
+	ieee80211_release_node(ic, ni);
 	return 1;
 }
 
