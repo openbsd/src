@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.50 2021/05/12 10:39:13 inoguchi Exp $
+# $OpenBSD: appstest.sh,v 1.51 2021/06/21 13:29:05 inoguchi Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -43,6 +43,16 @@ function stop_s_server {
 		kill -TERM $s_server_pid
 		wait $s_server_pid
 		s_server_pid=
+	fi
+}
+
+function stop_gnutls_serv {
+	if [ ! -z "$gnutls_serv_pid" ] ; then
+		echo ":-| stop gnutls-serv [ $gnutls_serv_pid ]"
+		sleep 1
+		kill -TERM $gnutls_serv_pid
+		wait $gnutls_serv_pid
+		gnutls_serv_pid=
 	fi
 }
 
@@ -706,6 +716,10 @@ __EOF__
 	start_message "genrsa ... generate server key#1"
 
 	$openssl_bin genrsa -aes256 -passout pass:$sv_rsa_pass -out $sv_rsa_key
+	check_exit_status $?
+
+	$openssl_bin rsa -in $sv_rsa_key -passin pass:$sv_rsa_pass \
+		-out $sv_rsa_key.nopass
 	check_exit_status $?
 
 	start_message "req ... generate server csr#1"
@@ -1847,6 +1861,92 @@ function test_server_client_dtls {
 
 	stop_s_server
 }
+
+function test_gnutls {
+	# --- GnuTLS interoperability ---
+	section_message "GnuTLS $1 interoperability"
+
+	proto="$1"
+
+	if [ $proto = "tls" ] ; then
+		sopt="-www"
+		lopt=
+		gopt=
+	else
+		sopt="-quiet"
+		lopt="-dtls"
+		gopt="-u"
+	fi
+
+	gs_bin=/usr/local/bin/gnutls-serv
+	gc_bin=/usr/local/bin/gnutls-cli
+
+	host="localhost"
+	port=4433
+
+	if [ $ecdsa_tests = 1 ] ; then
+		echo "Using ECDSA certificate"
+		crt=$sv_ecdsa_cert
+		key=$sv_ecdsa_key
+		sni=ecdsa.test-dummy.com
+	elif [ $gost_tests = 1 ] ; then
+		echo "Using GOST certificate"
+		crt=$sv_gost_cert
+		key=$sv_gost_key
+		sni=gost.test-dummy.com
+	else
+		echo "Using RSA certificate"
+		crt=$sv_rsa_cert
+		key=$sv_rsa_key.nopass
+		sni=localhost.test-dummy.com
+	fi
+
+	# LibreSSL - GnuTLS
+
+	start_message "s_server ... start $proto test server"
+	s_server_out=$server_dir/s_server_LG_$proto.out
+	$openssl_bin s_server -accept $port -CAfile $ca_cert \
+		-cert $crt -key $key -cert2 $crt -key2 $key \
+		-servername $sni -msg -tlsextdebug -status $sopt $lopt \
+		> $s_server_out 2>&1 &
+	check_exit_status $?
+	s_server_pid=$!
+	echo "s_server pid = [ $s_server_pid ]"
+	sleep 1
+
+	gnutls_cli_out=$user1_dir/gnutls-cli_LG_$proto.out
+	$gc_bin --x509cafile=$ca_cert --sni-hostname=$sni \
+		--verify-hostname=$sni $gopt -p $port $host < /dev/null \
+		> $gnutls_cli_out 2>&1
+	check_exit_status $?
+
+	grep 'Handshake was completed' $gnutls_cli_out > /dev/null
+	check_exit_status $?
+
+	stop_s_server
+
+	# GnuTLS - LibreSSL
+
+	start_message "gnutls-serv ... start $proto test server"
+	gnutls_serv_out=$server_dir/gnutls-serv_GL_$proto.out
+	$gs_bin --x509cafile=$ca_cert --x509certfile=$crt --x509keyfile=$key \
+	       $gopt -p $port > $gnutls_serv_out 2>&1 &
+	check_exit_status $?
+	gnutls_serv_pid=$!
+	echo "gnutls-serv pid = [ $gnutls_serv_pid ]"
+	sleep 1
+
+	s_client_out=$user1_dir/s_client_GL_$proto.out
+	$openssl_bin s_client -connect $host:$port -CAfile $ca_cert \
+		-msg -tlsextdebug -status $lopt < /dev/null > $s_client_out 2>&1
+	check_exit_status $?
+
+	grep 'Verify return code: 0 (ok)' $s_client_out > /dev/null
+	check_exit_status $?
+
+	stop_gnutls_serv
+}
+
 function test_speed {
 	# === PERFORMANCE ===
 	section_message "PERFORMANCE"
@@ -1877,6 +1977,7 @@ other_openssl_bin=${OTHER_OPENSSL:-/usr/local/bin/eopenssl11}
 ecdsa_tests=0
 gost_tests=0
 interop_tests=0
+gnutls_tests=0
 no_long_tests=0
 
 while [ "$1" != "" ]; do
@@ -1891,6 +1992,9 @@ while [ "$1" != "" ]; do
 					;;
 		-i | --interop)		shift
 					interop_tests=1
+					;;
+		-n | --gnutls)		shift
+					gnutls_tests=1
 					;;
 		-q | --quick )		shift
 					no_long_tests=1
@@ -1963,6 +2067,10 @@ test_server_client_dtls 0 0
 if [ $interop_tests = 1 ] ; then
 	test_server_client_dtls 0 1
 	test_server_client_dtls 1 0
+fi
+if [ $gnutls_tests = 1 ] ; then
+	test_gnutls tls
+	test_gnutls dtls
 fi
 test_speed
 test_version
