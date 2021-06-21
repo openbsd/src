@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.5 2021/05/20 04:22:33 drahn Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.6 2021/06/21 14:39:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -141,8 +141,6 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 	bzero(&frame, sizeof(frame));
 	frame.sf_signum = sig;
 
-	//dumpframe ("before", tf, fp);
-
 	/* Save register context. */
 	for (i=0; i < 7; i++)
 		frame.sf_sc.sc_t[i] = tf->tf_t[i];
@@ -263,8 +261,6 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 		tf->tf_sstatus &= ~SSTATUS_FS_MASK; /* disable fpu */
 		fpu_discard(p);
 	}
-
-	//dumpframe ("after", tf, 0);
 
 	/* Restore signal mask. */
 	p->p_sigmask = ksc.sc_mask & ~sigcantmask;
