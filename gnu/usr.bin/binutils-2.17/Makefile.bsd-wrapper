@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.22 2021/05/05 04:52:39 drahn Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.23 2021/06/21 14:20:20 deraadt Exp $
 
 .include <bsd.own.mk>
 
@@ -59,7 +59,8 @@ CONFIGTARGET=--target=${TARGET_ARCH}-unknown-openbsd${OSREV}
 CONFIGTARGET=
 .endif
 
-.if ${TARGET_ARCH} == "aarch64" || ${TARGET_ARCH} == "powerpc64"
+.if ${TARGET_ARCH} == "aarch64" || ${TARGET_ARCH} == "powerpc64" || \
+    ${TARGET_ARCH} == "riscv64"
 CONFIGTARGET+=--without-gnu-ld
 CONFIGTARGET+=--without-gnu-as
 .endif
