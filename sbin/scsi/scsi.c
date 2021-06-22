@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi.c,v 1.30 2016/06/07 01:29:38 tedu Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.31 2021/06/22 14:51:29 jmc Exp $	*/
 /*	$FreeBSD: scsi.c,v 1.11 1996/04/06 11:00:28 joerg Exp $	*/
 
 /*
@@ -84,20 +84,11 @@ static void
 usage(void)
 {
 	fprintf(stderr,
-"Usage:\n"
-"\n"
-"  scsi -f device -d debug_level                    # To set debug level\n"
-"  scsi -f device -m page [-P pc]                   # To read mode pages\n"
-"  scsi -f device [-v] [-s seconds] -c cmd_fmt [arg0 ... argn] # A command...\n"
-"                 -o count out_fmt [arg0 ... argn]  #   EITHER (data out)\n"
-"                 -i count in_fmt                   #   OR     (data in)\n"
-"\n"
-"\"out_fmt\" can be \"-\" to read output data from stdin;\n"
-"\"in_fmt\" can be \"-\" to write input data to stdout;\n"
-"\n"
-"If debugging is not compiled in the kernel, \"-d\" will have no effect\n"
-
-);
+"usage: scsi -f device -d debug_level\n"
+"       scsi -f device -m page [-e] [-P pc]\n"
+"       scsi -f device [-v] [-s seconds] -c cmd_fmt [arg ...]"
+" -o count out_fmt\n"
+"            [arg ...] -i count in_fmt [arg ...]\n");
 
 	exit (1);
 }
