@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.51 2021/02/26 12:33:59 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.52 2021/06/22 16:36:59 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -376,7 +376,7 @@ bwfm_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 
-	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_NET | IPL_MPSAFE,
+	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_NET,
 	    bwfm_pci_intr, sc, DEVNAME(sc));
 	if (sc->sc_ih == NULL) {
 		printf(": couldn't establish interrupt");
