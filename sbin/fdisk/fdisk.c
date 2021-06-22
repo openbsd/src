@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.110 2021/06/21 02:05:30 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.111 2021/06/22 14:01:58 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
+#include <sys/param.h>	/* DEV_BSIZE */
 #include <sys/disklabel.h>
 
 #include <err.h>
@@ -62,6 +62,7 @@ main(int argc, char *argv[])
 {
 	ssize_t len;
 	int ch, fd, efi, error;
+	unsigned int bps;
 	int e_flag = 0, g_flag = 0, i_flag = 0, u_flag = 0;
 	int verbosity = TERSE;
 	int c_arg = 0, h_arg = 0, s_arg = 0;
@@ -155,6 +156,15 @@ main(int argc, char *argv[])
 
 	disk.name = argv[0];
 	DISK_open(A_flag || i_flag || u_flag || e_flag);
+	bps = DL_BLKSPERSEC(&dl);
+	if (b_sectors > 0) {
+		if (b_sectors % bps != 0)
+			b_sectors += bps - b_sectors % bps;
+		if (b_offset % bps != 0)
+			b_offset += bps - b_offset % bps;
+		b_sectors = DL_BLKTOSEC(&dl, b_sectors);
+		b_offset = DL_BLKTOSEC(&dl, b_offset);
+	}
 
 	/* "proc exec" for man page display */
 	if (pledge("stdio rpath wpath disklabel proc exec", NULL) == -1)

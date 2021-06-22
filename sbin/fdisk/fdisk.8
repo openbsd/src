@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.101 2021/06/21 02:05:30 krw Exp $
+.\"	$OpenBSD: fdisk.8,v 1.102 2021/06/22 14:01:58 krw Exp $
 .\"
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 21 2021 $
+.Dd $Mdocdate: June 22 2021 $
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -69,10 +69,18 @@ all existing partitions except the boot partitions
 and
 .Sq HiFive BBL .
 .It Fl b Ar blocks Ns Op @ Ns Ar offset Ns Op : Ns Ar type
-A special boot partition of the specified size, offset and type will be written to disk.
+Configures a special boot partition of the specified number of blocks, offset
+and type.
+.Ar offset
+defaults to the first available block, and
+.Ar type
+defaults to
+.Sq EF .
+.Pp
 The
 .Ox
-partition will follow the boot partition and use the remaining space on the disk.
+partition will follow the boot partition and use the remaining
+available space.
 .Pp
 Can only be used when initializing a disk with
 .Fl i Op Fl g
@@ -81,8 +89,7 @@ or
 If a GPT is being initialized
 only the
 .Ar blocks
-value will be used, with the boot partition being placed at the first available LBA and
-given the type EFI SYS.
+value is used.
 .It Xo
 .Fl c Ar cylinders
 .Fl h Ar heads
