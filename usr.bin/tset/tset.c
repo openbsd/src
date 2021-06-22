@@ -1,4 +1,4 @@
-/*	$OpenBSD: tset.c,v 1.42 2021/06/22 18:32:24 tb Exp $	*/
+/*	$OpenBSD: tset.c,v 1.43 2021/06/22 18:33:48 tb Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
@@ -1094,28 +1094,9 @@ obsolete(char **argv)
 static void
 usage(void)
 {
-    static const char *tbl[] =
-    {
-	""
-	,"Options:"
-	,"  -c          set control characters"
-	,"  -e ch       erase character"
-	,"  -I          no initialization strings"
-	,"  -i ch       interrupt character"
-	,"  -k ch       kill character"
-	,"  -m mapping  map identifier to type"
-	,"  -Q          do not output control key settings"
-	,"  -r          display term on stderr"
-	,"  -s          output TERM set command"
-	,"  -V          print curses-version"
-	,"  -w          set window-size"
-    };
-    unsigned n;
-    (void) fprintf(stderr, "Usage: %s [-cIQqrsVw] [-] "
-	"[-e ch] [-i ch] [-k ch] [-m mapping] [terminal]\n",
+    (void) fprintf(stderr, "usage: %s [-cIQqrsVw] [-] "
+	"[-e ch] [-i ch] [-k ch] [-m mapping] [terminal]",
 	_nc_progname);
-    for (n = 0; n < sizeof(tbl) / sizeof(tbl[0]); ++n)
-	fprintf(stderr, "%s\n", tbl[n]);
 
     exit_error();
     /* NOTREACHED */
