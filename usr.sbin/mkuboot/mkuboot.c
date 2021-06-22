@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkuboot.c,v 1.10 2021/06/01 02:59:01 jsg Exp $	*/
+/*	$OpenBSD: mkuboot.c,v 1.11 2021/06/22 14:52:33 jmc Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -395,16 +395,6 @@ usage(void)
 	(void)fprintf(stderr,
 	    "usage: %s [-a arch] [-e entry] [-l loadaddr] [-n name] [-o os] "
 	    "[-t type] infile outfile\n", __progname);
-	(void)fprintf(stderr,
-	    "arch is one of:");
-	for (mapptr = archmap; mapptr->arch; mapptr++)
-		(void)fprintf(stderr, " %s", mapptr->arch);
-	(void)fprintf(stderr, "\n");
-	(void)fprintf(stderr,
-	    "os is one of:");
-	for (osmapptr = osmap; osmapptr->arch; osmapptr++)
-		(void)fprintf(stderr, " %s", osmapptr->arch);
-	(void)fprintf(stderr, "\n");
 	
 	exit(1);
 }
