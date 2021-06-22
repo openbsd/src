@@ -1,4 +1,4 @@
-/*	$OpenBSD: tset.c,v 1.41 2019/06/28 13:35:05 deraadt Exp $	*/
+/*	$OpenBSD: tset.c,v 1.42 2021/06/22 18:32:24 tb Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
@@ -110,7 +110,7 @@ extern char **environ;
 #undef CTRL
 #define CTRL(x)	((x) & 0x1f)
 
-const char *_nc_progname = "tset";
+const char *_nc_progname;
 
 static TTY mode, oldmode, original;
 
@@ -1136,6 +1136,8 @@ main(int argc, char **argv)
     const char *p;
     const char *ttype;
 
+    _nc_progname = _nc_rootname(*argv);
+
     if (pledge("stdio rpath wpath tty", NULL) == -1)
 	err("pledge: %s", strerror(errno));
 
@@ -1198,8 +1200,6 @@ main(int argc, char **argv)
 	    usage();
 	}
     }
-
-    _nc_progname = _nc_rootname(*argv);
     argc -= optind;
     argv += optind;
 
