@@ -1,4 +1,4 @@
-/*	$OpenBSD: distopt.c,v 1.13 2015/01/20 09:00:16 guenther Exp $	*/
+/*	$OpenBSD: distopt.c,v 1.14 2021/06/22 20:19:28 jmc Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -131,27 +131,6 @@ parsedistopts(char *str, opt_t *optptr, int doerrs)
 		(void) free(string);
 
 	return(nerrs);
-}
-
-/*
- * Get a list of the Distfile Option Entries.
- */
-char *
-getdistoptlist(void)
-{
-	int i;
-	static char buf[1024];
-
-	for (i = 0, buf[0] = CNULL; distoptinfo[i].do_name; ++i) {
-		if (buf[0] == CNULL)
-			(void) strlcpy(buf, distoptinfo[i].do_name, sizeof buf);
-		else {
-			(void) strlcat(buf, ",", sizeof buf);
-			(void) strlcat(buf, distoptinfo[i].do_name, sizeof buf);
-		}
-	}
-
-	return(buf);
 }
 
 /*

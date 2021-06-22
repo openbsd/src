@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.29 2019/06/28 05:35:35 deraadt Exp $	*/
+/*	$OpenBSD: message.c,v 1.30 2021/06/22 20:19:28 jmc Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -116,30 +116,6 @@ static void _message(int, char *);
 static void _debugmsg(int, char *);
 static void _error(const char *);
 static void _fatalerr(const char *);
-
-/*
- * Print message logging usage message
- */
-void
-msgprusage(void)
-{
-	int i, x;
-
-	(void) fprintf(stderr, "\nWhere <msgopt> is of form\n");
-	(void) fprintf(stderr, 
-       "\t<facility1>=<type1>,<type2>,...:<facility2>=<type1>,<type2>...\n");
-
-	(void) fprintf(stderr, "Valid <facility> names:");
-
-	for (i = 0; msgfacility[i].mf_name; ++i)
-		(void) fprintf(stderr, " %s", msgfacility[i].mf_name);
-
-	(void) fprintf(stderr, "\nValid <type> names:");
-	for (x = 0; msgtypes[x].mt_name; ++x)
-		(void) fprintf(stderr, " %s", msgtypes[x].mt_name);
-
-	(void) fprintf(stderr, "\n");
-}
 
 /*
  * Print enabled message logging info

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdist.c,v 1.31 2017/07/09 14:04:50 espie Exp $	*/
+/*	$OpenBSD: rdist.c,v 1.32 2021/06/22 20:19:28 jmc Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -337,19 +337,13 @@ usage(void)
 	extern char *__progname;
 
 	(void) fprintf(stderr,
-		"usage: %s [-DFnV] [-A num] [-a num] "
-		"[-c mini_distfile]\n"
-		"\t[-d var=value] [-f distfile] [-L remote_logopts] "
-		"[-l local_logopts]\n"
-		"\t[-M maxproc] [-m host] [-o distopts] [-P rsh-path] "
-		"[-p rdistd-path]\n"
-		"\t[-t timeout] [name ...]\n", __progname);
-
-
-	(void) fprintf(stderr, "\nThe values for <distopts> are:\n\t%s\n",
-		       getdistoptlist());
-
-	msgprusage();
+		"usage: %s [-DFnV] [-A num] [-a num] [-c mini_distfile]"
+		" [-d var=value]\n"
+		"\t[-f distfile] [-L remote_logopts] [-l local_logopts]"
+		" [-M maxproc]\n"
+		"\t[-m host] [-o distopts] [-P rsh-path] [-p rdistd-path]"
+		" [-t timeout]\n"
+		"\t[name ...]\n", __progname);
 
 	exit(1);
 }
