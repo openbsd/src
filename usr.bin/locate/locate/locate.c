@@ -1,5 +1,5 @@
 /*
- *	$OpenBSD: locate.c,v 1.33 2019/01/17 06:15:44 tedu Exp $
+ *	$OpenBSD: locate.c,v 1.34 2021/06/22 20:16:36 jmc Exp $
  *
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
  * Copyright (c) 1989, 1993
@@ -252,8 +252,7 @@ usage(void)
 {
 	(void)fprintf(stderr, "usage: locate [-bciS] [-d database] ");
 	(void)fprintf(stderr, "[-l limit] pattern ...\n");
-	(void)fprintf(stderr, "default database: `%s' or $LOCATE_PATH\n",
-	    _PATH_FCODES);
+
 	exit(1);
 }
 
