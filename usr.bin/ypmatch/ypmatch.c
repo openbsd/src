@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypmatch.c,v 1.16 2015/02/08 23:40:35 deraadt Exp $ */
+/*	$OpenBSD: ypmatch.c,v 1.17 2021/06/22 20:14:25 jmc Exp $ */
 /*	$NetBSD: ypmatch.c,v 1.8 1996/05/07 01:24:52 jtc Exp $	*/
 
 /*
@@ -61,12 +61,7 @@ usage(void)
 	fprintf(stderr,
 	    "usage: ypmatch [-kt] [-d domain] key ... mapname\n"
 	    "       ypmatch -x\n");
-	fprintf(stderr,
-	    "where\n"
-	    "\tmapname may be either a mapname or a nickname for a map.\n"
-	    "\t-k prints keys as well as values.\n"
-	    "\t-t inhibits map nickname translation.\n"
-	    "\t-x dumps the map nickname translation table.\n");
+
 	exit(1);
 }
 
