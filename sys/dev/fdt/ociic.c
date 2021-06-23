@@ -1,4 +1,4 @@
-/*	$OpenBSD: ociic.c,v 1.1 2021/06/16 12:37:24 kettenis Exp $	*/
+/*	$OpenBSD: ociic.c,v 1.2 2021/06/23 13:39:12 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -189,6 +189,26 @@ ociic_release_bus(void *cookie, int flags)
 }
 
 int
+ociic_unbusy(struct ociic_softc *sc)
+{
+	uint8_t stat;
+	int timo;
+
+	for (timo = 50000; timo > 0; timo--) {
+		stat = ociic_read(sc, I2C_SR);
+		if ((stat & I2C_SR_BUSY) == 0)
+			break;
+		delay(10);
+	}
+	if (timo == 0) {
+		ociic_write(sc, I2C_CR, I2C_CR_STO);
+		return ETIMEDOUT;
+	}
+
+	return 0;
+}
+
+int
 ociic_wait(struct ociic_softc *sc, int ack)
 {
 	uint8_t stat;
@@ -225,6 +245,10 @@ ociic_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmd,
 {
 	struct ociic_softc *sc = cookie;
 	int error, i;
+
+	error = ociic_unbusy(sc);
+	if (error)
+		return error;
 
 	if (cmdlen > 0) {
 		ociic_write(sc, I2C_TXR, addr << 1);
