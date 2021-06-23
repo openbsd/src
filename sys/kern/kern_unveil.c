@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_unveil.c,v 1.42 2021/06/15 18:42:23 claudio Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.43 2021/06/23 14:09:01 claudio Exp $	*/
 
 /*
  * Copyright (c) 2017-2019 Bob Beck <beck@openbsd.org>
@@ -420,12 +420,11 @@ unveil_add_vnode(struct proc *p, struct vnode *vp)
 {
 	struct process *pr = p->p_p;
 	struct unveil *uv = NULL;
-	ssize_t i, j;
+	ssize_t i;
 
 	KASSERT(pr->ps_uvvcount < UNVEIL_MAX_VNODES);
 
-	i = pr->ps_uvvcount;
-	uv = &pr->ps_uvpaths[i];
+	uv = &pr->ps_uvpaths[pr->ps_uvvcount++];
 	rw_init(&uv->uv_lock, "unveil");
 	RBT_INIT(unvname_rbt, &uv->uv_names);
 	uv->uv_vp = vp;
@@ -438,7 +437,6 @@ unveil_add_vnode(struct proc *p, struct vnode *vp)
 	 * work.
 	 */
 	uv->uv_flags = UNVEIL_INSPECT;
-	pr->ps_uvvcount++;
 
 	/* find out what we are covered by */
 	uv->uv_cover = unveil_find_cover(vp, p);
@@ -448,10 +446,10 @@ unveil_add_vnode(struct proc *p, struct vnode *vp)
 	 * and re-check what covers them (we could have
 	 * interposed a cover)
 	 */
-	for (j = 0; j < pr->ps_uvvcount; j++) {
+	for (i = 0; i < pr->ps_uvvcount - 1; i++) {
 		if (pr->ps_uvpaths[i].uv_cover == uv->uv_cover)
-			pr->ps_uvpaths[j].uv_cover =
-			    unveil_find_cover(pr->ps_uvpaths[j].uv_vp, p);
+			pr->ps_uvpaths[i].uv_cover =
+			    unveil_find_cover(pr->ps_uvpaths[i].uv_vp, p);
 	}
 
 	return (uv);
