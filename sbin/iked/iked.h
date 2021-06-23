@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.191 2021/05/13 15:20:48 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.192 2021/06/23 12:11:40 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -972,6 +972,7 @@ ssize_t	 dsa_verify_final(struct iked_dsa *, void *, size_t);
 
 /* vroute.c */
 void vroute_init(struct iked *);
+int vroute_setaddr(struct iked *, int, struct sockaddr *, int, unsigned int);
 void vroute_cleanup(struct iked *);
 int vroute_getaddr(struct iked *, struct imsg *);
 int vroute_setaddroute(struct iked *, uint8_t, struct sockaddr *,
