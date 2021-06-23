@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.500 2021/03/10 10:21:48 jsg Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.501 2021/06/23 04:16:32 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1781,7 +1781,6 @@ int	pf_normalize_tcp_stateful(struct pf_pdesc *, u_short *,
 	    int *);
 int	pf_normalize_mss(struct pf_pdesc *, u_int16_t);
 void	pf_scrub(struct mbuf *, u_int16_t, sa_family_t, u_int8_t, u_int8_t);
-int32_t	pf_state_expires(const struct pf_state *);
 void	pf_purge_expired_fragments(void);
 int	pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *,
 	    int);

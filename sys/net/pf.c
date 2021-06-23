@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1118 2021/06/01 09:57:11 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1119 2021/06/23 04:16:32 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -259,6 +259,7 @@ void			 pf_state_key_link_inpcb(struct pf_state_key *,
 void			 pf_state_key_unlink_inpcb(struct pf_state_key *);
 void			 pf_inpcb_unlink_state_key(struct inpcb *);
 void			 pf_pktenqueue_delayed(void *);
+int32_t			 pf_state_expires(const struct pf_state *, uint8_t);
 
 #if NPFLOG > 0
 void			 pf_log_matches(struct pf_pdesc *, struct pf_rule *,
@@ -1183,7 +1184,7 @@ pf_state_export(struct pfsync_state *sp, struct pf_state *st)
 	sp->rt = st->rt;
 	sp->rt_addr = st->rt_addr;
 	sp->creation = htonl(getuptime() - st->creation);
-	expire = pf_state_expires(st);
+	expire = pf_state_expires(st, st->timeout);
 	if (expire <= getuptime())
 		sp->expire = htonl(0);
 	else
@@ -1290,23 +1291,38 @@ pf_purge(void *xnloops)
 }
 
 int32_t
-pf_state_expires(const struct pf_state *state)
+pf_state_expires(const struct pf_state *state, uint8_t stimeout)
 {
 	u_int32_t	timeout;
 	u_int32_t	start;
 	u_int32_t	end;
 	u_int32_t	states;
 
+	/*
+	 * pf_state_expires is used by the state purge task to
+	 * decide if a state is a candidate for cleanup, and by the
+	 * pfsync state export code to populate an expiry time.
+	 *
+	 * this function may be called by the state purge task while
+	 * the state is being modified. avoid inconsistent reads of
+	 * state->timeout by having the caller do the read (and any
+	 * chacks it needs to do on the same variable) and then pass
+	 * their view of the timeout in here for this function to use.
+	 * the only consequnce of using a stale timeout value is
+	 * that the state won't be a candidate for purging until the
+	 * next pass of the purge task.
+	 */
+
 	/* handle all PFTM_* > PFTM_MAX here */
-	if (state->timeout == PFTM_PURGE)
+	if (stimeout == PFTM_PURGE)
 		return (0);
 
-	KASSERT(state->timeout != PFTM_UNLINKED);
-	KASSERT(state->timeout < PFTM_MAX);
+	KASSERT(stimeout != PFTM_UNLINKED);
+	KASSERT(stimeout < PFTM_MAX);
 
-	timeout = state->rule.ptr->timeout[state->timeout];
+	timeout = state->rule.ptr->timeout[stimeout];
 	if (!timeout)
-		timeout = pf_default_rule.timeout[state->timeout];
+		timeout = pf_default_rule.timeout[stimeout];
 
 	start = state->rule.ptr->timeout[PFTM_ADAPTIVE_START];
 	if (start) {
@@ -1467,6 +1483,8 @@ pf_purge_expired_states(u_int32_t maxcheck)
 
 	PF_STATE_ENTER_READ();
 	while (maxcheck--) {
+		uint8_t stimeout;
+
 		/* wrap to start of list when we hit the end */
 		if (cur == NULL) {
 			cur = pf_state_ref(TAILQ_FIRST(&state_list));
@@ -1477,8 +1495,9 @@ pf_purge_expired_states(u_int32_t maxcheck)
 		/* get next state, as cur may get deleted */
 		next = TAILQ_NEXT(cur, entry_list);
 
-		if ((cur->timeout == PFTM_UNLINKED) ||
-		    (pf_state_expires(cur) <= getuptime()))
+		stimeout = cur->timeout;
+		if ((stimeout == PFTM_UNLINKED) ||
+		    (pf_state_expires(cur, stimeout) <= getuptime()))
 			SLIST_INSERT_HEAD(&gcl, cur, gc_list);
 		else
 			pf_state_unref(cur);
