@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar_priv.h,v 1.6 2021/02/09 14:06:19 patrick Exp $	*/
+/*	$OpenBSD: pfvar_priv.h,v 1.7 2021/06/23 06:53:52 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -38,6 +38,114 @@
 #ifdef _KERNEL
 
 #include <sys/rwlock.h>
+#include <sys/mutex.h>
+
+/*
+ *
+ * states are linked into a global list to support the following
+ * functionality:
+ *
+ * - garbage collection
+ * - pfsync bulk send operations
+ * - bulk state fetches via the DIOCGETSTATES ioctl
+ * - bulk state clearing via the DIOCCLRSTATES ioctl
+ * 
+ * states are inserted into the global pf_state_list once it has also
+ * been successfully added to the various trees that make up the state
+ * table. states are only removed from the pf_state_list by the garbage
+ * collection process.
+
+ * the pf_state_list head and tail pointers (ie, the pfs_list TAILQ_HEAD
+ * structure) and the pointers between the entries on the pf_state_list
+ * are locked separately. at a high level, this allows for insertion
+ * of new states into the pf_state_list while other contexts (eg, the
+ * ioctls) are traversing the state items in the list. for garbage
+ * collection to remove items from the pf_state_list, it has to exclude
+ * both modifications to the list head and tail pointers, and traversal
+ * of the links between the states.
+ *
+ * the head and tail pointers are protected by a mutex. the pointers
+ * between states are protected by an rwlock.
+ *
+ * because insertions are only made to the end of the list, if we get
+ * a snapshot of the head and tail of the list and prevent modifications
+ * to the links between states, we can safely traverse between the
+ * head and tail entries. subsequent insertions can add entries after
+ * our view of the tail, but we don't look past our view.
+ *
+ * if both locks must be taken, the rwlock protecting the links between
+ * states is taken before the mutex protecting the head and tail
+ * pointer.
+ *
+ * insertion into the list follows this pattern:
+ *
+ *	// serialise list head/tail modifications
+ *	mtx_enter(&pf_state_list.pfs_mtx);
+ *	TAILQ_INSERT_TAIL(&pf_state_list.pfs_list, state, entry_list);
+ *	mtx_leave(&pf_state_list.pfs_mtx);
+ *
+ * traversal of the list:
+ *
+ *	// lock against the gc removing an item from the list
+ *	rw_enter_read(&pf_state_list.pfs_rwl);
+ *
+ *	// get a snapshot view of the ends of the list
+ *	mtx_enter(&pf_state_list.pfs_mtx);
+ *	head = TAILQ_FIRST(&pf_state_list.pfs_list);
+ *	tail = TAILQ_LAST(&pf_state_list.pfs_list, pf_state_queue);
+ *	mtx_leave(&pf_state_list.pfs_mtx);
+ *
+ *	state = NULL;
+ *	next = head;
+ *
+ *	while (state != tail) {
+ *		state = next;
+ *		next = TAILQ_NEXT(state, entry_list);
+ *
+ *		// look at the state
+ *	}
+ *
+ *	rw_exit_read(&pf_state_list.pfs_rwl);
+ *
+ * removing an item from the list:
+ * 
+ *	// wait for iterators (readers) to get out
+ *	rw_enter_write(&pf_state_list.pfs_rwl);
+ *
+ *	// serialise list head/tail modifications
+ *	mtx_enter(&pf_state_list.pfs_mtx);
+ *	TAILQ_REMOVE(&pf_state_list.pfs_list, state, entry_list);
+ *	mtx_leave(&pf_state_list.pfs_mtx);
+ *
+ *	rw_exit_write(&pf_state_list.pfs_rwl);
+ *
+ * the lock ordering for pf_state_list locks and the rest of the pf
+ * locks are:
+ *
+ * 1. KERNEL_LOCK
+ * 2. NET_LOCK
+ * 3. pf_state_list.pfs_rwl
+ * 4. PF_LOCK
+ * 5. PF_STATE_LOCK
+ * 6. pf_state_list.pfs_mtx
+ */
+
+struct pf_state_list {
+	/* the list of states in the system */
+	struct pf_state_queue		pfs_list;
+
+	/* serialise pfs_list head/tail access */
+	struct mutex			pfs_mtx;
+
+	/* serialise access to pointers between pfs_list entries */
+	struct rwlock			pfs_rwl;
+};
+
+#define PF_STATE_LIST_INITIALIZER(_pfs) {				\
+	.pfs_list	= TAILQ_HEAD_INITIALIZER(_pfs.pfs_list),	\
+	.pfs_mtx	= MUTEX_INITIALIZER(IPL_SOFTNET),		\
+	.pfs_rwl	= RWLOCK_INITIALIZER("pfstates"),		\
+}
 
 extern struct rwlock pf_lock;
 

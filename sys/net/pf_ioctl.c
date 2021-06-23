@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.364 2021/06/02 07:46:22 dlg Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.365 2021/06/23 06:53:52 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -113,6 +113,8 @@ int			 pf_rule_copyin(struct pf_rule *, struct pf_rule *,
 u_int16_t		 pf_qname2qid(char *, int);
 void			 pf_qid2qname(u_int16_t, char *);
 void			 pf_qid_unref(u_int16_t);
+int			 pf_states_clr(struct pfioc_state_kill *);
+int			 pf_states_get(struct pfioc_states *);
 
 struct pf_rule		 pf_default_rule, pf_default_rule_new;
 
@@ -206,7 +208,6 @@ pfattach(int num)
 	TAILQ_INIT(&pf_queues[1]);
 	pf_queues_active = &pf_queues[0];
 	pf_queues_inactive = &pf_queues[1];
-	TAILQ_INIT(&state_list);
 
 	/* default rule should never be garbage collected */
 	pf_default_rule.entries.tqe_prev = &pf_default_rule.entries.tqe_next;
@@ -903,6 +904,122 @@ pf_addr_copyout(struct pf_addr_wrap *addr)
 }
 
 int
+pf_states_clr(struct pfioc_state_kill *psk)
+{
+	struct pf_state		*s, *nexts;
+	struct pf_state		*head, *tail;
+	u_int			 killed = 0;
+	int			 error;
+
+	NET_LOCK();
+
+	/* lock against the gc removing an item from the list */
+	error = rw_enter(&pf_state_list.pfs_rwl, RW_READ|RW_INTR);
+	if (error != 0)
+		goto unlock;
+
+	/* get a snapshot view of the ends of the list to traverse between */
+	mtx_enter(&pf_state_list.pfs_mtx);
+	head = TAILQ_FIRST(&pf_state_list.pfs_list);
+	tail = TAILQ_LAST(&pf_state_list.pfs_list, pf_state_queue);
+	mtx_leave(&pf_state_list.pfs_mtx);
+
+	s = NULL;
+	nexts = head;
+
+	PF_LOCK();
+	PF_STATE_ENTER_WRITE();
+
+	while (s != tail) {
+		s = nexts;
+		nexts = TAILQ_NEXT(s, entry_list);
+
+		if (s->timeout == PFTM_UNLINKED)
+			continue;
+
+		if (!psk->psk_ifname[0] || !strcmp(psk->psk_ifname,
+		    s->kif->pfik_name)) {
+#if NPFSYNC > 0
+			/* don't send out individual delete messages */
+			SET(s->state_flags, PFSTATE_NOSYNC);
+#endif	/* NPFSYNC > 0 */
+			pf_remove_state(s);
+			killed++;
+		}
+	}
+
+	PF_STATE_EXIT_WRITE();
+#if NPFSYNC > 0
+	pfsync_clear_states(pf_status.hostid, psk->psk_ifname);
+#endif	/* NPFSYNC > 0 */
+	PF_UNLOCK();
+	rw_exit(&pf_state_list.pfs_rwl);
+
+	psk->psk_killed = killed;
+unlock:
+	NET_UNLOCK();
+
+	return (error);
+}
+
+int
+pf_states_get(struct pfioc_states *ps)
+{
+	struct pf_state		*head, *tail;
+	struct pf_state		*next, *state;
+	struct pfsync_state	*p, pstore;
+	u_int32_t		 nr = 0;
+	int			 error;
+
+	if (ps->ps_len == 0) {
+		nr = pf_status.states;
+		ps->ps_len = sizeof(struct pfsync_state) * nr;
+		return (0);
+	}
+
+	p = ps->ps_states;
+
+	/* lock against the gc removing an item from the list */
+	error = rw_enter(&pf_state_list.pfs_rwl, RW_READ|RW_INTR);
+	if (error != 0)
+		return (error);
+
+	/* get a snapshot view of the ends of the list to traverse between */
+	mtx_enter(&pf_state_list.pfs_mtx);
+	head = TAILQ_FIRST(&pf_state_list.pfs_list);
+	tail = TAILQ_LAST(&pf_state_list.pfs_list, pf_state_queue);
+	mtx_leave(&pf_state_list.pfs_mtx);
+
+	state = NULL;
+	next = head;
+
+	while (state != tail) {
+		state = next;
+		next = TAILQ_NEXT(state, entry_list);
+
+		if (state->timeout == PFTM_UNLINKED)
+			continue;
+
+		if ((nr+1) * sizeof(*p) > ps->ps_len)
+			break;
+
+		pf_state_export(&pstore, state);
+		error = copyout(&pstore, p, sizeof(*p));
+		if (error)
+			goto fail;
+
+		p++;
+		nr++;
+	}
+	ps->ps_len = sizeof(struct pfsync_state) * nr;
+
+fail:
+	rw_exit(&pf_state_list.pfs_rwl);
+
+	return (error);
+}
+
+int
 pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 {
 	int			 error = 0;
@@ -1545,36 +1662,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		break;
 	}
 
-	case DIOCCLRSTATES: {
-		struct pf_state		*s, *nexts;
-		struct pfioc_state_kill *psk = (struct pfioc_state_kill *)addr;
-		u_int			 killed = 0;
-
-		NET_LOCK();
-		PF_LOCK();
-		PF_STATE_ENTER_WRITE();
-		for (s = RB_MIN(pf_state_tree_id, &tree_id); s; s = nexts) {
-			nexts = RB_NEXT(pf_state_tree_id, &tree_id, s);
-
-			if (!psk->psk_ifname[0] || !strcmp(psk->psk_ifname,
-			    s->kif->pfik_name)) {
-#if NPFSYNC > 0
-				/* don't send out individual delete messages */
-				SET(s->state_flags, PFSTATE_NOSYNC);
-#endif	/* NPFSYNC > 0 */
-				pf_remove_state(s);
-				killed++;
-			}
-		}
-		PF_STATE_EXIT_WRITE();
-		psk->psk_killed = killed;
-#if NPFSYNC > 0
-		pfsync_clear_states(pf_status.hostid, psk->psk_ifname);
-#endif	/* NPFSYNC > 0 */
-		PF_UNLOCK();
-		NET_UNLOCK();
+	case DIOCCLRSTATES:
+		error = pf_states_clr((struct pfioc_state_kill *)addr);
 		break;
-	}
 
 	case DIOCKILLSTATES: {
 		struct pf_state		*s, *nexts;
@@ -1757,50 +1847,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		break;
 	}
 
-	case DIOCGETSTATES: {
-		struct pfioc_states	*ps = (struct pfioc_states *)addr;
-		struct pf_state		*state;
-		struct pfsync_state	*p, *pstore;
-		u_int32_t		 nr = 0;
-
-		if (ps->ps_len == 0) {
-			nr = pf_status.states;
-			ps->ps_len = sizeof(struct pfsync_state) * nr;
-			break;
-		}
-
-		pstore = malloc(sizeof(*pstore), M_TEMP, M_WAITOK);
-
-		p = ps->ps_states;
-
-		NET_LOCK();
-		PF_STATE_ENTER_READ();
-		state = TAILQ_FIRST(&state_list);
-		while (state) {
-			if (state->timeout != PFTM_UNLINKED) {
-				if ((nr+1) * sizeof(*p) > ps->ps_len)
-					break;
-				pf_state_export(pstore, state);
-				error = copyout(pstore, p, sizeof(*p));
-				if (error) {
-					free(pstore, M_TEMP, sizeof(*pstore));
-					PF_STATE_EXIT_READ();
-					NET_UNLOCK();
-					goto fail;
-				}
-				p++;
-				nr++;
-			}
-			state = TAILQ_NEXT(state, entry_list);
-		}
-		PF_STATE_EXIT_READ();
-		NET_UNLOCK();
-
-		ps->ps_len = sizeof(struct pfsync_state) * nr;
-
-		free(pstore, M_TEMP, sizeof(*pstore));
+	case DIOCGETSTATES: 
+		error = pf_states_get((struct pfioc_states *)addr);
 		break;
-	}
 
 	case DIOCGETSTATUS: {
 		struct pf_status *s = (struct pf_status *)addr;

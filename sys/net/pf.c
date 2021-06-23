@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1120 2021/06/23 05:51:27 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1121 2021/06/23 06:53:52 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -309,7 +309,7 @@ static __inline void pf_set_protostate(struct pf_state *, int, u_int8_t);
 struct pf_src_tree tree_src_tracking;
 
 struct pf_state_tree_id tree_id;
-struct pf_state_queue state_list;
+struct pf_state_list pf_state_list = PF_STATE_LIST_INITIALIZER(pf_state_list);
 
 RB_GENERATE(pf_src_tree, pf_src_node, entry, pf_src_compare);
 RB_GENERATE(pf_state_tree, pf_state_key, entry, pf_state_compare_key);
@@ -439,6 +439,37 @@ int
 pf_check_threshold(struct pf_threshold *threshold)
 {
 	return (threshold->count > threshold->limit);
+}
+
+void
+pf_state_list_insert(struct pf_state_list *pfs, struct pf_state *st)
+{
+	/*
+	 * we can always put states on the end of the list.
+	 *
+	 * things reading the list should take a read lock, then
+	 * the mutex, get the head and tail pointers, release the
+	 * mutex, and then they can iterate between the head and tail.
+	 */
+
+	pf_state_ref(st); /* get a ref for the list */
+
+	mtx_enter(&pfs->pfs_mtx);
+	TAILQ_INSERT_TAIL(&pfs->pfs_list, st, entry_list);
+	mtx_leave(&pfs->pfs_mtx);
+}
+
+void
+pf_state_list_remove(struct pf_state_list *pfs, struct pf_state *st)
+{
+	/* states can only be removed when the write lock is held */
+	rw_assert_wrlock(&pfs->pfs_rwl);
+
+	mtx_enter(&pfs->pfs_mtx);
+	TAILQ_REMOVE(&pfs->pfs_list, st, entry_list);
+	mtx_leave(&pfs->pfs_mtx);
+
+	pf_state_unref(st); /* list no longer references the state */
 }
 
 int
@@ -987,7 +1018,7 @@ pf_state_insert(struct pfi_kif *kif, struct pf_state_key **skw,
 		PF_STATE_EXIT_WRITE();
 		return (-1);
 	}
-	TAILQ_INSERT_TAIL(&state_list, s, entry_list);
+	pf_state_list_insert(&pf_state_list, s);
 	pf_status.fcounters[FCNT_STATE_INSERT]++;
 	pf_status.states++;
 	pfi_kif_ref(kif, PFI_KIF_REF_STATE);
@@ -1248,16 +1279,14 @@ pf_purge_expired_rules(void)
 void
 pf_purge_timeout(void *unused)
 {
-	task_add(net_tq(0), &pf_purge_task);
+	/* XXX move to systqmp to avoid KERNEL_LOCK */
+	task_add(systq, &pf_purge_task);
 }
 
 void
 pf_purge(void *xnloops)
 {
 	int *nloops = xnloops;
-
-	KERNEL_LOCK();
-	NET_LOCK();
 
 	/*
 	 * process a fraction of the state table every second
@@ -1268,6 +1297,8 @@ pf_purge(void *xnloops)
 	 */
 	pf_purge_expired_states(1 + (pf_status.states
 	    / pf_default_rule.timeout[PFTM_INTERVAL]));
+
+	NET_LOCK();
 
 	PF_LOCK();
 	/* purge other expired types every PFTM_INTERVAL seconds */
@@ -1285,7 +1316,6 @@ pf_purge(void *xnloops)
 		*nloops = 0;
 	}
 	NET_UNLOCK();
-	KERNEL_UNLOCK();
 
 	timeout_add_sec(&pf_purge_to, 1);
 }
@@ -1463,7 +1493,7 @@ pf_free_state(struct pf_state *cur)
 	}
 	pf_normalize_tcp_cleanup(cur);
 	pfi_kif_unref(cur->kif, PFI_KIF_REF_STATE);
-	TAILQ_REMOVE(&state_list, cur, entry_list);
+	pf_state_list_remove(&pf_state_list, cur);
 	if (cur->tag)
 		pf_tag_unref(cur->tag);
 	pf_state_unref(cur);
@@ -1474,60 +1504,82 @@ pf_free_state(struct pf_state *cur)
 void
 pf_purge_expired_states(u_int32_t maxcheck)
 {
+	/*
+	 * this task/thread/context/whatever is the only thing that
+	 * removes states from the pf_state_list, so the cur reference
+	 * it holds between calls is guaranteed to still be in the
+	 * list.
+	 */
 	static struct pf_state	*cur = NULL;
-	struct pf_state		*next;
-	SLIST_HEAD(pf_state_gcl, pf_state) gcl;
+
+	struct pf_state		*head, *tail;
+	struct pf_state		*st;
+	SLIST_HEAD(pf_state_gcl, pf_state) gcl = SLIST_HEAD_INITIALIZER(gcl);
 	time_t			 now;
 
 	PF_ASSERT_UNLOCKED();
-	SLIST_INIT(&gcl);
+ 
+	rw_enter_read(&pf_state_list.pfs_rwl);
 
-	PF_STATE_ENTER_READ();
+	mtx_enter(&pf_state_list.pfs_mtx);
+	head = TAILQ_FIRST(&pf_state_list.pfs_list);
+	tail = TAILQ_LAST(&pf_state_list.pfs_list, pf_state_queue);
+	mtx_leave(&pf_state_list.pfs_mtx);
+
+	if (head == NULL) {
+		/* the list is empty */
+		rw_exit_read(&pf_state_list.pfs_rwl);
+		return;
+	}
+
+	/* (re)start at the front of the list */
+	if (cur == NULL)
+		cur = head;
 
 	now = getuptime();
 
-	while (maxcheck--) {
-		uint8_t stimeout;
+	do {
+		uint8_t stimeout = cur->timeout;
 
-		/* wrap to start of list when we hit the end */
-		if (cur == NULL) {
-			cur = pf_state_ref(TAILQ_FIRST(&state_list));
-			if (cur == NULL)
-				break;	/* list empty */
+		if ((stimeout == PFTM_UNLINKED) ||
+		    (pf_state_expires(cur, stimeout) <= now)) {
+			st = pf_state_ref(cur);
+			SLIST_INSERT_HEAD(&gcl, st, gc_list);
 		}
 
-		/* get next state, as cur may get deleted */
-		next = TAILQ_NEXT(cur, entry_list);
-
-		stimeout = cur->timeout;
-		if ((stimeout == PFTM_UNLINKED) ||
-		    (pf_state_expires(cur, stimeout) <= now))
-			SLIST_INSERT_HEAD(&gcl, cur, gc_list);
-		else
-			pf_state_unref(cur);
-
-		cur = pf_state_ref(next);
-
-		if (cur == NULL)
+		/* don't iterate past the end of our view of the list */
+		if (cur == tail) {
+			cur = NULL;
 			break;
-	}
-	PF_STATE_EXIT_READ();
+		}
+ 
+		cur = TAILQ_NEXT(cur, entry_list);
+	} while (maxcheck--);
 
+	rw_exit_read(&pf_state_list.pfs_rwl);
+
+	if (SLIST_EMPTY(&gcl))
+		return;
+
+	NET_LOCK();
+	rw_enter_write(&pf_state_list.pfs_rwl);
 	PF_LOCK();
 	PF_STATE_ENTER_WRITE();
-	while ((next = SLIST_FIRST(&gcl)) != NULL) {
-		SLIST_REMOVE_HEAD(&gcl, gc_list);
-		if (next->timeout == PFTM_UNLINKED)
-			pf_free_state(next);
-		else {
-			pf_remove_state(next);
-			pf_free_state(next);
-		}
-
-		pf_state_unref(next);
+	SLIST_FOREACH(st, &gcl, gc_list) {
+		if (st->timeout != PFTM_UNLINKED)
+			pf_remove_state(st);
+ 
+		pf_free_state(st);
 	}
 	PF_STATE_EXIT_WRITE();
 	PF_UNLOCK();
+	rw_exit_write(&pf_state_list.pfs_rwl);
+	NET_UNLOCK();
+
+	while ((st = SLIST_FIRST(&gcl)) != NULL) {
+		SLIST_REMOVE_HEAD(&gcl, gc_list);
+		pf_state_unref(st);
+	}
 }
 
 int
