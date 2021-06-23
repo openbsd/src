@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1119 2021/06/23 04:16:32 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1120 2021/06/23 05:51:27 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1477,11 +1477,15 @@ pf_purge_expired_states(u_int32_t maxcheck)
 	static struct pf_state	*cur = NULL;
 	struct pf_state		*next;
 	SLIST_HEAD(pf_state_gcl, pf_state) gcl;
+	time_t			 now;
 
 	PF_ASSERT_UNLOCKED();
 	SLIST_INIT(&gcl);
 
 	PF_STATE_ENTER_READ();
+
+	now = getuptime();
+
 	while (maxcheck--) {
 		uint8_t stimeout;
 
@@ -1497,7 +1501,7 @@ pf_purge_expired_states(u_int32_t maxcheck)
 
 		stimeout = cur->timeout;
 		if ((stimeout == PFTM_UNLINKED) ||
-		    (pf_state_expires(cur, stimeout) <= getuptime()))
+		    (pf_state_expires(cur, stimeout) <= now))
 			SLIST_INSERT_HEAD(&gcl, cur, gc_list);
 		else
 			pf_state_unref(cur);
