@@ -1,4 +1,4 @@
-/*	$OpenBSD: vroute.c,v 1.11 2021/06/23 12:11:40 tobhe Exp $	*/
+/*	$OpenBSD: vroute.c,v 1.12 2021/06/23 12:21:23 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2021 Tobias Heider <tobhe@openbsd.org>
@@ -594,9 +594,17 @@ vroute_doroute(struct iked *env, int flags, int addrs, int rdomain, uint8_t type
 	for (i = 0; i < iovcnt; i++)
 		rtm.rtm_msglen += iov[i].iov_len;
 
-	log_debug("%s: len: %u type: %s rdomain: %d flags %x addrs %x", __func__, rtm.rtm_msglen,
+	log_debug("%s: len: %u type: %s rdomain: %d flags %x (%s%s)"
+	    " addrs %x (dst %s mask %s gw %s)", __func__, rtm.rtm_msglen,
 	    type == RTM_ADD ? "RTM_ADD" : type == RTM_DELETE ? "RTM_DELETE" :
-	    type == RTM_GET ? "RTM_GET" : "unknown", rdomain, flags,  addrs);
+	    type == RTM_GET ? "RTM_GET" : "unknown", rdomain,
+	    flags,
+	    flags & RTF_HOST ? "H" : "",
+	    flags & RTF_GATEWAY ? "G" : "",
+	    addrs,
+	    addrs & RTA_DST ? print_host(dest, NULL, 0) : "<>",
+	    addrs & RTA_NETMASK ? print_host(mask, NULL, 0) : "<>",
+	    addrs & RTA_GATEWAY ? print_host(addr, NULL, 0) : "<>");
 
 	if (writev(ivr->ivr_rtsock, iov, iovcnt) == -1) {
 		if ((type == RTM_ADD && errno != EEXIST) ||
@@ -676,8 +684,6 @@ vroute_doaddr(struct iked *env, char *ifname, struct sockaddr *addr,
 	struct in6_aliasreq	 req6;
 	unsigned long		 ioreq;
 	int			 af;
-	char			 addr_buf[NI_MAXHOST];
-	char			 mask_buf[NI_MAXHOST];
 
 	af = addr->sa_family;
 	switch (af) {
@@ -688,12 +694,10 @@ vroute_doaddr(struct iked *env, char *ifname, struct sockaddr *addr,
 		if (add)
 			memcpy(&req.ifra_mask, mask, sizeof(req.ifra_addr));
 
-		inet_ntop(af, &((struct sockaddr_in *)addr)->sin_addr,
-		    addr_buf, sizeof(addr_buf));
-		inet_ntop(af, &((struct sockaddr_in *)mask)->sin_addr,
-		    mask_buf, sizeof(mask_buf));
 		log_debug("%s: %s inet %s netmask %s", __func__,
-		    add ? "add" : "del",addr_buf, mask_buf);
+		    add ? "add" : "del",
+		    print_host((struct sockaddr *)addr, NULL, 0),
+		    print_host((struct sockaddr *)mask, NULL, 0));
 
 		ioreq = add ? SIOCAIFADDR : SIOCDIFADDR;
 		if (ioctl(ivr->ivr_iosock, ioreq, &req) == -1) {
@@ -712,12 +716,10 @@ vroute_doaddr(struct iked *env, char *ifname, struct sockaddr *addr,
 			memcpy(&req6.ifra_prefixmask, mask,
 			    sizeof(req6.ifra_prefixmask));
 
-		inet_ntop(af, &((struct sockaddr_in6 *)addr)->sin6_addr,
-		    addr_buf, sizeof(addr_buf));
-		inet_ntop(af, &((struct sockaddr_in6 *)mask)->sin6_addr,
-		    mask_buf, sizeof(mask_buf));
 		log_debug("%s: %s inet6 %s netmask %s", __func__,
-		    add ? "add" : "del",addr_buf, mask_buf);
+		    add ? "add" : "del",
+		    print_host((struct sockaddr *)addr, NULL, 0),
+		    print_host((struct sockaddr *)mask, NULL, 0));
 
 		ioreq = add ? SIOCAIFADDR_IN6 : SIOCDIFADDR_IN6;
 		if (ioctl(ivr->ivr_iosock6, ioreq, &req6) == -1) {
