@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.43 2021/03/11 11:16:58 jsg Exp $	*/
+/*	$OpenBSD: adb.c,v 1.44 2021/06/23 14:12:59 cheloha Exp $	*/
 /*	$NetBSD: adb.c,v 1.6 1999/08/16 06:28:09 tsubai Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.14 2000/06/08 22:10:45 tsubai Exp $	*/
 
@@ -228,7 +228,7 @@ void	print_single(u_char *);
 void	adb_intr_cuda(void);
 void	adb_soft_intr(void);
 int	send_adb_cuda(u_char *, u_char *, void *, void *, int);
-void	adb_cuda_tickle(void);
+void	adb_cuda_tickle(void *);
 void	adb_pass_up(struct adbCommand *);
 void	adb_op_comprout(caddr_t, caddr_t, int);
 void	adb_reinit(struct adb_softc *);
@@ -276,7 +276,7 @@ print_single(u_char *str)
 #endif
 
 void
-adb_cuda_tickle(void)
+adb_cuda_tickle(void *unused)
 {
 	volatile int s;
 
@@ -1160,7 +1160,7 @@ adb_reinit(struct adb_softc *sc)
 #endif
 
 	if (adbHardware == ADB_HW_CUDA) {
-		timeout_set(&adb_cuda_timeout, (void *)adb_cuda_tickle, NULL);
+		timeout_set(&adb_cuda_timeout, adb_cuda_tickle, NULL);
 		timeout_add(&adb_cuda_timeout, ADB_TICKLE_TICKS);
 	}
 
