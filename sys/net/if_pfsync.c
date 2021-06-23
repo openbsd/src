@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.293 2021/06/17 00:18:09 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.294 2021/06/23 05:43:53 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1988,6 +1988,17 @@ pfsync_undefer_notify(struct pfsync_deferral *pd)
 {
 	struct pf_pdesc pdesc;
 	struct pf_state *st = pd->pd_st;
+
+	/*
+	 * pf_remove_state removes the state keys and sets st->timeout
+	 * to PFTM_UNLINKED. this is done under NET_LOCK which should
+	 * be held here, so we can use PFTM_UNLINKED as a test for
+	 * whether the state keys are set for the address family
+	 * lookup.
+	 */
+
+	if (st->timeout == PFTM_UNLINKED)
+		return;
 
 	if (st->rt == PF_ROUTETO) {
 		if (pf_setup_pdesc(&pdesc, st->key[PF_SK_WIRE]->af,
