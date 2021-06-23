@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.111 2021/06/22 14:01:58 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.112 2021/06/23 13:07:13 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -164,6 +164,15 @@ main(int argc, char *argv[])
 			b_offset += bps - b_offset % bps;
 		b_sectors = DL_BLKTOSEC(&dl, b_sectors);
 		b_offset = DL_BLKTOSEC(&dl, b_offset);
+	}
+	if (l_arg > 0) {
+		if (l_arg % bps != 0)
+			l_arg += bps - l_arg % bps;
+		l_arg = DL_BLKTOSEC(&dl, l_arg);
+		disk.cylinders = l_arg / 64;
+		disk.heads = 1;
+		disk.sectors = 64;
+		disk.size = l_arg;
 	}
 
 	/* "proc exec" for man page display */
