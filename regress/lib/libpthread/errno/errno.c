@@ -1,4 +1,4 @@
-/* $OpenBSD: errno.c,v 1.2 2012/02/20 02:34:33 guenther Exp $ */
+/* $OpenBSD: errno.c,v 1.3 2021/06/23 22:39:31 kettenis Exp $ */
 /* PUBLIC DOMAIN Sep 2011 <guenther@openbsd.org> */
 
 /*
@@ -68,9 +68,7 @@ act_handler(int signal)
 		ASSERT(&errno == t1_errno);
 		ASSERTe(errno, == EXDEV);
 		ASSERT(pthread_equal(t1_tid, pthread_self()));
-		errno = ENODEV;
 		CHECKe(kill(getpid(), SIGUSR2));
-		ASSERTe(errno, == ENODEV);
 	} else if (handler_errno == &t2_errno) {
 		CHECKe(write(STDOUT_FILENO, "2", 1));
 		ASSERT(&errno == t2_errno);
@@ -102,7 +100,6 @@ tmain(void *arg)
 	set_state(T1_SIGNAL);
 	ASSERT(&errno == t1_errno);
 	wait_for_state(T1_CHECK2);
-	ASSERTe(*t1_errno, == ENODEV);
 
 	ASSERT(&errno == t1_errno);
 	ASSERT(pthread_equal(t1_tid, pthread_self()));
@@ -176,7 +173,6 @@ main(int argc, char **argv)
 	ASSERT(&errno == main_errno);
 	ASSERT(pthread_equal(main_tid, pthread_self()));
 
-	
 	handler_errno = &t1_errno;
 	CHECKe(pthread_kill(t1_tid, SIGUSR1));
 	ASSERT(&errno == main_errno);
