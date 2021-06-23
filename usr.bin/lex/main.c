@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.27 2017/01/21 08:33:07 krw Exp $	*/
+/*	$OpenBSD: main.c,v 1.28 2021/06/23 02:53:44 deraadt Exp $	*/
 
 /* flex - tool to generate fast lexical analyzers */
 
@@ -977,14 +977,7 @@ flexinit(argc, argv)
 	while ((rv = scanopt(sopt, &arg, &optind)) != 0) {
 
 		if (rv < 0) {
-			/*
-			 * Scanopt has already printed an option-specific
-			 * error message.
-			 */
-			fprintf(stderr,
-			    _
-			    ("Try `%s --help' for more information.\n"),
-			    program_name);
+			usage();
 			FLEX_EXIT(1);
 		}
 		switch ((enum flexopt_flag_t) rv) {
@@ -1740,71 +1733,12 @@ basename2(path, strip_ext)
 }
 
 void
-usage()
+usage(void)
 {
-	FILE *f = stdout;
+	extern char *__progname;
 
-	if (!did_outfilename) {
-		snprintf(outfile_path, sizeof(outfile_path), outfile_template,
-		    prefix, C_plus_plus ? "cc" : "c");
-		outfilename = outfile_path;
-	}
-	fprintf(f, _("Usage: %s [OPTIONS] [FILE]...\n"), program_name);
-	fprintf(f,
-	    _
-	    ("Generates programs that perform pattern-matching on text.\n"
-		"\n" "Table Compression:\n"
-		"  -Ca, --align      trade off larger tables for better memory alignment\n"
-		"  -Ce, --ecs        construct equivalence classes\n"
-		"  -Cf               do not compress tables; use -f representation\n"
-		"  -CF               do not compress tables; use -F representation\n"
-		"  -Cm, --meta-ecs   construct meta-equivalence classes\n"
-		"  -Cr, --read       use read() instead of stdio for scanner input\n"
-		"  -f, --full        generate fast, large scanner. Same as -Cfr\n"
-		"  -F, --fast        use alternate table representation. Same as -CFr\n"
-		"  -Cem              default compression (same as --ecs --meta-ecs)\n"
-		"\n" "Debugging:\n"
-		"  -d, --debug             enable debug mode in scanner\n"
-		"  -b, --backup            write backing-up information to %s\n"
-		"  -p, --perf-report       write performance report to stderr\n"
-		"  -s, --nodefault         suppress default rule to ECHO unmatched text\n"
-		"  -T, --trace             %s should run in trace mode\n"
-		"  -w, --nowarn            do not generate warnings\n"
-		"  -v, --verbose           write summary of scanner statistics to stdout\n"
-		"\n" "Files:\n"
-		"  -o, --outfile=FILE      specify output filename\n"
-		"  -S, --skel=FILE         specify skeleton file\n"
-		"  -t, --stdout            write scanner on stdout instead of %s\n"
-		"      --yyclass=NAME      name of C++ class\n"
-		"      --header-file=FILE   create a C header file in addition to the scanner\n"
-		"      --tables-file[=FILE] write tables to FILE\n" "\n"
-		"Scanner behavior:\n"
-		"  -7, --7bit              generate 7-bit scanner\n"
-		"  -8, --8bit              generate 8-bit scanner\n"
-		"  -B, --batch             generate batch scanner (opposite of -I)\n"
-		"  -i, --case-insensitive  ignore case in patterns\n"
-		"  -l, --lex-compat        maximal compatibility with original lex\n"
-		"  -X, --posix-compat      maximal compatibility with POSIX lex\n"
-		"  -I, --interactive       generate interactive scanner (opposite of -B)\n"
-		"      --yylineno          track line count in yylineno\n"
-		"\n" "Generated code:\n"
-		"  -+,  --c++               generate C++ scanner class\n"
-		"  -Dmacro[=defn]           #define macro defn  (default defn is '1')\n"
-		"  -L,  --noline            suppress #line directives in scanner\n"
-		"  -P,  --prefix=STRING     use STRING as prefix instead of \"yy\"\n"
-		"  -R,  --reentrant         generate a reentrant C scanner\n"
-		"       --bison-bridge      scanner for bison pure parser.\n"
-		"       --bison-locations   include yylloc support.\n"
-		"       --stdinit           initialize yyin/yyout to stdin/stdout\n"
-		"       --noansi-definitions old-style function definitions\n"
-		"       --noansi-prototypes  empty parameter list in prototypes\n"
-		"       --nounistd          do not include <unistd.h>\n"
-		"       --noFUNCTION        do not generate a particular FUNCTION\n"
-		"\n" "Miscellaneous:\n"
-		"  -n                      do-nothing POSIX option\n"
-		"  -?\n"
-		"  -h, --help              produce this help message\n"
-		"  -V, --version           report %s version\n"),
-	    backing_name, program_name, outfile_path, program_name);
-
+	(void) fprintf(stderr,
+		"usage: %s [-78BbFfhIiLlnpsTtVvw+?] [-C[aeFfmr]] [--help]"
+		" [--version]\n"
+		"\t[-ooutput] [-Pprefix] [-Sskeleton] [file ...]\n", __progname);
 }
