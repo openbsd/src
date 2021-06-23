@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.350 2021/06/19 17:21:40 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.351 2021/06/23 11:12:33 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1285,8 +1285,6 @@ uint16_t tls1_ec_nid2curve_id(const int nid);
 int tls1_check_curve(SSL *s, const uint16_t group_id);
 int tls1_get_shared_curve(SSL *s);
 
-int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **data,
-    size_t n, int *al);
 int ssl_check_clienthello_tlsext_early(SSL *s);
 int ssl_check_clienthello_tlsext_late(SSL *s);
 int ssl_check_serverhello_tlsext(SSL *s);
