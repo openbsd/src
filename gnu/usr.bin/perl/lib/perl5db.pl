@@ -1799,6 +1799,15 @@ our (
     @old_watch,
 );
 
+sub _DB__use_full_path
+{
+	local @INC = @INC;
+	eval { require Config; };
+	unshift(@INC, 
+	    @Config::Config{qw(archlibexp privlibexp sitearchexp sitelibexp)});
+	&{$_[0]};
+}
+
 sub _DB__determine_if_we_should_break
 {
     # if we have something here, see if we should break.
@@ -1961,7 +1970,10 @@ sub _DB__handle_y_command {
         if (!eval {
             local @INC = @INC;
             pop @INC if $INC[-1] eq '.';
-            require PadWalker; PadWalker->VERSION(0.08) }) {
+	    _DB__use_full_path(sub {
+	    	require PadWalker;
+	    });
+	    PadWalker->VERSION(0.08) }) {
             my $Err = $@;
             _db_warn(
                 $Err =~ /locate/
@@ -6818,13 +6830,15 @@ the appropriate attributes. We then
 
 use vars qw($ornaments);
 use vars qw($rl_attribs);
-
 sub setterm {
 
     # Load Term::Readline, but quietly; don't debug it and don't trace it.
     local $frame = 0;
     local $doret = -2;
-    require Term::ReadLine;
+    _DB__use_full_path(sub {
+	require Term::ReadLine;
+    });
+    
 
     # If noTTY is set, but we have a TTY name, go ahead and hook up to it.
     if ($notty) {
@@ -6999,7 +7013,9 @@ qq[3>&1 xterm -title "Daughter Perl debugger $pids $name" -e sh -c 'tty 1>&3;\
 
     # We need $term defined or we can not switch to the newly created xterm
     if ($tty ne '' && !defined $term) {
-        require Term::ReadLine;
+    	_DB__use_full_path(sub {
+	    require Term::ReadLine;
+	});
         if ( !$rl ) {
             $term = Term::ReadLine::Stub->new( 'perldb', $IN, $OUT );
         }
@@ -8833,7 +8849,7 @@ sub CvGV_name_or_bust {
     return if $skipCvGV;    # Backdoor to avoid problems if XS broken...
     return unless ref $in;
     $in = \&$in;            # Hard reference...
-    eval { require Devel::Peek; 1 } or return;
+    eval { _DB__use__full_path(sub { require Devel::Peek; 1;}); } or return;
     my $gv = Devel::Peek::CvGV($in) or return;
     *$gv{PACKAGE} . '::' . *$gv{NAME};
 } ## end sub CvGV_name_or_bust
