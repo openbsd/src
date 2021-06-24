@@ -1,4 +1,4 @@
-/*	$OpenBSD: alarm.c,v 1.9 2019/06/28 13:32:41 deraadt Exp $ */
+/*	$OpenBSD: alarm.c,v 1.10 2021/06/24 22:43:31 cheloha Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,13 +34,12 @@
 unsigned int
 alarm(unsigned int secs)
 {
-	struct itimerval it, oitv;
-	struct itimerval *itp = &it;
+	struct itimerval itv, oitv;
 
-	timerclear(&itp->it_interval);
-	itp->it_value.tv_sec = secs;
-	itp->it_value.tv_usec = 0;
-	if (setitimer(ITIMER_REAL, itp, &oitv) == -1)
+	timerclear(&itv.it_interval);
+	itv.it_value.tv_sec = secs;
+	itv.it_value.tv_usec = 0;
+	if (setitimer(ITIMER_REAL, &itv, &oitv) == -1)
 		return ((unsigned int) -1);
 	if (oitv.it_value.tv_usec)
 		oitv.it_value.tv_sec++;
