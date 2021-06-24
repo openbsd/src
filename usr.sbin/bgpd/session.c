@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.421 2021/06/17 16:05:26 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.422 2021/06/24 09:26:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1470,9 +1470,9 @@ session_open(struct peer *p)
 		u_int8_t	aplen;
 
 		if (mpcapa)
-			aplen = 2 + 4 * mpcapa;
+			aplen = 4 * mpcapa;
 		else	/* AID_INET */
-			aplen = 2 + 4;
+			aplen = 4;
 		errs += session_capa_add(opb, CAPA_ADD_PATH, aplen);
 		if (mpcapa) {
 			for (i = AID_MIN; i < AID_MAX; i++) {
