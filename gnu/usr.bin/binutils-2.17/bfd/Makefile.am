@@ -58,6 +58,7 @@ BFD64_LIBS_CFILES = archive64.c
 # This list is alphabetized to make it easier to keep in sync
 # with the decls and initializer in archures.c.
 ALL_MACHINES = \
+	cpu-aarch64.lo \
 	cpu-alpha.lo \
 	cpu-arc.lo \
 	cpu-arm.lo \
@@ -121,6 +122,7 @@ ALL_MACHINES = \
 	cpu-z8k.lo
 
 ALL_MACHINES_CFILES = \
+	cpu-aarch64.c \
 	cpu-alpha.c \
 	cpu-arc.c \
 	cpu-arm.c \
@@ -1003,6 +1005,7 @@ simple.lo: simple.c $(INCDIR)/filenames.h $(INCDIR)/hashtab.h \
   $(INCDIR)/bfdlink.h
 archive64.lo: archive64.c $(INCDIR)/filenames.h $(INCDIR)/hashtab.h \
   $(INCDIR)/aout/ar.h
+cpu-aarch64.lo: cpu-aarch64.c $(INCDIR)/filenames.h $(INCDIR)/hashtab.h
 cpu-alpha.lo: cpu-alpha.c $(INCDIR)/filenames.h $(INCDIR)/hashtab.h
 cpu-arc.lo: cpu-arc.c $(INCDIR)/filenames.h $(INCDIR)/hashtab.h
 cpu-arm.lo: cpu-arm.c $(INCDIR)/filenames.h $(INCDIR)/hashtab.h \

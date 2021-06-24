@@ -1574,6 +1574,7 @@ simple.lo: simple.c $(INCDIR)/filenames.h $(INCDIR)/hashtab.h \
   $(INCDIR)/bfdlink.h
 archive64.lo: archive64.c $(INCDIR)/filenames.h $(INCDIR)/hashtab.h \
   $(INCDIR)/aout/ar.h
+cpu-aarch64.lo: cpu-aarch64.c $(INCDIR)/filenames.h $(INCDIR)/hashtab.h
 cpu-alpha.lo: cpu-alpha.c $(INCDIR)/filenames.h $(INCDIR)/hashtab.h
 cpu-arc.lo: cpu-arc.c $(INCDIR)/filenames.h $(INCDIR)/hashtab.h
 cpu-arm.lo: cpu-arm.c $(INCDIR)/filenames.h $(INCDIR)/hashtab.h \
