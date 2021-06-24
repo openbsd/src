@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.74 2019/11/28 02:28:58 mlarkin Exp $
+#	$OpenBSD: airport,v 1.75 2021/06/24 18:05:02 mlarkin Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -400,6 +400,7 @@ CWB:Afonso Pena, Curitiba, Parana, Brazil
 CWC:Chernivtsi International, Chernivtsi, Ukraine
 CWT:Cowra, Cowra, New South Wales, Australia
 CXH:Vancouver Harbour, British Columbia, Canada
+CXP:Carson, Nevada, USA
 CYB:Cayman Brac Island, Cayman Islands
 CYR:Colonia, Uruguay
 CYS:Cheyenne, Wyoming, USA
@@ -1075,6 +1076,7 @@ MEI:Key Field, Meridian, Mississippi, USA
 MEL:Tullamarine, Melbourne, Victoria, Australia
 MEM:Memphis International, Tennessee, USA
 MES:Polonia, Medan, Indonesia
+MEV:Minden-Tahoe, Nevada, USA
 MEX:Juarez International, Mexico City, Distrito Federal, Mexico
 MEY:Meghauli, Nepal
 MFE:Mc Allen/Mission, Texas, USA
@@ -1443,7 +1445,7 @@ RKV:Reykjavik, Iceland
 RMA:Roma, Queensland, Australia
 RNB:Kallinge, Ronneby, Sweden
 RNN:Arnager, Bornholm, Denmark
-RNO:Reno Cannon International, Nevada, USA
+RNO:Reno/Tahoe International, Nevada, USA
 RNS:St Jacques, Rennes, France
 ROA:Roanoke, Virginia, USA
 ROC:Rochester International, New York, USA
@@ -1673,6 +1675,7 @@ TIV:Tivat, Montenegro
 TIZ:Tari, Papua New Guinea
 TJA:Tarija, Bolivia
 TJM:Roshchino, Tyumen, Russia
+TKF:Truckee Tahoe, California, USA
 TKK:Truk, Caroline Islands, Micronesia
 TKQ:Kigoma, Tanzania
 TKS:Tokushima, Japan
