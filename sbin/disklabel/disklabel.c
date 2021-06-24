@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.236 2020/11/14 20:53:31 guenther Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.237 2021/06/24 21:11:40 jmc Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -1212,28 +1212,15 @@ void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: disklabel    [-Acdtv] [-h | -p unit] [-T file] disk\t(read)\n");
+	    "usage: disklabel    [-Acdtv] [-h | -p unit] [-T file] disk\n");
 	fprintf(stderr,
-	    "       disklabel -w [-Acdnv] [-T file] disk disktype [packid]\t(write)\n");
+	    "       disklabel -w [-Acdnv] [-T file] disk disktype [packid]\n");
 	fprintf(stderr,
-	    "       disklabel -e [-Acdnv] [-T file] disk\t\t\t(edit)\n");
+	    "       disklabel -e [-Acdnv] [-T file] disk\n");
 	fprintf(stderr,
-	    "       disklabel -E [-Acdnv] [-F|-f file] [-T file] disk\t(simple editor)"
-	    "\n");
+	    "       disklabel -E [-Acdnv] [-F|-f file] [-T file] disk\n");
 	fprintf(stderr,
-	    "       disklabel -R [-nv] [-F|-f file] disk protofile\t\t(restore)\n\n");
-	fprintf(stderr,
-	    "`disk' may be of the form: sd0 or /dev/rsd0%c.\n", 'a'+RAW_PART);
-	fprintf(stderr,
-	    "`disktype' is an entry from %s, see disktab(5) for more info.\n",
-	    DISKTAB);
-	fprintf(stderr,
-	    "`packid' is an identification string for the device.\n");
-	fprintf(stderr,
-	    "`protofile' is the output from the read cmd form; -R is powerful.\n");
-#ifdef SEEALSO
-	fprintf(stderr,
-	    "For procedures specific to this architecture see: %s\n", SEEALSO);
-#endif
+	    "       disklabel -R [-nv] [-F|-f file] disk protofile\n");
+
 	exit(1);
 }
