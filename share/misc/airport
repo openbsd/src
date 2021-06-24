@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.75 2021/06/24 18:05:02 mlarkin Exp $
+#	$OpenBSD: airport,v 1.76 2021/06/24 18:40:59 ian Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -1905,6 +1905,7 @@ YKL:Schefferville, Quebec, Canada
 YKM:Yakima Air Terminal, Yakima, Washington, USA
 YKQ:Waskaganish, Quebec, Canada
 YKS:Yakutsk, Russia
+YKZ:Buttonville, Ontario, Canada
 YLD:Chapleau, Ontario, Canada
 YLL:Lloydminster, Saskatchewan, Canada
 YLQ:La Tuque, La Tuque, Quebec, Canada
@@ -1926,6 +1927,7 @@ YOW:Ottawa McDonald-Cartier International, Ontario, Canada
 YPE:Peace River, Alberta, Canada
 YPF:Esquimalt, British Columbia, Canada
 YPN:Port Menier, Quebec, Canada
+YPQ:Peterborough, Ontario, Canada
 YPR:Digby Island, Prince Rupert, British Columbia, Canada
 YPW:Powell River, British Columbia, Canada
 YPZ:Burns Lake, British Columbia, Canada
