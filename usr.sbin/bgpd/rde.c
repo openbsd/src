@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.527 2021/06/17 16:05:26 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.528 2021/06/24 13:03:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1338,9 +1338,9 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 			rde_peer_recv_eor(peer, aid);
 		}
 
-		switch (aid) {
-		case AID_INET6:
-			while (mplen > 0) {
+		while (mplen > 0) {
+			switch (aid) {
+			case AID_INET6:
 				if ((pos = nlri_get_prefix6(mpp, mplen,
 				    &prefix, &prefixlen)) == -1) {
 					log_peer_warnx(&peer->conf,
@@ -1350,14 +1350,8 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 					    mpa.unreach, mpa.unreach_len);
 					goto done;
 				}
-				mpp += pos;
-				mplen -= pos;
-
-				rde_update_withdraw(peer, &prefix, prefixlen);
-			}
-			break;
-		case AID_VPN_IPv4:
-			while (mplen > 0) {
+				break;
+			case AID_VPN_IPv4:
 				if ((pos = nlri_get_vpn4(mpp, mplen,
 				    &prefix, &prefixlen, 1)) == -1) {
 					log_peer_warnx(&peer->conf,
@@ -1367,14 +1361,8 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 					    mpa.unreach, mpa.unreach_len);
 					goto done;
 				}
-				mpp += pos;
-				mplen -= pos;
-
-				rde_update_withdraw(peer, &prefix, prefixlen);
-			}
-			break;
-		case AID_VPN_IPv6:
-			while (mplen > 0) {
+				break;
+			case AID_VPN_IPv6:
 				if ((pos = nlri_get_vpn6(mpp, mplen,
 				    &prefix, &prefixlen, 1)) == -1) {
 					log_peer_warnx(&peer->conf,
@@ -1384,15 +1372,16 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 					    mpa.unreach_len);
 					goto done;
 				}
-				mpp += pos;
-				mplen -= pos;
-
-				rde_update_withdraw(peer, &prefix, prefixlen);
+				break;
+			default:
+				/* ignore unsupported multiprotocol AF */
+				break;
 			}
-			break;
-		default:
-			/* silently ignore unsupported multiprotocol AF */
-			break;
+
+			mpp += pos;
+			mplen -= pos;
+
+			rde_update_withdraw(peer, &prefix, prefixlen);
 		}
 
 		if ((state.aspath.flags & ~F_ATTR_MP_UNREACH) == 0)
@@ -1466,9 +1455,9 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 		mpp += pos;
 		mplen -= pos;
 
-		switch (aid) {
-		case AID_INET6:
-			while (mplen > 0) {
+		while (mplen > 0) {
+			switch (aid) {
+			case AID_INET6:
 				if ((pos = nlri_get_prefix6(mpp, mplen,
 				    &prefix, &prefixlen)) == -1) {
 					log_peer_warnx(&peer->conf,
@@ -1478,16 +1467,8 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 					    mpa.reach, mpa.reach_len);
 					goto done;
 				}
-				mpp += pos;
-				mplen -= pos;
-
-				if (rde_update_update(peer, &state, &prefix,
-				    prefixlen) == -1)
-					goto done;
-			}
-			break;
-		case AID_VPN_IPv4:
-			while (mplen > 0) {
+				break;
+			case AID_VPN_IPv4:
 				if ((pos = nlri_get_vpn4(mpp, mplen,
 				    &prefix, &prefixlen, 0)) == -1) {
 					log_peer_warnx(&peer->conf,
@@ -1497,16 +1478,8 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 					    mpa.reach, mpa.reach_len);
 					goto done;
 				}
-				mpp += pos;
-				mplen -= pos;
-
-				if (rde_update_update(peer, &state, &prefix,
-				    prefixlen) == -1)
-					goto done;
-			}
-			break;
-		case AID_VPN_IPv6:
-			while (mplen > 0) {
+				break;
+			case AID_VPN_IPv6:
 				if ((pos = nlri_get_vpn6(mpp, mplen,
 				    &prefix, &prefixlen, 0)) == -1) {
 					log_peer_warnx(&peer->conf,
@@ -1516,17 +1489,18 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 					    mpa.reach, mpa.reach_len);
 					goto done;
 				}
-				mpp += pos;
-				mplen -= pos;
-
-				if (rde_update_update(peer, &state, &prefix,
-				    prefixlen) == -1)
-					goto done;
+				break;
+			default:
+				/* ignore unsupported multiprotocol AF */
+				break;
 			}
-			break;
-		default:
-			/* silently ignore unsupported multiprotocol AF */
-			break;
+
+			mpp += pos;
+			mplen -= pos;
+
+			if (rde_update_update(peer, &state,
+			    &prefix, prefixlen) == -1)
+				goto done;
 		}
 	}
 
