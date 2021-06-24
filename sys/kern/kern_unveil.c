@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_unveil.c,v 1.43 2021/06/23 14:09:01 claudio Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.44 2021/06/24 07:21:59 semarie Exp $	*/
 
 /*
  * Copyright (c) 2017-2019 Bob Beck <beck@openbsd.org>
@@ -693,7 +693,10 @@ unveil_start_relative(struct proc *p, struct nameidata *ni, struct vnode *dp)
 	struct process *pr = p->p_p;
 	struct unveil *uv = NULL;
 
-	if (dp != NULL && pr->ps_uvpaths != NULL) {
+	if (pr->ps_uvpaths == NULL)
+		return;
+	
+	if (dp != NULL) {
 		ssize_t uvi;
 		/*
 		 * XXX
@@ -733,7 +736,6 @@ unveil_start_relative(struct proc *p, struct nameidata *ni, struct vnode *dp)
 #endif
 		ni->ni_unveil_match = uv;
 	}
-
 }
 
 /*
@@ -745,40 +747,41 @@ unveil_check_component(struct proc *p, struct nameidata *ni, struct vnode *dp)
 	struct process *pr = p->p_p;
 	struct unveil *uv = NULL;
 
-	if (ni->ni_pledge != PLEDGE_UNVEIL) {
-		if ((ni->ni_cnd.cn_flags & BYPASSUNVEIL) == 0) {
-			if (ni->ni_cnd.cn_flags & ISDOTDOT) {
-				/*
-				 * adjust unveil match as necessary
-				 */
-				uv = unveil_covered(ni->ni_unveil_match, dp,
-				    pr);
-				/* clear the match when we DOTDOT above it */
-				if (ni->ni_unveil_match &&
-				    ni->ni_unveil_match->uv_vp == dp) {
-					ni->ni_unveil_match = NULL;
-					ni->ni_unveil_eacces = 0;
-				}
-			}
-			else
-				uv = unveil_lookup(dp, pr, NULL);
+	if (ni->ni_pledge == PLEDGE_UNVEIL) {
+		unveil_save_traversed_vnode(ni, dp);
+		return;
+	}
+	if (ni->ni_cnd.cn_flags & BYPASSUNVEIL)
+		return;
 
-			if (uv != NULL) {
-				/* if directory flags match, it's a match */
-				if (unveil_flagmatch(ni, uv->uv_flags)) {
-					if (uv->uv_flags & UNVEIL_USERSET) {
-						ni->ni_unveil_match = uv;
-#ifdef DEBUG_UNVEIL
-					printf("unveil: %s(%d): component "
-					    "directory match for vnode %p\n",
-					    pr->ps_comm, pr->ps_pid, dp);
-#endif
-					}
-				}
-			}
+	if (ni->ni_cnd.cn_flags & ISDOTDOT) {
+		/*
+		 * adjust unveil match as necessary
+		 */
+		uv = unveil_covered(ni->ni_unveil_match, dp, pr);
+
+		/* clear the match when we DOTDOT above it */
+		if (ni->ni_unveil_match &&
+		    ni->ni_unveil_match->uv_vp == dp) {
+			ni->ni_unveil_match = NULL;
+			ni->ni_unveil_eacces = 0;
 		}
 	} else
-		unveil_save_traversed_vnode(ni, dp);
+		uv = unveil_lookup(dp, pr, NULL);
+
+	if (uv != NULL) {
+		/* if directory flags match, it's a match */
+		if (unveil_flagmatch(ni, uv->uv_flags)) {
+			if (uv->uv_flags & UNVEIL_USERSET) {
+				ni->ni_unveil_match = uv;
+#ifdef DEBUG_UNVEIL
+				printf("unveil: %s(%d): component "
+				    "directory match for vnode %p\n",
+				    pr->ps_comm, pr->ps_pid, dp);
+#endif
+			}
+		}
+	}
 }
 
 /*
