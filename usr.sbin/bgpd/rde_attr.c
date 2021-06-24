@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.124 2021/01/16 13:14:54 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.125 2021/06/24 10:04:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -568,7 +568,6 @@ aspath_put(struct aspath *aspath)
 
 /*
  * convert a 4 byte aspath to a 2 byte one.
- * data is freed by aspath_deflate
  */
 u_char *
 aspath_deflate(u_char *data, u_int16_t *len, int *flagnew)
@@ -614,7 +613,6 @@ aspath_deflate(u_char *data, u_int16_t *len, int *flagnew)
 		}
 	}
 
-	free(data);
 	*len = nlen;
 	return (ndata);
 }

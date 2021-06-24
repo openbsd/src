@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.103 2020/01/09 11:55:25 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.104 2021/06/24 10:04:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -160,15 +160,19 @@ mrt_attr_dump(struct ibuf *buf, struct rde_aspath *a, struct rde_community *c,
 		return (-1);
 
 	/* aspath */
-	pdata = aspath_prepend(a->aspath, rde_local_as(), 0, &plen);
+	plen = aspath_length(a->aspath);
+	pdata = aspath_dump(a->aspath);
+
 	if (!v2)
 		pdata = aspath_deflate(pdata, &plen, &neednewpath);
 	if (attr_writebuf(buf, ATTR_WELL_KNOWN, ATTR_ASPATH, pdata,
 	    plen) == -1) {
-		free(pdata);
+		if (!v2)
+			free(pdata);
 		return (-1);
 	}
-	free(pdata);
+	if (!v2)
+		free(pdata);
 
 	if (nexthop && nexthop->aid == AID_INET) {
 		/* nexthop, already network byte order */
