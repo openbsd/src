@@ -338,6 +338,7 @@ ALL_MACHINES = \
 	cpu-pdp11.lo \
 	cpu-pj.lo \
 	cpu-powerpc.lo \
+	cpu-riscv64.lo \
 	cpu-rs6000.lo \
 	cpu-s390.lo \
 	cpu-sh.lo \
@@ -401,6 +402,7 @@ ALL_MACHINES_CFILES = \
 	cpu-pdp11.c \
 	cpu-pj.c \
 	cpu-powerpc.c \
+	cpu-riscv64.c \
 	cpu-rs6000.c \
 	cpu-s390.c \
 	cpu-sh.c \
@@ -1623,6 +1625,7 @@ cpu-pdp11.lo: cpu-pdp11.c $(INCDIR)/filenames.h $(INCDIR)/hashtab.h
 cpu-pj.lo: cpu-pj.c $(INCDIR)/filenames.h $(INCDIR)/hashtab.h
 cpu-powerpc.lo: cpu-powerpc.c $(INCDIR)/filenames.h \
   $(INCDIR)/hashtab.h
+cpu-riscv64.lo: cpu-riscv64.c $(INCDIR)/filenames.h $(INCDIR)/hashtab.h
 cpu-rs6000.lo: cpu-rs6000.c $(INCDIR)/filenames.h $(INCDIR)/hashtab.h
 cpu-s390.lo: cpu-s390.c $(INCDIR)/filenames.h $(INCDIR)/hashtab.h
 cpu-sh.lo: cpu-sh.c $(INCDIR)/filenames.h $(INCDIR)/hashtab.h \
