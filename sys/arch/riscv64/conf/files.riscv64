@@ -1,4 +1,4 @@
-#	$OpenBSD: files.riscv64,v 1.14 2021/06/17 16:10:50 kettenis Exp $
+#	$OpenBSD: files.riscv64,v 1.15 2021/06/25 19:27:40 matthieu Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -129,6 +129,11 @@ include "scsi/files.scsi"
 
 # Machine-independent ATA drivers
 include "dev/ata/files.ata"
+
+# Include WSCONS stuff
+include "dev/wscons/files.wscons"
+include "dev/rasops/files.rasops"
+include "dev/wsfont/files.wsfont"
 
 device	pciecam: pcibus
 attach	pciecam at fdt

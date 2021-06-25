@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.23 2021/06/23 15:26:10 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.24 2021/06/25 19:27:40 matthieu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -22,6 +22,11 @@ makeoptions	KERNEL_BASE_VIRT="0xffffffc000200000"
 #option		DEBUG_AUTOCONF
 #option		DEBUG_INTC
 #option		DEBUG_TIMER
+
+option		WSDISPLAY_COMPAT_USL
+option		WSDISPLAY_COMPAT_RAWKBD
+option		WSDISPLAY_DEFAULTSCREENS=6
+
 
 config	bsd	swap generic
 
@@ -80,6 +85,11 @@ titmp*		at iic?
 ppb*		at pci?		# PCI-PCI bridges
 pci*		at ppb?
 
+# DRM devices
+radeondrm*	at pci?
+drm*		at radeondrm?
+wsdisplay*	at radeondrm?
+
 # PCI Ethernet
 em*		at pci?		# Intel Pro/1000 Ethernet
 bge*		at pci?		# Broadcom BCM57xx (aka Tigon3)
@@ -103,9 +113,19 @@ usb*		at xhci?
 # USB devices
 uhub*		at usb?
 uhub*		at uhub?
-#uhidev*	at uhub?
-#ukbd*		at uhidev?
-#wskbd*		at ukbd? mux 1
+uhidev*		at uhub?
+ums*		at uhidev?		# USB mouse
+wsmouse* 	at ums? mux 0
+umt*		at uhidev?		# USB multitouch touchpad
+wsmouse* 	at umt? mux 0
+uts*		at uhub?		# USB touchscreen
+wsmouse* 	at uts? mux 0
+uwacom*		at uhidev?		# USB Wacom tablet
+wsmouse* 	at uwacom? mux 0
+ukbd*		at uhidev?
+wskbd*		at ukbd? mux 1
+udl*		at uhub?		# DisplayLink USB displays
+wsdisplay* 	at udl?
 umass*		at uhub?
 aue*		at uhub?	# ADMtek AN986 Pegasus Ethernet
 atu*		at uhub?	# Atmel AT76c50x based 802.11b
@@ -150,3 +170,7 @@ urlphy*		at mii?		# Realtek RTL8150L internal PHY
 
 # Pseudo-Devices
 pseudo-device	openprom
+pseudo-device	hotplug		1	# devices hot plugging
+
+# mouse & keyboard multiplexor pseudo-devices
+pseudo-device	wsmux		2

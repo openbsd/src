@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.9 2021/05/19 20:37:16 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.10 2021/06/25 19:27:40 matthieu Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -86,6 +86,13 @@ cdev_decl(lpt);
 #include "ksyms.h"
 #include "kstat.h"
 #include "radio.h"
+#include "drm.h"
+cdev_decl(drm);
+
+#include "wsdisplay.h"
+#include "wskbd.h"
+#include "wsmouse.h"
+#include "wsmux.h"
 
 #ifdef USER_PCICONF
 #include "pci.h"
@@ -116,7 +123,8 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 9: was floppy disk */
 	cdev_notdef(),			/* 10 */
 	cdev_notdef(),			/* 11: Sony CD-ROM */
-	cdev_notdef(),			/* 12: frame buffers, etc. */
+	cdev_wsdisplay_init(NWSDISPLAY,	/* 12: frame buffers, etc. */
+	    wsdisplay),
 	cdev_disk_init(NSD,sd),		/* 13: SCSI disk */
 	cdev_notdef(),			/* 14: was: SCSI tape */
 	cdev_disk_init(NCD,cd),		/* 15: SCSI CD-ROM */
@@ -173,9 +181,10 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 64: USB printers */
 	cdev_notdef(),			/* 65: urio */
 	cdev_notdef(),			/* 66: USB tty */
-	cdev_notdef(),			/* 67: keyboards */
-	cdev_notdef(),			/* 68: mice */
-	cdev_notdef(),			/* 69: ws multiplexor */
+	cdev_mouse_init(NWSKBD, wskbd),	/* 67: keyboards */
+	cdev_mouse_init(NWSMOUSE,	/* 68: mice */
+	    wsmouse),
+	cdev_mouse_init(NWSMUX, wsmux),	/* 69: ws multiplexor */
 	cdev_openprom_init(NOPENPROM,openprom),	/* 70: /dev/openprom */
 	cdev_notdef(),			/* 71: was: Cyclades-Z serial port */
 #ifdef USER_PCICONF
@@ -197,7 +206,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 84 */
 	cdev_notdef(),			/* 85 */
 	cdev_notdef(),			/* 86 */
-	cdev_notdef(),			/* 87: drm */
+	cdev_drm_init(NDRM,drm),	/* 87: drm */
 	cdev_notdef(),			/* 88: GPIO interface */
 	cdev_vscsi_init(NVSCSI,vscsi),	/* 89: vscsi */
 	cdev_disk_init(1,diskmap),	/* 90: disk mapper */
