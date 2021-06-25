@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.68 2021/06/20 18:44:19 krw Exp $	*/
+/*	$OpenBSD: misc.c,v 1.69 2021/06/25 19:24:53 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -411,11 +411,11 @@ parse_b(const char *arg, uint32_t *blocks, uint32_t *offset, uint8_t *type)
 	uint32_t blockcount, blockoffset;
 	uint8_t partitiontype;
 
-	blockoffset = 64;
+	blockoffset = BLOCKALIGNMENT;
 	partitiontype = DOSPTYP_EFISYS;
 	ptype = NULL;
 
-	/* First number: # of sectors in boot partition. */
+	/* First number: # of 512-byte blocks in boot partition. */
 	poffset = strchr(arg, '@');
 	if (poffset != NULL)
 		*poffset++ = '\0';
@@ -425,18 +425,19 @@ parse_b(const char *arg, uint32_t *blocks, uint32_t *offset, uint8_t *type)
 			*ptype++ = '\0';
 	}
 
-	blockcount = strtonum(arg, 64, UINT32_MAX, &errstr);
+	blockcount = strtonum(arg, BLOCKALIGNMENT, UINT32_MAX, &errstr);
 	if (errstr)
-		errx(1, "Block argument %s [64..%u].",
-		    errstr, UINT32_MAX);
+		errx(1, "Block argument %s [%u..%u].", errstr, BLOCKALIGNMENT,
+		    UINT32_MAX);
 
 	if (poffset == NULL)
 		goto done;
 
-	blockoffset = strtonum(poffset, 64, UINT32_MAX, &errstr);
+	/* Second number: # of 512-byte blocks to offset partition start. */
+	blockoffset = strtonum(poffset, BLOCKALIGNMENT, UINT32_MAX, &errstr);
 	if (errstr)
-		errx(1, "Block offset argument %s "
-		    "[64..%u].", errstr, UINT32_MAX);
+		errx(1, "Block offset argument %s [%u..%u].", errstr,
+		    BLOCKALIGNMENT, UINT32_MAX);
 
 	if (ptype == NULL)
 		goto done;

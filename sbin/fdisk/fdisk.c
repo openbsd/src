@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.112 2021/06/23 13:07:13 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.113 2021/06/25 19:24:53 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -124,13 +124,13 @@ main(int argc, char *argv[])
 			parse_b(optarg, &b_sectors, &b_offset, &b_type);
 			break;
 		case 'l':
-			l_arg = strtonum(optarg, 64, UINT32_MAX, &errstr);
+			l_arg = strtonum(optarg, BLOCKALIGNMENT, UINT32_MAX, &errstr);
 			if (errstr)
-				errx(1, "Block argument %s [64..%u].", errstr,
-				    UINT32_MAX);
-			disk.cylinders = l_arg / 64;
+				errx(1, "Block argument %s [%u..%u].", errstr,
+				    BLOCKALIGNMENT, UINT32_MAX);
+			disk.cylinders = l_arg / BLOCKALIGNMENT;
 			disk.heads = 1;
-			disk.sectors = 64;
+			disk.sectors = BLOCKALIGNMENT;
 			disk.size = l_arg;
 			break;
 		case 'y':
@@ -169,9 +169,9 @@ main(int argc, char *argv[])
 		if (l_arg % bps != 0)
 			l_arg += bps - l_arg % bps;
 		l_arg = DL_BLKTOSEC(&dl, l_arg);
-		disk.cylinders = l_arg / 64;
+		disk.cylinders = l_arg / BLOCKALIGNMENT;
 		disk.heads = 1;
-		disk.sectors = 64;
+		disk.sectors = BLOCKALIGNMENT;
 		disk.size = l_arg;
 	}
 

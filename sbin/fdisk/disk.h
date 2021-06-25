@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.h,v 1.22 2021/05/07 22:15:13 krw Exp $	*/
+/*	$OpenBSD: disk.h,v 1.23 2021/06/25 19:24:53 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -27,6 +27,9 @@ struct disk {
 	uint32_t sectors;
 	uint32_t size;
 };
+
+/* Align partition starts/sizes on 32K-byte boundaries. */
+#define	BLOCKALIGNMENT	64
 
 void  DISK_open(int);
 int  DISK_printgeometry(char *);

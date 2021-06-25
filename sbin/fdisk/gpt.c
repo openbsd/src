@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.32 2021/06/21 02:05:30 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.33 2021/06/25 19:24:53 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -334,8 +334,8 @@ add_partition(const uint8_t *beuuid, const char *name, uint64_t sectors)
 	if (rslt == -1)
 		goto done;
 
-	if (start % 64)
-		start += (64 - start % 64);
+	if (start % BLOCKALIGNMENT)
+		start += (BLOCKALIGNMENT - start % BLOCKALIGNMENT);
 	if (start >= end)
 		goto done;
 
@@ -386,9 +386,8 @@ init_gh(void)
 
 	needed = sizeof(gp) / secsize + 2;
 
-	/* Start usable LBA area on 64 sector boundary. */
-	if (needed % 64)
-		needed += (64 - (needed % 64));
+	if (needed % BLOCKALIGNMENT)
+		needed += (needed - (needed % BLOCKALIGNMENT));
 
 	gh.gh_sig = htole64(GPTSIGNATURE);
 	gh.gh_rev = htole32(GPTREVISION);
