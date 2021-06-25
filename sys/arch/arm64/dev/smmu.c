@@ -1,4 +1,4 @@
-/* $OpenBSD: smmu.c,v 1.15 2021/06/23 19:46:13 patrick Exp $ */
+/* $OpenBSD: smmu.c,v 1.16 2021/06/25 12:40:29 patrick Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
@@ -56,17 +56,11 @@ struct smmuvp2 {
 
 struct smmuvp3 {
 	uint64_t l3[VP_IDX3_CNT];
-	struct pte_desc *vp[VP_IDX3_CNT];
 };
 
 CTASSERT(sizeof(struct smmuvp0) == sizeof(struct smmuvp1));
 CTASSERT(sizeof(struct smmuvp0) == sizeof(struct smmuvp2));
-CTASSERT(sizeof(struct smmuvp0) == sizeof(struct smmuvp3));
-
-struct pte_desc {
-	uint64_t pted_pte;
-	vaddr_t pted_va;
-};
+CTASSERT(sizeof(struct smmuvp0) != sizeof(struct smmuvp3));
 
 uint32_t smmu_gr0_read_4(struct smmu_softc *, bus_size_t);
 void smmu_gr0_write_4(struct smmu_softc *, bus_size_t, uint32_t);
@@ -89,14 +83,13 @@ void smmu_set_l2(struct smmu_domain *, uint64_t, struct smmuvp1 *,
 void smmu_set_l3(struct smmu_domain *, uint64_t, struct smmuvp2 *,
     struct smmuvp3 *);
 
-struct pte_desc *smmu_vp_lookup(struct smmu_domain *, vaddr_t, uint64_t **);
-int smmu_vp_enter(struct smmu_domain *, vaddr_t, struct pte_desc *, int);
+int smmu_vp_lookup(struct smmu_domain *, vaddr_t, uint64_t **);
+int smmu_vp_enter(struct smmu_domain *, vaddr_t, uint64_t **, int);
 
-void smmu_fill_pte(struct smmu_domain *, vaddr_t, paddr_t, struct pte_desc *,
+uint64_t smmu_fill_pte(struct smmu_domain *, vaddr_t, paddr_t,
     vm_prot_t, int, int);
-void smmu_pte_update(struct smmu_domain *, struct pte_desc *, uint64_t *);
-void smmu_pte_insert(struct smmu_domain *, struct pte_desc *);
-void smmu_pte_remove(struct smmu_domain *, struct pte_desc *, int);
+void smmu_pte_update(struct smmu_domain *, uint64_t, uint64_t *);
+void smmu_pte_remove(struct smmu_domain *, vaddr_t);
 
 int smmu_enter(struct smmu_domain *, vaddr_t, paddr_t, vm_prot_t, int, int);
 void smmu_map(struct smmu_domain *, vaddr_t, paddr_t, vm_prot_t, int, int);
@@ -133,12 +126,12 @@ smmu_attach(struct smmu_softc *sc)
 
 	SIMPLEQ_INIT(&sc->sc_domains);
 
-	pool_init(&sc->sc_pted_pool, sizeof(struct pte_desc), 0, IPL_VM, 0,
-	    "smmu_pted", NULL);
-	pool_setlowat(&sc->sc_pted_pool, 20);
 	pool_init(&sc->sc_vp_pool, sizeof(struct smmuvp0), PAGE_SIZE, IPL_VM, 0,
 	    "smmu_vp", NULL);
 	pool_setlowat(&sc->sc_vp_pool, 20);
+	pool_init(&sc->sc_vp3_pool, sizeof(struct smmuvp3), PAGE_SIZE, IPL_VM, 0,
+	    "smmu_vp3", NULL);
+	pool_setlowat(&sc->sc_vp3_pool, 20);
 
 	reg = smmu_gr0_read_4(sc, SMMU_IDR0);
 	if (reg & SMMU_IDR0_S1TS)
@@ -817,10 +810,10 @@ smmu_set_l1(struct smmu_domain *dom, uint64_t va, struct smmuvp1 *l1_va)
 	int idx0;
 
 	if (pmap_extract(pmap_kernel(), (vaddr_t)l1_va, &l1_pa) == 0)
-		panic("unable to find vp pa mapping %p", l1_va);
+		panic("%s: unable to find vp pa mapping %p", __func__, l1_va);
 
 	if (l1_pa & (Lx_TABLE_ALIGN-1))
-		panic("misaligned L2 table");
+		panic("%s: misaligned L2 table", __func__);
 
 	pg_entry = VP_Lx(l1_pa);
 
@@ -838,10 +831,10 @@ smmu_set_l2(struct smmu_domain *dom, uint64_t va, struct smmuvp1 *vp1,
 	int idx1;
 
 	if (pmap_extract(pmap_kernel(), (vaddr_t)l2_va, &l2_pa) == 0)
-		panic("unable to find vp pa mapping %p", l2_va);
+		panic("%s: unable to find vp pa mapping %p", __func__, l2_va);
 
 	if (l2_pa & (Lx_TABLE_ALIGN-1))
-		panic("misaligned L2 table");
+		panic("%s: misaligned L2 table", __func__);
 
 	pg_entry = VP_Lx(l2_pa);
 
@@ -859,10 +852,10 @@ smmu_set_l3(struct smmu_domain *dom, uint64_t va, struct smmuvp2 *vp2,
 	int idx2;
 
 	if (pmap_extract(pmap_kernel(), (vaddr_t)l3_va, &l3_pa) == 0)
-		panic("unable to find vp pa mapping %p", l3_va);
+		panic("%s: unable to find vp pa mapping %p", __func__, l3_va);
 
 	if (l3_pa & (Lx_TABLE_ALIGN-1))
-		panic("misaligned L2 table");
+		panic("%s: misaligned L2 table", __func__);
 
 	pg_entry = VP_Lx(l3_pa);
 
@@ -871,45 +864,43 @@ smmu_set_l3(struct smmu_domain *dom, uint64_t va, struct smmuvp2 *vp2,
 	vp2->l2[idx2] = pg_entry;
 }
 
-struct pte_desc *
+int
 smmu_vp_lookup(struct smmu_domain *dom, vaddr_t va, uint64_t **pl3entry)
 {
 	struct smmuvp1 *vp1;
 	struct smmuvp2 *vp2;
 	struct smmuvp3 *vp3;
-	struct pte_desc *pted;
 
 	if (dom->sd_4level) {
 		if (dom->sd_vp.l0 == NULL) {
-			return NULL;
+			return ENXIO;
 		}
 		vp1 = dom->sd_vp.l0->vp[VP_IDX0(va)];
 	} else {
 		vp1 = dom->sd_vp.l1;
 	}
 	if (vp1 == NULL) {
-		return NULL;
+		return ENXIO;
 	}
 
 	vp2 = vp1->vp[VP_IDX1(va)];
 	if (vp2 == NULL) {
-		return NULL;
+		return ENXIO;
 	}
 
 	vp3 = vp2->vp[VP_IDX2(va)];
 	if (vp3 == NULL) {
-		return NULL;
+		return ENXIO;
 	}
 
-	pted = vp3->vp[VP_IDX3(va)];
 	if (pl3entry != NULL)
 		*pl3entry = &(vp3->l3[VP_IDX3(va)]);
 
-	return pted;
+	return 0;
 }
 
 int
-smmu_vp_enter(struct smmu_domain *dom, vaddr_t va, struct pte_desc *pted,
+smmu_vp_enter(struct smmu_domain *dom, vaddr_t va, uint64_t **pl3entry,
     int flags)
 {
 	struct smmu_softc *sc = dom->sd_sc;
@@ -957,7 +948,7 @@ smmu_vp_enter(struct smmu_domain *dom, vaddr_t va, struct pte_desc *pted,
 		mtx_enter(&dom->sd_pmap_mtx);
 		vp3 = vp2->vp[VP_IDX2(va)];
 		if (vp3 == NULL) {
-			vp3 = pool_get(&sc->sc_vp_pool, PR_NOWAIT | PR_ZERO);
+			vp3 = pool_get(&sc->sc_vp3_pool, PR_NOWAIT | PR_ZERO);
 			if (vp3 == NULL) {
 				mtx_leave(&dom->sd_pmap_mtx);
 				return ENOMEM;
@@ -967,15 +958,19 @@ smmu_vp_enter(struct smmu_domain *dom, vaddr_t va, struct pte_desc *pted,
 		mtx_leave(&dom->sd_pmap_mtx);
 	}
 
-	vp3->vp[VP_IDX3(va)] = pted;
+	if (pl3entry != NULL)
+		*pl3entry = &(vp3->l3[VP_IDX3(va)]);
+
 	return 0;
 }
 
-void
+uint64_t
 smmu_fill_pte(struct smmu_domain *dom, vaddr_t va, paddr_t pa,
-    struct pte_desc *pted, vm_prot_t prot, int flags, int cache)
+    vm_prot_t prot, int flags, int cache)
 {
-	pted->pted_va = va;
+	uint64_t pted;
+
+	pted = pa & PTE_RPGN;
 
 	switch (cache) {
 	case PMAP_CACHE_WB:
@@ -991,22 +986,20 @@ smmu_fill_pte(struct smmu_domain *dom, vaddr_t va, paddr_t pa,
 	default:
 		panic("%s: invalid cache mode", __func__);
 	}
-	pted->pted_va |= cache;
 
-	pted->pted_va |= prot & (PROT_READ|PROT_WRITE|PROT_EXEC);
-
-	pted->pted_pte = pa & PTE_RPGN;
-	pted->pted_pte |= flags & (PROT_READ|PROT_WRITE|PROT_EXEC);
+	pted |= cache;
+	pted |= flags & (PROT_READ|PROT_WRITE|PROT_EXEC);
+	return pted;
 }
 
 void
-smmu_pte_update(struct smmu_domain *dom, struct pte_desc *pted, uint64_t *pl3)
+smmu_pte_update(struct smmu_domain *dom, uint64_t pted, uint64_t *pl3)
 {
 	uint64_t pte, access_bits;
 	uint64_t attr = 0;
 
 	/* see mair in locore.S */
-	switch (pted->pted_va & PMAP_CACHE_BITS) {
+	switch (pted & PMAP_CACHE_BITS) {
 	case PMAP_CACHE_WB:
 		/* inner and outer writeback */
 		if (dom->sd_stage == 1)
@@ -1052,36 +1045,22 @@ smmu_pte_update(struct smmu_domain *dom, struct pte_desc *pted, uint64_t *pl3)
 	if (dom->sd_stage == 1) {
 		attr |= ATTR_nG;
 		access_bits |= ATTR_AP(1);
-		if ((pted->pted_pte & PROT_READ) &&
-		    !(pted->pted_pte & PROT_WRITE))
+		if ((pted & PROT_READ) &&
+		    !(pted & PROT_WRITE))
 			access_bits |= ATTR_AP(2);
 	} else {
-		if (pted->pted_pte & PROT_READ)
+		if (pted & PROT_READ)
 			access_bits |= ATTR_AP(1);
-		if (pted->pted_pte & PROT_WRITE)
+		if (pted & PROT_WRITE)
 			access_bits |= ATTR_AP(2);
 	}
 
-	pte = (pted->pted_pte & PTE_RPGN) | attr | access_bits | L3_P;
+	pte = (pted & PTE_RPGN) | attr | access_bits | L3_P;
 	*pl3 = pte;
 }
 
 void
-smmu_pte_insert(struct smmu_domain *dom, struct pte_desc *pted)
-{
-	uint64_t *pl3;
-
-	if (smmu_vp_lookup(dom, pted->pted_va, &pl3) == NULL) {
-		panic("%s: have a pted, but missing a vp"
-		    " for %lx va domain %p", __func__, pted->pted_va, dom);
-	}
-
-	smmu_pte_update(dom, pted, pl3);
-	membar_producer(); /* XXX bus dma sync? */
-}
-
-void
-smmu_pte_remove(struct smmu_domain *dom, struct pte_desc *pted, int remove_pted)
+smmu_pte_remove(struct smmu_domain *dom, vaddr_t va)
 {
 	/* put entry into table */
 	/* need to deal with ref/change here */
@@ -1090,92 +1069,81 @@ smmu_pte_remove(struct smmu_domain *dom, struct pte_desc *pted, int remove_pted)
 	struct smmuvp3 *vp3;
 
 	if (dom->sd_4level)
-		vp1 = dom->sd_vp.l0->vp[VP_IDX0(pted->pted_va)];
+		vp1 = dom->sd_vp.l0->vp[VP_IDX0(va)];
 	else
 		vp1 = dom->sd_vp.l1;
 	if (vp1 == NULL) {
-		panic("have a pted, but missing the l1 for %lx va domain %p",
-		    pted->pted_va, dom);
+		panic("%s: missing the l1 for va %lx domain %p", __func__,
+		    va, dom);
 	}
-	vp2 = vp1->vp[VP_IDX1(pted->pted_va)];
+	vp2 = vp1->vp[VP_IDX1(va)];
 	if (vp2 == NULL) {
-		panic("have a pted, but missing the l2 for %lx va domain %p",
-		    pted->pted_va, dom);
+		panic("%s: missing the l2 for va %lx domain %p", __func__,
+		    va, dom);
 	}
-	vp3 = vp2->vp[VP_IDX2(pted->pted_va)];
+	vp3 = vp2->vp[VP_IDX2(va)];
 	if (vp3 == NULL) {
-		panic("have a pted, but missing the l3 for %lx va domain %p",
-		    pted->pted_va, dom);
+		panic("%s: missing the l3 for va %lx domain %p", __func__,
+		    va, dom);
 	}
-	vp3->l3[VP_IDX3(pted->pted_va)] = 0;
-	if (remove_pted)
-		vp3->vp[VP_IDX3(pted->pted_va)] = NULL;
+	vp3->l3[VP_IDX3(va)] = 0;
 }
 
 int
 smmu_enter(struct smmu_domain *dom, vaddr_t va, paddr_t pa, vm_prot_t prot,
     int flags, int cache)
 {
-	struct smmu_softc *sc = dom->sd_sc;
-	struct pte_desc *pted;
-	int error;
+	uint64_t *pl3;
 
 	/* printf("%s: 0x%lx -> 0x%lx\n", __func__, va, pa); */
 
-	pted = smmu_vp_lookup(dom, va, NULL);
-	if (pted == NULL) {
-		pted = pool_get(&sc->sc_pted_pool, PR_NOWAIT | PR_ZERO);
-		if (pted == NULL) {
-			error = ENOMEM;
-			goto out;
-		}
-		if (smmu_vp_enter(dom, va, pted, flags)) {
-			pool_put(&sc->sc_pted_pool, pted);
-			error = ENOMEM;
-			goto out;
-		}
+	if (smmu_vp_lookup(dom, va, &pl3) != 0) {
+		if (smmu_vp_enter(dom, va, &pl3, flags))
+			return ENOMEM;
 	}
 
-	smmu_fill_pte(dom, va, pa, pted, prot, flags, cache);
+	if (flags & (PROT_READ|PROT_WRITE|PROT_EXEC))
+		smmu_map(dom, va, pa, prot, flags, cache);
 
-	error = 0;
-out:
-	return error;
+	return 0;
 }
 
 void
 smmu_map(struct smmu_domain *dom, vaddr_t va, paddr_t pa, vm_prot_t prot,
     int flags, int cache)
 {
-	struct pte_desc *pted;
+	uint64_t *pl3;
+	uint64_t pted;
+	int ret;
 
 	/* printf("%s: 0x%lx -> 0x%lx\n", __func__, va, pa); */
 
 	/* IOVA must already be allocated */
-	pted = smmu_vp_lookup(dom, va, NULL);
-	KASSERT(pted != NULL);
+	ret = smmu_vp_lookup(dom, va, &pl3);
+	KASSERT(ret == 0);
 
 	/* Update PTED information for physical address */
-	smmu_fill_pte(dom, va, pa, pted, prot, flags, cache);
+	pted = smmu_fill_pte(dom, va, pa, prot, flags, cache);
 
 	/* Insert updated information */
-	smmu_pte_insert(dom, pted);
+	smmu_pte_update(dom, pted, pl3);
+	membar_producer(); /* XXX bus dma sync? */
 }
 
 void
 smmu_unmap(struct smmu_domain *dom, vaddr_t va)
 {
 	struct smmu_softc *sc = dom->sd_sc;
-	struct pte_desc *pted;
+	int ret;
 
 	/* printf("%s: 0x%lx\n", __func__, va); */
 
 	/* IOVA must already be allocated */
-	pted = smmu_vp_lookup(dom, va, NULL);
-	KASSERT(pted != NULL);
+	ret = smmu_vp_lookup(dom, va, NULL);
+	KASSERT(ret == 0);
 
-	/* Remove mapping from pagetable, keep it alive */
-	smmu_pte_remove(dom, pted, 0);
+	/* Remove mapping from pagetable */
+	smmu_pte_remove(dom, va);
 	membar_producer(); /* XXX bus dma sync? */
 
 	/* Invalidate IOTLB */
@@ -1190,22 +1158,9 @@ smmu_unmap(struct smmu_domain *dom, vaddr_t va)
 void
 smmu_remove(struct smmu_domain *dom, vaddr_t va)
 {
-	struct smmu_softc *sc = dom->sd_sc;
-	struct pte_desc *pted;
-
 	/* printf("%s: 0x%lx\n", __func__, va); */
 
-	/* IOVA must already be allocated */
-	pted = smmu_vp_lookup(dom, va, NULL);
-	KASSERT(pted != NULL);
-
-	/* Mapping already removed, remove pted as well */
-	smmu_pte_remove(dom, pted, 1);
-
-	/* Destroy pted */
-	pted->pted_pte = 0;
-	pted->pted_va = 0;
-	pool_put(&sc->sc_pted_pool, pted);
+	/* TODO: garbage collect page tables? */
 }
 
 int
