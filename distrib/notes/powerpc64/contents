@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.1 2020/07/05 20:01:35 kettenis Exp $
+dnl	$OpenBSD: contents,v 1.2 2021/06/25 05:22:02 jsg Exp $
 TopPart
 
 OpenBSDminiroot
@@ -11,10 +11,18 @@ OpenBSDrd
 
 DistributionDescription(eight)
 
-OpenBSDbase(92997156,284219392)
+OpenBSDbase(181643584,438396928)
 
-OpenBSDcomp(57727901,212260864)
+OpenBSDcomp(44537651,191232000)
 
-OpenBSDgame(2768356,9330688)
+OpenBSDgame(2847010,7053312)
 
-OpenBSDman(7322823,31395840)
+OpenBSDman(7738117,32602112)
+
+OpenBSDxbase(27295576,103174144)
+
+OpenBSDxfont(40288466,59377664)
+
+OpenBSDxserv(14197226,41666560)
+
+OpenBSDxshare(4611688,30236672)
