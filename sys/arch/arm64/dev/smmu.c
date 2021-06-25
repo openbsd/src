@@ -1,4 +1,4 @@
-/* $OpenBSD: smmu.c,v 1.17 2021/06/25 17:41:22 patrick Exp $ */
+/* $OpenBSD: smmu.c,v 1.18 2021/06/25 19:55:22 patrick Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
@@ -122,8 +122,6 @@ smmu_attach(struct smmu_softc *sc)
 	uint32_t reg;
 	int i;
 
-	printf("\n");
-
 	SIMPLEQ_INIT(&sc->sc_domains);
 
 	pool_init(&sc->sc_vp_pool, sizeof(struct smmuvp0), PAGE_SIZE, IPL_VM, 0,
@@ -244,19 +242,8 @@ smmu_attach(struct smmu_softc *sc)
 		break;
 	}
 
-#if 1
-	reg = smmu_gr0_read_4(sc, SMMU_IDR0);
-	printf("%s: idr0 0x%08x\n", __func__, reg);
-	reg = smmu_gr0_read_4(sc, SMMU_IDR1);
-	printf("%s: idr1 0x%08x\n", __func__, reg);
-	reg = smmu_gr0_read_4(sc, SMMU_IDR2);
-	printf("%s: idr2 0x%08x\n", __func__, reg);
-
-	printf("%s: pagesize %zu numpage %u\n", __func__, sc->sc_pagesize,
-	    sc->sc_numpage);
-	printf("%s: total cb %u stage2-only cb %u\n", __func__,
+	printf(": %u CBs (%u S2-only)\n",
 	    sc->sc_num_context_banks, sc->sc_num_s2_context_banks);
-#endif
 
 	/* Clear Global Fault Status Register */
 	smmu_gr0_write_4(sc, SMMU_SGFSR, smmu_gr0_read_4(sc, SMMU_SGFSR));
@@ -334,8 +321,8 @@ smmu_global_irq(void *cookie)
 	if (reg == 0)
 		return 0;
 
-	printf("%s:%d: SGFSR 0x%08x SGFSYNR0 0x%08x SGFSYNR1 0x%08x "
-	    "SGFSYNR2 0x%08x\n", __func__, __LINE__, reg,
+	printf("%s: SGFSR 0x%08x SGFSYNR0 0x%08x SGFSYNR1 0x%08x "
+	    "SGFSYNR2 0x%08x\n", sc->sc_dev.dv_xname, reg,
 	    smmu_gr0_read_4(sc, SMMU_SGFSYNR0),
 	    smmu_gr0_read_4(sc, SMMU_SGFSYNR1),
 	    smmu_gr0_read_4(sc, SMMU_SGFSYNR2));
@@ -356,8 +343,8 @@ smmu_context_irq(void *cookie)
 	if ((reg & SMMU_CB_FSR_MASK) == 0)
 		return 0;
 
-	printf("%s:%d: FSR 0x%08x FSYNR0 0x%08x FAR 0x%llx "
-	    "CBFRSYNRA 0x%08x\n", __func__, __LINE__, reg,
+	printf("%s: FSR 0x%08x FSYNR0 0x%08x FAR 0x%llx "
+	    "CBFRSYNRA 0x%08x\n", sc->sc_dev.dv_xname, reg,
 	    smmu_cb_read_4(sc, cbi->cbi_idx, SMMU_CB_FSYNR0),
 	    smmu_cb_read_8(sc, cbi->cbi_idx, SMMU_CB_FAR),
 	    smmu_gr1_read_4(sc, SMMU_CBFRSYNRA(cbi->cbi_idx)));
@@ -526,7 +513,6 @@ smmu_domain_lookup(struct smmu_softc *sc, uint32_t sid)
 {
 	struct smmu_domain *dom;
 
-	printf("%s: looking for %x\n", sc->sc_dev.dv_xname, sid);
 	SIMPLEQ_FOREACH(dom, &sc->sc_domains, sd_list) {
 		if (dom->sd_sid == sid)
 			return dom;
@@ -544,7 +530,6 @@ smmu_domain_create(struct smmu_softc *sc, uint32_t sid)
 	vaddr_t l0va;
 	int i, start, end;
 
-	printf("%s: creating for %x\n", sc->sc_dev.dv_xname, sid);
 	dom = malloc(sizeof(*dom), M_DEVBUF, M_WAITOK | M_ZERO);
 	mtx_init(&dom->sd_iova_mtx, IPL_VM);
 	mtx_init(&dom->sd_pmap_mtx, IPL_VM);
@@ -571,6 +556,8 @@ smmu_domain_create(struct smmu_softc *sc, uint32_t sid)
 		break;
 	}
 	if (i >= end) {
+		printf("%s: out of context blocks, I/O device will fail\n",
+		    sc->sc_dev.dv_xname);
 		free(dom, M_DEVBUF, sizeof(*dom));
 		return NULL;
 	}
@@ -594,6 +581,8 @@ smmu_domain_create(struct smmu_softc *sc, uint32_t sid)
 			    sizeof(struct smmu_cb));
 			sc->sc_cb[dom->sd_cb_idx] = NULL;
 			free(dom, M_DEVBUF, sizeof(*dom));
+			printf("%s: out of streams, I/O device will fail\n",
+			    sc->sc_dev.dv_xname);
 			return NULL;
 		}
 	}
@@ -1099,8 +1088,6 @@ smmu_enter(struct smmu_domain *dom, vaddr_t va, paddr_t pa, vm_prot_t prot,
 {
 	uint64_t *pl3;
 
-	/* printf("%s: 0x%lx -> 0x%lx\n", __func__, va, pa); */
-
 	if (smmu_vp_lookup(dom, va, &pl3) != 0) {
 		if (smmu_vp_enter(dom, va, &pl3, flags))
 			return ENOMEM;
@@ -1120,8 +1107,6 @@ smmu_map(struct smmu_domain *dom, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	uint64_t pted;
 	int ret;
 
-	/* printf("%s: 0x%lx -> 0x%lx\n", __func__, va, pa); */
-
 	/* IOVA must already be allocated */
 	ret = smmu_vp_lookup(dom, va, &pl3);
 	KASSERT(ret == 0);
@@ -1139,8 +1124,6 @@ smmu_unmap(struct smmu_domain *dom, vaddr_t va)
 {
 	struct smmu_softc *sc = dom->sd_sc;
 	int ret;
-
-	/* printf("%s: 0x%lx\n", __func__, va); */
 
 	/* IOVA must already be allocated */
 	ret = smmu_vp_lookup(dom, va, NULL);
@@ -1162,8 +1145,6 @@ smmu_unmap(struct smmu_domain *dom, vaddr_t va)
 void
 smmu_remove(struct smmu_domain *dom, vaddr_t va)
 {
-	/* printf("%s: 0x%lx\n", __func__, va); */
-
 	/* TODO: garbage collect page tables? */
 }
 
