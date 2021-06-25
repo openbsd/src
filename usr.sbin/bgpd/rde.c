@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.528 2021/06/24 13:03:31 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.529 2021/06/25 09:23:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1280,6 +1280,14 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 
 	/* withdraw prefix */
 	while (len > 0) {
+		if (peer->capa.mp[AID_INET] == 0) {
+			log_peer_warnx(&peer->conf,
+			    "bad withdraw, %s disabled", aid2str(AID_INET));
+			rde_update_err(peer, ERR_UPDATE, ERR_UPD_OPTATTR,
+			    NULL, 0);
+			goto done;
+		}
+
 		if ((pos = nlri_get_prefix(p, len, &prefix,
 		    &prefixlen)) == -1) {
 			/*
@@ -1293,14 +1301,6 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 		}
 		p += pos;
 		len -= pos;
-
-		if (peer->capa.mp[AID_INET] == 0) {
-			log_peer_warnx(&peer->conf,
-			    "bad withdraw, %s disabled", aid2str(AID_INET));
-			rde_update_err(peer, ERR_UPDATE, ERR_UPD_OPTATTR,
-			    NULL, 0);
-			goto done;
-		}
 
 		rde_update_withdraw(peer, &prefix, prefixlen);
 	}
@@ -1393,6 +1393,14 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 
 	/* parse nlri prefix */
 	while (nlri_len > 0) {
+		if (peer->capa.mp[AID_INET] == 0) {
+			log_peer_warnx(&peer->conf,
+			    "bad update, %s disabled", aid2str(AID_INET));
+			rde_update_err(peer, ERR_UPDATE, ERR_UPD_OPTATTR,
+			    NULL, 0);
+			goto done;
+		}
+
 		if ((pos = nlri_get_prefix(p, nlri_len, &prefix,
 		    &prefixlen)) == -1) {
 			log_peer_warnx(&peer->conf, "bad nlri prefix");
@@ -1402,14 +1410,6 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 		}
 		p += pos;
 		nlri_len -= pos;
-
-		if (peer->capa.mp[AID_INET] == 0) {
-			log_peer_warnx(&peer->conf,
-			    "bad update, %s disabled", aid2str(AID_INET));
-			rde_update_err(peer, ERR_UPDATE, ERR_UPD_OPTATTR,
-			    NULL, 0);
-			goto done;
-		}
 
 		if (rde_update_update(peer, &state, &prefix, prefixlen) == -1)
 			goto done;
