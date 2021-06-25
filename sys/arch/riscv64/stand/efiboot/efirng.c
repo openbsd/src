@@ -1,4 +1,4 @@
-/*	$OpenBSD: efirng.c,v 1.1 2021/04/28 19:01:00 drahn Exp $	*/
+/*	$OpenBSD: efirng.c,v 1.2 2021/06/25 17:49:49 krw Exp $	*/
 
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -21,7 +21,6 @@
 #include <efi.h>
 #include <efiapi.h>
 
-#include "eficall.h"
 #include "libsa.h"
 
 extern EFI_BOOT_SERVICES	*BS;
@@ -68,13 +67,13 @@ fwrandom(char *buf, size_t buflen)
 	size_t			 i;
 	int			 ret = 0;
 
-	status = EFI_CALL(BS->LocateProtocol, &rng_guid, NULL, (void **)&rng);
+	status = BS->LocateProtocol(&rng_guid, NULL, (void **)&rng);
 	if (rng == NULL || EFI_ERROR(status))
 		return -1;
 
 	random = alloc(buflen);
 
-	status = EFI_CALL(rng->GetRNG, rng, NULL, buflen, random);
+	status = rng->GetRNG(rng, NULL, buflen, random);
 	if (EFI_ERROR(status)) {
 		printf("RNG GetRNG() failed (%d)\n", status);
 		ret = -1;
