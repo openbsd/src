@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.295 2021/06/23 06:53:51 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.296 2021/06/25 23:48:30 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -2232,6 +2232,7 @@ pfsync_request_update(u_int32_t creatorid, u_int64_t id)
 	struct pfsync_softc *sc = pfsyncif;
 	struct pfsync_upd_req_item *item;
 	size_t nlen, sc_len;
+	int retry;
 
 	/*
 	 * this code does nothing to prevent multiple update requests for the
@@ -2247,7 +2248,7 @@ pfsync_request_update(u_int32_t creatorid, u_int64_t id)
 	item->ur_msg.id = id;
 	item->ur_msg.creatorid = creatorid;
 
-	do {
+	for (;;) {
 		mtx_enter(&sc->sc_upd_req_mtx);
 
 		nlen = sizeof(struct pfsync_upd_req);
@@ -2255,16 +2256,19 @@ pfsync_request_update(u_int32_t creatorid, u_int64_t id)
 			nlen += sizeof(struct pfsync_subheader);
 
 		sc_len = atomic_add_long_nv(&sc->sc_len, nlen);
-		if (sc_len > sc->sc_if.if_mtu) {
+		retry = (sc_len > sc->sc_if.if_mtu);
+		if (retry)
 			atomic_sub_long(&sc->sc_len, nlen);
-			mtx_leave(&sc->sc_upd_req_mtx);
-			pfsync_sendout();
-			continue;
-		}
+		else
+			TAILQ_INSERT_TAIL(&sc->sc_upd_req_list, item, ur_entry);
 
-		TAILQ_INSERT_TAIL(&sc->sc_upd_req_list, item, ur_entry);
 		mtx_leave(&sc->sc_upd_req_mtx);
-	} while (0);
+
+		if (!retry)
+			break;
+
+		pfsync_sendout();
+	}
 
 	schednetisr(NETISR_PFSYNC);
 }
