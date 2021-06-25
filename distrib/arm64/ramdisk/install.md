@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.19 2021/06/07 07:38:55 kettenis Exp $
+#	$OpenBSD: install.md,v 1.20 2021/06/25 17:27:07 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -77,12 +77,9 @@ md_installboot() {
 }
 
 md_prep_fdisk() {
-	local _disk=$1 _d _plat
+	local _disk=$1 _d _type=MBR
 
-	case $(sysctl -n machdep.compatible) in
-	apple,*)	_plat=apple;;
-	esac
-
+	local bootpart=
 	local bootparttype="C"
 	local bootsectorstart="32768"
 	local bootsectorsize="32768"
@@ -92,23 +89,25 @@ md_prep_fdisk() {
 
 	while :; do
 		_d=whole
-		if disk_has $_disk mbr; then
+		if disk_has $_disk gpt; then
+			[[ $_disk == $ROOTDISK ]] && bootpart="-b ${bootsectorsize}"
+			_type=GPT
 			fdisk $_disk
-		elif disk_has $_disk gpt; then
-		     	fdisk $_disk
-			[[ $_plat == apple ]] && _d=edit
+		elif disk_has $_disk mbr; then
+			fdisk $_disk
 		else
 			echo "MBR has invalid signature; not showing it."
 		fi
-		ask "Use (W)hole disk or (E)dit the MBR?" "$_d"
+		ask "Use (W)hole disk or (E)dit the ${_type}?" $_d
 		case $resp in
 		[wW]*)
-			if disk_has $_disk gpt apfsisc; then
-				echo "(W)hole disk can not be used on Apple NVMe storage!"
-				continue
-			fi
 			echo -n "Creating a ${bootfstype} partition and an OpenBSD partition for rest of $_disk..."
-			fdisk -e ${_disk} <<__EOT >/dev/null
+			if disk_has $_disk gpt apfsisc; then
+				fdisk -Ay ${bootpart} ${_disk} >/dev/null
+			elif disk_has $_disk gpt; then
+				fdisk -iy -g ${bootpart} ${_disk} >/dev/null
+			else
+				fdisk -e ${_disk} <<__EOT >/dev/null
 reinit
 e 0
 ${bootparttype}
@@ -124,6 +123,7 @@ ${bootsectorend}
 write
 quit
 __EOT
+			fi
 			echo "done."
 			disklabel $_disk 2>/dev/null | grep -q "^  i:" || disklabel -w -d $_disk
 			newfs -t ${bootfstype} ${newfs_args} ${_disk}i
