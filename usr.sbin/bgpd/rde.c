@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.529 2021/06/25 09:23:26 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.530 2021/06/25 09:25:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -517,7 +517,7 @@ badnetdel:
 				break;
 			}
 			if (rib_dump_new(RIB_ADJ_IN, AID_UNSPEC,
-			    RDE_RUNNER_ROUNDS, peerself, network_flush_upcall,
+			    RDE_RUNNER_ROUNDS, NULL, network_flush_upcall,
 			    NULL, NULL) == -1)
 				log_warn("rde_dispatch: IMSG_NETWORK_FLUSH");
 			break;
@@ -4065,13 +4065,12 @@ network_dump_upcall(struct rib_entry *re, void *ptr)
 static void
 network_flush_upcall(struct rib_entry *re, void *ptr)
 {
-	struct rde_peer *peer = ptr;
 	struct bgpd_addr addr;
 	struct prefix *p;
 	u_int32_t i;
 	u_int8_t prefixlen;
 
-	p = prefix_bypeer(re, peer);
+	p = prefix_bypeer(re, peerself);
 	if (p == NULL)
 		return;
 	if ((prefix_aspath(p)->flags & F_ANN_DYNAMIC) != F_ANN_DYNAMIC)
@@ -4084,14 +4083,14 @@ network_flush_upcall(struct rib_entry *re, void *ptr)
 		struct rib *rib = rib_byid(i);
 		if (rib == NULL)
 			continue;
-		if (prefix_withdraw(rib, peer, &addr, prefixlen) == 1)
-			rde_update_log("flush announce", i, peer,
+		if (prefix_withdraw(rib, peerself, &addr, prefixlen) == 1)
+			rde_update_log("flush announce", i, peerself,
 			    NULL, &addr, prefixlen);
 	}
 
-	if (prefix_withdraw(rib_byid(RIB_ADJ_IN), peer, &addr,
+	if (prefix_withdraw(rib_byid(RIB_ADJ_IN), peerself, &addr,
 	    prefixlen) == 1)
-		peer->prefix_cnt--;
+		peerself->prefix_cnt--;
 }
 
 /* clean up */
