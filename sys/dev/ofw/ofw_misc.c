@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.c,v 1.32 2021/04/07 17:12:22 kettenis Exp $	*/
+/*	$OpenBSD: ofw_misc.c,v 1.33 2021/06/25 17:41:22 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -896,18 +896,17 @@ iommu_device_do_map(uint32_t phandle, uint32_t *cells, bus_dma_tag_t dmat)
 	return dmat;
 }
 
-bus_dma_tag_t
-iommu_device_map(int node, bus_dma_tag_t dmat)
+int
+iommu_device_lookup(int node, uint32_t *phandle, uint32_t *sid)
 {
-	uint32_t sid = 0;
-	uint32_t phandle = 0;
 	uint32_t *cell;
 	uint32_t *map;
 	int len, icells, ncells;
+	int ret = 1;
 
 	len = OF_getproplen(node, "iommus");
 	if (len <= 0)
-		return dmat;
+		return ret;
 
 	map = malloc(len, M_TEMP, M_WAITOK);
 	OF_getpropintarray(node, "iommus", map, len);
@@ -925,8 +924,9 @@ iommu_device_map(int node, bus_dma_tag_t dmat)
 
 		KASSERT(icells == 1);
 
-		phandle = cell[0];
-		sid = cell[1];
+		*phandle = cell[0];
+		*sid = cell[1];
+		ret = 0;
 		break;
 
 		cell += (1 + icells);
@@ -936,22 +936,23 @@ iommu_device_map(int node, bus_dma_tag_t dmat)
 out:
 	free(map, M_TEMP, len);
 
-	return iommu_device_do_map(phandle, &sid, dmat);
+	return ret;
 }
 
-bus_dma_tag_t
-iommu_device_map_pci(int node, uint32_t rid, bus_dma_tag_t dmat)
+int
+iommu_device_lookup_pci(int node, uint32_t rid, uint32_t *phandle,
+    uint32_t *sid)
 {
-	uint32_t sid_base, sid = 0;
-	uint32_t phandle = 0;
+	uint32_t sid_base;
 	uint32_t *cell;
 	uint32_t *map;
 	uint32_t mask, rid_base;
 	int len, length, icells, ncells;
+	int ret = 1;
 
 	len = OF_getproplen(node, "iommu-map");
 	if (len <= 0)
-		return dmat;
+		return ret;
 
 	map = malloc(len, M_TEMP, M_WAITOK);
 	OF_getpropintarray(node, "iommu-map", map, len);
@@ -976,8 +977,9 @@ iommu_device_map_pci(int node, uint32_t rid, bus_dma_tag_t dmat)
 		sid_base = cell[2];
 		length = cell[3];
 		if (rid >= rid_base && rid < rid_base + length) {
-			sid = sid_base + (rid - rid_base);
-			phandle = cell[1];
+			*sid = sid_base + (rid - rid_base);
+			*phandle = cell[1];
+			ret = 0;
 			break;
 		}
 
@@ -988,5 +990,56 @@ iommu_device_map_pci(int node, uint32_t rid, bus_dma_tag_t dmat)
 out:
 	free(map, M_TEMP, len);
 
+	return ret;
+}
+
+bus_dma_tag_t
+iommu_device_map(int node, bus_dma_tag_t dmat)
+{
+	uint32_t phandle, sid;
+
+	if (iommu_device_lookup(node, &phandle, &sid))
+		return dmat;
+
 	return iommu_device_do_map(phandle, &sid, dmat);
+}
+
+bus_dma_tag_t
+iommu_device_map_pci(int node, uint32_t rid, bus_dma_tag_t dmat)
+{
+	uint32_t phandle, sid;
+
+	if (iommu_device_lookup_pci(node, rid, &phandle, &sid))
+		return dmat;
+
+	return iommu_device_do_map(phandle, &sid, dmat);
+}
+
+void
+iommu_device_do_reserve(uint32_t phandle, uint32_t *cells, bus_addr_t addr,
+    bus_size_t size)
+{
+	struct iommu_device *id;
+
+	if (phandle == 0)
+		return;
+
+	LIST_FOREACH(id, &iommu_devices, id_list) {
+		if (id->id_phandle == phandle) {
+			id->id_reserve(id->id_cookie, cells, addr, size);
+			break;
+		}
+	}
+}
+
+void
+iommu_reserve_region_pci(int node, uint32_t rid, bus_addr_t addr,
+    bus_size_t size)
+{
+	uint32_t phandle, sid;
+
+	if (iommu_device_lookup_pci(node, rid, &phandle, &sid))
+		return;
+
+	return iommu_device_do_reserve(phandle, &sid, addr, size);
 }

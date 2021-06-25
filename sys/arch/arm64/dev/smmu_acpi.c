@@ -1,4 +1,4 @@
-/* $OpenBSD: smmu_acpi.c,v 1.2 2021/03/15 22:48:57 patrick Exp $ */
+/* $OpenBSD: smmu_acpi.c,v 1.3 2021/06/25 17:41:22 patrick Exp $ */
 /*
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
  *
@@ -126,5 +126,6 @@ smmu_acpi_attach(struct device *parent, struct device *self, void *aux)
 	as->as_node = node;
 	as->as_cookie = sc;
 	as->as_map = smmu_device_map;
+	as->as_reserve = smmu_reserve_region;
 	acpiiort_smmu_register(as);
 }

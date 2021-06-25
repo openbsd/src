@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwpcie.c,v 1.33 2021/06/24 09:34:17 kettenis Exp $	*/
+/*	$OpenBSD: dwpcie.c,v 1.34 2021/06/25 17:41:22 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -1206,9 +1206,15 @@ dwpcie_probe_device_hook(void *v, struct pci_attach_args *pa)
 {
 	struct dwpcie_softc *sc = v;
 	uint16_t rid;
+	int i;
 
 	rid = pci_requester_id(pa->pa_pc, pa->pa_tag);
 	pa->pa_dmat = iommu_device_map_pci(sc->sc_node, rid, pa->pa_dmat);
+
+	for (i = 0; i < sc->sc_nranges; i++) {
+		iommu_reserve_region_pci(sc->sc_node, rid,
+		    sc->sc_ranges[i].pci_base, sc->sc_ranges[i].size);
+	}
 
 	return 0;
 }

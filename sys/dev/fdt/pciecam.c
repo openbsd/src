@@ -1,4 +1,4 @@
-/* $OpenBSD: pciecam.c,v 1.2 2021/05/19 20:10:38 kettenis Exp $ */
+/* $OpenBSD: pciecam.c,v 1.3 2021/06/25 17:41:22 patrick Exp $ */
 /*
  * Copyright (c) 2013,2017 Patrick Wildt <patrick@blueri.se>
  *
@@ -340,9 +340,17 @@ pciecam_probe_device_hook(void *v, struct pci_attach_args *pa)
 {
 	struct pciecam_softc *sc = (struct pciecam_softc *)v;
 	uint16_t rid;
+	int i;
 
 	rid = pci_requester_id(pa->pa_pc, pa->pa_tag);
 	pa->pa_dmat = iommu_device_map_pci(sc->sc_node, rid, pa->pa_dmat);
+
+	for (i = 0; i < sc->sc_pcirangeslen; i++) {
+		if (sc->sc_pciranges[i].flags >> 24 == 0)
+			continue;
+		iommu_reserve_region_pci(sc->sc_node, rid,
+		    sc->sc_pciranges[i].pci_base, sc->sc_pciranges[i].size);
+	}
 
 	return 0;
 }

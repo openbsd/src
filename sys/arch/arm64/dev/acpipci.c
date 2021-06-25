@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpipci.c,v 1.29 2021/05/17 17:25:13 kettenis Exp $	*/
+/*	$OpenBSD: acpipci.c,v 1.30 2021/06/25 17:41:22 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -355,6 +355,7 @@ int
 acpipci_probe_device_hook(void *v, struct pci_attach_args *pa)
 {
 	struct acpipci_mcfg *am = v;
+	struct acpipci_trans *at;
 	struct acpi_table_header *hdr;
 	struct acpi_iort *iort = NULL;
 	struct acpi_iort_node *node;
@@ -417,8 +418,17 @@ acpipci_probe_device_hook(void *v, struct pci_attach_args *pa)
 		return 0;
 
 	node = (struct acpi_iort_node *)((char *)iort + offset);
-	if (node->type == ACPI_IORT_SMMU)
+	if (node->type == ACPI_IORT_SMMU) {
 		pa->pa_dmat = acpiiort_smmu_map(node, rid, pa->pa_dmat);
+		for (at = pa->pa_iot->bus_private; at; at = at->at_next) {
+			acpiiort_smmu_reserve_region(node, rid,
+			    at->at_base, at->at_size);
+		}
+		for (at = pa->pa_memt->bus_private; at; at = at->at_next) {
+			acpiiort_smmu_reserve_region(node, rid,
+			    at->at_base, at->at_size);
+		}
+	}
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiiort.c,v 1.3 2021/03/15 22:56:48 patrick Exp $ */
+/* $OpenBSD: acpiiort.c,v 1.4 2021/06/25 17:41:22 patrick Exp $ */
 /*
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
  *
@@ -101,6 +101,20 @@ acpiiort_smmu_map(struct acpi_iort_node *node, uint32_t rid,
 	}
 
 	return dmat;
+}
+
+void
+acpiiort_smmu_reserve_region(struct acpi_iort_node *node, uint32_t rid,
+    bus_addr_t addr, bus_size_t size)
+{
+	struct acpiiort_smmu *as;
+
+	SIMPLEQ_FOREACH(as, &acpiiort_smmu_list, as_list) {
+		if (as->as_node == node) {
+			as->as_reserve(as->as_cookie, rid, addr, size);
+			return;
+		}
+	}
 }
 
 bus_dma_tag_t

@@ -1,4 +1,4 @@
-/* $OpenBSD: smmu.c,v 1.16 2021/06/25 12:40:29 patrick Exp $ */
+/* $OpenBSD: smmu.c,v 1.17 2021/06/25 17:41:22 patrick Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
@@ -750,19 +750,23 @@ smmu_domain_create(struct smmu_softc *sc, uint32_t sid)
 	/* Reserve first page (to catch NULL access) */
 	extent_alloc_region(dom->sd_iovamap, 0, PAGE_SIZE, EX_WAITOK);
 
-#if 0
-	/* FIXME PCIe address space */
-	{
-#if 1
-		/* Reserve 8040 PCI address space */
-		extent_alloc_region(dom->sd_iovamap, 0xc0000000, 0x20000000,
-		    EX_WAITOK);
-#endif
-	}
-#endif
-
 	SIMPLEQ_INSERT_TAIL(&sc->sc_domains, dom, sd_list);
 	return dom;
+}
+
+void
+smmu_reserve_region(void *cookie, uint32_t sid, bus_addr_t addr,
+    bus_size_t size)
+{
+	struct smmu_softc *sc = cookie;
+	struct smmu_domain *dom;
+
+	dom = smmu_domain_lookup(sc, sid);
+	if (dom == NULL)
+		return;
+
+	extent_alloc_region(dom->sd_iovamap, addr, size,
+	    EX_WAITOK | EX_CONFLICTOK);
 }
 
 /* basically pmap follows */

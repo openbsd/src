@@ -1,4 +1,4 @@
-/* $OpenBSD: smmu_fdt.c,v 1.3 2021/03/15 22:48:57 patrick Exp $ */
+/* $OpenBSD: smmu_fdt.c,v 1.4 2021/06/25 17:41:22 patrick Exp $ */
 /*
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
  *
@@ -42,6 +42,7 @@ int smmu_fdt_match(struct device *, void *, void *);
 void smmu_fdt_attach(struct device *, struct device *, void *);
 
 bus_dma_tag_t smmu_fdt_map(void *, uint32_t *, bus_dma_tag_t);
+void smmu_fdt_reserve(void *, uint32_t *, bus_addr_t, bus_size_t);
 
 struct cfattach smmu_fdt_ca = {
 	sizeof(struct smmu_fdt_softc), smmu_fdt_match, smmu_fdt_attach
@@ -108,6 +109,7 @@ smmu_fdt_attach(struct device *parent, struct device *self, void *aux)
 	fsc->sc_id.id_node = faa->fa_node;
 	fsc->sc_id.id_cookie = fsc;
 	fsc->sc_id.id_map = smmu_fdt_map;
+	fsc->sc_id.id_reserve = smmu_fdt_reserve;
 	iommu_device_register(&fsc->sc_id);
 }
 
@@ -118,4 +120,14 @@ smmu_fdt_map(void *cookie, uint32_t *cells, bus_dma_tag_t dmat)
 	struct smmu_softc *sc = &fsc->sc_smmu;
 
 	return smmu_device_map(sc, cells[0], dmat);
+}
+
+void
+smmu_fdt_reserve(void *cookie, uint32_t *cells, bus_addr_t addr,
+    bus_size_t size)
+{
+	struct smmu_fdt_softc *fsc = (struct smmu_fdt_softc *)cookie;
+	struct smmu_softc *sc = &fsc->sc_smmu;
+
+	return smmu_reserve_region(sc, cells[0], addr, size);
 }

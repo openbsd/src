@@ -1,4 +1,4 @@
-/*	$OpenBSD: apldart.c,v 1.4 2021/05/30 15:05:32 visa Exp $	*/
+/*	$OpenBSD: apldart.c,v 1.5 2021/06/25 17:41:22 patrick Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -133,6 +133,7 @@ struct cfdriver apldart_cd = {
 };
 
 bus_dma_tag_t apldart_map(void *, uint32_t *, bus_dma_tag_t);
+void	apldart_reserve(void *, uint32_t *, bus_addr_t, bus_size_t);
 int	apldart_intr(void *);
 
 void	apldart_flush_tlb(struct apldart_softc *);
@@ -279,6 +280,7 @@ apldart_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_id.id_node = faa->fa_node;
 	sc->sc_id.id_cookie = sc;
 	sc->sc_id.id_map = apldart_map;
+	sc->sc_id.id_reserve = apldart_reserve;
 	iommu_device_register(&sc->sc_id);
 }
 
@@ -288,6 +290,11 @@ apldart_map(void *cookie, uint32_t *cells, bus_dma_tag_t dmat)
 	struct apldart_softc *sc = cookie;
 
 	return &sc->sc_bus_dmat;
+}
+
+void
+apldart_reserve(void *cookie, uint32_t *cells, bus_addr_t addr, bus_size_t size)
+{
 }
 
 int

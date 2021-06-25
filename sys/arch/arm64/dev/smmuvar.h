@@ -1,4 +1,4 @@
-/* $OpenBSD: smmuvar.h,v 1.5 2021/06/25 12:40:29 patrick Exp $ */
+/* $OpenBSD: smmuvar.h,v 1.6 2021/06/25 17:41:22 patrick Exp $ */
 /*
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
  *
@@ -80,3 +80,4 @@ int smmu_attach(struct smmu_softc *);
 int smmu_global_irq(void *);
 int smmu_context_irq(void *);
 bus_dma_tag_t smmu_device_map(void *, uint32_t, bus_dma_tag_t);
+void smmu_reserve_region(void *, uint32_t, bus_addr_t, bus_size_t);
