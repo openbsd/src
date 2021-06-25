@@ -1,24 +1,24 @@
-/*	$OpenBSD: atomic.h,v 1.2 2021/05/12 01:20:52 jsg Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.3 2021/06/25 13:25:53 jsg Exp $	*/
 
 /* Public Domain */
 
 #ifndef _MACHINE_ATOMIC_H_
 #define _MACHINE_ATOMIC_H_
 
-#define __membar() do {__asm __volatile("fence" ::: "memory"); } while (0)
+#define __membar(_f) do {__asm __volatile(_f ::: "memory"); } while (0)
 
-#define membar_enter()		__membar()
-#define membar_exit()		__membar()
-#define membar_producer()	__membar()
-#define membar_consumer()	__membar()
-#define membar_sync()		__membar()
+#define membar_enter()		__membar("fence w,rw")
+#define membar_exit()		__membar("fence rw,w")
+#define membar_producer()	__membar("fence w,w")
+#define membar_consumer()	__membar("fence r,r")
+#define membar_sync()		__membar("fence rw,rw")
 
 #if defined(_KERNEL)
 
 /* virtio needs MP membars even on SP kernels */
-#define virtio_membar_producer()	__membar()
-#define virtio_membar_consumer()	__membar()
-#define virtio_membar_sync()		__membar()
+#define virtio_membar_producer()	__membar("fence w,w")
+#define virtio_membar_consumer()	__membar("fence r,r")
+#define virtio_membar_sync()		__membar("fence rw,rw")
 
 /*
  * Set bits
