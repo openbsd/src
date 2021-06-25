@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwpcie.c,v 1.34 2021/06/25 17:41:22 patrick Exp $	*/
+/*	$OpenBSD: dwpcie.c,v 1.35 2021/06/25 18:55:26 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -1357,7 +1357,7 @@ dwpcie_bs_iomap(bus_space_tag_t t, bus_addr_t addr, bus_size_t size,
 			    addr - pci_start + phys_start, size, flags, bshp);
 		}
 	}
-	
+
 	return ENXIO;
 }
 
@@ -1373,12 +1373,12 @@ dwpcie_bs_memmap(bus_space_tag_t t, bus_addr_t addr, bus_size_t size,
 		uint64_t pci_end = pci_start + sc->sc_ranges[i].size;
 		uint64_t phys_start = sc->sc_ranges[i].phys_base;
 
-		if ((sc->sc_ranges[i].flags & 0x03000000) == 0x02000000 &&
+		if ((sc->sc_ranges[i].flags & 0x02000000) == 0x02000000 &&
 		    addr >= pci_start && addr + size <= pci_end) {
 			return bus_space_map(sc->sc_iot,
 			    addr - pci_start + phys_start, size, flags, bshp);
 		}
 	}
-	
+
 	return ENXIO;
 }
