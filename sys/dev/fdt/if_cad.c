@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cad.c,v 1.2 2021/06/13 02:56:48 drahn Exp $	*/
+/*	$OpenBSD: if_cad.c,v 1.3 2021/06/25 13:29:40 visa Exp $	*/
 
 /*
  * Copyright (c) 2021 Visa Hankala
@@ -207,11 +207,6 @@ struct cad_desc {
 #define GEM_RXD_SOF		(1 << 14)
 #define GEM_RXD_BADFCS		(1 << 13)
 #define GEM_RXD_LEN_MASK	0x1fff
-
-struct cad_txdesc {
-	uint32_t		txd_addr;
-	uint32_t		txd_status;
-};
 
 #define GEM_TXD_USED		(1 << 31)
 #define GEM_TXD_WRAP		(1 << 30)
