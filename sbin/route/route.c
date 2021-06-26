@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.254 2021/03/12 19:35:43 florian Exp $	*/
+/*	$OpenBSD: route.c,v 1.255 2021/06/26 15:42:58 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -135,9 +135,6 @@ usage(char *cp)
 	fprintf(stderr,
 	    "usage: %s [-dnqtv] [-T rtable] command [[modifiers] args]\n",
 	    __progname);
-	fprintf(stderr,
-	    "commands: add, change, delete, exec, flush, get, monitor, show, "
-	    "sourceaddr\n");
 	exit(1);
 }
 

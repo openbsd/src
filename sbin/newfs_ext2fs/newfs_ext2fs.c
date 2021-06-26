@@ -1,4 +1,4 @@
-/* $OpenBSD: newfs_ext2fs.c,v 1.27 2019/06/28 13:32:45 deraadt Exp $ */
+/* $OpenBSD: newfs_ext2fs.c,v 1.28 2021/06/26 15:42:58 deraadt Exp $ */
 /*	$NetBSD: newfs_ext2fs.c,v 1.8 2009/03/02 10:38:13 tsutsui Exp $	*/
 
 /*
@@ -428,34 +428,13 @@ strsuftoi64(const char *desc, const char *arg, int64_t min, int64_t max,
 	return result;
 }
 
-static const char help_strings[] =
-	"\t-b bsize\tblock size\n"
-	"\t-D inodesize\tsize of an inode in bytes (128 or 256)\n"
-	"\t-F \t\tcreate file system image in regular file\n"
-	"\t-f fsize\tfragment size\n"
-	"\t-I \t\tdo not check that the file system type is `ext2fs'\n"
-	"\t-i density\tnumber of bytes per inode\n"
-	"\t-m minfree\tminimum free space %\n"
-	"\t-N \t\tdo not create file system, just print out parameters\n"
-	"\t-n inodes\tnumber of inodes (overrides -i density)\n"
-	"\t-O N\t\tfilesystem revision: 0 ==> REV0, 1 ==> REV1 (default 0)\n"
-	"\t-S secsize\tsector size\n"
-	"\t-s fssize\tfile system size (sectors)\n"
-	"\t-V verbose\toutput verbosity: 0 ==> none, 4 ==> max\n"
-	"\t-v volname\text2fs volume name\n"
-	"\t-Z \t\tpre-zero the image file\n";
-
 static void
 usage(void)
 {
-
 	extern char *__progname;
 
 	fprintf(stderr,
 	    "usage: %s [ fsoptions ] special-device\n", __progname);
-	fprintf(stderr, "where fsoptions are:\n");
-	fprintf(stderr, "%s", help_strings);
-
 	exit(EXIT_FAILURE);
 }
 

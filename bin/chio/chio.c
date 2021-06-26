@@ -1,4 +1,4 @@
-/*	$OpenBSD: chio.c,v 1.26 2019/06/28 13:34:58 deraadt Exp $	*/
+/*	$OpenBSD: chio.c,v 1.27 2021/06/26 15:42:58 deraadt Exp $	*/
 /*	$NetBSD: chio.c,v 1.1.1.1 1996/04/03 00:34:38 thorpej Exp $	*/
 
 /*
@@ -835,9 +835,5 @@ usage(void)
 
 	fprintf(stderr, "usage: %s [-f changer] command [arg ...]\n",
 	    __progname);
-	fprintf(stderr, "commands:");
-	for (i = 0; commands[i].cc_name; i++)
-		fprintf(stderr, " %s", commands[i].cc_name);
-	fprintf(stderr, "\n");
 	exit(1);
 }
