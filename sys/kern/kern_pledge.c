@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.273 2021/06/09 17:52:47 semarie Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.274 2021/06/26 09:23:24 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -82,7 +82,8 @@
 
 #if defined(__amd64__) || defined(__arm64__) || \
     defined(__i386__) || defined(__loongson__) || \
-    defined(__macppc__) || defined(__sparc64__)
+    defined(__macppc__) || defined(__powerpc64__) || \
+    defined(__riscv64__) || defined(__sparc64__)
 #include "drm.h"
 #endif
 
