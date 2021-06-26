@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.1 2021/04/28 15:16:26 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.2 2021/06/26 14:50:25 kettenis Exp $ */
 
 /*
  * Copyright (c) 2004,2021 Dale Rahn <drahn@openbsd.org>
@@ -241,9 +241,6 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	if (object->Dyn.info[DT_PLTREL] != DT_RELA)
 		return 0;
 
-	// XXX - fix and enable.
-	lazy = 0;
-
 	if (!lazy) {
 		fails = _dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
 	} else {
@@ -256,8 +253,8 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 			*where += object->obj_base;
 		}
 
+		pltgot[0] = (Elf_Addr)_dl_bind_start;
 		pltgot[1] = (Elf_Addr)object;
-		pltgot[2] = (Elf_Addr)_dl_bind_start;
 	}
 
 	return fails;
@@ -300,7 +297,7 @@ _dl_bind(elf_object_t *object, int relidx)
 		register long syscall_num __asm("t0") = SYS_kbind;
 		register void *arg1 __asm("a0") = &buf;
 		register long  arg2 __asm("a1") = sizeof(buf);
-		register long  arg3 __asm("x2") = cookie;
+		register long  arg3 __asm("a2") = cookie;
 
 		__asm volatile("ecall" : "+r" (arg1), "+r" (arg2)
 		    : "r" (syscall_num), "r" (arg3)

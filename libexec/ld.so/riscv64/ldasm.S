@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.2 2021/05/16 16:00:50 drahn Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.3 2021/06/26 14:50:25 kettenis Exp $ */
 
 /*
  * Copyright (c) 2016,2021 Dale Rahn <drahn@openbsd.org>
@@ -74,65 +74,44 @@ END(_dl_start)
 
 ENTRY(_dl_bind_start)
 	/*
-	 * x16 is pointer to pltgot[2]
-	 * x17 is available as scratch register
-	 * return address and pointer to pltgot entry for this
-	 * relocation are on the stack
+	 * t0 is the "link map"
+	 * t1 is the .got.plt offset
 	 */
-	mv	x17, sp
 
 	/* save parameter/result registers */
-	addi	sp, sp, -(16*8)  /* should be aligned well enough */
-	sd	t1, ( 2*8)(sp)
-	sd	t2, ( 3*8)(sp)
-	sd	a0, ( 4*8)(sp)
-	sd	a1, ( 5*8)(sp)
-	sd	a2, ( 6*8)(sp)
-	sd	a3, ( 7*8)(sp)
-	sd	a4, ( 8*8)(sp)
-	sd	a5, ( 9*8)(sp)
-	sd	a6, (10*8)(sp)
-	sd	a7, (11*8)(sp)
-	sd	t3, (12*8)(sp)
-	sd	t4, (13*8)(sp)
-	sd	t5, (14*8)(sp)
-	sd	t6, (15*8)(sp)
+	addi	sp, sp, -(10*8)  /* should be aligned well enough */
+	sd	ra, (9*8)(sp)
+	sd	a0, (0*8)(sp)
+	sd	a1, (1*8)(sp)
+	sd	a2, (2*8)(sp)
+	sd	a3, (3*8)(sp)
+	sd	a4, (4*8)(sp)
+	sd	a5, (5*8)(sp)
+	sd	a6, (6*8)(sp)
+	sd	a7, (7*8)(sp)
 
-	/* what about float registers !?! */
 	/*
-	 * no need to save v0-v9 as ld.so is compiled with
-	 * -march=armv8-a+nofp+nosimd and therefore doesn't touch the
-	 * SIMD and Floating-Point registers
+	 * no need to save the FP registers as ld.so is compiled such that
+	 * it doesn't touch them
 	 */
 
 	mv	a0, t0
-	slli	a1, t1, 1
-	add	a1, a1, t1
+	srli	a1, t1, 3
 	jal	_dl_bind
-	nop
 	mv	t0, a0
 
-	// restore parameter/result registers
-	ld	t1, ( 2*8)(sp)
-	ld	t2, ( 3*8)(sp)
-	ld	a0, ( 4*8)(sp)
-	ld	a1, ( 5*8)(sp)
-	ld	a2, ( 6*8)(sp)
-	ld	a3, ( 7*8)(sp)
-	ld	a4, ( 8*8)(sp)
-	ld	a5, ( 9*8)(sp)
-	ld	a6, (10*8)(sp)
-	ld	a7, (11*8)(sp)
-	ld	t3, (12*8)(sp)
-	ld	t4, (13*8)(sp)
-	sd	t5, (14*8)(sp)
-	sd	t6, (15*8)(sp)
-	add	sp, sp, (16*8)
+	/* restore parameter/result registers */
+	ld	a0, (0*8)(sp)
+	ld	a1, (1*8)(sp)
+	ld	a2, (2*8)(sp)
+	ld	a3, (3*8)(sp)
+	ld	a4, (4*8)(sp)
+	ld	a5, (5*8)(sp)
+	ld	a6, (6*8)(sp)
+	ld	a7, (7*8)(sp)
+	ld	ra, (9*8)(sp)
+	addi	sp, sp, (10*8)
 
-	// restore LR saved by PLT stub	
-	// XXX - correct?
-	ld	ra, 16(sp)
-	add	sp, sp, 16
 	jr	t0
 END(_dl_bind_start)
 
