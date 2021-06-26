@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcctl.8,v 1.36 2021/02/27 09:28:04 ajacoutot Exp $
+.\"	$OpenBSD: rcctl.8,v 1.37 2021/06/26 18:02:48 jmc Exp $
 .\"
 .\" Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 27 2021 $
+.Dd $Mdocdate: June 26 2021 $
 .Dt RCCTL 8
 .Os
 .Sh NAME
@@ -26,13 +26,18 @@
 .Ar service | daemon Op Ar variable Op Ar arguments
 .Nm rcctl
 .Op Fl df
-.Ar action daemon ...
+.Sm off
+.Cm check | reload | restart | stop | start
+.Sm on
+.Ar daemon ...
 .Nm rcctl
 .Cm disable Ns | Ns Cm enable Ns | Ns Cm order
 .Op Ar daemon ...
 .Nm rcctl
 .Cm ls
-.Ar lsarg
+.Sm off
+.Cm all | failed | on | off | started | stopped
+.Sm on
 .Sh DESCRIPTION
 The
 .Nm
