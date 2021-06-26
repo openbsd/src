@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.65 2021/05/12 20:13:00 dv Exp $	*/
+/*	$OpenBSD: main.c,v 1.66 2021/06/26 18:03:45 jmc Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -99,10 +99,7 @@ usage(void)
 
 	fprintf(stderr, "usage:\t%s [-v] command [arg ...]\n",
 	    __progname);
-	for (i = 0; ctl_commands[i].name != NULL; i++) {
-		fprintf(stderr, "\t%s %s %s\n", __progname,
-		    ctl_commands[i].name, ctl_commands[i].usage);
-	}
+
 	exit(1);
 }
 
