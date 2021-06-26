@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.riscv64/MAKEDEV.md,v 1.1 2021/04/28 03:26:25 drahn Exp 
+#	OpenBSD: etc.riscv64/MAKEDEV.md,v 1.2 2021/06/26 00:38:38 jsg Exp 
 #	OpenBSD: MAKEDEV.common,v 1.113 2021/02/12 10:26:33 jsg Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.83 2016/09/11 03:06:31 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
@@ -66,6 +66,7 @@
 #	bpf	Berkeley Packet Filter
 #	dt	Dynamic Tracer
 #	diskmap	Disk mapper
+#	dri	Direct Rendering Infrastructure
 #	fd	fd/* nodes
 #	fuse	Userland Filesystem
 #	gpio*	General Purpose Input/Output
@@ -315,6 +316,19 @@ fd)
 	MKlist[${#MKlist[*]}]=";chmod 555 fd"
 	;;
 
+dri)
+	RMlist[${#RMlist[*]}]=";mkdir -p dri;rm -f"
+	n=0
+	while [ $n -lt 4 ]
+	do
+		M dri/card$n c 87 $n 600
+		r=$(($n+128))
+		M dri/renderD$r c 87 $r 600
+		n=$(($n+1))
+	done
+	MKlist[${#MKlist[*]}]=";chmod 555 dri"
+	;;
+
 diskmap)
 	M diskmap c 90 0 640 operator
 	;;
@@ -482,7 +496,7 @@ all)
 	R switch0 switch1 switch2 switch3 ipmi0 gpio0 gpio1 gpio2
 	R bktr0 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7
 	R sd8 sd9 cd0 cd1 rd0 tap0 tap1 tap2 tap3 tun0 tun1 tun2 tun3
-	R bio pty0 diskmap vscsi0 ch0 audio0 audio1 audio2 audio3
+	R bio pty0 dri diskmap vscsi0 ch0 audio0 audio1 audio2 audio3
 	R kstat dt bpf fuse pppac pppx hotplug ptm local wscons pci0
 	R pci1 pci2 pci3 uall rmidi0 rmidi1 rmidi2 rmidi3 rmidi4
 	R rmidi5 rmidi6 rmidi7 radio0 video0 video1 uk0 random tty00
