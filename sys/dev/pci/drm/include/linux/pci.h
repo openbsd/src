@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.h,v 1.5 2020/06/08 04:48:15 jsg Exp $	*/
+/*	$OpenBSD: pci.h,v 1.6 2021/06/26 09:24:51 kettenis Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -15,8 +15,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _LINUX_PCI_H
-#define _LINUX_PCI_H
+#ifndef _LINUX_PCI_H_
+#define _LINUX_PCI_H_
 
 #include <sys/types.h>
 /* sparc64 cpu.h needs time.h and siginfo.h (indirect via param.h) */
@@ -395,7 +395,8 @@ pci_get_class(pcireg_t class, struct pci_dev *pdev)
 #define PCI_CLASS_DISPLAY_OTHER \
     (PCI_CLASS_DISPLAY | PCI_SUBCLASS_DISPLAY_MISC)
 
-#if defined(__amd64__) || defined(__arm64__) || defined(__i386__)
+#if defined(__amd64__) || defined(__arm64__) || \
+    defined(__i386__) || defined(__riscv64__)
 
 #define PCI_DMA_BIDIRECTIONAL	0
 
@@ -419,6 +420,6 @@ pci_dma_mapping_error(struct pci_dev *pdev, dma_addr_t dma_addr)
 #define pci_set_dma_mask(x, y)			0
 #define pci_set_consistent_dma_mask(x, y)	0
 
-#endif /* defined(__amd64__) || defined(__arm64__) || defined(__i386__) */
-
 #endif
+
+#endif /* _LINUX_PCI_H_ */
