@@ -1,8 +1,16 @@
-/*	$OpenBSD: locore.S,v 1.7 2021/05/21 16:50:48 deraadt Exp $	*/
+/*	$OpenBSD: locore.S,v 1.8 2021/06/26 17:38:40 kettenis Exp $	*/
 
 /*-
- * Copyright (c) 2012-2014 Andrew Turner
+ * Copyright (c) 2015-2018 Ruslan Bukin <br@bsdpad.com>
  * All rights reserved.
+ *
+ * Portions of this software were developed by SRI International and the
+ * University of Cambridge Computer Laboratory under DARPA/AFRL contract
+ * FA8750-10-C-0237 ("CTSRD"), as part of the DARPA CRASH research programme.
+ *
+ * Portions of this software were developed by the University of Cambridge
+ * Computer Laboratory as part of the CTSRD Project, with support from the
+ * UK Higher Education Innovation Fund (HEIF).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -24,8 +32,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $FreeBSD: head/sys/arm64/arm64/locore.S 282867 2015-05-13 18:57:03Z zbb $
  */
 
 #include <assym.h>
