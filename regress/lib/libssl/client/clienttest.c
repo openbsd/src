@@ -1,4 +1,4 @@
-/*	$OpenBSD: clienttest.c,v 1.29 2021/06/27 16:33:30 jsing Exp $ */
+/*	$OpenBSD: clienttest.c,v 1.30 2021/06/27 16:36:53 jsing Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  *
@@ -347,11 +347,12 @@ make_client_hello(int protocol, char **out, size_t *outlen)
 	case TLS1_2_VERSION:
 		client_hello = client_hello_tls12;
 		client_hello_len = sizeof(client_hello_tls12);
-		if (ssl_aes_is_accelerated())
-			cipher_list = cipher_list_tls12_aes;
-		else
-			cipher_list = cipher_list_tls12_chacha;
+		cipher_list = cipher_list_tls12_chacha;
 		cipher_list_len = sizeof(cipher_list_tls12_chacha);
+		if (ssl_aes_is_accelerated()) {
+			cipher_list = cipher_list_tls12_aes;
+			cipher_list_len = sizeof(cipher_list_tls12_aes);
+		}
 		cipher_list_offset = SSL3_CIPHER_OFFSET;
 		break;
 
