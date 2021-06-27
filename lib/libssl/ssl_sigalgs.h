@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.h,v 1.19 2021/06/27 18:09:07 jsing Exp $ */
+/* $OpenBSD: ssl_sigalgs.h,v 1.20 2021/06/27 18:15:35 jsing Exp $ */
 /*
  * Copyright (c) 2018-2019 Bob Beck <beck@openbsd.org>
  *
@@ -55,7 +55,7 @@ __BEGIN_HIDDEN_DECLS
 #define SIGALG_GOSTR12_256_STREEBOG_256	0xEEEE
 #define SIGALG_GOSTR01_GOST94		0xEDED
 
-/* Legacy sigalg for < 1.2 same value as boring uses*/
+/* Legacy sigalg for < TLSv1.2 same value as BoringSSL uses. */
 #define SIGALG_RSA_PKCS1_MD5_SHA1	0xFF01
 
 #define SIGALG_FLAG_RSA_PSS	0x00000001
@@ -68,16 +68,10 @@ struct ssl_sigalg {
 	int flags;
 };
 
-extern const uint16_t tls12_sigalgs[];
-extern const size_t tls12_sigalgs_len;
-extern const uint16_t tls13_sigalgs[];
-extern const size_t tls13_sigalgs_len;
-
 const struct ssl_sigalg *ssl_sigalg_lookup(uint16_t sigalg);
-const struct ssl_sigalg *ssl_sigalg_from_value(uint16_t sigalg,
-    const uint16_t *values, size_t len);
+const struct ssl_sigalg *ssl_sigalg_from_value(uint16_t tls_version,
+    uint16_t value);
 int ssl_sigalgs_build(uint16_t tls_version, CBB *cbb);
-int ssl_sigalg_pkey_check(uint16_t sigalg, EVP_PKEY *pk);
 int ssl_sigalg_pkey_ok(const struct ssl_sigalg *sigalg, EVP_PKEY *pkey,
     int check_curve);
 const struct ssl_sigalg *ssl_sigalg_select(SSL *s, EVP_PKEY *pkey);

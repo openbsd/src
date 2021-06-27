@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.c,v 1.28 2021/06/27 18:09:07 jsing Exp $ */
+/* $OpenBSD: ssl_sigalgs.c,v 1.29 2021/06/27 18:15:35 jsing Exp $ */
 /*
  * Copyright (c) 2018-2020 Bob Beck <beck@openbsd.org>
  *
@@ -188,12 +188,12 @@ ssl_sigalgs_for_version(uint16_t tls_version, const uint16_t **out_values,
 }
 
 const struct ssl_sigalg *
-ssl_sigalg_lookup(uint16_t sigalg)
+ssl_sigalg_lookup(uint16_t value)
 {
 	int i;
 
 	for (i = 0; sigalgs[i].value != SIGALG_NONE; i++) {
-		if (sigalgs[i].value == sigalg)
+		if (sigalgs[i].value == value)
 			return &sigalgs[i];
 	}
 
@@ -201,13 +201,17 @@ ssl_sigalg_lookup(uint16_t sigalg)
 }
 
 const struct ssl_sigalg *
-ssl_sigalg_from_value(uint16_t sigalg, const uint16_t *values, size_t len)
+ssl_sigalg_from_value(uint16_t tls_version, uint16_t value)
 {
+	const uint16_t *values;
+	size_t len;
 	int i;
 
+	ssl_sigalgs_for_version(tls_version, &values, &len);
+
 	for (i = 0; i < len; i++) {
-		if (values[i] == sigalg)
-			return ssl_sigalg_lookup(sigalg);
+		if (values[i] == value)
+			return ssl_sigalg_lookup(value);
 	}
 
 	return NULL;
@@ -322,14 +326,14 @@ ssl_sigalg_select(SSL *s, EVP_PKEY *pkey)
 	 */
 	CBS_init(&cbs, S3I(s)->hs.sigalgs, S3I(s)->hs.sigalgs_len);
 	while (CBS_len(&cbs) > 0) {
-		uint16_t sig_alg;
 		const struct ssl_sigalg *sigalg;
+		uint16_t sigalg_value;
 
-		if (!CBS_get_u16(&cbs, &sig_alg))
+		if (!CBS_get_u16(&cbs, &sigalg_value))
 			return 0;
 
-		if ((sigalg = ssl_sigalg_from_value(sig_alg, tls_sigalgs,
-		    tls_sigalgs_len)) == NULL)
+		if ((sigalg = ssl_sigalg_from_value(
+		    S3I(s)->hs.negotiated_tls_version, sigalg_value)) == NULL)
 			continue;
 
 		/* RSA cannot be used without PSS in TLSv1.3. */
