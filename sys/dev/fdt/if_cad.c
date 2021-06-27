@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cad.c,v 1.5 2021/06/27 01:58:51 jsg Exp $	*/
+/*	$OpenBSD: if_cad.c,v 1.6 2021/06/27 04:32:31 visa Exp $	*/
 
 /*
  * Copyright (c) 2021 Visa Hankala
@@ -126,6 +126,8 @@
 #define GEM_LADDRH(i)			(0x008c + (i) * 8)
 #define GEM_LADDRNUM			4
 #define GEM_MID				0x00fc
+#define  GEM_MID_VERSION_MASK			(0xfff << 16)
+#define  GEM_MID_VERSION_SHIFT			16
 #define GEM_OCTTXL			0x0100
 #define GEM_OCTTXH			0x0104
 #define GEM_TXCNT			0x0108
@@ -169,6 +171,8 @@
 #define GEM_RXIPCCNT			0x01a8
 #define GEM_RXTCPCCNT			0x01ac
 #define GEM_RXUDPCCNT			0x01b0
+#define GEM_CFG6			0x0294
+#define  GEM_CFG6_DMA64				(1 << 23)
 #define GEM_TXQBASEHI			0x04c8
 #define GEM_RXQBASEHI			0x04d4
 
@@ -365,6 +369,7 @@ cad_attach(struct device *parent, struct device *self, void *aux)
 	struct cad_softc *sc = (struct cad_softc *)self;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	uint32_t hi, lo;
+	uint32_t rev, ver;
 	unsigned int i;
 	int node, phy;
 
@@ -417,9 +422,12 @@ cad_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
+	rev = HREAD4(sc, GEM_MID);
+	ver = (rev & GEM_MID_VERSION_MASK) >> GEM_MID_VERSION_SHIFT;
+
 	sc->sc_descsize = sizeof(struct cad_desc32);
-	if (OF_is_compatible(faa->fa_node, "sifive,fu540-c000-gem") ||
-	    OF_is_compatible(faa->fa_node, "sifive,fu740-c000-gem")) {
+	/* Register CFG6 is not present on Zynq-7000 / GEM version 0x2. */
+	if (ver >= 0x7 && (HREAD4(sc, GEM_CFG6) & GEM_CFG6_DMA64)) {
 		sc->sc_descsize = sizeof(struct cad_desc64);
 		sc->sc_dma64 = 1;
 	}
@@ -461,7 +469,7 @@ cad_attach(struct device *parent, struct device *self, void *aux)
 		    IFCAP_CSUM_TCPv6 | IFCAP_CSUM_UDPv6;
 	}
 
-	printf(": rev 0x%x, address %s\n", HREAD4(sc, GEM_MID),
+	printf(": rev 0x%x, address %s\n", rev,
 	    ether_sprintf(sc->sc_ac.ac_enaddr));
 
 	sc->sc_mii.mii_ifp = ifp;
