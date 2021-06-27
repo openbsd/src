@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cad.c,v 1.4 2021/06/26 10:47:59 visa Exp $	*/
+/*	$OpenBSD: if_cad.c,v 1.5 2021/06/27 01:58:51 jsg Exp $	*/
 
 /*
  * Copyright (c) 2021 Visa Hankala
@@ -353,6 +353,7 @@ cad_match(struct device *parent, void *match, void *aux)
 	struct fdt_attach_args *faa = aux;
 
 	return (OF_is_compatible(faa->fa_node, "cdns,gem") ||
+	    OF_is_compatible(faa->fa_node, "sifive,fu540-c000-gem") ||
 	    OF_is_compatible(faa->fa_node, "sifive,fu740-c000-gem"));
 }
 
@@ -417,7 +418,8 @@ cad_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sc->sc_descsize = sizeof(struct cad_desc32);
-	if (OF_is_compatible(faa->fa_node, "sifive,fu740-c000-gem")) {
+	if (OF_is_compatible(faa->fa_node, "sifive,fu540-c000-gem") ||
+	    OF_is_compatible(faa->fa_node, "sifive,fu740-c000-gem")) {
 		sc->sc_descsize = sizeof(struct cad_desc64);
 		sc->sc_dma64 = 1;
 	}
