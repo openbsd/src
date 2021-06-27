@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.22 2020/07/17 08:03:56 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.23 2021/06/27 04:52:01 jsg Exp $
 
 PROG=		installboot
 SRCS=		installboot.c util.c
@@ -15,7 +15,7 @@ CFLAGS += -DSOFTRAID
 SRCS += i386_installboot.c
 SRCS += i386_nlist.c
 SRCS += i386_softraid.c
-.elif ${MACHINE} == "armv7" || ${MACHINE} == "arm64"
+.elif ${MACHINE} == "armv7" || ${MACHINE} == "arm64" || ${MACHINE} == "riscv64"
 SRCS += armv7_installboot.c
 .elif ${MACHINE} == "hppa"
 CFLAGS += -DBOOTSTRAP

@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_installboot.c,v 1.9 2021/06/03 13:14:03 deraadt Exp $	*/
+/*	$OpenBSD: armv7_installboot.c,v 1.10 2021/06/27 04:52:01 jsg Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -207,7 +207,7 @@ write_filesystem(struct disklabel *dl, char part)
 		rslt = -1;
 		goto umount;
 	}
-#else
+#elif defined(__arm__)
 	/*
 	 * Copy BOOTARM.EFI to /efi/boot/bootarm.efi.
 	 */
@@ -218,6 +218,21 @@ write_filesystem(struct disklabel *dl, char part)
 		goto umount;
 	}
 	src = fileprefix(root, "/usr/mdec/BOOTARM.EFI");
+	if (src == NULL) {
+		rslt = -1;
+		goto umount;
+	}
+#elif defined(__riscv)
+	/*
+	 * Copy BOOTRISCV64.EFI to /efi/boot/bootriscv64.efi.
+	 */
+	pathlen = strlen(dst);
+	if (strlcat(dst, "/bootriscv64.efi", sizeof(dst)) >= sizeof(dst)) {
+		rslt = -1;
+		warn("unable to build /bootriscv64.efi path");
+		goto umount;
+	}
+	src = fileprefix(root, "/usr/mdec/BOOTRISCV64.EFI");
 	if (src == NULL) {
 		rslt = -1;
 		goto umount;
