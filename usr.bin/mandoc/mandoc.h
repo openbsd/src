@@ -1,4 +1,4 @@
-/* $OpenBSD: mandoc.h,v 1.212 2021/06/02 18:27:37 schwarze Exp $ */
+/* $OpenBSD: mandoc.h,v 1.213 2021/06/27 17:57:13 schwarze Exp $ */
 /*
  * Copyright (c) 2012-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -72,6 +72,7 @@ enum	mandocerr {
 	MANDOCERR_DELIM_NB, /* no blank before trailing delimiter: macro ... */
 	MANDOCERR_FI_SKIP, /* fill mode already enabled, skipping: fi */
 	MANDOCERR_NF_SKIP, /* fill mode already disabled, skipping: nf */
+	MANDOCERR_TEXT_LONG, /* input text line longer than 80 bytes */
 	MANDOCERR_DASHDASH, /* verbatim "--", maybe consider using \(em */
 	MANDOCERR_FUNC, /* function name without markup: name() */
 	MANDOCERR_SPACE_EOL, /* whitespace at end of input line */
