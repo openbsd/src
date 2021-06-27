@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.87 2020/05/08 14:30:42 jca Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.88 2021/06/27 15:53:33 schwarze Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -1851,11 +1851,17 @@ x_e_getu8(char *buf, int off)
 		return -1;
 	buf[off++] = c;
 
-	if (c == 0xf4)
+	/*
+	 * In the following, comments refer to violations of
+	 * the inequality tests at the ends of the lines.
+	 * See the utf8(7) manual page for details.
+	 */
+
+	if ((c & 0xf8) == 0xf0 && c < 0xf5)  /* beyond Unicode */
 		len = 4;
 	else if ((c & 0xf0) == 0xe0)
 		len = 3;
-	else if ((c & 0xe0) == 0xc0 && c > 0xc1)
+	else if ((c & 0xe0) == 0xc0 && c > 0xc1)  /* use single byte */
 		len = 2;
 	else
 		len = 1;
@@ -1865,9 +1871,10 @@ x_e_getu8(char *buf, int off)
 		if (cc == -1)
 			break;
 		if (isu8cont(cc) == 0 ||
-		    (c == 0xe0 && len == 3 && cc < 0xa0) ||
-		    (c == 0xed && len == 3 && cc & 0x20) ||
-		    (c == 0xf4 && len == 4 && cc & 0x30)) {
+		    (c == 0xe0 && len == 3 && cc < 0xa0) ||  /* use 2 bytes */
+		    (c == 0xed && len == 3 && cc > 0x9f) ||  /* surrogates  */
+		    (c == 0xf0 && len == 4 && cc < 0x90) ||  /* use 3 bytes */
+		    (c == 0xf4 && len == 4 && cc > 0x8f)) {  /* beyond Uni. */
 			x_e_ungetc(cc);
 			break;
 		}
