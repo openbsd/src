@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_versions.c,v 1.18 2021/03/19 19:52:55 tb Exp $ */
+/* $OpenBSD: ssl_versions.c,v 1.19 2021/06/27 16:54:14 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -145,9 +145,9 @@ ssl_enabled_tls_version_range(SSL *s, uint16_t *min_ver, uint16_t *max_ver)
 	if (SSL_is_dtls(s)) {
 		options = 0;
 		if (s->internal->options & SSL_OP_NO_DTLSv1)
-			options |= SSL_OP_NO_TLSv1_1;
+			options |= SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1;
 		if (s->internal->options & SSL_OP_NO_DTLSv1_2)
-			options |= SSL_OP_NO_TLSv1_2;
+			options |= SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_2;
 	}
 
 	if ((options & SSL_OP_NO_TLSv1) == 0)
