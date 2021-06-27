@@ -1,4 +1,4 @@
-/*	$OpenBSD: clienttest.c,v 1.30 2021/06/27 16:36:53 jsing Exp $ */
+/*	$OpenBSD: clienttest.c,v 1.31 2021/06/27 16:40:25 jsing Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  *
@@ -289,13 +289,17 @@ static const struct client_hello_test client_hello_tests[] = {
     (sizeof(client_hello_tests) / sizeof(*client_hello_tests))
 
 static void
-hexdump(const uint8_t *buf, size_t len)
+hexdump(const uint8_t *buf, size_t len, const uint8_t *compare)
 {
+	const char *mark = "";
 	size_t i;
 
-	for (i = 1; i <= len; i++)
-		fprintf(stderr, " 0x%02hhx,%s", buf[i - 1], i % 8 && i != len ? "" : "\n");
-
+	for (i = 1; i <= len; i++) {
+		if (compare != NULL)
+			mark = (buf[i - 1] != compare[i - 1]) ? "*" : " ";
+		fprintf(stderr, " %s0x%02hhx,%s", mark, buf[i - 1],
+		    i % 8 && i != len ? "" : "\n");
+	}
 	fprintf(stderr, "\n");
 }
 
@@ -428,9 +432,9 @@ client_hello_test(int testno, const struct client_hello_test *cht)
 		fprintf(stderr, "FAIL: test returned ClientHello length %li, "
 		    "want %zu\n", len, client_hello_len);
 		fprintf(stderr, "received:\n");
-		hexdump(wbuf, len);
+		hexdump(wbuf, len, NULL);
 		fprintf(stderr, "test data:\n");
-		hexdump(client_hello, client_hello_len);
+		hexdump(client_hello, client_hello_len, NULL);
 		fprintf(stderr, "\n");
 		goto failure;
 	}
@@ -447,9 +451,9 @@ client_hello_test(int testno, const struct client_hello_test *cht)
 	if (memcmp(client_hello, wbuf, client_hello_len) != 0) {
 		fprintf(stderr, "FAIL: ClientHello differs:\n");
 		fprintf(stderr, "received:\n");
-		hexdump(wbuf, len);
+		hexdump(wbuf, len, client_hello);
 		fprintf(stderr, "test data:\n");
-		hexdump(client_hello, client_hello_len);
+		hexdump(client_hello, client_hello_len, wbuf);
 		fprintf(stderr, "\n");
 		goto failure;
 	}
