@@ -1,4 +1,4 @@
-/*     $OpenBSD: kern.ldscript,v 1.9 2019/11/09 20:07:00 guenther Exp $         */
+/*     $OpenBSD: kern.ldscript,v 1.10 2021/06/27 21:39:55 kettenis Exp $         */
 /*     $NetBSD: ldscript.evbarm,v 1.2 2003/03/05 23:54:22 thorpej Exp $        */
 
 OUTPUT_ARCH(aarch64)
@@ -63,6 +63,7 @@ SECTIONS
 	} :data
 	PROVIDE (_edata = .);
 
+	. = ALIGN(8);
 	PROVIDE (__bss_start = .);
 	.sbss :
 	{
@@ -80,7 +81,7 @@ SECTIONS
 		/* Align here to ensure that the .bss section occupies space up to
 		   _end.  Align after .bss to ensure correct alignment even if the
 		   .bss section disappears because there are no input sections.  */
-		. = ALIGN(64 / 8);
+		. = ALIGN(8);
 	} :data
 	PROVIDE (_end = .);
 	PROVIDE (end = .);
