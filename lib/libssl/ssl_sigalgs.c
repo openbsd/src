@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.c,v 1.26 2021/06/27 17:50:06 jsing Exp $ */
+/* $OpenBSD: ssl_sigalgs.c,v 1.27 2021/06/27 17:59:17 jsing Exp $ */
 /*
  * Copyright (c) 2018-2020 Bob Beck <beck@openbsd.org>
  *
@@ -174,6 +174,19 @@ const uint16_t tls12_sigalgs[] = {
 };
 const size_t tls12_sigalgs_len = (sizeof(tls12_sigalgs) / sizeof(tls12_sigalgs[0]));
 
+static void
+ssl_sigalgs_for_version(uint16_t tls_version, const uint16_t **out_values,
+    size_t *out_len)
+{
+	if (tls_version >= TLS1_3_VERSION) {
+		*out_values = tls13_sigalgs;
+		*out_len = tls13_sigalgs_len;
+	} else {
+		*out_values = tls12_sigalgs;
+		*out_len = tls12_sigalgs_len;
+	}
+}
+
 const struct ssl_sigalg *
 ssl_sigalg_lookup(uint16_t sigalg)
 {
@@ -201,9 +214,13 @@ ssl_sigalg(uint16_t sigalg, const uint16_t *values, size_t len)
 }
 
 int
-ssl_sigalgs_build(CBB *cbb, const uint16_t *values, size_t len)
+ssl_sigalgs_build(uint16_t tls_version, CBB *cbb)
 {
+	const uint16_t *values;
+	size_t len;
 	size_t i;
+
+	ssl_sigalgs_for_version(tls_version, &values, &len);
 
 	/* Add values in order as long as they are supported. */
 	for (i = 0; i < len; i++) {

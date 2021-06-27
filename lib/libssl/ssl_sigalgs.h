@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.h,v 1.17 2021/06/27 17:45:16 jsing Exp $ */
+/* $OpenBSD: ssl_sigalgs.h,v 1.18 2021/06/27 17:59:17 jsing Exp $ */
 /*
  * Copyright (c) 2018-2019 Bob Beck <beck@openbsd.org>
  *
@@ -75,7 +75,7 @@ extern const size_t tls13_sigalgs_len;
 
 const struct ssl_sigalg *ssl_sigalg_lookup(uint16_t sigalg);
 const struct ssl_sigalg *ssl_sigalg(uint16_t sigalg, const uint16_t *values, size_t len);
-int ssl_sigalgs_build(CBB *cbb, const uint16_t *values, size_t len);
+int ssl_sigalgs_build(uint16_t tls_version, CBB *cbb);
 int ssl_sigalg_pkey_check(uint16_t sigalg, EVP_PKEY *pk);
 int ssl_sigalg_pkey_ok(const struct ssl_sigalg *sigalg, EVP_PKEY *pkey,
     int check_curve);

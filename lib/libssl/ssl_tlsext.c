@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.95 2021/06/11 17:29:48 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.96 2021/06/27 17:59:17 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -558,21 +558,12 @@ tlsext_sigalgs_client_needs(SSL *s, uint16_t msg_type)
 int
 tlsext_sigalgs_client_build(SSL *s, uint16_t msg_type, CBB *cbb)
 {
-	const uint16_t *tls_sigalgs = tls12_sigalgs;
-	size_t tls_sigalgs_len = tls12_sigalgs_len;
 	CBB sigalgs;
-
-	if (S3I(s)->hs.our_min_tls_version >= TLS1_3_VERSION) {
-		tls_sigalgs = tls13_sigalgs;
-		tls_sigalgs_len = tls13_sigalgs_len;
-	}
 
 	if (!CBB_add_u16_length_prefixed(cbb, &sigalgs))
 		return 0;
-
-	if (!ssl_sigalgs_build(&sigalgs, tls_sigalgs, tls_sigalgs_len))
+	if (!ssl_sigalgs_build(S3I(s)->hs.our_min_tls_version, &sigalgs))
 		return 0;
-
 	if (!CBB_flush(cbb))
 		return 0;
 
@@ -603,21 +594,12 @@ tlsext_sigalgs_server_needs(SSL *s, uint16_t msg_type)
 int
 tlsext_sigalgs_server_build(SSL *s, uint16_t msg_type, CBB *cbb)
 {
-	const uint16_t *tls_sigalgs = tls12_sigalgs;
-	size_t tls_sigalgs_len = tls12_sigalgs_len;
 	CBB sigalgs;
-
-	if (S3I(s)->hs.negotiated_tls_version >= TLS1_3_VERSION) {
-		tls_sigalgs = tls13_sigalgs;
-		tls_sigalgs_len = tls13_sigalgs_len;
-	}
 
 	if (!CBB_add_u16_length_prefixed(cbb, &sigalgs))
 		return 0;
-
-	if (!ssl_sigalgs_build(&sigalgs, tls_sigalgs, tls_sigalgs_len))
+	if (!ssl_sigalgs_build(S3I(s)->hs.negotiated_tls_version, &sigalgs))
 		return 0;
-
 	if (!CBB_flush(cbb))
 		return 0;
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.111 2021/05/16 14:10:43 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.112 2021/06/27 17:59:17 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1671,9 +1671,11 @@ ssl3_send_certificate_request(SSL *s)
 			goto err;
 
 		if (SSL_USE_SIGALGS(s)) {
-			if (!CBB_add_u16_length_prefixed(&cert_request, &sigalgs))
+			if (!CBB_add_u16_length_prefixed(&cert_request,
+			    &sigalgs))
 				goto err;
-			if (!ssl_sigalgs_build(&sigalgs, tls12_sigalgs, tls12_sigalgs_len))
+			if (!ssl_sigalgs_build(
+			    S3I(s)->hs.negotiated_tls_version, &sigalgs))
 				goto err;
 		}
 
