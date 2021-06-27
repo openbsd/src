@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.h,v 1.16 2021/05/16 13:39:07 jsing Exp $ */
+/* $OpenBSD: ssl_sigalgs.h,v 1.17 2021/06/27 17:45:16 jsing Exp $ */
 /*
  * Copyright (c) 2018-2019 Bob Beck <beck@openbsd.org>
  *
@@ -62,8 +62,8 @@ __BEGIN_HIDDEN_DECLS
 
 struct ssl_sigalg {
 	uint16_t value;
-	const EVP_MD *(*md)(void);
 	int key_type;
+	const EVP_MD *(*md)(void);
 	int curve_nid;
 	int flags;
 };
