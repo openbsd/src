@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.c,v 1.25 2021/06/27 17:45:16 jsing Exp $ */
+/* $OpenBSD: ssl_sigalgs.c,v 1.26 2021/06/27 17:50:06 jsing Exp $ */
 /*
  * Copyright (c) 2018-2020 Bob Beck <beck@openbsd.org>
  *
@@ -144,7 +144,7 @@ const struct ssl_sigalg sigalgs[] = {
 	},
 };
 
-/* Sigalgs for tls 1.3, in preference order, */
+/* Sigalgs for TLSv1.3, in preference order. */
 const uint16_t tls13_sigalgs[] = {
 	SIGALG_RSA_PSS_RSAE_SHA512,
 	SIGALG_RSA_PKCS1_SHA512,
@@ -158,7 +158,7 @@ const uint16_t tls13_sigalgs[] = {
 };
 const size_t tls13_sigalgs_len = (sizeof(tls13_sigalgs) / sizeof(tls13_sigalgs[0]));
 
-/* Sigalgs for tls 1.2, in preference order, */
+/* Sigalgs for TLSv1.2, in preference order. */
 const uint16_t tls12_sigalgs[] = {
 	SIGALG_RSA_PSS_RSAE_SHA512,
 	SIGALG_RSA_PKCS1_SHA512,
@@ -205,22 +205,14 @@ ssl_sigalgs_build(CBB *cbb, const uint16_t *values, size_t len)
 {
 	size_t i;
 
-	for (i = 0; sigalgs[i].value != SIGALG_NONE; i++);
-	if (len > i)
-		return 0;
-
-	/* XXX check for duplicates and other sanity BS? */
-
 	/* Add values in order as long as they are supported. */
 	for (i = 0; i < len; i++) {
-		/* Do not allow the legacy value for < 1.2 to be used */
+		/* Do not allow the legacy value for < 1.2 to be used. */
 		if (values[i] == SIGALG_RSA_PKCS1_MD5_SHA1)
 			return 0;
-
-		if (ssl_sigalg_lookup(values[i]) != NULL) {
-			if (!CBB_add_u16(cbb, values[i]))
-				return 0;
-		} else
+		if (ssl_sigalg_lookup(values[i]) == NULL)
+			return 0;
+		if (!CBB_add_u16(cbb, values[i]))
 			return 0;
 	}
 	return 1;
