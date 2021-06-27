@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.80 2021/06/27 18:15:35 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.81 2021/06/27 19:23:51 jsing Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -635,7 +635,7 @@ tls13_server_certificate_send(struct tls13_ctx *ctx, CBB *cbb)
 	}
 
 	ctx->hs->tls13.cpk = cpk;
-	ctx->hs->tls13.sigalg = sigalg;
+	ctx->hs->our_sigalg = sigalg;
 
 	if ((chain = cpk->chain) == NULL)
 		chain = s->ctx->extra_certs;
@@ -708,7 +708,7 @@ tls13_server_certificate_verify_send(struct tls13_ctx *ctx, CBB *cbb)
 
 	if ((cpk = ctx->hs->tls13.cpk) == NULL)
 		goto err;
-	if ((sigalg = ctx->hs->tls13.sigalg) == NULL)
+	if ((sigalg = ctx->hs->our_sigalg) == NULL)
 		goto err;
 	pkey = cpk->privatekey;
 
@@ -996,6 +996,7 @@ tls13_client_certificate_verify_recv(struct tls13_ctx *ctx, CBS *cbs)
 		goto err;
 	if (!ssl_sigalg_pkey_ok(sigalg, pkey, 1))
 		goto err;
+	ctx->hs->peer_sigalg = sigalg;
 
 	if (CBS_len(&signature) > EVP_PKEY_size(pkey))
 		goto err;

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.351 2021/06/23 11:12:33 tb Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.352 2021/06/27 19:23:51 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -444,9 +444,8 @@ typedef struct ssl_handshake_tls13_st {
 	int use_legacy;
 	int hrr;
 
-	/* Certificate and sigalg selected for use (static pointers). */
+	/* Certificate selected for use (static pointer). */
 	const CERT_PKEY *cpk;
-	const struct ssl_sigalg *sigalg;
 
 	/* Version proposed by peer server. */
 	uint16_t server_version;
@@ -502,6 +501,10 @@ typedef struct ssl_handshake_st {
 
 	/* Extensions seen in this handshake. */
 	uint32_t extensions_seen;
+
+	/* Signature algorithms selected for use (static pointers). */
+	const struct ssl_sigalg *our_sigalg;
+	const struct ssl_sigalg *peer_sigalg;
 
 	/* sigalgs offered in this handshake in wire form */
 	uint8_t *sigalgs;
