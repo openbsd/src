@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.99 2021/05/16 14:10:43 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.100 2021/06/27 18:09:07 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1550,8 +1550,8 @@ ssl3_get_server_key_exchange(SSL *s)
 
 			if (!CBS_get_u16(&cbs, &sigalg_value))
 				goto decode_err;
-			if ((sigalg = ssl_sigalg(sigalg_value, tls12_sigalgs,
-			    tls12_sigalgs_len)) == NULL) {
+			if ((sigalg = ssl_sigalg_from_value(sigalg_value,
+			    tls12_sigalgs, tls12_sigalgs_len)) == NULL) {
 				SSLerror(s, SSL_R_UNKNOWN_DIGEST);
 				al = SSL_AD_DECODE_ERROR;
 				goto fatal_err;

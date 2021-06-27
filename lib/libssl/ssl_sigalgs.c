@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.c,v 1.27 2021/06/27 17:59:17 jsing Exp $ */
+/* $OpenBSD: ssl_sigalgs.c,v 1.28 2021/06/27 18:09:07 jsing Exp $ */
 /*
  * Copyright (c) 2018-2020 Bob Beck <beck@openbsd.org>
  *
@@ -201,7 +201,7 @@ ssl_sigalg_lookup(uint16_t sigalg)
 }
 
 const struct ssl_sigalg *
-ssl_sigalg(uint16_t sigalg, const uint16_t *values, size_t len)
+ssl_sigalg_from_value(uint16_t sigalg, const uint16_t *values, size_t len)
 {
 	int i;
 
@@ -328,7 +328,7 @@ ssl_sigalg_select(SSL *s, EVP_PKEY *pkey)
 		if (!CBS_get_u16(&cbs, &sig_alg))
 			return 0;
 
-		if ((sigalg = ssl_sigalg(sig_alg, tls_sigalgs,
+		if ((sigalg = ssl_sigalg_from_value(sig_alg, tls_sigalgs,
 		    tls_sigalgs_len)) == NULL)
 			continue;
 

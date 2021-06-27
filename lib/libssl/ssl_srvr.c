@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.112 2021/06/27 17:59:17 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.113 2021/06/27 18:09:07 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2192,8 +2192,8 @@ ssl3_get_cert_verify(SSL *s)
 
 		if (!CBS_get_u16(&cbs, &sigalg_value))
 			goto decode_err;
-		if ((sigalg = ssl_sigalg(sigalg_value, tls12_sigalgs,
-		    tls12_sigalgs_len)) == NULL ||
+		if ((sigalg = ssl_sigalg_from_value(sigalg_value,
+		    tls12_sigalgs, tls12_sigalgs_len)) == NULL ||
 		    (md = sigalg->md()) == NULL) {
 			SSLerror(s, SSL_R_UNKNOWN_DIGEST);
 			al = SSL_AD_DECODE_ERROR;
