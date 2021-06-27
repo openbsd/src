@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_versions.c,v 1.14 2021/03/17 17:43:31 jsing Exp $ */
+/* $OpenBSD: ssl_versions.c,v 1.15 2021/06/27 16:54:55 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -461,6 +461,14 @@ static struct shared_version_test shared_version_tests[] = {
 		.maxver = TLS1_2_VERSION,
 		.peerver = DTLS1_VERSION,
 		.want_maxver = 0,
+	},
+	{
+		.ssl_method = DTLS_method,
+		.options = SSL_OP_NO_DTLSv1,
+		.minver = TLS1_1_VERSION,
+		.maxver = TLS1_2_VERSION,
+		.peerver = DTLS1_2_VERSION,
+		.want_maxver = DTLS1_2_VERSION,
 	},
 	{
 		.ssl_method = DTLS_method,
