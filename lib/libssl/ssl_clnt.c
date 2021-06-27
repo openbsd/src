@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.101 2021/06/27 18:15:35 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.102 2021/06/27 19:16:59 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2338,12 +2338,11 @@ ssl3_send_client_key_exchange(SSL *s)
 }
 
 static int
-ssl3_send_client_verify_sigalgs(SSL *s, CBB *cert_verify)
+ssl3_send_client_verify_sigalgs(SSL *s, EVP_PKEY *pkey, CBB *cert_verify)
 {
 	const struct ssl_sigalg *sigalg;
 	CBB cbb_signature;
 	EVP_PKEY_CTX *pctx = NULL;
-	EVP_PKEY *pkey;
 	EVP_MD_CTX mctx;
 	const EVP_MD *md;
 	const unsigned char *hdata;
@@ -2353,7 +2352,6 @@ ssl3_send_client_verify_sigalgs(SSL *s, CBB *cert_verify)
 
 	EVP_MD_CTX_init(&mctx);
 
-	pkey = s->cert->key->privatekey;
 	if ((sigalg = ssl_sigalg_select(s, pkey)) == NULL) {
 		SSLerror(s, SSL_R_SIGNATURE_ALGORITHMS_ERROR);
 		goto err;
@@ -2419,17 +2417,14 @@ ssl3_send_client_verify_sigalgs(SSL *s, CBB *cert_verify)
 }
 
 static int
-ssl3_send_client_verify_rsa(SSL *s, CBB *cert_verify)
+ssl3_send_client_verify_rsa(SSL *s, EVP_PKEY *pkey, CBB *cert_verify)
 {
 	CBB cbb_signature;
-	EVP_PKEY *pkey;
 	unsigned char data[EVP_MAX_MD_SIZE];
 	unsigned char *signature = NULL;
 	unsigned int signature_len;
 	size_t data_len;
 	int ret = 0;
-
-	pkey = s->cert->key->privatekey;
 
 	if (!tls1_transcript_hash_value(s, data, sizeof(data), &data_len))
 		goto err;
@@ -2455,16 +2450,13 @@ ssl3_send_client_verify_rsa(SSL *s, CBB *cert_verify)
 }
 
 static int
-ssl3_send_client_verify_ec(SSL *s, CBB *cert_verify)
+ssl3_send_client_verify_ec(SSL *s, EVP_PKEY *pkey, CBB *cert_verify)
 {
 	CBB cbb_signature;
-	EVP_PKEY *pkey;
 	unsigned char data[EVP_MAX_MD_SIZE];
 	unsigned char *signature = NULL;
 	unsigned int signature_len;
 	int ret = 0;
-
-	pkey = s->cert->key->privatekey;
 
 	if (!tls1_transcript_hash_value(s, data, sizeof(data), NULL))
 		goto err;
@@ -2491,12 +2483,11 @@ ssl3_send_client_verify_ec(SSL *s, CBB *cert_verify)
 
 #ifndef OPENSSL_NO_GOST
 static int
-ssl3_send_client_verify_gost(SSL *s, CBB *cert_verify)
+ssl3_send_client_verify_gost(SSL *s, EVP_PKEY *pkey, CBB *cert_verify)
 {
 	CBB cbb_signature;
 	EVP_MD_CTX mctx;
 	EVP_PKEY_CTX *pctx;
-	EVP_PKEY *pkey;
 	const EVP_MD *md;
 	const unsigned char *hdata;
 	unsigned char *signature = NULL;
@@ -2506,8 +2497,6 @@ ssl3_send_client_verify_gost(SSL *s, CBB *cert_verify)
 	int ret = 0;
 
 	EVP_MD_CTX_init(&mctx);
-
-	pkey = s->cert->key->privatekey;
 
 	if (!tls1_transcript_data(s, &hdata, &hdata_len)) {
 		SSLerror(s, ERR_R_INTERNAL_ERROR);
@@ -2576,22 +2565,22 @@ ssl3_send_client_verify(SSL *s)
 		pkey = s->cert->key->privatekey;
 
 		/*
-		 * For TLS v1.2 send signature algorithm and signature
-		 * using agreed digest and cached handshake records.
+		 * For TLS v1.2 send signature algorithm and signature using
+		 * agreed digest and cached handshake records.
 		 */
 		if (SSL_USE_SIGALGS(s)) {
-			if (!ssl3_send_client_verify_sigalgs(s, &cert_verify))
+			if (!ssl3_send_client_verify_sigalgs(s, pkey, &cert_verify))
 				goto err;
 		} else if (pkey->type == EVP_PKEY_RSA) {
-			if (!ssl3_send_client_verify_rsa(s, &cert_verify))
+			if (!ssl3_send_client_verify_rsa(s, pkey, &cert_verify))
 				goto err;
 		} else if (pkey->type == EVP_PKEY_EC) {
-			if (!ssl3_send_client_verify_ec(s, &cert_verify))
+			if (!ssl3_send_client_verify_ec(s, pkey, &cert_verify))
 				goto err;
 #ifndef OPENSSL_NO_GOST
 		} else if (pkey->type == NID_id_GostR3410_94 ||
 		    pkey->type == NID_id_GostR3410_2001) {
-			if (!ssl3_send_client_verify_gost(s, &cert_verify))
+			if (!ssl3_send_client_verify_gost(s, pkey, &cert_verify))
 				goto err;
 #endif
 		} else {
