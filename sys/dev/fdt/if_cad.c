@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cad.c,v 1.6 2021/06/27 04:32:31 visa Exp $	*/
+/*	$OpenBSD: if_cad.c,v 1.7 2021/06/27 04:33:40 visa Exp $	*/
 
 /*
  * Copyright (c) 2021 Visa Hankala
@@ -603,8 +603,12 @@ cad_up(struct cad_softc *sc)
 	struct cad_desc32 *desc32;
 	struct cad_desc64 *desc64;
 	uint64_t addr;
+	int flags = BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW;
 	unsigned int i;
 	uint32_t val;
+
+	if (sc->sc_dma64)
+		flags |= BUS_DMA_64BIT;
 
 	/*
 	 * Set up Tx descriptor ring.
@@ -622,7 +626,7 @@ cad_up(struct cad_softc *sc)
 	for (i = 0; i < CAD_NTXDESC; i++) {
 		txb = &sc->sc_txbuf[i];
 		bus_dmamap_create(sc->sc_dmat, MCLBYTES, CAD_NTXSEGS,
-		    MCLBYTES, 0, BUS_DMA_WAITOK, &txb->bf_map);
+		    MCLBYTES, 0, flags, &txb->bf_map);
 		txb->bf_m = NULL;
 
 		if (sc->sc_dma64) {
@@ -667,7 +671,7 @@ cad_up(struct cad_softc *sc)
 	for (i = 0; i < CAD_NRXDESC; i++) {
 		rxb = &sc->sc_rxbuf[i];
 		bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
-		    MCLBYTES, 0, BUS_DMA_WAITOK, &rxb->bf_map);
+		    MCLBYTES, 0, flags, &rxb->bf_map);
 		rxb->bf_m = NULL;
 
 		/* Mark all descriptors as used so that driver owns them. */
@@ -1496,13 +1500,17 @@ struct cad_dmamem *
 cad_dmamem_alloc(struct cad_softc *sc, bus_size_t size, bus_size_t align)
 {
 	struct cad_dmamem *cdm;
+	int flags = BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW;
 	int nsegs;
 
 	cdm = malloc(sizeof(*cdm), M_DEVBUF, M_WAITOK | M_ZERO);
 	cdm->cdm_size = size;
 
+	if (sc->sc_dma64)
+		flags |= BUS_DMA_64BIT;
+
 	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
-	    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW, &cdm->cdm_map) != 0)
+	    flags, &cdm->cdm_map) != 0)
 		goto cdmfree;
 	if (bus_dmamem_alloc(sc->sc_dmat, size, align, 0, &cdm->cdm_seg, 1,
 	    &nsegs, BUS_DMA_WAITOK) != 0)
