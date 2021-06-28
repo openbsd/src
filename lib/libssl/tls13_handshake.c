@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_handshake.c,v 1.66 2021/06/28 15:35:14 tb Exp $	*/
+/*	$OpenBSD: tls13_handshake.c,v 1.67 2021/06/28 18:42:17 tb Exp $	*/
 /*
  * Copyright (c) 2018-2019 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
@@ -383,7 +383,7 @@ tls13_handshake_perform(struct tls13_ctx *ctx)
 		    (action->sender == ctx->mode) ? "sending" : "receiving",
 		    tls13_handshake_message_name(action->handshake_type));
 
-		if (ctx->alert)
+		if (ctx->alert != 0)
 			return tls13_send_alert(ctx->rl, ctx->alert);
 
 		if (action->sender == ctx->mode)
@@ -391,7 +391,7 @@ tls13_handshake_perform(struct tls13_ctx *ctx)
 		else
 			ret = tls13_handshake_recv_action(ctx, action);
 
-		if (ctx->alert)
+		if (ctx->alert != 0)
 			return tls13_send_alert(ctx->rl, ctx->alert);
 
 		if (ret <= 0) {
