@@ -1,4 +1,4 @@
-/*	$OpenBSD: copy.S,v 1.4 2021/05/15 20:14:05 deraadt Exp $	*/
+/*	$OpenBSD: copy.S,v 1.5 2021/06/28 09:35:09 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Brian Bamsch <bbamsch@google.com>
@@ -62,7 +62,7 @@ ENTRY(copyin)
 	EXIT_USER_ACCESS(a4)
 	SET_FAULT_HANDLER(a3, a4)
 .Lcopyiodone:
-	mv	a0, x0
+	mv	a0, zero
 	RETGUARD_CHECK(copyio, a6)
 	ret
 
@@ -74,6 +74,33 @@ ENTRY(copyin)
 	li	a0, EFAULT
 	RETGUARD_CHECK(copyio, a6)
 	ret
+END(copyin)
+
+/*
+ * a0 = user space address
+ * a1 = kernel space address
+ *
+ * Atomically copies a 32-bit word from user space to kernel space
+ */
+ENTRY(copyin32)
+	RETGUARD_SETUP(copyio, a6)
+	/* Check source alignment. */
+	andi	a2, a0, 3
+	bnez	a2, .Lcopyiofault_nopcb
+	/* Check that source is in userspace. */
+	li	a4, VM_MAXUSER_ADDRESS
+	bgeu	a0, a4, .Lcopyiofault_nopcb
+
+	la	a3, .Lcopyiofault_user
+	SWAP_FAULT_HANDLER(a3, a4, a5)
+	ENTER_USER_ACCESS(a4)
+
+	lw	a2, 0(a0)
+	sw	a2, 0(a1)
+
+	EXIT_USER_ACCESS(a4)
+	SET_FAULT_HANDLER(a3, a4)
+	j	.Lcopyiodone
 END(copyin)
 
 /*
