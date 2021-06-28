@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_legacy.c,v 1.24 2021/04/19 16:51:56 jsing Exp $ */
+/*	$OpenBSD: tls13_legacy.c,v 1.25 2021/06/28 15:36:51 tb Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -361,8 +361,6 @@ tls13_use_legacy_client(struct tls13_ctx *ctx)
 	s->internal->handshake_func = s->method->internal->ssl_connect;
 	s->client_version = s->version = s->method->internal->max_tls_version;
 
-	ctx->hs->state = SSL3_ST_CR_SRVR_HELLO_A;
-
 	return 1;
 }
 
@@ -377,8 +375,6 @@ tls13_use_legacy_server(struct tls13_ctx *ctx)
 	s->internal->handshake_func = s->method->internal->ssl_accept;
 	s->client_version = s->version = s->method->internal->max_tls_version;
 	s->server = 1;
-
-	ctx->hs->state = SSL3_ST_SR_CLNT_HELLO_A;
 
 	return 1;
 }
@@ -406,13 +402,10 @@ tls13_legacy_accept(SSL *ssl)
 	}
 
 	ERR_clear_error();
-	ctx->hs->state = SSL_ST_ACCEPT;
 
 	ret = tls13_server_accept(ctx);
 	if (ret == TLS13_IO_USE_LEGACY)
 		return ssl->method->internal->ssl_accept(ssl);
-	if (ret == TLS13_IO_SUCCESS)
-		ctx->hs->state = SSL_ST_OK;
 
 	return tls13_legacy_return_code(ssl, ret);
 }
@@ -448,13 +441,10 @@ tls13_legacy_connect(SSL *ssl)
 	}
 
 	ERR_clear_error();
-	ctx->hs->state = SSL_ST_CONNECT;
 
 	ret = tls13_client_connect(ctx);
 	if (ret == TLS13_IO_USE_LEGACY)
 		return ssl->method->internal->ssl_connect(ssl);
-	if (ret == TLS13_IO_SUCCESS)
-		ctx->hs->state = SSL_ST_OK;
 
 	return tls13_legacy_return_code(ssl, ret);
 }
