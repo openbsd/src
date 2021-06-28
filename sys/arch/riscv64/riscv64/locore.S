@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.9 2021/06/28 15:45:16 deraadt Exp $	*/
+/*	$OpenBSD: locore.S,v 1.10 2021/06/28 18:52:26 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2015-2018 Ruslan Bukin <br@bsdpad.com>
@@ -418,5 +418,3 @@ mpva:
 	call	init_secondary
 END(mpentry)
 #endif
-
-
