@@ -1177,7 +1177,7 @@ warn_uninit (tree t, const char *gmsgid, void *data)
   locus = (context != NULL && EXPR_HAS_LOCATION (context)
 	   ? EXPR_LOCUS (context)
 	   : &DECL_SOURCE_LOCATION (var));
-  warning (0, gmsgid, locus, var);
+  warning (OPT_Wuninitialized, gmsgid, locus, var);
   fun_locus = &DECL_SOURCE_LOCATION (cfun->decl);
   if (locus->file != fun_locus->file
       || locus->line < fun_locus->line
