@@ -1,6 +1,6 @@
-/*	$OpenBSD: tls13_handshake.c,v 1.67 2021/06/28 18:42:17 tb Exp $	*/
+/*	$OpenBSD: tls13_handshake.c,v 1.68 2021/06/28 18:48:56 tb Exp $	*/
 /*
- * Copyright (c) 2018-2019 Theo Buehler <tb@openbsd.org>
+ * Copyright (c) 2018-2021 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -636,7 +636,7 @@ tls13_handshake_legacy_state(struct tls13_ctx *ctx, int *out_state)
 	if ((action = tls13_handshake_active_action(ctx)) == NULL)
 		return 0;
 
-	if (ctx->mode == action->sender)
+	if (action->sender == ctx->mode)
 		*out_state = legacy_states[mt].send;
 	else
 		*out_state = legacy_states[mt].recv;
