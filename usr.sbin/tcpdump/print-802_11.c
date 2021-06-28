@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-802_11.c,v 1.40 2017/09/01 14:04:49 stsp Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.41 2021/06/28 14:35:42 stsp Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -162,7 +162,9 @@ ieee80211_hdr(struct ieee80211_frame *wh)
 		u_int16_t seq;
 		TCARR(wh->i_seq);
 		bcopy(wh->i_seq, &seq, sizeof(u_int16_t));
-		printf(" (seq %u): ", letoh16(seq));
+		printf(" (seq %u frag %u): ",
+		    letoh16(seq) >> IEEE80211_SEQ_SEQ_SHIFT,
+		    letoh16(seq) & IEEE80211_SEQ_FRAG_MASK);
 	} else
 		printf(": ");
 
