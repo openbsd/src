@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_handshake.c,v 1.65 2021/03/21 18:36:34 jsing Exp $	*/
+/*	$OpenBSD: tls13_handshake.c,v 1.66 2021/06/28 15:35:14 tb Exp $	*/
 /*
  * Copyright (c) 2018-2019 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
@@ -47,6 +47,9 @@ static int tls13_handshake_send_action(struct tls13_ctx *ctx,
     const struct tls13_handshake_action *action);
 static int tls13_handshake_recv_action(struct tls13_ctx *ctx,
     const struct tls13_handshake_action *action);
+
+static int tls13_handshake_set_legacy_state(struct tls13_ctx *ctx);
+static int tls13_handshake_legacy_info_callback(struct tls13_ctx *ctx);
 
 static const struct tls13_handshake_action state_machine[] = {
 	[CLIENT_HELLO] = {
@@ -344,9 +347,20 @@ tls13_handshake_perform(struct tls13_ctx *ctx)
 	int ret;
 
 	if (!ctx->handshake_started) {
+		/*
+		 * Set legacy state to connect/accept and call info callback
+		 * to signal that the handshake started.
+		 */
+		if (!tls13_handshake_set_legacy_state(ctx))
+			return TLS13_IO_FAILURE;
+		if (!tls13_handshake_legacy_info_callback(ctx))
+			return TLS13_IO_FAILURE;
+
 		ctx->handshake_started = 1;
-		if (ctx->info_cb != NULL)
-			ctx->info_cb(ctx, TLS13_INFO_HANDSHAKE_STARTED, 1);
+
+		/* Set legacy state for initial ClientHello read or write. */
+		if (!tls13_handshake_set_legacy_state(ctx))
+			return TLS13_IO_FAILURE;
 	}
 
 	for (;;) {
@@ -356,9 +370,12 @@ tls13_handshake_perform(struct tls13_ctx *ctx)
 		if (action->handshake_complete) {
 			ctx->handshake_completed = 1;
 			tls13_record_layer_handshake_completed(ctx->rl);
-			if (ctx->info_cb != NULL)
-				ctx->info_cb(ctx,
-				    TLS13_INFO_HANDSHAKE_COMPLETED, 1);
+
+			if (!tls13_handshake_set_legacy_state(ctx))
+				return TLS13_IO_FAILURE;
+			if (!tls13_handshake_legacy_info_callback(ctx))
+				return TLS13_IO_FAILURE;
+
 			return TLS13_IO_SUCCESS;
 		}
 
@@ -385,7 +402,13 @@ tls13_handshake_perform(struct tls13_ctx *ctx)
 			return ret;
 		}
 
+		if (!tls13_handshake_legacy_info_callback(ctx))
+			return TLS13_IO_FAILURE;
+
 		if (!tls13_handshake_advance_state_machine(ctx))
+			return TLS13_IO_FAILURE;
+
+		if (!tls13_handshake_set_legacy_state(ctx))
 			return TLS13_IO_FAILURE;
 	}
 }
@@ -516,4 +539,159 @@ tls13_handshake_recv_action(struct tls13_ctx *ctx,
 		return TLS13_IO_USE_LEGACY;
 
 	return ret;
+}
+
+struct tls13_handshake_legacy_state {
+	int recv;
+	int send;
+};
+
+static const struct tls13_handshake_legacy_state legacy_states[] = {
+	[CLIENT_HELLO] = {
+		.recv = SSL3_ST_SR_CLNT_HELLO_A,
+		.send = SSL3_ST_CW_CLNT_HELLO_A,
+	},
+	[SERVER_HELLO_RETRY_REQUEST] = {
+		.recv = SSL3_ST_CR_SRVR_HELLO_A,
+		.send = SSL3_ST_SW_SRVR_HELLO_A,
+	},
+	[CLIENT_HELLO_RETRY] = {
+		.recv = SSL3_ST_SR_CLNT_HELLO_A,
+		.send = SSL3_ST_CW_CLNT_HELLO_A,
+	},
+	[SERVER_HELLO] = {
+		.recv = SSL3_ST_CR_SRVR_HELLO_A,
+		.send = SSL3_ST_SW_SRVR_HELLO_A,
+	},
+	[SERVER_ENCRYPTED_EXTENSIONS] = {
+		.send = 0,
+		.recv = 0,
+	},
+	[SERVER_CERTIFICATE_REQUEST] = {
+		.recv = SSL3_ST_CR_CERT_REQ_A,
+		.send = SSL3_ST_SW_CERT_REQ_A,
+	},
+	[SERVER_CERTIFICATE] = {
+		.recv = SSL3_ST_CR_CERT_A,
+		.send = SSL3_ST_SW_CERT_A,
+	},
+	[SERVER_CERTIFICATE_VERIFY] = {
+		.send = 0,
+		.recv = 0,
+	},
+	[SERVER_FINISHED] = {
+		.recv = SSL3_ST_CR_FINISHED_A,
+		.send = SSL3_ST_SW_FINISHED_A,
+	},
+	[CLIENT_END_OF_EARLY_DATA] = {
+		.send = 0,
+		.recv = 0,
+	},
+	[CLIENT_CERTIFICATE] = {
+		.recv = SSL3_ST_SR_CERT_VRFY_A,
+		.send = SSL3_ST_CW_CERT_VRFY_B,
+	},
+	[CLIENT_CERTIFICATE_VERIFY] = {
+		.send = 0,
+		.recv = 0,
+	},
+	[CLIENT_FINISHED] = {
+		.recv = SSL3_ST_SR_FINISHED_A,
+		.send = SSL3_ST_CW_FINISHED_A,
+	},
+	[APPLICATION_DATA] = {
+		.recv = 0,
+		.send = 0,
+	},
+};
+
+CTASSERT(sizeof(state_machine) / sizeof(state_machine[0]) ==
+    sizeof(legacy_states) / sizeof(legacy_states[0]));
+
+static int
+tls13_handshake_legacy_state(struct tls13_ctx *ctx, int *out_state)
+{
+	const struct tls13_handshake_action *action;
+	enum tls13_message_type mt;
+
+	*out_state = 0;
+
+	if (!ctx->handshake_started) {
+		if (ctx->mode == TLS13_HS_CLIENT)
+			*out_state = SSL_ST_CONNECT;
+		else
+			*out_state = SSL_ST_ACCEPT;
+
+		return 1;
+	}
+
+	if (ctx->handshake_completed) {
+		*out_state = SSL_ST_OK;
+		return 1;
+	}
+
+	if ((mt = tls13_handshake_active_state(ctx)) == INVALID)
+		return 0;
+
+	if ((action = tls13_handshake_active_action(ctx)) == NULL)
+		return 0;
+
+	if (ctx->mode == action->sender)
+		*out_state = legacy_states[mt].send;
+	else
+		*out_state = legacy_states[mt].recv;
+
+	return 1;
+}
+
+static int
+tls13_handshake_info_position(struct tls13_ctx *ctx)
+{
+	if (!ctx->handshake_started)
+		return TLS13_INFO_HANDSHAKE_STARTED;
+
+	if (ctx->handshake_completed)
+		return TLS13_INFO_HANDSHAKE_COMPLETED;
+
+	if (ctx->mode == TLS13_HS_CLIENT)
+		return TLS13_INFO_CONNECT_LOOP;
+	else
+		return TLS13_INFO_ACCEPT_LOOP;
+}
+
+static int
+tls13_handshake_legacy_info_callback(struct tls13_ctx *ctx)
+{
+	int state, where;
+
+	if (!tls13_handshake_legacy_state(ctx, &state))
+		return 0;
+
+	/* Do nothing if there's no corresponding legacy state. */
+	if (state == 0)
+		return 1;
+
+	if (ctx->info_cb != NULL) {
+		where = tls13_handshake_info_position(ctx);
+		ctx->info_cb(ctx, where, 1);
+	}
+
+	return 1;
+}
+
+static int
+tls13_handshake_set_legacy_state(struct tls13_ctx *ctx)
+{
+	int state;
+
+	if (!tls13_handshake_legacy_state(ctx, &state))
+		return 0;
+
+	/* Do nothing if there's no corresponding legacy state. */
+	if (state == 0)
+		return 1;
+
+	ctx->hs->state = state;
+
+	return 1;
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.89 2021/03/21 18:36:34 jsing Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.90 2021/06/28 15:35:14 tb Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -81,6 +81,8 @@ __BEGIN_HIDDEN_DECLS
 
 #define TLS13_INFO_HANDSHAKE_STARTED			SSL_CB_HANDSHAKE_START
 #define TLS13_INFO_HANDSHAKE_COMPLETED			SSL_CB_HANDSHAKE_DONE
+#define TLS13_INFO_ACCEPT_LOOP				SSL_CB_ACCEPT_LOOP
+#define TLS13_INFO_CONNECT_LOOP				SSL_CB_CONNECT_LOOP
 
 typedef void (*tls13_alert_cb)(uint8_t _alert_desc, void *_cb_arg);
 typedef ssize_t (*tls13_phh_recv_cb)(void *_cb_arg, CBS *_cbs);
