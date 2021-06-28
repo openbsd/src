@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.66 2021/06/26 18:03:45 jmc Exp $	*/
+/*	$OpenBSD: main.c,v 1.67 2021/06/28 14:01:38 tb Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -95,10 +95,8 @@ __dead void
 usage(void)
 {
 	extern char	*__progname;
-	int		 i;
 
-	fprintf(stderr, "usage:\t%s [-v] command [arg ...]\n",
-	    __progname);
+	fprintf(stderr, "usage:\t%s [-v] command [arg ...]\n", __progname);
 
 	exit(1);
 }
