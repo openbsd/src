@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.8 2021/06/26 17:38:40 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.9 2021/06/28 15:45:16 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2015-2018 Ruslan Bukin <br@bsdpad.com>
@@ -317,8 +317,6 @@ _C_LABEL(sigcoderet):
 	li	t0, SYS_exit
 	ecall
 END(sigcode)
-	/* This may be copied to the stack, keep it 16-byte aligned */
-	.align	3
 	.globl _C_LABEL(esigcode)
 _C_LABEL(esigcode):
 
