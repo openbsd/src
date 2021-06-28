@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.37 2021/06/23 11:24:01 dv Exp $ */
+/*	$OpenBSD: btrace.c,v 1.38 2021/06/28 08:55:06 bluhm Exp $ */
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -638,8 +638,10 @@ builtin_stack(struct dt_evt *dtev, int kernel)
 	size_t i;
 	int sz;
 
-	if (!kernel || st->st_count == 0)
+	if (!kernel)
 		return "";
+	if (st->st_count == 0)
+		return "\nuserland\n";
 
 	buf[0] = '\0';
 	bp = buf;
@@ -658,7 +660,7 @@ builtin_stack(struct dt_evt *dtev, int kernel)
 		bp += l;
 		sz -= l;
 	}
-	snprintf(bp, sz, "\n");
+	snprintf(bp, sz, "\nkernel\n");
 
 	return buf;
 }
