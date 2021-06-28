@@ -1,7 +1,5 @@
 TBL-LAYOUT-SPACING(1)       General Commands Manual      TBL-LAYOUT-SPACING(1)
 
-
-
 NNAAMMEE
        tbl-layout-spacing-nogroff - excessive spacing modifier
 
@@ -12,7 +10,5 @@ DDEESSCCRRIIPPTTIIOONN
        |a   b |
        +------+
        final text
-
-
 
 OpenBSD                        September 1, 2020         TBL-LAYOUT-SPACING(1)

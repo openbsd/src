@@ -1,7 +1,5 @@
 SPACE-EOS-MAN(1)            General Commands Manual           SPACE-EOS-MAN(1)
 
-
-
 NNAAMMEE
        SPACE-EOS-MAN - end-of-sentence spacing in man(7) documents
 
@@ -20,7 +18,5 @@ DDEESSCCRRIIPPTTIIOONN
 
        At the end of an input line, even an escaped dot .  is regarded as a
        full stop.
-
-
 
 OpenBSD                        December 22, 2013              SPACE-EOS-MAN(1)

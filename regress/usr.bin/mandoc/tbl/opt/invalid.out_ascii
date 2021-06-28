@@ -1,7 +1,5 @@
 TBL-OPT(1)                  General Commands Manual                 TBL-OPT(1)
 
-
-
 NNAAMMEE
        tbl-opt - table options
 
@@ -18,7 +16,5 @@ DDEESSCCRRIIPPTTIIOONN
        |a   b |
        +------+
        normal text
-
-
 
 OpenBSD                        January 25, 2015                     TBL-OPT(1)

@@ -1,7 +1,5 @@
 TBL-LAYOUT-NUMBERS(1)       General Commands Manual      TBL-LAYOUT-NUMBERS(1)
 
-
-
 NNAAMMEE
        tbl-layout-numbers - alignment of numbers in tables
 
@@ -13,6 +11,4 @@ DDEESSCCRRIIPPTTIIOONN
        +---++-------+--------+
        |10 ||-10.0  |   3.14 |
        +---++-------+--------+
-
-
 OpenBSD                        January 29, 2017          TBL-LAYOUT-NUMBERS(1)

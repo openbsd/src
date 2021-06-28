@@ -1,7 +1,5 @@
 TBL-DATA-BLOCK_UNCLOSED(1)  General Commands Manual TBL-DATA-BLOCK_UNCLOSED(1)
 
-
-
 NNAAMMEE
        tbl-data-block_unclosed - unclosed text block
 
@@ -21,7 +19,5 @@ DDEESSCCRRIIPPTTIIOONN
        |     reset    still   works |
        +----------------------------+
        normal text
-
-
 
 OpenBSD                        January 28, 2015     TBL-DATA-BLOCK_UNCLOSED(1)

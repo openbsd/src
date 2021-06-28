@@ -1,7 +1,5 @@
 SS-NOARG(1)                 General Commands Manual                SS-NOARG(1)
 
-
-
 NNAAMMEE
        SS-noarg - empty subsection header lines
 
@@ -29,7 +27,5 @@ DDEESSCCRRIIPPTTIIOONN
 
    SSuubbsseeccttiioonn
        with a blank line
-
-
 
 OpenBSD                         March 20, 2015                     SS-NOARG(1)

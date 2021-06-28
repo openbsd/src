@@ -1,7 +1,5 @@
 CHAR-UNICODE-NAMEDIFF(1)    General Commands Manual   CHAR-UNICODE-NAMEDIFF(1)
 
-
-
 NNAAMMEE
        char-unicode-namediff - Unicode characters having named escapes
 
@@ -31,7 +29,5 @@ DDEESSCCRRIIPPTTIIOONN
        ⎬⎬ RIGHT CURLY BRACKET MIDDLE PIECE
        ⎭⎭ RIGHT CURLY BRACKET LOWER HOOK
        ENDTEST
-
-
 
 OpenBSD                         August 21, 2018       CHAR-UNICODE-NAMEDIFF(1)

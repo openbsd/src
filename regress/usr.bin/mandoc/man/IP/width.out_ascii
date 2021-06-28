@@ -1,7 +1,5 @@
 IP-WIDTH(1)                 General Commands Manual                IP-WIDTH(1)
 
-
-
 NNAAMMEE
        IP-width - indentation width of indented paragraphs
 
@@ -81,7 +79,5 @@ text
 
        tag                                                                                                 indented
                                                                                                            text
-
-
 
 OpenBSD                        December 23, 2014                   IP-WIDTH(1)

@@ -1,7 +1,5 @@
 TP-BADARG(1)                General Commands Manual               TP-BADARG(1)
 
-
-
 NNAAMMEE
        TP-badarg - invalid width specification for tagged paragraph
 
@@ -16,7 +14,5 @@ DDEESSCCRRIIPPTTIIOONN
 
        tag    indented
               text
-
-
 
 OpenBSD                        November 18, 2012                  TP-BADARG(1)

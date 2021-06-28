@@ -1,7 +1,5 @@
 TBL-VSPACE(1)               General Commands Manual              TBL-VSPACE(1)
 
-
-
 NNAAMMEE
        tbl-vspace - vertical spacing around tables
 
@@ -36,7 +34,5 @@ DDEESSCCRRIIPPTTIIOONN
        +----------------------+
 
        table without box
-
-
 
 OpenBSD                          May 27, 2012                    TBL-VSPACE(1)

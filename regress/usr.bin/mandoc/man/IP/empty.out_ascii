@@ -1,7 +1,5 @@
 IP-EMPTY(1)                 General Commands Manual                IP-EMPTY(1)
 
-
-
 NNAAMMEE
        IP-empty - empty indented paragraphs
 
@@ -20,7 +18,5 @@ DDEESSCCRRIIPPTTIIOONN
 
               tag    indented text
        regular text ENDTEST
-
-
 
 OpenBSD                          July 17, 2012                     IP-EMPTY(1)

@@ -1,7 +1,5 @@
 STRING-UNDEF(1)             General Commands Manual            STRING-UNDEF(1)
 
-
-
 NNAAMMEE
        string-undef - expanding undefined strings
 
@@ -31,7 +29,5 @@ DDEESSCCRRIIPPTTIIOONN
 
    PPrreeddeeffiinneedd ssttrriinngg
        A predefined string is defined and has the value "(R)".
-
-
 
 OpenBSD                          April 9, 2018                 STRING-UNDEF(1)

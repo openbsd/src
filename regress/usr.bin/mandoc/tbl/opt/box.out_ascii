@@ -1,7 +1,5 @@
 TBL-OPT-BOX(1)              General Commands Manual             TBL-OPT-BOX(1)
 
-
-
 NNAAMMEE
        tbl-opt-box - box table options
 
@@ -49,6 +47,4 @@ DDEESSCCRRIIPPTTIIOONN
        |c ||d |
        +--++--+
        +--++--+
-
-
 OpenBSD                          June 12, 2017                  TBL-OPT-BOX(1)

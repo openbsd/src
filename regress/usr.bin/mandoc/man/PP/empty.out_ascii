@@ -1,7 +1,5 @@
 PP-EMPTY(1)                 General Commands Manual                PP-EMPTY(1)
 
-
-
 NNAAMMEE
        PP-empty - handling of empty paragraphs
 
@@ -13,7 +11,5 @@ DDEESSCCRRIIPPTTIIOONN
        head   empty PP between IP and PP:
 
        the end
-
-
 
 OpenBSD                          May 24, 2010                      PP-EMPTY(1)

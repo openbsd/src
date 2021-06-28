@@ -1,7 +1,5 @@
 IP-BULLET(1)                General Commands Manual               IP-BULLET(1)
 
-
-
 NNAAMMEE
        IP-bullet - bullet lists
 
@@ -22,7 +20,5 @@ DDEESSCCRRIIPPTTIIOONN
 
        ENDTEST
        end of file
-
-
 
 OpenBSD                        February 20, 2020                  IP-BULLET(1)

@@ -1,7 +1,5 @@
 BLANK-AFTERSH(1)            General Commands Manual           BLANK-AFTERSH(1)
 
-
-
 NNAAMMEE
        blank-afterSH - handling of blank lines right after a section heading
 
@@ -52,7 +50,5 @@ DDEESSCCRRIIPPTTIIOONN 1177
 
 DDEESSCCRRIIPPTTIIOONN 1188
        double blank line before sp
-
-
 
 OpenBSD                        November 10, 2013              BLANK-AFTERSH(1)

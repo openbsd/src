@@ -1,7 +1,5 @@
 COND-CLOSE(1)               General Commands Manual              COND-CLOSE(1)
 
-
-
 NNAAMMEE
        cond-close - closing conditional macros
 
@@ -40,7 +38,5 @@ DDEESSCCRRIIPPTTIIOONN
        preceding words two closes oonntthheesame macro line
 
        still open at the end of the file
-
-
 
 OpenBSD                        November 26, 2018                 COND-CLOSE(1)

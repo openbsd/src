@@ -1,7 +1,5 @@
 STRING-STD(1)               General Commands Manual              STRING-STD(1)
 
-
-
 NNAAMMEE
        string-std - expanding standard macros as strings
 
@@ -9,7 +7,5 @@ DDEESSCCRRIIPPTTIIOONN
        expanding the DT macro as a string: >>><<<
 
        the same after renaming it: >>><<<
-
-
 
 OpenBSD                          June 18, 2017                   STRING-STD(1)

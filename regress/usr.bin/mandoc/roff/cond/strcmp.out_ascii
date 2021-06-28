@@ -1,7 +1,5 @@
 COND-STRCMP(1)              General Commands Manual             COND-STRCMP(1)
 
-
-
 NNAAMMEE
        cond-strcmp - roff conditions involving string comparison
 
@@ -12,7 +10,5 @@ DDEESSCCRRIIPPTTIIOONN
 
    NNeeggaattiioonn
        match: (f) mismatch: (t)
-
-
 
 OpenBSD                          March 8, 2014                  COND-STRCMP(1)

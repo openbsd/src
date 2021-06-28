@@ -1,7 +1,5 @@
 PD-NEXTLINE(1)              General Commands Manual             PD-NEXTLINE(1)
 
-
-
 NNAAMMEE
        PD-nextline - paragraph distance macro in next-line scope
 
@@ -27,7 +25,5 @@ NNEEXXTT SSEECCTTIIOONN
 
        normal text bboolldd tteexxtt normal text
        final paragraph
-
-
 
 OpenBSD                         March 20, 2015                  PD-NEXTLINE(1)

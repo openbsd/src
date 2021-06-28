@@ -1,7 +1,5 @@
 SPACE-ESCT-MAN(1)           General Commands Manual          SPACE-ESCT-MAN(1)
 
-
-
 NNAAMMEE
        SPACE-T-MAN - the t escape sequence in pages with man macros
 
@@ -35,7 +33,5 @@ DDEESSCCRRIIPPTTIIOONN
        After font macros:
        ssiinnggllee    ttaabb
        ddoouubbllee         ttaabb
-
-
 
 OpenBSD                        December 20, 2018             SPACE-ESCT-MAN(1)

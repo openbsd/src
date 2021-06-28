@@ -1,7 +1,5 @@
 RS-NESTED(1)                General Commands Manual               RS-NESTED(1)
 
-
-
 NNAAMMEE
        RS-nested - various blocks nested inside reset blocks
 
@@ -35,7 +33,5 @@ DDEESSCCRRIIPPTTIIOONN
 
 
                  inner text
-
-
 
 OpenBSD                          April 4, 2015                    RS-NESTED(1)

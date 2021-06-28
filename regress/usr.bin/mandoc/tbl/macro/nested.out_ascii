@@ -1,7 +1,5 @@
 TBL-MACRO-NESTED(1)         General Commands Manual        TBL-MACRO-NESTED(1)
 
-
-
 NNAAMMEE
        tbl-macro-nested - nested table
 
@@ -15,7 +13,5 @@ DDEESSCCRRIIPPTTIIOONN
        |e | f |
        +--+---+
        normal text
-
-
 
 OpenBSD                        December 16, 2014           TBL-MACRO-NESTED(1)

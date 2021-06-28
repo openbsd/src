@@ -1,7 +1,5 @@
 PD-SPACING(1)               General Commands Manual              PD-SPACING(1)
 
-
-
 NNAAMMEE
        PD-spacing - effect of the PD macro on vertical spacing
 
@@ -64,7 +62,5 @@ NNOORRMMAALL SSPPAACCIINNGG
 
    ssuubbsseeccttiioonn
        subsection text
-
-
 
 OpenBSD                          July 28, 2012                   PD-SPACING(1)

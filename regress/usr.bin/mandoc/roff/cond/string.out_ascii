@@ -1,7 +1,5 @@
 STRING(1)                   General Commands Manual                  STRING(1)
 
-
-
 NNAAMMEE
        string - conditional testing whether a string is defined
 
@@ -20,7 +18,5 @@ DDEESSCCRRIIPPTTIIOONN
        identifier and tab:      mystr is defined
 
        escape sequence after identifier: -mystr is defined
-
-
 
 OpenBSD                        February 6, 2019                      STRING(1)

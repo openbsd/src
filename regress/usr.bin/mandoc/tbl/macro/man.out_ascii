@@ -1,7 +1,5 @@
 TBL-MACRO-MAN(1)            General Commands Manual           TBL-MACRO-MAN(1)
 
-
-
 NNAAMMEE
        tbl-macro-man - man macro in a table
 
@@ -14,7 +12,5 @@ DDEESSCCRRIIPPTTIIOONN
        |c | d |
        +--+---+
        normal text
-
-
 
 OpenBSD                        December 16, 2014              TBL-MACRO-MAN(1)

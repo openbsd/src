@@ -1,7 +1,5 @@
 IF(1)                       General Commands Manual                      IF(1)
 
-
-
 NNAAMMEE
        if - the roff conditional instruction
 
@@ -28,7 +26,5 @@ DDEESSCCRRIIPPTTIIOONN
        Outer true condition.  Inner true condition.  After conditional.
        Outer true condition.  After conditional.
        Backslash-backslash-brace in text: On a macro line: End.
-
-
 
 OpenBSD                          June 27, 2015                           IF(1)

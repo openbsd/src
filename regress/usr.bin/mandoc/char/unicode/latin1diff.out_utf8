@@ -1,7 +1,5 @@
 CHAR-UNICODE-LATIN1DIFF(1)  General Commands Manual CHAR-UNICODE-LATIN1DIFF(1)
 
-
-
 NNAAMMEE
        char-unicode-latin1diff - Unicode characters in the ISO-8859-1 range
 
@@ -9,7 +7,5 @@ DDEESSCCRRIIPPTTIIOONN
        BEGINTEST
        ¯¯   MACRON
        ENDTEST
-
-
 
 OpenBSD                         August 21, 2018     CHAR-UNICODE-LATIN1DIFF(1)

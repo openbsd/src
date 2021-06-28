@@ -1,7 +1,5 @@
 TBL-MOD-WIDTH(1)            General Commands Manual           TBL-MOD-WIDTH(1)
 
-
-
 NNAAMMEE
        tbl-mod-width - width modifier in table layout
 
@@ -11,6 +9,4 @@ DDEESSCCRRIIPPTTIIOONN
        +---+------+----+------+
        |a  | abcd | a  | abcd |
        +---+------+----+------+
-
-
 OpenBSD                          June 8, 2017                 TBL-MOD-WIDTH(1)

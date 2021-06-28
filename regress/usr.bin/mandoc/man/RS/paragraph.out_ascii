@@ -1,7 +1,5 @@
 RS-PARAGRAPH(1)             General Commands Manual            RS-PARAGRAPH(1)
 
-
-
 NNAAMMEE
        RS-paragraph - interaction between regular and indented paragraphs
 
@@ -15,7 +13,5 @@ DDEESSCCRRIIPPTTIIOONN
        regular text after display
        ENDTEST
        end of file
-
-
 
 OpenBSD                         January 6, 2019                RS-PARAGRAPH(1)

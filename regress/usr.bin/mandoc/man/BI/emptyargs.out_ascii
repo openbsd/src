@@ -1,7 +1,5 @@
 BI-EMPTYARGS(1)             General Commands Manual            BI-EMPTYARGS(1)
 
-
-
 NNAAMMEE
        BI-emptyargs - empty arguments to font alternation macros
 
@@ -12,7 +10,5 @@ DDEESSCCRRIIPPTTIIOONN
              bboolldd_i_t_a_l_i_c
 
        trailing text
-
-
 
 OpenBSD                          April 6, 2015                 BI-EMPTYARGS(1)

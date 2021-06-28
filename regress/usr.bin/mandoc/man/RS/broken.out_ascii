@@ -1,7 +1,5 @@
 RS-BROKEN(1)                General Commands Manual               RS-BROKEN(1)
 
-
-
 NNAAMMEE
        RS-broken - indented blocks broken by other blocks
 
@@ -35,7 +33,5 @@ DDEESSCCRRIIPPTTIIOONN
               indented
 
        final text
-
-
 
 OpenBSD                        January 24, 2015                   RS-BROKEN(1)

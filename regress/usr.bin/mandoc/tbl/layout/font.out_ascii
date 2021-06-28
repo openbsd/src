@@ -1,7 +1,5 @@
 TBL-LAYOUT-FONT(1)          General Commands Manual         TBL-LAYOUT-FONT(1)
 
-
-
 NNAAMMEE
        tbl-layout-font - font modifiers in the table layout
 
@@ -14,7 +12,5 @@ DDEESSCCRRIIPPTTIIOONN
        |roman   _i_t_a_l_i_c |
        +---------------+
        ENDTEST
-
-
 
 OpenBSD                          May 16, 2021               TBL-LAYOUT-FONT(1)

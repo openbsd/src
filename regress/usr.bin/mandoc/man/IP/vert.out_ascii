@@ -1,7 +1,5 @@
 IP-VERT(1)                  General Commands Manual                 IP-VERT(1)
 
-
-
 NNAAMMEE
        IP-vert - vertical spacing before indented paragraphs
 
@@ -10,7 +8,5 @@ DDEESSCCRRIIPPTTIIOONN
 
 
        tag    text
-
-
 
 OpenBSD                        February 19, 2020                    IP-VERT(1)

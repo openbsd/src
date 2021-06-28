@@ -1,7 +1,5 @@
 TP-MACROTAG(1)              General Commands Manual             TP-MACROTAG(1)
 
-
-
 NNAAMMEE
        TP-macrotag - macros in the head of tagged paragraphs
 
@@ -18,7 +16,5 @@ DDEESSCCRRIIPPTTIIOONN
               indented text
 
        regular text
-
-
 
 OpenBSD                        September 9, 2020                TP-MACROTAG(1)

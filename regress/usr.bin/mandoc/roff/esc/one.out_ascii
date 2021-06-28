@@ -1,7 +1,5 @@
 ESC-ONE(1)                  General Commands Manual                 ESC-ONE(1)
 
-
-
 NNAAMMEE
        esc-one - roff one-character escape sequences
 
@@ -11,7 +9,5 @@ DDEESSCCRRIIPPTTIIOONN
        acute: >'<
        grave: >`<
        normal character: >q<
-
-
 
 OpenBSD                        December 15, 2018                    ESC-ONE(1)

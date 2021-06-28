@@ -1,7 +1,5 @@
 CHAR-UNICODE-INPUT(1)       General Commands Manual      CHAR-UNICODE-INPUT(1)
 
-
-
 NNAAMMEE
        char-unicode-input - Unicode characters in the input file
 
@@ -65,7 +63,5 @@ DDEESSCCRRIIPPTTIIOONN
        U+140000   0xf5808080     ????     lowest invalid start byte
        U+1FFFFF   0xf7bfbfbf     ????     highest invalid four-byte
        U+200000   0xf888808080   ?????    lowest five-byte
-
-
 
 OpenBSD                          June 2, 2021            CHAR-UNICODE-INPUT(1)

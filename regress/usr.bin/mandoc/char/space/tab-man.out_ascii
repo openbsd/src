@@ -1,7 +1,5 @@
 SPACE-TAB-MAN(1)            General Commands Manual           SPACE-TAB-MAN(1)
 
-
-
 NNAAMMEE
        SPACE-TAB-MAN - handling of literal tab characters
 
@@ -46,7 +44,5 @@ DDEESSCCRRIIPPTTIIOONN
        space     tab
             tab
                  tab
-
-
 
 OpenBSD                          May 24, 2010                 SPACE-TAB-MAN(1)

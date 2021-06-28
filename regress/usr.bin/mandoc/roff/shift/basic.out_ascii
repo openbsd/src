@@ -1,7 +1,5 @@
 SHIFT_BASIC(1)              General Commands Manual             SHIFT_BASIC(1)
 
-
-
 NNAAMMEE
        sshhiifftt--bbaassiicc - the shift request
 
@@ -19,7 +17,5 @@ DDEESSCCRRIIPPTTIIOONN
        expand to exactly three bytes: <x y>
 
        expand to more than three bytes: <a longer argument... and another>
-
-
 
 OpenBSD                         August 23, 2018                 SHIFT_BASIC(1)

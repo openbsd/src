@@ -1,7 +1,5 @@
 SS-VERT(1)                  General Commands Manual                 SS-VERT(1)
 
-
-
 NNAAMMEE
        SS-vert - vertical spacing of subsections
 
@@ -11,7 +9,5 @@ DDEESSCCRRIIPPTTIIOONN
        first paragraph
 
        second paragraph
-
-
 
 OpenBSD                        February 19, 2020                    SS-VERT(1)

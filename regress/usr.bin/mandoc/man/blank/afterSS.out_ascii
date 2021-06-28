@@ -1,7 +1,5 @@
 BLANK-AFTERSS(1)            General Commands Manual           BLANK-AFTERSS(1)
 
-
-
 NNAAMMEE
        blank-afterSS - handling of blank lines right after a subsection
        heading
@@ -54,7 +52,5 @@ DDEESSCCRRIIPPTTIIOONN
 
    1188
        double blank line before sp
-
-
 
 OpenBSD                        November 10, 2013              BLANK-AFTERSS(1)

@@ -1,7 +1,5 @@
 CHAR-UNICODE-NAMED(1)       General Commands Manual      CHAR-UNICODE-NAMED(1)
 
-
-
 NNAAMMEE
        char-unicode-named - Unicode characters having named escapes
 
@@ -176,7 +174,5 @@ DDEESSCCRRIIPPTTIIOONN
        <<   MATHEMATICAL LEFT ANGLE BRACKET
        >>   MATHEMATICAL RIGHT ANGLE BRACKET
        ENDTEST
-
-
 
 OpenBSD                         August 21, 2018          CHAR-UNICODE-NAMED(1)

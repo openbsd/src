@@ -1,7 +1,5 @@
 TP-FILL(1)                  General Commands Manual                 TP-FILL(1)
 
-
-
 NNAAMMEE
        TP-fill - interaction of tagged paragraphs and fill mode
 
@@ -15,7 +13,5 @@ DDEESSCCRRIIPPTTIIOONN
        This is an extremely long tag that will certainly wrap the line and
        continue onto the next one.
               indented text
-
-
 
 OpenBSD                        September 4, 2015                    TP-FILL(1)

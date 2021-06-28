@@ -1,7 +1,5 @@
 TBL-LAYOUT-SPACING(1)       General Commands Manual      TBL-LAYOUT-SPACING(1)
 
-
-
 NNAAMMEE
        tbl-layout-spacing - spacing modifiers
 
@@ -33,7 +31,5 @@ DDEESSCCRRIIPPTTIIOONN
        +---++---+
        leaked tab settings:
        a    b    c    d    e    f
-
-
 
 OpenBSD                        September 1, 2020         TBL-LAYOUT-SPACING(1)

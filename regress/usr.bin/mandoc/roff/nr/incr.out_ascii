@@ -1,7 +1,5 @@
 NR-INCR(1)                  General Commands Manual                 NR-INCR(1)
 
-
-
 NNAAMMEE
        nr-incr - increment a number register by accessing it
 
@@ -16,7 +14,5 @@ DDEESSCCRRIIPPTTIIOONN
 
        Go to some other value, then continue incrementing with an unchanged
        (negative) step size: 40 38 36
-
-
 
 OpenBSD                         April 10, 2018                      NR-INCR(1)

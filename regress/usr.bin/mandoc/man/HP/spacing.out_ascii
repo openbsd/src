@@ -1,7 +1,5 @@
 HP-SPACING(1)               General Commands Manual              HP-SPACING(1)
 
-
-
 NNAAMMEE
        HP-spacing - spacing in hanged lists
 
@@ -52,7 +50,5 @@ And a second line.
                                                                                      line.
 
        Normal text.
-
-
 
 OpenBSD                        December 23, 2014                 HP-SPACING(1)

@@ -1,7 +1,5 @@
 HP-LITERAL(1)               General Commands Manual              HP-LITERAL(1)
 
-
-
 NNAAMMEE
        HP-literal - hanged paragraphs in literal context
 
@@ -24,7 +22,5 @@ DDEESSCCRRIIPPTTIIOONN
        regular text
        ENDTEST
        end of file
-
-
 
 OpenBSD                         January 6, 2019                  HP-LITERAL(1)

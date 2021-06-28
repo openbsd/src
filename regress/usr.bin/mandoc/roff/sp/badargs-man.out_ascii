@@ -1,7 +1,5 @@
 SP-BADARGS-MAN(1)           General Commands Manual          SP-BADARGS-MAN(1)
 
-
-
 NNAAMMEE
        sp-badargs-man - bad arguments to .sp macros in man(7)
 
@@ -23,7 +21,5 @@ DDEESSCCRRIIPPTTIIOONN
        garbage only:
 
        end of test document
-
-
 
 OpenBSD                        December 23, 2014             SP-BADARGS-MAN(1)

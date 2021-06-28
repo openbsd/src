@@ -1,7 +1,5 @@
 ARGS-MAN(1)                 General Commands Manual                ARGS-MAN(1)
 
-
-
 NNAAMMEE
        args-man - arguments to man macros
 
@@ -32,7 +30,5 @@ DDEESSCCRRIIPPTTIIOONN
        tab after macro: _o_n_ettwwoo text
        escape sequence after macro: _o_n_ettwwoo text
        backslash at eol: _o_n_ettwwoo
-
-
 
 OpenBSD                        November 19, 2014                   ARGS-MAN(1)

@@ -1,7 +1,5 @@
 ESC-IGNORE(1)               General Commands Manual              ESC-IGNORE(1)
 
-
-
 NNAAMMEE
        esc-ignore - ignored roff escape sequences
 
@@ -13,7 +11,5 @@ DDEESSCCRRIIPPTTIIOONN
        quoted: abc
        sizes: abcdef
        signed sizes: abcdef
-
-
 
 OpenBSD                        December 15, 2018                 ESC-IGNORE(1)

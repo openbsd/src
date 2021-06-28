@@ -1,7 +1,5 @@
 TBL-DATA-BLANKLINE(1)       General Commands Manual      TBL-DATA-BLANKLINE(1)
 
-
-
 NNAAMMEE
        tbl-data-blankline - blank line in a table
 
@@ -12,7 +10,5 @@ DDEESSCCRRIIPPTTIIOONN
 
        llaasstt
        normal text
-
-
 
 OpenBSD                        January 21, 2015          TBL-DATA-BLANKLINE(1)

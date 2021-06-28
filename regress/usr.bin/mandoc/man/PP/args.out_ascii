@@ -1,7 +1,5 @@
 PP-ARG(1)                   General Commands Manual                  PP-ARG(1)
 
-
-
 NNAAMMEE
        PP-arg - paragraphs macros with arguments
 
@@ -13,7 +11,5 @@ DDEESSCCRRIIPPTTIIOONN
        P with argument:
 
        final text
-
-
 
 OpenBSD                          July 4, 2014                        PP-ARG(1)

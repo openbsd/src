@@ -1,7 +1,5 @@
 SP-SCALING-MAN(1)           General Commands Manual          SP-SCALING-MAN(1)
 
-
-
 NNAAMMEE
        sp-scaling-man - scaled arguments to .sp requests in man(7)
 
@@ -28,7 +26,5 @@ DDEESSCCRRIIPPTTIIOONN
        two em:
 
        end of test document
-
-
 
 OpenBSD                        December 23, 2014             SP-SCALING-MAN(1)

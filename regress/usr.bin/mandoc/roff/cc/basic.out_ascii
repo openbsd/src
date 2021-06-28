@@ -1,7 +1,5 @@
 CC-BASIC(1)                 General Commands Manual                CC-BASIC(1)
 
-
-
 NNAAMMEE
        cc-basic - basic usage of the cc request
 
@@ -11,7 +9,5 @@ DDEESSCCRRIIPPTTIIOONN
        third line
        fourth line
        last line
-
-
 
 OpenBSD                          July 7, 2012                      CC-BASIC(1)

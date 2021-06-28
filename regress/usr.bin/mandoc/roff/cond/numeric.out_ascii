@@ -1,7 +1,5 @@
 COND-NUMERIC(1)             General Commands Manual            COND-NUMERIC(1)
 
-
-
 NNAAMMEE
        cond-numeric - roff conditions involving numbers
 
@@ -35,7 +33,5 @@ DDEESSCCRRIIPPTTIIOONN
        unmatched parenthesis: (f) one (t)
 
        negated unmatched parenthesis: (f) zero (t)
-
-
 
 OpenBSD                        December 16, 2014               COND-NUMERIC(1)

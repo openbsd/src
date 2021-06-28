@@ -1,7 +1,5 @@
 CE-BASIC(1)                 General Commands Manual                CE-BASIC(1)
 
-
-
 NNAAMMEE
        ce-basic - basic usage of the centering request
 
@@ -19,7 +17,5 @@ DDEESSCCRRIIPPTTIIOONN
                                      not filled.
 
        final text in fill mode
-
-
 
 OpenBSD                        September 2, 2020                   CE-BASIC(1)

@@ -1,7 +1,5 @@
 SPACE-ZEROWIDTH(1)          General Commands Manual         SPACE-ZEROWIDTH(1)
 
-
-
 NNAAMMEE
        space-zerowidth - zero width and narrow space characters
 
@@ -12,7 +10,5 @@ DDEESSCCRRIIPPTTIIOONN
        half-narrow (1/12) space \^ between A and B: AB
        narrow space (1/6) \| between A and B: AB
        ENDTEST
-
-
 
 OpenBSD                        October 27, 2014             SPACE-ZEROWIDTH(1)

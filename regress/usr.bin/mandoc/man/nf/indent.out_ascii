@@ -1,7 +1,5 @@
 NF-INDENT(1)                General Commands Manual               NF-INDENT(1)
 
-
-
 NNAAMMEE
        nf-indent - indentation of literal blocks
 
@@ -19,7 +17,5 @@ DDEESSCCRRIIPPTTIIOONN
 
        end of literal
        He is some more regular text.
-
-
 
 OpenBSD                         January 4, 2011                   NF-INDENT(1)

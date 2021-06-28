@@ -1,7 +1,5 @@
 ARGS-ROFF(1)                General Commands Manual               ARGS-ROFF(1)
 
-
-
 NNAAMMEE
        args-roff - arguments to roff macros
 
@@ -36,7 +34,5 @@ DDEESSCCRRIIPPTTIIOONN
        double trailing blank in unterminated quotes: (one  ) ()
        (one) (two  )
        backslash at eol: (one) (two)
-
-
 
 OpenBSD                        February 21, 2015                  ARGS-ROFF(1)

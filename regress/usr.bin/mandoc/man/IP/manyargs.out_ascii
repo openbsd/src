@@ -1,7 +1,5 @@
 IP-MANYARGS(1)              General Commands Manual             IP-MANYARGS(1)
 
-
-
 NNAAMMEE
        IP-manyargs - too many header args for indented blocks
 
@@ -34,7 +32,5 @@ DDEESSCCRRIIPPTTIIOONN
 
        tag3      indented
                  text
-
-
 
 OpenBSD                         January 4, 2011                 IP-MANYARGS(1)

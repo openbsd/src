@@ -1,7 +1,5 @@
 TP-LITERAL(1)               General Commands Manual              TP-LITERAL(1)
 
-
-
 NNAAMMEE
        TP-literal - indented paragraphs in literal context
 
@@ -23,7 +21,5 @@ DDEESSCCRRIIPPTTIIOONN
        regular text
        ENDTEST
        end of file
-
-
 
 OpenBSD                         January 6, 2019                  TP-LITERAL(1)

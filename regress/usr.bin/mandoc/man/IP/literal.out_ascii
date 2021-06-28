@@ -1,7 +1,5 @@
 IP-LITERAL(1)               General Commands Manual              IP-LITERAL(1)
 
-
-
 NNAAMMEE
        IP-literal - indented paragraphs in literal context
 
@@ -49,7 +47,5 @@ DDEESSCCRRIIPPTTIIOONN
        regular text
        ENDTEST
        end of file
-
-
 
 OpenBSD                         January 6, 2019                  IP-LITERAL(1)

@@ -1,7 +1,5 @@
 TP-SPACING(1)               General Commands Manual              TP-SPACING(1)
 
-
-
 NNAAMMEE
        TP-spacing - spacing in tagged paragraphs
 
@@ -37,7 +35,5 @@ DDEESSCCRRIIPPTTIIOONN
               Three plus five makes eight.
 
        Normal text.
-
-
 
 OpenBSD                       September 21, 2015                 TP-SPACING(1)

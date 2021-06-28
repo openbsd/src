@@ -1,7 +1,5 @@
 PD-ARGS(1)                  General Commands Manual                 PD-ARGS(1)
 
-
-
 NNAAMMEE
        PD-args - unusual arguments to the PD macro
 
@@ -25,7 +23,5 @@ DDEESSCCRRIIPPTTIIOONN
 
        argument(xxx)
        excessive argument
-
-
 
 OpenBSD                        December 23, 2014                    PD-ARGS(1)

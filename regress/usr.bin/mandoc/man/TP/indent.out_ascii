@@ -1,7 +1,5 @@
 TP-INDENT(1)                General Commands Manual               TP-INDENT(1)
 
-
-
 NNAAMMEE
        TP-indent - indent request inside TP head
 
@@ -14,7 +12,5 @@ DDEESSCCRRIIPPTTIIOONN
           tag  indented
 
        final text
-
-
 
 OpenBSD                          June 17, 2017                    TP-INDENT(1)

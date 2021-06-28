@@ -1,7 +1,5 @@
 B-ARGS(1)                   General Commands Manual                  B-ARGS(1)
 
-
-
 NNAAMMEE
        B-args - arguments to font macros
 
@@ -12,7 +10,5 @@ DDEESSCCRRIIPPTTIIOONN
        ttwwoo wwoorrddss
        and another line.
        It has no effect at the end of the file:
-
-
 
 OpenBSD                          July 30, 2014                       B-ARGS(1)

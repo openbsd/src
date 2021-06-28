@@ -1,7 +1,5 @@
 TBL-MOD-SPACING(1)          General Commands Manual         TBL-MOD-SPACING(1)
 
-
-
 NNAAMMEE
        tbl-mod-spacing - spacing modifier in table layout
 
@@ -13,6 +11,4 @@ DDEESSCCRRIIPPTTIIOONN
        |ab|c |d ||e    f  || g   |  h   ||  i |
        |ab|c |d ||e    f  || g   |  h   ||  i |
        +--+--+--++--------++-----+------++----+
-
-
 OpenBSD                          June 27, 2017              TBL-MOD-SPACING(1)

@@ -1,7 +1,5 @@
 TBL-LAYOUT-SHORTLINES(1)    General Commands Manual   TBL-LAYOUT-SHORTLINES(1)
 
-
-
 NNAAMMEE
        tbl-layout-shortlines - table lines of different length
 
@@ -41,6 +39,4 @@ DDEESSCCRRIIPPTTIIOONN
        +-----------+--------+-------+
        |left       | middle | right |
        +-----------+--------+-------+
-
-
 OpenBSD                        January 11, 2020       TBL-LAYOUT-SHORTLINES(1)

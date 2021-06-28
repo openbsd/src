@@ -1,7 +1,5 @@
 TP-DOUBLE(1)                General Commands Manual               TP-DOUBLE(1)
 
-
-
 NNAAMMEE
        TP-double - effect of double tagged paragraph
 
@@ -33,7 +31,5 @@ DDEESSCCRRIIPPTTIIOONN
 
        normal paragraph: This is a rather long text because we want to test
        the text width; at which point will this text wrap to the next line?
-
-
 
 OpenBSD                           2013-06-23                      TP-DOUBLE(1)

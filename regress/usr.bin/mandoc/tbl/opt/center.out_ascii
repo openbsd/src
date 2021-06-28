@@ -1,7 +1,5 @@
 TBL-LAYOUT_CENTER(1)        General Commands Manual       TBL-LAYOUT_CENTER(1)
 
-
-
 NNAAMMEE
        tbl-layout_center - center a table as a whole
 
@@ -60,6 +58,4 @@ DDEESSCCRRIIPPTTIIOONN
                                        +-----+
                                        |text |
                                        +-----+
-
-
 OpenBSD                        January 28, 2015           TBL-LAYOUT_CENTER(1)

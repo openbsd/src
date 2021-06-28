@@ -1,7 +1,5 @@
 CHAR-UNICODE-NOGROFF(1)     General Commands Manual    CHAR-UNICODE-NOGROFF(1)
 
-
-
 NNAAMMEE
        char-unicode-nogroff - characters handled differently by groff
 
@@ -51,7 +49,5 @@ DDEESSCCRRIIPPTTIIOONN
        􏿾     <undefined>
        􏿿     <undefined>
        ENDTEST
-
-
 
 OpenBSD                          June 2, 2021          CHAR-UNICODE-NOGROFF(1)

@@ -1,7 +1,5 @@
 N-BASIC(1)                  General Commands Manual                 N-BASIC(1)
 
-
-
 NNAAMMEE
        N-basic - basic handling of character number escapes
 
@@ -15,7 +13,5 @@ DDEESSCCRRIIPPTTIIOONN
        no quoting: x65x
        non-matching quoting characters: xAx
        end of test document
-
-
 
 OpenBSD                        January 29, 2011                     N-BASIC(1)

@@ -1,7 +1,5 @@
 NF-USERDEF(1)               General Commands Manual              NF-USERDEF(1)
 
-
-
 NNAAMMEE
        nf-userdef - setting unfilled mode via user-defined macros
 
@@ -13,7 +11,5 @@ DDEESSCCRRIIPPTTIIOONN
        unfilled
        text
        filled text
-
-
 
 OpenBSD                          March 8, 2014                   NF-USERDEF(1)

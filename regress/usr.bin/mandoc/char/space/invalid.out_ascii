@@ -1,7 +1,5 @@
 SPACE-INVALID(1)            General Commands Manual           SPACE-INVALID(1)
 
-
-
 NNAAMMEE
        SPACE-INVALID - invalid whitespace escape sequences
 
@@ -15,7 +13,5 @@ DDEESSCCRRIIPPTTIIOONN
        pipe: abc
        tilde: a bc
        digit-width: a bc
-
-
 
 OpenBSD                        December 15, 2018              SPACE-INVALID(1)

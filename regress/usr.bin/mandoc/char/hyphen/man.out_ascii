@@ -1,7 +1,5 @@
 hyphen-man(1)               General Commands Manual              hyphen-man(1)
 
-
-
 NNAAMMEE
        hhyypphheenn--mmaann - formatting hyphens and breaking lines
 
@@ -14,7 +12,5 @@ DDEESSCCRRIIPPTTIIOONN
 
        Finally, try it a third time, but this time in bold font mode: bbrreeaakk--
        hheerree
-
-
 
 OpenBSD                       September 18, 2011                 hyphen-man(1)

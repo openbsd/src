@@ -1,7 +1,5 @@
 TI-WIDE(1)                  General Commands Manual                 TI-WIDE(1)
 
-
-
 NNAAMMEE
        ti-wide - excessive temporary indentation
 
@@ -16,7 +14,5 @@ DDEESSCCRRIIPPTTIIOONN
                                                                          72n:
                                                                          same
        Back to normal.
-
-
 
 OpenBSD                        September 3, 2020                    TI-WIDE(1)

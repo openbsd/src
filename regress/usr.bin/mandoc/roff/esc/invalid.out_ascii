@@ -1,7 +1,5 @@
 ESC-INVALID(1)              General Commands Manual             ESC-INVALID(1)
 
-
-
 NNAAMMEE
        esc-invalid - invalid roff escape sequences
 
@@ -28,7 +26,5 @@ DDEESSCCRRIIPPTTIIOONN
        U: aUbc
        W: aWbc
        y: aybc
-
-
 
 OpenBSD                        December 15, 2018                ESC-INVALID(1)

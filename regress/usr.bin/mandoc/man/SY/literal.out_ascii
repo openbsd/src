@@ -1,7 +1,5 @@
 SY-LITERAL(1)               General Commands Manual              SY-LITERAL(1)
 
-
-
 NNAAMMEE
        SY-literal - synopsis block in literal context
 
@@ -21,7 +19,5 @@ DDEESSCCRRIIPPTTIIOONN
        final regular text
        ENDTEST
        end of file
-
-
 
 OpenBSD                         January 5, 2019                  SY-LITERAL(1)

@@ -1,7 +1,5 @@
 TBL-LAYOUT-EMPTYCOL(1)      General Commands Manual     TBL-LAYOUT-EMPTYCOL(1)
 
-
-
 NNAAMMEE
        tbl-layout-emptycol - empty columns in tables
 
@@ -41,6 +39,4 @@ DDEESSCCRRIIPPTTIIOONN
        +--+---+---+
        |span      |
        +----------+
-
-
 OpenBSD                        December 31, 2019        TBL-LAYOUT-EMPTYCOL(1)

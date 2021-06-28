@@ -1,7 +1,5 @@
 STRING-ESCAPE(1)            General Commands Manual           STRING-ESCAPE(1)
 
-
-
 NNAAMMEE
        string-escape - preventing string interpolation
 
@@ -25,7 +23,5 @@ DDEESSCCRRIIPPTTIIOONN
        result: *[right]
 
        The above line must be "result: *[right]", not "result: wrong".
-
-
 
 OpenBSD                        December 3, 2010               STRING-ESCAPE(1)

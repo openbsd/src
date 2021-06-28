@@ -1,7 +1,5 @@
 MT-ARGS(1)                  General Commands Manual                 MT-ARGS(1)
 
-
-
 NNAAMMEE
        MT-args - argument handling of the man-ext mailto macro
 
@@ -19,7 +17,5 @@ DDEESSCCRRIIPPTTIIOONN
        two arguments, but no text: <first>
 
        final text
-
-
 
 OpenBSD                         August 13, 2018                     MT-ARGS(1)
