@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.98 2021/06/16 09:02:21 mpi Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.99 2021/06/28 11:19:01 mpi Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -779,19 +779,11 @@ uao_init(void)
 void
 uao_reference(struct uvm_object *uobj)
 {
-	KERNEL_ASSERT_LOCKED();
-	uao_reference_locked(uobj);
-}
-
-void
-uao_reference_locked(struct uvm_object *uobj)
-{
-
 	/* Kernel object is persistent. */
 	if (UVM_OBJ_IS_KERN_OBJECT(uobj))
 		return;
 
-	uobj->uo_refs++;
+	atomic_inc_int(&uobj->uo_refs);
 }
 
 
@@ -801,34 +793,19 @@ uao_reference_locked(struct uvm_object *uobj)
 void
 uao_detach(struct uvm_object *uobj)
 {
-	KERNEL_ASSERT_LOCKED();
-	uao_detach_locked(uobj);
-}
-
-
-/*
- * uao_detach_locked: drop a reference to an aobj
- *
- * => aobj may freed upon return.
- */
-void
-uao_detach_locked(struct uvm_object *uobj)
-{
 	struct uvm_aobj *aobj = (struct uvm_aobj *)uobj;
 	struct vm_page *pg;
 
 	/*
 	 * Detaching from kernel_object is a NOP.
 	 */
-	if (UVM_OBJ_IS_KERN_OBJECT(uobj)) {
+	if (UVM_OBJ_IS_KERN_OBJECT(uobj))
 		return;
-	}
 
 	/*
 	 * Drop the reference.  If it was the last one, destroy the object.
 	 */
-	uobj->uo_refs--;
-	if (uobj->uo_refs) {
+	if (atomic_dec_int_nv(&uobj->uo_refs) > 0) {
 		return;
 	}
 
@@ -1265,68 +1242,54 @@ uao_dropswap(struct uvm_object *uobj, int pageidx)
 boolean_t
 uao_swap_off(int startslot, int endslot)
 {
-	struct uvm_aobj *aobj, *nextaobj, *prevaobj = NULL;
+	struct uvm_aobj *aobj;
 
 	/*
-	 * Walk the list of all anonymous UVM objects.
+	 * Walk the list of all anonymous UVM objects.  Grab the first.
 	 */
 	mtx_enter(&uao_list_lock);
+	if ((aobj = LIST_FIRST(&uao_list)) == NULL) {
+		mtx_leave(&uao_list_lock);
+		return FALSE;
+	}
+	uao_reference(&aobj->u_obj);
 
-	for (aobj = LIST_FIRST(&uao_list);
-	     aobj != NULL;
-	     aobj = nextaobj) {
+	do {
+		struct uvm_aobj *nextaobj;
 		boolean_t rv;
 
 		/*
-		 * add a ref to the aobj so it doesn't disappear
-		 * while we're working.
+		 * Prefetch the next object and immediately hold a reference
+		 * on it, so neither the current nor the next entry could
+		 * disappear while we are iterating.
 		 */
-		uao_reference_locked(&aobj->u_obj);
-
-		/*
-		 * now it's safe to unlock the uao list.
-		 * note that lock interleaving is alright with IPL_NONE mutexes.
-		 */
+		if ((nextaobj = LIST_NEXT(aobj, u_list)) != NULL) {
+			uao_reference(&nextaobj->u_obj);
+		}
 		mtx_leave(&uao_list_lock);
 
-		if (prevaobj) {
-			uao_detach_locked(&prevaobj->u_obj);
-			prevaobj = NULL;
-		}
-
 		/*
-		 * page in any pages in the swslot range.
-		 * if there's an error, abort and return the error.
+		 * Page in all pages in the swap slot range.
 		 */
 		rv = uao_pagein(aobj, startslot, endslot);
+
+		/* Drop the reference of the current object. */
+		uao_detach(&aobj->u_obj);
 		if (rv) {
-			uao_detach_locked(&aobj->u_obj);
+			if (nextaobj) {
+				uao_detach(&nextaobj->u_obj);
+			}
 			return rv;
 		}
 
-		/*
-		 * we're done with this aobj.
-		 * relock the list and drop our ref on the aobj.
-		 */
+		aobj = nextaobj;
 		mtx_enter(&uao_list_lock);
-		nextaobj = LIST_NEXT(aobj, u_list);
-		/*
-		 * prevaobj means that we have an object that we need
-		 * to drop a reference for. We can't just drop it now with
-		 * the list locked since that could cause lock recursion in
-		 * the case where we reduce the refcount to 0. It will be
-		 * released the next time we drop the list lock.
-		 */
-		prevaobj = aobj;
-	}
+	} while (aobj);
 
 	/*
 	 * done with traversal, unlock the list
 	 */
 	mtx_leave(&uao_list_lock);
-	if (prevaobj) {
-		uao_detach_locked(&prevaobj->u_obj);
-	}
 	return FALSE;
 }
 
