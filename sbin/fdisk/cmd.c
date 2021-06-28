@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.117 2021/06/21 02:05:30 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.118 2021/06/28 19:50:30 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -63,7 +63,7 @@ Xreinit(char *args, struct mbr *mbr)
 
 	if (dogpt) {
 		MBR_init_GPT(mbr);
-		GPT_init();
+		GPT_init(GHANDGP, 0);
 		GPT_print("s", TERSE);
 	} else {
 		memset(&gh, 0, sizeof(gh));

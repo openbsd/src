@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.113 2021/06/25 19:24:53 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.114 2021/06/28 19:50:30 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -222,14 +222,14 @@ main(int argc, char *argv[])
 		if (letoh64(gh.gh_sig) != GPTSIGNATURE)
 			errx(1, "-A requires a valid GPT");
 		else {
-			MBR_init_GPT(&initial_mbr);
-			GPT_init();
+			initial_mbr = mbr;	/* Keep current MBR. */
+			GPT_init(GPONLY, b_sectors);
 			query = "Do you wish to write new GPT?";
 		}
 	} else if (i_flag) {
 		if (g_flag) {
 			MBR_init_GPT(&initial_mbr);
-			GPT_init();
+			GPT_init(GHANDGP, b_sectors);
 			query = "Do you wish to write new GPT?";
 		} else {
 			memset(&gh, 0, sizeof(gh));

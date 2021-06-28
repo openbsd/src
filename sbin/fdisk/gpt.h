@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.h,v 1.12 2021/06/16 15:40:47 krw Exp $	*/
+/*	$OpenBSD: gpt.h,v 1.13 2021/06/28 19:50:30 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -20,7 +20,7 @@ void		GPT_read(int);
 int		GPT_get_lba_start(unsigned int);
 int		GPT_get_lba_end(unsigned int);
 
-int		GPT_init(void);
+int		GPT_init(int, uint32_t);
 int		GPT_write(void);
 void		GPT_zap_headers(void);
 void		GPT_print(char *, int);
@@ -36,3 +36,6 @@ extern struct gpt_partition gp[NGPTPARTITIONS];
 
 #define	TERSE		0
 #define	VERBOSE		1
+
+#define	GHANDGP		0
+#define	GPONLY		1

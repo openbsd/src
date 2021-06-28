@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.33 2021/06/25 19:24:53 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.34 2021/06/28 19:50:30 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -49,7 +49,7 @@ int			  add_partition(const uint8_t *, const char *, uint64_t);
 int			  get_header(off_t);
 int			  get_partition_table(void);
 int			  init_gh(void);
-int			  init_gp(void);
+int			  init_gp(int, uint32_t);
 
 int
 get_header(off_t where)
@@ -413,17 +413,15 @@ init_gh(void)
 }
 
 int
-init_gp(void)
+init_gp(int how, uint32_t bootsectors)
 {
-	extern uint32_t b_sectors;
-	extern int A_flag;
 	const uint8_t gpt_uuid_efi_system[] = GPT_UUID_EFI_SYSTEM;
 	const uint8_t gpt_uuid_openbsd[] = GPT_UUID_OPENBSD;
 	struct gpt_partition oldgp[NGPTPARTITIONS];
 	int pn, rslt;
 
 	memcpy(&oldgp, &gp, sizeof(oldgp));
-	if (A_flag == 0)
+	if (how == GHANDGP)
 		memset(&gp, 0, sizeof(gp));
 	else {
 		for (pn = 0; pn < NGPTPARTITIONS; pn++) {
@@ -434,9 +432,9 @@ init_gp(void)
 	}
 
 	rslt = 0;
-	if (b_sectors > 0) {
+	if (bootsectors > 0) {
 		rslt = add_partition(gpt_uuid_efi_system, "EFI System Area",
-		    b_sectors);
+		    bootsectors);
 	}
 	if (rslt == 0)
 		rslt = add_partition(gpt_uuid_openbsd, "OpenBSD Area", 0);
@@ -448,13 +446,14 @@ init_gp(void)
 }
 
 int
-GPT_init(void)
+GPT_init(int how, uint32_t bootsectors)
 {
-	int rslt;
+	int rslt = 0;
 
-	rslt = init_gh();
+	if (how == GHANDGP)
+		rslt = init_gh();
 	if (rslt == 0)
-		rslt = init_gp();
+		rslt = init_gp(how, bootsectors);
 
 	return rslt;
 }
@@ -498,10 +497,9 @@ GPT_write(void)
 	uint64_t altgh, altgp, prigh, prigp, gpbytes;
 
 	/*
-	 * XXX Assume we always write full-size partition table.
 	 * XXX Assume size of gp is multiple of sector size.
 	 */
-	gpbytes = sizeof(gp);
+	gpbytes = letoh64(gh.gh_part_num) * letoh64(gh.gh_part_size);
 
 	prigh = GPTSECTOR;
 	prigp = prigh + 1;
