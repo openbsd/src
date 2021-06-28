@@ -1,4 +1,4 @@
-/* $OpenBSD: man_term.c,v 1.188 2020/03/13 00:31:05 schwarze Exp $ */
+/* $OpenBSD: man_term.c,v 1.189 2021/06/28 19:49:57 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2015, 2017-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1019,10 +1019,6 @@ print_man_foot(struct termp *p, const struct roff_meta *meta)
 	 */
 
 	if ( ! p->mdocstyle) {
-		if (meta->hasbody) {
-			term_vspace(p);
-			term_vspace(p);
-		}
 		mandoc_asprintf(&title, "%s(%s)",
 		    meta->title, meta->msec);
 	} else if (meta->os != NULL) {
@@ -1141,9 +1137,5 @@ print_man_head(struct termp *p, const struct roff_meta *meta)
 	 */
 
 	term_vspace(p);
-	if ( ! p->mdocstyle) {
-		term_vspace(p);
-		term_vspace(p);
-	}
 	free(title);
 }

@@ -1,4 +1,4 @@
-.\" $OpenBSD: mandoc.1,v 1.176 2021/06/27 17:57:13 schwarze Exp $
+.\" $OpenBSD: mandoc.1,v 1.177 2021/06/28 19:49:57 schwarze Exp $
 .\"
 .\" Copyright (c) 2012, 2014-2021 Ingo Schwarze <schwarze@openbsd.org>
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 27 2021 $
+.Dd $Mdocdate: June 28 2021 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -301,8 +301,8 @@ Format
 input files in
 .Xr mdoc 7
 output style.
-Specifically, this suppresses the two additional blank lines near the
-top and the bottom of each page, and it implies
+This prints the operating system name rather than the page title
+on the right side of the footer line, and it implies
 .Fl O Cm indent Ns =5 .
 One useful application is for checking that
 .Fl T Cm man
