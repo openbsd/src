@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuswitch.S,v 1.3 2021/05/20 04:22:33 drahn Exp $	*/
+/*	$OpenBSD: cpuswitch.S,v 1.4 2021/06/28 18:38:17 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
@@ -98,8 +98,8 @@ END(cpu_switch_asm)
 
 ENTRY(proc_trampoline)
 #ifdef MULTIPROCESSOR
-	t0	_C_LABEL(proc_trampoline_mp)
-	jr	t0
+	la	t0, _C_LABEL(proc_trampoline_mp)
+	jalr	t0
 #endif
 	// call it or just set the variable?
 	li	a0, IPL_NONE
