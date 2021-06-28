@@ -1,4 +1,4 @@
-/*	$OpenBSD: copy.S,v 1.5 2021/06/28 09:35:09 kettenis Exp $	*/
+/*	$OpenBSD: copy.S,v 1.6 2021/06/28 18:53:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2020 Brian Bamsch <bbamsch@google.com>
@@ -27,7 +27,6 @@
 
 
 	.text
-	.align 4
 
 /*
  * a0 = user space address

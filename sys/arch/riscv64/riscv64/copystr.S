@@ -1,4 +1,4 @@
-/*	$OpenBSD: copystr.S,v 1.3 2021/05/15 20:14:05 deraadt Exp $	*/
+/*	$OpenBSD: copystr.S,v 1.4 2021/06/28 18:53:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
@@ -25,7 +25,6 @@
 #include <sys/errno.h>
 
 	.text
-	.align 4
 
 /*
  * a0 - from

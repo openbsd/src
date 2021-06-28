@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc_asm.S,v 1.2 2021/05/12 01:20:52 jsg Exp $	*/
+/*	$OpenBSD: cpufunc_asm.S,v 1.3 2021/06/28 18:53:10 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2015-2017 Ruslan Bukin <br@bsdpad.com>
@@ -37,7 +37,6 @@
 #include <machine/asm.h>
 
 	.text
-	.align	2
 
 ENTRY(riscv_nullop)
 	ret
