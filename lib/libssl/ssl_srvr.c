@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.115 2021/06/29 19:10:08 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.116 2021/06/29 19:24:07 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2113,7 +2113,7 @@ ssl3_get_cert_verify(SSL *s)
 {
 	CBS cbs, signature;
 	const struct ssl_sigalg *sigalg = NULL;
-	const EVP_MD *md = NULL;
+	uint16_t sigalg_value = SIGALG_NONE;
 	EVP_PKEY *pkey = NULL;
 	X509 *peer = NULL;
 	EVP_MD_CTX mctx;
@@ -2171,66 +2171,47 @@ ssl3_get_cert_verify(SSL *s)
 		goto fatal_err;
 	}
 
-	if (!SSL_USE_SIGALGS(s)) {
-		if (!CBS_get_u16_length_prefixed(&cbs, &signature))
-			goto err;
-		if (CBS_len(&signature) > EVP_PKEY_size(pkey)) {
-			SSLerror(s, SSL_R_WRONG_SIGNATURE_SIZE);
-			al = SSL_AD_DECODE_ERROR;
-			goto fatal_err;
-		}
-		if (CBS_len(&cbs) != 0) {
-			al = SSL_AD_DECODE_ERROR;
-			SSLerror(s, SSL_R_EXTRA_DATA_IN_MESSAGE);
-			goto fatal_err;
-		}
+	if (SSL_USE_SIGALGS(s)) {
+		if (!CBS_get_u16(&cbs, &sigalg_value))
+			goto decode_err;
+	}
+	if (!CBS_get_u16_length_prefixed(&cbs, &signature))
+		goto err;
+	if (CBS_len(&cbs) != 0) {
+		al = SSL_AD_DECODE_ERROR;
+		SSLerror(s, SSL_R_EXTRA_DATA_IN_MESSAGE);
+		goto fatal_err;
+	}
+
+	if (CBS_len(&signature) > EVP_PKEY_size(pkey)) {
+		SSLerror(s, SSL_R_WRONG_SIGNATURE_SIZE);
+		al = SSL_AD_DECODE_ERROR;
+		goto fatal_err;
+	}
+
+	if ((sigalg = ssl_sigalg_for_peer(s, pkey,
+	    sigalg_value)) == NULL) {
+		al = SSL_AD_DECODE_ERROR;
+		goto fatal_err;
 	}
 
 	if (SSL_USE_SIGALGS(s)) {
 		EVP_PKEY_CTX *pctx;
-		uint16_t sigalg_value;
-
-		if (!CBS_get_u16(&cbs, &sigalg_value))
-			goto decode_err;
-		if ((sigalg = ssl_sigalg_from_value(
-		    S3I(s)->hs.negotiated_tls_version, sigalg_value)) == NULL ||
-		    (md = sigalg->md()) == NULL) {
-			SSLerror(s, SSL_R_UNKNOWN_DIGEST);
-			al = SSL_AD_DECODE_ERROR;
-			goto fatal_err;
-		}
-		if (!ssl_sigalg_pkey_ok(s, sigalg, pkey)) {
-			SSLerror(s, SSL_R_WRONG_SIGNATURE_TYPE);
-			al = SSL_AD_DECODE_ERROR;
-			goto fatal_err;
-		}
-
-		if (!CBS_get_u16_length_prefixed(&cbs, &signature))
-			goto err;
-		if (CBS_len(&signature) > EVP_PKEY_size(pkey)) {
-			SSLerror(s, SSL_R_WRONG_SIGNATURE_SIZE);
-			al = SSL_AD_DECODE_ERROR;
-			goto fatal_err;
-		}
-		if (CBS_len(&cbs) != 0) {
-			al = SSL_AD_DECODE_ERROR;
-			SSLerror(s, SSL_R_EXTRA_DATA_IN_MESSAGE);
-			goto fatal_err;
-		}
 
 		if (!tls1_transcript_data(s, &hdata, &hdatalen)) {
 			SSLerror(s, ERR_R_INTERNAL_ERROR);
 			al = SSL_AD_INTERNAL_ERROR;
 			goto fatal_err;
 		}
-		if (!EVP_DigestVerifyInit(&mctx, &pctx, md, NULL, pkey)) {
+		if (!EVP_DigestVerifyInit(&mctx, &pctx, sigalg->md(),
+		    NULL, pkey)) {
 			SSLerror(s, ERR_R_EVP_LIB);
 			al = SSL_AD_INTERNAL_ERROR;
 			goto fatal_err;
 		}
 		if ((sigalg->flags & SIGALG_FLAG_RSA_PSS) &&
-		    (!EVP_PKEY_CTX_set_rsa_padding
-		    (pctx, RSA_PKCS1_PSS_PADDING) ||
+		    (!EVP_PKEY_CTX_set_rsa_padding(pctx,
+			RSA_PKCS1_PSS_PADDING) ||
 		    !EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, -1))) {
 			al = SSL_AD_INTERNAL_ERROR;
 			goto fatal_err;
@@ -2283,6 +2264,7 @@ ssl3_get_cert_verify(SSL *s)
 		unsigned char sigbuf[128];
 		unsigned int siglen = sizeof(sigbuf);
 		EVP_PKEY_CTX *pctx;
+		const EVP_MD *md;
 		int nid;
 
 		if (!tls1_transcript_data(s, &hdata, &hdatalen)) {
