@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_specops.c,v 1.6 2020/01/20 23:21:56 claudio Exp $	*/
+/*	$OpenBSD: tmpfs_specops.c,v 1.7 2021/06/29 16:15:37 claudio Exp $	*/
 /*	$NetBSD: tmpfs_specops.c,v 1.10 2011/05/24 20:17:49 rmind Exp $	*/
 
 /*
@@ -42,7 +42,6 @@
 
 #include <tmpfs/tmpfs.h>
 
-int	tmpfs_spec_close	(void *);
 int	tmpfs_spec_read		(void *);
 int	tmpfs_spec_write	(void *);
 
