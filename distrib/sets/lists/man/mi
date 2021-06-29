@@ -1819,6 +1819,7 @@
 ./usr/share/man/man4/rkpmic.4
 ./usr/share/man/man4/rkpwm.4
 ./usr/share/man/man4/rkrng.4
+./usr/share/man/man4/rktcphy.4
 ./usr/share/man/man4/rktemp.4
 ./usr/share/man/man4/rkvop.4
 ./usr/share/man/man4/rl.4
