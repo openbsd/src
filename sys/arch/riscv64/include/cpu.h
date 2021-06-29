@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.7 2021/06/02 00:39:27 cheloha Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.8 2021/06/29 21:27:52 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2019 Mike Larkin <mlarkin@openbsd.org>
@@ -78,24 +78,17 @@ struct cpu_info {
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
 
 	u_int32_t		ci_cpuid;
-#if 0
-	uint64_t		ci_mpidr;
-	u_int			ci_acpi_proc_id;
-#endif
+	uint64_t		ci_hartid;
 	int			ci_node;
 	struct cpu_info		*ci_self;
 
 	struct proc		*ci_curproc;
 	struct pmap		*ci_curpm;
-#if 0
 	struct proc		*ci_fpuproc;
-#endif
 	u_int32_t		ci_randseed;
 
 	struct pcb		*ci_curpcb;
 	struct pcb		*ci_idle_pcb;
-
-	u_int32_t		ci_ctrl; /* The CPU control register */
 
 	uint64_t		ci_lasttb;
 	uint64_t		ci_nexttimerevent;
@@ -110,25 +103,12 @@ struct cpu_info {
 #endif
 	int			ci_want_resched;
 
-	/* currently loaded fpu proc ctx */
-	struct proc		*ci_fpuproc;
-
-#if 0
-	void			(*ci_flush_bp)(void);
-
-	struct opp_table	*ci_opp_table;
-	volatile int		ci_opp_idx;
-	volatile int		ci_opp_max;
-	uint32_t		ci_cpu_supply;
-#endif
-
 #ifdef MULTIPROCESSOR
 	struct srp_hazard	ci_srp_hazards[SRP_HAZARD_NUM];
 	volatile int		ci_flags;
-#if 0
-	uint64_t		ci_ttbr1;
-	vaddr_t			ci_el1_stkend;
-#endif
+	uint64_t		ci_satp;
+	vaddr_t			ci_initstack_end;
+	int			ci_ipi_reason;
 
 	volatile int		ci_ddb_paused;
 #define CI_DDB_RUNNING		0
@@ -142,6 +122,7 @@ struct cpu_info {
 #ifdef GPROF
 	struct gmonparam	*ci_gmon;
 #endif
+
 	char			ci_panicbuf[512];
 };
 
@@ -169,6 +150,7 @@ extern struct cpu_info *cpu_info_list;
 
 #define cpu_number()	0
 #define CPU_IS_PRIMARY(ci)	1
+#define CPU_IS_RUNNING(ci)	1
 #define CPU_INFO_ITERATOR	int
 #define CPU_INFO_FOREACH(cii, ci) \
 	for (cii = 0, ci = curcpu(); ci != NULL; ci = NULL)
@@ -180,6 +162,7 @@ extern struct cpu_info *cpu_info_list;
 
 #define cpu_number()		(curcpu()->ci_cpuid)
 #define CPU_IS_PRIMARY(ci)	((ci) == &cpu_info_primary)
+#define CPU_IS_RUNNING(ci)	((ci)->ci_flags & CPUF_RUNNING)
 #define CPU_INFO_ITERATOR		int
 #define CPU_INFO_FOREACH(cii, ci)	for (cii = 0, ci = cpu_info_list; \
 					    ci != NULL; ci = ci->ci_next)
@@ -188,7 +171,9 @@ extern struct cpu_info *cpu_info_list;
 
 extern struct cpu_info *cpu_info[MAXCPUS];
 
-void cpu_boot_secondary_processors(void);
+void	cpu_boot_secondary_processors(void);
+void	cpu_startclock(void);
+
 #endif /* !MULTIPROCESSOR */
 
 #define CPU_BUSY_CYCLE()	do {} while (0)

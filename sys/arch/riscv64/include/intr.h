@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.5 2021/05/19 17:39:50 kettenis Exp $	*/
+/*	$OpenBSD: intr.h,v 1.6 2021/06/29 21:27:52 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -206,11 +206,10 @@ void	 riscv_intr_disable(void *);
 void	 riscv_intr_route(void *, int, struct cpu_info *);
 void	 riscv_intr_cpu_enable(void);
 
-void	 riscv_send_ipi(struct cpu_info *, int);
-extern void (*intr_send_ipi_func)(struct cpu_info *, int);
+#define IPI_NOP		0
+#define IPI_DDB		(1 << 0)
 
-#define riscv_IPI_NOP	0
-#define riscv_IPI_DDB	1
+void	intr_send_ipi(struct cpu_info *, int);
 
 #ifdef DIAGNOSTIC
 /*

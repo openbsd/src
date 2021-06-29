@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.11 2021/06/29 12:22:39 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.12 2021/06/29 21:27:53 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2015-2018 Ruslan Bukin <br@bsdpad.com>
@@ -263,6 +263,17 @@ va:
 	call	_C_LABEL(initriscv)	// Off we go, defined in machdep.c
 	call	_C_LABEL(main)		//defined in openbsd/kern/init_main.c
 
+/*
+ * Get the physical address the kernel is loaded to. Returned in s9.
+ */
+get_physmem:
+	lla	t0, virt_map	/* physical address of virt_map */
+	ld	t1, 0(t0)	/* virtual address of virt_map */
+	sub	t1, t1, t0	/* calculate phys->virt delta */
+	li	t2, KERNBASE
+	sub	s9, t2, t1	/* s9 = physmem base */
+	ret
+
 	.data
 	.align	4
 initstack:
@@ -317,44 +328,31 @@ init_pt_va:
 	.quad pagetable_l2	/* XXX: Keep page tables VA */
 
 #ifdef MULTIPROCESSOR
-/*
- * mpentry(unsigned long)
- *
- * Called by a core / hart when it is being brought online.
- * XXX: [CMPE] This needs to be updated
- */
-ENTRY(mpentry)
-	/*
-	 * Calculate the offset to __riscv_boot_ap
-	 * for the current core, cpuid is in a0.
-	 */
-	li	t1, 4			//t1 = 4, each core occupies a word
-	mulw	t1, t1, a0		//t1 = a0*4, offset in Bytes for #a0 core
-	/* Get the pointer */
-	lla	t0, __riscv_boot_ap
-	add	t0, t0, t1		//t0 = starting addr for current core
 
-1:
-	/* Wait the kernel to be ready */
-	lw	t1, 0(t0)		//when kernel is ready, 0(t0) should NOT euqal 0
-	beqz	t1, 1b			//see __riscv_boot_ap
+	.text
+	.globl cpu_hatch
+cpu_hatch:
+	ld	tp, CI_SELF(a1)
+	ld	a2, CI_SATP(a1)
 
-	/* Setup stack pointer */	//now kernel is ready
-	lla	t0, secondary_stacks	//pa, size: #core x #pages/kernel x pg_size
-	li	t1, (PAGE_SIZE * KSTACK_PAGES)	// size of kernel stack for one core
-	mulw	t2, t1, a0			//offset for this hart
-	add	t0, t0, t2			//end of stack for this hart
-	add	t0, t0, t1			//start of stack for this hart
-	sub	t0, t0, s9			//s9 is phymem base, t0 is now relative addr
-	li	t1, KERNBASE			//t1 is virtual addr
-	add	sp, t0, t1			//now sp is set to the right virtual address.
+	/* Set the global pointer */
+.option push
+.option norelax
+	lla	gp, __global_pointer$
+.option pop
+
+	/* Setup stack pointer */
+	ld	sp, CI_INITSTACK_END(a1)
+
+	/* Get the kernel's load address */
+	jal	get_physmem
 
 	/* Setup supervisor trap vector */
-	lla	t0, mpva			//mpva is phymem addr of the handler array
-	sub	t0, t0, s9			//get the relative addr
+	lla	t0, mpva
+	sub	t0, t0, s9
 	li	t1, KERNBASE
-	add	t0, t0, t1			//get the virtual addr
-	csrw	stvec, t0			//set the CSR
+	add	t0, t0, t1
+	csrw	stvec, t0
 
 	/* Set page tables base register */
 	lla	s2, pagetable_l1
@@ -378,8 +376,12 @@ mpva:
 
 	/* Ensure sscratch is zero */
 	li	t0, 0
-	csrw	sscratch, t0		//Scratch Register for Supervisor Mode Trap Handler
+	csrw	sscratch, t0
 
-	call	init_secondary
-END(mpentry)
+	/* Switch to real kernel page tables */
+	csrw	satp, a2
+	sfence.vma
+
+	call	_C_LABEL(cpu_start_secondary)
+
 #endif

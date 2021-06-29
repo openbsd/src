@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.9 2021/06/19 22:11:08 kettenis Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.10 2021/06/29 21:27:53 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Dale Rahn <drahn@openbsd.org>
@@ -32,9 +32,12 @@ fpu_clear(struct fpreg *fp)
 void
 fpu_discard(struct proc *p)
 {
-	if (p->p_addr->u_pcb.pcb_fpcpu == curcpu())
-		curcpu()->ci_fpuproc = NULL;
-	p->p_addr->u_pcb.pcb_fpcpu = NULL;
+	struct cpu_info *ci = curcpu();
+	
+	if (curpcb->pcb_fpcpu == ci && ci->ci_fpuproc == p) {
+		ci->ci_fpuproc = NULL;
+		curpcb->pcb_fpcpu = NULL;
+	}
 }
 
 void

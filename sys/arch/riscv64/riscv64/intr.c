@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.7 2021/05/19 17:39:50 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.8 2021/06/29 21:27:53 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
@@ -18,10 +18,12 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
 #include <sys/malloc.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
+#include <machine/sbi.h>
 
 #include <dev/ofw/openfirm.h>
 
@@ -713,17 +715,36 @@ intr_barrier(void *cookie)
  * IPI implementation
  */
 
-void riscv_no_send_ipi(struct cpu_info *ci, int id);
-void (*intr_send_ipi_func)(struct cpu_info *, int) = riscv_no_send_ipi;
+#ifdef MULTIPROCESSOR
 
 void
-riscv_send_ipi(struct cpu_info *ci, int id)
+intr_send_ipi(struct cpu_info *ci, int reason)
 {
-	(*intr_send_ipi_func)(ci, id);
+	unsigned long hart_mask;
+
+	if (ci == curcpu() && reason == IPI_NOP)
+		return;
+
+	if (reason != IPI_NOP)
+		atomic_setbits_int(&ci->ci_ipi_reason, reason);
+
+	hart_mask = (1UL << ci->ci_hartid);
+	sbi_send_ipi(&hart_mask);
 }
 
-void
-riscv_no_send_ipi(struct cpu_info *ci, int id)
+int
+ipi_intr(void *frame)
 {
-	panic("riscv_send_ipi() called: no ipi function");
+	struct cpu_info *ci = curcpu();
+	int pending;
+
+	csr_clear(sip, SIP_SSIP);
+	pending = atomic_swap_uint(&ci->ci_ipi_reason, IPI_NOP);
+
+	if (pending & IPI_DDB)
+		db_enter();
+
+	return 1;
 }
+
+#endif

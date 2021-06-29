@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.6 2021/06/21 14:39:05 deraadt Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.7 2021/06/29 21:27:53 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -156,7 +156,8 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 	/* Save signal mask. */
 	frame.sf_sc.sc_mask = mask;
 
-	if (p->p_addr->u_pcb.pcb_flags & PCB_FPU) {
+	if (p->p_addr->u_pcb.pcb_flags & PCB_FPU &&
+	    (tf->tf_sstatus & SSTATUS_FS_MASK) == SSTATUS_FS_DIRTY) {
 		fpu_save(p, tf);
 		fpreg = &p->p_addr->u_pcb.pcb_fpstate;
 		for (i=0; i < 32; i++) {

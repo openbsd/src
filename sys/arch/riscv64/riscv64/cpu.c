@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.8 2021/05/20 18:28:15 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.9 2021/06/29 21:27:53 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -19,11 +19,15 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/sysctl.h>
 
+#include <uvm/uvm.h>
+
 #include <machine/fdt.h>
+#include <machine/sbi.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>
@@ -65,7 +69,7 @@ cpu_identify(struct cpu_info *ci)
 }
 
 #ifdef MULTIPROCESSOR
-int	cpu_hatch_secondary(struct cpu_info *ci, int, uint64_t);
+int	cpu_hatch_secondary(struct cpu_info *ci);
 #endif
 int	cpu_clockspeed(int *);
 
@@ -94,10 +98,11 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 
 	KASSERT(faa->fa_nreg > 0);
 
-	if (faa->fa_reg[0].addr == boot_hart) {/* the primary cpu */
+	if (faa->fa_reg[0].addr == boot_hart) {
 		ci = &cpu_info_primary;
 #ifdef MULTIPROCESSOR
 		ci->ci_flags |= CPUF_RUNNING | CPUF_PRESENT | CPUF_PRIMARY;
+		csr_set(sie, SIE_SSIE);
 #endif
 	}
 #ifdef MULTIPROCESSOR
@@ -113,31 +118,18 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 
 	ci->ci_dev = dev;
 	ci->ci_cpuid = dev->dv_unit;
+	ci->ci_hartid = faa->fa_reg[0].addr;
 	ci->ci_node = faa->fa_node;
 	ci->ci_self = ci;
 
 #ifdef MULTIPROCESSOR
 	if (ci->ci_flags & CPUF_AP) {
-		char buf[32];
-		uint64_t spinup_data = 0;
-		int spinup_method = 0;
 		int timeout = 10000;
-		int len;
-
-		len = OF_getprop(ci->ci_node, "enable-method",
-		    buf, sizeof(buf));
-		if (strcmp(buf, "psci") == 0) {
-			spinup_method = 1;
-		} else if (strcmp(buf, "spin-table") == 0) {
-			spinup_method = 2;
-			spinup_data = OF_getpropint64(ci->ci_node,
-			    "cpu-release-addr", 0);
-		}
 
 		sched_init_cpu(ci);
-		if (cpu_hatch_secondary(ci, spinup_method, spinup_data)) {
+		if (cpu_hatch_secondary(ci)) {
 			atomic_setbits_int(&ci->ci_flags, CPUF_IDENTIFY);
-			__asm volatile("dsb sy; sev");
+			membar_producer();
 
 			while ((ci->ci_flags & CPUF_IDENTIFIED) == 0 &&
 			    --timeout)
@@ -240,3 +232,110 @@ cpu_cache_nop_range(paddr_t pa, psize_t len)
 void (*cpu_dcache_wbinv_range)(paddr_t, psize_t) = cpu_cache_nop_range;
 void (*cpu_dcache_inv_range)(paddr_t, psize_t) = cpu_cache_nop_range;
 void (*cpu_dcache_wb_range)(paddr_t, psize_t) = cpu_cache_nop_range;
+
+#ifdef MULTIPROCESSOR
+
+void	cpu_hatch(void);
+
+void
+cpu_boot_secondary(struct cpu_info *ci)
+{
+	atomic_setbits_int(&ci->ci_flags, CPUF_GO);
+	membar_producer();
+
+	while ((ci->ci_flags & CPUF_RUNNING) == 0)
+		CPU_BUSY_CYCLE();
+}
+
+void
+cpu_boot_secondary_processors(void)
+{
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
+
+	CPU_INFO_FOREACH(cii, ci) {
+		if ((ci->ci_flags & CPUF_AP) == 0)
+			continue;
+		if (ci->ci_flags & CPUF_PRIMARY)
+			continue;
+
+		ci->ci_randseed = (arc4random() & 0x7fffffff) + 1;
+		cpu_boot_secondary(ci);
+	}
+}
+
+int
+cpu_hatch_secondary(struct cpu_info *ci)
+{
+	paddr_t start_addr, a1;
+	void *kstack;
+	int error;
+
+	kstack = km_alloc(USPACE, &kv_any, &kp_zero, &kd_waitok);
+	ci->ci_initstack_end = (vaddr_t)kstack + USPACE - 16;
+
+	pmap_extract(pmap_kernel(), (vaddr_t)cpu_hatch, &start_addr);
+	pmap_extract(pmap_kernel(), (vaddr_t)ci, &a1);
+
+	ci->ci_satp = pmap_kernel()->pm_satp;
+
+	error = sbi_hsm_hart_start(ci->ci_hartid, start_addr, a1);
+	return (error == SBI_SUCCESS);
+}
+
+void cpu_startclock(void);
+
+void
+cpu_start_secondary(void)
+{
+	struct cpu_info *ci = curcpu();
+	int s;
+
+	ci->ci_flags |= CPUF_PRESENT;
+	membar_producer();
+
+	while ((ci->ci_flags & CPUF_IDENTIFY) == 0)
+		membar_consumer();
+
+	cpu_identify(ci);
+
+	atomic_setbits_int(&ci->ci_flags, CPUF_IDENTIFIED);
+	membar_producer();
+
+	while ((ci->ci_flags & CPUF_GO) == 0)
+		membar_consumer();
+
+	s = splhigh();
+	riscv_intr_cpu_enable();
+	cpu_startclock();
+
+	csr_clear(sstatus, SSTATUS_FS_MASK);
+	csr_set(sie, SIE_SSIE);
+
+	nanouptime(&ci->ci_schedstate.spc_runtime);
+
+	atomic_setbits_int(&ci->ci_flags, CPUF_RUNNING);
+	membar_producer();
+
+	spllower(IPL_NONE);
+	intr_enable();
+
+	SCHED_LOCK(s);
+	cpu_switchto(NULL, sched_chooseproc());
+}
+
+void
+cpu_kick(struct cpu_info *ci)
+{
+	if (ci != curcpu())
+		intr_send_ipi(ci, IPI_NOP);
+}
+
+void
+cpu_unidle(struct cpu_info *ci)
+{
+	if (ci != curcpu())
+		intr_send_ipi(ci, IPI_NOP);
+}
+
+#endif

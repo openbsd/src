@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_smr.c,v 1.9 2020/12/25 12:49:31 visa Exp $	*/
+/*	$OpenBSD: kern_smr.c,v 1.10 2021/06/29 21:27:53 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Visa Hankala
@@ -149,6 +149,8 @@ smr_grace_wait(void)
 	curcpu()->ci_schedstate.spc_smrgp = smrgp;
 
 	CPU_INFO_FOREACH(cii, ci) {
+		if (!CPU_IS_RUNNING(ci))
+			continue;
 		if (READ_ONCE(ci->ci_schedstate.spc_smrgp) == smrgp)
 			continue;
 		sched_peg_curproc(ci);
