@@ -1,8 +1,8 @@
-#	$OpenBSD: files.riscv64,v 1.15 2021/06/25 19:27:40 matthieu Exp $
+#	$OpenBSD: files.riscv64,v 1.16 2021/06/29 17:49:49 matthieu Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
-maxusers 2 8 64
+maxusers 2 8 128
 
 # Major number for block devices, for ``root on'' lines
 major	{ sd = 0 }
