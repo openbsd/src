@@ -1,10 +1,6 @@
 # $NetBSD: files.drm,v 1.2 2007/03/28 11:29:37 jmcneill Exp $
-# $OpenBSD: files.drm,v 1.50 2020/10/25 09:43:46 kettenis Exp $
+# $OpenBSD: files.drm,v 1.51 2021/06/29 01:42:14 jsg Exp $
 
-# direct rendering modules
-define drmbase {[primary = -1]}
-device drm: drmbase
-attach drm at drmbase
 file	dev/pci/drm/dma-resv.c			drm
 file	dev/pci/drm/drm_agpsupport.c		drm & agp
 file	dev/pci/drm/drm_atomic.c		drm
@@ -31,7 +27,6 @@ file	dev/pci/drm/drm_damage_helper.c		drm
 file	dev/pci/drm/drm_dp_dual_mode_helper.c	drm
 file	dev/pci/drm/drm_dp_helper.c		drm
 file	dev/pci/drm/drm_dp_mst_topology.c	drm
-file	dev/pci/drm/drm_drv.c			drm	needs-flag
 file	dev/pci/drm/drm_dsc.c			drm
 file	dev/pci/drm/drm_dumb_buffers.c		drm
 file	dev/pci/drm/drm_edid.c			drm

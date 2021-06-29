@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.702 2021/04/16 08:17:35 stsp Exp $
+#	$OpenBSD: files,v 1.703 2021/06/29 01:42:14 jsg Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -96,11 +96,14 @@ file	dev/ic/mk48txx.c		mk48txx
 # agp integrated graphics attaches at vga. defines are in dev/pci/files.agp
 define agpint {}
 
-# DRM - Direct Rendering Manager: /dev/drm
-define drmdev {}
+# DRM - Direct Rendering Manager: /dev/dri/
+define drmbase {[primary = -1]}
+device drm: drmbase
+attach drm at drmbase
+file	dev/pci/drm/drm_drv.c		drm	needs-flag
 
 # VGA graphics
-device	vga: wsemuldisplaydev, pcdisplayops, drmdev, agpint
+device	vga: wsemuldisplaydev, pcdisplayops, agpint
 file	dev/ic/vga.c			vga & (vga_pci | vga_isa) needs-flag
 file	dev/ic/vga_subr.c		vga & (vga_pci | vga_isa) needs-flag
 
