@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.70 2021/06/29 21:27:53 kettenis Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.71 2021/06/29 21:31:49 kettenis Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -638,7 +638,7 @@ sched_start_secondary_cpus(void)
 	CPU_INFO_FOREACH(cii, ci) {
 		struct schedstate_percpu *spc = &ci->ci_schedstate;
 
-		if (CPU_IS_PRIMARY(ci) || !CPU_IS_RUNNING(ci))
+		if (CPU_IS_PRIMARY(ci))
 			continue;
 		atomic_clearbits_int(&spc->spc_schedflags,
 		    SPCF_SHOULDHALT | SPCF_HALTED);
@@ -656,14 +656,13 @@ sched_stop_secondary_cpus(void)
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
 
-	printf("%s: start\n", __func__);
 	/*
 	 * Make sure we stop the secondary CPUs.
 	 */
 	CPU_INFO_FOREACH(cii, ci) {
 		struct schedstate_percpu *spc = &ci->ci_schedstate;
 
-		if (CPU_IS_PRIMARY(ci) || !CPU_IS_RUNNING(ci))
+		if (CPU_IS_PRIMARY(ci))
 			continue;
 		cpuset_del(&sched_all_cpus, ci);
 		atomic_setbits_int(&spc->spc_schedflags, SPCF_SHOULDHALT);
@@ -672,7 +671,7 @@ sched_stop_secondary_cpus(void)
 		struct schedstate_percpu *spc = &ci->ci_schedstate;
 		struct sleep_state sls;
 
-		if (CPU_IS_PRIMARY(ci) || !CPU_IS_RUNNING(ci))
+		if (CPU_IS_PRIMARY(ci))
 			continue;
 		while ((spc->spc_schedflags & SPCF_HALTED) == 0) {
 			sleep_setup(&sls, spc, PZERO, "schedstate", 0);
@@ -680,7 +679,6 @@ sched_stop_secondary_cpus(void)
 			    (spc->spc_schedflags & SPCF_HALTED) == 0);
 		}
 	}
-	printf("%s: end\n", __func__);
 }
 
 struct sched_barrier_state {
@@ -871,7 +869,7 @@ sysctl_hwsmt(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 
 	sched_smt = newsmt;
 	CPU_INFO_FOREACH(cii, ci) {
-		if (CPU_IS_PRIMARY(ci) || !CPU_IS_RUNNING(ci))
+		if (CPU_IS_PRIMARY(ci))
 			continue;
 		if (ci->ci_smt_id == 0)
 			continue;
