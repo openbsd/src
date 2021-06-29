@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.c,v 1.36 2021/06/29 19:33:46 jsing Exp $ */
+/* $OpenBSD: ssl_sigalgs.c,v 1.37 2021/06/29 19:36:14 jsing Exp $ */
 /*
  * Copyright (c) 2018-2020 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2021 Joel Sing <jsing@openbsd.org>
@@ -277,15 +277,16 @@ ssl_sigalg_pkey_ok(SSL *s, const struct ssl_sigalg *sigalg, EVP_PKEY *pkey)
 			return 0;
 	}
 
+	if (S3I(s)->hs.negotiated_tls_version < TLS1_3_VERSION)
+		return 1;
+
 	/* RSA cannot be used without PSS in TLSv1.3. */
-	if (S3I(s)->hs.negotiated_tls_version >= TLS1_3_VERSION &&
-	    sigalg->key_type == EVP_PKEY_RSA &&
+	if (sigalg->key_type == EVP_PKEY_RSA &&
 	    (sigalg->flags & SIGALG_FLAG_RSA_PSS) == 0)
 		return 0;
 
 	/* Ensure that curve matches for EC keys. */
-	if (S3I(s)->hs.negotiated_tls_version >= TLS1_3_VERSION &&
-	    pkey->type == EVP_PKEY_EC) {
+	if (pkey->type == EVP_PKEY_EC) {
 		if (sigalg->curve_nid == 0)
 			return 0;
 		if (EC_GROUP_get_curve_name(EC_KEY_get0_group(
