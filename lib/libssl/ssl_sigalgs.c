@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.c,v 1.34 2021/06/29 19:25:59 jsing Exp $ */
+/* $OpenBSD: ssl_sigalgs.c,v 1.35 2021/06/29 19:29:16 jsing Exp $ */
 /*
  * Copyright (c) 2018-2020 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2021 Joel Sing <jsing@openbsd.org>
@@ -203,13 +203,14 @@ ssl_sigalg_lookup(uint16_t value)
 }
 
 static const struct ssl_sigalg *
-ssl_sigalg_from_value(uint16_t tls_version, uint16_t value)
+ssl_sigalg_from_value(SSL *s, uint16_t value)
 {
 	const uint16_t *values;
 	size_t len;
 	int i;
 
-	ssl_sigalgs_for_version(tls_version, &values, &len);
+	ssl_sigalgs_for_version(S3I(s)->hs.negotiated_tls_version,
+	    &values, &len);
 
 	for (i = 0; i < len; i++) {
 		if (values[i] == value)
@@ -325,8 +326,7 @@ ssl_sigalg_select(SSL *s, EVP_PKEY *pkey)
 		if (!CBS_get_u16(&cbs, &sigalg_value))
 			return 0;
 
-		if ((sigalg = ssl_sigalg_from_value(
-		    S3I(s)->hs.negotiated_tls_version, sigalg_value)) == NULL)
+		if ((sigalg = ssl_sigalg_from_value(s, sigalg_value)) == NULL)
 			continue;
 		if (ssl_sigalg_pkey_ok(s, sigalg, pkey))
 			return sigalg;
@@ -344,8 +344,7 @@ ssl_sigalg_for_peer(SSL *s, EVP_PKEY *pkey, uint16_t sigalg_value)
 	if (!SSL_USE_SIGALGS(s))
 		return ssl_sigalg_for_legacy(s, pkey);
 
-	if ((sigalg = ssl_sigalg_from_value(S3I(s)->hs.negotiated_tls_version,
-	    sigalg_value)) == NULL) {
+	if ((sigalg = ssl_sigalg_from_value(s, sigalg_value)) == NULL) {
 		SSLerror(s, SSL_R_UNKNOWN_DIGEST);
 		return (NULL);
 	}
