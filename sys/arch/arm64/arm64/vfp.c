@@ -1,4 +1,4 @@
-/* $OpenBSD: vfp.c,v 1.5 2021/05/15 11:30:27 kettenis Exp $ */
+/* $OpenBSD: vfp.c,v 1.6 2021/06/29 19:58:21 kettenis Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -250,7 +250,7 @@ vfp_discard(struct proc *p)
 
 	if (curpcb->pcb_fpcpu == ci && ci->ci_fpuproc == p) {
 		ci->ci_fpuproc = NULL;
-		curpcb->pcb_fpcpu  = NULL;
+		curpcb->pcb_fpcpu = NULL;
 	}
 }
 
