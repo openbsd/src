@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.c,v 1.29 2021/06/27 18:15:35 jsing Exp $ */
+/* $OpenBSD: ssl_sigalgs.c,v 1.30 2021/06/29 18:55:47 jsing Exp $ */
 /*
  * Copyright (c) 2018-2020 Bob Beck <beck@openbsd.org>
  *
@@ -274,16 +274,11 @@ ssl_sigalg_pkey_ok(const struct ssl_sigalg *sigalg, EVP_PKEY *pkey,
 const struct ssl_sigalg *
 ssl_sigalg_select(SSL *s, EVP_PKEY *pkey)
 {
-	const uint16_t *tls_sigalgs = tls12_sigalgs;
-	size_t tls_sigalgs_len = tls12_sigalgs_len;
 	int check_curve = 0;
 	CBS cbs;
 
-	if (S3I(s)->hs.negotiated_tls_version >= TLS1_3_VERSION) {
-		tls_sigalgs = tls13_sigalgs;
-		tls_sigalgs_len = tls13_sigalgs_len;
+	if (S3I(s)->hs.negotiated_tls_version >= TLS1_3_VERSION)
 		check_curve = 1;
-	}
 
 	/* Pre TLS 1.2 defaults */
 	if (!SSL_USE_SIGALGS(s)) {
