@@ -1,4 +1,4 @@
-/*	$OpenBSD: xhci_fdt.c,v 1.16 2020/12/18 18:13:17 patrick Exp $	*/
+/*	$OpenBSD: xhci_fdt.c,v 1.17 2021/06/29 12:46:36 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -263,6 +263,9 @@ xhci_init_phys(struct xhci_fdt_softc *sc)
 	 */
 	idx = OF_getindex(sc->sc_node, "usb3-phy", "phy-names");
 	if (idx < 0)
+		return;
+
+	if (phy_enable_idx(sc->sc_node, idx) != ENXIO)
 		return;
 
 	len = OF_getproplen(sc->sc_node, "phys");
