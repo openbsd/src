@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.44 2021/06/13 15:34:41 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.45 2021/06/29 18:43:49 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -429,6 +429,16 @@ ssl3_get_record(SSL *s)
 	s->internal->packet_length = 0;
 
 	if (rr->length == 0) {
+		/*
+		 * Zero-length fragments are only permitted for application
+		 * data, as per RFC 5246 section 6.2.1.
+		 */
+		if (rr->type != SSL3_RT_APPLICATION_DATA) {
+			SSLerror(s, SSL_R_BAD_LENGTH);
+			al = SSL_AD_UNEXPECTED_MESSAGE;
+			goto fatal_err;
+		}
+
 		/*
 		 * CBC countermeasures for known IV weaknesses can legitimately
 		 * insert a single empty record, so we allow ourselves to read
