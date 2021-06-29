@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.114 2021/06/27 18:15:35 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.115 2021/06/29 19:10:08 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2199,7 +2199,7 @@ ssl3_get_cert_verify(SSL *s)
 			al = SSL_AD_DECODE_ERROR;
 			goto fatal_err;
 		}
-		if (!ssl_sigalg_pkey_ok(sigalg, pkey, 0)) {
+		if (!ssl_sigalg_pkey_ok(s, sigalg, pkey)) {
 			SSLerror(s, SSL_R_WRONG_SIGNATURE_TYPE);
 			al = SSL_AD_DECODE_ERROR;
 			goto fatal_err;

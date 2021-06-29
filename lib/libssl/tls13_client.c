@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.84 2021/06/29 18:47:15 jsing Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.85 2021/06/29 19:10:08 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -704,7 +704,7 @@ tls13_server_certificate_verify_recv(struct tls13_ctx *ctx, CBS *cbs)
 		goto err;
 	if ((pkey = X509_get0_pubkey(cert)) == NULL)
 		goto err;
-	if (!ssl_sigalg_pkey_ok(sigalg, pkey, 1))
+	if (!ssl_sigalg_pkey_ok(ctx->ssl, sigalg, pkey))
 		goto err;
 	ctx->hs->peer_sigalg = sigalg;
 

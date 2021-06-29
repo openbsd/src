@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.102 2021/06/27 19:16:59 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.103 2021/06/29 19:10:08 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1562,7 +1562,7 @@ ssl3_get_server_key_exchange(SSL *s)
 				al = SSL_AD_DECODE_ERROR;
 				goto fatal_err;
 			}
-			if (!ssl_sigalg_pkey_ok(sigalg, pkey, 0)) {
+			if (!ssl_sigalg_pkey_ok(s, sigalg, pkey)) {
 				SSLerror(s, SSL_R_WRONG_SIGNATURE_TYPE);
 				al = SSL_AD_DECODE_ERROR;
 				goto fatal_err;

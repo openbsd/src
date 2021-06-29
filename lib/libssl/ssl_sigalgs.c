@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.c,v 1.31 2021/06/29 18:59:25 jsing Exp $ */
+/* $OpenBSD: ssl_sigalgs.c,v 1.32 2021/06/29 19:10:08 jsing Exp $ */
 /*
  * Copyright (c) 2018-2020 Bob Beck <beck@openbsd.org>
  *
@@ -260,32 +260,37 @@ ssl_sigalg_for_legacy(SSL *s, EVP_PKEY *pkey)
 }
 
 int
-ssl_sigalg_pkey_ok(const struct ssl_sigalg *sigalg, EVP_PKEY *pkey,
-    int check_curve)
+ssl_sigalg_pkey_ok(SSL *s, const struct ssl_sigalg *sigalg, EVP_PKEY *pkey)
 {
 	if (sigalg == NULL || pkey == NULL)
 		return 0;
 	if (sigalg->key_type != pkey->type)
 		return 0;
 
+	/*
+	 * RSA PSS must have an RSA key that needs to be at
+	 * least as big as twice the size of the hash + 2
+	 */
 	if ((sigalg->flags & SIGALG_FLAG_RSA_PSS)) {
-		/*
-		 * RSA PSS Must have an RSA key that needs to be at
-		 * least as big as twice the size of the hash + 2
-		 */
 		if (pkey->type != EVP_PKEY_RSA ||
 		    EVP_PKEY_size(pkey) < (2 * EVP_MD_size(sigalg->md()) + 2))
 			return 0;
 	}
 
-	if (pkey->type == EVP_PKEY_EC && check_curve) {
-		/* Curve must match for EC keys. */
+	/* RSA cannot be used without PSS in TLSv1.3. */
+	if (S3I(s)->hs.negotiated_tls_version >= TLS1_3_VERSION &&
+	    sigalg->key_type == EVP_PKEY_RSA &&
+	    (sigalg->flags & SIGALG_FLAG_RSA_PSS) == 0)
+		return 0;
+
+	/* Ensure that curve matches for EC keys. */
+	if (S3I(s)->hs.negotiated_tls_version >= TLS1_3_VERSION &&
+	    pkey->type == EVP_PKEY_EC) {
 		if (sigalg->curve_nid == 0)
 			return 0;
-		if (EC_GROUP_get_curve_name(EC_KEY_get0_group
-		    (EVP_PKEY_get0_EC_KEY(pkey))) != sigalg->curve_nid) {
+		if (EC_GROUP_get_curve_name(EC_KEY_get0_group(
+		    EVP_PKEY_get0_EC_KEY(pkey))) != sigalg->curve_nid)
 			return 0;
-		}
 	}
 
 	return 1;
@@ -294,11 +299,7 @@ ssl_sigalg_pkey_ok(const struct ssl_sigalg *sigalg, EVP_PKEY *pkey,
 const struct ssl_sigalg *
 ssl_sigalg_select(SSL *s, EVP_PKEY *pkey)
 {
-	int check_curve = 0;
 	CBS cbs;
-
-	if (S3I(s)->hs.negotiated_tls_version >= TLS1_3_VERSION)
-		check_curve = 1;
 
 	if (!SSL_USE_SIGALGS(s))
 		return ssl_sigalg_for_legacy(s, pkey);
@@ -326,13 +327,7 @@ ssl_sigalg_select(SSL *s, EVP_PKEY *pkey)
 		    S3I(s)->hs.negotiated_tls_version, sigalg_value)) == NULL)
 			continue;
 
-		/* RSA cannot be used without PSS in TLSv1.3. */
-		if (S3I(s)->hs.negotiated_tls_version >= TLS1_3_VERSION &&
-		    sigalg->key_type == EVP_PKEY_RSA &&
-		    (sigalg->flags & SIGALG_FLAG_RSA_PSS) == 0)
-			continue;
-
-		if (ssl_sigalg_pkey_ok(sigalg, pkey, check_curve))
+		if (ssl_sigalg_pkey_ok(s, sigalg, pkey))
 			return sigalg;
 	}
 
