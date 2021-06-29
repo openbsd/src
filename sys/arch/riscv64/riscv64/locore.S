@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.10 2021/06/28 18:52:26 deraadt Exp $	*/
+/*	$OpenBSD: locore.S,v 1.11 2021/06/29 12:22:39 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2015-2018 Ruslan Bukin <br@bsdpad.com>
@@ -47,15 +47,12 @@
 	.globl	kernbase
 	.set	kernbase, KERNBASE
 
-	/* Trap entries */
-	.text
-
 	/* Reset vector */
 	.text
 	.globl _start_kern_bootstrap
 _start_kern_bootstrap:
 
-		/* Set the global pointer */
+	/* Set the global pointer */
 .option push
 .option norelax
 	lla	gp, __global_pointer$
@@ -68,37 +65,18 @@ _start_kern_bootstrap:
 	li	t2, KERNBASE	//KERNBASE is virtual addr
 	sub	s9, t2, t1	//s9 = physmem base of kernel
 
-	//registers passed by bbl.
 	/*
-	 * a0 = hart id
-	 * a1 = dtbp
+	 * EFIBOOT passes:
+	 * a0 = esym
+	 * a1 = 0
+	 * a2 = dtb
 	 */
 
-	bnez a1, 1f
-	// no dtb, we assume we were booted via efiboot
 	la t0, esym
 	add a3, a0, t1
 	sd a3, 0(t0)
-	li a0, 0
 	mv a1, a2
 
-1:
-	/* Pick a hart to run the boot process. */
-	lla	t0, hart_lottery
-	li	t1, 1
-	//atomic memory operation, read-modify-write:
-	//only the first hart can read 0 and modify it to 1,
-	//all other harts will read 1.
-	amoadd.w t2, t1, (t0)
-
-	/*
-	 * We must jump to mpentry in the non-BSP case because the offset is
-	 * too large to fit in a 12-bit branch immediate.
-	 */
-	beqz	t2, 1f
-	j	mpentry
-
-1:	//only one hart(which just won the lottery) runs the main boot procedure.
 	/*
 	 * Page tables
 	 */
@@ -193,7 +171,7 @@ _start_kern_bootstrap:
 	lla	s1, pagetable_l2_devmap
 
 	//calc PTE based on pa
-	mv	s2, a1			//passed by bbl
+	mv	s2, a1			//dtb
 	li	t0, 0xffffffffffe00000
 	and	s2, s2, t0
 	srli	s2, s2, PAGE_SHIFT	//12
@@ -238,7 +216,6 @@ va:
 	sd	x0, (s8)	// s8 is addr of pte for identity mapped kernel
 	sfence.vma		// Flush the TLB. Goodbye identity mapped kernel!
 
-
 	/* Setup supervisor trap vector */
 	la	t0, cpu_exception_handler
 	csrw	stvec, t0
@@ -261,10 +238,6 @@ va:
 	sd	zero, 0(s0)
 	addi	s0, s0, 8
 	bltu	s0, s1, 1b
-
-	/* Store boot hart id. */
-	la	t0, boot_hart	//the hart we booted on.
-	sw	a0, 0(t0)	//all above logic runs on this a0 hart.
 
 	/* Fill riscv_bootparams */
 	addi	sp, sp, -RISCV_BOOTPARAMS_SIZEOF
@@ -338,20 +311,12 @@ pagetable_l2_devmap:
 	.align 3
 virt_map:
 	.quad	virt_map
-hart_lottery:
-	.space	4
 
 	.globl init_pt_va
 init_pt_va:
 	.quad pagetable_l2	/* XXX: Keep page tables VA */
 
-#ifndef MULTIPROCESSOR
-ENTRY(mpentry)
-1:
-	wfi
-	j	1b
-END(mpentry)
-#else
+#ifdef MULTIPROCESSOR
 /*
  * mpentry(unsigned long)
  *
