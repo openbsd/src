@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.116 2021/06/29 19:24:07 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.117 2021/06/29 19:43:15 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1565,6 +1565,7 @@ ssl3_send_server_key_exchange(SSL *s)
 				al = SSL_AD_DECODE_ERROR;
 				goto fatal_err;
 			}
+			S3I(s)->hs.our_sigalg = sigalg;
 
 			/* Send signature algorithm. */
 			if (SSL_USE_SIGALGS(s)) {
@@ -2194,6 +2195,7 @@ ssl3_get_cert_verify(SSL *s)
 		al = SSL_AD_DECODE_ERROR;
 		goto fatal_err;
 	}
+	S3I(s)->hs.peer_sigalg = sigalg;
 
 	if (SSL_USE_SIGALGS(s)) {
 		EVP_PKEY_CTX *pctx;

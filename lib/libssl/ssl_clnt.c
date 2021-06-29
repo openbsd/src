@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.104 2021/06/29 19:23:36 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.105 2021/06/29 19:43:15 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1562,6 +1562,7 @@ ssl3_get_server_key_exchange(SSL *s)
 			al = SSL_AD_DECODE_ERROR;
 			goto fatal_err;
 		}
+		S3I(s)->hs.peer_sigalg = sigalg;
 
 		if (!EVP_DigestVerifyInit(&md_ctx, &pctx, sigalg->md(),
 		    NULL, pkey))
@@ -2338,6 +2339,7 @@ ssl3_send_client_verify_sigalgs(SSL *s, EVP_PKEY *pkey, CBB *cert_verify)
 		SSLerror(s, SSL_R_UNKNOWN_DIGEST);
 		goto err;
 	}
+	S3I(s)->hs.our_sigalg = sigalg;
 
 	if (!tls1_transcript_data(s, &hdata, &hdata_len)) {
 		SSLerror(s, ERR_R_INTERNAL_ERROR);
