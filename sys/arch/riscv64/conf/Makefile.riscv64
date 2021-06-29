@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.riscv64,v 1.11 2021/06/25 19:27:40 matthieu Exp $
+#	$OpenBSD: Makefile.riscv64,v 1.12 2021/06/29 18:45:41 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -169,10 +169,5 @@ install: update-link hardlink-obsd newinstall
 .  endif
 . endfor
 .endif
-
-## for qemu this is where ram is located
-RAM_ADDR?=0x40000000
-#KERNEL_LOAD_ADDR!=echo "x = hex(${KERNEL_BASE_PHYS} + ${RAM_ADDR}); print x" | python
-KERNEL_LOAD_ADDR=0x40200000
 
 %RULES
