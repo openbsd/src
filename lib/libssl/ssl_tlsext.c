@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.96 2021/06/27 17:59:17 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.97 2021/06/29 19:31:16 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -558,11 +558,15 @@ tlsext_sigalgs_client_needs(SSL *s, uint16_t msg_type)
 int
 tlsext_sigalgs_client_build(SSL *s, uint16_t msg_type, CBB *cbb)
 {
+	uint16_t tls_version = S3I(s)->hs.negotiated_tls_version;
 	CBB sigalgs;
+
+	if (msg_type == SSL_TLSEXT_MSG_CH)
+		tls_version = S3I(s)->hs.our_min_tls_version;
 
 	if (!CBB_add_u16_length_prefixed(cbb, &sigalgs))
 		return 0;
-	if (!ssl_sigalgs_build(S3I(s)->hs.our_min_tls_version, &sigalgs))
+	if (!ssl_sigalgs_build(tls_version, &sigalgs))
 		return 0;
 	if (!CBB_flush(cbb))
 		return 0;
