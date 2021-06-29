@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sqrt.3,v 1.17 2020/02/08 01:09:57 jsg Exp $
+.\"	$OpenBSD: sqrt.3,v 1.18 2021/06/29 14:04:16 schwarze Exp $
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"     from: @(#)sqrt.3	6.4 (Berkeley) 5/6/91
 .\"
-.Dd $Mdocdate: February 8 2020 $
+.Dd $Mdocdate: June 29 2021 $
 .Dt SQRT 3
 .Os
 .Sh NAME
@@ -57,7 +57,7 @@
 The
 .Fn cbrt
 function computes the cube root of
-.Ar x .
+.Fa x .
 The
 .Fn cbrtf
 function is a single precision version of
@@ -70,7 +70,8 @@ function is an extended precision version of
 The
 .Fn sqrt
 function computes
-the non-negative square root of x.
+the non-negative square root of
+.Fa x .
 The
 .Fn sqrtf
 function is a single precision version of
@@ -80,14 +81,17 @@ The
 function is an extended precision version of
 .Fn sqrt .
 .Sh RETURN VALUES
-If x is negative,
+If
+.Fa x
+is negative,
 .Fn sqrt "x" ,
 .Fn sqrtf "x"
 and
 .Fn sqrtl "x"
 set the global variable
 .Va errno
-to EDOM.
+to
+.Er EDOM .
 .Sh HISTORY
 A
 .Fn sqrt
