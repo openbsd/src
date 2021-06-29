@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.83 2021/06/27 19:23:51 jsing Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.84 2021/06/29 18:47:15 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -303,7 +303,16 @@ tls13_server_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 		ctx->alert = TLS13_ALERT_ILLEGAL_PARAMETER;
 		goto err;
 	}
-	/* XXX - move this to hs.tls13? */
+	if (!(ctx->handshake_stage.hs_type & WITHOUT_HRR) && !ctx->hs->tls13.hrr) {
+		/*
+		 * A ServerHello following a HelloRetryRequest MUST use the same
+		 * cipher suite (RFC 8446 section 4.1.4).
+		 */
+		if (ctx->hs->cipher != cipher) {
+			ctx->alert = TLS13_ALERT_ILLEGAL_PARAMETER;
+			goto err;
+		}
+	}
 	ctx->hs->cipher = cipher;
 
 	if (compression_method != 0) {
