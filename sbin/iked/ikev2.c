@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.324 2021/06/17 13:28:20 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.325 2021/06/29 15:39:20 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -805,6 +805,7 @@ ikev2_auth_verify(struct iked *env, struct iked_sa *sa)
 		    ikev2_auth_map),
 		    print_map(ikeauth.auth_method,
 		    ikev2_auth_map));
+		ikev2_send_auth_failed(env, sa);
 		return (-1);
 	}
 	ikeauth.auth_method = sa->sa_peerauth.id_type;
@@ -813,6 +814,7 @@ ikev2_auth_verify(struct iked *env, struct iked_sa *sa)
 	    sa->sa_hdr.sh_initiator)) == NULL) {
 		log_debug("%s: failed to get auth data",
 		    __func__);
+		ikev2_send_auth_failed(env, sa);
 		return (-1);
 	}
 
