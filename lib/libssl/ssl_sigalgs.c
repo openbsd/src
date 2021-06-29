@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.c,v 1.30 2021/06/29 18:55:47 jsing Exp $ */
+/* $OpenBSD: ssl_sigalgs.c,v 1.31 2021/06/29 18:59:25 jsing Exp $ */
 /*
  * Copyright (c) 2018-2020 Bob Beck <beck@openbsd.org>
  *
@@ -239,6 +239,26 @@ ssl_sigalgs_build(uint16_t tls_version, CBB *cbb)
 	return 1;
 }
 
+static const struct ssl_sigalg *
+ssl_sigalg_for_legacy(SSL *s, EVP_PKEY *pkey)
+{
+	/* Default signature algorithms used for TLSv1.2 and earlier. */
+	switch (pkey->type) {
+	case EVP_PKEY_RSA:
+		if (S3I(s)->hs.negotiated_tls_version < TLS1_2_VERSION)
+			return ssl_sigalg_lookup(SIGALG_RSA_PKCS1_MD5_SHA1);
+		return ssl_sigalg_lookup(SIGALG_RSA_PKCS1_SHA1);
+	case EVP_PKEY_EC:
+		return ssl_sigalg_lookup(SIGALG_ECDSA_SHA1);
+#ifndef OPENSSL_NO_GOST
+	case EVP_PKEY_GOSTR01:
+		return ssl_sigalg_lookup(SIGALG_GOSTR01_GOST94);
+#endif
+	}
+	SSLerror(s, SSL_R_UNKNOWN_PKEY_TYPE);
+	return (NULL);
+}
+
 int
 ssl_sigalg_pkey_ok(const struct ssl_sigalg *sigalg, EVP_PKEY *pkey,
     int check_curve)
@@ -280,41 +300,16 @@ ssl_sigalg_select(SSL *s, EVP_PKEY *pkey)
 	if (S3I(s)->hs.negotiated_tls_version >= TLS1_3_VERSION)
 		check_curve = 1;
 
-	/* Pre TLS 1.2 defaults */
-	if (!SSL_USE_SIGALGS(s)) {
-		switch (pkey->type) {
-		case EVP_PKEY_RSA:
-			return ssl_sigalg_lookup(SIGALG_RSA_PKCS1_MD5_SHA1);
-		case EVP_PKEY_EC:
-			return ssl_sigalg_lookup(SIGALG_ECDSA_SHA1);
-#ifndef OPENSSL_NO_GOST
-		case EVP_PKEY_GOSTR01:
-			return ssl_sigalg_lookup(SIGALG_GOSTR01_GOST94);
-#endif
-		}
-		SSLerror(s, SSL_R_UNKNOWN_PKEY_TYPE);
-		return (NULL);
-	}
+	if (!SSL_USE_SIGALGS(s))
+		return ssl_sigalg_for_legacy(s, pkey);
 
 	/*
-	 * RFC 5246 allows a TLS 1.2 client to send no sigalgs, in
-	 * which case the server must use the the default.
+	 * RFC 5246 allows a TLS 1.2 client to send no sigalgs extension,
+	 * in which case the server must use the default.
 	 */
 	if (S3I(s)->hs.negotiated_tls_version < TLS1_3_VERSION &&
-	    S3I(s)->hs.sigalgs == NULL) {
-		switch (pkey->type) {
-		case EVP_PKEY_RSA:
-			return ssl_sigalg_lookup(SIGALG_RSA_PKCS1_SHA1);
-		case EVP_PKEY_EC:
-			return ssl_sigalg_lookup(SIGALG_ECDSA_SHA1);
-#ifndef OPENSSL_NO_GOST
-		case EVP_PKEY_GOSTR01:
-			return ssl_sigalg_lookup(SIGALG_GOSTR01_GOST94);
-#endif
-		}
-		SSLerror(s, SSL_R_UNKNOWN_PKEY_TYPE);
-		return (NULL);
-	}
+	    S3I(s)->hs.sigalgs == NULL)
+		return ssl_sigalg_for_legacy(s, pkey);
 
 	/*
 	 * If we get here, we have client or server sent sigalgs, use one.
