@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.92 2021/06/25 19:27:40 matthieu Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.93 2021/06/29 01:46:35 jsg Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
@@ -81,12 +81,7 @@
 
 #include <uvm/uvm.h>
 
-#if defined(__amd64__) || defined(__arm64__) || \
-    defined(__i386__) || defined(__loongson__) || \
-    defined(__macppc__) || defined(__powerpc64__) || \
-    defined(__riscv64__) || defined(__sparc64__)
 #include "drm.h"
-#endif
 
 #if NDRM > 0
 extern void drmbackoff(long);
