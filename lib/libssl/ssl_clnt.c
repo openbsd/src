@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.105 2021/06/29 19:43:15 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.106 2021/06/29 19:56:11 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2317,9 +2317,9 @@ ssl3_send_client_key_exchange(SSL *s)
 }
 
 static int
-ssl3_send_client_verify_sigalgs(SSL *s, EVP_PKEY *pkey, CBB *cert_verify)
+ssl3_send_client_verify_sigalgs(SSL *s, EVP_PKEY *pkey,
+    const struct ssl_sigalg *sigalg, CBB *cert_verify)
 {
-	const struct ssl_sigalg *sigalg;
 	CBB cbb_signature;
 	EVP_PKEY_CTX *pctx = NULL;
 	EVP_MD_CTX mctx;
@@ -2330,16 +2330,6 @@ ssl3_send_client_verify_sigalgs(SSL *s, EVP_PKEY *pkey, CBB *cert_verify)
 	int ret = 0;
 
 	EVP_MD_CTX_init(&mctx);
-
-	if ((sigalg = ssl_sigalg_select(s, pkey)) == NULL) {
-		SSLerror(s, SSL_R_SIGNATURE_ALGORITHMS_ERROR);
-		goto err;
-	}
-	if ((md = sigalg->md()) == NULL) {
-		SSLerror(s, SSL_R_UNKNOWN_DIGEST);
-		goto err;
-	}
-	S3I(s)->hs.our_sigalg = sigalg;
 
 	if (!tls1_transcript_data(s, &hdata, &hdata_len)) {
 		SSLerror(s, ERR_R_INTERNAL_ERROR);
@@ -2532,6 +2522,7 @@ ssl3_send_client_verify_gost(SSL *s, EVP_PKEY *pkey, CBB *cert_verify)
 int
 ssl3_send_client_verify(SSL *s)
 {
+	const struct ssl_sigalg *sigalg;
 	CBB cbb, cert_verify;
 	EVP_PKEY *pkey;
 
@@ -2543,13 +2534,19 @@ ssl3_send_client_verify(SSL *s)
 			goto err;
 
 		pkey = s->cert->key->privatekey;
+		if ((sigalg = ssl_sigalg_select(s, pkey)) == NULL) {
+			SSLerror(s, SSL_R_SIGNATURE_ALGORITHMS_ERROR);
+			goto err;
+		}
+		S3I(s)->hs.our_sigalg = sigalg;
 
 		/*
 		 * For TLS v1.2 send signature algorithm and signature using
 		 * agreed digest and cached handshake records.
 		 */
 		if (SSL_USE_SIGALGS(s)) {
-			if (!ssl3_send_client_verify_sigalgs(s, pkey, &cert_verify))
+			if (!ssl3_send_client_verify_sigalgs(s, pkey, sigalg,
+			    &cert_verify))
 				goto err;
 		} else if (pkey->type == EVP_PKEY_RSA) {
 			if (!ssl3_send_client_verify_rsa(s, pkey, &cert_verify))
