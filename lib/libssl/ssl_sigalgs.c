@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.c,v 1.35 2021/06/29 19:29:16 jsing Exp $ */
+/* $OpenBSD: ssl_sigalgs.c,v 1.36 2021/06/29 19:33:46 jsing Exp $ */
 /*
  * Copyright (c) 2018-2020 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2021 Joel Sing <jsing@openbsd.org>
@@ -270,10 +270,7 @@ ssl_sigalg_pkey_ok(SSL *s, const struct ssl_sigalg *sigalg, EVP_PKEY *pkey)
 	if (sigalg->key_type != pkey->type)
 		return 0;
 
-	/*
-	 * RSA PSS must have an RSA key that needs to be at
-	 * least as big as twice the size of the hash + 2
-	 */
+	/* RSA PSS must have a sufficiently large RSA key. */
 	if ((sigalg->flags & SIGALG_FLAG_RSA_PSS)) {
 		if (pkey->type != EVP_PKEY_RSA ||
 		    EVP_PKEY_size(pkey) < (2 * EVP_MD_size(sigalg->md()) + 2))
