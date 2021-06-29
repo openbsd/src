@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.143 2021/06/14 09:54:15 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.144 2021/06/29 17:43:57 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -61,7 +61,7 @@ const char	*bird_tablename = "ROAS";
 
 int	verbose;
 int	noop;
-int	rrdpon;
+int	rrdpon = 1;
 
 struct stats	 stats;
 

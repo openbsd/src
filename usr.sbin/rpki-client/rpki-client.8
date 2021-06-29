@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.45 2021/05/06 17:03:57 job Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.46 2021/06/29 17:43:57 deraadt Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 6 2021 $
+.Dd $Mdocdate: June 29 2021 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -117,12 +117,11 @@ and
 .Fl j
 options are not specified this is the default.
 .It Fl R
-Do not synchronize via RRDP.
-This is the default.
+Synchronize via RSYNC only.
 .It Fl r
-Attempt to synchronize via RRDP.
+Synchronize via RRDP.
 If RRDP fails, RSYNC will be used.
-This flag is for testing purposes and will be removed in a future release.
+This is the default.
 Mutually exclusive with
 .Fl n .
 .It Fl s Ar timeout
