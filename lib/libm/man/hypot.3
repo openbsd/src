@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hypot.3,v 1.25 2020/02/08 01:09:57 jsg Exp $
+.\"	$OpenBSD: hypot.3,v 1.26 2021/06/29 14:47:33 schwarze Exp $
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"     from: @(#)hypot.3	6.7 (Berkeley) 5/6/91
 .\"
-.Dd $Mdocdate: February 8 2020 $
+.Dd $Mdocdate: June 29 2021 $
 .Dt HYPOT 3
 .Os
 .Sh NAME
@@ -68,7 +68,7 @@ occurs only if the final result deserves it.
 .Pp
 .Fn hypot "infinity" "v" No = Fn hypot "v" "infinity" No = +infinity
 for all
-.Ar v ,
+.Fa v ,
 including NaN.
 .Pp
 The
@@ -93,19 +93,19 @@ and
 .Fn hypot "NaN" "v"
 are NaN for all
 .Em finite
-.Ar v .
+.Fa v .
 Programmers might be surprised at first to discover that
 .Fn hypot "\(+-infinity" "NaN" No = +infinity .
 This is intentional; it happens because
 .Fn hypot "infinity" "v" No = +infinity
 for
 .Em all
-.Ar v ,
+.Fa v ,
 finite or infinite.
 Hence
 .Fn hypot "infinity" "v"
 is independent of
-.Ar v .
+.Fa v .
 The IEEE NaN is designed to disappear
 when it turns out to be irrelevant, as it does in
 .Fn hypot "infinity" "NaN" .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sincos.3,v 1.1 2018/03/10 20:52:58 kettenis Exp $
+.\"	$OpenBSD: sincos.3,v 1.2 2021/06/29 14:47:34 schwarze Exp $
 .\" Copyright (c) 2011 Steven G. Kargl.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -24,7 +24,7 @@
 .\"
 .\" $FreeBSD: head/lib/msun/man/sincos.3 319047 2017-05-28 06:13:38Z mmel $
 .\"
-.Dd $Mdocdate: March 10 2018 $
+.Dd $Mdocdate: June 29 2021 $
 .Dt SINCOS 3
 .Os
 .Sh NAME
@@ -66,9 +66,9 @@ Upon returning from
 and
 .Fn sincosl ,
 the objects pointed to by
-.Ar "*s"
+.Fa s
 and
-.Ar "*c"
+.Fa c
 are assigned the values of sine and cosine, respectively.
 .Sh SEE ALSO
 .Xr cos 3 ,

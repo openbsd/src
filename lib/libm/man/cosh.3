@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cosh.3,v 1.16 2016/04/26 19:49:22 tb Exp $
+.\"	$OpenBSD: cosh.3,v 1.17 2021/06/29 14:47:33 schwarze Exp $
 .\" Copyright (c) 1989, 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"     from: @(#)cosh.3	5.1 (Berkeley) 5/2/91
 .\"
-.Dd $Mdocdate: April 26 2016 $
+.Dd $Mdocdate: June 29 2021 $
 .Dt COSH 3
 .Os
 .Sh NAME
@@ -65,7 +65,8 @@ and
 .Fn coshl "x"
 return infinity and set the global variable
 .Va errno
-to ERANGE.
+to
+.Er ERANGE .
 .Sh SEE ALSO
 .Xr acos 3 ,
 .Xr asin 3 ,
