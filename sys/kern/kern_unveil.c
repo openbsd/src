@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_unveil.c,v 1.44 2021/06/24 07:21:59 semarie Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.45 2021/06/29 07:55:29 claudio Exp $	*/
 
 /*
  * Copyright (c) 2017-2019 Bob Beck <beck@openbsd.org>
@@ -274,7 +274,7 @@ unveil_copy(struct process *parent, struct process *child)
 
 /*
  * Walk up from vnode dp, until we find a matching unveil, or the root vnode
- * returns -1 if no unveil to be found above dp.
+ * returns -1 if no unveil to be found above dp or if dp is the root vnode.
  */
 ssize_t
 unveil_find_cover(struct vnode *dp, struct proc *p)
@@ -287,7 +287,7 @@ unveil_find_cover(struct vnode *dp, struct proc *p)
 	root = p->p_fd->fd_rdir ? p->p_fd->fd_rdir : rootvnode;
 	vp = dp;
 
-	do {
+	while (vp != root) {
 		struct componentname cn = {
 			.cn_nameiop = LOOKUP,
 			.cn_flags = ISLASTCN | ISDOTDOT | RDONLY,
@@ -343,7 +343,7 @@ unveil_find_cover(struct vnode *dp, struct proc *p)
 		}
 		vp = parent;
 		parent = NULL;
-	} while (vp != root);
+	}
 	return ret;
 }
 
@@ -666,13 +666,20 @@ unveil_flagmatch(struct nameidata *ni, u_char flags)
 	return 1;
 }
 
-
+/*
+ * When traversing up towards the root figure out the proper unveil for
+ * the parent directory.
+ */
 struct unveil *
-unveil_covered(struct unveil *uv, struct vnode *dvp, struct process *pr) {
+unveil_covered(struct unveil *uv, struct vnode *dvp, struct proc *p)
+{
 	if (uv && uv->uv_vp == dvp) {
+		/* if at the root, chrooted or not, return the current uv */
+		if (dvp == (p->p_fd->fd_rdir ? p->p_fd->fd_rdir : rootvnode))
+			return uv;
 		if (uv->uv_cover >=0) {
-			KASSERT(uv->uv_cover < pr->ps_uvvcount);
-			return &pr->ps_uvpaths[uv->uv_cover];
+			KASSERT(uv->uv_cover < p->p_p->ps_uvvcount);
+			return &p->p_p->ps_uvpaths[uv->uv_cover];
 		}
 		return NULL;
 	}
@@ -758,7 +765,7 @@ unveil_check_component(struct proc *p, struct nameidata *ni, struct vnode *dp)
 		/*
 		 * adjust unveil match as necessary
 		 */
-		uv = unveil_covered(ni->ni_unveil_match, dp, pr);
+		uv = unveil_covered(ni->ni_unveil_match, dp, p);
 
 		/* clear the match when we DOTDOT above it */
 		if (ni->ni_unveil_match &&
