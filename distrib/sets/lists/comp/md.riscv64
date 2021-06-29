@@ -25,6 +25,7 @@
 ./usr/include/riscv64/kcore.h
 ./usr/include/riscv64/limits.h
 ./usr/include/riscv64/loadfile_machdep.h
+./usr/include/riscv64/mplock.h
 ./usr/include/riscv64/mutex.h
 ./usr/include/riscv64/openpromio.h
 ./usr/include/riscv64/param.h
