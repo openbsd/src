@@ -1,6 +1,7 @@
-/* $OpenBSD: ssl_sigalgs.c,v 1.32 2021/06/29 19:10:08 jsing Exp $ */
+/* $OpenBSD: ssl_sigalgs.c,v 1.33 2021/06/29 19:20:39 jsing Exp $ */
 /*
  * Copyright (c) 2018-2020 Bob Beck <beck@openbsd.org>
+ * Copyright (c) 2021 Joel Sing <jsing@openbsd.org>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,6 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
 #include <string.h>
 #include <stdlib.h>
 
@@ -326,11 +328,31 @@ ssl_sigalg_select(SSL *s, EVP_PKEY *pkey)
 		if ((sigalg = ssl_sigalg_from_value(
 		    S3I(s)->hs.negotiated_tls_version, sigalg_value)) == NULL)
 			continue;
-
 		if (ssl_sigalg_pkey_ok(s, sigalg, pkey))
 			return sigalg;
 	}
 
 	SSLerror(s, SSL_R_UNKNOWN_PKEY_TYPE);
 	return NULL;
+}
+
+const struct ssl_sigalg *
+ssl_sigalg_for_peer(SSL *s, EVP_PKEY *pkey, uint16_t sigalg_value)
+{
+	const struct ssl_sigalg *sigalg;
+
+	if (!SSL_USE_SIGALGS(s))
+		return ssl_sigalg_for_legacy(s, pkey);
+
+	if ((sigalg = ssl_sigalg_from_value(S3I(s)->hs.negotiated_tls_version,
+	    sigalg_value)) == NULL) {
+		SSLerror(s, SSL_R_UNKNOWN_DIGEST);
+		return (NULL);
+	}
+	if (!ssl_sigalg_pkey_ok(s, sigalg, pkey)) {
+		SSLerror(s, SSL_R_WRONG_SIGNATURE_TYPE);
+		return (NULL);
+	}
+
+	return sigalg;
 }

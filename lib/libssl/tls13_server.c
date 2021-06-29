@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.82 2021/06/29 19:10:08 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.83 2021/06/29 19:20:39 jsing Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -970,10 +970,6 @@ tls13_client_certificate_verify_recv(struct tls13_ctx *ctx, CBS *cbs)
 	if (!CBS_get_u16_length_prefixed(cbs, &signature))
 		goto err;
 
-	if ((sigalg = ssl_sigalg_from_value(ctx->hs->negotiated_tls_version,
-	    signature_scheme)) == NULL)
-		goto err;
-
 	if (!CBB_init(&cbb, 0))
 		goto err;
 	if (!CBB_add_bytes(&cbb, tls13_cert_verify_pad,
@@ -994,7 +990,8 @@ tls13_client_certificate_verify_recv(struct tls13_ctx *ctx, CBS *cbs)
 		goto err;
 	if ((pkey = X509_get0_pubkey(cert)) == NULL)
 		goto err;
-	if (!ssl_sigalg_pkey_ok(ctx->ssl, sigalg, pkey))
+	if ((sigalg = ssl_sigalg_for_peer(ctx->ssl, pkey,
+	    signature_scheme)) == NULL)
 		goto err;
 	ctx->hs->peer_sigalg = sigalg;
 

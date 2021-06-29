@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.h,v 1.21 2021/06/29 19:10:08 jsing Exp $ */
+/* $OpenBSD: ssl_sigalgs.h,v 1.22 2021/06/29 19:20:39 jsing Exp $ */
 /*
  * Copyright (c) 2018-2019 Bob Beck <beck@openbsd.org>
  *
@@ -75,6 +75,8 @@ int ssl_sigalgs_build(uint16_t tls_version, CBB *cbb);
 int ssl_sigalg_pkey_ok(SSL *s, const struct ssl_sigalg *sigalg,
     EVP_PKEY *pkey);
 const struct ssl_sigalg *ssl_sigalg_select(SSL *s, EVP_PKEY *pkey);
+const struct ssl_sigalg *ssl_sigalg_for_peer(SSL *s, EVP_PKEY *pkey,
+    uint16_t sigalg_value);
 
 __END_HIDDEN_DECLS
 
