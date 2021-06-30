@@ -1,4 +1,4 @@
-/*	$Id: receiver.c,v 1.27 2021/05/17 11:59:09 claudio Exp $ */
+/*	$OpenBSD: receiver.c,v 1.28 2021/06/30 13:10:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>

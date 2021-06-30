@@ -1,4 +1,4 @@
-/*	$Id: flist.c,v 1.31 2021/03/22 11:49:15 claudio Exp $ */
+/*	$OpenBSD: flist.c,v 1.32 2021/06/30 13:10:04 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2019 Florian Obser <florian@openbsd.org>

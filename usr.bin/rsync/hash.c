@@ -1,4 +1,4 @@
-/*	$Id: hash.c,v 1.3 2019/02/13 05:41:35 tb Exp $ */
+/*	$OpenBSD: hash.c,v 1.4 2021/06/30 13:10:04 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *

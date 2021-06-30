@@ -1,4 +1,4 @@
-/*	$Id: socket.c,v 1.30 2021/05/17 12:02:58 claudio Exp $ */
+/*	$OpenBSD: socket.c,v 1.31 2021/06/30 13:10:04 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *

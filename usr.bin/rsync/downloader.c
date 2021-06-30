@@ -1,4 +1,4 @@
-/*	$Id: downloader.c,v 1.21 2019/05/08 21:30:11 benno Exp $ */
+/*	$OpenBSD: downloader.c,v 1.22 2021/06/30 13:10:04 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *

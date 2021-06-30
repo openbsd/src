@@ -1,4 +1,4 @@
-/*	$Id: client.c,v 1.16 2021/05/17 11:59:09 claudio Exp $ */
+/*	$OpenBSD: client.c,v 1.17 2021/06/30 13:10:04 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *

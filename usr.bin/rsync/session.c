@@ -1,4 +1,4 @@
-/*	$Id: session.c,v 1.7 2019/05/08 20:00:25 benno Exp $ */
+/*	$OpenBSD: session.c,v 1.8 2021/06/30 13:10:04 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *

@@ -1,4 +1,4 @@
-/*	$Id: blocks.c,v 1.19 2019/06/02 17:43:34 deraadt Exp $ */
+/*	$OpenBSD: blocks.c,v 1.20 2021/06/30 13:10:04 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
