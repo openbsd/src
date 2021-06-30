@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.60 2020/07/17 16:40:26 jmc Exp $
+.\" $OpenBSD: pledge.2,v 1.61 2021/06/30 18:17:21 schwarze Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 17 2020 $
+.Dd $Mdocdate: June 30 2021 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -33,9 +33,9 @@ management, read-write operations on file descriptors, opening of files,
 and networking.
 In general, these modes were selected by studying the operation
 of many programs using libc and other such interfaces, and setting
-.Ar promises
+.Fa promises
 or
-.Ar execpromises .
+.Fa execpromises .
 .Pp
 Use of
 .Fn pledge
@@ -60,7 +60,7 @@ with the
 flag.
 .Pp
 A
-.Ar promises
+.Fa promises
 value of
 .Qq \&
 restricts the process to the
@@ -72,9 +72,9 @@ with another process.
 Passing
 .Dv NULL
 to
-.Ar promises
+.Fa promises
 or
-.Ar execpromises
+.Fa execpromises
 specifies to not change the current value.
 .Pp
 Some system calls, when allowed, have restrictions applied to them:
@@ -136,9 +136,9 @@ and any files below
 .Pa /usr/share/zoneinfo .
 .It Fn pledge :
 Can only reduce permissions for
-.Ar promises
+.Fa promises
 and
-.Ar execpromises .
+.Fa execpromises .
 .It Xr sysctl 2 :
 A small set of read-only operations are allowed, sufficient to
 support:
@@ -150,7 +150,7 @@ and system sensor readings.
 .El
 .Pp
 The
-.Ar promises
+.Fa promises
 argument is specified as a string, with space separated keywords:
 .Bl -tag -width "prot_exec" -offset indent
 .It Va stdio
@@ -464,7 +464,7 @@ Coupled with the
 .Va proc
 promise, this allows a process to fork and execute another program.
 If
-.Ar execpromises
+.Fa execpromises
 has been previously set the new program begins with those promises,
 unless setuid/setgid bits are set in which case execution is blocked with
 .Er EACCES .
@@ -596,12 +596,12 @@ Rather than killing the process upon violation, indicate error with
 Also when
 .Fn pledge
 is called with higher
-.Ar promises
+.Fa promises
 or
-.Ar execpromises ,
+.Fa execpromises ,
 those changes will be ignored and return success.
 This is useful when a parent enforces
-.Ar execpromises
+.Fa execpromises
 but an execve'd child has a different idea.
 .El
 .Sh RETURN VALUES
@@ -611,12 +611,12 @@ but an execve'd child has a different idea.
 will fail if:
 .Bl -tag -width Er
 .It Bq Er EFAULT
-.Ar promises
+.Fa promises
 or
-.Ar execpromises
+.Fa execpromises
 points outside the process's allocated address space.
 .It Bq Er EINVAL
-.Ar promises
+.Fa promises
 is malformed or contains invalid keywords.
 .It Bq Er EPERM
 This process is attempting to increase permissions.
