@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.61 2021/06/30 09:47:20 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.62 2021/06/30 09:47:57 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5899,10 +5899,8 @@ iwx_mac_ctxt_cmd_common(struct iwx_softc *sc, struct iwx_node *in,
 		case IEEE80211_HTPROT_NONMEMBER:
 		case IEEE80211_HTPROT_NONHT_MIXED:
 			cmd->protection_flags |=
-			    htole32(IWX_MAC_PROT_FLG_HT_PROT);
-			if (ic->ic_protmode == IEEE80211_PROT_CTSONLY)
-				cmd->protection_flags |=
-				    htole32(IWX_MAC_PROT_FLG_SELF_CTS_EN);
+			    htole32(IWX_MAC_PROT_FLG_HT_PROT |
+			    IWX_MAC_PROT_FLG_FAT_PROT);
 			break;
 		case IEEE80211_HTPROT_20MHZ:
 			if (ic->ic_htcaps & IEEE80211_HTCAP_CBW20_40) {
@@ -5910,9 +5908,6 @@ iwx_mac_ctxt_cmd_common(struct iwx_softc *sc, struct iwx_node *in,
 				cmd->protection_flags |=
 				    htole32(IWX_MAC_PROT_FLG_HT_PROT |
 				    IWX_MAC_PROT_FLG_FAT_PROT);
-				if (ic->ic_protmode == IEEE80211_PROT_CTSONLY)
-					cmd->protection_flags |= htole32(
-					    IWX_MAC_PROT_FLG_SELF_CTS_EN);
 			}
 			break;
 		default:
