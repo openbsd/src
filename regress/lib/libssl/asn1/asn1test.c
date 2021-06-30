@@ -1,4 +1,4 @@
-/*	$OpenBSD: asn1test.c,v 1.7 2021/03/22 20:05:21 tb Exp $	*/
+/*	$OpenBSD: asn1test.c,v 1.8 2021/06/30 18:09:46 jsing Exp $	*/
 /*
  * Copyright (c) 2014, 2016 Joel Sing <jsing@openbsd.org>
  *
@@ -22,6 +22,8 @@
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 #include <openssl/tls1.h>
+
+#include "ssl_locl.h"
 
 int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp);
 SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
