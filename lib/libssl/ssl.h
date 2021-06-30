@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.195 2021/06/30 18:04:05 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.196 2021/06/30 18:07:50 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1039,6 +1039,7 @@ int PEM_write_SSL_SESSION(FILE *fp, SSL_SESSION *x);
 #define SSL_CTRL_SET_ECDH_AUTO			94
 
 #if defined(LIBRESSL_HAS_TLS1_3) || defined(LIBRESSL_INTERNAL)
+#define SSL_CTRL_GET_PEER_SIGNATURE_NID			108
 #define SSL_CTRL_GET_PEER_TMP_KEY			109
 #define SSL_CTRL_GET_SERVER_TMP_KEY SSL_CTRL_GET_PEER_TMP_KEY
 #else
@@ -1053,6 +1054,10 @@ int PEM_write_SSL_SESSION(FILE *fp, SSL_SESSION *x);
 #define SSL_CTRL_SET_MAX_PROTO_VERSION			124
 #define SSL_CTRL_GET_MIN_PROTO_VERSION			130
 #define SSL_CTRL_GET_MAX_PROTO_VERSION			131
+
+#if defined(LIBRESSL_HAS_TLS1_3) || defined(LIBRESSL_INTERNAL)
+#define SSL_CTRL_GET_SIGNATURE_NID			132
+#endif
 
 #define DTLSv1_get_timeout(ssl, arg) \
 	SSL_ctrl(ssl,DTLS_CTRL_GET_TIMEOUT,0, (void *)arg)
@@ -1151,8 +1156,17 @@ const SSL_METHOD *SSL_CTX_get_ssl_method(const SSL_CTX *ctx);
 	SSL_ctrl(s,SSL_CTRL_GET_SERVER_TMP_KEY,0,pk)
 
 #if defined(LIBRESSL_HAS_TLS1_3) || defined(LIBRESSL_INTERNAL)
+#define SSL_get_signature_nid(s, pn) \
+	SSL_ctrl(s, SSL_CTRL_GET_SIGNATURE_NID, 0, pn)
+
+#define SSL_get_peer_signature_nid(s, pn) \
+	SSL_ctrl(s, SSL_CTRL_GET_PEER_SIGNATURE_NID, 0, pn)
 #define SSL_get_peer_tmp_key(s, pk) \
 	SSL_ctrl(s, SSL_CTRL_GET_PEER_TMP_KEY, 0, pk)
+
+int SSL_get_signature_type_nid(const SSL *ssl, int *nid);
+int SSL_get_peer_signature_type_nid(const SSL *ssl, int *nid);
+
 #endif /* LIBRESSL_HAS_TLS1_3 || LIBRESSL_INTERNAL */
 
 #ifndef LIBRESSL_INTERNAL

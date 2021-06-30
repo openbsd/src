@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.210 2021/05/16 13:56:30 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.211 2021/06/30 18:07:50 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -161,6 +161,7 @@
 #include "bytestring.h"
 #include "dtls_locl.h"
 #include "ssl_locl.h"
+#include "ssl_sigalgs.h"
 
 #define SSL3_NUM_CIPHERS	(sizeof(ssl3_ciphers) / sizeof(SSL_CIPHER))
 
@@ -1929,6 +1930,64 @@ SSL_set1_groups_list(SSL *s, const char *groups)
 	    &s->internal->tlsext_supportedgroups_length, groups);
 }
 
+static int
+_SSL_get_signature_nid(SSL *s, int *nid)
+{
+	const struct ssl_sigalg *sigalg;
+
+	if ((sigalg = S3I(s)->hs.our_sigalg) == NULL)
+		return 0;
+
+	*nid = EVP_MD_type(sigalg->md());
+
+	return 1;
+}
+
+static int
+_SSL_get_peer_signature_nid(SSL *s, int *nid)
+{
+	const struct ssl_sigalg *sigalg;
+
+	if ((sigalg = S3I(s)->hs.peer_sigalg) == NULL)
+		return 0;
+
+	*nid = EVP_MD_type(sigalg->md());
+
+	return 1;
+}
+
+int
+SSL_get_signature_type_nid(const SSL *s, int *nid)
+{
+	const struct ssl_sigalg *sigalg;
+
+	if ((sigalg = S3I(s)->hs.our_sigalg) == NULL)
+		return 0;
+
+	*nid = sigalg->key_type;
+	if (sigalg->key_type == EVP_PKEY_RSA &&
+	    (sigalg->flags & SIGALG_FLAG_RSA_PSS))
+		*nid = EVP_PKEY_RSA_PSS;
+
+	return 1;
+}
+
+int
+SSL_get_peer_signature_type_nid(const SSL *s, int *nid)
+{
+	const struct ssl_sigalg *sigalg;
+
+	if ((sigalg = S3I(s)->hs.peer_sigalg) == NULL)
+		return 0;
+
+	*nid = sigalg->key_type;
+	if (sigalg->key_type == EVP_PKEY_RSA &&
+	    (sigalg->flags & SIGALG_FLAG_RSA_PSS))
+		*nid = EVP_PKEY_RSA_PSS;
+
+	return 1;
+}
+
 long
 ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 {
@@ -2038,6 +2097,12 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 		if (larg < 0 || larg > UINT16_MAX)
 			return 0;
 		return SSL_set_max_proto_version(s, larg);
+
+	case SSL_CTRL_GET_SIGNATURE_NID:
+		return _SSL_get_signature_nid(s, parg);
+
+	case SSL_CTRL_GET_PEER_SIGNATURE_NID:
+		return _SSL_get_peer_signature_nid(s, parg);
 
 	/*
 	 * Legacy controls that should eventually be removed.
