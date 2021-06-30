@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.106 2021/06/29 19:56:11 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.107 2021/06/30 09:59:07 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2323,7 +2323,6 @@ ssl3_send_client_verify_sigalgs(SSL *s, EVP_PKEY *pkey,
 	CBB cbb_signature;
 	EVP_PKEY_CTX *pctx = NULL;
 	EVP_MD_CTX mctx;
-	const EVP_MD *md;
 	const unsigned char *hdata;
 	unsigned char *signature = NULL;
 	size_t signature_len, hdata_len;
@@ -2335,7 +2334,7 @@ ssl3_send_client_verify_sigalgs(SSL *s, EVP_PKEY *pkey,
 		SSLerror(s, ERR_R_INTERNAL_ERROR);
 		goto err;
 	}
-	if (!EVP_DigestSignInit(&mctx, &pctx, md, NULL, pkey)) {
+	if (!EVP_DigestSignInit(&mctx, &pctx, sigalg->md(), NULL, pkey)) {
 		SSLerror(s, ERR_R_EVP_LIB);
 		goto err;
 	}
