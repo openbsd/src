@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.641 2021/05/25 22:45:09 bluhm Exp $	*/
+/*	$OpenBSD: if.c,v 1.642 2021/06/30 13:23:33 bluhm Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -3107,9 +3107,10 @@ ifnewlladdr(struct ifnet *ifp)
 #endif
 	struct ifreq ifrq;
 	short up;
-	int s;
 
-	s = splnet();
+	NET_ASSERT_LOCKED();	/* for ioctl and in6 */
+	KERNEL_ASSERT_LOCKED();	/* for if_flags */
+
 	up = ifp->if_flags & IFF_UP;
 
 	if (up) {
@@ -3143,7 +3144,6 @@ ifnewlladdr(struct ifnet *ifp)
 		ifrq.ifr_flags = ifp->if_flags;
 		(*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (caddr_t)&ifrq);
 	}
-	splx(s);
 }
 
 void
