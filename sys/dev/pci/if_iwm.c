@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.329 2021/06/21 10:19:21 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.330 2021/06/30 09:42:22 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5460,7 +5460,7 @@ iwm_rx_tx_cmd(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 		return;
 	if (qid < IWM_FIRST_AGG_TX_QUEUE && tx_resp->frame_count > 1)
 		return;
-	if (qid >= IWM_FIRST_AGG_TX_QUEUE && sizeof(*tx_resp) + sizeof(ssn) +
+	if (sizeof(*tx_resp) + sizeof(ssn) +
 	    tx_resp->frame_count * sizeof(tx_resp->status) > len)
 		return;
 
@@ -5468,26 +5468,21 @@ iwm_rx_tx_cmd(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 	if (txd->m == NULL)
 		return;
 
+	memcpy(&ssn, &tx_resp->status + tx_resp->frame_count, sizeof(ssn));
+	ssn = le32toh(ssn) & 0xfff;
 	if (qid >= IWM_FIRST_AGG_TX_QUEUE) {
 		int status;
-		memcpy(&ssn, &tx_resp->status + tx_resp->frame_count, sizeof(ssn));
-		ssn = le32toh(ssn) & 0xfff;
 		status = le16toh(tx_resp->status.status) & IWM_TX_STATUS_MSK;
 		iwm_ampdu_tx_done(sc, cmd_hdr, txd->in, ring,
 		    le32toh(tx_resp->initial_rate), tx_resp->frame_count,
 		    tx_resp->failure_frame, ssn, status, &tx_resp->status);
 	} else {
-		iwm_rx_tx_cmd_single(sc, pkt, txd->in, txd->txmcs, txd->txrate);
-		iwm_txd_done(sc, txd);
-		ring->queued--;
-
 		/*
-		 * XXX Sometimes we miss Tx completion interrupts.
-		 * We cannot check Tx success/failure for affected frames;
-		 * just free the associated mbuf and release the associated
-		 * node reference.
+		 * Even though this is not an agg queue, we must only free
+		 * frames before the firmware's starting sequence number.
 		 */
-		iwm_txq_advance(sc, ring, idx);
+		iwm_rx_tx_cmd_single(sc, pkt, txd->in, txd->txmcs, txd->txrate);
+		iwm_txq_advance(sc, ring, IWM_AGG_SSN_TO_TXQ_IDX(ssn));
 		iwm_clear_oactive(sc, ring);
 	}
 }
