@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.194 2021/06/13 15:51:10 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.195 2021/06/30 18:04:05 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -376,113 +376,6 @@ typedef int (*tls_session_ticket_ext_cb_fn)(SSL *s, const unsigned char *data,
     int len, void *arg);
 typedef int (*tls_session_secret_cb_fn)(SSL *s, void *secret, int *secret_len,
     STACK_OF(SSL_CIPHER) *peer_ciphers, SSL_CIPHER **cipher, void *arg);
-
-#ifdef LIBRESSL_INTERNAL
-
-/* used to hold info on the particular ciphers used */
-struct ssl_cipher_st {
-	int valid;
-	const char *name;		/* text name */
-	unsigned long id;		/* id, 4 bytes, first is version */
-
-	unsigned long algorithm_mkey;	/* key exchange algorithm */
-	unsigned long algorithm_auth;	/* server authentication */
-	unsigned long algorithm_enc;	/* symmetric encryption */
-	unsigned long algorithm_mac;	/* symmetric authentication */
-	unsigned long algorithm_ssl;	/* (major) protocol version */
-
-	unsigned long algo_strength;	/* strength and export flags */
-	unsigned long algorithm2;	/* Extra flags */
-	int strength_bits;		/* Number of bits really used */
-	int alg_bits;			/* Number of bits for algorithm */
-};
-
-
-/* Used to hold functions for SSLv3/TLSv1 functions */
-struct ssl_method_internal_st;
-
-struct ssl_method_st {
-	int (*ssl_dispatch_alert)(SSL *s);
-	int (*num_ciphers)(void);
-	const SSL_CIPHER *(*get_cipher)(unsigned int ncipher);
-	const SSL_CIPHER *(*get_cipher_by_char)(const unsigned char *ptr);
-	int (*put_cipher_by_char)(const SSL_CIPHER *cipher, unsigned char *ptr);
-
-	const struct ssl_method_internal_st *internal;
-};
-
-/* Lets make this into an ASN.1 type structure as follows
- * SSL_SESSION_ID ::= SEQUENCE {
- *	version 		INTEGER,	-- structure version number
- *	SSLversion 		INTEGER,	-- SSL version number
- *	Cipher 			OCTET STRING,	-- the 3 byte cipher ID
- *	Session_ID 		OCTET STRING,	-- the Session ID
- *	Master_key 		OCTET STRING,	-- the master key
- *	KRB5_principal		OCTET STRING	-- optional Kerberos principal
- *	Time [ 1 ] EXPLICIT	INTEGER,	-- optional Start Time
- *	Timeout [ 2 ] EXPLICIT	INTEGER,	-- optional Timeout ins seconds
- *	Peer [ 3 ] EXPLICIT	X509,		-- optional Peer Certificate
- *	Session_ID_context [ 4 ] EXPLICIT OCTET STRING,   -- the Session ID context
- *	Verify_result [ 5 ] EXPLICIT INTEGER,   -- X509_V_... code for `Peer'
- *	HostName [ 6 ] EXPLICIT OCTET STRING,   -- optional HostName from servername TLS extension
- *	PSK_identity_hint [ 7 ] EXPLICIT OCTET STRING, -- optional PSK identity hint
- *	PSK_identity [ 8 ] EXPLICIT OCTET STRING,  -- optional PSK identity
- *	Ticket_lifetime_hint [9] EXPLICIT INTEGER, -- server's lifetime hint for session ticket
- *	Ticket [10]             EXPLICIT OCTET STRING, -- session ticket (clients only)
- *	Compression_meth [11]   EXPLICIT OCTET STRING, -- optional compression method
- *	SRP_username [ 12 ] EXPLICIT OCTET STRING -- optional SRP username
- *	}
- * Look in ssl/ssl_asn1.c for more details
- * I'm using EXPLICIT tags so I can read the damn things using asn1parse :-).
- */
-struct ssl_session_internal_st;
-
-struct ssl_session_st {
-	int ssl_version;	/* what ssl version session info is
-				 * being kept in here? */
-
-	int master_key_length;
-	unsigned char master_key[SSL_MAX_MASTER_KEY_LENGTH];
-
-	/* session_id - valid? */
-	unsigned int session_id_length;
-	unsigned char session_id[SSL_MAX_SSL_SESSION_ID_LENGTH];
-
-	/* this is used to determine whether the session is being reused in
-	 * the appropriate context. It is up to the application to set this,
-	 * via SSL_new */
-	unsigned int sid_ctx_length;
-	unsigned char sid_ctx[SSL_MAX_SID_CTX_LENGTH];
-
-	/* This is the cert for the other end. */
-	X509 *peer;
-
-	/* when app_verify_callback accepts a session where the peer's certificate
-	 * is not ok, we must remember the error for session reuse: */
-	long verify_result; /* only for servers */
-
-	long timeout;
-	time_t time;
-	int references;
-
-	const SSL_CIPHER *cipher;
-	unsigned long cipher_id;	/* when ASN.1 loaded, this
-					 * needs to be used to load
-					 * the 'cipher' structure */
-
-	STACK_OF(SSL_CIPHER) *ciphers; /* shared ciphers? */
-
-	char *tlsext_hostname;
-
-	/* RFC4507 info */
-	unsigned char *tlsext_tick;	/* Session ticket */
-	size_t tlsext_ticklen;		/* Session ticket length */
-	long tlsext_tick_lifetime_hint;	/* Session lifetime hint in seconds */
-
-	struct ssl_session_internal_st *internal;
-};
-
-#endif
 
 /* Allow initial connection to servers that don't support RI */
 #define SSL_OP_LEGACY_SERVER_CONNECT			0x00000004L

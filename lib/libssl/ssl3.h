@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl3.h,v 1.54 2021/06/13 15:47:11 jsing Exp $ */
+/* $OpenBSD: ssl3.h,v 1.55 2021/06/30 18:04:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -356,21 +356,6 @@ typedef struct ssl3_buffer_st {
 #define TLS1_FLAGS_SKIP_CERT_VERIFY		0x0010
 #define TLS1_FLAGS_FREEZE_TRANSCRIPT		0x0020
 #define SSL3_FLAGS_CCS_OK			0x0080
-
-#ifdef LIBRESSL_INTERNAL
-
-struct ssl3_state_internal_st;
-
-typedef struct ssl3_state_st {
-	long flags;
-
-	unsigned char server_random[SSL3_RANDOM_SIZE];
-	unsigned char client_random[SSL3_RANDOM_SIZE];
-
-	struct ssl3_state_internal_st *internal;
-} SSL3_STATE;
-
-#endif
 
 /* SSLv3 */
 /*client */
