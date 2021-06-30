@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.22 2021/06/21 15:05:51 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.23 2021/06/30 22:20:56 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -294,30 +294,19 @@ void    cpu_switchto_asm(struct proc *, struct proc *);
 void
 cpu_switchto(struct proc *old, struct proc *new)
 {
-	struct cpu_info *ci = curcpu();
-	struct trapframe *tf;
-	struct pcb *pcb;
+	if (old) {
+		struct pcb *pcb = &old->p_addr->u_pcb;
+		struct trapframe *tf = pcb->pcb_tf;
 
-	/* old may be NULL, do not save context */
-	if (old != NULL) {
-		tf = old->p_addr->u_pcb.pcb_tf;
-		if ((tf->tf_sstatus & SSTATUS_FS_MASK) == SSTATUS_FS_DIRTY) {
+		if (pcb->pcb_flags & PCB_FPU)
 			fpu_save(old, tf);
-		}
+
+		/* drop FPU state */
 		tf->tf_sstatus &= ~SSTATUS_FS_MASK;
+		tf->tf_sstatus |= SSTATUS_FS_OFF;
 	}
 
 	cpu_switchto_asm(old, new);
-
-	pcb = ci->ci_curpcb;
-	tf = new->p_addr->u_pcb.pcb_tf;
-#if 0
-	/* XXX this optimization is subtly broken */	
-	if (pcb->pcb_fpcpu == ci && ci->ci_fpuproc == new) {
-		/* If fpu state is already loaded, allow it to be used */
-		tf->tf_sstatus |= SSTATUS_FS_CLEAN;
-	}
-#endif
 }
 
 /*
@@ -420,16 +409,15 @@ void
 setregs(struct proc *p, struct exec_package *pack, u_long stack,
     register_t *retval)
 {
-	struct trapframe *tf;
+	struct trapframe *tf = p->p_addr->u_pcb.pcb_tf;
+	struct pcb *pcb = &p->p_addr->u_pcb;
 
 	/* If we were using the FPU, forget about it. */
-	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
-		fpu_discard(p);
-	p->p_addr->u_pcb.pcb_flags &= ~PCB_FPU;
+	pcb->pcb_flags &= ~PCB_FPU;
+	tf->tf_sstatus &= ~SSTATUS_FS_MASK;
+	tf->tf_sstatus |= SSTATUS_FS_OFF;
 
-	tf = p->p_addr->u_pcb.pcb_tf;
-
-	memset (tf,0, sizeof(*tf));
+	memset(tf, 0, sizeof(*tf));
 	tf->tf_a[0] = stack; // XXX Inherited from FreeBSD. Why?
 	tf->tf_sp = STACKALIGN(stack);
 	tf->tf_ra = pack->ep_entry;

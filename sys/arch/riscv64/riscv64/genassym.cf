@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.4 2021/06/29 21:27:53 kettenis Exp $
+#	$OpenBSD: genassym.cf,v 1.5 2021/06/30 22:20:56 kettenis Exp $
 #
 # Copyright (c) 2020 Brian Bamsch <bbamsch@google.com>
 # All rights reserved.
@@ -62,7 +62,6 @@ member	pcb_tf
 member	pcb_sp
 member	pcb_onfault
 member	pcb_fpstate
-member	pcb_fpcpu
 
 struct	cpu_info
 member	ci_dev

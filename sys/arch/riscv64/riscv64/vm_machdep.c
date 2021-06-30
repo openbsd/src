@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.6 2021/05/20 04:22:33 drahn Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.7 2021/06/30 22:20:56 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -57,18 +57,17 @@ void
 cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
     void (*func)(void *), void *arg)
 {
-	struct pcb *pcb = (struct pcb *)&p2->p_addr->u_pcb;
+	struct pcb *pcb = &p2->p_addr->u_pcb;
+	struct pcb *pcb1 = &p1->p_addr->u_pcb;
 	struct trapframe *tf;
 	struct switchframe *sf;
 
-	/* If the FPU is enabled, allow fpu_save to store data if needed */
-	if (pcb->pcb_flags & PCB_FPU) {
-		fpu_save(p1, p1->p_addr->u_pcb.pcb_tf);
-	}
+	/* Save FPU state to PCB if necessary. */
+	if (pcb1->pcb_flags & PCB_FPU)
+		fpu_save(p1, pcb1->pcb_tf);
 
 	/* Copy the pcb. */
 	*pcb = p1->p_addr->u_pcb;
-	pcb->pcb_fpcpu = NULL;
 
 	pmap_activate(p2);
 
@@ -108,10 +107,6 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 void
 cpu_exit(struct proc *p)
 {
-	/* If we were using the FPU, forget about it. */
-	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
-		fpu_discard(p);
-
 	pmap_deactivate(p);
 	sched_exit(p);
 }

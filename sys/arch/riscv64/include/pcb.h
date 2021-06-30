@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.2 2021/05/12 01:20:52 jsg Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.3 2021/06/30 22:20:56 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -39,6 +39,5 @@ struct pcb {
 
 	caddr_t		pcb_onfault;	// On fault handler
 	struct fpreg	pcb_fpstate;	// Floating Point state */
-	struct cpu_info	*pcb_fpcpu;
 };
 #endif	/* _MACHINE_PCB_H_ */

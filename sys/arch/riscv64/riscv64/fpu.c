@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.10 2021/06/29 21:27:53 kettenis Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.11 2021/06/30 22:20:56 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Dale Rahn <drahn@openbsd.org>
@@ -23,24 +23,6 @@
 #include "machine/asm.h"
 
 void
-fpu_clear(struct fpreg *fp)
-{
-	/* rounding mode set to 0, should be RND_NEAREST */
-	bzero(fp, sizeof (*fp));
-}
-
-void
-fpu_discard(struct proc *p)
-{
-	struct cpu_info *ci = curcpu();
-	
-	if (curpcb->pcb_fpcpu == ci && ci->ci_fpuproc == p) {
-		ci->ci_fpuproc = NULL;
-		curpcb->pcb_fpcpu = NULL;
-	}
-}
-
-void
 fpu_disable(void)
 {
 	__asm volatile ("csrc sstatus, %0" :: "r"(SSTATUS_FS_MASK));
@@ -54,44 +36,21 @@ fpu_enable_clean(void)
 }
 
 void
-fpu_save(struct proc *p, struct trapframe *frame)
+fpu_save(struct proc *p, struct trapframe *tf)
 {
-	struct cpu_info *ci = curcpu();
-	struct pcb *pcb =  &p->p_addr->u_pcb;
-	struct fpreg *fp = &p->p_addr->u_pcb.pcb_fpstate;
-	register void *ptr = fp->fp_f;
-	uint64_t fcsr;
+	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct fpreg *fp = &pcb->pcb_fpstate;
 
-	if (ci->ci_fpuproc != p) {
+	if ((tf->tf_sstatus & SSTATUS_FS_MASK) == SSTATUS_FS_OFF ||
+	    (tf->tf_sstatus & SSTATUS_FS_MASK) == SSTATUS_FS_CLEAN)
 		return;
-	}
-
-	if (pcb->pcb_fpcpu == NULL || ci->ci_fpuproc == NULL ||
-	    !(pcb->pcb_fpcpu == ci && ci->ci_fpuproc == p)) {
-		/* disable fpu */
-		panic("FPU enabled but curproc and curcpu do not agree %p %p",
-		    pcb->pcb_fpcpu, ci->ci_fpuproc);
-	}
-
-
-	switch (p->p_addr->u_pcb.pcb_tf->tf_sstatus & SSTATUS_FS_MASK)  {
-	case SSTATUS_FS_OFF:
-		/* Fallthru */
-	case SSTATUS_FS_CLEAN:
-		p->p_addr->u_pcb.pcb_tf->tf_sstatus &= ~SSTATUS_FS_MASK;
-		return;
-	case SSTATUS_FS_DIRTY:
-	default:
-		;
-		/* fallthru */
-	}
 
 	fpu_enable_clean();
-	__asm volatile("frcsr	%0" : "=r"(fcsr));
 
-	fp->fp_fcsr = fcsr;
-	#define STFx(x) \
-	__asm volatile ("fsd	f" __STRING(x)  ", %1(%0)": :"r"(ptr), "i"(x * 8))
+	__asm volatile("frcsr	%0" : "=r"(fp->fp_fcsr));
+
+#define STFx(x) \
+	__asm volatile ("fsd f" #x ", %1(%0)" : : "r"(fp->fp_f), "i"(x * 8))
 
 	STFx(0);
 	STFx(1);
@@ -126,46 +85,32 @@ fpu_save(struct proc *p, struct trapframe *frame)
 	STFx(30);
 	STFx(31);
 
-	/*
-	 * pcb->pcb_fpcpu and ci->ci_fpuproc are still valid
-	 * until some other fpu context steals either the cpu
-	 * context or another cpu steals the fpu context.
-	 */
-
-	p->p_addr->u_pcb.pcb_tf->tf_sstatus &= ~SSTATUS_FS_MASK;
 	fpu_disable();
+
+	/* mark FPU as clean */
+	p->p_addr->u_pcb.pcb_tf->tf_sstatus &= ~SSTATUS_FS_MASK;
+	p->p_addr->u_pcb.pcb_tf->tf_sstatus |= SSTATUS_FS_CLEAN;
 }
 
 void
 fpu_load(struct proc *p)
 {
-	struct cpu_info *ci = curcpu();
-	struct pcb *pcb =  &p->p_addr->u_pcb;
-
-	struct fpreg *fp = &p->p_addr->u_pcb.pcb_fpstate;
-	register void *ptr = fp->fp_f;
+	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct fpreg *fp = &pcb->pcb_fpstate;
 
 	KASSERT((pcb->pcb_tf->tf_sstatus & SSTATUS_FS_MASK) == SSTATUS_FS_OFF);
 
-	/*
-	 * Verify that context is not already loaded
-	 */
-	if (pcb->pcb_fpcpu == ci && ci->ci_fpuproc == p) {
-		/* fpu state loaded, enable it */
-		pcb->pcb_tf->tf_sstatus |= SSTATUS_FS_CLEAN;
-		return;
-	}
-	//printf("FPU load requested %p %p \n", ci, p);
-
 	if ((pcb->pcb_flags & PCB_FPU) == 0) {
-		fpu_clear(fp);
+		memset(fp, 0, sizeof(*fp));
 		pcb->pcb_flags |= PCB_FPU;
 	}
+
 	fpu_enable_clean();
 
-	__asm volatile("fscsr	%0" : : "r"(fp->fp_fcsr));
-	#define RDFx(x) \
-	__asm volatile ("fld	f" __STRING(x)  ", %1(%0)": :"r"(ptr), "i"(x * 8))
+	__asm volatile("fscsr %0" : : "r"(fp->fp_fcsr));
+
+#define RDFx(x) \
+	__asm volatile ("fld f" #x ", %1(%0)" : : "r"(fp->fp_f), "i"(x * 8))
 
 	RDFx(0);
 	RDFx(1);
@@ -200,14 +145,9 @@ fpu_load(struct proc *p)
 	RDFx(30);
 	RDFx(31);
 
-	/*
-	 * pcb->pcb_fpcpu and ci->ci_fpuproc are activated here
-	 * to indicate that the fpu context is correctly loaded on
-	 * this cpu. XXX block interrupts for these saves ?
-	 */
-	pcb->pcb_fpcpu = ci;
-	ci->ci_fpuproc = p;
-	p->p_addr->u_pcb.pcb_tf->tf_sstatus |= SSTATUS_FS_CLEAN;
-
 	fpu_disable();
+
+	/* mark FPU as clean */
+	p->p_addr->u_pcb.pcb_tf->tf_sstatus &= ~SSTATUS_FS_MASK;
+	p->p_addr->u_pcb.pcb_tf->tf_sstatus |= SSTATUS_FS_CLEAN;
 }
