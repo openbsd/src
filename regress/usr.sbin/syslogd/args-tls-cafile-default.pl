@@ -38,7 +38,7 @@ our %args = (
 	    qr/listen sock: (127.0.0.1|::1) \d+/ => 1,
 	    qr/IO::Socket::SSL socket accept failed: /.
 		qr/.*,SSL accept attempt failed error:.*/.
-		qr/(ST_ACCEPT:tlsv1 alert unknown ca|$errors)/ => 1,
+		qr/(ACCEPT_SR_FINISHED:tlsv1 alert unknown ca|$errors)/ => 1,
 	    get_testgrep() => 0,
 	},
     },

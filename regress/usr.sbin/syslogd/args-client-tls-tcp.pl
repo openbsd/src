@@ -42,7 +42,7 @@ our %args = (
 	loggrep => {
 	    qr/syslogd\[\d+\]: tls logger .* connection error: /.
 		qr/handshake failed: error:.*:SSL routines:/.
-		qr/ST_ACCEPT:tlsv1 alert protocol version/ => 1,
+		qr/ACCEPT_SR_CLNT_HELLO:tlsv1 alert protocol version/ => 1,
 	},
     },
     pipe => { nocheck => 1 },
