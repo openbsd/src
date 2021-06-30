@@ -326,7 +326,10 @@ static int debug = 0;
 int doit_biopair(SSL *s_ssl, SSL *c_ssl, long bytes, clock_t *s_time,
     clock_t *c_time);
 int doit(SSL *s_ssl, SSL *c_ssl, long bytes);
+
+#if 0
 static int do_test_cipherlist(void);
+#endif
 
 static void
 sv_usage(void)
@@ -574,6 +577,7 @@ bad:
 		goto end;
 	}
 
+#if 0
 	if (test_cipherlist == 1) {
 		/* ensure that the cipher list are correctly sorted and exit */
 		if (do_test_cipherlist() == 0)
@@ -581,6 +585,7 @@ bad:
 		ret = 0;
 		goto end;
 	}
+#endif
 
 	if (!dtls1 && !tls1 && !tls1_2 && number > 1 && !reuse && !force) {
 		fprintf(stderr,
@@ -1923,6 +1928,7 @@ get_dh1024dsa()
 	return (dh);
 }
 
+#if 0
 static int
 do_test_cipherlist(void)
 {
@@ -1947,3 +1953,4 @@ do_test_cipherlist(void)
 
 	return 1;
 }
+#endif
