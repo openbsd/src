@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.h,v 1.71 2017/08/10 18:57:20 tedu Exp $	*/
+/*	$OpenBSD: cryptodev.h,v 1.72 2021/06/30 12:21:02 bluhm Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -216,6 +216,7 @@ struct cryptocap {
 	int		(*cc_freesession) (u_int64_t);
 };
 
+void	crypto_init(void);
 
 int	crypto_newsession(u_int64_t *, struct cryptoini *, int);
 int	crypto_freesession(u_int64_t);

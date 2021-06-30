@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.307 2021/06/02 13:56:28 visa Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.308 2021/06/30 12:21:02 bluhm Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -145,7 +145,6 @@ long	__guard_local __attribute__((section(".openbsd.randomdata")));
 int	main(void *);
 void	check_console(struct proc *);
 void	start_init(void *);
-void	crypto_init(void);
 void	db_ctf_init(void);
 void	prof_init(void);
 void	init_exec(void);
