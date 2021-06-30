@@ -1,4 +1,4 @@
-.\"	$OpenBSD: revoke.2,v 1.15 2021/01/03 18:10:27 rob Exp $
+.\"	$OpenBSD: revoke.2,v 1.16 2021/06/30 18:46:49 schwarze Exp $
 .\"	$NetBSD: revoke.2,v 1.3 1995/10/12 15:41:11 jtc Exp $
 .\"
 .\" Copyright (c) 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)revoke.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: January 3 2021 $
+.Dd $Mdocdate: June 30 2021 $
 .Dt REVOKE 2
 .Os
 .Sh NAME
@@ -87,7 +87,7 @@ bytes.
 .It Bq Er ENOENT
 The named file or a component of the pathname does not exist.
 .It Bq Er ENOTTY
-.Ar path
+.Fa path
 is not associated with a tty special device.
 .It Bq Er EACCES
 Search permission is denied for a component of the path prefix.
