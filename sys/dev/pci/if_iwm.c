@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.331 2021/06/30 09:43:59 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.332 2021/06/30 09:44:56 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -7677,10 +7677,8 @@ iwm_mac_ctxt_cmd_common(struct iwm_softc *sc, struct iwm_node *in,
 		case IEEE80211_HTPROT_NONMEMBER:
 		case IEEE80211_HTPROT_NONHT_MIXED:
 			cmd->protection_flags |=
-			    htole32(IWM_MAC_PROT_FLG_HT_PROT);
-			if (ic->ic_protmode == IEEE80211_PROT_CTSONLY)
-				cmd->protection_flags |=
-				    htole32(IWM_MAC_PROT_FLG_SELF_CTS_EN);
+			    htole32(IWM_MAC_PROT_FLG_HT_PROT |
+			    IWM_MAC_PROT_FLG_FAT_PROT);
 			break;
 		case IEEE80211_HTPROT_20MHZ:
 			if (ic->ic_htcaps & IEEE80211_HTCAP_CBW20_40) {
@@ -7688,9 +7686,6 @@ iwm_mac_ctxt_cmd_common(struct iwm_softc *sc, struct iwm_node *in,
 				cmd->protection_flags |=
 				    htole32(IWM_MAC_PROT_FLG_HT_PROT |
 				    IWM_MAC_PROT_FLG_FAT_PROT);
-				if (ic->ic_protmode == IEEE80211_PROT_CTSONLY)
-					cmd->protection_flags |= htole32(
-					    IWM_MAC_PROT_FLG_SELF_CTS_EN);
 			}
 			break;
 		default:
