@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.14 2021/06/30 01:08:10 jsg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.15 2021/06/30 07:39:05 jsg Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Brian Bamsch <bbamsch@google.com>
@@ -83,6 +83,7 @@ icache_flush(void)
 		hart_mask |= (1UL << ci->ci_hartid);
 	}
 
+	sbi_remote_fence_i(&hart_mask);
 #endif
 
 	fence_i();
