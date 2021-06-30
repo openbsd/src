@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxvar.h,v 1.16 2021/05/06 09:19:28 stsp Exp $	*/
+/*	$OpenBSD: if_iwxvar.h,v 1.17 2021/06/30 09:46:46 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -227,6 +227,9 @@ struct iwx_dma_info {
 #define IWX_TX_RING_COUNT	IWX_DEFAULT_QUEUE_SIZE
 #define IWX_TX_RING_LOMARK	192
 #define IWX_TX_RING_HIMARK	224
+
+/* For aggregation queues, index must be aligned to frame sequence number. */
+#define IWX_AGG_SSN_TO_TXQ_IDX(x)	((x) & (IWX_TX_RING_COUNT - 1))
 
 struct iwx_tx_data {
 	bus_dmamap_t	map;

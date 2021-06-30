@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.59 2021/06/21 10:19:21 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.60 2021/06/30 09:46:46 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -4245,6 +4245,9 @@ iwx_rx_tx_cmd(struct iwx_softc *sc, struct iwx_rx_packet *pkt,
 	int qid = cmd_hdr->qid;
 	struct iwx_tx_ring *ring = &sc->txq[qid];
 	struct iwx_tx_data *txd;
+	struct iwx_tx_resp *tx_resp = (void *)pkt->data;
+	uint32_t ssn;
+	uint32_t len = iwx_rx_packet_len(pkt);
 
 	bus_dmamap_sync(sc->sc_dmat, data->map, 0, IWX_RBUF_SIZE,
 	    BUS_DMASYNC_POSTREAD);
@@ -4255,20 +4258,21 @@ iwx_rx_tx_cmd(struct iwx_softc *sc, struct iwx_rx_packet *pkt,
 	if (txd->m == NULL)
 		return;
 
+	if (sizeof(*tx_resp) + sizeof(ssn) +
+	    tx_resp->frame_count * sizeof(tx_resp->status) > len)
+		return;
+
 	iwx_rx_tx_cmd_single(sc, pkt, txd->in);
-	iwx_txd_done(sc, txd);
-	iwx_tx_update_byte_tbl(ring, idx, 0, 0);
 
 	/*
-	 * XXX Sometimes we miss Tx completion interrupts.
-	 * We cannot check Tx success/failure for affected frames; just free
-	 * the associated mbuf and release the associated node reference.
+	 * Even though this is not an agg queue, we must only free
+	 * frames before the firmware's starting sequence number.
 	 */
-	while (ring->tail != idx) {
+	memcpy(&ssn, &tx_resp->status + tx_resp->frame_count, sizeof(ssn));
+	ssn = le32toh(ssn) & 0xfff;
+	while (ring->tail != IWX_AGG_SSN_TO_TXQ_IDX(ssn)) {
 		txd = &ring->data[ring->tail];
 		if (txd->m != NULL) {
-			DPRINTF(("%s: missed Tx completion: tail=%d idx=%d\n",
-			    __func__, ring->tail, idx));
 			iwx_txd_done(sc, txd);
 			iwx_tx_update_byte_tbl(ring, idx, 0, 0);
 			ring->queued--;
