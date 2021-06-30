@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.330 2021/06/30 09:42:22 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.331 2021/06/30 09:43:59 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3223,7 +3223,8 @@ iwm_mac_ctxt_task(void *arg)
 	struct iwm_node *in = (void *)ic->ic_bss;
 	int err, s = splnet();
 
-	if (sc->sc_flags & IWM_FLAG_SHUTDOWN) {
+	if ((sc->sc_flags & IWM_FLAG_SHUTDOWN) ||
+	    ic->ic_state != IEEE80211_S_RUN) {
 		refcnt_rele_wake(&sc->task_refs);
 		splx(s);
 		return;
@@ -3242,7 +3243,8 @@ iwm_updateprot(struct ieee80211com *ic)
 {
 	struct iwm_softc *sc = ic->ic_softc;
 
-	if (ic->ic_state == IEEE80211_S_RUN)
+	if (ic->ic_state == IEEE80211_S_RUN &&
+	    !task_pending(&sc->newstate_task))
 		iwm_add_task(sc, systq, &sc->mac_ctxt_task);
 }
 
@@ -3251,7 +3253,8 @@ iwm_updateslot(struct ieee80211com *ic)
 {
 	struct iwm_softc *sc = ic->ic_softc;
 
-	if (ic->ic_state == IEEE80211_S_RUN)
+	if (ic->ic_state == IEEE80211_S_RUN &&
+	    !task_pending(&sc->newstate_task))
 		iwm_add_task(sc, systq, &sc->mac_ctxt_task);
 }
 
@@ -3260,7 +3263,8 @@ iwm_updateedca(struct ieee80211com *ic)
 {
 	struct iwm_softc *sc = ic->ic_softc;
 
-	if (ic->ic_state == IEEE80211_S_RUN)
+	if (ic->ic_state == IEEE80211_S_RUN &&
+	    !task_pending(&sc->newstate_task))
 		iwm_add_task(sc, systq, &sc->mac_ctxt_task);
 }
 
