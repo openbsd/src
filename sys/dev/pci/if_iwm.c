@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.332 2021/06/30 09:44:56 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.333 2021/06/30 09:45:47 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -6428,8 +6428,8 @@ int
 iwm_flush_tx_path(struct iwm_softc *sc, int tfd_queue_msk)
 {
 	struct iwm_tx_path_flush_cmd flush_cmd = {
-		.queues_ctl = htole32(tfd_queue_msk),
-		.flush_ctl = htole16(IWM_DUMP_TX_FIFO_FLUSH),
+		.sta_id = htole32(IWM_STATION_ID),
+		.tid_mask = htole16(0xffff),
 	};
 	int err;
 
@@ -6859,15 +6859,14 @@ iwm_flush_sta(struct iwm_softc *sc, struct iwm_node *in)
 		goto done;
 	}
 
+	/*
+	 * Flushing Tx rings may fail if the AP has disappeared.
+	 * We can rely on iwm_newstate_task() to reset everything and begin
+	 * scanning again if we are left with outstanding frames on queues.
+	 */
 	err = iwm_wait_tx_queues_empty(sc);
-	if (err) {
-		printf("%s: Could not empty Tx queues (error %d)\n",
-		    DEVNAME(sc), err);
-#if 1
-		iwm_dump_driver_status(sc);
-#endif
+	if (err)
 		goto done;
-	}
 
 	err = iwm_drain_sta(sc, in, 0);
 done:

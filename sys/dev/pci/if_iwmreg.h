@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmreg.h,v 1.52 2021/06/01 18:03:56 stsp Exp $	*/
+/*	$OpenBSD: if_iwmreg.h,v 1.53 2021/06/30 09:45:47 stsp Exp $	*/
 
 /******************************************************************************
  *
@@ -5009,11 +5009,23 @@ struct iwm_beacon_notif {
  * @flush_ctl: control flags
  * @reserved: reserved
  */
-struct iwm_tx_path_flush_cmd {
+struct iwm_tx_path_flush_cmd_v1 {
 	uint32_t queues_ctl;
 	uint16_t flush_ctl;
 	uint16_t reserved;
 } __packed; /* IWM_TX_PATH_FLUSH_CMD_API_S_VER_1 */
+
+/**
+ * struct iwl_tx_path_flush_cmd -- queue/FIFO flush command
+ * @sta_id: station ID to flush
+ * @tid_mask: TID mask to flush
+ * @reserved: reserved
+ */
+struct iwm_tx_path_flush_cmd {
+	uint32_t sta_id;
+	uint16_t tid_mask;
+	uint16_t reserved;
+} __packed; /* TX_PATH_FLUSH_CMD_API_S_VER_2 */
 
 /**
  * iwm_get_scd_ssn - returns the SSN of the SCD
