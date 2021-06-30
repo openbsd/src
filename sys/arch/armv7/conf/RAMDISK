@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.125 2021/05/28 15:52:11 visa Exp $
+#	$OpenBSD: RAMDISK,v 1.126 2021/06/30 12:19:01 deraadt Exp $
 
 machine		armv7 arm
 
@@ -11,7 +11,7 @@ option		SMALL_KERNEL
 option		NO_PROPOLICE
 option		BOOT_CONFIG
 
-option		MINIROOTSIZE=18560
+option		MINIROOTSIZE=18880
 option		RAMDISK_HOOKS
 
 option		FFS
