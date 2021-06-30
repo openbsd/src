@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: emacs.sh,v 1.11 2019/04/03 14:59:34 jca Exp $
+# $OpenBSD: emacs.sh,v 1.12 2021/06/30 18:55:52 schwarze Exp $
 #
 # Copyright (c) 2017 Anton Lindqvist <anton@openbsd.org>
 # Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -58,6 +58,8 @@ testseq "z\0002\0355\0200\0006" " # z\b\0355\0200z\bz"
 testseq "z\0002\0355\0237\0006" " # z\b\0355\0237z\bz"
 testseq "z\0002\0356\0200\0006" " # z\b\0356\0200z\bz"
 testseq "z\0002\0357\0277\0006" " # z\b\0357\0277z\bz"
+testseq "z\0002\0363\0200\0200\0006" " # z\b\0363\0200\0200z\bz"
+testseq "z\0002\0363\0277\0277\0006" " # z\b\0363\0277\0277z\bz"
 testseq "z\0002\0364\0200\0200\0006" " # z\b\0364\0200\0200z\bz"
 testseq "z\0002\0364\0217\0277\0006" " # z\b\0364\0217\0277z\bz"
 
@@ -65,7 +67,6 @@ testseq "z\0002\0364\0217\0277\0006" " # z\b\0364\0217\0277z\bz"
 testseq "z\0002\0300\0277" " # z\b\0300z\b\b\0300\0277z\b"
 testseq "z\0002\0301\0277" " # z\b\0301z\b\b\0301\0277z\b"
 testseq "z\0002\0360\0217" " # z\b\0360z\b\b\0360\0217z\b"
-testseq "z\0002\0363\0217" " # z\b\0363z\b\b\0363\0217z\b"
 testseq "z\0002\0365\0217" " # z\b\0365z\b\b\0365\0217z\b"
 testseq "z\0002\0367\0217" " # z\b\0367z\b\b\0367\0217z\b"
 testseq "z\0002\0370\0217" " # z\b\0370z\b\b\0370\0217z\b"
