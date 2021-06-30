@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.60 2021/06/30 09:46:46 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.61 2021/06/30 09:47:20 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -2947,7 +2947,8 @@ iwx_mac_ctxt_task(void *arg)
 	struct iwx_node *in = (void *)ic->ic_bss;
 	int err, s = splnet();
 
-	if (sc->sc_flags & IWX_FLAG_SHUTDOWN) {
+	if ((sc->sc_flags & IWX_FLAG_SHUTDOWN) ||
+	    ic->ic_state != IEEE80211_S_RUN) {
 		refcnt_rele_wake(&sc->task_refs);
 		splx(s);
 		return;
@@ -2966,7 +2967,8 @@ iwx_updateprot(struct ieee80211com *ic)
 {
 	struct iwx_softc *sc = ic->ic_softc;
 
-	if (ic->ic_state == IEEE80211_S_RUN)
+	if (ic->ic_state == IEEE80211_S_RUN &&
+	    !task_pending(&sc->newstate_task))
 		iwx_add_task(sc, systq, &sc->mac_ctxt_task);
 }
 
@@ -2975,7 +2977,8 @@ iwx_updateslot(struct ieee80211com *ic)
 {
 	struct iwx_softc *sc = ic->ic_softc;
 
-	if (ic->ic_state == IEEE80211_S_RUN)
+	if (ic->ic_state == IEEE80211_S_RUN &&
+	    !task_pending(&sc->newstate_task))
 		iwx_add_task(sc, systq, &sc->mac_ctxt_task);
 }
 
@@ -2984,7 +2987,8 @@ iwx_updateedca(struct ieee80211com *ic)
 {
 	struct iwx_softc *sc = ic->ic_softc;
 
-	if (ic->ic_state == IEEE80211_S_RUN)
+	if (ic->ic_state == IEEE80211_S_RUN &&
+	    !task_pending(&sc->newstate_task))
 		iwx_add_task(sc, systq, &sc->mac_ctxt_task);
 }
 
