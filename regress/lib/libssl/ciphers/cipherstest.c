@@ -32,6 +32,7 @@ ssl_aes_is_accelerated(void)
 #endif
 }
 
+#if 0
 static int
 get_put_test(const char *name, const SSL_METHOD *method)
 {
@@ -117,6 +118,7 @@ cipher_get_put_tests(void)
 
 	return failed;
 }
+#endif
 
 static int
 cipher_get_by_value_tests(void)
@@ -508,7 +510,10 @@ main(int argc, char **argv)
 {
 	int failed = 0;
 
+#if 0
 	failed |= cipher_get_put_tests();
+#endif
+
 	failed |= cipher_get_by_value_tests();
 
 	failed |= parse_ciphersuites_test();
