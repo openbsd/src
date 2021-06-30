@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.13 2021/06/29 21:27:53 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.14 2021/06/30 01:08:10 jsg Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Brian Bamsch <bbamsch@google.com>
@@ -29,6 +29,7 @@
 #include "machine/pmap.h"
 #include "machine/cpufunc.h"
 #include "machine/riscvreg.h"
+#include "machine/sbi.h"
 
 void pmap_set_satp(struct proc *);
 void pmap_free_asid(pmap_t);
@@ -44,7 +45,7 @@ void pmap_free_asid(pmap_t);
 static inline void
 tlb_flush(pmap_t pm, vaddr_t va)
 {
-#ifdef MULTIPTOCESSOR
+#ifdef MULTIPROCESSOR
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
 	unsigned long hart_mask = 0;
