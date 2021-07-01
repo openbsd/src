@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.181 2021/06/11 11:13:53 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.182 2021/07/01 17:53:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -129,7 +129,7 @@ tls1_new(SSL *s)
 {
 	if (!ssl3_new(s))
 		return (0);
-	s->method->internal->ssl_clear(s);
+	s->method->ssl_clear(s);
 	return (1);
 }
 
@@ -147,7 +147,7 @@ void
 tls1_clear(SSL *s)
 {
 	ssl3_clear(s);
-	s->version = s->method->internal->version;
+	s->version = s->method->version;
 }
 
 static const int nid_list[] = {

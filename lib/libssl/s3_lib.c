@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.211 2021/06/30 18:07:50 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.212 2021/07/01 17:53:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1548,7 +1548,7 @@ ssl3_new(SSL *s)
 		return (0);
 	}
 
-	s->method->internal->ssl_clear(s);
+	s->method->ssl_clear(s);
 
 	return (1);
 }
@@ -2688,7 +2688,7 @@ ssl3_shutdown(SSL *s)
 		}
 	} else if (!(s->internal->shutdown & SSL_RECEIVED_SHUTDOWN)) {
 		/* If we are waiting for a close from our peer, we are closed */
-		s->method->internal->ssl_read_bytes(s, 0, NULL, 0, 0);
+		s->method->ssl_read_bytes(s, 0, NULL, 0, 0);
 		if (!(s->internal->shutdown & SSL_RECEIVED_SHUTDOWN)) {
 			return(-1);	/* return WANT_READ */
 		}
@@ -2709,8 +2709,8 @@ ssl3_write(SSL *s, const void *buf, int len)
 	if (S3I(s)->renegotiate)
 		ssl3_renegotiate_check(s);
 
-	return s->method->internal->ssl_write_bytes(s,
-	    SSL3_RT_APPLICATION_DATA, buf, len);
+	return s->method->ssl_write_bytes(s, SSL3_RT_APPLICATION_DATA,
+	    buf, len);
 }
 
 static int
@@ -2722,8 +2722,9 @@ ssl3_read_internal(SSL *s, void *buf, int len, int peek)
 	if (S3I(s)->renegotiate)
 		ssl3_renegotiate_check(s);
 	S3I(s)->in_read_app_data = 1;
-	ret = s->method->internal->ssl_read_bytes(s,
-	    SSL3_RT_APPLICATION_DATA, buf, len, peek);
+
+	ret = s->method->ssl_read_bytes(s, SSL3_RT_APPLICATION_DATA, buf, len,
+	    peek);
 	if ((ret == -1) && (S3I(s)->in_read_app_data == 2)) {
 		/*
 		 * ssl3_read_bytes decided to call s->internal->handshake_func,
@@ -2733,8 +2734,8 @@ ssl3_read_internal(SSL *s, void *buf, int len, int peek)
 		 * handshake processing and try to read application data again.
 		 */
 		s->internal->in_handshake++;
-		ret = s->method->internal->ssl_read_bytes(s,
-		    SSL3_RT_APPLICATION_DATA, buf, len, peek);
+		ret = s->method->ssl_read_bytes(s, SSL3_RT_APPLICATION_DATA,
+		    buf, len, peek);
 		s->internal->in_handshake--;
 	} else
 		S3I(s)->in_read_app_data = 0;

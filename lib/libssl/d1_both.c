@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_both.c,v 1.75 2021/06/11 17:29:48 jsing Exp $ */
+/* $OpenBSD: d1_both.c,v 1.76 2021/07/01 17:53:39 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -600,7 +600,7 @@ dtls1_reassemble_fragment(SSL *s, struct hm_header_st* msg_hdr, int *ok)
 		unsigned char devnull [256];
 
 		while (frag_len) {
-			i = s->method->internal->ssl_read_bytes(s, SSL3_RT_HANDSHAKE,
+			i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE,
 			    devnull, frag_len > sizeof(devnull) ?
 			    sizeof(devnull) : frag_len, 0);
 			if (i <= 0)
@@ -612,7 +612,7 @@ dtls1_reassemble_fragment(SSL *s, struct hm_header_st* msg_hdr, int *ok)
 	}
 
 	/* read the body of the fragment (header has already been read */
-	i = s->method->internal->ssl_read_bytes(s, SSL3_RT_HANDSHAKE,
+	i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE,
 	    frag->fragment + msg_hdr->frag_off, frag_len, 0);
 	if (i <= 0 || (unsigned long)i != frag_len)
 		goto err;
@@ -690,7 +690,7 @@ dtls1_process_out_of_seq_message(SSL *s, struct hm_header_st* msg_hdr, int *ok)
 		unsigned char devnull [256];
 
 		while (frag_len) {
-			i = s->method->internal->ssl_read_bytes(s, SSL3_RT_HANDSHAKE,
+			i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE,
 			    devnull, frag_len > sizeof(devnull) ?
 			    sizeof(devnull) : frag_len, 0);
 			if (i <= 0)
@@ -712,7 +712,7 @@ dtls1_process_out_of_seq_message(SSL *s, struct hm_header_st* msg_hdr, int *ok)
 
 		if (frag_len) {
 			/* read the body of the fragment (header has already been read */
-			i = s->method->internal->ssl_read_bytes(s, SSL3_RT_HANDSHAKE,
+			i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE,
 			    frag->fragment, frag_len, 0);
 			if (i <= 0 || (unsigned long)i != frag_len)
 				goto err;
@@ -756,7 +756,7 @@ dtls1_get_message_fragment(SSL *s, int st1, int stn, long max, int *ok)
 	}
 
 	/* read handshake message header */
-	i = s->method->internal->ssl_read_bytes(s, SSL3_RT_HANDSHAKE, wire,
+	i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE, wire,
 	    DTLS1_HM_HEADER_LENGTH, 0);
 	if (i <= 0) 	/* nbio, or an error */
 	{
@@ -825,7 +825,7 @@ dtls1_get_message_fragment(SSL *s, int st1, int stn, long max, int *ok)
 	if (frag_len > 0) {
 		unsigned char *p = (unsigned char *)s->internal->init_buf->data + DTLS1_HM_HEADER_LENGTH;
 
-		i = s->method->internal->ssl_read_bytes(s, SSL3_RT_HANDSHAKE,
+		i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE,
 		    &p[frag_off], frag_len, 0);
 		/* XDTLS:  fix this--message fragments cannot span multiple packets */
 		if (i <= 0) {

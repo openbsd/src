@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_legacy.c,v 1.25 2021/06/28 15:36:51 tb Exp $ */
+/*	$OpenBSD: tls13_legacy.c,v 1.26 2021/07/01 17:53:39 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -358,8 +358,8 @@ tls13_use_legacy_client(struct tls13_ctx *ctx)
 	if (!tls13_use_legacy_stack(ctx))
 		return 0;
 
-	s->internal->handshake_func = s->method->internal->ssl_connect;
-	s->client_version = s->version = s->method->internal->max_tls_version;
+	s->internal->handshake_func = s->method->ssl_connect;
+	s->client_version = s->version = s->method->max_tls_version;
 
 	return 1;
 }
@@ -372,8 +372,8 @@ tls13_use_legacy_server(struct tls13_ctx *ctx)
 	if (!tls13_use_legacy_stack(ctx))
 		return 0;
 
-	s->internal->handshake_func = s->method->internal->ssl_accept;
-	s->client_version = s->version = s->method->internal->max_tls_version;
+	s->internal->handshake_func = s->method->ssl_accept;
+	s->client_version = s->version = s->method->max_tls_version;
 	s->server = 1;
 
 	return 1;
@@ -405,7 +405,7 @@ tls13_legacy_accept(SSL *ssl)
 
 	ret = tls13_server_accept(ctx);
 	if (ret == TLS13_IO_USE_LEGACY)
-		return ssl->method->internal->ssl_accept(ssl);
+		return ssl->method->ssl_accept(ssl);
 
 	return tls13_legacy_return_code(ssl, ret);
 }
@@ -420,7 +420,7 @@ tls13_legacy_connect(SSL *ssl)
 	/* XXX drop back to legacy for client auth for now */
 	if (ssl->cert->key->privatekey != NULL) {
 		ssl->method = tls_legacy_client_method();
-		return ssl->method->internal->ssl_connect(ssl);
+		return ssl->method->ssl_connect(ssl);
 	}
 #endif
 
@@ -444,7 +444,7 @@ tls13_legacy_connect(SSL *ssl)
 
 	ret = tls13_client_connect(ctx);
 	if (ret == TLS13_IO_USE_LEGACY)
-		return ssl->method->internal->ssl_connect(ssl);
+		return ssl->method->ssl_connect(ssl);
 
 	return tls13_legacy_return_code(ssl, ret);
 }

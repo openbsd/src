@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_handshake.c,v 1.68 2021/06/28 18:48:56 tb Exp $	*/
+/*	$OpenBSD: tls13_handshake.c,v 1.69 2021/07/01 17:53:39 jsing Exp $	*/
 /*
  * Copyright (c) 2018-2021 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
@@ -535,7 +535,7 @@ tls13_handshake_recv_action(struct tls13_ctx *ctx,
 	tls13_handshake_msg_free(ctx->hs_msg);
 	ctx->hs_msg = NULL;
 
-	if (ctx->ssl->method->internal->version < TLS1_3_VERSION)
+	if (ctx->ssl->method->version < TLS1_3_VERSION)
 		return TLS13_IO_USE_LEGACY;
 
 	return ret;

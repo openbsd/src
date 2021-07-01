@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_both.c,v 1.32 2021/06/11 11:13:53 jsing Exp $ */
+/* $OpenBSD: ssl_both.c,v 1.33 2021/07/01 17:53:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -433,7 +433,7 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 
 		do {
 			while (s->internal->init_num < 4) {
-				i = s->method->internal->ssl_read_bytes(s,
+				i = s->method->ssl_read_bytes(s,
 				    SSL3_RT_HANDSHAKE, &p[s->internal->init_num],
 				    4 - s->internal->init_num, 0);
 				if (i <= 0) {
@@ -500,7 +500,7 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 	p = s->internal->init_msg;
 	n = S3I(s)->hs.tls12.message_size - s->internal->init_num;
 	while (n > 0) {
-		i = s->method->internal->ssl_read_bytes(s, SSL3_RT_HANDSHAKE,
+		i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE,
 		    &p[s->internal->init_num], n, 0);
 		if (i <= 0) {
 			s->internal->rwstate = SSL_READING;

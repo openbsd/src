@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_versions.c,v 1.19 2021/06/27 16:54:14 jsing Exp $ */
+/* $OpenBSD: ssl_versions.c,v 1.20 2021/07/01 17:53:39 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -61,7 +61,7 @@ ssl_version_set_min(const SSL_METHOD *meth, uint16_t proto_ver,
 	uint16_t min_proto, min_version, max_version;
 
 	if (proto_ver == 0) {
-		*out_tls_ver = meth->internal->min_tls_version;
+		*out_tls_ver = meth->min_tls_version;
 		*out_proto_ver = 0;
 		return 1;
 	}
@@ -69,17 +69,17 @@ ssl_version_set_min(const SSL_METHOD *meth, uint16_t proto_ver,
 	min_version = proto_ver;
 	max_version = max_tls_ver;
 
-	if (meth->internal->dtls) {
+	if (meth->dtls) {
 		if ((min_version = ssl_dtls_to_tls_version(proto_ver)) == 0)
 			return 0;
 	}
 
 	if (!ssl_clamp_tls_version_range(&min_version, &max_version,
-	    meth->internal->min_tls_version, meth->internal->max_tls_version))
+	    meth->min_tls_version, meth->max_tls_version))
 		return 0;
 
 	min_proto = min_version;
-	if (meth->internal->dtls) {
+	if (meth->dtls) {
 		if ((min_proto = ssl_tls_to_dtls_version(min_version)) == 0)
 			return 0;
 	}
@@ -96,7 +96,7 @@ ssl_version_set_max(const SSL_METHOD *meth, uint16_t proto_ver,
 	uint16_t max_proto, min_version, max_version;
 
 	if (proto_ver == 0) {
-		*out_tls_ver = meth->internal->max_tls_version;
+		*out_tls_ver = meth->max_tls_version;
 		*out_proto_ver = 0;
 		return 1;
 	}
@@ -104,17 +104,17 @@ ssl_version_set_max(const SSL_METHOD *meth, uint16_t proto_ver,
 	min_version = min_tls_ver;
 	max_version = proto_ver;
 
-	if (meth->internal->dtls) {
+	if (meth->dtls) {
 		if ((max_version = ssl_dtls_to_tls_version(proto_ver)) == 0)
 			return 0;
 	}
 
 	if (!ssl_clamp_tls_version_range(&min_version, &max_version,
-	    meth->internal->min_tls_version, meth->internal->max_tls_version))
+	    meth->min_tls_version, meth->max_tls_version))
 		return 0;
 
 	max_proto = max_version;
-	if (meth->internal->dtls) {
+	if (meth->dtls) {
 		if ((max_proto = ssl_tls_to_dtls_version(max_version)) == 0)
 			return 0;
 	}
@@ -195,8 +195,7 @@ ssl_supported_tls_version_range(SSL *s, uint16_t *min_ver, uint16_t *max_ver)
 
 	/* Limit to the versions supported by this method. */
 	if (!ssl_clamp_tls_version_range(&min_version, &max_version,
-	    s->method->internal->min_tls_version,
-	    s->method->internal->max_tls_version))
+	    s->method->min_tls_version, s->method->max_tls_version))
 		return 0;
 
 	if (min_ver != NULL)

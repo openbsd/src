@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.150 2021/06/13 15:34:41 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.151 2021/07/01 17:53:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -389,7 +389,7 @@ tls1_setup_key_block(SSL *s)
 	key_block = NULL;
 
 	if (!(s->internal->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS) &&
-	    s->method->internal->version <= TLS1_VERSION) {
+	    s->method->version <= TLS1_VERSION) {
 		/*
 		 * Enable vulnerability countermeasure for CBC ciphers with
 		 * known-IV problem (http://www.openssl.org/~bodo/tls-cbc.txt)

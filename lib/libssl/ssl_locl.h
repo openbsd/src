@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.353 2021/06/30 18:04:06 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.354 2021/07/01 17:53:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -319,19 +319,19 @@ __BEGIN_HIDDEN_DECLS
 
 /* See if we use signature algorithms extension. */
 #define SSL_USE_SIGALGS(s) \
-	(s->method->internal->enc_flags & SSL_ENC_FLAG_SIGALGS)
+	(s->method->enc_flags & SSL_ENC_FLAG_SIGALGS)
 
 /* See if we use SHA256 default PRF. */
 #define SSL_USE_SHA256_PRF(s) \
-	(s->method->internal->enc_flags & SSL_ENC_FLAG_SHA256_PRF)
+	(s->method->enc_flags & SSL_ENC_FLAG_SHA256_PRF)
 
 /* Allow TLS 1.2 ciphersuites: applies to DTLS 1.2 as well as TLS 1.2. */
 #define SSL_USE_TLS1_2_CIPHERS(s) \
-	(s->method->internal->enc_flags & SSL_ENC_FLAG_TLS1_2_CIPHERS)
+	(s->method->enc_flags & SSL_ENC_FLAG_TLS1_2_CIPHERS)
 
 /* Allow TLS 1.3 ciphersuites only. */
 #define SSL_USE_TLS1_3_CIPHERS(s) \
-	(s->method->internal->enc_flags & SSL_ENC_FLAG_TLS1_3_CIPHERS)
+	(s->method->enc_flags & SSL_ENC_FLAG_TLS1_3_CIPHERS)
 
 #define SSL_PKEY_RSA		0
 #define SSL_PKEY_ECC		1
@@ -378,7 +378,7 @@ struct ssl_cipher_st {
 	int alg_bits;			/* Number of bits for algorithm */
 };
 
-typedef struct ssl_method_internal_st {
+struct ssl_method_st {
 	int dtls;
 	int server;
 	int version;
@@ -402,17 +402,13 @@ typedef struct ssl_method_internal_st {
 	    int peek);
 	int (*ssl_write_bytes)(SSL *s, int type, const void *buf_, int len);
 
-	unsigned int enc_flags;		/* SSL_ENC_FLAG_* */
-} SSL_METHOD_INTERNAL;
-
-struct ssl_method_st {
 	int (*ssl_dispatch_alert)(SSL *s);
 	int (*num_ciphers)(void);
 	const SSL_CIPHER *(*get_cipher)(unsigned int ncipher);
 	const SSL_CIPHER *(*get_cipher_by_char)(const unsigned char *ptr);
 	int (*put_cipher_by_char)(const SSL_CIPHER *cipher, unsigned char *ptr);
 
-	const struct ssl_method_internal_st *internal;
+	unsigned int enc_flags;		/* SSL_ENC_FLAG_* */
 };
 
 typedef struct ssl_session_internal_st {

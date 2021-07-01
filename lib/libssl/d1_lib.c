@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_lib.c,v 1.56 2021/06/19 16:52:47 jsing Exp $ */
+/* $OpenBSD: d1_lib.c,v 1.57 2021/07/01 17:53:39 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -100,7 +100,7 @@ dtls1_new(SSL *s)
 	if (s->server)
 		s->d1->internal->cookie_len = sizeof(D1I(s)->cookie);
 
-	s->method->internal->ssl_clear(s);
+	s->method->ssl_clear(s);
 	return (1);
 
  err:
