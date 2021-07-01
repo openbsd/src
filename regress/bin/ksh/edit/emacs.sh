@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: emacs.sh,v 1.13 2021/07/01 10:00:15 schwarze Exp $
+# $OpenBSD: emacs.sh,v 1.14 2021/07/01 10:22:16 schwarze Exp $
 #
 # Copyright (c) 2017 Anton Lindqvist <anton@openbsd.org>
 # Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -29,6 +29,10 @@ MALLOC_OPTIONS=S
 PS1=' # '
 VISUAL=emacs
 export EDITOR ENV HISTFILE MAIL MALLOC_OPTIONS PS1 VISUAL
+
+# The function testseq() sets up a pseudo terminal and feeds its first
+# argument to a shell on standard input.  It then checks that output
+# from the shell to the pseudo terminal agrees with the second argument.
 
 # auto-insert
 testseq "abc" " # abc"

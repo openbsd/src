@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: vi.sh,v 1.7 2020/09/20 15:25:09 tb Exp $
+# $OpenBSD: vi.sh,v 1.8 2021/07/01 10:22:16 schwarze Exp $
 #
 # Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 # Copyright (c) 2017 Anton Lindqvist <anton@openbsd.org>
@@ -29,6 +29,10 @@ MALLOC_OPTIONS=S
 PS1=' # '
 VISUAL=vi
 export EDITOR ENV HISTFILE MAIL MALLOC_OPTIONS PS1 VISUAL
+
+# The function testseq() sets up a pseudo terminal and feeds its first
+# argument to a shell on standard input.  It then checks that output
+# from the shell to the pseudo terminal agrees with the second argument.
 
 # ^H, ^?: Erase.
 testseq "ab\bc" " # ab\b \bc"
