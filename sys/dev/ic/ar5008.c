@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.66 2021/05/03 08:23:05 stsp Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.67 2021/07/01 11:51:55 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -970,28 +970,51 @@ ar5008_rx_process(struct athn_softc *sc, struct mbuf_list *ml)
 	/* Finalize mbuf. */
 	m->m_pkthdr.len = m->m_len = len;
 
-	/* Grab a reference to the source node. */
 	wh = mtod(m, struct ieee80211_frame *);
-	ni = ieee80211_find_rxnode(ic, wh);
 
 	if (michael_mic_failure) {
 		/*
 		 * Check that it is not a control frame
 		 * (invalid MIC failures on valid ctl frames).
+		 * Validate the transmitter's address to avoid passing
+		 * corrupt frames with bogus addresses to net80211.
 		 */
-		if (!(wh->i_fc[0] & IEEE80211_FC0_TYPE_CTL) &&
-		    (ic->ic_flags & IEEE80211_F_RSNON) &&
-		    (ni->ni_rsncipher == IEEE80211_CIPHER_TKIP ||
-		    ni->ni_rsngroupcipher == IEEE80211_CIPHER_TKIP)) {
-			/* Report Michael MIC failures to net80211. */
-			ic->ic_stats.is_rx_locmicfail++;
-			ieee80211_michael_mic_failure(ic, 0);
+		if ((wh->i_fc[0] & IEEE80211_FC0_TYPE_CTL)) {
+			switch (ic->ic_opmode) {
+#ifndef IEEE80211_STA_ONLY
+			case IEEE80211_M_HOSTAP:
+				if (ieee80211_find_node(ic, wh->i_addr2))
+					michael_mic_failure = 0;
+				break;
+#endif
+			case IEEE80211_M_STA:
+				if (IEEE80211_ADDR_EQ(wh->i_addr2,
+				    ic->ic_bss->ni_macaddr))
+					michael_mic_failure = 0;
+				break;
+			case IEEE80211_M_MONITOR:
+				michael_mic_failure = 0;
+				break;
+			default:
+				break;
+			}
+		}
+
+		if (michael_mic_failure) {
+ 			/* Report Michael MIC failures to net80211. */
+			if ((ic->ic_rsnciphers & IEEE80211_CIPHER_TKIP) ||
+			    ic->ic_rsngroupcipher == IEEE80211_CIPHER_TKIP) {
+				ic->ic_stats.is_rx_locmicfail++;
+				ieee80211_michael_mic_failure(ic, 0);
+			}
 			ifp->if_ierrors++;
-			ieee80211_release_node(ic, ni);
 			m_freem(m);
 			goto skip;
 		}
 	}
+
+	/* Grab a reference to the source node. */
+	ni = ieee80211_find_rxnode(ic, wh);
 
 	/* Remove any HW padding after the 802.11 header. */
 	if (!(wh->i_fc[0] & IEEE80211_FC0_TYPE_CTL)) {
