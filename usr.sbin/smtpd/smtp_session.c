@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.431 2021/06/14 17:58:16 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.432 2021/07/01 07:42:16 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1069,11 +1069,6 @@ smtp_tls_started(struct smtp_session *s)
 		    s->id,
 		    (s->flags & SF_VERIFIED) ? "verified" : "unchecked",
 		    tls_peer_cert_hash(io_tls(s->io)));
-	}
-	else {
-		log_info("%016"PRIx64" smtp "
-		    "cert-check result=\"no certificate presented\"",
-		    s->id);
 	}
 
 	if (s->listener->flags & F_SMTPS) {
