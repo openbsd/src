@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.192 2021/06/02 11:30:23 mvs Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.193 2021/07/02 12:17:41 bluhm Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -124,20 +124,20 @@ isdnssocket(struct socket *so)
 
 /* For SS_DNS sockets, only allow port DNS (port 53) */
 static int
-dns_portcheck(struct proc *p, struct socket *so, void *nam, u_int *namelen)
+dns_portcheck(struct proc *p, struct socket *so, void *nam, size_t namelen)
 {
 	int error = EINVAL;
 
 	switch (so->so_proto->pr_domain->dom_family) {
 	case AF_INET:
-		if (*namelen < sizeof(struct sockaddr_in))
+		if (namelen < sizeof(struct sockaddr_in))
 			break;
 		if (((struct sockaddr_in *)nam)->sin_port == htons(53))
 			error = 0;
 		break;
 #ifdef INET6
 	case AF_INET6:
-		if (*namelen < sizeof(struct sockaddr_in6))
+		if (namelen < sizeof(struct sockaddr_in6))
 			break;
 		if (((struct sockaddr_in6 *)nam)->sin6_port == htons(53))
 			error = 0;
@@ -315,18 +315,17 @@ doaccept(struct proc *p, int sock, struct sockaddr *name, socklen_t *anamelen,
 	fp->f_ops = &socketops;
 	fp->f_data = so;
 	error = soaccept(so, nam);
+out:
+	sounlock(head, s);
 	if (!error && name != NULL)
 		error = copyaddrout(p, nam, name, namelen, anamelen);
-out:
 	if (!error) {
-		sounlock(head, s);
 		fdplock(fdp);
 		fdinsert(fdp, tmpfd, cloexec, fp);
 		fdpunlock(fdp);
 		FRELE(fp, p);
 		*retval = tmpfd;
 	} else {
-		sounlock(head, s);
 		fdplock(fdp);
 		fdremove(fdp, tmpfd);
 		fdpunlock(fdp);
@@ -348,44 +347,40 @@ sys_connect(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	struct file *fp;
 	struct socket *so;
-	struct mbuf *nam = NULL;
+	struct mbuf *nam;
 	int error, s, interrupted = 0;
 
 	if ((error = getsock(p, SCARG(uap, s), &fp)) != 0)
 		return (error);
 	so = fp->f_data;
-	s = solock(so);
-	if (so->so_state & SS_ISCONNECTING) {
-		error = EALREADY;
-		goto out;
-	}
-	error = sockargs(&nam, SCARG(uap, name), SCARG(uap, namelen),
-	    MT_SONAME);
-	if (error)
-		goto out;
 	error = pledge_socket(p, so->so_proto->pr_domain->dom_family,
 	    so->so_state);
+	if (error)
+		goto out;
+	error = sockargs(&nam, SCARG(uap, name), SCARG(uap, namelen),
+	    MT_SONAME);
 	if (error)
 		goto out;
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_STRUCT))
 		ktrsockaddr(p, mtod(nam, caddr_t), SCARG(uap, namelen));
 #endif
-
+	s = solock(so);
 	if (isdnssocket(so)) {
-		u_int namelen = nam->m_len;
-		error = dns_portcheck(p, so, mtod(nam, void *), &namelen);
+		error = dns_portcheck(p, so, mtod(nam, void *), nam->m_len);
 		if (error)
-			goto out;
-		nam->m_len = namelen;
+			goto unlock;
 	}
-
+	if (so->so_state & SS_ISCONNECTING) {
+		error = EALREADY;
+		goto unlock;
+	}
 	error = soconnect(so, nam);
 	if (error)
 		goto bad;
 	if ((fp->f_flag & FNONBLOCK) && (so->so_state & SS_ISCONNECTING)) {
 		error = EINPROGRESS;
-		goto out;
+		goto unlock;
 	}
 	while ((so->so_state & SS_ISCONNECTING) && so->so_error == 0) {
 		error = sosleep_nsec(so, &so->so_timeo, PSOCK | PCATCH,
@@ -403,10 +398,11 @@ sys_connect(struct proc *p, void *v, register_t *retval)
 bad:
 	if (!interrupted)
 		so->so_state &= ~SS_ISCONNECTING;
-out:
+unlock:
 	sounlock(so, s);
-	FRELE(fp, p);
 	m_freem(nam);
+out:
+	FRELE(fp, p);
 	if (error == ERESTART)
 		error = EINTR;
 	return (error);
@@ -618,12 +614,10 @@ sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 		if (error)
 			goto bad;
 		if (isdnssocket(so)) {
-			u_int namelen = mp->msg_namelen;
 			error = dns_portcheck(p, so, mtod(to, caddr_t),
-			    &namelen);
+			    mp->msg_namelen);
 			if (error)
 				goto bad;
-			mp->msg_namelen = namelen;
 		}
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_STRUCT))
