@@ -1,4 +1,4 @@
-/* $OpenBSD: bcm2836_intr.c,v 1.11 2021/05/15 11:30:27 kettenis Exp $ */
+/* $OpenBSD: bcm2836_intr.c,v 1.12 2021/07/02 19:55:00 kettenis Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2015 Patrick Wildt <patrick@blueri.se>
@@ -96,8 +96,8 @@ struct intrsource {
 
 struct bcm_intc_softc {
 	struct device		 sc_dev;
-	struct intrsource	 sc_bcm_intc_handler[INTC_NIRQ];
-	uint32_t		 sc_bcm_intc_imask[INTC_NBANK][NIPL];
+	struct intrsource	 sc_handler[INTC_NIRQ];
+	uint32_t		 sc_imask[INTC_NBANK][NIPL];
 	int32_t			 sc_localcoremask[MAXCPUS];
 	bus_space_tag_t		 sc_iot;
 	bus_space_handle_t	 sc_ioh;
@@ -115,11 +115,11 @@ int	 bcm_intc_splraise(int new);
 void	 bcm_intc_setipl(int new);
 void	 bcm_intc_calc_mask(void);
 void	*bcm_intc_intr_establish(int, int, struct cpu_info *,
-    int (*)(void *), void *, char *);
+	    int (*)(void *), void *, char *);
 void	*bcm_intc_intr_establish_fdt(void *, int *, int, struct cpu_info *,
-    int (*)(void *), void *, char *);
+	    int (*)(void *), void *, char *);
 void	*l1_intc_intr_establish_fdt(void *, int *, int, struct cpu_info *,
-    int (*)(void *), void *, char *);
+	    int (*)(void *), void *, char *);
 void	 bcm_intc_intr_disestablish(void *);
 void	 bcm_intc_irq_handler(void *);
 void	 bcm_intc_intr_route(void *, int , struct cpu_info *);
@@ -204,7 +204,7 @@ bcm_intc_attach(struct device *parent, struct device *self, void *aux)
 		    ARM_LOCAL_INT_MAILBOX(i), 0);
 
 	for (i = 0; i < INTC_NIRQ; i++) {
-		TAILQ_INIT(&sc->sc_bcm_intc_handler[i].is_list);
+		TAILQ_INIT(&sc->sc_handler[i].is_list);
 	}
 
 	bcm_intc_calc_mask();
@@ -239,13 +239,13 @@ bcm_intc_intr_enable(int irq, int ipl)
 	struct bcm_intc_softc	*sc = bcm_intc;
 
 	if (IS_IRQ_BANK0(irq))
-		sc->sc_bcm_intc_imask[0][ipl] |= (1 << IRQ_BANK0(irq));
+		sc->sc_imask[0][ipl] |= (1 << IRQ_BANK0(irq));
 	else if (IS_IRQ_BANK1(irq))
-		sc->sc_bcm_intc_imask[1][ipl] |= (1 << IRQ_BANK1(irq));
+		sc->sc_imask[1][ipl] |= (1 << IRQ_BANK1(irq));
 	else if (IS_IRQ_BANK2(irq))
-		sc->sc_bcm_intc_imask[2][ipl] |= (1 << IRQ_BANK2(irq));
+		sc->sc_imask[2][ipl] |= (1 << IRQ_BANK2(irq));
 	else if (IS_IRQ_LOCAL(irq))
-		sc->sc_bcm_intc_imask[3][ipl] |= (1 << IRQ_LOCAL(irq));
+		sc->sc_imask[3][ipl] |= (1 << IRQ_LOCAL(irq));
 	else
 		printf("%s: invalid irq number: %d\n", __func__, irq);
 }
@@ -256,13 +256,13 @@ bcm_intc_intr_disable(int irq, int ipl)
 	struct bcm_intc_softc	*sc = bcm_intc;
 
 	if (IS_IRQ_BANK0(irq))
-		sc->sc_bcm_intc_imask[0][ipl] &= ~(1 << IRQ_BANK0(irq));
+		sc->sc_imask[0][ipl] &= ~(1 << IRQ_BANK0(irq));
 	else if (IS_IRQ_BANK1(irq))
-		sc->sc_bcm_intc_imask[1][ipl] &= ~(1 << IRQ_BANK1(irq));
+		sc->sc_imask[1][ipl] &= ~(1 << IRQ_BANK1(irq));
 	else if (IS_IRQ_BANK2(irq))
-		sc->sc_bcm_intc_imask[2][ipl] &= ~(1 << IRQ_BANK2(irq));
+		sc->sc_imask[2][ipl] &= ~(1 << IRQ_BANK2(irq));
 	else if (IS_IRQ_LOCAL(irq))
-		sc->sc_bcm_intc_imask[3][ipl] &= ~(1 << IRQ_LOCAL(irq));
+		sc->sc_imask[3][ipl] &= ~(1 << IRQ_LOCAL(irq));
 	else
 		printf("%s: invalid irq number: %d\n", __func__, irq);
 }
@@ -279,8 +279,7 @@ bcm_intc_calc_mask(void)
 	for (irq = 0; irq < INTC_NIRQ; irq++) {
 		int max = IPL_NONE;
 		int min = IPL_HIGH;
-		TAILQ_FOREACH(ih, &sc->sc_bcm_intc_handler[irq].is_list,
-		    ih_list) {
+		TAILQ_FOREACH(ih, &sc->sc_handler[irq].is_list, ih_list) {
 			if (ih->ih_ipl > max)
 				max = ih->ih_ipl;
 
@@ -288,7 +287,7 @@ bcm_intc_calc_mask(void)
 				min = ih->ih_ipl;
 		}
 
-		sc->sc_bcm_intc_handler[irq].is_irq = max;
+		sc->sc_handler[irq].is_irq = max;
 
 		if (max == IPL_NONE)
 			min = IPL_NONE;
@@ -369,16 +368,16 @@ bcm_intc_setipl(int new)
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, INTC_DISABLE_BANK2,
 		    0xffffffff);
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, INTC_ENABLE_BANK0,
-		    sc->sc_bcm_intc_imask[0][new]);
+		    sc->sc_imask[0][new]);
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, INTC_ENABLE_BANK1,
-		    sc->sc_bcm_intc_imask[1][new]);
+		    sc->sc_imask[1][new]);
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, INTC_ENABLE_BANK2,
-		    sc->sc_bcm_intc_imask[2][new]);
+		    sc->sc_imask[2][new]);
 	}
 	/* timer for current core */
 	bus_space_write_4(sc->sc_iot, sc->sc_lioh,
 	    ARM_LOCAL_INT_TIMER(cpu_number()),
-	    sc->sc_bcm_intc_imask[3][ci->ci_cpl] &
+	    sc->sc_imask[3][ci->ci_cpl] &
 	    sc->sc_localcoremask[cpu_number()]);
 	intr_restore(psw);
 }
@@ -442,68 +441,47 @@ bcm_intc_get_next_irq(int last_irq)
 	return (-1);
 }
 
-static void
-bcm_intc_call_handler(int irq, void *frame)
+void
+bcm_intc_run_handler(struct intrhand *ih, void *frame, int s)
 {
-	struct bcm_intc_softc *sc = bcm_intc;
-	struct intrhand *ih;
-	int pri, s, handled;
+	int handled;
 	void *arg;
 
-#ifdef DEBUG_INTC
-	if (irq != 99)
-		printf("irq  %d fired\n", irq);
-	else {
-		static int cnt = 0;
-		if ((cnt++ % 100) == 0) {
-			printf("irq  %d fired * _100\n", irq);
-#ifdef DDB
-			db_enter();
-#endif
-		}
-	}
-#endif
-
-	pri = sc->sc_bcm_intc_handler[irq].is_irq;
-	s = bcm_intc_splraise(pri);
-	TAILQ_FOREACH(ih, &sc->sc_bcm_intc_handler[irq].is_list, ih_list) {
 #ifdef MULTIPROCESSOR
-		int need_lock;
+	int need_lock;
 
-		if (ih->ih_flags & IPL_MPSAFE)
-			need_lock = 0;
-		else
-			need_lock = s < IPL_SCHED;
+	if (ih->ih_flags & IPL_MPSAFE)
+		need_lock = 0;
+	else
+		need_lock = s < IPL_SCHED;
 
-		if (need_lock)
-			KERNEL_LOCK();
+	if (need_lock)
+		KERNEL_LOCK();
 #endif
 
-		if (ih->ih_arg != 0)
-			arg = ih->ih_arg;
-		else
-			arg = frame;
+	if (ih->ih_arg != 0)
+		arg = ih->ih_arg;
+	else
+		arg = frame;
 
-		intr_enable();
-		handled = ih->ih_func(arg);
-		intr_disable();
-		if (handled)
-			ih->ih_count.ec_count++;
+	handled = ih->ih_func(arg);
+	if (handled)
+		ih->ih_count.ec_count++;
 
 #ifdef MULTIPROCESSOR
-		if (need_lock)
-			KERNEL_UNLOCK();
+	if (need_lock)
+		KERNEL_UNLOCK();
 #endif
-	}
-
-	bcm_intc_splx(s);
 }
 
 void
 bcm_intc_irq_handler(void *frame)
 {
-	int irq = (cpu_number() == 0 ? 0 : LOCAL_START) - 1;
+	struct bcm_intc_softc *sc = bcm_intc;
+	struct intrhand *ih;
+	int irq, pri, s;
 
+	irq = (cpu_number() == 0 ? 0 : LOCAL_START) - 1;
 	while ((irq = bcm_intc_get_next_irq(irq)) != -1) {
 #ifdef MULTIPROCESSOR
 		if (irq == ARM_LOCAL_IRQ_MAILBOX(cpu_number())) {
@@ -511,7 +489,15 @@ bcm_intc_irq_handler(void *frame)
 			continue;
 		}
 #endif
-		bcm_intc_call_handler(irq, frame);
+
+		pri = sc->sc_handler[irq].is_irq;
+		s = bcm_intc_splraise(pri);
+		TAILQ_FOREACH(ih, &sc->sc_handler[irq].is_list, ih_list) {
+			intr_enable();
+			bcm_intc_run_handler(ih, frame, s);
+			intr_disable();
+		}
+		bcm_intc_splx(s);
 	}
 }
 
@@ -575,7 +561,7 @@ bcm_intc_intr_establish(int irqno, int level, struct cpu_info *ci,
 	if (IS_IRQ_LOCAL(irqno))
 		sc->sc_localcoremask[0] |= (1 << IRQ_LOCAL(irqno));
 
-	TAILQ_INSERT_TAIL(&sc->sc_bcm_intc_handler[irqno].is_list, ih, ih_list);
+	TAILQ_INSERT_TAIL(&sc->sc_handler[irqno].is_list, ih, ih_list);
 
 	if (name != NULL)
 		evcount_attach(&ih->ih_count, name, &ih->ih_irq);
@@ -599,7 +585,7 @@ bcm_intc_intr_disestablish(void *cookie)
 	u_long psw;
 
 	psw = intr_disable();
-	TAILQ_REMOVE(&sc->sc_bcm_intc_handler[irqno].is_list, ih, ih_list);
+	TAILQ_REMOVE(&sc->sc_handler[irqno].is_list, ih, ih_list);
 	if (ih->ih_name != NULL)
 		evcount_detach(&ih->ih_count);
 	intr_restore(psw);
@@ -622,12 +608,12 @@ bcm_intc_intr_route(void *cookie, int enable, struct cpu_info *ci)
 	if (ci == curcpu()) {
 		bus_space_write_4(sc->sc_iot, sc->sc_lioh,
 		    ARM_LOCAL_INT_TIMER(cpu_number()),
-		    sc->sc_bcm_intc_imask[3][ci->ci_cpl] &
+		    sc->sc_imask[3][ci->ci_cpl] &
 		    sc->sc_localcoremask[cpu_number()]);
 #ifdef MULTIPROCESSOR
 		bus_space_write_4(sc->sc_iot, sc->sc_lioh,
 		    ARM_LOCAL_INT_MAILBOX(cpu_number()),
-		    sc->sc_bcm_intc_imask[3][ci->ci_cpl] &
+		    sc->sc_imask[3][ci->ci_cpl] &
 		    sc->sc_localcoremask[cpu_number()]);
 #endif
 	}
