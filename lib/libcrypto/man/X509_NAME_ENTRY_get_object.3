@@ -1,11 +1,11 @@
-.\" $OpenBSD: X509_NAME_ENTRY_get_object.3,v 1.13 2019/06/14 13:59:32 schwarze Exp $
+.\" $OpenBSD: X509_NAME_ENTRY_get_object.3,v 1.14 2021/07/02 16:13:56 schwarze Exp $
 .\" full merge up to: OpenSSL aebb9aac Jul 19 09:27:53 2016 -0400
-.\" selective merge up to: OpenSSL 61f805c1 Jan 16 01:01:46 2018 +0800
+.\" selective merge up to: OpenSSL ca34e08d Dec 12 07:38:07 2018 +0100
 .\"
 .\" This file is a derived work.
 .\" The changes are covered by the following Copyright and license:
 .\"
-.\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2016, 2018, 2019, 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -67,7 +67,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 14 2019 $
+.Dd $Mdocdate: July 2 2021 $
 .Dt X509_NAME_ENTRY_GET_OBJECT 3
 .Os
 .Sh NAME
@@ -75,6 +75,7 @@
 .Nm X509_NAME_ENTRY_free ,
 .Nm X509_NAME_ENTRY_get_object ,
 .Nm X509_NAME_ENTRY_get_data ,
+.Nm X509_NAME_ENTRY_set ,
 .Nm X509_NAME_ENTRY_set_object ,
 .Nm X509_NAME_ENTRY_set_data ,
 .Nm X509_NAME_ENTRY_create_by_txt ,
@@ -97,6 +98,10 @@
 .Fc
 .Ft ASN1_STRING *
 .Fo X509_NAME_ENTRY_get_data
+.Fa "const X509_NAME_ENTRY *ne"
+.Fc
+.Ft int
+.Fo X509_NAME_ENTRY_set
 .Fa "const X509_NAME_ENTRY *ne"
 .Fc
 .Ft int
@@ -138,20 +143,40 @@
 .Sh DESCRIPTION
 An X.501
 .Vt RelativeDistinguishedName
-is a set of field type and value pairs.
+is an ordered set of field type and value pairs.
 It is the building block for constructing X.501
 .Vt Name
 objects.
-This implementation only supports sets with one element, so an
+The
 .Vt X509_NAME_ENTRY
-object contains only one field type and one value.
+object stores one such pair, containing one field type and one value.
+.Pp
+.Vt X509_NAME_ENTRY
+objects are intended for use by the
+.Vt X509_NAME
+objects documented in
+.Xr X509_NAME_new 3 .
+Since part of the information about how several
+.Vt X509_NAME_ENTRY
+objects combine to form an X.501
+.Vt Name
+is stored in the individual
+.Vt X509_NAME_ENTRY
+objects rather than in the
+.Vt X509_NAME
+object, any given
+.Vt X509_NAME_ENTRY
+object can only be used by one
+.Vt X509_NAME
+object at a time.
 .Pp
 .Fn X509_NAME_ENTRY_new
 allocates and initializes an empty
 .Vt X509_NAME_ENTRY
 object, representing an ASN.1
 .Vt RelativeDistinguishedName
-structure defined in RFC 5280 section 4.1.2.4.
+structure defined in RFC 5280 section 4.1.2.4, but containing not more
+than one type-value-pair.
 .Pp
 .Fn X509_NAME_ENTRY_free
 frees
@@ -174,6 +199,29 @@ These two functions can be used to examine an
 .Vt X509_NAME_ENTRY
 object as returned by
 .Xr X509_NAME_get_entry 3 .
+.Pp
+.Fn X509_NAME_ENTRY_set
+retrieves the index of the X.501
+.Vt RelativeDistinguishedName Pq RDN
+that
+.Fa ne
+is part of in the X.501
+.Vt Name
+object using it.
+The first RDN has index 0.
+If an RDN consists of more than one
+.Vt X509_NAME_ENTRY
+object, they all share the same index.
+In practice, RDNs containing more than one type-value-pair are rarely
+used, so if an
+.Va X509_NAME *name
+object uses
+.Fa ne ,
+then
+.Fn X509_NAME_ENTRY_set ne
+usually agrees with
+.Fn sk_X509_NAME_ENTRY_find name->entries ne ,
+but when multi-pair RDNs are used, it may be smaller.
 .Pp
 .Fn X509_NAME_ENTRY_set_object
 sets the field type of
@@ -246,6 +294,15 @@ structure if it is set or
 .Dv NULL
 if an error occurred.
 .Pp
+.Fn X509_NAME_ENTRY_set
+returns the zero-based index of the RDN
+.Fa ne
+is used in, or 0 if
+.Fa ne
+is not yet used by any
+.Vt X509_NAME
+object.
+.Pp
 The
 .Fn X509_NAME_ENTRY_set_object
 function returns 1 if successful;
@@ -253,7 +310,7 @@ otherwise 0 is returned and an error code can be retrieved with
 .Xr ERR_get_error 3 .
 .Pp
 .Fn X509_NAME_ENTRY_set_data
-return 1 on success or 0 on error.
+returns 1 on success or 0 on error.
 In some cases of failure, the reason can be determined with
 .Xr ERR_get_error 3 .
 .Pp
@@ -299,3 +356,14 @@ These functions have been available since
 .Fn X509_NAME_ENTRY_create_by_txt
 first appeared in OpenSSL 0.9.5 and has been available since
 .Ox 2.7 .
+.Pp
+.Fn X509_NAME_ENTRY_set
+first appeared in OpenSSL 1.1.0 and has been available since
+.Ox 6.3 .
+.Sh CAVEATS
+Despite its name,
+.Fn X509_NAME_ENTRY_set
+does not set anything.
+Something like
+.Dq X509_NAME_ENTRY_get_set
+would have been a better name.
