@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.9 2021/06/29 21:27:53 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.10 2021/07/02 08:44:37 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -33,7 +33,39 @@
 #include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/fdt.h>
 
-register_t mvendorid, marchid, mimpid;
+/* CPU Identification */
+
+#define CPU_VENDOR_SIFIVE	0x489
+
+#define CPU_ARCH_U5		0x0000000000000001
+#define CPU_ARCH_U7		0x8000000000000007
+
+/* Architectures */
+struct arch {
+	uint64_t	id;
+	char		*name;
+};
+
+struct arch cpu_arch_none[] = {
+	{ 0, NULL }
+};
+
+struct arch cpu_arch_sifive[] = {
+	{ CPU_ARCH_U5, "U5" },
+	{ CPU_ARCH_U7, "U7" },
+	{ 0, NULL }
+};
+
+/* Vendors */
+const struct vendor {
+	uint32_t	id;
+	char		*name;
+	struct arch	*archlist;
+} cpu_vendors[] = {
+	{ CPU_VENDOR_SIFIVE, "SiFive", cpu_arch_sifive },
+	{ 0, NULL }
+};
+
 char cpu_model[64];
 int cpu_node;
 
@@ -54,13 +86,43 @@ void
 cpu_identify(struct cpu_info *ci)
 {
 	char isa[32];
-	int len;
+	uint64_t marchid, mimpid;
+	uint32_t mvendorid;
+	const char *vendor_name = NULL;
+	const char *arch_name = NULL;
+	struct arch *archlist = cpu_arch_none;
+	int i, len;
+
+	mvendorid = sbi_get_mvendorid();
+	marchid = sbi_get_marchid();
+	mimpid = sbi_get_mimpid();
+
+	for (i = 0; cpu_vendors[i].name; i++) {
+		if (mvendorid == cpu_vendors[i].id) {
+			vendor_name = cpu_vendors[i].name;
+			archlist = cpu_vendors[i].archlist;
+			break;
+		}
+	}
+
+	for (i = 0; archlist[i].name; i++) {
+		if (marchid == archlist[i].id) {
+			arch_name = archlist[i].name;
+			break;
+		}
+	}
+
+	if (vendor_name)
+		printf(": %s", vendor_name);
+	else
+		printf(": vendor %x", mvendorid);
+	if (arch_name)
+		printf(" %s", arch_name);
+	else
+		printf(" arch %llx", marchid);
+	printf(" imp %llx", mimpid);
 
 	len = OF_getprop(ci->ci_node, "riscv,isa", isa, sizeof(isa));
-
-	printf(": vendor %lx arch %lx imp %lx",
-	    mvendorid, marchid, mimpid);
-
 	if (len != -1) {
 		printf(" %s", isa);
 		strlcpy(cpu_model, isa, sizeof(cpu_model));

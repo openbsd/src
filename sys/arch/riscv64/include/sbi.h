@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbi.h,v 1.3 2021/06/27 15:02:25 kettenis Exp $	*/
+/*	$OpenBSD: sbi.h,v 1.4 2021/07/02 08:44:37 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2016-2017 Ruslan Bukin <br@bsdpad.com>
@@ -33,8 +33,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $FreeBSD$
  */
 
 #ifndef _MACHINE_SBI_H_
@@ -133,6 +131,25 @@ sbi_call(uint64_t arg7, uint64_t arg6, uint64_t arg0, uint64_t arg1,
 extern u_long sbi_spec_version;
 extern u_long sbi_impl_id;
 extern u_long sbi_impl_version;
+
+static __inline u_int
+sbi_get_mvendorid(void)
+{
+	return (SBI_CALL0(SBI_EXT_ID_BASE, SBI_BASE_GET_MVENDORID).value);
+}
+
+
+static __inline u_long
+sbi_get_marchid(void)
+{
+	return (SBI_CALL0(SBI_EXT_ID_BASE, SBI_BASE_GET_MARCHID).value);
+}
+
+static __inline u_long
+sbi_get_mimpid(void)
+{
+	return (SBI_CALL0(SBI_EXT_ID_BASE, SBI_BASE_GET_MIMPID).value);
+}
 
 static __inline long
 sbi_probe_extension(long id)
