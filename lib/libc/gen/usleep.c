@@ -1,4 +1,4 @@
-/*	$OpenBSD: usleep.c,v 1.10 2005/08/08 08:05:34 espie Exp $ */
+/*	$OpenBSD: usleep.c,v 1.11 2021/07/02 17:16:20 cheloha Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,11 +37,8 @@ usleep(useconds_t useconds)
 {
 	struct timespec rqt;
 
-	if (useconds == 0)
-		return(0);
-
 	rqt.tv_sec = useconds / 1000000;
 	rqt.tv_nsec = (useconds % 1000000) * 1000;
 
-	return(nanosleep(&rqt, NULL));
+	return nanosleep(&rqt, NULL);
 }
