@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuswitch.S,v 1.4 2021/06/28 18:38:17 kettenis Exp $	*/
+/*	$OpenBSD: cpuswitch.S,v 1.5 2021/07/02 14:58:33 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
@@ -49,8 +49,6 @@ ENTRY(cpu_switchto_asm)
 	ld	a5, CI_CURPCB(tp)
 	sd	sp, PCB_SP(a5)
 
-	// XXX store fpu, if necessary
-
 1:
 	RETGUARD_SYMBOL(cpu_switchto)
 	RETGUARD_LOAD_RANDOM(cpu_switchto, s0)
@@ -87,14 +85,11 @@ ENTRY(cpu_switchto_asm)
 	ld	s11, (SF_S + 11 * 8)(sp)
 	ld	ra, SF_RA(sp)
 
-	// XXX restore fpu, if necessary
-
 	RETGUARD_CALC_COOKIE(a7)
 	addi	sp, sp, SWITCHFRAME_SIZEOF
 	RETGUARD_CHECK(cpu_switchto, a7)
 	ret
 END(cpu_switch_asm)
-
 
 ENTRY(proc_trampoline)
 #ifdef MULTIPROCESSOR
@@ -110,4 +105,3 @@ ENTRY(proc_trampoline)
 	la	t0, syscall_return
 	jr	t0
 END(cpu_switch)
-
