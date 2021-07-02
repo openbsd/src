@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.15 2021/06/30 07:39:05 jsg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.16 2021/07/02 08:53:28 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Brian Bamsch <bbamsch@google.com>
@@ -42,6 +42,16 @@ void pmap_free_asid(pmap_t);
 /* We run userland code with ASIDs that have the low bit set. */
 #define ASID_USER	1
 
+#ifdef MULTIPROCESSOR
+
+static inline int
+pmap_is_active(struct pmap *pm, struct cpu_info *ci)
+{
+	return pm == pmap_kernel() || pm == ci->ci_curpm;
+}
+
+#endif
+
 static inline void
 tlb_flush(pmap_t pm, vaddr_t va)
 {
@@ -53,10 +63,12 @@ tlb_flush(pmap_t pm, vaddr_t va)
 	CPU_INFO_FOREACH(cii, ci) {
 		if (ci == curcpu())
 			continue;
-		hart_mask |= (1UL << ci->ci_hartid);
+		if (pmap_is_active(pm, ci))
+			hart_mask |= (1UL << ci->ci_hartid);
 	}
 
-	sbi_remote_sfence_vma(&hart_mask, va, PAGE_SIZE);
+	if (hart_mask != 0)
+		sbi_remote_sfence_vma(&hart_mask, va, PAGE_SIZE);
 #endif
 
 	if (pm == pmap_kernel()) {
@@ -83,7 +95,8 @@ icache_flush(void)
 		hart_mask |= (1UL << ci->ci_hartid);
 	}
 
-	sbi_remote_fence_i(&hart_mask);
+	if (hart_mask != 0)
+		sbi_remote_fence_i(&hart_mask);
 #endif
 
 	fence_i();
@@ -2277,7 +2290,7 @@ pmap_set_satp(struct proc *p)
 	struct cpu_info *ci = curcpu();
 	pmap_t pm = p->p_vmspace->vm_map.pmap;
 
+	ci->ci_curpm = pm;
 	load_satp(pm->pm_satp);
 	__asm __volatile("sfence.vma");
-	ci->ci_curpm = pm;
 }
