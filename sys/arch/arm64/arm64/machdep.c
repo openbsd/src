@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.64 2021/05/13 16:08:16 kettenis Exp $ */
+/* $OpenBSD: machdep.c,v 1.65 2021/07/02 20:39:25 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
@@ -763,6 +763,8 @@ initarm(struct arm64_bootparams *abp)
 	vaddr_t vstart;
 	void *config = abp->arg2;
 	void *fdt = NULL;
+	struct fdt_reg reg;
+	void *node;
 	EFI_PHYSICAL_ADDRESS system_table = 0;
 	int (*map_func_save)(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 	    bus_space_handle_t *);
@@ -779,9 +781,6 @@ initarm(struct arm64_bootparams *abp)
 	if (!fdt_init(config) || fdt_get_size(config) == 0)
 		panic("initarm: no FDT");
 	pmap_map_early((paddr_t)config, round_page(fdt_get_size(config)));
-
-	struct fdt_reg reg;
-	void *node;
 
 	node = fdt_find_node("/chosen");
 	if (node != NULL) {
