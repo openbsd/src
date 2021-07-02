@@ -1,4 +1,4 @@
-/*    $OpenBSD: func.c,v 1.39 2019/06/28 13:34:58 deraadt Exp $       */
+/*    $OpenBSD: func.c,v 1.40 2021/07/02 15:34:27 deraadt Exp $       */
 /*    $NetBSD: func.c,v 1.11 1996/02/09 02:28:29 christos Exp $       */
 
 /*-
@@ -1247,6 +1247,9 @@ setlim(struct limits *lp, Char hard, rlim_t limit)
 	rlim.rlim_cur = rlim.rlim_max;
     else
 	rlim.rlim_cur = limit;
+
+    if (rlim.rlim_max < rlim.rlim_cur)
+	rlim.rlim_max = rlim.rlim_cur;
 
     if (setrlimit(lp->limconst, &rlim) == -1) {
 	(void) fprintf(csherr, "%s: %s: Can't %s%s limit\n", bname, lp->limname,
