@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.24 2021/07/02 10:42:22 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.25 2021/07/02 14:50:18 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -404,7 +404,6 @@ doreset:
 	/* NOTREACHED */
 }
 
-//Copied from ARM64, removed some registers. XXX
 void
 setregs(struct proc *p, struct exec_package *pack, u_long stack,
     register_t *retval)
@@ -467,7 +466,6 @@ cpu_dump_mempagecnt(void)
 	return 0;
 }
 
-//Copied from ARM64
 /*
  * These variables are needed by /sbin/savecore
  */
@@ -509,7 +507,6 @@ dumpconf(void)
 	dumpsize = cpu_dump_mempagecnt();
 }
 
-//copied from arm64/sys_machdep.h
 int
 sys_sysarch(struct proc *p, void *v, register_t *retval)
 {
