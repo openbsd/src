@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootconfig.h,v 1.3 2021/05/12 01:20:52 jsg Exp $	*/
+/*	$OpenBSD: bootconfig.h,v 1.4 2021/07/02 10:42:22 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2015-2017 Ruslan Bukin <br@bsdpad.com>
@@ -32,37 +32,17 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $FreeBSD$
  */
 
 #ifndef _MACHINE_BOOTCONFIG_H_
 #define	_MACHINE_BOOTCONFIG_H_
 
 struct riscv_bootparams {
-#if 0
-	vaddr_t		modulep;
-#endif
 	vaddr_t		kern_l1pt;	/* L1 page table for the kernel */
-	uint64_t	kern_delta;	/* PA - VA */
+	paddr_t		kern_phys;
 	vaddr_t		kern_stack;
-#if 0
-	void		*arg0; // passed to kernel in R0
-	void		*arg1; // passed to kernel in R1
-	void		*arg2; // passed to kernel in R2
-#endif
 	vaddr_t		dtbp_virt;	/* Device tree blob virtual addr */
-	vaddr_t		dtbp_phys;	/* Device tree blob physical addr */
+	paddr_t		dtbp_phys;	/* Device tree blob physical addr */
 };
-
-extern char *boot_file;
-
-// XXX ???
-extern paddr_t physmap[];
-extern u_int physmap_idx;
-
-// XXX ???
-vaddr_t fake_preload_metadata(struct riscv_bootparams *rbp);
-void initriscv(struct riscv_bootparams *);
 
 #endif /* _MACHINE_BOOTCONFIG_H_ */

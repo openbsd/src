@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.2 2021/05/12 01:20:52 jsg Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.3 2021/07/02 10:42:22 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
@@ -28,16 +28,20 @@
  * $FreeBSD: head/sys/arm64/arm64/locore.S 282867 2015-05-13 18:57:03Z zbb $
  */
 
-#include <sys/syscall.h>
 #include <machine/asm.h>
 #include <machine/param.h>
-#include <machine/trap.h>
-#include <machine/riscvreg.h>
-#include <machine/pte.h>
 
 	.text
+/*
+ * Main entry point.  EFIBOOT passes the following arguments:
+ *  - a0 = esym
+ *  - a1 = 0
+ *  - a2 = dtbp
+ */
 	.globl _start
 _start:
+	mv	a1, a2
+
 	/* jump to locore.S _start_kern_bootstrap*/
 	lla	t0, _start_kern_bootstrap
 	jr	t0
