@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_rsp_verify.c,v 1.20 2021/05/02 15:33:33 tb Exp $ */
+/* $OpenBSD: ts_rsp_verify.c,v 1.21 2021/07/02 11:15:08 schwarze Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -720,7 +720,7 @@ TS_check_signer_name(GENERAL_NAME *tsa_name, X509 *signer)
 
 	/* Check the subject name first. */
 	if (tsa_name->type == GEN_DIRNAME &&
-	    X509_name_cmp(tsa_name->d.dirn, signer->cert_info->subject) == 0)
+	    X509_NAME_cmp(tsa_name->d.dirn, signer->cert_info->subject) == 0)
 		return 1;
 
 	/* Check all the alternative names. */
