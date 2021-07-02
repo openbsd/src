@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.118 2015/01/16 06:39:59 deraadt Exp $	 */
+/* $OpenBSD: x509.c,v 1.119 2021/07/02 11:15:12 schwarze Exp $	 */
 /* $EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	 */
 
 /*
@@ -126,7 +126,7 @@ x509_generate_kn(int id, X509 *cert)
 	subject = X509_get_subject_name(cert);
 
 	/* Missing or self-signed, ignore cert but don't report failure.  */
-	if (!issuer || !subject || !X509_name_cmp(issuer, subject))
+	if (!issuer || !subject || !X509_NAME_cmp(issuer, subject))
 		return 1;
 
 	if (!x509_cert_get_key(cert, &key)) {
@@ -872,7 +872,7 @@ x509_cert_validate(void *scert)
 	issuer = X509_get_issuer_name(cert);
 	subject = X509_get_subject_name(cert);
 
-	if (!issuer || !subject || X509_name_cmp(issuer, subject))
+	if (!issuer || !subject || X509_NAME_cmp(issuer, subject))
 		return 0;
 
 	key = X509_get_pubkey(cert);
