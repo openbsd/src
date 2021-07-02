@@ -1,4 +1,4 @@
-/* $OpenBSD: main.c,v 1.74 2021/06/02 08:32:22 martijn Exp $	 */
+/* $OpenBSD: main.c,v 1.75 2021/07/02 15:34:16 millert Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -332,7 +332,7 @@ cmd_delay(const char *buf)
 	if (errstr != NULL)
 		error("s: \"%s\": delay value is %s", buf, errstr);
 	else {
-		udelay = (useconds_t)(del * 1000000);
+		refresh_delay(del);
 		gotsig_alarm = 1;
 		naptime = del;
 	}
@@ -557,11 +557,8 @@ main(int argc, char *argv[])
 			errx(1, "\"%s\": delay value is %s", argv[1], errstr);
 	}
 
-	udelay = (useconds_t)(delay * 1000000.0);
-	if (udelay < 1)
-		udelay = 1;
-
-	naptime = (double)udelay / 1000000.0;
+	refresh_delay(delay);
+	naptime = delay;
 
 	gethostname(hostname, sizeof (hostname));
 	gethz();

@@ -1,4 +1,4 @@
-/* $OpenBSD: engine.h,v 1.13 2021/06/02 08:32:22 martijn Exp $	 */
+/* $OpenBSD: engine.h,v 1.14 2021/07/02 15:34:16 millert Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -145,6 +145,7 @@ void show_order(void);
 
 void setup_term(int maxpr);
 int check_termcap(void);
+void refresh_delay(double delay);
 
 void engine_initialize(void);
 void engine_loop(int countmax);
@@ -156,7 +157,6 @@ const char *message_set(const char *msg);
 void foreach_view(void (*callback)(field_view *));
 
 extern int sortdir;
-extern useconds_t udelay;
 extern int dispstart;
 extern int humanreadable;
 extern int interactive;
