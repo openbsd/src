@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.354 2021/07/01 17:53:39 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.355 2021/07/03 16:06:45 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -403,10 +403,7 @@ struct ssl_method_st {
 	int (*ssl_write_bytes)(SSL *s, int type, const void *buf_, int len);
 
 	int (*ssl_dispatch_alert)(SSL *s);
-	int (*num_ciphers)(void);
 	const SSL_CIPHER *(*get_cipher)(unsigned int ncipher);
-	const SSL_CIPHER *(*get_cipher_by_char)(const unsigned char *ptr);
-	int (*put_cipher_by_char)(const SSL_CIPHER *cipher, unsigned char *ptr);
 
 	unsigned int enc_flags;		/* SSL_ENC_FLAG_* */
 };
@@ -1229,7 +1226,6 @@ int ssl_verify_alarm_type(long type);
 int SSL_SESSION_ticket(SSL_SESSION *ss, unsigned char **out, size_t *out_len);
 
 const SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p);
-int ssl3_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p);
 int ssl3_send_server_certificate(SSL *s);
 int ssl3_send_newsession_ticket(SSL *s);
 int ssl3_send_cert_status(SSL *s);

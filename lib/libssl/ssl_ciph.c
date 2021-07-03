@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.123 2021/05/16 08:24:21 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.124 2021/07/03 16:06:44 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1228,7 +1228,7 @@ ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	 * in ciphers. We cannot get more than the number compiled in, so
 	 * it is used for allocation.
 	 */
-	num_of_ciphers = ssl_method->num_ciphers();
+	num_of_ciphers = ssl3_num_ciphers();
 	co_list = reallocarray(NULL, num_of_ciphers, sizeof(CIPHER_ORDER));
 	if (co_list == NULL) {
 		SSLerrorx(ERR_R_MALLOC_FAILURE);
@@ -1603,7 +1603,15 @@ SSL_CIPHER_get_value(const SSL_CIPHER *c)
 const SSL_CIPHER *
 SSL_CIPHER_find(SSL *ssl, const unsigned char *ptr)
 {
-	return ssl->method->get_cipher_by_char(ptr);
+	uint16_t cipher_value;
+	CBS cbs;
+
+	/* This API is documented with ptr being an array of length two. */
+	CBS_init(&cbs, ptr, 2);
+	if (!CBS_get_u16(&cbs, &cipher_value))
+		return NULL;
+
+	return ssl3_get_cipher_by_value(cipher_value);
 }
 
 int

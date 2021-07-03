@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.212 2021/07/01 17:53:39 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.213 2021/07/03 16:06:44 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2482,51 +2482,6 @@ ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)(void))
 	}
 
 	return 0;
-}
-
-/*
- * This function needs to check if the ciphers required are actually available.
- */
-const SSL_CIPHER *
-ssl3_get_cipher_by_char(const unsigned char *p)
-{
-	uint16_t cipher_value;
-	CBS cbs;
-
-	/* We have to assume it is at least 2 bytes due to existing API. */
-	CBS_init(&cbs, p, 2);
-	if (!CBS_get_u16(&cbs, &cipher_value))
-		return NULL;
-
-	return ssl3_get_cipher_by_value(cipher_value);
-}
-
-int
-ssl3_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p)
-{
-	CBB cbb;
-
-	if (p == NULL)
-		return (2);
-
-	if ((c->id & ~SSL3_CK_VALUE_MASK) != SSL3_CK_ID)
-		return (0);
-
-	memset(&cbb, 0, sizeof(cbb));
-
-	/* We have to assume it is at least 2 bytes due to existing API. */
-	if (!CBB_init_fixed(&cbb, p, 2))
-		goto err;
-	if (!CBB_add_u16(&cbb, ssl3_cipher_get_value(c)))
-		goto err;
-	if (!CBB_finish(&cbb, NULL, NULL))
-		goto err;
-
-	return (2);
-
- err:
-	CBB_cleanup(&cbb);
-	return (0);
 }
 
 SSL_CIPHER *
