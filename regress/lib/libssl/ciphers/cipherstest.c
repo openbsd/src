@@ -20,6 +20,9 @@
 #include <stdio.h>
 #include <string.h>
 
+int ssl3_num_ciphers(void);
+const SSL_CIPHER *ssl3_get_cipher(unsigned int u);
+
 int ssl_parse_ciphersuites(STACK_OF(SSL_CIPHER) **out_ciphers, const char *str);
 
 static inline int
@@ -30,6 +33,38 @@ ssl_aes_is_accelerated(void)
 #else
 	return (0);
 #endif
+}
+
+static int
+check_cipher_order(void)
+{
+	unsigned long id, prev_id = 0;
+	const SSL_CIPHER *cipher;
+	int num_ciphers;
+	int i;
+
+	num_ciphers = ssl3_num_ciphers();
+
+	for (i = 1; i <= num_ciphers; i++) {
+		/*
+		 * For some reason, ssl3_get_cipher() returns ciphers in
+		 * reverse order.
+		 */
+		if ((cipher = ssl3_get_cipher(num_ciphers - i)) == NULL) {
+			fprintf(stderr, "FAIL: ssl3_get_cipher(%d) returned "
+			    "NULL\n", i);
+			return 1;
+		}
+		if ((id = SSL_CIPHER_get_id(cipher)) <= prev_id) {
+			fprintf(stderr, "FAIL: ssl3_ciphers is not sorted by "
+			    "id - cipher %d (%lx) <= cipher %d (%lx)\n",
+			    i, id, i - 1, prev_id);
+			return 1;
+		}
+		prev_id = id;
+	}
+
+	return 0;
 }
 
 static int
@@ -483,6 +518,8 @@ int
 main(int argc, char **argv)
 {
 	int failed = 0;
+
+	failed |= check_cipher_order();
 
 	failed |= cipher_find_test();
 	failed |= cipher_get_by_value_tests();
