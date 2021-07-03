@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.22 2021/05/15 11:30:27 kettenis Exp $ */
+/* $OpenBSD: ampintc.c,v 1.23 2021/07/03 10:21:38 kettenis Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -641,13 +641,45 @@ ampintc_intr_barrier(void *cookie)
 }
 
 void
+ampintc_run_handler(struct intrhand *ih, void *frame, int s)
+{
+	void *arg;
+	int handled;
+
+#ifdef MULTIPROCESSOR
+	int need_lock;
+
+	if (ih->ih_flags & IPL_MPSAFE)
+		need_lock = 0;
+	else
+		need_lock = s < IPL_SCHED;
+
+	if (need_lock)
+		KERNEL_LOCK();
+#endif
+
+	if (ih->ih_arg != 0)
+		arg = ih->ih_arg;
+	else
+		arg = frame;
+
+	handled = ih->ih_func(arg);
+	if (handled)
+		ih->ih_count.ec_count++;
+
+#ifdef MULTIPROCESSOR
+	if (need_lock)
+		KERNEL_UNLOCK();
+#endif
+}
+
+void
 ampintc_irq_handler(void *frame)
 {
 	struct ampintc_softc	*sc = ampintc;
 	struct intrhand		*ih;
-	void			*arg;
 	uint32_t		 iack_val;
-	int			 irq, pri, s, handled;
+	int			 irq, pri, s;
 
 	iack_val = ampintc_iack();
 #ifdef DEBUG_INTC
@@ -677,35 +709,11 @@ ampintc_irq_handler(void *frame)
 
 	pri = sc->sc_handler[irq].iq_irq_max;
 	s = ampintc_splraise(pri);
+	intr_enable();
 	TAILQ_FOREACH(ih, &sc->sc_handler[irq].iq_list, ih_list) {
-#ifdef MULTIPROCESSOR
-		int need_lock;
-
-		if (ih->ih_flags & IPL_MPSAFE)
-			need_lock = 0;
-		else
-			need_lock = s < IPL_SCHED;
-
-		if (need_lock)
-			KERNEL_LOCK();
-#endif
-
-		if (ih->ih_arg != 0)
-			arg = ih->ih_arg;
-		else
-			arg = frame;
-
-		intr_enable();
-		handled = ih->ih_func(arg);
-		intr_disable();
-		if (handled)
-			ih->ih_count.ec_count++;
-
-#ifdef MULTIPROCESSOR
-		if (need_lock)
-			KERNEL_UNLOCK();
-#endif
+		ampintc_run_handler(ih, frame, s);
 	}
+	intr_disable();
 	ampintc_eoi(iack_val);
 
 	ampintc_splx(s);
