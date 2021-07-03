@@ -1,4 +1,4 @@
-/*	$OpenBSD: test_wcrtomb.c,v 1.2 2017/07/27 15:08:37 bluhm Exp $	*/
+/*	$OpenBSD: test_wcrtomb.c,v 1.3 2021/07/03 12:04:53 schwarze Exp $	*/
 /*
  * Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -60,7 +60,7 @@ main(void)
 	onetest("0x100", 0x100, EILSEQ, NULL);
 
 	if (setlocale(LC_CTYPE, "en_US.UTF-8") == NULL)
-		errx(1, "setlocale(UTF-8) failed"),
+		errx(1, "setlocale(UTF-8) failed");
 
 	onetest("NUL", L'\0', 0, "");
 	onetest("BEL", L'\a', 0, "\a");
@@ -72,12 +72,12 @@ main(void)
 	onetest("0xd800", 0xd800, EILSEQ, NULL);
 
 	if (setlocale(LC_CTYPE, "POSIX") == NULL)
-		errx(1, "setlocale(POSIX) failed"),
+		errx(1, "setlocale(POSIX) failed");
 
 	onetest("0xff", L'\377', 0, "\377");
 
 	if (setlocale(LC_CTYPE, "en_US.UTF-8") == NULL)
-		errx(1, "second setlocale(UTF-8) failed"),
+		errx(1, "second setlocale(UTF-8) failed");
 
 	onetest("U+13000", 0x13000, 0, "\360\223\200\200");
 
