@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.349 2021/02/11 12:08:21 claudio Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.350 2021/07/03 17:51:59 semarie Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -923,8 +923,8 @@ sys___realpath(struct proc *p, void *v, register_t *retval)
 		if (*c != '/')
 			break;
 	}
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | SAVENAME | REALPATH,
-	    UIO_SYSSPACE, pathname, p);
+	NDINIT(&nd, LOOKUP, FOLLOW | SAVENAME | REALPATH, UIO_SYSSPACE,
+	    pathname, p);
 
 	nd.ni_cnd.cn_rpbuf = rpbuf;
 	nd.ni_cnd.cn_rpi = strlen(rpbuf);
@@ -934,11 +934,10 @@ sys___realpath(struct proc *p, void *v, register_t *retval)
 	if ((error = namei(&nd)) != 0)
 		goto end;
 
-	/* release lock and reference from namei */
-	if (nd.ni_vp) {
-		VOP_UNLOCK(nd.ni_vp);
+	/* release reference from namei */
+	if (nd.ni_vp)
 		vrele(nd.ni_vp);
-	}
+
 	error = copyoutstr(nd.ni_cnd.cn_rpbuf, SCARG(uap, resolved),
 	    MAXPATHLEN, NULL);
 
