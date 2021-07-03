@@ -32,9 +32,8 @@ ssl_aes_is_accelerated(void)
 #endif
 }
 
-#if 0
 static int
-get_put_test(const char *name, const SSL_METHOD *method)
+cipher_find_test(void)
 {
 	STACK_OF(SSL_CIPHER) *ciphers;
 	const SSL_CIPHER *cipher;
@@ -42,42 +41,46 @@ get_put_test(const char *name, const SSL_METHOD *method)
 	SSL_CTX *ssl_ctx = NULL;
 	SSL *ssl = NULL;
 	int ret = 1;
-	int i, len;
+	int i;
 
-	if ((len = method->put_cipher_by_char(NULL, NULL)) != 2) {
-		fprintf(stderr,
-		    "%s: put_cipher_by_char() returned len %i (want 2)\n",
-		    name, len);
-		return (1);
-	}
-
-	if ((ssl_ctx = SSL_CTX_new(method)) == NULL) {
-		fprintf(stderr, "%s: SSL_CTX_new() returned NULL\n", name);
+	if ((ssl_ctx = SSL_CTX_new(TLS_method())) == NULL) {
+		fprintf(stderr, "SSL_CTX_new() returned NULL\n");
 		goto failure;
 	}
 	if ((ssl = SSL_new(ssl_ctx)) == NULL) {
-		fprintf(stderr, "%s: SSL_new() returned NULL\n", name);
+		fprintf(stderr, "SSL_new() returned NULL\n");
+		goto failure;
+	}
+	if (!SSL_set_cipher_list(ssl, "ALL")) {
+		fprintf(stderr, "SSL_set_cipher_list failed\n");
 		goto failure;
 	}
 
 	if ((ciphers = SSL_get_ciphers(ssl)) == NULL) {
-		fprintf(stderr, "%s: no ciphers\n", name);
+		fprintf(stderr, "no ciphers\n");
 		goto failure;
 	}
 
 	for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
+		uint16_t cipher_value;
+
 		cipher = sk_SSL_CIPHER_value(ciphers, i);
-		if ((len = method->put_cipher_by_char(cipher, buf)) != 2) {
+		cipher_value = SSL_CIPHER_get_value(cipher);
+
+		buf[0] = cipher_value >> 8;
+		buf[1] = cipher_value & 0xff;
+
+		if ((cipher = SSL_CIPHER_find(ssl, buf)) == NULL) {
 			fprintf(stderr,
-			    "%s: put_cipher_by_char() returned len %i for %s "
-			    "(want 2)\n",
-			    name, len, SSL_CIPHER_get_name(cipher));
+			    "SSL_CIPHER_find() returned NULL for %s\n",
+			    SSL_CIPHER_get_name(cipher));
 			goto failure;
 		}
-		if ((cipher = method->get_cipher_by_char(buf)) == NULL) {
+
+		if (SSL_CIPHER_get_value(cipher) != cipher_value) {
 			fprintf(stderr,
-			    "%s: get_cipher_by_char() returned NULL for %s\n",
-			    name, SSL_CIPHER_get_name(cipher));
+			    "got cipher with value 0x%x, want 0x%x\n",
+			    SSL_CIPHER_get_value(cipher), cipher_value);
 			goto failure;
 		}
 	}
@@ -90,35 +93,6 @@ get_put_test(const char *name, const SSL_METHOD *method)
 
 	return (ret);
 }
-
-static int
-cipher_get_put_tests(void)
-{
-	int failed = 0;
-
-	failed |= get_put_test("SSLv23", SSLv23_method());
-	failed |= get_put_test("SSLv23_client", SSLv23_client_method());
-	failed |= get_put_test("SSLv23_server", SSLv23_server_method());
-
-	failed |= get_put_test("TLSv1", TLSv1_method());
-	failed |= get_put_test("TLSv1_client", TLSv1_client_method());
-	failed |= get_put_test("TLSv1_server", TLSv1_server_method());
-
-	failed |= get_put_test("TLSv1_1", TLSv1_1_method());
-	failed |= get_put_test("TLSv1_1_client", TLSv1_1_client_method());
-	failed |= get_put_test("TLSv1_1_server", TLSv1_1_server_method());
-
-	failed |= get_put_test("TLSv1_2", TLSv1_2_method());
-	failed |= get_put_test("TLSv1_2_client", TLSv1_2_client_method());
-	failed |= get_put_test("TLSv1_2_server", TLSv1_2_server_method());
-
-	failed |= get_put_test("DTLSv1", DTLSv1_method());
-	failed |= get_put_test("DTLSv1_client", DTLSv1_client_method());
-	failed |= get_put_test("DTLSv1_server", DTLSv1_server_method());
-
-	return failed;
-}
-#endif
 
 static int
 cipher_get_by_value_tests(void)
@@ -510,10 +484,7 @@ main(int argc, char **argv)
 {
 	int failed = 0;
 
-#if 0
-	failed |= cipher_get_put_tests();
-#endif
-
+	failed |= cipher_find_test();
 	failed |= cipher_get_by_value_tests();
 
 	failed |= parse_ciphersuites_test();
