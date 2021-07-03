@@ -1,4 +1,4 @@
-.\" $OpenBSD: d2i_X509_NAME.3,v 1.14 2018/03/27 17:35:50 schwarze Exp $
+.\" $OpenBSD: d2i_X509_NAME.3,v 1.15 2021/07/03 17:04:51 schwarze Exp $
 .\" checked up to:
 .\" OpenSSL crypto/d2i_X509_NAME 4692340e Jun 7 15:49:08 2016 -0400 and
 .\" OpenSSL man3/X509_NAME_get0_der 99d63d46 Oct 26 13:56:48 2016 -0400
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: July 3 2021 $
 .Dt D2I_X509_NAME 3
 .Os
 .Sh NAME
@@ -25,6 +25,7 @@
 .Nm i2d_X509_NAME ,
 .Nm X509_NAME_get0_der ,
 .Nm X509_NAME_dup ,
+.Nm X509_NAME_set ,
 .Nm X509_NAME_hash ,
 .Nm d2i_X509_NAME_ENTRY ,
 .Nm i2d_X509_NAME_ENTRY ,
@@ -54,6 +55,11 @@
 .Fc
 .Ft X509_NAME *
 .Fo X509_NAME_dup
+.Fa "X509_NAME *val_in"
+.Fc
+.Ft int
+.Fo X509_NAME_set
+.Fa "X509_NAME **val_out"
 .Fa "X509_NAME *val_in"
 .Fc
 .Ft unsigned long
@@ -108,6 +114,34 @@ by calling
 and
 .Fn d2i_X509_NAME .
 .Pp
+.Fn X509_NAME_set
+makes sure that
+.Pf * Fa val_out
+contains the same data as
+.Fa val_in
+after the call, except that it fails if
+.Fa val_in
+is
+.Dv NULL .
+If
+.Pf * Fa val_out
+is the same pointer as
+.Fa val_in ,
+the function succeeds without changing anything.
+Otherwise, it copies
+.Fa val_in
+using
+.Fn X509_NAME_dup ,
+and in case of success, it frees
+.Pf * Fa val_out
+and sets it to a pointer to the the new object.
+When the function fails, it never changes anything.
+In any case,
+.Fa val_in
+remains valid and may or may not be the same pointer as
+.Pf * Fa val_out
+after the call.
+.Pp
 .Fn X509_NAME_hash
 calculates a
 .Xr SHA1 3
@@ -141,8 +175,10 @@ object or
 .Dv NULL
 if an error occurs.
 .Pp
+.Fn X509_NAME_set
+and
 .Fn X509_NAME_get0_der
-returns 1 on success or 0 if an error occurs.
+return 1 on success or 0 if an error occurs.
 .Pp
 .Fn X509_NAME_hash
 returns the hash value or 0 if an error occurs.
@@ -184,6 +220,8 @@ first appeared in SSLeay 0.4.4.
 and
 .Fn X509_NAME_ENTRY_dup
 first appeared in SSLeay 0.5.1.
+.Fn X509_NAME_set
+and
 .Fn X509_NAME_hash
 first appeared in SSLeay 0.8.0.
 These functions have been available since
