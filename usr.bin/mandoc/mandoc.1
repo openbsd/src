@@ -1,4 +1,4 @@
-.\" $OpenBSD: mandoc.1,v 1.177 2021/06/28 19:49:57 schwarze Exp $
+.\" $OpenBSD: mandoc.1,v 1.178 2021/07/04 15:38:08 schwarze Exp $
 .\"
 .\" Copyright (c) 2012, 2014-2021 Ingo Schwarze <schwarze@openbsd.org>
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 28 2021 $
+.Dd $Mdocdate: July 4 2021 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -2314,6 +2314,26 @@ or
 macro or of an undefined macro.
 The macro is ignored, and its arguments are handled
 as if they were a text line.
+.It Sy "skipping tbl in -Tman mode"
+.Pq mdoc , tbl
+An input file contains the
+.Ic \&TS
+macro.
+This message is only generated in
+.Fl T Cm man
+output mode, where
+.Xr tbl 7
+input is not supported.
+.It Sy "skipping eqn in -Tman mode"
+.Pq mdoc , eqn
+An input file contains the
+.Ic \&EQ
+macro.
+This message is only generated in
+.Fl T Cm man
+output mode, where
+.Xr eqn 7
+input is not supported.
 .El
 .Ss Bad command line arguments
 .Bl -ohang

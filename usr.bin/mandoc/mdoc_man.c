@@ -1,6 +1,6 @@
-/*	$OpenBSD: mdoc_man.c,v 1.134 2020/02/27 01:25:57 schwarze Exp $ */
+/*	$OpenBSD: mdoc_man.c,v 1.135 2021/07/04 15:38:09 schwarze Exp $ */
 /*
- * Copyright (c) 2011-2020 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011-2021 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -658,7 +658,20 @@ print_node(DECL_ARGS)
 	do_sub = 1;
 	n->flags &= ~NODE_ENDED;
 
-	if (n->type == ROFFT_TEXT) {
+	switch (n->type) {
+	case ROFFT_EQN:
+	case ROFFT_TBL:
+		mandoc_msg(n->type == ROFFT_EQN ? MANDOCERR_EQN_TMAN :
+		    MANDOCERR_TBL_TMAN, n->line, n->pos, NULL);
+		outflags |= MMAN_PP | MMAN_sp | MMAN_nl;
+		print_word("The");
+		print_line(".B \\-T man", MMAN_nl);
+		print_word("output mode does not support");
+		print_word(n->type == ROFFT_EQN ? "eqn(7)" : "tbl(7)");
+		print_word("input.");
+		outflags |= MMAN_PP | MMAN_sp | MMAN_nl;
+		return;
+	case ROFFT_TEXT:
 		/*
 		 * Make sure that we don't happen to start with a
 		 * control character at the start of a line.
@@ -678,19 +691,18 @@ print_node(DECL_ARGS)
 			outflags &= ~(MMAN_spc | MMAN_spc_force);
 		else if (outflags & MMAN_Sm)
 			outflags |= MMAN_spc;
-	} else if (n->tok < ROFF_MAX) {
-		(*roff_man_acts[n->tok])(meta, n);
-		return;
-	} else {
-		/*
-		 * Conditionally run the pre-node action handler for a
-		 * node.
-		 */
+		break;
+	default:
+		if (n->tok < ROFF_MAX) {
+			(*roff_man_acts[n->tok])(meta, n);
+			return;
+		}
 		act = mdoc_man_act(n->tok);
 		cond = act->cond == NULL || (*act->cond)(meta, n);
 		if (cond && act->pre != NULL &&
 		    (n->end == ENDBODY_NOT || n->child != NULL))
 			do_sub = (*act->pre)(meta, n);
+		break;
 	}
 
 	/*

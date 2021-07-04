@@ -1,6 +1,6 @@
-/* $OpenBSD: mandoc.h,v 1.213 2021/06/27 17:57:13 schwarze Exp $ */
+/* $OpenBSD: mandoc.h,v 1.214 2021/07/04 15:38:08 schwarze Exp $ */
 /*
- * Copyright (c) 2012-2020 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2012-2021 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -245,6 +245,8 @@ enum	mandocerr {
 	MANDOCERR_TBLOPT_EQN, /* eqn delim option in tbl: arg */
 	MANDOCERR_TBLLAYOUT_MOD, /* unsupported tbl layout modifier: m */
 	MANDOCERR_TBLMACRO, /* ignoring macro in table: macro */
+	MANDOCERR_TBL_TMAN, /* skipping tbl in -Tman mode */
+	MANDOCERR_EQN_TMAN, /* skipping eqn in -Tman mode */
 
 	MANDOCERR_BADARG, /* ===== start of bad invocations ===== */
 
