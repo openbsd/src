@@ -2168,6 +2168,7 @@
 ./usr/share/man/man3/X509_cmp.3
 ./usr/share/man/man3/X509_cmp_time.3
 ./usr/share/man/man3/X509_digest.3
+./usr/share/man/man3/X509_find_by_subject.3
 ./usr/share/man/man3/X509_get0_notBefore.3
 ./usr/share/man/man3/X509_get0_signature.3
 ./usr/share/man/man3/X509_get1_email.3
