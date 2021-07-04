@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.77 2021/06/20 18:44:19 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.78 2021/07/04 20:37:11 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -135,12 +135,10 @@ MBR_init(struct mbr *mbr)
 	PRT_fix_BN(&mbr->part[3], 3);
 #else
 	if (b_sectors > 0) {
-		mbr->part[0].flag = DOSACTIVE;
 		mbr->part[0].id = b_type;
 		mbr->part[0].bs = b_offset;
 		mbr->part[0].ns = b_sectors;
 		PRT_fix_CHS(&mbr->part[0]);
-		mbr->part[3].flag = 0;
 		mbr->part[3].ns += mbr->part[3].bs;
 		mbr->part[3].bs = mbr->part[0].bs + mbr->part[0].ns;
 		mbr->part[3].ns -= mbr->part[3].bs;
