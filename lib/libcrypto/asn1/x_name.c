@@ -1,4 +1,4 @@
-/* $OpenBSD: x_name.c,v 1.34 2018/02/20 17:09:20 jsing Exp $ */
+/* $OpenBSD: x_name.c,v 1.35 2021/07/04 11:38:37 schwarze Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -626,19 +626,13 @@ i2d_name_canon(STACK_OF(STACK_OF_X509_NAME_ENTRY) *_intname, unsigned char **in)
 int
 X509_NAME_set(X509_NAME **xn, X509_NAME *name)
 {
-	X509_NAME *in;
-
-	if (!xn || !name)
-		return (0);
-
-	if (*xn != name) {
-		in = X509_NAME_dup(name);
-		if (in != NULL) {
-			X509_NAME_free(*xn);
-			*xn = in;
-		}
-	}
-	return (*xn != NULL);
+	if (*xn == name)
+		return *xn != NULL;
+	if ((name = X509_NAME_dup(name)) == NULL)
+		return 0;
+	X509_NAME_free(*xn);
+	*xn = name;
+	return 1;
 }
 
 int
