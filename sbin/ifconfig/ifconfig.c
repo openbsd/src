@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.442 2021/03/20 17:11:49 florian Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.443 2021/07/04 19:22:32 sthen Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -6012,6 +6012,7 @@ umb_status(void)
 {
 	struct umb_info mi;
 	char	 provider[UMB_PROVIDERNAME_MAXLEN+1];
+	char	 providerid[UMB_PROVIDERID_MAXLEN+1];
 	char	 roamingtxt[UMB_ROAMINGTEXT_MAXLEN+1];
 	char	 devid[UMB_DEVID_MAXLEN+1];
 	char	 fwinfo[UMB_FWINFO_MAXLEN+1];
@@ -6124,15 +6125,15 @@ umb_status(void)
 	utf16_to_char(mi.iccid, UMB_ICCID_MAXLEN, iccid, sizeof (iccid));
 	utf16_to_char(mi.provider, UMB_PROVIDERNAME_MAXLEN,
 	    provider, sizeof (provider));
-	if (sid[0] || iccid[0] || provider[0]) {
+	utf16_to_char(mi.providerid, UMB_PROVIDERID_MAXLEN,
+	    providerid, sizeof (providerid));
+	if (sid[0] || iccid[0]) {
 		printf("\t");
 		n = 0;
 		if (sid[0])
 			printf("%ssubscriber-id %s", n++ ? " " : "", sid);
 		if (iccid[0])
 			printf("%sICC-id %s", n++ ? " " : "", iccid);
-		if (provider[0])
-			printf("%sprovider %s", n ? " " : "", provider);
 		printf("\n");
 	}
 
@@ -6173,13 +6174,17 @@ umb_status(void)
 
 	utf16_to_char(mi.pn, UMB_PHONENR_MAXLEN, pn, sizeof (pn));
 	utf16_to_char(mi.apn, UMB_APN_MAXLEN, apn, sizeof (apn));
-	if (pn[0] || apn[0]) {
+	if (pn[0] || apn[0] || provider[0] || providerid[0]) {
 		printf("\t");
 		n = 0;
 		if (pn[0])
 			printf("%sphone# %s", n++ ? " " : "", pn);
 		if (apn[0])
 			printf("%sAPN %s", n++ ? " " : "", apn);
+		if (provider[0])
+			printf("%sprovider %s", n++ ? " " : "", provider);
+		if (providerid[0])
+			printf("%sprovider-id %s", n ? " " : "", providerid);
 		printf("\n");
 	}
 

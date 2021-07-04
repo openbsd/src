@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.h,v 1.9 2021/03/30 15:59:04 patrick Exp $ */
+/*	$OpenBSD: if_umb.h,v 1.10 2021/07/04 19:22:32 sthen Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -282,6 +282,8 @@ struct umb_info {
 	uint32_t		cellclass;
 #define UMB_PROVIDERNAME_MAXLEN		20
 	uint16_t		provider[UMB_PROVIDERNAME_MAXLEN];
+#define UMB_PROVIDERID_MAXLEN		20
+	uint16_t		providerid[UMB_PROVIDERID_MAXLEN];
 #define UMB_PHONENR_MAXLEN		22
 	uint16_t		pn[UMB_PHONENR_MAXLEN];
 #define UMB_SUBSCRIBERID_MAXLEN		15
