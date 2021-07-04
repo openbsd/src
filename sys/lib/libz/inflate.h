@@ -1,3 +1,5 @@
+/*	$OpenBSD: inflate.h,v 1.4 2021/07/04 17:41:23 tb Exp $ */
+
 /* inflate.h -- internal inflate state definition
  * Copyright (C) 1995-2016 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h

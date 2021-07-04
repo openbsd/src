@@ -1,3 +1,5 @@
+/*	$OpenBSD: deflate.h,v 1.10 2021/07/04 17:41:23 tb Exp $ */
+
 /* deflate.h -- internal compression state
  * Copyright (C) 1995-2016 Jean-loup Gailly
  * For conditions of distribution and use, see copyright notice in zlib.h

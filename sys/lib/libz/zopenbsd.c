@@ -1,3 +1,5 @@
+/*	$OpenBSD: zopenbsd.c,v 1.8 2021/07/04 17:41:23 tb Exp $ */
+
 #include <sys/types.h>
 #include <sys/malloc.h>
 

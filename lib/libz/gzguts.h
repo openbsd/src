@@ -1,3 +1,5 @@
+/*	$OpenBSD: gzguts.h,v 1.2 2021/07/04 17:41:23 tb Exp $ */
+
 /* gzguts.h -- zlib internal header definitions for gz* operations
  * Copyright (C) 2004, 2005, 2010, 2011, 2012, 2013, 2016 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h

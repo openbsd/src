@@ -1,3 +1,5 @@
+/*	$OpenBSD: crc32.h,v 1.3 2021/07/04 17:41:23 tb Exp $ */
+
 /* crc32.h -- tables for rapid CRC calculation
  * Generated automatically by crc32.c
  */

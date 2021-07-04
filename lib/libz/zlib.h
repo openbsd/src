@@ -1,3 +1,5 @@
+/*	$OpenBSD: zlib.h,v 1.13 2021/07/04 17:41:23 tb Exp $ */
+
 /* zlib.h -- interface of the 'zlib' general purpose compression library
   version 1.2.11, January 15th, 2017
 
