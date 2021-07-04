@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.20 2016/09/14 06:26:03 natano Exp $
+#	$OpenBSD: Makefile,v 1.21 2021/07/04 14:24:49 tb Exp $
 
 LIB=	z
 HDRS=	zconf.h zlib.h
-SRCS=	adler32.c compress.c crc32.c deflate.c gzio.c infback.c \
-	inffast.c inflate.c inftrees.c trees.c uncompr.c zutil.c
+SRCS=	adler32.c compress.c crc32.c deflate.c gzclose.c gzlib.c \
+	gzread.c gzwrite.c infback.c inffast.c inflate.c inftrees.c \
+	trees.c uncompr.c zutil.c
 MAN=	compress.3
-CFLAGS+=-DHAVE_STRERROR -DHAVE_MEMCPY -DHAS_vsnprintf -DHAS_snprintf
 
 PC_FILES=zlib.pc
 CLEANFILES+=${PC_FILES}

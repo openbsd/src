@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2003/12/18 02:27:13 millert Exp $
+#	$OpenBSD: Makefile,v 1.9 2021/07/04 14:24:49 tb Exp $
 #	$NetBSD: Makefile,v 1.2 1997/01/22 01:36:30 cgd Exp $
 
 LIB=	z
@@ -7,6 +7,7 @@ NOPROFILE=
 
 # Tweak knobs to generate small libz code
 CPPFLAGS+=	-DSLOW -DSMALL -DNOBYFOUR -DNO_GZIP -DDYNAMIC_CRC_TABLE
+CPPFLAGS+=	-DBUILDFIXED
 CPPFLAGS+=	-I. ${ZCPPFLAGS}
 
 # files to be copied down from libz.
