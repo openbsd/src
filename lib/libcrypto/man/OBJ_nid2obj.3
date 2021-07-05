@@ -1,10 +1,10 @@
-.\"	$OpenBSD: OBJ_nid2obj.3,v 1.14 2019/06/14 13:59:32 schwarze Exp $
+.\"	$OpenBSD: OBJ_nid2obj.3,v 1.15 2021/07/05 17:57:16 schwarze Exp $
 .\"	OpenSSL c264592d May 14 11:28:00 2006 +0000
 .\"
 .\" This file is a derived work.
 .\" The changes are covered by the following Copyright and license:
 .\"
-.\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2017, 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -66,7 +66,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 14 2019 $
+.Dd $Mdocdate: July 5 2021 $
 .Dt OBJ_NID2OBJ 3
 .Os
 .Sh NAME
@@ -83,7 +83,8 @@
 .Nm OBJ_dup ,
 .Nm OBJ_create ,
 .Nm OBJ_cleanup ,
-.Nm i2t_ASN1_OBJECT
+.Nm i2t_ASN1_OBJECT ,
+.Nm i2a_ASN1_OBJECT
 .Nd inspect and create ASN.1 object identifiers
 .Sh SYNOPSIS
 .In openssl/objects.h
@@ -149,6 +150,11 @@
 .Fo i2t_ASN1_OBJECT
 .Fa "char *buf"
 .Fa "int buf_len"
+.Fa "const ASN1_OBJECT *a"
+.Fc
+.Ft int
+.Fo i2a_ASN1_OBJECT
+.Fa "BIO *out_bio"
 .Fa "const ASN1_OBJECT *a"
 .Fc
 .Sh DESCRIPTION
@@ -234,6 +240,29 @@ with
 .Fa no_name
 set to 0.
 .Pp
+.Fn i2a_ASN1_OBJECT
+writes a textual representation of
+.Fa a
+to
+.Fa out_bio
+using
+.Xr BIO_write 3 .
+It does not write a terminating NUL byte.
+If
+.Fa a
+is
+.Dv NULL
+or contains no data, it writes the 4-byte string
+.Qq NULL .
+If
+.Fn i2t_ASN1_OBJECT
+fails,
+.Fn i2a_ASN1_OBJECT
+writes the 9-byte string
+.Qq <INVALID> .
+Otherwise, it writes the string constructed with
+.Fn i2t_ASN1_OBJECT .
+.Pp
 .Fn OBJ_cmp
 compares
 .Fa a
@@ -311,7 +340,8 @@ and
 .Fn OBJ_obj2txt
 can process the numerical form of an OID.
 .Sh RETURN VALUES
-.Fn OBJ_nid2obj
+.Fn OBJ_nid2obj ,
+.Fn OBJ_txt2obj ,
 and
 .Fn OBJ_dup
 return an
@@ -336,6 +366,25 @@ return a NID or
 .Dv NID_undef
 on error.
 .Pp
+.Fn OBJ_obj2txt
+and
+.Fn i2t_ASN1_OBJECT
+return the amount of space required in bytes,
+including the terminating NUL byte.
+.Pp
+.Fn i2a_ASN1_OBJECT
+returns the number of bytes written, even if
+.Fa a
+is invalid or contains invalid data,
+but a negative value if memory allocation or a write operation fails.
+.Pp
+.Fn OBJ_cmp
+returns 0 if the contents of
+.Fa a
+and
+.Fa b
+are identical, or non-zero otherwise.
+.Pp
 .Fn OBJ_create
 returns the new NID or
 .Dv NID_undef
@@ -350,8 +399,9 @@ In some cases of failure of
 .Fn OBJ_obj2txt ,
 .Fn OBJ_dup ,
 .Fn OBJ_create ,
-and
 .Fn i2t_ASN1_OBJECT ,
+and
+.Fn i2a_ASN1_OBJECT ,
 the reason can be determined with
 .Xr ERR_get_error 3 .
 .Sh EXAMPLES
@@ -383,6 +433,7 @@ obj = OBJ_txt2obj("1.2.3.4", 1);
 .Ed
 .Sh SEE ALSO
 .Xr ASN1_OBJECT_new 3 ,
+.Xr BIO_new 3 ,
 .Xr d2i_ASN1_OBJECT 3
 .Sh HISTORY
 .Fn OBJ_nid2obj ,
@@ -396,12 +447,14 @@ obj = OBJ_txt2obj("1.2.3.4", 1);
 and
 .Fn OBJ_dup
 first appeared in SSLeay 0.5.1.
+.Fn i2a_ASN1_OBJECT
+first appeared in SSLeay 0.6.0,
 .Fn OBJ_cleanup
-first appeared in SSLeay 0.8.0.
+in SSLeay 0.8.0, and
 .Fn OBJ_create
 and
 .Fn i2t_ASN1_OBJECT
-first appeared in SSLeay 0.9.0.
+in SSLeay 0.9.0.
 All these functions have been available since
 .Ox 2.4 .
 .Pp
