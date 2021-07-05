@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherbridge.h,v 1.3 2021/02/26 01:28:51 dlg Exp $ */
+/*	$OpenBSD: if_etherbridge.h,v 1.4 2021/07/05 04:17:41 dlg Exp $ */
 
 /*
  * Copyright (c) 2018, 2021 David Gwynne <dlg@openbsd.org>
@@ -51,7 +51,6 @@ struct eb_entry {
 	time_t				 ebe_age;
 
 	struct etherbridge		*ebe_etherbridge;
-	struct refcnt			 ebe_refs;
 	struct smr_entry		 ebe_smr_entry;
 };
 

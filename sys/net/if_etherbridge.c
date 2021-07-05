@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherbridge.c,v 1.6 2021/03/10 10:21:47 jsg Exp $ */
+/*	$OpenBSD: if_etherbridge.c,v 1.7 2021/07/05 04:17:41 dlg Exp $ */
 
 /*
  * Copyright (c) 2018, 2021 David Gwynne <dlg@openbsd.org>
@@ -44,7 +44,6 @@
 
 #include <net/if_etherbridge.h>
 
-static inline void	ebe_take(struct eb_entry *);
 static inline void	ebe_rele(struct eb_entry *);
 static void		ebe_free(void *);
 
@@ -233,16 +232,9 @@ ebt_remove(struct etherbridge *eb, struct eb_entry *ebe)
 }
 
 static inline void
-ebe_take(struct eb_entry *ebe)
-{
-	refcnt_take(&ebe->ebe_refs);
-}
-
-static void
 ebe_rele(struct eb_entry *ebe)
 {
-	if (refcnt_rele(&ebe->ebe_refs))
-		smr_call(&ebe->ebe_smr_entry, ebe_free, ebe);
+	smr_call(&ebe->ebe_smr_entry, ebe_free, ebe);
 }
 
 static void
@@ -309,19 +301,21 @@ etherbridge_map(struct etherbridge *eb, void *port, uint64_t eba)
 
 	smr_read_enter();
 	oebe = ebl_find(ebl, eba);
-	if (oebe == NULL)
-		new = 1;
-	else {
+	if (oebe == NULL) {
+		/*
+		 * peek at the space to see if it's worth trying
+		 * to make a new entry.
+		 */
+		if (eb->eb_num < eb->eb_max)
+			new = 1;
+	} else {
 		if (oebe->ebe_age != now)
 			oebe->ebe_age = now;
 
 		/* does this entry need to be replaced? */
 		if (oebe->ebe_type == EBE_DYNAMIC &&
-		    !eb_port_eq(eb, oebe->ebe_port, port)) {
+		    !eb_port_eq(eb, oebe->ebe_port, port))
 			new = 1;
-			ebe_take(oebe);
-		} else
-			oebe = NULL;
 	}
 	smr_read_leave();
 
@@ -342,7 +336,6 @@ etherbridge_map(struct etherbridge *eb, void *port, uint64_t eba)
 	}
 
 	smr_init(&nebe->ebe_smr_entry);
-	refcnt_init(&nebe->ebe_refs);
 	nebe->ebe_etherbridge = eb;
 
 	nebe->ebe_addr = eba;
@@ -351,40 +344,49 @@ etherbridge_map(struct etherbridge *eb, void *port, uint64_t eba)
 	nebe->ebe_age = now;
 
 	mtx_enter(&eb->eb_lock);
-	num = eb->eb_num + (oebe == NULL);
-	if (num <= eb->eb_max && ebt_insert(eb, nebe) == oebe) {
-		/* we won, do the update */
+	oebe = ebt_find(eb, nebe);
+	if (oebe == NULL) {
+		num = eb->eb_num + 1;
+		if (num <= eb->eb_max) {
+			ebl_insert(ebl, nebe);
+
+			oebe = ebt_insert(eb, nebe);
+			if (oebe != NULL) {
+				panic("etherbridge %p changed while locked",
+				    eb);
+			}
+
+			/* great success */
+			eb->eb_num = num;
+			nebe = NULL; /* give ref to table */
+		}
+	} else if (oebe->ebe_type == EBE_DYNAMIC) {
+		/* do the update */
 		ebl_insert(ebl, nebe);
 
-		if (oebe != NULL) {
-			ebl_remove(ebl, oebe);
-			ebt_replace(eb, oebe, nebe);
+		ebl_remove(ebl, oebe);
+		ebt_replace(eb, oebe, nebe);
 
-			/* take the table reference away */
-			if (refcnt_rele(&oebe->ebe_refs)) {
-				panic("%s: eb %p oebe %p refcnt",
-				    __func__, eb, oebe);
-			}
-		}
-
-		nebe = NULL;
-		eb->eb_num = num;
+		nebe = NULL; /* give ref to table */
+	} else {
+		/*
+		 * oebe is not a dynamic entry, so don't replace it.
+		 */
+		oebe = NULL;
 	}
 	mtx_leave(&eb->eb_lock);
 
 	if (nebe != NULL) {
 		/*
 		 * the new entry didn't make it into the
-		 * table, so it can be freed directly.
+		 * table so it can be freed directly.
 		 */
 		ebe_free(nebe);
 	}
 
 	if (oebe != NULL) {
 		/*
-		 * the old entry could be referenced in
-		 * multiple places, including an smr read
-		 * section, so release it properly.
+		 * we replaced this entry, it needs to be released.
 		 */
 		ebe_rele(oebe);
 	}
@@ -415,7 +417,6 @@ etherbridge_add_addr(struct etherbridge *eb, void *port,
 	}
 
 	smr_init(&nebe->ebe_smr_entry);
-	refcnt_init(&nebe->ebe_refs);
 	nebe->ebe_etherbridge = eb;
 
 	nebe->ebe_addr = eba;
@@ -551,12 +552,18 @@ etherbridge_detach_port(struct etherbridge *eb, void *port)
 		mtx_leave(&eb->eb_lock);
 	}
 
-	smr_barrier(); /* try and do it once for all the entries */
+	if (TAILQ_EMPTY(&ebq))
+		return;
+
+	/*
+	 * do one smr barrier for all the entries rather than an
+	 * smr_call each.
+	 */
+	smr_barrier();
 
 	TAILQ_FOREACH_SAFE(ebe, &ebq, ebe_qentry, nebe) {
 		TAILQ_REMOVE(&ebq, ebe, ebe_qentry);
-		if (refcnt_rele(&ebe->ebe_refs))
-			ebe_free(ebe);
+		ebe_free(ebe);
 	}
 }
 
@@ -587,12 +594,18 @@ etherbridge_flush(struct etherbridge *eb, uint32_t flags)
 		mtx_leave(&eb->eb_lock);
 	}
 
-	smr_barrier(); /* try and do it once for all the entries */
+	if (TAILQ_EMPTY(&ebq))
+		return;
+
+	/*
+	 * do one smr barrier for all the entries rather than an
+	 * smr_call each.
+	 */
+	smr_barrier();
 
 	TAILQ_FOREACH_SAFE(ebe, &ebq, ebe_qentry, nebe) {
 		TAILQ_REMOVE(&ebq, ebe, ebe_qentry);
-		if (refcnt_rele(&ebe->ebe_refs))
-			ebe_free(ebe);
+		ebe_free(ebe);
 	}
 }
 
