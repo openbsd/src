@@ -1,4 +1,4 @@
-/* $OpenBSD: clientloop.c,v 1.364 2021/05/26 01:47:24 djm Exp $ */
+/* $OpenBSD: clientloop.c,v 1.365 2021/07/05 01:21:07 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -564,7 +564,7 @@ client_wait_until_can_do_something(struct ssh *ssh,
 			fatal_fr(r, "sshbuf_putf");
 		quit_pending = 1;
 	} else if (options.server_alive_interval > 0 && !FD_ISSET(connection_in,
-	     *readsetp) && monotime() >= server_alive_time)
+	    *readsetp) && monotime() >= server_alive_time)
 		/*
 		 * ServerAlive check is needed. We can't rely on the select
 		 * timing out since traffic on the client side such as port
