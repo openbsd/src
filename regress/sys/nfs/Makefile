@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2020/12/16 21:49:20 bluhm Exp $
+# $OpenBSD: Makefile,v 1.9 2021/07/05 16:11:52 bluhm Exp $
 
 PROGS=		mmap-sysctl-copyin mmap-sysctl-copyout
 CLEANFILES=	diskimage
@@ -34,6 +34,7 @@ REGRESS_CLEANUP+=	killnc
 killnc:
 	-pkill -xf "nc -U -v -l /mnt/regress-nfs-client/socket-stream" || true
 	-pkill -xf "nc -Uu -v -l /mnt/regress-nfs-client/socket-dgram" || true
+	-pkill -xf "nc -n -v -l 127.0.0.1 0" || true
 
 REGRESS_CLEANUP+=	umount
 umount:
@@ -79,5 +80,31 @@ run-socket-${socktype}:
 	pkill -xf "nc -Uu -v -l /mnt/regress-nfs-client/socket-dgram"
 .endif
 .endfor
+
+REGRESS_TARGETS+=	run-ktrace-true
+run-ktrace-true:
+	ktrace -f /mnt/regress-nfs-client/true.ktrace /usr/bin/true
+	sync
+	kdump -f /mnt/regress-nfs-client/true.ktrace |\
+	    fgrep 'true     CALL  exit(0)'
+
+REGRESS_TARGETS+=	run-ktrace-netcat
+run-ktrace-netcat:
+	echo foo | \
+	    ktrace -f /mnt/regress-nfs-client/netcat-server.ktrace \
+	    nc -n -v -l 127.0.0.1 0 2>server.log &
+	# Wait until netcat is listening.
+	for  i in `jot 30`; do\
+	    if fgrep -q Listening server.log; then break; fi; sleep .1; done
+	fgrep Listening server.log
+	echo bar | \
+	    ktrace -f /mnt/regress-nfs-client/netcat-client.ktrace \
+	    nc -n -v -N 127.0.0.1 \
+	    `sed -n 's/Listening on 127.0.0.1 //p' server.log` 2>client.log
+	fgrep Connection client.log
+	kdump -f /mnt/regress-nfs-client/netcat-server.ktrace |\
+	    fgrep 'nc       CALL  exit(0)'
+	kdump -f /mnt/regress-nfs-client/netcat-client.ktrace |\
+	    fgrep 'nc       CALL  exit(0)'
 
 .include <bsd.regress.mk>
