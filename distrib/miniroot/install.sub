@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1165 2021/06/03 15:05:55 krw Exp $
+#	$OpenBSD: install.sub,v 1.1166 2021/07/05 13:56:24 jca Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -223,7 +223,7 @@ tmpdir() {
 unique_filename() {
 	local _fn=$1 _ufn
 
-	while _ufn=${_fn}.$RANDOM && [[ -e $_ufn ]]; do done
+	while _ufn=${_fn}.$RANDOM && [[ -e $_ufn ]]; do :; done
 	print -- "$_ufn"
 }
 
@@ -530,7 +530,7 @@ configure_disk() {
 
 # Acquire lock.
 lock() {
-	while ! mkdir /tmp/i/lock 2>/dev/null && sleep .1; do done
+	while ! mkdir /tmp/i/lock 2>/dev/null && sleep .1; do :; done
 }
 
 # Release lock.
@@ -765,7 +765,7 @@ _ask() {
 ask() {
 
 	# Prompt again in case the dmesg listener detected a change.
-	while ! _ask "$1" "$2"; do done
+	while ! _ask "$1" "$2"; do :; done
 	log_answers "$1" "$resp"
 }
 
