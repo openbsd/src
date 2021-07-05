@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.36 2020/10/10 07:07:46 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.37 2021/07/05 05:49:30 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -102,7 +102,7 @@ void kcovattach(int);
 int kd_init(struct kcov_dev *, unsigned long);
 void kd_free(struct kcov_dev *);
 struct kcov_dev *kd_lookup(int);
-void kd_put(struct kcov_dev *, struct kcov_dev *);
+void kd_copy(struct kcov_dev *, struct kcov_dev *);
 
 struct kcov_remote *kcov_remote_register_locked(int, void *);
 int kcov_remote_attach(struct kcov_dev *, struct kio_remote_attach *);
@@ -464,7 +464,7 @@ kd_lookup(int unit)
 }
 
 void
-kd_put(struct kcov_dev *dst, struct kcov_dev *src)
+kd_copy(struct kcov_dev *dst, struct kcov_dev *src)
 {
 	uint64_t idx, nmemb;
 	int stride;
@@ -689,7 +689,7 @@ kcov_remote_leave(int subsystem, void *id)
 		p->p_kd = kc->kc_kd_save;
 		kc->kc_kd_save = NULL;
 
-		kd_put(kr->kr_kd, &kc->kc_kd);
+		kd_copy(kr->kr_kd, &kc->kc_kd);
 		kc->kc_kd.kd_state = KCOV_STATE_READY;
 		kc->kc_kd.kd_mode = KCOV_MODE_NONE;
 		kc->kc_kd.kd_intr = 0;
