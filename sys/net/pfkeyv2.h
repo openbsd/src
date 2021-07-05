@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.h,v 1.87 2021/05/25 09:55:22 bluhm Exp $ */
+/* $OpenBSD: pfkeyv2.h,v 1.88 2021/07/05 12:01:20 tobhe Exp $ */
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) January 1998
  *
@@ -239,6 +239,12 @@ struct sadb_x_counter {
 	uint64_t  sadb_x_counter_ouncompbytes;	/* Output bytes, uncompressed */
 };
 
+struct sadb_x_mtu {
+	uint16_t  sadb_x_mtu_len;
+	uint16_t  sadb_x_mtu_exttype;
+	u_int32_t sadb_x_mtu_mtu;
+};
+
 #ifdef _KERNEL
 #define SADB_X_GETSPROTO(x) \
 	( (x) == SADB_SATYPE_AH ? IPPROTO_AH :\
@@ -285,7 +291,8 @@ struct sadb_x_counter {
 #define SADB_X_EXT_SATYPE2            35
 #define SADB_X_EXT_COUNTER            36
 #define SADB_X_EXT_RDOMAIN            37
-#define SADB_EXT_MAX                  37
+#define SADB_X_EXT_MTU                38
+#define SADB_EXT_MAX                  38
 
 /* Fix pfkeyv2.c struct pfkeyv2_socket if SATYPE_MAX > 31 */
 #define SADB_SATYPE_UNSPEC		 0
@@ -419,6 +426,7 @@ void export_key(void **, struct tdb *, int);
 void export_udpencap(void **, struct tdb *);
 void export_tag(void **, struct tdb *);
 void export_rdomain(void **, struct tdb *);
+void export_mtu(void **, struct tdb *);
 void export_tap(void **, struct tdb *);
 void export_satype(void **, struct tdb *);
 void export_counter(void **, struct tdb *);

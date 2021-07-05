@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.70 2020/12/14 20:20:06 tobhe Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.71 2021/07/05 12:01:20 tobhe Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -851,6 +851,18 @@ export_udpencap(void **p, struct tdb *tdb)
 	sadb_udpencap->sadb_x_udpencap_len =
 	    sizeof(struct sadb_x_udpencap) / sizeof(uint64_t);
 	*p += sizeof(struct sadb_x_udpencap);
+}
+
+/* Export mtu for SA */
+void
+export_mtu(void **p, struct tdb *tdb)
+{
+	struct sadb_x_mtu *smtu = (struct sadb_x_mtu *)*p;
+
+	smtu->sadb_x_mtu_mtu = tdb->tdb_mtu;
+	smtu->sadb_x_mtu_len =
+	    sizeof(struct sadb_x_mtu) / sizeof(uint64_t);
+	*p += sizeof(struct sadb_x_mtu);
 }
 
 /* Import rdomain switch for SA */
