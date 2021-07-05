@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsp.c,v 1.17 2021/01/12 15:46:53 naddy Exp $	*/
+/*	$OpenBSD: dsp.c,v 1.18 2021/07/05 08:29:59 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -321,7 +321,7 @@ resamp_do(struct resamp *p, adata_t *in, adata_t *out, int todo)
 			todo--;
 		} else {
 
-			for (c = nch; c > 0; c--)
+			for (c = 0; c < nch; c++)
 				f[c] = 0;
 
 			q = diff * p->filt_step;
@@ -334,7 +334,7 @@ resamp_do(struct resamp *p, adata_t *in, adata_t *out, int todo)
 				ds = resamp_filt[qi + 1] - s;
 				s += (int64_t)qf * ds >> RESAMP_STEP_BITS;
 				ctx = ctxbuf;
-				for (c = nch; c > 0; c--) {
+				for (c = 0; c < nch; c++) {
 					f[c] += (int64_t)ctx[n] * s;
 					ctx += RESAMP_NCTX;
 				}
@@ -342,7 +342,7 @@ resamp_do(struct resamp *p, adata_t *in, adata_t *out, int todo)
 				n = (n + 1) & (RESAMP_NCTX - 1);
 			}
 
-			for (c = nch; c > 0; c--) {
+			for (c = 0; c < nch; c++) {
 				s = f[c] >> RESAMP_BITS;
 				s = (int64_t)s * p->filt_cutoff >> RESAMP_BITS;
 #if ADATA_BITS == 16
