@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.37 2021/07/05 05:49:30 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.38 2021/07/05 05:50:19 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -754,7 +754,6 @@ kcov_remote_register_locked(int subsystem, void *id)
 		 * The remote could already be deregistered while another
 		 * thread is currently inside a kcov remote section.
 		 */
-		KASSERT(tmp->kr_state == KCOV_STATE_DYING);
 		msleep_nsec(tmp, &kcov_mtx, PWAIT, "kcov", INFSLP);
 	}
 	TAILQ_INSERT_TAIL(&kr_list, kr, kr_entry);
@@ -776,8 +775,6 @@ kcov_remote_attach(struct kcov_dev *kd, struct kio_remote_attach *arg)
 		    curproc->p_p);
 	if (kr == NULL)
 		return (EINVAL);
-	if (kr->kr_state != KCOV_STATE_NONE)
-		return (EBUSY);
 
 	kr->kr_state = KCOV_STATE_READY;
 	kr->kr_kd = kd;
