@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.97 2021/06/02 00:39:27 cheloha Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.98 2021/07/06 09:34:07 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -179,6 +179,7 @@ register struct cpu_info *__curcpu asm ("g7");
 #define cpu_number()	(__curcpu->ci_cpuid)
 
 #define CPU_IS_PRIMARY(ci)	((ci)->ci_cpuid == 0)
+#define CPU_IS_RUNNING(ci)	1
 #define CPU_INFO_ITERATOR	int
 #define CPU_INFO_FOREACH(cii, ci)					\
 	for (cii = 0, ci = cpus; ci != NULL; ci = ci->ci_next)
@@ -199,6 +200,7 @@ void	cpu_unidle(struct cpu_info *);
 #define cpu_number()	0
 
 #define CPU_IS_PRIMARY(ci)	1
+#define CPU_IS_RUNNING(ci)	1
 #define CPU_INFO_ITERATOR	int
 #define CPU_INFO_FOREACH(cii, ci)					\
 	for (cii = 0, ci = curcpu(); ci != NULL; ci = NULL)

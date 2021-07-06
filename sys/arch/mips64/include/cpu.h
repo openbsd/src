@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.134 2021/06/02 00:39:26 cheloha Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.135 2021/07/06 09:34:06 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -225,6 +225,7 @@ extern void (*cpu_idle_cycle_func)(void);
 extern struct cpu_info *get_cpu_info(int);
 #define curcpu() getcurcpu()
 #define	CPU_IS_PRIMARY(ci)		((ci)->ci_flags & CPUF_PRIMARY)
+#define	CPU_IS_RUNNING(ci)		((ci)->ci_flags & CPUF_RUNNING)
 #define cpu_number()			(curcpu()->ci_cpuid)
 
 extern struct cpuset cpus_running;
@@ -249,6 +250,7 @@ void	smp_rendezvous_cpus(unsigned long, void (*)(void *), void *arg);
 #define MAXCPUS				1
 #define curcpu()			(&cpu_info_primary)
 #define	CPU_IS_PRIMARY(ci)		1
+#define	CPU_IS_RUNNING(ci)		1
 #define cpu_number()			0UL
 #define cpu_unidle(ci)
 #define get_cpu_info(i)			(&cpu_info_primary)

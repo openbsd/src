@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.30 2021/06/02 00:39:27 cheloha Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.31 2021/07/06 09:34:07 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -130,6 +130,7 @@ curcpu(void)
 
 #define MAXCPUS			1
 #define CPU_IS_PRIMARY(ci)	1
+#define CPU_IS_RUNNING(ci)	1
 #define cpu_number()		0
 
 #define CPU_INFO_UNIT(ci)	0
@@ -143,6 +144,7 @@ curcpu(void)
 
 #define MAXCPUS			48
 #define CPU_IS_PRIMARY(ci)	((ci) == cpu_info_primary)
+#define CPU_IS_RUNNING(ci)	((ci)->ci_flags & CPUF_RUNNING)
 #define cpu_number()		(curcpu()->ci_cpuid)
 
 #define CPU_INFO_UNIT(ci)	((ci)->ci_dev ? (ci)->ci_dev->dv_unit : 0)

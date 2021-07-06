@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.64 2021/06/02 00:39:26 cheloha Exp $ */
+/* $OpenBSD: cpu.h,v 1.65 2021/07/06 09:34:06 kettenis Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -241,6 +241,7 @@ extern	struct cpu_info *cpu_info[];
 
 #define	curcpu()			((struct cpu_info *)alpha_pal_rdval())
 #define	CPU_IS_PRIMARY(ci)		((ci)->ci_flags & CPUF_PRIMARY)
+#define	CPU_IS_RUNNING(ci)		((ci)->ci_flags & CPUF_RUNNING)
 
 void	cpu_boot_secondary_processors(void);
 
@@ -273,6 +274,7 @@ do {									\
 
 #define	curcpu()			(&cpu_info_primary)
 #define	CPU_IS_PRIMARY(ci)		1
+#define	CPU_IS_RUNNING(ci)		1
 #define cpu_unidle(ci)			do { /* nothing */ } while (0)
 #define CPU_BUSY_CYCLE()		do {} while (0)
 

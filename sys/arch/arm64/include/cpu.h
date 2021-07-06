@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.21 2021/06/02 00:39:26 cheloha Exp $ */
+/* $OpenBSD: cpu.h,v 1.22 2021/07/06 09:34:06 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -161,6 +161,7 @@ extern struct cpu_info *cpu_info_list;
 #ifndef MULTIPROCESSOR
 #define cpu_number()	0
 #define CPU_IS_PRIMARY(ci)	1
+#define CPU_IS_RUNNING(ci)	1
 #define CPU_INFO_ITERATOR	int
 #define CPU_INFO_FOREACH(cii, ci) \
 	for (cii = 0, ci = curcpu(); ci != NULL; ci = NULL)
@@ -170,6 +171,7 @@ extern struct cpu_info *cpu_info_list;
 #else
 #define cpu_number()		(curcpu()->ci_cpuid)
 #define CPU_IS_PRIMARY(ci)	((ci) == &cpu_info_primary)
+#define CPU_IS_RUNNING(ci)	((ci)->ci_flags & CPUF_RUNNING)
 #define CPU_INFO_ITERATOR		int
 #define CPU_INFO_FOREACH(cii, ci)	for (cii = 0, ci = cpu_info_list; \
 					    ci != NULL; ci = ci->ci_next)

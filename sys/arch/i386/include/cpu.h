@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.174 2021/06/02 00:39:26 cheloha Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.175 2021/07/06 09:34:06 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -233,6 +233,7 @@ curcpu(void)
 #define cpu_number() 		(curcpu()->ci_cpuid)
 
 #define CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CPUF_PRIMARY)
+#define CPU_IS_RUNNING(ci)	((ci)->ci_flags & CPUF_RUNNING)
 
 extern struct cpu_info	*cpu_info[MAXCPUS];
 
@@ -252,6 +253,7 @@ void cpu_unidle(struct cpu_info *);
 #define	curcpu()		(&cpu_info_primary)
 
 #define CPU_IS_PRIMARY(ci)	1
+#define CPU_IS_RUNNING(ci)	1
 
 #define cpu_kick(ci)
 #define cpu_unidle(ci)
