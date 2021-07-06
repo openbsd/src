@@ -1,6 +1,6 @@
-.\"	$OpenBSD: compress.3,v 1.20 2021/02/08 20:32:07 jmc Exp $
+.\"	$OpenBSD: compress.3,v 1.21 2021/07/06 06:26:05 jmc Exp $
 .\"
-.\"  Copyright (C) 1995-2005 Jean-loup Gailly and Mark Adler
+.\"  Copyright (C) 1995-2017 Jean-loup Gailly and Mark Adler
 .\"
 .\"  This software is provided 'as-is', without any express or implied
 .\"  warranty.  In no event will the authors be held liable for any damages
@@ -23,7 +23,7 @@
 .\"
 .\" This page corresponds to zlib version 1.2.3
 .\"
-.Dd $Mdocdate: February 8 2021 $
+.Dd $Mdocdate: July 6 2021 $
 .Dt COMPRESS 3
 .Os
 .Sh NAME
@@ -37,19 +37,24 @@
 .Nm inflateEnd ,
 .Nm deflateInit2 ,
 .Nm deflateSetDictionary ,
+.Nm deflateGetDictionary ,
 .Nm deflateCopy ,
 .Nm deflateReset ,
 .Nm deflateParams ,
 .Nm deflateTune ,
 .Nm deflateBound ,
+.Nm deflatePending ,
 .Nm deflatePrime ,
 .Nm deflateSetHeader ,
 .Nm inflateInit2 ,
 .Nm inflateSetDictionary ,
+.Nm inflateGetDictionary ,
 .Nm inflateSync ,
 .Nm inflateCopy ,
 .Nm inflateReset ,
+.Nm inflateReset2 ,
 .Nm inflatePrime ,
+.Nm inflateMark ,
 .Nm inflateGetHeader ,
 .Nm inflateBackInit ,
 .Nm inflateBack ,
@@ -58,11 +63,15 @@
 .Nm compress2 ,
 .Nm compressBound ,
 .Nm uncompress ,
+.Nm uncompress2 ,
 .Nm gzopen ,
 .Nm gzdopen ,
+.Nm gzbuffer ,
 .Nm gzsetparams ,
 .Nm gzread ,
+.Nm gzfread ,
 .Nm gzwrite ,
+.Nm gzfwrite ,
 .Nm gzprintf ,
 .Nm gzputs ,
 .Nm gzgets ,
@@ -73,14 +82,19 @@
 .Nm gzseek ,
 .Nm gzrewind ,
 .Nm gztell ,
+.Nm gzoffset ,
 .Nm gzeof ,
 .Nm gzdirect ,
 .Nm gzclose ,
+.Nm gzclose_r ,
+.Nm gzclose_w ,
 .Nm gzerror ,
 .Nm gzclearerr ,
 .Nm adler32 ,
+.Nm adler32_z ,
 .Nm adler32_combine ,
 .Nm crc32 ,
+.Nm crc32_z ,
 .Nm crc32_combine
 .Nd zlib general purpose compression library
 .Sh SYNOPSIS
@@ -110,6 +124,8 @@ Advanced functions
 .Ft int
 .Fn deflateSetDictionary "z_streamp strm" "const Bytef *dictionary" "uInt dictLength"
 .Ft int
+.Fn deflateGetDictionary "z_streamp strm" "Bytef *dictionary" "uInt *dictLength"
+.Ft int
 .Fn deflateCopy "z_streamp dest" "z_streamp source"
 .Ft int
 .Fn deflateReset "z_streamp strm"
@@ -120,6 +136,8 @@ Advanced functions
 .Ft uLong
 .Fn deflateBound "z_streamp strm" "uLong sourceLen"
 .Ft int
+.Fn deflatePending "z_streamp strm" "unsigned *pending" "int *bits"
+.Ft int
 .Fn deflatePrime "z_streamp strm" "int bits" "int value"
 .Ft int
 .Fn deflateSetHeader "z_streamp strm" "gz_headerp head"
@@ -128,13 +146,19 @@ Advanced functions
 .Ft int
 .Fn inflateSetDictionary "z_streamp strm" "const Bytef *dictionary" "uInt dictLength"
 .Ft int
+.Fn inflateGetDictionary "z_streamp strm" "Bytef *dictionary" "uInt *dictLength"
+.Ft int
 .Fn inflateSync "z_streamp strm"
 .Ft int
 .Fn inflateCopy "z_streamp dst" "z_streamp source"
 .Ft int
 .Fn inflateReset "z_streamp strm"
 .Ft int
+.Fn inflateReset2 "z_streamp strm" "int windowBits"
+.Ft int
 .Fn inflatePrime "z_streamp strm" "int bits" "int value"
+.Ft int
+.Fn inflateMark "z_streamp strm"
 .Ft int
 .Fn inflateGetHeader "z_streamp strm" "gz_headerp head"
 .Ft int
@@ -158,16 +182,24 @@ Utility functions
 .Fn compressBound "uLong sourceLen"
 .Ft int
 .Fn uncompress "Bytef *dest" "uLongf *destLen" "const Bytef *source" "uLong sourceLen"
+.Ft int
+.Fn uncompress2 "Bytef *dest" "uLongf *destLen" "const Bytef *source" "uLong *sourceLen"
 .Ft gzFile
 .Fn gzopen "const char *path" "const char *mode"
 .Ft gzFile
 .Fn gzdopen "int fd" "const char *mode"
 .Ft int
+.Fn gzbuffer "gzFile file" "unsigned size"
+.Ft int
 .Fn gzsetparams "gzFile file" "int level" "int strategy"
 .Ft int
 .Fn gzread "gzFile file" "voidp buf" "unsigned len"
 .Ft int
+.Fn gzfread "voidp buf" "z_size_t size" "z_size_t nitems" "gzFile file"
+.Ft int
 .Fn gzwrite "gzFile file" "voidpc buf" "unsigned len"
+.Ft int
+.Fn gzfwrite "voidpc buf" "z_size_t size" "z_size_t nitems" "gzFile file"
 .Ft int
 .Fn gzprintf "gzFile file" "const char *format" "..."
 .Ft int
@@ -189,11 +221,17 @@ Utility functions
 .Ft z_off_t
 .Fn gztell "gzFile file"
 .Ft int
+.Fn gzoffset "gzFile file"
+.Ft int
 .Fn gzeof "gzFile file"
 .Ft int
 .Fn gzdirect "gzFile file"
 .Ft int
 .Fn gzclose "gzFile file"
+.Ft int
+.Fn gzclose_r "gzFile file"
+.Ft int
+.Fn gzclose_w "gzFile file"
 .Ft const char *
 .Fn gzerror "gzFile file" "int *errnum"
 .Ft void
@@ -204,15 +242,19 @@ Checksum functions
 .Ft uLong
 .Fn adler32 "uLong adler" "const Bytef *buf" "uInt len"
 .Ft uLong
+.Fn adler32_z "uLong adler" "const Bytef *buf" "z_size_t len"
+.Ft uLong
 .Fn adler32_combine "uLong adler1" "uLong adler2" "z_off_t len2"
 .Ft uLong
 .Fn crc32 "uLong crc" "const Bytef *buf" "uInt len"
+.Ft uLong
+.Fn crc32_z "uLong adler" "const Bytef *buf" "z_size_t len"
 .Ft uLong
 .Fn crc32_combine "uLong crc1" "uLong crc2" "z_off_t len2"
 .Sh DESCRIPTION
 This manual page describes the
 .Nm zlib
-general purpose compression library, version 1.2.3.
+general purpose compression library, version 1.2.11.
 .Pp
 The
 .Nm zlib
@@ -224,7 +266,6 @@ but other algorithms will be added later and will have the same
 stream interface.
 .Pp
 Compression can be done in a single step if the buffers are large enough
-.Pq for example if an input file is mmap'ed ,
 or can be done by repeated calls of the compression function.
 In the latter case, the application must provide more input
 and/or consume the output
@@ -245,7 +286,8 @@ using the functions that start with
 .Qq gz .
 The gzip format is different from the zlib format.
 gzip is a gzip wrapper, documented in RFC 1952, wrapped around a deflate stream.
-This library can optionally read and write gzip streams in memory as well.
+This library can optionally read and write gzip and raw deflate streams
+in memory as well.
 .Pp
 The zlib format was designed to be compact and fast for use in memory
 and on communications channels.
@@ -255,7 +297,7 @@ and uses a different, slower, check method than zlib.
 .Pp
 The library does not install any signal handler.
 The decoder checks the consistency of the compressed data,
-so the library should never crash even in case of corrupted input.
+so the library should never crash even in the case of corrupted input.
 .Pp
 The functions within the library are divided into the following sections:
 .Pp
@@ -308,7 +350,7 @@ If
 and
 .Fa zfree
 are set to
-.Dv Z_NULL ,
+.Dv NULL ,
 .Fn deflateInit
 updates them to use default allocation functions.
 .Pp
@@ -373,7 +415,7 @@ and
 are updated and processing will resume at this point for the next call to
 .Fn deflate .
 .Pp
-Provide more output starting at
+Generate more output starting at
 .Fa next_out
 and update
 .Fa next_out
@@ -386,8 +428,7 @@ is non-zero.
 Forcing
 .Fa flush
 frequently degrades the compression ratio,
-so this parameter should be set only when necessary
-.Pq in interactive applications .
+so this parameter should be set only when necessary.
 Some output may be provided even if
 .Fa flush
 is not set.
@@ -416,6 +457,10 @@ and with zero
 .Fa avail_out ,
 it must be called again after making room in the
 output buffer because there might be more output pending.
+See
+.Fn deflatePending ,
+which can be used if desired to determine whether or not there is more output
+in that case.
 .Pp
 Normally the parameter
 .Fa flush
@@ -431,14 +476,45 @@ If the parameter
 is set to
 .Dv Z_SYNC_FLUSH ,
 all pending output is flushed to the output buffer and the output
-is aligned on a byte boundary, so that the decompressor can get all
-input data available so far.
-(In particular,
+is aligned on a byte boundary,
+so that the decompressor can get all input data available so far.
+(In particular
 .Fa avail_in
-is zero after the call if enough output space
-has been provided before the call.)
+is zero after the call
+if enough output space has been provided before the call.)
 Flushing may degrade compression for some compression algorithms
 and so it should be used only when necessary.
+This completes the current deflate block and follows it with
+an empty stored block that is three bits plus filler bits to the next byte,
+followed by four bytes (00 00 ff ff).
+.Pp
+If
+.Fa flush
+is set to
+.Dv Z_PARTIAL_FLUSH ,
+all pending output is flushed to the output buffer,
+but the output is not aligned to a byte boundary.
+All of the input data so far will be available to the decompressor, as for
+.Dv Z_SYNC_FLUSH .
+This completes the current deflate block and follows it with an empty fixed
+code block that is 10 bits long.
+This assures that enough bytes are output in order for the decompressor to
+finish the block before the empty fixed codes block.
+.Pp
+If
+.Fa flush
+is set to
+.Dv Z_BLOCK ,
+a deflate block is completed and emitted, as for
+.Dv Z_SYNC_FLUSH ,
+but the output is not aligned on a byte boundary,
+and up to seven bits of the current block are held to be written as
+the next byte after the next deflate block is completed.
+In this case, the decompressor may not be provided enough bits at this point in
+order to complete decompression of the data provided so far to the compressor.
+It may need to wait for the next block to be emitted.
+This is for advanced applications that need to control
+the emission of deflate blocks.
 .Pp
 If
 .Fa flush
@@ -480,10 +556,13 @@ pending input is processed, pending output is flushed and
 .Fn deflate
 returns with
 .Dv Z_STREAM_END
-if there was enough output space; if
+if there was enough output space.
+If
 .Fn deflate
 returns with
-.Dv Z_OK ,
+.Dv Z_OK
+or
+.Dv Z_BUF_ERROR ,
 this function must be called again with
 .Dv Z_FINISH
 and more output space
@@ -502,25 +581,34 @@ or
 .Fn deflateEnd .
 .Pp
 .Dv Z_FINISH
-can be used immediately after
+can be used in the first deflate call after
 .Fn deflateInit
 if all the compression is to be done in a single step.
-In this case,
+In order to complete in one call,
 .Fa avail_out
 must be at least the value returned by
 .Fn deflateBound
-.Pq see below .
-If
+(see below).
+Then
 .Fn deflate
-does not return
+is guaranteed to return
+.Dv Z_STREAM_END .
+If not enough output space is provided,
+.Fn deflate
+will not return
 .Dv Z_STREAM_END ,
-then it must be called again as described above.
+and it must be called again as described above.
 .Pp
 .Fn deflate
 sets strm->adler to the Adler-32 checksum of all input read so far
 (that is,
 .Fa total_in
 bytes).
+If a gzip stream is being generated,
+then strm->adler will be the CRC-32 checksum of the input read so far.
+(See
+.Fn deflateInit2
+below.)
 .Pp
 .Fn deflate
 may update strm->data_type
@@ -548,7 +636,8 @@ if the stream state was inconsistent
 or
 .Fa next_out
 was
-.Dv NULL ) ,
+.Dv NULL
+or the state was inadvertently written over by the application), or
 .Dv Z_BUF_ERROR
 if no progress is possible
 (for example,
@@ -561,7 +650,7 @@ Note that
 is not fatal, and
 .Fn deflate
 can be called again with more input and more output space
-to continue processing.
+to continue compressing.
 .It Xo
 .Fa int
 .Fn deflateEnd "z_streamp strm" ;
@@ -599,26 +688,18 @@ The fields
 and
 .Fa opaque
 must be initialized before by the caller.
-If
-.Fa next_in
-is not
-.Dv Z_NULL
-and
-.Fa avail_in
-is large enough
-.Pq the exact value depends on the compression method ,
-.Fn inflateInit
-determines the compression method from the
-.Nm zlib
-header and allocates all data structures accordingly;
-otherwise the allocation will be deferred to the first call to
-.Fn inflate .
+In the current version of
+.Fn inflate ,
+the provided input is not read or consumed.
+The allocation of a sliding window will be deferred to the first call of
+.Fn inflate
+(if the decompression does not complete on the first call).
 If
 .Fa zalloc
 and
 .Fa zfree
 are set to
-.Dv Z_NULL ,
+.Dv NULL ,
 .Fn inflateInit
 updates them to use default allocation functions.
 .Pp
@@ -631,24 +712,26 @@ if there was not enough memory,
 .Dv Z_VERSION_ERROR
 if the
 .Nm zlib
-library version is incompatible with the version assumed by the caller.
+library version is incompatible with the version assumed by the caller or
+.Dv Z_STREAM_ERROR
+if the parameters are invalid, such as a null pointer to the structure.
 .Fa msg
 is set to null if there is no error message.
 .Fn inflateInit
-does not perform any decompression apart from reading the
-.Nm zlib
-header if present: this will be done by
+does not perform any decompression.
+Actual decompression will be done by
 .Fn inflate .
-(So
-.Fa next_in
-and
-.Fa avail_in
-may be modified,
-but
-.Fa next_out
+So
+.Fa next_in , avail_in , next_out ,
 and
 .Fa avail_out
-are unchanged.)
+are unused and unchanged.
+The current implementation of
+.Fn inflateInit
+does not process any header information \(em
+that is deferred until
+.Fn inflate
+is called.
 .It Xo
 .Fa int
 .Fn inflate "z_streamp strm" "int flush" ;
@@ -672,12 +755,15 @@ and
 .Fa avail_in
 accordingly.
 If not all input can be processed
-(because there is not enough room in the output buffer),
+(because there is not enough room in the output buffer), then
 .Fa next_in
-is updated and processing will resume at this point for the next call to
+and
+.Fa avail_in
+are updated accordingly,
+and processing will resume at this point for the next call to
 .Fn inflate .
 .Pp
-Provide more output starting at
+Generate more output starting at
 .Fa next_out
 and update
 .Fa next_out
@@ -694,6 +780,10 @@ Before the call to
 the application should ensure that at least one of the actions is possible,
 by providing more input and/or consuming more output,
 and updating the next_* and avail_* values accordingly.
+If the caller of
+.Fn inflate
+does not provide both available input and available output space,
+it is possible that there will be no progress made.
 The application can consume the uncompressed output when it wants,
 for example when the output buffer is full (avail_out == 0),
 or after each call to
@@ -712,9 +802,9 @@ The
 parameter of
 .Fn inflate
 can be
-.Dv Z_NO_FLUSH , Z_SYNC_FLUSH , Z_FINISH ,
+.Dv Z_NO_FLUSH , Z_SYNC_FLUSH , Z_FINISH , Z_BLOCK
 or
-.Dv Z_BLOCK .
+.Dv Z_TREES .
 .Dv Z_SYNC_FLUSH
 requests that
 .Fn inflate
@@ -735,20 +825,37 @@ or when it runs out of data.
 The
 .Dv Z_BLOCK
 option assists in appending to or combining deflate streams.
-Also to assist in this, on return
+To assist in this, on return
 .Fn inflate
-will set strm->data_type to the number of unused bits in the last byte
-taken from strm->next_in, plus 64 if
+always sets strm->data_type to the number of unused bits
+in the last byte taken from strm->next_in, plus 64 if
 .Fn inflate
 is currently decoding the last block in the deflate stream, plus 128 if
 .Fn inflate
-returned immediately after decoding an end-of-block code or decoding
-the complete header up to just before the first byte of the deflate stream.
-The end-of-block will not be indicated until all of the uncompressed data
-from that block has been written to strm->next_out.
+returned immediately after decoding an end-of-block code or decoding the
+complete header up to just before the first byte of the deflate stream.
+The end-of-block will not be indicated until all of the uncompressed
+data from that block has been written to strm->next_out.
 The number of unused bits may in general be greater than seven,
 except when bit 7 of data_type is set,
 in which case the number of unused bits will be less than eight.
+.Fa data_type
+is set as noted here every time
+.Fn inflate
+returns for all flush options,
+and so can be used to determine the amount of currently consumed input in bits.
+.Pp
+The
+.Dv Z_TREES
+option behaves as
+.Dv Z_BLOCK
+does, but it also returns when the end of each deflate block header is reached,
+before any actual data in that block is decoded.
+This allows the caller to determine the length of the deflate block header for
+later use in random access within a deflate block.
+256 is added to the value of strm->data_type when
+.Fn inflate
+returns immediately after reaching the end of the deflate block header.
 .Pp
 .Fn inflate
 should normally be called until it returns
@@ -762,30 +869,49 @@ should be set to
 .Dv Z_FINISH .
 In this case all pending input is processed and all pending output is flushed;
 .Fa avail_out
-must be large enough to hold all the uncompressed data.
+must be large enough to hold all the uncompressed data
+for the operation to complete.
 (The size of the uncompressed data may have been saved
 by the compressor for this purpose.)
-The next operation on this stream must be
-.Fn inflateEnd
-to deallocate the decompression state.
 The use of
 .Dv Z_FINISH
-is never required, but can be used to inform
+is not required to perform an inflation in one step.
+However it may be used to inform
 .Fn inflate
-that a faster approach may be used for the single
+that a faster approach can be used for the single
 .Fn inflate
 call.
+.Dv Z_FINISH
+also informs
+.Fn inflate
+to not maintain a sliding window if the stream completes,
+which reduces its memory footprint.
+If the stream does not complete,
+either because not all of the stream is provided or not enough output space
+is provided, then a sliding window will be allocated and
+.Fn inflate
+can be called again to continue the operation as if
+.Dv Z_NO_FLUSH
+had been used.
 .Pp
 In this implementation,
 .Fn inflate
 always flushes as much output as possible to the output buffer,
 and always uses the faster approach on the first call.
-So the only effect of the
-.Fa flush
-parameter in this implementation is on the return value of
-.Fn inflate ,
-as noted below, or when it returns early because
+So the effects of the flush parameter in this implementation are
+on the return value of
+.Fn inflate
+as noted below,
+when
+.Fn inflate
+returns early when
 .Dv Z_BLOCK
+or
+.Dv Z_TREES
+is used, and when
+.Fn inflate
+avoids the allocation of memory for a sliding window when
+.Dv Z_FINISH
 is used.
 .Pp
 If a preset dictionary is needed after this call (see
@@ -808,14 +934,16 @@ the compressor and returns
 only if the checksum is correct.
 .Pp
 .Fn inflate
-will decompress and check either zlib-wrapped or gzip-wrapped deflate data.
-The header type is detected automatically.
-Any information contained in the gzip header is not retained,
-so applications that need that information should instead use raw inflate; see
-.Fn inflateInit2
-below, or
-.Fn inflateBack
-and perform their own processing of the gzip header and trailer.
+can decompress and check either zlib-wrapped or gzip-wrapped deflate data.
+The header type is detected automatically, if requested when initializing with
+.Fn inflateInit2 .
+Any information contained in the gzip header is not retained unless
+.Fn inflateGetHeader
+is used.
+When processing gzip-wrapped deflate data, strm->adler32 is set to the CRC-32
+of the output produced so far.
+The CRC-32 is checked against the gzip trailer,
+as is the uncompressed length, modulo 2^32.
 .Pp
 .Fn inflate
 returns
@@ -830,19 +958,21 @@ if a preset dictionary is needed at this point,
 .Dv Z_DATA_ERROR
 if the input data was corrupted (input stream not conforming to the
 .Nm zlib
-format or incorrect check value),
+format or incorrect check value,
+in which case strm->msg points to a string with a more specific error),
 .Dv Z_STREAM_ERROR
 if the stream structure was inconsistent
-(for example, if
+(for example,
 .Fa next_in
 or
 .Fa next_out
 was
-.Dv NULL ) ,
+.Dv NULL ,
+or the state was inadvertently over by the application),
 .Dv Z_MEM_ERROR
 if there was not enough memory,
 .Dv Z_BUF_ERROR
-if no progress is possible or if there was not enough room in the output buffer
+if no progress was possible or if there was not enough room in the output buffer
 when
 .Dv Z_FINISH
 is used.
@@ -914,12 +1044,28 @@ The default value is 15 if
 .Fn deflateInit
 is used instead.
 .Pp
+For the current implementation of
+.Fn deflate ,
+a
+.Fa windowBits
+value of 8 (a window size of 256 bytes) is not supported.
+As a result, a request for 8 will result in 9 (a 512-byte window).
+In that case, providing 8 to
+.Fn inflateInit2
+will result in an error when the zlib header with 9 is
+checked against the initialization of
+.Fn inflate .
+The remedy is to not use 8 with
+.Fn deflateInit2
+with this initialization, or at least in that case use 9 with
+.Fn inflateInit2 .
+.Pp
 .Fa windowBits
 can also be -8..-15 for raw deflate.
 In this case, -windowBits determines the window size.
 .Fn deflate
 will then generate raw deflate data with no zlib header or trailer,
-and will not compute an Adler-32 check value.
+and will not compute a check value.
 .Pp
 .Fa windowBits
 can also be greater than 15 for optional gzip encoding.
@@ -930,10 +1076,15 @@ compressed data instead of a zlib wrapper.
 The gzip header will have no file name, no extra data, no comment,
 no modification time
 .Pq set to zero ,
-no header crc, and the operating system will be set to 255
-.Pq unknown .
+no header crc, and the operating system will be set to
+the appropriate value,
+if the operating system was determined at compile time.
 If a gzip stream is being written,
-strm->adler is a crc32 instead of an adler32.
+strm->adler is a CRC-32 instead of an Adler-32.
+.Pp
+For raw deflate or gzip encoding, a request for a 256-byte window is
+rejected as invalid, since only the zlib header provides a means of
+transmitting the window size to the decompressor.
 .Pp
 The
 .Fa memLevel
@@ -972,7 +1123,7 @@ The effect of
 .Dv Z_FILTERED
 is to force more Huffman coding and less string matching;
 it is somewhat intermediate between
-.Dv Z_DEFAULT
+.Dv Z_DEFAULT_STRATEGY
 and
 .Dv Z_HUFFMAN_ONLY .
 .Dv Z_RLE
@@ -994,8 +1145,12 @@ if successful,
 .Dv Z_MEM_ERROR
 if there was not enough memory,
 .Dv Z_STREAM_ERROR
-if a parameter is invalid
-.Pq such as an invalid method .
+if any parameter is invalid
+.Pq such as an invalid method ,
+or
+.Dv Z_VERSION_ERROR
+if the zlib library version (zlib_version) is
+incompatible with the version assumed by the caller (ZLIB_VERSION).
 .Fa msg
 is set to null if there is no error message.
 .Fn deflateInit2
@@ -1008,13 +1163,20 @@ does not perform any compression: this will be done by
 .Pp
 Initializes the compression dictionary from the given byte sequence
 without producing any compressed output.
-This function must be called immediately after
-.Fn deflateInit ,
-.Fn deflateInit2 ,
+When using the zlib format, this function must be called immediately after
+.Fn deflateInit , deflateInit2
 or
 .Fn deflateReset ,
-before any call to
+and before any call of
 .Fn deflate .
+When doing raw deflate, this function must be called either before any call of
+.Fn deflate ,
+or immediately after the completion of a deflate block,
+i.e. after all input has been consumed and all output has been delivered
+when using any of the flush options
+.Dv Z_BLOCK , Z_PARTIAL_FLUSH , Z_SYNC_FLUSH ,
+or
+.Dv Z_FULL_FLUSH .
 The compressor and decompressor must use exactly the same dictionary
 (see
 .Fn inflateSetDictionary ) .
@@ -1033,10 +1195,10 @@ Depending on the size of the compression data structures selected by
 or
 .Fn deflateInit2 ,
 a part of the dictionary may in effect be discarded,
-for example if the dictionary is larger than the window size in
-.Fn deflate
+for example if the dictionary is larger than the window size provided in
+.Fn deflateInit
 or
-.Fn deflate2 .
+.Fn deflateInit2 .
 Thus the strings most likely to be useful should be
 put at the end of the dictionary, not at the front.
 In addition, the current implementation of
@@ -1058,14 +1220,57 @@ if successful,
 or
 .Dv Z_STREAM_ERROR
 if a parameter is invalid
-.Pq such as NULL dictionary
+.Pq e.g. dictionary being NULL
 or the stream state is inconsistent
 (for example if
 .Fn deflate
-has already been called for this stream or if the compression method is bsort).
+has already been called for this stream or if not at a block boundary for raw
+deflate).
 .Fn deflateSetDictionary
 does not perform any compression: this will be done by
 .Fn deflate .
+.It Xo
+.Fa int
+.Fn deflateGetDictionary "z_streamp strm" "Bytef *dictionary uInt *dictLength" ;
+.Xc
+.Pp
+Returns the sliding dictionary being maintained by
+.Fn deflate .
+.Fa dictLength
+is set to the number of bytes in the dictionary, and that many bytes are copied
+to
+.Fa dictionary .
+.Fa dictionary
+must have enough space, where 32768 bytes is always enough.
+If
+.Fn deflateGetDictionary
+is called with dictionary equal to
+.Dv NULL ,
+then only the dictionary length is returned, and nothing is copied.
+Similary, if
+.Fa dictLength
+is
+.Dv NULL ,
+then it is not set.
+.Pp
+.Fn deflateGetDictionary
+may return a length less than the window size,
+even when more than the window size in input has been provided.
+It may return up to 258 bytes less in that case,
+due to how zlib's implementation of
+.Fn deflate
+manages the sliding window and lookahead for matches,
+where matches can be up to 258 bytes long.
+If the application needs the last window-size bytes of input,
+then that would need to be saved by the application outside of
+.Nm zlib .
+.Pp
+.Fn deflateGetDictionary
+returns
+.Dv Z_OK
+on success, or
+.Dv Z_STREAM_ERROR
+if the stream state is inconsistent.
 .It Xo
 .Fa int
 .Fn deflateCopy "z_streamp dest" "z_streamp source" ;
@@ -1107,10 +1312,9 @@ This function is equivalent to
 .Fn deflateEnd
 followed by
 .Fn deflateInit ,
-but does not free and reallocate all the internal compression state.
-The stream will keep the same compression level and any other attributes
-that may have been set by
-.Fn deflateInit2 .
+but does not free and reallocate the internal compression state.
+The stream will leave the compression level and any other attributes
+that may have been set unchanged.
 .Pp
 .Fn deflateReset
 returns
@@ -1136,30 +1340,62 @@ The interpretation of level and strategy is as in
 This can be used to switch between compression and straight copy
 of the input data, or to switch to a different kind of input data
 requiring a different strategy.
-If the compression level is changed, the input available so far
-is compressed with the old level
-.Pq and may be flushed ;
-the new level will take effect only at the next call to
+If the compression approach (which is a function of the level) or the
+strategy is changed, and if any input has been consumed in a previous
+.Fn deflate
+call, then the input available so far is compressed with the old
+level and strategy using deflate(strm, Z_BLOCK).
+There are three approaches for the compression levels 0, 1..3, and 4..9,
+respectively.
+The new level and strategy will take effect at the next call of
 .Fn deflate .
 .Pp
-Before the call to
+If a deflate(strm, Z_BLOCK) is performed by
 .Fn deflateParams ,
-the stream state must be set as for a call to
-.Fn deflate ,
-since the currently available input may have to be compressed and flushed.
-In particular, strm->avail_out must be non-zero.
+and it does not have enough output space to complete,
+then the parameter change will not take effect.
+In this case,
+.Fn deflateParams
+can be called again with the same parameters and more output space to try again.
+.Pp
+In order to assure a change in the parameters on the first try, the
+deflate stream should be flushed using
+.Fn deflate
+with
+.Dv Z_BLOCK
+or other flush request until
+.Fa strm.avail_out
+is not zero, before calling
+.Fn deflateParams .
+Then no more input data should be provided before the
+.Fn deflateParams
+call.
+If this is done, the old level and strategy will be applied to the data
+compressed before
+.Fn deflateParams ,
+and the new level and strategy will be applied to the the data compressed after
+.Fn deflateParams .
 .Pp
 .Fn deflateParams
 returns
 .Dv Z_OK
-if successful,
+on success,
 .Dv Z_STREAM_ERROR
 if the source stream state was inconsistent or if a parameter was invalid, or
 .Dv Z_BUF_ERROR
-if strm->avail_out was zero.
+if there was not enough output space to complete the compression of the
+available input data before a change in the strategy or approach.
+Note that in the case of a
+.Dv Z_BUF_ERROR ,
+the parameters are not changed.
+A return value of
+.Dv Z_BUF_ERROR
+is not fatal, in which case
+.Fn deflateParams
+can be retried with more output space.
 .It Xo
 .Fa int
-.Fn deflateTune "z_streamp strm" "int good_length" "int max_lazy" "int nice_length" "int max_chain"
+.Fn deflateTune "z_streamp strm" "int good_length" "int max_lazy" "int nice_length" "int max_chain" ;
 .Xc
 .Pp
 Fine tune
@@ -1189,7 +1425,7 @@ on success, or
 for an invalid deflate stream.
 .It Xo
 .Fa uLong
-.Fn deflateBound "z_streamp strm" "uLong sourceLen"
+.Fn deflateBound "z_streamp strm" "uLong sourceLen" ;
 .Xc
 .Pp
 .Fn deflateBound
@@ -1200,12 +1436,60 @@ It must be called after
 .Fn deflateInit
 or
 .Fn deflateInit2 .
+and after
+.Fn deflateSetHeader ,
+if used.
 This would be used to allocate an output buffer for deflation in a single pass,
 and so would be called before
 .Fn deflate .
+If that first
+.Fn deflate
+call is provided the
+.Fa sourceLen
+input bytes, an output buffer allocated to the size returned by
+.Fn deflateBound ,
+and the flush value
+.Dv Z_FINISH ,
+then
+.Fn deflate
+is guaranteed to return
+.Dv Z_STREAM_END .
+Note that it is possible for the compressed size to be larger than
+the value returned by
+.Fn deflateBound
+if flush options other than
+.Dv Z_FINISH
+or
+.Dv Z_NO_FLUSH
+are used.
 .It Xo
 .Fa int
-.Fn deflatePrime "z_streamp strm" "int bits" "int value"
+.Fn deflatePending "z_streamp strm" "unsigned *pending" "int *bits" ;
+.Xc
+.Pp
+.Fn deflatePending
+returns the number of bytes and bits of output that have been generated,
+but not yet provided in the available output.
+The bytes not provided would be due to the available output space
+having been consumed.
+The number of bits of output not provided are between 0 and 7,
+where they await more bits to join them in order to fill out a full byte.
+If
+.Fa pending
+or
+.Fa bits
+are
+.Dv NULL ,
+then those values are not set.
+.Pp
+.Fn deflatePending returns
+.Dv Z_OK
+if success, or
+.Dv Z_STREAM_ERROR
+if the source stream state was inconsistent.
+.It Xo
+.Fa int
+.Fn deflatePrime "z_streamp strm" "int bits" "int value" ;
 .Xc
 .Pp
 .Fn deflatePrime
@@ -1213,7 +1497,7 @@ inserts
 .Fa bits
 in the deflate output stream.
 The intent is that this function is used to start off the deflate output
-with the bits leftover from a previous deflate stream when appending to it.
+with the bits left over from a previous deflate stream when appending to it.
 As such, this function can only be used for raw deflate,
 and must be used before the first
 .Fn deflate
@@ -1230,12 +1514,14 @@ will be inserted in the output.
 .Fn deflatePrime
 returns
 .Dv Z_OK
-if successful, or
+if successful,
+.Dv Z_BUF_ERROR
+if there was not enough room in the internal buffer to insert the bits, or
 .Dv Z_STREAM_ERROR
 if the source stream state was inconsistent.
 .It Xo
 .Fa int
-.Fn deflateSetHeader "z_streamp strm" "gz_headerp head"
+.Fn deflateSetHeader "z_streamp strm" "gz_headerp head" ;
 .Xc
 .Pp
 .Fn deflateSetHeader
@@ -1254,7 +1540,7 @@ in the provided gz_header structure are written to the gzip header
 (xflag is ignored \- the extra flags are set
 according to the compression level).
 The caller must assure that, if not
-.Dv Z_NULL ,
+.Dv NULL ,
 .Fa name
 and
 .Fa comment
@@ -1262,7 +1548,7 @@ are terminated with a zero byte,
 and that if
 .Fa extra
 is not
-.Dv Z_NULL ,
+.Dv NULL ,
 that
 .Fa extra_len
 bytes are available there.
@@ -1327,6 +1613,10 @@ will return with the error code
 instead of trying to allocate a larger window.
 .Pp
 .Fa windowBits
+can also be zero to request that inflate use the window size in the zlib header
+of the compressed stream.
+.Pp
+.Fa windowBits
 can also be -8..-15 for raw inflate.
 In this case, -windowBits determines the window size.
 .Fn inflate
@@ -1338,7 +1628,7 @@ such as zip.
 Those formats provide their own check values.
 If a custom format is developed using the raw deflate format
 for compressed data, it is recommended that a check value such as an Adler-32
-or a crc32 be applied to the uncompressed data as is done in the zlib, gzip,
+or a CRC-32 be applied to the uncompressed data as is done in the zlib, gzip,
 and zip formats.
 For most applications, the zlib format should be used as is.
 Note that comments above on the use in
@@ -1353,7 +1643,19 @@ detection, or add 16 to decode only the gzip format
 (the zlib format will return a
 .Dv Z_DATA_ERROR ) .
 If a gzip stream is being decoded,
-strm->adler is a crc32 instead of an adler32.
+strm->adler is a CRC-32 instead of an Adler-32.
+Unlike the
+.Xr gunzip 1
+utility and
+.Fn gzread
+(see below),
+.Fn inflate
+will not automatically decode concatenated gzip streams.
+.Fn inflate
+will return
+.Dv Z_STREAM_END
+at the end of the gzip stream.
+The state would need to be reset to continue decoding a subsequent gzip stream.
 .Pp
 .Fn inflateInit2
 returns
@@ -1361,15 +1663,17 @@ returns
 if successful,
 .Dv Z_MEM_ERROR
 if there was not enough memory,
+.Dv Z_VERSION_ERROR
+if the
+.Nm zlib
+library version is incompatible with the version assumed by the caller, or
 .Dv Z_STREAM_ERROR
-if a parameter is invalid
-(such as a null strm).
+if the parameters are invalid, such as a null pointer to the structure.
 .Fa msg
 is set to null if there is no error message.
 .Fn inflateInit2
-does not perform any decompression apart from reading the
-.Nm zlib
-header if present: this will be done by
+does not perform any decompression apart from possibly reading the zlib header
+if present: actual decompression will be done by
 .Fn inflate .
 (So
 .Fa next_in
@@ -1379,7 +1683,12 @@ may be modified, but
 .Fa next_out
 and
 .Fa avail_out
-are unchanged.)
+are unused and unchanged.)
+The current implementation of
+.Fn inflateInit2
+does not process any header information \(em that is deferred until
+.Fn inflate
+is called.
 .It Xo
 .Fa int
 .Fn inflateSetDictionary "z_streamp strm" "const Bytef *dictionary" "uInt dictLength" ;
@@ -1397,13 +1706,9 @@ Adler-32 value returned by that call to
 The compressor and decompressor must use exactly the same dictionary
 (see
 .Fn deflateSetDictionary ) .
-For raw inflate, this function can be called immediately after
-.Fn inflateInit2
-or
-.Fn inflateReset
-and before any call to
-.Fn inflate
-to set the dictionary.
+For raw inflate, this function can be called at any time to set the dictionary.
+If the provided dictionary is smaller than the window and there is already
+data in the window, then the provided dictionary will amend what's there.
 The application must ensure that the dictionary
 that was used for compression is provided.
 .Pp
@@ -1413,7 +1718,7 @@ returns
 if successful,
 .Dv Z_STREAM_ERROR
 if a parameter is invalid
-.Pq such as NULL dictionary
+.Pq e.g. dictionary being NULL
 or the stream state is inconsistent,
 .Dv Z_DATA_ERROR
 if the given dictionary doesn't match the expected one
@@ -1423,10 +1728,39 @@ does not perform any decompression: this will be done by subsequent calls of
 .Fn inflate .
 .It Xo
 .Fa int
+.Fn inflateGetDictionary "z_streamp strm" "Bytef *dictionary" "uInt *dictLength" ;
+.Xc
+.Pp
+Returns the sliding dictionary being maintained by
+.Fn inflate .
+.Fa dictLength
+is set to the number of bytes in the dictionary, and that many bytes are copied
+to
+.Fa dictionary .
+.Fa dictionary
+must have enough space, where 32768 bytes is always enough.
+If
+.Fn inflateGetDictionary
+is called with dictionary equal to
+.Dv NULL ,
+then only the dictionary length is returned, and nothing is copied.
+Similary, if
+.Fa dictLength is
+.Dv NULL ,
+then it is not set.
+.Pp
+.Fn inflateGetDictionary
+returns
+.Dv Z_OK
+on success, or
+.Dv Z_STREAM_ERROR
+if the stream state is inconsistent.
+.It Xo
+.Fa int
 .Fn inflateSync "z_streamp strm" ;
 .Xc
 .Pp
-Skips invalid compressed data until a full flush point
+Skips invalid compressed data until a possible full flush point
 (see above the description of
 .Fn deflate
 with
@@ -1435,9 +1769,14 @@ can be found, or until all available input is skipped.
 No output is provided.
 .Pp
 .Fn inflateSync
+searches for a 00 00 FF FF pattern in the compressed data.
+All full flush points have this pattern, but not all occurrences of this
+pattern are full flush points.
+.Pp
+.Fn inflateSync
 returns
 .Dv Z_OK
-if a full flush point has been found,
+if a possible full flush point has been found,
 .Dv Z_BUF_ERROR
 if no more input was provided,
 .Dv Z_DATA_ERROR
@@ -1452,7 +1791,7 @@ In the error case, the application may repeatedly call
 providing more input each time, until success or end of the input data.
 .It Xo
 .Fa int
-.Fn inflateCopy "z_streamp dest" "z_streamp source"
+.Fn inflateCopy "z_streamp dest" "z_streamp source" ;
 .Xc
 .Pp
 Sets the destination stream as a complete copy of the source stream.
@@ -1486,7 +1825,7 @@ This function is equivalent to
 .Fn inflateEnd
 followed by
 .Fn inflateInit ,
-but does not free and reallocate all the internal decompression state.
+but does not free and reallocate the internal decompression state.
 The stream will keep attributes that may have been set by
 .Fn inflateInit2 .
 .Pp
@@ -1503,7 +1842,39 @@ or
 being NULL).
 .It Xo
 .Fa int
-.Fn inflatePrime "z_stream strm" "int bits" "int value"
+.Fn inflateReset2 "z_streamp strm" "int windowBits" ;
+.Xc
+.Pp
+This function is the same as
+.Fn inflateReset ,
+but it also permits changing the wrap and window size requests.
+The
+.Fa windowBits
+parameter is interpreted the same as it is for
+.Fa inflateInit2 .
+If the window size is changed, then the memory allocated for the window
+is freed, and the window will be reallocated by
+.Fn inflate
+if needed.
+.Pp
+.Fn inflateReset2
+returns
+.Dv Z_OK
+if success, or
+.Dv Z_STREAM_ERROR
+if the source stream state was inconsistent
+(such as
+.Fa zalloc
+or
+.Fa state
+being
+.Dv NULL ) ,
+or if the
+.Fa windowBits
+parameter is invalid.
+.It Xo
+.Fa int
+.Fn inflatePrime "z_stream strm" "int bits" "int value" ;
 .Xc
 .Pp
 This function inserts bits in the inflate input stream.
@@ -1523,6 +1894,16 @@ must be less than or equal to 16,
 and that many of the least significant bits of value
 will be inserted in the input.
 .Pp
+If
+.Fa bits
+is negative, then the input stream bit buffer is emptied.
+Then
+.Fn inflatePrime
+can be called again to put bits in the buffer.
+This is used to clear out bits left over after feeding
+.Fn inflate
+a block description prior to feeding it codes.
+.Pp
 .Fn inflatePrime
 returns
 .Dv Z_OK
@@ -1530,8 +1911,53 @@ if successful, or
 .Dv Z_STREAM_ERROR
 if the source stream state was inconsistent.
 .It Xo
+.Fa long
+.Fn inflateMark "z_streamp strm" ;
+.Xc
+.Pp
+This function returns two values: one in the lower 16 bits of the return
+value, and the other in the remaining upper bits, obtained by shifting the
+return value down 16 bits.
+If the upper value is -1 and the lower value is zero, then
+.Fn inflate
+is currently decoding information outside of a block.
+If the upper value is -1 and the lower value is non-zero, then
+.Fn inflate
+is in the middle of a stored block, with the lower value equaling the number of
+bytes from the input remaining to copy.
+If the upper value is not -1, then it is the number of bits back from
+the current bit position in the input of the code
+(literal or length/distance pair)
+currently being processed.
+In that case the lower value is the number of bytes
+already emitted for that code.
+.Pp
+A code is being processed if
+.Fn inflate
+is waiting for more input to complete decoding of the code,
+or if it has completed decoding but is waiting for
+more output space to write the literal or match data.
+.Pp
+.Fn inflateMark
+is used to mark locations in the input data for random access,
+which may be at bit positions,
+and to note those cases where the output of a code may span
+boundaries of random access blocks.
+The current location in the input stream can be determined from
+.Fa avail_in
+and
+.Fa data_type
+as noted in the description for the
+.Dv Z_BLOCK
+flush parameter for
+.Fn inflate .
+.Pp
+.Fn inflateMark
+returns the value noted above,
+or -65536 if the provided source stream state was inconsistent.
+.It Xo
 .Fa int
-.Fn inflateGetHeader "z_streamp strm" "gz_headerp head"
+.Fn inflateGetHeader "z_streamp strm" "gz_headerp head" ;
 .Xc
 .Pp
 .Fn inflateGetHeader
@@ -1549,10 +1975,12 @@ As
 processes the gzip stream, head->done is zero until the header
 is completed, at which time head->done is set to one.
 If a zlib stream is being decoded,
-then head->done is set to \-1 to indicate that there will be
+then head->done is set to -1 to indicate that there will be
 no gzip header information forthcoming.
 Note that
 .Dv Z_BLOCK
+or
+.Dv Z_TREES
 can be used to force
 .Fn inflate
 to return immediately after header processing is complete
@@ -1563,7 +1991,7 @@ contents.
 hcrc is set to true if there is a header CRC.
 (The header CRC was valid if done is set to one.)
 If extra is not
-.Dv Z_NULL ,
+.Dv NULL ,
 then
 .Fa extra_max
 contains the maximum number of bytes to write to
@@ -1577,24 +2005,24 @@ contains the extra field, or that field truncated if
 is less than
 .Fa extra_len .
 If name is not
-.Dv Z_NULL ,
+.Dv NULL ,
 then up to
 .Fa name_max
 characters are written there,
 terminated with a zero unless the length is greater than
 .Fa name_max .
 If comment is not
-.Dv Z_NULL ,
+.Dv NULL ,
 then up to
 .Fa comm_max
 characters are written there,
 terminated with a zero unless the length is greater than
 .Fa comm_max .
 When any of extra, name, or comment are not
-.Dv Z_NULL
+.Dv NULL
 and the respective field is not present in the header,
 then that field is set to
-.Dv Z_NULL
+.Dv NULL
 to signal its absence.
 This allows the use of
 .Fn deflateSetHeader
@@ -1623,7 +2051,7 @@ or
 if the source stream state was inconsistent.
 .It Xo
 .Fa int
-.Fn inflateBackInit "z_stream *strm" "int windowBits" "unsigned char FAR *window"
+.Fn inflateBackInit "z_stream *strm" "int windowBits" "unsigned char FAR *window" ;
 .Xc
 .Pp
 Initialize the internal stream state for decompression using
@@ -1641,7 +2069,7 @@ If
 and
 .Fa zfree
 are
-.Dv Z_NULL ,
+.Dv NULL ,
 then the default library-derived memory allocation routines are used.
 .Fa windowBits
 is the base two logarithm of the window size, in the range 8..15.
@@ -1670,17 +2098,20 @@ if the internal state could not be allocated, or
 if the version of the library does not match the version of the header file.
 .It Xo
 .Fa int
-.Fn inflateBack "z_stream *strm" "in_func in" "void FAR *in_desc" "out_func out" "void FAR *out_desc"
+.Fn inflateBack "z_stream *strm" "in_func in" "void FAR *in_desc" "out_func out" "void FAR *out_desc" ;
 .Xc
 .Pp
 .Fn inflateBack
 does a raw inflate with a single call using a call-back
 interface for input and output.
-This is more efficient than
+This is potentially more efficient than
 .Fn inflate
-for file I/O applications in that it avoids copying between the output and the
+for file I/O applications, in that it avoids copying between the output and the
 sliding window by simply making the window itself the output buffer.
-This function trusts the application to not change the output buffer passed by
+.Fn inflate
+can be faster on modern CPUs when used with large buffers.
+.Fn inflateBack
+trusts the application to not change the output buffer passed by
 the output function, at least until
 .Fn inflateBack
 returns.
@@ -1699,10 +2130,9 @@ This routine would normally be used in a utility that reads zip or gzip
 files and writes out uncompressed files.
 The utility would decode the header and process the trailer on its own,
 hence this routine expects only the raw deflate stream to decompress.
-This is different from the normal behavior of
+This is different from the default behavior of
 .Fn inflate ,
-which expects either a zlib or gzip header and
-trailer around the deflate stream.
+which expects either a zlib header and trailer around the deflate stream.
 .Pp
 .Fn inflateBack
 uses two subroutines supplied by the caller that are then called by
@@ -1758,12 +2188,12 @@ will be called.
 Therefore strm->next_in must be initialized before calling
 .Fn inflateBack .
 If strm->next_in is
-.Dv Z_NULL ,
+.Dv NULL ,
 then
 .Fn in
 will be called immediately for input.
 If strm->next_in is not
-.Dv Z_NULL ,
+.Dv NULL ,
 then strm->avail_in must also be initialized,
 and then if strm->avail_in is not zero,
 input will initially be taken from
@@ -1778,8 +2208,8 @@ parameters of
 are passed as the first parameter of
 .Fn in
 and
-.Fn out
-respectively when they are called.
+.Fn out ,
+respectively, when they are called.
 These descriptors can be optionally used to pass any information that the
 caller-supplied
 .Fn in
@@ -1814,12 +2244,12 @@ In the case of
 .Dv Z_BUF_ERROR ,
 an input or output error can be distinguished using strm->next_in which
 will be
-.Dv Z_NULL
+.Dv NULL
 only if
 .Fn in
 returned an error.
 If strm->next is not
-.Dv Z_NULL ,
+.Dv NULL ,
 then the
 .Dv Z_BUF_ERROR
 was due to
@@ -1839,7 +2269,7 @@ cannot return
 .Dv Z_OK .
 .It Xo
 .Fa int
-.Fn inflateBackEnd "z_stream *strm"
+.Fn inflateBackEnd "z_stream *strm" ;
 .Xc
 .Pp
 All memory allocated by
@@ -1854,7 +2284,7 @@ on success, or
 if the stream state was inconsistent.
 .It Xo
 .Fa uLong
-.Fn zlibCompileFlags "void"
+.Fn zlibCompileFlags "void" ;
 .Xc
 .Pp
 This function returns flags indicating compile-time options.
@@ -1888,7 +2318,7 @@ Compiler, assembler, and debug options:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
 .It 8
-DEBUG
+ZLIB_DEBUG
 .It 9
 ASMV or ASMINF \(em use ASM code
 .It 10
@@ -1966,7 +2396,7 @@ basic stream-oriented functions.
 To simplify the interface,
 some default options are assumed (compression level and memory usage,
 standard memory allocation functions).
-The source code of these utility functions can easily be modified
+The source code of these utility functions can be modified
 if you need special options.
 .Bl -tag -width Ds
 .It Xo
@@ -1986,9 +2416,12 @@ which must be at least the value returned by
 .Fn compressBound sourcelen .
 Upon exit,
 .Fa destLen
-is the actual size of the compressed buffer.
-This function can be used to compress a whole file at once if the
-input file is mmap'ed.
+is the actual size of the compressed data.
+.Fn compress
+is equivalent to
+.Fn compress2
+with a level parameter of
+.Dv Z_DEFAULT_COMPRESSION .
 .Pp
 .Fn compress
 returns
@@ -2033,7 +2466,7 @@ if there was not enough room in the output buffer, or
 if the level parameter is invalid.
 .It Xo
 .Fa uLong
-.Fn compressBound "uLong sourceLen"
+.Fn compressBound "uLong sourceLen" ;
 .Xc
 .Pp
 .Fn compressBound
@@ -2068,7 +2501,7 @@ by the compressor and transmitted to the decompressor
 by some mechanism outside the scope of this compression library.)
 Upon exit,
 .Fa destLen
-is the actual size of the compressed buffer.
+is the actual size of the uncompressed data.
 This function can be used to decompress a whole file at once if the
 input file is mmap'ed.
 .Pp
@@ -2082,10 +2515,32 @@ if there was not enough memory,
 if there was not enough room in the output buffer, or
 .Dv Z_DATA_ERROR
 if the input data was corrupted or incomplete.
+In the case where there is not enough room,
+.Fn uncompress
+will fill the output buffer with the uncompressed data up to that point.
+.It Xo
+.Fa int
+.Fn uncompress2 "Bytef *dest" "uLongf *destLen" "const Bytef *source" "uLong *sourceLen" ;
+.Xc
+.Pp
+Same as
+.Fn uncompress ,
+except that
+.Fa sourceLen
+is a pointer, where the length of the source is
+.Fa *sourceLen .
+On return,
+.Fa *sourceLen
+is the number of source bytes consumed.
 .It Xo
 .Fa gzFile
 .Fn gzopen "const char *path" "const char *mode" ;
 .Xc
+.Pp
+This library supports reading and writing files in gzip (.gz) format with
+an interface similar to that of stdio, using the functions that start with "gz".
+The gzip format is different from the zlib format.
+gzip is a gzip wrapper, documented in RFC 1952, wrapped around a deflate stream.
 .Pp
 The
 .Fn gzopen
@@ -2111,26 +2566,76 @@ for Huffman only compression, as in
 or
 .Sq R
 for run-length encoding as in
-.Qq wb1R .
+.Qq wb1R ,
+or
+.Sq F
+for fixed code compression as in
+.Qq wb9F .
 (See the description of
 .Fn deflateInit2
 for more information about the strategy parameter.)
+.Sq T
+will request transparent writing or appending with no compression and not using
+the gzip format.
+.Pp
+.Sq a
+can be used instead of
+.Sq w
+to request that the gzip stream that will be written be appended to the file.
+.Sq +
+will result in an error,
+since reading and writing to the same gzip file is not supported.
+The addition of
+.Sq x
+when writing will create the file exclusively,
+which fails if the file already exists.
+On systems that support it, the addition of
+.Sq e
+when reading or writing will set the flag to close the file on an
+.Xr execve 2
+call.
+.Pp
+These functions, as well as gzip,
+will read and decode a sequence of gzip streams in a file.
+The append function of
+.Fn gzopen
+can be used to create such a file.
+(Also see
+.Fn gzflush
+for another way to do this.)
+When appending,
+.Fn gzopen
+does not test whether the file begins with a gzip stream,
+nor does it look for the end of the gzip streams to begin appending.
+.Fn gzopen
+will simply append a gzip stream to the existing file.
 .Pp
 .Fn gzopen
 can be used to read a file which is not in gzip format;
 in this case
 .Fn gzread
 will directly read from the file without decompression.
+When reading, this will be detected automatically
+by looking for the magic two-byte gzip header.
 .Pp
 .Fn gzopen
 returns
 .Dv NULL
-if the file could not be opened or if there was
-insufficient memory to allocate the (de)compression state;
-errno can be checked to distinguish the two cases (if errno is zero, the
-.Nm zlib
-error is
-.Dv Z_MEM_ERROR ) .
+if the file could not be opened,
+if there was insufficient memory to allocate the gzFile state,
+or if an invalid mode was specified
+(an
+.Sq r ,
+.Sq w ,
+or
+.Sq a
+was not provided, or
+.Sq +
+was provided).
+.Fa errno
+can be checked to determine if the reason
+.Fn gzopen
+failed was that the file could not be opened.
 .It Xo
 .Fa gzFile
 .Fn gzdopen "int fd" "const char *mode" ;
@@ -2158,12 +2663,54 @@ The next call to
 .Fn gzclose
 on the returned gzFile will also close the file descriptor fd,
 just like fclose(fdopen(fd), mode) closes the file descriptor fd.
-If you want to keep fd open, use gzdopen(dup(fd), mode).
+If you want to keep fd open, use
+.Dq fd = dup(fd_keep); gz = gzdopen(fd, mode); .
+The duplicated descriptor should be saved to avoid a leak, since
+.Fn gzdopen
+does not close fd if it fails.
+If you are using
+.Fn fileno
+to get the file descriptor from a FILE *,
+then you will have to use
+.Xr dup 2
+to avoid double-closing the file descriptor.
+Both
+.Fn gzclose
+and
+.Fn fclose
+will close the associated file descriptor,
+so they need to have different file descriptors.
 .Pp
 .Fn gzdopen
-returns
-.Dv NULL
-if there was insufficient memory to allocate the (de)compression state.
+returns NULL if there was insufficient memory to allocate the gzFile state,
+if an invalid mode was specified
+(an 'r', 'w', or 'a' was not provided, or '+' was provided), or if fd is -1.
+The file descriptor is not used until the next gz* read, write, seek,
+or close operation, so
+.Fn gzdopen
+will not detect if fd is invalid (unless fd is -1).
+.It Xo
+.Fa int
+.Fn gzbuffer "gzFile file" "unsigned size" ;
+.Xc
+.Pp
+Set the internal buffer size used by this library's functions.
+The default buffer size is 8192 bytes.
+This function must be called after
+.Fn gzopen
+or
+.Fn gzdopen ,
+and before any other calls that read or write the file.
+The buffer memory allocation is always deferred to the first read or write.
+Three times that size in buffer space is allocated.
+A larger buffer size of, for example, 64K or 128K bytes,
+will noticeably increase the speed of decompression (reading).
+.Pp
+The new buffer size also affects the maximum length for
+.Fn gzprintf .
+.Pp
+.Fn gzbuffer
+returns 0 on success, or -1 on failure, such as being called too late.
 .It Xo
 .Fa int
 .Fn gzsetparams "gzFile file" "int level" "int strategy" ;
@@ -2175,28 +2722,137 @@ function dynamically updates the compression level or strategy.
 See the description of
 .Fn deflateInit2
 for the meaning of these parameters.
+Previously provided data is flushed before the parameter change.
 .Pp
 .Fn gzsetparams
 returns
 .Dv Z_OK
-if successful, or
+if successful,
 .Dv Z_STREAM_ERROR
-if the file was not opened for writing.
+if the file was not opened for writing,
+.Dv Z_ERRNO
+if there is an error writing the flushed data, or
+.Dv Z_MEM_ERROR
+if there is a memory allocation error.
 .It Xo
 .Fa int
 .Fn gzread "gzFile file" "voidp buf" "unsigned len" ;
 .Xc
 .Pp
-The
+Reads the given number of uncompressed bytes from the compressed file.
+If the input file is not in gzip format,
 .Fn gzread
-function reads the given number of uncompressed bytes from the compressed file.
-If the input file was not in gzip format,
+copies the given number ofbytes into the buffer directly from the file.
+.Pp
+After reaching the end of a gzip stream in the input,
 .Fn gzread
-copies the given number of bytes into the buffer.
+will continue to read, looking for another gzip stream.
+Any number of gzip streams may be concatenated in the input file,
+and will all be decompressed by
+.Fn gzread .
+If something other than a gzip stream is encountered after a gzip stream,
+that remaining trailing garbage is ignored (and no error is returned).
 .Pp
 .Fn gzread
-returns the number of uncompressed bytes actually read
-(0 for end of file, \-1 for error).
+can be used to read a gzip file that is being concurrently written.
+Upon reaching the end of the input,
+.Fn gzread
+will return with the available data.
+If the error code returned by
+.Fn gzerror
+is
+.Dv Z_OK
+or
+.Dv Z_BUF_ERROR ,
+then
+.Fn gzclearerr
+can be used to clear the end of file indicator in order to permit
+.Fn gzread
+to be tried again.
+.Dv Z_OK
+indicates that a gzip stream was completed on the last
+.Fn gzread .
+.Dv Z_BUF_ERROR
+indicates that the input file ended in the middle of a gzip stream.
+Note that
+.Fn gzread
+does not return -1 in the event of an incomplete gzip stream.
+This error is deferred until
+.Fn gzclose ,
+which will return
+.Dv Z_BUF_ERROR
+if the last
+.Fn gzread
+ended in the middle of a gzip stream.
+Alternatively,
+.Fn gzerror
+can be used before
+.Fn gzclose
+to detect this case.
+.Pp
+.Fn gzread
+returns the number of uncompressed bytes actually read,
+less than
+.Fa len
+for end of file, or -1 for error.
+If
+.Fa len
+is too large to fit in an int,
+then nothing is read, -1 is returned, and the error state is set to
+.Dv Z_STREAM_ERROR .
+.It Xo
+.Fa z_size_t
+.Fn gzfread "voidp buf" "z_size_t size" "z_size_t nitems" "gzFile file" ;
+.Xc
+.Pp
+Read up to
+.Fa nitems
+items of size
+.Fa size
+from
+.Fa file
+to
+.Fa buf ,
+otherwise operating as
+.Fn gzread
+does.
+This duplicates the interface of stdio's
+.Xr fread 3 ,
+with size_t request and return types.
+If the library defines size_t, then z_size_t is identical to size_t.
+If not, then z_size_t is an unsigned integer type that can contain a pointer.
+.Pp
+.Fn gzfread
+returns the number of full items read of size
+.Fa size ,
+or zero if the end of the file was reached and a full item could not be read,
+or if there was an error.
+.Fn gzerror
+must be consulted if zero is returned in order to determine
+if there was an error.
+If the multiplication of
+.Fa size
+and
+.Fa nitems
+overflows, i.e. the product does not fit in a z_size_t, then nothing is read,
+zero is returned, and the error state is set to
+.Dv Z_STREAM_ERROR .
+.Pp
+In the event that the end of file is reached and only a partial item is
+available at the end, i.e. the remaining uncompressed data length is not a
+multiple of size, then the final partial item is nevetheless read into
+.Fa buf
+and the end-of-file flag is set.
+The length of the partial item read is not provided,
+but could be inferred from the result of
+.Fn gztell .
+This behavior is the same as the behavior of
+.Xr fread 3
+implementations in common libraries,
+but it prevents the direct use of
+.Fn gzfread
+to read a concurrently written file, resetting and retrying on end-of-file,
+when size is not 1.
 .It Xo
 .Fa int
 .Fn gzwrite "gzFile file" "voidpc buf" "unsigned len" ;
@@ -2206,8 +2862,39 @@ The
 .Fn gzwrite
 function writes the given number of uncompressed bytes into the compressed file.
 .Fn gzwrite
-returns the number of uncompressed bytes actually written
-.Pq 0 in case of error .
+returns the number of uncompressed bytes written or 0 in case of error.
+.It Xo
+.Fa z_size_t
+.Fn gzfwrite "voidpc buf" "z_size_t size" "z_size_t nitems" "gzFile file" ;
+.Xc
+.Pp
+.Fn gzfwrite
+writes
+.Fa nitems
+items of size
+.Fa size
+from
+.Fa buf
+to
+.Fa file ,
+duplicating the interface of stdio's
+.Xr fwrite 3 ,
+with size_t request and return types.
+If the library defines size_t, then z_size_t is identical to size_t.
+If not, then z_size_t is an unsigned integer type that can contain a pointer.
+.Pp
+.Fn gzfwrite
+returns the number of full items written of size
+.Fa size ,
+or zero if there was an error.
+If the multiplication of
+.Fa size
+and
+.Fa nitems
+overflows,
+i.e. the product does not fit in a z_size_t, then nothing is written,
+zero is returned, and the error state is set to
+.Dv Z_STREAM_ERROR .
 .It Xo
 .Fa int
 .Fn gzprintf "gzFile file" "const char *format" "..." ;
@@ -2219,10 +2906,12 @@ function converts, formats, and writes the args to the compressed file
 under control of the format string, as in
 .Xr fprintf 3 .
 .Fn gzprintf
-returns the number of uncompressed bytes actually written
-.Pq 0 in case of error .
-The number of uncompressed bytes written is limited to 4095.
-The caller should make sure that this limit is not exceeded.
+returns the number of uncompressed bytes actually written,
+or a negative zlib error code in case of error.
+The number of uncompressed bytes written is limited to 8191,
+or one less than the buffer size given to
+.Fn gzbuffer .
+The caller should ensure that this limit is not exceeded.
 If it is exceeded, then
 .Fn gzprintf
 will return an error
@@ -2240,6 +2929,8 @@ because the secure
 or
 .Fn vsnprintf
 functions were not available.
+This can be determined using
+.Fn zlibCompileFlags .
 .It Xo
 .Fa int
 .Fn gzputs "gzFile file" "const char *s" ;
@@ -2247,11 +2938,11 @@ functions were not available.
 .Pp
 The
 .Fn gzputs
-function writes the given null-terminated string to the compressed file,
-excluding the terminating null character.
+function writes the given NUL-terminated string to the compressed file,
+excluding the terminating NUL character.
 .Pp
 .Fn gzputs
-returns the number of characters written, or \-1 in case of error.
+returns the number of characters written, or -1 in case of error.
 .It Xo
 .Fa char *
 .Fn gzgets "gzFile file" "char *buf" "int len" ;
@@ -2259,17 +2950,30 @@ returns the number of characters written, or \-1 in case of error.
 .Pp
 The
 .Fn gzgets
-function reads bytes from the compressed file until len\-1 characters are read,
+function reads bytes from the compressed file until len-1 characters are read,
 or a newline character is read and transferred to
 .Fa buf ,
 or an end-of-file condition is encountered.
-The string is then terminated with a null character.
+If any characters are read or if len == 1,
+the string is terminated with a NUL character.
+If no characters are read due to an end-of-file or len < 1,
+then the buffer is left untouched.
+.Pp
+.Fn gzgets
+returns
+.Fa buf ,
+which is a NUL-terminated string, or it returns
+.Dv NULL
+for end-of-file or in case of error.
+If there was an error, the contents at
+.Fa buf
+are indeterminate.
 .Pp
 .Fn gzgets
 returns
 .Fa buf ,
 or
-.Dv Z_NULL
+.Dv NULL
 in case of error.
 .It Xo
 .Fa int
@@ -2282,7 +2986,7 @@ function writes
 .Fa c ,
 converted to an unsigned char, into the compressed file.
 .Fn gzputc
-returns the value that was written, or \-1 in case of error.
+returns the value that was written, or -1 in case of error.
 .It Xo
 .Fa int
 .Fn gzgetc "gzFile file" ;
@@ -2292,20 +2996,37 @@ The
 .Fn gzgetc
 function reads one byte from the compressed file.
 .Fn gzgetc
-returns this byte or \-1 in case of end of file or error.
+returns this byte or -1 in case of end of file or error.
+This is implemented as a macro for speed.
+As such, it does not do all of the checking the other functions do.
+That is, it does not check to see if file is
+.Dv NULL ,
+nor whether the structure
+.Fa file
+points to has been clobbered or not.
 .It Xo
 .Fa int
-.Fn gzungetc "int c" "gzFile file"
+.Fn gzungetc "int c" "gzFile file" ;
 .Xc
 .Pp
-Push one character back onto the stream to be read again later.
-Only one character of push-back is allowed.
+Push one character back onto the stream to be read as the first character
+on the next read.
+At least one character of push-back is allowed.
 .Fn gzungetc
-returns the character pushed, or \-1 on failure.
+returns the character pushed, or -1 on failure.
 .Fn gzungetc
-will fail if a character has been pushed but not read yet, or if
-.Fa c
-is \-1.
+will fail if c is -1,
+and may fail if a character has been pushed but not read yet.
+If
+.Fn gzungetc
+is used immediately after
+.Fn gzopen
+or
+.Fn gzdopen ,
+at least the output buffer size of pushed characters is allowed.
+(See
+.Fn gzbuffer
+above.)
 The pushed character will be discarded if the stream is repositioned with
 .Fn gzseek
 or
@@ -2329,15 +3050,20 @@ error number (see function
 .Fn gzerror
 below).
 .Fn gzflush
-returns
-.Dv Z_OK
-if the flush parameter is
-.Dv Z_FINISH
-and all output could be flushed.
+is only permitted when writing.
+.Pp
+If the flush parameter is
+.Dv Z_FINISH ,
+the remaining data is written and the gzip stream is completed in the output.
+If
+.Fn gzwrite
+is called again, a new gzip stream will be started in the output.
+.Fn gzread
+is able to read such concatenated gzip streams.
 .Pp
 .Fn gzflush
-should be called only when strictly necessary because it can
-degrade compression.
+should be called only when strictly necessary because it will
+degrade compression if called too often.
 .It Xo
 .Fa z_off_t
 .Fn gzseek "gzFile file" "z_off_t offset" "int whence" ;
@@ -2363,7 +3089,7 @@ then compresses a sequence of zeroes up to the new starting position.
 .Pp
 .Fn gzseek
 returns the resulting offset location as measured in bytes from
-the beginning of the uncompressed stream, or \-1 in case of error,
+the beginning of the uncompressed stream, or -1 in case of error,
 in particular if the file is opened for writing and the new starting position
 would be before the current position.
 .It Xo
@@ -2390,43 +3116,151 @@ function returns the starting position for the next
 or
 .Fn gzwrite
 on the given compressed file.
-This position represents a number of bytes in the uncompressed data stream.
+This position represents a number of bytes in the uncompressed data stream,
+and is zero when starting,
+even if appending or reading a gzip stream from the middle of a file using
+.Fn gzdopen .
 .Pp
 gztell(file) is equivalent to gzseek(file, 0L, SEEK_CUR).
+.It Xo
+.Fa int
+.Fn gzeoffset "gzFile file" ;
+.Xc
+.Pp
+Returns the current offset in the file being read or written.
+This offset includes the count of bytes that precede the gzip stream,
+for example when appending or when using
+.Fn gzdopen
+for reading.
+When reading, the offset does not include as yet unused buffered input.
+This information can be used for a progress indicator.
+On error,
+.Fn gzoffset
+returns -1.
 .It Xo
 .Fa int
 .Fn gzeof "gzFile file" ;
 .Xc
 .Pp
-The
+Returns true (1) if the end-of-file indicator has been set while reading,
+false (0) otherwise.
+Note that the end-of-file indicator is set only if the
+read tried to go past the end of the input, but came up short.
+Therefore just like
+.Xr feof 3 ,
 .Fn gzeof
-function returns 1 when
-.Dv EOF
-has previously been detected reading the given input stream, otherwise zero.
+may return false even if there is no more data to read,
+in the event that the last read request was for the exact number of
+bytes remaining in the input file.
+This will happen if the input file size is an exact multiple of the buffer size.
+.Pp
+If
+.Fn gzeof
+returns true, then the read functions will return no more data,
+unless the end-of-file indicator is reset by
+.Fn gzclearerr
+and the input file has grown since the previous end of file was detected.
 .It Xo
 .Fa int
 .Fn gzdirect "gzFile file" ;
 .Xc
 .Pp
-The
+Returns true (1) if
+.Fa file
+is being copied directly while reading,
+or false (0) if
+.Fa file
+is a gzip stream being decompressed.
+.Pp
+If the input file is empty,
 .Fn gzdirect
-function returns 1 if the file is being read directly
-without compression;
-otherwise it returns 0.
+will return true, since the input does not contain a gzip stream.
+.Pp
+If
+.Fn gzdirect
+is used immediately after
+.Fn gzopen
+or
+.Fn gzdopen ,
+it will cause buffers to be allocated to allow reading the file
+to determine if it is a gzip file.
+Therefore if
+.Fn gzbuffer
+is used, it should be called before
+.Fn gzdirect .
+.Pp
+When writing,
+.Fn gzdirect
+returns true (1) if transparent writing was requested
+("wT" for the
+.Fn gzopen
+mode),
+or false (0) otherwise.
+(Note:
+.Fn gzdirect
+is not needed when writing.
+Transparent writing must be explicitly requested,
+so the application already knows the answer.
+When linking statically, using
+.Fn gzdirect
+will include all of the zlib code for gzip file reading and decompression,
+which may not be desired.)
 .It Xo
 .Fa int
 .Fn gzclose "gzFile file" ;
 .Xc
 .Pp
-The
-.Fn gzclose
-function flushes all pending output if necessary, closes the compressed file
-and deallocates all the (de)compression state.
-The return value is the
-.Nm zlib
-error number (see function
+Flushes all pending output if necessary, closes the compressed file and
+deallocates the (de)compression state.
+Note that once file is closed, you cannot call
 .Fn gzerror
-below).
+with
+.Fa file ,
+since its structures have been deallocated.
+.Fn gzclose
+must not be called more than once on the same file,
+just as
+.Xr free 3
+must not be called more than once on the same allocation.
+.Pp
+.Fn gzclose
+will return
+.Dv Z_STREAM_ERROR
+if
+.Fa file
+is not valid,
+.Dv Z_ERRNO
+on a file operation error,
+.Dv Z_MEM_ERROR
+if out of memory,
+.Dv Z_BUF_ERROR
+if the last read ended in the middle of a gzip stream, or
+.Dv Z_OK
+on success.
+.It Xo
+.Fa int
+.Fn gzclose_r "gzFile file" ;
+.Xc
+.It Xo
+.Fa int
+.Fn gzclose_w "gzFile file" ;
+.Xc
+.Pp
+Same as
+.Fn gzclose ,
+but
+.Fn gzclose_r
+is only for use when reading, and
+.Fn gzclose_w
+is only for use when writing or appending.
+The advantage to using these instead of
+.Fn gzclose
+is that they avoid linking in zlib compression or decompression code
+that is not used when only reading or only writing, respectively.
+If
+.Fn gzclose
+is used, then both compression and decompression code will be included
+in the application when linking to a static zlib library.
 .It Xo
 .Fa const char *
 .Fn gzerror "gzFile file" "int *errnum" ;
@@ -2446,9 +3280,21 @@ If an error occurred in the file system and not in the compression library,
 is set to
 .Dv Z_ERRNO
 and the application may consult errno to get the exact error code.
+.Pp
+The application must not modify the returned string.
+Future calls to this function may invalidate the previously returned string.
+If
+.Ar file
+is closed, then the string previously returned by
+.Fn gzerror
+will no longer be available.
+.Pp
+.Fn gzerror
+should be used to distinguish errors from end-of-file for those
+functions above that do not distinguish those cases in their return values.
 .It Xo
 .Fa void
-.Fn gzclearerr "gzFile file"
+.Fn gzclearerr "gzFile file" ;
 .Xc
 Clears the error and end-of-file flags for
 .Fa file .
@@ -2477,11 +3323,11 @@ is
 .Dv NULL ,
 this function returns the required initial value for the checksum.
 .Pp
-An Adler-32 checksum is almost as reliable as a CRC32 but can be computed
+An Adler-32 checksum is almost as reliable as a CRC-32 but can be computed
 much faster.
 Usage example:
 .Bd -unfilled -offset indent
-uLong adler = adler32(0L, Z_NULL, 0);
+uLong adler = adler32(0L, NULL, 0);
 
 while (read_buffer(buffer, length) != EOF) {
 adler = adler32(adler, buffer, length);
@@ -2490,7 +3336,15 @@ if (adler != original_adler) error();
 .Ed
 .It Xo
 .Fa uLong
-.Fn adler32_combine "uLong adler1" "uLong adler2" "z_off_t len2"
+.Fn adler32_z "uLong adler" "const Bytef *buf" "z_size_t len" ;
+.Xc
+.Pp
+The same as
+.Fn adler32 ,
+but with a size_t length.
+.It Xo
+.Fa uLong
+.Fn adler32_combine "uLong adler1" "uLong adler2" "z_off_t len2" ;
 .Xc
 .Pp
 The
@@ -2501,6 +3355,10 @@ Adler-32 checksums are calculated for each, adler1 and adler2.
 .Fn adler32_combine
 returns the Adler-32 checksum of seq1 and seq2 concatenated,
 requiring only adler1, adler2, and len2.
+Note that the z_off_t type (like off_t) is a signed integer.
+If
+.Ar len2
+is negative, the result has no meaning or utility.
 .It Xo
 .Fa uLong
 .Fn crc32 "uLong crc" "const Bytef *buf" "uInt len" ;
@@ -2520,7 +3378,7 @@ Pre- and post-conditioning
 is performed within this function so it shouldn't be done by the application.
 Usage example:
 .Bd -unfilled -offset indent
-uLong crc = crc32(0L, Z_NULL, 0);
+uLong crc = crc32(0L, NULL, 0);
 
 while (read_buffer(buffer, length) != EOF) {
 crc = crc32(crc, buffer, length);
@@ -2529,7 +3387,15 @@ if (crc != original_crc) error();
 .Ed
 .It Xo
 .Fa uLong
-.Fn crc32_combine "uLong crc1" "uLong crc2" "z_off_t len2"
+.Fn crc32_z "uLong adler "const Bytef *buf" "z_size_t len" ;
+.Xc
+.Pp
+The same as
+.Fn crc32 ,
+but with a size_t length.
+.It Xo
+.Fa uLong
+.Fn crc32_combine "uLong crc1" "uLong crc2" "z_off_t len2" ;
 .Xc
 .Pp
 The
@@ -2549,11 +3415,11 @@ struct internal_state;
 typedef struct z_stream_s {
     Bytef    *next_in;  /* next input byte */
     uInt     avail_in;  /* number of bytes available at next_in */
-    off_t    total_in;  /* total nb of input bytes read so far */
+    off_t    total_in;  /* total number of input bytes read so far */
 
-    Bytef    *next_out; /* next output byte should be put there */
+    Bytef    *next_out; /* next output byte will go here */
     uInt     avail_out; /* remaining free space at next_out */
-    off_t    total_out; /* total nb of bytes output so far */
+    off_t    total_out; /* total number of bytes output so far */
 
     char     *msg;      /* last error message, NULL if no error */
     struct internal_state FAR *state; /* not visible by applications */
@@ -2562,8 +3428,9 @@ typedef struct z_stream_s {
     free_func  zfree;   /* used to free the internal state */
     voidpf     opaque;  /* private data object passed to zalloc and zfree*/
 
-    int     data_type;  /* best guess about the data type: binary or text*/
-    uLong   adler;      /* adler32 value of the uncompressed data */
+    int     data_type;  /* best guess about the data type: binary or text
+                           for deflate, or the decoding state for inflate */
+    uLong   adler;      /* Adler-32 or CRC-32 value of the uncompressed data */
     uLong   reserved;   /* reserved for future use */
 } z_stream;
 
@@ -2579,12 +3446,12 @@ typedef struct gz_header_s {
     uLong   time;       /* modification time */
     int     xflags;     /*extra flags (not used when writing a gzip file)*/
     int     os;         /* operating system */
-    Bytef   *extra;     /* pointer to extra field or Z_NULL if none */
-    uInt    extra_len;  /* extra field length (valid if extra != Z_NULL) */
+    Bytef   *extra;     /* pointer to extra field or NULL if none */
+    uInt    extra_len;  /* extra field length (valid if extra != NULL) */
     uInt    extra_max;  /* space at extra (only when reading header) */
-    Bytef   *name;      /* pointer to zero-terminated file name or Z_NULL*/
+    Bytef   *name;      /* pointer to zero-terminated file name or NULL*/
     uInt    name_max;   /* space at name (only when reading header) */
-    Bytef   *comment;   /* pointer to zero-terminated comment or Z_NULL */
+    Bytef   *comment;   /* pointer to zero-terminated comment or NULL */
     uInt    comm_max;   /* space at comment (only when reading header) */
     int     hcrc;       /* true if there was or will be a header crc */
     int     done;       /* true when done reading gzip header (not used
@@ -2631,7 +3498,7 @@ value.
 .Pp
 .Fa zalloc
 must return
-.Dv Z_NULL
+.Dv NULL
 if there is not enough memory for the object.
 If
 .Nm zlib
@@ -2640,6 +3507,20 @@ is used in a multi-threaded application,
 and
 .Fa zfree
 must be thread safe.
+In that case,
+.Nm zlib
+is thread-safe.
+When
+.Fa zalloc
+and
+.Fa zfree
+are
+.Dv NULL
+on entry to the initialization function,
+they are set to internal routines that use the standard library functions
+.Xr malloc 3
+and
+.Xr free 3 .
 .Pp
 On 16-bit systems, the functions
 .Fa zalloc
@@ -2674,11 +3555,12 @@ in a single step).
 .Sh CONSTANTS
 .Bd -unfilled
 #define Z_NO_FLUSH      0
-#define Z_PARTIAL_FLUSH 1 /* will be removed, use Z_SYNC_FLUSH instead */
+#define Z_PARTIAL_FLUSH 1
 #define Z_SYNC_FLUSH    2
 #define Z_FULL_FLUSH    3
 #define Z_FINISH        4
-#define Z_BLOCK		5
+#define Z_BLOCK         5
+#define Z_TREES         6
 /* Allowed flush values; see deflate() and inflate() below for details */
 
 #define Z_OK            0
@@ -2712,7 +3594,7 @@ in a single step).
 #define Z_TEXT     1
 #define Z_ASCII    Z_TEXT /* for compatibility with 1.2.2 and earlier */
 #define Z_UNKNOWN  2
-/* Possible values of the data_type field (though see inflate()) */
+/* Possible values of the data_type field for deflate() */
 
 #define Z_DEFLATED   8
 /* The deflate compression method
@@ -2749,7 +3631,7 @@ version and the compiler's view of
 .Fa "int strategy"
 .Fa "const char *version"
 .Fa "int stream_size"
-.Fc
+.Fc ;
 .Xc
 .It Xo
 .Fa int
@@ -2757,7 +3639,7 @@ version and the compiler's view of
 .Xc
 .It Xo
 .Fa int
-.Fn inflateBackInit_ "z_stream *strm" "int windowBits" "unsigned char FAR *window" "const char *version" "int stream_size"
+.Fn inflateBackInit_ "z_stream *strm" "int windowBits" "unsigned char FAR *window" "const char *version" "int stream_size" ;
 .Xc
 .It Xo
 .Fa const char *
