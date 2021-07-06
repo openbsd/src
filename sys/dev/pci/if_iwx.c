@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.62 2021/06/30 09:47:57 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.63 2021/07/06 15:53:33 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -6677,11 +6677,16 @@ iwx_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
     struct ieee80211_key *k)
 {
 	struct iwx_softc *sc = ic->ic_softc;
+	struct iwx_node *in = (void *)ni;
 	struct iwx_setkey_task_arg *a;
+	int err;
 
 	if (k->k_cipher != IEEE80211_CIPHER_CCMP) {
 		/* Fallback to software crypto for other ciphers. */
-		return (ieee80211_set_key(ic, ni, k));
+		err = ieee80211_set_key(ic, ni, k);
+		if (!err && (k->k_flags & IEEE80211_KEY_GROUP))
+			in->in_flags |= IWX_NODE_FLAG_HAVE_GROUP_KEY;
+		return err;
 	}
 
 	if (sc->setkey_nkeys >= nitems(sc->setkey_arg))
