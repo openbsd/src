@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2020/12/17 00:39:42 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.6 2021/07/06 11:26:47 bluhm Exp $
 
 # Copyright (c) 2018-2020 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -17,7 +17,7 @@
 # Set up two gif interfaces in different routing domains.
 # Try to ping existing addresses in these domains with various tunnels.
 
-# This test uses routing doamin and interface number 11 and 12.
+# This test uses routing domain and interface number 11 and 12.
 # Adjust it here, if you want to use something else.
 N1 =		11
 N2 =		12

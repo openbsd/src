@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2020/12/17 13:07:18 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.4 2021/07/06 11:26:47 bluhm Exp $
 
 # Copyright (c) 2020 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -21,7 +21,7 @@
 # Check with tcpdump that encrypted traffic appears on loopback.
 # Configure wg interface with bad key and check that ping does not work.
 
-# This test uses routing doamin and wg interface number 11 12 13 14.
+# This test uses routing domain and wg interface number 11 12 13 14.
 # Adjust it here, if you want to use something else.
 TUNNEL4_SRC =	11
 TUNNEL4_DST =	12
