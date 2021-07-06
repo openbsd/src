@@ -1,10 +1,10 @@
-dnl	$OpenBSD: prep,v 1.3 2021/06/19 03:08:16 jsg Exp $
+dnl	$OpenBSD: prep,v 1.4 2021/07/06 18:01:34 jasper Exp $
 Please be aware that OpenBSD support for this platform is far from
 complete, however progress is being made.
 
 HiFive Unmatched
 
-Copy install{:==:}OSrev.img to a USB stick, and boot with both it and the
+Copy install{:--:}OSrev.img to a USB stick, and boot with both it and the
 vendor provided uSD card (unmodified) inserted. This should enable firmware
 and U-Boot to be loaded from uSD and OpenBSD bootloader and kernel to be
 loaded from USB stick. At this time onboard Ethernet is not well supported,
@@ -21,11 +21,11 @@ Booting from an SD card:
   SD card in to. Any machine type will do, as long as it supports SD card
   storage devices.  Under OpenBSD, it will appear as a ``sd'' device, for
   example sd1.
-  
+
   Use the dd(1) utility to copy the miniroot to the SD card.
   The command would likely be, under OpenBSD:
   	dd if=miniroot{:--:}OSrev.img of=/dev/rsd1c bs=1m
-  
+
   When you have connected the serial to your computer, a command such
   as "cu -l cuaU0 -s 115200" (assuming cuaU0 is your serial port device)
   should connect you to the board's console.
