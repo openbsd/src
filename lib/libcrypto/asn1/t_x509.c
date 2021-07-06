@@ -1,4 +1,4 @@
-/* $OpenBSD: t_x509.c,v 1.32 2020/04/10 07:05:24 tb Exp $ */
+/* $OpenBSD: t_x509.c,v 1.33 2021/07/06 11:26:25 schwarze Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -180,7 +180,7 @@ X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags, unsigned long cflag)
 		if (BIO_printf(bp, "        Issuer:%c", mlch) <= 0)
 			goto err;
 		if (X509_NAME_print_ex(bp, X509_get_issuer_name(x),
-		    nmindent, nmflags) < 0)
+		    nmindent, nmflags) < (nmflags == X509_FLAG_COMPAT ? 1 : 0))
 			goto err;
 		if (BIO_write(bp, "\n", 1) <= 0)
 			goto err;
@@ -203,7 +203,7 @@ X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags, unsigned long cflag)
 		if (BIO_printf(bp, "        Subject:%c", mlch) <= 0)
 			goto err;
 		if (X509_NAME_print_ex(bp, X509_get_subject_name(x),
-		    nmindent, nmflags) < 0)
+		    nmindent, nmflags) < (nmflags == X509_FLAG_COMPAT ? 1 : 0))
 			goto err;
 		if (BIO_write(bp, "\n", 1) <= 0)
 			goto err;
