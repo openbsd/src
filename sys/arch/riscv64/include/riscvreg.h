@@ -1,4 +1,4 @@
-/*	$OpenBSD: riscvreg.h,v 1.3 2021/05/12 01:20:52 jsg Exp $	*/
+/*	$OpenBSD: riscvreg.h,v 1.4 2021/07/06 19:09:57 patrick Exp $	*/
 
 /*-
  * Copyright (c) 2019 Brian Bamsch <bbamsch@google.com>
@@ -58,7 +58,7 @@
 #define EXCP_INST_PAGE_FAULT		12
 #define EXCP_LOAD_PAGE_FAULT		13
 #define EXCP_STORE_PAGE_FAULT		15
-#define EXCP_INTR			(1ul << 63)
+#define EXCP_INTR			(1ULL << 63)
 
 #define MSTATUS_UIE		(1 << 0)
 #define MSTATUS_SIE		(1 << 1)
@@ -80,10 +80,10 @@
 #define MSTATUS_TW		(1 << 21)
 #define MSTATUS_TSR		(1 << 22)
 #define MSTATUS_UXL_SHIFT	32
-#define MSTATUS_UXL_MASK	(0x3 << MSTATUS_UXL_SHIFT)
+#define MSTATUS_UXL_MASK	(0x3ULL << MSTATUS_UXL_SHIFT)
 #define MSTATUS_SXL_SHIFT	34
-#define MSTATUS_SXL_MASK	(0x3 << MSTATUS_SXL_SHIFT)
-#define MSTATUS_SD		(1 << (MXLEN - 1))
+#define MSTATUS_SXL_MASK	(0x3ULL << MSTATUS_SXL_SHIFT)
+#define MSTATUS_SD		(1ULL << (MXLEN - 1))
 
 #define SSTATUS_UIE		(1 << 0)
 #define SSTATUS_SIE		(1 << 1)
@@ -101,8 +101,8 @@
 #define SSTATUS_SUM		(1 << 18)
 #define SSTATUS_MXR		(1 << 19)
 #define SSTATUS_UXL_SHIFT	32
-#define SSTATUS_UXL_MASK	(0x3 << SSTATUS_UXL_SHIFT)
-#define SSTATUS_SD		(1 << (SXLEN - 1))
+#define SSTATUS_UXL_MASK	(0x3ULL << SSTATUS_UXL_SHIFT)
+#define SSTATUS_SD		(1ULL << (SXLEN - 1))
 
 #define USTATUS_UIE		(1 << 0)
 #define USTATUS_UPIE		(1 << 4)
