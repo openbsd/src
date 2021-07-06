@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcroute.c,v 1.2 2019/09/05 02:44:36 bluhm Exp $	*/
+/*	$OpenBSD: mcroute.c,v 1.3 2021/07/06 11:50:34 bluhm Exp $	*/
 /*
  * Copyright (c) 2019 Alexander Bluhm <bluhm@openbsd.org>
  *
@@ -209,8 +209,7 @@ main(int argc, char *argv[])
 			if (signal(SIGALRM, sigexit) == SIG_ERR)
 				err(1, "signal SIGALRM");
 		}
-		if (alarm(timeout) == (unsigned  int)-1)
-			err(1, "alarm %u", timeout);
+		alarm(timeout);
 	}
 
 	buf = NULL;

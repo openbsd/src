@@ -1,4 +1,4 @@
-/*	$OpenBSD: server-tcp.c,v 1.3 2020/01/21 22:47:39 bluhm Exp $	*/
+/*	$OpenBSD: server-tcp.c,v 1.4 2021/07/06 11:50:34 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2020 Alexander Bluhm <bluhm@openbsd.org>
@@ -77,7 +77,7 @@ main(int argc, char *argv[])
 		usage();
 	}
 
-	alarm_timeout();
+	alarm(10);
 	s = listen_socket(host, port);
 	print_sockname(s);
 
@@ -86,7 +86,7 @@ main(int argc, char *argv[])
 		err(1, "fork");
 	case 0:
 		/* child continues, set timer for new process */
-		alarm_timeout();
+		alarm(10);
 		break;
 	default:
 		/* parent exits and test runs in parallel */

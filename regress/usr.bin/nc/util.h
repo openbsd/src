@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.2 2020/01/17 20:45:50 bluhm Exp $	*/
+/*	$OpenBSD: util.h,v 1.3 2021/07/06 11:50:34 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2020 Alexander Bluhm <bluhm@openbsd.org>
@@ -23,7 +23,6 @@ struct task {
 
 void task_enqueue(struct task *, int, const char *);
 void task_run(int, struct task *, size_t);
-void alarm_timeout(void);
 void print_sockname(int);
 void print_peername(int);
 void receive_eof(int);

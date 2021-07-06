@@ -1,4 +1,4 @@
-/*	$OpenBSD: client-tcp.c,v 1.2 2020/01/17 20:45:50 bluhm Exp $	*/
+/*	$OpenBSD: client-tcp.c,v 1.3 2021/07/06 11:50:34 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2020 Alexander Bluhm <bluhm@openbsd.org>
@@ -76,7 +76,7 @@ main(int argc, char *argv[])
 		usage();
 	}
 
-	alarm_timeout();
+	alarm(10);
 	s = connect_socket(host, port);
 	print_sockname(s);
 	print_peername(s);

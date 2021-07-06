@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.9 2020/09/14 00:51:04 bluhm Exp $	*/
+/*	$OpenBSD: server.c,v 1.10 2021/07/06 11:50:34 bluhm Exp $	*/
 /*
  * Copyright (c) 2018-2019 Alexander Bluhm <bluhm@openbsd.org>
  *
@@ -250,8 +250,7 @@ main(int argc, char *argv[])
 	/* fork to background and set timeout */
 	if (daemon(1, 1) == -1)
 		err(1, "daemon");
-	if ((int)alarm(10) == -1)
-		err(1, "alarm");
+	alarm(10);
 
 	do {
 		/* accept connection */

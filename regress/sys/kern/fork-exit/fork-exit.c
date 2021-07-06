@@ -1,4 +1,4 @@
-/*	$OpenBSD: fork-exit.c,v 1.6 2021/05/22 15:49:36 bluhm Exp $	*/
+/*	$OpenBSD: fork-exit.c,v 1.7 2021/07/06 11:50:34 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2021 Alexander Bluhm <bluhm@openbsd.org>
@@ -190,8 +190,7 @@ sigexit(int sig)
 	pid_t pid;
 
 	/* all children must terminate in time */
-	if ((int)alarm(timeout) == -1)
-		err(1, "alarm");
+	alarm(timeout);
 
 	for (i = 0; i < procs; i++) {
 		pid = wait(&status);

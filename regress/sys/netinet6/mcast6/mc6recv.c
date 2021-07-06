@@ -1,4 +1,4 @@
-/*	$OpenBSD: mc6recv.c,v 1.1.1.1 2019/09/05 01:50:34 bluhm Exp $	*/
+/*	$OpenBSD: mc6recv.c,v 1.2 2021/07/06 11:50:34 bluhm Exp $	*/
 /*
  * Copyright (c) 2019 Alexander Bluhm <bluhm@openbsd.org>
  *
@@ -150,8 +150,7 @@ main(int argc, char *argv[])
 			if (signal(SIGALRM, sigexit) == SIG_ERR)
 				err(1, "signal SIGALRM");
 		}
-		if (alarm(timeout) == (unsigned  int)-1)
-			err(1, "alarm %u", timeout);
+		alarm(timeout);
 	}
 	n = recv(s, msg, sizeof(msg) - 1, 0);
 	if (n == -1)

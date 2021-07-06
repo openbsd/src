@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.2 2020/01/17 20:45:50 bluhm Exp $	*/
+/*	$OpenBSD: util.c,v 1.3 2021/07/06 11:50:34 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2020 Alexander Bluhm <bluhm@openbsd.org>
@@ -73,14 +73,6 @@ task_run(int s, struct task *todolist, size_t tlen)
 			break;
 		}
 	}
-}
-
-void
-alarm_timeout(void)
-{
-	/* just abort after 10 seconds */
-	if ((int)alarm(10) == -1)
-		err(1, "alarm");
 }
 
 void
