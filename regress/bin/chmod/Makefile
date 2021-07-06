@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2021/07/06 15:24:02 anton Exp $
+# $OpenBSD: Makefile,v 1.5 2021/07/06 19:48:05 bluhm Exp $
 
 REGRESS_TARGETS=	chmod_abs_0000 chmod_abs_0644
 REGRESS_TARGETS+=	chmod_sym_0644 chmod_sym_0000
@@ -41,400 +41,354 @@ REGRESS_ROOT_TARGETS+=	chown_RL
 
 REGRESS_TARGETS+=	${REGRESS_ROOT_TARGETS}
 
+MKDIR=			/bin/mkdir
+TOUCH=			/usr/bin/touch
+CHMOD=			/bin/chmod
+LN=			/bin/ln
+CHFLAGS=		/usr/bin/chflags
+CHGRP=			${SUDO} /bin/chgrp
+CHOWN=			${SUDO} /sbin/chown
+STAT=			${SUDO} /usr/bin/stat
+DIFF=			/usr/bin/diff -up
+RM=			${SUDO} /bin/rm
+
 prepfile: clean
-	@/bin/mkdir -p regress
-	@/usr/bin/touch regress/file
-	@/bin/chmod 000 regress/file
-	@[ `/usr/bin/stat -f '%p' regress/file` == '100000' ]
+	${MKDIR} -p regress
+	${TOUCH} regress/file
+	${CHMOD} 000 regress/file
+	[ `${STAT} -f '%p' regress/file` == '100000' ]
 
 chmod_prepsymlink: prepfile
-	@/bin/ln -s ${.OBJDIR}/regress/file ${.OBJDIR}/regress/link
-	@/bin/chmod -h 755 regress/link
-	@[ `/usr/bin/stat -f '%p' regress/link` == '120755' ]
+	${LN} -s ${.OBJDIR}/regress/file regress/link
+	${CHMOD} -h 755 regress/link
+	[ `${STAT} -f '%p' regress/link` == '120755' ]
 
 prepdir: clean
-	@/bin/mkdir -p regress/dir
-	@/usr/bin/touch regress/dir/file1
-	@/usr/bin/touch regress/dir/file2
-	@/bin/chmod 000 regress/dir/file1
-	@/bin/chmod 000 regress/dir/file2
-	@/usr/bin/touch regress/link_target_file
-	@/bin/chmod 0600 regress/link_target_file
-	@[ `/usr/bin/stat -f '%p' regress/dir/file1` == '100000' ]
-	@[ `/usr/bin/stat -f '%p' regress/dir/file2` == '100000' ]
-	@ln -s ${.OBJDIR}/regress/link_target_file \
-	    ${.OBJDIR}/regress/dir/linked_file
-	@ln -s ${.OBJDIR}/regress/dir ${.OBJDIR}/regress/linked_dir
-	@/bin/chmod 000 regress/dir
-	@[ `/usr/bin/stat -f '%p' regress/dir` == '40000' ]
-	@[ `/usr/bin/stat -f '%p' regress/link_target_file` == '100600' ]
+	${MKDIR} -p regress/dir
+	${TOUCH} regress/dir/file1
+	${TOUCH} regress/dir/file2
+	${CHMOD} 000 regress/dir/file1
+	${CHMOD} 000 regress/dir/file2
+	${TOUCH} regress/link_target_file
+	${CHMOD} 0600 regress/link_target_file
+	[ `${STAT} -f '%p' regress/dir/file1` == '100000' ]
+	[ `${STAT} -f '%p' regress/dir/file2` == '100000' ]
+	${LN} -s ${.OBJDIR}/regress/link_target_file regress/dir/linked_file
+	${LN} -s ${.OBJDIR}/regress/dir regress/linked_dir
+	${CHMOD} 000 regress/dir
+	[ `${STAT} -f '%p' regress/dir` == '40000' ]
+	[ `${STAT} -f '%p' regress/link_target_file` == '100600' ]
 
 chown_prepfile: prepfile
-	@[ `id -u` != 0 ] || /sbin/chown root:wheel regress/file
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Su' regress/file` == 'root' ]
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Sg' regress/file` == \
-	    'wheel' ]
+	${CHOWN} root:wheel regress/file
+	[ `${STAT} -f '%Su' regress/file` == 'root' ]
+	[ `${STAT} -f '%Sg' regress/file` == 'wheel' ]
 
 chown_prepsymlink: chown_prepfile
-	@[ `id -u` != 0 ] || ln -s ${.OBJDIR}/regress/file \
-	    ${.OBJDIR}/regress/symlink
-	@[ `id -u` != 0 ] || /sbin/chown -h root:wheel regress/symlink
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Su' regress/symlink` == \
-	    'root' ]
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Sg' regress/symlink` == \
-	    'wheel' ]
+	${LN} -s ${.OBJDIR}/regress/file regress/symlink
+	${CHOWN} -h root:wheel regress/symlink
+	[ `${STAT} -f '%Su' regress/symlink` == 'root' ]
+	[ `${STAT} -f '%Sg' regress/symlink` == 'wheel' ]
 
 chown_prepdir: prepdir
-	@[ `id -u` != 0 ] || /bin/chmod -R 0755 regress
-	@[ `id -u` != 0 ] || /sbin/chown -RL root:wheel regress
+	${CHMOD} -R 0755 regress
+	${CHOWN} -RL root:wheel regress
 
 chflags_prepfile: prepfile
-	@/usr/bin/chflags dump regress/file
-	@[ `/usr/bin/stat -f '%f' regress/file` == '0' ]
+	${CHFLAGS} dump regress/file
+	[ `${STAT} -f '%f' regress/file` == '0' ]
 
 chflags_prepdir: prepdir
-	@/bin/chmod -R 0755 regress
-	@/usr/bin/chflags -RL dump regress
+	${CHMOD} -R 0755 regress
+	${CHFLAGS} -RL dump regress
 
 chmod_abs_0000: prepfile
-	@echo chmod abs 0000
-	@/bin/chmod 0644 regress/file
-	@/bin/chmod 0000 regress/file
-	@[ `/usr/bin/stat -f '%p' regress/file` == '100000' ]
+	${CHMOD} 0644 regress/file
+	${CHMOD} 0000 regress/file
+	[ `${STAT} -f '%p' regress/file` == '100000' ]
 
 chmod_abs_0644: prepfile
-	@echo chmod abs 0644
-	@/bin/chmod 0644 regress/file
-	@[ `/usr/bin/stat -f '%p' regress/file` == '100644' ]
+	${CHMOD} 0644 regress/file
+	[ `${STAT} -f '%p' regress/file` == '100644' ]
 
 chmod_sym_0644: prepfile
-	@echo chmod sym 0644
-	@/bin/chmod u=rw,go=r regress/file
-	@[ `/usr/bin/stat -f '%p' regress/file` == '100644' ]
+	${CHMOD} u=rw,go=r regress/file
+	[ `${STAT} -f '%p' regress/file` == '100644' ]
 
 chmod_sym_0000: prepfile
-	@echo chmod sym 0000
-	@/bin/chmod 0644 regress/file
-	@/bin/chmod a-rwx regress/file
-	@[ `/usr/bin/stat -f '%p' regress/file` == '100000' ]
+	${CHMOD} 0644 regress/file
+	${CHMOD} a-rwx regress/file
+	[ `${STAT} -f '%p' regress/file` == '100000' ]
 
 chmod_R_0755: prepdir
-	@echo chmod -R 0755
-	@/bin/chmod -R 0755 regress/dir
-	@[ `/usr/bin/stat -f '%p' regress/dir/file1` == '100755' ]
-	@[ `/usr/bin/stat -f '%p' regress/dir/file2` == '100755' ]
-	@[ `/usr/bin/stat -f '%p' regress/dir` == '40755' ]
-	@[ `/usr/bin/stat -f '%p' regress/link_target_file` == '100600' ]
+	${CHMOD} -R 0755 regress/dir
+	[ `${STAT} -f '%p' regress/dir/file1` == '100755' ]
+	[ `${STAT} -f '%p' regress/dir/file2` == '100755' ]
+	[ `${STAT} -f '%p' regress/dir` == '40755' ]
+	[ `${STAT} -f '%p' regress/link_target_file` == '100600' ]
 
 chmod_RP_0755: prepdir
-	@echo chmod -RP 0755
-	@/bin/chmod -RP 0755 regress/dir
-	@[ `/usr/bin/stat -f '%p' regress/dir/file1` == '100755' ]
-	@[ `/usr/bin/stat -f '%p' regress/dir/file2` == '100755' ]
-	@[ `/usr/bin/stat -f '%p' regress/dir` == '40755' ]
-	@[ `/usr/bin/stat -f '%p' regress/link_target_file` == '100600' ]
+	${CHMOD} -RP 0755 regress/dir
+	[ `${STAT} -f '%p' regress/dir/file1` == '100755' ]
+	[ `${STAT} -f '%p' regress/dir/file2` == '100755' ]
+	[ `${STAT} -f '%p' regress/dir` == '40755' ]
+	[ `${STAT} -f '%p' regress/link_target_file` == '100600' ]
 
 chmod_RH_0755: prepdir
-	@echo chmod -RH 0755
-	@/bin/chmod -RH 0755 regress/linked_dir
-	@[ `/usr/bin/stat -f '%p' regress/dir/file1` == '100755' ]
-	@[ `/usr/bin/stat -f '%p' regress/dir/file2` == '100755' ]
-	@[ `/usr/bin/stat -f '%p' regress/dir` == '40755' ]
-	@[ `/usr/bin/stat -f '%p' regress/link_target_file` == '100600' ]
+	${CHMOD} -RH 0755 regress/linked_dir
+	[ `${STAT} -f '%p' regress/dir/file1` == '100755' ]
+	[ `${STAT} -f '%p' regress/dir/file2` == '100755' ]
+	[ `${STAT} -f '%p' regress/dir` == '40755' ]
+	[ `${STAT} -f '%p' regress/link_target_file` == '100600' ]
 
 chmod_RL_0755: prepdir
-	@echo chmod -RL 0755
-	@/bin/chmod -RL 0755 regress/linked_dir
-	@[ `/usr/bin/stat -f '%p' regress/dir/file1` == '100755' ]
-	@[ `/usr/bin/stat -f '%p' regress/dir/file2` == '100755' ]
-	@[ `/usr/bin/stat -f '%p' regress/dir` == '40755' ]
-	@[ `/usr/bin/stat -f '%p' regress/link_target_file` == '100755' ]
+	${CHMOD} -RL 0755 regress/linked_dir
+	[ `${STAT} -f '%p' regress/dir/file1` == '100755' ]
+	[ `${STAT} -f '%p' regress/dir/file2` == '100755' ]
+	[ `${STAT} -f '%p' regress/dir` == '40755' ]
+	[ `${STAT} -f '%p' regress/link_target_file` == '100755' ]
 
 chmod_h_abs_0000: chmod_prepsymlink
-	@echo chmod -h 0000
-	@/bin/chmod -h 0000 regress/link
-	@[ `/usr/bin/stat -f '%p' regress/file` == '100000' ]
-	@[ `/usr/bin/stat -f '%p' regress/link` == '120000' ]
+	${CHMOD} -h 0000 regress/link
+	[ `${STAT} -f '%p' regress/file` == '100000' ]
+	[ `${STAT} -f '%p' regress/link` == '120000' ]
 
 chmod_h_abs_0644: chmod_prepsymlink
-	@echo chmod -h 0644
-	@/bin/chmod -h 0644 regress/link
-	@[ `/usr/bin/stat -f '%p' regress/file` == '100000' ]
-	@[ `/usr/bin/stat -f '%p' regress/link` == '120644' ]
+	${CHMOD} -h 0644 regress/link
+	[ `${STAT} -f '%p' regress/file` == '100000' ]
+	[ `${STAT} -f '%p' regress/link` == '120644' ]
 
 chmod_h_sym_0000: chmod_prepsymlink
-	@echo chmod -h sym 0000
-	@/bin/chmod -h a-rwx regress/link
-	@[ `/usr/bin/stat -f '%p' regress/file` == '100000' ]
-	@[ `/usr/bin/stat -f '%p' regress/link` == '120000' ]
+	${CHMOD} -h a-rwx regress/link
+	[ `${STAT} -f '%p' regress/file` == '100000' ]
+	[ `${STAT} -f '%p' regress/link` == '120000' ]
 
 chmod_h_sym_0644: chmod_prepsymlink
-	@echo chmod -h sym 0644
-	@/bin/chmod -h u=rw,go=r regress/link
-	@[ `/usr/bin/stat -f '%p' regress/file` == '100000' ]
-	@[ `/usr/bin/stat -f '%p' regress/link` == '120644' ]
+	${CHMOD} -h u=rw,go=r regress/link
+	[ `${STAT} -f '%p' regress/file` == '100000' ]
+	[ `${STAT} -f '%p' regress/link` == '120644' ]
 
 chmod_h_go_minus_r: chmod_prepsymlink
-	@echo chmod -h go-r
-	@/bin/chmod -h go-r regress/link
-	@[ `/usr/bin/stat -f '%p' regress/file` == '100000' ]
-	@[ `/usr/bin/stat -f '%p' regress/link` == '120711' ]
+	${CHMOD} -h go-r regress/link
+	[ `${STAT} -f '%p' regress/file` == '100000' ]
+	[ `${STAT} -f '%p' regress/link` == '120711' ]
 
 chmod_h_go_minus_rx: chmod_prepsymlink
-	@echo chmod -h go-rx
-	@/bin/chmod -h go-rx regress/link
-	@[ `/usr/bin/stat -f '%p' regress/file` == '100000' ]
-	@[ `/usr/bin/stat -f '%p' regress/link` == '120700' ]
+	${CHMOD} -h go-rx regress/link
+	[ `${STAT} -f '%p' regress/file` == '100000' ]
+	[ `${STAT} -f '%p' regress/link` == '120700' ]
 
 chmod_h_go_plus_r: chmod_prepsymlink
-	@echo chmod -h go+r
-	@/bin/chmod -h go+r regress/link
-	@[ `/usr/bin/stat -f '%p' regress/file` == '100000' ]
-	@[ `/usr/bin/stat -f '%p' regress/link` == '120755' ]
+	${CHMOD} -h go+r regress/link
+	[ `${STAT} -f '%p' regress/file` == '100000' ]
+	[ `${STAT} -f '%p' regress/link` == '120755' ]
 
 chmod_h_go_plus_rx: chmod_prepsymlink
-	@echo chmod -h go+rx
-	@/bin/chmod -h go+rx regress/link
-	@[ `/usr/bin/stat -f '%p' regress/file` == '100000' ]
-	@[ `/usr/bin/stat -f '%p' regress/link` == '120755' ]
+	${CHMOD} -h go+rx regress/link
+	[ `${STAT} -f '%p' regress/file` == '100000' ]
+	[ `${STAT} -f '%p' regress/link` == '120755' ]
 
 chmod_via_link_abs_0000: chmod_prepsymlink
-	@echo chmod via symlink 0000
-	@/bin/chmod 0000 regress/link
-	@[ `/usr/bin/stat -f '%p' regress/file` == '100000' ]
-	@[ `/usr/bin/stat -f '%p' regress/link` == '120755' ]
+	${CHMOD} 0000 regress/link
+	[ `${STAT} -f '%p' regress/file` == '100000' ]
+	[ `${STAT} -f '%p' regress/link` == '120755' ]
 
 chmod_via_link_abs_0644: chmod_prepsymlink
-	@echo chmod via symlink 0644
-	@/bin/chmod 0644 regress/link
-	@[ `/usr/bin/stat -f '%p' regress/file` == '100644' ]
-	@[ `/usr/bin/stat -f '%p' regress/link` == '120755' ]
+	${CHMOD} 0644 regress/link
+	[ `${STAT} -f '%p' regress/file` == '100644' ]
+	[ `${STAT} -f '%p' regress/link` == '120755' ]
 
 chmod_via_link_sym_0000: chmod_prepsymlink
-	@echo chmod via symlink sym 0000
-	@/bin/chmod a-rwx regress/link
-	@[ `/usr/bin/stat -f '%p' regress/file` == '100000' ]
-	@[ `/usr/bin/stat -f '%p' regress/link` == '120755' ]
+	${CHMOD} a-rwx regress/link
+	[ `${STAT} -f '%p' regress/file` == '100000' ]
+	[ `${STAT} -f '%p' regress/link` == '120755' ]
 
 chmod_via_link_sym_0644: chmod_prepsymlink
-	@echo chmod via symlink sym 0644
-	@/bin/chmod u=rw,go=r regress/link
-	@[ `/usr/bin/stat -f '%p' regress/file` == '100644' ]
-	@[ `/usr/bin/stat -f '%p' regress/link` == '120755' ]
+	${CHMOD} u=rw,go=r regress/link
+	[ `${STAT} -f '%p' regress/file` == '100644' ]
+	[ `${STAT} -f '%p' regress/link` == '120755' ]
 
 chmod_via_link_go_minus_r: chmod_prepsymlink
-	@echo chmod via symlink go-r
-	@/bin/chmod go-r regress/link
-	@[ `/usr/bin/stat -f '%p' regress/file` == '100000' ]
-	@[ `/usr/bin/stat -f '%p' regress/link` == '120755' ]
+	${CHMOD} go-r regress/link
+	[ `${STAT} -f '%p' regress/file` == '100000' ]
+	[ `${STAT} -f '%p' regress/link` == '120755' ]
 
 chmod_via_link_go_minus_rx: chmod_prepsymlink
-	@echo chmod via symlink go-rx
-	@/bin/chmod go-rx regress/link
-	@[ `/usr/bin/stat -f '%p' regress/file` == '100000' ]
-	@[ `/usr/bin/stat -f '%p' regress/link` == '120755' ]
+	${CHMOD} go-rx regress/link
+	[ `${STAT} -f '%p' regress/file` == '100000' ]
+	[ `${STAT} -f '%p' regress/link` == '120755' ]
 
 chmod_via_link_go_plus_r: chmod_prepsymlink
-	@echo chmod via symlink go+r
-	@/bin/chmod go+r regress/link
-	@[ `/usr/bin/stat -f '%p' regress/file` == '100044' ]
-	@[ `/usr/bin/stat -f '%p' regress/link` == '120755' ]
+	${CHMOD} go+r regress/link
+	[ `${STAT} -f '%p' regress/file` == '100044' ]
+	[ `${STAT} -f '%p' regress/link` == '120755' ]
 
 chmod_via_link_go_plus_rx: chmod_prepsymlink
-	@echo chmod via symlink go+rx
-	@/bin/chmod go+rx regress/link
-	@[ `/usr/bin/stat -f '%p' regress/file` == '100055' ]
-	@[ `/usr/bin/stat -f '%p' regress/link` == '120755' ]
+	${CHMOD} go+rx regress/link
+	[ `${STAT} -f '%p' regress/file` == '100055' ]
+	[ `${STAT} -f '%p' regress/link` == '120755' ]
 
 chmod_error:
-	@echo chmod error
-	@/bin/chmod foo bar 2> ${.OBJDIR}/chmod.error || /usr/bin/true
-	@cmp -s ${.CURDIR}/chmod.error ${.OBJDIR}/chmod.error
+	${CHMOD} foo bar 2>chmod.err || true
+	${DIFF} ${.CURDIR}/chmod.error chmod.err
 
 chgrp_id: chown_prepfile
-	@echo chgrp 32767
-	@/bin/chgrp 32767 regress/file
-	@[ `/usr/bin/stat -f '%g' regress/file` == 32767 ]
+	${CHGRP} 32767 regress/file
+	[ `${STAT} -f '%g' regress/file` == 32767 ]
 
 chgrp_name: chown_prepfile
-	@echo chgrp nobody
-	@/bin/chgrp nobody regress/file
-	@[ `/usr/bin/stat -f '%Sg' regress/file` == 'nobody' ]
+	${CHGRP} nobody regress/file
+	[ `${STAT} -f '%Sg' regress/file` == 'nobody' ]
 
 chgrp_symlink: chown_prepsymlink
-	@echo chgrp symlink
-	@/bin/chgrp nobody regress/symlink
-	@[ `/usr/bin/stat -f '%Sg' regress/file` == 'nobody' ]
-	@[ `/usr/bin/stat -f '%Sg' regress/symlink` == 'wheel' ]
+	${CHGRP} nobody regress/symlink
+	[ `${STAT} -f '%Sg' regress/file` == 'nobody' ]
+	[ `${STAT} -f '%Sg' regress/symlink` == 'wheel' ]
 
 chgrp_h_symlink: chown_prepsymlink
-	@echo chgrp -h symlink
-	@/bin/chgrp -h nobody regress/symlink
-	@[ `/usr/bin/stat -f '%Sg' regress/file` == 'wheel' ]
-	@[ `/usr/bin/stat -f '%Sg' regress/symlink` == 'nobody' ]
+	${CHGRP} -h nobody regress/symlink
+	[ `${STAT} -f '%Sg' regress/file` == 'wheel' ]
+	[ `${STAT} -f '%Sg' regress/symlink` == 'nobody' ]
 
 chgrp_R: chown_prepdir
-	@echo chown -R nobody
-	@/bin/chgrp -R nobody regress/dir
-	@[ `/usr/bin/stat -f '%Sg' regress/dir/file1` == 'nobody' ]
-	@[ `/usr/bin/stat -f '%Sg' regress/dir/file2` == 'nobody' ]
-	@[ `/usr/bin/stat -f '%Sg' regress/dir` == 'nobody' ]
-	@[ `/usr/bin/stat -f '%Sg' regress/link_target_file` == 'wheel' ]
+	${CHGRP} -R nobody regress/dir
+	[ `${STAT} -f '%Sg' regress/dir/file1` == 'nobody' ]
+	[ `${STAT} -f '%Sg' regress/dir/file2` == 'nobody' ]
+	[ `${STAT} -f '%Sg' regress/dir` == 'nobody' ]
+	[ `${STAT} -f '%Sg' regress/link_target_file` == 'wheel' ]
 
 chgrp_RP: chown_prepdir
-	@echo chgrp -RP nobody
-	@/bin/chgrp -RP nobody regress/dir
-	@[ `/usr/bin/stat -f '%Sg' regress/dir/file1` == 'nobody' ]
-	@[ `/usr/bin/stat -f '%Sg' regress/dir/file2` == 'nobody' ]
-	@[ `/usr/bin/stat -f '%Sg' regress/dir` == 'nobody' ]
-	@[ `/usr/bin/stat -f '%Sg' regress/link_target_file` == 'wheel' ]
+	${CHGRP} -RP nobody regress/dir
+	[ `${STAT} -f '%Sg' regress/dir/file1` == 'nobody' ]
+	[ `${STAT} -f '%Sg' regress/dir/file2` == 'nobody' ]
+	[ `${STAT} -f '%Sg' regress/dir` == 'nobody' ]
+	[ `${STAT} -f '%Sg' regress/link_target_file` == 'wheel' ]
 
 chgrp_RH: chown_prepdir
-	@echo chgrp -RH nobody
-	@/bin/chgrp -RH nobody regress/linked_dir
-	@[ `/usr/bin/stat -f '%Sg' regress/dir/file1` == 'nobody' ]
-	@[ `/usr/bin/stat -f '%Sg' regress/dir/file2` == 'nobody' ]
-	@[ `/usr/bin/stat -f '%Sg' regress/dir` == 'nobody' ]
-	@[ `/usr/bin/stat -f '%Sg' regress/link_target_file` == 'wheel' ]
+	${CHGRP} -RH nobody regress/linked_dir
+	[ `${STAT} -f '%Sg' regress/dir/file1` == 'nobody' ]
+	[ `${STAT} -f '%Sg' regress/dir/file2` == 'nobody' ]
+	[ `${STAT} -f '%Sg' regress/dir` == 'nobody' ]
+	[ `${STAT} -f '%Sg' regress/link_target_file` == 'wheel' ]
 
 chgrp_RL: chown_prepdir
-	@echo chgrp -RL nobody
-	@/bin/chgrp -RL nobody regress/linked_dir
-	@[ `/usr/bin/stat -f '%Sg' regress/dir/file1` == 'nobody' ]
-	@[ `/usr/bin/stat -f '%Sg' regress/dir/file2` == 'nobody' ]
-	@[ `/usr/bin/stat -f '%Sg' regress/dir` == 'nobody' ]
-	@[ `/usr/bin/stat -f '%Sg' regress/link_target_file` == 'nobody' ]
+	${CHGRP} -RL nobody regress/linked_dir
+	[ `${STAT} -f '%Sg' regress/dir/file1` == 'nobody' ]
+	[ `${STAT} -f '%Sg' regress/dir/file2` == 'nobody' ]
+	[ `${STAT} -f '%Sg' regress/dir` == 'nobody' ]
+	[ `${STAT} -f '%Sg' regress/link_target_file` == 'nobody' ]
 
 chgrp_error:
-	@echo chgrp error
-	@/bin/chgrp __hopefully_not_existing_group bar 2> \
-	    ${.OBJDIR}/chgrp.error || /usr/bin/true
-	@cmp -s ${.CURDIR}/chgrp.error ${.OBJDIR}/chgrp.error
+	${CHGRP} __hopefully_not_existing_group bar 2>chgrp.err || true
+	${DIFF} ${.CURDIR}/chgrp.error chgrp.err
 
 chown_id: chown_prepfile
-	@echo chown 32767
-	@/sbin/chown 32767 regress/file
-	@[ `/usr/bin/stat -f '%u' regress/file` == 32767 ]
+	${CHOWN} 32767 regress/file
+	[ `${STAT} -f '%u' regress/file` == 32767 ]
 
 chown_name: chown_prepfile
-	@echo chown nobody
-	@/sbin/chown nobody regress/file
-	@[ `/usr/bin/stat -f '%Su' regress/file` == 'nobody' ]
+	${CHOWN} nobody regress/file
+	[ `${STAT} -f '%Su' regress/file` == 'nobody' ]
 
 chown_symlink: chown_prepsymlink
-	@echo chown symlink
-	@/sbin/chown nobody regress/symlink
-	@[ `/usr/bin/stat -f '%Su' regress/file` == 'nobody' ]
-	@[ `/usr/bin/stat -f '%Su' regress/symlink` == 'root' ]
+	${CHOWN} nobody regress/symlink
+	[ `${STAT} -f '%Su' regress/file` == 'nobody' ]
+	[ `${STAT} -f '%Su' regress/symlink` == 'root' ]
 
 chown_h_symlink: chown_prepsymlink
-	@echo chown -h symlink
-	@/sbin/chown -h nobody regress/symlink
-	@[ `/usr/bin/stat -f '%Su' regress/file` == 'root' ]
-	@[ `/usr/bin/stat -f '%Su' regress/symlink` == 'nobody' ]
+	${CHOWN} -h nobody regress/symlink
+	[ `${STAT} -f '%Su' regress/file` == 'root' ]
+	[ `${STAT} -f '%Su' regress/symlink` == 'nobody' ]
 
 chown_R: chown_prepdir
-	@echo chown -R nobody
-	@/sbin/chown -R nobody regress/dir
-	@[ `/usr/bin/stat -f '%Su' regress/dir/file1` == 'nobody' ]
-	@[ `/usr/bin/stat -f '%Su' regress/dir/file2` == 'nobody' ]
-	@[ `/usr/bin/stat -f '%Su' regress/dir` == 'nobody' ]
-	@[ `/usr/bin/stat -f '%Su' regress/link_target_file` == 'root' ]
+	${CHOWN} -R nobody regress/dir
+	[ `${STAT} -f '%Su' regress/dir/file1` == 'nobody' ]
+	[ `${STAT} -f '%Su' regress/dir/file2` == 'nobody' ]
+	[ `${STAT} -f '%Su' regress/dir` == 'nobody' ]
+	[ `${STAT} -f '%Su' regress/link_target_file` != 'nobody' ]
 
 chown_RP: chown_prepdir
-	@echo chown -RP nobody
-	@/sbin/chown -RP nobody regress/dir
-	@[ `/usr/bin/stat -f '%Su' regress/dir/file1` == 'nobody' ]
-	@[ `/usr/bin/stat -f '%Su' regress/dir/file2` == 'nobody' ]
-	@[ `/usr/bin/stat -f '%Su' regress/dir` == 'nobody' ]
-	@[ `/usr/bin/stat -f '%Su' regress/link_target_file` == 'root' ]
+	${CHOWN} -RP nobody regress/dir
+	[ `${STAT} -f '%Su' regress/dir/file1` == 'nobody' ]
+	[ `${STAT} -f '%Su' regress/dir/file2` == 'nobody' ]
+	[ `${STAT} -f '%Su' regress/dir` == 'nobody' ]
+	[ `${STAT} -f '%Su' regress/link_target_file` != 'nobody' ]
 
 chown_RH: chown_prepdir
-	@echo chown -RH nobody
-	@/sbin/chown -RH nobody regress/linked_dir
-	@[ `/usr/bin/stat -f '%Su' regress/dir/file1` == 'nobody' ]
-	@[ `/usr/bin/stat -f '%Su' regress/dir/file2` == 'nobody' ]
-	@[ `/usr/bin/stat -f '%Su' regress/dir` == 'nobody' ]
-	@[ `/usr/bin/stat -f '%Su' regress/link_target_file` == 'root' ]
+	${CHOWN} -RH nobody regress/linked_dir
+	[ `${STAT} -f '%Su' regress/dir/file1` == 'nobody' ]
+	[ `${STAT} -f '%Su' regress/dir/file2` == 'nobody' ]
+	[ `${STAT} -f '%Su' regress/dir` == 'nobody' ]
+	[ `${STAT} -f '%Su' regress/link_target_file` != 'nobody' ]
 
 chown_RL: chown_prepdir
-	@echo chown -RL nobody
-	@/sbin/chown -RL nobody regress/linked_dir
-	@[ `/usr/bin/stat -f '%Su' regress/dir/file1` == 'nobody' ]
-	@[ `/usr/bin/stat -f '%Su' regress/dir/file2` == 'nobody' ]
-	@[ `/usr/bin/stat -f '%Su' regress/dir` == 'nobody' ]
-	@[ `/usr/bin/stat -f '%Su' regress/link_target_file` == 'nobody' ]
+	${CHOWN} -RL nobody regress/linked_dir
+	[ `${STAT} -f '%Su' regress/dir/file1` == 'nobody' ]
+	[ `${STAT} -f '%Su' regress/dir/file2` == 'nobody' ]
+	[ `${STAT} -f '%Su' regress/dir` == 'nobody' ]
+	[ `${STAT} -f '%Su' regress/link_target_file` == 'nobody' ]
 
 chown_error:
-	@echo chown error
-	@/sbin/chown __hopefully_not_existing_user bar 2> \
-	    ${.OBJDIR}/chown.error || /usr/bin/true
-	@cmp -s ${.CURDIR}/chown.error ${.OBJDIR}/chown.error
+	${CHOWN} __hopefully_not_existing_user bar 2>chown.err || true
+	${DIFF} ${.CURDIR}/chown.error chown.err
 
 chflags: chflags_prepfile
-	@echo chflags nodump
-	@/usr/bin/chflags nodump regress/file
-	@[ `/usr/bin/stat -f '%f' regress/file` == '1' ]
+	${CHFLAGS} nodump regress/file
+	[ `${STAT} -f '%f' regress/file` == '1' ]
 
 chflags_no: chflags_prepfile
-	@echo chflags dump
-	@/usr/bin/chflags nodump regress/file
-	@[ `/usr/bin/stat -f '%f' regress/file` == '1' ]
-	@/usr/bin/chflags dump regress/file
-	@[ `/usr/bin/stat -f '%f' regress/file` == '0' ]
+	${CHFLAGS} nodump regress/file
+	[ `${STAT} -f '%f' regress/file` == '1' ]
+	${CHFLAGS} dump regress/file
+	[ `${STAT} -f '%f' regress/file` == '0' ]
 
 chflags_R: chflags_prepdir
-	@echo chflags -R nodump
-	@/usr/bin/chflags -R nodump regress/dir
-	@[ `/usr/bin/stat -f '%f' regress/dir/file1` == '1' ]
-	@[ `/usr/bin/stat -f '%f' regress/dir/file2` == '1' ]
-	@[ `/usr/bin/stat -f '%f' regress/dir` == '1' ]
-	@[ `/usr/bin/stat -f '%f' regress/link_target_file` == '0' ]
+	${CHFLAGS} -R nodump regress/dir
+	[ `${STAT} -f '%f' regress/dir/file1` == '1' ]
+	[ `${STAT} -f '%f' regress/dir/file2` == '1' ]
+	[ `${STAT} -f '%f' regress/dir` == '1' ]
+	[ `${STAT} -f '%f' regress/link_target_file` == '0' ]
 
 chflags_RP: chflags_prepdir
-	@echo chflags -RP nodump
-	@/usr/bin/chflags -RP nodump regress/dir
-	@[ `/usr/bin/stat -f '%f' regress/dir/file1` == '1' ]
-	@[ `/usr/bin/stat -f '%f' regress/dir/file2` == '1' ]
-	@[ `/usr/bin/stat -f '%f' regress/dir` == '1' ]
-	@[ `/usr/bin/stat -f '%f' regress/link_target_file` == '0' ]
+	${CHFLAGS} -RP nodump regress/dir
+	[ `${STAT} -f '%f' regress/dir/file1` == '1' ]
+	[ `${STAT} -f '%f' regress/dir/file2` == '1' ]
+	[ `${STAT} -f '%f' regress/dir` == '1' ]
+	[ `${STAT} -f '%f' regress/link_target_file` == '0' ]
 
 chflags_RH: chflags_prepdir
-	@echo chflags -RH nodump
-	@/usr/bin/chflags -RH nodump regress/linked_dir
-	@[ `/usr/bin/stat -f '%f' regress/dir/file1` == '1' ]
-	@[ `/usr/bin/stat -f '%f' regress/dir/file2` == '1' ]
-	@[ `/usr/bin/stat -f '%f' regress/dir` == '1' ]
-	@[ `/usr/bin/stat -f '%f' regress/link_target_file` == '0' ]
+	${CHFLAGS} -RH nodump regress/linked_dir
+	[ `${STAT} -f '%f' regress/dir/file1` == '1' ]
+	[ `${STAT} -f '%f' regress/dir/file2` == '1' ]
+	[ `${STAT} -f '%f' regress/dir` == '1' ]
+	[ `${STAT} -f '%f' regress/link_target_file` == '0' ]
 
 chflags_RL: chflags_prepdir
-	@echo chflags -RL nodump
-	@/usr/bin/chflags -RL nodump regress/linked_dir
-	@[ `/usr/bin/stat -f '%f' regress/dir/file1` == '1' ]
-	@[ `/usr/bin/stat -f '%f' regress/dir/file2` == '1' ]
-	@[ `/usr/bin/stat -f '%f' regress/dir` == '1' ]
-	@[ `/usr/bin/stat -f '%f' regress/link_target_file` == '1' ]
+	${CHFLAGS} -RL nodump regress/linked_dir
+	[ `${STAT} -f '%f' regress/dir/file1` == '1' ]
+	[ `${STAT} -f '%f' regress/dir/file2` == '1' ]
+	[ `${STAT} -f '%f' regress/dir` == '1' ]
+	[ `${STAT} -f '%f' regress/link_target_file` == '1' ]
 
 chflags_via_link: chflags_prepfile
-	@echo chflags via link
-	@/bin/ln -s ${.OBJDIR}/regress/file ${.OBJDIR}/regress/link
-	@chflags -h uchg regress/link
-	@chflags nodump regress/link
-	@[ `stat -f '%f' regress/link` == '2' ]
-	@[ `stat -f '%f' regress/file` == '1' ]
-	@chflags -h nouchg regress/link
-	@chflags dump regress/link
-	@[ `stat -f '%f' regress/link` == '0' ]
-	@[ `stat -f '%f' regress/file` == '0' ]
+	${LN} -s ${.OBJDIR}/regress/file regress/link
+	chflags -h uchg regress/link
+	chflags nodump regress/link
+	[ `${STAT} -f '%f' regress/link` == '2' ]
+	[ `${STAT} -f '%f' regress/file` == '1' ]
+	chflags -h nouchg regress/link
+	chflags dump regress/link
+	[ `${STAT} -f '%f' regress/link` == '0' ]
+	[ `${STAT} -f '%f' regress/file` == '0' ]
 
 chflags_error:
-	@echo chflags error
-	@/usr/bin/chflags foo bar 2> ${.OBJDIR}/chflags.error || /usr/bin/true
-	@cmp -s ${.CURDIR}/chflags.error ${.OBJDIR}/chflags.error
+	${CHFLAGS} foo bar 2>chflags.err || true
+	${DIFF} ${.CURDIR}/chflags.error chflags.err
 
 clean:
-	@chmod -R 0700 regress 2>/dev/null || /usr/bin/true
-	@/bin/rm -rf regress
+	${RM} -f *.err
+	${CHMOD} -R 0700 regress 2>/dev/null || true
+	${RM} -rf regress
 
 .PHONY: ${REGRESS_TARGETS} prepfile prepdir chown_prepfile chown_prepsymlink \
 	    chown_prepdir chflags_prepfile chflags_prepdir
