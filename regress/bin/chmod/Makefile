@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2017/02/18 18:27:12 tb Exp $
+# $OpenBSD: Makefile,v 1.4 2021/07/06 15:24:02 anton Exp $
 
 REGRESS_TARGETS=	chmod_abs_0000 chmod_abs_0644
 REGRESS_TARGETS+=	chmod_sym_0644 chmod_sym_0000
@@ -13,20 +13,33 @@ REGRESS_TARGETS+=	chmod_via_link_go_minus_r chmod_via_link_go_minus_rx
 REGRESS_TARGETS+=	chmod_via_link_go_plus_r chmod_via_link_go_plus_rx
 REGRESS_TARGETS+=	chmod_error
 
-REGRESS_TARGETS+=	chgrp_id chgrp_name
-REGRESS_TARGETS+=	chgrp_symlink chgrp_h_symlink
-REGRESS_TARGETS+=	chgrp_R chgrp_RP chgrp_RH chgrp_RL
 REGRESS_TARGETS+=	chgrp_error
 
-REGRESS_TARGETS+=	chown_id chown_name
-REGRESS_TARGETS+=	chown_symlink chown_h_symlink
-REGRESS_TARGETS+=	chown_R chown_RP chown_RH chown_RL
 REGRESS_TARGETS+=	chown_error
 
 REGRESS_TARGETS+=	chflags chflags_no
 REGRESS_TARGETS+=	chflags_R chflags_RP chflags_RH chflags_RL
 REGRESS_TARGETS+=	chflags_via_link
 REGRESS_TARGETS+=	chflags_error
+
+REGRESS_ROOT_TARGETS+=	chgrp_id
+REGRESS_ROOT_TARGETS+=	chgrp_name
+REGRESS_ROOT_TARGETS+=	chgrp_symlink
+REGRESS_ROOT_TARGETS+=	chgrp_h_symlink
+REGRESS_ROOT_TARGETS+=	chgrp_R
+REGRESS_ROOT_TARGETS+=	chgrp_RP
+REGRESS_ROOT_TARGETS+=	chgrp_RH
+REGRESS_ROOT_TARGETS+=	chgrp_RL
+REGRESS_ROOT_TARGETS+=	chown_id
+REGRESS_ROOT_TARGETS+=	chown_name
+REGRESS_ROOT_TARGETS+=	chown_symlink
+REGRESS_ROOT_TARGETS+=	chown_h_symlink
+REGRESS_ROOT_TARGETS+=	chown_R
+REGRESS_ROOT_TARGETS+=	chown_RP
+REGRESS_ROOT_TARGETS+=	chown_RH
+REGRESS_ROOT_TARGETS+=	chown_RL
+
+REGRESS_TARGETS+=	${REGRESS_ROOT_TARGETS}
 
 prepfile: clean
 	@/bin/mkdir -p regress
@@ -240,86 +253,57 @@ chmod_error:
 
 chgrp_id: chown_prepfile
 	@echo chgrp 32767
-	@[ `id -u` != 0 ] && echo skipped, not root || /usr/bin/true
-	@[ `id -u` != 0 ] || /bin/chgrp 32767 regress/file
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%g' regress/file` == 32767 ]
+	@/bin/chgrp 32767 regress/file
+	@[ `/usr/bin/stat -f '%g' regress/file` == 32767 ]
 
 chgrp_name: chown_prepfile
 	@echo chgrp nobody
-	@[ `id -u` != 0 ] && echo skipped, not root || /usr/bin/true
-	@[ `id -u` != 0 ] || /bin/chgrp nobody regress/file
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Sg' regress/file` == \
-	    'nobody' ]
+	@/bin/chgrp nobody regress/file
+	@[ `/usr/bin/stat -f '%Sg' regress/file` == 'nobody' ]
 
 chgrp_symlink: chown_prepsymlink
 	@echo chgrp symlink
-	@[ `id -u` != 0 ] && echo skipped, not root || /usr/bin/true
-	@[ `id -u` != 0 ] || /bin/chgrp nobody regress/symlink
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Sg' regress/file` == \
-	    'nobody' ]
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Sg' regress/symlink` == \
-	    'wheel' ]
+	@/bin/chgrp nobody regress/symlink
+	@[ `/usr/bin/stat -f '%Sg' regress/file` == 'nobody' ]
+	@[ `/usr/bin/stat -f '%Sg' regress/symlink` == 'wheel' ]
 
 chgrp_h_symlink: chown_prepsymlink
 	@echo chgrp -h symlink
-	@[ `id -u` != 0 ] && echo skipped, not root || /usr/bin/true
-	@[ `id -u` != 0 ] || /bin/chgrp -h nobody regress/symlink
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Sg' regress/file` == \
-	    'wheel' ]
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Sg' regress/symlink` == \
-	    'nobody' ]
+	@/bin/chgrp -h nobody regress/symlink
+	@[ `/usr/bin/stat -f '%Sg' regress/file` == 'wheel' ]
+	@[ `/usr/bin/stat -f '%Sg' regress/symlink` == 'nobody' ]
 
 chgrp_R: chown_prepdir
 	@echo chown -R nobody
-	@[ `id -u` != 0 ] && echo skipped, not root || /usr/bin/true
-	@[ `id -u` != 0 ] || /bin/chgrp -R nobody regress/dir
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Sg' regress/dir/file1` == \
-	    'nobody' ]
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Sg' regress/dir/file2` == \
-	    'nobody' ]
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Sg' regress/dir` == \
-	    'nobody' ]
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Sg' \
-	    regress/link_target_file` == 'wheel' ]
+	@/bin/chgrp -R nobody regress/dir
+	@[ `/usr/bin/stat -f '%Sg' regress/dir/file1` == 'nobody' ]
+	@[ `/usr/bin/stat -f '%Sg' regress/dir/file2` == 'nobody' ]
+	@[ `/usr/bin/stat -f '%Sg' regress/dir` == 'nobody' ]
+	@[ `/usr/bin/stat -f '%Sg' regress/link_target_file` == 'wheel' ]
 
 chgrp_RP: chown_prepdir
 	@echo chgrp -RP nobody
-	@[ `id -u` != 0 ] && echo skipped, not root || /usr/bin/true
-	@[ `id -u` != 0 ] || /bin/chgrp -RP nobody regress/dir
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Sg' regress/dir/file1` == \
-	    'nobody' ]
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Sg' regress/dir/file2` == \
-	    'nobody' ]
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Sg' regress/dir` == \
-	    'nobody' ]
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Sg' \
-	    regress/link_target_file` == 'wheel' ]
+	@/bin/chgrp -RP nobody regress/dir
+	@[ `/usr/bin/stat -f '%Sg' regress/dir/file1` == 'nobody' ]
+	@[ `/usr/bin/stat -f '%Sg' regress/dir/file2` == 'nobody' ]
+	@[ `/usr/bin/stat -f '%Sg' regress/dir` == 'nobody' ]
+	@[ `/usr/bin/stat -f '%Sg' regress/link_target_file` == 'wheel' ]
 
 chgrp_RH: chown_prepdir
 	@echo chgrp -RH nobody
-	@[ `id -u` != 0 ] && echo skipped, not root || /usr/bin/true
-	@[ `id -u` != 0 ] || /bin/chgrp -RH nobody regress/linked_dir
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Sg' regress/dir/file1` == \
-	    'nobody' ]
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Sg' regress/dir/file2` == \
-	    'nobody' ]
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Sg' regress/dir` == \
-	    'nobody' ]
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Sg' \
-	    regress/link_target_file` == 'wheel' ]
+	@/bin/chgrp -RH nobody regress/linked_dir
+	@[ `/usr/bin/stat -f '%Sg' regress/dir/file1` == 'nobody' ]
+	@[ `/usr/bin/stat -f '%Sg' regress/dir/file2` == 'nobody' ]
+	@[ `/usr/bin/stat -f '%Sg' regress/dir` == 'nobody' ]
+	@[ `/usr/bin/stat -f '%Sg' regress/link_target_file` == 'wheel' ]
 
 chgrp_RL: chown_prepdir
 	@echo chgrp -RL nobody
-	@[ `id -u` != 0 ] && echo skipped, not root || /usr/bin/true
-	@[ `id -u` != 0 ] || /bin/chgrp -RL nobody regress/linked_dir
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Sg' regress/dir/file1` == \
-	    'nobody' ]
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Sg' regress/dir/file2` == \
-	    'nobody' ]
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Sg' regress/dir` == \
-	    'nobody' ]
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Sg' \
-	    regress/link_target_file` == 'nobody' ]
+	@/bin/chgrp -RL nobody regress/linked_dir
+	@[ `/usr/bin/stat -f '%Sg' regress/dir/file1` == 'nobody' ]
+	@[ `/usr/bin/stat -f '%Sg' regress/dir/file2` == 'nobody' ]
+	@[ `/usr/bin/stat -f '%Sg' regress/dir` == 'nobody' ]
+	@[ `/usr/bin/stat -f '%Sg' regress/link_target_file` == 'nobody' ]
 
 chgrp_error:
 	@echo chgrp error
@@ -329,86 +313,57 @@ chgrp_error:
 
 chown_id: chown_prepfile
 	@echo chown 32767
-	@[ `id -u` != 0 ] && echo skipped, not root || /usr/bin/true
-	@[ `id -u` != 0 ] || /sbin/chown 32767 regress/file
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%u' regress/file` == 32767 ]
+	@/sbin/chown 32767 regress/file
+	@[ `/usr/bin/stat -f '%u' regress/file` == 32767 ]
 
 chown_name: chown_prepfile
 	@echo chown nobody
-	@[ `id -u` != 0 ] && echo skipped, not root || /usr/bin/true
-	@[ `id -u` != 0 ] || /sbin/chown nobody regress/file
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Su' regress/file` == \
-	    'nobody' ]
+	@/sbin/chown nobody regress/file
+	@[ `/usr/bin/stat -f '%Su' regress/file` == 'nobody' ]
 
 chown_symlink: chown_prepsymlink
 	@echo chown symlink
-	@[ `id -u` != 0 ] && echo skipped, not root || /usr/bin/true
-	@[ `id -u` != 0 ] || /sbin/chown nobody regress/symlink
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Su' regress/file` == \
-	    'nobody' ]
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Su' regress/symlink` == \
-	    'root' ]
+	@/sbin/chown nobody regress/symlink
+	@[ `/usr/bin/stat -f '%Su' regress/file` == 'nobody' ]
+	@[ `/usr/bin/stat -f '%Su' regress/symlink` == 'root' ]
 
 chown_h_symlink: chown_prepsymlink
 	@echo chown -h symlink
-	@[ `id -u` != 0 ] && echo skipped, not root || /usr/bin/true
-	@[ `id -u` != 0 ] || /sbin/chown -h nobody regress/symlink
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Su' regress/file` == \
-	    'root' ]
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Su' regress/symlink` == \
-	    'nobody' ]
+	@/sbin/chown -h nobody regress/symlink
+	@[ `/usr/bin/stat -f '%Su' regress/file` == 'root' ]
+	@[ `/usr/bin/stat -f '%Su' regress/symlink` == 'nobody' ]
 
 chown_R: chown_prepdir
 	@echo chown -R nobody
-	@[ `id -u` != 0 ] && echo skipped, not root || /usr/bin/true
-	@[ `id -u` != 0 ] || /sbin/chown -R nobody regress/dir
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Su' regress/dir/file1` == \
-	    'nobody' ]
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Su' regress/dir/file2` == \
-	    'nobody' ]
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Su' regress/dir` == \
-	    'nobody' ]
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Su' \
-	    regress/link_target_file` == 'root' ]
+	@/sbin/chown -R nobody regress/dir
+	@[ `/usr/bin/stat -f '%Su' regress/dir/file1` == 'nobody' ]
+	@[ `/usr/bin/stat -f '%Su' regress/dir/file2` == 'nobody' ]
+	@[ `/usr/bin/stat -f '%Su' regress/dir` == 'nobody' ]
+	@[ `/usr/bin/stat -f '%Su' regress/link_target_file` == 'root' ]
 
 chown_RP: chown_prepdir
 	@echo chown -RP nobody
-	@[ `id -u` != 0 ] && echo skipped, not root || /usr/bin/true
-	@[ `id -u` != 0 ] || /sbin/chown -RP nobody regress/dir
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Su' regress/dir/file1` == \
-	    'nobody' ]
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Su' regress/dir/file2` == \
-	    'nobody' ]
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Su' regress/dir` == \
-	    'nobody' ]
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Su' \
-	    regress/link_target_file` == 'root' ]
+	@/sbin/chown -RP nobody regress/dir
+	@[ `/usr/bin/stat -f '%Su' regress/dir/file1` == 'nobody' ]
+	@[ `/usr/bin/stat -f '%Su' regress/dir/file2` == 'nobody' ]
+	@[ `/usr/bin/stat -f '%Su' regress/dir` == 'nobody' ]
+	@[ `/usr/bin/stat -f '%Su' regress/link_target_file` == 'root' ]
 
 chown_RH: chown_prepdir
 	@echo chown -RH nobody
-	@[ `id -u` != 0 ] && echo skipped, not root || /usr/bin/true
-	@[ `id -u` != 0 ] || /sbin/chown -RH nobody regress/linked_dir
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Su' regress/dir/file1` == \
-	    'nobody' ]
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Su' regress/dir/file2` == \
-	    'nobody' ]
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Su' regress/dir` == \
-	    'nobody' ]
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Su' \
-	    regress/link_target_file` == 'root' ]
+	@/sbin/chown -RH nobody regress/linked_dir
+	@[ `/usr/bin/stat -f '%Su' regress/dir/file1` == 'nobody' ]
+	@[ `/usr/bin/stat -f '%Su' regress/dir/file2` == 'nobody' ]
+	@[ `/usr/bin/stat -f '%Su' regress/dir` == 'nobody' ]
+	@[ `/usr/bin/stat -f '%Su' regress/link_target_file` == 'root' ]
 
 chown_RL: chown_prepdir
 	@echo chown -RL nobody
-	@[ `id -u` != 0 ] && echo skipped, not root || /usr/bin/true
-	@[ `id -u` != 0 ] || /sbin/chown -RL nobody regress/linked_dir
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Su' regress/dir/file1` == \
-	    'nobody' ]
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Su' regress/dir/file2` == \
-	    'nobody' ]
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Su' regress/dir` == \
-	    'nobody' ]
-	@[ `id -u` != 0 ] || [ `/usr/bin/stat -f '%Su' \
-	    regress/link_target_file` == 'nobody' ]
+	@/sbin/chown -RL nobody regress/linked_dir
+	@[ `/usr/bin/stat -f '%Su' regress/dir/file1` == 'nobody' ]
+	@[ `/usr/bin/stat -f '%Su' regress/dir/file2` == 'nobody' ]
+	@[ `/usr/bin/stat -f '%Su' regress/dir` == 'nobody' ]
+	@[ `/usr/bin/stat -f '%Su' regress/link_target_file` == 'nobody' ]
 
 chown_error:
 	@echo chown error
