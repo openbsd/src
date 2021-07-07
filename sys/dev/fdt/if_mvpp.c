@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.47 2021/07/07 21:12:51 patrick Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.48 2021/07/07 21:21:48 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -125,7 +125,6 @@ struct mvpp2_tx_queue {
 	struct mvpp2_buf	*buf;
 	struct mvpp2_tx_desc	*descs;
 	int			prod;
-	int			cnt;
 	int			cons;
 
 	uint32_t		done_pkts_coal;
@@ -298,7 +297,6 @@ void	mvpp2_rx_refill(struct mvpp2_port *);
 void	mvpp2_up(struct mvpp2_port *);
 void	mvpp2_down(struct mvpp2_port *);
 void	mvpp2_iff(struct mvpp2_port *);
-int	mvpp2_encap(struct mvpp2_port *, struct mbuf *, int *);
 
 void	mvpp2_aggr_txq_hw_init(struct mvpp2_softc *, struct mvpp2_tx_queue *);
 void	mvpp2_txq_hw_init(struct mvpp2_port *, struct mvpp2_tx_queue *);
@@ -1692,13 +1690,33 @@ mvpp2_xpcs_write(struct mvpp2_port *sc, bus_addr_t addr, uint32_t data)
 	    data);
 }
 
+static inline int
+mvpp2_load_mbuf(bus_dma_tag_t dmat, bus_dmamap_t map, struct mbuf *m)
+{
+	int error;
+
+	error = bus_dmamap_load_mbuf(dmat, map, m, BUS_DMA_NOWAIT);
+	if (error != EFBIG)
+		return (error);
+
+	error = m_defrag(m, M_DONTWAIT);
+	if (error != 0)
+		return (error);
+
+	return bus_dmamap_load_mbuf(dmat, map, m, BUS_DMA_NOWAIT);
+}
+
 void
 mvpp2_start(struct ifnet *ifp)
 {
 	struct mvpp2_port *sc = ifp->if_softc;
 	struct mvpp2_tx_queue *txq = &sc->sc->sc_aggr_txqs[0];
+	struct mvpp2_tx_desc *txd;
 	struct mbuf *m;
-	int error, idx;
+	bus_dmamap_t map;
+	uint32_t command;
+	int i, current, first, last;
+	int free, prod, used;
 
 	if (!(ifp->if_flags & IFF_RUNNING))
 		return;
@@ -1709,99 +1727,82 @@ mvpp2_start(struct ifnet *ifp)
 	if (!sc->sc_link)
 		return;
 
-	idx = txq->prod;
-	while (txq->cnt < MVPP2_AGGR_TXQ_SIZE) {
+	used = 0;
+	prod = txq->prod;
+	free = txq->cons;
+	if (free <= prod)
+		free += MVPP2_AGGR_TXQ_SIZE;
+	free -= prod;
+
+	for (;;) {
+		if (free <= MVPP2_NTXSEGS) {
+			ifq_set_oactive(&ifp->if_snd);
+			break;
+		}
+
 		m = ifq_dequeue(&ifp->if_snd);
 		if (m == NULL)
 			break;
 
-		error = mvpp2_encap(sc, m, &idx);
-		if (error == ENOBUFS) {
-			m_freem(m); /* give up: drop it */
-			ifq_set_oactive(&ifp->if_snd);
-			break;
-		}
-		if (error == EFBIG) {
-			m_freem(m); /* give up: drop it */
+		first = last = current = prod;
+		map = txq->buf[current].mb_map;
+
+		if (mvpp2_load_mbuf(sc->sc_dmat, map, m) != 0) {
 			ifp->if_oerrors++;
+			m_freem(m);
 			continue;
 		}
+
+		bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
+		    BUS_DMASYNC_PREWRITE);
+
+		command = MVPP2_TXD_L4_CSUM_NOT |
+		    MVPP2_TXD_IP_CSUM_DISABLE;
+		for (i = 0; i < map->dm_nsegs; i++) {
+			txd = &txq->descs[current];
+			memset(txd, 0, sizeof(*txd));
+			txd->buf_phys_addr_hw_cmd2 =
+			    map->dm_segs[i].ds_addr & ~0x1f;
+			txd->packet_offset =
+			    map->dm_segs[i].ds_addr & 0x1f;
+			txd->data_size = map->dm_segs[i].ds_len;
+			txd->phys_txq = sc->sc_txqs[0].id;
+			txd->command = command |
+			    MVPP2_TXD_PADDING_DISABLE;
+			if (i == 0)
+				txd->command |= MVPP2_TXD_F_DESC;
+			if (i == (map->dm_nsegs - 1))
+				txd->command |= MVPP2_TXD_L_DESC;
+
+			bus_dmamap_sync(sc->sc_dmat, MVPP2_DMA_MAP(txq->ring),
+			    current * sizeof(*txd), sizeof(*txd),
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
+			last = current;
+			current = (current + 1) % MVPP2_AGGR_TXQ_SIZE;
+			KASSERT(current != txq->cons);
+		}
+
+		KASSERT(txq->buf[last].mb_m == NULL);
+		txq->buf[first].mb_map = txq->buf[last].mb_map;
+		txq->buf[last].mb_map = map;
+		txq->buf[last].mb_m = m;
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
+
+		free -= map->dm_nsegs;
+		used += map->dm_nsegs;
+		prod = current;
 	}
 
-	if (txq->prod != idx) {
-		txq->prod = idx;
+	if (used)
+		mvpp2_write(sc->sc, MVPP2_AGGR_TXQ_UPDATE_REG, used);
 
-		/* Set a timeout in case the chip goes out to lunch. */
-		ifp->if_timer = 5;
-	}
-}
-
-int
-mvpp2_encap(struct mvpp2_port *sc, struct mbuf *m, int *idx)
-{
-	struct mvpp2_tx_queue *txq = &sc->sc->sc_aggr_txqs[0];
-	struct mvpp2_tx_desc *txd;
-	bus_dmamap_t map;
-	uint32_t command;
-	int i, current, first, last;
-
-	first = last = current = *idx;
-	map = txq->buf[current].mb_map;
-
-	if (bus_dmamap_load_mbuf(sc->sc_dmat, map, m, BUS_DMA_NOWAIT))
-		return ENOBUFS;
-
-	if (map->dm_nsegs > (MVPP2_AGGR_TXQ_SIZE - txq->cnt - 2)) {
-		bus_dmamap_unload(sc->sc_dmat, map);
-		return ENOBUFS;
-	}
-
-	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
-	    BUS_DMASYNC_PREWRITE);
-
-	command = MVPP2_TXD_L4_CSUM_NOT |
-	    MVPP2_TXD_IP_CSUM_DISABLE;
-	for (i = 0; i < map->dm_nsegs; i++) {
-		txd = &txq->descs[current];
-		memset(txd, 0, sizeof(*txd));
-		txd->buf_phys_addr_hw_cmd2 =
-		    map->dm_segs[i].ds_addr & ~0x1f;
-		txd->packet_offset =
-		    map->dm_segs[i].ds_addr & 0x1f;
-		txd->data_size = map->dm_segs[i].ds_len;
-		txd->phys_txq = sc->sc_txqs[0].id;
-		txd->command = command |
-		    MVPP2_TXD_PADDING_DISABLE;
-		if (i == 0)
-			txd->command |= MVPP2_TXD_F_DESC;
-		if (i == (map->dm_nsegs - 1))
-			txd->command |= MVPP2_TXD_L_DESC;
-
-		bus_dmamap_sync(sc->sc_dmat, MVPP2_DMA_MAP(txq->ring),
-		    current * sizeof(*txd), sizeof(*txd),
-		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-
-		last = current;
-		current = (current + 1) % MVPP2_AGGR_TXQ_SIZE;
-		KASSERT(current != txq->cons);
-	}
-
-	KASSERT(txq->buf[last].mb_m == NULL);
-	txq->buf[first].mb_map = txq->buf[last].mb_map;
-	txq->buf[last].mb_map = map;
-	txq->buf[last].mb_m = m;
-
-	txq->cnt += map->dm_nsegs;
-	*idx = current;
-
-	mvpp2_write(sc->sc, MVPP2_AGGR_TXQ_UPDATE_REG, map->dm_nsegs);
-
-	return 0;
+	if (txq->prod != prod)
+		txq->prod = prod;
 }
 
 int
@@ -2120,6 +2121,7 @@ mvpp2_txq_proc(struct mvpp2_port *sc, struct mvpp2_tx_queue *txq)
 	struct mvpp2_buf *txb;
 	int i, idx, nsent;
 
+	/* XXX: this is a percpu register! */
 	nsent = (mvpp2_read(sc->sc, MVPP2_TXQ_SENT_REG(txq->id)) &
 	    MVPP2_TRANSMITTED_COUNT_MASK) >>
 	    MVPP2_TRANSMITTED_COUNT_OFFSET;
@@ -2138,12 +2140,8 @@ mvpp2_txq_proc(struct mvpp2_port *sc, struct mvpp2_tx_queue *txq)
 			txb->mb_m = NULL;
 		}
 
-		aggr_txq->cnt--;
 		aggr_txq->cons = (aggr_txq->cons + 1) % MVPP2_AGGR_TXQ_SIZE;
 	}
-
-	if (aggr_txq->cnt == 0)
-		ifp->if_timer = 0;
 
 	if (ifq_is_oactive(&ifp->if_snd))
 		ifq_restart(&ifp->if_snd);
@@ -2359,7 +2357,7 @@ mvpp2_txq_hw_init(struct mvpp2_port *sc, struct mvpp2_tx_queue *txq)
 	uint32_t reg;
 	int i;
 
-	txq->prod = txq->cons = txq->cnt = 0;
+	txq->prod = txq->cons = 0;
 //	txq->last_desc = txq->size - 1;
 
 	txq->ring = mvpp2_dmamem_alloc(sc->sc,
@@ -2877,7 +2875,6 @@ mvpp2_down(struct mvpp2_port *sc)
 
 	ifp->if_flags &= ~IFF_RUNNING;
 	ifq_clr_oactive(&ifp->if_snd);
-	ifp->if_timer = 0;
 
 	mvpp2_egress_disable(sc);
 	mvpp2_ingress_disable(sc);
