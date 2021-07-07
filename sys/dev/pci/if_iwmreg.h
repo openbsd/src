@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmreg.h,v 1.53 2021/06/30 09:45:47 stsp Exp $	*/
+/*	$OpenBSD: if_iwmreg.h,v 1.54 2021/07/07 08:05:11 stsp Exp $	*/
 
 /******************************************************************************
  *
@@ -825,6 +825,7 @@ enum msix_ivar_for_cause {
 #define IWM_UCODE_TLV_API_NAN2_VER2		31
 #define IWM_UCODE_TLV_API_ADAPTIVE_DWELL	32
 #define IWM_UCODE_TLV_API_NEW_RX_STATS		35
+#define IWM_UCODE_TLV_API_QUOTA_LOW_LATENCY	38
 #define IWM_UCODE_TLV_API_ADAPTIVE_DWELL_V2	42
 #define IWM_UCODE_TLV_API_SCAN_EXT_CHAN_VER	58
 #define IWM_NUM_UCODE_TLV_API			128
@@ -915,6 +916,7 @@ enum msix_ivar_for_cause {
 #define IWM_UCODE_TLV_CAPA_GSCAN_SUPPORT		31
 #define IWM_UCODE_TLV_CAPA_NAN_SUPPORT			34
 #define IWM_UCODE_TLV_CAPA_UMAC_UPLOAD			35
+#define IWM_UCODE_TLV_CAPA_DYNAMIC_QUOTA                44
 #define IWM_UCODE_TLV_CAPA_EXTENDED_DTS_MEASURE		64
 #define IWM_UCODE_TLV_CAPA_SHORT_PM_TIMEOUTS		65
 #define IWM_UCODE_TLV_CAPA_BT_MPLUT_SUPPORT		67
@@ -2867,7 +2869,7 @@ struct iwm_binding_cmd {
  *	remainig quota (after Time Events) according to this quota.
  * @max_duration: max uninterrupted context duration in TU
  */
-struct iwm_time_quota_data {
+struct iwm_time_quota_data_v1 {
 	uint32_t id_and_color;
 	uint32_t quota;
 	uint32_t max_duration;
@@ -2878,9 +2880,40 @@ struct iwm_time_quota_data {
  * ( IWM_TIME_QUOTA_CMD = 0x2c )
  * @quotas: allocations per binding
  */
+struct iwm_time_quota_cmd_v1 {
+	struct iwm_time_quota_data_v1 quotas[IWM_MAX_BINDINGS];
+} __packed; /* IWM_TIME_QUOTA_ALLOCATION_CMD_API_S_VER_1 */
+
+#define IWM_QUOTA_LOW_LATENCY_NONE	0
+#define IWM_QUOTA_LOW_LATENCY_TX	(1 << 0)
+#define IWM_QUOTA_LOW_LATENCY_RX	(1 << 1)
+
+/**
+ * struct iwm_time_quota_data - configuration of time quota per binding
+ * @id_and_color: ID and color of the relevant Binding.
+ * @quota: absolute time quota in TU. The scheduler will try to divide the
+ *	remainig quota (after Time Events) according to this quota.
+ * @max_duration: max uninterrupted context duration in TU
+ * @low_latency: low latency status IWM_QUOTA_LOW_LATENCY_*
+ */
+struct iwm_time_quota_data {
+	uint32_t id_and_color;
+	uint32_t quota;
+	uint32_t max_duration;
+	uint32_t low_latency;
+}; /* TIME_QUOTA_DATA_API_S_VER_2 */
+
+/**
+ * struct iwm_time_quota_cmd - configuration of time quota between bindings
+ * ( TIME_QUOTA_CMD = 0x2c )
+ * Note: on non-CDB the fourth one is the auxilary mac and is essentially zero.
+ * On CDB the fourth one is a regular binding.
+ *
+ * @quotas: allocations per binding
+ */
 struct iwm_time_quota_cmd {
 	struct iwm_time_quota_data quotas[IWM_MAX_BINDINGS];
-} __packed; /* IWM_TIME_QUOTA_ALLOCATION_CMD_API_S_VER_1 */
+}; /* TIME_QUOTA_ALLOCATION_CMD_API_S_VER_2 */
 
 
 /* PHY context */

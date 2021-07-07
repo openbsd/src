@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.333 2021/06/30 09:45:47 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.334 2021/07/07 08:05:11 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -462,6 +462,7 @@ void	iwm_mac_ctxt_cmd_common(struct iwm_softc *, struct iwm_node *,
 void	iwm_mac_ctxt_cmd_fill_sta(struct iwm_softc *, struct iwm_node *,
 	    struct iwm_mac_data_sta *, int);
 int	iwm_mac_ctxt_cmd(struct iwm_softc *, struct iwm_node *, uint32_t, int);
+int	iwm_update_quotas_v1(struct iwm_softc *, struct iwm_node *, int);
 int	iwm_update_quotas(struct iwm_softc *, struct iwm_node *, int);
 void	iwm_add_task(struct iwm_softc *, struct taskq *, struct task *);
 void	iwm_del_task(struct iwm_softc *, struct taskq *, struct task *);
@@ -7762,9 +7763,9 @@ iwm_mac_ctxt_cmd(struct iwm_softc *sc, struct iwm_node *in, uint32_t action,
 }
 
 int
-iwm_update_quotas(struct iwm_softc *sc, struct iwm_node *in, int running)
+iwm_update_quotas_v1(struct iwm_softc *sc, struct iwm_node *in, int running)
 {
-	struct iwm_time_quota_cmd cmd;
+	struct iwm_time_quota_cmd_v1 cmd;
 	int i, idx, num_active_macs, quota, quota_rem;
 	int colors[IWM_MAX_BINDINGS] = { -1, -1, -1, -1, };
 	int n_ifs[IWM_MAX_BINDINGS] = {0, };
@@ -7819,8 +7820,71 @@ iwm_update_quotas(struct iwm_softc *sc, struct iwm_node *in, int running)
 	/* Give the remainder of the session to the first binding */
 	cmd.quotas[0].quota = htole32(le32toh(cmd.quotas[0].quota) + quota_rem);
 
-	return iwm_send_cmd_pdu(sc, IWM_TIME_QUOTA_CMD, 0,
-	    sizeof(cmd), &cmd);
+	return iwm_send_cmd_pdu(sc, IWM_TIME_QUOTA_CMD, 0, sizeof(cmd), &cmd);
+}
+
+int
+iwm_update_quotas(struct iwm_softc *sc, struct iwm_node *in, int running)
+{
+	struct iwm_time_quota_cmd cmd;
+	int i, idx, num_active_macs, quota, quota_rem;
+	int colors[IWM_MAX_BINDINGS] = { -1, -1, -1, -1, };
+	int n_ifs[IWM_MAX_BINDINGS] = {0, };
+	uint16_t id;
+
+	if (!isset(sc->sc_ucode_api, IWM_UCODE_TLV_API_QUOTA_LOW_LATENCY))
+		return iwm_update_quotas_v1(sc, in, running);
+
+	memset(&cmd, 0, sizeof(cmd));
+
+	/* currently, PHY ID == binding ID */
+	if (in && in->in_phyctxt) {
+		id = in->in_phyctxt->id;
+		KASSERT(id < IWM_MAX_BINDINGS);
+		colors[id] = in->in_phyctxt->color;
+		if (running)
+			n_ifs[id] = 1;
+	}
+
+	/*
+	 * The FW's scheduling session consists of
+	 * IWM_MAX_QUOTA fragments. Divide these fragments
+	 * equally between all the bindings that require quota
+	 */
+	num_active_macs = 0;
+	for (i = 0; i < IWM_MAX_BINDINGS; i++) {
+		cmd.quotas[i].id_and_color = htole32(IWM_FW_CTXT_INVALID);
+		num_active_macs += n_ifs[i];
+	}
+
+	quota = 0;
+	quota_rem = 0;
+	if (num_active_macs) {
+		quota = IWM_MAX_QUOTA / num_active_macs;
+		quota_rem = IWM_MAX_QUOTA % num_active_macs;
+	}
+
+	for (idx = 0, i = 0; i < IWM_MAX_BINDINGS; i++) {
+		if (colors[i] < 0)
+			continue;
+
+		cmd.quotas[idx].id_and_color =
+			htole32(IWM_FW_CMD_ID_AND_COLOR(i, colors[i]));
+
+		if (n_ifs[i] <= 0) {
+			cmd.quotas[idx].quota = htole32(0);
+			cmd.quotas[idx].max_duration = htole32(0);
+		} else {
+			cmd.quotas[idx].quota = htole32(quota * n_ifs[i]);
+			cmd.quotas[idx].max_duration = htole32(0);
+		}
+		idx++;
+	}
+
+	/* Give the remainder of the session to the first binding */
+	cmd.quotas[0].quota = htole32(le32toh(cmd.quotas[0].quota) + quota_rem);
+
+	return iwm_send_cmd_pdu(sc, IWM_TIME_QUOTA_CMD, 0, sizeof(cmd), &cmd);
 }
 
 void
@@ -8235,11 +8299,13 @@ iwm_run(struct iwm_softc *sc)
 		return err;
 	}
 
-	err = iwm_update_quotas(sc, in, 1);
-	if (err) {
-		printf("%s: could not update quotas (error %d)\n",
-		    DEVNAME(sc), err);
-		return err;
+	if (!isset(sc->sc_enabled_capa, IWM_UCODE_TLV_CAPA_DYNAMIC_QUOTA)) {
+		err = iwm_update_quotas(sc, in, 1);
+		if (err) {
+			printf("%s: could not update quotas (error %d)\n",
+			    DEVNAME(sc), err);
+			return err;
+		}
 	}
 
 	ieee80211_amrr_node_init(&sc->sc_amrr, &in->in_amn);
@@ -8279,11 +8345,13 @@ iwm_run_stop(struct iwm_softc *sc)
 
 	iwm_disable_beacon_filter(sc);
 
-	err = iwm_update_quotas(sc, in, 0);
-	if (err) {
-		printf("%s: could not update quotas (error %d)\n",
-		    DEVNAME(sc), err);
-		return err;
+	if (!isset(sc->sc_enabled_capa, IWM_UCODE_TLV_CAPA_DYNAMIC_QUOTA)) {
+		err = iwm_update_quotas(sc, in, 0);
+		if (err) {
+			printf("%s: could not update quotas (error %d)\n",
+			    DEVNAME(sc), err);
+			return err;
+		}
 	}
 
 	err = iwm_mac_ctxt_cmd(sc, in, IWM_FW_CTXT_ACTION_MODIFY, 0);
