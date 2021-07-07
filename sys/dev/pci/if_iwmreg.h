@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmreg.h,v 1.54 2021/07/07 08:05:11 stsp Exp $	*/
+/*	$OpenBSD: if_iwmreg.h,v 1.55 2021/07/07 08:13:37 stsp Exp $	*/
 
 /******************************************************************************
  *
@@ -1094,6 +1094,17 @@ struct iwm_ucode_header {
 #define IWM_UCODE_TLV_FW_DBG_TRIGGER	40
 #define IWM_UCODE_TLV_FW_GSCAN_CAPA	50
 #define IWM_UCODE_TLV_FW_MEM_SEG	51
+#define IWM_UCODE_TLV_UMAC_DEBUG_ADDRS	54
+#define IWM_UCODE_TLV_LMAC_DEBUG_ADDRS	55
+#define IWM_UCODE_TLV_HW_TYPE		58
+
+#define IWM_UCODE_TLV_DEBUG_BASE		0x1000005
+#define IWM_UCODE_TLV_TYPE_DEBUG_INFO		(IWM_UCODE_TLV_DEBUG_BASE + 0)
+#define IWM_UCODE_TLV_TYPE_BUFFER_ALLOCATION	(IWM_UCODE_TLV_DEBUG_BASE + 1)
+#define IWM_UCODE_TLV_TYPE_HCMD			(IWM_UCODE_TLV_DEBUG_BASE + 2)
+#define IWM_UCODE_TLV_TYPE_REGIONS		(IWM_UCODE_TLV_DEBUG_BASE + 3)
+#define IWM_UCODE_TLV_TYPE_TRIGGERS		(IWM_UCODE_TLV_DEBUG_BASE + 4)
+#define IWM_UCODE_TLV_DEBUG_MAX			IWM_UCODE_TLV_TYPE_TRIGGERS
 
 struct iwm_ucode_tlv {
 	uint32_t type;		/* see above */

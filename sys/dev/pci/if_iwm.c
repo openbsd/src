@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.334 2021/07/07 08:05:11 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.335 2021/07/07 08:13:37 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -920,6 +920,16 @@ iwm_read_firmware(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 
 		case IWM_UCODE_TLV_FW_DBG_DEST:
 		case IWM_UCODE_TLV_FW_DBG_CONF:
+		case IWM_UCODE_TLV_UMAC_DEBUG_ADDRS:
+		case IWM_UCODE_TLV_LMAC_DEBUG_ADDRS:
+		case IWM_UCODE_TLV_TYPE_DEBUG_INFO:
+		case IWM_UCODE_TLV_TYPE_BUFFER_ALLOCATION:
+		case IWM_UCODE_TLV_TYPE_HCMD:
+		case IWM_UCODE_TLV_TYPE_REGIONS:
+		case IWM_UCODE_TLV_TYPE_TRIGGERS:
+			break;
+
+		case IWM_UCODE_TLV_HW_TYPE:
 			break;
 
 		case IWM_UCODE_TLV_FW_MEM_SEG:
