@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.46 2021/06/03 21:42:23 patrick Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.47 2021/07/07 21:12:51 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -2241,8 +2241,7 @@ mvpp2_rx_refill(struct mvpp2_port *sc)
 	KASSERT(pool < sc->sc->sc_npools);
 	bm = &sc->sc->sc_bm_pools[pool];
 
-	while (bm->free_cons != bm->free_prod) {
-		KASSERT(bm->freelist[bm->free_cons] != -1);
+	while (bm->freelist[bm->free_cons] != -1) {
 		virt = bm->freelist[bm->free_cons];
 		KASSERT(((virt >> 16) & 0xffff) == pool);
 		KASSERT((virt & 0xffff) < MVPP2_BM_SIZE);
