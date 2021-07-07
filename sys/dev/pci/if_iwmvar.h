@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.65 2021/07/07 08:52:54 stsp Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.66 2021/07/07 09:13:50 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -621,6 +621,9 @@ struct iwm_softc {
 
 	int sc_mqrx_supported;
 	int sc_integrated;
+	int sc_ltr_delay;
+	int sc_xtal_latency;
+	int sc_low_latency_xtal;
 
 	/*
 	 * Paging parameters - All of the parameters should be set by the

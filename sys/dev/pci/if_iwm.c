@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.339 2021/07/07 09:06:23 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.340 2021/07/07 09:13:50 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -498,6 +498,7 @@ void	iwm_fill_sf_command(struct iwm_softc *, struct iwm_sf_cfg_cmd *,
 	    struct ieee80211_node *);
 int	iwm_sf_config(struct iwm_softc *, int);
 int	iwm_send_bt_init_conf(struct iwm_softc *);
+int	iwm_send_soc_conf(struct iwm_softc *);
 int	iwm_send_update_mcc_cmd(struct iwm_softc *, const char *);
 int	iwm_send_temp_report_ths_cmd(struct iwm_softc *);
 void	iwm_tt_tx_backoff(struct iwm_softc *, uint32_t);
@@ -9045,6 +9046,45 @@ iwm_send_bt_init_conf(struct iwm_softc *sc)
 }
 
 int
+iwm_send_soc_conf(struct iwm_softc *sc)
+{
+	struct iwm_soc_configuration_cmd cmd;
+	int err;
+	uint32_t cmd_id, flags = 0;
+
+	memset(&cmd, 0, sizeof(cmd));
+
+	/*
+	 * In VER_1 of this command, the discrete value is considered
+	 * an integer; In VER_2, it's a bitmask.  Since we have only 2
+	 * values in VER_1, this is backwards-compatible with VER_2,
+	 * as long as we don't set any other flag bits.
+	 */
+	if (!sc->sc_integrated) { /* VER_1 */
+		flags = IWM_SOC_CONFIG_CMD_FLAGS_DISCRETE;
+	} else { /* VER_2 */
+		uint8_t scan_cmd_ver;
+		if (sc->sc_ltr_delay != IWM_SOC_FLAGS_LTR_APPLY_DELAY_NONE)
+			flags |= (sc->sc_ltr_delay &
+			    IWM_SOC_FLAGS_LTR_APPLY_DELAY_MASK);
+		scan_cmd_ver = iwm_lookup_cmd_ver(sc, IWM_LONG_GROUP,
+		    IWM_SCAN_REQ_UMAC);
+		if (scan_cmd_ver != IWM_FW_CMD_VER_UNKNOWN &&
+		    scan_cmd_ver >= 2 && sc->sc_low_latency_xtal)
+			flags |= IWM_SOC_CONFIG_CMD_FLAGS_LOW_LATENCY;
+	}
+	cmd.flags = htole32(flags);
+
+	cmd.latency = htole32(sc->sc_xtal_latency);
+
+	cmd_id = iwm_cmd_id(IWM_SOC_CONFIGURATION_CMD, IWM_SYSTEM_GROUP, 0);
+	err = iwm_send_cmd_pdu(sc, cmd_id, 0, sizeof(cmd), &cmd);
+	if (err)
+		printf("%s: failed to set soc latency: %d\n", DEVNAME(sc), err);
+	return err;
+}
+
+int
 iwm_send_update_mcc_cmd(struct iwm_softc *sc, const char *alpha2)
 {
 	struct iwm_mcc_update_cmd mcc_cmd;
@@ -9409,6 +9449,13 @@ iwm_init_hw(struct iwm_softc *sc)
 		printf("%s: could not init bt coex (error %d)\n",
 		    DEVNAME(sc), err);
 		return err;
+	}
+
+	if (isset(sc->sc_enabled_capa,
+	    IWM_UCODE_TLV_CAPA_SOC_LATENCY_SUPPORT)) {
+		err = iwm_send_soc_conf(sc);
+		if (err)
+			return err;
 	}
 
 	if (isset(sc->sc_enabled_capa, IWM_UCODE_TLV_CAPA_DQA_SUPPORT)) {
@@ -10448,6 +10495,9 @@ iwm_rx_pkt(struct iwm_softc *sc, struct iwm_rx_data *data, struct mbuf_list *ml)
 		case IWM_WIDE_ID(IWM_DATA_PATH_GROUP, IWM_DQA_ENABLE_CMD):
 			break;
 
+		case IWM_WIDE_ID(IWM_SYSTEM_GROUP, IWM_SOC_CONFIGURATION_CMD):
+			break;
+
 		default:
 			handled = 0;
 			printf("%s: unhandled firmware response 0x%x/0x%x "
@@ -10961,6 +11011,7 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_nvm_max_section_size = 32768;
 		sc->sc_mqrx_supported = 1;
 		sc->sc_integrated = 1;
+		sc->sc_xtal_latency = 650;
 		break;
 	default:
 		printf("%s: unknown adapter type\n", DEVNAME(sc));

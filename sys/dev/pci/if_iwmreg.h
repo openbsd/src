@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmreg.h,v 1.59 2021/07/07 09:06:23 stsp Exp $	*/
+/*	$OpenBSD: if_iwmreg.h,v 1.60 2021/07/07 09:13:50 stsp Exp $	*/
 
 /******************************************************************************
  *
@@ -916,6 +916,7 @@ enum msix_ivar_for_cause {
 #define IWM_UCODE_TLV_CAPA_GSCAN_SUPPORT		31
 #define IWM_UCODE_TLV_CAPA_NAN_SUPPORT			34
 #define IWM_UCODE_TLV_CAPA_UMAC_UPLOAD			35
+#define IWM_UCODE_TLV_CAPA_SOC_LATENCY_SUPPORT		37
 #define IWM_UCODE_TLV_CAPA_BINDING_CDB_SUPPORT		39
 #define IWM_UCODE_TLV_CAPA_CDB_SUPPORT			40
 #define IWM_UCODE_TLV_CAPA_DYNAMIC_QUOTA                44
@@ -2083,6 +2084,13 @@ struct iwm_agn_scd_bc_tbl {
 #define IWM_DATA_PATH_GROUP	0x5
 #define IWM_PROT_OFFLOAD_GROUP	0xb
 
+/* SYSTEM_GROUP group subcommand IDs */
+
+#define IWM_SHARED_MEM_CFG_CMD		0x00
+#define IWM_SOC_CONFIGURATION_CMD	0x01
+#define IWM_INIT_EXTENDED_CFG_CMD	0x03
+#define IWM_FW_ERROR_RECOVERY_CMD	0x07
+
 /* DATA_PATH group subcommand IDs */
 #define IWM_DQA_ENABLE_CMD	0x00
 
@@ -2540,6 +2548,32 @@ struct iwm_alive_resp_v3 {
 	uint32_t error_info_addr;		/* SRAM address for UMAC error log */
 	uint32_t dbg_print_buff_addr;
 } __packed; /* ALIVE_RES_API_S_VER_3 */
+
+#define IWM_SOC_CONFIG_CMD_FLAGS_DISCRETE	(1 << 0)
+#define IWM_SOC_CONFIG_CMD_FLAGS_LOW_LATENCY	(1 << 1)
+
+#define IWM_SOC_FLAGS_LTR_APPLY_DELAY_MASK		0xc
+#define IWM_SOC_FLAGS_LTR_APPLY_DELAY_NONE		0
+#define IWM_SOC_FLAGS_LTR_APPLY_DELAY_200		1
+#define IWM_SOC_FLAGS_LTR_APPLY_DELAY_2500		2
+#define IWM_SOC_FLAGS_LTR_APPLY_DELAY_1820		3
+
+/**
+ * struct iwm_soc_configuration_cmd - Set device stabilization latency
+ *
+ * @flags: soc settings flags.  In VER_1, we can only set the DISCRETE
+ *	flag, because the FW treats the whole value as an integer. In
+ *	VER_2, we can set the bits independently.
+ * @latency: time for SOC to ensure stable power & XTAL
+ */
+struct iwm_soc_configuration_cmd {
+	uint32_t flags;
+	uint32_t latency;
+} __packed; /*
+	     * SOC_CONFIGURATION_CMD_S_VER_1 (see description above)
+	     * SOC_CONFIGURATION_CMD_S_VER_2
+	     */
+
 
 /* Error response/notification */
 #define IWM_FW_ERR_UNKNOWN_CMD		0x0
