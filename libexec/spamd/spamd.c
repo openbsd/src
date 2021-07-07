@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.156 2019/08/06 13:34:36 mestre Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.157 2021/07/07 07:28:56 mestre Exp $	*/
 
 /*
  * Copyright (c) 2015 Henning Brauer <henning@openbsd.org>
@@ -136,10 +136,6 @@ u_short cfg_port;
 u_short sync_port;
 struct tls_config *tlscfg;
 struct tls *tlsctx;
-uint8_t	*pubcert;
-size_t	 pubcertlen;
-uint8_t	*privkey;
-size_t	 privkeylen;
 char 	*tlskeyfile = NULL;
 char 	*tlscertfile = NULL;
 
@@ -464,9 +460,9 @@ spamd_tls_init()
 	if (tls_config_set_ciphers(tlscfg, "all") != 0)
 		errx(1, "failed to set tls ciphers");
 
-	if (tls_config_set_cert_mem(tlscfg, pubcert, pubcertlen) == -1)
+	if (tls_config_set_cert_file(tlscfg, tlscertfile) == -1)
 		errx(1, "unable to set TLS certificate file %s", tlscertfile);
-	if (tls_config_set_key_mem(tlscfg, privkey, privkeylen) == -1)
+	if (tls_config_set_key_file(tlscfg, tlskeyfile) == -1)
 		errx(1, "unable to set TLS key file %s", tlskeyfile);
 	if (tls_configure(tlsctx, tlscfg) != 0)
 		errx(1, "failed to configure TLS - %s", tls_error(tlsctx));
@@ -1392,12 +1388,7 @@ main(int argc, char *argv[])
 	} else if (maxblack > maxcon)
 		usage();
 
-	if (tlscertfile &&
-		(pubcert=tls_load_file(tlscertfile, &pubcertlen, NULL)) == NULL)
-		errx(1, "unable to load TLS certificate file %s", tlscertfile);
-	if (tlskeyfile &&
-		(privkey=tls_load_file(tlskeyfile, &privkeylen, NULL)) == NULL)
-		errx(1, "unable to load TLS key file %s", tlskeyfile);
+	spamd_tls_init();
 
 	rlp.rlim_cur = rlp.rlim_max = maxcon + 15;
 	if (setrlimit(RLIMIT_NOFILE, &rlp) == -1)
@@ -1546,8 +1537,6 @@ main(int argc, char *argv[])
 jail:
 	if (pledge("stdio inet", NULL) == -1)
 		err(1, "pledge");
-
-	spamd_tls_init();
 
 	if (listen(smtplisten, 10) == -1)
 		err(1, "listen");
