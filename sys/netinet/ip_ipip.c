@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.90 2021/01/09 20:59:44 gnezdo Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.91 2021/07/07 18:03:46 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -228,7 +228,7 @@ ipip_input_if(struct mbuf **mp, int *offp, int proto, int oaf,
 
 	/* Some sanity checks in the inner IP header */
 	switch (proto) {
-    	case IPPROTO_IPV4:
+	case IPPROTO_IPV4:
 		iaf = AF_INET;
 		ip = mtod(m, struct ip *);
 		hlen = ip->ip_hl << 2;
@@ -249,7 +249,7 @@ ipip_input_if(struct mbuf **mp, int *offp, int proto, int oaf,
 			ip_tos_patch(ip, itos);
 		break;
 #ifdef INET6
-    	case IPPROTO_IPV6:
+	case IPPROTO_IPV6:
 		iaf = AF_INET6;
 		ip6 = mtod(m, struct ip6_hdr *);
 		itos = (ntohl(ip6->ip6_flow) >> 20) & 0xff;
@@ -289,7 +289,7 @@ ipip_input_if(struct mbuf **mp, int *offp, int proto, int oaf,
 			ipipstat_inc(ipips_spoof);
 			rtfree(rt);
 			goto bad;
- 		}
+		}
 		rtfree(rt);
 	}
 

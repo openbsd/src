@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.197 2021/05/04 09:28:04 mvs Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.198 2021/07/07 18:03:46 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -62,7 +62,7 @@ union sockaddr_union {
 #define	AH_SHA2_256_ALEN	32
 #define	AH_SHA2_384_ALEN	48
 #define	AH_SHA2_512_ALEN	64
-#define	AH_ALEN_MAX		64 	/* Keep updated */
+#define	AH_ALEN_MAX		64	/* Keep updated */
 
 /* Reserved SPI numbers */
 #define	SPI_LOCAL_USE		0
@@ -262,7 +262,7 @@ struct ipsec_policy {
 	union sockaddr_union	ipo_dst;	/* Remote gateway -- if it's zeroed:
 						 * - on output, we try to
 						 * contact the remote host
-						 * directly (if needed).  
+						 * directly (if needed).
 						 * - on input, we accept on if
 						 * the inner source is the
 						 * same as the outer source
@@ -494,7 +494,7 @@ extern int ipsec_exp_bytes;		/* num of bytes/SA before it expires */
 extern int ipsec_soft_timeout;		/* seconds/SA before renegotiation */
 extern int ipsec_exp_timeout;		/* seconds/SA before it expires */
 extern int ipsec_soft_first_use;	/* seconds between 1st asso & renego */
-extern int ipsec_exp_first_use;		/* seconds between 1st asso & expire */	
+extern int ipsec_exp_first_use;		/* seconds between 1st asso & expire */
 
 /*
  * Names for IPsec sysctl objects
@@ -575,9 +575,9 @@ int	ipe4_zeroize(struct tdb *);
 int	ipe4_input(struct mbuf *, struct tdb *, int, int);
 
 /* XF_AH */
-int 	ah_attach(void);
-int 	ah_init(struct tdb *, struct xformsw *, struct ipsecinit *);
-int 	ah_zeroize(struct tdb *);
+int	ah_attach(void);
+int	ah_init(struct tdb *, struct xformsw *, struct ipsecinit *);
+int	ah_zeroize(struct tdb *);
 int	ah_input(struct mbuf *, struct tdb *, int, int);
 int	ah_input_cb(struct tdb *, struct tdb_crypto *, struct mbuf *, int);
 int	ah_output(struct mbuf *, struct tdb *, struct mbuf **, int, int);
@@ -608,7 +608,7 @@ int	esp4_input(struct mbuf **, int *, int, int);
 void	esp4_ctlinput(int, struct sockaddr *, u_int, void *);
 
 #ifdef INET6
-int 	esp6_input(struct mbuf **, int *, int, int);
+int	esp6_input(struct mbuf **, int *, int, int);
 #endif /* INET6 */
 
 /* XF_IPCOMP */

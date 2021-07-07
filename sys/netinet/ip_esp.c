@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.163 2021/06/18 15:34:21 bluhm Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.164 2021/07/07 18:03:46 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -689,7 +689,7 @@ esp_input_cb(struct tdb *tdb, struct tdb_crypto *tc, struct mbuf *m, int clen)
 		 * overlapping copy of the remainder of the mbuf over the ESP
 		 * header.
 		 */
-		memmove(mtod(m1, u_char *) + roff, 
+		memmove(mtod(m1, u_char *) + roff,
 		    mtod(m1, u_char *) + roff + hlen,
 		    m1->m_len - (roff + hlen));
 		m1->m_len -= hlen;

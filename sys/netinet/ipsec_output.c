@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.80 2021/06/18 15:34:21 bluhm Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.81 2021/07/07 18:03:46 bluhm Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -453,7 +453,7 @@ ipsec_output_cb(struct cryptop *crp)
  baddone:
 	NET_UNLOCK();
  droponly:
- 	if (tdb != NULL)
+	if (tdb != NULL)
 		tdb->tdb_odrops++;
 	m_freem(m);
 	free(tc, M_XDATA, 0);
