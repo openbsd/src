@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmreg.h,v 1.57 2021/07/07 08:32:00 stsp Exp $	*/
+/*	$OpenBSD: if_iwmreg.h,v 1.58 2021/07/07 08:52:54 stsp Exp $	*/
 
 /******************************************************************************
  *
@@ -1095,6 +1095,7 @@ struct iwm_ucode_header {
 #define IWM_UCODE_TLV_FW_DBG_DEST	38
 #define IWM_UCODE_TLV_FW_DBG_CONF	39
 #define IWM_UCODE_TLV_FW_DBG_TRIGGER	40
+#define IWM_UCODE_TLV_CMD_VERSIONS	48
 #define IWM_UCODE_TLV_FW_GSCAN_CAPA	50
 #define IWM_UCODE_TLV_FW_MEM_SEG	51
 #define IWM_UCODE_TLV_UMAC_DEBUG_ADDRS	54
@@ -2545,6 +2546,22 @@ struct iwm_error_resp {
 	uint16_t bad_cmd_seq_num;
 	uint32_t error_service;
 	uint64_t timestamp;
+} __packed;
+
+#define IWM_FW_CMD_VER_UNKNOWN 99
+
+/**
+ * struct iwm_fw_cmd_version - firmware command version entry
+ * @cmd: command ID
+ * @group: group ID
+ * @cmd_ver: command version
+ * @notif_ver: notification version
+ */
+struct iwm_fw_cmd_version {
+	uint8_t cmd;
+	uint8_t group;
+	uint8_t cmd_ver;
+	uint8_t notif_ver;
 } __packed;
 
 

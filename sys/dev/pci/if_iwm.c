@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.337 2021/07/07 08:32:00 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.338 2021/07/07 08:52:54 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -549,6 +549,21 @@ int	iwm_resume(struct iwm_softc *);
 void	iwm_radiotap_attach(struct iwm_softc *);
 #endif
 
+uint8_t
+iwm_lookup_cmd_ver(struct iwm_softc *sc, uint8_t grp, uint8_t cmd)
+{
+	const struct iwm_fw_cmd_version *entry;
+	int i;
+
+	for (i = 0; i < sc->n_cmd_versions; i++) {
+		entry = &sc->cmd_versions[i];
+		if (entry->group == grp && entry->cmd == cmd)
+			return entry->cmd_ver;
+	}
+
+	return IWM_FW_CMD_VER_UNKNOWN;
+}
+
 int
 iwm_is_mimo_ht_plcp(uint8_t ht_plcp)
 {
@@ -680,6 +695,7 @@ iwm_read_firmware(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 	sc->sc_capaflags = 0;
 	sc->sc_capa_n_scan_channels = IWM_DEFAULT_SCAN_CHANNELS;
 	memset(sc->sc_enabled_capa, 0, sizeof(sc->sc_enabled_capa));
+	sc->n_cmd_versions = 0;
 	memset(sc->sc_fw_mcc, 0, sizeof(sc->sc_fw_mcc));
 
 	uhdr = (void *)fw->fw_rawdata;
@@ -850,7 +866,23 @@ iwm_read_firmware(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 			break;
 		}
 
-		case 48: /* undocumented TLV */
+		case IWM_UCODE_TLV_CMD_VERSIONS:
+			if (tlv_len % sizeof(struct iwm_fw_cmd_version)) {
+				tlv_len /= sizeof(struct iwm_fw_cmd_version);
+				tlv_len *= sizeof(struct iwm_fw_cmd_version);
+			}
+			if (sc->n_cmd_versions != 0) {
+				err = EINVAL;
+				goto parse_out;
+			}
+			if (tlv_len > sizeof(sc->cmd_versions)) {
+				err = EINVAL;
+				goto parse_out;
+			}
+			memcpy(&sc->cmd_versions[0], tlv_data, tlv_len);
+			sc->n_cmd_versions = tlv_len / sizeof(struct iwm_fw_cmd_version);
+			break;
+
 		case IWM_UCODE_TLV_SDIO_ADMA_ADDR:
 		case IWM_UCODE_TLV_FW_GSCAN_CAPA:
 			/* ignore, not used by current driver */

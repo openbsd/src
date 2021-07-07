@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.64 2021/06/01 18:03:56 stsp Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.65 2021/07/07 08:52:54 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -545,6 +545,9 @@ struct iwm_softc {
 	int sc_capa_n_scan_channels;
 	uint8_t sc_ucode_api[howmany(IWM_NUM_UCODE_TLV_API, NBBY)];
 	uint8_t sc_enabled_capa[howmany(IWM_NUM_UCODE_TLV_CAPA, NBBY)];
+#define IWM_MAX_FW_CMD_VERSIONS	64
+	struct iwm_fw_cmd_version cmd_versions[IWM_MAX_FW_CMD_VERSIONS];
+	int n_cmd_versions;
 	char sc_fw_mcc[3];
 
 	int sc_intmask;
