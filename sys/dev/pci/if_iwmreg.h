@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmreg.h,v 1.55 2021/07/07 08:13:37 stsp Exp $	*/
+/*	$OpenBSD: if_iwmreg.h,v 1.56 2021/07/07 08:21:31 stsp Exp $	*/
 
 /******************************************************************************
  *
@@ -917,6 +917,7 @@ enum msix_ivar_for_cause {
 #define IWM_UCODE_TLV_CAPA_NAN_SUPPORT			34
 #define IWM_UCODE_TLV_CAPA_UMAC_UPLOAD			35
 #define IWM_UCODE_TLV_CAPA_DYNAMIC_QUOTA                44
+#define IWM_UCODE_TLV_CAPA_ULTRA_HB_CHANNELS		48
 #define IWM_UCODE_TLV_CAPA_EXTENDED_DTS_MEASURE		64
 #define IWM_UCODE_TLV_CAPA_SHORT_PM_TIMEOUTS		65
 #define IWM_UCODE_TLV_CAPA_BT_MPLUT_SUPPORT		67
@@ -2966,12 +2967,29 @@ struct iwm_time_quota_cmd {
  * @width: PHY_[VHT|LEGACY]_CHANNEL_*
  * @ctrl channel: PHY_[VHT|LEGACY]_CTRL_*
  */
-struct iwm_fw_channel_info {
+struct iwm_fw_channel_info_v1 {
 	uint8_t band;
 	uint8_t channel;
 	uint8_t width;
 	uint8_t ctrl_pos;
-} __packed;
+} __packed; /* CHANNEL_CONFIG_API_S_VER_1 */
+
+/*
+ * struct iwm_fw_channel_info - channel information
+ *
+ * @channel: channel number
+ * @band: PHY_BAND_*
+ * @width: PHY_[VHT|LEGACY]_CHANNEL_*
+ * @ctrl channel: PHY_[VHT|LEGACY]_CTRL_*
+ * @reserved: for future use and alignment
+ */
+struct iwm_fw_channel_info {
+	uint32_t channel;
+	uint8_t band;
+	uint8_t width;
+	uint8_t ctrl_pos;
+	uint8_t reserved;
+} __packed; /* CHANNEL_CONFIG_API_S_VER_2 */
 
 #define IWM_PHY_RX_CHAIN_DRIVER_FORCE_POS	(0)
 #define IWM_PHY_RX_CHAIN_DRIVER_FORCE_MSK \
@@ -3013,7 +3031,15 @@ struct iwm_fw_channel_info {
  * @acquisition_data: ???
  * @dsp_cfg_flags: set to 0
  */
-struct iwm_phy_context_cmd {
+/*
+ * XXX Intel forgot to bump the PHY_CONTEXT command API when they increased
+ * the size of fw_channel_info from v1 to v2.
+ * To keep things simple we define two versions of this struct, and both
+ * are labled as CMD_API_VER_1. (The Linux iwlwifi driver performs dark
+ * magic with pointers to struct members instead.)
+ */
+/* This version must be used if IWM_UCODE_TLV_CAPA_ULTRA_HB_CHANNELS is set: */
+struct iwm_phy_context_cmd_uhb {
 	/* COMMON_INDEX_HDR_API_S_VER_1 */
 	uint32_t id_and_color;
 	uint32_t action;
@@ -3021,6 +3047,20 @@ struct iwm_phy_context_cmd {
 	uint32_t apply_time;
 	uint32_t tx_param_color;
 	struct iwm_fw_channel_info ci;
+	uint32_t txchain_info;
+	uint32_t rxchain_info;
+	uint32_t acquisition_data;
+	uint32_t dsp_cfg_flags;
+} __packed; /* IWM_PHY_CONTEXT_CMD_API_VER_1 */
+/* This version must be used otherwise: */
+struct iwm_phy_context_cmd {
+	/* COMMON_INDEX_HDR_API_S_VER_1 */
+	uint32_t id_and_color;
+	uint32_t action;
+	/* IWM_PHY_CONTEXT_DATA_API_S_VER_1 */
+	uint32_t apply_time;
+	uint32_t tx_param_color;
+	struct iwm_fw_channel_info_v1 ci;
 	uint32_t txchain_info;
 	uint32_t rxchain_info;
 	uint32_t acquisition_data;
