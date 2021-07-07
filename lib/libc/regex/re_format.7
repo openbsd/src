@@ -1,4 +1,4 @@
-.\"	$OpenBSD: re_format.7,v 1.22 2015/09/14 20:06:58 schwarze Exp $
+.\"	$OpenBSD: re_format.7,v 1.23 2021/07/07 11:21:55 martijn Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
 .\"
@@ -35,7 +35,7 @@
 .\"
 .\"	@(#)re_format.7	8.3 (Berkeley) 3/20/94
 .\"
-.Dd $Mdocdate: September 14 2015 $
+.Dd $Mdocdate: July 7 2021 $
 .Dt RE_FORMAT 7
 .Os
 .Sh NAME
@@ -524,13 +524,6 @@ or
 Basic regular expressions differ in several respects:
 .Bl -bullet -offset 3n
 .It
-.Sq | ,
-.Sq + ,
-and
-.Sq ?\&
-are ordinary characters and there is no equivalent
-for their functionality.
-.It
 The delimiters for bounds are
 .Sq \e{
 and
@@ -540,6 +533,20 @@ with
 and
 .Sq }
 by themselves ordinary characters.
+.It
+.Sq | ,
+.Sq + ,
+and
+.Sq ?\&
+are ordinary characters.
+.Sq \e{1,\e}
+is equivalent to
+.Sq + .
+.Sq \e{0,1\e}
+is equivalent to
+.Sq ?\& .
+There is no equivalent for
+.Sq | .
 .It
 The parentheses for nested subexpressions are
 .Sq \e(
