@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.338 2021/07/07 08:52:54 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.339 2021/07/07 09:06:23 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -499,6 +499,7 @@ void	iwm_fill_sf_command(struct iwm_softc *, struct iwm_sf_cfg_cmd *,
 int	iwm_sf_config(struct iwm_softc *, int);
 int	iwm_send_bt_init_conf(struct iwm_softc *);
 int	iwm_send_update_mcc_cmd(struct iwm_softc *, const char *);
+int	iwm_send_temp_report_ths_cmd(struct iwm_softc *);
 void	iwm_tt_tx_backoff(struct iwm_softc *, uint32_t);
 void	iwm_free_fw_paging(struct iwm_softc *);
 int	iwm_save_fw_paging(struct iwm_softc *, const struct iwm_fw_sects *);
@@ -9088,6 +9089,29 @@ iwm_send_update_mcc_cmd(struct iwm_softc *sc, const char *alpha2)
 	return 0;
 }
 
+int
+iwm_send_temp_report_ths_cmd(struct iwm_softc *sc)
+{
+	struct iwm_temp_report_ths_cmd cmd;
+	int err;
+
+	/*
+	 * In order to give responsibility for critical-temperature-kill
+	 * and TX backoff to FW we need to send an empty temperature
+	 * reporting command at init time.
+	 */
+	memset(&cmd, 0, sizeof(cmd));
+
+	err = iwm_send_cmd_pdu(sc,
+	    IWM_WIDE_ID(IWM_PHY_OPS_GROUP, IWM_TEMP_REPORTING_THRESHOLDS_CMD),
+	    0, sizeof(cmd), &cmd);
+	if (err)
+		printf("%s: TEMP_REPORT_THS_CMD command failed (error %d)\n",
+		    DEVNAME(sc), err);
+
+	return err;
+}
+
 void
 iwm_tt_tx_backoff(struct iwm_softc *sc, uint32_t backoff)
 {
@@ -9426,6 +9450,12 @@ iwm_init_hw(struct iwm_softc *sc)
 	if (err) {
 		printf("%s: PCIe LTR configuration failed (error %d)\n",
 		    DEVNAME(sc), err);
+	}
+
+	if (isset(sc->sc_enabled_capa, IWM_UCODE_TLV_CAPA_CT_KILL_BY_FW)) {
+		err = iwm_send_temp_report_ths_cmd(sc);
+		if (err)
+			goto err;
 	}
 
 	err = iwm_power_update_device(sc);
@@ -10266,7 +10296,21 @@ iwm_rx_pkt(struct iwm_softc *sc, struct iwm_rx_data *data, struct mbuf_list *ml)
 		case IWM_DTS_MEASUREMENT_NOTIFICATION:
 		case IWM_WIDE_ID(IWM_PHY_OPS_GROUP,
 				 IWM_DTS_MEASUREMENT_NOTIF_WIDE):
+		case IWM_WIDE_ID(IWM_PHY_OPS_GROUP,
+				 IWM_TEMP_REPORTING_THRESHOLDS_CMD):
 			break;
+
+		case IWM_WIDE_ID(IWM_PHY_OPS_GROUP,
+		    IWM_CT_KILL_NOTIFICATION): {
+			struct iwm_ct_kill_notif *notif;
+			SYNC_RESP_STRUCT(notif, pkt);
+			printf("%s: device at critical temperature (%u degC), "
+			    "stopping device\n",
+			    DEVNAME(sc), le16toh(notif->temperature));
+			sc->sc_flags |= IWM_FLAG_HW_ERR;
+			task_add(systq, &sc->init_task);
+			break;
+		}
 
 		case IWM_ADD_STA_KEY:
 		case IWM_PHY_CONFIGURATION_CMD:

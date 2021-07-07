@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmreg.h,v 1.58 2021/07/07 08:52:54 stsp Exp $	*/
+/*	$OpenBSD: if_iwmreg.h,v 1.59 2021/07/07 09:06:23 stsp Exp $	*/
 
 /******************************************************************************
  *
@@ -2177,6 +2177,31 @@ struct iwm_phy_cfg_cmd {
 #define IWM_PHY_CFG_RX_CHAIN_A	(1 << 12)
 #define IWM_PHY_CFG_RX_CHAIN_B	(1 << 13)
 #define IWM_PHY_CFG_RX_CHAIN_C	(1 << 14)
+
+#define IWM_MAX_DTS_TRIPS	8
+
+/**
+ * struct iwm_ct_kill_notif - CT-kill entry notification
+ *
+ * @temperature: the current temperature in celsius
+ * @reserved: reserved
+ */
+struct iwm_ct_kill_notif {
+	uint16_t temperature;
+	uint16_t reserved;
+} __packed; /* GRP_PHY_CT_KILL_NTF */
+
+/**
+ * struct iwm_temp_report_ths_cmd - set temperature thresholds
+ * (IWM_TEMP_REPORTING_THRESHOLDS_CMD)
+ *
+ * @num_temps: number of temperature thresholds passed
+ * @thresholds: array with the thresholds to be configured
+ */
+struct iwm_temp_report_ths_cmd {
+	uint32_t num_temps;
+	uint16_t thresholds[IWM_MAX_DTS_TRIPS];
+} __packed; /* GRP_PHY_TEMP_REPORTING_THRESHOLDS_CMD */
 
 /*
  * PHY db
