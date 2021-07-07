@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmreg.h,v 1.56 2021/07/07 08:21:31 stsp Exp $	*/
+/*	$OpenBSD: if_iwmreg.h,v 1.57 2021/07/07 08:32:00 stsp Exp $	*/
 
 /******************************************************************************
  *
@@ -916,6 +916,8 @@ enum msix_ivar_for_cause {
 #define IWM_UCODE_TLV_CAPA_GSCAN_SUPPORT		31
 #define IWM_UCODE_TLV_CAPA_NAN_SUPPORT			34
 #define IWM_UCODE_TLV_CAPA_UMAC_UPLOAD			35
+#define IWM_UCODE_TLV_CAPA_BINDING_CDB_SUPPORT		39
+#define IWM_UCODE_TLV_CAPA_CDB_SUPPORT			40
 #define IWM_UCODE_TLV_CAPA_DYNAMIC_QUOTA                44
 #define IWM_UCODE_TLV_CAPA_ULTRA_HB_CHANNELS		48
 #define IWM_UCODE_TLV_CAPA_EXTENDED_DTS_MEASURE		64
@@ -2855,12 +2857,31 @@ struct iwm_time_event_notif {
 /* Bindings and Time Quota */
 
 /**
+ * struct iwm_binding_cmd_v1 - configuring bindings
+ * ( IWM_BINDING_CONTEXT_CMD = 0x2b )
+ * @id_and_color: ID and color of the relevant Binding
+ * @action: action to perform, one of IWM_FW_CTXT_ACTION_*
+ * @macs: array of MAC id and colors which belong to the binding
+ * @phy: PHY id and color which belongs to the binding
+ * @lmac_id: the lmac id the binding belongs to
+ */
+struct iwm_binding_cmd_v1 {
+	/* COMMON_INDEX_HDR_API_S_VER_1 */
+	uint32_t id_and_color;
+	uint32_t action;
+	/* IWM_BINDING_DATA_API_S_VER_1 */
+	uint32_t macs[IWM_MAX_MACS_IN_BINDING];
+	uint32_t phy;
+} __packed; /* IWM_BINDING_CMD_API_S_VER_1 */
+
+/**
  * struct iwm_binding_cmd - configuring bindings
  * ( IWM_BINDING_CONTEXT_CMD = 0x2b )
  * @id_and_color: ID and color of the relevant Binding
  * @action: action to perform, one of IWM_FW_CTXT_ACTION_*
  * @macs: array of MAC id and colors which belong to the binding
  * @phy: PHY id and color which belongs to the binding
+ * @lmac_id: the lmac id the binding belongs to
  */
 struct iwm_binding_cmd {
 	/* COMMON_INDEX_HDR_API_S_VER_1 */
@@ -2869,7 +2890,11 @@ struct iwm_binding_cmd {
 	/* IWM_BINDING_DATA_API_S_VER_1 */
 	uint32_t macs[IWM_MAX_MACS_IN_BINDING];
 	uint32_t phy;
-} __packed; /* IWM_BINDING_CMD_API_S_VER_1 */
+	uint32_t lmac_id;
+} __packed; /* IWM_BINDING_CMD_API_S_VER_2 */
+
+#define IWM_LMAC_24G_INDEX		0
+#define IWM_LMAC_5G_INDEX		1
 
 /* The maximal number of fragments in the FW's schedule session */
 #define IWM_MAX_QUOTA 128

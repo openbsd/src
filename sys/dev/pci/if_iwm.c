@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.336 2021/07/07 08:21:31 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.337 2021/07/07 08:32:00 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5676,6 +5676,7 @@ iwm_binding_cmd(struct iwm_softc *sc, struct iwm_node *in, uint32_t action)
 	uint32_t mac_id = IWM_FW_CMD_ID_AND_COLOR(in->in_id, in->in_color);
 	int i, err, active = (sc->sc_flags & IWM_FLAG_BINDING_ACTIVE);
 	uint32_t status;
+	size_t len;
 
 	if (action == IWM_FW_CTXT_ACTION_ADD && active)
 		panic("binding already added");
@@ -5696,9 +5697,19 @@ iwm_binding_cmd(struct iwm_softc *sc, struct iwm_node *in, uint32_t action)
 	for (i = 1; i < IWM_MAX_MACS_IN_BINDING; i++)
 		cmd.macs[i] = htole32(IWM_FW_CTXT_INVALID);
 
+	if (IEEE80211_IS_CHAN_2GHZ(phyctxt->channel) ||
+	    !isset(sc->sc_enabled_capa, IWM_UCODE_TLV_CAPA_CDB_SUPPORT))
+		cmd.lmac_id = htole32(IWM_LMAC_24G_INDEX);
+	else
+		cmd.lmac_id = htole32(IWM_LMAC_5G_INDEX);
+
+	if (isset(sc->sc_enabled_capa, IWM_UCODE_TLV_CAPA_BINDING_CDB_SUPPORT))
+		len = sizeof(cmd);
+	else
+		len = sizeof(struct iwm_binding_cmd_v1);
 	status = 0;
-	err = iwm_send_cmd_pdu_status(sc, IWM_BINDING_CONTEXT_CMD,
-	    sizeof(cmd), &cmd, &status);
+	err = iwm_send_cmd_pdu_status(sc, IWM_BINDING_CONTEXT_CMD, len, &cmd,
+	    &status);
 	if (err == 0 && status != 0)
 		err = EIO;
 
