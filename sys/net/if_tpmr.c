@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tpmr.c,v 1.30 2021/06/02 01:37:10 dlg Exp $ */
+/*	$OpenBSD: if_tpmr.c,v 1.31 2021/07/07 20:19:01 sashan Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -83,6 +83,8 @@ struct tpmr_port {
 	struct tpmr_softc	*p_tpmr;
 	unsigned int		 p_slot;
 
+	int		 	 p_refcnt;
+
 	struct ether_brport	 p_brport;
 };
 
@@ -125,6 +127,8 @@ static int	tpmr_add_port(struct tpmr_softc *,
 static int	tpmr_del_port(struct tpmr_softc *,
 		    const struct ifbreq *);
 static int	tpmr_port_list(struct tpmr_softc *, struct ifbifconf *);
+static void	tpmr_p_take(void *);
+static void	tpmr_p_rele(void *);
 
 static struct if_clone tpmr_cloner =
     IF_CLONE_INITIALIZER("tpmr", tpmr_clone_create, tpmr_clone_destroy);
@@ -375,16 +379,21 @@ tpmr_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport)
 	}
 #endif
 
-	SMR_ASSERT_CRITICAL(); /* ether_input calls us in a crit section */
+	smr_read_enter();
 	pn = SMR_PTR_GET(&sc->sc_ports[!p->p_slot]);
+	if (pn != NULL)
+		tpmr_p_take(pn);
+	smr_read_leave();
 	if (pn == NULL)
 		goto drop;
 
 	ifpn = pn->p_ifp0;
 #if NPF > 0
 	if (!ISSET(iff, IFF_LINK1) &&
-	    (m = tpmr_pf(ifpn, PF_OUT, m)) == NULL)
+	    (m = tpmr_pf(ifpn, PF_OUT, m)) == NULL) {
+		tpmr_p_rele(pn);
 		return (NULL);
+	}
 #endif
 
 	if (if_enqueue(ifpn, m))
@@ -393,6 +402,8 @@ tpmr_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport)
 		counters_pkt(ifp->if_counters,
 		    ifc_opackets, ifc_obytes, len);
 	}
+
+	tpmr_p_rele(pn);
 
 	return (NULL);
 
@@ -532,6 +543,8 @@ tpmr_add_port(struct tpmr_softc *sc, const struct ifbreq *req)
 	if_detachhook_add(ifp0, &p->p_dtask);
 
 	p->p_brport.eb_input = tpmr_input;
+	p->p_brport.eb_port_take = tpmr_p_take;
+	p->p_brport.eb_port_rele = tpmr_p_rele;
 	p->p_brport.eb_port = p;
 
 	/* commit */
@@ -547,6 +560,7 @@ tpmr_add_port(struct tpmr_softc *sc, const struct ifbreq *req)
 
 	p->p_slot = i;
 
+	tpmr_p_take(p);
 	ether_brport_set(ifp0, &p->p_brport);
 	ifp0->if_ioctl = tpmr_p_ioctl;
 	ifp0->if_output = tpmr_p_output;
@@ -701,6 +715,26 @@ tpmr_p_output(struct ifnet *ifp0, struct mbuf *m, struct sockaddr *dst,
 }
 
 static void
+tpmr_p_take(void *p)
+{
+	struct tpmr_port *port = p;
+
+	atomic_inc_int(&port->p_refcnt);
+}
+
+static void
+tpmr_p_rele(void *p)
+{
+	struct tpmr_port *port = p;
+	struct ifnet *ifp0 = port->p_ifp0;
+
+	if (atomic_dec_int_nv(&port->p_refcnt) == 0) {
+		if_put(ifp0);
+		free(port, M_DEVBUF, sizeof(*port));
+	}
+}
+
+static void
 tpmr_p_dtor(struct tpmr_softc *sc, struct tpmr_port *p, const char *op)
 {
 	struct ifnet *ifp = &sc->sc_if;
@@ -725,10 +759,9 @@ tpmr_p_dtor(struct tpmr_softc *sc, struct tpmr_port *p, const char *op)
 	if_detachhook_del(ifp0, &p->p_dtask);
 	if_linkstatehook_del(ifp0, &p->p_ltask);
 
-	smr_barrier();
+	tpmr_p_rele(p);
 
-	if_put(ifp0);
-	free(p, M_DEVBUF, sizeof(*p));
+	smr_barrier();
 
 	if (ifp->if_link_state != LINK_STATE_DOWN) {
 		ifp->if_link_state = LINK_STATE_DOWN;

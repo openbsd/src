@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.82 2021/04/23 21:55:36 bluhm Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.83 2021/07/07 20:19:01 sashan Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -220,6 +220,8 @@ do {									\
 struct ether_brport {
 	struct mbuf	*(*eb_input)(struct ifnet *, struct mbuf *,
 			   uint64_t, void *);
+	void		(*eb_port_take)(void *);
+	void		(*eb_port_rele)(void *);
 	void		  *eb_port;
 };
 

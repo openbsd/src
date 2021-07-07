@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.c,v 1.43 2021/03/05 06:44:09 dlg Exp $	*/
+/*	$OpenBSD: if_switch.c,v 1.44 2021/07/07 20:19:01 sashan Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -110,6 +110,8 @@ struct mbuf
 void	 switch_flow_classifier_dump(struct switch_softc *,
 	    struct switch_flow_classify *);
 void	 switchattach(int);
+void	switch_take(void *);
+void	switch_rele(void *);
 
 struct if_clone switch_cloner =
     IF_CLONE_INITIALIZER("switch", switch_clone_create, switch_clone_destroy);
@@ -122,6 +124,8 @@ struct pool swfcl_pool;
 
 const struct ether_brport switch_brport = {
 	switch_input,
+	switch_take,
+	switch_rele,
 	NULL,
 };
 
@@ -1570,4 +1574,16 @@ ofp_split_mbuf(struct mbuf *m, struct mbuf **mtail)
 		return (-1);
 
 	return (0);
+}
+
+void
+switch_take(void *unused)
+{
+	return;
+}
+
+void
+switch_rele(void *unused)
+{
+	return;
 }
