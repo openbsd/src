@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.296 2021/06/25 23:48:30 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.297 2021/07/07 18:38:25 sashan Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1931,7 +1931,7 @@ pfsync_insert_state(struct pf_state *st)
 }
 
 int
-pfsync_defer(struct pf_state *st, struct mbuf *m)
+pfsync_defer(struct pf_state *st, struct mbuf *m, struct pfsync_deferral **ppd)
 {
 	struct pfsync_softc *sc = pfsyncif;
 	struct pfsync_deferral *pd;
@@ -1944,21 +1944,30 @@ pfsync_defer(struct pf_state *st, struct mbuf *m)
 	    m->m_flags & (M_BCAST|M_MCAST))
 		return (0);
 
-	if (sc->sc_deferred >= 128) {
-		mtx_enter(&sc->sc_deferrals_mtx);
-		pd = TAILQ_FIRST(&sc->sc_deferrals);
-		if (pd != NULL) {
-			TAILQ_REMOVE(&sc->sc_deferrals, pd, pd_entry);
-			sc->sc_deferred--;
-		}
-		mtx_leave(&sc->sc_deferrals_mtx);
-		if (pd != NULL)
-			pfsync_undefer(pd, 0);
-	}
-
 	pd = pool_get(&sc->sc_pool, M_NOWAIT);
 	if (pd == NULL)
 		return (0);
+
+	/*
+	 * deferral queue grows faster, than timeout can consume,
+	 * we have to ask packet (caller) to help timer and dispatch
+	 * one deferral for us.
+	 *
+	 * We wish to call pfsync_undefer() here. Unfortunately we can't,
+	 * because pfsync_undefer() will be calling to ip_output(),
+	 * which in turn will call to pf_test(), which would then attempt
+	 * to grab PF_LOCK() we currently hold.
+	 */
+	if (sc->sc_deferred >= 128) {
+		mtx_enter(&sc->sc_deferrals_mtx);
+		*ppd = TAILQ_FIRST(&sc->sc_deferrals);
+		if (*ppd != NULL) {
+			TAILQ_REMOVE(&sc->sc_deferrals, *ppd, pd_entry);
+			sc->sc_deferred--;
+		}
+		mtx_leave(&sc->sc_deferrals_mtx);
+	} else
+		*ppd = NULL;
 
 	m->m_pkthdr.pf.flags |= PF_TAG_GENERATED;
 	SET(st->state_flags, PFSTATE_ACK);
