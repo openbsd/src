@@ -176,8 +176,7 @@ static int framebuffer_check(struct drm_device *dev,
 	int i;
 
 	/* check if the format is supported at all */
-	info = __drm_format_info(r->pixel_format);
-	if (!info) {
+	if (!__drm_format_info(r->pixel_format)) {
 		struct drm_format_name_buf format_name;
 
 		DRM_DEBUG_KMS("bad framebuffer format %s\n",
@@ -185,9 +184,6 @@ static int framebuffer_check(struct drm_device *dev,
 						  &format_name));
 		return -EINVAL;
 	}
-
-	/* now let the driver pick its own format info */
-	info = drm_get_format_info(dev, r);
 
 	if (r->width == 0) {
 		DRM_DEBUG_KMS("bad framebuffer width %u\n", r->width);
@@ -198,6 +194,9 @@ static int framebuffer_check(struct drm_device *dev,
 		DRM_DEBUG_KMS("bad framebuffer height %u\n", r->height);
 		return -EINVAL;
 	}
+
+	/* now let the driver pick its own format info */
+	info = drm_get_format_info(dev, r);
 
 	for (i = 0; i < info->num_planes; i++) {
 		unsigned int width = fb_plane_width(r->width, info, i);
@@ -1112,6 +1111,7 @@ void drm_framebuffer_remove(struct drm_framebuffer *fb)
 	if (drm_framebuffer_read_refcount(fb) > 1) {
 		if (drm_drv_uses_atomic_modeset(dev)) {
 			int ret = atomic_remove_fb(fb);
+
 			WARN(ret, "atomic remove_fb failed with %i\n", ret);
 		} else
 			legacy_remove_fb(fb);
@@ -1209,10 +1209,10 @@ static const struct drm_info_list drm_framebuffer_debugfs_list[] = {
 	{ "framebuffer", drm_framebuffer_info, 0 },
 };
 
-int drm_framebuffer_debugfs_init(struct drm_minor *minor)
+void drm_framebuffer_debugfs_init(struct drm_minor *minor)
 {
-	return drm_debugfs_create_files(drm_framebuffer_debugfs_list,
-				ARRAY_SIZE(drm_framebuffer_debugfs_list),
-				minor->debugfs_root, minor);
+	drm_debugfs_create_files(drm_framebuffer_debugfs_list,
+				 ARRAY_SIZE(drm_framebuffer_debugfs_list),
+				 minor->debugfs_root, minor);
 }
 #endif

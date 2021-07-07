@@ -9,6 +9,7 @@
 #include "i915_debugfs.h"
 #include "intel_csr.h"
 #include "intel_display_debugfs.h"
+#include "intel_display_power.h"
 #include "intel_display_types.h"
 #include "intel_dp.h"
 #include "intel_fbc.h"
@@ -124,7 +125,7 @@ static int i915_ips_status(struct seq_file *m, void *unused)
 	wakeref = intel_runtime_pm_get(&dev_priv->runtime_pm);
 
 	seq_printf(m, "Enabled by kernel parameter: %s\n",
-		   yesno(i915_modparams.enable_ips));
+		   yesno(dev_priv->params.enable_ips));
 
 	if (INTEL_GEN(dev_priv) >= 8) {
 		seq_puts(m, "Currently: unknown\n");
@@ -416,6 +417,9 @@ static int i915_edp_psr_status(struct seq_file *m, void *data)
 			su_blocks = su_blocks >> PSR2_SU_STATUS_SHIFT(frame);
 			seq_printf(m, "%d\t%d\n", frame, su_blocks);
 		}
+
+		seq_printf(m, "PSR2 selective fetch: %s\n",
+			   enableddisabled(psr->psr2_sel_fetch_enabled));
 	}
 
 unlock:
@@ -597,6 +601,11 @@ static void intel_hdcp_info(struct seq_file *m,
 {
 	bool hdcp_cap, hdcp2_cap;
 
+	if (!intel_connector->hdcp.shim) {
+		seq_puts(m, "No Connector Support");
+		goto out;
+	}
+
 	hdcp_cap = intel_hdcp_capable(intel_connector);
 	hdcp2_cap = intel_hdcp2_capable(intel_connector);
 
@@ -608,6 +617,7 @@ static void intel_hdcp_info(struct seq_file *m,
 	if (!hdcp_cap && !hdcp2_cap)
 		seq_puts(m, "None");
 
+out:
 	seq_puts(m, "\n");
 }
 
@@ -616,6 +626,7 @@ static void intel_dp_info(struct seq_file *m,
 {
 	struct intel_encoder *intel_encoder = intel_attached_encoder(intel_connector);
 	struct intel_dp *intel_dp = enc_to_intel_dp(intel_encoder);
+	const struct drm_property_blob *edid = intel_connector->base.edid_blob_ptr;
 
 	seq_printf(m, "\tDPCD rev: %x\n", intel_dp->dpcd[DP_DPCD_REV]);
 	seq_printf(m, "\taudio support: %s\n", yesno(intel_dp->has_audio));
@@ -623,23 +634,13 @@ static void intel_dp_info(struct seq_file *m,
 		intel_panel_info(m, &intel_connector->panel);
 
 	drm_dp_downstream_debug(m, intel_dp->dpcd, intel_dp->downstream_ports,
-				&intel_dp->aux);
-	if (intel_connector->hdcp.shim) {
-		seq_puts(m, "\tHDCP version: ");
-		intel_hdcp_info(m, intel_connector);
-	}
+				edid ? edid->data : NULL, &intel_dp->aux);
 }
 
 static void intel_dp_mst_info(struct seq_file *m,
-			  struct intel_connector *intel_connector)
+			      struct intel_connector *intel_connector)
 {
-	struct intel_encoder *intel_encoder = intel_attached_encoder(intel_connector);
-	struct intel_dp_mst_encoder *intel_mst =
-		enc_to_mst(intel_encoder);
-	struct intel_digital_port *intel_dig_port = intel_mst->primary;
-	struct intel_dp *intel_dp = &intel_dig_port->dp;
-	bool has_audio = drm_dp_mst_port_has_audio(&intel_dp->mst_mgr,
-					intel_connector->port);
+	bool has_audio = intel_connector->port->has_audio;
 
 	seq_printf(m, "\taudio support: %s\n", yesno(has_audio));
 }
@@ -651,10 +652,6 @@ static void intel_hdmi_info(struct seq_file *m,
 	struct intel_hdmi *intel_hdmi = enc_to_intel_hdmi(intel_encoder);
 
 	seq_printf(m, "\taudio support: %s\n", yesno(intel_hdmi->has_audio));
-	if (intel_connector->hdcp.shim) {
-		seq_puts(m, "\tHDCP version: ");
-		intel_hdcp_info(m, intel_connector);
-	}
 }
 
 static void intel_lvds_info(struct seq_file *m,
@@ -709,6 +706,9 @@ static void intel_connector_info(struct seq_file *m,
 	default:
 		break;
 	}
+
+	seq_puts(m, "\tHDCP version: ");
+	intel_hdcp_info(m, intel_connector);
 
 	seq_printf(m, "\tmodes:\n");
 	list_for_each_entry(mode, &connector->modes, head)
@@ -1071,10 +1071,18 @@ static void drrs_status_per_crtc(struct seq_file *m,
 
 	drm_connector_list_iter_begin(dev, &conn_iter);
 	drm_for_each_connector_iter(connector, &conn_iter) {
+		bool supported = false;
+
 		if (connector->state->crtc != &intel_crtc->base)
 			continue;
 
 		seq_printf(m, "%s:\n", connector->name);
+
+		if (connector->connector_type == DRM_MODE_CONNECTOR_eDP &&
+		    drrs->type == SEAMLESS_DRRS_SUPPORT)
+			supported = true;
+
+		seq_printf(m, "\tDRRS Supported: %s\n", yesno(supported));
 	}
 	drm_connector_list_iter_end(&conn_iter);
 
@@ -1085,7 +1093,7 @@ static void drrs_status_per_crtc(struct seq_file *m,
 
 		mutex_lock(&drrs->mutex);
 		/* DRRS Supported */
-		seq_puts(m, "\tDRRS Supported: Yes\n");
+		seq_puts(m, "\tDRRS Enabled: Yes\n");
 
 		/* disable_drrs() will make drrs->dp NULL */
 		if (!drrs->dp) {
@@ -1104,10 +1112,10 @@ static void drrs_status_per_crtc(struct seq_file *m,
 		seq_puts(m, "\n\t\t");
 		if (drrs->refresh_rate_type == DRRS_HIGH_RR) {
 			seq_puts(m, "DRRS_State: DRRS_HIGH_RR\n");
-			vrefresh = panel->fixed_mode->vrefresh;
+			vrefresh = drm_mode_vrefresh(panel->fixed_mode);
 		} else if (drrs->refresh_rate_type == DRRS_LOW_RR) {
 			seq_puts(m, "DRRS_State: DRRS_LOW_RR\n");
-			vrefresh = panel->downclock_mode->vrefresh;
+			vrefresh = drm_mode_vrefresh(panel->downclock_mode);
 		} else {
 			seq_printf(m, "DRRS_State: Unknown(%d)\n",
 						drrs->refresh_rate_type);
@@ -1120,7 +1128,7 @@ static void drrs_status_per_crtc(struct seq_file *m,
 		mutex_unlock(&drrs->mutex);
 	} else {
 		/* DRRS not supported. Print the VBT parameter*/
-		seq_puts(m, "\tDRRS Supported : No");
+		seq_puts(m, "\tDRRS Enabled : No");
 	}
 	seq_puts(m, "\n");
 }
@@ -1149,12 +1157,57 @@ static int i915_drrs_status(struct seq_file *m, void *unused)
 	return 0;
 }
 
+#define LPSP_STATUS(COND) (COND ? seq_puts(m, "LPSP: enabled\n") : \
+				seq_puts(m, "LPSP: disabled\n"))
+
+static bool
+intel_lpsp_power_well_enabled(struct drm_i915_private *i915,
+			      enum i915_power_well_id power_well_id)
+{
+	intel_wakeref_t wakeref;
+	bool is_enabled;
+
+	wakeref = intel_runtime_pm_get(&i915->runtime_pm);
+	is_enabled = intel_display_power_well_is_enabled(i915,
+							 power_well_id);
+	intel_runtime_pm_put(&i915->runtime_pm, wakeref);
+
+	return is_enabled;
+}
+
+static int i915_lpsp_status(struct seq_file *m, void *unused)
+{
+	struct drm_i915_private *i915 = node_to_i915(m->private);
+
+	switch (INTEL_GEN(i915)) {
+	case 12:
+	case 11:
+		LPSP_STATUS(!intel_lpsp_power_well_enabled(i915, ICL_DISP_PW_3));
+		break;
+	case 10:
+	case 9:
+		LPSP_STATUS(!intel_lpsp_power_well_enabled(i915, SKL_DISP_PW_2));
+		break;
+	default:
+		/*
+		 * Apart from HASWELL/BROADWELL other legacy platform doesn't
+		 * support lpsp.
+		 */
+		if (IS_HASWELL(i915) || IS_BROADWELL(i915))
+			LPSP_STATUS(!intel_lpsp_power_well_enabled(i915, HSW_DISP_PW_GLOBAL));
+		else
+			seq_puts(m, "LPSP: not supported\n");
+	}
+
+	return 0;
+}
+
 static int i915_dp_mst_info(struct seq_file *m, void *unused)
 {
 	struct drm_i915_private *dev_priv = node_to_i915(m->private);
 	struct drm_device *dev = &dev_priv->drm;
 	struct intel_encoder *intel_encoder;
-	struct intel_digital_port *intel_dig_port;
+	struct intel_digital_port *dig_port;
 	struct drm_connector *connector;
 	struct drm_connector_list_iter conn_iter;
 
@@ -1167,14 +1220,14 @@ static int i915_dp_mst_info(struct seq_file *m, void *unused)
 		if (!intel_encoder || intel_encoder->type == INTEL_OUTPUT_DP_MST)
 			continue;
 
-		intel_dig_port = enc_to_dig_port(intel_encoder);
-		if (!intel_dig_port->dp.can_mst)
+		dig_port = enc_to_dig_port(intel_encoder);
+		if (!dig_port->dp.can_mst)
 			continue;
 
 		seq_printf(m, "MST Source Port [ENCODER:%d:%s]\n",
-			   intel_dig_port->base.base.base.id,
-			   intel_dig_port->base.base.name);
-		drm_dp_mst_dump_topology(m, &intel_dig_port->dp.mst_mgr);
+			   dig_port->base.base.base.id,
+			   dig_port->base.base.name);
+		drm_dp_mst_dump_topology(m, &dig_port->dp.mst_mgr);
 	}
 	drm_connector_list_iter_end(&conn_iter);
 
@@ -1326,6 +1379,16 @@ static int i915_displayport_test_data_show(struct seq_file *m, void *data)
 					   intel_dp->compliance.test_data.vdisplay);
 				seq_printf(m, "bpc: %u\n",
 					   intel_dp->compliance.test_data.bpc);
+			} else if (intel_dp->compliance.test_type ==
+				   DP_TEST_LINK_PHY_TEST_PATTERN) {
+				seq_printf(m, "pattern: %d\n",
+					   intel_dp->compliance.test_data.phytest.phy_pattern);
+				seq_printf(m, "Number of lanes: %d\n",
+					   intel_dp->compliance.test_data.phytest.num_lanes);
+				seq_printf(m, "Link Rate: %d\n",
+					   intel_dp->compliance.test_data.phytest.link_rate);
+				seq_printf(m, "level: %02x\n",
+					   intel_dp->train_set[0]);
 			}
 		} else
 			seq_puts(m, "0");
@@ -1358,7 +1421,7 @@ static int i915_displayport_test_type_show(struct seq_file *m, void *data)
 
 		if (encoder && connector->status == connector_status_connected) {
 			intel_dp = enc_to_intel_dp(encoder);
-			seq_printf(m, "%02lx", intel_dp->compliance.test_type);
+			seq_printf(m, "%02lx\n", intel_dp->compliance.test_type);
 		} else
 			seq_puts(m, "0");
 	}
@@ -1906,6 +1969,7 @@ static const struct drm_info_list intel_display_debugfs_list[] = {
 	{"i915_dp_mst_info", i915_dp_mst_info, 0},
 	{"i915_ddb_info", i915_ddb_info, 0},
 	{"i915_drrs_status", i915_drrs_status, 0},
+	{"i915_lpsp_status", i915_lpsp_status, 0},
 };
 
 static const struct {
@@ -1927,7 +1991,7 @@ static const struct {
 	{"i915_edp_psr_debug", &i915_edp_psr_debug_fops},
 };
 
-int intel_display_debugfs_register(struct drm_i915_private *i915)
+void intel_display_debugfs_register(struct drm_i915_private *i915)
 {
 	struct drm_minor *minor = i915->drm.primary;
 	int i;
@@ -1940,9 +2004,9 @@ int intel_display_debugfs_register(struct drm_i915_private *i915)
 				    intel_display_debugfs_files[i].fops);
 	}
 
-	return drm_debugfs_create_files(intel_display_debugfs_list,
-					ARRAY_SIZE(intel_display_debugfs_list),
-					minor->debugfs_root, minor);
+	drm_debugfs_create_files(intel_display_debugfs_list,
+				 ARRAY_SIZE(intel_display_debugfs_list),
+				 minor->debugfs_root, minor);
 }
 
 static int i915_panel_show(struct seq_file *m, void *data)
@@ -1975,10 +2039,6 @@ static int i915_hdcp_sink_capability_show(struct seq_file *m, void *data)
 	if (connector->status != connector_status_connected)
 		return -ENODEV;
 
-	/* HDCP is supported by connector */
-	if (!intel_connector->hdcp.shim)
-		return -EINVAL;
-
 	seq_printf(m, "%s:%d HDCP version: ", connector->name,
 		   connector->base.id);
 	intel_hdcp_info(m, intel_connector);
@@ -1986,6 +2046,51 @@ static int i915_hdcp_sink_capability_show(struct seq_file *m, void *data)
 	return 0;
 }
 DEFINE_SHOW_ATTRIBUTE(i915_hdcp_sink_capability);
+
+#define LPSP_CAPABLE(COND) (COND ? seq_puts(m, "LPSP: capable\n") : \
+				seq_puts(m, "LPSP: incapable\n"))
+
+static int i915_lpsp_capability_show(struct seq_file *m, void *data)
+{
+	struct drm_connector *connector = m->private;
+	struct drm_i915_private *i915 = to_i915(connector->dev);
+	struct intel_encoder *encoder;
+
+	encoder = intel_attached_encoder(to_intel_connector(connector));
+	if (!encoder)
+		return -ENODEV;
+
+	if (connector->status != connector_status_connected)
+		return -ENODEV;
+
+	switch (INTEL_GEN(i915)) {
+	case 12:
+		/*
+		 * Actually TGL can drive LPSP on port till DDI_C
+		 * but there is no physical connected DDI_C on TGL sku's,
+		 * even driver is not initilizing DDI_C port for gen12.
+		 */
+		LPSP_CAPABLE(encoder->port <= PORT_B);
+		break;
+	case 11:
+		LPSP_CAPABLE(connector->connector_type == DRM_MODE_CONNECTOR_DSI ||
+			     connector->connector_type == DRM_MODE_CONNECTOR_eDP);
+		break;
+	case 10:
+	case 9:
+		LPSP_CAPABLE(encoder->port == PORT_A &&
+			     (connector->connector_type == DRM_MODE_CONNECTOR_DSI ||
+			     connector->connector_type == DRM_MODE_CONNECTOR_eDP  ||
+			     connector->connector_type == DRM_MODE_CONNECTOR_DisplayPort));
+		break;
+	default:
+		if (IS_HASWELL(i915) || IS_BROADWELL(i915))
+			LPSP_CAPABLE(connector->connector_type == DRM_MODE_CONNECTOR_eDP);
+	}
+
+	return 0;
+}
+DEFINE_SHOW_ATTRIBUTE(i915_lpsp_capability);
 
 static int i915_dsc_fec_support_show(struct seq_file *m, void *data)
 {
@@ -2125,10 +2230,22 @@ int intel_connector_debugfs_add(struct drm_connector *connector)
 	}
 
 	if (INTEL_GEN(dev_priv) >= 10 &&
-	    (connector->connector_type == DRM_MODE_CONNECTOR_DisplayPort ||
+	    ((connector->connector_type == DRM_MODE_CONNECTOR_DisplayPort &&
+	      !to_intel_connector(connector)->mst_port) ||
 	     connector->connector_type == DRM_MODE_CONNECTOR_eDP))
 		debugfs_create_file("i915_dsc_fec_support", S_IRUGO, root,
 				    connector, &i915_dsc_fec_support_fops);
+
+	/* Legacy panels doesn't lpsp on any platform */
+	if ((INTEL_GEN(dev_priv) >= 9 || IS_HASWELL(dev_priv) ||
+	     IS_BROADWELL(dev_priv)) &&
+	     (connector->connector_type == DRM_MODE_CONNECTOR_DSI ||
+	     connector->connector_type == DRM_MODE_CONNECTOR_eDP ||
+	     connector->connector_type == DRM_MODE_CONNECTOR_DisplayPort ||
+	     connector->connector_type == DRM_MODE_CONNECTOR_HDMIA ||
+	     connector->connector_type == DRM_MODE_CONNECTOR_HDMIB))
+		debugfs_create_file("i915_lpsp_capability", 0444, root,
+				    connector, &i915_lpsp_capability_fops);
 
 	return 0;
 }

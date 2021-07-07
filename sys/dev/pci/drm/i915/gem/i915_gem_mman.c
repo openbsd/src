@@ -21,8 +21,6 @@
 #include "i915_user_extensions.h"
 #include "i915_vma.h"
 
-#define DRM_FILE_PAGE_OFFSET (0x100000000ULL >> PAGE_SHIFT)
-
 #ifdef __linux__
 static inline bool
 __vma_matches(struct vm_area_struct *vma, struct file *filp,
@@ -87,10 +85,17 @@ i915_gem_mmap_ioctl(struct drm_device *dev, void *data,
 	/* prime objects have no backing filp to GEM mmap
 	 * pages from.
 	 */
+#ifdef __linux__
 	if (!obj->base.filp) {
 		addr = -ENXIO;
 		goto err;
 	}
+#else
+	if (!obj->base.uao) {
+		addr = -ENXIO;
+		goto err;
+	}
+#endif
 
 	if (range_overflows(args->offset, args->size, (u64)obj->base.size)) {
 		addr = -EINVAL;
@@ -108,7 +113,7 @@ i915_gem_mmap_ioctl(struct drm_device *dev, void *data,
 		struct mm_struct *mm = current->mm;
 		struct vm_area_struct *vma;
 
-		if (down_write_killable(&mm->mmap_sem)) {
+		if (mmap_write_lock_killable(mm)) {
 			addr = -EINTR;
 			goto err;
 		}
@@ -118,7 +123,7 @@ i915_gem_mmap_ioctl(struct drm_device *dev, void *data,
 				pgprot_writecombine(vm_get_page_prot(vma->vm_flags));
 		else
 			addr = -ENOMEM;
-		up_write(&mm->mmap_sem);
+		mmap_write_unlock(mm);
 		if (IS_ERR_VALUE(addr))
 			goto err;
 	}
@@ -216,7 +221,7 @@ compute_partial_view(const struct drm_i915_gem_object *obj,
 	struct i915_ggtt_view view;
 
 	if (i915_gem_object_is_tiled(obj))
-		chunk = roundup(chunk, tile_row_pages(obj));
+		chunk = roundup(chunk, tile_row_pages(obj) ?: 1);
 
 	view.type = I915_GGTT_VIEW_PARTIAL;
 	view.partial.offset = rounddown(page_offset, chunk);
@@ -238,19 +243,19 @@ static vm_fault_t i915_error_to_vmf_fault(int err)
 	switch (err) {
 	default:
 		WARN_ONCE(err, "unhandled error in %s: %i\n", __func__, err);
-		/* fallthrough */
+		fallthrough;
 	case -EIO: /* shmemfs failure from swap device */
 	case -EFAULT: /* purged object */
 	case -ENODEV: /* bad object, how did you get here! */
 	case -ENXIO: /* unable to access backing store (on device) */
 		return VM_FAULT_SIGBUS;
 
-	case -ENOSPC: /* shmemfs allocation failure */
 	case -ENOMEM: /* our allocation failure */
 		return VM_FAULT_OOM;
 
 	case 0:
 	case -EAGAIN:
+	case -ENOSPC: /* transient failure to evict? */
 	case -ERESTARTSYS:
 	case -EINTR:
 	case -EBUSY:
@@ -312,37 +317,46 @@ static vm_fault_t vm_fault_gtt(struct vm_fault *vmf)
 	struct intel_runtime_pm *rpm = &i915->runtime_pm;
 	struct i915_ggtt *ggtt = &i915->ggtt;
 	bool write = area->vm_flags & VM_WRITE;
+	struct i915_gem_ww_ctx ww;
 	intel_wakeref_t wakeref;
 	struct i915_vma *vma;
 	pgoff_t page_offset;
 	int srcu;
 	int ret;
 
-	/* Sanity check that we allow writing into this object */
-	if (i915_gem_object_is_readonly(obj) && write)
-		return VM_FAULT_SIGBUS;
-
 	/* We don't use vmf->pgoff since that has the fake offset */
 	page_offset = (vmf->address - area->vm_start) >> PAGE_SHIFT;
 
 	trace_i915_gem_object_fault(obj, page_offset, true, write);
 
-	ret = i915_gem_object_pin_pages(obj);
-	if (ret)
-		goto err;
-
 	wakeref = intel_runtime_pm_get(rpm);
 
-	ret = intel_gt_reset_trylock(ggtt->vm.gt, &srcu);
+	i915_gem_ww_ctx_init(&ww, true);
+retry:
+	ret = i915_gem_object_lock(obj, &ww);
 	if (ret)
 		goto err_rpm;
 
+	/* Sanity check that we allow writing into this object */
+	if (i915_gem_object_is_readonly(obj) && write) {
+		ret = -EFAULT;
+		goto err_rpm;
+	}
+
+	ret = i915_gem_object_pin_pages(obj);
+	if (ret)
+		goto err_rpm;
+
+	ret = intel_gt_reset_trylock(ggtt->vm.gt, &srcu);
+	if (ret)
+		goto err_pages;
+
 	/* Now pin it into the GTT as needed */
-	vma = i915_gem_object_ggtt_pin(obj, NULL, 0, 0,
-				       PIN_MAPPABLE |
-				       PIN_NONBLOCK /* NOWARN */ |
-				       PIN_NOEVICT);
-	if (IS_ERR(vma)) {
+	vma = i915_gem_object_ggtt_pin_ww(obj, &ww, NULL, 0, 0,
+					  PIN_MAPPABLE |
+					  PIN_NONBLOCK /* NOWARN */ |
+					  PIN_NOEVICT);
+	if (IS_ERR(vma) && vma != ERR_PTR(-EDEADLK)) {
 		/* Use a partial view if it is bigger than available space */
 		struct i915_ggtt_view view =
 			compute_partial_view(obj, page_offset, MIN_CHUNK_PAGES);
@@ -357,11 +371,11 @@ static vm_fault_t vm_fault_gtt(struct vm_fault *vmf)
 		 * all hope that the hardware is able to track future writes.
 		 */
 
-		vma = i915_gem_object_ggtt_pin(obj, &view, 0, 0, flags);
-		if (IS_ERR(vma)) {
+		vma = i915_gem_object_ggtt_pin_ww(obj, &ww, &view, 0, 0, flags);
+		if (IS_ERR(vma) && vma != ERR_PTR(-EDEADLK)) {
 			flags = PIN_MAPPABLE;
 			view.type = I915_GGTT_VIEW_PARTIAL;
-			vma = i915_gem_object_ggtt_pin(obj, &view, 0, 0, flags);
+			vma = i915_gem_object_ggtt_pin_ww(obj, &ww, &view, 0, 0, flags);
 		}
 
 		/* The entire mappable GGTT is pinned? Unexpected! */
@@ -418,11 +432,49 @@ err_unpin:
 	__i915_vma_unpin(vma);
 err_reset:
 	intel_gt_reset_unlock(ggtt->vm.gt, srcu);
-err_rpm:
-	intel_runtime_pm_put(rpm, wakeref);
+err_pages:
 	i915_gem_object_unpin_pages(obj);
-err:
+err_rpm:
+	if (ret == -EDEADLK) {
+		ret = i915_gem_ww_ctx_backoff(&ww);
+		if (!ret)
+			goto retry;
+	}
+	i915_gem_ww_ctx_fini(&ww);
+	intel_runtime_pm_put(rpm, wakeref);
 	return i915_error_to_vmf_fault(ret);
+}
+
+static int
+vm_access(struct vm_area_struct *area, unsigned long addr,
+	  void *buf, int len, int write)
+{
+	struct i915_mmap_offset *mmo = area->vm_private_data;
+	struct drm_i915_gem_object *obj = mmo->obj;
+	void *vaddr;
+
+	if (i915_gem_object_is_readonly(obj) && write)
+		return -EACCES;
+
+	addr -= area->vm_start;
+	if (addr >= obj->base.size)
+		return -EINVAL;
+
+	/* As this is primarily for debugging, let's focus on simplicity */
+	vaddr = i915_gem_object_pin_map(obj, I915_MAP_FORCE_WC);
+	if (IS_ERR(vaddr))
+		return PTR_ERR(vaddr);
+
+	if (write) {
+		memcpy(vaddr + addr, buf, len);
+		__i915_gem_object_flush_map(obj, addr, len);
+	} else {
+		memcpy(buf, vaddr + addr, len);
+	}
+
+	i915_gem_object_unpin_map(obj);
+
+	return len;
 }
 
 #else /* !__linux__ */
@@ -432,19 +484,19 @@ static int i915_error_to_vmf_fault(int err)
 	switch (err) {
 	default:
 		WARN_ONCE(err, "unhandled error in %s: %i\n", __func__, err);
-		/* fallthrough */
+		fallthrough;
 	case -EIO: /* shmemfs failure from swap device */
 	case -EFAULT: /* purged object */
 	case -ENODEV: /* bad object, how did you get here! */
 	case -ENXIO: /* unable to access backing store (on device) */
 		return VM_PAGER_ERROR;
 
-	case -ENOSPC: /* shmemfs allocation failure */
 	case -ENOMEM: /* our allocation failure */
 		return VM_PAGER_ERROR;
 
 	case 0:
 	case -EAGAIN:
+	case -ENOSPC: /* transient failure to evict? */
 	case -ERESTART:
 	case -EINTR:
 	case -EBUSY:
@@ -551,39 +603,46 @@ vm_fault_gtt(struct i915_mmap_offset *mmo, struct uvm_faultinfo *ufi,
 	struct intel_runtime_pm *rpm = &i915->runtime_pm;
 	struct i915_ggtt *ggtt = &i915->ggtt;
 	int write = !!(access_type & PROT_WRITE);
+	struct i915_gem_ww_ctx ww;
 	intel_wakeref_t wakeref;
 	struct i915_vma *vma;
 	pgoff_t page_offset;
 	int srcu;
 	int ret;
 
-	/* Sanity check that we allow writing into this object */
-	if (i915_gem_object_is_readonly(obj) && write) {
-		uvmfault_unlockall(ufi, NULL, &obj->base.uobj);
-		return VM_PAGER_BAD;
-	}
-
 	/* We don't use vmf->pgoff since that has the fake offset */
 	page_offset = (vaddr - entry->start) >> PAGE_SHIFT;
 
 	trace_i915_gem_object_fault(obj, page_offset, true, write);
 
-	ret = i915_gem_object_pin_pages(obj);
-	if (ret)
-		goto err;
-
 	wakeref = intel_runtime_pm_get(rpm);
 
-	ret = intel_gt_reset_trylock(ggtt->vm.gt, &srcu);
+	i915_gem_ww_ctx_init(&ww, true);
+retry:
+	ret = i915_gem_object_lock(obj, &ww);
 	if (ret)
 		goto err_rpm;
 
+	/* Sanity check that we allow writing into this object */
+	if (i915_gem_object_is_readonly(obj) && write) {
+		ret = -EFAULT;
+		goto err_rpm;
+	}
+
+	ret = i915_gem_object_pin_pages(obj);
+	if (ret)
+		goto err_rpm;
+
+	ret = intel_gt_reset_trylock(ggtt->vm.gt, &srcu);
+	if (ret)
+		goto err_pages;
+
 	/* Now pin it into the GTT as needed */
-	vma = i915_gem_object_ggtt_pin(obj, NULL, 0, 0,
-				       PIN_MAPPABLE |
-				       PIN_NONBLOCK /* NOWARN */ |
-				       PIN_NOEVICT);
-	if (IS_ERR(vma)) {
+	vma = i915_gem_object_ggtt_pin_ww(obj, &ww, NULL, 0, 0,
+					  PIN_MAPPABLE |
+					  PIN_NONBLOCK /* NOWARN */ |
+					  PIN_NOEVICT);
+	if (IS_ERR(vma) && vma != ERR_PTR(-EDEADLK)) {
 		/* Use a partial view if it is bigger than available space */
 		struct i915_ggtt_view view =
 			compute_partial_view(obj, page_offset, MIN_CHUNK_PAGES);
@@ -598,11 +657,11 @@ vm_fault_gtt(struct i915_mmap_offset *mmo, struct uvm_faultinfo *ufi,
 		 * all hope that the hardware is able to track future writes.
 		 */
 
-		vma = i915_gem_object_ggtt_pin(obj, &view, 0, 0, flags);
-		if (IS_ERR(vma)) {
+		vma = i915_gem_object_ggtt_pin_ww(obj, &ww, &view, 0, 0, flags);
+		if (IS_ERR(vma) && vma != ERR_PTR(-EDEADLK)) {
 			flags = PIN_MAPPABLE;
 			view.type = I915_GGTT_VIEW_PARTIAL;
-			vma = i915_gem_object_ggtt_pin(obj, &view, 0, 0, flags);
+			vma = i915_gem_object_ggtt_pin_ww(obj, &ww, &view, 0, 0, flags);
 		}
 
 		/* The entire mappable GGTT is pinned? Unexpected! */
@@ -660,10 +719,16 @@ err_unpin:
 	__i915_vma_unpin(vma);
 err_reset:
 	intel_gt_reset_unlock(ggtt->vm.gt, srcu);
-err_rpm:
-	intel_runtime_pm_put(rpm, wakeref);
+err_pages:
 	i915_gem_object_unpin_pages(obj);
-err:
+err_rpm:
+	if (ret == -EDEADLK) {
+		ret = i915_gem_ww_ctx_backoff(&ww);
+		if (!ret)
+			goto retry;
+	}
+	i915_gem_ww_ctx_fini(&ww);
+	intel_runtime_pm_put(rpm, wakeref);
 	uvmfault_unlockall(ufi, NULL, &obj->base.uobj);
 	return i915_error_to_vmf_fault(ret);
 }
@@ -721,7 +786,7 @@ void __i915_gem_object_release_mmap_gtt(struct drm_i915_gem_object *obj)
  * mapping will then trigger a page fault on the next user access, allowing
  * fixup by vm_fault_gtt().
  */
-static void i915_gem_object_release_mmap_gtt(struct drm_i915_gem_object *obj)
+void i915_gem_object_release_mmap_gtt(struct drm_i915_gem_object *obj)
 {
 	struct drm_i915_private *i915 = to_i915(obj->base.dev);
 	intel_wakeref_t wakeref;
@@ -793,19 +858,6 @@ void i915_gem_object_release_mmap_offset(struct drm_i915_gem_object *obj)
 		spin_lock(&obj->mmo.lock);
 	}
 	spin_unlock(&obj->mmo.lock);
-}
-
-/**
- * i915_gem_object_release_mmap - remove physical page mappings
- * @obj: obj in question
- *
- * Preserve the reservation of the mmapping with the DRM core code, but
- * relinquish ownership of the pages back to the system.
- */
-void i915_gem_object_release_mmap(struct drm_i915_gem_object *obj)
-{
-	i915_gem_object_release_mmap_gtt(obj);
-	i915_gem_object_release_mmap_offset(obj);
 }
 
 static struct i915_mmap_offset *
@@ -1067,12 +1119,14 @@ static void vm_close(struct vm_area_struct *vma)
 
 static const struct vm_operations_struct vm_ops_gtt = {
 	.fault = vm_fault_gtt,
+	.access = vm_access,
 	.open = vm_open,
 	.close = vm_close,
 };
 
 static const struct vm_operations_struct vm_ops_cpu = {
 	.fault = vm_fault_cpu,
+	.access = vm_access,
 	.open = vm_open,
 	.close = vm_close,
 };
@@ -1228,9 +1282,6 @@ i915_gem_mmap(struct file *filp, vm_prot_t accessprot,
 	struct drm_device *dev = priv->minor->dev;
 	struct drm_i915_gem_object *obj = NULL;
 	struct i915_mmap_offset *mmo = NULL;
-
-	if (unlikely(off < DRM_FILE_PAGE_OFFSET))
-		return NULL;
 
 	if (drm_dev_is_unplugged(dev))
 		return NULL;

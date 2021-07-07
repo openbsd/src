@@ -28,14 +28,13 @@ void debugfs_gt_register(struct intel_gt *gt);
 struct debugfs_gt_file {
 	const char *name;
 	const struct file_operations *fops;
-	bool (*eval)(const struct intel_gt *gt);
+	bool (*eval)(void *data);
 };
 
 #ifdef notyet
-void debugfs_gt_register_files(struct intel_gt *gt,
-			       struct dentry *root,
-			       const struct debugfs_gt_file *files,
-			       unsigned long count);
+void intel_gt_debugfs_register_files(struct dentry *root,
+				     const struct debugfs_gt_file *files,
+				     unsigned long count, void *data);
 #endif
 
 #endif /* DEBUGFS_GT_H */

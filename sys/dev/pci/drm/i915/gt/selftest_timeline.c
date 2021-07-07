@@ -12,6 +12,7 @@
 #include "intel_gt.h"
 #include "intel_gt_requests.h"
 #include "intel_ring.h"
+#include "selftest_engine_heartbeat.h"
 
 #include "../selftests/i915_random.h"
 #include "../i915_selftest.h"
@@ -71,7 +72,7 @@ static int __mock_hwsp_timeline(struct mock_hwsp_freelist *state,
 		unsigned long cacheline;
 		int err;
 
-		tl = intel_timeline_create(state->gt, NULL);
+		tl = intel_timeline_create(state->gt);
 		if (IS_ERR(tl))
 			return PTR_ERR(tl);
 
@@ -157,7 +158,7 @@ out:
 		__mock_hwsp_record(&state, na, NULL);
 	kfree(state.history);
 err_put:
-	drm_dev_put(&i915->drm);
+	mock_destroy_device(i915);
 	return err;
 }
 
@@ -426,12 +427,12 @@ static int emit_ggtt_store_dw(struct i915_request *rq, u32 addr, u32 value)
 	if (IS_ERR(cs))
 		return PTR_ERR(cs);
 
-	if (INTEL_GEN(rq->i915) >= 8) {
+	if (INTEL_GEN(rq->engine->i915) >= 8) {
 		*cs++ = MI_STORE_DWORD_IMM_GEN4 | MI_USE_GGTT;
 		*cs++ = addr;
 		*cs++ = 0;
 		*cs++ = value;
-	} else if (INTEL_GEN(rq->i915) >= 4) {
+	} else if (INTEL_GEN(rq->engine->i915) >= 4) {
 		*cs++ = MI_STORE_DWORD_IMM_GEN4 | MI_USE_GGTT;
 		*cs++ = 0;
 		*cs++ = addr;
@@ -454,7 +455,7 @@ tl_write(struct intel_timeline *tl, struct intel_engine_cs *engine, u32 value)
 	struct i915_request *rq;
 	int err;
 
-	err = intel_timeline_pin(tl);
+	err = intel_timeline_pin(tl, NULL);
 	if (err) {
 		rq = ERR_PTR(err);
 		goto out;
@@ -486,11 +487,11 @@ checked_intel_timeline_create(struct intel_gt *gt)
 {
 	struct intel_timeline *tl;
 
-	tl = intel_timeline_create(gt, NULL);
+	tl = intel_timeline_create(gt);
 	if (IS_ERR(tl))
 		return tl;
 
-	if (*tl->hwsp_seqno != tl->seqno) {
+	if (READ_ONCE(*tl->hwsp_seqno) != tl->seqno) {
 		pr_err("Timeline created with incorrect breadcrumb, found %x, expected %x\n",
 		       *tl->hwsp_seqno, tl->seqno);
 		intel_timeline_put(tl);
@@ -560,9 +561,10 @@ static int live_hwsp_engine(void *arg)
 	for (n = 0; n < count; n++) {
 		struct intel_timeline *tl = timelines[n];
 
-		if (!err && *tl->hwsp_seqno != n) {
-			pr_err("Invalid seqno stored in timeline %lu, found 0x%x\n",
-			       n, *tl->hwsp_seqno);
+		if (!err && READ_ONCE(*tl->hwsp_seqno) != n) {
+			GEM_TRACE_ERR("Invalid seqno:%lu stored in timeline %llu @ %x, found 0x%x\n",
+				      n, tl->fence_context, tl->hwsp_offset, *tl->hwsp_seqno);
+			GEM_TRACE_DUMP();
 			err = -EINVAL;
 		}
 		intel_timeline_put(tl);
@@ -631,9 +633,10 @@ out:
 	for (n = 0; n < count; n++) {
 		struct intel_timeline *tl = timelines[n];
 
-		if (!err && *tl->hwsp_seqno != n) {
-			pr_err("Invalid seqno stored in timeline %lu, found 0x%x\n",
-			       n, *tl->hwsp_seqno);
+		if (!err && READ_ONCE(*tl->hwsp_seqno) != n) {
+			GEM_TRACE_ERR("Invalid seqno:%lu stored in timeline %llu @ %x, found 0x%x\n",
+				      n, tl->fence_context, tl->hwsp_offset, *tl->hwsp_seqno);
+			GEM_TRACE_DUMP();
 			err = -EINVAL;
 		}
 		intel_timeline_put(tl);
@@ -657,14 +660,14 @@ static int live_hwsp_wrap(void *arg)
 	 * foreign GPU references.
 	 */
 
-	tl = intel_timeline_create(gt, NULL);
+	tl = intel_timeline_create(gt);
 	if (IS_ERR(tl))
 		return PTR_ERR(tl);
 
 	if (!tl->has_initial_breadcrumb || !tl->hwsp_cacheline)
 		goto out_free;
 
-	err = intel_timeline_pin(tl);
+	err = intel_timeline_pin(tl, NULL);
 	if (err)
 		goto out_free;
 
@@ -730,7 +733,8 @@ static int live_hwsp_wrap(void *arg)
 			goto out;
 		}
 
-		if (*hwsp_seqno[0] != seqno[0] || *hwsp_seqno[1] != seqno[1]) {
+		if (READ_ONCE(*hwsp_seqno[0]) != seqno[0] ||
+		    READ_ONCE(*hwsp_seqno[1]) != seqno[1]) {
 			pr_err("Bad timeline values: found (%x, %x), expected (%x, %x)\n",
 			       *hwsp_seqno[0], *hwsp_seqno[1],
 			       seqno[0], seqno[1]);
@@ -751,24 +755,6 @@ out_free:
 	return err;
 }
 
-static void engine_heartbeat_disable(struct intel_engine_cs *engine,
-				     unsigned long *saved)
-{
-	*saved = engine->props.heartbeat_interval_ms;
-	engine->props.heartbeat_interval_ms = 0;
-
-	intel_engine_pm_get(engine);
-	intel_engine_park_heartbeat(engine);
-}
-
-static void engine_heartbeat_enable(struct intel_engine_cs *engine,
-				    unsigned long saved)
-{
-	intel_engine_pm_put(engine);
-
-	engine->props.heartbeat_interval_ms = saved;
-}
-
 static int live_hwsp_rollover_kernel(void *arg)
 {
 	struct intel_gt *gt = arg;
@@ -785,10 +771,9 @@ static int live_hwsp_rollover_kernel(void *arg)
 		struct intel_context *ce = engine->kernel_context;
 		struct intel_timeline *tl = ce->timeline;
 		struct i915_request *rq[3] = {};
-		unsigned long heartbeat;
 		int i;
 
-		engine_heartbeat_disable(engine, &heartbeat);
+		st_engine_heartbeat_disable(engine);
 		if (intel_gt_wait_for_idle(gt, HZ / 2)) {
 			err = -EIO;
 			goto out;
@@ -839,7 +824,7 @@ static int live_hwsp_rollover_kernel(void *arg)
 out:
 		for (i = 0; i < ARRAY_SIZE(rq); i++)
 			i915_request_put(rq[i]);
-		engine_heartbeat_enable(engine, heartbeat);
+		st_engine_heartbeat_enable(engine);
 		if (err)
 			break;
 	}
@@ -982,9 +967,11 @@ static int live_hwsp_recycle(void *arg)
 				break;
 			}
 
-			if (*tl->hwsp_seqno != count) {
-				pr_err("Invalid seqno stored in timeline %lu, found 0x%x\n",
-				       count, *tl->hwsp_seqno);
+			if (READ_ONCE(*tl->hwsp_seqno) != count) {
+				GEM_TRACE_ERR("Invalid seqno:%lu stored in timeline %llu @ %x found 0x%x\n",
+					      count, tl->fence_context,
+					      tl->hwsp_offset, *tl->hwsp_seqno);
+				GEM_TRACE_DUMP();
 				err = -EINVAL;
 			}
 

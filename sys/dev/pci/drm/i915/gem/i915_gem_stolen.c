@@ -53,8 +53,10 @@ int i915_gem_stolen_insert_node(struct drm_i915_private *i915,
 				struct drm_mm_node *node, u64 size,
 				unsigned alignment)
 {
-	return i915_gem_stolen_insert_node_in_range(i915, node, size,
-						    alignment, 0, U64_MAX);
+	return i915_gem_stolen_insert_node_in_range(i915, node,
+						    size, alignment,
+						    I915_GEM_STOLEN_BIAS,
+						    U64_MAX);
 }
 
 void i915_gem_stolen_remove_node(struct drm_i915_private *i915,
@@ -253,7 +255,7 @@ static void vlv_get_stolen_reserved(struct drm_i915_private *i915,
 	switch (reg_val & GEN7_STOLEN_RESERVED_SIZE_MASK) {
 	default:
 		MISSING_CASE(reg_val & GEN7_STOLEN_RESERVED_SIZE_MASK);
-		/* fall through */
+		fallthrough;
 	case GEN7_STOLEN_RESERVED_1M:
 		*size = 1024 * 1024;
 		break;
@@ -385,14 +387,14 @@ static int i915_gem_init_stolen(struct drm_i915_private *i915)
 	rw_init(&i915->mm.stolen_lock, "stln");
 
 	if (intel_vgpu_active(i915)) {
-		dev_notice(i915->drm.dev,
+		drm_notice(&i915->drm,
 			   "%s, disabling use of stolen memory\n",
 			   "iGVT-g active");
 		return 0;
 	}
 
 	if (intel_vtd_active() && INTEL_GEN(i915) < 8) {
-		dev_notice(i915->drm.dev,
+		drm_notice(&i915->drm,
 			   "%s, disabling use of stolen memory\n",
 			   "DMAR active");
 		return 0;
@@ -420,7 +422,7 @@ static int i915_gem_init_stolen(struct drm_i915_private *i915)
 	case 4:
 		if (!IS_G4X(i915))
 			break;
-		/* fall through */
+		fallthrough;
 	case 5:
 		g4x_get_stolen_reserved(i915, uncore,
 					&reserved_base, &reserved_size);
@@ -449,7 +451,7 @@ static int i915_gem_init_stolen(struct drm_i915_private *i915)
 		break;
 	default:
 		MISSING_CASE(INTEL_GEN(i915));
-		/* fall-through */
+		fallthrough;
 	case 11:
 	case 12:
 		icl_get_stolen_reserved(i915, uncore,
@@ -572,6 +574,7 @@ i915_gem_object_release_stolen(struct drm_i915_gem_object *obj)
 }
 
 static const struct drm_i915_gem_object_ops i915_gem_object_stolen_ops = {
+	.name = "i915_gem_object_stolen",
 	.get_pages = i915_gem_object_get_pages_stolen,
 	.put_pages = i915_gem_object_put_pages_stolen,
 	.release = i915_gem_object_release_stolen,

@@ -8,6 +8,9 @@
 
 struct pwm_device;
 
+struct pwm_state {
+};
+
 static inline struct pwm_device *
 pwm_get(struct device *dev, const char *consumer)
 {

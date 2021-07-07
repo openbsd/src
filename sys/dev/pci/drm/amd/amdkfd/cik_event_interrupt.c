@@ -24,6 +24,7 @@
 #include "kfd_events.h"
 #include "cik_int.h"
 #include "amdgpu_amdkfd.h"
+#include "kfd_smi_events.h"
 
 static bool cik_event_interrupt_isr(struct kfd_dev *dev,
 					const uint32_t *ih_ring_entry,
@@ -90,7 +91,7 @@ static void cik_event_interrupt_wq(struct kfd_dev *dev,
 			(const struct cik_ih_ring_entry *)ih_ring_entry;
 	uint32_t context_id = ihre->data & 0xfffffff;
 	unsigned int vmid  = (ihre->ring_id & 0x0000ff00) >> 8;
-	unsigned int pasid = (ihre->ring_id & 0xffff0000) >> 16;
+	u32 pasid = (ihre->ring_id & 0xffff0000) >> 16;
 
 	if (pasid == 0)
 		return;
@@ -107,6 +108,7 @@ static void cik_event_interrupt_wq(struct kfd_dev *dev,
 		ihre->source_id == CIK_INTSRC_GFX_MEM_PROT_FAULT) {
 		struct kfd_vm_fault_info info;
 
+		kfd_smi_event_update_vmfault(dev, pasid);
 		kfd_process_vm_fault(dev->dqm, pasid);
 
 		memset(&info, 0, sizeof(info));

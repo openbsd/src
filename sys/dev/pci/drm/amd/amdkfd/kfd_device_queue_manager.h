@@ -176,12 +176,13 @@ struct device_queue_manager {
 	struct mqd_manager	*mqd_mgrs[KFD_MQD_TYPE_MAX];
 	struct packet_manager	packets;
 	struct kfd_dev		*dev;
-	struct rwlock		lock_hidden; /* use dqm_lock/unlock(dqm) */
+	struct mutex		lock_hidden; /* use dqm_lock/unlock(dqm) */
 	struct list_head	queues;
 	unsigned int		saved_flags;
 	unsigned int		processes_count;
 	unsigned int		active_queue_count;
 	unsigned int		active_cp_queue_count;
+	unsigned int		gws_queue_count;
 	unsigned int		total_queue_count;
 	unsigned int		next_pipe_to_allocate;
 	unsigned int		*allocated_queues;
@@ -191,7 +192,7 @@ struct device_queue_manager {
 	uint16_t		vmid_pasid[VMID_NUM];
 	uint64_t		pipelines_addr;
 	uint64_t		fence_gpu_addr;
-	unsigned int		*fence_addr;
+	uint64_t		*fence_addr;
 	struct kfd_mem_obj	*fence_mem;
 	bool			active_runlist;
 	int			sched_policy;
@@ -242,12 +243,19 @@ get_sh_mem_bases_nybble_64(struct kfd_process_device *pdd)
 static inline void dqm_lock(struct device_queue_manager *dqm)
 {
 	mutex_lock(&dqm->lock_hidden);
-	dqm->saved_flags = memalloc_nofs_save();
+	dqm->saved_flags = memalloc_noreclaim_save();
 }
 static inline void dqm_unlock(struct device_queue_manager *dqm)
 {
-	memalloc_nofs_restore(dqm->saved_flags);
+	memalloc_noreclaim_restore(dqm->saved_flags);
 	mutex_unlock(&dqm->lock_hidden);
 }
 
+static inline int read_sdma_queue_counter(uint64_t __user *q_rptr, uint64_t *val)
+{
+        /*
+         * SDMA activity counter is stored at queue's RPTR + 0x8 location.
+         */
+	return get_user(*val, q_rptr + 1);
+}
 #endif /* KFD_DEVICE_QUEUE_MANAGER_H_ */

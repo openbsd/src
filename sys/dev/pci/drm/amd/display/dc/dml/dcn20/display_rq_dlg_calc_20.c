@@ -293,13 +293,31 @@ static void handle_det_buf_split(struct display_mode_lib *mode_lib,
 	if (surf_linear) {
 		log2_swath_height_l = 0;
 		log2_swath_height_c = 0;
-	} else if (!surf_vert) {
-		log2_swath_height_l = dml_log2(rq_param->misc.rq_l.blk256_height) - req128_l;
-		log2_swath_height_c = dml_log2(rq_param->misc.rq_c.blk256_height) - req128_c;
 	} else {
-		log2_swath_height_l = dml_log2(rq_param->misc.rq_l.blk256_width) - req128_l;
-		log2_swath_height_c = dml_log2(rq_param->misc.rq_c.blk256_width) - req128_c;
+		unsigned int swath_height_l;
+		unsigned int swath_height_c;
+
+		if (!surf_vert) {
+			swath_height_l = rq_param->misc.rq_l.blk256_height;
+			swath_height_c = rq_param->misc.rq_c.blk256_height;
+		} else {
+			swath_height_l = rq_param->misc.rq_l.blk256_width;
+			swath_height_c = rq_param->misc.rq_c.blk256_width;
+		}
+
+		if (swath_height_l > 0)
+			log2_swath_height_l = dml_log2(swath_height_l);
+
+		if (req128_l && log2_swath_height_l > 0)
+			log2_swath_height_l -= 1;
+
+		if (swath_height_c > 0)
+			log2_swath_height_c = dml_log2(swath_height_c);
+
+		if (req128_c && log2_swath_height_c > 0)
+			log2_swath_height_c -= 1;
 	}
+
 	rq_param->dlg.rq_l.swath_height = 1 << log2_swath_height_l;
 	rq_param->dlg.rq_c.swath_height = 1 << log2_swath_height_c;
 
@@ -890,11 +908,6 @@ static void dml20_rq_dlg_get_dlg_params(struct display_mode_lib *mode_lib,
 	double refcyc_per_req_delivery_c;
 
 	unsigned int full_recout_width;
-	double xfc_transfer_delay;
-	double xfc_precharge_delay;
-	double xfc_remote_surface_flip_latency;
-	double xfc_dst_y_delta_drq_limit;
-	double xfc_prefetch_margin;
 	double refcyc_per_req_delivery_pre_cur0;
 	double refcyc_per_req_delivery_cur0;
 	double refcyc_per_req_delivery_pre_cur1;
@@ -1344,22 +1357,6 @@ static void dml20_rq_dlg_get_dlg_params(struct display_mode_lib *mode_lib,
 		ASSERT(refcyc_per_req_delivery_c < dml_pow(2, 13));
 	}
 
-	// XFC
-	xfc_transfer_delay = get_xfc_transfer_delay(mode_lib, e2e_pipe_param, num_pipes, pipe_idx);
-	xfc_precharge_delay = get_xfc_precharge_delay(mode_lib,
-			e2e_pipe_param,
-			num_pipes,
-			pipe_idx);
-	xfc_remote_surface_flip_latency = get_xfc_remote_surface_flip_latency(mode_lib,
-			e2e_pipe_param,
-			num_pipes,
-			pipe_idx);
-	xfc_dst_y_delta_drq_limit = xfc_remote_surface_flip_latency;
-	xfc_prefetch_margin = get_xfc_prefetch_margin(mode_lib,
-			e2e_pipe_param,
-			num_pipes,
-			pipe_idx);
-
 	// TTU - Cursor
 	refcyc_per_req_delivery_pre_cur0 = 0.0;
 	refcyc_per_req_delivery_cur0 = 0.0;
@@ -1510,17 +1507,7 @@ static void dml20_rq_dlg_get_dlg_params(struct display_mode_lib *mode_lib,
 	disp_dlg_regs->chunk_hdl_adjust_cur1 = 3;
 	disp_dlg_regs->dst_y_offset_cur1 = 0;
 
-	disp_dlg_regs->xfc_reg_transfer_delay = xfc_transfer_delay;
-	disp_dlg_regs->xfc_reg_precharge_delay = xfc_precharge_delay;
-	disp_dlg_regs->xfc_reg_remote_surface_flip_latency = xfc_remote_surface_flip_latency;
-	disp_dlg_regs->xfc_reg_prefetch_margin = dml_ceil(xfc_prefetch_margin * refclk_freq_in_mhz,
-			1);
-
-	// slave has to have this value also set to off
-	if (src->xfc_enable && !src->xfc_slave)
-		disp_dlg_regs->dst_y_delta_drq_limit = dml_ceil(xfc_dst_y_delta_drq_limit, 1);
-	else
-		disp_dlg_regs->dst_y_delta_drq_limit = 0x7fff; // off
+	disp_dlg_regs->dst_y_delta_drq_limit = 0x7fff; // off
 
 	disp_ttu_regs->refcyc_per_req_delivery_pre_l = (unsigned int) (refcyc_per_req_delivery_pre_l
 			* dml_pow(2, 10));

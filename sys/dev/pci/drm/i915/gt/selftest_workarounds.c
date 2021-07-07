@@ -214,7 +214,7 @@ static int check_whitelist(struct i915_gem_context *ctx,
 		return PTR_ERR(results);
 
 	err = 0;
-	i915_gem_object_lock(results);
+	i915_gem_object_lock(results, NULL);
 	intel_wedge_on_timeout(&wedge, engine->gt, HZ / 5) /* safety net! */
 		err = i915_gem_object_set_to_cpu_domain(results, false);
 	i915_gem_object_unlock(results);
@@ -417,6 +417,20 @@ static bool wo_register(struct intel_engine_cs *engine, u32 reg)
 	return false;
 }
 
+static bool timestamp(const struct intel_engine_cs *engine, u32 reg)
+{
+	reg = (reg - engine->mmio_base) & ~RING_FORCE_TO_NONPRIV_ACCESS_MASK;
+	switch (reg) {
+	case 0x358:
+	case 0x35c:
+	case 0x3a8:
+		return true;
+
+	default:
+		return false;
+	}
+}
+
 static bool ro_register(u32 reg)
 {
 	if ((reg & RING_FORCE_TO_NONPRIV_ACCESS_MASK) ==
@@ -496,6 +510,9 @@ static int check_dirty_whitelist(struct intel_context *ce)
 
 		if (wo_register(engine, reg))
 			continue;
+
+		if (timestamp(engine, reg))
+			continue; /* timestamps are expected to autoincrement */
 
 		ro_reg = ro_register(reg);
 
@@ -623,6 +640,8 @@ err_request:
 				err = -EINVAL;
 				goto out_unpin;
 			}
+		} else {
+			rsvd = 0;
 		}
 
 		expect = results[0];

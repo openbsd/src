@@ -1,4 +1,4 @@
-/*	$OpenBSD: list.h,v 1.2 2020/06/08 04:48:14 jsg Exp $	*/
+/*	$OpenBSD: list.h,v 1.3 2021/07/07 02:38:36 jsg Exp $	*/
 /* drm_linux_list.h -- linux list functions for the BSDs.
  * Created: Mon Apr 7 14:30:16 1999 by anholt@FreeBSD.org
  */
@@ -126,6 +126,13 @@ static inline void list_move_tail(struct list_head *list,
 {
 	list_del(list);
 	list_add_tail(list, head);
+}
+
+static inline void
+list_rotate_to_front(struct list_head *list, struct list_head *head)
+{
+	list_del(head);
+	list_add_tail(head, list);
 }
 
 static inline void

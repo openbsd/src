@@ -26,6 +26,9 @@
 #include <linux/delay.h>
 #include <linux/i2c.h>
 #include <linux/types.h>
+#include <drm/drm_connector.h>
+
+struct drm_device;
 
 /*
  * Unless otherwise noted, all values are from the DP 1.1a spec.  Note that
@@ -292,7 +295,7 @@
 #define DP_DSC_PEAK_THROUGHPUT              0x06B
 # define DP_DSC_THROUGHPUT_MODE_0_MASK      (0xf << 0)
 # define DP_DSC_THROUGHPUT_MODE_0_SHIFT     0
-# define DP_DSC_THROUGHPUT_MODE_0_UPSUPPORTED 0
+# define DP_DSC_THROUGHPUT_MODE_0_UNSUPPORTED 0
 # define DP_DSC_THROUGHPUT_MODE_0_340       (1 << 0)
 # define DP_DSC_THROUGHPUT_MODE_0_400       (2 << 0)
 # define DP_DSC_THROUGHPUT_MODE_0_450       (3 << 0)
@@ -310,7 +313,7 @@
 # define DP_DSC_THROUGHPUT_MODE_0_170       (15 << 0) /* 1.4a */
 # define DP_DSC_THROUGHPUT_MODE_1_MASK      (0xf << 4)
 # define DP_DSC_THROUGHPUT_MODE_1_SHIFT     4
-# define DP_DSC_THROUGHPUT_MODE_1_UPSUPPORTED 0
+# define DP_DSC_THROUGHPUT_MODE_1_UNSUPPORTED 0
 # define DP_DSC_THROUGHPUT_MODE_1_340       (1 << 4)
 # define DP_DSC_THROUGHPUT_MODE_1_400       (2 << 4)
 # define DP_DSC_THROUGHPUT_MODE_1_450       (3 << 4)
@@ -384,13 +387,30 @@
 # define DP_DS_PORT_TYPE_DP_DUALMODE        5
 # define DP_DS_PORT_TYPE_WIRELESS           6
 # define DP_DS_PORT_HPD			    (1 << 3)
+# define DP_DS_NON_EDID_MASK		    (0xf << 4)
+# define DP_DS_NON_EDID_720x480i_60	    (1 << 4)
+# define DP_DS_NON_EDID_720x480i_50	    (2 << 4)
+# define DP_DS_NON_EDID_1920x1080i_60	    (3 << 4)
+# define DP_DS_NON_EDID_1920x1080i_50	    (4 << 4)
+# define DP_DS_NON_EDID_1280x720_60	    (5 << 4)
+# define DP_DS_NON_EDID_1280x720_50	    (7 << 4)
 /* offset 1 for VGA is maximum megapixels per second / 8 */
-/* offset 2 */
+/* offset 1 for DVI/HDMI is maximum TMDS clock in Mbps / 2.5 */
+/* offset 2 for VGA/DVI/HDMI */
 # define DP_DS_MAX_BPC_MASK	            (3 << 0)
 # define DP_DS_8BPC		            0
 # define DP_DS_10BPC		            1
 # define DP_DS_12BPC		            2
 # define DP_DS_16BPC		            3
+/* offset 3 for DVI */
+# define DP_DS_DVI_DUAL_LINK		    (1 << 1)
+# define DP_DS_DVI_HIGH_COLOR_DEPTH	    (1 << 2)
+/* offset 3 for HDMI */
+# define DP_DS_HDMI_FRAME_SEQ_TO_FRAME_PACK (1 << 0)
+# define DP_DS_HDMI_YCBCR422_PASS_THROUGH   (1 << 1)
+# define DP_DS_HDMI_YCBCR420_PASS_THROUGH   (1 << 2)
+# define DP_DS_HDMI_YCBCR444_TO_422_CONV    (1 << 3)
+# define DP_DS_HDMI_YCBCR444_TO_420_CONV    (1 << 4)
 
 #define DP_MAX_DOWNSTREAM_PORTS		    0x10
 
@@ -701,7 +721,16 @@
 # define DP_TEST_CRC_SUPPORTED		    (1 << 5)
 # define DP_TEST_COUNT_MASK		    0xf
 
-#define DP_TEST_PHY_PATTERN                 0x248
+#define DP_PHY_TEST_PATTERN                 0x248
+# define DP_PHY_TEST_PATTERN_SEL_MASK       0x7
+# define DP_PHY_TEST_PATTERN_NONE           0x0
+# define DP_PHY_TEST_PATTERN_D10_2          0x1
+# define DP_PHY_TEST_PATTERN_ERROR_COUNT    0x2
+# define DP_PHY_TEST_PATTERN_PRBS7          0x3
+# define DP_PHY_TEST_PATTERN_80BIT_CUSTOM   0x4
+# define DP_PHY_TEST_PATTERN_CP2520         0x5
+
+#define DP_TEST_HBR2_SCRAMBLER_RESET        0x24A
 #define DP_TEST_80BIT_CUSTOM_PATTERN_7_0    0x250
 #define	DP_TEST_80BIT_CUSTOM_PATTERN_15_8   0x251
 #define	DP_TEST_80BIT_CUSTOM_PATTERN_23_16  0x252
@@ -974,6 +1003,16 @@
 #define DP_CEC_TX_MESSAGE_BUFFER               0x3020
 #define DP_CEC_MESSAGE_BUFFER_LENGTH             0x10
 
+#define DP_PROTOCOL_CONVERTER_CONTROL_0		0x3050 /* DP 1.3 */
+# define DP_HDMI_DVI_OUTPUT_CONFIG		(1 << 0) /* DP 1.3 */
+#define DP_PROTOCOL_CONVERTER_CONTROL_1		0x3051 /* DP 1.3 */
+# define DP_CONVERSION_TO_YCBCR420_ENABLE	(1 << 0) /* DP 1.3 */
+# define DP_HDMI_EDID_PROCESSING_DISABLE	(1 << 1) /* DP 1.4 */
+# define DP_HDMI_AUTONOMOUS_SCRAMBLING_DISABLE	(1 << 2) /* DP 1.4 */
+# define DP_HDMI_FORCE_SCRAMBLING		(1 << 3) /* DP 1.4 */
+#define DP_PROTOCOL_CONVERTER_CONTROL_2		0x3052 /* DP 1.3 */
+# define DP_CONVERSION_TO_YCBCR422_ENABLE	(1 << 0) /* DP 1.3 */
+
 #define DP_AUX_HDCP_BKSV		0x68000
 #define DP_AUX_HDCP_RI_PRIME		0x68005
 #define DP_AUX_HDCP_AKSV		0x68007
@@ -1099,6 +1138,9 @@
 #define DP_POWER_DOWN_PHY		0x25
 #define DP_SINK_EVENT_NOTIFY		0x30
 #define DP_QUERY_STREAM_ENC_STATUS	0x38
+#define  DP_QUERY_STREAM_ENC_STATUS_STATE_NO_EXIST	0
+#define  DP_QUERY_STREAM_ENC_STATUS_STATE_INACTIVE	1
+#define  DP_QUERY_STREAM_ENC_STATUS_STATE_ACTIVE	2
 
 /* DP 1.2 MST sideband reply types */
 #define DP_SIDEBAND_REPLY_ACK		0x00
@@ -1125,6 +1167,7 @@
 #define DP_MST_PHYSICAL_PORT_0 0
 #define DP_MST_LOGICAL_PORT_0 8
 
+#define DP_LINK_CONSTANT_N_VALUE 0x8000
 #define DP_LINK_STATUS_SIZE	   6
 bool drm_dp_channel_eq_ok(const u8 link_status[DP_LINK_STATUS_SIZE],
 			  int lane_count);
@@ -1208,6 +1251,139 @@ struct dp_sdp {
 #define EDP_VSC_PSR_STATE_ACTIVE	(1<<0)
 #define EDP_VSC_PSR_UPDATE_RFB		(1<<1)
 #define EDP_VSC_PSR_CRC_VALUES_VALID	(1<<2)
+
+/**
+ * enum dp_pixelformat - drm DP Pixel encoding formats
+ *
+ * This enum is used to indicate DP VSC SDP Pixel encoding formats.
+ * It is based on DP 1.4 spec [Table 2-117: VSC SDP Payload for DB16 through
+ * DB18]
+ *
+ * @DP_PIXELFORMAT_RGB: RGB pixel encoding format
+ * @DP_PIXELFORMAT_YUV444: YCbCr 4:4:4 pixel encoding format
+ * @DP_PIXELFORMAT_YUV422: YCbCr 4:2:2 pixel encoding format
+ * @DP_PIXELFORMAT_YUV420: YCbCr 4:2:0 pixel encoding format
+ * @DP_PIXELFORMAT_Y_ONLY: Y Only pixel encoding format
+ * @DP_PIXELFORMAT_RAW: RAW pixel encoding format
+ * @DP_PIXELFORMAT_RESERVED: Reserved pixel encoding format
+ */
+enum dp_pixelformat {
+	DP_PIXELFORMAT_RGB = 0,
+	DP_PIXELFORMAT_YUV444 = 0x1,
+	DP_PIXELFORMAT_YUV422 = 0x2,
+	DP_PIXELFORMAT_YUV420 = 0x3,
+	DP_PIXELFORMAT_Y_ONLY = 0x4,
+	DP_PIXELFORMAT_RAW = 0x5,
+	DP_PIXELFORMAT_RESERVED = 0x6,
+};
+
+/**
+ * enum dp_colorimetry - drm DP Colorimetry formats
+ *
+ * This enum is used to indicate DP VSC SDP Colorimetry formats.
+ * It is based on DP 1.4 spec [Table 2-117: VSC SDP Payload for DB16 through
+ * DB18] and a name of enum member follows DRM_MODE_COLORIMETRY definition.
+ *
+ * @DP_COLORIMETRY_DEFAULT: sRGB (IEC 61966-2-1) or
+ *                          ITU-R BT.601 colorimetry format
+ * @DP_COLORIMETRY_RGB_WIDE_FIXED: RGB wide gamut fixed point colorimetry format
+ * @DP_COLORIMETRY_BT709_YCC: ITU-R BT.709 colorimetry format
+ * @DP_COLORIMETRY_RGB_WIDE_FLOAT: RGB wide gamut floating point
+ *                                 (scRGB (IEC 61966-2-2)) colorimetry format
+ * @DP_COLORIMETRY_XVYCC_601: xvYCC601 colorimetry format
+ * @DP_COLORIMETRY_OPRGB: OpRGB colorimetry format
+ * @DP_COLORIMETRY_XVYCC_709: xvYCC709 colorimetry format
+ * @DP_COLORIMETRY_DCI_P3_RGB: DCI-P3 (SMPTE RP 431-2) colorimetry format
+ * @DP_COLORIMETRY_SYCC_601: sYCC601 colorimetry format
+ * @DP_COLORIMETRY_RGB_CUSTOM: RGB Custom Color Profile colorimetry format
+ * @DP_COLORIMETRY_OPYCC_601: opYCC601 colorimetry format
+ * @DP_COLORIMETRY_BT2020_RGB: ITU-R BT.2020 R' G' B' colorimetry format
+ * @DP_COLORIMETRY_BT2020_CYCC: ITU-R BT.2020 Y'c C'bc C'rc colorimetry format
+ * @DP_COLORIMETRY_BT2020_YCC: ITU-R BT.2020 Y' C'b C'r colorimetry format
+ */
+enum dp_colorimetry {
+	DP_COLORIMETRY_DEFAULT = 0,
+	DP_COLORIMETRY_RGB_WIDE_FIXED = 0x1,
+	DP_COLORIMETRY_BT709_YCC = 0x1,
+	DP_COLORIMETRY_RGB_WIDE_FLOAT = 0x2,
+	DP_COLORIMETRY_XVYCC_601 = 0x2,
+	DP_COLORIMETRY_OPRGB = 0x3,
+	DP_COLORIMETRY_XVYCC_709 = 0x3,
+	DP_COLORIMETRY_DCI_P3_RGB = 0x4,
+	DP_COLORIMETRY_SYCC_601 = 0x4,
+	DP_COLORIMETRY_RGB_CUSTOM = 0x5,
+	DP_COLORIMETRY_OPYCC_601 = 0x5,
+	DP_COLORIMETRY_BT2020_RGB = 0x6,
+	DP_COLORIMETRY_BT2020_CYCC = 0x6,
+	DP_COLORIMETRY_BT2020_YCC = 0x7,
+};
+
+/**
+ * enum dp_dynamic_range - drm DP Dynamic Range
+ *
+ * This enum is used to indicate DP VSC SDP Dynamic Range.
+ * It is based on DP 1.4 spec [Table 2-117: VSC SDP Payload for DB16 through
+ * DB18]
+ *
+ * @DP_DYNAMIC_RANGE_VESA: VESA range
+ * @DP_DYNAMIC_RANGE_CTA: CTA range
+ */
+enum dp_dynamic_range {
+	DP_DYNAMIC_RANGE_VESA = 0,
+	DP_DYNAMIC_RANGE_CTA = 1,
+};
+
+/**
+ * enum dp_content_type - drm DP Content Type
+ *
+ * This enum is used to indicate DP VSC SDP Content Types.
+ * It is based on DP 1.4 spec [Table 2-117: VSC SDP Payload for DB16 through
+ * DB18]
+ * CTA-861-G defines content types and expected processing by a sink device
+ *
+ * @DP_CONTENT_TYPE_NOT_DEFINED: Not defined type
+ * @DP_CONTENT_TYPE_GRAPHICS: Graphics type
+ * @DP_CONTENT_TYPE_PHOTO: Photo type
+ * @DP_CONTENT_TYPE_VIDEO: Video type
+ * @DP_CONTENT_TYPE_GAME: Game type
+ */
+enum dp_content_type {
+	DP_CONTENT_TYPE_NOT_DEFINED = 0x00,
+	DP_CONTENT_TYPE_GRAPHICS = 0x01,
+	DP_CONTENT_TYPE_PHOTO = 0x02,
+	DP_CONTENT_TYPE_VIDEO = 0x03,
+	DP_CONTENT_TYPE_GAME = 0x04,
+};
+
+/**
+ * struct drm_dp_vsc_sdp - drm DP VSC SDP
+ *
+ * This structure represents a DP VSC SDP of drm
+ * It is based on DP 1.4 spec [Table 2-116: VSC SDP Header Bytes] and
+ * [Table 2-117: VSC SDP Payload for DB16 through DB18]
+ *
+ * @sdp_type: secondary-data packet type
+ * @revision: revision number
+ * @length: number of valid data bytes
+ * @pixelformat: pixel encoding format
+ * @colorimetry: colorimetry format
+ * @bpc: bit per color
+ * @dynamic_range: dynamic range information
+ * @content_type: CTA-861-G defines content types and expected processing by a sink device
+ */
+struct drm_dp_vsc_sdp {
+	unsigned char sdp_type;
+	unsigned char revision;
+	unsigned char length;
+	enum dp_pixelformat pixelformat;
+	enum dp_colorimetry colorimetry;
+	int bpc;
+	enum dp_dynamic_range dynamic_range;
+	enum dp_content_type content_type;
+};
+
+void drm_dp_vsc_sdp_log(const char *level, struct device *dev,
+			const struct drm_dp_vsc_sdp *vsc);
 
 int drm_dp_psr_setup_time(const u8 psr_cap[EDP_PSR_RECEIVER_CAP_SIZE]);
 
@@ -1313,6 +1489,14 @@ drm_dp_alternate_scrambler_reset_cap(const u8 dpcd[DP_RECEIVER_CAP_SIZE])
 {
 	return dpcd[DP_EDP_CONFIGURATION_CAP] &
 			DP_ALTERNATE_SCRAMBLER_RESET_CAP;
+}
+
+/* Ignore MSA timing for Adaptive Sync support on DP 1.4 */
+static inline bool
+drm_dp_sink_can_do_video_without_timing_msa(const u8 dpcd[DP_RECEIVER_CAP_SIZE])
+{
+	return dpcd[DP_DOWN_STREAM_PORT_COUNT] &
+		DP_MSA_TIMING_PAR_IGNORED;
 }
 
 /*
@@ -1456,19 +1640,60 @@ static inline ssize_t drm_dp_dpcd_writeb(struct drm_dp_aux *aux,
 	return drm_dp_dpcd_write(aux, offset, &value, 1);
 }
 
+int drm_dp_read_dpcd_caps(struct drm_dp_aux *aux,
+			  u8 dpcd[DP_RECEIVER_CAP_SIZE]);
+
 int drm_dp_dpcd_read_link_status(struct drm_dp_aux *aux,
 				 u8 status[DP_LINK_STATUS_SIZE]);
 
 bool drm_dp_send_real_edid_checksum(struct drm_dp_aux *aux,
 				    u8 real_edid_checksum);
 
-int drm_dp_downstream_max_clock(const u8 dpcd[DP_RECEIVER_CAP_SIZE],
-				const u8 port_cap[4]);
+int drm_dp_read_downstream_info(struct drm_dp_aux *aux,
+				const u8 dpcd[DP_RECEIVER_CAP_SIZE],
+				u8 downstream_ports[DP_MAX_DOWNSTREAM_PORTS]);
+bool drm_dp_downstream_is_type(const u8 dpcd[DP_RECEIVER_CAP_SIZE],
+			       const u8 port_cap[4], u8 type);
+bool drm_dp_downstream_is_tmds(const u8 dpcd[DP_RECEIVER_CAP_SIZE],
+			       const u8 port_cap[4],
+			       const struct edid *edid);
+int drm_dp_downstream_max_dotclock(const u8 dpcd[DP_RECEIVER_CAP_SIZE],
+				   const u8 port_cap[4]);
+int drm_dp_downstream_max_tmds_clock(const u8 dpcd[DP_RECEIVER_CAP_SIZE],
+				     const u8 port_cap[4],
+				     const struct edid *edid);
+int drm_dp_downstream_min_tmds_clock(const u8 dpcd[DP_RECEIVER_CAP_SIZE],
+				     const u8 port_cap[4],
+				     const struct edid *edid);
 int drm_dp_downstream_max_bpc(const u8 dpcd[DP_RECEIVER_CAP_SIZE],
-			      const u8 port_cap[4]);
+			      const u8 port_cap[4],
+			      const struct edid *edid);
+bool drm_dp_downstream_420_passthrough(const u8 dpcd[DP_RECEIVER_CAP_SIZE],
+				       const u8 port_cap[4]);
+bool drm_dp_downstream_444_to_420_conversion(const u8 dpcd[DP_RECEIVER_CAP_SIZE],
+					     const u8 port_cap[4]);
+struct drm_display_mode *drm_dp_downstream_mode(struct drm_device *dev,
+						const u8 dpcd[DP_RECEIVER_CAP_SIZE],
+						const u8 port_cap[4]);
 int drm_dp_downstream_id(struct drm_dp_aux *aux, char id[6]);
-void drm_dp_downstream_debug(struct seq_file *m, const u8 dpcd[DP_RECEIVER_CAP_SIZE],
-			     const u8 port_cap[4], struct drm_dp_aux *aux);
+void drm_dp_downstream_debug(struct seq_file *m,
+			     const u8 dpcd[DP_RECEIVER_CAP_SIZE],
+			     const u8 port_cap[4],
+			     const struct edid *edid,
+			     struct drm_dp_aux *aux);
+enum drm_mode_subconnector
+drm_dp_subconnector_type(const u8 dpcd[DP_RECEIVER_CAP_SIZE],
+			 const u8 port_cap[4]);
+void drm_dp_set_subconnector_property(struct drm_connector *connector,
+				      enum drm_connector_status status,
+				      const u8 *dpcd,
+				      const u8 port_cap[4]);
+
+struct drm_dp_desc;
+bool drm_dp_read_sink_count_cap(struct drm_connector *connector,
+				const u8 dpcd[DP_RECEIVER_CAP_SIZE],
+				const struct drm_dp_desc *desc);
+int drm_dp_read_sink_count(struct drm_dp_aux *aux);
 
 void drm_dp_remote_aux_init(struct drm_dp_aux *aux);
 void drm_dp_aux_init(struct drm_dp_aux *aux);
@@ -1528,7 +1753,8 @@ enum drm_dp_quirk {
 	 * @DP_DPCD_QUIRK_NO_SINK_COUNT:
 	 *
 	 * The device does not set SINK_COUNT to a non-zero value.
-	 * The driver should ignore SINK_COUNT during detection.
+	 * The driver should ignore SINK_COUNT during detection. Note that
+	 * drm_dp_read_sink_count_cap() automatically checks for this quirk.
 	 */
 	DP_DPCD_QUIRK_NO_SINK_COUNT,
 	/**
@@ -1548,11 +1774,18 @@ enum drm_dp_quirk {
 	 * capabilities advertised.
 	 */
 	DP_QUIRK_FORCE_DPCD_BACKLIGHT,
+	/**
+	 * @DP_DPCD_QUIRK_CAN_DO_MAX_LINK_RATE_3_24_GBPS:
+	 *
+	 * The device supports a link rate of 3.24 Gbps (multiplier 0xc) despite
+	 * the DP_MAX_LINK_RATE register reporting a lower max multiplier.
+	 */
+	DP_DPCD_QUIRK_CAN_DO_MAX_LINK_RATE_3_24_GBPS,
 };
 
 /**
  * drm_dp_has_quirk() - does the DP device have a specific quirk
- * @desc: Device decriptor filled by drm_dp_read_desc()
+ * @desc: Device descriptor filled by drm_dp_read_desc()
  * @edid_quirks: Optional quirk bitmask filled by drm_dp_get_edid_quirks()
  * @quirk: Quirk to query for
  *
@@ -1598,4 +1831,26 @@ static inline void drm_dp_cec_unset_edid(struct drm_dp_aux *aux)
 
 #endif
 
+/**
+ * struct drm_dp_phy_test_params - DP Phy Compliance parameters
+ * @link_rate: Requested Link rate from DPCD 0x219
+ * @num_lanes: Number of lanes requested by sing through DPCD 0x220
+ * @phy_pattern: DP Phy test pattern from DPCD 0x248
+ * @hbr2_reset: DP HBR2_COMPLIANCE_SCRAMBLER_RESET from DCPD 0x24A and 0x24B
+ * @custom80: DP Test_80BIT_CUSTOM_PATTERN from DPCDs 0x250 through 0x259
+ * @enhanced_frame_cap: flag for enhanced frame capability.
+ */
+struct drm_dp_phy_test_params {
+	int link_rate;
+	u8 num_lanes;
+	u8 phy_pattern;
+	u8 hbr2_reset[2];
+	u8 custom80[10];
+	bool enhanced_frame_cap;
+};
+
+int drm_dp_get_phy_test_pattern(struct drm_dp_aux *aux,
+				struct drm_dp_phy_test_params *data);
+int drm_dp_set_phy_test_pattern(struct drm_dp_aux *aux,
+				struct drm_dp_phy_test_params *data, u8 dp_rev);
 #endif /* _DRM_DP_HELPER_H_ */

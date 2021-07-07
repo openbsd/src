@@ -275,13 +275,13 @@ struct kfd_dbgdev {
 };
 
 struct kfd_dbgmgr {
-	unsigned int pasid;
+	u32 pasid;
 	struct kfd_dev *dev;
 	struct kfd_dbgdev *dbgdev;
 };
 
 /* prototypes for debug manager functions */
-struct rwlock *kfd_get_dbgmgr_mutex(void);
+struct mutex *kfd_get_dbgmgr_mutex(void);
 void kfd_dbgmgr_destroy(struct kfd_dbgmgr *pmgr);
 bool kfd_dbgmgr_create(struct kfd_dbgmgr **ppmgr, struct kfd_dev *pdev);
 long kfd_dbgmgr_register(struct kfd_dbgmgr *pmgr, struct kfd_process *p);

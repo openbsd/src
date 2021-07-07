@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_gem_cma_helper.c,v 1.4 2020/11/06 13:22:07 mpi Exp $ */
+/* $OpenBSD: drm_gem_cma_helper.c,v 1.5 2021/07/07 02:38:21 jsg Exp $ */
 /* $NetBSD: drm_gem_cma_helper.c,v 1.9 2019/11/05 23:29:28 jmcneill Exp $ */
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -152,7 +152,7 @@ drm_gem_cma_dumb_create(struct drm_file *file_priv, struct drm_device *ddev,
 		return -ENOMEM;
 
 	error = drm_gem_handle_create(file_priv, &obj->base, &handle);
-	drm_gem_object_put_unlocked(&obj->base);
+	drm_gem_object_put(&obj->base);
 	if (error) {
 		drm_gem_cma_obj_free(obj);
 		return error;

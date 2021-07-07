@@ -56,11 +56,15 @@ struct drm_i915_gem_object_ops {
 	void (*truncate)(struct drm_i915_gem_object *obj);
 	void (*writeback)(struct drm_i915_gem_object *obj);
 
+	int (*pread)(struct drm_i915_gem_object *obj,
+		     const struct drm_i915_gem_pread *arg);
 	int (*pwrite)(struct drm_i915_gem_object *obj,
 		      const struct drm_i915_gem_pwrite *arg);
 
 	int (*dmabuf_export)(struct drm_i915_gem_object *obj);
 	void (*release)(struct drm_i915_gem_object *obj);
+
+	const char *name; /* friendly name for debug, e.g. lockdep classes */
 };
 
 enum i915_mmap_type {
@@ -119,6 +123,16 @@ struct drm_i915_gem_object {
 	 * this translation from object to context->handles_vma.
 	 */
 	struct list_head lut_list;
+	spinlock_t lut_lock; /* guards lut_list */
+
+	/**
+	 * @obj_link: Link into @i915_gem_ww_ctx.obj_list
+	 *
+	 * When we lock this object through i915_gem_object_lock() with a
+	 * context, we add it to the list to ensure we can unlock everything
+	 * when i915_gem_ww_ctx_backoff() or i915_gem_ww_ctx_fini() are called.
+	 */
+	struct list_head obj_link;
 
 	/** Stolen memory for this object, instead of being backed by shmem. */
 	struct drm_mm_node *stolen;
@@ -178,9 +192,6 @@ struct drm_i915_gem_object {
 #define FENCE_MINIMUM_STRIDE 128 /* See i915_tiling_ok() */
 #define TILING_MASK (FENCE_MINIMUM_STRIDE - 1)
 #define STRIDE_MASK (~TILING_MASK)
-
-	/** Count of VMA actually bound by this object */
-	atomic_t bind_count;
 
 	struct {
 		/*
@@ -282,6 +293,7 @@ struct drm_i915_gem_object {
 		} userptr;
 
 		unsigned long scratch;
+		u64 encode;
 
 		void *gvt_info;
 	};

@@ -18,8 +18,18 @@ extern volatile unsigned long jiffies;
 
 #define time_in_range(x, min, max) ((x) >= (min) && (x) <= (max))
 
-#define jiffies_to_msecs(x)	(((uint64_t)(x)) * 1000 / hz)
-#define jiffies_to_usecs(x)	(((uint64_t)(x)) * 1000000 / hz)
+static inline unsigned int
+jiffies_to_msecs(const unsigned long x)
+{
+	return (((uint64_t)(x)) * 1000 / hz);
+}
+
+static inline unsigned int
+jiffies_to_usecs(const unsigned long x)
+{
+	return (((uint64_t)(x)) * 1000000 / hz);
+}
+
 #define msecs_to_jiffies(x)	(((uint64_t)(x)) * hz / 1000)
 #define usecs_to_jiffies(x)	(((uint64_t)(x)) * hz / 1000000)
 #define nsecs_to_jiffies(x)	(((uint64_t)(x)) * hz / 1000000000)

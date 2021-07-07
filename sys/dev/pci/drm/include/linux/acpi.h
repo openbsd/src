@@ -11,6 +11,8 @@
 #include <dev/acpi/acpivar.h>
 #endif
 
+#include <linux/irqdomain.h>
+
 typedef size_t acpi_size;
 typedef int acpi_status;
 typedef struct aml_node *acpi_handle;

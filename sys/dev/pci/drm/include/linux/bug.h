@@ -1,4 +1,4 @@
-/*	$OpenBSD: bug.h,v 1.1 2019/04/14 10:14:53 jsg Exp $	*/
+/*	$OpenBSD: bug.h,v 1.2 2021/07/07 02:38:36 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -21,6 +21,7 @@
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <linux/compiler.h>
+#include <linux/build_bug.h>
 
 #define BUG()								\
 do {									\
@@ -32,13 +33,6 @@ do {									\
 #else
 #define BUG_ON(x)	KASSERT(!(x))
 #endif
-
-#define BUILD_BUG()
-#define BUILD_BUG_ON(x) CTASSERT(!(x))
-#define BUILD_BUG_ON_NOT_POWER_OF_2(x)	0
-#define BUILD_BUG_ON_MSG(x, y)		do { } while (0)
-#define BUILD_BUG_ON_INVALID(x)		((void)0)
-#define BUILD_BUG_ON_ZERO(x)		0
 
 #define WARN(condition, fmt...) ({ 					\
 	int __ret = !!(condition);					\

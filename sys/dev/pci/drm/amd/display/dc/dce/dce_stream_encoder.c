@@ -564,6 +564,7 @@ static void dce110_stream_encoder_hdmi_set_stream_attribute(
 	cntl.enable_dp_audio = enable_audio;
 	cntl.pixel_clock = actual_pix_clk_khz;
 	cntl.lanes_number = LANE_COUNT_FOUR;
+	cntl.color_depth = crtc_timing->display_color_depth;
 
 	if (enc110->base.bp->funcs->encoder_control(
 			enc110->base.bp, &cntl) != BP_RESULT_OK)
@@ -710,7 +711,7 @@ static void dce110_stream_encoder_lvds_set_stream_attribute(
 	ASSERT(crtc_timing->pixel_encoding == PIXEL_ENCODING_RGB);
 }
 
-static void dce110_stream_encoder_set_mst_bandwidth(
+static void dce110_stream_encoder_set_throttled_vcp_size(
 	struct stream_encoder *enc,
 	struct fixed31_32 avg_time_slots_per_mtp)
 {
@@ -1336,7 +1337,6 @@ static void dce110_se_audio_setup(
 {
 	struct dce110_stream_encoder *enc110 = DCE110STRENC_FROM_STRENC(enc);
 
-	uint32_t speakers = 0;
 	uint32_t channels = 0;
 
 	ASSERT(audio_info);
@@ -1344,7 +1344,6 @@ static void dce110_se_audio_setup(
 		/* This should not happen.it does so we don't get BSOD*/
 		return;
 
-	speakers = audio_info->flags.info.ALLSPEAKERS;
 	channels = speakers_to_channels(audio_info->flags.speaker_flags).all;
 
 	/* setup the audio stream source select (audio -> dig mapping) */
@@ -1623,8 +1622,8 @@ static const struct stream_encoder_funcs dce110_str_enc_funcs = {
 		dce110_stream_encoder_dvi_set_stream_attribute,
 	.lvds_set_stream_attribute =
 		dce110_stream_encoder_lvds_set_stream_attribute,
-	.set_mst_bandwidth =
-		dce110_stream_encoder_set_mst_bandwidth,
+	.set_throttled_vcp_size =
+		dce110_stream_encoder_set_throttled_vcp_size,
 	.update_hdmi_info_packets =
 		dce110_stream_encoder_update_hdmi_info_packets,
 	.stop_hdmi_info_packets =

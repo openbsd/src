@@ -4,6 +4,7 @@
 #define _LINUX_BITFIELD_H
 
 #include <asm/byteorder.h>
+#include <linux/build_bug.h>
 
 #define __bf_shf(x) (__builtin_ffsll(x) - 1)
 

@@ -171,7 +171,7 @@ static void load_render_mocs(const struct intel_engine_cs *engine)
 		return;
 
 	for (ring_id = 0; ring_id < cnt; ring_id++) {
-		if (!HAS_ENGINE(engine->i915, ring_id))
+		if (!HAS_ENGINE(engine->gt, ring_id))
 			continue;
 
 		offset.reg = regs[ring_id];
@@ -595,7 +595,7 @@ void intel_gvt_init_engine_mmio_context(struct intel_gvt *gvt)
 	     i915_mmio_reg_valid(mmio->reg); mmio++) {
 		if (mmio->in_context) {
 			gvt->engine_mmio_list.ctx_mmio_count[mmio->id]++;
-			intel_gvt_mmio_set_in_ctx(gvt, mmio->reg.reg);
+			intel_gvt_mmio_set_sr_in_ctx(gvt, mmio->reg.reg);
 		}
 	}
 }

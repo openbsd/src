@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaccess.h,v 1.5 2020/12/20 03:42:01 jsg Exp $	*/
+/*	$OpenBSD: uaccess.h,v 1.6 2021/07/07 02:38:36 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -77,6 +77,9 @@ access_ok(const void *addr, unsigned long size)
 
 #define user_access_begin(addr, size)	access_ok(addr, size)
 #define user_access_end()
+
+#define user_write_access_begin(addr, size)	access_ok(addr, size)
+#define user_write_access_end()
 
 #if defined(__i386__) || defined(__amd64__)
 

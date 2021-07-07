@@ -94,7 +94,7 @@ static void init_mqd(struct mqd_manager *mm, void **mqd,
 	m = (struct cik_mqd *) mqd_mem_obj->cpu_ptr;
 	addr = mqd_mem_obj->gpu_addr;
 
-	memset(m, 0, roundup2(sizeof(struct cik_mqd), 256));
+	memset(m, 0, ALIGN(sizeof(struct cik_mqd), 256));
 
 	m->header = 0xC0310800;
 	m->compute_pipelinestat_enable = 1;

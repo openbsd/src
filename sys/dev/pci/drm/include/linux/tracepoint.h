@@ -15,7 +15,8 @@ static inline bool trace_##name##_enabled(void) { return false; }
 static inline void trace_##name(proto) {}
 
 #define TRACE_EVENT(name, proto, args, tstruct, assign, print) \
-static inline void trace_##name(proto) {}
+static inline void trace_##name(proto) {} \
+static inline bool trace_##name##_enabled(void) { return false; }
 
 #define TRACE_EVENT_CONDITION(name, proto, args, cond, tstruct, assign, print) \
 static inline void trace_##name(proto) {}

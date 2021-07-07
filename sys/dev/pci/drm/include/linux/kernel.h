@@ -138,8 +138,11 @@ _in_dbg_master(void)
 
 #define oops_in_progress _in_dbg_master()
 
-#define might_sleep()
-#define might_sleep_if(x)
+#define might_sleep()		assertwaitok()
+#define might_sleep_if(x)	do {	\
+	if (x)				\
+		assertwaitok();		\
+} while (0)
 
 #define add_taint(x, y)
 #define TAINT_MACHINE_CHECK	0

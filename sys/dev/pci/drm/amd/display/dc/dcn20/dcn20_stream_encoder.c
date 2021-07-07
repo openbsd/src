@@ -152,11 +152,11 @@ static void enc2_stream_encoder_update_hdmi_info_packets(
 
 	/*Always add mandatory packets first followed by optional ones*/
 	enc2_update_hdmi_info_packet(enc1, 0, &info_frame->avi);
-	enc2_update_hdmi_info_packet(enc1, 5, &info_frame->hfvsif);
+	enc2_update_hdmi_info_packet(enc1, 1, &info_frame->hfvsif);
 	enc2_update_hdmi_info_packet(enc1, 2, &info_frame->gamut);
-	enc2_update_hdmi_info_packet(enc1, 1, &info_frame->vendor);
-	enc2_update_hdmi_info_packet(enc1, 3, &info_frame->spd);
-	enc2_update_hdmi_info_packet(enc1, 4, &info_frame->hdrsmd);
+	enc2_update_hdmi_info_packet(enc1, 3, &info_frame->vendor);
+	enc2_update_hdmi_info_packet(enc1, 4, &info_frame->spd);
+	enc2_update_hdmi_info_packet(enc1, 5, &info_frame->hdrsmd);
 }
 
 static void enc2_stream_encoder_stop_hdmi_info_packets(
@@ -561,8 +561,8 @@ static const struct stream_encoder_funcs dcn20_str_enc_funcs = {
 		enc1_stream_encoder_hdmi_set_stream_attribute,
 	.dvi_set_stream_attribute =
 		enc1_stream_encoder_dvi_set_stream_attribute,
-	.set_mst_bandwidth =
-		enc1_stream_encoder_set_mst_bandwidth,
+	.set_throttled_vcp_size =
+		enc1_stream_encoder_set_throttled_vcp_size,
 	.update_hdmi_info_packets =
 		enc2_stream_encoder_update_hdmi_info_packets,
 	.stop_hdmi_info_packets =

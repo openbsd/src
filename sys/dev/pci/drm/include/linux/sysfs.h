@@ -25,5 +25,7 @@ struct attribute_group {
 #define sysfs_remove_group(x, y)
 #define sysfs_remove_file(x, y)
 #define sysfs_remove_file_from_group(x, y, z)
+#define sysfs_create_files(x, y)	0
+#define sysfs_remove_files(x, y)
 
 #endif

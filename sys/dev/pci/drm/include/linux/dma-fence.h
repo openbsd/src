@@ -4,11 +4,9 @@
 #define _LINUX_DMA_FENCE_H
 
 #include <sys/types.h>
-#include <sys/malloc.h>
 #include <sys/mutex.h>
 #include <linux/kref.h>
 #include <linux/list.h>
-#include <linux/bug.h>
 #include <linux/sched.h>
 #include <linux/rcupdate.h>
 
@@ -21,10 +19,12 @@ struct dma_fence {
 	uint64_t context;
 	uint64_t seqno;
 	struct mutex *lock;
-	struct list_head cb_list;
+	union {
+		struct list_head cb_list;
+		ktime_t timestamp;
+		struct rcu_head rcu;
+	};
 	int error;
-	struct rcu_head rcu;
-	ktime_t timestamp;
 };
 
 enum dma_fence_flag_bits {
@@ -52,231 +52,33 @@ struct dma_fence_cb {
 };
 
 uint64_t dma_fence_context_alloc(unsigned int);
+struct dma_fence *dma_fence_get(struct dma_fence *);
+struct dma_fence *dma_fence_get_rcu(struct dma_fence *);
+struct dma_fence *dma_fence_get_rcu_safe(struct dma_fence **);
+void dma_fence_release(struct kref *);
+void dma_fence_put(struct dma_fence *);
+int dma_fence_signal_locked(struct dma_fence *);
+int dma_fence_signal(struct dma_fence *);
+bool dma_fence_is_signaled(struct dma_fence *);
+bool dma_fence_is_signaled_locked(struct dma_fence *);
+long dma_fence_default_wait(struct dma_fence *, bool, long);
+long dma_fence_wait_any_timeout(struct dma_fence **, uint32_t, bool, long,
+    uint32_t *);
+long dma_fence_wait_timeout(struct dma_fence *, bool, long);
+long dma_fence_wait(struct dma_fence *, bool);
+void dma_fence_enable_sw_signaling(struct dma_fence *);
+void dma_fence_init(struct dma_fence *, const struct dma_fence_ops *,
+    struct mutex *, uint64_t, uint64_t);
+int dma_fence_add_callback(struct dma_fence *, struct dma_fence_cb *,
+    dma_fence_func_t);
+bool dma_fence_remove_callback(struct dma_fence *, struct dma_fence_cb *);
 
-static inline struct dma_fence *
-dma_fence_get(struct dma_fence *fence)
-{
-	if (fence)
-		kref_get(&fence->refcount);
-	return fence;
-}
-
-static inline struct dma_fence *
-dma_fence_get_rcu(struct dma_fence *fence)
-{
-	if (fence)
-		kref_get(&fence->refcount);
-	return fence;
-}
-
-static inline struct dma_fence *
-dma_fence_get_rcu_safe(struct dma_fence **dfp)
-{
-	struct dma_fence *fence;
-	if (dfp == NULL)
-		return NULL;
-	fence = *dfp;
-	if (fence)
-		kref_get(&fence->refcount);
-	return fence;
-}
-
-static inline void
-dma_fence_release(struct kref *ref)
-{
-	struct dma_fence *fence = container_of(ref, struct dma_fence, refcount);
-	if (fence->ops && fence->ops->release)
-		fence->ops->release(fence);
-	else
-		free(fence, M_DRM, 0);
-}
+struct dma_fence *dma_fence_get_stub(void);
 
 static inline void
 dma_fence_free(struct dma_fence *fence)
 {
 	free(fence, M_DRM, 0);
-}
-
-static inline void
-dma_fence_put(struct dma_fence *fence)
-{
-	if (fence)
-		kref_put(&fence->refcount, dma_fence_release);
-}
-
-static inline int
-dma_fence_signal_locked(struct dma_fence *fence)
-{
-	struct dma_fence_cb *cur, *tmp;
-	struct list_head cb_list;
-
-	if (fence == NULL)
-		return -EINVAL;
-
-	if (test_and_set_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags))
-		return -EINVAL;
-
-	list_replace(&fence->cb_list, &cb_list);
-
-	fence->timestamp = ktime_get();
-	set_bit(DMA_FENCE_FLAG_TIMESTAMP_BIT, &fence->flags);
-
-	list_for_each_entry_safe(cur, tmp, &cb_list, node) {
-		INIT_LIST_HEAD(&cur->node);
-		cur->func(fence, cur);
-	}
-
-	return 0;
-}
-
-static inline int
-dma_fence_signal(struct dma_fence *fence)
-{
-	int r;
-
-	if (fence == NULL)
-		return -EINVAL;
-
-	mtx_enter(fence->lock);
-	r = dma_fence_signal_locked(fence);
-	mtx_leave(fence->lock);
-
-	return r;
-}
-
-static inline bool
-dma_fence_is_signaled(struct dma_fence *fence)
-{
-	if (test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags))
-		return true;
-
-	if (fence->ops->signaled && fence->ops->signaled(fence)) {
-		dma_fence_signal(fence);
-		return true;
-	}
-
-	return false;
-}
-
-static inline bool
-dma_fence_is_signaled_locked(struct dma_fence *fence)
-{
-	if (test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags))
-		return true;
-
-	if (fence->ops->signaled && fence->ops->signaled(fence)) {
-		dma_fence_signal_locked(fence);
-		return true;
-	}
-
-	return false;
-}
-
-long dma_fence_default_wait(struct dma_fence *, bool, long);
-
-static inline long
-dma_fence_wait_timeout(struct dma_fence *fence, bool intr, long timeout)
-{
-	if (timeout < 0)
-		return -EINVAL;
-
-	if (fence->ops->wait)
-		return fence->ops->wait(fence, intr, timeout);
-	else
-		return dma_fence_default_wait(fence, intr, timeout);
-}
-
-static inline long
-dma_fence_wait(struct dma_fence *fence, bool intr)
-{
-	long ret;
-
-	ret = dma_fence_wait_timeout(fence, intr, MAX_SCHEDULE_TIMEOUT);
-	if (ret < 0)
-		return ret;
-	
-	return 0;
-}
-
-static inline void
-dma_fence_enable_sw_signaling(struct dma_fence *fence)
-{
-	if (!test_and_set_bit(DMA_FENCE_FLAG_ENABLE_SIGNAL_BIT, &fence->flags) &&
-	    !test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags) &&
-	    fence->ops->enable_signaling) {
-		mtx_enter(fence->lock);
-		if (!fence->ops->enable_signaling(fence))
-			dma_fence_signal_locked(fence);
-		mtx_leave(fence->lock);
-	}
-}
-
-static inline void
-dma_fence_init(struct dma_fence *fence, const struct dma_fence_ops *ops,
-    struct mutex *lock, uint64_t context, uint64_t seqno)
-{
-	fence->ops = ops;
-	fence->lock = lock;
-	fence->context = context;
-	fence->seqno = seqno;
-	fence->flags = 0;
-	fence->error = 0;
-	kref_init(&fence->refcount);
-	INIT_LIST_HEAD(&fence->cb_list);
-}
-
-static inline int
-dma_fence_add_callback(struct dma_fence *fence, struct dma_fence_cb *cb,
-    dma_fence_func_t func)
-{
-	int ret = 0;
-	bool was_set;
-
-	if (WARN_ON(!fence || !func))
-		return -EINVAL;
-
-	if (test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags)) {
-		INIT_LIST_HEAD(&cb->node);
-		return -ENOENT;
-	}
-
-	mtx_enter(fence->lock);
-
-	was_set = test_and_set_bit(DMA_FENCE_FLAG_ENABLE_SIGNAL_BIT, &fence->flags);
-
-	if (test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags))
-		ret = -ENOENT;
-	else if (!was_set && fence->ops->enable_signaling) {
-		if (!fence->ops->enable_signaling(fence)) {
-			dma_fence_signal_locked(fence);
-			ret = -ENOENT;
-		}
-	}
-
-	if (!ret) {
-		cb->func = func;
-		list_add_tail(&cb->node, &fence->cb_list);
-	} else
-		INIT_LIST_HEAD(&cb->node);
-	mtx_leave(fence->lock);
-
-	return ret;
-}
-
-static inline bool
-dma_fence_remove_callback(struct dma_fence *fence, struct dma_fence_cb *cb)
-{
-	bool ret;
-
-	mtx_enter(fence->lock);
-
-	ret = !list_empty(&cb->node);
-	if (ret)
-		list_del_init(&cb->node);
-
-	mtx_leave(fence->lock);
-
-	return ret;
 }
 
 static inline bool
@@ -290,10 +92,5 @@ dma_fence_set_error(struct dma_fence *fence, int error)
 {
 	fence->error = error;
 }
-
-long dma_fence_wait_any_timeout(struct dma_fence **, uint32_t, bool, long,
-    uint32_t *);
-
-struct dma_fence *dma_fence_get_stub(void);
 
 #endif

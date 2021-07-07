@@ -33,4 +33,10 @@ prandom_u32_max(uint32_t x)
 	return arc4random_uniform(x + 1);
 }
 
+static inline void
+get_random_bytes(void *buf, int nbytes)
+{
+	arc4random_buf(buf, nbytes);
+}
+
 #endif

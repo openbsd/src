@@ -249,7 +249,7 @@ i915_gem_object_set_tiling(struct drm_i915_gem_object *obj,
 	 * whilst executing a fenced command for an untiled object.
 	 */
 
-	i915_gem_object_lock(obj);
+	i915_gem_object_lock(obj, NULL);
 	if (i915_gem_object_is_framebuffer(obj)) {
 		i915_gem_object_unlock(obj);
 		return -EBUSY;
@@ -299,7 +299,7 @@ i915_gem_object_set_tiling(struct drm_i915_gem_object *obj,
 	i915_gem_object_unlock(obj);
 
 	/* Force the fence to be reacquired for GTT access */
-	i915_gem_object_release_mmap(obj);
+	i915_gem_object_release_mmap_gtt(obj);
 
 	/* Try to preallocate memory required to save swizzling on put-pages */
 	if (i915_gem_object_needs_bit17_swizzle(obj)) {

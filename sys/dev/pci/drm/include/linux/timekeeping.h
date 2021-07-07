@@ -4,6 +4,7 @@
 #define _LINUX_TIMEKEEPING_H
 
 #define ktime_get_boottime()	ktime_get()
+#define ktime_get_boottime_ns()	ktime_get_ns()
 #define get_seconds()		gettime()
 
 static inline time_t

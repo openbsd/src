@@ -119,7 +119,7 @@ static void amdgpufb_destroy_pinned_object(struct drm_gem_object *gobj)
 		amdgpu_bo_unpin(abo);
 		amdgpu_bo_unreserve(abo);
 	}
-	drm_gem_object_put_unlocked(gobj);
+	drm_gem_object_put(gobj);
 }
 
 static int amdgpufb_create_pinned_object(struct amdgpu_fbdev *rfbdev,
@@ -140,7 +140,7 @@ static int amdgpufb_create_pinned_object(struct amdgpu_fbdev *rfbdev,
 			       AMDGPU_GEM_CREATE_VRAM_CONTIGUOUS     |
 			       AMDGPU_GEM_CREATE_VRAM_CLEARED;
 
-	info = drm_get_format_info(adev->ddev, mode_cmd);
+	info = drm_get_format_info(adev_to_drm(adev), mode_cmd);
 	cpp = info->cpp[0];
 
 	/* need to align pitch with crtc limits */
@@ -151,7 +151,7 @@ static int amdgpufb_create_pinned_object(struct amdgpu_fbdev *rfbdev,
 	size = mode_cmd->pitches[0] * height;
 	aligned_size = roundup2(size, PAGE_SIZE);
 	ret = amdgpu_gem_object_create(adev, aligned_size, 0, domain, flags,
-				       ttm_bo_type_kernel, NULL, &gobj);
+				       ttm_bo_type_device, NULL, &gobj);
 	if (ret) {
 		pr_err("failed to allocate framebuffer (%d)\n", aligned_size);
 		return -ENOMEM;
@@ -237,7 +237,7 @@ static int amdgpufb_create(struct drm_fb_helper *helper,
 		goto out;
 	}
 
-	ret = amdgpu_display_framebuffer_init(adev->ddev, &rfbdev->rfb,
+	ret = amdgpu_display_framebuffer_init(adev_to_drm(adev), &rfbdev->rfb,
 					      &mode_cmd, gobj);
 	if (ret) {
 		DRM_ERROR("failed to initialize framebuffer %d\n", ret);
@@ -263,7 +263,7 @@ static int amdgpufb_create(struct drm_fb_helper *helper,
 
 #ifdef __linux__
 	/* setup aperture base/size for vesafb takeover */
-	info->apertures->ranges[0].base = adev->ddev->mode_config.fb_base;
+	info->apertures->ranges[0].base = adev_to_drm(adev)->mode_config.fb_base;
 	info->apertures->ranges[0].size = adev->gmc.aper_size;
 #endif
 
@@ -307,7 +307,7 @@ static int amdgpufb_create(struct drm_fb_helper *helper,
 		break;
 	}
 
-	vga_switcheroo_client_fb_set(adev->ddev->pdev, info);
+	vga_switcheroo_client_fb_set(adev_to_drm(adev)->pdev, info);
 	return 0;
 
 out:
@@ -315,7 +315,7 @@ out:
 
 	}
 	if (fb && ret) {
-		drm_gem_object_put_unlocked(gobj);
+		drm_gem_object_put(gobj);
 		drm_framebuffer_unregister_private(fb);
 		drm_framebuffer_cleanup(fb);
 		kfree(fb);
@@ -326,10 +326,13 @@ out:
 static int amdgpu_fbdev_destroy(struct drm_device *dev, struct amdgpu_fbdev *rfbdev)
 {
 	struct amdgpu_framebuffer *rfb = &rfbdev->rfb;
+	int i;
 
 	drm_fb_helper_unregister_fbi(&rfbdev->helper);
 
 	if (rfb->base.obj[0]) {
+		for (i = 0; i < rfb->base.format->num_planes; i++)
+			drm_gem_object_put(rfb->base.obj[0]);
 		amdgpufb_destroy_pinned_object(rfb->base.obj[0]);
 		rfb->base.obj[0] = NULL;
 		drm_framebuffer_unregister_private(&rfb->base);
@@ -355,7 +358,7 @@ int amdgpu_fbdev_init(struct amdgpu_device *adev)
 		return 0;
 
 	/* don't init fbdev if there are no connectors */
-	if (list_empty(&adev->ddev->mode_config.connector_list))
+	if (list_empty(&adev_to_drm(adev)->mode_config.connector_list))
 		return 0;
 
 	/* select 8 bpp console on low vram cards */
@@ -369,10 +372,10 @@ int amdgpu_fbdev_init(struct amdgpu_device *adev)
 	rfbdev->adev = adev;
 	adev->mode_info.rfbdev = rfbdev;
 
-	drm_fb_helper_prepare(adev->ddev, &rfbdev->helper,
-			&amdgpu_fb_helper_funcs);
+	drm_fb_helper_prepare(adev_to_drm(adev), &rfbdev->helper,
+			      &amdgpu_fb_helper_funcs);
 
-	ret = drm_fb_helper_init(adev->ddev, &rfbdev->helper);
+	ret = drm_fb_helper_init(adev_to_drm(adev), &rfbdev->helper);
 	if (ret) {
 		kfree(rfbdev);
 		return ret;
@@ -382,7 +385,7 @@ int amdgpu_fbdev_init(struct amdgpu_device *adev)
 
 	/* disable all the possible outputs/crtcs before entering KMS mode */
 	if (!amdgpu_device_has_dc_support(adev))
-		drm_helper_disable_unused_functions(adev->ddev);
+		drm_helper_disable_unused_functions(adev_to_drm(adev));
 
 	drm_fb_helper_initial_config(&rfbdev->helper, bpp_sel);
 	return 0;
@@ -395,7 +398,7 @@ void amdgpu_fbdev_fini(struct amdgpu_device *adev)
 
 	task_del(systq, &adev->burner_task);
 
-	amdgpu_fbdev_destroy(adev->ddev, adev->mode_info.rfbdev);
+	amdgpu_fbdev_destroy(adev_to_drm(adev), adev->mode_info.rfbdev);
 	kfree(adev->mode_info.rfbdev);
 	adev->mode_info.rfbdev = NULL;
 }

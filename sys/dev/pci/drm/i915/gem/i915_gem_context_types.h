@@ -174,6 +174,7 @@ struct i915_gem_context {
 	 * per vm, which may be one per context or shared with the global GTT)
 	 */
 	struct radix_tree_root handles_vma;
+	struct rwlock lut_mutex;
 
 	/**
 	 * @name: arbitrary name, used for user debug

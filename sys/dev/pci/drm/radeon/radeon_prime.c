@@ -38,7 +38,7 @@ struct sg_table *radeon_gem_prime_get_sg_table(struct drm_gem_object *obj)
 	struct radeon_bo *bo = gem_to_radeon_bo(obj);
 	int npages = bo->tbo.num_pages;
 
-	return drm_prime_pages_to_sg(bo->tbo.ttm->pages, npages);
+	return drm_prime_pages_to_sg(obj->dev, bo->tbo.ttm->pages, npages);
 }
 
 void *radeon_gem_prime_vmap(struct drm_gem_object *obj)
@@ -96,9 +96,19 @@ int radeon_gem_prime_pin(struct drm_gem_object *obj)
 
 	/* pin buffer into GTT */
 	ret = radeon_bo_pin(bo, RADEON_GEM_DOMAIN_GTT, NULL);
-	if (likely(ret == 0))
-		bo->prime_shared_count++;
+	if (unlikely(ret))
+		goto error;
 
+	if (bo->tbo.moving) {
+		ret = dma_fence_wait(bo->tbo.moving, false);
+		if (unlikely(ret)) {
+			radeon_bo_unpin(bo);
+			goto error;
+		}
+	}
+
+	bo->prime_shared_count++;
+error:
 	radeon_bo_unreserve(bo);
 	return ret;
 }
@@ -124,7 +134,7 @@ struct dma_buf *radeon_gem_prime_export(struct drm_gem_object *gobj,
 					int flags)
 {
 	struct radeon_bo *bo = gem_to_radeon_bo(gobj);
-	if (radeon_ttm_tt_has_userptr(bo->tbo.ttm))
+	if (radeon_ttm_tt_has_userptr(bo->rdev, bo->tbo.ttm))
 		return ERR_PTR(-EPERM);
 	return drm_gem_prime_export(gobj, flags);
 }

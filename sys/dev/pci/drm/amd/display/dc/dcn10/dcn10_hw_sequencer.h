@@ -109,6 +109,7 @@ void dcn10_program_pipe(
 void dcn10_program_gamut_remap(struct pipe_ctx *pipe_ctx);
 void dcn10_init_hw(struct dc *dc);
 void dcn10_init_pipes(struct dc *dc, struct dc_state *context);
+void dcn10_power_down_on_boot(struct dc *dc);
 enum dc_status dce110_apply_ctx_to_hw(
 		struct dc *dc,
 		struct dc_state *context);
@@ -193,6 +194,12 @@ void dcn10_get_surface_visual_confirm_color(
 void dcn10_get_hdr_visual_confirm_color(
 		struct pipe_ctx *pipe_ctx,
 		struct tg_color *color);
+bool dcn10_disconnect_pipes(
+		struct dc *dc,
+		struct dc_state *context);
+
+void dcn10_wait_for_pending_cleared(struct dc *dc,
+		struct dc_state *context);
 void dcn10_set_hdr_multiplier(struct pipe_ctx *pipe_ctx);
 void dcn10_verify_allow_pstate_change_high(struct dc *dc);
 

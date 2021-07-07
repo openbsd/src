@@ -23,4 +23,10 @@ capable(int cap)
 	}
 } 
 
+static inline bool
+perfmon_capable(void)
+{
+	return false;
+}
+
 #endif

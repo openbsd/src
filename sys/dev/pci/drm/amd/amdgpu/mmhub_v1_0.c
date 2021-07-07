@@ -34,7 +34,7 @@
 #define mmDAGB0_CNTL_MISC2_RV 0x008f
 #define mmDAGB0_CNTL_MISC2_RV_BASE_IDX 0
 
-u64 mmhub_v1_0_get_fb_location(struct amdgpu_device *adev)
+static u64 mmhub_v1_0_get_fb_location(struct amdgpu_device *adev)
 {
 	u64 base = RREG32_SOC15(MMHUB, 0, mmMC_VM_FB_LOCATION_BASE);
 	u64 top = RREG32_SOC15(MMHUB, 0, mmMC_VM_FB_LOCATION_TOP);
@@ -51,18 +51,18 @@ u64 mmhub_v1_0_get_fb_location(struct amdgpu_device *adev)
 	return base;
 }
 
-void mmhub_v1_0_setup_vm_pt_regs(struct amdgpu_device *adev, uint32_t vmid,
+static void mmhub_v1_0_setup_vm_pt_regs(struct amdgpu_device *adev, uint32_t vmid,
 				uint64_t page_table_base)
 {
-	/* two registers distance between mmVM_CONTEXT0_* to mmVM_CONTEXT1_* */
-	int offset = mmVM_CONTEXT1_PAGE_TABLE_BASE_ADDR_LO32
-			- mmVM_CONTEXT0_PAGE_TABLE_BASE_ADDR_LO32;
+	struct amdgpu_vmhub *hub = &adev->vmhub[AMDGPU_MMHUB_0];
 
 	WREG32_SOC15_OFFSET(MMHUB, 0, mmVM_CONTEXT0_PAGE_TABLE_BASE_ADDR_LO32,
-			offset * vmid, lower_32_bits(page_table_base));
+			    hub->ctx_addr_distance * vmid,
+			    lower_32_bits(page_table_base));
 
 	WREG32_SOC15_OFFSET(MMHUB, 0, mmVM_CONTEXT0_PAGE_TABLE_BASE_ADDR_HI32,
-			offset * vmid, upper_32_bits(page_table_base));
+			    hub->ctx_addr_distance * vmid,
+			    upper_32_bits(page_table_base));
 }
 
 static void mmhub_v1_0_init_gart_aperture_regs(struct amdgpu_device *adev)
@@ -96,7 +96,7 @@ static void mmhub_v1_0_init_system_aperture_regs(struct amdgpu_device *adev)
 	WREG32_SOC15(MMHUB, 0, mmMC_VM_SYSTEM_APERTURE_LOW_ADDR,
 		     min(adev->gmc.fb_start, adev->gmc.agp_start) >> 18);
 
-	if (adev->asic_type == CHIP_RAVEN && adev->rev_id >= 0x8)
+	if (adev->apu_flags & AMD_APU_IS_RAVEN2)
 		/*
 		 * Raven2 has a HW issue that it is unable to use the vram which
 		 * is out of MC_VM_SYSTEM_APERTURE_HIGH_ADDR. So here is the
@@ -230,6 +230,7 @@ static void mmhub_v1_0_disable_identity_aperture(struct amdgpu_device *adev)
 
 static void mmhub_v1_0_setup_vmid_config(struct amdgpu_device *adev)
 {
+	struct amdgpu_vmhub *hub = &adev->vmhub[AMDGPU_MMHUB_0];
 	unsigned num_level, block_size;
 	uint32_t tmp;
 	int i;
@@ -267,43 +268,48 @@ static void mmhub_v1_0_setup_vmid_config(struct amdgpu_device *adev)
 		/* Send no-retry XNACK on fault to suppress VM fault storm. */
 		tmp = REG_SET_FIELD(tmp, VM_CONTEXT1_CNTL,
 				    RETRY_PERMISSION_OR_INVALID_PAGE_FAULT,
-				    !amdgpu_noretry);
-		WREG32_SOC15_OFFSET(MMHUB, 0, mmVM_CONTEXT1_CNTL, i, tmp);
-		WREG32_SOC15_OFFSET(MMHUB, 0, mmVM_CONTEXT1_PAGE_TABLE_START_ADDR_LO32, i*2, 0);
-		WREG32_SOC15_OFFSET(MMHUB, 0, mmVM_CONTEXT1_PAGE_TABLE_START_ADDR_HI32, i*2, 0);
-		WREG32_SOC15_OFFSET(MMHUB, 0, mmVM_CONTEXT1_PAGE_TABLE_END_ADDR_LO32, i*2,
-			lower_32_bits(adev->vm_manager.max_pfn - 1));
-		WREG32_SOC15_OFFSET(MMHUB, 0, mmVM_CONTEXT1_PAGE_TABLE_END_ADDR_HI32, i*2,
-			upper_32_bits(adev->vm_manager.max_pfn - 1));
+				    !adev->gmc.noretry);
+		WREG32_SOC15_OFFSET(MMHUB, 0, mmVM_CONTEXT1_CNTL,
+				    i * hub->ctx_distance, tmp);
+		WREG32_SOC15_OFFSET(MMHUB, 0, mmVM_CONTEXT1_PAGE_TABLE_START_ADDR_LO32,
+				    i * hub->ctx_addr_distance, 0);
+		WREG32_SOC15_OFFSET(MMHUB, 0, mmVM_CONTEXT1_PAGE_TABLE_START_ADDR_HI32,
+				    i * hub->ctx_addr_distance, 0);
+		WREG32_SOC15_OFFSET(MMHUB, 0, mmVM_CONTEXT1_PAGE_TABLE_END_ADDR_LO32,
+				    i * hub->ctx_addr_distance,
+				    lower_32_bits(adev->vm_manager.max_pfn - 1));
+		WREG32_SOC15_OFFSET(MMHUB, 0, mmVM_CONTEXT1_PAGE_TABLE_END_ADDR_HI32,
+				    i * hub->ctx_addr_distance,
+				    upper_32_bits(adev->vm_manager.max_pfn - 1));
 	}
 }
 
 static void mmhub_v1_0_program_invalidation(struct amdgpu_device *adev)
 {
+	struct amdgpu_vmhub *hub = &adev->vmhub[AMDGPU_MMHUB_0];
 	unsigned i;
 
 	for (i = 0; i < 18; ++i) {
 		WREG32_SOC15_OFFSET(MMHUB, 0, mmVM_INVALIDATE_ENG0_ADDR_RANGE_LO32,
-				    2 * i, 0xffffffff);
+				    i * hub->eng_addr_distance, 0xffffffff);
 		WREG32_SOC15_OFFSET(MMHUB, 0, mmVM_INVALIDATE_ENG0_ADDR_RANGE_HI32,
-				    2 * i, 0x1f);
+				    i * hub->eng_addr_distance, 0x1f);
 	}
 }
 
-void mmhub_v1_0_update_power_gating(struct amdgpu_device *adev,
+static void mmhub_v1_0_update_power_gating(struct amdgpu_device *adev,
 				bool enable)
 {
 	if (amdgpu_sriov_vf(adev))
 		return;
 
 	if (enable && adev->pg_flags & AMD_PG_SUPPORT_MMHUB) {
-		if (adev->powerplay.pp_funcs && adev->powerplay.pp_funcs->set_powergating_by_smu)
-			amdgpu_dpm_set_powergating_by_smu(adev, AMD_IP_BLOCK_TYPE_GMC, true);
+		amdgpu_dpm_set_powergating_by_smu(adev, AMD_IP_BLOCK_TYPE_GMC, true);
 
 	}
 }
 
-int mmhub_v1_0_gart_enable(struct amdgpu_device *adev)
+static int mmhub_v1_0_gart_enable(struct amdgpu_device *adev)
 {
 	if (amdgpu_sriov_vf(adev)) {
 		/*
@@ -331,14 +337,16 @@ int mmhub_v1_0_gart_enable(struct amdgpu_device *adev)
 	return 0;
 }
 
-void mmhub_v1_0_gart_disable(struct amdgpu_device *adev)
+static void mmhub_v1_0_gart_disable(struct amdgpu_device *adev)
 {
+	struct amdgpu_vmhub *hub = &adev->vmhub[AMDGPU_MMHUB_0];
 	u32 tmp;
 	u32 i;
 
 	/* Disable all tables */
 	for (i = 0; i < 16; i++)
-		WREG32_SOC15_OFFSET(MMHUB, 0, mmVM_CONTEXT0_CNTL, i, 0);
+		WREG32_SOC15_OFFSET(MMHUB, 0, mmVM_CONTEXT0_CNTL,
+				    i * hub->ctx_distance, 0);
 
 	/* Setup TLB control */
 	tmp = RREG32_SOC15(MMHUB, 0, mmMC_VM_MX_L1_TLB_CNTL);
@@ -364,7 +372,7 @@ void mmhub_v1_0_gart_disable(struct amdgpu_device *adev)
  * @adev: amdgpu_device pointer
  * @value: true redirects VM faults to the default page
  */
-void mmhub_v1_0_set_fault_enable_default(struct amdgpu_device *adev, bool value)
+static void mmhub_v1_0_set_fault_enable_default(struct amdgpu_device *adev, bool value)
 {
 	u32 tmp;
 
@@ -406,7 +414,7 @@ void mmhub_v1_0_set_fault_enable_default(struct amdgpu_device *adev, bool value)
 	WREG32_SOC15(MMHUB, 0, mmVM_L2_PROTECTION_FAULT_CNTL, tmp);
 }
 
-void mmhub_v1_0_init(struct amdgpu_device *adev)
+static void mmhub_v1_0_init(struct amdgpu_device *adev)
 {
 	struct amdgpu_vmhub *hub = &adev->vmhub[AMDGPU_MMHUB_0];
 
@@ -429,6 +437,12 @@ void mmhub_v1_0_init(struct amdgpu_device *adev)
 	hub->vm_l2_pro_fault_cntl =
 		SOC15_REG_OFFSET(MMHUB, 0, mmVM_L2_PROTECTION_FAULT_CNTL);
 
+	hub->ctx_distance = mmVM_CONTEXT1_CNTL - mmVM_CONTEXT0_CNTL;
+	hub->ctx_addr_distance = mmVM_CONTEXT1_PAGE_TABLE_BASE_ADDR_LO32 -
+		mmVM_CONTEXT0_PAGE_TABLE_BASE_ADDR_LO32;
+	hub->eng_distance = mmVM_INVALIDATE_ENG1_REQ - mmVM_INVALIDATE_ENG0_REQ;
+	hub->eng_addr_distance = mmVM_INVALIDATE_ENG1_ADDR_RANGE_LO32 -
+		mmVM_INVALIDATE_ENG0_ADDR_RANGE_LO32;
 }
 
 static void mmhub_v1_0_update_medium_grain_clock_gating(struct amdgpu_device *adev,
@@ -510,7 +524,7 @@ static void mmhub_v1_0_update_medium_grain_light_sleep(struct amdgpu_device *ade
 		WREG32_SOC15(MMHUB, 0, mmATC_L2_MISC_CG, data);
 }
 
-int mmhub_v1_0_set_clockgating(struct amdgpu_device *adev,
+static int mmhub_v1_0_set_clockgating(struct amdgpu_device *adev,
 			       enum amd_clockgating_state state)
 {
 	if (amdgpu_sriov_vf(adev))
@@ -534,7 +548,7 @@ int mmhub_v1_0_set_clockgating(struct amdgpu_device *adev,
 	return 0;
 }
 
-void mmhub_v1_0_get_clockgating(struct amdgpu_device *adev, u32 *flags)
+static void mmhub_v1_0_get_clockgating(struct amdgpu_device *adev, u32 *flags)
 {
 	int data, data1;
 
@@ -690,7 +704,8 @@ static const struct soc15_reg_entry mmhub_v1_0_edc_cnt_regs[] = {
    { SOC15_REG_ENTRY(MMHUB, 0, mmMMEA1_EDC_CNT2_VG20), 0, 0, 0},
 };
 
-static int mmhub_v1_0_get_ras_error_count(const struct soc15_reg_entry *reg,
+static int mmhub_v1_0_get_ras_error_count(struct amdgpu_device *adev,
+	const struct soc15_reg_entry *reg,
 	uint32_t value, uint32_t *sec_count, uint32_t *ded_count)
 {
 	uint32_t i;
@@ -704,7 +719,8 @@ static int mmhub_v1_0_get_ras_error_count(const struct soc15_reg_entry *reg,
 				mmhub_v1_0_ras_fields[i].sec_count_mask) >>
 				mmhub_v1_0_ras_fields[i].sec_count_shift;
 		if (sec_cnt) {
-			DRM_INFO("MMHUB SubBlock %s, SEC %d\n",
+			dev_info(adev->dev,
+				"MMHUB SubBlock %s, SEC %d\n",
 				mmhub_v1_0_ras_fields[i].name,
 				sec_cnt);
 			*sec_count += sec_cnt;
@@ -714,7 +730,8 @@ static int mmhub_v1_0_get_ras_error_count(const struct soc15_reg_entry *reg,
 				mmhub_v1_0_ras_fields[i].ded_count_mask) >>
 				mmhub_v1_0_ras_fields[i].ded_count_shift;
 		if (ded_cnt) {
-			DRM_INFO("MMHUB SubBlock %s, DED %d\n",
+			dev_info(adev->dev,
+				"MMHUB SubBlock %s, DED %d\n",
 				mmhub_v1_0_ras_fields[i].name,
 				ded_cnt);
 			*ded_count += ded_cnt;
@@ -739,7 +756,8 @@ static void mmhub_v1_0_query_ras_error_count(struct amdgpu_device *adev,
 		reg_value =
 			RREG32(SOC15_REG_ENTRY_OFFSET(mmhub_v1_0_edc_cnt_regs[i]));
 		if (reg_value)
-			mmhub_v1_0_get_ras_error_count(&mmhub_v1_0_edc_cnt_regs[i],
+			mmhub_v1_0_get_ras_error_count(adev,
+				&mmhub_v1_0_edc_cnt_regs[i],
 				reg_value, &sec_count, &ded_count);
 	}
 
@@ -762,4 +780,13 @@ const struct amdgpu_mmhub_funcs mmhub_v1_0_funcs = {
 	.ras_late_init = amdgpu_mmhub_ras_late_init,
 	.query_ras_error_count = mmhub_v1_0_query_ras_error_count,
 	.reset_ras_error_count = mmhub_v1_0_reset_ras_error_count,
+	.get_fb_location = mmhub_v1_0_get_fb_location,
+	.init = mmhub_v1_0_init,
+	.gart_enable = mmhub_v1_0_gart_enable,
+	.set_fault_enable_default = mmhub_v1_0_set_fault_enable_default,
+	.gart_disable = mmhub_v1_0_gart_disable,
+	.set_clockgating = mmhub_v1_0_set_clockgating,
+	.get_clockgating = mmhub_v1_0_get_clockgating,
+	.setup_vm_pt_regs = mmhub_v1_0_setup_vm_pt_regs,
+	.update_power_gating = mmhub_v1_0_update_power_gating,
 };

@@ -19,7 +19,6 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include <linux/mmu_context.h>
 #include "amdgpu.h"
 #include "amdgpu_amdkfd.h"
 #include "gc/gc_10_1_0_offset.h"
@@ -33,7 +32,6 @@
 #include "v10_structs.h"
 #include "nv.h"
 #include "nvd.h"
-#include "gfxhub_v2_0.h"
 
 enum hqd_dequeue_request_type {
 	NO_ACTION = 0,
@@ -106,7 +104,7 @@ static void kgd_program_sh_mem_settings(struct kgd_dev *kgd, uint32_t vmid,
 	unlock_srbm(kgd);
 }
 
-static int kgd_set_pasid_vmid_mapping(struct kgd_dev *kgd, unsigned int pasid,
+static int kgd_set_pasid_vmid_mapping(struct kgd_dev *kgd, u32 pasid,
 					unsigned int vmid)
 {
 	struct amdgpu_device *adev = get_amdgpu_device(kgd);
@@ -543,6 +541,9 @@ static int kgd_hqd_destroy(struct kgd_dev *kgd, void *mqd,
 	uint32_t temp;
 	struct v10_compute_mqd *m = get_mqd(mqd);
 
+	if (amdgpu_in_reset(adev))
+		return -EIO;
+
 #if 0
 	unsigned long flags;
 	int retry;
@@ -751,7 +752,7 @@ static void set_vm_context_page_table_base(struct kgd_dev *kgd, uint32_t vmid,
 	}
 
 	/* SDMA is on gfxhub as well for Navi1* series */
-	gfxhub_v2_0_setup_vm_pt_regs(adev, vmid, page_table_base);
+	adev->gfxhub.funcs->setup_vm_pt_regs(adev, vmid, page_table_base);
 }
 
 const struct kfd2kgd_calls gfx_v10_kfd2kgd = {
@@ -774,6 +775,4 @@ const struct kfd2kgd_calls gfx_v10_kfd2kgd = {
 	.get_atc_vmid_pasid_mapping_info =
 			get_atc_vmid_pasid_mapping_info,
 	.set_vm_context_page_table_base = set_vm_context_page_table_base,
-	.get_hive_id = amdgpu_amdkfd_get_hive_id,
-	.get_unique_id = amdgpu_amdkfd_get_unique_id,
 };

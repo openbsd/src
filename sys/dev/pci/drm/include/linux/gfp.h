@@ -46,7 +46,7 @@ alloc_page(unsigned int gfp_mask)
 static inline void
 __free_page(struct vm_page *page)
 {
-	return __free_pages(page, 0);
+	__free_pages(page, 0);
 }
 
 static inline unsigned long

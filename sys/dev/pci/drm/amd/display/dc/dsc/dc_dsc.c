@@ -22,15 +22,20 @@
  * Author: AMD
  */
 
+#include <drm/drm_dsc.h>
 #include "dc_hw_types.h"
 #include "dsc.h"
 #include <drm/drm_dp_helper.h>
 #include "dc.h"
+#include "rc_calc.h"
 
 /* This module's internal functions */
 
 /* default DSC policy target bitrate limit is 16bpp */
 static uint32_t dsc_policy_max_target_bpp_limit = 16;
+
+/* default DSC policy enables DSC only when needed */
+static bool dsc_policy_enable_dsc_when_not_needed;
 
 static uint32_t dc_dsc_bandwidth_in_kbps_from_timing(
 	const struct dc_crtc_timing *timing)
@@ -129,7 +134,7 @@ static bool dsc_line_buff_depth_from_dpcd(int dpcd_line_buff_bit_depth, int *lin
 static bool dsc_throughput_from_dpcd(int dpcd_throughput, int *throughput)
 {
 	switch (dpcd_throughput) {
-	case DP_DSC_THROUGHPUT_MODE_0_UPSUPPORTED:
+	case DP_DSC_THROUGHPUT_MODE_0_UNSUPPORTED:
 		*throughput = 0;
 		break;
 	case DP_DSC_THROUGHPUT_MODE_0_170:
@@ -187,8 +192,10 @@ static bool dsc_throughput_from_dpcd(int dpcd_throughput, int *throughput)
 }
 
 
-static bool dsc_bpp_increment_div_from_dpcd(int bpp_increment_dpcd, uint32_t *bpp_increment_div)
+static bool dsc_bpp_increment_div_from_dpcd(uint8_t bpp_increment_dpcd, uint32_t *bpp_increment_div)
 {
+	// Mask bpp increment dpcd field to avoid reading other fields
+	bpp_increment_dpcd &= 0x7;
 
 	switch (bpp_increment_dpcd) {
 	case 0:
@@ -304,22 +311,6 @@ static inline uint32_t dsc_div_by_10_round_up(uint32_t value)
 	return (value + 9) / 10;
 }
 
-static inline uint32_t calc_dsc_bpp_x16(uint32_t stream_bandwidth_kbps, uint32_t pix_clk_100hz, uint32_t bpp_increment_div)
-{
-	uint32_t dsc_target_bpp_x16;
-	float f_dsc_target_bpp;
-	float f_stream_bandwidth_100bps = stream_bandwidth_kbps * 10.0f;
-	uint32_t precision = bpp_increment_div; // bpp_increment_div is actually precision
-
-	f_dsc_target_bpp = f_stream_bandwidth_100bps / pix_clk_100hz;
-
-	// Round down to the nearest precision stop to bring it into DSC spec range
-	dsc_target_bpp_x16 = (uint32_t)(f_dsc_target_bpp * precision);
-	dsc_target_bpp_x16 = (dsc_target_bpp_x16 * 16) / precision;
-
-	return dsc_target_bpp_x16;
-}
-
 /* Get DSC bandwidth range based on [min_bpp, max_bpp] target bitrate range, and timing's pixel clock
  * and uncompressed bandwidth.
  */
@@ -374,7 +365,7 @@ static bool decide_dsc_target_bpp_x16(
 
 	get_dsc_bandwidth_range(policy->min_target_bpp, policy->max_target_bpp,
 			dsc_common_caps, timing, &range);
-	if (target_bandwidth_kbps >= range.stream_kbps) {
+	if (!policy->enable_dsc_when_not_needed && target_bandwidth_kbps >= range.stream_kbps) {
 		/* enough bandwidth without dsc */
 		*target_bpp_x16 = 0;
 		should_use_dsc = false;
@@ -761,7 +752,7 @@ done:
 	return is_dsc_possible;
 }
 
-bool dc_dsc_parse_dsc_dpcd(const struct dc *dc, const uint8_t *dpcd_dsc_basic_data, const uint8_t *dpcd_dsc_ext_data, struct dsc_dec_dpcd_caps *dsc_sink_caps)
+bool dc_dsc_parse_dsc_dpcd(const struct dc *dc, const uint8_t *dpcd_dsc_basic_data, const uint8_t *dpcd_dsc_branch_decoder_caps, struct dsc_dec_dpcd_caps *dsc_sink_caps)
 {
 	if (!dpcd_dsc_basic_data)
 		return false;
@@ -832,14 +823,14 @@ bool dc_dsc_parse_dsc_dpcd(const struct dc *dc, const uint8_t *dpcd_dsc_basic_da
 	}
 
 	/* Extended caps */
-	if (dpcd_dsc_ext_data == NULL) { // Extended DPCD DSC data can be null, e.g. because it doesn't apply to SST
+	if (dpcd_dsc_branch_decoder_caps == NULL) { // branch decoder DPCD DSC data can be null for non branch device
 		dsc_sink_caps->branch_overall_throughput_0_mps = 0;
 		dsc_sink_caps->branch_overall_throughput_1_mps = 0;
 		dsc_sink_caps->branch_max_line_width = 0;
 		return true;
 	}
 
-	dsc_sink_caps->branch_overall_throughput_0_mps = dpcd_dsc_ext_data[DP_DSC_BRANCH_OVERALL_THROUGHPUT_0 - DP_DSC_BRANCH_OVERALL_THROUGHPUT_0];
+	dsc_sink_caps->branch_overall_throughput_0_mps = dpcd_dsc_branch_decoder_caps[DP_DSC_BRANCH_OVERALL_THROUGHPUT_0 - DP_DSC_BRANCH_OVERALL_THROUGHPUT_0];
 	if (dsc_sink_caps->branch_overall_throughput_0_mps == 0)
 		dsc_sink_caps->branch_overall_throughput_0_mps = 0;
 	else if (dsc_sink_caps->branch_overall_throughput_0_mps == 1)
@@ -849,7 +840,7 @@ bool dc_dsc_parse_dsc_dpcd(const struct dc *dc, const uint8_t *dpcd_dsc_basic_da
 		dsc_sink_caps->branch_overall_throughput_0_mps += 600;
 	}
 
-	dsc_sink_caps->branch_overall_throughput_1_mps = dpcd_dsc_ext_data[DP_DSC_BRANCH_OVERALL_THROUGHPUT_1 - DP_DSC_BRANCH_OVERALL_THROUGHPUT_0];
+	dsc_sink_caps->branch_overall_throughput_1_mps = dpcd_dsc_branch_decoder_caps[DP_DSC_BRANCH_OVERALL_THROUGHPUT_1 - DP_DSC_BRANCH_OVERALL_THROUGHPUT_0];
 	if (dsc_sink_caps->branch_overall_throughput_1_mps == 0)
 		dsc_sink_caps->branch_overall_throughput_1_mps = 0;
 	else if (dsc_sink_caps->branch_overall_throughput_1_mps == 1)
@@ -859,7 +850,7 @@ bool dc_dsc_parse_dsc_dpcd(const struct dc *dc, const uint8_t *dpcd_dsc_basic_da
 		dsc_sink_caps->branch_overall_throughput_1_mps += 600;
 	}
 
-	dsc_sink_caps->branch_max_line_width = dpcd_dsc_ext_data[DP_DSC_BRANCH_MAX_LINE_WIDTH - DP_DSC_BRANCH_OVERALL_THROUGHPUT_0] * 320;
+	dsc_sink_caps->branch_max_line_width = dpcd_dsc_branch_decoder_caps[DP_DSC_BRANCH_MAX_LINE_WIDTH - DP_DSC_BRANCH_OVERALL_THROUGHPUT_0] * 320;
 	ASSERT(dsc_sink_caps->branch_max_line_width == 0 || dsc_sink_caps->branch_max_line_width >= 5120);
 
 	return true;
@@ -975,9 +966,20 @@ void dc_dsc_get_policy_for_timing(const struct dc_crtc_timing *timing, struct dc
 	/* internal upper limit, default 16 bpp */
 	if (policy->max_target_bpp > dsc_policy_max_target_bpp_limit)
 		policy->max_target_bpp = dsc_policy_max_target_bpp_limit;
+
+	/* enable DSC when not needed, default false */
+	if (dsc_policy_enable_dsc_when_not_needed)
+		policy->enable_dsc_when_not_needed = dsc_policy_enable_dsc_when_not_needed;
+	else
+		policy->enable_dsc_when_not_needed = false;
 }
 
 void dc_dsc_policy_set_max_target_bpp_limit(uint32_t limit)
 {
 	dsc_policy_max_target_bpp_limit = limit;
+}
+
+void dc_dsc_policy_set_enable_dsc_when_not_needed(bool enable)
+{
+	dsc_policy_enable_dsc_when_not_needed = enable;
 }

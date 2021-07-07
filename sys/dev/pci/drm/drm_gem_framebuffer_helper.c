@@ -9,7 +9,7 @@ drm_gem_fb_destroy(struct drm_framebuffer *fb)
 	int i;
 
 	for (i = 0; i < 4; i++)
-		drm_gem_object_put_unlocked(fb->obj[i]);
+		drm_gem_object_put(fb->obj[i]);
 	drm_framebuffer_cleanup(fb);
 	free(fb, M_DRM, 0);
 }

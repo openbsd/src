@@ -61,6 +61,7 @@
 #include "dcn21_hubbub.h"
 #include "dcn10/dcn10_resource.h"
 #include "dce110/dce110_resource.h"
+#include "dce/dce_panel_cntl.h"
 
 #include "dcn20/dcn20_dwb.h"
 #include "dcn20/dcn20_mmhubbub.h"
@@ -85,8 +86,8 @@
 #include "vm_helper.h"
 #include "dcn20/dcn20_vmid.h"
 #include "dce/dmub_psr.h"
+#include "dce/dmub_abm.h"
 
-#define SOC_BOUNDING_BOX_VALID false
 #define DC_LOGGER_INIT(logger)
 
 
@@ -803,7 +804,7 @@ static const struct resource_caps res_cap_rn = {
 		.num_pll = 5,  // maybe 3 because the last two used for USB-c
 		.num_dwb = 1,
 		.num_ddc = 5,
-		.num_vmid = 1,
+		.num_vmid = 16,
 		.num_dsc = 3,
 };
 
@@ -856,7 +857,9 @@ static const struct dc_plane_cap plane_cap = {
 			.argb8888 = 250,
 			.nv12 = 250,
 			.fp16 = 250
-	}
+	},
+	64,
+	64
 };
 
 static const struct dc_debug_options debug_defaults_drv = {
@@ -876,7 +879,6 @@ static const struct dc_debug_options debug_defaults_drv = {
 		.scl_reset_length10 = true,
 		.sanity_checks = true,
 		.disable_48mhz_pwrdwn = false,
-		.nv12_iflip_vm_wa = true,
 		.usbc_combo_phy_reset_wa = true
 };
 
@@ -892,12 +894,16 @@ static const struct dc_debug_options debug_defaults_diags = {
 		.disable_pplib_wm_range = true,
 		.disable_stutter = true,
 		.disable_48mhz_pwrdwn = true,
+		.disable_psr = true,
+		.enable_tri_buf = true
 };
 
 enum dcn20_clk_src_array_id {
 	DCN20_CLK_SRC_PLL0,
 	DCN20_CLK_SRC_PLL1,
 	DCN20_CLK_SRC_PLL2,
+	DCN20_CLK_SRC_PLL3,
+	DCN20_CLK_SRC_PLL4,
 	DCN20_CLK_SRC_TOTAL_DCN21
 };
 
@@ -995,9 +1001,12 @@ static void dcn21_resource_destruct(struct dcn21_resource_pool *pool)
 		pool->base.dp_clock_source = NULL;
 	}
 
-
-	if (pool->base.abm != NULL)
-		dce_abm_destroy(&pool->base.abm);
+	if (pool->base.abm != NULL) {
+		if (pool->base.abm->ctx->dc->config.disable_dmcu)
+			dmub_abm_destroy(&pool->base.abm);
+		else
+			dce_abm_destroy(&pool->base.abm);
+	}
 
 	if (pool->base.dmcu != NULL)
 		dce_dmcu_destroy(&pool->base.dmcu);
@@ -1049,8 +1058,6 @@ static void patch_bounding_box(struct dc *dc, struct _vcs_dpi_soc_bounding_box_s
 {
 	int i;
 
-	DC_FP_START();
-
 	if (dc->bb_overrides.sr_exit_time_ns) {
 		for (i = 0; i < WM_SET_COUNT; i++) {
 			  dc->clk_mgr->bw_params->wm_table.entries[i].sr_exit_time_us =
@@ -1075,8 +1082,6 @@ static void patch_bounding_box(struct dc *dc, struct _vcs_dpi_soc_bounding_box_s
 				dc->bb_overrides.dram_clock_change_latency_ns / 1000.0;
 		}
 	}
-
-	DC_FP_END();
 }
 
 void dcn21_calculate_wm(
@@ -1164,8 +1169,8 @@ void dcn21_calculate_wm(
 }
 
 
-bool dcn21_validate_bandwidth(struct dc *dc, struct dc_state *context,
-		bool fast_validate)
+static noinline bool dcn21_validate_bandwidth_fp(struct dc *dc,
+		struct dc_state *context, bool fast_validate)
 {
 	bool out = false;
 
@@ -1174,10 +1179,13 @@ bool dcn21_validate_bandwidth(struct dc *dc, struct dc_state *context,
 	int vlevel = 0;
 	int pipe_split_from[MAX_PIPES];
 	int pipe_cnt = 0;
-	display_e2e_pipe_params_st *pipes = kzalloc(dc->res_pool->pipe_count * sizeof(display_e2e_pipe_params_st), GFP_KERNEL);
+	display_e2e_pipe_params_st *pipes = kzalloc(dc->res_pool->pipe_count * sizeof(display_e2e_pipe_params_st), GFP_ATOMIC);
 	DC_LOGGER_INIT(dc->ctx->logger);
 
 	BW_VAL_TRACE_COUNT();
+
+	/*Unsafe due to current pipe merge and split logic*/
+	ASSERT(context != dc->current_state);
 
 	DC_FP_START();
 	out = dcn20_fast_validate_bw(dc, context, pipes, &pipe_cnt, pipe_split_from, &vlevel);
@@ -1217,6 +1225,22 @@ validate_out:
 
 	return out;
 }
+
+/*
+ * Some of the functions further below use the FPU, so we need to wrap this
+ * with DC_FP_START()/DC_FP_END(). Use the same approach as for
+ * dcn20_validate_bandwidth in dcn20_resource.c.
+ */
+bool dcn21_validate_bandwidth(struct dc *dc, struct dc_state *context,
+		bool fast_validate)
+{
+	bool voltage_supported;
+	DC_FP_START();
+	voltage_supported = dcn21_validate_bandwidth_fp(dc, context, fast_validate);
+	DC_FP_END();
+	return voltage_supported;
+}
+
 static void dcn21_destroy_resource_pool(struct resource_pool **pool)
 {
 	struct dcn21_resource_pool *dcn21_pool = TO_DCN21_RES_POOL(*pool);
@@ -1292,6 +1316,7 @@ static struct hubbub *dcn21_hubbub_create(struct dc_context *ctx)
 		vmid->shifts = &vmid_shifts;
 		vmid->masks = &vmid_masks;
 	}
+	hubbub->num_vmid = res_cap_rn.num_vmid;
 
 	return &hubbub->base;
 }
@@ -1381,7 +1406,8 @@ static void update_bw_bounding_box(struct dc *dc, struct clk_bw_params *bw_param
 	struct dcn21_resource_pool *pool = TO_DCN21_RES_POOL(dc->res_pool);
 	struct clk_limit_table *clk_table = &bw_params->clk_table;
 	struct _vcs_dpi_voltage_scaling_st clock_limits[DC__VOLTAGE_STATES];
-	unsigned int i, j, closest_clk_lvl;
+	unsigned int i, closest_clk_lvl;
+	int j;
 
 	// Default clock levels are used for diags, which may lead to overclocking.
 	if (!IS_DIAG_DC(dc->ctx->dce_environment)) {
@@ -1597,6 +1623,18 @@ static const struct dcn10_link_enc_registers link_enc_regs[] = {
 	link_regs(4, E),
 };
 
+static const struct dce_panel_cntl_registers panel_cntl_regs[] = {
+	{ DCN_PANEL_CNTL_REG_LIST() }
+};
+
+static const struct dce_panel_cntl_shift panel_cntl_shift = {
+	DCE_PANEL_CNTL_MASK_SH_LIST(__SHIFT)
+};
+
+static const struct dce_panel_cntl_mask panel_cntl_mask = {
+	DCE_PANEL_CNTL_MASK_SH_LIST(_MASK)
+};
+
 #define aux_regs(id)\
 [id] = {\
 	DCN2_AUX_REG_LIST(id)\
@@ -1682,6 +1720,24 @@ static struct link_encoder *dcn21_link_encoder_create(
 
 	return &enc21->enc10.base;
 }
+
+static struct panel_cntl *dcn21_panel_cntl_create(const struct panel_cntl_init_data *init_data)
+{
+	struct dce_panel_cntl *panel_cntl =
+		kzalloc(sizeof(struct dce_panel_cntl), GFP_KERNEL);
+
+	if (!panel_cntl)
+		return NULL;
+
+	dce_panel_cntl_construct(panel_cntl,
+			init_data,
+			&panel_cntl_regs[init_data->inst],
+			&panel_cntl_shift,
+			&panel_cntl_mask);
+
+	return &panel_cntl->base;
+}
+
 #define CTX ctx
 
 #define REG(reg_name) \
@@ -1723,12 +1779,14 @@ enum dc_status dcn21_patch_unknown_plane_state(struct dc_plane_state *plane_stat
 	return result;
 }
 
-static struct resource_funcs dcn21_res_pool_funcs = {
+static const struct resource_funcs dcn21_res_pool_funcs = {
 	.destroy = dcn21_destroy_resource_pool,
 	.link_enc_create = dcn21_link_encoder_create,
+	.panel_cntl_create = dcn21_panel_cntl_create,
 	.validate_bandwidth = dcn21_validate_bandwidth,
 	.populate_dml_pipes = dcn21_populate_dml_pipes_from_context,
 	.add_stream_to_ctx = dcn20_add_stream_to_ctx,
+	.add_dsc_to_stream_resource = dcn20_add_dsc_to_stream_resource,
 	.remove_stream_from_ctx = dcn20_remove_stream_from_ctx,
 	.acquire_idle_pipe_for_layer = dcn20_acquire_idle_pipe_for_layer,
 	.populate_dml_writeback_from_context = dcn20_populate_dml_writeback_from_context,
@@ -1772,7 +1830,6 @@ static bool dcn21_resource_construct(
 	dc->caps.i2c_speed_in_khz = 100;
 	dc->caps.max_cursor_size = 256;
 	dc->caps.dmdata_alloc_size = 2048;
-	dc->caps.hw_3d_lut = true;
 
 	dc->caps.max_slave_planes = 1;
 	dc->caps.post_blend_color_processing = true;
@@ -1780,6 +1837,40 @@ static bool dcn21_resource_construct(
 	dc->caps.extended_aux_timeout_support = true;
 	dc->caps.dmcub_support = true;
 	dc->caps.is_apu = true;
+
+	/* Color pipeline capabilities */
+	dc->caps.color.dpp.dcn_arch = 1;
+	dc->caps.color.dpp.input_lut_shared = 0;
+	dc->caps.color.dpp.icsc = 1;
+	dc->caps.color.dpp.dgam_ram = 1;
+	dc->caps.color.dpp.dgam_rom_caps.srgb = 1;
+	dc->caps.color.dpp.dgam_rom_caps.bt2020 = 1;
+	dc->caps.color.dpp.dgam_rom_caps.gamma2_2 = 0;
+	dc->caps.color.dpp.dgam_rom_caps.pq = 0;
+	dc->caps.color.dpp.dgam_rom_caps.hlg = 0;
+	dc->caps.color.dpp.post_csc = 0;
+	dc->caps.color.dpp.gamma_corr = 0;
+
+	dc->caps.color.dpp.hw_3d_lut = 1;
+	dc->caps.color.dpp.ogam_ram = 1;
+	// no OGAM ROM on DCN2
+	dc->caps.color.dpp.ogam_rom_caps.srgb = 0;
+	dc->caps.color.dpp.ogam_rom_caps.bt2020 = 0;
+	dc->caps.color.dpp.ogam_rom_caps.gamma2_2 = 0;
+	dc->caps.color.dpp.ogam_rom_caps.pq = 0;
+	dc->caps.color.dpp.ogam_rom_caps.hlg = 0;
+	dc->caps.color.dpp.ocsc = 0;
+
+	dc->caps.color.mpc.gamut_remap = 0;
+	dc->caps.color.mpc.num_3dluts = 0;
+	dc->caps.color.mpc.shared_3d_lut = 0;
+	dc->caps.color.mpc.ogam_ram = 1;
+	dc->caps.color.mpc.ogam_rom_caps.srgb = 0;
+	dc->caps.color.mpc.ogam_rom_caps.bt2020 = 0;
+	dc->caps.color.mpc.ogam_rom_caps.gamma2_2 = 0;
+	dc->caps.color.mpc.ogam_rom_caps.pq = 0;
+	dc->caps.color.mpc.ogam_rom_caps.hlg = 0;
+	dc->caps.color.mpc.ocsc = 1;
 
 	if (dc->ctx->dce_environment == DCE_ENV_PRODUCTION_DRV)
 		dc->debug = debug_defaults_drv;
@@ -1809,6 +1900,14 @@ static bool dcn21_resource_construct(
 			dcn21_clock_source_create(ctx, ctx->dc_bios,
 				CLOCK_SOURCE_COMBO_PHY_PLL2,
 				&clk_src_regs[2], false);
+	pool->base.clock_sources[DCN20_CLK_SRC_PLL3] =
+			dcn21_clock_source_create(ctx, ctx->dc_bios,
+				CLOCK_SOURCE_COMBO_PHY_PLL3,
+				&clk_src_regs[3], false);
+	pool->base.clock_sources[DCN20_CLK_SRC_PLL4] =
+			dcn21_clock_source_create(ctx, ctx->dc_bios,
+				CLOCK_SOURCE_COMBO_PHY_PLL4,
+				&clk_src_regs[4], false);
 
 	pool->base.clk_src_count = DCN20_CLK_SRC_TOTAL_DCN21;
 
@@ -1833,17 +1932,21 @@ static bool dcn21_resource_construct(
 		goto create_fail;
 	}
 
-	pool->base.dmcu = dcn21_dmcu_create(ctx,
-			&dmcu_regs,
-			&dmcu_shift,
-			&dmcu_mask);
-	if (pool->base.dmcu == NULL) {
-		dm_error("DC: failed to create dmcu!\n");
-		BREAK_TO_DEBUGGER();
-		goto create_fail;
+	if (!dc->config.disable_dmcu) {
+		pool->base.dmcu = dcn21_dmcu_create(ctx,
+				&dmcu_regs,
+				&dmcu_shift,
+				&dmcu_mask);
+		if (pool->base.dmcu == NULL) {
+			dm_error("DC: failed to create dmcu!\n");
+			BREAK_TO_DEBUGGER();
+			goto create_fail;
+		}
+
+		dc->debug.dmub_command_table = false;
 	}
 
-	if (dc->debug.disable_dmcu) {
+	if (dc->config.disable_dmcu) {
 		pool->base.psr = dmub_psr_create(ctx);
 
 		if (pool->base.psr == NULL) {
@@ -1853,15 +1956,16 @@ static bool dcn21_resource_construct(
 		}
 	}
 
-	pool->base.abm = dce_abm_create(ctx,
+	if (dc->config.disable_dmcu)
+		pool->base.abm = dmub_abm_create(ctx,
 			&abm_regs,
 			&abm_shift,
 			&abm_mask);
-	if (pool->base.abm == NULL) {
-		dm_error("DC: failed to create abm!\n");
-		BREAK_TO_DEBUGGER();
-		goto create_fail;
-	}
+	else
+		pool->base.abm = dce_abm_create(ctx,
+			&abm_regs,
+			&abm_shift,
+			&abm_mask);
 
 	pool->base.pp_smu = dcn21_pp_smu_create(ctx);
 

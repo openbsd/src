@@ -9,6 +9,7 @@
 #define CONFIG_DRM_AMD_DC			1
 #if defined(__amd64__) || defined(__i386__)
 #define CONFIG_DRM_AMD_DC_DCN			1
+#define CONFIG_DRM_AMD_DC_DCN3_0		1
 #endif
 #if 0
 #define CONFIG_DRM_AMDGPU_CIK			1
@@ -22,6 +23,7 @@
 #define CONFIG_DRM_I915_HEARTBEAT_INTERVAL	2500	/* ms */
 #define CONFIG_DRM_I915_MAX_REQUEST_BUSYWAIT	8000	/* ns */
 #define CONFIG_DRM_I915_STOP_TIMEOUT		100	/* ms */
+#define CONFIG_DRM_I915_FENCE_TIMEOUT		10000	/* ms */
 #define CONFIG_DRM_I915_FORCE_PROBE		""
 
 #ifdef __HAVE_ACPI

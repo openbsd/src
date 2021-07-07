@@ -221,7 +221,7 @@ uint64_t rs400_gart_get_page_entry(uint64_t addr, uint32_t flags)
 {
 	uint32_t entry;
 
-	entry = (lower_32_bits(addr) & ~PAGE_MASK) |
+	entry = (lower_32_bits(addr) & LINUX_PAGE_MASK) |
 		((upper_32_bits(addr) & 0xff) << 4);
 	if (flags & RADEON_GART_PAGE_READ)
 		entry |= RS400_PTE_READABLE;

@@ -95,7 +95,6 @@ struct display_stream_compressor *dcn20_dsc_create(
 	struct dc_context *ctx, uint32_t inst);
 void dcn20_dsc_destroy(struct display_stream_compressor **dsc);
 
-void dcn20_patch_bounding_box(struct dc *dc, struct _vcs_dpi_soc_bounding_box_st *bb);
 void dcn20_cap_soc_clocks(
 		struct _vcs_dpi_soc_bounding_box_st *bb,
 		struct pp_smu_nv_clock_table max_clocks);
@@ -123,7 +122,7 @@ int dcn20_validate_apply_pipe_split_flags(
 		struct dc *dc,
 		struct dc_state *context,
 		int vlevel,
-		bool *split,
+		int *split,
 		bool *merge);
 void dcn20_release_dsc(struct resource_context *res_ctx,
 			const struct resource_pool *pool,
@@ -135,10 +134,14 @@ void dcn20_split_stream_for_mpc(
 		struct pipe_ctx *primary_pipe,
 		struct pipe_ctx *secondary_pipe);
 bool dcn20_split_stream_for_odm(
+		const struct dc *dc,
 		struct resource_context *res_ctx,
-		const struct resource_pool *pool,
 		struct pipe_ctx *prev_odm_pipe,
 		struct pipe_ctx *next_odm_pipe);
+void dcn20_acquire_dsc(const struct dc *dc,
+			struct resource_context *res_ctx,
+			struct display_stream_compressor **dsc,
+			int pipe_idx);
 struct pipe_ctx *dcn20_find_secondary_pipe(struct dc *dc,
 		struct resource_context *res_ctx,
 		const struct resource_pool *pool,

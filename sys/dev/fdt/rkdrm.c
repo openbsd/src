@@ -1,4 +1,4 @@
-/* $OpenBSD: rkdrm.c,v 1.10 2020/06/08 04:47:58 jsg Exp $ */
+/* $OpenBSD: rkdrm.c,v 1.11 2021/07/07 02:38:21 jsg Exp $ */
 /* $NetBSD: rk_drm.c,v 1.3 2019/12/15 01:00:58 mrg Exp $ */
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -146,7 +146,7 @@ rkdrm_fb_destroy(struct drm_framebuffer *fb)
 	struct rkdrm_framebuffer *sfb = to_rkdrm_framebuffer(fb);
 
 	drm_framebuffer_cleanup(fb);
-	drm_gem_object_put_unlocked(&sfb->obj->base);
+	drm_gem_object_put(&sfb->obj->base);
 	free(sfb, M_DRM, sizeof(*sfb));
 }
 
@@ -184,7 +184,7 @@ rkdrm_fb_create(struct drm_device *ddev, struct drm_file *file,
 dealloc:
 	drm_framebuffer_cleanup(&fb->base);
 	free(fb, M_DRM, sizeof(*fb));
-	drm_gem_object_put_unlocked(gem_obj);
+	drm_gem_object_put(gem_obj);
 
 	return NULL;
 }

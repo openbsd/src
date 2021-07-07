@@ -152,8 +152,7 @@ rebuild_st:
 		last_pfn = page_to_pfn(page);
 
 		/* Check that the i965g/gm workaround works. */
-		drm_WARN_ON(&i915->drm,
-			    (gfp & __GFP_DMA32) && (last_pfn >= 0x00100000UL));
+		GEM_BUG_ON(gfp & __GFP_DMA32 && last_pfn >= 0x00100000UL);
 	}
 #else
 	sg = st->sgl;
@@ -303,8 +302,8 @@ shmem_writeback(struct drm_i915_gem_object *obj)
 	for (i = 0; i < obj->base.size >> PAGE_SHIFT; i++) {
 		struct vm_page *page;
 
-		page = find_lock_entry(mapping, i);
-		if (!page || xa_is_value(page))
+		page = find_lock_page(mapping, i);
+		if (!page)
 			continue;
 
 		if (!page_mapped(page) && clear_page_dirty_for_io(page)) {
@@ -501,6 +500,7 @@ static void shmem_release(struct drm_i915_gem_object *obj)
 }
 
 const struct drm_i915_gem_object_ops i915_gem_shmem_ops = {
+	.name = "i915_gem_object_shmem",
 	.flags = I915_GEM_OBJECT_HAS_STRUCT_PAGE |
 		 I915_GEM_OBJECT_IS_SHRINKABLE,
 
@@ -699,15 +699,8 @@ static const struct intel_memory_region_ops shmem_region_ops = {
 
 struct intel_memory_region *i915_gem_shmem_setup(struct drm_i915_private *i915)
 {
-#ifdef __linux__
 	return intel_memory_region_create(i915, 0,
 					  totalram_pages() << PAGE_SHIFT,
 					  PAGE_SIZE, 0,
 					  &shmem_region_ops);
-#else
-	return intel_memory_region_create(i915, 0,
-					  ptoa(physmem),
-					  PAGE_SIZE, 0,
-					  &shmem_region_ops);
-#endif
 }

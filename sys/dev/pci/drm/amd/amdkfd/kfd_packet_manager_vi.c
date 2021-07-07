@@ -50,7 +50,7 @@ static int pm_map_process_vi(struct packet_manager *pm, uint32_t *buffer,
 	packet->header.u32All = pm_build_pm4_header(IT_MAP_PROCESS,
 					sizeof(struct pm4_mes_map_process));
 	packet->bitfields2.diq_enable = (qpd->is_debug) ? 1 : 0;
-	packet->bitfields2.process_quantum = 1;
+	packet->bitfields2.process_quantum = 10;
 	packet->bitfields2.pasid = qpd->pqm->process->pasid;
 	packet->bitfields3.page_table_base = qpd->page_table_base;
 	packet->bitfields10.gds_size = qpd->gds_size;
@@ -263,7 +263,7 @@ static int pm_unmap_queues_vi(struct packet_manager *pm, uint32_t *buffer,
 }
 
 static int pm_query_status_vi(struct packet_manager *pm, uint32_t *buffer,
-			uint64_t fence_address,	uint32_t fence_value)
+			uint64_t fence_address,	uint64_t fence_value)
 {
 	struct pm4_mes_query_status *packet;
 

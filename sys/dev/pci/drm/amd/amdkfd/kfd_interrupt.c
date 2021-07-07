@@ -67,7 +67,7 @@ int kfd_interrupt_init(struct kfd_dev *kfd)
 		dev_err(kfd_chardev(), "Failed to allocate KFD IH workqueue\n");
 		return -ENOMEM;
 	}
-	mtx_init(&kfd->interrupt_lock, IPL_TTY);
+	spin_lock_init(&kfd->interrupt_lock);
 
 	INIT_WORK(&kfd->interrupt_work, interrupt_wq);
 

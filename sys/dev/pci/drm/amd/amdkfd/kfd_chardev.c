@@ -39,6 +39,7 @@
 #include "kfd_device_queue_manager.h"
 #include "kfd_dbgmgr.h"
 #include "amdgpu_amdkfd.h"
+#include "kfd_smi_events.h"
 
 static long kfd_ioctl(struct file *, unsigned int, unsigned long);
 static int kfd_open(struct inode *, struct file *);
@@ -96,6 +97,7 @@ void kfd_chardev_exit(void)
 	device_destroy(kfd_class, MKDEV(kfd_char_dev_major, 0));
 	class_destroy(kfd_class);
 	unregister_chrdev(kfd_char_dev_major, kfd_dev_name);
+	kfd_device = NULL;
 }
 
 struct device *kfd_chardev(void)
@@ -215,6 +217,7 @@ static int set_queue_properties_from_user(struct queue_properties *q_properties,
 	}
 
 	q_properties->is_interop = false;
+	q_properties->is_gws = false;
 	q_properties->queue_percent = args->queue_percentage;
 	q_properties->priority = args->queue_priority;
 	q_properties->queue_address = args->ring_base_address;
@@ -1252,7 +1255,7 @@ bool kfd_dev_is_large_bar(struct kfd_dev *dev)
 		return true;
 	}
 
-	if (dev->device_info->needs_iommu_device)
+	if (dev->use_iommu_v2)
 		return false;
 
 	amdgpu_amdkfd_get_local_mem_info(dev->kgd, &mem_info);
@@ -1288,24 +1291,30 @@ static int kfd_ioctl_alloc_memory_of_gpu(struct file *filep,
 		return -EINVAL;
 	}
 
-	if (flags & KFD_IOC_ALLOC_MEM_FLAGS_DOORBELL) {
-		if (args->size != kfd_doorbell_process_slice(dev))
-			return -EINVAL;
-		offset = kfd_get_process_doorbells(dev, p);
-	} else if (flags & KFD_IOC_ALLOC_MEM_FLAGS_MMIO_REMAP) {
-		if (args->size != PAGE_SIZE)
-			return -EINVAL;
-		offset = amdgpu_amdkfd_get_mmio_remap_phys_addr(dev->kgd);
-		if (!offset)
-			return -ENOMEM;
-	}
-
 	mutex_lock(&p->mutex);
 
 	pdd = kfd_bind_process_to_device(dev, p);
 	if (IS_ERR(pdd)) {
 		err = PTR_ERR(pdd);
 		goto err_unlock;
+	}
+
+	if (flags & KFD_IOC_ALLOC_MEM_FLAGS_DOORBELL) {
+		if (args->size != kfd_doorbell_process_slice(dev)) {
+			err = -EINVAL;
+			goto err_unlock;
+		}
+		offset = kfd_get_process_doorbells(pdd);
+	} else if (flags & KFD_IOC_ALLOC_MEM_FLAGS_MMIO_REMAP) {
+		if (args->size != PAGE_SIZE) {
+			err = -EINVAL;
+			goto err_unlock;
+		}
+		offset = amdgpu_amdkfd_get_mmio_remap_phys_addr(dev->kgd);
+		if (!offset) {
+			err = -ENOMEM;
+			goto err_unlock;
+		}
 	}
 
 	err = amdgpu_amdkfd_gpuvm_alloc_memory_of_gpu(
@@ -1322,6 +1331,10 @@ static int kfd_ioctl_alloc_memory_of_gpu(struct file *filep,
 		goto err_free;
 	}
 
+	/* Update the VRAM usage count */
+	if (flags & KFD_IOC_ALLOC_MEM_FLAGS_VRAM)
+		WRITE_ONCE(pdd->vram_usage, pdd->vram_usage + args->size);
+
 	mutex_unlock(&p->mutex);
 
 	args->handle = MAKE_HANDLE(args->gpu_id, idr_handle);
@@ -1337,7 +1350,7 @@ static int kfd_ioctl_alloc_memory_of_gpu(struct file *filep,
 	return 0;
 
 err_free:
-	amdgpu_amdkfd_gpuvm_free_memory_of_gpu(dev->kgd, (struct kgd_mem *)mem);
+	amdgpu_amdkfd_gpuvm_free_memory_of_gpu(dev->kgd, (struct kgd_mem *)mem, NULL);
 err_unlock:
 	mutex_unlock(&p->mutex);
 	return err;
@@ -1351,6 +1364,7 @@ static int kfd_ioctl_free_memory_of_gpu(struct file *filep,
 	void *mem;
 	struct kfd_dev *dev;
 	int ret;
+	uint64_t size = 0;
 
 	dev = kfd_device_by_id(GET_GPU_ID(args->handle));
 	if (!dev)
@@ -1373,7 +1387,7 @@ static int kfd_ioctl_free_memory_of_gpu(struct file *filep,
 	}
 
 	ret = amdgpu_amdkfd_gpuvm_free_memory_of_gpu(dev->kgd,
-						(struct kgd_mem *)mem);
+						(struct kgd_mem *)mem, &size);
 
 	/* If freeing the buffer failed, leave the handle in place for
 	 * clean-up during process tear-down.
@@ -1381,6 +1395,8 @@ static int kfd_ioctl_free_memory_of_gpu(struct file *filep,
 	if (!ret)
 		kfd_process_device_remove_obj_handle(
 			pdd, GET_IDR_HANDLE(args->handle));
+
+	WRITE_ONCE(pdd->vram_usage, pdd->vram_usage - size);
 
 err_unlock:
 	mutex_unlock(&p->mutex);
@@ -1584,6 +1600,45 @@ copy_from_user_failed:
 	return err;
 }
 
+static int kfd_ioctl_alloc_queue_gws(struct file *filep,
+		struct kfd_process *p, void *data)
+{
+	int retval;
+	struct kfd_ioctl_alloc_queue_gws_args *args = data;
+	struct queue *q;
+	struct kfd_dev *dev;
+
+	mutex_lock(&p->mutex);
+	q = pqm_get_user_queue(&p->pqm, args->queue_id);
+
+	if (q) {
+		dev = q->device;
+	} else {
+		retval = -EINVAL;
+		goto out_unlock;
+	}
+
+	if (!dev->gws) {
+		retval = -ENODEV;
+		goto out_unlock;
+	}
+
+	if (dev->dqm->sched_policy == KFD_SCHED_POLICY_NO_HWS) {
+		retval = -ENODEV;
+		goto out_unlock;
+	}
+
+	retval = pqm_set_gws(&p->pqm, args->queue_id, args->num_gws ? dev->gws : NULL);
+	mutex_unlock(&p->mutex);
+
+	args->first_gws = 0;
+	return retval;
+
+out_unlock:
+	mutex_unlock(&p->mutex);
+	return retval;
+}
+
 static int kfd_ioctl_get_dmabuf_info(struct file *filep,
 		struct kfd_process *p, void *data)
 {
@@ -1681,16 +1736,32 @@ static int kfd_ioctl_import_dmabuf(struct file *filep,
 	}
 
 	mutex_unlock(&p->mutex);
+	dma_buf_put(dmabuf);
 
 	args->handle = MAKE_HANDLE(args->gpu_id, idr_handle);
 
 	return 0;
 
 err_free:
-	amdgpu_amdkfd_gpuvm_free_memory_of_gpu(dev->kgd, (struct kgd_mem *)mem);
+	amdgpu_amdkfd_gpuvm_free_memory_of_gpu(dev->kgd, (struct kgd_mem *)mem, NULL);
 err_unlock:
 	mutex_unlock(&p->mutex);
+	dma_buf_put(dmabuf);
 	return r;
+}
+
+/* Handle requests for watching SMI events */
+static int kfd_ioctl_smi_events(struct file *filep,
+				struct kfd_process *p, void *data)
+{
+	struct kfd_ioctl_smi_events_args *args = data;
+	struct kfd_dev *dev;
+
+	dev = kfd_device_by_id(args->gpuid);
+	if (!dev)
+		return -EINVAL;
+
+	return kfd_smi_event_open(dev, &args->anon_fd);
 }
 
 #define AMDKFD_IOCTL_DEF(ioctl, _func, _flags) \
@@ -1786,6 +1857,11 @@ static const struct amdkfd_ioctl_desc amdkfd_ioctls[] = {
 	AMDKFD_IOCTL_DEF(AMDKFD_IOC_IMPORT_DMABUF,
 				kfd_ioctl_import_dmabuf, 0),
 
+	AMDKFD_IOCTL_DEF(AMDKFD_IOC_ALLOC_QUEUE_GWS,
+			kfd_ioctl_alloc_queue_gws, 0),
+
+	AMDKFD_IOCTL_DEF(AMDKFD_IOC_SMI_EVENTS,
+			kfd_ioctl_smi_events, 0),
 };
 
 #define AMDKFD_CORE_IOCTL_COUNT	ARRAY_SIZE(amdkfd_ioctls)

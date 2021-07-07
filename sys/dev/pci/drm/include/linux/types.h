@@ -66,4 +66,6 @@ struct hlist_head {
 
 #define DECLARE_BITMAP(x, y)	unsigned long x[BITS_TO_LONGS(y)];
 
+#define LINUX_PAGE_MASK		(~PAGE_MASK)
+
 #endif /* _LINUX_TYPES_H_ */

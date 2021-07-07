@@ -1,4 +1,4 @@
-/*	$OpenBSD: simplepanel.c,v 1.3 2020/06/08 04:47:58 jsg Exp $	*/
+/*	$OpenBSD: simplepanel.c,v 1.4 2021/07/07 02:38:21 jsg Exp $	*/
 /*
  * Copyright (c) 2020 Patrick Wildt <patrick@blueri.se>
  *
@@ -41,7 +41,6 @@ const struct drm_display_mode boe_nv140fhmn49_mode = {
 	.vsync_start = 1080 + 3,
 	.vsync_end = 1080 + 3 + 5,
 	.vtotal = 1125,
-	.vrefresh = 60,
 };
 
 int simplepanel_match(struct device *, void *, void *);
@@ -87,7 +86,7 @@ simplepanel_attach(struct device *parent, struct device *self, void *aux)
 	uint32_t power_supply;
 	uint32_t *gpios;
 	int connector_type = DRM_MODE_CONNECTOR_Unknown;
-	int len, err;
+	int len;
 
 	pinctrl_byname(faa->fa_node, "default");
 
@@ -111,11 +110,7 @@ simplepanel_attach(struct device *parent, struct device *self, void *aux)
 
 	drm_panel_init(&sc->sc_panel, self, &simplepanel_funcs,
 	    connector_type);
-	err = drm_panel_add(&sc->sc_panel);
-	if (err < 0) {
-		printf(": can't register panel\n");
-		return;
-	}
+	drm_panel_add(&sc->sc_panel);
 
 	printf("\n");
 

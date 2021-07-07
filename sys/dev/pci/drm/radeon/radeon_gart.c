@@ -68,6 +68,27 @@
  * gart table to be in system memory.
  * Returns 0 for success, -ENOMEM for failure.
  */
+#ifdef __linux__
+int radeon_gart_table_ram_alloc(struct radeon_device *rdev)
+{
+	void *ptr;
+
+	ptr = dma_alloc_coherent(&rdev->pdev->dev, rdev->gart.table_size,
+				 &rdev->gart.table_addr, GFP_KERNEL);
+	if (ptr == NULL) {
+		return -ENOMEM;
+	}
+#ifdef CONFIG_X86
+	if (rdev->family == CHIP_RS400 || rdev->family == CHIP_RS480 ||
+	    rdev->family == CHIP_RS690 || rdev->family == CHIP_RS740) {
+		set_memory_uc((unsigned long)ptr,
+			      rdev->gart.table_size >> PAGE_SHIFT);
+	}
+#endif
+	rdev->gart.ptr = ptr;
+	return 0;
+}
+#else
 int radeon_gart_table_ram_alloc(struct radeon_device *rdev)
 {
 	struct drm_dmamem *dmah;
@@ -90,6 +111,7 @@ int radeon_gart_table_ram_alloc(struct radeon_device *rdev)
 	memset((void *)rdev->gart.ptr, 0, rdev->gart.table_size);
 	return 0;
 }
+#endif
 
 /**
  * radeon_gart_table_ram_free - free system ram for gart page table
@@ -100,6 +122,25 @@ int radeon_gart_table_ram_alloc(struct radeon_device *rdev)
  * (r1xx-r3xx, non-pcie r4xx, rs400).  These asics require the
  * gart table to be in system memory.
  */
+#ifdef __linux__
+void radeon_gart_table_ram_free(struct radeon_device *rdev)
+{
+	if (rdev->gart.ptr == NULL) {
+		return;
+	}
+#ifdef CONFIG_X86
+	if (rdev->family == CHIP_RS400 || rdev->family == CHIP_RS480 ||
+	    rdev->family == CHIP_RS690 || rdev->family == CHIP_RS740) {
+		set_memory_wb((unsigned long)rdev->gart.ptr,
+			      rdev->gart.table_size >> PAGE_SHIFT);
+	}
+#endif
+	dma_free_coherent(&rdev->pdev->dev, rdev->gart.table_size,
+			  (void *)rdev->gart.ptr, rdev->gart.table_addr);
+	rdev->gart.ptr = NULL;
+	rdev->gart.table_addr = 0;
+}
+#else
 void radeon_gart_table_ram_free(struct radeon_device *rdev)
 {
 	if (rdev->gart.ptr == NULL) {
@@ -116,6 +157,7 @@ void radeon_gart_table_ram_free(struct radeon_device *rdev)
 	rdev->gart.ptr = NULL;
 	rdev->gart.table_addr = 0;
 }
+#endif
 
 /**
  * radeon_gart_table_vram_alloc - allocate vram for gart page table

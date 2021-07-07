@@ -30,9 +30,7 @@
 
 #define barrier()	__asm __volatile("" : : : "memory")
 
-#define __printf(x, y)
-
-#define uninitialized_var(x) x
+#define __printf(x, y)	__attribute__((__format__(__kprintf__,x,y)))
 
 /* The Linux code doesn't meet our usual standards! */
 #ifdef __clang__
@@ -41,7 +39,6 @@
 #pragma clang diagnostic ignored "-Wunneeded-internal-declaration"
 #pragma clang diagnostic ignored "-Wunused-function"
 #pragma clang diagnostic ignored "-Wunused-variable"
-#pragma clang diagnostic ignored "-Wmissing-braces"
 #else
 #pragma GCC diagnostic ignored "-Wformat-zero-length"
 #endif

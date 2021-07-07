@@ -27,13 +27,14 @@
 #include <linux/pci.h>
 #include <linux/uaccess.h>
 #include <linux/pm_runtime.h>
-
+#include <linux/poll.h>
 #include <drm/drm_debugfs.h>
 
 #include "amdgpu.h"
 #include "amdgpu_pm.h"
 #include "amdgpu_dm_debugfs.h"
 #include "amdgpu_ras.h"
+#include "amdgpu_rap.h"
 
 /**
  * amdgpu_debugfs_add_files - Add simple debugfs entries
@@ -68,13 +69,91 @@ int amdgpu_debugfs_add_files(struct amdgpu_device *adev,
 	adev->debugfs_count = i;
 #if defined(CONFIG_DEBUG_FS)
 	drm_debugfs_create_files(files, nfiles,
-				 adev->ddev->primary->debugfs_root,
-				 adev->ddev->primary);
+				 adev_to_drm(adev)->primary->debugfs_root,
+				 adev_to_drm(adev)->primary);
+#endif
+	return 0;
+}
+
+int amdgpu_debugfs_wait_dump(struct amdgpu_device *adev)
+{
+#if defined(CONFIG_DEBUG_FS)
+	unsigned long timeout = 600 * HZ;
+	int ret;
+
+	wake_up_interruptible(&adev->autodump.gpu_hang);
+
+	ret = wait_for_completion_interruptible_timeout(&adev->autodump.dumping, timeout);
+	if (ret == 0) {
+		pr_err("autodump: timeout, move on to gpu recovery\n");
+		return -ETIMEDOUT;
+	}
 #endif
 	return 0;
 }
 
 #if defined(CONFIG_DEBUG_FS)
+
+static int amdgpu_debugfs_autodump_open(struct inode *inode, struct file *file)
+{
+	struct amdgpu_device *adev = inode->i_private;
+	int ret;
+
+	file->private_data = adev;
+
+	ret = down_read_killable(&adev->reset_sem);
+	if (ret)
+		return ret;
+
+	if (adev->autodump.dumping.done) {
+		reinit_completion(&adev->autodump.dumping);
+		ret = 0;
+	} else {
+		ret = -EBUSY;
+	}
+
+	up_read(&adev->reset_sem);
+
+	return ret;
+}
+
+static int amdgpu_debugfs_autodump_release(struct inode *inode, struct file *file)
+{
+	struct amdgpu_device *adev = file->private_data;
+
+	complete_all(&adev->autodump.dumping);
+	return 0;
+}
+
+static unsigned int amdgpu_debugfs_autodump_poll(struct file *file, struct poll_table_struct *poll_table)
+{
+	struct amdgpu_device *adev = file->private_data;
+
+	poll_wait(file, &adev->autodump.gpu_hang, poll_table);
+
+	if (amdgpu_in_reset(adev))
+		return POLLIN | POLLRDNORM | POLLWRNORM;
+
+	return 0;
+}
+
+static const struct file_operations autodump_debug_fops = {
+	.owner = THIS_MODULE,
+	.open = amdgpu_debugfs_autodump_open,
+	.poll = amdgpu_debugfs_autodump_poll,
+	.release = amdgpu_debugfs_autodump_release,
+};
+
+static void amdgpu_debugfs_autodump_init(struct amdgpu_device *adev)
+{
+	init_completion(&adev->autodump.dumping);
+	complete_all(&adev->autodump.dumping);
+	init_waitqueue_head(&adev->autodump.gpu_hang);
+
+	debugfs_create_file("amdgpu_autodump", 0600,
+		adev_to_drm(adev)->primary->debugfs_root,
+		adev, &autodump_debug_fops);
+}
 
 /**
  * amdgpu_debugfs_process_reg_op - Handle MMIO register reads/writes
@@ -148,15 +227,24 @@ static int  amdgpu_debugfs_process_reg_op(bool read, struct file *f,
 
 	*pos &= (1UL << 22) - 1;
 
-	r = pm_runtime_get_sync(adev->ddev->dev);
-	if (r < 0)
+	r = pm_runtime_get_sync(adev_to_drm(adev)->dev);
+	if (r < 0) {
+		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 		return r;
+	}
+
+	r = amdgpu_virt_enable_access_debugfs(adev);
+	if (r < 0) {
+		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+		return r;
+	}
 
 	if (use_bank) {
 		if ((sh_bank != 0xFFFFFFFF && sh_bank >= adev->gfx.config.max_sh_per_se) ||
 		    (se_bank != 0xFFFFFFFF && se_bank >= adev->gfx.config.max_shader_engines)) {
-			pm_runtime_mark_last_busy(adev->ddev->dev);
-			pm_runtime_put_autosuspend(adev->ddev->dev);
+			pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+			pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+			amdgpu_virt_disable_access_debugfs(adev);
 			return -EINVAL;
 		}
 		mutex_lock(&adev->grbm_idx_mutex);
@@ -179,7 +267,7 @@ static int  amdgpu_debugfs_process_reg_op(bool read, struct file *f,
 		} else {
 			r = get_user(value, (uint32_t *)buf);
 			if (!r)
-				amdgpu_mm_wreg_mmio_rlc(adev, *pos >> 2, value, 0);
+				amdgpu_mm_wreg_mmio_rlc(adev, *pos >> 2, value);
 		}
 		if (r) {
 			result = r;
@@ -204,9 +292,10 @@ end:
 	if (pm_pg_lock)
 		mutex_unlock(&adev->pm.mutex);
 
-	pm_runtime_mark_last_busy(adev->ddev->dev);
-	pm_runtime_put_autosuspend(adev->ddev->dev);
+	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 
+	amdgpu_virt_disable_access_debugfs(adev);
 	return result;
 }
 
@@ -251,18 +340,27 @@ static ssize_t amdgpu_debugfs_regs_pcie_read(struct file *f, char __user *buf,
 	if (size & 0x3 || *pos & 0x3)
 		return -EINVAL;
 
-	r = pm_runtime_get_sync(adev->ddev->dev);
-	if (r < 0)
+	r = pm_runtime_get_sync(adev_to_drm(adev)->dev);
+	if (r < 0) {
+		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 		return r;
+	}
+
+	r = amdgpu_virt_enable_access_debugfs(adev);
+	if (r < 0) {
+		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+		return r;
+	}
 
 	while (size) {
 		uint32_t value;
 
-		value = RREG32_PCIE(*pos >> 2);
+		value = RREG32_PCIE(*pos);
 		r = put_user(value, (uint32_t *)buf);
 		if (r) {
-			pm_runtime_mark_last_busy(adev->ddev->dev);
-			pm_runtime_put_autosuspend(adev->ddev->dev);
+			pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+			pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+			amdgpu_virt_disable_access_debugfs(adev);
 			return r;
 		}
 
@@ -272,9 +370,10 @@ static ssize_t amdgpu_debugfs_regs_pcie_read(struct file *f, char __user *buf,
 		size -= 4;
 	}
 
-	pm_runtime_mark_last_busy(adev->ddev->dev);
-	pm_runtime_put_autosuspend(adev->ddev->dev);
+	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 
+	amdgpu_virt_disable_access_debugfs(adev);
 	return result;
 }
 
@@ -300,21 +399,30 @@ static ssize_t amdgpu_debugfs_regs_pcie_write(struct file *f, const char __user 
 	if (size & 0x3 || *pos & 0x3)
 		return -EINVAL;
 
-	r = pm_runtime_get_sync(adev->ddev->dev);
-	if (r < 0)
+	r = pm_runtime_get_sync(adev_to_drm(adev)->dev);
+	if (r < 0) {
+		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 		return r;
+	}
+
+	r = amdgpu_virt_enable_access_debugfs(adev);
+	if (r < 0) {
+		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+		return r;
+	}
 
 	while (size) {
 		uint32_t value;
 
 		r = get_user(value, (uint32_t *)buf);
 		if (r) {
-			pm_runtime_mark_last_busy(adev->ddev->dev);
-			pm_runtime_put_autosuspend(adev->ddev->dev);
+			pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+			pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+			amdgpu_virt_disable_access_debugfs(adev);
 			return r;
 		}
 
-		WREG32_PCIE(*pos >> 2, value);
+		WREG32_PCIE(*pos, value);
 
 		result += 4;
 		buf += 4;
@@ -322,9 +430,10 @@ static ssize_t amdgpu_debugfs_regs_pcie_write(struct file *f, const char __user 
 		size -= 4;
 	}
 
-	pm_runtime_mark_last_busy(adev->ddev->dev);
-	pm_runtime_put_autosuspend(adev->ddev->dev);
+	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 
+	amdgpu_virt_disable_access_debugfs(adev);
 	return result;
 }
 
@@ -350,9 +459,17 @@ static ssize_t amdgpu_debugfs_regs_didt_read(struct file *f, char __user *buf,
 	if (size & 0x3 || *pos & 0x3)
 		return -EINVAL;
 
-	r = pm_runtime_get_sync(adev->ddev->dev);
-	if (r < 0)
+	r = pm_runtime_get_sync(adev_to_drm(adev)->dev);
+	if (r < 0) {
+		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 		return r;
+	}
+
+	r = amdgpu_virt_enable_access_debugfs(adev);
+	if (r < 0) {
+		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+		return r;
+	}
 
 	while (size) {
 		uint32_t value;
@@ -360,8 +477,9 @@ static ssize_t amdgpu_debugfs_regs_didt_read(struct file *f, char __user *buf,
 		value = RREG32_DIDT(*pos >> 2);
 		r = put_user(value, (uint32_t *)buf);
 		if (r) {
-			pm_runtime_mark_last_busy(adev->ddev->dev);
-			pm_runtime_put_autosuspend(adev->ddev->dev);
+			pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+			pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+			amdgpu_virt_disable_access_debugfs(adev);
 			return r;
 		}
 
@@ -371,9 +489,10 @@ static ssize_t amdgpu_debugfs_regs_didt_read(struct file *f, char __user *buf,
 		size -= 4;
 	}
 
-	pm_runtime_mark_last_busy(adev->ddev->dev);
-	pm_runtime_put_autosuspend(adev->ddev->dev);
+	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 
+	amdgpu_virt_disable_access_debugfs(adev);
 	return result;
 }
 
@@ -399,17 +518,26 @@ static ssize_t amdgpu_debugfs_regs_didt_write(struct file *f, const char __user 
 	if (size & 0x3 || *pos & 0x3)
 		return -EINVAL;
 
-	r = pm_runtime_get_sync(adev->ddev->dev);
-	if (r < 0)
+	r = pm_runtime_get_sync(adev_to_drm(adev)->dev);
+	if (r < 0) {
+		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 		return r;
+	}
+
+	r = amdgpu_virt_enable_access_debugfs(adev);
+	if (r < 0) {
+		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+		return r;
+	}
 
 	while (size) {
 		uint32_t value;
 
 		r = get_user(value, (uint32_t *)buf);
 		if (r) {
-			pm_runtime_mark_last_busy(adev->ddev->dev);
-			pm_runtime_put_autosuspend(adev->ddev->dev);
+			pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+			pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+			amdgpu_virt_disable_access_debugfs(adev);
 			return r;
 		}
 
@@ -421,9 +549,10 @@ static ssize_t amdgpu_debugfs_regs_didt_write(struct file *f, const char __user 
 		size -= 4;
 	}
 
-	pm_runtime_mark_last_busy(adev->ddev->dev);
-	pm_runtime_put_autosuspend(adev->ddev->dev);
+	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 
+	amdgpu_virt_disable_access_debugfs(adev);
 	return result;
 }
 
@@ -449,9 +578,17 @@ static ssize_t amdgpu_debugfs_regs_smc_read(struct file *f, char __user *buf,
 	if (size & 0x3 || *pos & 0x3)
 		return -EINVAL;
 
-	r = pm_runtime_get_sync(adev->ddev->dev);
-	if (r < 0)
+	r = pm_runtime_get_sync(adev_to_drm(adev)->dev);
+	if (r < 0) {
+		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 		return r;
+	}
+
+	r = amdgpu_virt_enable_access_debugfs(adev);
+	if (r < 0) {
+		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+		return r;
+	}
 
 	while (size) {
 		uint32_t value;
@@ -459,8 +596,9 @@ static ssize_t amdgpu_debugfs_regs_smc_read(struct file *f, char __user *buf,
 		value = RREG32_SMC(*pos);
 		r = put_user(value, (uint32_t *)buf);
 		if (r) {
-			pm_runtime_mark_last_busy(adev->ddev->dev);
-			pm_runtime_put_autosuspend(adev->ddev->dev);
+			pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+			pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+			amdgpu_virt_disable_access_debugfs(adev);
 			return r;
 		}
 
@@ -470,9 +608,10 @@ static ssize_t amdgpu_debugfs_regs_smc_read(struct file *f, char __user *buf,
 		size -= 4;
 	}
 
-	pm_runtime_mark_last_busy(adev->ddev->dev);
-	pm_runtime_put_autosuspend(adev->ddev->dev);
+	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 
+	amdgpu_virt_disable_access_debugfs(adev);
 	return result;
 }
 
@@ -498,17 +637,26 @@ static ssize_t amdgpu_debugfs_regs_smc_write(struct file *f, const char __user *
 	if (size & 0x3 || *pos & 0x3)
 		return -EINVAL;
 
-	r = pm_runtime_get_sync(adev->ddev->dev);
-	if (r < 0)
+	r = pm_runtime_get_sync(adev_to_drm(adev)->dev);
+	if (r < 0) {
+		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 		return r;
+	}
+
+	r = amdgpu_virt_enable_access_debugfs(adev);
+	if (r < 0) {
+		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+		return r;
+	}
 
 	while (size) {
 		uint32_t value;
 
 		r = get_user(value, (uint32_t *)buf);
 		if (r) {
-			pm_runtime_mark_last_busy(adev->ddev->dev);
-			pm_runtime_put_autosuspend(adev->ddev->dev);
+			pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+			pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+			amdgpu_virt_disable_access_debugfs(adev);
 			return r;
 		}
 
@@ -520,9 +668,10 @@ static ssize_t amdgpu_debugfs_regs_smc_write(struct file *f, const char __user *
 		size -= 4;
 	}
 
-	pm_runtime_mark_last_busy(adev->ddev->dev);
-	pm_runtime_put_autosuspend(adev->ddev->dev);
+	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 
+	amdgpu_virt_disable_access_debugfs(adev);
 	return result;
 }
 
@@ -647,20 +796,32 @@ static ssize_t amdgpu_debugfs_sensor_read(struct file *f, char __user *buf,
 
 	valuesize = sizeof(values);
 
-	r = pm_runtime_get_sync(adev->ddev->dev);
-	if (r < 0)
+	r = pm_runtime_get_sync(adev_to_drm(adev)->dev);
+	if (r < 0) {
+		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 		return r;
+	}
+
+	r = amdgpu_virt_enable_access_debugfs(adev);
+	if (r < 0) {
+		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+		return r;
+	}
 
 	r = amdgpu_dpm_read_sensor(adev, idx, &values[0], &valuesize);
 
-	pm_runtime_mark_last_busy(adev->ddev->dev);
-	pm_runtime_put_autosuspend(adev->ddev->dev);
+	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 
-	if (r)
+	if (r) {
+		amdgpu_virt_disable_access_debugfs(adev);
 		return r;
+	}
 
-	if (size > valuesize)
+	if (size > valuesize) {
+		amdgpu_virt_disable_access_debugfs(adev);
 		return -EINVAL;
+	}
 
 	outsize = 0;
 	x = 0;
@@ -673,6 +834,7 @@ static ssize_t amdgpu_debugfs_sensor_read(struct file *f, char __user *buf,
 		}
 	}
 
+	amdgpu_virt_disable_access_debugfs(adev);
 	return !r ? outsize : r;
 }
 
@@ -716,9 +878,17 @@ static ssize_t amdgpu_debugfs_wave_read(struct file *f, char __user *buf,
 	wave = (*pos & GENMASK_ULL(36, 31)) >> 31;
 	simd = (*pos & GENMASK_ULL(44, 37)) >> 37;
 
-	r = pm_runtime_get_sync(adev->ddev->dev);
-	if (r < 0)
+	r = pm_runtime_get_sync(adev_to_drm(adev)->dev);
+	if (r < 0) {
+		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 		return r;
+	}
+
+	r = amdgpu_virt_enable_access_debugfs(adev);
+	if (r < 0) {
+		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+		return r;
+	}
 
 	/* switch to the specific se/sh/cu */
 	mutex_lock(&adev->grbm_idx_mutex);
@@ -731,19 +901,23 @@ static ssize_t amdgpu_debugfs_wave_read(struct file *f, char __user *buf,
 	amdgpu_gfx_select_se_sh(adev, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF);
 	mutex_unlock(&adev->grbm_idx_mutex);
 
-	pm_runtime_mark_last_busy(adev->ddev->dev);
-	pm_runtime_put_autosuspend(adev->ddev->dev);
+	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 
-	if (!x)
+	if (!x) {
+		amdgpu_virt_disable_access_debugfs(adev);
 		return -EINVAL;
+	}
 
 	while (size && (offset < x * 4)) {
 		uint32_t value;
 
 		value = data[offset >> 2];
 		r = put_user(value, (uint32_t *)buf);
-		if (r)
+		if (r) {
+			amdgpu_virt_disable_access_debugfs(adev);
 			return r;
+		}
 
 		result += 4;
 		buf += 4;
@@ -751,6 +925,7 @@ static ssize_t amdgpu_debugfs_wave_read(struct file *f, char __user *buf,
 		size -= 4;
 	}
 
+	amdgpu_virt_disable_access_debugfs(adev);
 	return result;
 }
 
@@ -801,9 +976,13 @@ static ssize_t amdgpu_debugfs_gpr_read(struct file *f, char __user *buf,
 	if (!data)
 		return -ENOMEM;
 
-	r = pm_runtime_get_sync(adev->ddev->dev);
+	r = pm_runtime_get_sync(adev_to_drm(adev)->dev);
 	if (r < 0)
-		return r;
+		goto err;
+
+	r = amdgpu_virt_enable_access_debugfs(adev);
+	if (r < 0)
+		goto err;
 
 	/* switch to the specific se/sh/cu */
 	mutex_lock(&adev->grbm_idx_mutex);
@@ -820,8 +999,8 @@ static ssize_t amdgpu_debugfs_gpr_read(struct file *f, char __user *buf,
 	amdgpu_gfx_select_se_sh(adev, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF);
 	mutex_unlock(&adev->grbm_idx_mutex);
 
-	pm_runtime_mark_last_busy(adev->ddev->dev);
-	pm_runtime_put_autosuspend(adev->ddev->dev);
+	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 
 	while (size) {
 		uint32_t value;
@@ -829,7 +1008,7 @@ static ssize_t amdgpu_debugfs_gpr_read(struct file *f, char __user *buf,
 		value = data[result >> 2];
 		r = put_user(value, (uint32_t *)buf);
 		if (r) {
-			result = r;
+			amdgpu_virt_disable_access_debugfs(adev);
 			goto err;
 		}
 
@@ -838,9 +1017,14 @@ static ssize_t amdgpu_debugfs_gpr_read(struct file *f, char __user *buf,
 		size -= 4;
 	}
 
-err:
 	kfree(data);
+	amdgpu_virt_disable_access_debugfs(adev);
 	return result;
+
+err:
+	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+	kfree(data);
+	return r;
 }
 
 /**
@@ -863,17 +1047,19 @@ static ssize_t amdgpu_debugfs_gfxoff_write(struct file *f, const char __user *bu
 	if (size & 0x3 || *pos & 0x3)
 		return -EINVAL;
 
-	r = pm_runtime_get_sync(adev->ddev->dev);
-	if (r < 0)
+	r = pm_runtime_get_sync(adev_to_drm(adev)->dev);
+	if (r < 0) {
+		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 		return r;
+	}
 
 	while (size) {
 		uint32_t value;
 
 		r = get_user(value, (uint32_t *)buf);
 		if (r) {
-			pm_runtime_mark_last_busy(adev->ddev->dev);
-			pm_runtime_put_autosuspend(adev->ddev->dev);
+			pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+			pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 			return r;
 		}
 
@@ -885,12 +1071,63 @@ static ssize_t amdgpu_debugfs_gfxoff_write(struct file *f, const char __user *bu
 		size -= 4;
 	}
 
-	pm_runtime_mark_last_busy(adev->ddev->dev);
-	pm_runtime_put_autosuspend(adev->ddev->dev);
+	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 
 	return result;
 }
 
+
+/**
+ * amdgpu_debugfs_regs_gfxoff_status - read gfxoff status
+ *
+ * @f: open file handle
+ * @buf: User buffer to store read data in
+ * @size: Number of bytes to read
+ * @pos:  Offset to seek to
+ */
+static ssize_t amdgpu_debugfs_gfxoff_read(struct file *f, char __user *buf,
+					 size_t size, loff_t *pos)
+{
+	struct amdgpu_device *adev = file_inode(f)->i_private;
+	ssize_t result = 0;
+	int r;
+
+	if (size & 0x3 || *pos & 0x3)
+		return -EINVAL;
+
+	r = pm_runtime_get_sync(adev_to_drm(adev)->dev);
+	if (r < 0)
+		return r;
+
+	while (size) {
+		uint32_t value;
+
+		r = amdgpu_get_gfx_off_status(adev, &value);
+		if (r) {
+			pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+			pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+			return r;
+		}
+
+		r = put_user(value, (uint32_t *)buf);
+		if (r) {
+			pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+			pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+			return r;
+		}
+
+		result += 4;
+		buf += 4;
+		*pos += 4;
+		size -= 4;
+	}
+
+	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+
+	return result;
+}
 
 static const struct file_operations amdgpu_debugfs_regs_fops = {
 	.owner = THIS_MODULE,
@@ -942,7 +1179,9 @@ static const struct file_operations amdgpu_debugfs_gpr_fops = {
 
 static const struct file_operations amdgpu_debugfs_gfxoff_fops = {
 	.owner = THIS_MODULE,
+	.read = amdgpu_debugfs_gfxoff_read,
 	.write = amdgpu_debugfs_gfxoff_write,
+	.llseek = default_llseek
 };
 
 static const struct file_operations *debugfs_regs[] = {
@@ -977,7 +1216,7 @@ static const char *debugfs_regs_names[] = {
  */
 int amdgpu_debugfs_regs_init(struct amdgpu_device *adev)
 {
-	struct drm_minor *minor = adev->ddev->primary;
+	struct drm_minor *minor = adev_to_drm(adev)->primary;
 	struct dentry *ent, *root = minor->debugfs_root;
 	unsigned int i;
 
@@ -997,15 +1236,19 @@ static int amdgpu_debugfs_test_ib(struct seq_file *m, void *data)
 {
 	struct drm_info_node *node = (struct drm_info_node *) m->private;
 	struct drm_device *dev = node->minor->dev;
-	struct amdgpu_device *adev = dev->dev_private;
+	struct amdgpu_device *adev = drm_to_adev(dev);
 	int r = 0, i;
 
 	r = pm_runtime_get_sync(dev->dev);
-	if (r < 0)
+	if (r < 0) {
+		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 		return r;
+	}
 
 	/* Avoid accidently unparking the sched thread during GPU reset */
-	mutex_lock(&adev->lock_reset);
+	r = down_read_killable(&adev->reset_sem);
+	if (r)
+		return r;
 
 	/* hold on the scheduler */
 	for (i = 0; i < AMDGPU_MAX_RINGS; i++) {
@@ -1032,7 +1275,7 @@ static int amdgpu_debugfs_test_ib(struct seq_file *m, void *data)
 		kthread_unpark(ring->sched.thread);
 	}
 
-	mutex_unlock(&adev->lock_reset);
+	up_read(&adev->reset_sem);
 
 	pm_runtime_mark_last_busy(dev->dev);
 	pm_runtime_put_autosuspend(dev->dev);
@@ -1044,7 +1287,7 @@ static int amdgpu_debugfs_get_vbios_dump(struct seq_file *m, void *data)
 {
 	struct drm_info_node *node = (struct drm_info_node *) m->private;
 	struct drm_device *dev = node->minor->dev;
-	struct amdgpu_device *adev = dev->dev_private;
+	struct amdgpu_device *adev = drm_to_adev(dev);
 
 	seq_write(m, adev->bios, adev->bios_size);
 	return 0;
@@ -1054,12 +1297,14 @@ static int amdgpu_debugfs_evict_vram(struct seq_file *m, void *data)
 {
 	struct drm_info_node *node = (struct drm_info_node *)m->private;
 	struct drm_device *dev = node->minor->dev;
-	struct amdgpu_device *adev = dev->dev_private;
+	struct amdgpu_device *adev = drm_to_adev(dev);
 	int r;
 
 	r = pm_runtime_get_sync(dev->dev);
-	if (r < 0)
+	if (r < 0) {
+		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 		return r;
+	}
 
 	seq_printf(m, "(%d)\n", amdgpu_bo_evict_vram(adev));
 
@@ -1073,12 +1318,14 @@ static int amdgpu_debugfs_evict_gtt(struct seq_file *m, void *data)
 {
 	struct drm_info_node *node = (struct drm_info_node *)m->private;
 	struct drm_device *dev = node->minor->dev;
-	struct amdgpu_device *adev = dev->dev_private;
+	struct amdgpu_device *adev = drm_to_adev(dev);
 	int r;
 
 	r = pm_runtime_get_sync(dev->dev);
-	if (r < 0)
+	if (r < 0) {
+		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 		return r;
+	}
 
 	seq_printf(m, "(%d)\n", ttm_bo_evict_mm(&adev->mman.bdev, TTM_PL_TT));
 
@@ -1218,7 +1465,9 @@ static int amdgpu_debugfs_ib_preempt(void *data, u64 val)
 		return -ENOMEM;
 
 	/* Avoid accidently unparking the sched thread during GPU reset */
-	mutex_lock(&adev->lock_reset);
+	r = down_read_killable(&adev->reset_sem);
+	if (r)
+		goto pro_end;
 
 	/* stop the scheduler */
 	kthread_park(ring->sched.thread);
@@ -1259,13 +1508,14 @@ failure:
 	/* restart the scheduler */
 	kthread_unpark(ring->sched.thread);
 
-	mutex_unlock(&adev->lock_reset);
+	up_read(&adev->reset_sem);
 
 	ttm_bo_unlock_delayed_workqueue(&adev->mman.bdev, resched);
 
+pro_end:
 	kfree(fences);
 
-	return 0;
+	return r;
 }
 
 static int amdgpu_debugfs_sclk_set(void *data, u64 val)
@@ -1277,21 +1527,23 @@ static int amdgpu_debugfs_sclk_set(void *data, u64 val)
 	if (amdgpu_sriov_vf(adev) && !amdgpu_sriov_is_pp_one_vf(adev))
 		return -EINVAL;
 
-	ret = pm_runtime_get_sync(adev->ddev->dev);
-	if (ret < 0)
+	ret = pm_runtime_get_sync(adev_to_drm(adev)->dev);
+	if (ret < 0) {
+		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 		return ret;
+	}
 
 	if (is_support_sw_smu(adev)) {
-		ret = smu_get_dpm_freq_range(&adev->smu, SMU_SCLK, &min_freq, &max_freq, true);
+		ret = smu_get_dpm_freq_range(&adev->smu, SMU_SCLK, &min_freq, &max_freq);
 		if (ret || val > max_freq || val < min_freq)
 			return -EINVAL;
-		ret = smu_set_soft_freq_range(&adev->smu, SMU_SCLK, (uint32_t)val, (uint32_t)val, true);
+		ret = smu_set_soft_freq_range(&adev->smu, SMU_SCLK, (uint32_t)val, (uint32_t)val);
 	} else {
 		return 0;
 	}
 
-	pm_runtime_mark_last_busy(adev->ddev->dev);
-	pm_runtime_put_autosuspend(adev->ddev->dev);
+	pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+	pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
 
 	if (ret)
 		return -EINVAL;
@@ -1311,7 +1563,7 @@ int amdgpu_debugfs_init(struct amdgpu_device *adev)
 
 	adev->debugfs_preempt =
 		debugfs_create_file("amdgpu_preempt_ib", 0600,
-				    adev->ddev->primary->debugfs_root, adev,
+				    adev_to_drm(adev)->primary->debugfs_root, adev,
 				    &fops_ib_preempt);
 	if (!(adev->debugfs_preempt)) {
 		DRM_ERROR("unable to create amdgpu_preempt_ib debugsfs file\n");
@@ -1320,7 +1572,7 @@ int amdgpu_debugfs_init(struct amdgpu_device *adev)
 
 	adev->smu.debugfs_sclk =
 		debugfs_create_file("amdgpu_force_sclk", 0200,
-				    adev->ddev->primary->debugfs_root, adev,
+				    adev_to_drm(adev)->primary->debugfs_root, adev,
 				    &fops_sclk_set);
 	if (!(adev->smu.debugfs_sclk)) {
 		DRM_ERROR("unable to create amdgpu_set_sclk debugsfs file\n");
@@ -1378,6 +1630,10 @@ int amdgpu_debugfs_init(struct amdgpu_device *adev)
 	}
 
 	amdgpu_ras_debugfs_create_all(adev);
+
+	amdgpu_debugfs_autodump_init(adev);
+
+	amdgpu_rap_debugfs_init(adev);
 
 	return amdgpu_debugfs_add_files(adev, amdgpu_debugfs_list,
 					ARRAY_SIZE(amdgpu_debugfs_list));

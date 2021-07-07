@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmalloc.h,v 1.3 2021/01/13 01:04:49 jsg Exp $	*/
+/*	$OpenBSD: vmalloc.h,v 1.4 2021/07/07 02:38:36 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *

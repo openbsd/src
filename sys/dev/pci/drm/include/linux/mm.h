@@ -30,7 +30,7 @@
 #define PFN_DOWN(x)		((x) >> PAGE_SHIFT)
 #define PFN_PHYS(x)		((x) << PAGE_SHIFT)
 
-#define is_vmalloc_addr(ptr)	true
+bool is_vmalloc_addr(const void *);
 
 static inline void *
 kvmalloc(size_t size, gfp_t flags)
@@ -76,6 +76,12 @@ static inline unsigned int
 get_order(size_t size)
 {
 	return flsl((size - 1) >> PAGE_SHIFT);
+}
+
+static inline int
+totalram_pages(void)
+{
+	return uvmexp.npages;
 }
 
 #endif

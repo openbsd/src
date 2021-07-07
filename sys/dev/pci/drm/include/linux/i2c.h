@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c.h,v 1.2 2020/06/08 04:48:14 jsg Exp $	*/
+/*	$OpenBSD: i2c.h,v 1.3 2021/07/07 02:38:36 jsg Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -22,6 +22,7 @@
 #include <sys/rwlock.h>
 #include <linux/workqueue.h>
 #include <linux/seq_file.h>
+#include <linux/acpi.h>
 
 #include <dev/i2c/i2cvar.h>
 

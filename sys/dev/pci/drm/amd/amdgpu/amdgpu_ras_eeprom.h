@@ -47,7 +47,6 @@ struct amdgpu_ras_eeprom_control {
 	uint32_t next_addr;
 	unsigned int num_recs;
 	struct rwlock tbl_mutex;
-	bool bus_locked;
 	uint32_t tbl_byte_sum;
 	uint16_t i2c_address; // 8-bit represented address
 };
@@ -77,13 +76,20 @@ struct eeprom_table_record {
 	unsigned char mcumc_id;
 }__attribute__((__packed__));
 
-int amdgpu_ras_eeprom_init(struct amdgpu_ras_eeprom_control *control);
+int amdgpu_ras_eeprom_init(struct amdgpu_ras_eeprom_control *control,
+			bool *exceed_err_limit);
 int amdgpu_ras_eeprom_reset_table(struct amdgpu_ras_eeprom_control *control);
+
+int amdgpu_ras_eeprom_check_err_threshold(
+				struct amdgpu_ras_eeprom_control *control,
+				bool *exceed_err_limit);
 
 int amdgpu_ras_eeprom_process_recods(struct amdgpu_ras_eeprom_control *control,
 					    struct eeprom_table_record *records,
 					    bool write,
 					    int num);
+
+uint32_t amdgpu_ras_eeprom_get_record_max_length(void);
 
 void amdgpu_ras_eeprom_test(struct amdgpu_ras_eeprom_control *control);
 

@@ -30,11 +30,12 @@
 #include <drm/drm.h>
 #include <drm/drm_agpsupport.h>
 #include <drm/drm_drv.h>
-#include <drm/drm_pci.h>
 #include <drm/drm_print.h>
 
 #include "drm_internal.h"
 #include "drm_legacy.h"
+
+#ifdef CONFIG_DRM_LEGACY
 
 #ifdef __linux__
 
@@ -95,6 +96,7 @@ void drm_pci_free(struct drm_device * dev, drm_dma_handle_t * dmah)
 }
 
 EXPORT_SYMBOL(drm_pci_free);
+#endif
 
 #endif /* __linux__ */
 
@@ -302,6 +304,7 @@ EXPORT_SYMBOL(drm_legacy_pci_init);
 void drm_legacy_pci_exit(struct drm_driver *driver, struct pci_driver *pdriver)
 {
 	struct drm_device *dev, *tmp;
+
 	DRM_DEBUG("\n");
 
 	if (!(driver->driver_features & DRIVER_LEGACY)) {

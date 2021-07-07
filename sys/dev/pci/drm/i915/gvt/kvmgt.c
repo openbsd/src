@@ -31,7 +31,7 @@
 #include <linux/init.h>
 #include <linux/device.h>
 #include <linux/mm.h>
-#include <linux/mmu_context.h>
+#include <linux/kthread.h>
 #include <linux/sched/mm.h>
 #include <linux/types.h>
 #include <linux/list.h>
@@ -829,8 +829,10 @@ static int intel_vgpu_open(struct mdev_device *mdev)
 	/* Take a module reference as mdev core doesn't take
 	 * a reference for vendor driver.
 	 */
-	if (!try_module_get(THIS_MODULE))
+	if (!try_module_get(THIS_MODULE)) {
+		ret = -ENODEV;
 		goto undo_group;
+	}
 
 	ret = kvmgt_guest_init(mdev);
 	if (ret)

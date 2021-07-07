@@ -1,4 +1,4 @@
-/* $OpenBSD: dwhdmi.c,v 1.3 2020/06/08 04:47:58 jsg Exp $ */
+/* $OpenBSD: dwhdmi.c,v 1.4 2021/07/07 02:38:21 jsg Exp $ */
 /* $NetBSD: dw_hdmi.c,v 1.7 2019/12/22 23:23:32 thorpej Exp $ */
 
 /*-
@@ -682,6 +682,7 @@ dwhdmi_bridge_mode_set(struct drm_bridge *bridge,
 
 enum drm_mode_status
 dwhdmi_bridge_mode_valid(struct drm_bridge *bridge,
+    const struct drm_display_info *info,
     const struct drm_display_mode *mode)
 {
 	struct dwhdmi_softc *sc = bridge->driver_private;

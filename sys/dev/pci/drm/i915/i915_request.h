@@ -84,19 +84,26 @@ enum {
 	I915_FENCE_FLAG_PQUEUE,
 
 	/*
+	 * I915_FENCE_FLAG_HOLD - this request is currently on hold
+	 *
+	 * This request has been suspended, pending an ongoing investigation.
+	 */
+	I915_FENCE_FLAG_HOLD,
+
+	/*
+	 * I915_FENCE_FLAG_INITIAL_BREADCRUMB - this request has the initial
+	 * breadcrumb that marks the end of semaphore waits and start of the
+	 * user payload.
+	 */
+	I915_FENCE_FLAG_INITIAL_BREADCRUMB,
+
+	/*
 	 * I915_FENCE_FLAG_SIGNAL - this request is currently on signal_list
 	 *
 	 * Internal bookkeeping used by the breadcrumb code to track when
 	 * a request is on the various signal_list.
 	 */
 	I915_FENCE_FLAG_SIGNAL,
-
-	/*
-	 * I915_FENCE_FLAG_HOLD - this request is currently on hold
-	 *
-	 * This request has been suspended, pending an ongoing investigation.
-	 */
-	I915_FENCE_FLAG_HOLD,
 
 	/*
 	 * I915_FENCE_FLAG_NOPREEMPT - this request should not be preempted
@@ -155,9 +162,6 @@ struct i915_request {
 	struct dma_fence fence;
 	spinlock_t lock;
 
-	/** On Which ring this request was generated */
-	struct drm_i915_private *i915;
-
 	/**
 	 * Context and ring buffer related to this request
 	 * Contexts are refcounted, so when this request is associated with a
@@ -172,7 +176,9 @@ struct i915_request {
 	struct intel_context *context;
 	struct intel_ring *ring;
 	struct intel_timeline __rcu *timeline;
+
 	struct list_head signal_link;
+	struct llist_node signal_node;
 
 	/*
 	 * The rcu epoch of when this request was allocated. Used to judiciously
@@ -207,9 +213,8 @@ struct i915_request {
 			ktime_t emitted;
 		} duration;
 	};
-	struct list_head execute_cb;
+	struct llist_head execute_cb;
 	struct i915_sw_fence semaphore;
-	struct irq_work semaphore_work;
 
 	/*
 	 * A list of everyone we wait upon, and everyone who waits upon us.
@@ -281,10 +286,6 @@ struct i915_request {
 	/** timeline->request entry for this request */
 	struct list_head link;
 
-	struct drm_i915_file_private *file_priv;
-	/** file_priv list entry for this request */
-	struct list_head client_link;
-
 	I915_SELFTEST_DECLARE(struct {
 		struct list_head link;
 		unsigned long delay;
@@ -299,6 +300,12 @@ static inline bool dma_fence_is_i915(const struct dma_fence *fence)
 {
 	return fence->ops == &i915_fence_ops;
 }
+
+#ifdef __linux__
+struct kmem_cache *i915_request_slab_cache(void);
+#else
+struct pool *i915_request_slab_cache(void);
+#endif
 
 struct i915_request * __must_check
 __i915_request_create(struct intel_context *ce, gfp_t gfp);
@@ -360,10 +367,6 @@ void i915_request_submit(struct i915_request *request);
 void __i915_request_unsubmit(struct i915_request *request);
 void i915_request_unsubmit(struct i915_request *request);
 
-/* Note: part of the intel_breadcrumbs family */
-bool i915_request_enable_breadcrumb(struct i915_request *request);
-void i915_request_cancel_breadcrumb(struct i915_request *request);
-
 long i915_request_wait(struct i915_request *rq,
 		       unsigned int flags,
 		       long timeout)
@@ -386,6 +389,12 @@ static inline bool i915_request_is_active(const struct i915_request *rq)
 static inline bool i915_request_in_priority_queue(const struct i915_request *rq)
 {
 	return test_bit(I915_FENCE_FLAG_PQUEUE, &rq->fence.flags);
+}
+
+static inline bool
+i915_request_has_initial_breadcrumb(const struct i915_request *rq)
+{
+	return test_bit(I915_FENCE_FLAG_INITIAL_BREADCRUMB, &rq->fence.flags);
 }
 
 /**
@@ -429,7 +438,7 @@ static inline u32 hwsp_seqno(const struct i915_request *rq)
 
 static inline bool __i915_request_has_started(const struct i915_request *rq)
 {
-	return i915_seqno_passed(hwsp_seqno(rq), rq->fence.seqno - 1);
+	return i915_seqno_passed(__hwsp_seqno(rq), rq->fence.seqno - 1);
 }
 
 /**
@@ -460,11 +469,19 @@ static inline bool __i915_request_has_started(const struct i915_request *rq)
  */
 static inline bool i915_request_started(const struct i915_request *rq)
 {
+	bool result;
+
 	if (i915_request_signaled(rq))
 		return true;
 
-	/* Remember: started but may have since been preempted! */
-	return __i915_request_has_started(rq);
+	result = true;
+	rcu_read_lock(); /* the HWSP may be freed at runtime */
+	if (likely(!i915_request_signaled(rq)))
+		/* Remember: started but may have since been preempted! */
+		result = __i915_request_has_started(rq);
+	rcu_read_unlock();
+
+	return result;
 }
 
 /**
@@ -477,10 +494,16 @@ static inline bool i915_request_started(const struct i915_request *rq)
  */
 static inline bool i915_request_is_running(const struct i915_request *rq)
 {
+	bool result;
+
 	if (!i915_request_is_active(rq))
 		return false;
 
-	return __i915_request_has_started(rq);
+	rcu_read_lock();
+	result = __i915_request_has_started(rq) && i915_request_is_active(rq);
+	rcu_read_unlock();
+
+	return result;
 }
 
 /**
@@ -504,12 +527,25 @@ static inline bool i915_request_is_ready(const struct i915_request *rq)
 	return !list_empty(&rq->sched.link);
 }
 
+static inline bool __i915_request_is_complete(const struct i915_request *rq)
+{
+	return i915_seqno_passed(__hwsp_seqno(rq), rq->fence.seqno);
+}
+
 static inline bool i915_request_completed(const struct i915_request *rq)
 {
+	bool result;
+
 	if (i915_request_signaled(rq))
 		return true;
 
-	return i915_seqno_passed(hwsp_seqno(rq), rq->fence.seqno);
+	result = true;
+	rcu_read_lock(); /* the HWSP may be freed at runtime */
+	if (likely(!i915_request_signaled(rq)))
+		result = __i915_request_is_complete(rq);
+	rcu_read_unlock();
+
+	return result;
 }
 
 static inline void i915_request_mark_complete(struct i915_request *rq)
@@ -550,7 +586,7 @@ static inline void i915_request_clear_hold(struct i915_request *rq)
 }
 
 static inline struct intel_timeline *
-i915_request_timeline(struct i915_request *rq)
+i915_request_timeline(const struct i915_request *rq)
 {
 	/* Valid only while the request is being constructed (or retired). */
 	return rcu_dereference_protected(rq->timeline,
@@ -558,14 +594,14 @@ i915_request_timeline(struct i915_request *rq)
 }
 
 static inline struct i915_gem_context *
-i915_request_gem_context(struct i915_request *rq)
+i915_request_gem_context(const struct i915_request *rq)
 {
 	/* Valid only while the request is being constructed (or retired). */
 	return rcu_dereference_protected(rq->context->gem_context, true);
 }
 
 static inline struct intel_timeline *
-i915_request_active_timeline(struct i915_request *rq)
+i915_request_active_timeline(const struct i915_request *rq)
 {
 	/*
 	 * When in use during submission, we are protected by a guarantee that

@@ -20,6 +20,7 @@ struct pin_cookie {
 #define lockdep_unpin_lock(a, b)
 #define lockdep_set_class(a, b)
 #define lockdep_init_map(a, b, c, d)
+#define lockdep_set_class_and_name(a, b, c)
 
 #define mutex_acquire(a, b, c, d)
 #define mutex_release(a, b)

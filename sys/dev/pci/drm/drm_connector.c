@@ -38,7 +38,7 @@
  * DOC: overview
  *
  * In DRM connectors are the general abstraction for display sinks, and include
- * als fixed panels or anything else that can display pixels in some form. As
+ * also fixed panels or anything else that can display pixels in some form. As
  * opposed to all other KMS objects representing hardware (like CRTC, encoder or
  * plane abstractions) connectors can be hotplugged and unplugged at runtime.
  * Hence they are reference-counted using drm_connector_get() and
@@ -129,7 +129,7 @@ EXPORT_SYMBOL(drm_get_connector_type_name);
 
 /**
  * drm_connector_get_cmdline_mode - reads the user's cmdline mode
- * @connector: connector to quwery
+ * @connector: connector to query
  *
  * The kernel supports per-connector configuration of its consoles through
  * use of the video= parameter. This function parses that option and
@@ -269,6 +269,7 @@ int drm_connector_init(struct drm_device *dev,
 	INIT_LIST_HEAD(&connector->modes);
 	rw_init(&connector->mutex, "cnlk");
 	connector->edid_blob_ptr = NULL;
+	connector->epoch_counter = 0;
 	connector->tile_blob_ptr = NULL;
 	connector->status = connector_status_unknown;
 	connector->display_info.panel_orientation =
@@ -849,7 +850,7 @@ static const struct drm_prop_enum_list drm_dvi_i_select_enum_list[] = {
 DRM_ENUM_NAME_FN(drm_get_dvi_i_select_name, drm_dvi_i_select_enum_list)
 
 static const struct drm_prop_enum_list drm_dvi_i_subconnector_enum_list[] = {
-	{ DRM_MODE_SUBCONNECTOR_Unknown,   "Unknown"   }, /* DVI-I and TV-out */
+	{ DRM_MODE_SUBCONNECTOR_Unknown,   "Unknown"   }, /* DVI-I, TV-out and DP */
 	{ DRM_MODE_SUBCONNECTOR_DVID,      "DVI-D"     }, /* DVI-I  */
 	{ DRM_MODE_SUBCONNECTOR_DVIA,      "DVI-A"     }, /* DVI-I  */
 };
@@ -866,7 +867,7 @@ static const struct drm_prop_enum_list drm_tv_select_enum_list[] = {
 DRM_ENUM_NAME_FN(drm_get_tv_select_name, drm_tv_select_enum_list)
 
 static const struct drm_prop_enum_list drm_tv_subconnector_enum_list[] = {
-	{ DRM_MODE_SUBCONNECTOR_Unknown,   "Unknown"   }, /* DVI-I and TV-out */
+	{ DRM_MODE_SUBCONNECTOR_Unknown,   "Unknown"   }, /* DVI-I, TV-out and DP */
 	{ DRM_MODE_SUBCONNECTOR_Composite, "Composite" }, /* TV-out */
 	{ DRM_MODE_SUBCONNECTOR_SVIDEO,    "SVIDEO"    }, /* TV-out */
 	{ DRM_MODE_SUBCONNECTOR_Component, "Component" }, /* TV-out */
@@ -874,6 +875,19 @@ static const struct drm_prop_enum_list drm_tv_subconnector_enum_list[] = {
 };
 DRM_ENUM_NAME_FN(drm_get_tv_subconnector_name,
 		 drm_tv_subconnector_enum_list)
+
+static const struct drm_prop_enum_list drm_dp_subconnector_enum_list[] = {
+	{ DRM_MODE_SUBCONNECTOR_Unknown,     "Unknown"   }, /* DVI-I, TV-out and DP */
+	{ DRM_MODE_SUBCONNECTOR_VGA,	     "VGA"       }, /* DP */
+	{ DRM_MODE_SUBCONNECTOR_DVID,	     "DVI-D"     }, /* DP */
+	{ DRM_MODE_SUBCONNECTOR_HDMIA,	     "HDMI"      }, /* DP */
+	{ DRM_MODE_SUBCONNECTOR_DisplayPort, "DP"        }, /* DP */
+	{ DRM_MODE_SUBCONNECTOR_Wireless,    "Wireless"  }, /* DP */
+	{ DRM_MODE_SUBCONNECTOR_Native,	     "Native"    }, /* DP */
+};
+
+DRM_ENUM_NAME_FN(drm_get_dp_subconnector_name,
+		 drm_dp_subconnector_enum_list)
 
 static const struct drm_prop_enum_list hdmi_colorspaces[] = {
 	/* For Default case, driver will set the colorspace */
@@ -953,8 +967,7 @@ static const struct drm_prop_enum_list dp_colorspaces[] = {
  * 	connector is linked to. Drivers should never set this property directly,
  * 	it is handled by the DRM core by calling the &drm_connector_funcs.dpms
  * 	callback. For atomic drivers the remapping to the "ACTIVE" property is
- * 	implemented in the DRM core.  This is the only standard connector
- * 	property that userspace can change.
+ * 	implemented in the DRM core.
  *
  * 	Note that this property cannot be set through the MODE_ATOMIC ioctl,
  * 	userspace must use "ACTIVE" on the CRTC instead.
@@ -991,7 +1004,7 @@ static const struct drm_prop_enum_list dp_colorspaces[] = {
  * 	DP MST sinks), or high-res integrated panels (like dual-link DSI) which
  * 	are not gen-locked. Note that for tiled panels which are genlocked, like
  * 	dual-link LVDS or dual-link DSI, the driver should try to not expose the
- * 	tiling and virtualize both &drm_crtc and &drm_plane if needed. Drivers
+ * 	tiling and virtualise both &drm_crtc and &drm_plane if needed. Drivers
  * 	should update this value using drm_connector_set_tile_property().
  * 	Userspace cannot change this property.
  * link-status:
@@ -1000,6 +1013,32 @@ static const struct drm_prop_enum_list dp_colorspaces[] = {
  *      after modeset, the kernel driver may set this to "BAD" and issue a
  *      hotplug uevent. Drivers should update this value using
  *      drm_connector_set_link_status_property().
+ *
+ *      When user-space receives the hotplug uevent and detects a "BAD"
+ *      link-status, the sink doesn't receive pixels anymore (e.g. the screen
+ *      becomes completely black). The list of available modes may have
+ *      changed. User-space is expected to pick a new mode if the current one
+ *      has disappeared and perform a new modeset with link-status set to
+ *      "GOOD" to re-enable the connector.
+ *
+ *      If multiple connectors share the same CRTC and one of them gets a "BAD"
+ *      link-status, the other are unaffected (ie. the sinks still continue to
+ *      receive pixels).
+ *
+ *      When user-space performs an atomic commit on a connector with a "BAD"
+ *      link-status without resetting the property to "GOOD", the sink may
+ *      still not receive pixels. When user-space performs an atomic commit
+ *      which resets the link-status property to "GOOD" without the
+ *      ALLOW_MODESET flag set, it might fail because a modeset is required.
+ *
+ *      User-space can only change link-status to "GOOD", changing it to "BAD"
+ *      is a no-op.
+ *
+ *      For backwards compatibility with non-atomic userspace the kernel
+ *      tries to automatically set the link-status back to "GOOD" in the
+ *      SETCRTC IOCTL. This might fail if the mode is no longer valid, similar
+ *      to how it might fail if a different screen has been connected in the
+ *      interim.
  * non_desktop:
  * 	Indicates the output should be ignored for purposes of displaying a
  * 	standard desktop environment or console. This is most likely because
@@ -1131,7 +1170,7 @@ static const struct drm_prop_enum_list dp_colorspaces[] = {
  *
  *	It will even need to do colorspace conversion and get all layers
  *	to one common colorspace for blending. It can use either GL, Media
- *	or display engine to get this done based on the capabilties of the
+ *	or display engine to get this done based on the capabilities of the
  *	associated hardware.
  *
  *	Driver expects metadata to be put in &struct hdr_output_metadata
@@ -1191,6 +1230,14 @@ static const struct drm_prop_enum_list dp_colorspaces[] = {
  *	can also expose this property to external outputs, in which case they
  *	must support "None", which should be the default (since external screens
  *	have a built-in scaler).
+ *
+ * subconnector:
+ *	This property is used by DVI-I, TVout and DisplayPort to indicate different
+ *	connector subtypes. Enum values more or less match with those from main
+ *	connector types.
+ *	For DVI-I and TVout there is also a matching property "select subconnector"
+ *	allowing to switch between signal types.
+ *	DP subconnector corresponds to a downstream port.
  */
 
 int drm_connector_create_standard_properties(struct drm_device *dev)
@@ -1278,6 +1325,30 @@ int drm_mode_create_dvi_i_properties(struct drm_device *dev)
 	return 0;
 }
 EXPORT_SYMBOL(drm_mode_create_dvi_i_properties);
+
+/**
+ * drm_connector_attach_dp_subconnector_property - create subconnector property for DP
+ * @connector: drm_connector to attach property
+ *
+ * Called by a driver when DP connector is created.
+ */
+void drm_connector_attach_dp_subconnector_property(struct drm_connector *connector)
+{
+	struct drm_mode_config *mode_config = &connector->dev->mode_config;
+
+	if (!mode_config->dp_subconnector_property)
+		mode_config->dp_subconnector_property =
+			drm_property_create_enum(connector->dev,
+				DRM_MODE_PROP_IMMUTABLE,
+				"subconnector",
+				drm_dp_subconnector_enum_list,
+				ARRAY_SIZE(drm_dp_subconnector_enum_list));
+
+	drm_object_attach_property(&connector->base,
+				   mode_config->dp_subconnector_property,
+				   DRM_MODE_SUBCONNECTOR_Unknown);
+}
+EXPORT_SYMBOL(drm_connector_attach_dp_subconnector_property);
 
 /**
  * DOC: HDMI connector properties
@@ -1614,7 +1685,7 @@ EXPORT_SYMBOL(drm_mode_create_scaling_mode_property);
  * variable refresh rate capability for a connector.
  *
  * Returns:
- * Zero on success, negative errono on failure.
+ * Zero on success, negative errno on failure.
  */
 int drm_connector_attach_vrr_capable_property(
 	struct drm_connector *connector)
@@ -1759,7 +1830,7 @@ EXPORT_SYMBOL(drm_mode_create_aspect_ratio_property);
  * HDMI connectors.
  *
  * Returns:
- * Zero on success, negative errono on failure.
+ * Zero on success, negative errno on failure.
  */
 int drm_mode_create_hdmi_colorspace_property(struct drm_connector *connector)
 {
@@ -1788,7 +1859,7 @@ EXPORT_SYMBOL(drm_mode_create_hdmi_colorspace_property);
  * DP connectors.
  *
  * Returns:
- * Zero on success, negative errono on failure.
+ * Zero on success, negative errno on failure.
  */
 int drm_mode_create_dp_colorspace_property(struct drm_connector *connector)
 {
@@ -1840,7 +1911,7 @@ EXPORT_SYMBOL(drm_mode_create_content_type_property);
  * drm_mode_create_suggested_offset_properties - create suggests offset properties
  * @dev: DRM device
  *
- * Create the the suggested x/y offset property for connectors.
+ * Create the suggested x/y offset property for connectors.
  */
 int drm_mode_create_suggested_offset_properties(struct drm_device *dev)
 {
@@ -1954,6 +2025,7 @@ int drm_connector_update_edid_property(struct drm_connector *connector,
 	struct drm_device *dev = connector->dev;
 	size_t size = 0;
 	int ret;
+	const struct edid *old_edid;
 
 	/* ignore requests to set edid when overridden */
 	if (connector->override_edid)
@@ -1963,7 +2035,7 @@ int drm_connector_update_edid_property(struct drm_connector *connector,
 		size = EDID_LENGTH * (1 + edid->extensions);
 
 	/* Set the display info, using edid if available, otherwise
-	 * reseting the values to defaults. This duplicates the work
+	 * resetting the values to defaults. This duplicates the work
 	 * done in drm_add_edid_modes, but that function is not
 	 * consistently called before this one in all drivers and the
 	 * computation is cheap enough that it seems better to
@@ -1974,6 +2046,22 @@ int drm_connector_update_edid_property(struct drm_connector *connector,
 		drm_add_display_info(connector, edid);
 	else
 		drm_reset_display_info(connector);
+
+	drm_update_tile_info(connector, edid);
+
+	if (connector->edid_blob_ptr) {
+		old_edid = (const struct edid *)connector->edid_blob_ptr->data;
+		if (old_edid) {
+			if (!drm_edid_are_equal(edid, old_edid)) {
+				DRM_DEBUG_KMS("[CONNECTOR:%d:%s] Edid was changed.\n",
+					      connector->base.id, connector->name);
+
+				connector->epoch_counter += 1;
+				DRM_DEBUG_KMS("Updating change counter to %llu\n",
+					      connector->epoch_counter);
+			}
+		}
+	}
 
 	drm_object_property_set_value(&connector->base,
 				      dev->mode_config.non_desktop_property,
@@ -2074,7 +2162,7 @@ void drm_connector_set_vrr_capable_property(
 EXPORT_SYMBOL(drm_connector_set_vrr_capable_property);
 
 /**
- * drm_connector_set_panel_orientation - sets the connecter's panel_orientation
+ * drm_connector_set_panel_orientation - sets the connector's panel_orientation
  * @connector: connector for which to set the panel-orientation property.
  * @panel_orientation: drm_panel_orientation value to set
  *
@@ -2129,7 +2217,7 @@ EXPORT_SYMBOL(drm_connector_set_panel_orientation);
 
 /**
  * drm_connector_set_panel_orientation_with_quirk -
- *	set the connecter's panel_orientation after checking for quirks
+ *	set the connector's panel_orientation after checking for quirks
  * @connector: connector for which to init the panel-orientation property.
  * @panel_orientation: drm_panel_orientation value to set
  * @width: width in pixels of the panel, used for panel quirk detection
@@ -2207,7 +2295,7 @@ static struct drm_encoder *drm_connector_get_encoder(struct drm_connector *conne
 
 static bool
 drm_mode_expose_to_userspace(const struct drm_display_mode *mode,
-			     const struct list_head *export_list,
+			     const struct list_head *modes,
 			     const struct drm_file *file_priv)
 {
 	/*
@@ -2223,15 +2311,17 @@ drm_mode_expose_to_userspace(const struct drm_display_mode *mode,
 	 * while preparing the list of user-modes.
 	 */
 	if (!file_priv->aspect_ratio_allowed) {
-		struct drm_display_mode *mode_itr;
+		const struct drm_display_mode *mode_itr;
 
-		list_for_each_entry(mode_itr, export_list, export_head)
-			if (drm_mode_match(mode_itr, mode,
+		list_for_each_entry(mode_itr, modes, head) {
+			if (mode_itr->expose_to_userspace &&
+			    drm_mode_match(mode_itr, mode,
 					   DRM_MODE_MATCH_TIMINGS |
 					   DRM_MODE_MATCH_CLOCK |
 					   DRM_MODE_MATCH_FLAGS |
 					   DRM_MODE_MATCH_3D_FLAGS))
 				return false;
+		}
 	}
 
 	return true;
@@ -2251,7 +2341,6 @@ int drm_mode_getconnector(struct drm_device *dev, void *data,
 	struct drm_mode_modeinfo u_mode;
 	struct drm_mode_modeinfo __user *mode_ptr;
 	uint32_t __user *encoder_ptr;
-	DRM_LIST_HEAD(export_list);
 
 	if (!drm_core_check_feature(dev, DRIVER_MODESET))
 		return -EOPNOTSUPP;
@@ -2295,25 +2384,30 @@ int drm_mode_getconnector(struct drm_device *dev, void *data,
 	out_resp->connection = connector->status;
 
 	/* delayed so we get modes regardless of pre-fill_modes state */
-	list_for_each_entry(mode, &connector->modes, head)
-		if (drm_mode_expose_to_userspace(mode, &export_list,
+	list_for_each_entry(mode, &connector->modes, head) {
+		WARN_ON(mode->expose_to_userspace);
+
+		if (drm_mode_expose_to_userspace(mode, &connector->modes,
 						 file_priv)) {
-			list_add_tail(&mode->export_head, &export_list);
+			mode->expose_to_userspace = true;
 			mode_count++;
 		}
+	}
 
 	/*
 	 * This ioctl is called twice, once to determine how much space is
 	 * needed, and the 2nd time to fill it.
-	 * The modes that need to be exposed to the user are maintained in the
-	 * 'export_list'. When the ioctl is called first time to determine the,
-	 * space, the export_list gets filled, to find the no.of modes. In the
-	 * 2nd time, the user modes are filled, one by one from the export_list.
 	 */
 	if ((out_resp->count_modes >= mode_count) && mode_count) {
 		copied = 0;
 		mode_ptr = (struct drm_mode_modeinfo __user *)(unsigned long)out_resp->modes_ptr;
-		list_for_each_entry(mode, &export_list, export_head) {
+		list_for_each_entry(mode, &connector->modes, head) {
+			if (!mode->expose_to_userspace)
+				continue;
+
+			/* Clear the tag for the next time around */
+			mode->expose_to_userspace = false;
+
 			drm_mode_convert_to_umode(&u_mode, mode);
 			/*
 			 * Reset aspect ratio flags of user-mode, if modes with
@@ -2324,13 +2418,26 @@ int drm_mode_getconnector(struct drm_device *dev, void *data,
 			if (copy_to_user(mode_ptr + copied,
 					 &u_mode, sizeof(u_mode))) {
 				ret = -EFAULT;
+
+				/*
+				 * Clear the tag for the rest of
+				 * the modes for the next time around.
+				 */
+				list_for_each_entry_continue(mode, &connector->modes, head)
+					mode->expose_to_userspace = false;
+
 				mutex_unlock(&dev->mode_config.mutex);
 
 				goto out;
 			}
 			copied++;
 		}
+	} else {
+		/* Clear the tag for the next time around */
+		list_for_each_entry(mode, &connector->modes, head)
+			mode->expose_to_userspace = false;
 	}
+
 	out_resp->count_modes = mode_count;
 	mutex_unlock(&dev->mode_config.mutex);
 
@@ -2372,6 +2479,7 @@ static void drm_tile_group_free(struct kref *kref)
 {
 	struct drm_tile_group *tg = container_of(kref, struct drm_tile_group, refcount);
 	struct drm_device *dev = tg->dev;
+
 	mutex_lock(&dev->mode_config.idr_mutex);
 	idr_remove(&dev->mode_config.tile_idr, tg->id);
 	mutex_unlock(&dev->mode_config.idr_mutex);
@@ -2403,10 +2511,11 @@ EXPORT_SYMBOL(drm_mode_put_tile_group);
  * tile group or NULL if not found.
  */
 struct drm_tile_group *drm_mode_get_tile_group(struct drm_device *dev,
-					       char topology[8])
+					       const char topology[8])
 {
 	struct drm_tile_group *tg;
 	int id;
+
 	mutex_lock(&dev->mode_config.idr_mutex);
 	idr_for_each_entry(&dev->mode_config.tile_idr, tg, id) {
 		if (!memcmp(tg->group_data, topology, 8)) {
@@ -2433,7 +2542,7 @@ EXPORT_SYMBOL(drm_mode_get_tile_group);
  * new tile group or NULL.
  */
 struct drm_tile_group *drm_mode_create_tile_group(struct drm_device *dev,
-						  char topology[8])
+						  const char topology[8])
 {
 	struct drm_tile_group *tg;
 	int ret;

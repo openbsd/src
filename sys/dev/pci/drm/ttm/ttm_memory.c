@@ -269,7 +269,7 @@ static bool ttm_zones_above_swap_target(struct ttm_mem_global *glob,
 	return false;
 }
 
-/**
+/*
  * At this point we only support a single shrink callback.
  * Extend this if needed, perhaps using a linked list of callbacks.
  * Note that this function is reentrant:
@@ -552,7 +552,6 @@ ttm_check_under_lowerlimit(struct ttm_mem_global *glob,
 
 	return false;
 }
-EXPORT_SYMBOL(ttm_check_under_lowerlimit);
 
 static int ttm_mem_global_reserve(struct ttm_mem_global *glob,
 				  struct ttm_mem_zone *single_zone,
@@ -680,9 +679,3 @@ size_t ttm_round_pot(size_t size)
 	return 0;
 }
 EXPORT_SYMBOL(ttm_round_pot);
-
-uint64_t ttm_get_kernel_zone_memory_size(struct ttm_mem_global *glob)
-{
-	return glob->zone_kernel->max_mem;
-}
-EXPORT_SYMBOL(ttm_get_kernel_zone_memory_size);

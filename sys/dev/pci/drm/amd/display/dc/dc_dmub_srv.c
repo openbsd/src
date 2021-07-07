@@ -25,7 +25,7 @@
 
 #include "dc.h"
 #include "dc_dmub_srv.h"
-#include "../dmub/inc/dmub_srv.h"
+#include "../dmub/dmub_srv.h"
 
 static void dc_dmub_srv_construct(struct dc_dmub_srv *dc_srv, struct dc *dc,
 				  struct dmub_srv *dmub)
@@ -58,7 +58,7 @@ void dc_dmub_srv_destroy(struct dc_dmub_srv **dmub_srv)
 }
 
 void dc_dmub_srv_cmd_queue(struct dc_dmub_srv *dc_dmub_srv,
-			   struct dmub_cmd_header *cmd)
+			   union dmub_rb_cmd *cmd)
 {
 	struct dmub_srv *dmub = dc_dmub_srv->dmub;
 	struct dc_context *dc_ctx = dc_dmub_srv->ctx;
@@ -131,4 +131,20 @@ void dc_dmub_srv_wait_phy_init(struct dc_dmub_srv *dc_dmub_srv)
 
 		/* Continue spinning so we don't hang the ASIC. */
 	}
+}
+
+bool dc_dmub_srv_notify_stream_mask(struct dc_dmub_srv *dc_dmub_srv,
+				    unsigned int stream_mask)
+{
+	struct dmub_srv *dmub;
+	const uint32_t timeout = 30;
+
+	if (!dc_dmub_srv || !dc_dmub_srv->dmub)
+		return false;
+
+	dmub = dc_dmub_srv->dmub;
+
+	return dmub_srv_send_gpint_command(
+		       dmub, DMUB_GPINT__IDLE_OPT_NOTIFY_STREAM_MASK,
+		       stream_mask, timeout) == DMUB_STATUS_OK;
 }

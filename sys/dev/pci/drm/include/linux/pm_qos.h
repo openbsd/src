@@ -15,5 +15,6 @@ struct pm_qos_request {
 #define cpu_latency_qos_update_request(a, b)
 #define cpu_latency_qos_add_request(a, b)
 #define cpu_latency_qos_remove_request(a)
+#define cpu_latency_qos_request_active(a)	false
 
 #endif

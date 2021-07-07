@@ -51,7 +51,7 @@ struct ttm_agp_backend {
 	struct drm_agp_head *agp;
 };
 
-static int ttm_agp_bind(struct ttm_tt *ttm, struct ttm_mem_reg *bo_mem)
+int ttm_agp_bind(struct ttm_tt *ttm, struct ttm_resource *bo_mem)
 {
 	struct ttm_agp_backend	*agp_be = container_of(ttm, struct ttm_agp_backend, ttm);
 	struct vm_page *dummy_read_page = ttm_bo_glob.dummy_read_page;
@@ -60,6 +60,11 @@ static int ttm_agp_bind(struct ttm_tt *ttm, struct ttm_mem_reg *bo_mem)
 	bus_addr_t addr;
 //	int cached = (bo_mem->placement & TTM_PL_FLAG_CACHED);
 	unsigned i;
+
+#ifdef notyet
+	if (agp_be->mem)
+		return 0;
+#endif
 
 	addr = sc->sc_apaddr + (node->start << PAGE_SHIFT);
 	for (i = 0; i < ttm->num_pages; i++) {
@@ -78,8 +83,9 @@ static int ttm_agp_bind(struct ttm_tt *ttm, struct ttm_mem_reg *bo_mem)
 
 	return 0;
 }
+EXPORT_SYMBOL(ttm_agp_bind);
 
-static int ttm_agp_unbind(struct ttm_tt *ttm)
+void ttm_agp_unbind(struct ttm_tt *ttm)
 {
 	struct ttm_agp_backend *agp_be = container_of(ttm, struct ttm_agp_backend, ttm);
 	struct agp_softc *sc = agp_be->agp->agpdev;
@@ -96,10 +102,21 @@ static int ttm_agp_unbind(struct ttm_tt *ttm)
 		sc->sc_methods->flush_tlb(sc->sc_chipc);
 		agp_be->bound = 0;
 	}
-	return 0;
 }
+EXPORT_SYMBOL(ttm_agp_unbind);
 
-static void ttm_agp_destroy(struct ttm_tt *ttm)
+bool ttm_agp_is_bound(struct ttm_tt *ttm)
+{
+	struct ttm_agp_backend *agp_be = container_of(ttm, struct ttm_agp_backend, ttm);
+
+	if (!ttm)
+		return false;
+
+	return (agp_be->bound == 1);
+}
+EXPORT_SYMBOL(ttm_agp_is_bound);
+
+void ttm_agp_destroy(struct ttm_tt *ttm)
 {
 	struct ttm_agp_backend *agp_be = container_of(ttm, struct ttm_agp_backend, ttm);
 
@@ -108,12 +125,7 @@ static void ttm_agp_destroy(struct ttm_tt *ttm)
 	ttm_tt_fini(ttm);
 	kfree(agp_be);
 }
-
-static struct ttm_backend_func ttm_agp_func = {
-	.bind = ttm_agp_bind,
-	.unbind = ttm_agp_unbind,
-	.destroy = ttm_agp_destroy,
-};
+EXPORT_SYMBOL(ttm_agp_destroy);
 
 struct ttm_tt *ttm_agp_tt_create(struct ttm_buffer_object *bo,
 				 struct drm_agp_head *agp,
@@ -127,7 +139,6 @@ struct ttm_tt *ttm_agp_tt_create(struct ttm_buffer_object *bo,
 
 	agp_be->bound = 0;
 	agp_be->agp = agp;
-	agp_be->ttm.func = &ttm_agp_func;
 
 	if (ttm_tt_init(&agp_be->ttm, bo, page_flags)) {
 		return NULL;
@@ -136,18 +147,3 @@ struct ttm_tt *ttm_agp_tt_create(struct ttm_buffer_object *bo,
 	return &agp_be->ttm;
 }
 EXPORT_SYMBOL(ttm_agp_tt_create);
-
-int ttm_agp_tt_populate(struct ttm_tt *ttm, struct ttm_operation_ctx *ctx)
-{
-	if (ttm->state != tt_unpopulated)
-		return 0;
-
-	return ttm_pool_populate(ttm, ctx);
-}
-EXPORT_SYMBOL(ttm_agp_tt_populate);
-
-void ttm_agp_tt_unpopulate(struct ttm_tt *ttm)
-{
-	ttm_pool_unpopulate(ttm);
-}
-EXPORT_SYMBOL(ttm_agp_tt_unpopulate);

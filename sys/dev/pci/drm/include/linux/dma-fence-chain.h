@@ -10,35 +10,28 @@ struct dma_fence_chain {
 	struct dma_fence *fence;
 	struct dma_fence *prev;
 	uint64_t prev_seqno;
+	struct mutex lock;
 };
 
-static inline int
-dma_fence_chain_find_seqno(struct dma_fence **df, uint64_t seqno)
-{
-	if (seqno == 0)
-		return 0;
-	STUB();
-	return -ENOSYS;
-}
+int dma_fence_chain_find_seqno(struct dma_fence **, uint64_t);
+void dma_fence_chain_init(struct dma_fence_chain *, struct dma_fence *,
+    struct dma_fence *, uint64_t);
+
+extern const struct dma_fence_ops dma_fence_chain_ops;
 
 static inline struct dma_fence_chain *
 to_dma_fence_chain(struct dma_fence *fence)
 {
-	STUB();
-	return NULL;
+	if (fence && fence->ops != &dma_fence_chain_ops)
+		return NULL;
+
+	return container_of(fence, struct dma_fence_chain, base);
 }
+
+struct dma_fence *dma_fence_chain_next(struct dma_fence *);
 
 /* XXX walk chain */
 #define dma_fence_chain_for_each(f, h) \
-	for (f = dma_fence_get(h); f != NULL; dma_fence_put(f), f = NULL)
-
-static inline void
-dma_fence_chain_init(struct dma_fence_chain *chain, struct dma_fence *prev,
-    struct dma_fence *fence, uint64_t seqno)
-{
-	chain->fence = fence;
-	chain->prev = prev;
-	chain->prev_seqno = 0;
-}
+	for (f = dma_fence_get(h); f != NULL; f = dma_fence_chain_next(f))
 
 #endif

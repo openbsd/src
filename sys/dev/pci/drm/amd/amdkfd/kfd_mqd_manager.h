@@ -102,7 +102,7 @@ struct mqd_manager {
 	int	(*debugfs_show_mqd)(struct seq_file *m, void *data);
 #endif
 
-	struct rwlock	mqd_mutex;
+	struct mutex	mqd_mutex;
 	struct kfd_dev	*dev;
 	uint32_t mqd_size;
 };

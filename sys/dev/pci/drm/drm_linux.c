@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.79 2021/04/11 15:30:51 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.80 2021/07/07 02:38:21 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -35,6 +35,7 @@
 #include <linux/acpi.h>
 #include <linux/pagevec.h>
 #include <linux/dma-fence-array.h>
+#include <linux/dma-fence-chain.h>
 #include <linux/interrupt.h>
 #include <linux/err.h>
 #include <linux/idr.h>
@@ -47,6 +48,7 @@
 #include <linux/fb.h>
 #include <linux/xarray.h>
 #include <linux/interval_tree.h>
+#include <linux/kthread.h>
 
 #include <drm/drm_device.h>
 #include <drm/drm_print.h>
@@ -234,6 +236,69 @@ kthread_run(int (*func)(void *), void *data, const char *name)
 
 	LIST_INSERT_HEAD(&kthread_list, thread, next);
 	return thread->proc;
+}
+
+struct kthread_worker *
+kthread_create_worker(unsigned int flags, const char *fmt, ...)
+{
+	char name[MAXCOMLEN+1];
+	va_list ap;
+
+	struct kthread_worker *w = malloc(sizeof(*w), M_DRM, M_WAITOK);
+	va_start(ap, fmt);
+	vsnprintf(name, sizeof(name), fmt, ap);
+	va_end(ap);
+	w->tq = taskq_create(name, 1, IPL_HIGH, 0);
+	
+	return w;
+}
+
+void
+kthread_destroy_worker(struct kthread_worker *worker)
+{
+	taskq_destroy(worker->tq);
+	free(worker, M_DRM, sizeof(*worker));
+	
+}
+
+void
+kthread_init_work(struct kthread_work *work, void (*func)(struct kthread_work *))
+{
+	work->tq = NULL;
+	task_set(&work->task, (void (*)(void *))func, work);
+}
+
+bool
+kthread_queue_work(struct kthread_worker *worker, struct kthread_work *work)
+{
+	work->tq = worker->tq;
+	return task_add(work->tq, &work->task);
+}
+
+bool
+kthread_cancel_work_sync(struct kthread_work *work)
+{
+	return task_del(work->tq, &work->task);
+}
+
+void
+kthread_flush_work(struct kthread_work *work)
+{
+	if (cold)
+		return;
+
+	if (work->tq)
+		taskq_barrier(work->tq);
+}
+
+void
+kthread_flush_worker(struct kthread_worker *worker)
+{
+	if (cold)
+		return;
+
+	if (worker->tq)
+		taskq_barrier(worker->tq);
 }
 
 struct kthread *
@@ -536,6 +601,21 @@ vunmap(void *addr, size_t size)
 	pmap_remove(pmap_kernel(), va, va + size);
 	pmap_update(pmap_kernel());
 	uvm_km_free(kernel_map, va, size);
+}
+
+bool
+is_vmalloc_addr(const void *p)
+{
+	vaddr_t min, max, addr;
+
+	min = vm_map_min(kernel_map);
+	max = vm_map_max(kernel_map);
+	addr = (vaddr_t)p;
+
+	if (addr >= min && addr <= max)
+		return true;
+	else
+		return false;
 }
 
 void
@@ -882,10 +962,11 @@ int
 sg_alloc_table(struct sg_table *table, unsigned int nents, gfp_t gfp_mask)
 {
 	table->sgl = mallocarray(nents, sizeof(struct scatterlist),
-	    M_DRM, gfp_mask);
+	    M_DRM, gfp_mask | M_ZERO);
 	if (table->sgl == NULL)
 		return -ENOMEM;
 	table->nents = table->orig_nents = nents;
+	sg_mark_end(&table->sgl[nents - 1]);
 	return 0;
 }
 
@@ -894,6 +975,7 @@ sg_free_table(struct sg_table *table)
 {
 	free(table->sgl, M_DRM,
 	    table->orig_nents * sizeof(struct scatterlist));
+	table->orig_nents = 0;
 	table->sgl = NULL;
 }
 
@@ -1301,6 +1383,224 @@ drm_sysfs_hotplug_event(struct drm_device *dev)
 	KNOTE(&dev->note, NOTE_CHANGE);
 }
 
+struct dma_fence *
+dma_fence_get(struct dma_fence *fence)
+{
+	if (fence)
+		kref_get(&fence->refcount);
+	return fence;
+}
+
+struct dma_fence *
+dma_fence_get_rcu(struct dma_fence *fence)
+{
+	if (fence)
+		kref_get(&fence->refcount);
+	return fence;
+}
+
+struct dma_fence *
+dma_fence_get_rcu_safe(struct dma_fence **dfp)
+{
+	struct dma_fence *fence;
+	if (dfp == NULL)
+		return NULL;
+	fence = *dfp;
+	if (fence)
+		kref_get(&fence->refcount);
+	return fence;
+}
+
+void
+dma_fence_release(struct kref *ref)
+{
+	struct dma_fence *fence = container_of(ref, struct dma_fence, refcount);
+	if (fence->ops && fence->ops->release)
+		fence->ops->release(fence);
+	else
+		free(fence, M_DRM, 0);
+}
+
+void
+dma_fence_put(struct dma_fence *fence)
+{
+	if (fence)
+		kref_put(&fence->refcount, dma_fence_release);
+}
+
+int
+dma_fence_signal_locked(struct dma_fence *fence)
+{
+	struct dma_fence_cb *cur, *tmp;
+	struct list_head cb_list;
+
+	if (fence == NULL)
+		return -EINVAL;
+
+	if (test_and_set_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags))
+		return -EINVAL;
+
+	list_replace(&fence->cb_list, &cb_list);
+
+	fence->timestamp = ktime_get();
+	set_bit(DMA_FENCE_FLAG_TIMESTAMP_BIT, &fence->flags);
+
+	list_for_each_entry_safe(cur, tmp, &cb_list, node) {
+		INIT_LIST_HEAD(&cur->node);
+		cur->func(fence, cur);
+	}
+
+	return 0;
+}
+
+int
+dma_fence_signal(struct dma_fence *fence)
+{
+	int r;
+
+	if (fence == NULL)
+		return -EINVAL;
+
+	mtx_enter(fence->lock);
+	r = dma_fence_signal_locked(fence);
+	mtx_leave(fence->lock);
+
+	return r;
+}
+
+bool
+dma_fence_is_signaled(struct dma_fence *fence)
+{
+	if (test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags))
+		return true;
+
+	if (fence->ops->signaled && fence->ops->signaled(fence)) {
+		dma_fence_signal(fence);
+		return true;
+	}
+
+	return false;
+}
+
+bool
+dma_fence_is_signaled_locked(struct dma_fence *fence)
+{
+	if (test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags))
+		return true;
+
+	if (fence->ops->signaled && fence->ops->signaled(fence)) {
+		dma_fence_signal_locked(fence);
+		return true;
+	}
+
+	return false;
+}
+
+long
+dma_fence_wait_timeout(struct dma_fence *fence, bool intr, long timeout)
+{
+	if (timeout < 0)
+		return -EINVAL;
+
+	if (fence->ops->wait)
+		return fence->ops->wait(fence, intr, timeout);
+	else
+		return dma_fence_default_wait(fence, intr, timeout);
+}
+
+long
+dma_fence_wait(struct dma_fence *fence, bool intr)
+{
+	long ret;
+
+	ret = dma_fence_wait_timeout(fence, intr, MAX_SCHEDULE_TIMEOUT);
+	if (ret < 0)
+		return ret;
+	
+	return 0;
+}
+
+void
+dma_fence_enable_sw_signaling(struct dma_fence *fence)
+{
+	if (!test_and_set_bit(DMA_FENCE_FLAG_ENABLE_SIGNAL_BIT, &fence->flags) &&
+	    !test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags) &&
+	    fence->ops->enable_signaling) {
+		mtx_enter(fence->lock);
+		if (!fence->ops->enable_signaling(fence))
+			dma_fence_signal_locked(fence);
+		mtx_leave(fence->lock);
+	}
+}
+
+void
+dma_fence_init(struct dma_fence *fence, const struct dma_fence_ops *ops,
+    struct mutex *lock, uint64_t context, uint64_t seqno)
+{
+	fence->ops = ops;
+	fence->lock = lock;
+	fence->context = context;
+	fence->seqno = seqno;
+	fence->flags = 0;
+	fence->error = 0;
+	kref_init(&fence->refcount);
+	INIT_LIST_HEAD(&fence->cb_list);
+}
+
+int
+dma_fence_add_callback(struct dma_fence *fence, struct dma_fence_cb *cb,
+    dma_fence_func_t func)
+{
+	int ret = 0;
+	bool was_set;
+
+	if (WARN_ON(!fence || !func))
+		return -EINVAL;
+
+	if (test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags)) {
+		INIT_LIST_HEAD(&cb->node);
+		return -ENOENT;
+	}
+
+	mtx_enter(fence->lock);
+
+	was_set = test_and_set_bit(DMA_FENCE_FLAG_ENABLE_SIGNAL_BIT, &fence->flags);
+
+	if (test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags))
+		ret = -ENOENT;
+	else if (!was_set && fence->ops->enable_signaling) {
+		if (!fence->ops->enable_signaling(fence)) {
+			dma_fence_signal_locked(fence);
+			ret = -ENOENT;
+		}
+	}
+
+	if (!ret) {
+		cb->func = func;
+		list_add_tail(&cb->node, &fence->cb_list);
+	} else
+		INIT_LIST_HEAD(&cb->node);
+	mtx_leave(fence->lock);
+
+	return ret;
+}
+
+bool
+dma_fence_remove_callback(struct dma_fence *fence, struct dma_fence_cb *cb)
+{
+	bool ret;
+
+	mtx_enter(fence->lock);
+
+	ret = !list_empty(&cb->node);
+	if (ret)
+		list_del_init(&cb->node);
+
+	mtx_leave(fence->lock);
+
+	return ret;
+}
+
 static atomic64_t drm_fence_context_count = ATOMIC64_INIT(1);
 
 uint64_t
@@ -1535,14 +1835,16 @@ dma_fence_array_enable_signaling(struct dma_fence *fence)
 	return true;
 }
 
-static bool dma_fence_array_signaled(struct dma_fence *fence)
+static bool
+dma_fence_array_signaled(struct dma_fence *fence)
 {
 	struct dma_fence_array *dfa = to_dma_fence_array(fence);
 
 	return atomic_read(&dfa->num_pending) <= 0;
 }
 
-static void dma_fence_array_release(struct dma_fence *fence)
+static void
+dma_fence_array_release(struct dma_fence *fence)
 {
 	struct dma_fence_array *dfa = to_dma_fence_array(fence);
 	int i;
@@ -1582,6 +1884,93 @@ const struct dma_fence_ops dma_fence_array_ops = {
 	.enable_signaling = dma_fence_array_enable_signaling,
 	.signaled = dma_fence_array_signaled,
 	.release = dma_fence_array_release,
+};
+
+int
+dma_fence_chain_find_seqno(struct dma_fence **df, uint64_t seqno)
+{
+	if (seqno == 0)
+		return 0;
+	STUB();
+	return -ENOSYS;
+}
+
+void
+dma_fence_chain_init(struct dma_fence_chain *chain, struct dma_fence *prev,
+    struct dma_fence *fence, uint64_t seqno)
+{
+	struct dma_fence_chain *prev_chain = to_dma_fence_chain(prev);
+	uint64_t context;
+
+	chain->fence = fence;
+	chain->prev = prev;
+	mtx_init(&chain->lock, IPL_TTY);
+
+	if (prev_chain && seqno > prev->seqno) {
+		chain->prev_seqno = prev->seqno;
+		context = prev->context;
+	} else {
+		chain->prev_seqno = 0;
+		context = dma_fence_context_alloc(1);
+	}
+
+	dma_fence_init(&chain->base, &dma_fence_chain_ops, &chain->lock,
+	    context, seqno);
+}
+
+static const char *
+dma_fence_chain_get_driver_name(struct dma_fence *fence)
+{
+	return "dma_fence_chain";
+}
+
+static const char *
+dma_fence_chain_get_timeline_name(struct dma_fence *fence)
+{
+	return "unbound";
+}
+
+static bool
+dma_fence_chain_enable_signaling(struct dma_fence *fence)
+{
+	STUB();
+	return false;
+}
+
+static bool
+dma_fence_chain_signaled(struct dma_fence *fence)
+{
+	STUB();
+	return false;
+}
+
+static void
+dma_fence_chain_release(struct dma_fence *fence)
+{
+	STUB();
+}
+
+struct dma_fence *
+dma_fence_chain_next(struct dma_fence *fence)
+{
+	struct dma_fence_chain *chain = to_dma_fence_chain(fence);
+
+	if (chain == NULL) {
+		dma_fence_put(fence);
+		return NULL;
+	}
+
+	STUB();
+	dma_fence_put(fence);
+	return NULL;
+}
+
+const struct dma_fence_ops dma_fence_chain_ops = {
+	.get_driver_name = dma_fence_chain_get_driver_name,
+	.get_timeline_name = dma_fence_chain_get_timeline_name,
+	.enable_signaling = dma_fence_chain_enable_signaling,
+	.signaled = dma_fence_chain_signaled,
+	.release = dma_fence_chain_release,
 };
 
 int
@@ -1848,8 +2237,8 @@ autoremove_wake_function(struct wait_queue_entry *wqe, unsigned int mode,
     int sync, void *key)
 {
 	wakeup(wqe);
-	if (wqe->proc)
-		wake_up_process(wqe->proc);
+	if (wqe->private)
+		wake_up_process(wqe->private);
 	list_del_init(&wqe->entry);
 	return 0;
 }
@@ -1916,6 +2305,13 @@ clear_and_wake_up_bit(int bit, void *word)
 
 wait_queue_head_t *
 bit_waitqueue(void *word, int bit)
+{
+	/* XXX hash table of wait queues? */
+	return &bit_waitq;
+}
+
+wait_queue_head_t *
+__var_waitqueue(void *p)
 {
 	/* XXX hash table of wait queues? */
 	return &bit_waitq;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.h,v 1.6 2021/06/26 09:24:51 kettenis Exp $	*/
+/*	$OpenBSD: pci.h,v 1.7 2021/07/07 02:38:36 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -336,6 +336,12 @@ enum pcie_link_width {
 	PCIE_LNK_X32	= 32,
 	PCIE_LNK_WIDTH_UNKNOWN	= 0xff
 };
+
+typedef unsigned int pci_ers_result_t;
+typedef unsigned int pci_channel_state_t;
+
+#define PCI_ERS_RESULT_DISCONNECT	0
+#define PCI_ERS_RESULT_RECOVERED	1
 
 enum pci_bus_speed pcie_get_speed_cap(struct pci_dev *);
 enum pcie_link_width pcie_get_width_cap(struct pci_dev *);

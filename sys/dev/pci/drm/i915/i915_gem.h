@@ -72,7 +72,7 @@ struct drm_i915_private;
 	trace_printk(__VA_ARGS__);					\
 } while (0)
 #define GEM_TRACE_DUMP() \
-	do { ftrace_dump(DUMP_ALL); add_taint_for_CI(TAINT_WARN); } while (0)
+	do { ftrace_dump(DUMP_ALL); __add_taint_for_CI(TAINT_WARN); } while (0)
 #define GEM_TRACE_DUMP_ON(expr) \
 	do { if (expr) GEM_TRACE_DUMP(); } while (0)
 #else
@@ -115,5 +115,17 @@ static inline bool __tasklet_is_scheduled(struct tasklet_struct *t)
 {
 	return test_bit(TASKLET_STATE_SCHED, &t->state);
 }
+
+struct i915_gem_ww_ctx {
+	struct ww_acquire_ctx ctx;
+	struct list_head obj_list;
+	bool intr;
+	struct drm_i915_gem_object *contended;
+};
+
+void i915_gem_ww_ctx_init(struct i915_gem_ww_ctx *ctx, bool intr);
+void i915_gem_ww_ctx_fini(struct i915_gem_ww_ctx *ctx);
+int __must_check i915_gem_ww_ctx_backoff(struct i915_gem_ww_ctx *ctx);
+void i915_gem_ww_unlock_single(struct drm_i915_gem_object *obj);
 
 #endif /* __I915_GEM_H__ */

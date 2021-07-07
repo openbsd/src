@@ -59,6 +59,16 @@ __i915_printk(struct drm_i915_private *dev_priv, const char *level,
 	}
 }
 
+void add_taint_for_CI(struct drm_i915_private *i915, unsigned int taint)
+{
+	__i915_printk(i915, KERN_NOTICE, "CI tainted:%#x by %pS\n",
+		      taint, (void *)_RET_IP_);
+
+	/* Failures that occur during fault injection testing are expected */
+	if (!i915_error_injected())
+		__add_taint_for_CI(taint);
+}
+
 #if IS_ENABLED(CONFIG_DRM_I915_DEBUG)
 static unsigned int i915_probe_fail_count;
 
@@ -101,7 +111,7 @@ void set_timer_ms(struct timeout *t, unsigned long timeout)
 		return;
 	}
 
-	timeout = msecs_to_jiffies_timeout(timeout);
+	timeout = msecs_to_jiffies(timeout);
 
 	/*
 	 * Paranoia to make sure the compiler computes the timeout before
@@ -111,5 +121,6 @@ void set_timer_ms(struct timeout *t, unsigned long timeout)
 	 */
 	barrier();
 
-	mod_timer(t, jiffies + timeout);
+	/* Keep t->expires = 0 reserved to indicate a canceled timer. */
+	mod_timer(t, jiffies + timeout ?: 1);
 }

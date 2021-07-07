@@ -229,7 +229,7 @@ static int create_other_event(struct kfd_process *p, struct kfd_event *ev)
 
 void kfd_event_init_process(struct kfd_process *p)
 {
-	rw_init(&p->event_mutex, "kfdev");
+	mutex_init(&p->event_mutex);
 	idr_init(&p->event_idr);
 	p->signal_page = NULL;
 	p->signal_event_count = 0;
@@ -460,7 +460,7 @@ static void set_event_from_interrupt(struct kfd_process *p,
 	}
 }
 
-void kfd_signal_event_interrupt(unsigned int pasid, uint32_t partial_id,
+void kfd_signal_event_interrupt(u32 pasid, uint32_t partial_id,
 				uint32_t valid_id_bits)
 {
 	struct kfd_event *ev = NULL;
@@ -872,7 +872,7 @@ static void lookup_events_by_type_and_signal(struct kfd_process *p,
 }
 
 #ifdef KFD_SUPPORT_IOMMU_V2
-void kfd_signal_iommu_event(struct kfd_dev *dev, unsigned int pasid,
+void kfd_signal_iommu_event(struct kfd_dev *dev, u32 pasid,
 		unsigned long address, bool is_write_requested,
 		bool is_execute_requested)
 {
@@ -901,7 +901,7 @@ void kfd_signal_iommu_event(struct kfd_dev *dev, unsigned int pasid,
 
 	memset(&memory_exception_data, 0, sizeof(memory_exception_data));
 
-	down_read(&mm->mmap_sem);
+	mmap_read_lock(mm);
 	vma = find_vma(mm, address);
 
 	memory_exception_data.gpu_id = dev->id;
@@ -924,7 +924,7 @@ void kfd_signal_iommu_event(struct kfd_dev *dev, unsigned int pasid,
 			memory_exception_data.failure.NoExecute = 0;
 	}
 
-	up_read(&mm->mmap_sem);
+	mmap_read_unlock(mm);
 	mmput(mm);
 
 	pr_debug("notpresent %d, noexecute %d, readonly %d\n",
@@ -950,7 +950,7 @@ void kfd_signal_iommu_event(struct kfd_dev *dev, unsigned int pasid,
 }
 #endif /* KFD_SUPPORT_IOMMU_V2 */
 
-void kfd_signal_hw_exception_event(unsigned int pasid)
+void kfd_signal_hw_exception_event(u32 pasid)
 {
 	/*
 	 * Because we are called from arbitrary context (workqueue) as opposed
@@ -971,7 +971,7 @@ void kfd_signal_hw_exception_event(unsigned int pasid)
 	kfd_unref_process(p);
 }
 
-void kfd_signal_vm_fault_event(struct kfd_dev *dev, unsigned int pasid,
+void kfd_signal_vm_fault_event(struct kfd_dev *dev, u32 pasid,
 				struct kfd_vm_fault_info *info)
 {
 	struct kfd_event *ev;
