@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.371 2021/05/12 08:09:33 mvs Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.372 2021/07/08 15:13:14 bluhm Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -66,9 +66,14 @@
 
 #ifdef IPSEC
 #ifdef ENCDEBUG
-#define DPRINTF(x)    do { if (encdebug) printf x ; } while (0)
+#define DPRINTF(fmt, args...)						\
+	do {								\
+		if (encdebug)						\
+			printf("%s: " fmt "\n", __func__, ## args);	\
+	} while (0)
 #else
-#define DPRINTF(x)
+#define DPRINTF(fmt, args...)						\
+	do { } while (0)
 #endif
 #endif /* IPSEC */
 
@@ -611,8 +616,8 @@ ip_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route *ro, int fwd)
 			    m->m_pkthdr.ph_rtableid, 1);
 			rt_mtucloned = 1;
 		}
-		DPRINTF(("%s: spi %08x mtu %d rt %p cloned %d\n", __func__,
-		    ntohl(tdb->tdb_spi), tdb->tdb_mtu, rt, rt_mtucloned));
+		DPRINTF("spi %08x mtu %d rt %p cloned %d",
+		    ntohl(tdb->tdb_spi), tdb->tdb_mtu, rt, rt_mtucloned);
 		if (rt != NULL) {
 			rt->rt_mtu = tdb->tdb_mtu;
 			if (ro != NULL && ro->ro_rt != NULL) {

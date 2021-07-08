@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.81 2021/07/07 18:03:46 bluhm Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.82 2021/07/08 15:13:14 bluhm Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -51,9 +51,14 @@
 #include <crypto/xform.h>
 
 #ifdef ENCDEBUG
-#define DPRINTF(x)	if (encdebug) printf x
+#define DPRINTF(fmt, args...)						\
+	do {								\
+		if (encdebug)						\
+			printf("%s: " fmt "\n", __func__, ## args);	\
+	} while (0)
 #else
-#define DPRINTF(x)
+#define DPRINTF(fmt, args...)						\
+	do { } while (0)
 #endif
 
 int	udpencap_enable = 1;	/* enabled by default */
@@ -89,24 +94,24 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 	if ((tdb->tdb_sproto == IPPROTO_ESP && !esp_enable) ||
 	    (tdb->tdb_sproto == IPPROTO_AH && !ah_enable) ||
 	    (tdb->tdb_sproto == IPPROTO_IPCOMP && !ipcomp_enable)) {
-		DPRINTF(("ipsp_process_packet(): IPsec outbound packet "
-		    "dropped due to policy (check your sysctls)\n"));
+		DPRINTF("IPsec outbound packet dropped due to policy "
+		    "(check your sysctls)");
 		error = EHOSTUNREACH;
 		goto drop;
 	}
 
 	/* Sanity check. */
 	if (!tdb->tdb_xform) {
-		DPRINTF(("%s: uninitialized TDB\n", __func__));
+		DPRINTF("uninitialized TDB");
 		error = EHOSTUNREACH;
 		goto drop;
 	}
 
 	/* Check if the SPI is invalid. */
 	if (tdb->tdb_flags & TDBF_INVALID) {
-		DPRINTF(("ipsp_process_packet(): attempt to use invalid "
-		    "SA %s/%08x/%u\n", ipsp_address(&tdb->tdb_dst, buf,
-		    sizeof(buf)), ntohl(tdb->tdb_spi), tdb->tdb_sproto));
+		DPRINTF("attempt to use invalid SA %s/%08x/%u",
+		    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
+		    ntohl(tdb->tdb_spi), tdb->tdb_sproto);
 		error = ENXIO;
 		goto drop;
 	}
@@ -122,11 +127,10 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 #endif /* INET6 */
 
 	default:
-		DPRINTF(("ipsp_process_packet(): attempt to use "
-		    "SA %s/%08x/%u for protocol family %d\n",
+		DPRINTF("attempt to use SA %s/%08x/%u for protocol family %d",
 		    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
 		    ntohl(tdb->tdb_spi), tdb->tdb_sproto,
-		    tdb->tdb_dst.sa.sa_family));
+		    tdb->tdb_dst.sa.sa_family);
 		error = ENXIO;
 		goto drop;
 	}
@@ -394,7 +398,7 @@ ipsec_output_cb(struct cryptop *crp)
 	KERNEL_ASSERT_LOCKED();
 
 	if (m == NULL) {
-		DPRINTF(("%s: bogus returned buffer from crypto\n", __func__));
+		DPRINTF("bogus returned buffer from crypto");
 		ipsecstat_inc(ipsec_crypto);
 		goto droponly;
 	}
@@ -402,7 +406,7 @@ ipsec_output_cb(struct cryptop *crp)
 	NET_LOCK();
 	tdb = gettdb(tc->tc_rdomain, tc->tc_spi, &tc->tc_dst, tc->tc_proto);
 	if (tdb == NULL) {
-		DPRINTF(("%s: TDB is expired while in crypto\n", __func__));
+		DPRINTF("TDB is expired while in crypto");
 		ipsecstat_inc(ipsec_notdb);
 		goto baddone;
 	}
@@ -417,7 +421,7 @@ ipsec_output_cb(struct cryptop *crp)
 			crypto_dispatch(crp);
 			return;
 		}
-		DPRINTF(("%s: crypto error %d\n", __func__, crp->crp_etype));
+		DPRINTF("crypto error %d", crp->crp_etype);
 		ipsecstat_inc(ipsec_noxform);
 		goto baddone;
 	}
@@ -498,8 +502,8 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 			break;
 #endif /* INET6 */
 		default:
-			DPRINTF(("ipsp_process_done(): unknown protocol family "
-			    "(%d)\n", tdb->tdb_dst.sa.sa_family));
+			DPRINTF("unknown protocol family (%d)",
+			    tdb->tdb_dst.sa.sa_family);
 			error = ENXIO;
 			goto drop;
 		}
@@ -552,8 +556,8 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 #endif /* INET6 */
 
 	default:
-		DPRINTF(("ipsp_process_done(): unknown protocol family (%d)\n",
-		    tdb->tdb_dst.sa.sa_family));
+		DPRINTF("unknown protocol family (%d)",
+		    tdb->tdb_dst.sa.sa_family);
 		error = ENXIO;
 		goto drop;
 	}
@@ -565,8 +569,7 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 	mtag = m_tag_get(PACKET_TAG_IPSEC_OUT_DONE, sizeof(struct tdb_ident),
 	    M_NOWAIT);
 	if (mtag == NULL) {
-		DPRINTF(("ipsp_process_done(): could not allocate packet "
-		    "tag\n"));
+		DPRINTF("could not allocate packet tag");
 		error = ENOMEM;
 		goto drop;
 	}
@@ -701,9 +704,7 @@ ipsec_adjust_mtu(struct mbuf *m, u_int32_t mtu)
 		mtu -= adjust;
 		tdbp->tdb_mtu = mtu;
 		tdbp->tdb_mtutimeout = gettime() + ip_mtudisc_timeout;
-		DPRINTF(("ipsec_adjust_mtu: "
-		    "spi %08x mtu %d adjust %ld mbuf %p\n",
-		    ntohl(tdbp->tdb_spi), tdbp->tdb_mtu,
-		    adjust, m));
+		DPRINTF("spi %08x mtu %d adjust %ld mbuf %p",
+		    ntohl(tdbp->tdb_spi), tdbp->tdb_mtu, adjust, m);
 	}
 }

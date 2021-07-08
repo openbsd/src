@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.91 2021/07/07 18:03:46 bluhm Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.92 2021/07/08 15:13:14 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -72,9 +72,14 @@
 #endif
 
 #ifdef ENCDEBUG
-#define DPRINTF(x)	if (encdebug) printf x
+#define DPRINTF(fmt, args...)						\
+	do {								\
+		if (encdebug)						\
+			printf("%s: " fmt "\n", __func__, ## args);	\
+	} while (0)
 #else
-#define DPRINTF(x)
+#define DPRINTF(fmt, args...)						\
+	do { } while (0)
 #endif
 
 /*
@@ -101,7 +106,7 @@ ipip_input(struct mbuf **mp, int *offp, int nxt, int af)
 
 	/* If we do not accept IP-in-IP explicitly, drop.  */
 	if (!ipip_allow && ((*mp)->m_flags & (M_AUTH|M_CONF)) == 0) {
-		DPRINTF(("%s: dropped due to policy\n", __func__));
+		DPRINTF("dropped due to policy");
 		ipipstat_inc(ipips_pdrops);
 		m_freemp(mp);
 		return IPPROTO_DONE;
@@ -159,7 +164,7 @@ ipip_input_if(struct mbuf **mp, int *offp, int proto, int oaf,
 	/* Bring the IP header in the first mbuf, if not there already */
 	if (m->m_len < hlen) {
 		if ((m = *mp = m_pullup(m, hlen)) == NULL) {
-			DPRINTF(("%s: m_pullup() failed\n", __func__));
+			DPRINTF("m_pullup() failed");
 			ipipstat_inc(ipips_hdrops);
 			goto bad;
 		}
@@ -214,7 +219,7 @@ ipip_input_if(struct mbuf **mp, int *offp, int proto, int oaf,
 	 */
 	if (m->m_len < hlen) {
 		if ((m = *mp = m_pullup(m, hlen)) == NULL) {
-			DPRINTF(("%s: m_pullup() failed\n", __func__));
+			DPRINTF("m_pullup() failed");
 			ipipstat_inc(ipips_hdrops);
 			goto bad;
 		}
@@ -240,7 +245,7 @@ ipip_input_if(struct mbuf **mp, int *offp, int proto, int oaf,
 		mode = m->m_flags & (M_AUTH|M_CONF) ?
 		    ECN_ALLOWED_IPSEC : ECN_ALLOWED;
 		if (!ip_ecn_egress(mode, &otos, &itos)) {
-			DPRINTF(("%s: ip_ecn_egress() failed\n", __func__));
+			DPRINTF("ip_ecn_egress() failed");
 			ipipstat_inc(ipips_pdrops);
 			goto bad;
 		}
@@ -254,7 +259,7 @@ ipip_input_if(struct mbuf **mp, int *offp, int proto, int oaf,
 		ip6 = mtod(m, struct ip6_hdr *);
 		itos = (ntohl(ip6->ip6_flow) >> 20) & 0xff;
 		if (!ip_ecn_egress(ECN_ALLOWED, &otos, &itos)) {
-			DPRINTF(("%s: ip_ecn_egress() failed\n", __func__));
+			DPRINTF("ip_ecn_egress() failed");
 			ipipstat_inc(ipips_pdrops);
 			goto bad;
 		}
@@ -350,10 +355,10 @@ ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int dummy,
 		    tdb->tdb_src.sin.sin_addr.s_addr == INADDR_ANY ||
 		    tdb->tdb_dst.sin.sin_addr.s_addr == INADDR_ANY) {
 
-			DPRINTF(("%s: unspecified tunnel endpoind "
-			    "address in SA %s/%08x\n", __func__,
+			DPRINTF("unspecified tunnel endpoind address "
+			    "in SA %s/%08x",
 			    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
-			    ntohl(tdb->tdb_spi)));
+			    ntohl(tdb->tdb_spi));
 
 			ipipstat_inc(ipips_unspec);
 			m_freem(m);
@@ -363,7 +368,7 @@ ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int dummy,
 
 		M_PREPEND(m, sizeof(struct ip), M_DONTWAIT);
 		if (m == NULL) {
-			DPRINTF(("%s: M_PREPEND failed\n", __func__));
+			DPRINTF("M_PREPEND failed");
 			ipipstat_inc(ipips_hdrops);
 			*mp = NULL;
 			return ENOBUFS;
@@ -436,10 +441,10 @@ ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int dummy,
 		    tdb->tdb_src.sa.sa_family != AF_INET6 ||
 		    IN6_IS_ADDR_UNSPECIFIED(&tdb->tdb_src.sin6.sin6_addr)) {
 
-			DPRINTF(("%s: unspecified tunnel endpoind "
-			    "address in SA %s/%08x\n", __func__,
+			DPRINTF("unspecified tunnel endpoind address "
+			    "in SA %s/%08x",
 			    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
-			    ntohl(tdb->tdb_spi)));
+			    ntohl(tdb->tdb_spi));
 
 			ipipstat_inc(ipips_unspec);
 			m_freem(m);
@@ -459,7 +464,7 @@ ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int dummy,
 
 		M_PREPEND(m, sizeof(struct ip6_hdr), M_DONTWAIT);
 		if (m == NULL) {
-			DPRINTF(("%s: M_PREPEND failed\n", __func__));
+			DPRINTF("M_PREPEND failed");
 			ipipstat_inc(ipips_hdrops);
 			*mp = NULL;
 			return ENOBUFS;
@@ -509,8 +514,8 @@ ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int dummy,
 #endif /* INET6 */
 
 	default:
-		DPRINTF(("%s: unsupported protocol family %d\n", __func__,
-		    tdb->tdb_dst.sa.sa_family));
+		DPRINTF("unsupported protocol family %d",
+		    tdb->tdb_dst.sa.sa_family);
 		m_freem(m);
 		*mp = NULL;
 		ipipstat_inc(ipips_family);
@@ -565,7 +570,7 @@ int
 ipe4_input(struct mbuf *m, struct tdb *tdb, int hlen, int proto)
 {
 	/* This is a rather serious mistake, so no conditional printing. */
-	printf("ipe4_input(): should never be called\n");
+	printf("%s: should never be called\n", __func__);
 	m_freem(m);
 	return EINVAL;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.238 2021/03/10 10:21:49 jsg Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.239 2021/07/08 15:13:14 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -74,9 +74,14 @@ void tdb_hashstats(void);
 #endif
 
 #ifdef ENCDEBUG
-#define	DPRINTF(x)	if (encdebug) printf x
+#define DPRINTF(fmt, args...)						\
+	do {								\
+		if (encdebug)						\
+			printf("%s: " fmt "\n", __func__, ## args);	\
+	} while (0)
 #else
-#define	DPRINTF(x)
+#define DPRINTF(fmt, args...)						\
+	do { } while (0)
 #endif
 
 void		tdb_rehash(void);
@@ -910,9 +915,10 @@ tdb_init(struct tdb *tdbp, u_int16_t alg, struct ipsecinit *ii)
 		}
 	}
 
-	DPRINTF(("%s: no alg %d for spi %08x, addr %s, proto %d\n", __func__,
-	    alg, ntohl(tdbp->tdb_spi), ipsp_address(&tdbp->tdb_dst, buf,
-	    sizeof(buf)), tdbp->tdb_sproto));
+	DPRINTF("no alg %d for spi %08x, addr %s, proto %d",
+	    alg, ntohl(tdbp->tdb_spi),
+	    ipsp_address(&tdbp->tdb_dst, buf, sizeof(buf)),
+	    tdbp->tdb_sproto);
 
 	return EINVAL;
 }
@@ -983,8 +989,8 @@ ipsp_ids_insert(struct ipsec_ids *ids)
 		/* if refcount was zero, then timeout is running */
 		if (found->id_refcount++ == 0)
 			timeout_del(&found->id_timeout);
-		DPRINTF(("%s: ids %p count %d\n", __func__,
-		    found, found->id_refcount));
+		DPRINTF("ids %p count %d",
+		    found, found->id_refcount);
 		return found;
 	}
 	ids->id_flow = start_flow = ipsec_ids_next_flow;
@@ -995,13 +1001,13 @@ ipsp_ids_insert(struct ipsec_ids *ids)
 		if (++ipsec_ids_next_flow == 0)
 			ipsec_ids_next_flow = 1;
 		if (ipsec_ids_next_flow == start_flow) {
-			DPRINTF(("ipsec_ids_next_flow exhausted %u\n",
-			    ipsec_ids_next_flow));
+			DPRINTF("psec_ids_next_flow exhausted %u",
+			    ipsec_ids_next_flow);
 			return NULL;
 		}
 	}
 	ids->id_refcount = 1;
-	DPRINTF(("%s: new ids %p flow %u\n", __func__, ids, ids->id_flow));
+	DPRINTF("new ids %p flow %u", ids, ids->id_flow);
 	timeout_set_proc(&ids->id_timeout, ipsp_ids_timeout, ids);
 	return ids;
 }
@@ -1023,7 +1029,7 @@ ipsp_ids_timeout(void *arg)
 {
 	struct ipsec_ids *ids = arg;
 
-	DPRINTF(("%s: ids %p count %d\n", __func__, ids, ids->id_refcount));
+	DPRINTF("ids %p count %d", ids, ids->id_refcount);
 	KASSERT(ids->id_refcount == 0);
 
 	NET_LOCK();
@@ -1043,7 +1049,7 @@ ipsp_ids_free(struct ipsec_ids *ids)
 	 * If the refcount becomes zero, then a timeout is started. This
 	 * timeout must be cancelled if refcount is increased from zero.
 	 */
-	DPRINTF(("%s: ids %p count %d\n", __func__, ids, ids->id_refcount));
+	DPRINTF("ids %p count %d", ids, ids->id_refcount);
 	KASSERT(ids->id_refcount > 0);
 	if (--ids->id_refcount == 0)
 		timeout_add_sec(&ids->id_timeout, ipsec_ids_idle);
