@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.h,v 1.30 2018/04/09 04:34:56 visa Exp $	*/
+/*	$OpenBSD: xform.h,v 1.31 2021/07/08 09:22:30 bluhm Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -84,29 +84,29 @@ union authctx {
 	AES_GMAC_CTX aes_gmac_ctx;
 };
 
-extern struct enc_xform enc_xform_3des;
-extern struct enc_xform enc_xform_blf;
-extern struct enc_xform enc_xform_cast5;
-extern struct enc_xform enc_xform_aes;
-extern struct enc_xform enc_xform_aes_ctr;
-extern struct enc_xform enc_xform_aes_gcm;
-extern struct enc_xform enc_xform_aes_gmac;
-extern struct enc_xform enc_xform_aes_xts;
-extern struct enc_xform enc_xform_chacha20_poly1305;
-extern struct enc_xform enc_xform_null;
+extern const struct enc_xform enc_xform_3des;
+extern const struct enc_xform enc_xform_blf;
+extern const struct enc_xform enc_xform_cast5;
+extern const struct enc_xform enc_xform_aes;
+extern const struct enc_xform enc_xform_aes_ctr;
+extern const struct enc_xform enc_xform_aes_gcm;
+extern const struct enc_xform enc_xform_aes_gmac;
+extern const struct enc_xform enc_xform_aes_xts;
+extern const struct enc_xform enc_xform_chacha20_poly1305;
+extern const struct enc_xform enc_xform_null;
 
-extern struct auth_hash auth_hash_hmac_md5_96;
-extern struct auth_hash auth_hash_hmac_sha1_96;
-extern struct auth_hash auth_hash_hmac_ripemd_160_96;
-extern struct auth_hash auth_hash_hmac_sha2_256_128;
-extern struct auth_hash auth_hash_hmac_sha2_384_192;
-extern struct auth_hash auth_hash_hmac_sha2_512_256;
-extern struct auth_hash auth_hash_gmac_aes_128;
-extern struct auth_hash auth_hash_gmac_aes_192;
-extern struct auth_hash auth_hash_gmac_aes_256;
-extern struct auth_hash auth_hash_chacha20_poly1305;
+extern const struct auth_hash auth_hash_hmac_md5_96;
+extern const struct auth_hash auth_hash_hmac_sha1_96;
+extern const struct auth_hash auth_hash_hmac_ripemd_160_96;
+extern const struct auth_hash auth_hash_hmac_sha2_256_128;
+extern const struct auth_hash auth_hash_hmac_sha2_384_192;
+extern const struct auth_hash auth_hash_hmac_sha2_512_256;
+extern const struct auth_hash auth_hash_gmac_aes_128;
+extern const struct auth_hash auth_hash_gmac_aes_192;
+extern const struct auth_hash auth_hash_gmac_aes_256;
+extern const struct auth_hash auth_hash_chacha20_poly1305;
 
-extern struct comp_algo comp_algo_deflate;
-extern struct comp_algo comp_algo_lzs;
+extern const struct comp_algo comp_algo_deflate;
+extern const struct comp_algo comp_algo_lzs;
 
 #endif /* _CRYPTO_XFORM_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcrypto.c,v 1.4 2021/02/25 02:48:19 dlg Exp $	*/
+/*	$OpenBSD: octcrypto.c,v 1.5 2021/07/08 09:22:30 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2018 Visa Hankala
@@ -299,7 +299,7 @@ octcrypto_get(struct octcrypto_softc *sc, uint32_t sid)
 void
 octcrypto_free(struct octcrypto_session *ses)
 {
-	struct auth_hash *axf;
+	const struct auth_hash *axf;
 	struct swcr_data *swd;
 
 	if (ses->ses_swd != NULL) {
@@ -333,7 +333,7 @@ int
 octcrypto_newsession(uint32_t *sidp, struct cryptoini *cri)
 {
 	uint64_t block[ndwords(HMAC_MAX_BLOCK_LEN)];
-	struct auth_hash *axf;
+	const struct auth_hash *axf;
 	struct cryptoini *c;
 	const struct octcrypto_hmac *hmac = NULL;
 	struct octcrypto_softc *sc = octcrypto_sc;

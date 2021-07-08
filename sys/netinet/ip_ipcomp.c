@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.68 2021/06/18 15:34:21 bluhm Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.69 2021/07/08 09:22:30 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -77,7 +77,7 @@ ipcomp_attach(void)
 int
 ipcomp_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 {
-	struct comp_algo *tcomp = NULL;
+	const struct comp_algo *tcomp = NULL;
 	struct cryptoini cric;
 	int error;
 
@@ -133,7 +133,7 @@ ipcomp_zeroize(struct tdb *tdbp)
 int
 ipcomp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 {
-	struct comp_algo *ipcompx = (struct comp_algo *) tdb->tdb_compalgxform;
+	const struct comp_algo *ipcompx = tdb->tdb_compalgxform;
 	struct tdb_crypto *tc;
 	int hlen, error;
 
@@ -321,7 +321,7 @@ int
 ipcomp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
     int protoff)
 {
-	struct comp_algo *ipcompx = (struct comp_algo *) tdb->tdb_compalgxform;
+	const struct comp_algo *ipcompx = tdb->tdb_compalgxform;
 	int error, hlen;
 	struct cryptodesc *crdc = NULL;
 	struct cryptop *crp = NULL;

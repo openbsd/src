@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.33 2020/05/29 04:42:23 deraadt Exp $	*/
+/*	$OpenBSD: via.c,v 1.34 2021/07/08 09:22:30 bluhm Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -114,7 +114,7 @@ viac3_crypto_newsession(u_int32_t *sidp, struct cryptoini *cri)
 	struct cryptoini	*c;
 	struct viac3_softc	*sc = vc3_sc;
 	struct viac3_session	*ses = NULL;
-	struct auth_hash	*axf;
+	const struct auth_hash	*axf;
 	struct swcr_data	*swd;
 	int			 sesn, i, cw0;
 
@@ -271,7 +271,7 @@ viac3_crypto_freesession(u_int64_t tid)
 {
 	struct viac3_softc *sc = vc3_sc;
 	struct swcr_data *swd;
-	struct auth_hash *axf;
+	const struct auth_hash *axf;
 	int sesn;
 	u_int32_t sid = ((u_int32_t)tid) & 0xffffffff;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.147 2021/06/18 15:34:21 bluhm Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.148 2021/07/08 09:22:30 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -96,7 +96,7 @@ ah_attach(void)
 int
 ah_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 {
-	struct auth_hash *thash = NULL;
+	const struct auth_hash *thash = NULL;
 	struct cryptoini cria, crin;
 	int error;
 
@@ -529,7 +529,7 @@ error6:
 int
 ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 {
-	struct auth_hash *ahx = (struct auth_hash *) tdb->tdb_authalgxform;
+	const struct auth_hash *ahx = tdb->tdb_authalgxform;
 	struct tdb_crypto *tc = NULL;
 	u_int32_t btsx, esn;
 	u_int8_t hl;
@@ -717,7 +717,7 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 int
 ah_input_cb(struct tdb *tdb, struct tdb_crypto *tc, struct mbuf *m, int clen)
 {
-	struct auth_hash *ahx = (struct auth_hash *) tdb->tdb_authalgxform;
+	const struct auth_hash *ahx = tdb->tdb_authalgxform;
 	int roff, rplen, skip, protoff;
 	u_int32_t btsx, esn;
 	caddr_t ptr;
@@ -892,7 +892,7 @@ int
 ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
     int protoff)
 {
-	struct auth_hash *ahx = (struct auth_hash *) tdb->tdb_authalgxform;
+	const struct auth_hash *ahx = tdb->tdb_authalgxform;
 	struct cryptodesc *crda;
 	struct tdb_crypto *tc = NULL;
 	struct mbuf *mi;

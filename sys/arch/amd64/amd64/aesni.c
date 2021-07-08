@@ -1,4 +1,4 @@
-/*	$OpenBSD: aesni.c,v 1.49 2019/03/16 16:33:59 visa Exp $	*/
+/*	$OpenBSD: aesni.c,v 1.50 2021/07/08 09:22:30 bluhm Exp $	*/
 /*-
  * Copyright (c) 2003 Jason Wright
  * Copyright (c) 2003, 2004 Theo de Raadt
@@ -178,7 +178,7 @@ aesni_newsession(u_int32_t *sidp, struct cryptoini *cri)
 	struct aesni_session *ses = NULL;
 	struct aesni_aes_ctx *aes1, *aes2;
 	struct cryptoini *c;
-	struct auth_hash *axf;
+	const struct auth_hash *axf;
 	struct swcr_data *swd;
 	int i;
 
@@ -363,7 +363,7 @@ void
 aesni_free(struct aesni_session *ses)
 {
 	struct swcr_data *swd;
-	struct auth_hash *axf;
+	const struct auth_hash *axf;
 
 	if (ses->ses_ghash) {
 		explicit_bzero(ses->ses_ghash, sizeof(GHASH_CTX));

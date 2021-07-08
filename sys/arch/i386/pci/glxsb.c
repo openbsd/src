@@ -1,4 +1,4 @@
-/*	$OpenBSD: glxsb.c,v 1.36 2020/05/29 04:42:24 deraadt Exp $	*/
+/*	$OpenBSD: glxsb.c,v 1.37 2021/07/08 09:22:30 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2006 Tom Cosgrove <tom@openbsd.org>
@@ -357,8 +357,8 @@ glxsb_crypto_newsession(uint32_t *sidp, struct cryptoini *cri)
 {
 	struct glxsb_softc *sc = glxsb_sc;
 	struct glxsb_session *ses = NULL;
-	struct auth_hash	*axf;
-	struct enc_xform	*txf;
+	const struct auth_hash	*axf;
+	const struct enc_xform	*txf;
 	struct cryptoini	*c;
 	struct swcr_data	*swd;
 	int sesn, i;
@@ -509,8 +509,8 @@ glxsb_crypto_freesession(uint64_t tid)
 {
 	struct glxsb_softc *sc = glxsb_sc;
 	struct swcr_data *swd;
-	struct auth_hash *axf;
-	struct enc_xform *txf;
+	const struct auth_hash *axf;
+	const struct enc_xform *txf;
 	int sesn;
 	uint32_t sid = ((uint32_t)tid) & 0xffffffff;
 

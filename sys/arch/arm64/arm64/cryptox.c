@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptox.c,v 1.1 2021/02/21 14:55:17 tobhe Exp $	*/
+/*	$OpenBSD: cryptox.c,v 1.2 2021/07/08 09:22:30 bluhm Exp $	*/
 /*
  * Copyright (c) 2003 Jason Wright
  * Copyright (c) 2003, 2004 Theo de Raadt
@@ -143,7 +143,7 @@ cryptox_newsession(u_int32_t *sidp, struct cryptoini *cri)
 {
 	struct cryptox_session *ses = NULL;
 	struct cryptoini *c;
-	struct auth_hash *axf;
+	const struct auth_hash *axf;
 	struct swcr_data *swd;
 	int i;
 
@@ -280,7 +280,7 @@ void
 cryptox_free(struct cryptox_session *ses)
 {
 	struct swcr_data *swd;
-	struct auth_hash *axf;
+	const struct auth_hash *axf;
 
 	if (ses->ses_swd) {
 		swd = ses->ses_swd;

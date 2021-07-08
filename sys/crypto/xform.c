@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.c,v 1.59 2018/04/09 04:34:56 visa Exp $	*/
+/*	$OpenBSD: xform.c,v 1.60 2021/07/08 09:22:30 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -123,7 +123,7 @@ struct aes_xts_ctx {
 void aes_xts_crypt(struct aes_xts_ctx *, u_int8_t *, u_int);
 
 /* Encryption instances */
-struct enc_xform enc_xform_3des = {
+const struct enc_xform enc_xform_3des = {
 	CRYPTO_3DES_CBC, "3DES",
 	8, 8, 24, 24, 384,
 	des3_encrypt,
@@ -132,7 +132,7 @@ struct enc_xform enc_xform_3des = {
 	NULL
 };
 
-struct enc_xform enc_xform_blf = {
+const struct enc_xform enc_xform_blf = {
 	CRYPTO_BLF_CBC, "Blowfish",
 	8, 8, 5, 56 /* 448 bits, max key */,
 	sizeof(blf_ctx),
@@ -142,7 +142,7 @@ struct enc_xform enc_xform_blf = {
 	NULL
 };
 
-struct enc_xform enc_xform_cast5 = {
+const struct enc_xform enc_xform_cast5 = {
 	CRYPTO_CAST_CBC, "CAST-128",
 	8, 8, 5, 16,
 	sizeof(cast_key),
@@ -152,7 +152,7 @@ struct enc_xform enc_xform_cast5 = {
 	NULL
 };
 
-struct enc_xform enc_xform_aes = {
+const struct enc_xform enc_xform_aes = {
 	CRYPTO_AES_CBC, "AES",
 	16, 16, 16, 32,
 	sizeof(AES_CTX),
@@ -162,7 +162,7 @@ struct enc_xform enc_xform_aes = {
 	NULL
 };
 
-struct enc_xform enc_xform_aes_ctr = {
+const struct enc_xform enc_xform_aes_ctr = {
 	CRYPTO_AES_CTR, "AES-CTR",
 	16, 8, 16+4, 32+4,
 	sizeof(struct aes_ctr_ctx),
@@ -172,7 +172,7 @@ struct enc_xform enc_xform_aes_ctr = {
 	aes_ctr_reinit
 };
 
-struct enc_xform enc_xform_aes_gcm = {
+const struct enc_xform enc_xform_aes_gcm = {
 	CRYPTO_AES_GCM_16, "AES-GCM",
 	1, 8, 16+4, 32+4,
 	sizeof(struct aes_ctr_ctx),
@@ -182,7 +182,7 @@ struct enc_xform enc_xform_aes_gcm = {
 	aes_gcm_reinit
 };
 
-struct enc_xform enc_xform_aes_gmac = {
+const struct enc_xform enc_xform_aes_gmac = {
 	CRYPTO_AES_GMAC, "AES-GMAC",
 	1, 8, 16+4, 32+4, 0,
 	NULL,
@@ -191,7 +191,7 @@ struct enc_xform enc_xform_aes_gmac = {
 	NULL
 };
 
-struct enc_xform enc_xform_aes_xts = {
+const struct enc_xform enc_xform_aes_xts = {
 	CRYPTO_AES_XTS, "AES-XTS",
 	16, 8, 32, 64,
 	sizeof(struct aes_xts_ctx),
@@ -201,7 +201,7 @@ struct enc_xform enc_xform_aes_xts = {
 	aes_xts_reinit
 };
 
-struct enc_xform enc_xform_chacha20_poly1305 = {
+const struct enc_xform enc_xform_chacha20_poly1305 = {
 	CRYPTO_CHACHA20_POLY1305, "CHACHA20-POLY1305",
 	1, 8, 32+4, 32+4,
 	sizeof(struct chacha20_ctx),
@@ -211,7 +211,7 @@ struct enc_xform enc_xform_chacha20_poly1305 = {
 	chacha20_reinit
 };
 
-struct enc_xform enc_xform_null = {
+const struct enc_xform enc_xform_null = {
 	CRYPTO_NULL, "NULL",
 	4, 0, 0, 256, 0,
 	null_encrypt,
@@ -221,7 +221,7 @@ struct enc_xform enc_xform_null = {
 };
 
 /* Authentication instances */
-struct auth_hash auth_hash_hmac_md5_96 = {
+const struct auth_hash auth_hash_hmac_md5_96 = {
 	CRYPTO_MD5_HMAC, "HMAC-MD5",
 	16, 16, 12, sizeof(MD5_CTX), HMAC_MD5_BLOCK_LEN,
 	(void (*) (void *)) MD5Init, NULL, NULL,
@@ -229,7 +229,7 @@ struct auth_hash auth_hash_hmac_md5_96 = {
 	(void (*) (u_int8_t *, void *)) MD5Final
 };
 
-struct auth_hash auth_hash_hmac_sha1_96 = {
+const struct auth_hash auth_hash_hmac_sha1_96 = {
 	CRYPTO_SHA1_HMAC, "HMAC-SHA1",
 	20, 20, 12, sizeof(SHA1_CTX), HMAC_SHA1_BLOCK_LEN,
 	(void (*) (void *)) SHA1Init, NULL, NULL,
@@ -237,7 +237,7 @@ struct auth_hash auth_hash_hmac_sha1_96 = {
 	(void (*) (u_int8_t *, void *)) SHA1Final
 };
 
-struct auth_hash auth_hash_hmac_ripemd_160_96 = {
+const struct auth_hash auth_hash_hmac_ripemd_160_96 = {
 	CRYPTO_RIPEMD160_HMAC, "HMAC-RIPEMD-160",
 	20, 20, 12, sizeof(RMD160_CTX), HMAC_RIPEMD160_BLOCK_LEN,
 	(void (*)(void *)) RMD160Init, NULL, NULL,
@@ -245,7 +245,7 @@ struct auth_hash auth_hash_hmac_ripemd_160_96 = {
 	(void (*)(u_int8_t *, void *)) RMD160Final
 };
 
-struct auth_hash auth_hash_hmac_sha2_256_128 = {
+const struct auth_hash auth_hash_hmac_sha2_256_128 = {
 	CRYPTO_SHA2_256_HMAC, "HMAC-SHA2-256",
 	32, 32, 16, sizeof(SHA2_CTX), HMAC_SHA2_256_BLOCK_LEN,
 	(void (*)(void *)) SHA256Init, NULL, NULL,
@@ -253,7 +253,7 @@ struct auth_hash auth_hash_hmac_sha2_256_128 = {
 	(void (*)(u_int8_t *, void *)) SHA256Final
 };
 
-struct auth_hash auth_hash_hmac_sha2_384_192 = {
+const struct auth_hash auth_hash_hmac_sha2_384_192 = {
 	CRYPTO_SHA2_384_HMAC, "HMAC-SHA2-384",
 	48, 48, 24, sizeof(SHA2_CTX), HMAC_SHA2_384_BLOCK_LEN,
 	(void (*)(void *)) SHA384Init, NULL, NULL,
@@ -261,7 +261,7 @@ struct auth_hash auth_hash_hmac_sha2_384_192 = {
 	(void (*)(u_int8_t *, void *)) SHA384Final
 };
 
-struct auth_hash auth_hash_hmac_sha2_512_256 = {
+const struct auth_hash auth_hash_hmac_sha2_512_256 = {
 	CRYPTO_SHA2_512_HMAC, "HMAC-SHA2-512",
 	64, 64, 32, sizeof(SHA2_CTX), HMAC_SHA2_512_BLOCK_LEN,
 	(void (*)(void *)) SHA512Init, NULL, NULL,
@@ -269,28 +269,28 @@ struct auth_hash auth_hash_hmac_sha2_512_256 = {
 	(void (*)(u_int8_t *, void *)) SHA512Final
 };
 
-struct auth_hash auth_hash_gmac_aes_128 = {
+const struct auth_hash auth_hash_gmac_aes_128 = {
 	CRYPTO_AES_128_GMAC, "GMAC-AES-128",
 	16+4, GMAC_BLOCK_LEN, GMAC_DIGEST_LEN, sizeof(AES_GMAC_CTX),
 	AESCTR_BLOCKSIZE, AES_GMAC_Init, AES_GMAC_Setkey, AES_GMAC_Reinit,
 	AES_GMAC_Update, AES_GMAC_Final
 };
 
-struct auth_hash auth_hash_gmac_aes_192 = {
+const struct auth_hash auth_hash_gmac_aes_192 = {
 	CRYPTO_AES_192_GMAC, "GMAC-AES-192",
 	24+4, GMAC_BLOCK_LEN, GMAC_DIGEST_LEN, sizeof(AES_GMAC_CTX),
 	AESCTR_BLOCKSIZE, AES_GMAC_Init, AES_GMAC_Setkey, AES_GMAC_Reinit,
 	AES_GMAC_Update, AES_GMAC_Final
 };
 
-struct auth_hash auth_hash_gmac_aes_256 = {
+const struct auth_hash auth_hash_gmac_aes_256 = {
 	CRYPTO_AES_256_GMAC, "GMAC-AES-256",
 	32+4, GMAC_BLOCK_LEN, GMAC_DIGEST_LEN, sizeof(AES_GMAC_CTX),
 	AESCTR_BLOCKSIZE, AES_GMAC_Init, AES_GMAC_Setkey, AES_GMAC_Reinit,
 	AES_GMAC_Update, AES_GMAC_Final
 };
 
-struct auth_hash auth_hash_chacha20_poly1305 = {
+const struct auth_hash auth_hash_chacha20_poly1305 = {
 	CRYPTO_CHACHA20_POLY1305_MAC, "CHACHA20-POLY1305",
 	CHACHA20_KEYSIZE+CHACHA20_SALT, POLY1305_BLOCK_LEN, POLY1305_TAGLEN,
 	sizeof(CHACHA20_POLY1305_CTX), CHACHA20_BLOCK_LEN,
@@ -300,13 +300,13 @@ struct auth_hash auth_hash_chacha20_poly1305 = {
 };
 
 /* Compression instance */
-struct comp_algo comp_algo_deflate = {
+const struct comp_algo comp_algo_deflate = {
 	CRYPTO_DEFLATE_COMP, "Deflate",
 	90, deflate_compress,
 	deflate_decompress
 };
 
-struct comp_algo comp_algo_lzs = {
+const struct comp_algo comp_algo_lzs = {
 	CRYPTO_LZS_COMP, "LZS",
 	90, lzs_dummy,
 	lzs_dummy

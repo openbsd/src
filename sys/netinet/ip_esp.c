@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.164 2021/07/07 18:03:46 bluhm Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.165 2021/07/08 09:22:30 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -90,8 +90,8 @@ esp_attach(void)
 int
 esp_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 {
-	struct enc_xform *txform = NULL;
-	struct auth_hash *thash = NULL;
+	const struct enc_xform *txform = NULL;
+	const struct auth_hash *thash = NULL;
 	struct cryptoini cria, crie, crin;
 	int error;
 
@@ -337,8 +337,8 @@ esp_zeroize(struct tdb *tdbp)
 int
 esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 {
-	struct auth_hash *esph = (struct auth_hash *) tdb->tdb_authalgxform;
-	struct enc_xform *espx = (struct enc_xform *) tdb->tdb_encalgxform;
+	const struct auth_hash *esph = tdb->tdb_authalgxform;
+	const struct enc_xform *espx = tdb->tdb_encalgxform;
 	struct cryptodesc *crde = NULL, *crda = NULL;
 	struct cryptop *crp = NULL;
 	struct tdb_crypto *tc = NULL;
@@ -546,7 +546,7 @@ esp_input_cb(struct tdb *tdb, struct tdb_crypto *tc, struct mbuf *m, int clen)
 	u_int8_t lastthree[3], aalg[AH_HMAC_MAX_HASHLEN];
 	int hlen, roff, skip, protoff;
 	struct mbuf *m1, *mo;
-	struct auth_hash *esph;
+	const struct auth_hash *esph;
 	u_int32_t btsx, esn;
 	caddr_t ptr;
 #ifdef ENCDEBUG
@@ -558,7 +558,7 @@ esp_input_cb(struct tdb *tdb, struct tdb_crypto *tc, struct mbuf *m, int clen)
 
 	NET_ASSERT_LOCKED();
 
-	esph = (struct auth_hash *) tdb->tdb_authalgxform;
+	esph = tdb->tdb_authalgxform;
 
 	/* If authentication was performed, check now. */
 	if (esph != NULL) {
@@ -743,8 +743,8 @@ int
 esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
     int protoff)
 {
-	struct enc_xform *espx = (struct enc_xform *) tdb->tdb_encalgxform;
-	struct auth_hash *esph = (struct auth_hash *) tdb->tdb_authalgxform;
+	const struct enc_xform *espx = tdb->tdb_encalgxform;
+	const struct auth_hash *esph = tdb->tdb_authalgxform;
 	int ilen, hlen, rlen, padding, blks, alen, roff, error;
 	u_int64_t replay64;
 	u_int32_t replay;

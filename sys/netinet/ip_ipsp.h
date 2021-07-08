@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.198 2021/07/07 18:03:46 bluhm Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.199 2021/07/08 09:22:30 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -321,9 +321,9 @@ struct tdb {				/* tunnel descriptor block */
 	struct tdb	*tdb_onext;
 
 	struct xformsw		*tdb_xform;		/* Transform to use */
-	struct enc_xform	*tdb_encalgxform;	/* Enc algorithm */
-	struct auth_hash	*tdb_authalgxform;	/* Auth algorithm */
-	struct comp_algo	*tdb_compalgxform;	/* Compression algo */
+	const struct enc_xform	*tdb_encalgxform;	/* Enc algorithm */
+	const struct auth_hash	*tdb_authalgxform;	/* Auth algorithm */
+	const struct comp_algo	*tdb_compalgxform;	/* Compression algo */
 
 #define	TDBF_UNIQUE		0x00001	/* This should not be used by others */
 #define	TDBF_TIMER		0x00002	/* Absolute expiration timer in use */
@@ -517,17 +517,6 @@ extern int ipsec_exp_first_use;		/* seconds between 1st asso & expire */
 extern char ipsec_def_enc[];
 extern char ipsec_def_auth[];
 extern char ipsec_def_comp[];
-
-extern struct enc_xform enc_xform_des;
-extern struct enc_xform enc_xform_3des;
-extern struct enc_xform enc_xform_blf;
-extern struct enc_xform enc_xform_cast5;
-
-extern struct auth_hash auth_hash_hmac_md5_96;
-extern struct auth_hash auth_hash_hmac_sha1_96;
-extern struct auth_hash auth_hash_hmac_ripemd_160_96;
-
-extern struct comp_algo comp_algo_deflate;
 
 extern TAILQ_HEAD(ipsec_policy_head, ipsec_policy) ipsec_policy_head;
 
