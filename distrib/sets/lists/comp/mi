@@ -2160,6 +2160,7 @@
 ./usr/share/man/man3/X509_STORE_set1_param.3
 ./usr/share/man/man3/X509_STORE_set_verify_cb_func.3
 ./usr/share/man/man3/X509_VERIFY_PARAM_set_flags.3
+./usr/share/man/man3/X509_add1_trust_object.3
 ./usr/share/man/man3/X509_check_ca.3
 ./usr/share/man/man3/X509_check_host.3
 ./usr/share/man/man3/X509_check_issued.3
