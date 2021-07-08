@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.100 2021/06/02 19:11:02 patrick Exp $ */
+/*	$OpenBSD: nvme.c,v 1.101 2021/07/08 22:43:59 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -1503,7 +1503,6 @@ nvme_hibernate_admin_cmd(struct nvme_softc *sc, struct nvme_sqe *sqe,
 	bus_dmamap_sync(sc->sc_dmat, NVME_DMA_MAP(q->q_sq_dmamem),
 	    sizeof(*sqe) * tail, sizeof(*sqe), BUS_DMASYNC_PREWRITE);
 
-	nvme_write4(sc, q->q_sqtdbl, tail);
 	sc->sc_ops->op_sq_leave_locked(sc, q, /* XXX ccb */ NULL);
 
 	/* wait for completion */
