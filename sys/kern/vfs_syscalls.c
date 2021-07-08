@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.350 2021/07/03 17:51:59 semarie Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.351 2021/07/08 13:33:05 claudio Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1007,7 +1007,7 @@ sys_unveil(struct proc *p, void *v, register_t *retval)
 
 	nd.ni_pledge = PLEDGE_UNVEIL;
 	if ((error = namei(&nd)) != 0)
-		goto ndfree;
+		goto end;
 
 	/*
 	 * XXX Any access to the file or directory will allow us to
@@ -1040,8 +1040,6 @@ sys_unveil(struct proc *p, void *v, register_t *retval)
 		vrele(nd.ni_dvp);
 
 	pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
-ndfree:
-	unveil_free_traversed_vnodes(&nd);
 end:
 	pool_put(&namei_pool, pathname);
 

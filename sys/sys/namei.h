@@ -1,4 +1,4 @@
-/*	$OpenBSD: namei.h,v 1.45 2020/03/19 13:55:20 anton Exp $	*/
+/*	$OpenBSD: namei.h,v 1.46 2021/07/08 13:33:05 claudio Exp $	*/
 /*	$NetBSD: namei.h,v 1.11 1996/02/09 18:25:20 christos Exp $	*/
 
 /*
@@ -75,9 +75,6 @@ struct nameidata {
 	char	*ni_next;		/* next location in pathname */
 	u_long	ni_loopcnt;		/* count of symlinks encountered */
 	struct unveil *ni_unveil_match; /* last matching unveil component */
-	struct vnode **ni_tvp;		/* traversed vnodes */
-	size_t ni_tvpend;		/* end of traversed vnode list */
-	size_t ni_tvpsize;		/* size of traversed vnode list */
 	int ni_unveil_eacces;		/* indicates unveil flag mismatch */
 
 	/*
@@ -208,7 +205,6 @@ void cache_purgevfs(struct mount *);
 
 int unveil_add(struct proc *, struct nameidata *, const char *);
 void unveil_removevnode(struct vnode *);
-void unveil_free_traversed_vnodes(struct nameidata *);
 ssize_t unveil_find_cover(struct vnode *, struct proc *);
 struct unveil *unveil_lookup(struct vnode *, struct process *, ssize_t *);
 void unveil_start_relative(struct proc *, struct nameidata *, struct vnode *);

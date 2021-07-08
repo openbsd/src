@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_unveil.c,v 1.45 2021/06/29 07:55:29 claudio Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.46 2021/07/08 13:33:05 claudio Exp $	*/
 
 /*
  * Copyright (c) 2017-2019 Bob Beck <beck@openbsd.org>
@@ -78,35 +78,6 @@ unvname_new(const char *name, size_t size, u_char flags)
 	ret->un_namesize = size;
 	ret->un_flags = flags;
 	return ret;
-}
-
-void
-unveil_free_traversed_vnodes(struct nameidata *ndp)
-{
-	if (ndp->ni_tvpsize) {
-		size_t i;
-
-		for (i = 0; i < ndp->ni_tvpend; i++)
-			vrele(ndp->ni_tvp[i]); /* ref for being in list */
-		free(ndp->ni_tvp, M_PROC, ndp->ni_tvpsize *
-		    sizeof(struct vnode *));
-		ndp->ni_tvpsize = 0;
-		ndp->ni_tvpend = 0;
-	}
-}
-
-void
-unveil_save_traversed_vnode(struct nameidata *ndp, struct vnode *vp)
-{
-	if (ndp->ni_tvpsize == 0) {
-		ndp->ni_tvp = mallocarray(MAXPATHLEN, sizeof(struct vnode *),
-		    M_PROC, M_WAITOK);
-		ndp->ni_tvpsize = MAXPATHLEN;
-	}
-	/* This should be limited by MAXPATHLEN on a single lookup */
-	KASSERT(ndp->ni_tvpsize > ndp->ni_tvpend);
-	vref(vp); /* ref for being in the list */
-	ndp->ni_tvp[ndp->ni_tvpend++] = vp;
 }
 
 void
@@ -455,23 +426,6 @@ unveil_add_vnode(struct proc *p, struct vnode *vp)
 	return (uv);
 }
 
-void
-unveil_add_traversed_vnodes(struct proc *p, struct nameidata *ndp)
-{
-	if (ndp->ni_tvpsize) {
-		size_t i;
-
-		for (i = 0; i < ndp->ni_tvpend; i++) {
-			struct vnode *vp = ndp->ni_tvp[i];
-			if (unveil_lookup(vp, p->p_p, NULL) == NULL) {
-				vref(vp);
-				vp->v_uvcount++;
-				unveil_add_vnode(p, vp);
-			}
-		}
-	}
-}
-
 int
 unveil_add(struct proc *p, struct nameidata *ndp, const char *permissions)
 {
@@ -492,7 +446,7 @@ unveil_add(struct proc *p, struct nameidata *ndp, const char *permissions)
 		    sizeof(struct unveil), M_PROC, M_WAITOK|M_ZERO);
 	}
 
-	if ((pr->ps_uvvcount + ndp->ni_tvpend) >= UNVEIL_MAX_VNODES ||
+	if (pr->ps_uvvcount >= UNVEIL_MAX_VNODES ||
 	    pr->ps_uvncount >= UNVEIL_MAX_NAMES) {
 		ret = E2BIG;
 		goto done;
@@ -595,9 +549,6 @@ unveil_add(struct proc *p, struct nameidata *ndp, const char *permissions)
 #endif
 
  done:
-	if (ret == 0)
-		unveil_add_traversed_vnodes(p, ndp);
-
 	pr->ps_uvpcwd = unveil_lookup(p->p_fd->fd_cdir, pr, NULL);
 	if (pr->ps_uvpcwd == NULL) {
 		ssize_t i;
@@ -754,10 +705,8 @@ unveil_check_component(struct proc *p, struct nameidata *ni, struct vnode *dp)
 	struct process *pr = p->p_p;
 	struct unveil *uv = NULL;
 
-	if (ni->ni_pledge == PLEDGE_UNVEIL) {
-		unveil_save_traversed_vnode(ni, dp);
+	if (ni->ni_pledge == PLEDGE_UNVEIL || pr->ps_uvpaths == NULL)
 		return;
-	}
 	if (ni->ni_cnd.cn_flags & BYPASSUNVEIL)
 		return;
 
