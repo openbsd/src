@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.h,v 1.88 2021/07/05 12:01:20 tobhe Exp $ */
+/* $OpenBSD: pfkeyv2.h,v 1.89 2021/07/08 16:39:55 mvs Exp $ */
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) January 1998
  *
@@ -449,6 +449,7 @@ extern const uint64_t sadb_exts_allowed_out[SADB_MAX+1];
 extern const uint64_t sadb_exts_required_out[SADB_MAX+1];
 
 extern struct pool ipsec_policy_pool;
+extern struct pool ipsec_acquire_pool;
 #endif /* _KERNEL */
 
 #endif /* _NET_PFKEY_V2_H_ */

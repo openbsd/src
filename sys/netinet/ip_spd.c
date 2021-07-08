@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.103 2021/05/04 09:28:04 mvs Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.104 2021/07/08 16:39:55 mvs Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -52,7 +52,6 @@ struct pool ipsec_policy_pool;
 struct pool ipsec_acquire_pool;
 
 /* Protected by the NET_LOCK(). */
-int ipsec_acquire_pool_initialized = 0;
 struct radix_node_head **spd_tables;
 unsigned int spd_table_max;
 TAILQ_HEAD(ipsec_acquire_head, ipsec_acquire) ipsec_acquire_head =
@@ -719,12 +718,6 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 		return 0;
 
 	/* Add request in cache and proceed. */
-	if (ipsec_acquire_pool_initialized == 0) {
-		ipsec_acquire_pool_initialized = 1;
-		pool_init(&ipsec_acquire_pool, sizeof(struct ipsec_acquire),
-		    0, IPL_SOFTNET, 0, "ipsec acquire", NULL);
-	}
-
 	ipa = pool_get(&ipsec_acquire_pool, PR_NOWAIT|PR_ZERO);
 	if (ipa == NULL)
 		return ENOMEM;

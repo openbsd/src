@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.216 2021/07/05 12:01:20 tobhe Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.217 2021/07/08 16:39:55 mvs Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -249,6 +249,8 @@ pfkey_init(void)
 	    IPL_SOFTNET, PR_WAITOK, "pkpcb", NULL);
 	pool_init(&ipsec_policy_pool, sizeof(struct ipsec_policy), 0,
 	    IPL_SOFTNET, 0, "ipsec policy", NULL);
+	pool_init(&ipsec_acquire_pool, sizeof(struct ipsec_acquire), 0,
+	    IPL_SOFTNET, 0, "ipsec acquire", NULL);
 }
 
 
