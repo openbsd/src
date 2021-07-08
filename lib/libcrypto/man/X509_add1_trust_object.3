@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_add1_trust_object.3,v 1.1 2021/07/08 12:30:27 schwarze Exp $
+.\" $OpenBSD: X509_add1_trust_object.3,v 1.2 2021/07/08 13:07:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -19,7 +19,9 @@
 .Os
 .Sh NAME
 .Nm X509_add1_trust_object ,
-.Nm X509_trust_clear
+.Nm X509_trust_clear ,
+.Nm X509_add1_reject_object ,
+.Nm X509_reject_clear
 .Nd mark an X.509 certificate as intended for a specific purpose
 .Sh SYNOPSIS
 .In openssl/x509.h
@@ -30,6 +32,15 @@
 .Fc
 .Ft void
 .Fo X509_trust_clear
+.Fa "X509 *x"
+.Fc
+.Ft int
+.Fo X509_add1_reject_object
+.Fa "X509 *x"
+.Fa "const ASN1_OBJECT *purpose"
+.Fc
+.Ft void
+.Fo X509_reject_clear
 .Fa "X509 *x"
 .Fc
 .Sh DESCRIPTION
@@ -51,9 +62,14 @@ constants listed in that manual page are not intended for use with
 .Fn X509_add1_trust_object .
 .Pp
 .Fn X509_trust_clear
-frees and removes all purpose objects
-contained in the non-standard auxiliary data of
+frees and removes all purpose objects from the set of intended
+purposes in the non-standard auxiliary data of
 .Fa x .
+.Pp
+.Fn X509_add1_reject_object
+and
+.Fn X509_reject_clear
+are similar except that they operate on a set of unintended purposes.
 .Pp
 As an alternative to using the functions documented in the present
 manual page, X.509 certificate extensions can be used.
@@ -65,9 +81,10 @@ See
 for details.
 .Sh RETURN VALUES
 .Fn X509_add1_trust_object
-returns the new number of purposes that
-.Fa x
-is intended for, or 0 if an error occurs, in particular if memory
+and
+.Fn X509_add1_reject_object
+return the new number of purposes in the respective set
+or 0 if an error occurs, in particular if memory
 allocation fails or if
 .Fa x
 does not contain a sub-object that can hold non-standard auxiliary data.
