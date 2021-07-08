@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.70 2021/07/08 15:13:14 bluhm Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.71 2021/07/08 21:07:19 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -80,7 +80,7 @@ ipcomp_attach(void)
  * ipcomp_init() is called when an CPI is being set up.
  */
 int
-ipcomp_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
+ipcomp_init(struct tdb *tdbp, const struct xformsw *xsp, struct ipsecinit *ii)
 {
 	const struct comp_algo *tcomp = NULL;
 	struct cryptoini cric;

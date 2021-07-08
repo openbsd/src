@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.199 2021/07/08 09:22:30 bluhm Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.200 2021/07/08 21:07:19 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -320,7 +320,7 @@ struct tdb {				/* tunnel descriptor block */
 	struct tdb	*tdb_inext;
 	struct tdb	*tdb_onext;
 
-	struct xformsw		*tdb_xform;		/* Transform to use */
+	const struct xformsw	*tdb_xform;		/* Transform to use */
 	const struct enc_xform	*tdb_encalgxform;	/* Enc algorithm */
 	const struct auth_hash	*tdb_authalgxform;	/* Auth algorithm */
 	const struct comp_algo	*tdb_compalgxform;	/* Compression algo */
@@ -473,7 +473,8 @@ struct xformsw {
 	u_short	xf_flags;		/* flags (see below) */
 	char	*xf_name;		/* human-readable name */
 	int	(*xf_attach)(void);	/* called at config time */
-	int	(*xf_init)(struct tdb *, struct xformsw *, struct ipsecinit *);
+	int	(*xf_init)(struct tdb *, const struct xformsw *,
+		    struct ipsecinit *);
 	int	(*xf_zeroize)(struct tdb *); /* termination */
 	int	(*xf_input)(struct mbuf *, struct tdb *, int, int); /* input */
 	int	(*xf_output)(struct mbuf *, struct tdb *, struct mbuf **,
@@ -559,13 +560,13 @@ int	tdb_walk(u_int, int (*)(struct tdb *, void *, int), void *);
 
 /* XF_IP4 */
 int	ipe4_attach(void);
-int	ipe4_init(struct tdb *, struct xformsw *, struct ipsecinit *);
+int	ipe4_init(struct tdb *, const struct xformsw *, struct ipsecinit *);
 int	ipe4_zeroize(struct tdb *);
 int	ipe4_input(struct mbuf *, struct tdb *, int, int);
 
 /* XF_AH */
 int	ah_attach(void);
-int	ah_init(struct tdb *, struct xformsw *, struct ipsecinit *);
+int	ah_init(struct tdb *, const struct xformsw *, struct ipsecinit *);
 int	ah_zeroize(struct tdb *);
 int	ah_input(struct mbuf *, struct tdb *, int, int);
 int	ah_input_cb(struct tdb *, struct tdb_crypto *, struct mbuf *, int);
@@ -584,7 +585,7 @@ int	ah6_input(struct mbuf **, int *, int, int);
 
 /* XF_ESP */
 int	esp_attach(void);
-int	esp_init(struct tdb *, struct xformsw *, struct ipsecinit *);
+int	esp_init(struct tdb *, const struct xformsw *, struct ipsecinit *);
 int	esp_zeroize(struct tdb *);
 int	esp_input(struct mbuf *, struct tdb *, int, int);
 int	esp_input_cb(struct tdb *, struct tdb_crypto *, struct mbuf *, int);
@@ -602,7 +603,7 @@ int	esp6_input(struct mbuf **, int *, int, int);
 
 /* XF_IPCOMP */
 int	ipcomp_attach(void);
-int	ipcomp_init(struct tdb *, struct xformsw *, struct ipsecinit *);
+int	ipcomp_init(struct tdb *, const struct xformsw *, struct ipsecinit *);
 int	ipcomp_zeroize(struct tdb *);
 int	ipcomp_input(struct mbuf *, struct tdb *, int, int);
 int	ipcomp_input_cb(struct tdb *, struct tdb_crypto *, struct mbuf *, int);
@@ -617,7 +618,7 @@ int	ipcomp6_input(struct mbuf **, int *, int, int);
 
 /* XF_TCPSIGNATURE */
 int	tcp_signature_tdb_attach(void);
-int	tcp_signature_tdb_init(struct tdb *, struct xformsw *,
+int	tcp_signature_tdb_init(struct tdb *, const struct xformsw *,
 	    struct ipsecinit *);
 int	tcp_signature_tdb_zeroize(struct tdb *);
 int	tcp_signature_tdb_input(struct mbuf *, struct tdb *, int, int);

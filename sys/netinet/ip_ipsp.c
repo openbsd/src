@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.239 2021/07/08 15:13:14 bluhm Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.240 2021/07/08 21:07:19 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -119,7 +119,7 @@ RBT_GENERATE(ipsec_ids_flows, ipsec_ids, id_node_id, ipsp_ids_flow_cmp);
  * This is the proper place to define the various encapsulation transforms.
  */
 
-struct xformsw xformsw[] = {
+const struct xformsw xformsw[] = {
 #ifdef IPSEC
 {
   .xf_type	= XF_IP4,
@@ -176,7 +176,7 @@ struct xformsw xformsw[] = {
 #endif /* TCP_SIGNATURE */
 };
 
-struct xformsw *xformswNXFORMSW = &xformsw[nitems(xformsw)];
+const struct xformsw *const xformswNXFORMSW = &xformsw[nitems(xformsw)];
 
 #define	TDB_HASHSIZE_INIT	32
 
@@ -902,7 +902,7 @@ tdb_reaper(void *xtdbp)
 int
 tdb_init(struct tdb *tdbp, u_int16_t alg, struct ipsecinit *ii)
 {
-	struct xformsw *xsp;
+	const struct xformsw *xsp;
 	int err;
 #ifdef ENCDEBUG
 	char buf[INET6_ADDRSTRLEN];

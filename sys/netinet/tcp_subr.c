@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.177 2021/06/30 11:26:49 bluhm Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.178 2021/07/08 21:07:19 bluhm Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -930,7 +930,7 @@ tcp_signature_tdb_attach(void)
 }
 
 int
-tcp_signature_tdb_init(struct tdb *tdbp, struct xformsw *xsp,
+tcp_signature_tdb_init(struct tdb *tdbp, const struct xformsw *xsp,
     struct ipsecinit *ii)
 {
 	if ((ii->ii_authkeylen < 1) || (ii->ii_authkeylen > 80))

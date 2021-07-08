@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.166 2021/07/08 15:13:14 bluhm Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.167 2021/07/08 21:07:19 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -93,7 +93,7 @@ esp_attach(void)
  * esp_init() is called when an SPI is being set up.
  */
 int
-esp_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
+esp_init(struct tdb *tdbp, const struct xformsw *xsp, struct ipsecinit *ii)
 {
 	const struct enc_xform *txform = NULL;
 	const struct auth_hash *thash = NULL;
