@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.126 2021/03/10 10:21:47 jsg Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.127 2021/07/08 23:19:51 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -484,7 +484,7 @@ uvm_pmr_alloc_piglet(vaddr_t *va, paddr_t *pa, vsize_t sz, paddr_t align)
 	 */
 	if (align < PAGE_SIZE)
 		kp_piglet.kp_align = PAGE_SIZE;
-		
+
 	sz = round_page(sz);
 
 	*va = (vaddr_t)km_alloc(sz, &kv_any, &kp_piglet, &kd_nowait);
@@ -600,7 +600,7 @@ get_hibernate_info(union hibernate_info *hib, int suspend)
 
 	/* Magic number */
 	hib->magic = HIBERNATE_MAGIC;
-	
+
 	/* Calculate signature block location */
 	hib->sig_offset = DL_GETPSIZE(&dl.d_partitions[1]) -
 	    sizeof(union hibernate_info)/DEV_BSIZE;
@@ -623,7 +623,7 @@ get_hibernate_info(union hibernate_info *hib, int suspend)
 		 * setting up data structures that cannot safely be done
 		 * during suspend without causing side effects). There is
 		 * a matching HIB_DONE call performed after the write is
-		 * completed.	
+		 * completed.
 		 */
 		if (hib->io_func(hib->dev, DL_GETPOFFSET(&dl.d_partitions[1]),
 		    (vaddr_t)NULL, DL_GETPSIZE(&dl.d_partitions[1]),
@@ -719,7 +719,7 @@ hibernate_inflate_page(int *rle)
 		 */
 		panic("rle short inflate error");
 	}
-	
+
 	if (*rle < 0 || *rle > 1024) {
 		/*
 		 * XXX - this will likely reboot/hang most machines
@@ -836,7 +836,7 @@ hibernate_inflate_region(union hibernate_info *hib, paddr_t dest,
  *
  * Returns number of input bytes consumed, and may reset
  * the 'remaining' parameter if not all the output space was consumed
- * (this information is needed to know how much to write to disk
+ * (this information is needed to know how much to write to disk)
  */
 size_t
 hibernate_deflate(union hibernate_info *hib, paddr_t src,
@@ -1323,7 +1323,7 @@ hibernate_copy_chunk_to_piglet(paddr_t img_cur, vaddr_t piglet, size_t size)
 		dest += ct;
 	}
 
-	/* Copy remaining pages */	
+	/* Copy remaining pages */
 	while (src < size + img_cur) {
 		hibernate_enter_resume_mapping(HIBERNATE_INFLATE_PAGE, src, 0);
 		hibernate_flush();
@@ -1336,7 +1336,7 @@ hibernate_copy_chunk_to_piglet(paddr_t img_cur, vaddr_t piglet, size_t size)
 }
 
 /*
- * Process a chunk by bouncing it to the piglet, followed by unpacking 
+ * Process a chunk by bouncing it to the piglet, followed by unpacking
  */
 void
 hibernate_process_chunk(union hibernate_info *hib,
@@ -1522,7 +1522,7 @@ hibernate_write_chunks(union hibernate_info *hib)
 				 */
 				temp_inaddr = (inaddr & PAGE_MASK) +
 				    hibernate_copy_page;
-				
+
 				/* Deflate from temp_inaddr to IO page */
 				if (inaddr != range_end) {
 					if (inaddr % PAGE_SIZE == 0) {
@@ -1532,7 +1532,7 @@ hibernate_write_chunks(union hibernate_info *hib)
 							&blkctr,
 							&out_remaining);
 					}
-				
+
 					if (rle == 0) {
 						pmap_kenter_pa(hibernate_temp_page,
 							inaddr & PMAP_PA_MASK,
@@ -1886,7 +1886,7 @@ hibernate_read_chunks(union hibernate_info *hib, paddr_t pig_start,
 	}
 
 	pmap_kremove(hibernate_fchunk_area, 24 * PAGE_SIZE);
-	pmap_update(pmap_kernel());	
+	pmap_update(pmap_kernel());
 
 	return (0);
 }
@@ -1984,7 +1984,7 @@ hibernate_alloc(void)
 
 	/*
 	 * Allocate VA for the temp page.
-	 * 
+	 *
 	 * This will become part of the suspended kernel and will
 	 * be freed in hibernate_free, upon resume (or hibernate
 	 * failure)
