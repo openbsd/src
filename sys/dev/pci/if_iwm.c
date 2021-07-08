@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.341 2021/07/07 09:47:40 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.342 2021/07/08 00:12:49 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -456,7 +456,6 @@ int	iwm_fill_probe_req(struct iwm_softc *, struct iwm_scan_probe_req *);
 int	iwm_lmac_scan(struct iwm_softc *, int);
 int	iwm_config_umac_scan(struct iwm_softc *);
 int	iwm_umac_scan(struct iwm_softc *, int);
-void	iwm_mcc_update(struct iwm_softc *, struct iwm_mcc_chub_notif *);
 uint8_t	iwm_ridx2rate(struct ieee80211_rateset *, int);
 int	iwm_rval2ridx(int);
 void	iwm_ack_rates(struct iwm_softc *, struct iwm_node *, int *, int *);
@@ -699,6 +698,7 @@ iwm_read_firmware(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 	sc->sc_capa_n_scan_channels = IWM_DEFAULT_SCAN_CHANNELS;
 	memset(sc->sc_enabled_capa, 0, sizeof(sc->sc_enabled_capa));
 	sc->n_cmd_versions = 0;
+	memset(sc->sc_fw_mcc, 0, sizeof(sc->sc_fw_mcc));
 
 	uhdr = (void *)fw->fw_rawdata;
 	if (*(uint32_t *)fw->fw_rawdata != 0
@@ -7601,24 +7601,6 @@ iwm_umac_scan(struct iwm_softc *sc, int bgscan)
 	return err;
 }
 
-void
-iwm_mcc_update(struct iwm_softc *sc, struct iwm_mcc_chub_notif *notif)
-{
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = IC2IFP(ic);
-	char alpha2[3];
-
-	snprintf(alpha2, sizeof(alpha2), "%c%c",
-	    (le16toh(notif->mcc) & 0xff00) >> 8, le16toh(notif->mcc) & 0xff);
-
-	if (ifp->if_flags & IFF_DEBUG) {
-		printf("%s: firmware has detected regulatory domain '%s' "
-		    "(0x%x)\n", DEVNAME(sc), alpha2, le16toh(notif->mcc));
-	}
-
-	/* TODO: Schedule a task to send MCC_UPDATE_CMD? */
-}
-
 uint8_t
 iwm_ridx2rate(struct ieee80211_rateset *rs, int ridx)
 {
@@ -9111,11 +9093,9 @@ iwm_send_update_mcc_cmd(struct iwm_softc *sc, const char *alpha2)
 		.flags = IWM_CMD_WANT_RESP,
 		.data = { &mcc_cmd },
 	};
-	struct iwm_rx_packet *pkt;
-	size_t resp_len;
 	int err;
-	int resp_v3 = isset(sc->sc_enabled_capa,
-	    IWM_UCODE_TLV_CAPA_LAR_SUPPORT_V3);
+	int resp_v2 = isset(sc->sc_enabled_capa,
+	    IWM_UCODE_TLV_CAPA_LAR_SUPPORT_V2);
 
 	if (sc->sc_device_family == IWM_DEVICE_FAMILY_8000 &&
 	    !sc->sc_nvm.lar_enabled) {
@@ -9130,10 +9110,10 @@ iwm_send_update_mcc_cmd(struct iwm_softc *sc, const char *alpha2)
 	else
 		mcc_cmd.source_id = IWM_MCC_SOURCE_OLD_FW;
 
-	if (resp_v3) { /* same size as resp_v2 */
+	if (resp_v2) {
 		hcmd.len[0] = sizeof(struct iwm_mcc_update_cmd);
 		hcmd.resp_pkt_len = sizeof(struct iwm_rx_packet) +
-		    sizeof(struct iwm_mcc_update_resp_v3);
+		    sizeof(struct iwm_mcc_update_resp);
 	} else {
 		hcmd.len[0] = sizeof(struct iwm_mcc_update_cmd_v1);
 		hcmd.resp_pkt_len = sizeof(struct iwm_rx_packet) +
@@ -9144,44 +9124,9 @@ iwm_send_update_mcc_cmd(struct iwm_softc *sc, const char *alpha2)
 	if (err)
 		return err;
 
-	pkt = hcmd.resp_pkt;
-	if (!pkt || (pkt->hdr.flags & IWM_CMD_FAILED_MSK)) {
-		err = EIO;
-		goto out;
-	}
-
-	if (resp_v3) {
-		struct iwm_mcc_update_resp_v3 *resp;
-		resp_len = iwm_rx_packet_payload_len(pkt);
-		if (resp_len < sizeof(*resp)) {
-			err = EIO;
-			goto out;
-		}
-
-		resp = (void *)pkt->data;
-		if (resp_len != sizeof(*resp) +
-		    resp->n_channels * sizeof(resp->channels[0])) {
-			err = EIO;
-			goto out;
-		}
-	} else {
-		struct iwm_mcc_update_resp_v1 *resp_v1;
-		resp_len = iwm_rx_packet_payload_len(pkt);
-		if (resp_len < sizeof(*resp_v1)) {
-			err = EIO;
-			goto out;
-		}
-
-		resp_v1 = (void *)pkt->data;
-		if (resp_len != sizeof(*resp_v1) +
-		    resp_v1->n_channels * sizeof(resp_v1->channels[0])) {
-			err = EIO;
-			goto out;
-		}
-	}
-out:
 	iwm_free_resp(sc, &hcmd);
-	return err;
+
+	return 0;
 }
 
 int
@@ -10389,8 +10334,10 @@ iwm_rx_pkt(struct iwm_softc *sc, struct iwm_rx_data *data, struct mbuf_list *ml)
 		case IWM_MCC_CHUB_UPDATE_CMD: {
 			struct iwm_mcc_chub_notif *notif;
 			SYNC_RESP_STRUCT(notif, pkt);
-			iwm_mcc_update(sc, notif);
-			break;
+
+			sc->sc_fw_mcc[0] = (notif->mcc & 0xff00) >> 8;
+			sc->sc_fw_mcc[1] = notif->mcc & 0xff;
+			sc->sc_fw_mcc[2] = '\0';
 		}
 
 		case IWM_DTS_MEASUREMENT_NOTIFICATION:
