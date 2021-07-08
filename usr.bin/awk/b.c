@@ -1,4 +1,4 @@
-/*	$OpenBSD: b.c,v 1.36 2021/03/02 20:41:42 millert Exp $	*/
+/*	$OpenBSD: b.c,v 1.37 2021/07/08 21:26:39 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -1108,7 +1108,7 @@ rescan:
 					 * program to track each string's length.
 					 */
 					for (i = 1; i <= UCHAR_MAX; i++) {
-						if (!adjbuf((char **) &buf, &bufsz, bp-buf+1, 100, (char **) &bp, "relex2"))
+						if (!adjbuf((char **) &buf, &bufsz, bp-buf+2, 100, (char **) &bp, "relex2"))
 						    FATAL("out of space for reg expr %.10s...", lastre);
 						if (cc->cc_func(i)) {
 							/* escape backslash */
