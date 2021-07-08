@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.68 2021/07/08 00:12:49 stsp Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.69 2021/07/08 17:14:08 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -548,7 +548,6 @@ struct iwm_softc {
 #define IWM_MAX_FW_CMD_VERSIONS	64
 	struct iwm_fw_cmd_version cmd_versions[IWM_MAX_FW_CMD_VERSIONS];
 	int n_cmd_versions;
-	char sc_fw_mcc[3];
 
 	int sc_intmask;
 	int sc_flags;

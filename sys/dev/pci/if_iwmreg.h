@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmreg.h,v 1.62 2021/07/08 00:12:49 stsp Exp $	*/
+/*	$OpenBSD: if_iwmreg.h,v 1.63 2021/07/08 17:14:08 stsp Exp $	*/
 
 /******************************************************************************
  *
@@ -927,7 +927,7 @@ enum msix_ivar_for_cause {
 #define IWM_UCODE_TLV_CAPA_MULTI_QUEUE_RX_SUPPORT	68
 #define IWM_UCODE_TLV_CAPA_BEACON_ANT_SELECTION		71
 #define IWM_UCODE_TLV_CAPA_BEACON_STORING		72
-#define IWM_UCODE_TLV_CAPA_LAR_SUPPORT_V2		73
+#define IWM_UCODE_TLV_CAPA_LAR_SUPPORT_V3		73
 #define IWM_UCODE_TLV_CAPA_CT_KILL_BY_FW		74
 #define IWM_UCODE_TLV_CAPA_TEMP_THS_REPORT_SUPPORT	75
 #define IWM_UCODE_TLV_CAPA_CTDP_SUPPORT			76
@@ -6566,7 +6566,7 @@ struct iwm_mcc_update_resp_v1  {
 } __packed; /* LAR_UPDATE_MCC_CMD_RESP_S_VER_1 */
 
 /**
- * iwm_mcc_update_resp - response to MCC_UPDATE_CMD.
+ * iwm_mcc_update_resp_v2 - response to MCC_UPDATE_CMD.
  * Contains the new channel control profile map, if changed, and the new MCC
  * (mobile country code).
  * The new MCC may be different than what was requested in MCC_UPDATE_CMD.
@@ -6581,7 +6581,7 @@ struct iwm_mcc_update_resp_v1  {
  * @channels: channel control data map, DWORD for each channel. Only the first
  *	16bits are used.
  */
-struct iwm_mcc_update_resp {
+struct iwm_mcc_update_resp_v2 {
 	uint32_t status;
 	uint16_t mcc;
 	uint8_t cap;
@@ -6591,6 +6591,36 @@ struct iwm_mcc_update_resp {
 	uint32_t n_channels;
 	uint32_t channels[0];
 } __packed; /* LAR_UPDATE_MCC_CMD_RESP_S_VER_2 */
+
+#define IWM_GEO_NO_INFO			0
+#define IWM_GEO_WMM_ETSI_5GHZ_INFO	(1 << 0)
+
+/**
+ * iwm_mcc_update_resp_v3 - response to MCC_UPDATE_CMD.
+ * Contains the new channel control profile map, if changed, and the new MCC
+ * (mobile country code).
+ * The new MCC may be different than what was requested in MCC_UPDATE_CMD.
+ * @status: see &enum iwm_mcc_update_status
+ * @mcc: the new applied MCC
+ * @cap: capabilities for all channels which matches the MCC
+ * @source_id: the MCC source, see IWM_MCC_SOURCE_*
+ * @time: time elapsed from the MCC test start (in 30 seconds TU)
+ * @geo_info: geographic specific profile information
+ * @n_channels: number of channels in @channels_data (may be 14, 39, 50 or 51
+ *		channels, depending on platform)
+ * @channels: channel control data map, DWORD for each channel. Only the first
+ *	16bits are used.
+ */
+struct iwm_mcc_update_resp_v3 {
+	uint32_t status;
+	uint16_t mcc;
+	uint8_t cap;
+	uint8_t source_id;
+	uint16_t time;
+	uint16_t geo_info;
+	uint32_t n_channels;
+	uint32_t channels[0];
+} __packed; /* LAR_UPDATE_MCC_CMD_RESP_S_VER_3 */
 
 /**
  * struct iwm_mcc_chub_notif - chub notifies of mcc change
