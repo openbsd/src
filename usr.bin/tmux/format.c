@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.286 2021/06/10 07:58:08 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.287 2021/07/08 11:14:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -4809,7 +4809,8 @@ format_grid_word(struct grid *gd, u_int x, u_int y)
 		grid_get_cell(gd, x, y, &gc);
 		if (gc.flags & GRID_FLAG_PADDING)
 			break;
-		if (utf8_cstrhas(ws, &gc.data)) {
+		if (utf8_cstrhas(ws, &gc.data) ||
+		    (gc.data.size == 1 && *gc.data.data == ' ')) {
 			found = 1;
 			break;
 		}
@@ -4846,7 +4847,8 @@ format_grid_word(struct grid *gd, u_int x, u_int y)
 		grid_get_cell(gd, x, y, &gc);
 		if (gc.flags & GRID_FLAG_PADDING)
 			break;
-		if (utf8_cstrhas(ws, &gc.data))
+		if (utf8_cstrhas(ws, &gc.data) ||
+		    (gc.data.size == 1 && *gc.data.data == ' '))
 			break;
 
 		ud = xreallocarray(ud, size + 2, sizeof *ud);
