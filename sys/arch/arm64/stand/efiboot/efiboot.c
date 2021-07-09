@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.33 2021/06/06 23:56:55 krw Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.34 2021/07/09 20:19:46 patrick Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -465,6 +465,46 @@ void
 efi_dma_constraint(void)
 {
 	void *node;
+	char *prop;
+	uint32_t *propint;
+	uint64_t base, size;
+	uint32_t pacells, pscells;
+	uint32_t acells, scells;
+	int len;
+
+	node = fdt_find_node("/");
+	if (fdt_node_property_int(node, "#address-cells", &pacells) != 1)
+		pacells = 1;
+	if (fdt_node_property_int(node, "#size-cells", &pscells) != 1)
+		pscells = 1;
+	if (pacells > 2 || pscells > 2)
+		return;
+
+	node = fdt_find_node("/soc");
+	if (node != NULL) {
+		if (fdt_node_property_int(node, "#address-cells", &acells) != 1)
+			acells = pacells;
+		if (fdt_node_property_int(node, "#size-cells", &scells) != 1)
+			scells = pscells;
+		if (acells > 2 || scells > 2)
+			return;
+
+		len = fdt_node_property(node, "dma-ranges", &prop);
+		propint = (uint32_t *)prop;
+		if (len == (acells + pacells + scells) * sizeof(uint32_t)) {
+			base = betoh32(propint[acells]);
+			if (pacells == 2)
+				base = (base << 32) |
+				    betoh32(propint[acells + 1]);
+			size = betoh32(propint[acells + pacells]);
+			if (scells == 2)
+				size = (size << 32) |
+				    betoh32(propint[acells + pacells + 1]);
+
+			dma_constraint[0] = htobe64(base);
+			dma_constraint[1] = htobe64(base + size - 1);
+		}
+	}
 
 	/* Raspberry Pi 4 is "special". */
 	node = fdt_find_node("/");
