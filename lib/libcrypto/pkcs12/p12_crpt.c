@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_crpt.c,v 1.14 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: p12_crpt.c,v 1.15 2021/07/09 14:07:59 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -101,13 +101,13 @@ PKCS12_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 	}
 	salt = pbe->salt->data;
 	saltlen = pbe->salt->length;
-	if (!PKCS12_key_gen (pass, passlen, salt, saltlen, PKCS12_KEY_ID,
+	if (!PKCS12_key_gen(pass, passlen, salt, saltlen, PKCS12_KEY_ID,
 	    iter, EVP_CIPHER_key_length(cipher), key, md)) {
 		PKCS12error(PKCS12_R_KEY_GEN_ERROR);
 		PBEPARAM_free(pbe);
 		return 0;
 	}
-	if (!PKCS12_key_gen (pass, passlen, salt, saltlen, PKCS12_IV_ID,
+	if (!PKCS12_key_gen(pass, passlen, salt, saltlen, PKCS12_IV_ID,
 	    iter, EVP_CIPHER_iv_length(cipher), iv, md)) {
 		PKCS12error(PKCS12_R_IV_GEN_ERROR);
 		PBEPARAM_free(pbe);

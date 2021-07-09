@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_decr.c,v 1.19 2018/05/13 14:22:34 tb Exp $ */
+/* $OpenBSD: p12_decr.c,v 1.20 2021/07/09 14:08:00 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -156,7 +156,7 @@ PKCS12_item_i2d_encrypt(X509_ALGOR *algor, const ASN1_ITEM *it,
 	unsigned char *in = NULL;
 	int inlen;
 
-	if (!(oct = ASN1_OCTET_STRING_new ())) {
+	if (!(oct = ASN1_OCTET_STRING_new())) {
 		PKCS12error(ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}

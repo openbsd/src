@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_kiss.c,v 1.20 2021/04/24 18:16:39 tb Exp $ */
+/* $OpenBSD: p12_kiss.c,v 1.21 2021/07/09 14:08:00 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -125,7 +125,7 @@ PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
 		return 0;
 	}
 
-	if (!parse_pk12 (p12, pass, -1, pkey, ocerts)) {
+	if (!parse_pk12(p12, pass, -1, pkey, ocerts)) {
 		PKCS12error(PKCS12_R_PARSE_ERROR);
 		goto err;
 	}
@@ -179,11 +179,11 @@ parse_pk12(PKCS12 *p12, const char *pass, int passlen, EVP_PKEY **pkey,
 	int i, bagnid;
 	PKCS7 *p7;
 
-	if (!(asafes = PKCS12_unpack_authsafes (p12)))
+	if (!(asafes = PKCS12_unpack_authsafes(p12)))
 		return 0;
-	for (i = 0; i < sk_PKCS7_num (asafes); i++) {
-		p7 = sk_PKCS7_value (asafes, i);
-		bagnid = OBJ_obj2nid (p7->type);
+	for (i = 0; i < sk_PKCS7_num(asafes); i++) {
+		p7 = sk_PKCS7_value(asafes, i);
+		bagnid = OBJ_obj2nid(p7->type);
 		if (bagnid == NID_pkcs7_data) {
 			bags = PKCS12_unpack_p7data(p7);
 		} else if (bagnid == NID_pkcs7_encrypted) {
@@ -229,10 +229,10 @@ parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen, EVP_PKEY **pkey,
 	ASN1_BMPSTRING *fname = NULL;
 	ASN1_OCTET_STRING *lkid = NULL;
 
-	if ((attrib = PKCS12_get_attr (bag, NID_friendlyName)))
+	if ((attrib = PKCS12_get_attr(bag, NID_friendlyName)))
 		fname = attrib->value.bmpstring;
 
-	if ((attrib = PKCS12_get_attr (bag, NID_localKeyID)))
+	if ((attrib = PKCS12_get_attr(bag, NID_localKeyID)))
 		lkid = attrib->value.octet_string;
 
 	switch (OBJ_obj2nid(bag->type)) {

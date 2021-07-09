@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_key.c,v 1.26 2017/05/02 03:59:45 deraadt Exp $ */
+/* $OpenBSD: p12_key.c,v 1.27 2021/07/09 14:08:00 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -143,7 +143,7 @@ PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
 			    !EVP_DigestFinal_ex(&ctx, Ai, NULL))
 				goto err;
 		}
-		memcpy (out, Ai, min (n, u));
+		memcpy(out, Ai, min(n, u));
 		if (u >= n) {
 			ret = 1;
 			goto end;
@@ -153,9 +153,9 @@ PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
 		for (j = 0; j < v; j++)
 			B[j] = Ai[j % u];
 		/* Work out B + 1 first then can use B as tmp space */
-		if (!BN_bin2bn (B, v, Bpl1))
+		if (!BN_bin2bn(B, v, Bpl1))
 			goto err;
-		if (!BN_add_word (Bpl1, 1))
+		if (!BN_add_word(Bpl1, 1))
 			goto err;
 		for (j = 0; j < Ilen; j += v) {
 			if (!BN_bin2bn(I + j, v, Ij))
@@ -164,12 +164,12 @@ PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
 				goto err;
 			if (!BN_bn2bin(Ij, B))
 				goto err;
-			Ijlen = BN_num_bytes (Ij);
+			Ijlen = BN_num_bytes(Ij);
 			/* If more than 2^(v*8) - 1 cut off MSB */
 			if (Ijlen > v) {
-				if (!BN_bn2bin (Ij, B))
+				if (!BN_bn2bin(Ij, B))
 					goto err;
-				memcpy (I + j, B + 1, v);
+				memcpy(I + j, B + 1, v);
 #ifndef PKCS12_BROKEN_KEYGEN
 				/* If less than v bytes pad with zeroes */
 			} else if (Ijlen < v) {
@@ -177,7 +177,7 @@ PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
 				if (!BN_bn2bin(Ij, I + j + v - Ijlen))
 					goto err;
 #endif
-			} else if (!BN_bn2bin (Ij, I + j))
+			} else if (!BN_bn2bin(Ij, I + j))
 				goto err;
 		}
 	}

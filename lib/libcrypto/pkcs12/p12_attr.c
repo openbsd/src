@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_attr.c,v 1.12 2018/08/24 20:07:41 tb Exp $ */
+/* $OpenBSD: p12_attr.c,v 1.13 2021/07/09 14:07:59 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -125,10 +125,10 @@ PKCS12_get_attr_gen(const STACK_OF(X509_ATTRIBUTE) *attrs, int attr_nid)
 
 	if (!attrs)
 		return NULL;
-	for (i = 0; i < sk_X509_ATTRIBUTE_num (attrs); i++) {
-		attrib = sk_X509_ATTRIBUTE_value (attrs, i);
-		if (OBJ_obj2nid (attrib->object) == attr_nid) {
-			if (sk_ASN1_TYPE_num (attrib->value.set))
+	for (i = 0; i < sk_X509_ATTRIBUTE_num(attrs); i++) {
+		attrib = sk_X509_ATTRIBUTE_value(attrs, i);
+		if (OBJ_obj2nid(attrib->object) == attr_nid) {
+			if (sk_ASN1_TYPE_num(attrib->value.set))
 				return sk_ASN1_TYPE_value(attrib->value.set, 0);
 			else
 				return NULL;

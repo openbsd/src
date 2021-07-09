@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_mutl.c,v 1.23 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: p12_mutl.c,v 1.24 2021/07/09 14:08:00 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -192,7 +192,7 @@ PKCS12_setup_mac(PKCS12 *p12, int iter, unsigned char *salt, int saltlen,
 	if (!salt)
 		arc4random_buf(p12->mac->salt->data, saltlen);
 	else
-		memcpy (p12->mac->salt->data, salt, saltlen);
+		memcpy(p12->mac->salt->data, salt, saltlen);
 	p12->mac->dinfo->algor->algorithm = OBJ_nid2obj(EVP_MD_type(md_type));
 	if (!(p12->mac->dinfo->algor->parameter = ASN1_TYPE_new())) {
 		PKCS12error(ERR_R_MALLOC_FAILURE);
