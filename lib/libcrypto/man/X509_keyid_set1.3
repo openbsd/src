@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_keyid_set1.3,v 1.1 2021/07/09 12:07:27 schwarze Exp $
+.\" $OpenBSD: X509_keyid_set1.3,v 1.2 2021/07/09 14:41:14 tb Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -59,7 +59,7 @@ bytes of
 stored using
 .Fn X509_keyid_set1
 will be written to the
-.Sy friendlyName
+.Sy localKeyID
 attribute of the PKCS#12 structure if
 .Xr PKCS12_create 3
 is later called on
@@ -69,7 +69,7 @@ and the
 stored using
 .Fn X509_alias_set1
 will be written to the
-.Sy localKeyID
+.Sy friendlyName
 attribute.
 If
 .Fa data
