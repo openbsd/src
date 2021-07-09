@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.h,v 1.72 2021/06/30 12:21:02 bluhm Exp $	*/
+/*	$OpenBSD: cryptodev.h,v 1.73 2021/07/09 20:43:28 mvs Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -197,14 +197,11 @@ struct cryptop {
 struct cryptocap {
 	u_int64_t	cc_operations;	/* Counter of how many ops done */
 	u_int64_t	cc_bytes;	/* Counter of how many bytes done */
-	u_int64_t	cc_koperations;	/* How many PK ops done */
 
 	u_int32_t	cc_sessions;	/* How many sessions allocated */
 
 	/* Symmetric/hash algorithms supported */
 	int		cc_alg[CRYPTO_ALGORITHM_MAX + 1];
-
-	int		cc_queued;	/* Operations queued */
 
 	u_int8_t	cc_flags;
 #define CRYPTOCAP_F_CLEANUP     0x01
