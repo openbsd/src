@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.12 2020/09/11 09:27:10 mpi Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.13 2021/07/09 20:59:51 jasper Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.8 2003/01/17 22:28:48 thorpej Exp $	*/
 
 /*
@@ -65,7 +65,7 @@ void
 db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
     char *modif, int (*pr)(const char *, ...))
 {
-	u_int64_t	frame, lastframe, lr, lastlr, sp;
+	vaddr_t		frame, lastframe, lr, lastlr, sp;
 	char		c, *cp = modif;
 	db_expr_t	offset;
 	Elf_Sym *	sym;
