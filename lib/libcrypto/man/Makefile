@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.174 2021/07/08 12:30:27 schwarze Exp $
+# $OpenBSD: Makefile,v 1.175 2021/07/09 12:07:27 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -316,6 +316,7 @@ MAN=	\
 	X509_get0_notBefore.3 \
 	X509_get0_signature.3 \
 	X509_get1_email.3 \
+	X509_keyid_set1.3 \
 	X509_new.3 \
 	X509_sign.3 \
 	X509_signature_dump.3 \
