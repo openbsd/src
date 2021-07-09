@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sym.c,v 1.55 2020/10/15 03:14:00 deraadt Exp $	*/
+/*	$OpenBSD: db_sym.c,v 1.56 2021/07/09 20:59:17 jasper Exp $	*/
 /*	$NetBSD: db_sym.c,v 1.24 2000/08/11 22:50:47 tv Exp $	*/
 
 /*
@@ -113,7 +113,7 @@ db_search_symbol(vaddr_t val, db_strategy_t strategy, db_expr_t *offp)
 }
 
 /*
- * Print a the closest symbol to value
+ * Print the closest symbol to a value.
  *
  * After matching the symbol according to the given strategy
  * we print it in the name+offset format, provided the symbol's
