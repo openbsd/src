@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.c,v 1.43 2021/02/20 04:37:26 dlg Exp $ */
+/*	$OpenBSD: ifq.c,v 1.44 2021/07/09 01:22:05 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -499,6 +499,9 @@ ifq_hdatalen(struct ifqueue *ifq)
 {
 	struct mbuf *m;
 	int len = 0;
+
+	if (ifq_empty(ifq))
+		return (0);
 
 	m = ifq_deq_begin(ifq);
 	if (m != NULL) {
