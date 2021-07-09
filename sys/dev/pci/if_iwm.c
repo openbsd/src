@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.345 2021/07/09 10:45:17 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.346 2021/07/09 10:46:56 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -969,6 +969,11 @@ iwm_read_firmware(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 			break;
 
 		case IWM_UCODE_TLV_FW_MEM_SEG:
+			break;
+
+		/* undocumented TLVs found in iwm-9000-43 image */
+		case 0x1000003:
+		case 0x1000004:
 			break;
 
 		default:
