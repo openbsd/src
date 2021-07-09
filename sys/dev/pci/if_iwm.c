@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.348 2021/07/09 11:11:36 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.349 2021/07/09 11:21:31 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -476,6 +476,8 @@ int	iwm_bgscan(struct ieee80211com *);
 int	iwm_umac_scan_abort(struct iwm_softc *);
 int	iwm_lmac_scan_abort(struct iwm_softc *);
 int	iwm_scan_abort(struct iwm_softc *);
+int	iwm_phy_ctxt_update(struct iwm_softc *, struct iwm_phy_ctxt *,
+	    struct ieee80211_channel *, uint8_t, uint8_t, uint32_t);
 int	iwm_auth(struct iwm_softc *);
 int	iwm_deauth(struct iwm_softc *);
 int	iwm_assoc(struct iwm_softc *);
@@ -8151,6 +8153,47 @@ iwm_scan_abort(struct iwm_softc *sc)
 }
 
 int
+iwm_phy_ctxt_update(struct iwm_softc *sc, struct iwm_phy_ctxt *phyctxt,
+    struct ieee80211_channel *chan, uint8_t chains_static,
+    uint8_t chains_dynamic, uint32_t apply_time)
+{
+	uint16_t band_flags = (IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_5GHZ);
+	int err;
+
+	if (isset(sc->sc_enabled_capa,
+	    IWM_UCODE_TLV_CAPA_BINDING_CDB_SUPPORT) &&
+	    (phyctxt->channel->ic_flags & band_flags) !=
+	    (chan->ic_flags & band_flags)) {
+		err = iwm_phy_ctxt_cmd(sc, phyctxt, chains_static,
+		    chains_dynamic, IWM_FW_CTXT_ACTION_REMOVE, apply_time);
+		if (err) {
+			printf("%s: could not remove PHY context "
+			    "(error %d)\n", DEVNAME(sc), err);
+			return err;
+		}
+		phyctxt->channel = chan;
+		err = iwm_phy_ctxt_cmd(sc, phyctxt, chains_static,
+		    chains_dynamic, IWM_FW_CTXT_ACTION_ADD, apply_time);
+		if (err) {
+			printf("%s: could not remove PHY context "
+			    "(error %d)\n", DEVNAME(sc), err);
+			return err;
+		}
+	} else {
+		phyctxt->channel = chan;
+		err = iwm_phy_ctxt_cmd(sc, phyctxt, chains_static,
+		    chains_dynamic, IWM_FW_CTXT_ACTION_MODIFY, apply_time);
+		if (err) {
+			printf("%s: could not update PHY context (error %d)\n",
+			    DEVNAME(sc), err);
+			return err;
+		}
+	}
+
+	return 0;
+}
+
+int
 iwm_auth(struct iwm_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -8160,16 +8203,16 @@ iwm_auth(struct iwm_softc *sc)
 
 	splassert(IPL_NET);
 
-	if (ic->ic_opmode == IEEE80211_M_MONITOR)
-		sc->sc_phyctxt[0].channel = ic->ic_ibss_chan;
-	else
-		sc->sc_phyctxt[0].channel = in->in_ni.ni_chan;
-	err = iwm_phy_ctxt_cmd(sc, &sc->sc_phyctxt[0], 1, 1,
-	    IWM_FW_CTXT_ACTION_MODIFY, 0);
-	if (err) {
-		printf("%s: could not update PHY context (error %d)\n",
-		    DEVNAME(sc), err);
-		return err;
+	if (ic->ic_opmode == IEEE80211_M_MONITOR) {
+		err = iwm_phy_ctxt_update(sc, &sc->sc_phyctxt[0],
+		    ic->ic_ibss_chan, 1, 1, 0);
+		if (err)
+			return err;
+	} else {
+		err = iwm_phy_ctxt_update(sc, &sc->sc_phyctxt[0],
+		    in->in_ni.ni_chan, 1, 1, 0);
+		if (err)
+			return err;
 	}
 	in->in_phyctxt = &sc->sc_phyctxt[0];
 
@@ -8277,6 +8320,12 @@ iwm_deauth(struct iwm_softc *sc)
 		sc->sc_flags &= ~IWM_FLAG_MAC_ACTIVE;
 	}
 
+	/* Move unused PHY context to a default channel. */
+	err = iwm_phy_ctxt_update(sc, &sc->sc_phyctxt[0],
+	    &ic->ic_channels[1], 1, 1, 0);
+	if (err)
+		return err;
+
 	return 0;
 }
 
@@ -8354,11 +8403,10 @@ iwm_run(struct iwm_softc *sc)
 	if ((ic->ic_opmode == IEEE80211_M_MONITOR ||
 	    (in->in_ni.ni_flags & IEEE80211_NODE_HT)) &&
 	    iwm_mimo_enabled(sc)) {
-		err = iwm_phy_ctxt_cmd(sc, &sc->sc_phyctxt[0],
-		    2, 2, IWM_FW_CTXT_ACTION_MODIFY, 0);
+		err = iwm_phy_ctxt_update(sc, &sc->sc_phyctxt[0],
+		    in->in_ni.ni_chan, 2, 2, 0);
 		if (err) {
-			printf("%s: failed to update PHY\n",
-			    DEVNAME(sc));
+			printf("%s: failed to update PHY\n", DEVNAME(sc));
 			return err;
 		}
 	}
@@ -8482,8 +8530,8 @@ iwm_run_stop(struct iwm_softc *sc)
 	/* Reset Tx chains in case MIMO was enabled. */
 	if ((in->in_ni.ni_flags & IEEE80211_NODE_HT) &&
 	    iwm_mimo_enabled(sc)) {
-		err = iwm_phy_ctxt_cmd(sc, &sc->sc_phyctxt[0], 1, 1,
-		    IWM_FW_CTXT_ACTION_MODIFY, 0);
+		err = iwm_phy_ctxt_update(sc, &sc->sc_phyctxt[0],
+		   in->in_ni.ni_chan, 1, 1, 0);
 		if (err) {
 			printf("%s: failed to update PHY\n", DEVNAME(sc));
 			return err;
@@ -9531,12 +9579,13 @@ iwm_init_hw(struct iwm_softc *sc)
 		goto err;
 	}
 
-	for (i = 0; i < 1; i++) {
+	for (i = 0; i < IWM_NUM_PHY_CTX; i++) {
 		/*
 		 * The channel used here isn't relevant as it's
 		 * going to be overwritten in the other flows.
 		 * For now use the first channel we have.
 		 */
+		sc->sc_phyctxt[i].id = i;
 		sc->sc_phyctxt[i].channel = &ic->ic_channels[1];
 		err = iwm_phy_ctxt_cmd(sc, &sc->sc_phyctxt[i], 1, 1,
 		    IWM_FW_CTXT_ACTION_ADD, 0);
