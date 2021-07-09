@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmreg.h,v 1.63 2021/07/08 17:14:08 stsp Exp $	*/
+/*	$OpenBSD: if_iwmreg.h,v 1.64 2021/07/09 11:24:55 stsp Exp $	*/
 
 /******************************************************************************
  *
@@ -5731,6 +5731,16 @@ struct iwm_scan_config {
 #define IWM_UMAC_SCAN_GEN_FLAGS_ADAPTIVE_DWELL		(1 << 13)
 #define IWM_UMAC_SCAN_GEN_FLAGS_MAX_CHNL_TIME		(1 << 14)
 #define IWM_UMAC_SCAN_GEN_FLAGS_PROB_REQ_HIGH_TX_RATE	(1 << 15)
+
+/**
+ * UMAC scan general flags #2
+ * @IWM_UMAC_SCAN_GEN_FLAGS2_NOTIF_PER_CHNL: Whether to send a complete
+ *	notification per channel or not.
+ * @IWM_UMAC_SCAN_GEN_FLAGS2_ALLOW_CHNL_REORDER: Whether to allow channel
+ *	reorder optimization or not.
+ */
+#define IWM_UMAC_SCAN_GEN_FLAGS2_NOTIF_PER_CHNL		(1 << 0)
+#define IWM_UMAC_SCAN_GEN_FLAGS2_ALLOW_CHNL_REORDER	(1 << 1)
 
 /**
  * struct iwm_scan_channel_cfg_umac
