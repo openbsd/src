@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.87 2021/07/08 09:22:30 bluhm Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.88 2021/07/09 15:29:55 bluhm Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -73,7 +73,7 @@ const u_int8_t hmac_opad_buffer[HMAC_MAX_BLOCK_LEN] = {
 };
 
 
-struct swcr_data **swcr_sessions = NULL;
+struct swcr_list *swcr_sessions = NULL;
 u_int32_t swcr_sesnum = 0;
 int32_t swcr_id = -1;
 
@@ -485,6 +485,7 @@ swcr_authenc(struct cryptop *crp)
 	u_char iv[EALG_MAX_BLOCK_LEN];
 	union authctx ctx;
 	struct cryptodesc *crd, *crda = NULL, *crde = NULL;
+	struct swcr_list *session;
 	struct swcr_data *sw, *swa, *swe = NULL;
 	const struct auth_hash *axf = NULL;
 	const struct enc_xform *exf = NULL;
@@ -494,12 +495,13 @@ swcr_authenc(struct cryptop *crp)
 
 	ivlen = blksz = iskip = oskip = 0;
 
+	session = &swcr_sessions[crp->crp_sid & 0xffffffff];
 	for (i = 0; i < crp->crp_ndesc; i++) {
 		crd = &crp->crp_desc[i];
-		for (sw = swcr_sessions[crp->crp_sid & 0xffffffff];
-		     sw && sw->sw_alg != crd->crd_alg;
-		     sw = sw->sw_next)
-			;
+		SLIST_FOREACH(sw, session, sw_next) {
+			if (sw->sw_alg == crd->crd_alg)
+				break;
+		}
 		if (sw == NULL)
 			return (EINVAL);
 
@@ -728,7 +730,8 @@ swcr_compdec(struct cryptodesc *crd, struct swcr_data *sw,
 int
 swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 {
-	struct swcr_data **swd;
+	struct swcr_list *session;
+	struct swcr_data *swd, *prev;
 	const struct auth_hash *axf;
 	const struct enc_xform *txf;
 	const struct comp_algo *cxf;
@@ -738,9 +741,9 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 	if (sid == NULL || cri == NULL)
 		return EINVAL;
 
-	if (swcr_sessions) {
+	if (swcr_sessions != NULL) {
 		for (i = 1; i < swcr_sesnum; i++)
-			if (swcr_sessions[i] == NULL)
+			if (SLIST_EMPTY(&swcr_sessions[i]))
 				break;
 	}
 
@@ -751,9 +754,9 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 		} else
 			swcr_sesnum *= 2;
 
-		swd = mallocarray(swcr_sesnum, sizeof(struct swcr_data *),
+		session = mallocarray(swcr_sesnum, sizeof(struct swcr_list),
 		    M_CRYPTO_DATA, M_NOWAIT | M_ZERO);
-		if (swd == NULL) {
+		if (session == NULL) {
 			/* Reset session number */
 			if (swcr_sesnum == CRYPTO_SW_SESSIONS)
 				swcr_sesnum = 0;
@@ -764,25 +767,30 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 
 		/* Copy existing sessions */
 		if (swcr_sessions) {
-			bcopy(swcr_sessions, swd,
-			    (swcr_sesnum / 2) * sizeof(struct swcr_data *));
+			bcopy(swcr_sessions, session,
+			    (swcr_sesnum / 2) * sizeof(struct swcr_list));
 			free(swcr_sessions, M_CRYPTO_DATA,
-			    (swcr_sesnum / 2) * sizeof(struct swcr_data *));
+			    (swcr_sesnum / 2) * sizeof(struct swcr_list));
 		}
 
-		swcr_sessions = swd;
+		swcr_sessions = session;
 	}
 
-	swd = &swcr_sessions[i];
+	session = &swcr_sessions[i];
 	*sid = i;
+	prev = NULL;
 
 	while (cri) {
-		*swd = malloc(sizeof(struct swcr_data), M_CRYPTO_DATA,
+		swd = malloc(sizeof(struct swcr_data), M_CRYPTO_DATA,
 		    M_NOWAIT | M_ZERO);
-		if (*swd == NULL) {
+		if (swd == NULL) {
 			swcr_freesession(i);
 			return ENOBUFS;
 		}
+		if (prev == NULL)
+			SLIST_INSERT_HEAD(session, swd, sw_next);
+		else
+			SLIST_INSERT_AFTER(prev, swd, sw_next);
 
 		switch (cri->cri_alg) {
 		case CRYPTO_3DES_CBC:
@@ -808,7 +816,7 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 			goto enccommon;
 		case CRYPTO_AES_GMAC:
 			txf = &enc_xform_aes_gmac;
-			(*swd)->sw_exf = txf;
+			swd->sw_exf = txf;
 			break;
 		case CRYPTO_CHACHA20_POLY1305:
 			txf = &enc_xform_chacha20_poly1305;
@@ -818,19 +826,19 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 			goto enccommon;
 		enccommon:
 			if (txf->ctxsize > 0) {
-				(*swd)->sw_kschedule = malloc(txf->ctxsize,
+				swd->sw_kschedule = malloc(txf->ctxsize,
 				    M_CRYPTO_DATA, M_NOWAIT | M_ZERO);
-				if ((*swd)->sw_kschedule == NULL) {
+				if (swd->sw_kschedule == NULL) {
 					swcr_freesession(i);
 					return EINVAL;
 				}
 			}
-			if (txf->setkey((*swd)->sw_kschedule, cri->cri_key,
+			if (txf->setkey(swd->sw_kschedule, cri->cri_key,
 			    cri->cri_klen / 8) < 0) {
 				swcr_freesession(i);
 				return EINVAL;
 			}
-			(*swd)->sw_exf = txf;
+			swd->sw_exf = txf;
 			break;
 
 		case CRYPTO_MD5_HMAC:
@@ -852,16 +860,16 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 			axf = &auth_hash_hmac_sha2_512_256;
 			goto authcommon;
 		authcommon:
-			(*swd)->sw_ictx = malloc(axf->ctxsize, M_CRYPTO_DATA,
+			swd->sw_ictx = malloc(axf->ctxsize, M_CRYPTO_DATA,
 			    M_NOWAIT);
-			if ((*swd)->sw_ictx == NULL) {
+			if (swd->sw_ictx == NULL) {
 				swcr_freesession(i);
 				return ENOBUFS;
 			}
 
-			(*swd)->sw_octx = malloc(axf->ctxsize, M_CRYPTO_DATA,
+			swd->sw_octx = malloc(axf->ctxsize, M_CRYPTO_DATA,
 			    M_NOWAIT);
-			if ((*swd)->sw_octx == NULL) {
+			if (swd->sw_octx == NULL) {
 				swcr_freesession(i);
 				return ENOBUFS;
 			}
@@ -869,24 +877,24 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 			for (k = 0; k < cri->cri_klen / 8; k++)
 				cri->cri_key[k] ^= HMAC_IPAD_VAL;
 
-			axf->Init((*swd)->sw_ictx);
-			axf->Update((*swd)->sw_ictx, cri->cri_key,
+			axf->Init(swd->sw_ictx);
+			axf->Update(swd->sw_ictx, cri->cri_key,
 			    cri->cri_klen / 8);
-			axf->Update((*swd)->sw_ictx, hmac_ipad_buffer,
+			axf->Update(swd->sw_ictx, hmac_ipad_buffer,
 			    axf->blocksize - (cri->cri_klen / 8));
 
 			for (k = 0; k < cri->cri_klen / 8; k++)
 				cri->cri_key[k] ^= (HMAC_IPAD_VAL ^ HMAC_OPAD_VAL);
 
-			axf->Init((*swd)->sw_octx);
-			axf->Update((*swd)->sw_octx, cri->cri_key,
+			axf->Init(swd->sw_octx);
+			axf->Update(swd->sw_octx, cri->cri_key,
 			    cri->cri_klen / 8);
-			axf->Update((*swd)->sw_octx, hmac_opad_buffer,
+			axf->Update(swd->sw_octx, hmac_opad_buffer,
 			    axf->blocksize - (cri->cri_klen / 8));
 
 			for (k = 0; k < cri->cri_klen / 8; k++)
 				cri->cri_key[k] ^= HMAC_OPAD_VAL;
-			(*swd)->sw_axf = axf;
+			swd->sw_axf = axf;
 			break;
 
 		case CRYPTO_AES_128_GMAC:
@@ -902,21 +910,21 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 			axf = &auth_hash_chacha20_poly1305;
 			goto authenccommon;
 		authenccommon:
-			(*swd)->sw_ictx = malloc(axf->ctxsize, M_CRYPTO_DATA,
+			swd->sw_ictx = malloc(axf->ctxsize, M_CRYPTO_DATA,
 			    M_NOWAIT);
-			if ((*swd)->sw_ictx == NULL) {
+			if (swd->sw_ictx == NULL) {
 				swcr_freesession(i);
 				return ENOBUFS;
 			}
-			axf->Init((*swd)->sw_ictx);
-			axf->Setkey((*swd)->sw_ictx, cri->cri_key,
+			axf->Init(swd->sw_ictx);
+			axf->Setkey(swd->sw_ictx, cri->cri_key,
 			    cri->cri_klen / 8);
-			(*swd)->sw_axf = axf;
+			swd->sw_axf = axf;
 			break;
 
 		case CRYPTO_DEFLATE_COMP:
 			cxf = &comp_algo_deflate;
-			(*swd)->sw_cxf = cxf;
+			swd->sw_cxf = cxf;
 			break;
 		case CRYPTO_ESN:
 			/* nothing to do */
@@ -926,9 +934,9 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 			return EINVAL;
 		}
 
-		(*swd)->sw_alg = cri->cri_alg;
+		swd->sw_alg = cri->cri_alg;
 		cri = cri->cri_next;
-		swd = &((*swd)->sw_next);
+		prev = swd;
 	}
 	return 0;
 }
@@ -939,21 +947,24 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 int
 swcr_freesession(u_int64_t tid)
 {
+	struct swcr_list *session;
 	struct swcr_data *swd;
 	const struct enc_xform *txf;
 	const struct auth_hash *axf;
 	u_int32_t sid = ((u_int32_t) tid) & 0xffffffff;
 
 	if (sid > swcr_sesnum || swcr_sessions == NULL ||
-	    swcr_sessions[sid] == NULL)
+	    SLIST_EMPTY(&swcr_sessions[sid]))
 		return EINVAL;
 
 	/* Silently accept and return */
 	if (sid == 0)
 		return 0;
 
-	while ((swd = swcr_sessions[sid]) != NULL) {
-		swcr_sessions[sid] = swd->sw_next;
+	session = &swcr_sessions[sid];
+	while (!SLIST_EMPTY(session)) {
+		swd = SLIST_FIRST(session);
+		SLIST_REMOVE_HEAD(session, sw_next);
 
 		switch (swd->sw_alg) {
 		case CRYPTO_3DES_CBC:
@@ -1018,6 +1029,7 @@ int
 swcr_process(struct cryptop *crp)
 {
 	struct cryptodesc *crd;
+	struct swcr_list *session;
 	struct swcr_data *sw;
 	u_int32_t lid;
 	int type;
@@ -1033,7 +1045,8 @@ swcr_process(struct cryptop *crp)
 	}
 
 	lid = crp->crp_sid & 0xffffffff;
-	if (lid >= swcr_sesnum || lid == 0 || swcr_sessions[lid] == NULL) {
+	if (lid >= swcr_sesnum || lid == 0 ||
+	    SLIST_EMPTY(&swcr_sessions[lid])) {
 		crp->crp_etype = ENOENT;
 		goto done;
 	}
@@ -1044,6 +1057,7 @@ swcr_process(struct cryptop *crp)
 		type = CRYPTO_BUF_IOV;
 
 	/* Go through crypto descriptors, processing as we go */
+	session = &swcr_sessions[lid];
 	for (i = 0; i < crp->crp_ndesc; i++) {
 		crd = &crp->crp_desc[i];
 		/*
@@ -1056,10 +1070,10 @@ swcr_process(struct cryptop *crp)
 		 * XXX between the various instances of an algorithm (so we can
 		 * XXX locate the correct crypto context).
 		 */
-		for (sw = swcr_sessions[lid];
-		    sw && sw->sw_alg != crd->crd_alg;
-		    sw = sw->sw_next)
-			;
+		SLIST_FOREACH(sw, session, sw_next) {
+			if (sw->sw_alg == crd->crd_alg)
+				break;
+		}
 
 		/* No such context ? */
 		if (sw == NULL) {
