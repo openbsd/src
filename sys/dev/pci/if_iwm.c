@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.353 2021/07/09 11:33:00 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.354 2021/07/09 11:36:14 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -253,6 +253,7 @@ int	iwm_firmware_store_section(struct iwm_softc *, enum iwm_ucode_type,
 	    uint8_t *, size_t);
 int	iwm_set_default_calib(struct iwm_softc *, const void *);
 void	iwm_fw_info_free(struct iwm_fw_info *);
+void	iwm_fw_version_str(char *, size_t, uint32_t, uint32_t, uint32_t);
 int	iwm_read_firmware(struct iwm_softc *, enum iwm_ucode_type);
 uint32_t iwm_read_prph_unlocked(struct iwm_softc *, uint32_t);
 uint32_t iwm_read_prph(struct iwm_softc *, uint32_t);
@@ -666,6 +667,20 @@ iwm_fw_info_free(struct iwm_fw_info *fw)
 	/* don't touch fw->fw_status */
 	memset(fw->fw_sects, 0, sizeof(fw->fw_sects));
 }
+	    
+void
+iwm_fw_version_str(char *buf, size_t bufsize,
+    uint32_t major, uint32_t minor, uint32_t api)
+{
+	/*
+	 * Starting with major version 35 the Linux driver prints the minor
+	 * version in hexadecimal.
+	 */
+	if (major >= 35)
+		snprintf(buf, bufsize, "%u.%08x.%u", major, minor, api);
+	else
+		snprintf(buf, bufsize, "%u.%u.%u", major, minor, api);
+}
 
 int
 iwm_read_firmware(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
@@ -714,10 +729,11 @@ iwm_read_firmware(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 		goto out;
 	}
 
-	snprintf(sc->sc_fwver, sizeof(sc->sc_fwver), "%d.%d (API ver %d)",
+	iwm_fw_version_str(sc->sc_fwver, sizeof(sc->sc_fwver),
 	    IWM_UCODE_MAJOR(le32toh(uhdr->ver)),
 	    IWM_UCODE_MINOR(le32toh(uhdr->ver)),
 	    IWM_UCODE_API(le32toh(uhdr->ver)));
+
 	data = uhdr->data;
 	len = fw->fw_rawsize - sizeof(*uhdr);
 
@@ -952,8 +968,8 @@ iwm_read_firmware(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 				err = EINVAL;
 				goto parse_out;
 			}
-			snprintf(sc->sc_fwver, sizeof(sc->sc_fwver),
-			    "%u.%u.%u",
+
+			iwm_fw_version_str(sc->sc_fwver, sizeof(sc->sc_fwver),
 			    le32toh(((uint32_t *)tlv_data)[0]),
 			    le32toh(((uint32_t *)tlv_data)[1]),
 			    le32toh(((uint32_t *)tlv_data)[2]));
