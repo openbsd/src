@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.354 2021/07/09 11:36:14 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.355 2021/07/09 11:41:20 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -11078,7 +11078,7 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	case PCI_PRODUCT_INTEL_WL_3165_1:
 	case PCI_PRODUCT_INTEL_WL_3165_2:
-		sc->sc_fwname = "iwm-7265-17";
+		sc->sc_fwname = "iwm-7265D-29";
 		sc->host_interrupt_operation_mode = 0;
 		sc->sc_device_family = IWM_DEVICE_FAMILY_7000;
 		sc->sc_fwdmasegsz = IWM_FWDMASEGSZ;
@@ -11104,7 +11104,7 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	case PCI_PRODUCT_INTEL_WL_7265_1:
 	case PCI_PRODUCT_INTEL_WL_7265_2:
-		sc->sc_fwname = "iwm-7265-17";
+		sc->sc_fwname = "iwm-7265D-29";
 		sc->host_interrupt_operation_mode = 0;
 		sc->sc_device_family = IWM_DEVICE_FAMILY_7000;
 		sc->sc_fwdmasegsz = IWM_FWDMASEGSZ;
@@ -11113,7 +11113,7 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	case PCI_PRODUCT_INTEL_WL_8260_1:
 	case PCI_PRODUCT_INTEL_WL_8260_2:
-		sc->sc_fwname = "iwm-8000C-34";
+		sc->sc_fwname = "iwm-8000C-36";
 		sc->host_interrupt_operation_mode = 0;
 		sc->sc_device_family = IWM_DEVICE_FAMILY_8000;
 		sc->sc_fwdmasegsz = IWM_FWDMASEGSZ_8000;
@@ -11121,7 +11121,7 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 		sc->nvm_type = IWM_NVM_EXT;
 		break;
 	case PCI_PRODUCT_INTEL_WL_8265_1:
-		sc->sc_fwname = "iwm-8265-34";
+		sc->sc_fwname = "iwm-8265-36";
 		sc->host_interrupt_operation_mode = 0;
 		sc->sc_device_family = IWM_DEVICE_FAMILY_8000;
 		sc->sc_fwdmasegsz = IWM_FWDMASEGSZ_8000;
@@ -11129,7 +11129,7 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 		sc->nvm_type = IWM_NVM_EXT;
 		break;
 	case PCI_PRODUCT_INTEL_WL_9260_1:
-		sc->sc_fwname = "iwm-9260-34";
+		sc->sc_fwname = "iwm-9260-46";
 		sc->host_interrupt_operation_mode = 0;
 		sc->sc_device_family = IWM_DEVICE_FAMILY_9000;
 		sc->sc_fwdmasegsz = IWM_FWDMASEGSZ_8000;
@@ -11138,7 +11138,7 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	case PCI_PRODUCT_INTEL_WL_9560_1:
 	case PCI_PRODUCT_INTEL_WL_9560_2:
-		sc->sc_fwname = "iwm-9000-34";
+		sc->sc_fwname = "iwm-9000-46";
 		sc->host_interrupt_operation_mode = 0;
 		sc->sc_device_family = IWM_DEVICE_FAMILY_9000;
 		sc->sc_fwdmasegsz = IWM_FWDMASEGSZ_8000;
