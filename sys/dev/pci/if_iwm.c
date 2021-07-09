@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.347 2021/07/09 11:04:05 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.348 2021/07/09 11:11:36 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -6272,6 +6272,8 @@ iwm_tx_fill_cmd(struct iwm_softc *sc, struct iwm_node *in,
 	rinfo = &iwm_rates[ridx];
 	if (iwm_is_mimo_ht_plcp(rinfo->ht_plcp))
 		rate_flags = IWM_RATE_MCS_ANT_AB_MSK;
+	else if (sc->sc_device_family == IWM_DEVICE_FAMILY_9000)
+		rate_flags = IWM_RATE_MCS_ANT_B_MSK;
 	else
 		rate_flags = IWM_RATE_MCS_ANT_A_MSK;
 	if (IWM_RIDX_IS_CCK(ridx))
@@ -8717,6 +8719,8 @@ iwm_setrates(struct iwm_node *in, int async)
 
 		if (iwm_is_mimo_ht_plcp(ht_plcp))
 			tab |= IWM_RATE_MCS_ANT_AB_MSK;
+		else if (sc->sc_device_family == IWM_DEVICE_FAMILY_9000)
+			tab |= IWM_RATE_MCS_ANT_B_MSK;
 		else
 			tab |= IWM_RATE_MCS_ANT_A_MSK;
 
@@ -8732,11 +8736,17 @@ iwm_setrates(struct iwm_node *in, int async)
 		tab = iwm_rates[ridx_min].plcp;
 		if (IWM_RIDX_IS_CCK(ridx_min))
 			tab |= IWM_RATE_MCS_CCK_MSK;
-		tab |= IWM_RATE_MCS_ANT_A_MSK;
+		if (sc->sc_device_family == IWM_DEVICE_FAMILY_9000)
+			tab |= IWM_RATE_MCS_ANT_B_MSK;
+		else
+			tab |= IWM_RATE_MCS_ANT_A_MSK;
 		lqcmd.rs_table[j++] = htole32(tab);
 	}
 
-	lqcmd.single_stream_ant_msk = IWM_ANT_A;
+	if (sc->sc_device_family == IWM_DEVICE_FAMILY_9000)
+		lqcmd.single_stream_ant_msk = IWM_ANT_B;
+	else
+		lqcmd.single_stream_ant_msk = IWM_ANT_A;
 	lqcmd.dual_stream_ant_msk = IWM_ANT_AB;
 
 	lqcmd.agg_time_limit = htole16(4000);	/* 4ms */
