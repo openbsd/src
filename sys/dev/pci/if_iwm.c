@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.344 2021/07/09 10:42:35 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.345 2021/07/09 10:45:17 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -697,6 +697,7 @@ iwm_read_firmware(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 	sc->sc_capaflags = 0;
 	sc->sc_capa_n_scan_channels = IWM_DEFAULT_SCAN_CHANNELS;
 	memset(sc->sc_enabled_capa, 0, sizeof(sc->sc_enabled_capa));
+	memset(sc->sc_ucode_api, 0, sizeof(sc->sc_ucode_api));
 	sc->n_cmd_versions = 0;
 
 	uhdr = (void *)fw->fw_rawdata;
