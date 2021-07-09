@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.346 2021/07/09 10:46:56 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.347 2021/07/09 11:04:05 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -254,7 +254,9 @@ int	iwm_firmware_store_section(struct iwm_softc *, enum iwm_ucode_type,
 int	iwm_set_default_calib(struct iwm_softc *, const void *);
 void	iwm_fw_info_free(struct iwm_fw_info *);
 int	iwm_read_firmware(struct iwm_softc *, enum iwm_ucode_type);
+uint32_t iwm_read_prph_unlocked(struct iwm_softc *, uint32_t);
 uint32_t iwm_read_prph(struct iwm_softc *, uint32_t);
+void	iwm_write_prph_unlocked(struct iwm_softc *, uint32_t, uint32_t);
 void	iwm_write_prph(struct iwm_softc *, uint32_t, uint32_t);
 int	iwm_read_mem(struct iwm_softc *, uint32_t, void *, int);
 int	iwm_write_mem(struct iwm_softc *, uint32_t, const void *, int);
@@ -292,6 +294,7 @@ void	iwm_apm_stop(struct iwm_softc *);
 int	iwm_allow_mcast(struct iwm_softc *);
 void	iwm_init_msix_hw(struct iwm_softc *);
 void	iwm_conf_msix_hw(struct iwm_softc *, int);
+int	iwm_clear_persistence_bit(struct iwm_softc *);
 int	iwm_start_hw(struct iwm_softc *);
 void	iwm_stop_device(struct iwm_softc *);
 void	iwm_nic_config(struct iwm_softc *);
@@ -1006,23 +1009,35 @@ iwm_read_firmware(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 }
 
 uint32_t
-iwm_read_prph(struct iwm_softc *sc, uint32_t addr)
+iwm_read_prph_unlocked(struct iwm_softc *sc, uint32_t addr)
 {
-	iwm_nic_assert_locked(sc);
 	IWM_WRITE(sc,
 	    IWM_HBUS_TARG_PRPH_RADDR, ((addr & 0x000fffff) | (3 << 24)));
 	IWM_BARRIER_READ_WRITE(sc);
 	return IWM_READ(sc, IWM_HBUS_TARG_PRPH_RDAT);
 }
 
-void
-iwm_write_prph(struct iwm_softc *sc, uint32_t addr, uint32_t val)
+uint32_t
+iwm_read_prph(struct iwm_softc *sc, uint32_t addr)
 {
 	iwm_nic_assert_locked(sc);
+	return iwm_read_prph_unlocked(sc, addr);
+}
+
+void
+iwm_write_prph_unlocked(struct iwm_softc *sc, uint32_t addr, uint32_t val)
+{
 	IWM_WRITE(sc,
 	    IWM_HBUS_TARG_PRPH_WADDR, ((addr & 0x000fffff) | (3 << 24)));
 	IWM_BARRIER_WRITE(sc);
 	IWM_WRITE(sc, IWM_HBUS_TARG_PRPH_WDAT, val);
+}
+
+void
+iwm_write_prph(struct iwm_softc *sc, uint32_t addr, uint32_t val)
+{
+	iwm_nic_assert_locked(sc);
+	iwm_write_prph_unlocked(sc, addr, val);
 }
 
 void
@@ -1962,6 +1977,26 @@ iwm_conf_msix_hw(struct iwm_softc *sc, int stopped)
 }
 
 int
+iwm_clear_persistence_bit(struct iwm_softc *sc)
+{
+	uint32_t hpm, wprot;
+
+	hpm = iwm_read_prph_unlocked(sc, IWM_HPM_DEBUG);
+	if (hpm != 0xa5a5a5a0 && (hpm & IWM_HPM_PERSISTENCE_BIT)) {
+		wprot = iwm_read_prph_unlocked(sc, IWM_PREG_PRPH_WPROT_9000);
+		if (wprot & IWM_PREG_WFPM_ACCESS) {
+			printf("%s: cannot clear persistence bit\n",
+			    DEVNAME(sc));
+			return EPERM;
+		}
+		iwm_write_prph_unlocked(sc, IWM_HPM_DEBUG,
+		    hpm & ~IWM_HPM_PERSISTENCE_BIT);
+	}
+
+	return 0;
+}
+
+int
 iwm_start_hw(struct iwm_softc *sc)
 {
 	int err;
@@ -1969,6 +2004,12 @@ iwm_start_hw(struct iwm_softc *sc)
 	err = iwm_prepare_card_hw(sc);
 	if (err)
 		return err;
+
+	if (sc->sc_device_family == IWM_DEVICE_FAMILY_9000) {
+		err = iwm_clear_persistence_bit(sc);
+		if (err)
+			return err;
+	}
 
 	/* Reset the entire device */
 	IWM_WRITE(sc, IWM_CSR_RESET, IWM_CSR_RESET_REG_FLAG_SW_RESET);
