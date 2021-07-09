@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.350 2021/07/09 11:24:55 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.351 2021/07/09 11:29:08 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -7105,7 +7105,12 @@ iwm_lmac_scan_fill_channels(struct iwm_softc *sc,
 		chan->iter_count = htole16(1);
 		chan->iter_interval = 0;
 		chan->flags = htole32(IWM_UNIFIED_SCAN_CHANNEL_PARTIAL);
-		if (n_ssids != 0 && !bgscan)
+		/*
+		 * Firmware may become unresponsive when asked to send
+		 * a directed probe request on a passive channel.
+		 */
+		if (n_ssids != 0 && !bgscan &&
+		    (c->ic_flags & IEEE80211_CHAN_PASSIVE) == 0)
 			chan->flags |= htole32(1 << 1); /* select SSID 0 */
 		chan++;
 		nchan++;
@@ -7132,7 +7137,12 @@ iwm_umac_scan_fill_channels(struct iwm_softc *sc,
 		chan->channel_num = ieee80211_mhz2ieee(c->ic_freq, 0);
 		chan->iter_count = 1;
 		chan->iter_interval = htole16(0);
-		if (n_ssids != 0 && !bgscan)
+		/*
+		 * Firmware may become unresponsive when asked to send
+		 * a directed probe request on a passive channel.
+		 */
+		if (n_ssids != 0 && !bgscan &&
+		    (c->ic_flags & IEEE80211_CHAN_PASSIVE) == 0)
 			chan->flags = htole32(1 << 0); /* select SSID 0 */
 		chan++;
 		nchan++;
