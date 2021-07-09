@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.351 2021/07/09 11:29:08 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.352 2021/07/09 11:31:05 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -7180,7 +7180,7 @@ iwm_fill_probe_req(struct iwm_softc *sc, struct iwm_scan_probe_req *preq)
 
 	memset(preq, 0, sizeof(*preq));
 
-	if (remain < sizeof(*wh) + 2 + ic->ic_des_esslen)
+	if (remain < sizeof(*wh) + 2)
 		return ENOBUFS;
 
 	/*
@@ -7197,9 +7197,12 @@ iwm_fill_probe_req(struct iwm_softc *sc, struct iwm_scan_probe_req *preq)
 	*(uint16_t *)&wh->i_seq[0] = 0;	/* filled by HW */
 
 	frm = (uint8_t *)(wh + 1);
-	frm = ieee80211_add_ssid(frm, ic->ic_des_essid, ic->ic_des_esslen);
 
-	/* Tell the firmware where the MAC header is. */
+	*frm++ = IEEE80211_ELEMID_SSID;
+	*frm++ = 0;
+	/* hardware inserts SSID */
+
+	/* Tell firmware where the MAC header and SSID IE are. */
 	preq->mac_header.offset = 0;
 	preq->mac_header.len = htole16(frm - (uint8_t *)wh);
 	remain -= frm - (uint8_t *)wh;
@@ -7216,7 +7219,6 @@ iwm_fill_probe_req(struct iwm_softc *sc, struct iwm_scan_probe_req *preq)
 	frm = ieee80211_add_rates(frm, rs);
 	if (rs->rs_nrates > IEEE80211_RATE_SIZE)
 		frm = ieee80211_add_xrates(frm, rs);
-	preq->band_data[0].len = htole16(frm - pos);
 	remain -= frm - pos;
 
 	if (isset(sc->sc_enabled_capa, 
@@ -7228,6 +7230,7 @@ iwm_fill_probe_req(struct iwm_softc *sc, struct iwm_scan_probe_req *preq)
 		*frm++ = 0;
 		remain -= 3;
 	}
+	preq->band_data[0].len = htole16(frm - pos);
 
 	if (sc->sc_nvm.sku_cap_band_52GHz_enable) {
 		/* Fill in 5GHz IEs. */
