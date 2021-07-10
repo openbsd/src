@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.29 2021/02/15 20:53:24 tobhe Exp $
+#	$OpenBSD: Makefile,v 1.30 2021/07/10 15:05:22 tobhe Exp $
 
 # Copyright (c) 2020 Tobias Heider <tobhe@openbsd.org>
 #
@@ -35,8 +35,8 @@ TEST_FLOWS = \
 	_ret=1; \
 	count=0; \
 	dynamic=${RIGHT_ADDR}; \
-	if [ "$$config_address" = true ]; then \
-		dynamic="172.16.13.37"; \
+	if [ -n "$$config_address" ]; then \
+		dynamic="172.16.13.[0-9]+"; \
 	fi; \
 	while [[ $$count -le 3 ]]; do \
 		ipsecctlleft=`ssh ${LEFT_SSH} ipsecctl -sa`; \
@@ -114,15 +114,23 @@ SETUP_CONFIG = \
 		global="$${global}set enforcesingleikesa\n"; \
 	fi; \
 	confstr=""; \
-	if [ "$$config_address" = true ]; then \
+	if [ -n "$$config_address" ]; then \
 		if [ "$$side" = left ]; then \
 			mode=passive; \
-			confstr="config address 172.16.13.36/31"; \
-			to="dynamic"; \
+			confstr="config address $$config_address"; \
+			if [[ "$$config_address" == */* ]]; then \
+				to="dynamic"; \
+			else \
+				to="$$config_address"; \
+			fi; \
 		else \
 			mode=active; \
 			confstr="request address any"; \
-			from="dynamic"; \
+			if [[ "$$config_address" == */* ]]; then \
+				from="dynamic"; \
+			else \
+				from="$$config_address"; \
+			fi; \
 		fi; \
 	fi; \
 	echo "MODE=\"$$mode\"" >> $@_$$side.conf; \
@@ -279,12 +287,23 @@ run-cert-single-ca-asn1dn:
 REGRESS_TARGETS += run-config-address
 run-config-address:
 	flowtype=esp; \
-	config_address=true; \
+	config_address=172.16.13.36; \
 	leftid=left-from-ca-both; \
 	rightid=right-from-ca-both; \
 	    ${SETUP_CONFIGS}
 	${SETUP_START}
-	config_address=true; \
+	config_address=172.16.13.36; \
+	flowtype=esp; ${TEST_FLOWS}; if [[ $$_ret -ne 0 ]]; then exit 1; fi
+
+REGRESS_TARGETS += run-config-address-pool
+run-config-address-pool:
+	flowtype=esp; \
+	config_address=172.16.13.36/31; \
+	leftid=left-from-ca-both; \
+	rightid=right-from-ca-both; \
+	    ${SETUP_CONFIGS}
+	${SETUP_START}
+	config_address=172.16.13.36/31; \
 	flowtype=esp; ${TEST_FLOWS}; if [[ $$_ret -ne 0 ]]; then exit 1; fi
 
 REGRESS_TARGETS += run-dstid-fail
