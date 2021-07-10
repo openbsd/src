@@ -1,4 +1,4 @@
-/* $OpenBSD: edit.c,v 1.7 2017/11/21 19:22:45 anton Exp $ */
+/* $OpenBSD: edit.c,v 1.8 2021/07/10 07:10:31 anton Exp $ */
 /*
  * Copyright (c) 2017 Anton Lindqvist <anton@openbsd.org>
  *
@@ -84,7 +84,7 @@ main(int argc, char *argv[])
 		err(1, "signal: SIGINT");
 
 	memset(&ws, 0, sizeof(ws));
-	ws.ws_col = 80,
+	ws.ws_col = 80;
 	ws.ws_row = 24;
 
 	pid = forkpty(&ptyfd, NULL, NULL, &ws);
@@ -111,8 +111,10 @@ main(int argc, char *argv[])
 			err(1, "poll");
 		}
 		if (nready == 0) {
-			if (timeout == PRTIM)
+			if (timeout == PRTIM) {
+				warnx("timeout waiting from prompt");
 				ret = 1;
+			}
 			break;
 		}
 		if (pfd.revents & (POLLERR | POLLNVAL))
