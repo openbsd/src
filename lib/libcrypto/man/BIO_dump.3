@@ -1,0 +1,144 @@
+.\" $OpenBSD: BIO_dump.3,v 1.1 2021/07/10 15:56:18 schwarze Exp $
+.\"
+.\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: July 10 2021 $
+.Dt BIO_DUMP 3
+.Os
+.Sh NAME
+.Nm BIO_dump ,
+.Nm BIO_dump_indent ,
+.Nm BIO_dump_fp ,
+.Nm BIO_dump_indent_fp
+.Nd hexadecimal printout of arbitrary byte arrays
+.Sh SYNOPSIS
+.In openssl/bio.h
+.Ft int
+.Fo BIO_dump
+.Fa "BIO *b"
+.Fa "const char *s"
+.Fa "int len"
+.Fc
+.Ft int
+.Fo BIO_dump_indent
+.Fa "BIO *b"
+.Fa "const char *s"
+.Fa "int len"
+.Fa "int indent"
+.Fc
+.Ft int
+.Fo BIO_dump_fp
+.Fa "FILE *fp"
+.Fa "const char *s"
+.Fa "int len"
+.Fc
+.Ft int
+.Fo BIO_dump_indent_fp
+.Fa "FILE *fp"
+.Fa "const char *s"
+.Fa "int len"
+.Fa "int indent"
+.Fc
+.Sh DESCRIPTION
+.Fn BIO_dump
+prints
+.Fa len
+bytes starting at
+.Fa s
+to
+.Fa bio
+in hexadecimal format.
+.Pp
+The first column of output contains the index, in the byte array starting at
+.Fa s ,
+of the first byte shown on the respective output line, expressed as a
+four-digit hexadecimal number starting at 0000, followed by a dash.
+After the dash, sixteen bytes of data are printed as two-digit
+hexadecimal numbers, respecting the order in which they appear in
+the array
+.Fa s .
+Another dash is printed after the eighth column.
+.Pp
+To the right of the hexadecimal representation of the bytes,
+the same bytes are printed again, this time as ASCII characters.
+Non-printable ASCII characters are replaced with dots.
+.Pp
+Trailing space characters and NUL bytes are omitted from the main table.
+If there are any, an additional line is printed, constisting of the
+.Fa len
+argument as a four-digit hexadecimal number, a dash, and the fixed string
+.Qq <SPACES/NULS> .
+.Pp
+.Fn BIO_dump_indent
+is similar except that
+.Fa indent
+space characters are prepended to each output line.
+If
+.Fa indent
+is 7 or more, the number of data columns is reduced such that the
+total width of the output does not exceed 79 characters per line.
+.Pp
+.Fn BIO_dump_fp
+and
+.Fn BIO_dump_indent_fp
+are similar except that
+.Xr fwrite 3
+is used instead of
+.Xr BIO_write 3 .
+.Sh RETURN VALUES
+These functions return the sum of the return values of all calls to
+.Xr BIO_write 3
+or
+.Xr fwrite 3
+that were made.
+This is useless because it may add a positive number, the total amount
+of bytes written by successful calls to
+.Xr BIO_write 3 ,
+to an incommensurable negative number, usually the number of calls to
+.Xr BIO_write 3
+that failed.
+All that can be said is that a negative return value indicates that
+at least part of the printing failed, and a positive return value
+indicates that at least some of the printing succeeded, but one
+cannot tell whether success or failure were partial or complete.
+Furthermore, a zero return value does not necessarily mean that
+nothing was printed; it can also occur if a part of the printing
+succeeded and another part failed.
+.Sh SEE ALSO
+.Xr hexdump 1 ,
+.Xr BIO_new 3 ,
+.Xr BIO_write 3
+.Sh HISTORY
+.Fn BIO_dump
+first appeared in SSLeay 0.6.5 and has been available since
+.Ox 2.4 .
+.Pp
+.Fn BIO_dump_indent
+first appeared in OpenSSL 0.9.6 and has been available since
+.Ox 2.9 .
+.Pp
+.Fn BIO_dump_fp
+and
+.Fn BIO_dump_indent_fp
+first appeared in OpenSSL 0.9.8 and have been available since
+.Ox 4.5 .
+.Sh BUGS
+If some parts of the printing operations succeed
+and some other parts fail,
+.Fn BIO_dump
+may silently yield incomplete results
+such that the caller cannot detect the partial failure.
+Besides, the function may have written more bytes than the return
+value indicates.
