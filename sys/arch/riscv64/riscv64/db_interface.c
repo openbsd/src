@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.4 2021/06/29 21:27:53 kettenis Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.5 2021/07/10 18:46:39 jasper Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K. Stevens
@@ -167,7 +167,7 @@ db_validate_address(vaddr_t addr)
 	struct pmap *pmap;
 
 	if (!p || !p->p_vmspace || !p->p_vmspace->vm_map.pmap ||
-		INKERNEL(addr))
+	    INKERNEL(addr))
 		pmap = pmap_kernel();
 	else
 		pmap = p->p_vmspace->vm_map.pmap;
