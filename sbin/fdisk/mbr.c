@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.78 2021/07/04 20:37:11 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.79 2021/07/11 12:51:36 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -43,7 +43,7 @@ MBR_protective_mbr(struct mbr *mbr)
 	int i;
 
 	if (mbr->offset != 0)
-		return (-1);
+		return -1;
 
 	for (i = 0; i < NDOSPART; i++) {
 		PRT_make(&mbr->part[i], mbr->offset, mbr->reloffset,
@@ -51,7 +51,7 @@ MBR_protective_mbr(struct mbr *mbr)
 		memcpy(&dp[i], &dos_partition, sizeof(dp[i]));
 	}
 
-	return (gpt_chk_mbr(dp, DL_GETDSIZE(&dl)));
+	return gpt_chk_mbr(dp, DL_GETDSIZE(&dl));
 }
 
 void
@@ -214,12 +214,12 @@ MBR_read(off_t where, struct dos_mbr *dos_mbr)
 
 	secbuf = DISK_readsector(where);
 	if (secbuf == NULL)
-		return (-1);
+		return -1;
 
 	memcpy(dos_mbr, secbuf, sizeof(*dos_mbr));
 	free(secbuf);
 
-	return (0);
+	return 0;
 }
 
 int
@@ -229,7 +229,7 @@ MBR_write(off_t where, struct dos_mbr *dos_mbr)
 
 	secbuf = DISK_readsector(where);
 	if (secbuf == NULL)
-		return (-1);
+		return -1;
 
 	/*
 	 * Place the new MBR at the start of the sector and
@@ -243,7 +243,7 @@ MBR_write(off_t where, struct dos_mbr *dos_mbr)
 
 	free(secbuf);
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -276,7 +276,7 @@ gpt_chk_mbr(struct dos_partition *dp, u_int64_t dsize)
 		}
 	}
 	if (found == 1 && eficnt == 1)
-		return (efi);
+		return efi;
 
-	return (-1);
+	return -1;
 }

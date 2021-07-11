@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.69 2021/06/25 19:24:53 krw Exp $	*/
+/*	$OpenBSD: misc.c,v 1.70 2021/07/11 12:51:36 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -48,7 +48,7 @@ unit_lookup(char *units)
 	int i = 0;
 
 	if (units == NULL)
-		return (SECTORS);
+		return SECTORS;
 
 	while (unit_types[i].abbr != NULL) {
 		if (strncasecmp(unit_types[i].abbr, units, 1) == 0)
@@ -57,9 +57,9 @@ unit_lookup(char *units)
 	}
 	/* default */
 	if (unit_types[i].abbr == NULL)
-		return (SECTORS);
+		return SECTORS;
 
-	return (i);
+	return i;
 }
 
 int
@@ -71,14 +71,14 @@ string_from_line(char *buf, size_t buflen)
 
 	len = getline(&line, &sz, stdin);
 	if (len == -1)
-		return (1);
+		return 1;
 
 	if (line[len - 1] == '\n')
 		line[len - 1] = '\0';
 
 	strlcpy(buf, line, buflen);
 
-	return (0);
+	return 0;
 }
 
 void
@@ -129,7 +129,7 @@ ask_num(const char *str, int dflt, int low, int high)
 		}
 	} while (errstr);
 
-	return (num);
+	return num;
 }
 
 int
@@ -153,7 +153,7 @@ ask_pid(int dflt, struct uuid *guid)
 		if (guid && strlen(lbuf) == UUID_STR_LEN) {
 			uuid_from_string(lbuf, guid, &status);
 			if (status == uuid_s_ok)
-				return (0x100);
+				return 0x100;
 		}
 
 		/* Convert */
@@ -173,7 +173,7 @@ ask_pid(int dflt, struct uuid *guid)
 		}
 	} while (num < 0 || num > 0xff);
 
-	return (num);
+	return num;
 }
 
 int
@@ -183,7 +183,7 @@ ask_yn(const char *str)
 	extern int y_flag;
 
 	if (y_flag)
-		return (1);
+		return 1;
 
 	printf("%s [n] ", str);
 	fflush(stdout);
@@ -195,7 +195,7 @@ ask_yn(const char *str)
 	if (ch == EOF || first == EOF)
 		errx(1, "eof");
 
-	return (first == 'y' || first == 'Y');
+	return first == 'y' || first == 'Y';
 }
 
 /*
@@ -231,7 +231,7 @@ getuint64(char *prompt, uint64_t oval, uint64_t minval, uint64_t maxval)
 			if (rslt < 0 || rslt >= sizeof(buf))
 				errx(1, "default value too long");
 		} else if (buf[0] == '*' && buf[1] == '\0') {
-			return (maxval);
+			return maxval;
 		}
 
 		/* deal with units */
@@ -319,7 +319,7 @@ getuint64(char *prompt, uint64_t oval, uint64_t minval, uint64_t maxval)
 		}
 	} while (1);
 
-	return((uint64_t)d);
+	return (uint64_t)d;
 }
 
 char *
@@ -335,7 +335,7 @@ ask_string(const char *prompt, const char *oval)
 	if (buf[0] == '\0' && oval)
 		strlcpy(buf, oval, sizeof(buf));
 
-	return(buf);
+	return buf;
 }
 
 /*
@@ -383,7 +383,7 @@ utf16le_to_string(const uint16_t *utf)
 	if (i == GPTPARTNAMESIZE)
 		name[i - 1] = '\0';
 
-	return (name);
+	return name;
 }
 
 uint16_t *
@@ -400,7 +400,7 @@ string_to_utf16le(const char *ch)
 	if (i == GPTPARTNAMESIZE)
 		utf[i - 1] = 0;
 
-	return (utf);
+	return utf;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.57 2021/05/07 22:15:13 krw Exp $	*/
+/*	$OpenBSD: disk.c,v 1.58 2021/07/11 12:51:36 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -102,7 +102,7 @@ DISK_printgeometry(char *units)
 	} else
 		printf("geometry: <none>\n");
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -125,19 +125,19 @@ DISK_readsector(off_t where)
 	where *= secsize;
 	off = lseek(disk.fd, where, SEEK_SET);
 	if (off != where)
-		return (NULL);
+		return NULL;
 
 	secbuf = calloc(1, secsize);
 	if (secbuf == NULL)
-		return (NULL);
+		return NULL;
 
 	len = read(disk.fd, secbuf, secsize);
 	if (len == -1 || len != secsize) {
 		free(secbuf);
-		return (NULL);
+		return NULL;
 	}
 
-	return (secbuf);
+	return secbuf;
 }
 
 /*
@@ -163,8 +163,8 @@ DISK_writesector(char *secbuf, off_t where)
 	if (len == -1 || len != secsize) {
 		/* short read or write */
 		errno = EIO;
-		return (-1);
+		return -1;
 	}
 
-	return (0);
+	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.87 2021/06/21 13:17:20 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.88 2021/07/11 12:51:36 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -215,10 +215,10 @@ ascii_id(int id)
 
 	for (i = 0; i < sizeof(part_types)/sizeof(struct part_type); i++) {
 		if (part_types[i].type == id)
-			return (part_types[i].sname);
+			return part_types[i].sname;
 	}
 
-	return (unknown);
+	return unknown;
 }
 
 void
@@ -271,9 +271,9 @@ check_chs(struct prt *partn)
 		(partn->esect >63) ||
 		(partn->ecyl > 1023) )
 	{
-		return (0);
+		return 0;
 	}
-	return (1);
+	return 1;
 }
 
 void
@@ -461,7 +461,7 @@ PRT_uuid_to_typename(struct uuid *uuid)
 done:
 	free(uuidstr);
 
-	return (partition_type);
+	return partition_type;
 }
 
 int
@@ -487,7 +487,7 @@ PRT_uuid_to_type(struct uuid *uuid)
 
 done:
 	free(uuidstr);
-	return (type);
+	return type;
 }
 
 struct uuid *
@@ -509,5 +509,5 @@ PRT_type_to_uuid(int type)
 	if (i == entries || status != uuid_s_ok)
 		uuid_from_string(part_types[0].guid, &guid, &status);
 
-	return (&guid);
+	return &guid;
 }

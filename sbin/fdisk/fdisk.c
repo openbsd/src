@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.114 2021/06/28 19:50:30 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.115 2021/07/11 12:51:36 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -250,5 +250,5 @@ main(int argc, char *argv[])
 done:
 	close(disk.fd);
 
-	return (0);
+	return 0;
 }

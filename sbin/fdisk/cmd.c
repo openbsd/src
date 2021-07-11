@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.118 2021/06/28 19:50:30 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.119 2021/07/11 12:51:36 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -55,7 +55,7 @@ Xreinit(char *args, struct mbr *mbr)
 		dogpt = 0;
 	else if (strlen(args) > 0) {
 		printf("Unrecognized modifier '%s'\n", args);
-		return (CMD_CONT);
+		return CMD_CONT;
 	}
 
 	MBR_make(&initial_mbr, &dos_mbr);
@@ -73,7 +73,7 @@ Xreinit(char *args, struct mbr *mbr)
 
 	printf("Use 'write' to update disk.\n");
 
-	return (CMD_DIRTY);
+	return CMD_DIRTY;
 }
 
 int
@@ -104,7 +104,7 @@ Xdisk(char *args, struct mbr *mbr)
 		disk.size = disk.cylinders * disk.heads * disk.sectors;
 	}
 
-	return (CMD_CONT);
+	return CMD_CONT;
 }
 
 int
@@ -120,15 +120,15 @@ Xswap(char *args, struct mbr *mbr)
 
 	pt = parsepn(to);
 	if (pt == -1)
-		return (CMD_CONT);
+		return CMD_CONT;
 
 	pf = parsepn(from);
 	if (pf == -1)
-		return (CMD_CONT);
+		return CMD_CONT;
 
 	if (pt == pf) {
 		printf("%d same partition as %d, doing nothing.\n", pt, pf);
-		return (CMD_CONT);
+		return CMD_CONT;
 	}
 
 	if (letoh64(gh.gh_sig) == GPTSIGNATURE) {
@@ -141,7 +141,7 @@ Xswap(char *args, struct mbr *mbr)
 		mbr->part[pf] = pp;
 	}
 
-	return (CMD_DIRTY);
+	return CMD_DIRTY;
 }
 
 int
@@ -164,7 +164,7 @@ gedit(int pn)
 			goto done;
 		memset(gg, 0, sizeof(struct gpt_partition));
 		printf("Partition %d is disabled.\n", pn);
-		return (CMD_DIRTY);
+		return CMD_DIRTY;
 	}
 
 	if (GPT_get_lba_start(pn) == -1 ||
@@ -190,13 +190,13 @@ gedit(int pn)
 	}
 
 	if (memcmp(gg, &oldgg, sizeof(*gg)))
-		return (CMD_DIRTY);
+		return CMD_DIRTY;
 	else
-		return (CMD_CLEAN);
+		return CMD_CLEAN;
 
  done:
 	*gg = oldgg;
-	return (CMD_CONT);
+	return CMD_CONT;
 }
 
 int
@@ -273,9 +273,9 @@ edit(int pn, struct mbr *mbr)
 
 done:
 	if (memcmp(pp, &oldpp, sizeof(*pp)))
-		return (CMD_DIRTY);
+		return CMD_DIRTY;
 	else
-		return (CMD_CONT);
+		return CMD_CONT;
 }
 
 int
@@ -285,12 +285,12 @@ Xedit(char *args, struct mbr *mbr)
 
 	pn = parsepn(args);
 	if (pn == -1)
-		return (CMD_CONT);
+		return CMD_CONT;
 
 	if (letoh64(gh.gh_sig) == GPTSIGNATURE)
-		return (gedit(pn));
+		return gedit(pn);
 	else
-		return (edit(pn, mbr));
+		return edit(pn, mbr);
 }
 
 int
@@ -337,13 +337,13 @@ gsetpid(int pn)
 	}
 
 	if (memcmp(gg, &oldgg, sizeof(*gg)))
-		return (CMD_DIRTY);
+		return CMD_DIRTY;
 	else
-		return (CMD_CLEAN);
+		return CMD_CLEAN;
 
  done:
 	*gg = oldgg;
-	return (CMD_CONT);
+	return CMD_CONT;
 }
 
 int
@@ -361,11 +361,11 @@ setpid(int pn, struct mbr *mbr)
 	/* Ask for MBR partition type */
 	num = ask_pid(pp->id, NULL);
 	if (num == pp->id)
-		return (CMD_CONT);
+		return CMD_CONT;
 
 	pp->id = num;
 
-	return (CMD_DIRTY);
+	return CMD_DIRTY;
 }
 
 int
@@ -375,12 +375,12 @@ Xsetpid(char *args, struct mbr *mbr)
 
 	pn = parsepn(args);
 	if (pn == -1)
-		return (CMD_CONT);
+		return CMD_CONT;
 
 	if (letoh64(gh.gh_sig) == GPTSIGNATURE)
-		return (gsetpid(pn));
+		return gsetpid(pn);
 	else
-		return (setpid(pn, mbr));
+		return setpid(pn, mbr);
 }
 
 int
@@ -392,7 +392,7 @@ Xselect(char *args, struct mbr *mbr)
 
 	pn = parsepn(args);
 	if (pn == -1)
-		return (CMD_CONT);
+		return CMD_CONT;
 
 	off = mbr->part[pn].bs;
 
@@ -400,7 +400,7 @@ Xselect(char *args, struct mbr *mbr)
 	if ((mbr->part[pn].id != DOSPTYP_EXTEND) &&
 	    (mbr->part[pn].id != DOSPTYP_EXTENDL)) {
 		printf("Partition %d is not an extended partition.\n", pn);
-		return (CMD_CONT);
+		return CMD_CONT;
 	}
 
 	if (firstoff == 0)
@@ -408,7 +408,7 @@ Xselect(char *args, struct mbr *mbr)
 
 	if (!off) {
 		printf("Loop to offset 0!  Not selected.\n");
-		return (CMD_CONT);
+		return CMD_CONT;
 	} else {
 		printf("Selected extended partition %d\n", pn);
 		printf("New MBR at offset %lld.\n", (long long)off);
@@ -417,7 +417,7 @@ Xselect(char *args, struct mbr *mbr)
 	/* Recursion is beautiful! */
 	USER_edit(off, firstoff);
 
-	return (CMD_CONT);
+	return CMD_CONT;
 }
 
 int
@@ -431,7 +431,7 @@ Xprint(char *args, struct mbr *mbr)
 	else
 		MBR_print(mbr, args);
 
-	return (CMD_CONT);
+	return CMD_CONT;
 }
 
 int
@@ -446,7 +446,7 @@ Xwrite(char *args, struct mbr *mbr)
 	if (n >= 2) {
 		warnx("MBR contains more than one OpenBSD partition!");
 		if (!ask_yn("Write MBR anyway?"))
-			return (CMD_CONT);
+			return CMD_CONT;
 	}
 
 	MBR_make(mbr, &dos_mbr);
@@ -454,7 +454,7 @@ Xwrite(char *args, struct mbr *mbr)
 	printf("Writing MBR at offset %lld.\n", (long long)mbr->offset);
 	if (MBR_write(mbr->offset, &dos_mbr) == -1) {
 		warn("error writing MBR");
-		return (CMD_CONT);
+		return CMD_CONT;
 	}
 
 	if (letoh64(gh.gh_sig) == GPTSIGNATURE) {
@@ -462,7 +462,7 @@ Xwrite(char *args, struct mbr *mbr)
 		efi = MBR_protective_mbr(mbr);
 		if (efi == -1 || GPT_write() == -1) {
 			warn("error writing GPT");
-			return (CMD_CONT);
+			return CMD_CONT;
 		}
 	} else {
 		GPT_zap_headers();
@@ -471,13 +471,13 @@ Xwrite(char *args, struct mbr *mbr)
 	/* Refresh in memory copy to reflect what was just written. */
 	MBR_parse(&dos_mbr, mbr->offset, mbr->reloffset, mbr);
 
-	return (CMD_CLEAN);
+	return CMD_CLEAN;
 }
 
 int
 Xquit(char *args, struct mbr *mbr)
 {
-	return (CMD_SAVE);
+	return CMD_SAVE;
 }
 
 int
@@ -489,7 +489,7 @@ Xabort(char *args, struct mbr *mbr)
 int
 Xexit(char *args, struct mbr *mbr)
 {
-	return (CMD_EXIT);
+	return CMD_EXIT;
 }
 
 int
@@ -511,7 +511,7 @@ Xhelp(char *args, struct mbr *mbr)
 		printf("\t%s\t\t%s\n", cmd_table[i].cmd, help);
 	}
 
-	return (CMD_CONT);
+	return CMD_CONT;
 }
 
 int
@@ -521,7 +521,7 @@ Xupdate(char *args, struct mbr *mbr)
 	memcpy(mbr->code, initial_mbr.code, sizeof(mbr->code));
 	mbr->signature = DOSMBR_SIGNATURE;
 	printf("Machine code updated.\n");
-	return (CMD_DIRTY);
+	return CMD_DIRTY;
 }
 
 int
@@ -537,7 +537,7 @@ Xflag(char *args, struct mbr *mbr)
 
 	pn = parsepn(part);
 	if (pn == -1)
-		return (CMD_CONT);
+		return CMD_CONT;
 
 	if (flag != NULL) {
 		/* Set flag to value provided. */
@@ -547,7 +547,7 @@ Xflag(char *args, struct mbr *mbr)
 			val = strtonum(flag, 0, 0xff, &errstr);
 		if (errstr) {
 			printf("flag value is %s: %s.\n", errstr, flag);
-			return (CMD_CONT);
+			return CMD_CONT;
 		}
 		if (letoh64(gh.gh_sig) == GPTSIGNATURE)
 			gp[pn].gp_attrs = htole64(val);
@@ -574,7 +574,7 @@ Xflag(char *args, struct mbr *mbr)
 		printf("Partition %d marked active.\n", pn);
 	}
 
-	return (CMD_DIRTY);
+	return CMD_DIRTY;
 }
 
 int
@@ -601,5 +601,5 @@ Xmanual(char *args, struct mbr *mbr)
 
 	signal(SIGPIPE, opipe);
 
-	return (CMD_CONT);
+	return CMD_CONT;
 }
