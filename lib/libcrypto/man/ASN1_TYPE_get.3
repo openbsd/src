@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ASN1_TYPE_get.3,v 1.11 2019/08/26 11:41:31 schwarze Exp $
+.\"	$OpenBSD: ASN1_TYPE_get.3,v 1.12 2021/07/11 19:03:45 schwarze Exp $
 .\"	OpenSSL 99d63d46 Mon Jun 6 00:43:05 2016 -0400
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 26 2019 $
+.Dd $Mdocdate: July 11 2021 $
 .Dt ASN1_TYPE_GET 3
 .Os
 .Sh NAME
@@ -275,8 +275,10 @@ returns 1 if the copying succeeds or 0 if it fails.
 returns 0 for a match or non-zero for a mismatch.
 .Sh SEE ALSO
 .Xr ASN1_generate_nconf 3 ,
+.Xr ASN1_get_object 3 ,
 .Xr ASN1_item_free 3 ,
 .Xr ASN1_OBJECT_new 3 ,
+.Xr ASN1_parse_dump 3 ,
 .Xr ASN1_put_object 3 ,
 .Xr ASN1_STRING_dup 3 ,
 .Xr ASN1_STRING_new 3 ,
