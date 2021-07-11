@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.81 2021/07/11 19:43:19 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.82 2021/07/11 20:51:50 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -66,9 +66,9 @@ MBR_init_GPT(struct mbr *mbr)
 	 * about the size of the disk, thus making it impossible to boot
 	 * such devices.
 	 */
-	mbr->mbr_prt[0].id = DOSPTYP_EFI;
-	mbr->mbr_prt[0].bs = 1;
-	mbr->mbr_prt[0].ns = UINT32_MAX;
+	mbr->mbr_prt[0].prt_id = DOSPTYP_EFI;
+	mbr->mbr_prt[0].prt_bs = 1;
+	mbr->mbr_prt[0].prt_ns = UINT32_MAX;
 
 	/* Fix up start/length fields. */
 	PRT_fix_CHS(&mbr->mbr_prt[0]);
@@ -90,69 +90,69 @@ MBR_init(struct mbr *mbr)
 	 * from disk!! Just mark them inactive until -b goodness spreads
 	 * further.
 	 */
-	mbr->mbr_prt[0].flag = 0;
-	mbr->mbr_prt[1].flag = 0;
-	mbr->mbr_prt[2].flag = 0;
+	mbr->mbr_prt[0].prt_flag = 0;
+	mbr->mbr_prt[1].prt_flag = 0;
+	mbr->mbr_prt[2].prt_flag = 0;
 
-	mbr->mbr_prt[3].flag = DOSACTIVE;
+	mbr->mbr_prt[3].prt_flag = DOSACTIVE;
 	mbr->mbr_signature = DOSMBR_SIGNATURE;
 
 	/* Use whole disk. Reserve first track, or first cyl, if possible. */
-	mbr->mbr_prt[3].id = DOSPTYP_OPENBSD;
+	mbr->mbr_prt[3].prt_id = DOSPTYP_OPENBSD;
 	if (disk.heads > 1)
-		mbr->mbr_prt[3].shead = 1;
+		mbr->mbr_prt[3].prt_shead = 1;
 	else
-		mbr->mbr_prt[3].shead = 0;
+		mbr->mbr_prt[3].prt_shead = 0;
 	if (disk.heads < 2 && disk.cylinders > 1)
-		mbr->mbr_prt[3].scyl = 1;
+		mbr->mbr_prt[3].prt_scyl = 1;
 	else
-		mbr->mbr_prt[3].scyl = 0;
-	mbr->mbr_prt[3].ssect = 1;
+		mbr->mbr_prt[3].prt_scyl = 0;
+	mbr->mbr_prt[3].prt_ssect = 1;
 
 	/* Go right to the end */
-	mbr->mbr_prt[3].ecyl = disk.cylinders - 1;
-	mbr->mbr_prt[3].ehead = disk.heads - 1;
-	mbr->mbr_prt[3].esect = disk.sectors;
+	mbr->mbr_prt[3].prt_ecyl = disk.cylinders - 1;
+	mbr->mbr_prt[3].prt_ehead = disk.heads - 1;
+	mbr->mbr_prt[3].prt_esect = disk.sectors;
 
 	/* Fix up start/length fields */
 	PRT_fix_BN(&mbr->mbr_prt[3], 3);
 
 #if defined(__powerpc__) || defined(__mips__)
 	/* Now fix up for the MS-DOS boot partition on PowerPC. */
-	mbr->mbr_prt[0].flag = DOSACTIVE;	/* Boot from dos part */
-	mbr->mbr_prt[3].flag = 0;
-	mbr->mbr_prt[3].ns += mbr->mbr_prt[3].bs;
-	mbr->mbr_prt[3].bs = mbr->mbr_prt[0].bs + mbr->mbr_prt[0].ns;
-	mbr->mbr_prt[3].ns -= mbr->mbr_prt[3].bs;
+	mbr->mbr_prt[0].prt_flag = DOSACTIVE;	/* Boot from dos part */
+	mbr->mbr_prt[3].prt_flag = 0;
+	mbr->mbr_prt[3].prt_ns += mbr->mbr_prt[3].prt_bs;
+	mbr->mbr_prt[3].prt_bs = mbr->mbr_prt[0].prt_bs + mbr->mbr_prt[0].prt_ns;
+	mbr->mbr_prt[3].prt_ns -= mbr->mbr_prt[3].prt_bs;
 	PRT_fix_CHS(&mbr->mbr_prt[3]);
-	if ((mbr->mbr_prt[3].shead != 1) || (mbr->mbr_prt[3].ssect != 1)) {
+	if ((mbr->mbr_prt[3].prt_shead != 1) || (mbr->mbr_prt[3].prt_ssect != 1)) {
 		/* align the partition on a cylinder boundary */
-		mbr->mbr_prt[3].shead = 0;
-		mbr->mbr_prt[3].ssect = 1;
-		mbr->mbr_prt[3].scyl += 1;
+		mbr->mbr_prt[3].prt_shead = 0;
+		mbr->mbr_prt[3].prt_ssect = 1;
+		mbr->mbr_prt[3].prt_scyl += 1;
 	}
 	/* Fix up start/length fields */
 	PRT_fix_BN(&mbr->mbr_prt[3], 3);
 #else
 	if (b_sectors > 0) {
-		mbr->mbr_prt[0].id = b_type;
-		mbr->mbr_prt[0].bs = b_offset;
-		mbr->mbr_prt[0].ns = b_sectors;
+		mbr->mbr_prt[0].prt_id = b_type;
+		mbr->mbr_prt[0].prt_bs = b_offset;
+		mbr->mbr_prt[0].prt_ns = b_sectors;
 		PRT_fix_CHS(&mbr->mbr_prt[0]);
-		mbr->mbr_prt[3].ns += mbr->mbr_prt[3].bs;
-		mbr->mbr_prt[3].bs = mbr->mbr_prt[0].bs + mbr->mbr_prt[0].ns;
-		mbr->mbr_prt[3].ns -= mbr->mbr_prt[3].bs;
+		mbr->mbr_prt[3].prt_ns += mbr->mbr_prt[3].prt_bs;
+		mbr->mbr_prt[3].prt_bs = mbr->mbr_prt[0].prt_bs + mbr->mbr_prt[0].prt_ns;
+		mbr->mbr_prt[3].prt_ns -= mbr->mbr_prt[3].prt_bs;
 		PRT_fix_CHS(&mbr->mbr_prt[3]);
 	}
 #endif
 
 	/* Start OpenBSD MBR partition on a power of 2 block number. */
 	daddr = 1;
-	while (daddr < DL_SECTOBLK(&dl, mbr->mbr_prt[3].bs))
+	while (daddr < DL_SECTOBLK(&dl, mbr->mbr_prt[3].prt_bs))
 		daddr *= 2;
-	adj = DL_BLKTOSEC(&dl, daddr) - mbr->mbr_prt[3].bs;
-	mbr->mbr_prt[3].bs += adj;
-	mbr->mbr_prt[3].ns -= adj;
+	adj = DL_BLKTOSEC(&dl, daddr) - mbr->mbr_prt[3].prt_bs;
+	mbr->mbr_prt[3].prt_bs += adj;
+	mbr->mbr_prt[3].prt_ns -= adj;
 	PRT_fix_CHS(&mbr->mbr_prt[3]);
 }
 

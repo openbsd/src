@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.90 2021/07/11 19:43:19 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.91 2021/07/11 20:51:50 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -30,7 +30,7 @@
 #include "misc.h"
 #include "part.h"
 
-int			 check_chs(struct prt *partn);
+int			 check_chs(struct prt *);
 const char		*ascii_id(int);
 
 static const struct part_type {
@@ -222,54 +222,54 @@ ascii_id(int id)
 }
 
 void
-PRT_parse(struct dos_partition *prt, off_t lba_self, off_t lba_firstembr,
-    struct prt *partn)
+PRT_parse(struct dos_partition *dp, off_t lba_self, off_t lba_firstembr,
+    struct prt *prt)
 {
 	off_t			off;
 	uint32_t		t;
 
-	partn->flag = prt->dp_flag;
-	partn->shead = prt->dp_shd;
+	prt->prt_flag = dp->dp_flag;
+	prt->prt_shead = dp->dp_shd;
 
-	partn->ssect = (prt->dp_ssect) & 0x3F;
-	partn->scyl = ((prt->dp_ssect << 2) & 0xFF00) | prt->dp_scyl;
+	prt->prt_ssect = (dp->dp_ssect) & 0x3F;
+	prt->prt_scyl = ((dp->dp_ssect << 2) & 0xFF00) | dp->dp_scyl;
 
-	partn->id = prt->dp_typ;
-	partn->ehead = prt->dp_ehd;
-	partn->esect = (prt->dp_esect) & 0x3F;
-	partn->ecyl = ((prt->dp_esect << 2) & 0xFF00) | prt->dp_ecyl;
+	prt->prt_id = dp->dp_typ;
+	prt->prt_ehead = dp->dp_ehd;
+	prt->prt_esect = (dp->dp_esect) & 0x3F;
+	prt->prt_ecyl = ((dp->dp_esect << 2) & 0xFF00) | dp->dp_ecyl;
 
-	if ((partn->id == DOSPTYP_EXTEND) || (partn->id == DOSPTYP_EXTENDL))
+	if ((prt->prt_id == DOSPTYP_EXTEND) || (prt->prt_id == DOSPTYP_EXTENDL))
 		off = lba_firstembr;
 	else
 		off = lba_self;
 
 #if 0 /* XXX */
-	partn->bs = letoh32(prt->dp_start) + off;
-	partn->ns = letoh32(prt->dp_size);
-	if (partn->id == DOSPTYP_EFI && partn == UINT32_MAX)
-		partn->ns = DL_GETDSIZE(&dl) - partn->bs;
+	prt->prt_bs = letoh32(dp->dp_start) + off;
+	prt->prt_ns = letoh32(dp->dp_size);
+	if (prt->prt_id == DOSPTYP_EFI && partn == UINT32_MAX)
+		prt->prt_ns = DL_GETDSIZE(&dl) - prt->prt_bs;
 #else
-	memcpy(&t, &prt->dp_start, sizeof(uint32_t));
-	partn->bs = letoh32(t) + off;
-	memcpy(&t, &prt->dp_size, sizeof(uint32_t));
-	partn->ns = letoh32(t);
-	if (partn->id == DOSPTYP_EFI && partn->ns == UINT32_MAX)
-		partn->ns = DL_GETDSIZE(&dl) - partn->bs;
+	memcpy(&t, &dp->dp_start, sizeof(uint32_t));
+	prt->prt_bs = letoh32(t) + off;
+	memcpy(&t, &dp->dp_size, sizeof(uint32_t));
+	prt->prt_ns = letoh32(t);
+	if (prt->prt_id == DOSPTYP_EFI && prt->prt_ns == UINT32_MAX)
+		prt->prt_ns = DL_GETDSIZE(&dl) - prt->prt_bs;
 #endif
 
-	PRT_fix_CHS(partn);
+	PRT_fix_CHS(prt);
 }
 
 int
-check_chs(struct prt *partn)
+check_chs(struct prt *prt)
 {
-	if ( (partn->shead > 255) ||
-		(partn->ssect >63) ||
-		(partn->scyl > 1023) ||
-		(partn->ehead >255) ||
-		(partn->esect >63) ||
-		(partn->ecyl > 1023) )
+	if ( (prt->prt_shead > 255) ||
+		(prt->prt_ssect >63) ||
+		(prt->prt_scyl > 1023) ||
+		(prt->prt_ehead >255) ||
+		(prt->prt_esect >63) ||
+		(prt->prt_ecyl > 1023) )
 	{
 		return 0;
 	}
@@ -277,57 +277,57 @@ check_chs(struct prt *partn)
 }
 
 void
-PRT_make(struct prt *partn, off_t offset, off_t reloff,
-    struct dos_partition *prt)
+PRT_make(struct prt *prt, off_t lba_self, off_t lba_firstembr,
+    struct dos_partition *dp)
 {
 	off_t			off;
 	uint32_t		ecsave, scsave;
 	uint64_t		t;
 
 	/* Save (and restore below) cylinder info we may fiddle with. */
-	scsave = partn->scyl;
-	ecsave = partn->ecyl;
+	scsave = prt->prt_scyl;
+	ecsave = prt->prt_ecyl;
 
-	if ((partn->scyl > 1023) || (partn->ecyl > 1023)) {
-		partn->scyl = (partn->scyl > 1023)? 1023: partn->scyl;
-		partn->ecyl = (partn->ecyl > 1023)? 1023: partn->ecyl;
+	if ((prt->prt_scyl > 1023) || (prt->prt_ecyl > 1023)) {
+		prt->prt_scyl = (prt->prt_scyl > 1023)? 1023: prt->prt_scyl;
+		prt->prt_ecyl = (prt->prt_ecyl > 1023)? 1023: prt->prt_ecyl;
 	}
-	if ((partn->id == DOSPTYP_EXTEND) || (partn->id == DOSPTYP_EXTENDL))
-		off = reloff;
+	if ((prt->prt_id == DOSPTYP_EXTEND) || (prt->prt_id == DOSPTYP_EXTENDL))
+		off = lba_firstembr;
 	else
-		off = offset;
+		off = lba_self;
 
-	if (check_chs(partn)) {
-		prt->dp_shd = partn->shead & 0xFF;
-		prt->dp_ssect = (partn->ssect & 0x3F) |
-		    ((partn->scyl & 0x300) >> 2);
-		prt->dp_scyl = partn->scyl & 0xFF;
-		prt->dp_ehd = partn->ehead & 0xFF;
-		prt->dp_esect = (partn->esect & 0x3F) |
-		    ((partn->ecyl & 0x300) >> 2);
-		prt->dp_ecyl = partn->ecyl & 0xFF;
+	if (check_chs(prt)) {
+		dp->dp_shd = prt->prt_shead & 0xFF;
+		dp->dp_ssect = (prt->prt_ssect & 0x3F) |
+		    ((prt->prt_scyl & 0x300) >> 2);
+		dp->dp_scyl = prt->prt_scyl & 0xFF;
+		dp->dp_ehd = prt->prt_ehead & 0xFF;
+		dp->dp_esect = (prt->prt_esect & 0x3F) |
+		    ((prt->prt_ecyl & 0x300) >> 2);
+		dp->dp_ecyl = prt->prt_ecyl & 0xFF;
 	} else {
-		memset(prt, 0xFF, sizeof(*prt));
+		memset(dp, 0xFF, sizeof(*dp));
 	}
 
-	prt->dp_flag = partn->flag & 0xFF;
-	prt->dp_typ = partn->id & 0xFF;
+	dp->dp_flag = prt->prt_flag & 0xFF;
+	dp->dp_typ = prt->prt_id & 0xFF;
 
-	t = htole64(partn->bs - off);
-	memcpy(&prt->dp_start, &t, sizeof(uint32_t));
-	if (partn->id == DOSPTYP_EFI && (partn->bs + partn->ns) >
+	t = htole64(prt->prt_bs - off);
+	memcpy(&dp->dp_start, &t, sizeof(uint32_t));
+	if (prt->prt_id == DOSPTYP_EFI && (prt->prt_bs + prt->prt_ns) >
 	    DL_GETDSIZE(&dl))
 		t = htole64(UINT32_MAX);
 	else
-		t = htole64(partn->ns);
-	memcpy(&prt->dp_size, &t, sizeof(uint32_t));
+		t = htole64(prt->prt_ns);
+	memcpy(&dp->dp_size, &t, sizeof(uint32_t));
 
-	partn->scyl = scsave;
-	partn->ecyl = ecsave;
+	prt->prt_scyl = scsave;
+	prt->prt_ecyl = ecsave;
 }
 
 void
-PRT_print(int num, struct prt *partn, char *units)
+PRT_print(int num, struct prt *prt, char *units)
 {
 	const int		secsize = unit_types[SECTORS].conversion;
 	double			size;
@@ -335,7 +335,7 @@ PRT_print(int num, struct prt *partn, char *units)
 
 	i = unit_lookup(units);
 
-	if (partn == NULL) {
+	if (prt == NULL) {
 		printf("            Starting         Ending    "
 		    "     LBA Info:\n");
 		printf(" #: id      C   H   S -      C   H   S "
@@ -343,29 +343,29 @@ PRT_print(int num, struct prt *partn, char *units)
 		printf("---------------------------------------"
 		    "----------------------------------------\n");
 	} else {
-		size = ((double)partn->ns * secsize) / unit_types[i].conversion;
+		size = ((double)prt->prt_ns * secsize) / unit_types[i].conversion;
 		printf("%c%1d: %.2X %6u %3u %3u - %6u %3u %3u "
 		    "[%12llu:%12.0f%s] %s\n",
-		    (partn->flag == DOSACTIVE)?'*':' ',
-		    num, partn->id,
-		    partn->scyl, partn->shead, partn->ssect,
-		    partn->ecyl, partn->ehead, partn->esect,
-		    partn->bs, size,
+		    (prt->prt_flag == DOSACTIVE)?'*':' ',
+		    num, prt->prt_id,
+		    prt->prt_scyl, prt->prt_shead, prt->prt_ssect,
+		    prt->prt_ecyl, prt->prt_ehead, prt->prt_esect,
+		    prt->prt_bs, size,
 		    unit_types[i].abbr,
-		    ascii_id(partn->id));
+		    ascii_id(prt->prt_id));
 	}
 }
 
 void
-PRT_fix_BN(struct prt *part, int pn)
+PRT_fix_BN(struct prt *prt, int pn)
 {
 	uint32_t		spt, tpc, spc;
 	uint32_t		start = 0;
 	uint32_t		end = 0;
 
 	/* Zero out entry if not used */
-	if (part->id == DOSPTYP_UNUSED) {
-		memset(part, 0, sizeof(*part));
+	if (prt->prt_id == DOSPTYP_UNUSED) {
+		memset(prt, 0, sizeof(*prt));
 		return;
 	}
 
@@ -374,32 +374,32 @@ PRT_fix_BN(struct prt *part, int pn)
 	tpc = disk.heads;
 	spc = spt * tpc;
 
-	start += part->scyl * spc;
-	start += part->shead * spt;
-	start += part->ssect - 1;
+	start += prt->prt_scyl * spc;
+	start += prt->prt_shead * spt;
+	start += prt->prt_ssect - 1;
 
-	end += part->ecyl * spc;
-	end += part->ehead * spt;
-	end += part->esect - 1;
+	end += prt->prt_ecyl * spc;
+	end += prt->prt_ehead * spt;
+	end += prt->prt_esect - 1;
 
 	/* XXX - Should handle this... */
 	if (start > end)
 		warnx("Start of partition #%d after end!", pn);
 
-	part->bs = start;
-	part->ns = (end - start) + 1;
+	prt->prt_bs = start;
+	prt->prt_ns = (end - start) + 1;
 }
 
 void
-PRT_fix_CHS(struct prt *part)
+PRT_fix_CHS(struct prt *prt)
 {
 	uint32_t		spt, tpc, spc;
 	uint32_t		start, end, size;
 	uint32_t		cyl, head, sect;
 
 	/* Zero out entry if not used */
-	if (part->id == DOSPTYP_UNUSED || part->ns == 0) {
-		memset(part, 0, sizeof(*part));
+	if (prt->prt_id == DOSPTYP_UNUSED || prt->prt_ns == 0) {
+		memset(prt, 0, sizeof(*prt));
 		return;
 	}
 
@@ -408,8 +408,8 @@ PRT_fix_CHS(struct prt *part)
 	tpc = disk.heads;
 	spc = spt * tpc;
 
-	start = part->bs;
-	size = part->ns;
+	start = prt->prt_bs;
+	size = prt->prt_ns;
 	end = (start + size) - 1;
 
 	/* Figure out starting CHS values */
@@ -417,18 +417,18 @@ PRT_fix_CHS(struct prt *part)
 	head = (start / spt); start -= (head * spt);
 	sect = (start + 1);
 
-	part->scyl = cyl;
-	part->shead = head;
-	part->ssect = sect;
+	prt->prt_scyl = cyl;
+	prt->prt_shead = head;
+	prt->prt_ssect = sect;
 
 	/* Figure out ending CHS values */
 	cyl = (end / spc); end -= (cyl * spc);
 	head = (end / spt); end -= (head * spt);
 	sect = (end + 1);
 
-	part->ecyl = cyl;
-	part->ehead = head;
-	part->esect = sect;
+	prt->prt_ecyl = cyl;
+	prt->prt_ehead = head;
+	prt->prt_esect = sect;
 }
 
 char *

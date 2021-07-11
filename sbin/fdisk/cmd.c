@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.122 2021/07/11 19:43:19 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.123 2021/07/11 20:51:50 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -241,8 +241,8 @@ edit(int pn, struct mbr *mbr)
 	oldpp = *pp;
 
 	setpid(pn, mbr);
-	if (pp->id == DOSPTYP_UNUSED) {
-		if (oldpp.id != DOSPTYP_UNUSED) {
+	if (pp->prt_id == DOSPTYP_UNUSED) {
+		if (oldpp.prt_id != DOSPTYP_UNUSED) {
 			memset(pp, 0, sizeof(*pp));
 			printf("Partition %d is disabled.\n", pn);
 		}
@@ -250,19 +250,19 @@ edit(int pn, struct mbr *mbr)
 	}
 
 	if (ask_yn("Do you wish to edit in CHS mode?")) {
-		pp->scyl = ask_num("BIOS Starting cylinder", pp->scyl,  0,
+		pp->prt_scyl = ask_num("BIOS Starting cylinder", pp->prt_scyl,  0,
 		    disk.cylinders - 1);
-		pp->shead = ask_num("BIOS Starting head",    pp->shead, 0,
+		pp->prt_shead = ask_num("BIOS Starting head",    pp->prt_shead, 0,
 		    disk.heads - 1);
-		pp->ssect = ask_num("BIOS Starting sector",  pp->ssect, 1,
+		pp->prt_ssect = ask_num("BIOS Starting sector",  pp->prt_ssect, 1,
 		    disk.sectors);
 
-		pp->ecyl = ask_num("BIOS Ending cylinder",   pp->ecyl,
-		    pp->scyl, disk.cylinders - 1);
-		pp->ehead = ask_num("BIOS Ending head",      pp->ehead,
-		    (pp->scyl == pp->ecyl) ? pp->shead : 0, disk.heads - 1);
-		pp->esect = ask_num("BIOS Ending sector",    pp->esect,
-		    (pp->scyl == pp->ecyl && pp->shead == pp->ehead) ? pp->ssect
+		pp->prt_ecyl = ask_num("BIOS Ending cylinder",   pp->prt_ecyl,
+		    pp->prt_scyl, disk.cylinders - 1);
+		pp->prt_ehead = ask_num("BIOS Ending head",      pp->prt_ehead,
+		    (pp->prt_scyl == pp->prt_ecyl) ? pp->prt_shead : 0, disk.heads - 1);
+		pp->prt_esect = ask_num("BIOS Ending sector",    pp->prt_esect,
+		    (pp->prt_scyl == pp->prt_ecyl && pp->prt_shead == pp->prt_ehead) ? pp->prt_ssect
 		    : 1, disk.sectors);
 
 		/* Fix up off/size values */
@@ -270,9 +270,9 @@ edit(int pn, struct mbr *mbr)
 		/* Fix up CHS values for LBA */
 		PRT_fix_CHS(pp);
 	} else {
-		pp->bs = getuint64("Partition offset", pp->bs, 0, disk.size - 1);
-		pp->ns = getuint64("Partition size",   pp->ns, 1,
-		    disk.size - pp->bs);
+		pp->prt_bs = getuint64("Partition offset", pp->prt_bs, 0, disk.size - 1);
+		pp->prt_ns = getuint64("Partition size",   pp->prt_ns, 1,
+		    disk.size - pp->prt_bs);
 
 		/* Fix up CHS values */
 		PRT_fix_CHS(pp);
@@ -366,11 +366,11 @@ setpid(int pn, struct mbr *mbr)
 	PRT_print(pn, pp, NULL);
 
 	/* Ask for MBR partition type */
-	num = ask_pid(pp->id, NULL);
-	if (num == pp->id)
+	num = ask_pid(pp->prt_id, NULL);
+	if (num == pp->prt_id)
 		return CMD_CONT;
 
-	pp->id = num;
+	pp->prt_id = num;
 
 	return CMD_DIRTY;
 }
@@ -401,11 +401,11 @@ Xselect(char *args, struct mbr *mbr)
 	if (pn == -1)
 		return CMD_CONT;
 
-	off = mbr->mbr_prt[pn].bs;
+	off = mbr->mbr_prt[pn].prt_bs;
 
 	/* Sanity checks */
-	if ((mbr->mbr_prt[pn].id != DOSPTYP_EXTEND) &&
-	    (mbr->mbr_prt[pn].id != DOSPTYP_EXTENDL)) {
+	if ((mbr->mbr_prt[pn].prt_id != DOSPTYP_EXTEND) &&
+	    (mbr->mbr_prt[pn].prt_id != DOSPTYP_EXTENDL)) {
 		printf("Partition %d is not an extended partition.\n", pn);
 		return CMD_CONT;
 	}
@@ -448,7 +448,7 @@ Xwrite(char *args, struct mbr *mbr)
 	int			efi, i, n;
 
 	for (i = 0, n = 0; i < NDOSPART; i++)
-		if (mbr->mbr_prt[i].id == 0xA6)
+		if (mbr->mbr_prt[i].prt_id == 0xA6)
 			n++;
 	if (n >= 2) {
 		warnx("MBR contains more than one OpenBSD partition!");
@@ -559,7 +559,7 @@ Xflag(char *args, struct mbr *mbr)
 		if (letoh64(gh.gh_sig) == GPTSIGNATURE)
 			gp[pn].gp_attrs = htole64(val);
 		else
-			mbr->mbr_prt[pn].flag = val;
+			mbr->mbr_prt[pn].prt_flag = val;
 		printf("Partition %d flag value set to 0x%llx.\n", pn, val);
 	} else {
 		/* Set active flag */
@@ -573,9 +573,9 @@ Xflag(char *args, struct mbr *mbr)
 		} else {
 			for (i = 0; i < NDOSPART; i++) {
 				if (i == pn)
-					mbr->mbr_prt[i].flag = DOSACTIVE;
+					mbr->mbr_prt[i].prt_flag = DOSACTIVE;
 				else
-					mbr->mbr_prt[i].flag = 0x00;
+					mbr->mbr_prt[i].prt_flag = 0x00;
 			}
 		}
 		printf("Partition %d marked active.\n", pn);

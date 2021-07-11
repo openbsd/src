@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.58 2021/07/11 19:43:19 krw Exp $	*/
+/*	$OpenBSD: user.c,v 1.59 2021/07/11 20:51:50 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -192,9 +192,9 @@ USER_print_disk(int verbosity)
 
 		/* Print out extended partitions too */
 		for (offset = i = 0; i < 4; i++)
-			if (mbr.mbr_prt[i].id == DOSPTYP_EXTEND ||
-			    mbr.mbr_prt[i].id == DOSPTYP_EXTENDL) {
-				offset = (off_t)mbr.mbr_prt[i].bs;
+			if (mbr.mbr_prt[i].prt_id == DOSPTYP_EXTEND ||
+			    mbr.mbr_prt[i].prt_id == DOSPTYP_EXTENDL) {
+				offset = (off_t)mbr.mbr_prt[i].prt_bs;
 				if (firstoff == 0)
 					firstoff = offset;
 			}
