@@ -1,4 +1,4 @@
-/*	$OpenBSD: fat.h,v 1.12 2017/08/14 22:45:12 sf Exp $	*/
+/*	$OpenBSD: fat.h,v 1.13 2021/07/11 04:34:13 jsg Exp $	*/
 /*	$NetBSD: fat.h,v 1.11 1997/10/17 11:23:49 ws Exp $	*/
 
 /*-
@@ -69,7 +69,7 @@
  * MSDOSFS:
  * Return true if filesystem uses 12 bit fats. Microsoft Programmer's
  * Reference says if the maximum cluster number in a filesystem is greater
- * than 4078 ((CLUST_RSRVS - CLUST_FIRST) & FAT12_MASK) then we've got a
+ * than 4084 ((CLUST_RSRVD - CLUST_FIRST) & FAT12_MASK) then we've got a
  * 16 bit fat filesystem. While mounting, the result of this test is stored
  * in pm_fatentrysize.
  */
