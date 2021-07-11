@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.117 2021/07/11 13:51:42 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.118 2021/07/11 19:43:19 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -241,7 +241,8 @@ main(int argc, char *argv[])
 			    "partition table?";
 		}
 	} else if (u_flag) {
-		memcpy(initial_mbr.part, mbr.part, sizeof(initial_mbr.part));
+		memcpy(initial_mbr.mbr_prt, mbr.mbr_prt,
+		    sizeof(initial_mbr.mbr_prt));
 		query = "Do you wish to write new MBR?";
 	}
 	if (query && ask_yn(query))

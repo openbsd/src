@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.89 2021/07/11 13:38:27 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.90 2021/07/11 19:43:19 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -222,7 +222,7 @@ ascii_id(int id)
 }
 
 void
-PRT_parse(struct dos_partition *prt, off_t offset, off_t reloff,
+PRT_parse(struct dos_partition *prt, off_t lba_self, off_t lba_firstembr,
     struct prt *partn)
 {
 	off_t			off;
@@ -240,9 +240,9 @@ PRT_parse(struct dos_partition *prt, off_t offset, off_t reloff,
 	partn->ecyl = ((prt->dp_esect << 2) & 0xFF00) | prt->dp_ecyl;
 
 	if ((partn->id == DOSPTYP_EXTEND) || (partn->id == DOSPTYP_EXTENDL))
-		off = reloff;
+		off = lba_firstembr;
 	else
-		off = offset;
+		off = lba_self;
 
 #if 0 /* XXX */
 	partn->bs = letoh32(prt->dp_start) + off;

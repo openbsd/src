@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.121 2021/07/11 13:51:42 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.122 2021/07/11 19:43:19 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -66,7 +66,7 @@ Xreinit(char *args, struct mbr *mbr)
 	}
 
 	MBR_make(&initial_mbr, &dos_mbr);
-	MBR_parse(&dos_mbr, mbr->offset, mbr->reloffset, mbr);
+	MBR_parse(&dos_mbr, mbr->mbr_lba_self, mbr->mbr_lba_firstembr, mbr);
 
 	if (dogpt) {
 		MBR_init_GPT(mbr);
@@ -143,9 +143,9 @@ Xswap(char *args, struct mbr *mbr)
 		gp[pt] = gp[pf];
 		gp[pf] = gg;
 	} else {
-		pp = mbr->part[pt];
-		mbr->part[pt] = mbr->part[pf];
-		mbr->part[pf] = pp;
+		pp = mbr->mbr_prt[pt];
+		mbr->mbr_prt[pt] = mbr->mbr_prt[pf];
+		mbr->mbr_prt[pf] = pp;
 	}
 
 	return CMD_DIRTY;
@@ -237,7 +237,7 @@ edit(int pn, struct mbr *mbr)
 	struct prt		 oldpp;
 	struct prt		*pp;
 
-	pp = &mbr->part[pn];
+	pp = &mbr->mbr_prt[pn];
 	oldpp = *pp;
 
 	setpid(pn, mbr);
@@ -359,7 +359,7 @@ setpid(int pn, struct mbr *mbr)
 	struct prt		*pp;
 	int			 num;
 
-	pp = &mbr->part[pn];
+	pp = &mbr->mbr_prt[pn];
 
 	/* Print out current table entry */
 	PRT_print(0, NULL, NULL);
@@ -401,11 +401,11 @@ Xselect(char *args, struct mbr *mbr)
 	if (pn == -1)
 		return CMD_CONT;
 
-	off = mbr->part[pn].bs;
+	off = mbr->mbr_prt[pn].bs;
 
 	/* Sanity checks */
-	if ((mbr->part[pn].id != DOSPTYP_EXTEND) &&
-	    (mbr->part[pn].id != DOSPTYP_EXTENDL)) {
+	if ((mbr->mbr_prt[pn].id != DOSPTYP_EXTEND) &&
+	    (mbr->mbr_prt[pn].id != DOSPTYP_EXTENDL)) {
 		printf("Partition %d is not an extended partition.\n", pn);
 		return CMD_CONT;
 	}
@@ -448,7 +448,7 @@ Xwrite(char *args, struct mbr *mbr)
 	int			efi, i, n;
 
 	for (i = 0, n = 0; i < NDOSPART; i++)
-		if (mbr->part[i].id == 0xA6)
+		if (mbr->mbr_prt[i].id == 0xA6)
 			n++;
 	if (n >= 2) {
 		warnx("MBR contains more than one OpenBSD partition!");
@@ -458,8 +458,8 @@ Xwrite(char *args, struct mbr *mbr)
 
 	MBR_make(mbr, &dos_mbr);
 
-	printf("Writing MBR at offset %lld.\n", (long long)mbr->offset);
-	if (MBR_write(mbr->offset, &dos_mbr) == -1) {
+	printf("Writing MBR at offset %lld.\n", (long long)mbr->mbr_lba_self);
+	if (MBR_write(mbr->mbr_lba_self, &dos_mbr) == -1) {
 		warn("error writing MBR");
 		return CMD_CONT;
 	}
@@ -476,7 +476,7 @@ Xwrite(char *args, struct mbr *mbr)
 	}
 
 	/* Refresh in memory copy to reflect what was just written. */
-	MBR_parse(&dos_mbr, mbr->offset, mbr->reloffset, mbr);
+	MBR_parse(&dos_mbr, mbr->mbr_lba_self, mbr->mbr_lba_firstembr, mbr);
 
 	return CMD_CLEAN;
 }
@@ -525,8 +525,8 @@ int
 Xupdate(char *args, struct mbr *mbr)
 {
 	/* Update code */
-	memcpy(mbr->code, initial_mbr.code, sizeof(mbr->code));
-	mbr->signature = DOSMBR_SIGNATURE;
+	memcpy(mbr->mbr_code, initial_mbr.mbr_code, sizeof(mbr->mbr_code));
+	mbr->mbr_signature = DOSMBR_SIGNATURE;
 	printf("Machine code updated.\n");
 	return CMD_DIRTY;
 }
@@ -559,7 +559,7 @@ Xflag(char *args, struct mbr *mbr)
 		if (letoh64(gh.gh_sig) == GPTSIGNATURE)
 			gp[pn].gp_attrs = htole64(val);
 		else
-			mbr->part[pn].flag = val;
+			mbr->mbr_prt[pn].flag = val;
 		printf("Partition %d flag value set to 0x%llx.\n", pn, val);
 	} else {
 		/* Set active flag */
@@ -573,9 +573,9 @@ Xflag(char *args, struct mbr *mbr)
 		} else {
 			for (i = 0; i < NDOSPART; i++) {
 				if (i == pn)
-					mbr->part[i].flag = DOSACTIVE;
+					mbr->mbr_prt[i].flag = DOSACTIVE;
 				else
-					mbr->part[i].flag = 0x00;
+					mbr->mbr_prt[i].flag = 0x00;
 			}
 		}
 		printf("Partition %d marked active.\n", pn);

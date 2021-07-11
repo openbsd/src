@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.80 2021/07/11 13:38:27 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.81 2021/07/11 19:43:19 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -42,11 +42,11 @@ MBR_protective_mbr(struct mbr *mbr)
 	struct dos_partition	dp[NDOSPART], dos_partition;
 	int			i;
 
-	if (mbr->offset != 0)
+	if (mbr->mbr_lba_self != 0)
 		return -1;
 
 	for (i = 0; i < NDOSPART; i++) {
-		PRT_make(&mbr->part[i], mbr->offset, mbr->reloffset,
+		PRT_make(&mbr->mbr_prt[i], mbr->mbr_lba_self, mbr->mbr_lba_firstembr,
 		    &dos_partition);
 		memcpy(&dp[i], &dos_partition, sizeof(dp[i]));
 	}
@@ -57,7 +57,7 @@ MBR_protective_mbr(struct mbr *mbr)
 void
 MBR_init_GPT(struct mbr *mbr)
 {
-	memset(&mbr->part, 0, sizeof(mbr->part));
+	memset(&mbr->mbr_prt, 0, sizeof(mbr->mbr_prt));
 
 	/* Use whole disk, starting after MBR.
 	 *
@@ -66,12 +66,12 @@ MBR_init_GPT(struct mbr *mbr)
 	 * about the size of the disk, thus making it impossible to boot
 	 * such devices.
 	 */
-	mbr->part[0].id = DOSPTYP_EFI;
-	mbr->part[0].bs = 1;
-	mbr->part[0].ns = UINT32_MAX;
+	mbr->mbr_prt[0].id = DOSPTYP_EFI;
+	mbr->mbr_prt[0].bs = 1;
+	mbr->mbr_prt[0].ns = UINT32_MAX;
 
 	/* Fix up start/length fields. */
-	PRT_fix_CHS(&mbr->part[0]);
+	PRT_fix_CHS(&mbr->mbr_prt[0]);
 }
 
 void
@@ -90,87 +90,89 @@ MBR_init(struct mbr *mbr)
 	 * from disk!! Just mark them inactive until -b goodness spreads
 	 * further.
 	 */
-	mbr->part[0].flag = 0;
-	mbr->part[1].flag = 0;
-	mbr->part[2].flag = 0;
+	mbr->mbr_prt[0].flag = 0;
+	mbr->mbr_prt[1].flag = 0;
+	mbr->mbr_prt[2].flag = 0;
 
-	mbr->part[3].flag = DOSACTIVE;
-	mbr->signature = DOSMBR_SIGNATURE;
+	mbr->mbr_prt[3].flag = DOSACTIVE;
+	mbr->mbr_signature = DOSMBR_SIGNATURE;
 
 	/* Use whole disk. Reserve first track, or first cyl, if possible. */
-	mbr->part[3].id = DOSPTYP_OPENBSD;
+	mbr->mbr_prt[3].id = DOSPTYP_OPENBSD;
 	if (disk.heads > 1)
-		mbr->part[3].shead = 1;
+		mbr->mbr_prt[3].shead = 1;
 	else
-		mbr->part[3].shead = 0;
+		mbr->mbr_prt[3].shead = 0;
 	if (disk.heads < 2 && disk.cylinders > 1)
-		mbr->part[3].scyl = 1;
+		mbr->mbr_prt[3].scyl = 1;
 	else
-		mbr->part[3].scyl = 0;
-	mbr->part[3].ssect = 1;
+		mbr->mbr_prt[3].scyl = 0;
+	mbr->mbr_prt[3].ssect = 1;
 
 	/* Go right to the end */
-	mbr->part[3].ecyl = disk.cylinders - 1;
-	mbr->part[3].ehead = disk.heads - 1;
-	mbr->part[3].esect = disk.sectors;
+	mbr->mbr_prt[3].ecyl = disk.cylinders - 1;
+	mbr->mbr_prt[3].ehead = disk.heads - 1;
+	mbr->mbr_prt[3].esect = disk.sectors;
 
 	/* Fix up start/length fields */
-	PRT_fix_BN(&mbr->part[3], 3);
+	PRT_fix_BN(&mbr->mbr_prt[3], 3);
 
 #if defined(__powerpc__) || defined(__mips__)
 	/* Now fix up for the MS-DOS boot partition on PowerPC. */
-	mbr->part[0].flag = DOSACTIVE;	/* Boot from dos part */
-	mbr->part[3].flag = 0;
-	mbr->part[3].ns += mbr->part[3].bs;
-	mbr->part[3].bs = mbr->part[0].bs + mbr->part[0].ns;
-	mbr->part[3].ns -= mbr->part[3].bs;
-	PRT_fix_CHS(&mbr->part[3]);
-	if ((mbr->part[3].shead != 1) || (mbr->part[3].ssect != 1)) {
+	mbr->mbr_prt[0].flag = DOSACTIVE;	/* Boot from dos part */
+	mbr->mbr_prt[3].flag = 0;
+	mbr->mbr_prt[3].ns += mbr->mbr_prt[3].bs;
+	mbr->mbr_prt[3].bs = mbr->mbr_prt[0].bs + mbr->mbr_prt[0].ns;
+	mbr->mbr_prt[3].ns -= mbr->mbr_prt[3].bs;
+	PRT_fix_CHS(&mbr->mbr_prt[3]);
+	if ((mbr->mbr_prt[3].shead != 1) || (mbr->mbr_prt[3].ssect != 1)) {
 		/* align the partition on a cylinder boundary */
-		mbr->part[3].shead = 0;
-		mbr->part[3].ssect = 1;
-		mbr->part[3].scyl += 1;
+		mbr->mbr_prt[3].shead = 0;
+		mbr->mbr_prt[3].ssect = 1;
+		mbr->mbr_prt[3].scyl += 1;
 	}
 	/* Fix up start/length fields */
-	PRT_fix_BN(&mbr->part[3], 3);
+	PRT_fix_BN(&mbr->mbr_prt[3], 3);
 #else
 	if (b_sectors > 0) {
-		mbr->part[0].id = b_type;
-		mbr->part[0].bs = b_offset;
-		mbr->part[0].ns = b_sectors;
-		PRT_fix_CHS(&mbr->part[0]);
-		mbr->part[3].ns += mbr->part[3].bs;
-		mbr->part[3].bs = mbr->part[0].bs + mbr->part[0].ns;
-		mbr->part[3].ns -= mbr->part[3].bs;
-		PRT_fix_CHS(&mbr->part[3]);
+		mbr->mbr_prt[0].id = b_type;
+		mbr->mbr_prt[0].bs = b_offset;
+		mbr->mbr_prt[0].ns = b_sectors;
+		PRT_fix_CHS(&mbr->mbr_prt[0]);
+		mbr->mbr_prt[3].ns += mbr->mbr_prt[3].bs;
+		mbr->mbr_prt[3].bs = mbr->mbr_prt[0].bs + mbr->mbr_prt[0].ns;
+		mbr->mbr_prt[3].ns -= mbr->mbr_prt[3].bs;
+		PRT_fix_CHS(&mbr->mbr_prt[3]);
 	}
 #endif
 
 	/* Start OpenBSD MBR partition on a power of 2 block number. */
 	daddr = 1;
-	while (daddr < DL_SECTOBLK(&dl, mbr->part[3].bs))
+	while (daddr < DL_SECTOBLK(&dl, mbr->mbr_prt[3].bs))
 		daddr *= 2;
-	adj = DL_BLKTOSEC(&dl, daddr) - mbr->part[3].bs;
-	mbr->part[3].bs += adj;
-	mbr->part[3].ns -= adj;
-	PRT_fix_CHS(&mbr->part[3]);
+	adj = DL_BLKTOSEC(&dl, daddr) - mbr->mbr_prt[3].bs;
+	mbr->mbr_prt[3].bs += adj;
+	mbr->mbr_prt[3].ns -= adj;
+	PRT_fix_CHS(&mbr->mbr_prt[3]);
 }
 
 void
-MBR_parse(struct dos_mbr *dos_mbr, off_t offset, off_t reloff, struct mbr *mbr)
+MBR_parse(struct dos_mbr *dos_mbr, off_t lba_self, off_t lba_firstembr,
+    struct mbr *mbr)
 {
 	struct dos_partition	dos_parts[NDOSPART];
 	int			i;
 
-	memcpy(mbr->code, dos_mbr->dmbr_boot, sizeof(mbr->code));
-	mbr->offset = offset;
-	mbr->reloffset = reloff;
-	mbr->signature = letoh16(dos_mbr->dmbr_sign);
+	memcpy(mbr->mbr_code, dos_mbr->dmbr_boot, sizeof(mbr->mbr_code));
+	mbr->mbr_lba_self = lba_self;
+	mbr->mbr_lba_firstembr = lba_firstembr;
+	mbr->mbr_signature = letoh16(dos_mbr->dmbr_sign);
 
 	memcpy(dos_parts, dos_mbr->dmbr_parts, sizeof(dos_parts));
 
 	for (i = 0; i < NDOSPART; i++)
-		PRT_parse(&dos_parts[i], offset, reloff, &mbr->part[i]);
+		PRT_parse(&dos_parts[i], lba_self, lba_firstembr,
+		    &mbr->mbr_prt[i]);
 }
 
 void
@@ -179,11 +181,11 @@ MBR_make(struct mbr *mbr, struct dos_mbr *dos_mbr)
 	struct dos_partition	dos_partition;
 	int			i;
 
-	memcpy(dos_mbr->dmbr_boot, mbr->code, sizeof(dos_mbr->dmbr_boot));
+	memcpy(dos_mbr->dmbr_boot, mbr->mbr_code, sizeof(dos_mbr->dmbr_boot));
 	dos_mbr->dmbr_sign = htole16(DOSMBR_SIGNATURE);
 
 	for (i = 0; i < NDOSPART; i++) {
-		PRT_make(&mbr->part[i], mbr->offset, mbr->reloffset,
+		PRT_make(&mbr->mbr_prt[i], mbr->mbr_lba_self, mbr->mbr_lba_firstembr,
 		    &dos_partition);
 		memcpy(&dos_mbr->dmbr_parts[i], &dos_partition,
 		    sizeof(dos_mbr->dmbr_parts[i]));
@@ -198,13 +200,13 @@ MBR_print(struct mbr *mbr, char *units)
 	DISK_printgeometry(NULL);
 
 	/* Header */
-	printf("Offset: %lld\t", (long long)mbr->offset);
-	printf("Signature: 0x%X\n", (int)mbr->signature);
+	printf("Offset: %lld\t", (long long)mbr->mbr_lba_self);
+	printf("Signature: 0x%X\n", (int)mbr->mbr_signature);
 	PRT_print(0, NULL, units);
 
 	/* Entries */
 	for (i = 0; i < NDOSPART; i++)
-		PRT_print(i, &mbr->part[i], units);
+		PRT_print(i, &mbr->mbr_prt[i], units);
 }
 
 int
