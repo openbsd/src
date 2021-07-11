@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_dump.3,v 1.1 2021/07/10 15:56:18 schwarze Exp $
+.\" $OpenBSD: BIO_dump.3,v 1.2 2021/07/11 20:18:07 beck Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 10 2021 $
+.Dd $Mdocdate: July 11 2021 $
 .Dt BIO_DUMP 3
 .Os
 .Sh NAME
@@ -98,24 +98,13 @@ are similar except that
 is used instead of
 .Xr BIO_write 3 .
 .Sh RETURN VALUES
-These functions return the sum of the return values of all calls to
+On success these functions return the total number of bytes written by
 .Xr BIO_write 3
 or
-.Xr fwrite 3
-that were made.
-This is useless because it may add a positive number, the total amount
-of bytes written by successful calls to
-.Xr BIO_write 3 ,
-to an incommensurable negative number, usually the number of calls to
-.Xr BIO_write 3
-that failed.
-All that can be said is that a negative return value indicates that
-at least part of the printing failed, and a positive return value
-indicates that at least some of the printing succeeded, but one
-cannot tell whether success or failure were partial or complete.
-Furthermore, a zero return value does not necessarily mean that
-nothing was printed; it can also occur if a part of the printing
-succeeded and another part failed.
+.Xr fwrite 3 .
+If a failure occurs at any point when writing, these
+functions will stop after having potentially written out partial results,
+and return -1.
 .Sh SEE ALSO
 .Xr hexdump 1 ,
 .Xr BIO_new 3 ,
@@ -134,11 +123,3 @@ and
 .Fn BIO_dump_indent_fp
 first appeared in OpenSSL 0.9.8 and have been available since
 .Ox 4.5 .
-.Sh BUGS
-If some parts of the printing operations succeed
-and some other parts fail,
-.Fn BIO_dump
-may silently yield incomplete results
-such that the caller cannot detect the partial failure.
-Besides, the function may have written more bytes than the return
-value indicates.

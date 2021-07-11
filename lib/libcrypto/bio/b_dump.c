@@ -1,10 +1,10 @@
-/* $OpenBSD: b_dump.c,v 1.21 2015/04/23 06:11:19 deraadt Exp $ */
+/* $OpenBSD: b_dump.c,v 1.22 2021/07/11 20:18:07 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
  * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
+* The implementation was written so as to conform with Netscapes SSL.
  *
  * This library is free for commercial and non-commercial use as long as
  * the following conditions are aheared to.  The following conditions
@@ -82,7 +82,7 @@ BIO_dump_indent_cb(int (*cb)(const void *data, size_t len, void *u),
 {
 	int ret = 0;
 	char buf[288 + 1], tmp[20], str[128 + 1];
-	int i, j, rows, trc;
+	int i, j, rows, trc, written;
 	unsigned char ch;
 	int dump_width;
 
@@ -133,13 +133,18 @@ BIO_dump_indent_cb(int (*cb)(const void *data, size_t len, void *u),
 		/* if this is the last call then update the ddt_dump thing so
 		 * that we will move the selection point in the debug window
 		 */
-		ret += cb((void *)buf, strlen(buf), u);
+		if ((written = cb((void *)buf, strlen(buf), u)) < 0)
+			return -1;
+		ret += written;
+
 	}
 #ifdef TRUNCATE
 	if (trc > 0) {
 		snprintf(buf, sizeof buf, "%s%04x - <SPACES/NULS>\n",
 		    str, len + trc);
-		ret += cb((void *)buf, strlen(buf), u);
+		if ((written = cb((void *)buf, strlen(buf), u)) < 0)
+			return -1;
+		ret += written;
 	}
 #endif
 	return (ret);
