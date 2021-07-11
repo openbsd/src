@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.116 2021/07/11 13:38:27 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.117 2021/07/11 13:51:42 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -19,6 +19,7 @@
 #include <sys/param.h>	/* DEV_BSIZE */
 #include <sys/disklabel.h>
 
+#include <ctype.h>
 #include <err.h>
 #include <fcntl.h>
 #include <paths.h>
@@ -44,6 +45,8 @@ static unsigned char		builtin_mbr[] = {
 uint32_t		b_sectors, b_offset;
 uint8_t			b_type;
 int			A_flag, y_flag;
+
+void		 parse_b(const char *, uint32_t *, uint32_t *, uint8_t *);
 
 static void
 usage(void)
@@ -251,4 +254,54 @@ done:
 	close(disk.fd);
 
 	return 0;
+}
+
+void
+parse_b(const char *arg, uint32_t *blocks, uint32_t *offset, uint8_t *type)
+{
+	const char		*errstr;
+	char			*poffset, *ptype;
+	uint32_t		 blockcount, blockoffset;
+	uint8_t			 partitiontype;
+
+	blockoffset = BLOCKALIGNMENT;
+	partitiontype = DOSPTYP_EFISYS;
+	ptype = NULL;
+
+	/* First number: # of 512-byte blocks in boot partition. */
+	poffset = strchr(arg, '@');
+	if (poffset != NULL)
+		*poffset++ = '\0';
+	if (poffset != NULL) {
+		ptype = strchr(poffset, ':');
+		if (ptype != NULL)
+			*ptype++ = '\0';
+	}
+
+	blockcount = strtonum(arg, BLOCKALIGNMENT, UINT32_MAX, &errstr);
+	if (errstr)
+		errx(1, "Block argument %s [%u..%u].", errstr, BLOCKALIGNMENT,
+		    UINT32_MAX);
+
+	if (poffset == NULL)
+		goto done;
+
+	/* Second number: # of 512-byte blocks to offset partition start. */
+	blockoffset = strtonum(poffset, BLOCKALIGNMENT, UINT32_MAX, &errstr);
+	if (errstr)
+		errx(1, "Block offset argument %s [%u..%u].", errstr,
+		    BLOCKALIGNMENT, UINT32_MAX);
+
+	if (ptype == NULL)
+		goto done;
+
+	if (strlen(ptype) != 2 || !(isxdigit(*ptype) && isxdigit(*(ptype + 1))))
+		errx(1, "Block type is not 2 digit hex value");
+
+	partitiontype = strtol(ptype, NULL, 16);
+
+ done:
+	*blocks = blockcount;
+	*offset = blockoffset;
+	*type = partitiontype;
 }

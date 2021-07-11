@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.120 2021/07/11 13:38:27 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.121 2021/07/11 13:51:42 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -35,11 +35,15 @@
 #include "user.h"
 #include "cmd.h"
 
-int gedit(int);
-int edit(int, struct mbr *);
-int gsetpid(int);
-int setpid(int, struct mbr *);
-int parsepn(char *);
+int		 gedit(int);
+int		 edit(int, struct mbr *);
+int		 gsetpid(int);
+int		 setpid(int, struct mbr *);
+int		 parsepn(char *);
+
+int		 ask_num(const char *, int, int, int);
+int		 ask_pid(int, struct uuid *);
+char		*ask_string(const char *, const char *);
 
 extern const unsigned char	manpage[];
 extern const int		manpage_sz;
@@ -603,4 +607,95 @@ Xmanual(char *args, struct mbr *mbr)
 	signal(SIGPIPE, opipe);
 
 	return CMD_CONT;
+}
+
+int
+ask_num(const char *str, int dflt, int low, int high)
+{
+	char			 lbuf[100];
+	const char		*errstr;
+	int			 num;
+
+	if (dflt < low)
+		dflt = low;
+	else if (dflt > high)
+		dflt = high;
+
+	do {
+		printf("%s [%d - %d]: [%d] ", str, low, high, dflt);
+
+		if (string_from_line(lbuf, sizeof(lbuf)))
+			errx(1, "eof");
+
+		if (lbuf[0] == '\0') {
+			num = dflt;
+			errstr = NULL;
+		} else {
+			num = (int)strtonum(lbuf, low, high, &errstr);
+			if (errstr)
+				printf("%s is %s: %s.\n", str, errstr, lbuf);
+		}
+	} while (errstr);
+
+	return num;
+}
+
+int
+ask_pid(int dflt, struct uuid *guid)
+{
+	char			lbuf[100], *cp;
+	int			num = -1, status;
+
+	do {
+		printf("Partition id ('0' to disable) [01 - FF]: [%X] ", dflt);
+		printf("(? for help) ");
+
+		if (string_from_line(lbuf, sizeof(lbuf)))
+			errx(1, "eof");
+
+		if (lbuf[0] == '?') {
+			PRT_printall();
+			continue;
+		}
+
+		if (guid && strlen(lbuf) == UUID_STR_LEN) {
+			uuid_from_string(lbuf, guid, &status);
+			if (status == uuid_s_ok)
+				return 0x100;
+		}
+
+		/* Convert */
+		cp = lbuf;
+		num = strtol(lbuf, &cp, 16);
+
+		/* Make sure only number present */
+		if (cp == lbuf)
+			num = dflt;
+		if (*cp != '\0') {
+			printf("'%s' is not a valid number.\n", lbuf);
+			num = -1;
+		} else if (num == 0) {
+			break;
+		} else if (num < 0 || num > 0xff) {
+			printf("'%x' is out of range.\n", num);
+		}
+	} while (num < 0 || num > 0xff);
+
+	return num;
+}
+
+char *
+ask_string(const char *prompt, const char *oval)
+{
+	static char		buf[UUID_STR_LEN + 1];
+
+	buf[0] = '\0';
+	printf("%s: [%s] ", prompt, oval ? oval : "");
+	if (string_from_line(buf, sizeof(buf)))
+		errx(1, "eof");
+
+	if (buf[0] == '\0' && oval)
+		strlcpy(buf, oval, sizeof(buf));
+
+	return buf;
 }

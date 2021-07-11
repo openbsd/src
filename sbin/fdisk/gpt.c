@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.36 2021/07/11 13:38:27 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.37 2021/07/11 13:51:42 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -50,6 +50,7 @@ int			  get_header(off_t);
 int			  get_partition_table(void);
 int			  init_gh(void);
 int			  init_gp(int, uint32_t);
+uint32_t		  crc32(const u_char *, const uint32_t);
 
 int
 get_header(off_t where)
@@ -712,4 +713,35 @@ GPT_get_lba_end(unsigned int pn)
 	gp[pn].gp_lba_end = htole64(bs + ns - 1);
 
 	return 0;
+}
+
+/*
+ * Adapted from Hacker's Delight crc32b().
+ *
+ * To quote http://www.hackersdelight.org/permissions.htm :
+ *
+ * "You are free to use, copy, and distribute any of the code on
+ *  this web site, whether modified by you or not. You need not give
+ *  attribution. This includes the algorithms (some of which appear
+ *  in Hacker's Delight), the Hacker's Assistant, and any code submitted
+ *  by readers. Submitters implicitly agree to this."
+ */
+uint32_t
+crc32(const u_char *buf, const uint32_t size)
+{
+	int			j;
+	uint32_t		i, byte, crc, mask;
+
+	crc = 0xFFFFFFFF;
+
+	for (i = 0; i < size; i++) {
+		byte = buf[i];			/* Get next byte. */
+		crc = crc ^ byte;
+		for (j = 7; j >= 0; j--) {	/* Do eight times. */
+			mask = -(crc & 1);
+			crc = (crc >> 1) ^ (0xEDB88320 & mask);
+		}
+	}
+
+	return ~crc;
 }

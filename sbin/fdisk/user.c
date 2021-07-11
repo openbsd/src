@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.56 2021/07/11 13:38:27 krw Exp $	*/
+/*	$OpenBSD: user.c,v 1.57 2021/07/11 13:51:42 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -55,6 +55,8 @@ struct cmd		cmd_table[] = {
 
 
 int			modified;
+
+void			ask_cmd(char **, char **);
 
 void
 USER_edit(off_t offset, off_t reloff)
@@ -197,4 +199,24 @@ USER_print_disk(int verbosity)
 					firstoff = offset;
 			}
 	} while (offset);
+}
+
+void
+ask_cmd(char **cmd, char **arg)
+{
+	static char		lbuf[100];
+	size_t			cmdstart, cmdend, argstart;
+
+	/* Get NUL terminated string from stdin. */
+	if (string_from_line(lbuf, sizeof(lbuf)))
+		errx(1, "eof");
+
+	cmdstart = strspn(lbuf, " \t");
+	cmdend = cmdstart + strcspn(&lbuf[cmdstart], " \t");
+	argstart = cmdend + strspn(&lbuf[cmdend], " \t");
+
+	/* *cmd and *arg may be set to point at final NUL! */
+	*cmd = &lbuf[cmdstart];
+	lbuf[cmdend] = '\0';
+	*arg = &lbuf[argstart];
 }
