@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.5 2021/07/10 18:46:39 jasper Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.6 2021/07/11 12:21:52 jasper Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K. Stevens
@@ -179,7 +179,7 @@ db_validate_address(vaddr_t addr)
  * Read bytes from kernel address space for debugger.
  */
 void
-db_read_bytes(db_addr_t addr, size_t size, char *data)
+db_read_bytes(vaddr_t addr, size_t size, char *data)
 {
 	char	*src = (char *)addr;
 
@@ -217,7 +217,7 @@ db_read_bytes(db_addr_t addr, size_t size, char *data)
  * Write bytes to kernel address space for debugger.
  */
 void
-db_write_bytes(db_addr_t addr, size_t size, char *data)
+db_write_bytes(vaddr_t addr, size_t size, char *data)
 {
 	// XXX
 }
@@ -457,8 +457,8 @@ db_machine_init(void)
 #endif
 }
 
-db_addr_t
-db_branch_taken(u_int insn, db_addr_t pc, db_regs_t *db_regs)
+vaddr_t
+db_branch_taken(u_int insn, vaddr_t pc, db_regs_t *db_regs)
 {
 	// XXX
 	return pc + 4;

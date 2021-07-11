@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.3 2021/05/12 01:20:52 jsg Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.4 2021/07/11 12:21:52 jasper Exp $	*/
 
 /*
  * Copyright (c) 2019 Brian Bamsch <bbamsch@google.com>
@@ -57,7 +57,7 @@ typedef trapframe_t	db_regs_t;
 extern db_regs_t	ddb_regs;
 #define DDB_REGS	(&ddb_regs)
 
-#define	PC_REGS(regs)			((db_addr_t)(regs)->tf_ra)
+#define	PC_REGS(regs)			((vaddr_t)(regs)->tf_ra)
 #define	SET_PC_REGS(regs, value)	(regs)->tf_ra = (register_t)(value)
 
 #define	BKPT_INST	(KERNEL_BREAKPOINT)
@@ -81,7 +81,7 @@ extern db_regs_t	ddb_regs;
 
 int db_trapper(vaddr_t, u_int, trapframe_t *, int);
 void db_machine_init (void);
-db_addr_t db_branch_taken(u_int inst, db_addr_t pc, db_regs_t *regs);
+vaddr_t db_branch_taken(u_int inst, vaddr_t pc, db_regs_t *regs);
 
 #define branch_taken(ins, pc, fun, regs) \
 	db_branch_taken((ins), (pc), (regs))
