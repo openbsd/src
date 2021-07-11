@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs_msdos.c,v 1.27 2015/11/23 19:19:30 deraadt Exp $	*/
+/*	$OpenBSD: newfs_msdos.c,v 1.28 2021/07/11 15:39:58 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -62,11 +62,11 @@
 #define DEFRDE	  512		/* default root directory entries */
 #define RESFTE	  2		/* reserved FAT entries */
 #define MINCLS12  1		/* minimum FAT12 clusters */
-#define MINCLS16  0x1000	/* minimum FAT16 clusters */
-#define MINCLS32  2		/* minimum FAT32 clusters */
-#define MAXCLS12  0xfed		/* maximum FAT12 clusters */
-#define MAXCLS16  0xfff5	/* maximum FAT16 clusters */
-#define MAXCLS32  0xffffff5	/* maximum FAT32 clusters */
+#define MINCLS16  0xff5		/* minimum FAT16 clusters */
+#define MINCLS32  0xfff5	/* minimum FAT32 clusters */
+#define MAXCLS12  0xff4		/* maximum FAT12 clusters */
+#define MAXCLS16  0xfff4	/* maximum FAT16 clusters */
+#define MAXCLS32  0xffffff4	/* maximum FAT32 clusters */
 
 #define mincls(fat)  ((fat) == 12 ? MINCLS12 :	\
 		      (fat) == 16 ? MINCLS16 :	\
