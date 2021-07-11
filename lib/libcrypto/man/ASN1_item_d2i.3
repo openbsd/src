@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ASN1_item_d2i.3,v 1.9 2021/03/12 05:18:00 jsg Exp $
+.\"     $OpenBSD: ASN1_item_d2i.3,v 1.10 2021/07/11 15:30:21 schwarze Exp $
 .\"     OpenSSL doc/man3/d2i_X509.pod b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 12 2021 $
+.Dd $Mdocdate: July 11 2021 $
 .Dt ASN1_ITEM_D2I 3
 .Os
 .Sh NAME
@@ -361,6 +361,7 @@ if (d2i_X509(&x, &p, len) == NULL)
 	/* error */
 .Ed
 .Sh SEE ALSO
+.Xr ASN1_get_object 3 ,
 .Xr ASN1_item_new 3 ,
 .Xr ASN1_TYPE_new 3
 .Sh HISTORY
