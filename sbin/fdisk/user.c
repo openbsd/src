@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.55 2021/05/15 15:20:17 krw Exp $	*/
+/*	$OpenBSD: user.c,v 1.56 2021/07/11 13:38:27 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -34,7 +34,7 @@
 #include "disk.h"
 
 /* Our command table */
-struct cmd cmd_table[] = {
+struct cmd		cmd_table[] = {
 	{"help",   1, Xhelp,   "Command help list"},
 	{"manual", 1, Xmanual, "Show entire OpenBSD man page for fdisk"},
 	{"reinit", 1, Xreinit, "Re-initialize loaded MBR (to defaults)"},
@@ -54,16 +54,16 @@ struct cmd cmd_table[] = {
 };
 
 
-int modified;
+int			modified;
 
 void
 USER_edit(off_t offset, off_t reloff)
 {
-	static int editlevel;
-	struct dos_mbr dos_mbr;
-	struct mbr mbr;
-	char *cmd, *args;
-	int i, st, efi, error;
+	struct dos_mbr		 dos_mbr;
+	struct mbr		 mbr;
+	char			*cmd, *args;
+	int			 i, st, efi, error;
+	static int		 editlevel;
 
 	/* One level deeper */
 	editlevel += 1;
@@ -141,10 +141,10 @@ done:
 void
 USER_print_disk(int verbosity)
 {
-	off_t offset, firstoff;
-	int i, efi, error;
-	struct dos_mbr dos_mbr;
-	struct mbr mbr;
+	struct dos_mbr		dos_mbr;
+	struct mbr		mbr;
+	off_t			offset, firstoff;
+	int			i, efi, error;
 
 	offset = firstoff = 0;
 

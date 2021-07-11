@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.35 2021/07/11 12:51:36 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.36 2021/07/11 13:38:27 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -39,8 +39,8 @@
 #define DPRINTF(x...)
 #endif
 
-struct gpt_header gh;
-struct gpt_partition gp[NGPTPARTITIONS];
+struct gpt_header	gh;
+struct gpt_partition	gp[NGPTPARTITIONS];
 
 struct gpt_partition	**sort_gpt(void);
 int			  lba_start_cmp(const void *e1, const void *e2);
@@ -54,10 +54,10 @@ int			  init_gp(int, uint32_t);
 int
 get_header(off_t where)
 {
-	char *secbuf;
-	uint64_t partlastlba, partslen, lba_end;
-	int partspersec;
-	uint32_t orig_gh_csum, new_gh_csum;
+	char			*secbuf;
+	uint64_t		 partlastlba, partslen, lba_end;
+	int			 partspersec;
+	uint32_t		 orig_gh_csum, new_gh_csum;
 
 	secbuf = DISK_readsector(where);
 	if (secbuf == 0)
@@ -159,10 +159,10 @@ get_header(off_t where)
 int
 get_partition_table(void)
 {
-	ssize_t len;
-	off_t off, where;
-	int secs;
-	uint32_t checksum, partspersec;
+	ssize_t			len;
+	off_t			off, where;
+	int			secs;
+	uint32_t		checksum, partspersec;
 
 	DPRINTF("gpt partition table being read from LBA %llu\n",
 	    letoh64(gh.gh_part_lba));
@@ -204,7 +204,7 @@ get_partition_table(void)
 void
 GPT_read(int which)
 {
-	int valid;
+	int			valid;
 
 	switch (which) {
 	case PRIMARYGPT:
@@ -235,11 +235,11 @@ GPT_read(int which)
 void
 GPT_print(char *units, int verbosity)
 {
-	const int secsize = unit_types[SECTORS].conversion;
-	struct uuid guid;
-	char *guidstr = NULL;
-	double size;
-	int i, u, status;
+	const int		 secsize = unit_types[SECTORS].conversion;
+	struct uuid		 guid;
+	char			*guidstr = NULL;
+	double			 size;
+	int			 i, u, status;
 
 	u = unit_lookup(units);
 	size = ((double)DL_GETDSIZE(&dl) * secsize) / unit_types[u].conversion;
@@ -283,12 +283,12 @@ GPT_print_parthdr(int verbosity)
 void
 GPT_print_part(int n, char *units, int verbosity)
 {
-	struct uuid guid;
-	const int secsize = unit_types[SECTORS].conversion;
-	struct gpt_partition *partn = &gp[n];
-	char *guidstr = NULL;
-	double size;
-	int u, status;
+	struct uuid		 guid;
+	struct gpt_partition	*partn = &gp[n];
+	char			*guidstr = NULL;
+	const int		 secsize = unit_types[SECTORS].conversion;
+	double			 size;
+	int			 u, status;
 
 	uuid_dec_le(&partn->gp_type, &guid);
 	u = unit_lookup(units);
@@ -314,10 +314,10 @@ GPT_print_part(int n, char *units, int verbosity)
 int
 add_partition(const uint8_t *beuuid, const char *name, uint64_t sectors)
 {
-	struct uuid uuid, gp_type;
-	int rslt;
-	uint64_t end, freesectors, start;
-	uint32_t status, pn, pncnt;
+	struct uuid		uuid, gp_type;
+	int			rslt;
+	uint64_t		end, freesectors, start;
+	uint32_t		status, pn, pncnt;
 
 	uuid_dec_be(beuuid, &uuid);
 	uuid_enc_le(&gp_type, &uuid);
@@ -375,9 +375,9 @@ add_partition(const uint8_t *beuuid, const char *name, uint64_t sectors)
 int
 init_gh(void)
 {
-	const int		secsize = unit_types[SECTORS].conversion;
 	struct gpt_header	oldgh;
 	struct uuid		guid;
+	const int		secsize = unit_types[SECTORS].conversion;
 	int			needed;
 	uint32_t		status;
 
@@ -415,10 +415,10 @@ init_gh(void)
 int
 init_gp(int how, uint32_t bootsectors)
 {
-	const uint8_t gpt_uuid_efi_system[] = GPT_UUID_EFI_SYSTEM;
-	const uint8_t gpt_uuid_openbsd[] = GPT_UUID_OPENBSD;
-	struct gpt_partition oldgp[NGPTPARTITIONS];
-	int pn, rslt;
+	struct gpt_partition	oldgp[NGPTPARTITIONS];
+	const uint8_t		gpt_uuid_efi_system[] = GPT_UUID_EFI_SYSTEM;
+	const uint8_t		gpt_uuid_openbsd[] = GPT_UUID_OPENBSD;
+	int			pn, rslt;
 
 	memcpy(&oldgp, &gp, sizeof(oldgp));
 	if (how == GHANDGP)
@@ -448,7 +448,7 @@ init_gp(int how, uint32_t bootsectors)
 int
 GPT_init(int how, uint32_t bootsectors)
 {
-	int rslt = 0;
+	int			rslt = 0;
 
 	if (how == GHANDGP)
 		rslt = init_gh();
@@ -461,8 +461,8 @@ GPT_init(int how, uint32_t bootsectors)
 void
 GPT_zap_headers(void)
 {
-	char *secbuf;
-	uint64_t sig;
+	char			*secbuf;
+	uint64_t		 sig;
 
 	secbuf = DISK_readsector(GPTSECTOR);
 	if (secbuf == NULL)
@@ -490,11 +490,11 @@ GPT_zap_headers(void)
 int
 GPT_write(void)
 {
-	char *secbuf;
-	const int secsize = unit_types[SECTORS].conversion;
-	ssize_t len;
-	off_t off;
-	uint64_t altgh, altgp, prigh, prigp, gpbytes;
+	char			*secbuf;
+	ssize_t			 len;
+	off_t			 off;
+	const int		 secsize = unit_types[SECTORS].conversion;
+	uint64_t		 altgh, altgp, prigh, prigp, gpbytes;
 
 	/*
 	 * XXX Assume size of gp is multiple of sector size.
@@ -565,10 +565,10 @@ GPT_write(void)
 int
 gp_lba_start_cmp(const void *e1, const void *e2)
 {
-	struct gpt_partition *p1 = *(struct gpt_partition **)e1;
-	struct gpt_partition *p2 = *(struct gpt_partition **)e2;
-	uint64_t o1;
-	uint64_t o2;
+	struct gpt_partition	*p1 = *(struct gpt_partition **)e1;
+	struct gpt_partition	*p2 = *(struct gpt_partition **)e2;
+	uint64_t		 o1;
+	uint64_t		 o2;
 
 	o1 = letoh64(p1->gp_lba_start);
 	o2 = letoh64(p2->gp_lba_start);
@@ -584,8 +584,8 @@ gp_lba_start_cmp(const void *e1, const void *e2)
 struct gpt_partition **
 sort_gpt(void)
 {
-	static struct gpt_partition *sgp[NGPTPARTITIONS+2];
-	unsigned int i, j;
+	static struct gpt_partition	*sgp[NGPTPARTITIONS+2];
+	unsigned int			 i, j;
 
 	memset(sgp, 0, sizeof(sgp));
 
@@ -652,9 +652,9 @@ lba_free(uint64_t *start, uint64_t *end)
 int
 GPT_get_lba_start(unsigned int pn)
 {
-	uint64_t		  bs;
-	unsigned int		  i;
-	int			  rslt;
+	uint64_t		bs;
+	unsigned int		i;
+	int			rslt;
 
 	bs = letoh64(gh.gh_lba_start);
 

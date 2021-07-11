@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.115 2021/07/11 12:51:36 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.116 2021/07/11 13:38:27 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -36,19 +36,19 @@
 #include "user.h"
 #include "gpt.h"
 
-#define _PATH_MBR _PATH_BOOTDIR "mbr"
-static unsigned char builtin_mbr[] = {
+#define	_PATH_MBR		_PATH_BOOTDIR "mbr"
+static unsigned char		builtin_mbr[] = {
 #include "mbrcode.h"
 };
 
-uint32_t b_sectors, b_offset;
-uint8_t b_type;
-int	A_flag, y_flag;
+uint32_t		b_sectors, b_offset;
+uint8_t			b_type;
+int			A_flag, y_flag;
 
 static void
 usage(void)
 {
-	extern char * __progname;
+	extern char		* __progname;
 
 	fprintf(stderr, "usage: %s "
 	    "[-evy] [-i [-g] | -u | -A ] [-b blocks[@offset[:type]]]\n"
@@ -60,21 +60,21 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	ssize_t len;
-	int ch, fd, efi, error;
-	unsigned int bps;
-	int e_flag = 0, g_flag = 0, i_flag = 0, u_flag = 0;
-	int verbosity = TERSE;
-	int c_arg = 0, h_arg = 0, s_arg = 0;
-	uint32_t l_arg = 0;
-	char *query;
+	struct dos_mbr		 dos_mbr;
+	struct mbr		 mbr;
 #ifdef HAS_MBR
-	char *mbrfile = _PATH_MBR;
+	char			*mbrfile = _PATH_MBR;
 #else
-	char *mbrfile = NULL;
+	char			*mbrfile = NULL;
 #endif
-	struct dos_mbr dos_mbr;
-	struct mbr mbr;
+	ssize_t			 len;
+	int			 ch, fd, efi, error;
+	unsigned int		 bps;
+	int			 e_flag = 0, g_flag = 0, i_flag = 0, u_flag = 0;
+	int			 verbosity = TERSE;
+	int			 c_arg = 0, h_arg = 0, s_arg = 0;
+	uint32_t		 l_arg = 0;
+	char			*query;
 
 	while ((ch = getopt(argc, argv, "Aiegpuvf:c:h:s:l:b:y")) != -1) {
 		const char *errstr;

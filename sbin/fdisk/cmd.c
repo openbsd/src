@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.119 2021/07/11 12:51:36 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.120 2021/07/11 13:38:27 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -41,11 +41,14 @@ int gsetpid(int);
 int setpid(int, struct mbr *);
 int parsepn(char *);
 
+extern const unsigned char	manpage[];
+extern const int		manpage_sz;
+
 int
 Xreinit(char *args, struct mbr *mbr)
 {
-	struct dos_mbr dos_mbr;
-	int dogpt;
+	struct dos_mbr		dos_mbr;
+	int			dogpt;
 
 	dogpt = 0;
 
@@ -79,9 +82,9 @@ Xreinit(char *args, struct mbr *mbr)
 int
 Xdisk(char *args, struct mbr *mbr)
 {
-	int maxcyl  = 1024;
-	int maxhead = 256;
-	int maxsec  = 63;
+	int			maxcyl  = 1024;
+	int			maxhead = 256;
+	int			maxsec  = 63;
 
 	/* Print out disk info */
 	DISK_printgeometry(args);
@@ -110,10 +113,10 @@ Xdisk(char *args, struct mbr *mbr)
 int
 Xswap(char *args, struct mbr *mbr)
 {
-	char *from, *to;
-	int pf, pt;
-	struct prt pp;
-	struct gpt_partition gg;
+	char			*from, *to;
+	int			 pf, pt;
+	struct prt		 pp;
+	struct gpt_partition	 gg;
 
 	to = args;
 	from = strsep(&to, " \t");
@@ -147,11 +150,11 @@ Xswap(char *args, struct mbr *mbr)
 int
 gedit(int pn)
 {
-	struct gpt_partition oldgg;
-	struct gpt_partition *gg;
-	char *name;
-	uint16_t *utf;
-	int i;
+	struct gpt_partition	 oldgg;
+	struct gpt_partition	*gg;
+	char			*name;
+	uint16_t		*utf;
+	int			 i;
 
 	gg = &gp[pn];
 	oldgg = *gg;
@@ -202,8 +205,8 @@ gedit(int pn)
 int
 parsepn(char *pnstr)
 {
-	const char *errstr;
-	int maxpn, pn;
+	const char		*errstr;
+	int			 maxpn, pn;
 
 	if (pnstr == NULL) {
 		printf("no partition number\n");
@@ -227,8 +230,8 @@ parsepn(char *pnstr)
 int
 edit(int pn, struct mbr *mbr)
 {
-	struct prt oldpp;
-	struct prt *pp;
+	struct prt		 oldpp;
+	struct prt		*pp;
 
 	pp = &mbr->part[pn];
 	oldpp = *pp;
@@ -281,7 +284,7 @@ done:
 int
 Xedit(char *args, struct mbr *mbr)
 {
-	int pn;
+	int			pn;
 
 	pn = parsepn(args);
 	if (pn == -1)
@@ -296,9 +299,9 @@ Xedit(char *args, struct mbr *mbr)
 int
 gsetpid(int pn)
 {
-	struct uuid guid;
-	struct gpt_partition *gg, oldgg;
-	int num, status;
+	struct uuid		 guid;
+	struct gpt_partition	*gg, oldgg;
+	int			 num, status;
 
 	gg = &gp[pn];
 	oldgg = *gg;
@@ -349,8 +352,8 @@ gsetpid(int pn)
 int
 setpid(int pn, struct mbr *mbr)
 {
-	struct prt *pp;
-	int num;
+	struct prt		*pp;
+	int			 num;
 
 	pp = &mbr->part[pn];
 
@@ -371,7 +374,7 @@ setpid(int pn, struct mbr *mbr)
 int
 Xsetpid(char *args, struct mbr *mbr)
 {
-	int pn;
+	int			pn;
 
 	pn = parsepn(args);
 	if (pn == -1)
@@ -386,9 +389,9 @@ Xsetpid(char *args, struct mbr *mbr)
 int
 Xselect(char *args, struct mbr *mbr)
 {
-	static off_t firstoff = 0;
-	off_t off;
-	int pn;
+	static off_t		firstoff = 0;
+	off_t			off;
+	int			pn;
 
 	pn = parsepn(args);
 	if (pn == -1)
@@ -423,7 +426,7 @@ Xselect(char *args, struct mbr *mbr)
 int
 Xprint(char *args, struct mbr *mbr)
 {
-	int efi;
+	int			efi;
 
 	efi = MBR_protective_mbr(mbr);
 	if (efi != -1 && letoh64(gh.gh_sig) == GPTSIGNATURE)
@@ -437,8 +440,8 @@ Xprint(char *args, struct mbr *mbr)
 int
 Xwrite(char *args, struct mbr *mbr)
 {
-	struct dos_mbr dos_mbr;
-	int efi, i, n;
+	struct dos_mbr		dos_mbr;
+	int			efi, i, n;
 
 	for (i = 0, n = 0; i < NDOSPART; i++)
 		if (mbr->part[i].id == 0xA6)
@@ -495,9 +498,9 @@ Xexit(char *args, struct mbr *mbr)
 int
 Xhelp(char *args, struct mbr *mbr)
 {
-	char help[80];
-	char *mbrstr;
-	int i;
+	char			 help[80];
+	char			*mbrstr;
+	int			 i;
 
 	for (i = 0; cmd_table[i].cmd != NULL; i++) {
 		strlcpy(help, cmd_table[i].help, sizeof(help));
@@ -527,10 +530,10 @@ Xupdate(char *args, struct mbr *mbr)
 int
 Xflag(char *args, struct mbr *mbr)
 {
-	const char *errstr;
-	int i, pn;
-	long long val = -1;
-	char *part, *flag;
+	const char		*errstr;
+	char			*part, *flag;
+	long long		 val = -1;
+	int			 i, pn;
 
 	flag = args;
 	part = strsep(&flag, " \t");
@@ -580,12 +583,10 @@ Xflag(char *args, struct mbr *mbr)
 int
 Xmanual(char *args, struct mbr *mbr)
 {
-	char *pager = "/usr/bin/less";
-	char *p;
-	sig_t opipe;
-	extern const unsigned char manpage[];
-	extern const int manpage_sz;
-	FILE *f;
+	char			*pager = "/usr/bin/less";
+	char			*p;
+	FILE			*f;
+	sig_t			 opipe;
 
 	opipe = signal(SIGPIPE, SIG_IGN);
 	if ((p = getenv("PAGER")) != NULL && (*p != '\0'))

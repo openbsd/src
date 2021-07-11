@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.70 2021/07/11 12:51:36 krw Exp $	*/
+/*	$OpenBSD: misc.c,v 1.71 2021/07/11 13:38:27 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -32,7 +32,7 @@
 #include "misc.h"
 #include "part.h"
 
-struct unit_type unit_types[] = {
+struct unit_type	unit_types[] = {
 	{ "b"	, 1LL				, "Bytes"	},
 	{ " "	, 0LL				, "Sectors"	},
 	{ "K"	, 1024LL			, "Kilobytes"	},
@@ -45,7 +45,7 @@ struct unit_type unit_types[] = {
 int
 unit_lookup(char *units)
 {
-	int i = 0;
+	int			i = 0;
 
 	if (units == NULL)
 		return SECTORS;
@@ -65,9 +65,9 @@ unit_lookup(char *units)
 int
 string_from_line(char *buf, size_t buflen)
 {
-	static char *line;
-	static size_t sz;
-	ssize_t len;
+	static char		*line;
+	static size_t		 sz;
+	ssize_t			 len;
 
 	len = getline(&line, &sz, stdin);
 	if (len == -1)
@@ -84,8 +84,8 @@ string_from_line(char *buf, size_t buflen)
 void
 ask_cmd(char **cmd, char **arg)
 {
-	static char lbuf[100];
-	size_t cmdstart, cmdend, argstart;
+	static char		lbuf[100];
+	size_t			cmdstart, cmdend, argstart;
 
 	/* Get NUL terminated string from stdin. */
 	if (string_from_line(lbuf, sizeof(lbuf)))
@@ -104,9 +104,9 @@ ask_cmd(char **cmd, char **arg)
 int
 ask_num(const char *str, int dflt, int low, int high)
 {
-	char lbuf[100];
-	const char *errstr;
-	int num;
+	char			 lbuf[100];
+	const char		*errstr;
+	int			 num;
 
 	if (dflt < low)
 		dflt = low;
@@ -135,8 +135,8 @@ ask_num(const char *str, int dflt, int low, int high)
 int
 ask_pid(int dflt, struct uuid *guid)
 {
-	char lbuf[100], *cp;
-	int num = -1, status;
+	char			lbuf[100], *cp;
+	int			num = -1, status;
 
 	do {
 		printf("Partition id ('0' to disable) [01 - FF]: [%X] ", dflt);
@@ -179,8 +179,8 @@ ask_pid(int dflt, struct uuid *guid)
 int
 ask_yn(const char *str)
 {
-	int ch, first;
-	extern int y_flag;
+	int			ch, first;
+	extern int		y_flag;
 
 	if (y_flag)
 		return 1;
@@ -204,13 +204,13 @@ ask_yn(const char *str)
 uint64_t
 getuint64(char *prompt, uint64_t oval, uint64_t minval, uint64_t maxval)
 {
-	const int secsize = unit_types[SECTORS].conversion;
-	char buf[BUFSIZ], *endptr, *p, operator = '\0';
-	size_t n;
-	int64_t mult = 1;
-	double d, d2;
-	int rslt, secpercyl, saveerr;
-	char unit;
+	char			buf[BUFSIZ], *endptr, *p, operator = '\0';
+	const int		secsize = unit_types[SECTORS].conversion;
+	size_t			n;
+	int64_t			mult = 1;
+	double			d, d2;
+	int			rslt, secpercyl, saveerr;
+	char			unit;
 
 	if (oval > maxval)
 		oval = maxval;
@@ -325,7 +325,7 @@ getuint64(char *prompt, uint64_t oval, uint64_t minval, uint64_t maxval)
 char *
 ask_string(const char *prompt, const char *oval)
 {
-	static char buf[UUID_STR_LEN + 1];
+	static char		buf[UUID_STR_LEN + 1];
 
 	buf[0] = '\0';
 	printf("%s: [%s] ", prompt, oval ? oval : "");
@@ -352,8 +352,8 @@ ask_string(const char *prompt, const char *oval)
 uint32_t
 crc32(const u_char *buf, const uint32_t size)
 {
-	int j;
-	uint32_t i, byte, crc, mask;
+	int			j;
+	uint32_t		i, byte, crc, mask;
 
 	crc = 0xFFFFFFFF;
 
@@ -372,8 +372,8 @@ crc32(const u_char *buf, const uint32_t size)
 char *
 utf16le_to_string(const uint16_t *utf)
 {
-	static char name[GPTPARTNAMESIZE];
-	int i;
+	static char		name[GPTPARTNAMESIZE];
+	int			i;
 
 	for (i = 0; i < GPTPARTNAMESIZE; i++) {
 		name[i] = letoh16(utf[i]) & 0x7F;
@@ -389,8 +389,8 @@ utf16le_to_string(const uint16_t *utf)
 uint16_t *
 string_to_utf16le(const char *ch)
 {
-	static uint16_t utf[GPTPARTNAMESIZE];
-	int i;
+	static uint16_t		utf[GPTPARTNAMESIZE];
+	int			i;
 
 	for (i = 0; i < GPTPARTNAMESIZE; i++) {
 		utf[i] = htole16((unsigned int)ch[i]);
@@ -406,10 +406,10 @@ string_to_utf16le(const char *ch)
 void
 parse_b(const char *arg, uint32_t *blocks, uint32_t *offset, uint8_t *type)
 {
-	const char *errstr;
-	char *poffset, *ptype;
-	uint32_t blockcount, blockoffset;
-	uint8_t partitiontype;
+	const char		*errstr;
+	char			*poffset, *ptype;
+	uint32_t		 blockcount, blockoffset;
+	uint8_t			 partitiontype;
 
 	blockoffset = BLOCKALIGNMENT;
 	partitiontype = DOSPTYP_EFISYS;

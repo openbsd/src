@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.58 2021/07/11 12:51:36 krw Exp $	*/
+/*	$OpenBSD: disk.c,v 1.59 2021/07/11 13:38:27 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -34,14 +34,14 @@
 #include "disk.h"
 #include "misc.h"
 
-struct disk disk;
-struct disklabel dl;
+struct disk		disk;
+struct disklabel	dl;
 
 void
 DISK_open(int rw)
 {
-	struct stat st;
-	uint64_t sz, spc;
+	struct stat		st;
+	uint64_t		sz, spc;
 
 	disk.fd = opendev(disk.name, rw ? O_RDWR : O_RDONLY, OPENDEV_PART,
 	    NULL);
@@ -86,9 +86,9 @@ DISK_open(int rw)
 int
 DISK_printgeometry(char *units)
 {
-	const int secsize = unit_types[SECTORS].conversion;
-	double size;
-	int i;
+	const int		secsize = unit_types[SECTORS].conversion;
+	double			size;
+	int			i;
 
 	i = unit_lookup(units);
 	size = ((double)disk.size * secsize) / unit_types[i].conversion;
@@ -115,10 +115,10 @@ DISK_printgeometry(char *units)
 char *
 DISK_readsector(off_t where)
 {
-	int secsize;
-	char *secbuf;
-	ssize_t len;
-	off_t off;
+	char			*secbuf;
+	ssize_t			 len;
+	off_t			 off;
+	int			 secsize;
 
 	secsize = dl.d_secsize;
 
@@ -148,9 +148,9 @@ DISK_readsector(off_t where)
 int
 DISK_writesector(char *secbuf, off_t where)
 {
-	int secsize;
-	ssize_t len;
-	off_t off;
+	int			secsize;
+	ssize_t			len;
+	off_t			off;
 
 	len = -1;
 	secsize = dl.d_secsize;

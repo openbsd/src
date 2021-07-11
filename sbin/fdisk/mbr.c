@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.79 2021/07/11 12:51:36 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.80 2021/07/11 13:38:27 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -32,15 +32,15 @@
 #include "mbr.h"
 #include "gpt.h"
 
-struct mbr initial_mbr;
+struct mbr		initial_mbr;
 
-static int gpt_chk_mbr(struct dos_partition *, uint64_t);
+static int		gpt_chk_mbr(struct dos_partition *, uint64_t);
 
 int
 MBR_protective_mbr(struct mbr *mbr)
 {
-	struct dos_partition dp[NDOSPART], dos_partition;
-	int i;
+	struct dos_partition	dp[NDOSPART], dos_partition;
+	int			i;
 
 	if (mbr->offset != 0)
 		return -1;
@@ -77,10 +77,10 @@ MBR_init_GPT(struct mbr *mbr)
 void
 MBR_init(struct mbr *mbr)
 {
-	extern uint32_t b_sectors, b_offset;
-	extern uint8_t b_type;
-	uint64_t adj;
-	daddr_t daddr;
+	extern uint32_t		b_sectors, b_offset;
+	extern uint8_t		b_type;
+	uint64_t		adj;
+	daddr_t			daddr;
 
 	memset(&gh, 0, sizeof(gh));
 	memset(&gp, 0, sizeof(gp));
@@ -159,8 +159,8 @@ MBR_init(struct mbr *mbr)
 void
 MBR_parse(struct dos_mbr *dos_mbr, off_t offset, off_t reloff, struct mbr *mbr)
 {
-	struct dos_partition dos_parts[NDOSPART];
-	int i;
+	struct dos_partition	dos_parts[NDOSPART];
+	int			i;
 
 	memcpy(mbr->code, dos_mbr->dmbr_boot, sizeof(mbr->code));
 	mbr->offset = offset;
@@ -176,8 +176,8 @@ MBR_parse(struct dos_mbr *dos_mbr, off_t offset, off_t reloff, struct mbr *mbr)
 void
 MBR_make(struct mbr *mbr, struct dos_mbr *dos_mbr)
 {
-	struct dos_partition dos_partition;
-	int i;
+	struct dos_partition	dos_partition;
+	int			i;
 
 	memcpy(dos_mbr->dmbr_boot, mbr->code, sizeof(dos_mbr->dmbr_boot));
 	dos_mbr->dmbr_sign = htole16(DOSMBR_SIGNATURE);
@@ -193,7 +193,7 @@ MBR_make(struct mbr *mbr, struct dos_mbr *dos_mbr)
 void
 MBR_print(struct mbr *mbr, char *units)
 {
-	int i;
+	int			i;
 
 	DISK_printgeometry(NULL);
 
@@ -210,7 +210,7 @@ MBR_print(struct mbr *mbr, char *units)
 int
 MBR_read(off_t where, struct dos_mbr *dos_mbr)
 {
-	char *secbuf;
+	char			*secbuf;
 
 	secbuf = DISK_readsector(where);
 	if (secbuf == NULL)
@@ -225,7 +225,7 @@ MBR_read(off_t where, struct dos_mbr *dos_mbr)
 int
 MBR_write(off_t where, struct dos_mbr *dos_mbr)
 {
-	char *secbuf;
+	char			*secbuf;
 
 	secbuf = DISK_readsector(where);
 	if (secbuf == NULL)
@@ -256,9 +256,9 @@ MBR_write(off_t where, struct dos_mbr *dos_mbr)
 int
 gpt_chk_mbr(struct dos_partition *dp, u_int64_t dsize)
 {
-	struct dos_partition *dp2;
-	int efi, eficnt, found, i;
-	uint32_t psize;
+	struct dos_partition	*dp2;
+	int			 efi, eficnt, found, i;
+	uint32_t		 psize;
 
 	found = efi = eficnt = 0;
 	for (dp2 = dp, i = 0; i < NDOSPART; i++, dp2++) {

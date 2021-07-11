@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.88 2021/07/11 12:51:36 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.89 2021/07/11 13:38:27 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -30,8 +30,8 @@
 #include "misc.h"
 #include "part.h"
 
-int		 check_chs(struct prt *partn);
-const char	*ascii_id(int);
+int			 check_chs(struct prt *partn);
+const char		*ascii_id(int);
 
 static const struct part_type {
 	int	type;
@@ -159,11 +159,11 @@ static const struct protected_guid {
 int
 PRT_protected_guid(struct uuid *leuuid)
 {
-	struct uuid	 uuid;
-	char		*str = NULL;
-	int		 rslt;
-	unsigned int	 i;
-	uint32_t	 status;
+	struct uuid		 uuid;
+	char			*str = NULL;
+	int			 rslt;
+	unsigned int		 i;
+	uint32_t		 status;
 
 	uuid_dec_le(leuuid, &uuid);
 	uuid_to_string(&uuid, &str, &status);
@@ -188,7 +188,7 @@ PRT_protected_guid(struct uuid *leuuid)
 void
 PRT_printall(void)
 {
-	int i, idrows;
+	int			i, idrows;
 
 	idrows = ((sizeof(part_types)/sizeof(struct part_type))+3)/4;
 
@@ -210,8 +210,8 @@ PRT_printall(void)
 const char *
 ascii_id(int id)
 {
-	static char unknown[] = "<Unknown ID>";
-	int i;
+	static char		unknown[] = "<Unknown ID>";
+	int			i;
 
 	for (i = 0; i < sizeof(part_types)/sizeof(struct part_type); i++) {
 		if (part_types[i].type == id)
@@ -225,8 +225,8 @@ void
 PRT_parse(struct dos_partition *prt, off_t offset, off_t reloff,
     struct prt *partn)
 {
-	off_t off;
-	uint32_t t;
+	off_t			off;
+	uint32_t		t;
 
 	partn->flag = prt->dp_flag;
 	partn->shead = prt->dp_shd;
@@ -280,9 +280,9 @@ void
 PRT_make(struct prt *partn, off_t offset, off_t reloff,
     struct dos_partition *prt)
 {
-	off_t off;
-	uint32_t ecsave, scsave;
-	uint64_t t;
+	off_t			off;
+	uint32_t		ecsave, scsave;
+	uint64_t		t;
 
 	/* Save (and restore below) cylinder info we may fiddle with. */
 	scsave = partn->scyl;
@@ -329,9 +329,9 @@ PRT_make(struct prt *partn, off_t offset, off_t reloff,
 void
 PRT_print(int num, struct prt *partn, char *units)
 {
-	const int secsize = unit_types[SECTORS].conversion;
-	double size;
-	int i;
+	const int		secsize = unit_types[SECTORS].conversion;
+	double			size;
+	int			i;
 
 	i = unit_lookup(units);
 
@@ -359,9 +359,9 @@ PRT_print(int num, struct prt *partn, char *units)
 void
 PRT_fix_BN(struct prt *part, int pn)
 {
-	uint32_t spt, tpc, spc;
-	uint32_t start = 0;
-	uint32_t end = 0;
+	uint32_t		spt, tpc, spc;
+	uint32_t		start = 0;
+	uint32_t		end = 0;
 
 	/* Zero out entry if not used */
 	if (part->id == DOSPTYP_UNUSED) {
@@ -393,9 +393,9 @@ PRT_fix_BN(struct prt *part, int pn)
 void
 PRT_fix_CHS(struct prt *part)
 {
-	uint32_t spt, tpc, spc;
-	uint32_t start, end, size;
-	uint32_t cyl, head, sect;
+	uint32_t		spt, tpc, spc;
+	uint32_t		start, end, size;
+	uint32_t		cyl, head, sect;
 
 	/* Zero out entry if not used */
 	if (part->id == DOSPTYP_UNUSED || part->ns == 0) {
@@ -434,9 +434,9 @@ PRT_fix_CHS(struct prt *part)
 char *
 PRT_uuid_to_typename(struct uuid *uuid)
 {
-	static char partition_type[UUID_STR_LEN + 1];
-	char *uuidstr = NULL;
-	int i, entries, status;
+	static char		 partition_type[UUID_STR_LEN + 1];
+	char			*uuidstr = NULL;
+	int			 i, entries, status;
 
 	memset(partition_type, 0, sizeof(partition_type));
 
@@ -467,8 +467,8 @@ done:
 int
 PRT_uuid_to_type(struct uuid *uuid)
 {
-	char *uuidstr;
-	int entries, i, status, type;
+	char			*uuidstr;
+	int			 entries, i, status, type;
 
 	type = 0;
 
@@ -493,8 +493,8 @@ done:
 struct uuid *
 PRT_type_to_uuid(int type)
 {
-	static struct uuid guid;
-	int i, entries, status = uuid_s_ok;
+	static struct uuid	guid;
+	int			i, entries, status = uuid_s_ok;
 
 	memset(&guid, 0, sizeof(guid));
 
