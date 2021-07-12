@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.120 2021/07/07 02:38:21 jsg Exp $
+#	$OpenBSD: Makefile.amd64,v 1.121 2021/07/12 06:07:33 jsg Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -45,7 +45,8 @@ INCLUDES=	-nostdinc -I$S -I${.OBJDIR} -I$S/arch \
 		-I$S/dev/pci/drm/amd/display/modules/hdcp \
 		-I$S/dev/pci/drm/amd/display/dmub/inc \
 		-I$S/dev/pci/drm/i915
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -MD -MP -DCONFIG_DRM_AMD_DC_DCN3_0
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -MD -MP \
+		-DCONFIG_DRM_AMD_DC_DCN3_0
 CWARNFLAGS=	-Werror -Wall -Wimplicit-function-declaration \
 		-Wno-uninitialized -Wno-pointer-sign \
 		-Wframe-larger-than=2047
