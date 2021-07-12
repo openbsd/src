@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.61 2021/07/12 18:31:53 krw Exp $	*/
+/*	$OpenBSD: disk.c,v 1.62 2021/07/12 22:18:54 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -38,7 +38,7 @@ struct disk		disk;
 struct disklabel	dl;
 
 void
-DISK_open(int rw)
+DISK_open(const int rw)
 {
 	struct stat		st;
 	uint64_t		sz, spc;
@@ -84,7 +84,7 @@ DISK_open(int rw)
  * to indicate the units that should be used for display.
  */
 int
-DISK_printgeometry(char *units)
+DISK_printgeometry(const char *units)
 {
 	const int		secsize = unit_types[SECTORS].ut_conversion;
 	double			size;
@@ -146,7 +146,7 @@ DISK_readsector(off_t where)
  * errno if the write fails.
  */
 int
-DISK_writesector(char *secbuf, off_t where)
+DISK_writesector(const char *secbuf, off_t where)
 {
 	int			secsize;
 	ssize_t			len;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.83 2021/07/12 14:06:19 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.84 2021/07/12 22:18:54 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -157,8 +157,8 @@ MBR_init(struct mbr *mbr)
 }
 
 void
-MBR_parse(struct dos_mbr *dos_mbr, off_t lba_self, off_t lba_firstembr,
-    struct mbr *mbr)
+MBR_parse(const struct dos_mbr *dos_mbr, const off_t lba_self,
+    const off_t lba_firstembr, struct mbr *mbr)
 {
 	struct dos_partition	dos_parts[NDOSPART];
 	int			i;
@@ -193,7 +193,7 @@ MBR_make(struct mbr *mbr, struct dos_mbr *dos_mbr)
 }
 
 void
-MBR_print(struct mbr *mbr, char *units)
+MBR_print(const struct mbr *mbr, const char *units)
 {
 	int			i;
 
@@ -210,7 +210,7 @@ MBR_print(struct mbr *mbr, char *units)
 }
 
 int
-MBR_read(off_t where, struct dos_mbr *dos_mbr)
+MBR_read(const off_t where, struct dos_mbr *dos_mbr)
 {
 	char			*secbuf;
 
@@ -225,7 +225,7 @@ MBR_read(off_t where, struct dos_mbr *dos_mbr)
 }
 
 int
-MBR_write(off_t where, struct dos_mbr *dos_mbr)
+MBR_write(const off_t where, const struct dos_mbr *dos_mbr)
 {
 	char			*secbuf;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.93 2021/07/12 18:31:53 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.94 2021/07/12 22:18:54 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -30,8 +30,8 @@
 #include "misc.h"
 #include "part.h"
 
-int			 check_chs(struct prt *);
-const char		*ascii_id(int);
+int			 check_chs(const struct prt *);
+const char		*ascii_id(const int);
 
 static const struct part_type {
 	int	pt_type;
@@ -157,7 +157,7 @@ static const struct protected_guid {
 #endif
 
 int
-PRT_protected_guid(struct uuid *leuuid)
+PRT_protected_guid(const struct uuid *leuuid)
 {
 	struct uuid		 uuid;
 	char			*str = NULL;
@@ -208,7 +208,7 @@ PRT_printall(void)
 }
 
 const char *
-ascii_id(int id)
+ascii_id(const int id)
 {
 	static char		unknown[] = "<Unknown ID>";
 	int			i;
@@ -222,8 +222,8 @@ ascii_id(int id)
 }
 
 void
-PRT_parse(struct dos_partition *dp, off_t lba_self, off_t lba_firstembr,
-    struct prt *prt)
+PRT_parse(const struct dos_partition *dp, const off_t lba_self,
+    const off_t lba_firstembr, struct prt *prt)
 {
 	off_t			off;
 	uint32_t		t;
@@ -262,7 +262,7 @@ PRT_parse(struct dos_partition *dp, off_t lba_self, off_t lba_firstembr,
 }
 
 int
-check_chs(struct prt *prt)
+check_chs(const struct prt *prt)
 {
 	if ( (prt->prt_shead > 255) ||
 		(prt->prt_ssect >63) ||
@@ -277,7 +277,7 @@ check_chs(struct prt *prt)
 }
 
 void
-PRT_make(struct prt *prt, off_t lba_self, off_t lba_firstembr,
+PRT_make(struct prt *prt, const off_t lba_self, const off_t lba_firstembr,
     struct dos_partition *dp)
 {
 	off_t			off;
@@ -327,7 +327,7 @@ PRT_make(struct prt *prt, off_t lba_self, off_t lba_firstembr,
 }
 
 void
-PRT_print(int num, struct prt *prt, char *units)
+PRT_print(const int num, const struct prt *prt, const char *units)
 {
 	const int		secsize = unit_types[SECTORS].ut_conversion;
 	double			size;
@@ -357,7 +357,7 @@ PRT_print(int num, struct prt *prt, char *units)
 }
 
 void
-PRT_fix_BN(struct prt *prt, int pn)
+PRT_fix_BN(struct prt *prt, const int pn)
 {
 	uint32_t		spt, tpc, spc;
 	uint32_t		start = 0;
@@ -432,7 +432,7 @@ PRT_fix_CHS(struct prt *prt)
 }
 
 char *
-PRT_uuid_to_typename(struct uuid *uuid)
+PRT_uuid_to_typename(const struct uuid *uuid)
 {
 	static char		 partition_type[UUID_STR_LEN + 1];
 	char			*uuidstr = NULL;
@@ -465,7 +465,7 @@ done:
 }
 
 int
-PRT_uuid_to_type(struct uuid *uuid)
+PRT_uuid_to_type(const struct uuid *uuid)
 {
 	char			*uuidstr;
 	int			 entries, i, status, type;
@@ -491,7 +491,7 @@ done:
 }
 
 struct uuid *
-PRT_type_to_uuid(int type)
+PRT_type_to_uuid(const int type)
 {
 	static struct uuid	guid;
 	int			i, entries, status = uuid_s_ok;

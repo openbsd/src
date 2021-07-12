@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.74 2021/07/12 18:31:53 krw Exp $	*/
+/*	$OpenBSD: misc.c,v 1.75 2021/07/12 22:18:54 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -43,7 +43,7 @@ struct unit_type	unit_types[] = {
 };
 
 int
-unit_lookup(char *units)
+unit_lookup(const char *units)
 {
 	int			i = 0;
 
@@ -63,7 +63,7 @@ unit_lookup(char *units)
 }
 
 int
-string_from_line(char *buf, size_t buflen)
+string_from_line(char *buf, const size_t buflen)
 {
 	static char		*line;
 	static size_t		 sz;
@@ -107,7 +107,8 @@ ask_yn(const char *str)
  * adapted from sbin/disklabel/editor.c
  */
 uint64_t
-getuint64(char *prompt, uint64_t oval, uint64_t minval, uint64_t maxval)
+getuint64(const char *prompt, uint64_t oval, const uint64_t minval,
+    const uint64_t maxval)
 {
 	char			buf[BUFSIZ], *endptr, *p, operator = '\0';
 	const int		secsize = unit_types[SECTORS].ut_conversion;

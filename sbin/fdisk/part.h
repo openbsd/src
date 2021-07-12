@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.h,v 1.26 2021/07/11 20:51:50 krw Exp $	*/
+/*	$OpenBSD: part.h,v 1.27 2021/07/12 22:18:54 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -29,17 +29,17 @@ struct prt {
 };
 
 void		 PRT_printall(void);
-void		 PRT_parse(struct dos_partition *, off_t, off_t,
+void		 PRT_parse(const struct dos_partition *, const off_t, const off_t,
     struct prt *);
-void		 PRT_make(struct prt *, off_t, off_t, struct dos_partition *);
-void		 PRT_print(int, struct prt *, char *);
-char		*PRT_uuid_to_typename(struct uuid *);
-int		 PRT_uuid_to_type(struct uuid *);
-struct uuid	*PRT_type_to_uuid(int);
-int		 PRT_protected_guid(struct uuid *);
+void		 PRT_make(struct prt *,const off_t, const off_t, struct dos_partition *);
+void		 PRT_print(const int, const struct prt *, const char *);
+char		*PRT_uuid_to_typename(const struct uuid *);
+int		 PRT_uuid_to_type(const struct uuid *);
+struct uuid	*PRT_type_to_uuid(const int);
+int		 PRT_protected_guid(const struct uuid *);
 
 /* This does CHS -> bs/ns */
-void PRT_fix_BN(struct prt *, int);
+void PRT_fix_BN(struct prt *, const int);
 
 /* This does bs/ns -> CHS */
 void PRT_fix_CHS(struct prt *);

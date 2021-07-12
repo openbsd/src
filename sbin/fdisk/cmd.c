@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.125 2021/07/12 18:31:53 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.126 2021/07/12 22:18:54 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -35,14 +35,14 @@
 #include "user.h"
 #include "cmd.h"
 
-int		 gedit(int);
-int		 edit(int, struct mbr *);
-int		 gsetpid(int);
-int		 setpid(int, struct mbr *);
-int		 parsepn(char *);
+int		 gedit(const int);
+int		 edit(const int, struct mbr *);
+int		 gsetpid(const int);
+int		 setpid(const int, struct mbr *);
+int		 parsepn(const char *);
 
 int		 ask_num(const char *, int, int, int);
-int		 ask_pid(int, struct uuid *);
+int		 ask_pid(const int, struct uuid *);
 char		*ask_string(const char *, const char *);
 
 extern const unsigned char	manpage[];
@@ -152,7 +152,7 @@ Xswap(char *args, struct mbr *mbr)
 }
 
 int
-gedit(int pn)
+gedit(const int pn)
 {
 	struct gpt_partition	 oldgg;
 	struct gpt_partition	*gg;
@@ -207,7 +207,7 @@ gedit(int pn)
 }
 
 int
-parsepn(char *pnstr)
+parsepn(const char *pnstr)
 {
 	const char		*errstr;
 	int			 maxpn, pn;
@@ -232,7 +232,7 @@ parsepn(char *pnstr)
 }
 
 int
-edit(int pn, struct mbr *mbr)
+edit(const int pn, struct mbr *mbr)
 {
 	struct prt		 oldpp;
 	struct prt		*pp;
@@ -641,7 +641,7 @@ ask_num(const char *str, int dflt, int low, int high)
 }
 
 int
-ask_pid(int dflt, struct uuid *guid)
+ask_pid(const int dflt, struct uuid *guid)
 {
 	char			lbuf[100], *cp;
 	int			num = -1, status;

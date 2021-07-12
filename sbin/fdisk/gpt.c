@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.39 2021/07/12 18:31:53 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.40 2021/07/12 22:18:54 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -46,14 +46,14 @@ struct gpt_partition	**sort_gpt(void);
 int			  lba_start_cmp(const void *e1, const void *e2);
 int			  lba_free(uint64_t *, uint64_t *);
 int			  add_partition(const uint8_t *, const char *, uint64_t);
-int			  get_header(off_t);
+int			  get_header(const off_t);
 int			  get_partition_table(void);
 int			  init_gh(void);
-int			  init_gp(int, uint32_t);
+int			  init_gp(const int, const uint32_t);
 uint32_t		  crc32(const u_char *, const uint32_t);
 
 int
-get_header(off_t where)
+get_header(const off_t where)
 {
 	char			*secbuf;
 	uint64_t		 partlastlba, partslen, lba_end;
@@ -203,7 +203,7 @@ get_partition_table(void)
 }
 
 void
-GPT_read(int which)
+GPT_read(const int which)
 {
 	int			valid;
 
@@ -234,7 +234,7 @@ GPT_read(int which)
 }
 
 void
-GPT_print(char *units, int verbosity)
+GPT_print(const char *units, const int verbosity)
 {
 	const int		 secsize = unit_types[SECTORS].ut_conversion;
 	struct uuid		 guid;
@@ -271,7 +271,7 @@ GPT_print(char *units, int verbosity)
 }
 
 void
-GPT_print_parthdr(int verbosity)
+GPT_print_parthdr(const int verbosity)
 {
 	printf("   #: type                                "
 	    " [       start:         size ]\n");
@@ -282,7 +282,7 @@ GPT_print_parthdr(int verbosity)
 }
 
 void
-GPT_print_part(int n, char *units, int verbosity)
+GPT_print_part(const int n, const char *units, const int verbosity)
 {
 	struct uuid		 guid;
 	struct gpt_partition	*partn = &gp[n];
@@ -414,7 +414,7 @@ init_gh(void)
 }
 
 int
-init_gp(int how, uint32_t bootsectors)
+init_gp(const int how, const uint32_t bootsectors)
 {
 	struct gpt_partition	oldgp[NGPTPARTITIONS];
 	const uint8_t		gpt_uuid_efi_system[] = GPT_UUID_EFI_SYSTEM;
@@ -447,7 +447,7 @@ init_gp(int how, uint32_t bootsectors)
 }
 
 int
-GPT_init(int how, uint32_t bootsectors)
+GPT_init(const int how, const uint32_t bootsectors)
 {
 	int			rslt = 0;
 
@@ -651,7 +651,7 @@ lba_free(uint64_t *start, uint64_t *end)
 }
 
 int
-GPT_get_lba_start(unsigned int pn)
+GPT_get_lba_start(const unsigned int pn)
 {
 	uint64_t		bs;
 	unsigned int		i;
@@ -689,7 +689,7 @@ GPT_get_lba_start(unsigned int pn)
 }
 
 int
-GPT_get_lba_end(unsigned int pn)
+GPT_get_lba_end(const unsigned int pn)
 {
 	struct gpt_partition	**sgp;
 	uint64_t		  bs, nextbs, ns;
