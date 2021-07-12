@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdevs.c,v 1.33 2019/12/22 14:02:38 semarie Exp $	*/
+/*	$OpenBSD: usbdevs.c,v 1.34 2021/07/12 15:09:22 beck Exp $	*/
 /*	$NetBSD: usbdevs.c,v 1.19 2002/02/21 00:34:31 christos Exp $	*/
 
 /*
@@ -263,7 +263,7 @@ main(int argc, char **argv)
 		usage();
 
 	if (unveil("/dev", "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil /dev");
 	if (unveil(NULL, NULL) == -1)
 		err(1, "unveil");
 

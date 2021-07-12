@@ -1,4 +1,4 @@
-/*	$OpenBSD: makefs.c,v 1.20 2018/09/24 22:55:50 deraadt Exp $	*/
+/*	$OpenBSD: makefs.c,v 1.21 2021/07/12 15:09:21 beck Exp $	*/
 /*	$NetBSD: makefs.c,v 1.53 2015/11/27 15:10:32 joerg Exp $	*/
 
 /*
@@ -199,9 +199,9 @@ main(int argc, char *argv[])
 		usage();
 
 	if (unveil(argv[0], "rwc") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", argv[0]);
 	if (unveil(argv[1], "rw") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", argv[1]);
 	if (pledge("stdio rpath wpath cpath", NULL) == -1)
 		err(1, "pledge");
 

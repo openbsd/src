@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.217 2020/02/12 14:46:36 schwarze Exp $ */
+/* $OpenBSD: netcat.c,v 1.218 2021/07/12 15:09:20 beck Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -364,13 +364,13 @@ main(int argc, char *argv[])
 
 	if (usetls) {
 		if (Cflag && unveil(Cflag, "r") == -1)
-			err(1, "unveil");
+			err(1, "unveil %s", Cflag);
 		if (unveil(Rflag, "r") == -1)
-			err(1, "unveil");
+			err(1, "unveil %s", Rflag);
 		if (Kflag && unveil(Kflag, "r") == -1)
-			err(1, "unveil");
+			err(1, "unveil %s", Kflag);
 		if (oflag && unveil(oflag, "r") == -1)
-			err(1, "unveil");
+			err(1, "unveil %s", oflag);
 	} else if (family == AF_UNIX && uflag && lflag && !kflag) {
 		/*
 		 * After recvfrom(2) from client, the server connects
@@ -380,20 +380,20 @@ main(int argc, char *argv[])
 	} else {
 		if (family == AF_UNIX) {
 			if (unveil(host, "rwc") == -1)
-				err(1, "unveil");
+				err(1, "unveil %s", host);
 			if (uflag && !kflag) {
 				if (sflag) {
 					if (unveil(sflag, "rwc") == -1)
-						err(1, "unveil");
+						err(1, "unveil %s", sflag);
 				} else {
 					if (unveil("/tmp", "rwc") == -1)
-						err(1, "unveil");
+						err(1, "unveil /tmp");
 				}
 			}
 		} else {
 			/* no filesystem visibility */
 			if (unveil("/", "") == -1)
-				err(1, "unveil");
+				err(1, "unveil /");
 		}
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: last.c,v 1.52 2019/06/28 13:35:01 deraadt Exp $	*/
+/*	$OpenBSD: last.c,v 1.53 2021/07/12 15:09:19 beck Exp $	*/
 /*	$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $	*/
 
 /*
@@ -153,7 +153,7 @@ main(int argc, char *argv[])
 		exit(0);
 
 	if (unveil(file, "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", file);
 	if (pledge("stdio rpath", NULL) == -1)
 		err(1, "pledge");
 

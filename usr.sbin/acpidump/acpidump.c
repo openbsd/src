@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpidump.c,v 1.23 2019/05/11 19:17:56 lteo Exp $	*/
+/*	$OpenBSD: acpidump.c,v 1.24 2021/07/12 15:09:20 beck Exp $	*/
 /*
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
  * All rights reserved.
@@ -606,25 +606,25 @@ asl_dump_from_devmem(void)
 	/* Can only unveil if being dumped to a dir */
 	if (aml_dumpdir) {
 		if (unveil(aml_dumpfile, "wc") == -1)
-			err(1, "unveil");
+			err(1, "unveil %s", aml_dumpfile);
 	} else if (aml_dumpfile[0] == '/') {	/* admittedly pretty shitty */
 		if (unveil("/", "wc") == -1)
-			err(1, "unveil");
+			err(1, "unveil /");
 	} else {
 		if (unveil(".", "wc") == -1)
-			err(1, "unveil");
+			err(1, "unveil .");
 	}
 
 	if (unveil(_PATH_MEM, "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", _PATH_MEM);
 	if (unveil(_PATH_KMEM, "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", _PATH_KMEM);
 	if (unveil(_PATH_KVMDB, "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", _PATH_KVMDB);
 	if (unveil(_PATH_KSYMS, "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", _PATH_KSYMS);
 	if (unveil(_PATH_UNIX, "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", _PATH_UNIX);
 	if (pledge("stdio rpath wpath cpath", NULL) == -1)
 		err(1, "pledge");
 

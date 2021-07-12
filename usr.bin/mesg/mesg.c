@@ -1,4 +1,4 @@
-/*	$OpenBSD: mesg.c,v 1.16 2019/06/28 13:35:02 deraadt Exp $	*/
+/*	$OpenBSD: mesg.c,v 1.17 2021/07/12 15:09:20 beck Exp $	*/
 /*	$NetBSD: mesg.c,v 1.4 1994/12/23 07:16:32 jtc Exp $	*/
 
 /*
@@ -65,7 +65,7 @@ main(int argc, char *argv[])
 		err(2, "ttyname");
 
 	if (unveil(tty, "rw") == -1)
-		err(2, "unveil");
+		err(2, "unveil %s", tty);
 	if (pledge("stdio rpath fattr", NULL) == -1)
 		err(2, "pledge");
 

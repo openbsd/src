@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.89 2021/01/27 17:02:50 millert Exp $ */
+/* $OpenBSD: doas.c,v 1.90 2021/07/12 15:09:19 beck Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -416,9 +416,10 @@ main(int argc, char **argv)
 	if (formerpath == NULL)
 		formerpath = "";
 
-	if (unveil(_PATH_LOGIN_CONF, "r") == -1 ||
-	    unveil(_PATH_LOGIN_CONF ".db", "r") == -1)
-		err(1, "unveil");
+	if (unveil(_PATH_LOGIN_CONF, "r") == -1)
+		err(1, "unveil %s", _PATH_LOGIN_CONF);
+	if (unveil(_PATH_LOGIN_CONF ".db", "r") == -1)
+		err(1, "unveil %s.db", _PATH_LOGIN_CONF);
 	if (rule->cmd) {
 		if (setenv("PATH", safepath, 1) == -1)
 			err(1, "failed to set PATH '%s'", safepath);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.163 2020/02/11 18:41:39 deraadt Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.164 2021/07/12 15:09:21 beck Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -329,7 +329,7 @@ main(int argc, char *argv[])
 
 	/* Cannot pledge due to special setsockopt()s below */
 	if (unveil("/", "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil /");
 	if (unveil(NULL, NULL) == -1)
 		err(1, "unveil");
 

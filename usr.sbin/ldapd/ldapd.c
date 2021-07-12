@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.c,v 1.27 2021/01/27 22:12:28 rob Exp $ */
+/*	$OpenBSD: ldapd.c,v 1.28 2021/07/12 15:09:21 beck Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -237,15 +237,15 @@ main(int argc, char *argv[])
 	    ldapd_needfd);
 
 	if (unveil(_PATH_NOLOGIN, "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", _PATH_NOLOGIN);
 	if (unveil(_PATH_LOGIN_CONF, "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", _PATH_LOGIN_CONF);
 	if (unveil(_PATH_LOGIN_CONF ".db", "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s.db", _PATH_LOGIN_CONF);
 	if (unveil(_PATH_AUTHPROGDIR, "x") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", _PATH_AUTHPROGDIR);
 	if (unveil(datadir, "rw") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", datadir);
 	if (unveil(NULL, NULL) == -1)
 		err(1, "unveil");
 

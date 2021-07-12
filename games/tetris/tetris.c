@@ -1,4 +1,4 @@
-/*	$OpenBSD: tetris.c,v 1.34 2019/05/18 19:38:25 rob Exp $	*/
+/*	$OpenBSD: tetris.c,v 1.35 2021/07/12 15:09:18 beck Exp $	*/
 /*	$NetBSD: tetris.c,v 1.2 1995/04/22 07:42:47 cgd Exp $	*/
 
 /*-
@@ -234,7 +234,7 @@ main(int argc, char *argv[])
 	scr_init();
 
 	if (unveil(scorepath, "rwc") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", scorepath);
 
 	if (pledge("stdio rpath wpath cpath tty", NULL) == -1)
 		err(1, "pledge");

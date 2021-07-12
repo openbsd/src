@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfutils.c,v 1.21 2019/08/08 06:59:44 mestre Exp $ */
+/*	$OpenBSD: pfutils.c,v 1.22 2021/07/12 15:09:20 beck Exp $ */
 /*
  * Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
  *
@@ -62,7 +62,7 @@ pftable_handler()
 
 	/* no filesystem visibility */
 	if (unveil("/", "") == -1)
-		fatal("unveil");
+		fatal("unveil /");
 	if (unveil(NULL, NULL) == -1)
 		fatal("unveil");
 

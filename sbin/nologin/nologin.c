@@ -1,4 +1,4 @@
-/*	$OpenBSD: nologin.c,v 1.8 2019/06/28 13:32:45 deraadt Exp $	*/
+/*	$OpenBSD: nologin.c,v 1.9 2021/07/12 15:09:19 beck Exp $	*/
 
 /*
  * Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -47,7 +47,7 @@ main(int argc, char *argv[])
 	char nbuf[BUFSIZ];
 
 	if (unveil(_PATH_NOLOGIN_TXT, "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", _PATH_NOLOGIN_TXT);
 	if (pledge("stdio rpath", NULL) == -1)
 		err(1, "pledge");
 

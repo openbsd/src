@@ -1,4 +1,4 @@
-/*	$OpenBSD: chpass.c,v 1.46 2019/09/14 17:47:00 semarie Exp $	*/
+/*	$OpenBSD: chpass.c,v 1.47 2021/07/12 15:09:19 beck Exp $	*/
 /*	$NetBSD: chpass.c,v 1.8 1996/05/15 21:50:43 jtc Exp $	*/
 
 /*-
@@ -137,11 +137,11 @@ main(int argc, char *argv[])
 		display(tempname, dfd, pw);
 
 		if (unveil(_PATH_BSHELL, "x") == -1)
-			err(1, "unveil");
+			err(1, "unveil %s", _PATH_BSHELL);
 		if (unveil(_PATH_SHELLS, "r") == -1)
-			err(1, "unveil");
+			err(1, "unveil %s", _PATH_SHELLS);
 		if (unveil(tempname, "rc") == -1)
-			err(1, "unveil");
+			err(1, "unveil %s", tempname);
 		if (pledge("stdio rpath wpath cpath id proc exec unveil",
 		    NULL) == -1)
 			err(1, "pledge");
@@ -165,7 +165,7 @@ main(int argc, char *argv[])
 
 	if (op == NEWSH) {
 		if (unveil(_PATH_SHELLS, "r") == -1)
-			err(1, "unveil");
+			err(1, "unveil %s", _PATH_SHELLS);
 		if (pledge("stdio rpath wpath cpath id proc exec unveil",
 		    NULL) == -1)
 			err(1, "pledge");
@@ -184,11 +184,11 @@ main(int argc, char *argv[])
 	sigprocmask(SIG_BLOCK, &fullset, NULL);
 
 	if (unveil(_PATH_MASTERPASSWD_LOCK, "rwc") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", _PATH_MASTERPASSWD_LOCK);
 	if (unveil(_PATH_MASTERPASSWD, "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", _PATH_MASTERPASSWD);
 	if (unveil(_PATH_PWD_MKDB, "x") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", _PATH_PWD_MKDB);
 	if (pledge("stdio rpath wpath cpath proc exec", NULL) == -1)
 		err(1, "pledge");
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getent.c,v 1.21 2018/11/02 10:21:29 kn Exp $	*/
+/*	$OpenBSD: getent.c,v 1.22 2021/07/12 15:09:19 beck Exp $	*/
 /*	$NetBSD: getent.c,v 1.7 2005/08/24 14:31:02 ginsbach Exp $	*/
 
 /*-
@@ -102,7 +102,7 @@ main(int argc, char *argv[])
 		if (strcmp(curdb->name, argv[1]) == 0) {
 			if (curdb->unveil != NULL) {
 				if (unveil(curdb->unveil, "r") == -1)
-					err(1, "unveil");
+					err(1, "unveil %s", curdb->unveil);
 			}
 			if (pledge(curdb->pledge, NULL) == -1)
 				err(1, "pledge");

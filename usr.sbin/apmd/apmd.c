@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.105 2021/04/18 23:51:47 jca Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.106 2021/07/12 15:09:20 beck Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -504,7 +504,7 @@ main(int argc, char *argv[])
 		exit(0);
 
 	if (unveil(_PATH_APM_ETC_DIR, "rx") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", _PATH_APM_ETC_DIR);
 	if (unveil(NULL, NULL) == -1)
 		err(1, "unveil");
 

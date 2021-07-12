@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.56 2021/05/01 11:53:06 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.57 2021/07/12 15:09:19 beck Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -149,9 +149,9 @@ frontend(int debug, int verbose)
 		fatal("chdir(\"/\")");
 
 	if (unveil("/", "") == -1)
-		fatal("unveil(\"/\", \"\")");
+		fatal("unveil /");
 	if (unveil(NULL, NULL) == -1)
-		fatal("unveil(NULL, NULL)");
+		fatal("unveil");
 
 	setproctitle("%s", "frontend");
 	log_procinit("frontend");

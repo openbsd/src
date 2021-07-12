@@ -1,4 +1,4 @@
-/*	$OpenBSD: users.c,v 1.14 2018/08/03 16:02:53 deraadt Exp $	*/
+/*	$OpenBSD: users.c,v 1.15 2021/07/12 15:09:20 beck Exp $	*/
 /*	$NetBSD: users.c,v 1.5 1994/12/20 15:58:19 jtc Exp $	*/
 
 /*
@@ -54,7 +54,7 @@ main(int argc, char *argv[])
 	int ch;
 
 	if (unveil(_PATH_UTMP, "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", _PATH_UTMP);
 	if (pledge("stdio rpath", NULL) == -1)
 		err(1, "pledge");
 

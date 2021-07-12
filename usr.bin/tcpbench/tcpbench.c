@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpbench.c,v 1.64 2021/02/04 18:46:25 bluhm Exp $	*/
+/*	$OpenBSD: tcpbench.c,v 1.65 2021/07/12 15:09:20 beck Exp $	*/
 
 /*
  * Copyright (c) 2008 Damien Miller <djm@mindrot.org>
@@ -1273,11 +1273,11 @@ main(int argc, char **argv)
 
 	if (ptb->kvars) {
 		if (unveil(_PATH_MEM, "r") == -1)
-			err(1, "unveil");
+			err(1, "unveil %s", _PATH_MEM);
 		if (unveil(_PATH_KMEM, "r") == -1)
-			err(1, "unveil");
+			err(1, "unveil %s", _PATH_KMEM);
 		if (unveil(_PATH_KSYMS, "r") == -1)
-			err(1, "unveil");
+			err(1, "unveil %s", _PATH_KSYMS);
 
 		if ((ptb->kvmh = kvm_openfiles(NULL, NULL, NULL,
 		    O_RDONLY, kerr)) == NULL)
@@ -1294,7 +1294,7 @@ main(int argc, char **argv)
 
 	if (ptb->Uflag)
 		if (unveil(host, "rwc") == -1)
-			err(1, "unveil");
+			err(1, "unveil %s", host);
 
 	if (pledge("stdio id dns inet unix", NULL) == -1)
 		err(1, "pledge");

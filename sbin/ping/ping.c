@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.244 2021/02/21 10:38:42 sthen Exp $	*/
+/*	$OpenBSD: ping.c,v 1.245 2021/07/12 15:09:19 beck Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -266,7 +266,7 @@ main(int argc, char *argv[])
 
 	/* Cannot pledge due to special setsockopt()s below */
 	if (unveil("/", "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil /");
 	if (unveil(NULL, NULL) == -1)
 		err(1, "unveil");
 

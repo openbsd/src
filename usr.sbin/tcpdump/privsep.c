@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.55 2020/12/04 11:36:13 mvs Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.56 2021/07/12 15:09:21 beck Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -316,9 +316,9 @@ priv_exec(int argc, char *argv[])
 
 			drop_privs(1);
 			if (unveil("/etc/ethers", "r") == -1)
-				err(1, "unveil");
+				err(1, "unveil /etc/ethers");
 			if (unveil("/etc/rpc", "r") == -1)
-				err(1, "unveil");
+				err(1, "unveil /etc/rpc");
 			if (pledge("stdio rpath dns bpf", NULL) == -1)
 				err(1, "pledge");
 

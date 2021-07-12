@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.34 2019/11/27 17:49:09 deraadt Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.35 2021/07/12 15:09:19 beck Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -134,15 +134,15 @@ priv_init(int Pflag, int argc, char *argv[])
 	setproctitle("[priv]");
 
 	if (unveil(_PATH_RESCONF, "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", _PATH_RESCONF);
 	if (unveil(_PATH_HOSTS, "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", _PATH_HOSTS);
 	if (unveil(_PATH_SERVICES, "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", _PATH_SERVICES);
 	if (unveil("/dev/bpf", "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil /dev/bpf");
 	if (unveil(filename, "rwc") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", filename);
 	if (unveil(NULL, NULL) == -1)
 		err(1, "unveil");
 

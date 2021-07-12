@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.129 2020/02/12 19:14:56 otto Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.130 2021/07/12 15:09:21 beck Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -284,9 +284,9 @@ main(int argc, char *argv[])
 	 * then privdrop into chroot before speaking to the outside world.
 	 */
 	if (unveil(tls_default_ca_cert_file(), "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", tls_default_ca_cert_file());
 	if (unveil("/usr/sbin/ntpd", "x") == -1)
-		err(1, "unveil");
+		err(1, "unveil /usr/sbin/ntpd");
 	if (pledge("stdio rpath inet settime proc exec id", NULL) == -1)
 		err(1, "pledge");
 

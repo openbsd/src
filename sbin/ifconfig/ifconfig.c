@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.443 2021/07/04 19:22:32 sthen Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.444 2021/07/12 15:09:18 beck Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -773,7 +773,7 @@ main(int argc, char *argv[])
 	if (argc < 2) {
 		/* no filesystem visibility */
 		if (unveil("/", "") == -1)
-			err(1, "unveil");
+			err(1, "unveil /");
 		if (unveil(NULL, NULL) == -1)
 			err(1, "unveil");
 		aflag = 1;
@@ -827,11 +827,11 @@ main(int argc, char *argv[])
 
 	if (!found_rulefile) {
 		if (unveil(_PATH_RESCONF, "r") == -1)
-			err(1, "unveil");
+			err(1, "unveil %s", _PATH_RESCONF);
 		if (unveil(_PATH_HOSTS, "r") == -1)
-			err(1, "unveil");
+			err(1, "unveil %s", _PATH_HOSTS);
 		if (unveil(_PATH_SERVICES, "r") == -1)
-			err(1, "unveil");
+			err(1, "unveil %s", _PATH_SERVICES);
 		if (unveil(NULL, NULL) == -1)
 			err(1, "unveil");
 	}

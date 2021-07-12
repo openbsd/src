@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleased.c,v 1.13 2021/06/20 08:31:45 florian Exp $	*/
+/*	$OpenBSD: dhcpleased.c,v 1.14 2021/07/12 15:09:18 beck Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -274,7 +274,7 @@ main(int argc, char *argv[])
 	}
 
 	if (unveil(NULL, NULL) == -1)
-		fatal("locking unveil");
+		fatal("unveil");
 #if notyet
 	if (pledge("stdio inet rpath wpath sendfd wroute bpf", NULL) == -1)
 		fatal("pledge");

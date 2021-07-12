@@ -1,4 +1,4 @@
-/*	$Id: chngproc.c,v 1.15 2019/08/12 18:01:44 benno Exp $ */
+/*	$Id: chngproc.c,v 1.16 2021/07/12 15:09:20 beck Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -38,7 +38,7 @@ chngproc(int netsock, const char *root)
 
 
 	if (unveil(root, "wc") == -1) {
-		warn("unveil");
+		warn("unveil %s", root);
 		goto out;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: who.c,v 1.29 2020/08/27 15:20:31 semarie Exp $	*/
+/*	$OpenBSD: who.c,v 1.30 2021/07/12 15:09:20 beck Exp $	*/
 /*	$NetBSD: who.c,v 1.4 1994/12/07 04:28:49 jtc Exp $	*/
 
 /*
@@ -113,7 +113,7 @@ main(int argc, char *argv[])
 	if (show_quick) {
 		only_current_term = show_term = show_idle = show_labels = 0;
 	}
-	
+
 	if (show_term)
 		hostwidth -= 2;
 	if (show_idle)
@@ -123,10 +123,10 @@ main(int argc, char *argv[])
 		output_labels();
 
 	if (unveil(_PATH_UTMP, "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", _PATH_UTMP);
 	if (show_term || show_idle) {
 		if (unveil(_PATH_DEV, "r") == -1)
-			err(1, "unveil");
+			err(1, "unveil %s", _PATH_DEV);
 	}
 	switch (argc) {
 	case 0:					/* who */
@@ -138,7 +138,7 @@ main(int argc, char *argv[])
 			who_am_i(ufp);
 		} else if (show_quick) {
 			int count = 0;
-	
+
 			while (fread((char *)&usr, sizeof(usr), 1, ufp) == 1) {
 				if (*usr.ut_name && *usr.ut_line) {
 					(void)printf("%-*.*s ", NAME_WIDTH,
@@ -159,7 +159,7 @@ main(int argc, char *argv[])
 		break;
 	case 1:					/* who utmp_file */
 		if (unveil(*argv, "r") == -1)
-			err(1, "unveil");
+			err(1, "unveil %s", *argv);
 		if (pledge("stdio rpath getpw", NULL) == -1)
 			err(1, "pledge");
 		ufp = file(*argv);

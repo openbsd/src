@@ -1,4 +1,4 @@
-/*	$OpenBSD: from.c,v 1.27 2020/05/29 07:16:50 mestre Exp $	*/
+/*	$OpenBSD: from.c,v 1.28 2021/07/12 15:09:19 beck Exp $	*/
 /*	$NetBSD: from.c,v 1.6 1995/09/01 01:39:10 jtc Exp $	*/
 
 /*
@@ -80,7 +80,7 @@ main(int argc, char *argv[])
 	file = mail_spool(file, *argv);
 
 	if (unveil(file, "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", file);
 	if (pledge("stdio rpath", NULL) == -1)
 		err(1, "pledge");
 

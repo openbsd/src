@@ -1,4 +1,4 @@
-/*	$OpenBSD: biff.c,v 1.17 2019/06/28 13:35:00 deraadt Exp $	*/
+/*	$OpenBSD: biff.c,v 1.18 2021/07/12 15:09:19 beck Exp $	*/
 /*	$NetBSD: biff.c,v 1.3 1995/03/26 02:34:22 glass Exp $	*/
 
 /*
@@ -62,7 +62,7 @@ main(int argc, char *argv[])
 		err(2, "tty");
 
 	if (unveil(name, "rw") == -1)
-		err(2, "unveil");
+		err(2, "unveil %s", name);
 	if (pledge("stdio rpath fattr", NULL) == -1)
 		err(2, "pledge");
 

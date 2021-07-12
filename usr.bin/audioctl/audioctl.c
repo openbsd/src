@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioctl.c,v 1.42 2020/02/02 05:25:41 ratchov Exp $	*/
+/*	$OpenBSD: audioctl.c,v 1.43 2021/07/12 15:09:19 beck Exp $	*/
 /*
  * Copyright (c) 2016 Alexandre Ratchov <alex@caoua.org>
  *
@@ -285,7 +285,7 @@ main(int argc, char **argv)
 	argv += optind;
 
 	if (unveil(path, "w") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", path);
 	if (unveil(NULL, NULL) == -1)
 		err(1, "unveil");
 
@@ -296,5 +296,5 @@ main(int argc, char **argv)
 	audio_main(argc, argv);
 
 	close(fd);
-	return 0;	
+	return 0;
 }

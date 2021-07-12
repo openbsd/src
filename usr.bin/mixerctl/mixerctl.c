@@ -1,4 +1,4 @@
-/*	$OpenBSD: mixerctl.c,v 1.33 2020/04/04 08:43:08 ratchov Exp $	*/
+/*	$OpenBSD: mixerctl.c,v 1.34 2021/07/12 15:09:20 beck Exp $	*/
 /*	$NetBSD: mixerctl.c,v 1.11 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -285,7 +285,7 @@ main(int argc, char **argv)
 		aflag = 1;
 
 	if (unveil(file, "w") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", file);
 
 	if (unveil(NULL, NULL) == -1)
 		err(1, "unveil");

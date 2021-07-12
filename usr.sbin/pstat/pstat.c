@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.123 2020/09/28 15:53:13 tb Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.124 2021/07/12 15:09:21 beck Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -230,7 +230,7 @@ main(int argc, char *argv[])
 	}
 
 	if (unveil(_PATH_DEVDB, "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", _PATH_DEVDB);
 	if (pledge("stdio rpath vminfo", NULL) == -1)
 		err(1, "pledge");
 

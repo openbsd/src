@@ -1,4 +1,4 @@
-/*	$Id: netproc.c,v 1.29 2020/12/24 08:17:49 florian Exp $ */
+/*	$Id: netproc.c,v 1.30 2021/07/12 15:09:20 beck Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -688,7 +688,7 @@ netproc(int kfd, int afd, int Cfd, int cfd, int dfd, int rfd,
 	memset(&c, 0, sizeof(struct conn));
 
 	if (unveil(tls_default_ca_cert_file(), "r") == -1) {
-		warn("unveil");
+		warn("unveil %s", tls_default_ca_cert_file());
 		goto out;
 	}
 

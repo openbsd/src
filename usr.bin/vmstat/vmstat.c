@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.150 2019/11/28 16:27:26 guenther Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.151 2021/07/12 15:09:20 beck Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -213,7 +213,7 @@ main(int argc, char *argv[])
 	}
 
 	if (unveil("/", "") == -1)
-		err(1, "unveil");
+		err(1, "unveil /");
 	if (unveil(NULL, NULL) == -1)
 		err(1, "unveil");
 

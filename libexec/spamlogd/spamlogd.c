@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamlogd.c,v 1.31 2019/07/25 17:32:33 brynet Exp $	*/
+/*	$OpenBSD: spamlogd.c,v 1.32 2021/07/12 15:09:18 beck Exp $	*/
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -463,7 +463,7 @@ main(int argc, char **argv)
 	}
 
 	if (unveil(PATH_SPAMD_DB, "rw") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", PATH_SPAMD_DB);
 	if (syncsend) {
 		if (pledge("stdio rpath wpath inet flock", NULL) == -1)
 			err(1, "pledge");

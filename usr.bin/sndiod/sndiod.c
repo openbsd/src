@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.45 2021/03/08 09:42:50 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.46 2021/07/12 15:09:20 beck Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -378,7 +378,7 @@ dounveil(char *name, char *prefix, char *path_prefix)
 		errx(1, "%s: unsupported device or port format", name);
 	snprintf(path, sizeof(path), "%s%s", path_prefix, name + prefix_len);
 	if (unveil(path, "rw") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", path);
 }
 
 static int

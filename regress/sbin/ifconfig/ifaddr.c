@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifaddr.c,v 1.5 2021/03/12 19:35:43 florian Exp $	*/
+/*	$OpenBSD: ifaddr.c,v 1.6 2021/07/12 15:09:18 beck Exp $	*/
 
 /*
  * This file has been copied from ifconfig and adapted to test
@@ -287,7 +287,7 @@ main(int argc, char *argv[])
 	if (argc < 2) {
 		/* no filesystem visibility */
 		if (unveil("/", "") == -1)
-			err(1, "unveil");
+			err(1, "unveil /");
 		if (unveil(NULL, NULL) == -1)
 			err(1, "unveil");
 		aflag = 1;
@@ -326,11 +326,11 @@ main(int argc, char *argv[])
 	argc--, argv++;
 
 	if (unveil(_PATH_RESCONF, "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", _PATH_RESCONF);
 	if (unveil(_PATH_HOSTS, "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", _PATH_HOSTS);
 	if (unveil(_PATH_SERVICES, "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", _PATH_SERVICES);
 	if (unveil(NULL, NULL) == -1)
 		err(1, "unveil");
 

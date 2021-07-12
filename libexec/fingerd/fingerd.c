@@ -1,4 +1,4 @@
-/*	$OpenBSD: fingerd.c,v 1.41 2019/06/28 13:32:53 deraadt Exp $	*/
+/*	$OpenBSD: fingerd.c,v 1.42 2021/07/12 15:09:18 beck Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -109,7 +109,7 @@ main(int argc, char *argv[])
 		}
 
 	if (unveil(prog, "x") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", prog);
 	if (pledge("stdio inet dns proc exec", NULL) == -1)
 		err(1, "pledge");
 

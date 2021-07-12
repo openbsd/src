@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.67 2020/07/22 15:33:49 bluhm Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.68 2021/07/12 15:09:21 beck Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -147,11 +147,11 @@ main(int argc, char *argv[])
 
 	chdir("/");
 	if (unveil(configfile, "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", configfile);
 	if (unveil(configdb, "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", configdb);
 	if (unveil("/", "x") == -1)
-		err(1, "unveil");
+		err(1, "unveil /");
 
 	if (pledge("stdio rpath proc exec", NULL) == -1)
 		err(1, "pledge");

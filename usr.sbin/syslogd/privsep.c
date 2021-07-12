@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.72 2020/09/16 11:03:36 martijn Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.73 2021/07/12 15:09:21 beck Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -185,24 +185,24 @@ priv_exec(char *conf, int numeric, int child, int argc, char *argv[])
 		errx(1, "unknown user _syslogd");
 
 	if (unveil(conf, "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", conf);
 	if (unveil(_PATH_UTMP, "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", _PATH_UTMP);
 	if (unveil(_PATH_DEV, "rw") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", _PATH_DEV);
 	if (unveil(_PATH_LOGPID, "c") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", _PATH_LOGPID);
 
 	/* for pipes */
 	if (unveil(_PATH_BSHELL, "x") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", _PATH_BSHELL);
 
 	/* For HUP / re-exec */
 	if (unveil("/usr/sbin/syslogd", "x") == -1)
-		err(1, "unveil");
+		err(1, "unveil /usr/sbin/syslogd");
 	if (argv[0][0] == '/')
 		if (unveil(argv[0], "x") == -1)
-			err(1, "unveil");
+			err(1, "unveil %s", argv[0]);
 
 	if (pledge("stdio unveil rpath wpath cpath dns sendfd id proc exec",
 	    NULL) == -1)

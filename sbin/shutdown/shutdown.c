@@ -1,4 +1,4 @@
-/*	$OpenBSD: shutdown.c,v 1.52 2018/08/03 17:09:22 deraadt Exp $	*/
+/*	$OpenBSD: shutdown.c,v 1.53 2021/07/12 15:09:19 beck Exp $	*/
 /*	$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $	*/
 
 /*
@@ -166,24 +166,24 @@ main(int argc, char *argv[])
 	}
 
 	if (unveil(_PATH_CONSOLE, "rw") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", _PATH_CONSOLE);
 	if (unveil(_PATH_RC, "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", _PATH_RC);
 	if (unveil(_PATH_WALL, "x") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", _PATH_WALL);
 	if (unveil(_PATH_FASTBOOT, "wc") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", _PATH_FASTBOOT);
 	if (unveil(_PATH_NOLOGIN, "wc") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", _PATH_NOLOGIN);
 	if (dohalt || dopower) {
 		if (unveil(_PATH_HALT, "x") == -1)
-			err(1, "unveil");
+			err(1, "unveil %s", _PATH_HALT);
 	} else if (doreboot) {
 		if (unveil(_PATH_REBOOT, "x") == -1)
-			err(1, "unveil");
+			err(1, "unveil %s", _PATH_REBOOT);
 	} else {
 		if (unveil(_PATH_BSHELL, "x") == -1)
-			err(1, "unveil");
+			err(1, "unveil %s", _PATH_BSHELL);
 	}
 	if (pledge("stdio rpath wpath cpath getpw tty id proc exec", NULL) == -1)
 		err(1, "pledge");

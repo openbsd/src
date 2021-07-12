@@ -1,4 +1,4 @@
-/*	$OpenBSD: hotplugd.c,v 1.16 2020/10/15 19:45:50 naddy Exp $	*/
+/*	$OpenBSD: hotplugd.c,v 1.17 2021/07/12 15:09:21 beck Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -77,13 +77,13 @@ main(int argc, char *argv[])
 	argv += optind;
 	if (argc > 0)
 		usage();
-	
+
 	if (unveil(device, "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", device);
 	if (unveil(_PATH_ETC_HOTPLUG_ATTACH, "rx") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", _PATH_ETC_HOTPLUG_ATTACH);
 	if (unveil(_PATH_ETC_HOTPLUG_DETACH, "rx") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", _PATH_ETC_HOTPLUG_DETACH);
 	if (pledge("stdio rpath proc exec", NULL) == -1)
 		err(1, "pledge");
 

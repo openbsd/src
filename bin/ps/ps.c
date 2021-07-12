@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.76 2019/12/16 19:21:16 guenther Exp $	*/
+/*	$OpenBSD: ps.c,v 1.77 2021/07/12 15:09:18 beck Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -276,18 +276,18 @@ main(int argc, char *argv[])
 		errx(1, "%s", errbuf);
 
 	if (unveil(_PATH_DEVDB, "r") == -1 && errno != ENOENT)
-		err(1, "unveil");
+		err(1, "unveil %s", _PATH_DEVDB);
 	if (unveil(_PATH_DEV, "r") == -1 && errno != ENOENT)
-		err(1, "unveil");
+		err(1, "unveil %s", _PATH_DEV);
 	if (swapf)
 		if (unveil(swapf, "r") == -1)
-			err(1, "unveil");
+			err(1, "unveil %s", swapf);
 	if (nlistf)
 		if (unveil(nlistf, "r") == -1)
-			err(1, "unveil");
+			err(1, "unveil %s", nlistf);
 	if (memf)
 		if (unveil(memf, "r") == -1)
-			err(1, "unveil");
+			err(1, "unveil %s", memf);
 	if (pledge("stdio rpath getpw ps", NULL) == -1)
 		err(1, "pledge");
 

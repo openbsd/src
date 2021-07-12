@@ -1,4 +1,4 @@
-/*	$Id: fileproc.c,v 1.17 2021/01/03 16:32:38 florian Exp $ */
+/*	$Id: fileproc.c,v 1.18 2021/07/12 15:09:20 beck Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -100,7 +100,7 @@ fileproc(int certsock, const char *certdir, const char *certfile, const char
 	enum fileop	 op;
 
 	if (unveil(certdir, "rwc") == -1) {
-		warn("unveil");
+		warn("unveil %s", certdir);
 		goto out;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: unveil.c,v 1.1 2020/07/27 13:40:02 rob Exp $	*/
+/*	$OpenBSD: unveil.c,v 1.2 2021/07/12 15:09:18 beck Exp $	*/
 /*
  * Copyright (c) 2020 Rob Pierce <rob@openbsd.org>
  *
@@ -22,7 +22,7 @@ int
 main(int argc, char *argv[])
 {
 	if (unveil("/tmp", "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil /tmp");
 	if (unveil(NULL, NULL) == -1)
 		err(1, "unveil");
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.83 2020/10/30 16:23:57 millert Exp $	*/
+/*	$OpenBSD: su.c,v 1.84 2021/07/12 15:09:20 beck Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -161,17 +161,17 @@ main(int argc, char **argv)
 	}
 
 	if (unveil(_PATH_LOGIN_CONF, "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", _PATH_LOGIN_CONF);
 	if (unveil(_PATH_LOGIN_CONF ".db", "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s.db", _PATH_LOGIN_CONF);
 	if (unveil(_PATH_AUTHPROGDIR, "x") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", _PATH_AUTHPROGDIR);
 	if (unveil(_PATH_SHELLS, "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", _PATH_SHELLS);
 	if (unveil(_PATH_DEVDB, "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", _PATH_DEVDB);
 	if (unveil(_PATH_NOLOGIN, "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", _PATH_NOLOGIN);
 
 	for (;;) {
 		char *pw_class = class;
@@ -251,9 +251,9 @@ main(int argc, char **argv)
 	}
 
 	if (unveil(shell, "x") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", shell);
 	if (unveil(pwd->pw_dir, "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", pwd->pw_dir);
 
 	if ((p = strrchr(shell, '/')))
 		avshell = p+1;
@@ -283,7 +283,7 @@ main(int argc, char **argv)
 					auth_err(as, 1, "%s", pwd->pw_dir);
 				} else {
 					if (unveil("/", "r") == -1)
-						err(1, "unveil");
+						err(1, "unveil /");
 					printf("No home directory %s!\n", pwd->pw_dir);
 					printf("Logging in with home = \"/\".\n");
 					if (chdir("/") == -1)

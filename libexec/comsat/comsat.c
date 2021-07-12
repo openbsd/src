@@ -1,4 +1,4 @@
-/*	$OpenBSD: comsat.c,v 1.49 2018/09/24 22:56:54 deraadt Exp $	*/
+/*	$OpenBSD: comsat.c,v 1.50 2021/07/12 15:09:18 beck Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -92,13 +92,13 @@ main(int argc, char *argv[])
 	}
 
 	if (unveil(_PATH_MAILDIR, "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", _PATH_MAILDIR);
 	if (unveil(_PATH_UTMP, "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", _PATH_UTMP);
 	if (unveil("/tmp", "w") == -1)
-		err(1, "unveil");
+		err(1, "unveil /tmp");
 	if (unveil(_PATH_DEV, "rw") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", _PATH_DEV);
 	if (pledge("stdio rpath wpath proc tty", NULL) == -1)
 		err(1, "pledge");
 

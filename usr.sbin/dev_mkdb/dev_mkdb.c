@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_mkdb.c,v 1.17 2018/10/18 14:37:01 deraadt Exp $	*/
+/*	$OpenBSD: dev_mkdb.c,v 1.18 2021/07/12 15:09:20 beck Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -65,11 +65,11 @@ main(int argc, char *argv[])
 	(void)snprintf(dbname, sizeof(dbname), "%sdev.db", _PATH_VARRUN);
 
 	if (unveil(_PATH_DEV, "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", _PATH_DEV);
 	if (unveil(dbtmp, "rwc") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", dbtmp);
 	if (unveil(dbname, "wc") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", dbname);
 	if (pledge("stdio rpath wpath cpath flock", NULL) == -1)
 		err(1, "pledge");
 

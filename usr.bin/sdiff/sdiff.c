@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdiff.c,v 1.37 2018/09/28 18:21:52 mestre Exp $ */
+/*	$OpenBSD: sdiff.c,v 1.38 2021/07/12 15:09:20 beck Exp $ */
 
 /*
  * Written by Raymond Lai <ray@cyth.net>.
@@ -255,7 +255,7 @@ main(int argc, char **argv)
 	if (outfile && (outfp = fopen(outfile, "w")) == NULL)
 		err(2, "could not open: %s", optarg);
 
-	if ((tmpdir = getenv("TMPDIR")) == NULL || *tmpdir == '\0')                       
+	if ((tmpdir = getenv("TMPDIR")) == NULL || *tmpdir == '\0')
 		tmpdir = _PATH_TMP;
 
 	filename1 = argv[0];
@@ -263,15 +263,15 @@ main(int argc, char **argv)
 
 	if (!Fflag) {
 		if (unveil(filename1, "r") == -1)
-			err(2, "unveil");
+			err(2, "unveil %s", filename1);
 		if (unveil(filename2, "r") == -1)
-			err(2, "unveil");
+			err(2, "unveil %s", filename2);
 		if (unveil(tmpdir, "rwc") == -1)
-			err(2, "unveil");
+			err(2, "unveil %s", tmpdir);
 		if (unveil("/usr/bin/diff", "x") == -1)
-			err(2, "unveil");
+			err(2, "unveil /usr/bin/diff");
 		if (unveil(_PATH_BSHELL, "x") == -1)
-			err(2, "unveil");
+			err(2, "unveil %s", _PATH_BSHELL);
 	}
 	if (pledge("stdio rpath wpath cpath proc exec", NULL) == -1)
 		err(2, "pledge");

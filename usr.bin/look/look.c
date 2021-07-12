@@ -1,4 +1,4 @@
-/*	$OpenBSD: look.c,v 1.23 2019/06/28 13:35:01 deraadt Exp $	*/
+/*	$OpenBSD: look.c,v 1.24 2021/07/12 15:09:20 beck Exp $	*/
 /*	$NetBSD: look.c,v 1.7 1995/08/31 22:41:02 jtc Exp $	*/
 
 /*-
@@ -111,7 +111,7 @@ main(int argc, char *argv[])
 	}
 
 	if (unveil(file, "r") == -1)
-		err(2, "unveil");
+		err(2, "unveil %s", file);
 	if (pledge("stdio rpath", NULL) == -1)
 		err(2, "pledge");
 

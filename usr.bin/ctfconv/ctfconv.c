@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctfconv.c,v 1.18 2019/11/07 13:39:08 mpi Exp $ */
+/*	$OpenBSD: ctfconv.c,v 1.19 2021/07/12 15:09:19 beck Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -128,11 +128,11 @@ main(int argc, char *argv[])
 	filename = *argv;
 
 	if (unveil(filename, "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", filename);
 
 	if (outfile != NULL) {
 		if (unveil(outfile, "wc") == -1)
-			err(1, "unveil");
+			err(1, "unveil %s", outfile);
 	}
 
 	if (pledge("stdio rpath wpath cpath", NULL) == -1)

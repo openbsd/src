@@ -2418,17 +2418,17 @@ int main(int argc, char* argv[])
 		exit(0);
 	}
 	if (unveil(root_anchor_temppath, "rwc") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", root_anchor_temppath);
 	free(root_anchor_temppath);
 	free(s);
 	if (unveil(root_cert_file, "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", root_cert_file);
 	if (res_conf != NULL && unveil(res_conf, "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", res_conf);
 	if (root_hints != NULL && unveil(root_hints, "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", root_hints);
 	if (debugconf != NULL && unveil(debugconf, "r") == -1)
-		err(1, "unveil");
+		err(1, "unveil %s", debugconf);
 
 	if (pledge("stdio rpath wpath cpath inet dns", NULL) == -1)
 		err(1, "pledge");
