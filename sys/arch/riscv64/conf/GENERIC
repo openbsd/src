@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.25 2021/06/29 17:49:49 matthieu Exp $
+#	$OpenBSD: GENERIC,v 1.26 2021/07/12 19:11:42 matthieu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -114,6 +114,10 @@ usb*		at xhci?
 uhub*		at usb?
 uhub*		at uhub?
 uhidev*		at uhub?
+uaudio*		at uhub?		# USB Audio
+audio*		at uaudio?
+umidi*		at uhub?		# USB MIDI
+midi*		at umidi?
 ums*		at uhidev?		# USB mouse
 wsmouse* 	at ums? mux 0
 umt*		at uhidev?		# USB multitouch touchpad
