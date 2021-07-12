@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.60 2021/07/12 14:06:19 krw Exp $	*/
+/*	$OpenBSD: disk.c,v 1.61 2021/07/12 18:31:53 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -56,7 +56,7 @@ DISK_open(int rw)
 	if (ioctl(disk.dk_fd, DIOCGPDINFO, &dl) == -1) {
 		warn("DIOCGPDINFO");
 	} else {
-		unit_types[SECTORS].conversion = dl.d_secsize;
+		unit_types[SECTORS].ut_conversion = dl.d_secsize;
 		if (disk.dk_size == 0) {
 			/* -l or -c/-h/-s not used. Use disklabel info. */
 			disk.dk_cylinders = dl.d_ncylinders;
@@ -74,7 +74,7 @@ DISK_open(int rw)
 	}
 
 	if (disk.dk_size == 0 || disk.dk_cylinders == 0 || disk.dk_heads == 0 ||
-	    disk.dk_sectors == 0 || unit_types[SECTORS].conversion == 0)
+	    disk.dk_sectors == 0 || unit_types[SECTORS].ut_conversion == 0)
 		errx(1, "Can't get disk geometry, please use [-chs] or [-l]"
 		    "to specify.");
 }
@@ -86,19 +86,19 @@ DISK_open(int rw)
 int
 DISK_printgeometry(char *units)
 {
-	const int		secsize = unit_types[SECTORS].conversion;
+	const int		secsize = unit_types[SECTORS].ut_conversion;
 	double			size;
 	int			i;
 
 	i = unit_lookup(units);
-	size = ((double)disk.dk_size * secsize) / unit_types[i].conversion;
+	size = ((double)disk.dk_size * secsize) / unit_types[i].ut_conversion;
 	printf("Disk: %s\t", disk.dk_name);
 	if (disk.dk_size) {
 		printf("geometry: %d/%d/%d [%.0f ", disk.dk_cylinders,
 		    disk.dk_heads, disk.dk_sectors, size);
 		if (i == SECTORS && secsize != sizeof(struct dos_mbr))
 			printf("%d-byte ", secsize);
-		printf("%s]\n", unit_types[i].lname);
+		printf("%s]\n", unit_types[i].ut_lname);
 	} else
 		printf("geometry: <none>\n");
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.92 2021/07/12 14:06:19 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.93 2021/07/12 18:31:53 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -34,9 +34,9 @@ int			 check_chs(struct prt *);
 const char		*ascii_id(int);
 
 static const struct part_type {
-	int	type;
-	char	sname[14];
-	char	guid[UUID_STR_LEN + 1];
+	int	pt_type;
+	char	pt_sname[14];
+	char	pt_guid[UUID_STR_LEN + 1];
 } part_types[] = {
 	{ 0x00, "unused      ", "00000000-0000-0000-0000-000000000000" },
 	{ 0x01, "FAT12       ", "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
@@ -143,7 +143,7 @@ static const struct part_type {
 };
 
 static const struct protected_guid {
-	char	guid[UUID_STR_LEN + 1];
+	char	pg_guid[UUID_STR_LEN + 1];
 } protected_guid[] = {
 	{ "7c3457ef-0000-11aa-aa11-00306543ecac" },	/* APFS		*/
 	{ "69646961-6700-11aa-aa11-00306543ecac" },	/* APFS ISC	*/
@@ -174,7 +174,7 @@ PRT_protected_guid(struct uuid *leuuid)
 
 	rslt = 0;
 	for(i = 0; i < nitems(protected_guid); i++) {
-		if (strncmp(str, protected_guid[i].guid, UUID_STR_LEN) == 0) {
+		if (strncmp(str, protected_guid[i].pg_guid, UUID_STR_LEN) == 0) {
 			rslt = 1;
 			break;
 		}
@@ -195,13 +195,13 @@ PRT_printall(void)
 	printf("Choose from the following Partition id values:\n");
 	for (i = 0; i < idrows; i++) {
 		printf("%02X %s   %02X %s   %02X %s",
-		    part_types[i].type, part_types[i].sname,
-		    part_types[i+idrows].type, part_types[i+idrows].sname,
-		    part_types[i+idrows*2].type, part_types[i+idrows*2].sname);
+		    part_types[i].pt_type, part_types[i].pt_sname,
+		    part_types[i+idrows].pt_type, part_types[i+idrows].pt_sname,
+		    part_types[i+idrows*2].pt_type, part_types[i+idrows*2].pt_sname);
 		if ((i+idrows*3) < (sizeof(part_types)/sizeof(struct part_type))) {
 			printf("   %02X %s\n",
-			    part_types[i+idrows*3].type,
-			    part_types[i+idrows*3].sname);
+			    part_types[i+idrows*3].pt_type,
+			    part_types[i+idrows*3].pt_sname);
 		} else
 			printf( "\n" );
 	}
@@ -214,8 +214,8 @@ ascii_id(int id)
 	int			i;
 
 	for (i = 0; i < sizeof(part_types)/sizeof(struct part_type); i++) {
-		if (part_types[i].type == id)
-			return part_types[i].sname;
+		if (part_types[i].pt_type == id)
+			return part_types[i].pt_sname;
 	}
 
 	return unknown;
@@ -329,7 +329,7 @@ PRT_make(struct prt *prt, off_t lba_self, off_t lba_firstembr,
 void
 PRT_print(int num, struct prt *prt, char *units)
 {
-	const int		secsize = unit_types[SECTORS].conversion;
+	const int		secsize = unit_types[SECTORS].ut_conversion;
 	double			size;
 	int			i;
 
@@ -343,7 +343,7 @@ PRT_print(int num, struct prt *prt, char *units)
 		printf("---------------------------------------"
 		    "----------------------------------------\n");
 	} else {
-		size = ((double)prt->prt_ns * secsize) / unit_types[i].conversion;
+		size = ((double)prt->prt_ns * secsize) / unit_types[i].ut_conversion;
 		printf("%c%1d: %.2X %6u %3u %3u - %6u %3u %3u "
 		    "[%12llu:%12.0f%s] %s\n",
 		    (prt->prt_flag == DOSACTIVE)?'*':' ',
@@ -351,7 +351,7 @@ PRT_print(int num, struct prt *prt, char *units)
 		    prt->prt_scyl, prt->prt_shead, prt->prt_ssect,
 		    prt->prt_ecyl, prt->prt_ehead, prt->prt_esect,
 		    prt->prt_bs, size,
-		    unit_types[i].abbr,
+		    unit_types[i].ut_abbr,
 		    ascii_id(prt->prt_id));
 	}
 }
@@ -447,13 +447,13 @@ PRT_uuid_to_typename(struct uuid *uuid)
 	entries = sizeof(part_types) / sizeof(struct part_type);
 
 	for (i = 0; i < entries; i++) {
-		if (memcmp(part_types[i].guid, uuidstr,
-		    sizeof(part_types[i].guid)) == 0)
+		if (memcmp(part_types[i].pt_guid, uuidstr,
+		    sizeof(part_types[i].pt_guid)) == 0)
 			break;
 	}
 
 	if (i < entries)
-		strlcpy(partition_type, part_types[i].sname,
+		strlcpy(partition_type, part_types[i].pt_sname,
 		    sizeof(partition_type));
 	else
 		strlcpy(partition_type, uuidstr, sizeof(partition_type));
@@ -478,9 +478,9 @@ PRT_uuid_to_type(struct uuid *uuid)
 
 	entries = sizeof(part_types) / sizeof(struct part_type);
 	for (i = 0; i < entries; i++) {
-		if (memcmp(part_types[i].guid, uuidstr,
-		    sizeof(part_types[i].guid)) == 0) {
-			type = part_types[i].type;
+		if (memcmp(part_types[i].pt_guid, uuidstr,
+		    sizeof(part_types[i].pt_guid)) == 0) {
+			type = part_types[i].pt_type;
 			break;
 		}
 	}
@@ -501,13 +501,13 @@ PRT_type_to_uuid(int type)
 	entries = sizeof(part_types) / sizeof(struct part_type);
 
 	for (i = 0; i < entries; i++) {
-		if (part_types[i].type == type)
+		if (part_types[i].pt_type == type)
 			break;
 	}
 	if (i < entries)
-		uuid_from_string(part_types[i].guid, &guid, &status);
+		uuid_from_string(part_types[i].pt_guid, &guid, &status);
 	if (i == entries || status != uuid_s_ok)
-		uuid_from_string(part_types[0].guid, &guid, &status);
+		uuid_from_string(part_types[0].pt_guid, &guid, &status);
 
 	return &guid;
 }

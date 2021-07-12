@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.124 2021/07/12 14:06:19 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.125 2021/07/12 18:31:53 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -506,16 +506,16 @@ Xhelp(char *args, struct mbr *mbr)
 	char			*mbrstr;
 	int			 i;
 
-	for (i = 0; cmd_table[i].cmd != NULL; i++) {
-		strlcpy(help, cmd_table[i].help, sizeof(help));
+	for (i = 0; cmd_table[i].cmd_name != NULL; i++) {
+		strlcpy(help, cmd_table[i].cmd_help, sizeof(help));
 		if (letoh64(gh.gh_sig) == GPTSIGNATURE) {
-			if (cmd_table[i].gpt == 0)
+			if (cmd_table[i].cmd_gpt == 0)
 				continue;
 			mbrstr = strstr(help, "MBR");
 			if (mbrstr)
 				memcpy(mbrstr, "GPT", 3);
 		}
-		printf("\t%s\t\t%s\n", cmd_table[i].cmd, help);
+		printf("\t%s\t\t%s\n", cmd_table[i].cmd_name, help);
 	}
 
 	return CMD_CONT;

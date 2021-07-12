@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.60 2021/07/12 14:06:19 krw Exp $	*/
+/*	$OpenBSD: user.c,v 1.61 2021/07/12 18:31:53 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -97,8 +97,8 @@ again:
 
 		if (cmd[0] == '\0')
 			continue;
-		for (i = 0; cmd_table[i].cmd != NULL; i++)
-			if (strstr(cmd_table[i].cmd, cmd) == cmd_table[i].cmd)
+		for (i = 0; cmd_table[i].cmd_name != NULL; i++)
+			if (strstr(cmd_table[i].cmd_name, cmd) == cmd_table[i].cmd_name)
 				break;
 
 		/* Quick hack to put in '?' == 'help' */
@@ -106,14 +106,14 @@ again:
 			i = 0;
 
 		/* Check for valid command */
-		if ((cmd_table[i].cmd == NULL) || (letoh64(gh.gh_sig) ==
-		    GPTSIGNATURE && cmd_table[i].gpt == 0)) {
+		if ((cmd_table[i].cmd_name == NULL) || (letoh64(gh.gh_sig) ==
+		    GPTSIGNATURE && cmd_table[i].cmd_gpt == 0)) {
 			printf("Invalid command '%s'.  Try 'help'.\n", cmd);
 			continue;
 		}
 
 		/* Call function */
-		st = cmd_table[i].fcn(args, &mbr);
+		st = cmd_table[i].cmd_fcn(args, &mbr);
 
 		/* Update status */
 		if (st == CMD_EXIT)

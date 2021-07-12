@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.73 2021/07/12 14:06:19 krw Exp $	*/
+/*	$OpenBSD: misc.c,v 1.74 2021/07/12 18:31:53 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -50,13 +50,13 @@ unit_lookup(char *units)
 	if (units == NULL)
 		return SECTORS;
 
-	while (unit_types[i].abbr != NULL) {
-		if (strncasecmp(unit_types[i].abbr, units, 1) == 0)
+	while (unit_types[i].ut_abbr != NULL) {
+		if (strncasecmp(unit_types[i].ut_abbr, units, 1) == 0)
 			break;
 		i++;
 	}
 	/* default */
-	if (unit_types[i].abbr == NULL)
+	if (unit_types[i].ut_abbr == NULL)
 		return SECTORS;
 
 	return i;
@@ -110,7 +110,7 @@ uint64_t
 getuint64(char *prompt, uint64_t oval, uint64_t minval, uint64_t maxval)
 {
 	char			buf[BUFSIZ], *endptr, *p, operator = '\0';
-	const int		secsize = unit_types[SECTORS].conversion;
+	const int		secsize = unit_types[SECTORS].ut_conversion;
 	size_t			n;
 	int64_t			mult = 1;
 	double			d, d2;

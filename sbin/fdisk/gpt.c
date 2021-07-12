@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.38 2021/07/12 14:06:19 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.39 2021/07/12 18:31:53 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -236,20 +236,20 @@ GPT_read(int which)
 void
 GPT_print(char *units, int verbosity)
 {
-	const int		 secsize = unit_types[SECTORS].conversion;
+	const int		 secsize = unit_types[SECTORS].ut_conversion;
 	struct uuid		 guid;
 	char			*guidstr = NULL;
 	double			 size;
 	int			 i, u, status;
 
 	u = unit_lookup(units);
-	size = ((double)DL_GETDSIZE(&dl) * secsize) / unit_types[u].conversion;
+	size = ((double)DL_GETDSIZE(&dl) * secsize) / unit_types[u].ut_conversion;
 	printf("Disk: %s       Usable LBA: %llu to %llu [%.0f ",
 	    disk.dk_name, letoh64(gh.gh_lba_start), letoh64(gh.gh_lba_end), size);
 
 	if (u == SECTORS && secsize != DEV_BSIZE)
 		printf("%d-byte ", secsize);
-	printf("%s]\n", unit_types[u].lname);
+	printf("%s]\n", unit_types[u].ut_lname);
 
 	if (verbosity == VERBOSE) {
 		printf("GUID: ");
@@ -287,18 +287,18 @@ GPT_print_part(int n, char *units, int verbosity)
 	struct uuid		 guid;
 	struct gpt_partition	*partn = &gp[n];
 	char			*guidstr = NULL;
-	const int		 secsize = unit_types[SECTORS].conversion;
+	const int		 secsize = unit_types[SECTORS].ut_conversion;
 	double			 size;
 	int			 u, status;
 
 	uuid_dec_le(&partn->gp_type, &guid);
 	u = unit_lookup(units);
 	size = letoh64(partn->gp_lba_end) - letoh64(partn->gp_lba_start) + 1;
-	size = (size * secsize) / unit_types[u].conversion;
+	size = (size * secsize) / unit_types[u].ut_conversion;
 	printf("%c%3d: %-36s [%12lld: %12.0f%s]\n",
 	    (letoh64(partn->gp_attrs) & GPTDOSACTIVE)?'*':' ', n,
 	    PRT_uuid_to_typename(&guid), letoh64(partn->gp_lba_start),
-	    size, unit_types[u].abbr);
+	    size, unit_types[u].ut_abbr);
 
 	if (verbosity == VERBOSE) {
 		uuid_dec_le(&partn->gp_guid, &guid);
@@ -378,7 +378,7 @@ init_gh(void)
 {
 	struct gpt_header	oldgh;
 	struct uuid		guid;
-	const int		secsize = unit_types[SECTORS].conversion;
+	const int		secsize = unit_types[SECTORS].ut_conversion;
 	int			needed;
 	uint32_t		status;
 
@@ -494,7 +494,7 @@ GPT_write(void)
 	char			*secbuf;
 	ssize_t			 len;
 	off_t			 off;
-	const int		 secsize = unit_types[SECTORS].conversion;
+	const int		 secsize = unit_types[SECTORS].ut_conversion;
 	uint64_t		 altgh, altgp, prigh, prigp, gpbytes;
 
 	/*
