@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.132 2021/07/12 09:29:18 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.133 2021/07/12 09:32:37 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -1333,6 +1333,9 @@ hw_cpu_hatch(struct cpu_info *ci)
 
 	octeon_intr_init();
 	mips64_ipi_init();
+
+	ci->ci_flags |= CPUF_RUNNING;
+	membar_sync();
 
 	ncpus++;
 	cpuset_add(&cpus_running, ci);
