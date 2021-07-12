@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.38 2021/07/10 15:52:59 beck Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.39 2021/07/12 15:12:38 beck Exp $ */
 /*
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
  *
@@ -829,14 +829,9 @@ x509_verify_validate_constraints(X509 *cert,
 static int
 x509_verify_cert_extensions(struct x509_verify_ctx *ctx, X509 *cert, int need_ca)
 {
-	if (!(cert->ex_flags & EXFLAG_SET)) {
-		CRYPTO_w_lock(CRYPTO_LOCK_X509);
-		x509v3_cache_extensions(cert);
-		CRYPTO_w_unlock(CRYPTO_LOCK_X509);
-		if (cert->ex_flags & EXFLAG_INVALID) {
-			ctx->error = X509_V_ERR_UNSPECIFIED;
-			return 0;
-		}
+	if (!x509_verify_cert_cache_extensions(cert)) {
+		ctx->error = X509_V_ERR_UNSPECIFIED;
+		return 0;
 	}
 
 	if (ctx->xsc != NULL)
