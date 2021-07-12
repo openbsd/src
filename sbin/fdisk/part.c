@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.91 2021/07/11 20:51:50 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.92 2021/07/12 14:06:19 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -370,8 +370,8 @@ PRT_fix_BN(struct prt *prt, int pn)
 	}
 
 	/* Disk geometry. */
-	spt = disk.sectors;
-	tpc = disk.heads;
+	spt = disk.dk_sectors;
+	tpc = disk.dk_heads;
 	spc = spt * tpc;
 
 	start += prt->prt_scyl * spc;
@@ -404,8 +404,8 @@ PRT_fix_CHS(struct prt *prt)
 	}
 
 	/* Disk geometry. */
-	spt = disk.sectors;
-	tpc = disk.heads;
+	spt = disk.dk_sectors;
+	tpc = disk.dk_heads;
 	spc = spt * tpc;
 
 	start = prt->prt_bs;

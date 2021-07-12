@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.59 2021/07/11 13:38:27 krw Exp $	*/
+/*	$OpenBSD: disk.c,v 1.60 2021/07/12 14:06:19 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -43,38 +43,38 @@ DISK_open(int rw)
 	struct stat		st;
 	uint64_t		sz, spc;
 
-	disk.fd = opendev(disk.name, rw ? O_RDWR : O_RDONLY, OPENDEV_PART,
+	disk.dk_fd = opendev(disk.dk_name, rw ? O_RDWR : O_RDONLY, OPENDEV_PART,
 	    NULL);
-	if (disk.fd == -1)
-		err(1, "%s", disk.name);
-	if (fstat(disk.fd, &st) == -1)
-		err(1, "%s", disk.name);
+	if (disk.dk_fd == -1)
+		err(1, "%s", disk.dk_name);
+	if (fstat(disk.dk_fd, &st) == -1)
+		err(1, "%s", disk.dk_name);
 	if (!S_ISCHR(st.st_mode))
-		errx(1, "%s is not a character device", disk.name);
+		errx(1, "%s is not a character device", disk.dk_name);
 
 	/* Get label geometry. */
-	if (ioctl(disk.fd, DIOCGPDINFO, &dl) == -1) {
+	if (ioctl(disk.dk_fd, DIOCGPDINFO, &dl) == -1) {
 		warn("DIOCGPDINFO");
 	} else {
 		unit_types[SECTORS].conversion = dl.d_secsize;
-		if (disk.size == 0) {
+		if (disk.dk_size == 0) {
 			/* -l or -c/-h/-s not used. Use disklabel info. */
-			disk.cylinders = dl.d_ncylinders;
-			disk.heads = dl.d_ntracks;
-			disk.sectors = dl.d_nsectors;
+			disk.dk_cylinders = dl.d_ncylinders;
+			disk.dk_heads = dl.d_ntracks;
+			disk.dk_sectors = dl.d_nsectors;
 			/* MBR handles only first UINT32_MAX sectors. */
-			spc = (uint64_t)disk.heads * disk.sectors;
+			spc = (uint64_t)disk.dk_heads * disk.dk_sectors;
 			sz = DL_GETDSIZE(&dl);
 			if (sz > UINT32_MAX) {
-				disk.cylinders = UINT32_MAX / spc;
-				disk.size = disk.cylinders * spc;
+				disk.dk_cylinders = UINT32_MAX / spc;
+				disk.dk_size = disk.dk_cylinders * spc;
 			} else
-				disk.size = sz;
+				disk.dk_size = sz;
 		}
 	}
 
-	if (disk.size == 0 || disk.cylinders == 0 || disk.heads == 0 ||
-	    disk.sectors == 0 || unit_types[SECTORS].conversion == 0)
+	if (disk.dk_size == 0 || disk.dk_cylinders == 0 || disk.dk_heads == 0 ||
+	    disk.dk_sectors == 0 || unit_types[SECTORS].conversion == 0)
 		errx(1, "Can't get disk geometry, please use [-chs] or [-l]"
 		    "to specify.");
 }
@@ -91,11 +91,11 @@ DISK_printgeometry(char *units)
 	int			i;
 
 	i = unit_lookup(units);
-	size = ((double)disk.size * secsize) / unit_types[i].conversion;
-	printf("Disk: %s\t", disk.name);
-	if (disk.size) {
-		printf("geometry: %d/%d/%d [%.0f ", disk.cylinders,
-		    disk.heads, disk.sectors, size);
+	size = ((double)disk.dk_size * secsize) / unit_types[i].conversion;
+	printf("Disk: %s\t", disk.dk_name);
+	if (disk.dk_size) {
+		printf("geometry: %d/%d/%d [%.0f ", disk.dk_cylinders,
+		    disk.dk_heads, disk.dk_sectors, size);
 		if (i == SECTORS && secsize != sizeof(struct dos_mbr))
 			printf("%d-byte ", secsize);
 		printf("%s]\n", unit_types[i].lname);
@@ -123,7 +123,7 @@ DISK_readsector(off_t where)
 	secsize = dl.d_secsize;
 
 	where *= secsize;
-	off = lseek(disk.fd, where, SEEK_SET);
+	off = lseek(disk.dk_fd, where, SEEK_SET);
 	if (off != where)
 		return NULL;
 
@@ -131,7 +131,7 @@ DISK_readsector(off_t where)
 	if (secbuf == NULL)
 		return NULL;
 
-	len = read(disk.fd, secbuf, secsize);
+	len = read(disk.dk_fd, secbuf, secsize);
 	if (len == -1 || len != secsize) {
 		free(secbuf);
 		return NULL;
@@ -156,9 +156,9 @@ DISK_writesector(char *secbuf, off_t where)
 	secsize = dl.d_secsize;
 
 	where *= secsize;
-	off = lseek(disk.fd, where, SEEK_SET);
+	off = lseek(disk.dk_fd, where, SEEK_SET);
 	if (off == where)
-		len = write(disk.fd, secbuf, secsize);
+		len = write(disk.dk_fd, secbuf, secsize);
 
 	if (len == -1 || len != secsize) {
 		/* short read or write */

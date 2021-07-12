@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.37 2021/07/11 13:51:42 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.38 2021/07/12 14:06:19 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -179,13 +179,13 @@ get_partition_table(void)
 	memset(&gp, 0, sizeof(gp));
 
 	where = letoh64(gh.gh_part_lba) * dl.d_secsize;
-	off = lseek(disk.fd, where, SEEK_SET);
+	off = lseek(disk.dk_fd, where, SEEK_SET);
 	if (off == -1) {
 		DPRINTF("seek to gpt partition table @ sector %llu failed\n",
 		    (unsigned long long)where / dl.d_secsize);
 		return 1;
 	}
-	len = read(disk.fd, &gp, secs * dl.d_secsize);
+	len = read(disk.dk_fd, &gp, secs * dl.d_secsize);
 	if (len == -1 || len != secs * dl.d_secsize) {
 		DPRINTF("gpt partition table read failed.\n");
 		return 1;
@@ -245,7 +245,7 @@ GPT_print(char *units, int verbosity)
 	u = unit_lookup(units);
 	size = ((double)DL_GETDSIZE(&dl) * secsize) / unit_types[u].conversion;
 	printf("Disk: %s       Usable LBA: %llu to %llu [%.0f ",
-	    disk.name, letoh64(gh.gh_lba_start), letoh64(gh.gh_lba_end), size);
+	    disk.dk_name, letoh64(gh.gh_lba_start), letoh64(gh.gh_lba_end), size);
 
 	if (u == SECTORS && secsize != DEV_BSIZE)
 		printf("%d-byte ", secsize);
@@ -536,9 +536,9 @@ GPT_write(void)
 	DISK_writesector(secbuf, altgh);
 	free(secbuf);
 
-	off = lseek(disk.fd, secsize * prigp, SEEK_SET);
+	off = lseek(disk.dk_fd, secsize * prigp, SEEK_SET);
 	if (off == secsize * prigp)
-		len = write(disk.fd, &gp, gpbytes);
+		len = write(disk.dk_fd, &gp, gpbytes);
 	else
 		len = -1;
 	if (len == -1 || len != gpbytes) {
@@ -546,9 +546,9 @@ GPT_write(void)
 		return -1;
 	}
 
-	off = lseek(disk.fd, secsize * altgp, SEEK_SET);
+	off = lseek(disk.dk_fd, secsize * altgp, SEEK_SET);
 	if (off == secsize * altgp)
-		len = write(disk.fd, &gp, gpbytes);
+		len = write(disk.dk_fd, &gp, gpbytes);
 	else
 		len = -1;
 
@@ -558,7 +558,7 @@ GPT_write(void)
 	}
 
 	/* Refresh in-kernel disklabel from the updated disk information. */
-	ioctl(disk.fd, DIOCRLDINFO, 0);
+	ioctl(disk.dk_fd, DIOCRLDINFO, 0);
 
 	return 0;
 }

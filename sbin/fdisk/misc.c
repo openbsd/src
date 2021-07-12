@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.72 2021/07/11 13:51:42 krw Exp $	*/
+/*	$OpenBSD: misc.c,v 1.73 2021/07/12 14:06:19 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -122,7 +122,7 @@ getuint64(char *prompt, uint64_t oval, uint64_t minval, uint64_t maxval)
 	if (oval < minval)
 		oval = minval;
 
-	secpercyl = disk.sectors * disk.heads;
+	secpercyl = disk.dk_sectors * disk.dk_heads;
 
 	do {
 		printf("%s [%llu - %llu]: [%llu] ", prompt, minval, maxval,

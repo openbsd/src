@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.h,v 1.24 2021/07/11 13:23:18 krw Exp $	*/
+/*	$OpenBSD: disk.h,v 1.25 2021/07/12 14:06:19 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -20,12 +20,12 @@
 #define _DISK_H
 
 struct disk {
-	char		*name;
-	int		 fd;
-	uint32_t	 cylinders;
-	uint32_t	 heads;
-	uint32_t	 sectors;
-	uint32_t	 size;
+	char		*dk_name;
+	int		 dk_fd;
+	uint32_t	 dk_cylinders;
+	uint32_t	 dk_heads;
+	uint32_t	 dk_sectors;
+	uint32_t	 dk_size;
 };
 
 /* Align partition starts/sizes on 32K-byte boundaries. */

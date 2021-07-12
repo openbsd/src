@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.82 2021/07/11 20:51:50 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.83 2021/07/12 14:06:19 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -99,20 +99,20 @@ MBR_init(struct mbr *mbr)
 
 	/* Use whole disk. Reserve first track, or first cyl, if possible. */
 	mbr->mbr_prt[3].prt_id = DOSPTYP_OPENBSD;
-	if (disk.heads > 1)
+	if (disk.dk_heads > 1)
 		mbr->mbr_prt[3].prt_shead = 1;
 	else
 		mbr->mbr_prt[3].prt_shead = 0;
-	if (disk.heads < 2 && disk.cylinders > 1)
+	if (disk.dk_heads < 2 && disk.dk_cylinders > 1)
 		mbr->mbr_prt[3].prt_scyl = 1;
 	else
 		mbr->mbr_prt[3].prt_scyl = 0;
 	mbr->mbr_prt[3].prt_ssect = 1;
 
 	/* Go right to the end */
-	mbr->mbr_prt[3].prt_ecyl = disk.cylinders - 1;
-	mbr->mbr_prt[3].prt_ehead = disk.heads - 1;
-	mbr->mbr_prt[3].prt_esect = disk.sectors;
+	mbr->mbr_prt[3].prt_ecyl = disk.dk_cylinders - 1;
+	mbr->mbr_prt[3].prt_ehead = disk.dk_heads - 1;
+	mbr->mbr_prt[3].prt_esect = disk.dk_sectors;
 
 	/* Fix up start/length fields */
 	PRT_fix_BN(&mbr->mbr_prt[3], 3);
@@ -241,7 +241,7 @@ MBR_write(off_t where, struct dos_mbr *dos_mbr)
 	DISK_writesector(secbuf, where);
 
 	/* Refresh in-kernel disklabel from the updated disk information. */
-	ioctl(disk.fd, DIOCRLDINFO, 0);
+	ioctl(disk.dk_fd, DIOCRLDINFO, 0);
 
 	free(secbuf);
 

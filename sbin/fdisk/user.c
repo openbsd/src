@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.59 2021/07/11 20:51:50 krw Exp $	*/
+/*	$OpenBSD: user.c,v 1.60 2021/07/12 14:06:19 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -91,7 +91,7 @@ USER_edit(off_t offset, off_t reloff)
 	/* Edit cycle */
 again:
 	do {
-		printf("%s%s: %d> ", disk.name, modified ? "*" : "", editlevel);
+		printf("%s%s: %d> ", disk.dk_name, modified ? "*" : "", editlevel);
 		fflush(stdout);
 		ask_cmd(&cmd, &args);
 

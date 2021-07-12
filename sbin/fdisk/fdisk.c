@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.118 2021/07/11 19:43:19 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.119 2021/07/12 14:06:19 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -103,22 +103,22 @@ main(int argc, char *argv[])
 			if (errstr)
 				errx(1, "Cylinder argument %s [1..262144].",
 				    errstr);
-			disk.cylinders = c_arg;
-			disk.size = c_arg * h_arg * s_arg;
+			disk.dk_cylinders = c_arg;
+			disk.dk_size = c_arg * h_arg * s_arg;
 			break;
 		case 'h':
 			h_arg = strtonum(optarg, 1, 256, &errstr);
 			if (errstr)
 				errx(1, "Head argument %s [1..256].", errstr);
-			disk.heads = h_arg;
-			disk.size = c_arg * h_arg * s_arg;
+			disk.dk_heads = h_arg;
+			disk.dk_size = c_arg * h_arg * s_arg;
 			break;
 		case 's':
 			s_arg = strtonum(optarg, 1, 63, &errstr);
 			if (errstr)
 				errx(1, "Sector argument %s [1..63].", errstr);
-			disk.sectors = s_arg;
-			disk.size = c_arg * h_arg * s_arg;
+			disk.dk_sectors = s_arg;
+			disk.dk_size = c_arg * h_arg * s_arg;
 			break;
 		case 'g':
 			g_flag = 1;
@@ -131,10 +131,10 @@ main(int argc, char *argv[])
 			if (errstr)
 				errx(1, "Block argument %s [%u..%u].", errstr,
 				    BLOCKALIGNMENT, UINT32_MAX);
-			disk.cylinders = l_arg / BLOCKALIGNMENT;
-			disk.heads = 1;
-			disk.sectors = BLOCKALIGNMENT;
-			disk.size = l_arg;
+			disk.dk_cylinders = l_arg / BLOCKALIGNMENT;
+			disk.dk_heads = 1;
+			disk.dk_sectors = BLOCKALIGNMENT;
+			disk.dk_size = l_arg;
 			break;
 		case 'y':
 			y_flag = 1;
@@ -157,7 +157,7 @@ main(int argc, char *argv[])
 	    ((c_arg | h_arg | s_arg) && l_arg))
 		usage();
 
-	disk.name = argv[0];
+	disk.dk_name = argv[0];
 	DISK_open(A_flag || i_flag || u_flag || e_flag);
 	bps = DL_BLKSPERSEC(&dl);
 	if (b_sectors > 0) {
@@ -172,10 +172,10 @@ main(int argc, char *argv[])
 		if (l_arg % bps != 0)
 			l_arg += bps - l_arg % bps;
 		l_arg = DL_BLKTOSEC(&dl, l_arg);
-		disk.cylinders = l_arg / BLOCKALIGNMENT;
-		disk.heads = 1;
-		disk.sectors = BLOCKALIGNMENT;
-		disk.size = l_arg;
+		disk.dk_cylinders = l_arg / BLOCKALIGNMENT;
+		disk.dk_heads = 1;
+		disk.dk_sectors = BLOCKALIGNMENT;
+		disk.dk_size = l_arg;
 	}
 
 	/* "proc exec" for man page display */
@@ -252,7 +252,7 @@ main(int argc, char *argv[])
 		USER_edit(0, 0);
 
 done:
-	close(disk.fd);
+	close(disk.dk_fd);
 
 	return 0;
 }
