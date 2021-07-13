@@ -1,4 +1,4 @@
-/*	$OpenBSD: timeout.h,v 1.42 2021/06/19 02:05:33 cheloha Exp $	*/
+/*	$OpenBSD: timeout.h,v 1.43 2021/07/13 17:50:19 mvs Exp $	*/
 /*
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -99,10 +99,10 @@ int timeout_sysctl(void *, size_t *, void *, size_t);
 }
 
 #define TIMEOUT_INITIALIZER_KCLOCK(_fn, _arg, _kclock, _flags)		\
-    __TIMEOUT_INITIALIZER((_fn), (_args), (_kclock), (_flags) | TIMEOUT_KCLOCK)
+    __TIMEOUT_INITIALIZER((_fn), (_arg), (_kclock), (_flags) | TIMEOUT_KCLOCK)
 
 #define TIMEOUT_INITIALIZER_FLAGS(_fn, _arg, _flags)			\
-    __TIMEOUT_INITIALIZER((_fn), (_args), KCLOCK_NONE, (_flags))
+    __TIMEOUT_INITIALIZER((_fn), (_arg), KCLOCK_NONE, (_flags))
 
 #define TIMEOUT_INITIALIZER(_f, _a)					\
     __TIMEOUT_INITIALIZER((_f), (_a), KCLOCK_NONE, 0)
