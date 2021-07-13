@@ -1,4 +1,4 @@
-	$OpenBSD: na.phone,v 1.37 2021/07/13 15:32:59 deraadt Exp $
+	$OpenBSD: na.phone,v 1.38 2021/07/13 16:49:32 deraadt Exp $
 #	@(#)na.phone	8.1 (Berkeley) 6/8/93
 #
 # Area Code : City : State/Province : State/Province Abbrev.
@@ -225,7 +225,7 @@
 352:Gainesville:Florida:FL
 352:Leesburg:Florida:FL
 352:Ocala:Florida:FL
-354::Quebec:PQ
+354::Quebec:QC
 360:Bellingham:Washington:WA
 360:Kent:Washington:WA
 360:Olympia:Washington:WA
@@ -233,7 +233,7 @@
 361:Corpus Christi:Texas:TX
 361:Kingsville:Texas:TX
 365::Ontario:ON
-367::Quebec:PQ
+367::Quebec:QC
 368::Alberta:AB
 386:Daytona Beach:Florida:FL
 386:Deland:Florida:FL
@@ -295,20 +295,20 @@
 417:Joplin:Missouri:MO
 417:Lebanon:Missouri:MO
 417:Springfield:Missouri:MO
-418:Alma:Quebec:PQ
-418:Chicoutimi:Quebec:PQ
-418:Dolbeau:Quebec:PQ
-418:La Malbaie:Quebec:PQ
-418:Levis:Quebec:PQ
-418:Loretteville:Quebec:PQ
-418:Montmagny:Quebec:PQ
-418:Portneuf:Quebec:PQ
-418:Quebec City:Quebec:PQ
-418:Rimouski:Quebec:PQ
-418:Riviere-du-loup:Quebec:PQ
-418:Sept-Iles:Quebec:PQ
-418:Ste-Anne-de-Beaupre:Quebec:PQ
-418:Thetford Mines:Quebec:PQ
+418:Alma:Quebec:QC
+418:Chicoutimi:Quebec:QC
+418:Dolbeau:Quebec:QC
+418:La Malbaie:Quebec:QC
+418:Levis:Quebec:QC
+418:Loretteville:Quebec:QC
+418:Montmagny:Quebec:QC
+418:Portneuf:Quebec:QC
+418:Quebec City:Quebec:QC
+418:Rimouski:Quebec:QC
+418:Riviere-du-loup:Quebec:QC
+418:Sept-Iles:Quebec:QC
+418:Ste-Anne-de-Beaupre:Quebec:QC
+418:Thetford Mines:Quebec:QC
 419:Mansfield:Ohio:OH
 419:Sandusky:Ohio:OH
 419:Toledo:Ohio:OH
@@ -332,7 +332,7 @@
 435:Logan:Utah:UT
 435:Saint George:Utah:UT
 437:Toronto:Ontario:ON
-438::Quebec:PQ
+438::Quebec:QC
 440:Cleveland:Ohio:OH
 440:Lorain:Ohio:OH
 440:Mentor:Ohio:OH
@@ -342,23 +342,23 @@
 443:Columbia:Maryland:MD
 443:Ocean City:Maryland:MD
 445:Philadelphia:Pennsylvania:PA
-450:Beauharnios:Quebec:PQ
-450:Bedford:Quebec:PQ
-450:Cowansville:Quebec:PQ
-450:Granby:Quebec:PQ
-450:Hemmingford:Quebec:PQ
-450:Howick:Quebec:PQ
-450:Hudson:Quebec:PQ
-450:Huntingdon:Quebec:PQ
-450:Joliette:Quebec:PQ
-450:Laval:Quebec:PQ
-450:Longueuil:Quebec:PQ
-450:Marieville:Quebec:PQ
-450:Sorel:Quebec:PQ
-450:St-Hyacinthe:Quebec:PQ
-450:St-Jean:Quebec:PQ
-450:St-Jerome:Quebec:PQ
-450:Ste-Rose:Quebec:PQ
+450:Beauharnios:Quebec:QC
+450:Bedford:Quebec:QC
+450:Cowansville:Quebec:QC
+450:Granby:Quebec:QC
+450:Hemmingford:Quebec:QC
+450:Howick:Quebec:QC
+450:Hudson:Quebec:QC
+450:Huntingdon:Quebec:QC
+450:Joliette:Quebec:QC
+450:Laval:Quebec:QC
+450:Longueuil:Quebec:QC
+450:Marieville:Quebec:QC
+450:Sorel:Quebec:QC
+450:St-Hyacinthe:Quebec:QC
+450:St-Jean:Quebec:QC
+450:St-Jerome:Quebec:QC
+450:Ste-Rose:Quebec:QC
 456::Inbound International:
 469:Dallas:Texas:TX
 469:Irving:Texas:TX
@@ -420,11 +420,11 @@
 513:Cincinnati:Ohio:OH
 513:Fairfield:Ohio:OH
 513:Middletown:Ohio:OH
-514:Dorval:Quebec:PQ
-514:Lachine:Quebec:PQ
-514:Montreal:Quebec:PQ
-514:Pointe Claire:Quebec:PQ
-514:Roxboro:Quebec:PQ
+514:Dorval:Quebec:QC
+514:Lachine:Quebec:QC
+514:Montreal:Quebec:QC
+514:Pointe Claire:Quebec:QC
+514:Roxboro:Quebec:QC
 515:Ames:Iowa:IA
 515:Des Moines:Iowa:IA
 515:Fort Dodge:Iowa:IA
@@ -533,11 +533,11 @@
 573:Columbia:Missouri:MO
 573:Hannibal:Missouri:MO
 575::New Mexico:NM
-579::Quebec:PQ
+579::Quebec:QC
 580:Enid:Oklahoma:OK
 580:Lawton:Oklahoma:OK
 580:Ponca City:Oklahoma:OK
-581::Quebec:PQ
+581::Quebec:QC
 585:Rochester:New York:NY
 586:Macomb County:Michigan:MI
 587::Alberta:AB
@@ -744,7 +744,7 @@
 708:Chicago Suburbs:Illinois:IL
 708:Elgin:Illinois:IL
 708:Waukegan:Illinois:IL
-709::Newfoundland:NF
+709::Newfoundland:NL
 710::US Government:
 712:Council Bluffs:Iowa:IA
 712:Sioux City:Iowa:IA
@@ -896,32 +896,32 @@
 818:Pasadena:California:CA
 818:San Fernando:California:CA
 818:Van Nuys:California:CA
-819:Aylmer:Quebec:PQ
-819:Buckingham:Quebec:PQ
-819:Cambell's Bay:Quebec:PQ
-819:Coaticook:Quebec:PQ
-819:Drummondville:Quebec:PQ
-819:Gatineau:Quebec:PQ
-819:Gracefield:Quebec:PQ
-819:Hull:Quebec:PQ
-819:Low:Quebec:PQ
-819:Luskville:Quebec:PQ
-819:Magog:Quebec:PQ
-819:Maniwaki:Quebec:PQ
-819:Montebello:Quebec:PQ
-819:Richmond:Quebec:PQ
-819:Rock Island:Quebec:PQ
-819:Rouyn-Noranda:Quebec:PQ
-819:Shawinigan:Quebec:PQ
-819:Shawville:Quebec:PQ
-819:Sherbrooke:Quebec:PQ
-819:St-Jovite:Quebec:PQ
-819:Ste-Agathe:Quebec:PQ
-819:Temiscaming:Quebec:PQ
-819:Trois Rivieres:Quebec:PQ
-819:Val d'Or:Quebec:PQ
-819:Victoriaville:Quebec:PQ
-819:Wakefield:Quebec:PQ
+819:Aylmer:Quebec:QC
+819:Buckingham:Quebec:QC
+819:Cambell's Bay:Quebec:QC
+819:Coaticook:Quebec:QC
+819:Drummondville:Quebec:QC
+819:Gatineau:Quebec:QC
+819:Gracefield:Quebec:QC
+819:Hull:Quebec:QC
+819:Low:Quebec:QC
+819:Luskville:Quebec:QC
+819:Magog:Quebec:QC
+819:Maniwaki:Quebec:QC
+819:Montebello:Quebec:QC
+819:Richmond:Quebec:QC
+819:Rock Island:Quebec:QC
+819:Rouyn-Noranda:Quebec:QC
+819:Shawinigan:Quebec:QC
+819:Shawville:Quebec:QC
+819:Sherbrooke:Quebec:QC
+819:St-Jovite:Quebec:QC
+819:Ste-Agathe:Quebec:QC
+819:Temiscaming:Quebec:QC
+819:Trois Rivieres:Quebec:QC
+819:Val d'Or:Quebec:QC
+819:Victoriaville:Quebec:QC
+819:Wakefield:Quebec:QC
 825::Alberta:AB
 828:Asheville:North Carolina:NC
 828:Boone:North Carolina:NC
@@ -981,14 +981,14 @@
 868::Trinidad and Tobago:
 869::St Kitts and Nevis:KN
 870:Pine Bluff:Arkansas:AR
-873::Quebec:PQ
+873::Quebec:QC
 876::Jamaica:
 877::Toll-Free:
 878:New Castle:Pennsylvania:PA
 878:Pittsburgh:Pennsylvania:PA
 878:Uniontown:Pennsylvania:PA
 878:Washington:Pennsylvania:PA
-879::Newfoundland:NF
+879::Newfoundland:NL
 880::Paid Toll-Free Service:
 881::Paid Toll-Free Service:
 882::Paid Toll-Free Service:
