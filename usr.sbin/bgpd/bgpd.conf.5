@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.211 2021/06/17 16:05:25 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.212 2021/07/13 08:44:18 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 17 2021 $
+.Dd $Mdocdate: July 13 2021 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -148,7 +148,7 @@ The default is 120 seconds.
 .It Xo
 .Ic dump
 .Op Ic rib Ar name
-.Pq Ic table Ns | Ns Ic table-mp Ns | Ns Ic table-v2
+.Pq Ic table-v2 Ns | Ns Ic table-mp Ns | Ns Ic table
 .Ar file Op Ar interval
 .Xc
 .It Xo
