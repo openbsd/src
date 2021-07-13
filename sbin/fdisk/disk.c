@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.62 2021/07/12 22:18:54 krw Exp $	*/
+/*	$OpenBSD: disk.c,v 1.63 2021/07/13 15:03:34 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -113,16 +113,16 @@ DISK_printgeometry(const char *units)
  * The caller must free() the memory it gets.
  */
 char *
-DISK_readsector(off_t where)
+DISK_readsector(const uint64_t sector)
 {
 	char			*secbuf;
 	ssize_t			 len;
-	off_t			 off;
+	off_t			 off, where;
 	int			 secsize;
 
 	secsize = dl.d_secsize;
 
-	where *= secsize;
+	where = sector * secsize;
 	off = lseek(disk.dk_fd, where, SEEK_SET);
 	if (off != where)
 		return NULL;
@@ -146,16 +146,16 @@ DISK_readsector(off_t where)
  * errno if the write fails.
  */
 int
-DISK_writesector(const char *secbuf, off_t where)
+DISK_writesector(const char *secbuf, const uint64_t sector)
 {
 	int			secsize;
 	ssize_t			len;
-	off_t			off;
+	off_t			off, where;
 
 	len = -1;
 	secsize = dl.d_secsize;
 
-	where *= secsize;
+	where = secsize * sector;
 	off = lseek(disk.dk_fd, where, SEEK_SET);
 	if (off == where)
 		len = write(disk.dk_fd, secbuf, secsize);

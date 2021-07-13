@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.126 2021/07/12 22:18:54 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.127 2021/07/13 15:03:34 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -393,15 +393,15 @@ Xsetpid(char *args, struct mbr *mbr)
 int
 Xselect(char *args, struct mbr *mbr)
 {
-	static off_t		firstoff = 0;
-	off_t			off;
+	static uint64_t		lba_firstembr = 0;
+	uint64_t		lba_self;
 	int			pn;
 
 	pn = parsepn(args);
 	if (pn == -1)
 		return CMD_CONT;
 
-	off = mbr->mbr_prt[pn].prt_bs;
+	lba_self = mbr->mbr_prt[pn].prt_bs;
 
 	/* Sanity checks */
 	if ((mbr->mbr_prt[pn].prt_id != DOSPTYP_EXTEND) &&
@@ -410,19 +410,19 @@ Xselect(char *args, struct mbr *mbr)
 		return CMD_CONT;
 	}
 
-	if (firstoff == 0)
-		firstoff = off;
+	if (lba_firstembr == 0)
+		lba_firstembr = lba_self;
 
-	if (!off) {
-		printf("Loop to offset 0!  Not selected.\n");
+	if (lba_self == 0) {
+		printf("Loop to MBR (sector 0)! Not selected.\n");
 		return CMD_CONT;
 	} else {
 		printf("Selected extended partition %d\n", pn);
-		printf("New MBR at offset %lld.\n", (long long)off);
+		printf("New EMBR at offset %llu.\n", lba_self);
 	}
 
 	/* Recursion is beautiful! */
-	USER_edit(off, firstoff);
+	USER_edit(lba_self, lba_firstembr);
 
 	return CMD_CONT;
 }

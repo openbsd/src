@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.62 2021/07/12 22:18:54 krw Exp $	*/
+/*	$OpenBSD: user.c,v 1.63 2021/07/13 15:03:34 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -59,7 +59,7 @@ int			modified;
 void			ask_cmd(char **, char **);
 
 void
-USER_edit(const off_t offset, const off_t reloff)
+USER_edit(const uint64_t lba_self, const uint64_t lba_firstembr)
 {
 	struct dos_mbr		 dos_mbr;
 	struct mbr		 mbr;
@@ -71,12 +71,12 @@ USER_edit(const off_t offset, const off_t reloff)
 	editlevel += 1;
 
 	/* Read MBR & partition */
-	error = MBR_read(offset, &dos_mbr);
+	error = MBR_read(lba_self, &dos_mbr);
 	if (error == -1)
 		goto done;
 
 	/* Parse the sucker */
-	MBR_parse(&dos_mbr, offset, reloff, &mbr);
+	MBR_parse(&dos_mbr, lba_self, lba_firstembr, &mbr);
 
 	if (editlevel == 1) {
 		memset(&gh, 0, sizeof(gh));
@@ -145,17 +145,17 @@ USER_print_disk(const int verbosity)
 {
 	struct dos_mbr		dos_mbr;
 	struct mbr		mbr;
-	off_t			offset, firstoff;
+	uint64_t		lba_self, lba_firstembr;
 	int			i, efi, error;
 
-	offset = firstoff = 0;
+	lba_self = lba_firstembr = 0;
 
 	do {
-		error = MBR_read(offset, &dos_mbr);
+		error = MBR_read(lba_self, &dos_mbr);
 		if (error == -1)
 			break;
-		MBR_parse(&dos_mbr, offset, firstoff, &mbr);
-		if (offset == 0) {
+		MBR_parse(&dos_mbr, lba_self, lba_firstembr, &mbr);
+		if (lba_self == 0) {
 			efi = MBR_protective_mbr(&mbr);
 			if (efi == -1) {
 				/* No valid 0xEE partition means no GPT. */
@@ -191,14 +191,14 @@ USER_print_disk(const int verbosity)
 		MBR_print(&mbr, NULL);
 
 		/* Print out extended partitions too */
-		for (offset = i = 0; i < 4; i++)
+		for (lba_self = i = 0; i < 4; i++)
 			if (mbr.mbr_prt[i].prt_id == DOSPTYP_EXTEND ||
 			    mbr.mbr_prt[i].prt_id == DOSPTYP_EXTENDL) {
-				offset = (off_t)mbr.mbr_prt[i].prt_bs;
-				if (firstoff == 0)
-					firstoff = offset;
+				lba_self = mbr.mbr_prt[i].prt_bs;
+				if (lba_firstembr == 0)
+					lba_firstembr = lba_self;
 			}
-	} while (offset);
+	} while (lba_self);
 }
 
 void

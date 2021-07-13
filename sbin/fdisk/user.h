@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.h,v 1.18 2021/07/11 13:23:18 krw Exp $	*/
+/*	$OpenBSD: user.h,v 1.19 2021/07/13 15:03:34 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -20,7 +20,7 @@
 #define _USER_H
 
 /* Prototypes */
-void		USER_edit(off_t, off_t);
-void		USER_print_disk(int);
+void		USER_edit(const uint64_t, const uint64_t);
+void		USER_print_disk(const int);
 
 #endif /* _USER_H */

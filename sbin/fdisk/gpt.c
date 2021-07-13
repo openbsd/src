@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.41 2021/07/13 11:18:25 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.42 2021/07/13 15:03:34 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -46,21 +46,21 @@ struct gpt_partition	**sort_gpt(void);
 int			  lba_start_cmp(const void *e1, const void *e2);
 int			  lba_free(uint64_t *, uint64_t *);
 int			  add_partition(const uint8_t *, const char *, uint64_t);
-int			  get_header(const off_t);
+int			  get_header(const uint64_t);
 int			  get_partition_table(void);
 int			  init_gh(void);
 int			  init_gp(const int, const uint32_t);
 uint32_t		  crc32(const u_char *, const uint32_t);
 
 int
-get_header(const off_t where)
+get_header(const uint64_t sector)
 {
 	char			*secbuf;
 	uint64_t		 partlastlba, partslen, lba_end;
 	int			 partspersec;
 	uint32_t		 orig_gh_csum, new_gh_csum;
 
-	secbuf = DISK_readsector(where);
+	secbuf = DISK_readsector(sector);
 	if (secbuf == 0)
 		return 1;
 
@@ -79,9 +79,9 @@ get_header(const off_t where)
 		return 1;
 	}
 
-	if (letoh64(gh.gh_lba_self) != where) {
-		DPRINTF("gpt self lba: expected %lld, got %llu\n",
-		    (long long)where, letoh64(gh.gh_lba_self));
+	if (letoh64(gh.gh_lba_self) != sector) {
+		DPRINTF("gpt self lba: expected %llu, got %llu\n",
+		    sector, letoh64(gh.gh_lba_self));
 		return 1;
 	}
 

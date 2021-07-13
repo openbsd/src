@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.94 2021/07/12 22:18:54 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.95 2021/07/13 15:03:34 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -222,8 +222,8 @@ ascii_id(const int id)
 }
 
 void
-PRT_parse(const struct dos_partition *dp, const off_t lba_self,
-    const off_t lba_firstembr, struct prt *prt)
+PRT_parse(const struct dos_partition *dp, const uint64_t lba_self,
+    const uint64_t lba_firstembr, struct prt *prt)
 {
 	off_t			off;
 	uint32_t		t;
@@ -277,12 +277,11 @@ check_chs(const struct prt *prt)
 }
 
 void
-PRT_make(struct prt *prt, const off_t lba_self, const off_t lba_firstembr,
+PRT_make(struct prt *prt, const uint64_t lba_self, const uint64_t lba_firstembr,
     struct dos_partition *dp)
 {
-	off_t			off;
+	uint64_t		off, t;
 	uint32_t		ecsave, scsave;
-	uint64_t		t;
 
 	/* Save (and restore below) cylinder info we may fiddle with. */
 	scsave = prt->prt_scyl;

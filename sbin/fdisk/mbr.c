@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.84 2021/07/12 22:18:54 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.85 2021/07/13 15:03:34 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -157,8 +157,8 @@ MBR_init(struct mbr *mbr)
 }
 
 void
-MBR_parse(const struct dos_mbr *dos_mbr, const off_t lba_self,
-    const off_t lba_firstembr, struct mbr *mbr)
+MBR_parse(const struct dos_mbr *dos_mbr, const uint64_t lba_self,
+    const uint64_t lba_firstembr, struct mbr *mbr)
 {
 	struct dos_partition	dos_parts[NDOSPART];
 	int			i;
@@ -210,11 +210,11 @@ MBR_print(const struct mbr *mbr, const char *units)
 }
 
 int
-MBR_read(const off_t where, struct dos_mbr *dos_mbr)
+MBR_read(const uint64_t sector, struct dos_mbr *dos_mbr)
 {
 	char			*secbuf;
 
-	secbuf = DISK_readsector(where);
+	secbuf = DISK_readsector(sector);
 	if (secbuf == NULL)
 		return -1;
 
@@ -225,11 +225,11 @@ MBR_read(const off_t where, struct dos_mbr *dos_mbr)
 }
 
 int
-MBR_write(const off_t where, const struct dos_mbr *dos_mbr)
+MBR_write(const uint64_t sector, const struct dos_mbr *dos_mbr)
 {
 	char			*secbuf;
 
-	secbuf = DISK_readsector(where);
+	secbuf = DISK_readsector(sector);
 	if (secbuf == NULL)
 		return -1;
 
@@ -238,7 +238,7 @@ MBR_write(const off_t where, const struct dos_mbr *dos_mbr)
 	 * write the sector back to "disk".
 	 */
 	memcpy(secbuf, dos_mbr, sizeof(*dos_mbr));
-	DISK_writesector(secbuf, where);
+	DISK_writesector(secbuf, sector);
 
 	/* Refresh in-kernel disklabel from the updated disk information. */
 	ioctl(disk.dk_fd, DIOCRLDINFO, 0);
