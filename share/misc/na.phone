@@ -1,4 +1,4 @@
-	$OpenBSD: na.phone,v 1.36 2021/04/04 20:08:49 deraadt Exp $
+	$OpenBSD: na.phone,v 1.37 2021/07/13 15:32:59 deraadt Exp $
 #	@(#)na.phone	8.1 (Berkeley) 6/8/93
 #
 # Area Code : City : State/Province : State/Province Abbrev.
@@ -11,7 +11,6 @@
 203:New Haven:Connecticut:CT
 203:Stamford:Connecticut:CT
 204::Manitoba:MB
-431::Manitoba:MB
 205:Birmingham:Alabama:AL
 205:Fairfield:Alabama:AL
 205:Tuscaloosa:Alabama:AL
@@ -54,6 +53,7 @@
 231:Traverse City:Michigan:MI
 234:Akron:Ohio:OH
 234:Canton:Ohio:OH
+236::British Columbia:BC
 239:Collier:Florida:FL
 239:Lee:Florida:FL
 239:Monroe:Florida:FL
@@ -65,6 +65,7 @@
 248:Detroit:Michigan:MI
 248:Pontiac:Michigan:MI
 248:Southfield:Michigan:MI
+249::Ontario:ON
 250:150 Mile House:British Columbia:BC
 250:Cache Creek:British Columbia:BC
 250:Campbell River:British Columbia:BC
@@ -118,8 +119,8 @@
 270:Owensboro:Kentucky:KY
 270:Paducah:Kentucky:KY
 276:Bristol:Virginia:VA
-276:Stuart:Virginia:VA
 276:Martinsville:Virginia:VA
+276:Stuart:Virginia:VA
 281:Houston Cellular and Pagers:Texas:TX
 284::British Virgin Islands:
 289:Cobourg:Ontario:ON
@@ -198,9 +199,9 @@
 325:Snyder:Texas:TX
 325:Sweetwater:Texas:TX
 327:Maceo:Kentucky:KY
-330:Mahoning County:Ohio:OH
 330:Akron:Ohio:OH
 330:Canton:Ohio:OH
+330:Mahoning County:Ohio:OH
 330:Youngstown:Ohio:OH
 334:Auburn:Alabama:AL
 334:Mobile:Alabama:AL
@@ -214,6 +215,8 @@
 337:Sulphur:Louisiana:LA
 340:St John:US Virgin Islands:
 340:St Thomas:US Virgin Islands:
+343::Ontario:ON
+343::Ontario:ON
 345::Cayman Islands:
 347:Brooklyn:New York:NY
 347:Queens:New York:NY
@@ -222,12 +225,16 @@
 352:Gainesville:Florida:FL
 352:Leesburg:Florida:FL
 352:Ocala:Florida:FL
+354::Quebec:PQ
 360:Bellingham:Washington:WA
 360:Kent:Washington:WA
 360:Olympia:Washington:WA
 361:Alice:Texas:TX
 361:Corpus Christi:Texas:TX
 361:Kingsville:Texas:TX
+365::Ontario:ON
+367::Quebec:PQ
+368::Alberta:AB
 386:Daytona Beach:Florida:FL
 386:Deland:Florida:FL
 386:Edgewater:Florida:FL
@@ -238,8 +245,6 @@
 402:Blair:Nebraska:NE
 402:Lincoln:Nebraska:NE
 402:Omaha:Nebraska:NE
-587::Alberta:AB
-825::Alberta:AB
 403:Banff:Alberta:AB
 403:Calgary:Alberta:AB
 403:Canmore:Alberta:AB
@@ -313,6 +318,8 @@
 425:Bellevue:Washington:WA
 425:Everett:Washington:WA
 425:Redmond:Washington:WA
+428::New Brunswick:NB
+431::Manitoba:MB
 432:Big Spring:Texas:TX
 432:Midland:Texas:TX
 432:Odessa:Texas:TX
@@ -324,6 +331,8 @@
 435:Brigham City:Utah:UT
 435:Logan:Utah:UT
 435:Saint George:Utah:UT
+437:Toronto:Ontario:ON
+438::Quebec:PQ
 440:Cleveland:Ohio:OH
 440:Lorain:Ohio:OH
 440:Mentor:Ohio:OH
@@ -356,6 +365,7 @@
 469:Mesquite:Texas:TX
 469:Plano:Texas:TX
 473::Grenada:
+474::Saskatchewan:SK
 475:Greenwich:Connecticut:CT
 475:New Haven:Connecticut:CT
 478:Dublin:Georgia:GA
@@ -523,11 +533,14 @@
 573:Columbia:Missouri:MO
 573:Hannibal:Missouri:MO
 575::New Mexico:NM
+579::Quebec:PQ
 580:Enid:Oklahoma:OK
 580:Lawton:Oklahoma:OK
 580:Ponca City:Oklahoma:OK
+581::Quebec:PQ
 585:Rochester:New York:NY
 586:Macomb County:Michigan:MI
+587::Alberta:AB
 590::French West Indies:
 600::Canadian Services:
 601:Clinton:Mississippi:MS
@@ -629,6 +642,7 @@
 636:Ballwin:Missouri:MO
 636:Chesterfield:Missouri:MO
 636:Fenton:Missouri:MO
+639::Saskatchewan:SK
 646:Manhattan:New York:NY
 646:New York City Cellular and Pagers:New York:NY
 647:Toronto:Ontario:ON
@@ -652,6 +666,7 @@
 664::Montserrat:
 670::Northern Mariana Islands (CNMI, US Commonwealth):
 671:Yigo, Dededo:Guam:
+672::British Columbia:BC
 678:Atlanta:Georgia:GA
 678:Marietta:Georgia:GA
 678:Smyrna:Georgia:GA
@@ -772,6 +787,7 @@
 740:Delaware:Ohio:OH
 740:Lancaster:Ohio:OH
 740:Marion:Ohio:OH
+742::Ontario:ON
 757:Norfolk:Virginia:VA
 758::St Lucia:LC
 760:Carlsbad:California:CA
@@ -788,8 +804,8 @@
 770:La Grange:Georgia:GA
 770:Marietta:Georgia:GA
 770:Norcross:Georgia:GA
-772:Martin:Florida:FL
 772:Indian River:Florida:FL
+772:Martin:Florida:FL
 772:St.Lucie:Florida:FL
 773:Chicago(outside the loop):Illinois:IL
 774:Cape Cod:Massachusetts:MA
@@ -797,6 +813,7 @@
 775:Carson City:Nevada:NV
 775:Elko:Nevada:NV
 775:Sparks:Nevada:NV
+778::British Columbia:BC
 780:Cold Lake:Alberta:AB
 780:Edmonton:Alberta:AB
 780:Fort Assiniboine:Alberta:AB
@@ -808,6 +825,7 @@
 781:Lynn:Massachusetts:MA
 781:Waltham:Massachusetts:MA
 781:Weymouth:Massachusetts:MA
+782::Nova Scotia:NS
 784::St. Vincent/Grenadines:
 785:Lawrence:Kansas:KS
 785:Manhattan:Kansas:KS
@@ -904,6 +922,7 @@
 819:Val d'Or:Quebec:PQ
 819:Victoriaville:Quebec:PQ
 819:Wakefield:Quebec:PQ
+825::Alberta:AB
 828:Asheville:North Carolina:NC
 828:Boone:North Carolina:NC
 828:Hickory:North Carolina:NC
@@ -920,12 +939,12 @@
 843:Beaufort:South Carolina:SC
 843:Charleston:South Carolina:SC
 843:Myrtle Beach:South Carolina:SC
-845:Poughkeepsie: New York:NY
 845:Dutchess: New York:NY
 845:Nanuet: New York:NY
 845:New City: New York:NY
 845:Nyack: New York:NY
 845:Orange: New York:NY
+845:Poughkeepsie: New York:NY
 845:Putnam: New York:NY
 845:Rockland: New York:NY
 845:Sullivan: New York:NY
@@ -962,12 +981,14 @@
 868::Trinidad and Tobago:
 869::St Kitts and Nevis:KN
 870:Pine Bluff:Arkansas:AR
+873::Quebec:PQ
 876::Jamaica:
 877::Toll-Free:
 878:New Castle:Pennsylvania:PA
 878:Pittsburgh:Pennsylvania:PA
 878:Uniontown:Pennsylvania:PA
 878:Washington:Pennsylvania:PA
+879::Newfoundland:NF
 880::Paid Toll-Free Service:
 881::Paid Toll-Free Service:
 882::Paid Toll-Free Service:
