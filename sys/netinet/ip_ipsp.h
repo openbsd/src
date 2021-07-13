@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.200 2021/07/08 21:07:19 bluhm Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.201 2021/07/13 08:16:17 mvs Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -113,8 +113,6 @@ struct sockaddr_encap {
 			u_int16_t	Sport;
 			u_int16_t	Dport;
 		} Sip6;
-
-		struct ipsec_policy	*PolicyHead;	/* SENT_IPSP */
 	} Sen;
 };
 
@@ -208,7 +206,6 @@ struct m_tag;
 #define	sen_ip6_sport		Sen.Sip6.Sport
 #define	sen_ip6_dport		Sen.Sip6.Dport
 #define	sen_ip6_direction	Sen.Sip6.Direction
-#define	sen_ipsp		Sen.PolicyHead
 
 /*
  * The "type" is really part of the address as far as the routing
@@ -219,8 +216,7 @@ struct m_tag;
  */
 
 #define	SENT_IP4	0x0001		/* data is two struct in_addr */
-#define	SENT_IPSP	0x0002		/* data as in IP4/6 plus SPI */
-#define	SENT_IP6	0x0004
+#define	SENT_IP6	0x0002
 
 #define	SENT_LEN	sizeof(struct sockaddr_encap)
 
