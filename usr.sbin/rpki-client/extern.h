@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.64 2021/05/06 17:03:57 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.65 2021/07/13 18:39:39 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -410,10 +410,14 @@ int		 valid_roa(const char *, struct auth_tree *, struct roa *);
 int		 valid_filehash(const char *, const char *, size_t);
 int		 valid_uri(const char *, size_t, const char *);
 
-/* Working with CMS files. */
-
+/* Working with CMS. */
 unsigned char	*cms_parse_validate(X509 **, const char *,
 			const char *, size_t *);
+int		 cms_econtent_version(const char *, const unsigned char **,
+			size_t, long *);
+/* Helper for ASN1 parsing */
+int		 ASN1_frame(const char *, size_t,
+			const unsigned char **, long *, int *);
 
 /* Work with RFC 3779 IP addresses, prefixes, ranges. */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.35 2021/06/14 12:08:50 job Exp $ */
+/*	$OpenBSD: mft.c,v 1.36 2021/07/13 18:39:39 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -259,6 +259,7 @@ mft_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 	ASN1_SEQUENCE_ANY	*seq;
 	const ASN1_TYPE		*t;
 	const ASN1_GENERALIZEDTIME *from, *until;
+	long			 mft_version;
 	BIGNUM			*mft_seqnum = NULL;
 	int			 i = 0, rc = -1;
 
@@ -268,8 +269,7 @@ mft_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 		goto out;
 	}
 
-	/* The profile version field is optional. */
-
+	/* Test if the optional profile version field is present. */
 	if (sk_ASN1_TYPE_num(seq) != 5 &&
 	    sk_ASN1_TYPE_num(seq) != 6) {
 		warnx("%s: RFC 6486 section 4.2: Manifest: "
@@ -278,11 +278,24 @@ mft_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 		goto out;
 	}
 
+	/* Parse the optional version field */
 	if (sk_ASN1_TYPE_num(seq) == 6) {
-		warnx("%s: RFC 6486 section 4.2.1 and X.690, 11.5: not "
-		    "expecting version field, as only version 0 is supported",
-		    p->fn);
-		goto out;
+		t = sk_ASN1_TYPE_value(seq, i++);
+		d = t->value.asn1_string->data;
+		dsz = t->value.asn1_string->length;
+
+		if (cms_econtent_version(p->fn, &d, dsz, &mft_version) == -1)
+			goto out;
+
+		switch (mft_version) {
+		case 0:
+			warnx("%s: incorrect encoding for version 0", p->fn);
+			goto out;
+		default:
+			warnx("%s: version %ld not supported (yet)", p->fn,
+			    mft_version);
+			goto out;
+		}
 	}
 
 	/* Now the manifest sequence number. */

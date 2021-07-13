@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.30 2021/05/27 09:41:02 job Exp $ */
+/*	$OpenBSD: cert.c,v 1.31 2021/07/13 18:39:39 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -45,27 +45,6 @@ struct	parse {
 	struct cert	*res; /* result */
 	const char	*fn; /* currently-parsed file */
 };
-
-/*
- * Wrapper around ASN1_get_object() that preserves the current start
- * state and returns a more meaningful value.
- * Return zero on failure, non-zero on success.
- */
-static int
-ASN1_frame(struct parse *p, size_t sz,
-	const unsigned char **cnt, long *cntsz, int *tag)
-{
-	int	 ret, pcls;
-
-	assert(cnt != NULL && *cnt != NULL);
-	assert(sz > 0);
-	ret = ASN1_get_object(cnt, cntsz, tag, &pcls, sz);
-	if ((ret & 0x80)) {
-		cryptowarnx("%s: ASN1_get_object", p->fn);
-		return 0;
-	}
-	return ASN1_object_size((ret & 0x01) ? 2 : 0, *cntsz, *tag);
-}
 
 /*
  * Append an IP address structure to our list of results.
@@ -268,7 +247,7 @@ sbgp_sia_resource_entry(struct parse *p,
 
 	d = t->value.asn1_string->data;
 	dsz = t->value.asn1_string->length;
-	if (!ASN1_frame(p, dsz, &d, &plen, &ptag))
+	if (!ASN1_frame(p->fn, dsz, &d, &plen, &ptag))
 		goto out;
 
 	/*
@@ -666,7 +645,7 @@ sbgp_assysnum(struct parse *p, X509_EXTENSION *ext)
 
 		d = t->value.asn1_string->data;
 		dsz = t->value.asn1_string->length;
-		if (!ASN1_frame(p, dsz, &d, &plen, &ptag))
+		if (!ASN1_frame(p->fn, dsz, &d, &plen, &ptag))
 			goto out;
 
 		/* Ignore bad AS identifiers and RDI entries. */

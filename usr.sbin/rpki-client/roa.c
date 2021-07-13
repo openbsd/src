@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.20 2021/06/14 12:08:50 job Exp $ */
+/*	$OpenBSD: roa.c,v 1.21 2021/07/13 18:39:39 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -249,6 +249,7 @@ roa_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 	ASN1_SEQUENCE_ANY	*seq;
 	int			 i = 0, rc = 0, sz;
 	const ASN1_TYPE		*t;
+	long			 roa_version;
 
 	/* RFC 6482, section 3. */
 
@@ -265,12 +266,24 @@ roa_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 		goto out;
 	}
 
-	/* RFC 6482, section 3.1. */
-
+	/* Parse the optional version field */
 	if (sz == 3) {
-		warnx("%s: RFC 6482 section 3 and X.690, 11.5: not expecting "
-		    "version field, as only version 0 is supported", p->fn);
-		goto out;
+		t = sk_ASN1_TYPE_value(seq, i++);
+		d = t->value.asn1_string->data;
+		dsz = t->value.asn1_string->length;
+
+		if (cms_econtent_version(p->fn, &d, dsz, &roa_version) == -1)
+			goto out;
+
+		switch (roa_version) {
+		case 0:
+			warnx("%s: incorrect encoding for version 0", p->fn);
+			goto out;
+		default:
+			warnx("%s: version %ld not supported (yet)", p->fn,
+			    roa_version);
+			goto out;
+		}
 	}
 
 	/*
