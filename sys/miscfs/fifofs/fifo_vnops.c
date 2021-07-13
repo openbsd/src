@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.79 2021/01/17 05:23:34 visa Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.80 2021/07/13 07:37:50 visa Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -104,14 +104,22 @@ const struct vops fifo_vops = {
 
 void	filt_fifordetach(struct knote *kn);
 int	filt_fiforead(struct knote *kn, long hint);
+int	filt_fiforeadmodify(struct kevent *kev, struct knote *kn);
+int	filt_fiforeadprocess(struct knote *kn, struct kevent *kev);
+int	filt_fiforead_common(struct knote *kn, struct socket *so);
 void	filt_fifowdetach(struct knote *kn);
 int	filt_fifowrite(struct knote *kn, long hint);
+int	filt_fifowritemodify(struct kevent *kev, struct knote *kn);
+int	filt_fifowriteprocess(struct knote *kn, struct kevent *kev);
+int	filt_fifowrite_common(struct knote *kn, struct socket *so);
 
 const struct filterops fiforead_filtops = {
 	.f_flags	= FILTEROP_ISFD,
 	.f_attach	= NULL,
 	.f_detach	= filt_fifordetach,
 	.f_event	= filt_fiforead,
+	.f_modify	= filt_fiforeadmodify,
+	.f_process	= filt_fiforeadprocess,
 };
 
 const struct filterops fifowrite_filtops = {
@@ -119,6 +127,8 @@ const struct filterops fifowrite_filtops = {
 	.f_attach	= NULL,
 	.f_detach	= filt_fifowdetach,
 	.f_event	= filt_fifowrite,
+	.f_modify	= filt_fifowritemodify,
+	.f_process	= filt_fifowriteprocess,
 };
 
 /*
@@ -546,13 +556,12 @@ filt_fifordetach(struct knote *kn)
 }
 
 int
-filt_fiforead(struct knote *kn, long hint)
+filt_fiforead_common(struct knote *kn, struct socket *so)
 {
-	struct socket *so = (struct socket *)kn->kn_hook;
-	int s, rv;
+	int rv;
 
-	if ((hint & NOTE_SUBMIT) == 0)
-		s = solock(so);
+	soassertlocked(so);
+
 	kn->kn_data = so->so_rcv.sb_cc;
 	if (so->so_state & SS_CANTRCVMORE) {
 		kn->kn_flags |= EV_EOF;
@@ -565,8 +574,46 @@ filt_fiforead(struct knote *kn, long hint)
 		kn->kn_flags &= ~EV_EOF;
 		rv = (kn->kn_data > 0);
 	}
-	if ((hint & NOTE_SUBMIT) == 0)
-		sounlock(so, s);
+
+	return (rv);
+}
+
+int
+filt_fiforead(struct knote *kn, long hint)
+{
+	struct socket *so = kn->kn_hook;
+
+	return (filt_fiforead_common(kn, so));
+}
+
+int
+filt_fiforeadmodify(struct kevent *kev, struct knote *kn)
+{
+	struct socket *so = kn->kn_hook;
+	int rv, s;
+
+	s = solock(so);
+	knote_modify(kev, kn);
+	rv = filt_fiforead_common(kn, so);
+	sounlock(so, s);
+
+	return (rv);
+}
+
+int
+filt_fiforeadprocess(struct knote *kn, struct kevent *kev)
+{
+	struct socket *so = kn->kn_hook;
+	int rv, s;
+
+	s = solock(so);
+	if (kev != NULL && (kn->kn_flags & EV_ONESHOT))
+		rv = 1;
+	else
+		rv = filt_fiforead_common(kn, so);
+	if (rv != 0)
+		knote_submit(kn, kev);
+	sounlock(so, s);
 
 	return (rv);
 }
@@ -580,13 +627,12 @@ filt_fifowdetach(struct knote *kn)
 }
 
 int
-filt_fifowrite(struct knote *kn, long hint)
+filt_fifowrite_common(struct knote *kn, struct socket *so)
 {
-	struct socket *so = (struct socket *)kn->kn_hook;
-	int s, rv;
+	int rv;
 
-	if ((hint & NOTE_SUBMIT) == 0)
-		s = solock(so);
+	soassertlocked(so);
+
 	kn->kn_data = sbspace(so, &so->so_snd);
 	if (so->so_state & SS_CANTSENDMORE) {
 		kn->kn_flags |= EV_EOF;
@@ -595,8 +641,46 @@ filt_fifowrite(struct knote *kn, long hint)
 		kn->kn_flags &= ~EV_EOF;
 		rv = (kn->kn_data >= so->so_snd.sb_lowat);
 	}
-	if ((hint & NOTE_SUBMIT) == 0)
-		sounlock(so, s);
+
+	return (rv);
+}
+
+int
+filt_fifowrite(struct knote *kn, long hint)
+{
+	struct socket *so = kn->kn_hook;
+
+	return (filt_fifowrite_common(kn, so));
+}
+
+int
+filt_fifowritemodify(struct kevent *kev, struct knote *kn)
+{
+	struct socket *so = kn->kn_hook;
+	int rv, s;
+
+	s = solock(so);
+	knote_modify(kev, kn);
+	rv = filt_fifowrite_common(kn, so);
+	sounlock(so, s);
+
+	return (rv);
+}
+
+int
+filt_fifowriteprocess(struct knote *kn, struct kevent *kev)
+{
+	struct socket *so = kn->kn_hook;
+	int rv, s;
+
+	s = solock(so);
+	if (kev != NULL && (kn->kn_flags & EV_ONESHOT))
+		rv = 1;
+	else
+		rv = filt_fifowrite_common(kn, so);
+	if (rv != 0)
+		knote_submit(kn, kev);
+	sounlock(so, s);
 
 	return (rv);
 }
