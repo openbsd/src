@@ -1,4 +1,4 @@
-	$OpenBSD: na.phone,v 1.38 2021/07/13 16:49:32 deraadt Exp $
+	$OpenBSD: na.phone,v 1.39 2021/07/13 19:28:05 tb Exp $
 #	@(#)na.phone	8.1 (Berkeley) 6/8/93
 #
 # Area Code : City : State/Province : State/Province Abbrev.
@@ -342,7 +342,7 @@
 443:Columbia:Maryland:MD
 443:Ocean City:Maryland:MD
 445:Philadelphia:Pennsylvania:PA
-450:Beauharnios:Quebec:QC
+450:Beauharnois:Quebec:QC
 450:Bedford:Quebec:QC
 450:Cowansville:Quebec:QC
 450:Granby:Quebec:QC
