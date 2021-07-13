@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.40 2021/07/12 22:18:54 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.41 2021/07/13 11:18:25 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -500,7 +500,7 @@ GPT_write(void)
 	/*
 	 * XXX Assume size of gp is multiple of sector size.
 	 */
-	gpbytes = letoh64(gh.gh_part_num) * letoh64(gh.gh_part_size);
+	gpbytes = letoh32(gh.gh_part_num) * letoh32(gh.gh_part_size);
 
 	prigh = GPTSECTOR;
 	prigp = prigh + 1;
