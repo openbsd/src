@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.95 2021/07/13 15:03:34 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.96 2021/07/13 22:10:20 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -190,7 +190,7 @@ PRT_printall(void)
 {
 	int			i, idrows;
 
-	idrows = ((sizeof(part_types)/sizeof(struct part_type))+3)/4;
+	idrows = (nitems(part_types) + 3) / 4;
 
 	printf("Choose from the following Partition id values:\n");
 	for (i = 0; i < idrows; i++) {
@@ -213,7 +213,7 @@ ascii_id(const int id)
 	static char		unknown[] = "<Unknown ID>";
 	int			i;
 
-	for (i = 0; i < sizeof(part_types)/sizeof(struct part_type); i++) {
+	for (i = 0; i < nitems(part_types); i++) {
 		if (part_types[i].pt_type == id)
 			return part_types[i].pt_sname;
 	}
@@ -443,7 +443,7 @@ PRT_uuid_to_typename(const struct uuid *uuid)
 	if (status != uuid_s_ok)
 		goto done;
 
-	entries = sizeof(part_types) / sizeof(struct part_type);
+	entries = nitems(part_types);
 
 	for (i = 0; i < entries; i++) {
 		if (memcmp(part_types[i].pt_guid, uuidstr,
@@ -467,7 +467,7 @@ int
 PRT_uuid_to_type(const struct uuid *uuid)
 {
 	char			*uuidstr;
-	int			 entries, i, status, type;
+	int			 i, status, type;
 
 	type = 0;
 
@@ -475,8 +475,7 @@ PRT_uuid_to_type(const struct uuid *uuid)
 	if (status != uuid_s_ok)
 		goto done;
 
-	entries = sizeof(part_types) / sizeof(struct part_type);
-	for (i = 0; i < entries; i++) {
+	for (i = 0; i < nitems(part_types); i++) {
 		if (memcmp(part_types[i].pt_guid, uuidstr,
 		    sizeof(part_types[i].pt_guid)) == 0) {
 			type = part_types[i].pt_type;
@@ -497,7 +496,7 @@ PRT_type_to_uuid(const int type)
 
 	memset(&guid, 0, sizeof(guid));
 
-	entries = sizeof(part_types) / sizeof(struct part_type);
+	entries = nitems(part_types);
 
 	for (i = 0; i < entries; i++) {
 		if (part_types[i].pt_type == type)
