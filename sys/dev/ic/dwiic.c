@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic.c,v 1.11 2020/02/20 15:33:41 cheloha Exp $ */
+/* $OpenBSD: dwiic.c,v 1.12 2021/07/13 22:08:50 patrick Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -415,6 +415,42 @@ dwiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 			    sc->sc_dev.dv_xname, (int)(len - readpos)));
 			tx_limit = sc->tx_fifo_depth -
 			    dwiic_read(sc, DW_IC_TXFLR);
+		}
+
+		if (I2C_OP_WRITE_P(op) && tx_limit == 0 && x < len) {
+			if (flags & I2C_F_POLL) {
+				for (retries = 1000; retries > 0; retries--) {
+					tx_limit = sc->tx_fifo_depth -
+					    dwiic_read(sc, DW_IC_TXFLR);
+					if (tx_limit > 0)
+						break;
+					DELAY(50);
+				}
+			} else {
+				s = splbio();
+				dwiic_read(sc, DW_IC_CLR_INTR);
+				dwiic_write(sc, DW_IC_INTR_MASK,
+				    DW_IC_INTR_TX_EMPTY);
+
+				if (tsleep_nsec(&sc->sc_writewait, PRIBIO,
+				    "dwiic", MSEC_TO_NSEC(500)) != 0)
+					printf("%s: timed out waiting for "
+					    "tx_empty intr\n",
+					    sc->sc_dev.dv_xname);
+				splx(s);
+
+				tx_limit = sc->tx_fifo_depth -
+				    dwiic_read(sc, DW_IC_TXFLR);
+			}
+
+			if (tx_limit == 0) {
+				printf("%s: timed out writing remaining %d\n",
+				    sc->sc_dev.dv_xname, (int)(len - x));
+				sc->sc_i2c_xfer.error = 1;
+				sc->sc_busy = 0;
+
+				return (1);
+			}
 		}
 	}
 
