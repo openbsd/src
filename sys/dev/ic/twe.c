@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe.c,v 1.65 2021/03/07 06:21:38 jsg Exp $	*/
+/*	$OpenBSD: twe.c,v 1.66 2021/07/14 01:11:13 daniel Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Michael Shalayeff.  All rights reserved.
@@ -369,7 +369,7 @@ twe_attach(struct twe_softc *sc)
 		cap->param_size = 4;	/* 4 bytes */
 
 		lock = TWE_LOCK(sc);
-		twe_cmd(ccb, BUS_DMA_NOWAIT, 1);
+		error = twe_cmd(ccb, BUS_DMA_NOWAIT, 1);
 		TWE_UNLOCK(sc, lock);
 		scsi_io_put(&sc->sc_iopool, ccb);
 		if (error) {
