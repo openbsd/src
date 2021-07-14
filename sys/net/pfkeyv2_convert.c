@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.71 2021/07/05 12:01:20 tobhe Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.72 2021/07/14 22:39:26 tobhe Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -851,6 +851,18 @@ export_udpencap(void **p, struct tdb *tdb)
 	sadb_udpencap->sadb_x_udpencap_len =
 	    sizeof(struct sadb_x_udpencap) / sizeof(uint64_t);
 	*p += sizeof(struct sadb_x_udpencap);
+}
+
+/* Export PF replay for SA */
+void
+export_replay(void **p, struct tdb *tdb)
+{
+	struct sadb_x_replay *sreplay = (struct sadb_x_replay *)*p;
+
+	sreplay->sadb_x_replay_count = tdb->tdb_rpl;
+	sreplay->sadb_x_replay_len =
+	    sizeof(struct sadb_x_replay) / sizeof(uint64_t);
+	*p += sizeof(struct sadb_x_replay);
 }
 
 /* Export mtu for SA */

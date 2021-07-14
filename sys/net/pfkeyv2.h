@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.h,v 1.89 2021/07/08 16:39:55 mvs Exp $ */
+/* $OpenBSD: pfkeyv2.h,v 1.90 2021/07/14 22:39:26 tobhe Exp $ */
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) January 1998
  *
@@ -212,6 +212,13 @@ struct sadb_x_tag {
 	u_int32_t sadb_x_tag_taglen;
 };
 
+struct sadb_x_replay {
+	uint16_t  sadb_x_replay_len;
+	uint16_t  sadb_x_replay_exttype;
+	u_int32_t sadb_x_replay_reserved;
+	u_int64_t sadb_x_replay_count;
+};
+
 struct sadb_x_rdomain {
 	uint16_t  sadb_x_rdomain_len;
 	uint16_t  sadb_x_rdomain_exttype;
@@ -292,7 +299,8 @@ struct sadb_x_mtu {
 #define SADB_X_EXT_COUNTER            36
 #define SADB_X_EXT_RDOMAIN            37
 #define SADB_X_EXT_MTU                38
-#define SADB_EXT_MAX                  38
+#define SADB_X_EXT_REPLAY             39
+#define SADB_EXT_MAX                  39
 
 /* Fix pfkeyv2.c struct pfkeyv2_socket if SATYPE_MAX > 31 */
 #define SADB_SATYPE_UNSPEC		 0
@@ -425,6 +433,7 @@ void export_flow(void **, u_int8_t, struct sockaddr_encap *,
 void export_key(void **, struct tdb *, int);
 void export_udpencap(void **, struct tdb *);
 void export_tag(void **, struct tdb *);
+void export_replay(void **, struct tdb *);
 void export_rdomain(void **, struct tdb *);
 void export_mtu(void **, struct tdb *);
 void export_tap(void **, struct tdb *);

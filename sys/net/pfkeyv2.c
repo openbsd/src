@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.217 2021/07/08 16:39:55 mvs Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.218 2021/07/14 22:39:26 tobhe Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -861,6 +861,8 @@ pfkeyv2_get(struct tdb *tdb, void **headers, void **buffer, int *lenp,
 	if (tdb->tdb_udpencap_port)
 		i += sizeof(struct sadb_x_udpencap);
 
+	i += sizeof(struct sadb_x_replay);
+
 	if (tdb->tdb_mtu > 0)
 		i+= sizeof(struct sadb_x_mtu);
 
@@ -956,6 +958,9 @@ pfkeyv2_get(struct tdb *tdb, void **headers, void **buffer, int *lenp,
 		headers[SADB_X_EXT_UDPENCAP] = p;
 		export_udpencap(&p, tdb);
 	}
+
+	headers[SADB_X_EXT_REPLAY] = p;
+	export_replay(&p, tdb);
 
 	if (tdb->tdb_mtu > 0) {
 		headers[SADB_X_EXT_MTU] = p;
