@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1110 2021/06/10 07:56:47 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1111 2021/07/14 08:56:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -73,6 +73,9 @@ struct winlink;
 #endif
 #ifndef TMUX_SOCK
 #define TMUX_SOCK "$TMUX_TMPDIR:" _PATH_TMP
+#endif
+#ifndef TMUX_TERM
+#define TMUX_TERM "screen"
 #endif
 
 /* Minimum layout cell size, NOT including border lines. */

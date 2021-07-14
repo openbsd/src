@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.144 2021/06/16 11:57:04 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.145 2021/07/14 08:56:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -234,7 +234,7 @@ const struct options_table_entry options_table[] = {
 	{ .name = "default-terminal",
 	  .type = OPTIONS_TABLE_STRING,
 	  .scope = OPTIONS_TABLE_SERVER,
-	  .default_str = "screen",
+	  .default_str = TMUX_TERM,
 	  .text = "Default for the 'TERM' environment variable."
 	},
 
