@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2020/12/17 00:51:13 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.10 2021/07/14 05:04:08 anton Exp $
 
 # Copyright (c) 2020 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -326,7 +326,7 @@ run-tls-bad-ca: server.crt fake-ca.crt
 	${CONNECT_WAIT}
 	grep 'Listening on localhost ' server.err
 	grep 'Connection received on localhost ' server.err
-	grep 'certificate signature failure' client.err
+	grep 'certificate verification failed' client.err
 	! grep 'greeting' client.out
 	! grep 'command' server.out
 
