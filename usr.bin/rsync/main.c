@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.55 2021/06/30 13:10:04 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.56 2021/07/14 11:14:27 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -269,60 +269,66 @@ fargs_parse(size_t argc, char *argv[], struct opts *opts)
 	return f;
 }
 
+static struct opts	 opts;
+
+#define OP_ADDRESS	1000
+#define OP_PORT		1001
+#define OP_RSYNCPATH	1002
+#define OP_TIMEOUT	1003
+#define OP_VERSION	1004
+
+const struct option	 lopts[] = {
+    { "address",	required_argument, NULL,		OP_ADDRESS },
+    { "archive",	no_argument,	NULL,			'a' },
+    { "compress",	no_argument,	NULL,			'z' },
+    { "del",		no_argument,	&opts.del,		1 },
+    { "delete",		no_argument,	&opts.del,		1 },
+    { "devices",	no_argument,	&opts.devices,		1 },
+    { "no-devices",	no_argument,	&opts.devices,		0 },
+    { "dry-run",	no_argument,	&opts.dry_run,		1 },
+    { "group",		no_argument,	&opts.preserve_gids,	1 },
+    { "no-group",	no_argument,	&opts.preserve_gids,	0 },
+    { "help",		no_argument,	NULL,			'h' },
+    { "links",		no_argument,	&opts.preserve_links,	1 },
+    { "no-links",	no_argument,	&opts.preserve_links,	0 },
+    { "no-motd",	no_argument,	&opts.no_motd,		1 },
+    { "numeric-ids",	no_argument,	&opts.numeric_ids,	1 },
+    { "owner",		no_argument,	&opts.preserve_uids,	1 },
+    { "no-owner",	no_argument,	&opts.preserve_uids,	0 },
+    { "perms",		no_argument,	&opts.preserve_perms,	1 },
+    { "no-perms",	no_argument,	&opts.preserve_perms,	0 },
+    { "port",		required_argument, NULL,		OP_PORT },
+    { "recursive",	no_argument,	&opts.recursive,	1 },
+    { "no-recursive",	no_argument,	&opts.recursive,	0 },
+    { "rsh",		required_argument, NULL,		'e' },
+    { "rsync-path",	required_argument, NULL,		OP_RSYNCPATH },
+    { "sender",		no_argument,	&opts.sender,		1 },
+    { "server",		no_argument,	&opts.server,		1 },
+    { "specials",	no_argument,	&opts.specials,		1 },
+    { "no-specials",	no_argument,	&opts.specials,		0 },
+    { "timeout",	required_argument, NULL,		OP_TIMEOUT },
+    { "times",		no_argument,	&opts.preserve_times,	1 },
+    { "no-times",	no_argument,	&opts.preserve_times,	0 },
+    { "verbose",	no_argument,	&verbose,		1 },
+    { "no-verbose",	no_argument,	&verbose,		0 },
+    { "version",	no_argument,	NULL,			OP_VERSION },
+    { NULL,		0,		NULL,			0 }
+};
+
 int
 main(int argc, char *argv[])
 {
-	struct opts	 opts;
 	pid_t		 child;
 	int		 fds[2], sd = -1, rc, c, st, i;
 	struct sess	  sess;
 	struct fargs	*fargs;
 	char		**args;
 	const char 	*errstr;
-	const struct option	 lopts[] = {
-		{ "port",	required_argument, NULL,		3 },
-		{ "rsh",	required_argument, NULL,		'e' },
-		{ "rsync-path",	required_argument, NULL,		1 },
-		{ "sender",	no_argument,	&opts.sender,		1 },
-		{ "server",	no_argument,	&opts.server,		1 },
-		{ "dry-run",	no_argument,	&opts.dry_run,		1 },
-		{ "version",	no_argument,	NULL,			2 },
-		{ "archive",	no_argument,	NULL,			'a' },
-		{ "help",	no_argument,	NULL,			'h' },
-		{ "compress",	no_argument,	NULL,			'z' },
-		{ "del",	no_argument,	&opts.del,		1 },
-		{ "delete",	no_argument,	&opts.del,		1 },
-		{ "devices",	no_argument,	&opts.devices,		1 },
-		{ "no-devices",	no_argument,	&opts.devices,		0 },
-		{ "group",	no_argument,	&opts.preserve_gids,	1 },
-		{ "no-group",	no_argument,	&opts.preserve_gids,	0 },
-		{ "links",	no_argument,	&opts.preserve_links,	1 },
-		{ "no-links",	no_argument,	&opts.preserve_links,	0 },
-		{ "owner",	no_argument,	&opts.preserve_uids,	1 },
-		{ "no-owner",	no_argument,	&opts.preserve_uids,	0 },
-		{ "perms",	no_argument,	&opts.preserve_perms,	1 },
-		{ "no-perms",	no_argument,	&opts.preserve_perms,	0 },
-		{ "numeric-ids", no_argument,	&opts.numeric_ids,	1 },
-		{ "recursive",	no_argument,	&opts.recursive,	1 },
-		{ "no-recursive", no_argument,	&opts.recursive,	0 },
-		{ "specials",	no_argument,	&opts.specials,		1 },
-		{ "no-specials", no_argument,	&opts.specials,		0 },
-		{ "timeout",	required_argument, NULL,		5 },
-		{ "times",	no_argument,	&opts.preserve_times,	1 },
-		{ "no-times",	no_argument,	&opts.preserve_times,	0 },
-		{ "verbose",	no_argument,	&verbose,		1 },
-		{ "no-verbose",	no_argument,	&verbose,		0 },
-		{ "address",	required_argument, NULL,		4 },
-		{ "no-motd",	no_argument,	NULL,			6 },
-		{ NULL,		0,		NULL,			0 }};
-
 	/* Global pledge. */
 
 	if (pledge("stdio unix rpath wpath cpath dpath inet fattr chown dns getpw proc exec unveil",
 	    NULL) == -1)
 		err(ERR_IPC, "pledge");
-
-	memset(&opts, 0, sizeof(struct opts));
 
 	while ((c = getopt_long(argc, argv, "Dae:ghlnoprtvxz", lopts, NULL))
 	    != -1) {
@@ -377,28 +383,25 @@ main(int argc, char *argv[])
 		case 0:
 			/* Non-NULL flag values (e.g., --sender). */
 			break;
-		case 1:
-			opts.rsync_path = optarg;
-			break;
-		case 2:
-			fprintf(stderr, "openrsync: protocol version %u\n",
-			    RSYNC_PROTOCOL);
-			exit(0);
-		case 3:
-			opts.port = optarg;
-			break;
-		case 4:
+		case OP_ADDRESS:
 			opts.address = optarg;
 			break;
-		case 5:
+		case OP_PORT:
+			opts.port = optarg;
+			break;
+		case OP_RSYNCPATH:
+			opts.rsync_path = optarg;
+			break;
+		case OP_TIMEOUT:
 			poll_timeout = strtonum(optarg, 0, 60*60, &errstr);
 			if (errstr != NULL)
 				errx(ERR_SYNTAX, "timeout is %s: %s",
 				    errstr, optarg);
 			break;
-		case 6:
-			opts.no_motd = 1;
-			break;
+		case OP_VERSION:
+			fprintf(stderr, "openrsync: protocol version %u\n",
+			    RSYNC_PROTOCOL);
+			exit(0);
 		case 'h':
 		default:
 			goto usage;
