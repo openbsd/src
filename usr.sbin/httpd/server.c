@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.125 2021/04/10 10:10:07 claudio Exp $	*/
+/*	$OpenBSD: server.c,v 1.126 2021/07/14 13:33:57 kn Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -245,10 +245,6 @@ server_tls_init(struct server *srv)
 
 	log_debug("%s: setting up tls for %s", __func__, srv->srv_conf.name);
 
-	if (tls_init() != 0) {
-		log_warnx("%s: failed to initialise tls", __func__);
-		return (-1);
-	}
 	if ((srv->srv_tls_config = tls_config_new()) == NULL) {
 		log_warnx("%s: failed to get tls config", __func__);
 		return (-1);

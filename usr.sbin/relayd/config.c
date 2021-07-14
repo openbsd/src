@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.41 2019/09/15 19:23:29 rob Exp $	*/
+/*	$OpenBSD: config.c,v 1.42 2021/07/14 13:33:57 kn Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -296,8 +296,6 @@ config_getcfg(struct relayd *env, struct imsg *imsg)
 		ssl_init(env);
 		if (what & CONFIG_CA_ENGINE)
 			ca_engine_init(env);
-		if (tls_init() == -1)
-			fatalx("unable to initialize TLS");
 	}
 
 	if (privsep_process != PROC_PARENT)

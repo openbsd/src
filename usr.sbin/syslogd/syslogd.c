@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.265 2021/03/09 15:08:23 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.266 2021/07/14 13:33:57 kn Exp $	*/
 
 /*
  * Copyright (c) 2014-2017 Alexander Bluhm <bluhm@genua.de>
@@ -597,27 +597,24 @@ main(int argc, char *argv[])
 	if (fd_sendsys != -1)
 		close(pair[1]);
 
-	if (tls_init() == -1) {
-		log_warn("tls_init");
-	} else {
-		if ((client_config = tls_config_new()) == NULL)
-			log_warn("tls_config_new client");
-		if (tls_hostport) {
-			if ((server_config = tls_config_new()) == NULL)
-				log_warn("tls_config_new server");
-			if ((server_ctx = tls_server()) == NULL) {
-				log_warn("tls_server");
-				for (i = 0; i < ntls; i++)
-					close(fd_tls[i]);
-				free(fd_tls);
-				fd_tls = NULL;
-				free(tls_host);
-				free(tls_port);
-				tls_host = tls_port = NULL;
-				ntls = 0;
-			}
+	if ((client_config = tls_config_new()) == NULL)
+		log_warn("tls_config_new client");
+	if (tls_hostport) {
+		if ((server_config = tls_config_new()) == NULL)
+			log_warn("tls_config_new server");
+		if ((server_ctx = tls_server()) == NULL) {
+			log_warn("tls_server");
+			for (i = 0; i < ntls; i++)
+				close(fd_tls[i]);
+			free(fd_tls);
+			fd_tls = NULL;
+			free(tls_host);
+			free(tls_port);
+			tls_host = tls_port = NULL;
+			ntls = 0;
 		}
 	}
+
 	if (client_config) {
 		if (NoVerify) {
 			tls_config_insecure_noverifycert(client_config);

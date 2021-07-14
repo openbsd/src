@@ -1,4 +1,4 @@
-/*	$Id: http.c,v 1.29 2020/01/20 22:10:27 sthen Exp $ */
+/*	$Id: http.c,v 1.30 2021/07/14 13:33:57 kn Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -123,11 +123,6 @@ http_init()
 {
 	if (tlscfg != NULL)
 		return 0;
-
-	if (tls_init() == -1) {
-		warn("tls_init");
-		goto err;
-	}
 
 	tlscfg = tls_config_new();
 	if (tlscfg == NULL) {

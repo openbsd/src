@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpc.c,v 1.18 2021/06/14 17:58:16 eric Exp $	*/
+/*	$OpenBSD: smtpc.c,v 1.19 2021/07/14 13:33:57 kn Exp $	*/
 
 /*
  * Copyright (c) 2018 Eric Faurot <eric@openbsd.org>
@@ -217,7 +217,6 @@ main(int argc, char **argv)
 		mail.rcptcount = argc;
 	}
 
-	tls_init();
 	event_init();
 
 	tls_config = tls_config_new();

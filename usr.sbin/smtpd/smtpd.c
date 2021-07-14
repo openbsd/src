@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.340 2021/06/14 17:58:16 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.341 2021/07/14 13:33:57 kn Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -592,8 +592,6 @@ main(int argc, char *argv[])
 		usage();
 
 	env->sc_opts |= opts;
-
-	tls_init();
 
 	if (parse_config(conf, conffile, opts))
 		exit(1);

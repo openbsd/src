@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.c,v 1.28 2021/07/12 15:09:21 beck Exp $ */
+/*	$OpenBSD: ldapd.c,v 1.29 2021/07/14 13:33:57 kn Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -183,7 +183,6 @@ main(int argc, char *argv[])
 
 	log_setverbose(verbose);
 	stats.started_at = time(0);
-	tls_init();
 
 	if (parse_config(conffile) != 0)
 		exit(2);
