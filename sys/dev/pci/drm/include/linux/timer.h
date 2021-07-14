@@ -1,4 +1,4 @@
-/*	$OpenBSD: timer.h,v 1.6 2021/07/07 02:38:36 jsg Exp $	*/
+/*	$OpenBSD: timer.h,v 1.7 2021/07/14 05:42:47 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -24,10 +24,19 @@
 #include <sys/kernel.h>
 #include <linux/ktime.h>
 
-#define mod_timer(x, y)		timeout_add((x), ((y) - jiffies))
 #define del_timer_sync(x)	timeout_del_barrier((x))
 #define del_timer(x)		timeout_del((x))
 #define timer_pending(x)	timeout_pending((x))
+
+static inline int
+mod_timer(struct timeout *to, unsigned long j)
+{
+	if (j <= jiffies) {
+		timeout_del(to);
+		return timeout_add(to, 1);
+	}
+	return timeout_add(to, j - jiffies);
+}
 
 static inline unsigned long
 round_jiffies_up(unsigned long j)
