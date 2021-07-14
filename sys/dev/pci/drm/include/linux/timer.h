@@ -1,4 +1,4 @@
-/*	$OpenBSD: timer.h,v 1.7 2021/07/14 05:42:47 jsg Exp $	*/
+/*	$OpenBSD: timer.h,v 1.8 2021/07/14 09:56:17 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -31,10 +31,8 @@
 static inline int
 mod_timer(struct timeout *to, unsigned long j)
 {
-	if (j <= jiffies) {
-		timeout_del(to);
+	if (j <= jiffies)
 		return timeout_add(to, 1);
-	}
 	return timeout_add(to, j - jiffies);
 }
 
