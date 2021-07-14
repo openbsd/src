@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.178 2021/07/08 21:07:19 bluhm Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.179 2021/07/14 21:07:36 bluhm Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -845,6 +845,8 @@ tcp_mtudisc(struct inpcb *inp, int errno)
 
 	rt = in_pcbrtentry(inp);
 	if (rt != NULL) {
+		unsigned int orig_mtulock = (rt->rt_locks & RTV_MTU);
+
 		/*
 		 * If this was not a host route, remove and realloc.
 		 */
@@ -853,7 +855,7 @@ tcp_mtudisc(struct inpcb *inp, int errno)
 			if ((rt = in_pcbrtentry(inp)) == NULL)
 				return;
 		}
-		if (rt->rt_locks & RTV_MTU)
+		if (orig_mtulock < (rt->rt_locks & RTV_MTU))
 			change = 1;
 	}
 	tcp_mss(tp, -1);
