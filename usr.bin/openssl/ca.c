@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.30 2021/07/15 10:15:22 inoguchi Exp $ */
+/* $OpenBSD: ca.c,v 1.31 2021/07/15 10:26:43 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -121,43 +121,43 @@
 #define REV_CA_COMPROMISE	4	/* Value is CA key compromise time */
 
 static void lookup_fail(const char *name, const char *tag);
-static int certify(X509 ** xret, char *infile, EVP_PKEY * pkey, X509 * x509,
-    const EVP_MD * dgst, STACK_OF(OPENSSL_STRING) * sigopts,
-    STACK_OF(CONF_VALUE) * policy, CA_DB * db, BIGNUM * serial, char *subj,
+static int certify(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
+    const EVP_MD *dgst, STACK_OF(OPENSSL_STRING) *sigopts,
+    STACK_OF(CONF_VALUE) *policy, CA_DB *db, BIGNUM *serial, char *subj,
     unsigned long chtype, int multirdn, int email_dn, char *startdate,
-    char *enddate, long days, int batch, char *ext_sect, CONF * conf,
+    char *enddate, long days, int batch, char *ext_sect, CONF *conf,
     int verbose, unsigned long certopt, unsigned long nameopt,
     int default_op, int ext_copy, int selfsign);
-static int certify_cert(X509 ** xret, char *infile, EVP_PKEY * pkey,
-    X509 * x509, const EVP_MD * dgst, STACK_OF(OPENSSL_STRING) * sigopts,
-    STACK_OF(CONF_VALUE) * policy, CA_DB * db, BIGNUM * serial, char *subj,
+static int certify_cert(X509 **xret, char *infile, EVP_PKEY *pkey,
+    X509 *x509, const EVP_MD *dgst, STACK_OF(OPENSSL_STRING) *sigopts,
+    STACK_OF(CONF_VALUE) *policy, CA_DB *db, BIGNUM *serial, char *subj,
     unsigned long chtype, int multirdn, int email_dn, char *startdate,
-    char *enddate, long days, int batch, char *ext_sect, CONF * conf,
+    char *enddate, long days, int batch, char *ext_sect, CONF *conf,
     int verbose, unsigned long certopt, unsigned long nameopt, int default_op,
     int ext_copy);
-static int certify_spkac(X509 ** xret, char *infile, EVP_PKEY * pkey,
-    X509 * x509, const EVP_MD * dgst, STACK_OF(OPENSSL_STRING) * sigopts,
-    STACK_OF(CONF_VALUE) * policy, CA_DB * db, BIGNUM * serial, char *subj,
+static int certify_spkac(X509 **xret, char *infile, EVP_PKEY *pkey,
+    X509 *x509, const EVP_MD *dgst, STACK_OF(OPENSSL_STRING) *sigopts,
+    STACK_OF(CONF_VALUE) *policy, CA_DB *db, BIGNUM *serial, char *subj,
     unsigned long chtype, int multirdn, int email_dn, char *startdate,
-    char *enddate, long days, char *ext_sect, CONF * conf, int verbose,
+    char *enddate, long days, char *ext_sect, CONF *conf, int verbose,
     unsigned long certopt, unsigned long nameopt, int default_op, int ext_copy);
-static void write_new_certificate(BIO * bp, X509 * x, int output_der,
+static void write_new_certificate(BIO *bp, X509 *x, int output_der,
     int notext);
-static int do_body(X509 ** xret, EVP_PKEY * pkey, X509 * x509,
-    const EVP_MD * dgst, STACK_OF(OPENSSL_STRING) * sigopts,
-    STACK_OF(CONF_VALUE) * policy, CA_DB * db, BIGNUM * serial, char *subj,
+static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
+    const EVP_MD *dgst, STACK_OF(OPENSSL_STRING) *sigopts,
+    STACK_OF(CONF_VALUE) *policy, CA_DB *db, BIGNUM *serial, char *subj,
     unsigned long chtype, int multirdn, int email_dn, char *startdate,
-    char *enddate, long days, int batch, int verbose, X509_REQ * req,
-    char *ext_sect, CONF * conf, unsigned long certopt, unsigned long nameopt,
+    char *enddate, long days, int batch, int verbose, X509_REQ *req,
+    char *ext_sect, CONF *conf, unsigned long certopt, unsigned long nameopt,
     int default_op, int ext_copy, int selfsign);
-static int do_revoke(X509 * x509, CA_DB * db, int ext, char *extval);
-static int get_certificate_status(const char *serial, CA_DB * db);
-static int do_updatedb(CA_DB * db);
+static int do_revoke(X509 *x509, CA_DB *db, int ext, char *extval);
+static int get_certificate_status(const char *serial, CA_DB *db);
+static int do_updatedb(CA_DB *db);
 static int check_time_format(const char *str);
-static char * bin2hex(unsigned char *, size_t);
+static char *bin2hex(unsigned char *, size_t);
 char *make_revocation_str(int rev_type, char *rev_arg);
-int make_revoked(X509_REVOKED * rev, const char *str);
-int old_entry_print(BIO * bp, ASN1_OBJECT * obj, ASN1_STRING * str);
+int make_revoked(X509_REVOKED *rev, const char *str);
+int old_entry_print(BIO *bp, ASN1_OBJECT *obj, ASN1_STRING *str);
 
 static CONF *conf = NULL;
 static CONF *extconf = NULL;
@@ -201,7 +201,7 @@ static struct {
 	char *serial_status;
 	char *section;
 	int selfsign;
-	STACK_OF(OPENSSL_STRING) * sigopts;
+	STACK_OF(OPENSSL_STRING) *sigopts;
 	char *spkac_file;
 	char *ss_cert_file;
 	char *startdate;
@@ -677,11 +677,11 @@ ca_main(int argc, char **argv)
 	ASN1_INTEGER *tmpserial;
 	char *f;
 	const char *p;
-	char *const * pp;
+	char *const *pp;
 	int i, j;
 	const EVP_MD *dgst = NULL;
-	STACK_OF(CONF_VALUE) * attribs = NULL;
-	STACK_OF(X509) * cert_sk = NULL;
+	STACK_OF(CONF_VALUE) *attribs = NULL;
+	STACK_OF(X509) *cert_sk = NULL;
 	char *tofree = NULL;
 	DB_ATTR db_attr;
 
@@ -1535,11 +1535,11 @@ lookup_fail(const char *name, const char *tag)
 }
 
 static int
-certify(X509 ** xret, char *infile, EVP_PKEY * pkey, X509 * x509,
-    const EVP_MD * dgst, STACK_OF(OPENSSL_STRING) * sigopts,
-    STACK_OF(CONF_VALUE) * policy, CA_DB * db, BIGNUM * serial, char *subj,
+certify(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
+    const EVP_MD *dgst, STACK_OF(OPENSSL_STRING) *sigopts,
+    STACK_OF(CONF_VALUE) *policy, CA_DB *db, BIGNUM *serial, char *subj,
     unsigned long chtype, int multirdn, int email_dn, char *startdate,
-    char *enddate, long days, int batch, char *ext_sect, CONF * lconf,
+    char *enddate, long days, int batch, char *ext_sect, CONF *lconf,
     int verbose, unsigned long certopt, unsigned long nameopt, int default_op,
     int ext_copy, int selfsign)
 {
@@ -1603,11 +1603,11 @@ certify(X509 ** xret, char *infile, EVP_PKEY * pkey, X509 * x509,
 }
 
 static int
-certify_cert(X509 ** xret, char *infile, EVP_PKEY * pkey, X509 * x509,
-    const EVP_MD * dgst, STACK_OF(OPENSSL_STRING) * sigopts,
-    STACK_OF(CONF_VALUE) * policy, CA_DB * db, BIGNUM * serial, char *subj,
+certify_cert(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
+    const EVP_MD *dgst, STACK_OF(OPENSSL_STRING) *sigopts,
+    STACK_OF(CONF_VALUE) *policy, CA_DB *db, BIGNUM *serial, char *subj,
     unsigned long chtype, int multirdn, int email_dn, char *startdate,
-    char *enddate, long days, int batch, char *ext_sect, CONF * lconf,
+    char *enddate, long days, int batch, char *ext_sect, CONF *lconf,
     int verbose, unsigned long certopt, unsigned long nameopt, int default_op,
     int ext_copy)
 {
@@ -1660,11 +1660,11 @@ certify_cert(X509 ** xret, char *infile, EVP_PKEY * pkey, X509 * x509,
 }
 
 static int
-do_body(X509 ** xret, EVP_PKEY * pkey, X509 * x509, const EVP_MD * dgst,
-    STACK_OF(OPENSSL_STRING) * sigopts, STACK_OF(CONF_VALUE) * policy,
-    CA_DB * db, BIGNUM * serial, char *subj, unsigned long chtype, int multirdn,
+do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
+    STACK_OF(OPENSSL_STRING) *sigopts, STACK_OF(CONF_VALUE) *policy,
+    CA_DB *db, BIGNUM *serial, char *subj, unsigned long chtype, int multirdn,
     int email_dn, char *startdate, char *enddate, long days, int batch,
-    int verbose, X509_REQ * req, char *ext_sect, CONF * lconf,
+    int verbose, X509_REQ *req, char *ext_sect, CONF *lconf,
     unsigned long certopt, unsigned long nameopt, int default_op,
     int ext_copy, int selfsign)
 {
@@ -2178,7 +2178,7 @@ again2:
 }
 
 static void
-write_new_certificate(BIO * bp, X509 * x, int output_der, int notext)
+write_new_certificate(BIO *bp, X509 *x, int output_der, int notext)
 {
 	if (output_der) {
 		(void) i2d_X509_bio(bp, x);
@@ -2190,15 +2190,15 @@ write_new_certificate(BIO * bp, X509 * x, int output_der, int notext)
 }
 
 static int
-certify_spkac(X509 ** xret, char *infile, EVP_PKEY * pkey, X509 * x509,
-    const EVP_MD * dgst, STACK_OF(OPENSSL_STRING) * sigopts,
-    STACK_OF(CONF_VALUE) * policy, CA_DB * db, BIGNUM * serial, char *subj,
+certify_spkac(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
+    const EVP_MD *dgst, STACK_OF(OPENSSL_STRING) *sigopts,
+    STACK_OF(CONF_VALUE) *policy, CA_DB *db, BIGNUM *serial, char *subj,
     unsigned long chtype, int multirdn, int email_dn, char *startdate,
-    char *enddate, long days, char *ext_sect, CONF * lconf, int verbose,
+    char *enddate, long days, char *ext_sect, CONF *lconf, int verbose,
     unsigned long certopt, unsigned long nameopt, int default_op, int ext_copy)
 {
-	STACK_OF(CONF_VALUE) * sk = NULL;
-	LHASH_OF(CONF_VALUE) * parms = NULL;
+	STACK_OF(CONF_VALUE) *sk = NULL;
+	LHASH_OF(CONF_VALUE) *parms = NULL;
 	X509_REQ *req = NULL;
 	CONF_VALUE *cv = NULL;
 	NETSCAPE_SPKI *spki = NULL;
@@ -2331,7 +2331,7 @@ check_time_format(const char *str)
 }
 
 static int
-do_revoke(X509 * x509, CA_DB * db, int type, char *value)
+do_revoke(X509 *x509, CA_DB *db, int type, char *value)
 {
 	ASN1_UTCTIME *tm = NULL;
 	char *row[DB_NUMBER], **rrow, **irow;
@@ -2443,7 +2443,7 @@ do_revoke(X509 * x509, CA_DB * db, int type, char *value)
 }
 
 static int
-get_certificate_status(const char *serial, CA_DB * db)
+get_certificate_status(const char *serial, CA_DB *db)
 {
 	char *row[DB_NUMBER], **rrow;
 	int ok = -1, i;
@@ -2515,7 +2515,7 @@ get_certificate_status(const char *serial, CA_DB * db)
 }
 
 static int
-do_updatedb(CA_DB * db)
+do_updatedb(CA_DB *db)
 {
 	ASN1_UTCTIME *a_tm = NULL;
 	int i, cnt = 0;
@@ -2680,7 +2680,7 @@ make_revocation_str(int rev_type, char *rev_arg)
  */
 
 int
-make_revoked(X509_REVOKED * rev, const char *str)
+make_revoked(X509_REVOKED *rev, const char *str)
 {
 	char *tmp = NULL;
 	int reason_code = -1;
@@ -2733,7 +2733,7 @@ make_revoked(X509_REVOKED * rev, const char *str)
 }
 
 int
-old_entry_print(BIO * bp, ASN1_OBJECT * obj, ASN1_STRING * str)
+old_entry_print(BIO *bp, ASN1_OBJECT *obj, ASN1_STRING *str)
 {
 	char buf[25], *pbuf, *p;
 	int j;
@@ -2774,8 +2774,8 @@ old_entry_print(BIO * bp, ASN1_OBJECT * obj, ASN1_STRING * str)
 }
 
 int
-unpack_revinfo(ASN1_TIME ** prevtm, int *preason, ASN1_OBJECT ** phold,
-    ASN1_GENERALIZEDTIME ** pinvtm, const char *str)
+unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold,
+    ASN1_GENERALIZEDTIME **pinvtm, const char *str)
 {
 	char *tmp = NULL;
 	char *rtime_str, *reason_str = NULL, *arg_str = NULL, *p;
@@ -2880,7 +2880,7 @@ unpack_revinfo(ASN1_TIME ** prevtm, int *preason, ASN1_OBJECT ** phold,
 }
 
 static char *
-bin2hex(unsigned char * data, size_t len)
+bin2hex(unsigned char *data, size_t len)
 {
 	char *ret = NULL;
 	char hex[] = "0123456789ABCDEF";
