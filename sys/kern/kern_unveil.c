@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_unveil.c,v 1.46 2021/07/08 13:33:05 claudio Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.47 2021/07/15 06:57:02 claudio Exp $	*/
 
 /*
  * Copyright (c) 2017-2019 Bob Beck <beck@openbsd.org>
@@ -399,15 +399,7 @@ unveil_add_vnode(struct proc *p, struct vnode *vp)
 	rw_init(&uv->uv_lock, "unveil");
 	RBT_INIT(unvname_rbt, &uv->uv_names);
 	uv->uv_vp = vp;
-
-	/*
-	 * Added vnodes are added with the UNVEIL_INSPECT flag
-	 * to allow operations such as access and stat. This lets
-	 * TOCTOU fans that call access on all components of
-	 * an unveil'ed path before the final operations
-	 * work.
-	 */
-	uv->uv_flags = UNVEIL_INSPECT;
+	uv->uv_flags = 0;
 
 	/* find out what we are covered by */
 	uv->uv_cover = unveil_find_cover(vp, p);
@@ -579,7 +571,7 @@ unveil_flagmatch(struct nameidata *ni, u_char flags)
 #ifdef DEBUG_UNVEIL
 			printf("unveil lacks UNVEIL_READ\n");
 #endif
-			if (flags != UNVEIL_INSPECT)
+			if (flags & UNVEIL_USERSET)
 				ni->ni_unveil_eacces = 1;
 			return 0;
 		}
@@ -589,7 +581,7 @@ unveil_flagmatch(struct nameidata *ni, u_char flags)
 #ifdef DEBUG_UNVEIL
 			printf("unveil lacks UNVEIL_WRITE\n");
 #endif
-			if (flags != UNVEIL_INSPECT)
+			if (flags & UNVEIL_USERSET)
 				ni->ni_unveil_eacces = 1;
 			return 0;
 		}
@@ -599,7 +591,7 @@ unveil_flagmatch(struct nameidata *ni, u_char flags)
 #ifdef DEBUG_UNVEIL
 			printf("unveil lacks UNVEIL_EXEC\n");
 #endif
-			if (flags != UNVEIL_INSPECT)
+			if (flags & UNVEIL_USERSET)
 				ni->ni_unveil_eacces = 1;
 			return 0;
 		}
@@ -609,7 +601,7 @@ unveil_flagmatch(struct nameidata *ni, u_char flags)
 #ifdef DEBUG_UNVEIL
 			printf("unveil lacks UNVEIL_CREATE\n");
 #endif
-			if (flags != UNVEIL_INSPECT)
+			if (flags & UNVEIL_USERSET)
 				ni->ni_unveil_eacces = 1;
 			return 0;
 		}
