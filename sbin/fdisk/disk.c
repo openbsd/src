@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.63 2021/07/13 15:03:34 krw Exp $	*/
+/*	$OpenBSD: disk.c,v 1.64 2021/07/15 21:23:54 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
+#include <sys/param.h>		/* DEV_BSIZE */
 #include <sys/ioctl.h>
 #include <sys/dkio.h>
 #include <sys/stat.h>
@@ -28,6 +28,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <util.h>
 
@@ -38,45 +39,53 @@ struct disk		disk;
 struct disklabel	dl;
 
 void
-DISK_open(const int rw)
+DISK_open(const char *name, const int oflags)
 {
 	struct stat		st;
 	uint64_t		sz, spc;
 
-	disk.dk_fd = opendev(disk.dk_name, rw ? O_RDWR : O_RDONLY, OPENDEV_PART,
-	    NULL);
+	disk.dk_name = strdup(name);
+	if (disk.dk_name == NULL)
+		err(1, "DISK_Open('%s')", name);
+
+	disk.dk_fd = opendev(disk.dk_name, oflags, OPENDEV_PART, NULL);
 	if (disk.dk_fd == -1)
 		err(1, "%s", disk.dk_name);
 	if (fstat(disk.dk_fd, &st) == -1)
 		err(1, "%s", disk.dk_name);
 	if (!S_ISCHR(st.st_mode))
 		errx(1, "%s is not a character device", disk.dk_name);
+	if (ioctl(disk.dk_fd, DIOCGPDINFO, &dl) == -1)
+		err(1, "DIOCGPDINFO");
 
-	/* Get label geometry. */
-	if (ioctl(disk.dk_fd, DIOCGPDINFO, &dl) == -1) {
-		warn("DIOCGPDINFO");
+	unit_types[SECTORS].ut_conversion = dl.d_secsize;
+
+	/* Set geometry to use in MBR partitions. */
+	if (disk.dk_size > 0) {
+		/* -l has set disk size. */
+		sz = DL_BLKTOSEC(&dl, disk.dk_size);
+		disk.dk_heads = 1;
+		disk.dk_sectors = 64;
+	} else if (disk.dk_cylinders > 0) {
+		/* -c/-h/-c has set disk geometry. */
+		sz = disk.dk_cylinders * disk.dk_heads * disk.dk_sectors;
+		sz = DL_BLKTOSEC(&dl, sz);
+		disk.dk_sectors = DL_BLKTOSEC(&dl, disk.dk_sectors);
 	} else {
-		unit_types[SECTORS].ut_conversion = dl.d_secsize;
-		if (disk.dk_size == 0) {
-			/* -l or -c/-h/-s not used. Use disklabel info. */
-			disk.dk_cylinders = dl.d_ncylinders;
-			disk.dk_heads = dl.d_ntracks;
-			disk.dk_sectors = dl.d_nsectors;
-			/* MBR handles only first UINT32_MAX sectors. */
-			spc = (uint64_t)disk.dk_heads * disk.dk_sectors;
-			sz = DL_GETDSIZE(&dl);
-			if (sz > UINT32_MAX) {
-				disk.dk_cylinders = UINT32_MAX / spc;
-				disk.dk_size = disk.dk_cylinders * spc;
-			} else
-				disk.dk_size = sz;
-		}
+		sz = DL_GETDSIZE(&dl);
+		disk.dk_heads = dl.d_ntracks;
+		disk.dk_sectors = dl.d_nsectors;
 	}
 
-	if (disk.dk_size == 0 || disk.dk_cylinders == 0 || disk.dk_heads == 0 ||
-	    disk.dk_sectors == 0 || unit_types[SECTORS].ut_conversion == 0)
-		errx(1, "Can't get disk geometry, please use [-chs] or [-l]"
-		    "to specify.");
+	if (sz > UINT32_MAX)
+		sz = UINT32_MAX;	/* MBR knows nothing > UINT32_MAX. */
+
+	spc = disk.dk_heads * disk.dk_sectors;
+	disk.dk_cylinders = sz / spc;
+	disk.dk_size = disk.dk_cylinders * spc;
+
+	if (disk.dk_size == 0)
+		errx(1, "dk_size == 0");
 }
 
 /*
