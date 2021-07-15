@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.31 2021/07/15 10:26:43 inoguchi Exp $ */
+/* $OpenBSD: ca.c,v 1.32 2021/07/15 11:43:27 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -766,24 +766,24 @@ ca_main(int argc, char **argv)
 		}
 	}
 	f = NCONF_get_string(conf, ca_config.section, STRING_MASK);
-	if (!f)
+	if (f == NULL)
 		ERR_clear_error();
 
-	if (f && !ASN1_STRING_set_default_mask_asc(f)) {
+	if (f != NULL && !ASN1_STRING_set_default_mask_asc(f)) {
 		BIO_printf(bio_err,
 		    "Invalid global string mask setting %s\n", f);
 		goto err;
 	}
 	if (ca_config.chtype != MBSTRING_UTF8) {
 		f = NCONF_get_string(conf, ca_config.section, UTF8_IN);
-		if (!f)
+		if (f == NULL)
 			ERR_clear_error();
 		else if (!strcmp(f, "yes"))
 			ca_config.chtype = MBSTRING_UTF8;
 	}
 	db_attr.unique_subject = 1;
 	p = NCONF_get_string(conf, ca_config.section, ENV_UNIQUE_SUBJECT);
-	if (p) {
+	if (p != NULL) {
 		db_attr.unique_subject = parse_yesno(p, 1);
 	} else
 		ERR_clear_error();
@@ -824,7 +824,7 @@ ca_main(int argc, char **argv)
 		lookup_fail(ca_config.section, ENV_PRIVATE_KEY);
 		goto err;
 	}
-	if (!ca_config.key) {
+	if (ca_config.key == NULL) {
 		free_key = 1;
 		if (!app_passwd(bio_err, ca_config.passargin, NULL, &ca_config.key, NULL)) {
 			BIO_printf(bio_err, "Error getting password\n");
@@ -832,7 +832,7 @@ ca_main(int argc, char **argv)
 		}
 	}
 	pkey = load_key(bio_err, ca_config.keyfile, ca_config.keyform, 0, ca_config.key, "CA private key");
-	if (ca_config.key)
+	if (ca_config.key != NULL)
 		explicit_bzero(ca_config.key, strlen(ca_config.key));
 	if (pkey == NULL) {
 		/* load_key() has already printed an appropriate message */
@@ -840,7 +840,7 @@ ca_main(int argc, char **argv)
 	}
 	/*****************************************************************/
 	/* we need a certificate */
-	if (!ca_config.selfsign || ca_config.spkac_file || ca_config.ss_cert_file || ca_config.gencrl) {
+	if (!ca_config.selfsign || ca_config.spkac_file != NULL || ca_config.ss_cert_file != NULL || ca_config.gencrl) {
 		if ((ca_config.certfile == NULL) &&
 		    ((ca_config.certfile = NCONF_get_string(conf,
 		    ca_config.section, ENV_CERTIFICATE)) == NULL)) {
@@ -886,7 +886,7 @@ ca_main(int argc, char **argv)
 
 	f = NCONF_get_string(conf, ca_config.section, ENV_CERTOPT);
 
-	if (f) {
+	if (f != NULL) {
 		if (!set_cert_ex(&certopt, f)) {
 			BIO_printf(bio_err,
 			    "Invalid certificate options: \"%s\"\n", f);
@@ -898,7 +898,7 @@ ca_main(int argc, char **argv)
 
 	f = NCONF_get_string(conf, ca_config.section, ENV_EXTCOPY);
 
-	if (f) {
+	if (f != NULL) {
 		if (!set_ext_copy(&ext_copy, f)) {
 			BIO_printf(bio_err,
 			    "Invalid extension copy option: \"%s\"\n", f);
@@ -1005,7 +1005,7 @@ ca_main(int argc, char **argv)
 	}
 	/*****************************************************************/
 	/* Read extentions config file                                   */
-	if (ca_config.extfile) {
+	if (ca_config.extfile != NULL) {
 		extconf = NCONF_new(NULL);
 		if (NCONF_load(extconf, ca_config.extfile, &errorline) <= 0) {
 			if (errorline <= 0)
@@ -1025,8 +1025,8 @@ ca_main(int argc, char **argv)
 			    ca_config.extfile);
 
 		/* We can have sections in the ext file */
-		if (!ca_config.extensions && !(ca_config.extensions = NCONF_get_string(extconf,
-		    "default", "extensions")))
+		if (ca_config.extensions == NULL && (ca_config.extensions = NCONF_get_string(extconf,
+		    "default", "extensions")) == NULL)
 			ca_config.extensions = "default";
 	}
 	/*****************************************************************/
@@ -1080,18 +1080,18 @@ ca_main(int argc, char **argv)
 			lookup_fail(ca_config.section, ENV_SERIAL);
 			goto err;
 		}
-		if (!extconf) {
+		if (extconf == NULL) {
 			/*
 			 * no '-extfile' option, so we look for extensions in
 			 * the main configuration file
 			 */
-			if (!ca_config.extensions) {
+			if (ca_config.extensions == NULL) {
 				ca_config.extensions = NCONF_get_string(conf, ca_config.section,
 				    ENV_EXTENSIONS);
-				if (!ca_config.extensions)
+				if (ca_config.extensions == NULL)
 					ERR_clear_error();
 			}
-			if (ca_config.extensions) {
+			if (ca_config.extensions != NULL) {
 				/* Check syntax of file */
 				X509V3_CTX ctx;
 				X509V3_set_ctx_test(&ctx);
@@ -1177,7 +1177,7 @@ ca_main(int argc, char **argv)
 					    "Memory allocation failure\n");
 					goto err;
 				}
-				if (ca_config.outfile) {
+				if (ca_config.outfile != NULL) {
 					output_der = 1;
 					ca_config.batch = 1;
 				}
@@ -1257,7 +1257,7 @@ ca_main(int argc, char **argv)
 
 				BIO_printf(bio_err, "\n%d out of %d certificate requests certified, commit? [y/n]", total_done, total);
 				(void) BIO_flush(bio_err);
-				if (!fgets(answer, sizeof answer - 1, stdin)) {
+				if (fgets(answer, sizeof answer - 1, stdin) == NULL) {
 					BIO_printf(bio_err, "CERTIFICATION CANCELED: I/O error\n");
 					ret = 0;
 					goto err;
@@ -1292,7 +1292,7 @@ ca_main(int argc, char **argv)
 				serialstr = bin2hex(data, j);
 			else
 				serialstr = strdup("00");
-			if (serialstr) {
+			if (serialstr != NULL) {
 				k = snprintf(pempath, sizeof(pempath),
 				    "%s/%s.pem", ca_config.outdir, serialstr);
 				free(serialstr);
@@ -1331,12 +1331,12 @@ ca_main(int argc, char **argv)
 	/*****************************************************************/
 	if (ca_config.gencrl) {
 		int crl_v2 = 0;
-		if (!ca_config.crl_ext) {
+		if (ca_config.crl_ext == NULL) {
 			ca_config.crl_ext = NCONF_get_string(conf, ca_config.section, ENV_CRLEXT);
-			if (!ca_config.crl_ext)
+			if (ca_config.crl_ext == NULL)
 				ERR_clear_error();
 		}
-		if (ca_config.crl_ext) {
+		if (ca_config.crl_ext != NULL) {
 			/* Check syntax of file */
 			X509V3_CTX ctx;
 			X509V3_set_ctx_test(&ctx);
@@ -1378,12 +1378,12 @@ ca_main(int argc, char **argv)
 			goto err;
 
 		tmptm = ASN1_TIME_new();
-		if (!tmptm)
+		if (tmptm == NULL)
 			goto err;
 		X509_gmtime_adj(tmptm, 0);
 		X509_CRL_set_lastUpdate(crl, tmptm);
-		if (!X509_time_adj_ex(tmptm, ca_config.crldays,
-		    ca_config.crlhours * 60 * 60 + ca_config.crlsec, NULL)) {
+		if (X509_time_adj_ex(tmptm, ca_config.crldays,
+		    ca_config.crlhours * 60 * 60 + ca_config.crlsec, NULL) == NULL) {
 			BIO_puts(bio_err, "error setting CRL nextUpdate\n");
 			goto err;
 		}
@@ -1406,7 +1406,7 @@ ca_main(int argc, char **argv)
 				tmpserial = BN_to_ASN1_INTEGER(serial, NULL);
 				BN_free(serial);
 				serial = NULL;
-				if (!tmpserial)
+				if (tmpserial == NULL)
 					goto err;
 				X509_REVOKED_set_serialNumber(r, tmpserial);
 				ASN1_INTEGER_free(tmpserial);
@@ -1425,18 +1425,18 @@ ca_main(int argc, char **argv)
 
 		/* Add any extensions asked for */
 
-		if (ca_config.crl_ext || crlnumberfile != NULL) {
+		if (ca_config.crl_ext != NULL || crlnumberfile != NULL) {
 			X509V3_CTX crlctx;
 			X509V3_set_ctx(&crlctx, x509, NULL, NULL, crl, 0);
 			X509V3_set_nconf(&crlctx, conf);
 
-			if (ca_config.crl_ext)
+			if (ca_config.crl_ext != NULL)
 				if (!X509V3_EXT_CRL_add_nconf(conf, &crlctx,
 				    ca_config.crl_ext, crl))
 					goto err;
 			if (crlnumberfile != NULL) {
 				tmpserial = BN_to_ASN1_INTEGER(crlnumber, NULL);
-				if (!tmpserial)
+				if (tmpserial == NULL)
 					goto err;
 				X509_CRL_add1_ext_i2d(crl, NID_crl_number,
 				    tmpserial, 0, 0);
@@ -1446,7 +1446,7 @@ ca_main(int argc, char **argv)
 					goto err;
 			}
 		}
-		if (ca_config.crl_ext || crl_v2) {
+		if (ca_config.crl_ext != NULL || crl_v2) {
 			if (!X509_CRL_set_version(crl, 1))
 				goto err;	/* version 2 CRL */
 		}
@@ -1455,7 +1455,7 @@ ca_main(int argc, char **argv)
 			if (!save_serial(crlnumberfile, "new", crlnumber, NULL))
 				goto err;
 
-		if (crlnumber) {
+		if (crlnumber != NULL) {
 			BN_free(crlnumber);
 			crlnumber = NULL;
 		}
@@ -1692,10 +1692,10 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 	for (i = 0; i < DB_NUMBER; i++)
 		row[i] = NULL;
 
-	if (subj) {
+	if (subj != NULL) {
 		X509_NAME *n = parse_name(subj, chtype, multirdn);
 
-		if (!n) {
+		if (n == NULL) {
 			ERR_print_errors(bio_err);
 			goto err;
 		}
@@ -1870,7 +1870,7 @@ again2:
 		 * Its best to dup the subject DN and then delete any email
 		 * addresses because this retains its structure.
 		 */
-		if (!(dn_subject = X509_NAME_dup(subject))) {
+		if ((dn_subject = X509_NAME_dup(subject)) == NULL) {
 			BIO_printf(bio_err, "Memory allocation failure\n");
 			goto err;
 		}
@@ -1997,7 +1997,7 @@ again2:
 		goto err;
 
 	/* Lets add the extensions, if there are any */
-	if (ext_sect) {
+	if (ext_sect != NULL) {
 		X509V3_CTX ctx;
 		if (ci->version == NULL)
 			if ((ci->version = ASN1_INTEGER_new()) == NULL)
@@ -2020,7 +2020,7 @@ again2:
 		else
 			X509V3_set_ctx(&ctx, x509, ret, req, NULL, 0);
 
-		if (extconf) {
+		if (extconf != NULL) {
 			if (verbose)
 				BIO_printf(bio_err,
 				    "Extra configuration file found\n");
@@ -2042,7 +2042,7 @@ again2:
 			}
 			if (verbose)
 				BIO_printf(bio_err, "Successfully added extensions from file.\n");
-		} else if (ext_sect) {
+		} else if (ext_sect != NULL) {
 			/* We found extensions to be set from config file */
 			X509V3_set_nconf(&ctx, lconf);
 
@@ -2343,7 +2343,7 @@ do_revoke(X509 *x509, CA_DB *db, int type, char *value)
 		row[i] = NULL;
 	row[DB_name] = X509_NAME_oneline(X509_get_subject_name(x509), NULL, 0);
 	bn = ASN1_INTEGER_to_BN(X509_get_serialNumber(x509), NULL);
-	if (!bn)
+	if (bn == NULL)
 		goto err;
 	if (BN_is_zero(bn))
 		row[DB_serial] = strdup("00");
@@ -2425,7 +2425,7 @@ do_revoke(X509 *x509, CA_DB *db, int type, char *value)
 		BIO_printf(bio_err, "Revoking Certificate %s.\n",
 		    rrow[DB_serial]);
 		rev_str = make_revocation_str(type, value);
-		if (!rev_str) {
+		if (rev_str == NULL) {
 			BIO_printf(bio_err, "Error in revocation arguments\n");
 			goto err;
 		}
@@ -2696,22 +2696,22 @@ make_revoked(X509_REVOKED *rev, const char *str)
 	if (i == 0)
 		goto err;
 
-	if (rev && !X509_REVOKED_set_revocationDate(rev, revDate))
+	if (rev != NULL && !X509_REVOKED_set_revocationDate(rev, revDate))
 		goto err;
 
-	if (rev && (reason_code != OCSP_REVOKED_STATUS_NOSTATUS)) {
+	if (rev != NULL && (reason_code != OCSP_REVOKED_STATUS_NOSTATUS)) {
 		rtmp = ASN1_ENUMERATED_new();
-		if (!rtmp || !ASN1_ENUMERATED_set(rtmp, reason_code))
+		if (rtmp == NULL || !ASN1_ENUMERATED_set(rtmp, reason_code))
 			goto err;
 		if (!X509_REVOKED_add1_ext_i2d(rev, NID_crl_reason, rtmp, 0, 0))
 			goto err;
 	}
-	if (rev && comp_time) {
+	if (rev != NULL && comp_time != NULL) {
 		if (!X509_REVOKED_add1_ext_i2d(rev, NID_invalidity_date,
 		    comp_time, 0, 0))
 			goto err;
 	}
-	if (rev && hold) {
+	if (rev != NULL && hold != NULL) {
 		if (!X509_REVOKED_add1_ext_i2d(rev, NID_hold_instruction_code,
 		    hold, 0, 0))
 			goto err;
@@ -2792,17 +2792,17 @@ unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold,
 	p = strchr(tmp, ',');
 	rtime_str = tmp;
 
-	if (p) {
+	if (p != NULL) {
 		*p = '\0';
 		p++;
 		reason_str = p;
 		p = strchr(p, ',');
-		if (p) {
+		if (p != NULL) {
 			*p = '\0';
 			arg_str = p + 1;
 		}
 	}
-	if (prevtm) {
+	if (prevtm != NULL) {
 		*prevtm = ASN1_UTCTIME_new();
 		if (!ASN1_UTCTIME_set_string(*prevtm, rtime_str)) {
 			BIO_printf(bio_err, "invalid revocation date %s\n",
@@ -2810,7 +2810,7 @@ unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold,
 			goto err;
 		}
 	}
-	if (reason_str) {
+	if (reason_str != NULL) {
 		for (i = 0; i < NUM_REASONS; i++) {
 			if (!strcasecmp(reason_str, crl_reasons[i])) {
 				reason_code = i;
@@ -2825,7 +2825,7 @@ unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold,
 		if (reason_code == 7)
 			reason_code = OCSP_REVOKED_STATUS_REMOVEFROMCRL;
 		else if (reason_code == 8) {	/* Hold instruction */
-			if (!arg_str) {
+			if (arg_str == NULL) {
 				BIO_printf(bio_err,
 				    "missing hold instruction\n");
 				goto err;
@@ -2833,15 +2833,15 @@ unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold,
 			reason_code = OCSP_REVOKED_STATUS_CERTIFICATEHOLD;
 			hold = OBJ_txt2obj(arg_str, 0);
 
-			if (!hold) {
+			if (hold == NULL) {
 				BIO_printf(bio_err,
 				    "invalid object identifier %s\n", arg_str);
 				goto err;
 			}
-			if (phold)
+			if (phold != NULL)
 				*phold = hold;
 		} else if ((reason_code == 9) || (reason_code == 10)) {
-			if (!arg_str) {
+			if (arg_str == NULL) {
 				BIO_printf(bio_err,
 				    "missing compromised time\n");
 				goto err;
@@ -2859,9 +2859,9 @@ unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold,
 				reason_code = OCSP_REVOKED_STATUS_CACOMPROMISE;
 		}
 	}
-	if (preason)
+	if (preason != NULL)
 		*preason = reason_code;
-	if (pinvtm)
+	if (pinvtm != NULL)
 		*pinvtm = comp_time;
 	else
 		ASN1_GENERALIZEDTIME_free(comp_time);
@@ -2871,9 +2871,9 @@ unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold,
  err:
 	free(tmp);
 
-	if (!phold)
+	if (phold == NULL)
 		ASN1_OBJECT_free(hold);
-	if (!pinvtm)
+	if (pinvtm == NULL)
 		ASN1_GENERALIZEDTIME_free(comp_time);
 
 	return ret;
@@ -2886,7 +2886,7 @@ bin2hex(unsigned char *data, size_t len)
 	char hex[] = "0123456789ABCDEF";
 	int i;
 
-	if ((ret = malloc(len * 2 + 1))) {
+	if ((ret = malloc(len * 2 + 1)) != NULL) {
 		for (i = 0; i < len; i++) {
 			ret[i * 2 + 0] = hex[data[i] >> 4];
 			ret[i * 2 + 1] = hex[data[i] & 0x0F];
