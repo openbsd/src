@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.29 2021/07/15 09:56:32 inoguchi Exp $ */
+/* $OpenBSD: ca.c,v 1.30 2021/07/15 10:15:22 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -151,7 +151,7 @@ static int do_body(X509 ** xret, EVP_PKEY * pkey, X509 * x509,
     char *ext_sect, CONF * conf, unsigned long certopt, unsigned long nameopt,
     int default_op, int ext_copy, int selfsign);
 static int do_revoke(X509 * x509, CA_DB * db, int ext, char *extval);
-static int get_certificate_status(const char *ser_status, CA_DB * db);
+static int get_certificate_status(const char *serial, CA_DB * db);
 static int do_updatedb(CA_DB * db);
 static int check_time_format(const char *str);
 static char * bin2hex(unsigned char *, size_t);
@@ -167,7 +167,7 @@ static struct {
 	char *certfile;
 	unsigned long chtype;
 	char *configfile;
-	int create_ser;
+	int create_serial;
 	char *crl_ext;
 	long crldays;
 	long crlhours;
@@ -198,7 +198,7 @@ static struct {
 	int req;
 	char *rev_arg;
 	int rev_type;
-	char *ser_status;
+	char *serial_status;
 	char *section;
 	int selfsign;
 	STACK_OF(OPENSSL_STRING) * sigopts;
@@ -329,7 +329,7 @@ static const struct option ca_options[] = {
 		.name = "create_serial",
 		.desc = "If reading serial fails, create a new random serial",
 		.type = OPTION_FLAG,
-		.opt.flag = &ca_config.create_ser,
+		.opt.flag = &ca_config.create_serial,
 	},
 	{
 		.name = "crl_CA_compromise",
@@ -577,7 +577,7 @@ static const struct option ca_options[] = {
 		.argname = "serial",
 		.desc = "Shows certificate status given the serial number",
 		.type = OPTION_ARG,
-		.opt.arg = &ca_config.ser_status,
+		.opt.arg = &ca_config.serial_status,
 	},
 	{
 		.name = "subj",
@@ -674,7 +674,7 @@ ca_main(int argc, char **argv)
 	X509_CRL *crl = NULL;
 	X509_REVOKED *r = NULL;
 	ASN1_TIME *tmptm;
-	ASN1_INTEGER *tmpser;
+	ASN1_INTEGER *tmpserial;
 	char *f;
 	const char *p;
 	char *const * pp;
@@ -798,7 +798,7 @@ ca_main(int argc, char **argv)
 	}
 	/*****************************************************************/
 	/* report status of cert with serial number given on command line */
-	if (ca_config.ser_status) {
+	if (ca_config.serial_status) {
 		if ((dbfile = NCONF_get_string(conf, ca_config.section,
 		    ENV_DATABASE)) == NULL) {
 			lookup_fail(ca_config.section, ENV_DATABASE);
@@ -811,9 +811,9 @@ ca_main(int argc, char **argv)
 		if (!index_index(db))
 			goto err;
 
-		if (get_certificate_status(ca_config.ser_status, db) != 1)
+		if (get_certificate_status(ca_config.serial_status, db) != 1)
 			BIO_printf(bio_err, "Error verifying serial %s!\n",
-			    ca_config.ser_status);
+			    ca_config.serial_status);
 		goto err;
 	}
 	/*****************************************************************/
@@ -1131,7 +1131,7 @@ ca_main(int argc, char **argv)
 			    "cannot lookup how many days to certify for\n");
 			goto err;
 		}
-		if ((serial = load_serial(serialfile, ca_config.create_ser, NULL)) ==
+		if ((serial = load_serial(serialfile, ca_config.create_serial, NULL)) ==
 		    NULL) {
 			BIO_printf(bio_err,
 			    "error while loading serial number\n");
@@ -1403,13 +1403,13 @@ ca_main(int argc, char **argv)
 					crl_v2 = 1;
 				if (!BN_hex2bn(&serial, pp[DB_serial]))
 					goto err;
-				tmpser = BN_to_ASN1_INTEGER(serial, NULL);
+				tmpserial = BN_to_ASN1_INTEGER(serial, NULL);
 				BN_free(serial);
 				serial = NULL;
-				if (!tmpser)
+				if (!tmpserial)
 					goto err;
-				X509_REVOKED_set_serialNumber(r, tmpser);
-				ASN1_INTEGER_free(tmpser);
+				X509_REVOKED_set_serialNumber(r, tmpserial);
+				ASN1_INTEGER_free(tmpserial);
 				X509_CRL_add0_revoked(crl, r);
 			}
 		}
@@ -1435,12 +1435,12 @@ ca_main(int argc, char **argv)
 				    ca_config.crl_ext, crl))
 					goto err;
 			if (crlnumberfile != NULL) {
-				tmpser = BN_to_ASN1_INTEGER(crlnumber, NULL);
-				if (!tmpser)
+				tmpserial = BN_to_ASN1_INTEGER(crlnumber, NULL);
+				if (!tmpserial)
 					goto err;
 				X509_CRL_add1_ext_i2d(crl, NID_crl_number,
-				    tmpser, 0, 0);
-				ASN1_INTEGER_free(tmpser);
+				    tmpserial, 0, 0);
+				ASN1_INTEGER_free(tmpserial);
 				crl_v2 = 1;
 				if (!BN_add_word(crlnumber, 1))
 					goto err;
