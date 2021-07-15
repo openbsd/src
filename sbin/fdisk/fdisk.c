@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.120 2021/07/15 21:23:54 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.121 2021/07/15 21:58:02 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -29,8 +29,8 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "disk.h"
 #include "part.h"
+#include "disk.h"
 #include "mbr.h"
 #include "misc.h"
 #include "cmd.h"
@@ -42,11 +42,9 @@ static unsigned char		builtin_mbr[] = {
 #include "mbrcode.h"
 };
 
-uint32_t		b_sectors, b_offset;
-uint8_t			b_type;
 int			A_flag, y_flag;
 
-void		 parse_b(const char *, uint32_t *, uint32_t *, uint8_t *);
+void			parse_bootprt(const char *);
 
 static void
 usage(void)
@@ -124,7 +122,7 @@ main(int argc, char *argv[])
 			g_flag = 1;
 			break;
 		case 'b':
-			parse_b(optarg, &b_sectors, &b_offset, &b_type);
+			parse_bootprt(optarg);
 			break;
 		case 'l':
 			disk.dk_size = strtonum(optarg, BLOCKALIGNMENT, UINT32_MAX, &errstr);
@@ -148,8 +146,7 @@ main(int argc, char *argv[])
 
 	/* Argument checking */
 	if (argc != 1 || (i_flag && u_flag) ||
-	    (i_flag == 0 && g_flag) ||
-	    (b_sectors && !(i_flag || A_flag)))
+	    (i_flag == 0 && g_flag))
 		usage();
 
 	if ((disk.dk_cylinders || disk.dk_heads || disk.dk_sectors) &&
@@ -157,15 +154,11 @@ main(int argc, char *argv[])
 		usage();
 
 	DISK_open(argv[0], oflags);
-
-	bps = DL_BLKSPERSEC(&dl);
-	if (b_sectors > 0) {
-		if (b_sectors % bps != 0)
-			b_sectors += bps - b_sectors % bps;
-		if (b_offset % bps != 0)
-			b_offset += bps - b_offset % bps;
-		b_sectors = DL_BLKTOSEC(&dl, b_sectors);
-		b_offset = DL_BLKTOSEC(&dl, b_offset);
+	if (oflags == O_RDONLY) {
+		if (pledge("stdio", NULL) == -1)
+			err(1, "pledge");
+		USER_print_disk(verbosity);
+		goto done;
 	}
 
 	/* "proc exec" for man page display */
@@ -181,13 +174,6 @@ main(int argc, char *argv[])
 	efi = MBR_protective_mbr(&mbr);
 	if (efi != -1)
 		GPT_read(ANYGPT);
-
-	if (oflags == O_RDONLY) {
-		if (pledge("stdio", NULL) == -1)
-			err(1, "pledge");
-		USER_print_disk(verbosity);
-		goto done;
-	}
 
 	/* Create initial/default MBR. */
 	if (mbrfile == NULL) {
@@ -216,13 +202,13 @@ main(int argc, char *argv[])
 			errx(1, "-A requires a valid GPT");
 		else {
 			initial_mbr = mbr;	/* Keep current MBR. */
-			GPT_init(GPONLY, b_sectors);
+			GPT_init(GPONLY);
 			query = "Do you wish to write new GPT?";
 		}
 	} else if (i_flag) {
 		if (g_flag) {
 			MBR_init_GPT(&initial_mbr);
-			GPT_init(GHANDGP, b_sectors);
+			GPT_init(GHANDGP);
 			query = "Do you wish to write new GPT?";
 		} else {
 			memset(&gh, 0, sizeof(gh));
@@ -248,7 +234,7 @@ done:
 }
 
 void
-parse_b(const char *arg, uint32_t *blocks, uint32_t *offset, uint8_t *type)
+parse_bootprt(const char *arg)
 {
 	const char		*errstr;
 	char			*poffset, *ptype;
@@ -292,7 +278,7 @@ parse_b(const char *arg, uint32_t *blocks, uint32_t *offset, uint8_t *type)
 	partitiontype = strtol(ptype, NULL, 16);
 
  done:
-	*blocks = blockcount;
-	*offset = blockoffset;
-	*type = partitiontype;
+	disk.dk_bootprt.prt_ns = blockcount;
+	disk.dk_bootprt.prt_bs = blockoffset;
+	disk.dk_bootprt.prt_id = partitiontype;
 }

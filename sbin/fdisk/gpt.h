@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.h,v 1.15 2021/07/12 22:18:54 krw Exp $	*/
+/*	$OpenBSD: gpt.h,v 1.16 2021/07/15 21:58:02 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -20,7 +20,7 @@ void		GPT_read(const int);
 int		GPT_get_lba_start(const unsigned int);
 int		GPT_get_lba_end(const unsigned int);
 
-int		GPT_init(const int, const uint32_t);
+int		GPT_init(const int);
 int		GPT_write(void);
 void		GPT_zap_headers(void);
 void		GPT_print(const char *, const int);

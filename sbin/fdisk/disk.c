@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.64 2021/07/15 21:23:54 krw Exp $	*/
+/*	$OpenBSD: disk.c,v 1.65 2021/07/15 21:58:02 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -32,6 +32,7 @@
 #include <unistd.h>
 #include <util.h>
 
+#include "part.h"
 #include "disk.h"
 #include "misc.h"
 
@@ -42,7 +43,7 @@ void
 DISK_open(const char *name, const int oflags)
 {
 	struct stat		st;
-	uint64_t		sz, spc;
+	uint64_t		ns, bs, sz, spc;
 
 	disk.dk_name = strdup(name);
 	if (disk.dk_name == NULL)
@@ -86,6 +87,13 @@ DISK_open(const char *name, const int oflags)
 
 	if (disk.dk_size == 0)
 		errx(1, "dk_size == 0");
+
+	if (disk.dk_bootprt.prt_ns > 0) {
+		ns = disk.dk_bootprt.prt_ns + DL_BLKSPERSEC(&dl) - 1;
+		bs = disk.dk_bootprt.prt_bs + DL_BLKSPERSEC(&dl) - 1;
+		disk.dk_bootprt.prt_ns = DL_BLKTOSEC(&dl, ns);
+		disk.dk_bootprt.prt_bs = DL_BLKTOSEC(&dl, bs);
+	}
 }
 
 /*

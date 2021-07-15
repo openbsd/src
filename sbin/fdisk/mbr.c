@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.85 2021/07/13 15:03:34 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.86 2021/07/15 21:58:02 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -26,8 +26,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "disk.h"
 #include "part.h"
+#include "disk.h"
 #include "misc.h"
 #include "mbr.h"
 #include "gpt.h"
@@ -77,8 +77,6 @@ MBR_init_GPT(struct mbr *mbr)
 void
 MBR_init(struct mbr *mbr)
 {
-	extern uint32_t		b_sectors, b_offset;
-	extern uint8_t		b_type;
 	uint64_t		adj;
 	daddr_t			daddr;
 
@@ -134,16 +132,12 @@ MBR_init(struct mbr *mbr)
 	/* Fix up start/length fields */
 	PRT_fix_BN(&mbr->mbr_prt[3], 3);
 #else
-	if (b_sectors > 0) {
-		mbr->mbr_prt[0].prt_id = b_type;
-		mbr->mbr_prt[0].prt_bs = b_offset;
-		mbr->mbr_prt[0].prt_ns = b_sectors;
-		PRT_fix_CHS(&mbr->mbr_prt[0]);
-		mbr->mbr_prt[3].prt_ns += mbr->mbr_prt[3].prt_bs;
-		mbr->mbr_prt[3].prt_bs = mbr->mbr_prt[0].prt_bs + mbr->mbr_prt[0].prt_ns;
-		mbr->mbr_prt[3].prt_ns -= mbr->mbr_prt[3].prt_bs;
-		PRT_fix_CHS(&mbr->mbr_prt[3]);
-	}
+	mbr->mbr_prt[0] = disk.dk_bootprt;
+	PRT_fix_CHS(&mbr->mbr_prt[0]);
+	mbr->mbr_prt[3].prt_ns += mbr->mbr_prt[3].prt_bs;
+	mbr->mbr_prt[3].prt_bs = mbr->mbr_prt[0].prt_bs + mbr->mbr_prt[0].prt_ns;
+	mbr->mbr_prt[3].prt_ns -= mbr->mbr_prt[3].prt_bs;
+	PRT_fix_CHS(&mbr->mbr_prt[3]);
 #endif
 
 	/* Start OpenBSD MBR partition on a power of 2 block number. */

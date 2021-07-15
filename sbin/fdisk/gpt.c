@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.42 2021/07/13 15:03:34 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.43 2021/07/15 21:58:02 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -28,9 +28,9 @@
 #include <unistd.h>
 #include <uuid.h>
 
+#include "part.h"
 #include "disk.h"
 #include "misc.h"
-#include "part.h"
 #include "gpt.h"
 
 #ifdef DEBUG
@@ -49,7 +49,7 @@ int			  add_partition(const uint8_t *, const char *, uint64_t);
 int			  get_header(const uint64_t);
 int			  get_partition_table(void);
 int			  init_gh(void);
-int			  init_gp(const int, const uint32_t);
+int			  init_gp(const int);
 uint32_t		  crc32(const u_char *, const uint32_t);
 
 int
@@ -414,7 +414,7 @@ init_gh(void)
 }
 
 int
-init_gp(const int how, const uint32_t bootsectors)
+init_gp(const int how)
 {
 	struct gpt_partition	oldgp[NGPTPARTITIONS];
 	const uint8_t		gpt_uuid_efi_system[] = GPT_UUID_EFI_SYSTEM;
@@ -433,9 +433,9 @@ init_gp(const int how, const uint32_t bootsectors)
 	}
 
 	rslt = 0;
-	if (bootsectors > 0) {
+	if (disk.dk_bootprt.prt_ns > 0) {
 		rslt = add_partition(gpt_uuid_efi_system, "EFI System Area",
-		    bootsectors);
+		    disk.dk_bootprt.prt_ns);
 	}
 	if (rslt == 0)
 		rslt = add_partition(gpt_uuid_openbsd, "OpenBSD Area", 0);
@@ -447,14 +447,14 @@ init_gp(const int how, const uint32_t bootsectors)
 }
 
 int
-GPT_init(const int how, const uint32_t bootsectors)
+GPT_init(const int how)
 {
 	int			rslt = 0;
 
 	if (how == GHANDGP)
 		rslt = init_gh();
 	if (rslt == 0)
-		rslt = init_gp(how, bootsectors);
+		rslt = init_gp(how);
 
 	return rslt;
 }

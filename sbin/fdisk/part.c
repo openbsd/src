@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.96 2021/07/13 22:10:20 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.97 2021/07/15 21:58:02 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -26,9 +26,9 @@
 #include <string.h>
 #include <uuid.h>
 
+#include "part.h"
 #include "disk.h"
 #include "misc.h"
-#include "part.h"
 
 int			 check_chs(const struct prt *);
 const char		*ascii_id(const int);
