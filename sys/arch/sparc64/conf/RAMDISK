@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.125 2021/07/15 15:33:47 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.126 2021/07/15 15:37:55 deraadt Exp $
 
 machine		sparc64
 maxusers	4
@@ -17,7 +17,6 @@ option		FFS2
 option		NFSCLIENT
 option		CD9660
 option		MSDOSFS
-option		UDF
 option		INET6
 option		CRYPTO
 
