@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.121 2021/07/15 21:58:02 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.122 2021/07/15 23:25:46 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -70,7 +70,6 @@ main(int argc, char *argv[])
 #endif
 	ssize_t			 len;
 	int			 ch, fd, efi, error;
-	unsigned int		 bps;
 	int			 e_flag = 0, g_flag = 0, i_flag = 0, u_flag = 0;
 	int			 verbosity = TERSE;
 	int			 oflags = O_RDONLY;
