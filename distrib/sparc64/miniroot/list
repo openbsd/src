@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.6 2019/06/07 14:39:57 deraadt Exp $
+#	$OpenBSD: list,v 1.7 2021/07/15 15:33:47 deraadt Exp $
 
 SRCDIRS distrib/special
 
@@ -42,7 +42,6 @@ LINK	instbin					sbin/mount_udf
 LINK	instbin					sbin/newfs
 LINK	instbin					sbin/ping sbin/ping6
 LINK	instbin					sbin/reboot sbin/halt
-LINK	instbin					sbin/restore
 LINK	instbin					sbin/route
 LINK	instbin					sbin/slaacd
 LINK	instbin					sbin/sysctl
@@ -67,15 +66,6 @@ COPY	${DESTDIR}/etc/firmware/bnx-b09		etc/firmware/bnx-b09
 COPY	${DESTDIR}/etc/firmware/bnx-rv2p	etc/firmware/bnx-rv2p
 COPY	${DESTDIR}/etc/firmware/bnx-xi-rv2p	etc/firmware/bnx-xi-rv2p
 COPY	${DESTDIR}/etc/firmware/bnx-xi90-rv2p	etc/firmware/bnx-xi90-rv2p
-
-COPY	${DESTDIR}/etc/firmware/ral-rt2561	etc/firmware/ral-rt2561
-COPY	${DESTDIR}/etc/firmware/ral-rt2561s	etc/firmware/ral-rt2561s
-COPY	${DESTDIR}/etc/firmware/ral-rt2661	etc/firmware/ral-rt2661
-COPY	${DESTDIR}/etc/firmware/ral-rt2860	etc/firmware/ral-rt2860
-COPY	${DESTDIR}/etc/firmware/ral-rt3290	etc/firmware/ral-rt3290
-COPY	${DESTDIR}/etc/firmware/rum-rt2573	etc/firmware/rum-rt2573
-COPY	${DESTDIR}/etc/firmware/run-rt2870	etc/firmware/run-rt2870
-COPY	${DESTDIR}/etc/firmware/run-rt3071	etc/firmware/run-rt3071
 
 # copy the MAKEDEV script and make some devices
 SCRIPT	${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV

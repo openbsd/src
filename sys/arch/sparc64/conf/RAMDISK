@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.124 2019/09/04 14:29:42 cheloha Exp $
+#	$OpenBSD: RAMDISK,v 1.125 2021/07/15 15:33:47 deraadt Exp $
 
 machine		sparc64
 maxusers	4
@@ -70,8 +70,6 @@ ath*		at pci?			# Atheros AR5k (802.11a/b/g)
 ath*		at cardbus?		# Atheros AR5k (802.11a/b/g)
 athn*		at pci?			# Atheros AR9k (802.11a/g/n)
 athn*		at cardbus?		# Atheros AR9k (802.11a/g/n)
-ral*		at pci?			# Ralink RT2500/RT2501/RT2600
-ral*		at cardbus?		# Ralink RT2500/RT2501/RT2600
 com*		at pcmcia?		# PCMCIA modems/serial ports
 ep*		at pcmcia?		# PCMCIA based 3C5xx ethernet
 ne*		at pcmcia?		# PCMCIA based NE2000 ethernet
@@ -226,8 +224,6 @@ smsc*		at uhub?		# SMSC LAN95xx Ethernet
 cdce*		at uhub?		# CDC Ethernet
 udav*		at uhub?		# Davicom DM9601 based Ethernet
 mos*		at uhub?		# MOSCHIP MCS7730/7830 10/100 Ethernet
-ural*		at uhub?		# Ralink RT2500USB
-rum*		at uhub?		# Ralink RT2501USB/RT2601USB
 url*		at uhub?		# Realtek RTL8150L based adapters
 ure*		at uhub?		# Realtek RTL8152 based adapters
 
