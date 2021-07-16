@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.128 2021/07/15 21:58:02 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.129 2021/07/16 22:50:43 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -303,7 +303,7 @@ Xedit(char *args, struct mbr *mbr)
 int
 gsetpid(int pn)
 {
-	struct uuid		 guid;
+	struct uuid		 gp_type, gp_guid;
 	struct gpt_partition	*gg, oldgg;
 	int			 num, status;
 
@@ -314,33 +314,32 @@ gsetpid(int pn)
 	GPT_print_parthdr(TERSE);
 	GPT_print_part(pn, "s", TERSE);
 
-	if (PRT_protected_guid(&gg->gp_type)) {
-		uuid_dec_le(&gg->gp_type, &guid);
+	uuid_dec_le(&gg->gp_type, &gp_type);
+	if (PRT_protected_guid(&gp_type)) {
 		printf("can't edit partition type %s\n",
-		    PRT_uuid_to_typename(&guid));
+		    PRT_uuid_to_typename(&gp_type));
 		goto done;
 	}
 
 	/* Ask for partition type or GUID. */
-	uuid_dec_le(&gg->gp_type, &guid);
-	num = ask_pid(PRT_uuid_to_type(&guid), &guid);
+	num = ask_pid(PRT_uuid_to_type(&gp_type), &gp_type);
 	if (num <= 0xff)
-		guid = *(PRT_type_to_uuid(num));
-	uuid_enc_le(&gg->gp_type, &guid);
-	if (PRT_protected_guid(&gg->gp_type)) {
-		uuid_dec_le(&gg->gp_type, &guid);
+		gp_type = *(PRT_type_to_uuid(num));
+	if (PRT_protected_guid(&gp_type)) {
 		printf("can't change partition type to %s\n",
-		    PRT_uuid_to_typename(&guid));
+		    PRT_uuid_to_typename(&gp_type));
 		goto done;
 	}
+	uuid_enc_le(&gg->gp_type, &gp_type);
 
-	if (uuid_is_nil(&gg->gp_guid, NULL)) {
-		uuid_create(&guid, &status);
+	uuid_dec_le(&gg->gp_guid, &gp_guid);
+	if (uuid_is_nil(&gp_guid, NULL)) {
+		uuid_create(&gp_guid, &status);
 		if (status != uuid_s_ok) {
 			printf("could not create guid for partition\n");
 			goto done;
 		}
-		uuid_enc_le(&gg->gp_guid, &guid);
+		uuid_enc_le(&gg->gp_guid, &gp_guid);
 	}
 
 	if (memcmp(gg, &oldgg, sizeof(*gg)))

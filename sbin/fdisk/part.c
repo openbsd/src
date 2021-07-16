@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.98 2021/07/16 13:26:04 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.99 2021/07/16 22:50:43 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -157,16 +157,14 @@ static const struct protected_guid {
 #endif
 
 int
-PRT_protected_guid(const struct uuid *leuuid)
+PRT_protected_guid(const struct uuid *uuid)
 {
-	struct uuid		 uuid;
 	char			*str = NULL;
 	int			 rslt;
 	unsigned int		 i;
 	uint32_t		 status;
 
-	uuid_dec_le(leuuid, &uuid);
-	uuid_to_string(&uuid, &str, &status);
+	uuid_to_string(uuid, &str, &status);
 	if (status != uuid_s_ok) {
 		rslt = 1;
 		goto done;
