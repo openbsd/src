@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.84 2021/03/20 11:26:07 semarie Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.85 2021/07/16 07:59:38 claudio Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -213,7 +213,7 @@ namei(struct nameidata *ndp)
 	} else if (ndp->ni_dirfd == AT_FDCWD) {
 		dp = fdp->fd_cdir;
 		vref(dp);
-		unveil_start_relative(p, ndp, NULL);
+		unveil_start_relative(p, ndp, dp);
 		unveil_check_component(p, ndp, dp);
 	} else {
 		struct file *fp = fd_getfile(fdp, ndp->ni_dirfd);
@@ -523,7 +523,6 @@ dirloop:
 	 * Handle "..": two special cases.
 	 * 1. If at root directory (e.g. after chroot)
 	 *    or at absolute root directory
-	 *    or we are under unveil restrictions
 	 *    then ignore it so can't get out.
 	 * 2. If this vnode is the root of a mounted
 	 *    filesystem, then replace it with the

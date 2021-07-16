@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_unveil.c,v 1.47 2021/07/15 06:57:02 claudio Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.48 2021/07/16 07:59:38 claudio Exp $	*/
 
 /*
  * Copyright (c) 2017-2019 Bob Beck <beck@openbsd.org>
@@ -198,7 +198,6 @@ unveil_destroy(struct process *ps)
 	    sizeof(struct unveil));
 	ps->ps_uvvcount = 0;
 	ps->ps_uvpaths = NULL;
-	ps->ps_uvpcwd = NULL;
 }
 
 void
@@ -237,9 +236,6 @@ unveil_copy(struct process *parent, struct process *child)
 		to->uv_cover = from->uv_cover;
 	}
 	child->ps_uvvcount = parent->ps_uvvcount;
-	if (parent->ps_uvpcwd)
-		child->ps_uvpcwd = child->ps_uvpaths +
-		    (parent->ps_uvpcwd - parent->ps_uvpaths);
 	child->ps_uvdone = parent->ps_uvdone;
 }
 
@@ -541,15 +537,6 @@ unveil_add(struct proc *p, struct nameidata *ndp, const char *permissions)
 #endif
 
  done:
-	pr->ps_uvpcwd = unveil_lookup(p->p_fd->fd_cdir, pr, NULL);
-	if (pr->ps_uvpcwd == NULL) {
-		ssize_t i;
-
-		i = unveil_find_cover(p->p_fd->fd_cdir, p);
-		if (i >= 0)
-			pr->ps_uvpcwd = &pr->ps_uvpaths[i];
-	}
-
 	return ret;
 }
 
@@ -642,36 +629,18 @@ unveil_start_relative(struct proc *p, struct nameidata *ni, struct vnode *dp)
 {
 	struct process *pr = p->p_p;
 	struct unveil *uv = NULL;
+	ssize_t uvi;
 
 	if (pr->ps_uvpaths == NULL)
 		return;
 	
-	if (dp != NULL) {
-		ssize_t uvi;
-		/*
-		 * XXX
-		 * This is a non AT_FDCWD relative lookup starting
-		 * from a file descriptor. As such, we can't use the
-		 * saved current working directory unveil. We walk up
-		 * and find what we are covered by.
-		 */
-		uv = unveil_lookup(dp, pr, NULL);
-		if (uv == NULL) {
-			uvi = unveil_find_cover(dp, p);
-			if (uvi >= 0) {
-				KASSERT(uvi < pr->ps_uvvcount);
-				uv = &pr->ps_uvpaths[uvi];
-			}
+	uv = unveil_lookup(dp, pr, NULL);
+	if (uv == NULL) {
+		uvi = unveil_find_cover(dp, p);
+		if (uvi >= 0) {
+			KASSERT(uvi < pr->ps_uvvcount);
+			uv = &pr->ps_uvpaths[uvi];
 		}
-	} else {
-		/*
-		 * Check saved cwd unveil match.
-		 *
-		 * Since ps_uvpcwd is set on chdir (UNVEIL_READ) we
-		 * don't need to go up any further as in the above
-		 * case.
-		 */
-		uv = pr->ps_uvpcwd;
 	}
 
 	/*

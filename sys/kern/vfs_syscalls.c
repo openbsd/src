@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.351 2021/07/08 13:33:05 claudio Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.352 2021/07/16 07:59:38 claudio Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -339,7 +339,6 @@ checkdirs(struct vnode *olddp)
 			vref(newdp);
 			fdp->fd_rdir = newdp;
 		}
-		pr->ps_uvpcwd = NULL;
 	}
 	if (rootvnode == olddp) {
 		free_count++;
@@ -791,7 +790,6 @@ sys_chdir(struct proc *p, void *v, register_t *retval)
 	nd.ni_unveil = UNVEIL_READ;
 	if ((error = change_dir(&nd, p)) != 0)
 		return (error);
-	p->p_p->ps_uvpcwd = nd.ni_unveil_match;
 	old_cdir = fdp->fd_cdir;
 	fdp->fd_cdir = nd.ni_vp;
 	vrele(old_cdir);
