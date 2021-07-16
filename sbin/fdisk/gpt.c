@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.44 2021/07/16 13:26:04 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.45 2021/07/16 13:29:49 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -61,7 +61,7 @@ get_header(const uint64_t sector)
 	uint32_t		 orig_gh_csum, new_gh_csum;
 
 	secbuf = DISK_readsector(sector);
-	if (secbuf == 0)
+	if (secbuf == NULL)
 		return -1;
 
 	memcpy(&gh, secbuf, sizeof(struct gpt_header));
