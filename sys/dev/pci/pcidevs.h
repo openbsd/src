@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1973 2021/06/20 06:40:12 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1974 2021/07/16 13:08:24 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -888,6 +888,9 @@
 #define	PCI_PRODUCT_AMD_500SERIES_PCIE_2	0x43ea		/* 500 Series PCIE */
 #define	PCI_PRODUCT_AMD_500SERIES_AHCI	0x43eb		/* 500 Series AHCI */
 #define	PCI_PRODUCT_AMD_500SERIES_XHCI	0x43ee		/* 500 Series xHCI */
+#define	PCI_PRODUCT_AMD_500SERIES_PCIE_3	0x57a3		/* 500 Series PCIE */
+#define	PCI_PRODUCT_AMD_500SERIES_PCIE_4	0x57a4		/* 500 Series PCIE */
+#define	PCI_PRODUCT_AMD_500SERIES_PCIE_5	0x57ad		/* 500 Series PCIE */
 /* http://www.amd.com/products/cpg/athlon/techdocs/pdf/21910.pdf */
 #define	PCI_PRODUCT_AMD_SC751_SC	0x7006		/* 751 System */
 #define	PCI_PRODUCT_AMD_SC751_PPB	0x7007		/* 751 */
@@ -1982,7 +1985,8 @@
 #define	PCI_PRODUCT_ATI_DIMGREY_CAVEFISH_1	0x73e0		/* Navi 23 */
 #define	PCI_PRODUCT_ATI_DIMGREY_CAVEFISH_2	0x73e1		/* Navi 23 */
 #define	PCI_PRODUCT_ATI_DIMGREY_CAVEFISH_3	0x73e2		/* Navi 23 */
-#define	PCI_PRODUCT_ATI_DIMGREY_CAVEFISH_4	0x73ff		/* Navi 23 */
+#define	PCI_PRODUCT_ATI_DIMGREY_CAVEFISH_4	0x73e3		/* Navi 23 */
+#define	PCI_PRODUCT_ATI_DIMGREY_CAVEFISH_5	0x73ff		/* Navi 23 */
 #define	PCI_PRODUCT_ATI_RADEON_9000IGP	0x7834		/* Radeon 9000/9100 IGP */
 #define	PCI_PRODUCT_ATI_RADEON_RS350IGP	0x7835		/* Radeon RS350IGP */
 #define	PCI_PRODUCT_ATI_RS690_HB	0x7910		/* RS690 Host */

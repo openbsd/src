@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1973 2021/06/20 06:40:12 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1974 2021/07/16 13:08:24 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -1830,6 +1830,18 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_500SERIES_XHCI,
 	    "500 Series xHCI",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_500SERIES_PCIE_3,
+	    "500 Series PCIE",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_500SERIES_PCIE_4,
+	    "500 Series PCIE",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_500SERIES_PCIE_5,
+	    "500 Series PCIE",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC751_SC,
@@ -6085,6 +6097,10 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_DIMGREY_CAVEFISH_4,
+	    "Navi 23",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_DIMGREY_CAVEFISH_5,
 	    "Navi 23",
 	},
 	{
