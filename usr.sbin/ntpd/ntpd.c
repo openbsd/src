@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.131 2021/07/16 14:34:37 mestre Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.132 2021/07/16 14:36:09 mestre Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -285,7 +285,7 @@ main(int argc, char *argv[])
 	 */
 	if (unveil("/usr/sbin/ntpd", "x") == -1)
 		err(1, "unveil /usr/sbin/ntpd");
-	if (pledge("stdio inet settime proc exec id", NULL) == -1)
+	if (pledge("stdio settime proc exec", NULL) == -1)
 		err(1, "pledge");
 
 	while (quit == 0) {
