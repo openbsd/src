@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolvd.c,v 1.12 2021/05/10 15:06:34 deraadt Exp $	*/
+/*	$OpenBSD: resolvd.c,v 1.13 2021/07/16 15:22:12 florian Exp $	*/
 /*
  * Copyright (c) 2021 Florian Obser <florian@openbsd.org>
  * Copyright (c) 2021 Theo de Raadt <deraadt@openbsd.org>
@@ -44,9 +44,12 @@
 #define	ASR_MAXNS		10
 #ifndef SMALL
 #define	_PATH_UNWIND_SOCKET	"/dev/unwind.sock"
-#endif
 #define	_PATH_RESCONF		"/etc/resolv.conf"
 #define	_PATH_RESCONF_NEW	"/etc/resolv.conf.new"
+#else
+#define	_PATH_RESCONF		"/tmp/i/resolv.conf.shadow"
+#define	_PATH_RESCONF_NEW	"/tmp/i/resolv.conf.shadow.new"
+#endif
 #define _PATH_LOCKFILE		"/var/run/resolvd.lock"
 
 #ifndef nitems
