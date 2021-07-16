@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.51 2021/03/18 11:17:04 bluhm Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.52 2021/07/16 13:59:10 kn Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -353,9 +353,7 @@ priv_constraint_child(const char *pw_dir, uid_t pw_uid, gid_t pw_gid)
 	if (setpriority(PRIO_PROCESS, 0, 0) == -1)
 		log_warn("could not set priority");
 
-	/* Init TLS and load CA certs before chroot() */
-	if (tls_init() == -1)
-		fatalx("tls_init");
+	/* load CA certs before chroot() */
 	if ((conf->ca = tls_load_file(tls_default_ca_cert_file(),
 	    &conf->ca_len, NULL)) == NULL)
 		fatalx("failed to load constraint ca");
