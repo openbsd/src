@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sndiod.8,v 1.10 2021/02/05 17:59:33 jcs Exp $
+.\"	$OpenBSD: sndiod.8,v 1.11 2021/07/16 15:05:58 sthen Exp $
 .\"
 .\" Copyright (c) 2006-2012 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 5 2021 $
+.Dd $Mdocdate: July 16 2021 $
 .Dt SNDIOD 8
 .Os
 .Sh NAME
@@ -368,7 +368,7 @@ resolution must be 96, 100 or 120 ticks per second for maximum
 accuracy.
 For instance, 100 ticks per second at 48000Hz corresponds
 to a 480 frame block size.
-The default is 960 or half of the buffer size
+The default is 480 or half of the buffer size
 .Pq Fl b ,
 if the buffer size is set.
 .El
