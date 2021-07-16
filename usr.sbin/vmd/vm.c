@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.63 2021/06/16 16:55:02 dv Exp $	*/
+/*	$OpenBSD: vm.c,v 1.64 2021/07/16 16:21:22 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1710,9 +1710,6 @@ vcpu_exit(struct vm_run_params *vrp)
 		log_debug("%s: unknown exit reason 0x%x",
 		    __progname, vrp->vrp_exit_reason);
 	}
-
-	/* Process any pending traffic */
-	vionet_process_rx(vrp->vrp_vm_id);
 
 	vrp->vrp_continue = 1;
 

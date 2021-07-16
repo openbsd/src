@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.91 2021/06/21 02:38:18 dv Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.92 2021/07/16 16:21:22 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1254,12 +1254,12 @@ static int
 vionet_rx(struct vionet_dev *dev)
 {
 	char buf[PAGE_SIZE];
-	int hasdata, num_enq = 0, spc = 0;
+	int num_enq = 0, spc = 0;
 	struct ether_header *eh;
 	ssize_t sz;
 
 	do {
-		sz = read(dev->fd, buf, sizeof buf);
+		sz = read(dev->fd, buf, sizeof(buf));
 		if (sz == -1) {
 			/*
 			 * If we get EAGAIN, No data is currently available.
@@ -1270,21 +1270,17 @@ vionet_rx(struct vionet_dev *dev)
 				    "device");
 		} else if (sz > 0) {
 			eh = (struct ether_header *)buf;
-			if (!dev->lockedmac || sz < ETHER_HDR_LEN ||
+			if (!dev->lockedmac ||
 			    ETHER_IS_MULTICAST(eh->ether_dhost) ||
 			    memcmp(eh->ether_dhost, dev->mac,
 			    sizeof(eh->ether_dhost)) == 0)
 				num_enq += vionet_enq_rx(dev, buf, sz, &spc);
 		} else if (sz == 0) {
 			log_debug("process_rx: no data");
-			hasdata = 0;
 			break;
 		}
+	} while (spc > 0 && sz > 0);
 
-		hasdata = fd_hasdata(dev->fd);
-	} while (spc && hasdata);
-
-	dev->rx_pending = hasdata;
 	return (num_enq);
 }
 
@@ -1301,56 +1297,12 @@ vionet_rx_event(int fd, short kind, void *arg)
 
 	mutex_lock(&dev->mutex);
 
-	/*
-	 * We already have other data pending to be received. The data that
-	 * has become available now will be enqueued to the vionet_dev
-	 * later.
-	 */
-	if (dev->rx_pending) {
-		mutex_unlock(&dev->mutex);
-		return;
-	}
-
 	if (vionet_rx(dev) > 0) {
 		/* XXX: vcpu_id */
 		vcpu_assert_pic_irq(dev->vm_id, 0, dev->irq);
 	}
 
 	mutex_unlock(&dev->mutex);
-}
-
-/*
- * vionet_process_rx
- *
- * Processes any remaining pending receivable data for a vionet device.
- * Called on VCPU exit. Although we poll on the tap file descriptor of
- * a vionet_dev in a separate thread, this function still needs to be
- * called on VCPU exit: it can happen that not all data fits into the
- * receive queue of the vionet_dev immediately. So any outstanding data
- * is handled here.
- *
- * Parameters:
- *  vm_id: VM ID of the VM for which to process vionet events
- */
-void
-vionet_process_rx(uint32_t vm_id)
-{
-	int i;
-
-	for (i = 0 ; i < nr_vionet; i++) {
-		mutex_lock(&vionet[i].mutex);
-		if (!vionet[i].rx_added) {
-			mutex_unlock(&vionet[i].mutex);
-			continue;
-		}
-
-		if (vionet[i].rx_pending) {
-			if (vionet_rx(&vionet[i])) {
-				vcpu_assert_pic_irq(vm_id, 0, vionet[i].irq);
-			}
-		}
-		mutex_unlock(&vionet[i].mutex);
-	}
 }
 
 /*
@@ -1383,7 +1335,6 @@ vionet_notify_rx(struct vionet_dev *dev)
 	/* Compute offset into avail ring */
 	avail = (struct vring_avail *)(vr + dev->vq[RXQ].vq_availoffset);
 
-	dev->rx_added = 1;
 	dev->vq[RXQ].notified_avail = avail->idx - 1;
 
 	free(vr);
@@ -1937,7 +1888,6 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 			vionet[i].vq[TXQ].last_avail = 0;
 			vionet[i].vq[TXQ].notified_avail = 0;
 			vionet[i].fd = child_taps[i];
-			vionet[i].rx_pending = 0;
 			vionet[i].vm_id = vcp->vcp_id;
 			vionet[i].vm_vmid = vm->vm_vmid;
 			vionet[i].irq = pci_get_dev_irq(id);
@@ -2222,7 +2172,6 @@ vionet_restore(int fd, struct vmd_vm *vm, int *child_taps)
 				return (-1);
 			}
 			vionet[i].fd = child_taps[i];
-			vionet[i].rx_pending = 0;
 			vionet[i].vm_id = vcp->vcp_id;
 			vionet[i].vm_vmid = vm->vm_vmid;
 			vionet[i].irq = pci_get_dev_irq(vionet[i].pci_id);

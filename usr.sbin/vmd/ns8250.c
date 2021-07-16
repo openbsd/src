@@ -1,4 +1,4 @@
-/* $OpenBSD: ns8250.c,v 1.31 2021/06/16 16:55:02 dv Exp $ */
+/* $OpenBSD: ns8250.c,v 1.32 2021/07/16 16:21:22 dv Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -36,14 +36,10 @@
 extern char *__progname;
 struct ns8250_dev com1_dev;
 
-/* Flags to distinguish calling threads to com_rcv */
-#define NS8250_DEV_THREAD	0
-#define NS8250_CPU_THREAD 	1
-
 static struct vm_dev_pipe dev_pipe;
 
 static void com_rcv_event(int, short, void *);
-static void com_rcv(struct ns8250_dev *, uint32_t, uint32_t, int);
+static void com_rcv(struct ns8250_dev *, uint32_t, uint32_t);
 
 /*
  * ns8250_pipe_dispatch
@@ -58,11 +54,6 @@ ns8250_pipe_dispatch(int fd, short event, void *arg)
 
 	msg = vm_pipe_recv(&dev_pipe);
 	switch(msg) {
-	case NS8250_ZERO_READ:
-		log_debug("%s: resetting events after zero byte read", __func__);
-		event_del(&com1_dev.event);
-		event_add(&com1_dev.wake, NULL);
-		break;
 	case NS8250_RATELIMIT:
 		evtimer_add(&com1_dev.rate, &com1_dev.rate_tv);
 		break;
@@ -110,7 +101,6 @@ ns8250_init(int fd, uint32_t vmid)
 	com1_dev.fd = fd;
 	com1_dev.irq = 4;
 	com1_dev.portid = NS8250_COM1;
-	com1_dev.rcv_pending = 0;
 	com1_dev.vmid = vmid;
 	com1_dev.byte_out = 0;
 	com1_dev.regs.divlo = 1;
@@ -163,17 +153,8 @@ com_rcv_event(int fd, short kind, void *arg)
 		return;
 	}
 
-	/*
-	 * We already have other data pending to be received. The data that
-	 * has become available now will be moved to the com port later by
-	 * the vcpu.
-	 */
-	if (!com1_dev.rcv_pending) {
-		if (com1_dev.regs.lsr & LSR_RXRDY)
-			com1_dev.rcv_pending = 1;
-		else
-			com_rcv(&com1_dev, (uintptr_t)arg, 0, NS8250_DEV_THREAD);
-	}
+	if ((com1_dev.regs.lsr & LSR_RXRDY) == 0)
+		com_rcv(&com1_dev, (uintptr_t)arg, 0);
 
 	/* If pending interrupt, inject */
 	if ((com1_dev.regs.iir & IIR_NOPEND) == 0) {
@@ -216,7 +197,7 @@ com_rcv_handle_break(struct ns8250_dev *com, uint8_t cmd)
  * Must be called with the mutex of the com device acquired
  */
 static void
-com_rcv(struct ns8250_dev *com, uint32_t vm_id, uint32_t vcpu_id, int thread)
+com_rcv(struct ns8250_dev *com, uint32_t vm_id, uint32_t vcpu_id)
 {
 	char buf[2];
 	ssize_t sz;
@@ -236,13 +217,9 @@ com_rcv(struct ns8250_dev *com, uint32_t vm_id, uint32_t vcpu_id, int thread)
 		if (errno != EAGAIN)
 			log_warn("unexpected read error on com device");
 	} else if (sz == 0) {
-		if (thread == NS8250_DEV_THREAD) {
-			event_del(&com->event);
-			event_add(&com->wake, NULL);
-		} else {
-			/* Called by vcpu thread, use pipe for event changes */
-			vm_pipe_send(&dev_pipe, NS8250_ZERO_READ);
-		}
+		/* Zero read typically occurs on a disconnect */
+		event_del(&com->event);
+		event_add(&com->wake, NULL);
 		return;
 	} else if (sz != 1 && sz != 2)
 		log_warnx("unexpected read return value %zd on com device", sz);
@@ -258,8 +235,6 @@ com_rcv(struct ns8250_dev *com, uint32_t vm_id, uint32_t vcpu_id, int thread)
 			com->regs.iir &= ~IIR_NOPEND;
 		}
 	}
-
-	com->rcv_pending = fd_hasdata(com->fd);
 }
 
 /*
@@ -337,9 +312,6 @@ vcpu_process_com_data(struct vm_exit *vei, uint32_t vm_id, uint32_t vcpu_id)
 		 */
 		if (com1_dev.regs.iir == 0x0)
 			com1_dev.regs.iir = 0x1;
-
-		if (com1_dev.rcv_pending)
-			com_rcv(&com1_dev, vm_id, vcpu_id, NS8250_CPU_THREAD);
 	}
 
 	/* If pending interrupt, make sure it gets injected */
@@ -688,7 +660,6 @@ ns8250_restore(int fd, int con_fd, uint32_t vmid)
 	com1_dev.fd = con_fd;
 	com1_dev.irq = 4;
 	com1_dev.portid = NS8250_COM1;
-	com1_dev.rcv_pending = 0;
 	com1_dev.vmid = vmid;
 	com1_dev.byte_out = 0;
 	com1_dev.regs.divlo = 1;
