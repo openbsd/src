@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.76 2021/07/15 21:58:02 krw Exp $	*/
+/*	$OpenBSD: misc.c,v 1.77 2021/07/16 13:26:04 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -71,7 +71,7 @@ string_from_line(char *buf, const size_t buflen)
 
 	len = getline(&line, &sz, stdin);
 	if (len == -1)
-		return 1;
+		return -1;
 
 	if (line[len - 1] == '\n')
 		line[len - 1] = '\0';

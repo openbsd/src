@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.43 2021/07/15 21:58:02 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.44 2021/07/16 13:26:04 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -62,7 +62,7 @@ get_header(const uint64_t sector)
 
 	secbuf = DISK_readsector(sector);
 	if (secbuf == 0)
-		return 1;
+		return -1;
 
 	memcpy(&gh, secbuf, sizeof(struct gpt_header));
 	free(secbuf);
@@ -70,37 +70,37 @@ get_header(const uint64_t sector)
 	if (letoh64(gh.gh_sig) != GPTSIGNATURE) {
 		DPRINTF("gpt signature: expected 0x%llx, got 0x%llx\n",
 		    GPTSIGNATURE, letoh64(gh.gh_sig));
-		return 1;
+		return -1;
 	}
 
 	if (letoh32(gh.gh_rev) != GPTREVISION) {
 		DPRINTF("gpt revision: expected 0x%x, got 0x%x\n",
 		    GPTREVISION, letoh32(gh.gh_rev));
-		return 1;
+		return -1;
 	}
 
 	if (letoh64(gh.gh_lba_self) != sector) {
 		DPRINTF("gpt self lba: expected %llu, got %llu\n",
 		    sector, letoh64(gh.gh_lba_self));
-		return 1;
+		return -1;
 	}
 
 	if (letoh32(gh.gh_size) != GPTMINHDRSIZE) {
 		DPRINTF("gpt header size: expected %u, got %u\n",
 		    GPTMINHDRSIZE, letoh32(gh.gh_size));
-		return 1;
+		return -1;
 	}
 
 	if (letoh32(gh.gh_part_size) != GPTMINPARTSIZE) {
 		DPRINTF("gpt partition size: expected %u, got %u\n",
 		    GPTMINPARTSIZE, letoh32(gh.gh_part_size));
-		return 1;
+		return -1;
 	}
 
 	if (letoh32(gh.gh_part_num) > NGPTPARTITIONS) {
 		DPRINTF("gpt partition count: expected <= %u, got %u\n",
 		    NGPTPARTITIONS, letoh32(gh.gh_part_num));
-		return 1;
+		return -1;
 	}
 
 	orig_gh_csum = gh.gh_csum;
@@ -110,7 +110,7 @@ get_header(const uint64_t sector)
 	if (letoh32(orig_gh_csum) != new_gh_csum) {
 		DPRINTF("gpt header checksum: expected 0x%x, got 0x%x\n",
 		    orig_gh_csum, new_gh_csum);
-		return 1;
+		return -1;
 	}
 
 	/* XXX Assume part_num * part_size is multiple of secsize. */
@@ -126,7 +126,7 @@ get_header(const uint64_t sector)
 	if (letoh64(gh.gh_lba_start) >= letoh64(gh.gh_lba_end)) {
 		DPRINTF("gpt first usable LBA: expected < %llu, got %llu\n",
 		    letoh64(gh.gh_lba_end), letoh64(gh.gh_lba_start));
-		return 1;
+		return -1;
 	}
 
 	if (letoh64(gh.gh_part_lba) <= letoh64(gh.gh_lba_end) &&
@@ -134,7 +134,7 @@ get_header(const uint64_t sector)
 		DPRINTF("gpt partition table start lba: expected < %llu or "
 		    "> %llu, got %llu\n", letoh64(gh.gh_lba_start),
 		    letoh64(gh.gh_lba_end), letoh64(gh.gh_part_lba));
-		return 1;
+		return -1;
 	}
 
 	partspersec = dl.d_secsize / letoh32(gh.gh_part_size);
@@ -145,7 +145,7 @@ get_header(const uint64_t sector)
 		DPRINTF("gpt partition table last LBA: expected < %llu or "
 		    "> %llu, got %llu\n", letoh64(gh.gh_lba_start),
 		    letoh64(gh.gh_lba_end), partlastlba);
-		return 1;
+		return -1;
 	}
 
 	/*
@@ -172,7 +172,7 @@ get_partition_table(void)
 	if (partspersec * letoh32(gh.gh_part_size) != dl.d_secsize) {
 		DPRINTF("gpt partition table entry invalid size. %u\n",
 		    letoh32(gh.gh_part_size));
-		return 1;
+		return -1;
 	}
 	secs = (letoh32(gh.gh_part_num) + partspersec - 1) / partspersec;
 
@@ -183,12 +183,12 @@ get_partition_table(void)
 	if (off == -1) {
 		DPRINTF("seek to gpt partition table @ sector %llu failed\n",
 		    (unsigned long long)where / dl.d_secsize);
-		return 1;
+		return -1;
 	}
 	len = read(disk.dk_fd, &gp, secs * dl.d_secsize);
 	if (len == -1 || len != secs * dl.d_secsize) {
 		DPRINTF("gpt partition table read failed.\n");
-		return 1;
+		return -1;
 	}
 
 	checksum = crc32((unsigned char *)&gp, letoh32(gh.gh_part_num) *
@@ -196,7 +196,7 @@ get_partition_table(void)
 	if (checksum != letoh32(gh.gh_part_csum)) {
 		DPRINTF("gpt partition table checksum: expected %x, got %x\n",
 		    checksum, letoh32(gh.gh_part_csum));
-		return 1;
+		return -1;
 	}
 
 	return 0;
@@ -370,7 +370,7 @@ add_partition(const uint8_t *beuuid, const char *name, uint64_t sectors)
 	if (pn != pncnt)
 		memset(&gp[pn], 0, sizeof(gp[pn]));
 	printf("unable to add %s\n", name);
-	return 1;
+	return -1;
 }
 
 int
@@ -406,7 +406,7 @@ init_gh(void)
 	uuid_create(&guid, &status);
 	if (status != uuid_s_ok) {
 		memcpy(&gh, &oldgh, sizeof(gh));
-		return 1;
+		return -1;
 	}
 
 	uuid_enc_le(&gh.gh_guid, &guid);

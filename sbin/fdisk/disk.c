@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.65 2021/07/15 21:58:02 krw Exp $	*/
+/*	$OpenBSD: disk.c,v 1.66 2021/07/16 13:26:04 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -100,7 +100,7 @@ DISK_open(const char *name, const int oflags)
  * Print the disk geometry information. Take an optional modifier
  * to indicate the units that should be used for display.
  */
-int
+void
 DISK_printgeometry(const char *units)
 {
 	const int		secsize = unit_types[SECTORS].ut_conversion;
@@ -118,8 +118,6 @@ DISK_printgeometry(const char *units)
 		printf("%s]\n", unit_types[i].ut_lname);
 	} else
 		printf("geometry: <none>\n");
-
-	return 0;
 }
 
 /*

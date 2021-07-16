@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.97 2021/07/15 21:58:02 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.98 2021/07/16 13:26:04 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -271,9 +271,9 @@ check_chs(const struct prt *prt)
 		(prt->prt_esect >63) ||
 		(prt->prt_ecyl > 1023) )
 	{
-		return 0;
+		return -1;
 	}
-	return 1;
+	return 0;
 }
 
 void
@@ -296,7 +296,7 @@ PRT_make(struct prt *prt, const uint64_t lba_self, const uint64_t lba_firstembr,
 	else
 		off = lba_self;
 
-	if (check_chs(prt)) {
+	if (check_chs(prt) == 0) {
 		dp->dp_shd = prt->prt_shead & 0xFF;
 		dp->dp_ssect = (prt->prt_ssect & 0x3F) |
 		    ((prt->prt_scyl & 0x300) >> 2);

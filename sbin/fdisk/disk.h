@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.h,v 1.29 2021/07/15 21:58:02 krw Exp $	*/
+/*	$OpenBSD: disk.h,v 1.30 2021/07/16 13:26:04 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -33,7 +33,7 @@ struct disk {
 #define	BLOCKALIGNMENT	64
 
 void		 DISK_open(const char *, const int);
-int		 DISK_printgeometry(const char *);
+void		 DISK_printgeometry(const char *);
 char		*DISK_readsector(const uint64_t);
 int		 DISK_writesector(const char *, const uint64_t);
 
