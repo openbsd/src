@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.73 2020/06/27 15:35:29 deraadt Exp $
+#	$OpenBSD: list,v 1.74 2021/07/16 15:24:09 florian Exp $
 
 SRCDIRS distrib/special
 
@@ -26,7 +26,7 @@ LINK	instbin					bin/sleep
 LINK	instbin					bin/stty
 LINK	instbin					bin/sync
 LINK	instbin					sbin/bioctl
-LINK	instbin					sbin/dhclient
+LINK	instbin					sbin/dhcpleased
 LINK	instbin					sbin/disklabel
 LINK	instbin					sbin/dmesg
 LINK	instbin					sbin/fdisk
@@ -47,6 +47,7 @@ LINK	instbin					sbin/newfs_msdos
 LINK	instbin					sbin/pdisk
 LINK	instbin					sbin/ping sbin/ping6
 LINK	instbin					sbin/reboot sbin/halt
+LINK	instbin					sbin/resolvd
 LINK	instbin					sbin/route
 LINK	instbin					sbin/slaacd
 LINK	instbin					sbin/sysctl
