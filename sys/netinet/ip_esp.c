@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.167 2021/07/08 21:07:19 bluhm Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.168 2021/07/16 15:08:39 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -1112,10 +1112,10 @@ checkreplaywindow(struct tdb *tdb, u_int32_t seq, u_int32_t *seqh, int commit)
 		return (2);
 
 	/*
-	 * SN is within [wl, 0xffffffff] and wl is within
-	 * [0xffffffff-window, 0xffffffff].  This means we got a SN
-	 * which is within our replay window, but in the previous
-	 * subspace.
+	 * (3) SN is within [wl, 0xffffffff] and wl is within
+	 *     (0xffffffff-window+1, 0xffffffff].
+	 * This means we got a SN which is within our replay window,
+	 * but in the previous subspace.
 	 */
 	if (tl < window - 1 && seq >= wl) {
 		if (tdb->tdb_seen[idx] & packet)
@@ -1127,8 +1127,8 @@ checkreplaywindow(struct tdb *tdb, u_int32_t seq, u_int32_t *seqh, int commit)
 	}
 
 	/*
-	 * SN has wrapped and the last authenticated SN is in the old
-	 * subspace.
+	 * (4) SN has wrapped and the last authenticated SN is in the old
+	 *     subspace.
 	 */
 	*seqh = th + 1;
 	if (*seqh == 0)		/* Don't let high bit to wrap */
