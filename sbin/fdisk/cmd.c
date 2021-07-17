@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.129 2021/07/16 22:50:43 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.130 2021/07/17 13:37:01 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -154,36 +154,36 @@ Xswap(char *args, struct mbr *mbr)
 int
 gedit(const int pn)
 {
-	struct gpt_partition	 oldgg;
+	struct uuid		 oldtype;
 	struct gpt_partition	*gg;
 	char			*name;
 	uint16_t		*utf;
 	int			 i;
 
 	gg = &gp[pn];
-	oldgg = *gg;
+	oldtype = gg->gp_type;
 
-	if (gsetpid(pn) == CMD_CONT)
-		goto done;
+	if (gsetpid(pn))
+		return -1;
 
 	if (uuid_is_nil(&gg->gp_type, NULL)) {
-		if (uuid_is_nil(&oldgg.gp_type, NULL))
-			goto done;
-		memset(gg, 0, sizeof(struct gpt_partition));
-		printf("Partition %d is disabled.\n", pn);
-		return CMD_DIRTY;
+		if (uuid_is_nil(&oldtype, NULL) == 0) {
+			memset(gg, 0, sizeof(struct gpt_partition));
+			printf("Partition %d is disabled.\n", pn);
+		}
+		return 0;
 	}
 
 	if (GPT_get_lba_start(pn) == -1 ||
 	    GPT_get_lba_end(pn) == -1) {
-		goto done;
+		return -1;
 	}
 
 	name = ask_string("Partition name", utf16le_to_string(gg->gp_name));
 	if (strlen(name) >= GPTPARTNAMESIZE) {
 		printf("partition name must be < %d characters\n",
 		    GPTPARTNAMESIZE);
-		goto done;
+		return -1;
 	}
 	/*
 	 * N.B.: simple memcpy() could copy trash from static buf! This
@@ -195,15 +195,7 @@ gedit(const int pn)
 		if (utf[i] == 0)
 			break;
 	}
-
-	if (memcmp(gg, &oldgg, sizeof(*gg)))
-		return CMD_DIRTY;
-	else
-		return CMD_CLEAN;
-
- done:
-	*gg = oldgg;
-	return CMD_CONT;
+	return 0;
 }
 
 int
@@ -234,19 +226,21 @@ parsepn(const char *pnstr)
 int
 edit(const int pn, struct mbr *mbr)
 {
-	struct prt		 oldpp;
 	struct prt		*pp;
+	unsigned char		 oldid;
 
 	pp = &mbr->mbr_prt[pn];
-	oldpp = *pp;
+	oldid = pp->prt_id;
 
-	setpid(pn, mbr);
+	if (setpid(pn, mbr))
+		return -1;
+
 	if (pp->prt_id == DOSPTYP_UNUSED) {
-		if (oldpp.prt_id != DOSPTYP_UNUSED) {
+		if (oldid != DOSPTYP_UNUSED) {
 			memset(pp, 0, sizeof(*pp));
 			printf("Partition %d is disabled.\n", pn);
 		}
-		goto done;
+		return 0;
 	}
 
 	if (ask_yn("Do you wish to edit in CHS mode?")) {
@@ -278,37 +272,46 @@ edit(const int pn, struct mbr *mbr)
 		PRT_fix_CHS(pp);
 	}
 
-done:
-	if (memcmp(pp, &oldpp, sizeof(*pp)))
-		return CMD_DIRTY;
-	else
-		return CMD_CONT;
+	return 0;
 }
 
 int
 Xedit(char *args, struct mbr *mbr)
 {
-	int			pn;
+	struct gpt_partition	 oldgg;
+	struct prt		 oldprt;
+	struct gpt_partition	*gg;
+	int			 pn;
 
 	pn = parsepn(args);
 	if (pn == -1)
 		return CMD_CONT;
 
-	if (letoh64(gh.gh_sig) == GPTSIGNATURE)
-		return gedit(pn);
-	else
-		return edit(pn, mbr);
+	if (letoh64(gh.gh_sig) == GPTSIGNATURE) {
+		oldgg = gp[pn];
+		if (gedit(pn))
+			gp[pn] = oldgg;
+		else if (memcmp(&gp[pn], &oldgg, sizeof(oldgg)))
+			return CMD_DIRTY;
+	} else {
+		oldprt = mbr->mbr_prt[pn];
+		if (edit(pn, mbr))
+			mbr->mbr_prt[pn] = oldprt;
+		else if (memcmp(&mbr->mbr_prt[pn], &oldprt, sizeof(oldprt)))
+			return CMD_DIRTY;
+	}
+
+	return CMD_CONT;
 }
 
 int
 gsetpid(int pn)
 {
 	struct uuid		 gp_type, gp_guid;
-	struct gpt_partition	*gg, oldgg;
+	struct gpt_partition	*gg;
 	int			 num, status;
 
 	gg = &gp[pn];
-	oldgg = *gg;
 
 	/* Print out current table entry */
 	GPT_print_parthdr(TERSE);
@@ -318,7 +321,7 @@ gsetpid(int pn)
 	if (PRT_protected_guid(&gp_type)) {
 		printf("can't edit partition type %s\n",
 		    PRT_uuid_to_typename(&gp_type));
-		goto done;
+		return -1;
 	}
 
 	/* Ask for partition type or GUID. */
@@ -328,35 +331,28 @@ gsetpid(int pn)
 	if (PRT_protected_guid(&gp_type)) {
 		printf("can't change partition type to %s\n",
 		    PRT_uuid_to_typename(&gp_type));
-		goto done;
+		return -1;
 	}
-	uuid_enc_le(&gg->gp_type, &gp_type);
 
 	uuid_dec_le(&gg->gp_guid, &gp_guid);
 	if (uuid_is_nil(&gp_guid, NULL)) {
 		uuid_create(&gp_guid, &status);
 		if (status != uuid_s_ok) {
 			printf("could not create guid for partition\n");
-			goto done;
+			return -1;
 		}
-		uuid_enc_le(&gg->gp_guid, &gp_guid);
 	}
 
-	if (memcmp(gg, &oldgg, sizeof(*gg)))
-		return CMD_DIRTY;
-	else
-		return CMD_CLEAN;
+	uuid_enc_le(&gg->gp_type, &gp_type);
+	uuid_enc_le(&gg->gp_guid, &gp_guid);
 
- done:
-	*gg = oldgg;
-	return CMD_CONT;
+	return 0;
 }
 
 int
 setpid(int pn, struct mbr *mbr)
 {
 	struct prt		*pp;
-	int			 num;
 
 	pp = &mbr->mbr_prt[pn];
 
@@ -365,28 +361,37 @@ setpid(int pn, struct mbr *mbr)
 	PRT_print(pn, pp, NULL);
 
 	/* Ask for MBR partition type */
-	num = ask_pid(pp->prt_id, NULL);
-	if (num == pp->prt_id)
-		return CMD_CONT;
+	pp->prt_id = ask_pid(pp->prt_id, NULL);
 
-	pp->prt_id = num;
-
-	return CMD_DIRTY;
+	return 0;
 }
 
 int
 Xsetpid(char *args, struct mbr *mbr)
 {
+	struct gpt_partition	oldgg;
+	struct prt		oldprt;
 	int			pn;
 
 	pn = parsepn(args);
 	if (pn == -1)
 		return CMD_CONT;
 
-	if (letoh64(gh.gh_sig) == GPTSIGNATURE)
-		return gsetpid(pn);
-	else
-		return setpid(pn, mbr);
+	if (letoh64(gh.gh_sig) == GPTSIGNATURE) {
+		oldgg = gp[pn];
+		if (gsetpid(pn))
+			gp[pn] = oldgg;
+		else if (memcmp(&gp[pn], &oldgg, sizeof(oldgg)))
+			return CMD_DIRTY;
+	} else {
+		oldprt = mbr->mbr_prt[pn];
+		if (setpid(pn, mbr))
+			mbr->mbr_prt[pn] = oldprt;
+		else if (memcmp(&mbr->mbr_prt[pn], &oldprt, sizeof(oldprt)))
+			return CMD_DIRTY;
+	}
+
+	return CMD_CONT;
 }
 
 int
