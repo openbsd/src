@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolvd.c,v 1.13 2021/07/16 15:22:12 florian Exp $	*/
+/*	$OpenBSD: resolvd.c,v 1.14 2021/07/17 03:31:31 kn Exp $	*/
 /*
  * Copyright (c) 2021 Florian Obser <florian@openbsd.org>
  * Copyright (c) 2021 Theo de Raadt <deraadt@openbsd.org>
@@ -155,7 +155,10 @@ const struct loggers *logger = &conslogger;
 enum {
 	KQ_ROUTE,
 	KQ_RESOLVE_CONF,
+#ifndef SMALL
 	KQ_UNWIND,
+#endif
+	KQ_TOTAL
 };
 
 int
@@ -164,7 +167,7 @@ main(int argc, char *argv[])
 	struct timespec		 one = {1, 0};
 	int			 kq, ch, debug = 0, routesock;
 	int			 rtfilter, nready, lockfd;
-	struct kevent		 kev[3];
+	struct kevent		 kev[KQ_TOTAL];
 #ifndef SMALL
 	int			 unwindsock = -1;
 #endif
@@ -273,7 +276,7 @@ main(int argc, char *argv[])
 			newkevent = 0;
 		}
 
-		nready = kevent(kq, NULL, 0, kev, nitems(kev), NULL);
+		nready = kevent(kq, NULL, 0, kev, KQ_TOTAL, NULL);
 		if (nready == -1) {
 			if (errno == EINTR)
 				continue;
