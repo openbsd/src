@@ -4,14 +4,14 @@ man: nothing appropriate
 
 >>> badname0
 man: dbm_get: Database corrupt: offset -1
-man: outdated mandoc.db lacks empty(1) entry, run makewhatis /usr/obj/regress/usr.bin/mandoc/db/run/man
+man: outdated mandoc.db lacks empty(1) entry
 
 >>> badname
 man: dbm_get: Database corrupt: offset -1
 
 >>> badsect0
 man: dbm_get: Database corrupt: offset -1
-man: outdated mandoc.db lacks empty(1) entry, run makewhatis /usr/obj/regress/usr.bin/mandoc/db/run/man
+man: outdated mandoc.db lacks empty(1) entry
 
 >>> badsect
 man: dbm_get: Database corrupt: offset -1
@@ -31,11 +31,11 @@ man: dbm_get: Database corrupt: offset -1
 
 >>> badfile0
 man: dbm_get: Database corrupt: offset -1
-man: /usr/obj/regress/usr.bin/mandoc/db/run/man/(NULL): No such file or directory
-man: outdated mandoc.db contains bogus (NULL) entry, run makewhatis /usr/obj/regress/usr.bin/mandoc/db/run/man
-man: outdated mandoc.db lacks empty(1) entry, run makewhatis /usr/obj/regress/usr.bin/mandoc/db/run/man
+man: db/run/man/(NULL): No such file or directory
+man: outdated mandoc.db contains bogus (NULL) entry
+man: outdated mandoc.db lacks empty(1) entry
 
 >>> badfile
 man: dbm_get: Database corrupt: offset -1
-man: /usr/obj/regress/usr.bin/mandoc/db/run/man/(NULL): No such file or directory
-man: outdated mandoc.db contains bogus (NULL) entry, run makewhatis /usr/obj/regress/usr.bin/mandoc/db/run/man
+man: db/run/man/(NULL): No such file or directory
+man: outdated mandoc.db contains bogus (NULL) entry

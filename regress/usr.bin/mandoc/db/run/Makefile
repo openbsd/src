@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2020/07/30 21:32:19 schwarze Exp $
+# $OpenBSD: Makefile,v 1.9 2021/07/17 14:23:02 schwarze Exp $
 #
 # Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 #
@@ -344,6 +344,8 @@ badname0.mout badname0.merr: badname0.db
 	cp -pR onepage.dir man
 	cp badname0.db man/mandoc.db
 	man -wM man empty > badname0.mout 2> badname0.merr
+	sed -i 's#.*/man/##' badname0.mout
+	sed -i 's#, run makewhatis.*##' badname0.merr
 	rm -rf man
 
 badname.mout badname.merr: badname.db
@@ -352,6 +354,8 @@ badname.mout badname.merr: badname.db
 	cp -pR threepages.dir man
 	cp badname.db man/mandoc.db
 	man -wM man empty > badname.mout 2> badname.merr
+	sed -i 's#.*/man/##' badname.mout
+	sed -i 's#, run makewhatis.*##' badname.merr
 	rm -rf man
 
 badsect0.mout badsect0.merr: badsect0.db
@@ -360,6 +364,8 @@ badsect0.mout badsect0.merr: badsect0.db
 	cp -pR onepage.dir man
 	cp badsect0.db man/mandoc.db
 	man -wM man -s 1 empty > badsect0.mout 2> badsect0.merr
+	sed -i 's#.*/man/##' badsect0.mout
+	sed -i 's#, run makewhatis.*##' badsect0.merr
 	rm -rf man
 
 badsect.mout badsect.merr: badsect.db
@@ -368,6 +374,8 @@ badsect.mout badsect.merr: badsect.db
 	cp -pR threepages.dir man
 	cp badsect.db man/mandoc.db
 	man -wM man -s 1 empty > badsect.mout 2> badsect.merr
+	sed -i 's#.*/man/##' badsect.mout
+	sed -i 's#, run makewhatis.*##' badsect.merr
 	rm -rf man
 
 badarch0.mout badarch0.merr: badarch0.db
@@ -376,6 +384,8 @@ badarch0.mout badarch0.merr: badarch0.db
 	cp -pR threearch.dir man
 	cp badarch0.db man/mandoc.db
 	man -wM man -S amd64 empty > badarch0.mout 2> badarch0.merr
+	sed -i 's#.*/man/##' badarch0.mout
+	sed -i 's#, run makewhatis.*##' badarch0.merr
 	rm -rf man
 
 badarch.mout badarch.merr: badarch.db
@@ -384,6 +394,8 @@ badarch.mout badarch.merr: badarch.db
 	cp -pR threearch.dir man
 	cp badarch.db man/mandoc.db
 	man -wM man -S i386 empty > badarch.mout 2> badarch.merr
+	sed -i 's#.*/man/##' badarch.mout
+	sed -i 's#, run makewhatis.*##' badarch.merr
 	rm -rf man
 
 baddesc0.mout baddesc0.merr: baddesc0.db
@@ -408,6 +420,8 @@ badfile0.mout badfile0.merr: badfile0.db
 	cp -pR onepage.dir man
 	cp badfile0.db man/mandoc.db
 	man -wM man empty > badfile0.mout 2> badfile0.merr
+	sed -i 's#.*/man/##' badfile0.mout
+	sed -i 's#, run makewhatis.*##;s#/.*/mandoc/##' badfile0.merr
 	rm -rf man
 
 badfile.mout badfile.merr: badfile.db
@@ -416,6 +430,8 @@ badfile.mout badfile.merr: badfile.db
 	cp -pR threepages.dir man
 	cp badfile.db man/mandoc.db
 	man -wM man empty > badfile.mout 2> badfile.merr
+	sed -i 's#.*/man/##' badfile.mout
+	sed -i 's#, run makewhatis.*##;s#/.*/mandoc/##' badfile.merr
 	rm -rf man
 
 all.mout: ${MOB_TESTS:C/$/.mout/}
