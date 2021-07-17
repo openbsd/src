@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.66 2021/07/16 13:26:04 krw Exp $	*/
+/*	$OpenBSD: disk.c,v 1.67 2021/07/17 14:16:34 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -96,10 +96,6 @@ DISK_open(const char *name, const int oflags)
 	}
 }
 
-/*
- * Print the disk geometry information. Take an optional modifier
- * to indicate the units that should be used for display.
- */
 void
 DISK_printgeometry(const char *units)
 {
@@ -121,11 +117,7 @@ DISK_printgeometry(const char *units)
 }
 
 /*
- * Read the sector at 'where' from the file descriptor 'fd' into newly
- * calloc'd memory. Return a pointer to the memory if it contains the
- * requested data, or NULL if it does not.
- *
- * The caller must free() the memory it gets.
+ * The caller must free() the returned memory!
  */
 char *
 DISK_readsector(const uint64_t sector)
@@ -155,11 +147,6 @@ DISK_readsector(const uint64_t sector)
 	return secbuf;
 }
 
-/*
- * Write the sector-sized 'secbuf' to the sector 'where' on the file
- * descriptor 'fd'. Return 0 if the write works. Return -1 and set
- * errno if the write fails.
- */
 int
 DISK_writesector(const char *secbuf, const uint64_t sector)
 {
@@ -176,7 +163,6 @@ DISK_writesector(const char *secbuf, const uint64_t sector)
 		len = write(disk.dk_fd, secbuf, secsize);
 
 	if (len == -1 || len != secsize) {
-		/* short read or write */
 		errno = EIO;
 		return -1;
 	}

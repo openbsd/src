@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.86 2021/07/15 21:58:02 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.87 2021/07/17 14:16:34 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -193,12 +193,10 @@ MBR_print(const struct mbr *mbr, const char *units)
 
 	DISK_printgeometry(NULL);
 
-	/* Header */
 	printf("Offset: %lld\t", (long long)mbr->mbr_lba_self);
 	printf("Signature: 0x%X\n", (int)mbr->mbr_signature);
 	PRT_print(0, NULL, units);
 
-	/* Entries */
 	for (i = 0; i < NDOSPART; i++)
 		PRT_print(i, &mbr->mbr_prt[i], units);
 }
@@ -227,10 +225,6 @@ MBR_write(const uint64_t sector, const struct dos_mbr *dos_mbr)
 	if (secbuf == NULL)
 		return -1;
 
-	/*
-	 * Place the new MBR at the start of the sector and
-	 * write the sector back to "disk".
-	 */
 	memcpy(secbuf, dos_mbr, sizeof(*dos_mbr));
 	DISK_writesector(secbuf, sector);
 

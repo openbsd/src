@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.130 2021/07/17 13:37:01 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.131 2021/07/17 14:16:34 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -99,7 +99,6 @@ Xdisk(char *args, struct mbr *mbr)
 	maxsec  = 9999999;
 #endif
 
-	/* Ask for new info */
 	if (ask_yn("Change disk geometry?")) {
 		disk.dk_cylinders = ask_num("BIOS Cylinders",
 		    disk.dk_cylinders, 1, maxcyl);
@@ -313,7 +312,6 @@ gsetpid(int pn)
 
 	gg = &gp[pn];
 
-	/* Print out current table entry */
 	GPT_print_parthdr(TERSE);
 	GPT_print_part(pn, "s", TERSE);
 
@@ -356,11 +354,9 @@ setpid(int pn, struct mbr *mbr)
 
 	pp = &mbr->mbr_prt[pn];
 
-	/* Print out current table entry */
 	PRT_print(0, NULL, NULL);
 	PRT_print(pn, pp, NULL);
 
-	/* Ask for MBR partition type */
 	pp->prt_id = ask_pid(pp->prt_id, NULL);
 
 	return 0;
@@ -528,7 +524,6 @@ Xhelp(char *args, struct mbr *mbr)
 int
 Xupdate(char *args, struct mbr *mbr)
 {
-	/* Update code */
 	memcpy(mbr->mbr_code, initial_mbr.mbr_code, sizeof(mbr->mbr_code));
 	mbr->mbr_signature = DOSMBR_SIGNATURE;
 	printf("Machine code updated.\n");
@@ -551,7 +546,6 @@ Xflag(char *args, struct mbr *mbr)
 		return CMD_CONT;
 
 	if (flag != NULL) {
-		/* Set flag to value provided. */
 		if (letoh64(gh.gh_sig) == GPTSIGNATURE)
 			val = strtonum(flag, 0, INT64_MAX, &errstr);
 		else
@@ -566,7 +560,6 @@ Xflag(char *args, struct mbr *mbr)
 			mbr->mbr_prt[pn].prt_flag = val;
 		printf("Partition %d flag value set to 0x%llx.\n", pn, val);
 	} else {
-		/* Set active flag */
 		if (letoh64(gh.gh_sig) == GPTSIGNATURE) {
 			for (i = 0; i < NGPTPARTITIONS; i++) {
 				if (i == pn)

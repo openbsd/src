@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.122 2021/07/15 23:25:46 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.123 2021/07/17 14:16:34 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -143,7 +143,6 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	/* Argument checking */
 	if (argc != 1 || (i_flag && u_flag) ||
 	    (i_flag == 0 && g_flag))
 		usage();
