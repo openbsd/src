@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.101 2020/08/22 18:34:29 millert Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.102 2021/07/17 20:46:02 kn Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <millert@openbsd.org>
@@ -142,7 +142,6 @@ hide(void *p)
 int
 main(int argc, char *argv[])
 {
-	struct passwd *passwd;
 	struct kinfo_file *kf, *kflast;
 	int ch;
 	char *memf, *nlistf, *optstr;
@@ -163,9 +162,6 @@ main(int argc, char *argv[])
 		fuser = 0;
 		optstr = "fnop:su:vN:M:";
 	}
-
-	/* Keep passwd file open for faster lookups. */
-	setpassent(1);
 
 	/*
 	 * fuser and fstat share three flags: -f, -s and -u.  In both cases
