@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.if.5,v 1.76 2021/03/10 19:19:04 kn Exp $
+.\"	$OpenBSD: hostname.if.5,v 1.77 2021/07/17 15:28:31 kn Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)hosts.5	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: March 10 2021 $
+.Dd $Mdocdate: July 17 2021 $
 .Dt HOSTNAME.IF 5
 .Os
 .Sh NAME
@@ -69,11 +69,19 @@ For example:
 .Bd -literal -offset indent
 nwid mynwid wpakey mywpakey
 inet6 autoconf
-dhcp
+inet autoconf
 .Ed
 .Pp
-would run ifconfig to set the nwid and wpakey of the interface, run it again to set the AUTOCONF6 flag, and then start
-.Xr dhclient 8 .
+would run ifconfig three times to set the
+.Cm nwid
+and
+.Cm wpakey
+of the interface,
+the
+.Sy AUTOCONF6
+flag and the
+.Sy AUTOCONF4
+flag, respectively.
 .Sh STATIC ADDRESS CONFIGURATION
 The following packed formats are valid for configuring network
 interfaces with static addresses.
@@ -226,23 +234,7 @@ up
 .Ed
 .El
 .Sh DYNAMIC ADDRESS CONFIGURATION
-IPv4 dynamic addressing using DHCP can be done in two forms:
-.Pp
-The token
-.Dq dhcp
-followed first by
-.Xr dhclient 8
-options and then by
-.Xr ifconfig 8
-options, which are handled before starting
-.Xr dhclient 8 .
-.Bd -ragged -offset indent
-.Li dhcp
-.Op Va dhclient_options
-.Op Va ifconfig_options
-.Ed
-.Pp
-Alternatively, the literal string
+IPv4 dynamic addressing via DHCP is requested using
 .Dq inet autoconf
 followed by any options to be passed to
 .Xr ifconfig 8 .
@@ -250,6 +242,11 @@ followed by any options to be passed to
 .Li inet autoconf
 .Op Va ifconfig_options
 .Ed
+.Pp
+The token
+.Dq dhcp
+on its own line without any options is short for
+.Dq inet autoconf .
 .Pp
 IPv6 stateless address autoconfiguration is requested using
 the literal string
@@ -288,9 +285,7 @@ up    # and finally enable it
 Interface-specific configuration files.
 .El
 .Sh SEE ALSO
-.Xr dhclient.conf 5 ,
 .Xr hosts 5 ,
-.Xr dhclient 8 ,
 .Xr ifconfig 8 ,
 .Xr netstart 8 ,
 .Xr rc 8 ,
