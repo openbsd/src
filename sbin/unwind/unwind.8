@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unwind.8,v 1.10 2021/01/25 16:57:00 florian Exp $
+.\"	$OpenBSD: unwind.8,v 1.11 2021/07/18 11:18:38 kn Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2016 Kenneth R Westerback <kwesterback@gmail.com>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 25 2021 $
+.Dd $Mdocdate: July 18 2021 $
 .Dt UNWIND 8
 .Os
 .Sh NAME
@@ -34,7 +34,10 @@ listens on localhost.
 .Nm
 sends DNS queries to nameservers to answer queries and switches to resolvers
 learned from
-.Xr dhclient 8
+.Xr dhclient 8 ,
+.Xr dhcpleased 8
+or
+.Xr slaacd 8
 if it detects that DNS queries are blocked by the local network.
 It periodically probes if DNS is no longer blocked and switches back to
 querying nameservers itself.
@@ -56,15 +59,6 @@ which sets
 .Pp
 in
 .Xr rc.conf.local 8 .
-.Pp
-Adding
-.Pp
-.Dl supersede domain-name-servers 127.0.0.1;
-.Pp
-to
-.Pa /etc/dhclient.conf
-configures a machine using DHCP to use
-.Nm .
 .Pp
 A running
 .Nm
@@ -111,6 +105,8 @@ socket used for communication with
 .Sh SEE ALSO
 .Xr unwind.conf 5 ,
 .Xr dhclient 8 ,
+.Xr dhcpleased 8 ,
+.Xr slaacd 8 ,
 .Xr unbound 8 ,
 .Xr unwindctl 8
 .Sh STANDARDS
