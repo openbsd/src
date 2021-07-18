@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.88 2021/07/18 12:41:00 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.89 2021/07/18 21:40:13 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -170,7 +170,7 @@ MBR_parse(const struct dos_mbr *dos_mbr, const uint64_t lba_self,
 }
 
 void
-MBR_make(struct mbr *mbr, struct dos_mbr *dos_mbr)
+MBR_make(const struct mbr *mbr, struct dos_mbr *dos_mbr)
 {
 	struct dos_partition	dos_partition;
 	int			i;

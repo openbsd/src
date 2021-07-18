@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.99 2021/07/16 22:50:43 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.100 2021/07/18 21:40:13 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -275,20 +275,15 @@ check_chs(const struct prt *prt)
 }
 
 void
-PRT_make(struct prt *prt, const uint64_t lba_self, const uint64_t lba_firstembr,
+PRT_make(const struct prt *prt, const uint64_t lba_self, const uint64_t lba_firstembr,
     struct dos_partition *dp)
 {
 	uint64_t		off, t;
-	uint32_t		ecsave, scsave;
+	uint32_t		ecyl, scyl;
 
-	/* Save (and restore below) cylinder info we may fiddle with. */
-	scsave = prt->prt_scyl;
-	ecsave = prt->prt_ecyl;
+	scyl = (prt->prt_scyl > 1023) ? 1023 : prt->prt_scyl;
+	ecyl = (prt->prt_ecyl > 1023) ? 1023 : prt->prt_ecyl;
 
-	if ((prt->prt_scyl > 1023) || (prt->prt_ecyl > 1023)) {
-		prt->prt_scyl = (prt->prt_scyl > 1023)? 1023: prt->prt_scyl;
-		prt->prt_ecyl = (prt->prt_ecyl > 1023)? 1023: prt->prt_ecyl;
-	}
 	if ((prt->prt_id == DOSPTYP_EXTEND) || (prt->prt_id == DOSPTYP_EXTENDL))
 		off = lba_firstembr;
 	else
@@ -296,13 +291,11 @@ PRT_make(struct prt *prt, const uint64_t lba_self, const uint64_t lba_firstembr,
 
 	if (check_chs(prt) == 0) {
 		dp->dp_shd = prt->prt_shead & 0xFF;
-		dp->dp_ssect = (prt->prt_ssect & 0x3F) |
-		    ((prt->prt_scyl & 0x300) >> 2);
-		dp->dp_scyl = prt->prt_scyl & 0xFF;
+		dp->dp_ssect = (prt->prt_ssect & 0x3F) | ((scyl & 0x300) >> 2);
+		dp->dp_scyl = scyl & 0xFF;
 		dp->dp_ehd = prt->prt_ehead & 0xFF;
-		dp->dp_esect = (prt->prt_esect & 0x3F) |
-		    ((prt->prt_ecyl & 0x300) >> 2);
-		dp->dp_ecyl = prt->prt_ecyl & 0xFF;
+		dp->dp_esect = (prt->prt_esect & 0x3F) | ((ecyl & 0x300) >> 2);
+		dp->dp_ecyl = ecyl & 0xFF;
 	} else {
 		memset(dp, 0xFF, sizeof(*dp));
 	}
@@ -318,9 +311,6 @@ PRT_make(struct prt *prt, const uint64_t lba_self, const uint64_t lba_firstembr,
 	else
 		t = htole64(prt->prt_ns);
 	memcpy(&dp->dp_size, &t, sizeof(uint32_t));
-
-	prt->prt_scyl = scsave;
-	prt->prt_ecyl = ecsave;
 }
 
 void
