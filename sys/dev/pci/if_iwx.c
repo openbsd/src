@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.67 2021/07/18 12:21:49 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.68 2021/07/18 12:39:16 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -248,7 +248,9 @@ int	iwx_firmware_store_section(struct iwx_softc *, enum iwx_ucode_type,
 int	iwx_set_default_calib(struct iwx_softc *, const void *);
 void	iwx_fw_info_free(struct iwx_fw_info *);
 int	iwx_read_firmware(struct iwx_softc *);
+uint32_t iwx_read_prph_unlocked(struct iwx_softc *, uint32_t);
 uint32_t iwx_read_prph(struct iwx_softc *, uint32_t);
+void	iwx_write_prph_unlocked(struct iwx_softc *, uint32_t, uint32_t);
 void	iwx_write_prph(struct iwx_softc *, uint32_t, uint32_t);
 int	iwx_read_mem(struct iwx_softc *, uint32_t, void *, int);
 int	iwx_write_mem(struct iwx_softc *, uint32_t, const void *, int);
@@ -287,6 +289,7 @@ void	iwx_apm_stop(struct iwx_softc *);
 int	iwx_allow_mcast(struct iwx_softc *);
 void	iwx_init_msix_hw(struct iwx_softc *);
 void	iwx_conf_msix_hw(struct iwx_softc *, int);
+int	iwx_clear_persistence_bit(struct iwx_softc *);
 int	iwx_start_hw(struct iwx_softc *);
 void	iwx_stop_device(struct iwx_softc *);
 void	iwx_nic_config(struct iwx_softc *);
@@ -1344,23 +1347,35 @@ iwx_read_firmware(struct iwx_softc *sc)
 }
 
 uint32_t
-iwx_read_prph(struct iwx_softc *sc, uint32_t addr)
+iwx_read_prph_unlocked(struct iwx_softc *sc, uint32_t addr)
 {
-	iwx_nic_assert_locked(sc);
 	IWX_WRITE(sc,
 	    IWX_HBUS_TARG_PRPH_RADDR, ((addr & 0x000fffff) | (3 << 24)));
 	IWX_BARRIER_READ_WRITE(sc);
 	return IWX_READ(sc, IWX_HBUS_TARG_PRPH_RDAT);
 }
 
-void
-iwx_write_prph(struct iwx_softc *sc, uint32_t addr, uint32_t val)
+uint32_t
+iwx_read_prph(struct iwx_softc *sc, uint32_t addr)
 {
 	iwx_nic_assert_locked(sc);
+	return iwx_read_prph_unlocked(sc, addr);
+}
+
+void
+iwx_write_prph_unlocked(struct iwx_softc *sc, uint32_t addr, uint32_t val)
+{
 	IWX_WRITE(sc,
 	    IWX_HBUS_TARG_PRPH_WADDR, ((addr & 0x000fffff) | (3 << 24)));
 	IWX_BARRIER_WRITE(sc);
 	IWX_WRITE(sc, IWX_HBUS_TARG_PRPH_WDAT, val);
+}
+
+void
+iwx_write_prph(struct iwx_softc *sc, uint32_t addr, uint32_t val)
+{
+	iwx_nic_assert_locked(sc);
+	iwx_write_prph_unlocked(sc, addr, val);
 }
 
 void
@@ -2216,12 +2231,36 @@ iwx_conf_msix_hw(struct iwx_softc *sc, int stopped)
 }
 
 int
+iwx_clear_persistence_bit(struct iwx_softc *sc)
+{
+	uint32_t hpm, wprot;
+
+	hpm = iwx_read_prph_unlocked(sc, IWX_HPM_DEBUG);
+	if (hpm != 0xa5a5a5a0 && (hpm & IWX_PERSISTENCE_BIT)) {
+		wprot = iwx_read_prph_unlocked(sc, IWX_PREG_PRPH_WPROT_22000);
+		if (wprot & IWX_PREG_WFPM_ACCESS) {
+			printf("%s: cannot clear persistence bit\n",
+			    DEVNAME(sc));
+			return EPERM;
+		}
+		iwx_write_prph_unlocked(sc, IWX_HPM_DEBUG,
+		    hpm & ~IWX_PERSISTENCE_BIT);
+	}
+
+	return 0;
+}
+
+int
 iwx_start_hw(struct iwx_softc *sc)
 {
 	int err;
 	int t = 0;
 
 	err = iwx_prepare_card_hw(sc);
+	if (err)
+		return err;
+
+	err = iwx_clear_persistence_bit(sc);
 	if (err)
 		return err;
 
