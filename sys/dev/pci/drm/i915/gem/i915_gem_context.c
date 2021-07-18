@@ -549,11 +549,11 @@ static void kill_context(struct i915_gem_context *ctx)
 		}
 
 		/*
-		 * XXX don't incorrectly reset chip on vlv/ivb/bdw cause unknown
+		 * XXX don't incorrectly reset chip on vlv/ivb/hsw/bdw cause unknown
 		 */
 		if (IS_GEN_RANGE(ctx->i915, 7, 8)) {
 			if (warn) {
-				printf("%s XXX skipping reset pos %p\n", __func__, pos);
+				DRM_DEBUG("%s XXX skipping reset pos %p\n", __func__, pos);
 				warn = 0;
 			}
 			continue;
