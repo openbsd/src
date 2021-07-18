@@ -31,11 +31,11 @@ man: dbm_get: Database corrupt: offset -1
 
 >>> badfile0
 man: dbm_get: Database corrupt: offset -1
-man: db/run/man/(NULL): No such file or directory
+man: db/run/badfile0.dir/(NULL): No such file or directory
 man: outdated mandoc.db contains bogus (NULL) entry
 man: outdated mandoc.db lacks empty(1) entry
 
 >>> badfile
 man: dbm_get: Database corrupt: offset -1
-man: db/run/man/(NULL): No such file or directory
+man: db/run/badfile.dir/(NULL): No such file or directory
 man: outdated mandoc.db contains bogus (NULL) entry

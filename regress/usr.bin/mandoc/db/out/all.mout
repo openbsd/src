@@ -65,8 +65,8 @@ man3/fn.3
 man3/fn.3
 > fo_type
 man3/fn.3
-> fo_func
-man: nothing appropriate
+> fo_name
+man3/fn.3
 > fo_arg
 man3/fn.3
 

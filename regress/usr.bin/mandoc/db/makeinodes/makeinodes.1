@@ -1,6 +1,6 @@
-.\"	$OpenBSD: makeinodes.1,v 1.1 2016/07/30 10:56:13 schwarze Exp $
+.\"	$OpenBSD: makeinodes.1,v 1.2 2021/07/18 11:25:47 schwarze Exp $
 .\"
-.\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2016, 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 30 2016 $
+.Dd $Mdocdate: July 18 2021 $
 .Dt MAKEINODES 1
 .Os
 .Sh NAME
@@ -22,31 +22,38 @@
 .Nd create files such that inode numbers hash in a defined order
 .Sh SYNOPSIS
 .Nm makeinodes
+.Op Fl r
+.Ar dirname
 .Sh DESCRIPTION
 The
 .Nm
 utility creates a directory
-.Pa man/man1/
+.Ar dirname
+with a subdirectory
+.Pa man1
 and two empty files
-.Pa man/man1/1
+.Pa man1/one.1
 and
-.Pa man/man1/2
-such that the lowest six bits of the inode number of file 1
-are smaller than the lowest six bits of the inode number of file 2.
+.Pa man1/two.1
+such that the lowest six bits of the inode number of file
+.Pa one.1
+are smaller than the lowest six bits of the inode number of file
+.Pa two.1 .
+If
+.Fl r
+is specified, the reverse order is produced.
 .Pp
 This is useful to test the behaviour of the
 .Xr makewhatis 8
 program which hashes files with
-.Xr ohash 3
+.Xr ohash_init 3
 according to their inode numbers, such that fully testing all the
 code paths requires test files hashing in a well-defined order.
 .Pp
 Once the files have been created with
 .Nm ,
 their content can be provided with
-.Xr cat 1
-and they can be renamed as desired with
-.Xr mv 1 .
+.Xr cat 1 .
 .Sh EXIT STATUS
 .Ex -std
 It may fail when creation of a directory or file,

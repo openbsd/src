@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2021/07/17 14:23:02 schwarze Exp $
+# $OpenBSD: Makefile,v 1.10 2021/07/18 11:25:48 schwarze Exp $
 #
 # Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 #
@@ -78,8 +78,7 @@ diff.merr: all.merr
 cleandir: cleandir_local
 
 cleandir_local:
-	rm -rf man onepage.dir twopages.dir threepages.dir \
-		threemacros.dir threearch.dir
+	rm -rf ${MOB_TESTS:C/$/.dir/}
 
 
 # === RUNNING DBM_DUMP =================================================
@@ -104,335 +103,269 @@ all.derr: ${DEB_TESTS:C/$/.derr/}
 
 empty.mout empty.merr:
 	@echo creating $@
-	rm -rf man
-	mkdir man
-	makewhatis man
-	if man -kM man something > empty.mout 2> empty.merr; \
+	mkdir -p empty.dir
+	makewhatis empty.dir
+	if man -kM empty.dir something > empty.mout 2> empty.merr; \
 		then false; else test $$? -eq 5; fi
-	rmdir man
 
 onepage.db onepage.mout: ${.CURDIR}/../man/empty.1
 	@echo creating $@
-	rm -rf man
-	mkdir -p man/man1
-	cp ${.CURDIR}/../man/empty.1 man/man1/
-	makewhatis man
-	man -kM man title > onepage.mout
-	cp man/mandoc.db onepage.db
-	rm -rf onepage.dir
-	mv man onepage.dir
+	mkdir -p onepage.dir/man1
+	cp ${.CURDIR}/../man/empty.1 onepage.dir/man1/
+	makewhatis onepage.dir
+	man -kM onepage.dir title > onepage.mout
+	cp onepage.dir/mandoc.db onepage.db
 
 twopages.db twopages.mout: ${.CURDIR}/../man/empty.1
 	@echo creating $@
-	rm -rf man
-	mkdir -p man/man1
-	cp ${.CURDIR}/../man/empty.1 man/man1/
-	cp ${.CURDIR}/../man/empty.1 man/man1/second.1
-	makewhatis man
-	(echo "> second"; man -wM man second | sed 's#.*/man/##'; \
-	  echo "> empty"; man -wM man empty | sed 's#.*/man/##') \
-	  > twopages.mout
-	cp man/mandoc.db twopages.db
-	rm -rf twopages.dir
-	mv man twopages.dir
+	mkdir -p twopages.dir/man1
+	cp ${.CURDIR}/../man/empty.1 twopages.dir/man1/
+	cp ${.CURDIR}/../man/empty.1 twopages.dir/man1/second.1
+	makewhatis twopages.dir
+	(echo "> second"; man -wM twopages.dir second; \
+	  echo "> empty"; man -wM twopages.dir empty) \
+	  | sed 's#.*/twopages\.dir/##' > twopages.mout
+	cp twopages.dir/mandoc.db twopages.db
 
 threepages.db threepages.mout: ${.CURDIR}/../man/empty.1
 	@echo creating $@
-	rm -rf man
-	mkdir -p man/man1
-	cp ${.CURDIR}/../man/empty.1 man/man1/
-	cp ${.CURDIR}/../man/empty.1 man/man1/second.1
-	cp ${.CURDIR}/../man/empty.1 man/man1/third.1
-	makewhatis man
-	(echo "> second"; man -wM man second | sed 's#.*/man/##'; \
-	  echo "> third"; man -wM man third | sed 's#.*/man/##'; \
-	  echo "> empty"; man -wM man empty | sed 's#.*/man/##') \
-	  > threepages.mout
-	cp man/mandoc.db threepages.db
-	rm -rf threepages.dir
-	mv man threepages.dir
+	mkdir -p threepages.dir/man1
+	cp ${.CURDIR}/../man/empty.1 threepages.dir/man1/
+	cp ${.CURDIR}/../man/empty.1 threepages.dir/man1/second.1
+	cp ${.CURDIR}/../man/empty.1 threepages.dir/man1/third.1
+	makewhatis threepages.dir
+	(echo "> second"; man -wM threepages.dir second; \
+	  echo "> third"; man -wM threepages.dir third; \
+	  echo "> empty"; man -wM threepages.dir empty) \
+	  | sed 's#.*/threepages.dir/##' > threepages.mout
+	cp threepages.dir/mandoc.db threepages.db
 
 threemacros.db threemacros.mout: ${.CURDIR}/../man/empty.1
 	@echo creating $@
-	rm -rf man
-	mkdir -p man/man1
-	cp ${.CURDIR}/../man/empty.1 man/man1/
+	mkdir -p threemacros.dir/man1
+	cp ${.CURDIR}/../man/empty.1 threemacros.dir/man1/
 	printf ".Sh SEE ALSO\n.Xr one 1\n.Xr two 2\n.Xr three 3" \
-		>> man/man1/empty.1
-	makewhatis man
-	(echo "> Xr=one"; man -kwM man Xr=one | sed 's#.*/man/##'; \
-	  echo "> Xr~^t"; man -kM man -O Xr Xr~^t;) > threemacros.mout
-	cp man/mandoc.db threemacros.db
-	rm -rf threemacros.dir
-	mv man threemacros.dir
+		>> threemacros.dir/man1/empty.1
+	makewhatis threemacros.dir
+	(echo "> Xr=one"; \
+	  man -kwM threemacros.dir Xr=one | sed 's#.*/threemacros\.dir/##'; \
+	  echo "> Xr~^t"; man -kM threemacros.dir -O Xr Xr~^t) \
+	  > threemacros.mout
+	cp threemacros.dir/mandoc.db threemacros.db
 
 sortpages.db sortpages.mout: makeinodes ${.CURDIR}/../man/empty.1
 	@echo creating $@
-	rm -rf man
-	./makeinodes
-	cat ${.CURDIR}/../man/empty.1 >> man/man1/1
-	cat ${.CURDIR}/../man/empty.1 >> man/man1/2
-	mv man/man1/1 man/man1/one.1
-	mv man/man1/2 man/man1/two.1
-	makewhatis man
-	man -kM man Nm=empty > sortpages.mout
-	mv man/mandoc.db sortpages.db
-	rm -rf man
+	./makeinodes sortpages.dir
+	cat ${.CURDIR}/../man/empty.1 >> sortpages.dir/man1/one.1
+	cat ${.CURDIR}/../man/empty.1 >> sortpages.dir/man1/two.1
+	makewhatis sortpages.dir
+	man -kM sortpages.dir Nm=empty > sortpages.mout
+	cp sortpages.dir/mandoc.db sortpages.db
 
 sortpages_rev.db sortpages_rev.mout: makeinodes ${.CURDIR}/../man/empty.1
 	@echo creating $@
-	rm -rf man
-	./makeinodes
-	cat ${.CURDIR}/../man/empty.1 >> man/man1/1
-	cat ${.CURDIR}/../man/empty.1 >> man/man1/2
-	mv man/man1/2 man/man1/one.1
-	mv man/man1/1 man/man1/two.1
-	makewhatis man
-	man -kM man Nm=empty > sortpages_rev.mout
-	mv man/mandoc.db sortpages_rev.db
-	rm -rf man
+	rm -rf sortpages_rev.dir
+	./makeinodes -r sortpages_rev.dir
+	cat ${.CURDIR}/../man/empty.1 >> sortpages_rev.dir/man1/one.1
+	cat ${.CURDIR}/../man/empty.1 >> sortpages_rev.dir/man1/two.1
+	makewhatis sortpages_rev.dir
+	man -kM sortpages_rev.dir Nm=empty > sortpages_rev.mout
+	cp sortpages_rev.dir/mandoc.db sortpages_rev.db
 
 so.db so.mout: makeinodes ${.CURDIR}/../man/empty.1
 	@echo creating $@
-	rm -rf man
-	./makeinodes
-	cat ${.CURDIR}/../man/empty.1 >> man/man1/1
-	echo ".so man1/one.1" >> man/man1/2
-	mv man/man1/1 man/man1/one.1
-	mv man/man1/2 man/man1/two.1
-	makewhatis man
-	man -wM man two | sed 's#.*/man/##' > so.mout
-	mv man/mandoc.db so.db
-	rm -rf man
+	./makeinodes so.dir
+	cat ${.CURDIR}/../man/empty.1 >> so.dir/man1/one.1
+	echo ".so man1/one.1" >> so.dir/man1/two.1
+	makewhatis so.dir
+	man -wM so.dir two | sed 's#.*/so\.dir/##' > so.mout
+	cp so.dir/mandoc.db so.db
 
 so_rev.db so_rev.mout: makeinodes ${.CURDIR}/../man/empty.1
 	@echo creating $@
-	rm -rf man
-	./makeinodes
-	cat ${.CURDIR}/../man/empty.1 >> man/man1/2
-	echo ".so man1/one.1" >> man/man1/1
-	mv man/man1/2 man/man1/one.1
-	mv man/man1/1 man/man1/two.1
-	makewhatis man
-	man -wM man two | sed 's#.*/man/##' > so_rev.mout
-	mv man/mandoc.db so_rev.db
-	rm -rf man
+	./makeinodes -r so_rev.dir
+	cat ${.CURDIR}/../man/empty.1 >> so_rev.dir/man1/one.1
+	echo ".so man1/one.1" >> so_rev.dir/man1/two.1
+	makewhatis so_rev.dir
+	man -wM so_rev.dir two | sed 's#.*/so_rev\.dir/##' > so_rev.mout
+	cp so_rev.dir/mandoc.db so_rev.db
 
 sortnames.db sortnames.mout: ${.CURDIR}/../man/sortnames.1
 	@echo creating $@
-	rm -rf man
-	mkdir -p man/man1
-	cp ${.CURDIR}/../man/sortnames.1 man/man1/
-	ln man/man1/sortnames.1 man/man1/link.1
-	makewhatis man
-	man -kM man Nm=onlysyn > sortnames.mout
-	mv man/mandoc.db sortnames.db
-	rm -rf man
+	mkdir -p sortnames.dir/man1
+	cp ${.CURDIR}/../man/sortnames.1 sortnames.dir/man1/
+	ln sortnames.dir/man1/sortnames.1 sortnames.dir/man1/link.1
+	makewhatis sortnames.dir
+	man -kM sortnames.dir Nm=onlysyn > sortnames.mout
+	cp sortnames.dir/mandoc.db sortnames.db
 
 twosect.db twosect.mout: ${.CURDIR}/../man/empty.1
 	@echo creating $@
-	rm -rf man
-	mkdir -p man/man1
-	mkdir -p man/man8
-	cp ${.CURDIR}/../man/empty.1 man/man1/
-	ln man/man1/empty.1 man/man8/empty.8
-	makewhatis man
-	man -kM man -s 1 title > twosect.mout
-	mv man/mandoc.db twosect.db
-	rm -rf man
+	mkdir -p twosect.dir/man1
+	mkdir -p twosect.dir/man8
+	cp ${.CURDIR}/../man/empty.1 twosect.dir/man1/
+	ln twosect.dir/man1/empty.1 twosect.dir/man8/empty.8
+	makewhatis twosect.dir
+	man -kM twosect.dir -s 1 title > twosect.mout
+	cp twosect.dir/mandoc.db twosect.db
 
 twoarch.db twoarch.mout: ${.CURDIR}/../man/empty.1
 	@echo creating $@
-	rm -rf man
-	mkdir -p man/man1/i386
-	mkdir -p man/man1/amd64
-	cp ${.CURDIR}/../man/empty.1 man/man1/i386
-	ln man/man1/i386/empty.1 man/man1/amd64/empty.1
-	makewhatis man
-	man -kM man -S i386 title > twoarch.mout
-	mv man/mandoc.db twoarch.db
-	rm -rf man
+	mkdir -p twoarch.dir/man1/i386
+	mkdir -p twoarch.dir/man1/amd64
+	cp ${.CURDIR}/../man/empty.1 twoarch.dir/man1/i386
+	ln twoarch.dir/man1/i386/empty.1 twoarch.dir/man1/amd64/empty.1
+	makewhatis twoarch.dir
+	man -kM twoarch.dir -S i386 title > twoarch.mout
+	cp twoarch.dir/mandoc.db twoarch.db
 
 threearch.db threearch.mout: ${.CURDIR}/../man/empty.1
 	@echo creating $@
-	rm -rf man
-	mkdir -p man/man1/amd64
-	mkdir -p man/man1/i386
-	mkdir -p man/man1/sgi
-	cp ${.CURDIR}/../man/empty.1 man/man1/amd64/
-	cp ${.CURDIR}/../man/empty.1 man/man1/i386/
-	cp ${.CURDIR}/../man/empty.1 man/man1/sgi/
-	makewhatis man
-	(echo "> amd64"; man -wM man -S amd64 empty | sed 's#.*/man/##'; \
-	  echo "> i386"; man -wM man -S i386 empty | sed 's#.*/man/##'; \
-	  echo "> sgi"; man -wM man -S sgi empty | sed 's#.*/man/##') \
-	  > threearch.mout
-	cp man/mandoc.db threearch.db
-	rm -rf threearch.dir
-	mv man threearch.dir
+	mkdir -p threearch.dir/man1/amd64
+	mkdir -p threearch.dir/man1/i386
+	mkdir -p threearch.dir/man1/sgi
+	cp ${.CURDIR}/../man/empty.1 threearch.dir/man1/amd64/
+	cp ${.CURDIR}/../man/empty.1 threearch.dir/man1/i386/
+	cp ${.CURDIR}/../man/empty.1 threearch.dir/man1/sgi/
+	makewhatis threearch.dir
+	(echo "> amd64"; man -wM threearch.dir -S amd64 empty; \
+	  echo "> i386"; man -wM threearch.dir -S i386 empty; \
+	  echo "> sgi"; man -wM threearch.dir -S sgi empty) \
+	  | sed 's#.*/threearch\.dir/##' > threearch.mout
+	cp threearch.dir/mandoc.db threearch.db
 
 fn.db fn.mout: ${.CURDIR}/../man/fn.3
 	@echo creating $@
-	rm -rf man
-	mkdir -p man/man3
-	cp ${.CURDIR}/../man/fn.3 man/man3/
-	makewhatis man
-	(echo "> fn_type"; man -kwM man Ft=fn_type | sed 's#.*/man/##'; \
-	  echo "> fn_func"; man -kwM man Fn=fn_func | sed 's#.*/man/##'; \
-	  echo "> fn_arg";  man -kwM man Fa=fn_arg  | sed 's#.*/man/##'; \
-	  echo "> fo_type"; man -kwM man Ft=fo_type | sed 's#.*/man/##'; \
-	  echo "> fo_func"; man -kwM man Fn=fo_func 2>&1 | sed 's#.*/man/##'; \
-	  echo "> fo_arg";  man -kwM man Fa=fo_arg  | sed 's#.*/man/##') \
-	  > fn.mout
-	mv man/mandoc.db fn.db
-	rm -rf man
+	mkdir -p fn.dir/man3
+	cp ${.CURDIR}/../man/fn.3 fn.dir/man3/
+	makewhatis fn.dir
+	(echo "> fn_type"; man -kwM fn.dir Ft=fn_type; \
+	  echo "> fn_func"; man -kwM fn.dir Fn=fn_func; \
+	  echo "> fn_arg"; man -kwM fn.dir Fa=fn_arg; \
+	  echo "> fo_type"; man -kwM fn.dir Ft=fo_type; \
+ 	  echo "> fo_name"; man -kwM fn.dir Fn=fo_name; \
+	  echo "> fo_arg"; man -kwM fn.dir Fa=fo_arg) \
+	  | sed 's#.*/fn\.dir/##' > fn.mout
+	cp fn.dir/mandoc.db fn.db
 
 in.db in.mout: ${.CURDIR}/../man/in.3
 	@echo creating $@
-	rm -rf man
-	mkdir -p man/man3
-	cp ${.CURDIR}/../man/in.3 man/man3/
-	makewhatis man
-	(echo "> In"; man -kwM man In=in.h | sed 's#.*/man/##'; \
-	  echo "> Fd"; man -kwM man In=fd.h | sed 's#.*/man/##') \
-	  > in.mout
-	mv man/mandoc.db in.db
-	rm -rf man
+	mkdir -p in.dir/man3
+	cp ${.CURDIR}/../man/in.3 in.dir/man3/
+	makewhatis in.dir
+	(echo "> In"; man -kwM in.dir In=in.h; \
+	  echo "> Fd"; man -kwM in.dir In=fd.h) \
+	  | sed 's#.*/in\.dir/##' > in.mout
+	cp in.dir/mandoc.db in.db
 
 va.db va.mout: ${.CURDIR}/../man/va.3
 	@echo creating $@
-	rm -rf man
-	mkdir -p man/man3
-	cp ${.CURDIR}/../man/va.3 man/man3/
-	makewhatis man
-	(echo "> b2"; man -kwM man Va='block vt_two' | sed 's#.*/man/##'; \
-	  echo "> t1"; man -kwM man Vt='vt_one' | sed 's#.*/man/##'; \
-	  echo "> a1"; man -kwM man Va='va_one'  | sed 's#.*/man/##'; \
-	  echo "> t2"; man -kwM man Vt='struct vt_two' | sed 's#.*/man/##'; \
-	  echo "> a2"; man -kwM man Va='int va_two'  | sed 's#.*/man/##') \
-	  > va.mout
-	mv man/mandoc.db va.db
-	rm -rf man
+	mkdir -p va.dir/man3
+	cp ${.CURDIR}/../man/va.3 va.dir/man3/
+	makewhatis va.dir
+	(echo "> b2"; man -kwM va.dir Va='block vt_two'; \
+	  echo "> t1"; man -kwM va.dir Vt='vt_one'; \
+	  echo "> a1"; man -kwM va.dir Va='va_one'; \
+	  echo "> t2"; man -kwM va.dir Vt='struct vt_two'; \
+	  echo "> a2"; man -kwM va.dir Va='int va_two') \
+	  | sed 's#.*/va\.dir/##' > va.mout
+	cp va.dir/mandoc.db va.db
 
 sh.db sh.mout: ${.CURDIR}/../man/sh.1
 	@echo creating $@
-	rm -rf man
-	mkdir -p man/man1
-	cp ${.CURDIR}/../man/sh.1 man/man1/
-	makewhatis man
-	(echo "> Sh"; man -kwM man Sh=sh_title | sed 's#.*/man/##'; \
-	  echo "> Ss"; man -kwM man Ss=ss_title | sed 's#.*/man/##') \
-	  > sh.mout
-	mv man/mandoc.db sh.db
-	rm -rf man
+	mkdir -p sh.dir/man1
+	cp ${.CURDIR}/../man/sh.1 sh.dir/man1/
+	makewhatis sh.dir
+	(echo "> Sh"; man -kwM sh.dir Sh=sh_title; \
+	  echo "> Ss"; man -kwM sh.dir Ss=ss_title) \
+	  | sed 's#.*/sh\.dir/##' > sh.mout
+	cp sh.dir/mandoc.db sh.db
 
 xr.db xr.mout: ${.CURDIR}/../man/xr.1
 	@echo creating $@
-	rm -rf man
-	mkdir -p man/man1
-	cp ${.CURDIR}/../man/xr.1 man/man1/
-	makewhatis man
-	(echo "> bare"; man -kwM man 'Xr~^bare$$' | sed 's#.*/man/##'; \
-	  echo "> page"; man -kwM man 'Xr=page(1)' | sed 's#.*/man/##') \
-	  > xr.mout
-	mv man/mandoc.db xr.db
-	rm -rf man
+	mkdir -p xr.dir/man1
+	cp ${.CURDIR}/../man/xr.1 xr.dir/man1/
+	makewhatis xr.dir
+	(echo "> bare"; man -kwM xr.dir 'Xr~^bare$$'; \
+	  echo "> page"; man -kwM xr.dir 'Xr=page(1)') \
+	  | sed 's#.*/xr\.dir/##' > xr.mout
+	cp xr.dir/mandoc.db xr.db
 
 badname0.mout badname0.merr: badname0.db
 	@echo creating $@
-	rm -rf man
-	cp -pR onepage.dir man
-	cp badname0.db man/mandoc.db
-	man -wM man empty > badname0.mout 2> badname0.merr
-	sed -i 's#.*/man/##' badname0.mout
+	cp -pR onepage.dir badname0.dir
+	cp badname0.db badname0.dir/mandoc.db
+	man -wM badname0.dir empty > badname0.mout 2> badname0.merr
+	sed -i 's#.*/badname0\.dir/##' badname0.mout
 	sed -i 's#, run makewhatis.*##' badname0.merr
-	rm -rf man
 
 badname.mout badname.merr: badname.db
 	@echo creating $@
-	rm -rf man
-	cp -pR threepages.dir man
-	cp badname.db man/mandoc.db
-	man -wM man empty > badname.mout 2> badname.merr
-	sed -i 's#.*/man/##' badname.mout
+	cp -pR threepages.dir badname.dir
+	cp badname.db badname.dir/mandoc.db
+	man -wM badname.dir empty > badname.mout 2> badname.merr
+	sed -i 's#.*/badname\.dir/##' badname.mout
 	sed -i 's#, run makewhatis.*##' badname.merr
-	rm -rf man
 
 badsect0.mout badsect0.merr: badsect0.db
 	@echo creating $@
-	rm -rf man
-	cp -pR onepage.dir man
-	cp badsect0.db man/mandoc.db
-	man -wM man -s 1 empty > badsect0.mout 2> badsect0.merr
-	sed -i 's#.*/man/##' badsect0.mout
+	cp -pR onepage.dir badsect0.dir
+	cp badsect0.db badsect0.dir/mandoc.db
+	man -wM badsect0.dir -s 1 empty > badsect0.mout 2> badsect0.merr
+	sed -i 's#.*/badsect0\.dir/##' badsect0.mout
 	sed -i 's#, run makewhatis.*##' badsect0.merr
-	rm -rf man
 
 badsect.mout badsect.merr: badsect.db
 	@echo creating $@
-	rm -rf man
-	cp -pR threepages.dir man
-	cp badsect.db man/mandoc.db
-	man -wM man -s 1 empty > badsect.mout 2> badsect.merr
-	sed -i 's#.*/man/##' badsect.mout
+	cp -pR threepages.dir badsect.dir
+	cp badsect.db badsect.dir/mandoc.db
+	man -wM badsect.dir -s 1 empty > badsect.mout 2> badsect.merr
+	sed -i 's#.*/badsect\.dir/##' badsect.mout
 	sed -i 's#, run makewhatis.*##' badsect.merr
-	rm -rf man
 
 badarch0.mout badarch0.merr: badarch0.db
 	@echo creating $@
-	rm -rf man
-	cp -pR threearch.dir man
-	cp badarch0.db man/mandoc.db
-	man -wM man -S amd64 empty > badarch0.mout 2> badarch0.merr
-	sed -i 's#.*/man/##' badarch0.mout
+	cp -pR threearch.dir badarch0.dir
+	cp badarch0.db badarch0.dir/mandoc.db
+	man -wM badarch0.dir -S amd64 empty > badarch0.mout 2> badarch0.merr
+	sed -i 's#.*/badarch0\.dir/##' badarch0.mout
 	sed -i 's#, run makewhatis.*##' badarch0.merr
-	rm -rf man
 
 badarch.mout badarch.merr: badarch.db
 	@echo creating $@
-	rm -rf man
-	cp -pR threearch.dir man
-	cp badarch.db man/mandoc.db
-	man -wM man -S i386 empty > badarch.mout 2> badarch.merr
-	sed -i 's#.*/man/##' badarch.mout
+	cp -pR threearch.dir badarch.dir
+	cp badarch.db badarch.dir/mandoc.db
+	man -wM badarch.dir -S i386 empty > badarch.mout 2> badarch.merr
+	sed -i 's#.*/badarch\.dir/##' badarch.mout
 	sed -i 's#, run makewhatis.*##' badarch.merr
-	rm -rf man
 
 baddesc0.mout baddesc0.merr: baddesc0.db
 	@echo creating $@
-	rm -rf man
-	cp -pR onepage.dir man
-	cp baddesc0.db man/mandoc.db
-	man -kM man empty > baddesc0.mout 2> baddesc0.merr
-	rm -rf man
+	cp -pR onepage.dir baddesc0.dir
+	cp baddesc0.db baddesc0.dir/mandoc.db
+	man -kM baddesc0.dir empty > baddesc0.mout 2> baddesc0.merr
 
 baddesc.mout baddesc0.merr: baddesc.db
 	@echo creating $@
-	rm -rf man
-	cp -pR threepages.dir man
-	cp baddesc.db man/mandoc.db
-	man -kM man empty > baddesc.mout 2> baddesc.merr
-	rm -rf man
+	cp -pR threepages.dir baddesc.dir
+	cp baddesc.db baddesc.dir/mandoc.db
+	man -kM baddesc.dir empty > baddesc.mout 2> baddesc.merr
 
 badfile0.mout badfile0.merr: badfile0.db
 	@echo creating $@
-	rm -rf man
-	cp -pR onepage.dir man
-	cp badfile0.db man/mandoc.db
-	man -wM man empty > badfile0.mout 2> badfile0.merr
-	sed -i 's#.*/man/##' badfile0.mout
+	cp -pR onepage.dir badfile0.dir
+	cp badfile0.db badfile0.dir/mandoc.db
+	man -wM badfile0.dir empty > badfile0.mout 2> badfile0.merr
+	sed -i 's#.*/badfile0\.dir/##' badfile0.mout
 	sed -i 's#, run makewhatis.*##;s#/.*/mandoc/##' badfile0.merr
-	rm -rf man
 
 badfile.mout badfile.merr: badfile.db
 	@echo creating $@
-	rm -rf man
-	cp -pR threepages.dir man
-	cp badfile.db man/mandoc.db
-	man -wM man empty > badfile.mout 2> badfile.merr
-	sed -i 's#.*/man/##' badfile.mout
+	cp -pR threepages.dir badfile.dir
+	cp badfile.db badfile.dir/mandoc.db
+	man -wM badfile.dir empty > badfile.mout 2> badfile.merr
+	sed -i 's#.*/badfile\.dir/##' badfile.mout
 	sed -i 's#, run makewhatis.*##;s#/.*/mandoc/##' badfile.merr
-	rm -rf man
 
 all.mout: ${MOB_TESTS:C/$/.mout/}
 	for f in ${MOB_TESTS}; \

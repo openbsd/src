@@ -1,6 +1,6 @@
-/*	$OpenBSD: makeinodes.c,v 1.1 2016/07/30 10:56:13 schwarze Exp $ */
+/*	$OpenBSD: makeinodes.c,v 1.2 2021/07/18 11:25:47 schwarze Exp $ */
 /*
- * Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2016, 2021 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,21 +18,33 @@
 #include <err.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 
 #define	HSIZE	 64
 
 int
-main(void)
+main(int argc, char *argv[])
 {
 	struct stat	 sb1, sb2;
 	long long	 diff;
-	int		 fd;
+	int		 fd, rev;
 
-	if (mkdir("man", 0755) == -1)
-		err(1, "mkdir(man)");
-	if (chdir("man") == -1)
-		err(1, "chdir(man)");
+	if (argc > 1 && strcmp(argv[1], "-r") == 0) {
+		rev = 1;
+		argc--;
+		argv++;
+	} else
+		rev = 0;
+
+	if (argc != 2) {
+		fputs("usage: makeinodes [-r] dirname\n", stderr);
+		return 1;
+	}
+	if (mkdir(argv[1], 0755) == -1)
+		err(1, "mkdir(%s)", argv[1]);
+	if (chdir(argv[1]) == -1)
+		err(1, "chdir(%s)", argv[1]);
 	if (mkdir("man1", 0755) == -1)
 		err(1, "mkdir(man1)");
 	if (chdir("man1") == -1)
@@ -59,13 +71,16 @@ main(void)
 		if (rename("3", "2") == -1)
 			err(1, "rename(3, 2)");
 	}
-	if (diff < 0) {
-		if (rename("1", "3") == -1)
-			err(1, "rename(1, 3)");
-		if (rename("2", "1") == -1)
-			err(1, "rename(2, 1)");
-		if (rename("3", "2") == -1)
-			err(1, "rename(3, 2)");
+	if ((diff < 0) == rev) {
+		if (rename("1", "one.1") == -1)
+			err(1, "rename(1, one)");
+		if (rename("2", "two.1") == -1)
+			err(1, "rename(2, two)");
+	} else {
+		if (rename("2", "one.1") == -1)
+			err(1, "rename(2, one)");
+		if (rename("1", "two.1") == -1)
+			err(1, "rename(1, two)");
 	}
 	return 0;
 }
