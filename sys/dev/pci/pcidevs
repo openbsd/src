@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1974 2021/07/16 13:08:24 jsg Exp $
+$OpenBSD: pcidevs,v 1.1975 2021/07/18 05:02:08 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -260,6 +260,7 @@ vendor	LITEON2		0x14a4	Lite-On
 vendor	AIRONET		0x14b9	Aironet
 vendor	GLOBESPAN	0x14bc	Globespan
 vendor	MYRICOM		0x14c1	Myricom
+vendor	MEDIATEK	0x14c3	MediaTek
 vendor	OXFORD		0x14d2	VScom
 vendor	AVLAB		0x14db	Avlab
 vendor	INVERTEX	0x14e1	Invertex
@@ -832,9 +833,18 @@ product AMD 15_0X_HB		0x1605	15/0xh Host
 product AMD 17_6X_RC		0x1630	17h/6xh Root Complex
 product AMD 17_6X_IOMMU		0x1631	17h/6xh IOMMU
 product AMD 17_6X_HB		0x1632	17h/6xh Host
-product AMD 17_6X_PCIE_1	0x1634	17h/6xh PCIE
-product AMD 17_6X_PCIE_2	0x1635	17h/6xh PCIE
+product AMD 17_6X_PCIE_1	0x1633	17h/6xh PCIE
+product AMD 17_6X_PCIE_2	0x1634	17h/6xh PCIE
+product AMD 17_6X_PCIE_3	0x1635	17h/6xh PCIE
 product AMD 17_6X_XHCI		0x1639	17h/6xh xHCI
+product AMD 19_5X_DF_0		0x166a	19h/5xh Data Fabric
+product AMD 19_5X_DF_1		0x166b	19h/5xh Data Fabric
+product AMD 19_5X_DF_2		0x166c	19h/5xh Data Fabric
+product AMD 19_5X_DF_3		0x166d	19h/5xh Data Fabric
+product AMD 19_5X_DF_4		0x166e	19h/5xh Data Fabric
+product AMD 19_5X_DF_5		0x166f	19h/5xh Data Fabric
+product AMD 19_5X_DF_6		0x1670	19h/5xh Data Fabric
+product AMD 19_5X_DF_7		0x1671	19h/5xh Data Fabric
 product AMD 14_LINK		0x1700	14h Link Cfg
 product AMD 14_ADDR		0x1701	14h Address Map
 product AMD 14_DRAM		0x1702	14h DRAM Cfg
@@ -878,7 +888,8 @@ product AMD 300SERIES_XHCI	0x43bb	300 Series xHCI
 product AMD 400SERIES_PCIE_1	0x43c6	400 Series PCIE
 product AMD 400SERIES_PCIE_2	0x43c7	400 Series PCIE
 product AMD 400SERIES_AHCI	0x43c8	400 Series AHCI
-product AMD 400SERIES_XHCI	0x43d0	400 Series xHCI
+product AMD 400SERIES_XHCI_1	0x43d0	400 Series xHCI
+product AMD 400SERIES_XHCI_2	0x43d1	400 Series xHCI
 product AMD 500SERIES_PCIE_1	0x43e9	500 Series PCIE
 product AMD 500SERIES_PCIE_2	0x43ea	500 Series PCIE
 product AMD 500SERIES_AHCI	0x43eb	500 Series AHCI
@@ -1195,8 +1206,8 @@ product ATI KAVERI_19		0x1318	Kaveri Radeon R5
 product ATI KAVERI_20		0x131b	Kaveri Radeon R4
 product ATI KAVERI_21		0x131c	Kaveri Radeon R7
 product ATI KAVERI_22		0x131d	Kaveri Radeon R6
-product ATI NAVI10_PPB_1	0x1478	Navi 10 PCIE
-product ATI NAVI10_PPB_2	0x1479	Navi 10 PCIE
+product ATI PPB_1		0x1478	PCIE
+product ATI PPB_2		0x1479	PCIE
 product ATI PICASSO		0x15d8	Picasso
 product ATI RAVEN_VEGA		0x15dd	Radeon Vega
 product ATI RAVEN_VEGA_HDA	0x15de	Radeon Vega HD Audio
@@ -2251,6 +2262,7 @@ product ATI RADEON_HD6400_HDA	0xaa98	Radeon HD 6400 Audio
 product ATI RADEON_HD7700_HDA	0xaab0	Radeon HD 7700 Audio
 product ATI RADEON_PRO_HDA	0xaae0	Radeon Pro Audio
 product ATI VEGA10_HDA_1	0xaaf8	Radeon Rx Vega HD Audio
+product ATI NAVI2X_HDA		0xab28	Navi 2x HD Audio
 product ATI NAVI10_HDA_1	0xab38	Navi 10 HD Audio
 product ATI RS100_AGP		0xcab0	RS100 AGP
 product ATI RS200_AGP		0xcab2	RS200 AGP
@@ -6630,6 +6642,9 @@ product MATROX MYST_G200_SD	0xff02	MGA Mystique G200 SD
 product MATROX MILL_G200_SG	0xff03	MGA Millennium G200 SG
 product MATROX MARV_G200_SD	0xff04	MGA Marvel G200 SD
 
+/* MediaTek products */
+product MEDIATEK MT7921		0x7961	MT7921
+
 /* Meinberg Funkuhren */
 product MEINBERG PCI32		0x0101	PCI32
 product MEINBERG PCI509		0x0102	PCI509
@@ -7976,6 +7991,7 @@ product SAMSUNG2 SM951_AHCI	0xa801	SM951 AHCI
 product SAMSUNG2 SM951_NVME	0xa802	SM951/PM951 NVMe
 product SAMSUNG2 SM961_NVME	0xa804	SM961/PM961 NVMe
 product SAMSUNG2 SM981_NVME	0xa808	SM981/PM981 NVMe
+product SAMSUNG2 PM991_NVME	0xa809	PM991 NVMe
 product SAMSUNG2 PM9A1_NVME	0xa80a	PM9A1 NVMe
 product SAMSUNG2 NVME_171X	0xa820	NVMe
 product SAMSUNG2 NVME_172X	0xa821	NVMe
