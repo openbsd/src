@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1974 2021/07/16 13:08:24 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1975 2021/07/18 05:02:08 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -265,6 +265,7 @@
 #define	PCI_VENDOR_AIRONET	0x14b9		/* Aironet */
 #define	PCI_VENDOR_GLOBESPAN	0x14bc		/* Globespan */
 #define	PCI_VENDOR_MYRICOM	0x14c1		/* Myricom */
+#define	PCI_VENDOR_MEDIATEK	0x14c3		/* MediaTek */
 #define	PCI_VENDOR_OXFORD	0x14d2		/* VScom */
 #define	PCI_VENDOR_AVLAB	0x14db		/* Avlab */
 #define	PCI_VENDOR_INVERTEX	0x14e1		/* Invertex */
@@ -837,9 +838,18 @@
 #define	PCI_PRODUCT_AMD_17_6X_RC	0x1630		/* 17h/6xh Root Complex */
 #define	PCI_PRODUCT_AMD_17_6X_IOMMU	0x1631		/* 17h/6xh IOMMU */
 #define	PCI_PRODUCT_AMD_17_6X_HB	0x1632		/* 17h/6xh Host */
-#define	PCI_PRODUCT_AMD_17_6X_PCIE_1	0x1634		/* 17h/6xh PCIE */
-#define	PCI_PRODUCT_AMD_17_6X_PCIE_2	0x1635		/* 17h/6xh PCIE */
+#define	PCI_PRODUCT_AMD_17_6X_PCIE_1	0x1633		/* 17h/6xh PCIE */
+#define	PCI_PRODUCT_AMD_17_6X_PCIE_2	0x1634		/* 17h/6xh PCIE */
+#define	PCI_PRODUCT_AMD_17_6X_PCIE_3	0x1635		/* 17h/6xh PCIE */
 #define	PCI_PRODUCT_AMD_17_6X_XHCI	0x1639		/* 17h/6xh xHCI */
+#define	PCI_PRODUCT_AMD_19_5X_DF_0	0x166a		/* 19h/5xh Data Fabric */
+#define	PCI_PRODUCT_AMD_19_5X_DF_1	0x166b		/* 19h/5xh Data Fabric */
+#define	PCI_PRODUCT_AMD_19_5X_DF_2	0x166c		/* 19h/5xh Data Fabric */
+#define	PCI_PRODUCT_AMD_19_5X_DF_3	0x166d		/* 19h/5xh Data Fabric */
+#define	PCI_PRODUCT_AMD_19_5X_DF_4	0x166e		/* 19h/5xh Data Fabric */
+#define	PCI_PRODUCT_AMD_19_5X_DF_5	0x166f		/* 19h/5xh Data Fabric */
+#define	PCI_PRODUCT_AMD_19_5X_DF_6	0x1670		/* 19h/5xh Data Fabric */
+#define	PCI_PRODUCT_AMD_19_5X_DF_7	0x1671		/* 19h/5xh Data Fabric */
 #define	PCI_PRODUCT_AMD_14_LINK	0x1700		/* 14h Link Cfg */
 #define	PCI_PRODUCT_AMD_14_ADDR	0x1701		/* 14h Address Map */
 #define	PCI_PRODUCT_AMD_14_DRAM	0x1702		/* 14h DRAM Cfg */
@@ -883,7 +893,8 @@
 #define	PCI_PRODUCT_AMD_400SERIES_PCIE_1	0x43c6		/* 400 Series PCIE */
 #define	PCI_PRODUCT_AMD_400SERIES_PCIE_2	0x43c7		/* 400 Series PCIE */
 #define	PCI_PRODUCT_AMD_400SERIES_AHCI	0x43c8		/* 400 Series AHCI */
-#define	PCI_PRODUCT_AMD_400SERIES_XHCI	0x43d0		/* 400 Series xHCI */
+#define	PCI_PRODUCT_AMD_400SERIES_XHCI_1	0x43d0		/* 400 Series xHCI */
+#define	PCI_PRODUCT_AMD_400SERIES_XHCI_2	0x43d1		/* 400 Series xHCI */
 #define	PCI_PRODUCT_AMD_500SERIES_PCIE_1	0x43e9		/* 500 Series PCIE */
 #define	PCI_PRODUCT_AMD_500SERIES_PCIE_2	0x43ea		/* 500 Series PCIE */
 #define	PCI_PRODUCT_AMD_500SERIES_AHCI	0x43eb		/* 500 Series AHCI */
@@ -1200,8 +1211,8 @@
 #define	PCI_PRODUCT_ATI_KAVERI_20	0x131b		/* Kaveri Radeon R4 */
 #define	PCI_PRODUCT_ATI_KAVERI_21	0x131c		/* Kaveri Radeon R7 */
 #define	PCI_PRODUCT_ATI_KAVERI_22	0x131d		/* Kaveri Radeon R6 */
-#define	PCI_PRODUCT_ATI_NAVI10_PPB_1	0x1478		/* Navi 10 PCIE */
-#define	PCI_PRODUCT_ATI_NAVI10_PPB_2	0x1479		/* Navi 10 PCIE */
+#define	PCI_PRODUCT_ATI_PPB_1	0x1478		/* PCIE */
+#define	PCI_PRODUCT_ATI_PPB_2	0x1479		/* PCIE */
 #define	PCI_PRODUCT_ATI_PICASSO	0x15d8		/* Picasso */
 #define	PCI_PRODUCT_ATI_RAVEN_VEGA	0x15dd		/* Radeon Vega */
 #define	PCI_PRODUCT_ATI_RAVEN_VEGA_HDA	0x15de		/* Radeon Vega HD Audio */
@@ -2256,6 +2267,7 @@
 #define	PCI_PRODUCT_ATI_RADEON_HD7700_HDA	0xaab0		/* Radeon HD 7700 Audio */
 #define	PCI_PRODUCT_ATI_RADEON_PRO_HDA	0xaae0		/* Radeon Pro Audio */
 #define	PCI_PRODUCT_ATI_VEGA10_HDA_1	0xaaf8		/* Radeon Rx Vega HD Audio */
+#define	PCI_PRODUCT_ATI_NAVI2X_HDA	0xab28		/* Navi 2x HD Audio */
 #define	PCI_PRODUCT_ATI_NAVI10_HDA_1	0xab38		/* Navi 10 HD Audio */
 #define	PCI_PRODUCT_ATI_RS100_AGP	0xcab0		/* RS100 AGP */
 #define	PCI_PRODUCT_ATI_RS200_AGP	0xcab2		/* RS200 AGP */
@@ -6635,6 +6647,9 @@
 #define	PCI_PRODUCT_MATROX_MILL_G200_SG	0xff03		/* MGA Millennium G200 SG */
 #define	PCI_PRODUCT_MATROX_MARV_G200_SD	0xff04		/* MGA Marvel G200 SD */
 
+/* MediaTek products */
+#define	PCI_PRODUCT_MEDIATEK_MT7921	0x7961		/* MT7921 */
+
 /* Meinberg Funkuhren */
 #define	PCI_PRODUCT_MEINBERG_PCI32	0x0101		/* PCI32 */
 #define	PCI_PRODUCT_MEINBERG_PCI509	0x0102		/* PCI509 */
@@ -7981,6 +7996,7 @@
 #define	PCI_PRODUCT_SAMSUNG2_SM951_NVME	0xa802		/* SM951/PM951 NVMe */
 #define	PCI_PRODUCT_SAMSUNG2_SM961_NVME	0xa804		/* SM961/PM961 NVMe */
 #define	PCI_PRODUCT_SAMSUNG2_SM981_NVME	0xa808		/* SM981/PM981 NVMe */
+#define	PCI_PRODUCT_SAMSUNG2_PM991_NVME	0xa809		/* PM991 NVMe */
 #define	PCI_PRODUCT_SAMSUNG2_PM9A1_NVME	0xa80a		/* PM9A1 NVMe */
 #define	PCI_PRODUCT_SAMSUNG2_NVME_171X	0xa820		/* NVMe */
 #define	PCI_PRODUCT_SAMSUNG2_NVME_172X	0xa821		/* NVMe */

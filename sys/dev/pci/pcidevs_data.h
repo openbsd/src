@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1974 2021/07/16 13:08:24 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1975 2021/07/18 05:02:08 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -1636,8 +1636,44 @@ static const struct pci_known_product pci_known_products[] = {
 	    "17h/6xh PCIE",
 	},
 	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_17_6X_PCIE_3,
+	    "17h/6xh PCIE",
+	},
+	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_17_6X_XHCI,
 	    "17h/6xh xHCI",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_5X_DF_0,
+	    "19h/5xh Data Fabric",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_5X_DF_1,
+	    "19h/5xh Data Fabric",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_5X_DF_2,
+	    "19h/5xh Data Fabric",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_5X_DF_3,
+	    "19h/5xh Data Fabric",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_5X_DF_4,
+	    "19h/5xh Data Fabric",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_5X_DF_5,
+	    "19h/5xh Data Fabric",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_5X_DF_6,
+	    "19h/5xh Data Fabric",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_5X_DF_7,
+	    "19h/5xh Data Fabric",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_14_LINK,
@@ -1812,7 +1848,11 @@ static const struct pci_known_product pci_known_products[] = {
 	    "400 Series AHCI",
 	},
 	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_400SERIES_XHCI,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_400SERIES_XHCI_1,
+	    "400 Series xHCI",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_400SERIES_XHCI_2,
 	    "400 Series xHCI",
 	},
 	{
@@ -2956,12 +2996,12 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Kaveri Radeon R6",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_NAVI10_PPB_1,
-	    "Navi 10 PCIE",
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_PPB_1,
+	    "PCIE",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_NAVI10_PPB_2,
-	    "Navi 10 PCIE",
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_PPB_2,
+	    "PCIE",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_PICASSO,
@@ -7178,6 +7218,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VEGA10_HDA_1,
 	    "Radeon Rx Vega HD Audio",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_NAVI2X_HDA,
+	    "Navi 2x HD Audio",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_NAVI10_HDA_1,
@@ -23728,6 +23772,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "MGA Marvel G200 SD",
 	},
 	{
+	    PCI_VENDOR_MEDIATEK, PCI_PRODUCT_MEDIATEK_MT7921,
+	    "MT7921",
+	},
+	{
 	    PCI_VENDOR_MEINBERG, PCI_PRODUCT_MEINBERG_PCI32,
 	    "PCI32",
 	},
@@ -28500,6 +28548,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "SM981/PM981 NVMe",
 	},
 	{
+	    PCI_VENDOR_SAMSUNG2, PCI_PRODUCT_SAMSUNG2_PM991_NVME,
+	    "PM991 NVMe",
+	},
+	{
 	    PCI_VENDOR_SAMSUNG2, PCI_PRODUCT_SAMSUNG2_PM9A1_NVME,
 	    "PM9A1 NVMe",
 	},
@@ -33138,6 +33190,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_MYRICOM,
 	    "Myricom",
+	},
+	{
+	    PCI_VENDOR_MEDIATEK,
+	    "MediaTek",
 	},
 	{
 	    PCI_VENDOR_OXFORD,
