@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.62 2021/05/12 02:24:56 mlarkin Exp $	*/
+/*	$OpenBSD: config.c,v 1.63 2021/07/18 11:55:45 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -208,6 +208,13 @@ config_getreset(struct vmd *env, struct imsg *imsg)
 	return (0);
 }
 
+/*
+ * config_setvm
+ *
+ * Configure a vm, opening any required file descriptors.
+ *
+ * Returns 0 on success, error code on failure.
+ */
 int
 config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 {
@@ -216,34 +223,25 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 	struct vmop_create_params *vmc = &vm->vm_params;
 	struct vm_create_params	*vcp = &vmc->vmc_params;
 	unsigned int		 i, j;
-	int			 fd = -1;
-	int			 kernfd = -1;
+	int			 fd = -1, cdromfd = -1, kernfd = -1;
 	int			*tapfds = NULL;
-	int			 cdromfd = -1;
-	int			 saved_errno = 0;
-	int			 n = 0, aflags, oflags;
+	int			 n = 0, aflags, oflags, ret = -1;
 	char			 ifname[IF_NAMESIZE], *s;
-	char			 path[PATH_MAX];
-	char			 base[PATH_MAX];
+	char			 path[PATH_MAX], base[PATH_MAX];
 	unsigned int		 unit;
 	struct timeval		 tv, rate, since_last;
 	struct vmop_addr_req	 var;
 
-	errno = 0;
-
 	if (vm->vm_state & VM_STATE_RUNNING) {
 		log_warnx("%s: vm is already running", __func__);
-		errno = EALREADY;
-		return (-1);
+		return (EALREADY);
 	}
 
 	/* increase the user reference counter and check user limits */
 	if (vm->vm_user != NULL && user_get(vm->vm_user->usr_id.uid) != NULL) {
 		user_inc(vcp, vm->vm_user, 1);
-		if (user_checklimit(vm->vm_user, vcp) == -1) {
-			errno = EPERM;
-			goto fail;
-		}
+		if (user_checklimit(vm->vm_user, vcp) == -1)
+			return (EPERM);
 	}
 
 	/*
@@ -273,8 +271,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 		if (vm->vm_start_limit >= VM_START_RATE_LIMIT) {
 			log_warnx("%s: vm %u restarted too quickly",
 			    __func__, vcp->vcp_id);
-			errno = EPERM;
-			goto fail;
+			return (EPERM);
 		}
 	}
 	vm->vm_start_tv = tv;
@@ -285,8 +282,9 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 
 	tapfds = reallocarray(NULL, vcp->vcp_nnics, sizeof(*tapfds));
 	if (tapfds == NULL) {
+		ret = errno;
 		log_warn("%s: can't allocate tap fds", __func__);
-		goto fail;
+		return (ret);
 	}
 	for (i = 0; i < vcp->vcp_nnics; i++)
 		tapfds[i] = -1;
@@ -294,10 +292,15 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 	vm->vm_peerid = peerid;
 	vm->vm_uid = uid;
 
+	/*
+	 * From here onward, all failures need cleanup and use goto fail
+	 */
+
 	if (!(vm->vm_state & VM_STATE_RECEIVED)) {
 		if (strlen(vcp->vcp_kernel)) {
 			/* Open external kernel for child */
 			if ((kernfd = open(vcp->vcp_kernel, O_RDONLY)) == -1) {
+				ret = errno;
 				log_warn("%s: can't open kernel or BIOS "
 				    "boot image %s", __func__, vcp->vcp_kernel);
 				goto fail;
@@ -313,7 +316,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 		if (kernfd == -1 &&
 		    (kernfd = open(VM_DEFAULT_BIOS, O_RDONLY)) == -1) {
 			log_warn("can't open %s", VM_DEFAULT_BIOS);
-			errno = VMD_BIOS_MISSING;
+			ret = VMD_BIOS_MISSING;
 			goto fail;
 		}
 
@@ -322,7 +325,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 		    uid, R_OK) == -1) {
 			log_warnx("vm \"%s\" no read access to kernel %s",
 			    vcp->vcp_name, vcp->vcp_kernel);
-			errno = EPERM;
+			ret = EPERM;
 			goto fail;
 		}
 	}
@@ -333,7 +336,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 		if ((cdromfd =
 		    open(vcp->vcp_cdrom, O_RDONLY)) == -1) {
 			log_warn("can't open cdrom %s", vcp->vcp_cdrom);
-			errno = VMD_CDROM_MISSING;
+			ret = VMD_CDROM_MISSING;
 			goto fail;
 		}
 
@@ -342,7 +345,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 		    uid, R_OK) == -1) {
 			log_warnx("vm \"%s\" no read access to cdrom %s",
 			    vcp->vcp_name, vcp->vcp_cdrom);
-			errno = EPERM;
+			ret = EPERM;
 			goto fail;
 		}
 	}
@@ -360,7 +363,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 			if ((diskfds[i][j] = open(path, oflags)) == -1) {
 				log_warn("can't open disk %s",
 				    vcp->vcp_disks[i]);
-				errno = VMD_DISK_MISSING;
+				ret = VMD_DISK_MISSING;
 				goto fail;
 			}
 
@@ -405,7 +408,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 			    strcmp(ifname, "tap") != 0) {
 				log_warnx("%s: invalid tap name %s",
 				    __func__, s);
-				errno = EINVAL;
+				ret = EINVAL;
 				goto fail;
 			}
 		} else
@@ -423,7 +426,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 			s = ifname;
 		}
 		if (tapfds[i] == -1) {
-			log_warn("%s: can't open tap %s", __func__, s);
+			log_warnx("%s: can't open tap %s", __func__, s);
 			goto fail;
 		}
 		if ((vif->vif_name = strdup(s)) == NULL) {
@@ -473,6 +476,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 	}
 
 	/* Send VM information */
+	/* XXX check proc_compose_imsg return values */
 	if (vm->vm_state & VM_STATE_RECEIVED)
 		proc_compose_imsg(ps, PROC_VMM, -1,
 		    IMSG_VMDOP_RECEIVE_VM_REQUEST, vm->vm_vmid, fd,  vmc,
@@ -518,7 +522,6 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 	return (0);
 
  fail:
-	saved_errno = errno;
 	log_warnx("failed to start vm %s", vcp->vcp_name);
 
 	if (kernfd != -1)
@@ -540,10 +543,8 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 	} else {
 		vm_remove(vm, __func__);
 	}
-	errno = saved_errno;
-	if (errno == 0)
-		errno = EINVAL;
-	return (-1);
+
+	return (ret);
 }
 
 int

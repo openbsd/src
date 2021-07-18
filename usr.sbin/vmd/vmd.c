@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.125 2021/05/05 21:33:11 dv Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.126 2021/07/18 11:55:45 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -116,11 +116,11 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 			res = errno;
 			cmd = IMSG_VMDOP_START_VM_RESPONSE;
 		}
-		if (res == 0 &&
-		    config_setvm(ps, vm,
-		    imsg->hdr.peerid, vm->vm_params.vmc_owner.uid) == -1) {
-			res = errno;
-			cmd = IMSG_VMDOP_START_VM_RESPONSE;
+		if (res == 0) {
+			res = config_setvm(ps, vm, imsg->hdr.peerid,
+			    vm->vm_params.vmc_owner.uid);
+			if (res)
+				cmd = IMSG_VMDOP_START_VM_RESPONSE;
 		}
 		break;
 	case IMSG_VMDOP_WAIT_VM_REQUEST:
