@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.66 2021/07/18 12:03:57 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.67 2021/07/18 12:21:49 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5172,6 +5172,17 @@ iwx_add_sta_cmd(struct iwx_softc *sc, struct iwx_node *in, int update)
 		add_sta_cmd.station_flags_msk
 		    |= htole32(IWX_STA_FLG_MAX_AGG_SIZE_MSK |
 		    IWX_STA_FLG_AGG_MPDU_DENS_MSK);
+
+		if (iwx_mimo_enabled(sc)) {
+			if (in->in_ni.ni_rxmcs[1] != 0) {
+				add_sta_cmd.station_flags |=
+				    htole32(IWX_STA_FLG_MIMO_EN_MIMO2);
+			}
+			if (in->in_ni.ni_rxmcs[2] != 0) {
+				add_sta_cmd.station_flags |=
+				    htole32(IWX_STA_FLG_MIMO_EN_MIMO3);
+			}
+		}
 
 		add_sta_cmd.station_flags
 		    |= htole32(IWX_STA_FLG_MAX_AGG_SIZE_64K);
