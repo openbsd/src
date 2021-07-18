@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.61 2021/06/30 18:17:21 schwarze Exp $
+.\" $OpenBSD: pledge.2,v 1.62 2021/07/18 23:02:57 kn Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 30 2021 $
+.Dd $Mdocdate: July 18 2021 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -109,19 +109,19 @@ and
 operations are allowed by default.
 Various ioctl requests are allowed against specific file descriptors
 based upon the requests
-.Va audio ,
-.Va bpf ,
-.Va disklabel ,
-.Va drm ,
-.Va inet ,
-.Va pf ,
-.Va route ,
-.Va wroute ,
-.Va tape ,
-.Va tty ,
-.Va video ,
+.Cm audio ,
+.Cm bpf ,
+.Cm disklabel ,
+.Cm drm ,
+.Cm inet ,
+.Cm pf ,
+.Cm route ,
+.Cm wroute ,
+.Cm tape ,
+.Cm tty ,
+.Cm video ,
 and
-.Va vmm .
+.Cm vmm .
 .It Xo
 .Xr mmap 2
 and
@@ -153,7 +153,7 @@ The
 .Fa promises
 argument is specified as a string, with space separated keywords:
 .Bl -tag -width "prot_exec" -offset indent
-.It Va stdio
+.It Cm stdio
 The following system calls are permitted.
 .Xr sendto 2
 is only permitted if its destination socket address is
@@ -229,7 +229,7 @@ As a result, all the expected functionalities of libc stdio work.
 .Xr wait4 2 ,
 .Xr write 2 ,
 .Xr writev 2
-.It Va rpath
+.It Cm rpath
 A number of system calls are allowed if they only cause
 read-only effects on the filesystem:
 .Pp
@@ -250,7 +250,7 @@ read-only effects on the filesystem:
 .Xr fchownat 2 ,
 .Xr fstat 2 ,
 .Xr getfsstat 2
-.It Va wpath
+.It Cm wpath
 A number of system calls are allowed and may cause
 write-effects on the filesystem:
 .Pp
@@ -269,7 +269,7 @@ write-effects on the filesystem:
 .Xr fchown 2 ,
 .Xr fchownat 2 ,
 .Xr fstat 2
-.It Va cpath
+.It Cm cpath
 A number of system calls and sub-modes are allowed, which may
 create new files or directories in the filesystem:
 .Pp
@@ -284,12 +284,12 @@ create new files or directories in the filesystem:
 .Xr mkdir 2 ,
 .Xr mkdirat 2 ,
 .Xr rmdir 2
-.It Va dpath
+.It Cm dpath
 A number of system calls are allowed to create special files:
 .Pp
 .Xr mkfifo 2 ,
 .Xr mknod 2
-.It Va tmppath
+.It Cm tmppath
 A number of system calls are allowed to do operations in the
 .Pa /tmp
 directory, including create, read, or write:
@@ -300,7 +300,7 @@ directory, including create, read, or write:
 .Xr chown 2 ,
 .Xr unlink 2 ,
 .Xr fstat 2
-.It Va inet
+.It Cm inet
 The following system calls are allowed to operate in the
 .Dv AF_INET
 and
@@ -320,13 +320,13 @@ has been substantially reduced in functionality):
 .Xr getsockname 2 ,
 .Xr setsockopt 2 ,
 .Xr getsockopt 2
-.It Va mcast
+.It Cm mcast
 In combination with
-.Va inet
+.Cm inet
 give back functionality to
 .Xr setsockopt 2
 for operating on multicast sockets.
-.It Va fattr
+.It Cm fattr
 The following system calls are allowed to make explicit changes
 to fields in
 .Vt struct stat
@@ -346,11 +346,11 @@ relating to a file:
 .Xr lchown 2 ,
 .Xr fchown 2 ,
 .Xr utimes 2
-.It Va chown
+.It Cm chown
 The
 .Xr chown 2
 family is allowed to change the user or group on a file.
-.It Va flock
+.It Cm flock
 File locking via
 .Xr fcntl 2 ,
 .Xr flock 2 ,
@@ -360,7 +360,7 @@ and
 is allowed.
 No distinction is made between shared and exclusive locks.
 This promise is required for unlock as well as lock.
-.It Va unix
+.It Cm unix
 The following system calls are allowed to operate in the
 .Dv AF_UNIX
 domain:
@@ -375,7 +375,7 @@ domain:
 .Xr getsockname 2 ,
 .Xr setsockopt 2 ,
 .Xr getsockopt 2
-.It Va dns
+.It Cm dns
 Subsequent to a successful
 .Xr open 2
 of
@@ -386,7 +386,7 @@ a few system calls become able to allow DNS network transactions:
 .Xr recvfrom 2 ,
 .Xr socket 2 ,
 .Xr connect 2
-.It Va getpw
+.It Cm getpw
 This allows read-only opening of files in
 .Pa /etc
 for the
@@ -403,32 +403,32 @@ environment, so a successful
 of
 .Pa /var/run/ypbind.lock
 enables
-.Va inet
+.Cm inet
 operations.
-.It Va sendfd
+.It Cm sendfd
 Allows sending of file descriptors using
 .Xr sendmsg 2 .
 File descriptors referring to directories may not be passed.
-.It Va recvfd
+.It Cm recvfd
 Allows receiving of file descriptors using
 .Xr recvmsg 2 .
 File descriptors referring to directories may not be passed.
-.It Va tape
+.It Cm tape
 Allow
 .Dv MTIOCGET
 and
 .Dv MTIOCTOP
 operations against tape drives.
-.It Va tty
+.It Cm tty
 In addition to allowing read-write operations on
 .Pa /dev/tty ,
 this opens up a variety of
 .Xr ioctl 2
 requests used by tty devices.
 If
-.Va tty
+.Cm tty
 is accompanied with
-.Va rpath ,
+.Cm rpath ,
 .Xr revoke 2
 is permitted.
 Otherwise only the following
@@ -446,7 +446,7 @@ requests are permitted:
 .Dv TIOCSETAW ,
 .Dv TIOCSETAF ,
 .Dv TIOCUCNTL
-.It Va proc
+.It Cm proc
 Allows the following process relationship operations:
 .Pp
 .Xr fork 2 ,
@@ -457,11 +457,11 @@ Allows the following process relationship operations:
 .Xr setrlimit 2 ,
 .Xr setpgid 2 ,
 .Xr setsid 2
-.It Va exec
+.It Cm exec
 Allows a process to call
 .Xr execve 2 .
 Coupled with the
-.Va proc
+.Cm proc
 promise, this allows a process to fork and execute another program.
 If
 .Fa execpromises
@@ -470,27 +470,27 @@ unless setuid/setgid bits are set in which case execution is blocked with
 .Er EACCES .
 Otherwise the new program starts running without pledge active,
 and hopefully makes a new pledge soon.
-.It Va prot_exec
+.It Cm prot_exec
 Allows the use of
 .Dv PROT_EXEC
 with
 .Xr mmap 2
 and
 .Xr mprotect 2 .
-.It Va settime
+.It Cm settime
 Allows the setting of system time, via the
 .Xr settimeofday 2 ,
 .Xr adjtime 2 ,
 and
 .Xr adjfreq 2
 system calls.
-.It Va ps
+.It Cm ps
 Allows enough
 .Xr sysctl 2
 interfaces to allow inspection of processes operating on the system using
 programs like
 .Xr ps 1 .
-.It Va vminfo
+.It Cm vminfo
 Allows enough
 .Xr sysctl 2
 interfaces to allow inspection of the system's virtual memory by
@@ -498,7 +498,7 @@ programs like
 .Xr top 1
 and
 .Xr vmstat 8 .
-.It Va id
+.It Cm id
 Allows the following system calls which can change the rights of a
 process:
 .Pp
@@ -515,7 +515,7 @@ process:
 .Xr setrlimit 2 ,
 .Xr getpriority 2 ,
 .Xr setpriority 2
-.It Va pf
+.It Cm pf
 Allows a subset of
 .Xr ioctl 2
 operations on the
@@ -533,11 +533,11 @@ device:
 .Dv DIOCRSETADDRS ,
 .Dv DIOCXBEGIN ,
 .Dv DIOCXCOMMIT
-.It Va route
+.It Cm route
 Allow inspection of the routing table.
-.It Va wroute
+.It Cm wroute
 Allow changes to the routing table.
-.It Va audio
+.It Cm audio
 Allows a subset of
 .Xr ioctl 2
 operations on
@@ -555,7 +555,7 @@ for more information):
 .Dv AUDIO_MIXER_DEVINFO ,
 .Dv AUDIO_MIXER_READ ,
 .Dv AUDIO_MIXER_WRITE
-.It Va video
+.It Cm video
 Allows a subset of
 .Xr ioctl 2
 operations on
@@ -579,17 +579,17 @@ devices:
 .Dv VIDIOC_STREAMON ,
 .Dv VIDIOC_TRY_FMT ,
 .Dv VIDIOC_REQBUFS
-.It Va bpf
+.It Cm bpf
 Allow
 .Dv BIOCGSTATS
 operation for statistics collection from a
 .Xr bpf 4
 device.
-.It Va unveil
+.It Cm unveil
 Allow
 .Xr unveil 2
 to be called.
-.It Va error
+.It Cm error
 Rather than killing the process upon violation, indicate error with
 .Er ENOSYS .
 .Pp
