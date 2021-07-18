@@ -1,4 +1,4 @@
-/* $OpenBSD: mdoc_validate.c,v 1.303 2020/10/30 13:24:26 schwarze Exp $ */
+/* $OpenBSD: mdoc_validate.c,v 1.304 2021/07/18 11:40:58 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -162,7 +162,7 @@ static	const v_post mdoc_valids[MDOC_MAX - MDOC_Dd] = {
 	post_defaults,	/* Pa */
 	post_rv,	/* Rv */
 	post_st,	/* St */
-	post_delim_nb,	/* Va */
+	post_tag,	/* Va */
 	post_delim_nb,	/* Vt */
 	post_xr,	/* Xr */
 	NULL,		/* %A */
