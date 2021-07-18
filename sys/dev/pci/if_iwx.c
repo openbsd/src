@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.68 2021/07/18 12:39:16 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.69 2021/07/18 13:07:13 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5334,7 +5334,12 @@ iwx_umac_scan_fill_channels(struct iwx_softc *sc,
 			chan->v1.iter_count = 1;
 			chan->v1.iter_interval = htole16(0);
 		}
-		if (n_ssids != 0 && !bgscan)
+		/*
+		 * Firmware may become unresponsive when asked to send
+		 * a directed probe request on a passive channel.
+		 */
+		if (n_ssids != 0 && !bgscan &&
+		    (c->ic_flags & IEEE80211_CHAN_PASSIVE) == 0)
 			chan->flags = htole32(1 << 0); /* select SSID 0 */
 		chan++;
 		nchan++;
