@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.124 2021/07/17 21:47:56 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.125 2021/07/18 12:41:00 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -163,10 +163,9 @@ main(int argc, char *argv[])
 	if (pledge("stdio rpath wpath disklabel proc exec", NULL) == -1)
 		err(1, "pledge");
 
-	error = MBR_read(0, &dos_mbr);
+	error = MBR_read(0, 0, &mbr);
 	if (error)
-		errx(1, "Can't read sector 0!");
-	MBR_parse(&dos_mbr, 0, 0, &mbr);
+		errx(1, "Can't read MBR!");
 
 	/* Get the GPT if present. Either primary or secondary is ok. */
 	efi = MBR_protective_mbr(&mbr);
