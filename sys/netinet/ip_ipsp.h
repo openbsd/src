@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.202 2021/07/18 14:38:20 bluhm Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.203 2021/07/18 18:19:22 mvs Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -226,13 +226,14 @@ struct ipsec_id {
 };
 
 struct ipsec_ids {
+	LIST_ENTRY(ipsec_ids)	id_gc_list;
 	RBT_ENTRY(ipsec_ids)	id_node_id;
 	RBT_ENTRY(ipsec_ids)	id_node_flow;
 	struct ipsec_id		*id_local;
 	struct ipsec_id		*id_remote;
 	u_int32_t		id_flow;
 	int			id_refcount;
-	struct timeout		id_timeout;
+	u_int			id_gc_ttl;
 };
 RBT_HEAD(ipsec_ids_flows, ipsec_ids);
 RBT_HEAD(ipsec_ids_tree, ipsec_ids);

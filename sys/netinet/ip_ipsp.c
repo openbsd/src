@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.240 2021/07/08 21:07:19 bluhm Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.241 2021/07/18 18:19:22 mvs Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -105,7 +105,13 @@ struct ipsec_ids_flows ipsec_ids_flows;
 struct ipsec_policy_head ipsec_policy_head =
     TAILQ_HEAD_INITIALIZER(ipsec_policy_head);
 
-void ipsp_ids_timeout(void *);
+void ipsp_ids_gc(void *);
+
+LIST_HEAD(, ipsec_ids) ipsp_ids_gc_list =
+    LIST_HEAD_INITIALIZER(ipsp_ids_gc_list);
+struct timeout ipsp_ids_gc_timeout =
+    TIMEOUT_INITIALIZER_FLAGS(ipsp_ids_gc, NULL, TIMEOUT_PROC);
+
 static inline int ipsp_ids_cmp(const struct ipsec_ids *,
     const struct ipsec_ids *);
 static inline int ipsp_ids_flow_cmp(const struct ipsec_ids *,
@@ -987,10 +993,13 @@ ipsp_ids_insert(struct ipsec_ids *ids)
 	found = RBT_INSERT(ipsec_ids_tree, &ipsec_ids_tree, ids);
 	if (found) {
 		/* if refcount was zero, then timeout is running */
-		if (found->id_refcount++ == 0)
-			timeout_del(&found->id_timeout);
-		DPRINTF("ids %p count %d",
-		    found, found->id_refcount);
+		if (found->id_refcount++ == 0) {
+			LIST_REMOVE(found, id_gc_list);
+
+			if (LIST_EMPTY(&ipsp_ids_gc_list))
+				timeout_del(&ipsp_ids_gc_timeout);
+		}
+		DPRINTF("ids %p count %d", found, found->id_refcount);
 		return found;
 	}
 	ids->id_flow = start_flow = ipsec_ids_next_flow;
@@ -1008,7 +1017,6 @@ ipsp_ids_insert(struct ipsec_ids *ids)
 	}
 	ids->id_refcount = 1;
 	DPRINTF("new ids %p flow %u", ids, ids->id_flow);
-	timeout_set_proc(&ids->id_timeout, ipsp_ids_timeout, ids);
 	return ids;
 }
 
@@ -1025,34 +1033,58 @@ ipsp_ids_lookup(u_int32_t ipsecflowinfo)
 
 /* free ids only from delayed timeout */
 void
-ipsp_ids_timeout(void *arg)
+ipsp_ids_gc(void *arg)
 {
-	struct ipsec_ids *ids = arg;
-
-	DPRINTF("ids %p count %d", ids, ids->id_refcount);
-	KASSERT(ids->id_refcount == 0);
+	struct ipsec_ids *ids, *tids;
 
 	NET_LOCK();
-	RBT_REMOVE(ipsec_ids_tree, &ipsec_ids_tree, ids);
-	RBT_REMOVE(ipsec_ids_flows, &ipsec_ids_flows, ids);
-	free(ids->id_local, M_CREDENTIALS, 0);
-	free(ids->id_remote, M_CREDENTIALS, 0);
-	free(ids, M_CREDENTIALS, 0);
+
+	LIST_FOREACH_SAFE(ids, &ipsp_ids_gc_list, id_gc_list, tids) {
+		KASSERT(ids->id_refcount == 0);
+		DPRINTF("ids %p count %d", ids, ids->id_refcount);
+
+		if ((--ids->id_gc_ttl) > 0)
+			continue;
+
+		LIST_REMOVE(ids, id_gc_list);
+		RBT_REMOVE(ipsec_ids_tree, &ipsec_ids_tree, ids);
+		RBT_REMOVE(ipsec_ids_flows, &ipsec_ids_flows, ids);
+		free(ids->id_local, M_CREDENTIALS, 0);
+		free(ids->id_remote, M_CREDENTIALS, 0);
+		free(ids, M_CREDENTIALS, 0);
+	}
+
+	if (!LIST_EMPTY(&ipsp_ids_gc_list))
+		timeout_add_sec(&ipsp_ids_gc_timeout, 1);
+
 	NET_UNLOCK();
 }
 
-/* decrements refcount, actual free happens in timeout */
+/* decrements refcount, actual free happens in gc */
 void
 ipsp_ids_free(struct ipsec_ids *ids)
 {
+	NET_ASSERT_LOCKED();
+
 	/*
 	 * If the refcount becomes zero, then a timeout is started. This
 	 * timeout must be cancelled if refcount is increased from zero.
 	 */
 	DPRINTF("ids %p count %d", ids, ids->id_refcount);
 	KASSERT(ids->id_refcount > 0);
-	if (--ids->id_refcount == 0)
-		timeout_add_sec(&ids->id_timeout, ipsec_ids_idle);
+
+	if (--ids->id_refcount > 0)
+		return;
+
+	/* 
+	 * Add second for the case ipsp_ids_gc() is already running and
+	 * awaits netlock to be released.
+	 */
+	ids->id_gc_ttl = ipsec_ids_idle + 1;
+
+	if (LIST_EMPTY(&ipsp_ids_gc_list))
+		timeout_add_sec(&ipsp_ids_gc_timeout, 1);
+	LIST_INSERT_HEAD(&ipsp_ids_gc_list, ids, id_gc_list);
 }
 
 static int
