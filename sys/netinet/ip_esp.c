@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.168 2021/07/16 15:08:39 bluhm Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.169 2021/07/18 14:38:20 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -388,7 +388,7 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 		    &btsx);
 		btsx = ntohl(btsx);
 
-		switch (checkreplaywindow(tdb, btsx, &esn, 0)) {
+		switch (checkreplaywindow(tdb, tdb->tdb_rpl, btsx, &esn, 0)) {
 		case 0: /* All's well */
 			break;
 		case 1:
@@ -511,6 +511,7 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	tc->tc_proto = tdb->tdb_sproto;
 	tc->tc_rdomain = tdb->tdb_rdomain;
 	tc->tc_dst = tdb->tdb_dst;
+	tc->tc_rpl = tdb->tdb_rpl;
 
 	/* Decryption descriptor */
 	if (espx) {
@@ -549,6 +550,7 @@ esp_input_cb(struct tdb *tdb, struct tdb_crypto *tc, struct mbuf *m, int clen)
 	int hlen, roff, skip, protoff;
 	struct mbuf *m1, *mo;
 	const struct auth_hash *esph;
+	u_int64_t rpl;
 	u_int32_t btsx, esn;
 	caddr_t ptr;
 #ifdef ENCDEBUG
@@ -557,6 +559,7 @@ esp_input_cb(struct tdb *tdb, struct tdb_crypto *tc, struct mbuf *m, int clen)
 
 	skip = tc->tc_skip;
 	protoff = tc->tc_protoff;
+	rpl = tc->tc_rpl;
 
 	NET_ASSERT_LOCKED();
 
@@ -590,7 +593,7 @@ esp_input_cb(struct tdb *tdb, struct tdb_crypto *tc, struct mbuf *m, int clen)
 		    &btsx);
 		btsx = ntohl(btsx);
 
-		switch (checkreplaywindow(tdb, btsx, &esn, 1)) {
+		switch (checkreplaywindow(tdb, rpl, btsx, &esn, 1)) {
 		case 0: /* All's well */
 #if NPFSYNC > 0
 			pfsync_update_tdb(tdb,0);
@@ -1049,14 +1052,15 @@ esp_output_cb(struct tdb *tdb, struct tdb_crypto *tc, struct mbuf *m, int ilen,
  * return 3 for packet within current window but already received
  */
 int
-checkreplaywindow(struct tdb *tdb, u_int32_t seq, u_int32_t *seqh, int commit)
+checkreplaywindow(struct tdb *tdb, u_int64_t t, u_int32_t seq, u_int32_t *seqh,
+    int commit)
 {
 	u_int32_t	tl, th, wl;
 	u_int32_t	packet, window = TDB_REPLAYMAX - TDB_REPLAYWASTE;
 	int		idx, esn = tdb->tdb_flags & TDBF_ESN;
 
-	tl = (u_int32_t)tdb->tdb_rpl;
-	th = (u_int32_t)(tdb->tdb_rpl >> 32);
+	tl = (u_int32_t)t;
+	th = (u_int32_t)(t >> 32);
 
 	/* Zero SN is not allowed */
 	if ((esn && seq == 0 && tl <= AH_HMAC_INITIAL_RPL && th == 0) ||

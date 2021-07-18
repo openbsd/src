@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.150 2021/07/08 21:07:19 bluhm Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.151 2021/07/18 14:38:20 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -550,7 +550,7 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 		    sizeof(u_int32_t), &btsx);
 		btsx = ntohl(btsx);
 
-		switch (checkreplaywindow(tdb, btsx, &esn, 0)) {
+		switch (checkreplaywindow(tdb, tdb->tdb_rpl, btsx, &esn, 0)) {
 		case 0: /* All's well. */
 			break;
 		case 1:
@@ -697,6 +697,7 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	tc->tc_proto = tdb->tdb_sproto;
 	tc->tc_rdomain = tdb->tdb_rdomain;
 	memcpy(&tc->tc_dst, &tdb->tdb_dst, sizeof(union sockaddr_union));
+	tc->tc_rpl = tdb->tdb_rpl;
 
 	KERNEL_LOCK();
 	error = crypto_dispatch(crp);
@@ -715,6 +716,7 @@ ah_input_cb(struct tdb *tdb, struct tdb_crypto *tc, struct mbuf *m, int clen)
 {
 	const struct auth_hash *ahx = tdb->tdb_authalgxform;
 	int roff, rplen, skip, protoff;
+	u_int64_t rpl;
 	u_int32_t btsx, esn;
 	caddr_t ptr;
 	unsigned char calc[AH_ALEN_MAX];
@@ -727,6 +729,7 @@ ah_input_cb(struct tdb *tdb, struct tdb_crypto *tc, struct mbuf *m, int clen)
 
 	skip = tc->tc_skip;
 	protoff = tc->tc_protoff;
+	rpl = tc->tc_rpl;
 
 	rplen = AH_FLENGTH + sizeof(u_int32_t);
 
@@ -756,7 +759,7 @@ ah_input_cb(struct tdb *tdb, struct tdb_crypto *tc, struct mbuf *m, int clen)
 		    sizeof(u_int32_t), &btsx);
 		btsx = ntohl(btsx);
 
-		switch (checkreplaywindow(tdb, btsx, &esn, 1)) {
+		switch (checkreplaywindow(tdb, rpl, btsx, &esn, 1)) {
 		case 0: /* All's well. */
 #if NPFSYNC > 0
 			pfsync_update_tdb(tdb,0);
