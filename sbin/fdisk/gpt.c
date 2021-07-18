@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.45 2021/07/16 13:29:49 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.46 2021/07/18 15:28:37 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -30,6 +30,7 @@
 
 #include "part.h"
 #include "disk.h"
+#include "mbr.h"
 #include "misc.h"
 #include "gpt.h"
 
@@ -202,35 +203,45 @@ get_partition_table(void)
 	return 0;
 }
 
-void
+int
 GPT_read(const int which)
 {
-	int			valid;
+	struct mbr		mbr;
+	int			error;
+
+	error = MBR_read(0, 0, &mbr);
+	if (error == 0)
+		error = MBR_protective_mbr(&mbr);
+	if (error)
+		goto done;
 
 	switch (which) {
 	case PRIMARYGPT:
-		valid = get_header(GPTSECTOR);
+		error = get_header(GPTSECTOR);
 		break;
 	case SECONDARYGPT:
-		valid = get_header(DL_GETDSIZE(&dl) - 1);
+		error = get_header(DL_GETDSIZE(&dl) - 1);
 		break;
 	case ANYGPT:
-		valid = get_header(GPTSECTOR);
-		if (valid != 0 || get_partition_table() != 0)
-			valid = get_header(DL_GETDSIZE(&dl) - 1);
+		error = get_header(GPTSECTOR);
+		if (error != 0 || get_partition_table() != 0)
+			error = get_header(DL_GETDSIZE(&dl) - 1);
 		break;
 	default:
-		return;
+		return -1;
 	}
 
-	if (valid == 0)
-		valid = get_partition_table();
+	if (error == 0)
+		error = get_partition_table();
 
-	if (valid != 0) {
+ done:
+	if (error != 0) {
 		/* No valid GPT found. Zap any artifacts. */
 		memset(&gh, 0, sizeof(gh));
 		memset(&gp, 0, sizeof(gp));
 	}
+
+	return error;
 }
 
 void

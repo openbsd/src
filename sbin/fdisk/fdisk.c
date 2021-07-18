@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.125 2021/07/18 12:41:00 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.126 2021/07/18 15:28:37 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -167,11 +167,6 @@ main(int argc, char *argv[])
 	if (error)
 		errx(1, "Can't read MBR!");
 
-	/* Get the GPT if present. Either primary or secondary is ok. */
-	efi = MBR_protective_mbr(&mbr);
-	if (efi != -1)
-		GPT_read(ANYGPT);
-
 	/* Create initial/default MBR. */
 	if (mbrfile == NULL) {
 		memcpy(&dos_mbr, builtin_mbr, sizeof(dos_mbr));
@@ -195,7 +190,7 @@ main(int argc, char *argv[])
 
 	query = NULL;
 	if (A_flag) {
-		if (letoh64(gh.gh_sig) != GPTSIGNATURE)
+		if (GPT_read(ANYGPT))
 			errx(1, "-A requires a valid GPT");
 		else {
 			initial_mbr = mbr;	/* Keep current MBR. */
