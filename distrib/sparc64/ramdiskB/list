@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.54 2019/06/07 14:39:57 deraadt Exp $
+#	$OpenBSD: list,v 1.55 2021/07/18 15:18:49 deraadt Exp $
 
 SRCDIRS distrib/special
 
@@ -69,7 +69,6 @@ COPY	${CURDIR}/../../miniroot/services	etc/services
 TERMCAP	vt100,vt220,dumb,sun			usr/share/misc/termcap
 
 SYMLINK	/tmp/i/fstab.shadow			etc/fstab
-SYMLINK	/tmp/i/resolv.conf.shadow		etc/resolv.conf
 SYMLINK	/tmp/i/hosts				etc/hosts
 
 # and the installation tools
