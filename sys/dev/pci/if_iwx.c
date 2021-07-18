@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.64 2021/07/18 11:40:31 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.65 2021/07/18 11:56:11 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -7201,7 +7201,8 @@ iwx_send_soc_conf(struct iwx_softc *sc)
 			    IWX_SOC_FLAGS_LTR_APPLY_DELAY_MASK);
 		scan_cmd_ver = iwx_lookup_cmd_ver(sc, IWX_LONG_GROUP,
 		    IWX_SCAN_REQ_UMAC);
-		if (scan_cmd_ver >= 2 && sc->sc_low_latency_xtal)
+		if (scan_cmd_ver != IWX_FW_CMD_VER_UNKNOWN &&
+		    scan_cmd_ver >= 2 && sc->sc_low_latency_xtal)
 			flags |= IWX_SOC_CONFIG_CMD_FLAGS_LOW_LATENCY;
 	}
 	cmd.flags = htole32(flags);
