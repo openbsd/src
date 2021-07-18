@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.169 2021/05/16 06:46:57 paco Exp $
+.\"	$OpenBSD: afterboot.8,v 1.170 2021/07/18 17:44:46 kn Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 16 2021 $
+.Dd $Mdocdate: July 18 2021 $
 .Dt AFTERBOOT 8
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
 .Os
@@ -201,11 +201,6 @@ and
 .Ic route delete
 commands (see
 .Xr route 8 ) .
-If you run
-.Xr dhclient 8
-you will have to kill it by running
-.Ic pkill dhclient
-after you flush the routes.
 .Pp
 If you wish to route packets between interfaces, add one or both
 of the following directives (depending on whether IPv4 or IPv6 routing
@@ -227,14 +222,10 @@ Most likely, the IP address of at least one domain name server
 was added to
 .Xr resolv.conf 5
 while installing the system.
-If DHCP is in use, it will overwrite
+.Xr resolvd 8
+maintains
 .Pa /etc/resolv.conf
-every time
-.Xr dhclient 8
-is run but
-.Pa /etc/resolv.conf.tail
-can be used to add options and extra name servers to those received
-dynamically.
+at runtime.
 .Pp
 A
 .Xr hosts 5
