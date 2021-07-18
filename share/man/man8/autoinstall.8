@@ -1,4 +1,4 @@
-.\"     $OpenBSD: autoinstall.8,v 1.22 2019/04/27 22:30:39 tj Exp $
+.\"     $OpenBSD: autoinstall.8,v 1.23 2021/07/18 11:08:34 kn Exp $
 .\"
 .\" Copyright (c) 2013 Robert Peichaer <rpe@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 27 2019 $
+.Dd $Mdocdate: July 18 2021 $
 .Dt AUTOINSTALL 8
 .Os
 .Sh NAME
@@ -71,23 +71,15 @@ for install answers, or one of
 or
 .Ar hostname Ns - Ns Pa upgrade.conf
 for upgrade answers.
+.Pp
 The URL used to fetch the file is constructed from
-.Xr dhcpd.conf 5
-statements extracted from the
-.Xr dhclient 8
-lease file.
-One of the statements
-.Ic server-name ,
-.Ic option tftp-server-name ,
-or
+.Xr dhcp-options 5
+statements extracted from the DHCP lease file.
 .Ic next-server
-(in that order of priority) specify the
+specifies the
 .Ar server .
-One of the statements
 .Ic filename
-or
-.Ic option bootfile-name
-(in that order of priority) specify the
+specifies the
 .Ar filename .
 The statement
 .Ic option host-name
@@ -241,6 +233,7 @@ host foo {
 }
 .Ed
 .Sh SEE ALSO
+.Xr dhcp-options 5 ,
 .Xr dhcpd.conf 5 ,
 .Xr diskless 8
 .Sh HISTORY
