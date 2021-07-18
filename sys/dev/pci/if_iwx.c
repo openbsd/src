@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.65 2021/07/18 11:56:11 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.66 2021/07/18 12:03:57 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -7349,9 +7349,11 @@ iwx_init_hw(struct iwx_softc *sc)
 	if (err)
 		return err;
 
-	err = iwx_send_dqa_cmd(sc);
-	if (err)
-		return err;
+	if (isset(sc->sc_enabled_capa, IWX_UCODE_TLV_CAPA_DQA_SUPPORT)) {
+		err = iwx_send_dqa_cmd(sc);
+		if (err)
+			return err;
+	}
 
 	/* Add auxiliary station for scanning */
 	err = iwx_add_aux_sta(sc);
