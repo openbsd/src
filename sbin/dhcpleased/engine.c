@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.18 2021/07/12 15:09:18 beck Exp $	*/
+/*	$OpenBSD: engine.c,v 1.19 2021/07/18 12:33:41 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -613,7 +613,7 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 	uint32_t		 rebinding_time = 0;
 	uint8_t			*p, dho = DHO_PAD, dho_len;
 	uint8_t			 dhcp_message_type = 0;
-	int			 routes_len = 0;
+	int			 routes_len = 0, routers = 0, csr = 0;
 	char			 from[sizeof("xx:xx:xx:xx:xx:xx")];
 	char			 to[sizeof("xx:xx:xx:xx:xx:xx")];
 	char			 hbuf_src[INET_ADDRSTRLEN];
@@ -836,19 +836,28 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 			if (dho_len % sizeof(routes[routes_len].gw) != 0)
 				goto wrong_length;
 
-			while (routes_len < MAX_DHCP_ROUTES && dho_len > 0) {
-				memcpy(&routes[routes_len].gw, p,
-				    sizeof(routes[routes_len].gw));
-				if (log_getverbose() > 1) {
-					log_debug("DHO_ROUTER: %s",
-					    inet_ntop(AF_INET,
-					    &routes[routes_len].gw, hbuf,
-					    sizeof(hbuf)));
+			/*
+			 * Ignore routers option if classless static routes
+			 * are present (RFC3442).
+			 */
+			if (!csr) {
+				routers = 1;
+				while (routes_len < MAX_DHCP_ROUTES &&
+				    dho_len > 0) {
+					memcpy(&routes[routes_len].gw, p,
+					    sizeof(routes[routes_len].gw));
+					if (log_getverbose() > 1) {
+						log_debug("DHO_ROUTER: %s",
+						    inet_ntop(AF_INET,
+						    &routes[routes_len].gw,
+						    hbuf, sizeof(hbuf)));
+					}
+					p += sizeof(routes[routes_len].gw);
+					rem -= sizeof(routes[routes_len].gw);
+					dho_len -=
+					    sizeof(routes[routes_len].gw);
+					routes_len++;
 				}
-				p += sizeof(routes[routes_len].gw);
-				rem -= sizeof(routes[routes_len].gw);
-				dho_len -= sizeof(routes[routes_len].gw);
-				routes_len++;
 			}
 			if (dho_len != 0) {
 				/* ignore > MAX_DHCP_ROUTES routes */
@@ -939,6 +948,15 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 		case DHO_CLASSLESS_STATIC_ROUTES: {
 			int	prefixlen, compressed_prefixlen;
 
+			csr = 1;
+			if (routers) {
+				/*
+				 * Ignore routers option if classless static
+				 * routes are present (RFC3442).
+				 */
+				routers = 0;
+				routes_len = 0;
+			}
 			while (routes_len < MAX_DHCP_ROUTES && dho_len > 0) {
 				prefixlen = *p;
 				p += 1;
