@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.126 2021/07/18 15:28:37 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.127 2021/07/19 19:46:20 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -45,6 +45,7 @@ static unsigned char		builtin_mbr[] = {
 int			A_flag, y_flag;
 
 void			parse_bootprt(const char *);
+void			get_default_mbr(const char *, struct mbr *);
 
 static void
 usage(void)
@@ -61,15 +62,13 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	struct dos_mbr		 dos_mbr;
 	struct mbr		 mbr;
 #ifdef HAS_MBR
 	char			*mbrfile = _PATH_MBR;
 #else
 	char			*mbrfile = NULL;
 #endif
-	ssize_t			 len;
-	int			 ch, fd, efi, error;
+	int			 ch, error;
 	int			 e_flag = 0, g_flag = 0, i_flag = 0, u_flag = 0;
 	int			 verbosity = TERSE;
 	int			 oflags = O_RDONLY;
@@ -163,30 +162,10 @@ main(int argc, char *argv[])
 	if (pledge("stdio rpath wpath disklabel proc exec", NULL) == -1)
 		err(1, "pledge");
 
+	get_default_mbr(mbrfile, &initial_mbr);
 	error = MBR_read(0, 0, &mbr);
 	if (error)
 		errx(1, "Can't read MBR!");
-
-	/* Create initial/default MBR. */
-	if (mbrfile == NULL) {
-		memcpy(&dos_mbr, builtin_mbr, sizeof(dos_mbr));
-	} else {
-		fd = open(mbrfile, O_RDONLY);
-		if (fd == -1) {
-			warn("%s", mbrfile);
-			warnx("using builtin MBR");
-			memcpy(&dos_mbr, builtin_mbr, sizeof(dos_mbr));
-		} else {
-			len = read(fd, &dos_mbr, sizeof(dos_mbr));
-			close(fd);
-			if (len == -1)
-				err(1, "Unable to read MBR from '%s'", mbrfile);
-			else if (len != sizeof(dos_mbr))
-				errx(1, "Unable to read complete MBR from '%s'",
-				    mbrfile);
-		}
-	}
-	MBR_parse(&dos_mbr, 0, 0, &initial_mbr);
 
 	query = NULL;
 	if (A_flag) {
@@ -272,4 +251,33 @@ parse_bootprt(const char *arg)
 	disk.dk_bootprt.prt_ns = blockcount;
 	disk.dk_bootprt.prt_bs = blockoffset;
 	disk.dk_bootprt.prt_id = partitiontype;
+}
+
+void
+get_default_mbr(const char *mbrfile, struct mbr *mbr)
+{
+	struct dos_mbr		dos_mbr;
+	ssize_t			len;
+	int			fd;
+
+	if (mbrfile == NULL) {
+		memcpy(&dos_mbr, builtin_mbr, sizeof(dos_mbr));
+	} else {
+		fd = open(mbrfile, O_RDONLY);
+		if (fd == -1) {
+			warn("%s", mbrfile);
+			warnx("using builtin MBR");
+			memcpy(&dos_mbr, builtin_mbr, sizeof(dos_mbr));
+		} else {
+			len = read(fd, &dos_mbr, sizeof(dos_mbr));
+			close(fd);
+			if (len == -1)
+				err(1, "Unable to read MBR from '%s'", mbrfile);
+			else if (len != sizeof(dos_mbr))
+				errx(1, "Unable to read complete MBR from '%s'",
+				    mbrfile);
+		}
+	}
+
+	MBR_parse(&dos_mbr, 0, 0, mbr);
 }
