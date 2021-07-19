@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.100 2021/07/18 21:40:13 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.101 2021/07/19 23:24:54 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -350,13 +350,11 @@ PRT_fix_BN(struct prt *prt, const int pn)
 	uint32_t		start = 0;
 	uint32_t		end = 0;
 
-	/* Zero out entry if not used */
 	if (prt->prt_id == DOSPTYP_UNUSED) {
 		memset(prt, 0, sizeof(*prt));
 		return;
 	}
 
-	/* Disk geometry. */
 	spt = disk.dk_sectors;
 	tpc = disk.dk_heads;
 	spc = spt * tpc;
@@ -384,13 +382,11 @@ PRT_fix_CHS(struct prt *prt)
 	uint32_t		start, end, size;
 	uint32_t		cyl, head, sect;
 
-	/* Zero out entry if not used */
 	if (prt->prt_id == DOSPTYP_UNUSED || prt->prt_ns == 0) {
 		memset(prt, 0, sizeof(*prt));
 		return;
 	}
 
-	/* Disk geometry. */
 	spt = disk.dk_sectors;
 	tpc = disk.dk_heads;
 	spc = spt * tpc;
@@ -399,7 +395,6 @@ PRT_fix_CHS(struct prt *prt)
 	size = prt->prt_ns;
 	end = (start + size) - 1;
 
-	/* Figure out starting CHS values */
 	cyl = (start / spc); start -= (cyl * spc);
 	head = (start / spt); start -= (head * spt);
 	sect = (start + 1);
@@ -408,7 +403,6 @@ PRT_fix_CHS(struct prt *prt)
 	prt->prt_shead = head;
 	prt->prt_ssect = sect;
 
-	/* Figure out ending CHS values */
 	cyl = (end / spc); end -= (cyl * spc);
 	head = (end / spt); end -= (head * spt);
 	sect = (end + 1);

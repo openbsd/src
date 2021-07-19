@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.65 2021/07/18 15:28:37 krw Exp $	*/
+/*	$OpenBSD: user.c,v 1.66 2021/07/19 23:24:54 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -33,7 +33,6 @@
 #include "gpt.h"
 #include "disk.h"
 
-/* Our command table */
 const struct cmd		cmd_table[] = {
 	{"help",   1, Xhelp,   "Command help list"},
 	{"manual", 1, Xmanual, "Show entire OpenBSD man page for fdisk"},
@@ -78,7 +77,6 @@ USER_edit(const uint64_t lba_self, const uint64_t lba_firstembr)
 
 	printf("Enter 'help' for information\n");
 
-	/* Edit cycle */
 again:
 	do {
 		printf("%s%s: %d> ", disk.dk_name, modified ? "*" : "", editlevel);
@@ -95,14 +93,12 @@ again:
 		if (!strcmp(cmd, "?"))
 			i = 0;
 
-		/* Check for valid command */
 		if ((cmd_table[i].cmd_name == NULL) || (letoh64(gh.gh_sig) ==
 		    GPTSIGNATURE && cmd_table[i].cmd_gpt == 0)) {
 			printf("Invalid command '%s'.  Try 'help'.\n", cmd);
 			continue;
 		}
 
-		/* Call function */
 		st = cmd_table[i].cmd_fcn(args, &mbr);
 
 		/* Update status */
@@ -116,7 +112,6 @@ again:
 			modified = 1;
 	} while (1);
 
-	/* Write out MBR */
 	if (modified) {
 		if (st == CMD_SAVE) {
 			if (Xwrite(NULL, &mbr) == CMD_CONT)
@@ -126,7 +121,6 @@ again:
 	}
 
 done:
-	/* One level less */
 	editlevel -= 1;
 }
 
@@ -153,7 +147,6 @@ USER_print_disk(const int verbosity)
 				GPT_print("s", verbosity);
 				return;
 			} else {
-				/*. Read & print both primary and secondary GPT. */
 				printf("Primary GPT:\n");
 				GPT_read(PRIMARYGPT);
 				if (letoh64(gh.gh_sig) == GPTSIGNATURE)
@@ -173,7 +166,6 @@ USER_print_disk(const int verbosity)
 
 		MBR_print(&mbr, NULL);
 
-		/* Print out extended partitions too */
 		for (lba_self = i = 0; i < 4; i++)
 			if (mbr.mbr_prt[i].prt_id == DOSPTYP_EXTEND ||
 			    mbr.mbr_prt[i].prt_id == DOSPTYP_EXTENDL) {
@@ -190,7 +182,6 @@ ask_cmd(char **cmd, char **arg)
 	static char		lbuf[100];
 	size_t			cmdstart, cmdend, argstart;
 
-	/* Get NUL terminated string from stdin. */
 	if (string_from_line(lbuf, sizeof(lbuf)))
 		errx(1, "eof");
 
