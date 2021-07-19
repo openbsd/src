@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.132 2021/07/17 21:47:56 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.133 2021/07/19 19:23:50 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -443,7 +443,6 @@ Xprint(char *args, struct mbr *mbr)
 int
 Xwrite(char *args, struct mbr *mbr)
 {
-	struct dos_mbr		dos_mbr;
 	int			efi, i, n;
 
 	for (i = 0, n = 0; i < NDOSPART; i++)
@@ -455,10 +454,8 @@ Xwrite(char *args, struct mbr *mbr)
 			return CMD_CONT;
 	}
 
-	MBR_make(mbr, &dos_mbr);
-
 	printf("Writing MBR at offset %lld.\n", (long long)mbr->mbr_lba_self);
-	if (MBR_write(mbr->mbr_lba_self, &dos_mbr) == -1) {
+	if (MBR_write(mbr) == -1) {
 		warn("error writing MBR");
 		return CMD_CONT;
 	}
@@ -473,9 +470,6 @@ Xwrite(char *args, struct mbr *mbr)
 	} else {
 		GPT_zap_headers();
 	}
-
-	/* Refresh in memory copy to reflect what was just written. */
-	MBR_parse(&dos_mbr, mbr->mbr_lba_self, mbr->mbr_lba_firstembr, mbr);
 
 	return CMD_CLEAN;
 }

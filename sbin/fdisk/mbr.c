@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.90 2021/07/19 14:30:08 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.91 2021/07/19 19:23:50 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -222,16 +222,19 @@ MBR_read(const uint64_t lba_self, const uint64_t lba_firstembr, struct mbr *mbr)
 }
 
 int
-MBR_write(const uint64_t sector, const struct dos_mbr *dos_mbr)
+MBR_write(const struct mbr *mbr)
 {
+	struct dos_mbr		 dos_mbr;
 	char			*secbuf;
 
-	secbuf = DISK_readsector(sector);
+	secbuf = DISK_readsector(mbr->mbr_lba_self);
 	if (secbuf == NULL)
 		return -1;
 
-	memcpy(secbuf, dos_mbr, sizeof(*dos_mbr));
-	DISK_writesector(secbuf, sector);
+	MBR_make(mbr, &dos_mbr);
+	memcpy(secbuf, &dos_mbr, sizeof(dos_mbr));
+
+	DISK_writesector(secbuf, mbr->mbr_lba_self);
 
 	/* Refresh in-kernel disklabel from the updated disk information. */
 	ioctl(disk.dk_fd, DIOCRLDINFO, 0);
