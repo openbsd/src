@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.89 2021/07/18 21:40:13 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.90 2021/07/19 14:30:08 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -132,12 +132,14 @@ MBR_init(struct mbr *mbr)
 	/* Fix up start/length fields */
 	PRT_fix_BN(&mbr->mbr_prt[3], 3);
 #else
-	mbr->mbr_prt[0] = disk.dk_bootprt;
-	PRT_fix_CHS(&mbr->mbr_prt[0]);
-	mbr->mbr_prt[3].prt_ns += mbr->mbr_prt[3].prt_bs;
-	mbr->mbr_prt[3].prt_bs = mbr->mbr_prt[0].prt_bs + mbr->mbr_prt[0].prt_ns;
-	mbr->mbr_prt[3].prt_ns -= mbr->mbr_prt[3].prt_bs;
-	PRT_fix_CHS(&mbr->mbr_prt[3]);
+	if (disk.dk_bootprt.prt_ns > 0) {
+		mbr->mbr_prt[0] = disk.dk_bootprt;
+		PRT_fix_CHS(&mbr->mbr_prt[0]);
+		mbr->mbr_prt[3].prt_ns += mbr->mbr_prt[3].prt_bs;
+		mbr->mbr_prt[3].prt_bs = mbr->mbr_prt[0].prt_bs + mbr->mbr_prt[0].prt_ns;
+		mbr->mbr_prt[3].prt_ns -= mbr->mbr_prt[3].prt_bs;
+		PRT_fix_CHS(&mbr->mbr_prt[3]);
+	}
 #endif
 
 	/* Start OpenBSD MBR partition on a power of 2 block number. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.67 2021/07/17 14:16:34 krw Exp $	*/
+/*	$OpenBSD: disk.c,v 1.68 2021/07/19 14:30:08 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -64,29 +64,33 @@ DISK_open(const char *name, const int oflags)
 	/* Set geometry to use in MBR partitions. */
 	if (disk.dk_size > 0) {
 		/* -l has set disk size. */
-		sz = DL_BLKTOSEC(&dl, disk.dk_size);
+		sz = disk.dk_size;
 		disk.dk_heads = 1;
 		disk.dk_sectors = 64;
+		disk.dk_size = DL_BLKTOSEC(&dl, sz);
+		disk.dk_cylinders = disk.dk_size / disk.dk_sectors;
 	} else if (disk.dk_cylinders > 0) {
-		/* -c/-h/-c has set disk geometry. */
+		/* -c/-h/-s has set disk geometry & therefore size. */
 		sz = disk.dk_cylinders * disk.dk_heads * disk.dk_sectors;
-		sz = DL_BLKTOSEC(&dl, sz);
+		disk.dk_size = DL_BLKTOSEC(&dl, sz);
 		disk.dk_sectors = DL_BLKTOSEC(&dl, disk.dk_sectors);
 	} else {
-		sz = DL_GETDSIZE(&dl);
+		disk.dk_sectors = dl.d_nsectors;
+		disk.dk_cylinders = dl.d_ncylinders;
 		disk.dk_heads = dl.d_ntracks;
 		disk.dk_sectors = dl.d_nsectors;
+		/* MBR handles only first UINT32_MAX sectors. */
+		spc = (uint64_t)disk.dk_heads * disk.dk_sectors;
+		sz = DL_GETDSIZE(&dl);
+		if (sz > UINT32_MAX) {
+			disk.dk_cylinders = UINT32_MAX / spc;
+			disk.dk_size = disk.dk_cylinders * spc;
+		} else
+			disk.dk_size = sz;
 	}
 
-	if (sz > UINT32_MAX)
-		sz = UINT32_MAX;	/* MBR knows nothing > UINT32_MAX. */
-
-	spc = disk.dk_heads * disk.dk_sectors;
-	disk.dk_cylinders = sz / spc;
-	disk.dk_size = disk.dk_cylinders * spc;
-
 	if (disk.dk_size == 0)
-		errx(1, "dk_size == 0");
+		errx(1, "disk size is 0");
 
 	if (disk.dk_bootprt.prt_ns > 0) {
 		ns = disk.dk_bootprt.prt_ns + DL_BLKSPERSEC(&dl) - 1;
