@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.77 2021/01/19 19:38:29 mvs Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.78 2021/07/19 19:00:58 stsp Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -347,8 +347,8 @@ pppoe_dispatch_disc_pkt(struct mbuf *m)
 	const char *err_msg, *devname;
 	size_t ac_cookie_len;
 	size_t relay_sid_len;
-	int off, noff, err, errortag;
-	u_int16_t *max_payload;
+	int off, noff, err, errortag, max_payloadtag;
+	u_int16_t max_payload;
 	u_int16_t tag, len;
 	u_int16_t session, plen;
 	u_int8_t *ac_cookie;
@@ -359,6 +359,7 @@ pppoe_dispatch_disc_pkt(struct mbuf *m)
 	devname = "pppoe";
 	off = 0;
 	errortag = 0;
+	max_payloadtag = 0;
 
 	if (m->m_len < sizeof(*eh)) {
 		m = m_pullup(m, sizeof(*eh));
@@ -372,7 +373,7 @@ pppoe_dispatch_disc_pkt(struct mbuf *m)
 	ac_cookie_len = 0;
 	relay_sid = NULL;
 	relay_sid_len = 0;
-	max_payload = NULL;
+	max_payload = 0;
 
 	session = 0;
 	if (m->m_pkthdr.len - off <= PPPOE_HEADERLEN) {
@@ -473,15 +474,17 @@ pppoe_dispatch_disc_pkt(struct mbuf *m)
 			}
 			break;
 		case PPPOE_TAG_MAX_PAYLOAD:
-			if (max_payload == NULL) {
+			if (!max_payloadtag) {
 				n = m_pulldown(m, off, len,
 				    &noff);
-				if (n == NULL || len != 2) {
+				if (n == NULL || len != sizeof(max_payload)) {
 					err_msg = "TAG MAX_PAYLOAD ERROR";
 					m = NULL;
 					break;
 				}
-				max_payload = (u_int16_t *)(mtod(n, caddr_t) + noff);
+				memcpy(&max_payload, mtod(n, caddr_t) + noff,
+				    sizeof(max_payload));
+				max_payloadtag = 1;
 			}
 			break;
 		case PPPOE_TAG_SNAME_ERR:
@@ -556,8 +559,8 @@ breakbreak:
 			memcpy(sc->sc_relay_sid, relay_sid, relay_sid_len);
 		}
 		if (sc->sc_sppp.pp_if.if_mtu > PPPOE_MTU &&
-		    (max_payload == NULL ||
-		     ntohs(*max_payload) != sc->sc_sppp.pp_if.if_mtu)) {
+		    (!max_payloadtag ||
+		     ntohs(max_payload) != sc->sc_sppp.pp_if.if_mtu)) {
 			printf("%s: No valid PPP-Max-Payload tag received in PADO\n",
 			    sc->sc_sppp.pp_if.if_xname);
 			sc->sc_sppp.pp_if.if_mtu = PPPOE_MTU;
