@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.91 2021/07/19 19:23:50 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.92 2021/07/19 19:30:35 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -37,7 +37,7 @@ struct mbr		initial_mbr;
 static int		gpt_chk_mbr(struct dos_partition *, uint64_t);
 
 int
-MBR_protective_mbr(struct mbr *mbr)
+MBR_protective_mbr(const struct mbr *mbr)
 {
 	struct dos_partition	dp[NDOSPART], dos_partition;
 	int			i;
