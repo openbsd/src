@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.241 2021/07/18 18:19:22 mvs Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.242 2021/07/19 14:49:55 mvs Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -1010,7 +1010,8 @@ ipsp_ids_insert(struct ipsec_ids *ids)
 		if (++ipsec_ids_next_flow == 0)
 			ipsec_ids_next_flow = 1;
 		if (ipsec_ids_next_flow == start_flow) {
-			DPRINTF("psec_ids_next_flow exhausted %u",
+			RBT_REMOVE(ipsec_ids_tree, &ipsec_ids_tree, ids);
+			DPRINTF("ipsec_ids_next_flow exhausted %u",
 			    ipsec_ids_next_flow);
 			return NULL;
 		}
