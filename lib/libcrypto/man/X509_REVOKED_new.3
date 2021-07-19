@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_REVOKED_new.3,v 1.11 2019/06/14 13:59:32 schwarze Exp $
+.\" $OpenBSD: X509_REVOKED_new.3,v 1.12 2021/07/19 13:16:43 schwarze Exp $
 .\" full merge up to:
 .\" OpenSSL man3/X509_CRL_get0_by_serial cdd6c8c5 Mar 20 12:29:37 2017 +0100
 .\"
@@ -66,7 +66,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 14 2019 $
+.Dd $Mdocdate: July 19 2021 $
 .Dt X509_REVOKED_NEW 3
 .Os
 .Sh NAME
@@ -183,6 +183,7 @@ In some cases of failure, the reason can be determined with
 .Xr PEM_read_X509_CRL 3 ,
 .Xr X509_CRL_get0_by_serial 3 ,
 .Xr X509_CRL_new 3 ,
+.Xr X509_CRL_print 3 ,
 .Xr X509_EXTENSION_new 3 ,
 .Xr X509_REVOKED_get_ext 3 ,
 .Xr X509_REVOKED_get_ext_d2i 3
