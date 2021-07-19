@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.99 2021/06/19 17:21:39 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.100 2021/07/19 08:39:28 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -836,14 +836,13 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 
 	if (rr->type == SSL3_RT_CHANGE_CIPHER_SPEC) {
 		struct ccs_header_st ccs_hdr;
-		unsigned int ccs_hdr_len = DTLS1_CCS_HEADER_LENGTH;
 
 		dtls1_get_ccs_header(rr->data, &ccs_hdr);
 
 		/* 'Change Cipher Spec' is just a single byte, so we know
 		 * exactly what the record payload has to look like */
 		/* XDTLS: check that epoch is consistent */
-		if ((rr->length != ccs_hdr_len) ||
+		if ((rr->length != DTLS1_CCS_HEADER_LENGTH) ||
 		    (rr->off != 0) || (rr->data[0] != SSL3_MT_CCS)) {
 			al = SSL_AD_DECODE_ERROR;
 			SSLerror(s, SSL_R_BAD_CHANGE_CIPHER_SPEC);
