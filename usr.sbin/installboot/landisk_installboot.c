@@ -1,4 +1,4 @@
-/*	$OpenBSD: landisk_installboot.c,v 1.9 2018/09/01 16:55:29 krw Exp $	*/
+/*	$OpenBSD: landisk_installboot.c,v 1.10 2021/07/20 14:51:56 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2013 Joel Sing <jsing@openbsd.org>
@@ -35,6 +35,11 @@ md_init(void)
 
 void
 md_loadboot(void)
+{
+}
+
+void
+md_prepareboot(int devfd, char *dev)
 {
 }
 

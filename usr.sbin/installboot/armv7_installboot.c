@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_installboot.c,v 1.10 2021/06/27 04:52:01 jsg Exp $	*/
+/*	$OpenBSD: armv7_installboot.c,v 1.11 2021/07/20 14:51:56 kettenis Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -55,6 +55,7 @@
 
 #include "installboot.h"
 
+static int	create_filesystem(struct disklabel *, char);
 static void	write_filesystem(struct disklabel *, char);
 static int	findgptefisys(int, struct disklabel *);
 static int	findmbrfat(int, struct disklabel *);
@@ -67,6 +68,35 @@ md_init(void)
 void
 md_loadboot(void)
 {
+}
+
+void
+md_prepareboot(int devfd, char *dev)
+{
+	struct disklabel dl;
+	int part;
+
+	/* Get and check disklabel. */
+	if (ioctl(devfd, DIOCGDINFO, &dl) == -1)
+		err(1, "disklabel: %s", dev);
+	if (dl.d_magic != DISKMAGIC)
+		errx(1, "bad disklabel magic=0x%08x", dl.d_magic);
+
+	/* Warn on unknown disklabel types. */
+	if (dl.d_type == 0)
+		warnx("disklabel type unknown");
+
+	part = findgptefisys(devfd, &dl);
+	if (part != -1) {
+		create_filesystem(&dl, (char)part);
+		return;
+	}
+
+	part = findmbrfat(devfd, &dl);
+	if (part != -1) {
+		create_filesystem(&dl, (char)part);
+		return;
+	}
 }
 
 void
@@ -98,12 +128,51 @@ md_installboot(int devfd, char *dev)
 	}
 }
 
+static int
+create_filesystem(struct disklabel *dl, char part)
+{
+	static char *newfsfmt ="/sbin/newfs_msdos %s >/dev/null";
+	struct msdosfs_args args;
+	char cmd[60];
+	int rslt;
+
+	/* Mount <duid>.<part> as msdos filesystem. */
+	memset(&args, 0, sizeof(args));
+	rslt = asprintf(&args.fspec,
+	    "%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx.%c",
+            dl->d_uid[0], dl->d_uid[1], dl->d_uid[2], dl->d_uid[3],
+            dl->d_uid[4], dl->d_uid[5], dl->d_uid[6], dl->d_uid[7],
+	    part);
+	if (rslt == -1) {
+		warn("bad special device");
+		return rslt;
+	}
+
+	rslt = snprintf(cmd, sizeof(cmd), newfsfmt, args.fspec);
+	if (rslt >= sizeof(cmd)) {
+		warnx("can't build newfs command");
+		rslt = -1;
+		return rslt;
+	}
+
+	if (verbose)
+		fprintf(stderr, "%s %s\n",
+		    (nowrite ? "would newfs" : "newfsing"), args.fspec);
+	if (!nowrite) {
+		rslt = system(cmd);
+		if (rslt == -1) {
+			warn("system('%s') failed", cmd);
+			return rslt;
+		}
+	}
+
+	return 0;
+}
 
 static void
 write_filesystem(struct disklabel *dl, char part)
 {
 	static char *fsckfmt = "/sbin/fsck_msdos %s >/dev/null";
-	static char *newfsfmt ="/sbin/newfs_msdos %s >/dev/null";
 	struct msdosfs_args args;
 	char cmd[60];
 	char dst[PATH_MAX];
@@ -150,18 +219,9 @@ write_filesystem(struct disklabel *dl, char part)
 		}
 		if (mount(MOUNT_MSDOS, dst, 0, &args) == -1) {
 			/* Try newfs'ing it. */
-			rslt = snprintf(cmd, sizeof(cmd), newfsfmt,
-			    args.fspec);
-			if (rslt >= sizeof(cmd)) {
-				warnx("can't build newfs command");
-				rslt = -1;
+			rslt = create_filesystem(dl, part);
+			if (rslt == -1)
 				goto rmdir;
-			}
-			rslt = system(cmd);
-			if (rslt == -1) {
-				warn("system('%s') failed", cmd);
-				goto rmdir;
-			}
 			rslt = mount(MOUNT_MSDOS, dst, 0, &args);
 			if (rslt == -1) {
 				warn("unable to mount EFI System partition");

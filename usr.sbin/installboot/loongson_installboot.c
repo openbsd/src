@@ -1,4 +1,4 @@
-/*	$OpenBSD: loongson_installboot.c,v 1.3 2020/07/19 15:23:08 visa Exp $	*/
+/*	$OpenBSD: loongson_installboot.c,v 1.4 2021/07/20 14:51:56 kettenis Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -63,6 +63,11 @@ md_init(void)
 
 void
 md_loadboot(void)
+{
+}
+
+void
+md_prepareboot(int devfd, char *dev)
 {
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.13 2019/10/29 17:41:45 deraadt Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.14 2021/07/20 14:51:56 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012, 2013 Joel Sing <jsing@openbsd.org>
@@ -27,6 +27,7 @@
 #include "installboot.h"
 
 int	nowrite;
+int	prepare;
 int	stages;
 int	verbose;
 
@@ -39,7 +40,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-nv] [-r root] disk [stage1%s]\n",
+	fprintf(stderr, "usage: %s [-npv] [-r root] disk [stage1%s]\n",
 	    __progname, (stages >= 2) ? " [stage2]" : "");
 
 	exit(1);
@@ -53,10 +54,13 @@ main(int argc, char **argv)
 
 	md_init();
 
-	while ((opt = getopt(argc, argv, "nr:v")) != -1) {
+	while ((opt = getopt(argc, argv, "npr:v")) != -1) {
 		switch (opt) {
 		case 'n':
 			nowrite = 1;
+			break;
+		case 'p':
+			prepare = 1;
 			break;
 		case 'r':
 			root = strdup(optarg);
@@ -114,6 +118,11 @@ main(int argc, char **argv)
 	}
 
 	md_loadboot();
+
+	if (prepare) {
+		md_prepareboot(devfd, realdev);
+		return 0;
+	}
 
 #ifdef SOFTRAID
 	sr_installboot(devfd, dev);

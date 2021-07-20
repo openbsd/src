@@ -1,4 +1,4 @@
-/*	$OpenBSD: stubs.c,v 1.4 2015/10/15 04:41:10 deraadt Exp $	*/
+/*	$OpenBSD: stubs.c,v 1.5 2021/07/20 14:51:56 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -28,6 +28,11 @@ md_init(void)
 
 void
 md_loadboot(void)
+{
+}
+
+void
+md_prepareboot(int devfd, char *dev)
 {
 }
 

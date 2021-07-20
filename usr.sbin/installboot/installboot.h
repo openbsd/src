@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.h,v 1.12 2020/06/08 19:17:12 kn Exp $	*/
+/*	$OpenBSD: installboot.h,v 1.13 2021/07/20 14:51:56 kettenis Exp $	*/
 /*
  * Copyright (c) 2012, 2013 Joel Sing <jsing@openbsd.org>
  *
@@ -37,6 +37,7 @@ u_int32_t crc32(const u_char *, const u_int32_t);
 
 void	md_init(void);
 void	md_loadboot(void);
+void	md_prepareboot(int, char *);
 void	md_installboot(int, char *);
 
 #ifdef SOFTRAID
