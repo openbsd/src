@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.69 2021/07/18 13:07:13 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.70 2021/07/20 14:44:09 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -7552,8 +7552,10 @@ iwx_init(struct ifnet *ifp)
 		    SEC_TO_NSEC(1));
 		if (generation != sc->sc_generation)
 			return ENXIO;
-		if (err)
+		if (err) {
+			iwx_stop(ifp);
 			return err;
+		}
 	} while (ic->ic_state != IEEE80211_S_SCAN);
 
 	return 0;
