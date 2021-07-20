@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.20 2021/06/25 17:27:07 krw Exp $
+#	$OpenBSD: install.md,v 1.21 2021/07/20 15:25:48 kettenis Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -33,7 +33,6 @@
 #
 
 NCPU=$(sysctl -n hw.ncpufound)
-NEWFSARGS_msdos="-F 16 -L boot"
 MOUNT_ARGS_msdos="-o-l"
 
 md_installboot() {
@@ -85,7 +84,6 @@ md_prep_fdisk() {
 	local bootsectorsize="32768"
 	local bootsectorend=$(($bootsectorstart + $bootsectorsize))
 	local bootfstype="msdos"
-	local newfs_args=${NEWFSARGS_msdos}
 
 	while :; do
 		_d=whole
@@ -125,8 +123,7 @@ quit
 __EOT
 			fi
 			echo "done."
-			disklabel $_disk 2>/dev/null | grep -q "^  i:" || disklabel -w -d $_disk
-			newfs -t ${bootfstype} ${newfs_args} ${_disk}i
+			installboot -p $_disk
 			return ;;
 		[eE]*)
 			if disk_has $_disk gpt; then
