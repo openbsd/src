@@ -1,4 +1,4 @@
-/* $OpenBSD: ipifuncs.c,v 1.22 2020/08/10 15:22:53 visa Exp $ */
+/* $OpenBSD: ipifuncs.c,v 1.23 2021/07/20 07:53:39 visa Exp $ */
 /* $NetBSD: ipifuncs.c,v 1.40 2008/04/28 20:23:10 martin Exp $ */
 
 /*-
@@ -126,9 +126,11 @@ static void
 do_send_ipi(unsigned int cpuid, unsigned int ipimask)
 {
 #ifdef DEBUG
-	if (cpuid >= CPU_MAXID || get_cpu_info(cpuid) == NULL)
+	struct cpu_info *ci = get_cpu_info(cpuid);
+
+	if (ci == NULL)
 		panic("mips_send_ipi: bogus cpu_id");
-	if (!cpuset_isset(&cpus_running, get_cpu_info(cpuid)))
+	if (!cpuset_isset(&cpus_running, ci))
 	        panic("mips_send_ipi: CPU %u not running", cpuid);
 #endif
 
