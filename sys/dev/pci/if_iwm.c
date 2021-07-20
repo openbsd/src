@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.356 2021/07/20 14:44:37 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.357 2021/07/20 16:00:47 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -11106,7 +11106,11 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	case PCI_PRODUCT_INTEL_WL_7265_1:
 	case PCI_PRODUCT_INTEL_WL_7265_2:
-		sc->sc_fwname = "iwm-7265D-29";
+		if ((sc->sc_hw_rev & IWM_CSR_HW_REV_TYPE_MSK) ==
+		    IWM_CSR_HW_REV_TYPE_7265D)
+			sc->sc_fwname = "iwm-7265D-29";
+		else
+			sc->sc_fwname = "iwm-7265-17";
 		sc->host_interrupt_operation_mode = 0;
 		sc->sc_device_family = IWM_DEVICE_FAMILY_7000;
 		sc->sc_fwdmasegsz = IWM_FWDMASEGSZ;
