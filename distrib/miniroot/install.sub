@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1168 2021/07/18 15:18:49 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.1169 2021/07/20 11:20:09 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -244,21 +244,20 @@ prep_root_mail() {
 __EOT
 }
 
-# Examine the contents of the DHCP lease file $1 for a line containing the
-# field provided as parameters and return the value of the first field found.
+# Examine the contents of the dhcpleased lease file $1 for a line containing the
+# field(s) provided as parameters and return the value of the first field found.
 #
-# Note that strings are unescaped but not unvis()'d.
+# Note that value strings are VIS_SAFE'd.
 lease_value() {
-	local _lf=$1 _o
+	local _lf=$1 _o _opt _val
 
 	[[ -s $_lf ]] || return
 	shift
 
 	for _o; do
-		sed -E \
-			-e '/^'"$_o"': (.*)$/!d;s//\1/' \
-			-e '/^"(.*)"$/{s//\1/;s/\\(.)/\1/g;};q' "$_lf" \
-			| grep ^ && return
+		while read -r _opt _val; do
+			[[ $_opt == ${_o}: ]] && echo "$_val" && return
+		done < "$_lf"
 	done
 }
 
