@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.642 2021/06/30 13:23:33 bluhm Exp $	*/
+/*	$OpenBSD: if.c,v 1.643 2021/07/20 16:32:28 bluhm Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -833,6 +833,12 @@ if_input_process(struct ifnet *ifp, struct mbuf_list *ml)
 	 * Since we have a NET_LOCK() we also use it to serialize access
 	 * to PF globals, pipex globals, unicast and multicast addresses
 	 * lists and the socket layer.
+	 */
+
+	/*
+	 * XXXSMP IPsec data structures are not ready to be accessed
+	 * by multiple network threads in parallel.  In this case
+	 * use an exclusive lock.
 	 */
 	NET_LOCK();
 	while ((m = ml_dequeue(ml)) != NULL)
@@ -3311,17 +3317,14 @@ unhandled_af(int af)
 	panic("unhandled af %d", af);
 }
 
-/*
- * XXXSMP This tunable is here to work around the fact that IPsec
- * globals aren't ready to be accessed by multiple threads in
- * parallel.
- */
-int		 nettaskqs = NET_TASKQ;
-
 struct taskq *
 net_tq(unsigned int ifindex)
 {
 	struct taskq *t = NULL;
+	static int nettaskqs;
+
+	if (nettaskqs == 0)
+		nettaskqs = min(NET_TASKQ, ncpus);
 
 	t = nettqmp[ifindex % nettaskqs];
 
