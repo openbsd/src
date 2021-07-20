@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.33 2021/07/15 12:41:49 inoguchi Exp $ */
+/* $OpenBSD: ca.c,v 1.34 2021/07/20 12:04:53 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -880,7 +880,7 @@ ca_main(int argc, char **argv)
 
 	f = NCONF_get_string(conf, ca_config.section, ENV_NAMEOPT);
 
-	if (f) {
+	if (f != NULL) {
 		if (!set_name_ex(&nameopt, f)) {
 			BIO_printf(bio_err,
 			    "Invalid name options: \"%s\"\n", f);
