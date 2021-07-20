@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.355 2021/07/09 11:41:20 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.356 2021/07/20 14:44:37 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -9777,8 +9777,10 @@ iwm_init(struct ifnet *ifp)
 		    SEC_TO_NSEC(1));
 		if (generation != sc->sc_generation)
 			return ENXIO;
-		if (err)
+		if (err) {
+			iwm_stop(ifp);
 			return err;
+		}
 	} while (ic->ic_state != IEEE80211_S_SCAN);
 
 	return 0;
