@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.398 2021/05/09 15:51:35 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.399 2021/07/20 00:41:54 mlarkin Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -281,7 +281,7 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 			if (iodir == ACPI_IOREAD) {
 				switch (access_size) {
 				case 1:
-					*(uint8_t *)(pb + reg) = 
+					*(uint8_t *)(pb + reg) =
 					    bus_space_read_1(iot, ioh, reg);
 					dnprintf(80, "os_in8(%llx) = %x\n",
 					    reg+address, *(uint8_t *)(pb+reg));
@@ -354,7 +354,7 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 			if (iodir == ACPI_IOREAD) {
 				switch (access_size) {
 				case 1:
-					*(uint8_t *)(pb + idx) = 
+					*(uint8_t *)(pb + idx) =
 					    acpi_pci_conf_read_1(pc, tag, reg + idx);
 					break;
 				case 2:
@@ -474,7 +474,7 @@ acpi_foundprt(struct aml_node *node, void *arg)
 
 TAILQ_HEAD(, acpi_pci) acpi_pcidevs =
     TAILQ_HEAD_INITIALIZER(acpi_pcidevs);
-TAILQ_HEAD(, acpi_pci) acpi_pcirootdevs = 
+TAILQ_HEAD(, acpi_pci) acpi_pcirootdevs =
     TAILQ_HEAD_INITIALIZER(acpi_pcirootdevs);
 
 int acpi_getpci(struct aml_node *node, void *arg);
@@ -528,7 +528,7 @@ _acpi_matchhids(const char *hid, const char *hids[])
 {
 	int i;
 
-	for (i = 0; hids[i]; i++) 
+	for (i = 0; hids[i]; i++)
 		if (!strcmp(hid, hids[i]))
 			return (1);
 	return (0);
@@ -631,7 +631,7 @@ acpi_getpci(struct aml_node *node, void *arg)
 	pci->node = node;
 	pci->sub = -1;
 
-	dnprintf(10, "%.2x:%.2x.%x -> %s\n", 
+	dnprintf(10, "%.2x:%.2x.%x -> %s\n",
 		pci->bus, pci->dev, pci->fun,
 		aml_nodename(node));
 
@@ -676,7 +676,7 @@ acpi_getpci(struct aml_node *node, void *arg)
 		reg = pci_conf_read(pc, tag, PPB_REG_BUSINFO);
 		pci->sub = PPB_BUSINFO_SECONDARY(reg);
 
-		dnprintf(10, "found PCI bridge: %s %d\n", 
+		dnprintf(10, "found PCI bridge: %s %d\n",
 		    aml_nodename(node), pci->sub);
 
 		/* Continue scanning */
@@ -1792,7 +1792,7 @@ SIMPLEQ_HEAD(,acpi_taskq) acpi_taskq =
     SIMPLEQ_HEAD_INITIALIZER(acpi_taskq);
 
 void
-acpi_addtask(struct acpi_softc *sc, void (*handler)(void *, int), 
+acpi_addtask(struct acpi_softc *sc, void (*handler)(void *, int),
     void *arg0, int arg1)
 {
 	struct acpi_taskq *wq;
@@ -1804,7 +1804,7 @@ acpi_addtask(struct acpi_softc *sc, void (*handler)(void *, int),
 	wq->handler = handler;
 	wq->arg0 = arg0;
 	wq->arg1 = arg1;
-	
+
 	s = splbio();
 	SIMPLEQ_INSERT_TAIL(&acpi_taskq, wq, next);
 	splx(s);
@@ -1832,7 +1832,7 @@ acpi_dotask(struct acpi_softc *sc)
 	free(wq, M_DEVBUF, sizeof(*wq));
 
 	/* We did something */
-	return (1);	
+	return (1);
 }
 
 #ifndef SMALL_KERNEL
@@ -2769,7 +2769,7 @@ acpi_powerdown(void)
 
 	/* 1st powerdown AML step: _PTS(tostate) */
 	aml_node_setval(sc, sc->sc_pts, state);
-	
+
 	acpi_disable_allgpes(sc);
 	acpi_enable_wakegpes(sc, state);
 
@@ -3206,7 +3206,7 @@ acpi_parse_resources(int crsidx, union acpi_resource *crs, void *arg)
 	case SR_IOPORT:
 	case SR_FIXEDPORT:
 		aaa->aaa_bst[aaa->aaa_naddr] = aaa->aaa_iot;
-		break;	
+		break;
 	case LR_MEM24:
 	case LR_MEM32:
 	case LR_MEM32FIXED:
