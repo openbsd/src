@@ -2143,6 +2143,7 @@
 ./usr/share/man/man3/X509_CINF_new.3
 ./usr/share/man/man3/X509_CRL_get0_by_serial.3
 ./usr/share/man/man3/X509_CRL_new.3
+./usr/share/man/man3/X509_CRL_print.3
 ./usr/share/man/man3/X509_EXTENSION_set_object.3
 ./usr/share/man/man3/X509_INFO_new.3
 ./usr/share/man/man3/X509_LOOKUP_hash_dir.3
