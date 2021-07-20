@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex_local.h,v 1.41 2021/01/04 12:21:38 mvs Exp $	*/
+/*	$OpenBSD: pipex_local.h,v 1.42 2021/07/20 16:44:55 mvs Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -148,6 +148,8 @@ struct pipex_l2tp_session {
 };
 #endif /* PIPEX_L2TP */
 
+struct cpumem;
+
 /* pppac ip-extension sessoin table */
 struct pipex_session {
 	struct radix_node	ps4_rn[2];
@@ -166,6 +168,7 @@ struct pipex_session {
 #define PIPEX_STATE_CLOSE_WAIT2		0x0003
 #define PIPEX_STATE_CLOSED		0x0004
 
+	uint32_t	idle_time;	/* [N] idle time in seconds */
 	uint16_t	ip_forward:1,	/* [N] {en|dis}ableIP forwarding */
 			ip6_forward:1,	/* [I] {en|dis}able IPv6 forwarding */
 			is_multicast:1,	/* [I] virtual entry for multicast */
@@ -193,7 +196,9 @@ struct pipex_session {
 	    mppe_recv,				/* MPPE context for incoming */
 	    mppe_send;				/* MPPE context for outgoing */ 
 #endif /*PIPEXMPPE */
-	struct pipex_statistics stat;		/* [N] statistics */
+
+	struct cpumem	*stat_counters;
+
 	union {
 #ifdef PIPEX_PPPOE
 		struct pipex_pppoe_session pppoe;	/* context for PPPoE */
@@ -212,6 +217,16 @@ struct pipex_session {
 		struct sockaddr_in6	sin6;
 		struct sockaddr_dl	sdl;
 	} peer, local;					/* [I] */
+};
+
+enum pipex_counters {
+	pxc_ipackets,	/* packets received from tunnel */
+	pxc_ierrors,	/* error packets received from tunnel */
+	pxc_ibytes,	/* number of received bytes from tunnel */
+	pxc_opackets,	/* packets sent to tunnel */
+	pxc_oerrors,	/* error packets on sending to tunnel */
+	pxc_obytes,	/* number of sent bytes to tunnel */
+	pxc_ncounters
 };
 
 /* gre header */
@@ -384,6 +399,8 @@ void                  pipex_rele_session(struct pipex_session *);
 int                   pipex_link_session(struct pipex_session *,
                           struct ifnet *, void *);
 void                  pipex_unlink_session(struct pipex_session *);
+void                  pipex_export_session_stats(struct pipex_session *,
+                          struct pipex_statistics *);
 int                   pipex_config_session (struct pipex_session_config_req *,
                           void *);
 int                   pipex_get_stat (struct pipex_session_stat_req *,
