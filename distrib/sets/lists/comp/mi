@@ -2150,6 +2150,7 @@
 ./usr/share/man/man3/X509_NAME_ENTRY_get_object.3
 ./usr/share/man/man3/X509_NAME_add_entry_by_txt.3
 ./usr/share/man/man3/X509_NAME_get_index_by_NID.3
+./usr/share/man/man3/X509_NAME_hash.3
 ./usr/share/man/man3/X509_NAME_new.3
 ./usr/share/man/man3/X509_NAME_print_ex.3
 ./usr/share/man/man3/X509_OBJECT_get0_X509.3
