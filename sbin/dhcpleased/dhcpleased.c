@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleased.c,v 1.14 2021/07/12 15:09:18 beck Exp $	*/
+/*	$OpenBSD: dhcpleased.c,v 1.15 2021/07/21 03:53:50 kn Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -131,7 +131,7 @@ main(int argc, char *argv[])
 	char			*saved_argv0;
 	int			 pipe_main2frontend[2];
 	int			 pipe_main2engine[2];
-	int			 frontend_routesock, rtfilter;
+	int			 frontend_routesock, rtfilter, lockfd;
 	int			 rtable_any = RTABLE_ANY;
 	char			*csock = _PATH_DHCPLEASED_SOCKET;
 #ifndef SMALL
@@ -180,6 +180,10 @@ main(int argc, char *argv[])
 	/* Check for root privileges. */
 	if (geteuid())
 		errx(1, "need root privileges");
+
+	lockfd = open(_PATH_LOCKFILE, O_CREAT|O_RDWR|O_EXLOCK|O_NONBLOCK, 0600);
+	if (lockfd == -1)
+		errx(1, "already running");
 
 	/* Check for assigned daemon user */
 	if (getpwnam(DHCPLEASED_USER) == NULL)

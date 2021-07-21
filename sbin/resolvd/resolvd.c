@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolvd.c,v 1.15 2021/07/18 15:18:49 deraadt Exp $	*/
+/*	$OpenBSD: resolvd.c,v 1.16 2021/07/21 03:53:50 kn Exp $	*/
 /*
  * Copyright (c) 2021 Florian Obser <florian@openbsd.org>
  * Copyright (c) 2021 Theo de Raadt <deraadt@openbsd.org>
@@ -42,10 +42,10 @@
 
 #define	ROUTE_SOCKET_BUF_SIZE	16384
 #define	ASR_MAXNS		10
+#define	_PATH_LOCKFILE		"/dev/resolvd.lock"
 #define	_PATH_UNWIND_SOCKET	"/dev/unwind.sock"
 #define	_PATH_RESCONF		"/etc/resolv.conf"
 #define	_PATH_RESCONF_NEW	"/etc/resolv.conf.new"
-#define _PATH_LOCKFILE		"/var/run/resolvd.lock"
 
 #ifndef nitems
 #define	nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
@@ -193,7 +193,7 @@ main(int argc, char *argv[])
 
 	lockfd = open(_PATH_LOCKFILE, O_CREAT|O_RDWR|O_EXLOCK|O_NONBLOCK, 0600);
 	if (lockfd == -1)
-		errx(1, "already running, " _PATH_LOCKFILE);
+		errx(1, "already running");
 
 	if (!debug)
 		daemon(0, 0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleased.h,v 1.6 2021/06/20 08:31:45 florian Exp $	*/
+/*	$OpenBSD: dhcpleased.h,v 1.7 2021/07/21 03:53:50 kn Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -18,6 +18,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#define	_PATH_LOCKFILE		"/dev/dhcpleased.lock"
 #define	_PATH_DHCPLEASED_SOCKET	"/dev/dhcpleased.sock"
 #define	DHCPLEASED_USER		"_dhcp"
 #define	DHCPLEASED_RTA_LABEL	"dhcpleased"

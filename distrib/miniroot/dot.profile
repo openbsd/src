@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.45 2021/07/16 15:24:44 florian Exp $
+#	$OpenBSD: dot.profile,v 1.46 2021/07/21 03:53:50 kn Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 2009 Kenneth R. Westerback
@@ -58,9 +58,10 @@ if [[ -z $DONEPROFILE ]]; then
 	mkdir -m u=rwx,go=rx -p /tmp/{ai,i}
 
 	# Start autoconfiguration daemons.
-	[[ -x /sbin/resolvd ]] && /sbin/resolvd
-	[[ -x /sbin/dhcpleased ]] && /sbin/dhcpleased
-	[[ -x /sbin/slaacd ]] && /sbin/slaacd
+	# Hide legit "already running" errors when reentering the installer.
+	[[ -x /sbin/resolvd ]] && /sbin/resolvd 2>/dev/null
+	[[ -x /sbin/dhcpleased ]] && /sbin/dhcpleased 2>/dev/null
+	[[ -x /sbin/slaacd ]] && /sbin/slaacd 2>/dev/null
 
 	# Set up some sane tty defaults.
 	echo 'erase ^?, werase ^W, kill ^U, intr ^C, status ^T'

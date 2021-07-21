@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.60 2021/05/01 11:53:24 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.61 2021/07/21 03:53:50 kn Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -129,7 +129,7 @@ main(int argc, char *argv[])
 	char			*saved_argv0;
 	int			 pipe_main2frontend[2];
 	int			 pipe_main2engine[2];
-	int			 frontend_routesock, rtfilter;
+	int			 frontend_routesock, rtfilter, lockfd;
 	int			 rtable_any = RTABLE_ANY;
 	char			*csock = _PATH_SLAACD_SOCKET;
 #ifndef SMALL
@@ -179,6 +179,10 @@ main(int argc, char *argv[])
 	/* Check for root privileges. */
 	if (geteuid())
 		errx(1, "need root privileges");
+
+	lockfd = open(_PATH_LOCKFILE, O_CREAT|O_RDWR|O_EXLOCK|O_NONBLOCK, 0600);
+	if (lockfd == -1)
+		errx(1, "already running");
 
 	/* Check for assigned daemon user */
 	if (getpwnam(SLAACD_USER) == NULL)
