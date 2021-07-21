@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-menu.c,v 1.25 2021/07/08 11:14:53 nicm Exp $ */
+/* $OpenBSD: cmd-display-menu.c,v 1.26 2021/07/21 08:09:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -175,7 +175,7 @@ cmd_display_menu_get_position(struct client *tc, struct cmdq_item *item,
 		} else
 			format_add(ft, "popup_mouse_centre_y", "%ld", n);
 		n = (long)event->m.y + h;
-		if (n + h >= tty->sy)
+		if (n >= tty->sy)
 			format_add(ft, "popup_mouse_top", "%u", tty->sy - 1);
 		else
 			format_add(ft, "popup_mouse_top", "%ld", n);
