@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.82 2021/07/08 15:13:14 bluhm Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.83 2021/07/21 11:11:41 bluhm Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -418,7 +418,12 @@ ipsec_output_cb(struct cryptop *crp)
 			if (tdb->tdb_cryptoid != 0)
 				tdb->tdb_cryptoid = crp->crp_sid;
 			NET_UNLOCK();
-			crypto_dispatch(crp);
+			error = crypto_dispatch(crp);
+			if (error) {
+				DPRINTF("crypto dispatch error %d", error);
+				ipsecstat_inc(ipsec_odrops);
+				tdb->tdb_odrops++;
+			}
 			return;
 		}
 		DPRINTF("crypto error %d", crp->crp_etype);

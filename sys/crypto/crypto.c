@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.83 2021/06/30 12:21:02 bluhm Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.84 2021/07/21 11:11:41 bluhm Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -388,7 +388,7 @@ int
 crypto_dispatch(struct cryptop *crp)
 {
 	struct taskq *tq = crypto_taskq;
-	int s;
+	int error = 0, s;
 	u_int32_t hid;
 
 	s = splvm();
@@ -399,14 +399,14 @@ crypto_dispatch(struct cryptop *crp)
 	}
 	splx(s);
 
-	if (tq && !(crp->crp_flags & CRYPTO_F_NOQUEUE)) {
+	if ((crp->crp_flags & CRYPTO_F_NOQUEUE) == 0) {
 		task_set(&crp->crp_task, (void (*))crypto_invoke, crp);
 		task_add(tq, &crp->crp_task);
 	} else {
-		crypto_invoke(crp);
+		error = crypto_invoke(crp);
 	}
 
-	return 0;
+	return error;
 }
 
 /*
