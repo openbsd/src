@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.101 2021/07/19 08:42:24 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.102 2021/07/21 07:51:12 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -323,14 +323,22 @@ dtls1_process_record(SSL *s)
 		if (alert_desc == 0)
 			goto err;
 
+		/*
+		 * DTLS should silently discard invalid records, including those
+		 * with a bad MAC, as per RFC 6347 section 4.1.2.1.
+		 */
+		if (alert_desc == SSL_AD_BAD_RECORD_MAC) {
+			out_len = 0;
+			goto done;
+		}
+
 		if (alert_desc == SSL_AD_RECORD_OVERFLOW)
 			SSLerror(s, SSL_R_ENCRYPTED_LENGTH_TOO_LONG);
-		else if (alert_desc == SSL_AD_BAD_RECORD_MAC)
-			SSLerror(s, SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC);
 
 		goto fatal_err;
 	}
 
+ done:
 	rr->data = out;
 	rr->length = out_len;
 	rr->off = 0;
@@ -344,7 +352,6 @@ dtls1_process_record(SSL *s)
  err:
 	return (0);
 }
-
 
 /* Call this to get a new input record.
  * It will return <= 0 if more data is needed, normally due to an error
