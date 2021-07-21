@@ -1,4 +1,4 @@
-/* $OpenBSD: menu.c,v 1.33 2020/10/30 12:00:01 nicm Exp $ */
+/* $OpenBSD: menu.c,v 1.34 2021/07/21 08:06:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -390,6 +390,6 @@ menu_display(struct menu *menu, int flags, struct cmdq_item *item, u_int px,
 	md->data = data;
 
 	server_client_set_overlay(c, 0, NULL, menu_mode_cb, menu_draw_cb,
-	    menu_key_cb, menu_free_cb, md);
+	    menu_key_cb, menu_free_cb, NULL, md);
 	return (0);
 }
