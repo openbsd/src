@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.133 2021/07/19 19:23:50 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.134 2021/07/21 12:22:54 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -69,7 +69,6 @@ Xreinit(char *args, struct mbr *mbr)
 	MBR_parse(&dos_mbr, mbr->mbr_lba_self, mbr->mbr_lba_firstembr, mbr);
 
 	if (dogpt) {
-		MBR_init_GPT(mbr);
 		GPT_init(GHANDGP);
 		GPT_print("s", TERSE);
 	} else {
@@ -429,10 +428,7 @@ Xselect(char *args, struct mbr *mbr)
 int
 Xprint(char *args, struct mbr *mbr)
 {
-	int			efi;
-
-	efi = MBR_protective_mbr(mbr);
-	if (efi != -1 && letoh64(gh.gh_sig) == GPTSIGNATURE)
+	if (letoh64(gh.gh_sig) == GPTSIGNATURE)
 		GPT_print(args, VERBOSE);
 	else
 		MBR_print(mbr, args);
@@ -443,7 +439,7 @@ Xprint(char *args, struct mbr *mbr)
 int
 Xwrite(char *args, struct mbr *mbr)
 {
-	int			efi, i, n;
+	int			i, n;
 
 	for (i = 0, n = 0; i < NDOSPART; i++)
 		if (mbr->mbr_prt[i].prt_id == 0xA6)
@@ -454,20 +450,18 @@ Xwrite(char *args, struct mbr *mbr)
 			return CMD_CONT;
 	}
 
-	printf("Writing MBR at offset %lld.\n", (long long)mbr->mbr_lba_self);
-	if (MBR_write(mbr) == -1) {
-		warn("error writing MBR");
-		return CMD_CONT;
-	}
-
 	if (letoh64(gh.gh_sig) == GPTSIGNATURE) {
 		printf("Writing GPT.\n");
-		efi = MBR_protective_mbr(mbr);
-		if (efi == -1 || GPT_write() == -1) {
+		if (GPT_write() == -1) {
 			warn("error writing GPT");
 			return CMD_CONT;
 		}
 	} else {
+		printf("Writing MBR at offset %lld.\n", (long long)mbr->mbr_lba_self);
+		if (MBR_write(mbr) == -1) {
+			warn("error writing MBR");
+			return CMD_CONT;
+		}
 		GPT_zap_headers();
 	}
 

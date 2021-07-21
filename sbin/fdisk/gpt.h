@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.h,v 1.17 2021/07/18 15:28:37 krw Exp $	*/
+/*	$OpenBSD: gpt.h,v 1.18 2021/07/21 12:22:54 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -27,6 +27,7 @@ void		GPT_print(const char *, const int);
 void		GPT_print_part(const int, const char *, const int);
 void		GPT_print_parthdr(const int);
 
+extern struct mbr		gmbr;
 extern struct gpt_header	gh;
 extern struct gpt_partition	gp[NGPTPARTITIONS];
 

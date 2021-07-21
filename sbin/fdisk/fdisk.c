@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.127 2021/07/19 19:46:20 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.128 2021/07/21 12:22:54 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -163,22 +163,17 @@ main(int argc, char *argv[])
 		err(1, "pledge");
 
 	get_default_mbr(mbrfile, &initial_mbr);
-	error = MBR_read(0, 0, &mbr);
-	if (error)
-		errx(1, "Can't read MBR!");
 
 	query = NULL;
 	if (A_flag) {
 		if (GPT_read(ANYGPT))
 			errx(1, "-A requires a valid GPT");
 		else {
-			initial_mbr = mbr;	/* Keep current MBR. */
 			GPT_init(GPONLY);
 			query = "Do you wish to write new GPT?";
 		}
 	} else if (i_flag) {
 		if (g_flag) {
-			MBR_init_GPT(&initial_mbr);
 			GPT_init(GHANDGP);
 			query = "Do you wish to write new GPT?";
 		} else {
@@ -187,6 +182,9 @@ main(int argc, char *argv[])
 			    "partition table?";
 		}
 	} else if (u_flag) {
+		error = MBR_read(0, 0, &mbr);
+		if (error)
+			errx(1, "Can't read MBR!");
 		memcpy(initial_mbr.mbr_prt, mbr.mbr_prt,
 		    sizeof(initial_mbr.mbr_prt));
 		query = "Do you wish to write new MBR?";

@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.66 2021/07/19 23:24:54 krw Exp $	*/
+/*	$OpenBSD: user.c,v 1.67 2021/07/21 12:22:54 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -62,7 +62,7 @@ USER_edit(const uint64_t lba_self, const uint64_t lba_firstembr)
 {
 	struct mbr		 mbr;
 	char			*cmd, *args;
-	int			 i, st, efi, error;
+	int			 i, st, error;
 	static int		 editlevel;
 
 	/* One level deeper */

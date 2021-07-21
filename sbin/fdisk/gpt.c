@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.46 2021/07/18 15:28:37 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.47 2021/07/21 12:22:54 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -23,6 +23,7 @@
 
 #include <errno.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -40,6 +41,7 @@
 #define DPRINTF(x...)
 #endif
 
+struct mbr		gmbr;
 struct gpt_header	gh;
 struct gpt_partition	gp[NGPTPARTITIONS];
 
@@ -52,6 +54,61 @@ int			  get_partition_table(void);
 int			  init_gh(void);
 int			  init_gp(const int);
 uint32_t		  crc32(const u_char *, const uint32_t);
+int			  protective_mbr(const struct mbr *);
+int			  gpt_chk_mbr(struct dos_partition *, uint64_t);
+
+/*
+ * Return the index into dp[] of the EFI GPT (0xEE) partition, or -1 if no such
+ * partition exists.
+ *
+ * Taken from kern/subr_disk.c.
+ *
+ */
+int
+gpt_chk_mbr(struct dos_partition *dp, u_int64_t dsize)
+{
+	struct dos_partition	*dp2;
+	int			 efi, eficnt, found, i;
+	uint32_t		 psize;
+
+	found = efi = eficnt = 0;
+	for (dp2 = dp, i = 0; i < NDOSPART; i++, dp2++) {
+		if (dp2->dp_typ == DOSPTYP_UNUSED)
+			continue;
+		found++;
+		if (dp2->dp_typ != DOSPTYP_EFI)
+			continue;
+		if (letoh32(dp2->dp_start) != GPTSECTOR)
+			continue;
+		psize = letoh32(dp2->dp_size);
+		if (psize <= (dsize - GPTSECTOR) || psize == UINT32_MAX) {
+			efi = i;
+			eficnt++;
+		}
+	}
+	if (found == 1 && eficnt == 1)
+		return efi;
+
+	return -1;
+}
+
+int
+protective_mbr(const struct mbr *mbr)
+{
+	struct dos_partition	dp[NDOSPART], dos_partition;
+	int			i;
+
+	if (mbr->mbr_lba_self != 0)
+		return -1;
+
+	for (i = 0; i < NDOSPART; i++) {
+		PRT_make(&mbr->mbr_prt[i], mbr->mbr_lba_self, mbr->mbr_lba_firstembr,
+		    &dos_partition);
+		memcpy(&dp[i], &dos_partition, sizeof(dp[i]));
+	}
+
+	return gpt_chk_mbr(dp, DL_GETDSIZE(&dl));
+}
 
 int
 get_header(const uint64_t sector)
@@ -206,12 +263,11 @@ get_partition_table(void)
 int
 GPT_read(const int which)
 {
-	struct mbr		mbr;
 	int			error;
 
-	error = MBR_read(0, 0, &mbr);
+	error = MBR_read(0, 0, &gmbr);
 	if (error == 0)
-		error = MBR_protective_mbr(&mbr);
+		error = protective_mbr(&gmbr);
 	if (error)
 		goto done;
 
@@ -237,6 +293,7 @@ GPT_read(const int which)
  done:
 	if (error != 0) {
 		/* No valid GPT found. Zap any artifacts. */
+		memset(&gmbr, 0, sizeof(gmbr));
 		memset(&gh, 0, sizeof(gh));
 		memset(&gp, 0, sizeof(gp));
 	}
@@ -395,6 +452,15 @@ init_gh(void)
 
 	memcpy(&oldgh, &gh, sizeof(oldgh));
 	memset(&gh, 0, sizeof(gh));
+	memset(&gmbr, 0, sizeof(gmbr));
+
+	/* XXX Do we need the boot code? UEFI spec & Apple says no. */
+	memcpy(gmbr.mbr_code, initial_mbr.mbr_code, sizeof(gmbr.mbr_code));
+	gmbr.mbr_prt[0].prt_id = DOSPTYP_EFI;
+	gmbr.mbr_prt[0].prt_bs = 1;
+	gmbr.mbr_prt[0].prt_ns = UINT32_MAX;
+	PRT_fix_CHS(&gmbr.mbr_prt[0]);
+	gmbr.mbr_signature = DOSMBR_SIGNATURE;
 
 	needed = sizeof(gp) / secsize + 2;
 
@@ -507,6 +573,8 @@ GPT_write(void)
 	off_t			 off;
 	const int		 secsize = unit_types[SECTORS].ut_conversion;
 	uint64_t		 altgh, altgp, prigh, prigp, gpbytes;
+
+	MBR_write(&gmbr);
 
 	/*
 	 * XXX Assume size of gp is multiple of sector size.
