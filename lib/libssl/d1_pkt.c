@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.102 2021/07/21 07:51:12 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.103 2021/07/21 08:42:14 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -274,34 +274,23 @@ dtls1_retrieve_buffered_record(SSL *s, record_pqueue *queue)
 }
 
 static int
-dtls1_process_buffered_records(SSL *s)
+dtls1_process_buffered_record(SSL *s)
 {
-	pitem *item;
+	/* Check if epoch is current. */
+	if (D1I(s)->unprocessed_rcds.epoch != D1I(s)->r_epoch)
+		return (0);
 
-	item = pqueue_peek(D1I(s)->unprocessed_rcds.q);
-	if (item) {
-		/* Check if epoch is current. */
-		if (D1I(s)->unprocessed_rcds.epoch != D1I(s)->r_epoch)
-			return (1);
-		/* Nothing to do. */
-
-		/* Process all the records. */
-		while (pqueue_peek(D1I(s)->unprocessed_rcds.q)) {
-			if (!dtls1_retrieve_buffered_record((s),
-			    &((D1I(s))->unprocessed_rcds)))
-				return (0);
-			if (!dtls1_process_record(s))
-				return (0);
-			if (dtls1_buffer_record(s, &(D1I(s)->processed_rcds),
-			    S3I(s)->rrec.seq_num) < 0)
-				return (-1);
-		}
+	/* Update epoch once all unprocessed records have been processed. */
+	if (pqueue_peek(D1I(s)->unprocessed_rcds.q) == NULL) {
+		D1I(s)->unprocessed_rcds.epoch = D1I(s)->r_epoch + 1;
+		return (0);
 	}
 
-    /* sync epoch numbers once all the unprocessed records
-     * have been processed */
-	D1I(s)->processed_rcds.epoch = D1I(s)->r_epoch;
-	D1I(s)->unprocessed_rcds.epoch = D1I(s)->r_epoch + 1;
+	/* Process one of the records. */
+	if (!dtls1_retrieve_buffered_record(s, &D1I(s)->unprocessed_rcds))
+		return (-1);
+	if (!dtls1_process_record(s))
+		return (-1);
 
 	return (1);
 }
@@ -365,22 +354,15 @@ dtls1_process_record(SSL *s)
 int
 dtls1_get_record(SSL *s)
 {
-	SSL3_RECORD_INTERNAL *rr;
+	SSL3_RECORD_INTERNAL *rr = &(S3I(s)->rrec);
 	unsigned char *p = NULL;
 	DTLS1_BITMAP *bitmap;
 	unsigned int is_next_epoch;
-	int n;
+	int ret, n;
 
-	rr = &(S3I(s)->rrec);
-
-	/* The epoch may have changed.  If so, process all the
-	 * pending records.  This is a non-blocking operation. */
-	if (dtls1_process_buffered_records(s) < 0)
-		return (-1);
-
-	/* if we're renegotiating, then there may be buffered records */
-	if (dtls1_retrieve_buffered_record((s), &((D1I(s))->processed_rcds)))
-		return 1;
+	/* See if there are pending records that can now be processed. */
+	if ((ret = dtls1_process_buffered_record(s)) != 0)
+		return (ret);
 
 	/* get something from the wire */
 	if (0) {
@@ -1188,7 +1170,6 @@ dtls1_dispatch_alert(SSL *s)
 	}
 	return (i);
 }
-
 
 static DTLS1_BITMAP *
 dtls1_get_bitmap(SSL *s, SSL3_RECORD_INTERNAL *rr, unsigned int *is_next_epoch)

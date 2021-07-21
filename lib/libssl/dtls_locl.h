@@ -1,4 +1,4 @@
-/* $OpenBSD: dtls_locl.h,v 1.2 2021/07/19 08:42:24 jsing Exp $ */
+/* $OpenBSD: dtls_locl.h,v 1.3 2021/07/21 08:42:14 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -151,9 +151,8 @@ typedef struct dtls1_state_internal_st {
 
 	unsigned short handshake_read_seq;
 
-	/* Received handshake records (processed and unprocessed) */
+	/* Received handshake records (unprocessed) */
 	record_pqueue unprocessed_rcds;
-	record_pqueue processed_rcds;
 
 	/* Buffered handshake messages */
 	struct _pqueue *buffered_messages;
