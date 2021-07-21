@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.175 2021/07/08 15:13:14 bluhm Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.176 2021/07/21 12:23:32 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -404,7 +404,12 @@ ipsec_input_cb(struct cryptop *crp)
 			if (tdb->tdb_cryptoid != 0)
 				tdb->tdb_cryptoid = crp->crp_sid;
 			NET_UNLOCK();
-			crypto_dispatch(crp);
+			error = crypto_dispatch(crp);
+			if (error) {
+				DPRINTF("crypto dispatch error %d", error);
+				ipsecstat_inc(ipsec_idrops);
+				tdb->tdb_idrops++;
+			}
 			return;
 		}
 		DPRINTF("crypto error %d", crp->crp_etype);
