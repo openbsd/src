@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.134 2021/07/21 12:22:54 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.135 2021/07/21 20:26:30 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -302,7 +302,7 @@ Xedit(char *args, struct mbr *mbr)
 }
 
 int
-gsetpid(int pn)
+gsetpid(const int pn)
 {
 	struct uuid		 gp_type, gp_guid;
 	struct gpt_partition	*gg;
@@ -346,7 +346,7 @@ gsetpid(int pn)
 }
 
 int
-setpid(int pn, struct mbr *mbr)
+setpid(const int pn, struct mbr *mbr)
 {
 	struct prt		*pp;
 
