@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.550 2021/07/22 01:53:45 deraadt Exp $
+#	$OpenBSD: rc,v 1.551 2021/07/22 18:09:04 sthen Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -462,7 +462,8 @@ reorder_libs
 
 # Pause a little so at least one dynamic (slaacd or dhcpleased) config completes
 count=0
-while ((count++ < 20 && $(route -n show | grep -c '^default ') == 0)); do
+while ((count++ < 20)); do
+	route -n show | grep -q ^default && break
 	sleep .5
 done
 
