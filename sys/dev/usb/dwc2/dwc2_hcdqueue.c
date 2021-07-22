@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_hcdqueue.c,v 1.9 2017/09/08 05:36:53 deraadt Exp $	*/
+/*	$OpenBSD: dwc2_hcdqueue.c,v 1.10 2021/07/22 18:32:33 mglocker Exp $	*/
 /*	$NetBSD: dwc2_hcdqueue.c,v 1.11 2014/09/03 10:00:08 skrll Exp $	*/
 
 /*
@@ -61,6 +61,10 @@
 #include <dev/usb/dwc2/dwc2_hcd.h>
 
 STATIC u32 dwc2_calc_bus_time(struct dwc2_hsotg *, int, int, int, int);
+STATIC void dwc2_wait_timer_fn(void *);
+
+/* If we get a NAK, wait this long before retrying */
+#define DWC2_RETRY_WAIT_DELAY 1	/* msec */
 
 /**
  * dwc2_qh_init() - Initializes a QH structure
@@ -79,13 +83,16 @@ STATIC void dwc2_qh_init(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
 	dev_vdbg(hsotg->dev, "%s()\n", __func__);
 
 	/* Initialize QH */
+	qh->hsotg = hsotg;
+	/* XXX timer_setup(&qh->wait_timer, dwc2_wait_timer_fn, 0); */
+	timeout_set(&qh->wait_timer, dwc2_wait_timer_fn, qh);
 	qh->ep_type = dwc2_hcd_get_pipe_type(&urb->pipe_info);
 	qh->ep_is_in = dwc2_hcd_is_pipe_in(&urb->pipe_info) ? 1 : 0;
 
 	qh->data_toggle = DWC2_HC_PID_DATA0;
 	qh->maxp = dwc2_hcd_get_mps(&urb->pipe_info);
-	TAILQ_INIT(&qh->qtd_list);
-	qh->linked = 0;
+	INIT_LIST_HEAD(&qh->qtd_list);
+	INIT_LIST_HEAD(&qh->qh_list_entry);
 
 	/* FS/LS Endpoint on HS Hub, NOT virtual root hub */
 	dev_speed = dwc2_host_get_speed(hsotg, urb->priv);
@@ -115,6 +122,9 @@ STATIC void dwc2_qh_init(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
 				USB_SPEED_HIGH : dev_speed, qh->ep_is_in,
 				qh->ep_type == USB_ENDPOINT_XFER_ISOC,
 				bytecount);
+
+		/* Ensure frame_number corresponds to the reality */
+		hsotg->frame_number = dwc2_hcd_get_frame_number(hsotg);
 		/* Start in a slightly future (micro)frame */
 		qh->sched_frame = dwc2_frame_num_inc(hsotg->frame_number,
 						     SCHEDULE_SLOP);
@@ -203,7 +213,7 @@ STATIC void dwc2_qh_init(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
  *
  * Return: Pointer to the newly allocated QH, or NULL on error
  */
-STATIC struct dwc2_qh *dwc2_hcd_qh_create(struct dwc2_hsotg *hsotg,
+struct dwc2_qh *dwc2_hcd_qh_create(struct dwc2_hsotg *hsotg,
 					  struct dwc2_hcd_urb *urb,
 					  gfp_t mem_flags)
 {
@@ -245,11 +255,21 @@ void dwc2_hcd_qh_free(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 {
 	struct dwc2_softc *sc = hsotg->hsotg_sc;
 
-	if (hsotg->core_params->dma_desc_enable > 0) {
+	/*
+	 * We don't have the lock so we can safely wait until the wait timer
+	 * finishes.  Of course, at this point in time we'd better have set
+	 * wait_timer_active to false so if this timer was still pending it
+	 * won't do anything anyway, but we want it to finish before we free
+	 * memory.
+	 */
+	/* XXX del_timer_sync(&qh->wait_timer); */
+
+	timeout_del(&qh->wait_timer);
+	if (qh->desc_list) {
 		dwc2_hcd_qh_free_ddma(hsotg, qh);
 	} else if (qh->dw_align_buf) {
-		/* XXXNH */
-		usb_freemem(&hsotg->hsotg_sc->sc_bus, &qh->dw_align_buf_usbdma);
+		usb_freemem(&sc->sc_bus, &qh->dw_align_buf_usbdma);
+ 		qh->dw_align_buf_dma = (dma_addr_t)0;
 	}
 
 	pool_put(&sc->sc_qhpool, qh);
@@ -533,11 +553,11 @@ STATIC int dwc2_schedule_periodic(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 
 	if (hsotg->core_params->dma_desc_enable > 0)
 		/* Don't rely on SOF and start in ready schedule */
-		TAILQ_INSERT_TAIL(&hsotg->periodic_sched_ready, qh, qh_list_entry);
+		list_add_tail(&qh->qh_list_entry, &hsotg->periodic_sched_ready);
 	else
 		/* Always start in inactive schedule */
-		TAILQ_INSERT_TAIL(&hsotg->periodic_sched_inactive, qh, qh_list_entry);
-	qh->linked = 1;
+		list_add_tail(&qh->qh_list_entry,
+			      &hsotg->periodic_sched_inactive);
 
 	if (hsotg->core_params->uframe_sched <= 0)
 		/* Reserve periodic channel */
@@ -561,7 +581,7 @@ STATIC void dwc2_deschedule_periodic(struct dwc2_hsotg *hsotg,
 {
 	int i;
 
-	qh->linked = 0;
+	list_del_init(&qh->qh_list_entry);
 
 	/* Update claimed usecs per (micro)frame */
 	hsotg->periodic_usecs -= qh->usecs;
@@ -575,6 +595,55 @@ STATIC void dwc2_deschedule_periodic(struct dwc2_hsotg *hsotg,
 		/* Release periodic channel reservation */
 		hsotg->periodic_channels--;
 	}
+}
+
+/**
+ * dwc2_wait_timer_fn() - Timer function to re-queue after waiting
+ *
+ * As per the spec, a NAK indicates that "a function is temporarily unable to
+ * transmit or receive data, but will eventually be able to do so without need
+ * of host intervention".
+ *
+ * That means that when we encounter a NAK we're supposed to retry.
+ *
+ * ...but if we retry right away (from the interrupt handler that saw the NAK)
+ * then we can end up with an interrupt storm (if the other side keeps NAKing
+ * us) because on slow enough CPUs it could take us longer to get out of the
+ * interrupt routine than it takes for the device to send another NAK.  That
+ * leads to a constant stream of NAK interrupts and the CPU locks.
+ *
+ * ...so instead of retrying right away in the case of a NAK we'll set a timer
+ * to retry some time later.  This function handles that timer and moves the
+ * qh back to the "inactive" list, then queues transactions.
+ *
+ * @t: Pointer to wait_timer in a qh.
+ */
+STATIC void dwc2_wait_timer_fn(void *arg)
+{
+	struct dwc2_qh *qh = arg;
+	struct dwc2_hsotg *hsotg = qh->hsotg;
+	unsigned long flags;
+
+	spin_lock_irqsave(&hsotg->lock, flags);
+
+	/*
+	 * We'll set wait_timer_cancel to true if we want to cancel this
+	 * operation in dwc2_hcd_qh_unlink().
+	 */
+	if (!qh->wait_timer_cancel) {
+		enum dwc2_transaction_type tr_type;
+
+		qh->want_wait = false;
+
+		list_move(&qh->qh_list_entry,
+			  &hsotg->non_periodic_sched_inactive);
+
+		tr_type = dwc2_hcd_select_transactions(hsotg);
+		if (tr_type != DWC2_TRANSACTION_NONE)
+			dwc2_hcd_queue_transactions(hsotg, tr_type);
+	}
+
+	spin_unlock_irqrestore(&hsotg->lock, flags);
 }
 
 /**
@@ -595,18 +664,35 @@ int dwc2_hcd_qh_add(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 	if (dbg_qh(qh))
 		dev_vdbg(hsotg->dev, "%s()\n", __func__);
 
-	if (qh->linked != 0) {
+	if (!list_empty(&qh->qh_list_entry))
 		/* QH already in a schedule */
 		return 0;
+
+	if (!dwc2_frame_num_le(qh->sched_frame, hsotg->frame_number) &&
+			!hsotg->frame_number) {
+		dev_dbg(hsotg->dev,
+				"reset frame number counter\n");
+		qh->sched_frame = dwc2_frame_num_inc(hsotg->frame_number,
+				SCHEDULE_SLOP);
 	}
 
 	/* Add the new QH to the appropriate schedule */
 	if (dwc2_qh_is_non_per(qh)) {
-		/* Always start in inactive schedule */
-		TAILQ_INSERT_TAIL(&hsotg->non_periodic_sched_inactive, qh, qh_list_entry);
-		qh->linked = 1;
+		if (qh->want_wait) {
+			list_add_tail(&qh->qh_list_entry,
+				      &hsotg->non_periodic_sched_waiting);
+			qh->wait_timer_cancel = false;
+			/* XXX mod_timer(&qh->wait_timer,
+				  jiffies + DWC2_RETRY_WAIT_DELAY + 1); */
+			timeout_add_msec(&qh->wait_timer,
+			    DWC2_RETRY_WAIT_DELAY);
+		} else {
+			list_add_tail(&qh->qh_list_entry,
+				      &hsotg->non_periodic_sched_inactive);
+		}
 		return 0;
 	}
+
 	status = dwc2_schedule_periodic(hsotg, qh);
 	if (status)
 		return status;
@@ -633,28 +719,21 @@ void dwc2_hcd_qh_unlink(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 
 	dev_vdbg(hsotg->dev, "%s()\n", __func__);
 
-	if (qh->linked == 0) {
+	/* If the wait_timer is pending, this will stop it from acting */
+	qh->wait_timer_cancel = true;
+
+	if (list_empty(&qh->qh_list_entry))
 		/* QH is not in a schedule */
 		return;
-	}
 
 	if (dwc2_qh_is_non_per(qh)) {
-		if (hsotg->non_periodic_qh_ptr == qh) {
+		if (hsotg->non_periodic_qh_ptr == &qh->qh_list_entry)
 			hsotg->non_periodic_qh_ptr =
-					TAILQ_NEXT(qh, qh_list_entry);
-		}
-
-		if (qh->channel) {
-			TAILQ_REMOVE(&hsotg->non_periodic_sched_active, qh, qh_list_entry);
-		} else {
-			TAILQ_REMOVE(&hsotg->non_periodic_sched_inactive, qh, qh_list_entry);
-		}
-		qh->linked = 0;
-
-		if (hsotg->non_periodic_qh_ptr == NULL)
-			hsotg->non_periodic_qh_ptr = TAILQ_FIRST(&hsotg->non_periodic_sched_active);
+					hsotg->non_periodic_qh_ptr->next;
+		list_del_init(&qh->qh_list_entry);
 		return;
 	}
+
 	dwc2_deschedule_periodic(hsotg, qh);
 	hsotg->periodic_qh_count--;
 	if (!hsotg->periodic_qh_count) {
@@ -722,8 +801,8 @@ void dwc2_hcd_qh_deactivate(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
 
 	if (dwc2_qh_is_non_per(qh)) {
 		dwc2_hcd_qh_unlink(hsotg, qh);
-		if (!TAILQ_EMPTY(&qh->qtd_list))
-			/* Add back to inactive non-periodic schedule */
+		if (!list_empty(&qh->qtd_list))
+			/* Add back to inactive/waiting non-periodic schedule */
 			dwc2_hcd_qh_add(hsotg, qh);
 		return;
 	}
@@ -740,7 +819,7 @@ void dwc2_hcd_qh_deactivate(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
 			qh->sched_frame = frame_number;
 	}
 
-	if (TAILQ_EMPTY(&qh->qtd_list)) {
+	if (list_empty(&qh->qtd_list)) {
 		dwc2_hcd_qh_unlink(hsotg, qh);
 		return;
 	}
@@ -748,15 +827,13 @@ void dwc2_hcd_qh_deactivate(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
 	 * Remove from periodic_sched_queued and move to
 	 * appropriate queue
 	 */
-	TAILQ_REMOVE(&hsotg->periodic_sched_queued, qh, qh_list_entry);
 	if ((hsotg->core_params->uframe_sched > 0 &&
 	     dwc2_frame_num_le(qh->sched_frame, frame_number)) ||
 	    (hsotg->core_params->uframe_sched <= 0 &&
-	     qh->sched_frame == frame_number)) {
-		TAILQ_INSERT_TAIL(&hsotg->periodic_sched_ready, qh, qh_list_entry);
-	} else {
-		TAILQ_INSERT_TAIL(&hsotg->periodic_sched_inactive, qh, qh_list_entry);
-	}
+	     qh->sched_frame == frame_number))
+		list_move(&qh->qh_list_entry, &hsotg->periodic_sched_ready);
+	else
+		list_move(&qh->qh_list_entry, &hsotg->periodic_sched_inactive);
 }
 
 /**
@@ -791,62 +868,39 @@ void dwc2_hcd_qtd_init(struct dwc2_qtd *qtd, struct dwc2_hcd_urb *urb)
 
 /**
  * dwc2_hcd_qtd_add() - Adds a QTD to the QTD-list of a QH
+ *			Caller must hold driver lock.
  *
- * @hsotg:     The DWC HCD structure
- * @qtd:       The QTD to add
- * @qh:        Out parameter to return queue head
- * @mem_flags: Flag to do atomic alloc if needed
+ * @hsotg:        The DWC HCD structure
+ * @qtd:          The QTD to add
+ * @qh:           Queue head to add qtd to
  *
  * Return: 0 if successful, negative error code otherwise
  *
- * Finds the correct QH to place the QTD into. If it does not find a QH, it
- * will create a new QH. If the QH to which the QTD is added is not currently
- * scheduled, it is placed into the proper schedule based on its EP type.
- *
- * HCD lock must be held and interrupts must be disabled on entry
+ * If the QH to which the QTD is added is not currently scheduled, it is placed
+ * into the proper schedule based on its EP type.
  */
 int dwc2_hcd_qtd_add(struct dwc2_hsotg *hsotg, struct dwc2_qtd *qtd,
-		     struct dwc2_qh **qh, gfp_t mem_flags)
+		     struct dwc2_qh *qh)
 {
-	struct dwc2_hcd_urb *urb = qtd->urb;
-	int allocated = 0;
+
+	MUTEX_ASSERT_LOCKED(&hsotg->lock);
 	int retval;
 
-	/*
-	 * Get the QH which holds the QTD-list to insert to. Create QH if it
-	 * doesn't exist.
-	 */
-	if (*qh == NULL) {
-		*qh = dwc2_hcd_qh_create(hsotg, urb, mem_flags);
-		if (*qh == NULL)
-			return -ENOMEM;
-		allocated = 1;
+	if (!qh) {
+		dev_err(hsotg->dev, "%s: Invalid QH\n", __func__);
+		retval = -EINVAL;
+		goto fail;
 	}
 
-	retval = dwc2_hcd_qh_add(hsotg, *qh);
+	retval = dwc2_hcd_qh_add(hsotg, qh);
 	if (retval)
 		goto fail;
 
-	qtd->qh = *qh;
-	TAILQ_INSERT_TAIL(&(*qh)->qtd_list, qtd, qtd_list_entry);
+	qtd->qh = qh;
+	list_add_tail(&qtd->qtd_list_entry, &qh->qtd_list);
 
 	return 0;
-
 fail:
-	if (allocated) {
-		struct dwc2_qtd *qtd2, *qtd2_tmp;
-		struct dwc2_qh *qh_tmp = *qh;
-
-		*qh = NULL;
-		dwc2_hcd_qh_unlink(hsotg, qh_tmp);
-
-		/* Free each QTD in the QH's QTD list */
-		TAILQ_FOREACH_SAFE(qtd2, &qh_tmp->qtd_list, qtd_list_entry, qtd2_tmp)
-			dwc2_hcd_qtd_unlink_and_free(hsotg, qtd2, qh_tmp);
-
-		dwc2_hcd_qh_free(hsotg, qh_tmp);
-	}
-
 	return retval;
 }
 
@@ -856,7 +910,7 @@ void dwc2_hcd_qtd_unlink_and_free(struct dwc2_hsotg *hsotg,
 {
 	struct dwc2_softc *sc = hsotg->hsotg_sc;
 
-	TAILQ_REMOVE(&qh->qtd_list, qtd, qtd_list_entry);
+	list_del_init(&qtd->qtd_list_entry);
  	pool_put(&sc->sc_qtdpool, qtd);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_hw.h,v 1.2 2015/02/10 12:58:47 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2_hw.h,v 1.3 2021/07/22 18:32:33 mglocker Exp $	*/
 /*	$NetBSD: dwc2_hw.h,v 1.2 2013/09/25 06:19:22 skrll Exp $	*/
 
 /*
@@ -112,6 +112,7 @@
 #define GUSBCFG_FSINTF			(1 << 5)
 #define GUSBCFG_ULPI_UTMI_SEL		(1 << 4)
 #define GUSBCFG_PHYIF16			(1 << 3)
+#define GUSBCFG_PHYIF8			(0 << 3)
 #define GUSBCFG_TOUTCAL_MASK		(0x7 << 0)
 #define GUSBCFG_TOUTCAL_SHIFT		0
 #define GUSBCFG_TOUTCAL_LIMIT		0x7
@@ -144,6 +145,7 @@
 #define GINTSTS_RESETDET		(1 << 23)
 #define GINTSTS_FET_SUSP		(1 << 22)
 #define GINTSTS_INCOMPL_IP		(1 << 21)
+#define GINTSTS_INCOMPL_SOOUT		(1 << 21)
 #define GINTSTS_INCOMPL_SOIN		(1 << 20)
 #define GINTSTS_OEPINT			(1 << 19)
 #define GINTSTS_IEPINT			(1 << 18)
@@ -296,6 +298,7 @@
 #define GHWCFG4_NUM_IN_EPS_MASK			(0xf << 26)
 #define GHWCFG4_NUM_IN_EPS_SHIFT		26
 #define GHWCFG4_DED_FIFO_EN			(1 << 25)
+#define GHWCFG4_DED_FIFO_SHIFT		25
 #define GHWCFG4_SESSION_END_FILT_EN		(1 << 24)
 #define GHWCFG4_B_VALID_FILT_EN			(1 << 23)
 #define GHWCFG4_A_VALID_FILT_EN			(1 << 22)
@@ -406,6 +409,7 @@
 #define FIFOSIZE_DEPTH_SHIFT		16
 #define FIFOSIZE_STARTADDR_MASK		(0xffff << 0)
 #define FIFOSIZE_STARTADDR_SHIFT	0
+#define FIFOSIZE_DEPTH_GET(_x)		(((_x) >> 16) & 0xffff)
 
 /* Device mode registers */
 
@@ -522,11 +526,11 @@
 #define DXEPCTL_STALL			(1 << 21)
 #define DXEPCTL_SNP			(1 << 20)
 #define DXEPCTL_EPTYPE_MASK		(0x3 << 18)
-#define DXEPCTL_EPTYPE_SHIFT		18
-#define DXEPCTL_EPTYPE_CONTROL		0
-#define DXEPCTL_EPTYPE_ISO		1
-#define DXEPCTL_EPTYPE_BULK		2
-#define DXEPCTL_EPTYPE_INTTERUPT	3
+#define DXEPCTL_EPTYPE_CONTROL		(0x0 << 18)
+#define DXEPCTL_EPTYPE_ISO		(0x1 << 18)
+#define DXEPCTL_EPTYPE_BULK		(0x2 << 18)
+#define DXEPCTL_EPTYPE_INTERRUPT	(0x3 << 18)
+
 #define DXEPCTL_NAKSTS			(1 << 17)
 #define DXEPCTL_DPID			(1 << 16)
 #define DXEPCTL_EOFRNUM			(1 << 16)
@@ -542,6 +546,7 @@
 
 #define DIEPINT(_a)			HSOTG_REG(0x908 + ((_a) * 0x20))
 #define DOEPINT(_a)			HSOTG_REG(0xB08 + ((_a) * 0x20))
+#define DXEPINT_SETUP_RCVD		(1 << 15)
 #define DXEPINT_INEPNAKEFF		(1 << 6)
 #define DXEPINT_BACK2BACKSETUP		(1 << 6)
 #define DXEPINT_INTKNEPMIS		(1 << 5)
@@ -767,10 +772,6 @@
 #define TSIZ_XFERSIZE_SHIFT		0
 
 #define HCDMA(_ch)			HSOTG_REG(0x0514 + 0x20 * (_ch))
-#define HCDMA_DMA_ADDR_MASK		(0x1fffff << 11)
-#define HCDMA_DMA_ADDR_SHIFT		11
-#define HCDMA_CTD_MASK			(0xff << 3)
-#define HCDMA_CTD_SHIFT			3
 
 #define HCDMAB(_ch)			HSOTG_REG(0x051c + 0x20 * (_ch))
 

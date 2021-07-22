@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.h,v 1.14 2017/02/15 14:49:13 visa Exp $	*/
+/*	$OpenBSD: dwc2.h,v 1.15 2021/07/22 18:32:33 mglocker Exp $	*/
 /*	$NetBSD: dwc2.h,v 1.4 2014/12/23 16:20:06 macallan Exp $	*/
 
 /*-
@@ -37,20 +37,18 @@
 #include <sys/kernel.h>
 
 #include <sys/task.h>
-#include <sys/timeout.h>
 
 #include <lib/libkern/libkern.h>
 
-#if 0
-#include "opt_usb.h"
-#endif
-
-#define	STATIC_INLINE		static inline
-#define	STATIC
+#define STATIC
 
 // #define VERBOSE_DEBUG
 // #define DWC2_DUMP_FRREM
 // #define CONFIG_USB_DWC2_TRACK_MISSED_SOFS
+
+#define CONFIG_USB_DWC2_HOST		1
+#define CONFIG_USB_DWC2_DUAL_ROLE	0
+#define CONFIG_USB_DWC2_PERIPHERAL	0
 
 typedef int irqreturn_t;
 #define	IRQ_NONE 0
@@ -63,6 +61,11 @@ typedef int irqreturn_t;
 #define	u64	uint64_t
 
 #define	dma_addr_t	bus_addr_t
+
+#define DWC2_READ_4(hsotg, reg) \
+    bus_space_read_4((hsotg)->hsotg_sc->sc_iot, (hsotg)->hsotg_sc->sc_ioh, (reg))
+#define DWC2_WRITE_4(hsotg, reg, data)  \
+    bus_space_write_4((hsotg)->hsotg_sc->sc_iot, (hsotg)->hsotg_sc->sc_ioh, (reg), (data));
 
 #ifdef DWC2_DEBUG
 extern int dwc2debug;
@@ -101,13 +104,6 @@ extern int dwc2debug;
 #define	dev_vdbg(...) do { } while (0)
 #endif
 
-#define jiffies			hardclock_ticks
-#define msecs_to_jiffies	mstohz
-
-#define gfp_t		int
-#define GFP_KERNEL	 M_WAITOK
-#define GFP_ATOMIC	 M_NOWAIT
-
 enum usb_otg_state {
 	OTG_STATE_RESERVED = 0,
 
@@ -122,8 +118,8 @@ enum usb_otg_state {
 
 #define spinlock_t		struct mutex
 #define spin_lock_init(lock)	mtx_init(lock, IPL_USB)
-#define	spin_lock(l)		do { mtx_enter(l); } while (0)
-#define	spin_unlock(l)		do { mtx_leave(l); } while (0)
+#define spin_lock(l)		do { mtx_enter(l); } while (0)
+#define spin_unlock(l)		do { mtx_leave(l); } while (0)
 
 #define	spin_lock_irqsave(l, f)		\
 	do { mtx_enter(l); (void)(f); } while (0)
@@ -193,19 +189,76 @@ enum usb_otg_state {
 #define	USB_PORT_STAT_C_RESET		UPS_C_PORT_RESET
 #define	USB_PORT_STAT_C_L1		UPS_C_PORT_L1
 
-STATIC_INLINE void
+#define	USB_DT_HUB			UDESC_HUB
+
+/* See USB 2.0 spec Table 11-13, offset 3 */
+#define HUB_CHAR_LPSM		UHD_PWR
+#define HUB_CHAR_COMMON_LPSM	UHD_PWR_GANGED
+#define HUB_CHAR_INDV_PORT_LPSM	UHD_PWR_INDIVIDUAL
+#define HUB_CHAR_NO_LPSM	UHD_PWR_NO_SWITCH
+
+#define HUB_CHAR_COMPOUND	UHD_COMPOUND
+
+#define HUB_CHAR_OCPM		UHD_OC
+#define HUB_CHAR_COMMON_OCPM	UHD_OC_GLOBAL
+#define HUB_CHAR_INDV_PORT_OCPM	UHD_OC_INDIVIDUAL
+#define HUB_CHAR_NO_OCPM	UHD_OC_NONE
+
+#define HUB_CHAR_TTTT		UHD_TT_THINK
+#define HUB_CHAR_PORTIND	UHD_PORT_IND
+
+enum usb_dr_mode {
+	USB_DR_MODE_UNKNOWN,
+	USB_DR_MODE_HOST,
+	USB_DR_MODE_PERIPHERAL,
+	USB_DR_MODE_OTG,
+};
+
+struct usb_phy;
+struct usb_hcd;
+
+static inline int
+usb_phy_set_suspend(struct usb_phy *x, int suspend)
+{
+
+	return 0;
+}
+
+static inline void
+usb_hcd_resume_root_hub(struct usb_hcd *hcd)
+{
+
+	return;
+}
+
+static inline int
+usb_disabled(void)
+{
+
+	return 0;
+}
+
+static inline void
 udelay(unsigned long usecs)
 {
+
 	DELAY(usecs);
+}
+
+static inline void
+ndelay(unsigned long nsecs)
+{
+
+	DELAY(nsecs / 1000);
 }
 
 #define	EREMOTEIO	EIO
 #define	ECOMM		EIO
+#define	ENOTSUPP	ENOTSUP
 
 #define NS_TO_US(ns)	((ns + 500L) / 1000L)
 
 void dw_timeout(void *);
-void dwc2_worker(struct task *, void *);
 
 struct delayed_work {
 	struct task work;
@@ -216,7 +269,7 @@ struct delayed_work {
 	void *dw_arg;
 };
 
-STATIC_INLINE void
+static inline void
 INIT_DELAYED_WORK(struct delayed_work *dw, void (*fn)(void *), void *arg)
 {
 	dw->dw_fn = fn;
@@ -224,11 +277,13 @@ INIT_DELAYED_WORK(struct delayed_work *dw, void (*fn)(void *), void *arg)
 	timeout_set(&dw->dw_timer, dw_timeout, dw);
 }
 
-STATIC_INLINE void
+static inline void
 queue_delayed_work(struct taskq *wq, struct delayed_work *dw, int j)
 {
 	dw->dw_wq = wq;
 	timeout_add(&dw->dw_timer, j);
 }
+
+#define USB_RESUME_TIMEOUT	40 /* ms */
 
 #endif

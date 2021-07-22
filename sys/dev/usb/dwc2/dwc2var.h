@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2var.h,v 1.19 2017/09/05 14:01:03 otto Exp $	*/
+/*	$OpenBSD: dwc2var.h,v 1.20 2021/07/22 18:32:33 mglocker Exp $	*/
 /*	$NetBSD: dwc2var.h,v 1.3 2013/10/22 12:57:40 skrll Exp $	*/
 
 /*-
@@ -34,10 +34,8 @@
 #define	_DWC2VAR_H_
 
 #include <sys/pool.h>
+#include <sys/task.h>
 
-struct task;
-
-#define DWC2_MAXISOCPACKETS	16
 struct dwc2_hsotg;
 struct dwc2_qtd;
 
@@ -45,13 +43,12 @@ struct dwc2_xfer {
 	struct usbd_xfer xfer;			/* Needs to be first */
 
 	struct dwc2_hcd_urb *urb;
-	int packet_count;
 
 	TAILQ_ENTRY(dwc2_xfer) xnext;		/* list of complete xfers */
-
+	usbd_status intr_status;
 	u_int32_t flags;
-#define DWC2_XFER_ABORTING	0x0001	/* xfer is aborting. */
-#define DWC2_XFER_ABORTWAIT	0x0002	/* abort completion is being awaited. */
+#define DWC2_XFER_ABORTING      0x0001  /* xfer is aborting. */
+#define DWC2_XFER_ABORTWAIT     0x0002  /* abort completion is being awaited. */
 };
 
 struct dwc2_pipe {
@@ -82,7 +79,7 @@ typedef struct dwc2_softc {
  	bus_space_tag_t		sc_iot;
  	bus_space_handle_t	sc_ioh;
 	struct dwc2_core_params *sc_params;
-	struct dwc2_core_dma_config *sc_dma_config;
+	int			(*sc_set_dma_addr)(struct device *, bus_addr_t, int);
 
 	/*
 	 * Private
@@ -90,34 +87,29 @@ typedef struct dwc2_softc {
 
 	struct dwc2_hsotg *sc_hsotg;
 
+	struct mutex sc_lock;
+
 	bool sc_hcdenabled;
 	void *sc_rhc_si;
 
 	struct usbd_xfer *sc_intrxfer;
 
-	struct device *sc_child;		/* /dev/usb# device */
-	char sc_dying;
-#if 0
-	struct usb_dma_reserve sc_dma_reserve;
-#endif
+	struct device *sc_child;	/* /dev/usb# device */
 
 	char sc_vendor[32];		/* vendor string for root hub */
-	int sc_id_vendor;		/* vendor ID for root hub */
 
 	TAILQ_HEAD(, dwc2_xfer) sc_complete;	/* complete transfers */
-
-	uint8_t sc_addr;		/* device address */
-	uint8_t sc_conf;		/* device configuration */
 
 	struct pool sc_xferpool;
 	struct pool sc_qhpool;
 	struct pool sc_qtdpool;
 
+	uint8_t sc_addr;		/* device address */
+	uint8_t sc_conf;		/* device configuration */
+
 } dwc2_softc_t;
 
 int		dwc2_init(struct dwc2_softc *);
-int		dwc2_dma_config(struct dwc2_softc *,
-				struct dwc2_core_dma_config *);
 int		dwc2_intr(void *);
 int		dwc2_detach(dwc2_softc_t *, int);
 
@@ -126,13 +118,6 @@ void		dwc2_worker(struct task *, void *);
 void		dwc2_host_complete(struct dwc2_hsotg *, struct dwc2_qtd *,
 				   int);
 
-#define DWC2_READ_4(hsotg, reg) \
-    bus_space_read_4((hsotg)->hsotg_sc->sc_iot, (hsotg)->hsotg_sc->sc_ioh, \
-    (reg))
-#define DWC2_WRITE_4(hsotg, reg, data)  \
-    bus_space_write_4((hsotg)->hsotg_sc->sc_iot, (hsotg)->hsotg_sc->sc_ioh, \
-    (reg), (data))
-
 static inline void
 dwc2_root_intr(dwc2_softc_t *sc)
 {
@@ -140,23 +125,18 @@ dwc2_root_intr(dwc2_softc_t *sc)
 	softintr_schedule(sc->sc_rhc_si);
 }
 
-// XXX compat
-
-#define	ENOSR		90
-
-#ifndef mstohz
+/*
+ * XXX Compat
+ */
+#define DWC2_MAXISOCPACKETS	16	/* XXX: Fix nframes handling */
+#define ENOSR			90
+#define device_xname(d)		((d)->dv_xname)
+#define jiffies			hardclock_ticks
 #define mstohz(ms) \
 	(__predict_false((ms) >= 0x20000) ? \
 	    ((ms +0u) / 1000u) * hz : \
 	    ((ms +0u) * hz) / 1000u)
-#endif
-
-#define	timeout_reset(x, t, f, a) \
-do { \
-	timeout_set((x), (f), (a)); \
-	timeout_add((x), (t)); \
-} while (0)
-
-#define	device_xname(d)	((d)->dv_xname)
+#define msecs_to_jiffies	mstohz
+#define IS_ENABLED(option)	(option)
 
 #endif	/* _DWC_OTGVAR_H_ */
