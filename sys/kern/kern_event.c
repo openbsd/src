@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.167 2021/06/16 14:26:30 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.168 2021/07/22 07:22:43 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -92,7 +92,7 @@ void	kqueue_do_check(struct kqueue *kq, const char *func, int line);
 #define kqueue_check(kq)	do {} while (0)
 #endif
 
-void	kqpoll_dequeue(struct proc *p);
+void	kqpoll_dequeue(struct proc *p, int all);
 
 static int	filter_attach(struct knote *kn);
 static void	filter_detach(struct knote *kn);
@@ -720,12 +720,12 @@ kqpoll_init(void)
 
 	if (p->p_kq != NULL) {
 		/*
-		 * Discard any knotes that have been enqueued after
+		 * Discard any badfd knotes that have been enqueued after
 		 * previous scan.
-		 * This prevents accumulation of enqueued badfd knotes
-		 * in case scan does not make progress for some reason.
+		 * This prevents them from accumulating in case
+		 * scan does not make progress for some reason.
 		 */
-		kqpoll_dequeue(p);
+		kqpoll_dequeue(p, 0);
 		return;
 	}
 
@@ -747,7 +747,7 @@ kqpoll_exit(void)
 
 	kqueue_purge(p, p->p_kq);
 	/* Clear any detached knotes that remain in the queue. */
-	kqpoll_dequeue(p);
+	kqpoll_dequeue(p, 1);
 	kqueue_terminate(p, p->p_kq);
 	KASSERT(p->p_kq->kq_refs == 1);
 	KQRELE(p->p_kq);
@@ -755,33 +755,57 @@ kqpoll_exit(void)
 }
 
 void
-kqpoll_dequeue(struct proc *p)
+kqpoll_dequeue(struct proc *p, int all)
 {
+	struct knote marker;
 	struct knote *kn;
 	struct kqueue *kq = p->p_kq;
 
+	/*
+	 * Bail out early without locking if the queue appears empty.
+	 *
+	 * This thread might not see the latest value of kq_count yet.
+	 * However, if there is any sustained increase in the queue size,
+	 * this thread will eventually observe that kq_count has become
+	 * non-zero.
+	 */
+	if (all == 0 && kq->kq_count == 0)
+		return;
+
+	memset(&marker, 0, sizeof(marker));
+	marker.kn_filter = EVFILT_MARKER;
+	marker.kn_status = KN_PROCESSING;
+
 	mtx_enter(&kq->kq_lock);
-	while ((kn = TAILQ_FIRST(&kq->kq_head)) != NULL) {
+	kn = TAILQ_FIRST(&kq->kq_head);
+	while (kn != NULL) {
 		/* This kqueue should not be scanned by other threads. */
 		KASSERT(kn->kn_filter != EVFILT_MARKER);
 
-		if (!knote_acquire(kn, NULL, 0)) {
-			/* knote_acquire() has released kq_lock. */
-			mtx_enter(&kq->kq_lock);
+		if (all == 0 && (kn->kn_status & KN_ATTACHED)) {
+			kn = TAILQ_NEXT(kn, kn_tqe);
 			continue;
 		}
 
-		kqueue_check(kq);
-		TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe);
-		kn->kn_status &= ~KN_QUEUED;
-		kq->kq_count--;
-		mtx_leave(&kq->kq_lock);
+		TAILQ_INSERT_BEFORE(kn, &marker, kn_tqe);
 
-		filter_detach(kn);
-		knote_drop(kn, p);
+		if (!knote_acquire(kn, NULL, 0)) {
+			/* knote_acquire() has released kq_lock. */
+		} else {
+			kqueue_check(kq);
+			TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe);
+			kn->kn_status &= ~KN_QUEUED;
+			kq->kq_count--;
+			mtx_leave(&kq->kq_lock);
+
+			filter_detach(kn);
+			knote_drop(kn, p);
+		}
 
 		mtx_enter(&kq->kq_lock);
 		kqueue_check(kq);
+		kn = TAILQ_NEXT(&marker, kn_tqe);
+		TAILQ_REMOVE(&kq->kq_head, &marker, kn_tqe);
 	}
 	mtx_leave(&kq->kq_lock);
 }
