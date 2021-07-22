@@ -1,0 +1,166 @@
+.\" $OpenBSD: X509_STORE_CTX_set_flags.3,v 1.1 2021/07/22 17:11:14 schwarze Exp $
+.\" full merge up to: OpenSSL aae41f8c Jun 25 09:47:15 2015 +0100
+.\" selective merge up to: OpenSSL 24a535ea Sep 22 13:14:20 2020 +0100
+.\"
+.\" This file is a derived work.
+.\" The changes are covered by the following Copyright and license:
+.\"
+.\" Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
+.\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" The original file was written by Dr. Stephen Henson <steve@openssl.org>.
+.\" Copyright (c) 2009 The OpenSSL Project.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\"
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in
+.\"    the documentation and/or other materials provided with the
+.\"    distribution.
+.\"
+.\" 3. All advertising materials mentioning features or use of this
+.\"    software must display the following acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+.\"
+.\" 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+.\"    endorse or promote products derived from this software without
+.\"    prior written permission. For written permission, please contact
+.\"    openssl-core@openssl.org.
+.\"
+.\" 5. Products derived from this software may not be called "OpenSSL"
+.\"    nor may "OpenSSL" appear in their names without prior written
+.\"    permission of the OpenSSL Project.
+.\"
+.\" 6. Redistributions of any form whatsoever must retain the following
+.\"    acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+.\" EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+.\" ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+.\" OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd $Mdocdate: July 22 2021 $
+.Dt X509_STORE_CTX_SET_FLAGS 3
+.Os
+.Sh NAME
+.Nm X509_STORE_CTX_set_flags ,
+.Nm X509_STORE_CTX_get0_param ,
+.Nm X509_STORE_CTX_set0_param ,
+.Nm X509_STORE_CTX_set_default
+.Nd X509_STORE_CTX parameter initialisation
+.Sh SYNOPSIS
+.In openssl/x509_vfy.h
+.Ft void
+.Fo X509_STORE_CTX_set_flags
+.Fa "X509_STORE_CTX *ctx"
+.Fa "unsigned long flags"
+.Fc
+.Ft X509_VERIFY_PARAM *
+.Fo X509_STORE_CTX_get0_param
+.Fa "X509_STORE_CTX *ctx"
+.Fc
+.Ft void
+.Fo X509_STORE_CTX_set0_param
+.Fa "X509_STORE_CTX *ctx"
+.Fa "X509_VERIFY_PARAM *param"
+.Fc
+.Ft int
+.Fo X509_STORE_CTX_set_default
+.Fa "X509_STORE_CTX *ctx"
+.Fa "const char *name"
+.Fc
+.Sh DESCRIPTION
+These functions operate on the
+.Vt X509_VERIFY_PARAM
+object used by
+.Fa ctx .
+Usually,
+.Xr X509_STORE_CTX_init 3
+is called on
+.Fa ctx
+before these functions, and
+.Xr X509_verify_cert 3
+afterwards.
+.Pp
+.Fn X509_STORE_CTX_set_flags
+sets the internal verification parameter flags to
+.Fa flags .
+See
+.Xr X509_VERIFY_PARAM_set_flags 3
+for a description of the verification flags.
+.Pp
+.Fn X509_STORE_CTX_get0_param
+retrieves an internal pointer to the verification parameters associated
+with
+.Fa ctx .
+.Pp
+.Fn X509_STORE_CTX_set0_param
+sets the internal verification parameter pointer to
+.Fa param .
+After this call
+.Fa param
+should not be used.
+.Pp
+.Fn X509_STORE_CTX_set_default
+looks up and sets the default verification method to
+.Fa name .
+This uses the function
+.Xr X509_VERIFY_PARAM_lookup 3
+to find an appropriate set of parameters from
+.Fa name .
+.Sh RETURN VALUES
+.Fn X509_STORE_CTX_get0_param
+returns a pointer to an
+.Vt X509_VERIFY_PARAM
+structure or
+.Dv NULL
+if an error occurred.
+.Pp
+.Fn X509_STORE_CTX_set_default
+returns 1 for success or 0 if an error occurred.
+.Sh SEE ALSO
+.Xr X509_STORE_CTX_get_error 3 ,
+.Xr X509_STORE_CTX_new 3 ,
+.Xr X509_STORE_new 3 ,
+.Xr X509_STORE_set1_param 3 ,
+.Xr X509_verify_cert 3 ,
+.Xr X509_VERIFY_PARAM_set_flags 3
+.Sh HISTORY
+.Fn X509_STORE_CTX_set_flags
+first appeared in OpenSSL 0.9.6 and has been available since
+.Ox 2.9 .
+.Pp
+.Fn X509_STORE_CTX_get0_param ,
+.Fn X509_STORE_CTX_set0_param ,
+and
+.Fn X509_STORE_CTX_set_default
+first appeared in OpenSSL 0.9.8 and have been available since
+.Ox 4.5 .
