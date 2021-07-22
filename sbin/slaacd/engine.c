@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.73 2021/07/12 15:09:19 beck Exp $	*/
+/*	$OpenBSD: engine.c,v 1.74 2021/07/22 15:32:51 kn Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -273,9 +273,9 @@ void			 send_interface_info(struct slaacd_iface *, pid_t);
 void			 engine_showinfo_ctl(struct imsg *, uint32_t);
 void			 debug_log_ra(struct imsg_ra *);
 int			 in6_mask2prefixlen(struct in6_addr *);
+#endif	/* SMALL */
 void			 deprecate_all_proposals(struct slaacd_iface *);
 void			 send_rdns_withdraw(struct slaacd_iface *);
-#endif	/* SMALL */
 struct slaacd_iface	*get_slaacd_iface_by_id(uint32_t);
 void			 remove_slaacd_iface(uint32_t);
 void			 free_ra(struct radv *);
@@ -295,7 +295,6 @@ void			 gen_dfr_proposal(struct slaacd_iface *, struct
 void			 configure_dfr(struct dfr_proposal *);
 void			 free_dfr_proposal(struct dfr_proposal *);
 void			 withdraw_dfr(struct dfr_proposal *);
-#ifndef	SMALL
 void			 update_iface_ra_rdns(struct slaacd_iface *,
 			     struct radv *);
 void			 gen_rdns_proposal(struct slaacd_iface *, struct
@@ -303,7 +302,6 @@ void			 gen_rdns_proposal(struct slaacd_iface *, struct
 void			 propose_rdns(struct rdns_proposal *);
 void			 free_rdns_proposal(struct rdns_proposal *);
 void			 compose_rdns_proposal(uint32_t, int);
-#endif	/* SMALL */
 char			*parse_dnssl(char *, int);
 void			 update_iface_ra(struct slaacd_iface *, struct radv *);
 void			 update_iface_ra_dfr(struct slaacd_iface *,
@@ -313,19 +311,15 @@ void			 update_iface_ra_prefix(struct slaacd_iface *,
 void			 start_probe(struct slaacd_iface *);
 void			 address_proposal_timeout(int, short, void *);
 void			 dfr_proposal_timeout(int, short, void *);
-#ifndef	SMALL
 void			 rdns_proposal_timeout(int, short, void *);
-#endif	/* SMALL */
 void			 iface_timeout(int, short, void *);
 struct radv		*find_ra(struct slaacd_iface *, struct sockaddr_in6 *);
 struct address_proposal	*find_address_proposal_by_addr(struct slaacd_iface *,
 			     struct sockaddr_in6 *);
 struct dfr_proposal	*find_dfr_proposal_by_gw(struct slaacd_iface *,
 			     struct sockaddr_in6 *);
-#ifndef	SMALL
 struct rdns_proposal	*find_rdns_proposal_by_gw(struct slaacd_iface *,
 			     struct sockaddr_in6 *);
-#endif	/* SMALL */
 struct radv_prefix	*find_prefix(struct radv *, struct radv_prefix *);
 int			 engine_imsg_compose_main(int, pid_t, void *, uint16_t);
 uint32_t		 real_lifetime(struct timespec *, uint32_t);
@@ -596,13 +590,11 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 				evtimer_add(&addr_proposal->timer, &tv);
 			}
 			break;
-#ifndef	SMALL
 		case IMSG_REPROPOSE_RDNS:
 			LIST_FOREACH (iface, &slaacd_interfaces, entries)
 				compose_rdns_proposal(iface->if_index,
 				    iface->rdomain);
 			break;
-#endif	/* SMALL */
 		default:
 			log_debug("%s: unexpected imsg %d", __func__,
 			    imsg.hdr.type);
@@ -628,12 +620,10 @@ engine_dispatch_main(int fd, short event, void *bula)
 	struct imsg_ifinfo	 imsg_ifinfo;
 	ssize_t			 n;
 	int			 shut = 0;
-#ifndef	SMALL
 	struct slaacd_iface	*iface;
 	struct imsg_addrinfo	 imsg_addrinfo;
 	struct address_proposal	*addr_proposal = NULL;
 	size_t			 i;
-#endif	/* SMALL */
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
@@ -963,6 +953,8 @@ engine_showinfo_ctl(struct imsg *imsg, uint32_t if_index)
 	}
 }
 
+#endif	/* SMALL */
+
 void
 deprecate_all_proposals(struct slaacd_iface *iface)
 {
@@ -989,8 +981,6 @@ send_rdns_withdraw(struct slaacd_iface *iface)
 	compose_rdns_proposal(iface->if_index, iface->rdomain);
 }
 
-#endif	/* SMALL */
-
 struct slaacd_iface*
 get_slaacd_iface_by_id(uint32_t if_index)
 {
@@ -1010,9 +1000,7 @@ remove_slaacd_iface(uint32_t if_index)
 	struct radv		*ra;
 	struct address_proposal	*addr_proposal;
 	struct dfr_proposal	*dfr_proposal;
-#ifndef	SMALL
 	struct rdns_proposal	*rdns_proposal;
-#endif	/* SMALL */
 
 	iface = get_slaacd_iface_by_id(if_index);
 
@@ -1034,13 +1022,11 @@ remove_slaacd_iface(uint32_t if_index)
 		dfr_proposal = LIST_FIRST(&iface->dfr_proposals);
 		free_dfr_proposal(dfr_proposal);
 	}
-#ifndef	SMALL
 	while(!LIST_EMPTY(&iface->rdns_proposals)) {
 		rdns_proposal = LIST_FIRST(&iface->rdns_proposals);
 		free_rdns_proposal(rdns_proposal);
 	}
 	compose_rdns_proposal(iface->if_index, iface->rdomain);
-#endif	/* SMALL */
 	evtimer_del(&iface->timer);
 	free(iface);
 }
@@ -1160,10 +1146,8 @@ engine_update_iface(struct imsg_ifinfo *imsg_ifinfo)
 
 	else {
 		/* XXX correct state transition */
-#ifndef	SMALL
 		send_rdns_withdraw(iface);
 		deprecate_all_proposals(iface);
-#endif	/* SMALL */
 		iface->state = IF_DOWN;
 		if (evtimer_pending(&iface->timer, NULL))
 			evtimer_del(&iface->timer);
@@ -1774,9 +1758,7 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 			update_iface_ra_prefix(iface, ra, prefix);
 		}
 
-#ifndef	SMALL
 	update_iface_ra_rdns(iface, ra);
-#endif	/* SMALL */
 }
 
 void
@@ -1947,7 +1929,6 @@ update_iface_ra_prefix(struct slaacd_iface *iface, struct radv *ra,
 	}
 }
 
-#ifndef	SMALL
 void
 update_iface_ra_rdns(struct slaacd_iface *iface, struct radv *ra)
 {
@@ -1990,7 +1971,6 @@ update_iface_ra_rdns(struct slaacd_iface *iface, struct radv *ra)
 		break;
 	}
 }
-#endif	/* SMALL */
 
 void
 timeout_from_lifetime(struct address_proposal *addr_proposal)
@@ -2234,7 +2214,6 @@ free_dfr_proposal(struct dfr_proposal *dfr_proposal)
 	free(dfr_proposal);
 }
 
-#ifndef	SMALL
 void
 gen_rdns_proposal(struct slaacd_iface *iface, struct radv *ra)
 {
@@ -2338,7 +2317,6 @@ free_rdns_proposal(struct rdns_proposal *rdns_proposal)
 	evtimer_del(&rdns_proposal->timer);
 	free(rdns_proposal);
 }
-#endif	/* SMALL */
 
 void
 start_probe(struct slaacd_iface *iface)
@@ -2484,7 +2462,6 @@ dfr_proposal_timeout(int fd, short events, void *arg)
 	}
 }
 
-#ifndef	SMALL
 void
 rdns_proposal_timeout(int fd, short events, void *arg)
 {
@@ -2536,7 +2513,6 @@ rdns_proposal_timeout(int fd, short events, void *arg)
 		    proposal_state_name[rdns_proposal->state]);
 	}
 }
-#endif	/* SMALL */
 
 void
 iface_timeout(int fd, short events, void *arg)
@@ -2545,9 +2521,7 @@ iface_timeout(int fd, short events, void *arg)
 	struct timeval		 tv;
 	struct address_proposal	*addr_proposal;
 	struct dfr_proposal	*dfr_proposal;
-#ifndef SMALL
 	struct rdns_proposal	*rdns_proposal;
-#endif	/* SMALL */
 
 	log_debug("%s[%d]: %s", __func__, iface->if_index,
 	    if_state_name[iface->state]);
@@ -2577,14 +2551,12 @@ iface_timeout(int fd, short events, void *arg)
 			dfr_proposal->state = PROPOSAL_STALE;
 			free_dfr_proposal(dfr_proposal);
 		}
-#ifndef	SMALL
 		while(!LIST_EMPTY(&iface->rdns_proposals)) {
 			rdns_proposal = LIST_FIRST(&iface->rdns_proposals);
 			rdns_proposal->state = PROPOSAL_STALE;
 			free_rdns_proposal(rdns_proposal);
 		}
 		compose_rdns_proposal(iface->if_index, iface->rdomain);
-#endif	/* SMALL */
 		break;
 	case IF_DOWN:
 	case IF_IDLE:
@@ -2635,7 +2607,6 @@ find_dfr_proposal_by_gw(struct slaacd_iface *iface, struct sockaddr_in6
 	return (NULL);
 }
 
-#ifndef	SMALL
 struct rdns_proposal*
 find_rdns_proposal_by_gw(struct slaacd_iface *iface, struct sockaddr_in6
     *from)
@@ -2649,7 +2620,6 @@ find_rdns_proposal_by_gw(struct slaacd_iface *iface, struct sockaddr_in6
 
 	return (NULL);
 }
-#endif	/* SMALL */
 
 struct radv_prefix *
 find_prefix(struct radv *ra, struct radv_prefix *prefix)

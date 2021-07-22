@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.h,v 1.34 2021/07/21 03:53:50 kn Exp $	*/
+/*	$OpenBSD: slaacd.h,v 1.35 2021/07/22 15:32:51 kn Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -56,9 +56,9 @@ enum imsg_type {
 	IMSG_CTL_SHOW_INTERFACE_INFO_RDNS_PROPOSAL,
 	IMSG_CTL_END,
 	IMSG_UPDATE_ADDRESS,
+#endif	/* SMALL */
 	IMSG_PROPOSE_RDNS,
 	IMSG_REPROPOSE_RDNS,
-#endif	/* SMALL */
 	IMSG_CTL_SEND_SOLICITATION,
 	IMSG_SOCKET_IPC,
 	IMSG_OPEN_ICMP6SOCK,
@@ -168,6 +168,8 @@ struct ctl_engine_info_rdns_proposal {
 	struct in6_addr		 rdns[MAX_RDNS_COUNT];
 };
 
+#endif	/* SMALL */
+
 struct imsg_addrinfo {
 	uint32_t		if_index;
 	struct sockaddr_in6	addr;
@@ -184,7 +186,6 @@ struct imsg_propose_rdns {
 	struct in6_addr		rdns[MAX_RDNS_COUNT];
 };
 
-#endif	/* SMALL */
 
 struct imsg_ifinfo {
 	uint32_t		if_index;
