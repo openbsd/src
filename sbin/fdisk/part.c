@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.101 2021/07/19 23:24:54 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.102 2021/07/22 13:30:40 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -160,20 +160,19 @@ int
 PRT_protected_guid(const struct uuid *uuid)
 {
 	char			*str = NULL;
-	int			 rslt;
+	int			 rslt = 0;
 	unsigned int		 i;
 	uint32_t		 status;
 
 	uuid_to_string(uuid, &str, &status);
 	if (status != uuid_s_ok) {
-		rslt = 1;
+		rslt = -1;
 		goto done;
 	}
 
-	rslt = 0;
 	for(i = 0; i < nitems(protected_guid); i++) {
 		if (strncmp(str, protected_guid[i].pg_guid, UUID_STR_LEN) == 0) {
-			rslt = 1;
+			rslt = -1;
 			break;
 		}
 	}
