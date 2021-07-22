@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp-deflate.c,v 1.16 2021/03/05 09:21:08 jsg Exp $	*/
+/*	$OpenBSD: ppp-deflate.c,v 1.17 2021/07/22 16:40:19 tb Exp $	*/
 /*	$NetBSD: ppp-deflate.c,v 1.1 1996/03/15 02:28:09 paulus Exp $	*/
 
 /*
@@ -66,7 +66,7 @@ struct deflate_state {
 #define DEFLATE_OVHD	2		/* Deflate overhead/packet */
 
 static void	*zcalloc(void *, u_int items, u_int size);
-static void	zcfree(void *, void *ptr);
+static void	zcfree(void *, void *ptr, u_int size);
 static void	*z_comp_alloc(u_char *options, int opt_len);
 static void	*z_decomp_alloc(u_char *options, int opt_len);
 static void	z_comp_free(void *state);
@@ -133,9 +133,9 @@ zcalloc(void *notused, u_int items, u_int size)
 }
 
 void
-zcfree(void *notused, void *ptr)
+zcfree(void *notused, void *ptr, u_int size)
 {
-    free(ptr, M_DEVBUF, 0);
+    free(ptr, M_DEVBUF, size);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: zlib.h,v 1.13 2021/07/04 17:41:23 tb Exp $ */
+/*	$OpenBSD: zlib.h,v 1.14 2021/07/22 16:40:20 tb Exp $ */
 
 /* zlib.h -- interface of the 'zlib' general purpose compression library
   version 1.2.11, January 15th, 2017
@@ -81,7 +81,7 @@ extern "C" {
 */
 
 typedef voidpf (*alloc_func) OF((voidpf opaque, uInt items, uInt size));
-typedef void   (*free_func)  OF((voidpf opaque, voidpf address));
+typedef void   (*free_func)  OF((voidpf opaque, voidpf address, uInt size));
 
 struct internal_state;
 

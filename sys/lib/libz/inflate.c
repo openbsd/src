@@ -1,4 +1,4 @@
-/*	$OpenBSD: inflate.c,v 1.16 2021/07/04 14:24:49 tb Exp $ */
+/*	$OpenBSD: inflate.c,v 1.17 2021/07/22 16:40:20 tb Exp $ */
 /* inflate.c -- zlib decompression
  * Copyright (C) 1995-2016 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
@@ -183,7 +183,7 @@ int windowBits;
     if (windowBits && (windowBits < 8 || windowBits > 15))
         return Z_STREAM_ERROR;
     if (state->window != Z_NULL && state->wbits != (unsigned)windowBits) {
-        ZFREE(strm, state->window);
+        ZFREE(strm, state->window, 1U << state->wbits);
         state->window = Z_NULL;
     }
 
@@ -231,7 +231,7 @@ int stream_size;
     state->mode = HEAD;     /* to pass state test in inflateReset2() */
     ret = inflateReset2(strm, windowBits);
     if (ret != Z_OK) {
-        ZFREE(strm, state);
+        ZFREE(strm, state, sizeof(struct inflate_state));
         strm->state = Z_NULL;
     }
     return ret;
@@ -1368,8 +1368,8 @@ z_streamp strm;
     if (inflateStateCheck(strm))
         return Z_STREAM_ERROR;
     state = (struct inflate_state FAR *)strm->state;
-    if (state->window != Z_NULL) ZFREE(strm, state->window);
-    ZFREE(strm, strm->state);
+    if (state->window != Z_NULL) ZFREE(strm, state->window, 1U << state->wbits);
+    ZFREE(strm, strm->state, sizeof(struct inflate_state));
     strm->state = Z_NULL;
     Tracev((stderr, "inflate: end\n"));
     return Z_OK;
@@ -1568,7 +1568,7 @@ z_streamp source;
         window = (unsigned char FAR *)
                  ZALLOC(source, 1U << state->wbits, sizeof(unsigned char));
         if (window == Z_NULL) {
-            ZFREE(source, copy);
+            ZFREE(source, copy, sizeof(struct inflate_state));
             return Z_MEM_ERROR;
         }
     }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: zutil.h,v 1.21 2021/07/08 20:02:42 deraadt Exp $ */
+/*	$OpenBSD: zutil.h,v 1.22 2021/07/22 16:40:20 tb Exp $ */
 
 /* zutil.h -- internal interface and configuration of the compression library
  * Copyright (C) 1995-2016 Jean-loup Gailly, Mark Adler
@@ -270,13 +270,14 @@ extern z_const char * const z_errmsg[10]; /* indexed by 2-zlib_error */
 #ifndef Z_SOLO
    voidpf ZLIB_INTERNAL zcalloc OF((voidpf opaque, unsigned items,
                                     unsigned size));
-   void ZLIB_INTERNAL zcfree  OF((voidpf opaque, voidpf ptr));
+   void ZLIB_INTERNAL zcfree  OF((voidpf opaque, voidpf ptr, unsigned size));
 #endif
 
 #define ZALLOC(strm, items, size) \
            (*((strm)->zalloc))((strm)->opaque, (items), (size))
-#define ZFREE(strm, addr)  (*((strm)->zfree))((strm)->opaque, (voidpf)(addr))
-#define TRY_FREE(s, p) {if (p) ZFREE(s, p);}
+#define ZFREE(strm, addr, size) \
+           (*((strm)->zfree))((strm)->opaque, (voidpf)(addr), (size))
+#define TRY_FREE(s, p, size) ZFREE(s, p, size)
 
 /* Reverse the bytes in a 32-bit value */
 #define ZSWAP32(q) ((((q) >> 24) & 0xff) + (((q) >> 8) & 0xff00) + \

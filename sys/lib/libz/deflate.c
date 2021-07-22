@@ -1,4 +1,4 @@
-/*	$OpenBSD: deflate.c,v 1.4 2021/07/04 14:24:49 tb Exp $ */
+/*	$OpenBSD: deflate.c,v 1.5 2021/07/22 16:40:20 tb Exp $ */
 /* deflate.c -- compress data using the deflation algorithm
  * Copyright (C) 1995-2017 Jean-loup Gailly and Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
@@ -1080,12 +1080,12 @@ int ZEXPORT deflateEnd (strm)
     status = strm->state->status;
 
     /* Deallocate in reverse order of allocations: */
-    TRY_FREE(strm, strm->state->pending_buf);
-    TRY_FREE(strm, strm->state->head);
-    TRY_FREE(strm, strm->state->prev);
-    TRY_FREE(strm, strm->state->window);
+    TRY_FREE(strm, strm->state->pending_buf, strm->state->pending_buf_size);
+    TRY_FREE(strm, strm->state->head, strm->state->hash_size * sizeof(Pos));
+    TRY_FREE(strm, strm->state->prev, strm->state->w_size * sizeof(Pos));
+    TRY_FREE(strm, strm->state->window, strm->state->w_size * 2 * sizeof(Pos));
 
-    ZFREE(strm, strm->state);
+    ZFREE(strm, strm->state, sizeof(deflate_state));
     strm->state = Z_NULL;
 
     return status == BUSY_STATE ? Z_DATA_ERROR : Z_OK;

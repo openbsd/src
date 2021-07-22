@@ -1,4 +1,4 @@
-/*	$OpenBSD: infback.c,v 1.7 2021/07/04 14:24:49 tb Exp $ */
+/*	$OpenBSD: infback.c,v 1.8 2021/07/22 16:40:20 tb Exp $ */
 /* infback.c -- inflate using a call-back interface
  * Copyright (C) 1995-2016 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
@@ -684,7 +684,7 @@ z_streamp strm;
 {
     if (strm == Z_NULL || strm->state == Z_NULL || strm->zfree == (free_func)0)
         return Z_STREAM_ERROR;
-    ZFREE(strm, strm->state);
+    ZFREE(strm, strm->state, sizeof(struct inflate_state));
     strm->state = Z_NULL;
     Tracev((stderr, "inflate: end\n"));
     return Z_OK;
