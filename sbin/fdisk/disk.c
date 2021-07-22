@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.68 2021/07/19 14:30:08 krw Exp $	*/
+/*	$OpenBSD: disk.c,v 1.69 2021/07/22 13:17:59 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -47,13 +47,12 @@ DISK_open(const char *name, const int oflags)
 
 	disk.dk_name = strdup(name);
 	if (disk.dk_name == NULL)
-		err(1, "DISK_Open('%s')", name);
-
+		err(1, "dk_name");
 	disk.dk_fd = opendev(disk.dk_name, oflags, OPENDEV_PART, NULL);
 	if (disk.dk_fd == -1)
-		err(1, "%s", disk.dk_name);
+		err(1, "opendev('%s', 0x%x)", disk.dk_name, oflags);
 	if (fstat(disk.dk_fd, &st) == -1)
-		err(1, "%s", disk.dk_name);
+		err(1, "fstat('%s)", disk.dk_name);
 	if (!S_ISCHR(st.st_mode))
 		errx(1, "%s is not a character device", disk.dk_name);
 	if (ioctl(disk.dk_fd, DIOCGPDINFO, &dl) == -1)
