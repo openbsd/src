@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_STORE_CTX_set_flags.3,v 1.1 2021/07/22 17:11:14 schwarze Exp $
+.\" $OpenBSD: X509_STORE_CTX_set_flags.3,v 1.2 2021/07/22 19:44:30 schwarze Exp $
 .\" full merge up to: OpenSSL aae41f8c Jun 25 09:47:15 2015 +0100
 .\" selective merge up to: OpenSSL 24a535ea Sep 22 13:14:20 2020 +0100
 .\"
@@ -72,6 +72,8 @@
 .Os
 .Sh NAME
 .Nm X509_STORE_CTX_set_flags ,
+.Nm X509_STORE_CTX_set_time ,
+.Nm X509_STORE_CTX_set_depth ,
 .Nm X509_STORE_CTX_get0_param ,
 .Nm X509_STORE_CTX_set0_param ,
 .Nm X509_STORE_CTX_set_default
@@ -82,6 +84,17 @@
 .Fo X509_STORE_CTX_set_flags
 .Fa "X509_STORE_CTX *ctx"
 .Fa "unsigned long flags"
+.Fc
+.Ft void
+.Fo X509_STORE_CTX_set_time
+.Fa "X509_STORE_CTX *ctx"
+.Fa "unsigned long dummy"
+.Fa "time_t time"
+.Fc
+.Ft void
+.Fo X509_STORE_CTX_set_depth
+.Fa "X509_STORE_CTX *ctx"
+.Fa "int depth"
 .Fc
 .Ft X509_VERIFY_PARAM *
 .Fo X509_STORE_CTX_get0_param
@@ -116,6 +129,19 @@ sets the internal verification parameter flags to
 See
 .Xr X509_VERIFY_PARAM_set_flags 3
 for a description of the verification flags.
+.Pp
+.Fn X509_STORE_CTX_set_time
+sets the verification
+.Fa time .
+The
+.Fa dummy
+argument is ignored.
+.Pp
+.Fn X509_STORE_CTX_set_depth
+sets the maximum verification
+.Fa depth .
+That is the maximum number of untrusted CA certificates
+that can appear in a chain.
 .Pp
 .Fn X509_STORE_CTX_get0_param
 retrieves an internal pointer to the verification parameters associated
@@ -154,8 +180,14 @@ returns 1 for success or 0 if an error occurred.
 .Xr X509_verify_cert 3 ,
 .Xr X509_VERIFY_PARAM_set_flags 3
 .Sh HISTORY
+.Fn X509_STORE_CTX_set_depth
+first appeared in OpenSSL 0.9.3 and has been available since
+.Ox 2.4 .
+.Pp
 .Fn X509_STORE_CTX_set_flags
-first appeared in OpenSSL 0.9.6 and has been available since
+and
+.Fn X509_STORE_CTX_set_time
+first appeared in OpenSSL 0.9.6 and have been available since
 .Ox 2.9 .
 .Pp
 .Fn X509_STORE_CTX_get0_param ,
