@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.2 2021/05/16 16:00:50 drahn Exp $ */
+/* $OpenBSD: md_init.h,v 1.3 2021/07/22 18:16:13 kettenis Exp $ */
 /*
  * Copyright (c) 2020 Dale Rahn <drahn@openbsd.org>
  *
@@ -15,17 +15,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifdef __PIC__
 #define MD_SECT_CALL_FUNC(section, func) 				\
 	__asm (".section "#section", \"ax\"				\n" \
 	"call " # func "@plt 						\n" \
-"	.previous")
-#else
-#define MD_SECT_CALL_FUNC(section, func) 				\
-	__asm (".section "#section", \"ax\"				\n" \
-	"call " # func " 						\n" \
-"	.previous")
-#endif
+	"	.previous")
 
 #define MD_SECTION_PROLOGUE(sect, entry_pt)				\
 	__asm (								\
@@ -78,7 +71,6 @@
 	"	.size	__start, .-__start				\n" \
 	".previous");
 
-#ifdef __PIC__
 #define	MD_RCRT0_START							\
 	char **environ, *__progname;					\
 	__asm(								\
@@ -120,36 +112,3 @@
 	"	ecall							\n" \
 	"	unimp							\n" \
 	".previous");
-#else /* non-pic/pie */
-#define	MD_RCRT0_START							\
-	char **environ, *__progname;					\
-	__asm(								\
-	".text								\n" \
-	"	.align	0						\n" \
-	"	.globl	_start						\n" \
-	"	.globl	__start						\n" \
-	"	.type	_start, @function				\n" \
-	"	.type	__start, @function				\n" \
-	"_start:							\n" \
-	"__start:							\n" \
-	"	mv	a0, sp						\n" \
-	"	li	fp, 0x0						\n" \
-	"								\n" \
-	"	li	a3, 0x0	/* cleanup */				\n" \
-	"/* Get argc/argv/envp from stack */				\n" \
-	"	ld	a0, (sp)					\n" \
-	"	addi	a1, sp, 0x0008					\n" \
-	"	slli	a2, a0, 0x3					\n" \
-	"	add	a2, a1, a2					\n" \
-	"	addi	a2, a2, 0x0008					\n" \
-	"								\n" \
-	"	j	___start					\n" \
-	"	.size	_start, .-_start				\n" \
-	"	.size	__start, .-__start				\n" \
-	"_dl_exit:							\n" \
-	"	li	t0, " STR(SYS_exit) "				\n" \
-	"	ecall							\n" \
-	"	unimp							\n" \
-
-	".previous");
-#endif 
