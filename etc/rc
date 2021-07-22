@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.549 2021/03/13 21:11:56 deraadt Exp $
+#	$OpenBSD: rc,v 1.550 2021/07/22 01:53:45 deraadt Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -456,6 +456,16 @@ mount -s /var >/dev/null 2>&1
 
 start_daemon dhcpleased unwind resolvd >/dev/null 2>&1
 
+random_seed
+
+reorder_libs
+
+# Pause a little so at least one dynamic (slaacd or dhcpleased) config completes
+count=0
+while ((count++ < 20 && $(route -n show | grep -c '^default ') == 0)); do
+	sleep .5
+done
+
 # Load pf rules and bring up pfsync interface.
 if [[ $pf != NO ]]; then
 	if [[ -f /etc/pf.conf ]]; then
@@ -465,10 +475,6 @@ if [[ $pf != NO ]]; then
 		sh /etc/netstart pfsync0
 	fi
 fi
-
-random_seed
-
-reorder_libs
 
 # Clean up left-over files.
 rm -f /etc/nologin /var/spool/lock/LCK.*
