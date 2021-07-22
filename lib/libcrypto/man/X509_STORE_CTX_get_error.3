@@ -1,11 +1,28 @@
-.\" $OpenBSD: X509_STORE_CTX_get_error.3,v 1.15 2021/07/22 14:30:38 schwarze Exp $
+.\" $OpenBSD: X509_STORE_CTX_get_error.3,v 1.16 2021/07/22 15:35:50 schwarze Exp $
 .\" full merge up to:
 .\" OpenSSL crypto/X509_STORE_CTX_get_error f0e0fd51 Apr 14 23:59:26 2016 -0400
 .\" selective merge up to:
 .\" OpenSSL man3/X509_STORE_CTX_get_error 24a535ea Sep 22 13:14:20 2020 +0100
 .\" OpenSSL man3/X509_STORE_CTX_new 24a535ea Sep 22 13:14:20 2020 +0100
 .\"
-.\" This file was written by Dr. Stephen Henson <steve@openssl.org>
+.\" This file is a derived work.
+.\" The changes are covered by the following Copyright and license:
+.\"
+.\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" The original file was written by Dr. Stephen Henson <steve@openssl.org>
 .\" and Rich Salz <rsalz@openssl.org>.
 .\" Copyright (c) 2009, 2016 The OpenSSL Project.  All rights reserved.
 .\"
@@ -61,6 +78,8 @@
 .Nm X509_STORE_CTX_set_error ,
 .Nm X509_STORE_CTX_get_error_depth ,
 .Nm X509_STORE_CTX_get_current_cert ,
+.Nm X509_STORE_CTX_get0_current_issuer ,
+.Nm X509_STORE_CTX_get0_current_crl ,
 .Nm X509_STORE_CTX_get0_chain ,
 .Nm X509_STORE_CTX_get_chain ,
 .Nm X509_STORE_CTX_get1_chain ,
@@ -83,6 +102,14 @@
 .Fc
 .Ft X509 *
 .Fo X509_STORE_CTX_get_current_cert
+.Fa "X509_STORE_CTX *ctx"
+.Fc
+.Ft X509 *
+.Fo X509_STORE_CTX_get0_current_issuer
+.Fa "X509_STORE_CTX *ctx"
+.Fc
+.Ft X509_CRL *
+.Fo X509_STORE_CTX_get0_current_crl
 .Fa "X509_STORE_CTX *ctx"
 .Fc
 .Ft STACK_OF(X509) *
@@ -137,6 +164,16 @@ which caused the error or
 .Dv NULL
 if no certificate is relevant.
 .Pp
+.Fn X509_STORE_CTX_get0_current_issuer
+returns the certificate that caused issuer validation to fail or
+.Dv NULL
+if no CA certificate is relevant.
+.Pp
+.Fn X509_STORE_CTX_get0_current_crl
+returns the certificate revocation list that caused CRL checking to fail or
+.Dv NULL
+if no CRL is relevant.
+.Pp
 .Fn X509_STORE_CTX_get0_chain
 returns an internal pointer to a complete validate chain
 if a previous call to
@@ -185,10 +222,13 @@ or an error code.
 .Fn X509_STORE_CTX_get_error_depth
 returns a non-negative error depth.
 .Pp
-.Fn X509_STORE_CTX_get_current_cert
-returns the certificate which caused the error or
+.Fn X509_STORE_CTX_get_current_cert ,
+.Fn X509_STORE_CTX_get0_current_issuer ,
+and
+.Fn X509_STORE_CTX_get0_current_crl
+return the object which caused the error or
 .Dv NULL
-if no certificate is relevant to the error.
+if no object of the requested kind is relevant to the error.
 .Pp
 .Fn X509_STORE_CTX_get0_chain ,
 .Fn X509_STORE_CTX_get_chain ,
@@ -389,6 +429,12 @@ first appeared in SSLeay 0.8.0 and have been available since
 .Fn X509_STORE_CTX_get1_chain
 first appeared in OpenSSL 0.9.5 and has been available since
 .Ox 2.7 .
+.Pp
+.Fn X509_STORE_CTX_get0_current_issuer
+and
+.Fn X509_STORE_CTX_get0_current_crl
+first appeared in OpenSSL 1.0.0 and have been available since
+.Ox 4.9 .
 .Pp
 .Fn X509_STORE_CTX_get0_chain
 first appeared in OpenSSL 1.1.0 and has been available since
