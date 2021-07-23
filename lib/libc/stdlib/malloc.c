@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.270 2021/04/09 06:05:21 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.271 2021/07/23 18:04:28 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -1610,7 +1610,7 @@ orealloc(struct dir_info **argpool, void *p, size_t newsz, void *f)
 			}
 			if (munmap((char *)r->p + rnewsz, roldsz - rnewsz))
 				wrterror(pool, "munmap %p", (char *)r->p + rnewsz);
-			STATS_SUB(d->malloc_used, roldsz - rnewsz);
+			STATS_SUB(pool->malloc_used, roldsz - rnewsz);
 			r->size = gnewsz;
 			if (MALLOC_MOVE_COND(gnewsz)) {
 				void *pp = MALLOC_MOVE(r->p, gnewsz);
