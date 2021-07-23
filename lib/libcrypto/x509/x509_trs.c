@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_trs.c,v 1.23 2018/05/18 18:40:38 tb Exp $ */
+/* $OpenBSD: x509_trs.c,v 1.24 2021/07/23 20:50:28 schwarze Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -265,10 +265,6 @@ trtable_free(X509_TRUST *p)
 void
 X509_TRUST_cleanup(void)
 {
-	unsigned int i;
-
-	for (i = 0; i < X509_TRUST_COUNT; i++)
-		trtable_free(trstandard + i);
 	sk_X509_TRUST_pop_free(trtable, trtable_free);
 	trtable = NULL;
 }
