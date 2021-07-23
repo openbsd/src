@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.74 2021/03/26 08:02:34 jan Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.75 2021/07/23 00:29:14 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -1795,7 +1795,7 @@ ixl_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (pci_intr_map_msix(pa, 0, &sc->sc_ih) == 0) {
-		int nmsix = pci_intr_msix_count(pa->pa_pc, pa->pa_tag);
+		int nmsix = pci_intr_msix_count(pa);
 		if (nmsix > 1) { /* we used 1 (the 0th) for the adminq */
 			nmsix--;
 

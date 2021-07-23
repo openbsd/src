@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.32 2021/04/24 09:37:46 jmatthew Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.33 2021/07/23 00:29:14 jmatthew Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -537,7 +537,7 @@ bnxt_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_flags |= BNXT_FLAG_MSIX;
 		intrstr = pci_intr_string(sc->sc_pc, ih);
 
-		nmsix = pci_intr_msix_count(pa->pa_pc, pa->pa_tag);
+		nmsix = pci_intr_msix_count(pa);
 		if (nmsix > 1) {
 			sc->sc_ih = pci_intr_establish(sc->sc_pc, ih,
 			    IPL_NET | IPL_MPSAFE, bnxt_admin_intr, sc, DEVNAME(sc));

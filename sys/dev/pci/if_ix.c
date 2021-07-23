@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.178 2020/12/22 23:25:37 dlg Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.179 2021/07/23 00:29:14 jmatthew Exp $	*/
 
 /******************************************************************************
 
@@ -1783,7 +1783,7 @@ ixgbe_setup_msix(struct ix_softc *sc)
 	if (!ixgbe_enable_msix)
 		return;
 
-	nmsix = pci_intr_msix_count(pa->pa_pc, pa->pa_tag);
+	nmsix = pci_intr_msix_count(pa);
 	if (nmsix <= 1)
 		return;
 

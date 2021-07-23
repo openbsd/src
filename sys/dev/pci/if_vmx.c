@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.65 2020/12/12 11:48:53 jan Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.66 2021/07/23 00:29:14 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -271,7 +271,7 @@ vmxnet3_attach(struct device *parent, struct device *self, void *aux)
 	switch (intrcfg & VMXNET3_INTRCFG_TYPE_MASK) {
 	case VMXNET3_INTRCFG_TYPE_AUTO:
 	case VMXNET3_INTRCFG_TYPE_MSIX:
-		msix = pci_intr_msix_count(pa->pa_pc, pa->pa_tag);
+		msix = pci_intr_msix_count(pa);
 		if (msix > 0) {
 			if (pci_intr_map_msix(pa, 0, &ih) == 0) {
 				msix--; /* are there spares for tx/rx qs? */

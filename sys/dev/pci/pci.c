@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.119 2020/09/08 20:13:52 kettenis Exp $	*/
+/*	$OpenBSD: pci.c,v 1.120 2021/07/23 00:29:14 jmatthew Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -1694,11 +1694,15 @@ pci_resume_msix(pci_chipset_tag_t pc, pcitag_t tag,
 }
 
 int
-pci_intr_msix_count(pci_chipset_tag_t pc, pcitag_t tag)
+pci_intr_msix_count(struct pci_attach_args *pa)
 {
 	pcireg_t reg;
 
-	if (pci_get_capability(pc, tag, PCI_CAP_MSIX, NULL, &reg) == 0)
+	if ((pa->pa_flags & PCI_FLAGS_MSI_ENABLED) == 0)
+		return (0);
+
+	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_MSIX, NULL,
+	    &reg) == 0)
 		return (0);
 
 	return (PCI_MSIX_MC_TBLSZ(reg) + 1);
@@ -1731,7 +1735,7 @@ pci_resume_msix(pci_chipset_tag_t pc, pcitag_t tag,
 }
 
 int
-pci_intr_msix_count(pci_chipset_tag_t pc, pcitag_t tag)
+pci_intr_msix_count(struct pci_attach_args *pa)
 {
 	return (0);
 }

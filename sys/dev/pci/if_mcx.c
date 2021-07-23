@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.101 2021/06/02 19:16:11 patrick Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.102 2021/07/23 00:29:14 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -2831,7 +2831,7 @@ mcx_attach(struct device *parent, struct device *self, void *aux)
 		goto teardown;
 	}
 
-	msix = pci_intr_msix_count(pa->pa_pc, pa->pa_tag);
+	msix = pci_intr_msix_count(pa);
 	if (msix < 2) {
 		printf(": not enough msi-x vectors\n");
 		goto teardown;
