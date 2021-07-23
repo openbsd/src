@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.33 2021/05/10 15:12:33 claudio Exp $  */
+/*	$OpenBSD: http.c,v 1.34 2021/07/23 16:03:47 job Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -847,9 +847,10 @@ http_request(struct http_connection *conn)
 	conn->bufpos = 0;
 	if ((r = asprintf(&conn->buf,
 	    "GET /%s HTTP/1.1\r\n"
-	    "Connection: keep-alive\r\n"
+	    "Host: %s\r\n"
+	    "Accept-Encoding: identity\r\n"
 	    "User-Agent: " HTTP_USER_AGENT "\r\n"
-	    "Host: %s\r\n%s\r\n",
+	    "%s\r\n",
 	    epath, host,
 	    modified_since ? modified_since : "")) == -1)
 		err(1, NULL);
