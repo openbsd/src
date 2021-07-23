@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_purp.c,v 1.4 2021/03/19 18:52:14 tb Exp $ */
+/* $OpenBSD: x509_purp.c,v 1.5 2021/07/23 20:40:49 schwarze Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -295,11 +295,7 @@ xptable_free(X509_PURPOSE *p)
 void
 X509_PURPOSE_cleanup(void)
 {
-	unsigned int i;
-
 	sk_X509_PURPOSE_pop_free(xptable, xptable_free);
-	for(i = 0; i < X509_PURPOSE_COUNT; i++)
-		xptable_free(xstandard + i);
 	xptable = NULL;
 }
 
