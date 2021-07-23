@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.c,v 1.54 2021/07/22 18:32:33 mglocker Exp $	*/
+/*	$OpenBSD: dwc2.c,v 1.55 2021/07/23 16:23:37 deraadt Exp $	*/
 /*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
@@ -859,15 +859,13 @@ dwc2_root_intr_abort(struct usbd_xfer *xfer)
 STATIC void
 dwc2_root_intr_close(struct usbd_pipe *pipe)
 {
-	struct dwc2_softc *sc = DWC2_PIPE2SC(pipe);
-
 	DPRINTF("\n");
 
 	/*
 	 * Caller must guarantee the xfer has completed first, by
 	 * closing the pipe only after normal completion or an abort.
 	 */
-	KASSERT(sc->sc_intrxfer == NULL);
+	KASSERT(DWC2_PIPE2SC(pipe)->sc_intrxfer == NULL);
 }
 
 STATIC void
