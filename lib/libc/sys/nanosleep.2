@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nanosleep.2,v 1.16 2018/12/31 18:54:00 cheloha Exp $
+.\"	$OpenBSD: nanosleep.2,v 1.17 2021/07/23 12:47:21 cheloha Exp $
 .\"	$NetBSD: nanosleep.2,v 1.1 1997/04/17 18:12:02 jtc Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)sleep.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: December 31 2018 $
+.Dd $Mdocdate: July 23 2021 $
 .Dt NANOSLEEP 2
 .Os
 .Sh NAME
@@ -41,53 +41,69 @@
 .Ft int
 .Fn nanosleep "const struct timespec *timeout" "struct timespec *remainder"
 .Sh DESCRIPTION
+The
 .Fn nanosleep
-suspends execution of the calling process for the duration specified by
+function suspends execution of the calling thread for at least the given
 .Fa timeout .
-An unmasked signal will cause it to terminate the sleep early,
-regardless of the
+Delivery of an unmasked signal terminates this sleep early,
+even if
 .Dv SA_RESTART
-value on the interrupting signal.
+is set with
+.Xr sigaction 2
+for the interrupting signal.
 .Sh RETURN VALUES
-If the
-.Fn nanosleep
-function returns because the requested duration has elapsed, the value
-returned will be zero.
-.Pp
-If the
-.Fn nanosleep
-function returns due to the delivery of a signal, the value returned
-will be \-1, and the global variable
-.Va errno
-will be set to indicate the interruption.
 If
-.Fa remainder
-is non-null, the timespec structure it references is updated to contain the
-unslept amount (the requested duration minus the duration actually slept).
-.Sh ERRORS
-If any of the following conditions occur, the
 .Fn nanosleep
-function shall return \-1 and set
+sleeps the full
+.Fa timeout
+without interruption it returns 0.
+Unless
+.Fa remainder
+is
+.Dv NULL ,
+it is set to zero.
+.Pp
+If
+.Fn nanosleep
+is interrupted by a signal it returns \-1 and the global variable
 .Va errno
-to the corresponding value.
+is set to
+.Dv EINTR .
+Unless
+.Fa remainder
+is
+.Dv NULL ,
+it is set to the unslept portion of the
+.Fa timeout .
+.Pp
+Otherwise,
+.Fn nanosleep
+returns \-1 and the global variable
+.Va errno
+is set to indicate the error.
+.Sh ERRORS
+.Fn nanosleep
+will fail if:
 .Bl -tag -width Er
 .It Bq Er EINTR
-.Fn nanosleep
-was interrupted by the delivery of a signal.
+The call is interrupted by the delivery of a signal.
 .It Bq Er EINVAL
 .Fa timeout
-specified a nanosecond value less than zero or greater than or equal to
-1000 million,
+specifies a nanosecond value less than zero or greater than or equal to
+one billion,
 or a second value less than zero.
 .It Bq Er EFAULT
-Either
 .Fa timeout
-or
-.Fa remainder
 points to memory that is not a valid part of the process address space.
+.It Bq Er EFAULT
+.Fa remainder
+is not
+.Dv NULL
+and points to memory that is not a valid part of the process address space.
 .El
 .Sh SEE ALSO
 .Xr sleep 1 ,
+.Xr sigaction 2 ,
 .Xr sleep 3
 .Sh STANDARDS
 The
@@ -97,17 +113,23 @@ function conforms to
 .Sh HISTORY
 The predecessor of this system call,
 .Fn sleep ,
-appeared in
-.At v3 ,
-but was removed when
+first appeared in
+.At v3 .
+It was removed in
+.At v7
+and replaced with a C library implementation based on
 .Xr alarm 3
-was introduced into
-.At v7 .
+and
+.Xr signal 3 .
+.Pp
 The
 .Fn nanosleep
-system call has been available since
+function first appeared in
+.St -p1003.1b-93 .
+.Pp
+This implementation of
+.Fn nanosleep
+first appeared in
 .Nx 1.3
 and was ported to
-.Ox 2.1
-and
-.Fx 3.0 .
+.Ox 2.1 .
