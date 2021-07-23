@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.19 2021/07/18 12:33:41 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.20 2021/07/23 11:56:01 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -322,13 +322,13 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 					break;
 				case IF_INIT:
 				case IF_REQUESTING:
+					state_transition(iface, iface->state);
+					break;
 				case IF_RENEWING:
 				case IF_REBINDING:
 				case IF_REBOOTING:
-					state_transition(iface, iface->state);
-					break;
 				case IF_BOUND:
-					state_transition(iface, IF_RENEWING);
+					state_transition(iface, IF_REBOOTING);
 					break;
 				}
 			}
