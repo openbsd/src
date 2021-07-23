@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.113 2021/07/19 02:46:34 dtucker Exp $
+#	$OpenBSD: Makefile,v 1.114 2021/07/23 04:56:21 dtucker Exp $
 
 .ifndef SKIP_UNIT
 SUBDIR=		unittests
@@ -106,7 +106,7 @@ CLEANFILES+=	*.core actual agent-key.* authorized_keys_${USERNAME} \
 		host.ssh-dss host.ssh-ed25519 host.ssh-rsa \
 		host_* host_ca_key* host_krl_* host_revoked_* key.* \
 		key.dsa-* key.ecdsa-* key.ed25519-512 key.ed25519-512.pub \
-		key.rsa-* keys-command-args kh.* known_hosts \
+		key.rsa-* keys-command-args kh.* known_hosts askpass \
 		known_hosts-cert known_hosts.* krl-* ls.copy modpipe \
 		netcat pidfile putty.rsa2 ready regress.log remote_pid \
 		revoked-* rsa rsa-agent rsa-agent.pub rsa.pub rsa_ssh2_cr.prv \
