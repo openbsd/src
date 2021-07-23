@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_NAME_hash.3,v 1.1 2021/07/20 17:31:32 schwarze Exp $
+.\" $OpenBSD: X509_NAME_hash.3,v 1.2 2021/07/23 20:25:36 schwarze Exp $
 .\"
 .\" Copyright (c) 2017, 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,13 +14,15 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 20 2021 $
+.Dd $Mdocdate: July 23 2021 $
 .Dt X509_NAME_HASH 3
 .Os
 .Sh NAME
 .Nm X509_NAME_hash ,
 .Nm X509_issuer_name_hash ,
 .Nm X509_subject_name_hash ,
+.\" X509_issuer_and_serial_hash() is intentionally undocumented
+.\" because it uses MD5 only and is unused in real-world code.
 .Nm X509_NAME_hash_old ,
 .Nm X509_issuer_name_hash_old ,
 .Nm X509_subject_name_hash_old
