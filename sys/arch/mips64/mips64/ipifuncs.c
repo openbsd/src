@@ -1,4 +1,4 @@
-/* $OpenBSD: ipifuncs.c,v 1.23 2021/07/20 07:53:39 visa Exp $ */
+/* $OpenBSD: ipifuncs.c,v 1.24 2021/07/24 08:21:13 visa Exp $ */
 /* $NetBSD: ipifuncs.c,v 1.40 2008/04/28 20:23:10 martin Exp $ */
 
 /*-
@@ -130,8 +130,8 @@ do_send_ipi(unsigned int cpuid, unsigned int ipimask)
 
 	if (ci == NULL)
 		panic("mips_send_ipi: bogus cpu_id");
-	if (!cpuset_isset(&cpus_running, ci))
-	        panic("mips_send_ipi: CPU %u not running", cpuid);
+	if (!CPU_IS_RUNNING(ci))
+		panic("mips_send_ipi: CPU %u not running", cpuid);
 #endif
 
 	atomic_setbits_int(&ipi_mailbox[cpuid], ipimask);
@@ -172,8 +172,7 @@ mips64_multicast_ipi(unsigned int cpumask, unsigned int ipimask)
 	membar_producer();
 
 	CPU_INFO_FOREACH(cii, ci) {
-		if (!(cpumask & (1UL << ci->ci_cpuid)) || 
-		    !cpuset_isset(&cpus_running, ci))
+		if (!(cpumask & (1UL << ci->ci_cpuid)) || !CPU_IS_RUNNING(ci))
 			continue;
 		do_send_ipi(ci->ci_cpuid, ipimask);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.135 2021/07/06 09:34:06 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.136 2021/07/24 08:21:13 visa Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -228,7 +228,6 @@ extern struct cpu_info *get_cpu_info(int);
 #define	CPU_IS_RUNNING(ci)		((ci)->ci_flags & CPUF_RUNNING)
 #define cpu_number()			(curcpu()->ci_cpuid)
 
-extern struct cpuset cpus_running;
 void cpu_unidle(struct cpu_info *);
 void cpu_boot_secondary_processors(void);
 #define cpu_boot_secondary(ci)          hw_cpu_boot_secondary(ci)

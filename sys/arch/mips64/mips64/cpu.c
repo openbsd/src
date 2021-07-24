@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.79 2021/05/28 16:33:36 visa Exp $ */
+/*	$OpenBSD: cpu.c,v 1.80 2021/07/24 08:21:13 visa Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -45,9 +45,6 @@ void	cpuattach(struct device *, struct device *, void *);
 struct cpu_info cpu_info_primary;
 struct cpu_info *cpu_info_list = &cpu_info_primary;
 struct cpu_info *cpu_info_secondaries;
-#ifdef MULTIPROCESSOR
-struct cpuset cpus_running;
-#endif
 
 extern void cpu_idle_cycle_nop(void);
 extern void cpu_idle_cycle_wait(void);
@@ -90,7 +87,6 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 		ci = &cpu_info_primary;
 #ifdef MULTIPROCESSOR
 		ci->ci_flags |= CPUF_RUNNING | CPUF_PRESENT | CPUF_PRIMARY;
-		cpuset_add(&cpus_running, ci);
 		if (ncpusfound > 1) {
 			cpu_info_secondaries = (struct cpu_info *)
 			    alloc_contiguous_pages(sizeof(struct cpu_info) *
