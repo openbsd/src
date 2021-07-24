@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.56 2020/06/26 20:16:21 naddy Exp $
+#	$OpenBSD: Makefile,v 1.57 2021/07/24 05:45:49 visa Exp $
 
 SUBDIR+= _setjmp
 SUBDIR+= alloca arc4random-fork atexit
@@ -18,7 +18,7 @@ SUBDIR+= popen printf
 SUBDIR+= qsort
 SUBDIR+= regex
 SUBDIR+= setjmp setjmp-signal sigsetjmp sigthr sleep sprintf stdio_threading
-SUBDIR+= stpncpy strerror strlcat strlcpy strnlen strtod strtol strtonum
+SUBDIR+= stpncpy strchr strerror strlcat strlcpy strnlen strtod strtol strtonum
 SUBDIR+= sys
 SUBDIR+= telldir time timingsafe
 SUBDIR+= vis
