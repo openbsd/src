@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.34 2021/07/20 12:04:53 inoguchi Exp $ */
+/* $OpenBSD: ca.c,v 1.35 2021/07/24 13:21:04 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -780,7 +780,7 @@ ca_main(int argc, char **argv)
 		f = NCONF_get_string(conf, ca_config.section, UTF8_IN);
 		if (f == NULL)
 			ERR_clear_error();
-		else if (!strcmp(f, "yes"))
+		else if (strcmp(f, "yes") == 0)
 			ca_config.chtype = MBSTRING_UTF8;
 	}
 	db_attr.unique_subject = 1;
@@ -1058,7 +1058,7 @@ ca_main(int argc, char **argv)
 		lookup_fail(ca_config.section, ENV_DEFAULT_MD);
 		goto err;
 	}
-	if (!strcmp(ca_config.md, "default")) {
+	if (strcmp(ca_config.md, "default") == 0) {
 		int def_nid;
 		if (EVP_PKEY_get_default_digest_nid(pkey, &def_nid) <= 0) {
 			BIO_puts(bio_err, "no default digest\n");
@@ -1863,7 +1863,7 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 				}
 				last2 = -1;
 
-again2:
+ again2:
 				j = X509_NAME_get_index_by_OBJ(CAname, obj,
 				    last2);
 				if ((j < 0) && (last2 == -1)) {
@@ -2688,7 +2688,7 @@ make_revocation_str(int rev_type, char *rev_arg)
 
 	case REV_CRL_REASON:
 		for (i = 0; i < 8; i++) {
-			if (!strcasecmp(rev_arg, crl_reasons[i])) {
+			if (strcasecmp(rev_arg, crl_reasons[i]) == 0) {
 				reason = crl_reasons[i];
 				break;
 			}
@@ -2883,7 +2883,7 @@ unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold,
 	}
 	if (reason_str != NULL) {
 		for (i = 0; i < NUM_REASONS; i++) {
-			if (!strcasecmp(reason_str, crl_reasons[i])) {
+			if (strcasecmp(reason_str, crl_reasons[i]) == 0) {
 				reason_code = i;
 				break;
 			}
