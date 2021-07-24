@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unwind.conf.5,v 1.27 2021/02/20 12:37:59 jmc Exp $
+.\"	$OpenBSD: unwind.conf.5,v 1.28 2021/07/24 14:15:34 kn Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 20 2021 $
+.Dd $Mdocdate: July 24 2021 $
 .Dt UNWIND.CONF 5
 .Os
 .Sh NAME
@@ -68,7 +68,7 @@ A file containing domains to block, one per line.
 If a domain from this list is queried
 .Nm unwind
 answers with a return code of
-.Cm refused .
+.Dv REFUSED .
 With
 .Cm log
 blocked queries are logged.
@@ -94,7 +94,7 @@ DNS name server types are:
 .Pp
 .Bl -tag -width "forwarder" -compact
 .It Ic stub
-Name servers learned via DHCP, queried using the libc functions.
+Name servers learned via DHCP or SLAAC, queried using the libc functions.
 See
 .Xr asr_run 3 .
 Will never validate.
@@ -141,7 +141,7 @@ The default
 configuration file.
 .El
 .Sh EXAMPLES
-Block requests from hostnames in
+Block requests for domains in
 .Pa /etc/blocklist
 and log each blocked request:
 .Bd -literal -offset indent
