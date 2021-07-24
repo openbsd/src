@@ -1733,6 +1733,7 @@ get_machine_name (unsigned e_machine)
     case EM_ALTERA_NIOS2:	return "Altera Nios II";
     case EM_XC16X:		return "Infineon Technologies xc16x";
     case EM_AARCH64:		return "AArch64";
+    case EM_RISCV:		return "RISC-V";
     default:
       snprintf (buff, sizeof (buff), _("<unknown>: %x"), e_machine);
       return buff;
