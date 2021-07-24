@@ -1,4 +1,4 @@
-/* $OpenBSD: imxiic_acpi.c,v 1.1 2020/11/17 14:31:59 patrick Exp $ */
+/* $OpenBSD: imxiic_acpi.c,v 1.2 2021/07/24 10:52:07 patrick Exp $ */
 /*
  * Copyright (c) 2015, 2016 joshua stein <jcs@openbsd.org>
  * Copyright (c) 2020 Patrick Wildt <patrick@blueri.se>
@@ -103,14 +103,19 @@ imxiic_acpi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_type = I2C_TYPE_VF610;
 
 	/*
-	 * In comparison to the device tree, it looks like the clock-frequency
-	 * property is actually the clock supplied to the controller, and not
-	 * the bitrate.  Using the default 100 kHz value seems to work, since
-	 * there's no other property we can read.
+	 * Older versions of the ACPI tables for this device had the naming for
+	 * the clkrate and bitrate confused.  For those, keep the old value of
+	 * 100 kHz.
 	 */
 	sc->sc_clkrate = acpi_getpropint(ac->ac_devnode,
+	    "uefi-clock-frequency", 0) / 1000;
+	sc->sc_bitrate = acpi_getpropint(ac->ac_devnode,
 	    "clock-frequency", 0) / 1000;
-	sc->sc_bitrate = 100000 / 1000;
+	if (sc->sc_clkrate == 0) {
+		sc->sc_clkrate = acpi_getpropint(ac->ac_devnode,
+		    "clock-frequency", 0) / 1000;
+		sc->sc_bitrate = 100000 / 1000;
+	}
 	if (sc->sc_clkrate == 0) {
 		printf(": clock frequency unknown\n");
 		return;
