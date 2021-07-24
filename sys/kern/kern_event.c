@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.168 2021/07/22 07:22:43 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.169 2021/07/24 09:16:51 mpi Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -1908,6 +1908,9 @@ knote_dequeue(struct knote *kn)
 void
 knote_modify(const struct kevent *kev, struct knote *kn)
 {
+	if ((kn->kn_fop->f_flags & FILTEROP_MPSAFE) == 0)
+		KERNEL_ASSERT_LOCKED();
+
 	kn->kn_sfflags = kev->fflags;
 	kn->kn_sdata = kev->data;
 	kn->kn_udata = kev->udata;
@@ -1921,6 +1924,9 @@ knote_modify(const struct kevent *kev, struct knote *kn)
 void
 knote_submit(struct knote *kn, struct kevent *kev)
 {
+	if ((kn->kn_fop->f_flags & FILTEROP_MPSAFE) == 0)
+		KERNEL_ASSERT_LOCKED();
+
 	if (kev != NULL) {
 		*kev = kn->kn_kevent;
 		if (kn->kn_flags & EV_CLEAR) {
