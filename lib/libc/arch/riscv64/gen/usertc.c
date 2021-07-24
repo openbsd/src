@@ -1,6 +1,7 @@
-/*	$OpenBSD: usertc.c,v 1.1 2021/04/29 18:33:36 drahn Exp $	*/
+/*	$OpenBSD: usertc.c,v 1.2 2021/07/24 22:41:09 jca Exp $	*/
 /*
  * Copyright (c) 2020 Paul Irofti <paul@irofti.net>
+ * Copyright (c) 2021 Jeremie Courreges-Anglas <jca@wxcvbn.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,4 +19,26 @@
 #include <sys/types.h>
 #include <sys/timetc.h>
 
-int (*const _tc_get_timecount)(struct timekeep *, u_int *) = NULL;
+static inline u_int
+rdtime(void)
+{
+	uint64_t ret;
+
+	__asm volatile("rdtime %0" : "=r"(ret));
+
+	return ret;
+}
+
+static int
+tc_get_timecount(struct timekeep *tk, u_int *tc)
+{
+	switch (tk->tk_user) {
+	case TC_TB:
+		*tc = rdtime();
+		return 0;
+	}
+
+	return -1;
+}
+
+int (*const _tc_get_timecount)(struct timekeep *, u_int *) = tc_get_timecount;
