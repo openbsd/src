@@ -1,4 +1,4 @@
-/*	$OpenBSD: octdwctwo.c,v 1.13 2021/07/24 14:41:41 mglocker Exp $	*/
+/*	$OpenBSD: octdwctwo.c,v 1.14 2021/07/24 14:43:53 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2015 Masao Uebayashi <uebayasi@tombiinc.com>
@@ -101,6 +101,8 @@ static struct dwc2_core_params octdwctwo_params = {
 	.reload_ctl = 0,
 	.ahbcfg = 0x7,
 	.uframe_sched = 1,
+	.external_id_pin_ctl = -1,
+	.hibernation = -1,
 };
 
 /*
