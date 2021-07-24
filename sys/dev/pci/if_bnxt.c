@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.33 2021/07/23 00:29:14 jmatthew Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.34 2021/07/24 05:49:59 jmatthew Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -586,7 +586,7 @@ bnxt_attach(struct device *parent, struct device *self, void *aux)
 		goto deintr;
 	}
 
-	if (sc->sc_nqueues == 1)
+	if (sc->sc_intrmap == NULL)
 		cpr = &sc->sc_queues[0].q_cp;
 	else
 		cpr = &sc->sc_cp_ring;
@@ -674,7 +674,7 @@ bnxt_attach(struct device *parent, struct device *self, void *aux)
 		tx->tx_ifq = ifq;
 		ifq->ifq_softc = tx;
 
-		if (sc->sc_nqueues > 1) {
+		if (sc->sc_intrmap != NULL) {
 			cp->stats_ctx_id = HWRM_NA_SIGNATURE;
 			cp->ring.phys_id = (uint16_t)HWRM_NA_SIGNATURE;
 			cp->ring.id = i + 1;	/* first cp ring is async only */
@@ -792,8 +792,8 @@ bnxt_queue_up(struct bnxt_softc *sc, struct bnxt_queue *bq)
 		goto free_tx;
 	}
 
-	/* completion ring is already allocated if we only have one queue */
-	if (sc->sc_nqueues > 1) {
+	/* completion ring is already allocated if we're not using an intrmap */
+	if (sc->sc_intrmap != NULL) {
 		cp->ring_mem = bnxt_dmamem_alloc(sc, PAGE_SIZE * BNXT_CP_PAGES);
 		if (cp->ring_mem == NULL) {
 			printf("%s: failed to allocate completion ring %d mem\n",
@@ -1026,8 +1026,8 @@ bnxt_queue_down(struct bnxt_softc *sc, struct bnxt_queue *bq)
 	bnxt_hwrm_ring_free(sc, HWRM_RING_ALLOC_INPUT_RING_TYPE_RX,
 	    &rx->rx_ring);
 
-	/* if only one queue, leave cp ring in place for async events */
-	if (sc->sc_nqueues > 1) {
+	/* if no intrmap, leave cp ring in place for async events */
+	if (sc->sc_intrmap != NULL) {
 		bnxt_hwrm_ring_free(sc, HWRM_RING_ALLOC_INPUT_RING_TYPE_L2_CMPL,
 		    &cp->ring);
 
