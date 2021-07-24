@@ -1,4 +1,4 @@
-/*	$OpenBSD: octdwctwo.c,v 1.12 2019/07/28 12:57:09 visa Exp $	*/
+/*	$OpenBSD: octdwctwo.c,v 1.13 2021/07/24 14:41:41 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2015 Masao Uebayashi <uebayasi@tombiinc.com>
@@ -52,7 +52,7 @@ int			octdwctwo_match(struct device *, void *, void *);
 void			octdwctwo_attach(struct device *, struct device *,
 			    void *);
 int			octdwctwo_activate(struct device *, int);
-int			octdwctwo_set_dma_addr(void *, dma_addr_t, int);
+int			octdwctwo_set_dma_addr(struct device *, bus_addr_t, int);
 u_int64_t		octdwctwo_reg2_rd(struct octdwctwo_softc *, bus_size_t);
 void			octdwctwo_reg2_wr(struct octdwctwo_softc *, bus_size_t,
 			    u_int64_t);
@@ -103,10 +103,6 @@ static struct dwc2_core_params octdwctwo_params = {
 	.uframe_sched = 1,
 };
 
-static struct dwc2_core_dma_config octdwctwo_dma_config = {
-	.set_dma_addr = octdwctwo_set_dma_addr,
-};
-
 /*
  * This bus space tag adjusts register addresses to account for
  * dwc2 using little endian addressing.  dwc2 only does 32bit reads
@@ -151,6 +147,7 @@ octdwctwo_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dwc2.sc_bus.pipe_size = sizeof(struct usbd_pipe);
 	sc->sc_dwc2.sc_bus.dmatag = aa->aa_dmat;
 	sc->sc_dwc2.sc_params = &octdwctwo_params;
+	sc->sc_dwc2.sc_set_dma_addr = octdwctwo_set_dma_addr;
 
 	rc = bus_space_map(sc->sc_dwc2.sc_iot, USBC_BASE, USBC_SIZE,
 	    0, &sc->sc_dwc2.sc_ioh);
@@ -218,10 +215,6 @@ octdwctwo_attach(struct device *parent, struct device *self, void *aux)
 	rc = dwc2_init(&sc->sc_dwc2);
 	if (rc != 0)
 		return;
-	octdwctwo_dma_config.set_dma_addr_data = sc;
-	rc = dwc2_dma_config(&sc->sc_dwc2, &octdwctwo_dma_config);
-	if (rc != 0)
-		return;
 
 	printf("\n");
 
@@ -269,9 +262,9 @@ octdwctwo_activate(struct device *self, int act)
 }
 
 int
-octdwctwo_set_dma_addr(void *data, dma_addr_t dma_addr, int ch)
+octdwctwo_set_dma_addr(struct device *data, bus_addr_t dma_addr, int ch)
 {
-	struct octdwctwo_softc *sc = data;
+	struct octdwctwo_softc *sc = (struct octdwctwo_softc *)data;
 
 	octdwctwo_reg2_wr(sc,
 	    USBN_DMA0_INB_CHN0_OFFSET + ch * 0x8, dma_addr);
