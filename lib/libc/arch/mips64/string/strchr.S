@@ -1,4 +1,4 @@
-/*	$OpenBSD: strchr.S,v 1.3 2015/08/31 02:53:56 guenther Exp $ */
+/*	$OpenBSD: strchr.S,v 1.4 2021/07/24 05:35:56 visa Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,6 +37,7 @@ WEAK_ALIAS(index, strchr)
 
 LEAF(strchr, 0)
 	.set	reorder
+	andi	a1, 0xff
 0:
 	lbu	a2, 0(a0)		# get a byte
 	daddu	a0, a0, 1
