@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.16 2021/07/02 08:53:28 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.17 2021/07/24 18:15:13 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Brian Bamsch <bbamsch@google.com>
@@ -32,15 +32,6 @@
 #include "machine/sbi.h"
 
 void pmap_set_satp(struct proc *);
-void pmap_free_asid(pmap_t);
-
-#define cpu_tlb_flush_all()			sfence_vma()
-#define cpu_tlb_flush_page_all(va)		sfence_vma_page(va)
-#define cpu_tlb_flush_asid_all(asid)		sfence_vma_asid(asid)
-#define cpu_tlb_flush_page_asid(va, asid)	sfence_vma_page_asid(va, asid)
-
-/* We run userland code with ASIDs that have the low bit set. */
-#define ASID_USER	1
 
 #ifdef MULTIPROCESSOR
 
@@ -52,8 +43,10 @@ pmap_is_active(struct pmap *pm, struct cpu_info *ci)
 
 #endif
 
-static inline void
-tlb_flush(pmap_t pm, vaddr_t va)
+int sifive_cip_1200_errata;
+
+void
+do_tlb_flush_page(pmap_t pm, vaddr_t va)
 {
 #ifdef MULTIPROCESSOR
 	CPU_INFO_ITERATOR cii;
@@ -71,14 +64,38 @@ tlb_flush(pmap_t pm, vaddr_t va)
 		sbi_remote_sfence_vma(&hart_mask, va, PAGE_SIZE);
 #endif
 
-	if (pm == pmap_kernel()) {
-		// Flush Translations for VA across all ASIDs
-		cpu_tlb_flush_page_all(va);
-	} else {
-		// Flush Translations for VA in appropriate Kernel / USER ASIDs
-		cpu_tlb_flush_page_asid(va, SATP_ASID(pm->pm_satp));
-		cpu_tlb_flush_page_asid(va, SATP_ASID(pm->pm_satp) | ASID_USER);
+	sfence_vma_page(va);
+}
+
+void
+do_tlb_flush(pmap_t pm)
+{
+#ifdef MULTIPROCESSOR
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+	unsigned long hart_mask = 0;
+
+	CPU_INFO_FOREACH(cii, ci) {
+		if (ci == curcpu())
+			continue;
+		if (pmap_is_active(pm, ci))
+			hart_mask |= (1UL << ci->ci_hartid);
 	}
+
+	if (hart_mask != 0)
+		sbi_remote_sfence_vma(&hart_mask, 0, -1);
+#endif
+
+	sfence_vma();
+}
+
+void
+tlb_flush_page(pmap_t pm, vaddr_t va)
+{
+	if (cpu_errata_sifive_cip_1200)
+		do_tlb_flush(pm);
+	else
+		do_tlb_flush_page(pm, va);
 }
 
 static inline void
@@ -103,7 +120,6 @@ icache_flush(void)
 }
 
 struct pmap kernel_pmap_;
-struct pmap pmap_tramp;
 
 LIST_HEAD(pted_pv_head, pte_desc);
 
@@ -130,7 +146,6 @@ void _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags,
 
 static __inline void pmap_set_mode(pmap_t);
 static __inline void pmap_set_ppn(pmap_t, paddr_t);
-void pmap_allocate_asid(pmap_t);
 
 # if 0	// XXX 4 Level Page Table
 struct pmapvp0 {
@@ -560,7 +575,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		pmap_pte_insert(pted);
 	}
 
-	tlb_flush(pm, va & ~PAGE_MASK);
+	tlb_flush_page(pm, va & ~PAGE_MASK);
 
 	if (pg != NULL && (flags & PROT_EXEC)) {
 		need_sync = ((pg->pg_flags & PG_PMAP_EXE) == 0);
@@ -618,7 +633,7 @@ pmap_remove_pted(pmap_t pm, struct pte_desc *pted)
 
 	pmap_pte_remove(pted, pm != pmap_kernel());
 
-	tlb_flush(pm, pted->pted_va & ~PAGE_MASK);
+	tlb_flush_page(pm, pted->pted_va & ~PAGE_MASK);
 
 	if (pted->pted_va & PTED_VA_EXEC_M) {
 		pted->pted_va &= ~PTED_VA_EXEC_M;
@@ -674,7 +689,7 @@ _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
 	 */
 	pmap_pte_insert(pted);
 
-	tlb_flush(pm, va & ~PAGE_MASK);
+	tlb_flush_page(pm, va & ~PAGE_MASK);
 }
 
 void
@@ -718,7 +733,7 @@ pmap_kremove_pg(vaddr_t va)
 	 */
 	pmap_pte_remove(pted, 0);
 
-	tlb_flush(pm, pted->pted_va & ~PAGE_MASK);
+	tlb_flush_page(pm, pted->pted_va & ~PAGE_MASK);
 
 	if (pted->pted_va & PTED_VA_EXEC_M)
 		pted->pted_va &= ~PTED_VA_EXEC_M;
@@ -860,7 +875,6 @@ pmap_pinit(pmap_t pm)
 	pmap_extract(pmap_kernel(), l1va, (paddr_t *)&l1pa);
 	pmap_set_ppn(pm, l1pa);
 	pmap_set_mode(pm);
-	pmap_allocate_asid(pm);
 	pmap_reference(pm);
 }
 
@@ -912,7 +926,6 @@ pmap_destroy(pmap_t pm)
 	 * reference count is zero, free pmap resources and free pmap.
 	 */
 	pmap_release(pm);
-	pmap_free_asid(pm);
 	pool_put(&pmap_pmap_pool, pm);
 }
 
@@ -1238,12 +1251,6 @@ pmap_bootstrap(long kvo, vaddr_t l1pt, vaddr_t kernelstart, vaddr_t kernelend,
 	pmap_kernel()->pm_satp = SATP_MODE_SV39 | /* ASID = 0 */
 		((PPN(pt1pa) & SATP_PPN_MASK) << SATP_PPN_SHIFT);
 
-	// XXX Trampoline
-	pmap_tramp.pm_vp.l1 = (struct pmapvp1 *)va + 1;
-	pmap_tramp.pm_privileged = 1;
-	pmap_tramp.pm_satp = SATP_MODE_SV39; /* ASID = 0 */
-	/* pmap_tramp ppn initialized in pmap_postinit */
-
 	/* allocate memory (in unit of pages) for l2 and l3 page table */
 	for (i = VP_IDX1(VM_MIN_KERNEL_ADDRESS);
 	    i <= VP_IDX1(pmap_maxkvaddr - 1);
@@ -1520,7 +1527,7 @@ pmap_page_ro(pmap_t pm, vaddr_t va, vm_prot_t prot)
 	}
 	pmap_pte_update(pted, pl3);
 
-	tlb_flush(pm, pted->pted_va & ~PAGE_MASK);
+	tlb_flush_page(pm, pted->pted_va & ~PAGE_MASK);
 
 	return;
 }
@@ -1708,7 +1715,7 @@ pmap_pte_remove(struct pte_desc *pted, int remove_pted)
 	if (remove_pted)
 		vp3->vp[VP_IDX3(pted->pted_va)] = NULL;
 
-	tlb_flush(pm, pted->pted_va);
+	tlb_flush_page(pm, pted->pted_va);
 }
 
 /*
@@ -1802,7 +1809,7 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype)
 	pmap_pte_update(pted, pl3);
 
 	/* Flush tlb. */
-	tlb_flush(pm, va & ~PAGE_MASK);
+	tlb_flush_page(pm, va & ~PAGE_MASK);
 
 	/*
 	 * If this is a page that can be executed, make sure to invalidate
@@ -1825,19 +1832,8 @@ done:
 void
 pmap_postinit(void)
 {
-#if 0	// XXX Trampoline Vectors
-	extern char trampoline_vectors[];
-	paddr_t pa;
-#endif
 	vaddr_t minaddr, maxaddr;
 	u_long npteds, npages;
-
-	memset(pmap_tramp.pm_vp.l1, 0, sizeof(struct pmapvp1));
-#if 0	// XXX Trampoline Vectors
-	pmap_extract(pmap_kernel(), (vaddr_t)trampoline_vectors, &pa);
-	pmap_enter(&pmap_tramp, (vaddr_t)trampoline_vectors, pa,
-	    PROT_READ | PROT_EXEC, PROT_READ | PROT_EXEC | PMAP_WIRED);
-#endif
 
 	/*
 	 * Reserve enough virtual address space to grow the kernel
@@ -1894,7 +1890,7 @@ pmap_clear_modify(struct vm_page *pg)
 		*pl3 &= ~PTE_W;
 		pted->pted_pte &= ~PROT_WRITE;
 
-		tlb_flush(pted->pted_pmap, pted->pted_va & ~PAGE_MASK);
+		tlb_flush_page(pted->pted_pmap, pted->pted_va & ~PAGE_MASK);
 	}
 	mtx_leave(&pg->mdpage.pv_mtx);
 
@@ -1916,7 +1912,7 @@ pmap_clear_reference(struct vm_page *pg)
 	LIST_FOREACH(pted, &(pg->mdpage.pv_list), pted_pv_list) {
 		pted->pted_pte &= ~PROT_MASK;
 		pmap_pte_insert(pted);
-		tlb_flush(pted->pted_pmap, pted->pted_va & ~PAGE_MASK);
+		tlb_flush_page(pted->pted_pmap, pted->pted_va & ~PAGE_MASK);
 	}
 	mtx_leave(&pg->mdpage.pv_mtx);
 
@@ -2232,56 +2228,6 @@ pmap_set_mode(pmap_t pm) {
 	// Always using Sv39
 	// XXX Support 4-level PT
 	((pm)->pm_satp |= SATP_MODE_SV39);
-}
-
-/*
- * We allocate ASIDs in pairs.  The first ASID is used to run the
- * kernel and has both userland and the full kernel mapped.  The
- * second ASID is used for running userland and has only the
- * trampoline page mapped in addition to userland.
- */
-
-#define NUM_ASID (1 << 16)
-uint32_t pmap_asid[NUM_ASID / 32];
-
-void
-pmap_allocate_asid(pmap_t pm)
-{
-	uint32_t bits;
-	int asid, bit;
-
-	for (;;) {
-		do {
-			asid = arc4random() & (NUM_ASID - 2);
-			bit = (asid & (32 - 1));
-			bits = pmap_asid[asid / 32];
-		} while (asid == 0 || (bits & (3U << bit)));
-
-		if (atomic_cas_uint(&pmap_asid[asid / 32], bits,
-		    bits | (3U << bit)) == bits)
-			break;
-	}
-	pm->pm_satp |= SATP_FORMAT_ASID(asid);
-}
-
-void
-pmap_free_asid(pmap_t pm)
-{
-	uint32_t bits;
-	int asid, bit;
-
-	KASSERT(pm != curcpu()->ci_curpm);
-	asid = SATP_ASID(pm->pm_satp);
-	cpu_tlb_flush_asid_all(asid);
-	cpu_tlb_flush_asid_all(asid | ASID_USER);
-
-	bit = (asid & (32 - 1));
-	for (;;) {
-		bits = pmap_asid[asid / 32];
-		if (atomic_cas_uint(&pmap_asid[asid / 32], bits,
-		    bits & ~(3U << bit)) == bits)
-			break;
-	}
 }
 
 void

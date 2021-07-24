@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.10 2021/07/02 08:44:37 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.11 2021/07/24 18:15:13 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -82,6 +82,8 @@ struct cfdriver cpu_cd = {
 	NULL, "cpu", DV_DULL
 };
 
+int cpu_errata_sifive_cip_1200;
+
 void
 cpu_identify(struct cpu_info *ci)
 {
@@ -128,6 +130,10 @@ cpu_identify(struct cpu_info *ci)
 		strlcpy(cpu_model, isa, sizeof(cpu_model));
 	}
 	printf("\n");
+
+	/* Handle errata. */
+	if (mvendorid == CPU_VENDOR_SIFIVE && marchid == CPU_ARCH_U7)
+		cpu_errata_sifive_cip_1200 = 1;
 }
 
 #ifdef MULTIPROCESSOR
