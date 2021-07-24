@@ -2169,6 +2169,7 @@
 ./usr/share/man/man3/X509_STORE_new.3
 ./usr/share/man/man3/X509_STORE_set1_param.3
 ./usr/share/man/man3/X509_STORE_set_verify_cb_func.3
+./usr/share/man/man3/X509_TRUST_set.3
 ./usr/share/man/man3/X509_VERIFY_PARAM_set_flags.3
 ./usr/share/man/man3/X509_add1_trust_object.3
 ./usr/share/man/man3/X509_check_ca.3
@@ -2176,6 +2177,7 @@
 ./usr/share/man/man3/X509_check_issued.3
 ./usr/share/man/man3/X509_check_private_key.3
 ./usr/share/man/man3/X509_check_purpose.3
+./usr/share/man/man3/X509_check_trust.3
 ./usr/share/man/man3/X509_cmp.3
 ./usr/share/man/man3/X509_cmp_time.3
 ./usr/share/man/man3/X509_digest.3
