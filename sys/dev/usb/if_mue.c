@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mue.c,v 1.10 2020/07/31 10:49:32 mglocker Exp $	*/
+/*	$OpenBSD: if_mue.c,v 1.11 2021/07/25 06:43:04 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2018 Kevin Lo <kevlo@openbsd.org>
@@ -655,6 +655,13 @@ mue_chip_init(struct mue_softc *sc)
 
 	MUE_SETBIT(sc, (sc->mue_flags & LAN7500) ?
 	    MUE_FCT_RX_CTL : MUE_7800_FCT_RX_CTL, MUE_FCT_RX_CTL_EN);
+
+	/* Enable LEDs. */
+	if (sc->mue_product == USB_PRODUCT_SMC2_LAN7800 &&
+	    sc->mue_eeprom_present == 0) {
+		MUE_SETBIT(sc, MUE_HW_CFG,
+		    MUE_HW_CFG_LED0_EN | MUE_HW_CFG_LED1_EN);
+	}
 
 	return (0);
 }
