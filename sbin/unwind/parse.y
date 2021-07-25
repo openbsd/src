@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.25 2021/02/27 10:32:28 florian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.26 2021/07/25 08:34:43 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -192,7 +192,11 @@ block_list		: BLOCK LIST STRING log {
 			}
 			;
 
-uw_pref			: PREFERENCE { conf->res_pref.len = 0; } pref_block
+uw_pref			: PREFERENCE {
+				conf->res_pref.len = 0;
+				memset(conf->enabled_resolvers, 0,
+				    sizeof(conf->enabled_resolvers));
+			} pref_block
 			;
 
 pref_block		: '{' optnl prefopts_l '}'
@@ -211,6 +215,7 @@ prefoptsl		: prefopt {
 					YYERROR;
 				}
 				conf->res_pref.types[conf->res_pref.len++] = $1;
+				conf->enabled_resolvers[$1] = 1;
 			}
 			;
 

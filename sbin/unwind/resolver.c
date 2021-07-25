@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.144 2021/07/12 15:09:19 beck Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.145 2021/07/25 08:34:43 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -211,7 +211,6 @@ static struct imsgev		*iev_frontend;
 static struct imsgev		*iev_main;
 struct uw_forwarder_head	 autoconf_forwarder_list;
 struct uw_resolver		*resolvers[UW_RES_NONE];
-int				 enabled_resolvers[UW_RES_NONE];
 struct timespec			 last_network_change;
 
 struct event			 trust_anchor_timer;
@@ -672,10 +671,6 @@ resolver_dispatch_main(int fd, short event, void *bula)
 				    "IMSG_RECONF_CONF", __func__);
 			restart = resolvers_to_restart(resolver_conf, nconf);
 			merge_config(resolver_conf, nconf);
-			memset(enabled_resolvers, 0, sizeof(enabled_resolvers));
-			for (i = 0; i < resolver_conf->res_pref.len; i++)
-				enabled_resolvers[
-				    resolver_conf->res_pref.types[i]] = 1;
 			nconf = NULL;
 			for (i = 0; i < UW_RES_NONE; i++)
 				if (restart[i])
@@ -1088,7 +1083,7 @@ new_resolver(enum uw_resolver_type type, enum uw_resolver_state state)
 	free_resolver(resolvers[type]);
 	resolvers[type] = NULL;
 
-	if (!enabled_resolvers[type])
+	if (!resolver_conf->enabled_resolvers[type])
 		return;
 
 	switch (type) {
@@ -2162,8 +2157,6 @@ int *
 resolvers_to_restart(struct uw_conf *oconf, struct uw_conf *nconf)
 {
 	static int	 restart[UW_RES_NONE];
-	int		 o_enabled[UW_RES_NONE];
-	int		 n_enabled[UW_RES_NONE];
 	int		 i;
 
 	memset(&restart, 0, sizeof(restart));
@@ -2176,16 +2169,9 @@ resolvers_to_restart(struct uw_conf *oconf, struct uw_conf *nconf)
 	    &nconf->uw_dot_forwarder_list)) {
 		restart[UW_RES_DOT] = 1;
 	}
-	memset(o_enabled, 0, sizeof(o_enabled));
-	memset(n_enabled, 0, sizeof(n_enabled));
-	for (i = 0; i < oconf->res_pref.len; i++)
-		o_enabled[oconf->res_pref.types[i]] = 1;
-
-	for (i = 0; i < nconf->res_pref.len; i++)
-		n_enabled[nconf->res_pref.types[i]] = 1;
 
 	for (i = 0; i < UW_RES_NONE; i++) {
-		if (n_enabled[i] != o_enabled[i])
+		if (oconf->enabled_resolvers[i] != nconf->enabled_resolvers[i])
 			restart[i] = 1;
 	}
 	return restart;

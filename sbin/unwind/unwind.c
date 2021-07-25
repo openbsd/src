@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.61 2021/02/27 10:32:28 florian Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.62 2021/07/25 08:34:43 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -694,6 +694,7 @@ config_new_empty(void)
 	    UW_RES_DHCP,
 	    UW_RES_ASR};
 	struct uw_conf			*xconf;
+	int				 i;
 
 	xconf = calloc(1, sizeof(*xconf));
 	if (xconf == NULL)
@@ -702,6 +703,8 @@ config_new_empty(void)
 	memcpy(&xconf->res_pref.types, &default_res_pref,
 	    sizeof(default_res_pref));
 	xconf->res_pref.len = nitems(default_res_pref);
+	for (i = 0; i < xconf->res_pref.len; i++)
+		xconf->enabled_resolvers[xconf->res_pref.types[i]] = 1;
 
 	TAILQ_INIT(&xconf->uw_forwarder_list);
 	TAILQ_INIT(&xconf->uw_dot_forwarder_list);
