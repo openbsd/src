@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.81 2021/03/24 20:59:54 benno Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.82 2021/07/25 20:31:41 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -1735,7 +1735,7 @@ relay_apply_actions(struct ctl_relay_event *cre, struct kvlist *actions,
 		case KEY_OPTION_STRIP:
 			nstrip = strtonum(kv->kv_value, 0, INT_MAX, NULL);
 			if (kv->kv_type == KEY_TYPE_PATH) {
-				if (kv_setkey(match,
+				if (kv_setkey(match, "%s",
 				    server_root_strip(match->kv_key,
 				    nstrip)) == -1)
 					goto fail;
@@ -1763,7 +1763,7 @@ relay_apply_actions(struct ctl_relay_event *cre, struct kvlist *actions,
 			if ((ptr = relay_expand_http(cre, kp->kv_value, buf,
 			    sizeof(buf))) == NULL)
 				goto fail;
-			if (kv_set(match, ptr) == -1)
+			if (kv_set(match, "%s", ptr) == -1)
 				goto fail;
 		}
 
