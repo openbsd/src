@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.145 2021/07/25 08:34:43 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.146 2021/07/25 08:36:06 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -988,9 +988,9 @@ resolve_done(struct uw_resolver *res, void *arg, int rcode,
 		force_acceptbogus = 0;
 
 	timespecsub(&tp, &last_network_change, &elapsed);
-	if ((result->rcode == LDNS_RCODE_NXDOMAIN || sec == BOGUS) &&
-	    !force_acceptbogus && res->type != UW_RES_ASR && elapsed.tv_sec <
-	    DOUBT_NXDOMAIN_SEC) {
+	if (sec != SECURE && elapsed.tv_sec < DOUBT_NXDOMAIN_SEC &&
+	    !force_acceptbogus && res->type != UW_RES_ASR &&
+	    (result->rcode == LDNS_RCODE_NXDOMAIN || sec == BOGUS)) {
 		/*
 		 * Doubt NXDOMAIN or BOGUS if we just switched networks, we
 		 * might be behind a captive portal.
