@@ -1,6 +1,9 @@
-#	$OpenBSD: Makefile,v 1.114 2021/07/23 04:56:21 dtucker Exp $
+#	$OpenBSD: Makefile,v 1.115 2021/07/25 12:27:37 dtucker Exp $
 
-.ifndef SKIP_UNIT
+OPENSSL?=	yes
+
+# Unit tests require OpenSSL.
+.if !defined(SKIP_UNIT) && ${OPENSSL:L} == yes
 SUBDIR=		unittests
 .endif
 SUBDIR+=	misc
@@ -8,7 +11,11 @@ SUBDIR+=	misc
 REGRESS_SETUP_ONCE=misc	# For sk-dummy.so
 
 REGRESS_FAIL_EARLY?=	yes
+
+# Key conversion operations are not supported when built w/out OpenSSL.
+.if ${OPENSSL:L} != no
 REGRESS_TARGETS=	t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12
+.endif
 
 LTESTS= 	connect \
 		proxy-connect \
