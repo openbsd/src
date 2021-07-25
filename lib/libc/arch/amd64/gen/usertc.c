@@ -1,4 +1,4 @@
-/*	$OpenBSD: usertc.c,v 1.3 2020/08/23 21:38:47 cheloha Exp $ */
+/*	$OpenBSD: usertc.c,v 1.4 2021/07/25 22:58:39 jca Exp $ */
 /*
  * Copyright (c) 2020 Paul Irofti <paul@irofti.net>
  *
@@ -22,7 +22,7 @@ static inline u_int
 rdtsc_lfence(void)
 {
 	uint32_t hi, lo;
-	asm volatile("lfence; rdtsc" : "=a"(lo), "=d"(hi));
+	__asm volatile("lfence; rdtsc" : "=a"(lo), "=d"(hi));
 	return ((uint64_t)lo)|(((uint64_t)hi)<<32);
 }
 

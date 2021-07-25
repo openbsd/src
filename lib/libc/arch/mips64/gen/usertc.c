@@ -1,4 +1,4 @@
-/*	$OpenBSD: usertc.c,v 1.2 2020/07/18 08:37:43 visa Exp $	*/
+/*	$OpenBSD: usertc.c,v 1.3 2021/07/25 22:58:39 jca Exp $	*/
 /*
  * Copyright (c) 2020 Visa Hankala
  *
@@ -23,7 +23,7 @@ get_cp0_count(void)
 {
 	uint32_t count;
 
-	__asm__ volatile (
+	__asm volatile (
 	"	.set	push\n"
 	"	.set	mips64r2\n"
 	"	rdhwr	%0, $2\n"
