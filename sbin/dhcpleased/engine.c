@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.20 2021/07/23 11:56:01 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.21 2021/07/25 12:35:58 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -1072,6 +1072,12 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 			return;
 		}
 
+		/* Defaults if we didn't receive renewal or rebinding time. */
+		if (renewal_time == 0)
+			renewal_time = lease_time / 2;
+		if (rebinding_time == 0)
+			rebinding_time = lease_time - (lease_time / 8);
+
 		/* RFC 2131 4.4.5 */
 		/* Ignore invalid T1/T2 options */
 		if (renewal_time >= rebinding_time) {
@@ -1086,6 +1092,7 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 			renewal_time = rebinding_time = 0;
 		}
 
+		/* Defaults if we received wrong renewal or rebinding time. */
 		if (renewal_time == 0)
 			renewal_time = lease_time / 2;
 		if (rebinding_time == 0)
