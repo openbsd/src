@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.23 2021/06/19 01:17:34 mlarkin Exp $
+#	$OpenBSD: RAMDISK,v 1.24 2021/07/25 05:51:15 jsg Exp $
 
 machine		riscv64
 maxusers	4
@@ -78,7 +78,8 @@ pci*		at ppb?
 # PCI Ethernet
 em*		at pci?		# Intel Pro/1000 Ethernet
 bge*		at pci?		# Broadcom BCM57xx (aka Tigon3)
-oce*            at pci?         # Emulex OneConnect 10Gb ethernet
+oce*		at pci?		# Emulex OneConnect 10Gb ethernet
+ix*		at pci?		# Intel 82598EB 10Gb ethernet
 
 nvme*		at pci?		# NVMe controllers
 ahci*		at pci?		# AHCI SATA controllers
