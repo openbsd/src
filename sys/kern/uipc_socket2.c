@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.111 2021/06/07 09:10:32 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.112 2021/07/25 14:13:47 mpi Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -734,55 +734,6 @@ sbappendrecord(struct socket *so, struct sockbuf *sb, struct mbuf *m0)
 	}
 	sbcompress(sb, m, m0);
 	SBLASTRECORDCHK(sb, "sbappendrecord 2");
-}
-
-/*
- * As above except that OOB data
- * is inserted at the beginning of the sockbuf,
- * but after any other OOB data.
- */
-void
-sbinsertoob(struct sockbuf *sb, struct mbuf *m0)
-{
-	struct mbuf *m, **mp;
-
-	if (m0 == NULL)
-		return;
-
-	SBLASTRECORDCHK(sb, "sbinsertoob 1");
-
-	for (mp = &sb->sb_mb; (m = *mp) != NULL; mp = &((*mp)->m_nextpkt)) {
-	    again:
-		switch (m->m_type) {
-
-		case MT_OOBDATA:
-			continue;		/* WANT next train */
-
-		case MT_CONTROL:
-			if ((m = m->m_next) != NULL)
-				goto again;	/* inspect THIS train further */
-		}
-		break;
-	}
-	/*
-	 * Put the first mbuf on the queue.
-	 * Note this permits zero length records.
-	 */
-	sballoc(sb, m0);
-	m0->m_nextpkt = *mp;
-	if (*mp == NULL) {
-		/* m0 is actually the new tail */
-		sb->sb_lastrecord = m0;
-	}
-	*mp = m0;
-	m = m0->m_next;
-	m0->m_next = NULL;
-	if (m && (m0->m_flags & M_EOR)) {
-		m0->m_flags &= ~M_EOR;
-		m->m_flags |= M_EOR;
-	}
-	sbcompress(sb, m, m0);
-	SBLASTRECORDCHK(sb, "sbinsertoob 2");
 }
 
 /*

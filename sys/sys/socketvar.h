@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.98 2021/06/07 09:10:32 mpi Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.99 2021/07/25 14:13:47 mpi Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -293,7 +293,6 @@ struct mbuf *
 void	sbdrop(struct socket *, struct sockbuf *, int);
 void	sbdroprecord(struct sockbuf *);
 void	sbflush(struct socket *, struct sockbuf *);
-void	sbinsertoob(struct sockbuf *, struct mbuf *);
 void	sbrelease(struct socket *, struct sockbuf *);
 int	sbcheckreserve(u_long, u_long);
 int	sbchecklowmem(void);
