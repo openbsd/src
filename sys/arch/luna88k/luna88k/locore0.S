@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.2 2018/06/06 12:58:05 aoyama Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.3 2021/07/25 07:12:51 aoyama Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -228,24 +228,30 @@ ASLOCAL(main_init)
 
 	/* read dispswitch setting */
 	ld.bu	%r10, %r11, %lo16(OBIO_PIO0A)	/* dipsw-1 (from portA) */
-	mak	%r10, %r10, 0<8>			/* shift left 8 bit */
+	mak	%r10, %r10, 0<8>		/* shift left 8 bit */
 	ld.bu	%r12, %r11, %lo16(OBIO_PIO0B)	/* dipsw-2 (from portB) */
 	or	%r10, %r10, %r12
-
 	or.u	%r11, %r0,  %hi16(_C_LABEL(dipswitch))
 	st.h	%r10, %r11, %lo16(_C_LABEL(dipswitch))
 
-	bb1	14,   %r10, 1f			/* XXX: if dipsw-1:2 is on, */
-	or	%r10, %r0,  %r0			/* XXX: console is ttya */
+	/* read frame buffer depth from ROM work area */
+	ld	%r12, %r0,  %lo16(0x00001114)	/* frame buffer depth */
+	or.u	%r13, %r0,  %hi16(_C_LABEL(hwplanebits))
+	st	%r12, %r13, %lo16(_C_LABEL(hwplanebits))
+
+	/*
+	 * By default, sysconsole is set to 0 (means using ttya). If
+	 *  a) Not forced to use serial console (by DIP SW setting), and
+	 *  b) Some graphic board are installed (hwplanebits != 0),
+	 * we can use graphic console, so change sysconsole to 1.
+	 */
+	bb0	14,   %r10, 1f			/* if dipsw-1:2 is on, skip */
+	bcnd	eq0,  %r12, 1f			/* if hwplanebits == 0, skip */
+	or	%r10, %r0,  1			/* set sysconsole = 1 */
 	or.u	%r11, %r0,  %hi16(_C_LABEL(sysconsole))
 	st	%r10, %r11, %lo16(_C_LABEL(sysconsole))
 
 1:
-	/* read frame buffer depth from ROM work area */
-	ld	%r10, %r0,  %lo16(0x00001114)	/* frame buffer depth */
-	or.u	%r11, %r0,  %hi16(_C_LABEL(hwplanebits))
-	st	%r10, %r11, %lo16(_C_LABEL(hwplanebits))
-
 	or	%r10,  %r0,  0x84		/* initialize pio1 */
 	or.u	%r11,  %r0,  %hi16(OBIO_PIO1)
 	st.b	%r10,  %r11, %lo16(OBIO_PIO1)
