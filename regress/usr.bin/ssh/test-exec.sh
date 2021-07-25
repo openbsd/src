@@ -1,4 +1,4 @@
-#	$OpenBSD: test-exec.sh,v 1.82 2021/06/10 09:37:59 dtucker Exp $
+#	$OpenBSD: test-exec.sh,v 1.83 2021/07/25 12:13:03 dtucker Exp $
 #	Placed in the Public Domain.
 
 USER=`id -un`
@@ -60,7 +60,7 @@ CONCH=/usr/local/bin/conch
 
 # Tools used by multiple tests
 NC=nc
-OPENSSL="${OPENSSL:-openssl}"
+OPENSSL_BIN="${OPENSSL_BIN:-openssl}"
 
 if [ "x$TEST_SSH_SSH" != "x" ]; then
 	SSH="${TEST_SSH_SSH}"
@@ -105,7 +105,7 @@ if [ "x$TEST_SSH_SK_HELPER" != "x" ]; then
 	SSH_SK_HELPER="${TEST_SSH_SK_HELPER}"
 fi
 if [ "x$TEST_SSH_OPENSSL" != "x" ]; then
-	OPENSSL="${TEST_SSH_OPENSSL}"
+	OPENSSL_BIN="${TEST_SSH_OPENSSL}"
 fi
 
 # Path to sshd must be absolute for rexec
