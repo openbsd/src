@@ -759,13 +759,20 @@ kvp_pool_keys(struct kvp_pool *kvpl, int next, char *key, size_t *keylen)
 	struct kvp_entry *kpe;
 	int iter = 0;
 
+	mtx_enter(&kvpl->kvp_lock);
+
 	TAILQ_FOREACH(kpe, &kvpl->kvp_entries, kpe_entry) {
 		if (iter++ < next)
 			continue;
 		*keylen = strlen(kpe->kpe_key) + 1;
 		strlcpy(key, kpe->kpe_key, *keylen);
+
+		mtx_leave(&kvpl->kvp_lock);
+
 		return (0);
 	}
+
+	mtx_leave(&kvpl->kvp_lock);
 
 	return (-1);
 }
