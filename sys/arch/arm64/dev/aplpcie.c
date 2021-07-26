@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplpcie.c,v 1.3 2021/06/11 12:23:52 kettenis Exp $	*/
+/*	$OpenBSD: aplpcie.c,v 1.4 2021/07/26 16:47:52 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -89,6 +89,8 @@ struct aplpcie_softc {
 
 	int			sc_msi;
 	bus_addr_t		sc_msi_doorbell;
+	uint32_t		sc_msi_range[2];
+	struct interrupt_controller sc_msi_ic;
 };
 
 int	aplpcie_match(struct device *, void *, void *);
@@ -107,7 +109,7 @@ aplpcie_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "apple,pcie-m1");
+	return OF_is_compatible(faa->fa_node, "apple,pcie");
 }
 
 void	aplpcie_attach_hook(struct device *, struct device *,
@@ -131,6 +133,10 @@ int	aplpcie_bs_iomap(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 int	aplpcie_bs_memmap(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 	    bus_space_handle_t *);
 
+void	*aplpcie_intr_establish_msi(void *, uint64_t *, uint64_t *,
+	    int, struct cpu_info *, int (*)(void *), void *, char *);
+void	aplpcie_intr_disestablish_msi(void *);
+
 void
 aplpcie_attach(struct device *parent, struct device *self, void *aux)
 {
@@ -140,22 +146,26 @@ aplpcie_attach(struct device *parent, struct device *self, void *aux)
 	uint32_t *ranges;
 	int i, j, nranges, rangeslen;
 	uint32_t bus_range[2];
-
-	if (faa->fa_nreg < 6) {
-		printf(": no registers\n");
-		return;
-	}
+	uint32_t msi_range[2];
+	char name[32];
+	int idx;
 
 	sc->sc_iot = faa->fa_iot;
-	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
-	    faa->fa_reg[0].size, 0, &sc->sc_ioh)) {
+
+	idx = OF_getindex(faa->fa_node, "config", "reg-names");
+	if (idx < 0 || idx >= faa->fa_nreg ||
+	    bus_space_map(sc->sc_iot, faa->fa_reg[i].addr,
+	    faa->fa_reg[i].size, 0, &sc->sc_ioh)) {
 		printf(": can't map registers\n");
 		return;
 	}
 
-	for (i = 3; i < 6; i++) {
-		if (bus_space_map(sc->sc_iot, faa->fa_reg[i].addr,
-		    faa->fa_reg[i].size, 0, &sc->sc_port_ioh[i - 3])) {
+	for (i = 0; i < 3; i++) {
+		snprintf(name, sizeof(name), "port%d", i);
+		idx = OF_getindex(faa->fa_node, name, "reg-names");
+		if (idx < 0 || idx > faa->fa_nreg ||
+		    bus_space_map(sc->sc_iot, faa->fa_reg[idx].addr,
+		    faa->fa_reg[idx].size, 0, &sc->sc_port_ioh[i])) {
 			printf(": can't map registers\n");
 			return;
 		}
@@ -163,10 +173,14 @@ aplpcie_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_dmat = faa->fa_dmat;
 	sc->sc_node = faa->fa_node;
-	printf("\n");
 
 	sc->sc_msi_doorbell =
 	    OF_getpropint64(sc->sc_node, "msi-doorbell", 0xffff000ULL);
+	if (OF_getpropintarray(sc->sc_node, "msi-ranges", sc->sc_msi_range,
+	    sizeof(sc->sc_msi_range)) != sizeof(msi_range)) {
+		printf(": invalid msi-ranges property\n");
+		return;
+	}
 
 	/*
 	 * Set things up such that we can share the 32 available MSIs
@@ -227,6 +241,8 @@ aplpcie_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	free(ranges, M_TEMP, rangeslen);
+
+	printf("\n");
 
 	/* Create extents for our address spaces. */
 	sc->sc_busex = extent_create("pcibus", 0, 255,
@@ -301,6 +317,13 @@ aplpcie_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = sc->sc_bus;
 	pba.pba_flags |= PCI_FLAGS_MSI_ENABLED;
+
+	sc->sc_msi_ic.ic_node = sc->sc_node;
+	sc->sc_msi_ic.ic_cookie = sc;
+	sc->sc_msi_ic.ic_establish_msi = aplpcie_intr_establish_msi;
+	sc->sc_msi_ic.ic_disestablish = aplpcie_intr_disestablish_msi;
+	sc->sc_msi_ic.ic_barrier = intr_barrier;
+	fdt_intr_register(&sc->sc_msi_ic);
 
 	config_found(self, &pba, NULL);
 }
@@ -444,10 +467,8 @@ aplpcie_intr_establish(void *v, pci_intr_handle_t ih, int level,
 	if (ih.ih_type != PCI_INTX) {
 		uint64_t addr, data;
 
-		data = sc->sc_msi++;
-		addr = sc->sc_msi_doorbell;
-		cookie = fdt_intr_establish_idx_cpu(sc->sc_node, 3 + data,
-		    level, ci, func, arg, (void *)name);
+		cookie = fdt_intr_establish_msi_cpu(sc->sc_node, &addr,
+		    &data, level, ci, func, arg, name);
 		if (cookie == NULL)
 			return NULL;
 
@@ -476,6 +497,33 @@ aplpcie_intr_establish(void *v, pci_intr_handle_t ih, int level,
 void
 aplpcie_intr_disestablish(void *v, void *cookie)
 {
+}
+
+void *
+aplpcie_intr_establish_msi(void *cookie, uint64_t *addr, uint64_t *data,
+    int level, struct cpu_info *ci, int (*func)(void *), void *arg, char *name)
+{
+	struct aplpcie_softc *sc = cookie;
+	uint32_t cells[3];
+
+	if (sc->sc_msi >= sc->sc_msi_range[1])
+		return NULL;
+
+	*addr = sc->sc_msi_doorbell;
+	*data = sc->sc_msi++;
+
+	cells[0] = 0;
+	cells[1] = sc->sc_msi_range[0] + *data;
+	cells[2] = IST_LEVEL_HIGH;
+
+	return fdt_intr_parent_establish(&sc->sc_msi_ic, cells,
+	    level, ci, func, arg, name);
+}
+
+void
+aplpcie_intr_disestablish_msi(void *cookie)
+{
+	fdt_intr_parent_disestablish(cookie);
 }
 
 int
