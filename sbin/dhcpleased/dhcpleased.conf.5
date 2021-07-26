@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpleased.conf.5,v 1.1 2021/07/26 09:26:36 florian Exp $
+.\"	$OpenBSD: dhcpleased.conf.5,v 1.2 2021/07/26 12:59:41 sthen Exp $
 .\"
 .\" Copyright (c) 2018, 2021 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -37,7 +37,9 @@ config file is divided into the following main sections:
 User-defined variables may be defined and used later, simplifying the
 configuration file.
 .It Sy Interfaces
-This section defines interfaces for which default options need to be overwritten.
+If an interface requires non-default options, they can be defined in
+this section.
+Most configurations do not require this.
 .El
 .Sh MACROS
 Macros can be defined that will later be expanded in context.
@@ -61,7 +63,7 @@ Send the dhcp client identifier option with a value of
 If
 .Ar client-id
 consists of a series of octets of two-digit hexadecimal numbers separated by
-colons the first octet is used as the type and the rest as value.
+colons, the first octet is used as the type and the rest as value.
 The MAC address 00:53:FF:AA:BB:CC would be configured as
 .Bd -literal -offset indent
 send client id "01:00:53:FF:AA:BB:CC"
@@ -69,7 +71,7 @@ send client id "01:00:53:FF:AA:BB:CC"
 .Pp
 Otherwise the string
 .Ar client-id
-is send verbatim with type zero.
+is sent verbatim with type zero.
 The default is to send the interface's MAC address as client identifier.
 .It Ic send vendor class id Ar vendor-class-id
 Send the dhcp vendor class identifier option with a value of
