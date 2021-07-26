@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.235 2021/03/10 10:21:49 jsg Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.236 2021/07/26 20:44:44 bluhm Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1052,6 +1052,7 @@ icmp6_reflect(struct mbuf **mp, size_t off, struct sockaddr *sa)
 	struct in6_addr t, *src = NULL;
 	struct sockaddr_in6 sa6_src, sa6_dst;
 	u_int rtableid;
+	u_int8_t pfflags;
 
 	CTASSERT(sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr) <= MHLEN);
 
@@ -1069,8 +1070,10 @@ icmp6_reflect(struct mbuf **mp, size_t off, struct sockaddr *sa)
 		return (ELOOP);
 	}
 	rtableid = m->m_pkthdr.ph_rtableid;
+	pfflags = m->m_pkthdr.pf.flags;
 	m_resethdr(m);
 	m->m_pkthdr.ph_rtableid = rtableid;
+	m->m_pkthdr.pf.flags = pfflags & PF_TAG_GENERATED;
 
 	/*
 	 * If there are extra headers between IPv6 and ICMPv6, strip

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.186 2021/03/30 08:37:10 sashan Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.187 2021/07/26 20:44:44 bluhm Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -691,6 +691,7 @@ icmp_reflect(struct mbuf *m, struct mbuf **op, struct in_ifaddr *ia)
 	struct rtentry *rt = NULL;
 	int optlen = (ip->ip_hl << 2) - sizeof(struct ip);
 	u_int rtableid;
+	u_int8_t pfflags;
 
 	if (!in_canforward(ip->ip_src) &&
 	    ((ip->ip_src.s_addr & IN_CLASSA_NET) !=
@@ -704,8 +705,10 @@ icmp_reflect(struct mbuf *m, struct mbuf **op, struct in_ifaddr *ia)
 		return (ELOOP);
 	}
 	rtableid = m->m_pkthdr.ph_rtableid;
+	pfflags = m->m_pkthdr.pf.flags;
 	m_resethdr(m);
 	m->m_pkthdr.ph_rtableid = rtableid;
+	m->m_pkthdr.pf.flags = pfflags & PF_TAG_GENERATED;
 
 	/*
 	 * If the incoming packet was addressed directly to us,
