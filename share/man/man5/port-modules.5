@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.256 2021/04/10 15:26:47 gnezdo Exp $
+.\"	$OpenBSD: port-modules.5,v 1.257 2021/07/26 07:37:05 rsadowski Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 10 2021 $
+.Dd $Mdocdate: July 26 2021 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -123,11 +123,11 @@ as appropriate.
 .Pp
 As an exception to the naming mechanism, some ports have several distinct
 versions in the ports tree, say
-.Pa x11/qt4
+.Pa x11/qt5
 and
-.Pa x11/qt5 .
+.Pa x11/qt6 .
 Instead of using the namespace
-.Ev MODQT4* ,
+.Ev MODQT5* ,
 variables will usually drop the version suffix and be simply called
 .Ev MODQT_*
 so that a port using the module can be switched from version to version
@@ -141,11 +141,11 @@ and
 Normal client ports will use
 .Ev MODQT_LIB_DEPENDS ,
 but a port may exceptionally import both modules with
-.Li MODULES += x11/qt4 x11/qt5
-and differentiate between qt4 and qt5 needs with
-.Ev MODQT4_LIB_DEPENDS
+.Li MODULES += x11/qt5 x11/qt6
+and differentiate between qt5 and qt6 needs with
+.Ev MODQT5_LIB_DEPENDS
 and
-.Ev MODQT5_LIB_DEPENDS .
+.Ev MODQT6_LIB_DEPENDS .
 See
 .Pa print/poppler
 for an example.
@@ -1129,14 +1129,14 @@ and appends to
 See
 .Xr gnome-module 5 .
 .It x11/gnustep
-.It x11/qt4 and x11/qt5
+.It x11/qt5 and x11/qt6
 All qt* modules share a common
 .Ev MODQT_*
 namespace for simple ports.
-The qt4 module also defines the same variables under
-.Ev MODQT4_*
-and the qt5 module also defines the same variables under
-.Ev MODQT5_* ,
+The qt5 module also defines the same variables under
+.Ev MODQT5_*
+and the qt6 module also defines the same variables under
+.Ev MODQT6_* ,
 to allow ports to use both modules, such as
 .Pa print/poppler .
 .Pp
@@ -1176,11 +1176,6 @@ module should be used instead of using
 .Ev MODQT*_QMAKE
 directly.
 .Pp
-qt4 includes
-.Xr pkg-config 1
-files under a specific location recorded in
-.Ev MODQT_PKG_CONFIG_PATH .
-.Pp
 The modules add to
 .Ev CONFIGURE_ENV , MAKE_ENV
 and
@@ -1190,15 +1185,12 @@ They define appropriate
 and
 .Ev MODQT*_WANTLIB .
 .Pp
-Note that Qt 4 and Qt 5 has their code split over several libraries.
-For the qt4 module the basic
-.Ev WANTLIB
-only refers to QtCore, and other libraries should be added as needed.
-The qt5 module doesn't set
+Note that Qt5 and Qt6 have their code split over several libraries.
+Both modules qt5 and qt6 doesn't set
 .Ev MODQT*_WANTLIB
 at all.
-Also, Qt 5 consists of many so called Qt modules, and qt5 port module
-only refers to qtbase Qt 5 module; other Qt modules should be added to
+Qt5 and Qt6 consist of many so called Qt modules, these Qt modules should be
+added to
 .Ev LIB_DEPENDS ,
 .Ev BUILD_DEPENDS
 or
