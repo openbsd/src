@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.65 2020/12/12 11:48:53 jan Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.66 2021/07/26 11:06:36 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -572,7 +572,7 @@ xnf_encap(struct xnf_softc *sc, struct mbuf *m_head, uint32_t *prod)
 	struct xnf_tx_ring *txr = sc->sc_tx_ring;
 	struct xnf_tx_buf *txb = NULL;
 	union xnf_tx_desc *txd = NULL;
-	struct mbuf *m;
+	struct mbuf *m, **next;
 	uint32_t oprod = *prod;
 	uint16_t id;
 	int i, flags, n, used = 0;
@@ -583,7 +583,16 @@ xnf_encap(struct xnf_softc *sc, struct mbuf *m_head, uint32_t *prod)
 
 	flags = (sc->sc_domid << 16) | BUS_DMA_WRITE | BUS_DMA_NOWAIT;
 
-	for (m = m_head; m != NULL && m->m_len > 0; m = m->m_next) {
+	next = &m_head->m_next;
+	for (m = m_head; m != NULL; m = *next) {
+		/* Unlink and free zero length nodes. */
+		if (m->m_len == 0) {
+			*next = m->m_next;
+			m_free(m);
+			continue;
+		}
+		next = &m->m_next;
+
 		i = *prod & (XNF_TX_DESC - 1);
 		txd = &txr->txr_desc[i];
 
