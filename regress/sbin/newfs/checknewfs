@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: checknewfs,v 1.8 2020/05/18 06:20:44 otto Exp $
+#	$OpenBSD: checknewfs,v 1.9 2021/07/26 20:38:18 bluhm Exp $
 # Written by Otto Moerbeek, 2007,  Public domain
 
 
@@ -12,7 +12,7 @@ trap 'cleanup' INT
 
 dotest() {
 	if ! grep -q "$2|" /etc/disktab; then
-		echo disk type $2 does not exists in /etc/disktab
+		echo disk type $2 does not exist in /etc/disktab
 		echo SKIPPED
 		return
 	fi
