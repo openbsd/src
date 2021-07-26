@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.355 2021/07/03 16:06:45 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.356 2021/07/26 03:17:38 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -402,7 +402,6 @@ struct ssl_method_st {
 	    int peek);
 	int (*ssl_write_bytes)(SSL *s, int type, const void *buf_, int len);
 
-	int (*ssl_dispatch_alert)(SSL *s);
 	const SSL_CIPHER *(*get_cipher)(unsigned int ncipher);
 
 	unsigned int enc_flags;		/* SSL_ENC_FLAG_* */

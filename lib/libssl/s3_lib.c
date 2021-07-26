@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.213 2021/07/03 16:06:44 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.214 2021/07/26 03:17:38 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2631,7 +2631,7 @@ ssl3_shutdown(SSL *s)
 			return(-1);	/* return WANT_WRITE */
 	} else if (S3I(s)->alert_dispatch) {
 		/* resend it if not sent */
-		ret = s->method->ssl_dispatch_alert(s);
+		ret = ssl3_dispatch_alert(s);
 		if (ret == -1) {
 			/*
 			 * We only get to return -1 here the 2nd/Nth

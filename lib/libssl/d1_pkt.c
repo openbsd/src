@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.103 2021/07/21 08:42:14 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.104 2021/07/26 03:17:38 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -125,10 +125,6 @@
 #include "dtls_locl.h"
 #include "pqueue.h"
 #include "ssl_locl.h"
-
-static int	do_dtls1_write(SSL *s, int type, const unsigned char *buf,
-		    unsigned int len);
-
 
 /* mod 128 saturating subtract of two 64-bit values in big-endian order */
 static int
@@ -1057,7 +1053,7 @@ do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 
 	/* If we have an alert to send, let's send it */
 	if (S3I(s)->alert_dispatch) {
-		if ((ret = s->method->ssl_dispatch_alert(s)) <= 0)
+		if ((ret = ssl3_dispatch_alert(s)) <= 0)
 			return (ret);
 		/* If it went, fall through and send more stuff. */
 	}
@@ -1137,38 +1133,6 @@ dtls1_record_bitmap_update(SSL *s, DTLS1_BITMAP *bitmap,
 		if (shift < sizeof(bitmap->map) * 8)
 			bitmap->map |= 1UL << shift;
 	}
-}
-
-int
-dtls1_dispatch_alert(SSL *s)
-{
-	int i, j;
-	void (*cb)(const SSL *ssl, int type, int val) = NULL;
-
-	S3I(s)->alert_dispatch = 0;
-
-	i = do_dtls1_write(s, SSL3_RT_ALERT, &S3I(s)->send_alert[0], 2);
-	if (i <= 0) {
-		S3I(s)->alert_dispatch = 1;
-	} else {
-		if (S3I(s)->send_alert[0] == SSL3_AL_FATAL)
-			(void)BIO_flush(s->wbio);
-
-		if (s->internal->msg_callback)
-			s->internal->msg_callback(1, s->version, SSL3_RT_ALERT,
-			    S3I(s)->send_alert, 2, s, s->internal->msg_callback_arg);
-
-		if (s->internal->info_callback != NULL)
-			cb = s->internal->info_callback;
-		else if (s->ctx->internal->info_callback != NULL)
-			cb = s->ctx->internal->info_callback;
-
-		if (cb != NULL) {
-			j = (S3I(s)->send_alert[0]<<8)|S3I(s)->send_alert[1];
-			cb(s, SSL_CB_WRITE_ALERT, j);
-		}
-	}
-	return (i);
 }
 
 static DTLS1_BITMAP *

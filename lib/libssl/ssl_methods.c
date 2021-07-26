@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_methods.c,v 1.27 2021/07/03 16:06:45 jsing Exp $ */
+/* $OpenBSD: ssl_methods.c,v 1.28 2021/07/26 03:17:38 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -77,7 +77,6 @@ static const SSL_METHOD DTLS_method_data = {
 	.ssl_pending = ssl3_pending,
 	.ssl_read_bytes = dtls1_read_bytes,
 	.ssl_write_bytes = dtls1_write_app_data_bytes,
-	.ssl_dispatch_alert = dtls1_dispatch_alert,
 	.get_cipher = dtls1_get_cipher,
 	.enc_flags = TLSV1_2_ENC_FLAGS,
 };
@@ -99,7 +98,6 @@ static const SSL_METHOD DTLS_client_method_data = {
 	.ssl_pending = ssl3_pending,
 	.ssl_read_bytes = dtls1_read_bytes,
 	.ssl_write_bytes = dtls1_write_app_data_bytes,
-	.ssl_dispatch_alert = dtls1_dispatch_alert,
 	.get_cipher = dtls1_get_cipher,
 	.enc_flags = TLSV1_2_ENC_FLAGS,
 };
@@ -121,7 +119,6 @@ static const SSL_METHOD DTLSv1_method_data = {
 	.ssl_pending = ssl3_pending,
 	.ssl_read_bytes = dtls1_read_bytes,
 	.ssl_write_bytes = dtls1_write_app_data_bytes,
-	.ssl_dispatch_alert = dtls1_dispatch_alert,
 	.get_cipher = dtls1_get_cipher,
 	.enc_flags = TLSV1_1_ENC_FLAGS,
 };
@@ -143,7 +140,6 @@ static const SSL_METHOD DTLSv1_client_method_data = {
 	.ssl_pending = ssl3_pending,
 	.ssl_read_bytes = dtls1_read_bytes,
 	.ssl_write_bytes = dtls1_write_app_data_bytes,
-	.ssl_dispatch_alert = dtls1_dispatch_alert,
 	.get_cipher = dtls1_get_cipher,
 	.enc_flags = TLSV1_1_ENC_FLAGS,
 };
@@ -165,7 +161,6 @@ static const SSL_METHOD DTLSv1_2_method_data = {
 	.ssl_pending = ssl3_pending,
 	.ssl_read_bytes = dtls1_read_bytes,
 	.ssl_write_bytes = dtls1_write_app_data_bytes,
-	.ssl_dispatch_alert = dtls1_dispatch_alert,
 	.get_cipher = dtls1_get_cipher,
 	.enc_flags = TLSV1_2_ENC_FLAGS,
 };
@@ -187,7 +182,6 @@ static const SSL_METHOD DTLSv1_2_client_method_data = {
 	.ssl_pending = ssl3_pending,
 	.ssl_read_bytes = dtls1_read_bytes,
 	.ssl_write_bytes = dtls1_write_app_data_bytes,
-	.ssl_dispatch_alert = dtls1_dispatch_alert,
 	.get_cipher = dtls1_get_cipher,
 	.enc_flags = TLSV1_2_ENC_FLAGS,
 };
@@ -264,7 +258,6 @@ static const SSL_METHOD TLS_method_data = {
 	.ssl_pending = tls13_legacy_pending,
 	.ssl_read_bytes = tls13_legacy_read_bytes,
 	.ssl_write_bytes = tls13_legacy_write_bytes,
-	.ssl_dispatch_alert = ssl3_dispatch_alert,
 	.get_cipher = ssl3_get_cipher,
 	.enc_flags = TLSV1_3_ENC_FLAGS,
 };
@@ -287,7 +280,6 @@ static const SSL_METHOD TLS_legacy_method_data = {
 	.ssl_pending = ssl3_pending,
 	.ssl_read_bytes = ssl3_read_bytes,
 	.ssl_write_bytes = ssl3_write_bytes,
-	.ssl_dispatch_alert = ssl3_dispatch_alert,
 	.get_cipher = ssl3_get_cipher,
 	.enc_flags = TLSV1_2_ENC_FLAGS,
 };
@@ -310,7 +302,6 @@ static const SSL_METHOD TLS_client_method_data = {
 	.ssl_pending = tls13_legacy_pending,
 	.ssl_read_bytes = tls13_legacy_read_bytes,
 	.ssl_write_bytes = tls13_legacy_write_bytes,
-	.ssl_dispatch_alert = ssl3_dispatch_alert,
 	.get_cipher = ssl3_get_cipher,
 	.enc_flags = TLSV1_3_ENC_FLAGS,
 };
@@ -334,7 +325,6 @@ static const SSL_METHOD TLS_legacy_client_method_data = {
 	.ssl_pending = ssl3_pending,
 	.ssl_read_bytes = ssl3_read_bytes,
 	.ssl_write_bytes = ssl3_write_bytes,
-	.ssl_dispatch_alert = ssl3_dispatch_alert,
 	.get_cipher = ssl3_get_cipher,
 	.enc_flags = TLSV1_2_ENC_FLAGS,
 };
@@ -357,7 +347,6 @@ static const SSL_METHOD TLSv1_method_data = {
 	.ssl_pending = ssl3_pending,
 	.ssl_read_bytes = ssl3_read_bytes,
 	.ssl_write_bytes = ssl3_write_bytes,
-	.ssl_dispatch_alert = ssl3_dispatch_alert,
 	.get_cipher = ssl3_get_cipher,
 	.enc_flags = TLSV1_ENC_FLAGS,
 };
@@ -379,7 +368,6 @@ static const SSL_METHOD TLSv1_client_method_data = {
 	.ssl_pending = ssl3_pending,
 	.ssl_read_bytes = ssl3_read_bytes,
 	.ssl_write_bytes = ssl3_write_bytes,
-	.ssl_dispatch_alert = ssl3_dispatch_alert,
 	.get_cipher = ssl3_get_cipher,
 	.enc_flags = TLSV1_ENC_FLAGS,
 };
@@ -401,7 +389,6 @@ static const SSL_METHOD TLSv1_1_method_data = {
 	.ssl_pending = ssl3_pending,
 	.ssl_read_bytes = ssl3_read_bytes,
 	.ssl_write_bytes = ssl3_write_bytes,
-	.ssl_dispatch_alert = ssl3_dispatch_alert,
 	.get_cipher = ssl3_get_cipher,
 	.enc_flags = TLSV1_1_ENC_FLAGS,
 };
@@ -423,7 +410,6 @@ static const SSL_METHOD TLSv1_1_client_method_data = {
 	.ssl_pending = ssl3_pending,
 	.ssl_read_bytes = ssl3_read_bytes,
 	.ssl_write_bytes = ssl3_write_bytes,
-	.ssl_dispatch_alert = ssl3_dispatch_alert,
 	.get_cipher = ssl3_get_cipher,
 	.enc_flags = TLSV1_1_ENC_FLAGS,
 };
@@ -445,7 +431,6 @@ static const SSL_METHOD TLSv1_2_method_data = {
 	.ssl_pending = ssl3_pending,
 	.ssl_read_bytes = ssl3_read_bytes,
 	.ssl_write_bytes = ssl3_write_bytes,
-	.ssl_dispatch_alert = ssl3_dispatch_alert,
 	.get_cipher = ssl3_get_cipher,
 	.enc_flags = TLSV1_2_ENC_FLAGS,
 };
@@ -467,7 +452,6 @@ static const SSL_METHOD TLSv1_2_client_method_data = {
 	.ssl_pending = ssl3_pending,
 	.ssl_read_bytes = ssl3_read_bytes,
 	.ssl_write_bytes = ssl3_write_bytes,
-	.ssl_dispatch_alert = ssl3_dispatch_alert,
 	.get_cipher = ssl3_get_cipher,
 	.enc_flags = TLSV1_2_ENC_FLAGS,
 };

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.45 2021/06/29 18:43:49 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.46 2021/07/26 03:17:38 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -116,6 +116,7 @@
 #include <openssl/evp.h>
 
 #include "bytestring.h"
+#include "dtls_locl.h"
 #include "ssl_locl.h"
 
 static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
@@ -552,7 +553,7 @@ do_ssl3_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 
 	/* If we have an alert to send, let's send it. */
 	if (S3I(s)->alert_dispatch) {
-		if ((ret = s->method->ssl_dispatch_alert(s)) <= 0)
+		if ((ret = ssl3_dispatch_alert(s)) <= 0)
 			return (ret);
 		/* If it went, fall through and send more stuff. */
 
@@ -1188,6 +1189,17 @@ ssl3_do_change_cipher_spec(SSL *s)
 	return (1);
 }
 
+static int
+ssl3_write_alert(SSL *s)
+{
+	if (SSL_is_dtls(s))
+		return do_dtls1_write(s, SSL3_RT_ALERT, S3I(s)->send_alert,
+		    sizeof(S3I(s)->send_alert));
+
+	return do_ssl3_write(s, SSL3_RT_ALERT, S3I(s)->send_alert,
+	    sizeof(S3I(s)->send_alert));
+}
+
 int
 ssl3_send_alert(SSL *s, int level, int desc)
 {
@@ -1199,7 +1211,7 @@ ssl3_send_alert(SSL *s, int level, int desc)
 	S3I(s)->send_alert[0] = level;
 	S3I(s)->send_alert[1] = desc;
 	if (S3I(s)->wbuf.left == 0) /* data still being written out? */
-		return s->method->ssl_dispatch_alert(s);
+		return ssl3_dispatch_alert(s);
 
 	/* else data is still being written out, we will get written
 	 * some time in the future */
@@ -1213,7 +1225,7 @@ ssl3_dispatch_alert(SSL *s)
 	void (*cb)(const SSL *ssl, int type, int val) = NULL;
 
 	S3I(s)->alert_dispatch = 0;
-	i = do_ssl3_write(s, SSL3_RT_ALERT, &S3I(s)->send_alert[0], 2);
+	i = ssl3_write_alert(s);
 	if (i <= 0) {
 		S3I(s)->alert_dispatch = 1;
 	} else {

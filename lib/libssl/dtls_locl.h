@@ -1,4 +1,4 @@
-/* $OpenBSD: dtls_locl.h,v 1.3 2021/07/21 08:42:14 jsing Exp $ */
+/* $OpenBSD: dtls_locl.h,v 1.4 2021/07/26 03:17:38 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -207,6 +207,9 @@ void dtls1_set_message_header_int(SSL *s, unsigned char mt,
     unsigned long len, unsigned short seq_num, unsigned long frag_off,
     unsigned long frag_len);
 
+int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
+    unsigned int len);
+
 int dtls1_write_app_data_bytes(SSL *s, int type, const void *buf, int len);
 int dtls1_write_bytes(SSL *s, int type, const void *buf, int len);
 
@@ -237,7 +240,6 @@ long dtls1_ctrl(SSL *s, int cmd, long larg, void *parg);
 
 long dtls1_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok);
 int dtls1_get_record(SSL *s);
-int dtls1_dispatch_alert(SSL *s);
 
 __END_HIDDEN_DECLS
 
