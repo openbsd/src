@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.70 2021/07/20 14:44:09 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.71 2021/07/26 14:15:40 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -4325,7 +4325,7 @@ iwx_rx_tx_cmd(struct iwx_softc *sc, struct iwx_rx_packet *pkt,
 		ring->tail = (ring->tail + 1) % IWX_TX_RING_COUNT;
 	}
 
-	if (--ring->queued < IWX_TX_RING_LOMARK) {
+	if (ring->queued < IWX_TX_RING_LOMARK) {
 		sc->qfullmsk &= ~(1 << ring->qid);
 		if (sc->qfullmsk == 0 && ifq_is_oactive(&ifp->if_snd)) {
 			ifq_clr_oactive(&ifp->if_snd);
