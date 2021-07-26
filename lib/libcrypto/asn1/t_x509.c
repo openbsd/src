@@ -1,4 +1,4 @@
-/* $OpenBSD: t_x509.c,v 1.33 2021/07/06 11:26:25 schwarze Exp $ */
+/* $OpenBSD: t_x509.c,v 1.34 2021/07/26 16:54:20 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -261,10 +261,12 @@ X509_ocspid_print(BIO *bp, X509 *x)
 	   in OCSP requests */
 	if (BIO_printf(bp, "        Subject OCSP hash: ") <= 0)
 		goto err;
-	derlen = i2d_X509_NAME(x->cert_info->subject, NULL);
+	if ((derlen = i2d_X509_NAME(x->cert_info->subject, NULL)) <= 0)
+		goto err;
 	if ((der = dertmp = malloc(derlen)) == NULL)
 		goto err;
-	i2d_X509_NAME(x->cert_info->subject, &dertmp);
+	if (i2d_X509_NAME(x->cert_info->subject, &dertmp) <= 0)
+		goto err;
 
 	if (!EVP_Digest(der, derlen, SHA1md, NULL, EVP_sha1(), NULL))
 		goto err;
