@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.112 2021/07/25 14:13:47 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.113 2021/07/26 05:51:13 mpi Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -654,7 +654,7 @@ sbappend(struct socket *so, struct sockbuf *sb, struct mbuf *m)
 		 */
 		sb->sb_lastrecord = m;
 	}
-	sbcompress(sb, m, n);
+	sbcompress(so, sb, m, n);
 	SBLASTRECORDCHK(sb, "sbappend 2");
 }
 
@@ -673,7 +673,7 @@ sbappendstream(struct socket *so, struct sockbuf *sb, struct mbuf *m)
 
 	SBLASTMBUFCHK(sb, __func__);
 
-	sbcompress(sb, m, sb->sb_mbtail);
+	sbcompress(so, sb, m, sb->sb_mbtail);
 
 	sb->sb_lastrecord = sb->sb_mb;
 	SBLASTRECORDCHK(sb, __func__);
@@ -681,7 +681,7 @@ sbappendstream(struct socket *so, struct sockbuf *sb, struct mbuf *m)
 
 #ifdef SOCKBUF_DEBUG
 void
-sbcheck(struct sockbuf *sb)
+sbcheck(struct socket *so, struct sockbuf *sb)
 {
 	struct mbuf *m, *n;
 	u_long len = 0, mbcnt = 0;
@@ -723,7 +723,7 @@ sbappendrecord(struct socket *so, struct sockbuf *sb, struct mbuf *m0)
 	 * Put the first mbuf on the queue.
 	 * Note this permits zero length records.
 	 */
-	sballoc(sb, m0);
+	sballoc(so, sb, m0);
 	SBLASTRECORDCHK(sb, "sbappendrecord 1");
 	SBLINKRECORD(sb, m0);
 	m = m0->m_next;
@@ -732,7 +732,7 @@ sbappendrecord(struct socket *so, struct sockbuf *sb, struct mbuf *m0)
 		m0->m_flags &= ~M_EOR;
 		m->m_flags |= M_EOR;
 	}
-	sbcompress(sb, m, m0);
+	sbcompress(so, sb, m, m0);
 	SBLASTRECORDCHK(sb, "sbappendrecord 2");
 }
 
@@ -778,8 +778,8 @@ sbappendaddr(struct socket *so, struct sockbuf *sb, const struct sockaddr *asa,
 	SBLASTRECORDCHK(sb, "sbappendaddr 1");
 
 	for (n = m; n->m_next != NULL; n = n->m_next)
-		sballoc(sb, n);
-	sballoc(sb, n);
+		sballoc(so, sb, n);
+	sballoc(so, sb, n);
 	nlast = n;
 	SBLINKRECORD(sb, m);
 
@@ -815,8 +815,8 @@ sbappendcontrol(struct socket *so, struct sockbuf *sb, struct mbuf *m0,
 	SBLASTRECORDCHK(sb, "sbappendcontrol 1");
 
 	for (m = control; m->m_next != NULL; m = m->m_next)
-		sballoc(sb, m);
-	sballoc(sb, m);
+		sballoc(so, sb, m);
+	sballoc(so, sb, m);
 	mlast = m;
 	SBLINKRECORD(sb, control);
 
@@ -834,7 +834,8 @@ sbappendcontrol(struct socket *so, struct sockbuf *sb, struct mbuf *m0,
  * is null, the buffer is presumed empty.
  */
 void
-sbcompress(struct sockbuf *sb, struct mbuf *m, struct mbuf *n)
+sbcompress(struct socket *so, struct sockbuf *sb, struct mbuf *m,
+    struct mbuf *n)
 {
 	int eor = 0;
 	struct mbuf *o;
@@ -870,7 +871,7 @@ sbcompress(struct sockbuf *sb, struct mbuf *m, struct mbuf *n)
 		else
 			sb->sb_mb = m;
 		sb->sb_mbtail = m;
-		sballoc(sb, m);
+		sballoc(so, sb, m);
 		n = m;
 		m->m_flags &= ~M_EOR;
 		m = m->m_next;
@@ -935,12 +936,12 @@ sbdrop(struct socket *so, struct sockbuf *sb, int len)
 			break;
 		}
 		len -= m->m_len;
-		sbfree(sb, m);
+		sbfree(so, sb, m);
 		mn = m_free(m);
 		m = mn;
 	}
 	while (m && m->m_len == 0) {
-		sbfree(sb, m);
+		sbfree(so, sb, m);
 		mn = m_free(m);
 		m = mn;
 	}
@@ -967,7 +968,7 @@ sbdrop(struct socket *so, struct sockbuf *sb, int len)
  * and move the next record to the front.
  */
 void
-sbdroprecord(struct sockbuf *sb)
+sbdroprecord(struct socket *so, struct sockbuf *sb)
 {
 	struct mbuf *m, *mn;
 
@@ -975,7 +976,7 @@ sbdroprecord(struct sockbuf *sb)
 	if (m) {
 		sb->sb_mb = m->m_nextpkt;
 		do {
-			sbfree(sb, m);
+			sbfree(so, sb, m);
 			mn = m_free(m);
 		} while ((m = mn) != NULL);
 	}

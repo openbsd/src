@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.263 2021/05/28 16:24:53 visa Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.264 2021/07/26 05:51:13 mpi Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -860,7 +860,7 @@ dontblock:
 				*paddr = m_copym(m, 0, m->m_len, M_NOWAIT);
 			m = m->m_next;
 		} else {
-			sbfree(&so->so_rcv, m);
+			sbfree(so, &so->so_rcv, m);
 			if (paddr) {
 				*paddr = m;
 				so->so_rcv.sb_mb = m->m_next;
@@ -884,7 +884,7 @@ dontblock:
 				*controlp = m_copym(m, 0, m->m_len, M_NOWAIT);
 			m = m->m_next;
 		} else {
-			sbfree(&so->so_rcv, m);
+			sbfree(so, &so->so_rcv, m);
 			so->so_rcv.sb_mb = m->m_next;
 			m->m_nextpkt = m->m_next = NULL;
 			cm = m;
@@ -984,7 +984,7 @@ dontblock:
 				orig_resid = 0;
 			} else {
 				nextrecord = m->m_nextpkt;
-				sbfree(&so->so_rcv, m);
+				sbfree(so, &so->so_rcv, m);
 				if (mp) {
 					*mp = m;
 					mp = &m->m_next;
@@ -1065,7 +1065,7 @@ dontblock:
 	if (m && pr->pr_flags & PR_ATOMIC) {
 		flags |= MSG_TRUNC;
 		if ((flags & MSG_PEEK) == 0)
-			(void) sbdroprecord(&so->so_rcv);
+			(void) sbdroprecord(so, &so->so_rcv);
 	}
 	if ((flags & MSG_PEEK) == 0) {
 		if (m == NULL) {
@@ -1452,7 +1452,7 @@ somove(struct socket *so, int wait)
 	while (m && m->m_type == MT_CONTROL)
 		m = m->m_next;
 	if (m == NULL) {
-		sbdroprecord(&so->so_rcv);
+		sbdroprecord(so, &so->so_rcv);
 		if (so->so_proto->pr_flags & PR_WANTRCVD && so->so_pcb)
 			(so->so_proto->pr_usrreq)(so, PRU_RCVD, NULL,
 			    NULL, NULL, NULL);
@@ -1492,7 +1492,7 @@ somove(struct socket *so, int wait)
 		 * that the whole first record can be processed.
 		 */
 		m = so->so_rcv.sb_mb;
-		sbfree(&so->so_rcv, m);
+		sbfree(so, &so->so_rcv, m);
 		so->so_rcv.sb_mb = m_free(m);
 		sbsync(&so->so_rcv, nextrecord);
 	}
@@ -1502,7 +1502,7 @@ somove(struct socket *so, int wait)
 	 */
 	m = so->so_rcv.sb_mb;
 	while (m && m->m_type == MT_CONTROL) {
-		sbfree(&so->so_rcv, m);
+		sbfree(so, &so->so_rcv, m);
 		so->so_rcv.sb_mb = m_free(m);
 		m = so->so_rcv.sb_mb;
 		sbsync(&so->so_rcv, nextrecord);
@@ -1541,7 +1541,7 @@ somove(struct socket *so, int wait)
 			so->so_rcv.sb_datacc -= size;
 		} else {
 			*mp = so->so_rcv.sb_mb;
-			sbfree(&so->so_rcv, *mp);
+			sbfree(so, &so->so_rcv, *mp);
 			so->so_rcv.sb_mb = (*mp)->m_next;
 			sbsync(&so->so_rcv, nextrecord);
 		}
@@ -1550,7 +1550,7 @@ somove(struct socket *so, int wait)
 
 	SBLASTRECORDCHK(&so->so_rcv, "somove 3");
 	SBLASTMBUFCHK(&so->so_rcv, "somove 3");
-	SBCHECK(&so->so_rcv);
+	SBCHECK(so, &so->so_rcv);
 	if (m == NULL)
 		goto release;
 	m->m_nextpkt = NULL;
