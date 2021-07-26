@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.94 2021/07/21 12:22:54 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.95 2021/07/26 13:05:14 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -21,6 +21,7 @@
 #include <sys/disklabel.h>
 #include <sys/dkio.h>
 
+#include <err.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -170,7 +171,7 @@ MBR_read(const uint64_t lba_self, const uint64_t lba_firstembr, struct mbr *mbr)
 	struct dos_mbr		 dos_mbr;
 	char			*secbuf;
 
-	secbuf = DISK_readsector(lba_self);
+	secbuf = DISK_readsectors(lba_self, 1);
 	if (secbuf == NULL)
 		return -1;
 
@@ -187,20 +188,23 @@ MBR_write(const struct mbr *mbr)
 {
 	struct dos_mbr		 dos_mbr;
 	char			*secbuf;
+	int			 rslt;
 
-	secbuf = DISK_readsector(mbr->mbr_lba_self);
+	secbuf = DISK_readsectors(mbr->mbr_lba_self, 1);
 	if (secbuf == NULL)
 		return -1;
 
 	MBR_make(mbr, &dos_mbr);
 	memcpy(secbuf, &dos_mbr, sizeof(dos_mbr));
 
-	DISK_writesector(secbuf, mbr->mbr_lba_self);
+	rslt = DISK_writesectors(secbuf, mbr->mbr_lba_self, 1);
+	free(secbuf);
+	if (rslt)
+		return -1;
 
 	/* Refresh in-kernel disklabel from the updated disk information. */
-	ioctl(disk.dk_fd, DIOCRLDINFO, 0);
-
-	free(secbuf);
+	if (ioctl(disk.dk_fd, DIOCRLDINFO, 0) == -1)
+		warn("DIOCRLDINFO");
 
 	return 0;
 }

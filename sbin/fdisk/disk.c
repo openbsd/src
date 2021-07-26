@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.69 2021/07/22 13:17:59 krw Exp $	*/
+/*	$OpenBSD: disk.c,v 1.70 2021/07/26 13:05:14 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -123,26 +123,40 @@ DISK_printgeometry(const char *units)
  * The caller must free() the returned memory!
  */
 char *
-DISK_readsector(const uint64_t sector)
+DISK_readsectors(const uint64_t sector, const uint32_t count)
 {
 	char			*secbuf;
 	ssize_t			 len;
 	off_t			 off, where;
-	int			 secsize;
+	size_t			 bytes;
 
-	secsize = dl.d_secsize;
+	where = sector * dl.d_secsize;
+	bytes = count * dl.d_secsize;
 
-	where = sector * secsize;
 	off = lseek(disk.dk_fd, where, SEEK_SET);
-	if (off != where)
+	if (off == -1) {
+#ifdef DEBUG
+		warn("lseek(%lld) for read", (int64_t)where);
+#endif
 		return NULL;
+	}
 
-	secbuf = calloc(1, secsize);
+	secbuf = calloc(1, bytes);
 	if (secbuf == NULL)
 		return NULL;
 
-	len = read(disk.dk_fd, secbuf, secsize);
-	if (len == -1 || len != secsize) {
+	len = read(disk.dk_fd, secbuf, bytes);
+	if (len == -1) {
+#ifdef DEBUG
+		warn("read(%zu @ %lld)", bytes, (int64_t)where);
+#endif
+		free(secbuf);
+		return NULL;
+	}
+	if (len != (ssize_t)bytes) {
+#ifdef DEBUG
+		warnx("short read(%zu @ %lld)", bytes, (int64_t)where);
+#endif
 		free(secbuf);
 		return NULL;
 	}
@@ -151,22 +165,35 @@ DISK_readsector(const uint64_t sector)
 }
 
 int
-DISK_writesector(const char *secbuf, const uint64_t sector)
+DISK_writesectors(const char *buf, const uint64_t sector,
+    const uint32_t count)
 {
-	int			secsize;
 	ssize_t			len;
 	off_t			off, where;
+	size_t			bytes;
 
-	len = -1;
-	secsize = dl.d_secsize;
+	where = sector * dl.d_secsize;
+	bytes = count * dl.d_secsize;
 
-	where = secsize * sector;
 	off = lseek(disk.dk_fd, where, SEEK_SET);
-	if (off == where)
-		len = write(disk.dk_fd, secbuf, secsize);
+	if (off == -1) {
+#ifdef DEBUG
+		warn("lseek(%lld) for write", (int64_t)where);
+#endif
+		return -1;
+	}
 
-	if (len == -1 || len != secsize) {
-		errno = EIO;
+	len = write(disk.dk_fd, buf, bytes);
+	if (len == -1) {
+#ifdef DEBUG
+		warn("write(%zu @ %lld)", bytes, (int64_t)where);
+#endif
+		return -1;
+	}
+	if (len != (ssize_t)bytes) {
+#ifdef DEBUG
+		warnx("short write(%zu @ %lld)", bytes, (int64_t)where);
+#endif
 		return -1;
 	}
 

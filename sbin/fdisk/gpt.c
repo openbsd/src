@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.47 2021/07/21 12:22:54 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.48 2021/07/26 13:05:14 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -21,7 +21,7 @@
 #include <sys/dkio.h>
 #include <sys/ioctl.h>
 
-#include <errno.h>
+#include <err.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -118,7 +118,7 @@ get_header(const uint64_t sector)
 	int			 partspersec;
 	uint32_t		 orig_gh_csum, new_gh_csum;
 
-	secbuf = DISK_readsector(sector);
+	secbuf = DISK_readsectors(sector, 1);
 	if (secbuf == NULL)
 		return -1;
 
@@ -218,10 +218,9 @@ get_header(const uint64_t sector)
 int
 get_partition_table(void)
 {
-	ssize_t			len;
-	off_t			off, where;
-	int			secs;
-	uint32_t		checksum, partspersec;
+	char			*secbuf;
+	uint64_t		 gpbytes, gpsectors;
+	uint32_t		 checksum, partspersec;
 
 	DPRINTF("gpt partition table being read from LBA %llu\n",
 	    letoh64(gh.gh_part_lba));
@@ -232,25 +231,18 @@ get_partition_table(void)
 		    letoh32(gh.gh_part_size));
 		return -1;
 	}
-	secs = (letoh32(gh.gh_part_num) + partspersec - 1) / partspersec;
-
+	gpbytes = letoh32(gh.gh_part_num) * letoh32(gh.gh_part_size);
+	gpsectors = gpbytes / dl.d_secsize;
 	memset(&gp, 0, sizeof(gp));
 
-	where = letoh64(gh.gh_part_lba) * dl.d_secsize;
-	off = lseek(disk.dk_fd, where, SEEK_SET);
-	if (off == -1) {
-		DPRINTF("seek to gpt partition table @ sector %llu failed\n",
-		    (unsigned long long)where / dl.d_secsize);
+	secbuf = DISK_readsectors(letoh64(gh.gh_part_lba), gpsectors);
+	if (secbuf == NULL)
 		return -1;
-	}
-	len = read(disk.dk_fd, &gp, secs * dl.d_secsize);
-	if (len == -1 || len != secs * dl.d_secsize) {
-		DPRINTF("gpt partition table read failed.\n");
-		return -1;
-	}
 
-	checksum = crc32((unsigned char *)&gp, letoh32(gh.gh_part_num) *
-	    letoh32(gh.gh_part_size));
+	memcpy(&gp, secbuf, gpbytes);
+	free(secbuf);
+
+	checksum = crc32((unsigned char *)&gp, gpbytes);
 	if (checksum != letoh32(gh.gh_part_csum)) {
 		DPRINTF("gpt partition table checksum: expected %x, got %x\n",
 		    checksum, letoh32(gh.gh_part_csum));
@@ -542,25 +534,29 @@ GPT_zap_headers(void)
 	char			*secbuf;
 	uint64_t		 sig;
 
-	secbuf = DISK_readsector(GPTSECTOR);
+	secbuf = DISK_readsectors(GPTSECTOR, 1);
 	if (secbuf == NULL)
 		return;
 
 	memcpy(&sig, secbuf, sizeof(sig));
 	if (letoh64(sig) == GPTSIGNATURE) {
 		memset(secbuf, 0, dl.d_secsize);
-		DISK_writesector(secbuf, GPTSECTOR);
+		if (DISK_writesectors(secbuf, GPTSECTOR, 1))
+			DPRINTF("Unable to zap GPT header @ sector %d",
+			    GPTSECTOR);
 	}
 	free(secbuf);
 
-	secbuf = DISK_readsector(DL_GETDSIZE(&dl) - 1);
+	secbuf = DISK_readsectors(DL_GETDSIZE(&dl) - 1, 1);
 	if (secbuf == NULL)
 		return;
 
 	memcpy(&sig, secbuf, sizeof(sig));
 	if (letoh64(sig) == GPTSIGNATURE) {
 		memset(secbuf, 0, dl.d_secsize);
-		DISK_writesector(secbuf, DL_GETDSIZE(&dl) - 1);
+		if (DISK_writesectors(secbuf, DL_GETDSIZE(&dl) - 1, 1))
+			DPRINTF("Unable to zap GPT header @ sector %llu",
+			    DL_GETDSIZE(&dl) - 1);
 	}
 	free(secbuf);
 }
@@ -569,22 +565,23 @@ int
 GPT_write(void)
 {
 	char			*secbuf;
-	ssize_t			 len;
-	off_t			 off;
-	const int		 secsize = unit_types[SECTORS].ut_conversion;
-	uint64_t		 altgh, altgp, prigh, prigp, gpbytes;
+	uint64_t		 altgh, altgp, prigh, prigp;
+	uint64_t		 gpbytes, gpsectors;
+	int			 rslt;
 
-	MBR_write(&gmbr);
+	if (MBR_write(&gmbr))
+		return -1;
 
 	/*
 	 * XXX Assume size of gp is multiple of sector size.
 	 */
 	gpbytes = letoh32(gh.gh_part_num) * letoh32(gh.gh_part_size);
+	gpsectors = gpbytes / dl.d_secsize;
 
 	prigh = GPTSECTOR;
 	prigp = prigh + 1;
 	altgh = DL_GETDSIZE(&dl) - 1;
-	altgp = DL_GETDSIZE(&dl) - 1 - (gpbytes / secsize);
+	altgp = altgh - gpsectors;
 
 	gh.gh_lba_self = htole64(prigh);
 	gh.gh_lba_alt = htole64(altgh);
@@ -593,13 +590,15 @@ GPT_write(void)
 	gh.gh_csum = 0;
 	gh.gh_csum = crc32((unsigned char *)&gh, letoh32(gh.gh_size));
 
-	secbuf = DISK_readsector(prigh);
+	secbuf = DISK_readsectors(prigh, 1);
 	if (secbuf == NULL)
 		return -1;
 
 	memcpy(secbuf, &gh, sizeof(gh));
-	DISK_writesector(secbuf, prigh);
+	rslt = DISK_writesectors(secbuf, prigh, 1);
 	free(secbuf);
+	if (rslt)
+		return -1;
 
 	gh.gh_lba_self = htole64(altgh);
 	gh.gh_lba_alt = htole64(prigh);
@@ -607,37 +606,24 @@ GPT_write(void)
 	gh.gh_csum = 0;
 	gh.gh_csum = crc32((unsigned char *)&gh, letoh32(gh.gh_size));
 
-	secbuf = DISK_readsector(altgh);
+	secbuf = DISK_readsectors(altgh, 1);
 	if (secbuf == NULL)
 		return -1;
 
 	memcpy(secbuf, &gh, sizeof(gh));
-	DISK_writesector(secbuf, altgh);
+	rslt = DISK_writesectors(secbuf, altgh, 1);
 	free(secbuf);
-
-	off = lseek(disk.dk_fd, secsize * prigp, SEEK_SET);
-	if (off == secsize * prigp)
-		len = write(disk.dk_fd, &gp, gpbytes);
-	else
-		len = -1;
-	if (len == -1 || len != gpbytes) {
-		errno = EIO;
+	if (rslt)
 		return -1;
-	}
 
-	off = lseek(disk.dk_fd, secsize * altgp, SEEK_SET);
-	if (off == secsize * altgp)
-		len = write(disk.dk_fd, &gp, gpbytes);
-	else
-		len = -1;
-
-	if (len == -1 || len != gpbytes) {
-		errno = EIO;
+	if (DISK_writesectors((const char *)&gp, prigp, gpsectors))
 		return -1;
-	}
+	if (DISK_writesectors((const char *)&gp, altgp, gpsectors))
+		return -1;
 
 	/* Refresh in-kernel disklabel from the updated disk information. */
-	ioctl(disk.dk_fd, DIOCRLDINFO, 0);
+	if (ioctl(disk.dk_fd, DIOCRLDINFO, 0) == -1)
+		warn("DIOCRLDINFO");
 
 	return 0;
 }
