@@ -1,0 +1,87 @@
+.\"	$OpenBSD: dhcpleased.conf.5,v 1.1 2021/07/26 09:26:36 florian Exp $
+.\"
+.\" Copyright (c) 2018, 2021 Florian Obser <florian@openbsd.org>
+.\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
+.\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
+.\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
+.\" Copyright (c) 2002 Daniel Hartmeier <dhartmei@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: July 26 2021 $
+.Dt DHCPLEASED.CONF 5
+.Os
+.Sh NAME
+.Nm dhcpleased.conf
+.Nd dynamic host configuration protocol client daemon configuration file
+.Sh DESCRIPTION
+The
+.Xr dhcpleased 8
+daemon is a dynamic host configuration protocol client daemon.
+.Pp
+The
+.Nm
+config file is divided into the following main sections:
+.Bl -tag -width xxxx
+.It Sy Macros
+User-defined variables may be defined and used later, simplifying the
+configuration file.
+.It Sy Interfaces
+This section defines interfaces for which default options need to be overwritten.
+.El
+.Sh MACROS
+Macros can be defined that will later be expanded in context.
+Macro names must start with a letter, digit, or underscore,
+and may contain any of those characters.
+Macro names may not be reserved words (for example,
+.Ic interface )
+Macros are not expanded inside quotes.
+.Sh INTERFACES
+A list of interfaces to overwrite defaults:
+.Bd -unfilled -offset indent
+.Ic interface Ar name { Oo option list Oc }
+.Ed
+.Pp
+.Ic interface
+options are as follows:
+.Bl -tag -width Ds
+.It Ic send client id Ar client-id
+Send the dhcp client identifier option with a value of
+.Ar client-id .
+If
+.Ar client-id
+consists of a series of octets of two-digit hexadecimal numbers separated by
+colons the first octet is used as the type and the rest as value.
+The MAC address 00:53:FF:AA:BB:CC would be configured as
+.Bd -literal -offset indent
+send client id "01:00:53:FF:AA:BB:CC"
+.Ed
+.Pp
+Otherwise the string
+.Ar client-id
+is send verbatim with type zero.
+The default is to send the interface's MAC address as client identifier.
+.It Ic send vendor class id Ar vendor-class-id
+Send the dhcp vendor class identifier option with a value of
+.Ar vendor-class-id .
+The default is to not send a vendor class identifier.
+.El
+.Sh FILES
+.Bl -tag -width /etc/dhcpleased.conf -compact
+.It Pa /etc/dhcpleased.conf
+.Xr dhcpleased 8
+configuration file.
+.El
+.Sh SEE ALSO
+.Xr dhcpleasectl 8 ,
+.Xr dhcpleased 8 ,

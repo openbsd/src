@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.2 2021/03/02 04:10:07 jsg Exp $	*/
+/*	$OpenBSD: control.c,v 1.3 2021/07/26 09:26:36 florian Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -253,6 +253,9 @@ control_dispatch_imsg(int fd, short event, void *bula)
 			break;
 
 		switch (imsg.hdr.type) {
+		case IMSG_CTL_RELOAD:
+			frontend_imsg_compose_main(imsg.hdr.type, 0, NULL, 0);
+			break;
 		case IMSG_CTL_LOG_VERBOSE:
 			if (IMSG_DATA_SIZE(imsg) != sizeof(verbose))
 				break;

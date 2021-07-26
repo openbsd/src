@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.21 2021/07/25 12:35:58 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.22 2021/07/26 09:26:36 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -145,6 +145,10 @@ int			 engine_imsg_compose_main(int, pid_t, void *, uint16_t);
 void			 log_dhcp_hdr(struct dhcp_hdr *);
 const char		*dhcp_message_type2str(uint8_t);
 
+#ifndef SMALL
+struct dhcpleased_conf	*engine_conf;
+#endif /* SMALL */
+
 static struct imsgev	*iev_frontend;
 static struct imsgev	*iev_main;
 int64_t			 proposal_id;
@@ -171,6 +175,10 @@ engine(int debug, int verbose)
 {
 	struct event		 ev_sigint, ev_sigterm;
 	struct passwd		*pw;
+
+#ifndef SMALL
+	engine_conf = config_new_empty();
+#endif /* SMALL */
 
 	log_init(debug, LOG_DAEMON);
 	log_setverbose(verbose);
@@ -375,12 +383,16 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 void
 engine_dispatch_main(int fd, short event, void *bula)
 {
-	struct imsg		 imsg;
-	struct imsgev		*iev = bula;
-	struct imsgbuf		*ibuf = &iev->ibuf;
-	struct imsg_ifinfo	 imsg_ifinfo;
-	ssize_t			 n;
-	int			 shut = 0;
+#ifndef SMALL
+	static struct dhcpleased_conf	*nconf;
+	static struct iface_conf	*iface_conf;
+#endif /* SMALL */
+	struct imsg			 imsg;
+	struct imsgev			*iev = bula;
+	struct imsgbuf			*ibuf = &iev->ibuf;
+	struct imsg_ifinfo		 imsg_ifinfo;
+	ssize_t				 n;
+	int				 shut = 0;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
@@ -439,6 +451,69 @@ engine_dispatch_main(int fd, short event, void *bula)
 			memcpy(&imsg_ifinfo, imsg.data, sizeof(imsg_ifinfo));
 			engine_update_iface(&imsg_ifinfo);
 			break;
+#ifndef SMALL
+		case IMSG_RECONF_CONF:
+			if (nconf != NULL)
+				fatalx("%s: IMSG_RECONF_CONF already in "
+				    "progress", __func__);
+			if ((nconf = malloc(sizeof(struct dhcpleased_conf))) ==
+			    NULL)
+				fatal(NULL);
+			SIMPLEQ_INIT(&nconf->iface_list);
+			break;
+		case IMSG_RECONF_IFACE:
+			if (IMSG_DATA_SIZE(imsg) != sizeof(struct
+			    iface_conf))
+				fatalx("%s: IMSG_RECONF_IFACE wrong length: "
+				    "%lu", __func__, IMSG_DATA_SIZE(imsg));
+			if ((iface_conf = malloc(sizeof(struct iface_conf)))
+			    == NULL)
+				fatal(NULL);
+			memcpy(iface_conf, imsg.data, sizeof(struct
+			    iface_conf));
+			iface_conf->vc_id = NULL;
+			iface_conf->vc_id_len = 0;
+			iface_conf->c_id = NULL;
+			iface_conf->c_id_len = 0;
+			SIMPLEQ_INSERT_TAIL(&nconf->iface_list,
+			    iface_conf, entry);
+			break;
+		case IMSG_RECONF_VC_ID:
+			if (iface_conf == NULL)
+				fatal("IMSG_RECONF_VC_ID without "
+				    "IMSG_RECONF_IFACE");
+			if (IMSG_DATA_SIZE(imsg) > 255 + 2)
+				fatalx("%s: IMSG_RECONF_VC_ID wrong length: "
+				    "%lu", __func__, IMSG_DATA_SIZE(imsg));
+			if ((iface_conf->vc_id = malloc(IMSG_DATA_SIZE(imsg)))
+			    == NULL)
+				fatal(NULL);
+			memcpy(iface_conf->vc_id, imsg.data,
+			    IMSG_DATA_SIZE(imsg));
+			iface_conf->vc_id_len = IMSG_DATA_SIZE(imsg);
+			break;
+		case IMSG_RECONF_C_ID:
+			if (iface_conf == NULL)
+				fatal("IMSG_RECONF_C_ID without "
+				    "IMSG_RECONF_IFACE");
+			if (IMSG_DATA_SIZE(imsg) > 255 + 2)
+				fatalx("%s: IMSG_RECONF_C_ID wrong length: "
+				    "%lu", __func__, IMSG_DATA_SIZE(imsg));
+			if ((iface_conf->c_id = malloc(IMSG_DATA_SIZE(imsg)))
+			    == NULL)
+				fatal(NULL);
+			memcpy(iface_conf->c_id, imsg.data,
+			    IMSG_DATA_SIZE(imsg));
+			iface_conf->c_id_len = IMSG_DATA_SIZE(imsg);
+			break;
+		case IMSG_RECONF_END:
+			if (nconf == NULL)
+				fatalx("%s: IMSG_RECONF_END without "
+				    "IMSG_RECONF_CONF", __func__);
+			merge_config(engine_conf, nconf);
+			nconf = NULL;
+			break;
+#endif /* SMALL */
 		default:
 			log_debug("%s: unexpected imsg %d", __func__,
 			    imsg.hdr.type);
@@ -600,6 +675,9 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 {
 	static uint8_t		 cookie[] = DHCP_COOKIE;
 	static struct ether_addr bcast_mac;
+#ifndef SMALL
+	struct iface_conf	*iface_conf;
+#endif /* SMALL */
 	struct ether_header	*eh;
 	struct ether_addr	 ether_src, ether_dst;
 	struct ip		*ip;
@@ -625,6 +703,12 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 
 	if (bcast_mac.ether_addr_octet[0] == 0)
 		memset(bcast_mac.ether_addr_octet, 0xff, ETHER_ADDR_LEN);
+
+	if_name = if_indextoname(iface->if_index, ifnamebuf);
+
+#ifndef SMALL
+	iface_conf = find_iface_conf(&engine_conf->iface_list, if_name);
+#endif /* SMALL*/
 
 	memset(hbuf_src, 0, sizeof(hbuf_src));
 	memset(hbuf_dst, 0, sizeof(hbuf_dst));
@@ -930,17 +1014,35 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 			break;
 		case DHO_DHCP_CLIENT_IDENTIFIER:
 			/* the server is supposed to echo this back to us */
-			if (dho_len != 1 + sizeof(iface->hw_address))
-				goto wrong_length;
-			if (*p != HTYPE_ETHER) {
-				log_warn("DHO_DHCP_CLIENT_IDENTIFIER: wrong "
-				    "type");
-				return;
-			}
-			if (memcmp(p + 1, &iface->hw_address,
-			    sizeof(iface->hw_address)) != 0) {
-				log_warn("wrong DHO_DHCP_CLIENT_IDENTIFIER");
-				return;
+#ifndef SMALL
+			if (iface_conf != NULL && iface_conf->c_id_len > 0) {
+				if (dho_len != iface_conf->c_id[1]) {
+					log_warnx("wrong "
+					    "DHO_DHCP_CLIENT_IDENTIFIER");
+					return;
+				}
+				if (memcmp(p, &iface_conf->c_id[2], dho_len) !=
+				    0) {
+					log_warnx("wrong "
+					    "DHO_DHCP_CLIENT_IDENTIFIER");
+					return;
+				}
+			} else
+#endif /* SMALL */
+			{
+				if (dho_len != 1 + sizeof(iface->hw_address))
+					goto wrong_length;
+				if (*p != HTYPE_ETHER) {
+					log_warnx("DHO_DHCP_CLIENT_IDENTIFIER: "
+					    "wrong type");
+					return;
+				}
+				if (memcmp(p + 1, &iface->hw_address,
+				    sizeof(iface->hw_address)) != 0) {
+					log_warnx("wrong "
+					    "DHO_DHCP_CLIENT_IDENTIFIER");
+					return;
+				}
 			}
 			p += dho_len;
 			rem -= dho_len;
@@ -1024,7 +1126,6 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 		log_warnx("%s: %lu bytes garbage data from %s", __func__, rem,
 		    from);
 
-	if_name = if_indextoname(iface->if_index, ifnamebuf);
 	log_debug("%s on %s from %s/%s to %s/%s",
 	    dhcp_message_type2str(dhcp_message_type), if_name == NULL ? "?" :
 	    if_name, from, hbuf_src, to, hbuf_dst);

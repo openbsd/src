@@ -1,9 +1,10 @@
-#	$OpenBSD: Makefile,v 1.1 2021/02/26 16:16:37 florian Exp $
+#	$OpenBSD: Makefile,v 1.2 2021/07/26 09:26:36 florian Exp $
 
 PROG=	dhcpleased
 SRCS=	bpf.c checksum.c control.c dhcpleased.c engine.c frontend.c log.c
+SRCS+=	parse.y printconf.c
 
-MAN=	dhcpleased.8
+MAN=	dhcpleased.8 dhcpleased.conf.5
 
 #DEBUG=	-g -DDEBUG=3 -O0
 

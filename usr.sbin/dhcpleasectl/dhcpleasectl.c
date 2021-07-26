@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleasectl.c,v 1.4 2021/06/16 14:06:18 florian Exp $	*/
+/*	$OpenBSD: dhcpleasectl.c,v 1.5 2021/07/26 09:26:36 florian Exp $	*/
 
 /*
  * Copyright (c) 2021 Florian Obser <florian@openbsd.org>
@@ -115,6 +115,11 @@ main(int argc, char *argv[])
 
 	/* Process user request. */
 	switch (res->action) {
+	case RELOAD:
+		imsg_compose(ibuf, IMSG_CTL_RELOAD, 0, 0, -1, NULL, 0);
+		printf("reload request sent.\n");
+		done = 1;
+		break;
 	case LOG_VERBOSE:
 		verbose = 1;
 		/* FALLTHROUGH */

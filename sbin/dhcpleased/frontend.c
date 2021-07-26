@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.13 2021/07/12 15:09:18 beck Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.14 2021/07/26 09:26:36 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -90,14 +90,15 @@ int		 get_xflags(char *);
 struct iface	*get_iface_by_id(uint32_t);
 void		 remove_iface(uint32_t);
 void		 set_bpfsock(int, uint32_t);
-ssize_t		 build_packet(uint8_t, uint32_t, struct ether_addr *, struct
-		     in_addr *, struct in_addr *);
+ssize_t		 build_packet(uint8_t, char *, uint32_t, struct ether_addr *,
+		     struct in_addr *, struct in_addr *);
 void		 send_discover(struct iface *);
 void		 send_request(struct iface *);
 void		 bpf_send_packet(struct iface *, uint8_t *, ssize_t);
 void		 udp_send_packet(struct iface *, uint8_t *, ssize_t);
 
 LIST_HEAD(, iface)		 interfaces;
+struct dhcpleased_conf		*frontend_conf;
 static struct imsgev		*iev_main;
 static struct imsgev		*iev_engine;
 struct event			 ev_route;
@@ -127,6 +128,10 @@ frontend(int debug, int verbose)
 {
 	struct event		 ev_sigint, ev_sigterm;
 	struct passwd		*pw;
+
+#ifndef SMALL
+	frontend_conf = config_new_empty();
+#endif /* SMALL */
 
 	log_init(debug, LOG_DAEMON);
 	log_setverbose(verbose);
@@ -192,6 +197,10 @@ frontend_shutdown(void)
 	msgbuf_clear(&iev_main->ibuf.w);
 	close(iev_main->ibuf.fd);
 
+#ifndef SMALL
+	config_clear(frontend_conf);
+#endif /* SMALL */
+
 	free(iev_engine);
 	free(iev_main);
 
@@ -218,12 +227,14 @@ frontend_imsg_compose_engine(int type, uint32_t peerid, pid_t pid,
 void
 frontend_dispatch_main(int fd, short event, void *bula)
 {
-	struct imsg		 imsg;
-	struct imsgev		*iev = bula;
-	struct imsgbuf		*ibuf = &iev->ibuf;
-	struct iface		*iface;
-	ssize_t			 n;
-	int			 shut = 0, bpfsock, if_index, udpsock;
+	static struct dhcpleased_conf	*nconf;
+	static struct iface_conf	*iface_conf;
+	struct imsg			 imsg;
+	struct imsgev			*iev = bula;
+	struct imsgbuf			*ibuf = &iev->ibuf;
+	struct iface			*iface;
+	ssize_t				 n;
+	int				 shut = 0, bpfsock, if_index, udpsock;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
@@ -322,7 +333,68 @@ frontend_dispatch_main(int fd, short event, void *bula)
 		case IMSG_STARTUP:
 			frontend_startup();
 			break;
-#ifndef	SMALL
+#ifndef SMALL
+		case IMSG_RECONF_CONF:
+			if (nconf != NULL)
+				fatalx("%s: IMSG_RECONF_CONF already in "
+				    "progress", __func__);
+			if ((nconf = malloc(sizeof(struct dhcpleased_conf))) ==
+			    NULL)
+				fatal(NULL);
+			SIMPLEQ_INIT(&nconf->iface_list);
+			break;
+		case IMSG_RECONF_IFACE:
+			if (IMSG_DATA_SIZE(imsg) != sizeof(struct
+			    iface_conf))
+				fatalx("%s: IMSG_RECONF_IFACE wrong length: "
+				    "%lu", __func__, IMSG_DATA_SIZE(imsg));
+			if ((iface_conf = malloc(sizeof(struct iface_conf)))
+			    == NULL)
+				fatal(NULL);
+			memcpy(iface_conf, imsg.data, sizeof(struct
+			    iface_conf));
+			iface_conf->vc_id = NULL;
+			iface_conf->vc_id_len = 0;
+			iface_conf->c_id = NULL;
+			iface_conf->c_id_len = 0;
+			SIMPLEQ_INSERT_TAIL(&nconf->iface_list,
+			    iface_conf, entry);
+			break;
+		case IMSG_RECONF_VC_ID:
+			if (iface_conf == NULL)
+				fatal("IMSG_RECONF_VC_ID without "
+				    "IMSG_RECONF_IFACE");
+			if (IMSG_DATA_SIZE(imsg) > 255 + 2)
+				fatalx("%s: IMSG_RECONF_VC_ID wrong length: "
+				    "%lu", __func__, IMSG_DATA_SIZE(imsg));
+			if ((iface_conf->vc_id = malloc(IMSG_DATA_SIZE(imsg)))
+			    == NULL)
+				fatal(NULL);
+			memcpy(iface_conf->vc_id, imsg.data,
+			    IMSG_DATA_SIZE(imsg));
+			iface_conf->vc_id_len = IMSG_DATA_SIZE(imsg);
+			break;
+		case IMSG_RECONF_C_ID:
+			if (iface_conf == NULL)
+				fatal("IMSG_RECONF_C_ID without "
+				    "IMSG_RECONF_IFACE");
+			if (IMSG_DATA_SIZE(imsg) > 255 + 2)
+				fatalx("%s: IMSG_RECONF_C_ID wrong length: "
+				    "%lu", __func__, IMSG_DATA_SIZE(imsg));
+			if ((iface_conf->c_id = malloc(IMSG_DATA_SIZE(imsg)))
+			    == NULL)
+				fatal(NULL);
+			memcpy(iface_conf->c_id, imsg.data,
+			    IMSG_DATA_SIZE(imsg));
+			iface_conf->c_id_len = IMSG_DATA_SIZE(imsg);
+			break;
+		case IMSG_RECONF_END:
+			if (nconf == NULL)
+				fatalx("%s: IMSG_RECONF_END without "
+				    "IMSG_RECONF_CONF", __func__);
+			merge_config(frontend_conf, nconf);
+			nconf = NULL;
+			break;
 		case IMSG_CONTROLFD:
 			if ((fd = imsg.fd) == -1)
 				fatalx("%s: expected to receive imsg "
@@ -769,8 +841,9 @@ bpf_receive(int fd, short events, void *arg)
 }
 
 ssize_t
-build_packet(uint8_t message_type, uint32_t xid, struct ether_addr *hw_address,
-    struct in_addr *requested_ip, struct in_addr *server_identifier)
+build_packet(uint8_t message_type, char *if_name, uint32_t xid,
+    struct ether_addr *hw_address, struct in_addr *requested_ip,
+    struct in_addr *server_identifier)
 {
 	static uint8_t	 dhcp_cookie[] = DHCP_COOKIE;
 	static uint8_t	 dhcp_message_type[] = {DHO_DHCP_MESSAGE_TYPE, 1,
@@ -786,10 +859,17 @@ build_packet(uint8_t message_type, uint32_t xid, struct ether_addr *hw_address,
 		4, 0, 0, 0, 0};
 	static uint8_t	 dhcp_server_identifier[] = {DHO_DHCP_SERVER_IDENTIFIER,
 		4, 0, 0, 0, 0};
-	struct dhcp_hdr	*hdr;
-	ssize_t		 len;
-	uint8_t		*p;
-	char		*c;
+#ifndef SMALL
+	struct iface_conf	*iface_conf;
+#endif /* SMALL */
+	struct dhcp_hdr		*hdr;
+	ssize_t			 len;
+	uint8_t			*p;
+	char			*c;
+
+#ifndef SMALL
+	iface_conf = find_iface_conf(&frontend_conf->iface_list, if_name);
+#endif /* SMALL */
 
 	memset(dhcp_packet, 0, sizeof(dhcp_packet));
 	dhcp_message_type[2] = message_type;
@@ -814,9 +894,26 @@ build_packet(uint8_t message_type, uint32_t xid, struct ether_addr *hw_address,
 		memcpy(p, dhcp_hostname, dhcp_hostname[1] + 2);
 		p += dhcp_hostname[1] + 2;
 	}
-	memcpy(dhcp_client_id + 3, hw_address, sizeof(*hw_address));
-	memcpy(p, dhcp_client_id, sizeof(dhcp_client_id));
-	p += sizeof(dhcp_client_id);
+
+#ifndef SMALL
+	if (iface_conf != NULL) {
+		if (iface_conf->c_id_len > 0) {
+			/* XXX check space */
+			memcpy(p, iface_conf->c_id, iface_conf->c_id_len);
+			p += iface_conf->c_id_len;
+		}
+		if (iface_conf->vc_id_len > 0) {
+			/* XXX check space */
+			memcpy(p, iface_conf->vc_id, iface_conf->vc_id_len);
+			p += iface_conf->vc_id_len;
+		}
+	} else
+#endif /* SMALL */
+	{
+		memcpy(dhcp_client_id + 3, hw_address, sizeof(*hw_address));
+		memcpy(p, dhcp_client_id, sizeof(dhcp_client_id));
+		p += sizeof(dhcp_client_id);
+	}
 	memcpy(p, dhcp_req_list, sizeof(dhcp_req_list));
 	p += sizeof(dhcp_req_list);
 
@@ -851,8 +948,8 @@ build_packet(uint8_t message_type, uint32_t xid, struct ether_addr *hw_address,
 void
 send_discover(struct iface *iface)
 {
-	ssize_t	 pkt_len;
-	char	 ifnamebuf[IF_NAMESIZE], *if_name;
+	ssize_t			 pkt_len;
+	char			 ifnamebuf[IF_NAMESIZE], *if_name;
 
 	if (!event_initialized(&iface->bpfev.ev)) {
 		iface->send_discover = 1;
@@ -863,7 +960,7 @@ send_discover(struct iface *iface)
 	if_name = if_indextoname(iface->ifinfo.if_index, ifnamebuf);
 	log_debug("DHCPDISCOVER on %s", if_name == NULL ? "?" : if_name);
 
-	pkt_len = build_packet(DHCPDISCOVER, iface->xid,
+	pkt_len = build_packet(DHCPDISCOVER, if_name, iface->xid,
 	    &iface->ifinfo.hw_address, &iface->requested_ip, NULL);
 	bpf_send_packet(iface, dhcp_packet, pkt_len);
 }
@@ -871,13 +968,13 @@ send_discover(struct iface *iface)
 void
 send_request(struct iface *iface)
 {
-	ssize_t	 pkt_len;
-	char	 ifnamebuf[IF_NAMESIZE], *if_name;
+	ssize_t			 pkt_len;
+	char			 ifnamebuf[IF_NAMESIZE], *if_name;
 
 	if_name = if_indextoname(iface->ifinfo.if_index, ifnamebuf);
 	log_debug("DHCPREQUEST on %s", if_name == NULL ? "?" : if_name);
 
-	pkt_len = build_packet(DHCPREQUEST, iface->xid,
+	pkt_len = build_packet(DHCPREQUEST, if_name, iface->xid,
 	    &iface->ifinfo.hw_address, &iface->requested_ip,
 	    &iface->server_identifier);
 	if (iface->dhcp_server.s_addr != INADDR_ANY)
@@ -1015,3 +1112,20 @@ set_bpfsock(int bpfsock, uint32_t if_index)
 			send_discover(iface);
 	}
 }
+
+#ifndef SMALL
+struct iface_conf*
+find_iface_conf(struct iface_conf_head *head, char *if_name)
+{
+	struct iface_conf	*iface_conf;
+
+	if (if_name == NULL)
+		return (NULL);
+
+	SIMPLEQ_FOREACH(iface_conf, head, entry) {
+		if (strcmp(iface_conf->name, if_name) == 0)
+			return iface_conf;
+	}
+	return (NULL);
+}
+#endif /* SMALL */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.1 2021/02/26 16:16:37 florian Exp $	*/
+/*	$OpenBSD: parser.c,v 1.2 2021/07/26 09:26:36 florian Exp $	*/
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -61,6 +61,7 @@ static const struct token t_send[];
 static const struct token t_send_request[];
 
 static const struct token t_main[] = {
+	{KEYWORD,	"reload",	RELOAD,		NULL},
 	{KEYWORD,	"show",		SHOW,		t_show},
 	{KEYWORD,	"log",		NONE,		t_log},
 	{KEYWORD,	"send",		NONE,		t_send},

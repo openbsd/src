@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.1 2021/02/26 16:16:37 florian Exp $	*/
+/*	$OpenBSD: parser.h,v 1.2 2021/07/26 09:26:36 florian Exp $	*/
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -23,7 +23,8 @@ enum actions {
 	LOG_BRIEF,
 	SHOW,
 	SHOW_INTERFACE,
-	SEND_REQUEST
+	SEND_REQUEST,
+	RELOAD
 };
 
 struct parse_result {

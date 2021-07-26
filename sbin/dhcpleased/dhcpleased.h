@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleased.h,v 1.7 2021/07/21 03:53:50 kn Exp $	*/
+/*	$OpenBSD: dhcpleased.h,v 1.8 2021/07/26 09:26:36 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -19,6 +19,7 @@
  */
 
 #define	_PATH_LOCKFILE		"/dev/dhcpleased.lock"
+#define	_PATH_CONF_FILE		"/etc/dhcpleased.conf"
 #define	_PATH_DHCPLEASED_SOCKET	"/dev/dhcpleased.sock"
 #define	DHCPLEASED_USER		"_dhcp"
 #define	DHCPLEASED_RTA_LABEL	"dhcpleased"
@@ -42,6 +43,7 @@
 #define	DHCP_COOKIE		{99, 130, 83, 99}
 
 /* Possible values for hardware type (htype) field. */
+#define	HTYPE_NONE		0
 #define	HTYPE_ETHER		1
 #define	HTYPE_IPSEC_TUNNEL	31
 
@@ -189,7 +191,13 @@ enum imsg_type {
 	IMSG_CTL_LOG_VERBOSE,
 	IMSG_CTL_SHOW_INTERFACE_INFO,
 	IMSG_CTL_SEND_REQUEST,
+	IMSG_CTL_RELOAD,
 	IMSG_CTL_END,
+	IMSG_RECONF_CONF,
+	IMSG_RECONF_IFACE,
+	IMSG_RECONF_VC_ID,
+	IMSG_RECONF_C_ID,
+	IMSG_RECONF_END,
 #endif	/* SMALL */
 	IMSG_SEND_DISCOVER,
 	IMSG_SEND_REQUEST,
@@ -228,6 +236,19 @@ struct ctl_engine_info {
 	uint32_t		lease_time;
 	uint32_t		renewal_time;
 	uint32_t		rebinding_time;
+};
+
+struct iface_conf {
+	SIMPLEQ_ENTRY(iface_conf)	 entry;
+	char				 name[IF_NAMESIZE];
+	uint8_t				*vc_id;
+	int				 vc_id_len;
+	uint8_t				*c_id;
+	int				 c_id_len;
+};
+
+struct dhcpleased_conf {
+	SIMPLEQ_HEAD(iface_conf_head, iface_conf)	iface_list;
 };
 
 #endif	/* SMALL */
@@ -270,11 +291,26 @@ struct imsg_req_request {
 };
 
 /* dhcpleased.c */
-void		imsg_event_add(struct imsgev *);
-int		imsg_compose_event(struct imsgev *, uint16_t, uint32_t, pid_t,
-		    int, void *, uint16_t);
+void			 imsg_event_add(struct imsgev *);
+int			 imsg_compose_event(struct imsgev *, uint16_t, uint32_t,
+			     pid_t, int, void *, uint16_t);
 #ifndef	SMALL
+void			 config_clear(struct dhcpleased_conf *);
+struct dhcpleased_conf	*config_new_empty(void);
+void			 merge_config(struct dhcpleased_conf *, struct
+			     dhcpleased_conf *);
 const char	*sin_to_str(struct sockaddr_in *);
+
+/* frontend.c */
+struct iface_conf	*find_iface_conf(struct iface_conf_head *, char *);
+
+/* printconf.c */
+void	print_config(struct dhcpleased_conf *);
+
+/* parse.y */
+struct dhcpleased_conf	*parse_config(char *);
+int			 cmdline_symset(char *);
 #else
 #define	sin_to_str(x...)	""
 #endif	/* SMALL */
+
