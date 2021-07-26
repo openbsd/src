@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.242 2021/07/19 14:49:55 mvs Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.243 2021/07/26 23:17:06 mvs Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -830,6 +830,9 @@ tdb_alloc(u_int rdomain)
 	tdbp->tdb_rdomain = rdomain;
 	tdbp->tdb_rdomain_post = rdomain;
 
+	/* Initialize counters. */
+	tdbp->tdb_counters = counters_alloc(tdb_ncounters);
+
 	/* Initialize timeouts. */
 	timeout_set_proc(&tdbp->tdb_timer_tmo, tdb_timeout, tdbp);
 	timeout_set_proc(&tdbp->tdb_first_tmo, tdb_firstuse, tdbp);
@@ -881,6 +884,8 @@ tdb_free(struct tdb *tdbp)
 
 	if ((tdbp->tdb_inext) && (tdbp->tdb_inext->tdb_onext == tdbp))
 		tdbp->tdb_inext->tdb_onext = NULL;
+
+	counters_free(tdbp->tdb_counters, tdb_ncounters);
 
 	/* Remove expiration timeouts. */
 	tdbp->tdb_flags &= ~(TDBF_FIRSTUSE | TDBF_SOFT_FIRSTUSE | TDBF_TIMER |

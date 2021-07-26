@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.170 2021/07/26 21:27:57 bluhm Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.171 2021/07/26 23:17:06 mvs Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -426,7 +426,7 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	/* Update the counters */
 	ibytes = m->m_pkthdr.len - skip - hlen - alen;
 	tdb->tdb_cur_bytes += ibytes;
-	tdb->tdb_ibytes += ibytes;
+	tdbstat_add(tdb, tdb_ibytes, ibytes);
 	espstat_add(esps_ibytes, ibytes);
 
 	/* Hard expiration */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.372 2021/07/08 15:13:14 bluhm Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.373 2021/07/26 23:17:07 mvs Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -646,7 +646,7 @@ ip_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route *ro, int fwd)
 	error = ipsp_process_packet(m, tdb, AF_INET, 0);
 	if (error) {
 		ipsecstat_inc(ipsec_odrops);
-		tdb->tdb_odrops++;
+		tdbstat_inc(tdb, tdb_odrops);
 	}
 	return error;
 }

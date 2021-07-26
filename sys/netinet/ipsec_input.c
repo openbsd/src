@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.177 2021/07/26 21:27:57 bluhm Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.178 2021/07/26 23:17:07 mvs Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -350,8 +350,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 			    tdbp->tdb_soft_first_use);
 	}
 
-	tdbp->tdb_ipackets++;
-	tdbp->tdb_ibytes += m->m_pkthdr.len;
+	tdbstat_pkt(tdbp, tdb_ipackets, tdb_ibytes, m->m_pkthdr.len);
 
 	/*
 	 * Call appropriate transform and return -- callback takes care of
@@ -360,14 +359,14 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 	error = (*(tdbp->tdb_xform->xf_input))(m, tdbp, skip, protoff);
 	if (error) {
 		ipsecstat_inc(ipsec_idrops);
-		tdbp->tdb_idrops++;
+		tdbstat_inc(tdbp, tdb_idrops);
 	}
 	return error;
 
  drop:
 	ipsecstat_inc(ipsec_idrops);
 	if (tdbp != NULL)
-		tdbp->tdb_idrops++;
+		tdbstat_inc(tdbp, tdb_idrops);
 	m_freem(m);
 	return error;
 }
@@ -436,14 +435,14 @@ ipsec_input_cb(struct cryptop *crp)
 
 	if (error) {
 		ipsecstat_inc(ipsec_idrops);
-		tdb->tdb_idrops++;
+		tdbstat_inc(tdb, tdb_idrops);
 	}
 	return;
 
  drop:
 	ipsecstat_inc(ipsec_idrops);
 	if (tdb != NULL)
-		tdb->tdb_idrops++;
+		tdbstat_inc(tdb, tdb_idrops);
 	free(tc, M_XDATA, 0);
 	m_freem(m);
 	crypto_freereq(crp);
@@ -688,7 +687,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 		m->m_flags |= M_TUNNEL;
 
 	ipsecstat_add(ipsec_idecompbytes, m->m_pkthdr.len);
-	tdbp->tdb_idecompbytes += m->m_pkthdr.len;
+	tdbstat_add(tdbp, tdb_idecompbytes, m->m_pkthdr.len);
 
 #if NBPFILTER > 0
 	if ((encif = enc_getif(tdbp->tdb_rdomain_post, tdbp->tdb_tap)) != NULL) {
