@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.169 2021/07/18 14:38:20 bluhm Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.170 2021/07/26 21:27:57 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -498,7 +498,7 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 
 	/* Crypto operation descriptor */
 	crp->crp_ilen = m->m_pkthdr.len; /* Total input length */
-	crp->crp_flags = CRYPTO_F_IMBUF;
+	crp->crp_flags = CRYPTO_F_IMBUF | CRYPTO_F_MPSAFE | CRYPTO_F_NOQUEUE;
 	crp->crp_buf = (caddr_t)m;
 	crp->crp_callback = ipsec_input_cb;
 	crp->crp_sid = tdb->tdb_cryptoid;
@@ -528,9 +528,7 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 			crde->crd_len = m->m_pkthdr.len - (skip + hlen + alen);
 	}
 
-	KERNEL_LOCK();
 	error = crypto_dispatch(crp);
-	KERNEL_UNLOCK();
 	return error;
 
  drop:
@@ -983,7 +981,7 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 
 	/* Crypto operation descriptor. */
 	crp->crp_ilen = m->m_pkthdr.len; /* Total input length. */
-	crp->crp_flags = CRYPTO_F_IMBUF;
+	crp->crp_flags = CRYPTO_F_IMBUF | CRYPTO_F_MPSAFE | CRYPTO_F_NOQUEUE;
 	crp->crp_buf = (caddr_t)m;
 	crp->crp_callback = ipsec_output_cb;
 	crp->crp_opaque = (caddr_t)tc;
@@ -1015,9 +1013,7 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 			crda->crd_len = m->m_pkthdr.len - (skip + alen);
 	}
 
-	KERNEL_LOCK();
 	error = crypto_dispatch(crp);
-	KERNEL_UNLOCK();
 	return error;
 
  drop:

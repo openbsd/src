@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.84 2021/07/21 11:11:41 bluhm Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.85 2021/07/26 21:27:56 bluhm Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -387,23 +387,32 @@ crypto_unregister(u_int32_t driverid, int alg)
 int
 crypto_dispatch(struct cryptop *crp)
 {
-	struct taskq *tq = crypto_taskq;
-	int error = 0, s;
+	int error = 0, lock = 1, s;
 	u_int32_t hid;
 
 	s = splvm();
 	hid = (crp->crp_sid >> 32) & 0xffffffff;
 	if (hid < crypto_drivers_num) {
 		if (crypto_drivers[hid].cc_flags & CRYPTOCAP_F_MPSAFE)
-			tq = crypto_taskq_mpsafe;
+			lock = 0;
 	}
 	splx(s);
 
-	if ((crp->crp_flags & CRYPTO_F_NOQUEUE) == 0) {
+	/* XXXSMP crypto_invoke() is not MP safe */
+	lock = 1;
+
+	if (crp->crp_flags & CRYPTO_F_NOQUEUE) {
+		if (lock)
+			KERNEL_LOCK();
+		error = crypto_invoke(crp);
+		if (lock)
+			KERNEL_UNLOCK();
+	} else {
+		struct taskq *tq;
+
+		tq = lock ? crypto_taskq : crypto_taskq_mpsafe;
 		task_set(&crp->crp_task, (void (*))crypto_invoke, crp);
 		task_add(tq, &crp->crp_task);
-	} else {
-		error = crypto_invoke(crp);
 	}
 
 	return error;
@@ -423,6 +432,8 @@ crypto_invoke(struct cryptop *crp)
 	/* Sanity checks. */
 	if (crp == NULL || crp->crp_callback == NULL)
 		return EINVAL;
+
+	KERNEL_ASSERT_LOCKED();
 
 	s = splvm();
 	if (crp->crp_ndesc < 1 || crypto_drivers == NULL) {
@@ -535,11 +546,16 @@ void
 crypto_done(struct cryptop *crp)
 {
 	crp->crp_flags |= CRYPTO_F_DONE;
+
 	if (crp->crp_flags & CRYPTO_F_NOQUEUE) {
 		/* not from the crypto queue, wakeup the userland process */
 		crp->crp_callback(crp);
 	} else {
+		struct taskq *tq;
+
+		tq = (crp->crp_flags & CRYPTO_F_MPSAFE) ?
+		    crypto_taskq_mpsafe : crypto_taskq;
 		task_set(&crp->crp_task, (void (*))crp->crp_callback, crp);
-		task_add(crypto_taskq, &crp->crp_task);
+		task_add(tq, &crp->crp_task);
 	}
 }

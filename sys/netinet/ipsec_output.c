@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.83 2021/07/21 11:11:41 bluhm Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.84 2021/07/26 21:27:57 bluhm Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -395,20 +395,19 @@ ipsec_output_cb(struct cryptop *crp)
 	struct tdb *tdb = NULL;
 	int error, ilen, olen;
 
-	KERNEL_ASSERT_LOCKED();
+	NET_ASSERT_LOCKED();
 
 	if (m == NULL) {
 		DPRINTF("bogus returned buffer from crypto");
 		ipsecstat_inc(ipsec_crypto);
-		goto droponly;
+		goto drop;
 	}
 
-	NET_LOCK();
 	tdb = gettdb(tc->tc_rdomain, tc->tc_spi, &tc->tc_dst, tc->tc_proto);
 	if (tdb == NULL) {
 		DPRINTF("TDB is expired while in crypto");
 		ipsecstat_inc(ipsec_notdb);
-		goto baddone;
+		goto drop;
 	}
 
 	/* Check for crypto errors. */
@@ -417,18 +416,16 @@ ipsec_output_cb(struct cryptop *crp)
 			/* Reset the session ID */
 			if (tdb->tdb_cryptoid != 0)
 				tdb->tdb_cryptoid = crp->crp_sid;
-			NET_UNLOCK();
 			error = crypto_dispatch(crp);
 			if (error) {
 				DPRINTF("crypto dispatch error %d", error);
-				ipsecstat_inc(ipsec_odrops);
-				tdb->tdb_odrops++;
+				goto drop;
 			}
 			return;
 		}
 		DPRINTF("crypto error %d", crp->crp_etype);
 		ipsecstat_inc(ipsec_noxform);
-		goto baddone;
+		goto drop;
 	}
 
 	olen = crp->crp_olen;
@@ -452,16 +449,13 @@ ipsec_output_cb(struct cryptop *crp)
 		    __func__, tdb->tdb_sproto);
 	}
 
-	NET_UNLOCK();
 	if (error) {
 		ipsecstat_inc(ipsec_odrops);
 		tdb->tdb_odrops++;
 	}
 	return;
 
- baddone:
-	NET_UNLOCK();
- droponly:
+ drop:
 	if (tdb != NULL)
 		tdb->tdb_odrops++;
 	m_freem(m);
@@ -484,6 +478,8 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 	struct tdb_ident *tdbi;
 	struct m_tag *mtag;
 	int roff, error;
+
+	NET_ASSERT_LOCKED();
 
 	tdb->tdb_last_used = gettime();
 

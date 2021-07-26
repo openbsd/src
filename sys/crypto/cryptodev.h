@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.h,v 1.73 2021/07/09 20:43:28 mvs Exp $	*/
+/*	$OpenBSD: cryptodev.h,v 1.74 2021/07/26 21:27:56 bluhm Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -171,6 +171,7 @@ struct cryptop {
 
 #define CRYPTO_F_IMBUF	0x0001	/* Input/output are mbuf chains, otherwise contig */
 #define CRYPTO_F_IOV	0x0002	/* Input/output are uio */
+#define CRYPTO_F_MPSAFE	0x0004	/* Do not use kernel lock for callback */
 #define CRYPTO_F_NOQUEUE	0x0008	/* Don't use crypto queue/thread */
 #define CRYPTO_F_DONE	0x0010	/* request completed */
 
