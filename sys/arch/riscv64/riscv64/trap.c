@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.15 2021/06/20 17:57:10 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.16 2021/07/26 22:13:19 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Shivam Waghela <shivamwaghela@gmail.com>
@@ -57,6 +57,8 @@ dump_regs(struct trapframe *frame)
 
 	printf("sepc == 0x%016lx\n", frame->tf_sepc);
 	printf("sstatus == 0x%016lx\n", frame->tf_sstatus);
+	printf("stval == 0x%016lx\n", frame->tf_stval);
+	printf("scause == 0x%016lx\n", frame->tf_scause);
 }
 
 void
