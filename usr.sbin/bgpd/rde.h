@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.240 2021/06/17 16:05:26 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.241 2021/07/27 07:50:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -56,10 +56,10 @@ struct rib {
 	struct filter_head	*in_rules_tmp;
 	u_int			rtableid;
 	u_int			rtableid_tmp;
+	enum reconf_action	state, fibstate;
+	u_int16_t		id;
 	u_int16_t		flags;
 	u_int16_t		flags_tmp;
-	u_int16_t		id;
-	enum reconf_action	state, fibstate;
 };
 
 #define RIB_ADJ_IN	0
@@ -317,13 +317,13 @@ struct prefix {
 	union {
 		struct {
 			LIST_ENTRY(prefix)	 rib, nexthop;
+			struct rib_entry	*re;
 		} list;
 		struct {
 			RB_ENTRY(prefix)	 index, update;
 		} tree;
 	}				 entry;
 	struct pt_entry			*pt;
-	struct rib_entry		*re;
 	struct rde_aspath		*aspath;
 	struct rde_community		*communities;
 	struct rde_peer			*peer;
@@ -338,6 +338,7 @@ struct prefix {
 #define	PREFIX_FLAG_DEAD	0x04	/* locked but removed */
 #define	PREFIX_FLAG_STALE	0x08	/* stale entry (graceful reload) */
 #define	PREFIX_FLAG_MASK	0x0f	/* mask for the prefix types */
+#define	PREFIX_FLAG_ADJOUT	0x10	/* prefix is in the adj-out rib */
 #define	PREFIX_NEXTHOP_LINKED	0x40	/* prefix is linked onto nexthop list */
 #define	PREFIX_FLAG_LOCKED	0x80	/* locked by rib walker */
 };
@@ -637,6 +638,14 @@ static inline u_int8_t
 prefix_vstate(struct prefix *p)
 {
 	return (p->validation_state & ROA_MASK);
+}
+
+static inline struct rib_entry *
+prefix_re(struct prefix *p)
+{
+	if (p->flags & PREFIX_FLAG_ADJOUT)
+		return NULL;
+	return (p->entry.list.re);
 }
 
 void		 nexthop_init(u_int32_t);

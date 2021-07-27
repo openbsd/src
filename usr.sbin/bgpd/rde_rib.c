@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.222 2021/06/17 08:16:04 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.223 2021/07/27 07:50:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1031,6 +1031,9 @@ prefix_move(struct prefix *p, struct rde_peer *peer,
 {
 	struct prefix		*np;
 
+	if (p->flags & PREFIX_FLAG_ADJOUT)
+		fatalx("%s: prefix with PREFIX_FLAG_ADJOUT hit", __func__);
+
 	if (peer != prefix_peer(p))
 		fatalx("prefix_move: cross peer move");
 
@@ -1040,7 +1043,7 @@ prefix_move(struct prefix *p, struct rde_peer *peer,
 	np->aspath = path_ref(asp);
 	np->communities = communities_ref(comm);
 	np->peer = peer;
-	np->re = p->re;
+	np->entry.list.re = prefix_re(p);
 	np->pt = p->pt; /* skip refcnt update since ref is moved */
 	np->validation_state = vstate;
 	np->nhflags = nhflags;
@@ -1056,7 +1059,7 @@ prefix_move(struct prefix *p, struct rde_peer *peer,
 	 * no need to update the peer prefix count because we are only moving
 	 * the prefix without changing the peer.
 	 */
-	prefix_evaluate(np->re, np, p);
+	prefix_evaluate(prefix_re(np), np, p);
 
 	/* remove possible pftable reference from old path first */
 	if (p->aspath && p->aspath->pftableid)
@@ -1071,8 +1074,8 @@ prefix_move(struct prefix *p, struct rde_peer *peer,
 	p->nexthop = NULL;
 	p->aspath = NULL;
 	p->peer = NULL;
-	p->re = NULL;
 	p->pt = NULL;
+	p->entry.list.re = NULL;
 	prefix_free(p);
 
 	return (0);
@@ -1093,6 +1096,8 @@ prefix_withdraw(struct rib *rib, struct rde_peer *peer,
 	if (p == NULL)		/* Got a dummy withdrawn request. */
 		return (0);
 
+	if (p->flags & PREFIX_FLAG_ADJOUT)
+		fatalx("%s: prefix with PREFIX_FLAG_ADJOUT hit", __func__);
 	asp = prefix_aspath(p);
 	if (asp && asp->pftableid)
 		/* only prefixes in the local RIB were pushed into pf */
@@ -1112,8 +1117,8 @@ prefix_add_eor(struct rde_peer *peer, u_int8_t aid)
 	struct prefix *p;
 
 	p = prefix_alloc();
+	p->flags = PREFIX_FLAG_ADJOUT | PREFIX_FLAG_UPDATE;
 	p->eor = 1;
-	p->flags = PREFIX_FLAG_UPDATE;
 	if (RB_INSERT(prefix_tree, &peer->updates[aid], p) != NULL)
 		/* no need to add if EoR marker already present */
 		prefix_free(p);
@@ -1134,6 +1139,9 @@ prefix_adjout_update(struct rde_peer *peer, struct filterstate *state,
 	int created = 0;
 
 	if ((p = prefix_lookup(peer, prefix, prefixlen)) != NULL) {
+		if ((p->flags & PREFIX_FLAG_ADJOUT) == 0)
+			fatalx("%s: prefix without PREFIX_FLAG_ADJOUT hit",
+			    __func__);
 		/* prefix is already in the Adj-RIB-Out */
 		if (p->flags & PREFIX_FLAG_WITHDRAW) {
 			created = 1;	/* consider this a new entry */
@@ -1171,6 +1179,7 @@ prefix_adjout_update(struct rde_peer *peer, struct filterstate *state,
 		/* peer and pt remain */
 	} else {
 		p = prefix_alloc();
+		p->flags |= PREFIX_FLAG_ADJOUT;
 		created = 1;
 
 		p->pt = pt_get(prefix, prefixlen);
@@ -1224,6 +1233,9 @@ prefix_adjout_withdraw(struct rde_peer *peer, struct bgpd_addr *prefix,
 	p = prefix_lookup(peer, prefix, prefixlen);
 	if (p == NULL)		/* Got a dummy withdrawn request. */
 		return (0);
+
+	if ((p->flags & PREFIX_FLAG_ADJOUT) == 0)
+		fatalx("%s: prefix without PREFIX_FLAG_ADJOUT hit", __func__);
 
 	/* already a withdraw, shortcut */
 	if (p->flags & PREFIX_FLAG_WITHDRAW) {
@@ -1284,6 +1296,9 @@ void
 prefix_adjout_destroy(struct prefix *p)
 {
 	struct rde_peer *peer = prefix_peer(p);
+
+	if ((p->flags & PREFIX_FLAG_ADJOUT) == 0)
+		fatalx("%s: prefix without PREFIX_FLAG_ADJOUT hit", __func__);
 
 	if (p->eor) {
 		/* EOR marker is not linked in the index */
@@ -1486,8 +1501,10 @@ static void
 prefix_evaluate_all(struct prefix *p, enum nexthop_state state,
     enum nexthop_state oldstate)
 {
+	struct rib_entry *re = prefix_re(p);
+
 	/* Skip non local-RIBs or RIBs that are flagged as noeval. */
-	if (re_rib(p->re)->flags & F_RIB_NOEVALUATE) {
+	if (re_rib(re)->flags & F_RIB_NOEVALUATE) {
 		log_warnx("%s: prefix with F_RIB_NOEVALUATE hit", __func__);
 		return;
 	}
@@ -1500,15 +1517,15 @@ prefix_evaluate_all(struct prefix *p, enum nexthop_state state,
 		 * the routing decision so shortcut here.
 		 */
 		if (state == NEXTHOP_REACH) {
-			if ((re_rib(p->re)->flags & F_RIB_NOFIB) == 0 &&
-			    p == p->re->active)
-				rde_send_kroute(re_rib(p->re), p, NULL);
+			if ((re_rib(re)->flags & F_RIB_NOFIB) == 0 &&
+			    p == re->active)
+				rde_send_kroute(re_rib(re), p, NULL);
 		}
 		return;
 	}
 
 	/* redo the route decision */
-	prefix_evaluate(p->re, p, p);
+	prefix_evaluate(prefix_re(p), p, p);
 }
 
 /* kill a prefix. */
@@ -1516,7 +1533,7 @@ void
 prefix_destroy(struct prefix *p)
 {
 	/* make route decision */
-	prefix_evaluate(p->re, NULL, p);
+	prefix_evaluate(prefix_re(p), NULL, p);
 
 	prefix_unlink(p);
 	prefix_free(p);
@@ -1530,11 +1547,14 @@ prefix_link(struct prefix *p, struct rib_entry *re, struct rde_peer *peer,
     struct rde_aspath *asp, struct rde_community *comm,
     struct nexthop *nexthop, u_int8_t nhflags, u_int8_t vstate)
 {
+	if (p->flags & PREFIX_FLAG_ADJOUT)
+		fatalx("%s: prefix with PREFIX_FLAG_ADJOUT hit", __func__);
+
+	p->entry.list.re = re;
 	p->aspath = path_ref(asp);
 	p->communities = communities_ref(comm);
 	p->peer = peer;
 	p->pt = pt_ref(re->prefix);
-	p->re = re;
 	p->validation_state = vstate;
 	p->nhflags = nhflags;
 	p->nexthop = nexthop_ref(nexthop);
@@ -1555,7 +1575,7 @@ prefix_link(struct prefix *p, struct rib_entry *re, struct rde_peer *peer,
 static void
 prefix_unlink(struct prefix *p)
 {
-	struct rib_entry	*re = p->re;
+	struct rib_entry	*re = prefix_re(p);
 
 	/* destroy all references to other objects */
 	nexthop_unlink(p);
@@ -1567,7 +1587,6 @@ prefix_unlink(struct prefix *p)
 	p->nexthop = NULL;
 	p->aspath = NULL;
 	p->peer = NULL;
-	p->re = NULL;
 	p->pt = NULL;
 
 	if (re && rib_empty(re))
@@ -1795,7 +1814,7 @@ nexthop_link(struct prefix *p)
 		return;
 
 	/* no need to link prefixes in RIBs that have no decision process */
-	if (re_rib(p->re)->flags & F_RIB_NOEVALUATE)
+	if (re_rib(prefix_re(p))->flags & F_RIB_NOEVALUATE)
 		return;
 
 	p->flags |= PREFIX_NEXTHOP_LINKED;

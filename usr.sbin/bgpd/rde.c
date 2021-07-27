@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.530 2021/06/25 09:25:48 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.531 2021/07/27 07:50:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2298,6 +2298,7 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags)
 	struct ibuf		*wbuf;
 	struct attr		*a;
 	struct nexthop		*nexthop;
+	struct rib_entry	*re;
 	void			*bp;
 	time_t			 staletime;
 	size_t			 aslen;
@@ -2330,7 +2331,8 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags)
 	rib.origin = asp->origin;
 	rib.validation_state = p->validation_state;
 	rib.flags = 0;
-	if (p->re != NULL && p->re->active == p)
+	re = prefix_re(p);
+	if (re != NULL && re->active == p)
 		rib.flags |= F_PREF_ACTIVE;
 	if (!prefix_peer(p)->conf.ebgp)
 		rib.flags |= F_PREF_INTERNAL;
@@ -2412,14 +2414,16 @@ static void
 rde_dump_filter(struct prefix *p, struct ctl_show_rib_request *req)
 {
 	struct rde_aspath	*asp;
+	struct rib_entry	*re;
 
 	if (!rde_match_peer(prefix_peer(p), &req->neighbor))
 		return;
 
 	asp = prefix_aspath(p);
+	re = prefix_re(p);
 	if (asp == NULL)	/* skip pending withdraw in Adj-RIB-Out */
 		return;
-	if ((req->flags & F_CTL_ACTIVE) && p->re->active != p)
+	if ((req->flags & F_CTL_ACTIVE) && re != NULL && re->active != p)
 		return;
 	if ((req->flags & F_CTL_INVALID) &&
 	    (asp->flags & F_ATTR_PARSE_ERR) == 0)
