@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.62 2021/07/22 15:32:51 kn Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.63 2021/07/27 08:15:11 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -660,7 +660,7 @@ configure_interface(struct imsg_configure_address *address)
 	log_debug("%s: %s", __func__, if_name);
 
 	if (ioctl(ioctl_sock, SIOCAIFADDR_IN6, &in6_addreq) == -1)
-		fatal("SIOCAIFADDR_IN6");
+		log_warn("SIOCAIFADDR_IN6");
 
 	if (address->mtu) {
 		struct ifreq	 ifr;
