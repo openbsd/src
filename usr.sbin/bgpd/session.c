@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.422 2021/06/24 09:26:18 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.423 2021/07/27 07:14:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1413,14 +1413,13 @@ session_open(struct peer *p)
 	struct bgp_msg		*buf;
 	struct ibuf		*opb;
 	struct msg_open		 msg;
-	u_int16_t		 len;
-	u_int8_t		 i, op_type, optparamlen = 0;
-	int			 errs = 0;
+	u_int16_t		 len, optparamlen = 0;
+	u_int8_t		 i, op_type;
+	int			 errs = 0, extlen = 0;
 	int			 mpcapa = 0;
 
 
-	if ((opb = ibuf_dynamic(0, UCHAR_MAX - sizeof(op_type) -
-	    sizeof(optparamlen))) == NULL) {
+	if ((opb = ibuf_dynamic(0, UINT16_MAX - 3)) == NULL) {
 		bgp_fsm(p, EVNT_CON_FATAL);
 		return;
 	}
@@ -1491,9 +1490,18 @@ session_open(struct peer *p)
 	if (p->capa.ann.enhanced_rr)	/* no data */
 		errs += session_capa_add(opb, CAPA_ENHANCED_RR, 0);
 
-	if (ibuf_size(opb))
-		optparamlen = ibuf_size(opb) + sizeof(op_type) +
-		    sizeof(optparamlen);
+	optparamlen = ibuf_size(opb);
+	if (optparamlen == 0) {
+		/* nothing */
+	} else if (optparamlen + 2 >= 255) {
+		/* RFC9072: 2 byte lenght instead of 1 + 3 byte extra header */
+		optparamlen += sizeof(op_type) + 2 + 3;
+		msg.optparamlen = 255;
+		extlen = 1;
+	} else {
+		optparamlen += sizeof(op_type) + 1;
+		msg.optparamlen = optparamlen;
+	}
 
 	len = MSGSIZE_OPEN_MIN + optparamlen;
 	if (errs || (buf = session_newmsg(OPEN, len)) == NULL) {
@@ -1509,19 +1517,34 @@ session_open(struct peer *p)
 	else
 		msg.holdtime = htons(conf->holdtime);
 	msg.bgpid = conf->bgpid;	/* is already in network byte order */
-	msg.optparamlen = optparamlen;
 
 	errs += ibuf_add(buf->buf, &msg.version, sizeof(msg.version));
 	errs += ibuf_add(buf->buf, &msg.myas, sizeof(msg.myas));
 	errs += ibuf_add(buf->buf, &msg.holdtime, sizeof(msg.holdtime));
 	errs += ibuf_add(buf->buf, &msg.bgpid, sizeof(msg.bgpid));
-	errs += ibuf_add(buf->buf, &msg.optparamlen, sizeof(msg.optparamlen));
+	errs += ibuf_add(buf->buf, &msg.optparamlen, 1);
+
+	if (extlen) {
+		/* write RFC9072 extra header */
+		u_int16_t op_extlen = htons(optparamlen - 3);
+		op_type = OPT_PARAM_EXT_LEN;
+		errs += ibuf_add(buf->buf, &op_type, 1);
+		errs += ibuf_add(buf->buf, &op_extlen, 2);
+	}
 
 	if (optparamlen) {
 		op_type = OPT_PARAM_CAPABILITIES;
-		optparamlen = ibuf_size(opb);
 		errs += ibuf_add(buf->buf, &op_type, sizeof(op_type));
-		errs += ibuf_add(buf->buf, &optparamlen, sizeof(optparamlen));
+
+		optparamlen = ibuf_size(opb);
+		if (extlen) {
+			/* RFC9072: 2-byte extended length */
+			u_int16_t op_extlen = htons(optparamlen);
+			errs += ibuf_add(buf->buf, &op_extlen, 2);
+		} else {
+			u_int8_t op_len = optparamlen;
+			errs += ibuf_add(buf->buf, &op_len, 1);
+		}
 		errs += ibuf_add(buf->buf, opb->buf, ibuf_size(opb));
 	}
 
@@ -2042,8 +2065,8 @@ parse_open(struct peer *peer)
 	u_int16_t	 short_as, msglen;
 	u_int16_t	 holdtime, oholdtime, myholdtime;
 	u_int32_t	 as, bgpid;
-	u_int8_t	 optparamlen, plen;
-	u_int8_t	 op_type, op_len;
+	u_int16_t	 optparamlen, extlen, plen, op_len;
+	u_int8_t	 op_type;
 
 	p = peer->rbuf->rptr;
 	p += MSGSIZE_HEADER_MARKER;
@@ -2116,41 +2139,56 @@ parse_open(struct peer *peer)
 	}
 	peer->remote_bgpid = bgpid;
 
-	memcpy(&optparamlen, p, sizeof(optparamlen));
-	p += sizeof(optparamlen);
+	extlen = 0;
+	optparamlen = *p++;
 
-	if (optparamlen != msglen - MSGSIZE_OPEN_MIN) {
+	if (optparamlen == 0) {
+		if (msglen != MSGSIZE_OPEN_MIN) {
+bad_len:
 			log_peer_warnx(&peer->conf,
 			    "corrupt OPEN message received: length mismatch");
 			session_notification(peer, ERR_OPEN, 0, NULL, 0);
 			change_state(peer, STATE_IDLE, EVNT_RCVD_OPEN);
 			return (-1);
+		}
+	} else {
+		if (msglen < MSGSIZE_OPEN_MIN + 1)
+			goto bad_len;
+
+		op_type = *p;
+		if (op_type == OPT_PARAM_EXT_LEN) {
+			p++;
+			memcpy(&optparamlen, p, sizeof(optparamlen));
+			optparamlen = ntohs(optparamlen);
+			p += sizeof(optparamlen);
+			extlen = 1;
+		}
+
+		/* RFC9020 encoding has 3 extra bytes */ 
+		if (optparamlen + 3 * extlen != msglen - MSGSIZE_OPEN_MIN)
+			goto bad_len;
 	}
 
 	plen = optparamlen;
 	while (plen > 0) {
-		if (plen < 2) {
-			log_peer_warnx(&peer->conf,
-			    "corrupt OPEN message received, len wrong");
-			session_notification(peer, ERR_OPEN, 0, NULL, 0);
-			change_state(peer, STATE_IDLE, EVNT_RCVD_OPEN);
-			return (-1);
-		}
+		if (plen < 2 + extlen)
+			goto bad_len;
+
 		memcpy(&op_type, p, sizeof(op_type));
 		p += sizeof(op_type);
 		plen -= sizeof(op_type);
-		memcpy(&op_len, p, sizeof(op_len));
-		p += sizeof(op_len);
-		plen -= sizeof(op_len);
+		if (!extlen) {
+			op_len = *p++;
+			plen--;
+		} else {
+			memcpy(&op_len, p, sizeof(op_len));
+			op_len = ntohs(op_len);
+			p += sizeof(op_len);
+			plen -= sizeof(op_len);
+		}
 		if (op_len > 0) {
-			if (plen < op_len) {
-				log_peer_warnx(&peer->conf,
-				    "corrupt OPEN message received, len wrong");
-				session_notification(peer, ERR_OPEN, 0,
-				    NULL, 0);
-				change_state(peer, STATE_IDLE, EVNT_RCVD_OPEN);
-				return (-1);
-			}
+			if (plen < op_len)
+				goto bad_len;
 			op_val = p;
 			p += op_len;
 			plen -= op_len;
