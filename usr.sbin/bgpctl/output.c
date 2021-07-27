@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.17 2021/05/27 08:29:07 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.18 2021/07/27 07:42:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -666,13 +666,13 @@ show_ext_community(u_char *data, u_int16_t len)
 }
 
 static void
-show_attr(u_char *data, size_t len, int reqflags)
+show_attr(u_char *data, size_t len, int reqflags, int addpath)
 {
 	u_char		*path;
 	struct in_addr	 id;
 	struct bgpd_addr prefix;
 	char		*aspath;
-	u_int32_t	 as;
+	u_int32_t	 as, pathid;
 	u_int16_t	 alen, ioff, short_as, afi;
 	u_int8_t	 flags, type, safi, aid, prefixlen;
 	int		 i, pos, e2, e4;
@@ -851,6 +851,16 @@ show_attr(u_char *data, size_t len, int reqflags)
 		}
 
 		while (alen > 0) {
+			if (addpath) {
+				if (alen <= sizeof(pathid)) {
+					printf("bad nlri prefix");
+					return;
+				}
+				memcpy(&pathid, data, sizeof(pathid));
+				pathid = ntohl(pathid);
+				data += sizeof(pathid);
+				alen -= sizeof(pathid);
+			}
 			switch (aid) {
 			case AID_INET6:
 				pos = nlri_get_prefix6(data, alen, &prefix,
@@ -873,6 +883,8 @@ show_attr(u_char *data, size_t len, int reqflags)
 				break;
 			}
 			printf(" %s/%u", log_addr(&prefix), prefixlen);
+			if (addpath)
+				printf(" path-id %u", pathid);
 			data += pos;
 			alen -= pos;
 		}
@@ -940,7 +952,10 @@ show_rib_detail(struct ctl_show_rib *r, u_char *asdata, size_t aslen,
 	printf("(via %s) Neighbor %s (", log_addr(&r->true_nexthop), s);
 	free(s);
 	id.s_addr = htonl(r->remote_id);
-	printf("%s)%c", inet_ntoa(id), EOL0(flag0));
+
+	if (r->flags & F_PREF_PATH_ID)
+		printf("%s) Path-Id: %u%c", inet_ntoa(id), r->path_id,
+		    EOL0(flag0));
 
 	printf("    Origin %s, metric %u, localpref %u, weight %u, ovs %s, ",
 	    fmt_origin(r->origin, 0), r->med, r->local_pref, r->weight,

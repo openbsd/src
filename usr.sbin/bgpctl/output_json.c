@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.11 2021/05/27 08:29:07 claudio Exp $ */
+/*	$OpenBSD: output_json.c,v 1.12 2021/07/27 07:42:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -586,13 +586,13 @@ json_do_ext_community(u_char *data, uint16_t len)
 }
 
 static void
-json_attr(u_char *data, size_t len, int reqflags)
+json_attr(u_char *data, size_t len, int reqflags, int addpath)
 {
 	struct bgpd_addr prefix;
 	struct in_addr id;
 	char *aspath;
 	u_char *path;
-	uint32_t as;
+	uint32_t as, pathid;
 	uint16_t alen, afi, off, short_as;
 	uint8_t flags, type, safi, aid, prefixlen;
 	int e4, e2, pos;
@@ -783,6 +783,17 @@ bad_len:
 
 		json_do_array("NLRI");
 		while (alen > 0) {
+			json_do_object("prefix");
+			if (addpath) {
+				if (alen <= sizeof(pathid)) {
+					json_do_printf("error", "bad path-id");
+					break;
+				}
+				memcpy(&pathid, data, sizeof(pathid));
+				pathid = ntohl(pathid);
+				data += sizeof(pathid);
+				alen -= sizeof(pathid);
+			}
 			switch (aid) {
 			case AID_INET6:
 				pos = nlri_get_prefix6(data, alen, &prefix,
@@ -808,9 +819,13 @@ bad_len:
 			}
 			json_do_printf("prefix", "%s/%u", log_addr(&prefix),
 			    prefixlen);
+			if (addpath)
+				 json_do_uint("path_id", pathid);
 			data += pos;
 			alen -= pos;
+			json_do_end();
 		}
+		json_do_end();
 		break;
 	case ATTR_EXT_COMMUNITIES:
 		json_do_ext_community(data, alen);
@@ -854,6 +869,9 @@ json_rib(struct ctl_show_rib *r, u_char *asdata, size_t aslen,
 	id.s_addr = htonl(r->remote_id);
 	json_do_printf("bgp_id", "%s", inet_ntoa(id));
 	json_do_end();
+
+	if (r->flags & F_PREF_PATH_ID)
+		json_do_uint("path_id", r->path_id);
 
 	/* flags */
 	json_do_bool("valid", r->flags & F_PREF_ELIGIBLE);

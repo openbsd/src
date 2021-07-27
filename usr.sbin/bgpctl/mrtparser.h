@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrtparser.h,v 1.3 2019/02/25 11:51:58 claudio Exp $ */
+/*	$OpenBSD: mrtparser.h,v 1.4 2021/07/27 07:42:37 claudio Exp $ */
 /*
  * Copyright (c) 2011 Claudio Jeker <claudio@openbsd.org>
  *
@@ -43,6 +43,7 @@ struct mrt_rib_entry {
 	time_t		 originated;
 	u_int32_t	 local_pref;
 	u_int32_t	 med;
+	u_int32_t	 path_id;
 	u_int16_t	 peer_idx;
 	u_int16_t	 aspath_len;
 	u_int16_t	 nattrs;
@@ -55,6 +56,7 @@ struct mrt_rib {
 	u_int32_t		 seqnum;
 	u_int16_t		 nentries;
 	u_int8_t		 prefixlen;
+	u_int8_t	 	 add_path;
 };
 
 /* data structures for the BGP4MP MESSAGE and STATE types */
@@ -75,6 +77,7 @@ struct mrt_bgp_msg {
 	u_int32_t	 src_as;
 	u_int32_t	 dst_as;
 	u_int16_t	 msg_len;
+	u_int8_t	 add_path;
 	void		*msg;
 };
 
