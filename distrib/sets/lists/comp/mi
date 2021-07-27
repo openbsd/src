@@ -2191,6 +2191,8 @@
 ./usr/share/man/man3/X509_get_version.3
 ./usr/share/man/man3/X509_keyid_set1.3
 ./usr/share/man/man3/X509_new.3
+./usr/share/man/man3/X509_policy_check.3
+./usr/share/man/man3/X509_policy_tree_level_count.3
 ./usr/share/man/man3/X509_print_ex.3
 ./usr/share/man/man3/X509_sign.3
 ./usr/share/man/man3/X509_signature_dump.3

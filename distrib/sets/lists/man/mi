@@ -2137,6 +2137,7 @@
 ./usr/share/man/man5/dhcp-options.5
 ./usr/share/man/man5/dhcpd.conf.5
 ./usr/share/man/man5/dhcpd.leases.5
+./usr/share/man/man5/dhcpleased.conf.5
 ./usr/share/man/man5/dir.5
 ./usr/share/man/man5/disklabel.5
 ./usr/share/man/man5/disktab.5
