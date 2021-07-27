@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.179 2021/07/23 00:29:14 jmatthew Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.180 2021/07/27 01:44:55 kevlo Exp $	*/
 
 /******************************************************************************
 
@@ -3071,7 +3071,8 @@ ixgbe_rxeof(struct rx_ring *rxr)
 
 	i = rxr->next_to_check;
 	while (if_rxr_inuse(&rxr->rx_ring) > 0) {
-		uint32_t hash, hashtype;
+		uint32_t hash;
+		uint16_t hashtype;
 
 		bus_dmamap_sync(rxr->rxdma.dma_tag, rxr->rxdma.dma_map,
 		    dsize * i, dsize, BUS_DMASYNC_POSTREAD);
@@ -3101,7 +3102,8 @@ ixgbe_rxeof(struct rx_ring *rxr)
 		vtag = letoh16(rxdesc->wb.upper.vlan);
 		eop = ((staterr & IXGBE_RXD_STAT_EOP) != 0);
 		hash = lemtoh32(&rxdesc->wb.lower.hi_dword.rss);
-		hashtype = lemtoh32(&rxdesc->wb.lower.lo_dword.data) &
+		hashtype =
+		    lemtoh16(&rxdesc->wb.lower.lo_dword.hs_rss.pkt_info) &
 		    IXGBE_RXDADV_RSSTYPE_MASK;
 
 		if (staterr & IXGBE_RXDADV_ERR_FRAME_ERR_MASK) {
