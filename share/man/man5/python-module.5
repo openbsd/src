@@ -1,4 +1,4 @@
-.\"	$OpenBSD: python-module.5,v 1.2 2021/07/25 11:29:42 espie Exp $
+.\"	$OpenBSD: python-module.5,v 1.3 2021/07/27 13:21:50 espie Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 25 2021 $
+.Dd $Mdocdate: July 27 2021 $
 .Dt PYTHON-MODULE 5
 .Os
 .Sh NAME
@@ -37,8 +37,20 @@ in the
 .Xr ports 7
 tree.
 .Pp
-Sets
-.Ev MODPY_VERSION ,
+By default, the module sets
+.Ev MODPY_VERSION
+to the appropriate python version
+.Po
+depending on the existence/presence of a
+.Sq python3
+.Ev FLAVOR
+.Pc .
+but
+.Ev MODPY_VERSION
+may be set manually to ${MODPY_DEFAULT_VERSION_2}
+for legacy ports.
+.Pp
+The module then sets
 .Ev MODPY_BIN ,
 .Ev MODPY_INCDIR ,
 .Ev MODPY_LIBDIR ,
@@ -52,20 +64,24 @@ Sets
 .Ev MODPY_TEST_DEPENDS ,
 .Ev MODPY_BUILD_DEPENDS ,
 and
-.Ev MODPY_ADJ_FILES .
-Appends to
+.Ev MODPY_ADJ_FILES
+accordingly.
+.Pp
+The module also appends to
+.Bl -bullet
+.It
 .Ev RUN_DEPENDS
 unless
 .Ev MODPY_RUNDEP
-is set to No.
-Appends to
+is set to No,
+.It
 .Ev BUILD_DEPENDS
 unless
 .Ev MODPY_BUILDDEP
 is set to No or
 .Ev NO_BUILD
-is set to Yes.
-Appends to
+is set to Yes,
+.It
 .Ev TEST_DEPENDS
 if
 .Ev MODPY_PYTEST
@@ -73,18 +89,23 @@ is set to Yes
 unless
 .Ev MODPY_TESTDEP
 is set to No.
-Appends
+.El
+.Pp
+It also appends
 .Ev MODPY_TEST_LOCALE
 to
-.Ev TEST_ENV .
-Changes to the directory specified in
-.Ev MODPY_TEST_DIR ,
-by default WRKSRC, before running tests.
-.Ev MODPY_VERSION
-is the default version used by all python modules.
+.Ev TEST_ENV
+and changes to the directory specified in
+.Ev MODPY_TEST_DIR
+.Po
+by default ${WRKSRC}
+.Pc
+before running tests.
+.Pp
 Ports which use the setuptools module should set
 .Ev MODPY_SETUPTOOLS
 to Yes.
+.Pp
 Ports which use the pytest module should set
 .Ev MODPY_PYTEST
 to Yes.
@@ -92,6 +113,7 @@ Arguments can be passed to pytest during
 .Cm test
 with
 .Ev MODPY_PYTEST_ARGS .
+.Pp
 All ports that generate egg-info files should set
 .Ev MODPY_EGG_VERSION
 to the version string used by the
@@ -106,37 +128,48 @@ Extra arguments to the build and install commands can be passed via
 .Ev MODPY_DISTUTILS_BUILDARGS
 and
 .Ev MODPY_DISTUTILS_INSTALLARGS .
-If any files have a python shebang line which needs to be replaced
-using MODPY_BIN, list them in
+.Pp
+If any files have a python shebang line where the interpreter should be
+${MODPY_BIN}, list them in
 .Ev MODPY_ADJ_FILES .
-These are prefixed with WRKSRC and replaced automatically
+These filenames can be relative to ${WRKSRC} and will be modified
 at the end of
 .Cm pre-configure .
-Also affects
+.Pp
+This module also affects
 .Ev CATEGORIES ,
 .Ev MAKE_ENV ,
 .Ev CONFIGURE_ENV ,
 and
-.Ev SUBST_VARS .
-May affect the
+.Ev SUBST_VARS ,
+and it may affect the
 .Cm test
 target.
+.Pp
 If
 .Ev MODPY_PI
-is set to Yes it will set
+is set to
+.Sq Yes
+the module will provide a default for
 .Ev HOMEPAGE
-and
-.Ev MASTER_SITES .
-The subdirectory can be overridden with
-.Ev MODPY_PI_DIR .
-.Pp
+and set
+.Ev MASTER_SITES
+.Po
+the subdirectory can be overridden with
+.Ev MODPY_PI_DIR
+.Pc .
+.Ss Packing-list generation
 Python 2.x places .pyc files in the same directory as the associated .py file.
 Python 3.x places these in a separate __pycache__ directory and uses an
 additional suffix.
 In some cases, an ABI tag is also used for names of compiled extensions.
-The python module defines variables to allow a single PLIST to be
-used for both versions.
-Generate or update the PLIST using the python3
+The python module defines variables to allow a single
+.Pa PLIST
+to be
+used for both versions:
+generate or update the
+.Pa PLIST
+using the python3
 .Ev FLAVOR ,
 then edit it to prefix any lines creating
 .Ev MODPY_PYCACHE
