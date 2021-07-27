@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_hcdintr.c,v 1.11 2021/07/22 18:32:33 mglocker Exp $	*/
+/*	$OpenBSD: dwc2_hcdintr.c,v 1.12 2021/07/27 13:36:59 mglocker Exp $	*/
 /*	$NetBSD: dwc2_hcdintr.c,v 1.11 2014/11/24 10:14:14 skrll Exp $	*/
 
 /*
@@ -154,8 +154,8 @@ STATIC void dwc2_sof_intr(struct dwc2_hsotg *hsotg)
 			 * Move QH to the ready list to be executed next
 			 * (micro)frame
 			 */
-			list_move(&qh->qh_list_entry,
-				  &hsotg->periodic_sched_ready);
+			list_move_tail(&qh->qh_list_entry,
+				       &hsotg->periodic_sched_ready);
 	}
 	tr_type = dwc2_hcd_select_transactions(hsotg);
 	if (tr_type != DWC2_TRANSACTION_NONE)
@@ -865,8 +865,8 @@ STATIC void dwc2_halt_channel(struct dwc2_hsotg *hsotg,
 			 * halt to be queued when the periodic schedule is
 			 * processed.
 			 */
-			list_move(&chan->qh->qh_list_entry,
-				  &hsotg->periodic_sched_assigned);
+			list_move_tail(&chan->qh->qh_list_entry,
+				       &hsotg->periodic_sched_assigned);
 
 			/*
 			 * Make sure the Periodic Tx FIFO Empty interrupt is
@@ -1269,29 +1269,25 @@ STATIC void dwc2_hc_nak_intr(struct dwc2_hsotg *hsotg,
 	 * avoid interrupt storms we'll wait before retrying if we've got
 	 * several NAKs. If we didn't do this we'd retry directly from the
 	 * interrupt handler and could end up quickly getting another
-	 * interrupt (another NAK), which we'd retry.
+	 * interrupt (another NAK), which we'd retry. Note that we do not
+	 * delay retries for IN parts of control requests, as those are expected
+	 * to complete fairly quickly, and if we delay them we risk confusing
+	 * the device and cause it issue STALL.
 	 *
 	 * Note that in DMA mode software only gets involved to re-send NAKed
-	 * transfers for split transactions unless the core is missing OUT NAK
-	 * enhancement.
+	 * transfers for split transactions, so we only need to apply this
+	 * delaying logic when handling splits. In non-DMA mode presumably we
+	 * might want a similar delay if someone can demonstrate this problem
+	 * affects that code path too.
 	 */
 	if (chan->do_split) {
-		/*
-		 * When we get control/bulk NAKs then remember this so we holdoff on
-		 * this qh until the beginning of the next frame
-		 */
-		switch (dwc2_hcd_get_pipe_type(&qtd->urb->pipe_info)) {
-		case USB_ENDPOINT_XFER_CONTROL:
-		case USB_ENDPOINT_XFER_BULK:
-			chan->qh->nak_frame = dwc2_hcd_get_frame_number(hsotg);
-			break;
-		}
-
 		if (chan->complete_split)
 			qtd->error_count = 0;
 		qtd->complete_split = 0;
 		qtd->num_naks++;
-		qtd->qh->want_wait = qtd->num_naks >= dwc2_naks_before_delay;
+		qtd->qh->want_wait = qtd->num_naks >= DWC2_NAKS_BEFORE_DELAY &&
+				!(chan->ep_type == USB_ENDPOINT_XFER_CONTROL &&
+				  chan->ep_is_in);
 		dwc2_halt_channel(hsotg, chan, qtd, DWC2_HC_XFER_NAK);
 		goto handle_nak_done;
 	}
@@ -1317,13 +1313,6 @@ STATIC void dwc2_hc_nak_intr(struct dwc2_hsotg *hsotg,
 		 */
 		qtd->error_count = 0;
 
-		if (hsotg->core_params->dma_enable > 0 && !chan->ep_is_in) {
-			/*
-			 * Avoid interrupt storms.
-			 */
-			qtd->num_naks++;
-			qtd->qh->want_wait = qtd->num_naks >= dwc2_out_naks_before_delay;
-		}
 		if (!chan->qh->ping_state) {
 			dwc2_update_urb_state_abn(hsotg, chan, chnum, qtd->urb,
 						  qtd, DWC2_HC_XFER_NAK);
@@ -1984,6 +1973,18 @@ error:
 		qtd->error_count++;
 		dwc2_update_urb_state_abn(hsotg, chan, chnum, qtd->urb,
 					  qtd, DWC2_HC_XFER_XACT_ERR);
+		/*
+		 * We can get here after a completed transaction
+		 * (urb->actual_length >= urb->length) which was not reported
+		 * as completed. If that is the case, and we do not abort
+		 * the transfer, a transfer of size 0 will be enqueued
+		 * subsequently. If urb->actual_length is not DMA-aligned,
+		 * the buffer will then point to an unaligned address, and
+		 * the resulting behavior is undefined. Bail out in that
+		 * situation.
+		 */
+		if (qtd->urb->actual_length >= qtd->urb->length)
+			qtd->error_count = 3;
 		dwc2_hcd_save_data_toggle(hsotg, chan, chnum, qtd);
 		dwc2_halt_channel(hsotg, chan, qtd, DWC2_HC_XFER_XACT_ERR);
 	}
@@ -2183,12 +2184,29 @@ STATIC void dwc2_hc_intr(struct dwc2_hsotg *hsotg)
 {
 	u32 haint;
 	int i;
+	struct dwc2_host_chan *chan, *chan_tmp;
 
 	haint = DWC2_READ_4(hsotg, HAINT);
 	if (dbg_perio()) {
 		dev_vdbg(hsotg->dev, "%s()\n", __func__);
 
 		dev_vdbg(hsotg->dev, "HAINT=%08x\n", haint);
+	}
+
+	/*
+	 * According to USB 2.0 spec section 11.18.8, a host must
+	 * issue complete-split transactions in a microframe for a
+	 * set of full-/low-speed endpoints in the same relative
+	 * order as the start-splits were issued in a microframe for.
+	 */
+	list_for_each_entry_safe(chan, chan_tmp, &hsotg->split_order,
+				 split_order_list_entry) {
+		int hc_num = chan->hc_num;
+
+		if (haint & (1 << hc_num)) {
+			dwc2_hc_n_intr(hsotg, hc_num);
+			haint &= ~(1 << hc_num);
+		}
 	}
 
 	for (i = 0; i < hsotg->core_params->host_channels; i++) {

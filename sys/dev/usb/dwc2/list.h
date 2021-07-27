@@ -1,4 +1,4 @@
-/*	$OpenBSD: list.h,v 1.1 2021/07/22 18:32:33 mglocker Exp $	*/
+/*	$OpenBSD: list.h,v 1.2 2021/07/27 13:36:59 mglocker Exp $	*/
 /* linux list functions for the BSDs, cut down for dwctwo(4).
  * Created: Mon Apr 7 14:30:16 1999 by anholt@FreeBSD.org
  */
@@ -91,6 +91,13 @@ static inline void list_move(struct list_head *list, struct list_head *head)
 {
 	list_del(list);
 	list_add(list, head);
+}
+
+static inline void list_move_tail(struct list_head *list,
+    struct list_head *head)
+{
+	list_del(list);
+	list_add_tail(list, head);
 }
 
 static inline void

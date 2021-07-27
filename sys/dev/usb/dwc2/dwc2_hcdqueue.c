@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_hcdqueue.c,v 1.10 2021/07/22 18:32:33 mglocker Exp $	*/
+/*	$OpenBSD: dwc2_hcdqueue.c,v 1.11 2021/07/27 13:36:59 mglocker Exp $	*/
 /*	$NetBSD: dwc2_hcdqueue.c,v 1.11 2014/09/03 10:00:08 skrll Exp $	*/
 
 /*
@@ -831,9 +831,11 @@ void dwc2_hcd_qh_deactivate(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
 	     dwc2_frame_num_le(qh->sched_frame, frame_number)) ||
 	    (hsotg->core_params->uframe_sched <= 0 &&
 	     qh->sched_frame == frame_number))
-		list_move(&qh->qh_list_entry, &hsotg->periodic_sched_ready);
+		list_move_tail(&qh->qh_list_entry,
+			       &hsotg->periodic_sched_ready);
 	else
-		list_move(&qh->qh_list_entry, &hsotg->periodic_sched_inactive);
+		list_move_tail(&qh->qh_list_entry,
+			       &hsotg->periodic_sched_inactive);
 }
 
 /**

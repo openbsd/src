@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_hcd.h,v 1.14 2021/07/22 18:32:33 mglocker Exp $	*/
+/*	$OpenBSD: dwc2_hcd.h,v 1.15 2021/07/27 13:36:59 mglocker Exp $	*/
 /*	$NetBSD: dwc2_hcd.h,v 1.9 2014/09/03 10:00:08 skrll Exp $	*/
 
 /*
@@ -111,6 +111,7 @@ struct dwc2_qh;
  * @hc_list_entry:      For linking to list of host channels
  * @desc_list_addr:     Current QH's descriptor list DMA address
  * @desc_list_sz:       Current QH's descriptor list size
+ * @split_order_list_entry: List entry for keeping track of the order of splits
  *
  * This structure represents the state of a single host channel when acting in
  * host mode. It contains the data items needed to transfer packets to an
@@ -166,6 +167,7 @@ struct dwc2_host_chan {
 	struct usb_dma desc_list_usbdma;
 	dma_addr_t desc_list_addr;
 	u32 desc_list_sz;
+	struct list_head split_order_list_entry;
 };
 
 struct dwc2_hcd_pipe_info {

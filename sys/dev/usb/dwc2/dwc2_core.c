@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_core.c,v 1.10 2021/07/22 18:32:33 mglocker Exp $	*/
+/*	$OpenBSD: dwc2_core.c,v 1.11 2021/07/27 13:36:59 mglocker Exp $	*/
 /*	$NetBSD: dwc2_core.c,v 1.6 2014/04/03 06:34:58 skrll Exp $	*/
 
 /*
@@ -1694,6 +1694,8 @@ void dwc2_hc_cleanup(struct dwc2_hsotg *hsotg, struct dwc2_host_chan *chan)
 	u32 hcintmsk;
 
 	chan->xfer_started = 0;
+
+	list_del_init(&chan->split_order_list_entry);
 
 	/*
 	 * Clear channel interrupt enables and any unhandled channel interrupt

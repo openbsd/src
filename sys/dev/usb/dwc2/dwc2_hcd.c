@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_hcd.c,v 1.23 2021/07/22 18:32:33 mglocker Exp $	*/
+/*	$OpenBSD: dwc2_hcd.c,v 1.24 2021/07/27 13:36:59 mglocker Exp $	*/
 /*	$NetBSD: dwc2_hcd.c,v 1.15 2014/11/24 10:14:14 skrll Exp $	*/
 
 /*
@@ -932,7 +932,8 @@ enum dwc2_transaction_type dwc2_hcd_select_transactions(
 		 * periodic assigned schedule
 		 */
 		qh_ptr = qh_ptr->next;
-		list_move(&qh->qh_list_entry, &hsotg->periodic_sched_assigned);
+		list_move_tail(&qh->qh_list_entry,
+			       &hsotg->periodic_sched_assigned);
 		ret_val = DWC2_TRANSACTION_PERIODIC;
 	}
 
@@ -981,7 +982,7 @@ enum dwc2_transaction_type dwc2_hcd_select_transactions(
 		 * non-periodic active schedule
 		 */
 		qh_ptr = qh_ptr->next;
-		list_move(&qh->qh_list_entry,
+		list_move_tail(&qh->qh_list_entry,
 			  &hsotg->non_periodic_sched_active);
 
 		if (ret_val == DWC2_TRANSACTION_NONE)
@@ -1023,7 +1024,12 @@ STATIC int dwc2_queue_transaction(struct dwc2_hsotg *hsotg,
 {
 	int retval = 0;
 
-	if (hsotg->core_params->dma_enable > 0) {
+	if (chan->do_split)
+		/* Put ourselves on the list to keep order straight */
+		list_move_tail(&chan->split_order_list_entry,
+			       &hsotg->split_order);
+
+	if (hsotg->core_params->dma_enable > 0 && chan->qh) {
 		if (hsotg->core_params->dma_desc_enable > 0) {
 			if (!chan->xfer_started ||
 			    chan->ep_type == USB_ENDPOINT_XFER_ISOC) {
@@ -1155,7 +1161,7 @@ STATIC void dwc2_process_periodic_channels(struct dwc2_hsotg *hsotg)
 			 * Move the QH from the periodic assigned schedule to
 			 * the periodic queued schedule
 			 */
-			list_move(&qh->qh_list_entry,
+			list_move_tail(&qh->qh_list_entry,
 				  &hsotg->periodic_sched_queued);
 
 			/* done queuing high bandwidth */
@@ -2347,6 +2353,8 @@ int dwc2_hcd_init(struct dwc2_hsotg *hsotg)
 	INIT_LIST_HEAD(&hsotg->periodic_sched_assigned);
 	INIT_LIST_HEAD(&hsotg->periodic_sched_queued);
 
+	INIT_LIST_HEAD(&hsotg->split_order);
+
 	/*
 	 * Create a host channel descriptor for each host channel implemented
 	 * in the controller. Initialize the channel descriptor array.
@@ -2360,6 +2368,7 @@ int dwc2_hcd_init(struct dwc2_hsotg *hsotg)
 		if (channel == NULL)
 			goto error3;
 		channel->hc_num = i;
+		INIT_LIST_HEAD(&channel->split_order_list_entry);
 		hsotg->hc_ptr_array[i] = channel;
 	}
 
