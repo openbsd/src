@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.415 2021/06/17 16:05:26 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.416 2021/07/27 07:32:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -791,6 +791,7 @@ struct ctl_neighbor {
 #define	F_PREF_ANNOUNCE	0x08
 #define	F_PREF_STALE	0x10
 #define	F_PREF_INVALID	0x20
+#define	F_PREF_PATH_ID	0x40
 
 struct ctl_show_rib {
 	struct bgpd_addr	true_nexthop;
@@ -800,6 +801,7 @@ struct ctl_show_rib {
 	char			descr[PEER_DESCR_LEN];
 	time_t			age;
 	u_int32_t		remote_id;
+	u_int32_t		path_id;
 	u_int32_t		local_pref;
 	u_int32_t		med;
 	u_int32_t		weight;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.h,v 1.35 2019/12/31 15:09:40 claudio Exp $ */
+/*	$OpenBSD: mrt.h,v 1.36 2021/07/27 07:32:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -84,7 +84,11 @@ enum MRT_BGP4MP_SUBTYPES {
 	BGP4MP_MESSAGE_AS4,	/* same as BGP4MP_MESSAGE with 4byte AS */
 	BGP4MP_STATE_CHANGE_AS4,
 	BGP4MP_MESSAGE_LOCAL,	  /* same as BGP4MP_MESSAGE but for self */
-	BGP4MP_MESSAGE_AS4_LOCAL  /* originated updates. Not implemented */
+	BGP4MP_MESSAGE_AS4_LOCAL, /* originated updates. Not implemented */
+	BGP4MP_MESSAGE_ADDPATH,	  /* same as above but for add-path peers */
+	BGP4MP_MESSAGE_AS4_ADDPATH,
+	BGP4MP_MESSAGE_LOCAL_ADDPATH,
+	BGP4MP_MESSAGE_AS4_LOCAL_ADDPATH,
 };
 
 /* size of the BGP4MP headers without payload */
@@ -178,7 +182,12 @@ enum MRT_DUMP_V2_SUBTYPES {
 	MRT_DUMP_V2_RIB_IPV4_MULTICAST=3,
 	MRT_DUMP_V2_RIB_IPV6_UNICAST=4,
 	MRT_DUMP_V2_RIB_IPV6_MULTICAST=5,
-	MRT_DUMP_V2_RIB_GENERIC=6
+	MRT_DUMP_V2_RIB_GENERIC=6,
+	MRT_DUMP_V2_RIB_IPV4_UNICAST_ADDPATH=8,
+	MRT_DUMP_V2_RIB_IPV4_MULTICAST_ADDPATH=9,
+	MRT_DUMP_V2_RIB_IPV6_UNICAST_ADDPATH=10,
+	MRT_DUMP_V2_RIB_IPV6_MULTICAST_ADDPATH=11,
+	MRT_DUMP_V2_RIB_GENERIC_ADDPATH=12,
 };
 
 /*
@@ -228,7 +237,7 @@ enum MRT_DUMP_V2_SUBTYPES {
  * |     #entry      | rib entries (variable)
  * +--------+--------+--------+--------+
  *
- * The RIB_GENERIC subtype is needed for the less common AFI/SAFI pairs
+ * The RIB_GENERIC subtype is needed for the less common AFI/SAFI pairs.
  *
  * +--------+--------+--------+--------+
  * |              seq_num              |
@@ -249,6 +258,8 @@ enum MRT_DUMP_V2_SUBTYPES {
  * +--------+--------+--------+--------+
  * |          originated_time          |
  * +--------+--------+--------+--------+
+ * [    path_id in _ADDPATH variants   ]
+ * +--------+--------+--------+--------+
  * |    attr_len     |   bgp_attrs
  * +--------+--------+--------+--------+
  *      bgp_attrs (variable) ...
@@ -257,6 +268,10 @@ enum MRT_DUMP_V2_SUBTYPES {
  * Some BGP path attributes need special encoding:
  *  - the AS_PATH attribute MUST be encoded as 4-Byte AS
  *  - the MP_REACH_NLRI only consists of the nexthop len and nexthop address
+ *
+ * The non generic ADDPATH variants add the path-identifier between
+ * originated_time and attr_len. For RIB_GENERIC_ADDPATH the path_id should
+ * be part of the NLRI.
  */
 
 /*
