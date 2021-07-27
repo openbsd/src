@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex_local.h,v 1.42 2021/07/20 16:44:55 mvs Exp $	*/
+/*	$OpenBSD: pipex_local.h,v 1.43 2021/07/27 09:29:09 mvs Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -57,22 +57,25 @@
  * Locks used to protect struct members:
  *      I       immutable after creation
  *      N       net lock
+ *      s       this pipex_session' `pxs_mtx'
+ *      m       this pipex_mppe' `pxm_mtx'
  */
 
 #ifdef PIPEX_MPPE
 /* mppe rc4 key */
 struct pipex_mppe {
+	struct mutex pxm_mtx;
 	int16_t	stateless:1,			/* [I] key change mode */
-		resetreq:1,			/* [N] */
+		resetreq:1,			/* [m] */
 		reserved:14;
 	int16_t	keylenbits;			/* [I] key length */
 	int16_t keylen;				/* [I] */
-	uint16_t coher_cnt;			/* [N] cohency counter */
-	struct  rc4_ctx rc4ctx;			/* [N] */
-	u_char master_key[PIPEX_MPPE_KEYLEN];	/* [N] master key of MPPE */
-	u_char session_key[PIPEX_MPPE_KEYLEN];	/* [N] session key of MPPE */
+	uint16_t coher_cnt;			/* [m] cohency counter */
+	struct  rc4_ctx rc4ctx;			/* [m] */
+	u_char master_key[PIPEX_MPPE_KEYLEN];	/* [m] master key of MPPE */
+	u_char session_key[PIPEX_MPPE_KEYLEN];	/* [m] session key of MPPE */
 	u_char (*old_session_keys)[PIPEX_MPPE_KEYLEN];
-						/* [N] old session keys */
+						/* [m] old session keys */
 };
 #endif /* PIPEX_MPPE */
 
@@ -156,6 +159,8 @@ struct pipex_session {
 					/* [N] tree glue, and other values */
 	struct radix_node	ps6_rn[2];
 					/* [N] tree glue, and other values */
+	struct mutex pxs_mtx;
+
 	LIST_ENTRY(pipex_session) session_list;	/* [N] all session chain */
 	LIST_ENTRY(pipex_session) state_list;	/* [N] state list chain */
 	LIST_ENTRY(pipex_session) id_chain;	/* [N] id hash chain */
@@ -191,7 +196,7 @@ struct pipex_session {
 
 	uint32_t	ppp_flags;		/* [I] configure flags */
 #ifdef PIPEX_MPPE
-	int ccp_id;				/* [N] CCP packet id */
+	int ccp_id;				/* [s] CCP packet id */
 	struct pipex_mppe
 	    mppe_recv,				/* MPPE context for incoming */
 	    mppe_send;				/* MPPE context for outgoing */ 

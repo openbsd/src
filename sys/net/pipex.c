@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.134 2021/07/20 16:44:55 mvs Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.135 2021/07/27 09:29:09 mvs Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -263,6 +263,7 @@ pipex_init_session(struct pipex_session **rsession,
 
 	/* prepare a new session */
 	session = pool_get(&pipex_session_pool, PR_WAITOK | PR_ZERO);
+	mtx_init(&session->pxs_mtx, IPL_SOFTNET);
 	session->state = PIPEX_STATE_INITIAL;
 	session->protocol = req->pr_protocol;
 	session->session_id = req->pr_session_id;
@@ -2099,6 +2100,7 @@ pipex_mppe_init(struct pipex_mppe *mppe, int stateless, int keylenbits,
     u_char *master_key, int has_oldkey)
 {
 	memset(mppe, 0, sizeof(struct pipex_mppe));
+	mtx_init(&mppe->pxm_mtx, IPL_SOFTNET);
 	if (stateless)
 		mppe->stateless = 1;
 	if (has_oldkey)
@@ -2238,11 +2240,14 @@ pipex_mppe_input(struct mbuf *m0, struct pipex_session *session)
 	coher_cnt &= PIPEX_COHERENCY_CNT_MASK;
 	pktloss = 0;
 
+	mtx_enter(&mppe->pxm_mtx);
+
 	PIPEX_MPPE_DBG((session, LOG_DEBUG, "in coher_cnt=%03x %s%s",
 	    mppe->coher_cnt, (flushed) ? "[flushed]" : "",
 	    (encrypt) ? "[encrypt]" : ""));
 
 	if (encrypt == 0) {
+		mtx_leave(&mppe->pxm_mtx);
 		pipex_session_log(session, LOG_DEBUG,
 		    "Received unexpected MPPE packet.(no ecrypt)");
 		goto drop;
@@ -2274,6 +2279,7 @@ pipex_mppe_input(struct mbuf *m0, struct pipex_session *session)
 			pipex_session_log(session, LOG_DEBUG,
 			    "Workaround the out-of-sequence PPP framing problem: "
 			    "%d => %d", mppe->coher_cnt, coher_cnt);
+			mtx_leave(&mppe->pxm_mtx);
 			goto drop;
 		}
 		rewind = 1;
@@ -2305,10 +2311,19 @@ pipex_mppe_input(struct mbuf *m0, struct pipex_session *session)
 			coher_cnt &= PIPEX_COHERENCY_CNT_MASK;
 			mppe->coher_cnt = coher_cnt;
 		} else if (mppe->coher_cnt != coher_cnt) {
+			int ccp_id;
+
+			mtx_leave(&mppe->pxm_mtx);
+
 			/* Send CCP ResetReq */
 			PIPEX_DBG((session, LOG_DEBUG, "CCP SendResetReq"));
-			pipex_ccp_output(session, CCP_RESETREQ,
-			    session->ccp_id++);
+
+			mtx_enter(&session->pxs_mtx);
+			ccp_id = session->ccp_id;
+			session->ccp_id++;
+			mtx_leave(&session->pxs_mtx);
+
+			pipex_ccp_output(session, CCP_RESETREQ, ccp_id);
 			goto drop;
 		}
 		if ((coher_cnt & 0xff) == 0xff) {
@@ -2336,6 +2351,9 @@ pipex_mppe_input(struct mbuf *m0, struct pipex_session *session)
 		mppe->coher_cnt++;
 		mppe->coher_cnt &= PIPEX_COHERENCY_CNT_MASK;
 	}
+
+	mtx_leave(&mppe->pxm_mtx);
+
 	if (m0->m_pkthdr.len < PIPEX_PPPMINLEN)
 		goto drop;
 
@@ -2387,6 +2405,8 @@ pipex_mppe_output(struct mbuf *m0, struct pipex_session *session,
 	flushed = 0;
 	encrypt = 1;
 
+	mtx_enter(&mppe->pxm_mtx);
+
 	if (mppe->stateless != 0) {
 		flushed = 1;
 		mppe_key_change(mppe);
@@ -2429,6 +2449,8 @@ pipex_mppe_output(struct mbuf *m0, struct pipex_session *session,
 		pipex_mppe_crypt(mppe, len, cp, cp);
 	}
 
+	mtx_leave(&mppe->pxm_mtx);
+
 	pipex_ppp_output(m0, session, PPP_COMP);
 
 	return;
@@ -2455,7 +2477,9 @@ pipex_ccp_input(struct mbuf *m0, struct pipex_session *session)
 	switch (code) {
 	case CCP_RESETREQ:
 		PIPEX_DBG((session, LOG_DEBUG, "CCP RecvResetReq"));
+		mtx_enter(&session->mppe_send.pxm_mtx);
 		session->mppe_send.resetreq = 1;
+		mtx_leave(&session->mppe_send.pxm_mtx);
 #ifndef PIPEX_NO_CCP_RESETACK
 		PIPEX_DBG((session, LOG_DEBUG, "CCP SendResetAck"));
 		pipex_ccp_output(session, CCP_RESETACK, id);
