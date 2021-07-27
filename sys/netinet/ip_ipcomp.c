@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.73 2021/07/26 23:17:06 mvs Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.74 2021/07/27 17:13:03 mvs Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -213,7 +213,7 @@ ipcomp_input_cb(struct tdb *tdb, struct tdb_crypto *tc, struct mbuf *m, int clen
 	/* update the counters */
 	ibytes = m->m_pkthdr.len - (skip + hlen);
 	tdb->tdb_cur_bytes += ibytes;
-	tdbstat_add(tdb, tdb_ibytes, ibytes);
+	tdb->tdb_ibytes += ibytes;
 	ipcompstat_add(ipcomps_ibytes, ibytes);
 
 	/* Hard expiration */

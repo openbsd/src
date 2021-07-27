@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.259 2021/07/26 23:17:07 mvs Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.260 2021/07/27 17:13:03 mvs Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -2872,7 +2872,7 @@ ip6_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route_in6 *ro,
 	error = ipsp_process_packet(m, tdb, AF_INET6, tunalready);
 	if (error) {
 		ipsecstat_inc(ipsec_odrops);
-		tdbstat_inc(tdb, tdb_odrops);
+		tdb->tdb_odrops++;
 	}
 	return error;
 }
