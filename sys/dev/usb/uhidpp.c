@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidpp.c,v 1.15 2021/07/28 09:55:58 anton Exp $	*/
+/*	$OpenBSD: uhidpp.c,v 1.16 2021/07/28 09:56:54 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -622,7 +622,7 @@ uhidpp_device_connect(struct uhidpp_softc *sc, struct uhidpp_device *dev)
 	sensor_attach(&sc->sc_sensdev, sens);
 
 	sens = &dev->d_battery.b_sens[1];
-	strlcpy(sens->desc, "battery levels", sizeof(sens->desc));
+	strlcpy(sens->desc, "number of battery levels", sizeof(sens->desc));
 	sens->type = SENSOR_INTEGER;
 	sens->value = dev->d_battery.b_nlevels;
 	sensor_attach(&sc->sc_sensdev, sens);
