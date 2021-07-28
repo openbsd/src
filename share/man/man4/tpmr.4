@@ -1,4 +1,4 @@
-.\" $OpenBSD: tpmr.4,v 1.9 2020/08/24 07:40:03 kn Exp $
+.\" $OpenBSD: tpmr.4,v 1.10 2021/07/28 19:19:38 benno Exp $
 .\"
 .\" Copyright (c) 2019 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 24 2020 $
+.Dd $Mdocdate: July 28 2021 $
 .Dt TPMR 4
 .Os
 .Sh NAME
@@ -27,11 +27,8 @@ The
 .Nm
 driver implements an 802.1Q (originally 802.1aj) Two-Port MAC Relay
 (TPMR).
-A TPMR is a simplified Ethernet bridge that provides a subset of
-the functionality as found in
-.Xr bridge 4 .
-A TPMR has exactly two member ports, and unconditionally relays
-Ethernet packets between them.
+A TPMR is a simplified Ethernet bridge with exactly two member ports,
+and it unconditionally relays Ethernet packets between those ports.
 .Pp
 .Nm
 interfaces can be created at runtime using the
@@ -43,7 +40,9 @@ configuration file for
 .Pp
 Other forms of Ethernet bridging are available using the
 .Xr bridge 4
-driver.
+Ethernet bridge driver and the
+.Xr veb 4
+Virtual Ethernet Bridge device.
 Link aggregation of Ethernet interfaces can be achieved
 using the
 .Xr aggr 4
@@ -145,6 +144,7 @@ interfaces.
 .Xr bridge 4 ,
 .Xr pf 4 ,
 .Xr trunk 4 ,
+.Xr veb 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8 ,
 .Xr netstart 8
