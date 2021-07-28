@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleased.h,v 1.8 2021/07/26 09:26:36 florian Exp $	*/
+/*	$OpenBSD: dhcpleased.h,v 1.9 2021/07/28 07:57:10 anton Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -190,7 +190,6 @@ enum imsg_type {
 #ifndef	SMALL
 	IMSG_CTL_LOG_VERBOSE,
 	IMSG_CTL_SHOW_INTERFACE_INFO,
-	IMSG_CTL_SEND_REQUEST,
 	IMSG_CTL_RELOAD,
 	IMSG_CTL_END,
 	IMSG_RECONF_CONF,
@@ -199,6 +198,7 @@ enum imsg_type {
 	IMSG_RECONF_C_ID,
 	IMSG_RECONF_END,
 #endif	/* SMALL */
+	IMSG_CTL_SEND_REQUEST,
 	IMSG_SEND_DISCOVER,
 	IMSG_SEND_REQUEST,
 	IMSG_SOCKET_IPC,
