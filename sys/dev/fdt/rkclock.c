@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.55 2021/04/07 16:35:02 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.56 2021/07/28 13:04:46 patrick Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -2192,6 +2192,18 @@ struct rkclock rk3399_clocks[] = {
 		RK3399_CLK_MAC, RK3399_CRU_CLKSEL_CON(20),
 		SEL(15, 14), DIV(12, 8),
 		{ RK3399_PLL_CPLL, RK3399_PLL_GPLL, RK3399_PLL_NPLL }
+	},
+	{
+		RK3399_CLK_UPHY0_TCPDCORE, RK3399_CRU_CLKSEL_CON(64),
+		SEL(7, 6), DIV(4, 0),
+		{ RK3399_XIN24M, RK3399_CLK_32K, RK3399_PLL_CPLL,
+		  RK3399_PLL_GPLL }
+	},
+	{
+		RK3399_CLK_UPHY1_TCPDCORE, RK3399_CRU_CLKSEL_CON(65),
+		SEL(7, 6), DIV(4, 0),
+		{ RK3399_XIN24M, RK3399_CLK_32K, RK3399_PLL_CPLL,
+		  RK3399_PLL_GPLL }
 	},
 	{
 		RK3399_DCLK_VOP0, RK3399_CRU_CLKSEL_CON(49),
