@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwge.c,v 1.9 2021/05/07 19:03:01 kettenis Exp $	*/
+/*	$OpenBSD: if_dwge.c,v 1.10 2021/07/28 13:43:11 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -370,9 +370,19 @@ dwge_attach(struct device *parent, struct device *self, void *aux)
 
 	pinctrl_byname(faa->fa_node, "default");
 
-	/* Enable clock. */
+	/* Enable clocks. */
+	clock_set_assigned(faa->fa_node);
 	clock_enable(faa->fa_node, "stmmaceth");
 	reset_deassert(faa->fa_node, "stmmaceth");
+	if (OF_is_compatible(faa->fa_node, "rockchip,rk3288-gmac") ||
+	    OF_is_compatible(faa->fa_node, "rockchip,rk3308-mac") ||
+	    OF_is_compatible(faa->fa_node, "rockchip,rk3328-gmac") ||
+	    OF_is_compatible(faa->fa_node, "rockchip,rk3399-gmac")) {
+		clock_enable(faa->fa_node, "mac_clk_rx");
+		clock_enable(faa->fa_node, "mac_clk_tx");
+		clock_enable(faa->fa_node, "aclk_mac");
+		clock_enable(faa->fa_node, "pclk_mac");
+	}
 	delay(5000);
 
 	version = dwge_read(sc, GMAC_VERSION);
@@ -429,13 +439,10 @@ dwge_attach(struct device *parent, struct device *self, void *aux)
 	/* Do hardware specific initializations. */
 	if (OF_is_compatible(faa->fa_node, "allwinner,sun7i-a20-gmac"))
 		dwge_setup_allwinner(sc);
-	else if (OF_is_compatible(faa->fa_node, "rockchip,rk3288-gmac"))
-		dwge_setup_rockchip(sc);
-	else if (OF_is_compatible(faa->fa_node, "rockchip,rk3308-mac"))
-		dwge_setup_rockchip(sc);
-	else if (OF_is_compatible(faa->fa_node, "rockchip,rk3328-gmac"))
-		dwge_setup_rockchip(sc);
-	else if (OF_is_compatible(faa->fa_node, "rockchip,rk3399-gmac"))
+	if (OF_is_compatible(faa->fa_node, "rockchip,rk3288-gmac") ||
+	    OF_is_compatible(faa->fa_node, "rockchip,rk3308-mac") ||
+	    OF_is_compatible(faa->fa_node, "rockchip,rk3328-gmac") ||
+	    OF_is_compatible(faa->fa_node, "rockchip,rk3399-gmac"))
 		dwge_setup_rockchip(sc);
 
 	if (OF_getpropbool(faa->fa_node, "snps,force_thresh_dma_mode"))
@@ -1491,12 +1498,6 @@ dwge_setup_rockchip(struct dwge_softc *sc)
 	rm = regmap_byphandle(grf);
 	if (rm == NULL)
 		return;
-
-	clock_set_assigned(sc->sc_node);
-	clock_enable(sc->sc_node, "mac_clk_rx");
-	clock_enable(sc->sc_node, "mac_clk_tx");
-	clock_enable(sc->sc_node, "aclk_mac");
-	clock_enable(sc->sc_node, "pclk_mac");
 
 	tx_delay = OF_getpropint(sc->sc_node, "tx_delay", 0x30);
 	rx_delay = OF_getpropint(sc->sc_node, "rx_delay", 0x10);
