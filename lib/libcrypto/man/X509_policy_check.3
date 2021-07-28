@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_policy_check.3,v 1.2 2021/07/28 13:39:20 schwarze Exp $
+.\" $OpenBSD: X509_policy_check.3,v 1.3 2021/07/28 14:00:33 schwarze Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -18,7 +18,8 @@
 .Dt X509_POLICY_CHECK 3
 .Os
 .Sh NAME
-.Nm X509_policy_check
+.Nm X509_policy_check ,
+.Nm X509_policy_tree_free
 .Nd construct X.509 valid policy tree
 .Sh SYNOPSIS
 .In openssl/x509_vfy.h
@@ -30,6 +31,8 @@
 .Fa "STACK_OF(ASN1_OBJECT) *policy_oids"
 .Fa "unsigned int flags"
 .Fc
+.Ft void
+.Fn X509_policy_tree_free "X509_POLICY_TREE *tree"
 .Sh DESCRIPTION
 .Fn X509_policy_check
 performs those parts of Basic Certification Path Validation
@@ -97,6 +100,17 @@ is set to 1 if
 .Dv X509_V_FLAG_EXPLICIT_POLICY
 was requested.
 Otherwise, it is set to 0.
+.Pp
+.Fn X509_policy_tree_free
+releases all memory used by the
+.Fa tree
+and decrements the reference counts
+of the certificates referenced from it by 1.
+If
+.Fa tree
+is a
+.Dv NULL
+pointer, no action occurs.
 .Sh RETURN VALUES
 .Fn X509_policy_check
 returns these values:
@@ -177,5 +191,7 @@ and Certificate Revocation List (CRL) Profile,
 section 6.1: Basic Path Validation
 .Sh HISTORY
 .Fn X509_policy_check
-first appeared in OpenSSL 0.9.8 and has been available since
+and
+.Fn X509_policy_tree_free
+first appeared in OpenSSL 0.9.8 and have been available since
 .Ox 4.5 .
