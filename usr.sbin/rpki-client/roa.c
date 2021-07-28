@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.21 2021/07/13 18:39:39 job Exp $ */
+/*	$OpenBSD: roa.c,v 1.22 2021/07/28 12:32:14 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -49,6 +49,7 @@ roa_parse_addr(const ASN1_OCTET_STRING *os, enum afi afi, struct parse *p)
 	int			 rc = 0;
 	const ASN1_TYPE		*t;
 	const ASN1_INTEGER	*maxlength = NULL;
+	long			 maxlen;
 	struct ip_addr		 addr;
 	struct roa_ip		*res;
 
@@ -81,11 +82,6 @@ roa_parse_addr(const ASN1_OCTET_STRING *os, enum afi afi, struct parse *p)
 		goto out;
 	}
 
-	/*
-	 * RFC 6482, section 3.3 doesn't ever actually state that the
-	 * maximum length can't be negative, but it needs to be >=0.
-	 */
-
 	if (sk_ASN1_TYPE_num(seq) == 2) {
 		t = sk_ASN1_TYPE_value(seq, 1);
 		if (t->type != V_ASN1_INTEGER) {
@@ -101,14 +97,21 @@ roa_parse_addr(const ASN1_OCTET_STRING *os, enum afi afi, struct parse *p)
 		 * because we're not going to have more than signed 32
 		 * bit maximum of length.
 		 */
-
-		if (ASN1_INTEGER_get(maxlength) < 0) {
+		maxlen = ASN1_INTEGER_get(maxlength);
+		if (maxlen < 0) {
 			warnx("%s: RFC 6482 section 3.2: maxLength: "
-			    "want positive integer, have %ld",
-			    p->fn, ASN1_INTEGER_get(maxlength));
+			    "want positive integer, have %ld", p->fn, maxlen);
 			goto out;
 		}
-		/* FIXME: maximum check. */
+		if (addr.prefixlen > maxlen) {
+			warnx("%s: prefixlen (%i) larger than maxLength (%ld)",
+			    p->fn, addr.prefixlen, maxlen);
+			goto out;
+		}
+		if (maxlen > ((afi == AFI_IPV4) ? 32 : 128)) {
+			warnx("%s: maxLength (%ld) too large", p->fn, maxlen);
+			goto out;
+		}
 	}
 
 	p->res->ips = recallocarray(p->res->ips, p->res->ipsz, p->res->ipsz + 1,
@@ -119,8 +122,7 @@ roa_parse_addr(const ASN1_OCTET_STRING *os, enum afi afi, struct parse *p)
 
 	res->addr = addr;
 	res->afi = afi;
-	res->maxlength = (maxlength == NULL) ? addr.prefixlen :
-	    ASN1_INTEGER_get(maxlength);
+	res->maxlength = (maxlength == NULL) ? addr.prefixlen : maxlen;
 	ip_roa_compose_ranges(res);
 
 	rc = 1;
