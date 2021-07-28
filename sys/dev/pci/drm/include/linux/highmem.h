@@ -1,4 +1,4 @@
-/*	$OpenBSD: highmem.h,v 1.3 2020/06/14 15:20:07 jsg Exp $	*/
+/*	$OpenBSD: highmem.h,v 1.4 2021/07/28 13:28:05 kettenis Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -21,39 +21,20 @@
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
 #include <linux/uaccess.h>
+#include <asm/pgtable.h>
 
 void	*kmap(struct vm_page *);
-void	 kunmap_va(void *addr);
+void	kunmap_va(void *addr);
 
 #define kmap_to_page(ptr)	(ptr)
 
-#if defined(__i386__) || defined(__amd64__)
+void	*kmap_atomic_prot(struct vm_page *, pgprot_t);
+void	kunmap_atomic(void *);
 
 static inline void *
 kmap_atomic(struct vm_page *pg)
 {
-	vaddr_t va;
-
-#if defined (__HAVE_PMAP_DIRECT)
-	va = pmap_map_direct(pg);
-#else
-	extern vaddr_t pmap_tmpmap_pa(paddr_t);
-	va = pmap_tmpmap_pa(VM_PAGE_TO_PHYS(pg));
-#endif
-	return (void *)va;
+	return kmap_atomic_prot(pg, PAGE_KERNEL);
 }
-
-static inline void
-kunmap_atomic(void *addr)
-{
-#if defined (__HAVE_PMAP_DIRECT)
-	pmap_unmap_direct((vaddr_t)addr);
-#else
-	extern void pmap_tmpunmap_pa(void);
-	pmap_tmpunmap_pa();
-#endif
-}
-
-#endif /* defined(__i386__) || defined(__amd64__) */
 
 #endif

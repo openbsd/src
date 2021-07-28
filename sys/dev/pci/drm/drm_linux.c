@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.81 2021/07/26 06:24:22 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.82 2021/07/28 13:28:04 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -569,6 +569,29 @@ kunmap_va(void *addr)
 	pmap_update(pmap_kernel());
 	uvm_km_free_wakeup(phys_map, va, PAGE_SIZE);
 #endif
+}
+
+vaddr_t kmap_atomic_va;
+int kmap_atomic_inuse;
+
+void *
+kmap_atomic_prot(struct vm_page *pg, pgprot_t prot)
+{
+	KASSERT(!kmap_atomic_inuse);
+
+	kmap_atomic_inuse = 1;
+	pmap_kenter_pa(kmap_atomic_va, VM_PAGE_TO_PHYS(pg) | prot,
+	    PROT_READ | PROT_WRITE);
+	return (void *)kmap_atomic_va;
+}
+
+void
+kunmap_atomic(void *addr)
+{
+	KASSERT(kmap_atomic_inuse);
+	
+	pmap_kremove(kmap_atomic_va, PAGE_SIZE);
+	kmap_atomic_inuse = 0;
 }
 
 void *
@@ -2348,6 +2371,9 @@ drm_linux_init(void)
 
 	pool_init(&idr_pool, sizeof(struct idr_entry), 0, IPL_TTY, 0,
 	    "idrpl", NULL);
+
+	kmap_atomic_va =
+	    (vaddr_t)km_alloc(PAGE_SIZE, &kv_any, &kp_none, &kd_waitok);
 }
 
 void

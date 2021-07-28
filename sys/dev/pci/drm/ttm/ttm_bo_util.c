@@ -186,9 +186,6 @@ static int ttm_copy_io_ttm_page(struct ttm_tt *ttm, void *src,
 				unsigned long page,
 				pgprot_t prot)
 {
-	STUB();
-	return -ENOSYS;
-#ifdef notyet
 	struct vm_page *d = ttm->pages[page];
 	void *dst;
 
@@ -205,16 +202,12 @@ static int ttm_copy_io_ttm_page(struct ttm_tt *ttm, void *src,
 	kunmap_atomic(dst);
 
 	return 0;
-#endif
 }
 
 static int ttm_copy_ttm_io_page(struct ttm_tt *ttm, void *dst,
 				unsigned long page,
 				pgprot_t prot)
 {
-	STUB();
-	return -ENOSYS;
-#ifdef notyet
 	struct vm_page *s = ttm->pages[page];
 	void *src;
 
@@ -231,7 +224,6 @@ static int ttm_copy_ttm_io_page(struct ttm_tt *ttm, void *dst,
 	kunmap_atomic(src);
 
 	return 0;
-#endif
 }
 
 int ttm_bo_move_memcpy(struct ttm_buffer_object *bo,
