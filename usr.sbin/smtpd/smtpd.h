@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.669 2021/06/14 17:58:16 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.670 2021/07/28 19:39:51 benno Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1322,7 +1322,8 @@ int		 enqueue(int, char **, FILE *);
 
 
 /* envelope.c */
-void envelope_set_errormsg(struct envelope *, char *, ...);
+void envelope_set_errormsg(struct envelope *, char *, ...)
+    __attribute__((__format__ (printf, 2, 3)));
 void envelope_set_esc_class(struct envelope *, enum enhanced_status_class);
 void envelope_set_esc_code(struct envelope *, enum enhanced_status_code);
 int envelope_load_buffer(struct envelope *, const char *, size_t);

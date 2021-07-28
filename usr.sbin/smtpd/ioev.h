@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioev.h,v 1.19 2021/03/05 12:37:32 eric Exp $	*/
+/*	$OpenBSD: ioev.h,v 1.20 2021/07/28 19:39:50 benno Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -61,7 +61,8 @@ int io_writev(struct io *, const struct iovec *, int);
 int io_print(struct io *, const char *);
 int io_printf(struct io *, const char *, ...)
     __attribute__((__format__ (printf, 2, 3)));
-int io_vprintf(struct io *, const char *, va_list);
+int io_vprintf(struct io *, const char *, va_list)
+    __attribute__((__format__ (printf, 2, 0)));
 size_t io_queued(struct io *);
 
 /* Buffered input functions */

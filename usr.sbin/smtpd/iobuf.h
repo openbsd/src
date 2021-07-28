@@ -1,4 +1,4 @@
-/*	$OpenBSD: iobuf.h,v 1.6 2021/03/05 12:37:32 eric Exp $	*/
+/*	$OpenBSD: iobuf.h,v 1.7 2021/07/28 19:39:50 benno Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -60,7 +60,8 @@ size_t  iobuf_queued(struct iobuf *);
 void*   iobuf_reserve(struct iobuf *, size_t);
 int	iobuf_queue(struct iobuf *, const void*, size_t);
 int	iobuf_queuev(struct iobuf *, const struct iovec *, int);
-int	iobuf_fqueue(struct iobuf *, const char *, ...);
+int	iobuf_fqueue(struct iobuf *, const char *, ...)
+    __attribute__((__format__ (printf, 2, 3)));
 int	iobuf_vfqueue(struct iobuf *, const char *, va_list);
 int	iobuf_flush(struct iobuf *, int);
 int	iobuf_flush_tls(struct iobuf *, struct tls *);

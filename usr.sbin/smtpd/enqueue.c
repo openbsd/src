@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.119 2021/06/14 17:58:15 eric Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.120 2021/07/28 19:39:50 benno Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -39,7 +39,8 @@ static char *qualify_addr(char *);
 static void rcpt_add(char *);
 static int open_connection(void);
 static int get_responses(FILE *, int);
-static int send_line(FILE *, int, char *, ...);
+static int send_line(FILE *, int, char *, ...)
+    __attribute__((__format__ (printf, 3, 4)));
 static int enqueue_offline(int, char *[], FILE *, FILE *);
 static int savedeadletter(struct passwd *, FILE *);
 

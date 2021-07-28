@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.143 2021/06/14 17:58:15 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.144 2021/07/28 19:39:50 benno Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -131,8 +131,10 @@ static void mta_on_timeout(struct runq *, void *);
 static void mta_connect(struct mta_session *);
 static void mta_enter_state(struct mta_session *, int);
 static void mta_flush_task(struct mta_session *, int, const char *, size_t, int);
-static void mta_error(struct mta_session *, const char *, ...);
-static void mta_send(struct mta_session *, char *, ...);
+static void mta_error(struct mta_session *, const char *, ...)
+    __attribute__((__format__ (printf, 2, 3)));
+static void mta_send(struct mta_session *, char *, ...)
+    __attribute__((__format__ (printf, 2, 3)));
 static ssize_t mta_queue_data(struct mta_session *);
 static void mta_response(struct mta_session *, char *);
 static const char * mta_strstate(int);
