@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_policy_check.3,v 1.1 2021/07/27 13:27:46 schwarze Exp $
+.\" $OpenBSD: X509_policy_check.3,v 1.2 2021/07/28 13:39:20 schwarze Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 27 2021 $
+.Dd $Mdocdate: July 28 2021 $
 .Dt X509_POLICY_CHECK 3
 .Os
 .Sh NAME
@@ -50,6 +50,7 @@ The
 input argument contains the
 .Va user-initial-policy-set
 according to RFC 5280 section 6.1.1(c).
+It specifies a set of certificate policies acceptable to the certificate user.
 .Pp
 The
 .Fa flags
@@ -86,19 +87,16 @@ the last level corresponds to the target certificate.
 Level 0 is initialized to contain a single node with a
 .Fa valid_policy
 of
-.Sy anyPolicy ,
-an empty
-.Fa qualifier_set ,
-and an
-.Fa expected_policy_set
-containing only
-.Sy anyPolicy .
+.Sy anyPolicy
+and an empty
+.Fa qualifier_set .
 .Pp
-The storage location pointed to by
+Upon success and in some cases of failure, the storage location pointed to by
 .Fa pexplicit_policy
-is set as specified in RFC 5280 paragraphs 6.1.2(d), 6.1.4(h), 6.1.4(i),
-6.1.5(a), and 6.1.5(b).
-In case of failure, it may or may not get set, representing a partial result.
+is set to 1 if
+.Dv X509_V_FLAG_EXPLICIT_POLICY
+was requested.
+Otherwise, it is set to 0.
 .Sh RETURN VALUES
 .Fn X509_policy_check
 returns these values:
@@ -135,7 +133,7 @@ is set to
 .Dv NULL
 and
 .Pf * Fa pexplicit_policy
-may be set to 0 or to a partial result.
+may or may not be set.
 .It 1
 Validation succeeded and
 .Pf * Fa ptree
