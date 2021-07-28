@@ -8,6 +8,7 @@
 ./usr/bin/lex
 ./usr/bin/libtool
 ./usr/bin/lorder
+./usr/bin/objcopy
 ./usr/bin/objdump
 ./usr/bin/ranlib
 ./usr/bin/rpcgen

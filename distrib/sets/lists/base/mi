@@ -640,6 +640,10 @@
 ./usr/games
 ./usr/include
 ./usr/lib
+./usr/lib/crtbegin.o
+./usr/lib/crtbeginS.o
+./usr/lib/crtend.o
+./usr/lib/crtendS.o
 ./usr/lib/libagentx.so.1.0
 ./usr/lib/libc.so.96.1
 ./usr/lib/libcbor.so.1.0

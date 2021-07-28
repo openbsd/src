@@ -1836,8 +1836,8 @@
 ./usr/lib/clang/11.1.0/include/avxintrin.h
 ./usr/lib/clang/11.1.0/include/bmi2intrin.h
 ./usr/lib/clang/11.1.0/include/bmiintrin.h
-./usr/lib/clang/11.1.0/include/cetintrin.h
 ./usr/lib/clang/11.1.0/include/cet.h
+./usr/lib/clang/11.1.0/include/cetintrin.h
 ./usr/lib/clang/11.1.0/include/cldemoteintrin.h
 ./usr/lib/clang/11.1.0/include/clflushoptintrin.h
 ./usr/lib/clang/11.1.0/include/clwbintrin.h
