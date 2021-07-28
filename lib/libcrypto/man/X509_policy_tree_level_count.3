@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_policy_tree_level_count.3,v 1.2 2021/07/27 13:27:46 schwarze Exp $
+.\" $OpenBSD: X509_policy_tree_level_count.3,v 1.3 2021/07/28 13:47:21 schwarze Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 27 2021 $
+.Dd $Mdocdate: July 28 2021 $
 .Dt X509_POLICY_TREE_LEVEL_COUNT 3
 .Os
 .Sh NAME
@@ -65,6 +65,9 @@ or 0 if the
 .Fa tree
 argument is
 .Dv NULL .
+If it is not 0, it equals the number of certificates in the
+certification path the tree was created from, including both
+the target certificate and the trust anchor.
 .Pp
 .Fn X509_policy_tree_get0_level
 returns an internal pointer to the level of the
@@ -81,6 +84,10 @@ or the
 .Fa index
 is less than 0 or greater than or equal to the number of levels in the
 .Fa tree .
+An
+.Fa index
+of 0 corresponds to the trust anchor
+and the last level corresponds to the target certificate.
 .Pp
 .Fn X509_policy_level_node_count
 returns the number of nodes on the
@@ -121,9 +128,13 @@ if the
 .Fa node
 argument is
 .Dv NULL .
+It represents a single policy that is valid for the path
+from the trust anchor to the certificate corresponding
+to the level containing the
+.Fa node .
 .Pp
 .Fn X509_policy_node_get0_qualifiers
-returns an an internal pointer to the
+returns an internal pointer to the
 .Fa qualifier_set
 child object of the node or
 .Dv NULL
@@ -131,6 +142,12 @@ if the
 .Fa node
 argument is
 .Dv NULL .
+It contains the policy qualifiers associated with the
+.Fa valid_policy
+of the
+.Fa node
+in the certificate corresponding to the level containing the
+.Fa node .
 .Pp
 .Fn X509_policy_node_get0_parent
 returns
