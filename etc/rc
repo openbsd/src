@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.552 2021/07/22 18:29:47 deraadt Exp $
+#	$OpenBSD: rc,v 1.553 2021/07/28 20:48:36 deraadt Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -461,7 +461,7 @@ random_seed
 reorder_libs
 
 # If interface autoconf exists, pause a little for at least one default route
-if ifconfig | grep -q ': flags=.*<.*AUTOCONF.*> mtu'; then
+if ifconfig | grep -q ': flags=.*<.*AUTOCONF.*>'; then
 	count=0
 	while ((count++ < 20)); do
 		route -n show | grep -q ^default && break
