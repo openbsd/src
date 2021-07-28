@@ -1,4 +1,4 @@
-/*	$OpenBSD: deflate.c,v 1.5 2021/07/22 16:40:20 tb Exp $ */
+/*	$OpenBSD: deflate.c,v 1.6 2021/07/28 07:36:06 tb Exp $ */
 /* deflate.c -- compress data using the deflation algorithm
  * Copyright (C) 1995-2017 Jean-loup Gailly and Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
@@ -1083,7 +1083,7 @@ int ZEXPORT deflateEnd (strm)
     TRY_FREE(strm, strm->state->pending_buf, strm->state->pending_buf_size);
     TRY_FREE(strm, strm->state->head, strm->state->hash_size * sizeof(Pos));
     TRY_FREE(strm, strm->state->prev, strm->state->w_size * sizeof(Pos));
-    TRY_FREE(strm, strm->state->window, strm->state->w_size * 2 * sizeof(Pos));
+    TRY_FREE(strm, strm->state->window, strm->state->w_size * 2 * sizeof(Byte));
 
     ZFREE(strm, strm->state, sizeof(deflate_state));
     strm->state = Z_NULL;
