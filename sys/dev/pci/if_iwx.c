@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.77 2021/07/29 11:53:46 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.78 2021/07/29 11:56:21 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5296,6 +5296,15 @@ iwx_add_aux_sta(struct iwx_softc *sc)
 	struct iwx_add_sta_cmd cmd;
 	int err, qid = IWX_DQA_AUX_QUEUE;
 	uint32_t status;
+	uint8_t cmdver;
+
+	/*
+	 * ADD_STA command version >= 12 implies that firmware uses
+	 * an internal AUX station for scanning.
+	 */
+	cmdver = iwx_lookup_cmd_ver(sc, IWX_LONG_GROUP, IWX_ADD_STA);
+	if (cmdver != IWX_FW_CMD_VER_UNKNOWN && cmdver >= 12)
+		return 0;
 
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.sta_id = IWX_AUX_STA_ID;
