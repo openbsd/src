@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxvar.h,v 1.17 2021/06/30 09:46:46 stsp Exp $	*/
+/*	$OpenBSD: if_iwxvar.h,v 1.18 2021/07/29 11:50:37 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -123,7 +123,7 @@ struct iwx_tx_radiotap_header {
 	 (1 << IEEE80211_RADIOTAP_RATE) |				\
 	 (1 << IEEE80211_RADIOTAP_CHANNEL))
 
-#define IWX_UCODE_SECT_MAX 42
+#define IWX_UCODE_SECT_MAX 48
 #define IWX_FWDMASEGSZ (192*1024)
 #define IWX_FWDMASEGSZ_8000 (320*1024)
 /* sanity check value */
@@ -536,7 +536,7 @@ struct iwx_softc {
 	int sc_capa_n_scan_channels;
 	uint8_t sc_ucode_api[howmany(IWX_NUM_UCODE_TLV_API, NBBY)];
 	uint8_t sc_enabled_capa[howmany(IWX_NUM_UCODE_TLV_CAPA, NBBY)];
-#define IWX_MAX_FW_CMD_VERSIONS	64
+#define IWX_MAX_FW_CMD_VERSIONS	167
 	struct iwx_fw_cmd_version cmd_versions[IWX_MAX_FW_CMD_VERSIONS];
 	int n_cmd_versions;
 

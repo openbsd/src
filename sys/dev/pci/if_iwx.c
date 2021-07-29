@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.71 2021/07/26 14:15:40 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.72 2021/07/29 11:50:37 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -924,7 +924,7 @@ iwx_firmware_store_section(struct iwx_softc *sc, enum iwx_ucode_type type,
 
 #define IWX_DEFAULT_SCAN_CHANNELS	40
 /* Newer firmware might support more channels. Raise this value if needed. */
-#define IWX_MAX_SCAN_CHANNELS		52 /* as of 8265-34 firmware image */
+#define IWX_MAX_SCAN_CHANNELS		67 /* as of iwx-cc-a0-62 firmware */
 
 struct iwx_tlv_calib_data {
 	uint32_t ucode_type;
