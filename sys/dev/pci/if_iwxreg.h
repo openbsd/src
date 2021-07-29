@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.20 2021/07/29 11:49:53 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.21 2021/07/29 11:51:39 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -1233,6 +1233,12 @@ struct iwx_ucode_header {
 #define IWX_UCODE_TLV_FW_RECOVERY_INFO	57
 #define IWX_UCODE_TLV_FW_FMAC_RECOVERY_INFO 59
 #define IWX_UCODE_TLV_FW_FSEQ_VERSION	60
+#define IWX_UCODE_TLV_PHY_INTEGRATION_VERSION	61
+#define IWX_UCODE_TLV_PNVM_VERSION		62
+#define IWX_UCODE_TLV_PNVM_SKU			64
+
+#define IWX_UCODE_TLV_CONST_BASE		0x100
+#define IWX_UCODE_TLV_FW_NUM_STATIONS		(IWX_UCODE_TLV_CONST_BASE + 0)
 
 #define IWX_UCODE_TLV_DEBUG_BASE	0x1000005
 #define IWX_UCODE_TLV_TYPE_DEBUG_INFO		(IWX_UCODE_TLV_DEBUG_BASE + 0)

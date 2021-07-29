@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.73 2021/07/29 11:50:57 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.74 2021/07/29 11:51:39 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -1304,6 +1304,8 @@ iwx_read_firmware(struct iwx_softc *sc)
 			break;
 
 		case IWX_UCODE_TLV_FW_FSEQ_VERSION:
+		case IWX_UCODE_TLV_PHY_INTEGRATION_VERSION:
+		case IWX_UCODE_TLV_FW_NUM_STATIONS:
 			break;
 
 		/* undocumented TLVs found in iwx-cc-a0-46 image */
