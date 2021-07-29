@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.84 2021/07/29 12:01:04 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.85 2021/07/29 12:01:45 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -318,6 +318,8 @@ int	iwx_ampdu_rx_start(struct ieee80211com *, struct ieee80211_node *,
 void	iwx_ampdu_rx_stop(struct ieee80211com *, struct ieee80211_node *,
 	    uint8_t);
 void	iwx_rx_ba_session_expired(void *);
+void	iwx_rx_bar_frame_release(struct iwx_softc *, struct iwx_rx_packet *,
+	    struct iwx_rx_data *, struct mbuf_list *);
 void	iwx_reorder_timer_expired(void *);
 void	iwx_sta_rx_agg(struct iwx_softc *, struct ieee80211_node *, uint8_t,
 	    uint16_t, uint16_t, int, int);
@@ -2864,6 +2866,41 @@ iwx_rx_ba_session_expired(void *arg)
 		}
 	}
 	splx(s);
+}
+
+void
+iwx_rx_bar_frame_release(struct iwx_softc *sc, struct iwx_rx_packet *pkt,
+    struct iwx_rx_data *data, struct mbuf_list *ml)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211_node *ni = ic->ic_bss;
+	struct iwx_bar_frame_release *release = (void *)data;
+	struct iwx_reorder_buffer *buf;
+	struct iwx_rxba_data *rxba;
+	unsigned int baid, nssn, sta_id, tid;
+
+	if (iwx_rx_packet_payload_len(pkt) < sizeof(*release))
+		return;
+
+	baid = (le32toh(release->ba_info) & IWX_BAR_FRAME_RELEASE_BAID_MASK) >>
+	    IWX_BAR_FRAME_RELEASE_BAID_SHIFT;
+	if (baid == IWX_RX_REORDER_DATA_INVALID_BAID ||
+	    baid >= nitems(sc->sc_rxba_data))
+		return;
+
+	rxba = &sc->sc_rxba_data[baid];
+	if (rxba == NULL || rxba->baid == IWX_RX_REORDER_DATA_INVALID_BAID)
+		return;
+
+	tid = le32toh(release->sta_tid) & IWX_BAR_FRAME_RELEASE_TID_MASK;
+	sta_id = (le32toh(release->sta_tid) &
+	    IWX_BAR_FRAME_RELEASE_STA_MASK) >> IWX_BAR_FRAME_RELEASE_STA_SHIFT;
+	if (tid != rxba->tid || rxba->sta_id != IWX_STATION_ID)
+		return;
+
+	nssn = le32toh(release->ba_info) & IWX_BAR_FRAME_RELEASE_NSSN_MASK;
+	buf = &rxba->reorder_buf;
+	iwx_release_frames(sc, ni, rxba, buf, nssn, ml);
 }
 
 void
@@ -8523,6 +8560,10 @@ iwx_rx_pkt(struct iwx_softc *sc, struct iwx_rx_data *data, struct mbuf_list *ml)
 			}
  			break;
 		}
+
+		case IWX_BAR_FRAME_RELEASE:
+			iwx_rx_bar_frame_release(sc, pkt, data, ml);
+			break;
 
 		case IWX_TX_CMD:
 			iwx_rx_tx_cmd(sc, pkt, data);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.28 2021/07/29 12:00:30 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.29 2021/07/29 12:01:45 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -1580,6 +1580,8 @@ struct iwx_tx_queue_cfg_rsp {
 
 #define IWX_REPLY_RX_PHY_CMD	0xc0
 #define IWX_REPLY_RX_MPDU_CMD	0xc1
+#define IWX_BAR_FRAME_RELEASE	0xc2
+#define IWX_FRAME_RELEASE	0xc3
 #define IWX_BA_NOTIF		0xc5
 
 /* Location Aware Regulatory */
@@ -3316,6 +3318,43 @@ struct iwx_rx_mpdu_desc {
 	uint32_t reorder_data;
 	struct iwx_rx_mpdu_desc_v1 v1;
 } __packed;
+
+struct iwx_frame_release {
+	uint8_t baid;
+	uint8_t reserved;
+	uint16_t nssn;
+};
+
+/**
+ * enum iwx_bar_frame_release_sta_tid - STA/TID information for BAR release
+ * @IWX_BAR_FRAME_RELEASE_TID_MASK: TID mask
+ * @IWX_BAR_FRAME_RELEASE_STA_MASK: STA mask
+ */
+#define IWX_BAR_FRAME_RELEASE_TID_MASK	0x0000000f
+#define IWX_BAR_FRAME_RELEASE_STA_MASK	0x000001f0
+#define IWX_BAR_FRAME_RELEASE_STA_SHIFT	4
+
+/**
+ * enum iwx_bar_frame_release_ba_info - BA information for BAR release
+ * @IWL_BAR_FRAME_RELEASE_NSSN_MASK: NSSN mask
+ * @IWL_BAR_FRAME_RELEASE_SN_MASK: SN mask (ignored by driver)
+ * @IWL_BAR_FRAME_RELEASE_BAID_MASK: BAID mask
+ */
+#define IWX_BAR_FRAME_RELEASE_NSSN_MASK		0x00000fff
+#define IWX_BAR_FRAME_RELEASE_SN_MASK		0x00fff000
+#define IWX_BAR_FRAME_RELEASE_SN_SHIFT		12
+#define IWX_BAR_FRAME_RELEASE_BAID_MASK		0x3f000000
+#define IWX_BAR_FRAME_RELEASE_BAID_SHIFT	24
+
+/**
+ * struct iwx_bar_frame_release - frame release from BAR info
+ * @sta_tid: STA & TID information, see &enum iwx_bar_frame_release_sta_tid.
+ * @ba_info: BA information, see &enum iwx_bar_frame_release_ba_info.
+ */
+struct iwx_bar_frame_release {
+	uint32_t sta_tid;
+	uint32_t ba_info;
+} __packed; /* RX_BAR_TO_FRAME_RELEASE_API_S_VER_1 */
 
 /**
  * struct iwx_radio_version_notif - information on the radio version
