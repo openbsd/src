@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.24 2021/07/29 11:56:53 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.25 2021/07/29 11:57:33 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -5598,7 +5598,26 @@ struct iwx_scan_dwell {
 #define IWX_SCAN_HB_LMAC_IDX 1 /* high-band */
 
 /**
- * struct iwx_scan_config
+ * struct iwl_scan_config
+ * @enable_cam_mode: whether to enable CAM mode.
+ * @enable_promiscouos_mode: whether to enable promiscouos mode
+ * @bcast_sta_id: the index of the station in the fw. Deprecated starting with
+ *     API version 5.
+ * @reserved: reserved
+ * @tx_chains: valid_tx antenna - ANT_* definitions
+ * @rx_chains: valid_rx antenna - ANT_* definitions
+ */
+struct iwx_scan_config {
+	uint8_t enable_cam_mode;
+	uint8_t enable_promiscouos_mode;
+	uint8_t bcast_sta_id;
+	uint8_t reserved;
+	uint32_t tx_chains;
+	uint32_t rx_chains;
+} __packed; /* SCAN_CONFIG_DB_CMD_API_S_5 */
+
+/**
+ * struct iwx_scan_config_v2
  * @flags:			enum scan_config_flags
  * @tx_chains:			valid_tx antenna - ANT_* definitions
  * @rx_chains:			valid_rx antenna - ANT_* definitions
@@ -5615,7 +5634,7 @@ struct iwx_scan_dwell {
  *				scan_config_channel_flag
  * @channel_array:		default supported channels
  */
-struct iwx_scan_config {
+struct iwx_scan_config_v2 {
 	uint32_t flags;
 	uint32_t tx_chains;
 	uint32_t rx_chains;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.79 2021/07/29 11:56:53 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.80 2021/07/29 11:57:33 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -392,6 +392,7 @@ int	iwx_add_sta_cmd(struct iwx_softc *, struct iwx_node *, int);
 int	iwx_add_aux_sta(struct iwx_softc *);
 int	iwx_rm_sta_cmd(struct iwx_softc *, struct iwx_node *);
 int	iwx_fill_probe_req(struct iwx_softc *, struct iwx_scan_probe_req *);
+int	iwx_config_umac_scan_reduced(struct iwx_softc *);
 int	iwx_config_umac_scan(struct iwx_softc *);
 int	iwx_umac_scan(struct iwx_softc *, int);
 void	iwx_mcc_update(struct iwx_softc *, struct iwx_mcc_chub_notif *);
@@ -5593,10 +5594,48 @@ iwx_fill_probe_req(struct iwx_softc *sc, struct iwx_scan_probe_req *preq)
 }
 
 int
+iwx_config_umac_scan_reduced(struct iwx_softc *sc)
+{
+	struct iwx_scan_config scan_cfg;
+	struct iwx_host_cmd hcmd = {
+		.id = iwx_cmd_id(IWX_SCAN_CFG_CMD, IWX_LONG_GROUP, 0),
+		.len[0] = sizeof(scan_cfg),
+		.data[0] = &scan_cfg,
+		.flags = 0,
+	};
+	int cmdver;
+
+	memset(&scan_cfg, 0, sizeof(scan_cfg));
+
+	/*
+	 * ADD_STA command version >= 12 implies that firmware uses
+	 * an internal AUX station for scanning.
+	 */
+	cmdver = iwx_lookup_cmd_ver(sc, IWX_LONG_GROUP, IWX_ADD_STA);
+	if (cmdver == IWX_FW_CMD_VER_UNKNOWN || cmdver < 12)
+		scan_cfg.bcast_sta_id = IWX_AUX_STA_ID;
+	else {
+		/*
+		 * SCAN_CFG version >= 5 implies that the broadcast
+		 * STA ID field is deprecated.
+		 */
+		cmdver = iwx_lookup_cmd_ver(sc, IWX_LONG_GROUP,
+		    IWX_SCAN_CFG_CMD);
+		if (cmdver == IWX_FW_CMD_VER_UNKNOWN || cmdver < 5)
+			scan_cfg.bcast_sta_id = 0xff;
+	}
+
+	scan_cfg.tx_chains = htole32(iwx_fw_valid_tx_ant(sc));
+	scan_cfg.rx_chains = htole32(iwx_fw_valid_rx_ant(sc));
+
+	return iwx_send_cmd(sc, &hcmd);
+}
+
+int
 iwx_config_umac_scan(struct iwx_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct iwx_scan_config *scan_config;
+	struct iwx_scan_config_v2 *scan_config;
 	int err, nchan;
 	size_t cmd_size;
 	struct ieee80211_channel *c;
@@ -5611,6 +5650,9 @@ iwx_config_umac_scan(struct iwx_softc *sc)
 	    IWX_SCAN_CONFIG_RATE_18M | IWX_SCAN_CONFIG_RATE_24M |
 	    IWX_SCAN_CONFIG_RATE_36M | IWX_SCAN_CONFIG_RATE_48M |
 	    IWX_SCAN_CONFIG_RATE_54M);
+
+	if (isset(sc->sc_ucode_api, IWX_UCODE_TLV_API_REDUCED_SCAN_CONFIG))
+		return iwx_config_umac_scan_reduced(sc);
 
 	cmd_size = sizeof(*scan_config) + sc->sc_capa_n_scan_channels;
 
