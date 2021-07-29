@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.177 2021/07/04 15:58:51 kn Exp $
+.\"	$OpenBSD: mdoc.7,v 1.178 2021/07/29 16:23:43 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013-2020 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 4 2021 $
+.Dd $Mdocdate: July 29 2021 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -1581,19 +1581,25 @@ and
 .It Ic \&Fl Op Ar word ...
 Command-line flag or option.
 Used when listing arguments to command-line utilities.
-Prints a fixed-width hyphen
-.Sq \-
-directly followed by each argument.
-If no arguments are provided, a hyphen is printed followed by a space.
-If the argument is a macro, a hyphen is prefixed to the subsequent macro
-output.
+For each argument, prints an ASCII hyphen-minus character
+.Sq \- ,
+immediately followed by the argument.
+If no arguments are provided, a hyphen-minus is printed followed by a space.
+If the argument is a macro, a hyphen-minus is prefixed
+to the subsequent macro output.
 .Pp
 Examples:
-.Dl ".Fl R Op Fl H | L | P"
-.Dl ".Op Fl 1AaCcdFfgHhikLlmnopqRrSsTtux"
-.Dl ".Fl type Cm d Fl name Pa CVS"
-.Dl ".Fl Ar signal_number"
-.Dl ".Fl o Fl"
+.Dl ".Nm du Op Fl H | L | P"
+.Dl ".Nm ls Op Fl 1AaCcdFfgHhikLlmnopqRrSsTtux"
+.Dl ".Nm route Cm add Fl inet Ar destination gateway"
+.Dl ".Nm locate.updatedb Op Fl \e-fcodes Ns = Ns Ar dbfile"
+.Dl ".Nm aucat Fl o Fl"
+.Dl ".Nm kill Fl Ar signal_number"
+.Pp
+For GNU-sytle long options, escaping the additional hyphen-minus is not
+strictly required, but may be safer with future versions of GNU troff; see
+.Xr mandoc_char 7
+for details.
 .Pp
 See also
 .Ic \&Cm .
