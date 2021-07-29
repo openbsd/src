@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.83 2021/07/29 12:00:30 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.84 2021/07/29 12:01:04 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5026,7 +5026,7 @@ iwx_tx(struct iwx_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 	 * Tx aggregation will require additional queues (one queue per TID
 	 * for which aggregation is enabled) but we do not implement this yet.
 	 */
-	ring = &sc->txq[ac + IWX_DQA_AUX_QUEUE + 1];
+	ring = &sc->txq[ac + sc->first_data_qid];
 	desc = &ring->desc[ring->cur];
 	memset(desc, 0, sizeof(*desc));
 	data = &ring->data[ring->cur];
@@ -6607,19 +6607,31 @@ iwx_scan_abort(struct iwx_softc *sc)
 int
 iwx_enable_data_tx_queues(struct iwx_softc *sc)
 {
-	int err, ac;
+	int err, ac, cmdver;
+
+	/*
+	 * ADD_STA command version >= 12 implies that firmware uses
+	 * an internal AUX station for scanning. We do not configure
+	 * an AUX Tx queue in this case and data queue indices assigned
+	 * by firmware shift upwards accordingly.
+	 */
+	cmdver = iwx_lookup_cmd_ver(sc, IWX_LONG_GROUP, IWX_ADD_STA);
+	if (cmdver != IWX_FW_CMD_VER_UNKNOWN && cmdver >= 12)
+		sc->first_data_qid = IWX_DQA_CMD_QUEUE + 1;
+	else
+		sc->first_data_qid = IWX_DQA_AUX_QUEUE + 1;
 
 	for (ac = 0; ac < EDCA_NUM_AC; ac++) {
-		int qid = ac + IWX_DQA_AUX_QUEUE + 1;
+		int qid = ac + sc->first_data_qid;
 		/*
 		 * Regular data frames use the "MGMT" TID and queue.
 		 * Other TIDs and queues are reserved for frame aggregation.
 		 */
-		err = iwx_enable_txq(sc, IWX_STATION_ID, qid, IWX_TID_NON_QOS,
+		err = iwx_enable_txq(sc, IWX_STATION_ID, qid, IWX_MGMT_TID,
 		    IWX_TX_RING_COUNT);
 		if (err) {
 			printf("%s: could not enable Tx queue %d (error %d)\n",
-			    DEVNAME(sc), ac, err);
+			    DEVNAME(sc), qid, err);
 			return err;
 		}
 	}
