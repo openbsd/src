@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.26 2021/07/29 11:57:59 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.27 2021/07/29 11:58:35 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -1655,6 +1655,10 @@ struct iwx_tx_queue_cfg_rsp {
 #define IWX_INIT_EXTENDED_CFG_CMD	0x03
 #define IWX_FW_ERROR_RECOVERY_CMD	0x07
 
+/* MAC_CONF group subcommand IDs */
+#define IWX_SESSION_PROTECTION_CMD	0x05
+#define IWX_SESSION_PROTECTION_NOTIF	0xfb
+
 /* DATA_PATH group subcommand IDs */
 #define IWX_DQA_ENABLE_CMD	0x00
 #define IWX_TLC_MNG_CONFIG_CMD	0x0f
@@ -2784,6 +2788,86 @@ struct iwx_time_event_notif {
 	uint32_t action;
 	uint32_t status;
 } __packed; /* IWX_MAC_TIME_EVENT_NTFY_API_S_VER_1 */
+
+/**
+ * enum iwx_session_prot_conf_id - session protection's configurations
+ * @SESSION_PROTECT_CONF_ASSOC: Start a session protection for association.
+ *	The firmware will allocate two events.
+ *	Valid for BSS_STA and P2P_STA.
+ *	* A rather short event that can't be fragmented and with a very
+ *	high priority. If every goes well (99% of the cases) the
+ *	association should complete within this first event. During
+ *	that event, no other activity will happen in the firmware,
+ *	which is why it can't be too long.
+ *	The length of this event is hard-coded in the firmware: 300TUs.
+ *	* Another event which can be much longer (it's duration is
+ *	configurable by the driver) which has a slightly lower
+ *	priority and that can be fragmented allowing other activities
+ *	to run while this event is running.
+ *	The firmware will automatically remove both events once the driver sets
+ *	the BSS MAC as associated. Neither of the events will be removed
+ *	for the P2P_STA MAC.
+ *	Only the duration is configurable for this protection.
+ * @SESSION_PROTECT_CONF_GO_CLIENT_ASSOC: not used
+ * @SESSION_PROTECT_CONF_P2P_DEVICE_DISCOV: Schedule the P2P Device to be in
+ *	listen mode. Will be fragmented. Valid only on the P2P Device MAC.
+ *	Valid only on the P2P Device MAC. The firmware will take into account
+ *	the duration, the interval and the repetition count.
+ * @SESSION_PROTECT_CONF_P2P_GO_NEGOTIATION: Schedule the P2P Device to be be
+ *	able to run the GO Negotiation. Will not be fragmented and not
+ *	repetitive. Valid only on the P2P Device MAC. Only the duration will
+ *	be taken into account.
+ * @SESSION_PROTECT_CONF_MAX_ID: not used
+ */
+enum iwx_session_prot_conf_id {
+	IWX_SESSION_PROTECT_CONF_ASSOC,
+	IWX_SESSION_PROTECT_CONF_GO_CLIENT_ASSOC,
+	IWX_SESSION_PROTECT_CONF_P2P_DEVICE_DISCOV,
+	IWX_SESSION_PROTECT_CONF_P2P_GO_NEGOTIATION,
+	IWX_SESSION_PROTECT_CONF_MAX_ID,
+}; /* SESSION_PROTECTION_CONF_ID_E_VER_1 */
+
+/**
+ * struct iwx_session_prot_cmd - configure a session protection
+ * @id_and_color: the id and color of the mac for which this session protection
+ *	is sent
+ * @action: can be either FW_CTXT_ACTION_ADD or FW_CTXT_ACTION_REMOVE
+ * @conf_id: see &enum iwx_mvm_session_prot_conf_id
+ * @duration_tu: the duration of the whole protection in TUs.
+ * @repetition_count: not used
+ * @interval: not used
+ *
+ * Note: the session protection will always be scheduled to start as
+ * early as possible, but the maximum delay is configuration dependent.
+ * The firmware supports only one concurrent session protection per vif.
+ * Adding a new session protection will remove any currently running session.
+ */
+struct iwx_session_prot_cmd {
+	/* COMMON_INDEX_HDR_API_S_VER_1 hdr */
+	uint32_t id_and_color;
+	uint32_t action;
+	uint32_t conf_id;
+	uint32_t duration_tu;
+	uint32_t repetition_count;
+	uint32_t interval;
+} __packed; /* SESSION_PROTECTION_CMD_API_S_VER_1 */
+
+/**
+ * struct iwx_session_prot_notif - session protection started / ended
+ * @mac_id: the mac id for which the session protection started / ended
+ * @status: 1 means success, 0 means failure
+ * @start: 1 means the session protection started, 0 means it ended
+ * @conf_id: see &enum iwx_mvm_session_prot_conf_id
+ *
+ * Note that any session protection will always get two notifications: start
+ * and end even the firmware could not schedule it.
+ */
+struct iwx_session_prot_notif {
+	uint32_t mac_id;
+	uint32_t status;
+	uint32_t start;
+	uint32_t conf_id;
+} __packed; /* SESSION_PROTECTION_NOTIFICATION_API_S_VER_2 */
 
 
 /* Bindings and Time Quota */

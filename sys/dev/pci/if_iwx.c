@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.81 2021/07/29 11:57:59 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.82 2021/07/29 11:58:35 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -298,6 +298,8 @@ int	iwx_nic_rx_init(struct iwx_softc *);
 int	iwx_nic_init(struct iwx_softc *);
 int	iwx_enable_txq(struct iwx_softc *, int, int, int, int);
 void	iwx_post_alive(struct iwx_softc *);
+int	iwx_schedule_session_protection(struct iwx_softc *, struct iwx_node *,
+	    uint32_t);
 void	iwx_protect_session(struct iwx_softc *, struct iwx_node *, uint32_t,
 	    uint32_t);
 void	iwx_unprotect_session(struct iwx_softc *, struct iwx_node *);
@@ -2595,6 +2597,23 @@ iwx_send_time_event_cmd(struct iwx_softc *sc,
 out:
 	iwx_free_resp(sc, &hcmd);
 	return err;
+}
+
+int
+iwx_schedule_session_protection(struct iwx_softc *sc, struct iwx_node *in,
+    uint32_t duration)
+{
+	struct iwx_session_prot_cmd cmd = {
+		.id_and_color = htole32(IWX_FW_CMD_ID_AND_COLOR(in->in_id,
+		    in->in_color)),
+		.action = htole32(IWX_FW_CTXT_ACTION_ADD),
+		.conf_id = htole32(IWX_SESSION_PROTECT_CONF_ASSOC),
+		.duration_tu = htole32(duration * IEEE80211_DUR_TU),
+	};
+	uint32_t cmd_id;
+
+	cmd_id = iwx_cmd_id(IWX_SESSION_PROTECTION_CMD, IWX_MAC_CONF_GROUP, 0);
+	return iwx_send_cmd_pdu(sc, cmd_id, 0, sizeof(cmd), &cmd);
 }
 
 void
@@ -6835,9 +6854,12 @@ iwx_auth(struct iwx_softc *sc)
 		duration = in->in_ni.ni_intval * 2;
 	else
 		duration = IEEE80211_DUR_TU; 
-	iwx_protect_session(sc, in, duration, in->in_ni.ni_intval / 2);
+	if (isset(sc->sc_enabled_capa, IWX_UCODE_TLV_CAPA_SESSION_PROT_CMD))
+		err = iwx_schedule_session_protection(sc, in, duration);
+	else
+		iwx_protect_session(sc, in, duration, in->in_ni.ni_intval / 2);
 
-	return 0;
+	return err;
 
 rm_sta:
 	if (generation == sc->sc_generation) {
@@ -8575,6 +8597,8 @@ iwx_rx_pkt(struct iwx_softc *sc, struct iwx_rx_data *data, struct mbuf_list *ml)
 			break;
 		}
 
+		case IWX_WIDE_ID(IWX_MAC_CONF_GROUP,
+		    IWX_SESSION_PROTECTION_CMD):
 		case IWX_WIDE_ID(IWX_REGULATORY_AND_NVM_GROUP,
 		    IWX_NVM_GET_INFO):
 		case IWX_ADD_STA_KEY:
@@ -8673,6 +8697,10 @@ iwx_rx_pkt(struct iwx_softc *sc, struct iwx_rx_data *data, struct mbuf_list *ml)
 				sc->sc_flags &= ~IWX_FLAG_TE_ACTIVE;
 			break;
 		}
+
+		case IWX_WIDE_ID(IWX_MAC_CONF_GROUP,
+		    IWX_SESSION_PROTECTION_NOTIF):
+			break;
 
 		case IWX_WIDE_ID(IWX_SYSTEM_GROUP,
 		    IWX_FSEQ_VER_MISMATCH_NOTIFICATION):
