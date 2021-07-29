@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.22 2021/07/29 11:52:11 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.23 2021/07/29 11:53:46 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -6596,7 +6596,7 @@ struct iwx_cmd_header_wide {
 #define IWX_POWER_SCHEME_LP	3
 
 #define IWX_DEF_CMD_PAYLOAD_SIZE 320
-#define IWX_MAX_CMD_PAYLOAD_SIZE ((4096 - 4) - sizeof(struct iwx_cmd_header))
+#define IWX_MAX_CMD_PAYLOAD_SIZE (4096 - sizeof(struct iwx_cmd_header_wide))
 #define IWX_CMD_FAILED_MSK 0x40
 
 /**

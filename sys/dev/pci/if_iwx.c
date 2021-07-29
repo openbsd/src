@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.76 2021/07/29 11:52:58 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.77 2021/07/29 11:53:46 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -4581,13 +4581,9 @@ iwx_send_cmd(struct iwx_softc *sc, struct iwx_host_cmd *hcmd)
 		txdata->flags &= ~IWX_TXDATA_FLAG_CMD_IS_NARROW;
 
 	group_id = iwx_cmd_groupid(code);
-	if (group_id != 0) {
-		hdrlen = sizeof(cmd->hdr_wide);
-		datasz = sizeof(cmd->data_wide);
-	} else {
-		hdrlen = sizeof(cmd->hdr);
-		datasz = sizeof(cmd->data);
-	}
+
+	hdrlen = sizeof(cmd->hdr_wide);
+	datasz = sizeof(cmd->data_wide);
 
 	if (paylen > datasz) {
 		/* Command is too large to fit in pre-allocated space. */
@@ -4621,21 +4617,14 @@ iwx_send_cmd(struct iwx_softc *sc, struct iwx_host_cmd *hcmd)
 		paddr = txdata->cmd_paddr;
 	}
 
-	if (group_id != 0) {
-		cmd->hdr_wide.opcode = iwx_cmd_opcode(code);
-		cmd->hdr_wide.group_id = group_id;
-		cmd->hdr_wide.qid = ring->qid;
-		cmd->hdr_wide.idx = idx;
-		cmd->hdr_wide.length = htole16(paylen);
-		cmd->hdr_wide.version = iwx_cmd_version(code);
-		data = cmd->data_wide;
-	} else {
-		cmd->hdr.code = code;
-		cmd->hdr.flags = 0;
-		cmd->hdr.qid = ring->qid;
-		cmd->hdr.idx = idx;
-		data = cmd->data;
-	}
+	memset(cmd, 0, sizeof(*cmd));
+	cmd->hdr_wide.opcode = iwx_cmd_opcode(code);
+	cmd->hdr_wide.group_id = group_id;
+	cmd->hdr_wide.qid = ring->qid;
+	cmd->hdr_wide.idx = idx;
+	cmd->hdr_wide.length = htole16(paylen);
+	cmd->hdr_wide.version = iwx_cmd_version(code);
+	data = cmd->data_wide;
 
 	for (i = 0, off = 0; i < nitems(hcmd->data); i++) {
 		if (hcmd->len[i] == 0)
@@ -4645,10 +4634,17 @@ iwx_send_cmd(struct iwx_softc *sc, struct iwx_host_cmd *hcmd)
 	}
 	KASSERT(off == paylen);
 
-	desc->tbs[0].tb_len = htole16(hdrlen + paylen);
-	addr = htole64((uint64_t)paddr);
+	desc->tbs[0].tb_len = htole16(MIN(hdrlen + paylen, IWX_FIRST_TB_SIZE));
+	addr = htole64(paddr);
 	memcpy(&desc->tbs[0].addr, &addr, sizeof(addr));
-	desc->num_tbs = 1;
+	if (hdrlen + paylen > IWX_FIRST_TB_SIZE) {
+		desc->tbs[1].tb_len = htole16(hdrlen + paylen -
+		    IWX_FIRST_TB_SIZE);
+		addr = htole64(paddr + IWX_FIRST_TB_SIZE);
+		memcpy(&desc->tbs[1].addr, &addr, sizeof(addr));
+		desc->num_tbs = htole16(2);
+	} else
+		desc->num_tbs = htole16(1);
 
 	if (paylen > datasz) {
 		bus_dmamap_sync(sc->sc_dmat, txdata->map, 0,
