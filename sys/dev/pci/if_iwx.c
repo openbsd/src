@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.80 2021/07/29 11:57:33 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.81 2021/07/29 11:57:59 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -394,6 +394,14 @@ int	iwx_rm_sta_cmd(struct iwx_softc *, struct iwx_node *);
 int	iwx_fill_probe_req(struct iwx_softc *, struct iwx_scan_probe_req *);
 int	iwx_config_umac_scan_reduced(struct iwx_softc *);
 int	iwx_config_umac_scan(struct iwx_softc *);
+uint16_t iwx_scan_umac_flags_v2(struct iwx_softc *, int);
+void	iwx_scan_umac_dwell_v10(struct iwx_softc *,
+	    struct iwx_scan_general_params_v10 *, int);
+void	iwx_scan_umac_fill_general_p_v10(struct iwx_softc *,
+	    struct iwx_scan_general_params_v10 *, uint16_t, int);
+void	iwx_scan_umac_fill_ch_p_v6(struct iwx_softc *,
+	    struct iwx_scan_channel_params_v6 *, uint32_t, int, int);
+int	iwx_umac_scan_v14(struct iwx_softc *, int);
 int	iwx_umac_scan(struct iwx_softc *, int);
 void	iwx_mcc_update(struct iwx_softc *, struct iwx_mcc_chub_notif *);
 uint8_t	iwx_ridx2rate(struct ieee80211_rateset *, int);
@@ -5438,7 +5446,8 @@ iwx_rm_sta_cmd(struct iwx_softc *sc, struct iwx_node *in)
 
 uint8_t
 iwx_umac_scan_fill_channels(struct iwx_softc *sc,
-    struct iwx_scan_channel_cfg_umac *chan, int n_ssids, int bgscan)
+    struct iwx_scan_channel_cfg_umac *chan, size_t chan_nitems,
+    int n_ssids, int bgscan)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_channel *c;
@@ -5446,6 +5455,7 @@ iwx_umac_scan_fill_channels(struct iwx_softc *sc,
 
 	for (nchan = 0, c = &ic->ic_channels[1];
 	    c <= &ic->ic_channels[IEEE80211_CHAN_MAX] &&
+	    nchan < chan_nitems &&
 	    nchan < sc->sc_capa_n_scan_channels;
 	    c++) {
 		uint8_t channel_num;
@@ -5764,6 +5774,25 @@ iwx_get_scan_req_umac_data(struct iwx_softc *sc, struct iwx_scan_req_umac *req)
 
 }
 
+uint16_t
+iwx_scan_umac_flags_v2(struct iwx_softc *sc, int bgscan)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	uint16_t flags = 0;
+
+	if (ic->ic_des_esslen == 0)
+		flags |= IWX_UMAC_SCAN_GEN_FLAGS_V2_FORCE_PASSIVE;
+
+	flags |= IWX_UMAC_SCAN_GEN_FLAGS_V2_PASS_ALL;
+	flags |= IWX_UMAC_SCAN_GEN_FLAGS_V2_NTFY_ITER_COMPLETE;
+	flags |= IWX_UMAC_SCAN_GEN_FLAGS_V2_ADAPTIVE_DWELL;
+
+	return flags;
+}
+
+#define IWX_SCAN_DWELL_ACTIVE		10
+#define IWX_SCAN_DWELL_PASSIVE		110
+
 /* adaptive dwell max budget time [TU] for full scan */
 #define IWX_SCAN_ADWELL_MAX_BUDGET_FULL_SCAN 300
 /* adaptive dwell max budget time [TU] for directed scan */
@@ -5774,6 +5803,143 @@ iwx_get_scan_req_umac_data(struct iwx_softc *sc, struct iwx_scan_req_umac *req)
 #define IWX_SCAN_ADWELL_DEFAULT_LB_N_APS 2
 /* adaptive dwell default APs number in social channels (1, 6, 11) */
 #define IWX_SCAN_ADWELL_DEFAULT_N_APS_SOCIAL 10
+/* adaptive dwell number of APs override for p2p friendly GO channels */
+#define IWX_SCAN_ADWELL_N_APS_GO_FRIENDLY 10
+/* adaptive dwell number of APs override for social channels */
+#define IWX_SCAN_ADWELL_N_APS_SOCIAL_CHS 2
+
+void
+iwx_scan_umac_dwell_v10(struct iwx_softc *sc,
+    struct iwx_scan_general_params_v10 *general_params, int bgscan)
+{
+	uint32_t suspend_time, max_out_time;
+	uint8_t active_dwell, passive_dwell;
+
+	active_dwell = IWX_SCAN_DWELL_ACTIVE;
+	passive_dwell = IWX_SCAN_DWELL_PASSIVE;
+
+	general_params->adwell_default_social_chn =
+		IWX_SCAN_ADWELL_DEFAULT_N_APS_SOCIAL;
+	general_params->adwell_default_2g = IWX_SCAN_ADWELL_DEFAULT_LB_N_APS;
+	general_params->adwell_default_5g = IWX_SCAN_ADWELL_DEFAULT_HB_N_APS;
+
+	if (bgscan)
+		general_params->adwell_max_budget =
+			htole16(IWX_SCAN_ADWELL_MAX_BUDGET_DIRECTED_SCAN);
+	else
+		general_params->adwell_max_budget =
+			htole16(IWX_SCAN_ADWELL_MAX_BUDGET_FULL_SCAN);
+
+	general_params->scan_priority = htole32(IWX_SCAN_PRIORITY_EXT_6);
+	if (bgscan) {
+		max_out_time = htole32(120);
+		suspend_time = htole32(120);
+	} else {
+		max_out_time = htole32(0);
+		suspend_time = htole32(0);
+	}
+	general_params->max_out_of_time[IWX_SCAN_LB_LMAC_IDX] =
+		htole32(max_out_time);
+	general_params->suspend_time[IWX_SCAN_LB_LMAC_IDX] =
+		htole32(suspend_time);
+	general_params->max_out_of_time[IWX_SCAN_HB_LMAC_IDX] =
+		htole32(max_out_time);
+	general_params->suspend_time[IWX_SCAN_HB_LMAC_IDX] =
+		htole32(suspend_time);
+
+	general_params->active_dwell[IWX_SCAN_LB_LMAC_IDX] = active_dwell;
+	general_params->passive_dwell[IWX_SCAN_LB_LMAC_IDX] = passive_dwell;
+	general_params->active_dwell[IWX_SCAN_HB_LMAC_IDX] = active_dwell;
+	general_params->passive_dwell[IWX_SCAN_HB_LMAC_IDX] = passive_dwell;
+}
+
+void
+iwx_scan_umac_fill_general_p_v10(struct iwx_softc *sc,
+    struct iwx_scan_general_params_v10 *gp, uint16_t gen_flags, int bgscan)
+{
+	iwx_scan_umac_dwell_v10(sc, gp, bgscan);
+
+	gp->flags = htole16(gen_flags);
+
+	if (gen_flags & IWX_UMAC_SCAN_GEN_FLAGS_V2_FRAGMENTED_LMAC1)
+		gp->num_of_fragments[IWX_SCAN_LB_LMAC_IDX] = 3;
+	if (gen_flags & IWX_UMAC_SCAN_GEN_FLAGS_V2_FRAGMENTED_LMAC2)
+		gp->num_of_fragments[IWX_SCAN_HB_LMAC_IDX] = 3;
+
+	gp->scan_start_mac_id = 0;
+}
+
+void
+iwx_scan_umac_fill_ch_p_v6(struct iwx_softc *sc,
+    struct iwx_scan_channel_params_v6 *cp, uint32_t channel_cfg_flags,
+    int n_ssid, int bgscan)
+{
+	cp->flags = IWX_SCAN_CHANNEL_FLAG_ENABLE_CHAN_ORDER;
+
+	cp->count = iwx_umac_scan_fill_channels(sc, cp->channel_config,
+	    nitems(cp->channel_config), n_ssid, bgscan);
+
+	cp->n_aps_override[0] = IWX_SCAN_ADWELL_N_APS_GO_FRIENDLY;
+	cp->n_aps_override[1] = IWX_SCAN_ADWELL_N_APS_SOCIAL_CHS;
+}
+
+int
+iwx_umac_scan_v14(struct iwx_softc *sc, int bgscan)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct iwx_host_cmd hcmd = {
+		.id = iwx_cmd_id(IWX_SCAN_REQ_UMAC, IWX_LONG_GROUP, 0),
+		.len = { 0, },
+		.data = { NULL, },
+		.flags = 0,
+	};
+	struct iwx_scan_req_umac_v14 *cmd;
+	struct iwx_scan_req_params_v14 *scan_p;
+	int err, async = bgscan, n_ssid = 0;
+	uint16_t gen_flags;
+	uint32_t bitmap_ssid = 0;
+
+	cmd = malloc(sizeof(*cmd), M_DEVBUF,
+	    (async ? M_NOWAIT : M_WAIT) | M_CANFAIL | M_ZERO);
+	if (cmd == NULL)
+		return ENOMEM;
+
+	scan_p = &cmd->scan_params;
+
+	cmd->ooc_priority = htole32(IWX_SCAN_PRIORITY_EXT_6);
+	cmd->uid = htole32(0);
+
+	gen_flags = iwx_scan_umac_flags_v2(sc, bgscan);
+	iwx_scan_umac_fill_general_p_v10(sc, &scan_p->general_params,
+	    gen_flags, bgscan);
+
+	scan_p->periodic_params.schedule[0].interval = htole16(0);
+	scan_p->periodic_params.schedule[0].iter_count = 1;
+
+	err = iwx_fill_probe_req(sc, &scan_p->probe_params.preq);
+	if (err)
+		return err;
+
+	if (ic->ic_des_esslen != 0) {
+		scan_p->probe_params.direct_scan[0].id = IEEE80211_ELEMID_SSID;
+		scan_p->probe_params.direct_scan[0].len = ic->ic_des_esslen;
+		memcpy(scan_p->probe_params.direct_scan[0].ssid,
+		    ic->ic_des_essid, ic->ic_des_esslen);
+		bitmap_ssid |= (1 << 0);
+		n_ssid = 1;
+	}
+
+	iwx_scan_umac_fill_ch_p_v6(sc, &scan_p->channel_params, bitmap_ssid,
+	    n_ssid, bgscan);
+
+	hcmd.len[0] = sizeof(*cmd);
+	hcmd.data[0] = (void *)cmd;
+	hcmd.flags |= async ? IWX_CMD_ASYNC : 0;
+
+	err = iwx_send_cmd(sc, &hcmd);
+	free(cmd, M_DEVBUF, sizeof(*cmd));
+	return err;
+}
 
 int
 iwx_umac_scan(struct iwx_softc *sc, int bgscan)
@@ -5792,6 +5958,11 @@ iwx_umac_scan(struct iwx_softc *sc, int bgscan)
 	struct iwx_scan_umac_chan_param *chanparam;
 	size_t req_len;
 	int err, async = bgscan;
+	int cmdver;
+
+	cmdver = iwx_lookup_cmd_ver(sc, IWX_LONG_GROUP, IWX_SCAN_REQ_UMAC);
+	if (cmdver == 14)
+		return iwx_umac_scan_v14(sc, bgscan);
 
 	req_len = iwx_umac_scan_size(sc);
 	if ((req_len < IWX_SCAN_REQ_UMAC_SIZE_V1 +
@@ -5865,6 +6036,7 @@ iwx_umac_scan(struct iwx_softc *sc, int bgscan)
 	chanparam = iwx_get_scan_req_umac_chan_param(sc, req);
 	chanparam->count = iwx_umac_scan_fill_channels(sc,
 	    (struct iwx_scan_channel_cfg_umac *)cmd_data,
+	    sc->sc_capa_n_scan_channels,
 	    ic->ic_des_esslen != 0, bgscan);
 	chanparam->flags = 0;
 

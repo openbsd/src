@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.25 2021/07/29 11:57:33 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.26 2021/07/29 11:57:59 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -5412,6 +5412,10 @@ struct iwx_scan_probe_req {
 #define IWX_SCAN_CHANNEL_FLAG_EBS		(1 << 0)
 #define IWX_SCAN_CHANNEL_FLAG_EBS_ACCURATE	(1 << 1)
 #define IWX_SCAN_CHANNEL_FLAG_CACHE_ADD		(1 << 2)
+#define IWX_SCAN_CHANNEL_FLAG_EBS_FRAG		(1 << 3)
+#define IWX_SCAN_CHANNEL_FLAG_FORCE_EBS		(1 << 4)
+#define IWX_SCAN_CHANNEL_FLAG_ENABLE_CHAN_ORDER	(1 << 5)
+#define IWX_SCAN_CHANNEL_FLAG_6G_PSC_NO_FILTER	(1 << 6)
 
 /* iwx_scan_channel_opt - CHANNEL_OPTIMIZATION_API_S
  * @flags: enum iwx_scan_channel_flags
@@ -5428,6 +5432,17 @@ struct iwx_scan_channel_opt {
 #define IWX_SCAN_PRIORITY_LOW		0
 #define IWX_SCAN_PRIORITY_MEDIUM	1
 #define IWX_SCAN_PRIORITY_HIGH		2
+
+enum iwx_scan_priority_ext {
+	IWX_SCAN_PRIORITY_EXT_0_LOWEST,
+	IWX_SCAN_PRIORITY_EXT_1,
+	IWX_SCAN_PRIORITY_EXT_2,
+	IWX_SCAN_PRIORITY_EXT_3,
+	IWX_SCAN_PRIORITY_EXT_4,
+	IWX_SCAN_PRIORITY_EXT_5,
+	IWX_SCAN_PRIORITY_EXT_6,
+	IWX_SCAN_PRIORITY_EXT_7_HIGHEST,
+};
 
 /**
  * iwx_scan_offload_complete - PERIODIC_SCAN_COMPLETE_NTF_API_S_VER_2
@@ -5933,6 +5948,125 @@ struct iwx_scan_req_umac {
 #define IWX_SCAN_REQ_UMAC_SIZE_V7 48
 #define IWX_SCAN_REQ_UMAC_SIZE_V6 44
 #define IWX_SCAN_REQ_UMAC_SIZE_V1 36
+
+/**
+ * struct iwx_scan_general_params_v10
+ * @flags: &enum iwx_umac_scan_flags
+ * @reserved: reserved for future
+ * @scan_start_mac_id: report the scan start TSF time according to this mac TSF
+ * @active_dwell: dwell time for active scan per LMAC
+ * @adwell_default_2g: adaptive dwell default number of APs
+ *                        for 2.4GHz channel
+ * @adwell_default_5g: adaptive dwell default number of APs
+ *                        for 5GHz channels
+ * @adwell_default_social_chn: adaptive dwell default number of
+ *                             APs per social channel
+ * @reserved1: reserved for future
+ * @adwell_max_budget: the maximal number of TUs that adaptive dwell
+ *                     can add to the total scan time
+ * @max_out_of_time: max out of serving channel time, per LMAC
+ * @suspend_time: max suspend time, per LMAC
+ * @scan_priority: priority of the request
+ * @passive_dwell: continues dwell time for passive channel
+ *                 (without adaptive dwell)
+ * @num_of_fragments: number of fragments needed for full fragmented
+ *                    scan coverage.
+ */
+struct iwx_scan_general_params_v10 {
+	uint16_t flags;
+	uint8_t reserved;
+	uint8_t scan_start_mac_id;
+	uint8_t active_dwell[IWX_SCAN_TWO_LMACS];
+	uint8_t adwell_default_2g;
+	uint8_t adwell_default_5g;
+	uint8_t adwell_default_social_chn;
+	uint8_t reserved1;
+	uint16_t adwell_max_budget;
+	uint32_t max_out_of_time[IWX_SCAN_TWO_LMACS];
+	uint32_t suspend_time[IWX_SCAN_TWO_LMACS];
+	uint32_t scan_priority;
+	uint8_t passive_dwell[IWX_SCAN_TWO_LMACS];
+	uint8_t num_of_fragments[IWX_SCAN_TWO_LMACS];
+} __packed; /* SCAN_GENERAL_PARAMS_API_S_VER_10 */
+
+/**
+ * struct iwx_scan_channel_params_v6
+ * @flags: channel flags &enum iwl_scan_channel_flags
+ * @count: num of channels in scan request
+ * @n_aps_override: override the number of APs the FW uses to calculate dwell
+ *	time when adaptive dwell is used.
+ *	Channel k will use n_aps_override[i] when BIT(20 + i) is set in
+ *	channel_config[k].flags
+ * @channel_config: array of explicit channel configurations
+ *                  for 2.4Ghz and 5.2Ghz bands
+ */
+struct iwx_scan_channel_params_v6 {
+	uint8_t flags;
+	uint8_t count;
+	uint8_t n_aps_override[2];
+	struct iwx_scan_channel_cfg_umac channel_config[67];
+} __packed; /* SCAN_CHANNEL_PARAMS_API_S_VER_6 */
+
+/**
+ * struct iwx_scan_periodic_parms_v1
+ * @schedule: can scheduling parameter
+ * @delay: initial delay of the periodic scan in seconds
+ * @reserved: reserved for future
+ */
+struct iwx_scan_periodic_parms_v1 {
+	struct iwx_scan_umac_schedule schedule[IWX_MAX_SCHED_SCAN_PLANS];
+	uint16_t delay;
+	uint16_t reserved;
+} __packed; /* SCAN_PERIODIC_PARAMS_API_S_VER_1 */
+
+#define IWX_SCAN_SHORT_SSID_MAX_SIZE        8
+#define IWX_SCAN_BSSID_MAX_SIZE             16
+
+/**
+ * struct iwx_scan_probe_params_v4
+ * @preq: scan probe request params
+ * @short_ssid_num: number of valid short SSIDs in short ssid array
+ * @bssid_num: number of valid bssid in bssids array
+ * @reserved: reserved
+ * @direct_scan: list of ssids
+ * @short_ssid: array of short ssids
+ * @bssid_array: array of bssids
+ */
+struct iwx_scan_probe_params_v4 {
+	struct iwx_scan_probe_req preq;
+	uint8_t short_ssid_num;
+	uint8_t bssid_num;
+	uint16_t reserved;
+	struct iwx_ssid_ie direct_scan[IWX_PROBE_OPTION_MAX];
+	uint32_t short_ssid[IWX_SCAN_SHORT_SSID_MAX_SIZE];
+	uint8_t bssid_array[IWX_SCAN_BSSID_MAX_SIZE][ETHER_ADDR_LEN];
+} __packed; /* SCAN_PROBE_PARAMS_API_S_VER_4 */
+
+/**
+ * struct iwx_scan_req_params_v14
+ * @general_params: &struct iwx_scan_general_params_v10
+ * @channel_params: &struct iwx_scan_channel_params_v6
+ * @periodic_params: &struct iwx_scan_periodic_parms_v1
+ * @probe_params: &struct iwx_scan_probe_params_v4
+ */
+struct iwx_scan_req_params_v14 {
+	struct iwx_scan_general_params_v10 general_params;
+	struct iwx_scan_channel_params_v6 channel_params;
+	struct iwx_scan_periodic_parms_v1 periodic_params;
+	struct iwx_scan_probe_params_v4 probe_params;
+} __packed; /* SCAN_REQUEST_PARAMS_API_S_VER_14 */
+
+/**
+ * struct iwx_scan_req_umac_v14
+ * @uid: scan id, &enum iwl_umac_scan_uid_offsets
+ * @ooc_priority: out of channel priority - &enum iwx_scan_priority
+ * @scan_params: scan parameters
+ */
+struct iwx_scan_req_umac_v14 {
+	uint32_t uid;
+	uint32_t ooc_priority;
+	struct iwx_scan_req_params_v14 scan_params;
+} __packed; /* SCAN_REQUEST_CMD_UMAC_API_S_VER_14 */
 
 /**
  * struct iwx_umac_scan_abort
