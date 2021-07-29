@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.75 2021/07/29 11:52:11 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.76 2021/07/29 11:52:58 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -4567,6 +4567,19 @@ iwx_send_cmd(struct iwx_softc *sc, struct iwx_host_cmd *hcmd)
 	desc = &ring->desc[idx];
 	txdata = &ring->data[idx];
 
+	/*
+	 * XXX Intel inside (tm)
+	 * Firmware API versions >= 50 reject old-style commands in
+	 * group 0 with a "BAD_COMMAND" firmware error. We must pretend
+	 * that such commands were in the LONG_GROUP instead in order
+	 * for firmware to accept them.
+	 */
+	if (iwx_cmd_groupid(code) == 0) {
+		code = IWX_WIDE_ID(IWX_LONG_GROUP, code);
+		txdata->flags |= IWX_TXDATA_FLAG_CMD_IS_NARROW;
+	} else
+		txdata->flags &= ~IWX_TXDATA_FLAG_CMD_IS_NARROW;
+
 	group_id = iwx_cmd_groupid(code);
 	if (group_id != 0) {
 		hdrlen = sizeof(cmd->hdr_wide);
@@ -8097,6 +8110,19 @@ iwx_rx_pkt(struct iwx_softc *sc, struct iwx_rx_data *data, struct mbuf_list *ml)
 
 		if (!iwx_rx_pkt_valid(pkt))
 			break;
+
+		/*
+		 * XXX Intel inside (tm)
+		 * Any commands in the LONG_GROUP could actually be in the
+		 * LEGACY group. Firmware API versions >= 50 reject commands
+		 * in group 0, forcing us to use this hack.
+		 */
+		if (iwx_cmd_groupid(code) == IWX_LONG_GROUP) {
+			struct iwx_tx_ring *ring = &sc->txq[qid];
+			struct iwx_tx_data *txdata = &ring->data[idx];
+			if (txdata->flags & IWX_TXDATA_FLAG_CMD_IS_NARROW)
+				code = iwx_cmd_opcode(code);
+		}
 
 		len = sizeof(pkt->len_n_flags) + iwx_rx_packet_len(pkt);
 		if (len < sizeof(pkt->hdr) ||
