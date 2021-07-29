@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.82 2021/07/29 11:58:35 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.83 2021/07/29 12:00:30 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -6668,9 +6668,16 @@ iwx_rs_init(struct iwx_softc *sc, struct iwx_node *in)
 	struct ieee80211_rateset *rs = &ni->ni_rates;
 	struct iwx_tlc_config_cmd cfg_cmd;
 	uint32_t cmd_id;
-	int i;
+	int i, cmdver;
+	size_t cmd_size = sizeof(cfg_cmd);
 
 	memset(&cfg_cmd, 0, sizeof(cfg_cmd));
+
+	/* In old versions of the API the struct is 4 bytes smaller */
+	cmdver = iwx_lookup_cmd_ver(sc, IWX_DATA_PATH_GROUP,
+	    IWX_TLC_MNG_CONFIG_CMD);
+	if (cmdver == IWX_FW_CMD_VER_UNKNOWN || cmdver < 3)
+		cmd_size -= sizeof(uint32_t);
 
 	for (i = 0; i < rs->rs_nrates; i++) {
 		uint8_t rval = rs->rs_rates[i] & IEEE80211_RATE_VAL;
@@ -6697,8 +6704,7 @@ iwx_rs_init(struct iwx_softc *sc, struct iwx_node *in)
 		cfg_cmd.sgi_ch_width_supp = (1 << IWX_TLC_MNG_CH_WIDTH_20MHZ);
 
 	cmd_id = iwx_cmd_id(IWX_TLC_MNG_CONFIG_CMD, IWX_DATA_PATH_GROUP, 0);
-	return iwx_send_cmd_pdu(sc, cmd_id, IWX_CMD_ASYNC, sizeof(cfg_cmd),
-	    &cfg_cmd);
+	return iwx_send_cmd_pdu(sc, cmd_id, IWX_CMD_ASYNC, cmd_size, &cfg_cmd);
 }
 
 void

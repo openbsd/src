@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.27 2021/07/29 11:58:35 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.28 2021/07/29 12:00:30 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -4755,6 +4755,8 @@ enum iwx_tlc_mng_ht_rates {
  * @sgi_ch_width_supp: bitmap of SGI support per channel width
  *		       use (1 << @enum iwx_tlc_mng_cfg_cw)
  * @reserved2: reserved
+ * @max_tx_op: max TXOP in uSecs for all AC (BK, BE, VO, VI),
+ *	       set zero for no limit.
  */
 struct iwx_tlc_config_cmd {
 	uint8_t sta_id;
@@ -4768,8 +4770,9 @@ struct iwx_tlc_config_cmd {
 	uint16_t ht_rates[IWX_TLC_NSS_MAX][2];
 	uint16_t max_mpdu_len;
 	uint8_t sgi_ch_width_supp;
-	uint8_t reserved2[1];
-} __packed; /* TLC_MNG_CONFIG_CMD_API_S_VER_2 */
+	uint8_t reserved2;
+	uint32_t max_tx_op;
+} __packed; /* TLC_MNG_CONFIG_CMD_API_S_VER_3 */
 
 /**
  * @IWX_TLC_NOTIF_FLAG_RATE: last initial rate update
