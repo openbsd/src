@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.74 2021/07/29 11:51:39 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.75 2021/07/29 11:52:11 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -232,6 +232,7 @@ const int iwx_mcs2ridx[] = {
 };
 
 uint8_t	iwx_lookup_cmd_ver(struct iwx_softc *, uint8_t, uint8_t);
+uint8_t	iwx_lookup_notif_ver(struct iwx_softc *, uint8_t, uint8_t);
 int	iwx_is_mimo_ht_plcp(uint8_t);
 int	iwx_is_mimo_mcs(int);
 int	iwx_store_cscheme(struct iwx_softc *, uint8_t *, size_t);
@@ -485,6 +486,21 @@ iwx_lookup_cmd_ver(struct iwx_softc *sc, uint8_t grp, uint8_t cmd)
 		entry = &sc->cmd_versions[i];
 		if (entry->group == grp && entry->cmd == cmd)
 			return entry->cmd_ver;
+	}
+
+	return IWX_FW_CMD_VER_UNKNOWN;
+}
+
+uint8_t
+iwx_lookup_notif_ver(struct iwx_softc *sc, uint8_t grp, uint8_t cmd)
+{
+	const struct iwx_fw_cmd_version *entry;
+	int i;
+
+	for (i = 0; i < sc->n_cmd_versions; i++) {
+		entry = &sc->cmd_versions[i];
+		if (entry->group == grp && entry->cmd == cmd)
+			return entry->notif_ver;
 	}
 
 	return IWX_FW_CMD_VER_UNKNOWN;
@@ -8146,9 +8162,37 @@ iwx_rx_pkt(struct iwx_softc *sc, struct iwx_rx_data *data, struct mbuf_list *ml)
 
 		case IWX_ALIVE: {
 			struct iwx_alive_resp_v4 *resp4;
+			struct iwx_alive_resp_v5 *resp5;
 
 			DPRINTF(("%s: firmware alive\n", __func__));
-			if (iwx_rx_packet_payload_len(pkt) == sizeof(*resp4)) {
+			sc->sc_uc.uc_ok = 0;
+
+			/*
+			 * For v5 and above, we can check the version, for older
+			 * versions we need to check the size.
+			 */
+			 if (iwx_lookup_notif_ver(sc, IWX_LEGACY_GROUP,
+			    IWX_ALIVE) == 5) {
+				SYNC_RESP_STRUCT(resp5, pkt);
+				if (iwx_rx_packet_payload_len(pkt) !=
+				    sizeof(*resp5)) {
+					sc->sc_uc.uc_intr = 1;
+					wakeup(&sc->sc_uc);
+					break;
+				}
+				sc->sc_uc.uc_lmac_error_event_table[0] = le32toh(
+				    resp5->lmac_data[0].dbg_ptrs.error_event_table_ptr);
+				sc->sc_uc.uc_lmac_error_event_table[1] = le32toh(
+				    resp5->lmac_data[1].dbg_ptrs.error_event_table_ptr);
+				sc->sc_uc.uc_log_event_table = le32toh(
+				    resp5->lmac_data[0].dbg_ptrs.log_event_table_ptr);
+				sc->sched_base = le32toh(
+				    resp5->lmac_data[0].dbg_ptrs.scd_base_ptr);
+				sc->sc_uc.uc_umac_error_event_table = le32toh(
+				    resp5->umac_data.dbg_ptrs.error_info_addr);
+				if (resp5->status == IWX_ALIVE_STATUS_OK)
+					sc->sc_uc.uc_ok = 1;
+			} else if (iwx_rx_packet_payload_len(pkt) == sizeof(*resp4)) {
 				SYNC_RESP_STRUCT(resp4, pkt);
 				sc->sc_uc.uc_lmac_error_event_table[0] = le32toh(
 				    resp4->lmac_data[0].dbg_ptrs.error_event_table_ptr);
@@ -8162,8 +8206,6 @@ iwx_rx_pkt(struct iwx_softc *sc, struct iwx_rx_data *data, struct mbuf_list *ml)
 				    resp4->umac_data.dbg_ptrs.error_info_addr);
 				if (resp4->status == IWX_ALIVE_STATUS_OK)
 					sc->sc_uc.uc_ok = 1;
-				else
-					sc->sc_uc.uc_ok = 0;
 			}
 
 			sc->sc_uc.uc_intr = 1;

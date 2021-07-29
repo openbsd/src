@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.21 2021/07/29 11:51:39 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.22 2021/07/29 11:52:11 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -1971,6 +1971,19 @@ struct iwx_alive_resp_v4 {
 	struct iwx_lmac_alive lmac_data[2];
 	struct iwx_umac_alive umac_data;
 } __packed; /* ALIVE_RES_API_S_VER_4 */
+
+struct iwx_sku_id {
+	uint32_t data[3];
+} __packed; /* SKU_ID_API_S_VER_1 */
+
+struct iwx_alive_resp_v5 {
+	uint16_t status;
+	uint16_t flags;
+	struct iwx_lmac_alive lmac_data[2];
+	struct iwx_umac_alive umac_data;
+	struct iwx_sku_id sku_id;
+} __packed; /* UCODE_ALIVE_NTFY_API_S_VER_5 */
+
 
 #define IWX_SOC_CONFIG_CMD_FLAGS_DISCRETE	(1 << 0)
 #define IWX_SOC_CONFIG_CMD_FLAGS_LOW_LATENCY	(1 << 1)
