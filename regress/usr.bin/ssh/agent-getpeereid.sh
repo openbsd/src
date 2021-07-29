@@ -1,4 +1,4 @@
-#	$OpenBSD: agent-getpeereid.sh,v 1.11 2019/11/26 23:43:10 djm Exp $
+#	$OpenBSD: agent-getpeereid.sh,v 1.12 2021/07/29 15:34:09 anton Exp $
 #	Placed in the Public Domain.
 
 tid="disallow agent attach from other uid"
@@ -9,7 +9,7 @@ SSH_AUTH_SOCK=/nonexistent
 
 case "x$SUDO" in
 	xsudo) sudo=1;;
-	xdoas) ;;
+	xdoas|xdoas\ *) ;;
 	x)
 		if [ -x /usr/local/bin/sudo -a -f /etc/sudoers ]; then
 			sudo=1
