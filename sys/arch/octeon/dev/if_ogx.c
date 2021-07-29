@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ogx.c,v 1.5 2021/01/01 14:11:10 visa Exp $	*/
+/*	$OpenBSD: if_ogx.c,v 1.6 2021/07/29 14:11:53 visa Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Visa Hankala
@@ -268,7 +268,7 @@ const struct cfattach ogx_ca = {
 };
 
 struct cfdriver ogx_cd = {
-	NULL, "ogx", DV_DULL
+	NULL, "ogx", DV_IFNET
 };
 
 const struct ogx_config ogx_cn73xx_config = {
