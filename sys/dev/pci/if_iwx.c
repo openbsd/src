@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.78 2021/07/29 11:56:21 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.79 2021/07/29 11:56:53 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -357,6 +357,10 @@ void	iwx_rx_tx_cmd(struct iwx_softc *, struct iwx_rx_packet *,
 void	iwx_rx_bmiss(struct iwx_softc *, struct iwx_rx_packet *,
 	    struct iwx_rx_data *);
 int	iwx_binding_cmd(struct iwx_softc *, struct iwx_node *, uint32_t);
+int	iwx_phy_ctxt_cmd_uhb_v3(struct iwx_softc *, struct iwx_phy_ctxt *, uint8_t,
+	    uint8_t, uint32_t);
+int	iwx_phy_ctxt_cmd_v3(struct iwx_softc *, struct iwx_phy_ctxt *, uint8_t,
+	    uint8_t, uint32_t);
 int	iwx_phy_ctxt_cmd_uhb(struct iwx_softc *, struct iwx_phy_ctxt *, uint8_t,
 	    uint8_t, uint32_t, uint32_t);
 int	iwx_phy_ctxt_cmd(struct iwx_softc *, struct iwx_phy_ctxt *, uint8_t,
@@ -4441,12 +4445,86 @@ iwx_binding_cmd(struct iwx_softc *sc, struct iwx_node *in, uint32_t action)
 }
 
 int
+iwx_phy_ctxt_cmd_uhb_v3(struct iwx_softc *sc, struct iwx_phy_ctxt *ctxt,
+    uint8_t chains_static, uint8_t chains_dynamic, uint32_t action)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct iwx_phy_context_cmd_uhb cmd;
+	uint8_t active_cnt, idle_cnt;
+	struct ieee80211_channel *chan = ctxt->channel;
+
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.id_and_color = htole32(IWX_FW_CMD_ID_AND_COLOR(ctxt->id,
+	    ctxt->color));
+	cmd.action = htole32(action);
+
+	if (IEEE80211_IS_CHAN_2GHZ(ctxt->channel) ||
+	    !isset(sc->sc_enabled_capa, IWX_UCODE_TLV_CAPA_CDB_SUPPORT))
+		cmd.lmac_id = htole32(IWX_LMAC_24G_INDEX);
+	else
+		cmd.lmac_id = htole32(IWX_LMAC_5G_INDEX);
+
+	cmd.ci.band = IEEE80211_IS_CHAN_2GHZ(chan) ?
+	    IWX_PHY_BAND_24 : IWX_PHY_BAND_5;
+	cmd.ci.channel = htole32(ieee80211_chan2ieee(ic, chan));
+	cmd.ci.width = IWX_PHY_VHT_CHANNEL_MODE20;
+	cmd.ci.ctrl_pos = IWX_PHY_VHT_CTRL_POS_1_BELOW;
+
+	idle_cnt = chains_static;
+	active_cnt = chains_dynamic;
+	cmd.rxchain_info = htole32(iwx_fw_valid_rx_ant(sc) <<
+	    IWX_PHY_RX_CHAIN_VALID_POS);
+	cmd.rxchain_info |= htole32(idle_cnt << IWX_PHY_RX_CHAIN_CNT_POS);
+	cmd.rxchain_info |= htole32(active_cnt <<
+	    IWX_PHY_RX_CHAIN_MIMO_CNT_POS);
+
+	return iwx_send_cmd_pdu(sc, IWX_PHY_CONTEXT_CMD, 0, sizeof(cmd), &cmd);
+}
+
+int
+iwx_phy_ctxt_cmd_v3(struct iwx_softc *sc, struct iwx_phy_ctxt *ctxt,
+    uint8_t chains_static, uint8_t chains_dynamic, uint32_t action)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct iwx_phy_context_cmd cmd;
+	uint8_t active_cnt, idle_cnt;
+	struct ieee80211_channel *chan = ctxt->channel;
+
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.id_and_color = htole32(IWX_FW_CMD_ID_AND_COLOR(ctxt->id,
+	    ctxt->color));
+	cmd.action = htole32(action);
+
+	if (IEEE80211_IS_CHAN_2GHZ(ctxt->channel) ||
+	    !isset(sc->sc_enabled_capa, IWX_UCODE_TLV_CAPA_CDB_SUPPORT))
+		cmd.lmac_id = htole32(IWX_LMAC_24G_INDEX);
+	else
+		cmd.lmac_id = htole32(IWX_LMAC_5G_INDEX);
+
+	cmd.ci.band = IEEE80211_IS_CHAN_2GHZ(chan) ?
+	    IWX_PHY_BAND_24 : IWX_PHY_BAND_5;
+	cmd.ci.channel = ieee80211_chan2ieee(ic, chan);
+	cmd.ci.width = IWX_PHY_VHT_CHANNEL_MODE20;
+	cmd.ci.ctrl_pos = IWX_PHY_VHT_CTRL_POS_1_BELOW;
+
+	idle_cnt = chains_static;
+	active_cnt = chains_dynamic;
+	cmd.rxchain_info = htole32(iwx_fw_valid_rx_ant(sc) <<
+	    IWX_PHY_RX_CHAIN_VALID_POS);
+	cmd.rxchain_info |= htole32(idle_cnt << IWX_PHY_RX_CHAIN_CNT_POS);
+	cmd.rxchain_info |= htole32(active_cnt <<
+	    IWX_PHY_RX_CHAIN_MIMO_CNT_POS);
+
+	return iwx_send_cmd_pdu(sc, IWX_PHY_CONTEXT_CMD, 0, sizeof(cmd), &cmd);
+}
+
+int
 iwx_phy_ctxt_cmd_uhb(struct iwx_softc *sc, struct iwx_phy_ctxt *ctxt,
     uint8_t chains_static, uint8_t chains_dynamic, uint32_t action,
     uint32_t apply_time)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct iwx_phy_context_cmd_uhb cmd;
+	struct iwx_phy_context_cmd_uhb_v1 cmd;
 	uint8_t active_cnt, idle_cnt;
 	struct ieee80211_channel *chan = ctxt->channel;
 
@@ -4480,9 +4558,10 @@ iwx_phy_ctxt_cmd(struct iwx_softc *sc, struct iwx_phy_ctxt *ctxt,
     uint32_t apply_time)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct iwx_phy_context_cmd cmd;
+	struct iwx_phy_context_cmd_v1 cmd;
 	uint8_t active_cnt, idle_cnt;
 	struct ieee80211_channel *chan = ctxt->channel;
+	int cmdver;
 
 	/*
 	 * Intel increased the size of the fw_channel_info struct and neglected
@@ -4491,6 +4570,17 @@ iwx_phy_ctxt_cmd(struct iwx_softc *sc, struct iwx_phy_ctxt *ctxt,
 	 * To keep things simple we use a separate function to handle the larger
 	 * variant of the phy context command.
 	 */
+	cmdver = iwx_lookup_cmd_ver(sc, IWX_LONG_GROUP, IWX_PHY_CONTEXT_CMD);
+	if (cmdver == 3) {
+		/* Version 3 differs in the "data" portion of the command. */
+		if (isset(sc->sc_enabled_capa,
+		    IWX_UCODE_TLV_CAPA_ULTRA_HB_CHANNELS)) {
+			return iwx_phy_ctxt_cmd_uhb_v3(sc, ctxt, chains_static,
+			    chains_dynamic, action);
+		}
+		return iwx_phy_ctxt_cmd_v3(sc, ctxt, chains_static,
+		    chains_dynamic, action);
+	}
 	if (isset(sc->sc_enabled_capa, IWX_UCODE_TLV_CAPA_ULTRA_HB_CHANNELS))
 		return iwx_phy_ctxt_cmd_uhb(sc, ctxt, chains_static,
 		    chains_dynamic, action, apply_time);

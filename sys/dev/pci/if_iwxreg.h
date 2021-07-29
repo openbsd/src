@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.23 2021/07/29 11:53:46 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.24 2021/07/29 11:56:53 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -2924,6 +2924,40 @@ struct iwx_fw_channel_info {
 /* TODO: fix the value, make it depend on firmware at runtime? */
 #define IWX_NUM_PHY_CTX	3
 
+/**
+ * struct iwl_phy_context_cmd - config of the PHY context
+ * ( IWX_PHY_CONTEXT_CMD = 0x8 )
+ * @id_and_color: ID and color of the relevant Binding
+ * @action: action to perform, one of IWX_FW_CTXT_ACTION_*
+ * @lmac_id: the lmac id the phy context belongs to
+ * @ci: channel info
+ * @rxchain_info: ???
+ * @dsp_cfg_flags: set to 0
+ * @reserved: reserved to align to 64 bit
+ */
+struct iwx_phy_context_cmd_uhb {
+	/* COMMON_INDEX_HDR_API_S_VER_1 */
+	uint32_t id_and_color;
+	uint32_t action;
+	/* PHY_CONTEXT_DATA_API_S_VER_3 */
+	struct iwx_fw_channel_info ci;
+	uint32_t lmac_id;
+	uint32_t rxchain_info;
+	uint32_t dsp_cfg_flags;
+	uint32_t reserved;
+} __packed; /* PHY_CONTEXT_CMD_API_VER_3 */
+struct iwx_phy_context_cmd {
+	/* COMMON_INDEX_HDR_API_S_VER_1 */
+	uint32_t id_and_color;
+	uint32_t action;
+	/* PHY_CONTEXT_DATA_API_S_VER_3 */
+	struct iwx_fw_channel_info_v1 ci;
+	uint32_t lmac_id;
+	uint32_t rxchain_info;
+	uint32_t dsp_cfg_flags;
+	uint32_t reserved;
+} __packed; /* PHY_CONTEXT_CMD_API_VER_3 */
+
 /* TODO: complete missing documentation */
 /**
  * struct iwx_phy_context_cmd - config of the PHY context
@@ -2947,7 +2981,7 @@ struct iwx_fw_channel_info {
  * magic with pointers to struct members instead.)
  */
 /* This version must be used if IWX_UCODE_TLV_CAPA_ULTRA_HB_CHANNELS is set: */
-struct iwx_phy_context_cmd_uhb {
+struct iwx_phy_context_cmd_uhb_v1 {
 	/* COMMON_INDEX_HDR_API_S_VER_1 */
 	uint32_t id_and_color;
 	uint32_t action;
@@ -2961,7 +2995,7 @@ struct iwx_phy_context_cmd_uhb {
 	uint32_t dsp_cfg_flags;
 } __packed; /* IWX_PHY_CONTEXT_CMD_API_VER_1 */
 /* This version must be used otherwise: */
-struct iwx_phy_context_cmd {
+struct iwx_phy_context_cmd_v1 {
 	/* COMMON_INDEX_HDR_API_S_VER_1 */
 	uint32_t id_and_color;
 	uint32_t action;
