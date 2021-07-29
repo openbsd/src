@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.85 2021/07/29 12:01:45 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.86 2021/07/29 12:13:58 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -9317,7 +9317,7 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_INTEL_WL_22500_1:
-		sc->sc_fwname = "iwx-cc-a0-48";
+		sc->sc_fwname = "iwx-cc-a0-63";
 		sc->sc_device_family = IWX_DEVICE_FAMILY_22000;
 		sc->sc_fwdmasegsz = IWX_FWDMASEGSZ_8000;
 		sc->sc_integrated = 1;
@@ -9335,7 +9335,7 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 			return;
 		}
 
-		sc->sc_fwname = "iwx-QuZ-a0-hr-b0-48";
+		sc->sc_fwname = "iwx-QuZ-a0-hr-b0-63";
 		sc->sc_device_family = IWX_DEVICE_FAMILY_22000;
 		sc->sc_fwdmasegsz = IWX_FWDMASEGSZ_8000;
 		sc->sc_integrated = 1;
@@ -9346,7 +9346,7 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_uhb_supported = 0;
 		break;
 	case PCI_PRODUCT_INTEL_WL_22500_4:
-	    sc->sc_fwname = "iwx-Qu-c0-hr-b0-48";
+	    sc->sc_fwname = "iwx-Qu-c0-hr-b0-63";
 	    sc->sc_device_family = IWX_DEVICE_FAMILY_22000;
 	    sc->sc_fwdmasegsz = IWX_FWDMASEGSZ_8000;
 	    sc->sc_integrated = 1;
