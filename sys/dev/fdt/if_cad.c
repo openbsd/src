@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cad.c,v 1.7 2021/06/27 04:33:40 visa Exp $	*/
+/*	$OpenBSD: if_cad.c,v 1.8 2021/07/29 09:19:42 patrick Exp $	*/
 
 /*
  * Copyright (c) 2021 Visa Hankala
@@ -336,7 +336,7 @@ const struct cfattach cad_ca = {
 };
 
 struct cfdriver cad_cd = {
-	NULL, "cad", DV_DULL
+	NULL, "cad", DV_IFNET
 };
 
 const struct {
