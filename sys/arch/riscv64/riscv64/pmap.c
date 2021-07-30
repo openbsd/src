@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.17 2021/07/24 18:15:13 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.18 2021/07/30 13:17:33 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Brian Bamsch <bbamsch@google.com>
@@ -2238,5 +2238,5 @@ pmap_set_satp(struct proc *p)
 
 	ci->ci_curpm = pm;
 	load_satp(pm->pm_satp);
-	__asm __volatile("sfence.vma");
+	sfence_vma();
 }
