@@ -1687,6 +1687,8 @@ static int drm_fb_helper_single_fb_probe(struct drm_fb_helper *fb_helper,
 
 #ifdef __linux__
 	strcpy(fb_helper->fb->comm, "[fbcon]");
+#else
+	strlcpy(fb_helper->fb->comm, "[fbcon]", sizeof(fb_helper->fb->comm));
 #endif
 	return 0;
 }
