@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.5 2021/05/20 04:22:33 drahn Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.6 2021/07/30 13:10:12 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -60,25 +60,20 @@ process_read_regs(struct proc *p, struct reg *regs)
 	regs->r_ra = tf->tf_ra;
 	regs->r_sp = tf->tf_sp;
 	regs->r_gp = tf->tf_gp;
-	regs->r_tp = tf->tf_tp;//following Freebsd
-	//regs->r_tp = (uint64_t)p->p_addr->u_pcb.pcb_tcb;//XXX why?
-	//XXX freebsd adds the following two fields so we just follow.
+	regs->r_tp = tf->tf_tp;
 	regs->r_sepc = tf->tf_sepc;
 	regs->r_sstatus = tf->tf_sstatus;
 
 	return(0);
 }
 
-#if 0
 int
 process_read_fpregs(struct proc *p, struct fpreg *regs)
 {
 	struct trapframe *tf = p->p_addr->u_pcb.pcb_tf;
 
-	if ((tf->tf_sstatus & SSTATUS_FS_MASK) == SSTATUS_FS_DIRTY) {
-		tf->tf_sstatus &= ~SSTATUS_FS_MASK; /* disable fpu */
+	if (p->p_addr->u_pcb.pcb_flags & PCB_FPU)
 		fpu_save(p, tf);
-	}
 
 	if (p->p_addr->u_pcb.pcb_flags & PCB_FPU)
 		memcpy(regs, &p->p_addr->u_pcb.pcb_fpstate, sizeof(*regs));
@@ -87,8 +82,8 @@ process_read_fpregs(struct proc *p, struct fpreg *regs)
 
 	return(0);
 }
-#endif
-#ifdef	PTRACE
+
+#ifdef PTRACE
 
 int
 process_write_regs(struct proc *p, struct reg *regs)
@@ -101,48 +96,31 @@ process_write_regs(struct proc *p, struct reg *regs)
 	tf->tf_ra = regs->r_ra;
 	tf->tf_sp = regs->r_sp;
 	tf->tf_gp = regs->r_gp;
-	tf->tf_tp = regs->r_tp; //XXX
+	tf->tf_tp = regs->r_tp;
 	tf->tf_sepc = regs->r_sepc;
-
-	//p->p_addr->u_pcb.pcb_tcb = (void *)regs->r_tp;//XXX why? freebsd just copied r_tp to tf_tp
-
 
 	return(0);
 }
 
-#if 0
 int
 process_write_fpregs(struct proc *p,  struct fpreg *regs)
 {
-	struct cpu_info *ci = curcpu();
 	struct trapframe *tf = p->p_addr->u_pcb.pcb_tf;
 
-	p->p_addr->u_pcb.pcb_flags |= PCB_FPU;
 	memcpy(&p->p_addr->u_pcb.pcb_fpstate, regs,
 	    sizeof(p->p_addr->u_pcb.pcb_fpstate));
+	p->p_addr->u_pcb.pcb_flags |= PCB_FPU;
 
-	tf->tf_sstatus &= ~SSTATUS_FS_MASK; /* disable fpu */
-	fpu_discard(p);
+	/* drop FPU state */
+	tf->tf_sstatus &= ~SSTATUS_FS_MASK;
+	tf->tf_sstatus |= SSTATUS_FS_OFF;
+
 	return(0);
 }
-#endif
 
 int
 process_sstep(struct proc *p, int sstep)
 {
-#if 0
-	//XXX TODO
-	struct trapframe *tf = p->p_addr->u_pcb.pcb_tf;
-
-	if (sstep) {
-		p->p_addr->u_pcb.pcb_flags |= PCB_SINGLESTEP;
-		tf->tf_spsr |= PSR_SS;
-	} else {
-		p->p_addr->u_pcb.pcb_flags &= ~(PCB_SINGLESTEP);
-		tf->tf_spsr &= ~PSR_SS;
-	}
-	return 0;
-#endif
 	return (EOPNOTSUPP);
 }
 
