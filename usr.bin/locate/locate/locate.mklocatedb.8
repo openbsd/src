@@ -1,0 +1,45 @@
+.\"	$OpenBSD: locate.mklocatedb.8,v 1.1 2021/07/30 09:28:26 espie Exp $
+.\"
+.\" Copyright (c) 2021 Marc Espie <espie@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: July 30 2021 $
+.Dt LOCATE.MKLOCATEDB 8
+.Os
+.Sh NAME
+.Nm locate.mklocatedb
+.Nd create locate database
+.Sh SYNOPSIS
+.Nm
+.Op Fl presort
+.Sh DESCRIPTION
+.Nm
+reads a list of filenames (one per line)
+from standard input and
+creates a database usable by
+.Xr locate 1
+on standard output.
+It is typically run by
+.Xr locate.updatedb 8 ,
+but it can be used independently to generate
+a database from any list of paths.
+.Pp
+The options are as follows:
+.Bl -tag -width -presort
+.It Fl presort
+Assume the input list is already sorted.
+.El
+.Sh SEE ALSO
+.Xr locate 1 ,
+.Xr locate.updatedb 8
