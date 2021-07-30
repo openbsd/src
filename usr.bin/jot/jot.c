@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.49 2019/06/27 18:03:36 deraadt Exp $	*/
+/*	$OpenBSD: jot.c,v 1.50 2021/07/30 02:46:53 tb Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -244,7 +244,7 @@ main(int argc, char *argv[])
 			if (putdata(x, reps == i && !infinity))
 				errx(1, "range error in conversion: %f", x);
 	} else { /* Random output: use defaults for omitted values. */
-		bool		use_unif;
+		bool		use_unif = 0;
 		uint32_t	pow10 = 1;
 		uint32_t	uintx = 0; /* Initialized to make gcc happy. */
 
@@ -261,18 +261,19 @@ main(int argc, char *argv[])
 		if (prec == 0 && (fmod(ender, 1) != 0 || fmod(begin, 1) != 0))
 			use_unif = 0;
 		else {
+			double range;
+
 			while (prec-- > 0)
 				pow10 *= 10;
-			/*
-			 * If pow10 * (ender - begin) is an integer, use
-			 * arc4random_uniform().
-			 */
-			use_unif = fmod(pow10 * (ender - begin), 1) == 0;
-			if (use_unif) {
-				uintx = pow10 * (ender - begin);
-				if (uintx >= UINT32_MAX)
+
+			range = pow10 * (ender - begin);
+
+			/* If range is an integer, use arc4random_uniform(). */
+			if (fmod(range, 1) == 0) {
+				if (range >= UINT32_MAX)
 					errx(1, "requested range too large");
-				uintx++;
+				use_unif = 1;
+				uintx = range + 1;
 			}
 		}
 
