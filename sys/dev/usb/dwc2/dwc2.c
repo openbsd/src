@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.c,v 1.57 2021/07/30 12:33:27 mglocker Exp $	*/
+/*	$OpenBSD: dwc2.c,v 1.58 2021/07/30 18:56:01 mglocker Exp $	*/
 /*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
@@ -472,7 +472,7 @@ dwc2_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 
 	splsoftassert(IPL_SOFTUSB);
 
-	DPRINTF("xfer %p pipe %p status 0x%08x", xfer, xfer->pipe,
+	DPRINTF("xfer %p pipe %p status 0x%08x\n", xfer, xfer->pipe,
 	    xfer->status);
 
 	/* XXX The stack should not call abort() in this case. */
