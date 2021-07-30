@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.c,v 1.56 2021/07/23 21:47:22 mglocker Exp $	*/
+/*	$OpenBSD: dwc2.c,v 1.57 2021/07/30 12:33:27 mglocker Exp $	*/
 /*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
@@ -467,15 +467,16 @@ dwc2_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	struct dwc2_xfer *dxfer = DWC2_XFER2DXFER(xfer);
 	struct dwc2_softc *sc = DWC2_XFER2SC(xfer);
 	struct dwc2_hsotg *hsotg = sc->sc_hsotg;
-	struct dwc2_xfer *d, *tmp;
-	bool wake;
+	struct dwc2_xfer *d;
 	int err;
 
 	splsoftassert(IPL_SOFTUSB);
 
-	DPRINTF("xfer=%p\n", xfer);
+	DPRINTF("xfer %p pipe %p status 0x%08x", xfer, xfer->pipe,
+	    xfer->status);
 
-	if (sc->sc_bus.dying) {
+	/* XXX The stack should not call abort() in this case. */
+	if (sc->sc_bus.dying || xfer->status == USBD_NOT_STARTED) {
 		xfer->status = status;
 		timeout_del(&xfer->timeout_handle);
 		usb_rem_task(xfer->device, &xfer->abort_task);
@@ -483,43 +484,57 @@ dwc2_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 		return;
 	}
 
-	/*
-	 * If an abort is already in progress then just wait for it to
-	 * complete and return.
-	 */
-	if (dxfer->flags & DWC2_XFER_ABORTING) {
-		xfer->status = status;
-		dxfer->flags |= DWC2_XFER_ABORTWAIT;
-		while (dxfer->flags & DWC2_XFER_ABORTING)
-			tsleep_nsec(&dxfer->flags, PZERO, "dwc2xfer", INFSLP);
-		return;
-	}
-
-	mtx_enter(&hsotg->lock);
-
-	/* The transfer might have been completed already. */
+	KASSERT(xfer->status != USBD_CANCELLED);
+	/* Transfer is already done. */
 	if (xfer->status != USBD_IN_PROGRESS) {
-		DPRINTF("xfer=%p already completed\n", xfer);
-		mtx_leave(&hsotg->lock);
+		DPRINTF("%s: already done \n", __func__);
 		return;
 	}
 
-	/*
-	 * Step 1: Make the stack ignore it and stop the timeout.
-	 */
-	dxfer->flags |= DWC2_XFER_ABORTING;
-
-	xfer->status = status;	/* make software ignore it */
+	/* Prevent any timeout to kick in. */	
 	timeout_del(&xfer->timeout_handle);
 	usb_rem_task(xfer->device, &xfer->abort_task);
 
-	/* XXXNH suboptimal */
-	TAILQ_FOREACH_SAFE(d, &sc->sc_complete, xnext, tmp) {
+	/* Claim the transfer status as cancelled. */
+	xfer->status = USBD_CANCELLED;
+
+	KASSERTMSG((xfer->status == USBD_CANCELLED ||
+		xfer->status == USBD_TIMEOUT),
+	    "bad abort status: %d", xfer->status);
+
+	mtx_enter(&hsotg->lock);
+
+	/*
+	 * Check whether we aborted or timed out after the hardware
+	 * completion interrupt determined that it's done but before
+	 * the soft interrupt could actually complete it.  If so, it's
+	 * too late for the soft interrupt -- at this point we've
+	 * already committed to abort it or time it out, so we need to
+	 * take it off the softint's list of work in case the caller,
+	 * say, frees the xfer before the softint runs.
+	 *
+	 * This logic is unusual among host controller drivers, and
+	 * happens because dwc2 decides to complete xfers in the hard
+	 * interrupt handler rather than in the soft interrupt handler,
+	 * but usb_transfer_complete must be deferred to softint -- and
+	 * we happened to swoop in between the hard interrupt and the
+	 * soft interrupt.  Other host controller drivers do almost all
+	 * processing in the softint so there's no intermediate stage.
+	 *
+	 * Fortunately, this linear search to discern the intermediate
+	 * stage is not likely to be a serious performance impact
+	 * because it happens only on abort or timeout.
+	 */
+	TAILQ_FOREACH(d, &sc->sc_complete, xnext) {
 		if (d == dxfer) {
 			TAILQ_REMOVE(&sc->sc_complete, dxfer, xnext);
+			break;
 		}
 	}
 
+	/*
+	 * HC Step 1: Handle the hardware.
+	 */
 	err = dwc2_hcd_urb_dequeue(hsotg, dxfer->urb);
 	if (err) {
 		DPRINTF("dwc2_hcd_urb_dequeue failed\n");
@@ -528,15 +543,9 @@ dwc2_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	mtx_leave(&hsotg->lock);
 
 	/*
-	 * Step 2: Execute callback.
+	 * Final Step: Notify completion to waiting xfers.
 	 */
-	wake = dxfer->flags & DWC2_XFER_ABORTWAIT;
-	dxfer->flags &= ~(DWC2_XFER_ABORTING | DWC2_XFER_ABORTWAIT);
-
 	usb_transfer_complete(xfer);
-	if (wake) {
-		wakeup(&dxfer->flags);
-	}
 }
 
 STATIC void
