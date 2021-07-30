@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.50 2021/07/30 02:46:53 tb Exp $	*/
+/*	$OpenBSD: jot.c,v 1.51 2021/07/30 02:47:37 tb Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -443,7 +443,7 @@ fmt_broken:
 
 		while ((p = strchr(p, '%')) != NULL && p[1] == '%')
 			p += 2;
-		
+
 		if (p != NULL) {
 			if (p[1] != '\0')
 				errx(1, "too many conversions");
