@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.127 2020/09/13 10:03:46 ajacoutot Exp $
+#	$OpenBSD: changelist,v 1.128 2021/07/30 07:00:02 bket Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -25,6 +25,7 @@
 /etc/defaultdomain
 /etc/dhclient.conf
 /etc/dhcpd.conf
+/etc/dhcpleased.conf
 /etc/disktab
 /etc/distfile
 /etc/doas.conf
