@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.18 2021/07/27 07:42:37 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.19 2021/07/30 09:45:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -948,14 +948,14 @@ show_rib_detail(struct ctl_show_rib *r, u_char *asdata, size_t aslen,
 	free(aspath);
 
 	s = fmt_peer(r->descr, &r->remote_addr, -1);
-	printf("    Nexthop %s ", log_addr(&r->exit_nexthop));
-	printf("(via %s) Neighbor %s (", log_addr(&r->true_nexthop), s);
-	free(s);
 	id.s_addr = htonl(r->remote_id);
-
+	printf("    Nexthop %s ", log_addr(&r->exit_nexthop));
+	printf("(via %s) Neighbor %s (%s)", log_addr(&r->true_nexthop), s,
+	    inet_ntoa(id));
 	if (r->flags & F_PREF_PATH_ID)
-		printf("%s) Path-Id: %u%c", inet_ntoa(id), r->path_id,
-		    EOL0(flag0));
+		printf(" Path-Id: %u", r->path_id);
+	printf("%c", EOL0(flag0));
+	free(s);
 
 	printf("    Origin %s, metric %u, localpref %u, weight %u, ovs %s, ",
 	    fmt_origin(r->origin, 0), r->med, r->local_pref, r->weight,
