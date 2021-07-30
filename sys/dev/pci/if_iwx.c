@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.87 2021/07/30 13:56:44 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.88 2021/07/30 14:09:12 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -244,6 +244,7 @@ void	iwx_ctxt_info_free_fw_img(struct iwx_softc *);
 void	iwx_ctxt_info_free_paging(struct iwx_softc *);
 int	iwx_init_fw_sec(struct iwx_softc *, const struct iwx_fw_sects *,
 	    struct iwx_context_info_dram *);
+void	iwx_fw_version_str(char *, size_t, uint32_t, uint32_t, uint32_t);
 int	iwx_firmware_store_section(struct iwx_softc *, enum iwx_ucode_type,
 	    uint8_t *, size_t);
 int	iwx_set_default_calib(struct iwx_softc *, const void *);
@@ -688,6 +689,20 @@ iwx_init_fw_sec(struct iwx_softc *sc, const struct iwx_fw_sects *fws,
 
 	return 0;
 }
+	    
+void
+iwx_fw_version_str(char *buf, size_t bufsize,
+    uint32_t major, uint32_t minor, uint32_t api)
+{
+	/*
+	 * Starting with major version 35 the Linux driver prints the minor
+	 * version in hexadecimal.
+	 */
+	if (major >= 35)
+		snprintf(buf, bufsize, "%u.%08x.%u", major, minor, api);
+	else
+		snprintf(buf, bufsize, "%u.%u.%u", major, minor, api);
+}
 
 int
 iwx_alloc_fw_monitor_block(struct iwx_softc *sc, uint8_t max_power,
@@ -1037,10 +1052,11 @@ iwx_read_firmware(struct iwx_softc *sc)
 		goto out;
 	}
 
-	snprintf(sc->sc_fwver, sizeof(sc->sc_fwver), "%d.%d (API ver %d)",
+	iwx_fw_version_str(sc->sc_fwver, sizeof(sc->sc_fwver),
 	    IWX_UCODE_MAJOR(le32toh(uhdr->ver)),
 	    IWX_UCODE_MINOR(le32toh(uhdr->ver)),
 	    IWX_UCODE_API(le32toh(uhdr->ver)));
+
 	data = uhdr->data;
 	len = fw->fw_rawsize - sizeof(*uhdr);
 
@@ -1234,8 +1250,8 @@ iwx_read_firmware(struct iwx_softc *sc)
 				err = EINVAL;
 				goto parse_out;
 			}
-			snprintf(sc->sc_fwver, sizeof(sc->sc_fwver),
-			    "%u.%u.%u",
+
+			iwx_fw_version_str(sc->sc_fwver, sizeof(sc->sc_fwver),
 			    le32toh(((uint32_t *)tlv_data)[0]),
 			    le32toh(((uint32_t *)tlv_data)[1]),
 			    le32toh(((uint32_t *)tlv_data)[2]));
