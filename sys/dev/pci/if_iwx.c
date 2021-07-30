@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.86 2021/07/29 12:13:58 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.87 2021/07/30 13:56:44 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -9319,7 +9319,6 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 	case PCI_PRODUCT_INTEL_WL_22500_1:
 		sc->sc_fwname = "iwx-cc-a0-63";
 		sc->sc_device_family = IWX_DEVICE_FAMILY_22000;
-		sc->sc_fwdmasegsz = IWX_FWDMASEGSZ_8000;
 		sc->sc_integrated = 1;
 		sc->sc_ltr_delay = IWX_SOC_FLAGS_LTR_APPLY_DELAY_NONE;
 		sc->sc_low_latency_xtal = 0;
@@ -9337,7 +9336,6 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 
 		sc->sc_fwname = "iwx-QuZ-a0-hr-b0-63";
 		sc->sc_device_family = IWX_DEVICE_FAMILY_22000;
-		sc->sc_fwdmasegsz = IWX_FWDMASEGSZ_8000;
 		sc->sc_integrated = 1;
 		sc->sc_ltr_delay = IWX_SOC_FLAGS_LTR_APPLY_DELAY_200;
 		sc->sc_low_latency_xtal = 0;
@@ -9348,7 +9346,6 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 	case PCI_PRODUCT_INTEL_WL_22500_4:
 	    sc->sc_fwname = "iwx-Qu-c0-hr-b0-63";
 	    sc->sc_device_family = IWX_DEVICE_FAMILY_22000;
-	    sc->sc_fwdmasegsz = IWX_FWDMASEGSZ_8000;
 	    sc->sc_integrated = 1;
 	    sc->sc_ltr_delay = IWX_SOC_FLAGS_LTR_APPLY_DELAY_200;
 	    sc->sc_low_latency_xtal = 0;
@@ -9406,18 +9403,6 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: could not allocate memory for loading firmware\n",
 		    DEVNAME(sc));
 		return;
-	}
-
-	/* 
-	 * Allocate DMA memory for firmware transfers.
-	 * Must be aligned on a 16-byte boundary.
-	 */
-	err = iwx_dma_contig_alloc(sc->sc_dmat, &sc->fw_dma,
-	    sc->sc_fwdmasegsz, 16);
-	if (err) {
-		printf("%s: could not allocate memory for firmware transfers\n",
-		    DEVNAME(sc));
-		goto fail0;
 	}
 
 	/* Allocate interrupt cause table (ICT).*/
@@ -9554,8 +9539,7 @@ fail4:	while (--txq_i >= 0)
 fail3:	if (sc->ict_dma.vaddr != NULL)
 		iwx_dma_contig_free(&sc->ict_dma);
 	
-fail1:	iwx_dma_contig_free(&sc->fw_dma);
-fail0:	iwx_dma_contig_free(&sc->ctxt_info_dma);
+fail1:	iwx_dma_contig_free(&sc->ctxt_info_dma);
 	return;
 }
 
