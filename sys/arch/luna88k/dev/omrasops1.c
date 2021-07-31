@@ -1,4 +1,4 @@
-/*	$OpenBSD: omrasops1.c,v 1.3 2017/03/20 19:37:54 miod Exp $	*/
+/*	$OpenBSD: omrasops1.c,v 1.4 2021/07/31 05:22:36 aoyama Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat.
@@ -147,7 +147,7 @@ om1_windowmove(struct rasops_info *ri, u_int16_t sx, u_int16_t sy,
 		dstBit = dx & 0x1f;
 
 		while (cy--) {
-			getandputrop(R(psrc), srcBit, dstBit, cx, W(pdst), rop);
+			getandputrop(P0(psrc), srcBit, dstBit, cx, P0(pdst), rop);
 			pdst += width;
 			psrc += width;
 		}
@@ -174,8 +174,8 @@ om1_windowmove(struct rasops_info *ri, u_int16_t sx, u_int16_t sy,
 				pdst = pdstLine;
 
 				if (startmask) {
-					getandputrop(R(psrc), (sx & 0x1f),
-					    (dx & 0x1f), nstart, W(pdst), rop);
+					getandputrop(P0(psrc), (sx & 0x1f),
+					    (dx & 0x1f), nstart, P0(pdst), rop);
 					pdst++;
 					if (srcStartOver)
 						psrc++;
@@ -186,9 +186,9 @@ om1_windowmove(struct rasops_info *ri, u_int16_t sx, u_int16_t sy,
 					nl = nlMiddle;
 					while (nl--) {
 						if (rop == RR_CLEAR)
-							*W(pdst) = 0;
+							*P0(pdst) = 0;
 						else
-							*W(pdst) = *R(psrc);
+							*P0(pdst) = *P0(psrc);
 						psrc++;
 						pdst++;
 					}
@@ -196,18 +196,18 @@ om1_windowmove(struct rasops_info *ri, u_int16_t sx, u_int16_t sy,
 					nl = nlMiddle + 1;
 					while (--nl) {
 						if (rop == RR_CLEAR)
-							*W(pdst) = 0;
+							*P0(pdst) = 0;
 						else
-							getunalignedword(R(psrc),
-							    xoffSrc, *W(pdst));
+							getunalignedword(P0(psrc),
+							    xoffSrc, *P0(pdst));
 						pdst++;
 						psrc++;
 					}
 				}
 
 				if (endmask) {
-					getandputrop(R(psrc), xoffSrc, 0, nend,
-					    W(pdst), rop);
+					getandputrop(P0(psrc), xoffSrc, 0, nend,
+					    P0(pdst), rop);
 				}
 
 				pdstLine += width;
@@ -228,8 +228,8 @@ om1_windowmove(struct rasops_info *ri, u_int16_t sx, u_int16_t sy,
 				pdst = pdstLine;
 
 				if (endmask) {
-					getandputrop(R(psrc), xoffSrc, 0, nend,
-					    W(pdst), rop);
+					getandputrop(P0(psrc), xoffSrc, 0, nend,
+					    P0(pdst), rop);
 				}
 
 				nl = nlMiddle + 1;
@@ -237,18 +237,18 @@ om1_windowmove(struct rasops_info *ri, u_int16_t sx, u_int16_t sy,
 					--psrc;
 					--pdst;
 					if (rop == RR_CLEAR)
-						*W(pdst) = 0;
+						*P0(pdst) = 0;
 					else
-						getunalignedword(R(psrc), xoffSrc,
-						    *W(pdst));
+						getunalignedword(P0(psrc), xoffSrc,
+						    *P0(pdst));
 				}
 
 				if (startmask) {
 					if (srcStartOver)
 						--psrc;
 					--pdst;
-					getandputrop(R(psrc), (sx & 0x1f),
-					    (dx & 0x1f), nstart, W(pdst), rop);
+					getandputrop(P0(psrc), (sx & 0x1f),
+					    (dx & 0x1f), nstart, P0(pdst), rop);
 				}
 
 				pdstLine += width;

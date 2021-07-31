@@ -18,7 +18,6 @@
  * Helper macros
  */
 #define W(addr)  ((u_int32_t *)(addr))
-#define R(addr)  ((u_int32_t *)((u_int8_t *)(addr) +  0x40000))
 #define P0(addr) ((u_int32_t *)((u_int8_t *)(addr) +  0x40000))
 #define P1(addr) ((u_int32_t *)((u_int8_t *)(addr) +  0x80000))
 #define P2(addr) ((u_int32_t *)((u_int8_t *)(addr) +  0xC0000))

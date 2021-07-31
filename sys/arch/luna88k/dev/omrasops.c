@@ -1,4 +1,4 @@
-/* $OpenBSD: omrasops.c,v 1.16 2020/05/25 09:55:48 jsg Exp $ */
+/* $OpenBSD: omrasops.c,v 1.17 2021/07/31 05:22:36 aoyama Exp $ */
 /* $NetBSD: omrasops.c,v 1.1 2000/01/05 08:48:56 nisimura Exp $ */
 
 /*-
@@ -123,7 +123,7 @@ om1_putchar(void *cookie, int row, int startcol, u_int uc, uint32_t attr)
 				glyph = (glyph << 8) | *fb++;
 			glyph <<= (4 - ri->ri_font->stride) * NBBY;
 			glyph = (glyph >> align) ^ inverse;
-			*W(p) = (*R(p) & ~lmask) | (glyph & lmask);
+			*P0(p) = (*P0(p) & ~lmask) | (glyph & lmask);
 			p += scanspan;
 			height--;
 		}
@@ -137,12 +137,12 @@ om1_putchar(void *cookie, int row, int startcol, u_int uc, uint32_t attr)
 				glyph = (glyph << 8) | *fb++;
 			glyph <<= (4 - ri->ri_font->stride) * NBBY;
 			lhalf = (glyph >> align) ^ inverse;
-			*W(p) = (*R(p) & ~lmask) | (lhalf & lmask);
+			*P0(p) = (*P0(p) & ~lmask) | (lhalf & lmask);
 
 			p += BYTESDONE;
 
 			rhalf = (glyph << (BLITWIDTH - align)) ^ inverse;
-			*W(p) = (rhalf & rmask) | (*R(p) & ~rmask);
+			*P0(p) = (rhalf & rmask) | (*P0(p) & ~rmask);
 
 			p = (q += scanspan);
 			height--;
@@ -407,8 +407,8 @@ om1_cursor(void *cookie, int on, int row, int col)
 	if (width <= BLITWIDTH) {
 		lmask &= rmask;
 		while (height > 0) {
-			image = *R(p);
-			*W(p) = (image & ~lmask) | ((image ^ ALL1BITS) & lmask);
+			image = *P0(p);
+			*P0(p) = (image & ~lmask) | ((image ^ ALL1BITS) & lmask);
 			p += scanspan;
 			height--;
 		}
@@ -416,12 +416,12 @@ om1_cursor(void *cookie, int on, int row, int col)
 		u_int8_t *q = p;
 
 		while (height > 0) {
-			image = *R(p);
-			*W(p) = (image & ~lmask) | ((image ^ ALL1BITS) & lmask);
+			image = *P0(p);
+			*P0(p) = (image & ~lmask) | ((image ^ ALL1BITS) & lmask);
 			p += BYTESDONE;
 
-			image = *R(p);
-			*W(p) = ((image ^ ALL1BITS) & rmask) | (image & ~rmask);
+			image = *P0(p);
+			*P0(p) = ((image ^ ALL1BITS) & rmask) | (image & ~rmask);
 			p = (q += scanspan);
 			height--;
 		}
