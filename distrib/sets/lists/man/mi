@@ -2405,6 +2405,7 @@
 ./usr/share/man/man8/ldconfig.8
 ./usr/share/man/man8/ldpctl.8
 ./usr/share/man/man8/ldpd.8
+./usr/share/man/man8/locate.mklocatedb.8
 ./usr/share/man/man8/locate.updatedb.8
 ./usr/share/man/man8/login_chpass.8
 ./usr/share/man/man8/login_lchpass.8
