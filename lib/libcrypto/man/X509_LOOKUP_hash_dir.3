@@ -1,7 +1,24 @@
-.\" $OpenBSD: X509_LOOKUP_hash_dir.3,v 1.9 2019/06/06 01:06:59 schwarze Exp $
+.\" $OpenBSD: X509_LOOKUP_hash_dir.3,v 1.10 2021/07/31 14:54:33 schwarze Exp $
 .\" full merge up to: OpenSSL 61f805c1 Jan 16 01:01:46 2018 +0800
 .\"
-.\" This file was written by Victor B. Wagner <vitus@cryptocom.ru>
+.\" This file is a derived work.
+.\" The changes are covered by the following Copyright and license:
+.\"
+.\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" The original file was written by Victor B. Wagner <vitus@cryptocom.ru>
 .\" and Claus Assmann.
 .\" Copyright (c) 2015, 2016, 2017 The OpenSSL Project.  All rights reserved.
 .\"
@@ -49,22 +66,25 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 6 2019 $
+.Dd $Mdocdate: July 31 2021 $
 .Dt X509_LOOKUP_HASH_DIR 3
 .Os
 .Sh NAME
 .Nm X509_LOOKUP_hash_dir ,
 .Nm X509_LOOKUP_file ,
+.Nm X509_LOOKUP_mem ,
 .Nm X509_load_cert_file ,
 .Nm X509_load_crl_file ,
 .Nm X509_load_cert_crl_file
-.Nd default OpenSSL certificate lookup methods
+.Nd default certificate lookup methods
 .Sh SYNOPSIS
 .In openssl/x509_vfy.h
 .Ft X509_LOOKUP_METHOD *
 .Fn X509_LOOKUP_hash_dir void
 .Ft X509_LOOKUP_METHOD *
 .Fn X509_LOOKUP_file void
+.Ft X509_LOOKUP_METHOD *
+.Fn X509_LOOKUP_mem void
 .Ft int
 .Fo X509_load_cert_file
 .Fa "X509_LOOKUP *ctx"
@@ -84,16 +104,17 @@
 .Fa "int type"
 .Fc
 .Sh DESCRIPTION
-.Fn X509_LOOKUP_hash_dir
+.Fn X509_LOOKUP_hash_dir ,
+.Fn X509_LOOKUP_file ,
 and
-.Fn X509_LOOKUP_file
-are two certificate lookup methods to use with
-.Vt X509_STORE ,
-provided by the OpenSSL library.
+.Fn X509_LOOKUP_mem
+return pointers to static certificate lookup method objects
+built into the library, for use with
+.Vt X509_STORE .
 .Pp
-Users of the library typically do not need to create instances of these
-methods manually.
-They are created automatically by the
+Users of the library typically do not need
+to retrieve pointers to these method objects manually.
+They are automatically used by the
 .Xr X509_STORE_load_locations 3
 or
 .Xr SSL_CTX_load_verify_locations 3
@@ -141,7 +162,7 @@ filename causes these functions to load the default certificate
 store file (see
 .Xr X509_STORE_set_default_paths 3 ) .
 .Pp
-Both methods support adding several certificate locations into one
+All three methods support adding several certificate locations into one
 .Sy X509_STORE .
 .Pp
 This page documents certificate store formats used by these methods and
@@ -208,13 +229,22 @@ sequence number greater than that of the already cached CRL.
 Note that the hash algorithm used for subject name hashing changed in
 OpenSSL 1.0.0, and all certificate stores have to be rehashed when
 moving from OpenSSL 0.9.8 to 1.0.0.
+.Ss Memory Method
+The
+.Fn X509_LOOKUP_mem
+method supports loading PEM-encoded certificates and revocation lists
+that are already stored in memory, using the function
+.Xr X509_LOOKUP_add_mem 3 .
+This is particularly useful in processes using
+.Xr chroot 2 .
 .Sh RETURN VALUES
-.Fn X509_LOOKUP_hash_dir
+.Fn X509_LOOKUP_hash_dir ,
+.Fn X509_LOOKUP_file ,
 and
-.Fn X509_LOOKUP_file
+.Fn X509_LOOKUP_mem
 always return a pointer to a static
 .Vt X509_LOOKUP_METHOD
-structure.
+object.
 .Pp
 .Fn X509_load_cert_file ,
 .Fn X509_load_crl_file ,
@@ -227,6 +257,7 @@ or 0 on error.
 .Xr d2i_X509_bio 3 ,
 .Xr PEM_read_PrivateKey 3 ,
 .Xr SSL_CTX_load_verify_locations 3 ,
+.Xr X509_LOOKUP_new 3 ,
 .Xr X509_OBJECT_get0_X509 3 ,
 .Xr X509_STORE_load_locations 3 ,
 .Xr X509_STORE_new 3
@@ -244,3 +275,7 @@ These functions have been available since
 .Fn X509_load_cert_crl_file
 first appeared in OpenSSL 0.9.5 and has been available since
 .Ox 2.7 .
+.Pp
+.Fn X509_LOOKUP_mem
+first appeared in
+.Ox 5.7 .
