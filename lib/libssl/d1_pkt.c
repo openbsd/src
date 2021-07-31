@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.104 2021/07/26 03:17:38 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.105 2021/07/31 09:31:04 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -786,15 +786,13 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 			cb(s, SSL_CB_READ_ALERT, j);
 		}
 
-		if (alert_level == 1) /* warning */
-		{
+		if (alert_level == SSL3_AL_WARNING) {
 			S3I(s)->warn_alert = alert_descr;
 			if (alert_descr == SSL_AD_CLOSE_NOTIFY) {
 				s->internal->shutdown |= SSL_RECEIVED_SHUTDOWN;
 				return (0);
 			}
-		} else if (alert_level == 2) /* fatal */
-		{
+		} else if (alert_level == SSL3_AL_FATAL) {
 			s->internal->rwstate = SSL_NOTHING;
 			S3I(s)->fatal_alert = alert_descr;
 			SSLerror(s, SSL_AD_REASON_OFFSET + alert_descr);

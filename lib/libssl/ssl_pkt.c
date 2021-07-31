@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.46 2021/07/26 03:17:38 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.47 2021/07/31 09:31:04 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1204,7 +1204,7 @@ int
 ssl3_send_alert(SSL *s, int level, int desc)
 {
 	/* If a fatal one, remove from cache */
-	if ((level == 2) && (s->session != NULL))
+	if ((level == SSL3_AL_FATAL) && (s->session != NULL))
 		SSL_CTX_remove_session(s->ctx, s->session);
 
 	S3I(s)->alert_dispatch = 1;
