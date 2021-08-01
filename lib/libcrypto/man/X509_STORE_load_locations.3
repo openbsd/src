@@ -1,8 +1,8 @@
-.\" $OpenBSD: X509_STORE_load_locations.3,v 1.7 2021/03/12 05:18:00 jsg Exp $
+.\" $OpenBSD: X509_STORE_load_locations.3,v 1.8 2021/08/01 15:37:53 schwarze Exp $
 .\" full merge up to:
 .\" OpenSSL X509_STORE_add_cert b0edda11 Mar 20 13:00:17 2018 +0000
 .\"
-.\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2017, 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -16,12 +16,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 12 2021 $
+.Dd $Mdocdate: August 1 2021 $
 .Dt X509_STORE_LOAD_LOCATIONS 3
 .Os
 .Sh NAME
 .Nm X509_STORE_load_locations ,
-.Nm X509_STORE_set_default_paths
+.Nm X509_STORE_set_default_paths ,
+.Nm X509_STORE_load_mem ,
+.Nm X509_STORE_add_lookup
 .Nd configure files and directories used by a certificate store
 .Sh SYNOPSIS
 .In openssl/x509_vfy.h
@@ -35,11 +37,22 @@
 .Fo X509_STORE_set_default_paths
 .Fa "X509_STORE *store"
 .Fc
+.Ft int
+.Fo X509_STORE_load_mem
+.Fa "X509_STORE *store"
+.Fa "void *buffer"
+.Fa "int length"
+.Fc
+.Ft X509_LOOKUP *
+.Fo X509_STORE_add_lookup
+.Fa "X509_STORE *store"
+.Fa "X509_LOOKUP_METHOD *method"
+.Fc
 .Sh DESCRIPTION
 .Fn X509_STORE_load_locations
 instructs the
 .Fa store
-to use the PEM file
+to use the PEM
 .Fa file
 and all the PEM files in the directories
 contained in the colon-separated list
@@ -85,6 +98,35 @@ except that it operates directly on an
 .Vt X509_STORE
 object, rather than on the store used by an SSL context.
 See that manual page for more information.
+.Pp
+The above functions are wrappers around
+.Xr X509_LOOKUP_load_file 3
+and
+.Xr X509_LOOKUP_add_dir 3 .
+.Pp
+.Fn X509_STORE_load_mem
+instructs the
+.Fa store
+to use the certificates contained in the memory
+.Fa buffer
+of the given
+.Fa length
+for certificate lookup.
+It is a wrapper around
+.Xr X509_LOOKUP_add_mem 3 .
+.Pp
+.Fn X509_STORE_add_lookup
+checks whether the
+.Fa store
+already contains an
+.Vt X509_LOOKUP
+object using the given
+.Fa method ;
+if it does, no action occurs.
+Otherwise, a new
+.Vt X509_LOOKUP
+object is allocated, added, and returned.
+This function is used internally by all the functions listed above.
 .Sh RETURN VALUES
 .Fn X509_STORE_load_locations
 returns 1 if all files and directories specified were successfully
@@ -97,6 +139,18 @@ directories failed, or if both arguments were
 .Fn X509_STORE_set_default_paths
 returns 0 for some error conditions and 1 otherwise, not just for
 success, but also for various cases of failure.
+.Pp
+.Fn X509_STORE_load_mem
+returns 1 for success or 0 for failure.
+In particular, parse errors or lack of memory can cause failure.
+.Pp
+.Fn X509_STORE_add_lookup
+returns the existing or new lookup object or
+.Dv NULL
+on failure.
+When using the built-in
+.Vt X509_LOOKUP_METHOD
+objects, the only reason for failure is lack of memory.
 .Sh FILES
 .Bl -tag -width Ds
 .It Pa /etc/ssl/cert.pem
@@ -109,15 +163,21 @@ default directory for
 .Sh SEE ALSO
 .Xr SSL_CTX_load_verify_locations 3 ,
 .Xr X509_LOOKUP_hash_dir 3 ,
+.Xr X509_LOOKUP_new 3 ,
 .Xr X509_STORE_new 3 ,
 .Xr X509_STORE_set1_param 3 ,
 .Xr X509_STORE_set_verify_cb 3
 .Sh HISTORY
-.Fn X509_STORE_load_locations
+.Fn X509_STORE_load_locations ,
+.Fn X509_STORE_set_default_paths ,
 and
-.Fn X509_STORE_set_default_paths
+.Fn X509_STORE_add_lookup
 first appeared in SSLeay 0.8.0 and have been available since
 .Ox 2.4 .
+.Pp
+.Fn X509_STORE_load_mem
+first appeared in
+.Ox 5.7 .
 .Sh BUGS
 By the time that adding a directory is found to have failed,
 the file and some other directories may already have been successfully loaded,
