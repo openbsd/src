@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.2 2021/07/30 15:34:37 job Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.3 2021/08/01 00:40:13 job Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -518,7 +518,7 @@ rtr_parse_ipv6_prefix(struct rtr_session *rs, uint8_t *buf, size_t len)
 		rtr_send_error(rs, INTERNAL_ERROR, "out of memory", NULL, 0);
 		return -1;
 	}
-	if (ip6.prefixlen > ip6.maxlen || ip6.prefixlen > 128 || 
+	if (ip6.prefixlen > ip6.maxlen || ip6.prefixlen > 128 ||
 	    ip6.maxlen > 128) {
 		log_warnx("rtr: %s: received %s: bad prefixlen / maxlen",
 		    log_rtr(rs), log_rtr_type(IPV6_PREFIX));
@@ -767,7 +767,7 @@ rtr_process_msg(struct rtr_session *rs)
 			break;
 		default:
 			log_warnx("rtr %s: received %s: unexpected pdu type",
-		    	    log_rtr(rs), log_rtr_type(msgtype));
+			    log_rtr(rs), log_rtr_type(msgtype));
 			rtr_send_error(rs, INVALID_REQUEST, NULL, rptr, msglen);
 			return;
 		}
@@ -1020,7 +1020,7 @@ struct rtr_session *
 rtr_new(uint32_t id, char *descr)
 {
 	struct rtr_session *rs;
-	
+
 	if ((rs = calloc(1, sizeof(*rs))) == NULL)
 		fatal("RTR session %s", descr);
 
