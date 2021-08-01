@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.22 2021/07/28 12:32:14 job Exp $ */
+/*	$OpenBSD: roa.c,v 1.23 2021/08/01 22:29:49 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -90,13 +90,8 @@ roa_parse_addr(const ASN1_OCTET_STRING *os, enum afi afi, struct parse *p)
 			    p->fn, ASN1_tag2str(t->type), t->type);
 			goto out;
 		}
-		maxlength = t->value.integer;
 
-		/*
-		 * It's safe to use ASN1_INTEGER_get() here
-		 * because we're not going to have more than signed 32
-		 * bit maximum of length.
-		 */
+		maxlength = t->value.integer;
 		maxlen = ASN1_INTEGER_get(maxlength);
 		if (maxlen < 0) {
 			warnx("%s: RFC 6482 section 3.2: maxLength: "
@@ -104,7 +99,7 @@ roa_parse_addr(const ASN1_OCTET_STRING *os, enum afi afi, struct parse *p)
 			goto out;
 		}
 		if (addr.prefixlen > maxlen) {
-			warnx("%s: prefixlen (%i) larger than maxLength (%ld)",
+			warnx("%s: prefixlen (%d) larger than maxLength (%ld)",
 			    p->fn, addr.prefixlen, maxlen);
 			goto out;
 		}
