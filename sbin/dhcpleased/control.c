@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.3 2021/07/26 09:26:36 florian Exp $	*/
+/*	$OpenBSD: control.c,v 1.4 2021/08/01 09:07:03 florian Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -280,7 +280,7 @@ control_dispatch_imsg(int fd, short event, void *bula)
 			if (IMSG_DATA_SIZE(imsg) != sizeof(uint32_t))
 				break;
 			c->iev.ibuf.pid = imsg.hdr.pid;
-			frontend_imsg_compose_engine(imsg.hdr.type, 0,
+			frontend_imsg_compose_engine(IMSG_REQUEST_REBOOT, 0,
 			    imsg.hdr.pid, imsg.data, IMSG_DATA_SIZE(imsg));
 			break;
 		default:
