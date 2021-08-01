@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.72 2021/06/20 19:55:48 martijn Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.73 2021/08/01 11:36:48 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -381,7 +381,7 @@ badversion:
 	case SNMP_C_TRAPV2:
 		if (msg->sm_pdutype == SNMP_C_TRAPV2 &&
 		    !(msg->sm_version == SNMP_V2 ||
-		    msg->sm_version != SNMP_V3)) {
+		    msg->sm_version == SNMP_V3)) {
 			msg->sm_errstr = "trapv2 request on !SNMPv2C or "
 			    "!SNMPv3 message";
 			goto parsefail;
