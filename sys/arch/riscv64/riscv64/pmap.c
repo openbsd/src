@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.18 2021/07/30 13:17:33 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.19 2021/08/02 19:07:29 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Brian Bamsch <bbamsch@google.com>
@@ -105,18 +105,29 @@ icache_flush(void)
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
 	unsigned long hart_mask = 0;
+#endif
 
+	fence_i();
+
+#ifdef MULTIPROCESSOR
 	CPU_INFO_FOREACH(cii, ci) {
 		if (ci == curcpu())
 			continue;
 		hart_mask |= (1UL << ci->ci_hartid);
 	}
 
-	if (hart_mask != 0)
+	/*
+	 * From the RISC-V ISA:
+	 *
+	 * To make a store to instruction memory visible to all RISC-V
+	 * harts, the writing hart has to execute a data FENCE before
+	 * requesting that all remote RISC-V harts execute a FENCE.I.
+	 */
+	if (hart_mask != 0) {
+		membar_sync();
 		sbi_remote_fence_i(&hart_mask);
+	}
 #endif
-
-	fence_i();
 }
 
 struct pmap kernel_pmap_;
