@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_OBJECT_get0_X509.3,v 1.10 2021/07/31 14:54:34 schwarze Exp $
+.\" $OpenBSD: X509_OBJECT_get0_X509.3,v 1.11 2021/08/02 16:21:11 schwarze Exp $
 .\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 31 2021 $
+.Dd $Mdocdate: August 2 2021 $
 .Dt X509_OBJECT_GET0_X509 3
 .Os
 .Sh NAME
@@ -228,11 +228,9 @@ or no match is found.
 .Xr X509_LOOKUP_new 3 ,
 .Xr X509_NAME_new 3 ,
 .Xr X509_STORE_get0_objects 3 ,
+.Xr X509_STORE_get_by_subject 3 ,
 .Xr X509_STORE_load_locations 3 ,
 .Xr X509_STORE_new 3
-.\" The type X509_OBJECT is also used
-.\" by the following undocumented public function:
-.\" X509_STORE_get_by_subject
 .Sh HISTORY
 .Fn X509_OBJECT_up_ref_count
 and
