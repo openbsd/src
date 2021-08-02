@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.14 2021/04/28 12:55:37 patrick Exp $
+# $OpenBSD: Makefile,v 1.15 2021/08/02 08:50:51 patrick Exp $
 
 .include <bsd.own.mk>
 
@@ -98,6 +98,10 @@ SUBDIR+=liblldbUtility
 
 SUBDIR+=lldb
 SUBDIR+=lldb-server
+
+SUBDIR+=include/llvm-objcopy
+SUBDIR+=llvm-objcopy
+SUBDIR+=llvm-objdump
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
