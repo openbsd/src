@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.3 2021/08/01 00:40:13 job Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.4 2021/08/02 16:42:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -449,8 +449,8 @@ rtr_parse_ipv4_prefix(struct rtr_session *rs, uint8_t *buf, size_t len)
 		rtr_send_error(rs, INTERNAL_ERROR, "out of memory", NULL, 0);
 		return -1;
 	}
-	if (ip4.prefixlen > ip4.maxlen || ip4.prefixlen > 32 ||
-	    ip4.maxlen > 32) {
+	if (ip4.prefixlen > 32 || ip4.maxlen > 32 ||
+	    ip4.prefixlen > ip4.maxlen) {
 		log_warnx("rtr: %s: received %s: bad prefixlen / maxlen",
 		    log_rtr(rs), log_rtr_type(IPV4_PREFIX));
 		rtr_send_error(rs, CORRUPT_DATA, "bad prefixlen / maxlen",
@@ -518,8 +518,8 @@ rtr_parse_ipv6_prefix(struct rtr_session *rs, uint8_t *buf, size_t len)
 		rtr_send_error(rs, INTERNAL_ERROR, "out of memory", NULL, 0);
 		return -1;
 	}
-	if (ip6.prefixlen > ip6.maxlen || ip6.prefixlen > 128 ||
-	    ip6.maxlen > 128) {
+	if (ip6.prefixlen > 128 || ip6.maxlen > 128 ||
+	    ip6.prefixlen > ip6.maxlen) {
 		log_warnx("rtr: %s: received %s: bad prefixlen / maxlen",
 		    log_rtr(rs), log_rtr_type(IPV6_PREFIX));
 		rtr_send_error(rs, CORRUPT_DATA, "bad prefixlen / maxlen",
