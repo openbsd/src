@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.67 2021/05/10 18:01:24 mpi Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.68 2021/08/02 15:15:47 tb Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -621,7 +621,10 @@ sysctl_hwsetperf(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 	    &perflevel, 0, 100);
 	if (err)
 		return err;
-	cpu_setperf(perflevel);
+
+	if (newp != NULL)
+		cpu_setperf(perflevel);
+
 	return 0;
 }
 
