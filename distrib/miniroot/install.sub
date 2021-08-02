@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1169 2021/07/20 11:20:09 kn Exp $
+#	$OpenBSD: install.sub,v 1.1170 2021/08/02 01:29:26 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2052,7 +2052,7 @@ set_term() {
 
 # Configure the network.
 donetconfig() {
-	local _dn _ns _f1 _f2 _f3
+	local _dn _ns _f1 _f2 _f3 _autoconf_ns=false
 
 	configure_ifs
 	v4_defroute
@@ -2065,6 +2065,7 @@ donetconfig() {
 		# domain given on *last* search or domain statement.
 		while read -r -- _f1 _f2 _f3; do
 			[[ $_f1 == nameserver ]] && _ns="${_ns:+$_ns }$_f2"
+			[[ $_f3 == '# resolvd: '* ]] && _autoconf_ns=true
 			[[ $_f1 == @(domain|search) ]] && _dn=$_f2
 		done </etc/resolv.conf
 	fi
@@ -2085,6 +2086,11 @@ donetconfig() {
 		ask "DNS domain name? (e.g. 'example.com')" "$resp"
 	fi
 	hostname "$(hostname -s).$resp"
+
+	if $_autoconf_ns && [[ -n $_ns ]]; then
+		echo "Using DNS nameservers at $_ns"
+		return
+	fi
 
 	# Get & add nameservers to /tmp/resolv.conf. Don't ask if there's only
 	# one configured interface and if it's managed by dhcp and if the
