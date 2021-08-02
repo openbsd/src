@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkpwm.c,v 1.2 2020/09/08 01:29:04 jmatthew Exp $	*/
+/*	$OpenBSD: rkpwm.c,v 1.3 2021/08/02 18:22:41 patrick Exp $	*/
 /*
  * Copyright (c) 2019 Krystian Lewandowski
  * Copyright (c) 2019 Patrick Wildt <patrick@blueri.se>
@@ -93,7 +93,7 @@ rkpwm_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->sc_clkin = clock_get_frequency(faa->fa_node, "pwm");
+	sc->sc_clkin = clock_get_frequency(faa->fa_node, NULL);
 	if (sc->sc_clkin == 0) {
 		printf(": no clock\n");
 		return;
