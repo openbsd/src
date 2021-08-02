@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.151 2021/01/28 20:04:44 mvs Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.152 2021/08/02 21:10:55 mvs Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1244,7 +1244,6 @@ trunk_port_state(void *arg)
 	if (tr->tr_linkstate != NULL)
 		(*tr->tr_linkstate)(tp);
 	trunk_link_active(tr, tp);
-	rtm_ifchg(&tr->tr_ac.ac_if);
 }
 
 struct trunk_port *
