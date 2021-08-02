@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.271 2021/07/27 07:42:37 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.272 2021/08/02 16:51:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1723,7 +1723,8 @@ show_mrt_msg(struct mrt_bgp_msg *mm, void *arg)
 
 	printf("%s %s[%u] -> ", fmt_time(&mm->time),
 	    log_addr(&mm->src), mm->src_as);
-	printf("%s[%u]: size %u ", log_addr(&mm->dst), mm->dst_as, mm->msg_len);
+	printf("%s[%u]: size %u%s ", log_addr(&mm->dst), mm->dst_as,
+	    mm->msg_len, mm->add_path ? " addpath" : "");
 	p = mm->msg;
 	len = mm->msg_len;
 
