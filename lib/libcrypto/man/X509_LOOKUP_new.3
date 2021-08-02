@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_LOOKUP_new.3,v 1.1 2021/07/31 14:54:33 schwarze Exp $
+.\" $OpenBSD: X509_LOOKUP_new.3,v 1.2 2021/08/02 16:29:27 schwarze Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 31 2021 $
+.Dd $Mdocdate: August 2 2021 $
 .Dt X509_LOOKUP_NEW 3
 .Os
 .Sh NAME
@@ -70,7 +70,7 @@
 .Fa "X509_LOOKUP *lookup"
 .Fa "int type"
 .Fa "X509_NAME *name"
-.Fa "X509_OBJECT *ret"
+.Fa "X509_OBJECT *object"
 .Fc
 .Ft int
 .Fn X509_LOOKUP_init "X509_LOOKUP *lookup"
@@ -82,7 +82,7 @@
 .Fa "int type"
 .Fa "X509_NAME *name"
 .Fa "ASN1_INTEGER *serial"
-.Fa "X509_OBJECT *ret"
+.Fa "X509_OBJECT *object"
 .Fc
 .Ft int
 .Fo X509_LOOKUP_by_fingerprint
@@ -90,7 +90,7 @@
 .Fa "int type"
 .Fa "const unsigned char *bytes"
 .Fa "int length"
-.Fa "X509_OBJECT *ret"
+.Fa "X509_OBJECT *object"
 .Fc
 .Ft int
 .Fo X509_LOOKUP_by_alias
@@ -98,7 +98,7 @@
 .Fa "int type"
 .Fa "const char *string"
 .Fa "int length"
-.Fa "X509_OBJECT *ret"
+.Fa "X509_OBJECT *object"
 .Fc
 .In openssl/x509.h
 .Ft const char *
@@ -170,6 +170,14 @@ and
 .Fa ret
 set to
 .Dv NULL .
+.Pp
+This lookup method is peculiar in so far as calling
+.Fn X509_LOOKUP_ctrl
+on a lookup object using it does not yet add any certificates to the associated
+.Vt X509_STORE
+object.
+They need to be added selectively using
+.Fn X509_LOOKUP_by_subject .
 .It Xr X509_LOOKUP_file 3
 The
 .Fa command
@@ -290,6 +298,7 @@ to
 .Xr X509_NAME_hash 3
 and converts the resulting hash to an eight-digit lower-case
 hexadecimal number.
+.Pp
 If the
 .Fa type
 is
@@ -313,6 +322,10 @@ i.e. they start with
 .Qq ".r0" ,
 and the files are read with
 .Xr X509_load_crl_file 3 .
+.Pp
+In case of success, the first match is returned in the
+.Pf * Fa object
+provided by the caller, overwriting any previous content.
 .Pp
 Unless an application program manually constructs its own
 .Vt X509_LOOKUP_METHOD
@@ -369,7 +382,12 @@ is neither
 .Dv X509_LU_X509
 nor
 .Dv X509_LU_CRL ,
-or if memory allocation fails.
+if no match is found, or if memory allocation fails.
+If
+.Fa lookup
+uses a user-defined
+.Vt X509_LOOKUP_METHOD
+object, it might also return negative values for internal errors.
 .Pp
 .Fn X509_LOOKUP_init
 and
@@ -487,6 +505,7 @@ or calling
 with a
 .Dv NULL
 .Fa name
+or with arguments that yield no match
 causes failure but provides no diagnostics.
 .Sh SEE ALSO
 .Xr d2i_X509_bio 3 ,
@@ -497,7 +516,8 @@ causes failure but provides no diagnostics.
 .Xr X509_NAME_new 3 ,
 .Xr X509_new 3 ,
 .Xr X509_OBJECT_get_type 3 ,
-.Xr X509_STORE_add_cert 3
+.Xr X509_STORE_add_cert 3 ,
+.Xr X509_STORE_get_by_subject 3
 .Sh HISTORY
 .Fn X509_get_default_cert_dir
 and
