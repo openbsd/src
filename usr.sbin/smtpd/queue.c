@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.193 2021/06/14 17:58:16 eric Exp $	*/
+/*	$OpenBSD: queue.c,v 1.194 2021/08/02 12:33:34 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -199,7 +199,7 @@ queue_imsg(struct mproc *p, struct imsg *imsg)
 
 		bounce.type = B_FAILED;
 		envelope_set_errormsg(&evp, "Envelope expired");
-		envelope_set_esc_class(&evp, ESC_STATUS_TEMPFAIL);
+		envelope_set_esc_class(&evp, ESC_STATUS_PERMFAIL);
 		envelope_set_esc_code(&evp, ESC_DELIVERY_TIME_EXPIRED);
 		queue_bounce(&evp, &bounce);
 		queue_log(&evp, "Expire", "Envelope expired");
