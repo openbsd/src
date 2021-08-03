@@ -1,4 +1,6 @@
 ./usr/bin/llvm-config
+./usr/bin/llvm-objcopy
+./usr/bin/llvm-objdump
 ./usr/include/c++
 ./usr/include/c++/v1
 ./usr/include/c++/v1/__bit_reference
@@ -1823,3 +1825,5 @@
 ./usr/share/man/man1/clang.1
 ./usr/share/man/man1/ld.lld.1
 ./usr/share/man/man1/llvm-config.1
+./usr/share/man/man1/llvm-objcopy.1
+./usr/share/man/man1/llvm-objdump.1
