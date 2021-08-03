@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.85 2021/04/11 23:27:06 tobhe Exp $
+.\" $OpenBSD: iked.conf.5,v 1.86 2021/08/03 12:46:30 tobhe Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 11 2021 $
+.Dd $Mdocdate: August 3 2021 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -586,8 +586,8 @@ parameter defines the Child SA expiration timeout by the
 SA was in use and by the number of
 .Ar bytes
 that were processed using the SA.
-Default values are 3 hours and 512 megabytes which means that SA will be
-rekeyed before reaching the time limit or 512 megabytes of data
+Default values are 3 hours and 4 gigabytes which means that SA will be
+rekeyed before reaching the time limit or 4 gigabytes of data
 will pass through.
 Zero values disable rekeying.
 .Pp

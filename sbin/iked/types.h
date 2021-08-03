@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.43 2021/05/13 15:20:48 tobhe Exp $	*/
+/*	$OpenBSD: types.h,v 1.44 2021/08/03 12:46:30 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -67,7 +67,7 @@
 #define IKED_CYCLE_BUFFERS	8	/* # of static buffers for mapping */
 #define IKED_PASSWORD_SIZE	256	/* limited by most EAP types */
 
-#define IKED_LIFETIME_BYTES	536870912 /* 512 Mb */
+#define IKED_LIFETIME_BYTES	4294967296 /* 4 GB */
 #define IKED_LIFETIME_SECONDS	10800	  /* 3 hours */
 
 #define IKED_E			0x1000	/* Decrypted flag */
