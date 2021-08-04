@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.255 2021/06/26 15:42:58 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.256 2021/08/04 18:17:23 benno Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -93,6 +93,7 @@ int	 show(int, char *[]);
 int	 keycmp(const void *, const void *);
 int	 keyword(char *);
 void	 monitor(int, char *[]);
+int	 nameserver(int, char **);
 int	 prefixlen(int, char *);
 void	 sockaddr(char *, struct sockaddr *);
 void	 sodump(sup, char *);
@@ -281,6 +282,9 @@ main(int argc, char **argv)
 		break;
 	case K_MONITOR:
 		monitor(argc, argv);
+		break;
+	case K_NAMESERVER:
+		rval = nameserver(argc, argv);
 		break;
 	default:
 		usage(*argv);
@@ -1127,6 +1131,146 @@ monitor(int argc, char *argv[])
 		printf("got message of size %d on %s", n, ctime(&now));
 		print_rtmsg((struct rt_msghdr *)msg, n);
 	}
+}
+
+
+int
+nameserver(int argc, char *argv[])
+{
+	struct rt_msghdr         rtm;
+	struct sockaddr_rtdns    rtdns;
+	struct iovec             iov[3];
+	struct addrinfo	 hints, *res;
+	struct in_addr           ns4[5];
+	struct in6_addr          ns6[5];
+	size_t			 ns4_count = 0, ns6_count = 0;
+	long			 pad = 0;
+	unsigned int		 if_index;
+	int			 error = 0, iovcnt = 0, padlen, i;
+	char			*if_name, buf[INET6_ADDRSTRLEN];
+
+
+	argc--;
+	argv++;
+	if (argc == 0)
+		usage(NULL);
+
+	if_name = *argv;
+	argc--;
+	argv++;
+
+	if ((if_index = if_nametoindex(if_name)) == 0)
+		errx(1, "unknown interface: %s", if_name);
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_NUMERICHOST | AI_NUMERICSERV;
+
+#ifndef nitems
+#define nitems(_a)      (sizeof((_a)) / sizeof((_a)[0]))
+#endif
+
+	for (; argc > 0; argc--, argv++) {
+		error = getaddrinfo(*argv, NULL, &hints, &res);
+		if (error) {
+			errx(1, "%s", gai_strerror(error));
+		}
+		if (res == NULL) {
+			errx(1, "%s: unknown", *argv);
+		}
+
+		switch (res->ai_addr->sa_family) {
+		case AF_INET:
+			if (ns4_count >= nitems(ns4)) {
+				warnx("ignoring superflous nameserver: %s",
+				    *argv);
+				break;
+			}
+			memcpy(&ns4[ns4_count++],
+			    &((struct sockaddr_in *)res->ai_addr)->sin_addr,
+			    sizeof(struct in_addr));
+			break;
+		case AF_INET6:
+			if (ns6_count >= nitems(ns6)) {
+				warnx("ignoring superflous nameserver: %s",
+				    *argv);
+				break;
+			}
+			memcpy(&ns6[ns6_count++],
+			    &((struct sockaddr_in6 *)res->ai_addr)->sin6_addr,
+			    sizeof(struct in6_addr));
+			break;
+		default:
+			errx(1, "unknown address family");
+		}
+		freeaddrinfo(res);
+	}
+
+	if (argc > 0)
+		warnx("ignoring additional nameservers");
+
+	if (verbose) {
+		for (i = 0; i < ns4_count; i++)
+			warnx("v4: %s", inet_ntop(AF_INET, &ns4[i], buf,
+			    sizeof(buf)));
+		for (i = 0; i < ns6_count; i++)
+			warnx("v6: %s", inet_ntop(AF_INET6, &ns6[i], buf,
+			    sizeof(buf)));
+	}
+
+	memset(&rtm, 0, sizeof(rtm));
+
+	rtm.rtm_version = RTM_VERSION;
+	rtm.rtm_type = RTM_PROPOSAL;
+	rtm.rtm_msglen = sizeof(rtm);
+	rtm.rtm_tableid = tableid;
+	rtm.rtm_index = if_index;
+	rtm.rtm_seq = 1;
+	rtm.rtm_priority = RTP_PROPOSAL_STATIC;
+	rtm.rtm_addrs = RTA_DNS;
+	rtm.rtm_flags = RTF_UP;
+
+	iov[iovcnt].iov_base = &rtm;
+	iov[iovcnt++].iov_len = sizeof(rtm);
+
+	iov[iovcnt].iov_base = &rtdns;
+	iov[iovcnt++].iov_len = sizeof(rtdns);
+	rtm.rtm_msglen += sizeof(rtdns);
+
+	padlen = ROUNDUP(sizeof(rtdns)) - sizeof(rtdns);
+	if (padlen > 0) {
+		iov[iovcnt].iov_base = &pad;
+		iov[iovcnt++].iov_len = padlen;
+		rtm.rtm_msglen += padlen;
+	}
+
+	memset(&rtdns, 0, sizeof(rtdns));
+	rtdns.sr_family = AF_INET;
+	rtdns.sr_len = 2 + ns4_count * sizeof(struct in_addr);
+	memcpy(rtdns.sr_dns, ns4, rtdns.sr_len - 2);
+
+	if (debugonly)
+		return (0);
+
+	if (writev(s, iov, iovcnt) == -1) {
+		warn("failed to send route message");
+		error = 1;
+	}
+
+	rtm.rtm_seq++;
+
+	memset(&rtdns, 0, sizeof(rtdns));
+	rtdns.sr_family = AF_INET6;
+	rtdns.sr_len = 2 + ns6_count * sizeof(struct in6_addr);
+	memcpy(rtdns.sr_dns, ns6, rtdns.sr_len - 2);
+
+	if (writev(s, iov, iovcnt) == -1) {
+		warn("failed to send route message");
+		error = 1;
+	}
+
+	return (error);
 }
 
 struct {

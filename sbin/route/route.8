@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.95 2021/01/02 15:35:24 schwarze Exp $
+.\"	$OpenBSD: route.8,v 1.96 2021/08/04 18:17:23 benno Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)route.8	8.3 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: January 2 2021 $
+.Dd $Mdocdate: August 4 2021 $
 .Dt ROUTE 8
 .Os
 .Sh NAME
@@ -215,7 +215,6 @@ priority are shown.
 .Fl ifp
 .Ar interface
 .Xc
-.Pp
 Set the preferred source address.
 If
 .Ar address
@@ -236,6 +235,26 @@ destination is on-link
 .It
 source address is assigned to a disabled interface
 .El
+.El
+.Bl -tag -width Fl -compact
+.It Xo
+.Ic route
+.Op Fl dtv
+.Op Fl T Ar rtable
+.Tg
+.Cm nameserver
+.Op Ar address
+.Op Ar ...
+.Xc
+Send a list of up to five nameserver addresses proposals to
+.Xr resolvd 8 .
+.Xr resolvd 8
+will react upon this request by writing the nameservers to
+.Pa /etc/resolv.conf .
+If no
+.Ar address
+argument is given, a request to remove the nameservers previously entered for
+the given interface is sent.
 .El
 .Pp
 .Tg destination
@@ -603,9 +622,11 @@ to create the new entry.
 .Xr route 4 ,
 .Xr tcp 4 ,
 .Xr hosts 5 ,
+.Xr resolv.conf 5 ,
 .Xr mygate 5 ,
 .Xr bgpd 8 ,
 .Xr ospfd 8 ,
+.Xr resolvd 8 ,
 .Xr ripd 8 ,
 .Xr sysctl 8
 .Sh HISTORY
