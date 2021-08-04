@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.376 2021/07/21 08:06:36 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.377 2021/08/04 08:07:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1127,6 +1127,8 @@ server_client_update_latest(struct client *c)
 
 	if (options_get_number(w->options, "window-size") == WINDOW_SIZE_LATEST)
 		recalculate_size(w, 0);
+
+	notify_client("client-active", c);
 }
 
 /*

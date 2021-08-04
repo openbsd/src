@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.844 2021/06/18 07:46:54 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.845 2021/08/04 08:07:19 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 18 2021 $
+.Dd $Mdocdate: August 4 2021 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -4396,6 +4396,8 @@ See
 Run when a window has been silent.
 See
 .Ic monitor-silence .
+.It client-active
+Run when a client becomes the latest active client of its session.
 .It client-attached
 Run when a client is attached.
 .It client-detached
