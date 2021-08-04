@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.23 2021/08/01 09:07:03 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.24 2021/08/04 05:56:58 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -1389,7 +1389,7 @@ iface_timeout(int fd, short events, void *arg)
 			state_transition(iface, IF_REBOOTING);
 		break;
 	case IF_REQUESTING:
-		if (iface->timo.tv_sec >= MAX_EXP_BACKOFF_FAST)
+		if (iface->timo.tv_sec >= MAX_EXP_BACKOFF_SLOW)
 			state_transition(iface, IF_INIT);
 		else
 			state_transition(iface, IF_REQUESTING);
