@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.34 2021/07/23 16:03:47 job Exp $  */
+/*	$OpenBSD: http.c,v 1.35 2021/08/04 16:10:03 claudio Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -865,7 +865,9 @@ http_request(struct http_connection *conn)
 
 /*
  * Parse the HTTP status line.
- * Return 0 for status codes 200, 301-304, 307-308.
+ * Return 0 for status codes 100, 103, 200, 203, 301-304, 307-308.
+ * The other 1xx and 2xx status codes are explicitly not handled and are
+ * considered an error.
  * Failure codes and other errors return -1.
  * The redirect loop limit is enforced here.
  */
@@ -885,7 +887,7 @@ http_parse_status(struct http_connection *conn, char *buf)
 		cp++;
 
 	strlcpy(ststr, cp, sizeof(ststr));
-	status = strtonum(ststr, 200, 599, &errstr);
+	status = strtonum(ststr, 100, 599, &errstr);
 	if (errstr != NULL) {
 		strnvis(gerror, cp, sizeof gerror, VIS_SAFE);
 		warnx("Error retrieving %s: %s", http_info(conn->host),
@@ -894,19 +896,23 @@ http_parse_status(struct http_connection *conn, char *buf)
 	}
 
 	switch (status) {
-	case 301:
-	case 302:
-	case 303:
-	case 307:
-	case 308:
+	case 301:	/* Redirect: moved permanently */
+	case 302:	/* Redirect: found / moved temporarily */
+	case 303:	/* Redirect: see other */
+	case 307:	/* Redirect: temporary redirect */
+	case 308:	/* Redirect: permanent redirect */
 		if (conn->req->redirect_loop++ > 10) {
 			warnx("%s: Too many redirections requested",
 			    http_info(conn->host));
 			return -1;
 		}
 		/* FALLTHROUGH */
-	case 200:
-	case 304:
+	case 100:	/* Informational: continue (ignored) */
+	case 103:	/* Informational: early hints (ignored) */
+		/* FALLTHROUGH */
+	case 200:	/* Success: OK */
+	case 203:	/* Success: non-authoritative information (proxy) */
+	case 304:	/* Redirect: not modified */
 		conn->status = status;
 		break;
 	default:
@@ -927,6 +933,14 @@ http_isredirect(struct http_connection *conn)
 {
 	if ((conn->status >= 301 && conn->status <= 303) ||
 	    conn->status == 307 || conn->status == 308)
+		return 1;
+	return 0;
+}
+
+static inline int
+http_isok(struct http_connection *conn)
+{
+	if (conn->status >= 200 && conn->status < 300)
 		return 1;
 	return 0;
 }
@@ -1165,7 +1179,7 @@ again:
 		}
 
 		/* Check status header and decide what to do next */
-		if (conn->status == 200 || http_isredirect(conn)) {
+		if (http_isok(conn) || http_isredirect(conn)) {
 			if (http_isredirect(conn))
 				http_redirect(conn);
 
@@ -1174,6 +1188,8 @@ again:
 			else
 				conn->state = STATE_RESPONSE_DATA;
 			goto again;
+		} else if (conn->status == 100 || conn->status == 103) {
+			conn->state = STATE_RESPONSE_STATUS;
 		} else if (conn->status == 304) {
 			return http_done(conn, HTTP_NOT_MOD);
 		}
