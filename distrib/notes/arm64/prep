@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.12 2021/04/17 21:21:41 sthen Exp $
+dnl	$OpenBSD: prep,v 1.13 2021/08/05 08:54:56 jsg Exp $
 Please be aware that OpenBSD support for this platform is far from
 complete.
 
@@ -101,7 +101,5 @@ Install on systems without a supported miniroot:
 
   For systems based on Rockchip RK33xx SoCs:
 
- 	dd if=/usr/local/share/u-boot/board/idbloader.img \
+ 	dd if=/usr/local/share/u-boot/board/u-boot-rockchip.bin \
  	    of=/dev/sdXc seek=64
- 	dd if=/usr/local/share/u-boot/board/u-boot.itb \
- 	    of=/dev/sdXc seek=16384
