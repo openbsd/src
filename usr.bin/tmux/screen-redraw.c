@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-redraw.c,v 1.84 2021/04/13 05:25:05 nicm Exp $ */
+/* $OpenBSD: screen-redraw.c,v 1.85 2021/08/05 09:43:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -636,7 +636,7 @@ screen_redraw_pane(struct client *c, struct window_pane *wp)
 {
 	struct screen_redraw_ctx	 ctx;
 
-	if (c->overlay_draw != NULL || !window_pane_visible(wp))
+	if (!window_pane_visible(wp))
 		return;
 
 	screen_redraw_set_context(c, &ctx);

@@ -1,4 +1,4 @@
-/* $OpenBSD: popup.c,v 1.23 2021/07/21 08:06:36 nicm Exp $ */
+/* $OpenBSD: popup.c,v 1.24 2021/08/05 09:43:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -339,11 +339,7 @@ popup_job_update_cb(struct job *job)
 		return;
 
 	c->overlay_check = NULL;
-	c->tty.flags &= ~TTY_FREEZE;
-
 	input_parse_screen(pd->ictx, s, popup_init_ctx_cb, pd, data, size);
-
-	c->tty.flags |= TTY_FREEZE;
 	c->overlay_check = popup_check_cb;
 
 	evbuffer_drain(evb, size);
