@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.256 2021/08/04 18:17:23 benno Exp $	*/
+/*	$OpenBSD: route.c,v 1.257 2021/08/05 07:30:04 tb Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -1183,7 +1183,7 @@ nameserver(int argc, char *argv[])
 		switch (res->ai_addr->sa_family) {
 		case AF_INET:
 			if (ns4_count >= nitems(ns4)) {
-				warnx("ignoring superflous nameserver: %s",
+				warnx("ignoring superfluous nameserver: %s",
 				    *argv);
 				break;
 			}
@@ -1193,7 +1193,7 @@ nameserver(int argc, char *argv[])
 			break;
 		case AF_INET6:
 			if (ns6_count >= nitems(ns6)) {
-				warnx("ignoring superflous nameserver: %s",
+				warnx("ignoring superfluous nameserver: %s",
 				    *argv);
 				break;
 			}
