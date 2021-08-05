@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.96 2021/08/04 18:17:23 benno Exp $
+.\"	$OpenBSD: route.8,v 1.97 2021/08/05 06:21:32 jmc Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)route.8	8.3 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: August 4 2021 $
+.Dd $Mdocdate: August 5 2021 $
 .Dt ROUTE 8
 .Os
 .Sh NAME
@@ -157,6 +157,28 @@ are shown.
 If a routing table is supplied with
 .Fl T ,
 only changes in that routing table will be displayed.
+.El
+.Pp
+.Bl -tag -width Fl -compact
+.It Xo
+.Ic route
+.Op Fl dtv
+.Op Fl T Ar rtable
+.Tg
+.Cm nameserver
+.Op Ar address
+.Op Ar ...
+.Xc
+Send a list of up to five nameserver address proposals to
+.Xr resolvd 8 .
+.Xr resolvd 8
+will react to this request by writing the nameservers to
+.Pa /etc/resolv.conf .
+If no
+.Ar address
+argument is given, a request to remove the nameservers previously entered for
+the given interface is sent.
+.Pp
 .It Xo
 .Nm route
 .Op Fl nv
@@ -235,26 +257,6 @@ destination is on-link
 .It
 source address is assigned to a disabled interface
 .El
-.El
-.Bl -tag -width Fl -compact
-.It Xo
-.Ic route
-.Op Fl dtv
-.Op Fl T Ar rtable
-.Tg
-.Cm nameserver
-.Op Ar address
-.Op Ar ...
-.Xc
-Send a list of up to five nameserver addresses proposals to
-.Xr resolvd 8 .
-.Xr resolvd 8
-will react upon this request by writing the nameservers to
-.Pa /etc/resolv.conf .
-If no
-.Ar address
-argument is given, a request to remove the nameservers previously entered for
-the given interface is sent.
 .El
 .Pp
 .Tg destination
@@ -622,8 +624,8 @@ to create the new entry.
 .Xr route 4 ,
 .Xr tcp 4 ,
 .Xr hosts 5 ,
-.Xr resolv.conf 5 ,
 .Xr mygate 5 ,
+.Xr resolv.conf 5 ,
 .Xr bgpd 8 ,
 .Xr ospfd 8 ,
 .Xr resolvd 8 ,
