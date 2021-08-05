@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ure.c,v 1.24 2021/04/15 02:23:17 kevlo Exp $	*/
+/*	$OpenBSD: if_ure.c,v 1.25 2021/08/05 20:53:28 mglocker Exp $	*/
 /*-
  * Copyright (c) 2015, 2016, 2019 Kevin Lo <kevlo@openbsd.org>
  * Copyright (c) 2020 Jonathon Fletcher <jonathon.fletcher@gmail.com>
@@ -183,6 +183,7 @@ void		ure_xfer_list_free(struct ure_softc *, struct ure_chain *, int);
 void		ure_tick_task(void *);
 void		ure_tick(void *);
 
+void		ure_ifmedia_init(struct ifnet *);
 int		ure_ifmedia_upd(struct ifnet *);
 void		ure_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 void		ure_add_media_types(struct ure_softc *);
@@ -435,6 +436,70 @@ ure_miibus_statchg(struct device *dev)
 	/* Lost link, do nothing. */
 	if ((sc->ure_flags & URE_FLAG_LINK) == 0)
 		return;
+
+	/*
+	 * After a link change the media settings are getting reset on the
+	 * hardware, and need to be re-initialized again for communication
+	 * to continue work.
+	 */
+	ure_ifmedia_init(ifp);
+}
+
+void
+ure_ifmedia_init(struct ifnet *ifp)
+{
+	struct ure_softc *sc = ifp->if_softc;
+	uint32_t reg = 0;
+
+	/* Set MAC address. */
+	ure_write_1(sc, URE_PLA_CRWECR, URE_MCU_TYPE_PLA, URE_CRWECR_CONFIG);
+	ure_write_mem(sc, URE_PLA_IDR, URE_MCU_TYPE_PLA | URE_BYTE_EN_SIX_BYTES,
+	    sc->ure_ac.ac_enaddr, 8);
+	ure_write_1(sc, URE_PLA_CRWECR, URE_MCU_TYPE_PLA, URE_CRWECR_NORAML);
+
+	if (!(sc->ure_flags & URE_FLAG_8152)) {
+		reg = sc->ure_rxbufsz - URE_FRAMELEN(ifp->if_mtu) -
+		    sizeof(struct ure_rxpkt) - URE_RX_BUF_ALIGN;
+		if (sc->ure_flags & (URE_FLAG_8153B | URE_FLAG_8156)) {
+			ure_write_2(sc, URE_USB_RX_EARLY_SIZE, URE_MCU_TYPE_USB,
+			    reg / 8);
+
+			ure_write_2(sc, URE_USB_RX_EARLY_AGG, URE_MCU_TYPE_USB,
+			    (sc->ure_flags & URE_FLAG_8153B) ? 16 : 80);
+			ure_write_2(sc, URE_USB_PM_CTRL_STATUS,
+			    URE_MCU_TYPE_USB, 1875);
+		} else {
+			ure_write_2(sc, URE_USB_RX_EARLY_SIZE, URE_MCU_TYPE_USB,
+			    reg / 4);
+			switch (sc->ure_udev->speed) {
+			case USB_SPEED_SUPER:
+				reg = URE_COALESCE_SUPER / 8;
+				break;
+			case USB_SPEED_HIGH:
+				reg = URE_COALESCE_HIGH / 8;
+				break;
+			default:
+				reg = URE_COALESCE_SLOW / 8;
+				break;
+			}
+			ure_write_2(sc, URE_USB_RX_EARLY_AGG, URE_MCU_TYPE_USB,
+			    reg);
+		}
+	}
+		
+	/* Reset the packet filter. */
+	URE_CLRBIT_2(sc, URE_PLA_FMC, URE_MCU_TYPE_PLA, URE_FMC_FCR_MCU_EN);
+	URE_SETBIT_2(sc, URE_PLA_FMC, URE_MCU_TYPE_PLA, URE_FMC_FCR_MCU_EN);
+
+	/* Enable transmit and receive. */
+	URE_SETBIT_1(sc, URE_PLA_CR, URE_MCU_TYPE_PLA, URE_CR_RE | URE_CR_TE);
+
+	if (sc->ure_flags & (URE_FLAG_8153B | URE_FLAG_8156)) {
+		ure_write_1(sc, URE_USB_UPT_RXDMA_OWN, URE_MCU_TYPE_USB,
+		    URE_OWN_UPDATE | URE_OWN_CLEAR);
+	}
+
+	URE_CLRBIT_2(sc, URE_PLA_MISC_1, URE_MCU_TYPE_PLA, URE_RXDY_GATED_EN);
 }
 
 int
@@ -721,7 +786,6 @@ ure_init(void *xsc)
 	struct ure_chain	*c;
 	struct ifnet		*ifp = &sc->ure_ac.ac_if;
 	usbd_status		err;
-	uint32_t		reg = 0;
 	int			s, i;
 
 	s = splnet();
@@ -754,55 +818,8 @@ ure_init(void *xsc)
 		SLIST_INSERT_HEAD(&sc->ure_cdata.ure_tx_free,
 		    &sc->ure_cdata.ure_tx_chain[i], uc_list);
 
-	/* Set MAC address. */
-	ure_write_1(sc, URE_PLA_CRWECR, URE_MCU_TYPE_PLA, URE_CRWECR_CONFIG);
-	ure_write_mem(sc, URE_PLA_IDR, URE_MCU_TYPE_PLA | URE_BYTE_EN_SIX_BYTES,
-	    sc->ure_ac.ac_enaddr, 8);
-	ure_write_1(sc, URE_PLA_CRWECR, URE_MCU_TYPE_PLA, URE_CRWECR_NORAML);
-
-	if (!(sc->ure_flags & URE_FLAG_8152)) {
-		reg = sc->ure_rxbufsz - URE_FRAMELEN(ifp->if_mtu) -
-		    sizeof(struct ure_rxpkt) - URE_RX_BUF_ALIGN;
-		if (sc->ure_flags & (URE_FLAG_8153B | URE_FLAG_8156)) {
-			ure_write_2(sc, URE_USB_RX_EARLY_SIZE, URE_MCU_TYPE_USB,
-			    reg / 8);
-
-			ure_write_2(sc, URE_USB_RX_EARLY_AGG, URE_MCU_TYPE_USB,
-			    (sc->ure_flags & URE_FLAG_8153B) ? 16 : 80);
-			ure_write_2(sc, URE_USB_PM_CTRL_STATUS,
-			    URE_MCU_TYPE_USB, 1875);
-		} else {
-			ure_write_2(sc, URE_USB_RX_EARLY_SIZE, URE_MCU_TYPE_USB,
-			    reg / 4);
-			switch (sc->ure_udev->speed) {
-			case USB_SPEED_SUPER:
-				reg = URE_COALESCE_SUPER / 8;
-				break;
-			case USB_SPEED_HIGH:
-				reg = URE_COALESCE_HIGH / 8;
-				break;
-			default:
-				reg = URE_COALESCE_SLOW / 8;
-				break;
-			}
-			ure_write_2(sc, URE_USB_RX_EARLY_AGG, URE_MCU_TYPE_USB,
-			    reg);
-		}
-	}
-		
-	/* Reset the packet filter. */
-	URE_CLRBIT_2(sc, URE_PLA_FMC, URE_MCU_TYPE_PLA, URE_FMC_FCR_MCU_EN);
-	URE_SETBIT_2(sc, URE_PLA_FMC, URE_MCU_TYPE_PLA, URE_FMC_FCR_MCU_EN);
-
-	/* Enable transmit and receive. */
-	URE_SETBIT_1(sc, URE_PLA_CR, URE_MCU_TYPE_PLA, URE_CR_RE | URE_CR_TE);
-
-	if (sc->ure_flags & (URE_FLAG_8153B | URE_FLAG_8156)) {
-		ure_write_1(sc, URE_USB_UPT_RXDMA_OWN, URE_MCU_TYPE_USB,
-		    URE_OWN_UPDATE | URE_OWN_CLEAR);
-	}
-
-	URE_CLRBIT_2(sc, URE_PLA_MISC_1, URE_MCU_TYPE_PLA, URE_RXDY_GATED_EN);
+	/* Setup MAC address, and enable TX/RX. */
+	ure_ifmedia_init(ifp);
 
 	/* Load the multicast filter. */
 	ure_iff(sc);
