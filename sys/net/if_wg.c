@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wg.c,v 1.17 2021/05/16 15:10:20 deraadt Exp $ */
+/*	$OpenBSD: if_wg.c,v 1.18 2021/08/05 13:37:04 sthen Exp $ */
 
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
@@ -810,6 +810,7 @@ wg_send(struct wg_softc *sc, struct wg_endpoint *e, struct mbuf *m)
 			    IPPROTO_IPV6);
 #endif
 	} else {
+		m_freem(m);
 		return EAFNOSUPPORT;
 	}
 
