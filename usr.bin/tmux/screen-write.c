@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.194 2021/06/10 07:43:44 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.195 2021/08/06 07:32:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -596,7 +596,7 @@ screen_write_hline(struct screen_write_ctx *ctx, u_int nx, int left, int right)
 	screen_write_set_cursor(ctx, cx, cy);
 }
 
-/* Draw a horizontal line on screen. */
+/* Draw a vertical line on screen. */
 void
 screen_write_vline(struct screen_write_ctx *ctx, u_int ny, int top, int bottom)
 {

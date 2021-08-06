@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.396 2021/08/06 03:29:15 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.397 2021/08/06 07:32:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1463,9 +1463,15 @@ tty_draw_line(struct tty *tty, struct screen *s, u_int px, u_int py, u_int nx,
 				tty_attributes(tty, &last, defaults, palette);
 				tty_cursor(tty, atx + ux, aty);
 				for (j = 0; j < gcp->data.width; j++) {
-					if (ux + j > nx)
+					if (ux > nx)
 						break;
-					tty_putc(tty, ' ');
+					if (tty_check_overlay(tty, atx + ux,
+					    aty))
+						tty_putc(tty, ' ');
+					else {
+						tty_cursor(tty, atx + ux + 1,
+						    aty);
+					}
 					ux++;
 				}
 			}
