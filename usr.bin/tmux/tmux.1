@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.845 2021/08/04 08:07:19 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.846 2021/08/06 09:19:02 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 4 2021 $
+.Dd $Mdocdate: August 6 2021 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -4402,6 +4402,10 @@ Run when a client becomes the latest active client of its session.
 Run when a client is attached.
 .It client-detached
 Run when a client is detached
+.It client-focus-in
+Run when focus enters a client
+.It client-focus-out
+Run when focus exits a client
 .It client-resized
 Run when a client is resized.
 .It client-session-changed

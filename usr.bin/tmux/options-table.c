@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.147 2021/08/04 08:07:19 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.148 2021/08/06 09:19:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1148,6 +1148,8 @@ const struct options_table_entry options_table[] = {
 	OPTIONS_TABLE_HOOK("client-active", ""),
 	OPTIONS_TABLE_HOOK("client-attached", ""),
 	OPTIONS_TABLE_HOOK("client-detached", ""),
+ 	OPTIONS_TABLE_HOOK("client-focus-in", ""),
+ 	OPTIONS_TABLE_HOOK("client-focus-out", ""),
 	OPTIONS_TABLE_HOOK("client-resized", ""),
 	OPTIONS_TABLE_HOOK("client-session-changed", ""),
 	OPTIONS_TABLE_PANE_HOOK("pane-died", ""),
