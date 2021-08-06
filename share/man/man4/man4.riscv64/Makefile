@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.2 2021/06/18 04:29:09 jsg Exp $
+#	$OpenBSD: Makefile,v 1.3 2021/08/06 06:35:13 jsg Exp $
 
-MAN=	plic.4 sfcc.4 sfclock.4 sfuart.4
+MAN=	intro.4 plic.4 sfcc.4 sfclock.4 sfuart.4
 
 MANSUBDIR=riscv64
 
