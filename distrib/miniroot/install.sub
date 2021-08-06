@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1170 2021/08/02 01:29:26 kn Exp $
+#	$OpenBSD: install.sub,v 1.1171 2021/08/06 07:06:34 sthen Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2386,7 +2386,7 @@ parse_hn_line() {
 		;;
 	dhcp)	! $_has_dhcp && return
 		_cmds[${#_cmds[*]}]="ifconfig $_if inet autoconf"
-		V4_DHCPCONF=true
+		V4_AUTOCONF=true
 		;;
 	'!'*|bridge)
 		# Skip shell commands and bridge in the installer.
@@ -2482,7 +2482,7 @@ enable_network() {
 			continue
 			;;
 		!(*:*))
-			($_v4set || $V4_DHCPCONF) && continue
+			($_v4set || $V4_AUTOCONF) && continue
 			route -qn add -host default $_gw
 			_v4set=true
 			;;
@@ -3385,7 +3385,7 @@ ROOTDEV=
 ROOTDISK=
 SETDIR="$VNAME/$ARCH"
 UPGRADE_BSDRD=false
-V4_DHCPCONF=false
+V4_AUTOCONF=false
 V6_AUTOCONF=false
 WLANLIST=/tmp/i/wlanlist
 

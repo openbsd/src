@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.213 2021/07/16 15:21:41 florian Exp $
+#	$OpenBSD: netstart,v 1.214 2021/08/06 07:06:35 sthen Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -38,7 +38,7 @@ parse_hn_line() {
 	inet)	((${#_c[*]} > 1)) || return
 		if [[ ${_c[_name]} == autoconf ]]; then
 			_cmds[${#_cmds[*]}]="ifconfig $_if ${_c[@]}"
-			V4_DHCPCONF=true
+			V4_AUTOCONF=true
 			return
 		fi
 		[[ ${_c[_name]} == alias ]] && _mask=3 _bc=4
@@ -191,7 +191,7 @@ defaultroute() {
 			_cmd="${_cmd#!}"
 			;;
 		!(*:*))
-			($_v4set || $V4_DHCPCONF) && continue
+			($_v4set || $V4_AUTOCONF) && continue
 			_cmd="route -qn add -host default $gw"
 			_v4set=true
 			;;
@@ -222,7 +222,7 @@ FUNCS_ONLY=1 . /etc/rc.d/rc.subr
 _rc_parse_conf
 
 PRINT_ONLY=false
-V4_DHCPCONF=false
+V4_AUTOCONF=false
 V6_AUTOCONF=false
 
 while getopts ":n" opt; do
