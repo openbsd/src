@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.104 2021/06/23 13:07:13 krw Exp $
+.\"	$OpenBSD: fdisk.8,v 1.105 2021/08/06 10:41:31 krw Exp $
 .\"
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 23 2021 $
+.Dd $Mdocdate: August 6 2021 $
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -23,8 +23,8 @@
 .Nd partition table maintenance program
 .Sh SYNOPSIS
 .Nm fdisk
-.Op Fl ey
-.Op Fl i Oo Fl g Oc | Fl u | Fl A | Fl v
+.Op Fl evy
+.Op Fl A  | g | i | u
 .Op Fl b Ar blocks Ns Op @ Ns Ar offset Ns Op : Ns Ar type
 .Op Fl l Ar blocks | Fl c Ar cylinders Fl h Ar heads Fl s Ar sectors
 .Op Fl f Ar mbrfile
@@ -54,7 +54,7 @@ at install time.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl A
-Allocates the largest chunks of free space in an existing GPT to the
+Modifies existing GPT partitions to allocate all possible space to an
 .Ox
 partition
 and the optional
@@ -82,12 +82,18 @@ The
 partition will follow the boot partition and use the remaining
 available space.
 .Pp
-Can only be used when initializing a disk with
-.Fl i Op Fl g
+Can only be used when initializing
+.Ar disk
+with
+.Fl A ,
+.Fl g ,
 or
-.Fl A .
-If a GPT is being initialized
-only the
+.Fl i .
+If
+.Fl A
+or
+.Fl g
+is specified, only the
 .Ar blocks
 value is used.
 .It Xo
@@ -118,40 +124,33 @@ Specifies an alternate MBR template file.
 The default file is
 .Pa /usr/mdec/mbr .
 .It Fl g
-A protective MBR and a default GPT will be written to disk.
-The default GPT will have a single
+A default GPT, including a protective MBR, will be written to
+.Ar disk .
+The default GPT has a single
 .Ox
-partition containing all available space not allocated by a
-.Fl b
-specification.
+partition containing all available space not allocated by
+.Fl b .
 .It Fl i
-Requests that the partition table data be re-initialized.
-In this mode,
-.Nm
-will completely overwrite the primary MBR bootcode and MBR partition table.
-.Pp
-If
-.Fl g
-is not specified then the MBR will be overwritten by
-the default MBR template
+A default MBR will be written to
+.Ar disk .
+The default MBR will be read from
+the file specified by
+.Fl f ,
+the default file
 .Pa /usr/mdec/mbr
-(or the one optionally specified by the
-.Fl f
-flag).
-In the default template, MBR partition number 3 will be configured as an
+or the built-in default.
+Normally the default MBR has a single
 .Ox
-MBR partition containing all available space not allocated by a
-.Fl b
-specification.
+partition containing all available space not allocated by
+.Fl b .
 .It Fl l Ar blocks
-Treat the disk as if it has the specified number of blocks.
+Treat
+.Ar disk
+as if it has the specified number of blocks.
 .It Fl u
 Update MBR bootcode, preserving existing MBR partition table.
 The MBR bootcode extends from offset 0x000 to the start of the MBR partition
 table at offset 0x1BE.
-It is similar to the
-.Fl i
-flag, except the existing MBR partition table is preserved.
 This is useful for writing new MBR bootcode onto an existing drive, and is
 equivalent to the DOS command
 .Dq FDISK /MBR .
@@ -159,10 +158,6 @@ Note that this option will overwrite the NT disk signature, if present.
 .It Fl v
 Print the contents of the MBR, the Primary GPT and the Secondary GPT.
 Also print more detailed GPT header and partition entry information.
-.Fl i ,
-.Fl u ,
-or
-.Fl e .
 .It Fl y
 Avoid asking yes/no questions when not desirable.
 .It Ar disk
@@ -184,10 +179,12 @@ or
 .Sh TYPICAL LAYOUT
 When called with no special flags,
 .Nm
-prints the partition table of the specified disk.
+prints the partition table of the
+.Ar disk .
 .Pp
-If the disk does not contain a valid GPT the contents
-of the MBR are displayed.
+If
+.Ar disk
+does not contain a valid GPT the contents of the MBR are displayed.
 For example:
 .Bd -literal -offset 1n
 # fdisk sd0
@@ -239,7 +236,9 @@ for the system to be able to boot and use the drive correctly.
 These values must be kept correctly synchronized or a variety of
 problems develop which are very difficult to diagnose.
 .Pp
-If the disk contains a protective MBR and a valid GPT, the contents of the GPT
+If
+.Ar disk
+contains a protective MBR and a valid GPT, the contents of the GPT
 are displayed.
 For example:
 .Bd -literal -offset 1n
@@ -255,7 +254,7 @@ partitions that span the whole disk.
 The first partition is a 960 sector EFI Sys partition;
 the second is a 7764929 sector
 .Ox
-partition using the remainder of the disk.
+partition using the remaing space.
 The fields of the output are:
 .Bl -tag -width "type"
 .It Em "#"

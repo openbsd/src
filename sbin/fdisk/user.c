@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.67 2021/07/21 12:22:54 krw Exp $	*/
+/*	$OpenBSD: user.c,v 1.68 2021/08/06 10:41:31 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -79,7 +79,11 @@ USER_edit(const uint64_t lba_self, const uint64_t lba_firstembr)
 
 again:
 	do {
-		printf("%s%s: %d> ", disk.dk_name, modified ? "*" : "", editlevel);
+		if (letoh64(gh.gh_sig) == GPTSIGNATURE && editlevel > 1)
+			goto done;	/* 'reinit gpt'. Unwind recursion! */
+
+		printf("%s%s: %d> ", disk.dk_name, modified ? "*" : "",
+		    editlevel);
 		fflush(stdout);
 		ask_cmd(&cmd, &args);
 

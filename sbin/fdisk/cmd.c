@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.135 2021/07/21 20:26:30 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.136 2021/08/06 10:41:31 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -51,7 +51,6 @@ extern const int		manpage_sz;
 int
 Xreinit(char *args, struct mbr *mbr)
 {
-	struct dos_mbr		dos_mbr;
 	int			dogpt;
 
 	dogpt = 0;
@@ -64,9 +63,6 @@ Xreinit(char *args, struct mbr *mbr)
 		printf("Unrecognized modifier '%s'\n", args);
 		return CMD_CONT;
 	}
-
-	MBR_make(&initial_mbr, &dos_mbr);
-	MBR_parse(&dos_mbr, mbr->mbr_lba_self, mbr->mbr_lba_firstembr, mbr);
 
 	if (dogpt) {
 		GPT_init(GHANDGP);
@@ -511,7 +507,7 @@ Xhelp(char *args, struct mbr *mbr)
 int
 Xupdate(char *args, struct mbr *mbr)
 {
-	memcpy(mbr->mbr_code, initial_mbr.mbr_code, sizeof(mbr->mbr_code));
+	memcpy(mbr->mbr_code, default_dmbr.dmbr_boot, sizeof(mbr->mbr_code));
 	mbr->mbr_signature = DOSMBR_SIGNATURE;
 	printf("Machine code updated.\n");
 	return CMD_DIRTY;

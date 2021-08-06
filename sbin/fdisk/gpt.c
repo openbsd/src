@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.48 2021/07/26 13:05:14 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.49 2021/08/06 10:41:31 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -447,7 +447,7 @@ init_gh(void)
 	memset(&gmbr, 0, sizeof(gmbr));
 
 	/* XXX Do we need the boot code? UEFI spec & Apple says no. */
-	memcpy(gmbr.mbr_code, initial_mbr.mbr_code, sizeof(gmbr.mbr_code));
+	memcpy(gmbr.mbr_code, default_dmbr.dmbr_boot, sizeof(gmbr.mbr_code));
 	gmbr.mbr_prt[0].prt_id = DOSPTYP_EFI;
 	gmbr.mbr_prt[0].prt_bs = 1;
 	gmbr.mbr_prt[0].prt_ns = UINT32_MAX;

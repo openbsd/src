@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.95 2021/07/26 13:05:14 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.96 2021/08/06 10:41:31 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -33,7 +33,11 @@
 #include "mbr.h"
 #include "gpt.h"
 
-struct mbr		initial_mbr;
+struct dos_mbr		default_dmbr;
+
+void		mbr_to_dos_mbr(const struct mbr *, struct dos_mbr *);
+void		dos_mbr_to_mbr(const struct dos_mbr *, const uint64_t,
+    const uint64_t, struct mbr *);
 
 void
 MBR_init(struct mbr *mbr)
@@ -45,11 +49,22 @@ MBR_init(struct mbr *mbr)
 	memset(&gh, 0, sizeof(gh));
 	memset(&gp, 0, sizeof(gp));
 
+	if (mbr->mbr_lba_self != 0) {
+		/* Extended MBR - save lba's, set sig, zap everything else. */
+		memset(mbr->mbr_code, 0, sizeof(mbr->mbr_code));
+		memset(mbr->mbr_prt, 0, sizeof(mbr->mbr_prt));
+		mbr->mbr_signature = DOSMBR_SIGNATURE;
+		return;
+	}
+
+	dos_mbr_to_mbr(&default_dmbr, 0, 0, mbr);
+
 	/*
-	 * XXX Do *NOT* zap all MBR parts! Some archs still read initmbr
-	 * from disk!! Just mark them inactive until -b goodness spreads
+	 * XXX Do *NOT* zap all MBR parts! Some archs still read default mmbr
+	 * from disk! Just mark them inactive until -b goodness spreads
 	 * further.
 	 */
+
 	mbr->mbr_prt[0].prt_flag = 0;
 	mbr->mbr_prt[1].prt_flag = 0;
 	mbr->mbr_prt[2].prt_flag = 0;
@@ -115,18 +130,18 @@ MBR_init(struct mbr *mbr)
 }
 
 void
-MBR_parse(const struct dos_mbr *dos_mbr, const uint64_t lba_self,
+dos_mbr_to_mbr(const struct dos_mbr *dmbr, const uint64_t lba_self,
     const uint64_t lba_firstembr, struct mbr *mbr)
 {
 	struct dos_partition	dos_parts[NDOSPART];
 	int			i;
 
-	memcpy(mbr->mbr_code, dos_mbr->dmbr_boot, sizeof(mbr->mbr_code));
+	memcpy(mbr->mbr_code, dmbr->dmbr_boot, sizeof(mbr->mbr_code));
 	mbr->mbr_lba_self = lba_self;
 	mbr->mbr_lba_firstembr = lba_firstembr;
-	mbr->mbr_signature = letoh16(dos_mbr->dmbr_sign);
+	mbr->mbr_signature = letoh16(dmbr->dmbr_sign);
 
-	memcpy(dos_parts, dos_mbr->dmbr_parts, sizeof(dos_parts));
+	memcpy(dos_parts, dmbr->dmbr_parts, sizeof(dos_parts));
 
 	for (i = 0; i < NDOSPART; i++)
 		PRT_parse(&dos_parts[i], lba_self, lba_firstembr,
@@ -134,7 +149,7 @@ MBR_parse(const struct dos_mbr *dos_mbr, const uint64_t lba_self,
 }
 
 void
-MBR_make(const struct mbr *mbr, struct dos_mbr *dos_mbr)
+mbr_to_dos_mbr(const struct mbr *mbr, struct dos_mbr *dos_mbr)
 {
 	struct dos_partition	dos_partition;
 	int			i;
@@ -178,7 +193,7 @@ MBR_read(const uint64_t lba_self, const uint64_t lba_firstembr, struct mbr *mbr)
 	memcpy(&dos_mbr, secbuf, sizeof(dos_mbr));
 	free(secbuf);
 
-	MBR_parse(&dos_mbr, lba_self, lba_firstembr, mbr);
+	dos_mbr_to_mbr(&dos_mbr, lba_self, lba_firstembr, mbr);
 
 	return 0;
 }
@@ -194,7 +209,7 @@ MBR_write(const struct mbr *mbr)
 	if (secbuf == NULL)
 		return -1;
 
-	MBR_make(mbr, &dos_mbr);
+	mbr_to_dos_mbr(mbr, &dos_mbr);
 	memcpy(secbuf, &dos_mbr, sizeof(dos_mbr));
 
 	rslt = DISK_writesectors(secbuf, mbr->mbr_lba_self, 1);
