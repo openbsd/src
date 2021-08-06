@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1112 2021/07/21 08:06:36 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1113 2021/08/06 09:34:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -866,6 +866,7 @@ struct screen_write_ctx {
 
 	int				 flags;
 #define SCREEN_WRITE_SYNC 0x1
+#define SCREEN_WRITE_ZWJ 0x2
 
 	screen_write_init_ctx_cb	 init_ctx_cb;
 	void				*arg;
