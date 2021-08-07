@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.16 2021/08/01 09:07:03 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.17 2021/08/07 07:07:44 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -96,6 +96,9 @@ void		 send_discover(struct iface *);
 void		 send_request(struct iface *);
 void		 bpf_send_packet(struct iface *, uint8_t *, ssize_t);
 void		 udp_send_packet(struct iface *, uint8_t *, ssize_t);
+int		*changed_ifaces(struct dhcpleased_conf *, struct
+		     dhcpleased_conf *);
+int		 iface_conf_cmp(struct iface_conf *, struct iface_conf *);
 
 LIST_HEAD(, iface)		 interfaces;
 struct dhcpleased_conf		*frontend_conf;
@@ -388,13 +391,30 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			    IMSG_DATA_SIZE(imsg));
 			iface_conf->c_id_len = IMSG_DATA_SIZE(imsg);
 			break;
-		case IMSG_RECONF_END:
+		case IMSG_RECONF_END: {
+			int	 i;
+			int	*ifaces;
+			char	 ifnamebuf[IF_NAMESIZE], *if_name;
+
 			if (nconf == NULL)
 				fatalx("%s: IMSG_RECONF_END without "
 				    "IMSG_RECONF_CONF", __func__);
+
+			ifaces = changed_ifaces(frontend_conf, nconf);
 			merge_config(frontend_conf, nconf);
 			nconf = NULL;
+			for (i = 0; ifaces[i] != 0; i++) {
+				if_index = ifaces[i];
+				if_name = if_indextoname(if_index, ifnamebuf);
+				log_debug("changed iface: %s[%d]", if_name !=
+				    NULL ? if_name : "<unknown>", if_index);
+				frontend_imsg_compose_engine(
+				    IMSG_REQUEST_REBOOT, 0, 0, &if_index,
+				    sizeof(if_index));
+			}
+			free(ifaces);
 			break;
+		}
 		case IMSG_CONTROLFD:
 			if ((fd = imsg.fd) == -1)
 				fatalx("%s: expected to receive imsg "
@@ -1140,5 +1160,61 @@ find_iface_conf(struct iface_conf_head *head, char *if_name)
 			return iface_conf;
 	}
 	return (NULL);
+}
+
+int*
+changed_ifaces(struct dhcpleased_conf *oconf, struct dhcpleased_conf *nconf)
+{
+	struct iface_conf	*iface_conf, *oiface_conf;
+	int			*ret, if_index, count = 0, i = 0;
+
+	/*
+	 * Worst case: All old interfaces replaced with new interfaces.
+	 * This should still be a small number
+	 */
+	SIMPLEQ_FOREACH(iface_conf, &oconf->iface_list, entry)
+	    count++;
+	SIMPLEQ_FOREACH(iface_conf, &nconf->iface_list, entry)
+	    count++;
+
+	ret = calloc(count + 1, sizeof(int));
+
+	SIMPLEQ_FOREACH(iface_conf, &nconf->iface_list, entry) {
+		if ((if_index = if_nametoindex(iface_conf->name)) == 0)
+			continue;
+		oiface_conf = find_iface_conf(&oconf->iface_list,
+		    iface_conf->name);
+		if (oiface_conf == NULL) {
+			/* new interface added to config */
+			ret[i++] = if_index;
+		} else if (iface_conf_cmp(iface_conf, oiface_conf) != 0) {
+			/* interface conf changed */
+			ret[i++] = if_index;
+		}
+	}
+	SIMPLEQ_FOREACH(oiface_conf, &oconf->iface_list, entry) {
+		if ((if_index = if_nametoindex(oiface_conf->name)) == 0)
+			continue;
+		if (find_iface_conf(&nconf->iface_list, oiface_conf->name) ==
+		    NULL) {
+			/* interface removed from config */
+			ret[i++] = if_index;
+		}
+	}
+	return ret;
+}
+
+int
+iface_conf_cmp(struct iface_conf *a, struct iface_conf *b)
+{
+	if (a->vc_id_len != b->vc_id_len)
+		return 1;
+	if (memcmp(a->vc_id, b->vc_id, a->vc_id_len) != 0)
+		return 1;
+	if (a->c_id_len != b->c_id_len)
+		return 1;
+	if (memcmp(a->c_id, b->c_id, a->c_id_len) != 0)
+		return 1;
+	return 0;
 }
 #endif /* SMALL */
