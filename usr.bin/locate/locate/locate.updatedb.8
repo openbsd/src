@@ -1,4 +1,4 @@
-.\"	$OpenBSD: locate.updatedb.8,v 1.20 2021/08/07 11:08:38 schwarze Exp $
+.\"	$OpenBSD: locate.updatedb.8,v 1.21 2021/08/07 11:23:07 schwarze Exp $
 .\"
 .\" Copyright (c) 1996
 .\"	Mike Pritchard <mpp@FreeBSD.org>.  All rights reserved.
@@ -38,37 +38,37 @@
 .Nd update locate database
 .Sh SYNOPSIS
 .Nm locate.updatedb
-.Op Cm --fcodes=dbfile
-.Op Cm --filesystems='type ...'
-.Op Cm --prunepaths='dir ...'
-.Op Cm --searchpaths='dir ...'
-.Op Cm --tmpdir=dir
+.Op Fl \-fcodes Ns = Ns Ar dbfile
+.Op Fl \-filesystems Ns = Ns Eo \(aq Ar type ... Ec \(aq
+.Op Fl \-prunepaths Ns = Ns Eo \(aq Ar dir ... Ec \(aq
+.Op Fl \-searchpaths Ns = Ns Eo \(aq Ar dir ... Ec \(aq
+.Op Fl \-tmpdir Ns = Ns Ar dir
 .Sh DESCRIPTION
 .Nm
 updates the database used by
 .Xr locate 1 .
 It is typically run once a week by the
-.Pa /etc/weekly
+.Xr weekly 8
 script.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl -fcodes
+.It Fl \-fcodes
 Output to an alternate database file instead of the default
 .Pa /var/db/locate.database .
 If
 .Ql \-
 is specified in place of the file name,
 send the database to the standard output.
-.It Fl -filesystems
+.It Fl \-filesystems
 A list of filesystem types to be traversed by
 .Xr find 1 .
-.It Fl -prunepaths
+.It Fl \-prunepaths
 Sets the list of parent directories that should not go in
 the database.
-.It Fl -searchpaths
+.It Fl \-searchpaths
 Sets the list of directories to be put in the database.
-.It Fl -tmpdir
+.It Fl \-tmpdir
 Sets the directory temporary files are stored in.
 .El
 .Pp
