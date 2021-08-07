@@ -643,19 +643,6 @@ ch_flush(void)
 	ch_block = 0; /* ch_fpos / LBUFSIZE; */
 	ch_offset = 0; /* ch_fpos % LBUFSIZE; */
 
-#if 1
-	/*
-	 * This is a kludge to workaround a Linux kernel bug: files in
-	 * /proc have a size of 0 according to fstat() but have readable
-	 * data.  They are sometimes, but not always, seekable.
-	 * Force them to be non-seekable here.
-	 */
-	if (ch_fsize == 0) {
-		ch_fsize = -1;
-		ch_flags &= ~CH_CANSEEK;
-	}
-#endif
-
 	if (lseek(ch_file, (off_t)0, SEEK_SET) == (off_t)-1) {
 		/*
 		 * Warning only; even if the seek fails for some reason,
