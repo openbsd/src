@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxvar.h,v 1.21 2021/07/30 13:56:44 stsp Exp $	*/
+/*	$OpenBSD: if_iwxvar.h,v 1.22 2021/08/07 09:21:51 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -490,10 +490,6 @@ struct iwx_softc {
 	pcitag_t sc_pcitag;
 	const void *sc_ih;
 	int sc_msix;
-
-	/* TX scheduler rings. */
-	struct iwx_dma_info		sched_dma;
-	uint32_t			sched_base;
 
 	/* TX/RX rings. */
 	struct iwx_tx_ring txq[IWX_MAX_QUEUES];

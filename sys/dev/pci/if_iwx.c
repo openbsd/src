@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.88 2021/07/30 14:09:12 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.89 2021/08/07 09:21:51 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -8618,8 +8618,6 @@ iwx_rx_pkt(struct iwx_softc *sc, struct iwx_rx_data *data, struct mbuf_list *ml)
 				    resp5->lmac_data[1].dbg_ptrs.error_event_table_ptr);
 				sc->sc_uc.uc_log_event_table = le32toh(
 				    resp5->lmac_data[0].dbg_ptrs.log_event_table_ptr);
-				sc->sched_base = le32toh(
-				    resp5->lmac_data[0].dbg_ptrs.scd_base_ptr);
 				sc->sc_uc.uc_umac_error_event_table = le32toh(
 				    resp5->umac_data.dbg_ptrs.error_info_addr);
 				if (resp5->status == IWX_ALIVE_STATUS_OK)
@@ -8632,8 +8630,6 @@ iwx_rx_pkt(struct iwx_softc *sc, struct iwx_rx_data *data, struct mbuf_list *ml)
 				    resp4->lmac_data[1].dbg_ptrs.error_event_table_ptr);
 				sc->sc_uc.uc_log_event_table = le32toh(
 				    resp4->lmac_data[0].dbg_ptrs.log_event_table_ptr);
-				sc->sched_base = le32toh(
-				    resp4->lmac_data[0].dbg_ptrs.scd_base_ptr);
 				sc->sc_uc.uc_umac_error_event_table = le32toh(
 				    resp4->umac_data.dbg_ptrs.error_info_addr);
 				if (resp4->status == IWX_ALIVE_STATUS_OK)
@@ -9429,15 +9425,6 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 		goto fail1;
 	}
 
-	/* TX scheduler rings must be aligned on a 1KB boundary. */
-	err = iwx_dma_contig_alloc(sc->sc_dmat, &sc->sched_dma,
-	    nitems(sc->txq) * sizeof(struct iwx_agn_scd_bc_tbl), 1024);
-	if (err) {
-		printf("%s: could not allocate TX scheduler rings\n",
-		    DEVNAME(sc));
-		goto fail3;
-	}
-
 	for (txq_i = 0; txq_i < nitems(sc->txq); txq_i++) {
 		err = iwx_alloc_tx_ring(sc, &sc->txq[txq_i], txq_i);
 		if (err) {
@@ -9551,8 +9538,7 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 fail4:	while (--txq_i >= 0)
 		iwx_free_tx_ring(sc, &sc->txq[txq_i]);
 	iwx_free_rx_ring(sc, &sc->rxq);
-	iwx_dma_contig_free(&sc->sched_dma);
-fail3:	if (sc->ict_dma.vaddr != NULL)
+	if (sc->ict_dma.vaddr != NULL)
 		iwx_dma_contig_free(&sc->ict_dma);
 	
 fail1:	iwx_dma_contig_free(&sc->ctxt_info_dma);
