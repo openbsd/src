@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.130 2021/08/06 10:41:31 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.131 2021/08/07 12:57:48 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -78,7 +78,7 @@ main(int argc, char *argv[])
 	int			 verbosity = TERSE;
 	int			 oflags = O_RDONLY;
 
-	while ((ch = getopt(argc, argv, "Aiegpuvf:c:h:s:l:b:y")) != -1) {
+	while ((ch = getopt(argc, argv, "Aieguvf:c:h:s:l:b:y")) != -1) {
 		const char *errstr;
 
 		switch(ch) {
