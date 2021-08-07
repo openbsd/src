@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.132 2021/08/07 13:33:12 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.133 2021/08/07 17:48:31 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -72,32 +72,19 @@ main(int argc, char *argv[])
 #else
 	const char		*mbrfile = NULL;
 #endif
-	int			 ch, error;
+	const char		*errstr;
+	int			 ch;
 	int			 e_flag = 0, init = 0;
 	int			 verbosity = TERSE;
 	int			 oflags = O_RDONLY;
 
-	while ((ch = getopt(argc, argv, "Aieguvf:c:h:s:l:b:y")) != -1) {
-		const char *errstr;
-
+	while ((ch = getopt(argc, argv, "Ab:c:ef:gh:il:s:uvy")) != -1) {
 		switch(ch) {
 		case 'A':
 			init = INIT_GPTPARTITIONS;
 			break;
-		case 'i':
-			init = INIT_MBR;
-			break;
-		case 'g':
-			init = INIT_GPT;
-			break;
-		case 'u':
-			init = INIT_MBRBOOTCODE;
-			break;
-		case 'e':
-			e_flag = 1;
-			break;
-		case 'f':
-			mbrfile = optarg;
+		case 'b':
+			parse_bootprt(optarg);
 			break;
 		case 'c':
 			disk.dk_cylinders = strtonum(optarg, 1, 262144, &errstr);
@@ -106,20 +93,23 @@ main(int argc, char *argv[])
 				    errstr);
 			disk.dk_size = 0;
 			break;
+		case 'e':
+			e_flag = 1;
+			break;
+		case 'f':
+			mbrfile = optarg;
+			break;
+		case 'g':
+			init = INIT_GPT;
+			break;
 		case 'h':
 			disk.dk_heads = strtonum(optarg, 1, 256, &errstr);
 			if (errstr)
 				errx(1, "Head argument %s [1..256].", errstr);
 			disk.dk_size = 0;
 			break;
-		case 's':
-			disk.dk_sectors = strtonum(optarg, 1, 63, &errstr);
-			if (errstr)
-				errx(1, "Sector argument %s [1..63].", errstr);
-			disk.dk_size = 0;
-			break;
-		case 'b':
-			parse_bootprt(optarg);
+		case 'i':
+			init = INIT_MBR;
 			break;
 		case 'l':
 			disk.dk_size = strtonum(optarg, BLOCKALIGNMENT, UINT32_MAX, &errstr);
@@ -128,11 +118,20 @@ main(int argc, char *argv[])
 				    BLOCKALIGNMENT, UINT32_MAX);
 			disk.dk_cylinders = disk.dk_heads = disk.dk_sectors = 0;
 			break;
-		case 'y':
-			y_flag = 1;
+		case 's':
+			disk.dk_sectors = strtonum(optarg, 1, 63, &errstr);
+			if (errstr)
+				errx(1, "Sector argument %s [1..63].", errstr);
+			disk.dk_size = 0;
+			break;
+		case 'u':
+			init = INIT_MBRBOOTCODE;
 			break;
 		case 'v':
 			verbosity = VERBOSE;
+			break;
+		case 'y':
+			y_flag = 1;
 			break;
 		default:
 			usage();
@@ -185,8 +184,7 @@ main(int argc, char *argv[])
 			MBR_write(&mbr);
 		break;
 	case INIT_MBRBOOTCODE:
-		error = MBR_read(0, 0, &mbr);
-		if (error)
+		if (MBR_read(0, 0, &mbr))
 			errx(1, "Can't read MBR!");
 		memcpy(mbr.mbr_code, default_dmbr.dmbr_boot,
 		    sizeof(mbr.mbr_code));
