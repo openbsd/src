@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.96 2021/08/06 10:41:31 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.97 2021/08/07 12:51:30 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -60,7 +60,7 @@ MBR_init(struct mbr *mbr)
 	dos_mbr_to_mbr(&default_dmbr, 0, 0, mbr);
 
 	/*
-	 * XXX Do *NOT* zap all MBR parts! Some archs still read default mmbr
+	 * XXX Do *NOT* zap all MBR parts! Some archs still read default mbr
 	 * from disk! Just mark them inactive until -b goodness spreads
 	 * further.
 	 */
