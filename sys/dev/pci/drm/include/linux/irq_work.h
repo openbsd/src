@@ -1,4 +1,4 @@
-/*	$OpenBSD: irq_work.h,v 1.3 2021/07/07 02:38:36 jsg Exp $	*/
+/*	$OpenBSD: irq_work.h,v 1.4 2021/08/07 06:23:34 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -49,7 +49,7 @@ irq_work_queue(struct irq_work *work)
 static inline void
 irq_work_sync(struct irq_work *work)
 {
-	taskq_barrier(work->tq);
+	taskq_del_barrier(work->tq, &work->task);
 }
 
 #endif
