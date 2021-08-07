@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.136 2021/08/06 10:41:31 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.137 2021/08/07 13:37:50 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -84,7 +84,6 @@ Xdisk(char *args, struct mbr *mbr)
 	int			maxhead = 256;
 	int			maxsec  = 63;
 
-	/* Print out disk info */
 	DISK_printgeometry(args);
 
 #if defined (__powerpc__) || defined (__mips__)
@@ -397,7 +396,6 @@ Xselect(char *args, struct mbr *mbr)
 
 	lba_self = mbr->mbr_prt[pn].prt_bs;
 
-	/* Sanity checks */
 	if ((mbr->mbr_prt[pn].prt_id != DOSPTYP_EXTEND) &&
 	    (mbr->mbr_prt[pn].prt_id != DOSPTYP_EXTENDL)) {
 		printf("Partition %d is not an extended partition.\n", pn);
@@ -415,7 +413,6 @@ Xselect(char *args, struct mbr *mbr)
 		printf("New EMBR at offset %llu.\n", lba_self);
 	}
 
-	/* Recursion is beautiful! */
 	USER_edit(lba_self, lba_firstembr);
 
 	return CMD_CONT;
