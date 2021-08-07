@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.70 2021/07/26 13:05:14 krw Exp $	*/
+/*	$OpenBSD: disk.c,v 1.71 2021/08/07 13:33:12 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -23,7 +23,6 @@
 #include <sys/disklabel.h>
 
 #include <err.h>
-#include <errno.h>
 #include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>

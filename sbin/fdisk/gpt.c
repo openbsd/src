@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.49 2021/08/06 10:41:31 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.50 2021/08/07 13:33:12 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -26,7 +26,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <uuid.h>
 
 #include "part.h"
