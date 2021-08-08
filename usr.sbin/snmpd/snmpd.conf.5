@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpd.conf.5,v 1.50 2021/06/20 19:59:42 martijn Exp $
+.\" $OpenBSD: snmpd.conf.5,v 1.51 2021/08/08 13:28:06 sthen Exp $
 .\"
 .\" Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 20 2021 $
+.Dd $Mdocdate: August 8 2021 $
 .Dt SNMPD.CONF 5
 .Os
 .Sh NAME
@@ -207,6 +207,7 @@ system may provide.
 Refer to the
 .Ar sysServices
 description in the SNMP MIB for details.
+The value is given in decimal.
 .\"XXX describe the complicated services alg here
 .It Ic trap community Ar string
 Specify the name of the trap community.
