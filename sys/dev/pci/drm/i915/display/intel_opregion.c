@@ -956,9 +956,8 @@ int intel_opregion_setup(struct drm_i915_private *dev_priv)
 		opregion->rvda = memremap(rvda, opregion->asle->rvds,
 					  MEMREMAP_WB);
 #else
-		if (bus_space_map(dev_priv->bst, opregion->asle->rvda,
-		    opregion->asle->rvds, BUS_SPACE_MAP_LINEAR,
-		    &dev_priv->opregion_rvda_ioh))
+		if (bus_space_map(dev_priv->bst, rvda, opregion->asle->rvds,
+		    BUS_SPACE_MAP_LINEAR, &dev_priv->opregion_rvda_ioh))
 			return -ENOMEM;
 		opregion->rvda = bus_space_vaddr(dev_priv->bst,
 		    dev_priv->opregion_rvda_ioh);
