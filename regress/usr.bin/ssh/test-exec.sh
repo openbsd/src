@@ -1,7 +1,6 @@
-#	$OpenBSD: test-exec.sh,v 1.84 2021/08/08 06:38:33 dtucker Exp $
+#	$OpenBSD: test-exec.sh,v 1.85 2021/08/08 07:27:52 dtucker Exp $
 #	Placed in the Public Domain.
 
-USER=`id -un`
 #SUDO=sudo
 
 if [ ! -x "$TEST_SSH_ELAPSED_TIMES" ]; then
@@ -39,6 +38,8 @@ else
 	exit 2
 fi
 unset SSH_AUTH_SOCK
+
+USER=`id -un`
 
 SRC=`dirname ${SCRIPT}`
 
