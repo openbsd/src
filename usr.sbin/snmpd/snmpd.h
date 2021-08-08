@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.97 2021/06/20 19:59:42 martijn Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.98 2021/08/08 13:41:26 sthen Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -529,7 +529,7 @@ enum usmauth {
 	AUTH_SHA512	/* usmHMAC384SHA512AuthProtocol. RFC7860 */
 };
 
-#define AUTH_DEFAULT	AUTH_SHA256	/* Default digest */
+#define AUTH_DEFAULT	AUTH_SHA1	/* Default digest */
 
 enum usmpriv {
 	PRIV_NONE = 0,

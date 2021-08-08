@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpd.conf.5,v 1.51 2021/08/08 13:28:06 sthen Exp $
+.\" $OpenBSD: snmpd.conf.5,v 1.52 2021/08/08 13:41:26 sthen Exp $
 .\"
 .\" Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -280,7 +280,7 @@ must be either
 or
 .Ic hmac-sha512 .
 If omitted the default is
-.Ic hmac-sha256 .
+.Ic hmac-sha1 .
 .Pp
 With
 .Ic enckey
@@ -346,17 +346,14 @@ oid 1.3.6.1.4.1.30155.42.2 name myStatus read-only integer 1
 .Pp
 The next example will enforce SNMPv3 with authenticated and encrypted
 communication and the user-based security model.
-The configuration defines two users,
-the first one is using the
-.Ic aes
-encryption algorithm and the second one the default
-.Ic des
-algorithm.
+The configuration defines several users using varying encryption and
+authentication algorithms.
 .Bd -literal -offset indent
 seclevel enc
 
-user "hans" authkey "password123" enc aes enckey "321drowssap"
-user "sophie" authkey "password456" enc des enckey "654drowssap"
+user "mgmt" auth hmac-sha256 authkey "password123" enc aes enckey "321drowssap"
+user "hans" auth hmac-sha1 authkey "password456" enc aes enckey "654drowssap"
+user "sophie" auth hmac-md5 authkey "password789" enc des enckey "987drowssap"
 .Ed
 .Sh SEE ALSO
 .Xr snmp 1 ,
