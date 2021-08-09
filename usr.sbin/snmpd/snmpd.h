@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.98 2021/08/08 13:41:26 sthen Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.99 2021/08/09 18:14:53 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -77,7 +77,9 @@
 #define SNMP_ENGINEID_FMT_MAC	3
 #define SNMP_ENGINEID_FMT_TEXT	4
 #define SNMP_ENGINEID_FMT_OCT	5
-#define SNMP_ENGINEID_FMT_EID	128
+#define SNMP_ENGINEID_FMT_HH	129
+
+#define PEN_OPENBSD		30155
 
 enum imsg_type {
 	IMSG_NONE,
@@ -733,7 +735,6 @@ void		 timer_init(void);
 /* snmpd.c */
 int		 snmpd_socket_af(struct sockaddr_storage *, int);
 u_long		 snmpd_engine_time(void);
-char		*tohexstr(u_int8_t *, int);
 
 /* usm.c */
 void		 usm_generate_keys(void);
@@ -796,5 +797,7 @@ ssize_t	 recvfromto(int, void *, size_t, int, struct sockaddr *,
 	    socklen_t *, struct sockaddr *, socklen_t *);
 const char *log_in6addr(const struct in6_addr *);
 const char *print_host(struct sockaddr_storage *, char *, size_t);
+char	*tohexstr(u_int8_t *, int);
+uint8_t *fromhexstr(uint8_t *, const char *, size_t);
 
 #endif /* SNMPD_H */

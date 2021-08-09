@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.c,v 1.44 2021/01/27 07:21:54 deraadt Exp $	*/
+/*	$OpenBSD: snmpd.c,v 1.45 2021/08/09 18:14:53 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -45,7 +45,6 @@ __dead void	 usage(void);
 void	 snmpd_shutdown(struct snmpd *);
 void	 snmpd_sig_handler(int, short, void *);
 int	 snmpd_dispatch_snmpe(int, struct privsep_proc *, struct imsg *);
-void	 snmpd_generate_engineid(struct snmpd *);
 int	 check_child(pid_t, const char *);
 
 struct snmpd	*snmpd_env;
@@ -228,7 +227,6 @@ main(int argc, char *argv[])
 	env->sc_engine_boots = 0;
 
 	pf_init();
-	snmpd_generate_engineid(env);
 
 	proc_init(ps, procs, nitems(procs), debug, argc0, argv0, proc_id);
 	if (!debug && daemon(0, 0) == -1)
@@ -318,29 +316,6 @@ snmpd_socket_af(struct sockaddr_storage *ss, int type)
 	    SOCK_STREAM | SOCK_NONBLOCK : SOCK_DGRAM) | SOCK_CLOEXEC, 0);
 }
 
-void
-snmpd_generate_engineid(struct snmpd *env)
-{
-	u_int32_t		 oid_enterprise, rnd, tim;
-
-	/* RFC 3411 */
-	memset(env->sc_engineid, 0, sizeof(env->sc_engineid));
-	oid_enterprise = htonl(OIDVAL_openBSD_eid);
-	memcpy(env->sc_engineid, &oid_enterprise, sizeof(oid_enterprise));
-	env->sc_engineid[0] |= SNMP_ENGINEID_NEW;
-	env->sc_engineid_len = sizeof(oid_enterprise);
-
-	/* XXX alternatively configure engine id via snmpd.conf */
-	env->sc_engineid[(env->sc_engineid_len)++] = SNMP_ENGINEID_FMT_EID;
-	rnd = arc4random();
-	memcpy(&env->sc_engineid[env->sc_engineid_len], &rnd, sizeof(rnd));
-	env->sc_engineid_len += sizeof(rnd);
-
-	tim = htonl(env->sc_starttime.tv_sec);
-	memcpy(&env->sc_engineid[env->sc_engineid_len], &tim, sizeof(tim));
-	env->sc_engineid_len += sizeof(tim);
-}
-
 u_long
 snmpd_engine_time(void)
 {
@@ -357,22 +332,4 @@ snmpd_engine_time(void)
 	 */
 	gettimeofday(&now, NULL);
 	return now.tv_sec;
-}
-
-char *
-tohexstr(u_int8_t *bstr, int len)
-{
-#define MAXHEXSTRLEN		256
-	static char hstr[2 * MAXHEXSTRLEN + 1];
-	static const char hex[] = "0123456789abcdef";
-	int i;
-
-	if (len > MAXHEXSTRLEN)
-		len = MAXHEXSTRLEN;	/* truncate */
-	for (i = 0; i < len; i++) {
-		hstr[i + i] = hex[bstr[i] >> 4];
-		hstr[i + i + 1] = hex[bstr[i] & 0x0f];
-	}
-	hstr[i + i] = '\0';
-	return hstr;
 }

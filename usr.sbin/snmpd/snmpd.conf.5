@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpd.conf.5,v 1.52 2021/08/08 13:41:26 sthen Exp $
+.\" $OpenBSD: snmpd.conf.5,v 1.53 2021/08/09 18:14:53 martijn Exp $
 .\"
 .\" Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 8 2021 $
+.Dd $Mdocdate: August 9 2021 $
 .Dt SNMPD.CONF 5
 .Os
 .Sh NAME
@@ -146,6 +146,71 @@ Having
 set requires at least one
 .Ic trap handle
 statement.
+.It Ic engineid Oo Ic pen Ar enterprise Oc Ar format
+Set the snmp engineid, used for instance identification and key
+generation for the
+.Ic user
+.Ar auth
+and
+.Ar key .
+.Ar enterprise
+specifies the private enterprise number of the instance and can be either an
+integer or
+.Ic openbsd
+.Pq default .
+.Pp
+.Ar format
+can be one of the following:
+.Bl -tag -widt Ds
+.It Ic ipv4 Ar address
+The engineID's format identifier is set to 1 and the ipv4
+.Ar address
+is used in the format.
+.It Ic ipv6 Ar address
+The engineID's format identifier is set to 2 and the ipv6
+.Ar address
+is used in the format.
+.It Ic mac Ar address
+The engineID's format identifier is set to 3 and the mac
+.Ar address
+is used in the format.
+.It Ic text Ar text
+The engineID's format identifier is set to 4 and the ASCII
+.Ar text
+is used in the format.
+.It Ic octets Ar octetstring
+The engineID's format identifier is set to 5 and the
+.Ar octetstring
+in hexadecimal is used in the format.
+.It Ic hosthash Op Ar hostname
+The engineID's format identifier is set to 129 and the first 27 bytes of the
+sha256 hash of the
+.Ar hostname
+are used in the format.
+This option is only valid for
+.Ar enterprise
+.Ic openbsd .
+If used for the local engineID, then
+.Ar hostname
+defaults to the value of
+.Xr hostname 1 .
+This format is the default.
+.It Ar number Ar octetstring
+The engineID's format identifier is set to
+.Ar number
+and the
+.Ar octetstring
+in hexadecimal is used in the format.
+This format is only available if
+.Ar enterprise
+is not
+.Ic openbsd .
+.It Ic agentid Ar octetstring
+RFC1910 legacy format.
+.Ar octetstring
+must be 8 bytes
+.Pq or 16 characters in hexadecimal format .
+.El
 .It Ic read-only community Ar string
 Specify the name of the read-only community.
 There is no default value.

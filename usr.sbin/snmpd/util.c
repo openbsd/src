@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.11 2021/01/28 20:45:14 martijn Exp $	*/
+/*	$OpenBSD: util.c,v 1.12 2021/08/09 18:14:53 martijn Exp $	*/
 /*
  * Copyright (c) 2014 Bret Stephen Lambert <blambert@openbsd.org>
  *
@@ -22,7 +22,9 @@
 #include <net/if.h>
 
 #include <ber.h>
+#include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <netdb.h>
 #include <event.h>
@@ -186,4 +188,43 @@ print_host(struct sockaddr_storage *ss, char *buf, size_t len)
 		return (NULL);
 	}
 	return (buf);
+}
+
+char *
+tohexstr(uint8_t *bstr, int len)
+{
+#define MAXHEXSTRLEN		256
+	static char hstr[2 * MAXHEXSTRLEN + 1];
+	static const char hex[] = "0123456789abcdef";
+	int i;
+
+	if (len > MAXHEXSTRLEN)
+		len = MAXHEXSTRLEN;	/* truncate */
+	for (i = 0; i < len; i++) {
+		hstr[i + i] = hex[bstr[i] >> 4];
+		hstr[i + i + 1] = hex[bstr[i] & 0x0f];
+	}
+	hstr[i + i] = '\0';
+	return hstr;
+}
+
+uint8_t *
+fromhexstr(uint8_t *bstr, const char *hstr, size_t len)
+{
+	size_t i;
+	char hex[3];
+
+	if (len % 2 != 0)
+		return NULL;
+
+	hex[2] = '\0';
+	for (i = 0; i < len; i += 2) {
+		if (!isxdigit(hstr[i]) || !isxdigit(hstr[i + 1]))
+			return NULL;
+		hex[0] = hstr[i];
+		hex[1] = hstr[i + 1];
+		bstr[i / 2] = strtol(hex, NULL, 16);
+	}
+
+	return bstr;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.64 2021/06/20 19:55:48 martijn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.65 2021/08/09 18:14:53 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -34,6 +34,8 @@
 
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
+
+#include <openssl/sha.h>
 
 #include <ctype.h>
 #include <unistd.h>
@@ -95,6 +97,10 @@ struct snmpd			*conf = NULL;
 static int			 errors = 0;
 static struct usmuser		*user = NULL;
 
+static uint8_t			 engineid[SNMPD_MAXENGINEIDLEN];
+static int32_t			 enginepen;
+static size_t			 engineidlen;
+
 int		 host(const char *, const char *, int,
 		    struct sockaddr_storage *, int);
 int		 listen_add(struct sockaddr_storage *, int, int);
@@ -120,13 +126,14 @@ typedef struct {
 %}
 
 %token	INCLUDE
-%token  LISTEN ON READ WRITE NOTIFY SNMPV1 SNMPV2 SNMPV3
+%token	LISTEN ON READ WRITE NOTIFY SNMPV1 SNMPV2 SNMPV3
+%token	ENGINEID PEN OPENBSD IP4 IP6 MAC TEXT OCTETS AGENTID HOSTHASH
 %token	SYSTEM CONTACT DESCR LOCATION NAME OBJECTID SERVICES RTFILTER
 %token	READONLY READWRITE OCTETSTRING INTEGER COMMUNITY TRAP RECEIVER
 %token	SECLEVEL NONE AUTH ENC USER AUTHKEY ENCKEY ERROR
 %token	HANDLE DEFAULT SRCADDR TCP UDP PFADDRFILTER PORT
 %token	<v.string>	STRING
-%token  <v.number>	NUMBER
+%token	<v.number>	NUMBER
 %type	<v.string>	hostcmn
 %type	<v.string>	srcaddr port
 %type	<v.number>	optwrite yesno seclevel listenopt listenopts
@@ -196,6 +203,14 @@ yesno		:  STRING			{
 		;
 
 main		: LISTEN ON listenproto
+		| engineid_local {
+			if (conf->sc_engineid_len != 0) {
+				yyerror("Redefinition of engineid");
+				YYERROR;
+			}
+			memcpy(conf->sc_engineid, engineid, engineidlen);
+			conf->sc_engineid_len = engineidlen;
+		}
 		| READONLY COMMUNITY STRING	{
 			if (strlcpy(conf->sc_rdcommunity, $3,
 			    sizeof(conf->sc_rdcommunity)) >=
@@ -380,6 +395,210 @@ port		: /* empty */			{
 			$$ = number;
 		}
 		;
+
+enginefmt	: IP4 STRING			{
+			struct in_addr addr;
+
+			engineid[engineidlen++] = SNMP_ENGINEID_FMT_IPv4;
+			if (inet_pton(AF_INET, $2, &addr) != 1) {
+				yyerror("Invalid ipv4 address: %s", $2);
+				free($2);
+				YYERROR;
+			}
+			memcpy(engineid + engineidlen, &addr,
+			    sizeof(engineid) - engineidlen);
+			engineid[0] |= SNMP_ENGINEID_NEW;
+			engineidlen += sizeof(addr);
+			free($2);
+		}
+		| IP6 STRING			{
+			struct in6_addr addr;
+
+			engineid[engineidlen++] = SNMP_ENGINEID_FMT_IPv6;
+			if (inet_pton(AF_INET6, $2, &addr) != 1) {
+				yyerror("Invalid ipv6 address: %s", $2);
+				free($2);
+				YYERROR;
+			}
+			memcpy(engineid + engineidlen, &addr,
+			    sizeof(engineid) - engineidlen);
+			engineid[0] |= SNMP_ENGINEID_NEW;
+			engineidlen += sizeof(addr);
+			free($2);
+		}
+		| MAC STRING			{
+			size_t i;
+
+			if (strlen($2) != 5 * 3 + 2) {
+				yyerror("Invalid mac address: %s", $2);
+				free($2);
+				YYERROR;
+			}
+			engineid[engineidlen++] = SNMP_ENGINEID_FMT_MAC;
+			for (i = 0; i < 6; i++) {
+				if (fromhexstr(engineid + engineidlen + i,
+				    $2 + (i * 3), 2) == NULL ||
+				    $2[i * 3 + 2] != (i < 5 ? ':' : '\0')) {
+					yyerror("Invalid mac address: %s", $2);
+					free($2);
+					YYERROR;
+				}
+			}
+			engineid[0] |= SNMP_ENGINEID_NEW;
+			engineidlen += 6;
+			free($2);
+		}
+		| TEXT STRING			{
+			size_t i, fmtstart;
+
+			engineid[engineidlen++] = SNMP_ENGINEID_FMT_TEXT;
+			for (i = 0, fmtstart = engineidlen;
+			    i < sizeof(engineid) - engineidlen && $2[i] != '\0';
+			    i++) {
+				if (!isprint($2[i])) {
+					yyerror("invalid text character");
+					free($2);
+					YYERROR;
+				}
+				engineid[fmtstart + i] = $2[i];
+				engineidlen++;
+			}
+			if (i == 0 || $2[i] != '\0') {
+				yyerror("Invalid text length: %s", $2);
+				free($2);
+				YYERROR;
+			}
+			engineid[0] |= SNMP_ENGINEID_NEW;
+			free($2);
+		}
+		| OCTETS STRING			{
+			if (strlen($2) / 2 > sizeof(engineid) - 1) {
+				yyerror("Invalid octets length: %s", $2);
+				free($2);
+				YYERROR;
+			}
+
+			engineid[engineidlen++] = SNMP_ENGINEID_FMT_OCT;
+			if (fromhexstr(engineid + engineidlen, $2,
+			    strlen($2)) == NULL) {
+				yyerror("Invalid octets: %s", $2);
+				free($2);
+				YYERROR;
+			}
+			engineidlen += strlen($2) / 2;
+			engineid[0] |= SNMP_ENGINEID_NEW;
+			free($2);
+		}
+		| AGENTID STRING		{
+			if (strlen($2) / 2 != 8) {
+				yyerror("Invalid agentid length: %s", $2);
+				free($2);
+				YYERROR;
+			}
+
+			if (fromhexstr(engineid + engineidlen, $2,
+			    strlen($2)) == NULL) {
+				yyerror("Invalid agentid: %s", $2);
+				free($2);
+				YYERROR;
+			}
+			engineidlen += 8;
+			engineid[0] |= SNMP_ENGINEID_OLD;
+			free($2);
+		}
+		| HOSTHASH STRING		{
+			if (enginepen != PEN_OPENBSD) {
+				yyerror("hosthash only allowed for pen "
+				    "openbsd");
+				YYERROR;
+			}
+			engineid[engineidlen++] = SNMP_ENGINEID_FMT_HH;
+			memcpy(engineid + engineidlen,
+			    SHA256($2, strlen($2), NULL),
+			    sizeof(engineid) - engineidlen);
+			engineidlen = sizeof(engineid);
+			engineid[0] |= SNMP_ENGINEID_NEW;
+			free($2);
+		}
+		| NUMBER STRING			{
+			if (enginepen == PEN_OPENBSD) {
+				yyerror("%lld is only allowed when pen is not "
+				    "openbsd", $1);
+				YYERROR;
+			}
+
+			if ($1 < 128 || $1 > 255) {
+				yyerror("Invalid format number: %lld\n", $1);
+				YYERROR;
+			}
+			if (strlen($2) / 2 > sizeof(engineid) - 1) {
+				yyerror("Invalid octets length: %s", $2);
+				free($2);
+				YYERROR;
+			}
+
+			engineid[engineidlen++] = (uint8_t)$1;
+			if (fromhexstr(engineid + engineidlen, $2,
+			    strlen($2)) == NULL) {
+				yyerror("Invalid octets: %s", $2);
+				free($2);
+				YYERROR;
+			}
+			engineidlen += strlen($2) / 2;
+			engineid[0] |= SNMP_ENGINEID_NEW;
+			free($2);
+		}
+		;
+
+enginefmt_local	: enginefmt
+		| HOSTHASH			{
+			char hostname[HOST_NAME_MAX + 1];
+
+			if (enginepen != PEN_OPENBSD) {
+				yyerror("hosthash only allowed for pen "
+				    "openbsd");
+				YYERROR;
+			}
+
+			if (gethostname(hostname, sizeof(hostname)) == -1) {
+				yyerror("gethostname: %s", strerror(errno));
+				YYERROR;
+			}
+
+			engineid[engineidlen++] = SNMP_ENGINEID_FMT_HH;
+			memcpy(engineid + engineidlen,
+			    SHA256(hostname, strlen(hostname), NULL),
+			    sizeof(engineid) - engineidlen);
+			engineidlen = sizeof(engineid);
+			engineid[0] |= SNMP_ENGINEID_NEW;
+		}
+		;
+
+pen		: /* empty */			{
+			enginepen = PEN_OPENBSD;
+		}
+		| PEN NUMBER			{
+			if ($2 > INT32_MAX) {
+				yyerror("pen number too large");
+				YYERROR;
+			}
+			if ($2 <= 0) {
+				yyerror("pen number too small");
+				YYERROR;
+			}
+			enginepen = $2;
+		}
+		| PEN OPENBSD			{
+			enginepen = PEN_OPENBSD;
+		}
+		;
+
+engineid_local	: ENGINEID pen			{
+			uint32_t npen = htonl(enginepen);
+
+			memcpy(engineid, &npen, sizeof(enginepen));
+			engineidlen = sizeof(enginepen);
+		} enginefmt_local
 
 system		: SYSTEM sysmib
 		;
@@ -707,6 +926,7 @@ lookup(char *s)
 {
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
+		{ "agentid",			AGENTID },
 		{ "auth",			AUTH },
 		{ "authkey",			AUTHKEY },
 		{ "community",			COMMUNITY },
@@ -715,18 +935,26 @@ lookup(char *s)
 		{ "description",		DESCR },
 		{ "enc",			ENC },
 		{ "enckey",			ENCKEY },
+		{ "engineid",			ENGINEID },
 		{ "filter-pf-addresses",	PFADDRFILTER },
 		{ "filter-routes",		RTFILTER },
 		{ "handle",			HANDLE },
+		{ "hosthash",			HOSTHASH },
 		{ "include",			INCLUDE },
 		{ "integer",			INTEGER },
+		{ "ipv4",			IP4 },
+		{ "ipv6",			IP6 },
 		{ "listen",			LISTEN },
 		{ "location",			LOCATION },
+		{ "mac",			MAC },
 		{ "name",			NAME },
 		{ "none",			NONE },
 		{ "notify",			NOTIFY },
+		{ "octets",			OCTETS },
 		{ "oid",			OBJECTID },
 		{ "on",				ON },
+		{ "openbsd",			OPENBSD },
+		{ "pen",			PEN },
 		{ "port",			PORT },
 		{ "read",			READ },
 		{ "read-only",			READONLY },
@@ -741,6 +969,7 @@ lookup(char *s)
 		{ "string",			OCTETSTRING },
 		{ "system",			SYSTEM },
 		{ "tcp",			TCP },
+		{ "text",			TEXT },
 		{ "trap",			TRAP },
 		{ "udp",			UDP },
 		{ "user",			USER },
@@ -1109,7 +1338,9 @@ parse_config(const char *filename, u_int flags)
 	struct trap_address	*tr;
 	const struct usmuser	*up;
 	const char	*errstr;
+	char		 hostname[HOST_NAME_MAX + 1];
 	int		 found;
+	uint32_t	 npen = htonl(PEN_OPENBSD);
 
 	if ((conf = calloc(1, sizeof(*conf))) == NULL) {
 		log_warn("%s", __func__);
@@ -1134,6 +1365,21 @@ parse_config(const char *filename, u_int flags)
 	popfile();
 
 	endservent();
+
+	/* Must be identical to enginefmt_local:HOSTHASH */
+	if (conf->sc_engineid_len == 0) {
+		if (gethostname(hostname, sizeof(hostname)) == -1)
+			fatal("gethostname");
+		memcpy(conf->sc_engineid, &npen, sizeof(npen));
+		conf->sc_engineid_len += sizeof(npen);
+		conf->sc_engineid[conf->sc_engineid_len++] |=
+		    SNMP_ENGINEID_FMT_HH;
+		memcpy(conf->sc_engineid + conf->sc_engineid_len,
+		    SHA256(hostname, strlen(hostname), NULL),
+		    sizeof(conf->sc_engineid) - conf->sc_engineid_len);
+		conf->sc_engineid_len = sizeof(conf->sc_engineid);
+		conf->sc_engineid[0] |= SNMP_ENGINEID_NEW;
+	}
 
 	/* Setup default listen addresses */
 	if (TAILQ_EMPTY(&conf->sc_addresses)) {
