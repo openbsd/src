@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.66 2021/07/23 00:29:14 jmatthew Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.67 2021/08/09 18:13:09 jan Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -157,7 +157,6 @@ struct vmxnet3_softc {
 #define WRITE_BAR1(sc, reg, val) \
 	bus_space_write_4((sc)->sc_iot1, (sc)->sc_ioh1, reg, val)
 #define WRITE_CMD(sc, cmd) WRITE_BAR1(sc, VMXNET3_BAR1_CMD, cmd)
-#define vtophys(va) 0		/* XXX ok? */
 
 int vmxnet3_match(struct device *, void *, void *);
 void vmxnet3_attach(struct device *, struct device *, void *);
@@ -468,8 +467,8 @@ vmxnet3_dma_init(struct vmxnet3_softc *sc)
 	ds->vmxnet3_revision = 1;
 	ds->upt_version = 1;
 	ds->upt_features = UPT1_F_CSUM | UPT1_F_VLAN;
-	ds->driver_data = vtophys(sc);
-	ds->driver_data_len = sizeof(struct vmxnet3_softc);
+	ds->driver_data = ~0ULL;
+	ds->driver_data_len = 0;
 	ds->queue_shared = qs_pa;
 	ds->queue_shared_len = qs_len;
 	ds->mtu = VMXNET3_MAX_MTU;
@@ -546,8 +545,8 @@ vmxnet3_alloc_txring(struct vmxnet3_softc *sc, int queue, int intr)
 	ts->cmd_ring_len = NTXDESC;
 	ts->comp_ring = comp_pa;
 	ts->comp_ring_len = NTXCOMPDESC;
-	ts->driver_data = vtophys(tq);
-	ts->driver_data_len = sizeof *tq;
+	ts->driver_data = ~0ULL;
+	ts->driver_data_len = 0;
 	ts->intr_idx = intr;
 	ts->stopped = 1;
 	ts->error = 0;
@@ -598,8 +597,8 @@ vmxnet3_alloc_rxring(struct vmxnet3_softc *sc, int queue, int intr)
 	rs->cmd_ring_len[1] = NRXDESC;
 	rs->comp_ring = comp_pa;
 	rs->comp_ring_len = NRXCOMPDESC;
-	rs->driver_data = vtophys(rq);
-	rs->driver_data_len = sizeof *rq;
+	rs->driver_data = ~0ULL;
+	rs->driver_data_len = 0;
 	rs->intr_idx = intr;
 	rs->stopped = 1;
 	rs->error = 0;
