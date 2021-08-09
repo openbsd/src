@@ -1,5 +1,5 @@
 %{
-/*      $OpenBSD: scan.l,v 1.30 2017/07/19 12:50:33 espie Exp $	*/
+/*      $OpenBSD: scan.l,v 1.31 2021/08/09 19:13:56 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -245,6 +245,7 @@ abort_line(int sig)
 	save_errno = errno;
 	if (use_el) {
 		write(STDOUT_FILENO, str2, sizeof(str2) - 1);
+		/* XXX signal race */
 		info = el_line(el);
 		skipchars = info->lastchar - info->buffer;
 	} else
