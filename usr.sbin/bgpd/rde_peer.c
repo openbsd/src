@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.11 2021/06/17 16:05:26 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.12 2021/08/09 08:15:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -51,6 +51,14 @@ int
 peer_has_as4byte(struct rde_peer *peer)
 {
 	return (peer->capa.as4byte);
+}
+
+int
+peer_has_add_path(struct rde_peer *peer, u_int8_t aid, int mode)
+{
+	if (aid > AID_MAX)
+		return 0;
+	return (peer->capa.add_path[aid] & mode);
 }
 
 int
@@ -250,7 +258,8 @@ peer_flush_upcall(struct rib_entry *re, void *arg)
 			struct rib *rib = rib_byid(i);
 			if (rib == NULL)
 				continue;
-			rp = prefix_get(rib, peer, &addr, prefixlen);
+			rp = prefix_get(rib, peer, p->path_id,
+			     &addr, prefixlen);
 			if (rp) {
 				asp = prefix_aspath(rp);
 				if (asp && asp->pftableid)
@@ -264,7 +273,6 @@ peer_flush_upcall(struct rib_entry *re, void *arg)
 
 		prefix_destroy(p);
 		peer->prefix_cnt--;
-		break;	/* optimization, only one match per peer possible */
 	}
 }
 

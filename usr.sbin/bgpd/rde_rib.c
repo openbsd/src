@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.223 2021/07/27 07:50:02 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.224 2021/08/09 08:15:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -842,7 +842,7 @@ path_put(struct rde_aspath *asp)
 /* prefix specific functions */
 
 static int	prefix_add(struct bgpd_addr *, int, struct rib *,
-		    struct rde_peer *, struct rde_aspath *,
+		    struct rde_peer *, u_int32_t, struct rde_aspath *,
 		    struct rde_community *, struct nexthop *,
 		    u_int8_t, u_int8_t);
 static int	prefix_move(struct prefix *, struct rde_peer *,
@@ -850,7 +850,7 @@ static int	prefix_move(struct prefix *, struct rde_peer *,
 		    struct nexthop *, u_int8_t, u_int8_t);
 
 static void	prefix_link(struct prefix *, struct rib_entry *,
-		     struct rde_peer *, struct rde_aspath *,
+		     struct rde_peer *, u_int32_t, struct rde_aspath *,
 		     struct rde_community *, struct nexthop *,
 		     u_int8_t, u_int8_t);
 static void	prefix_unlink(struct prefix *);
@@ -876,12 +876,14 @@ prefix_cmp(struct prefix *a, struct prefix *b)
 		return (a->nexthop > b->nexthop ? 1 : -1);
 	if (a->nhflags != b->nhflags)
 		return (a->nhflags > b->nhflags ? 1 : -1);
+	/* XXX path_id ??? */
 	return pt_prefix_cmp(a->pt, b->pt);
 }
 
 static inline int
 prefix_index_cmp(struct prefix *a, struct prefix *b)
 {
+	/* XXX path_id ??? */
 	return pt_prefix_cmp(a->pt, b->pt);
 }
 
@@ -892,15 +894,15 @@ RB_GENERATE_STATIC(prefix_index, prefix, entry.tree.index, prefix_index_cmp)
  * search for specified prefix of a peer. Returns NULL if not found.
  */
 struct prefix *
-prefix_get(struct rib *rib, struct rde_peer *peer, struct bgpd_addr *prefix,
-    int prefixlen)
+prefix_get(struct rib *rib, struct rde_peer *peer, u_int32_t path_id,
+    struct bgpd_addr *prefix, int prefixlen)
 {
 	struct rib_entry	*re;
 
 	re = rib_get(rib, prefix, prefixlen);
 	if (re == NULL)
 		return (NULL);
-	return (prefix_bypeer(re, peer));
+	return (prefix_bypeer(re, peer, path_id));
 }
 
 /*
@@ -954,8 +956,9 @@ prefix_match(struct rde_peer *peer, struct bgpd_addr *addr)
  * Return 1 if prefix was newly added, 0 if it was just changed.
  */
 int
-prefix_update(struct rib *rib, struct rde_peer *peer, struct filterstate *state,
-    struct bgpd_addr *prefix, int prefixlen, u_int8_t vstate)
+prefix_update(struct rib *rib, struct rde_peer *peer, u_int32_t path_id,
+    struct filterstate *state, struct bgpd_addr *prefix, int prefixlen,
+    u_int8_t vstate)
 {
 	struct rde_aspath	*asp, *nasp = &state->aspath;
 	struct rde_community	*comm, *ncomm = &state->communities;
@@ -964,7 +967,7 @@ prefix_update(struct rib *rib, struct rde_peer *peer, struct filterstate *state,
 	/*
 	 * First try to find a prefix in the specified RIB.
 	 */
-	if ((p = prefix_get(rib, peer, prefix, prefixlen)) != NULL) {
+	if ((p = prefix_get(rib, peer, path_id, prefix, prefixlen)) != NULL) {
 		if (prefix_nexthop(p) == state->nexthop &&
 		    prefix_nhflags(p) == state->nhflags &&
 		    communities_equal(ncomm, prefix_communities(p)) &&
@@ -997,8 +1000,8 @@ prefix_update(struct rib *rib, struct rde_peer *peer, struct filterstate *state,
 		return (prefix_move(p, peer, asp, comm, state->nexthop,
 		    state->nhflags, vstate));
 	else
-		return (prefix_add(prefix, prefixlen, rib, peer, asp, comm,
-		    state->nexthop, state->nhflags, vstate));
+		return (prefix_add(prefix, prefixlen, rib, peer, path_id, asp,
+		    comm, state->nexthop, state->nhflags, vstate));
 }
 
 /*
@@ -1006,8 +1009,9 @@ prefix_update(struct rib *rib, struct rde_peer *peer, struct filterstate *state,
  */
 static int
 prefix_add(struct bgpd_addr *prefix, int prefixlen, struct rib *rib,
-    struct rde_peer *peer, struct rde_aspath *asp, struct rde_community *comm,
-    struct nexthop *nexthop, u_int8_t nhflags, u_int8_t vstate)
+    struct rde_peer *peer, u_int32_t path_id, struct rde_aspath *asp,
+    struct rde_community *comm, struct nexthop *nexthop, u_int8_t nhflags,
+    u_int8_t vstate)
 {
 	struct prefix		*p;
 	struct rib_entry	*re;
@@ -1017,7 +1021,7 @@ prefix_add(struct bgpd_addr *prefix, int prefixlen, struct rib *rib,
 		re = rib_add(rib, prefix, prefixlen);
 
 	p = prefix_alloc();
-	prefix_link(p, re, peer, asp, comm, nexthop, nhflags, vstate);
+	prefix_link(p, re, peer, path_id, asp, comm, nexthop, nhflags, vstate);
 	return (1);
 }
 
@@ -1045,6 +1049,7 @@ prefix_move(struct prefix *p, struct rde_peer *peer,
 	np->peer = peer;
 	np->entry.list.re = prefix_re(p);
 	np->pt = p->pt; /* skip refcnt update since ref is moved */
+	np->path_id = p->path_id;
 	np->validation_state = vstate;
 	np->nhflags = nhflags;
 	np->nexthop = nexthop_ref(nexthop);
@@ -1086,13 +1091,13 @@ prefix_move(struct prefix *p, struct rde_peer *peer,
  * or pt_entry -- become empty remove them too.
  */
 int
-prefix_withdraw(struct rib *rib, struct rde_peer *peer,
+prefix_withdraw(struct rib *rib, struct rde_peer *peer, u_int32_t path_id,
     struct bgpd_addr *prefix, int prefixlen)
 {
 	struct prefix		*p;
 	struct rde_aspath	*asp;
 
-	p = prefix_get(rib, peer, prefix, prefixlen);
+	p = prefix_get(rib, peer, path_id, prefix, prefixlen);
 	if (p == NULL)		/* Got a dummy withdrawn request. */
 		return (0);
 
@@ -1487,12 +1492,12 @@ prefix_writebuf(struct ibuf *buf, struct bgpd_addr *prefix, u_int8_t plen)
  * belonging to the peer peer. Returns NULL if no match found.
  */
 struct prefix *
-prefix_bypeer(struct rib_entry *re, struct rde_peer *peer)
+prefix_bypeer(struct rib_entry *re, struct rde_peer *peer, u_int32_t path_id)
 {
 	struct prefix	*p;
 
 	LIST_FOREACH(p, &re->prefix_h, entry.list.rib)
-		if (prefix_peer(p) == peer)
+		if (prefix_peer(p) == peer && p->path_id == path_id)
 			return (p);
 	return (NULL);
 }
@@ -1544,7 +1549,7 @@ prefix_destroy(struct prefix *p)
  */
 static void
 prefix_link(struct prefix *p, struct rib_entry *re, struct rde_peer *peer,
-    struct rde_aspath *asp, struct rde_community *comm,
+    u_int32_t path_id, struct rde_aspath *asp, struct rde_community *comm,
     struct nexthop *nexthop, u_int8_t nhflags, u_int8_t vstate)
 {
 	if (p->flags & PREFIX_FLAG_ADJOUT)
@@ -1555,6 +1560,7 @@ prefix_link(struct prefix *p, struct rib_entry *re, struct rde_peer *peer,
 	p->communities = communities_ref(comm);
 	p->peer = peer;
 	p->pt = pt_ref(re->prefix);
+	p->path_id = path_id;
 	p->validation_state = vstate;
 	p->nhflags = nhflags;
 	p->nexthop = nexthop_ref(nexthop);

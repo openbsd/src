@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.417 2021/06/17 16:05:26 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.418 2021/08/09 08:15:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -204,7 +204,8 @@ typedef struct {
 %token	GROUP NEIGHBOR NETWORK
 %token	EBGP IBGP
 %token	LOCALAS REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE MAXPREFIX RESTART
-%token	ANNOUNCE CAPABILITIES REFRESH AS4BYTE CONNECTRETRY ENHANCED
+%token	ANNOUNCE CAPABILITIES REFRESH AS4BYTE CONNECTRETRY ENHANCED ADDPATH
+%token	SEND RECV
 %token	DEMOTE ENFORCE NEIGHBORAS ASOVERRIDE REFLECTOR DEPEND DOWN
 %token	DUMP IN OUT SOCKET RESTRICTED
 %token	LOG TRANSPARENT
@@ -1454,6 +1455,16 @@ peeropts	: REMOTEAS as4number	{
 		}
 		| ANNOUNCE AS4BYTE yesno {
 			curpeer->conf.capabilities.as4byte = $3;
+		}
+		| ANNOUNCE ADDPATH RECV yesno {
+			int8_t *ap = curpeer->conf.capabilities.add_path;
+			u_int8_t i;
+
+			for (i = 0; i < AID_MAX; i++)
+				if ($4)
+					*ap++ |= CAPA_AP_RECV;
+				else
+					*ap++ &= ~CAPA_AP_RECV;
 		}
 		| EXPORT NONE {
 			curpeer->conf.export_type = EXPORT_NONE;
@@ -2878,6 +2889,7 @@ lookup(char *s)
 		{ "AS",			AS},
 		{ "IPv4",		IPV4},
 		{ "IPv6",		IPV6},
+		{ "add-path",		ADDPATH},
 		{ "ah",			AH},
 		{ "allow",		ALLOW},
 		{ "announce",		ANNOUNCE},
@@ -2965,6 +2977,7 @@ lookup(char *s)
 		{ "quick",		QUICK},
 		{ "rd",			RD},
 		{ "rde",		RDE},
+		{ "recv",		RECV},
 		{ "refresh",		REFRESH },
 		{ "reject",		REJECT},
 		{ "remote-as",		REMOTEAS},
@@ -2978,6 +2991,7 @@ lookup(char *s)
 		{ "rtlabel",		RTLABEL},
 		{ "rtr",		RTR},
 		{ "self",		SELF},
+		{ "send",		SEND},
 		{ "set",		SET},
 		{ "socket",		SOCKET },
 		{ "source-as",		SOURCEAS},

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.416 2021/07/27 07:32:08 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.417 2021/08/09 08:15:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -95,6 +95,7 @@
 #define	F_CTL_OVS_INVALID	0x100000
 #define	F_CTL_OVS_NOTFOUND	0x200000
 #define	F_CTL_NEIGHBORS		0x400000 /* only used by bgpctl */
+#define	F_CTL_HAS_PATHID	0x800000 /* only set on requests */
 
 #define CTASSERT(x)	extern char  _ctassert[(x) ? 1 : -1 ] \
 			    __attribute__((__unused__))
@@ -891,9 +892,10 @@ struct ctl_show_rib_request {
 	struct filter_as	as;
 	struct community	community;
 	u_int32_t		flags;
-	u_int8_t		validation_state;
+	u_int32_t		path_id;
 	pid_t			pid;
 	enum imsg_type		type;
+	u_int8_t		validation_state;
 	u_int8_t		prefixlen;
 	u_int8_t		aid;
 };

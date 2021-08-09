@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.241 2021/07/27 07:50:02 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.242 2021/08/09 08:15:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -329,6 +329,8 @@ struct prefix {
 	struct rde_peer			*peer;
 	struct nexthop			*nexthop;	/* may be NULL */
 	time_t				 lastchange;
+	u_int32_t			 path_id;
+	u_int32_t			 path_id_tx;
 	u_int8_t			 validation_state;
 	u_int8_t			 nhflags;
 	u_int8_t			 eor;
@@ -386,6 +388,7 @@ int		rde_match_peer(struct rde_peer *, struct ctl_neighbor *);
 
 /* rde_peer.c */
 int		 peer_has_as4byte(struct rde_peer *);
+int		 peer_has_add_path(struct rde_peer *, u_int8_t, int);
 int		 peer_accept_no_as_set(struct rde_peer *);
 void		 peer_init(u_int32_t);
 void		 peer_shutdown(void);
@@ -577,13 +580,13 @@ void		 path_clean(struct rde_aspath *);
 void		 path_put(struct rde_aspath *);
 
 #define	PREFIX_SIZE(x)	(((x) + 7) / 8 + 1)
-struct prefix	*prefix_get(struct rib *, struct rde_peer *,
+struct prefix	*prefix_get(struct rib *, struct rde_peer *, u_int32_t,
 		    struct bgpd_addr *, int);
 struct prefix	*prefix_lookup(struct rde_peer *, struct bgpd_addr *, int);
 struct prefix	*prefix_match(struct rde_peer *, struct bgpd_addr *);
-int		 prefix_update(struct rib *, struct rde_peer *,
+int		 prefix_update(struct rib *, struct rde_peer *, u_int32_t,
 		     struct filterstate *, struct bgpd_addr *, int, u_int8_t);
-int		 prefix_withdraw(struct rib *, struct rde_peer *,
+int		 prefix_withdraw(struct rib *, struct rde_peer *, u_int32_t,
 		    struct bgpd_addr *, int);
 void		 prefix_add_eor(struct rde_peer *, u_int8_t);
 int		 prefix_adjout_update(struct rde_peer *, struct filterstate *,
@@ -598,7 +601,8 @@ int		 prefix_dump_new(struct rde_peer *, u_int8_t, unsigned int,
 		    void (*)(void *, u_int8_t), int (*)(void *));
 int		 prefix_write(u_char *, int, struct bgpd_addr *, u_int8_t, int);
 int		 prefix_writebuf(struct ibuf *, struct bgpd_addr *, u_int8_t);
-struct prefix	*prefix_bypeer(struct rib_entry *, struct rde_peer *);
+struct prefix	*prefix_bypeer(struct rib_entry *, struct rde_peer *,
+		    u_int32_t);
 void		 prefix_destroy(struct prefix *);
 void		 prefix_relink(struct prefix *, struct rde_aspath *, int);
 
