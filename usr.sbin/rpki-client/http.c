@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.35 2021/08/04 16:10:03 claudio Exp $  */
+/*	$OpenBSD: http.c,v 1.36 2021/08/09 10:30:23 claudio Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -318,6 +318,11 @@ http_parse_uri(char *uri, char **ohost, char **oport, char **opath)
 			port = hosttail + 1;
 		else
 			hosttail = path;
+	}
+
+	if (memchr(host, '@', hosttail - host) != NULL) {
+		warnx("%s: URI with userinfo not supported", http_info(uri));
+		return -1;
 	}
 
 	if ((host = strndup(host, hosttail - host)) == NULL)
