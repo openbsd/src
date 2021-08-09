@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.368 2021/04/16 12:08:25 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.369 2021/08/09 16:06:31 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -262,7 +262,7 @@ tcp_reass(struct tcpcb *tp, struct tcphdr *th, struct mbuf *m, int *tlen)
 		/* conversion to int (in i) handles seq wraparound */
 		i = phdr->th_seq + phdr->th_reseqlen - th->th_seq;
 		if (i > 0) {
-		        if (i >= *tlen) {
+			if (i >= *tlen) {
 				tcpstat_pkt(tcps_rcvduppack, tcps_rcvdupbyte,
 				    *tlen);
 				m_freem(m);
@@ -506,7 +506,7 @@ tcp_input(struct mbuf **mp, int *offp, int proto, int af)
 		 */
 		if ((optlen == TCPOLEN_TSTAMP_APPA ||
 		     (optlen > TCPOLEN_TSTAMP_APPA &&
-			optp[TCPOLEN_TSTAMP_APPA] == TCPOPT_EOL)) &&
+		      optp[TCPOLEN_TSTAMP_APPA] == TCPOPT_EOL)) &&
 		     *(u_int32_t *)optp == htonl(TCPOPT_TSTAMP_HDR) &&
 		     (th->th_flags & TH_SYN) == 0) {
 			opti.ts_present = 1;
@@ -575,7 +575,7 @@ findpcb:
 		mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_DONE, NULL);
 		if (mtag != NULL) {
 			tdbi = (struct tdb_ident *)(mtag + 1);
-		        tdb = gettdb(tdbi->rdomain, tdbi->spi,
+			tdb = gettdb(tdbi->rdomain, tdbi->spi,
 			    &tdbi->dst, tdbi->proto);
 		} else
 			tdb = NULL;
@@ -1075,7 +1075,7 @@ findpcb:
 
 	/*
 	 * If the state is SYN_RECEIVED:
-	 * 	if seg contains SYN/ACK, send an RST.
+	 *	if seg contains SYN/ACK, send an RST.
 	 *	if seg contains an ACK, but not for our SYN/ACK, send an RST
 	 */
 
@@ -1133,11 +1133,11 @@ findpcb:
 			tp->snd_cwnd = tp->t_maxseg;
 		tcp_rcvseqinit(tp);
 		tp->t_flags |= TF_ACKNOW;
-                /*
-                 * If we've sent a SACK_PERMITTED option, and the peer
-                 * also replied with one, then TF_SACK_PERMIT should have
-                 * been set in tcp_dooptions().  If it was not, disable SACKs.
-                 */
+		/*
+		 * If we've sent a SACK_PERMITTED option, and the peer
+		 * also replied with one, then TF_SACK_PERMIT should have
+		 * been set in tcp_dooptions().  If it was not, disable SACKs.
+		 */
 		if (tp->sack_enable)
 			tp->sack_enable = tp->t_flags & TF_SACK_PERMIT;
 #ifdef TCP_ECN
@@ -1601,7 +1601,7 @@ trimthenstep6:
 						 */
 						(void) tcp_output(tp);
 						tp->snd_cwnd = tp->snd_ssthresh+
-					           tp->t_maxseg * tp->t_dupacks;
+						   tp->t_maxseg * tp->t_dupacks;
 						goto drop;
 					}
 					TCP_TIMER_DISARM(tp, TCPT_REXMT);
@@ -1897,7 +1897,7 @@ step6:
 		 */
 		if (th->th_urp <= (u_int16_t) tlen &&
 		    (so->so_options & SO_OOBINLINE) == 0)
-		        tcp_pulloutofband(so, th->th_urp, m, hdroptlen);
+			tcp_pulloutofband(so, th->th_urp, m, hdroptlen);
 	} else
 		/*
 		 * If no out of band data is expected,
@@ -2384,7 +2384,7 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 		return;
 	/* SACK without ACK doesn't make sense. */
 	if ((th->th_flags & TH_ACK) == 0)
-	       return;
+		return;
 	/* Make sure the ACK on this segment is in [snd_una, snd_max]. */
 	if (SEQ_LT(th->th_ack, tp->snd_una) ||
 	    SEQ_GT(th->th_ack, tp->snd_max))
@@ -2632,7 +2632,7 @@ tcp_sack_partialack(struct tcpcb *tp, struct tcphdr *th)
 void
 tcp_pulloutofband(struct socket *so, u_int urgent, struct mbuf *m, int off)
 {
-        int cnt = off + urgent - 1;
+	int cnt = off + urgent - 1;
 
 	while (cnt >= 0) {
 		if (m->m_len > cnt) {
@@ -2886,7 +2886,7 @@ tcp_mss(struct tcpcb *tp, int offer)
 			 * segment size to the new segment size.
 			 */
 			tp->snd_cwnd = ulmax((tp->snd_cwnd / tp->t_maxseg) *
-					     mss, mss);
+			    mss, mss);
 		}
 	} else if (tcp_do_rfc3390 == 2) {
 		/* increase initial window  */
@@ -3043,7 +3043,7 @@ tcp_mss_adv(struct mbuf *m, int af)
 			mss = ifp->if_mtu;
 		iphlen = sizeof(struct ip6_hdr);
 		break;
-#endif  
+#endif
 	default:
 		unhandled_af(af);
 	}
