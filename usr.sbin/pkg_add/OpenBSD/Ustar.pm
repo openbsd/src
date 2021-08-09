@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.88 2017/07/23 10:34:44 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.89 2021/08/09 16:40:20 espie Exp $
 #
 # Copyright (c) 2002-2014 Marc Espie <espie@openbsd.org>
 #
@@ -526,21 +526,32 @@ sub name
 	return $self->{name};
 }
 
+sub fullname
+{
+	my $self = shift;
+	return $self->{destdir}.$self->{name};
+}
+
 sub set_name
 {
 	my ($self, $v) = @_;
 	$self->{name} = $v;
 }
 
+sub set_modes_on_object
+{
+	my ($self, $o) = @_;
+	chown $self->{uid}, $self->{gid}, $o;
+	chmod $self->{mode}, $o;
+	if (defined $self->{mtime} || defined $self->{atime}) {
+		utime $self->{atime} // time, $self->{mtime} // time, $o;
+	}
+}
+
 sub set_modes
 {
 	my $self = shift;
-	chown $self->{uid}, $self->{gid}, $self->{destdir}.$self->name;
-	chmod $self->{mode}, $self->{destdir}.$self->name;
-	if (defined $self->{mtime} || defined $self->{atime}) {
-		utime $self->{atime} // time, $self->{mtime} // time,
-		    $self->{destdir}.$self->name;
-	}
+	$self->set_modes_on_object($self->fullname);
 }
 
 sub ensure_dir
@@ -628,7 +639,7 @@ our @ISA=qw(OpenBSD::Ustar::Object);
 sub create
 {
 	my $self = shift;
-	$self->ensure_dir($self->{destdir}.$self->name);
+	$self->ensure_dir($self->fullname);
 	$self->set_modes;
 }
 
@@ -647,7 +658,7 @@ sub create
 	if (defined $self->{cwd}) {
 		$linkname=$self->{cwd}.'/'.$linkname;
 	}
-	link $self->{destdir}.$linkname, $self->{destdir}.$self->name or
+	link $self->{destdir}.$linkname, $self->fullname or
 	    $self->fatal("Can't link #1#2 to #1#3: #4",
 	    	$self->{destdir}, $linkname, $self->name, $!);
 }
@@ -677,11 +688,11 @@ sub create
 {
 	my $self = shift;
 	$self->make_basedir;
-	symlink $self->{linkname}, $self->{destdir}.$self->name or
-	    $self->fatal("Can't symlink #1 to #2#3: #4",
-	    	$self->{linkname}, $self->{destdir}, $self->name, $!);
+	symlink $self->{linkname}, $self->fullname or
+	    $self->fatal("Can't symlink #1 to #2: #3",
+	    	$self->{linkname}, $self->fullname, $!);
 	require POSIX;
-	POSIX::lchown($self->{uid}, $self->{gid}, $self->{destdir}.$self->name);
+	POSIX::lchown($self->{uid}, $self->{gid}, $self->fullname);
 }
 
 sub isLink() { 1 }
@@ -697,9 +708,8 @@ sub create
 	my $self = shift;
 	$self->make_basedir;
 	require POSIX;
-	POSIX::mkfifo($self->{destdir}.$self->name, $self->{mode}) or
-	    $self->fatal("Can't create fifo #1#2: #3", $self->{destdir},
-	    	$self->name, $!);
+	POSIX::mkfifo($self->fullname, $self->{mode}) or
+	    $self->fatal("Can't create fifo #1: #2", $self->fullname, $!);
 	$self->set_modes;
 }
 
@@ -714,7 +724,7 @@ sub create
 	my $self = shift;
 	$self->make_basedir;
 	$self->system(OpenBSD::Paths->mknod,
-	    '-m', $self->{mode}, '--', $self->{destdir}.$self->name,
+	    '-m', $self->{mode}, '--', $self->fullname,
 	    $self->devicetype, $self->{major}, $self->{minor});
 	$self->set_modes;
 }
@@ -744,8 +754,7 @@ use constant {
 
 sub new
 {
-	my ($class, $fname) = @_;
-	open (my $out, '>', $fname) or return;
+	my ($class, $out) = @_;
 	my $bs = (stat $out)[11];
 	my $zeroes;
 	if (defined $bs) {
@@ -809,18 +818,22 @@ sub create
 {
 	my $self = shift;
 	$self->make_basedir;
+	open(my $fh, '>', $self->fullname) or
+	    $self->fatal("Can't write to #1: #2", $self->fullname, $!);
+	$self->extract_to_fh($fh);
+}
+
+sub extract_to_fh
+{
+	my ($self, $fh) = @_;
 	my $buffer;
-	my $out = OpenBSD::CompactWriter->new($self->{destdir}.$self->name);
-	if (!defined $out) {
-		$self->fatal("Can't write to #1#2: #3", $self->{destdir},
-		    $self->name, $!);
-	}
+	my $out = OpenBSD::CompactWriter->new($fh);
 	my $toread = $self->{size};
 	if ($self->{partial}) {
 		$toread -= length($self->{partial});
 		unless ($out->write($self->{partial})) {
-			$self->fatal("Error writing to #1#2: #3",
-			    $self->{destdir}, $self->name, $!);
+			$self->fatal("Error writing to #1: #2",
+			    $self->fullname, $!);
 		}
 	}
 	while ($toread > 0) {
@@ -835,16 +848,16 @@ sub create
 		}
 		$self->{archive}{swallow} -= $actual;
 		unless ($out->write($buffer)) {
-			$self->fatal("Error writing to #1#2: #3",
-			    $self->{destdir}, $self->name, $!);
+			$self->fatal("Error writing to #1: #2",
+			    $self->fullname, $!);
 		}
 
 		$toread -= $actual;
 		$self->left_todo($toread);
 	}
-	$out->close or $self->fatal("Error closing #1#2: #3",
-	    $self->{destdir}, $self->name, $!);
-	$self->set_modes;
+	$self->set_modes_on_object($fh);
+	$out->close or $self->fatal("Error closing #1: #2",
+	    $self->fullname, $!);
 }
 
 sub contents
