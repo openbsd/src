@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.369 2021/08/09 16:06:31 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.370 2021/08/09 17:03:08 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -966,6 +966,8 @@ findpcb:
 					tp->t_pmtud_mss_acked = acked;
 
 				tp->snd_una = th->th_ack;
+				/* Pull snd_wl2 up to prevent seq wrap. */
+				tp->snd_wl2 = th->th_ack;
 				/*
 				 * We want snd_last to track snd_una so
 				 * as to avoid sequence wraparound problems
@@ -1015,6 +1017,10 @@ findpcb:
 				tcp_clean_sackreport(tp);
 			tcpstat_inc(tcps_preddat);
 			tp->rcv_nxt += tlen;
+			/* Pull snd_wl1 and rcv_up up to prevent seq wrap. */
+			tp->snd_wl1 = th->th_seq;
+			/* Packet has most recent segment, no urgent exists. */
+			tp->rcv_up = tp->rcv_nxt;
 			tcpstat_pkt(tcps_rcvpack, tcps_rcvbyte, tlen);
 			ND6_HINT(tp);
 
