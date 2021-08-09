@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.184 2020/05/17 14:34:47 espie Exp $
+# $OpenBSD: Add.pm,v 1.185 2021/08/09 13:34:00 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -454,8 +454,11 @@ sub prepare_to_extract
 
 sub find_safe_dir
 {
-	my ($self, $filename) = @_;
+	my ($self, $state) = @_;
 	# figure out a safe directory where to put the temp file
+
+	my $fullname = $self->fullname;
+	my $filename = $state->{destdir}.$fullname;
 	my $d = dirname($filename);
 
 	# we go back up until we find an existing directory.
@@ -471,16 +474,16 @@ sub find_safe_dir
 		last if -e $c; # okay this exists, but is not a directory
 		$d = $c;
 	}
+	if (!-e _ && !$state->{not}) {
+		$state->make_path($d, $fullname);
+	}
 	return $d;
 }
 
 sub create_temp
 {
-	my ($self, $d, $state, $fullname) = @_;
-	# XXX this takes over right after find_safe_dir
-	if (!-e _) {
-		$state->make_path($d, $fullname);
-	}
+	my ($self, $d, $state) = @_;
+	my $fullname = $self->fullname;
 	my ($fh, $tempname) = OpenBSD::Temp::permanent_file($d, "pkg");
 	$self->{tempname} = $tempname;
 	if (!defined $tempname) {
@@ -503,13 +506,12 @@ sub tie
 
 	$self->SUPER::extract($state);
 
-	my $d = $self->find_safe_dir($state->{destdir}.$self->fullname);
+	my $d = $self->find_safe_dir($state);
 	if ($state->{not}) {
 		$state->say("link #1 -> #2", 
 		    $self->name, $d) if $state->verbose >= 3;
 	} else {
-		my ($fh, $tempname) = $self->create_temp($d, $state, 
-		    $self->fullname);
+		my ($fh, $tempname) = $self->create_temp($d, $state);
 
 		return if !defined $tempname;
 		my $src = $self->{tieto}->realname($state);
@@ -526,14 +528,13 @@ sub extract
 
 	$self->SUPER::extract($state);
 
-	my $d = $self->find_safe_dir($file->{destdir}.$file->name);
+	my $d = $self->find_safe_dir($state);
 	if ($state->{not}) {
 		$state->say("extract #1 -> #2", 
 		    $self->name, $d) if $state->verbose >= 3;
 		$state->{archive}->skip;
 	} else {
-		my ($fh, $tempname) = $self->create_temp($d, $state, 
-		    $file->name);
+		my ($fh, $tempname) = $self->create_temp($d, $state);
 		if (!defined $tempname) {
 			$state->{archive}->skip;
 			return;
