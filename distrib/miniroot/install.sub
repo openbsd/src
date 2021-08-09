@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1171 2021/08/06 07:06:34 sthen Exp $
+#	$OpenBSD: install.sub,v 1.1172 2021/08/09 13:56:17 sthen Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2355,6 +2355,11 @@ parse_hn_line() {
 		return
 		;;
 	inet)	((${#_c[*]} > 1)) || return
+		if [[ ${_c[_name]} == autoconf ]]; then
+			_cmds[${#_cmds[*]}]="ifconfig $_if ${_c[@]}"
+			V4_AUTOCONF=true
+			return
+		fi
 		[[ ${_c[_name]} == alias ]] && _mask=3 _bc=4
 		[[ -n ${_c[_mask]} ]] && _c[_mask]="netmask ${_c[_mask]}"
 		if [[ -n ${_c[_bc]} ]]; then
