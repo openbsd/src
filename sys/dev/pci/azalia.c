@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.263 2021/06/11 15:46:09 jsg Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.264 2021/08/09 12:59:53 kevlo Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -737,6 +737,9 @@ azalia_shutdown(void *v)
 {
 	azalia_t *az = (azalia_t *)v;
 	uint32_t gctl;
+
+	if (az->detached)
+		return;
 
 	/* disable unsolicited response */
 	gctl = AZ_READ_4(az, GCTL);
