@@ -1,4 +1,4 @@
-/* $OpenBSD: sftp-client.c,v 1.152 2021/08/07 01:55:01 djm Exp $ */
+/* $OpenBSD: sftp-client.c,v 1.153 2021/08/09 07:16:09 djm Exp $ */
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
  *
@@ -1350,6 +1350,19 @@ send_open(struct sftp_conn *conn, const char *path, const char *tag,
 	return 0;
 }
 
+static const char *
+progress_meter_path(const char *path)
+{
+	const char *progresspath;
+
+	if ((progresspath = strrchr(path, '/')) == NULL)
+		return path;
+	progresspath++;
+	if (*progresspath == '\0')
+		return path;
+	return progresspath;
+}
+
 int
 do_download(struct sftp_conn *conn, const char *remote_path,
     const char *local_path, Attrib *a, int preserve_flag, int resume_flag,
@@ -1433,8 +1446,10 @@ do_download(struct sftp_conn *conn, const char *remote_path,
 	max_req = 1;
 	progress_counter = offset;
 
-	if (showprogress && size != 0)
-		start_progress_meter(remote_path, size, &progress_counter);
+	if (showprogress && size != 0) {
+		start_progress_meter(progress_meter_path(remote_path),
+		    size, &progress_counter);
+	}
 
 	if ((msg = sshbuf_new()) == NULL)
 		fatal_f("sshbuf_new failed");
@@ -1820,9 +1835,10 @@ do_upload(struct sftp_conn *conn, const char *local_path,
 
 	/* Read from local and write to remote */
 	offset = progress_counter = (resume ? c->size : 0);
-	if (showprogress)
-		start_progress_meter(local_path, sb.st_size,
-		    &progress_counter);
+	if (showprogress) {
+		start_progress_meter(progress_meter_path(local_path),
+		    sb.st_size, &progress_counter);
+	}
 
 	if ((msg = sshbuf_new()) == NULL)
 		fatal_f("sshbuf_new failed");
@@ -2178,8 +2194,10 @@ do_crossload(struct sftp_conn *from, struct sftp_conn *to,
 	max_req = 1;
 	progress_counter = 0;
 
-	if (showprogress && size != 0)
-		start_progress_meter(from_path, size, &progress_counter);
+	if (showprogress && size != 0) {
+		start_progress_meter(progress_meter_path(from_path),
+		    size, &progress_counter);
+	}
 	if ((msg = sshbuf_new()) == NULL)
 		fatal_f("sshbuf_new failed");
 	while (num_req > 0 || max_req > 0) {
