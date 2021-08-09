@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.185 2021/08/09 13:34:00 espie Exp $
+# $OpenBSD: Add.pm,v 1.186 2021/08/09 16:41:21 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -540,10 +540,6 @@ sub extract
 			return;
 		}
 
-		# XXX don't apply destdir twice
-		$file->{destdir} = '';
-		$file->set_name($tempname);
-
 		$state->say("extract #1 -> #2", $self->name, $tempname) 
 		    if $state->verbose >= 3;
 
@@ -552,8 +548,8 @@ sub extract
 			$state->fatal("can't extract #1, it's not a file", 
 			    $self->stringize);
 		}
-		$file->create;
-		$self->may_check_digest($file, $state);
+		$file->extract_to_fh($fh);
+		$self->may_check_digest($tempname, $state);
 	}
 }
 

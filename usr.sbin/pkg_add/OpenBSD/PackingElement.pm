@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.277 2020/06/09 20:16:12 sthen Exp $
+# $OpenBSD: PackingElement.pm,v 1.278 2021/08/09 16:41:21 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -434,21 +434,21 @@ sub make_hardlink
 
 sub may_check_digest
 {
-	my ($self, $file, $state) = @_;
+	my ($self, $path, $state) = @_;
 	if ($state->{check_digest}) {
-		$self->check_digest($file, $state);
+		$self->check_digest($path, $state);
 	}
 }
 
 sub check_digest
 {
-	my ($self, $file, $state) = @_;
+	my ($self, $path, $state) = @_;
 	return if $self->{link} or $self->{symlink};
 	if (!defined $self->{d}) {
 		$state->log->fatal($state->f("#1 does not have a signature",
 		    $self->fullname));
 	}
-	my $d = $self->compute_digest($file->{destdir}.$file->name);
+	my $d = $self->compute_digest($path);
 	if (!$d->equals($self->{d})) {
 		$state->log->fatal($state->f("checksum for #1 does not match",
 		    $self->fullname));
