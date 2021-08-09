@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.111 2020/07/31 10:49:32 mglocker Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.112 2021/08/09 07:21:48 jmatthew Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1355,7 +1355,7 @@ aue_openpipes(struct aue_softc *sc)
 		return (EIO);
 	}
 	err = usbd_open_pipe_intr(sc->aue_iface, sc->aue_ed[AUE_ENDPT_INTR],
-	    USBD_EXCLUSIVE_USE, &sc->aue_ep[AUE_ENDPT_INTR], sc,
+	    0, &sc->aue_ep[AUE_ENDPT_INTR], sc,
 	    &sc->aue_cdata.aue_ibuf, AUE_INTR_PKTLEN, aue_intr,
 	    AUE_INTR_INTERVAL);
 	if (err) {

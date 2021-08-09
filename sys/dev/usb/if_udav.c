@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.84 2020/07/31 10:49:32 mglocker Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.85 2021/08/09 07:21:48 jmatthew Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -769,7 +769,7 @@ udav_openpipes(struct udav_softc *sc)
 	/* XXX: interrupt endpoint is not yet supported */
 	/* Open Interrupt pipe */
 	err = usbd_open_pipe_intr(sc->sc_ctl_iface, sc->sc_intrin_no,
-				  USBD_EXCLUSIVE_USE, &sc->sc_pipe_intr, sc,
+				  0, &sc->sc_pipe_intr, sc,
 				  &sc->sc_cdata.udav_ibuf, UDAV_INTR_PKGLEN,
 				  udav_intr, UDAV_INTR_INTERVAL);
 	if (err) {

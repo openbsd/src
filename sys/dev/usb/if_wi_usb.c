@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.73 2020/07/31 10:49:33 mglocker Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.74 2021/08/09 07:21:48 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -1233,7 +1233,7 @@ wi_usb_open_pipes(struct wi_usb_softc *sc)
 
 	/* is this used? */
 	err = usbd_open_pipe_intr(sc->wi_usb_iface,
-	    sc->wi_usb_ed[WI_USB_ENDPT_INTR], USBD_EXCLUSIVE_USE,
+	    sc->wi_usb_ed[WI_USB_ENDPT_INTR], 0,
 	    &sc->wi_usb_ep[WI_USB_ENDPT_INTR], sc, &sc->wi_usb_ibuf,
 	    WI_USB_INTR_PKTLEN, wi_usb_intr, WI_USB_INTR_INTERVAL);
 	if (err) {

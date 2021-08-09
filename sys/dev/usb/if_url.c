@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.88 2020/07/31 10:49:33 mglocker Exp $ */
+/*	$OpenBSD: if_url.c,v 1.89 2021/08/09 07:21:48 jmatthew Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -635,7 +635,7 @@ url_openpipes(struct url_softc *sc)
 	/* XXX: interrupt endpoint is not yet supported */
 	/* Open Interrupt pipe */
 	err = usbd_open_pipe_intr(sc->sc_ctl_iface, sc->sc_intrin_no,
-				  USBD_EXCLUSIVE_USE, &sc->sc_pipe_intr, sc,
+				  0, &sc->sc_pipe_intr, sc,
 				  &sc->sc_cdata.url_ibuf, URL_INTR_PKGLEN,
 				  url_intr, URL_INTR_INTERVAL);
 	if (err) {

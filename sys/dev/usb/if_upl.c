@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.78 2020/07/31 10:49:32 mglocker Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.79 2021/08/09 07:21:48 jmatthew Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -661,7 +661,7 @@ upl_openpipes(struct upl_softc *sc)
 		return (EIO);
 	}
 	err = usbd_open_pipe_intr(sc->sc_iface, sc->sc_ed[UPL_ENDPT_INTR],
-	    USBD_EXCLUSIVE_USE, &sc->sc_ep[UPL_ENDPT_INTR], sc,
+	    0, &sc->sc_ep[UPL_ENDPT_INTR], sc,
 	    &sc->sc_ibuf, UPL_INTR_PKTLEN, upl_intr,
 	    UPL_INTR_INTERVAL);
 	if (err) {
