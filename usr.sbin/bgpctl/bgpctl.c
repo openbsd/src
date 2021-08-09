@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.272 2021/08/02 16:51:39 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.273 2021/08/09 08:24:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -249,6 +249,7 @@ main(int argc, char *argv[])
 		ribreq.neighbor = neighbor;
 		strlcpy(ribreq.rib, res->rib, sizeof(ribreq.rib));
 		ribreq.aid = res->aid;
+		ribreq.path_id = res->pathid;
 		ribreq.flags = res->flags;
 		imsg_compose(ibuf, type, 0, 0, -1, &ribreq, sizeof(ribreq));
 		break;

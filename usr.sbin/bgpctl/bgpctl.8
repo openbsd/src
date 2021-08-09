@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.99 2021/06/16 16:24:12 job Exp $
+.\" $OpenBSD: bgpctl.8,v 1.100 2021/08/09 08:24:36 claudio Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 16 2021 $
+.Dd $Mdocdate: August 9 2021 $
 .Dt BGPCTL 8
 .Os
 .Sh NAME
@@ -348,6 +348,13 @@ Show RIB memory statistics.
 Show only entries from the specified peer.
 .It Cm neighbor group Ar description
 Show only entries from the specified peer group.
+.It Cm path-id Ar pathid
+Show only entries which match the specified
+.Ar pathid .
+Must be used together with either
+.Cm neighbor
+or
+.Cm out .
 .It Cm peer-as Ar as
 Show all entries with
 .Ar as

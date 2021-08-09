@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.106 2021/02/16 08:30:21 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.107 2021/08/09 08:24:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -61,7 +61,8 @@ enum token_type {
 	RD,
 	FAMILY,
 	RTABLE,
-	FILENAME
+	FILENAME,
+	PATHID,
 };
 
 struct token {
@@ -114,6 +115,7 @@ static const struct token t_log[];
 static const struct token t_fib_table[];
 static const struct token t_show_fib_table[];
 static const struct token t_communication[];
+static const struct token t_show_rib_path[];
 
 static const struct token t_main[] = {
 	{ KEYWORD,	"reload",	RELOAD,		t_communication},
@@ -178,10 +180,11 @@ static const struct token t_show_rib[] = {
 	{ FLAG,		"in",		F_CTL_ADJ_IN,	t_show_rib},
 	{ FLAG,		"out",		F_CTL_ADJ_OUT,	t_show_rib},
 	{ KEYWORD,	"neighbor",	NONE,		t_show_rib_neigh},
+	{ KEYWORD,	"ovs",		NONE,		t_show_ovs},
+	{ KEYWORD,	"path-id",	NONE,		t_show_rib_path},
 	{ KEYWORD,	"table",	NONE,		t_show_rib_rib},
 	{ KEYWORD,	"summary",	SHOW_SUMMARY,	t_show_summary},
 	{ KEYWORD,	"memory",	SHOW_RIB_MEM,	NULL},
-	{ KEYWORD,	"ovs",		NONE,		t_show_ovs},
 	{ FAMILY,	"",		NONE,		t_show_rib},
 	{ PREFIX,	"",		NONE,		t_show_prefix},
 	{ ENDTOKEN,	"",		NONE,		NULL}
@@ -479,6 +482,11 @@ static const struct token t_show_fib_table[] = {
 	{ ENDTOKEN,	"",			NONE,	NULL}
 };
 
+static const struct token t_show_rib_path[] = {
+	{ PATHID,	"",		NONE,	t_show_rib},
+	{ ENDTOKEN,	"",		NONE,	NULL}
+};
+
 static struct parse_result	res;
 
 const struct token	*match_token(int *argc, char **argv[],
@@ -748,6 +756,7 @@ match_token(int *argc, char **argv[], const struct token table[])
 		case PREPSELF:
 		case WEIGHT:
 		case RTABLE:
+		case PATHID:
 			if (word != NULL && wordlen > 0 &&
 			    parse_number(word, &res, table[i].type)) {
 				match++;
@@ -863,6 +872,7 @@ show_valid_args(const struct token table[])
 		case PREPNBR:
 		case PREPSELF:
 		case WEIGHT:
+		case PATHID:
 			fprintf(stderr, "  <number>\n");
 			break;
 		case RTABLE:
@@ -1019,9 +1029,16 @@ parse_number(const char *word, struct parse_result *r, enum token_type type)
 		errx(1, "number is %s: %s", errstr, word);
 
 	/* number was parseable */
-	if (type == RTABLE) {
+	switch (type) {
+	case RTABLE:
 		r->rtableid = uval;
 		return (1);
+	case PATHID:
+		r->pathid = uval;
+		r->flags |= F_CTL_HAS_PATHID;
+		return (1);
+	default:
+		break;
 	}
 
 	if ((fs = calloc(1, sizeof(struct filter_set))) == NULL)
