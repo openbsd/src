@@ -46,6 +46,8 @@
 
 #define ILNP_MAXDIGITS 4
 #define ILNP_NUMGROUPS 4
+#define SVCB_MAX_COMMA_SEPARATED_VALUES 1000
+
 
 const dname_type *error_dname;
 domain_type *error_domain;
@@ -753,6 +755,443 @@ zparser_conv_nsec(region_type *region,
 	return r;
 }
 
+static uint16_t
+svcbparam_lookup_key(const char *key, size_t key_len)
+{
+	char buf[64];
+	char *endptr;
+	unsigned long int key_value;
+
+	if (key_len >= 4  && key_len <= 8 && !strncmp(key, "key", 3)) {
+		memcpy(buf, key + 3, key_len - 3);
+		buf[key_len - 3] = 0;
+		key_value = strtoul(buf, &endptr, 10);
+		if (endptr > buf	/* digits seen */
+		&& *endptr == 0		/* no non-digit chars after digits */
+		&&  key_value <= 65535)	/* no overflow */
+			return key_value;
+
+	} else switch (key_len) {
+	case sizeof("mandatory")-1:
+		if (!strncmp(key, "mandatory", sizeof("mandatory")-1))
+			return SVCB_KEY_MANDATORY;
+		if (!strncmp(key, "echconfig", sizeof("echconfig")-1))
+			return SVCB_KEY_ECH; /* allow "echconfig as well as "ech" */
+		break;
+
+	case sizeof("alpn")-1:
+		if (!strncmp(key, "alpn", sizeof("alpn")-1))
+			return SVCB_KEY_ALPN;
+		if (!strncmp(key, "port", sizeof("port")-1))
+			return SVCB_KEY_PORT;
+		break;
+
+	case sizeof("no-default-alpn")-1:
+		if (!strncmp( key  , "no-default-alpn"
+		            , sizeof("no-default-alpn")-1))
+			return SVCB_KEY_NO_DEFAULT_ALPN;
+		break;
+
+	case sizeof("ipv4hint")-1:
+		if (!strncmp(key, "ipv4hint", sizeof("ipv4hint")-1))
+			return SVCB_KEY_IPV4HINT;
+		if (!strncmp(key, "ipv6hint", sizeof("ipv6hint")-1))
+			return SVCB_KEY_IPV6HINT;
+		break;
+	case sizeof("ech")-1:
+		if (!strncmp(key, "ech", sizeof("ech")-1))
+			return SVCB_KEY_ECH;
+		break;
+	default:
+		break;
+	}
+	if (key_len > sizeof(buf) - 1)
+		zc_error_prev_line("Unknown SvcParamKey");
+	else {
+		memcpy(buf, key, key_len);
+		buf[key_len] = 0;
+		zc_error_prev_line("Unknown SvcParamKey: %s", buf);
+	}
+	/* Although the returned value might be used by the caller,
+	 * the parser has erred, so the zone will not be loaded.
+	 */
+	return -1;
+}
+
+static uint16_t *
+zparser_conv_svcbparam_port_value(region_type *region, const char *val)
+{
+	unsigned long int port;
+	char *endptr;
+	uint16_t *r;
+
+	port = strtoul(val, &endptr, 10);
+	if (endptr > val	/* digits seen */
+	&& *endptr == 0		/* no non-digit chars after digits */
+	&&  port <= 65535) {	/* no overflow */
+
+		r = alloc_rdata(region, 3 * sizeof(uint16_t));
+		r[1] = htons(SVCB_KEY_PORT);
+		r[2] = htons(sizeof(uint16_t));
+		r[3] = htons(port);
+		return r;
+	}
+	zc_error_prev_line("Could not parse port SvcParamValue: \"%s\"", val);
+	return NULL;
+}
+
+static uint16_t *
+zparser_conv_svcbparam_ipv4hint_value(region_type *region, const char *val)
+{
+	uint16_t *r;
+	int count;
+	char ip_str[INET_ADDRSTRLEN+1];
+	char *next_ip_str;
+	uint32_t *ip_wire_dst;
+	size_t i;
+
+	for (i = 0, count = 1; val[i]; i++) {
+		if (val[i] == ',')
+			count += 1;
+		if (count > SVCB_MAX_COMMA_SEPARATED_VALUES) {
+			zc_error_prev_line("Too many IPV4 addresses in ipv4hint");
+			return NULL;
+		}
+	}
+
+	/* count == number of comma's in val + 1, so the actual number of IPv4
+	 * addresses in val
+	 */
+	r = alloc_rdata(region, 2 * sizeof(uint16_t) + IP4ADDRLEN * count);
+	r[1] = htons(SVCB_KEY_IPV4HINT);
+	r[2] = htons(IP4ADDRLEN * count);
+	ip_wire_dst = (void *)&r[3];
+
+	while (count) {
+		if (!(next_ip_str = strchr(val, ','))) {
+			if (inet_pton(AF_INET, val, ip_wire_dst) != 1)
+				break;
+
+			assert(count == 1);
+
+		} else if (next_ip_str - val >= (int)sizeof(ip_str))
+			break;
+
+		else {
+			memcpy(ip_str, val, next_ip_str - val);
+			ip_str[next_ip_str - val] = 0;
+			if (inet_pton(AF_INET, ip_str, ip_wire_dst) != 1) {
+				val = ip_str; /* to use in error reporting below */
+				break;
+			}
+
+			val = next_ip_str + 1;
+		}
+		ip_wire_dst++;
+		count--;
+	}
+	if (count)
+		zc_error_prev_line("Could not parse ipv4hint SvcParamValue: %s", val);
+
+	return r;
+}
+
+static uint16_t *
+zparser_conv_svcbparam_ipv6hint_value(region_type *region, const char *val)
+{
+	uint16_t *r;
+	int i, count;
+	char ip6_str[INET6_ADDRSTRLEN+1];
+	char *next_ip6_str;
+	uint8_t *ipv6_wire_dst;
+
+	for (i = 0, count = 1; val[i]; i++) {
+		if (val[i] == ',')
+			count += 1;
+		if (count > SVCB_MAX_COMMA_SEPARATED_VALUES) {
+			zc_error_prev_line("Too many IPV6 addresses in ipv6hint");
+			return NULL;
+		}
+	}
+
+	/* count == number of comma's in val + 1 
+	 * so actually the number of IPv6 addresses in val
+	 */
+	r = alloc_rdata(region, 2 * sizeof(uint16_t) + IP6ADDRLEN * count);
+	r[1] = htons(SVCB_KEY_IPV6HINT);
+	r[2] = htons(IP6ADDRLEN * count);
+	ipv6_wire_dst = (void *)&r[3];
+
+	while (count) {
+		if (!(next_ip6_str = strchr(val, ','))) {
+			if ((inet_pton(AF_INET6, val, ipv6_wire_dst) != 1))
+				break;
+
+			assert(count == 1);
+
+		} else if (next_ip6_str - val >= (int)sizeof(ip6_str))
+			break;
+
+		else {
+			memcpy(ip6_str, val, next_ip6_str - val);
+			ip6_str[next_ip6_str - val] = 0;
+			if (inet_pton(AF_INET6, ip6_str, ipv6_wire_dst) != 1) {
+				val = ip6_str; /* for error reporting below */
+				break;
+			}
+
+			val = next_ip6_str + 1; /* skip the comma */
+		}
+		ipv6_wire_dst += IP6ADDRLEN;
+		count--;
+	}
+	if (count)
+		zc_error_prev_line("Could not parse ipv6hint SvcParamValue: %s", val);
+
+	return r;
+}
+
+static int
+network_uint16_cmp(const void *a, const void *b)
+{
+	return ((int)read_uint16(a)) - ((int)read_uint16(b));
+}
+
+static uint16_t *
+zparser_conv_svcbparam_mandatory_value(region_type *region,
+		const char *val, size_t val_len)
+{
+	uint16_t *r;
+	size_t i, count;
+	char* next_key;
+	uint16_t* key_dst;
+
+	for (i = 0, count = 1; val[i]; i++) {
+		if (val[i] == ',')
+			count += 1;
+		if (count > SVCB_MAX_COMMA_SEPARATED_VALUES) {
+			zc_error_prev_line("Too many keys in mandatory");
+			return NULL;
+		}
+	}
+
+	r = alloc_rdata(region, (2 + count) * sizeof(uint16_t));
+	r[1] = htons(SVCB_KEY_MANDATORY);
+	r[2] = htons(sizeof(uint16_t) * count);
+	key_dst = (void *)&r[3];
+
+	for(;;) {
+		if (!(next_key = strchr(val, ','))) {
+			*key_dst = htons(svcbparam_lookup_key(val, val_len));
+			break;	
+		} else {
+			*key_dst = htons(svcbparam_lookup_key(val, next_key - val));
+		}
+
+		val_len -= next_key - val + 1;
+		val = next_key + 1; /* skip the comma */
+		key_dst += 1;
+	}
+
+	/* In draft-ietf-dnsop-svcb-https-04 Section 7:
+	 *
+	 *     In wire format, the keys are represented by their numeric
+	 *     values in network byte order, concatenated in ascending order.
+	 */
+	qsort((void *)&r[3], count, sizeof(uint16_t), network_uint16_cmp);
+
+	return r;
+}
+
+static uint16_t *
+zparser_conv_svcbparam_ech_value(region_type *region, const char *b64)
+{
+	uint8_t buffer[B64BUFSIZE];
+	uint16_t *r = NULL;
+	int wire_len;
+
+	if(strcmp(b64, "0") == 0) {
+		/* single 0 represents empty buffer */
+		return alloc_rdata(region, 0);
+	}
+	wire_len = __b64_pton(b64, buffer, B64BUFSIZE);
+	if (wire_len == -1) {
+		zc_error_prev_line("invalid base64 data in ech");
+	} else {
+		r = alloc_rdata(region, 2 * sizeof(uint16_t) + wire_len);
+		r[1] = htons(SVCB_KEY_ECH);
+		r[2] = htons(wire_len);
+		memcpy(&r[3], buffer, wire_len);
+	}
+
+	return r;
+}
+
+static const char* parse_alpn_next_unescaped_comma(const char *val)
+{
+	while (*val) {
+		/* Only return when the comma is not escaped*/
+		if (*val == '\\'){
+			++val;
+			if (!*val)
+				break;
+		} else if (*val == ',')
+				return val;
+
+		val++;
+	}
+	return NULL;
+}
+
+static size_t
+parse_alpn_copy_unescaped(uint8_t *dst, const char *src, size_t len)
+{
+	uint8_t *orig_dst = dst;
+
+	while (len) {
+		if (*src == '\\') {
+			src++;
+			len--;
+			if (!len)
+				break;
+		}
+		*dst++ = *src++;
+		len--;
+	}
+	return (size_t)(dst - orig_dst);
+}
+
+static uint16_t *
+zparser_conv_svcbparam_alpn_value(region_type *region,
+		const char *val, size_t val_len)
+{
+	uint8_t     unescaped_dst[65536];
+	uint8_t    *dst = unescaped_dst;
+	const char *next_str;
+	size_t      str_len;
+	size_t      dst_len;
+	uint16_t   *r = NULL;
+
+	if (val_len > sizeof(unescaped_dst)) {
+		zc_error_prev_line("invalid alpn");
+		return r;
+	}
+	while (val_len) {
+		size_t dst_len;
+
+		str_len = (next_str = parse_alpn_next_unescaped_comma(val))
+		        ? (size_t)(next_str - val) : val_len;
+
+		if (str_len > 255) {
+			zc_error_prev_line("alpn strings need to be"
+					   " smaller than 255 chars");
+			return r;
+		}
+		dst_len = parse_alpn_copy_unescaped(dst + 1, val, str_len);
+		*dst++ = dst_len;
+		 dst  += dst_len;
+
+		if (!next_str)
+			break;
+
+		/* skip the comma for the next iteration */
+		val_len -= next_str - val + 1;
+		val = next_str + 1;
+	}
+	dst_len = dst - unescaped_dst;
+	r = alloc_rdata(region, 2 * sizeof(uint16_t) + dst_len);
+	r[1] = htons(SVCB_KEY_ALPN);
+	r[2] = htons(dst_len);
+	memcpy(&r[3], unescaped_dst, dst_len);
+	return r;
+}
+
+static uint16_t *
+zparser_conv_svcbparam_key_value(region_type *region,
+    const char *key, size_t key_len, const char *val, size_t val_len)
+{
+	uint16_t svcparamkey = svcbparam_lookup_key(key, key_len);
+	uint16_t *r;
+
+	switch (svcparamkey) {
+	case SVCB_KEY_PORT:
+		return zparser_conv_svcbparam_port_value(region, val);
+	case SVCB_KEY_IPV4HINT:
+		return zparser_conv_svcbparam_ipv4hint_value(region, val);
+	case SVCB_KEY_IPV6HINT:
+		return zparser_conv_svcbparam_ipv6hint_value(region, val);
+	case SVCB_KEY_MANDATORY:
+		return zparser_conv_svcbparam_mandatory_value(region, val, val_len);
+	case SVCB_KEY_NO_DEFAULT_ALPN:
+		if(zone_is_slave(parser->current_zone->opts))
+			zc_warning_prev_line("no-default-alpn should not have a value");
+		else
+			zc_error_prev_line("no-default-alpn should not have a value");
+		break;
+	case SVCB_KEY_ECH:
+		return zparser_conv_svcbparam_ech_value(region, val);
+	case SVCB_KEY_ALPN:
+		return zparser_conv_svcbparam_alpn_value(region, val, val_len);
+	default:
+		break;
+	}
+	r = alloc_rdata(region, 2 * sizeof(uint16_t) + val_len);
+	r[1] = htons(svcparamkey);
+	r[2] = htons(val_len);
+	memcpy(r + 3, val, val_len);
+	return r;
+}
+
+uint16_t *
+zparser_conv_svcbparam(region_type *region, const char *key, size_t key_len
+                                          , const char *val, size_t val_len)
+{
+	const char *eq;
+	uint16_t *r;
+	uint16_t svcparamkey;
+
+	/* Form <key>="<value>" (or at least with quoted value) */
+	if (val && val_len) {
+		/* Does key end with '=' */
+		if (key_len && key[key_len - 1] == '=')
+			return zparser_conv_svcbparam_key_value(
+			    region, key, key_len - 1, val, val_len);
+
+		zc_error_prev_line( "SvcParam syntax error in param: %s\"%s\""
+		                  , key, val);
+	}
+	assert(val == NULL);
+	if ((eq = memchr(key, '=', key_len))) {
+		size_t new_key_len = eq - key;
+
+		if (key_len - new_key_len - 1 > 0)
+			return zparser_conv_svcbparam_key_value(region,
+			    key, new_key_len, eq+1, key_len - new_key_len - 1);
+		key_len = new_key_len;
+	}
+	/* Some SvcParamKeys require values */
+	svcparamkey = svcbparam_lookup_key(key, key_len);
+	switch (svcparamkey) {
+		case SVCB_KEY_MANDATORY:
+		case SVCB_KEY_ALPN:
+		case SVCB_KEY_PORT:
+		case SVCB_KEY_IPV4HINT:
+		case SVCB_KEY_IPV6HINT:
+			if(zone_is_slave(parser->current_zone->opts))
+				zc_warning_prev_line("value expected for SvcParam: %s", key);
+			else
+				zc_error_prev_line("value expected for SvcParam: %s", key);
+			break;
+		default:
+			break;
+	}
+	/* SvcParam is only a SvcParamKey */
+	r = alloc_rdata(region, 2 * sizeof(uint16_t));
+	r[1] = htons(svcparamkey);
+	r[2] = 0;
+	return r;
+}
+
 /* Parse an int terminated in the specified range. */
 static int
 parse_int(const char *str,
@@ -1215,6 +1654,147 @@ zadd_rdata_txt_clean_wireformat()
 	}
 }
 
+static int
+svcparam_key_cmp(const void *a, const void *b)
+{
+	return ((int)read_uint16(rdata_atom_data(*(rdata_atom_type *)a)))
+	     - ((int)read_uint16(rdata_atom_data(*(rdata_atom_type *)b)));
+}
+
+void
+zadd_rdata_svcb_check_wireformat()
+{
+	size_t i;
+	uint8_t paramkeys[65536];
+	int prev_key = - 1;
+	int key = 0;
+	size_t size;
+	uint16_t *mandatory_values;
+
+	if (parser->current_rr.rdata_count <= 2) {
+		if (!parser->error_occurred)
+			zc_error_prev_line("invalid SVCB or HTTPS rdata");
+		return;
+	} else for (i = 2; i < parser->current_rr.rdata_count; i++) {
+		if (parser->current_rr.rdatas[i].data == NULL
+		||  rdata_atom_data(parser->current_rr.rdatas[i]) == NULL
+		||  rdata_atom_size(parser->current_rr.rdatas[i]) < 4) {
+			if (!parser->error_occurred)
+				zc_error_prev_line("invalid SVCB or HTTPS rdata");
+			return;
+		}
+	}
+	/* After this point, all rdatas do have data larger than 4 bytes.
+	 * So we may assume a uint16_t SVCB key followed by uint16_t length
+	 * in each rdata in the remainder of this function.
+	 */
+	memset(paramkeys, 0, sizeof(paramkeys));
+	/* 
+	 * In draft-ietf-dnsop-svcb-https-04 Section 7:
+	 * In wire format, the keys are represented by their numeric values in
+	 * network byte order, concatenated in ascending order.
+	 *
+	 * svcparam_key_cmp assumes the rdatas to have a SVCB key, which is
+	 * safe because we checked.
+	 *
+	 */
+	qsort( (void *)&parser->current_rr.rdatas[2]
+	     , parser->current_rr.rdata_count - 2
+	     , sizeof(rdata_atom_type)
+	     , svcparam_key_cmp
+	     );
+
+	for (i = 2; i < parser->current_rr.rdata_count; i++) {
+		assert(parser->current_rr.rdatas[i].data);
+		assert(rdata_atom_data(parser->current_rr.rdatas[i]));
+		assert(rdata_atom_size(parser->current_rr.rdatas[i]) >= sizeof(uint16_t));
+		 
+		key = read_uint16(rdata_atom_data(parser->current_rr.rdatas[i]));
+
+		/* In draft-ietf-dnsop-svcb-https-04 Section 7:
+		 *
+		 *     Keys (...) MUST NOT appear more than once.
+		 * 
+		 * If they key has already been seen, we have a duplicate
+		 */
+		if (!paramkeys[key])
+			/* keep track of keys that are present */
+			paramkeys[key] = 1;
+
+		else if (key < SVCPARAMKEY_COUNT) {
+			if(zone_is_slave(parser->current_zone->opts))
+				zc_warning_prev_line(
+					"Duplicate key found: %s",
+					svcparamkey_strs[key]);
+			else {
+				zc_error_prev_line(
+					"Duplicate key found: %s",
+					svcparamkey_strs[key]);
+			}
+		} else if(zone_is_slave(parser->current_zone->opts))
+			zc_warning_prev_line(
+					"Duplicate key found: key%d", key);
+		else
+			zc_error_prev_line(
+					"Duplicate key found: key%d", key);
+	}
+	/* Checks when a mandatory key is present */
+	if (!paramkeys[SVCB_KEY_MANDATORY])
+		return;
+
+	size = rdata_atom_size(parser->current_rr.rdatas[2]);
+	assert(size >= 4);
+	mandatory_values = (void*)rdata_atom_data(parser->current_rr.rdatas[2]);
+	mandatory_values += 2; /* skip the key type and length */
+
+	if (size % 2)
+		zc_error_prev_line("mandatory rdata must be a multiple of shorts");
+		
+	else for (i = 0; i < (size - 4)/2; i++) {
+		key = ntohs(mandatory_values[i]);
+
+		if (paramkeys[key])
+			; /* pass */
+
+		else if (key < SVCPARAMKEY_COUNT) {
+			if(zone_is_slave(parser->current_zone->opts))
+				zc_warning_prev_line("mandatory SvcParamKey: %s is missing "
+						     "the record", svcparamkey_strs[key]);
+			else
+				zc_error_prev_line("mandatory SvcParamKey: %s is missing "
+						   "the record", svcparamkey_strs[key]);
+		} else {
+			if(zone_is_slave(parser->current_zone->opts))
+				zc_warning_prev_line("mandatory SvcParamKey: key%d is missing "
+						     "the record", key);
+			else
+				zc_error_prev_line("mandatory SvcParamKey: key%d is missing "
+						   "the record", key);
+		}
+
+		/* In draft-ietf-dnsop-svcb-https-04 Section 8
+		 * automatically mandatory MUST NOT appear in its own value-list
+		 */
+		if (key == SVCB_KEY_MANDATORY) {
+			if(zone_is_slave(parser->current_zone->opts))
+				zc_warning_prev_line("mandatory MUST not be included"
+						     " as mandatory parameter");
+			else
+				zc_error_prev_line("mandatory MUST not be included"
+						   " as mandatory parameter");
+		}
+		if (key == prev_key) {
+			if(zone_is_slave(parser->current_zone->opts))
+				zc_warning_prev_line("Keys inSvcParam mandatory "
+				                   "MUST NOT appear more than once.");
+			else
+				zc_error_prev_line("Keys in SvcParam mandatory "
+				                   "MUST NOT appear more than once.");
+		}
+		prev_key = key;
+	}
+}
+
 void
 zadd_rdata_domain(domain_type *domain)
 {
@@ -1409,6 +1989,16 @@ process_rr(void)
 		zc_error_prev_line("maximum rdata length exceeds %d octets", MAX_RDLENGTH);
 		return 0;
 	}
+
+	/* We cannot print invalid owner names,
+	 * so error on that before it is used in printing other errors.
+	 */
+	if (rr->owner == error_domain
+	||  domain_dname(rr->owner) == error_dname) {
+		zc_error_prev_line("invalid owner name");
+		return 0;
+	}
+
 	/* we have the zone already */
 	assert(zone);
 	if (rr->type == TYPE_SOA) {

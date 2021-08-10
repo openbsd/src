@@ -33,12 +33,15 @@
 #include "namedb.h"
 #include "options.h"
 
+#include "udb.h"
+#include "rrl.h"
+
 struct dt_collector* dt_collector_create(struct nsd* nsd)
 {
 	int i, sv[2];
 	struct dt_collector* dt_col = (struct dt_collector*)xalloc_zero(
 		sizeof(*dt_col));
-	dt_col->count = nsd->child_count;
+	dt_col->count = nsd->child_count * 2;
 	dt_col->dt_env = NULL;
 	dt_col->region = region_create(xalloc, free);
 	dt_col->send_buffer = buffer_create(dt_col->region,
@@ -51,28 +54,32 @@ struct dt_collector* dt_collector_create(struct nsd* nsd)
 #endif
 		);
 
-	/* open pipes in struct nsd */
+	/* open communication channels in struct nsd */
 	nsd->dt_collector_fd_send = (int*)xalloc_array_zero(dt_col->count,
 		sizeof(int));
 	nsd->dt_collector_fd_recv = (int*)xalloc_array_zero(dt_col->count,
 		sizeof(int));
 	for(i=0; i<dt_col->count; i++) {
-		int fd[2];
-		fd[0] = -1;
-		fd[1] = -1;
-		if(pipe(fd) < 0) {
-			error("dnstap_collector: cannot create pipe: %s",
+		int sv[2];
+		int bufsz = buffer_capacity(dt_col->send_buffer);
+		sv[0] = -1; /* For receiving by parent (dnstap-collector) */
+		sv[1] = -1; /* For sending   by child  (server childs) */
+		if(socketpair(AF_UNIX, SOCK_DGRAM | SOCK_NONBLOCK, 0, sv) < 0) {
+			error("dnstap_collector: cannot create communication channel: %s",
 				strerror(errno));
 		}
-		if(fcntl(fd[0], F_SETFL, O_NONBLOCK) == -1) {
-			log_msg(LOG_ERR, "fcntl failed: %s", strerror(errno));
+		if(setsockopt(sv[0], SOL_SOCKET, SO_RCVBUF, &bufsz, sizeof(bufsz))) {
+			log_msg(LOG_ERR, "setting dnstap_collector "
+				"receive buffer size failed: %s", strerror(errno));
 		}
-		if(fcntl(fd[1], F_SETFL, O_NONBLOCK) == -1) {
-			log_msg(LOG_ERR, "fcntl failed: %s", strerror(errno));
+		if(setsockopt(sv[1], SOL_SOCKET, SO_SNDBUF, &bufsz, sizeof(bufsz))) {
+			log_msg(LOG_ERR, "setting dnstap_collector "
+				"send buffer size failed: %s", strerror(errno));
 		}
-		nsd->dt_collector_fd_recv[i] = fd[0];
-		nsd->dt_collector_fd_send[i] = fd[1];
+		nsd->dt_collector_fd_recv[i] = sv[0];
+		nsd->dt_collector_fd_send[i] = sv[1];
 	}
+	nsd->dt_collector_fd_swap = nsd->dt_collector_fd_send + nsd->child_count;
 
 	/* open socketpair */
 	if(socketpair(AF_UNIX, SOCK_STREAM, 0, sv) == -1) {
@@ -96,15 +103,19 @@ void dt_collector_destroy(struct dt_collector* dt_col, struct nsd* nsd)
 	if(!dt_col) return;
 	free(nsd->dt_collector_fd_recv);
 	nsd->dt_collector_fd_recv = NULL;
-	free(nsd->dt_collector_fd_send);
+	if (nsd->dt_collector_fd_send < nsd->dt_collector_fd_swap)
+		free(nsd->dt_collector_fd_send);
+	else
+		free(nsd->dt_collector_fd_swap);
 	nsd->dt_collector_fd_send = NULL;
+	nsd->dt_collector_fd_swap = NULL;
 	region_destroy(dt_col->region);
 	free(dt_col);
 }
 
 void dt_collector_close(struct dt_collector* dt_col, struct nsd* nsd)
 {
-	int i;
+	int i, *fd_send;
 	if(!dt_col) return;
 	if(dt_col->cmd_socket_dt != -1) {
 		close(dt_col->cmd_socket_dt);
@@ -114,14 +125,16 @@ void dt_collector_close(struct dt_collector* dt_col, struct nsd* nsd)
 		close(dt_col->cmd_socket_nsd);
 		dt_col->cmd_socket_nsd = -1;
 	}
+	fd_send = nsd->dt_collector_fd_send < nsd->dt_collector_fd_swap
+	        ? nsd->dt_collector_fd_send : nsd->dt_collector_fd_swap;
 	for(i=0; i<dt_col->count; i++) {
 		if(nsd->dt_collector_fd_recv[i] != -1) {
 			close(nsd->dt_collector_fd_recv[i]);
 			nsd->dt_collector_fd_recv[i] = -1;
 		}
-		if(nsd->dt_collector_fd_send[i] != -1) {
-			close(nsd->dt_collector_fd_send[i]);
-			nsd->dt_collector_fd_send[i] = -1;
+		if(fd_send[i] != -1) {
+			close(fd_send[i]);
+			fd_send[i] = -1;
 		}
 	}
 }
@@ -137,49 +150,38 @@ dt_handle_cmd_from_nsd(int ATTR_UNUSED(fd), short event, void* arg)
 	}
 }
 
-/* read data from fd into buffer, true when message is complete */
-static int read_into_buffer(int fd, struct buffer* buf)
+/* receive data from fd into buffer, 1 when message received, -1 on error */
+static int recv_into_buffer(int fd, struct buffer* buf)
 {
 	size_t msglen;
 	ssize_t r;
-	if(buffer_position(buf) < 4) {
-		/* read the length of the message */
-		r = read(fd, buffer_current(buf), 4 - buffer_position(buf));
-		if(r == -1) {
-			if(errno == EAGAIN || errno == EINTR) {
-				/* continue to read later */
-				return 0;
-			}
-			log_msg(LOG_ERR, "dnstap collector: read failed: %s",
-				strerror(errno));
-			return 0;
-		}
-		buffer_skip(buf, r);
-		if(buffer_position(buf) < 4)
-			return 0; /* continue to read more msglen later */
-	}
 
-	/* msglen complete */
-	msglen = buffer_read_u32_at(buf, 0);
-	/* assert we have enough space, if we don't and we wanted to continue,
-	 * we would have to skip the message somehow, but that should never
-	 * happen because send_buffer and receive_buffer have the same size */
-	assert(buffer_capacity(buf) >= msglen + 4);
-	r = read(fd, buffer_current(buf), msglen - (buffer_position(buf) - 4));
+	assert(buffer_position(buf) == 0);
+	r = recv(fd, buffer_current(buf), buffer_capacity(buf), MSG_DONTWAIT);
 	if(r == -1) {
-		if(errno == EAGAIN || errno == EINTR) {
-			/* continue to read later */
+		if(errno == EAGAIN || errno == EINTR || errno == EMSGSIZE) {
+			/* continue to receive a message later */
 			return 0;
 		}
-		log_msg(LOG_ERR, "dnstap collector: read failed: %s",
+		log_msg(LOG_ERR, "dnstap collector: receive failed: %s",
 			strerror(errno));
+		return -1;
+	}
+	if(r == 0) {
+		/* Remote end closed the connection? */
+		log_msg(LOG_ERR, "dnstap collector: remote closed connection");
+		return -1;
+	}
+	assert(r > 4);
+	msglen = buffer_read_u32_at(buf, 0);
+	if(msglen != (size_t)(r - 4)) {
+		/* Is this still possible now the communication channel is of
+		 * type SOCK_DGRAM? I think not, but better safe than sorry. */
+		log_msg(LOG_ERR, "dnstap collector: out of sync (msglen: %u)",
+			(unsigned int) msglen);
 		return 0;
 	}
 	buffer_skip(buf, r);
-	if(buffer_position(buf) < 4 + msglen)
-		return 0; /* read more msg later */
-
-	/* msg complete */
 	buffer_flip(buf);
 	return 1;
 }
@@ -242,11 +244,15 @@ dt_handle_input(int fd, short event, void* arg)
 {
 	struct dt_collector_input* dt_input = (struct dt_collector_input*)arg;
 	if((event&EV_READ) != 0) {
-		/* read */
-		if(!read_into_buffer(fd, dt_input->buffer))
+		/* receive */
+		int r = recv_into_buffer(fd, dt_input->buffer);
+		if(r == 0)
 			return;
-
-		/* once data is complete, write it to dnstap */
+		else if(r < 0) {
+			event_base_loopexit(dt_input->dt_collector->event_base, NULL);
+			return;
+		}
+		/* once data is complete, send it to dnstap */
 		VERBOSITY(4, (LOG_INFO, "dnstap collector: received msg len %d",
 			(int)buffer_remaining(dt_input->buffer)));
 		if(dt_input->dt_collector->dt_env) {
@@ -376,6 +382,7 @@ static void dt_collector_run(struct dt_collector* dt_col, struct nsd* nsd)
 
 void dt_collector_start(struct dt_collector* dt_col, struct nsd* nsd)
 {
+	int i, *fd_send;
 	/* fork */
 	dt_col->dt_pid = fork();
 	if(dt_col->dt_pid == -1) {
@@ -386,6 +393,29 @@ void dt_collector_start(struct dt_collector* dt_col, struct nsd* nsd)
 		/* close the nsd side of the command channel */
 		close(dt_col->cmd_socket_nsd);
 		dt_col->cmd_socket_nsd = -1;
+
+		/* close the send side of the communication channels */
+		assert(nsd->dt_collector_fd_send < nsd->dt_collector_fd_swap);
+		fd_send = nsd->dt_collector_fd_send < nsd->dt_collector_fd_swap
+			? nsd->dt_collector_fd_send : nsd->dt_collector_fd_swap;
+		for(i=0; i<dt_col->count; i++) {
+			if(fd_send[i] != -1) {
+				close(fd_send[i]);
+				fd_send[i] = -1;
+			}
+		}
+#ifdef HAVE_SETPROCTITLE
+		setproctitle("dnstap_collector");
+#endif
+		/* Free serve process specific memory pages */
+#ifdef RATELIMIT
+		rrl_mmap_deinit_keep_mmap();
+#endif
+		udb_base_free_keep_mmap(nsd->task[0]);
+		udb_base_free_keep_mmap(nsd->task[1]);
+		namedb_close_udb(nsd->db); /* keeps mmap */
+		namedb_close(nsd->db);
+
 		dt_collector_run(dt_col, nsd);
 		/* NOTREACH */
 		exit(0);
@@ -394,6 +424,14 @@ void dt_collector_start(struct dt_collector* dt_col, struct nsd* nsd)
 		/* close the dt side of the command channel */
 		close(dt_col->cmd_socket_dt);
 		dt_col->cmd_socket_dt = -1;
+
+		/* close the receive side of the communication channels */
+		for(i=0; i<dt_col->count; i++) {
+			if(nsd->dt_collector_fd_recv[i] != -1) {
+				close(nsd->dt_collector_fd_recv[i]);
+				nsd->dt_collector_fd_recv[i] = -1;
+			}
+		}
 	}
 }
 
@@ -446,37 +484,34 @@ prep_send_data(struct buffer* buf, uint8_t is_response,
 	return 1;
 }
 
-/* attempt to write buffer to socket, if it blocks do not write it. */
-static void attempt_to_write(int s, uint8_t* data, size_t len)
+/* attempt to send buffer to socket, if it blocks do not send it.
+ * return 0 on success, -1 on error */
+static int attempt_to_send(int s, uint8_t* data, size_t len)
 {
-	size_t total = 0;
 	ssize_t r;
-	while(total < len) {
-		r = write(s, data+total, len-total);
-		if(r == -1) {
-			if(errno == EAGAIN && total == 0) {
-				/* on first write part, check if pipe is full,
-				 * if the nonblocking fd blocks, then drop
-				 * the message */
-				return;
-			}
-			if(errno != EAGAIN && errno != EINTR) {
-				/* some sort of error, print it and drop it */
-				log_msg(LOG_ERR,
-					"dnstap collector: write failed: %s",
-					strerror(errno));
-				return;
-			}
-			/* continue and write this again */
-			/* for EINTR, we have to do this,
-			 * for EAGAIN, if the first part succeeded, we have
-			 * to continue to write the remainder of the message,
-			 * because otherwise partial messages confuse the
-			 * receiver. */
-			continue;
+	if(len == 0)
+		return 0;
+	r = send(s, data, len, MSG_DONTWAIT | MSG_NOSIGNAL);
+	if(r == -1) {
+		if(errno == EAGAIN || errno == EINTR ||
+				errno == ENOBUFS || errno == EMSGSIZE) {
+			/* check if pipe is full, if the nonblocking fd blocks,
+			 * then drop the message */
+			return 0;
 		}
-		total += r;
+		/* some sort of error, print it */
+		log_msg(LOG_ERR, "dnstap collector: send failed: %s",
+			strerror(errno));
+		return -1;
 	}
+	assert(r > 0);
+	if(r > 0) {
+		assert((size_t)r == len);
+		return 0;
+	}
+	/* Other end closed the channel? */
+	log_msg(LOG_ERR, "dnstap collector: server child closed the channel");
+	return -1;
 }
 
 void dt_collector_submit_auth_query(struct nsd* nsd,
@@ -491,6 +526,7 @@ void dt_collector_submit_auth_query(struct nsd* nsd,
 {
 	if(!nsd->dt_collector) return;
 	if(!nsd->options->dnstap_log_auth_query_messages) return;
+	if(nsd->dt_collector_fd_send[nsd->this_child->child_num] == -1) return;
 	VERBOSITY(4, (LOG_INFO, "dnstap submit auth query"));
 
 	/* marshal data into send buffer */
@@ -499,9 +535,14 @@ void dt_collector_submit_auth_query(struct nsd* nsd,
 		return; /* probably did not fit in buffer */
 
 	/* attempt to send data; do not block */
-	attempt_to_write(nsd->dt_collector_fd_send[nsd->this_child->child_num],
-		buffer_begin(nsd->dt_collector->send_buffer),
-		buffer_remaining(nsd->dt_collector->send_buffer));
+	if(attempt_to_send(nsd->dt_collector_fd_send[nsd->this_child->child_num],
+			buffer_begin(nsd->dt_collector->send_buffer),
+			buffer_remaining(nsd->dt_collector->send_buffer))) {
+		/* Something went wrong sending to the socket. Don't send to
+		 * this socket again. */
+		close(nsd->dt_collector_fd_send[nsd->this_child->child_num]);
+		nsd->dt_collector_fd_send[nsd->this_child->child_num] = -1;
+	}
 }
 
 void dt_collector_submit_auth_response(struct nsd* nsd,
@@ -517,6 +558,7 @@ void dt_collector_submit_auth_response(struct nsd* nsd,
 {
 	if(!nsd->dt_collector) return;
 	if(!nsd->options->dnstap_log_auth_response_messages) return;
+	if(nsd->dt_collector_fd_send[nsd->this_child->child_num] == -1) return;
 	VERBOSITY(4, (LOG_INFO, "dnstap submit auth response"));
 
 	/* marshal data into send buffer */
@@ -525,7 +567,12 @@ void dt_collector_submit_auth_response(struct nsd* nsd,
 		return; /* probably did not fit in buffer */
 
 	/* attempt to send data; do not block */
-	attempt_to_write(nsd->dt_collector_fd_send[nsd->this_child->child_num],
-		buffer_begin(nsd->dt_collector->send_buffer),
-		buffer_remaining(nsd->dt_collector->send_buffer));
+	if(attempt_to_send(nsd->dt_collector_fd_send[nsd->this_child->child_num],
+			buffer_begin(nsd->dt_collector->send_buffer),
+			buffer_remaining(nsd->dt_collector->send_buffer))) {
+		/* Something went wrong sending to the socket. Don't send to
+		 * this socket again. */
+		close(nsd->dt_collector_fd_send[nsd->this_child->child_num]);
+		nsd->dt_collector_fd_send[nsd->this_child->child_num] = -1;
+	}
 }

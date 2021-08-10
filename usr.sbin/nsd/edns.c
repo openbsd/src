@@ -11,6 +11,10 @@
 #include "config.h"
 
 #include <string.h>
+#ifdef HAVE_SSL
+#include <openssl/opensslv.h>
+#include <openssl/evp.h>
+#endif
 
 #include "dns.h"
 #include "edns.h"
@@ -33,15 +37,17 @@ edns_init_data(edns_data_type *data, uint16_t max_length)
 	data->error[3] = (max_length & 0xff00) >> 8;	/* size_hi */
 	data->error[4] = max_length & 0x00ff;		/* size_lo */
 	data->error[5] = 1;	/* XXX Extended RCODE=BAD VERS */
+
+	/* COOKIE OPT HDR */
+	data->cookie[0] = (COOKIE_CODE & 0xff00) >> 8;
+	data->cookie[1] = (COOKIE_CODE & 0x00ff);
+	data->cookie[2] = (24 & 0xff00) >> 8;
+	data->cookie[3] = (24 & 0x00ff);
 }
 
 void
 edns_init_nsid(edns_data_type *data, uint16_t nsid_len)
 {
-       /* add nsid length bytes */
-       data->rdata_nsid[0] = ((OPT_HDR + nsid_len) & 0xff00) >> 8; /* length_hi */
-       data->rdata_nsid[1] = ((OPT_HDR + nsid_len) & 0x00ff);      /* length_lo */
-
        /* NSID OPT HDR */
        data->nsid[0] = (NSID_CODE & 0xff00) >> 8;
        data->nsid[1] = (NSID_CODE & 0x00ff);
@@ -58,6 +64,8 @@ edns_init_record(edns_record_type *edns)
 	edns->opt_reserved_space = 0;
 	edns->dnssec_ok = 0;
 	edns->nsid = 0;
+	edns->cookie_status = COOKIE_NOT_PRESENT;
+	edns->cookie_len = 0;
 	edns->ede = -1; /* -1 means no Extended DNS Error */
 	edns->ede_text = NULL;
 	edns->ede_text_len = 0;
@@ -81,6 +89,24 @@ edns_handle_option(uint16_t optcode, uint16_t optlen, buffer_type* packet,
 			edns->opt_reserved_space += OPT_HDR + nsd->nsid_len;
 		} else {
 			/* ignore option */
+			buffer_skip(packet, optlen);
+		}
+		break;
+	case COOKIE_CODE:
+		/* Cookies enabled? */
+		if(nsd->do_answer_cookie) {
+			if (optlen == 8) 
+				edns->cookie_status = COOKIE_INVALID;
+			else if (optlen < 16 || optlen > 40)
+				return 0; /* FORMERR */
+			else
+				edns->cookie_status = COOKIE_UNVERIFIED;
+
+			edns->cookie_len = optlen;
+			memcpy(edns->cookie, buffer_current(packet), optlen);
+			buffer_skip(packet, optlen);
+			edns->opt_reserved_space += OPT_HDR + 24;
+		} else {
 			buffer_skip(packet, optlen);
 		}
 		break;
@@ -162,3 +188,148 @@ edns_reserved_space(edns_record_type *edns)
 	return edns->status == EDNS_NOT_PRESENT ? 0
 	     : (OPT_LEN + OPT_RDATA + edns->opt_reserved_space);
 }
+
+int siphash(const uint8_t *in, const size_t inlen,
+                const uint8_t *k, uint8_t *out, const size_t outlen);
+
+/** RFC 1982 comparison, uses unsigned integers, and tries to avoid
+ * compiler optimization (eg. by avoiding a-b<0 comparisons),
+ * this routine matches compare_serial(), for SOA serial number checks */
+static int
+compare_1982(uint32_t a, uint32_t b)
+{
+	/* for 32 bit values */
+	const uint32_t cutoff = ((uint32_t) 1 << (32 - 1));
+
+	if (a == b) {
+		return 0;
+	} else if ((a < b && b - a < cutoff) || (a > b && a - b > cutoff)) {
+		return -1;
+	} else {
+		return 1;
+	}
+}
+
+/** if we know that b is larger than a, return the difference between them,
+ * that is the distance between them. in RFC1982 arith */
+static uint32_t
+subtract_1982(uint32_t a, uint32_t b)
+{
+	/* for 32 bit values */
+	const uint32_t cutoff = ((uint32_t) 1 << (32 - 1));
+
+	if(a == b)
+		return 0;
+	if(a < b && b - a < cutoff) {
+		return b-a;
+	}
+	if(a > b && a - b > cutoff) {
+		return ((uint32_t)0xffffffff) - (a-b-1);
+	}
+	/* wrong case, b smaller than a */
+	return 0;
+}
+
+void cookie_verify(query_type *q, struct nsd* nsd, uint32_t *now_p) {
+	uint8_t hash[8], hash2verify[8];
+	uint32_t cookie_time, now_uint32;
+	size_t verify_size;
+	int i;
+
+	/* We support only draft-sury-toorop-dnsop-server-cookies sizes */
+	if(q->edns.cookie_len != 24)
+		return;
+
+	if(q->edns.cookie[8] != 1)
+		return;
+
+	q->edns.cookie_status = COOKIE_INVALID;
+
+	cookie_time = (q->edns.cookie[12] << 24)
+	            | (q->edns.cookie[13] << 16)
+	            | (q->edns.cookie[14] <<  8)
+	            |  q->edns.cookie[15];
+	
+	now_uint32 = *now_p ? *now_p : (*now_p = (uint32_t)time(NULL));
+
+	if(compare_1982(now_uint32, cookie_time) > 0) {
+		/* ignore cookies > 1 hour in past */
+		if (subtract_1982(cookie_time, now_uint32) > 3600)
+			return;
+	} else if (subtract_1982(now_uint32, cookie_time) > 300) {
+		/* ignore cookies > 5 minutes in future */
+		return;
+	}
+
+	memcpy(hash2verify, q->edns.cookie + 16, 8);
+
+#ifdef INET6
+	if(q->addr.ss_family == AF_INET6) {
+		memcpy(q->edns.cookie + 16, &((struct sockaddr_in6 *)&q->addr)->sin6_addr, 16);
+		verify_size = 32;
+	} else {
+		memcpy(q->edns.cookie + 16, &((struct sockaddr_in *)&q->addr)->sin_addr, 4);
+		verify_size = 20;
+	}
+#else
+	memcpy( q->edns.cookie + 16, &q->addr.sin_addr, 4);
+	verify_size = 20;
+#endif
+
+	q->edns.cookie_status = COOKIE_INVALID;
+	siphash(q->edns.cookie, verify_size,
+		nsd->cookie_secrets[0].cookie_secret, hash, 8);
+	if(CRYPTO_memcmp(hash2verify, hash, 8) == 0 ) {
+		if (subtract_1982(cookie_time, now_uint32) < 1800) {
+			q->edns.cookie_status = COOKIE_VALID_REUSE;
+			memcpy(q->edns.cookie + 16, hash, 8);
+		} else
+			q->edns.cookie_status = COOKIE_VALID;
+		return;
+	}
+	for(i = 1;
+	    i < (int)nsd->cookie_count && i < NSD_COOKIE_HISTORY_SIZE;
+	    i++) {
+		siphash(q->edns.cookie, verify_size,
+		        nsd->cookie_secrets[i].cookie_secret, hash, 8);
+		if(CRYPTO_memcmp(hash2verify, hash, 8) == 0 ) {
+			q->edns.cookie_status = COOKIE_VALID;
+			return;
+		}
+	}
+}
+
+void cookie_create(query_type *q, struct nsd* nsd, uint32_t *now_p)
+{
+	uint8_t  hash[8];
+	uint32_t now_uint32;
+       
+	if (q->edns.cookie_status == COOKIE_VALID_REUSE)
+		return;
+
+	now_uint32 = *now_p ? *now_p : (*now_p = (uint32_t)time(NULL));
+	q->edns.cookie[ 8] = 1;
+	q->edns.cookie[ 9] = 0;
+	q->edns.cookie[10] = 0;
+	q->edns.cookie[11] = 0;
+	q->edns.cookie[12] = (now_uint32 & 0xFF000000) >> 24;
+	q->edns.cookie[13] = (now_uint32 & 0x00FF0000) >> 16;
+	q->edns.cookie[14] = (now_uint32 & 0x0000FF00) >>  8;
+	q->edns.cookie[15] =  now_uint32 & 0x000000FF;
+#ifdef INET6
+	if (q->addr.ss_family == AF_INET6) {
+		memcpy( q->edns.cookie + 16
+		      , &((struct sockaddr_in6 *)&q->addr)->sin6_addr, 16);
+		siphash(q->edns.cookie, 32, nsd->cookie_secrets[0].cookie_secret, hash, 8);
+	} else {
+		memcpy( q->edns.cookie + 16
+		      , &((struct sockaddr_in *)&q->addr)->sin_addr, 4);
+		siphash(q->edns.cookie, 20, nsd->cookie_secrets[0].cookie_secret, hash, 8);
+	}
+#else
+	memcpy( q->edns.cookie + 16, &q->addr.sin_addr, 4);
+	siphash(q->edns.cookie, 20, nsd->cookie_secrets[0].cookie_secret, hash, 8);
+#endif
+	memcpy(q->edns.cookie + 16, hash, 8);
+}
+

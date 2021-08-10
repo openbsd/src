@@ -17,6 +17,7 @@
 struct rr;
 struct buffer;
 struct region;
+struct nsd;
 
 #ifdef HAVE_SYSLOG_H
 #  include <syslog.h>
@@ -440,4 +441,14 @@ int number_of_cpus(void);
 int set_cpu_affinity(cpuset_t *set);
 #endif
 
+/* Add a cookie secret. If there are no secrets yet, the secret will become
+ * the active secret. Otherwise it will become the staging secret.
+ * Active secrets are used to both verify and create new DNS Cookies.
+ * Staging secrets are only used to verify DNS Cookies. */
+void add_cookie_secret(struct nsd* nsd, uint8_t* secret);
+/* Makes the staging cookie secret active and the active secret staging. */
+void activate_cookie_secret(struct nsd* nsd);
+/* Drop a cookie secret. Drops the staging secret. An active secret will not
+ * be dropped. */
+void drop_cookie_secret(struct nsd* nsd);
 #endif /* _UTIL_H_ */

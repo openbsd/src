@@ -111,6 +111,8 @@ uint16_t *zparser_conv_algorithm(region_type *region, const char *algstr);
 uint16_t *zparser_conv_certificate_type(region_type *region,
 					const char *typestr);
 uint16_t *zparser_conv_apl_rdata(region_type *region, char *str);
+uint16_t *zparser_conv_svcbparam(region_type *region,
+	const char *key, size_t key_len, const char *value, size_t value_len);
 
 void parse_unknown_rdata(uint16_t type, uint16_t *wireformat);
 
@@ -118,6 +120,7 @@ uint32_t zparser_ttl2int(const char *ttlstr, int* error);
 void zadd_rdata_wireformat(uint16_t *data);
 void zadd_rdata_txt_wireformat(uint16_t *data, int first);
 void zadd_rdata_txt_clean_wireformat(void);
+void zadd_rdata_svcb_check_wireformat(void);
 void zadd_rdata_domain(domain_type *domain);
 
 void set_bitnsec(uint8_t  bits[NSEC_WINDOW_COUNT][NSEC_WINDOW_BITS_SIZE],

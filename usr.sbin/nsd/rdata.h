@@ -19,6 +19,7 @@
 
 extern lookup_table_type dns_certificate_types[];
 extern lookup_table_type dns_algorithms[];
+extern const char *svcparamkey_strs[];
 
 int rdata_atom_to_string(buffer_type *output, rdata_zoneformat_type type,
 			 rdata_atom_type rdata, rr_type *rr);

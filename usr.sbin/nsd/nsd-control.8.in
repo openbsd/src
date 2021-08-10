@@ -1,4 +1,4 @@
-.TH "nsd\-control" "8" "Apr  6, 2021" "NLnet Labs" "nsd 4.3.6"
+.TH "nsd\-control" "8" "Jul 22, 2021" "NLnet Labs" "nsd 4.3.7"
 .\" Copyright (c) 2011, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
@@ -177,6 +177,41 @@ given key.
 Delete the TSIG key with the given name.  Prints error if the key is still
 in use by some zone.  The changes are only in-memory and are gone next
 restart, for lasting changes edit the nsd.conf file or a file included from it.
+.TP
+.B add_cookie_secret <secret>
+Add or replace a cookie secret persistently. <secret> needs to be an 128 bit
+hex string.
+
+Cookie secrets can be either \fIactive\fR or \fIstaging\fR. \fIActive\fR cookie
+secrets are used to create DNS Cookies, but verification of a DNS Cookie
+succeeds with any of the \fIactive\fR or \fIstaging\fR cookie secrets. The
+state of the current cookie secrets can be printed with the
+\fBprint_cookie_secrets\fR command.
+
+When there are no cookie secrets configured yet, the <secret> is added as
+\fIactive\fR. If there is already an \fIactive\fR cookie secret, the <secret>
+is added as \fIstaging\fR or replacing an existing \fIstaging\fR secret.
+
+To "roll" a cookie secret used in an anycast set. The new secret has to be
+added as staging secret to \fBall\fR nodes in the anycast set. When \fBall\fR
+nodes can verify DNS Cookies with the new secret, the new secret can be
+activated with the \fBactivate_cookie_secret\fR command. After \fBall\fR nodes
+have the new secret \fIactive\fR for at least one hour, the previous secret can
+be dropped with the \fBdrop_cookie_secret\fR command.
+
+Persistence is accomplished by writing to a file which if configured with the
+\fBcookie\-secret\-file\fR option in the server section of the config file.
+The default value for that is: @configdir@/nsd_cookiesecrets.txt .
+.TP
+.B drop_cookie_secret
+Drop the \fIstaging\fR cookie secret.
+.TP
+.B activate_cookie_secret
+Make the current \fIstaging\fR cookie secret \fIactive\fR, and the current
+\fIactive\fR cookie secret \fIstaging\fR.
+.TP
+.B print_cookie_secrets
+Show the current configured cookie secrets with their status.
 .SH "EXIT CODE"
 The nsd\-control program exits with status code 1 on error, 0 on success.
 .SH "SET UP"

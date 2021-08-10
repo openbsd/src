@@ -185,6 +185,15 @@ struct nsd_child
 #endif
 };
 
+#define NSD_COOKIE_HISTORY_SIZE 2
+#define NSD_COOKIE_SECRET_SIZE 16
+
+typedef struct cookie_secret cookie_secret_type;
+struct cookie_secret {
+	/** cookie secret */
+	uint8_t cookie_secret[NSD_COOKIE_SECRET_SIZE];
+};
+
 /* NSD configuration and run-time variables */
 typedef struct nsd nsd_type;
 struct	nsd
@@ -305,13 +314,29 @@ struct	nsd
 	/* the dnstap collector process info */
 	struct dt_collector* dt_collector;
 	/* the pipes from server processes to the dt_collector,
-	 * arrays of size child_count.  Kept open for (re-)forks. */
+	 * arrays of size child_count * 2.  Kept open for (re-)forks. */
 	int *dt_collector_fd_send, *dt_collector_fd_recv;
+	/* the pipes from server processes to the dt_collector. Initially
+	 * these point halfway into dt_collector_fd_send, but during reload
+	 * the pointer is swapped with dt_collector_fd_send in order to
+	 * to prevent writing to the dnstap collector by old serve childs
+	 * simultaneous with new serve childs. */
+	int *dt_collector_fd_swap;
 #endif /* USE_DNSTAP */
 	/* ratelimit for errors, time value */
 	time_t err_limit_time;
 	/* ratelimit for errors, packet count */
 	unsigned int err_limit_count;
+
+	/** do answer with server cookie when request contained cookie option */
+	int do_answer_cookie;
+
+	/** how many cookies are there in the cookies array */
+	size_t cookie_count;
+
+	/* keep track of the last `NSD_COOKIE_HISTORY_SIZE`
+	 * cookies as per rfc requirement .*/
+	cookie_secret_type cookie_secrets[NSD_COOKIE_HISTORY_SIZE];
 
 	struct nsd_options* options;
 

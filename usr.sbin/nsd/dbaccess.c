@@ -530,8 +530,17 @@ namedb_read_zonefile(struct nsd* nsd, struct zone* zone, udb_base* taskudb,
 	assert(fname);
 	if(!file_get_mtime(fname, &mtime, &nonexist)) {
 		if(nonexist) {
-			VERBOSITY(2, (LOG_INFO, "zonefile %s does not exist",
-				fname));
+			if(zone_is_slave(zone->opts)) {
+				/* for slave zones not as bad, no zonefile
+				 * may just mean we have to transfer it */
+				VERBOSITY(2, (LOG_INFO, "zonefile %s does not exist",
+					fname));
+			} else {
+				/* without a download option, we can never
+				 * serve data, more severe error printout */
+				log_msg(LOG_ERR, "zonefile %s does not exist", fname);
+			}
+
 		} else
 			log_msg(LOG_ERR, "zonefile %s: %s",
 				fname, strerror(errno));

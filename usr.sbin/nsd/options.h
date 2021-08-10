@@ -28,6 +28,7 @@ typedef struct cpu_option cpu_option_type;
 typedef struct cpu_map_option cpu_map_option_type;
 typedef struct acl_options acl_options_type;
 typedef struct key_options key_options_type;
+typedef struct tls_auth_options tls_auth_options_type;
 typedef struct config_parser_state config_parser_state_type;
 
 /*
@@ -58,6 +59,9 @@ struct nsd_options {
 
 	/* rbtree of keys defined, by name */
 	rbtree_type* keys;
+
+	/* rbtree of tls_auth defined, by name */
+	rbtree_type* tls_auths;
 
 	/* list of ip addresses to bind to (or NULL for all) */
 	struct ip_address_option* ip_addresses;
@@ -117,6 +121,8 @@ struct nsd_options {
 	char* tls_service_pem;
 	/* TLS dedicated port */
 	const char* tls_port;
+	/* TLS certificate bundle */
+	const char* tls_cert_bundle;
 
 	/** remote control section. enable toggle. */
 	int control_enable;
@@ -162,6 +168,13 @@ struct nsd_options {
 	int dnstap_log_auth_query_messages;
 	/** true to log dnstap AUTH_RESPONSE message events */
 	int dnstap_log_auth_response_messages;
+
+	/** do answer with server cookie when request contained cookie option */
+	int answer_cookie;
+	/** cookie secret */
+	char *cookie_secret;
+	/** path to cookie secret store */
+	char const* cookie_secret_file;
 
 	region_type* region;
 };
@@ -303,6 +316,10 @@ struct acl_options {
 	uint8_t blocked;
 	const char* key_name;
 	struct key_options* key_options;
+
+	/* tls_auth for XoT */
+	const char* tls_auth_name;
+	struct tls_auth_options* tls_auth_options;
 } ATTR_PACKED;
 
 /*
@@ -315,6 +332,15 @@ struct key_options {
 	char* secret;
 	struct tsig_key* tsig_key;
 } ATTR_PACKED;
+
+/*
+ * TLS Auth definition for XoT
+ */
+struct tls_auth_options {
+	rbnode_type node; /* key of tree is name */
+	char* name;
+	char* auth_domain_name;
+};
 
 /** zone list free space */
 struct zonelist_free {
@@ -348,6 +374,7 @@ struct config_parser_state {
 	struct pattern_options *pattern;
 	struct zone_options *zone;
 	struct key_options *key;
+	struct tls_auth_options *tls_auth;
 	struct ip_address_option *ip;
 	void (*err)(void*,const char*);
 	void* err_arg;
@@ -392,6 +419,10 @@ int key_options_equal(struct key_options* p, struct key_options* q);
 void key_options_add_modify(struct nsd_options* opt, struct key_options* key);
 void key_options_setup(region_type* region, struct key_options* key);
 void key_options_desetup(region_type* region, struct key_options* key);
+/* TLS auth */
+struct tls_auth_options* tls_auth_options_create(region_type* region);
+void tls_auth_options_insert(struct nsd_options* opt, struct tls_auth_options* auth);
+struct tls_auth_options* tls_auth_options_find(struct nsd_options* opt, const char* name);
 /* read in zone list file. Returns false on failure */
 int parse_zone_list_file(struct nsd_options* opt);
 /* create zone entry and add to the zonelist file */

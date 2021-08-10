@@ -36,6 +36,7 @@
 #include "namedb.h"
 #include "rdata.h"
 #include "zonec.h"
+#include "nsd.h"
 
 #ifdef USE_MMAP_ALLOC
 #include <sys/mman.h>
@@ -1234,3 +1235,59 @@ int set_cpu_affinity(cpuset_t *set)
 }
 #endif
 #endif /* HAVE_CPUSET_T */
+
+void add_cookie_secret(struct nsd* nsd, uint8_t* secret)
+{
+	/* New cookie secret becomes the staging secret (position 1)
+	 * unless there is no active cookie yet, then it becomes the active
+	 * secret.  If the NSD_COOKIE_HISTORY_SIZE > 2 then all staging cookies
+	 * are moved one position down.
+	 */
+	if(nsd->cookie_count == 0) {
+		memcpy( nsd->cookie_secrets->cookie_secret
+		       , secret, NSD_COOKIE_SECRET_SIZE);
+		nsd->cookie_count = 1;
+		explicit_bzero(secret, NSD_COOKIE_SECRET_SIZE);
+		return;
+	}
+#if NSD_COOKIE_HISTORY_SIZE > 2
+	memmove( &nsd->cookie_secrets[2], &nsd->cookie_secrets[1]
+	       , sizeof(struct cookie_secret) * (NSD_COOKIE_HISTORY_SIZE - 2));
+#endif
+	memcpy( nsd->cookie_secrets[1].cookie_secret
+	      , secret, NSD_COOKIE_SECRET_SIZE);
+	nsd->cookie_count = nsd->cookie_count     < NSD_COOKIE_HISTORY_SIZE
+	                  ? nsd->cookie_count + 1 : NSD_COOKIE_HISTORY_SIZE;
+	explicit_bzero(secret, NSD_COOKIE_SECRET_SIZE);
+}
+
+void activate_cookie_secret(struct nsd* nsd)
+{
+	uint8_t active_secret[NSD_COOKIE_SECRET_SIZE];
+	/* The staging secret becomes the active secret.
+	 * The active secret becomes a staging secret.
+	 * If the NSD_COOKIE_HISTORY_SIZE > 2 then all staging secrets are moved
+	 * one position up and the previously active secret becomes the last
+	 * staging secret.
+	 */
+	if(nsd->cookie_count < 2)
+		return;
+	memcpy( active_secret, nsd->cookie_secrets[0].cookie_secret
+	      , NSD_COOKIE_SECRET_SIZE);
+	memmove( &nsd->cookie_secrets[0], &nsd->cookie_secrets[1]
+	       , sizeof(struct cookie_secret) * (NSD_COOKIE_HISTORY_SIZE - 1));
+	memcpy( nsd->cookie_secrets[nsd->cookie_count - 1].cookie_secret
+	      , active_secret, NSD_COOKIE_SECRET_SIZE);
+	explicit_bzero(active_secret, NSD_COOKIE_SECRET_SIZE);
+}
+
+void drop_cookie_secret(struct nsd* nsd)
+{
+	/* Drops a staging cookie secret. If there are more than one, it will
+	 * drop the last staging secret. */
+	if(nsd->cookie_count < 2)
+		return;
+	explicit_bzero( nsd->cookie_secrets[nsd->cookie_count - 1].cookie_secret
+	              , NSD_COOKIE_SECRET_SIZE);
+	nsd->cookie_count -= 1;
+}

@@ -68,7 +68,7 @@ nsec3_add_params(const char* hash_algo_str, const char* flag_str,
 %token <type> T_AXFR T_MAILB T_MAILA T_DS T_DLV T_SSHFP T_RRSIG T_NSEC T_DNSKEY
 %token <type> T_SPF T_NSEC3 T_IPSECKEY T_DHCID T_NSEC3PARAM T_TLSA T_URI
 %token <type> T_NID T_L32 T_L64 T_LP T_EUI48 T_EUI64 T_CAA T_CDS T_CDNSKEY
-%token <type> T_OPENPGPKEY T_CSYNC T_ZONEMD T_AVC T_SMIMEA
+%token <type> T_OPENPGPKEY T_CSYNC T_ZONEMD T_AVC T_SMIMEA T_SVCB T_HTTPS
 
 /* other tokens */
 %token	       DOLLAR_TTL DOLLAR_ORIGIN NL SP
@@ -85,7 +85,7 @@ nsec3_add_params(const char* hash_algo_str, const char* flag_str,
 %type <dname>	rel_dname label
 %type <data>	wire_dname wire_abs_dname wire_rel_dname wire_label
 %type <data>	str concatenated_str_seq str_sp_seq str_dot_seq
-%type <data>	unquoted_dotted_str dotted_str
+%type <data>	unquoted_dotted_str dotted_str svcparam svcparams
 %type <data>	nxt_seq nsec_more
 %type <unknown> rdata_unknown
 
@@ -707,6 +707,10 @@ type_and_rdata:
     |	T_CSYNC sp rdata_unknown { $$ = $1; parse_unknown_rdata($1, $3); }
     |	T_ZONEMD sp rdata_zonemd
     |	T_ZONEMD sp rdata_unknown { $$ = $1; parse_unknown_rdata($1, $3); }
+    |	T_SVCB sp rdata_svcb
+    |	T_SVCB sp rdata_unknown { $$ = $1; parse_unknown_rdata($1, $3); }
+    |	T_HTTPS sp rdata_svcb
+    |	T_HTTPS sp rdata_unknown { $$ = $1; parse_unknown_rdata($1, $3); }
     |	T_URI sp rdata_uri
     |	T_URI sp rdata_unknown { $$ = $1; parse_unknown_rdata($1, $3); }
     |	T_UTYPE sp rdata_unknown { $$ = $1; parse_unknown_rdata($1, $3); }
@@ -1167,6 +1171,35 @@ rdata_zonemd:	str sp str sp str sp str_sp_seq trail
 	    zadd_rdata_wireformat(zparser_conv_byte(parser->region, $5.str)); /* hash algorithm */
 	    zadd_rdata_wireformat(zparser_conv_hex(parser->region, $7.str, $7.len)); /* digest */
     }
+    ;
+
+svcparam:	dotted_str QSTR
+    {
+	zadd_rdata_wireformat(zparser_conv_svcbparam(
+		parser->region, $1.str, $1.len, $2.str, $2.len));
+    }
+    |		dotted_str
+    {
+	zadd_rdata_wireformat(zparser_conv_svcbparam(
+		parser->region, $1.str, $1.len, NULL, 0));
+    }
+    ;
+svcparams:	svcparam
+    |		svcparams sp svcparam
+    ;
+/* draft-ietf-dnsop-svcb-https */
+rdata_svcb_base:	str sp dname
+    {
+	    /* SvcFieldPriority */
+	    zadd_rdata_wireformat(zparser_conv_short(parser->region, $1.str));
+	    /* SvcDomainName */
+	    zadd_rdata_domain($3);
+    };
+rdata_svcb:     rdata_svcb_base sp svcparams trail
+    {
+        zadd_rdata_svcb_check_wireformat();
+    }
+    |   rdata_svcb_base trail
     ;
 
 rdata_unknown:	URR sp str sp str_sp_seq trail

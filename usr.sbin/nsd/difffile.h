@@ -88,7 +88,13 @@ struct task_list_d {
 		/** options change */
 		task_opt_change,
 		/** zonestat increment */
-		task_zonestat_inc
+		task_zonestat_inc,
+		/** add a new cookie secret */
+		task_add_cookie_secret,
+		/** drop the oldest cookie secret */
+		task_drop_cookie_secret,
+		/** make staging cookie secret active */
+		task_activate_cookie_secret,
 	} task_type;
 	uint32_t size; /* size of this struct */
 
@@ -126,6 +132,9 @@ void task_new_add_pattern(udb_base* udb, udb_ptr* last,
 void task_new_del_pattern(udb_base* udb, udb_ptr* last, const char* name);
 void task_new_opt_change(udb_base* udb, udb_ptr* last, struct nsd_options* opt);
 void task_new_zonestat_inc(udb_base* udb, udb_ptr* last, unsigned sz);
+void task_new_add_cookie_secret(udb_base* udb, udb_ptr* last, const char* secret);
+void task_new_drop_cookie_secret(udb_base* udb, udb_ptr* last);
+void task_new_activate_cookie_secret(udb_base* udb, udb_ptr* last);
 int task_new_apply_xfr(udb_base* udb, udb_ptr* last, const dname_type* zone,
 	uint32_t old_serial, uint32_t new_serial, uint64_t filenumber);
 void task_process_in_reload(struct nsd* nsd, udb_base* udb, udb_ptr *last_task,

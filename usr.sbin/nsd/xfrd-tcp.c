@@ -24,6 +24,107 @@
 #include "xfrd.h"
 #include "xfrd-disk.h"
 #include "util.h"
+#ifdef HAVE_TLS_1_3
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+#endif
+
+#ifdef HAVE_TLS_1_3
+void log_crypto_err(const char* str); /* in server.c */
+
+static SSL_CTX*
+create_ssl_context()
+{
+	SSL_CTX *ctx;
+	ctx = SSL_CTX_new(TLS_client_method());
+	if (!ctx) {
+		log_msg(LOG_ERR, "xfrd tls: Unable to create SSL ctxt");
+	}
+	else if (SSL_CTX_set_default_verify_paths(ctx) != 1) {
+		SSL_CTX_free(ctx);
+		log_msg(LOG_ERR, "xfrd tls: Unable to set default SSL verify paths");
+		return NULL;
+	}
+	/* Only trust 1.3 as per the specification */
+	else if (!SSL_CTX_set_min_proto_version(ctx, TLS1_3_VERSION)) {
+		SSL_CTX_free(ctx);
+		log_msg(LOG_ERR, "xfrd tls: Unable to set minimum TLS version 1.3");
+		return NULL;
+	}
+	return ctx;
+}
+
+static int
+tls_verify_callback(int preverify_ok, X509_STORE_CTX *ctx)
+{
+	int err = X509_STORE_CTX_get_error(ctx);
+	int depth = X509_STORE_CTX_get_error_depth(ctx);
+
+	// report the specific cert error here - will need custom verify code if 
+	// SPKI pins are supported
+	if (!preverify_ok)
+		log_msg(LOG_ERR, "xfrd tls: TLS verify failed - (%d) depth: %d error: %s",
+				err,
+				depth,
+				X509_verify_cert_error_string(err));
+	return preverify_ok;
+}
+
+static int
+setup_ssl(struct xfrd_tcp_pipeline* tp, struct xfrd_tcp_set* tcp_set, 
+		  const char* auth_domain_name)
+{
+	if (!tcp_set->ssl_ctx) {
+		log_msg(LOG_ERR, "xfrd tls: No TLS CTX, cannot set up XFR-over-TLS");
+		return 0;
+	}
+	DEBUG(DEBUG_XFRD,1, (LOG_INFO, "xfrd: setting up TLS for tls_auth domain name %s", 
+						 auth_domain_name));
+	tp->ssl = SSL_new((SSL_CTX*)tcp_set->ssl_ctx);
+	if(!tp->ssl) {
+		log_msg(LOG_ERR, "xfrd tls: Unable to create TLS object");
+		return 0;
+	}
+	SSL_set_connect_state(tp->ssl);
+	(void)SSL_set_mode(tp->ssl, SSL_MODE_AUTO_RETRY);
+	if(!SSL_set_fd(tp->ssl, tp->tcp_w->fd)) {
+		log_msg(LOG_ERR, "xfrd tls: Unable to set TLS fd");
+		SSL_free(tp->ssl);
+		tp->ssl = NULL;
+		return 0;
+	}
+
+	SSL_set_verify(tp->ssl, SSL_VERIFY_PEER, tls_verify_callback);
+	if(!SSL_set1_host(tp->ssl, auth_domain_name)) {
+		log_msg(LOG_ERR, "xfrd tls: TLS setting of hostname %s failed",
+		auth_domain_name);
+		SSL_free(tp->ssl);
+		tp->ssl = NULL;
+		return 0;
+	}
+	return 1;
+}
+
+static int
+ssl_handshake(struct xfrd_tcp_pipeline* tp)
+{
+	int ret;
+
+	ERR_clear_error();
+	ret = SSL_do_handshake(tp->ssl);
+	if(ret == 1) {
+		DEBUG(DEBUG_XFRD, 1, (LOG_INFO, "xfrd: TLS handshake successful"));
+		tp->handshake_done = 1;
+		return 1;
+	}
+	tp->handshake_want = SSL_get_error(tp->ssl, ret);
+	if(tp->handshake_want == SSL_ERROR_WANT_READ
+	|| tp->handshake_want == SSL_ERROR_WANT_WRITE)
+		return 1;
+
+	return 0;
+}
+#endif
 
 /* sort tcppipe, first on IP address, for an IPaddresss, sort on num_unused */
 static int
@@ -34,21 +135,21 @@ xfrd_pipe_cmp(const void* a, const void* b)
 	int r;
 	if(x == y)
 		return 0;
-	if(y->ip_len != x->ip_len)
+	if(y->key.ip_len != x->key.ip_len)
 		/* subtraction works because nonnegative and small numbers */
-		return (int)y->ip_len - (int)x->ip_len;
-	r = memcmp(&x->ip, &y->ip, x->ip_len);
+		return (int)y->key.ip_len - (int)x->key.ip_len;
+	r = memcmp(&x->key.ip, &y->key.ip, x->key.ip_len);
 	if(r != 0)
 		return r;
 	/* sort that num_unused is sorted ascending, */
-	if(x->num_unused != y->num_unused) {
-		return (x->num_unused < y->num_unused) ? -1 : 1;
+	if(x->key.num_unused != y->key.num_unused) {
+		return (x->key.num_unused < y->key.num_unused) ? -1 : 1;
 	}
 	/* different pipelines are different still, even with same numunused*/
 	return (uintptr_t)x < (uintptr_t)y ? -1 : 1;
 }
 
-struct xfrd_tcp_set* xfrd_tcp_set_create(struct region* region)
+struct xfrd_tcp_set* xfrd_tcp_set_create(struct region* region, const char *tls_cert_bundle)
 {
 	int i;
 	struct xfrd_tcp_set* tcp_set = region_alloc(region,
@@ -57,6 +158,20 @@ struct xfrd_tcp_set* xfrd_tcp_set_create(struct region* region)
 	tcp_set->tcp_count = 0;
 	tcp_set->tcp_waiting_first = 0;
 	tcp_set->tcp_waiting_last = 0;
+#ifdef HAVE_TLS_1_3
+	/* Set up SSL context */
+	tcp_set->ssl_ctx = create_ssl_context();
+	if (tcp_set->ssl_ctx == NULL)
+		log_msg(LOG_ERR, "xfrd: XFR-over-TLS not available");
+
+	else if (tls_cert_bundle && tls_cert_bundle[0] && SSL_CTX_load_verify_locations(
+				tcp_set->ssl_ctx, tls_cert_bundle, NULL) != 1) {
+		log_msg(LOG_ERR, "xfrd tls: Unable to set the certificate bundle file %s",
+				tls_cert_bundle);
+	}
+#else
+	log_msg(LOG_INFO, "xfrd: No TLS 1.3 support - XFR-over-TLS not available");
+#endif
 	for(i=0; i<XFRD_MAX_TCP; i++)
 		tcp_set->tcp_state[i] = xfrd_tcp_pipeline_create(region);
 	tcp_set->pipetree = rbtree_create(region, &xfrd_pipe_cmp);
@@ -69,7 +184,7 @@ xfrd_tcp_pipeline_create(region_type* region)
 	int i;
 	struct xfrd_tcp_pipeline* tp = (struct xfrd_tcp_pipeline*)
 		region_alloc_zero(region, sizeof(*tp));
-	tp->num_unused = ID_PIPE_NUM;
+	tp->key.num_unused = ID_PIPE_NUM;
 	assert(sizeof(tp->unused)/sizeof(tp->unused[0]) == ID_PIPE_NUM);
 	for(i=0; i<ID_PIPE_NUM; i++)
 		tp->unused[i] = (uint16_t)i;
@@ -142,7 +257,12 @@ xfrd_acl_sockaddr_to(acl_options_type* acl, struct sockaddr_storage *to)
 xfrd_acl_sockaddr_to(acl_options_type* acl, struct sockaddr_in *to)
 #endif /* INET6 */
 {
+#ifdef HAVE_TLS_1_3
+	unsigned int port = acl->port?acl->port:(acl->tls_auth_options?
+						(unsigned)atoi(TLS_PORT):(unsigned)atoi(TCP_PORT));
+#else
 	unsigned int port = acl->port?acl->port:(unsigned)atoi(TCP_PORT);
+#endif
 #ifdef INET6
 	return xfrd_acl_sockaddr(acl, port, to);
 #else
@@ -215,12 +335,7 @@ pipeline_find(struct xfrd_tcp_set* set, xfrd_zone_type* zone)
 	/* smaller buf than a full pipeline with 64kb ID array, only need
 	 * the front part with the key info, this front part contains the
 	 * members that the compare function uses. */
-	enum { keysize = sizeof(struct xfrd_tcp_pipeline) -
-		ID_PIPE_NUM*(sizeof(struct xfrd_zone*) + sizeof(uint16_t)) };
-	/* void* type for alignment of the struct,
-	 * divide the keysize by ptr-size and then add one to round up */
-	void* buf[ (keysize / sizeof(void*)) + 1 ];
-	struct xfrd_tcp_pipeline* key = (struct xfrd_tcp_pipeline*)buf;
+	struct xfrd_tcp_pipeline_key k, *key=&k;
 	key->node.key = key;
 	key->ip_len = xfrd_acl_sockaddr_to(zone->master, &key->ip);
 	key->num_unused = ID_PIPE_NUM;
@@ -233,12 +348,12 @@ pipeline_find(struct xfrd_tcp_set* set, xfrd_zone_type* zone)
 		return NULL;
 	r = (struct xfrd_tcp_pipeline*)sme->key;
 	/* <= key pointed at, is the master correct ? */
-	if(r->ip_len != key->ip_len)
+	if(r->key.ip_len != key->ip_len)
 		return NULL;
-	if(memcmp(&r->ip, &key->ip, key->ip_len) != 0)
+	if(memcmp(&r->key.ip, &key->ip, key->ip_len) != 0)
 		return NULL;
 	/* correct master, is there a slot free for this transfer? */
-	if(r->num_unused == 0)
+	if(r->key.num_unused == 0)
 		return NULL;
 	return r;
 }
@@ -286,14 +401,14 @@ tcp_pipe_sendlist_popfirst(struct xfrd_tcp_pipeline* tp, xfrd_zone_type* zone)
 static void
 tcp_pipe_id_remove(struct xfrd_tcp_pipeline* tp, xfrd_zone_type* zone)
 {
-	assert(tp->num_unused < ID_PIPE_NUM && tp->num_unused >= 0);
+	assert(tp->key.num_unused < ID_PIPE_NUM && tp->key.num_unused >= 0);
 	assert(tp->id[zone->query_id] == zone);
 	tp->id[zone->query_id] = NULL;
-	tp->unused[tp->num_unused] = zone->query_id;
+	tp->unused[tp->key.num_unused] = zone->query_id;
 	/* must remove and re-add for sort order in tree */
-	(void)rbtree_delete(xfrd->tcp_set->pipetree, &tp->node);
-	tp->num_unused++;
-	(void)rbtree_insert(xfrd->tcp_set->pipetree, &tp->node);
+	(void)rbtree_delete(xfrd->tcp_set->pipetree, &tp->key.node);
+	tp->key.num_unused++;
+	(void)rbtree_insert(xfrd->tcp_set->pipetree, &tp->key.node);
 }
 
 /* stop the tcp pipe (and all its zones need to retry) */
@@ -301,8 +416,8 @@ static void
 xfrd_tcp_pipe_stop(struct xfrd_tcp_pipeline* tp)
 {
 	int i, conn = -1;
-	assert(tp->num_unused < ID_PIPE_NUM); /* at least one 'in-use' */
-	assert(ID_PIPE_NUM - tp->num_unused > tp->num_skip); /* at least one 'nonskip' */
+	assert(tp->key.num_unused < ID_PIPE_NUM); /* at least one 'in-use' */
+	assert(ID_PIPE_NUM - tp->key.num_unused > tp->key.num_skip); /* at least one 'nonskip' */
 	/* need to retry for all the zones connected to it */
 	/* these could use different lists and go to a different nextmaster*/
 	for(i=0; i<ID_PIPE_NUM; i++) {
@@ -332,7 +447,15 @@ tcp_pipe_reset_timeout(struct xfrd_tcp_pipeline* tp)
 		event_del(&tp->handler);
 	memset(&tp->handler, 0, sizeof(tp->handler));
 	event_set(&tp->handler, fd, EV_PERSIST|EV_TIMEOUT|EV_READ|
-		(tp->tcp_send_first?EV_WRITE:0), xfrd_handle_tcp_pipe, tp);
+#ifdef HAVE_TLS_1_3
+		( tp->ssl
+		? ( tp->handshake_done ?  ( tp->tcp_send_first ? EV_WRITE : 0 )
+		  : tp->handshake_want == SSL_ERROR_WANT_WRITE ? EV_WRITE : 0 )
+		: tp->tcp_send_first ? EV_WRITE : 0 ),
+#else
+		( tp->tcp_send_first ? EV_WRITE : 0 ),
+#endif
+		xfrd_handle_tcp_pipe, tp);
 	if(event_base_set(xfrd->event_base, &tp->handler) != 0)
 		log_msg(LOG_ERR, "xfrd tcp: event_base_set failed");
 	if(event_add(&tp->handler, &tv) != 0)
@@ -372,16 +495,16 @@ pipeline_setup_new_zone(struct xfrd_tcp_set* set, struct xfrd_tcp_pipeline* tp,
 {
 	/* assign the ID */
 	int idx;
-	assert(tp->num_unused > 0);
+	assert(tp->key.num_unused > 0);
 	/* we pick a random ID, even though it is TCP anyway */
-	idx = random_generate(tp->num_unused);
+	idx = random_generate(tp->key.num_unused);
 	zone->query_id = tp->unused[idx];
-	tp->unused[idx] = tp->unused[tp->num_unused-1];
+	tp->unused[idx] = tp->unused[tp->key.num_unused-1];
 	tp->id[zone->query_id] = zone;
 	/* decrement unused counter, and fixup tree */
-	(void)rbtree_delete(set->pipetree, &tp->node);
-	tp->num_unused--;
-	(void)rbtree_insert(set->pipetree, &tp->node);
+	(void)rbtree_delete(set->pipetree, &tp->key.node);
+	tp->key.num_unused--;
+	(void)rbtree_insert(set->pipetree, &tp->key.node);
 
 	/* add to sendlist, at end */
 	zone->tcp_send_next = NULL;
@@ -437,9 +560,9 @@ xfrd_tcp_obtain(struct xfrd_tcp_set* set, xfrd_zone_type* zone)
 			return;
 		}
 		/* ip and ip_len set by tcp_open */
-		tp->node.key = tp;
-		tp->num_unused = ID_PIPE_NUM;
-		tp->num_skip = 0;
+		tp->key.node.key = tp;
+		tp->key.num_unused = ID_PIPE_NUM;
+		tp->key.num_skip = 0;
 		tp->tcp_send_first = NULL;
 		tp->tcp_send_last = NULL;
 		memset(tp->id, 0, sizeof(tp->id));
@@ -448,7 +571,7 @@ xfrd_tcp_obtain(struct xfrd_tcp_set* set, xfrd_zone_type* zone)
 		}
 
 		/* insert into tree */
-		(void)rbtree_insert(set->pipetree, &tp->node);
+		(void)rbtree_insert(set->pipetree, &tp->key.node);
 		xfrd_deactivate_zone(zone);
 		xfrd_unset_timer(zone);
 		pipeline_setup_new_zone(set, tp, zone);
@@ -552,7 +675,7 @@ xfrd_tcp_open(struct xfrd_tcp_set* set, struct xfrd_tcp_pipeline* tp,
 #endif
 	}
 
-	tp->ip_len = xfrd_acl_sockaddr_to(zone->master, &tp->ip);
+	tp->key.ip_len = xfrd_acl_sockaddr_to(zone->master, &tp->key.ip);
 
 	/* bind it */
 	if (!xfrd_bind_local_interface(fd, zone->zone_options->pattern->
@@ -562,7 +685,7 @@ xfrd_tcp_open(struct xfrd_tcp_set* set, struct xfrd_tcp_pipeline* tp,
 		return 0;
         }
 
-	conn = connect(fd, (struct sockaddr*)&tp->ip, tp->ip_len);
+	conn = connect(fd, (struct sockaddr*)&tp->key.ip, tp->key.ip_len);
 	if (conn == -1 && errno != EINPROGRESS) {
 		log_msg(LOG_ERR, "xfrd: connect %s failed: %s",
 			zone->master->ip_address_spec, strerror(errno));
@@ -573,12 +696,66 @@ xfrd_tcp_open(struct xfrd_tcp_set* set, struct xfrd_tcp_pipeline* tp,
 	tp->tcp_r->fd = fd;
 	tp->tcp_w->fd = fd;
 
+	/* Check if an tls_auth name is configured which means we should try to
+	   establish an SSL connection */
+	if (zone->master->tls_auth_options &&
+		zone->master->tls_auth_options->auth_domain_name) {
+#ifdef HAVE_TLS_1_3
+		if (!setup_ssl(tp, set, zone->master->tls_auth_options->auth_domain_name)) {
+			log_msg(LOG_ERR, "xfrd: Cannot setup TLS on pipeline for %s to %s",
+					zone->apex_str, zone->master->ip_address_spec);
+			close(fd);
+			xfrd_set_refresh_now(zone);
+			return 0;
+		}
+		tp->handshake_done = 0;
+		if(!ssl_handshake(tp)) {
+			if(tp->handshake_want == SSL_ERROR_SYSCALL) {
+				log_msg(LOG_ERR, "xfrd: TLS handshake failed "
+					"for %s to %s: %s", zone->apex_str,
+					zone->master->ip_address_spec,
+					strerror(errno));
+
+			} else if(tp->handshake_want == SSL_ERROR_SSL) {
+				char errmsg[1024];
+				snprintf(errmsg, sizeof(errmsg), "xfrd: "
+					"TLS handshake failed for %s to %s",
+					zone->apex_str,
+					zone->master->ip_address_spec);
+				log_crypto_err(errmsg);
+			} else {
+				log_msg(LOG_ERR, "xfrd: TLS handshake failed "
+					"for %s to %s with %d", zone->apex_str,
+					zone->master->ip_address_spec,
+					tp->handshake_want);
+			}
+			close(fd);
+			xfrd_set_refresh_now(zone);
+			return 0;
+		}
+#else
+		log_msg(LOG_ERR, "xfrd: TLS 1.3 is not available, XFR-over-TLS is "
+						 "not supported for %s to %s",
+						  zone->apex_str, zone->master->ip_address_spec);
+		close(fd);
+		xfrd_set_refresh_now(zone);
+		return 0;
+#endif
+	}
+
 	/* set the tcp pipe event */
 	if(tp->handler_added)
 		event_del(&tp->handler);
 	memset(&tp->handler, 0, sizeof(tp->handler));
-	event_set(&tp->handler, fd, EV_PERSIST|EV_TIMEOUT|EV_READ|EV_WRITE,
-		xfrd_handle_tcp_pipe, tp);
+	event_set(&tp->handler, fd, EV_PERSIST|EV_TIMEOUT|EV_READ|
+#ifdef HAVE_TLS_1_3
+		( !tp->ssl
+		|| tp->handshake_done
+		|| tp->handshake_want == SSL_ERROR_WANT_WRITE ? EV_WRITE : 0),
+#else
+		EV_WRITE,
+#endif
+	        xfrd_handle_tcp_pipe, tp);
 	if(event_base_set(xfrd->event_base, &tp->handler) != 0)
 		log_msg(LOG_ERR, "xfrd tcp: event_base_set failed");
 	tv.tv_sec = set->tcp_timeout;
@@ -616,7 +793,7 @@ xfrd_tcp_setup_write_packet(struct xfrd_tcp_pipeline* tp, xfrd_zone_type* zone)
 		xfrd_setup_packet(tcp->packet, TYPE_IXFR, CLASS_IN, zone->apex,
 			zone->query_id);
 		zone->query_type = TYPE_IXFR;
-        	NSCOUNT_SET(tcp->packet, 1);
+		NSCOUNT_SET(tcp->packet, 1);
 		xfrd_write_soa_buffer(tcp->packet, zone->apex, &zone->soa_disk);
 	}
 	/* old transfer needs to be removed still? */
@@ -640,6 +817,79 @@ tcp_conn_ready_for_reading(struct xfrd_tcp* tcp)
 	tcp->msglen = 0;
 	buffer_clear(tcp->packet);
 }
+
+#ifdef HAVE_TLS_1_3
+static int
+conn_write_ssl(struct xfrd_tcp* tcp, SSL* ssl)
+{
+	int request_length;
+	ssize_t sent;
+
+	if(tcp->total_bytes < sizeof(tcp->msglen)) {
+		uint16_t sendlen = htons(tcp->msglen);
+		// send
+		request_length = sizeof(tcp->msglen) - tcp->total_bytes;
+		ERR_clear_error();
+		sent = SSL_write(ssl, (const char*)&sendlen + tcp->total_bytes,
+						 request_length);
+		switch(SSL_get_error(ssl,sent)) {
+			case SSL_ERROR_NONE:
+				break;
+			default:
+				log_msg(LOG_ERR, "xfrd: generic write problem with tls");
+		}
+
+		if(sent == -1) {
+			if(errno == EAGAIN || errno == EINTR) {
+				/* write would block, try later */
+				return 0;
+			} else {
+				return -1;
+			}
+		}
+
+		tcp->total_bytes += sent;
+		if(sent > (ssize_t)sizeof(tcp->msglen))
+			buffer_skip(tcp->packet, sent-sizeof(tcp->msglen));
+		if(tcp->total_bytes < sizeof(tcp->msglen)) {
+			/* incomplete write, resume later */
+			return 0;
+		}
+		assert(tcp->total_bytes >= sizeof(tcp->msglen));
+	}
+
+	assert(tcp->total_bytes < tcp->msglen + sizeof(tcp->msglen));
+
+	request_length = buffer_remaining(tcp->packet);
+	ERR_clear_error();
+	sent = SSL_write(ssl, buffer_current(tcp->packet), request_length);
+	switch(SSL_get_error(ssl,sent)) {
+		case SSL_ERROR_NONE:
+			break;
+		default:
+			log_msg(LOG_ERR, "xfrd: generic write problem with tls");
+	}
+	if(sent == -1) {
+		if(errno == EAGAIN || errno == EINTR) {
+			/* write would block, try later */
+			return 0;
+		} else {
+			return -1;
+		}
+	}
+
+	buffer_skip(tcp->packet, sent);
+	tcp->total_bytes += sent;
+
+	if(tcp->total_bytes < tcp->msglen + sizeof(tcp->msglen)) {
+		/* more to write when socket becomes writable again */
+		return 0;
+	}
+
+	assert(tcp->total_bytes == tcp->msglen + sizeof(tcp->msglen));
+	return 1;
+}
+#endif
 
 int conn_write(struct xfrd_tcp* tcp)
 {
@@ -737,7 +987,32 @@ xfrd_tcp_write(struct xfrd_tcp_pipeline* tp, xfrd_zone_type* zone)
 			return;
 		}
 	}
-	ret = conn_write(tcp);
+#ifdef HAVE_TLS_1_3
+	if (tp->ssl) {
+		if(tp->handshake_done) {
+			ret = conn_write_ssl(tcp, tp->ssl);
+
+		} else if(ssl_handshake(tp)) {
+			tcp_pipe_reset_timeout(tp); /* reschedule */
+			return;
+
+		} else {
+			if(tp->handshake_want == SSL_ERROR_SYSCALL) {
+				log_msg(LOG_ERR, "xfrd: TLS handshake failed: %s",
+					strerror(errno));
+
+			} else if(tp->handshake_want == SSL_ERROR_SSL) {
+				log_crypto_err("xfrd: TLS handshake failed");
+			} else {
+				log_msg(LOG_ERR, "xfrd: TLS handshake failed "
+					"with value: %d", tp->handshake_want);
+			}
+			xfrd_tcp_pipe_stop(tp);
+			return;
+		}
+	} else
+#endif
+		ret = conn_write(tcp);
 	if(ret == -1) {
 		log_msg(LOG_ERR, "xfrd: failed writing tcp %s", strerror(errno));
 		xfrd_tcp_pipe_stop(tp);
@@ -759,7 +1034,12 @@ xfrd_tcp_write(struct xfrd_tcp_pipeline* tp, xfrd_zone_type* zone)
 		/* setup to write for this zone */
 		xfrd_tcp_setup_write_packet(tp, tp->tcp_send_first);
 		/* attempt to write for this zone (if success, continue loop)*/
-		ret = conn_write(tcp);
+#ifdef HAVE_TLS_1_3
+		if (tp->ssl)
+			ret = conn_write_ssl(tcp, tp->ssl);
+		else
+#endif
+			ret = conn_write(tcp);
 		if(ret == -1) {
 			log_msg(LOG_ERR, "xfrd: failed writing tcp %s", strerror(errno));
 			xfrd_tcp_pipe_stop(tp);
@@ -776,6 +1056,107 @@ xfrd_tcp_write(struct xfrd_tcp_pipeline* tp, xfrd_zone_type* zone)
 	assert(tp->tcp_send_first == NULL);
 	tcp_pipe_reset_timeout(tp);
 }
+
+#ifdef HAVE_TLS_1_3
+static int
+conn_read_ssl(struct xfrd_tcp* tcp, SSL* ssl)
+{
+	ssize_t received;
+	/* receive leading packet length bytes */
+	if(tcp->total_bytes < sizeof(tcp->msglen)) {
+		ERR_clear_error();
+		received = SSL_read(ssl,
+						(char*) &tcp->msglen + tcp->total_bytes,
+						sizeof(tcp->msglen) - tcp->total_bytes);
+		if (received <= 0) {
+			int err = SSL_get_error(ssl, received);
+			if(err == SSL_ERROR_WANT_READ && errno == EAGAIN) {
+				return 0;
+			}
+			if(err == SSL_ERROR_ZERO_RETURN) {
+				/* EOF */
+				return 0;
+			}
+			log_msg(LOG_ERR, "ssl_read returned error %d with received %zd", err, received);
+		}
+		if(received == -1) {
+			if(errno == EAGAIN || errno == EINTR) {
+				/* read would block, try later */
+				return 0;
+			} else {
+#ifdef ECONNRESET
+				if (verbosity >= 2 || errno != ECONNRESET)
+#endif /* ECONNRESET */
+					log_msg(LOG_ERR, "tls read sz: %s", strerror(errno));
+				return -1;
+			}
+		} else if(received == 0) {
+			/* EOF */
+			return -1;
+		}
+		tcp->total_bytes += received;
+		if(tcp->total_bytes < sizeof(tcp->msglen)) {
+			/* not complete yet, try later */
+			return 0;
+		}
+
+		assert(tcp->total_bytes == sizeof(tcp->msglen));
+		tcp->msglen = ntohs(tcp->msglen);
+
+		if(tcp->msglen == 0) {
+			buffer_set_limit(tcp->packet, tcp->msglen);
+			return 1;
+		}
+		if(tcp->msglen > buffer_capacity(tcp->packet)) {
+			log_msg(LOG_ERR, "buffer too small, dropping connection");
+			return 0;
+		}
+		buffer_set_limit(tcp->packet, tcp->msglen);
+	}
+
+	assert(buffer_remaining(tcp->packet) > 0);
+	ERR_clear_error();
+
+	received = SSL_read(ssl, buffer_current(tcp->packet),
+					buffer_remaining(tcp->packet));
+
+	if (received <= 0) {
+		int err = SSL_get_error(ssl, received);
+		if(err == SSL_ERROR_ZERO_RETURN) {
+			/* EOF */
+			return 0;
+		}
+		log_msg(LOG_ERR, "ssl_read returned error %d with received %zd", err, received);
+	}
+	if(received == -1) {
+		if(errno == EAGAIN || errno == EINTR) {
+			/* read would block, try later */
+			return 0;
+		} else {
+#ifdef ECONNRESET
+			if (verbosity >= 2 || errno != ECONNRESET)
+#endif /* ECONNRESET */
+				log_msg(LOG_ERR, "tcp read %s", strerror(errno));
+			return -1;
+		}
+	} else if(received == 0) {
+		/* EOF */
+		return -1;
+	}
+
+	tcp->total_bytes += received;
+	buffer_skip(tcp->packet, received);
+
+	if(buffer_remaining(tcp->packet) > 0) {
+		/* not complete yet, wait for more */
+		return 0;
+	}
+
+	/* completed */
+	assert(buffer_position(tcp->packet) == tcp->msglen);
+	return 1;
+}
+#endif
 
 int
 conn_read(struct xfrd_tcp* tcp)
@@ -861,9 +1242,34 @@ xfrd_tcp_read(struct xfrd_tcp_pipeline* tp)
 	struct xfrd_tcp* tcp = tp->tcp_r;
 	int ret;
 	enum xfrd_packet_result pkt_result;
+#ifdef HAVE_TLS_1_3
+	if(tp->ssl) {
+		if(tp->handshake_done) {
+			ret = conn_read_ssl(tcp, tp->ssl);
 
-	ret = conn_read(tcp);
+		} else if(ssl_handshake(tp)) {
+			tcp_pipe_reset_timeout(tp); /* reschedule */
+			return;
+
+		} else {
+			if(tp->handshake_want == SSL_ERROR_SYSCALL) {
+				log_msg(LOG_ERR, "xfrd: TLS handshake failed: %s",
+					strerror(errno));
+
+			} else if(tp->handshake_want == SSL_ERROR_SSL) {
+				log_crypto_err("xfrd: TLS handshake failed");
+			} else {
+				log_msg(LOG_ERR, "xfrd: TLS handshake failed "
+					"with value: %d", tp->handshake_want);
+			}
+			xfrd_tcp_pipe_stop(tp);
+			return;
+		}
+	} else 
+#endif
+		ret = conn_read(tcp);
 	if(ret == -1) {
+		log_msg(LOG_ERR, "xfrd: failed writing tcp %s", strerror(errno));
 		xfrd_tcp_pipe_stop(tp);
 		return;
 	}
@@ -901,7 +1307,7 @@ xfrd_tcp_read(struct xfrd_tcp_pipeline* tp)
 		case xfrd_packet_newlease:
 			/* set to skip if more packets with this ID */
 			tp->id[zone->query_id] = TCP_NULL_SKIP;
-			tp->num_skip++;
+			tp->key.num_skip++;
 			/* fall through to remove zone from tp */
 			/* fallthrough */
 		case xfrd_packet_transfer:
@@ -924,7 +1330,7 @@ xfrd_tcp_read(struct xfrd_tcp_pipeline* tp)
 		default:
 			/* set to skip if more packets with this ID */
 			tp->id[zone->query_id] = TCP_NULL_SKIP;
-			tp->num_skip++;
+			tp->key.num_skip++;
 			xfrd_tcp_release(xfrd->tcp_set, zone);
 			/* query next server */
 			xfrd_make_request(zone);
@@ -950,10 +1356,10 @@ xfrd_tcp_release(struct xfrd_tcp_set* set, xfrd_zone_type* zone)
 	if(tp->id[zone->query_id] != TCP_NULL_SKIP)
 		tcp_pipe_id_remove(tp, zone);
 	DEBUG(DEBUG_XFRD,1, (LOG_INFO, "xfrd: released tcp pipe now %d unused",
-		tp->num_unused));
+		tp->key.num_unused));
 	/* if pipe was full, but no more, then see if waiting element is
 	 * for the same master, and can fill the unused ID */
-	if(tp->num_unused == 1 && set->tcp_waiting_first) {
+	if(tp->key.num_unused == 1 && set->tcp_waiting_first) {
 #ifdef INET6
 		struct sockaddr_storage to;
 #else
@@ -961,7 +1367,7 @@ xfrd_tcp_release(struct xfrd_tcp_set* set, xfrd_zone_type* zone)
 #endif
 		socklen_t to_len = xfrd_acl_sockaddr_to(
 			set->tcp_waiting_first->master, &to);
-		if(to_len == tp->ip_len && memcmp(&to, &tp->ip, to_len) == 0) {
+		if(to_len == tp->key.ip_len && memcmp(&to, &tp->key.ip, to_len) == 0) {
 			/* use this connection for the waiting zone */
 			zone = set->tcp_waiting_first;
 			assert(zone->tcp_conn == -1);
@@ -977,7 +1383,7 @@ xfrd_tcp_release(struct xfrd_tcp_set* set, xfrd_zone_type* zone)
 	}
 
 	/* if all unused, or only skipped leftover, close the pipeline */
-	if(tp->num_unused >= ID_PIPE_NUM || tp->num_skip >= ID_PIPE_NUM - tp->num_unused)
+	if(tp->key.num_unused >= ID_PIPE_NUM || tp->key.num_skip >= ID_PIPE_NUM - tp->key.num_unused)
 		xfrd_tcp_pipe_release(set, tp, conn);
 }
 
@@ -991,6 +1397,16 @@ xfrd_tcp_pipe_release(struct xfrd_tcp_set* set, struct xfrd_tcp_pipeline* tp,
 		event_del(&tp->handler);
 	tp->handler_added = 0;
 
+#ifdef HAVE_TLS_1_3
+	/* close SSL */
+	if (tp->ssl) {
+		DEBUG(DEBUG_XFRD, 1, (LOG_INFO, "xfrd: Shutting down TLS"));
+		SSL_shutdown(tp->ssl);
+		SSL_free(tp->ssl);
+		tp->ssl = NULL;
+	}
+#endif
+
 	/* fd in tcp_r and tcp_w is the same, close once */
 	if(tp->tcp_r->fd != -1)
 		close(tp->tcp_r->fd);
@@ -998,7 +1414,7 @@ xfrd_tcp_pipe_release(struct xfrd_tcp_set* set, struct xfrd_tcp_pipeline* tp,
 	tp->tcp_w->fd = -1;
 
 	/* remove from pipetree */
-	(void)rbtree_delete(xfrd->tcp_set->pipetree, &tp->node);
+	(void)rbtree_delete(xfrd->tcp_set->pipetree, &tp->key.node);
 
 	/* a waiting zone can use the free tcp slot (to another server) */
 	/* if that zone fails to set-up or connect, we try to start the next
@@ -1024,9 +1440,9 @@ xfrd_tcp_pipe_release(struct xfrd_tcp_set* set, struct xfrd_tcp_pipeline* tp,
 		}
 		/* re-init this tcppipe */
 		/* ip and ip_len set by tcp_open */
-		tp->node.key = tp;
-		tp->num_unused = ID_PIPE_NUM;
-		tp->num_skip = 0;
+		tp->key.node.key = tp;
+		tp->key.num_unused = ID_PIPE_NUM;
+		tp->key.num_skip = 0;
 		tp->tcp_send_first = NULL;
 		tp->tcp_send_last = NULL;
 		memset(tp->id, 0, sizeof(tp->id));
@@ -1035,7 +1451,7 @@ xfrd_tcp_pipe_release(struct xfrd_tcp_set* set, struct xfrd_tcp_pipeline* tp,
 		}
 
 		/* insert into tree */
-		(void)rbtree_insert(set->pipetree, &tp->node);
+		(void)rbtree_insert(set->pipetree, &tp->key.node);
 		/* setup write */
 		xfrd_unset_timer(zone);
 		pipeline_setup_new_zone(set, tp, zone);

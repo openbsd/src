@@ -196,7 +196,7 @@ xfrd_init(int socket, struct nsd* nsd, int shortsoa, int reload_active,
 	daemon_remote_attach(xfrd->nsd->rc, xfrd);
 #endif
 
-	xfrd->tcp_set = xfrd_tcp_set_create(xfrd->region);
+	xfrd->tcp_set = xfrd_tcp_set_create(xfrd->region, nsd->options->tls_cert_bundle);
 	xfrd->tcp_set->tcp_timeout = nsd->tcp_timeout;
 #if !defined(HAVE_ARC4RANDOM) && !defined(HAVE_GETRANDOM)
 	srandom((unsigned long) getpid() * (unsigned long) time(NULL));
@@ -465,6 +465,7 @@ xfrd_clean_pending_tasks(struct nsd* nsd, udb_base* u)
 void
 xfrd_init_slave_zone(xfrd_state_type* xfrd, struct zone_options* zone_opt)
 {
+	int num, num_xot;
 	xfrd_zone_type *xzone;
 	xzone = (xfrd_zone_type*)region_alloc(xfrd->region,
 		sizeof(xfrd_zone_type));
@@ -505,6 +506,16 @@ xfrd_init_slave_zone(xfrd_state_type* xfrd, struct zone_options* zone_opt)
 
 	/* set refreshing anyway, if we have data it may be old */
 	xfrd_set_refresh_now(xzone);
+
+	/*Check all or none of acls use XoT*/
+	num = 0;
+	num_xot = 0;
+	for (; xzone->master != NULL; xzone->master = xzone->master->next, num++) {
+		if (xzone->master->tls_auth_options != NULL) num_xot++; 
+	}
+	if (num_xot != 0 && num != num_xot)
+		log_msg(LOG_WARNING, "Some but not all request-xfrs for %s have XFR-over-TLS configured",
+			xzone->apex_str);
 
 	xzone->node.key = xzone->apex;
 	rbtree_insert(xfrd->zones, (rbnode_type*)xzone);

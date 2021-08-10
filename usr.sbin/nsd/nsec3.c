@@ -391,7 +391,7 @@ nsec3_chain_find_prev(struct zone* zone, struct domain* domain)
 			return (domain_type*)r->key;
 		}
 	}
-	if(zone->nsec3_last)
+	if(zone->nsec3_last && zone->nsec3_last != domain)
 		return zone->nsec3_last;
 	return NULL;
 }

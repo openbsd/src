@@ -250,6 +250,10 @@ server:
 	# tls-service-pem: "path/to/publiccertfile.pem"
 	# tls-service-ocsp: "path/to/ocsp.pem"
 	# tls-port: 853
+	
+	# Certificates used to authenticate connections made upstream for
+	# Transfers over TLS (XoT). Default is "" (default verify locations).
+	# tls-cert-bundle: "path/to/ca-bundle.pem"
 
 # DNSTAP config section, if compiled with that
 # dnstap:
@@ -309,6 +313,17 @@ remote-control:
 	# e.g. from dd if=/dev/random of=/dev/stdout count=1 bs=32 | base64
 	#secret: "K2tf3TRjvQkVCmJF3/Z9vA=="
 
+# The tls-auth clause establishes authentication attributes to use when 
+# authenticating the far end of an outgoing TLS connection in access control 
+# lists used for XFR-over-TLS. If authentication fails, the XFR request will not
+# be made. Support for TLS 1.3 is required for XFR-over-TLS. It has the 
+# following attributes:
+#
+# tls-auth:
+	# The tls-auth name. Used to refer to this TLS auth information in the access control list.
+	#name: "tls-authname"
+	# The authentication domain name as defined in RFC8310.
+	#auth-domain-name: "example.com"
 
 # Patterns have zone configuration and they are shared by one or more zones.
 #
@@ -354,7 +369,9 @@ remote-control:
 	# By default, a slave will request a zone transfer with IXFR/TCP.
 	# If you want to make use of IXFR/UDP use: UDP addr tsigkey
 	# for a master that only speaks AXFR (like NSD) use AXFR addr tsigkey
+	# If you want to require use of XFR-over-TLS use: addr tsigkey tlsauthname
 	#request-xfr: 192.0.2.2 the_tsig_key_name
+	#request-xfr: 192.0.2.2 the_tsig_key_name the_tls_auth_name
 	# Attention: You cannot use UDP and AXFR together. AXFR is always over
 	# TCP. If you use UDP, we higly recommend you to deploy TSIG.
 	# Allow AXFR fallback if the master does not support IXFR. Default

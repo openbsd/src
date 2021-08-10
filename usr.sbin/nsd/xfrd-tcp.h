@@ -11,6 +11,10 @@
 #define XFRD_TCP_H
 
 #include "xfrd.h"
+#ifdef HAVE_TLS_1_3
+#include <openssl/ssl.h>
+#endif
+
 
 struct buffer;
 struct xfrd_zone;
@@ -35,6 +39,10 @@ struct xfrd_tcp_set {
 	int tcp_timeout;
 	/* rbtree with pipelines sorted by master */
 	rbtree_type* pipetree;
+#ifdef HAVE_TLS_1_3
+	/* XoT: SSL context */
+	SSL_CTX* ssl_ctx;
+#endif
 	/* double linked list of zones waiting for a TCP connection */
 	struct xfrd_zone *tcp_waiting_first, *tcp_waiting_last;
 };
@@ -70,13 +78,10 @@ struct xfrd_tcp {
 #define ID_PIPE_NUM 65536
 
 /**
- * Structure to keep track of a pipelined set of queries on
- * an open tcp connection.  The queries may be answered with
- * interleaved answer packets, the ID number disambiguates.
- * Sorted by the master IP address so you can use lookup with
- * smaller-or-equal to find the tcp connection most suitable.
+ * The tcp pipeline key structure. By ip_len, ip, num_unused and unique by
+ * pointer value.
  */
-struct xfrd_tcp_pipeline {
+struct xfrd_tcp_pipeline_key {
 	/* the rbtree node, sorted by IP and nr of unused queries */
 	rbnode_type node;
 	/* destination IP address */
@@ -93,6 +98,19 @@ struct xfrd_tcp_pipeline {
 	int num_unused;
 	/* number of skip-set IDs (these are 'in-use') */
 	int num_skip;
+};
+
+/**
+ * Structure to keep track of a pipelined set of queries on
+ * an open tcp connection.  The queries may be answered with
+ * interleaved answer packets, the ID number disambiguates.
+ * Sorted by the master IP address so you can use lookup with
+ * smaller-or-equal to find the tcp connection most suitable.
+ */
+struct xfrd_tcp_pipeline {
+	/* the key information for the tcp pipeline, in its own
+	 * struct so it can be referenced on its own for comparison funcs */
+	struct xfrd_tcp_pipeline_key key;
 
 	int handler_added;
 	/* the event handler for this pipe (it'll disambiguate by ID) */
@@ -105,6 +123,17 @@ struct xfrd_tcp_pipeline {
 	struct xfrd_tcp* tcp_w;
 	/* once a byte has been written, handshake complete */
 	int connection_established;
+#ifdef HAVE_TLS_1_3
+	/* XoT: SSL object */
+	SSL *ssl;
+	/* XoT: if SSL handshake is not done, handshake_want indicates the
+	 * last error. This may be SSL_ERROR_WANT_READ or SSL_ERROR_WANT_WRITE
+	 * when the handshake is still in progress.
+	 */
+	int  handshake_want;
+	/* XoT: 1 if the SSL handshake has succeeded, 0 otherwise */
+	int  handshake_done;
+#endif
 
 	/* list of queries that want to send, first to get write event,
 	 * if NULL, no write event interest */
@@ -125,7 +154,7 @@ struct xfrd_tcp_pipeline {
 };
 
 /* create set of tcp connections */
-struct xfrd_tcp_set* xfrd_tcp_set_create(struct region* region);
+struct xfrd_tcp_set* xfrd_tcp_set_create(struct region* region, const char *tls_cert_bundle);
 
 /* init tcp state */
 struct xfrd_tcp* xfrd_tcp_create(struct region* region, size_t bufsize);

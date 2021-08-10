@@ -52,6 +52,7 @@ nsd_options_create(region_type* region)
 	opt->zonestatnames = rbtree_create(opt->region, rbtree_strcmp);
 	opt->patterns = rbtree_create(region, rbtree_strcmp);
 	opt->keys = rbtree_create(region, rbtree_strcmp);
+	opt->tls_auths = rbtree_create(region, rbtree_strcmp);
 	opt->ip_addresses = NULL;
 	opt->ip_transparent = 0;
 	opt->ip_freebind = 0;
@@ -129,6 +130,10 @@ nsd_options_create(region_type* region)
 	opt->tls_service_ocsp = NULL;
 	opt->tls_service_pem = NULL;
 	opt->tls_port = TLS_PORT;
+	opt->tls_cert_bundle = NULL;
+	opt->answer_cookie = 1;
+	opt->cookie_secret = NULL;
+	opt->cookie_secret_file = CONFIGDIR"/nsd_cookiesecrets.txt";
 	opt->control_enable = 0;
 	opt->control_interface = NULL;
 	opt->control_port = NSD_CONTROL_PORT;
@@ -200,6 +205,7 @@ parse_options_file(struct nsd_options* opt, const char* file,
 	cfg_parser->pattern = NULL;
 	cfg_parser->zone = NULL;
 	cfg_parser->key = NULL;
+	cfg_parser->tls_auth = NULL;
 
 	in = fopen(cfg_parser->filename, "r");
 	if(!in) {
@@ -244,6 +250,14 @@ parse_options_file(struct nsd_options* opt, const char* file,
 		}
 		for(acl=pat->request_xfr; acl; acl=acl->next)
 		{
+			/* Find tls_auth */
+			if (!acl->tls_auth_name)
+				; /* pass */
+			else if (!(acl->tls_auth_options =
+			                tls_auth_options_find(opt, acl->tls_auth_name)))
+				c_error("tls_auth %s in pattern %s could not be found",
+						acl->tls_auth_name, pat->pname);
+			/* Find key */
 			if(acl->nokey || acl->blocked)
 				continue;
 			acl->key_options = key_options_find(opt, acl->key_name);
@@ -806,6 +820,11 @@ acl_equal(struct acl_options* p, struct acl_options* q)
 	} else if(p->key_name && !q->key_name) return 0;
 	else if(!p->key_name && q->key_name) return 0;
 	/* key_options is derived from key_name */
+	if(p->tls_auth_name && q->tls_auth_name) {
+		if(strcmp(p->tls_auth_name, q->tls_auth_name)!=0) return 0;
+	} else if(p->tls_auth_name && !q->tls_auth_name) return 0;
+	else if(!p->tls_auth_name && q->tls_auth_name) return 0;
+	/* tls_auth_options is derived from tls_auth_name */
 	return 1;
 }
 
@@ -873,6 +892,9 @@ acl_delete(region_type* region, struct acl_options* acl)
 	if(acl->key_name)
 		region_recycle(region, (void*)acl->key_name,
 			strlen(acl->key_name)+1);
+	if(acl->tls_auth_name)
+		region_recycle(region, (void*)acl->tls_auth_name,
+			strlen(acl->tls_auth_name)+1);
 	/* key_options is a convenience pointer, not owned by the acl */
 	region_recycle(region, acl, sizeof(*acl));
 }
@@ -928,8 +950,11 @@ copy_acl(region_type* region, struct acl_options* a)
 		b->ip_address_spec = region_strdup(region, a->ip_address_spec);
 	if(a->key_name)
 		b->key_name = region_strdup(region, a->key_name);
+	if(a->tls_auth_name)
+		b->tls_auth_name = region_strdup(region, a->tls_auth_name);
 	b->next = NULL;
 	b->key_options = NULL;
+	b->tls_auth_options = NULL;
 	return b;
 }
 
@@ -943,6 +968,10 @@ copy_acl_list(struct nsd_options* opt, struct acl_options* a)
 		if(b->key_name)
 			b->key_options = key_options_find(opt, b->key_name);
 		else	b->key_options = NULL;
+		/* fixup tls_auth_options */
+		if(b->tls_auth_name)
+			b->tls_auth_options = tls_auth_options_find(opt, b->tls_auth_name);
+		else	b->tls_auth_options = NULL;
 
 		/* link as last into list */
 		b->next = NULL;
@@ -1178,6 +1207,7 @@ marshal_acl(struct buffer* b, struct acl_options* acl)
 	buffer_write(b, acl, sizeof(*acl));
 	marshal_str(b, acl->ip_address_spec);
 	marshal_str(b, acl->key_name);
+	marshal_str(b, acl->tls_auth_name);
 }
 
 static struct acl_options*
@@ -1188,8 +1218,10 @@ unmarshal_acl(region_type* r, struct buffer* b)
 	buffer_read(b, acl, sizeof(*acl));
 	acl->next = NULL;
 	acl->key_options = NULL;
+	acl->tls_auth_options = NULL;
 	acl->ip_address_spec = unmarshal_str(r, b);
 	acl->key_name = unmarshal_str(r, b);
+	acl->tls_auth_name = unmarshal_str(r, b);
 	return acl;
 }
 
@@ -1298,6 +1330,14 @@ key_options_create(region_type* region)
 	return key;
 }
 
+struct tls_auth_options*
+tls_auth_options_create(region_type* region)
+{
+	struct tls_auth_options* tls_auth_options;
+	tls_auth_options = (struct tls_auth_options*)region_alloc_zero(region, sizeof(struct tls_auth_options));
+	return tls_auth_options;
+}
+
 void
 key_options_insert(struct nsd_options* opt, struct key_options* key)
 {
@@ -1310,6 +1350,20 @@ struct key_options*
 key_options_find(struct nsd_options* opt, const char* name)
 {
 	return (struct key_options*)rbtree_search(opt->keys, name);
+}
+
+void
+tls_auth_options_insert(struct nsd_options* opt, struct tls_auth_options* auth)
+{
+	if(!auth->name) return;
+	auth->node.key = auth->name;
+	(void)rbtree_insert(opt->tls_auths, &auth->node);
+}
+
+struct tls_auth_options*
+tls_auth_options_find(struct nsd_options* opt, const char* name)
+{
+	return (struct tls_auth_options*)rbtree_search(opt->tls_auths, name);
 }
 
 /** remove tsig_key contents */
@@ -1797,7 +1851,7 @@ config_make_zonefile(struct zone_options* zone, struct nsd* nsd)
 	static char f[1024];
 	/* if not a template, return as-is */
 	if(!strchr(zone->pattern->zonefile, '%')) {
-		if (nsd->chrootdir && nsd->chrootdir[0] && 
+		if (nsd->chrootdir && nsd->chrootdir[0] &&
 			zone->pattern->zonefile &&
 			zone->pattern->zonefile[0] == '/' &&
 			strncmp(zone->pattern->zonefile, nsd->chrootdir,
@@ -1925,6 +1979,8 @@ parse_acl_info(region_type* region, char* ip, const char* key)
 	acl->ixfr_disabled = 0;
 	acl->bad_xfr_count = 0;
 	acl->key_options = 0;
+	acl->tls_auth_options = 0;
+	acl->tls_auth_name = 0;
 	acl->is_ipv6 = 0;
 	acl->port = 0;
 	memset(&acl->addr, 0, sizeof(union acl_addr_storage));

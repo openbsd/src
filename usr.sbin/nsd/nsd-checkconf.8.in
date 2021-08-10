@@ -1,4 +1,4 @@
-.TH "nsd\-checkconf" "8" "Apr  6, 2021" "NLnet Labs" "nsd 4.3.6"
+.TH "nsd\-checkconf" "8" "Jul 22, 2021" "NLnet Labs" "nsd 4.3.7"
 .\" Copyright (c) 2001\-2008, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
@@ -17,6 +17,8 @@
 .IR pattern ]
 .RB [ \-s
 .IR keyname ]
+.RB [ \-t
+.IR tlsauthname ]
 .I configfile
 .SH "DESCRIPTION"
 .B nsd\-checkconf
@@ -66,6 +68,10 @@ option is not given, nothing is printed.
 .TP
 .B \-s\fI keyname
 Prints the key secret (base64 blob) configured for this key in the 
+config file. Used to help shell scripts parse the config file.
+.TP
+.B \-t\fI tls-auth
+Prints the authentication domain name configured for this tls-auth clause in the
 config file. Used to help shell scripts parse the config file.
 .TP
 .B \-p\fI pattern

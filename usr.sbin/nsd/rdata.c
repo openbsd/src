@@ -66,6 +66,11 @@ lookup_table_type dns_algorithms[] = {
 	{ 0, NULL }
 };
 
+const char *svcparamkey_strs[] = {
+		"mandatory", "alpn", "no-default-alpn", "port",
+		"ipv4hint", "ech", "ipv6hint"
+	};
+
 typedef int (*rdata_to_string_type)(buffer_type *output,
 				    rdata_atom_type rdata,
 				    rr_type *rr);
@@ -642,6 +647,223 @@ rdata_loc_to_string(buffer_type *ATTR_UNUSED(output),
 	return 0;
 }
 
+static void
+buffer_print_svcparamkey(buffer_type *output, uint16_t svcparamkey)
+{
+	if (svcparamkey < SVCPARAMKEY_COUNT)
+		buffer_printf(output, "%s", svcparamkey_strs[svcparamkey]);
+	else
+		buffer_printf(output, "key%d", (int)svcparamkey);
+}
+
+static int
+rdata_svcparam_port_to_string(buffer_type *output, uint16_t val_len,
+	uint16_t *data)
+{
+	if (val_len != 2)
+		return 0; /* wireformat error, a short is 2 bytes */
+	buffer_printf(output, "=%d", (int)ntohs(data[0]));
+	return 1;
+}
+
+static int
+rdata_svcparam_ipv4hint_to_string(buffer_type *output, uint16_t val_len,
+	uint16_t *data)
+{
+	char ip_str[INET_ADDRSTRLEN + 1];
+	
+	assert(val_len > 0); /* Guaranteed by rdata_svcparam_to_string */
+
+	if ((val_len % IP4ADDRLEN) == 0) {
+		if (inet_ntop(AF_INET, data, ip_str, sizeof(ip_str)) == NULL)
+			return 0; /* wireformat error, incorrect size or inet family */
+
+		buffer_printf(output, "=%s", ip_str);
+		data += IP4ADDRLEN / sizeof(uint16_t);
+
+		while ((val_len -= IP4ADDRLEN) > 0) {
+			if (inet_ntop(AF_INET, data, ip_str, sizeof(ip_str)) == NULL)
+				return 0; /* wireformat error, incorrect size or inet family */
+
+			buffer_printf(output, ",%s", ip_str);
+			data += IP4ADDRLEN / sizeof(uint16_t);
+		}
+		return 1;
+	} else
+		return 0;
+}
+
+static int
+rdata_svcparam_ipv6hint_to_string(buffer_type *output, uint16_t val_len,
+	uint16_t *data)
+{
+	char ip_str[INET6_ADDRSTRLEN + 1];
+	
+	assert(val_len > 0); /* Guaranteed by rdata_svcparam_to_string */
+
+	if ((val_len % IP6ADDRLEN) == 0) {
+		if (inet_ntop(AF_INET6, data, ip_str, sizeof(ip_str)) == NULL)
+			return 0; /* wireformat error, incorrect size or inet family */
+
+		buffer_printf(output, "=%s", ip_str);
+		data += IP6ADDRLEN / sizeof(uint16_t);
+
+		while ((val_len -= IP6ADDRLEN) > 0) {
+			if (inet_ntop(AF_INET6, data, ip_str, sizeof(ip_str)) == NULL)
+				return 0; /* wireformat error, incorrect size or inet family */
+
+			buffer_printf(output, ",%s", ip_str);
+			data += IP6ADDRLEN / sizeof(uint16_t);
+		}
+		return 1;
+	} else
+		return 0;
+}
+
+static int
+rdata_svcparam_mandatory_to_string(buffer_type *output, uint16_t val_len,
+	uint16_t *data)
+{
+	assert(val_len > 0); /* Guaranteed by rdata_svcparam_to_string */
+
+	if (val_len % sizeof(uint16_t))
+		return 0; /* wireformat error, val_len must be multiple of shorts */
+	buffer_write_u8(output, '=');
+	buffer_print_svcparamkey(output, ntohs(*data));
+	data += 1;
+
+	while ((val_len -= sizeof(uint16_t))) {
+		buffer_write_u8(output, ',');
+		buffer_print_svcparamkey(output, ntohs(*data));
+		data += 1;
+	}
+
+	return 1;
+}
+
+static int
+rdata_svcparam_ech_to_string(buffer_type *output, uint16_t val_len,
+	uint16_t *data)
+{
+	int length;
+
+	assert(val_len > 0); /* Guaranteed by rdata_svcparam_to_string */
+
+	buffer_write_u8(output, '=');
+
+	buffer_reserve(output, val_len * 2 + 1);
+	length = __b64_ntop((uint8_t*) data, val_len,
+			  (char *) buffer_current(output), val_len * 2);
+	if (length > 0) {
+		buffer_skip(output, length);
+	}
+
+	return length != -1;
+}
+
+static int
+rdata_svcparam_alpn_to_string(buffer_type *output, uint16_t val_len,
+	uint16_t *data)
+{
+	uint8_t *dp = (void *)data;
+
+	assert(val_len > 0); /* Guaranteed by rdata_svcparam_to_string */
+
+	buffer_write_u8(output, '=');
+	buffer_write_u8(output, '"');
+	while (val_len) {
+		uint8_t i, str_len = *dp++;
+
+		if (str_len > --val_len)
+			return 0;
+
+		for (i = 0; i < str_len; i++) {
+			if (dp[i] == '"' || dp[i] == '\\')
+				buffer_printf(output, "\\\\\\%c", dp[i]);
+
+			else if (dp[i] == ',')
+				buffer_printf(output, "\\\\%c", dp[i]);
+
+			else if (!isprint(dp[i]))
+				buffer_printf(output, "\\%03u", (unsigned) dp[i]);
+
+			else
+				buffer_write_u8(output, dp[i]);
+		}
+		dp += str_len;
+		if ((val_len -= str_len))
+			buffer_write_u8(output, ',');
+	}
+	buffer_write_u8(output, '"');
+	return 1;
+}
+
+static int
+rdata_svcparam_to_string(buffer_type *output, rdata_atom_type rdata,
+	rr_type* ATTR_UNUSED(rr))
+{
+	uint16_t  size = rdata_atom_size(rdata);
+	uint16_t* data = (uint16_t *)rdata_atom_data(rdata);
+	uint16_t  svcparamkey, val_len;
+	uint8_t*  dp; 
+	size_t i;
+
+	if (size < 4)
+		return 0;
+	svcparamkey = ntohs(data[0]);
+
+	buffer_print_svcparamkey(output, svcparamkey);
+	val_len = ntohs(data[1]);
+	if (size != val_len + 4)
+		return 0; /* wireformat error */
+	if (!val_len) {
+		/* Some SvcParams MUST have values */
+		switch (svcparamkey) {
+		case SVCB_KEY_ALPN:
+		case SVCB_KEY_PORT:
+		case SVCB_KEY_IPV4HINT:
+		case SVCB_KEY_IPV6HINT:
+		case SVCB_KEY_MANDATORY:
+			return 0;
+		default:
+			return 1;
+		}
+	}
+	switch (svcparamkey) {
+	case SVCB_KEY_PORT:
+		return rdata_svcparam_port_to_string(output, val_len, data+2);
+	case SVCB_KEY_IPV4HINT:
+		return rdata_svcparam_ipv4hint_to_string(output, val_len, data+2);
+	case SVCB_KEY_IPV6HINT:
+		return rdata_svcparam_ipv6hint_to_string(output, val_len, data+2);
+	case SVCB_KEY_MANDATORY:
+		return rdata_svcparam_mandatory_to_string(output, val_len, data+2);
+	case SVCB_KEY_NO_DEFAULT_ALPN:
+		return 0; /* wireformat error, should not have a value */
+	case SVCB_KEY_ALPN:
+		return rdata_svcparam_alpn_to_string(output, val_len, data+2);
+	case SVCB_KEY_ECH:
+		return rdata_svcparam_ech_to_string(output, val_len, data+2);
+	default:
+		buffer_write(output, "=\"", 2);
+		dp = (void*) (data + 2);
+
+		for (i = 0; i < val_len; i++) {
+			if (dp[i] == '"' || dp[i] == '\\')
+				buffer_printf(output, "\\%c", dp[i]);
+
+			else if (!isprint(dp[i]))
+				buffer_printf(output, "\\%03u", (unsigned) dp[i]);
+
+			else
+				buffer_write_u8(output, dp[i]);
+		}
+		buffer_write_u8(output, '"');
+		break;
+	}
+	return 1;
+}
+
 static int
 rdata_unknown_to_string(buffer_type *output, rdata_atom_type rdata,
 	rr_type* ATTR_UNUSED(rr))
@@ -683,6 +905,7 @@ static rdata_to_string_type rdata_to_string_table[RDATA_ZF_UNKNOWN + 1] = {
 	rdata_eui64_to_string,
 	rdata_long_text_to_string,
 	rdata_tag_to_string,
+	rdata_svcparam_to_string,
 	rdata_unknown_to_string
 };
 
@@ -799,6 +1022,13 @@ rdata_wireformat_to_rdata_atoms(region_type *region,
 				is_normalized = 1;
 				is_wirestore = 1;
 				break;
+			}
+			break;
+		case RDATA_WF_SVCPARAM:
+			length = 4;
+			if (buffer_position(packet) + 4 <= end) {
+				length +=
+				    read_uint16(buffer_current(packet) + 2);
 			}
 			break;
 		}
@@ -932,5 +1162,4 @@ print_rdata(buffer_type *output, rrtype_descriptor_type *descriptor,
 
 	return 1;
 }
-
 

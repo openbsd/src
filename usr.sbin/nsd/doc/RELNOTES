@@ -1,5 +1,33 @@
 NSD RELEASE NOTES
 
+4.3.7
+================
+FEATURES:
+	- Syntax of SVCB and HTTPS RR type as per draft-ietf-dnsop-svcb-https
+	- Client side DNS Zone Transfer-over-TLS (XoT) support as per
+	  draft-ietf-dprive-xfr-over-tls
+	- Interoperable DNS Cookies support as per RFC7873 and RFC9018
+BUG FIXES:
+	- Fix for #170: Fix build warnings when IPv6 is disabled.
+	- Fix #170: Disabled IPv6 and DNSTAP enabled triggers a build error.
+	- Fix for #128: Skip over sendmmsg invalid argument when port is zero.
+	- Fix #171: Invalid negative response (NSEC3) after IXFR.
+	- Fix to make nsec3_chain_find_prev return NULL if one nsec3 left.
+	- Fix #174: NS Records below delegation are not ignored (nsd-checkzone
+	  also does not raise any issue).
+	- Fix #176: please review Loglevel on missing zonefile.
+	- Update the ACX_CHECK_NONBLOCKING_BROKEN test for the configure
+	  script.
+	- Fix #179: log notice and server-count.
+	- Update configure nonblocking test to use host.
+	- Fix #168: Buffer overflow in the dname_to_string() function
+	- Fixes for child server processes getting out of sync with the
+	  dnstap-collector process
+	- Fix gcc-11 warning on array bounds.
+	- Fix compile of cookies on FreeBSD without IPv6.
+	- Fix for loop initial declaration for nonc99 compiler
+	- Fix typo in xfrd-tcp.c.
+
 4.3.6
 ================
 FEATURES:

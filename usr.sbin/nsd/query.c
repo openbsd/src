@@ -1495,7 +1495,7 @@ query_prepare_response(query_type *q)
  *
  */
 query_state_type
-query_process(query_type *q, nsd_type *nsd)
+query_process(query_type *q, nsd_type *nsd, uint32_t *now_p)
 {
 	/* The query... */
 	nsd_rc_type rc;
@@ -1555,7 +1555,7 @@ query_process(query_type *q, nsd_type *nsd)
 				if(process_edns(nsd, q) == NSD_RC_OK) {
 					int opcode = OPCODE(q->packet);
 					(void)query_error(q, NSD_RC_FORMAT);
-					query_add_optional(q, nsd);
+					query_add_optional(q, nsd, now_p);
 					FLAGS_SET(q->packet, FLAGS(q->packet) & 0x0100U);
 						/* Preserve the RD flag. Clear the rest. */
 					OPCODE_SET(q->packet, opcode);
@@ -1652,6 +1652,9 @@ query_process(query_type *q, nsd_type *nsd)
 		return QUERY_PROCESSED;
 	}
 
+	if (q->edns.cookie_status == COOKIE_UNVERIFIED)
+		cookie_verify(q, nsd, now_p);
+
 	query_prepare_response(q);
 
 	if (q->qclass != CLASS_IN && q->qclass != CLASS_ANY) {
@@ -1679,7 +1682,7 @@ query_process(query_type *q, nsd_type *nsd)
 }
 
 void
-query_add_optional(query_type *q, nsd_type *nsd)
+query_add_optional(query_type *q, nsd_type *nsd, uint32_t *now_p)
 {
 	struct edns_data *edns = &nsd->edns_ipv4;
 #if defined(INET6)
@@ -1718,6 +1721,13 @@ query_add_optional(query_type *q, nsd_type *nsd)
 				buffer_write(q->packet, edns->nsid, OPT_HDR);
 				/* nsid payload */
 				buffer_write(q->packet, nsd->nsid, nsd->nsid_len);
+			}
+			if(q->edns.cookie_status != COOKIE_NOT_PRESENT) {
+				/* cookie opt header */
+				buffer_write(q->packet, edns->cookie, OPT_HDR);
+				/* cookie payload */
+				cookie_create(q, nsd, now_p);
+				buffer_write(q->packet, q->edns.cookie, 24);
 			}
 			/* Append Extended DNS Error (RFC8914) option if needed */
 			if (q->edns.ede >= 0) { /* < 0 means no EDE */

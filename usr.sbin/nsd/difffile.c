@@ -559,6 +559,12 @@ nsec3_add_rr_trigger(namedb_type* db, rr_type* rr, zone_type* zone,
 	if(zone->nsec3_param && rr->type == TYPE_NSEC3 &&
 		(!rr->owner->nsec3 || !rr->owner->nsec3->nsec3_node.key)
 		&& nsec3_rr_uses_params(rr, zone)) {
+		if(!zone->nsec3_last) {
+			/* all nsec3s have previously been deleted, but
+			 * we have nsec3 parameters, set it up again from
+			 * being cleared. */
+			nsec3_precompile_newparam(db, zone);
+		}
 		/* added NSEC3 into the chain */
 		nsec3_precompile_nsec3rr(db, rr->owner, zone);
 		/* the domain has become an NSEC3-domain, if it was precompiled
@@ -1715,6 +1721,47 @@ void task_new_del_key(udb_base* udb, udb_ptr* last, const char* name)
 	udb_ptr_unlink(&e, udb);
 }
 
+void task_new_add_cookie_secret(udb_base* udb, udb_ptr* last,
+                                 const char* secret) {
+	udb_ptr e;
+	char* p;
+	size_t const secret_size = strlen(secret) + 1;
+
+	DEBUG(DEBUG_IPC, 1, (LOG_INFO, "add task add_cookie_secret"));
+
+	if(!task_create_new_elem(udb, last, &e,
+	                         sizeof(struct task_list_d) + secret_size, NULL)) {
+		log_msg(LOG_ERR, "tasklist: out of space, cannot add add_cookie_secret");
+		return;
+	}
+	TASKLIST(&e)->task_type = task_add_cookie_secret;
+	p = (char*)TASKLIST(&e)->zname;
+	memmove(p, secret, secret_size);
+	udb_ptr_unlink(&e, udb);
+}
+
+void task_new_drop_cookie_secret(udb_base* udb, udb_ptr* last) {
+	udb_ptr e;
+	DEBUG(DEBUG_IPC, 1, (LOG_INFO, "add task drop_cookie_secret"));
+	if(!task_create_new_elem(udb, last, &e, sizeof(struct task_list_d), NULL)) {
+		log_msg(LOG_ERR, "tasklist: out of space, cannot add drop_cookie_secret");
+		return;
+	}
+	TASKLIST(&e)->task_type = task_drop_cookie_secret;
+	udb_ptr_unlink(&e, udb);
+}
+
+void task_new_activate_cookie_secret(udb_base* udb, udb_ptr* last) {
+	udb_ptr e;
+	DEBUG(DEBUG_IPC, 1, (LOG_INFO, "add task activate_cookie_secret"));
+	if(!task_create_new_elem(udb, last, &e, sizeof(struct task_list_d), NULL)) {
+		log_msg(LOG_ERR, "tasklist: out of space, cannot add activate_cookie_secret");
+		return;
+	}
+	TASKLIST(&e)->task_type = task_activate_cookie_secret;
+	udb_ptr_unlink(&e, udb);
+}
+
 void task_new_add_pattern(udb_base* udb, udb_ptr* last,
 	struct pattern_options* p)
 {
@@ -1956,6 +2003,56 @@ task_process_del_key(struct nsd* nsd, struct task_list_d* task)
 }
 
 static void
+task_process_add_cookie_secret(struct nsd* nsd, struct task_list_d* task) {
+	uint8_t secret_tmp[NSD_COOKIE_SECRET_SIZE];
+	ssize_t decoded_len;
+	char* secret = (char*)task->zname;
+
+	DEBUG(DEBUG_IPC, 1, (LOG_INFO, "add_cookie_secret task %s", secret));
+
+	if( strlen(secret) != 32 ) {
+		log_msg(LOG_ERR, "invalid cookie secret: %s", secret);
+		explicit_bzero(secret, strlen(secret));
+		return;
+	}
+
+	decoded_len = hex_pton(secret, secret_tmp, NSD_COOKIE_SECRET_SIZE);
+	if( decoded_len != 16 ) {
+		explicit_bzero(secret_tmp, NSD_COOKIE_SECRET_SIZE);
+		log_msg(LOG_ERR, "unable to parse cookie secret: %s", secret);
+		explicit_bzero(secret, strlen(secret));
+		return;
+	}
+	explicit_bzero(secret, strlen(secret));
+	add_cookie_secret(nsd, secret_tmp);
+	explicit_bzero(secret_tmp, NSD_COOKIE_SECRET_SIZE);
+}
+
+static void
+task_process_drop_cookie_secret(struct nsd* nsd, struct task_list_d* task)
+{
+	(void)task;
+	DEBUG(DEBUG_IPC, 1, (LOG_INFO, "drop_cookie_secret task"));
+	if( nsd->cookie_count <= 1 ) {
+		log_msg(LOG_ERR, "can not drop the only active cookie secret");
+		return;
+	}
+	drop_cookie_secret(nsd);
+}
+
+static void
+task_process_activate_cookie_secret(struct nsd* nsd, struct task_list_d* task)
+{
+	(void)task;
+	DEBUG(DEBUG_IPC, 1, (LOG_INFO, "activate_cookie_secret task"));
+	if( nsd->cookie_count <= 1 ) {
+		log_msg(LOG_ERR, "can not activate the only active cookie secret");
+		return;
+	}
+	activate_cookie_secret(nsd);
+}
+
+static void
 task_process_add_pattern(struct nsd* nsd, struct task_list_d* task)
 {
 	region_type* temp = region_create(xalloc, free);
@@ -2086,6 +2183,15 @@ void task_process_in_reload(struct nsd* nsd, udb_base* udb, udb_ptr *last_task,
 #endif
 	case task_apply_xfr:
 		task_process_apply_xfr(nsd, udb, last_task, task);
+		break;
+	case task_add_cookie_secret:
+		task_process_add_cookie_secret(nsd, TASKLIST(task));
+		break;
+	case task_drop_cookie_secret:
+		task_process_drop_cookie_secret(nsd, TASKLIST(task));
+		break;
+	case task_activate_cookie_secret:
+		task_process_activate_cookie_secret(nsd, TASKLIST(task));
 		break;
 	default:
 		log_msg(LOG_WARNING, "unhandled task in reload type %d",
