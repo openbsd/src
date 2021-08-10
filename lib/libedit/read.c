@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.45 2021/08/09 09:11:26 schwarze Exp $	*/
+/*	$OpenBSD: read.c,v 1.46 2021/08/10 14:28:10 schwarze Exp $	*/
 /*	$NetBSD: read.c,v 1.100 2016/05/24 19:31:27 christos Exp $	*/
 
 /*-
@@ -144,9 +144,6 @@ read__fixio(int fd, int e)
 	case EAGAIN:
 		if (ioctl(fd, FIONBIO, &zero) == -1)
 			return -1;
-		return 0;
-
-	case EINTR:
 		return 0;
 
 	default:
