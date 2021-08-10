@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.65 2021/08/09 18:14:53 martijn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.66 2021/08/10 06:49:33 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -135,8 +135,9 @@ typedef struct {
 %token	<v.string>	STRING
 %token	<v.number>	NUMBER
 %type	<v.string>	hostcmn
+%type	<v.number>	listenproto listenflag listenflags
 %type	<v.string>	srcaddr port
-%type	<v.number>	optwrite yesno seclevel listenopt listenopts
+%type	<v.number>	optwrite yesno seclevel
 %type	<v.data>	objtype cmd
 %type	<v.oid>		oid hostoid trapoid
 %type	<v.auth>	auth
@@ -202,7 +203,7 @@ yesno		:  STRING			{
 		}
 		;
 
-main		: LISTEN ON listenproto
+main		: LISTEN ON listen_udptcp
 		| engineid_local {
 			if (conf->sc_engineid_len != 0) {
 				yyerror("Redefinition of engineid");
@@ -288,15 +289,16 @@ main		: LISTEN ON listenproto
 		}
 		;
 
-listenproto	: UDP listen_udp
-		| TCP listen_tcp
-		| listen_udp
-
-listenopts	: /* empty */ { $$ = 0; }
-		| listenopts listenopt { $$ |= $2; }
+listenproto	: /* empty */			{ $$ = SOCK_DGRAM; }
+		| UDP 				{ $$ = SOCK_DGRAM; }
+		| TCP listen_tcp		{ $$ = SOCK_STREAM; }
 		;
 
-listenopt	: READ { $$ = ADDRESS_FLAG_READ; }
+listenflags	: /* empty */ { $$ = 0; }
+		| listenflags listenflag { $$ |= $2; }
+		;
+
+listenflag	: READ { $$ = ADDRESS_FLAG_READ; }
 		| WRITE { $$ = ADDRESS_FLAG_WRITE; }
 		| NOTIFY { $$ = ADDRESS_FLAG_NOTIFY; }
 		| SNMPV1 { $$ = ADDRESS_FLAG_SNMPV1; }
@@ -304,71 +306,50 @@ listenopt	: READ { $$ = ADDRESS_FLAG_READ; }
 		| SNMPV3 { $$ = ADDRESS_FLAG_SNMPV3; }
 		;
 
-listen_udp	: STRING port listenopts	{
+listen_udptcp	: listenproto STRING port listenflags	{
 			struct sockaddr_storage ss[16];
-			int nhosts, i;
-			char *port = $2;
+			int nhosts, j;
+			char *address[2], *port = $3;
+			size_t addresslen = 1, i;
 
 			if (port == NULL) {
-				if (($3 & ADDRESS_FLAG_PERM) ==
+				if (($4 & ADDRESS_FLAG_PERM) ==
 				    ADDRESS_FLAG_NOTIFY)
 					port = SNMPTRAP_PORT;
 				else
 					port = SNMP_PORT;
 			}
 
-			nhosts = host($1, port, SOCK_DGRAM, ss, nitems(ss));
-			if (nhosts < 1) {
-				yyerror("invalid address: %s", $1);
-				free($1);
-				free($2);
-				YYERROR;
+			if (strcmp($2, "any") == 0) {
+				addresslen = 2;
+				address[0] = "0.0.0.0";
+				address[1] = "::";
+			} else {
+				addresslen = 1;
+				address[0] = $2;
 			}
-			if (nhosts > (int)nitems(ss))
-				log_warn("%s:%s resolves to more than %zu hosts",
-				    $1, port, nitems(ss));
 
-			free($1);
-			free($2);
-			for (i = 0; i < nhosts; i++) {
-				if (listen_add(&(ss[i]), SOCK_DGRAM, $3) == -1) {
-					yyerror("calloc");
+			for (i = 0; i < addresslen; i++) {
+				nhosts = host(address[i], port, $1, ss, nitems(ss));
+				if (nhosts < 1) {
+					yyerror("invalid address: %s", $2);
+					free($2);
+					free($3);
 					YYERROR;
 				}
-			}
-		}
+				if (nhosts > (int)nitems(ss))
+					log_warn("%s:%s resolves to more than "
+					    "%zu hosts", $2, port, nitems(ss));
 
-listen_tcp	: STRING port listenopts	{
-			struct sockaddr_storage ss[16];
-			int nhosts, i;
-			char *port = $2;
-
-			if (port == NULL) {
-				if (($3 & ADDRESS_FLAG_PERM) ==
-				    ADDRESS_FLAG_NOTIFY)
-					port = SNMPTRAP_PORT;
-				else
-					port = SNMP_PORT;
-			}
-			nhosts = host($1, port, SOCK_STREAM, ss, nitems(ss));
-			if (nhosts < 1) {
-				yyerror("invalid address: %s", $1);
-				free($1);
-				free($2);
-				YYERROR;
-			}
-			if (nhosts > (int)nitems(ss))
-				log_warn("%s:%s resolves to more than %zu hosts",
-				    $1, port, nitems(ss));
-
-			free($1);
-			free($2);
-			for (i = 0; i < nhosts; i++) {
-				if (listen_add(&(ss[i]), SOCK_STREAM, $3) == -1) {
-					yyerror("calloc");
-					YYERROR;
+				for (j = 0; j < nhosts; j++) {
+					if (listen_add(&(ss[j]), $1, $4) == -1) {
+						yyerror("calloc");
+						YYERROR;
+					}
 				}
 			}
+			free($2);
+			free($3);
 		}
 
 port		: /* empty */			{

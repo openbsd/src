@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpd.conf.5,v 1.54 2021/08/09 19:13:08 martijn Exp $
+.\" $OpenBSD: snmpd.conf.5,v 1.55 2021/08/10 06:49:33 martijn Exp $
 .\"
 .\" Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 9 2021 $
+.Dd $Mdocdate: August 10 2021 $
 .Dt SNMPD.CONF 5
 .Os
 .Sh NAME
@@ -96,9 +96,20 @@ reduced during bulk updates.
 The default is
 .Ic no .
 .It Ic listen on Oo Ic tcp | udp Oc Ar address Oo Ic port Ar port Oc Op Ar flags
-Specify the local address
+Specify the local
+.Ar address
 .Xr snmpd 8
-should listen on for incoming SNMP messages.
+should listen on for incoming SNMP messages,
+or
+.Cm any
+to listen on all local IPv4 and IPv6 addresses.
+Multiple
+.Ic listen on
+statements are supported.
+If no
+.Ic listen on
+statement is present, the default is
+.Ic listen on Cm any .
 .Pp
 The
 .Ar flags
@@ -119,9 +130,6 @@ Enables SNMPv2c subsystem on the listen address.
 Enables SNMPv3 subsystem on the listen address.
 .El
 .Pp
-Multiple
-.Ic listen on
-statements are supported.
 The default protocol is
 .Ic udp .
 The default
