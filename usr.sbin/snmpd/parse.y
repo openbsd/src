@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.66 2021/08/10 06:49:33 martijn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.67 2021/08/10 16:14:00 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -291,7 +291,7 @@ main		: LISTEN ON listen_udptcp
 
 listenproto	: /* empty */			{ $$ = SOCK_DGRAM; }
 		| UDP 				{ $$ = SOCK_DGRAM; }
-		| TCP listen_tcp		{ $$ = SOCK_STREAM; }
+		| TCP				{ $$ = SOCK_STREAM; }
 		;
 
 listenflags	: /* empty */ { $$ = 0; }
