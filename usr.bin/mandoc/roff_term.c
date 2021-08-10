@@ -1,4 +1,4 @@
-/* $OpenBSD: roff_term.c,v 1.21 2020/09/03 20:33:20 schwarze Exp $ */
+/* $OpenBSD: roff_term.c,v 1.22 2021/08/10 12:36:42 schwarze Exp $ */
 /*
  * Copyright (c) 2010,2014,2015,2017-2020 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -110,9 +110,11 @@ roff_term_pre_ft(ROFF_TERM_ARGS)
 	cp = n->child->string;
 	switch (mandoc_font(cp, (int)strlen(cp))) {
 	case ESCAPE_FONTBOLD:
+	case ESCAPE_FONTCB:
 		term_fontrepl(p, TERMFONT_BOLD);
 		break;
 	case ESCAPE_FONTITALIC:
+	case ESCAPE_FONTCI:
 		term_fontrepl(p, TERMFONT_UNDER);
 		break;
 	case ESCAPE_FONTBI:
@@ -122,7 +124,7 @@ roff_term_pre_ft(ROFF_TERM_ARGS)
 		term_fontlast(p);
 		break;
 	case ESCAPE_FONTROMAN:
-	case ESCAPE_FONTCW:
+	case ESCAPE_FONTCR:
 		term_fontrepl(p, TERMFONT_NONE);
 		break;
 	default:

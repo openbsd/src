@@ -1,4 +1,4 @@
-/* $OpenBSD: mdoc_markdown.c,v 1.35 2020/04/03 11:34:19 schwarze Exp $ */
+/* $OpenBSD: mdoc_markdown.c,v 1.36 2021/08/10 12:36:42 schwarze Exp $ */
 /*
  * Copyright (c) 2017, 2018, 2020 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -601,16 +601,18 @@ md_word(const char *s)
 				md_rawword("markdown");
 				continue;
 			case ESCAPE_FONTBOLD:
+			case ESCAPE_FONTCB:
 				nextfont = "**";
 				break;
 			case ESCAPE_FONTITALIC:
+			case ESCAPE_FONTCI:
 				nextfont = "*";
 				break;
 			case ESCAPE_FONTBI:
 				nextfont = "***";
 				break;
 			case ESCAPE_FONT:
-			case ESCAPE_FONTCW:
+			case ESCAPE_FONTCR:
 			case ESCAPE_FONTROMAN:
 				nextfont = "";
 				break;

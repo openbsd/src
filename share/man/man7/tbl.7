@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tbl.7,v 1.23 2021/03/08 03:54:48 jsg Exp $
+.\"	$OpenBSD: tbl.7,v 1.24 2021/08/10 12:36:42 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2014,2015,2017,2018,2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 8 2021 $
+.Dd $Mdocdate: August 10 2021 $
 .Dt TBL 7
 .Os
 .Sh NAME
@@ -178,10 +178,11 @@ of any other column also having the
 .Cm e
 modifier.
 .It Cm f
-The next character selects the font to use for this cell.
+The next one or two characters select the font to use for this cell.
+One-character font names must be followed by a blank or period.
 See the
 .Xr roff 7
-manual for supported one-character font names.
+manual for supported font names.
 .It Cm i
 Use an italic font for the contents of this cell.
 .It Cm m

@@ -1,4 +1,4 @@
-/*	$OpenBSD: out.c,v 1.51 2019/12/31 22:49:17 schwarze Exp $ */
+/*	$OpenBSD: out.c,v 1.52 2021/08/10 12:36:42 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011,2014,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -20,11 +20,13 @@
 #include <assert.h>
 #include <ctype.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
 #include "mandoc_aux.h"
+#include "mandoc.h"
 #include "tbl.h"
 #include "out.h"
 

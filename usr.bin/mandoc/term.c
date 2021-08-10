@@ -1,4 +1,4 @@
-/* $OpenBSD: term.c,v 1.142 2020/09/02 16:36:48 schwarze Exp $ */
+/* $OpenBSD: term.c,v 1.143 2021/08/10 12:36:42 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2020 Ingo Schwarze <schwarze@openbsd.org>
@@ -587,16 +587,18 @@ term_word(struct termp *p, const char *word)
 			uc = *seq;
 			break;
 		case ESCAPE_FONTBOLD:
+		case ESCAPE_FONTCB:
 			term_fontrepl(p, TERMFONT_BOLD);
 			continue;
 		case ESCAPE_FONTITALIC:
+		case ESCAPE_FONTCI:
 			term_fontrepl(p, TERMFONT_UNDER);
 			continue;
 		case ESCAPE_FONTBI:
 			term_fontrepl(p, TERMFONT_BI);
 			continue;
 		case ESCAPE_FONT:
-		case ESCAPE_FONTCW:
+		case ESCAPE_FONTCR:
 		case ESCAPE_FONTROMAN:
 			term_fontrepl(p, TERMFONT_NONE);
 			continue;

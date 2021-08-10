@@ -1,4 +1,4 @@
-/* $OpenBSD: mandoc.h,v 1.214 2021/07/04 15:38:08 schwarze Exp $ */
+/* $OpenBSD: mandoc.h,v 1.215 2021/08/10 12:36:42 schwarze Exp $ */
 /*
  * Copyright (c) 2012-2021 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -291,7 +291,9 @@ enum	mandoc_esc {
 	ESCAPE_FONTITALIC, /* italic font mode */
 	ESCAPE_FONTBI, /* bold italic font mode */
 	ESCAPE_FONTROMAN, /* roman font mode */
-	ESCAPE_FONTCW, /* constant width font mode */
+	ESCAPE_FONTCR, /* constant width font mode */
+	ESCAPE_FONTCB, /* constant width bold font mode */
+	ESCAPE_FONTCI, /* constant width italic font mode */
 	ESCAPE_FONTPREV, /* previous font mode */
 	ESCAPE_NUMBERED, /* a numbered glyph */
 	ESCAPE_UNICODE, /* a unicode codepoint */

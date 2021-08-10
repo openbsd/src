@@ -1,7 +1,8 @@
-/*	$OpenBSD: tbl_layout.c,v 1.36 2020/09/01 18:24:10 schwarze Exp $ */
+/*	$OpenBSD: tbl_layout.c,v 1.37 2021/08/10 12:36:42 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2012, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2012, 2014, 2015, 2017, 2020, 2021
+ *               Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -65,6 +66,8 @@ mods(struct tbl_node *tbl, struct tbl_cell *cp,
 	char		*endptr;
 	unsigned long	 spacing;
 	size_t		 sz;
+	int		 isz;
+	enum mandoc_esc	 fontesc;
 
 mod:
 	while (p[*pos] == ' ' || p[*pos] == '\t')
@@ -103,7 +106,7 @@ mod:
 
 	switch (tolower((unsigned char)p[(*pos)++])) {
 	case 'b':
-		cp->flags |= TBL_CELL_BOLD;
+		cp->font = ESCAPE_FONTBOLD;
 		goto mod;
 	case 'd':
 		cp->flags |= TBL_CELL_BALIGN;
@@ -114,7 +117,7 @@ mod:
 	case 'f':
 		break;
 	case 'i':
-		cp->flags |= TBL_CELL_ITALIC;
+		cp->font = ESCAPE_FONTITALIC;
 		goto mod;
 	case 'm':
 		mandoc_msg(MANDOCERR_TBLLAYOUT_MOD, ln, *pos, "m");
@@ -168,40 +171,34 @@ mod:
 		goto mod;
 	}
 
+	while (p[*pos] == ' ' || p[*pos] == '\t')
+		(*pos)++;
+
 	/* Ignore parenthised font names for now. */
 
 	if (p[*pos] == '(')
 		goto mod;
 
-	/* Support only one-character font-names for now. */
+	isz = 0;
+	if (p[*pos] != '\0')
+		isz++;
+	if (strchr(" \t.", p[*pos + isz]) == NULL)
+		isz++;
+	
+	fontesc = mandoc_font(p + *pos, isz);
 
-	if (p[*pos] == '\0' || (p[*pos + 1] != ' ' && p[*pos + 1] != '.')) {
+	switch (fontesc) {
+	case ESCAPE_FONTPREV:
+	case ESCAPE_ERROR:
 		mandoc_msg(MANDOCERR_FT_BAD,
 		    ln, *pos, "TS %s", p + *pos - 1);
-		if (p[*pos] != '\0')
-			(*pos)++;
-		if (p[*pos] != '\0')
-			(*pos)++;
-		goto mod;
-	}
-
-	switch (p[(*pos)++]) {
-	case '3':
-	case 'B':
-		cp->flags |= TBL_CELL_BOLD;
-		goto mod;
-	case '2':
-	case 'I':
-		cp->flags |= TBL_CELL_ITALIC;
-		goto mod;
-	case '1':
-	case 'R':
-		goto mod;
+		break;
 	default:
-		mandoc_msg(MANDOCERR_FT_BAD,
-		    ln, *pos - 1, "TS f%c", p[*pos - 1]);
-		goto mod;
+		cp->font = fontesc;
+		break;
 	}
+	*pos += isz;
+	goto mod;
 }
 
 static void
@@ -360,6 +357,7 @@ cell_alloc(struct tbl_node *tbl, struct tbl_row *rp, enum tbl_cellt pos)
 
 	p = mandoc_calloc(1, sizeof(*p));
 	p->spacing = SIZE_MAX;
+	p->font = ESCAPE_FONTROMAN;
 	p->pos = pos;
 
 	if ((pp = rp->last) != NULL) {

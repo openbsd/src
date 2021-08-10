@@ -1,4 +1,4 @@
-/* $OpenBSD: man_validate.c,v 1.125 2020/10/30 13:24:26 schwarze Exp $ */
+/* $OpenBSD: man_validate.c,v 1.126 2021/08/10 12:36:42 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2012-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -237,7 +237,9 @@ check_tag(struct roff_node *n, struct roff_node *nt)
 			case ESCAPE_FONTITALIC:
 			case ESCAPE_FONTBI:
 			case ESCAPE_FONTROMAN:
-			case ESCAPE_FONTCW:
+			case ESCAPE_FONTCR:
+			case ESCAPE_FONTCB:
+			case ESCAPE_FONTCI:
 			case ESCAPE_FONTPREV:
 			case ESCAPE_IGNORE:
 				break;

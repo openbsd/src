@@ -1,7 +1,7 @@
-/* $OpenBSD: tree.c,v 1.56 2020/04/08 11:54:14 schwarze Exp $ */
+/* $OpenBSD: tree.c,v 1.57 2021/08/10 12:36:42 schwarze Exp $ */
 /*
- * Copyright (c) 2013-2015, 2017-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008, 2009, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2013-2015, 2017-2021 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -469,10 +469,28 @@ print_span(const struct tbl_span *sp, int indent)
 			else {
 				printf("%d", cp->col);
 				print_cellt(dp->layout->pos);
-				if (cp->flags & TBL_CELL_BOLD)
+				switch (cp->font) {
+				case ESCAPE_FONTBOLD:
 					putchar('b');
-				if (cp->flags & TBL_CELL_ITALIC)
+					break;
+				case ESCAPE_FONTITALIC:
 					putchar('i');
+					break;
+				case ESCAPE_FONTBI:
+					fputs("bi", stdout);
+					break;
+				case ESCAPE_FONTCR:
+					putchar('c');
+					break;
+				case ESCAPE_FONTCB:
+					fputs("cb", stdout);
+					break;
+				case ESCAPE_FONTCI:
+					fputs("ci", stdout);
+					break;
+				default:
+					abort();
+				}
 				if (cp->flags & TBL_CELL_TALIGN)
 					putchar('t');
 				if (cp->flags & TBL_CELL_UP)

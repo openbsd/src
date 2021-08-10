@@ -1,0 +1,13 @@
+.\" $OpenBSD: font-eol.in,v 1.1 2021/08/10 12:36:42 schwarze Exp $
+.TH TBL-MOD-FONT-EOL 1 "August 9, 2021"
+.SH NAME
+tbl-mod-font-eol \- font modifier at eol in table layout
+.SH DESCRIPTION
+normal text
+.TS
+box tab(:);
+lfB lf
+lfB lfI.
+bold:none
+bold:italic
+.TE

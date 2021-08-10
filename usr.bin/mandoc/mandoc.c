@@ -1,7 +1,7 @@
-/*	$OpenBSD: mandoc.c,v 1.86 2020/10/24 22:52:34 schwarze Exp $ */
+/*	$OpenBSD: mandoc.c,v 1.87 2021/08/10 12:36:42 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2011-2015, 2017-2020 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011-2015, 2017-2021 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -72,12 +72,12 @@ mandoc_font(const char *cp, int sz)
 		case 'C':
 			switch (cp[1]) {
 			case 'B':
-				return ESCAPE_FONTBOLD;
+				return ESCAPE_FONTCB;
 			case 'I':
-				return ESCAPE_FONTITALIC;
+				return ESCAPE_FONTCI;
 			case 'R':
 			case 'W':
-				return ESCAPE_FONTCW;
+				return ESCAPE_FONTCR;
 			default:
 				return ESCAPE_ERROR;
 			}

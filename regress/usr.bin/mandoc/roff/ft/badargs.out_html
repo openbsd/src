@@ -1,6 +1,7 @@
   <br/>
   default font <i>italic</i> <b><i>bold italic</i></b>
-    <span class="Li">typeqriter</span> <span class="Li">roman</span> <b>bold</b>
-    <i>italic</i> <b>bold</b> <b>still bold</b> <i>italic</i> <i>back to
-    bold</i> <i>back to italic</i>
+    <span class="Li">typeqriter</span> <span class="Li">roman</span>
+    <span class="Li"><b>bold</b></span> <span class="Li"><i>italic</i></span>
+    <b>bold</b> <b>still bold</b> <i>italic</i> <i>back to bold</i> <i>back to
+    italic</i>
   <br/>

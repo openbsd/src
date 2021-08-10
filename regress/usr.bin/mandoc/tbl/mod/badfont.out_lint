@@ -1,2 +1,3 @@
-mandoc: badfont.in:9:7: WARNING: unknown font, skipping request: TS f
-mandoc: badfont.in:10:7: WARNING: unknown font, skipping request: TS f.
+mandoc: badfont.in:9:7: WARNING: unknown font, skipping request: TS fX
+mandoc: badfont.in:10:7: WARNING: unknown font, skipping request: TS fIB
+mandoc: badfont.in:11:7: WARNING: unknown font, skipping request: TS f.

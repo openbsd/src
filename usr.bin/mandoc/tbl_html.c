@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_html.c,v 1.30 2021/05/16 23:16:22 schwarze Exp $ */
+/*	$OpenBSD: tbl_html.c,v 1.31 2021/08/10 12:36:42 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014,2015,2017,2018,2021 Ingo Schwarze <schwarze@openbsd.org>
@@ -241,10 +241,7 @@ print_tbl(struct html *h, const struct tbl_span *sp)
 		    "border-right-style", rborder);
 		if (dp->string != NULL) {
 			save_font = h->metac;
-			if (dp->layout->flags & TBL_CELL_BOLD)
-				html_setfont(h, ESCAPE_FONTBOLD);
-			else if (dp->layout->flags & TBL_CELL_ITALIC)
-				html_setfont(h, ESCAPE_FONTITALIC);
+			html_setfont(h, dp->layout->font);
 			if (dp->layout->pos == TBL_CELL_LONG)
 				print_text(h, "\\[u2003]");  /* em space */
 			print_text(h, dp->string);
