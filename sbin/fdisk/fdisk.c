@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.133 2021/08/07 17:48:31 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.134 2021/08/10 18:17:48 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -32,6 +32,7 @@
 #include "part.h"
 #include "disk.h"
 #include "mbr.h"
+#include "cmd.h"
 #include "misc.h"
 #include "user.h"
 #include "gpt.h"
@@ -168,20 +169,20 @@ main(int argc, char *argv[])
 	case INIT_GPT:
 		GPT_init(GHANDGP);
 		if (ask_yn("Do you wish to write new GPT?"))
-			GPT_write();
+			Xwrite(NULL, &gmbr);
 		break;
 	case INIT_GPTPARTITIONS:
 		if (GPT_read(ANYGPT))
 			errx(1, "-A requires a valid GPT");
 		GPT_init(GPONLY);
 		if (ask_yn("Do you wish to write new GPT?"))
-			GPT_write();
+			Xwrite(NULL, &gmbr);
 		break;
 	case INIT_MBR:
 		mbr.mbr_lba_self = mbr.mbr_lba_firstembr = 0;
 		MBR_init(&mbr);
 		if (ask_yn("Do you wish to write new MBR?"))
-			MBR_write(&mbr);
+			Xwrite(NULL, &mbr);
 		break;
 	case INIT_MBRBOOTCODE:
 		if (MBR_read(0, 0, &mbr))
@@ -189,7 +190,7 @@ main(int argc, char *argv[])
 		memcpy(mbr.mbr_code, default_dmbr.dmbr_boot,
 		    sizeof(mbr.mbr_code));
 		if (ask_yn("Do you wish to write new MBR?"))
-			MBR_write(&mbr);
+			Xwrite(NULL, &mbr);
 		break;
 	default:
 		break;
