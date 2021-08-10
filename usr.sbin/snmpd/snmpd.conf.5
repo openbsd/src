@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpd.conf.5,v 1.55 2021/08/10 06:49:33 martijn Exp $
+.\" $OpenBSD: snmpd.conf.5,v 1.56 2021/08/10 07:53:57 martijn Exp $
 .\"
 .\" Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -116,18 +116,17 @@ The
 are as follows:
 .Bl -tag -width Ds
 .It Ic read
-Specifies if the listen address accepts get, getnext and bulkget
-requests.
+Accept get, getnext and bulkget requests.
 .It Ic write
-Specifies if the listen address accepts set requests.
+Accepts set requests.
 .It Ic notify
-Specifies if the listen address accepts trapv1 and trapv2 requests.
+Accepts trapv1 and trapv2 requests.
 .It Ic snmpv1
-Enables SNMPv1 subsystem on the listen address.
+Enable SNMPv1 subsystem on the listen address.
 .It Ic snmpv2c
-Enables SNMPv2c subsystem on the listen address.
+Enable SNMPv2c subsystem on the listen address.
 .It Ic snmpv3
-Enables SNMPv3 subsystem on the listen address.
+Enable SNMPv3 subsystem on the listen address.
 .El
 .Pp
 The default protocol is
