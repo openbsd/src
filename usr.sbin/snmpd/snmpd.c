@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.c,v 1.45 2021/08/09 18:14:53 martijn Exp $	*/
+/*	$OpenBSD: snmpd.c,v 1.46 2021/08/10 06:52:03 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -312,8 +312,22 @@ snmpd_dispatch_snmpe(int fd, struct privsep_proc *p, struct imsg *imsg)
 int
 snmpd_socket_af(struct sockaddr_storage *ss, int type)
 {
-	return socket(ss->ss_family, (type == SOCK_STREAM ?
+	int fd, serrno;
+	const int enable = 1;
+
+	fd = socket(ss->ss_family, (type == SOCK_STREAM ?
 	    SOCK_STREAM | SOCK_NONBLOCK : SOCK_DGRAM) | SOCK_CLOEXEC, 0);
+	if (fd == -1)
+		return -1;
+
+	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &enable,
+	    sizeof(enable)) == -1) {
+		serrno = errno;
+		close(fd);
+		errno = serrno;
+		return -1;
+	}
+	return fd;
 }
 
 u_long
