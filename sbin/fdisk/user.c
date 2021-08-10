@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.69 2021/08/07 13:33:12 krw Exp $	*/
+/*	$OpenBSD: user.c,v 1.70 2021/08/10 13:48:34 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -60,14 +60,13 @@ USER_edit(const uint64_t lba_self, const uint64_t lba_firstembr)
 {
 	struct mbr		 mbr;
 	char			*cmd, *args;
-	int			 i, st, error;
+	int			 i, st;
 	static int		 editlevel;
 
 	/* One level deeper */
 	editlevel += 1;
 
-	error = MBR_read(lba_self, lba_firstembr, &mbr);
-	if (error == -1)
+	if (MBR_read(lba_self, lba_firstembr, &mbr))
 		goto done;
 
 	if (editlevel == 1)
@@ -131,13 +130,12 @@ USER_print_disk(const int verbosity)
 {
 	struct mbr		mbr;
 	uint64_t		lba_self, lba_firstembr;
-	int			i, error;
+	int			i;
 
 	lba_self = lba_firstembr = 0;
 
 	do {
-		error = MBR_read(lba_self, lba_firstembr, &mbr);
-		if (error == -1)
+		if (MBR_read(lba_self, lba_firstembr, &mbr))
 			break;
 		if (lba_self == 0) {
 			if (GPT_read(ANYGPT)) {
