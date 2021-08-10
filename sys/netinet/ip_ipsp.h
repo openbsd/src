@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.205 2021/07/27 17:13:03 mvs Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.206 2021/08/10 21:29:53 mvs Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -245,7 +245,6 @@ struct ipsec_acquire {
 	struct sockaddr_encap		ipa_mask;
 	struct timeout			ipa_timeout;
 	struct ipsec_policy		*ipa_policy;
-	struct inpcb                    *ipa_pcb;
 	TAILQ_ENTRY(ipsec_acquire)	ipa_ipo_next;
 	TAILQ_ENTRY(ipsec_acquire)	ipa_next;
 };
