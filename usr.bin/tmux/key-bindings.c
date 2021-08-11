@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.136 2021/08/09 13:08:08 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.137 2021/08/11 20:35:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -476,7 +476,7 @@ key_bindings_init(void)
 		"bind -Tcopy-mode C-f send -X cursor-right",
 		"bind -Tcopy-mode C-b send -X cursor-left",
 		"bind -Tcopy-mode C-g send -X clear-selection",
-		"bind -Tcopy-mode C-k send -X copy-end-of-line-and-cancel",
+		"bind -Tcopy-mode C-k send -X copy-pipe-end-of-line-and-cancel",
 		"bind -Tcopy-mode C-n send -X cursor-down",
 		"bind -Tcopy-mode C-p send -X cursor-up",
 		"bind -Tcopy-mode C-r command-prompt -T search -ip'(search up)' -I'#{pane_search_string}' 'send -X search-backward-incremental \"%%%\"'",
@@ -575,7 +575,7 @@ key_bindings_init(void)
 		"bind -Tcopy-mode-vi ? command-prompt -T search -p'(search up)' 'send -X search-backward \"%%%\"'",
 		"bind -Tcopy-mode-vi A send -X append-selection-and-cancel",
 		"bind -Tcopy-mode-vi B send -X previous-space",
-		"bind -Tcopy-mode-vi D send -X copy-end-of-line-and-cancel",
+		"bind -Tcopy-mode-vi D send -X copy-pipe-end-of-line-and-cancel",
 		"bind -Tcopy-mode-vi E send -X next-space-end",
 		"bind -Tcopy-mode-vi F command-prompt -1p'(jump backward)' 'send -X jump-backward \"%%%\"'",
 		"bind -Tcopy-mode-vi G send -X history-bottom",
