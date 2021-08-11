@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmp.1,v 1.19 2021/08/08 13:41:26 sthen Exp $
+.\" $OpenBSD: snmp.1,v 1.20 2021/08/11 18:53:45 martijn Exp $
 .\"
 .\" Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 8 2021 $
+.Dd $Mdocdate: August 11 2021 $
 .Dt SNMP 1
 .Os
 .Sh NAME
@@ -303,12 +303,11 @@ Show how long it took to walk the entire tree.
 Set the
 .Ar community
 string.
-Defaults to
-.Cm public .
 This option is only used by
 .Fl v Cm 1
 and
-.Fl v Cm 2c .
+.Fl v Cm 2c
+and has no default.
 .It Fl e Ar secengineid
 The USM security engine id.
 Under normal circumstances this value is discovered via snmpv3 discovery and
@@ -425,7 +424,7 @@ to either
 or
 .Cm 3 .
 Currently defaults to
-.Cm 2c .
+.Cm 3 .
 .It Fl X Ar privpass
 The privacy password for the user.
 This will be tansformed to
