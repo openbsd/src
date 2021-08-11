@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.39 2021/04/23 21:01:45 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.40 2021/08/11 19:45:08 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -218,6 +218,7 @@ tls13_extra_cert_tests = TestGroup("TLSv1.3 certificate tests", [
     Test("test-tls13-certificate-request.py"),
     Test("test-tls13-certificate-verify.py"),
     Test("test-tls13-ecdsa-in-certificate-verify.py"),
+    Test("test-tls13-eddsa-in-certificate-verify.py"),
 
     # Test expects the server to have installed three certificates:
     # with P-256, P-384 and P-521 curve. Also SHA1+ECDSA is verified
@@ -426,6 +427,7 @@ tls12_failing_tests = TestGroup("failing TLSv1.2 tests", [
     Test("test-certificate-verify-malformed.py"),
     Test("test-certificate-verify.py"),
     Test("test-ecdsa-in-certificate-verify.py"),
+    Test("test-eddsa-in-certificate-verify.py"),
     Test("test-renegotiation-disabled-client-cert.py"),
     Test("test-rsa-pss-sigs-on-certificate-verify.py"),
     Test("test-rsa-sigs-on-certificate-verify.py"),
