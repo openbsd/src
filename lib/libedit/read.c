@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.46 2021/08/10 14:28:10 schwarze Exp $	*/
+/*	$OpenBSD: read.c,v 1.47 2021/08/11 15:13:46 martijn Exp $	*/
 /*	$NetBSD: read.c,v 1.100 2016/05/24 19:31:27 christos Exp $	*/
 
 /*-
@@ -240,15 +240,17 @@ read_char(EditLine *el, wchar_t *cp)
 	el->el_signal->sig_no = 0;
 	while ((num_read = read(el->el_infd, cbuf + cbp, 1)) == -1) {
 		int e = errno;
-		switch (el->el_signal->sig_no) {
-		case SIGCONT:
-			el_set(el, EL_REFRESH);
-			/*FALLTHROUGH*/
-		case SIGWINCH:
-			sig_set(el);
-			goto again;
-		default:
-			break;
+		if (errno == EINTR) {
+			switch (el->el_signal->sig_no) {
+			case SIGCONT:
+				el_set(el, EL_REFRESH);
+				/*FALLTHROUGH*/
+			case SIGWINCH:
+				sig_set(el);
+				goto again;
+			default:
+				break;
+			}
 		}
 		if (!tried && read__fixio(el->el_infd, e) == 0) {
 			errno = save_errno;
