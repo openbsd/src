@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.397 2021/08/06 07:32:21 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.398 2021/08/11 07:51:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2041,6 +2041,7 @@ tty_set_selection(struct tty *tty, const char *buf, size_t len)
 
 	b64_ntop(buf, len, encoded, size);
 	tty_putcode_ptr2(tty, TTYC_MS, "", encoded);
+	tty->client->redraw = EVBUFFER_LENGTH(tty->out);
 
 	free(encoded);
 }
