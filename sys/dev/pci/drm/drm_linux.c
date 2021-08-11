@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.83 2021/08/07 06:23:34 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.84 2021/08/11 16:14:00 sthen Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -171,7 +171,7 @@ flush_work(struct work_struct *work)
 		return false;
 
 	if (work->tq)
-		taskq_del_barrier(work->tq, &work->task);
+		taskq_barrier(work->tq);
 	return false;
 }
 
@@ -189,7 +189,7 @@ flush_delayed_work(struct delayed_work *dwork)
 	}
 
 	if (dwork->tq)
-		taskq_del_barrier(dwork->tq, &dwork->work.task);
+		taskq_barrier(dwork->tq);
 	return ret;
 }
 
@@ -288,7 +288,7 @@ kthread_flush_work(struct kthread_work *work)
 		return;
 
 	if (work->tq)
-		taskq_del_barrier(work->tq, &work->task);
+		taskq_barrier(work->tq);
 }
 
 void
