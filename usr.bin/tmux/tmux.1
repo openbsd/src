@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.847 2021/08/09 13:08:08 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.848 2021/08/11 08:40:58 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 9 2021 $
+.Dd $Mdocdate: August 11 2021 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -5507,6 +5507,7 @@ option:
 .It Li "Transpose characters" Ta "" Ta "C-t"
 .El
 .It Xo Ic confirm-before
+.Op Fl b
 .Op Fl p Ar prompt
 .Op Fl t Ar target-client
 .Ar command
@@ -5523,9 +5524,9 @@ is the prompt to display; otherwise a prompt is constructed from
 It may contain the special character sequences supported by the
 .Ic status-left
 option.
-.Pp
-This command works only from inside
-.Nm .
+With
+.Fl b ,
+the prompt is shown in the background and the client.
 .It Xo Ic display-menu
 .Op Fl O
 .Op Fl c Ar target-client
