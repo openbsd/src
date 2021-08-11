@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpc.c,v 1.35 2021/08/08 13:41:26 sthen Exp $	*/
+/*	$OpenBSD: snmpc.c,v 1.36 2021/08/11 17:54:19 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -1573,7 +1573,7 @@ usage(void)
 		    "            [-n ctxname] [-O afnqvxSQ] [-r retries] [-t timeout] [-u user]\n"
 		    "            [-v version] [-X privpass] [-x cipher] [-Z boots,time]\n"
 		    "            " : "",
-		    snmp_app->usage == NULL ? "" : snmp_app->usage);
+		    snmp_app->usage == NULL ? " " : snmp_app->usage);
 		exit(1);
 	}
 	for (i = 0; i < (sizeof(snmp_apps)/sizeof(*snmp_apps)); i++) {
