@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1113 2021/08/06 09:34:09 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1114 2021/08/11 09:05:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -885,6 +885,9 @@ struct screen_redraw_ctx {
 
 	int		 pane_status;
 	int		 pane_lines;
+
+	struct grid_cell no_pane_gc;
+	int		 no_pane_gc_set;
 
 	u_int		 sx;
 	u_int		 sy;
