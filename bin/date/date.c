@@ -1,4 +1,4 @@
-/*	$OpenBSD: date.c,v 1.56 2019/08/08 02:17:51 cheloha Exp $	*/
+/*	$OpenBSD: date.c,v 1.57 2021/08/11 13:41:48 schwarze Exp $	*/
 /*	$NetBSD: date.c,v 1.11 1995/09/07 06:21:05 jtc Exp $	*/
 
 /*
@@ -219,7 +219,11 @@ setthetime(char *p, const char *pformat)
 	}
 
 	/* convert broken-down time to UTC clock time */
-	if ((tval = mktime(lt)) == -1)
+	if (pformat != NULL && strstr(pformat, "%s") != NULL)
+		tval = timegm(lt);
+	else
+		tval = mktime(lt);
+	if (tval == -1)
 		errx(1, "specified date is outside allowed range");
 
 	if (jflag)
