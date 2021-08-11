@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-keygen.c,v 1.434 2021/07/24 02:51:14 dtucker Exp $ */
+/* $OpenBSD: ssh-keygen.c,v 1.435 2021/08/11 08:54:17 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1994 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -2650,12 +2650,14 @@ done:
 }
 
 static int
-sig_process_opts(char * const *opts, size_t nopts, uint64_t *verify_timep)
+sig_process_opts(char * const *opts, size_t nopts, uint64_t *verify_timep,
+    int *print_pubkey)
 {
 	size_t i;
 	time_t now;
 
 	*verify_timep = 0;
+	*print_pubkey = 0;
 	for (i = 0; i < nopts; i++) {
 		if (strncasecmp(opts[i], "verify-time=", 12) == 0) {
 			if (parse_absolute_time(opts[i] + 12,
@@ -2663,6 +2665,9 @@ sig_process_opts(char * const *opts, size_t nopts, uint64_t *verify_timep)
 				error("Invalid \"verify-time\" option");
 				return SSH_ERR_INVALID_ARGUMENT;
 			}
+		} else if (print_pubkey &&
+		    strcasecmp(opts[i], "print-pubkey") == 0) {
+			*print_pubkey = 1;
 		} else {
 			error("Invalid option \"%s\"", opts[i]);
 			return SSH_ERR_INVALID_ARGUMENT;
@@ -2684,13 +2689,14 @@ sig_verify(const char *signature, const char *sig_namespace,
     char * const *opts, size_t nopts)
 {
 	int r, ret = -1;
+	int print_pubkey = 0;
 	struct sshbuf *sigbuf = NULL, *abuf = NULL;
 	struct sshkey *sign_key = NULL;
 	char *fp = NULL;
 	struct sshkey_sig_details *sig_details = NULL;
 	uint64_t verify_time = 0;
 
-	if (sig_process_opts(opts, nopts, &verify_time) != 0)
+	if (sig_process_opts(opts, nopts, &verify_time, &print_pubkey) != 0)
 		goto done; /* error already logged */
 
 	memset(&sig_details, 0, sizeof(sig_details));
@@ -2751,6 +2757,15 @@ done:
 			printf("Could not verify signature.\n");
 		}
 	}
+	/* Print the signature key if requested */
+	if (ret == 0 && print_pubkey && sign_key != NULL) {
+		if ((r = sshkey_write(sign_key, stdout)) == 0)
+			fputc('\n', stdout);
+		else {
+			error_r(r, "Could not print public key.\n");
+			ret = -1;
+		}
+	}
 	sshbuf_free(sigbuf);
 	sshbuf_free(abuf);
 	sshkey_free(sign_key);
@@ -2769,7 +2784,7 @@ sig_find_principals(const char *signature, const char *allowed_keys,
 	char *principals = NULL, *cp, *tmp;
 	uint64_t verify_time = 0;
 
-	if (sig_process_opts(opts, nopts, &verify_time) != 0)
+	if (sig_process_opts(opts, nopts, &verify_time, NULL) != 0)
 		goto done; /* error already logged */
 
 	if ((r = sshbuf_load_file(signature, &abuf)) != 0) {
