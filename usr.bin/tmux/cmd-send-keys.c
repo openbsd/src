@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-send-keys.c,v 1.65 2020/05/27 14:45:35 nicm Exp $ */
+/* $OpenBSD: cmd-send-keys.c,v 1.66 2021/08/11 20:49:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -197,8 +197,9 @@ cmd_send_keys_exec(struct cmd *self, struct cmdq_item *item)
 	}
 
 	if (args_has(args, 'R')) {
-		window_pane_reset_palette(wp);
+		colour_palette_clear(&wp->palette);
 		input_reset(wp->ictx, 1);
+		wp->flags |= (PANE_STYLECHANGED|PANE_REDRAW);
 	}
 
 	for (; np != 0; np--) {
