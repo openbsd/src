@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-select-pane.c,v 1.66 2021/03/11 06:31:05 nicm Exp $ */
+/* $OpenBSD: cmd-select-pane.c,v 1.67 2021/08/12 19:47:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -145,10 +145,12 @@ cmd_select_pane_exec(struct cmd *self, struct cmdq_item *item)
 		markedwp = marked_pane.wp;
 
 		if (lastwp != NULL) {
+			lastwp->flags |= (PANE_REDRAW|PANE_STYLECHANGED);
 			server_redraw_window_borders(lastwp->window);
 			server_status_window(lastwp->window);
 		}
 		if (markedwp != NULL) {
+			markedwp->flags |= (PANE_REDRAW|PANE_STYLECHANGED);
 			server_redraw_window_borders(markedwp->window);
 			server_status_window(markedwp->window);
 		}
