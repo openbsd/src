@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.47 2021/08/11 15:13:46 martijn Exp $	*/
+/*	$OpenBSD: read.c,v 1.48 2021/08/12 10:31:15 schwarze Exp $	*/
 /*	$NetBSD: read.c,v 1.100 2016/05/24 19:31:27 christos Exp $	*/
 
 /*-
@@ -66,7 +66,6 @@ struct el_read_t {
 	int		 read_errno;
 };
 
-static int	read__fixio(int, int);
 static int	read_char(EditLine *, wchar_t *);
 static int	read_getcmd(EditLine *, el_action_t *, wchar_t *);
 static void	read_clearmacros(struct macros *);
@@ -129,26 +128,6 @@ el_read_getfn(struct el_read_t *el_read)
 {
 	return el_read->read_char == read_char ?
 	    EL_BUILTIN_GETCFN : el_read->read_char;
-}
-
-
-/* read__fixio():
- *	Try to recover from a read error
- */
-static int
-read__fixio(int fd, int e)
-{
-	int zero = 0;
-
-	switch (e) {
-	case EAGAIN:
-		if (ioctl(fd, FIONBIO, &zero) == -1)
-			return -1;
-		return 0;
-
-	default:
-		return -1;
-	}
 }
 
 
@@ -231,15 +210,12 @@ static int
 read_char(EditLine *el, wchar_t *cp)
 {
 	ssize_t num_read;
-	int tried = 0;
 	char cbuf[MB_LEN_MAX];
 	int cbp = 0;
-	int save_errno = errno;
 
  again:
 	el->el_signal->sig_no = 0;
 	while ((num_read = read(el->el_infd, cbuf + cbp, 1)) == -1) {
-		int e = errno;
 		if (errno == EINTR) {
 			switch (el->el_signal->sig_no) {
 			case SIGCONT:
@@ -252,14 +228,8 @@ read_char(EditLine *el, wchar_t *cp)
 				break;
 			}
 		}
-		if (!tried && read__fixio(el->el_infd, e) == 0) {
-			errno = save_errno;
-			tried = 1;
-		} else {
-			errno = e;
-			*cp = L'\0';
-			return -1;
-		}
+		*cp = L'\0';
+		return -1;
 	}
 
 	/* Test for EOF */
