@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.1 2021/07/26 09:26:36 florian Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.2 2021/08/12 12:41:08 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -106,11 +106,24 @@ void
 print_config(struct dhcpleased_conf *conf)
 {
 	struct iface_conf	*iface;
+	int			 i;
+	char			 hbuf[INET_ADDRSTRLEN];
 
 	SIMPLEQ_FOREACH(iface, &conf->iface_list, entry) {
 		printf("interface %s {\n", iface->name);
 		print_dhcp_options("\t", iface->c_id, iface->c_id_len);
 		print_dhcp_options("\t", iface->vc_id, iface->vc_id_len);
+		if (iface->ignore & IGN_DNS)
+			printf("\tignore dns\n");
+		if (iface->ignore & IGN_ROUTES)
+			printf("\tignore routes\n");
+		for (i = 0; i < iface->ignore_servers_len; i++) {
+			if (inet_ntop(AF_INET, &iface->ignore_servers[i],
+			    hbuf, sizeof(hbuf)) == NULL)
+				continue;
+			printf("\tignore %s\n", hbuf);
+
+		}
 		printf("}\n");
 	}
 }

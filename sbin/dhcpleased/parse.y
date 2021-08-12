@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.2 2021/07/27 13:28:25 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.3 2021/08/12 12:41:08 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -108,7 +108,7 @@ typedef struct {
 
 %}
 
-%token	DHCP_IFACE ERROR SEND VENDOR CLASS ID CLIENT
+%token	DHCP_IFACE ERROR SEND VENDOR CLASS ID CLIENT IGNORE DNS ROUTES
 
 %token	<v.string>	STRING
 %token	<v.number>	NUMBER
@@ -275,6 +275,31 @@ ifaceoptsl	: SEND VENDOR CLASS ID STRING {
 			iface_conf->c_id[0] = DHO_DHCP_CLIENT_IDENTIFIER;
 			iface_conf->c_id[1] = iface_conf->c_id_len - 2;
 		}
+		| IGNORE ROUTES {
+			iface_conf->ignore |= IGN_ROUTES;
+		}
+		| IGNORE DNS {
+			iface_conf->ignore |= IGN_DNS;
+		}
+		| IGNORE STRING {
+			int res;
+
+			if (iface_conf->ignore_servers_len >= MAX_SERVERS) {
+				yyerror("too many servers to ignore");
+				free($2);
+				YYERROR;
+			}
+			res = inet_pton(AF_INET, $2,
+			    &iface_conf->ignore_servers[
+			    iface_conf->ignore_servers_len++]);
+
+			if (res != 1) {
+				yyerror("Invalid server IP %s", $2);
+				free($2);
+				YYERROR;
+			}
+			free($2);
+		}
 		;
 %%
 
@@ -312,8 +337,11 @@ lookup(char *s)
 	static const struct keywords keywords[] = {
 		{"class",		CLASS},
 		{"client",		CLIENT},
+		{"dns",			DNS},
 		{"id",			ID},
+		{"ignore",		IGNORE},
 		{"interface",		DHCP_IFACE},
+		{"routes",		ROUTES},
 		{"send",		SEND},
 		{"vendor",		VENDOR},
 	};

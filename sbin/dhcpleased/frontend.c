@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.17 2021/08/07 07:07:44 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.18 2021/08/12 12:41:08 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -96,8 +96,6 @@ void		 send_discover(struct iface *);
 void		 send_request(struct iface *);
 void		 bpf_send_packet(struct iface *, uint8_t *, ssize_t);
 void		 udp_send_packet(struct iface *, uint8_t *, ssize_t);
-int		*changed_ifaces(struct dhcpleased_conf *, struct
-		     dhcpleased_conf *);
 int		 iface_conf_cmp(struct iface_conf *, struct iface_conf *);
 
 LIST_HEAD(, iface)		 interfaces;
@@ -1214,6 +1212,13 @@ iface_conf_cmp(struct iface_conf *a, struct iface_conf *b)
 	if (a->c_id_len != b->c_id_len)
 		return 1;
 	if (memcmp(a->c_id, b->c_id, a->c_id_len) != 0)
+		return 1;
+	if (a->ignore != b->ignore)
+		return 1;
+	if (a->ignore_servers_len != b->ignore_servers_len)
+		return 1;
+	if (memcmp(a->ignore_servers, b->ignore_servers,
+	    a->ignore_servers_len * sizeof (struct in_addr)) != 0)
 		return 1;
 	return 0;
 }

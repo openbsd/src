@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.24 2021/08/04 05:56:58 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.25 2021/08/12 12:41:08 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -139,6 +139,7 @@ void			 send_configure_interface(struct dhcpleased_iface *);
 void			 send_rdns_proposal(struct dhcpleased_iface *);
 void			 send_deconfigure_interface(struct dhcpleased_iface *);
 void			 send_rdns_withdraw(struct dhcpleased_iface *);
+void			 send_routes_withdraw(struct dhcpleased_iface *);
 void			 parse_lease(struct dhcpleased_iface *,
 			     struct imsg_ifinfo *);
 int			 engine_imsg_compose_main(int, pid_t, void *, uint16_t);
@@ -506,13 +507,37 @@ engine_dispatch_main(int fd, short event, void *bula)
 			    IMSG_DATA_SIZE(imsg));
 			iface_conf->c_id_len = IMSG_DATA_SIZE(imsg);
 			break;
-		case IMSG_RECONF_END:
+		case IMSG_RECONF_END: {
+			struct dhcpleased_iface	*iface;
+			int			*ifaces;
+			int			 i, if_index;
+			char			*if_name;
+			char			 ifnamebuf[IF_NAMESIZE];
+
 			if (nconf == NULL)
 				fatalx("%s: IMSG_RECONF_END without "
 				    "IMSG_RECONF_CONF", __func__);
+			ifaces = changed_ifaces(engine_conf, nconf);
 			merge_config(engine_conf, nconf);
 			nconf = NULL;
+			for (i = 0; ifaces[i] != 0; i++) {
+				if_index = ifaces[i];
+				if_name = if_indextoname(if_index, ifnamebuf);
+				iface = get_dhcpleased_iface_by_id(if_index);
+				if (if_name == NULL || iface == NULL)
+					continue;
+				iface_conf = find_iface_conf(
+				    &engine_conf->iface_list, if_name);
+				if (iface_conf == NULL)
+					continue;
+				if (iface_conf->ignore & IGN_DNS)
+					send_rdns_withdraw(iface);
+				if (iface_conf->ignore & IGN_ROUTES)
+					send_routes_withdraw(iface);
+			}
+			free(ifaces);
 			break;
+		}
 #endif /* SMALL */
 		default:
 			log_debug("%s: unexpected imsg %d", __func__,
@@ -759,6 +784,18 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 		hbuf_src[0] = '\0';
 	if (inet_ntop(AF_INET, &ip->ip_dst, hbuf_dst, sizeof(hbuf_dst)) == NULL)
 		hbuf_dst[0] = '\0';
+
+#ifndef SMALL
+	if (iface_conf != NULL) {
+		for (i = 0; (int)i < iface_conf->ignore_servers_len; i++) {
+			if (iface_conf->ignore_servers[i].s_addr ==
+			    ip->ip_src.s_addr) {
+				log_debug("ignoring server %s", hbuf_src);
+				return;
+			}
+		}
+	}
+#endif /* SMALL */
 
 	if (rem < sizeof(*udp))
 		goto too_short;
@@ -1203,13 +1240,30 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 		iface->server_identifier.s_addr = server_identifier.s_addr;
 		iface->requested_ip.s_addr = dhcp_hdr->yiaddr.s_addr;
 		iface->mask.s_addr = subnet_mask.s_addr;
-		iface->routes_len = routes_len;
-		memcpy(iface->routes, routes, sizeof(iface->routes));
+#ifndef SMALL
+		if (iface_conf != NULL && iface_conf->ignore & IGN_ROUTES) {
+			iface->routes_len = 0;
+			memset(iface->routes, 0, sizeof(iface->routes));
+		} else
+#endif /* SMALL */
+		{
+			iface->routes_len = routes_len;
+			memcpy(iface->routes, routes, sizeof(iface->routes));
+		}
 		iface->lease_time = lease_time;
 		iface->renewal_time = renewal_time;
 		iface->rebinding_time = rebinding_time;
-		memcpy(iface->nameservers, nameservers,
-		    sizeof(iface->nameservers));
+
+#ifndef SMALL
+		if (iface_conf != NULL && iface_conf->ignore & IGN_DNS) {
+			memset(iface->nameservers, 0,
+			    sizeof(iface->nameservers));
+		} else
+#endif /* SMALL */
+		{
+			memcpy(iface->nameservers, nameservers,
+			    sizeof(iface->nameservers));
+		}
 
 		iface->siaddr.s_addr = dhcp_hdr->siaddr.s_addr;
 
@@ -1518,6 +1572,28 @@ send_deconfigure_interface(struct dhcpleased_iface *iface)
 	iface->mask.s_addr = INADDR_ANY;
 	iface->routes_len = 0;
 	memset(iface->routes, 0, sizeof(iface->routes));
+}
+
+void
+send_routes_withdraw(struct dhcpleased_iface *iface)
+{
+	struct imsg_configure_interface	 imsg;
+
+	if (iface->requested_ip.s_addr == INADDR_ANY || iface->routes_len == 0)
+		return;
+
+	imsg.if_index = iface->if_index;
+	imsg.rdomain = iface->rdomain;
+	imsg.addr.s_addr = iface->requested_ip.s_addr;
+	imsg.mask.s_addr = iface->mask.s_addr;
+	imsg.siaddr.s_addr = iface->siaddr.s_addr;
+	strlcpy(imsg.file, iface->file, sizeof(imsg.file));
+	strlcpy(imsg.domainname, iface->domainname, sizeof(imsg.domainname));
+	strlcpy(imsg.hostname, iface->hostname, sizeof(imsg.hostname));
+	imsg.routes_len = iface->routes_len;
+	memcpy(imsg.routes, iface->routes, sizeof(imsg.routes));
+	engine_imsg_compose_main(IMSG_WITHDRAW_ROUTES, 0, &imsg,
+	    sizeof(imsg));
 }
 
 void

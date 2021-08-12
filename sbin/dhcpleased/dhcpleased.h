@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleased.h,v 1.10 2021/08/01 09:07:03 florian Exp $	*/
+/*	$OpenBSD: dhcpleased.h,v 1.11 2021/08/12 12:41:08 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -151,6 +151,12 @@
 #define	DHCPRELEASE	7
 #define	DHCPINFORM	8
 
+/* Ignore parts of DHCP lease */
+#define	IGN_ROUTES	1
+#define	IGN_DNS		2
+
+#define	MAX_SERVERS	16	/* max servers that can be ignored per if */
+
 #define	IMSG_DATA_SIZE(imsg)	((imsg).hdr.len - IMSG_HEADER_SIZE)
 #define	DHCP_SNAME_LEN		64
 #define	DHCP_FILE_LEN		128
@@ -216,6 +222,7 @@ enum imsg_type {
 	IMSG_DECONFIGURE_INTERFACE,
 	IMSG_PROPOSE_RDNS,
 	IMSG_WITHDRAW_RDNS,
+	IMSG_WITHDRAW_ROUTES,
 	IMSG_REPROPOSE_RDNS,
 	IMSG_REQUEST_REBOOT,
 };
@@ -246,6 +253,9 @@ struct iface_conf {
 	int				 vc_id_len;
 	uint8_t				*c_id;
 	int				 c_id_len;
+	int				 ignore;
+	struct in_addr			 ignore_servers[MAX_SERVERS];
+	int				 ignore_servers_len;
 };
 
 struct dhcpleased_conf {
@@ -304,6 +314,8 @@ const char	*sin_to_str(struct sockaddr_in *);
 
 /* frontend.c */
 struct iface_conf	*find_iface_conf(struct iface_conf_head *, char *);
+int			*changed_ifaces(struct dhcpleased_conf *, struct
+			     dhcpleased_conf *);
 
 /* printconf.c */
 void	print_config(struct dhcpleased_conf *);

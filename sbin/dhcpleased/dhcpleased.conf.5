@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpleased.conf.5,v 1.4 2021/07/27 14:38:36 florian Exp $
+.\"	$OpenBSD: dhcpleased.conf.5,v 1.5 2021/08/12 12:41:08 florian Exp $
 .\"
 .\" Copyright (c) 2018, 2021 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 27 2021 $
+.Dd $Mdocdate: August 12 2021 $
 .Dt DHCPLEASED.CONF 5
 .Os
 .Sh NAME
@@ -57,6 +57,17 @@ A list of interfaces to overwrite defaults:
 .Ic interface
 options are as follows:
 .Bl -tag -width Ds
+.It Ic ignore dns
+Ignore nameservers from leases on this interface.
+The default is to not ignore nameservers.
+.It Ic ignore routes
+Ignore routes from leases on this interface.
+The default is to not ignore routes.
+.It Ic ignore Ar server-ip
+Ignore leases from
+.Ar server-ip .
+This option can be listed multiple times.
+The default is to not ignore servers.
 .It Ic send client id Ar client-id
 Send the dhcp client identifier option with a value of
 .Ar client-id .
