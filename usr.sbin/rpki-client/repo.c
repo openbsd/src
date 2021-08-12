@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.8 2021/06/14 10:01:23 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.9 2021/08/12 15:27:15 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -38,6 +38,7 @@
 
 extern struct stats	stats;
 extern int		noop;
+extern int		rrdpon;
 
 enum repo_state {
 	REPO_LOADING = 0,
@@ -329,6 +330,26 @@ rrdp_state_filename(const struct rrdprepo *rr, int temp)
 static void
 ta_fetch(struct tarepo *tr)
 {
+	if (!rrdpon) {
+		for (; tr->uriidx < tr->urisz; tr->uriidx++) {
+			if (strncasecmp(tr->uri[tr->uriidx],
+			    "rsync://", 8) == 0)
+				break;
+		}
+	}
+
+	if (tr->uriidx >= tr->urisz) {
+		struct repo *rp;
+
+		tr->state = REPO_FAILED;
+		logx("ta/%s: fallback to cache", tr->descr);
+
+		SLIST_FOREACH(rp, &repos, entry)
+			if (rp->ta == tr)
+				entityq_flush(&rp->queue, rp);
+		return;
+	}
+
 	logx("ta/%s: pulling from %s", tr->descr, tr->uri[tr->uriidx]);
 
 	if (strncasecmp(tr->uri[tr->uriidx], "rsync://", 8) == 0) {
@@ -914,16 +935,12 @@ rsync_finish(size_t id, int ok)
 			logx("ta/%s: loaded from network", tr->descr);
 			stats.rsync_repos++;
 			tr->state = REPO_DONE;
-		} else if (++tr->uriidx < tr->urisz) {
-			logx("ta/%s: load from network failed, retry",
-			    tr->descr);
+		} else {
+			logx("ta/%s: load from network failed", tr->descr);
+			stats.rsync_fails++;
+			tr->uriidx++;
 			ta_fetch(tr);
 			return;
-		} else {
-			logx("ta/%s: load from network failed, "
-			    "fallback to cache", tr->descr);
-			stats.rsync_fails++;
-			tr->state = REPO_FAILED;
 		}
 		SLIST_FOREACH(rp, &repos, entry)
 			if (rp->ta == tr)
@@ -1031,16 +1048,10 @@ http_finish(size_t id, enum http_result res, const char *last_mod)
 		if (unlink(tr->temp) == -1 && errno != ENOENT)
 			warn("unlink %s", tr->temp);
 
-		if (++tr->uriidx < tr->urisz) {
-			logx("ta/%s: load from network failed, retry",
-			    tr->descr);
-			ta_fetch(tr);
-			return;
-		}
-
-		tr->state = REPO_FAILED;
-		logx("ta/%s: load from network failed, "
-		    "fallback to cache", tr->descr);
+		tr->uriidx++;
+		logx("ta/%s: load from network failed", tr->descr);
+		ta_fetch(tr);
+		return;
 	}
 
 	SLIST_FOREACH(rp, &repos, entry)
