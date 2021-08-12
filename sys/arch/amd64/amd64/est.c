@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.41 2021/08/12 15:13:52 tb Exp $ */
+/*	$OpenBSD: est.c,v 1.42 2021/08/12 15:16:23 tb Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -298,14 +298,14 @@ est_acpi_pss_changed(struct acpicpu_pss *pss, int npss)
 	if ((acpilist = malloc(sizeof(struct fqlist), M_DEVBUF, M_NOWAIT))
 	    == NULL) {
 		printf("est_acpi_pss_changed: cannot allocate memory for new "
-		    "est state");
+		    "est state\n");
 		return;
 	}
 
 	if ((acpilist->table = mallocarray(npss, sizeof(struct est_op),
 	    M_DEVBUF, M_NOWAIT)) == NULL) {
 		printf("est_acpi_pss_changed: cannot allocate memory for new "
-		    "operating points");
+		    "operating points\n");
 		free(acpilist, M_DEVBUF, sizeof(struct fqlist));
 		return;
 	}
