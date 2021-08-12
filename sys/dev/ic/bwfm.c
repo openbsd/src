@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.84 2021/04/22 22:14:30 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.85 2021/08/12 12:31:40 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -2464,7 +2464,7 @@ bwfm_rx_event_cb(struct bwfm_softc *sc, struct mbuf *m)
 		if (ntohl(e->msg.status) == BWFM_E_STATUS_SUCCESS &&
 		    ic->ic_state == IEEE80211_S_ASSOC)
 			ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
-		else
+		else if (ntohl(e->msg.status) != BWFM_E_STATUS_UNSOLICITED)
 			ieee80211_begin_scan(ifp);
 		break;
 	case BWFM_E_DEAUTH:
