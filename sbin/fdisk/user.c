@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.70 2021/08/10 13:48:34 krw Exp $	*/
+/*	$OpenBSD: user.c,v 1.71 2021/08/12 12:31:16 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -31,6 +31,13 @@
 #include "gpt.h"
 #include "disk.h"
 
+struct cmd {
+	char	*cmd_name;
+	int	 cmd_gpt;
+	int	(*cmd_fcn)(char *, struct mbr *);
+	char	*cmd_help;
+};
+
 const struct cmd		cmd_table[] = {
 	{"help",   1, Xhelp,   "Command help list"},
 	{"manual", 1, Xmanual, "Show entire OpenBSD man page for fdisk"},
@@ -47,7 +54,6 @@ const struct cmd		cmd_table[] = {
 	{"exit",   1, Xexit,   "Exit edit of current MBR, without saving changes"},
 	{"quit",   1, Xquit,   "Quit edit of current MBR, saving current changes"},
 	{"abort",  1, Xabort,  "Abort program without saving current changes"},
-	{NULL,     0, NULL,    NULL}
 };
 
 
@@ -86,7 +92,7 @@ again:
 
 		if (cmd[0] == '\0')
 			continue;
-		for (i = 0; cmd_table[i].cmd_name != NULL; i++)
+		for (i = 0; i < nitems(cmd_table); i++)
 			if (strstr(cmd_table[i].cmd_name, cmd) == cmd_table[i].cmd_name)
 				break;
 
@@ -174,6 +180,26 @@ USER_print_disk(const int verbosity)
 					lba_firstembr = lba_self;
 			}
 	} while (lba_self);
+}
+
+void
+USER_help(void)
+{
+	char			 help[80];
+	char			*mbrstr;
+	int			 i;
+
+	for (i = 0; i < nitems(cmd_table); i++) {
+		strlcpy(help, cmd_table[i].cmd_help, sizeof(help));
+		if (letoh64(gh.gh_sig) == GPTSIGNATURE) {
+			if (cmd_table[i].cmd_gpt == 0)
+				continue;
+			mbrstr = strstr(help, "MBR");
+			if (mbrstr)
+				memcpy(mbrstr, "GPT", 3);
+		}
+		printf("\t%s\t\t%s\n", cmd_table[i].cmd_name, help);
+	}
 }
 
 void
