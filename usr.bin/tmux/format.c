@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.289 2021/08/12 08:05:11 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.290 2021/08/12 08:10:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3098,7 +3098,7 @@ format_log_debug_cb(const char *key, const char *value, void *arg)
 void
 format_log_debug(struct format_tree *ft, const char *prefix)
 {
-	format_each(ft, format_log_debug_cb, prefix);
+	format_each(ft, format_log_debug_cb, (void *)prefix);
 }
 
 /* Walk each format. */
