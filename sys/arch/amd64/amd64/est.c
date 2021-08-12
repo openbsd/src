@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.40 2021/08/11 18:15:50 tb Exp $ */
+/*	$OpenBSD: est.c,v 1.41 2021/08/12 15:13:52 tb Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -187,7 +187,7 @@ p3_get_bus_clock(struct cpu_info *ci)
 		default:
 			printf("%s: unknown Core FSB_FREQ value %d",
 			    ci->ci_dev->dv_xname, bus);
-			break;
+			goto print_msr;
 		}
 		break;
 	case 0x1c: /* Atom */
@@ -211,13 +211,20 @@ p3_get_bus_clock(struct cpu_info *ci)
 		default:
 			printf("%s: unknown Atom FSB_FREQ value %d",
 			    ci->ci_dev->dv_xname, bus);
-			break;
+			goto print_msr;
 		}
 		break;
 	default:
 		/* no FSB on modern Intel processors */
 		break;
 	}
+	return;
+print_msr:
+	/*
+	 * Show the EBL_CR_POWERON MSR, so we'll at least have
+	 * some extra information, such as clock ratio, etc.
+	 */
+	printf(" (0x%llx)\n", rdmsr(MSR_EBL_CR_POWERON));
 }
 
 #if NACPICPU > 0
