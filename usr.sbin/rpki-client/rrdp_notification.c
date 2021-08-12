@@ -365,8 +365,9 @@ notification_done(struct notification_xml *nxml, char *last_mod)
 	if (nxml->repository->serial == 0)
 		goto snapshot;
 
-	if (nxml->repository->serial == nxml->serial) {
-		nxml->current->serial = nxml->serial;
+	/* if our serial is equal or bigger, the repo is up to date */
+	if (nxml->repository->serial >= nxml->serial) {
+		nxml->current->serial = nxml->repository->serial;
 		return NOTIFICATION;
 	}
 
