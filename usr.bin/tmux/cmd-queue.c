@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.102 2021/04/12 09:36:12 nicm Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.103 2021/08/12 08:05:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -267,6 +267,15 @@ cmdq_add_format(struct cmdq_state *state, const char *key, const char *fmt, ...)
 	format_add(state->formats, key, "%s", value);
 
 	free(value);
+}
+
+/* Add formats to command queue. */
+void
+cmdq_add_formats(struct cmdq_state *state, struct format_tree *ft)
+{
+	if (state->formats == NULL)
+		state->formats = format_create(NULL, NULL, FORMAT_NONE, 0);
+	format_merge(state->formats, ft);
 }
 
 /* Merge formats from item. */

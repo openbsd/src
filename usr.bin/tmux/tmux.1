@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.850 2021/08/11 20:49:55 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.851 2021/08/12 08:05:11 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 11 2021 $
+.Dd $Mdocdate: August 12 2021 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -4925,6 +4925,7 @@ The following variables are available, where appropriate:
 .It Li "history_limit" Ta "" Ta "Maximum window history lines"
 .It Li "history_size" Ta "" Ta "Size of history in lines"
 .It Li "hook" Ta "" Ta "Name of running hook, if any"
+.It Li "hook_client" Ta "" Ta "Name of client where hook was run, if any"
 .It Li "hook_pane" Ta "" Ta "ID of pane where hook was run, if any"
 .It Li "hook_session" Ta "" Ta "ID of session where hook was run, if any"
 .It Li "hook_session_name" Ta "" Ta "Name of session where hook was run, if any"
