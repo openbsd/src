@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urereg.h,v 1.9 2020/08/04 14:45:46 kevlo Exp $	*/
+/*	$OpenBSD: if_urereg.h,v 1.10 2021/08/13 01:24:22 gnezdo Exp $	*/
 /*-
  * Copyright (c) 2015, 2016, 2019 Kevin Lo <kevlo@openbsd.org>
  * All rights reserved.
@@ -527,7 +527,6 @@ struct ure_softc {
 	/* usb */
 	struct usbd_interface	*ure_iface;
 	struct usb_task		ure_tick_task;
-	struct usb_task		ure_stop_task;
 	int			ure_ed[URE_ENDPT_MAX];
 	struct usbd_pipe	*ure_ep[URE_ENDPT_MAX];
 
