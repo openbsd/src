@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.48 2021/08/12 10:31:15 schwarze Exp $	*/
+/*	$OpenBSD: read.c,v 1.49 2021/08/13 10:21:25 schwarze Exp $	*/
 /*	$NetBSD: read.c,v 1.100 2016/05/24 19:31:27 christos Exp $	*/
 
 /*-
@@ -209,13 +209,13 @@ read_getcmd(EditLine *el, el_action_t *cmdnum, wchar_t *ch)
 static int
 read_char(EditLine *el, wchar_t *cp)
 {
-	ssize_t num_read;
 	char cbuf[MB_LEN_MAX];
 	int cbp = 0;
 
  again:
 	el->el_signal->sig_no = 0;
-	while ((num_read = read(el->el_infd, cbuf + cbp, 1)) == -1) {
+	switch (read(el->el_infd, cbuf + cbp, 1)) {
+	case -1:
 		if (errno == EINTR) {
 			switch (el->el_signal->sig_no) {
 			case SIGCONT:
@@ -230,12 +230,11 @@ read_char(EditLine *el, wchar_t *cp)
 		}
 		*cp = L'\0';
 		return -1;
-	}
-
-	/* Test for EOF */
-	if (num_read == 0) {
+	case 0:
 		*cp = L'\0';
 		return 0;
+	default:
+		break;
 	}
 
 	for (;;) {
