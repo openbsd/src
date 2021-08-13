@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.89 2021/08/07 09:21:51 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.90 2021/08/13 13:13:11 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5989,8 +5989,10 @@ iwx_umac_scan_v14(struct iwx_softc *sc, int bgscan)
 	scan_p->periodic_params.schedule[0].iter_count = 1;
 
 	err = iwx_fill_probe_req(sc, &scan_p->probe_params.preq);
-	if (err)
+	if (err) {
+		free(cmd, M_DEVBUF, sizeof(*cmd));
 		return err;
+	}
 
 	if (ic->ic_des_esslen != 0) {
 		scan_p->probe_params.direct_scan[0].id = IEEE80211_ELEMID_SSID;
