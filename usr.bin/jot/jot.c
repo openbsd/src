@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.53 2021/08/13 10:40:23 tb Exp $	*/
+/*	$OpenBSD: jot.c,v 1.54 2021/08/13 10:45:26 tb Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -258,9 +258,7 @@ main(int argc, char *argv[])
 		}
 		x = ender - begin;
 
-		if (prec == 0 && (fmod(ender, 1) != 0 || fmod(begin, 1) != 0))
-			use_unif = 0;
-		else {
+		if (prec > 0 || (fmod(ender, 1) == 0 && fmod(begin, 1) == 0)) {
 			double range;
 
 			while (prec-- > 0)
