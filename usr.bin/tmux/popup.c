@@ -1,4 +1,4 @@
-/* $OpenBSD: popup.c,v 1.30 2021/08/13 19:55:11 nicm Exp $ */
+/* $OpenBSD: popup.c,v 1.31 2021/08/13 20:04:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -162,12 +162,12 @@ popup_check_cb(struct client *c, void *data, u_int px, u_int py)
 {
 	struct popup_data	*pd = data;
 
+	if (pd->md != NULL && menu_check_cb(c, pd->md, px, py) == 0)
+		return (0);
 	if (px < pd->px || px > pd->px + pd->sx - 1)
 		return (1);
 	if (py < pd->py || py > pd->py + pd->sy - 1)
 		return (1);
-	if (pd->md != NULL)
-		return (menu_check_cb(c, pd->md, px, py));
 	return (0);
 }
 
