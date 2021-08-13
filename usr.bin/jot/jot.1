@@ -1,4 +1,4 @@
-.\"	$OpenBSD: jot.1,v 1.24 2021/08/13 07:59:04 martijn Exp $
+.\"	$OpenBSD: jot.1,v 1.25 2021/08/13 11:27:33 martijn Exp $
 .\"	$NetBSD: jot.1,v 1.2 1994/11/14 20:27:36 jtc Exp $
 .\"
 .\" Copyright (c) 1993
@@ -58,9 +58,18 @@ The options are as follows:
 Just print
 .Ar word
 repetitively.
+Overrides earlier
+.Fl b ,
+.Fl c ,
+and
+.Fl w .
 .It Fl c
 This is an abbreviation for
 .Fl w Ic %c .
+Overrides earlier
+.Fl b
+and
+.Fl w .
 .It Fl n
 Do not print the final newline normally appended to the output.
 .It Fl p Ar precision
@@ -99,6 +108,11 @@ are possible by using the appropriate
 conversion specification inside
 .Ar word ,
 in which case the data is inserted rather than appended.
+Overrides earlier
+.Fl b ,
+.Fl c ,
+and
+.Fl w .
 .El
 .Pp
 The last four arguments specify the length of the output sequence,

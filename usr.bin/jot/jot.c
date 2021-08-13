@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.54 2021/08/13 10:45:26 tb Exp $	*/
+/*	$OpenBSD: jot.c,v 1.55 2021/08/13 11:27:33 martijn Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -70,6 +70,7 @@ static bool	intdata;
 static bool	longdata;
 static bool	nosign;
 static bool	randomize;
+static bool	word;
 
 static void	getformat(void);
 static int	getprec(char *);
@@ -94,10 +95,13 @@ main(int argc, char *argv[])
 		switch (ch) {
 		case 'b':
 			boring = true;
+			chardata = word = false;
 			format = optarg;
 			break;
 		case 'c':
 			chardata = true;
+			boring = word = false;
+			format = "";
 			break;
 		case 'n':
 			finalnl = false;
@@ -115,6 +119,8 @@ main(int argc, char *argv[])
 			sepstring = optarg;
 			break;
 		case 'w':
+			word = true;
+			boring = chardata = false;
 			format = optarg;
 			break;
 		default:
