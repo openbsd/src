@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.130 2021/02/01 08:01:14 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.131 2021/08/13 06:52:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -445,21 +445,9 @@ server_destroy_session(struct session *s)
 	TAILQ_FOREACH(c, &clients, entry) {
 		if (c->session != s)
 			continue;
-		if (s_new == NULL) {
-			c->session = NULL;
+		server_client_set_session(c, NULL);
+		if (s_new == NULL)
 			c->flags |= CLIENT_EXIT;
-		} else {
-			c->last_session = NULL;
-			c->session = s_new;
-			server_client_set_key_table(c, NULL);
-			tty_update_client_offset(c);
-			status_timer_start(c);
-			notify_client("client-session-changed", c);
-			session_update_activity(s_new, NULL);
-			gettimeofday(&s_new->last_attached_time, NULL);
-			server_redraw_client(c);
-			alerts_check_session(s_new);
-		}
 	}
 	recalculate_sizes();
 }

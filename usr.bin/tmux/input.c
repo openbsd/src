@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.190 2021/08/11 20:49:55 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.191 2021/08/13 06:52:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1792,8 +1792,12 @@ input_csi_dispatch_sm_private(struct input_ctx *ictx)
 			if (sctx->s->mode & MODE_FOCUSON)
 				break;
 			screen_write_mode_set(sctx, MODE_FOCUSON);
-			if (wp != NULL)
-				wp->flags |= PANE_FOCUSPUSH; /* force update */
+			if (wp == NULL)
+				break;
+			if (wp->flags & PANE_FOCUSED)
+				bufferevent_write(wp->event, "\033[I", 3);
+			else
+				bufferevent_write(wp->event, "\033[O", 3);
 			break;
 		case 1005:
 			screen_write_mode_set(sctx, MODE_MOUSE_UTF8);
