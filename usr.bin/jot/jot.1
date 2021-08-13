@@ -1,4 +1,4 @@
-.\"	$OpenBSD: jot.1,v 1.23 2016/08/12 21:49:31 tb Exp $
+.\"	$OpenBSD: jot.1,v 1.24 2021/08/13 07:59:04 martijn Exp $
 .\"	$NetBSD: jot.1,v 1.2 1994/11/14 20:27:36 jtc Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)jot.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: August 12 2016 $
+.Dd $Mdocdate: August 13 2021 $
 .Dt JOT 1
 .Os
 .Sh NAME
@@ -45,7 +45,7 @@
 .Op Fl s Ar string
 .Op Fl w Ar word
 .Oo Ar reps Oo Ar begin Oo Ar end
-.Oo Ar s Oc Oc Oc Oc
+.Oo Ar step Oc Oc Oc Oc
 .Ek
 .Sh DESCRIPTION
 .Nm
@@ -115,7 +115,7 @@ The default values for
 .Ar begin ,
 .Ar end ,
 and
-.Ar s
+.Ar step
 are 100, 1, 100, and 1, respectively.
 Omitted values are computed if possible or assume the default.
 A special case arises if only
@@ -128,7 +128,7 @@ if
 is greater than
 .Ar end
 then
-.Ar s
+.Ar step
 is set to \(mi1, otherwise it is set to 1;
 afterwards
 .Ar reps
@@ -149,7 +149,7 @@ Random numbers are obtained through
 Historical versions of
 .Nm
 used
-.Ar s
+.Ar step
 to seed the random number generator.
 This is no longer supported.
 The name
