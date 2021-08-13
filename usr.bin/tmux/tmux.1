@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.851 2021/08/12 08:05:11 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.852 2021/08/13 06:50:42 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 12 2021 $
+.Dd $Mdocdate: August 13 2021 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -5414,7 +5414,7 @@ See
 for possible values for
 .Ar prompt-type .
 .It Xo Ic command-prompt
-.Op Fl 1FikN
+.Op Fl 1bFikN
 .Op Fl I Ar inputs
 .Op Fl p Ar prompts
 .Op Fl t Ar target-client
@@ -5516,7 +5516,12 @@ option:
 .It Li "Move cursor to previous word" Ta "b" Ta "M-b"
 .It Li "Move cursor to start" Ta "0" Ta "C-a"
 .It Li "Transpose characters" Ta "" Ta "C-t"
+.Pp
 .El
+With
+.Fl b ,
+the prompt is shown in the background and the invoking client does not exit
+until it is dismissed.
 .It Xo Ic confirm-before
 .Op Fl b
 .Op Fl p Ar prompt
@@ -5537,7 +5542,8 @@ It may contain the special character sequences supported by the
 option.
 With
 .Fl b ,
-the prompt is shown in the background and the client.
+the prompt is shown in the background and the invoking client does not exit
+until it is dismissed.
 .It Xo Ic display-menu
 .Op Fl O
 .Op Fl c Ar target-client

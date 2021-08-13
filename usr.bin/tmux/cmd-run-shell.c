@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-run-shell.c,v 1.73 2021/04/12 09:36:12 nicm Exp $ */
+/* $OpenBSD: cmd-run-shell.c,v 1.74 2021/08/13 06:50:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -121,7 +121,6 @@ cmd_run_shell_exec(struct cmd *self, struct cmdq_item *item)
 
 	cdata->shell = !args_has(args, 'C');
 	if (!cdata->shell) {
-		memset(&cdata->pi, 0, sizeof cdata->pi);
 		cmd_get_source(self, &cdata->pi.file, &cdata->pi.line);
 		if (wait)
 			cdata->pi.item = item;
