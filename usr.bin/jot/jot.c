@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.51 2021/07/30 02:47:37 tb Exp $	*/
+/*	$OpenBSD: jot.c,v 1.52 2021/08/13 07:56:34 martijn Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -304,25 +304,21 @@ putdata(double x, bool last)
 	if (boring)
 		printf("%s", format);
 	else if (longdata && nosign) {
-		if (x <= (double)ULONG_MAX && x >= 0.0)
-			printf(format, (unsigned long)x);
-		else
+		if (x < 0.0 || x > (double)ULONG_MAX)
 			return 1;
+		printf(format, (unsigned long)x);
 	} else if (longdata) {
-		if (x <= (double)LONG_MAX && x >= (double)LONG_MIN)
-			printf(format, (long)x);
-		else
+		if (x < (double)LONG_MIN || x > (double)LONG_MAX)
 			return 1;
+		printf(format, (long)x);
 	} else if (chardata || (intdata && !nosign)) {
-		if (x <= (double)INT_MAX && x >= (double)INT_MIN)
-			printf(format, (int)x);
-		else
+		if (x < (double)INT_MIN || x > (double)INT_MAX)
 			return 1;
+		printf(format, (int)x);
 	} else if (intdata) {
-		if (x <= (double)UINT_MAX && x >= 0.0)
-			printf(format, (unsigned int)x);
-		else
+		if (x < 0.0 || x > (double)UINT_MAX)
 			return 1;
+		printf(format, (unsigned int)x);
 	} else
 		printf(format, x);
 	if (!last)
