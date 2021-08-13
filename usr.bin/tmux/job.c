@@ -1,4 +1,4 @@
-/* $OpenBSD: job.c,v 1.60 2021/03/02 10:56:45 nicm Exp $ */
+/* $OpenBSD: job.c,v 1.61 2021/08/13 19:27:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -199,6 +199,27 @@ fail:
 	sigprocmask(SIG_SETMASK, &oldset, NULL);
 	environ_free(env);
 	return (NULL);
+}
+
+/* Take job's file descriptor and free the job. */
+int
+job_transfer(struct job *job)
+{
+	int	fd = job->fd;
+
+	log_debug("transfer job %p: %s", job, job->cmd);
+
+	LIST_REMOVE(job, entry);
+	free(job->cmd);
+
+	if (job->freecb != NULL && job->data != NULL)
+		job->freecb(job->data);
+
+	if (job->event != NULL)
+		bufferevent_free(job->event);
+
+	free(job);
+	return (fd);
 }
 
 /* Kill and free an individual job. */
