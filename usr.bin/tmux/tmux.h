@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1121 2021/08/13 19:27:25 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1122 2021/08/13 19:55:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2042,7 +2042,7 @@ struct job	*job_run(const char *, int, char **, struct session *,
 		     const char *, job_update_cb, job_complete_cb, job_free_cb,
 		     void *, int, int, int);
 void		 job_free(struct job *);
-int		 job_transfer(struct job *);
+int		 job_transfer(struct job *, pid_t *, char *, size_t);
 void		 job_resize(struct job *, u_int, u_int);
 void		 job_check_died(pid_t, int);
 int		 job_get_status(struct job *);
