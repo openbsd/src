@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.52 2021/08/13 07:56:34 martijn Exp $	*/
+/*	$OpenBSD: jot.c,v 1.53 2021/08/13 10:40:23 tb Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -160,10 +160,10 @@ main(int argc, char *argv[])
 			mask |= REPS;
 			if (reps == 0)
 				infinity = true;
-			if (prec == -1)
-				prec = 0;
 		}
 	case 0:
+		if (prec == -1)
+			prec = 0;
 		break;
 	default:
 		errx(1, "Too many arguments.  What do you mean by %s?",
