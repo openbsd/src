@@ -1,7 +1,7 @@
 /*	$Id: key.h,v 1.1 2019/06/12 11:09:25 gilles Exp $ */
 /*
- * Copyright (c) 2019 Renaud Allard <renaud@allard.it>
- * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2019 guanlong huang <gl041188@gmail.com>
+ * Copyright (c) 2016 guanlong huang <gl041188@gmail.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
