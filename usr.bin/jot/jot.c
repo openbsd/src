@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.55 2021/08/13 11:27:33 martijn Exp $	*/
+/*	$OpenBSD: jot.c,v 1.56 2021/08/13 12:37:28 jmc Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -336,7 +336,7 @@ usage(void)
 {
 	(void)fprintf(stderr, "usage: jot [-cnr] [-b word] [-p precision] "
 	    "[-s string] [-w word]\n"
-	    "	   [reps [begin [end [s]]]]\n");
+	    "	   [reps [begin [end [step]]]]\n");
 	exit(1);
 }
 
