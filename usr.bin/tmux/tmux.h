@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1122 2021/08/13 19:55:11 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1123 2021/08/13 23:05:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1158,6 +1158,7 @@ RB_HEAD(sessions, session);
 #define MOUSE_MASK_CTRL 16
 #define MOUSE_MASK_DRAG 32
 #define MOUSE_MASK_WHEEL 64
+#define MOUSE_MASK_MODIFIERS (MOUSE_MASK_SHIFT|MOUSE_MASK_META|MOUSE_MASK_CTRL)
 
 /* Mouse wheel states. */
 #define MOUSE_WHEEL_UP 0
