@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.80 2021/01/18 00:44:00 mortimer Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.81 2021/08/13 10:56:54 schwarze Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -63,6 +63,7 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -158,6 +159,7 @@ int		verbose = 1;
 int		msf = 1;
 const char	*cddb_host;
 char		**track_names;
+volatile sig_atomic_t signo;
 
 EditLine	*el = NULL;	/* line-editing structure */
 History		*hist = NULL;	/* line-editing history */
@@ -179,6 +181,7 @@ int		pstatus(char *arg);
 int		play_next(char *arg);
 int		play_prev(char *arg);
 int		play_same(char *arg);
+void		sigint_handler(int);
 char		*input(int *);
 char		*prompt(void);
 void		prtrack(struct cd_toc_entry *e, int lastflag, char *name);
@@ -1499,18 +1502,36 @@ status(int *trk, int *min, int *sec, int *frame)
 	return s.data->header.audio_status;
 }
 
+void
+sigint_handler(int signo_arg)
+{
+	signo = signo_arg;
+}
+
 char *
 input(int *cmd)
 {
+	struct sigaction sa;
 	char *buf;
 	int siz = 0;
 	char *p;
 	HistEvent hev;
 
+	memset(&sa, 0, sizeof(sa));
 	do {
-		if ((buf = (char *) el_gets(el, &siz)) == NULL || !siz) {
-			*cmd = CMD_QUIT;
+		signo = 0;
+		sa.sa_handler = sigint_handler;
+		if (sigaction(SIGINT, &sa, NULL) == -1)
+			err(1, "sigaction");
+		buf = (char *)el_gets(el, &siz);
+		sa.sa_handler = SIG_DFL;
+		if (sigaction(SIGINT, &sa, NULL) == -1)
+			err(1, "sigaction");
+		if (buf == NULL || siz <= 0) {
 			fprintf(stderr, "\r\n");
+			if (siz < 0 && errno == EINTR && signo == SIGINT)
+				continue;
+			*cmd = CMD_QUIT;
 			return (0);
 		}
 		if (strlen(buf) > 1)
