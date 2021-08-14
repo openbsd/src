@@ -1,4 +1,4 @@
-/*	$OpenBSD: workqueue.h,v 1.5 2021/05/17 00:17:26 jsg Exp $	*/
+/*	$OpenBSD: workqueue.h,v 1.6 2021/08/14 03:12:51 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -201,7 +201,13 @@ bool flush_delayed_work(struct delayed_work *);
 #define flush_scheduled_work()	flush_workqueue(system_wq)
 #define drain_workqueue(x)	flush_workqueue(x)
 
-#define destroy_work_on_stack(x)
+static inline void
+destroy_work_on_stack(struct work_struct *work)
+{
+	if (work->tq)
+		task_del(work->tq, &work->task);
+}
+
 #define destroy_delayed_work_on_stack(x)
 
 struct rcu_work {
