@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-message.c,v 1.57 2021/04/12 09:36:12 nicm Exp $ */
+/* $OpenBSD: cmd-display-message.c,v 1.58 2021/08/14 08:06:37 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -39,7 +39,7 @@ const struct cmd_entry cmd_display_message_entry = {
 	.name = "display-message",
 	.alias = "display",
 
-	.args = { "acd:INpt:F:v", 0, 1 },
+	.args = { "ac:d:INpt:F:v", 0, 1 },
 	.usage = "[-aINpv] [-c target-client] [-d delay] [-F format] "
 		 CMD_TARGET_PANE_USAGE " [message]",
 
