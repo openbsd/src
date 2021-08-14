@@ -1,4 +1,4 @@
-/* $OpenBSD: mandoc_msg.c,v 1.13 2021/07/04 15:38:09 schwarze Exp $ */
+/* $OpenBSD: mandoc_msg.c,v 1.14 2021/08/14 13:51:46 schwarze Exp $ */
 /*
  * Copyright (c) 2014-2021 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -255,6 +255,7 @@ static	const char *const type_message[MANDOCERR_MAX] = {
 	"bad option value",
 	"duplicate option value",
 	"no such tag",
+	"-Tmarkdown unsupported for man(7) input",
 
 	/* system errors */
 	NULL,

@@ -1,4 +1,4 @@
-/* $OpenBSD: mandoc.h,v 1.215 2021/08/10 12:36:42 schwarze Exp $ */
+/* $OpenBSD: mandoc.h,v 1.216 2021/08/14 13:51:46 schwarze Exp $ */
 /*
  * Copyright (c) 2012-2021 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -257,6 +257,7 @@ enum	mandocerr {
 	MANDOCERR_BADVAL_BAD, /* bad argument value */
 	MANDOCERR_BADVAL_DUPE, /* duplicate argument value */
 	MANDOCERR_TAG, /* no such tag */
+	MANDOCERR_MAN_TMARKDOWN, /* -Tmarkdown unsupported for man(7) input */
 
 	MANDOCERR_SYSERR, /* ===== start of system errors ===== */
 
