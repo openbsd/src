@@ -1,4 +1,4 @@
-/* $OpenBSD: colour.c,v 1.21 2021/08/11 20:49:55 nicm Exp $ */
+/* $OpenBSD: colour.c,v 1.22 2021/08/14 14:00:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -959,10 +959,10 @@ colour_palette_init(struct colour_palette *p)
 void
 colour_palette_clear(struct colour_palette *p)
 {
-	p->fg = 8;
-	p->bg = 8;
 	if (p != NULL) {
-		free(p->palette);
+		p->fg = 8;
+		p->bg = 8;
+ 		free(p->palette);
 		p->palette = NULL;
 	}
 }
