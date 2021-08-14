@@ -29,6 +29,9 @@
 /* Whether daemon is deprecated */
 /* #undef DEPRECATED_DAEMON */
 
+/* Deprecate RSA 1024 bit length, makes that an unsupported key */
+/* #undef DEPRECATE_RSA_1024 */
+
 /* Define this to enable kernel based UDP source port randomization. */
 #define DISABLE_EXPLICIT_PORT_RANDOMISATION 1
 
@@ -218,7 +221,7 @@
 #define HAVE_EVP_CLEANUP 1
 
 /* Define to 1 if you have the `EVP_DigestVerify' function. */
-/* #undef HAVE_EVP_DIGESTVERIFY */
+#define HAVE_EVP_DIGESTVERIFY 1
 
 /* Define to 1 if you have the `EVP_dss1' function. */
 #define HAVE_EVP_DSS1 1
@@ -427,6 +430,9 @@
 /* Define to 1 if you have the `OPENSSL_init_ssl' function. */
 #define HAVE_OPENSSL_INIT_SSL 1
 
+/* Define to 1 if you have the <openssl/param_build.h> header file. */
+/* #undef HAVE_OPENSSL_PARAM_BUILD_H */
+
 /* Define to 1 if you have the <openssl/rand.h> header file. */
 #define HAVE_OPENSSL_RAND_H 1
 
@@ -435,6 +441,9 @@
 
 /* Define to 1 if you have the <openssl/ssl.h> header file. */
 #define HAVE_OPENSSL_SSL_H 1
+
+/* Define to 1 if you have the `OSSL_PARAM_BLD_new' function. */
+/* #undef HAVE_OSSL_PARAM_BLD_NEW */
 
 /* Define if you have POSIX threads libraries and header files. */
 /* #undef HAVE_PTHREAD */
@@ -517,6 +526,9 @@
 /* Define if you have the SSL libraries installed. */
 #define HAVE_SSL /**/
 
+/* Define to 1 if you have the `SSL_CTX_set_alpn_protos' function. */
+#define HAVE_SSL_CTX_SET_ALPN_PROTOS 1
+
 /* Define to 1 if you have the `SSL_CTX_set_alpn_select_cb' function. */
 #define HAVE_SSL_CTX_SET_ALPN_SELECT_CB 1
 
@@ -530,8 +542,14 @@
    function. */
 /* #undef HAVE_SSL_CTX_SET_TLSEXT_TICKET_KEY_EVP_CB */
 
+/* Define to 1 if you have the `SSL_get0_alpn_selected' function. */
+#define HAVE_SSL_GET0_ALPN_SELECTED 1
+
 /* Define to 1 if you have the `SSL_get0_peername' function. */
-/* #undef HAVE_SSL_GET0_PEERNAME */
+#define HAVE_SSL_GET0_PEERNAME 1
+
+/* Define to 1 if you have the `SSL_get1_peer_certificate' function. */
+/* #undef HAVE_SSL_GET1_PEER_CERTIFICATE */
 
 /* Define to 1 if you have the `SSL_set1_host' function. */
 #define HAVE_SSL_SET1_HOST 1
@@ -730,7 +748,7 @@
 #define PACKAGE_NAME "unbound"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "unbound 1.13.1"
+#define PACKAGE_STRING "unbound 1.13.2"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "unbound"
@@ -739,7 +757,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.13.1"
+#define PACKAGE_VERSION "1.13.2"
 
 /* default pidfile location */
 #define PIDFILE ""
@@ -762,7 +780,7 @@
 #define ROOT_CERT_FILE "/var/unbound/etc/icannbundle.pem"
 
 /* version number for resource files */
-#define RSRC_PACKAGE_VERSION 1,13,1,0
+#define RSRC_PACKAGE_VERSION 1,13,2,0
 
 /* Directory to chdir to */
 #define RUN_DIR "/var/unbound/etc"
@@ -847,6 +865,14 @@
 
 /* Define if you enable libevent */
 #define USE_LIBEVENT 1
+
+/* Define this to enable use of /proc/sys/net/ipv4/ip_local_port_range as a
+   default outgoing port range. This is only for the libunbound on Linux and
+   does not affect unbound resolving daemon itself. This may severely limit
+   the number of available outgoing ports and thus decrease randomness. Define
+   this only when the target system restricts (e.g. some of SELinux enabled
+   distributions) the use of non-ephemeral ports. */
+/* #undef USE_LINUX_IP_LOCAL_PORT_RANGE */
 
 /* Define if you want to use internal select based events */
 /* #undef USE_MINI_EVENT */
