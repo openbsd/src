@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.79 2021/08/07 13:33:12 krw Exp $	*/
+/*	$OpenBSD: misc.c,v 1.80 2021/08/15 13:45:42 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -59,7 +59,7 @@ unit_lookup(const char *units)
 	return i;
 }
 
-int
+void
 string_from_line(char *buf, const size_t buflen)
 {
 	static char		*line;
@@ -68,14 +68,11 @@ string_from_line(char *buf, const size_t buflen)
 
 	len = getline(&line, &sz, stdin);
 	if (len == -1)
-		return -1;
+		errx(1, "eof");
 
-	if (line[len - 1] == '\n')
-		line[len - 1] = '\0';
+	line[strcspn(line, "\n")] = '\0';
 
 	strlcpy(buf, line, buflen);
-
-	return 0;
 }
 
 int
@@ -125,9 +122,7 @@ getuint64(const char *prompt, uint64_t oval, const uint64_t minval,
 	do {
 		printf("%s [%llu - %llu]: [%llu] ", prompt, minval, maxval,
 		    oval);
-
-		if (string_from_line(buf, sizeof(buf)))
-			errx(1, "eof");
+		string_from_line(buf, sizeof(buf));
 
 		if (buf[0] == '\0') {
 			rslt = snprintf(buf, sizeof(buf), "%llu", oval);

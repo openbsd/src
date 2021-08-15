@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.138 2021/08/12 12:31:16 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.139 2021/08/15 13:45:42 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -586,9 +586,7 @@ ask_num(const char *str, int dflt, int low, int high)
 
 	do {
 		printf("%s [%d - %d]: [%d] ", str, low, high, dflt);
-
-		if (string_from_line(lbuf, sizeof(lbuf)))
-			errx(1, "eof");
+		string_from_line(lbuf, sizeof(lbuf));
 
 		if (lbuf[0] == '\0') {
 			num = dflt;
@@ -612,9 +610,7 @@ ask_pid(const int dflt, struct uuid *guid)
 	do {
 		printf("Partition id ('0' to disable) [01 - FF]: [%X] ", dflt);
 		printf("(? for help) ");
-
-		if (string_from_line(lbuf, sizeof(lbuf)))
-			errx(1, "eof");
+		string_from_line(lbuf, sizeof(lbuf));
 
 		if (lbuf[0] == '?') {
 			PRT_printall();
@@ -654,8 +650,7 @@ ask_string(const char *prompt, const char *oval)
 
 	buf[0] = '\0';
 	printf("%s: [%s] ", prompt, oval ? oval : "");
-	if (string_from_line(buf, sizeof(buf)))
-		errx(1, "eof");
+	string_from_line(buf, sizeof(buf));
 
 	if (buf[0] == '\0' && oval)
 		strlcpy(buf, oval, sizeof(buf));

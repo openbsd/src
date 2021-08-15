@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.72 2021/08/12 17:30:52 krw Exp $	*/
+/*	$OpenBSD: user.c,v 1.73 2021/08/15 13:45:42 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -208,8 +208,7 @@ ask_cmd(char **cmd, char **arg)
 	static char		lbuf[100];
 	size_t			cmdstart, cmdend, argstart;
 
-	if (string_from_line(lbuf, sizeof(lbuf)))
-		errx(1, "eof");
+	string_from_line(lbuf, sizeof(lbuf));
 
 	cmdstart = strspn(lbuf, " \t");
 	cmdend = cmdstart + strcspn(&lbuf[cmdstart], " \t");
