@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rge.c,v 1.14 2021/07/12 12:24:41 daniel Exp $	*/
+/*	$OpenBSD: if_rge.c,v 1.15 2021/08/16 01:30:27 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2019, 2020 Kevin Lo <kevlo@openbsd.org>
@@ -525,13 +525,6 @@ rge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
-		break;
-	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > ifp->if_hardmtu) {
-			error = EINVAL;
-			break;
-		}
-		ifp->if_mtu = ifr->ifr_mtu;
 		break;
 	case SIOCGIFRXR:
 		error = if_rxr_ioctl((struct if_rxrinfo *)ifr->ifr_data,
