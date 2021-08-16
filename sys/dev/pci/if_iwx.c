@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.90 2021/08/13 13:13:11 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.91 2021/08/16 14:54:50 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -9369,44 +9369,6 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 	    break;
 	default:
 		printf("%s: unknown adapter type\n", DEVNAME(sc));
-		return;
-	}
-
-	if (iwx_prepare_card_hw(sc) != 0) {
-		printf("%s: could not initialize hardware\n",
-		    DEVNAME(sc));
-		return;
-	}
-
-	/*
-	 * In order to recognize C step the driver should read the
-	 * chip version id located at the AUX bus MISC address.
-	 */
-	IWX_SETBITS(sc, IWX_CSR_GP_CNTRL,
-		    IWX_CSR_GP_CNTRL_REG_FLAG_INIT_DONE);
-	DELAY(2);
-
-	err = iwx_poll_bit(sc, IWX_CSR_GP_CNTRL,
-			   IWX_CSR_GP_CNTRL_REG_FLAG_MAC_CLOCK_READY,
-			   IWX_CSR_GP_CNTRL_REG_FLAG_MAC_CLOCK_READY,
-			   25000);
-	if (!err) {
-		printf("%s: Failed to wake up the nic\n", DEVNAME(sc));
-		return;
-	}
-
-	if (iwx_nic_lock(sc)) {
-		uint32_t hw_step = iwx_read_prph(sc, IWX_WFPM_CTRL_REG);
-		hw_step |= IWX_ENABLE_WFPM;
-		iwx_write_prph(sc, IWX_WFPM_CTRL_REG, hw_step);
-		hw_step = iwx_read_prph(sc, IWX_AUX_MISC_REG);
-		hw_step = (hw_step >> IWX_HW_STEP_LOCATION_BITS) & 0xF;
-		if (hw_step == 0x3)
-			sc->sc_hw_rev = (sc->sc_hw_rev & 0xFFFFFFF3) |
-					(IWX_SILICON_C_STEP << 2);
-		iwx_nic_unlock(sc);
-	} else {
-		printf("%s: Failed to lock the nic\n", DEVNAME(sc));
 		return;
 	}
 

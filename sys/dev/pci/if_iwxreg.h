@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.29 2021/07/29 12:01:45 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.30 2021/08/16 14:54:50 kevlo Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -704,9 +704,6 @@ struct iwx_context_info {
 #define IWX_WFPM_CTRL_REG			0xa03030
 #define IWX_WFPM_AUX_CTL_AUX_IF_MAC_OWNER_MSK	0x08000000
 #define IWX_ENABLE_WFPM				0x80000000
-
-#define IWX_AUX_MISC_REG			0xa200b0
-#define IWX_HW_STEP_LOCATION_BITS		24
 
 #define IWX_AUX_MISC_MASTER1_EN			0xa20818
 #define IWX_AUX_MISC_MASTER1_EN_SBE_MSK		0x1
