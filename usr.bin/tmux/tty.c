@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.402 2021/08/17 08:44:52 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.403 2021/08/17 11:20:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2043,7 +2043,7 @@ tty_cmd_syncstart(struct tty *tty, const struct tty_ctx *ctx)
 {
 	if (ctx->num == 0x11) {
 		/*
-		 * This is an overlay and a command that moves, the cursor so
+		 * This is an overlay and a command that moves the cursor so
 		 * start synchronized updates.
 		 */
 		tty_sync_start(tty);

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-confirm-before.c,v 1.45 2021/08/13 06:50:42 nicm Exp $ */
+/* $OpenBSD: cmd-confirm-before.c,v 1.46 2021/08/17 11:20:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -72,7 +72,7 @@ cmd_confirm_before_exec(struct cmd *self, struct cmdq_item *item)
 		free(copy);
 	}
 
-	cdata = xmalloc(sizeof *cdata);
+	cdata = xcalloc(1, sizeof *cdata);
 	cdata->cmd = xstrdup(args->argv[0]);
 
 	cmd_get_source(self, &cdata->pi.file, &cdata->pi.line);
