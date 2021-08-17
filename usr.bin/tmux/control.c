@@ -1,4 +1,4 @@
-/* $OpenBSD: control.c,v 1.45 2020/09/18 11:20:59 nicm Exp $ */
+/* $OpenBSD: control.c,v 1.46 2021/08/17 20:17:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -665,7 +665,7 @@ control_write_pending(struct client *c, struct control_pane *cp, size_t limit)
 	uint64_t		 age, t = get_timer();
 
 	wp = control_window_pane(c, cp->pane);
-	if (wp == NULL) {
+	if (wp == NULL || wp->fd == -1) {
 		TAILQ_FOREACH_SAFE(cb, &cp->blocks, entry, cb1) {
 			TAILQ_REMOVE(&cp->blocks, cb, entry);
 			control_free_block(cs, cb);
@@ -865,7 +865,7 @@ control_check_subs_pane(struct client *c, struct control_sub *csub)
 	struct control_sub_pane	*csp, find;
 
 	wp = window_pane_find_by_id(csub->id);
-	if (wp == NULL)
+	if (wp == NULL || wp->fd == -1)
 		return;
 	w = wp->window;
 
