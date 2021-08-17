@@ -1,4 +1,4 @@
-/* $OpenBSD: popup.c,v 1.33 2021/08/17 07:14:33 nicm Exp $ */
+/* $OpenBSD: popup.c,v 1.34 2021/08/17 08:22:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -554,7 +554,6 @@ popup_job_update_cb(struct job *job)
 	if (size == 0)
 		return;
 
-	tty_sync_start(&c->tty);
 	if (pd->md != NULL) {
 		c->overlay_check = menu_check_cb;
 		c->overlay_data = pd->md;
