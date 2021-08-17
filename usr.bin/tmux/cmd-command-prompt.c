@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-command-prompt.c,v 1.56 2021/08/13 06:50:42 nicm Exp $ */
+/* $OpenBSD: cmd-command-prompt.c,v 1.57 2021/08/17 19:26:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -79,6 +79,8 @@ cmd_command_prompt_exec(struct cmd *self, struct cmdq_item *item)
 
 	if (tc->prompt_string != NULL)
 		return (CMD_RETURN_NORMAL);
+	if (args_has(args, 'i'))
+		wait = 0;
 
 	cdata = xcalloc(1, sizeof *cdata);
 	cdata->idx = 1;
