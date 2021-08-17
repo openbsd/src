@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidpp.c,v 1.16 2021/07/28 09:56:54 anton Exp $	*/
+/*	$OpenBSD: uhidpp.c,v 1.17 2021/08/17 05:56:24 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -124,6 +124,8 @@ int uhidpp_debug = 1;
 #define HIDPP20_FEAT_BATTERY_ID			0x1000
 #define HIDPP20_FEAT_BATTERY_LEVEL_FUNC		0x0000
 #define HIDPP20_FEAT_BATTERY_CAPABILITY_FUNC	0x0001
+
+#define HIDPP20_BATTERY_STATUS_CHARGING_DONE	0x0003
 
 /* HID++ 2.0 error codes. */
 #define HIDPP20_ERROR				0xff
@@ -267,6 +269,7 @@ int hidpp20_battery_get_level_status(struct uhidpp_softc *, uint8_t, uint8_t,
     uint8_t *, uint8_t *, uint8_t *);
 int hidpp20_battery_get_capability(struct uhidpp_softc *, uint8_t, uint8_t,
     uint8_t *);
+int hidpp20_battery_status_is_charging(uint8_t);
 
 int hidpp_send_validate(uint8_t, int);
 int hidpp_send_rap_report(struct uhidpp_softc *, uint8_t, uint8_t,
@@ -672,9 +675,13 @@ uhidpp_device_refresh(struct uhidpp_softc *sc, struct uhidpp_device *dev)
 			 * [81, 100] full
 			 *
 			 * Since sensors are limited to 3 valid statuses, clamp
-			 * it even further.
+			 * it even further. Unless the battery is charging in
+			 * which the level cannot be trusted.
 			 */
-			if (dev->d_battery.b_level <= 10)
+			if (hidpp20_battery_status_is_charging(
+			    dev->d_battery.b_status))
+				dev->d_battery.b_sens[0].status = SENSOR_S_UNKNOWN;
+			else if (dev->d_battery.b_level <= 10)
 				dev->d_battery.b_sens[0].status = SENSOR_S_CRIT;
 			else if (dev->d_battery.b_level <= 30)
 				dev->d_battery.b_sens[0].status = SENSOR_S_WARN;
@@ -1060,6 +1067,18 @@ hidpp20_battery_get_level_status(struct uhidpp_softc *sc, uint8_t device_id,
 	*level = resp.fap.params[0];
 	*next_level = resp.fap.params[1];
 	*status = resp.fap.params[2];
+
+	/*
+	 * While charging, the reported level cannot be trusted. However, fake
+	 * the battery state once the charging is done.
+	 */
+	switch (hidpp20_battery_status_is_charging(*status)) {
+	case HIDPP20_BATTERY_STATUS_CHARGING_DONE:
+		*level = 100;
+		*status = 0;
+		break;
+	}
+
 	return 0;
 }
 
@@ -1080,6 +1099,27 @@ hidpp20_battery_get_capability(struct uhidpp_softc *sc, uint8_t device_id,
 		return error;
 	*nlevels = resp.fap.params[0];
 	return 0;
+}
+
+int
+hidpp20_battery_status_is_charging(uint8_t status)
+{
+	switch (status) {
+	case 1:	/* recharging */
+	case 2:	/* charge in final stage */
+	case 4:	/* recharging below optimal speed */
+		return status;
+
+	case 3:	/* charge complete */
+		return status;
+
+	case 0:	/* discharging */
+	case 5:	/* invalid battery type */
+	case 6:	/* thermal error */
+	case 7:	/* other charging error */
+	default:
+		return 0;
+	}
 }
 
 int
