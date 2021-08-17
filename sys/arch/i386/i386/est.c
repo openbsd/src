@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.53 2021/08/12 15:16:23 tb Exp $ */
+/*	$OpenBSD: est.c,v 1.54 2021/08/17 19:44:01 tb Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -78,6 +78,7 @@
 struct est_op {
 	uint16_t ctrl;
 	uint16_t mhz;
+	uint16_t pct;
 };
 
 /* Ultra Low Voltage Intel Pentium M processor 900 MHz */
@@ -973,8 +974,14 @@ est_acpi_init(void)
 	struct acpicpu_pss *pss;
 	struct fqlist *acpilist;
 	int nstates, i;
+	int high, low;
 
 	if ((nstates = acpicpu_fetch_pss(&pss)) == 0)
+		goto nolist;
+
+	high = pss[0].pss_core_freq;
+	low = pss[nstates - 1].pss_core_freq;
+	if (high - low <= 0)
 		goto nolist;
 
 	if ((acpilist = malloc(sizeof(struct fqlist), M_DEVBUF, M_NOWAIT))
@@ -990,6 +997,8 @@ est_acpi_init(void)
 	for (i = 0; i < nstates; i++) {
 		acpilist->table[i].mhz = pss[i].pss_core_freq;
 		acpilist->table[i].ctrl = pss[i].pss_ctrl;
+		acpilist->table[i].pct =
+		    (pss[i].pss_core_freq - low) * 100 / (high - low);
 	}
 
 	acpicpu_set_notify(est_acpi_pss_changed);
@@ -1008,11 +1017,20 @@ est_acpi_pss_changed(struct acpicpu_pss *pss, int npss)
 {
 	struct fqlist *acpilist;
 	int needtran = 1, i;
+	int high, low;
 	u_int64_t msr;
 	u_int16_t cur;
 
 	msr = rdmsr(MSR_PERF_STATUS);
 	cur = msr & 0xffff;
+
+	high = pss[0].pss_core_freq;
+	low = pss[npss - 1].pss_core_freq;
+	if (high - low <= 0) {
+		printf("est_acpi_pss_changed: new est state has no "
+		    "speed step\n");
+		return;
+	}
 
 	if ((acpilist = malloc(sizeof(struct fqlist), M_DEVBUF, M_NOWAIT))
 	    == NULL) {
@@ -1032,6 +1050,8 @@ est_acpi_pss_changed(struct acpicpu_pss *pss, int npss)
 	for (i = 0; i < npss; i++) {
 		acpilist->table[i].mhz = pss[i].pss_core_freq;
 		acpilist->table[i].ctrl = pss[i].pss_ctrl;
+		acpilist->table[i].pct =
+		    (pss[i].pss_core_freq - low) * 100 / (high - low);
 		if (pss[i].pss_ctrl == cur)
 			needtran = 0;
 	}
@@ -1152,18 +1172,25 @@ est_init(struct cpu_info *ci, int vendor)
 			printf("%s: using only highest and lowest power "
 			       "states\n", cpu_device);
 
+			fake_table[0].pct = 51;
+
 			fake_table[1].ctrl = idlo;
 			fake_table[1].mhz = MSR2MHZ(idlo, bus_clock);
+			fake_table[1].pct = 0;
 			fake_fqlist->n = 2;
 		} else {
 			printf("%s: using only highest, current and lowest "
 			    "power states\n", cpu_device);
 
+			fake_table[0].pct = 67;
+
 			fake_table[1].ctrl = cur;
 			fake_table[1].mhz = MSR2MHZ(cur, bus_clock);
+			fake_table[1].pct = 34;
 
 			fake_table[2].ctrl = idlo;
 			fake_table[2].mhz = MSR2MHZ(idlo, bus_clock);
+			fake_table[2].pct = 0;
 			fake_fqlist->n = 3;
 		}
 
@@ -1218,10 +1245,10 @@ est_setperf(int level)
 	if (est_fqlist == NULL)
 		return;
 
-	i = ((level * est_fqlist->n) + 1) / 101;
-	if (i >= est_fqlist->n)
-		i = est_fqlist->n - 1;
-	i = est_fqlist->n - 1 - i;
+	for (i = 0; i < est_fqlist->n; i++) {
+		if (level >= est_fqlist->table[i].pct)
+			break;
+	}
 
 	msr = rdmsr(MSR_PERF_CTL);
 	msr &= ~0xffffULL;
