@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.40 2021/08/18 15:10:46 beck Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.41 2021/08/18 15:32:38 beck Exp $ */
 /*
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
  *
@@ -312,7 +312,7 @@ static int
 x509_verify_ctx_validate_legacy_chain(struct x509_verify_ctx *ctx,
     struct x509_verify_chain *chain, size_t depth)
 {
-	int ret = 0;
+	int ret = 0, trust;
 
 	if (ctx->xsc == NULL)
 		return 1;
@@ -329,6 +329,10 @@ x509_verify_ctx_validate_legacy_chain(struct x509_verify_ctx *ctx,
 	/* These may be set in one of the following calls. */
 	ctx->xsc->error = X509_V_OK;
 	ctx->xsc->error_depth = 0;
+
+	trust = x509_vfy_check_trust(ctx->xsc);
+	if (trust == X509_TRUST_REJECTED)
+		goto err;
 
 	if (!x509_verify_ctx_set_xsc_chain(ctx, chain, 0, 1))
 		goto err;
@@ -352,6 +356,10 @@ x509_verify_ctx_validate_legacy_chain(struct x509_verify_ctx *ctx,
 		goto err;
 
 	if (!x509_vfy_check_policy(ctx->xsc))
+		goto err;
+
+	if ((!(ctx->xsc->param->flags & X509_V_FLAG_PARTIAL_CHAIN)) &&
+	    trust != X509_TRUST_TRUSTED)
 		goto err;
 
 	ret = 1;
