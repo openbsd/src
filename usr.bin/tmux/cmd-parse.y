@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-parse.y,v 1.33 2021/08/18 10:15:08 nicm Exp $ */
+/* $OpenBSD: cmd-parse.y,v 1.34 2021/08/18 15:16:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -834,6 +834,7 @@ cmd_parse_build_commands(struct cmd_parse_commands *cmds,
 			cmd_parse_free_command(cmd);
 			continue;
 		}
+		cmd_parse_flatten_command(cmd2);
 		for (i = 1; i < cmd->argc; i++)
 			cmd_append_argv(&cmd2->argc, &cmd2->argv, cmd->argv[i]);
 
