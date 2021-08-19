@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.92 2021/08/19 06:02:04 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.93 2021/08/19 18:45:11 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -9556,13 +9556,7 @@ iwx_resume(struct iwx_softc *sc)
 	reg = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
 	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, reg & ~0xff00);
 
-	/* reconfigure the MSI-X mapping to get the correct IRQ for rfkill */
-	iwx_conf_msix_hw(sc, 0);
-
-	iwx_enable_rfkill_int(sc);
-	iwx_check_rfkill(sc);
-
-	return iwx_prepare_card_hw(sc);
+	return iwx_start_hw(sc);
 }
 
 int

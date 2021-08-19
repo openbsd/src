@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.358 2021/08/19 06:02:04 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.359 2021/08/19 18:45:11 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -11425,13 +11425,7 @@ iwm_resume(struct iwm_softc *sc)
 	reg = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
 	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, reg & ~0xff00);
 
-	/* reconfigure the MSI-X mapping to get the correct IRQ for rfkill */
-	iwm_conf_msix_hw(sc, 0);
-
-	iwm_enable_rfkill_int(sc);
-	iwm_check_rfkill(sc);
-
-	return iwm_prepare_card_hw(sc);
+	return iwm_start_hw(sc);
 }
 
 int
