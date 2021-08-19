@@ -1,6 +1,6 @@
-/* $OpenBSD: cgi.c,v 1.113 2021/05/01 16:11:17 visa Exp $ */
+/* $OpenBSD: cgi.c,v 1.114 2021/08/19 15:21:32 schwarze Exp $ */
 /*
- * Copyright (c) 2014-2019 Ingo Schwarze <schwarze@usta.de>
+ * Copyright (c) 2014-2019, 2021 Ingo Schwarze <schwarze@usta.de>
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -366,7 +366,8 @@ resp_copy(const char *filename)
 static void
 resp_begin_html(int code, const char *msg, const char *file)
 {
-	char	*cp;
+	const char	*name, *sec, *cp;
+	int		 namesz, secsz;
 
 	resp_begin_http(code, msg);
 
@@ -381,12 +382,27 @@ resp_begin_html(int code, const char *msg, const char *file)
 	       "  <title>",
 	       CSS_DIR);
 	if (file != NULL) {
-		if ((cp = strrchr(file, '/')) != NULL)
-			file = cp + 1;
-		if ((cp = strrchr(file, '.')) != NULL) {
-			printf("%.*s(%s) - ", (int)(cp - file), file, cp + 1);
-		} else
-			printf("%s - ", file);
+		cp = strrchr(file, '/');
+		name = cp == NULL ? file : cp + 1;
+		cp = strrchr(name, '.');
+		namesz = cp == NULL ? strlen(name) : cp - name;
+		sec = NULL;
+		if (cp != NULL && cp[1] != '0') {
+			sec = cp + 1;
+			secsz = strlen(sec);
+		} else if (name - file > 1) {
+			for (cp = name - 2; cp >= file; cp--) {
+				if (*cp < '1' || *cp > '9')
+					continue;
+				sec = cp;
+				secsz = name - cp - 1;
+				break;
+			}
+		}
+		printf("%.*s", namesz, name);
+		if (sec != NULL)
+			printf("(%.*s)", secsz, sec);
+		fputs(" - ", stdout);
 	}
 	printf("%s</title>\n"
 	       "</head>\n"
