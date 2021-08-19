@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_internal.h,v 1.8 2021/07/10 15:52:59 beck Exp $ */
+/* $OpenBSD: x509_internal.h,v 1.9 2021/08/19 03:44:00 beck Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -92,6 +92,7 @@ int x509_vfy_check_policy(X509_STORE_CTX *ctx);
 int x509_vfy_check_trust(X509_STORE_CTX *ctx);
 int x509_vfy_check_chain_extensions(X509_STORE_CTX *ctx);
 void x509v3_cache_extensions(X509 *x);
+X509 *x509_vfy_lookup_cert_match(X509_STORE_CTX *ctx, X509 *x);
 
 int x509_verify_asn1_time_to_tm(const ASN1_TIME *atime, struct tm *tm,
     int notafter);

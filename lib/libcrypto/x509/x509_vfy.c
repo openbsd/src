@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.86 2021/02/25 17:29:22 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.87 2021/08/19 03:44:00 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -940,6 +940,15 @@ lookup_cert_match(X509_STORE_CTX *ctx, X509 *x)
 
 	sk_X509_pop_free(certs, X509_free);
 	return xtmp;
+}
+
+X509 *
+x509_vfy_lookup_cert_match(X509_STORE_CTX *ctx, X509 *x)
+{
+	if (ctx->lookup_certs == NULL || ctx->ctx == NULL ||
+	    ctx->ctx->objs == NULL)
+		return NULL;
+	return lookup_cert_match(ctx, x);
 }
 
 static int

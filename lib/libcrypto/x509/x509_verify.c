@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.41 2021/08/18 15:32:38 beck Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.42 2021/08/19 03:44:00 beck Exp $ */
 /*
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
  *
@@ -207,21 +207,29 @@ static int
 x509_verify_ctx_cert_is_root(struct x509_verify_ctx *ctx, X509 *cert,
     int full_chain)
 {
+	X509 *match = NULL;
 	int i;
 
 	if (!x509_verify_cert_cache_extensions(cert))
 		return 0;
 
+	/* Check the provided roots */
 	for (i = 0; i < sk_X509_num(ctx->roots); i++) {
 		if (X509_cmp(sk_X509_value(ctx->roots, i), cert) == 0)
 			return !full_chain ||
 			    x509_verify_cert_self_signed(cert);
 	}
-	/*
-	 * XXX what if this is a by_dir thing? this currently isn't
-	 * handled so this case is a bit messed up for loonix with
-	 * by directory trust bundles...
-	 */
+
+	/* Check by lookup if we have a legacy xsc */
+	if (ctx->xsc != NULL) {
+		if ((match = x509_vfy_lookup_cert_match(ctx->xsc,
+		    cert)) != NULL) {
+			X509_free(match);
+			return !full_chain ||
+			    x509_verify_cert_self_signed(cert);
+		}
+	}
+
 	return 0;
 }
 
