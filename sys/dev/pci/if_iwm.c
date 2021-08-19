@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.357 2021/07/20 16:00:47 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.358 2021/08/19 06:02:04 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -517,12 +517,10 @@ void	iwm_start(struct ifnet *);
 void	iwm_stop(struct ifnet *);
 void	iwm_watchdog(struct ifnet *);
 int	iwm_ioctl(struct ifnet *, u_long, caddr_t);
-#if 1
 const char *iwm_desc_lookup(uint32_t);
 void	iwm_nic_error(struct iwm_softc *);
 void	iwm_dump_driver_status(struct iwm_softc *);
 void	iwm_nic_umac_error(struct iwm_softc *);
-#endif
 void	iwm_rx_mpdu(struct iwm_softc *, struct mbuf *, void *, size_t,
 	    struct mbuf_list *);
 void	iwm_flip_address(uint8_t *);
@@ -9933,10 +9931,10 @@ iwm_watchdog(struct ifnet *ifp)
 	if (sc->sc_tx_timer > 0) {
 		if (--sc->sc_tx_timer == 0) {
 			printf("%s: device timeout\n", DEVNAME(sc));
-#if 1
-			iwm_nic_error(sc);
-			iwm_dump_driver_status(sc);
-#endif
+			if (ifp->if_flags & IFF_DEBUG) {
+				iwm_nic_error(sc);
+				iwm_dump_driver_status(sc);
+			}
 			if ((sc->sc_flags & IWM_FLAG_SHUTDOWN) == 0)
 				task_add(systq, &sc->init_task);
 			ifp->if_oerrors++;
@@ -10001,7 +9999,6 @@ iwm_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	return err;
 }
 
-#if 1
 /*
  * Note: This structure is read from the device with IO accesses,
  * and the reading already does the endian conversion. As it is
@@ -10268,7 +10265,6 @@ iwm_dump_driver_status(struct iwm_softc *sc)
 	printf("  802.11 state %s\n",
 	    ieee80211_state_name[sc->sc_ic.ic_state]);
 }
-#endif
 
 #define SYNC_RESP_STRUCT(_var_, _pkt_)					\
 do {									\
@@ -10701,6 +10697,8 @@ int
 iwm_intr(void *arg)
 {
 	struct iwm_softc *sc = arg;
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = IC2IFP(ic);
 	int handled = 0;
 	int rv = 0;
 	uint32_t r1, r2;
@@ -10763,11 +10761,10 @@ iwm_intr(void *arg)
 	}
 
 	if (r1 & IWM_CSR_INT_BIT_SW_ERR) {
-#if 1
-		iwm_nic_error(sc);
-		iwm_dump_driver_status(sc);
-#endif
-
+		if (ifp->if_flags & IFF_DEBUG) {
+			iwm_nic_error(sc);
+			iwm_dump_driver_status(sc);
+		}
 		printf("%s: fatal firmware error\n", DEVNAME(sc));
 		if ((sc->sc_flags & IWM_FLAG_SHUTDOWN) == 0)
 			task_add(systq, &sc->init_task);
@@ -10836,6 +10833,8 @@ int
 iwm_intr_msix(void *arg)
 {
 	struct iwm_softc *sc = arg;
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = IC2IFP(ic);
 	uint32_t inta_fh, inta_hw;
 	int vector = 0;
 
@@ -10860,11 +10859,10 @@ iwm_intr_msix(void *arg)
 	if ((inta_fh & IWM_MSIX_FH_INT_CAUSES_FH_ERR) ||
 	    (inta_hw & IWM_MSIX_HW_INT_CAUSES_REG_SW_ERR) ||
 	    (inta_hw & IWM_MSIX_HW_INT_CAUSES_REG_SW_ERR_V2)) {
-#if 1
-		iwm_nic_error(sc);
-		iwm_dump_driver_status(sc);
-#endif
-
+		if (ifp->if_flags & IFF_DEBUG) {
+			iwm_nic_error(sc);
+			iwm_dump_driver_status(sc);
+		}
 		printf("%s: fatal firmware error\n", DEVNAME(sc));
 		if ((sc->sc_flags & IWM_FLAG_SHUTDOWN) == 0)
 			task_add(systq, &sc->init_task);

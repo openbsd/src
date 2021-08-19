@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.248 2021/04/29 21:43:47 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.249 2021/08/19 06:02:04 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -904,8 +904,6 @@ iwn_mem_write_2(struct iwn_softc *sc, uint32_t addr, uint16_t data)
 	iwn_mem_write(sc, addr & ~3, tmp);
 }
 
-#ifdef IWN_DEBUG
-
 static __inline void
 iwn_mem_read_region_4(struct iwn_softc *sc, uint32_t addr, uint32_t *data,
     int count)
@@ -913,8 +911,6 @@ iwn_mem_read_region_4(struct iwn_softc *sc, uint32_t addr, uint32_t *data,
 	for (; count > 0; count--, addr += 4)
 		*data++ = iwn_mem_read(sc, addr);
 }
-
-#endif
 
 static __inline void
 iwn_mem_set_region_4(struct iwn_softc *sc, uint32_t addr, uint32_t val,
@@ -3075,7 +3071,6 @@ iwn_wakeup_intr(struct iwn_softc *sc)
 	}
 }
 
-#ifdef IWN_DEBUG
 /*
  * Dump the error log of the firmware when a firmware panic occurs.  Although
  * we can't debug the firmware because it is neither open source nor free, it
@@ -3135,7 +3130,6 @@ iwn_fatal_intr(struct iwn_softc *sc)
 	printf("  rx ring: cur=%d\n", sc->rxq.cur);
 	printf("  802.11 state %d\n", sc->sc_ic.ic_state);
 }
-#endif
 
 int
 iwn_intr(void *arg)
@@ -3197,9 +3191,8 @@ iwn_intr(void *arg)
 		sc->sc_flags &= ~IWN_FLAG_CALIB_DONE;
 
 		/* Dump firmware error log and stop. */
-#ifdef IWN_DEBUG
-		iwn_fatal_intr(sc);
-#endif
+		if (ifp->if_flags & IFF_DEBUG)
+			iwn_fatal_intr(sc);
 		iwn_stop(ifp);
 		task_add(systq, &sc->init_task);
 		return 1;

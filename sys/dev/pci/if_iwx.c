@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.91 2021/08/16 14:54:50 kevlo Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.92 2021/08/19 06:02:04 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -462,6 +462,7 @@ void	iwx_watchdog(struct ifnet *);
 int	iwx_ioctl(struct ifnet *, u_long, caddr_t);
 const char *iwx_desc_lookup(uint32_t);
 void	iwx_nic_error(struct iwx_softc *);
+void	iwx_dump_driver_status(struct iwx_softc *);
 void	iwx_nic_umac_error(struct iwx_softc *);
 int	iwx_detect_duplicate(struct iwx_softc *, struct mbuf *,
 	    struct iwx_rx_mpdu_desc *, struct ieee80211_rxinfo *);
@@ -8145,9 +8146,10 @@ iwx_watchdog(struct ifnet *ifp)
 	if (sc->sc_tx_timer > 0) {
 		if (--sc->sc_tx_timer == 0) {
 			printf("%s: device timeout\n", DEVNAME(sc));
-#ifdef IWX_DEBUG
-			iwx_nic_error(sc);
-#endif
+			if (ifp->if_flags & IFF_DEBUG) {
+				iwx_nic_error(sc);
+				iwx_dump_driver_status(sc);
+			}
 			if ((sc->sc_flags & IWX_FLAG_SHUTDOWN) == 0)
 				task_add(systq, &sc->init_task);
 			ifp->if_oerrors++;
@@ -8212,7 +8214,6 @@ iwx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	return err;
 }
 
-#if 1 /* usually #ifdef IWX_DEBUG but always enabled for now */
 /*
  * Note: This structure is read from the device with IO accesses,
  * and the reading already does the endian conversion. As it is
@@ -8462,7 +8463,23 @@ iwx_nic_error(struct iwx_softc *sc)
 	if (sc->sc_uc.uc_umac_error_event_table)
 		iwx_nic_umac_error(sc);
 }
-#endif
+
+void
+iwx_dump_driver_status(struct iwx_softc *sc)
+{
+	int i;
+
+	printf("driver status:\n");
+	for (i = 0; i < IWX_MAX_QUEUES; i++) {
+		struct iwx_tx_ring *ring = &sc->txq[i];
+		printf("  tx ring %2d: qid=%-2d cur=%-3d "
+		    "queued=%-3d\n",
+		    i, ring->qid, ring->cur, ring->queued);
+	}
+	printf("  rx ring: cur=%d\n", sc->rxq.cur);
+	printf("  802.11 state %s\n",
+	    ieee80211_state_name[sc->sc_ic.ic_state]);
+}
 
 #define SYNC_RESP_STRUCT(_var_, _pkt_)					\
 do {									\
@@ -8874,6 +8891,8 @@ int
 iwx_intr(void *arg)
 {
 	struct iwx_softc *sc = arg;
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = IC2IFP(ic);
 	int handled = 0;
 	int r1, r2, rv = 0;
 
@@ -8938,24 +8957,10 @@ iwx_intr(void *arg)
 	}
 
 	if (r1 & IWX_CSR_INT_BIT_SW_ERR) {
-#if 1 /* usually #ifdef IWX_DEBUG but always enabled for now */
-		int i;
-
-		iwx_nic_error(sc);
-
-		/* Dump driver status (TX and RX rings) while we're here. */
-		printf("driver status:\n");
-		for (i = 0; i < IWX_MAX_QUEUES; i++) {
-			struct iwx_tx_ring *ring = &sc->txq[i];
-			printf("  tx ring %2d: qid=%-2d cur=%-3d "
-			    "queued=%-3d\n",
-			    i, ring->qid, ring->cur, ring->queued);
+		if (ifp->if_flags & IFF_DEBUG) {
+			iwx_nic_error(sc);
+			iwx_dump_driver_status(sc);
 		}
-		printf("  rx ring: cur=%d\n", sc->rxq.cur);
-		printf("  802.11 state %s\n",
-		    ieee80211_state_name[sc->sc_ic.ic_state]);
-#endif
-
 		printf("%s: fatal firmware error\n", DEVNAME(sc));
 		if ((sc->sc_flags & IWX_FLAG_SHUTDOWN) == 0)
 			task_add(systq, &sc->init_task);
@@ -9024,6 +9029,8 @@ int
 iwx_intr_msix(void *arg)
 {
 	struct iwx_softc *sc = arg;
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = IC2IFP(ic);
 	uint32_t inta_fh, inta_hw;
 	int vector = 0;
 
@@ -9048,24 +9055,10 @@ iwx_intr_msix(void *arg)
 	if ((inta_fh & IWX_MSIX_FH_INT_CAUSES_FH_ERR) ||
 	    (inta_hw & IWX_MSIX_HW_INT_CAUSES_REG_SW_ERR) ||
 	    (inta_hw & IWX_MSIX_HW_INT_CAUSES_REG_SW_ERR_V2)) {
-#if 1 /* usually #ifdef IWX_DEBUG but always enabled for now */
-		int i;
-
-		iwx_nic_error(sc);
-
-		/* Dump driver status (TX and RX rings) while we're here. */
-		printf("driver status:\n");
-		for (i = 0; i < IWX_MAX_QUEUES; i++) {
-			struct iwx_tx_ring *ring = &sc->txq[i];
-			printf("  tx ring %2d: qid=%-2d cur=%-3d "
-			    "queued=%-3d\n",
-			    i, ring->qid, ring->cur, ring->queued);
+		if (ifp->if_flags & IFF_DEBUG) {
+			iwx_nic_error(sc);
+			iwx_dump_driver_status(sc);
 		}
-		printf("  rx ring: cur=%d\n", sc->rxq.cur);
-		printf("  802.11 state %s\n",
-		    ieee80211_state_name[sc->sc_ic.ic_state]);
-#endif
-
 		printf("%s: fatal firmware error\n", DEVNAME(sc));
 		if ((sc->sc_flags & IWX_FLAG_SHUTDOWN) == 0)
 			task_add(systq, &sc->init_task);
