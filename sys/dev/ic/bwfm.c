@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.86 2021/08/19 06:02:39 stsp Exp $ */
+/* $OpenBSD: bwfm.c,v 1.87 2021/08/19 13:58:40 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -2469,16 +2469,16 @@ bwfm_rx_event_cb(struct bwfm_softc *sc, struct mbuf *m)
 		break;
 	case BWFM_E_DEAUTH:
 	case BWFM_E_DISASSOC:
-		if (ic->ic_state != IEEE80211_S_INIT)
-			ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
+		if (ic->ic_state > IEEE80211_S_SCAN)
+			ieee80211_begin_scan(ifp);
 		break;
 	case BWFM_E_LINK:
 		if (ntohl(e->msg.status) == BWFM_E_STATUS_SUCCESS &&
 		    ntohl(e->msg.reason) == 0)
 			break;
 		/* Link status has changed */
-		if (ic->ic_state != IEEE80211_S_INIT)
-			ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
+		if (ic->ic_state > IEEE80211_S_SCAN)
+			ieee80211_begin_scan(ifp);
 		break;
 #ifndef IEEE80211_STA_ONLY
 	case BWFM_E_AUTH_IND:
