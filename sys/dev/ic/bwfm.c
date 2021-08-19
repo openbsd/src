@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.85 2021/08/12 12:31:40 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.86 2021/08/19 06:02:39 stsp Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -1959,7 +1959,7 @@ bwfm_connect(struct bwfm_softc *sc)
 	bwfm_fwvar_var_set_int(sc, "auth", BWFM_AUTH_OPEN);
 	bwfm_fwvar_var_set_int(sc, "mfp", BWFM_MFP_NONE);
 
-	if (ic->ic_des_esslen && ic->ic_des_esslen < BWFM_MAX_SSID_LEN) {
+	if (ic->ic_des_esslen && ic->ic_des_esslen <= BWFM_MAX_SSID_LEN) {
 		params = malloc(sizeof(*params), M_TEMP, M_WAITOK | M_ZERO);
 		memcpy(params->ssid.ssid, ic->ic_des_essid, ic->ic_des_esslen);
 		params->ssid.len = htole32(ic->ic_des_esslen);
@@ -2064,7 +2064,7 @@ bwfm_scan(struct bwfm_softc *sc)
 	struct bwfm_ssid *ssid;
 
 	if (ic->ic_flags & IEEE80211_F_ASCAN &&
-	    ic->ic_des_esslen && ic->ic_des_esslen < BWFM_MAX_SSID_LEN)
+	    ic->ic_des_esslen && ic->ic_des_esslen <= BWFM_MAX_SSID_LEN)
 		nssid = 1;
 
 	chan_size = roundup(nchan * sizeof(uint16_t), sizeof(uint32_t));
@@ -2088,7 +2088,7 @@ bwfm_scan(struct bwfm_softc *sc)
 	params->sync_id = htole16(0x1234);
 
 	if (ic->ic_flags & IEEE80211_F_ASCAN &&
-	    ic->ic_des_esslen && ic->ic_des_esslen < BWFM_MAX_SSID_LEN) {
+	    ic->ic_des_esslen && ic->ic_des_esslen <= BWFM_MAX_SSID_LEN) {
 		params->scan_params.scan_type = BWFM_SCANTYPE_ACTIVE;
 		ssid->len = htole32(ic->ic_des_esslen);
 		memcpy(ssid->ssid, ic->ic_des_essid, ic->ic_des_esslen);
