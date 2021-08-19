@@ -63,11 +63,11 @@
 ./sbin/mount_ntfs
 ./sbin/wsconsctl
 ./usr/bin/ld.bfd
-./usr/lib/gcc-lib/alpha-unknown-openbsd6.9
-./usr/lib/gcc-lib/alpha-unknown-openbsd6.9/4.2.1
-./usr/lib/gcc-lib/alpha-unknown-openbsd6.9/4.2.1/collect2
-./usr/lib/gcc-lib/alpha-unknown-openbsd6.9/4.2.1/libgcc.a
-./usr/lib/gcc-lib/alpha-unknown-openbsd6.9/4.2.1/specs
+./usr/lib/gcc-lib/alpha-unknown-openbsd7.0
+./usr/lib/gcc-lib/alpha-unknown-openbsd7.0/4.2.1
+./usr/lib/gcc-lib/alpha-unknown-openbsd7.0/4.2.1/collect2
+./usr/lib/gcc-lib/alpha-unknown-openbsd7.0/4.2.1/libgcc.a
+./usr/lib/gcc-lib/alpha-unknown-openbsd7.0/4.2.1/specs
 ./usr/lib/libstdc++.so.57.0
 ./usr/libdata/perl5/alpha-openbsd
 ./usr/libdata/perl5/alpha-openbsd/.packlist

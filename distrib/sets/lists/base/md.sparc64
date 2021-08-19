@@ -70,11 +70,11 @@
 ./usr/bin/clang++
 ./usr/bin/clang-cpp
 ./usr/bin/ld.bfd
-./usr/lib/gcc-lib/sparc64-unknown-openbsd6.9
-./usr/lib/gcc-lib/sparc64-unknown-openbsd6.9/4.2.1
-./usr/lib/gcc-lib/sparc64-unknown-openbsd6.9/4.2.1/collect2
-./usr/lib/gcc-lib/sparc64-unknown-openbsd6.9/4.2.1/libgcc.a
-./usr/lib/gcc-lib/sparc64-unknown-openbsd6.9/4.2.1/specs
+./usr/lib/gcc-lib/sparc64-unknown-openbsd7.0
+./usr/lib/gcc-lib/sparc64-unknown-openbsd7.0/4.2.1
+./usr/lib/gcc-lib/sparc64-unknown-openbsd7.0/4.2.1/collect2
+./usr/lib/gcc-lib/sparc64-unknown-openbsd7.0/4.2.1/libgcc.a
+./usr/lib/gcc-lib/sparc64-unknown-openbsd7.0/4.2.1/specs
 ./usr/lib/libLLVM.so.6.0
 ./usr/lib/libc++.so.8.0
 ./usr/lib/libc++abi.so.5.0
