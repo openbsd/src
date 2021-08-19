@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.207 2021/06/09 03:24:54 dlg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.208 2021/08/19 10:22:00 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -336,6 +336,23 @@ leave:
 }
 
 struct mbuf *
+vlan_strip(struct mbuf *m)
+{
+	if (ISSET(m->m_flags, M_VLANTAG)) {
+		CLR(m->m_flags, M_VLANTAG);
+	} else {
+		struct ether_vlan_header *evl;
+
+		evl = mtod(m, struct ether_vlan_header *);
+		memmove((caddr_t)evl + EVL_ENCAPLEN, evl,
+		    offsetof(struct ether_vlan_header, evl_encap_proto));
+		m_adj(m, EVL_ENCAPLEN);
+	}
+
+	return (m);
+}
+
+struct mbuf *
 vlan_inject(struct mbuf *m, uint16_t type, uint16_t tag)
 {
 	struct ether_vlan_header evh;
@@ -358,7 +375,7 @@ vlan_inject(struct mbuf *m, uint16_t type, uint16_t tag)
 }
 
 struct mbuf *
-vlan_input(struct ifnet *ifp0, struct mbuf *m)
+vlan_input(struct ifnet *ifp0, struct mbuf *m, unsigned int *sdelim)
 {
 	struct vlan_softc *sc;
 	struct ifnet *ifp;
@@ -407,8 +424,25 @@ vlan_input(struct ifnet *ifp0, struct mbuf *m)
 	}
 	smr_read_leave();
 
-	if (sc == NULL)
-		return (m); /* decline, let bridge have a go */
+	if (sc == NULL) {
+		/* VLAN 0 Priority Tagging */
+		if (tag == 0 && etype == ETHERTYPE_VLAN) {
+			struct ether_header *eh;
+
+			/* XXX we should actually use the prio value? */
+			m = vlan_strip(m);
+
+			eh = mtod(m, struct ether_header *);
+			if (eh->ether_type == htons(ETHERTYPE_VLAN) ||
+			    eh->ether_type == htons(ETHERTYPE_QINQ)) {
+				m_freem(m);
+				return (NULL);
+			}
+		} else
+			*sdelim = 1;
+
+		return (m); /* decline */
+	}
 
 	ifp = &sc->sc_if;
 	if (!ISSET(ifp->if_flags, IFF_RUNNING)) {
@@ -421,13 +455,7 @@ vlan_input(struct ifnet *ifp0, struct mbuf *m)
 	 * the given source interface and vlan tag, remove the
 	 * encapsulation.
 	 */
-	if (ISSET(m->m_flags, M_VLANTAG)) {
-		CLR(m->m_flags, M_VLANTAG);
-	} else {
-		memmove((caddr_t)evl + EVL_ENCAPLEN, evl,
-		    offsetof(struct ether_vlan_header, evl_encap_proto));
-		m_adj(m, EVL_ENCAPLEN);
-	}
+	m = vlan_strip(m);
 
 	rxprio = sc->sc_rxprio;
 	switch (rxprio) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.275 2021/07/07 20:19:01 sashan Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.276 2021/08/19 10:22:00 dlg Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -404,12 +404,12 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	if (ISSET(m->m_flags, M_VLANTAG) ||
 	    etype == ETHERTYPE_VLAN || etype == ETHERTYPE_QINQ) {
 #if NVLAN > 0
-		m = vlan_input(ifp, m);
+		m = vlan_input(ifp, m, &sdelim);
 		if (m == NULL)
 			return;
-#endif /* NVLAN > 0 */
-
+#else
 		sdelim = 1;
+#endif
 	}
 
 	/*
@@ -497,6 +497,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	 * At this point it is known that the packet is destined
 	 * for layer 3 protocol handling on the local port.
 	 */
+	etype = ntohs(eh->ether_type);
 
 	switch (etype) {
 	case ETHERTYPE_IP:
