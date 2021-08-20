@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.293 2021/08/20 20:04:22 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.294 2021/08/20 20:08:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2085,7 +2085,7 @@ static void *
 format_cb_session_windows(struct format_tree *ft)
 {
 	if (ft->s != NULL)
-		return (format_printf ("%u", winlink_count(&ft->s->windows)));
+		return (format_printf("%u", winlink_count(&ft->s->windows)));
 	return (NULL);
 }
 

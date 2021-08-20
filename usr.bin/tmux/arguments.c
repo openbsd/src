@@ -1,4 +1,4 @@
-/* $OpenBSD: arguments.c,v 1.38 2021/08/20 19:50:16 nicm Exp $ */
+/* $OpenBSD: arguments.c,v 1.39 2021/08/20 20:08:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -148,7 +148,7 @@ args_vector(struct args *args, int *argc, char ***argv)
 static void printflike(3, 4)
 args_print_add(char **buf, size_t *len, const char *fmt, ...)
 {
-	va_list  ap;
+	va_list	 ap;
 	char	*s;
 	size_t	 slen;
 
@@ -181,7 +181,7 @@ args_print_add_argument(char **buf, size_t *len, const char *argument)
 char *
 args_print(struct args *args)
 {
-	size_t		 	 len;
+	size_t			 len;
 	char			*buf;
 	int			 i;
 	u_int			 j;
@@ -376,7 +376,7 @@ args_strtonum(struct args *args, u_char flag, long long minval,
     long long maxval, char **cause)
 {
 	const char		*errstr;
-	long long 	 	 ll;
+	long long		 ll;
 	struct args_entry	*entry;
 	struct args_value	*value;
 
@@ -418,7 +418,7 @@ args_string_percentage(const char *value, long long minval, long long maxval,
     long long curval, char **cause)
 {
 	const char	*errstr;
-	long long 	 ll;
+	long long	 ll;
 	size_t		 valuelen = strlen(value);
 	char		*copy;
 

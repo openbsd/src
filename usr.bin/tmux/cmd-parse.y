@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-parse.y,v 1.36 2021/08/20 09:06:26 nicm Exp $ */
+/* $OpenBSD: cmd-parse.y,v 1.37 2021/08/20 20:08:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -579,7 +579,7 @@ cmd_parse_get_error(const char *file, u_int line, const char *error)
 	if (file == NULL)
 		s = xstrdup(error);
 	else
-		xasprintf (&s, "%s:%u: %s", file, line, error);
+		xasprintf(&s, "%s:%u: %s", file, line, error);
 	return (s);
 }
 
