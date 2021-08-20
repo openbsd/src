@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ure.c,v 1.26 2021/08/13 01:24:22 gnezdo Exp $	*/
+/*	$OpenBSD: if_ure.c,v 1.27 2021/08/20 01:40:51 kevlo Exp $	*/
 /*-
  * Copyright (c) 2015, 2016, 2019 Kevin Lo <kevlo@openbsd.org>
  * Copyright (c) 2020 Jonathon Fletcher <jonathon.fletcher@gmail.com>
@@ -223,7 +223,7 @@ ure_ctl(struct ure_softc *sc, uint8_t rw, uint16_t val, uint16_t index,
 	usbd_status		err;
 
 	if (usbd_is_dying(sc->ure_udev))
-		return 0;
+		return -1;
 
 	if (rw == URE_CTL_WRITE)
 		req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
@@ -239,6 +239,8 @@ ure_ctl(struct ure_softc *sc, uint8_t rw, uint16_t val, uint16_t index,
 	err = usbd_do_request(sc->ure_udev, &req, buf);
 	if (err) {
 		DPRINTF(("ure_ctl: error %d\n", err));
+		if (err == USBD_CANCELLED || err == USBD_TIMEOUT)
+			usbd_deactivate(sc->ure_udev);
 		return -1;
 	}
 
