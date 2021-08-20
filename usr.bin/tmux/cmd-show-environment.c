@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-environment.c,v 1.26 2020/04/13 10:59:58 nicm Exp $ */
+/* $OpenBSD: cmd-show-environment.c,v 1.27 2021/08/20 19:50:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -101,7 +101,7 @@ cmd_show_environment_exec(struct cmd *self, struct cmdq_item *item)
 	struct cmd_find_state	*target = cmdq_get_target(item);
 	struct environ		*env;
 	struct environ_entry	*envent;
-	const char		*tflag;
+	const char		*tflag, *name = args_string(args, 0);
 
 	if ((tflag = args_get(args, 't')) != NULL) {
 		if (target->s == NULL) {
@@ -124,10 +124,10 @@ cmd_show_environment_exec(struct cmd *self, struct cmdq_item *item)
 		env = target->s->environ;
 	}
 
-	if (args->argc != 0) {
-		envent = environ_find(env, args->argv[0]);
+	if (name != NULL) {
+		envent = environ_find(env, name);
 		if (envent == NULL) {
-			cmdq_error(item, "unknown variable: %s", args->argv[0]);
+			cmdq_error(item, "unknown variable: %s", name);
 			return (CMD_RETURN_ERROR);
 		}
 		cmd_show_environment_print(self, item, envent);

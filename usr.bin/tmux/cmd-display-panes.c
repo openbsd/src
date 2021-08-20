@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-panes.c,v 1.40 2021/08/13 18:54:54 nicm Exp $ */
+/* $OpenBSD: cmd-display-panes.c,v 1.41 2021/08/20 19:50:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -276,8 +276,8 @@ cmd_display_panes_exec(struct cmd *self, struct cmdq_item *item)
 		delay = options_get_number(s->options, "display-panes-time");
 
 	cdata = xmalloc(sizeof *cdata);
-	if (args->argc != 0)
-		cdata->command = xstrdup(args->argv[0]);
+	if (args_count(args))
+		cdata->command = xstrdup(args_string(args, 0));
 	else
 		cdata->command = xstrdup("select-pane -t '%%'");
 	if (args_has(args, 'b'))

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-pipe-pane.c,v 1.56 2021/08/17 19:37:55 nicm Exp $ */
+/* $OpenBSD: cmd-pipe-pane.c,v 1.57 2021/08/20 19:50:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -82,7 +82,7 @@ cmd_pipe_pane_exec(struct cmd *self, struct cmdq_item *item)
 	}
 
 	/* If no pipe command, that is enough. */
-	if (args->argc == 0 || *args->argv[0] == '\0')
+	if (args_count(args) == 0 || *args_string(args, 0) == '\0')
 		return (CMD_RETURN_NORMAL);
 
 	/*
@@ -112,7 +112,7 @@ cmd_pipe_pane_exec(struct cmd *self, struct cmdq_item *item)
 	/* Expand the command. */
 	ft = format_create(cmdq_get_client(item), item, FORMAT_NONE, 0);
 	format_defaults(ft, tc, s, wl, wp);
-	cmd = format_expand_time(ft, args->argv[0]);
+	cmd = format_expand_time(ft, args_string(args, 0));
 	format_free(ft);
 
 	/* Fork the child. */

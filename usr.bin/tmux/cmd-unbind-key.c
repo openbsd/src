@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-unbind-key.c,v 1.32 2020/09/16 19:12:59 nicm Exp $ */
+/* $OpenBSD: cmd-unbind-key.c,v 1.33 2021/08/20 19:50:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -44,11 +44,11 @@ cmd_unbind_key_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args	*args = cmd_get_args(self);
 	key_code	 key;
-	const char	*tablename;
+	const char	*tablename, *keystr = args_string(args, 0);
 	int		 quiet = args_has(args, 'q');
 
 	if (args_has(args, 'a')) {
-		if (args->argc != 0) {
+		if (keystr != NULL) {
 			if (!quiet)
 				cmdq_error(item, "key given with -a");
 			return (CMD_RETURN_ERROR);
@@ -73,16 +73,16 @@ cmd_unbind_key_exec(struct cmd *self, struct cmdq_item *item)
 		return (CMD_RETURN_NORMAL);
 	}
 
-	if (args->argc != 1) {
+	if (keystr == NULL) {
 		if (!quiet)
 			cmdq_error(item, "missing key");
 		return (CMD_RETURN_ERROR);
 	}
 
-	key = key_string_lookup_string(args->argv[0]);
+	key = key_string_lookup_string(keystr);
 	if (key == KEYC_NONE || key == KEYC_UNKNOWN) {
 		if (!quiet)
-			cmdq_error(item, "unknown key: %s", args->argv[0]);
+			cmdq_error(item, "unknown key: %s", keystr);
 		return (CMD_RETURN_ERROR);
 	}
 

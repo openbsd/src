@@ -1,4 +1,4 @@
-/* $OpenBSD: window-client.c,v 1.31 2021/04/12 06:50:25 nicm Exp $ */
+/* $OpenBSD: window-client.c,v 1.32 2021/08/20 19:50:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -303,10 +303,10 @@ window_client_init(struct window_mode_entry *wme,
 		data->key_format = xstrdup(WINDOW_CLIENT_DEFAULT_KEY_FORMAT);
 	else
 		data->key_format = xstrdup(args_get(args, 'K'));
-	if (args == NULL || args->argc == 0)
+	if (args == NULL || args_count(args) == 0)
 		data->command = xstrdup(WINDOW_CLIENT_DEFAULT_COMMAND);
 	else
-		data->command = xstrdup(args->argv[0]);
+		data->command = xstrdup(args_string(args, 0));
 
 	data->data = mode_tree_start(wp, args, window_client_build,
 	    window_client_draw, NULL, window_client_menu, NULL,

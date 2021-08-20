@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-buffer.c,v 1.30 2020/09/02 13:46:35 nicm Exp $ */
+/* $OpenBSD: cmd-set-buffer.c,v 1.31 2021/08/20 19:50:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -94,11 +94,11 @@ cmd_set_buffer_exec(struct cmd *self, struct cmdq_item *item)
 		return (CMD_RETURN_NORMAL);
 	}
 
-	if (args->argc != 1) {
+	if (args_count(args) != 1) {
 		cmdq_error(item, "no data specified");
 		return (CMD_RETURN_ERROR);
 	}
-	if ((newsize = strlen(args->argv[0])) == 0)
+	if ((newsize = strlen(args_string(args, 0))) == 0)
 		return (CMD_RETURN_NORMAL);
 
 	bufsize = 0;
@@ -111,7 +111,7 @@ cmd_set_buffer_exec(struct cmd *self, struct cmdq_item *item)
 	}
 
 	bufdata = xrealloc(bufdata, bufsize + newsize);
-	memcpy(bufdata + bufsize, args->argv[0], newsize);
+	memcpy(bufdata + bufsize, args_string(args, 0), newsize);
 	bufsize += newsize;
 
 	if (paste_set(bufdata, bufsize, bufname, &cause) != 0) {

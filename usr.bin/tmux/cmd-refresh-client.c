@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-refresh-client.c,v 1.41 2021/08/20 19:34:51 nicm Exp $ */
+/* $OpenBSD: cmd-refresh-client.c,v 1.42 2021/08/20 19:50:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -127,10 +127,11 @@ cmd_refresh_client_exec(struct cmd *self, struct cmdq_item *item)
 	    args_has(args, 'U') ||
 	    args_has(args, 'D'))
 	{
-		if (args->argc == 0)
+		if (args_count(args) == 0)
 			adjust = 1;
 		else {
-			adjust = strtonum(args->argv[0], 1, INT_MAX, &errstr);
+			adjust = strtonum(args_string(args, 0), 1, INT_MAX,
+			    &errstr);
 			if (errstr != NULL) {
 				cmdq_error(item, "adjustment %s", errstr);
 				return (CMD_RETURN_ERROR);

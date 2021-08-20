@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-save-buffer.c,v 1.52 2021/02/11 09:03:38 nicm Exp $ */
+/* $OpenBSD: cmd-save-buffer.c,v 1.53 2021/08/20 19:50:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -105,7 +105,7 @@ cmd_save_buffer_exec(struct cmd *self, struct cmdq_item *item)
 		}
 		path = xstrdup("-");
 	} else
-		path = format_single_from_target(item, args->argv[0]);
+		path = format_single_from_target(item, args_string(args, 0));
 	if (args_has(args, 'a'))
 		flags = O_APPEND;
 	else

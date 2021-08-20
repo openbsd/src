@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-resize-pane.c,v 1.48 2020/05/25 18:17:14 nicm Exp $ */
+/* $OpenBSD: cmd-resize-pane.c,v 1.49 2021/08/20 19:50:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -95,10 +95,11 @@ cmd_resize_pane_exec(struct cmd *self, struct cmdq_item *item)
 	}
 	server_unzoom_window(w);
 
-	if (args->argc == 0)
+	if (args_count(args) == 0)
 		adjust = 1;
 	else {
-		adjust = strtonum(args->argv[0], 1, INT_MAX, &errstr);
+		adjust = strtonum(args_string(args, 0), 1, INT_MAX,
+		    &errstr);
 		if (errstr != NULL) {
 			cmdq_error(item, "adjustment %s", errstr);
 			return (CMD_RETURN_ERROR);

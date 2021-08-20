@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-rename-window.c,v 1.26 2020/05/16 15:01:30 nicm Exp $ */
+/* $OpenBSD: cmd-rename-window.c,v 1.27 2021/08/20 19:50:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -50,7 +50,7 @@ cmd_rename_window_exec(struct cmd *self, struct cmdq_item *item)
 	struct winlink		*wl = target->wl;
 	char			*newname;
 
-	newname = format_single_from_target(item, args->argv[0]);
+	newname = format_single_from_target(item, args_string(args, 0));
 	window_set_name(wl->window, newname);
 	options_set_number(wl->window->options, "automatic-rename", 0);
 

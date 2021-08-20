@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-wait-for.c,v 1.20 2020/04/13 10:59:58 nicm Exp $ */
+/* $OpenBSD: cmd-wait-for.c,v 1.21 2021/08/20 19:50:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -121,11 +121,11 @@ static enum cmd_retval
 cmd_wait_for_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args     	*args = cmd_get_args(self);
-	const char		*name = args->argv[0];
-	struct wait_channel	*wc, wc0;
+	const char		*name = args_string(args, 0);
+	struct wait_channel	*wc, find;
 
-	wc0.name = name;
-	wc = RB_FIND(wait_channels, &wait_channels, &wc0);
+	find.name = name;
+	wc = RB_FIND(wait_channels, &wait_channels, &find);
 
 	if (args_has(args, 'S'))
 		return (cmd_wait_for_signal(item, name, wc));

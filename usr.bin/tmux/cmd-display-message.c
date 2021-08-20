@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-message.c,v 1.58 2021/08/14 08:06:37 nicm Exp $ */
+/* $OpenBSD: cmd-display-message.c,v 1.59 2021/08/20 19:50:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -68,9 +68,9 @@ cmd_display_message_exec(struct cmd *self, struct cmdq_item *item)
 	struct window_pane	*wp = target->wp;
 	const char		*template;
 	char			*msg, *cause;
-	int			 delay = -1;
+	int			 delay = -1, flags;
 	struct format_tree	*ft;
-	int			 flags;
+	u_int			 count = args_count(args);
 
 	if (args_has(args, 'I')) {
 		if (wp == NULL)
@@ -83,7 +83,7 @@ cmd_display_message_exec(struct cmd *self, struct cmdq_item *item)
 		return (CMD_RETURN_WAIT);
 	}
 
-	if (args_has(args, 'F') && args->argc != 0) {
+	if (args_has(args, 'F') && count != 0) {
 		cmdq_error(item, "only one of -F or argument must be given");
 		return (CMD_RETURN_ERROR);
 	}
@@ -97,9 +97,10 @@ cmd_display_message_exec(struct cmd *self, struct cmdq_item *item)
 		}
 	}
 
-	template = args_get(args, 'F');
-	if (args->argc != 0)
-		template = args->argv[0];
+	if (count != 0)
+		template = args_string(args, 0);
+	else
+		template = args_get(args, 'F');
 	if (template == NULL)
 		template = DISPLAY_MESSAGE_TEMPLATE;
 

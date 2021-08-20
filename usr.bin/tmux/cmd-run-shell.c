@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-run-shell.c,v 1.74 2021/08/13 06:50:42 nicm Exp $ */
+/* $OpenBSD: cmd-run-shell.c,v 1.75 2021/08/20 19:50:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -104,6 +104,7 @@ cmd_run_shell_exec(struct cmd *self, struct cmdq_item *item)
 	double				 d;
 	struct timeval			 tv;
 	char				*end;
+	const char			*cmd = args_string(args, 0);
 	int				 wait = !args_has(args, 'b');
 
 	if ((delay = args_get(args, 'd')) != NULL) {
@@ -112,12 +113,12 @@ cmd_run_shell_exec(struct cmd *self, struct cmdq_item *item)
 			cmdq_error(item, "invalid delay time: %s", delay);
 			return (CMD_RETURN_ERROR);
 		}
-	} else if (args->argc == 0)
+	} else if (args_count(args) == 0)
 		return (CMD_RETURN_NORMAL);
 
 	cdata = xcalloc(1, sizeof *cdata);
-	if (args->argc != 0)
-		cdata->cmd = format_single_from_target(item, args->argv[0]);
+	if (cmd != NULL)
+		cdata->cmd = format_single_from_target(item, cmd);
 
 	cdata->shell = !args_has(args, 'C');
 	if (!cdata->shell) {

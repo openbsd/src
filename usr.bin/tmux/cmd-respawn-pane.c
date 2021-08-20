@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-respawn-pane.c,v 1.34 2021/08/20 18:59:53 nicm Exp $ */
+/* $OpenBSD: cmd-respawn-pane.c,v 1.35 2021/08/20 19:50:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -49,14 +49,13 @@ cmd_respawn_pane_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args		*args = cmd_get_args(self);
 	struct cmd_find_state	*target = cmdq_get_target(item);
-	struct spawn_context	 sc;
+	struct spawn_context	 sc = { 0 };
 	struct session		*s = target->s;
 	struct winlink		*wl = target->wl;
 	struct window_pane	*wp = target->wp;
 	char			*cause = NULL;
 	struct args_value	*av;
 
-	memset(&sc, 0, sizeof sc);
 	sc.item = item;
 	sc.s = s;
 	sc.wl = wl;
@@ -65,8 +64,7 @@ cmd_respawn_pane_exec(struct cmd *self, struct cmdq_item *item)
 	sc.lc = NULL;
 
 	sc.name = NULL;
-	sc.argc = args->argc;
-	sc.argv = args->argv;
+	args_vector(args, &sc.argc, &sc.argv);
 	sc.environ = environ_create();
 
 	av = args_first_value(args, 'e');
@@ -85,6 +83,8 @@ cmd_respawn_pane_exec(struct cmd *self, struct cmdq_item *item)
 	if (spawn_pane(&sc, &cause) == NULL) {
 		cmdq_error(item, "respawn pane failed: %s", cause);
 		free(cause);
+		if (sc.argv != NULL)
+			cmd_free_argv(sc.argc, sc.argv);
 		environ_free(sc.environ);
 		return (CMD_RETURN_ERROR);
 	}
@@ -93,6 +93,8 @@ cmd_respawn_pane_exec(struct cmd *self, struct cmdq_item *item)
 	server_redraw_window_borders(wp->window);
 	server_status_window(wp->window);
 
+	if (sc.argv != NULL)
+		cmd_free_argv(sc.argc, sc.argv);
 	environ_free(sc.environ);
 	return (CMD_RETURN_NORMAL);
 }
