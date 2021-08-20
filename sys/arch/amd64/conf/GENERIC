@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.498 2021/04/28 11:32:59 bluhm Exp $
+#	$OpenBSD: GENERIC,v 1.499 2021/08/20 05:23:18 anton Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -286,6 +286,8 @@ uslhcom* at uhidev?		# Silicon Labs CP2110 USB HID UART
 ucom*	at uslhcom?
 uhid*	at uhidev?		# USB generic HID support
 fido*	at uhidev?		# FIDO/U2F security key support
+ucc*	at uhidev?		# Consumer Control keyboards
+wskbd*	at ucc? mux 1
 ujoy*	at uhidev?		# USB joystick/gamecontroller support
 uhidpp*	at uhidev?		# Logitech HID++ Devices
 upd*	at uhidev?		# USB Power Devices sensors

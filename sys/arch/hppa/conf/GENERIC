@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.182 2021/02/04 16:25:39 anton Exp $
+#	$OpenBSD: GENERIC,v 1.183 2021/08/20 05:23:18 anton Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -111,6 +111,8 @@ ukbd*	at uhidev?		# USB keyboard
 wskbd*	at ukbd? mux 1
 uhid*	at uhidev?		# USB generic HID support
 fido*	at uhidev?		# FIDO/U2F security key support
+ucc*	at uhidev?		# Consumer Control keyboards
+wskbd*	at ucc? mux 1
 ujoy*	at uhidev?		# USB joystick/gamecontroller support
 uhidpp*	at uhidev?		# Logitech HID++ Devices
 upd*	at uhidev?		# USB Power Devices sensors
