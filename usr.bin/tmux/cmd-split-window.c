@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.105 2021/03/11 06:31:05 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.106 2021/08/20 18:59:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -65,10 +65,10 @@ cmd_split_window_exec(struct cmd *self, struct cmdq_item *item)
 	struct layout_cell	*lc;
 	struct cmd_find_state	 fs;
 	int			 size, percentage, flags, input;
-	const char		*template, *add, *errstr, *p;
+	const char		*template, *errstr, *p;
 	char			*cause, *cp, *copy;
 	size_t			 plen;
-	struct args_value	*value;
+	struct args_value	*av;
 
 	if (args_has(args, 'h'))
 		type = LAYOUT_LEFTRIGHT;
@@ -141,10 +141,10 @@ cmd_split_window_exec(struct cmd *self, struct cmdq_item *item)
 	sc.argv = args->argv;
 	sc.environ = environ_create();
 
-	add = args_first_value(args, 'e', &value);
-	while (add != NULL) {
-		environ_put(sc.environ, add, 0);
-		add = args_next_value(&value);
+	av = args_first_value(args, 'e');
+	while (av != NULL) {
+		environ_put(sc.environ, av->value, 0);
+		av = args_next_value(av);
 	}
 
 	sc.idx = -1;
@@ -159,6 +159,7 @@ cmd_split_window_exec(struct cmd *self, struct cmdq_item *item)
 	if ((new_wp = spawn_pane(&sc, &cause)) == NULL) {
 		cmdq_error(item, "create pane failed: %s", cause);
 		free(cause);
+		environ_free(sc.environ);
 		return (CMD_RETURN_ERROR);
 	}
 	if (input && window_pane_start_input(new_wp, item, &cause) != 0) {
@@ -167,6 +168,7 @@ cmd_split_window_exec(struct cmd *self, struct cmdq_item *item)
 		window_remove_pane(wp->window, new_wp);
 		cmdq_error(item, "%s", cause);
 		free(cause);
+		environ_free(sc.environ);
 		return (CMD_RETURN_ERROR);
 	}
 	if (!args_has(args, 'd'))

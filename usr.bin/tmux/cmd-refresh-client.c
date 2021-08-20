@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-refresh-client.c,v 1.39 2020/07/06 09:14:20 nicm Exp $ */
+/* $OpenBSD: cmd-refresh-client.c,v 1.40 2021/08/20 18:59:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -184,20 +184,20 @@ cmd_refresh_client_exec(struct cmd *self, struct cmdq_item *item)
 	if (args_has(args, 'A')) {
 		if (~tc->flags & CLIENT_CONTROL)
 			goto not_control_client;
-		value = args_first_value(args, 'A', &av);
-		while (value != NULL) {
-			cmd_refresh_client_update_offset(tc, value);
-			value = args_next_value(&av);
+		av = args_first_value(args, 'A');
+		while (av != NULL) {
+			cmd_refresh_client_update_offset(tc, av->value);
+			av = args_next_value(&av);
 		}
 		return (CMD_RETURN_NORMAL);
 	}
 	if (args_has(args, 'B')) {
 		if (~tc->flags & CLIENT_CONTROL)
 			goto not_control_client;
-		value = args_first_value(args, 'B', &av);
-		while (value != NULL) {
-			cmd_refresh_client_update_subscription(tc, value);
-			value = args_next_value(&av);
+		av = args_first_value(args, 'B');
+		while (av != NULL) {
+			cmd_refresh_client_update_subscription(tc, av);
+			av = args_next_value(av);
 		}
 		return (CMD_RETURN_NORMAL);
 	}

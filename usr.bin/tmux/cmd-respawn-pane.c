@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-respawn-pane.c,v 1.33 2020/05/16 15:01:30 nicm Exp $ */
+/* $OpenBSD: cmd-respawn-pane.c,v 1.34 2021/08/20 18:59:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -54,8 +54,7 @@ cmd_respawn_pane_exec(struct cmd *self, struct cmdq_item *item)
 	struct winlink		*wl = target->wl;
 	struct window_pane	*wp = target->wp;
 	char			*cause = NULL;
-	const char		*add;
-	struct args_value	*value;
+	struct args_value	*av;
 
 	memset(&sc, 0, sizeof sc);
 	sc.item = item;
@@ -70,10 +69,10 @@ cmd_respawn_pane_exec(struct cmd *self, struct cmdq_item *item)
 	sc.argv = args->argv;
 	sc.environ = environ_create();
 
-	add = args_first_value(args, 'e', &value);
-	while (add != NULL) {
-		environ_put(sc.environ, add, 0);
-		add = args_next_value(&value);
+	av = args_first_value(args, 'e');
+	while (av != NULL) {
+		environ_put(sc.environ, av->value, 0);
+		av = args_next_value(av);
 	}
 
 	sc.idx = -1;
@@ -86,6 +85,7 @@ cmd_respawn_pane_exec(struct cmd *self, struct cmdq_item *item)
 	if (spawn_pane(&sc, &cause) == NULL) {
 		cmdq_error(item, "respawn pane failed: %s", cause);
 		free(cause);
+		environ_free(sc.environ);
 		return (CMD_RETURN_ERROR);
 	}
 
