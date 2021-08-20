@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.329 2021/08/20 19:50:17 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.330 2021/08/20 20:04:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2841,6 +2841,7 @@ window_copy_command(struct window_mode_entry *wme, struct client *c,
 	if (count == 0)
 		return;
 	command = args_string(args, 0);
+
 	if (m != NULL && m->valid && !MOUSE_WHEEL(m->b))
 		window_copy_move_mouse(m);
 

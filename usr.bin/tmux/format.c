@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.292 2021/08/20 17:50:42 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.293 2021/08/20 20:04:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3626,7 +3626,7 @@ format_build_modifiers(struct format_expand_state *es, const char **s,
 				break;
 			cp++;
 
-			argv = xreallocarray (argv, argc + 1, sizeof *argv);
+			argv = xreallocarray(argv, argc + 1, sizeof *argv);
 			value = xstrndup(cp, end - cp);
 			argv[argc++] = format_expand1(es, value);
 			free(value);
