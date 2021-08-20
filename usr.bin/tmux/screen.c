@@ -1,4 +1,4 @@
-/* $OpenBSD: screen.c,v 1.73 2021/06/10 07:43:44 nicm Exp $ */
+/* $OpenBSD: screen.c,v 1.74 2021/08/20 17:50:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -698,6 +698,6 @@ screen_mode_to_string(int mode)
 		strlcat(tmp, "CRLF,", sizeof tmp);
 	if (mode & MODE_KEXTENDED)
 		strlcat(tmp, "KEXTENDED,", sizeof tmp);
-	tmp[strlen (tmp) - 1] = '\0';
+	tmp[strlen(tmp) - 1] = '\0';
 	return (tmp);
 }

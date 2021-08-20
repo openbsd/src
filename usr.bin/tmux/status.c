@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.226 2021/08/12 20:09:34 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.227 2021/08/20 17:50:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1413,7 +1413,7 @@ process_key:
 			break;
 		if (c->prompt_buffer[0].size == 0) {
 			prefix = '=';
-			free (c->prompt_buffer);
+			free(c->prompt_buffer);
 			c->prompt_buffer = utf8_fromcstr(c->prompt_last);
 			c->prompt_index = utf8_strlen(c->prompt_buffer);
 		} else
@@ -1424,7 +1424,7 @@ process_key:
 			break;
 		if (c->prompt_buffer[0].size == 0) {
 			prefix = '=';
-			free (c->prompt_buffer);
+			free(c->prompt_buffer);
 			c->prompt_buffer = utf8_fromcstr(c->prompt_last);
 			c->prompt_index = utf8_strlen(c->prompt_buffer);
 		} else

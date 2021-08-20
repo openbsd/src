@@ -1,4 +1,4 @@
-/* $OpenBSD: input-keys.c,v 1.85 2021/06/10 07:52:07 nicm Exp $ */
+/* $OpenBSD: input-keys.c,v 1.86 2021/08/20 17:50:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -334,7 +334,7 @@ input_key_cmp(struct input_key_entry *ike1, struct input_key_entry *ike2)
 
 /* Look for key in tree. */
 static struct input_key_entry *
-input_key_get (key_code key)
+input_key_get(key_code key)
 {
 	struct input_key_entry	entry = { .key = key };
 

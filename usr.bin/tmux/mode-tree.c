@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-tree.c,v 1.54 2021/06/10 07:50:03 nicm Exp $ */
+/* $OpenBSD: mode-tree.c,v 1.55 2021/08/20 17:50:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -922,7 +922,7 @@ mode_tree_menu_callback(__unused struct menu *menu, __unused u_int idx,
 	if (mti->itemdata != mtm->itemdata)
 		goto out;
 	mtd->current = mtm->line;
-	mtd->menucb (mtd->modedata, mtm->c, key);
+	mtd->menucb(mtd->modedata, mtm->c, key);
 
 out:
 	mode_tree_remove_ref(mtd);

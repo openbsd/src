@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.380 2021/08/13 18:54:54 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.381 2021/08/20 17:50:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2378,7 +2378,7 @@ server_client_set_flags(struct client *c, const char *flags)
 	uint64_t flag;
 	int	 not;
 
-	s = copy = xstrdup (flags);
+	s = copy = xstrdup(flags);
 	while ((next = strsep(&s, ",")) != NULL) {
 		not = (*next == '!');
 		if (not)
