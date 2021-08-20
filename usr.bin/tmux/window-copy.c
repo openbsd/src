@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.327 2021/08/20 17:50:42 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.328 2021/08/20 19:08:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1884,7 +1884,6 @@ window_copy_cmd_select_word(struct window_copy_cmd_state *cs)
 	struct options			*session_options = cs->s->options;
 	struct window_copy_mode_data	*data = wme->data;
 	u_int				 px, py, nextx, nexty;
-
 
 	data->lineflag = LINE_SEL_LEFT_RIGHT;
 	data->rectflag = 0;

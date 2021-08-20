@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-window.c,v 1.91 2021/08/20 18:59:53 nicm Exp $ */
+/* $OpenBSD: cmd-new-window.c,v 1.92 2021/08/20 19:08:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -93,7 +93,6 @@ cmd_new_window_exec(struct cmd *self, struct cmdq_item *item)
 			return (CMD_RETURN_NORMAL);
 		}
 	}
-
 
 	before = args_has(args, 'b');
 	if (args_has(args, 'a') || before) {
