@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.164 2021/06/10 07:50:03 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.165 2021/08/20 19:34:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -252,7 +252,7 @@ cmd_log_argv(int argc, char **argv, const char *fmt, ...)
 
 /* Prepend to an argument vector. */
 void
-cmd_prepend_argv(int *argc, char ***argv, char *arg)
+cmd_prepend_argv(int *argc, char ***argv, const char *arg)
 {
 	char	**new_argv;
 	int	  i;
@@ -269,7 +269,7 @@ cmd_prepend_argv(int *argc, char ***argv, char *arg)
 
 /* Append to an argument vector. */
 void
-cmd_append_argv(int *argc, char ***argv, char *arg)
+cmd_append_argv(int *argc, char ***argv, const char *arg)
 {
 	*argv = xreallocarray(*argv, (*argc) + 1, sizeof **argv);
 	(*argv)[(*argc)++] = xstrdup(arg);
