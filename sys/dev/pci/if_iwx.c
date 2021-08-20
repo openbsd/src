@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.94 2021/08/20 00:22:54 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.95 2021/08/20 01:33:44 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -9264,15 +9264,6 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 	reg = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
 	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, reg & ~0xff00);
 
-	/* Enable bus-mastering and hardware bug workaround. */
-	reg = pci_conf_read(sc->sc_pct, sc->sc_pcitag, PCI_COMMAND_STATUS_REG);
-	reg |= PCI_COMMAND_MASTER_ENABLE;
-	/* if !MSI */
-	if (reg & PCI_COMMAND_INTERRUPT_DISABLE) {
-		reg &= ~PCI_COMMAND_INTERRUPT_DISABLE;
-	}
-	pci_conf_write(sc->sc_pct, sc->sc_pcitag, PCI_COMMAND_STATUS_REG, reg);
-
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, PCI_MAPREG_START);
 	err = pci_mapreg_map(pa, PCI_MAPREG_START, memtype, 0,
 	    &sc->sc_st, &sc->sc_sh, NULL, &sc->sc_sz, 0);
@@ -9283,9 +9274,18 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 
 	if (pci_intr_map_msix(pa, 0, &ih) == 0) {
 		sc->sc_msix = 1;
-	} else if (pci_intr_map_msi(pa, &ih) && pci_intr_map(pa, &ih)) {
-		printf("%s: can't map interrupt\n", DEVNAME(sc));
-		return;
+	} else if (pci_intr_map_msi(pa, &ih)) {
+		if (pci_intr_map(pa, &ih)) {
+			printf("%s: can't map interrupt\n", DEVNAME(sc));
+			return;
+		}
+		/* Hardware bug workaround. */
+		reg = pci_conf_read(sc->sc_pct, sc->sc_pcitag,
+		    PCI_COMMAND_STATUS_REG);
+		if (reg & PCI_COMMAND_INTERRUPT_DISABLE)
+			reg &= ~PCI_COMMAND_INTERRUPT_DISABLE;
+		pci_conf_write(sc->sc_pct, sc->sc_pcitag,
+		    PCI_COMMAND_STATUS_REG, reg);
 	}
 
 	intrstr = pci_intr_string(sc->sc_pct, ih);
@@ -9351,15 +9351,15 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_uhb_supported = 0;
 		break;
 	case PCI_PRODUCT_INTEL_WL_22500_4:
-	    sc->sc_fwname = "iwx-Qu-c0-hr-b0-63";
-	    sc->sc_device_family = IWX_DEVICE_FAMILY_22000;
-	    sc->sc_integrated = 1;
-	    sc->sc_ltr_delay = IWX_SOC_FLAGS_LTR_APPLY_DELAY_200;
-	    sc->sc_low_latency_xtal = 0;
-	    sc->sc_xtal_latency = 5000;
-	    sc->sc_tx_with_siso_diversity = 0;
-	    sc->sc_uhb_supported = 0;
-	    break;
+		sc->sc_fwname = "iwx-Qu-c0-hr-b0-63";
+		sc->sc_device_family = IWX_DEVICE_FAMILY_22000;
+		sc->sc_integrated = 1;
+		sc->sc_ltr_delay = IWX_SOC_FLAGS_LTR_APPLY_DELAY_200;
+		sc->sc_low_latency_xtal = 0;
+		sc->sc_xtal_latency = 5000;
+		sc->sc_tx_with_siso_diversity = 0;
+		sc->sc_uhb_supported = 0;
+		break;
 	default:
 		printf("%s: unknown adapter type\n", DEVNAME(sc));
 		return;
