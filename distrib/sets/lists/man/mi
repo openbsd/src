@@ -1988,6 +1988,7 @@
 ./usr/share/man/man4/uberry.4
 ./usr/share/man/man4/ubsa.4
 ./usr/share/man/man4/ubsec.4
+./usr/share/man/man4/ucc.4
 ./usr/share/man/man4/uchcom.4
 ./usr/share/man/man4/ucom.4
 ./usr/share/man/man4/ucrcom.4
