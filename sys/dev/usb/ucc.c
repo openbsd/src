@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucc.c,v 1.1 2021/08/20 05:23:19 anton Exp $	*/
+/*	$OpenBSD: ucc.c,v 1.2 2021/08/21 02:43:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -298,8 +298,6 @@ ucc_set_leds(void *v, int leds)
 int
 ucc_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
-	struct ucc_softc *sc = (struct ucc_softc *)v;
-
 	switch (cmd) {
 	/* wsconsctl(8) stub */
 	case WSKBDIO_GTYPE:
@@ -312,9 +310,12 @@ ucc_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return 0;
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
-	case WSKBDIO_SETMODE:
+	case WSKBDIO_SETMODE: {
+		struct ucc_softc *sc = (struct ucc_softc *)v;
+
 		sc->sc_mode = *(int *)data;
 		return 0;
+	    }
 #endif
 	}
 
