@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.24 2021/05/19 23:18:40 drahn Exp $
+# $OpenBSD: Makefile.inc,v 1.25 2021/08/21 03:00:02 gkoehler Exp $
 
 CLANG_SRCS?=	${.CURDIR}/../../../llvm/clang
 LLDB_SRCS?=	${.CURDIR}/../../../llvm/lldb
@@ -77,7 +77,3 @@ DPADD+=	${.OBJDIR}/../lib${lib}/lib${lib}.a
 LDADD+=	${.OBJDIR}/../lib${lib}/lib${lib}.a
 .endfor
 LDADD+=-Wl,--end-group
-
-.if ${MACHINE_ARCH} == "powerpc"
-LDADD+=-Wl,-relax
-.endif
