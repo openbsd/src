@@ -1,4 +1,4 @@
-.\"	$OpenBSD: onewire.4,v 1.12 2021/05/03 07:09:26 jmc Exp $
+.\"	$OpenBSD: onewire.4,v 1.13 2021/08/21 18:28:52 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 3 2021 $
+.Dd $Mdocdate: August 21 2021 $
 .Dt ONEWIRE 4
 .Os
 .Sh NAME
@@ -46,8 +46,6 @@ The driver supports plugging and unplugging slave devices on the fly.
 .Bl -tag -width 11n -offset ind -compact
 .It Xr gpioow 4
 1-Wire bus bit-banging through GPIO pin
-.It Xr ioc 4
-IOC3 generic workstation I/O device
 .It Xr uow 4
 Maxim/Dallas DS2490 USB 1-Wire adapter
 .El
