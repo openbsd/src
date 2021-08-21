@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-session.c,v 1.142 2021/08/21 10:22:39 nicm Exp $ */
+/* $OpenBSD: cmd-new-session.c,v 1.143 2021/08/21 10:28:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -271,7 +271,7 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 		environ_update(global_s_options, c->environ, env);
 	av = args_first_value(args, 'e');
 	while (av != NULL) {
-		environ_put(env, av->value, 0);
+		environ_put(env, av->string, 0);
 		av = args_next_value(av);
 	}
 	s = session_create(prefix, newname, cwd, env, oo, tiop);

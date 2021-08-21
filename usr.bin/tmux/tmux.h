@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1129 2021/08/21 10:22:39 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1130 2021/08/21 10:28:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1357,7 +1357,7 @@ TAILQ_HEAD(message_list, message_entry);
 
 /* Argument value. */
 struct args_value {
-	char			*value;
+	char			*string;
 	TAILQ_ENTRY(args_value)	 entry;
 };
 

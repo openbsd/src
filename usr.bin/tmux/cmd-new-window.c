@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-window.c,v 1.94 2021/08/21 10:22:39 nicm Exp $ */
+/* $OpenBSD: cmd-new-window.c,v 1.95 2021/08/21 10:28:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -110,7 +110,7 @@ cmd_new_window_exec(struct cmd *self, struct cmdq_item *item)
 
 	av = args_first_value(args, 'e');
 	while (av != NULL) {
-		environ_put(sc.environ, av->value, 0);
+		environ_put(sc.environ, av->string, 0);
 		av = args_next_value(av);
 	}
 

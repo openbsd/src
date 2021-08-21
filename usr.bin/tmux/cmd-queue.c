@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.105 2021/08/20 19:50:16 nicm Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.106 2021/08/21 10:28:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -413,7 +413,7 @@ cmdq_insert_hook(struct session *s, struct cmdq_item *item,
 		av = args_first_value(args, flag);
 		while (av != NULL) {
 			xsnprintf(tmp, sizeof tmp, "hook_flag_%c_%d", flag, i);
-			cmdq_add_format(new_state, tmp, "%s", av->value);
+			cmdq_add_format(new_state, tmp, "%s", av->string);
 			i++;
 			av = args_next_value(av);
 		}

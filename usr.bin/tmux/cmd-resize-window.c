@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-resize-window.c,v 1.7 2021/08/21 10:22:39 nicm Exp $ */
+/* $OpenBSD: cmd-resize-window.c,v 1.8 2021/08/21 10:28:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2018 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -59,8 +59,7 @@ cmd_resize_window_exec(struct cmd *self, struct cmdq_item *item)
 	if (args_count(args) == 0)
 		adjust = 1;
 	else {
-		adjust = strtonum(args_string(args, 0), 1, INT_MAX,
-		    &errstr);
+		adjust = strtonum(args_string(args, 0), 1, INT_MAX, &errstr);
 		if (errstr != NULL) {
 			cmdq_error(item, "adjustment %s", errstr);
 			return (CMD_RETURN_ERROR);

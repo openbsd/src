@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-respawn-window.c,v 1.47 2021/08/21 10:22:39 nicm Exp $ */
+/* $OpenBSD: cmd-respawn-window.c,v 1.48 2021/08/21 10:28:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -67,7 +67,7 @@ cmd_respawn_window_exec(struct cmd *self, struct cmdq_item *item)
 
 	av = args_first_value(args, 'e');
 	while (av != NULL) {
-		environ_put(sc.environ, av->value, 0);
+		environ_put(sc.environ, av->string, 0);
 		av = args_next_value(av);
 	}
 
