@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.168 2021/08/21 14:06:17 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.169 2021/08/21 14:10:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -221,10 +221,6 @@ struct cmd {
 
 	char			 *file;
 	u_int			  line;
-
-	char			 *alias;
-	int			  argc;
-	char			**argv;
 
 	TAILQ_ENTRY(cmd)	  qentry;
 };
@@ -530,10 +526,6 @@ cmd_parse(int argc, char **argv, const char *file, u_int line, char **cause)
 		cmd->file = xstrdup(file);
 	cmd->line = line;
 
-	cmd->alias = NULL;
-	cmd->argc = argc;
-	cmd->argv = cmd_copy_argv(argc, argv);
-
 	return (cmd);
 
 usage:
@@ -547,9 +539,6 @@ usage:
 void
 cmd_free(struct cmd *cmd)
 {
-	free(cmd->alias);
-	cmd_free_argv(cmd->argc, cmd->argv);
-
 	free(cmd->file);
 
 	args_free(cmd->args);
