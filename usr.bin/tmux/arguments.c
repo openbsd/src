@@ -1,4 +1,4 @@
-/* $OpenBSD: arguments.c,v 1.43 2021/08/21 20:46:43 nicm Exp $ */
+/* $OpenBSD: arguments.c,v 1.44 2021/08/21 20:57:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -39,7 +39,7 @@ struct args_entry {
 };
 
 struct args {
-	struct args_tree	  tree;
+	struct args_tree	 tree;
 	u_int			 count;
 	struct args_value	*values;
 };
@@ -231,7 +231,7 @@ args_free(struct args *args)
 		RB_REMOVE(args_tree, &args->tree, entry);
 		TAILQ_FOREACH_SAFE(value, &entry->values, entry, value1) {
 			TAILQ_REMOVE(&entry->values, value, entry);
-			free(value->string);
+			args_free_value(value);
 			free(value);
 		}
 		free(entry);
@@ -472,7 +472,7 @@ args_value(struct args *args, u_int idx)
 const char *
 args_string(struct args *args, u_int idx)
 {
-	if (idx >= (u_int)args->count)
+	if (idx >= args->count)
 		return (NULL);
 	return (args_value_as_string(&args->values[idx]));
 }
