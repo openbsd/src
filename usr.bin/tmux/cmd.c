@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.167 2021/08/21 08:44:59 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.168 2021/08/21 14:06:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -594,7 +594,18 @@ cmd_list_append(struct cmd_list *cmdlist, struct cmd *cmd)
 	TAILQ_INSERT_TAIL(cmdlist->list, cmd, qentry);
 }
 
-/* Move all commands from one command list to another */
+/* Append all commands from one list to another.  */
+void
+cmd_list_append_all(struct cmd_list *cmdlist, struct cmd_list *from)
+{
+	struct cmd	*cmd;
+
+	TAILQ_FOREACH(cmd, from->list, qentry)
+		cmd->group = cmdlist->group;
+	TAILQ_CONCAT(cmdlist->list, from->list, qentry);
+}
+
+/* Move all commands from one command list to another. */
 void
 cmd_list_move(struct cmd_list *cmdlist, struct cmd_list *from)
 {

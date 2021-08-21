@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-parse.y,v 1.37 2021/08/20 20:08:30 nicm Exp $ */
+/* $OpenBSD: cmd-parse.y,v 1.38 2021/08/21 14:06:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -871,7 +871,7 @@ cmd_parse_build_commands(struct cmd_parse_commands *cmds,
 			cmd_list_free(current);
 			return;
 		}
-		cmd_list_move(current, add);
+		cmd_list_append_all(current, add);
 		cmd_list_free(add);
 	}
 	if (current != NULL) {
