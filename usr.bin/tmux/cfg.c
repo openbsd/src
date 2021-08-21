@@ -1,4 +1,4 @@
-/* $OpenBSD: cfg.c,v 1.83 2021/04/07 12:50:12 nicm Exp $ */
+/* $OpenBSD: cfg.c,v 1.84 2021/08/21 17:25:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -125,8 +125,6 @@ load_cfg(const char *path, struct client *c, struct cmdq_item *item, int flags,
 
 	pr = cmd_parse_from_file(f, &pi);
 	fclose(f);
-	if (pr->status == CMD_PARSE_EMPTY)
-		return (0);
 	if (pr->status == CMD_PARSE_ERROR) {
 		cfg_add_cause("%s", pr->error);
 		free(pr->error);
@@ -179,8 +177,6 @@ load_cfg_from_buffer(const void *buf, size_t len, const char *path,
 	pi.c = c;
 
 	pr = cmd_parse_from_buffer(buf, len, &pi);
-	if (pr->status == CMD_PARSE_EMPTY)
-		return (0);
 	if (pr->status == CMD_PARSE_ERROR) {
 		cfg_add_cause("%s", pr->error);
 		free(pr->error);

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-if-shell.c,v 1.78 2021/08/21 10:22:39 nicm Exp $ */
+/* $OpenBSD: cmd-if-shell.c,v 1.79 2021/08/21 17:25:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -159,8 +159,6 @@ cmd_if_shell_callback(struct job *job)
 
 	pr = cmd_parse_from_string(cmd, &cdata->input);
 	switch (pr->status) {
-	case CMD_PARSE_EMPTY:
-		break;
 	case CMD_PARSE_ERROR:
 		if (cdata->item != NULL)
 		       cmdq_error(cdata->item, "%s", pr->error);

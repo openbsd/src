@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.382 2021/08/20 19:08:36 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.383 2021/08/21 17:25:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2151,9 +2151,6 @@ server_client_dispatch_command(struct client *c, struct imsg *imsg)
 
 	pr = cmd_parse_from_arguments(argc, argv, NULL);
 	switch (pr->status) {
-	case CMD_PARSE_EMPTY:
-		cause = xstrdup("empty command");
-		goto error;
 	case CMD_PARSE_ERROR:
 		cause = pr->error;
 		goto error;

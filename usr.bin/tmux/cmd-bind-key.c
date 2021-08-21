@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-bind-key.c,v 1.40 2021/08/21 10:22:38 nicm Exp $ */
+/* $OpenBSD: cmd-bind-key.c,v 1.41 2021/08/21 17:25:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -75,9 +75,6 @@ cmd_bind_key_exec(struct cmd *self, struct cmdq_item *item)
 			cmd_free_argv(argc, argv);
 		}
 		switch (pr->status) {
-		case CMD_PARSE_EMPTY:
-			cmdq_error(item, "empty command");
-			return (CMD_RETURN_ERROR);
 		case CMD_PARSE_ERROR:
 			cmdq_error(item, "%s", pr->error);
 			free(pr->error);

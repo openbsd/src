@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1131 2021/08/21 14:06:17 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1132 2021/08/21 17:25:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1417,7 +1417,6 @@ enum cmd_retval {
 
 /* Command parse result. */
 enum cmd_parse_status {
-	CMD_PARSE_EMPTY,
 	CMD_PARSE_ERROR,
 	CMD_PARSE_SUCCESS
 };
