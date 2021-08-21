@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucc.c,v 1.2 2021/08/21 02:43:35 deraadt Exp $	*/
+/*	$OpenBSD: ucc.c,v 1.3 2021/08/21 06:52:52 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -315,7 +315,7 @@ ucc_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 		sc->sc_mode = *(int *)data;
 		return 0;
-	    }
+	}
 #endif
 	}
 
