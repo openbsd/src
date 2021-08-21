@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-buffers.c,v 1.38 2020/04/13 10:59:58 nicm Exp $ */
+/* $OpenBSD: cmd-list-buffers.c,v 1.39 2021/08/21 10:22:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -36,7 +36,7 @@ const struct cmd_entry cmd_list_buffers_entry = {
 	.name = "list-buffers",
 	.alias = "lsb",
 
-	.args = { "F:f:", 0, 0 },
+	.args = { "F:f:", 0, 0, NULL },
 	.usage = "[-F format] [-f filter]",
 
 	.flags = CMD_AFTERHOOK,

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-copy-mode.c,v 1.46 2020/04/13 14:46:04 nicm Exp $ */
+/* $OpenBSD: cmd-copy-mode.c,v 1.47 2021/08/21 10:22:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -30,7 +30,7 @@ const struct cmd_entry cmd_copy_mode_entry = {
 	.name = "copy-mode",
 	.alias = NULL,
 
-	.args = { "eHMs:t:uq", 0, 0 },
+	.args = { "eHMs:t:uq", 0, 0, NULL },
 	.usage = "[-eHMuq] [-s src-pane] " CMD_TARGET_PANE_USAGE,
 
 	.source =  { 's', CMD_FIND_PANE, 0 },
@@ -44,7 +44,7 @@ const struct cmd_entry cmd_clock_mode_entry = {
 	.name = "clock-mode",
 	.alias = NULL,
 
-	.args = { "t:", 0, 0 },
+	.args = { "t:", 0, 0, NULL },
 	.usage = CMD_TARGET_PANE_USAGE,
 
 	.target = { 't', CMD_FIND_PANE, 0 },

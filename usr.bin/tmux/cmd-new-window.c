@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-window.c,v 1.93 2021/08/20 19:50:16 nicm Exp $ */
+/* $OpenBSD: cmd-new-window.c,v 1.94 2021/08/21 10:22:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -38,7 +38,7 @@ const struct cmd_entry cmd_new_window_entry = {
 	.name = "new-window",
 	.alias = "neww",
 
-	.args = { "abc:de:F:kn:PSt:", 0, -1 },
+	.args = { "abc:de:F:kn:PSt:", 0, -1, NULL },
 	.usage = "[-abdkPS] [-c start-directory] [-e environment] [-F format] "
 		 "[-n window-name] " CMD_TARGET_WINDOW_USAGE " [command]",
 

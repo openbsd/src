@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-break-pane.c,v 1.59 2020/06/13 09:05:53 nicm Exp $ */
+/* $OpenBSD: cmd-break-pane.c,v 1.60 2021/08/21 10:22:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -34,7 +34,7 @@ const struct cmd_entry cmd_break_pane_entry = {
 	.name = "break-pane",
 	.alias = "breakp",
 
-	.args = { "abdPF:n:s:t:", 0, 0 },
+	.args = { "abdPF:n:s:t:", 0, 0, NULL },
 	.usage = "[-abdP] [-F format] [-n window-name] [-s src-pane] "
 		 "[-t dst-window]",
 

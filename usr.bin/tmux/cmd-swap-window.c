@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-swap-window.c,v 1.27 2020/04/13 10:59:58 nicm Exp $ */
+/* $OpenBSD: cmd-swap-window.c,v 1.28 2021/08/21 10:22:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -32,7 +32,7 @@ const struct cmd_entry cmd_swap_window_entry = {
 	.name = "swap-window",
 	.alias = "swapw",
 
-	.args = { "ds:t:", 0, 0 },
+	.args = { "ds:t:", 0, 0, NULL },
 	.usage = "[-d] " CMD_SRCDST_WINDOW_USAGE,
 
 	.source = { 's', CMD_FIND_WINDOW, CMD_FIND_DEFAULT_MARKED },

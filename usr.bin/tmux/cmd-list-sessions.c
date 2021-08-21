@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-sessions.c,v 1.33 2020/04/13 10:59:58 nicm Exp $ */
+/* $OpenBSD: cmd-list-sessions.c,v 1.34 2021/08/21 10:22:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -42,7 +42,7 @@ const struct cmd_entry cmd_list_sessions_entry = {
 	.name = "list-sessions",
 	.alias = "ls",
 
-	.args = { "F:f:", 0, 0 },
+	.args = { "F:f:", 0, 0, NULL },
 	.usage = "[-F format] [-f filter]",
 
 	.flags = CMD_AFTERHOOK,

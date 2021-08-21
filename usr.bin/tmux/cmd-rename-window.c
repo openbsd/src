@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-rename-window.c,v 1.27 2021/08/20 19:50:16 nicm Exp $ */
+/* $OpenBSD: cmd-rename-window.c,v 1.28 2021/08/21 10:22:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -33,7 +33,7 @@ const struct cmd_entry cmd_rename_window_entry = {
 	.name = "rename-window",
 	.alias = "renamew",
 
-	.args = { "t:", 1, 1 },
+	.args = { "t:", 1, 1, NULL },
 	.usage = CMD_TARGET_WINDOW_USAGE " new-name",
 
 	.target = { 't', CMD_FIND_WINDOW, 0 },

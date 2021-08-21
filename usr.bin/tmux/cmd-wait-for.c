@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-wait-for.c,v 1.21 2021/08/20 19:50:17 nicm Exp $ */
+/* $OpenBSD: cmd-wait-for.c,v 1.22 2021/08/21 10:22:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -34,7 +34,7 @@ const struct cmd_entry cmd_wait_for_entry = {
 	.name = "wait-for",
 	.alias = "wait",
 
-	.args = { "LSU", 1, 1 },
+	.args = { "LSU", 1, 1, NULL },
 	.usage = "[-L|-S|-U] channel",
 
 	.flags = 0,

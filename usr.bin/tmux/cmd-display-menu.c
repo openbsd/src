@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-menu.c,v 1.28 2021/08/20 19:50:16 nicm Exp $ */
+/* $OpenBSD: cmd-display-menu.c,v 1.29 2021/08/21 10:22:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -37,7 +37,7 @@ const struct cmd_entry cmd_display_menu_entry = {
 	.name = "display-menu",
 	.alias = "menu",
 
-	.args = { "c:t:OT:x:y:", 1, -1 },
+	.args = { "c:t:OT:x:y:", 1, -1, NULL },
 	.usage = "[-O] [-c target-client] " CMD_TARGET_PANE_USAGE " [-T title] "
 		 "[-x position] [-y position] name key command ...",
 
@@ -51,7 +51,7 @@ const struct cmd_entry cmd_display_popup_entry = {
 	.name = "display-popup",
 	.alias = "popup",
 
-	.args = { "BCc:d:Eh:t:w:x:y:", 0, -1 },
+	.args = { "BCc:d:Eh:t:w:x:y:", 0, -1, NULL },
 	.usage = "[-BCE] [-c target-client] [-d start-directory] [-h height] "
 	         CMD_TARGET_PANE_USAGE " [-w width] "
 	         "[-x position] [-y position] [command]",

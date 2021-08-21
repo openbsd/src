@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-pipe-pane.c,v 1.57 2021/08/20 19:50:16 nicm Exp $ */
+/* $OpenBSD: cmd-pipe-pane.c,v 1.58 2021/08/21 10:22:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -44,7 +44,7 @@ const struct cmd_entry cmd_pipe_pane_entry = {
 	.name = "pipe-pane",
 	.alias = "pipep",
 
-	.args = { "IOot:", 0, 1 },
+	.args = { "IOot:", 0, 1, NULL },
 	.usage = "[-IOo] " CMD_TARGET_PANE_USAGE " [shell-command]",
 
 	.target = { 't', CMD_FIND_PANE, 0 },

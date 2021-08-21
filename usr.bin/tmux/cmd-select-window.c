@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-select-window.c,v 1.29 2020/10/19 06:39:28 nicm Exp $ */
+/* $OpenBSD: cmd-select-window.c,v 1.30 2021/08/21 10:22:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -33,7 +33,7 @@ const struct cmd_entry cmd_select_window_entry = {
 	.name = "select-window",
 	.alias = "selectw",
 
-	.args = { "lnpTt:", 0, 0 },
+	.args = { "lnpTt:", 0, 0, NULL },
 	.usage = "[-lnpT] " CMD_TARGET_WINDOW_USAGE,
 
 	.target = { 't', CMD_FIND_WINDOW, 0 },
@@ -46,7 +46,7 @@ const struct cmd_entry cmd_next_window_entry = {
 	.name = "next-window",
 	.alias = "next",
 
-	.args = { "at:", 0, 0 },
+	.args = { "at:", 0, 0, NULL },
 	.usage = "[-a] " CMD_TARGET_SESSION_USAGE,
 
 	.target = { 't', CMD_FIND_SESSION, 0 },
@@ -59,7 +59,7 @@ const struct cmd_entry cmd_previous_window_entry = {
 	.name = "previous-window",
 	.alias = "prev",
 
-	.args = { "at:", 0, 0 },
+	.args = { "at:", 0, 0, NULL },
 	.usage = "[-a] " CMD_TARGET_SESSION_USAGE,
 
 	.target = { 't', CMD_FIND_SESSION, 0 },
@@ -72,7 +72,7 @@ const struct cmd_entry cmd_last_window_entry = {
 	.name = "last-window",
 	.alias = "last",
 
-	.args = { "t:", 0, 0 },
+	.args = { "t:", 0, 0, NULL },
 	.usage = CMD_TARGET_SESSION_USAGE,
 
 	.target = { 't', CMD_FIND_SESSION, 0 },

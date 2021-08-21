@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-kill-window.c,v 1.27 2020/07/04 14:24:02 nicm Exp $ */
+/* $OpenBSD: cmd-kill-window.c,v 1.28 2021/08/21 10:22:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -30,7 +30,7 @@ const struct cmd_entry cmd_kill_window_entry = {
 	.name = "kill-window",
 	.alias = "killw",
 
-	.args = { "at:", 0, 0 },
+	.args = { "at:", 0, 0, NULL },
 	.usage = "[-a] " CMD_TARGET_WINDOW_USAGE,
 
 	.target = { 't', CMD_FIND_WINDOW, 0 },
@@ -43,7 +43,7 @@ const struct cmd_entry cmd_unlink_window_entry = {
 	.name = "unlink-window",
 	.alias = "unlinkw",
 
-	.args = { "kt:", 0, 0 },
+	.args = { "kt:", 0, 0, NULL },
 	.usage = "[-k] " CMD_TARGET_WINDOW_USAGE,
 
 	.target = { 't', CMD_FIND_WINDOW, 0 },

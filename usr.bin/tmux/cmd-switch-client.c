@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-switch-client.c,v 1.69 2021/08/13 06:52:51 nicm Exp $ */
+/* $OpenBSD: cmd-switch-client.c,v 1.70 2021/08/21 10:22:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -34,7 +34,7 @@ const struct cmd_entry cmd_switch_client_entry = {
 	.name = "switch-client",
 	.alias = "switchc",
 
-	.args = { "lc:EFnpt:rT:Z", 0, 0 },
+	.args = { "lc:EFnpt:rT:Z", 0, 0, NULL },
 	.usage = "[-ElnprZ] [-c target-client] [-t target-session] "
 		 "[-T key-table]",
 

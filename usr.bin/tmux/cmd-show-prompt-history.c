@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-prompt-history.c,v 1.1 2021/06/10 07:50:03 nicm Exp $ */
+/* $OpenBSD: cmd-show-prompt-history.c,v 1.2 2021/08/21 10:22:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2021 Anindya Mukherjee <anindya49@hotmail.com>
@@ -31,7 +31,7 @@ const struct cmd_entry cmd_show_prompt_history_entry = {
 	.name = "show-prompt-history",
 	.alias = "showphist",
 
-	.args = { "T:", 0, 0 },
+	.args = { "T:", 0, 0, NULL },
 	.usage = "[-T type]",
 
 	.flags = CMD_AFTERHOOK,
@@ -42,7 +42,7 @@ const struct cmd_entry cmd_clear_prompt_history_entry = {
 	.name = "clear-prompt-history",
 	.alias = "clearphist",
 
-	.args = { "T:", 0, 0 },
+	.args = { "T:", 0, 0, NULL },
 	.usage = "[-T type]",
 
 	.flags = CMD_AFTERHOOK,

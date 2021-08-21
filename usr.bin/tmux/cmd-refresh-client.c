@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-refresh-client.c,v 1.42 2021/08/20 19:50:16 nicm Exp $ */
+/* $OpenBSD: cmd-refresh-client.c,v 1.43 2021/08/21 10:22:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -34,7 +34,7 @@ const struct cmd_entry cmd_refresh_client_entry = {
 	.name = "refresh-client",
 	.alias = "refresh",
 
-	.args = { "A:B:cC:Df:F:lLRSt:U", 0, 1 },
+	.args = { "A:B:cC:Df:F:lLRSt:U", 0, 1, NULL },
 	.usage = "[-cDlLRSU] [-A pane:state] [-B name:what:format] "
 		 "[-C XxY] [-f flags] " CMD_TARGET_CLIENT_USAGE " [adjustment]",
 

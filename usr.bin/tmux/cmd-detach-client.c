@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-detach-client.c,v 1.35 2020/04/13 20:51:57 nicm Exp $ */
+/* $OpenBSD: cmd-detach-client.c,v 1.36 2021/08/21 10:22:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -33,7 +33,7 @@ const struct cmd_entry cmd_detach_client_entry = {
 	.name = "detach-client",
 	.alias = "detach",
 
-	.args = { "aE:s:t:P", 0, 0 },
+	.args = { "aE:s:t:P", 0, 0, NULL },
 	.usage = "[-aP] [-E shell-command] "
 	         "[-s target-session] " CMD_TARGET_CLIENT_USAGE,
 
@@ -47,7 +47,7 @@ const struct cmd_entry cmd_suspend_client_entry = {
 	.name = "suspend-client",
 	.alias = "suspendc",
 
-	.args = { "t:", 0, 0 },
+	.args = { "t:", 0, 0, NULL },
 	.usage = CMD_TARGET_CLIENT_USAGE,
 
 	.flags = CMD_CLIENT_TFLAG,

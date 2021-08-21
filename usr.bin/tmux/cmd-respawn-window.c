@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-respawn-window.c,v 1.46 2021/08/20 19:50:16 nicm Exp $ */
+/* $OpenBSD: cmd-respawn-window.c,v 1.47 2021/08/21 10:22:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -34,7 +34,7 @@ const struct cmd_entry cmd_respawn_window_entry = {
 	.name = "respawn-window",
 	.alias = "respawnw",
 
-	.args = { "c:e:kt:", 0, -1 },
+	.args = { "c:e:kt:", 0, -1, NULL },
 	.usage = "[-k] [-c start-directory] [-e environment] "
 		 CMD_TARGET_WINDOW_USAGE " [command]",
 

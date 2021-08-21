@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-rotate-window.c,v 1.32 2021/03/11 06:31:05 nicm Exp $ */
+/* $OpenBSD: cmd-rotate-window.c,v 1.33 2021/08/21 10:22:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -31,7 +31,7 @@ const struct cmd_entry cmd_rotate_window_entry = {
 	.name = "rotate-window",
 	.alias = "rotatew",
 
-	.args = { "Dt:UZ", 0, 0 },
+	.args = { "Dt:UZ", 0, 0, NULL },
 	.usage = "[-DUZ] " CMD_TARGET_WINDOW_USAGE,
 
 	.target = { 't', CMD_FIND_WINDOW, 0 },

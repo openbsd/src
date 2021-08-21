@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-option.c,v 1.139 2021/08/20 19:50:17 nicm Exp $ */
+/* $OpenBSD: cmd-set-option.c,v 1.140 2021/08/21 10:22:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -33,7 +33,7 @@ const struct cmd_entry cmd_set_option_entry = {
 	.name = "set-option",
 	.alias = "set",
 
-	.args = { "aFgopqst:uUw", 1, 2 },
+	.args = { "aFgopqst:uUw", 1, 2, NULL },
 	.usage = "[-aFgopqsuUw] " CMD_TARGET_PANE_USAGE " option [value]",
 
 	.target = { 't', CMD_FIND_PANE, CMD_FIND_CANFAIL },
@@ -46,7 +46,7 @@ const struct cmd_entry cmd_set_window_option_entry = {
 	.name = "set-window-option",
 	.alias = "setw",
 
-	.args = { "aFgoqt:u", 1, 2 },
+	.args = { "aFgoqt:u", 1, 2, NULL },
 	.usage = "[-aFgoqu] " CMD_TARGET_WINDOW_USAGE " option [value]",
 
 	.target = { 't', CMD_FIND_WINDOW, CMD_FIND_CANFAIL },
@@ -59,7 +59,7 @@ const struct cmd_entry cmd_set_hook_entry = {
 	.name = "set-hook",
 	.alias = NULL,
 
-	.args = { "agpRt:uw", 1, 2 },
+	.args = { "agpRt:uw", 1, 2, NULL },
 	.usage = "[-agpRuw] " CMD_TARGET_PANE_USAGE " hook [command]",
 
 	.target = { 't', CMD_FIND_PANE, CMD_FIND_CANFAIL },

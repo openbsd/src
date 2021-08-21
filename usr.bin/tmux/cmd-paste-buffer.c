@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-paste-buffer.c,v 1.40 2020/04/13 10:59:58 nicm Exp $ */
+/* $OpenBSD: cmd-paste-buffer.c,v 1.41 2021/08/21 10:22:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -34,7 +34,7 @@ const struct cmd_entry cmd_paste_buffer_entry = {
 	.name = "paste-buffer",
 	.alias = "pasteb",
 
-	.args = { "db:prs:t:", 0, 0 },
+	.args = { "db:prs:t:", 0, 0, NULL },
 	.usage = "[-dpr] [-s separator] " CMD_BUFFER_USAGE " "
 		 CMD_TARGET_PANE_USAGE,
 

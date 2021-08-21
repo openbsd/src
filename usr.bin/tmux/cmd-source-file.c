@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-source-file.c,v 1.50 2021/08/20 19:50:17 nicm Exp $ */
+/* $OpenBSD: cmd-source-file.c,v 1.51 2021/08/21 10:22:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Tiago Cunha <me@tiagocunha.org>
@@ -36,7 +36,7 @@ const struct cmd_entry cmd_source_file_entry = {
 	.name = "source-file",
 	.alias = "source",
 
-	.args = { "Fnqv", 1, -1 },
+	.args = { "Fnqv", 1, -1, NULL },
 	.usage = "[-Fnqv] path ...",
 
 	.flags = 0,

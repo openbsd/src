@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-windows.c,v 1.47 2021/01/20 07:16:54 nicm Exp $ */
+/* $OpenBSD: cmd-list-windows.c,v 1.48 2021/08/21 10:22:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -49,7 +49,7 @@ const struct cmd_entry cmd_list_windows_entry = {
 	.name = "list-windows",
 	.alias = "lsw",
 
-	.args = { "F:f:at:", 0, 0 },
+	.args = { "F:f:at:", 0, 0, NULL },
 	.usage = "[-a] [-F format] [-f filter] " CMD_TARGET_SESSION_USAGE,
 
 	.target = { 't', CMD_FIND_SESSION, 0 },

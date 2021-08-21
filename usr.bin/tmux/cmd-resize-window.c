@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-resize-window.c,v 1.6 2021/08/20 19:50:16 nicm Exp $ */
+/* $OpenBSD: cmd-resize-window.c,v 1.7 2021/08/21 10:22:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2018 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -33,7 +33,7 @@ const struct cmd_entry cmd_resize_window_entry = {
 	.name = "resize-window",
 	.alias = "resizew",
 
-	.args = { "aADLRt:Ux:y:", 0, 1 },
+	.args = { "aADLRt:Ux:y:", 0, 1, NULL },
 	.usage = "[-aADLRU] [-x width] [-y height] " CMD_TARGET_WINDOW_USAGE " "
 		 "[adjustment]",
 
