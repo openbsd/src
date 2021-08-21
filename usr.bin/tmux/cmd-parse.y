@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-parse.y,v 1.40 2021/08/21 18:39:07 nicm Exp $ */
+/* $OpenBSD: cmd-parse.y,v 1.41 2021/08/21 20:46:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -804,7 +804,8 @@ cmd_parse_build_command(struct cmd_parse_command *cmd,
 		return (cmdlist);
 
 	TAILQ_FOREACH(arg, &cmd->arguments, entry) {
-		values = xreallocarray(values, count + 1, sizeof *values);
+		values = xrecallocarray(values, count, count + 1,
+		    sizeof *values);
 		switch (arg->type) {
 		case CMD_PARSE_STRING:
 			values[count].type = ARGS_STRING;
