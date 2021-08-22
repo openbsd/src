@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucc.c,v 1.3 2021/08/21 06:52:52 anton Exp $	*/
+/*	$OpenBSD: ucc.c,v 1.4 2021/08/22 07:20:40 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -42,21 +42,21 @@ int	ucc_debug = 1;
 #endif
 
 struct ucc_softc {
-	struct uhidev		 sc_hdev;
-	struct device		*sc_wskbddev;
+	struct uhidev		  sc_hdev;
+	struct device		 *sc_wskbddev;
 
 	/* Key mappings used in translating mode. */
-	keysym_t		*sc_map;
-	u_int			 sc_maplen;
-	u_int			 sc_mapsiz;
-	u_int			 sc_nkeys;
+	keysym_t		 *sc_map;
+	u_int			  sc_maplen;
+	u_int			  sc_mapsiz;
+	u_int			  sc_nkeys;
 
 	/* Key mappings used in raw mode. */
-	struct ucc_keyraw	*sc_raw;
-	u_int			 sc_rawlen;
-	u_int			 sc_rawsiz;
+	const struct ucc_keysym	**sc_raw;
+	u_int			  sc_rawlen;
+	u_int			  sc_rawsiz;
 
-	int			 sc_mode;
+	int			  sc_mode;
 
 	/* Last pressed key. */
 	union {
@@ -64,8 +64,8 @@ struct ucc_softc {
 		u_char	sc_last_raw;
 	};
 
-	struct wscons_keydesc	 sc_keydesc[2];
-	struct wskbd_mapdata	 sc_keymap;
+	struct wscons_keydesc	  sc_keydesc[2];
+	struct wskbd_mapdata	  sc_keymap;
 };
 
 struct ucc_keysym {
@@ -73,11 +73,6 @@ struct ucc_keysym {
 	int32_t		 us_usage;
 	keysym_t	 us_key;
 	u_char		 us_raw;
-};
-
-struct ucc_keyraw {
-	u_int	ur_bit;
-	u_char	ur_raw;
 };
 
 int	ucc_match(struct device *, void *, void *);
@@ -331,6 +326,7 @@ ucc_parse_hid(struct ucc_softc *sc, void *desc, int descsiz)
 {
 	struct hid_item hi;
 	struct hid_data *hd;
+	u_int mapsiz, rawsiz;
 	int isize;
 
 	/*
@@ -347,7 +343,8 @@ ucc_parse_hid(struct ucc_softc *sc, void *desc, int descsiz)
 	 * in translating mode. Two entries are needed per bit in order
 	 * construct a mapping.
 	 */
-	sc->sc_mapsiz = isize * 2 * sizeof(*sc->sc_map);
+	mapsiz = isize * 2;
+	sc->sc_mapsiz = mapsiz * sizeof(*sc->sc_map);
 	sc->sc_map = mallocarray(isize, 2 * sizeof(*sc->sc_map), M_USBDEV,
 	    M_WAITOK | M_ZERO);
 
@@ -355,7 +352,8 @@ ucc_parse_hid(struct ucc_softc *sc, void *desc, int descsiz)
 	 * Create mapping between each input bit and the corresponding scan
 	 * code used in raw mode.
 	 */
-	sc->sc_rawsiz = isize * sizeof(*sc->sc_raw);
+	rawsiz = isize;
+	sc->sc_rawsiz = rawsiz * sizeof(*sc->sc_raw);
 	sc->sc_raw = mallocarray(isize, sizeof(*sc->sc_raw), M_USBDEV,
 	    M_WAITOK | M_ZERO);
 
@@ -372,15 +370,14 @@ ucc_parse_hid(struct ucc_softc *sc, void *desc, int descsiz)
 		if (ucc_usage_to_sym(HID_GET_USAGE(hi.usage), &us))
 			continue;
 
-		if (sc->sc_maplen + 2 >= sc->sc_mapsiz)
+		if (sc->sc_maplen + 2 >= mapsiz)
 			return ENOMEM;
 		sc->sc_map[sc->sc_maplen++] = KS_KEYCODE(bit);
 		sc->sc_map[sc->sc_maplen++] = us->us_key;
 
-		if (sc->sc_rawlen + 1 >= sc->sc_rawsiz)
+		if (bit >= rawsiz)
 			return ENOMEM;
-		sc->sc_raw[sc->sc_rawlen].ur_bit = bit;
-		sc->sc_raw[sc->sc_rawlen].ur_raw = us->us_raw;
+		sc->sc_raw[bit] = us;
 		sc->sc_rawlen++;
 
 		DPRINTF("%s: bit %d, usage %s\n", __func__,
@@ -394,17 +391,10 @@ ucc_parse_hid(struct ucc_softc *sc, void *desc, int descsiz)
 int
 ucc_bit_to_raw(struct ucc_softc *sc, u_int bit, u_char *raw)
 {
-	u_int i;
-
-	for (i = 0; i < sc->sc_rawlen; i++) {
-		const struct ucc_keyraw *ur = &sc->sc_raw[i];
-
-		if (ur->ur_bit == bit) {
-			*raw = ur->ur_raw;
-			return 0;
-		}
-	}
-	return 1;
+	if (bit >= sc->sc_nkeys)
+		return 1;
+	*raw = sc->sc_raw[bit]->us_raw;
+	return 0;
 }
 
 int
