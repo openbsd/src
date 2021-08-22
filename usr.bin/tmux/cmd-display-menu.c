@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-menu.c,v 1.29 2021/08/21 10:22:38 nicm Exp $ */
+/* $OpenBSD: cmd-display-menu.c,v 1.30 2021/08/22 13:48:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -121,8 +121,6 @@ cmd_display_menu_get_position(struct client *tc, struct cmdq_item *item,
 			if (sr != NULL)
 				break;
 		}
-		if (line == lines)
-			ranges = &tc->status.entries[0].ranges;
 
 		if (sr != NULL) {
 			format_add(ft, "popup_window_status_line_x", "%u",

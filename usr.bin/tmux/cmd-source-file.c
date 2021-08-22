@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-source-file.c,v 1.51 2021/08/21 10:22:39 nicm Exp $ */
+/* $OpenBSD: cmd-source-file.c,v 1.52 2021/08/22 13:48:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Tiago Cunha <me@tiagocunha.org>
@@ -180,12 +180,12 @@ cmd_source_file_exec(struct cmd *self, struct cmdq_item *item)
 			free(pattern);
 			continue;
 		}
-		free(expanded);
 		free(pattern);
 
 		for (j = 0; j < g.gl_pathc; j++)
 			cmd_source_file_add(cdata, g.gl_pathv[j]);
 	}
+	free(expanded);
 
 	cdata->after = item;
 	cdata->retval = retval;

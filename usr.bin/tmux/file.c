@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.11 2021/06/10 07:51:43 nicm Exp $ */
+/* $OpenBSD: file.c,v 1.12 2021/08/22 13:48:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -558,7 +558,7 @@ file_write_open(struct client_files *files, struct tmuxpeer *peer,
 	log_debug("open write file %d %s", msg->stream, path);
 
 	find.stream = msg->stream;
-	if ((cf = RB_FIND(client_files, files, &find)) != NULL) {
+	if (RB_FIND(client_files, files, &find) != NULL) {
 		error = EBADF;
 		goto reply;
 	}
@@ -717,7 +717,7 @@ file_read_open(struct client_files *files, struct tmuxpeer *peer,
 	log_debug("open read file %d %s", msg->stream, path);
 
 	find.stream = msg->stream;
-	if ((cf = RB_FIND(client_files, files, &find)) != NULL) {
+	if (RB_FIND(client_files, files, &find) != NULL) {
 		error = EBADF;
 		goto reply;
 	}

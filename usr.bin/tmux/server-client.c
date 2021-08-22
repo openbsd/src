@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.383 2021/08/21 17:25:32 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.384 2021/08/22 13:48:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -280,7 +280,7 @@ server_client_open(struct client *c, char **cause)
 static void
 server_client_attached_lost(struct client *c)
 {
-	struct session	*s = c->session;
+	struct session	*s;
 	struct window	*w;
 	struct client	*loop;
 	struct client	*found;
