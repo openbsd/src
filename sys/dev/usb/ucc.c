@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucc.c,v 1.4 2021/08/22 07:20:40 anton Exp $	*/
+/*	$OpenBSD: ucc.c,v 1.5 2021/08/23 17:50:26 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -426,6 +426,7 @@ ucc_input(struct ucc_softc *sc, u_int bit, int release)
 void
 ucc_rawinput(struct ucc_softc *sc, u_char c, int release)
 {
+#ifdef WSDISPLAY_COMPAT_RAWKBD
 	u_char buf[2];
 	int len = 0;
 	int s;
@@ -439,6 +440,7 @@ ucc_rawinput(struct ucc_softc *sc, u_char c, int release)
 	s = spltty();
 	wskbd_rawinput(sc->sc_wskbddev, buf, len);
 	splx(s);
+#endif
 }
 
 int
