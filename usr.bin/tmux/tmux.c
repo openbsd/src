@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.208 2021/07/06 08:26:00 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.209 2021/08/23 11:04:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -211,6 +211,7 @@ make_label(const char *label, char **cause)
 	free(paths);
 
 	xasprintf(&base, "%s/tmux-%ld", path, (long)uid);
+	free(path);
 	if (mkdir(base, S_IRWXU) != 0 && errno != EEXIST) {
 		xasprintf(cause, "couldn't create directory %s (%s)", base,
 		    strerror(errno));

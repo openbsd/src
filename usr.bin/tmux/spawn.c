@@ -1,4 +1,4 @@
-/* $OpenBSD: spawn.c,v 1.28 2021/03/11 06:31:05 nicm Exp $ */
+/* $OpenBSD: spawn.c,v 1.29 2021/08/23 11:04:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -179,6 +179,7 @@ spawn_window(struct spawn_context *sc, char **cause)
 
 	/* Set the name of the new window. */
 	if (~sc->flags & SPAWN_RESPAWN) {
+		free(w->name);
 		if (sc->name != NULL) {
 			w->name = format_single(item, sc->name, c, s, NULL,
 			    NULL);

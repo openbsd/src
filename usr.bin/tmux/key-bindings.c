@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.138 2021/08/21 17:41:19 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.139 2021/08/23 11:04:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -187,6 +187,7 @@ key_bindings_add(const char *name, key_code key, const char *note, int repeat,
 {
 	struct key_table	*table;
 	struct key_binding	*bd;
+	char			*s;
 
 	table = key_bindings_get_table(name, 1);
 
@@ -216,8 +217,10 @@ key_bindings_add(const char *name, key_code key, const char *note, int repeat,
 		bd->flags |= KEY_BINDING_REPEAT;
 	bd->cmdlist = cmdlist;
 
+	s = cmd_list_print(bd->cmdlist, 0);
 	log_debug("%s: %#llx %s = %s", __func__, bd->key,
-	    key_string_lookup_key(bd->key, 1), cmd_list_print(bd->cmdlist, 0));
+	    key_string_lookup_key(bd->key, 1), s);
+	free(s);
 }
 
 void
