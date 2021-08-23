@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-bind-key.c,v 1.42 2021/08/21 20:46:43 nicm Exp $ */
+/* $OpenBSD: cmd-bind-key.c,v 1.43 2021/08/23 11:48:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -75,6 +75,7 @@ cmd_bind_key_exec(struct cmd *self, struct cmdq_item *item)
 	value = args_value(args, 1);
 	if (count == 2 && value->type == ARGS_COMMANDS) {
 		key_bindings_add(tablename, key, note, repeat, value->cmdlist);
+		value->cmdlist->references++;
 		return (CMD_RETURN_NORMAL);
 	}
 
