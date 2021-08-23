@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.95 2021/08/20 01:33:44 kevlo Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.96 2021/08/23 08:59:31 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5594,7 +5594,7 @@ iwx_fill_probe_req(struct iwx_softc *sc, struct iwx_scan_probe_req *preq)
 
 	memset(preq, 0, sizeof(*preq));
 
-	if (remain < sizeof(*wh) + 2 + ic->ic_des_esslen)
+	if (remain < sizeof(*wh) + 2)
 		return ENOBUFS;
 
 	/*
