@@ -1,4 +1,4 @@
-/* $OpenBSD: arguments.c,v 1.45 2021/08/23 12:33:55 nicm Exp $ */
+/* $OpenBSD: arguments.c,v 1.46 2021/08/23 17:05:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -127,7 +127,7 @@ args_parse(const struct args_parse *parse, struct args_value *values,
     u_int count)
 {
 	struct args		*args;
-	u_int		 	 i;
+	u_int			 i;
 	struct args_value	*value, *new;
 	u_char			 flag, argument;
 	const char		*found, *string, *s;
@@ -497,11 +497,13 @@ args_make_commands_now(struct cmd *self, struct cmdq_item *item, u_int idx)
 
 	state = args_make_commands_prepare(self, item, idx, NULL, 0, 0);
 	cmdlist = args_make_commands(state, 0, NULL, &error);
-	args_make_commands_free(state);
 	if (cmdlist == NULL) {
 		cmdq_error(item, "%s", error);
 		free(error);
 	}
+       else
+	       cmdlist->references++;
+	args_make_commands_free(state);
 	return (cmdlist);
 }
 
