@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.18 2021/08/12 12:41:08 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.19 2021/08/23 18:21:48 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -96,7 +96,9 @@ void		 send_discover(struct iface *);
 void		 send_request(struct iface *);
 void		 bpf_send_packet(struct iface *, uint8_t *, ssize_t);
 void		 udp_send_packet(struct iface *, uint8_t *, ssize_t);
+#ifndef SMALL
 int		 iface_conf_cmp(struct iface_conf *, struct iface_conf *);
+#endif /* SMALL */
 
 LIST_HEAD(, iface)		 interfaces;
 struct dhcpleased_conf		*frontend_conf;
