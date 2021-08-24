@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.57 2021/07/12 15:09:19 beck Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.58 2021/08/24 14:56:06 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -778,6 +778,7 @@ void
 handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 {
 	struct if_msghdr		*ifm;
+	struct if_announcemsghdr	*ifan;
 	struct imsg_del_addr		 del_addr;
 	struct imsg_del_route		 del_route;
 	struct imsg_dup_addr		 dup_addr;
@@ -798,6 +799,7 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 			if_index = ifm->ifm_index;
 			frontend_imsg_compose_engine(IMSG_REMOVE_IF, 0, 0,
 			    &if_index, sizeof(if_index));
+			remove_iface(if_index);
 		} else {
 			xflags = get_xflags(if_name);
 			if (xflags == -1 || !(xflags & (IFXF_AUTOCONF6 |
@@ -815,6 +817,15 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 				    if_name);
 #endif	/* SMALL */
 			}
+		}
+		break;
+	case RTM_IFANNOUNCE:
+		ifan = (struct if_announcemsghdr *)rtm;
+		if_index = ifan->ifan_index;
+                if (ifan->ifan_what == IFAN_DEPARTURE) {
+			frontend_imsg_compose_engine(IMSG_REMOVE_IF, 0, 0,
+			    &if_index, sizeof(if_index));
+			remove_iface(if_index);
 		}
 		break;
 	case RTM_NEWADDR:
