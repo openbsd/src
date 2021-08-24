@@ -64,7 +64,7 @@
 
 #ifdef IOMMU_DEBUG
 int acpidmar_dbg_lvl = 0;
-#define DPRINTF(lvl,x...) if (acpidmar_dbg_lvl >= lvl) { printf(x) }
+#define DPRINTF(lvl,x...) if (acpidmar_dbg_lvl >= lvl) { printf(x); }
 #else
 #define DPRINTF(lvl,x...)
 #endif
@@ -2307,8 +2307,8 @@ ivhd_iommu_init(struct acpidmar_softc *sc, struct iommu_softc *iommu,
 	printf(": AMD iommu%d at 0x%.8llx\n", iommu->id, ivhd->address);
 
 	iommu->ecap = iommu_read_8(iommu, EXTFEAT_REG);
-	DPRINTF("iommu%d: ecap:%.16llx ", iommu->id, iommu->ecap);
-	DPRINTF("%s%s%s%s%s%s%s%s\n",
+	DPRINTF(0,"iommu%d: ecap:%.16llx ", iommu->id, iommu->ecap);
+	DPRINTF(0,"%s%s%s%s%s%s%s%s\n",
 	    iommu->ecap & EFR_PREFSUP ? "pref " : "",
 	    iommu->ecap & EFR_PPRSUP  ? "ppr " : "",
 	    iommu->ecap & EFR_NXSUP   ? "nx " : "",
