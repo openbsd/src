@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleased.c,v 1.19 2021/08/12 12:41:08 florian Exp $	*/
+/*	$OpenBSD: dhcpleased.c,v 1.20 2021/08/24 14:54:02 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -294,7 +294,8 @@ main(int argc, char *argv[])
 	    AF_INET)) == -1)
 		fatal("route socket");
 
-	rtfilter = ROUTE_FILTER(RTM_IFINFO) | ROUTE_FILTER(RTM_PROPOSAL);
+	rtfilter = ROUTE_FILTER(RTM_IFINFO) | ROUTE_FILTER(RTM_PROPOSAL) |
+	    ROUTE_FILTER(RTM_IFANNOUNCE);
 	if (setsockopt(frontend_routesock, AF_ROUTE, ROUTE_MSGFILTER,
 	    &rtfilter, sizeof(rtfilter)) == -1)
 		fatal("setsockopt(ROUTE_MSGFILTER)");

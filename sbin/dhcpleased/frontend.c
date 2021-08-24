@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.20 2021/08/23 18:22:56 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.21 2021/08/24 14:54:02 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -768,13 +768,25 @@ route_receive(int fd, short events, void *arg)
 void
 handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 {
-	struct sockaddr_dl	*sdl = NULL;
+	struct sockaddr_dl		*sdl = NULL;
+	struct if_announcemsghdr	*ifan;
+	uint32_t			 if_index;
+
 	switch (rtm->rtm_type) {
 	case RTM_IFINFO:
 		if (rtm->rtm_addrs & RTA_IFP && rti_info[RTAX_IFP]->sa_family
 		    == AF_LINK)
 			sdl = (struct sockaddr_dl *)rti_info[RTAX_IFP];
 		update_iface((struct if_msghdr *)rtm, sdl);
+		break;
+	case RTM_IFANNOUNCE:
+		ifan = (struct if_announcemsghdr *)rtm;
+		if_index = ifan->ifan_index;
+                if (ifan->ifan_what == IFAN_DEPARTURE) {
+			frontend_imsg_compose_engine(IMSG_REMOVE_IF, 0, 0,
+			    &if_index, sizeof(if_index));
+			remove_iface(if_index);
+		}
 		break;
 	case RTM_PROPOSAL:
 		if (rtm->rtm_priority == RTP_PROPOSAL_SOLICIT) {
@@ -784,7 +796,6 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 		}
 #ifndef SMALL
 		else if (rtm->rtm_flags & RTF_PROTO3) {
-			uint32_t	 if_index;
 			char		 ifnamebuf[IF_NAMESIZE], *if_name;
 
 			if_index = rtm->rtm_index;
