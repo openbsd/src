@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_pci.c,v 1.1 2020/06/04 15:19:31 jsing Exp $ */
+/* $OpenBSD: x509_pci.c,v 1.2 2021/08/24 15:23:03 tb Exp $ */
 /* Contributed to the OpenSSL Project 2004
  * by Richard Levitte (richard@levitte.org)
  */
@@ -77,7 +77,8 @@ i2r_pci(X509V3_EXT_METHOD *method, PROXY_CERT_INFO_EXTENSION *pci, BIO *out,
 	i2a_ASN1_OBJECT(out, pci->proxyPolicy->policyLanguage);
 	BIO_puts(out, "\n");
 	if (pci->proxyPolicy->policy && pci->proxyPolicy->policy->data)
-		BIO_printf(out, "%*sPolicy Text: %s\n", indent, "",
+		BIO_printf(out, "%*sPolicy Text: %.*s\n", indent, "",
+		    pci->proxyPolicy->policy->length,
 		    pci->proxyPolicy->policy->data);
 	return 1;
 }

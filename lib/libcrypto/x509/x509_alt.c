@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_alt.c,v 1.1 2020/06/04 15:19:31 jsing Exp $ */
+/* $OpenBSD: x509_alt.c,v 1.2 2021/08/24 15:23:03 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -264,15 +264,18 @@ GENERAL_NAME_print(BIO *out, GENERAL_NAME *gen)
 		break;
 
 	case GEN_EMAIL:
-		BIO_printf(out, "email:%s", gen->d.ia5->data);
+		BIO_printf(out, "email:%.*s", gen->d.ia5->length,
+		    gen->d.ia5->data);
 		break;
 
 	case GEN_DNS:
-		BIO_printf(out, "DNS:%s", gen->d.ia5->data);
+		BIO_printf(out, "DNS:%.*s", gen->d.ia5->length,
+		    gen->d.ia5->data);
 		break;
 
 	case GEN_URI:
-		BIO_printf(out, "URI:%s", gen->d.ia5->data);
+		BIO_printf(out, "URI:%.*s", gen->d.ia5->length,
+		    gen->d.ia5->data);
 		break;
 
 	case GEN_DIRNAME:

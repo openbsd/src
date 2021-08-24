@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_cpols.c,v 1.1 2020/06/04 15:19:31 jsing Exp $ */
+/* $OpenBSD: x509_cpols.c,v 1.2 2021/08/24 15:23:03 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -696,7 +696,8 @@ print_qualifiers(BIO *out, STACK_OF(POLICYQUALINFO) *quals, int indent)
 		qualinfo = sk_POLICYQUALINFO_value(quals, i);
 		switch (OBJ_obj2nid(qualinfo->pqualid)) {
 		case NID_id_qt_cps:
-			BIO_printf(out, "%*sCPS: %s\n", indent, "",
+			BIO_printf(out, "%*sCPS: %.*s\n", indent, "",
+			    qualinfo->d.cpsuri->length,
 			    qualinfo->d.cpsuri->data);
 			break;
 
@@ -724,8 +725,8 @@ print_notice(BIO *out, USERNOTICE *notice, int indent)
 	if (notice->noticeref) {
 		NOTICEREF *ref;
 		ref = notice->noticeref;
-		BIO_printf(out, "%*sOrganization: %s\n", indent, "",
-		    ref->organization->data);
+		BIO_printf(out, "%*sOrganization: %.*s\n", indent, "",
+		    ref->organization->length, ref->organization->data);
 		BIO_printf(out, "%*sNumber%s: ", indent, "",
 		    sk_ASN1_INTEGER_num(ref->noticenos) > 1 ? "s" : "");
 		for (i = 0; i < sk_ASN1_INTEGER_num(ref->noticenos); i++) {
@@ -741,8 +742,8 @@ print_notice(BIO *out, USERNOTICE *notice, int indent)
 		BIO_puts(out, "\n");
 	}
 	if (notice->exptext)
-		BIO_printf(out, "%*sExplicit Text: %s\n", indent, "",
-		    notice->exptext->data);
+		BIO_printf(out, "%*sExplicit Text: %.*s\n", indent, "",
+		    notice->exptext->length, notice->exptext->data);
 }
 
 void
