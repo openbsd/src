@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.h,v 1.41 2021/08/15 13:45:42 krw Exp $	*/
+/*	$OpenBSD: misc.h,v 1.42 2021/08/24 12:34:04 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -31,9 +31,13 @@ extern struct unit_type		unit_types[];
 #define	nitems(_a)	(sizeof((_a)) / sizeof((_a)[0]))
 #endif
 
+#define	WHITESPACE	" \f\n\r\t\v"
+#define	UNTRIMMED	0
+#define	TRIMMED		1
+
 /* Prototypes */
 int		 unit_lookup(const char *);
-void		 string_from_line(char *, const size_t);
+void		 string_from_line(char *, const size_t, const int);
 int		 ask_yn(const char *);
 uint64_t	 getuint64(const char *, uint64_t, const uint64_t, const uint64_t);
 char		*utf16le_to_string(const uint16_t *);

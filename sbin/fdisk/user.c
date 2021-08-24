@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.73 2021/08/15 13:45:42 krw Exp $	*/
+/*	$OpenBSD: user.c,v 1.74 2021/08/24 12:34:04 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -97,7 +97,7 @@ again:
 				break;
 
 		/* Quick hack to put in '?' == 'help' */
-		if (!strcmp(cmd, "?"))
+		if (strcmp(cmd, "?") == 0)
 			i = 0;
 
 		if (i >= nitems(cmd_table) || (letoh64(gh.gh_sig) ==
@@ -106,7 +106,7 @@ again:
 			continue;
 		}
 
-		st = cmd_table[i].cmd_fcn(args, &mbr);
+		st = cmd_table[i].cmd_fcn(args ? args : "", &mbr);
 
 		/* Update status */
 		if (st == CMD_EXIT)
@@ -206,16 +206,12 @@ void
 ask_cmd(char **cmd, char **arg)
 {
 	static char		lbuf[100];
-	size_t			cmdstart, cmdend, argstart;
 
-	string_from_line(lbuf, sizeof(lbuf));
+	string_from_line(lbuf, sizeof(lbuf), TRIMMED);
 
-	cmdstart = strspn(lbuf, " \t");
-	cmdend = cmdstart + strcspn(&lbuf[cmdstart], " \t");
-	argstart = cmdend + strspn(&lbuf[cmdend], " \t");
+	*arg = lbuf;
+	*cmd = strsep(arg, WHITESPACE);
 
-	/* *cmd and *arg may be set to point at final NUL! */
-	*cmd = &lbuf[cmdstart];
-	lbuf[cmdend] = '\0';
-	*arg = &lbuf[argstart];
+	if (*arg != NULL)
+		*arg += strspn(*arg, WHITESPACE);
 }
