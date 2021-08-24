@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.h,v 1.42 2021/08/24 12:34:04 krw Exp $	*/
+/*	$OpenBSD: misc.h,v 1.43 2021/08/24 12:55:06 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -35,7 +35,6 @@ extern struct unit_type		unit_types[];
 #define	UNTRIMMED	0
 #define	TRIMMED		1
 
-/* Prototypes */
 int		 unit_lookup(const char *);
 void		 string_from_line(char *, const size_t, const int);
 int		 ask_yn(const char *);
