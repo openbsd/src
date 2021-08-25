@@ -1,4 +1,4 @@
-/* $OpenBSD: resize.c,v 1.44 2021/06/10 07:29:45 nicm Exp $ */
+/* $OpenBSD: resize.c,v 1.45 2021/08/25 10:15:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -242,6 +242,13 @@ default_window_size(struct client *c, struct session *s, struct window *w,
 			goto done;
 		}
 	}
+
+        /*
+         * Ignore the given client if it is a control client - the creating
+         * client should only affect the size if it is not a control client.
+         */
+        if (c != NULL && (c->flags & CLIENT_CONTROL))
+                c = NULL;
 
 	/*
 	 * Look for a client to base the size on. If none exists (or the type
