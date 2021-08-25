@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucc.c,v 1.8 2021/08/25 05:46:31 anton Exp $	*/
+/*	$OpenBSD: ucc.c,v 1.9 2021/08/25 05:47:15 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -140,6 +140,8 @@ ucc_match(struct device *parent, void *match, void *aux)
 	uhidev_get_report_desc(uha->parent, &desc, &size);
 	if (!hid_is_collection(desc, size, uha->reportid,
 	    HID_USAGE2(HUP_CONSUMER, HUC_CONTROL)))
+		return UMATCH_NONE;
+	if (hid_report_size(desc, size, hid_input, uha->reportid) == 0)
 		return UMATCH_NONE;
 
 	return UMATCH_IFACECLASS;
