@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-command-prompt.c,v 1.60 2021/08/23 12:33:55 nicm Exp $ */
+/* $OpenBSD: cmd-command-prompt.c,v 1.61 2021/08/25 06:36:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -77,7 +77,7 @@ cmd_command_prompt_exec(struct cmd *self, struct cmdq_item *item)
 	const char			*type, *s, *input;
 	struct cmd_command_prompt_cdata	*cdata;
 	char				*tmp, *prompts, *prompt, *next_prompt;
-	char				*inputs, *next_input;
+	char				*inputs = NULL, *next_input;
 	u_int				 count = args_count(args);
 	int				 wait = !args_has(args, 'b'), space = 1;
 
