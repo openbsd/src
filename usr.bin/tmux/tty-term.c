@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-term.c,v 1.90 2021/06/10 07:45:43 nicm Exp $ */
+/* $OpenBSD: tty-term.c,v 1.91 2021/08/25 07:37:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -661,7 +661,7 @@ tty_term_read_list(const char *name, int fd, char ***caps, u_int *ncaps,
 	const char				*s;
 	char					 tmp[11];
 
-	if (setupterm(name, fd, &error) != OK) {
+	if (setupterm((char *)name, fd, &error) != OK) {
 		switch (error) {
 		case 1:
 			xasprintf(cause, "can't use hardcopy terminal: %s",
