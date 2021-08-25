@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucc.c,v 1.10 2021/08/25 05:48:02 anton Exp $	*/
+/*	$OpenBSD: ucc.c,v 1.11 2021/08/25 05:48:50 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -89,7 +89,7 @@ int	ucc_hid_parse(struct ucc_softc *, void *, int);
 int	ucc_hid_parse_array(struct ucc_softc *, const struct hid_item *);
 int	ucc_hid_is_array(const struct hid_item *);
 int	ucc_add_key(struct ucc_softc *, int32_t, u_int);
-int	ucc_bit_to_raw(struct ucc_softc *, u_int, u_char *);
+int	ucc_bit_to_sym(struct ucc_softc *, u_int, const struct ucc_keysym **);
 int	ucc_usage_to_sym(int32_t, const struct ucc_keysym **);
 int	ucc_intr_to_usage(u_char *, u_int, int32_t *);
 void	ucc_input(struct ucc_softc *, u_int, int);
@@ -203,6 +203,7 @@ void
 ucc_intr(struct uhidev *addr, void *data, u_int len)
 {
 	struct ucc_softc *sc = (struct ucc_softc *)addr;
+	const struct ucc_keysym *us;
 	int raw = sc->sc_mode == WSKBD_RAW;
 	u_int bit = 0;
 	u_char c = 0;
@@ -224,7 +225,6 @@ ucc_intr(struct uhidev *addr, void *data, u_int len)
 		}
 		return;
 	} else if (sc->sc_isarray) {
-		const struct ucc_keysym *us;
 		int32_t usage;
 
 		if (ucc_intr_to_usage(data, len, &usage) ||
@@ -233,8 +233,9 @@ ucc_intr(struct uhidev *addr, void *data, u_int len)
 		bit = us->us_usage;
 		c = us->us_raw;
 	} else if (raw) {
-		if (ucc_bit_to_raw(sc, bit, &c))
+		if (ucc_bit_to_sym(sc, bit, &us))
 			goto unknown;
+		c = us->us_raw;
 	}
 
 	if (raw) {
@@ -454,11 +455,11 @@ ucc_add_key(struct ucc_softc *sc, int32_t usage, u_int bit)
 }
 
 int
-ucc_bit_to_raw(struct ucc_softc *sc, u_int bit, u_char *raw)
+ucc_bit_to_sym(struct ucc_softc *sc, u_int bit, const struct ucc_keysym **us)
 {
 	if (bit >= sc->sc_rawsiz)
 		return 1;
-	*raw = sc->sc_raw[bit]->us_raw;
+	*us = sc->sc_raw[bit];
 	return 0;
 }
 
