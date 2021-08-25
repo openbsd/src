@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-confirm-before.c,v 1.49 2021/08/23 12:33:55 nicm Exp $ */
+/* $OpenBSD: cmd-confirm-before.c,v 1.50 2021/08/25 08:51:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -28,8 +28,10 @@
  * Asks for confirmation before executing a command.
  */
 
-static enum cmd_retval	cmd_confirm_before_exec(struct cmd *,
-			    struct cmdq_item *);
+static enum args_parse_type	cmd_confirm_before_args_parse(struct args *,
+				    u_int, char **);
+static enum cmd_retval		cmd_confirm_before_exec(struct cmd *,
+				    struct cmdq_item *);
 
 static int	cmd_confirm_before_callback(struct client *, void *,
 		    const char *, int);
@@ -39,7 +41,7 @@ const struct cmd_entry cmd_confirm_before_entry = {
 	.name = "confirm-before",
 	.alias = "confirm",
 
-	.args = { "bp:t:", 1, 1, NULL },
+	.args = { "bp:t:", 1, 1, cmd_confirm_before_args_parse },
 	.usage = "[-b] [-p prompt] " CMD_TARGET_CLIENT_USAGE " command",
 
 	.flags = CMD_CLIENT_TFLAG,
@@ -50,6 +52,13 @@ struct cmd_confirm_before_data {
 	struct cmdq_item	*item;
 	struct cmd_list		*cmdlist;
 };
+
+static enum args_parse_type
+cmd_confirm_before_args_parse(__unused struct args *args, __unused u_int idx,
+    __unused char **cause)
+{
+	return (ARGS_PARSE_COMMANDS_OR_STRING);
+}
 
 static enum cmd_retval
 cmd_confirm_before_exec(struct cmd *self, struct cmdq_item *item)
