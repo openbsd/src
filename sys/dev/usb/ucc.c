@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucc.c,v 1.7 2021/08/25 05:45:33 anton Exp $	*/
+/*	$OpenBSD: ucc.c,v 1.8 2021/08/25 05:46:31 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -479,10 +479,18 @@ int
 ucc_intr_to_usage(u_char *buf, u_int buflen, int32_t *usage)
 {
 	int32_t x = 0;
+	int maxlen = sizeof(*usage);
 	int i;
 
-	if (buflen == 0 || buflen > sizeof(*usage))
+	if (buflen == 0)
 		return 1;
+
+	/*
+	 * XXX should only look at the bits given by the report size and report
+	 * count associated with the Consumer usage page.
+	 */
+	if (buflen > maxlen)
+		buflen = maxlen;
 
 	for (i = buflen - 1; i >= 0; i--) {
 		x |= buf[i];
