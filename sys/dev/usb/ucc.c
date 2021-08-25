@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucc.c,v 1.6 2021/08/24 10:53:43 anton Exp $	*/
+/*	$OpenBSD: ucc.c,v 1.7 2021/08/25 05:45:33 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -87,6 +87,7 @@ int	ucc_ioctl(void *, u_long, caddr_t, int, struct proc *);
 
 int	ucc_hid_parse(struct ucc_softc *, void *, int);
 int	ucc_hid_parse_array(struct ucc_softc *, const struct hid_item *);
+int	ucc_hid_is_array(const struct hid_item *);
 int	ucc_add_key(struct ucc_softc *, int32_t, u_int);
 int	ucc_bit_to_raw(struct ucc_softc *, u_int, u_char *);
 int	ucc_usage_to_sym(int32_t, const struct ucc_keysym **);
@@ -337,6 +338,7 @@ ucc_hid_parse(struct ucc_softc *sc, void *desc, int descsiz)
 	struct hid_item hi;
 	struct hid_data *hd;
 	int nsyms = nitems(ucc_keysyms);
+	int error = 0;
 	int isize;
 
 	/*
@@ -369,30 +371,28 @@ ucc_hid_parse(struct ucc_softc *sc, void *desc, int descsiz)
 	hd = hid_start_parse(desc, descsiz, hid_input);
 	while (hid_get_item(hd, &hi)) {
 		u_int bit;
-		int error;
 
-		if (HID_GET_USAGE_PAGE(hi.usage) != HUP_CONSUMER)
+		if (hi.kind != hid_input ||
+		    HID_GET_USAGE_PAGE(hi.usage) != HUP_CONSUMER)
 			continue;
 
 		/*
 		 * The usages could be expressed as an array instead of
 		 * enumerating all supported ones.
 		 */
-		if (HID_GET_USAGE(hi.usage) == HUC_CONTROL) {
+		if (ucc_hid_is_array(&hi)) {
 			error = ucc_hid_parse_array(sc, &hi);
-			if (error)
-				return error;
-			continue;
+			break;
 		}
 
 		bit = sc->sc_nusages++;
 		error = ucc_add_key(sc, HID_GET_USAGE(hi.usage), bit);
 		if (error)
-			return error;
+			break;
 	}
 	hid_end_parse(hd);
 
-	return 0;
+	return error;
 }
 
 int
@@ -402,21 +402,29 @@ ucc_hid_parse_array(struct ucc_softc *sc, const struct hid_item *hi)
 
 	min = HID_GET_USAGE(hi->usage_minimum);
 	max = HID_GET_USAGE(hi->usage_maximum);
-	if (min < 0 || max < 0 || min >= max)
-		return 0;
 
+	sc->sc_nusages = (max - min) + 1;
 	sc->sc_isarray = 1;
 
 	for (usage = min; usage <= max; usage++) {
 		int error;
 
-		sc->sc_nusages++;
 		error = ucc_add_key(sc, usage, 0);
 		if (error)
 			return error;
 	}
 
 	return 0;
+}
+
+int
+ucc_hid_is_array(const struct hid_item *hi)
+{
+	int32_t max, min;
+
+	min = HID_GET_USAGE(hi->usage_minimum);
+	max = HID_GET_USAGE(hi->usage_maximum);
+	return min >= 0 && max > 0 && min < max;
 }
 
 int
