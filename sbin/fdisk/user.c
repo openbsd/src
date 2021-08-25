@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.75 2021/08/25 13:25:23 krw Exp $	*/
+/*	$OpenBSD: user.c,v 1.76 2021/08/25 23:47:36 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -69,7 +69,6 @@ USER_edit(const uint64_t lba_self, const uint64_t lba_firstembr)
 	int			 i, st;
 	static int		 editlevel;
 
-	/* One level deeper */
 	editlevel += 1;
 
 	if (MBR_read(lba_self, lba_firstembr, &mbr))
@@ -91,7 +90,6 @@ again:
 
 		st = cmd_table[i].cmd_fcn(args ? args : "", &mbr);
 
-		/* Update status */
 		if (st == CMD_EXIT)
 			break;
 		if (st == CMD_SAVE)
