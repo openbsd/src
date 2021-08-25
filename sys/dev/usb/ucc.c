@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucc.c,v 1.9 2021/08/25 05:47:15 anton Exp $	*/
+/*	$OpenBSD: ucc.c,v 1.10 2021/08/25 05:48:02 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -281,7 +281,7 @@ ucc_attach_wskbd(struct ucc_softc *sc)
 	sc->sc_keydesc[0].map_size = sc->sc_maplen;
 	sc->sc_keydesc[0].map = sc->sc_map;
 	sc->sc_keymap.keydesc = sc->sc_keydesc;
-	sc->sc_keymap.layout = KB_US | KB_DEFAULT;
+	sc->sc_keymap.layout = KB_US;
 	sc->sc_wskbddev = config_found(&sc->sc_hdev.sc_dev, &a, wskbddevprint);
 }
 
