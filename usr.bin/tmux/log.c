@@ -1,4 +1,4 @@
-/* $OpenBSD: log.c,v 1.27 2021/03/31 08:37:48 nicm Exp $ */
+/* $OpenBSD: log.c,v 1.28 2021/08/25 07:09:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -29,9 +29,6 @@
 
 static FILE	*log_file;
 static int	 log_level;
-
-static void	 log_event_cb(int, const char *);
-static void	 log_vwrite(const char *, va_list);
 
 /* Log callback for libevent. */
 static void
@@ -101,7 +98,7 @@ log_close(void)
 }
 
 /* Write a log message. */
-static void
+static void printflike(1, 0)
 log_vwrite(const char *msg, va_list ap)
 {
 	char		*fmt, *out;

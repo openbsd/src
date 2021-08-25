@@ -1,4 +1,4 @@
-/* $OpenBSD: control.c,v 1.46 2021/08/17 20:17:21 nicm Exp $ */
+/* $OpenBSD: control.c,v 1.47 2021/08/25 07:09:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -386,7 +386,7 @@ control_pause_pane(struct client *c, struct window_pane *wp)
 }
 
 /* Write a line. */
-static void
+static void printflike(2, 0)
 control_vwrite(struct client *c, const char *fmt, va_list ap)
 {
 	struct control_state	*cs = c->control_state;
