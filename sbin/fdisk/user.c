@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.74 2021/08/24 12:34:04 krw Exp $	*/
+/*	$OpenBSD: user.c,v 1.75 2021/08/25 13:25:23 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -59,13 +59,13 @@ const struct cmd		cmd_table[] = {
 
 int			modified;
 
-void			ask_cmd(char **, char **);
+int			ask_cmd(const int, char **);
 
 void
 USER_edit(const uint64_t lba_self, const uint64_t lba_firstembr)
 {
 	struct mbr		 mbr;
-	char			*cmd, *args;
+	char			*args;
 	int			 i, st;
 	static int		 editlevel;
 
@@ -85,26 +85,9 @@ again:
 		if (letoh64(gh.gh_sig) == GPTSIGNATURE && editlevel > 1)
 			goto done;	/* 'reinit gpt'. Unwind recursion! */
 
-		printf("%s%s: %d> ", disk.dk_name, modified ? "*" : "",
-		    editlevel);
-		fflush(stdout);
-		ask_cmd(&cmd, &args);
-
-		if (cmd[0] == '\0')
+		i = ask_cmd(editlevel, &args);
+		if (i == -1)
 			continue;
-		for (i = 0; i < nitems(cmd_table); i++)
-			if (strstr(cmd_table[i].cmd_name, cmd) == cmd_table[i].cmd_name)
-				break;
-
-		/* Quick hack to put in '?' == 'help' */
-		if (strcmp(cmd, "?") == 0)
-			i = 0;
-
-		if (i >= nitems(cmd_table) || (letoh64(gh.gh_sig) ==
-		    GPTSIGNATURE && cmd_table[i].cmd_gpt == 0)) {
-			printf("Invalid command '%s'.  Try 'help'.\n", cmd);
-			continue;
-		}
 
 		st = cmd_table[i].cmd_fcn(args ? args : "", &mbr);
 
@@ -202,16 +185,40 @@ USER_help(void)
 	}
 }
 
-void
-ask_cmd(char **cmd, char **arg)
+int
+ask_cmd(const int editlevel, char **arg)
 {
-	static char		lbuf[100];
+	static char		 lbuf[100];
+	char			*cmd;
+	unsigned int		 i, gpt;
 
+	printf("%s%s: %d> ", disk.dk_name, modified ? "*" : "", editlevel);
+	fflush(stdout);
 	string_from_line(lbuf, sizeof(lbuf), TRIMMED);
 
 	*arg = lbuf;
-	*cmd = strsep(arg, WHITESPACE);
+	cmd = strsep(arg, WHITESPACE);
 
 	if (*arg != NULL)
 		*arg += strspn(*arg, WHITESPACE);
+
+	if (strlen(cmd) == 0)
+		return -1;
+	if (strcmp(cmd, "?") == 0)
+		cmd = "help";
+
+	gpt = letoh64(gh.gh_sig) == GPTSIGNATURE;
+	for (i = 0; i < nitems(cmd_table); i++) {
+		if (gpt && cmd_table[i].cmd_gpt == 0)
+			continue;
+		if (strstr(cmd_table[i].cmd_name, cmd) == cmd_table[i].cmd_name)
+			return i;
+	}
+
+	printf("Invalid command '%s", cmd);
+	if (*arg && strlen(*arg) > 0)
+		printf(" %s", *arg);
+	printf("'. Try 'help'.\n");
+
+	return -1;
 }
