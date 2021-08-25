@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.724 2021/07/27 18:35:30 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.725 2021/08/25 21:07:47 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -391,13 +391,13 @@ set_iff_up(struct interface_info *ifi, int ioctlfd)
 	strlcpy(ifr.ifr_name, ifi->name, sizeof(ifr.ifr_name));
 
 	if (ioctl(ioctlfd, SIOCGIFFLAGS, (caddr_t)&ifr) == -1)
-		fatal("%s: SIOCGIFFLAGS", log_procname);
+		fatal("%s: SIOCGIFFLAGS", ifi->name);
 
 	if ((ifr.ifr_flags & IFF_UP) == 0) {
 		ifi->link_state = LINK_STATE_DOWN;
 		ifr.ifr_flags |= IFF_UP;
 		if (ioctl(ioctlfd, SIOCSIFFLAGS, (caddr_t)&ifr) == -1)
-			fatal("%s: SIOCSIFFLAGS", log_procname);
+			fatal("%s: SIOCSIFFLAGS", ifi->name);
 	}
 }
 
