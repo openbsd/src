@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucc.c,v 1.11 2021/08/25 05:48:50 anton Exp $	*/
+/*	$OpenBSD: ucc.c,v 1.12 2021/08/26 10:29:02 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -171,7 +171,7 @@ ucc_attach(struct device *parent, struct device *self, void *aux)
 
 	error = ucc_hid_parse(sc, desc, size);
 	if (error) {
-		printf(" hid error %d\n", error);
+		printf(": hid error %d\n", error);
 		return;
 	}
 
