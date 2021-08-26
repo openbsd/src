@@ -1,4 +1,4 @@
-/* $OpenBSD: ihidev.c,v 1.23 2020/07/09 21:01:55 jcs Exp $ */
+/* $OpenBSD: ihidev.c,v 1.24 2021/08/26 21:05:01 jcs Exp $ */
 /*
  * HID-over-i2c driver
  *
@@ -106,7 +106,6 @@ ihidev_attach(struct device *parent, struct device *self, void *aux)
 	struct device *dev;
 	int repid, repsz;
 	int repsizes[256];
-	int isize;
 
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
@@ -158,12 +157,8 @@ ihidev_attach(struct device *parent, struct device *self, void *aux)
 		repsz = hid_report_size(sc->sc_report, sc->sc_reportlen,
 		    hid_input, repid);
 		repsizes[repid] = repsz;
-
-		isize = repsz + 2; /* two bytes for the length */
-		isize += (sc->sc_nrepid != 1); /* one byte for the report ID */
-		if (isize > sc->sc_isize)
-			sc->sc_isize = isize;
-
+		if (repsz > sc->sc_isize)
+			sc->sc_isize = repsz;
 		if (repsz != 0)
 			DPRINTF(("%s: repid %d size %d\n", sc->sc_dev.dv_xname,
 			    repid, repsz));
@@ -648,7 +643,7 @@ ihidev_intr(void *arg)
 
 	iic_acquire_bus(sc->sc_tag, I2C_F_POLL);
 	res = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr, NULL, 0,
-	    sc->sc_ibuf, sc->sc_isize, I2C_F_POLL);
+	    sc->sc_ibuf, letoh16(sc->hid_desc.wMaxInputLength), I2C_F_POLL);
 	iic_release_bus(sc->sc_tag, I2C_F_POLL);
 
 	/*
