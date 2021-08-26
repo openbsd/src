@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.96 2021/08/23 08:59:31 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.97 2021/08/26 07:11:09 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -2044,6 +2044,7 @@ int
 iwx_prepare_card_hw(struct iwx_softc *sc)
 {
 	int t = 0;
+	int ntries;
 
 	if (iwx_set_hw_ready(sc))
 		return 0;
@@ -2052,17 +2053,19 @@ iwx_prepare_card_hw(struct iwx_softc *sc)
 	    IWX_CSR_RESET_LINK_PWR_MGMT_DISABLED);
 	DELAY(1000);
  
+	for (ntries = 0; ntries < 10; ntries++) {
+		/* If HW is not ready, prepare the conditions to check again */
+		IWX_SETBITS(sc, IWX_CSR_HW_IF_CONFIG_REG,
+		    IWX_CSR_HW_IF_CONFIG_REG_PREPARE);
 
-	/* If HW is not ready, prepare the conditions to check again */
-	IWX_SETBITS(sc, IWX_CSR_HW_IF_CONFIG_REG,
-	    IWX_CSR_HW_IF_CONFIG_REG_PREPARE);
-
-	do {
-		if (iwx_set_hw_ready(sc))
-			return 0;
-		DELAY(200);
-		t += 200;
-	} while (t < 150000);
+		do {
+			if (iwx_set_hw_ready(sc))
+				return 0;
+			DELAY(200);
+			t += 200;
+		} while (t < 150000);
+		DELAY(25000);
+	}
 
 	return ETIMEDOUT;
 }
