@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.275 2021/08/20 17:36:03 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.276 2021/08/27 17:15:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -318,6 +318,8 @@ window_create(u_int sx, u_int sy, u_int xpixel, u_int ypixel)
 
 	w->sx = sx;
 	w->sy = sy;
+	w->manual_sx = sx;
+	w->manual_sy = sy;
 	w->xpixel = xpixel;
 	w->ypixel = ypixel;
 
