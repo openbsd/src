@@ -223,6 +223,8 @@ create_root_bundle "./2a/roots.pem" "ca-root"
 create_bundle "./2a/bundle.pem" "server-1" "ca-int-1"
 create_root_bundle "./2b/roots.pem" "ca-root"
 create_bundle "./2b/bundle.pem" "server-1"
+create_root_bundle "./2c/roots.pem" "ca-root"
+create_bundle "./2c/bundle.pem" "server-1" "ca-root" "ca-int-1"
 
 # Scenarios 3a, 3b, 3c, 3d and 3e.
 reset

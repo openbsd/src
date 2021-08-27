@@ -12,6 +12,9 @@ intermediate certificates are contained in a bundle.pem file.
 
  2b. Same as (2a), however the intermediate is missing which should
      prevent verification.
+ 
+ 2c. Same as (2a), however the intermediate and root are in the intermediate
+     bundle, (should verify)
 
  3a. A leaf certificate signed by three intermediates, the last of
      which is signed by a root certificate (should verify).
