@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.103 2021/08/12 12:31:16 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.104 2021/08/27 11:28:22 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -191,7 +191,7 @@ PRT_printall(void)
 		    part_types[i].pt_type, part_types[i].pt_sname,
 		    part_types[i+idrows].pt_type, part_types[i+idrows].pt_sname,
 		    part_types[i+idrows*2].pt_type, part_types[i+idrows*2].pt_sname);
-		if ((i+idrows*3) < (sizeof(part_types)/sizeof(struct part_type))) {
+		if ((i+idrows*3) < nitems(part_types)) {
 			printf("   %02X %s\n",
 			    part_types[i+idrows*3].pt_type,
 			    part_types[i+idrows*3].pt_sname);
