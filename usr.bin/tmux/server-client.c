@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.385 2021/08/27 17:15:57 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.386 2021/08/27 17:25:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2124,6 +2124,7 @@ server_client_dispatch_command(struct client *c, struct imsg *imsg)
 	int			  argc;
 	char			**argv, *cause;
 	struct cmd_parse_result	 *pr;
+	struct args_value	 *values;
 
 	if (c->flags & CLIENT_EXIT)
 		return;
@@ -2149,7 +2150,8 @@ server_client_dispatch_command(struct client *c, struct imsg *imsg)
 		*argv = xstrdup("new-session");
 	}
 
-	pr = cmd_parse_from_arguments(argc, argv, NULL);
+	values = args_from_vector(argc, argv);
+	pr = cmd_parse_from_arguments(values, argc, NULL);
 	switch (pr->status) {
 	case CMD_PARSE_ERROR:
 		cause = pr->error;
@@ -2157,6 +2159,8 @@ server_client_dispatch_command(struct client *c, struct imsg *imsg)
 	case CMD_PARSE_SUCCESS:
 		break;
 	}
+	args_free_values(values, argc);
+	free(values);
 	cmd_free_argv(argc, argv);
 
 	cmdq_append(c, cmdq_get_command(pr->cmdlist, NULL));

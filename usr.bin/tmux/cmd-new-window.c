@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-window.c,v 1.95 2021/08/21 10:28:05 nicm Exp $ */
+/* $OpenBSD: cmd-new-window.c,v 1.96 2021/08/27 17:25:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -40,7 +40,7 @@ const struct cmd_entry cmd_new_window_entry = {
 
 	.args = { "abc:de:F:kn:PSt:", 0, -1, NULL },
 	.usage = "[-abdkPS] [-c start-directory] [-e environment] [-F format] "
-		 "[-n window-name] " CMD_TARGET_WINDOW_USAGE " [command]",
+		 "[-n window-name] " CMD_TARGET_WINDOW_USAGE " [shell-command]",
 
 	.target = { 't', CMD_FIND_WINDOW, CMD_FIND_WINDOW_INDEX },
 
@@ -105,7 +105,7 @@ cmd_new_window_exec(struct cmd *self, struct cmdq_item *item)
 	sc.tc = tc;
 
 	sc.name = args_get(args, 'n');
-	args_vector(args, &sc.argc, &sc.argv);
+	args_to_vector(args, &sc.argc, &sc.argv);
 	sc.environ = environ_create();
 
 	av = args_first_value(args, 'e');

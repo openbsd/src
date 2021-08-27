@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-menu.c,v 1.32 2021/08/25 08:51:55 nicm Exp $ */
+/* $OpenBSD: cmd-display-menu.c,v 1.33 2021/08/27 17:25:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -408,7 +408,7 @@ cmd_display_popup_exec(struct cmd *self, struct cmdq_item *item)
 			shell = _PATH_BSHELL;
 		cmd_append_argv(&argc, &argv, shell);
 	} else
-		args_vector(args, &argc, &argv);
+		args_to_vector(args, &argc, &argv);
 
 	if (args_has(args, 'E') > 1)
 		flags |= POPUP_CLOSEEXITZERO;

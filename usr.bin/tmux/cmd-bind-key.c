@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-bind-key.c,v 1.45 2021/08/25 09:18:08 nicm Exp $ */
+/* $OpenBSD: cmd-bind-key.c,v 1.46 2021/08/27 17:25:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -58,8 +58,7 @@ cmd_bind_key_exec(struct cmd *self, struct cmdq_item *item)
 	key_code		  key;
 	const char		 *tablename, *note = args_get(args, 'N');
 	struct cmd_parse_result	 *pr;
-	char			**argv;
-	int			  argc, repeat;
+	int			  repeat;
 	struct args_value	 *value;
 	u_int			  count = args_count(args);
 
@@ -92,9 +91,8 @@ cmd_bind_key_exec(struct cmd *self, struct cmdq_item *item)
 	if (count == 2)
 		pr = cmd_parse_from_string(args_string(args, 1), NULL);
 	else {
-		args_vector(args, &argc, &argv);
-		pr = cmd_parse_from_arguments(argc - 1, argv + 1, NULL);
-		cmd_free_argv(argc, argv);
+		pr = cmd_parse_from_arguments(args_values(args) + 1, count - 1,
+		    NULL);
 	}
 	switch (pr->status) {
 	case CMD_PARSE_ERROR:
