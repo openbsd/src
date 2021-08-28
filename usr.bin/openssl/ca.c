@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.38 2021/08/28 02:40:17 inoguchi Exp $ */
+/* $OpenBSD: ca.c,v 1.39 2021/08/28 04:02:20 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -673,7 +673,7 @@ ca_main(int argc, char **argv)
 	CA_DB *db = NULL;
 	X509_CRL *crl = NULL;
 	X509_REVOKED *r = NULL;
-	ASN1_TIME *tmptm;
+	ASN1_TIME *tmptm = NULL;
 	ASN1_INTEGER *tmpserial;
 	char *f;
 	const char *p;
@@ -1425,29 +1425,20 @@ ca_main(int argc, char **argv)
 		if (!X509_CRL_set_issuer_name(crl, X509_get_subject_name(x509)))
 			goto err;
 
-		tmptm = ASN1_TIME_new();
-		if (tmptm == NULL)
+		if ((tmptm = X509_gmtime_adj(NULL, 0)) == NULL)
 			goto err;
-		if (X509_gmtime_adj(tmptm, 0) == NULL) {
-			ASN1_TIME_free(tmptm);
+		if (!X509_CRL_set_lastUpdate(crl, tmptm))
 			goto err;
-		}
-		if (!X509_CRL_set_lastUpdate(crl, tmptm)) {
-			ASN1_TIME_free(tmptm);
-			goto err;
-		}
 		if (X509_time_adj_ex(tmptm, ca_config.crldays,
 		    ca_config.crlhours * 60 * 60 + ca_config.crlsec, NULL) ==
 		    NULL) {
 			BIO_puts(bio_err, "error setting CRL nextUpdate\n");
-			ASN1_TIME_free(tmptm);
 			goto err;
 		}
-		if (!X509_CRL_set_nextUpdate(crl, tmptm)) {
-			ASN1_TIME_free(tmptm);
+		if (!X509_CRL_set_nextUpdate(crl, tmptm))
 			goto err;
-		}
 		ASN1_TIME_free(tmptm);
+		tmptm = NULL;
 
 		for (i = 0; i < sk_OPENSSL_PSTRING_num(db->db->data); i++) {
 			pp = sk_OPENSSL_PSTRING_value(db->db->data, i);
@@ -1591,6 +1582,7 @@ ca_main(int argc, char **argv)
 		X509_free(x509);
 	X509_CRL_free(crl);
 	X509_REVOKED_free(r);
+	ASN1_TIME_free(tmptm);
 	NCONF_free(conf);
 	NCONF_free(extconf);
 	OBJ_cleanup();
