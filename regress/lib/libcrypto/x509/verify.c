@@ -1,7 +1,7 @@
-/* $OpenBSD: verify.c,v 1.6 2021/08/27 16:15:42 beck Exp $ */
+/* $OpenBSD: verify.c,v 1.7 2021/08/28 15:13:50 beck Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
- * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
+ * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -26,9 +26,10 @@
 #include <openssl/x509v3.h>
 #include <openssl/x509_verify.h>
 
-#define MODE_MODERN_VFY	0
-#define MODE_LEGACY_VFY 1
-#define MODE_VERIFY	2
+#define MODE_MODERN_VFY		0
+#define MODE_MODERN_VFY_DIR	1
+#define MODE_LEGACY_VFY		2
+#define MODE_VERIFY		3
 
 static int verbose = 1;
 
@@ -100,18 +101,20 @@ verify_cert_cb(int ok, X509_STORE_CTX *xsc)
 }
 
 static void
-verify_cert(const char *roots_file, const char *bundle_file, int *chains,
-    int mode)
+verify_cert(const char *roots_dir, const char *roots_file,
+    const char *bundle_file, int *chains, int mode)
 {
 	STACK_OF(X509) *roots = NULL, *bundle = NULL;
 	X509_STORE_CTX *xsc = NULL;
+	X509_STORE *store = NULL;
+	int verify_err, use_dir;
 	unsigned long flags;
 	X509 *leaf = NULL;
-	int verify_err;
 
 	*chains = 0;
+	use_dir = (mode == MODE_MODERN_VFY_DIR);
 
-	if (!certs_from_file(roots_file, &roots))
+	if (!use_dir && !certs_from_file(roots_file, &roots))
 		errx(1, "failed to load roots from '%s'", roots_file);
 	if (!certs_from_file(bundle_file, &bundle))
 		errx(1, "failed to load bundle from '%s'", bundle_file);
@@ -121,9 +124,15 @@ verify_cert(const char *roots_file, const char *bundle_file, int *chains,
 
 	if ((xsc = X509_STORE_CTX_new()) == NULL)
 		errx(1, "X509_STORE_CTX");
-	if (!X509_STORE_CTX_init(xsc, NULL, leaf, bundle)) {
+	if (use_dir && (store = X509_STORE_new()) == NULL)
+		errx(1, "X509_STORE");
+	if (!X509_STORE_CTX_init(xsc, store, leaf, bundle)) {
 		ERR_print_errors_fp(stderr);
 		errx(1, "failed to init store context");
+	}
+	if (use_dir) {
+		if (!X509_STORE_load_locations(store, NULL, roots_dir))
+			errx(1, "failed to set by_dir directory of %s", roots_dir);
 	}
 	if (mode == MODE_LEGACY_VFY) {
 		flags = X509_VERIFY_PARAM_get_flags(xsc->param);
@@ -137,7 +146,8 @@ verify_cert(const char *roots_file, const char *bundle_file, int *chains,
 
 	if (verbose)
 		X509_STORE_CTX_set_verify_cb(xsc, verify_cert_cb);
-	X509_STORE_CTX_set0_trusted_stack(xsc, roots);
+	if (!use_dir)
+		X509_STORE_CTX_set0_trusted_stack(xsc, roots);
 	if (X509_verify_cert(xsc) == 1) {
 		*chains = 1; /* XXX */
 		goto done;
@@ -154,6 +164,7 @@ verify_cert(const char *roots_file, const char *bundle_file, int *chains,
  done:
 	sk_X509_pop_free(roots, X509_free);
 	sk_X509_pop_free(bundle, X509_free);
+	X509_STORE_free(store);
 	X509_STORE_CTX_free(xsc);
 	X509_free(leaf);
 }
@@ -394,7 +405,7 @@ struct verify_cert_test verify_cert_tests[] = {
 static int
 verify_cert_test(const char *certs_path, int mode)
 {
-	char *roots_file, *bundle_file;
+	char *roots_file, *bundle_file, *roots_dir;
 	struct verify_cert_test *vct;
 	int failed = 0;
 	int chains;
@@ -409,13 +420,15 @@ verify_cert_test(const char *certs_path, int mode)
 		if (asprintf(&bundle_file, "%s/%s/bundle.pem", certs_path,
 		    vct->id) == -1)
 			errx(1, "asprintf");
+		if (asprintf(&roots_dir, "./%s/roots", vct->id) == -1)
+			errx(1, "asprintf");
 
 		fprintf(stderr, "== Test %zu (%s)\n", i, vct->id);
 		if (mode == MODE_VERIFY)
 			verify_cert_new(roots_file, bundle_file, &chains);
 		else
-			verify_cert(roots_file, bundle_file, &chains, mode);
-		if ((mode == 2 && chains == vct->want_chains) ||
+			verify_cert(roots_dir, roots_file, bundle_file, &chains, mode);
+		if ((mode == MODE_VERIFY && chains == vct->want_chains) ||
 		    (chains == 0 && vct->want_chains == 0) ||
 		    (chains == 1 && vct->want_chains > 0)) {
 			fprintf(stderr, "INFO: Succeeded with %d chains%s\n",
@@ -432,6 +445,7 @@ verify_cert_test(const char *certs_path, int mode)
 
 		free(roots_file);
 		free(bundle_file);
+		free(roots_dir);
 	}
 
 	return failed;
@@ -451,6 +465,8 @@ main(int argc, char **argv)
 	failed |= verify_cert_test(argv[1], MODE_LEGACY_VFY);
 	fprintf(stderr, "\n\nTesting modern x509_vfy\n");
 	failed |= verify_cert_test(argv[1], MODE_MODERN_VFY);
+	fprintf(stderr, "\n\nTesting modern x509_vfy by_dir\n");
+	failed |= verify_cert_test(argv[1], MODE_MODERN_VFY_DIR);
 	fprintf(stderr, "\n\nTesting x509_verify\n");
 	failed |= verify_cert_test(argv[1], MODE_VERIFY);
 
