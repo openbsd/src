@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.76 2021/04/05 00:51:14 kn Exp $	*/
+/*	$OpenBSD: print.c,v 1.77 2021/08/28 20:54:54 chrisz Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -366,6 +366,48 @@ rgname(const struct kinfo_proc *kp, VARENT *ve)
 {
 	mbswprint(group_from_gid(kp->p_rgid, 0), ve->var->width,
 	    ve->next != NULL);
+}
+
+void
+supgid(const struct kinfo_proc *kp, VARENT *ve)
+{
+	char buf[1024];
+	char *p = buf;
+	ssize_t size = sizeof(buf);
+	int i, len;
+
+	for (i = 0; i < kp->p_ngroups; i++) {
+		len = snprintf(p, size, "%s%u",
+		    p == buf ? "" : ",",
+		    kp->p_groups[i]);
+		if (len < 0 || len >= size)
+			break;
+		p += len;
+		size -= len;
+	}
+
+	(void)printf("%-*s", ve->var->width, buf);
+}
+
+void
+supgrp(const struct kinfo_proc *kp, VARENT *ve)
+{
+	char buf[1024];
+	char *p = buf;
+	ssize_t size = sizeof(buf);
+	int i, len;
+
+	for (i = 0; i < kp->p_ngroups; i++) {
+		len = snprintf(p, size, "%s%s",
+		    p == buf ? "" : ",",
+		    group_from_gid(kp->p_groups[i], 0));
+		if (len < 0 || len >= size)
+			break;
+		p += len;
+		size -= len;
+	}
+
+	(void)printf("%-*s", ve->var->width, buf);
 }
 
 void

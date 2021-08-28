@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.21 2019/06/23 17:18:50 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.22 2021/08/28 20:54:54 chrisz Exp $	*/
 /*	$NetBSD: extern.h,v 1.10 1995/05/21 13:38:27 mycroft Exp $	*/
 
 /*-
@@ -52,6 +52,8 @@ void	 elapsed(const struct kinfo_proc *, VARENT *);
 double	 getpcpu(const struct kinfo_proc *);
 double	 getpmem(const struct kinfo_proc *);
 void	 gname(const struct kinfo_proc *, VARENT *);
+void	 supgid(const struct kinfo_proc *, VARENT *);
+void	 supgrp(const struct kinfo_proc *, VARENT *);
 void	 logname(const struct kinfo_proc *, VARENT *);
 void	 longtname(const struct kinfo_proc *, VARENT *);
 void	 lstarted(const struct kinfo_proc *, VARENT *);
