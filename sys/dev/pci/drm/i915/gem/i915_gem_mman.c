@@ -841,19 +841,6 @@ void i915_gem_object_release_mmap_offset(struct drm_i915_gem_object *obj)
 #ifdef __linux__
 		drm_vma_node_unmap(&mmo->vma_node,
 				   obj->base.dev->anon_inode->i_mapping);
-#else
-		if (drm_mm_node_allocated(&mmo->vma_node.vm_node)) {
-			struct drm_i915_private *dev_priv = obj->base.dev->dev_private;
-			struct i915_vma *vma;
-			struct vm_page *pg;
-
-			for_each_ggtt_vma(vma, obj) {
-				for (pg = &dev_priv->pgs[atop(vma->node.start)];
-				     pg != &dev_priv->pgs[atop(vma->node.start + vma->size)];
-				     pg++)
-					pmap_page_protect(pg, PROT_NONE);
-			}
-		}
 #endif
 		spin_lock(&obj->mmo.lock);
 	}
