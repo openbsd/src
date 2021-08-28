@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.40 2021/08/28 05:14:30 inoguchi Exp $ */
+/* $OpenBSD: ca.c,v 1.41 2021/08/28 05:30:09 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2246,7 +2246,8 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 	/* We now just add it to the database */
 	row[DB_type] = malloc(2);
 
-	tm = X509_get_notAfter(ret);
+	if ((tm = X509_get_notAfter(ret)) == NULL)
+		goto err;
 	row[DB_exp_date] = strndup(tm->data, tm->length);
 	if (row[DB_type] == NULL || row[DB_exp_date] == NULL) {
 		BIO_printf(bio_err, "Memory allocation failure\n");
@@ -2503,7 +2504,8 @@ do_revoke(X509 *x509, CA_DB *db, int type, char *value)
 		/* We now just add it to the database */
 		row[DB_type] = malloc(2);
 
-		tm = X509_get_notAfter(x509);
+		if ((tm = X509_get_notAfter(x509)) == NULL)
+			goto err;
 		row[DB_exp_date] = strndup(tm->data, tm->length);
 		if (row[DB_type] == NULL || row[DB_exp_date] == NULL) {
 			BIO_printf(bio_err, "Memory allocation failure\n");
