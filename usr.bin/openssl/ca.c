@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.39 2021/08/28 04:02:20 inoguchi Exp $ */
+/* $OpenBSD: ca.c,v 1.40 2021/08/28 05:14:30 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2247,14 +2247,11 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 	row[DB_type] = malloc(2);
 
 	tm = X509_get_notAfter(ret);
-	row[DB_exp_date] = malloc(tm->length + 1);
+	row[DB_exp_date] = strndup(tm->data, tm->length);
 	if (row[DB_type] == NULL || row[DB_exp_date] == NULL) {
 		BIO_printf(bio_err, "Memory allocation failure\n");
 		goto err;
 	}
-
-	memcpy(row[DB_exp_date], tm->data, tm->length);
-	row[DB_exp_date][tm->length] = '\0';
 
 	row[DB_rev_date] = NULL;
 
@@ -2507,13 +2504,11 @@ do_revoke(X509 *x509, CA_DB *db, int type, char *value)
 		row[DB_type] = malloc(2);
 
 		tm = X509_get_notAfter(x509);
-		row[DB_exp_date] = malloc(tm->length + 1);
+		row[DB_exp_date] = strndup(tm->data, tm->length);
 		if (row[DB_type] == NULL || row[DB_exp_date] == NULL) {
 			BIO_printf(bio_err, "Memory allocation failure\n");
 			goto err;
 		}
-		memcpy(row[DB_exp_date], tm->data, tm->length);
-		row[DB_exp_date][tm->length] = '\0';
 
 		row[DB_rev_date] = NULL;
 
@@ -2673,13 +2668,11 @@ do_updatedb(CA_DB *db)
 		cnt = -1;
 		goto err;
 	}
-	a_tm_s = malloc(a_tm->length + 1);
+	a_tm_s = strndup(a_tm->data, a_tm->length);
 	if (a_tm_s == NULL) {
 		cnt = -1;
 		goto err;
 	}
-	memcpy(a_tm_s, a_tm->data, a_tm->length);
-	a_tm_s[a_tm->length] = '\0';
 
 	if (strncmp(a_tm_s, "49", 2) <= 0)
 		a_y2k = 1;
