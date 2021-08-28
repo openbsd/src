@@ -1,4 +1,4 @@
-.\"	$OpenBSD: traceroute.8,v 1.69 2020/02/11 18:41:39 deraadt Exp $
+.\"	$OpenBSD: traceroute.8,v 1.70 2021/08/28 19:59:28 sthen Exp $
 .\"	$NetBSD: traceroute.8,v 1.6 1995/10/12 03:05:50 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)traceroute.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: February 11 2020 $
+.Dd $Mdocdate: August 28 2021 $
 .Dt TRACEROUTE 8
 .Os
 .Sh NAME
@@ -201,7 +201,7 @@ and
 are listed.
 .It Fl w Ar waittime
 Set the time, in seconds, to wait for a response to a probe.
-The default is 5.
+The default is 3.
 .It Fl x
 Print the ICMP extended headers if available.
 This option is not available for IPv6.

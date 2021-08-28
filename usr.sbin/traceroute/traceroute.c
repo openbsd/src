@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.164 2021/07/12 15:09:21 beck Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.165 2021/08/28 19:59:28 sthen Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -351,7 +351,7 @@ main(int argc, char *argv[])
 	rcvsock4 = rcvsock6 = sndsock4 = sndsock6 = -1;
 	v4sock_errno = v6sock_errno = 0;
 
-	conf->waittime = 5 * 1000;
+	conf->waittime = 3 * 1000;
 
 	if ((rcvsock6 = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6)) == -1)
 		v6sock_errno = errno;
@@ -554,9 +554,9 @@ main(int argc, char *argv[])
 				err(1, "setsockopt SO_RTABLE");
 			break;
 		case 'w':
-			conf->waittime = strtonum(optarg, 2, INT_MAX, &errstr);
+			conf->waittime = strtonum(optarg, 1, INT_MAX, &errstr);
 			if (errstr)
-				errx(1, "wait must be >1 sec.");
+				errx(1, "wait must be >=1 sec.");
 			conf->waittime *= 1000;
 			break;
 		case 'x':
