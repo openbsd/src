@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.165 2021/08/28 19:59:28 sthen Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.166 2021/08/28 19:59:49 sthen Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -345,7 +345,7 @@ main(int argc, char *argv[])
 	/* start udp dest port # for probe packets */
 	conf->port = 32768+666;
 
- 	memset(&rcvmhdr, 0, sizeof(rcvmhdr));
+	memset(&rcvmhdr, 0, sizeof(rcvmhdr));
 	memset(&rcviov, 0, sizeof(rcviov));
 
 	rcvsock4 = rcvsock6 = sndsock4 = sndsock6 = -1;
