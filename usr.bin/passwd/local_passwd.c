@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.59 2021/07/12 15:09:20 beck Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.60 2021/08/28 06:46:49 robert Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -176,14 +176,14 @@ getnewpasswd(struct passwd *pw, login_cap_t *lc, int authenticated)
 	savequit = signal(SIGQUIT, kbintr);
 
 	if (!authenticated) {
-		(void)printf("Changing password for %s.\n", pw->pw_name);
+		fprintf(stderr, "Changing password for %s.\n", pw->pw_name);
 		if (uid != 0 && pw->pw_passwd[0] != '\0') {
 			char oldpass[1024];
 
 			p = readpassphrase("Old password:", oldpass,
 			    sizeof(oldpass), RPP_ECHO_OFF);
 			if (p == NULL || *p == '\0') {
-				(void)printf("%s\n", UNCHANGED_MSG);
+				fprintf(stderr, "%s\n", UNCHANGED_MSG);
 				pw_abort();
 				exit(p == NULL ? 1 : 0);
 			}
@@ -204,12 +204,12 @@ getnewpasswd(struct passwd *pw, login_cap_t *lc, int authenticated)
 		p = readpassphrase("New password:", newpass, sizeof(newpass),
 		    RPP_ECHO_OFF);
 		if (p == NULL || *p == '\0') {
-			(void)printf("%s\n", UNCHANGED_MSG);
+			fprintf(stderr, "%s\n", UNCHANGED_MSG);
 			pw_abort();
 			exit(p == NULL ? 1 : 0);
 		}
 		if (strcmp(p, "s/key") == 0) {
-			printf("That password collides with a system feature. Choose another.\n");
+			fprintf(stderr, "That password collides with a system feature. Choose another.\n");
 			continue;
 		}
 
@@ -222,7 +222,7 @@ getnewpasswd(struct passwd *pw, login_cap_t *lc, int authenticated)
 			explicit_bzero(repeat, sizeof(repeat));
 			break;
 		}
-		(void)printf("Mismatch; try again, EOF to quit.\n");
+		fprintf(stderr, "Mismatch; try again, EOF to quit.\n");
 		explicit_bzero(repeat, sizeof(repeat));
 		explicit_bzero(newpass, sizeof(newpass));
 	}
@@ -232,7 +232,7 @@ getnewpasswd(struct passwd *pw, login_cap_t *lc, int authenticated)
 
 	pref = login_getcapstr(lc, "localcipher", NULL, NULL);
 	if (crypt_newhash(newpass, pref, hash, sizeof(hash)) != 0) {
-		(void)printf("Couldn't generate hash.\n");
+		fprintf(stderr, "Couldn't generate hash.\n");
 		explicit_bzero(newpass, sizeof(newpass));
 		pw_error(NULL, 0, 0);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_check.c,v 1.16 2017/08/21 21:41:13 deraadt Exp $	*/
+/*	$OpenBSD: pwd_check.c,v 1.17 2021/08/28 06:46:49 robert Exp $	*/
 
 /*
  * Copyright 2000 Niels Provos <provos@citi.umich.edu>
@@ -97,7 +97,7 @@ pwd_check(login_cap_t *lc, char *password)
 
 	min_len = (int)login_getcapnum(lc, "minpasswordlen", 6, 6);
 	if (min_len > 0 && strlen(password) < min_len) {
-		printf("Please enter a longer password.\n");
+		fprintf(stderr, "Please enter a longer password.\n");
 		return (0);
 	}
 
@@ -146,7 +146,7 @@ pwd_check(login_cap_t *lc, char *password)
 				ret = regexec(&rgx, password, 0, NULL, 0);
 				regfree(&rgx);
 				if (ret == 0) {
-					printf("%s\n", patterns[i].response);
+					fprintf(stderr, "%s\n", patterns[i].response);
 					exit(1);
 				}
 			}
@@ -194,8 +194,8 @@ pwd_check(login_cap_t *lc, char *password)
 
  out:
 	free(checker);
-	printf("Please use a different password. Unusual capitalization,\n");
-	printf("control characters, or digits are suggested.\n");
+	fprintf(stderr, "Please use a different password. Unusual capitalization,\n");
+	fprintf(stderr, "control characters, or digits are suggested.\n");
 
 	return (0);
 }
