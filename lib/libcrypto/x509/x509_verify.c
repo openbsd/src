@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.43 2021/08/28 07:49:00 beck Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.44 2021/08/28 15:22:42 beck Exp $ */
 /*
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
  *
@@ -213,13 +213,6 @@ x509_verify_ctx_cert_is_root(struct x509_verify_ctx *ctx, X509 *cert,
 	if (!x509_verify_cert_cache_extensions(cert))
 		return 0;
 
-	/* Check the provided roots */
-	for (i = 0; i < sk_X509_num(ctx->roots); i++) {
-		if (X509_cmp(sk_X509_value(ctx->roots, i), cert) == 0)
-			return !full_chain ||
-			    x509_verify_cert_self_signed(cert);
-	}
-
 	/* Check by lookup if we have a legacy xsc */
 	if (ctx->xsc != NULL) {
 		if ((match = x509_vfy_lookup_cert_match(ctx->xsc,
@@ -227,6 +220,13 @@ x509_verify_ctx_cert_is_root(struct x509_verify_ctx *ctx, X509 *cert,
 			X509_free(match);
 			return !full_chain ||
 			    x509_verify_cert_self_signed(cert);
+		}
+	} else {
+		/* Check the provided roots */
+		for (i = 0; i < sk_X509_num(ctx->roots); i++) {
+			if (X509_cmp(sk_X509_value(ctx->roots, i), cert) == 0)
+				return !full_chain ||
+				    x509_verify_cert_self_signed(cert);
 		}
 	}
 
@@ -611,17 +611,6 @@ x509_verify_build_chains(struct x509_verify_ctx *ctx, X509 *cert,
 			    X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN;
 	}
 
-	/* Check to see if we have a trusted root issuer. */
-	for (i = 0; i < sk_X509_num(ctx->roots); i++) {
-		candidate = sk_X509_value(ctx->roots, i);
-		if (x509_verify_potential_parent(ctx, candidate, cert)) {
-			is_root = !full_chain ||
-			    x509_verify_cert_self_signed(candidate);
-			x509_verify_consider_candidate(ctx, cert,
-			    cert_md, is_root, candidate, current_chain,
-			    full_chain);
-		}
-	}
 	/* Check for legacy mode roots */
 	if (ctx->xsc != NULL) {
 		if ((ret = ctx->xsc->get_issuer(&candidate, ctx->xsc, cert)) < 0) {
@@ -638,6 +627,18 @@ x509_verify_build_chains(struct x509_verify_ctx *ctx, X509 *cert,
 				    full_chain);
 			}
 			X509_free(candidate);
+		}
+	} else {
+		/* Check to see if we have a trusted root issuer. */
+		for (i = 0; i < sk_X509_num(ctx->roots); i++) {
+			candidate = sk_X509_value(ctx->roots, i);
+			if (x509_verify_potential_parent(ctx, candidate, cert)) {
+				is_root = !full_chain ||
+				    x509_verify_cert_self_signed(candidate);
+				x509_verify_consider_candidate(ctx, cert,
+				    cert_md, is_root, candidate, current_chain,
+				    full_chain);
+			}
 		}
 	}
 
@@ -933,7 +934,7 @@ x509_verify_cert_valid(struct x509_verify_ctx *ctx, X509 *cert,
 }
 
 struct x509_verify_ctx *
-x509_verify_ctx_new_from_xsc(X509_STORE_CTX *xsc, STACK_OF(X509) *roots)
+x509_verify_ctx_new_from_xsc(X509_STORE_CTX *xsc)
 {
 	struct x509_verify_ctx *ctx;
 	size_t max_depth;
@@ -941,7 +942,7 @@ x509_verify_ctx_new_from_xsc(X509_STORE_CTX *xsc, STACK_OF(X509) *roots)
 	if (xsc == NULL)
 		return NULL;
 
-	if ((ctx = x509_verify_ctx_new(roots)) == NULL)
+	if ((ctx = x509_verify_ctx_new(NULL)) == NULL)
 		return NULL;
 
 	ctx->xsc = xsc;
@@ -969,14 +970,16 @@ x509_verify_ctx_new(STACK_OF(X509) *roots)
 {
 	struct x509_verify_ctx *ctx;
 
-	if (roots == NULL)
-		return NULL;
-
 	if ((ctx = calloc(1, sizeof(struct x509_verify_ctx))) == NULL)
 		return NULL;
 
-	if ((ctx->roots = X509_chain_up_ref(roots)) == NULL)
-		goto err;
+	if (roots != NULL) {
+		if  ((ctx->roots = X509_chain_up_ref(roots)) == NULL)
+			goto err;
+	} else {
+		if ((ctx->roots = sk_X509_new_null()) == NULL)
+			goto err;
+	}
 
 	ctx->max_depth = X509_VERIFY_MAX_CHAIN_CERTS;
 	ctx->max_chains = X509_VERIFY_MAX_CHAINS;

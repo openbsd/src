@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.87 2021/08/19 03:44:00 beck Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.88 2021/08/28 15:22:42 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -634,54 +634,7 @@ X509_verify_cert(X509_STORE_CTX *ctx)
 
 	/* Use the modern multi-chain verifier from x509_verify_cert */
 
-	/* Find our trusted roots */
-	ctx->error = X509_V_ERR_OUT_OF_MEM;
-
-	if (ctx->get_issuer == get_issuer_sk) {
-		/*
-		 * We are using the trusted stack method. so
-		 * the roots are in the aptly named "ctx->other_ctx"
-		 * pointer. (It could have been called "al")
-		 */
-		if ((roots = X509_chain_up_ref(ctx->other_ctx)) == NULL)
-			return -1;
-	} else {
-		/*
-		 * We have a X509_STORE and need to pull out the roots.
-		 * Don't look Ethel...
-		 */
-		STACK_OF(X509_OBJECT) *objs;
-		size_t i, good = 1;
-
-		if ((roots = sk_X509_new_null()) == NULL)
-			return -1;
-
-		CRYPTO_w_lock(CRYPTO_LOCK_X509_STORE);
-		if ((objs = X509_STORE_get0_objects(ctx->ctx)) == NULL)
-			good = 0;
-		for (i = 0; good && i < sk_X509_OBJECT_num(objs); i++) {
-			X509_OBJECT *obj;
-			X509 *root;
-			obj = sk_X509_OBJECT_value(objs, i);
-			if (obj->type != X509_LU_X509)
-				continue;
-			root = obj->data.x509;
-			if (X509_up_ref(root) == 0)
-				good = 0;
-			if (sk_X509_push(roots, root) == 0) {
-				X509_free(root);
-				good = 0;
-			}
-		}
-		CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
-
-		if (!good) {
-			sk_X509_pop_free(roots, X509_free);
-			return -1;
-		}
-	}
-
-	if ((vctx = x509_verify_ctx_new_from_xsc(ctx, roots)) != NULL) {
+	if ((vctx = x509_verify_ctx_new_from_xsc(ctx)) != NULL) {
 		ctx->error = X509_V_OK; /* Initialize to OK */
 		chain_count = x509_verify(vctx, NULL, NULL);
 	}
