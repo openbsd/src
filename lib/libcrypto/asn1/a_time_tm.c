@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time_tm.c,v 1.17 2020/12/16 18:46:29 tb Exp $ */
+/* $OpenBSD: a_time_tm.c,v 1.18 2021/08/28 08:22:48 tb Exp $ */
 /*
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
  *
@@ -261,8 +261,8 @@ ASN1_TIME_adj_internal(ASN1_TIME *s, time_t t, int offset_day, long offset_sec,
 	size_t len;
 	char * p;
 
- 	if (gmtime_r(&t, &tm) == NULL)
- 		return (NULL);
+	if (gmtime_r(&t, &tm) == NULL)
+		return (NULL);
 
 	if (offset_day || offset_sec) {
 		if (!OPENSSL_gmtime_adj(&tm, offset_day, offset_sec))
@@ -298,7 +298,7 @@ ASN1_TIME_adj_internal(ASN1_TIME *s, time_t t, int offset_day, long offset_sec,
 	case GENTIME_LENGTH:
 		s->type = V_ASN1_GENERALIZEDTIME;
 		break;
- 	case UTCTIME_LENGTH:
+	case UTCTIME_LENGTH:
 		s->type = V_ASN1_UTCTIME;
 		break;
 	default:
