@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.140 2021/08/24 12:34:04 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.141 2021/08/28 11:55:17 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -607,11 +607,13 @@ ask_pid(const int dflt, struct uuid *guid)
 	char			lbuf[100], *cp;
 	int			num = -1, status;
 
-	do {
-		printf("Partition id ('0' to disable) [01 - FF]: [%X] ", dflt);
+	for (;;) {
+		printf("Partition id ('0' to disable) [01 - FF]: [%02X] ", dflt);
 		printf("(? for help) ");
 		string_from_line(lbuf, sizeof(lbuf), TRIMMED);
 
+		if (strlen(lbuf) == 0)
+			return dflt;
 		if (strcmp(lbuf, "?") == 0) {
 			PRT_printall();
 			continue;
@@ -623,24 +625,12 @@ ask_pid(const int dflt, struct uuid *guid)
 				return 0x100;
 		}
 
-		/* Convert */
-		cp = lbuf;
-		num = strtol(lbuf, &cp, 16);
+		num = hex_octet(lbuf);
+		if (num != -1)
+			return num;
 
-		/* Make sure only number present */
-		if (cp == lbuf)
-			num = dflt;
-		if (*cp != '\0') {
-			printf("'%s' is not a valid number.\n", lbuf);
-			num = -1;
-		} else if (num == 0) {
-			break;
-		} else if (num < 0 || num > 0xff) {
-			printf("'%x' is out of range.\n", num);
-		}
-	} while (num < 0 || num > 0xff);
-
-	return num;
+		printf("'%s' is not a valid partition id.\n", lbuf);
+	}
 }
 
 char *

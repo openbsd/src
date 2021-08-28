@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.81 2021/08/24 12:34:04 krw Exp $	*/
+/*	$OpenBSD: misc.c,v 1.82 2021/08/28 11:55:17 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -264,4 +264,22 @@ string_to_utf16le(const char *ch)
 		utf[i - 1] = 0;
 
 	return utf;
+}
+
+int
+hex_octet(char *buf)
+{
+	char			*cp;
+	long			 num;
+
+	cp = buf;
+	num = strtol(buf, &cp, 16);
+
+	if (cp == buf || *cp != '\0')
+		return -1;
+
+	if (num < 0 || num > 0xff)
+		return -1;
+
+	return num;
 }

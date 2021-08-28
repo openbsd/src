@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.134 2021/08/10 18:17:48 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.135 2021/08/28 11:55:17 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -210,8 +210,8 @@ parse_bootprt(const char *arg)
 {
 	const char		*errstr;
 	char			*poffset, *ptype;
+	int			 partitiontype;
 	uint32_t		 blockcount, blockoffset;
-	uint8_t			 partitiontype;
 
 	blockoffset = BLOCKALIGNMENT;
 	partitiontype = DOSPTYP_EFISYS;
@@ -244,10 +244,9 @@ parse_bootprt(const char *arg)
 	if (ptype == NULL)
 		goto done;
 
-	if (strlen(ptype) != 2 || !(isxdigit(*ptype) && isxdigit(*(ptype + 1))))
-		errx(1, "Block type is not 2 digit hex value");
-
-	partitiontype = strtol(ptype, NULL, 16);
+	partitiontype = hex_octet(ptype);
+	if (partitiontype == -1)
+		errx(1, "Block type is not a 1-2 digit hex value");
 
  done:
 	disk.dk_bootprt.prt_ns = blockcount;
