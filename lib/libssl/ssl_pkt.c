@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.48 2021/08/04 12:41:25 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.49 2021/08/28 15:20:58 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1203,51 +1203,53 @@ ssl3_write_alert(SSL *s)
 int
 ssl3_send_alert(SSL *s, int level, int desc)
 {
-	/* If a fatal one, remove from cache */
+	/* If alert is fatal, remove session from cache. */
 	if (level == SSL3_AL_FATAL)
 		SSL_CTX_remove_session(s->ctx, s->session);
 
 	S3I(s)->alert_dispatch = 1;
 	S3I(s)->send_alert[0] = level;
 	S3I(s)->send_alert[1] = desc;
-	if (S3I(s)->wbuf.left == 0) /* data still being written out? */
-		return ssl3_dispatch_alert(s);
 
-	/* else data is still being written out, we will get written
-	 * some time in the future */
-	return -1;
+	/*
+	 * If data is still being written out, the alert will be dispatched at
+	 * some point in the future.
+	 */
+	if (S3I(s)->wbuf.left != 0)
+		return -1;
+
+	return ssl3_dispatch_alert(s);
 }
 
 int
 ssl3_dispatch_alert(SSL *s)
 {
-	int i, j;
-	void (*cb)(const SSL *ssl, int type, int val) = NULL;
+	void (*cb)(const SSL *ssl, int type, int val);
+	int ret;
 
 	S3I(s)->alert_dispatch = 0;
-	i = ssl3_write_alert(s);
-	if (i <= 0) {
+	if ((ret = ssl3_write_alert(s)) <= 0) {
 		S3I(s)->alert_dispatch = 1;
-	} else {
-		/* Alert sent to BIO.  If it is important, flush it now.
-		 * If the message does not get sent due to non-blocking IO,
-		 * we will not worry too much. */
-		if (S3I(s)->send_alert[0] == SSL3_AL_FATAL)
-			(void)BIO_flush(s->wbio);
-
-		if (s->internal->msg_callback)
-			s->internal->msg_callback(1, s->version, SSL3_RT_ALERT,
-			    S3I(s)->send_alert, 2, s, s->internal->msg_callback_arg);
-
-		if (s->internal->info_callback != NULL)
-			cb = s->internal->info_callback;
-		else if (s->ctx->internal->info_callback != NULL)
-			cb = s->ctx->internal->info_callback;
-
-		if (cb != NULL) {
-			j = (S3I(s)->send_alert[0]<<8)|S3I(s)->send_alert[1];
-			cb(s, SSL_CB_WRITE_ALERT, j);
-		}
+		return ret;
 	}
-	return (i);
+
+	/*
+	 * Alert sent to BIO.  If it is important, flush it now.
+	 * If the message does not get sent due to non-blocking IO,
+	 * we will not worry too much.
+	 */
+	if (S3I(s)->send_alert[0] == SSL3_AL_FATAL)
+		(void)BIO_flush(s->wbio);
+
+	if (s->internal->msg_callback)
+		s->internal->msg_callback(1, s->version, SSL3_RT_ALERT,
+		    S3I(s)->send_alert, 2, s, s->internal->msg_callback_arg);
+
+	if ((cb = s->internal->info_callback) == NULL)
+		cb = s->ctx->internal->info_callback;
+	if (cb != NULL)
+		cb(s, SSL_CB_WRITE_ALERT, (S3I(s)->send_alert[0] << 8) |
+		    S3I(s)->send_alert[1]);
+
+	return ret;
 }
