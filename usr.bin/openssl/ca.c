@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.37 2021/08/28 02:24:10 inoguchi Exp $ */
+/* $OpenBSD: ca.c,v 1.38 2021/08/28 02:40:17 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2097,8 +2097,7 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 		if (X509_gmtime_adj(X509_get_notBefore(ret), 0) == NULL)
 			goto err;
 	} else if (setCertificateTime(X509_get_notBefore(ret), startdate) == -1) {
-		BIO_printf(bio_err, "Invalid start date %s\n",
-		    startdate);
+		BIO_printf(bio_err, "Invalid start date %s\n", startdate);
 		goto err;
 	}
 
@@ -2107,8 +2106,7 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 		    NULL) == NULL)
 			goto err;
 	} else if (setCertificateTime(X509_get_notAfter(ret), enddate) == -1) {
-		BIO_printf(bio_err, "Invalid end date %s\n",
-		    enddate);
+		BIO_printf(bio_err, "Invalid end date %s\n", enddate);
 		goto err;
 	}
 
