@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.36 2021/08/28 02:11:18 inoguchi Exp $ */
+/* $OpenBSD: ca.c,v 1.37 2021/08/28 02:24:10 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1473,6 +1473,7 @@ ca_main(int argc, char **argv)
 				ASN1_INTEGER_free(tmpserial);
 				if (!X509_CRL_add0_revoked(crl, r))
 					goto err;
+				r = NULL;
 			}
 		}
 
@@ -1589,6 +1590,7 @@ ca_main(int argc, char **argv)
 	if (x509)
 		X509_free(x509);
 	X509_CRL_free(crl);
+	X509_REVOKED_free(r);
 	NCONF_free(conf);
 	NCONF_free(extconf);
 	OBJ_cleanup();
