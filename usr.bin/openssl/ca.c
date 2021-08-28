@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.35 2021/07/24 13:21:04 inoguchi Exp $ */
+/* $OpenBSD: ca.c,v 1.36 2021/08/28 02:11:18 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -141,7 +141,7 @@ static int certify_spkac(X509 **xret, char *infile, EVP_PKEY *pkey,
     unsigned long chtype, int multirdn, int email_dn, char *startdate,
     char *enddate, long days, char *ext_sect, CONF *conf, int verbose,
     unsigned long certopt, unsigned long nameopt, int default_op, int ext_copy);
-static void write_new_certificate(BIO *bp, X509 *x, int output_der,
+static int write_new_certificate(BIO *bp, X509 *x, int output_der,
     int notext);
 static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
     const EVP_MD *dgst, STACK_OF(OPENSSL_STRING) *sigopts,
@@ -1065,6 +1065,8 @@ ca_main(int argc, char **argv)
 			goto err;
 		}
 		ca_config.md = (char *) OBJ_nid2sn(def_nid);
+		if (ca_config.md == NULL)
+			goto err;
 	}
 	if ((dgst = EVP_get_digestbyname(ca_config.md)) == NULL) {
 		BIO_printf(bio_err,
@@ -1350,9 +1352,12 @@ ca_main(int argc, char **argv)
 				perror(pempath);
 				goto err;
 			}
-			write_new_certificate(Cout, x, 0, ca_config.notext);
-			write_new_certificate(Sout, x, output_der,
-			    ca_config.notext);
+			if (!write_new_certificate(Cout, x, 0,
+			    ca_config.notext))
+				goto err;
+			if (!write_new_certificate(Sout, x, output_der,
+			    ca_config.notext))
+				goto err;
 		}
 
 		if (sk_X509_num(cert_sk)) {
@@ -1423,16 +1428,25 @@ ca_main(int argc, char **argv)
 		tmptm = ASN1_TIME_new();
 		if (tmptm == NULL)
 			goto err;
-		X509_gmtime_adj(tmptm, 0);
-		X509_CRL_set_lastUpdate(crl, tmptm);
+		if (X509_gmtime_adj(tmptm, 0) == NULL) {
+			ASN1_TIME_free(tmptm);
+			goto err;
+		}
+		if (!X509_CRL_set_lastUpdate(crl, tmptm)) {
+			ASN1_TIME_free(tmptm);
+			goto err;
+		}
 		if (X509_time_adj_ex(tmptm, ca_config.crldays,
 		    ca_config.crlhours * 60 * 60 + ca_config.crlsec, NULL) ==
 		    NULL) {
 			BIO_puts(bio_err, "error setting CRL nextUpdate\n");
+			ASN1_TIME_free(tmptm);
 			goto err;
 		}
-		X509_CRL_set_nextUpdate(crl, tmptm);
-
+		if (!X509_CRL_set_nextUpdate(crl, tmptm)) {
+			ASN1_TIME_free(tmptm);
+			goto err;
+		}
 		ASN1_TIME_free(tmptm);
 
 		for (i = 0; i < sk_OPENSSL_PSTRING_num(db->db->data); i++) {
@@ -1452,9 +1466,13 @@ ca_main(int argc, char **argv)
 				serial = NULL;
 				if (tmpserial == NULL)
 					goto err;
-				X509_REVOKED_set_serialNumber(r, tmpserial);
+				if (!X509_REVOKED_set_serialNumber(r, tmpserial)) {
+					ASN1_INTEGER_free(tmpserial);
+					goto err;
+				}
 				ASN1_INTEGER_free(tmpserial);
-				X509_CRL_add0_revoked(crl, r);
+				if (!X509_CRL_add0_revoked(crl, r))
+					goto err;
 			}
 		}
 
@@ -1482,8 +1500,11 @@ ca_main(int argc, char **argv)
 				tmpserial = BN_to_ASN1_INTEGER(crlnumber, NULL);
 				if (tmpserial == NULL)
 					goto err;
-				X509_CRL_add1_ext_i2d(crl, NID_crl_number,
-				    tmpserial, 0, 0);
+				if (!X509_CRL_add1_ext_i2d(crl, NID_crl_number,
+				    tmpserial, 0, 0)) {
+					ASN1_INTEGER_free(tmpserial);
+					goto err;
+				}
 				ASN1_INTEGER_free(tmpserial);
 				crl_v2 = 1;
 				if (!BN_add_word(crlnumber, 1))
@@ -1507,7 +1528,8 @@ ca_main(int argc, char **argv)
 		    ca_config.sigopts))
 			goto err;
 
-		PEM_write_bio_X509_CRL(Sout, crl);
+		if (!PEM_write_bio_X509_CRL(Sout, crl))
+			goto err;
 
 		if (crlnumberfile != NULL)	/* Rename the crlnumber file */
 			if (!rotate_serial(crlnumberfile, "new", "old"))
@@ -1605,8 +1627,10 @@ certify(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 		    infile);
 		goto err;
 	}
-	if (verbose)
-		X509_REQ_print(bio_err, req);
+	if (verbose) {
+		if (!X509_REQ_print(bio_err, req))
+			goto err;
+	}
 
 	BIO_printf(bio_err, "Check that the request matches the signature\n");
 
@@ -1665,8 +1689,10 @@ certify_cert(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 	if ((req = load_cert(bio_err, infile, FORMAT_PEM, NULL,
 	    infile)) == NULL)
 		goto err;
-	if (verbose)
-		X509_print(bio_err, req);
+	if (verbose) {
+		if (!X509_print(bio_err, req))
+			goto err;
+	}
 
 	BIO_printf(bio_err, "Check that the request matches the signature\n");
 
@@ -1746,7 +1772,10 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 			ERR_print_errors(bio_err);
 			goto err;
 		}
-		X509_REQ_set_subject_name(req, n);
+		if (!X509_REQ_set_subject_name(req, n)) {
+			X509_NAME_free(n);
+			goto err;
+		}
 		req->req_info->enc.modified = 1;
 		X509_NAME_free(n);
 	}
@@ -1757,12 +1786,20 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 	name = X509_REQ_get_subject_name(req);
 	for (i = 0; i < X509_NAME_entry_count(name); i++) {
 		ne = X509_NAME_get_entry(name, i);
+		if (ne == NULL)
+			goto err;
 		str = X509_NAME_ENTRY_get_data(ne);
+		if (str == NULL)
+			goto err;
 		obj = X509_NAME_ENTRY_get_object(ne);
+		if (obj == NULL)
+			goto err;
 
 		if (ca_config.msie_hack) {
 			/* assume all type should be strings */
 			nid = OBJ_obj2nid(ne->object);
+			if (nid == NID_undef)
+				goto err;
 
 			if (str->type == V_ASN1_UNIVERSALSTRING)
 				ASN1_UNIVERSALSTRING_to_string(str);
@@ -1825,6 +1862,8 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 			goto err;
 		}
 		obj = OBJ_nid2obj(j);
+		if (obj == NULL)
+			goto err;
 
 		last = -1;
 		for (;;) {
@@ -1836,6 +1875,8 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 				tne = NULL;
 			} else {
 				tne = X509_NAME_get_entry(name, j);
+				if (tne == NULL)
+					goto err;
 			}
 			last = j;
 
@@ -1874,8 +1915,14 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 				}
 				if (j >= 0) {
 					push = X509_NAME_get_entry(CAname, j);
+					if (push == NULL)
+						goto err;
 					str = X509_NAME_ENTRY_get_data(tne);
+					if (str == NULL)
+						goto err;
 					str2 = X509_NAME_ENTRY_get_data(push);
+					if (str2 == NULL)
+						goto err;
 					last2 = j;
 					if (ASN1_STRING_cmp(str, str2) != 0)
 						goto again2;
@@ -1943,7 +1990,12 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 		while ((i = X509_NAME_get_index_by_NID(dn_subject,
 		    NID_pkcs9_emailAddress, -1)) >= 0) {
 			tmpne = X509_NAME_get_entry(dn_subject, i);
-			X509_NAME_delete_entry(dn_subject, i);
+			if (tmpne == NULL)
+				goto err;
+			if (X509_NAME_delete_entry(dn_subject, i) == NULL) {
+				X509_NAME_ENTRY_free(tmpne);
+				goto err;
+			}
 			X509_NAME_ENTRY_free(tmpne);
 		}
 	}
@@ -2039,17 +2091,20 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 			goto err;
 	}
 
-	if (strcmp(startdate, "today") == 0)
-		X509_gmtime_adj(X509_get_notBefore(ret), 0);
-	else if (setCertificateTime(X509_get_notBefore(ret), startdate) == -1) {
+	if (strcmp(startdate, "today") == 0) {
+		if (X509_gmtime_adj(X509_get_notBefore(ret), 0) == NULL)
+			goto err;
+	} else if (setCertificateTime(X509_get_notBefore(ret), startdate) == -1) {
 		BIO_printf(bio_err, "Invalid start date %s\n",
 		    startdate);
 		goto err;
 	}
 
-	if (enddate == NULL)
-		X509_time_adj_ex(X509_get_notAfter(ret), days, 0, NULL);
-	else if (setCertificateTime(X509_get_notAfter(ret), enddate) == -1) {
+	if (enddate == NULL) {
+		if (X509_time_adj_ex(X509_get_notAfter(ret), days, 0,
+		    NULL) == NULL)
+			goto err;
+	} else if (setCertificateTime(X509_get_notAfter(ret), enddate) == -1) {
 		BIO_printf(bio_err, "Invalid end date %s\n",
 		    enddate);
 		goto err;
@@ -2059,6 +2114,9 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 		goto err;
 
 	pktmp = X509_REQ_get_pubkey(req);
+	if (pktmp == NULL)
+		goto err;
+
 	i = X509_set_pubkey(ret, pktmp);
 	EVP_PKEY_free(pktmp);
 	if (!i)
@@ -2070,7 +2128,10 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 		if (ci->version == NULL)
 			if ((ci->version = ASN1_INTEGER_new()) == NULL)
 				goto err;
-		ASN1_INTEGER_set(ci->version, 2);	/* version 3 certificate */
+
+		/* version 3 certificate */
+		if (!ASN1_INTEGER_set(ci->version, 2))
+			goto err;
 
 		/*
 		 * Free the current entries if any, there should not be any I
@@ -2146,7 +2207,8 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 		 * present
 		 */
 		certopt |= X509_FLAG_NO_SIGDUMP | X509_FLAG_NO_SIGNAME;
-		X509_print_ex(bio_err, ret, nameopt, certopt);
+		if (!X509_print_ex(bio_err, ret, nameopt, certopt))
+			goto err;
 	}
 	BIO_printf(bio_err, "Certificate is to be certified until ");
 	ASN1_TIME_print(bio_err, X509_get_notAfter(ret));
@@ -2172,10 +2234,18 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 			goto err;
 		}
 	}
+
 	pktmp = X509_get_pubkey(ret);
+	if (pktmp == NULL)
+		goto err;
+
 	if (EVP_PKEY_missing_parameters(pktmp) &&
-	    !EVP_PKEY_missing_parameters(pkey))
-		EVP_PKEY_copy_parameters(pktmp, pkey);
+	    !EVP_PKEY_missing_parameters(pkey)) {
+		if (!EVP_PKEY_copy_parameters(pktmp, pkey)) {
+			EVP_PKEY_free(pktmp);
+			goto err;
+		}
+	}
 	EVP_PKEY_free(pktmp);
 
 	if (!do_X509_sign(bio_err, ret, pkey, dgst, sigopts))
@@ -2247,16 +2317,19 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 	return (ok);
 }
 
-static void
+static int
 write_new_certificate(BIO *bp, X509 *x, int output_der, int notext)
 {
 	if (output_der) {
-		(void) i2d_X509_bio(bp, x);
-		return;
+		if (!i2d_X509_bio(bp, x))
+			return (0);
 	}
-	if (!notext)
-		X509_print(bp, x);
-	PEM_write_bio_X509(bp, x);
+	if (!notext) {
+		if (!X509_print(bp, x))
+			return (0);
+	}
+
+	return PEM_write_bio_X509(bp, x);
 }
 
 static int
@@ -2377,7 +2450,10 @@ certify_spkac(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 	}
 	BIO_printf(bio_err, "Signature ok\n");
 
-	X509_REQ_set_pubkey(req, pktmp);
+	if (!X509_REQ_set_pubkey(req, pktmp)) {
+		EVP_PKEY_free(pktmp);
+		goto err;
+	}
 	EVP_PKEY_free(pktmp);
 	ok = do_body(xret, pkey, x509, dgst, sigopts, policy, db, serial,
 	    subj, chtype, multirdn, email_dn, startdate, enddate, days, 1,
@@ -2591,12 +2667,20 @@ do_updatedb(CA_DB *db)
 	ASN1_UTCTIME *a_tm = NULL;
 	int i, cnt = 0;
 	int db_y2k, a_y2k;	/* flags = 1 if y >= 2000 */
-	char **rrow, *a_tm_s;
+	char **rrow, *a_tm_s = NULL;
 
 	a_tm = ASN1_UTCTIME_new();
+	if (a_tm == NULL) {
+		cnt = -1;
+		goto err;
+	}
 
 	/* get actual time and make a string */
 	a_tm = X509_gmtime_adj(a_tm, 0);
+	if (a_tm == NULL) {
+		cnt = -1;
+		goto err;
+	}
 	a_tm_s = malloc(a_tm->length + 1);
 	if (a_tm_s == NULL) {
 		cnt = -1;
@@ -2701,7 +2785,6 @@ make_revocation_str(int rev_type, char *rev_arg)
 
 	case REV_HOLD:
 		/* Argument is an OID */
-
 		otmp = OBJ_txt2obj(rev_arg, 0);
 		ASN1_OBJECT_free(otmp);
 
@@ -2716,7 +2799,6 @@ make_revocation_str(int rev_type, char *rev_arg)
 
 	case REV_KEY_COMPROMISE:
 	case REV_CA_COMPROMISE:
-
 		/* Argument is the key compromise time  */
 		if (!ASN1_GENERALIZEDTIME_set_string(NULL, rev_arg)) {
 			BIO_printf(bio_err,
@@ -2731,15 +2813,19 @@ make_revocation_str(int rev_type, char *rev_arg)
 			reason = "CAkeyTime";
 
 		break;
-
 	}
 
 	revtm = X509_gmtime_adj(NULL, 0);
+	if (revtm == NULL)
+		return NULL;
+
 	if (asprintf(&str, "%s%s%s%s%s", revtm->data,
 	    reason ? "," : "", reason ? reason : "",
 	    other ? "," : "", other ? other : "") == -1)
 		str = NULL;
+
 	ASN1_UTCTIME_free(revtm);
+
 	return str;
 }
 
