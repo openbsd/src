@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_internal.h,v 1.9 2021/08/19 03:44:00 beck Exp $ */
+/* $OpenBSD: x509_internal.h,v 1.10 2021/08/28 07:49:00 beck Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -69,7 +69,6 @@ struct x509_verify_ctx {
 	int saved_error;
 	int saved_error_depth;
 	size_t chains_count;
-	int dump_chain;			/* Dump current chain without erroring */
 	STACK_OF(X509) *roots;		/* Trusted roots for this validation */
 	STACK_OF(X509) *intermediates;	/* Intermediates provided by peer */
 	time_t *check_time;		/* Time for validity checks */

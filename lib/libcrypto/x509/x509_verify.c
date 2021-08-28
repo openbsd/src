@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.42 2021/08/19 03:44:00 beck Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.43 2021/08/28 07:49:00 beck Exp $ */
 /*
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
  *
@@ -494,18 +494,8 @@ x509_verify_consider_candidate(struct x509_verify_ctx *ctx, X509 *cert,
 	/* Fail if the certificate is already in the chain */
 	for (i = 0; i < sk_X509_num(current_chain->certs); i++) {
 		if (X509_cmp(sk_X509_value(current_chain->certs, i),
-		    candidate) == 0) {
-			if (is_root_cert) {
-				/*
-				 * Someone made a boo-boo and put their root
-				 * in with their intermediates - handle this
-				 * gracefully as we'll have already picked
-				 * this up as a shorter chain.
-				 */
-				ctx->dump_chain = 1;
-			}
+		    candidate) == 0)
 			return 0;
-		}
 	}
 
 	if (ctx->sig_checks++ > X509_VERIFY_MAX_SIGCHECKS) {
@@ -606,7 +596,6 @@ x509_verify_build_chains(struct x509_verify_ctx *ctx, X509 *cert,
 		return;
 
 	count = ctx->chains_count;
-	ctx->dump_chain = 0;
 	ctx->error = X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY;
 	ctx->error_depth = depth;
 	if (ctx->xsc != NULL) {
@@ -671,7 +660,7 @@ x509_verify_build_chains(struct x509_verify_ctx *ctx, X509 *cert,
 			ctx->xsc->current_cert = cert;
 			(void) ctx->xsc->verify_cb(1, ctx->xsc);
 		}
-	} else if (ctx->error_depth == depth && !ctx->dump_chain) {
+	} else if (ctx->error_depth == depth) {
 		if (!x509_verify_ctx_set_xsc_chain(ctx, current_chain, 0, 0))
 			return;
 		(void) x509_verify_cert_error(ctx, cert, depth,
