@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucc.c,v 1.18 2021/08/29 18:31:08 anton Exp $	*/
+/*	$OpenBSD: ucc.c,v 1.19 2021/08/29 19:00:59 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -281,15 +281,15 @@ static const struct ucc_keysym ucc_keysyms[] = {
 	/* 0x00D8-0x00DF Reserved */
 	N(0x00E0,	"Volume",					0,		0)
 	N(0x00E1,	"Balance",					0,		0)
-	Y(0x00E2,	"Mute",						KS_AudioMute,	0)
+	Y(0x00E2,	"Mute",						KS_AudioMute,	160 /* I20 = XF86AudioMute */)
 	N(0x00E3,	"Bass",						0,		0)
 	N(0x00E4,	"Treble",					0,		0)
 	N(0x00E5,	"Bass Boost",					0,		0)
 	N(0x00E6,	"Surround Mode",				0,		0)
 	N(0x00E7,	"Loudness",					0,		0)
 	N(0x00E8,	"MPX",						0,		0)
-	Y(0x00E9,	"Volume Increment",				KS_AudioRaise,	0)
-	Y(0x00EA,	"Volume Decrement",				KS_AudioLower,	0)
+	Y(0x00E9,	"Volume Increment",				KS_AudioRaise,	176 /* I30 = XF86AudioRaiseVolume */)
+	Y(0x00EA,	"Volume Decrement",				KS_AudioLower,	174 /* I2E = XF86AudioLowerVolume */)
 	/* 0x00EB-0x00EF Reserved */
 	N(0x00F0,	"Speed Select",					0,		0)
 	N(0x00F1,	"Playback Speed",				0,		0)
@@ -690,7 +690,6 @@ ucc_intr(struct uhidev *addr, void *data, u_int len)
 	int raw = sc->sc_mode == WSKBD_RAW;
 	int error;
 	u_int bit = 0;
-	u_char c = 0;
 
 	ucc_dump(__func__, data, len);
 
@@ -730,26 +729,20 @@ ucc_intr(struct uhidev *addr, void *data, u_int len)
 		    ucc_usage_to_sym(usage, &us))
 			goto unknown;
 		bit = us->us_usage;
-		c = us->us_raw;
 	} else if (raw) {
 		if (ucc_bit_to_sym(sc, bit, &us))
 			goto unknown;
-		c = us->us_raw;
 	}
 
 	if (raw) {
-		if (c != 0) {
-			ucc_rawinput(sc, c, 0);
-			sc->sc_last_raw = c;
-			return;
-		}
-
+		ucc_rawinput(sc, us->us_raw, 0);
+		sc->sc_last_raw = us->us_raw;
 		/*
-		 * The pressed key does not have a corresponding raw scan code
-		 * which implies that wsbkd must handle the pressed key as if
-		 * being in translating mode, hence the fall through. This is
-		 * only the case for volume related keys.
+		 * Feed both raw and translating input for keys that have both
+		 * defined. This is only the case for volume related keys.
 		 */
+		if (us->us_key == 0)
+			return;
 	}
 
 	ucc_input(sc, bit, 0);
