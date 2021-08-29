@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.44 2021/07/18 15:18:48 deraadt Exp $
+#	$OpenBSD: list,v 1.45 2021/08/29 09:05:21 deraadt Exp $
 
 SRCDIRS distrib/special
 
@@ -32,6 +32,7 @@ LINK	instbin					sbin/dmesg
 LINK	instbin					sbin/fdisk
 LINK	instbin					sbin/fsck
 LINK	instbin					sbin/fsck_ext2fs
+LINK	instbin					sbin/fsck_msdos
 LINK	instbin					sbin/fsck_ffs
 LINK	instbin					sbin/growfs
 LINK	instbin					sbin/ifconfig
