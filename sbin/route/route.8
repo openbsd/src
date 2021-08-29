@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.98 2021/08/05 09:02:19 jmc Exp $
+.\"	$OpenBSD: route.8,v 1.99 2021/08/29 19:55:12 kn Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)route.8	8.3 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: August 5 2021 $
+.Dd $Mdocdate: August 29 2021 $
 .Dt ROUTE 8
 .Os
 .Sh NAME
@@ -166,6 +166,7 @@ only changes in that routing table will be displayed.
 .Op Fl T Ar rtable
 .Tg
 .Cm nameserver
+.Ar interface
 .Op Ar address ...
 .Xc
 Send a list of up to five nameserver address proposals to
