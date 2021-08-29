@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.96 2021/08/29 12:17:38 dv Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.97 2021/08/29 18:01:32 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -151,7 +151,7 @@ viornd_notifyq(void)
 	uint64_t q_gpa;
 	uint32_t vr_sz;
 	size_t sz;
-	int ret;
+	int dxx, ret;
 	uint16_t aidx, uidx;
 	char *buf, *rnd_data;
 	struct vring_desc *desc;
@@ -188,26 +188,27 @@ viornd_notifyq(void)
 	aidx = avail->idx & VIORND_QUEUE_MASK;
 	uidx = used->idx & VIORND_QUEUE_MASK;
 
-	sz = desc[avail->ring[aidx]].len;
+	dxx = avail->ring[aidx] & VIORND_QUEUE_MASK;
+
+	sz = desc[dxx].len;
 	if (sz > MAXPHYS)
-		fatal("viornd descriptor size too large (%zu)", sz);
+		fatalx("viornd descriptor size too large (%zu)", sz);
 
 	rnd_data = malloc(sz);
 
 	if (rnd_data != NULL) {
-		arc4random_buf(rnd_data, desc[avail->ring[aidx]].len);
-		if (write_mem(desc[avail->ring[aidx]].addr, rnd_data, sz)) {
+		arc4random_buf(rnd_data, sz);
+		if (write_mem(desc[dxx].addr, rnd_data, sz)) {
 			log_warnx("viornd: can't write random data @ "
 			    "0x%llx",
-			    desc[avail->ring[aidx]].addr);
+			    desc[dxx].addr);
 		} else {
 			/* ret == 1 -> interrupt needed */
 			/* XXX check VIRTIO_F_NO_INTR */
 			ret = 1;
 			viornd.cfg.isr_status = 1;
-			used->ring[uidx].id = avail->ring[aidx] &
-			    VIORND_QUEUE_MASK;
-			used->ring[uidx].len = desc[avail->ring[aidx]].len;
+			used->ring[uidx].id = dxx;
+			used->ring[uidx].len = sz;
 			used->idx++;
 
 			if (write_mem(q_gpa, buf, vr_sz)) {
