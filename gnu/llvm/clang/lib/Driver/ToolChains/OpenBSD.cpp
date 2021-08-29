@@ -189,9 +189,6 @@ void openbsd::Linker::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back(ToolChain.getCompilerRTArgString(Args, "builtins"));
       linkXRayRuntimeDeps(ToolChain, CmdArgs);
     }
-    // FIXME: For some reason GCC passes -lgcc before adding
-    // the default system libraries. Just mimic this for now.
-    CmdArgs.push_back("-lcompiler_rt");
 
     if (Args.hasArg(options::OPT_pthread)) {
       if (!Args.hasArg(options::OPT_shared) && Args.hasArg(options::OPT_pg))
