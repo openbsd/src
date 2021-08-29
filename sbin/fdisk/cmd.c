@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.141 2021/08/28 11:55:17 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.142 2021/08/29 17:29:14 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -604,8 +604,8 @@ ask_num(const char *str, int dflt, int low, int high)
 int
 ask_pid(const int dflt, struct uuid *guid)
 {
-	char			lbuf[100], *cp;
-	int			num = -1, status;
+	char			lbuf[100];
+	int			num, status;
 
 	for (;;) {
 		printf("Partition id ('0' to disable) [01 - FF]: [%02X] ", dflt);
