@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.92 2021/07/16 16:21:22 dv Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.93 2021/08/29 11:09:05 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -81,41 +81,6 @@ vioblk_cmd_name(uint32_t type)
 	case VIRTIO_BLK_T_GET_ID: return "get id";
 	default: return "unknown";
 	}
-}
-
-static void
-dump_descriptor_chain(struct vring_desc *desc, int16_t dxx)
-{
-	unsigned int cnt = 0;
-
-	log_debug("descriptor chain @ %d", dxx);
-	do {
-		log_debug("desc @%d addr/len/flags/next = 0x%llx / 0x%x "
-		    "/ 0x%x / 0x%x",
-		    dxx,
-		    desc[dxx].addr,
-		    desc[dxx].len,
-		    desc[dxx].flags,
-		    desc[dxx].next);
-		dxx = desc[dxx].next;
-
-		/*
-		 * Dump up to the max number of descriptor for the largest
-		 * queue we support, which currently is VIONET_QUEUE_SIZE.
-		 */
-		if (++cnt >= VIONET_QUEUE_SIZE) {
-			log_warnx("%s: descriptor table invalid", __func__);
-			return;
-		}
-	} while (desc[dxx].flags & VRING_DESC_F_NEXT);
-
-	log_debug("desc @%d addr/len/flags/next = 0x%llx / 0x%x / 0x%x "
-	    "/ 0x%x",
-	    dxx,
-	    desc[dxx].addr,
-	    desc[dxx].len,
-	    desc[dxx].flags,
-	    desc[dxx].next);
 }
 
 static const char *
@@ -570,8 +535,6 @@ vioblk_notifyq(struct vioblk_dev *dev)
 					log_warnx("can't write sector "
 					    "data to gpa @ 0x%llx",
 					    secdata_desc->addr);
-					dump_descriptor_chain(desc,
-					    cmd_desc_idx);
 					vioblk_free_info(info);
 					goto out;
 				}
@@ -634,8 +597,6 @@ vioblk_notifyq(struct vioblk_dev *dev)
 					log_warnx("wr vioblk: can't read "
 					    "sector data @ 0x%llx",
 					    secdata_desc->addr);
-					dump_descriptor_chain(desc,
-					    cmd_desc_idx);
 					goto out;
 				}
 
@@ -721,7 +682,6 @@ vioblk_notifyq(struct vioblk_dev *dev)
 		if (write_mem(ds_desc->addr, &ds, ds_desc->len)) {
 			log_warnx("%s: can't write device status data @ 0x%llx",
 			    __func__, ds_desc->addr);
-			dump_descriptor_chain(desc, cmd_desc_idx);
 			goto out;
 		}
 
