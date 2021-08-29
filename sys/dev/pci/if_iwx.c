@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.97 2021/08/26 07:11:09 kevlo Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.98 2021/08/29 20:31:18 gnezdo Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -261,10 +261,10 @@ int	iwx_poll_bit(struct iwx_softc *, int, uint32_t, uint32_t, int);
 int	iwx_nic_lock(struct iwx_softc *);
 void	iwx_nic_assert_locked(struct iwx_softc *);
 void	iwx_nic_unlock(struct iwx_softc *);
-void	iwx_set_bits_mask_prph(struct iwx_softc *, uint32_t, uint32_t,
+int	iwx_set_bits_mask_prph(struct iwx_softc *, uint32_t, uint32_t,
 	    uint32_t);
-void	iwx_set_bits_prph(struct iwx_softc *, uint32_t, uint32_t);
-void	iwx_clear_bits_prph(struct iwx_softc *, uint32_t, uint32_t);
+int	iwx_set_bits_prph(struct iwx_softc *, uint32_t, uint32_t);
+int	iwx_clear_bits_prph(struct iwx_softc *, uint32_t, uint32_t);
 int	iwx_dma_contig_alloc(bus_dma_tag_t, struct iwx_dma_info *, bus_size_t,
 	    bus_size_t);
 void	iwx_dma_contig_free(struct iwx_dma_info *);
@@ -284,7 +284,7 @@ void	iwx_disable_interrupts(struct iwx_softc *);
 void	iwx_ict_reset(struct iwx_softc *);
 int	iwx_set_hw_ready(struct iwx_softc *);
 int	iwx_prepare_card_hw(struct iwx_softc *);
-void	iwx_force_power_gating(struct iwx_softc *);
+int	iwx_force_power_gating(struct iwx_softc *);
 void	iwx_apm_config(struct iwx_softc *);
 int	iwx_apm_init(struct iwx_softc *);
 void	iwx_apm_stop(struct iwx_softc *);
@@ -814,10 +814,14 @@ iwx_apply_debug_destination(struct iwx_softc *sc)
 			iwx_write_prph(sc, addr, val);
 			break;
 		case PRPH_SETBIT:
-			iwx_set_bits_prph(sc, addr, (1 << val));
+			err = iwx_set_bits_prph(sc, addr, (1 << val));
+			if (err)
+				return err;
 			break;
 		case PRPH_CLEARBIT:
-			iwx_clear_bits_prph(sc, addr, (1 << val));
+			err = iwx_clear_bits_prph(sc, addr, (1 << val));
+			if (err)
+				return err;
 			break;
 		case PRPH_BLOCKBIT:
 			if (iwx_read_prph(sc, addr) & (1 << val))
@@ -1547,31 +1551,32 @@ iwx_nic_unlock(struct iwx_softc *sc)
 		printf("%s: NIC already unlocked\n", DEVNAME(sc));
 }
 
-void
+int
 iwx_set_bits_mask_prph(struct iwx_softc *sc, uint32_t reg, uint32_t bits,
     uint32_t mask)
 {
 	uint32_t val;
 
-	/* XXX: no error path? */
 	if (iwx_nic_lock(sc)) {
 		val = iwx_read_prph(sc, reg) & mask;
 		val |= bits;
 		iwx_write_prph(sc, reg, val);
 		iwx_nic_unlock(sc);
+		return 0;
 	}
+	return EBUSY;
 }
 
-void
+int
 iwx_set_bits_prph(struct iwx_softc *sc, uint32_t reg, uint32_t bits)
 {
-	iwx_set_bits_mask_prph(sc, reg, bits, ~0);
+	return iwx_set_bits_mask_prph(sc, reg, bits, ~0);
 }
 
-void
+int
 iwx_clear_bits_prph(struct iwx_softc *sc, uint32_t reg, uint32_t bits)
 {
-	iwx_set_bits_mask_prph(sc, reg, 0, ~bits);
+	return iwx_set_bits_mask_prph(sc, reg, 0, ~bits);
 }
 
 int
@@ -2070,18 +2075,25 @@ iwx_prepare_card_hw(struct iwx_softc *sc)
 	return ETIMEDOUT;
 }
 
-void
+int
 iwx_force_power_gating(struct iwx_softc *sc)
 {
-	iwx_set_bits_prph(sc, IWX_HPM_HIPM_GEN_CFG,
+	int err;
+
+	err = iwx_set_bits_prph(sc, IWX_HPM_HIPM_GEN_CFG,
 	    IWX_HPM_HIPM_GEN_CFG_CR_FORCE_ACTIVE);
+	if (err)
+		return err;
 	DELAY(20);
-	iwx_set_bits_prph(sc, IWX_HPM_HIPM_GEN_CFG,
+	err = iwx_set_bits_prph(sc, IWX_HPM_HIPM_GEN_CFG,
 	    IWX_HPM_HIPM_GEN_CFG_CR_PG_EN |
 	    IWX_HPM_HIPM_GEN_CFG_CR_SLP_EN);
+	if (err)
+		return err;
 	DELAY(20);
-	iwx_clear_bits_prph(sc, IWX_HPM_HIPM_GEN_CFG,
+	err = iwx_clear_bits_prph(sc, IWX_HPM_HIPM_GEN_CFG,
 	    IWX_HPM_HIPM_GEN_CFG_CR_FORCE_ACTIVE);
+	return err;
 }
 
 void
@@ -2342,7 +2354,9 @@ iwx_start_hw(struct iwx_softc *sc)
 			return ETIMEDOUT;
 		}
 
-		iwx_force_power_gating(sc);
+		err = iwx_force_power_gating(sc);
+		if (err)
+			return err;
 
 		/* Reset the entire device */
 		IWX_SETBITS(sc, IWX_CSR_RESET, IWX_CSR_RESET_REG_FLAG_SW_RESET);
@@ -3361,7 +3375,7 @@ iwx_load_firmware(struct iwx_softc *sc)
 		err = tsleep_nsec(&sc->sc_uc, 0, "iwxuc", MSEC_TO_NSEC(100));
 	}
 	if (err || !sc->sc_uc.uc_ok)
-		printf("%s: could not load firmware\n", DEVNAME(sc));
+		printf("%s: could not load firmware, %d\n", DEVNAME(sc), err);
 
 	iwx_ctxt_info_free_fw_img(sc);
 
