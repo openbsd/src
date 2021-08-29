@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.101 2021/07/08 22:43:59 dlg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.102 2021/08/29 11:23:29 kettenis Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -282,6 +282,8 @@ nvme_attach(struct nvme_softc *sc)
 	scsi_iopool_init(&sc->sc_iopool, sc, nvme_ccb_get, nvme_ccb_put);
 	if (sc->sc_ops == NULL)
 		sc->sc_ops = &nvme_ops;
+	if (sc->sc_openings == 0)
+		sc->sc_openings = 64;
 
 	reg = nvme_read4(sc, NVME_VS);
 	if (reg == 0xffffffff) {
@@ -372,7 +374,7 @@ nvme_attach(struct nvme_softc *sc)
 	saa.saa_adapter_buswidth = sc->sc_nn + 1;
 	saa.saa_luns = 1;
 	saa.saa_adapter_target = 0;
-	saa.saa_openings = 64;
+	saa.saa_openings = sc->sc_openings;
 	saa.saa_pool = &sc->sc_iopool;
 	saa.saa_quirks = saa.saa_flags = 0;
 	saa.saa_wwpn = saa.saa_wwnn = 0;
