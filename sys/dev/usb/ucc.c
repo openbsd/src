@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucc.c,v 1.16 2021/08/29 18:20:18 anton Exp $	*/
+/*	$OpenBSD: ucc.c,v 1.17 2021/08/29 18:21:16 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -839,19 +839,21 @@ ucc_hid_match(void *desc, int descsiz, uint8_t repid)
 {
 	struct hid_item hi;
 	struct hid_data *hd;
-	int match = 0;
+	int32_t maxusage = 0;
 
 	hd = hid_start_parse(desc, descsiz, hid_input);
 	while (hid_get_item(hd, &hi)) {
 		if (hi.report_ID == repid &&
 		    hi.kind == hid_input &&
 		    HID_GET_USAGE_PAGE(hi.usage) == HUP_CONSUMER) {
-			match = 1;
-			break;
+			if (HID_GET_USAGE(hi.usage_maximum) > maxusage)
+				maxusage = HID_GET_USAGE(hi.usage_maximum);
+			else if (HID_GET_USAGE(hi.usage) > maxusage)
+				maxusage = HID_GET_USAGE(hi.usage);
 		}
 	}
 	hid_end_parse(hd);
-	return match;
+	return maxusage > 0;
 }
 
 /*
