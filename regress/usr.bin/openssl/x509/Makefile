@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2021/08/29 13:17:42 tb Exp $
+# $OpenBSD: Makefile,v 1.7 2021/08/29 15:52:47 tb Exp $
 
 # Copyright (c) 2021 Jan Klemkow <j.klemkow@wemelug.de>
 #
@@ -56,7 +56,7 @@ cleanup-ssl:
 test-inlabel-wildcard-cert-no-CA-client:
 	# unusual wildcard cert, no CA given to client
 	# start server
-	${OPENSSL} s_server -naccept 1 -cert server-unusual-wildcard.pem \
+	${OPENSSL} s_server -quiet -naccept 1 -cert server-unusual-wildcard.pem \
 	    -key server-unusual-wildcard.pem & \
 	    timeout=$$(($$(date +%s) + 5)); \
 	    while fstat -p $$! | ! grep -q 'tcp .* \*:4433$$'; \
@@ -68,7 +68,7 @@ test-inlabel-wildcard-cert-no-CA-client:
 test-inlabel-wildcard-cert-CA-client:
 	# unusual wildcard cert, CA given to client
 	# start server
-	${OPENSSL} s_server -naccept 1 -cert server-unusual-wildcard.pem \
+	${OPENSSL} s_server -quiet -naccept 1 -cert server-unusual-wildcard.pem \
 	    -key server-unusual-wildcard.pem & \
 	    timeout=$$(($$(date +%s) + 5)); \
 	    while fstat -p $$! | ! grep -q 'tcp .* \*:4433$$'; \
@@ -80,7 +80,7 @@ test-inlabel-wildcard-cert-CA-client:
 test-common-wildcard-cert-no-CA-client:
 	# common wildcard cert, no CA given to client
 	# start server
-	${OPENSSL} s_server -naccept 1 -cert server-common-wildcard.pem \
+	${OPENSSL} s_server -quiet -naccept 1 -cert server-common-wildcard.pem \
 	    -key server-common-wildcard.pem & \
 	    timeout=$$(($$(date +%s) + 5)); \
 	    while fstat -p $$! | ! grep -q 'tcp .* \*:4433$$'; \
@@ -92,7 +92,7 @@ test-common-wildcard-cert-no-CA-client:
 test-common-wildcard-cert-CA-client:
 	# common wildcard cert, CA given to client
 	# start server
-	${OPENSSL} s_server -naccept 1 -cert server-unusual-wildcard.pem \
+	${OPENSSL} s_server -quiet -naccept 1 -cert server-unusual-wildcard.pem \
 	    -key server-unusual-wildcard.pem & \
 	    timeout=$$(($$(date +%s) + 5)); \
 	    while fstat -p $$! | ! grep -q 'tcp .* \*:4433$$'; \
@@ -114,7 +114,7 @@ test-openssl-verify-common-wildcard-cert:
 test-chain-certificates-s_server:
 	# Not all chain certificates are sent in s_server
 	# start server
-	${OPENSSL} s_server -naccept 1 -cert server-subca-chainS.pem -CAfile subcaR.pem & \
+	${OPENSSL} s_server -quiet -naccept 1 -cert server-subca-chainS.pem -CAfile subcaR.pem & \
 	    timeout=$$(($$(date +%s) + 5)); \
 	    while fstat -p $$! | ! grep -q 'tcp .* \*:4433$$'; \
 		do test $$(date +%s) -lt $$timeout || exit 1; done
