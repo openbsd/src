@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucc.c,v 1.15 2021/08/29 18:19:09 anton Exp $	*/
+/*	$OpenBSD: ucc.c,v 1.16 2021/08/29 18:20:18 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -98,6 +98,7 @@ int	ucc_enable(void *, int);
 void	ucc_set_leds(void *, int);
 int	ucc_ioctl(void *, u_long, caddr_t, int, struct proc *);
 
+int	ucc_hid_match(void *, int, uint8_t);
 int	ucc_hid_parse(struct ucc_softc *, void *, int);
 int	ucc_hid_parse_array(struct ucc_softc *, const struct hid_item *);
 int	ucc_hid_is_array(const struct hid_item *);
@@ -619,10 +620,9 @@ ucc_match(struct device *parent, void *match, void *aux)
 	int size;
 
 	uhidev_get_report_desc(uha->parent, &desc, &size);
-	if (!hid_is_collection(desc, size, uha->reportid,
-	    HID_USAGE2(HUP_CONSUMER, HUC_CONTROL)))
-		return UMATCH_NONE;
 	if (hid_report_size(desc, size, hid_input, uha->reportid) == 0)
+		return UMATCH_NONE;
+	if (!ucc_hid_match(desc, size, uha->reportid))
 		return UMATCH_NONE;
 
 	return UMATCH_IFACECLASS;
@@ -828,6 +828,30 @@ ucc_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	}
 
 	return -1;
+}
+
+/*
+ * Returns non-zero if the given report ID has at least one Consumer Control
+ * usage.
+ */
+int
+ucc_hid_match(void *desc, int descsiz, uint8_t repid)
+{
+	struct hid_item hi;
+	struct hid_data *hd;
+	int match = 0;
+
+	hd = hid_start_parse(desc, descsiz, hid_input);
+	while (hid_get_item(hd, &hi)) {
+		if (hi.report_ID == repid &&
+		    hi.kind == hid_input &&
+		    HID_GET_USAGE_PAGE(hi.usage) == HUP_CONSUMER) {
+			match = 1;
+			break;
+		}
+	}
+	hid_end_parse(hd);
+	return match;
 }
 
 /*
