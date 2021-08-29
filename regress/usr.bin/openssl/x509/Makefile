@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2021/08/29 12:40:37 tb Exp $
+# $OpenBSD: Makefile,v 1.6 2021/08/29 13:17:42 tb Exp $
 
 # Copyright (c) 2021 Jan Klemkow <j.klemkow@wemelug.de>
 #
@@ -62,7 +62,7 @@ test-inlabel-wildcard-cert-no-CA-client:
 	    while fstat -p $$! | ! grep -q 'tcp .* \*:4433$$'; \
 		do test $$(date +%s) -lt $$timeout || exit 1; done
 	# start client
-	${OPENSSL} s_client -verify_return_error \
+	echo Q | ${OPENSSL} s_client -verify_return_error \
 	    | grep "Verify return code: 21"
 
 test-inlabel-wildcard-cert-CA-client:
@@ -74,7 +74,7 @@ test-inlabel-wildcard-cert-CA-client:
 	    while fstat -p $$! | ! grep -q 'tcp .* \*:4433$$'; \
 		do test $$(date +%s) -lt $$timeout || exit 1; done
 	# start client
-	${OPENSSL} s_client -CAfile caR.pem \
+	echo Q | ${OPENSSL} s_client -CAfile caR.pem \
 	    | grep "Verify return code: 0"
 
 test-common-wildcard-cert-no-CA-client:
@@ -86,7 +86,7 @@ test-common-wildcard-cert-no-CA-client:
 	    while fstat -p $$! | ! grep -q 'tcp .* \*:4433$$'; \
 		do test $$(date +%s) -lt $$timeout || exit 1; done
 	# start client
-	${OPENSSL} s_client \
+	echo Q | ${OPENSSL} s_client \
 	    | grep "Verify return code: 21"
 
 test-common-wildcard-cert-CA-client:
@@ -98,7 +98,7 @@ test-common-wildcard-cert-CA-client:
 	    while fstat -p $$! | ! grep -q 'tcp .* \*:4433$$'; \
 		do test $$(date +%s) -lt $$timeout || exit 1; done
 	# start client
-	${OPENSSL} s_client -CAfile caR.pem \
+	echo Q | ${OPENSSL} s_client -CAfile caR.pem \
 	    | grep "Verify return code: 21"
 
 test-verify-unusual-wildcard-cert:
