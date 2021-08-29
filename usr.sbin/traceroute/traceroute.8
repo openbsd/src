@@ -1,4 +1,4 @@
-.\"	$OpenBSD: traceroute.8,v 1.70 2021/08/28 19:59:28 sthen Exp $
+.\"	$OpenBSD: traceroute.8,v 1.71 2021/08/29 06:50:29 jmc Exp $
 .\"	$NetBSD: traceroute.8,v 1.6 1995/10/12 03:05:50 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)traceroute.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: August 28 2021 $
+.Dd $Mdocdate: August 29 2021 $
 .Dt TRACEROUTE 8
 .Os
 .Sh NAME
@@ -230,7 +230,7 @@ showing the TTL or hop limit, address of the gateway,
 and round trip time of each probe.
 If the probe answers come from different gateways,
 the address of each responding system will be printed.
-If there is no response within a 5 second timeout
+If there is no response within a 3 second timeout
 interval (which can be changed using the
 .Fl w
 option), a "*" is printed for that
