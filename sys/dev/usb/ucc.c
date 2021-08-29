@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucc.c,v 1.17 2021/08/29 18:21:16 anton Exp $	*/
+/*	$OpenBSD: ucc.c,v 1.18 2021/08/29 18:31:08 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -607,7 +607,7 @@ static const struct ucc_keysym ucc_keysyms[] = {
 	N(0x0512,	"Contact Speed Dial Number",			0,		0)
 	N(0x0513,	"Contact Status Flag",				0,		0)
 	N(0x0514,	"Contact Misc.",				0,		0)
-	/* 0x0515-0x0FFF Reserved */
+	/* 0x0515-0xFFFF Reserved */
 #undef Y
 #undef N
 };
