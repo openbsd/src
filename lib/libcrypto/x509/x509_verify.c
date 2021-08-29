@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.44 2021/08/28 15:22:42 beck Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.45 2021/08/29 17:13:15 beck Exp $ */
 /*
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
  *
@@ -659,7 +659,6 @@ x509_verify_build_chains(struct x509_verify_ctx *ctx, X509 *cert,
 			ctx->xsc->error = X509_V_OK;
 			ctx->xsc->error_depth = depth;
 			ctx->xsc->current_cert = cert;
-			(void) ctx->xsc->verify_cb(1, ctx->xsc);
 		}
 	} else if (ctx->error_depth == depth) {
 		if (!x509_verify_ctx_set_xsc_chain(ctx, current_chain, 0, 0))
