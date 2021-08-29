@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1174 2021/08/29 13:05:43 kn Exp $
+#	$OpenBSD: install.sub,v 1.1175 2021/08/29 13:31:52 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1629,7 +1629,7 @@ install_files() {
 
 		# Fetch and verify the set files.
 		for _f in $_get_sets; do
-			$UU && reset_watchdog
+			$UU && reset_timeout
 
 			rm -f /tmp/h /tmp/fail
 
@@ -1694,7 +1694,7 @@ install_files() {
 
 	# Install the set files.
 	for _f in $_get_sets; do
-		$UU && reset_watchdog
+		$UU && reset_timeout
 		_fsrc="$_src/$_f"
 
 		# Take the set file from the prefetch area if possible.
@@ -1743,7 +1743,7 @@ install_files() {
 		cp ${_src#file://}/SHA256 /mnt/var/db/installed.SHA256
 	fi
 
-	$UU && reset_watchdog
+	$UU && reset_timeout
 }
 
 # Fetch install sets from an HTTP server possibly using a proxy.
@@ -3283,25 +3283,9 @@ check_unattendedupgrade() {
 	) > /dev/null 2>&1
 }
 
-WATCHDOG_PERIOD_SEC=$((30 * 60))
-
-# Restart the background timer.
-reset_watchdog() {
-	kill -KILL $WDPID 2>/dev/null
-	start_watchdog
-}
-
-# Start a co-process to reboot a stalled sysupgrade.
-# This mechanism is only used during non-interactive sysupgrade.
-start_watchdog() {
-	(
-		sleep $WATCHDOG_PERIOD_SEC && reboot
-	) |&
-	WDPID=$!
-
-	# Close standard input of the co-process.
-	exec 3>&p; exec 3>&-
-}
+# Reboot out of a stalled non-interactive sysupgrade.
+TIMEOUT_ACTION=reboot
+TIMEOUT_PERIOD_SEC=$((30 * 60))
 
 # ------------------------------------------------------------------------------
 # Initial actions common to both installs and upgrades.
@@ -3452,7 +3436,7 @@ elif $UU; then
 	MODE=upgrade
 	check_unattendedupgrade || exit 1
 
-	start_watchdog
+	start_timeout
 
 	get_responsefile
 	do_autoinstall
