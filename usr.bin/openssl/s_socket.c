@@ -1,4 +1,4 @@
-/* $OpenBSD: s_socket.c,v 1.11 2019/06/28 13:35:02 deraadt Exp $ */
+/* $OpenBSD: s_socket.c,v 1.12 2021/08/29 12:33:15 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -132,7 +132,7 @@ init_client(int *sock, char *host, char *port, int type, int af)
 int
 do_server(int port, int type, int *ret,
     int (*cb) (char *hostname, int s, unsigned char *context),
-    unsigned char *context)
+    unsigned char *context, int naccept)
 {
 	int sock;
 	char *name = NULL;
@@ -161,7 +161,9 @@ do_server(int port, int type, int *ret,
 			shutdown(sock, SHUT_RDWR);
 			close(sock);
 		}
-		if (i < 0) {
+		if (naccept != -1)
+			naccept--;
+		if (i < 0 || naccept == 0) {
 			shutdown(accept_socket, SHUT_RDWR);
 			close(accept_socket);
 			return (i);

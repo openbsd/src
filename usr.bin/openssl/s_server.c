@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.47 2021/03/17 18:11:01 jsing Exp $ */
+/* $OpenBSD: s_server.c,v 1.48 2021/08/29 12:33:15 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -267,6 +267,7 @@ static struct {
 	uint16_t min_version;
 	const SSL_METHOD *meth;
 	int msg;
+	int naccept;
 	char *named_curve;
 	int nbio;
 	int nbio_test;
@@ -741,6 +742,13 @@ static const struct option s_server_options[] = {
 	},
 #endif
 	{
+		.name = "naccept",
+		.argname = "num",
+		.desc = "terminate after num connections",
+		.type = OPTION_ARG_INT,
+		.opt.value = &s_server_config.naccept
+	},
+	{
 		.name = "named_curve",
 		.argname = "arg",
 		.type = OPTION_ARG,
@@ -1045,7 +1053,7 @@ sv_usage(void)
 	    "    [-dpass arg] [-dtls] [-dtls1] [-dtls1_2] [-groups list] [-HTTP]\n"
 	    "    [-id_prefix arg] [-key keyfile] [-key2 keyfile]\n"
 	    "    [-keyform der | pem] [-keymatexport label]\n"
-	    "    [-keymatexportlen len] [-msg] [-mtu mtu]\n"
+	    "    [-keymatexportlen len] [-msg] [-mtu mtu] [-naccept num]\n"
 	    "    [-named_curve arg] [-nbio] [-nbio_test] [-no_cache]\n"
 	    "    [-no_dhe] [-no_ecdhe] [-no_ticket] [-no_tls1]\n"
 	    "    [-no_tls1_1] [-no_tls1_2] [-no_tls1_3] [-no_tmp_rsa]\n"
@@ -1084,6 +1092,7 @@ s_server_main(int argc, char *argv[])
 	memset(&s_server_config, 0, sizeof(s_server_config));
 	s_server_config.keymatexportlen = 20;
 	s_server_config.meth = TLS_server_method();
+	s_server_config.naccept = -1;
 	s_server_config.port = PORT;
 	s_server_config.cert_file = TEST_CERT;
 	s_server_config.cert_file2 = TEST_CERT2;
@@ -1465,10 +1474,12 @@ s_server_main(int argc, char *argv[])
 	(void) BIO_flush(bio_s_out);
 	if (s_server_config.www)
 		do_server(s_server_config.port, s_server_config.socket_type,
-		    &accept_socket, www_body, s_server_config.context);
+		    &accept_socket, www_body, s_server_config.context,
+		    s_server_config.naccept);
 	else
 		do_server(s_server_config.port, s_server_config.socket_type,
-		    &accept_socket, sv_body, s_server_config.context);
+		    &accept_socket, sv_body, s_server_config.context,
+		    s_server_config.naccept);
 	print_stats(bio_s_out, ctx);
 	ret = 0;
  end:

@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.129 2021/03/17 18:08:32 jsing Exp $
+.\" $OpenBSD: openssl.1,v 1.130 2021/08/29 12:33:15 tb Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: March 17 2021 $
+.Dd $Mdocdate: August 29 2021 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -4607,6 +4607,7 @@ will be used.
 .Op Fl keymatexportlen Ar len
 .Op Fl msg
 .Op Fl mtu Ar mtu
+.Op Fl naccept Ar num
 .Op Fl named_curve Ar arg
 .Op Fl nbio
 .Op Fl nbio_test
@@ -4807,6 +4808,10 @@ Export len bytes of keying material (default 20).
 Show all protocol messages with hex dump.
 .It Fl mtu Ar mtu
 Set the link layer MTU.
+.It Fl naccept Ar num
+Terminate server after
+.Ar num
+connections.
 .It Fl named_curve Ar arg
 Specify the elliptic curve name to use for ephemeral ECDH keys.
 This option is deprecated; use
