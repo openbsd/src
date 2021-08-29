@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.23 2021/04/07 10:44:03 inoguchi Exp $ */
+/* $OpenBSD: x509.c,v 1.24 2021/08/29 19:56:40 schwarze Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1016,10 +1016,12 @@ x509_main(int argc, char **argv)
 					    sk_OPENSSL_STRING_value(emlst, j));
 				X509_email_free(emlst);
 			} else if (x509_config.aliasout == i) {
-				unsigned char *alstr;
-				alstr = X509_alias_get0(x, NULL);
-				if (alstr != NULL)
-					BIO_printf(STDout, "%s\n", alstr);
+				unsigned char *albuf;
+				int buflen;
+				albuf = X509_alias_get0(x, &buflen);
+				if (albuf != NULL)
+					BIO_printf(STDout, "%.*s\n",
+					    buflen, albuf);
 				else
 					BIO_puts(STDout, "<No Alias>\n");
 			} else if (x509_config.subject_hash == i) {
