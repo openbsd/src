@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.95 2021/08/29 11:41:27 dv Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.96 2021/08/29 12:17:38 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1395,7 +1395,7 @@ vionet_notify_tx(struct vionet_dev *dev)
 		dxx = hdr_desc_idx;
 		do {
 			pktsz += desc[dxx].len;
-			dxx = desc[dxx].next;
+			dxx = desc[dxx].next & VIONET_QUEUE_MASK;
 
 			/*
 			 * Virtio 1.0, cs04, section 2.4.5:
@@ -1443,7 +1443,7 @@ vionet_notify_tx(struct vionet_dev *dev)
 			if (pkt_desc->len > pktsz - ofs) {
 				log_warnx("%s: descriptor len past pkt len",
 				    __func__);
-				chunk_size = pktsz - ofs - pkt_desc->len;
+				chunk_size = pktsz - ofs;
 			} else
 				chunk_size = pkt_desc->len;
 
