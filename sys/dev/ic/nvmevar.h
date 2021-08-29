@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvmevar.h,v 1.27 2021/05/28 04:39:54 dlg Exp $ */
+/*	$OpenBSD: nvmevar.h,v 1.28 2021/08/29 12:02:52 kettenis Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -95,6 +95,7 @@ struct nvme_softc {
 	struct device		sc_dev;
 
 	const struct nvme_ops	*sc_ops;
+	u_int			sc_openings;
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
