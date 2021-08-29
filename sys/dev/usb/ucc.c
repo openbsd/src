@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucc.c,v 1.14 2021/08/29 18:17:51 anton Exp $	*/
+/*	$OpenBSD: ucc.c,v 1.15 2021/08/29 18:19:09 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -34,7 +34,7 @@
 /* #define UCC_DEBUG */
 #ifdef UCC_DEBUG
 #define DPRINTF(x...)	do { if (ucc_debug) printf(x); } while (0)
-void	ucc_dump(const char *, u_char *, u_int);
+void	ucc_dump(const char *, uint8_t *, u_int);
 int	ucc_debug = 1;
 #else
 #define DPRINTF(x...)
@@ -57,6 +57,17 @@ struct ucc_softc {
 	u_int			  sc_nusages;
 	int			  sc_isarray;
 	int			  sc_mode;
+
+	/*
+	 * Slice of the interrupt buffer which represents a pressed key.
+	 * See section 8 (Report Protocol) of the HID specification v1.11.
+	 */
+	struct {
+		uint8_t	*i_buf;
+		uint32_t i_bufsiz;
+		uint32_t i_off;		/* offset in bits */
+		uint32_t i_len;		/* length in bits */
+	} sc_input;
 
 	/* Last pressed key. */
 	union {
@@ -93,10 +104,11 @@ int	ucc_hid_is_array(const struct hid_item *);
 int	ucc_add_key(struct ucc_softc *, int32_t, u_int);
 int	ucc_bit_to_sym(struct ucc_softc *, u_int, const struct ucc_keysym **);
 int	ucc_usage_to_sym(int32_t, const struct ucc_keysym **);
-int	ucc_bits_to_usage(u_char *, u_int, int32_t *);
+int	ucc_bits_to_usage(uint8_t *, u_int, int32_t *);
+int	ucc_intr_slice(struct ucc_softc *, uint8_t *, uint8_t *, int *);
 void	ucc_input(struct ucc_softc *, u_int, int);
 void	ucc_rawinput(struct ucc_softc *, u_char, int);
-int	ucc_setbits(u_char *, int, u_int *);
+int	ucc_setbits(uint8_t *, int, u_int *);
 
 struct cfdriver ucc_cd = {
 	NULL, "ucc", DV_DULL
@@ -663,6 +675,7 @@ ucc_detach(struct device *self, int flags)
 	if (sc->sc_wskbddev != NULL)
 		error = config_detach(sc->sc_wskbddev, flags);
 	uhidev_close(&sc->sc_hdev);
+	free(sc->sc_input.i_buf, M_USBDEV, sc->sc_input.i_bufsiz);
 	free(sc->sc_map, M_USBDEV, sc->sc_mapsiz * sizeof(*sc->sc_map));
 	free(sc->sc_raw, M_USBDEV, sc->sc_rawsiz * sizeof(*sc->sc_raw));
 	return error;
@@ -673,13 +686,30 @@ ucc_intr(struct uhidev *addr, void *data, u_int len)
 {
 	struct ucc_softc *sc = (struct ucc_softc *)addr;
 	const struct ucc_keysym *us;
+	uint8_t *buf = sc->sc_input.i_buf;
 	int raw = sc->sc_mode == WSKBD_RAW;
+	int error;
 	u_int bit = 0;
 	u_char c = 0;
 
 	ucc_dump(__func__, data, len);
 
-	if (ucc_setbits(data, len, &bit)) {
+	if (len > sc->sc_input.i_bufsiz) {
+		DPRINTF("%s: too much data: len %d, bufsiz %d\n", __func__,
+		    len, sc->sc_input.i_bufsiz);
+		return;
+	}
+
+	error = ucc_intr_slice(sc, data, buf, &len);
+	if (error) {
+		DPRINTF("%s: slice failure: error %d\n", __func__, error);
+		return;
+	}
+
+	/* Dump the buffer again after slicing. */
+	ucc_dump(__func__, buf, len);
+
+	if (ucc_setbits(buf, len, &bit)) {
 		/* All zeroes, assume key up event. */
 		if (raw) {
 			if (sc->sc_last_raw != 0) {
@@ -696,7 +726,7 @@ ucc_intr(struct uhidev *addr, void *data, u_int len)
 	} else if (sc->sc_isarray) {
 		int32_t usage;
 
-		if (ucc_bits_to_usage(data, len, &usage) ||
+		if (ucc_bits_to_usage(buf, len, &usage) ||
 		    ucc_usage_to_sym(usage, &us))
 			goto unknown;
 		bit = us->us_usage;
@@ -807,10 +837,12 @@ ucc_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 int
 ucc_hid_parse(struct ucc_softc *sc, void *desc, int descsiz)
 {
+	enum { OFFSET, LENGTH } istate = OFFSET;
 	struct hid_item hi;
 	struct hid_data *hd;
-	int nsyms = nitems(ucc_keysyms);
 	int error = 0;
+	int nsyms = nitems(ucc_keysyms);
+	int repid = sc->sc_hdev.sc_report_id;
 	int isize;
 
 	/*
@@ -821,6 +853,10 @@ ucc_hid_parse(struct ucc_softc *sc, void *desc, int descsiz)
 	isize = sc->sc_hdev.sc_isize * 8;
 	if (isize == 0)
 		return ENXIO;
+
+	/* Allocate buffer used to slice interrupt data. */
+	sc->sc_input.i_bufsiz = sc->sc_hdev.sc_isize;
+	sc->sc_input.i_buf = malloc(sc->sc_input.i_bufsiz, M_USBDEV, M_WAITOK);
 
 	/*
 	 * Create mapping between each input bit and the corresponding usage,
@@ -844,9 +880,28 @@ ucc_hid_parse(struct ucc_softc *sc, void *desc, int descsiz)
 	while (hid_get_item(hd, &hi)) {
 		u_int bit;
 
-		if (hi.kind != hid_input ||
-		    HID_GET_USAGE_PAGE(hi.usage) != HUP_CONSUMER)
+		if (hi.report_ID != repid || hi.kind != hid_input)
 			continue;
+
+		if (HID_GET_USAGE_PAGE(hi.usage) != HUP_CONSUMER) {
+			uint32_t len = hi.loc.size * hi.loc.count;
+
+			switch (istate) {
+			case OFFSET:
+				sc->sc_input.i_off = hi.loc.pos + len;
+				break;
+			case LENGTH:
+				/* Constant padding. */
+				if (hi.flags & HIO_CONST)
+					sc->sc_input.i_len += len;
+				break;
+			}
+			continue;
+		}
+
+		/* Signal that the input offset is reached. */
+		istate = LENGTH;
+		sc->sc_input.i_len += hi.loc.size * hi.loc.count;
 
 		/*
 		 * The usages could be expressed as an array instead of
@@ -863,6 +918,9 @@ ucc_hid_parse(struct ucc_softc *sc, void *desc, int descsiz)
 			break;
 	}
 	hid_end_parse(hd);
+
+	DPRINTF("%s: input: off %d, len %d\n", __func__,
+	    sc->sc_input.i_off, sc->sc_input.i_len);
 
 	return error;
 }
@@ -948,21 +1006,13 @@ ucc_usage_to_sym(int32_t usage, const struct ucc_keysym **us)
 }
 
 int
-ucc_bits_to_usage(u_char *buf, u_int buflen, int32_t *usage)
+ucc_bits_to_usage(uint8_t *buf, u_int buflen, int32_t *usage)
 {
 	int32_t x = 0;
-	int maxlen = sizeof(*usage);
 	int i;
 
-	if (buflen == 0)
+	if (buflen == 0 || buflen > sizeof(*usage))
 		return 1;
-
-	/*
-	 * XXX should only look at the bits given by the report size and report
-	 * count associated with the Consumer usage page.
-	 */
-	if (buflen > maxlen)
-		buflen = maxlen;
 
 	for (i = buflen - 1; i >= 0; i--) {
 		x |= buf[i];
@@ -970,6 +1020,38 @@ ucc_bits_to_usage(u_char *buf, u_int buflen, int32_t *usage)
 			x <<= 8;
 	}
 	*usage = x;
+	return 0;
+}
+
+int
+ucc_intr_slice(struct ucc_softc *sc, uint8_t *src, uint8_t *dst, int *len)
+{
+	int ilen = sc->sc_input.i_len;
+	int ioff = sc->sc_input.i_off;
+	int maxlen = *len;
+	int di, si;
+
+	if (maxlen == 0)
+		return 1;
+
+	memset(dst, 0, maxlen);
+	si = ioff;
+	di = 0;
+	for (; ilen > 0; ilen--) {
+		int db, sb;
+
+		sb = si / 8;
+		db = di / 8;
+		if (sb >= maxlen || db >= maxlen)
+			return 1;
+
+		if (src[sb] & (1 << (si % 8)))
+			dst[db] |= 1 << (di % 8);
+		si++;
+		di++;
+	}
+
+	*len = (sc->sc_input.i_len + 7) / 8;
 	return 0;
 }
 
@@ -1005,7 +1087,7 @@ ucc_rawinput(struct ucc_softc *sc, u_char c, int release)
 }
 
 int
-ucc_setbits(u_char *data, int len, u_int *bit)
+ucc_setbits(uint8_t *data, int len, u_int *bit)
 {
 	int i, j;
 
@@ -1027,7 +1109,7 @@ ucc_setbits(u_char *data, int len, u_int *bit)
 #ifdef UCC_DEBUG
 
 void
-ucc_dump(const char *prefix, u_char *data, u_int len)
+ucc_dump(const char *prefix, uint8_t *data, u_int len)
 {
 	u_int i;
 
