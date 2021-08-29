@@ -1,4 +1,4 @@
-.\" $OpenBSD: ober_set_header.3,v 1.3 2021/08/29 13:27:11 martijn Exp $
+.\" $OpenBSD: ober_set_header.3,v 1.4 2021/08/29 19:00:20 schwarze Exp $
 .\"
 .\" Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -46,8 +46,8 @@
 .Ft "void"
 .Fn "ober_replace_elements" "struct ber_element *prev" "struct ber_element *elm"
 .Ft "struct ber_element *"
-.Ft "struct ber_element *"
 .Fn "ober_dup" "struct ber_element *orig"
+.Ft "struct ber_element *"
 .Fn "ober_unlink_elements" "struct ber_element *prev"
 .Ft "void"
 .Fn "ober_free_element" "struct ber_element *root"
@@ -140,7 +140,11 @@ returns a pointer to
 ITU-T Recommendation X.690, also known as ISO/IEC 8825-1:
 Information technology - ASN.1 encoding rules.
 .Sh HISTORY
-These functions first appeared as internal functions in
+.Fn ober_dup
+first appeared in
+.Ox 7.0 .
+.Pp
+The other functions first appeared as internal functions in
 .Xr snmpd 8
 in
 .Ox 4.2
