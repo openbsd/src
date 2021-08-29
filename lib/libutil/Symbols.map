@@ -65,6 +65,7 @@
 		ober_add_set;
 		ober_add_string;
 		ober_calc_len;
+		ober_dup;
 		ober_free;
 		ober_free_element;
 		ober_free_elements;

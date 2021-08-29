@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.21 2021/02/22 17:15:02 martijn Exp $ */
+/*	$OpenBSD: ber.c,v 1.22 2021/08/29 13:27:11 martijn Exp $ */
 
 /*
  * Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -924,6 +924,43 @@ off_t
 ober_getpos(struct ber_element *elm)
 {
 	return elm->be_offs;
+}
+
+struct ber_element *
+ober_dup(struct ber_element *orig)
+{
+	struct ber_element *new;
+
+	if ((new = malloc(sizeof(*new))) == NULL)
+		return NULL;
+	memcpy(new, orig, sizeof(*new));
+	new->be_next = NULL;
+	new->be_sub = NULL;
+
+	if (orig->be_next != NULL) {
+		if ((new->be_next = ober_dup(orig->be_next)) == NULL)
+			goto fail;
+	}
+	if (orig->be_encoding == BER_TYPE_SEQUENCE ||
+	    orig->be_encoding == BER_TYPE_SET) {
+		if (orig->be_sub != NULL) {
+			if ((new->be_sub = ober_dup(orig->be_sub)) == NULL)
+				goto fail;
+		}
+	} else if (orig->be_encoding == BER_TYPE_OCTETSTRING ||
+	    orig->be_encoding == BER_TYPE_BITSTRING ||
+	    orig->be_encoding == BER_TYPE_OBJECT) {
+		if (orig->be_val != NULL) {
+			if ((new->be_val = malloc(orig->be_len)) == NULL)
+				goto fail;
+			memcpy(new->be_val, orig->be_val, orig->be_len);
+		}
+	} else
+		new->be_numeric = orig->be_numeric;
+	return new;
+ fail:
+	ober_free_elements(new);
+	return NULL;
 }
 
 void

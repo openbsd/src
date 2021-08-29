@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.h,v 1.3 2019/12/31 10:34:14 martijn Exp $ */
+/*	$OpenBSD: ber.h,v 1.4 2021/08/29 13:27:11 martijn Exp $ */
 
 /*
  * Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -137,6 +137,7 @@ ssize_t			 ober_write_elements(struct ber *, struct ber_element *);
 void			 ober_set_readbuf(struct ber *, void *, size_t);
 struct ber_element	*ober_read_elements(struct ber *, struct ber_element *);
 off_t			 ober_getpos(struct ber_element *);
+struct ber_element	*ober_dup(struct ber_element *);
 void			 ober_free_element(struct ber_element *);
 void			 ober_free_elements(struct ber_element *);
 size_t			 ober_calc_len(struct ber_element *);
