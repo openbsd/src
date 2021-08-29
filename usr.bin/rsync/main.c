@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.56 2021/07/14 11:14:27 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.57 2021/08/29 13:43:46 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -276,6 +276,10 @@ static struct opts	 opts;
 #define OP_RSYNCPATH	1002
 #define OP_TIMEOUT	1003
 #define OP_VERSION	1004
+#define OP_EXCLUDE	1005
+#define OP_INCLUDE	1006
+#define OP_EXCLUDE_FROM	1007
+#define OP_INCLUDE_FROM	1008
 
 const struct option	 lopts[] = {
     { "address",	required_argument, NULL,		OP_ADDRESS },
@@ -286,9 +290,15 @@ const struct option	 lopts[] = {
     { "devices",	no_argument,	&opts.devices,		1 },
     { "no-devices",	no_argument,	&opts.devices,		0 },
     { "dry-run",	no_argument,	&opts.dry_run,		1 },
+    { "exclude",	required_argument, NULL, 		OP_EXCLUDE },
+    { "exclude-from",	required_argument, NULL,		OP_EXCLUDE_FROM },
+    { "from0",		no_argument,	NULL,			'0' },
+    { "no-from0",	no_argument,	&opts.from0,		0 },
     { "group",		no_argument,	&opts.preserve_gids,	1 },
     { "no-group",	no_argument,	&opts.preserve_gids,	0 },
     { "help",		no_argument,	NULL,			'h' },
+    { "include",	required_argument, NULL, 		OP_INCLUDE },
+    { "include-from",	required_argument, NULL,		OP_INCLUDE_FROM },
     { "links",		no_argument,	&opts.preserve_links,	1 },
     { "no-links",	no_argument,	&opts.preserve_links,	0 },
     { "no-motd",	no_argument,	&opts.no_motd,		1 },
@@ -324,6 +334,7 @@ main(int argc, char *argv[])
 	struct fargs	*fargs;
 	char		**args;
 	const char 	*errstr;
+
 	/* Global pledge. */
 
 	if (pledge("stdio unix rpath wpath cpath dpath inet fattr chown dns getpw proc exec unveil",
@@ -333,6 +344,9 @@ main(int argc, char *argv[])
 	while ((c = getopt_long(argc, argv, "Dae:ghlnoprtvxz", lopts, NULL))
 	    != -1) {
 		switch (c) {
+		case '0':
+			opts.from0 = 1;
+			break;
 		case 'D':
 			opts.devices = 1;
 			opts.specials = 1;
@@ -397,6 +411,24 @@ main(int argc, char *argv[])
 			if (errstr != NULL)
 				errx(ERR_SYNTAX, "timeout is %s: %s",
 				    errstr, optarg);
+			break;
+		case OP_EXCLUDE:
+			if (parse_rule(optarg, RULE_EXCLUDE) == -1)
+				errx(ERR_SYNTAX, "syntax error in exclude: %s",
+				    optarg);
+			break;
+		case OP_INCLUDE:
+			if (parse_rule(optarg, RULE_INCLUDE) == -1)
+				errx(ERR_SYNTAX, "syntax error in include: %s",
+				    optarg);
+			break;
+		case OP_EXCLUDE_FROM:
+			parse_file(optarg, RULE_EXCLUDE,
+			    opts.from0 ? '\0' : '\n' );
+			break;
+		case OP_INCLUDE_FROM:
+			parse_file(optarg, RULE_INCLUDE,
+			    opts.from0 ? '\0' : '\n' );
 			break;
 		case OP_VERSION:
 			fprintf(stderr, "openrsync: protocol version %u\n",

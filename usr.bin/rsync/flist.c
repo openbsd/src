@@ -1,4 +1,4 @@
-/*	$OpenBSD: flist.c,v 1.32 2021/06/30 13:10:04 claudio Exp $ */
+/*	$OpenBSD: flist.c,v 1.33 2021/08/29 13:43:46 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2019 Florian Obser <florian@openbsd.org>
@@ -823,6 +823,11 @@ flist_gen_dirent(struct sess *sess, char *root, struct flist **fl, size_t *sz,
 		ERR("%s: lstat", root);
 		return 0;
 	} else if (S_ISREG(st.st_mode)) {
+		/* filter files */
+		if (rules_match(root, 0) == -1) {
+			WARNX("%s: skipping excluded file", root);
+			return 1;
+		}
 		if (!flist_realloc(fl, sz, max)) {
 			ERRX1("flist_realloc");
 			return 0;
@@ -839,7 +844,13 @@ flist_gen_dirent(struct sess *sess, char *root, struct flist **fl, size_t *sz,
 		if (!sess->opts->preserve_links) {
 			WARNX("%s: skipping symlink", root);
 			return 1;
-		} else if (!flist_realloc(fl, sz, max)) {
+		}
+		/* filter files */
+		if (rules_match(root, 0) == -1) {
+			WARNX("%s: skipping excluded symlink", root);
+			return 1;
+		}
+		if (!flist_realloc(fl, sz, max)) {
 			ERRX1("flist_realloc");
 			return 0;
 		}
@@ -940,6 +951,15 @@ flist_gen_dirent(struct sess *sess, char *root, struct flist **fl, size_t *sz,
 			xdev = newxdev;
 			xdev[nxdev] = ent->fts_statp->st_dev;
 			nxdev++;
+		}
+
+		/* filter files */
+		if (rules_match(ent->fts_path + stripdir,
+		    (ent->fts_info == FTS_D)) == -1) {
+			WARNX("%s: skipping excluded file",
+			    ent->fts_path + stripdir);
+			fts_set(fts, ent, FTS_SKIP);
+			continue;
 		}
 
 		/* Allocate a new file entry. */
@@ -1073,6 +1093,11 @@ flist_gen_files(struct sess *sess, size_t argc, char **argv,
 			continue;
 		}
 
+		/* filter files */
+		if (rules_match(argv[i], S_ISDIR(st.st_mode)) == -1) {
+			WARNX("%s: skipping excluded file", argv[i]);
+			continue;
+		}
 
 		f = &fl[flsz++];
 		assert(f != NULL);
@@ -1295,6 +1320,16 @@ flist_gen_dels(struct sess *sess, const char *root, struct flist **fl,
 			}
 			if (!flag)
 				continue;
+		}
+
+		/* filter files on delete */
+		/* TODO handle --delete-excluded */
+		if (rules_match(ent->fts_path + stripdir,
+		    (ent->fts_info == FTS_D)) == -1) {
+			WARNX("skip excluded file %s",
+			    ent->fts_path + stripdir);
+			fts_set(fts, ent, FTS_SKIP);
+			continue;
 		}
 
 		/* Look up in hashtable. */

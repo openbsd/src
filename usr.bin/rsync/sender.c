@@ -1,4 +1,4 @@
-/*	$OpenBSD: sender.c,v 1.29 2021/06/30 13:10:04 claudio Exp $ */
+/*	$OpenBSD: sender.c,v 1.30 2021/08/29 13:43:46 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -358,7 +358,7 @@ rsync_sender(struct sess *sess, int fdin,
 {
 	struct flist	   *fl = NULL;
 	const struct flist *f;
-	size_t		    i, flsz = 0, phase = 0, excl;
+	size_t		    i, flsz = 0, phase = 0;
 	int		    rc = 0, c;
 	int32_t		    idx;
 	struct pollfd	    pfd[3];
@@ -393,12 +393,8 @@ rsync_sender(struct sess *sess, int fdin,
 	}
 
 	/* Client sends zero-length exclusions if deleting. */
-
-	if (!sess->opts->server && sess->opts->del &&
-	    !io_write_int(sess, fdout, 0)) {
-		ERRX1("io_write_int");
-		goto out;
-	}
+	if (!sess->opts->server && sess->opts->del)
+		send_rules(sess, fdout);
 
 	/*
 	 * Then the file list in any mode.
@@ -427,15 +423,8 @@ rsync_sender(struct sess *sess, int fdin,
 	 * This is always 0 for now.
 	 */
 
-	if (sess->opts->server) {
-		if (!io_read_size(sess, fdin, &excl)) {
-			ERRX1("io_read_size");
-			goto out;
-		} else if (excl != 0) {
-			ERRX1("exclusion list is non-empty");
-			goto out;
-		}
-	}
+	if (sess->opts->server)
+		recv_rules(sess, fdin);
 
 	/*
 	 * Set up our poll events.

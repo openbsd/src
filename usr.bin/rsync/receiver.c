@@ -1,4 +1,4 @@
-/*	$OpenBSD: receiver.c,v 1.28 2021/06/30 13:10:04 claudio Exp $ */
+/*	$OpenBSD: receiver.c,v 1.29 2021/08/29 13:43:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -172,7 +172,7 @@ int
 rsync_receiver(struct sess *sess, int fdin, int fdout, const char *root)
 {
 	struct flist	*fl = NULL, *dfl = NULL;
-	size_t		 i, flsz = 0, dflsz = 0, excl;
+	size_t		 i, flsz = 0, dflsz = 0;
 	char		*tofree;
 	int		 rc = 0, dfd = -1, phase = 0, c;
 	int32_t		 ioerror;
@@ -184,22 +184,13 @@ rsync_receiver(struct sess *sess, int fdin, int fdout, const char *root)
 	if (pledge("stdio unix rpath wpath cpath dpath fattr chown getpw unveil", NULL) == -1)
 		err(ERR_IPC, "pledge");
 
-	/* Client sends zero-length exclusions. */
+	/* Client sends exclusions. */
+	if (!sess->opts->server)
+		send_rules(sess, fdout);
 
-	if (!sess->opts->server && !io_write_int(sess, fdout, 0)) {
-		ERRX1("io_write_int");
-		goto out;
-	}
-
-	if (sess->opts->server && sess->opts->del) {
-		if (!io_read_size(sess, fdin, &excl)) {
-			ERRX1("io_read_size");
-			goto out;
-		} else if (excl != 0) {
-			ERRX("exclusion list is non-empty");
-			goto out;
-		}
-	}
+	/* Server receives exclusions if delete is on. */
+	if (sess->opts->server && sess->opts->del)
+		recv_rules(sess, fdin);
 
 	/*
 	 * Start by receiving the file list and our mystery number.

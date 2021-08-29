@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.39 2021/06/30 15:24:10 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.40 2021/08/29 13:43:46 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -131,10 +131,26 @@ struct	opts {
 	int		 no_motd;		/* --no-motd */
 	int		 numeric_ids;		/* --numeric-ids */
 	int		 one_file_system;	/* -x */
+	int		 from0;			/* -0 */
 	char		*rsync_path;		/* --rsync-path */
 	char		*ssh_prog;		/* --rsh or -e */
 	char		*port;			/* --port */
 	char		*address;		/* --address */
+};
+
+enum rule_type {
+	RULE_NONE,
+	RULE_EXCLUDE,
+	RULE_INCLUDE,
+	RULE_CLEAR,
+#ifdef NOTYET
+	RULE_MERGE,
+	RULE_DIR_MERGE,
+	RULE_SHOW,
+	RULE_HIDE,
+	RULE_PROTECT,
+	RULE_RISK,
+#endif
 };
 
 /*
@@ -361,6 +377,14 @@ char		*mkstempfifoat(int, char *);
 char		*mkstempnodat(int, char *, mode_t, dev_t);
 char		*mkstempsock(const char *, char *);
 int		 mktemplate(char **, const char *, int);
+
+int		 parse_rule(char *line, enum rule_type);
+void		 parse_file(const char *, enum rule_type, int);
+void		 send_rules(struct sess *, int);
+void		 recv_rules(struct sess *, int);
+int		 rules_match(const char *, int);
+
+int		 rmatch(const char *, const char *, int);
 
 char		*symlink_read(const char *);
 char		*symlinkat_read(int, const char *);
