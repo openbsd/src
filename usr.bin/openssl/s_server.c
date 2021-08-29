@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.48 2021/08/29 12:33:15 tb Exp $ */
+/* $OpenBSD: s_server.c,v 1.49 2021/08/29 13:16:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -744,7 +744,7 @@ static const struct option s_server_options[] = {
 	{
 		.name = "naccept",
 		.argname = "num",
-		.desc = "terminate after num connections",
+		.desc = "Terminate after num connections",
 		.type = OPTION_ARG_INT,
 		.opt.value = &s_server_config.naccept
 	},
