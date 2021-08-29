@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.94 2021/08/29 11:14:27 dv Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.95 2021/08/29 11:41:27 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -520,6 +520,11 @@ vioblk_notifyq(struct vioblk_dev *dev)
 
 				info = vioblk_start_read(dev,
 				    cmd.sector + secbias, secdata_desc->len);
+
+				if (info == NULL) {
+					log_warnx("vioblk: can't start read");
+					goto out;
+				}
 
 				/* read the data, use current data descriptor */
 				secdata = vioblk_finish_read(info);
