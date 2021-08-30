@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.1 2021/05/03 18:21:00 tb Exp $
+#	$OpenBSD: Makefile,v 1.2 2021/08/30 17:28:46 tb Exp $
 
 OPENSSL_RUBY_TESTS =	/usr/local/share/openssl-ruby-tests
-RUBY_BINREV =		27
+RUBY_BINREV =		30
 RUBY =			ruby${RUBY_BINREV}
 
 # We work in a subdirectory of obj/ since extconf.rb generates a Makefile whose
@@ -55,6 +55,26 @@ rebuild:
 retest:
 	rm -f ${_TEST_COOKIE}
 	${_MAKE} test
+
+client_cert: ${_BUILD_COOKIE}
+	-cd ${BUILDDIR} && { \
+	    ${RUBY} -I. -I${OPENSSL_RUBY_TESTS}/test/openssl \
+		-I${OPENSSL_RUBY_TESTS}/lib \
+		${OPENSSL_RUBY_TESTS}/test/openssl/test_ssl.rb \
+		-n test_client_ca; \
+	} 
+
+timestamp: ${_BUILD_COOKIE}
+	-cd ${BUILDDIR} && { \
+	    ${RUBY} -I. -I${OPENSSL_RUBY_TESTS}/test/openssl \
+		-I${OPENSSL_RUBY_TESTS}/lib \
+		${OPENSSL_RUBY_TESTS}/test/openssl/test_ts.rb \
+		-n test_verify_ee_wrong_root_no_intermediate; \
+	    ${RUBY} -I. -I${OPENSSL_RUBY_TESTS}/test/openssl \
+		-I${OPENSSL_RUBY_TESTS}/lib \
+		${OPENSSL_RUBY_TESTS}/test/openssl/test_ts.rb \
+		-n test_verify_ee_wrong_root_wrong_intermediate; \
+	}
 
 CLEANFILES +=		${_BUILD_COOKIE} ${_TEST_COOKIE} ${_BUILDDIR_COOKIE}
 

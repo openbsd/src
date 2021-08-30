@@ -1,4 +1,4 @@
-/*	$OpenBSD: clienttest.c,v 1.33 2021/06/27 17:13:23 jsing Exp $ */
+/*	$OpenBSD: clienttest.c,v 1.34 2021/08/30 17:28:46 tb Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  *
@@ -720,7 +720,7 @@ client_hello_test(int testno, const struct client_hello_test *cht)
 	BIO_free(rbio);
 	BIO_free(wbio);
 
-	free(client_hello);
+	// free(client_hello);
 
 	return (ret);
 }
