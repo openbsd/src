@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2021/08/30 09:06:04 beck Exp $
+# $OpenBSD: Makefile,v 1.10 2021/08/30 17:50:05 tb Exp $
 
 # Copyright (c) 2021 Jan Klemkow <j.klemkow@wemelug.de>
 #
@@ -31,71 +31,18 @@ regress:
 . endif
 .endif
 
-REGRESS_TARGETS +=	test-inlabel-wildcard-cert-no-CA-client
-REGRESS_TARGETS +=	test-inlabel-wildcard-cert-CA-client
-REGRESS_TARGETS +=	test-common-wildcard-cert-no-CA-client
-REGRESS_TARGETS +=	test-common-wildcard-cert-CA-client
 REGRESS_TARGETS +=	test-verify-unusual-wildcard-cert
 REGRESS_TARGETS +=	test-openssl-verify-common-wildcard-cert
-REGRESS_TARGETS +=	test-chain-certificates-s_server
 REGRESS_TARGETS +=	test-alternative-chain
+
 REGRESS_CLEANUP =	cleanup-ssl
 REGRESS_SETUP_ONCE =	create-libressl-test-certs
-
 
 create-libressl-test-certs: create-libressl-test-certs.pl
 	${PERL} ${.CURDIR}/$@.pl
 
 cleanup-ssl:
 	rm *.pem *.key
-
-test-inlabel-wildcard-cert-no-CA-client:
-	# unusual wildcard cert, no CA given to client
-	# start server
-	${OPENSSL} s_server -quiet -naccept 1 -cert server-unusual-wildcard.pem \
-	    -key server-unusual-wildcard.pem & \
-	    timeout=$$(($$(date +%s) + 5)); \
-	    while fstat -p $$! | ! grep -q 'tcp .* \*:4433$$'; \
-		do test $$(date +%s) -lt $$timeout || exit 1; done
-	# start client, note - some versions of openssl return 21.
-	echo Q | ${OPENSSL} s_client -verify_return_error \
-	    | grep "Verify return code: 20"
-
-test-inlabel-wildcard-cert-CA-client:
-	# unusual wildcard cert, CA given to client
-	# start server
-	${OPENSSL} s_server -quiet -naccept 1 -cert server-unusual-wildcard.pem \
-	    -key server-unusual-wildcard.pem & \
-	    timeout=$$(($$(date +%s) + 5)); \
-	    while fstat -p $$! | ! grep -q 'tcp .* \*:4433$$'; \
-		do test $$(date +%s) -lt $$timeout || exit 1; done
-	# start client
-	echo Q | ${OPENSSL} s_client -CAfile caR.pem \
-	    | grep "Verify return code: 0"
-
-test-common-wildcard-cert-no-CA-client:
-	# common wildcard cert, no CA given to client
-	# start server
-	${OPENSSL} s_server -quiet -naccept 1 -cert server-common-wildcard.pem \
-	    -key server-common-wildcard.pem & \
-	    timeout=$$(($$(date +%s) + 5)); \
-	    while fstat -p $$! | ! grep -q 'tcp .* \*:4433$$'; \
-		do test $$(date +%s) -lt $$timeout || exit 1; done
-	# start client, note - some versions of openssl return 21.
-	echo Q | ${OPENSSL} s_client \
-	    | grep "Verify return code: 20"
-
-test-common-wildcard-cert-CA-client:
-	# common wildcard cert, CA given to client
-	# start server
-	${OPENSSL} s_server -quiet -naccept 1 -cert server-common-wildcard.pem \
-	    -key server-common-wildcard.pem & \
-	    timeout=$$(($$(date +%s) + 5)); \
-	    while fstat -p $$! | ! grep -q 'tcp .* \*:4433$$'; \
-		do test $$(date +%s) -lt $$timeout || exit 1; done
-	# start client
-	echo Q | ${OPENSSL} s_client -CAfile caR.pem \
-	    | grep "Verify return code: 0"
 
 test-verify-unusual-wildcard-cert:
 	# openssl verify, unusual wildcard cert
@@ -106,16 +53,6 @@ test-openssl-verify-common-wildcard-cert:
 	# openssl verify, common wildcard cert
 	${OPENSSL} verify -CAfile caR.pem server-common-wildcard.pem \
 	    | grep "server-common-wildcard.pem: OK"
-
-test-chain-certificates-s_server:
-	# Not all chain certificates are sent in s_server
-	# start server
-	${OPENSSL} s_server -quiet -naccept 1 -cert server-subca-chainS.pem -CAfile subcaR.pem & \
-	    timeout=$$(($$(date +%s) + 5)); \
-	    while fstat -p $$! | ! grep -q 'tcp .* \*:4433$$'; \
-		do test $$(date +%s) -lt $$timeout || exit 1; done
-	# start client
-	${OPENSSL} s_client -CAfile caR.pem | grep "Verify return code: 0"
 
 test-alternative-chain:
 	# alternative chain not found
