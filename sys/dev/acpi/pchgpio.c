@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchgpio.c,v 1.4 2021/08/24 16:18:50 kettenis Exp $	*/
+/*	$OpenBSD: pchgpio.c,v 1.5 2021/08/30 18:40:19 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis
  * Copyright (c) 2020 James Hastings
@@ -42,7 +42,6 @@ struct pchgpio_group {
 	uint8_t		bank;
 	uint16_t	base;
 	uint16_t	limit;
-	uint16_t	offset;
 	int16_t		gpiobase;
 };
 
@@ -50,14 +49,14 @@ struct pchgpio_device {
 	uint16_t	pad_size;
 	uint16_t	gpi_is;
 	uint16_t	gpi_ie;
-	struct pchgpio_group *groups;
+	const struct pchgpio_group *groups;
 	int		ngroups;
 	int		npins;
 };
 
 struct pchgpio_match {
 	const char	*hid;
-	struct pchgpio_device *device;
+	const struct pchgpio_device *device;
 };
 
 struct pchgpio_intrhand {
@@ -75,8 +74,9 @@ struct pchgpio_softc {
 	void *sc_ih;
 	int sc_naddr;
 
-	struct pchgpio_device *sc_device;
+	const struct pchgpio_device *sc_device;
 	uint16_t sc_padbar[PCHGPIO_MAXCOM];
+	uint16_t sc_padbase[PCHGPIO_MAXCOM];
 	int sc_padsize;
 
 	int sc_npins;
@@ -102,24 +102,24 @@ const char *pchgpio_hids[] = {
 	NULL
 };
 
-struct pchgpio_group cnl_lp_groups[] =
+const struct pchgpio_group cnl_lp_groups[] =
 {
 	/* Community 0 */
-	{ 0, 0, 0, 24, 0, 0 },		/* GPP_A */
-	{ 0, 1, 25, 50, 25, 32 },	/* GPP_B */
-	{ 0, 2, 51, 58, 51, 64 },	/* GPP_G */
+	{ 0, 0, 0, 24, 0 },		/* GPP_A */
+	{ 0, 1, 25, 50, 32 },		/* GPP_B */
+	{ 0, 2, 51, 58, 64 },		/* GPP_G */
 
 	/* Community 1 */
-	{ 1, 0, 68, 92, 0, 96 },	/* GPP_D */
-	{ 1, 1, 93, 116, 25, 128 },	/* GPP_F */
-	{ 1, 2, 117, 140, 49, 160 },	/* GPP_H */
+	{ 1, 0, 68, 92, 96 },		/* GPP_D */
+	{ 1, 1, 93, 116, 128 },		/* GPP_F */
+	{ 1, 2, 117, 140, 160 },	/* GPP_H */
 
 	/* Community 4 */
-	{ 2, 0, 181, 204, 0, 256 },	/* GPP_C */
-	{ 2, 1, 205, 228, 24, 288 },	/* GPP_E */
+	{ 2, 0, 181, 204, 256 },	/* GPP_C */
+	{ 2, 1, 205, 228, 288 },	/* GPP_E */
 };
 
-struct pchgpio_device cnl_lp_device =
+const struct pchgpio_device cnl_lp_device =
 {
 	.pad_size = 16,
 	.gpi_is = 0x100,
@@ -129,29 +129,29 @@ struct pchgpio_device cnl_lp_device =
 	.npins = 320,
 };
 
-struct pchgpio_group tgl_lp_groups[] =
+const struct pchgpio_group tgl_lp_groups[] =
 {
 	/* Community 0 */
-	{ 0, 0, 0, 25, 0, 0 },		/* GPP_B */
-	{ 0, 1, 26, 41, 26, 32 },	/* GPP_T */
-	{ 0, 2, 42, 66, 42, 64 },	/* GPP_A */
+	{ 0, 0, 0, 25, 0 },		/* GPP_B */
+	{ 0, 1, 26, 41, 32 },		/* GPP_T */
+	{ 0, 2, 42, 66, 64 },		/* GPP_A */
 
 	/* Community 1 */
-	{ 1, 0, 67, 74, 0, 96 },	/* GPP_S */
-	{ 1, 1, 75, 98, 8, 128 },	/* GPP_H */
-	{ 1, 2, 99, 119, 32, 160 },	/* GPP_D */
-	{ 1, 3, 120, 143, 53, 192 },	/* GPP_U */
+	{ 1, 0, 67, 74, 96 },		/* GPP_S */
+	{ 1, 1, 75, 98, 128 },		/* GPP_H */
+	{ 1, 2, 99, 119, 160 },		/* GPP_D */
+	{ 1, 3, 120, 143, 192 },	/* GPP_U */
 
 	/* Community 4 */
-	{ 2, 0, 171, 194, 0, 256 },	/* GPP_C */
-	{ 2, 1, 195, 219, 24, 288 },	/* GPP_F */
-	{ 2, 3, 226, 250, 55, 320 },	/* GPP_E */
+	{ 2, 0, 171, 194, 256 },	/* GPP_C */
+	{ 2, 1, 195, 219, 288 },	/* GPP_F */
+	{ 2, 3, 226, 250, 320 },	/* GPP_E */
 
 	/* Community 5 */
-	{ 3, 0, 260, 267, 0, 352 },	/* GPP_R */
+	{ 3, 0, 260, 267, 352 },	/* GPP_R */
 };
 
-struct pchgpio_device tgl_lp_device =
+const struct pchgpio_device tgl_lp_device =
 {
 	.pad_size = 16,
 	.gpi_is = 0x100,
@@ -185,6 +185,7 @@ pchgpio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pchgpio_softc *sc = (struct pchgpio_softc *)self;
 	struct acpi_attach_args *aaa = aux;
+	uint16_t bar;
 	int i;
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
@@ -228,6 +229,15 @@ pchgpio_attach(struct device *parent, struct device *self, void *aux)
 	}
 	KASSERT(sc->sc_device);
 
+	/* Figure out the first pin for each community. */
+	bar = -1;
+	for (i = 0; i < sc->sc_device->ngroups; i++) {
+		if (sc->sc_device->groups[i].bar != bar) {
+			bar = sc->sc_device->groups[i].bar;
+			sc->sc_padbase[bar] = sc->sc_device->groups[i].base;
+		}
+	}
+
 	sc->sc_padsize = sc->sc_device->pad_size;
 	sc->sc_npins = sc->sc_device->npins;
 	sc->sc_pin_ih = mallocarray(sc->sc_npins, sizeof(*sc->sc_pin_ih),
@@ -258,7 +268,7 @@ unmap:
 		    aaa->aaa_size[i]);
 }
 
-struct pchgpio_group *
+const struct pchgpio_group *
 pchgpio_find_group(struct pchgpio_softc *sc, int pin)
 {
 	int i, npads;
@@ -278,17 +288,17 @@ int
 pchgpio_read_pin(void *cookie, int pin)
 {
 	struct pchgpio_softc *sc = cookie;
-	struct pchgpio_group *group;
+	const struct pchgpio_group *group;
 	uint32_t reg;
-	uint16_t offset;
+	uint16_t pad;
 	uint8_t bar;
 
 	group = pchgpio_find_group(sc, pin);
-	offset = group->offset + (pin - group->gpiobase);
 	bar = group->bar;
+	pad = group->base + (pin - group->gpiobase) - sc->sc_padbase[bar];
 
 	reg = bus_space_read_4(sc->sc_memt[bar], sc->sc_memh[bar],
-	    sc->sc_padbar[bar] + offset * sc->sc_padsize);
+	    sc->sc_padbar[bar] + pad * sc->sc_padsize);
 
 	return !!(reg & PCHGPIO_CONF_RXSTATE);
 }
@@ -297,23 +307,23 @@ void
 pchgpio_write_pin(void *cookie, int pin, int value)
 {
 	struct pchgpio_softc *sc = cookie;
-	struct pchgpio_group *group;
+	const struct pchgpio_group *group;
 	uint32_t reg;
-	uint16_t offset;
+	uint16_t pad;
 	uint8_t bar;
 
 	group = pchgpio_find_group(sc, pin);
-	offset = group->offset + (pin - group->gpiobase);
 	bar = group->bar;
+	pad = group->base + (pin - group->gpiobase) - sc->sc_padbase[bar];
 
 	reg = bus_space_read_4(sc->sc_memt[bar], sc->sc_memh[bar],
-	    sc->sc_padbar[bar] + offset * sc->sc_padsize);
+	    sc->sc_padbar[bar] + pad * sc->sc_padsize);
 	if (value)
 		reg |= PCHGPIO_CONF_TXSTATE;
 	else
 		reg &= ~PCHGPIO_CONF_TXSTATE;
 	bus_space_write_4(sc->sc_memt[bar], sc->sc_memh[bar],
-	    sc->sc_padbar[bar] + offset * sc->sc_padsize, reg);
+	    sc->sc_padbar[bar] + pad * sc->sc_padsize, reg);
 }
 
 void
@@ -321,25 +331,26 @@ pchgpio_intr_establish(void *cookie, int pin, int flags,
     int (*func)(void *), void *arg)
 {
 	struct pchgpio_softc *sc = cookie;
-	struct pchgpio_group *group;
+	const struct pchgpio_group *group;
 	uint32_t reg;
-	uint16_t offset;
+	uint16_t pad;
 	uint8_t bank, bar;
 
 	KASSERT(pin >= 0);
 
-	if ((group = pchgpio_find_group(sc, pin)) == NULL)
+	group = pchgpio_find_group(sc, pin);
+	if (group == NULL)
 		return;
 
-	offset = group->offset + (pin - group->gpiobase);
 	bar = group->bar;
 	bank = group->bank;
+	pad = group->base + (pin - group->gpiobase) - sc->sc_padbase[bar];
 
 	sc->sc_pin_ih[pin].ih_func = func;
 	sc->sc_pin_ih[pin].ih_arg = arg;
 
 	reg = bus_space_read_4(sc->sc_memt[bar], sc->sc_memh[bar],
-	    sc->sc_padbar[bar] + offset * sc->sc_padsize);
+	    sc->sc_padbar[bar] + pad * sc->sc_padsize);
 	reg &= ~(PCHGPIO_CONF_RXEV_MASK | PCHGPIO_CONF_RXINV);
 	if ((flags & LR_GPIO_MODE) == 1)
 		reg |= PCHGPIO_CONF_RXEV_EDGE;
@@ -348,7 +359,7 @@ pchgpio_intr_establish(void *cookie, int pin, int flags,
 	if ((flags & LR_GPIO_POLARITY) == LR_GPIO_ACTBOTH)
 		reg |= PCHGPIO_CONF_RXEV_EDGE | PCHGPIO_CONF_RXEV_ZERO;
 	bus_space_write_4(sc->sc_memt[bar], sc->sc_memh[bar],
-	    sc->sc_padbar[bar] + offset * sc->sc_padsize, reg);
+	    sc->sc_padbar[bar] + pad * sc->sc_padsize, reg);
 
 	reg = bus_space_read_4(sc->sc_memt[bar], sc->sc_memh[bar],
 	    sc->sc_device->gpi_ie + bank * 4);
@@ -364,7 +375,6 @@ pchgpio_intr(void *arg)
 	uint32_t status, enable;
 	int gpiobase, group, bit, pin, handled = 0;
 	uint16_t base, limit;
-	uint16_t offset;
 	uint8_t bank, bar;
 
 	for (group = 0; group < sc->sc_device->ngroups; group++) {
@@ -372,7 +382,6 @@ pchgpio_intr(void *arg)
 		bank = sc->sc_device->groups[group].bank;
 		base = sc->sc_device->groups[group].base;
 		limit = sc->sc_device->groups[group].limit;
-		offset = sc->sc_device->groups[group].offset;
 		gpiobase = sc->sc_device->groups[group].gpiobase;
 
 		status = bus_space_read_4(sc->sc_memt[bar], sc->sc_memh[bar],
