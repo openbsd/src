@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.214 2021/08/06 07:06:35 sthen Exp $
+#	$OpenBSD: netstart,v 1.215 2021/08/30 16:58:52 bluhm Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -86,7 +86,11 @@ parse_hn_line() {
 ifcreate() {
 	local _if=$1
 
-	{ ifconfig $_if || ifconfig $_if create; } >/dev/null 2>&1
+	if $PRINT_ONLY; then
+		print -r -- "{ ifconfig $_if || ifconfig $_if create; }"
+	else
+		{ ifconfig $_if || ifconfig $_if create; } >/dev/null 2>&1
+	fi
 }
 
 # Create interfaces for network pseudo-devices referred to by hostname.if files.
@@ -130,9 +134,7 @@ ifstart() {
 	fi
 
 	# Check for ifconfig'able interface, except if -n option is specified.
-	if ! $PRINT_ONLY; then
-		ifcreate $_if || return
-	fi
+	ifcreate $_if || return
 
 	# Parse the hostname.if(5) file and fill _cmds array with interface
 	# configuration commands.
@@ -210,6 +212,63 @@ defaultroute() {
 	set +o noglob
 }
 
+# add all the routes needed for IPv6
+ip6routes() {
+	local _i=0
+	set -A _cmds
+
+	# Disallow link-local unicast dest without outgoing scope identifiers.
+	_cmds[_i++]="route -qn add -inet6 fe80:: -prefixlen 10 ::1 -reject"
+
+	# Disallow site-local unicast dest without outgoing scope identifiers.
+	# If you configure site-locals without scope id (it is permissible
+	# config for routers that are not on scope boundary), you may want
+	# to comment the line out.
+	_cmds[_i++]="route -qn add -inet6 fec0:: -prefixlen 10 ::1 -reject"
+
+	# Disallow "internal" addresses to appear on the wire.
+	_cmds[_i++]="route -qn add -inet6 ::ffff:0.0.0.0 -prefixlen 96 ::1 -reject"
+
+	# Disallow packets to malicious 6to4 prefix.
+	_cmds[_i++]="route -qn add -inet6 2002:e000:: -prefixlen 20 ::1 -reject"
+	_cmds[_i++]="route -qn add -inet6 2002:7f00:: -prefixlen 24 ::1 -reject"
+	_cmds[_i++]="route -qn add -inet6 2002:0000:: -prefixlen 24 ::1 -reject"
+	_cmds[_i++]="route -qn add -inet6 2002:ff00:: -prefixlen 24 ::1 -reject"
+
+	# Disallow packets without scope identifier.
+	_cmds[_i++]="route -qn add -inet6 ff01:: -prefixlen 16 ::1 -reject"
+	_cmds[_i++]="route -qn add -inet6 ff02:: -prefixlen 16 ::1 -reject"
+
+	# Completely disallow packets to IPv4 compatible prefix.
+	#
+	# This may conflict with RFC1933 under following circumstances:
+	# (1) An IPv6-only KAME node tries to originate packets to IPv4
+	#     compatible destination.  The KAME node has no IPv4 compatible
+	#     support.  Under RFC1933, it should transmit native IPv6
+	#     packets toward IPv4 compatible destination, hoping it would
+	#     reach a router that forwards the packet toward auto-tunnel
+	#     interface.
+	# (2) An IPv6-only node originates a packet to an IPv4 compatible
+	#     destination.  A KAME node is acting as an IPv6 router, and
+	#     asked to forward it.
+	#
+	# Due to rare use of IPv4 compatible addresses, and security issues
+	# with it, we disable it by default.
+	_cmds[_i++]="route -qn add -inet6 ::0.0.0.0 -prefixlen 96 ::1 -reject"
+
+	# Apply the interface configuration commands stored in _cmds array.
+	_i=0
+	while ((_i < ${#_cmds[*]})); do
+		if $PRINT_ONLY; then
+			print -r -- "${_cmds[_i]}"
+		else
+			eval "${_cmds[_i]}"
+		fi
+		((_i++))
+	done
+	unset _cmds
+}
+
 # Make sure the invoking user has the right privileges.  Check for presence of
 # id(1) to avoid problems with diskless setups.
 if [[ -x /usr/bin/id ]] && (($(id -u) != 0)); then
@@ -233,9 +292,6 @@ while getopts ":n" opt; do
 done
 shift $((OPTIND-1))
 
-# Option -n is only supported if interface names are specified as parameters.
-$PRINT_ONLY && (($# == 0)) && usage
-
 # Load key material for the generation of IPv6 Semantically Opaque Interface
 # Identifiers (SOII) used for link local and SLAAC addresses.
 $PRINT_ONLY || [[ ! -f /etc/soii.key ]] ||
@@ -253,50 +309,16 @@ fi
 
 # Set the address for the loopback interface.  Bringing the interface up,
 # automatically invokes the IPv6 address ::1.
-ifconfig lo0 inet 127.0.0.1/8
+if $PRINT_ONLY; then
+	print -r -- "ifconfig lo0 inet 127.0.0.1/8"
+else
+	ifconfig lo0 inet 127.0.0.1/8
+fi
 
 # IPv6 configuration.
 if ifconfig lo0 inet6 >/dev/null 2>&1; then
 	ip6kernel=YES
-
-	# Disallow link-local unicast dest without outgoing scope identifiers.
-	route -qn add -inet6 fe80:: -prefixlen 10 ::1 -reject
-
-	# Disallow site-local unicast dest without outgoing scope identifiers.
-	# If you configure site-locals without scope id (it is permissible
-	# config for routers that are not on scope boundary), you may want
-	# to comment the line out.
-	route -qn add -inet6 fec0:: -prefixlen 10 ::1 -reject
-
-	# Disallow "internal" addresses to appear on the wire.
-	route -qn add -inet6 ::ffff:0.0.0.0 -prefixlen 96 ::1 -reject
-
-	# Disallow packets to malicious 6to4 prefix.
-	route -qn add -inet6 2002:e000:: -prefixlen 20 ::1 -reject
-	route -qn add -inet6 2002:7f00:: -prefixlen 24 ::1 -reject
-	route -qn add -inet6 2002:0000:: -prefixlen 24 ::1 -reject
-	route -qn add -inet6 2002:ff00:: -prefixlen 24 ::1 -reject
-
-	# Disallow packets without scope identifier.
-	route -qn add -inet6 ff01:: -prefixlen 16 ::1 -reject
-	route -qn add -inet6 ff02:: -prefixlen 16 ::1 -reject
-
-	# Completely disallow packets to IPv4 compatible prefix.
-	#
-	# This may conflict with RFC1933 under following circumstances:
-	# (1) An IPv6-only KAME node tries to originate packets to IPv4
-	#     compatible destination.  The KAME node has no IPv4 compatible
-	#     support.  Under RFC1933, it should transmit native IPv6
-	#     packets toward IPv4 compatible destination, hoping it would
-	#     reach a router that forwards the packet toward auto-tunnel
-	#     interface.
-	# (2) An IPv6-only node originates a packet to an IPv4 compatible
-	#     destination.  A KAME node is acting as an IPv6 router, and
-	#     asked to forward it.
-	#
-	# Due to rare use of IPv4 compatible addresses, and security issues
-	# with it, we disable it by default.
-	route -qn add -inet6 ::0.0.0.0 -prefixlen 96 ::1 -reject
+	ip6routes
 else
 	ip6kernel=NO
 fi
@@ -318,12 +340,21 @@ defaultroute
 
 # Multicast routing.
 if [[ $multicast != YES ]]; then
-	route -qn delete 224.0.0.0/4 >/dev/null 2>&1
-	route -qn add -net 224.0.0.0/4 -interface 127.0.0.1 -reject >/dev/null
+	if $PRINT_ONLY; then
+		print -r -- "route -qn delete 224.0.0.0/4"
+		print -r -- "route -qn add -net 224.0.0.0/4 -interface 127.0.0.1 -reject"
+	else
+		route -qn delete 224.0.0.0/4
+		route -qn add -net 224.0.0.0/4 -interface 127.0.0.1 -reject
+	fi
 fi
 
 # Reject 127/8 other than 127.0.0.1.
-route -qn add -net 127 127.0.0.1 -reject >/dev/null
+if $PRINT_ONLY; then
+	print -r -- "route -qn add -net 127 127.0.0.1 -reject"
+else
+	route -qn add -net 127 127.0.0.1 -reject
+fi
 
 # Configure interfaces that rely on routing
 ifmstart "tun tap gif etherip gre egre pflow wg"
