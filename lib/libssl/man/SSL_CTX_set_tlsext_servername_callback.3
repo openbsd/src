@@ -1,10 +1,11 @@
-.\"	$OpenBSD: SSL_CTX_set_tlsext_servername_callback.3,v 1.4 2019/06/12 09:36:30 schwarze Exp $
-.\"	OpenSSL 190b9a03 Jun 28 15:46:13 2017 +0800
-.\"	OpenSSL 8c55c461 Mar 29 08:34:37 2017 +1000
+.\" $OpenBSD: SSL_CTX_set_tlsext_servername_callback.3,v 1.5 2021/08/30 18:18:16 schwarze Exp $
+.\" full merge up to: OpenSSL 190b9a03 Jun 28 15:46:13 2017 +0800
+.\" selective merge up to: OpenSSL 6328d367 Jul 4 21:58:30 2020 +0200
 .\"
-.\" This file was written by Jon Spillett <jon.spillett@oracle.com>
-.\" and Paul Yang <yang dot yang at baishancloud dot com>.
-.\" Copyright (c) 2000 The OpenSSL Project.  All rights reserved.
+.\" This file was written by Jon Spillett <jon.spillett@oracle.com>,
+.\" Paul Yang <yang dot yang at baishancloud dot com>, and
+.\" Matt Caswell <matt@openssl.org>.
+.\" Copyright (c) 2017, 2019 The OpenSSL Project.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -50,7 +51,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 12 2019 $
+.Dd $Mdocdate: August 30 2021 $
 .Dt SSL_CTX_SET_TLSEXT_SERVERNAME_CALLBACK 3
 .Os
 .Sh NAME
@@ -65,7 +66,7 @@
 .Ft long
 .Fo SSL_CTX_set_tlsext_servername_callback
 .Fa "SSL_CTX *ctx"
-.Fa "int (*cb)(SSL_CTX *, int *, void *)"
+.Fa "int (*cb)(SSL *ssl, int *alert, void *arg)"
 .Fc
 .Ft long
 .Fo SSL_CTX_set_tlsext_servername_arg
@@ -74,16 +75,16 @@
 .Fc
 .Ft const char *
 .Fo SSL_get_servername
-.Fa "const SSL *s"
+.Fa "const SSL *ssl"
 .Fa "const int type"
 .Fc
 .Ft int
 .Fo SSL_get_servername_type
-.Fa "const SSL *s"
+.Fa "const SSL *ssl"
 .Fc
 .Ft int
 .Fo SSL_set_tlsext_host_name
-.Fa "const SSL *s"
+.Fa "const SSL *ssl"
 .Fa "const char *name"
 .Fc
 .Sh DESCRIPTION
@@ -97,13 +98,104 @@ When
 is
 .Dv NULL ,
 SNI is not used.
-The
-.Fa arg
-value is a pointer which is passed to the application callback.
+.Pp
+The servername callback should return one of the following values:
+.Bl -tag -width Ds
+.It Dv SSL_TLSEXT_ERR_OK
+This is used to indicate that the servername requested by the client
+has been accepted.
+Typically a server will call
+.Xr SSL_set_SSL_CTX 3
+in the callback to set up a different configuration
+for the selected servername in this case.
+.It Dv SSL_TLSEXT_ERR_ALERT_FATAL
+In this case the servername requested by the client is not accepted
+and the handshake will be aborted.
+The value of the alert to be used should be stored in the location
+pointed to by the
+.Fa alert
+parameter to the callback.
+By default this value is initialised to
+.Dv SSL_AD_UNRECOGNIZED_NAME .
+.It Dv SSL_TLSEXT_ERR_ALERT_WARNING
+If this value is returned, then the servername is not accepted by the server.
+However, the handshake will continue and send a warning alert instead.
+The value of the alert should be stored in the location pointed to by the
+.Fa alert
+parameter as for
+.Dv SSL_TLSEXT_ERR_ALERT_FATAL
+above.
+Note that TLSv1.3 does not support warning alerts, so if TLSv1.3 has
+been negotiated then this return value is treated the same way as
+.Dv SSL_TLSEXT_ERR_NOACK .
+.It Dv SSL_TLSEXT_ERR_NOACK
+This return value indicates
+that the servername is not accepted by the server.
+No alerts are sent
+and the server will not acknowledge the requested servername.
+.El
 .Pp
 .Fn SSL_CTX_set_tlsext_servername_arg
-sets a context-specific argument to be passed into the callback for
+sets a context-specific argument to be passed into the callback via the
+.Fa arg
+parameter for
 .Fa ctx .
+.Pp
+The behaviour of
+.Fn SSL_get_servername
+depends on a number of different factors.
+In particular note that in TLSv1.3,
+the servername is negotiated in every handshake.
+In TLSv1.2 the servername is only negotiated on initial handshakes
+and not on resumption handshakes.
+.Bl -tag -width Ds
+.It On the client, before the handshake:
+If a servername has been set via a call to
+.Fn SSL_set_tlsext_host_name ,
+then it will return that servername.
+If one has not been set, but a TLSv1.2 resumption is being attempted
+and the session from the original handshake had a servername
+accepted by the server, then it will return that servername.
+Otherwise it returns
+.Dv NULL .
+.It On the client, during or after the handshake,\
+ if a TLSv1.2 (or below) resumption occurred:
+If the session from the original handshake had a servername accepted by the
+server, then it will return that servername.
+Otherwise it returns the servername set via
+.Fn SSL_set_tlsext_host_name
+or
+.Dv NULL
+if it was not called.
+.It On the client, during or after the handshake,\
+ if a TLSv1.2 (or below) resumption did not occur:
+It will return the servername set via
+.Fn SSL_set_tlsext_host_name
+or
+.Dv NULL
+if it was not called.
+.It On the server, before the handshake:
+The function will always return
+.Dv NULL
+before the handshake.
+.It On the server, after the servername extension has been processed,\
+ if a TLSv1.2 (or below) resumption occurred:
+If a servername was accepted by the server in the original handshake,
+then it will return that servername, or
+.Dv NULL
+otherwise.
+.It On the server, after the servername extension has been processed,\
+ if a TLSv1.2 (or below) resumption did not occur:
+The function will return the servername
+requested by the client in this handshake or
+.Dv NULL
+if none was requested.
+.El
+.Pp
+Note that the early callback occurs before a servername extension
+from the client is processed.
+The servername, certificate and ALPN callbacks occur
+after a servername extension from the client is processed.
 .Pp
 .Fn SSL_set_tlsext_host_name
 sets the server name indication ClientHello extension
