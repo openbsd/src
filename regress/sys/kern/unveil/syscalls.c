@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.29 2021/08/30 08:07:22 claudio Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.30 2021/08/30 09:09:21 claudio Exp $	*/
 
 /*
  * Copyright (c) 2017-2019 Bob Beck <beck@openbsd.org>
@@ -55,6 +55,17 @@ char uv_file2[] = "/tmp/uvfile2.XXXXXX"; /* not unveiled */
 #define UV_SHOULD_EACCES(A, B) do {					\
 	if (A) {				 			\
 		if (do_uv && errno != EACCES)				\
+			err(1, "%s:%d - %s", __FILE__, __LINE__, B);	\
+	} else {							\
+		if (do_uv)						\
+			errx(1, "%s:%d - %s worked when it should not "	\
+			    "have",  __FILE__, __LINE__, B);		\
+	}								\
+} while(0)
+
+#define UV_SHOULD_EPERM(A, B) do {					\
+	if (A) {				 			\
+		if (do_uv && errno != EPERM)				\
 			err(1, "%s:%d - %s", __FILE__, __LINE__, B);	\
 	} else {							\
 		if (do_uv)						\
@@ -934,6 +945,33 @@ test_fchdir(int do_uv)
 	return 0;
 }
 
+static int
+test_fork_locked(int do_uv)
+{
+	int status;
+	pid_t pid;
+
+	if (do_uv) {
+		printf("testing unveil locked fork\n");
+		unveil(NULL, NULL);
+	}
+
+	pid = fork();
+	if (pid == 0) {
+		UV_SHOULD_EPERM((unveil("/", "rwx") == -1), "unveil");
+		exit(0);
+	}
+
+	status = 0;
+	waitpid(pid, &status, 0);
+	if (WIFSIGNALED(status))
+		errx(1, "child exited with signal %d\n", WTERMSIG(status));
+	if (WEXITSTATUS(status) == 0)
+		return 0;
+	else
+		return 1;
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -983,5 +1021,6 @@ main (int argc, char *argv[])
 	failures += runcompare(test_kn);
 	failures += runcompare(test_pathdiscover);
 	failures += runcompare(test_fchdir);
+	failures += runcompare(test_fork_locked);
 	exit(failures);
 }
