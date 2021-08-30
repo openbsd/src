@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.27 2020/04/07 18:05:47 claudio Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.28 2021/08/30 08:06:02 claudio Exp $	*/
 
 /*
  * Copyright (c) 2017-2019 Bob Beck <beck@openbsd.org>
@@ -35,32 +35,32 @@ char uv_dir2[] = "/tmp/uvdir2.XXXXXX"; /* not unveiled */
 char uv_file1[] = "/tmp/uvfile1.XXXXXX"; /* unveiled */
 char uv_file2[] = "/tmp/uvfile2.XXXXXX"; /* not unveiled */
 
-#define UV_SHOULD_SUCCEED(A, B) do {						\
-	if (A) {								\
-		err(1, "%s:%d - %s", __FILE__, __LINE__, B);			\
-	}									\
+#define UV_SHOULD_SUCCEED(A, B) do {					\
+	if (A) {							\
+		err(1, "%s:%d - %s", __FILE__, __LINE__, B);		\
+	}								\
 } while (0)
 
-#define UV_SHOULD_ENOENT(A, B) do {						\
-	if (A) {				 				\
-		if (do_uv && errno != ENOENT)					\
-			err(1, "%s:%d - %s", __FILE__, __LINE__, B);		\
-	} else {								\
-		if (do_uv)							\
-			errx(1, "%s:%d - %s worked when it should not "		\
-			    "have",  __FILE__, __LINE__, B);			\
-	}									\
+#define UV_SHOULD_ENOENT(A, B) do {					\
+	if (A) {				 			\
+		if (do_uv && errno != ENOENT)				\
+			err(1, "%s:%d - %s", __FILE__, __LINE__, B);	\
+	} else {							\
+		if (do_uv)						\
+			errx(1, "%s:%d - %s worked when it should not "	\
+			    "have",  __FILE__, __LINE__, B);		\
+	}								\
 } while(0)
 
-#define UV_SHOULD_EACCES(A, B) do {						\
-	if (A) {				 				\
-		if (do_uv && errno != EACCES)					\
-			err(1, "%s:%d - %s", __FILE__, __LINE__, B);		\
-	} else {								\
-		if (do_uv)							\
-			errx(1, "%s:%d - %s worked when it should not "		\
-			    "have",  __FILE__, __LINE__, B);			\
-	}									\
+#define UV_SHOULD_EACCES(A, B) do {					\
+	if (A) {				 			\
+		if (do_uv && errno != EACCES)				\
+			err(1, "%s:%d - %s", __FILE__, __LINE__, B);	\
+	} else {							\
+		if (do_uv)						\
+			errx(1, "%s:%d - %s worked when it should not "	\
+			    "have",  __FILE__, __LINE__, B);		\
+	}								\
 } while(0)
 
 /* all the things unless we override */
