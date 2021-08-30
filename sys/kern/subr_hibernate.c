@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.127 2021/07/08 23:19:51 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.128 2021/08/30 09:45:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -541,9 +541,10 @@ uvm_page_rle(paddr_t addr)
 	 * therefore pg->fpgsz cannot be used.
 	 */
 	for (pg_end = pg; pg_end <= vmp->lastpg &&
-	    (pg_end->pg_flags & PQ_FREE) == PQ_FREE; pg_end++)
+	    (pg_end->pg_flags & PQ_FREE) == PQ_FREE &&
+	    (pg_end - pg) < HIBERNATE_CHUNK_SIZE/PAGE_SIZE; pg_end++)
 		;
-	return min((pg_end - pg), HIBERNATE_CHUNK_SIZE/PAGE_SIZE);
+	return pg_end - pg;
 }
 
 /*
