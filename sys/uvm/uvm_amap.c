@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.89 2021/03/26 13:40:05 mpi Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.90 2021/08/30 16:59:17 mpi Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -618,6 +618,13 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int waitf,
 		return;
 	srcamap = entry->aref.ar_amap;
 
+	/*
+	 * Make the new amap share the source amap's lock, and then lock
+	 * both.
+	 */
+	amap->am_lock = srcamap->am_lock;
+	rw_obj_hold(amap->am_lock);
+
 	amap_lock(srcamap);
 
 	/*
@@ -655,7 +662,7 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int waitf,
 
 		chunk = amap_chunk_get(amap, lcv, 1, PR_NOWAIT);
 		if (chunk == NULL) {
-			amap_unlock(srcamap);
+			/* amap_wipeout() releases the lock. */
 			amap->am_ref = 0;
 			amap_wipeout(amap);
 			return;
@@ -695,10 +702,10 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int waitf,
 	 * If we referenced any anons, then share the source amap's lock.
 	 * Otherwise, we have nothing in common, so allocate a new one.
 	 */
-	KASSERT(amap->am_lock == NULL);
-	if (amap->am_nused != 0) {
-		amap->am_lock = srcamap->am_lock;
-		rw_obj_hold(amap->am_lock);
+	KASSERT(amap->am_lock == srcamap->am_lock);
+	if (amap->am_nused == 0) {
+		rw_obj_free(amap->am_lock);
+		amap->am_lock = NULL;
 	}
 	amap_unlock(srcamap);
 
