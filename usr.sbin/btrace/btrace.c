@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.38 2021/06/28 08:55:06 bluhm Exp $ */
+/*	$OpenBSD: btrace.c,v 1.39 2021/08/30 11:57:45 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -1068,8 +1068,14 @@ baexpr2long(struct bt_arg *ba, struct dt_evt *dtev)
 	case B_AT_OP_LE:
 		result = (first <= second);
 		break;
+	case B_AT_OP_LT:
+		result = (first < second);
+		break;
 	case B_AT_OP_GE:
 		result = (first >= second);
+		break;
+	case B_AT_OP_GT:
+		result = (first > second);
 		break;
 	case B_AT_OP_LAND:
 		result = (first && second);
@@ -1118,8 +1124,12 @@ ba_name(struct bt_arg *ba)
 		return "!=";
 	case B_AT_OP_LE:
 		return "<=";
+	case B_AT_OP_LT:
+		return "<";
 	case B_AT_OP_GE:
 		return ">=";
+	case B_AT_OP_GT:
+		return ">";
 	case B_AT_OP_LAND:
 		return "&&";
 	case B_AT_OP_LOR:

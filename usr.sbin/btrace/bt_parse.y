@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parse.y,v 1.34 2021/04/22 11:53:13 mpi Exp $	*/
+/*	$OpenBSD: bt_parse.y,v 1.35 2021/08/30 11:57:45 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019-2021 Martin Pieuchot <mpi@openbsd.org>
@@ -109,7 +109,8 @@ static int	 yylex(void);
 static int pflag;
 %}
 
-%token	<v.i>		ERROR ENDFILT OP_EQ OP_NE OP_LE OP_GE OP_LAND OP_LOR
+%token	<v.i>		ERROR ENDFILT
+%token	<v.i>		OP_EQ OP_NE OP_LE OP_LT OP_GE OP_GT OP_LAND OP_LOR
 /* Builtins */
 %token	<v.i>		BUILTIN BEGIN END HZ
 /* Functions and Map operators */
@@ -126,7 +127,7 @@ static int pflag;
 %type	<v.arg>		expr vargs mentry mexpr pargs term
 
 %right	'='
-%nonassoc OP_EQ OP_NE OP_LE OP_GE OP_LAND OP_LOR
+%nonassoc OP_EQ OP_NE OP_LE OP_LT OP_GE OP_GT OP_LAND OP_LOR
 %left	'&' '|'
 %left	'+' '-'
 %left	'/' '*'
@@ -181,7 +182,9 @@ term	: '(' term ')'			{ $$ = $2; }
 	| term OP_EQ term		{ $$ = ba_op(B_AT_OP_EQ, $1, $3); }
 	| term OP_NE term		{ $$ = ba_op(B_AT_OP_NE, $1, $3); }
 	| term OP_LE term		{ $$ = ba_op(B_AT_OP_LE, $1, $3); }
+	| term OP_LT term		{ $$ = ba_op(B_AT_OP_LT, $1, $3); }
 	| term OP_GE term		{ $$ = ba_op(B_AT_OP_GE, $1, $3); }
+	| term OP_GT term		{ $$ = ba_op(B_AT_OP_GT, $1, $3); }
 	| term OP_LAND term		{ $$ = ba_op(B_AT_OP_LAND, $1, $3); }
 	| term OP_LOR term		{ $$ = ba_op(B_AT_OP_LOR, $1, $3); }
 	| term '+' term			{ $$ = ba_op(B_AT_OP_PLUS, $1, $3); }
@@ -723,16 +726,31 @@ again:
 			lgetc();
 			return (c == '=') ? OP_EQ : OP_NE;
 		}
+		return c;
+	case '<':
+		if (peek() == '=') {
+			lgetc();
+			return OP_LE;
+		}
+		return OP_LT;
+	case '>':
+		if (peek() == '=') {
+			lgetc();
+			return OP_GE;
+		}
+		return OP_GT;
 	case '&':
 		if (peek() == '&') {
 			lgetc();
 			return OP_LAND;
 		}
+		return c;
 	case '|':
 		if (peek() == '|') {
 			lgetc();
 			return OP_LOR;
 		}
+		return c;
 	case '/':
 		if (peek() == '{' || peek() == '/' || peek() == '\n') {
 			return ENDFILT;
