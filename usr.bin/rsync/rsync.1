@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rsync.1,v 1.24 2021/03/31 20:36:05 jmc Exp $
+.\"	$OpenBSD: rsync.1,v 1.25 2021/08/30 20:25:24 job Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 31 2021 $
+.Dd $Mdocdate: August 30 2021 $
 .Dt OPENRSYNC 1
 .Os
 .Sh NAME
@@ -26,6 +26,10 @@
 .Op Fl e Ar program
 .Op Fl -address Ns = Ns Ar sourceaddr
 .Op Fl -del
+.Op Fl -exclude Ar pattern
+.Op Fl -exclude-from Ns = Ns Ar file
+.Op Fl -include Ar pattern
+.Op Fl -include-from Ns = Ns Ar file
 .Op Fl -no-motd
 .Op Fl -numeric-ids
 .Op Fl -port Ns = Ns Ar service
@@ -70,6 +74,26 @@ not found in
 directories.
 Only applicable with
 .Fl r .
+.It Fl -exclude Ar pattern
+Exclude files matching
+.Em pattern .
+.It Fl -exclude-from Ns = Ns Ar file
+Load
+.Em patterns
+and
+.Em rules
+from
+.Em file .
+.It Fl -include Ar pattern
+Include files matching
+.Em pattern .
+.It Fl -include-from Ns = Ns Ar file
+Load
+.Em patterns
+and
+.Em rules
+from
+.Em file .
 .It Fl -devices
 Also transfer device files.
 .It Fl e Ar program , Fl -rsh Ns = Ns Ar program
@@ -210,6 +234,7 @@ or symbolic links
 The destination
 .Ar directory
 must be a directory and is created if not found.
+.\" .Sh PATTERNS AND RULES
 .\" .Sh ENVIRONMENT
 .\" .Sh FILES
 .Sh EXIT STATUS
