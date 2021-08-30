@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolvd.c,v 1.16 2021/07/21 03:53:50 kn Exp $	*/
+/*	$OpenBSD: resolvd.c,v 1.17 2021/08/30 11:04:50 kn Exp $	*/
 /*
  * Copyright (c) 2021 Florian Obser <florian@openbsd.org>
  * Copyright (c) 2021 Theo de Raadt <deraadt@openbsd.org>
@@ -476,7 +476,7 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 			case AF_INET:
 				memcpy(&addr4, src, sizeof(struct in_addr));
 				src += sizeof(struct in_addr);
-				if (addr4.s_addr == INADDR_LOOPBACK)
+				if (addr4.s_addr == htonl(INADDR_LOOPBACK))
 					continue;
 				new = findslot(learning);
 				if (inet_ntop(af, &addr4, learning[new].ip,
