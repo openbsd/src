@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.42 2021/08/30 12:12:11 inoguchi Exp $ */
+/* $OpenBSD: ca.c,v 1.43 2021/08/30 12:25:54 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1745,6 +1745,8 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 	OPENSSL_STRING *irow = NULL;
 	OPENSSL_STRING *rrow = NULL;
 
+	*xret = NULL;
+
 	tmptm = ASN1_UTCTIME_new();
 	if (tmptm == NULL) {
 		BIO_printf(bio_err, "malloc error\n");
@@ -2275,7 +2277,11 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 		BIO_printf(bio_err, "TXT_DB error number %ld\n", db->db->error);
 		goto err;
 	}
+
+	*xret = ret;
+	ret = NULL;
 	ok = 1;
+
  err:
 	for (i = 0; i < DB_NUMBER; i++)
 		free(row[i]);
@@ -2285,11 +2291,7 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 	if (!email_dn)
 		X509_NAME_free(dn_subject);
 	ASN1_UTCTIME_free(tmptm);
-	if (ok <= 0) {
-		X509_free(ret);
-		ret = NULL;
-	} else
-		*xret = ret;
+	X509_free(ret);
 
 	return (ok);
 }
