@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.99 2021/08/29 19:55:12 kn Exp $
+.\"	$OpenBSD: route.8,v 1.100 2021/08/30 15:46:07 kn Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)route.8	8.3 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: August 29 2021 $
+.Dd $Mdocdate: August 30 2021 $
 .Dt ROUTE 8
 .Os
 .Sh NAME
@@ -172,7 +172,7 @@ only changes in that routing table will be displayed.
 Send a list of up to five nameserver address proposals to
 .Xr resolvd 8 .
 .Xr resolvd 8
-will react to this request by writing the nameservers to
+will replace all existing nameservers for the given interface in
 .Xr resolv.conf 5 .
 If no
 .Ar address
