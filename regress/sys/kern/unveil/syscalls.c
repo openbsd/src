@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.28 2021/08/30 08:06:02 claudio Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.29 2021/08/30 08:07:22 claudio Exp $	*/
 
 /*
  * Copyright (c) 2017-2019 Bob Beck <beck@openbsd.org>
@@ -914,6 +914,25 @@ test_pathdiscover(int do_uv)
 	return 0;
 }
 
+static int
+test_fchdir(int do_uv)
+{
+	int fd2, fd;
+
+	UV_SHOULD_SUCCEED(((fd2 = open(uv_dir2, O_RDONLY | O_DIRECTORY)) == -1), "open");
+
+	if (do_uv) {
+		printf("testing fchdir\n");
+		do_unveil2();
+	}
+
+	UV_SHOULD_SUCCEED((pledge("stdio fattr rpath", NULL) == -1), "pledge");
+	UV_SHOULD_SUCCEED((chdir(uv_dir1) == -1), "chdir");
+	UV_SHOULD_SUCCEED((fchdir(fd2) == -1), "fchdir");
+	UV_SHOULD_ENOENT((fd = (open("subdir", O_RDONLY | O_DIRECTORY)) == -1), "open");
+
+	return 0;
+}
 
 int
 main (int argc, char *argv[])
@@ -963,5 +982,6 @@ main (int argc, char *argv[])
 	failures += runcompare(test_dotdotup);
 	failures += runcompare(test_kn);
 	failures += runcompare(test_pathdiscover);
+	failures += runcompare(test_fchdir);
 	exit(failures);
 }
