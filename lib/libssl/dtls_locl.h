@@ -1,4 +1,4 @@
-/* $OpenBSD: dtls_locl.h,v 1.4 2021/07/26 03:17:38 jsing Exp $ */
+/* $OpenBSD: dtls_locl.h,v 1.5 2021/08/30 19:12:25 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -131,13 +131,6 @@ typedef struct dtls1_state_internal_st {
 	unsigned char cookie[DTLS1_COOKIE_LENGTH];
 	unsigned char rcvd_cookie[DTLS1_COOKIE_LENGTH];
 	unsigned int cookie_len;
-
-	/*
-	 * The current data and handshake epoch.  This is initially
-	 * undefined, and starts at zero once the initial handshake is
-	 * completed
-	 */
-	unsigned short r_epoch;
 
 	/* records being received in the current epoch */
 	DTLS1_BITMAP bitmap;

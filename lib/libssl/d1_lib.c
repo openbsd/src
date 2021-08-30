@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_lib.c,v 1.58 2021/07/21 08:42:14 jsing Exp $ */
+/* $OpenBSD: d1_lib.c,v 1.59 2021/08/30 19:12:25 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -191,10 +191,8 @@ dtls1_clear(SSL *s)
 		memset(s->d1, 0, sizeof(*s->d1));
 		s->d1->internal = internal;
 
-		D1I(s)->r_epoch =
-		    tls12_record_layer_initial_epoch(s->internal->rl);
-
-		D1I(s)->unprocessed_rcds.epoch = D1I(s)->r_epoch + 1;
+		D1I(s)->unprocessed_rcds.epoch =
+		    tls12_record_layer_read_epoch(s->internal->rl) + 1;
 
 		if (s->server) {
 			D1I(s)->cookie_len = sizeof(D1I(s)->cookie);

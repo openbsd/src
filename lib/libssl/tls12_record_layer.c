@@ -1,4 +1,4 @@
-/* $OpenBSD: tls12_record_layer.c,v 1.33 2021/08/30 19:00:49 jsing Exp $ */
+/* $OpenBSD: tls12_record_layer.c,v 1.34 2021/08/30 19:12:25 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -296,9 +296,9 @@ tls12_record_layer_set_initial_epoch(struct tls12_record_layer *rl,
 }
 
 uint16_t
-tls12_record_layer_initial_epoch(struct tls12_record_layer *rl)
+tls12_record_layer_read_epoch(struct tls12_record_layer *rl)
 {
-	return rl->initial_epoch;
+	return rl->read->epoch;
 }
 
 uint16_t
@@ -579,6 +579,10 @@ tls12_record_layer_change_read_cipher_state(struct tls12_record_layer *rl,
 		goto err;
 
 	/* Read sequence number gets reset to zero. */
+
+	/* DTLS epoch is incremented and is permitted to wrap. */
+	if (rl->dtls)
+		read_new->epoch = rl->read_current->epoch + 1;
 
 	if (!tls12_record_layer_change_cipher_state(rl, read_new, 0,
 	    mac_key, key, iv))

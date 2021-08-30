@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.105 2021/07/31 09:31:04 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.106 2021/08/30 19:12:25 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -273,12 +273,14 @@ static int
 dtls1_process_buffered_record(SSL *s)
 {
 	/* Check if epoch is current. */
-	if (D1I(s)->unprocessed_rcds.epoch != D1I(s)->r_epoch)
+	if (D1I(s)->unprocessed_rcds.epoch !=
+	    tls12_record_layer_read_epoch(s->internal->rl))
 		return (0);
 
 	/* Update epoch once all unprocessed records have been processed. */
 	if (pqueue_peek(D1I(s)->unprocessed_rcds.q) == NULL) {
-		D1I(s)->unprocessed_rcds.epoch = D1I(s)->r_epoch + 1;
+		D1I(s)->unprocessed_rcds.epoch =
+		    tls12_record_layer_read_epoch(s->internal->rl) + 1;
 		return (0);
 	}
 
@@ -858,7 +860,7 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 		/* this may just be a stale retransmit */
 		if (!dtls1_get_message_header(rr->data, &msg_hdr))
 			return -1;
-		if (rr->epoch != D1I(s)->r_epoch) {
+		if (rr->epoch != tls12_record_layer_read_epoch(s->internal->rl)) {
 			rr->length = 0;
 			goto start;
 		}
@@ -1136,17 +1138,20 @@ dtls1_record_bitmap_update(SSL *s, DTLS1_BITMAP *bitmap,
 static DTLS1_BITMAP *
 dtls1_get_bitmap(SSL *s, SSL3_RECORD_INTERNAL *rr, unsigned int *is_next_epoch)
 {
-	uint16_t next_epoch = D1I(s)->r_epoch + 1;
+	uint16_t read_epoch, read_epoch_next;
 
 	*is_next_epoch = 0;
 
+	read_epoch = tls12_record_layer_read_epoch(s->internal->rl);
+	read_epoch_next = read_epoch + 1;
+
 	/* In current epoch, accept HM, CCS, DATA, & ALERT */
-	if (rr->epoch == D1I(s)->r_epoch)
+	if (rr->epoch == read_epoch)
 		return &D1I(s)->bitmap;
 
 	/* Only HM and ALERT messages can be from the next epoch */
-	else if (rr->epoch == next_epoch &&
-		(rr->type == SSL3_RT_HANDSHAKE || rr->type == SSL3_RT_ALERT)) {
+	if (rr->epoch == read_epoch_next &&
+	    (rr->type == SSL3_RT_HANDSHAKE || rr->type == SSL3_RT_ALERT)) {
 		*is_next_epoch = 1;
 		return &D1I(s)->next_bitmap;
 	}
@@ -1157,7 +1162,6 @@ dtls1_get_bitmap(SSL *s, SSL3_RECORD_INTERNAL *rr, unsigned int *is_next_epoch)
 void
 dtls1_reset_read_seq_numbers(SSL *s)
 {
-	D1I(s)->r_epoch++;
 	memcpy(&(D1I(s)->bitmap), &(D1I(s)->next_bitmap), sizeof(DTLS1_BITMAP));
 	memset(&(D1I(s)->next_bitmap), 0, sizeof(DTLS1_BITMAP));
 }
