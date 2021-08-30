@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.357 2021/08/30 19:12:25 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.358 2021/08/30 19:25:43 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -662,6 +662,10 @@ int tls12_record_layer_seal_record(struct tls12_record_layer *rl,
     uint8_t content_type, const uint8_t *content, size_t content_len,
     CBB *out);
 
+typedef void (ssl_info_callback_fn)(const SSL *s, int type, int val);
+typedef void (ssl_msg_callback_fn)(int is_write, int version, int content_type,
+    const void *buf, size_t len, SSL *ssl, void *arg);
+
 typedef struct ssl_ctx_internal_st {
 	uint16_t min_tls_version;
 	uint16_t max_tls_version;
@@ -704,11 +708,10 @@ typedef struct ssl_ctx_internal_st {
 	int (*app_verify_cookie_cb)(SSL *ssl, const unsigned char *cookie,
 	    unsigned int cookie_len);
 
-	void (*info_callback)(const SSL *ssl,int type,int val); /* used if SSL's info_callback is NULL */
+	ssl_info_callback_fn *info_callback;
 
 	/* callback that allows applications to peek at protocol messages */
-	void (*msg_callback)(int write_p, int version, int content_type,
-	    const void *buf, size_t len, SSL *ssl, void *arg);
+	ssl_msg_callback_fn *msg_callback;
 	void *msg_callback_arg;
 
 	int (*default_verify_callback)(int ok,X509_STORE_CTX *ctx); /* called 'verify_callback' in the SSL */
@@ -854,17 +857,17 @@ typedef struct ssl_internal_st {
 	/* true when we are actually in SSL_accept() or SSL_connect() */
 	int in_handshake;
 	int (*handshake_func)(SSL *);
-	/* callback that allows applications to peek at protocol messages */
-	void (*msg_callback)(int write_p, int version, int content_type,
-	    const void *buf, size_t len, SSL *ssl, void *arg);
-	void *msg_callback_arg;
 
-	/* Default generate session ID callback. */
-	GEN_SESSION_CB generate_session_id;
+	ssl_info_callback_fn *info_callback;
+
+	/* callback that allows applications to peek at protocol messages */
+	ssl_msg_callback_fn *msg_callback;
+	void *msg_callback_arg;
 
 	int (*verify_callback)(int ok,X509_STORE_CTX *ctx); /* fail if callback returns 0 */
 
-	void (*info_callback)(const SSL *ssl,int type,int val); /* optional informational callback */
+	/* Default generate session ID callback. */
+	GEN_SESSION_CB generate_session_id;
 
 	/* TLS extension debug callback */
 	void (*tlsext_debug_cb)(SSL *s, int client_server, int type,
@@ -1176,6 +1179,10 @@ void ssl_clear_cipher_state(SSL *s);
 void ssl_clear_cipher_read_state(SSL *s);
 void ssl_clear_cipher_write_state(SSL *s);
 int ssl_clear_bad_session(SSL *s);
+
+void ssl_info_callback(const SSL *s, int type, int value);
+void ssl_msg_callback(SSL *s, int is_write, int content_type,
+    const void *msg_buf, size_t msg_len);
 
 CERT *ssl_cert_new(void);
 CERT *ssl_cert_dup(CERT *cert);

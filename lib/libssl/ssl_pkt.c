@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.49 2021/08/28 15:20:58 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.50 2021/08/30 19:25:43 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -714,8 +714,7 @@ ssl3_write_pending(SSL *s, int type, const unsigned char *buf, unsigned int len)
 int
 ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 {
-	void (*cb)(const SSL *ssl, int type2, int val) = NULL;
-	int al, i, j, ret, rrcount = 0;
+	int al, i, ret, rrcount = 0;
 	unsigned int n;
 	SSL3_RECORD_INTERNAL *rr;
 
@@ -914,10 +913,8 @@ ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 			goto fatal_err;
 		}
 
-		if (s->internal->msg_callback)
-			s->internal->msg_callback(0, s->version, SSL3_RT_HANDSHAKE,
-			    S3I(s)->handshake_fragment, 4, s,
-			    s->internal->msg_callback_arg);
+		ssl_msg_callback(s, 0, SSL3_RT_HANDSHAKE,
+		    S3I(s)->handshake_fragment, 4);
 
 		if (SSL_is_init_finished(s) &&
 		    !(s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS) &&
@@ -978,19 +975,11 @@ ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 
 		S3I(s)->alert_fragment_len = 0;
 
-		if (s->internal->msg_callback)
-			s->internal->msg_callback(0, s->version, SSL3_RT_ALERT,
-			    S3I(s)->alert_fragment, 2, s, s->internal->msg_callback_arg);
+		ssl_msg_callback(s, 0, SSL3_RT_ALERT,
+		    S3I(s)->alert_fragment, 2);
 
-		if (s->internal->info_callback != NULL)
-			cb = s->internal->info_callback;
-		else if (s->ctx->internal->info_callback != NULL)
-			cb = s->ctx->internal->info_callback;
-
-		if (cb != NULL) {
-			j = (alert_level << 8) | alert_descr;
-			cb(s, SSL_CB_READ_ALERT, j);
-		}
+		ssl_info_callback(s, SSL_CB_READ_ALERT,
+		    (alert_level << 8) | alert_descr);
 
 		if (alert_level == SSL3_AL_WARNING) {
 			S3I(s)->warn_alert = alert_descr;
@@ -1064,11 +1053,7 @@ ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 
 		rr->length = 0;
 
-		if (s->internal->msg_callback) {
-			s->internal->msg_callback(0, s->version,
-			    SSL3_RT_CHANGE_CIPHER_SPEC, rr->data, 1, s,
-			    s->internal->msg_callback_arg);
-		}
+		ssl_msg_callback(s, 0, SSL3_RT_CHANGE_CIPHER_SPEC, rr->data, 1);
 
 		S3I(s)->change_cipher_spec = 1;
 		if (!ssl3_do_change_cipher_spec(s))
@@ -1224,7 +1209,6 @@ ssl3_send_alert(SSL *s, int level, int desc)
 int
 ssl3_dispatch_alert(SSL *s)
 {
-	void (*cb)(const SSL *ssl, int type, int val);
 	int ret;
 
 	S3I(s)->alert_dispatch = 0;
@@ -1241,15 +1225,10 @@ ssl3_dispatch_alert(SSL *s)
 	if (S3I(s)->send_alert[0] == SSL3_AL_FATAL)
 		(void)BIO_flush(s->wbio);
 
-	if (s->internal->msg_callback)
-		s->internal->msg_callback(1, s->version, SSL3_RT_ALERT,
-		    S3I(s)->send_alert, 2, s, s->internal->msg_callback_arg);
+	ssl_msg_callback(s, 1, SSL3_RT_ALERT, S3I(s)->send_alert, 2);
 
-	if ((cb = s->internal->info_callback) == NULL)
-		cb = s->ctx->internal->info_callback;
-	if (cb != NULL)
-		cb(s, SSL_CB_WRITE_ALERT, (S3I(s)->send_alert[0] << 8) |
-		    S3I(s)->send_alert[1]);
+	ssl_info_callback(s, SSL_CB_WRITE_ALERT,
+	    (S3I(s)->send_alert[0] << 8) | S3I(s)->send_alert[1]);
 
 	return ret;
 }

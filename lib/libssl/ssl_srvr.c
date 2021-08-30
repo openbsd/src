@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.117 2021/06/29 19:43:15 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.118 2021/08/30 19:25:43 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -174,19 +174,13 @@
 int
 ssl3_accept(SSL *s)
 {
-	void (*cb)(const SSL *ssl, int type, int val) = NULL;
 	unsigned long alg_k;
-	int ret = -1;
 	int new_state, state, skip = 0;
 	int listen = 0;
+	int ret = -1;
 
 	ERR_clear_error();
 	errno = 0;
-
-	if (s->internal->info_callback != NULL)
-		cb = s->internal->info_callback;
-	else if (s->ctx->internal->info_callback != NULL)
-		cb = s->ctx->internal->info_callback;
 
 	if (SSL_is_dtls(s))
 		listen = D1I(s)->listen;
@@ -212,8 +206,8 @@ ssl3_accept(SSL *s)
 		case SSL_ST_BEFORE|SSL_ST_ACCEPT:
 		case SSL_ST_OK|SSL_ST_ACCEPT:
 			s->server = 1;
-			if (cb != NULL)
-				cb(s, SSL_CB_HANDSHAKE_START, 1);
+
+			ssl_info_callback(s, SSL_CB_HANDSHAKE_START, 1);
 
 			if (!ssl_legacy_stack_version(s, s->version)) {
 				SSLerror(s, ERR_R_INTERNAL_ERROR);
@@ -705,8 +699,7 @@ ssl3_accept(SSL *s)
 				/* s->server=1; */
 				s->internal->handshake_func = ssl3_accept;
 
-				if (cb != NULL)
-					cb(s, SSL_CB_HANDSHAKE_DONE, 1);
+				ssl_info_callback(s, SSL_CB_HANDSHAKE_DONE, 1);
 			}
 
 			ret = 1;
@@ -735,10 +728,10 @@ ssl3_accept(SSL *s)
 			}
 
 
-			if ((cb != NULL) && (S3I(s)->hs.state != state)) {
+			if (S3I(s)->hs.state != state) {
 				new_state = S3I(s)->hs.state;
 				S3I(s)->hs.state = state;
-				cb(s, SSL_CB_ACCEPT_LOOP, 1);
+				ssl_info_callback(s, SSL_CB_ACCEPT_LOOP, 1);
 				S3I(s)->hs.state = new_state;
 			}
 		}
@@ -747,8 +740,7 @@ ssl3_accept(SSL *s)
  end:
 	/* BIO_flush(s->wbio); */
 	s->internal->in_handshake--;
-	if (cb != NULL)
-		cb(s, SSL_CB_ACCEPT_EXIT, ret);
+	ssl_info_callback(s, SSL_CB_ACCEPT_EXIT, ret);
 
 	return (ret);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_both.c,v 1.33 2021/07/01 17:53:39 jsing Exp $ */
+/* $OpenBSD: ssl_both.c,v 1.34 2021/08/30 19:25:43 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -150,10 +150,8 @@ ssl3_do_write(SSL *s, int type)
 		    (unsigned char *)&s->internal->init_buf->data[s->internal->init_off], ret);
 
 	if (ret == s->internal->init_num) {
-		if (s->internal->msg_callback)
-			s->internal->msg_callback(1, s->version, type, s->internal->init_buf->data,
-			    (size_t)(s->internal->init_off + s->internal->init_num), s,
-			    s->internal->msg_callback_arg);
+		ssl_msg_callback(s, 1, type, s->internal->init_buf->data,
+		    (size_t)(s->internal->init_off + s->internal->init_num));
 		return (1);
 	}
 
@@ -456,10 +454,8 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 					s->internal->init_num = 0;
 					skip_message = 1;
 
-					if (s->internal->msg_callback)
-						s->internal->msg_callback(0, s->version,
-						    SSL3_RT_HANDSHAKE, p, 4, s,
-						    s->internal->msg_callback_arg);
+					ssl_msg_callback(s, 0,
+					    SSL3_RT_HANDSHAKE, p, 4);
 				}
 			}
 		} while (skip_message);
@@ -516,11 +512,9 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 		tls1_transcript_record(s, (unsigned char *)s->internal->init_buf->data,
 		    s->internal->init_num + 4);
 
-		if (s->internal->msg_callback)
-			s->internal->msg_callback(0, s->version,
-			    SSL3_RT_HANDSHAKE, s->internal->init_buf->data,
-			    (size_t)s->internal->init_num + 4, s,
-			    s->internal->msg_callback_arg);
+		ssl_msg_callback(s, 0, SSL3_RT_HANDSHAKE,
+		    s->internal->init_buf->data,
+		    (size_t)s->internal->init_num + 4);
 	}
 
 	*ok = 1;

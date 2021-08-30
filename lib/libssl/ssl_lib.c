@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.262 2021/07/01 17:53:39 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.263 2021/08/30 19:25:43 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1184,9 +1184,7 @@ SSL_callback_ctrl(SSL *s, int cmd, void (*fp)(void))
 {
 	switch (cmd) {
 	case SSL_CTRL_SET_MSG_CALLBACK:
-		s->internal->msg_callback = (void (*)(int write_p, int version,
-		    int content_type, const void *buf, size_t len,
-		    SSL *ssl, void *arg))(fp);
+		s->internal->msg_callback = (ssl_msg_callback_fn *)(fp);
 		return (1);
 
 	default:
@@ -1284,9 +1282,7 @@ SSL_CTX_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)(void))
 {
 	switch (cmd) {
 	case SSL_CTRL_SET_MSG_CALLBACK:
-		ctx->internal->msg_callback = (void (*)(int write_p, int version,
-		    int content_type, const void *buf, size_t len, SSL *ssl,
-		    void *arg))(fp);
+		ctx->internal->msg_callback = (ssl_msg_callback_fn *)fp;
 		return (1);
 
 	default:
@@ -2620,6 +2616,26 @@ void
 ssl_clear_cipher_write_state(SSL *s)
 {
 	tls12_record_layer_clear_write_state(s->internal->rl);
+}
+
+void
+ssl_info_callback(const SSL *s, int type, int value)
+{
+	ssl_info_callback_fn *cb;
+
+	if ((cb = s->internal->info_callback) == NULL)
+		cb = s->ctx->internal->info_callback;
+	if (cb != NULL)
+		cb(s, type, value);
+}
+
+void
+ssl_msg_callback(SSL *s, int is_write, int content_type,
+    const void *msg_buf, size_t msg_len)
+{
+	if (s->internal->msg_callback != NULL)
+		s->internal->msg_callback(is_write, s->version, content_type,
+		    msg_buf, msg_len, s, s->internal->msg_callback_arg);
 }
 
 /* Fix this function so that it takes an optional type parameter */

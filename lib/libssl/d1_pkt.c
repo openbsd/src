@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.106 2021/08/30 19:12:25 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.107 2021/08/30 19:25:43 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -515,10 +515,9 @@ dtls1_get_record(SSL *s)
 int
 dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 {
-	int al, i, j, ret;
+	int al, i, ret;
 	unsigned int n;
 	SSL3_RECORD_INTERNAL *rr;
-	void (*cb)(const SSL *ssl, int type2, int val) = NULL;
 
 	if (S3I(s)->rbuf.buf == NULL) /* Not initialized yet */
 		if (!ssl3_setup_buffers(s))
@@ -727,9 +726,8 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 
 		/* no need to check sequence number on HELLO REQUEST messages */
 
-		if (s->internal->msg_callback)
-			s->internal->msg_callback(0, s->version, SSL3_RT_HANDSHAKE,
-		D1I(s)->handshake_fragment, 4, s, s->internal->msg_callback_arg);
+		ssl_msg_callback(s, 0, SSL3_RT_HANDSHAKE,
+		    D1I(s)->handshake_fragment, 4);
 
 		if (SSL_is_init_finished(s) &&
 		    !(s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS) &&
@@ -774,19 +772,10 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 
 		D1I(s)->alert_fragment_len = 0;
 
-		if (s->internal->msg_callback)
-			s->internal->msg_callback(0, s->version, SSL3_RT_ALERT,
-		D1I(s)->alert_fragment, 2, s, s->internal->msg_callback_arg);
+		ssl_msg_callback(s, 0, SSL3_RT_ALERT, D1I(s)->alert_fragment, 2);
 
-		if (s->internal->info_callback != NULL)
-			cb = s->internal->info_callback;
-		else if (s->ctx->internal->info_callback != NULL)
-			cb = s->ctx->internal->info_callback;
-
-		if (cb != NULL) {
-			j = (alert_level << 8) | alert_descr;
-			cb(s, SSL_CB_READ_ALERT, j);
-		}
+		ssl_info_callback(s, SSL_CB_READ_ALERT,
+		    (alert_level << 8) | alert_descr);
 
 		if (alert_level == SSL3_AL_WARNING) {
 			S3I(s)->warn_alert = alert_descr;
@@ -832,9 +821,7 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 
 		rr->length = 0;
 
-		if (s->internal->msg_callback)
-			s->internal->msg_callback(0, s->version, SSL3_RT_CHANGE_CIPHER_SPEC,
-		rr->data, 1, s, s->internal->msg_callback_arg);
+		ssl_msg_callback(s, 0, SSL3_RT_CHANGE_CIPHER_SPEC, rr->data, 1);
 
 		/* We can't process a CCS now, because previous handshake
 		 * messages are still missing, so just drop it.

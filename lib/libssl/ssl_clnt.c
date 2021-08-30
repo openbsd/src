@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.107 2021/06/30 09:59:07 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.108 2021/08/30 19:25:43 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -179,17 +179,11 @@ static int ca_dn_cmp(const X509_NAME * const *a, const X509_NAME * const *b);
 int
 ssl3_connect(SSL *s)
 {
-	void (*cb)(const SSL *ssl, int type, int val) = NULL;
-	int ret = -1;
 	int new_state, state, skip = 0;
+	int ret = -1;
 
 	ERR_clear_error();
 	errno = 0;
-
-	if (s->internal->info_callback != NULL)
-		cb = s->internal->info_callback;
-	else if (s->ctx->internal->info_callback != NULL)
-		cb = s->ctx->internal->info_callback;
 
 	s->internal->in_handshake++;
 	if (!SSL_in_init(s) || SSL_in_before(s))
@@ -210,8 +204,8 @@ ssl3_connect(SSL *s)
 		case SSL_ST_OK|SSL_ST_CONNECT:
 
 			s->server = 0;
-			if (cb != NULL)
-				cb(s, SSL_CB_HANDSHAKE_START, 1);
+
+			ssl_info_callback(s, SSL_CB_HANDSHAKE_START, 1);
 
 			if (!ssl_legacy_stack_version(s, s->version)) {
 				SSLerror(s, ERR_R_INTERNAL_ERROR);
@@ -597,8 +591,7 @@ ssl3_connect(SSL *s)
 			s->internal->handshake_func = ssl3_connect;
 			s->ctx->internal->stats.sess_connect_good++;
 
-			if (cb != NULL)
-				cb(s, SSL_CB_HANDSHAKE_DONE, 1);
+			ssl_info_callback(s, SSL_CB_HANDSHAKE_DONE, 1);
 
 			if (SSL_is_dtls(s)) {
 				/* done with handshaking */
@@ -623,10 +616,10 @@ ssl3_connect(SSL *s)
 					goto end;
 			}
 
-			if ((cb != NULL) && (S3I(s)->hs.state != state)) {
+			if (S3I(s)->hs.state != state) {
 				new_state = S3I(s)->hs.state;
 				S3I(s)->hs.state = state;
-				cb(s, SSL_CB_CONNECT_LOOP, 1);
+				ssl_info_callback(s, SSL_CB_CONNECT_LOOP, 1);
 				S3I(s)->hs.state = new_state;
 			}
 		}
@@ -635,8 +628,7 @@ ssl3_connect(SSL *s)
 
  end:
 	s->internal->in_handshake--;
-	if (cb != NULL)
-		cb(s, SSL_CB_CONNECT_EXIT, ret);
+	ssl_info_callback(s, SSL_CB_CONNECT_EXIT, ret);
 
 	return (ret);
 }
