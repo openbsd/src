@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdtvar.h,v 1.25 2020/07/22 13:16:04 krw Exp $	*/
+/*	$OpenBSD: gdtvar.h,v 1.26 2021/08/30 14:44:39 jasper Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -72,7 +72,6 @@ struct gdt_intr_ctx {
 struct gdt_ccb {
 	TAILQ_ENTRY(gdt_ccb) gc_chain;
 	struct scsi_xfer *gc_xs;
-	struct gdt_ucmd *gc_ucmd;
 	bus_dmamap_t gc_dmamap_xfer;
 	int gc_timeout;
 	u_int32_t gc_info;
@@ -129,7 +128,6 @@ struct gdt_softc {
 
 	struct gdt_ccb sc_ccbs[GDT_MAXCMDS];
 	TAILQ_HEAD(, gdt_ccb) sc_free_ccb, sc_ccbq;
-	TAILQ_HEAD(, gdt_ucmd) sc_ucmdq;
 	struct scsi_xfer_list sc_queue;
 
 	struct mutex		sc_ccb_mtx;

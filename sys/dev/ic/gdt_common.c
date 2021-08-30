@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.83 2020/10/15 00:01:24 krw Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.84 2021/08/30 14:44:39 jasper Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2003 Niklas Hallqvist.  All rights reserved.
@@ -125,7 +125,6 @@ gdt_attach(struct gdt_softc *sc)
 
 	TAILQ_INIT(&sc->sc_free_ccb);
 	TAILQ_INIT(&sc->sc_ccbq);
-	TAILQ_INIT(&sc->sc_ucmdq);
 	SIMPLEQ_INIT(&sc->sc_queue);
 
 	mtx_init(&sc->sc_ccb_mtx, IPL_BIO);
