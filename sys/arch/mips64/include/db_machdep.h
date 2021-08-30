@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.20 2019/11/07 14:44:53 mpi Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.21 2021/08/30 08:11:12 jasper Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -39,7 +39,6 @@ typedef struct trapframe db_regs_t;
 extern db_regs_t	ddb_regs;
 
 typedef	long		db_expr_t;
-typedef vaddr_t		db_addr_t;
 
 #define	SOFTWARE_SSTEP		/* Need software single step */
 #define	SOFTWARE_SSTEP_EMUL	/* next_instr_address() emulates 100% */

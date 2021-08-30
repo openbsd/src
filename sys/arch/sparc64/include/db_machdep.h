@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.21 2019/11/07 14:44:53 mpi Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.22 2021/08/30 08:11:12 jasper Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.12 2001/07/07 15:16:13 eeh Exp $ */
 
 /*
@@ -43,7 +43,6 @@
 
 /* end of mangling */
 
-typedef	vaddr_t		db_addr_t;	/* address - unsigned */
 typedef	long		db_expr_t;	/* expression - signed */
 
 struct trapstate {

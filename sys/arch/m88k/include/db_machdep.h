@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.19 2016/04/27 11:10:48 mpi Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.20 2021/08/30 08:11:12 jasper Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -56,7 +56,6 @@ do {									\
 /* Entry trap for the debugger - used for inline assembly breaks*/
 #define ENTRY_ASM		"tb0 0, %r0, 132"
 
-typedef	vaddr_t		db_addr_t;
 typedef	long		db_expr_t;
 typedef	struct reg	db_regs_t;
 extern db_regs_t	ddb_regs;	/* register state */

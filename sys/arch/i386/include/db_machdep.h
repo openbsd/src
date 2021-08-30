@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.29 2019/11/07 14:44:53 mpi Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.30 2021/08/30 08:11:12 jasper Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.9 1996/05/03 19:23:59 christos Exp $	*/
 
 /* 
@@ -38,7 +38,6 @@
 #include <uvm/uvm_extern.h>
 #include <machine/trap.h>
 
-typedef	vaddr_t		db_addr_t;	/* address - unsigned */
 typedef	long		db_expr_t;	/* expression - signed */
 
 typedef struct trapframe db_regs_t;

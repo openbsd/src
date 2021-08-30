@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.21 2019/11/07 14:44:53 mpi Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.22 2021/08/30 08:11:12 jasper Exp $	*/
 
 /*
  * Copyright (c) 1998-2005 Michael Shalayeff
@@ -23,7 +23,6 @@
 #include <uvm/uvm_extern.h>
 
 /* types the generic ddb module needs */
-typedef	vaddr_t db_addr_t;
 typedef	long db_expr_t;
 
 typedef struct trapframe db_regs_t;
