@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.41 2021/08/28 05:30:09 inoguchi Exp $ */
+/* $OpenBSD: ca.c,v 1.42 2021/08/30 12:12:11 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1512,10 +1512,9 @@ ca_main(int argc, char **argv)
 			if (!save_serial(crlnumberfile, "new", crlnumber, NULL))
 				goto err;
 
-		if (crlnumber != NULL) {
-			BN_free(crlnumber);
-			crlnumber = NULL;
-		}
+		BN_free(crlnumber);
+		crlnumber = NULL;
+
 		if (!do_X509_CRL_sign(bio_err, crl, pkey, dgst,
 		    ca_config.sigopts))
 			goto err;
@@ -1565,21 +1564,18 @@ ca_main(int argc, char **argv)
 	BIO_free_all(out);
 	BIO_free_all(in);
 
-	if (cert_sk)
-		sk_X509_pop_free(cert_sk, X509_free);
+	sk_X509_pop_free(cert_sk, X509_free);
 
 	if (ret)
 		ERR_print_errors(bio_err);
-	if (free_key && ca_config.key)
+	if (free_key)
 		free(ca_config.key);
 	BN_free(serial);
 	BN_free(crlnumber);
 	free_index(db);
-	if (ca_config.sigopts)
-		sk_OPENSSL_STRING_free(ca_config.sigopts);
+	sk_OPENSSL_STRING_free(ca_config.sigopts);
 	EVP_PKEY_free(pkey);
-	if (x509)
-		X509_free(x509);
+	X509_free(x509);
 	X509_CRL_free(crl);
 	X509_REVOKED_free(r);
 	ASN1_TIME_free(tmptm);
@@ -1659,10 +1655,9 @@ certify(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 	    ext_copy, selfsign);
 
  err:
-	if (req != NULL)
-		X509_REQ_free(req);
-	if (in != NULL)
-		BIO_free(in);
+	X509_REQ_free(req);
+	BIO_free(in);
+
 	return (ok);
 }
 
@@ -1718,10 +1713,9 @@ certify_cert(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 	    ext_copy, 0);
 
  err:
-	if (rreq != NULL)
-		X509_REQ_free(rreq);
-	if (req != NULL)
-		X509_free(req);
+	X509_REQ_free(rreq);
+	X509_free(req);
+
 	return (ok);
 }
 
@@ -1940,8 +1934,7 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 			if (push != NULL) {
 				if (!X509_NAME_add_entry(subject, push,
 				    -1, 0)) {
-					if (push != NULL)
-						X509_NAME_ENTRY_free(push);
+					X509_NAME_ENTRY_free(push);
 					BIO_printf(bio_err,
 					    "Memory allocation failure\n");
 					goto err;
@@ -2129,10 +2122,7 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 		 * Free the current entries if any, there should not be any I
 		 * believe
 		 */
-		if (ci->extensions != NULL)
-			sk_X509_EXTENSION_pop_free(ci->extensions,
-			    X509_EXTENSION_free);
-
+		sk_X509_EXTENSION_pop_free(ci->extensions, X509_EXTENSION_free);
 		ci->extensions = NULL;
 
 		/* Initialize the context structure */
@@ -2290,20 +2280,17 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 	for (i = 0; i < DB_NUMBER; i++)
 		free(row[i]);
 
-	if (CAname != NULL)
-		X509_NAME_free(CAname);
-	if (subject != NULL)
-		X509_NAME_free(subject);
-	if ((dn_subject != NULL) && !email_dn)
+	X509_NAME_free(CAname);
+	X509_NAME_free(subject);
+	if (!email_dn)
 		X509_NAME_free(dn_subject);
-	if (tmptm != NULL)
-		ASN1_UTCTIME_free(tmptm);
+	ASN1_UTCTIME_free(tmptm);
 	if (ok <= 0) {
-		if (ret != NULL)
-			X509_free(ret);
+		X509_free(ret);
 		ret = NULL;
 	} else
 		*xret = ret;
+
 	return (ok);
 }
 
@@ -2451,12 +2438,9 @@ certify_spkac(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 	    ext_copy, 0);
 
  err:
-	if (req != NULL)
-		X509_REQ_free(req);
-	if (parms != NULL)
-		CONF_free(parms);
-	if (spki != NULL)
-		NETSCAPE_SPKI_free(spki);
+	X509_REQ_free(req);
+	CONF_free(parms);
+	NETSCAPE_SPKI_free(spki);
 
 	return (ok);
 }
