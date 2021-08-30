@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.144 2021/06/29 17:43:57 deraadt Exp $ */
+/*	$OpenBSD: main.c,v 1.145 2021/08/30 16:05:55 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -122,6 +122,7 @@ entity_write_req(const struct entity *ent)
 
 	if (filepath_add(&fpt, ent->file) == 0) {
 		warnx("%s: File already visited", ent->file);
+		entity_queue--;
 		return;
 	}
 
