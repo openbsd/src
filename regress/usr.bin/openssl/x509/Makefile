@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2021/08/30 06:51:36 beck Exp $
+# $OpenBSD: Makefile,v 1.9 2021/08/30 09:06:04 beck Exp $
 
 # Copyright (c) 2021 Jan Klemkow <j.klemkow@wemelug.de>
 #
@@ -57,9 +57,9 @@ test-inlabel-wildcard-cert-no-CA-client:
 	    timeout=$$(($$(date +%s) + 5)); \
 	    while fstat -p $$! | ! grep -q 'tcp .* \*:4433$$'; \
 		do test $$(date +%s) -lt $$timeout || exit 1; done
-	# start client
+	# start client, note - some versions of openssl return 21.
 	echo Q | ${OPENSSL} s_client -verify_return_error \
-	    | grep "Verify return code: 21"
+	    | grep "Verify return code: 20"
 
 test-inlabel-wildcard-cert-CA-client:
 	# unusual wildcard cert, CA given to client
@@ -81,9 +81,9 @@ test-common-wildcard-cert-no-CA-client:
 	    timeout=$$(($$(date +%s) + 5)); \
 	    while fstat -p $$! | ! grep -q 'tcp .* \*:4433$$'; \
 		do test $$(date +%s) -lt $$timeout || exit 1; done
-	# start client
+	# start client, note - some versions of openssl return 21.
 	echo Q | ${OPENSSL} s_client \
-	    | grep "Verify return code: 21"
+	    | grep "Verify return code: 20"
 
 test-common-wildcard-cert-CA-client:
 	# common wildcard cert, CA given to client
