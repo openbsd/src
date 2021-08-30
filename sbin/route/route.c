@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.257 2021/08/05 07:30:04 tb Exp $	*/
+/*	$OpenBSD: route.c,v 1.258 2021/08/30 18:49:19 kn Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -1171,7 +1171,7 @@ nameserver(int argc, char *argv[])
 #define nitems(_a)      (sizeof((_a)) / sizeof((_a)[0]))
 #endif
 
-	for (; argc > 0; argc--, argv++) {
+	for (; argc > 0 && ns4_count + ns6_count < 5; argc--, argv++) {
 		error = getaddrinfo(*argv, NULL, &hints, &res);
 		if (error) {
 			errx(1, "%s", gai_strerror(error));
@@ -1182,21 +1182,11 @@ nameserver(int argc, char *argv[])
 
 		switch (res->ai_addr->sa_family) {
 		case AF_INET:
-			if (ns4_count >= nitems(ns4)) {
-				warnx("ignoring superfluous nameserver: %s",
-				    *argv);
-				break;
-			}
 			memcpy(&ns4[ns4_count++],
 			    &((struct sockaddr_in *)res->ai_addr)->sin_addr,
 			    sizeof(struct in_addr));
 			break;
 		case AF_INET6:
-			if (ns6_count >= nitems(ns6)) {
-				warnx("ignoring superfluous nameserver: %s",
-				    *argv);
-				break;
-			}
 			memcpy(&ns6[ns6_count++],
 			    &((struct sockaddr_in6 *)res->ai_addr)->sin6_addr,
 			    sizeof(struct in6_addr));
