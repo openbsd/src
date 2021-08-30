@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.57 2021/08/29 13:43:46 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.58 2021/08/30 20:25:01 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -563,6 +563,8 @@ main(int argc, char *argv[])
 usage:
 	fprintf(stderr, "usage: %s"
 	    " [-aDglnoprtvx] [-e program] [--address=sourceaddr] [--del]\n"
+	    "\t[--exclude] [--exclude-from=file] [--include] "
+	    "[--include-from=file]\n"
 	    "\t[--no-motd] [--numeric-ids] [--port=portnumber] "
 	    "[--rsync-path=program]\n\t[--timeout=seconds] [--version] "
             "source ... directory\n",
