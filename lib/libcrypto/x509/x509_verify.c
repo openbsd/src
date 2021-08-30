@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.45 2021/08/29 17:13:15 beck Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.46 2021/08/30 06:51:36 beck Exp $ */
 /*
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
  *
@@ -132,8 +132,11 @@ x509_verify_chain_append(struct x509_verify_chain *chain, X509 *cert,
 	 * We've just added the issuer for the previous certificate,
 	 * clear its error if appropriate.
 	 */
-	if (idx > 1 && chain->cert_errors[idx - 1] ==
-	    X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY)
+	if (idx > 1 &&
+	    (chain->cert_errors[idx - 1] ==
+	    X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY ||
+	    chain->cert_errors[idx - 1] ==
+	    X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE))
 		chain->cert_errors[idx - 1] = X509_V_OK;
 
 	return 1;
@@ -406,7 +409,9 @@ x509_verify_ctx_add_chain(struct x509_verify_ctx *ctx,
 
 	/* Clear a get issuer failure for a root certificate. */
 	if (chain->cert_errors[depth] ==
-	    X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY)
+	    X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY ||
+	    chain->cert_errors[depth] ==
+	    X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE)
 		chain->cert_errors[depth] = X509_V_OK;
 
 	if (!x509_verify_ctx_validate_legacy_chain(ctx, chain, depth))
@@ -596,7 +601,8 @@ x509_verify_build_chains(struct x509_verify_ctx *ctx, X509 *cert,
 		return;
 
 	count = ctx->chains_count;
-	ctx->error = X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY;
+	ctx->error = depth == 0 ? X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE :
+	    X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY;
 	ctx->error_depth = depth;
 	if (ctx->xsc != NULL) {
 		/*
