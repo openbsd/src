@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_unveil.c,v 1.48 2021/07/16 07:59:38 claudio Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.49 2021/08/30 09:05:44 claudio Exp $	*/
 
 /*
  * Copyright (c) 2017-2019 Bob Beck <beck@openbsd.org>
@@ -205,6 +205,7 @@ unveil_copy(struct process *parent, struct process *child)
 {
 	size_t i;
 
+	child->ps_uvdone = parent->ps_uvdone;
 	if (parent->ps_uvvcount == 0)
 		return;
 
@@ -236,7 +237,6 @@ unveil_copy(struct process *parent, struct process *child)
 		to->uv_cover = from->uv_cover;
 	}
 	child->ps_uvvcount = parent->ps_uvvcount;
-	child->ps_uvdone = parent->ps_uvdone;
 }
 
 /*
