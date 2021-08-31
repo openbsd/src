@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.36 2021/05/30 15:05:32 visa Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.37 2021/08/31 14:37:49 mlarkin Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /*
@@ -47,6 +47,7 @@
 #include <machine/cpuvar.h>
 #include <machine/i82093var.h>
 #include <machine/atomic.h>
+#include <machine/specialreg.h>
 
 #include <ddb/db_sym.h>
 #include <ddb/db_command.h>
@@ -159,6 +160,45 @@ db_ktrap(int type, int code, db_regs_t *regs)
 	}
 #endif
 	return (1);
+}
+
+void
+db_sysregs_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+{
+	int64_t idtr, gdtr;
+	uint64_t cr;
+	uint16_t ldtr, tr;
+	uint64_t gsb;
+
+	__asm__ volatile("sidt %0" : "=m" (idtr));
+	db_printf("idtr:   0x%08llx/%04llx\n", idtr >> 16, idtr & 0xffff);
+
+	__asm__ volatile("sgdt %0" : "=m" (gdtr));
+	db_printf("gdtr:   0x%08llx/%04llx\n", gdtr >> 16, gdtr & 0xffff);
+
+	__asm__ volatile("sldt %0" : "=g" (ldtr));
+	db_printf("ldtr:   0x%04x\n", ldtr);
+
+	__asm__ volatile("str %0" : "=g" (tr));
+	db_printf("tr:     0x%04x\n", tr);
+
+	__asm__ volatile("movq %%cr0,%0" : "=r" (cr));
+	db_printf("cr0:    0x%016llx\n", cr);
+
+	__asm__ volatile("movq %%cr2,%0" : "=r" (cr));
+	db_printf("cr2:    0x%016llx\n", cr);
+
+	__asm__ volatile("movq %%cr3,%0" : "=r" (cr));
+	db_printf("cr3:    0x%016llx\n", cr);
+
+	__asm__ volatile("movq %%cr4,%0" : "=r" (cr));
+	db_printf("cr4:    0x%016llx\n", cr);
+
+	gsb = rdmsr(MSR_GSBASE);
+	db_printf("gsb:    0x%016llx\n", gsb);
+
+	gsb = rdmsr(MSR_KERNELGSBASE);
+	db_printf("kgsb:   0x%016llx\n", gsb);
 }
 
 
@@ -369,6 +409,7 @@ struct db_command db_machine_command_table[] = {
 	{ "startcpu",	db_startproc_cmd,	0,	0 },
 	{ "stopcpu",	db_stopproc_cmd,	0,	0 },
 	{ "ddbcpu",	db_ddbproc_cmd,		0,	0 },
+	{ "sysregs",	db_sysregs_cmd,		0,	0 },
 #endif
 #if NACPI > 0
 	{ "acpi",	NULL,			0,	db_acpi_cmds },
