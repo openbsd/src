@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unwind.conf.5,v 1.29 2021/08/31 20:18:03 kn Exp $
+.\"	$OpenBSD: unwind.conf.5,v 1.30 2021/08/31 20:28:45 kn Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -92,7 +92,7 @@ Additionally, the first mentioned type gets a time bonus.
 Validating name servers are always picked over non-validating name servers.
 DNS name server types are:
 .Pp
-.Bl -tag -width "forwarder" -compact
+.Bl -tag -width "oDoT-forwarder" -compact
 .It Ic stub
 Name servers learned via DHCP or SLAAC, queried using the libc functions.
 See
