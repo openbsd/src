@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucc.c,v 1.19 2021/08/29 19:00:59 anton Exp $	*/
+/*	$OpenBSD: ucc.c,v 1.20 2021/08/31 05:16:45 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -1003,7 +1003,7 @@ ucc_add_key(struct ucc_softc *sc, int32_t usage, u_int bit)
 int
 ucc_bit_to_sym(struct ucc_softc *sc, u_int bit, const struct ucc_keysym **us)
 {
-	if (bit >= sc->sc_rawsiz)
+	if (bit >= sc->sc_rawsiz || sc->sc_raw[bit] == NULL)
 		return 1;
 	*us = sc->sc_raw[bit];
 	return 0;
