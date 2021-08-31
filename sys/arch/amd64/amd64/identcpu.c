@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.119 2021/08/31 15:11:54 kettenis Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.120 2021/08/31 15:52:59 patrick Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -41,9 +41,14 @@
 #include <sys/sysctl.h>
 
 #include "vmm.h"
+#include "pvbus.h"
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
+
+#if NPVBUS > 0
+#include <dev/pv/pvvar.h>
+#endif
 
 void	replacesmap(void);
 void	replacemeltdown(void);
@@ -521,6 +526,12 @@ identifycpu(struct cpu_info *ci)
 		ci->ci_family += (ci->ci_signature >> 20) & 0xff;
 		ci->ci_model += ((ci->ci_signature >> 16) & 0x0f) << 4;
 	}
+
+#if NPVBUS > 0
+	/* Detect hypervisors early, attach the paravirtual bus later */
+	if (CPU_IS_PRIMARY(ci) && cpu_ecxfeature & CPUIDECX_HV)
+		pvbus_identify();
+#endif
 
 	if (ci->ci_feature_flags && ci->ci_feature_flags & CPUID_TSC) {
 		/* Has TSC, check if it's constant */

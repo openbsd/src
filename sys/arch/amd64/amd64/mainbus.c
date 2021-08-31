@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.50 2020/05/14 13:07:11 kettenis Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.51 2021/08/31 15:52:59 patrick Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.1 2003/04/26 18:39:29 fvdl Exp $	*/
 
 /*
@@ -166,12 +166,6 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	extern void			(*setperf_setup)(struct cpu_info *);
 
 	printf("\n");
-
-#if NPVBUS > 0
-	/* Detect hypervisors early, attach the paravirtual bus later */
-	if (cpu_ecxfeature & CPUIDECX_HV)
-		pvbus_identify();
-#endif
 
 #if NEFIFB > 0
 	efifb_cnremap();
