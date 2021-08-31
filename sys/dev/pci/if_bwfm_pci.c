@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.52 2021/06/22 16:36:59 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.53 2021/08/31 20:58:51 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -1158,6 +1158,8 @@ bwfm_pci_setup_ring(struct bwfm_pci_softc *sc, struct bwfm_pci_msgring *ring,
 {
 	ring->w_idx_addr = w_idx + idx * idx_off;
 	ring->r_idx_addr = r_idx + idx * idx_off;
+	ring->w_ptr = 0;
+	ring->r_ptr = 0;
 	ring->nitem = nitem;
 	ring->itemsz = itemsz;
 	bwfm_pci_ring_write_rptr(sc, ring);
