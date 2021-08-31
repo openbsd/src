@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.102 2021/08/29 11:23:29 kettenis Exp $ */
+/*	$OpenBSD: nvme.c,v 1.103 2021/08/31 04:21:04 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -1551,6 +1551,7 @@ nvme_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size,
 	u_int64_t data_bus_phys, page_bus_phys;
 	u_int16_t flags;
 	int i;
+	int error;
 
 	if (op == HIB_INIT) {
 		struct device *disk;
@@ -1652,28 +1653,44 @@ nvme_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size,
 
 	nvme_write4(my->sc, NVME_SQTDBL(NVME_HIB_Q, my->sc->sc_dstrd),
 	    my->sq_tail);
+	nvme_barrier(my->sc, NVME_SQTDBL(NVME_HIB_Q, my->sc->sc_dstrd), 4,
+	    BUS_SPACE_BARRIER_WRITE);
+
+	error = 0;
 
 	icqe = NVME_DMA_KVA(my->sc->sc_hib_q->q_cq_dmamem);
 	icqe += my->cq_head;
+
+	nvme_dmamem_sync(my->sc, my->sc->sc_hib_q->q_cq_dmamem,
+	    BUS_DMASYNC_POSTREAD);
 	for (;;) {
 		flags = lemtoh16(&icqe->flags);
-		if ((flags & NVME_CQE_PHASE) == my->cqe_phase)
-			break;
+		if ((flags & NVME_CQE_PHASE) == my->cqe_phase) {
+			if ((NVME_CQE_SC(flags) != NVME_CQE_SC_SUCCESS) ||
+			    (icqe->cid != blkno % 0xffff))
+				error = EIO;
 
-		delay(10);
+			break;
+		}
+
+		delay(1);
+		nvme_dmamem_sync(my->sc, my->sc->sc_hib_q->q_cq_dmamem,
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_POSTREAD);
 	}
+	nvme_dmamem_sync(my->sc, my->sc->sc_hib_q->q_cq_dmamem,
+	    BUS_DMASYNC_PREREAD);
 
 	if (++my->cq_head == my->sc->sc_hib_q->q_entries) {
 		my->cq_head = 0;
 		my->cqe_phase ^= NVME_CQE_PHASE;
 	}
+
 	nvme_write4(my->sc, NVME_CQHDBL(NVME_HIB_Q, my->sc->sc_dstrd),
 	    my->cq_head);
-	if ((NVME_CQE_SC(flags) != NVME_CQE_SC_SUCCESS) ||
-	    (icqe->cid != blkno % 0xffff))
-		return (EIO);
+	nvme_barrier(my->sc, NVME_CQHDBL(NVME_HIB_Q, my->sc->sc_dstrd), 4,
+	    BUS_SPACE_BARRIER_WRITE);
 
-	return (0);
+	return (error);
 }
 
 #endif
