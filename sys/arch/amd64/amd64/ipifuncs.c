@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.35 2020/09/13 11:53:16 jsg Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.36 2021/08/31 17:40:59 dv Exp $	*/
 /*	$NetBSD: ipifuncs.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $ */
 
 /*-
@@ -63,6 +63,7 @@ void x86_64_ipi_halt(struct cpu_info *);
 void x86_64_ipi_wbinvd(struct cpu_info *);
 
 #if NVMM > 0
+void x86_64_ipi_vmclear_vmm(struct cpu_info *);
 void x86_64_ipi_start_vmm(struct cpu_info *);
 void x86_64_ipi_stop_vmm(struct cpu_info *);
 #endif /* NVMM > 0 */
@@ -85,7 +86,11 @@ void (*ipifunc[X86_NIPI])(struct cpu_info *) =
 {
 	x86_64_ipi_halt,
 	x86_64_ipi_nop,
+#if NVMM > 0
+	x86_64_ipi_vmclear_vmm,
+#else
 	NULL,
+#endif
 	NULL,
 	x86_64_ipi_reload_pctr,
 	x86_64_ipi_reload_mtrr,
@@ -137,6 +142,12 @@ x86_64_ipi_reload_mtrr(struct cpu_info *ci)
 #endif
 
 #if NVMM > 0
+void
+x86_64_ipi_vmclear_vmm(struct cpu_info *ci)
+{
+	vmclear_on_cpu(ci);
+}
+
 void
 x86_64_ipi_start_vmm(struct cpu_info *ci)
 {

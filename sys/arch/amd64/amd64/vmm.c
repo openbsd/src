@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.286 2021/06/08 23:18:43 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.287 2021/08/31 17:40:59 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -135,7 +135,7 @@ int vcpu_writeregs_svm(struct vcpu *, uint64_t, struct vcpu_reg_state *);
 int vcpu_reset_regs(struct vcpu *, struct vcpu_reg_state *);
 int vcpu_reset_regs_vmx(struct vcpu *, struct vcpu_reg_state *);
 int vcpu_reset_regs_svm(struct vcpu *, struct vcpu_reg_state *);
-int vcpu_reload_vmcs_vmx(uint64_t *);
+int vcpu_reload_vmcs_vmx(struct vcpu *);
 int vcpu_init(struct vcpu *);
 int vcpu_init_vmx(struct vcpu *);
 int vcpu_init_svm(struct vcpu *);
@@ -209,6 +209,10 @@ int vmm_gpa_is_valid(struct vcpu *vcpu, paddr_t gpa, size_t obj_size);
 void vmm_init_pvclock(struct vcpu *, paddr_t);
 int vmm_update_pvclock(struct vcpu *);
 int vmm_pat_is_valid(uint64_t);
+
+#ifdef MULTIPROCESSOR
+static int vmx_remote_vmclear(struct cpu_info*, struct vcpu *);
+#endif
 
 #ifdef VMM_DEBUG
 void dump_vcpu(struct vcpu *);
@@ -470,6 +474,8 @@ vmmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	int ret;
 
+	KERNEL_UNLOCK();
+
 	switch (cmd) {
 	case VMM_IOC_CREATE:
 		if ((ret = vmm_start()) != 0) {
@@ -513,6 +519,8 @@ vmmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		DPRINTF("%s: unknown ioctl code 0x%lx\n", __func__, cmd);
 		ret = ENOTTY;
 	}
+
+	KERNEL_LOCK();
 
 	return (ret);
 }
@@ -629,12 +637,15 @@ vm_resetcpu(struct vm_resetcpu_params *vrp)
 		return (ENOENT);
 	}
 
+	rw_enter_write(&vcpu->vc_lock);
+
 	if (vcpu->vc_state != VCPU_STATE_STOPPED) {
 		DPRINTF("%s: reset of vcpu %u on vm %u attempted "
 		    "while vcpu was in state %u (%s)\n", __func__,
 		    vrp->vrp_vcpu_id, vrp->vrp_vm_id, vcpu->vc_state,
 		    vcpu_state_decode(vcpu->vc_state));
 
+		rw_exit_write(&vcpu->vc_lock);
 		return (EBUSY);
 	}
 
@@ -646,9 +657,11 @@ vm_resetcpu(struct vm_resetcpu_params *vrp)
 #ifdef VMM_DEBUG
 		dump_vcpu(vcpu);
 #endif /* VMM_DEBUG */
+		rw_exit_write(&vcpu->vc_lock);
 		return (EIO);
 	}
 
+	rw_exit_write(&vcpu->vc_lock);
 	return (0);
 }
 
@@ -688,25 +701,9 @@ vm_intr_pending(struct vm_intr_params *vip)
 	if (vcpu == NULL)
 		return (ENOENT);
 
+	rw_enter_write(&vcpu->vc_lock);
 	vcpu->vc_intr = vip->vip_intr;
-
-#ifdef MULTIPROCESSOR
-	/*
-	 * If the vcpu is running on another PCPU, attempt to force it
-	 * to exit to process the pending interrupt. This could race as
-	 * it could be running when we do the check but be stopped by the
-	 * time we send the IPI. In this case, there is a small extra
-	 * overhead to process the IPI but no other side effects.
-	 *
-	 * There is also a chance that the vcpu may have interrupts blocked.
-	 * That's ok as that condition will be checked on exit, and we will
-	 * simply re-enter the guest. This "fast notification" is done only
-	 * as an optimization.
-	 */
-	if (vcpu->vc_state == VCPU_STATE_RUNNING &&
-	    vip->vip_intr == 1)
-		x86_send_ipi(vcpu->vc_last_pcpu, X86_IPI_NOP);
-#endif /* MULTIPROCESSOR */
+	rw_exit_write(&vcpu->vc_lock);
 
 	return (0);
 }
@@ -987,6 +984,8 @@ vmx_mprotect_ept(vm_map_t vm_map, paddr_t sgpa, paddr_t egpa, int prot)
 
 	pmap = vm_map->pmap;
 
+	KERNEL_LOCK();
+
 	for (addr = sgpa; addr < egpa; addr += PAGE_SIZE) {
 		pte = vmx_pmap_find_pte_ept(pmap, addr);
 		if (pte == NULL) {
@@ -1035,6 +1034,8 @@ vmx_mprotect_ept(vm_map_t vm_map, paddr_t sgpa, paddr_t egpa, int prot)
 		    vid.vid_eptp);
 		invept(IA32_VMX_INVEPT_SINGLE_CTX, &vid);
 	}
+
+	KERNEL_UNLOCK();
 
 	return ret;
 }
@@ -1338,6 +1339,47 @@ stop_vmm_on_cpu(struct cpu_info *ci)
 
 	ci->ci_flags &= ~CPUF_VMM;
 }
+
+/*
+ * vmclear_on_cpu
+ *
+ * Flush and clear VMCS on 'ci' by executing vmclear.
+ *
+ */
+void
+vmclear_on_cpu(struct cpu_info *ci)
+{
+	if ((ci->ci_flags & CPUF_VMM) && (ci->ci_vmm_flags & CI_VMM_VMX)) {
+		if (vmclear(&ci->ci_vmcs_pa))
+			panic("VMCLEAR ipi failed");
+		atomic_swap_ulong(&ci->ci_vmcs_pa, VMX_VMCS_PA_CLEAR);
+	}
+}
+
+#ifdef MULTIPROCESSOR
+static int
+vmx_remote_vmclear(struct cpu_info *ci, struct vcpu *vcpu)
+{
+	int ret = 0, nticks = 100000;
+
+	rw_enter_write(&ci->ci_vmcs_lock);
+	atomic_swap_ulong(&ci->ci_vmcs_pa, vcpu->vc_control_pa);
+	x86_send_ipi(ci, X86_IPI_VMCLEAR_VMM);
+
+	while (ci->ci_vmcs_pa != VMX_VMCS_PA_CLEAR) {
+		CPU_BUSY_CYCLE();
+		if (--nticks <= 0) {
+			printf("%s: spun out\n", __func__);
+			ret = 1;
+			break;
+		}
+	}
+	atomic_swap_uint(&vcpu->vc_vmx_vmcs_state, VMCS_CLEARED);
+	rw_exit_write(&ci->ci_vmcs_lock);
+
+	return (ret);
+}
+#endif /* MULTIPROCESSOR */
 
 /*
  * vm_create_check_mem_ranges
@@ -1705,35 +1747,45 @@ vm_impl_deinit(struct vm *vm)
 /*
  * vcpu_reload_vmcs_vmx
  *
- * Loads 'vmcs' on the current CPU, possibly flushing any old vmcs state
- * of the previous occupant.
+ * (Re)load the VMCS on the current cpu. Must be called with the VMCS write
+ * lock acquired. If the VMCS is determined to be loaded on a remote cpu, an
+ * ipi will be used to remotely flush it before loading the VMCS locally.
  *
  * Parameters:
- *  vmcs: Pointer to uint64_t containing the PA of the vmcs to load
+ *  vcpu: Pointer to the vcpu needing its VMCS
  *
  * Return values:
  *  0: if successful
  *  EINVAL: an error occurred during flush or reload
  */
 int
-vcpu_reload_vmcs_vmx(uint64_t *vmcs)
+vcpu_reload_vmcs_vmx(struct vcpu *vcpu)
 {
-	uint64_t old;
+	struct cpu_info *ci, *last_ci;
 
-	/* Flush any old state */
-	if (!vmptrst(&old)) {
-		if (old != 0xFFFFFFFFFFFFFFFFULL) {
-			if (vmclear(&old))
+	rw_assert_wrlock(&vcpu->vc_lock);
+
+	ci = curcpu();
+	last_ci = vcpu->vc_last_pcpu;
+
+	if (last_ci == NULL) {
+		/* First launch */
+		if (vmclear(&vcpu->vc_control_pa))
 				return (EINVAL);
-		}
-	} else
-		return (EINVAL);
+		atomic_swap_uint(&vcpu->vc_vmx_vmcs_state, VMCS_CLEARED);
+#ifdef MULTIPROCESSOR
+	} else if (last_ci != ci) {
+		/* We've moved CPUs at some point, so remote VMCLEAR */
+		if (vmx_remote_vmclear(last_ci, vcpu))
+			return (EINVAL);
+		KASSERT(vcpu->vc_vmx_vmcs_state == VMCS_CLEARED);
+#endif /* MULTIPROCESSOR */
+	}
 
-	/*
-	 * Load the VMCS onto this PCPU
-	 */
-	if (vmptrld(vmcs))
+	if (vmptrld(&vcpu->vc_control_pa)) {
+		printf("%s: vmptrld\n", __func__);
 		return (EINVAL);
+	}
 
 	return (0);
 }
@@ -1765,8 +1817,13 @@ vcpu_readregs_vmx(struct vcpu *vcpu, uint64_t regmask,
 	struct vcpu_segment_info *sregs = vrs->vrs_sregs;
 	struct vmx_msr_store *msr_store;
 
-	if (vcpu_reload_vmcs_vmx(&vcpu->vc_control_pa))
-		return (EINVAL);
+#ifdef VMM_DEBUG
+	/* VMCS should be loaded... */
+	paddr_t pa = 0ULL;
+	if (vmptrst(&pa))
+		panic("%s: vmptrst", __func__);
+	KASSERT(pa == vcpu->vc_control_pa);
+#endif /* VMM_DEBUG */
 
 	if (regmask & VM_RWREGS_GPRS) {
 		gprs[VCPU_REGS_RAX] = vcpu->vc_gueststate.vg_rax;
@@ -1865,8 +1922,6 @@ vcpu_readregs_vmx(struct vcpu *vcpu, uint64_t regmask,
 errout:
 	ret = EINVAL;
 out:
-	if (vmclear(&vcpu->vc_control_pa))
-		ret = EINVAL;
 	return (ret);
 }
 
@@ -2038,9 +2093,17 @@ vcpu_writeregs_vmx(struct vcpu *vcpu, uint64_t regmask, int loadvmcs,
 	struct vmx_msr_store *msr_store;
 
 	if (loadvmcs) {
-		if (vcpu_reload_vmcs_vmx(&vcpu->vc_control_pa))
+		if (vcpu_reload_vmcs_vmx(vcpu))
 			return (EINVAL);
 	}
+
+#ifdef VMM_DEBUG
+	/* VMCS should be loaded... */
+	paddr_t pa = 0ULL;
+	if (vmptrst(&pa))
+		panic("%s: vmptrst", __func__);
+	KASSERT(pa == vcpu->vc_control_pa);
+#endif /* VMM_DEBUG */
 
 	if (regmask & VM_RWREGS_GPRS) {
 		vcpu->vc_gueststate.vg_rax = gprs[VCPU_REGS_RAX];
@@ -2651,7 +2714,7 @@ svm_set_dirty(struct vcpu *vcpu, uint32_t value)
 int
 vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 {
-	int ret, ug;
+	int ret = 0, ug = 0;
 	uint32_t cr0, cr4;
 	uint32_t pinbased, procbased, procbased2, exit, entry;
 	uint32_t want1, want0;
@@ -2659,15 +2722,23 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	uint16_t ctrl, vpid;
 	struct vmx_msr_store *msr_store;
 
-	ret = 0;
-	ug = 0;
+	rw_assert_wrlock(&vcpu->vc_lock);
 
 	cr0 = vrs->vrs_crs[VCPU_REGS_CR0];
 
-	if (vcpu_reload_vmcs_vmx(&vcpu->vc_control_pa)) {
+	if (vcpu_reload_vmcs_vmx(vcpu)) {
 		DPRINTF("%s: error reloading VMCS\n", __func__);
-		return (EINVAL);
+		ret = EINVAL;
+		goto exit;
 	}
+
+#ifdef VMM_DEBUG
+	/* VMCS should be loaded... */
+	paddr_t pa = 0ULL;
+	if (vmptrst(&pa))
+		panic("%s: vmptrst", __func__);
+	KASSERT(pa == vcpu->vc_control_pa);
+#endif /* VMM_DEBUG */
 
 	/* Compute Basic Entry / Exit Controls */
 	vcpu->vc_vmx_basic = rdmsr(IA32_VMX_BASIC);
@@ -3197,14 +3268,14 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	/* XXX PAT shadow */
 	vcpu->vc_shadow_pat = rdmsr(MSR_CR_PAT);
 
-exit:
 	/* Flush the VMCS */
 	if (vmclear(&vcpu->vc_control_pa)) {
 		DPRINTF("%s: vmclear failed\n", __func__);
 		ret = EINVAL;
-		goto exit;
 	}
+	atomic_swap_uint(&vcpu->vc_vmx_vmcs_state, VMCS_CLEARED);
 
+exit:
 	return (ret);
 }
 
@@ -3229,13 +3300,12 @@ vcpu_init_vmx(struct vcpu *vcpu)
 {
 	struct vmcs *vmcs;
 	uint32_t cr0, cr4;
-	int ret;
-
-	ret = 0;
+	int ret = 0;
 
 	/* Allocate VMCS VA */
 	vcpu->vc_control_va = (vaddr_t)km_alloc(PAGE_SIZE, &kv_page, &kp_zero,
 	    &kd_waitok);
+	vcpu->vc_vmx_vmcs_state = VMCS_CLEARED;
 
 	if (!vcpu->vc_control_va)
 		return (ENOMEM);
@@ -3389,10 +3459,16 @@ vcpu_init_vmx(struct vcpu *vcpu)
 	}
 
 	/* VMCS link */
-	if (vmwrite(VMCS_LINK_POINTER, 0xFFFFFFFFFFFFFFFF)) {
+	if (vmwrite(VMCS_LINK_POINTER, VMX_VMCS_PA_CLEAR)) {
 		DPRINTF("%s: error writing VMCS link pointer\n", __func__);
 		ret = EINVAL;
 		goto exit;
+	}
+
+	/* Flush the initial VMCS */
+	if (vmclear(&vcpu->vc_control_pa)) {
+		DPRINTF("%s: vmclear failed\n", __func__);
+		ret = EINVAL;
 	}
 
 exit:
@@ -3412,11 +3488,6 @@ exit:
 		if (vcpu->vc_vmx_msr_entry_load_va)
 			km_free((void *)vcpu->vc_vmx_msr_entry_load_va,
 			    PAGE_SIZE, &kv_page, &kp_zero);
-	} else {
-		if (vmclear(&vcpu->vc_control_pa)) {
-			DPRINTF("%s: vmclear failed\n", __func__);
-			ret = EINVAL;
-		}
 	}
 
 	return (ret);
@@ -3472,9 +3543,7 @@ vcpu_reset_regs(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 int
 vcpu_init_svm(struct vcpu *vcpu)
 {
-	int ret;
-
-	ret = 0;
+	int ret = 0;
 
 	/* Allocate VMCB VA */
 	vcpu->vc_control_va = (vaddr_t)km_alloc(PAGE_SIZE, &kv_page, &kp_zero,
@@ -3588,6 +3657,9 @@ vcpu_init(struct vcpu *vcpu)
 	vcpu->vc_state = VCPU_STATE_STOPPED;
 	vcpu->vc_vpid = 0;
 	vcpu->vc_pvclock_system_gpa = 0;
+	vcpu->vc_last_pcpu = NULL;
+
+	rw_init(&vcpu->vc_lock, "vcpulock");
 
 	/* Shadow PAT MSR, starting with host's value. */
 	vcpu->vc_shadow_pat = rdmsr(MSR_CR_PAT);
@@ -3694,6 +3766,7 @@ vm_teardown(struct vm *vm)
 	struct vcpu *vcpu, *tmp;
 
 	rw_assert_wrlock(&vmm_softc->vm_lock);
+	KERNEL_LOCK();
 
 	/* Free VCPUs */
 	rw_enter_write(&vm->vm_vcpu_lock);
@@ -3716,8 +3789,10 @@ vm_teardown(struct vm *vm)
 		if (vmm_softc->vm_ct < 1)
 			vmm_stop();
 	}
-	rw_exit_write(&vm->vm_vcpu_lock);
 	pool_put(&vm_pool, vm);
+
+	KERNEL_UNLOCK();
+	rw_exit_write(&vm->vm_vcpu_lock);
 }
 
 /*
@@ -4150,11 +4225,11 @@ vm_run(struct vm_run_params *vrp)
 				ret = EBUSY;
 			else
 				atomic_inc_int(&vm->vm_vcpus_running);
-		}
-		rw_exit_read(&vm->vm_vcpu_lock);
-
-		if (vcpu == NULL)
+			rw_enter_write(&vcpu->vc_lock);
+		} else
 			ret = ENOENT;
+
+		rw_exit_read(&vm->vm_vcpu_lock);
 	}
 	rw_exit_read(&vmm_softc->vm_lock);
 
@@ -4174,6 +4249,7 @@ vm_run(struct vm_run_params *vrp)
 	if (vrp->vrp_continue) {
 		if (copyin(vrp->vrp_exit, &vcpu->vc_exit,
 		    sizeof(struct vm_exit)) == EFAULT) {
+			rw_exit_write(&vcpu->vc_lock);
 			return (EFAULT);
 		}
 	}
@@ -4221,6 +4297,8 @@ vm_run(struct vm_run_params *vrp)
 		vcpu->vc_state = VCPU_STATE_TERMINATED;
 	}
 
+	rw_exit_write(&vcpu->vc_lock);
+
 	return (ret);
 }
 
@@ -4262,7 +4340,7 @@ vmm_fpurestore(struct vcpu *vcpu)
 {
 	struct cpu_info *ci = curcpu();
 
-	/* save vmmd's FPU state if we haven't already */
+	/* save vmm's FPU state if we haven't already */
 	if (ci->ci_flags & CPUF_USERXSTATE) {
 		ci->ci_flags &= ~CPUF_USERXSTATE;
 		fpusavereset(&curproc->p_addr->u_pcb.pcb_savefpu);
@@ -4487,10 +4565,10 @@ vmm_translate_gva(struct vcpu *vcpu, uint64_t va, uint64_t *pa, int mode)
 int
 vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 {
-	int ret = 0, resume = 0, cleared = 1, locked, exitinfo;
+	int ret = 0, exitinfo;
 	struct region_descriptor gdt;
-	struct cpu_info *ci = NULL;
-	uint64_t exit_reason, cr3, vmcs_ptr, insn_error;
+	struct cpu_info *ci = curcpu();
+	uint64_t exit_reason, cr3, insn_error;
 	struct schedstate_percpu *spc;
 	struct vmx_invvpid_descriptor vid;
 	uint64_t eii, procbased, int_st;
@@ -4498,7 +4576,12 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 	u_long s;
 	struct region_descriptor gdtr, idtr;
 
-	irq = vrp->vrp_irq;
+	rw_assert_wrlock(&vcpu->vc_lock);
+
+	if (vcpu_reload_vmcs_vmx(vcpu)) {
+		printf("%s: failed (re)loading vmcs\n", __func__);
+		return (EINVAL);
+	}
 
 	/*
 	 * If we are returning from userspace (vmd) because we exited
@@ -4506,6 +4589,8 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 	 * needs to be fixed up depends on what vmd populated in the
 	 * exit data structure.
 	 */
+	irq = vrp->vrp_irq;
+
 	if (vrp->vrp_continue) {
 		switch (vcpu->vc_gueststate.vg_exit_reason) {
 		case VMX_EXIT_IO:
@@ -4513,16 +4598,12 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 				vcpu->vc_gueststate.vg_rax =
 				    vcpu->vc_exit.vei.vei_data;
 			break;
+		case VM_EXIT_NONE:
 		case VMX_EXIT_HLT:
-			break;
 		case VMX_EXIT_INT_WINDOW:
-			break;
 		case VMX_EXIT_EXTINT:
-			break;
 		case VMX_EXIT_EPT_VIOLATION:
-			break;
 		case VMX_EXIT_CPUID:
-			break;
 		case VMX_EXIT_XSETBV:
 			break;
 #ifdef VMM_DEBUG
@@ -4530,12 +4611,6 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 			DPRINTF("%s: vm %d vcpu %d triple fault\n",
 			    __func__, vcpu->vc_parent->vm_id,
 			    vcpu->vc_id);
-			/*
-			 * Ensure we have the proper VMCS loaded before
-			 * dumping register and VMCS state
-			 */
-			if (vcpu_reload_vmcs_vmx(&vcpu->vc_control_pa))
-				break;
 			vmx_vcpu_dump_regs(vcpu);
 			dump_vcpu(vcpu);
 			vmx_dump_vmcs(vcpu);
@@ -4545,27 +4620,15 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 			    "due to invalid guest state\n",
 			    __func__, vcpu->vc_parent->vm_id,
 			    vcpu->vc_id);
-			/*
-			 * Ensure we have the proper VMCS loaded before
-			 * dumping register and VMCS state
-			 */
-			if (vcpu_reload_vmcs_vmx(&vcpu->vc_control_pa))
-				break;
 			vmx_vcpu_dump_regs(vcpu);
 			dump_vcpu(vcpu);
-			return EINVAL;
+			return (EINVAL);
 		default:
 			DPRINTF("%s: unimplemented exit type %d (%s)\n",
 			    __func__,
 			    vcpu->vc_gueststate.vg_exit_reason,
 			    vmx_exit_reason_decode(
 				vcpu->vc_gueststate.vg_exit_reason));
-			/*
-			 * Ensure we have the proper VMCS loaded before
-			 * dumping register and VMCS state
-			 */
-			if (vcpu_reload_vmcs_vmx(&vcpu->vc_control_pa))
-				break;
 			vmx_vcpu_dump_regs(vcpu);
 			dump_vcpu(vcpu);
 			break;
@@ -4573,94 +4636,82 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 		}
 	}
 
+	setregion(&gdt, ci->ci_gdt, GDT_SIZE - 1);
+	if (gdt.rd_base == 0) {
+		printf("%s: setregion\n", __func__);
+		return (EINVAL);
+	}
+
+	/* Host GDTR base */
+	if (vmwrite(VMCS_HOST_IA32_GDTR_BASE, gdt.rd_base)) {
+		printf("%s: vmwrite(0x%04X, 0x%llx)\n", __func__,
+		    VMCS_HOST_IA32_GDTR_BASE, gdt.rd_base);
+		return (EINVAL);
+	}
+
+	/* Host TR base */
+	if (vmwrite(VMCS_HOST_IA32_TR_BASE, (uint64_t)ci->ci_tss)) {
+		printf("%s: vmwrite(0x%04X, 0x%llx)\n", __func__,
+		    VMCS_HOST_IA32_TR_BASE, (uint64_t)ci->ci_tss);
+		return (EINVAL);
+	}
+
+	/* Host CR3 */
+	cr3 = rcr3();
+	if (vmwrite(VMCS_HOST_IA32_CR3, cr3)) {
+		printf("%s: vmwrite(0x%04X, 0x%llx)\n", __func__,
+		    VMCS_HOST_IA32_CR3, cr3);
+		return (EINVAL);
+	}
+
+	/* Handle vmd(8) injected interrupts */
+	/* Is there an interrupt pending injection? */
+	if (irq != 0xFFFF) {
+		if (vmread(VMCS_GUEST_INTERRUPTIBILITY_ST, &int_st)) {
+			printf("%s: can't get interruptibility state\n",
+			    __func__);
+			return (EINVAL);
+		}
+
+		/* Interruptbility state 0x3 covers NMIs and STI */
+		if (!(int_st & 0x3) && vcpu->vc_irqready) {
+			eii = (irq & 0xFF);
+			eii |= (1ULL << 31);	/* Valid */
+			eii |= (0ULL << 8);	/* Hardware Interrupt */
+			if (vmwrite(VMCS_ENTRY_INTERRUPTION_INFO, eii)) {
+				printf("vcpu_run_vmx: can't vector "
+				    "interrupt to guest\n");
+				return (EINVAL);
+			}
+
+			irq = 0xFFFF;
+		}
+	} else if (!vcpu->vc_intr) {
+		/*
+		 * Disable window exiting
+		 */
+		if (vmread(VMCS_PROCBASED_CTLS, &procbased)) {
+			printf("%s: can't read procbased ctls on exit\n",
+			    __func__);
+			return (EINVAL);
+		} else {
+			procbased &= ~IA32_VMX_INTERRUPT_WINDOW_EXITING;
+			if (vmwrite(VMCS_PROCBASED_CTLS, procbased)) {
+				printf("%s: can't write procbased ctls "
+				    "on exit\n", __func__);
+				return (EINVAL);
+			}
+		}
+	}
+
 	while (ret == 0) {
+#ifdef VMM_DEBUG
+		paddr_t pa = 0ULL;
+		vmptrst(&pa);
+		KASSERT(pa == vcpu->vc_control_pa);
+#endif /* VMM_DEBUG */
+
 		vmm_update_pvclock(vcpu);
-		if (cleared || ci != curcpu()) {
-			/*
-			 * We are launching for the first time, we yielded the
-			 * pcpu, or we are resuming from a different pcpu, so we
-			 * need to reset certain pcpu-specific values.
-			 */
-			resume = cleared = 0;
-			ci = curcpu();
-			setregion(&gdt, ci->ci_gdt, GDT_SIZE - 1);
-
-			vcpu->vc_last_pcpu = ci;
-
-			if (vmptrld(&vcpu->vc_control_pa)) {
-				ret = EINVAL;
-				break;
-			}
-
-			if (gdt.rd_base == 0) {
-				ret = EINVAL;
-				break;
-			}
-
-			/* Host GDTR base */
-			if (vmwrite(VMCS_HOST_IA32_GDTR_BASE, gdt.rd_base)) {
-				ret = EINVAL;
-				break;
-			}
-
-			/* Host TR base */
-			if (vmwrite(VMCS_HOST_IA32_TR_BASE,
-			    (uint64_t)ci->ci_tss)) {
-				ret = EINVAL;
-				break;
-			}
-
-			/* Host CR3 */
-			cr3 = rcr3();
-			if (vmwrite(VMCS_HOST_IA32_CR3, cr3)) {
-				ret = EINVAL;
-				break;
-			}
-		}
-
-		/* Handle vmd(8) injected interrupts */
-		/* Is there an interrupt pending injection? */
-		if (irq != 0xFFFF) {
-			if (vmread(VMCS_GUEST_INTERRUPTIBILITY_ST, &int_st)) {
-				printf("%s: can't get interruptibility state\n",
-				    __func__);
-				ret = EINVAL;
-				break;
-			}
-
-			/* Interruptbility state 0x3 covers NMIs and STI */
-			if (!(int_st & 0x3) && vcpu->vc_irqready) {
-				eii = (irq & 0xFF);
-				eii |= (1ULL << 31);	/* Valid */
-				eii |= (0ULL << 8);	/* Hardware Interrupt */
-				if (vmwrite(VMCS_ENTRY_INTERRUPTION_INFO, eii)) {
-					printf("vcpu_run_vmx: can't vector "
-					    "interrupt to guest\n");
-					ret = EINVAL;
-					break;
-				}
-
-				irq = 0xFFFF;
-			}
-		} else if (!vcpu->vc_intr) {
-			/*
-			 * Disable window exiting
-			 */
-			if (vmread(VMCS_PROCBASED_CTLS, &procbased)) {
-				printf("%s: can't read procbased ctls on "
-				    "exit\n", __func__);
-				ret = EINVAL;
-				break;
-			} else {
-				procbased &= ~IA32_VMX_INTERRUPT_WINDOW_EXITING;
-				if (vmwrite(VMCS_PROCBASED_CTLS, procbased)) {
-					printf("%s: can't write procbased ctls "
-					    "on exit\n", __func__);
-					ret = EINVAL;
-					break;
-				}
-			}
-		}
 
 		/* Inject event if present */
 		if (vcpu->vc_event != 0) {
@@ -4704,12 +4755,7 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 			invvpid(IA32_VMX_INVVPID_SINGLE_CTX_GLB, &vid);
 		}
 
-		TRACEPOINT(vmm, guest_enter, vcpu, vrp);
-
 		/* Start / resume the VCPU */
-#ifdef VMM_DEBUG
-		KERNEL_ASSERT_LOCKED();
-#endif /* VMM_DEBUG */
 
 		/* Disable interrupts and save the current host FPU state. */
 		s = intr_disable();
@@ -4722,9 +4768,11 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 		sidt(&idtr);
 		sldt(&ldt_sel);
 
-		KERNEL_UNLOCK();
+		TRACEPOINT(vmm, guest_enter, vcpu, vrp);
+
 		ret = vmx_enter_guest(&vcpu->vc_control_pa,
-		    &vcpu->vc_gueststate, resume,
+		    &vcpu->vc_gueststate,
+		    (vcpu->vc_vmx_vmcs_state == VMCS_LAUNCHED),
 		    ci->ci_vmm_cap.vcc_vmx.vmx_has_l1_flush_msr);
 
 		bare_lgdt(&gdtr);
@@ -4737,10 +4785,14 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 		 * state before re-enabling interrupts.
 		 */
 		vmm_fpusave(vcpu);
-
 		intr_restore(s);
 
+		TRACEPOINT(vmm, guest_exit, vcpu, vrp, exit_reason);
+
+		atomic_swap_uint(&vcpu->vc_vmx_vmcs_state, VMCS_LAUNCHED);
 		exit_reason = VM_EXIT_NONE;
+
+		/* If we exited successfully ... */
 		if (ret == 0) {
 			/*
 			 * ret == 0 implies we entered the guest, and later
@@ -4753,35 +4805,18 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 				printf("%s: can't read guest rflags during "
 				    "exit\n", __func__);
 				ret = EINVAL;
-				KERNEL_LOCK();
 				break;
                         }
-		}
 
-		TRACEPOINT(vmm, guest_exit, vcpu, vrp, exit_reason);
-
-		if (ret || exitinfo != VMX_EXIT_INFO_COMPLETE ||
-		    exit_reason != VMX_EXIT_EXTINT) {
-			KERNEL_LOCK();
-			locked = 1;
-		} else
-			locked = 0;
-
-		/* If we exited successfully ... */
-		if (ret == 0) {
-			resume = 1;
+			/* Update our state */
 			if (!(exitinfo & VMX_EXIT_INFO_HAVE_RIP)) {
 				printf("%s: cannot read guest rip\n", __func__);
-				if (!locked)
-					KERNEL_LOCK();
 				ret = EINVAL;
 				break;
 			}
 
 			if (!(exitinfo & VMX_EXIT_INFO_HAVE_REASON)) {
 				printf("%s: cant read exit reason\n", __func__);
-				if (!locked)
-					KERNEL_LOCK();
 				ret = EINVAL;
 				break;
 			}
@@ -4792,25 +4827,6 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 			 */
 			vcpu->vc_gueststate.vg_exit_reason = exit_reason;
 			ret = vmx_handle_exit(vcpu);
-
-			/*
-			 * When the guest exited due to an external interrupt,
-			 * we do not yet hold the kernel lock: we need to
-			 * handle interrupts first before grabbing the lock:
-			 * the interrupt handler might do work that
-			 * another CPU holding the kernel lock waits for.
-			 *
-			 * Example: the TLB shootdown code in the pmap module
-			 * sends an IPI to all other CPUs and busy-waits for
-			 * them to decrement tlb_shoot_wait to zero. While
-			 * busy-waiting, the kernel lock is held.
-			 *
-			 * If this code here attempted to grab the kernel lock
-			 * before handling the interrupt, it would block
-			 * forever.
-			 */
-			if (!locked)
-				KERNEL_LOCK();
 
 			if (vcpu->vc_gueststate.vg_rflags & PSL_I)
 				vcpu->vc_irqready = 1;
@@ -4850,72 +4866,61 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 				break;
 			}
 
-			/* Check if we should yield - don't hog the cpu */
+			/* Check if we should yield - don't hog the {p,v}pu */
 			spc = &ci->ci_schedstate;
-			if (spc->spc_schedflags & SPCF_SHOULDYIELD) {
-				if (vmclear(&vcpu->vc_control_pa)) {
-					ret = EINVAL;
-					break;
-				}
-				cleared = 1;
-				yield();
-			}
-		} else if (ret == VMX_FAIL_LAUNCH_INVALID_VMCS) {
-			printf("%s: failed launch with invalid vmcs\n",
-			    __func__);
-#ifdef VMM_DEBUG
-			vmx_vcpu_dump_regs(vcpu);
-			dump_vcpu(vcpu);
-#endif /* VMM_DEBUG */
-			ret = EINVAL;
-		} else if (ret == VMX_FAIL_LAUNCH_VALID_VMCS) {
-			exit_reason = vcpu->vc_gueststate.vg_exit_reason;
-			printf("%s: failed launch with valid vmcs, code=%lld "
-			    "(%s)\n", __func__, exit_reason,
-			    vmx_instruction_error_decode(exit_reason));
+			if (spc->spc_schedflags & SPCF_SHOULDYIELD)
+				break;
 
+		} else {
+			/*
+			 * We failed vmresume or vmlaunch for some reason,
+			 * typically due to invalid vmcs state or other
+			 * reasons documented in SDM Vol 3C 30.4.
+			 */
+			switch (ret) {
+			case VMX_FAIL_LAUNCH_INVALID_VMCS:
+				printf("%s: failed %s with invalid vmcs\n",
+				    __func__,
+				    (vcpu->vc_vmx_vmcs_state == VMCS_LAUNCHED
+					? "vmresume" : "vmlaunch"));
+				break;
+			case VMX_FAIL_LAUNCH_VALID_VMCS:
+				printf("%s: failed %s with valid vmcs\n",
+				    __func__,
+				    (vcpu->vc_vmx_vmcs_state == VMCS_LAUNCHED
+					? "vmresume" : "vmlaunch"));
+				break;
+			default:
+				printf("%s: failed %s for unknown reason\n",
+				    __func__,
+				    (vcpu->vc_vmx_vmcs_state == VMCS_LAUNCHED
+					? "vmresume" : "vmlaunch"));
+			}
+
+			ret = EINVAL;
+
+			/* Try to translate a vmfail error code, if possible. */
 			if (vmread(VMCS_INSTRUCTION_ERROR, &insn_error)) {
 				printf("%s: can't read insn error field\n",
 				    __func__);
 			} else
-				printf("%s: insn error code = %lld\n",
-				    __func__, insn_error);
+				printf("%s: error code = %lld, %s\n", __func__,
+				    insn_error,
+				    vmx_instruction_error_decode(insn_error));
 #ifdef VMM_DEBUG
 			vmx_vcpu_dump_regs(vcpu);
 			dump_vcpu(vcpu);
 #endif /* VMM_DEBUG */
-			ret = EINVAL;
-		} else {
-			printf("%s: failed %s for unknown reason %d\n",
-			    __func__, resume ? "vmresume" : "vmlaunch", ret);
-#ifdef VMM_DEBUG
-			vmx_vcpu_dump_regs(vcpu);
-			dump_vcpu(vcpu);
-#endif /* VMM_DEBUG */
-			ret = EINVAL;
 		}
 	}
+
+	vcpu->vc_last_pcpu = curcpu();
 
 	/* Copy the VCPU register state to the exit structure */
 	if (vcpu_readregs_vmx(vcpu, VM_RWREGS_ALL, &vcpu->vc_exit.vrs))
 		ret = EINVAL;
 	vcpu->vc_exit.cpl = vmm_get_guest_cpu_cpl(vcpu);
-	/*
-	 * We are heading back to userspace (vmd), either because we need help
-	 * handling an exit, a guest interrupt is pending, or we failed in some
-	 * way to enter the guest. Clear any current VMCS pointer as we may end
-	 * up coming back on a different CPU.
-	 */
-	if (!vmptrst(&vmcs_ptr)) {
-		if (vmcs_ptr != 0xFFFFFFFFFFFFFFFFULL)
-			if (vmclear(&vcpu->vc_control_pa))
-				ret = EINVAL;
-	} else
-		ret = EINVAL;
 
-#ifdef VMM_DEBUG
-	KERNEL_ASSERT_LOCKED();
-#endif /* VMM_DEBUG */
 	return (ret);
 }
 
@@ -5247,8 +5252,10 @@ vmx_handle_exit(struct vcpu *vcpu)
 		update_rip = 0;
 		break;
 	default:
+#ifdef VMM_DEBUG
 		DPRINTF("%s: unhandled exit 0x%llx (%s)\n", __func__,
 		    exit_reason, vmx_exit_reason_decode(exit_reason));
+#endif /* VMM_DEBUG */
 		return (EINVAL);
 	}
 
@@ -5541,8 +5548,10 @@ vmx_fault_page(struct vcpu *vcpu, paddr_t gpa)
 		return (EAGAIN);
 	}
 
+	KERNEL_LOCK();
 	ret = uvm_fault(vcpu->vc_parent->vm_map, gpa, VM_FAULT_WIRE,
 	    PROT_READ | PROT_WRITE | PROT_EXEC);
+	KERNEL_UNLOCK();
 
 	if (ret)
 		printf("%s: uvm_fault returns %d, GPA=0x%llx, rip=0x%llx\n",
@@ -7066,10 +7075,6 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 		TRACEPOINT(vmm, guest_enter, vcpu, vrp);
 
 		/* Start / resume the VCPU */
-#ifdef VMM_DEBUG
-		KERNEL_ASSERT_LOCKED();
-#endif /* VMM_DEBUG */
-
 		/* Disable interrupts and save the current host FPU state. */
 		clgi();
 		if ((ret = vmm_fpurestore(vcpu))) {
@@ -7078,8 +7083,6 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 		}
 
 		KASSERT(vmcb->v_intercept1 & SVM_INTERCEPT_INTR);
-		KERNEL_UNLOCK();
-
 		wrmsr(MSR_AMD_VM_HSAVE_PA, vcpu->vc_svm_hsa_pa);
 
 		ret = svm_enter_guest(vcpu->vc_control_pa,
@@ -7097,7 +7100,6 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 		 * (external interrupt), the interrupt will be processed now.
 		 */
 		stgi();
-		KERNEL_LOCK();
 
 		vcpu->vc_gueststate.vg_rip = vmcb->v_rip;
 		vmcb->v_tlb_control = SVM_TLB_CONTROL_FLUSH_NONE;
@@ -7153,9 +7155,8 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 
 			/* Check if we should yield - don't hog the cpu */
 			spc = &ci->ci_schedstate;
-			if (spc->spc_schedflags & SPCF_SHOULDYIELD) {
-				yield();
-			}
+			if (spc->spc_schedflags & SPCF_SHOULDYIELD)
+				break;
 		}
 	}
 
@@ -7168,9 +7169,6 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 	if (vcpu_readregs_svm(vcpu, VM_RWREGS_ALL, &vcpu->vc_exit.vrs))
 		ret = EINVAL;
 
-#ifdef VMM_DEBUG
-	KERNEL_ASSERT_LOCKED();
-#endif /* VMM_DEBUG */
 	return (ret);
 }
 
@@ -7789,6 +7787,8 @@ vmx_dump_vmcs(struct vcpu *vcpu)
 	/* XXX save and load new vmcs, restore at end */
 
 	DPRINTF("--CURRENT VMCS STATE--\n");
+	printf("VMCS launched: %s\n",
+	    (vcpu->vc_vmx_vmcs_state == VMCS_LAUNCHED) ? "Yes" : "No");
 	DPRINTF("VMXON revision : 0x%x\n",
 	    curcpu()->ci_vmm_cap.vcc_vmx.vmx_vmxon_revision);
 	DPRINTF("CR0 fixed0: 0x%llx\n",

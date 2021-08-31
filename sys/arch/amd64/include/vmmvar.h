@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.72 2021/05/20 17:33:44 dv Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.73 2021/08/31 17:40:59 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -106,6 +106,7 @@
  * VMX: Misc defines
  */
 #define VMX_MAX_CR3_TARGETS			256
+#define VMX_VMCS_PA_CLEAR			0xFFFFFFFFFFFFFFFFUL
 
 #define VM_EXIT_TERMINATED			0xFFFE
 #define VM_EXIT_NONE				0xFFFF
@@ -902,7 +903,7 @@ struct vcpu {
 
 	/* VMCS / VMCB pointer */
 	vaddr_t vc_control_va;
-	uint64_t vc_control_pa;
+	paddr_t vc_control_pa;
 
 	/* VLAPIC pointer */
 	vaddr_t vc_vlapic_va;
@@ -920,6 +921,7 @@ struct vcpu {
 
 	uint8_t vc_virt_mode;
 
+	struct rwlock vc_lock;
 	struct cpu_info *vc_last_pcpu;
 	struct vm_exit vc_exit;
 
@@ -961,6 +963,9 @@ struct vcpu {
 	uint8_t vc_vmx_vpid_enabled;
 	uint64_t vc_vmx_cr0_fixed1;
 	uint64_t vc_vmx_cr0_fixed0;
+	uint32_t vc_vmx_vmcs_state;
+#define VMCS_CLEARED	0
+#define VMCS_LAUNCHED	1
 
 	/* SVM only */
 	vaddr_t vc_svm_hsa_va;
@@ -974,18 +979,19 @@ SLIST_HEAD(vcpu_head, vcpu);
 void	vmm_dispatch_intr(vaddr_t);
 int	vmxon(uint64_t *);
 int	vmxoff(void);
-int	vmclear(uint64_t *);
-int	vmptrld(uint64_t *);
-int	vmptrst(uint64_t *);
+int	vmclear(paddr_t *);
+int	vmptrld(paddr_t *);
+int	vmptrst(paddr_t *);
 int	vmwrite(uint64_t, uint64_t);
 int	vmread(uint64_t, uint64_t *);
 void	invvpid(uint64_t, struct vmx_invvpid_descriptor *);
 void	invept(uint64_t, struct vmx_invept_descriptor *);
-int	vmx_enter_guest(uint64_t *, struct vcpu_gueststate *, int, uint8_t);
+int	vmx_enter_guest(paddr_t *, struct vcpu_gueststate *, int, uint8_t);
 int	svm_enter_guest(uint64_t, struct vcpu_gueststate *,
     struct region_descriptor *);
 void	start_vmm_on_cpu(struct cpu_info *);
 void	stop_vmm_on_cpu(struct cpu_info *);
+void	vmclear_on_cpu(struct cpu_info *);
 
 #endif /* _KERNEL */
 

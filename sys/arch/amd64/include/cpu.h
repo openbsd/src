@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.140 2021/07/06 09:34:06 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.141 2021/08/31 17:40:59 dv Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -49,6 +49,7 @@
 #endif /* _KERNEL */
 
 #include <sys/device.h>
+#include <sys/rwlock.h>
 #include <sys/sched.h>
 #include <sys/sensors.h>
 #include <sys/srp.h>
@@ -211,6 +212,9 @@ struct cpu_info {
 	int64_t		ci_tsc_skew;		/* counter skew vs cpu0 */
 
 	char		ci_panicbuf[512];
+
+	paddr_t		ci_vmcs_pa;
+	struct rwlock	ci_vmcs_lock;
 };
 
 #define CPUF_BSP	0x0001		/* CPU is the original BSP */

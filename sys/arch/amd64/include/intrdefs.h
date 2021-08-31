@@ -1,4 +1,4 @@
-/*	$OpenBSD: intrdefs.h,v 1.21 2020/09/13 11:53:16 jsg Exp $	*/
+/*	$OpenBSD: intrdefs.h,v 1.22 2021/08/31 17:40:59 dv Exp $	*/
 /*	$NetBSD: intrdefs.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
 #ifndef _AMD64_INTRDEFS_H
@@ -76,6 +76,7 @@
 
 #define X86_IPI_HALT			0x00000001
 #define X86_IPI_NOP			0x00000002
+#define X86_IPI_VMCLEAR_VMM		0x00000004
 #define X86_IPI_PCTR			0x00000010
 #define X86_IPI_MTRR			0x00000020
 #define X86_IPI_SETPERF			0x00000040
@@ -84,7 +85,7 @@
 #define X86_IPI_STOP_VMM		0x00000200
 #define X86_IPI_WBINVD			0x00000400
 
-#define X86_NIPI			11
+#define X86_NIPI			12
 
 #define IREENT_MAGIC	0x18041969
 
