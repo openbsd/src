@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parse.y,v 1.35 2021/08/30 11:57:45 mpi Exp $	*/
+/*	$OpenBSD: bt_parse.y,v 1.36 2021/08/31 08:39:26 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019-2021 Martin Pieuchot <mpi@openbsd.org>
@@ -55,6 +55,9 @@ SLIST_HEAD(, bt_var)	 g_variables;
 
 /* List of local variables, cleaned for each new rule. */
 SLIST_HEAD(, bt_var)	l_variables;
+
+struct bt_arg 		g_nullba = BA_INITIALIZER(0, B_AT_LONG);
+struct bt_arg		g_maxba = BA_INITIALIZER(LONG_MAX, B_AT_LONG);
 
 struct bt_rule	*br_new(struct bt_probe *, struct bt_filter *, struct bt_stmt *,
 		     enum bt_rtype);
@@ -124,13 +127,8 @@ static int pflag;
 %type	<v.probe>	probe pname
 %type	<v.filter>	filter
 %type	<v.stmt>	action stmt stmtlist
-%type	<v.arg>		expr vargs mentry mexpr pargs term
-
-%right	'='
-%nonassoc OP_EQ OP_NE OP_LE OP_LT OP_GE OP_GT OP_LAND OP_LOR
-%left	'&' '|'
-%left	'+' '-'
-%left	'/' '*'
+%type	<v.arg>		pat vargs mentry mpat pargs
+%type	<v.arg>		expr term fterm factor
 %%
 
 grammar	: /* empty */
@@ -165,64 +163,80 @@ lvar	: '$' STRING			{ $$ = $2; }
 mentry	: gvar '[' vargs ']'		{ $$ = bm_find($1, $3); }
 	;
 
-mexpr	: MOP0 '(' ')'			{ $$ = ba_new(NULL, $1); }
-	| MOP1 '(' expr ')'		{ $$ = ba_new($3, $1); }
+mpat	: MOP0 '(' ')'			{ $$ = ba_new(NULL, $1); }
+	| MOP1 '(' pat ')'		{ $$ = ba_new($3, $1); }
+	| pat
+	;
+
+pat	: CSTRING			{ $$ = ba_new($1, B_AT_STR); }
 	| expr
 	;
 
-expr	: CSTRING			{ $$ = ba_new($1, B_AT_STR); }
+filter	: /* empty */			{ $$ = NULL; }
+	| '/' expr ENDFILT		{ $$ = bc_new(NULL, B_AT_OP_NE, $2); }
+	;
+
+/*
+ * Give higher precedence to:
+ *  1. && and ||
+ *  2. ==, !=, <<, <, >=, >, +, =, &, ^, |
+ *  3. * and /
+ */
+expr	: expr OP_LAND term	{ $$ = ba_op(B_AT_OP_LAND, $1, $3); }
+	| expr OP_LOR term	{ $$ = ba_op(B_AT_OP_LOR, $1, $3); }
 	| term
 	;
 
-filter	: /* empty */			{ $$ = NULL; }
-	| '/' term ENDFILT		{ $$ = bc_new(NULL, B_AT_OP_NE, $2); }
+term	: term OP_EQ fterm	{ $$ = ba_op(B_AT_OP_EQ, $1, $3); }
+	| term OP_NE fterm	{ $$ = ba_op(B_AT_OP_NE, $1, $3); }
+	| term OP_LE fterm	{ $$ = ba_op(B_AT_OP_LE, $1, $3); }
+	| term OP_LT fterm	{ $$ = ba_op(B_AT_OP_LT, $1, $3); }
+	| term OP_GE fterm	{ $$ = ba_op(B_AT_OP_GE, $1, $3); }
+	| term OP_GT fterm	{ $$ = ba_op(B_AT_OP_GT, $1, $3); }
+	| term '+' fterm	{ $$ = ba_op(B_AT_OP_PLUS, $1, $3); }
+	| term '-' fterm	{ $$ = ba_op(B_AT_OP_MINUS, $1, $3); }
+	| term '&' fterm	{ $$ = ba_op(B_AT_OP_BAND, $1, $3); }
+	| term '^' fterm	{ $$ = ba_op(B_AT_OP_XOR, $1, $3); }
+	| term '|' fterm	{ $$ = ba_op(B_AT_OP_BOR, $1, $3); }
+	| fterm
 	;
 
-term	: '(' term ')'			{ $$ = $2; }
-	| term OP_EQ term		{ $$ = ba_op(B_AT_OP_EQ, $1, $3); }
-	| term OP_NE term		{ $$ = ba_op(B_AT_OP_NE, $1, $3); }
-	| term OP_LE term		{ $$ = ba_op(B_AT_OP_LE, $1, $3); }
-	| term OP_LT term		{ $$ = ba_op(B_AT_OP_LT, $1, $3); }
-	| term OP_GE term		{ $$ = ba_op(B_AT_OP_GE, $1, $3); }
-	| term OP_GT term		{ $$ = ba_op(B_AT_OP_GT, $1, $3); }
-	| term OP_LAND term		{ $$ = ba_op(B_AT_OP_LAND, $1, $3); }
-	| term OP_LOR term		{ $$ = ba_op(B_AT_OP_LOR, $1, $3); }
-	| term '+' term			{ $$ = ba_op(B_AT_OP_PLUS, $1, $3); }
-	| term '-' term			{ $$ = ba_op(B_AT_OP_MINUS, $1, $3); }
-	| term '*' term			{ $$ = ba_op(B_AT_OP_MULT, $1, $3); }
-	| term '/' term			{ $$ = ba_op(B_AT_OP_DIVIDE, $1, $3); }
-	| term '&' term			{ $$ = ba_op(B_AT_OP_BAND, $1, $3); }
-	| term '|' term			{ $$ = ba_op(B_AT_OP_BOR, $1, $3); }
-	| staticv			{ $$ = ba_new($1, B_AT_LONG); }
-	| BUILTIN			{ $$ = ba_new(NULL, $1); }
-	| lvar				{ $$ = bl_find($1); }
-	| gvar				{ $$ = bg_find($1); }
+fterm	: fterm '*' factor	{ $$ = ba_op(B_AT_OP_MULT, $1, $3); }
+	| fterm '/' factor	{ $$ = ba_op(B_AT_OP_DIVIDE, $1, $3); }
+	| factor
+	;
+
+factor : '(' expr ')'		{ $$ = $2; }
+	| staticv		{ $$ = ba_new($1, B_AT_LONG); }
+	| BUILTIN		{ $$ = ba_new(NULL, $1); }
+	| lvar			{ $$ = bl_find($1); }
+	| gvar			{ $$ = bg_find($1); }
 	| mentry
 	;
 
 
-vargs	: expr
-	| vargs ',' expr	{ $$ = ba_append($1, $3); }
+vargs	: pat
+	| vargs ',' pat			{ $$ = ba_append($1, $3); }
 	;
 
-pargs	: term
-	| gvar ',' expr		{ $$ = ba_append(bg_find($1), $3); }
+pargs	: expr
+	| gvar ',' pat			{ $$ = ba_append(bg_find($1), $3); }
 	;
 
 NL	: /* empty */ | '\n'
 		;
 
 stmt	: ';' NL			{ $$ = NULL; }
-	| gvar '=' expr			{ $$ = bg_store($1, $3); }
-	| lvar '=' expr			{ $$ = bl_store($1, $3); }
-	| gvar '[' vargs ']' '=' mexpr	{ $$ = bm_insert($1, $3, $6); }
+	| gvar '=' pat			{ $$ = bg_store($1, $3); }
+	| lvar '=' pat			{ $$ = bl_store($1, $3); }
+	| gvar '[' vargs ']' '=' mpat	{ $$ = bm_insert($1, $3, $6); }
 	| FUNCN '(' vargs ')'		{ $$ = bs_new($1, $3, NULL); }
-	| FUNC1 '(' expr ')'		{ $$ = bs_new($1, $3, NULL); }
+	| FUNC1 '(' pat ')'		{ $$ = bs_new($1, $3, NULL); }
 	| FUNC0 '(' ')'			{ $$ = bs_new($1, NULL, NULL); }
 	| F_DELETE '(' mentry ')'	{ $$ = bm_op($1, $3, NULL); }
 	| F_PRINT '(' pargs ')'		{ $$ = bs_new($1, $3, NULL); }
-	| gvar '=' OP1 '(' expr ')'	{ $$ = bh_inc($1, $5, NULL); }
-	| gvar '=' OP4 '(' expr ',' vargs ')'	{ $$ = bh_inc($1, $5, $7); }
+	| gvar '=' OP1 '(' pat ')'	{ $$ = bh_inc($1, $5, NULL); }
+	| gvar '=' OP4 '(' pat ',' vargs ')'	{ $$ = bh_inc($1, $5, $7); }
 	;
 
 stmtlist: stmt

@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.39 2021/08/30 11:57:45 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.40 2021/08/31 08:39:26 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -104,6 +104,8 @@ __dead void		 xabort(const char *, ...);
 void			 debug(const char *, ...);
 void			 debugx(const char *, ...);
 const char		*debug_rule_name(struct bt_rule *);
+void			 debug_dump_term(struct bt_arg *);
+void			 debug_dump_expr(struct bt_arg *);
 void			 debug_dump_filter(struct bt_rule *);
 
 struct dtioc_probe_info	*dt_dtpis;	/* array of available probes */
@@ -867,15 +869,15 @@ stmt_store(struct bt_stmt *bs, struct dt_evt *dtev)
 bool
 stmt_test(struct bt_stmt *bs, struct dt_evt *dtev)
 {
-	struct bt_arg *bop;
+	struct bt_arg *ba;
 
 	if (bs == NULL)
 		return true;
 
 	assert(bs->bs_var == NULL);
-	bop = SLIST_FIRST(&bs->bs_args);
+	ba = SLIST_FIRST(&bs->bs_args);
 
-	return baexpr2long(bop, dtev) != 0;
+	return baexpr2long(ba, dtev) != 0;
 }
 
 /*
@@ -1022,73 +1024,75 @@ long
 baexpr2long(struct bt_arg *ba, struct dt_evt *dtev)
 {
 	static long recursions;
-	struct bt_arg *a, *b;
-	long first, second, result;
+	struct bt_arg *lhs, *rhs;
+	long lval, rval, result;
 
 	if (++recursions >= __MAXOPERANDS)
 		errx(1, "too many operands (>%d) in expression", __MAXOPERANDS);
 
-	a = ba->ba_value;
-	first = ba2long(a, dtev);
+	lhs = ba->ba_value;
+	rhs = SLIST_NEXT(lhs, ba_next);
 
-	b = SLIST_NEXT(a, ba_next);
-
-	if (b == NULL) {
-		second = 0;
+	lval = ba2long(lhs, dtev);
+	if (rhs == NULL) {
+		rval = 0;
 	} else {
-		assert(SLIST_NEXT(b, ba_next) == NULL);
-		second = ba2long(b, dtev);
+		assert(SLIST_NEXT(rhs, ba_next) == NULL);
+		rval = ba2long(rhs, dtev);
 	}
 
 	switch (ba->ba_type) {
 	case B_AT_OP_PLUS:
-		result = first + second;
+		result = lval + rval;
 		break;
 	case B_AT_OP_MINUS:
-		result = first - second;
+		result = lval - rval;
 		break;
 	case B_AT_OP_MULT:
-		result = first * second;
+		result = lval * rval;
 		break;
 	case B_AT_OP_DIVIDE:
-		result = first / second;
+		result = lval / rval;
 		break;
 	case B_AT_OP_BAND:
-		result = first & second;
+		result = lval & rval;
+		break;
+	case B_AT_OP_XOR:
+		result = lval ^ rval;
 		break;
 	case B_AT_OP_BOR:
-		result = first | second;
+		result = lval | rval;
 		break;
 	case B_AT_OP_EQ:
-		result = (first == second);
+		result = (lval == rval);
 		break;
 	case B_AT_OP_NE:
-		result = (first != second);
+		result = (lval != rval);
 		break;
 	case B_AT_OP_LE:
-		result = (first <= second);
+		result = (lval <= rval);
 		break;
 	case B_AT_OP_LT:
-		result = (first < second);
+		result = (lval < rval);
 		break;
 	case B_AT_OP_GE:
-		result = (first >= second);
+		result = (lval >= rval);
 		break;
 	case B_AT_OP_GT:
-		result = (first > second);
+		result = (lval > rval);
 		break;
 	case B_AT_OP_LAND:
-		result = (first && second);
+		result = (lval && rval);
 		break;
 	case B_AT_OP_LOR:
-		result = (first || second);
+		result = (lval || rval);
 		break;
 	default:
 		xabort("unsuported operation %d", ba->ba_type);
 	}
 
-	debug("ba=%p '%ld %s %ld = %ld'\n", ba, first, ba_name(ba), second,
-	   result);
+	debug("ba=%p eval '%ld %s %ld = %d'\n", ba, lval, ba_name(ba),
+	   rval, result);
 
 	--recursions;
 
@@ -1106,6 +1110,40 @@ ba_name(struct bt_arg *ba)
 		return "pid";
 	case B_AT_BI_TID:
 		return "tid";
+	case B_AT_BI_COMM:
+		return "comm";
+	case B_AT_BI_CPU:
+		return "cpu";
+	case B_AT_BI_NSECS:
+		return "nsecs";
+	case B_AT_BI_KSTACK:
+		return "kstack";
+	case B_AT_BI_USTACK:
+		return "ustack";
+	case B_AT_BI_ARG0:
+		return "arg0";
+	case B_AT_BI_ARG1:
+		return "arg1";
+	case B_AT_BI_ARG2:
+		return "arg2";
+	case B_AT_BI_ARG3:
+		return "arg3";
+	case B_AT_BI_ARG4:
+		return "arg4";
+	case B_AT_BI_ARG5:
+		return "arg5";
+	case B_AT_BI_ARG6:
+		return "arg6";
+	case B_AT_BI_ARG7:
+		return "arg7";
+	case B_AT_BI_ARG8:
+		return "arg8";
+	case B_AT_BI_ARG9:
+		return "arg9";
+	case B_AT_BI_ARGS:
+		return "args";
+	case B_AT_BI_RETVAL:
+		return "retval";
 	case B_AT_OP_PLUS:
 		return "+";
 	case B_AT_OP_MINUS:
@@ -1116,6 +1154,8 @@ ba_name(struct bt_arg *ba)
 		return "/";
 	case B_AT_OP_BAND:
 		return "&";
+	case B_AT_OP_XOR:
+		return "^";
 	case B_AT_OP_BOR:
 		return "|";
 	case B_AT_OP_EQ:
@@ -1394,20 +1434,56 @@ debugx(const char *fmt, ...)
 }
 
 void
+debug_dump_term(struct bt_arg *ba)
+{
+	switch (ba->ba_type) {
+	case B_AT_LONG:
+		debugx("%s", ba2str(ba, NULL));
+		break;
+	case B_AT_OP_PLUS ... B_AT_OP_LOR:
+		debug_dump_expr(ba);
+		break;
+	default:
+		debugx("%s", ba_name(ba));
+	}
+}
+
+void
+debug_dump_expr(struct bt_arg *ba)
+{
+	struct bt_arg *lhs, *rhs;
+
+	lhs = ba->ba_value;
+	rhs = SLIST_NEXT(lhs, ba_next);
+
+	/* Left */
+	debug_dump_term(lhs);
+
+	/* Right */
+	if (rhs != NULL) {
+		debugx(" %s ", ba_name(ba));
+		debug_dump_term(rhs);
+	} else {
+		if (ba->ba_type != B_AT_OP_NE)
+			debugx(" %s NULL", ba_name(ba));
+	}
+}
+
+void
 debug_dump_filter(struct bt_rule *r)
 {
-	if (r->br_filter != NULL) {
-		struct bt_stmt *bs = r->br_filter->bf_condition;
-		struct bt_arg *bop = SLIST_FIRST(&bs->bs_args);
-		struct bt_arg *a, *b;
+	struct bt_stmt *bs;
 
-		a = bop->ba_value;
-		b = SLIST_NEXT(a, ba_next);
-
-		debugx(" / %s %s %s /", ba_name(a), ba_name(bop),
-		    (b != NULL) ? ba_name(b) : "NULL");
+	if (r->br_filter == NULL) {
+		debugx("\n");
+		return;
 	}
-	debugx("\n");
+
+	bs = r->br_filter->bf_condition;
+
+	debugx(" /");
+	debug_dump_expr(SLIST_FIRST(&bs->bs_args));
+	debugx("/\n");
 }
 
 const char *

@@ -12,6 +12,5 @@ Missing language features:
 
 Improvements:
 
-- implement arithmetic operator precedence
 - rewrite stmt_printf() to not use strings internally
 - look at collision in map hash

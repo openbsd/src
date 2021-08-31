@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parser.h,v 1.17 2021/08/30 11:57:45 mpi Exp $	*/
+/*	$OpenBSD: bt_parser.h,v 1.18 2021/08/31 08:39:26 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019-2021 Martin Pieuchot <mpi@openbsd.org>
@@ -156,6 +156,7 @@ struct bt_arg {
 		B_AT_OP_MULT,
 		B_AT_OP_DIVIDE,
 		B_AT_OP_BAND,
+		B_AT_OP_XOR,
 		B_AT_OP_BOR,
 		B_AT_OP_EQ,
 		B_AT_OP_NE,
@@ -198,6 +199,8 @@ struct bt_stmt {
 
 extern struct bt_ruleq	 g_rules;	/* Successfully parsed rules. */
 extern int		 g_nprobes;	/* # of probes to attach */
+extern struct bt_arg 	 g_nullba;
+extern struct bt_arg	 g_maxba;
 
 int			 btparse(const char *, size_t, const char *, int);
 
