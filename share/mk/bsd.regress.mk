@@ -1,4 +1,4 @@
-# $OpenBSD: bsd.regress.mk,v 1.23 2020/12/17 14:54:15 bluhm Exp $
+# $OpenBSD: bsd.regress.mk,v 1.24 2021/08/31 23:33:05 bluhm Exp $
 # Documented in bsd.regress.mk(5)
 
 # No man pages for regression tests.
@@ -8,7 +8,7 @@ NOMAN=
 install:
 
 # If REGRESS_TARGETS is defined and PROG is not defined, set NOPROG
-.if defined(REGRESS_TARGETS) && !defined(PROG)
+.if defined(REGRESS_TARGETS) && !defined(PROG) && !defined(PROGS)
 NOPROG=
 .endif
 
@@ -31,16 +31,16 @@ _REGRESS_NAME=${.CURDIR:S/${BSDSRCDIR}\/regress\///}
 _REGRESS_TMP?=/dev/null
 _REGRESS_OUT= | tee -a ${REGRESS_LOG} ${_REGRESS_TMP} 2>&1 > /dev/null
 
-.if defined(PROG) && !empty(PROG)
-run-regress-${PROG}: ${PROG}
-	./${PROG}
-.PHONY: run-regress-${PROG}
-.endif
+.for p in ${PROG} ${PROGS}
+run-regress-$p: $p
+	./$p
+.PHONY: run-regress-$p
+.endfor
 
-.if defined(PROG) && !defined(REGRESS_TARGETS)
-REGRESS_TARGETS=run-regress-${PROG}
+.if (defined(PROG) || defined(PROGS)) && !defined(REGRESS_TARGETS)
+REGRESS_TARGETS=	${PROG:S/^/run-regress-/} ${PROGS:S/^/run-regress-/}
 .  if defined(REGRESS_SKIP)
-REGRESS_SKIP_TARGETS=run-regress-${PROG}
+REGRESS_SKIP_TARGETS=	${PROG:S/^/run-regress-/} ${PROGS:S/^/run-regress-/}
 .  endif
 .endif
 
