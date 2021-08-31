@@ -1,4 +1,4 @@
-/*	$OpenBSD: chio.c,v 1.27 2021/06/26 15:42:58 deraadt Exp $	*/
+/*	$OpenBSD: chio.c,v 1.28 2021/08/31 05:29:55 robert Exp $	*/
 /*	$NetBSD: chio.c,v 1.1.1.1 1996/04/03 00:34:38 thorpej Exp $	*/
 
 /*
@@ -59,6 +59,7 @@ static	int parse_element_type(char *);
 static	int parse_element_unit(char *);
 static	int parse_special(char *);
 static	int is_special(char *);
+static	const char * element_type_name(int et);
 static	char *bits_to_string(int, const char *);
 static	void find_voltag(char *, int *, int *);
 static	void check_source_drive(int);
@@ -104,6 +105,8 @@ static	int changer_fd;
 static	char *changer_name;
 static int avoltag;
 static int pvoltag;
+static int sense;
+static int source;
 
 int
 main(int argc, char *argv[])
@@ -486,8 +489,14 @@ do_status(char *cname, int argc, char *argv[])
 
 	optreset = 1;
 	optind = 1;
-	while ((c = getopt(argc, argv, "vVa")) != -1) {
+	while ((c = getopt(argc, argv, "SsvVa")) != -1) {
 		switch (c) {
+		case 's':
+			sense = 1;
+			break;
+		case 'S':
+			source = 1;
+			break;
 		case 'v':
 			pvoltag = 1;
 			break;
@@ -495,7 +504,7 @@ do_status(char *cname, int argc, char *argv[])
 			avoltag = 1;
 			break;
 		case 'a':
-			pvoltag = avoltag = 1;
+			pvoltag = avoltag = source = sense = 1;
 			break;
 		default:
 			goto usage;
@@ -589,6 +598,10 @@ do_status(char *cname, int argc, char *argv[])
 			         &(cmd.cesr_data[i]);
 			printf("%s %d: %s", description, i,
 			    bits_to_string(ces->ces_flags, CESTATUS_BITS));
+			if (sense)
+				printf(" sense: <0x%02x/0x%02x>",
+				       ces->ces_sensecode,
+				       ces->ces_sensequal);
 			if (pvoltag)
 				printf(" voltag: <%s:%d>",
 				       ces->ces_pvoltag.cv_volid,
@@ -597,6 +610,15 @@ do_status(char *cname, int argc, char *argv[])
 				printf(" avoltag: <%s:%d>",
 				       ces->ces_avoltag.cv_volid,
 				       ces->ces_avoltag.cv_serial);
+			if (source) {
+				if (ces->ces_flags & CESTATUS_ACCESS)
+					printf(" source: <%s %d>",
+						element_type_name(
+							ces->ces_source_type),
+						ces->ces_source_addr);
+				else
+					printf(" source: <>");
+			}
 			printf("\n");
 		}
 
@@ -763,6 +785,18 @@ parse_element_type(char *cp)
 			return (elements[i].et_type);
 
 	errx(1, "invalid element type `%s'", cp);
+}
+
+static const char *
+element_type_name(int et)
+{
+	int i;
+
+	for (i = 0; elements[i].et_name != NULL; i++)
+		if (elements[i].et_type == et)
+			return elements[i].et_name;
+
+	return "unknown";
 }
 
 static int

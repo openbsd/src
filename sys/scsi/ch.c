@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.68 2021/03/12 10:22:46 jsg Exp $	*/
+/*	$OpenBSD: ch.c,v 1.69 2021/08/31 05:29:55 robert Exp $	*/
 /*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
@@ -514,10 +514,52 @@ copy_voltag(struct changer_voltag *uvoltag, struct volume_tag *voltag)
  * changer_element_status structure.
  */
 static void
-copy_element_status(int flags,	struct read_element_status_descriptor *desc,
+copy_element_status(struct ch_softc *sc, int flags,
+    struct read_element_status_descriptor *desc,
     struct changer_element_status *ces)
 {
+	u_int16_t eaddr = _2btol(desc->eaddr);
+	u_int16_t et;
+
+	for (et = CHET_MT; et <= CHET_DT; et++) {
+		if ((sc->sc_firsts[et] <= eaddr)
+		    && ((sc->sc_firsts[et] + sc->sc_counts[et])
+		    > eaddr)) {
+			ces->ces_addr = eaddr - sc->sc_firsts[et];
+			ces->ces_type = et;
+			break;
+		}
+	}
+
 	ces->ces_flags = desc->flags1;
+
+	ces->ces_sensecode = desc->sense_code;
+	ces->ces_sensequal = desc->sense_qual;
+
+	if (desc->flags2 & READ_ELEMENT_STATUS_INVERT)
+		ces->ces_flags |= READ_ELEMENT_STATUS_EXCEPT;
+
+	if (desc->flags2 & READ_ELEMENT_STATUS_SVALID) {
+		eaddr = _2btol(desc->ssea);
+
+		/* convert source address to logical format */
+		for (et = CHET_MT; et <= CHET_DT; et++) {
+			if ((sc->sc_firsts[et] <= eaddr)
+			    && ((sc->sc_firsts[et] + sc->sc_counts[et])
+				> eaddr)) {
+				ces->ces_source_addr =
+					eaddr - sc->sc_firsts[et];
+				ces->ces_source_type = et;
+				ces->ces_flags |= READ_ELEMENT_STATUS_ACCESS;
+				break;
+			}
+		}
+
+		if (!(ces->ces_flags & READ_ELEMENT_STATUS_ACCESS))
+			printf("ch: warning: could not map element source "
+			       "address %ud to a valid element type\n",
+			       eaddr);
+	}
 
 	if (ISSET(flags, READ_ELEMENT_STATUS_PVOLTAG))
 		copy_voltag(&ces->ces_pvoltag, &desc->pvoltag);
@@ -604,7 +646,7 @@ ch_usergetelemstatus(struct ch_softc *sc,
 	desc = (caddr_t)(pg_hdr + 1);
 	for (i = 0; i < avail; ++i) {
 		struct changer_element_status *ces = &(user_data[i]);
-		copy_element_status(pg_hdr->flags,
+		copy_element_status(sc, pg_hdr->flags,
 		    (struct read_element_status_descriptor *)desc, ces);
 		desc += desclen;
 	}

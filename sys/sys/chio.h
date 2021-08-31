@@ -1,4 +1,4 @@
-/*	$OpenBSD: chio.h,v 1.7 2006/05/31 03:01:44 beck Exp $	*/
+/*	$OpenBSD: chio.h,v 1.8 2021/08/31 05:29:55 robert Exp $	*/
 /*	$NetBSD: chio.h,v 1.8 1996/04/03 00:25:21 thorpej Exp $	*/
 
 /*
@@ -127,6 +127,11 @@ struct changer_voltag {
 struct changer_element_status {
 	int	 		ces_type;		/* element type */
 	u_int8_t 		ces_flags;		/* flags */
+	u_int16_t		ces_addr;		/* logical element address */
+	u_int8_t		ces_sensecode;	  	/* additional sense code for element */
+	u_int8_t		ces_sensequal;	  	/* additional sense code qualifier */
+	u_int8_t		ces_source_type;  	/*  element type of source address */
+	u_int16_t		ces_source_addr;	/*  source address of medium */
   	struct changer_voltag	ces_pvoltag;		/* primary voltag */
 	struct changer_voltag	ces_avoltag;		/* alternate voltag */
 };
