@@ -1,4 +1,4 @@
-#	$OpenBSD: putty-kex.sh,v 1.6 2021/08/31 06:13:23 dtucker Exp $
+#	$OpenBSD: putty-kex.sh,v 1.7 2021/08/31 07:13:59 dtucker Exp $
 #	Placed in the Public Domain.
 
 tid="putty KEX"
@@ -19,7 +19,7 @@ for k in dh-gex-sha1 dh-group1-sha1 dh-group14-sha1 ecdh ; do
 	    ${OBJ}/.putty/sessions/kex_$k
 	echo "KEX=$k" >> ${OBJ}/.putty/sessions/kex_$k
 
-	env HOME=$PWD ${PLINK} -load kex_$k -batch -i putty.rsa2 true
+	env HOME=$PWD ${PLINK} -load kex_$k -batch -i ${OBJ}/putty.rsa2 true
 	if [ $? -ne 0 ]; then
 		fail "KEX $k failed"
 	fi

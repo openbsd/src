@@ -1,4 +1,4 @@
-#	$OpenBSD: putty-ciphers.sh,v 1.8 2021/08/31 06:13:23 dtucker Exp $
+#	$OpenBSD: putty-ciphers.sh,v 1.9 2021/08/31 07:13:59 dtucker Exp $
 #	Placed in the Public Domain.
 
 tid="putty ciphers"
@@ -20,7 +20,7 @@ for c in aes 3des aes128-ctr aes192-ctr aes256-ctr chacha20 ; do
 	echo "Cipher=$c" >> ${OBJ}/.putty/sessions/cipher_$c
 
 	rm -f ${COPY}
-	env HOME=$PWD ${PLINK} -load cipher_$c -batch -i putty.rsa2 \
+	env HOME=$PWD ${PLINK} -load cipher_$c -batch -i ${OBJ}/putty.rsa2 \
 	    cat ${DATA} > ${COPY}
 	if [ $? -ne 0 ]; then
 		fail "ssh cat $DATA failed"
