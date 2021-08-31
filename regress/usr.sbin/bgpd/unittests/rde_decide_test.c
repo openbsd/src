@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide_test.c,v 1.5 2021/04/13 07:43:23 claudio Exp $ */
+/*	$OpenBSD: rde_decide_test.c,v 1.6 2021/08/31 10:54:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -110,47 +110,47 @@ struct test {
 	struct prefix p;
 } test_pfx[] = {
 	{ .what = "test prefix",
-	.p = { .re = &dummy_re, .aspath = &asp[0], .peer = &peer1, .nexthop = &nh_reach, .lastchange = T1, } },
+	.p = { .entry.list.re = &dummy_re, .aspath = &asp[0], .peer = &peer1, .nexthop = &nh_reach, .lastchange = T1, } },
 	/* pathes with errors are not eligible */
 	{ .what = "prefix with error",
-	.p = { .re = &dummy_re, .aspath = &asp[1], .peer = &peer1, .nexthop = &nh_reach, .lastchange = T1, } },
+	.p = { .entry.list.re = &dummy_re, .aspath = &asp[1], .peer = &peer1, .nexthop = &nh_reach, .lastchange = T1, } },
 	/* only loop free pathes are eligible */
 	{ .what = "prefix with loop",
-	.p = { .re = &dummy_re, .aspath = &asp[2], .peer = &peer1, .nexthop = &nh_reach, .lastchange = T1, } },
+	.p = { .entry.list.re = &dummy_re, .aspath = &asp[2], .peer = &peer1, .nexthop = &nh_reach, .lastchange = T1, } },
 	/* 1. check if prefix is eligible a.k.a reachable */
 	{ .what = "prefix with unreachable nexthop",
-	.p = { .re = &dummy_re, .aspath = &asp[0], .peer = &peer1, .nexthop = &nh_unreach, .lastchange = T1, } },
+	.p = { .entry.list.re = &dummy_re, .aspath = &asp[0], .peer = &peer1, .nexthop = &nh_unreach, .lastchange = T1, } },
 	/* 2. local preference of prefix, bigger is better */
 	{ .what = "local preference check",
-	.p = { .re = &dummy_re, .aspath = &asp[3], .peer = &peer1, .nexthop = &nh_reach, .lastchange = T1, } },
+	.p = { .entry.list.re = &dummy_re, .aspath = &asp[3], .peer = &peer1, .nexthop = &nh_reach, .lastchange = T1, } },
 	/* 3. aspath count, the shorter the better */
 	{ .what = "aspath count check",
-	.p = { .re = &dummy_re, .aspath = &asp[4], .peer = &peer1, .nexthop = &nh_reach, .lastchange = T1, } },
+	.p = { .entry.list.re = &dummy_re, .aspath = &asp[4], .peer = &peer1, .nexthop = &nh_reach, .lastchange = T1, } },
 	/* 4. origin, the lower the better */
 	{ .what = "origin EGP",
-	.p = { .re = &dummy_re, .aspath = &asp[5], .peer = &peer1, .nexthop = &nh_reach, .lastchange = T1, } },
+	.p = { .entry.list.re = &dummy_re, .aspath = &asp[5], .peer = &peer1, .nexthop = &nh_reach, .lastchange = T1, } },
 	{ .what = "origin INCOMPLETE",
-	.p = { .re = &dummy_re, .aspath = &asp[6], .peer = &peer1, .nexthop = &nh_reach, .lastchange = T1, } },
+	.p = { .entry.list.re = &dummy_re, .aspath = &asp[6], .peer = &peer1, .nexthop = &nh_reach, .lastchange = T1, } },
 	/* 5. MED decision */
 	{ .what = "MED",
-	.p = { .re = &dummy_re, .aspath = &asp[7], .peer = &peer1, .nexthop = &nh_reach, .lastchange = T1, } },
+	.p = { .entry.list.re = &dummy_re, .aspath = &asp[7], .peer = &peer1, .nexthop = &nh_reach, .lastchange = T1, } },
 	/* 6. EBGP is cooler than IBGP */
 	{ .what = "EBGP vs IBGP",
-	.p = { .re = &dummy_re, .aspath = &asp[0], .peer = &peer1_i, .nexthop = &nh_reach, .lastchange = T1, } },
+	.p = { .entry.list.re = &dummy_re, .aspath = &asp[0], .peer = &peer1_i, .nexthop = &nh_reach, .lastchange = T1, } },
 	/* 7. weight */
 	{ .what = "local weight",
-	.p = { .re = &dummy_re, .aspath = &asp[8], .peer = &peer1, .nexthop = &nh_reach, .lastchange = T1, } },
+	.p = { .entry.list.re = &dummy_re, .aspath = &asp[8], .peer = &peer1, .nexthop = &nh_reach, .lastchange = T1, } },
 	/* 8. nexthop cost not implemented */
 	/* 9. route age */
 	{ .what = "route age",
-	.p = { .re = &dummy_re, .aspath = &asp[0], .peer = &peer1, .nexthop = &nh_reach, .lastchange = T2, } },
+	.p = { .entry.list.re = &dummy_re, .aspath = &asp[0], .peer = &peer1, .nexthop = &nh_reach, .lastchange = T2, } },
 	/* 10. BGP Id or ORIGINATOR_ID if present */
 	{ .what = "BGP ID",
-	.p = { .re = &dummy_re, .aspath = &asp[0], .peer = &peer2, .nexthop = &nh_reach, .lastchange = T1, } },
+	.p = { .entry.list.re = &dummy_re, .aspath = &asp[0], .peer = &peer2, .nexthop = &nh_reach, .lastchange = T1, } },
 	/* 11. CLUSTER_LIST length, TODO */
 	/* 12. lowest peer address wins */
 	{ .what = "remote peer address",
-	.p = { .re = &dummy_re, .aspath = &asp[0], .peer = &peer1_a4, .nexthop = &nh_reach, .lastchange = T1, } },
+	.p = { .entry.list.re = &dummy_re, .aspath = &asp[0], .peer = &peer1_a4, .nexthop = &nh_reach, .lastchange = T1, } },
 };
 
 struct rde_aspath med_asp[] = {
@@ -170,27 +170,27 @@ struct rde_aspath med_asp[] = {
  * For med_pfx3 and med_pfx4 the strict case differs in the bgp-id.
  */
 struct prefix med_pfx1 = 
-	{ .re = &dummy_re, .aspath = &med_asp[0], .peer = &peer2, .nexthop = &nh_reach, .lastchange = T1, };
+	{ .entry.list.re = &dummy_re, .aspath = &med_asp[0], .peer = &peer2, .nexthop = &nh_reach, .lastchange = T1, };
 struct prefix med_pfx2 = 
-	{ .re = &dummy_re, .aspath = &med_asp[1], .peer = &peer1, .nexthop = &nh_reach, .lastchange = T1, };
+	{ .entry.list.re = &dummy_re, .aspath = &med_asp[1], .peer = &peer1, .nexthop = &nh_reach, .lastchange = T1, };
 struct prefix med_pfx3 = 
-	{ .re = &dummy_re, .aspath = &med_asp[2], .peer = &peer3, .nexthop = &nh_reach, .lastchange = T1, };
+	{ .entry.list.re = &dummy_re, .aspath = &med_asp[2], .peer = &peer3, .nexthop = &nh_reach, .lastchange = T1, };
 struct prefix med_pfx4 = 
-	{ .re = &dummy_re, .aspath = &med_asp[3], .peer = &peer1_a4, .nexthop = &nh_reach, .lastchange = T1, };
+	{ .entry.list.re = &dummy_re, .aspath = &med_asp[3], .peer = &peer1_a4, .nexthop = &nh_reach, .lastchange = T1, };
 /* the next two prefixes have a longer aspath than med_pfx1 & 2 */
 struct prefix med_pfx5 = 
-	{ .re = &dummy_re, .aspath = &med_asp[5], .peer = &peer3, .nexthop = &nh_reach, .lastchange = T1, };
+	{ .entry.list.re = &dummy_re, .aspath = &med_asp[5], .peer = &peer3, .nexthop = &nh_reach, .lastchange = T1, };
 struct prefix med_pfx6 = 
-	{ .re = &dummy_re, .aspath = &med_asp[4], .peer = &peer1, .nexthop = &nh_reach, .lastchange = T1, };
+	{ .entry.list.re = &dummy_re, .aspath = &med_asp[4], .peer = &peer1, .nexthop = &nh_reach, .lastchange = T1, };
 
 /*
  * Define two prefixes where pfx1 > pfx2 if 'rde route-age evaluate'
  * but pfx1 < pfx2 if 'rde route-age ignore' 
  */
 struct prefix age_pfx1 = 
-	{ .re = &dummy_re, .aspath = &asp[0], .peer = &peer2, .nexthop = &nh_reach, .lastchange = T1, };
+	{ .entry.list.re = &dummy_re, .aspath = &asp[0], .peer = &peer2, .nexthop = &nh_reach, .lastchange = T1, };
 struct prefix age_pfx2 = 
-	{ .re = &dummy_re, .aspath = &asp[0], .peer = &peer1, .nexthop = &nh_reach, .lastchange = T2, };
+	{ .entry.list.re = &dummy_re, .aspath = &asp[0], .peer = &peer1, .nexthop = &nh_reach, .lastchange = T2, };
 
 int     prefix_cmp(struct prefix *, struct prefix *, int *);
 
