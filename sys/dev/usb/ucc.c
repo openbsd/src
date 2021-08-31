@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucc.c,v 1.20 2021/08/31 05:16:45 anton Exp $	*/
+/*	$OpenBSD: ucc.c,v 1.21 2021/08/31 05:17:49 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -859,6 +859,7 @@ ucc_hid_parse(struct ucc_softc *sc, void *desc, int descsiz)
 	enum { OFFSET, LENGTH } istate = OFFSET;
 	struct hid_item hi;
 	struct hid_data *hd;
+	u_int bit = 0;
 	int error = 0;
 	int nsyms = nitems(ucc_keysyms);
 	int repid = sc->sc_hdev.sc_report_id;
@@ -897,8 +898,6 @@ ucc_hid_parse(struct ucc_softc *sc, void *desc, int descsiz)
 
 	hd = hid_start_parse(desc, descsiz, hid_input);
 	while (hid_get_item(hd, &hi)) {
-		u_int bit;
-
 		if (hi.report_ID != repid || hi.kind != hid_input)
 			continue;
 
@@ -931,10 +930,11 @@ ucc_hid_parse(struct ucc_softc *sc, void *desc, int descsiz)
 			break;
 		}
 
-		bit = sc->sc_nusages++;
 		error = ucc_add_key(sc, HID_GET_USAGE(hi.usage), bit);
 		if (error)
 			break;
+		sc->sc_nusages++;
+		bit += hi.loc.size * hi.loc.count;
 	}
 	hid_end_parse(hd);
 
