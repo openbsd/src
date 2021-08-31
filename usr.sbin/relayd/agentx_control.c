@@ -1,4 +1,4 @@
-/*	$OpenBSD: agentx_control.c,v 1.4 2020/10/27 18:48:07 martijn Exp $	*/
+/*	$OpenBSD: agentx_control.c,v 1.5 2021/08/31 13:19:29 martijn Exp $	*/
 
 /*
  * Copyright (c) 2020 Martijn van Duren <martijn@openbsd.org>
@@ -124,7 +124,7 @@ static struct snmp_oid	hosttrapoid = {
 #define RELAYDTABLENAME		RELAYDTABLEENTRY, 2
 #define RELAYDTABLESTATUS	RELAYDTABLEENTRY, 3
 
-void agentx_needsock(struct agentx *, void *, int);
+void agentx_nofd(struct agentx *, void *, int);
 
 struct relayd *env;
 
@@ -202,6 +202,7 @@ agentx_init(struct relayd *nenv)
 	struct agentx_context *sac;
 	struct agentx_region *sar;
 	struct agentx_index *session_idxs[2];
+	static int freed;
 
 	agentx_log_fatal = fatalx;
 	agentx_log_warn = log_warnx;
@@ -211,14 +212,17 @@ agentx_init(struct relayd *nenv)
 	env = nenv;
 
 	if ((env->sc_conf.flags & F_AGENTX) == 0) {
-		if (sa != NULL)
+		if (sa != NULL && !freed) {
 			agentx_free(sa);
+			freed = 1;
+		}
 		return;
 	}
 	if (sa != NULL)
 		return;
 
-	if ((sa = agentx(agentx_needsock, NULL)) == NULL)
+	freed = 0;
+	if ((sa = agentx(agentx_nofd, NULL)) == NULL)
 		fatal("%s: agentx alloc", __func__);
 	if ((sas = agentx_session(sa, NULL, 0, "relayd", 0)) == NULL)
 		fatal("%s: agentx session alloc", __func__);
@@ -420,9 +424,15 @@ agentx_init(struct relayd *nenv)
 }
 
 void
-agentx_needsock(struct agentx *usa, void *cookie, int fd)
+agentx_nofd(struct agentx *usa, void *cookie, int close)
 {
-	proc_compose(env->sc_ps, PROC_PARENT, IMSG_AGENTXSOCK, NULL, 0);
+	if (!close)
+		proc_compose(env->sc_ps, PROC_PARENT, IMSG_AGENTXSOCK, NULL, 0);
+	else {
+		sa = NULL;
+		agentx_init(env);
+		event_del(&(env->sc_agentxev));
+	}
 }
 
 void
