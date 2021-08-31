@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.33 2021/04/20 17:12:43 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.34 2021/08/31 20:14:40 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -801,12 +801,12 @@ ec_asn1_group2fieldid(const EC_GROUP * group, X9_62_FIELDID * field)
 static int 
 ec_asn1_group2curve(const EC_GROUP * group, X9_62_CURVE * curve)
 {
-	int ok = 0, nid;
 	BIGNUM *tmp_1 = NULL, *tmp_2 = NULL;
 	unsigned char *buffer_1 = NULL, *buffer_2 = NULL, *a_buf = NULL,
 	*b_buf = NULL;
 	size_t len_1, len_2;
 	unsigned char char_zero = 0;
+	int ok = 0;
 
 	if (!group || !curve || !curve->a || !curve->b)
 		return 0;
@@ -815,7 +815,6 @@ ec_asn1_group2curve(const EC_GROUP * group, X9_62_CURVE * curve)
 		ECerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
-	nid = EC_METHOD_get_field_type(EC_GROUP_method_of(group));
 
 	/* get a and b */
 	if (!EC_GROUP_get_curve(group, NULL, tmp_1, tmp_2, NULL)) {
@@ -1018,7 +1017,7 @@ ec_asn1_group2pkparameters(const EC_GROUP * group, ECPKPARAMETERS * params)
 			if ((ret->value.named_curve = OBJ_nid2obj(tmp)) == NULL)
 				ok = 0;
 		} else
-			/* we don't kmow the nid => ERROR */
+			/* we don't know the group => ERROR */
 			ok = 0;
 	} else {
 		/* use the ECPARAMETERS structure */
