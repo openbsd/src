@@ -1,4 +1,4 @@
-/*	$OpenBSD: tsc.c,v 1.23 2021/02/23 04:44:30 cheloha Exp $	*/
+/*	$OpenBSD: tsc.c,v 1.24 2021/08/31 15:11:54 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * Copyright (c) 2016,2017 Reyk Floeter <reyk@openbsd.org>
@@ -102,6 +102,21 @@ tsc_freq_cpuid(struct cpu_info *ci)
 	}
 
 	return (0);
+}
+
+void
+tsc_identify(struct cpu_info *ci)
+{
+	if (!(ci->ci_flags & CPUF_PRIMARY) ||
+	    !(ci->ci_flags & CPUF_CONST_TSC) ||
+	    !(ci->ci_flags & CPUF_INVAR_TSC))
+		return;
+
+	tsc_is_invariant = 1;
+
+	tsc_frequency = tsc_freq_cpuid(ci);
+	if (tsc_frequency > 0)
+		delay_func = tsc_delay;
 }
 
 static inline int
@@ -242,9 +257,6 @@ tsc_timecounter_init(struct cpu_info *ci, uint64_t cpufreq)
 	    !(ci->ci_flags & CPUF_INVAR_TSC))
 		return;
 
-	tsc_frequency = tsc_freq_cpuid(ci);
-	tsc_is_invariant = 1;
-
 	/* Newer CPUs don't require recalibration */
 	if (tsc_frequency > 0) {
 		tsc_timecounter.tc_frequency = tsc_frequency;
@@ -262,8 +274,7 @@ tsc_timecounter_init(struct cpu_info *ci, uint64_t cpufreq)
 		tsc_timecounter.tc_quality = -1000;
 		tsc_timecounter.tc_user = 0;
 		tsc_is_invariant = 0;
-	} else
-		delay_func = tsc_delay;
+	}
 
 	tc_init(&tsc_timecounter);
 }

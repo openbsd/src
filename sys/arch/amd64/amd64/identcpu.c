@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.118 2020/12/31 06:22:33 jsg Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.119 2021/08/31 15:11:54 kettenis Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 void	replacesmap(void);
 void	replacemeltdown(void);
 uint64_t cpu_freq(struct cpu_info *);
+void	tsc_identify(struct cpu_info *);
 void	tsc_timecounter_init(struct cpu_info *, uint64_t);
 #if NVMM > 0
 void	cpu_check_vmm_cap(struct cpu_info *);
@@ -545,6 +546,8 @@ identifycpu(struct cpu_info *ci)
 		/* Check if it's an invariant TSC */
 		if (cpu_apmi_edx & CPUIDEDX_ITSC)
 			ci->ci_flags |= CPUF_INVAR_TSC;
+
+		tsc_identify(ci);
 	}
 
 	freq = cpu_freq(ci);
