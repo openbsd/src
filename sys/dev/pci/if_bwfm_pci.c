@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.53 2021/08/31 20:58:51 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.54 2021/08/31 21:02:09 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -493,6 +493,7 @@ bwfm_pci_preinit(struct bwfm_softc *bwfm)
 		return 1;
 	}
 
+	sc->sc_dma_idx_sz = 0;
 	if (sc->sc_shared_flags & BWFM_SHARED_INFO_DMA_INDEX) {
 		if (sc->sc_shared_flags & BWFM_SHARED_INFO_DMA_2B_IDX)
 			sc->sc_dma_idx_sz = sizeof(uint16_t);
@@ -684,6 +685,7 @@ bwfm_pci_preinit(struct bwfm_softc *bwfm)
 		bus_dmamap_create(sc->sc_dmat, MSGBUF_MAX_PKT_SIZE,
 		    BWFM_NUM_TX_DESCS, MSGBUF_MAX_PKT_SIZE, 0, BUS_DMA_WAITOK,
 		    &sc->sc_tx_pkts.pkts[i].bb_map);
+	sc->sc_tx_pkts_full = 0;
 
 	/* Maps IOCTL mbufs to a packet id and back. */
 	sc->sc_ioctl_pkts.npkt = BWFM_NUM_IOCTL_PKTIDS;
