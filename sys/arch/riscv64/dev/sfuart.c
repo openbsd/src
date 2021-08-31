@@ -1,4 +1,4 @@
-/*	$OpenBSD: sfuart.c,v 1.3 2021/06/20 17:55:37 kettenis Exp $	*/
+/*	$OpenBSD: sfuart.c,v 1.4 2021/08/31 12:24:15 jan Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -398,7 +398,7 @@ sfuartopen(dev_t dev, int flag, int mode, struct proc *p)
 
 		/* No carrier detect support. */
 		SET(tp->t_state, TS_CARR_ON);
-	} else if (ISSET(tp->t_state, TS_XCLUDE) && p->p_ucred->cr_uid != 0)
+	} else if (ISSET(tp->t_state, TS_XCLUDE) && suser(p) != 0)
 		return EBUSY;
 	else
 		s = spltty();

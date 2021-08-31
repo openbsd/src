@@ -1,4 +1,4 @@
-/* $OpenBSD: mvuart.c,v 1.2 2019/07/19 00:17:15 cheloha Exp $ */
+/* $OpenBSD: mvuart.c,v 1.3 2021/08/31 12:24:15 jan Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
@@ -425,7 +425,7 @@ mvuartopen(dev_t dev, int flag, int mode, struct proc *p)
 		HSET4(sc, MVUART_CTRL, MVUART_CTRL_RX_RDY_INT);
 
 		SET(tp->t_state, TS_CARR_ON); /* XXX */
-	} else if (ISSET(tp->t_state, TS_XCLUDE) && p->p_ucred->cr_uid != 0)
+	} else if (ISSET(tp->t_state, TS_XCLUDE) && suser(p) != 0)
 		return EBUSY;
 	else
 		s = spltty();

@@ -1,4 +1,4 @@
-/* $OpenBSD: imxuart.c,v 1.9 2021/02/04 22:40:04 patrick Exp $ */
+/* $OpenBSD: imxuart.c,v 1.10 2021/08/31 12:24:15 jan Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -572,7 +572,7 @@ imxuartopen(dev_t dev, int flag, int mode, struct proc *p)
 		SET(tp->t_state, TS_CARR_ON); /* XXX */
 
 
-	} else if (ISSET(tp->t_state, TS_XCLUDE) && p->p_ucred->cr_uid != 0)
+	} else if (ISSET(tp->t_state, TS_XCLUDE) && suser(p) != 0)
 		return EBUSY;
 	else
 		s = spltty();
