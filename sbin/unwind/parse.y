@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.26 2021/07/25 08:34:43 florian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.27 2021/08/31 20:18:03 kn Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -100,8 +100,8 @@ typedef struct {
 %}
 
 %token	INCLUDE ERROR
-%token	FORWARDER DOT PORT ODOT_FORWARDER ODOT_DHCP
-%token	AUTHENTICATION NAME PREFERENCE RECURSOR DHCP STUB
+%token	FORWARDER DOT PORT ODOT_FORWARDER ODOT_AUTOCONF ODOT_DHCP
+%token	AUTHENTICATION NAME PREFERENCE RECURSOR AUTOCONF DHCP STUB
 %token	BLOCK LIST LOG FORCE ACCEPT BOGUS
 
 %token	<v.string>	STRING
@@ -223,8 +223,10 @@ prefopt			: DOT			{ $$ = UW_RES_DOT; }
 			| FORWARDER		{ $$ = UW_RES_FORWARDER; }
 			| ODOT_FORWARDER	{ $$ = UW_RES_ODOT_FORWARDER; }
 			| RECURSOR		{ $$ = UW_RES_RECURSOR; }
-			| DHCP			{ $$ = UW_RES_DHCP; }
-			| ODOT_DHCP		{ $$ = UW_RES_ODOT_DHCP; }
+			| AUTOCONF		{ $$ = UW_RES_AUTOCONF; }
+			| DHCP			{ $$ = UW_RES_AUTOCONF; }
+			| ODOT_AUTOCONF		{ $$ = UW_RES_ODOT_AUTOCONF; }
+			| ODOT_DHCP		{ $$ = UW_RES_ODOT_AUTOCONF; }
 			| STUB			{ $$ = UW_RES_ASR; }
 			;
 
@@ -416,6 +418,7 @@ lookup(char *s)
 		{"DoT",			DOT},
 		{"accept",		ACCEPT},
 		{"authentication",	AUTHENTICATION},
+		{"autoconf",		AUTOCONF},
 		{"block",		BLOCK},
 		{"bogus",		BOGUS},
 		{"dhcp",		DHCP},
@@ -426,6 +429,7 @@ lookup(char *s)
 		{"list",		LIST},
 		{"log",			LOG},
 		{"name",		NAME},
+		{"oDoT-autoconf",	ODOT_AUTOCONF},
 		{"oDoT-dhcp",		ODOT_DHCP},
 		{"oDoT-forwarder",	ODOT_FORWARDER},
 		{"port",		PORT},

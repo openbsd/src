@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.62 2021/07/25 08:34:43 florian Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.63 2021/08/31 20:18:03 kn Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -690,8 +690,8 @@ config_new_empty(void)
 	    UW_RES_ODOT_FORWARDER,
 	    UW_RES_FORWARDER,
 	    UW_RES_RECURSOR,
-	    UW_RES_ODOT_DHCP,
-	    UW_RES_DHCP,
+	    UW_RES_ODOT_AUTOCONF,
+	    UW_RES_AUTOCONF,
 	    UW_RES_ASR};
 	struct uw_conf			*xconf;
 	int				 i;

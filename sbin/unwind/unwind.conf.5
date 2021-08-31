@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unwind.conf.5,v 1.28 2021/07/24 14:15:34 kn Exp $
+.\"	$OpenBSD: unwind.conf.5,v 1.29 2021/08/31 20:18:03 kn Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 24 2021 $
+.Dd $Mdocdate: August 31 2021 $
 .Dt UNWIND.CONF 5
 .Os
 .Sh NAME
@@ -100,9 +100,9 @@ See
 Will never validate.
 Useful when running behind broken middle boxes that do not like edns0.
 DNS answers from stub name servers are not cached.
-.It Ic dhcp
+.It Ic autoconf
 Name servers learned via DHCP or SLAAC.
-.It Ic oDoT-dhcp
+.It Ic oDoT-autoconf
 Name servers learned via DHCP or SLAAC.
 .Nm unwind
 tries to opportunistically use DNS over TLS.
@@ -123,7 +123,7 @@ itself recursively resolves names.
 .El
 .Pp
 The default preference is
-.Ic DoT oDoT-forwarder forwarder recursor oDoT-dhcp dhcp stub .
+.Ic DoT oDoT-forwarder forwarder recursor oDoT-autoconf autoconf stub .
 .It Ic force Oo Cm accept bogus Oc Ar type Brq Ar name ...
 Force resolving of
 .Ar name
@@ -160,7 +160,7 @@ force
 .Xr unwind 8
 to use a specific resolver type:
 .Bd -literal -offset indent
-force dhcp { domain.local }
+force autoconf { domain.local }
 .Ed
 .Sh SEE ALSO
 .Xr rc.conf.local 8 ,

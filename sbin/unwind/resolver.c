@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.148 2021/08/30 11:09:58 kn Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.149 2021/08/31 20:18:03 kn Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -864,8 +864,8 @@ resolve(struct uw_resolver *res, const char* name, int rrtype, int rrclass,
 		}
 		break;
 	case UW_RES_RECURSOR:
-	case UW_RES_DHCP:
-	case UW_RES_ODOT_DHCP:
+	case UW_RES_AUTOCONF:
+	case UW_RES_ODOT_AUTOCONF:
 	case UW_RES_FORWARDER:
 	case UW_RES_ODOT_FORWARDER:
 	case UW_RES_DOT:
@@ -1088,8 +1088,8 @@ new_resolver(enum uw_resolver_type type, enum uw_resolver_state state)
 
 	switch (type) {
 	case UW_RES_ASR:
-	case UW_RES_DHCP:
-	case UW_RES_ODOT_DHCP:
+	case UW_RES_AUTOCONF:
+	case UW_RES_ODOT_AUTOCONF:
 		if (TAILQ_EMPTY(&autoconf_forwarder_list))
 			return;
 		break;
@@ -1110,8 +1110,8 @@ new_resolver(enum uw_resolver_type type, enum uw_resolver_state state)
 
 	switch (type) {
 	case UW_RES_RECURSOR:
-	case UW_RES_DHCP:
-	case UW_RES_ODOT_DHCP:
+	case UW_RES_AUTOCONF:
+	case UW_RES_ODOT_AUTOCONF:
 	case UW_RES_FORWARDER:
 	case UW_RES_ODOT_FORWARDER:
 	case UW_RES_DOT:
@@ -1228,8 +1228,8 @@ create_resolver(enum uw_resolver_type type)
 		free(resolv_conf);
 		break;
 	case UW_RES_RECURSOR:
-	case UW_RES_DHCP:
-	case UW_RES_ODOT_DHCP:
+	case UW_RES_AUTOCONF:
+	case UW_RES_ODOT_AUTOCONF:
 	case UW_RES_FORWARDER:
 	case UW_RES_ODOT_FORWARDER:
 	case UW_RES_DOT:
@@ -1311,10 +1311,10 @@ create_resolver(enum uw_resolver_type type)
 		break;
 	case UW_RES_RECURSOR:
 		break;
-	case UW_RES_DHCP:
+	case UW_RES_AUTOCONF:
 		set_forwarders(res, &autoconf_forwarder_list, 0);
 		break;
-	case UW_RES_ODOT_DHCP:
+	case UW_RES_ODOT_AUTOCONF:
 		set_forwarders(res, &autoconf_forwarder_list, 853);
 		ub_ctx_set_option(res->ctx, "tls-cert-bundle:",
 		    TLS_DEFAULT_CA_CERT_FILE);
@@ -1342,8 +1342,8 @@ create_resolver(enum uw_resolver_type type)
 
 	/* for the forwarder cases allow AS112 zones */
 	switch(res->type) {
-	case UW_RES_DHCP:
-	case UW_RES_ODOT_DHCP:
+	case UW_RES_AUTOCONF:
+	case UW_RES_ODOT_AUTOCONF:
 	case UW_RES_FORWARDER:
 	case UW_RES_ODOT_FORWARDER:
 	case UW_RES_DOT:
@@ -1548,8 +1548,8 @@ check_resolver_done(struct uw_resolver *res, void *arg, int rcode,
 	}
 
 	if (sec == SECURE) {
-		if (dns64_present && (res->type == UW_RES_DHCP ||
-		    res->type == UW_RES_ODOT_DHCP)) {
+		if (dns64_present && (res->type == UW_RES_AUTOCONF ||
+		    res->type == UW_RES_ODOT_AUTOCONF)) {
 			/* do not upgrade to validating, DNS64 breaks DNSSEC */
 			if (prev_state != RESOLVING)
 				new_resolver(checked_resolver->type,
@@ -2049,8 +2049,8 @@ replace_autoconf_forwarders(struct imsg_rdns_proposal *rdns_proposal)
 		replace_forwarders(&new_forwarder_list,
 		    &autoconf_forwarder_list);
 		new_resolver(UW_RES_ASR, UNKNOWN);
-		new_resolver(UW_RES_DHCP, UNKNOWN);
-		new_resolver(UW_RES_ODOT_DHCP, UNKNOWN);
+		new_resolver(UW_RES_AUTOCONF, UNKNOWN);
+		new_resolver(UW_RES_ODOT_AUTOCONF, UNKNOWN);
 	} else {
 		while ((tmp = TAILQ_FIRST(&new_forwarder_list)) != NULL) {
 			TAILQ_REMOVE(&new_forwarder_list, tmp, entry);
@@ -2278,7 +2278,7 @@ check_dns64_done(struct asr_result *ar, void *arg)
 	}
 
 	if (ar->ar_rcode == LDNS_RCODE_NXDOMAIN) {
-		/* XXX this means that the dhcp resolver is broken */
+		/* XXX this means that the autoconf resolver is broken */
 		log_debug("%s: NXDOMAIN", __func__);
 		goto out;
 	}
@@ -2336,13 +2336,13 @@ check_dns64_done(struct asr_result *ar, void *arg)
 	dns64_present = count > 0;
 
 	if (dns64_present) {
-		/* downgrade DHCP resolvers, DNS64 breaks DNSSEC */
-		if (resolvers[UW_RES_DHCP] != NULL &&
-		    resolvers[UW_RES_DHCP]->state == VALIDATING)
-			new_resolver(UW_RES_DHCP, RESOLVING);
-		if (resolvers[UW_RES_ODOT_DHCP] != NULL &&
-		    resolvers[UW_RES_ODOT_DHCP]->state == VALIDATING)
-			new_resolver(UW_RES_ODOT_DHCP, RESOLVING);
+		/* downgrade SLAAC resolvers, DNS64 breaks DNSSEC */
+		if (resolvers[UW_RES_AUTOCONF] != NULL &&
+		    resolvers[UW_RES_AUTOCONF]->state == VALIDATING)
+			new_resolver(UW_RES_AUTOCONF, RESOLVING);
+		if (resolvers[UW_RES_ODOT_AUTOCONF] != NULL &&
+		    resolvers[UW_RES_ODOT_AUTOCONF]->state == VALIDATING)
+			new_resolver(UW_RES_ODOT_AUTOCONF, RESOLVING);
 	}
 
 	resolver_imsg_compose_frontend(IMSG_NEW_DNS64_PREFIXES_START, 0,
