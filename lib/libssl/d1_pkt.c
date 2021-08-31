@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.107 2021/08/30 19:25:43 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.108 2021/08/31 13:14:43 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -898,11 +898,6 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 
 	switch (rr->type) {
 	default:
-		/* TLS just ignores unknown message types */
-		if (s->version == TLS1_VERSION) {
-			rr->length = 0;
-			goto start;
-		}
 		al = SSL_AD_UNEXPECTED_MESSAGE;
 		SSLerror(s, SSL_R_UNEXPECTED_RECORD);
 		goto fatal_err;
