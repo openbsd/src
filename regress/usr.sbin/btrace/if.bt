@@ -1,0 +1,12 @@
+BEGIN {
+	if (0)
+		printf("nothing");
+
+	@var = 0;
+	if (@var)
+		printf("not printed\n");
+
+	if (1) {
+		printf("printed!\n");
+	}
+}
