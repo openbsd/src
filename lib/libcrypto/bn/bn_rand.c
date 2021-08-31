@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_rand.c,v 1.24 2020/09/12 17:16:36 tb Exp $ */
+/* $OpenBSD: bn_rand.c,v 1.25 2021/08/31 11:19:19 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -194,20 +194,20 @@ err:
 	return (ret);
 }
 
-int    
+int
 BN_rand(BIGNUM *rnd, int bits, int top, int bottom)
 {
 	return bnrand(0, rnd, bits, top, bottom);
 }
 
-int    
+int
 BN_pseudo_rand(BIGNUM *rnd, int bits, int top, int bottom)
 {
 	return bnrand(1, rnd, bits, top, bottom);
 }
 
 #if 1
-int    
+int
 BN_bntest_rand(BIGNUM *rnd, int bits, int top, int bottom)
 {
 	return bnrand(2, rnd, bits, top, bottom);

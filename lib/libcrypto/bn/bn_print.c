@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_print.c,v 1.31 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: bn_print.c,v 1.32 2021/08/31 11:19:19 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -216,7 +216,7 @@ BN_hex2bn(BIGNUM **bn, const char *a)
 		if ((ret = BN_new()) == NULL)
 			return (0);
 	} else {
-		ret= *bn;
+		ret = *bn;
 		BN_zero(ret);
 	}
 
@@ -228,7 +228,7 @@ BN_hex2bn(BIGNUM **bn, const char *a)
 	m = 0;
 	h = 0;
 	while (j > 0) {
-		m = ((BN_BYTES*2) <= j) ? (BN_BYTES * 2) : j;
+		m = ((BN_BYTES * 2) <= j) ? (BN_BYTES * 2) : j;
 		l = 0;
 		for (;;) {
 			c = a[j - m];
