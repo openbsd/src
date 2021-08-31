@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.98 2021/08/29 20:31:18 gnezdo Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.99 2021/08/31 13:19:32 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -580,7 +580,7 @@ void iwx_ctxt_info_free_paging(struct iwx_softc *sc)
 
 	/* free paging*/
 	for (i = 0; i < dram->paging_cnt; i++)
-		iwx_dma_contig_free(dram->paging);
+		iwx_dma_contig_free(&dram->paging[i]);
 
 	free(dram->paging, M_DEVBUF, dram->paging_cnt * sizeof(*dram->paging));
 	dram->paging_cnt = 0;
