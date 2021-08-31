@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp.c,v 1.10 2021/06/14 10:01:23 claudio Exp $ */
+/*	$OpenBSD: rrdp.c,v 1.11 2021/08/31 15:18:53 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -509,13 +509,12 @@ proc_rrdp(int fd)
 	if (pledge("stdio recvfd", NULL) == -1)
 		err(1, "pledge");
 
-	memset(&pfds, 0, sizeof(pfds));
-
 	msgbuf_init(&msgq);
 	msgq.fd = fd;
 
 	for (;;) {
 		i = 1;
+		memset(&pfds, 0, sizeof(pfds));
 		TAILQ_FOREACH(s, &states, entry) {
 			if (i >= MAX_SESSIONS + 1) {
 				/* not enough sessions, wait for better times */
