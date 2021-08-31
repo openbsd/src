@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.57 2021/07/24 05:45:49 visa Exp $
+#	$OpenBSD: Makefile,v 1.58 2021/08/31 09:58:17 jasper Exp $
 
 SUBDIR+= _setjmp
 SUBDIR+= alloca arc4random-fork atexit
@@ -21,6 +21,7 @@ SUBDIR+= setjmp setjmp-signal sigsetjmp sigthr sleep sprintf stdio_threading
 SUBDIR+= stpncpy strchr strerror strlcat strlcpy strnlen strtod strtol strtonum
 SUBDIR+= sys
 SUBDIR+= telldir time timingsafe
+SUBDIR+= uuid
 SUBDIR+= vis
 SUBDIR+= wprintf
 
