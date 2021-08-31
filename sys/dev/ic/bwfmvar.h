@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfmvar.h,v 1.23 2021/02/26 00:07:41 patrick Exp $ */
+/* $OpenBSD: bwfmvar.h,v 1.24 2021/08/31 23:05:11 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -179,7 +179,9 @@ struct bwfm_softc {
 void bwfm_attach(struct bwfm_softc *);
 void bwfm_attachhook(struct device *);
 int bwfm_preinit(struct bwfm_softc *);
+void bwfm_cleanup(struct bwfm_softc *);
 int bwfm_detach(struct bwfm_softc *, int);
+int bwfm_activate(struct bwfm_softc *, int);
 int bwfm_chip_attach(struct bwfm_softc *);
 int bwfm_chip_set_active(struct bwfm_softc *, uint32_t);
 void bwfm_chip_set_passive(struct bwfm_softc *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.55 2021/08/31 21:13:24 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.56 2021/08/31 23:05:11 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -184,6 +184,8 @@ struct bwfm_pci_softc {
 	struct bwfm_pci_pkts	 sc_rx_pkts;
 	struct bwfm_pci_pkts	 sc_tx_pkts;
 	int			 sc_tx_pkts_full;
+
+	uint8_t			 sc_mbdata_done;
 };
 
 struct bwfm_pci_dmamem {
@@ -201,6 +203,8 @@ struct bwfm_pci_dmamem {
 int		 bwfm_pci_match(struct device *, void *, void *);
 void		 bwfm_pci_attach(struct device *, struct device *, void *);
 int		 bwfm_pci_detach(struct device *, int);
+int		 bwfm_pci_activate(struct device *, int);
+void		 bwfm_pci_cleanup(struct bwfm_pci_softc *);
 
 #if defined(__HAVE_FDT)
 int		 bwfm_pci_read_otp(struct bwfm_pci_softc *);
@@ -213,6 +217,7 @@ void		 bwfm_pci_intr_enable(struct bwfm_pci_softc *);
 void		 bwfm_pci_intr_disable(struct bwfm_pci_softc *);
 uint32_t	 bwfm_pci_intr_status(struct bwfm_pci_softc *);
 void		 bwfm_pci_intr_ack(struct bwfm_pci_softc *, uint32_t);
+uint32_t	 bwfm_pci_intmask(struct bwfm_pci_softc *);
 void		 bwfm_pci_hostready(struct bwfm_pci_softc *);
 int		 bwfm_pci_load_microcode(struct bwfm_pci_softc *, const u_char *,
 		    size_t, const u_char *, size_t);
@@ -285,6 +290,9 @@ void		 bwfm_pci_stop(struct bwfm_softc *);
 int		 bwfm_pci_txcheck(struct bwfm_softc *);
 int		 bwfm_pci_txdata(struct bwfm_softc *, struct mbuf *);
 
+int		 bwfm_pci_send_mb_data(struct bwfm_pci_softc *, uint32_t);
+void		 bwfm_pci_handle_mb_data(struct bwfm_pci_softc *);
+
 #ifdef BWFM_DEBUG
 void		 bwfm_pci_debug_console(struct bwfm_pci_softc *);
 #endif
@@ -325,6 +333,7 @@ struct cfattach bwfm_pci_ca = {
 	bwfm_pci_match,
 	bwfm_pci_attach,
 	bwfm_pci_detach,
+	bwfm_pci_activate,
 };
 
 static const struct pci_matchid bwfm_pci_devices[] = {
@@ -809,9 +818,17 @@ int
 bwfm_pci_detach(struct device *self, int flags)
 {
 	struct bwfm_pci_softc *sc = (struct bwfm_pci_softc *)self;
-	int i;
 
 	bwfm_detach(&sc->sc_sc, flags);
+	bwfm_pci_cleanup(sc);
+
+	return 0;
+}
+
+void
+bwfm_pci_cleanup(struct bwfm_pci_softc *sc)
+{
+	int i;
 
 	for (i = 0; i < BWFM_NUM_RX_PKTIDS; i++) {
 		bus_dmamap_destroy(sc->sc_dmat, sc->sc_rx_pkts.pkts[i].bb_map);
@@ -857,6 +874,50 @@ bwfm_pci_detach(struct device *self, int flags)
 	}
 
 	sc->sc_initialized = 0;
+}
+
+int
+bwfm_pci_activate(struct device *self, int act)
+{
+	struct bwfm_pci_softc *sc = (struct bwfm_pci_softc *)self;
+	struct bwfm_softc *bwfm = (void *)sc;
+	int error = 0;
+
+	switch (act) {
+	case DVACT_QUIESCE:
+		error = bwfm_activate(bwfm, act);
+		if (error)
+			return error;
+		if (sc->sc_initialized) {
+			sc->sc_mbdata_done = 0;
+			error = bwfm_pci_send_mb_data(sc,
+			    BWFM_PCI_H2D_HOST_D3_INFORM);
+			if (error)
+				return error;
+			tsleep_nsec(&sc->sc_mbdata_done, PCATCH,
+			    DEVNAME(sc), SEC_TO_NSEC(2));
+			if (!sc->sc_mbdata_done)
+				return ETIMEDOUT;
+		}
+		break;
+	case DVACT_WAKEUP:
+		if (sc->sc_initialized) {
+			/* If device can't be resumed, re-init. */
+			if (bwfm_pci_intmask(sc) == 0 ||
+			    bwfm_pci_send_mb_data(sc,
+			    BWFM_PCI_H2D_HOST_D0_INFORM) != 0) {
+				bwfm_cleanup(bwfm);
+				bwfm_pci_cleanup(sc);
+			}
+		}
+		error = bwfm_activate(bwfm, act);
+		if (error)
+			return error;
+		break;
+	default:
+		break;
+	}
+
 	return 0;
 }
 
@@ -2034,6 +2095,60 @@ bwfm_pci_txdata(struct bwfm_softc *bwfm, struct mbuf *m)
 	return 0;
 }
 
+int
+bwfm_pci_send_mb_data(struct bwfm_pci_softc *sc, uint32_t htod_mb_data)
+{
+	struct bwfm_softc *bwfm = (void *)sc;
+	struct bwfm_core *core;
+	uint32_t reg;
+	int i;
+
+	for (i = 0; i < 100; i++) {
+		reg = bus_space_read_4(sc->sc_tcm_iot, sc->sc_tcm_ioh,
+		    sc->sc_htod_mb_data_addr);
+		if (reg == 0)
+			break;
+		delay(10 * 1000);
+	}
+	if (i == 100) {
+		DPRINTF(("%s: MB transaction already pending\n", DEVNAME(sc)));
+		return EIO;
+	}
+
+	bus_space_write_4(sc->sc_tcm_iot, sc->sc_tcm_ioh,
+	    sc->sc_htod_mb_data_addr, htod_mb_data);
+	pci_conf_write(sc->sc_pc, sc->sc_tag, BWFM_PCI_REG_SBMBX, 1);
+
+	core = bwfm_chip_get_core(bwfm, BWFM_AGENT_CORE_PCIE2);
+	if (core->co_rev <= 13)
+		pci_conf_write(sc->sc_pc, sc->sc_tag, BWFM_PCI_REG_SBMBX, 1);
+
+	return 0;
+}
+
+void
+bwfm_pci_handle_mb_data(struct bwfm_pci_softc *sc)
+{
+	uint32_t reg;
+
+	reg = bus_space_read_4(sc->sc_tcm_iot, sc->sc_tcm_ioh,
+	    sc->sc_dtoh_mb_data_addr);
+	if (reg == 0)
+		return;
+
+	bus_space_write_4(sc->sc_tcm_iot, sc->sc_tcm_ioh,
+	    sc->sc_dtoh_mb_data_addr, 0);
+
+	if (reg & BWFM_PCI_D2H_DEV_D3_ACK) {
+		sc->sc_mbdata_done = 1;
+		wakeup(&sc->sc_mbdata_done);
+	}
+
+	/* TODO: support more events */
+	if (reg & ~BWFM_PCI_D2H_DEV_D3_ACK)
+		printf("%s: handle MB data 0x%08x\n", DEVNAME(sc), reg);
+}
+
 #ifdef BWFM_DEBUG
 void
 bwfm_pci_debug_console(struct bwfm_pci_softc *sc)
@@ -2081,7 +2196,7 @@ bwfm_pci_intr(void *v)
 	if (bwfm->sc_chip.ch_chip != BRCM_CC_4378_CHIP_ID &&
 	    (status & (BWFM_PCI_PCIE2REG_MAILBOXMASK_INT_FN0_0 |
 	    BWFM_PCI_PCIE2REG_MAILBOXMASK_INT_FN0_1)))
-		printf("%s: handle MB data\n", __func__);
+		bwfm_pci_handle_mb_data(sc);
 
 	mask = BWFM_PCI_PCIE2REG_MAILBOXMASK_INT_D2H_DB;
 	if (bwfm->sc_chip.ch_chip == BRCM_CC_4378_CHIP_ID)
@@ -2158,6 +2273,19 @@ bwfm_pci_intr_ack(struct bwfm_pci_softc *sc, uint32_t status)
 	else
 		bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
 		    BWFM_PCI_PCIE2REG_MAILBOXINT, status);
+}
+
+uint32_t
+bwfm_pci_intmask(struct bwfm_pci_softc *sc)
+{
+	struct bwfm_softc *bwfm = (void *)sc;
+
+	if (bwfm->sc_chip.ch_chip == BRCM_CC_4378_CHIP_ID)
+		return bus_space_read_4(sc->sc_reg_iot, sc->sc_reg_ioh,
+		    BWFM_PCI_64_PCIE2REG_INTMASK);
+	else
+		return bus_space_read_4(sc->sc_reg_iot, sc->sc_reg_ioh,
+		    BWFM_PCI_PCIE2REG_INTMASK);
 }
 
 void

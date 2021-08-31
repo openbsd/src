@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.89 2021/08/31 21:46:00 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.90 2021/08/31 23:05:11 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -337,6 +337,13 @@ bwfm_preinit(struct bwfm_softc *sc)
 	return 0;
 }
 
+void
+bwfm_cleanup(struct bwfm_softc *sc)
+{
+	bwfm_chip_detach(sc);
+	sc->sc_initialized = 0;
+}
+
 int
 bwfm_detach(struct bwfm_softc *sc, int flags)
 {
@@ -348,8 +355,29 @@ bwfm_detach(struct bwfm_softc *sc, int flags)
 	ieee80211_ifdetach(ifp);
 	if_detach(ifp);
 
-	bwfm_chip_detach(sc);
-	sc->sc_initialized = 0;
+	bwfm_cleanup(sc);
+	return 0;
+}
+
+int
+bwfm_activate(struct bwfm_softc *sc, int act)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
+
+	switch (act) {
+	case DVACT_QUIESCE:
+		if (ifp->if_flags & IFF_UP)
+			bwfm_stop(ifp);
+		break;
+	case DVACT_WAKEUP:
+		if (ifp->if_flags & IFF_UP)
+			bwfm_init(ifp);
+		break;
+	default:
+		break;
+	}
+
 	return 0;
 }
 
