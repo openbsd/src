@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.40 2021/08/31 08:39:26 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.41 2021/08/31 11:30:21 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -429,6 +429,17 @@ rules_setup(int fd)
 
 			SLIST_FOREACH(ba, &bs->bs_args, ba_next)
 				dtrq->dtrq_evtflags |= ba2dtflags(ba);
+
+			/* Also check the value for map/hist insertion */
+			switch (bs->bs_act) {
+			case B_AC_BUCKETIZE:
+			case B_AC_INSERT:
+				ba = (struct bt_arg *)bs->bs_var;
+				dtrq->dtrq_evtflags |= ba2dtflags(ba);
+				break;
+			default:
+				break;
+			}
 		}
 
 		if (dtrq->dtrq_evtflags & DTEVT_KSTACK)
@@ -1242,6 +1253,9 @@ ba2long(struct bt_arg *ba, struct dt_evt *dtev)
 	case B_AT_BI_NSECS:
 		val = builtin_nsecs(dtev);
 		break;
+	case B_AT_BI_ARG0 ... B_AT_BI_ARG9:
+	    	val = dtev->dtev_sysargs[ba->ba_type - B_AT_BI_ARG0];
+		break;
 	case B_AT_BI_RETVAL:
 		val = dtev->dtev_sysretval[0];
 		break;
@@ -1338,13 +1352,16 @@ ba2str(struct bt_arg *ba, struct dt_evt *dtev)
 int
 ba2dtflags(struct bt_arg *ba)
 {
+	struct bt_arg *bval;
 	int flags = 0;
 
-	if (ba->ba_type == B_AT_MAP)
-		ba = ba->ba_key;
-
 	do {
-		switch (ba->ba_type) {
+		if (ba->ba_type == B_AT_MAP)
+			bval = ba->ba_key;
+		else
+			bval = ba;
+
+		switch (bval->ba_type) {
 		case B_AT_STR:
 		case B_AT_LONG:
 		case B_AT_VAR:
@@ -1376,7 +1393,7 @@ ba2dtflags(struct bt_arg *ba)
 		case B_AT_OP_PLUS ... B_AT_OP_LOR:
 			break;
 		default:
-			xabort("invalid argument type %d", ba->ba_type);
+			xabort("invalid argument type %d", bval->ba_type);
 		}
 	} while ((ba = SLIST_NEXT(ba, ba_next)) != NULL);
 
