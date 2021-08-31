@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplpcie.c,v 1.4 2021/07/26 16:47:52 kettenis Exp $	*/
+/*	$OpenBSD: aplpcie.c,v 1.5 2021/08/31 15:21:19 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -31,6 +31,7 @@
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_misc.h>
+#include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/fdt.h>
 
 /*
@@ -173,6 +174,8 @@ aplpcie_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_dmat = faa->fa_dmat;
 	sc->sc_node = faa->fa_node;
+
+	pinctrl_byname(sc->sc_node, "default");
 
 	sc->sc_msi_doorbell =
 	    OF_getpropint64(sc->sc_node, "msi-doorbell", 0xffff000ULL);
