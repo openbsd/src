@@ -349,6 +349,18 @@ hv_gettime(struct timecounter *tc)
 	return (now);
 }
 
+void
+hv_delay(int usecs)
+{
+	uint64_t interval, start;
+
+	/* 10 MHz fixed frequency */
+	interval = (uint64_t)usecs * 10;
+	start = rdmsr(MSR_HV_TIME_REF_COUNT);
+	while (rdmsr(MSR_HV_TIME_REF_COUNT) - start < interval)
+		CPU_BUSY_CYCLE();
+}
+
 int
 hv_init_hypercall(struct hv_softc *sc)
 {

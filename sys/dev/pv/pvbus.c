@@ -1,4 +1,4 @@
-/*	$OpenBSD: pvbus.c,v 1.22 2020/08/26 03:29:06 visa Exp $	*/
+/*	$OpenBSD: pvbus.c,v 1.23 2021/08/31 15:52:10 patrick Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -40,6 +40,9 @@
 
 #include <dev/pv/pvvar.h>
 #include <dev/pv/pvreg.h>
+#include <dev/pv/hypervreg.h>
+
+#include "hyperv.h"
 
 int has_hv_cpuid = 0;
 
@@ -297,6 +300,8 @@ pvbus_kvm(struct pvbus_hv *hv)
 	hv->hv_features = regs[0];
 }
 
+extern void hv_delay(int usecs);
+
 void
 pvbus_hyperv(struct pvbus_hv *hv)
 {
@@ -312,6 +317,12 @@ pvbus_hyperv(struct pvbus_hv *hv)
 	    HYPERV_VERSION_EBX_MAJOR_S;
 	hv->hv_minor = (regs[1] & HYPERV_VERSION_EBX_MINOR_M) >>
 	    HYPERV_VERSION_EBX_MINOR_S;
+
+#if NHYPERV > 0
+	if (hv->hv_features & CPUID_HV_MSR_TIME_REFCNT &&
+	    delay_func == i8254_delay)
+		delay_func = hv_delay;
+#endif
 }
 
 void
