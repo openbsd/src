@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.204 2021/03/29 03:34:52 deraadt Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.205 2021/08/31 09:51:25 claudio Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -1574,7 +1574,7 @@ urldecode(const char *str)
 
 	if (str == NULL)
 		return NULL;
-	if ((ret = malloc(strlen(str)+1)) == NULL)
+	if ((ret = malloc(strlen(str) + 1)) == NULL)
 		err(1, "Can't allocate memory for URL decoding");
 	for (i = 0, reallen = 0; str[i] != '\0'; i++, reallen++, ret++) {
 		c = str[i];
@@ -1586,17 +1586,17 @@ urldecode(const char *str)
 		/* Cannot use strtol here because next char
 		 * after %xx may be a digit.
 		 */
-		if (c == '%' && isxdigit((unsigned char)str[i+1]) &&
-		    isxdigit((unsigned char)str[i+2])) {
-			*ret = hextochar(&str[i+1]);
-			i+=2;
+		if (c == '%' && isxdigit((unsigned char)str[i + 1]) &&
+		    isxdigit((unsigned char)str[i + 2])) {
+			*ret = hextochar(&str[i + 1]);
+			i += 2;
 			continue;
 		}
 		*ret = c;
 	}
 	*ret = '\0';
 
-	return ret-reallen;
+	return ret - reallen;
 }
 
 static char *
