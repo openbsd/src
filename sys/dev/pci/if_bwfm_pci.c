@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.54 2021/08/31 21:02:09 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.55 2021/08/31 21:13:24 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -809,12 +809,40 @@ int
 bwfm_pci_detach(struct device *self, int flags)
 {
 	struct bwfm_pci_softc *sc = (struct bwfm_pci_softc *)self;
+	int i;
 
 	bwfm_detach(&sc->sc_sc, flags);
 
-	/* FIXME: free RX buffers */
-	/* FIXME: free TX buffers */
-	/* FIXME: free more memory */
+	for (i = 0; i < BWFM_NUM_RX_PKTIDS; i++) {
+		bus_dmamap_destroy(sc->sc_dmat, sc->sc_rx_pkts.pkts[i].bb_map);
+		if (sc->sc_rx_pkts.pkts[i].bb_m)
+			m_freem(sc->sc_rx_pkts.pkts[i].bb_m);
+	}
+	free(sc->sc_rx_pkts.pkts, M_DEVBUF, BWFM_NUM_RX_PKTIDS *
+	    sizeof(struct bwfm_pci_buf));
+
+	for (i = 0; i < BWFM_NUM_TX_PKTIDS; i++) {
+		bus_dmamap_destroy(sc->sc_dmat, sc->sc_tx_pkts.pkts[i].bb_map);
+		if (sc->sc_tx_pkts.pkts[i].bb_m)
+			m_freem(sc->sc_tx_pkts.pkts[i].bb_m);
+	}
+	free(sc->sc_tx_pkts.pkts, M_DEVBUF, BWFM_NUM_TX_PKTIDS *
+	    sizeof(struct bwfm_pci_buf));
+
+	for (i = 0; i < BWFM_NUM_IOCTL_PKTIDS; i++) {
+		bus_dmamap_destroy(sc->sc_dmat, sc->sc_ioctl_pkts.pkts[i].bb_map);
+		if (sc->sc_ioctl_pkts.pkts[i].bb_m)
+			m_freem(sc->sc_ioctl_pkts.pkts[i].bb_m);
+	}
+	free(sc->sc_ioctl_pkts.pkts, M_DEVBUF, BWFM_NUM_IOCTL_PKTIDS *
+	    sizeof(struct bwfm_pci_buf));
+
+	for (i = 0; i < sc->sc_max_flowrings; i++) {
+		if (sc->sc_flowrings[i].status >= RING_OPEN)
+			bwfm_pci_dmamem_free(sc, sc->sc_flowrings[i].ring);
+	}
+	free(sc->sc_flowrings, M_DEVBUF, sc->sc_max_flowrings *
+	    sizeof(struct bwfm_pci_msgring));
 
 	bwfm_pci_dmamem_free(sc, sc->sc_ringupd_buf);
 	bwfm_pci_dmamem_free(sc, sc->sc_scratch_buf);
@@ -823,7 +851,12 @@ bwfm_pci_detach(struct device *self, int flags)
 	bwfm_pci_dmamem_free(sc, sc->sc_ctrl_complete.ring);
 	bwfm_pci_dmamem_free(sc, sc->sc_rxpost_submit.ring);
 	bwfm_pci_dmamem_free(sc, sc->sc_ctrl_submit.ring);
-	bwfm_pci_dmamem_free(sc, sc->sc_dma_idx_buf);
+	if (sc->sc_dma_idx_buf) {
+		bwfm_pci_dmamem_free(sc, sc->sc_dma_idx_buf);
+		sc->sc_dma_idx_buf = NULL;
+	}
+
+	sc->sc_initialized = 0;
 	return 0;
 }
 
