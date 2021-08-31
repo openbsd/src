@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.58 2021/06/11 05:33:16 jsg Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.59 2021/08/31 15:53:36 patrick Exp $	*/
 /* $NetBSD: lapic.c,v 1.2 2003/05/08 01:04:35 fvdl Exp $ */
 
 /*-
@@ -521,31 +521,40 @@ lapic_calibrate_timer(struct cpu_info *ci)
 	 */
 	lapic_timer_oneshot(LAPIC_LVTT_M, 0x80000000);
 
-	s = intr_disable();
+	if (delay_func == i8254_delay) {
+		s = intr_disable();
 
-	/* wait for current cycle to finish */
-	wait_next_cycle();
-
-	startapic = lapic_gettick();
-
-	/* wait the next hz cycles */
-	for (i = 0; i < hz; i++)
+		/* wait for current cycle to finish */
 		wait_next_cycle();
 
-	endapic = lapic_gettick();
+		startapic = lapic_gettick();
 
-	intr_restore(s);
+		/* wait the next hz cycles */
+		for (i = 0; i < hz; i++)
+			wait_next_cycle();
 
-	dtick = hz * rtclock_tval;
-	dapic = startapic-endapic;
+		endapic = lapic_gettick();
 
-	/*
-	 * there are TIMER_FREQ ticks per second.
-	 * in dtick ticks, there are dapic bus clocks.
-	 */
-	tmp = (TIMER_FREQ * dapic) / dtick;
+		intr_restore(s);
 
-	lapic_per_second = tmp;
+		dtick = hz * rtclock_tval;
+		dapic = startapic-endapic;
+
+		/*
+		 * there are TIMER_FREQ ticks per second.
+		 * in dtick ticks, there are dapic bus clocks.
+		 */
+		tmp = (TIMER_FREQ * dapic) / dtick;
+
+		lapic_per_second = tmp;
+	} else {
+		s = intr_disable();
+		startapic = lapic_gettick();
+		delay(1 * 1000 * 1000);
+		endapic = lapic_gettick();
+		intr_restore(s);
+		lapic_per_second = startapic - endapic;
+	}
 
 skip_calibration:
 	printf("%s: apic clock running at %dMHz\n",
@@ -585,7 +594,7 @@ skip_calibration:
 		 * Now that the timer's calibrated, use the apic timer routines
 		 * for all our timing needs..
 		 */
-		if (delay_func != tsc_delay)
+		if (delay_func == i8254_delay)
 			delay_func = lapic_delay;
 		initclock_func = lapic_initclocks;
 	}
@@ -658,7 +667,7 @@ i82489_ipi_init(int target)
 
 	i82489_icr_wait();
 
-	i8254_delay(10000);
+	delay(10000);
 
 	i82489_writereg(LAPIC_ICRLO, (target & LAPIC_DEST_MASK) |
 	     LAPIC_DLMODE_INIT | LAPIC_LVL_TRIG | LAPIC_LVL_DEASSERT);
@@ -697,7 +706,7 @@ x2apic_ipi_init(int target)
 	x2apic_writeicr(hi, (target & LAPIC_DEST_MASK) | LAPIC_DLMODE_INIT |
 	    LAPIC_LVL_ASSERT );
 
-	i8254_delay(10000);
+	delay(10000);
 
 	x2apic_writeicr(0, (target & LAPIC_DEST_MASK) | LAPIC_DLMODE_INIT |
 	    LAPIC_LVL_TRIG | LAPIC_LVL_DEASSERT);
