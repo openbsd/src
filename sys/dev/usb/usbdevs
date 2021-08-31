@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.740 2021/05/18 14:23:03 kevlo Exp $
+$OpenBSD: usbdevs,v 1.741 2021/08/31 22:55:56 jmatthew Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -609,6 +609,7 @@ vendor MDS		0x1bc8	MDS
 vendor ALTI2		0x1bc9	Alti-2
 vendor SUNPLUS		0x1bcf	Sunplus
 vendor WAGO		0x1be3	WAGO Kontakttechnik
+vendor QNAP		0x1c04	QNAP
 vendor LONGCHEER	0x1c9e	Longcheer Technology
 vendor DRESDENELEC	0x1cf1	Dresden Elektronic
 vendor DREAMLINK	0x1d34	Dream Link
@@ -646,6 +647,7 @@ vendor PIONEERDJ	0x2b73	Pioneer DJ
 vendor PLANEX		0x2c02	Planex Communications
 vendor QUECTEL		0x2c7c	Quectel
 vendor CLUB3D		0x2d1c	Club 3D
+vendor AQUANTIA		0x2eca	Aquantia
 vendor CLEVO		0x30da	CLEVO
 vendor DYNABOOK		0x30f3	Dynabook
 vendor LINKINSTRUMENTS	0x3195	Link Instruments
@@ -1022,6 +1024,9 @@ product APPLE BLUETOOTH		0x8300	Bluetooth
 product APPLE ISIGHT_1		0x8501	iSight
 product APPLE ISIGHT		0x8502	iSight
 
+/* Aquantia products */
+product AQUANTIA AQC111		0xc101	AQC111
+
 /* Araneus Information Systems products */
 product ARANEUS ALEA		0x0001	True Random Number Generator
 
@@ -1044,6 +1049,8 @@ product ASANTE EA		0x1427	Ethernet
 product ASIX AX88172		0x1720	USB 2.0 10/100 Ethernet controller
 product ASIX AX88178		0x1780	AX88178
 product ASIX AX88179		0x1790	AX88179
+product ASIX ASIX111		0x2790	ASIX111
+product ASIX ASIX112		0x2791	ASIX112
 product ASIX AX88772		0x7720	AX88772
 product ASIX AX88772A		0x772a	AX88772A
 product ASIX AX88772B		0x772b	AX88772B
@@ -3662,6 +3669,9 @@ product QCOM RT2573_2		0x6229	RT2573
 product QCOM RT2573_3		0x6238	RT2573
 product QCOM RT2870		0x6259	RT2870
 
+/* QNAP products */
+product QNAP UC5G1T		0x0015	QNA-UC5G1T
+
 /* Qtronix products */
 product QTRONIX 980N		0x2011	Scorpion-980N
 
@@ -4430,6 +4440,7 @@ product TREK THUMBDRIVE_8MB	0x9988	ThumbDrive 8MB
 product TRENDNET RTL8192CU	0x624d	RTL8192CU
 product TRENDNET RTL8188CU	0x648b	RTL8188CU
 product TRENDNET RTL8156	0xe02b	RTL8156
+product TRENDNET TUCET5G	0xe05a	TUC-ET5G
 
 /* Tripp-Lite products */
 product TRIPPLITE U209		0x2008	U209 Serial
