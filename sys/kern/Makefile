@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.50 2021/05/01 16:11:16 visa Exp $
+#	$OpenBSD: Makefile,v 1.51 2021/08/31 23:53:42 kn Exp $
 
 # Makefile for kernel tags files, init_sysent, etc.
 
@@ -38,7 +38,7 @@ DGEN=	conf \
 	lib/libkern/arch/${MACHINE_ARCH} \
 	miscfs miscfs/deadfs miscfs/fifofs \
 	msdosfs \
-	net netinet netmpls \
+	net netinet netinet6 netmpls \
 	nfs \
 	scsi \
 	sys \
