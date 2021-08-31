@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.41 2021/08/31 11:30:21 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.42 2021/08/31 12:51:24 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -81,6 +81,7 @@ void			 rule_printmaps(struct bt_rule *);
 uint64_t		 builtin_nsecs(struct dt_evt *);
 const char		*builtin_kstack(struct dt_evt *);
 const char		*builtin_arg(struct dt_evt *, enum bt_argtype);
+void			 stmt_eval(struct bt_stmt *, struct dt_evt *);
 void			 stmt_bucketize(struct bt_stmt *, struct dt_evt *);
 void			 stmt_clear(struct bt_stmt *);
 void			 stmt_delete(struct bt_stmt *, struct dt_evt *);
@@ -545,40 +546,10 @@ rule_eval(struct bt_rule *r, struct dt_evt *dtev)
 	}
 
 	SLIST_FOREACH(bs, &r->br_action, bs_next) {
-		switch (bs->bs_act) {
-		case B_AC_BUCKETIZE:
-			stmt_bucketize(bs, dtev);
-			break;
-		case B_AC_CLEAR:
-			stmt_clear(bs);
-			break;
-		case B_AC_DELETE:
-			stmt_delete(bs, dtev);
-			break;
-		case B_AC_EXIT:
-			exit(0);
-			break;
-		case B_AC_INSERT:
-			stmt_insert(bs, dtev);
-			break;
-		case B_AC_PRINT:
-			stmt_print(bs, dtev);
-			break;
-		case B_AC_PRINTF:
-			stmt_printf(bs, dtev);
-			break;
-		case B_AC_STORE:
-			stmt_store(bs, dtev);
-			break;
-		case B_AC_TIME:
-			stmt_time(bs, dtev);
-			break;
-		case B_AC_ZERO:
-			stmt_zero(bs);
-			break;
-		default:
-			xabort("no handler for action type %d", bs->bs_act);
-		}
+		if ((bs->bs_act == B_AC_TEST) && stmt_test(bs, dtev) == true)
+			stmt_eval((struct bt_stmt *)bs->bs_var, dtev);
+
+		stmt_eval(bs, dtev);
 	}
 }
 
@@ -687,6 +658,48 @@ builtin_arg(struct dt_evt *dtev, enum bt_argtype dat)
 	    dtev->dtev_sysargs[dat - B_AT_BI_ARG0]);
 
 	return buf;
+}
+
+void
+stmt_eval(struct bt_stmt *bs, struct dt_evt *dtev)
+{
+	switch (bs->bs_act) {
+	case B_AC_BUCKETIZE:
+		stmt_bucketize(bs, dtev);
+		break;
+	case B_AC_CLEAR:
+		stmt_clear(bs);
+		break;
+	case B_AC_DELETE:
+		stmt_delete(bs, dtev);
+		break;
+	case B_AC_EXIT:
+		exit(0);
+		break;
+	case B_AC_INSERT:
+		stmt_insert(bs, dtev);
+		break;
+	case B_AC_PRINT:
+		stmt_print(bs, dtev);
+		break;
+	case B_AC_PRINTF:
+		stmt_printf(bs, dtev);
+		break;
+	case B_AC_STORE:
+		stmt_store(bs, dtev);
+		break;
+	case B_AC_TEST:
+		/* done before */
+		break;
+	case B_AC_TIME:
+		stmt_time(bs, dtev);
+		break;
+	case B_AC_ZERO:
+		stmt_zero(bs);
+		break;
+	default:
+		xabort("no handler for action type %d", bs->bs_act);
+	}
 }
 
 /*
@@ -885,7 +898,6 @@ stmt_test(struct bt_stmt *bs, struct dt_evt *dtev)
 	if (bs == NULL)
 		return true;
 
-	assert(bs->bs_var == NULL);
 	ba = SLIST_FIRST(&bs->bs_args);
 
 	return baexpr2long(ba, dtev) != 0;

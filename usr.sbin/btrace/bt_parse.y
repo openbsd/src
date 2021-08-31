@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parse.y,v 1.36 2021/08/31 08:39:26 mpi Exp $	*/
+/*	$OpenBSD: bt_parse.y,v 1.37 2021/08/31 12:51:24 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019-2021 Martin Pieuchot <mpi@openbsd.org>
@@ -115,7 +115,7 @@ static int pflag;
 %token	<v.i>		ERROR ENDFILT
 %token	<v.i>		OP_EQ OP_NE OP_LE OP_LT OP_GE OP_GT OP_LAND OP_LOR
 /* Builtins */
-%token	<v.i>		BUILTIN BEGIN END HZ
+%token	<v.i>		BUILTIN BEGIN END HZ IF
 /* Functions and Map operators */
 %token  <v.i>		F_DELETE F_PRINT FUNC0 FUNC1 FUNCN OP1 OP4 MOP0 MOP1
 %token	<v.string>	STRING CSTRING
@@ -126,7 +126,7 @@ static int pflag;
 %type	<v.i>		beginend
 %type	<v.probe>	probe pname
 %type	<v.filter>	filter
-%type	<v.stmt>	action stmt stmtlist
+%type	<v.stmt>	action stmt stmtblck stmtlist block
 %type	<v.arg>		pat vargs mentry mpat pargs
 %type	<v.arg>		expr term fterm factor
 %%
@@ -239,8 +239,17 @@ stmt	: ';' NL			{ $$ = NULL; }
 	| gvar '=' OP4 '(' pat ',' vargs ')'	{ $$ = bh_inc($1, $5, $7); }
 	;
 
-stmtlist: stmt
+stmtblck: IF '(' expr ')' block			{ $$ = bt_new($3, $5); }
+	;
+
+stmtlist: stmtlist stmtblck		{ $$ = bs_append($1, $2); }
 	| stmtlist stmt			{ $$ = bs_append($1, $2); }
+	| stmtblck
+	| stmt
+	;
+
+block	: '{' stmt ';' '}'			{ $$ = $2; }
+	| stmt ';'
 	;
 
 action	: '{' stmtlist '}'		{ $$ = $2; }
@@ -302,6 +311,17 @@ bc_new(struct bt_arg *term, enum bt_argtype op, struct bt_arg *ba)
 	return bf;
 }
 
+/* Create a new if/else test */
+struct bt_stmt *
+bt_new(struct bt_arg *ba, struct bt_stmt *condbs)
+{
+	struct bt_arg *bop;
+
+	bop = ba_op(B_AT_OP_NE, NULL, ba);
+
+	return bs_new(B_AC_TEST, bop, (struct bt_var *)condbs);
+
+}
 /* Create a new probe */
 struct bt_probe *
 bp_new(const char *prov, const char *func, const char *name, int32_t rate)
@@ -638,6 +658,7 @@ lookup(char *s)
 		{ "exit",	FUNC0,		B_AC_EXIT },
 		{ "hist",	OP1,		0 },
 		{ "hz",		HZ,		0 },
+		{ "if",		IF,		0 },
 		{ "kstack",	BUILTIN,	B_AT_BI_KSTACK },
 		{ "lhist",	OP4,		0 },
 		{ "max",	MOP1,		B_AT_MF_MAX },
