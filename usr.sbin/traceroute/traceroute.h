@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.h,v 1.5 2017/05/28 10:06:13 benno Exp $	*/
+/*	$OpenBSD: traceroute.h,v 1.6 2021/08/31 18:12:47 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -62,11 +62,10 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/types.h>
 
 #include <netinet/ip_var.h>
 #include <netmpls/mpls.h>
-#include <sys/cdefs.h>
-#include <sys/types.h>
 
 #define DUMMY_PORT 10010
 

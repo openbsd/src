@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.166 2021/08/28 19:59:49 sthen Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.167 2021/08/31 18:12:47 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -233,27 +233,28 @@
  *     Tue Dec 20 03:50:13 PST 1988
  */
 
-
-#include <arpa/inet.h>
-#include <endian.h>
-#include <err.h>
-#include <errno.h>
-#include <limits.h>
-#include <netdb.h>
-#include <netinet/icmp6.h>
-#include <netinet/in.h>
-#include <netinet/ip.h>
-#include <netinet/ip6.h>
-#include <netinet/ip_icmp.h>
-#include <netinet/udp.h>
-#include <pwd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
 #include <sys/time.h>
 #include <sys/uio.h>
+
+#include <netinet/in.h>
+#include <netinet/ip.h>
+#include <netinet/ip6.h>
+#include <netinet/ip_icmp.h>
+#include <netinet/icmp6.h>
+#include <netinet/udp.h>
+
+#include <arpa/inet.h>
+
+#include <err.h>
+#include <errno.h>
+#include <limits.h>
+#include <netdb.h>
+#include <pwd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "traceroute.h"
