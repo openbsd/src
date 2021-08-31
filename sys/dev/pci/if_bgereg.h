@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.133 2021/06/18 06:53:42 jsg Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.134 2021/08/31 08:06:56 jasper Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2784,8 +2784,6 @@ struct bge_ring_data {
 	struct bge_rx_bd	bge_rx_return_ring[BGE_RETURN_RING_CNT];
 	struct bge_tx_bd	bge_tx_ring[BGE_TX_RING_CNT];
 	struct bge_status_block	bge_status_block;
-	struct bge_tx_desc	*bge_tx_ring_nic;/* pointer to shared mem */
-	struct bge_cmd_desc	*bge_cmd_ring;	/* pointer to shared mem */
 	struct bge_gib		bge_info;
 };
 
