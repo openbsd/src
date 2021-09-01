@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.43 2021/09/01 07:35:21 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.44 2021/09/01 08:01:09 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2021 Martin Pieuchot <mpi@openbsd.org>
@@ -522,12 +522,10 @@ rules_teardown(int fd)
 
 	if (rend)
 		rule_eval(rend, &bt_devt);
-	else {
-		debug("eval default 'end' rule\n");
 
-		TAILQ_FOREACH(r, &g_rules, br_next)
-			rule_printmaps(r);
-	}
+	/* Print non-empty map & hist */
+	TAILQ_FOREACH(r, &g_rules, br_next)
+		rule_printmaps(r);
 }
 
 void
