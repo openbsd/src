@@ -300,9 +300,17 @@ void OpenBSD::AddCXXStdlibLibArgs(const ArgList &Args,
 std::string OpenBSD::getCompilerRT(const ArgList &Args,
                                    StringRef Component,
                                    FileType Type) const {
-  SmallString<128> Path(getDriver().SysRoot);
-  llvm::sys::path::append(Path, "/usr/lib/libcompiler_rt.a");
-  return std::string(Path.str());
+  if (Component == "builtins") {
+    SmallString<128> Path(getDriver().SysRoot);
+    llvm::sys::path::append(Path, "/usr/lib/libcompiler_rt.a");
+    return std::string(Path.str());
+  } else {
+    SmallString<128> P(getDriver().ResourceDir);
+    std::string CRTBasename =
+        getCompilerRTBasename(Args, Component, Type, /*AddArch=*/false);
+    llvm::sys::path::append(P, "lib", CRTBasename);
+    return std::string(P.str());
+  }
 }
 
 Tool *OpenBSD::buildAssembler() const {
