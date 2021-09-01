@@ -1,6 +1,6 @@
-/* $OpenBSD: timeout.c,v 1.10 2021/09/01 20:18:54 job Exp $ */
+/* $OpenBSD: timeout.c,v 1.11 2021/09/01 21:43:51 job Exp $ */
 
-/*-
+/*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2014 Baptiste Daroussin <bapt@FreeBSD.org>
  * Copyright (c) 2014 Vsevolod Stakhov <vsevolod@FreeBSD.org>
@@ -63,19 +63,21 @@ static double
 parse_duration(const char *duration)
 {
 	double 	 ret;
-	char 	*end;
+	char 	*suffix;
 
-	ret = strtod(duration, &end);
-	if (ret == 0 && end == duration)
+	ret = strtod(duration, &suffix);
+	if (ret == 0 && suffix == duration)
+		err(1, "invalid duration");
+	if (ret < 0 || ret >= 100000000UL)
 		err(1, "invalid duration");
 
-	if (end == NULL || *end == '\0')
+	if (suffix == NULL || *suffix == '\0')
 		return (ret);
 
-	if (end != NULL && *(end + 1) != '\0')
+	if (suffix != NULL && *(suffix + 1) != '\0')
 		err(1, "invalid duration");
 
-	switch (*end) {
+	switch (*suffix) {
 	case 's':
 		break;
 	case 'm':
@@ -90,9 +92,6 @@ parse_duration(const char *duration)
 	default:
 		err(1, "invalid duration");
 	}
-
-	if (ret < 0 || ret >= 100000000UL)
-		err(1, "invalid duration");
 
 	return (ret);
 }
