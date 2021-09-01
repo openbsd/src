@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
+#include <sys/types.h>
 #include <sys/time.h>
 #include <sys/wait.h>
 
@@ -40,7 +40,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sysexits.h>
 #include <unistd.h>
 
 #define EXIT_TIMEOUT 124
@@ -53,11 +52,10 @@ static sig_atomic_t sig_ign = 0;
 static void __dead
 usage(void)
 {
-	fprintf(stderr, "Usage: %s [--signal sig | -s sig] [--preserve-status]"
-	    " [--kill-after time | -k time] [--foreground] <duration> <command>"
-	    " <arg ...>\n", getprogname());
+	fprintf(stderr, "usage: timeout [-s sig] [-k time] [--preserve-status]"
+	    " [--foreground] duration command\n");
 
-	exit(EX_USAGE);
+	exit(1);
 }
 
 static double
@@ -68,13 +66,13 @@ parse_duration(const char *duration)
 
 	ret = strtod(duration, &end);
 	if (ret == 0 && end == duration)
-		errx(EXIT_FAILURE, "invalid duration");
+		err(1, "invalid duration");
 
 	if (end == NULL || *end == '\0')
 		return (ret);
 
 	if (end != NULL && *(end + 1) != '\0')
-		errx(EX_USAGE, "invalid duration");
+		err(1, "invalid duration");
 
 	switch (*end) {
 	case 's':
@@ -89,11 +87,11 @@ parse_duration(const char *duration)
 		ret *= 60 * 60 * 24;
 		break;
 	default:
-		errx(EX_USAGE, "invalid duration");
+		err(1, "invalid duration");
 	}
 
 	if (ret < 0 || ret >= 100000000UL)
-		errx(EX_USAGE, "invalid duration");
+		err(1, "invalid duration");
 
 	return (ret);
 }
@@ -129,7 +127,7 @@ parse_signal(const char *str)
 	return (int)sig;
 
 err:
-	errx(EX_USAGE, "invalid signal");
+	err(1, "invalid signal");
 }
 
 static void
@@ -168,7 +166,7 @@ set_interval(double iv)
 	tim.it_value.tv_usec = (suseconds_t)(iv * 1000000UL);
 
 	if (setitimer(ITIMER_REAL, &tim, NULL) == -1)
-		err(EX_OSERR, "setitimer()");
+		err(1, "setitimer()");
 }
 
 int
@@ -194,8 +192,6 @@ main(int argc, char **argv)
 		SIGALRM,
 		SIGQUIT,
 	};
-
-	setprogname(argv[0]);
 
 	foreground = preserve = 0;
 	second_kill = 0;
@@ -243,7 +239,7 @@ main(int argc, char **argv)
 		pgid = setpgid(0,0);
 
 		if (pgid == -1)
-			err(EX_OSERR, "setpgid()");
+			err(1, "setpgid()");
 	}
 
 	memset(&signals, 0, sizeof(signals));
@@ -261,7 +257,7 @@ main(int argc, char **argv)
 	for (i = 0; i < sizeof(signums) / sizeof(signums[0]); i ++) {
 		if (signums[i] != -1 && signums[i] != 0 &&
 		    sigaction(signums[i], &signals, NULL) == -1)
-			err(EX_OSERR, "sigaction()");
+			err(1, "sigaction()");
 	}
 
 	signal(SIGTTIN, SIG_IGN);
@@ -269,7 +265,7 @@ main(int argc, char **argv)
 
 	pid = fork();
 	if (pid == -1)
-		err(EX_OSERR, "fork()");
+		err(1, "fork()");
 	else if (pid == 0) {
 		/* child process */
 		signal(SIGTTIN, SIG_DFL);
@@ -277,11 +273,11 @@ main(int argc, char **argv)
 
 		error = execvp(argv[0], argv);
 		if (error == -1)
-			err(EX_UNAVAILABLE, "exec()");
+			err(1, "exec()");
 	}
 
 	if (sigprocmask(SIG_BLOCK, &signals.sa_mask, NULL) == -1)
-		err(EX_OSERR, "sigprocmask()");
+		err(1, "sigprocmask()");
 
 	/* parent continues here */
 	set_interval(first_kill);
@@ -334,7 +330,7 @@ main(int argc, char **argv)
 
 	while (cpid != pid  && wait(&pstat) == -1) {
 		if (errno != EINTR)
-			err(EX_OSERR, "waitpid()");
+			err(1, "waitpid()");
 	}
 
 	if (WEXITSTATUS(pstat))
