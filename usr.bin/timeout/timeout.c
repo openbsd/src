@@ -99,14 +99,13 @@ parse_duration(const char *duration)
 static int
 parse_signal(const char *str)
 {
-	char 		*ep;
-	int 	 	 i;
-	long	 	 sig;
+	long long	 sig;
 	const char	*errstr;
 
 	if (strncasecmp(str, "SIG", 3) == 0) {
-		str += 3;
+		int i;
 
+		str += 3;
 		for (i = 1; i < NSIG; i++) {
 			if (strcasecmp(str, sys_signame[i]) == 0)
 				return (i);
@@ -164,12 +163,12 @@ main(int argc, char **argv)
 {
 	int		ch;
 	unsigned long 	i;
-	int 		foreground, preserve;
+	int 		foreground = 0, preserve = 0;
 	int 		error, pstat, status;
 	int 		killsig = SIGTERM;
-	pid_t 		pgid, pid, cpid;
+	pid_t 		pgid = 0, pid, cpid = 0;
 	double 		first_kill;
-	double 		second_kill;
+	double 		second_kill = 0;
 	bool 		timedout = false;
 	bool 		do_second_kill = false;
 	struct 		sigaction signals;
@@ -187,11 +186,6 @@ main(int argc, char **argv)
 
 	if (pledge("stdio proc exec", NULL) == -1)
 		err(1, "pledge");
-
-	foreground = preserve = 0;
-	second_kill = 0;
-	cpid = -1;
-	pgid = -1;
 
 	while ((ch = getopt_long(argc, argv, "+k:s:h", longopts, NULL)) != -1) {
 		switch (ch) {
