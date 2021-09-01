@@ -111,21 +111,14 @@ parse_signal(const char *str)
 			if (strcasecmp(str, sys_signame[i]) == 0)
 				return (i);
 		}
-
-		goto err;
+		err(1, "invalid signal name");
 	}
 
-	errno = 0;
-	sig = strtonum(str, LONG_MIN, LONG_MAX, &errstr);
+	sig = strtonum(str, 1, NSIG, &errstr);
 	if (errstr != NULL)
-		goto err;
-	if (sig >= NSIG || sig < 0)
-		goto err;
+		err(1, "signal %s %s", str, errstr);
 
 	return (int)sig;
-
-err:
-	err(1, "invalid signal");
 }
 
 static void
