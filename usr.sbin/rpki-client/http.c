@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.36 2021/08/09 10:30:23 claudio Exp $  */
+/*	$OpenBSD: http.c,v 1.37 2021/09/01 08:09:41 claudio Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -70,6 +70,7 @@
 #define HTTP_USER_AGENT		"OpenBSD rpki-client"
 #define HTTP_BUF_SIZE		(32 * 1024)
 #define HTTP_IDLE_TIMEOUT	10
+#define HTTP_IO_TIMEOUT		(3 * 60)
 #define MAX_CONNECTIONS		64
 #define NPFDS			(MAX_CONNECTIONS + 1)
 
@@ -83,6 +84,9 @@ enum http_state {
 	STATE_FREE,
 	STATE_CONNECT,
 	STATE_TLSCONNECT,
+	STATE_PROXY_REQUEST,
+	STATE_PROXY_STATUS,
+	STATE_PROXY_RESPONSE,
 	STATE_REQUEST,
 	STATE_RESPONSE_STATUS,
 	STATE_RESPONSE_HEADER,
@@ -96,9 +100,9 @@ enum http_state {
 
 struct http_proxy {
 	char	*proxyhost;
-	char	*proxyuser;
-	char	*proxypw;
-};
+	char	*proxyport;
+	char	*proxyauth;
+} proxy;
 
 struct http_connection {
 	LIST_ENTRY(http_connection)	entry;
@@ -116,6 +120,7 @@ struct http_connection {
 	size_t			bufpos;
 	off_t			iosz;
 	time_t			idle_time;
+	time_t			io_time;
 	int			status;
 	int			fd;
 	int			chunked;
@@ -177,10 +182,13 @@ static enum res http_handle(struct http_connection *);
 
 /* Internal state functions used by the above functions */
 static enum res	http_finish_connect(struct http_connection *);
+static enum res	proxy_connect(struct http_connection *);
 static enum res	http_tls_connect(struct http_connection *);
 static enum res	http_tls_handshake(struct http_connection *);
 static enum res	http_read(struct http_connection *);
 static enum res	http_write(struct http_connection *);
+static enum res	proxy_read(struct http_connection *);
+static enum res	proxy_write(struct http_connection *);
 static enum res	data_write(struct http_connection *);
 
 static time_t
@@ -277,6 +285,139 @@ url_encode(const char *path)
 	return (epath);
 }
 
+static char
+hextochar(const char *str)
+{
+	unsigned char c, ret;
+
+	c = str[0];
+	ret = c;
+	if (isalpha(c))
+		ret -= isupper(c) ? 'A' - 10 : 'a' - 10;
+	else
+		ret -= '0';
+	ret *= 16;
+
+	c = str[1];
+	ret += c;
+	if (isalpha(c))
+		ret -= isupper(c) ? 'A' - 10 : 'a' - 10;
+	else
+		ret -= '0';
+	return ret;
+}
+
+static char *
+url_decode(const char *str)
+{
+	char *ret, c;
+	int i, reallen;
+
+	if (str == NULL)
+		return NULL;
+	if ((ret = malloc(strlen(str) + 1)) == NULL)
+		err(1, "Can't allocate memory for URL decoding");
+	for (i = 0, reallen = 0; str[i] != '\0'; i++, reallen++, ret++) {
+		c = str[i];
+		if (c == '+') {
+			*ret = ' ';
+			continue;
+		}
+		/*
+		 * Cannot use strtol here because next char
+		 * after %xx may be a digit.
+		 */
+		if (c == '%' && isxdigit((unsigned char)str[i + 1]) &&
+		    isxdigit((unsigned char)str[i + 2])) {
+			*ret = hextochar(&str[i + 1]);
+			i += 2;
+			continue;
+		}
+		*ret = c;
+	}
+	*ret = '\0';
+	return ret - reallen;
+}
+
+static char *
+recode_credentials(const char *userinfo)
+{
+	char *ui, *creds;
+	size_t ulen;
+
+	/* url-decode the user and pass */
+	ui = url_decode(userinfo);
+
+	ulen = strlen(ui);
+	if (base64_encode(ui, ulen, &creds) == -1)
+		errx(1, "error in base64 encoding");
+	free(ui);
+	return (creds);
+}
+
+/*
+ * Parse a proxy URI and split it up into host, port and userinfo.
+ */
+static void
+proxy_parse_uri(char *uri)
+{
+	char *host, *port = NULL, *cred, *cookie = NULL;
+
+	if (uri == NULL)
+		return;
+
+	if (strncasecmp(uri, "http://", 7) != 0)
+		errx(1, "%s: http_proxy not using http schema", http_info(uri));
+
+	host = uri + 7;
+	if ((host = strndup(host, strcspn(host, "/"))) == NULL)
+		err(1, NULL);
+
+	cred = host;
+	host = strchr(cred, '@');
+	if (host != NULL)
+		*host++ = '\0';
+	else {
+		host = cred;
+		cred = NULL;
+	}
+
+	if (*host == '[') {
+		char *hosttail;
+
+		if ((hosttail = strrchr(host, ']')) == NULL)
+			errx(1, "%s: unmatched opening bracket",
+			     http_info(uri));
+		if (hosttail[1] == '\0' || hosttail[1] == ':')
+			host++;
+		if (hosttail[1] == ':')
+			port = hosttail + 2;
+		*hosttail = '\0';
+	} else {
+		if ((port = strrchr(host, ':')) != NULL)
+			*port++ = '\0';
+	}
+
+	if (port == NULL)
+		port = "443";
+
+	if (cred != NULL) {
+		if (strchr(cred, ':') == NULL)
+			errx(1, "%s: malformed proxy url", http_info(uri));
+		cred = recode_credentials(cred);
+		if (asprintf(&cookie, "Proxy-Authorization: Basic %s\r\n",
+		    cred) == -1)
+			err(1, NULL);
+		free(cred);
+	} else
+		if ((cookie = strdup("")) == NULL)
+			err(1, NULL);
+
+	proxy.proxyhost = host;
+	proxy.proxyport = port;
+	proxy.proxyauth = cookie;
+}
+
 /*
  * Parse a URI and split it up into host, port and path.
  * Does some basic URI validation. Both host and port need to be freed
@@ -301,8 +442,13 @@ http_parse_uri(char *uri, char **ohost, char **oport, char **opath)
 		warnx("%s: preposterous host length", http_info(uri));
 		return -1;
 	}
+	
+	if (memchr(host, '@', path - host) != NULL) {
+		warnx("%s: URI with userinfo not supported", http_info(uri));
+		return -1;
+	}
+
 	if (*host == '[') {
-		char *scope;
 		if ((hosttail = memrchr(host, ']', path - host)) == NULL) {
 			warnx("%s: unmatched opening bracket", http_info(uri));
 			return -1;
@@ -311,18 +457,11 @@ http_parse_uri(char *uri, char **ohost, char **oport, char **opath)
 			host++;
 		if (hosttail[1] == ':')
 			port = hosttail + 2;
-		if ((scope = memchr(host, '%', hosttail - host)) != NULL)
-			hosttail = scope;
 	} else {
 		if ((hosttail = memrchr(host, ':', path - host)) != NULL)
 			port = hosttail + 1;
 		else
 			hosttail = path;
-	}
-
-	if (memchr(host, '@', hosttail - host) != NULL) {
-		warnx("%s: URI with userinfo not supported", http_info(uri));
-		return -1;
 	}
 
 	if ((host = strndup(host, hosttail - host)) == NULL)
@@ -519,12 +658,19 @@ http_new(struct http_request *req)
 	LIST_INSERT_HEAD(&active, conn, entry);
 	http_conn_count++;
 
-	/* TODO proxy support (overload of host and port) */
-
-	if (http_resolv(&conn->res0, conn->host, conn->port) == -1) {
-		http_req_fail(req->id);
-		http_free(conn);
-		return;
+	if (proxy.proxyhost == NULL) {
+		if (http_resolv(&conn->res0, proxy.proxyhost,
+		    proxy.proxyport) == -1) {
+			http_req_fail(req->id);
+			http_free(conn);
+			return;
+		}
+	} else {
+		if (http_resolv(&conn->res0, conn->host, conn->port) == -1) {
+			http_req_fail(req->id);
+			http_free(conn);
+			return;
+		}
 	}
 
 	/* connect and start request */
@@ -641,7 +787,7 @@ http_do(struct http_connection *conn, enum res (*f)(struct http_connection *))
 }
 
 /*
- * Connection successfully establish, initiate TLS handshake.
+ * Connection successfully establish, initiate TLS handshake or proxy request.
  */
 static enum res
 http_connect_done(struct http_connection *conn)
@@ -650,12 +796,8 @@ http_connect_done(struct http_connection *conn)
 	conn->res0 = NULL;
 	conn->res = NULL;
 
-#if 0
-	/* TODO proxy connect */
-	if (proxyenv)
-		proxy_connect(conn->fd, sslhost, proxy_credentials); */
-#endif
-
+	if (proxy.proxyhost == NULL)
+		return proxy_connect(conn);
 	return http_tls_connect(conn);
 }
 
@@ -798,8 +940,40 @@ http_tls_handshake(struct http_connection *conn)
 		return WANT_POLLOUT;
 	}
 
-	/* ready to send request */
 	return http_request(conn);
+}
+
+static enum res
+proxy_connect(struct http_connection *conn)
+{
+	char *host;
+	int r;
+
+	assert(conn->state == STATE_CONNECT);
+	conn->state = STATE_PROXY_REQUEST;
+
+	/* Construct the Host header from host and port info */
+	if (strchr(conn->host, ':')) {
+		if (asprintf(&host, "[%s]:%s", conn->host, conn->port) == -1)
+			err(1, NULL);
+
+	} else {
+		if (asprintf(&host, "%s:%s", conn->host, conn->port) == -1)
+			err(1, NULL);
+	}
+
+	free(conn->buf);
+	conn->bufpos = 0;
+	/* XXX handle auth */
+	if ((r = asprintf(&conn->buf, "CONNECT %s HTTP/1.1\r\n"
+	    "User-Agent: " HTTP_USER_AGENT "\r\n%s\r\n", host,
+	    proxy.proxyauth)) == -1)
+		err(1, NULL);
+	conn->bufsz = r;
+
+	free(host);
+
+	return proxy_write(conn);
 }
 
 /*
@@ -1134,7 +1308,7 @@ read_more:
 	s = tls_read(conn->tls, conn->buf + conn->bufpos,
 	    conn->bufsz - conn->bufpos);
 	if (s == -1) {
-		warn("%s: TLS read: %s", http_info(conn->host),
+		warnx("%s: TLS read: %s", http_info(conn->host),
 		    tls_error(conn->tls));
 		return http_failed(conn);
 	} else if (s == TLS_WANT_POLLIN) {
@@ -1154,10 +1328,37 @@ read_more:
 
 again:
 	switch (conn->state) {
+	case STATE_PROXY_STATUS:
+		buf = http_get_line(conn);
+		if (buf == NULL)
+			goto read_more;
+		if (http_parse_status(conn, buf) == -1) {
+			free(buf);
+			return http_failed(conn);
+		}
+		free(buf);
+		conn->state = STATE_PROXY_RESPONSE;
+		goto again;
+	case STATE_PROXY_RESPONSE:
+		while (1) {
+			buf = http_get_line(conn);
+			if (buf == NULL)
+				goto read_more;
+			/* empty line, end of header */
+			if (*buf == '\0')
+				break;
+		}
+		/* proxy is ready to take connection */
+		if (conn->status == 200) {
+			conn->state = STATE_CONNECT;
+			return http_tls_connect(conn);
+		}
+		return http_failed(conn);
 	case STATE_RESPONSE_STATUS:
 		buf = http_get_line(conn);
 		if (buf == NULL)
 			goto read_more;
+
 		if (http_parse_status(conn, buf) == -1) {
 			free(buf);
 			return http_failed(conn);
@@ -1311,6 +1512,97 @@ http_write(struct http_connection *conn)
 	return http_read(conn);
 }
 
+static enum res
+proxy_read(struct http_connection *conn)
+{
+	ssize_t s;
+	char *buf;
+	int done;
+
+	s = read(conn->fd, conn->buf + conn->bufpos,
+	    conn->bufsz - conn->bufpos);
+	if (s == -1) {
+		warn("%s: read", http_info(conn->host));
+		return http_failed(conn);
+	}
+
+	if (s == 0) {
+		if (conn->req)
+			warnx("%s: short read, connection closed",
+			    http_info(conn->host));
+		return http_failed(conn);
+	}
+
+	conn->bufpos += s;
+
+again:
+	switch (conn->state) {
+	case STATE_PROXY_STATUS:
+		buf = http_get_line(conn);
+		if (buf == NULL)
+			return WANT_POLLIN;
+		if (http_parse_status(conn, buf) == -1) {
+			free(buf);
+			return http_failed(conn);
+		}
+		free(buf);
+		conn->state = STATE_PROXY_RESPONSE;
+		goto again;
+	case STATE_PROXY_RESPONSE:
+		done = 0;
+		while (!done) {
+			buf = http_get_line(conn);
+			if (buf == NULL)
+				return WANT_POLLIN;
+			/* empty line, end of header */
+			if (*buf == '\0')
+				done = 1;
+			free(buf);
+		}
+		/* proxy is ready, connect to remote */
+		if (conn->status == 200) {
+			conn->state = STATE_CONNECT;
+			return http_tls_connect(conn);
+		}
+		return http_failed(conn);
+	default:
+		errx(1, "unexpected http state");
+	}
+}
+
+/*
+ * Send out the proxy request. When done, replace buffer with the read buffer.
+ */
+static enum res
+proxy_write(struct http_connection *conn)
+{
+	ssize_t s;
+
+	assert(conn->state == STATE_PROXY_REQUEST);
+
+	s = write(conn->fd, conn->buf + conn->bufpos,
+		    conn->bufsz - conn->bufpos);
+	if (s == -1) {
+		warn("%s: write", http_info(conn->host));
+		return http_failed(conn);
+	}
+	conn->bufpos += s;
+	if (conn->bufpos < conn->bufsz)
+		return WANT_POLLOUT;
+
+	/* done writing, first thing we need the status */
+	conn->state = STATE_PROXY_STATUS;
+
+	/* free write buffer and allocate the read buffer */
+	free(conn->buf);
+	conn->bufpos = 0;
+	conn->bufsz = HTTP_BUF_SIZE;
+	if ((conn->buf = malloc(conn->bufsz)) == NULL)
+		err(1, NULL);
+
+	return WANT_POLLIN;
+}
+
 /*
  * Properly shutdown the TLS session else move connection into free state.
  */
@@ -1391,6 +1683,8 @@ http_handle(struct http_connection *conn)
 {
 	assert (conn->pfd != NULL && conn->pfd->revents != 0);
 
+	conn->io_time = 0;
+
 	switch (conn->state) {
 	case STATE_CONNECT:
 		return http_finish_connect(conn);
@@ -1398,6 +1692,11 @@ http_handle(struct http_connection *conn)
 		return http_tls_handshake(conn);
 	case STATE_REQUEST:
 		return http_write(conn);
+	case STATE_PROXY_REQUEST:
+		return proxy_write(conn);
+	case STATE_PROXY_STATUS:
+	case STATE_PROXY_RESPONSE:
+		return proxy_read(conn);
 	case STATE_RESPONSE_STATUS:
 	case STATE_RESPONSE_HEADER:
 	case STATE_RESPONSE_DATA:
@@ -1423,6 +1722,8 @@ http_handle(struct http_connection *conn)
 static void
 http_setup(void)
 {
+	char *httpproxy;
+
 	tls_config = tls_config_new();
 	if (tls_config == NULL)
 		errx(1, "tls config failed");
@@ -1444,7 +1745,10 @@ http_setup(void)
 		err(1, "tls_load_file: %s", tls_default_ca_cert_file());
 	tls_config_set_ca_mem(tls_config, tls_ca_mem, tls_ca_size);
 
-	/* TODO initalize proxy settings */
+        if ((httpproxy = getenv("http_proxy")) != NULL && *httpproxy == '\0')
+		httpproxy = NULL;
+
+	proxy_parse_uri(httpproxy);
 }
 
 void
@@ -1490,6 +1794,17 @@ proc_http(char *bind_addr, int fd)
 		timeout = INFTIM;
 		now = getmonotime();
 		LIST_FOREACH(conn, &active, entry) {
+			if (conn->io_time == 0)
+				conn->io_time = now + HTTP_IO_TIMEOUT;
+
+			if (conn->io_time <= now)
+				timeout = 0;
+			else {
+				int diff = conn->io_time - now; 
+				diff *= 1000;
+				if (timeout == INFTIM || diff < timeout)
+					timeout = diff;
+			}
 			if (conn->state == STATE_WRITE_DATA)
 				pfds[i].fd = conn->req->outfd;
 			else
@@ -1562,6 +1877,11 @@ proc_http(char *bind_addr, int fd)
 			/* check if event is ready */
 			if (conn->pfd != NULL && conn->pfd->revents != 0)
 				http_do(conn, http_handle);
+			else if (conn->io_time <= now) {
+				warnx("%s: timeout, connection closed",
+				    http_info(conn->host));
+				http_do(conn, http_failed);
+			}
 
 			if (conn->state == STATE_FREE)
 				http_free(conn);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.65 2021/07/13 18:39:39 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.66 2021/09/01 08:09:41 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -364,8 +364,6 @@ extern int verbose;
 
 /* Routines for RPKI entities. */
 
-int		 base64_decode(const unsigned char *, unsigned char **,
-		    size_t *);
 void		 tal_buffer(struct ibuf *, const struct tal *);
 void		 tal_free(struct tal *);
 struct tal	*tal_parse(const char *, char *);
@@ -499,6 +497,7 @@ void		 cryptoerrx(const char *, ...)
 
 int		 base64_decode(const unsigned char *, unsigned char **,
 		    size_t *);
+int		 base64_encode(const unsigned char *, size_t, char **);
 char		*hex_encode(const unsigned char *, size_t);
 
 
