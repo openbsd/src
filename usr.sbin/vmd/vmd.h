@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.105 2021/04/11 14:12:42 dv Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.106 2021/09/01 11:08:21 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -451,26 +451,22 @@ int	 vm_priv_addr6(struct vmd_config *, uint32_t, int, int,
 	    struct in6_addr *);
 
 /* vmm.c */
-struct iovec;
-
 void	 vmm(struct privsep *, struct privsep_proc *);
 void	 vmm_shutdown(void);
-void	*vaddr_mem(paddr_t, size_t);
-int	 write_mem(paddr_t, const void *buf, size_t);
-int	 read_mem(paddr_t, void *buf, size_t);
-int	 iovec_mem(paddr_t, size_t, struct iovec *, int);
 int	 opentap(char *);
 int	 fd_hasdata(int);
-void	 mutex_lock(pthread_mutex_t *);
-void	 mutex_unlock(pthread_mutex_t *);
 int	 vmm_pipe(struct vmd_vm *, int, void (*)(int, short, void *));
 
 /* vm.c */
+void	 mutex_lock(pthread_mutex_t *);
+void	 mutex_unlock(pthread_mutex_t *);
+int	 read_mem(paddr_t, void *buf, size_t);
 int	 start_vm(struct vmd_vm *, int);
 __dead void vm_shutdown(unsigned int);
 void	 vm_pipe_init(struct vm_dev_pipe *, void (*)(int, short, void *));
 void	 vm_pipe_send(struct vm_dev_pipe *, enum pipe_msg_type);
 enum pipe_msg_type vm_pipe_recv(struct vm_dev_pipe *);
+int	 write_mem(paddr_t, const void *buf, size_t);
 
 /* config.c */
 int	 config_init(struct vmd *);
