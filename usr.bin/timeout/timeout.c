@@ -211,7 +211,6 @@ main(int argc, char **argv)
 			break;
 		case 0:
 			break;
-		case 'h':
 		default:
 			usage();
 			break;
