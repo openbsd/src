@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.553 2021/07/28 20:48:36 deraadt Exp $
+#	$OpenBSD: rc,v 1.554 2021/09/01 08:15:53 deraadt Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -453,6 +453,7 @@ sh /etc/netstart
 
 mount -s /usr >/dev/null 2>&1
 mount -s /var >/dev/null 2>&1
+mount -s /var/log >/dev/null 2>&1
 
 start_daemon dhcpleased unwind resolvd >/dev/null 2>&1
 
