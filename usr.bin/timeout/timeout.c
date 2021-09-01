@@ -137,7 +137,6 @@ sig_handler(int signo)
 	}
 
 	switch(signo) {
-	case 0:
 	case SIGINT:
 	case SIGHUP:
 	case SIGQUIT:
@@ -181,15 +180,8 @@ main(int argc, char **argv)
 	bool 		timedout = false;
 	bool 		do_second_kill = false;
 	struct 		sigaction signals;
-	int 		signums[] = {
-		-1,
-		SIGTERM,
-		SIGINT,
-		SIGHUP,
-		SIGCHLD,
-		SIGALRM,
-		SIGQUIT,
-	};
+	int 		signums[] = {-1, SIGTERM, SIGINT, SIGHUP, SIGCHLD,
+			    SIGALRM, SIGQUIT};
 
 	const struct option longopts[] = {
 		{ "preserve-status", no_argument,       &preserve,    1 },
