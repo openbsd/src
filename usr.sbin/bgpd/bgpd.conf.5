@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.214 2021/09/01 12:39:52 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.215 2021/09/01 15:06:47 job Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -489,7 +489,9 @@ prefix-set as64496set { 192.0.2.0/24 prefixlen >= 26,
 .Pp
 .It Xo
 .Ic roa-set
-.Ic { Ar address Ns Li / Ns Ar len Ic maxlen Ar mlen Ic source-as Ar asn
+.Ic { Ar address Ns Li / Ns Ar len
+.Op Ic maxlen Ar mlen
+.Ic source-as Ar asn
 .Oo Ic expires Ar seconds Oc ... Ic }
 .Xc
 The
@@ -503,7 +505,7 @@ and the Origin Validation State (OVS) is set.
 .Ic expires
 can be set to the seconds since Epoch until when this VRP is valid.
 .Bd -literal -offset indent
-roa-set { 192.0.2.0/24 maxlen 24 source-as 64511
+roa-set { 192.0.2.0/23 maxlen 24 source-as 64511
           203.0.113.0/24 source-as 64496 }
 .Ed
 .Pp
