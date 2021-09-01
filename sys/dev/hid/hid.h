@@ -1,4 +1,4 @@
-/*	$OpenBSD: hid.h,v 1.8 2021/08/20 05:19:08 anton Exp $ */
+/*	$OpenBSD: hid.h,v 1.9 2021/09/01 10:41:39 anton Exp $ */
 /*	$NetBSD: hid.h,v 1.8 2002/07/11 21:14:25 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.h,v 1.7 1999/11/17 22:33:40 n_hibma Exp $ */
 
@@ -401,6 +401,7 @@ int	hid_is_collection(const void *, int, uint8_t, int32_t);
 #define HUC_TRACK_PREV		0x00b6
 #define HUC_STOP		0x00b7
 #define HUC_PLAY_PAUSE		0x00cd
+#define HUC_VOLUME		0x00e0
 #define HUC_MUTE		0x00e2
 #define HUC_VOL_INC		0x00e9
 #define HUC_VOL_DEC		0x00ea

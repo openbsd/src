@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucc.c,v 1.22 2021/09/01 10:40:19 anton Exp $	*/
+/*	$OpenBSD: ucc.c,v 1.23 2021/09/01 10:41:39 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -69,6 +69,13 @@ struct ucc_softc {
 		uint32_t i_len;		/* length in bits */
 	} sc_input;
 
+	struct {
+		uint32_t	v_inc;	/* volume increment bit offset */
+		uint32_t	v_dec;	/* volume decrement bit offset */
+		uint32_t	v_off;	/* offset in bits */
+		uint32_t	v_len;	/* length in bits */
+	} sc_volume;
+
 	/* Last pressed key. */
 	union {
 		int	sc_last_translate;
@@ -103,13 +110,16 @@ int	ucc_hid_parse(struct ucc_softc *, void *, int);
 int	ucc_hid_parse_array(struct ucc_softc *, const struct hid_item *);
 int	ucc_hid_is_array(const struct hid_item *);
 int	ucc_add_key(struct ucc_softc *, int32_t, u_int);
+int	ucc_add_key_volume(struct ucc_softc *, const struct hid_item *,
+    uint32_t, u_int);
 int	ucc_bit_to_sym(struct ucc_softc *, u_int, const struct ucc_keysym **);
 int	ucc_usage_to_sym(int32_t, const struct ucc_keysym **);
 int	ucc_bits_to_int(uint8_t *, u_int, int32_t *);
+int	ucc_bits_to_volume(struct ucc_softc *, uint8_t *, int, u_int *);
 int	ucc_intr_slice(struct ucc_softc *, uint8_t *, uint8_t *, int *);
 void	ucc_input(struct ucc_softc *, u_int, int);
 void	ucc_rawinput(struct ucc_softc *, u_char, int);
-int	ucc_setbits(uint8_t *, int, u_int *);
+int	ucc_setbits(struct ucc_softc *, uint8_t *, int, u_int *);
 
 struct cfdriver ucc_cd = {
 	NULL, "ucc", DV_DULL
@@ -708,7 +718,7 @@ ucc_intr(struct uhidev *addr, void *data, u_int len)
 	/* Dump the buffer again after slicing. */
 	ucc_dump(__func__, buf, len);
 
-	if (ucc_setbits(buf, len, &bit)) {
+	if (ucc_setbits(sc, buf, len, &bit)) {
 		/* All zeroes, assume key up event. */
 		if (raw) {
 			if (sc->sc_last_raw != 0) {
@@ -898,6 +908,9 @@ ucc_hid_parse(struct ucc_softc *sc, void *desc, int descsiz)
 
 	hd = hid_start_parse(desc, descsiz, hid_input);
 	while (hid_get_item(hd, &hi)) {
+		uint32_t off;
+		int32_t usage;
+
 		if (hi.report_ID != repid || hi.kind != hid_input)
 			continue;
 
@@ -919,6 +932,7 @@ ucc_hid_parse(struct ucc_softc *sc, void *desc, int descsiz)
 
 		/* Signal that the input offset is reached. */
 		istate = LENGTH;
+		off = sc->sc_input.i_len;
 		sc->sc_input.i_len += hi.loc.size * hi.loc.count;
 
 		/*
@@ -930,7 +944,11 @@ ucc_hid_parse(struct ucc_softc *sc, void *desc, int descsiz)
 			break;
 		}
 
-		error = ucc_add_key(sc, HID_GET_USAGE(hi.usage), bit);
+		usage = HID_GET_USAGE(hi.usage);
+		if (usage == HUC_VOLUME)
+			error = ucc_add_key_volume(sc, &hi, off, bit);
+		else
+			error = ucc_add_key(sc, usage, bit);
 		if (error)
 			break;
 		sc->sc_nusages++;
@@ -1000,6 +1018,47 @@ ucc_add_key(struct ucc_softc *sc, int32_t usage, u_int bit)
 	return 0;
 }
 
+/*
+ * Add key mappings for the volume usage which differs compared to the volume
+ * increment/decrement usages in which each volume change direction is
+ * represented using a distinct usage. The volume usage instead uses bits of the
+ * interrupt buffer to represent the wanted volume. The same bits should be
+ * within the bounds given by the logical min/max associated with the HID item.
+ */
+int
+ucc_add_key_volume(struct ucc_softc *sc, const struct hid_item *hi,
+    uint32_t off, u_int bit)
+{
+	uint32_t len;
+	int error;
+
+	/*
+	 * Since the volume usage is internally represented using two key
+	 * mappings, make sure enough bits are available to avoid any ambiguity.
+	 */
+	len = hi->loc.size * hi->loc.count;
+	if (len <= 1)
+		return 1;
+
+	sc->sc_volume.v_inc = bit;
+	sc->sc_volume.v_dec = bit + 1;
+	sc->sc_volume.v_off = off;
+	sc->sc_volume.v_len = len;
+
+	DPRINTF("%s: inc %d, dec %d, off %d, len %d, min %d, max %d\n",
+	    __func__, sc->sc_volume.v_inc, sc->sc_volume.v_dec,
+	    sc->sc_volume.v_off, sc->sc_volume.v_len,
+	    hi->logical_minimum, hi->logical_maximum);
+
+	error = ucc_add_key(sc, HUC_VOL_INC, sc->sc_volume.v_inc);
+	if (error)
+		return error;
+	error = ucc_add_key(sc, HUC_VOL_DEC, sc->sc_volume.v_dec);
+	if (error)
+		return error;
+	return 0;
+}
+
 int
 ucc_bit_to_sym(struct ucc_softc *sc, u_int bit, const struct ucc_keysym **us)
 {
@@ -1039,6 +1098,37 @@ ucc_bits_to_int(uint8_t *buf, u_int buflen, int32_t *usage)
 			x <<= 8;
 	}
 	*usage = x;
+	return 0;
+}
+
+int
+ucc_bits_to_volume(struct ucc_softc *sc, uint8_t *buf, int buflen, u_int *bit)
+{
+	uint32_t vlen = sc->sc_volume.v_len;
+	uint32_t voff = sc->sc_volume.v_off;
+	int32_t vol;
+	int sign;
+
+	if (vlen == 0)
+		return 1;
+	if (ucc_bits_to_int(buf, buflen, &vol))
+		return 1;
+	vol = (vol >> voff) & ((1 << vlen) - 1);
+	if (vol == 0)
+		return 1;
+
+	/*
+	 * Interpret the volume as a relative change by only looking at the sign
+	 * in order to determine the change direction.
+	 */
+	sign = vol & (1 << (vlen - 1)) ? -1 : 1;
+	if (sign < 0)
+		vol = (1 << vlen) - vol;
+	vol *= sign;
+	if (vol > 0)
+		*bit = sc->sc_volume.v_inc;
+	else
+		*bit = sc->sc_volume.v_dec;
 	return 0;
 }
 
@@ -1106,9 +1196,12 @@ ucc_rawinput(struct ucc_softc *sc, u_char c, int release)
 }
 
 int
-ucc_setbits(uint8_t *data, int len, u_int *bit)
+ucc_setbits(struct ucc_softc *sc, uint8_t *data, int len, u_int *bit)
 {
 	int i, j;
+
+	if (ucc_bits_to_volume(sc, data, len, bit) == 0)
+		return 0;
 
 	for (i = 0; i < len; i++) {
 		if (data[i] == 0)
