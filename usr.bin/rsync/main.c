@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.58 2021/08/30 20:25:01 job Exp $ */
+/*	$OpenBSD: main.c,v 1.59 2021/09/01 09:48:08 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -292,8 +292,6 @@ const struct option	 lopts[] = {
     { "dry-run",	no_argument,	&opts.dry_run,		1 },
     { "exclude",	required_argument, NULL, 		OP_EXCLUDE },
     { "exclude-from",	required_argument, NULL,		OP_EXCLUDE_FROM },
-    { "from0",		no_argument,	NULL,			'0' },
-    { "no-from0",	no_argument,	&opts.from0,		0 },
     { "group",		no_argument,	&opts.preserve_gids,	1 },
     { "no-group",	no_argument,	&opts.preserve_gids,	0 },
     { "help",		no_argument,	NULL,			'h' },
@@ -344,9 +342,6 @@ main(int argc, char *argv[])
 	while ((c = getopt_long(argc, argv, "Dae:ghlnoprtvxz", lopts, NULL))
 	    != -1) {
 		switch (c) {
-		case '0':
-			opts.from0 = 1;
-			break;
 		case 'D':
 			opts.devices = 1;
 			opts.specials = 1;
@@ -423,12 +418,10 @@ main(int argc, char *argv[])
 				    optarg);
 			break;
 		case OP_EXCLUDE_FROM:
-			parse_file(optarg, RULE_EXCLUDE,
-			    opts.from0 ? '\0' : '\n' );
+			parse_file(optarg, RULE_EXCLUDE);
 			break;
 		case OP_INCLUDE_FROM:
-			parse_file(optarg, RULE_INCLUDE,
-			    opts.from0 ? '\0' : '\n' );
+			parse_file(optarg, RULE_INCLUDE);
 			break;
 		case OP_VERSION:
 			fprintf(stderr, "openrsync: protocol version %u\n",
@@ -453,8 +446,7 @@ main(int argc, char *argv[])
 
 	/* by default and for --timeout=0 disable poll_timeout */
 	if (poll_timeout == 0)
-		poll_timeout = -1;
-	else
+		poll_timeout = -1; else
 		poll_timeout *= 1000;
 
 	/*

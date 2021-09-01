@@ -223,7 +223,7 @@ parse_rule(char *line, enum rule_type def)
 }
 
 void
-parse_file(const char *file, enum rule_type def, int delim)
+parse_file(const char *file, enum rule_type def)
 {
 	FILE *fp;
 	char *line = NULL;
@@ -233,7 +233,7 @@ parse_file(const char *file, enum rule_type def, int delim)
 	if ((fp = fopen(file, "r")) == NULL)
 		err(ERR_SYNTAX, "open: %s", file);
 
-	while ((linelen = getdelim(&line, &linesize, delim, fp)) != -1) {
+	while ((linelen = getline(&line, &linesize, fp)) != -1) {
 		linenum++;
 		line[linelen - 1] = '\0';
 		if (parse_rule(line, def) == -1)

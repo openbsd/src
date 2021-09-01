@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.40 2021/08/29 13:43:46 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.41 2021/09/01 09:48:08 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -131,7 +131,6 @@ struct	opts {
 	int		 no_motd;		/* --no-motd */
 	int		 numeric_ids;		/* --numeric-ids */
 	int		 one_file_system;	/* -x */
-	int		 from0;			/* -0 */
 	char		*rsync_path;		/* --rsync-path */
 	char		*ssh_prog;		/* --rsh or -e */
 	char		*port;			/* --port */
@@ -379,7 +378,7 @@ char		*mkstempsock(const char *, char *);
 int		 mktemplate(char **, const char *, int);
 
 int		 parse_rule(char *line, enum rule_type);
-void		 parse_file(const char *, enum rule_type, int);
+void		 parse_file(const char *, enum rule_type);
 void		 send_rules(struct sess *, int);
 void		 recv_rules(struct sess *, int);
 int		 rules_match(const char *, int);
