@@ -1,0 +1,133 @@
+.\"	$NetBSD: timeout.1,v 1.4 2016/10/13 06:22:26 dholland Exp $
+.\"
+.\" Copyright (c) 2014 Baptiste Daroussin <bapt@FreeBSD.org>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\" $FreeBSD: head/usr.bin/timeout/timeout.1 268861 2014-07-18 22:56:59Z bapt $
+.\"
+.Dd July 19, 2014
+.Dt TIMEOUT 1
+.Os
+.Sh NAME
+.Nm timeout
+.Nd run a command with a time limit
+.Sh SYNOPSIS
+.Nm
+.Op Fl Fl signal Ar sig | Fl s Ar sig
+.Op Fl Fl preserve-status
+.Op Fl Fl kill-after Ar time | Fl k Ar time
+.Op Fl Fl foreground
+.Ao Ar duration Ac
+.Ao Ar command Ac
+.Ao Ar args ... Ac
+.Sh DESCRIPTION
+.Nm
+starts the
+.Ar command
+with its
+.Ar args .
+If
+.Ar command
+is still running after
+.Ar duration ,
+it is killed.
+By default,
+.Dv SIGTERM
+is sent.
+.Bl -tag -width "-k time, --kill-after time"
+.It Fl Fl preserve-status
+Always exits with the same status as
+.Ar command
+even if it times out.
+.It Fl Fl foreground
+Do not propagate timeout to the
+.Ar command
+children.
+.It Fl s Ar sig , Fl Fl signal Ar sig
+Specify the signal to send on timeout.
+By default,
+.Dv SIGTERM
+is sent.
+.It Fl k Ar time , Fl Fl kill-after Ar time
+Send a second kill signal if
+.Ar command
+is still running after
+.Ar time
+after the first signal was sent.
+.El
+.Sh DURATION FORMAT
+.Ar duration
+and
+.Ar time
+can be integer or decimal numbers.
+Values without unit symbols are interpreted as seconds.
+.Pp
+Supported unit symbols are:
+.Bl -tag -width indent -compact
+.It s
+seconds
+.It m
+minutes
+.It h
+hours
+.It d
+days
+.El
+.Sh EXIT STATUS
+If the timeout was not reached, the exit status of
+.Ar command
+is returned.
+.Pp
+If the timeout was reached and
+.Fl Fl preserve-status
+is set, the exit status of
+.Ar command
+is returned.
+If
+.Fl Fl preserve-status
+is not set, an exit status of 124 is returned.
+.Pp
+If
+.Ar command
+exits after receiving a signal, the exit status returned is the signal number plus 128.
+.Sh SEE ALSO
+.Xr kill 1 ,
+.Xr signal 3
+.Sh HISTORY
+A
+.Nm
+utility appeared in a development branch of
+.Fx 11
+and was imported into
+.Nx 7 .
+The
+.Fx
+work is compatible with GNU
+.Nm
+by
+.An Padraig Brady ,
+from GNU Coreutils 8.21.
+The
+.Nm
+utility first appeared in GNU Coreutils 7.0.
