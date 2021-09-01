@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet_ntop.3,v 1.4 2019/08/30 20:06:07 jmc Exp $
+.\"	$OpenBSD: inet_ntop.3,v 1.5 2021/09/01 15:59:22 claudio Exp $
 .\"	$NetBSD: inet.3,v 1.7 1997/06/18 02:25:24 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)inet.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: August 30 2019 $
+.Dd $Mdocdate: September 1 2021 $
 .Dt INET_NTOP 3
 .Os
 .Sh NAME
@@ -38,6 +38,7 @@
 .Nm inet_pton
 .Nd convert Internet addresses between presentation and network formats
 .Sh SYNOPSIS
+.In sys/socket.h
 .In arpa/inet.h
 .Ft const char *
 .Fn inet_ntop "int af" "const void * restrict src" "char * restrict dst" "socklen_t size"
