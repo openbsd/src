@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.46 2021/06/29 17:43:57 deraadt Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.47 2021/09/01 08:17:37 claudio Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 29 2021 $
+.Dd $Mdocdate: September 1 2021 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -173,8 +173,13 @@ should be run hourly by
 use
 .Xr crontab 1
 to uncomment the entry in root's crontab.
-.\" .Sh ENVIRONMENT
-.\" For sections 1, 6, 7, and 8 only.
+.Sh ENVIRONMENT
+.Nm
+utilizes the following environment variables:
+.Bl -tag -width "http_proxy"
+.It Ev http_proxy
+URL of HTTP proxy to use.
+.El
 .Sh FILES
 .Bl -tag -width "/var/db/rpki-client/openbgpd" -compact
 .It Pa /etc/rpki/*.tal
@@ -188,10 +193,6 @@ default roa-set output file.
 .El
 .Sh EXIT STATUS
 .Ex -std
-.\" For sections 1, 6, and 8 only.
-.\" .Sh EXAMPLES
-.\" .Sh DIAGNOSTICS
-.\" For sections 1, 4, 6, 7, 8, and 9 printf/stderr messages only.
 .Sh SEE ALSO
 .Xr openrsync 1 ,
 .Xr bgpd.conf 5
