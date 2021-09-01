@@ -136,7 +136,7 @@ sig_handler(int signo)
 		return;
 	}
 
-	switch(signo) {
+	switch (signo) {
 	case SIGINT:
 	case SIGHUP:
 	case SIGQUIT:
@@ -228,7 +228,7 @@ main(int argc, char **argv)
 	argv++;
 
 	if (!foreground) {
-		pgid = setpgid(0,0);
+		pgid = setpgid(0, 0);
 
 		if (pgid == -1)
 			err(1, "setpgid()");
@@ -240,13 +240,13 @@ main(int argc, char **argv)
 	if (killsig != SIGKILL && killsig != SIGSTOP)
 		signums[0] = killsig;
 
-	for (i = 0; i < sizeof(signums) / sizeof(signums[0]); i ++)
+	for (i = 0; i < sizeof(signums) / sizeof(signums[0]); i++)
 		sigaddset(&signals.sa_mask, signums[i]);
 
 	signals.sa_handler = sig_handler;
 	signals.sa_flags = SA_RESTART;
 
-	for (i = 0; i < sizeof(signums) / sizeof(signums[0]); i ++) {
+	for (i = 0; i < sizeof(signums) / sizeof(signums[0]); i++) {
 		if (signums[i] != -1 && signums[i] != 0 &&
 		    sigaction(signums[i], &signals, NULL) == -1)
 			err(1, "sigaction()");
@@ -323,14 +323,14 @@ main(int argc, char **argv)
 		}
 	}
 
-	while (cpid != pid  && wait(&pstat) == -1) {
+	while (cpid != pid && wait(&pstat) == -1) {
 		if (errno != EINTR)
 			err(1, "waitpid()");
 	}
 
 	if (WEXITSTATUS(pstat))
 		pstat = WEXITSTATUS(pstat);
-	else if(WIFSIGNALED(pstat))
+	else if (WIFSIGNALED(pstat))
 		pstat = 128 + WTERMSIG(pstat);
 
 	if (timedout && !preserve)
