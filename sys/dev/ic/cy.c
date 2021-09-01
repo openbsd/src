@@ -1,4 +1,4 @@
-/*	$OpenBSD: cy.c,v 1.40 2021/03/07 06:21:38 jsg Exp $	*/
+/*	$OpenBSD: cy.c,v 1.41 2021/09/01 16:10:39 jan Exp $	*/
 /*
  * Copyright (c) 1996 Timo Rossi.
  * All rights reserved.
@@ -368,7 +368,7 @@ cyopen(dev_t dev, int flag, int mode, struct proc *p)
 		    !ISSET(tp->t_state, TS_CARR_ON)) {
 			SET(tp->t_state, TS_WOPEN);
 			error = ttysleep(tp, &tp->t_rawq, TTIPRI | PCATCH,
-			    "cydcd");
+			    ttopen);
 			if (error != 0) {
 				splx(s);
 				CLR(tp->t_state, TS_WOPEN);
