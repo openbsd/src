@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.c,v 1.32 2020/04/09 16:19:00 krw Exp $	*/
+/*	$OpenBSD: ffs.c,v 1.33 2021/09/01 15:19:00 deraadt Exp $	*/
 /*	$NetBSD: ffs.c,v 1.66 2015/12/21 00:58:08 christos Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  *	@(#)ffs_alloc.c	8.19 (Berkeley) 7/13/95
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/disklabel.h>
 
 #include <assert.h>

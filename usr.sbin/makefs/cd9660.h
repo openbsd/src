@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660.h,v 1.14 2017/04/09 09:58:53 natano Exp $	*/
+/*	$OpenBSD: cd9660.h,v 1.15 2021/09/01 15:19:00 deraadt Exp $	*/
 /*	$NetBSD: cd9660.h,v 1.21 2015/12/24 15:52:37 christos Exp $	*/
 
 /*
@@ -36,6 +36,9 @@
 #ifndef _MAKEFS_CD9660_H
 #define _MAKEFS_CD9660_H
 
+#include <sys/queue.h>
+#include <sys/endian.h>
+
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -46,9 +49,6 @@
 #include <unistd.h>
 #include <time.h>
 #include <limits.h>
-#include <sys/queue.h>
-#include <sys/param.h>
-#include <sys/endian.h>
 
 #include "makefs.h"
 #include "cd9660/iso.h"

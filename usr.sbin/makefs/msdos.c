@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdos.c,v 1.11 2017/03/23 18:16:06 patrick Exp $	*/
+/*	$OpenBSD: msdos.c,v 1.12 2021/09/01 15:19:00 deraadt Exp $	*/
 /*	$NetBSD: msdos.c,v 1.16 2016/01/30 09:59:27 mlelstv Exp $	*/
 
 /*-
@@ -29,8 +29,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/param.h>
 
 #include <assert.h>
 #include <fcntl.h>

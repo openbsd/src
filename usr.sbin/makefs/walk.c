@@ -1,4 +1,4 @@
-/*	$OpenBSD: walk.c,v 1.9 2016/12/17 16:12:15 krw Exp $	*/
+/*	$OpenBSD: walk.c,v 1.10 2021/09/01 15:19:00 deraadt Exp $	*/
 /*	$NetBSD: walk.c,v 1.29 2015/11/25 00:48:49 christos Exp $	*/
 
 /*
@@ -36,13 +36,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 
 #include <assert.h>
 #include <stdio.h>
 #include <dirent.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -67,7 +68,7 @@ walk_dir(const char *root, const char *dir, fsnode *parent, fsnode *join)
 	fsnode		*first, *cur, *prev, *last;
 	DIR		*dirp;
 	struct dirent	*dent;
-	char		path[MAXPATHLEN + 1];
+	char		path[PATH_MAX+1];
 	struct stat	stbuf;
 	char		*name, *rp;
 	int		dot, len;
