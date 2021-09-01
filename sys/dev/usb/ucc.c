@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucc.c,v 1.21 2021/08/31 05:17:49 anton Exp $	*/
+/*	$OpenBSD: ucc.c,v 1.22 2021/09/01 10:40:19 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -105,7 +105,7 @@ int	ucc_hid_is_array(const struct hid_item *);
 int	ucc_add_key(struct ucc_softc *, int32_t, u_int);
 int	ucc_bit_to_sym(struct ucc_softc *, u_int, const struct ucc_keysym **);
 int	ucc_usage_to_sym(int32_t, const struct ucc_keysym **);
-int	ucc_bits_to_usage(uint8_t *, u_int, int32_t *);
+int	ucc_bits_to_int(uint8_t *, u_int, int32_t *);
 int	ucc_intr_slice(struct ucc_softc *, uint8_t *, uint8_t *, int *);
 void	ucc_input(struct ucc_softc *, u_int, int);
 void	ucc_rawinput(struct ucc_softc *, u_char, int);
@@ -725,7 +725,7 @@ ucc_intr(struct uhidev *addr, void *data, u_int len)
 	} else if (sc->sc_isarray) {
 		int32_t usage;
 
-		if (ucc_bits_to_usage(buf, len, &usage) ||
+		if (ucc_bits_to_int(buf, len, &usage) ||
 		    ucc_usage_to_sym(usage, &us))
 			goto unknown;
 		bit = us->us_usage;
@@ -1025,7 +1025,7 @@ ucc_usage_to_sym(int32_t usage, const struct ucc_keysym **us)
 }
 
 int
-ucc_bits_to_usage(uint8_t *buf, u_int buflen, int32_t *usage)
+ucc_bits_to_int(uint8_t *buf, u_int buflen, int32_t *usage)
 {
 	int32_t x = 0;
 	int i;
