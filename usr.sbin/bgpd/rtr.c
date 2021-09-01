@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr.c,v 1.3 2021/05/11 12:09:19 claudio Exp $ */
+/*	$OpenBSD: rtr.c,v 1.4 2021/09/01 12:39:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -38,6 +38,7 @@ volatile sig_atomic_t		 rtr_quit;
 static struct imsgbuf		*ibuf_main;
 static struct imsgbuf		*ibuf_rde;
 static struct bgpd_config	*conf, *nconf;
+static struct timer_head	 expire_timer;
 
 static void
 rtr_sighdlr(int sig)
@@ -53,6 +54,31 @@ rtr_sighdlr(int sig)
 #define PFD_PIPE_MAIN	0
 #define PFD_PIPE_RDE	1
 #define PFD_PIPE_COUNT	2
+
+#define EXPIRE_TIMEOUT	300
+
+/*
+ * Every EXPIRE_TIMEOUT seconds traverse the static roa-set table and expire
+ * all elements where the expires timestamp is smaller or equal to now.
+ * If any change is done recalculate the RTR table.
+ */
+static unsigned int
+rtr_expire_roas(time_t now)
+{
+	struct roa *roa, *nr;
+	unsigned int recalc = 0;
+
+	RB_FOREACH_SAFE(roa, roa_tree, &conf->roa, nr) {
+		if (roa->expires != 0 && roa->expires <= now) {
+			recalc++;
+			RB_REMOVE(roa_tree, &conf->roa, roa);
+			free(roa);
+		}
+	}
+	if (recalc != 0)
+		log_warnx("%u roa-set entries expired", recalc);
+	return recalc;
+}
 
 void
 roa_insert(struct roa_tree *rt, struct roa *in)
@@ -113,6 +139,9 @@ rtr_main(int debug, int verbose)
 	conf = new_config();
 	log_info("rtr engine ready");
 
+	TAILQ_INIT(&expire_timer);
+	timer_set(&expire_timer, Timer_Rtr_Expire, EXPIRE_TIMEOUT);
+
 	while (rtr_quit == 0) {
 		i = rtr_count();
 		if (pfd_elms < PFD_PIPE_COUNT + i) {
@@ -123,7 +152,12 @@ rtr_main(int debug, int verbose)
 			pfd = newp;
 			pfd_elms = PFD_PIPE_COUNT + i;
 		}
-		timeout = 240;  /* loop every 240s at least */
+
+		/* run the expire timeout every EXPIRE_TIMEOUT seconds */
+		timeout = timer_nextduein(&expire_timer, getmonotime());
+		if (timeout == -1)
+			fatalx("roa-set expire timer no longer runnning");
+
 		bzero(pfd, sizeof(struct pollfd) * pfd_elms);
 
 		set_pollfd(&pfd[PFD_PIPE_MAIN], ibuf_main);
@@ -153,6 +187,13 @@ rtr_main(int debug, int verbose)
 
 		i = PFD_PIPE_COUNT;
 		rtr_check_events(pfd + i, pfd_elms - i);
+
+		if (timer_nextisdue(&expire_timer, getmonotime()) != NULL) {
+			timer_set(&expire_timer, Timer_Rtr_Expire,
+			    EXPIRE_TIMEOUT);
+			if (rtr_expire_roas(time(NULL)) != 0)
+				rtr_recalc();
+		}
 	}
 
 	rtr_shutdown();
@@ -257,6 +298,7 @@ rtr_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			RB_ROOT(&nconf->roa) = NULL;
 			/* finally merge the rtr session */
 			rtr_config_merge();
+			rtr_expire_roas(time(NULL));
 			rtr_recalc();
 			log_info("RTR engine reconfigured");
 			imsg_compose(ibuf_main, IMSG_RECONF_DONE, 0, 0,

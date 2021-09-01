@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.418 2021/08/09 08:15:34 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.419 2021/09/01 12:39:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -102,6 +102,7 @@ static struct filter_head	*peerfilter_l;
 static struct filter_head	*groupfilter_l;
 static struct filter_rule	*curpeer_filter[2];
 static struct filter_rule	*curgroup_filter[2];
+static int			 noexpires;
 
 struct filter_rib_l {
 	struct filter_rib_l	*next;
@@ -163,7 +164,8 @@ static int	 new_as_set(char *);
 static void	 add_as_set(u_int32_t);
 static void	 done_as_set(void);
 static struct prefixset	*new_prefix_set(char *, int);
-static void	 add_roa_set(struct prefixset_item *, u_int32_t, u_int8_t);
+static void	 add_roa_set(struct prefixset_item *, u_int32_t, u_int8_t,
+		    time_t);
 static struct rtr_config	*get_rtr(struct bgpd_addr *);
 static int	 insert_rtr(struct rtr_config *);
 
@@ -216,7 +218,7 @@ typedef struct {
 %token	CONNECTED STATIC
 %token	COMMUNITY EXTCOMMUNITY LARGECOMMUNITY DELETE
 %token	PREFIX PREFIXLEN PREFIXSET
-%token	ROASET ORIGINSET OVS
+%token	ROASET ORIGINSET OVS EXPIRES
 %token	ASSET SOURCEAS TRANSITAS PEERAS MAXASLEN MAXASSEQ
 %token	SET LOCALPREF MED METRIC NEXTHOP REJECT BLACKHOLE NOMODIFY SELF
 %token	PREPEND_SELF PREPEND_PEER PFTABLE WEIGHT RTLABEL ORIGIN PRIORITY
@@ -229,7 +231,7 @@ typedef struct {
 %token	<v.number>		NUMBER
 %type	<v.number>		asnumber as4number as4number_any optnumber
 %type	<v.number>		espah family safi restart origincode nettype
-%type	<v.number>		yesno inout restricted validity
+%type	<v.number>		yesno inout restricted validity expires
 %type	<v.string>		string
 %type	<v.addr>		address
 %type	<v.prefix>		prefix addrspec
@@ -505,8 +507,10 @@ prefixset_item	: prefix prefixlenop			{
 
 roa_set		: ROASET '{' optnl		{
 			curroatree = &conf->roa;
+			noexpires = 0;
 		} roa_set_l optnl '}'			{
 			curroatree = NULL;
+			noexpires = 1;
 		}
 		| ROASET '{' optnl '}'		/* nothing */
 		;
@@ -517,6 +521,7 @@ origin_set	: ORIGINSET STRING '{' optnl		{
 				YYERROR;
 			}
 			curroatree = &curoset->roaitems;
+			noexpires = 1;
 			free($2);
 		} roa_set_l optnl '}'			{
 			SIMPLEQ_INSERT_TAIL(&conf->originsets, curoset, entry);
@@ -535,24 +540,35 @@ origin_set	: ORIGINSET STRING '{' optnl		{
 		}
 		;
 
-roa_set_l	: prefixset_item SOURCEAS as4number_any			{
+expires		: /* empty */	{
+			$$ = 0;
+		}
+		| EXPIRES NUMBER	{
+			if (noexpires) {
+				yyerror("syntax error, expires not allowed");
+				YYERROR;
+			}
+			$$ = $2;
+		}
+
+roa_set_l	: prefixset_item SOURCEAS as4number_any	expires		{
 			if ($1->p.len_min != $1->p.len) {
 				yyerror("unsupported prefixlen operation in "
 				    "roa-set");
 				free($1);
 				YYERROR;
 			}
-			add_roa_set($1, $3, $1->p.len_max);
+			add_roa_set($1, $3, $1->p.len_max, $4);
 			free($1);
 		}
-		| roa_set_l comma prefixset_item SOURCEAS as4number_any	{
+		| roa_set_l comma prefixset_item SOURCEAS as4number_any	expires {
 			if ($3->p.len_min != $3->p.len) {
 				yyerror("unsupported prefixlen operation in "
 				    "roa-set");
 				free($3);
 				YYERROR;
 			}
-			add_roa_set($3, $5, $3->p.len_max);
+			add_roa_set($3, $5, $3->p.len_max, $6);
 			free($3);
 		}
 		;
@@ -2916,6 +2932,7 @@ lookup(char *s)
 		{ "enhanced",		ENHANCED },
 		{ "esp",		ESP},
 		{ "evaluate",		EVALUATE},
+		{ "expires",		EXPIRES},
 		{ "export",		EXPORT},
 		{ "export-target",	EXPORTTRGT},
 		{ "ext-community",	EXTCOMMUNITY},
@@ -4670,7 +4687,8 @@ new_prefix_set(char *name, int is_roa)
 }
 
 static void
-add_roa_set(struct prefixset_item *npsi, u_int32_t as, u_int8_t max)
+add_roa_set(struct prefixset_item *npsi, u_int32_t as, u_int8_t max,
+    time_t expires)
 {
 	struct roa *roa, *r;
 
@@ -4681,6 +4699,7 @@ add_roa_set(struct prefixset_item *npsi, u_int32_t as, u_int8_t max)
 	roa->prefixlen = npsi->p.len;
 	roa->maxlen = max;
 	roa->asnum = as;
+	roa->expires = expires;
 	switch (roa->aid) {
 	case AID_INET:
 		roa->prefix.inet = npsi->p.addr.v4;
@@ -4693,9 +4712,12 @@ add_roa_set(struct prefixset_item *npsi, u_int32_t as, u_int8_t max)
 	}
 
 	r = RB_INSERT(roa_tree, curroatree, roa);
-	if (r != NULL)
+	if (r != NULL) {
 		/* just ignore duplicates */
+		if (r->expires != 0 && expires != 0 && expires > r->expires)
+			r->expires = expires;
 		free(roa);
+	}
 }
 
 static struct rtr_config *

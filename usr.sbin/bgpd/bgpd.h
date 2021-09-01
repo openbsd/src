@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.417 2021/08/09 08:15:34 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.418 2021/09/01 12:39:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -257,6 +257,7 @@ struct roa {
 	uint8_t		maxlen;
 	uint8_t		pad;
 	uint32_t	asnum;
+	time_t		expires;
 	union {
 		struct in_addr	inet;
 		struct in6_addr	inet6;
