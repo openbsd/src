@@ -1,4 +1,4 @@
-/*	$OpenBSD: strlcpytest.c,v 1.3 2019/01/25 00:19:26 millert Exp $ */
+/*	$OpenBSD: strlcpytest.c,v 1.4 2021/09/01 09:26:32 jasper Exp $ */
 
 /*
  * Copyright (c) 2014 Todd C. Miller <millert@openbsd.org>
@@ -42,9 +42,6 @@ main(int argc, char *argv[])
 	struct sigaction sa;
 	size_t len, bufsize;
 	int failures = 0;
-
-	/* Enable malloc security options. */
-	setenv("MALLOC_OPTIONS", "S", 0);
 
 	bufsize = getpagesize(); /* trigger guard pages easily */
 	buf = malloc(bufsize);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: envtest.c,v 1.2 2019/01/25 00:19:26 millert Exp $ */
+/*	$OpenBSD: envtest.c,v 1.3 2021/09/01 09:26:32 jasper Exp $ */
 
 /*
  * Copyright (c) 2010 Todd C. Miller <millert@openbsd.org>
@@ -62,9 +62,6 @@ main(int argc, char *argv[])
 	char *buf;
 	int n, failures = 0;
 	size_t len, bufsize;
-
-	/* Enable malloc security options. */
-	setenv("MALLOC_OPTIONS", "S", 0);
 
 	fake_env();
 	n = count_instances("USER");
