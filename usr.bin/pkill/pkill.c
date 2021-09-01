@@ -1,4 +1,4 @@
-/*	$OpenBSD: pkill.c,v 1.42 2019/12/16 19:21:17 guenther Exp $	*/
+/*	$OpenBSD: pkill.c,v 1.43 2021/09/01 15:54:40 deraadt Exp $	*/
 /*	$NetBSD: pkill.c,v 1.5 2002/10/27 11:49:34 kleink Exp $	*/
 
 /*-
@@ -30,9 +30,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>	/* MAXCOMLEN */
 #include <sys/types.h>
 #include <sys/sysctl.h>
+#include <sys/signal.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
 #include <sys/stat.h>

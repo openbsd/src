@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.c,v 1.14 2018/04/26 12:42:51 guenther Exp $	*/
+/*	$OpenBSD: subr.c,v 1.15 2021/09/01 15:54:40 deraadt Exp $	*/
 /*	$NetBSD: subr.c,v 1.6 1995/08/31 23:01:45 jtc Exp $	*/
 
 /*-
@@ -32,6 +32,7 @@
 
 #include <sys/param.h>	/* MAXCOMLEN */
 #include <sys/time.h>
+#include <sys/signal.h>
 #include <sys/ktrace.h>
 
 #include "ktrace.h"

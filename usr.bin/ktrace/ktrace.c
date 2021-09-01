@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrace.c,v 1.37 2020/07/16 17:47:41 tedu Exp $	*/
+/*	$OpenBSD: ktrace.c,v 1.38 2021/09/01 15:54:40 deraadt Exp $	*/
 /*	$NetBSD: ktrace.c,v 1.4 1995/08/31 23:01:44 jtc Exp $	*/
 
 /*-
@@ -31,6 +31,7 @@
  */
 
 #include <sys/param.h>	/* MAXCOMLEN */
+#include <sys/types.h>
 #include <sys/signal.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -41,6 +42,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
