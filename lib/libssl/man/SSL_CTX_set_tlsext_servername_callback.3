@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_CTX_set_tlsext_servername_callback.3,v 1.5 2021/08/30 18:18:16 schwarze Exp $
+.\" $OpenBSD: SSL_CTX_set_tlsext_servername_callback.3,v 1.6 2021/09/01 13:56:03 schwarze Exp $
 .\" full merge up to: OpenSSL 190b9a03 Jun 28 15:46:13 2017 +0800
 .\" selective merge up to: OpenSSL 6328d367 Jul 4 21:58:30 2020 +0200
 .\"
@@ -51,7 +51,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 30 2021 $
+.Dd $Mdocdate: September 1 2021 $
 .Dt SSL_CTX_SET_TLSEXT_SERVERNAME_CALLBACK 3
 .Os
 .Sh NAME
@@ -93,6 +93,7 @@ sets the application callback
 .Fa cb
 used by a server to perform any actions or configuration required based
 on the servername extension received in the incoming connection.
+Like the ALPN callback, it is executed during Client Hello processing.
 When
 .Fa cb
 is
@@ -140,6 +141,11 @@ sets a context-specific argument to be passed into the callback via the
 .Fa arg
 parameter for
 .Fa ctx .
+.ig end_of_get_servername_details
+.\" I would suggest to comment out that second wall text of dubious
+.\" usefulness and see if we can meet all these documented API
+.\" requirements in the future or decide that it's not worth the
+.\" effort.  -- tb@ Aug 30, 2021
 .Pp
 The behaviour of
 .Fn SSL_get_servername
@@ -196,6 +202,7 @@ Note that the early callback occurs before a servername extension
 from the client is processed.
 The servername, certificate and ALPN callbacks occur
 after a servername extension from the client is processed.
+.end_of_get_servername_details
 .Pp
 .Fn SSL_set_tlsext_host_name
 sets the server name indication ClientHello extension
@@ -211,11 +218,6 @@ extension is set to
 as defined in RFC 3546.
 .Pp
 All three functions are implemented as macros.
-.Pp
-The ALPN and SNI callbacks are both executed during Client Hello
-processing.
-The servername callback is executed first, followed by the ALPN
-callback.
 .Sh RETURN VALUES
 .Fn SSL_CTX_set_tlsext_servername_callback
 and
