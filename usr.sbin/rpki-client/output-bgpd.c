@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-bgpd.c,v 1.21 2021/04/19 17:04:35 deraadt Exp $ */
+/*	$OpenBSD: output-bgpd.c,v 1.22 2021/09/01 15:21:10 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -41,8 +41,8 @@ output_bgpd(FILE *out, struct vrp_tree *vrps, struct stats *st)
 				return -1;
 		} else
 			maxlenbuf[0] = '\0';
-		if (fprintf(out, "\t%s %ssource-as %u\n",
-		    ipbuf, maxlenbuf, v->asid) < 0)
+		if (fprintf(out, "\t%s %ssource-as %u expires %lld\n",
+		    ipbuf, maxlenbuf, v->asid, (long long)v->expires) < 0)
 			return -1;
 	}
 
