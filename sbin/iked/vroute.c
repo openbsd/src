@@ -1,4 +1,4 @@
-/*	$OpenBSD: vroute.c,v 1.12 2021/06/23 12:21:23 tobhe Exp $	*/
+/*	$OpenBSD: vroute.c,v 1.13 2021/09/01 15:30:06 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2021 Tobias Heider <tobhe@openbsd.org>
@@ -35,6 +35,7 @@
 
 #include <iked.h>
 
+#define ROUTE_SOCKET_BUF_SIZE	16384
 #define IKED_VROUTE_PRIO	6
 
 #define ROUNDUP(a) (a>0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
@@ -44,10 +45,14 @@ int vroute_setroute(struct iked *, uint8_t, struct sockaddr *, uint8_t,
 int vroute_doroute(struct iked *, int, int, int, uint8_t, struct sockaddr *,
     struct sockaddr *, struct sockaddr *, int *);
 int vroute_doaddr(struct iked *, char *, struct sockaddr *, struct sockaddr *, int);
+int vroute_dodns(struct iked *, struct sockaddr *, int, unsigned int);
 void vroute_cleanup(struct iked *);
+void vroute_rtmsg_cb(int, short, void *);
 
 void vroute_insertaddr(struct iked *, int, struct sockaddr *, struct sockaddr *);
 void vroute_removeaddr(struct iked *, int, struct sockaddr *, struct sockaddr *);
+void vroute_insertdns(struct iked *, int, struct sockaddr *);
+void vroute_removedns(struct iked *, int, struct sockaddr *);
 void vroute_insertroute(struct iked *, int, struct sockaddr *, struct sockaddr *);
 void vroute_removeroute(struct iked *, int, struct sockaddr *, struct sockaddr *);
 
@@ -68,14 +73,21 @@ struct vroute_route {
 };
 TAILQ_HEAD(vroute_routes, vroute_route);
 
+struct vroute_dns {
+	struct	sockaddr_storage	vd_addr;
+	int				vd_ifidx;
+};
+
 struct iked_vroute_sc {
-	struct vroute_addrs	ivr_addrs;
-	struct vroute_routes	ivr_routes;
-	int			ivr_iosock;
-	int			ivr_iosock6;
-	int			ivr_rtsock;
-	int			ivr_rtseq;
-	pid_t			ivr_pid;
+	struct vroute_addrs	 ivr_addrs;
+	struct vroute_routes	 ivr_routes;
+	struct vroute_dns	*ivr_dns;
+	struct event		 ivr_routeev;
+	int			 ivr_iosock;
+	int			 ivr_iosock6;
+	int			 ivr_rtsock;
+	int			 ivr_rtseq;
+	pid_t			 ivr_pid;
 };
 
 struct vroute_msg {
@@ -87,9 +99,57 @@ int vroute_process(struct iked *, int msglen, struct vroute_msg *,
     struct sockaddr *, struct sockaddr *, struct sockaddr *, int *);
 
 void
+vroute_rtmsg_cb(int fd, short events, void *arg)
+{
+	struct iked		*env = (struct iked *) arg;
+	struct iked_vroute_sc	*ivr = env->sc_vroute;
+	static uint8_t		*buf;
+	struct rt_msghdr	*rtm;
+	ssize_t			 n;
+
+	if (buf == NULL) {
+		buf = malloc(ROUTE_SOCKET_BUF_SIZE);
+		if (buf == NULL)
+			fatal("malloc");
+	}
+	rtm = (struct rt_msghdr *)buf;
+	if ((n = read(fd, buf, ROUTE_SOCKET_BUF_SIZE)) == -1) {
+		if (errno == EAGAIN || errno == EINTR)
+			return;
+		log_warn("%s: read error", __func__);
+		return;
+	}
+
+	if (n == 0)
+		fatal("routing socket closed");
+
+	if (n < (ssize_t)sizeof(rtm->rtm_msglen) || n < rtm->rtm_msglen) {
+		log_warnx("partial rtm of %zd in buffer", n);
+		return;
+	}
+
+	if (rtm->rtm_version != RTM_VERSION)
+		return;
+
+	switch(rtm->rtm_type) {
+	case RTM_PROPOSAL:
+		if (rtm->rtm_priority == RTP_PROPOSAL_SOLICIT) {
+			log_debug("%s: got solicit", __func__);
+			vroute_dodns(env, (struct sockaddr *)&ivr->ivr_dns->vd_addr, 1,
+			    ivr->ivr_dns->vd_ifidx);
+		}
+		break;
+	default:
+		log_debug("%s: unexpected RTM: %d", __func__, rtm->rtm_type);
+		break;
+	}
+}
+
+void
 vroute_init(struct iked *env)
 {
 	struct iked_vroute_sc	*ivr;
+	int			 rtfilter;
 
 	ivr = calloc(1, sizeof(*ivr));
 	if (ivr == NULL)
@@ -104,12 +164,21 @@ vroute_init(struct iked *env)
 	if ((ivr->ivr_rtsock = socket(AF_ROUTE, SOCK_RAW, AF_UNSPEC)) == -1)
 		fatal("%s: failed to create routing socket", __func__);
 
+	rtfilter = ROUTE_FILTER(RTM_GET) | ROUTE_FILTER(RTM_PROPOSAL);
+	if (setsockopt(ivr->ivr_rtsock, AF_ROUTE, ROUTE_MSGFILTER, &rtfilter,
+	    sizeof(rtfilter)) == -1)
+		fatal("%s: setsockopt(ROUTE_MSGFILTER)", __func__);
+
 	TAILQ_INIT(&ivr->ivr_addrs);
 	TAILQ_INIT(&ivr->ivr_routes);
 
 	ivr->ivr_pid = getpid();
 
 	env->sc_vroute = ivr;
+
+	event_set(&ivr->ivr_routeev, ivr->ivr_rtsock, EV_READ | EV_PERSIST,
+	    vroute_rtmsg_cb, env);
+	event_add(&ivr->ivr_routeev, NULL);
 }
 
 void
@@ -137,6 +206,12 @@ vroute_cleanup(struct iked *env)
 		    NULL, NULL);
 		TAILQ_REMOVE(&ivr->ivr_routes, route, vr_entry);
 		free(route);
+	}
+
+	if (ivr->ivr_dns) {
+		vroute_dodns(env, (struct sockaddr *)&ivr->ivr_dns->vd_addr, 0,
+		    ivr->ivr_dns->vd_ifidx);
+		free(ivr->ivr_dns);
 	}
 }
 
@@ -239,6 +314,64 @@ vroute_getaddr(struct iked *env, struct imsg *imsg)
 	return (vroute_doaddr(env, ifname, addr, mask, add));
 }
 
+int
+vroute_setdns(struct iked *env, int add, struct sockaddr *addr,
+    unsigned int ifidx)
+{
+	struct iovec		 iov[2];
+
+	iov[0].iov_base = addr;
+	iov[0].iov_len = addr->sa_len;
+
+	iov[1].iov_base = &ifidx;
+	iov[1].iov_len = sizeof(ifidx);
+
+	return (proc_composev(&env->sc_ps, PROC_PARENT,
+	    add ? IMSG_VDNS_ADD: IMSG_VDNS_DEL, iov, 2));
+}
+
+int
+vroute_getdns(struct iked *env, struct imsg *imsg)
+{
+	struct iked_vroute_sc	*ivr = env->sc_vroute;
+	struct sockaddr		*dns;
+	uint8_t			*ptr;
+	size_t			 left;
+	int			 add;
+	unsigned int		 ifidx;
+
+	ptr = imsg->data;
+	left = IMSG_DATA_SIZE(imsg);
+
+	if (left < sizeof(*dns))
+		fatalx("bad length imsg received");
+
+	dns = (struct sockaddr *) ptr;
+	if (left < dns->sa_len)
+		fatalx("bad length imsg received");
+	ptr += dns->sa_len;
+	left -= dns->sa_len;
+
+	if (left != sizeof(ifidx))
+		fatalx("bad length imsg received");
+	memcpy(&ifidx, ptr, sizeof(ifidx));
+	ptr += sizeof(ifidx);
+	left -= sizeof(ifidx);
+
+	add = (imsg->hdr.type == IMSG_VDNS_ADD);
+	if (add) {
+		if (ivr->ivr_dns != NULL)
+			return (0);
+		vroute_insertdns(env, ifidx, dns);
+	} else {
+		if (ivr->ivr_dns == NULL)
+			return (0);
+		vroute_removedns(env, ifidx, dns);
+	}
+
+	return (vroute_dodns(env, dns, add, ifidx));
+}
+
 void
 vroute_insertroute(struct iked *env, int rdomain, struct sockaddr *dest,
     struct sockaddr *mask)
@@ -281,6 +414,35 @@ vroute_removeroute(struct iked *env, int rdomain, struct sockaddr *dest,
 		if (rdomain != route->vr_rdomain)
 			continue;
 		TAILQ_REMOVE(&ivr->ivr_routes, route, vr_entry);
+	}
+}
+
+void
+vroute_insertdns(struct iked *env, int ifidx, struct sockaddr *addr)
+{
+	struct iked_vroute_sc	*ivr = env->sc_vroute;
+	struct vroute_dns	*dns;
+	
+	dns = calloc(1, sizeof(*dns));
+	if (dns == NULL)
+		fatalx("%s: calloc.", __func__);
+
+	memcpy(&dns->vd_addr, addr, addr->sa_len);
+	dns->vd_ifidx = ifidx;
+	
+	ivr->ivr_dns = dns;
+}
+
+void
+vroute_removedns(struct iked *env, int ifidx, struct sockaddr *addr)
+{
+	struct iked_vroute_sc	*ivr = env->sc_vroute;
+
+	if (ifidx == ivr->ivr_dns->vd_ifidx &&
+	    sockaddr_cmp(addr, (struct sockaddr *)
+	    &ivr->ivr_dns->vd_addr, -1) == 0) {
+		free(ivr->ivr_dns);
+		ivr->ivr_dns = NULL;
 	}
 }
 
@@ -525,6 +687,73 @@ vroute_getcloneroute(struct iked *env, struct imsg *imsg)
 	return (vroute_doroute(env, flags, addrs, rdomain, RTM_ADD,
 	    (struct sockaddr *)&dest, (struct sockaddr *)&mask,
 	    (struct sockaddr *)&addr, NULL));
+}
+
+int
+vroute_dodns(struct iked *env, struct sockaddr *dns, int add,
+    unsigned int ifidx)
+{
+	struct vroute_msg	 m_rtmsg;
+	struct sockaddr_in	 *in;
+	struct sockaddr_in6	 *in6;
+	struct sockaddr_rtdns	 rtdns;
+	struct iked_vroute_sc	*ivr = env->sc_vroute;
+	struct iovec		 iov[3];
+	int			 i;
+	long			 pad = 0;
+	int			 iovcnt = 0, padlen;
+
+	bzero(&m_rtmsg, sizeof(m_rtmsg));
+#define rtm m_rtmsg.vm_rtm
+	rtm.rtm_version = RTM_VERSION;
+	rtm.rtm_type = RTM_PROPOSAL;
+	rtm.rtm_seq = ++ivr->ivr_rtseq;
+	rtm.rtm_priority = RTP_PROPOSAL_STATIC;
+	rtm.rtm_flags = RTF_UP;
+	rtm.rtm_addrs = RTA_DNS;
+	rtm.rtm_index = ifidx;
+
+	iov[iovcnt].iov_base = &rtm;
+	iov[iovcnt].iov_len = sizeof(rtm);
+	iovcnt++;
+
+	bzero(&rtdns, sizeof(rtdns));
+	rtdns.sr_family = dns->sa_family;
+	rtdns.sr_len = 2;
+	if (add) {
+		switch(dns->sa_family) {
+		case AF_INET:
+			rtdns.sr_family = AF_INET;
+			rtdns.sr_len += sizeof(struct in_addr);
+			in = (struct sockaddr_in *)dns;
+			memcpy(rtdns.sr_dns, &in->sin_addr, sizeof(struct in_addr));
+			break;
+		case AF_INET6:
+			rtdns.sr_family = AF_INET6;
+			rtdns.sr_len += sizeof(struct in6_addr);
+			in6 = (struct sockaddr_in6 *)dns;
+			memcpy(rtdns.sr_dns, &in6->sin6_addr, sizeof(struct in6_addr));
+			break;
+		default:
+			return (-1);
+		}
+	}
+	iov[iovcnt].iov_base = &rtdns;
+	iov[iovcnt++].iov_len = sizeof(rtdns);
+	padlen = ROUNDUP(sizeof(rtdns)) - sizeof(rtdns);
+	if (padlen > 0) {
+		iov[iovcnt].iov_base = &pad;
+		iov[iovcnt++].iov_len = padlen;
+	}
+
+	for (i = 0; i < iovcnt; i++)
+		rtm.rtm_msglen += iov[i].iov_len;
+#undef rtm
+
+	if (writev(ivr->ivr_rtsock, iov, iovcnt) == -1)
+		log_warn("failed to send route message");
+
+	return (0);
 }
 
 int

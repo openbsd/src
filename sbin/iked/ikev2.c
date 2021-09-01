@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.325 2021/06/29 15:39:20 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.326 2021/09/01 15:30:06 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -997,6 +997,13 @@ ikev2_ike_auth_recv(struct iked *env, struct iked_sa *sa,
 			msg->msg_cp_addr6 = NULL;
 			log_info("%s: obtained lease: %s", SPI_SA(sa, __func__),
 			    print_host((struct sockaddr *)&sa->sa_cp_addr6->addr, NULL, 0));
+		}
+		if (msg->msg_cp_dns) {
+			sa->sa_cp_dns = msg->msg_cp_dns;
+			msg->msg_cp_dns = NULL;
+			log_debug("%s: DNS: %s", __func__,
+			    print_host((struct sockaddr *)&sa->sa_cp_dns->addr,
+			    NULL, 0));
 		}
 		sa->sa_cp = msg->msg_cp;
 	}
@@ -4508,6 +4515,8 @@ ikev2_ikesa_enable(struct iked *env, struct iked_sa *sa, struct iked_sa *nsa)
 	sa->sa_cp_addr = NULL;
 	nsa->sa_cp_addr6 = sa->sa_cp_addr6;
 	sa->sa_cp_addr6 = NULL;
+	nsa->sa_cp_dns = sa->sa_cp_dns;
+	sa->sa_cp_dns = NULL;
 	/* Transfer other attributes */
         if (sa->sa_dstid_entry_valid) {
 		sa_dstid_remove(env, sa);

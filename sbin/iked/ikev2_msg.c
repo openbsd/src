@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.77 2020/10/29 21:49:58 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.78 2021/09/01 15:30:06 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -197,6 +197,7 @@ ikev2_msg_cleanup(struct iked *env, struct iked_message *msg)
 		free(msg->msg_eap.eam_user);
 		free(msg->msg_cp_addr);
 		free(msg->msg_cp_addr6);
+		free(msg->msg_cp_dns);
 
 		msg->msg_nonce = NULL;
 		msg->msg_ke = NULL;
@@ -209,6 +210,7 @@ ikev2_msg_cleanup(struct iked *env, struct iked_message *msg)
 		msg->msg_eap.eam_user = NULL;
 		msg->msg_cp_addr = NULL;
 		msg->msg_cp_addr6 = NULL;
+		msg->msg_cp_dns = NULL;
 
 		config_free_proposals(&msg->msg_proposals, 0);
 		while ((cr = SIMPLEQ_FIRST(&msg->msg_certreqs))) {

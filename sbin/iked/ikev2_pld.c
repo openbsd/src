@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.117 2021/02/19 21:52:53 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.118 2021/09/01 15:30:06 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1842,6 +1842,7 @@ ikev2_pld_cp(struct iked *env, struct ikev2_payload *pld,
 	uint8_t			*ptr;
 	size_t			 len;
 	uint8_t			 buf[128];
+	int			 cfg_type;
 
 	if (ikev2_validate_cp(msg, offset, left, &cp))
 		return (-1);
@@ -1878,8 +1879,10 @@ ikev2_pld_cp(struct iked *env, struct ikev2_payload *pld,
 
 		print_hex(ptr, sizeof(*cfg), betoh16(cfg->cfg_length));
 
-		switch (betoh16(cfg->cfg_type)) {
+		cfg_type = betoh16(cfg->cfg_type);
+		switch (cfg_type) {
 		case IKEV2_CFG_INTERNAL_IP4_ADDRESS:
+		case IKEV2_CFG_INTERNAL_IP4_DNS:
 			if (!ikev2_msg_frompeer(msg))
 				break;
 			if (betoh16(cfg->cfg_length) == 0)
@@ -1891,8 +1894,20 @@ ikev2_pld_cp(struct iked *env, struct ikev2_payload *pld,
 				    __func__, betoh16(cfg->cfg_length), 4);
 				return (-1);
 			}
-			if (msg->msg_parent->msg_cp_addr != NULL) {
-				log_debug("%s: address already set", __func__);
+			switch(cfg_type) {
+			case IKEV2_CFG_INTERNAL_IP4_ADDRESS:
+				if (msg->msg_parent->msg_cp_addr != NULL) {
+					log_debug("%s: address already set", __func__);
+					goto skip;
+				}
+				break;
+			case IKEV2_CFG_INTERNAL_IP4_DNS:
+				if (msg->msg_parent->msg_cp_dns != NULL) {
+					log_debug("%s: dns already set", __func__);
+					goto skip;
+				}
+				break;
+			default:
 				break;
 			}
 			if ((addr = calloc(1, sizeof(*addr))) == NULL) {
@@ -1907,22 +1922,42 @@ ikev2_pld_cp(struct iked *env, struct ikev2_payload *pld,
 			print_host((struct sockaddr *)in4, (char *)buf,
 			    sizeof(buf));
 			log_debug("%s: cfg %s", __func__, buf);
-			msg->msg_parent->msg_cp_addr = addr;
+			switch(cfg_type) {
+			case IKEV2_CFG_INTERNAL_IP4_ADDRESS:
+				msg->msg_parent->msg_cp_addr = addr;
+				log_debug("%s: IP4_ADDRESS %s", __func__, buf);
+				break;
+			case IKEV2_CFG_INTERNAL_IP4_DNS:
+				msg->msg_parent->msg_cp_dns = addr;
+				log_debug("%s: IP4_DNS %s", __func__, buf);
+				break;
+			}
 			break;
 		case IKEV2_CFG_INTERNAL_IP6_ADDRESS:
+		case IKEV2_CFG_INTERNAL_IP6_DNS:
 			if (!ikev2_msg_frompeer(msg))
 				break;
 			if (betoh16(cfg->cfg_length) == 0)
 				break;
 			/* XXX multiple-valued */
-			if (betoh16(cfg->cfg_length) < 16 + 1) {
+			if (betoh16(cfg->cfg_length) < 16) {
 				log_debug("%s: malformed payload: too short "
 				    "for ipv6 addr w/prefixlen (%u < %u)",
-				    __func__, betoh16(cfg->cfg_length), 16 + 1);
+				    __func__, betoh16(cfg->cfg_length), 16);
 				return (-1);
 			}
-			if (msg->msg_parent->msg_cp_addr6 != NULL) {
-				log_debug("%s: address already set", __func__);
+			switch(cfg_type) {
+			case IKEV2_CFG_INTERNAL_IP6_ADDRESS:
+				if (msg->msg_parent->msg_cp_addr6 != NULL) {
+					log_debug("%s: address6 already set", __func__);
+					goto skip;
+				}
+				break;
+			case IKEV2_CFG_INTERNAL_IP6_DNS:
+				if (msg->msg_parent->msg_cp_dns != NULL) {
+					log_debug("%s: dns already set", __func__);
+					goto skip;
+				}
 				break;
 			}
 			if ((addr = calloc(1, sizeof(*addr))) == NULL) {
@@ -1937,10 +1972,20 @@ ikev2_pld_cp(struct iked *env, struct ikev2_payload *pld,
 			print_host((struct sockaddr *)in6, (char *)buf,
 			    sizeof(buf));
 			log_debug("%s: cfg %s/%d", __func__, buf, ptr[16]);
-			msg->msg_parent->msg_cp_addr6 = addr;
+			switch(cfg_type) {
+			case IKEV2_CFG_INTERNAL_IP6_ADDRESS:
+				msg->msg_parent->msg_cp_addr6 = addr;
+				log_debug("%s: IP6_ADDRESS %s", __func__, buf);
+				break;
+			case IKEV2_CFG_INTERNAL_IP6_DNS:
+				msg->msg_parent->msg_cp_dns = addr;
+				log_debug("%s: IP6_DNS %s", __func__, buf);
+				break;
+			}
 			break;
 		}
 
+ skip:
 		ptr += betoh16(cfg->cfg_length);
 		len -= betoh16(cfg->cfg_length);
 	}

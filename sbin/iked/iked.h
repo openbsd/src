@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.192 2021/06/23 12:11:40 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.193 2021/09/01 15:30:06 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -429,6 +429,7 @@ struct iked_sa {
 	int				 sa_cp;		/* XXX */
 	struct iked_addr		*sa_cp_addr;	/* requested address */
 	struct iked_addr		*sa_cp_addr6;	/* requested address */
+	struct iked_addr		*sa_cp_dns;	/* requested dns */
 
 	struct iked_policy		*sa_policy;
 	struct timeval			 sa_timecreated;
@@ -611,6 +612,7 @@ struct iked_message {
 	int			 msg_cp;
 	struct iked_addr	*msg_cp_addr;	/* requested address */
 	struct iked_addr	*msg_cp_addr6;	/* requested address */
+	struct iked_addr	*msg_cp_dns;	/* requested dns */
 
 	/* MOBIKE */
 	int			 msg_update_sa_addresses;
@@ -752,6 +754,7 @@ struct iked {
 
 	int				 sc_pfkey;	/* ike process */
 	struct event			 sc_pfkeyev;
+	struct event			 sc_routeev;
 	uint8_t				 sc_certreqtype;
 	struct ibuf			*sc_certreq;
 	void				*sc_vroute;
@@ -975,6 +978,8 @@ void vroute_init(struct iked *);
 int vroute_setaddr(struct iked *, int, struct sockaddr *, int, unsigned int);
 void vroute_cleanup(struct iked *);
 int vroute_getaddr(struct iked *, struct imsg *);
+int vroute_setdns(struct iked *, int, struct sockaddr *, unsigned int);
+int vroute_getdns(struct iked *, struct imsg *);
 int vroute_setaddroute(struct iked *, uint8_t, struct sockaddr *,
     uint8_t, struct sockaddr *);
 int vroute_setcloneroute(struct iked *, uint8_t, struct sockaddr *,

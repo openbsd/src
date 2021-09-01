@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.57 2021/05/13 15:20:48 tobhe Exp $	*/
+/*	$OpenBSD: iked.c,v 1.58 2021/09/01 15:30:06 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -459,6 +459,9 @@ parent_dispatch_ikev2(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_IF_ADDADDR:
 	case IMSG_IF_DELADDR:
 		return (vroute_getaddr(env, imsg));
+	case IMSG_VDNS_ADD:
+	case IMSG_VDNS_DEL:
+		return (vroute_getdns(env, imsg));
 	case IMSG_VROUTE_ADD:
 	case IMSG_VROUTE_DEL:
 		return (vroute_getroute(env, imsg));
