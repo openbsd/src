@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.37 2021/09/01 08:09:41 claudio Exp $  */
+/*	$OpenBSD: http.c,v 1.38 2021/09/01 09:39:14 claudio Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -658,7 +658,7 @@ http_new(struct http_request *req)
 	LIST_INSERT_HEAD(&active, conn, entry);
 	http_conn_count++;
 
-	if (proxy.proxyhost == NULL) {
+	if (proxy.proxyhost != NULL) {
 		if (http_resolv(&conn->res0, proxy.proxyhost,
 		    proxy.proxyport) == -1) {
 			http_req_fail(req->id);
@@ -796,7 +796,7 @@ http_connect_done(struct http_connection *conn)
 	conn->res0 = NULL;
 	conn->res = NULL;
 
-	if (proxy.proxyhost == NULL)
+	if (proxy.proxyhost != NULL)
 		return proxy_connect(conn);
 	return http_tls_connect(conn);
 }
