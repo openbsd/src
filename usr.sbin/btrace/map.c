@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.15 2021/09/01 07:35:21 mpi Exp $ */
+/*	$OpenBSD: map.c,v 1.16 2021/09/01 08:06:49 mpi Exp $ */
 
 /*
  * Copyright (c) 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -83,6 +83,9 @@ void
 map_clear(struct map *map)
 {
 	struct mentry *mep;
+
+	if (map == NULL)
+		return;
 
 	while ((mep = RB_MIN(map, map)) != NULL) {
 		RB_REMOVE(map, map, mep);
