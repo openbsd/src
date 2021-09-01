@@ -1,6 +1,7 @@
-/* $NetBSD: timeout.c,v 1.4 2014/08/05 08:20:02 christos Exp $ */
+/* $OpenBSD: timeout.c,v 1.10 2021/09/01 20:18:54 job Exp $ */
 
 /*-
+ * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2014 Baptiste Daroussin <bapt@FreeBSD.org>
  * Copyright (c) 2014 Vsevolod Stakhov <vsevolod@FreeBSD.org>
  * All rights reserved.
@@ -155,7 +156,7 @@ set_interval(double iv)
 	tim.it_value.tv_usec = (suseconds_t)(iv * 1000000UL);
 
 	if (setitimer(ITIMER_REAL, &tim, NULL) == -1)
-		err(1, "setitimer()");
+		err(1, "setitimer");
 }
 
 int
@@ -218,7 +219,7 @@ main(int argc, char **argv)
 		pgid = setpgid(0, 0);
 
 		if (pgid == -1)
-			err(1, "setpgid()");
+			err(1, "setpgid");
 	}
 
 	memset(&signals, 0, sizeof(signals));
@@ -236,7 +237,7 @@ main(int argc, char **argv)
 	for (i = 0; i < sizeof(signums) / sizeof(signums[0]); i++) {
 		if (signums[i] != -1 && signums[i] != 0 &&
 		    sigaction(signums[i], &signals, NULL) == -1)
-			err(1, "sigaction()");
+			err(1, "sigaction");
 	}
 
 	signal(SIGTTIN, SIG_IGN);
@@ -244,7 +245,7 @@ main(int argc, char **argv)
 
 	pid = fork();
 	if (pid == -1)
-		err(1, "fork()");
+		err(1, "fork");
 	else if (pid == 0) {
 		/* child process */
 		signal(SIGTTIN, SIG_DFL);
@@ -252,14 +253,14 @@ main(int argc, char **argv)
 
 		error = execvp(argv[0], argv);
 		if (error == -1)
-			err(1, "exec()");
+			err(1, "execvp");
 	}
 
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
 
 	if (sigprocmask(SIG_BLOCK, &signals.sa_mask, NULL) == -1)
-		err(1, "sigprocmask()");
+		err(1, "sigprocmask");
 
 	/* parent continues here */
 	set_interval(first_kill);
@@ -312,7 +313,7 @@ main(int argc, char **argv)
 
 	while (cpid != pid && wait(&pstat) == -1) {
 		if (errno != EINTR)
-			err(1, "waitpid()");
+			err(1, "wait");
 	}
 
 	if (WEXITSTATUS(pstat))
