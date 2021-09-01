@@ -1,11 +1,11 @@
-# $OpenBSD: Makefile,v 1.11 2021/08/31 12:51:56 mpi Exp $
+# $OpenBSD: Makefile,v 1.12 2021/09/01 13:22:36 mpi Exp $
 
 BTRACE?=		 /usr/sbin/btrace
 
 # scripts that don't need /dev/dt
 BT_LANG_SCRIPTS=	arithm beginend boolean comments delete exit if map \
 			map-unnamed maxoperand min+max+sum multismts nsecs+var \
-			precedence print
+			precedence print read-map-after-clear
 
 BT_KERN_SCRIPTS=
 
