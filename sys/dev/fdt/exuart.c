@@ -1,4 +1,4 @@
-/* $OpenBSD: exuart.c,v 1.8 2021/02/22 18:32:02 kettenis Exp $ */
+/* $OpenBSD: exuart.c,v 1.9 2021/09/01 09:29:31 jan Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -106,7 +106,6 @@ void exuartcnputc(dev_t dev, int c);
 void exuartcnpollc(dev_t dev, int on);
 int  exuart_param(struct tty *tp, struct termios *t);
 void exuart_start(struct tty *);
-void exuart_pwroff(struct exuart_softc *sc);
 void exuart_diag(void *arg);
 void exuart_raisedtr(void *arg);
 void exuart_softint(void *arg);
@@ -558,11 +557,6 @@ stopped:
 }
 
 void
-exuart_pwroff(struct exuart_softc *sc)
-{
-}
-
-void
 exuart_diag(void *arg)
 {
 	struct exuart_softc *sc = arg;
@@ -797,9 +791,6 @@ exuartopen(dev_t dev, int flag, int mode, struct proc *p)
 				 */
 				if (error && ISSET(tp->t_state, TS_WOPEN)) {
 					CLR(tp->t_state, TS_WOPEN);
-					if (!sc->sc_cua && !ISSET(tp->t_state,
-					    TS_ISOPEN))
-						exuart_pwroff(sc);
 					splx(s);
 					return error;
 				}
@@ -832,9 +823,6 @@ exuartclose(dev_t dev, int flag, int mode, struct proc *p)
 		//CLR(sc->sc_ucr3, EXUART_CR3_DSR);
 		//bus_space_write_2(iot, ioh, EXUART_UCR3, sc->sc_ucr3);
 		timeout_add_sec(&sc->sc_dtr_tmo, 2);
-	} else {
-		/* no one else waiting; turn off the uart */
-		exuart_pwroff(sc);
 	}
 	CLR(tp->t_state, TS_BUSY | TS_FLUSH);
 	sc->sc_cua = 0;

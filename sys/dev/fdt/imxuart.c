@@ -1,4 +1,4 @@
-/* $OpenBSD: imxuart.c,v 1.10 2021/08/31 12:24:15 jan Exp $ */
+/* $OpenBSD: imxuart.c,v 1.11 2021/09/01 09:29:31 jan Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -98,7 +98,6 @@ void imxuartcnputc(dev_t dev, int c);
 void imxuartcnpollc(dev_t dev, int on);
 int  imxuart_param(struct tty *tp, struct termios *t);
 void imxuart_start(struct tty *);
-void imxuart_pwroff(struct imxuart_softc *sc);
 void imxuart_diag(void *arg);
 void imxuart_raisedtr(void *arg);
 void imxuart_softint(void *arg);
@@ -389,11 +388,6 @@ stopped:
 }
 
 void
-imxuart_pwroff(struct imxuart_softc *sc)
-{
-}
-
-void
 imxuart_diag(void *arg)
 {
 	struct imxuart_softc *sc = arg;
@@ -606,9 +600,6 @@ imxuartopen(dev_t dev, int flag, int mode, struct proc *p)
 				 */
 				if (error && ISSET(tp->t_state, TS_WOPEN)) {
 					CLR(tp->t_state, TS_WOPEN);
-					if (!sc->sc_cua && !ISSET(tp->t_state,
-					    TS_ISOPEN))
-						imxuart_pwroff(sc);
 					splx(s);
 					return error;
 				}
@@ -640,9 +631,6 @@ imxuartclose(dev_t dev, int flag, int mode, struct proc *p)
 		CLR(sc->sc_ucr3, IMXUART_CR3_DSR);
 		bus_space_write_2(iot, ioh, IMXUART_UCR3, sc->sc_ucr3);
 		timeout_add_sec(&sc->sc_dtr_tmo, 2);
-	} else {
-		/* no one else waiting; turn off the uart */
-		imxuart_pwroff(sc);
 	}
 	CLR(tp->t_state, TS_BUSY | TS_FLUSH);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pluart.c,v 1.6 2021/08/31 12:24:15 jan Exp $	*/
+/*	$OpenBSD: pluart.c,v 1.7 2021/09/01 09:29:31 jan Exp $	*/
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2005 Dale Rahn <drahn@dalerahn.com>
@@ -124,7 +124,6 @@ void pluartcnputc(dev_t dev, int c);
 void pluartcnpollc(dev_t dev, int on);
 int  pluart_param(struct tty *tp, struct termios *t);
 void pluart_start(struct tty *);
-void pluart_pwroff(struct pluart_softc *sc);
 void pluart_diag(void *arg);
 void pluart_raisedtr(void *arg);
 void pluart_softint(void *arg);
@@ -344,11 +343,6 @@ pluart_start(struct tty *tp)
 	}
 out:
 	splx(s);
-}
-
-void
-pluart_pwroff(struct pluart_softc *sc)
-{
 }
 
 void
@@ -572,9 +566,6 @@ pluartopen(dev_t dev, int flag, int mode, struct proc *p)
 				 */
 				if (error && ISSET(tp->t_state, TS_WOPEN)) {
 					CLR(tp->t_state, TS_WOPEN);
-					if (!sc->sc_cua && !ISSET(tp->t_state,
-					    TS_ISOPEN))
-						pluart_pwroff(sc);
 					splx(s);
 					return error;
 				}
@@ -606,9 +597,6 @@ pluartclose(dev_t dev, int flag, int mode, struct proc *p)
 		//CLR(sc->sc_ucr3, IMXUART_CR3_DSR);
 		//bus_space_write_4(iot, ioh, IMXUART_UCR3, sc->sc_ucr3);
 		timeout_add_sec(&sc->sc_dtr_tmo, 2);
-	} else {
-		/* no one else waiting; turn off the uart */
-		pluart_pwroff(sc);
 	}
 	CLR(tp->t_state, TS_BUSY | TS_FLUSH);
 
