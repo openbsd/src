@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_funcs.c,v 1.20 2016/05/27 09:18:11 martijn Exp $	*/
+/*	$OpenBSD: cl_funcs.c,v 1.21 2021/09/01 14:28:15 schwarze Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -601,7 +601,7 @@ cl_suspend(SCR *sp, int *allowedp)
 	if (cl_ssize(sp, 1, NULL, NULL, &changed))
 		return (1);
 	if (changed)
-		F_SET(CLP(sp), CL_SIGWINCH);
+		cl_sigwinch = 1;
 
 	return (0);
 }

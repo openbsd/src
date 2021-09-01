@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_read.c,v 1.21 2016/05/27 09:18:11 martijn Exp $	*/
+/*	$OpenBSD: cl_read.c,v 1.22 2021/09/01 14:28:15 schwarze Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -54,34 +54,32 @@ cl_event(SCR *sp, EVENT *evp, u_int32_t flags, int ms)
 	 * so that we just keep returning them until the editor dies.
 	 */
 	clp = CLP(sp);
-retest:	if (LF_ISSET(EC_INTERRUPT) || F_ISSET(clp, CL_SIGINT)) {
-		if (F_ISSET(clp, CL_SIGINT)) {
-			F_CLR(clp, CL_SIGINT);
+retest:	if (LF_ISSET(EC_INTERRUPT) || cl_sigint) {
+		if (cl_sigint) {
+			cl_sigint = 0;
 			evp->e_event = E_INTERRUPT;
 		} else
 			evp->e_event = E_TIMEOUT;
 		return (0);
 	}
-	if (F_ISSET(clp, CL_SIGHUP | CL_SIGTERM | CL_SIGWINCH)) {
-		if (F_ISSET(clp, CL_SIGHUP)) {
-			evp->e_event = E_SIGHUP;
+	if (cl_sighup) {
+		evp->e_event = E_SIGHUP;
+		return (0);
+	}
+	if (cl_sigterm) {
+		evp->e_event = E_SIGTERM;
+		return (0);
+	}
+	if (cl_sigwinch) {
+		cl_sigwinch = 0;
+		if (cl_ssize(sp, 1, &lines, &columns, &changed))
+			return (1);
+		if (changed) {
+			(void)cl_resize(sp, lines, columns);
+			evp->e_event = E_WRESIZE;
 			return (0);
 		}
-		if (F_ISSET(clp, CL_SIGTERM)) {
-			evp->e_event = E_SIGTERM;
-			return (0);
-		}
-		if (F_ISSET(clp, CL_SIGWINCH)) {
-			F_CLR(clp, CL_SIGWINCH);
-			if (cl_ssize(sp, 1, &lines, &columns, &changed))
-				return (1);
-			if (changed) {
-				(void)cl_resize(sp, lines, columns);
-				evp->e_event = E_WRESIZE;
-				return (0);
-			}
-			/* No real change, ignore the signal. */
-		}
+		/* No real change, ignore the signal. */
 	}
 
 	/* Set timer. */

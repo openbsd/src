@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_main.c,v 1.33 2016/05/05 20:36:41 martijn Exp $	*/
+/*	$OpenBSD: cl_main.c,v 1.34 2021/09/01 14:28:15 schwarze Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -32,6 +32,11 @@
 #include "cl.h"
 
 GS *__global_list;				/* GLOBAL: List of screens. */
+
+volatile sig_atomic_t cl_sighup;
+volatile sig_atomic_t cl_sigint;
+volatile sig_atomic_t cl_sigterm;
+volatile sig_atomic_t cl_sigwinch;
 
 static void	   cl_func_std(GS *);
 static CL_PRIVATE *cl_init(GS *);
@@ -217,16 +222,14 @@ h_hup(int signo)
 {
 	GLOBAL_CLP;
 
-	F_SET(clp, CL_SIGHUP);
+	cl_sighup = 1;
 	clp->killersig = SIGHUP;
 }
 
 static void
 h_int(int signo)
 {
-	GLOBAL_CLP;
-
-	F_SET(clp, CL_SIGINT);
+	cl_sigint = 1;
 }
 
 static void
@@ -234,16 +237,14 @@ h_term(int signo)
 {
 	GLOBAL_CLP;
 
-	F_SET(clp, CL_SIGTERM);
+	cl_sigterm = 1;
 	clp->killersig = SIGTERM;
 }
 
 static void
 h_winch(int signo)
 {
-	GLOBAL_CLP;
-
-	F_SET(clp, CL_SIGWINCH);
+	cl_sigwinch = 1;
 }
 #undef	GLOBAL_CLP
 
@@ -259,6 +260,11 @@ sig_init(GS *gp, SCR *sp)
 	CL_PRIVATE *clp;
 
 	clp = GCLP(gp);
+
+	cl_sighup = 0;
+	cl_sigint = 0;
+	cl_sigterm = 0;
+	cl_sigwinch = 0;
 
 	if (sp == NULL) {
 		if (setsig(SIGHUP, &clp->oact[INDX_HUP], h_hup) ||
