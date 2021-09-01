@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.18 2019/04/02 03:35:08 mortimer Exp $	*/
+/*	$OpenBSD: asm.h,v 1.19 2021/09/01 09:50:21 bluhm Exp $	*/
 /*	$NetBSD: asm.h,v 1.2 2003/05/02 18:05:47 yamt Exp $	*/
 
 /*-
@@ -193,6 +193,7 @@
 		jmp	68b		; \
 		_ALIGN_TRAPS		; \
 	69:	mov	%reg,(%rsp)	; \
-		ret
+		ret			; \
+		lfence
 
 #endif /* !_MACHINE_ASM_H_ */
