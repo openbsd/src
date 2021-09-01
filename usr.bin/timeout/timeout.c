@@ -99,9 +99,10 @@ parse_duration(const char *duration)
 static int
 parse_signal(const char *str)
 {
-	char 	*ep;
-	int 	 i;
-	long	 sig;
+	char 		*ep;
+	int 	 	 i;
+	long	 	 sig;
+	const char	*errstr;
 
 	if (strncasecmp(str, "SIG", 3) == 0) {
 		str += 3;
@@ -115,11 +116,8 @@ parse_signal(const char *str)
 	}
 
 	errno = 0;
-	sig = strtol(str, &ep, 10);
-
-	if (str[0] == '\0' || *ep != '\0')
-		goto err;
-	if (errno == ERANGE && (sig == LONG_MAX || sig == LONG_MIN))
+	sig = strtonum(str, LONG_MIN, LONG_MAX, &errstr);
+	if (errstr != NULL)
 		goto err;
 	if (sig >= NSIG || sig < 0)
 		goto err;
