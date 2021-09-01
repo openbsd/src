@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.93 2019/06/28 13:35:00 deraadt Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.94 2021/09/01 18:16:52 halex Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -429,6 +429,10 @@ files_differ(FILE *f1, FILE *f2, int flags)
 	if ((flags & (D_EMPTY1|D_EMPTY2)) || stb1.st_size != stb2.st_size ||
 	    (stb1.st_mode & S_IFMT) != (stb2.st_mode & S_IFMT))
 		return (1);
+
+	if (stb1.st_dev == stb2.st_dev && stb1.st_ino == stb2.st_ino)
+		return (0);
+
 	for (;;) {
 		i = fread(buf1, 1, sizeof(buf1), f1);
 		j = fread(buf2, 1, sizeof(buf2), f2);
