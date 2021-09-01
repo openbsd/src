@@ -193,11 +193,6 @@ main(int argc, char **argv)
 		SIGQUIT,
 	};
 
-	foreground = preserve = 0;
-	second_kill = 0;
-	cpid = -1;
-	pgid = -1;
-
 	const struct option longopts[] = {
 		{ "preserve-status", no_argument,       &preserve,    1 },
 		{ "foreground",      no_argument,       &foreground,  1 },
@@ -206,6 +201,14 @@ main(int argc, char **argv)
 		{ "help",            no_argument,       NULL,        'h'},
 		{ NULL,              0,                 NULL,         0 }
 	};
+
+	if (pledge("stdio proc exec", NULL) == -1)
+		err(1, "pledge");
+
+	foreground = preserve = 0;
+	second_kill = 0;
+	cpid = -1;
+	pgid = -1;
 
 	while ((ch = getopt_long(argc, argv, "+k:s:h", longopts, NULL)) != -1) {
 		switch (ch) {
@@ -275,6 +278,9 @@ main(int argc, char **argv)
 		if (error == -1)
 			err(1, "exec()");
 	}
+
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
 
 	if (sigprocmask(SIG_BLOCK, &signals.sa_mask, NULL) == -1)
 		err(1, "sigprocmask()");
