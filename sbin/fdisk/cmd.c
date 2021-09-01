@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.142 2021/08/29 17:29:14 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.143 2021/09/01 20:08:32 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -42,7 +42,8 @@ int		 setpid(const int, struct mbr *);
 int		 parsepn(const char *);
 
 int		 ask_num(const char *, int, int, int);
-int		 ask_pid(const int, struct uuid *);
+int		 ask_pid(const int);
+struct uuid	*ask_uuid(const struct uuid *);
 char		*ask_string(const char *, const char *);
 
 extern const unsigned char	manpage[];
@@ -301,7 +302,7 @@ gsetpid(const int pn)
 {
 	struct uuid		 gp_type, gp_guid;
 	struct gpt_partition	*gg;
-	int			 num, status;
+	int			 status;
 
 	gg = &gp[pn];
 
@@ -315,10 +316,7 @@ gsetpid(const int pn)
 		return -1;
 	}
 
-	/* Ask for partition type or GUID. */
-	num = ask_pid(PRT_uuid_to_type(&gp_type), &gp_type);
-	if (num <= 0xff)
-		gp_type = *(PRT_type_to_uuid(num));
+	gp_type = *ask_uuid(&gp_type);
 	if (PRT_protected_guid(&gp_type)) {
 		printf("can't change partition type to %s\n",
 		    PRT_uuid_to_typename(&gp_type));
@@ -350,7 +348,7 @@ setpid(const int pn, struct mbr *mbr)
 	PRT_print(0, NULL, NULL);
 	PRT_print(pn, pp, NULL);
 
-	pp->prt_id = ask_pid(pp->prt_id, NULL);
+	pp->prt_id = ask_pid(pp->prt_id);
 
 	return 0;
 }
@@ -602,10 +600,10 @@ ask_num(const char *str, int dflt, int low, int high)
 }
 
 int
-ask_pid(const int dflt, struct uuid *guid)
+ask_pid(const int dflt)
 {
 	char			lbuf[100];
-	int			num, status;
+	int			num;
 
 	for (;;) {
 		printf("Partition id ('0' to disable) [01 - FF]: [%02X] ", dflt);
@@ -619,18 +617,79 @@ ask_pid(const int dflt, struct uuid *guid)
 			continue;
 		}
 
-		if (guid && strlen(lbuf) == UUID_STR_LEN) {
-			uuid_from_string(lbuf, guid, &status);
-			if (status == uuid_s_ok)
-				return 0x100;
-		}
-
 		num = hex_octet(lbuf);
 		if (num != -1)
 			return num;
 
 		printf("'%s' is not a valid partition id.\n", lbuf);
 	}
+}
+
+struct uuid *
+ask_uuid(const struct uuid *olduuid)
+{
+	static struct uuid	 uuid;
+	char			 lbuf[100];
+	char			*dflt = NULL;
+	int			 status;
+	int			 num = 0;
+
+	uuid = *olduuid;
+	if (uuid_is_nil(&uuid, NULL) == 0) {
+		num = PRT_uuid_to_type(&uuid);
+		if (num == 0) {
+			uuid_to_string(&uuid, &dflt, &status);
+			if (status != uuid_s_ok) {
+				printf("uuid_to_string() failed\n");
+				goto done;
+			}
+		}
+	}
+	if (dflt == NULL) {
+		if (asprintf(&dflt, "%X", num) == -1) {
+			warn("asprintf()");
+			goto done;
+		}
+	}
+
+	for (;;) {
+		printf("Partition id ('0' to disable) [01 - FF, <uuid>]: [%s] ",
+		    dflt);
+		printf("(? for help) ");
+		string_from_line(lbuf, sizeof(lbuf), TRIMMED);
+
+		if (strcmp(lbuf, "?") == 0) {
+			PRT_printall();
+			continue;
+		} else if (strlen(lbuf) == 0) {
+			uuid = *olduuid;
+			goto done;
+		}
+
+		uuid_from_string(lbuf, &uuid, &status);
+		if (status == uuid_s_ok)
+			goto done;
+
+		num = hex_octet(lbuf);
+		switch (num) {
+		case -1:
+			printf("'%s' is not a valid partition id\n", lbuf);
+			break;
+		case 0:
+			uuid_create_nil(&uuid, NULL);
+			goto done;
+		default:
+			uuid = *PRT_type_to_uuid(num);
+			if (uuid_is_nil(&uuid, NULL) == 0)
+				goto done;
+			printf("'%s' has no associated UUID\n", lbuf);
+			break;
+		}
+	}
+
+ done:
+	free(dflt);
+	return &uuid;
 }
 
 char *
