@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapclient.c,v 1.12 2019/01/26 10:58:54 deraadt Exp $	*/
+/*	$OpenBSD: ldapclient.c,v 1.13 2021/09/02 21:09:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2018 Reyk Floeter <reyk@openbsd.org>
@@ -16,7 +16,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -56,6 +55,8 @@
 #define LDAPFILTER	"(objectClass=*)"
 #define LDIF_LINELENGTH	79
 #define LDAPPASSMAX	1024
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 struct ldapc {
 	struct aldap		*ldap_al;
@@ -455,7 +456,7 @@ ldapc_printattr(struct ldapc *ldap, const char *key,
 			if (outlen > LDIF_LINELENGTH)
 				outlen--;
 			/* max. line length - newline - optional indent */
-			left = MIN(inlen - outlen, outlen ?
+			left = MINIMUM(inlen - outlen, outlen ?
 			    LDIF_LINELENGTH - 2 :
 			    LDIF_LINELENGTH - 1);
 			fwrite(p + outlen, left, 1, stdout);
