@@ -1,4 +1,4 @@
-/* $OpenBSD: x509v3.h,v 1.4 2021/09/02 13:26:51 job Exp $ */
+/* $OpenBSD: x509v3.h,v 1.5 2021/09/02 13:48:39 job Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -877,10 +877,33 @@ typedef struct ASIdentifiers_st {
     ASIdentifierChoice *asnum, *rdi;
 } ASIdentifiers;
 
-DECLARE_ASN1_FUNCTIONS(ASRange)
-DECLARE_ASN1_FUNCTIONS(ASIdOrRange)
-DECLARE_ASN1_FUNCTIONS(ASIdentifierChoice)
-DECLARE_ASN1_FUNCTIONS(ASIdentifiers)
+ASRange *ASRange_new(void);
+void ASRange_free(ASRange *a);
+ASRange *d2i_ASRange(ASRange **a, const unsigned char **in, long len);
+int i2d_ASRange(ASRange *a, unsigned char **out);
+extern const ASN1_ITEM ASRange_it;
+
+ASIdOrRange *ASIdOrRange_new(void);
+void ASIdOrRange_free(ASIdOrRange *a);
+ASIdOrRange *d2i_ASIdOrRange(ASIdOrRange **a, const unsigned char **in,
+    long len);
+int i2d_ASIdOrRange(ASIdOrRange *a, unsigned char **out);
+extern const ASN1_ITEM ASIdOrRange_it;
+
+ASIdentifierChoice *ASIdentifierChoice_new(void);
+void ASIdentifierChoice_free(ASIdentifierChoice *a);
+ASIdentifierChoice *d2i_ASIdentifierChoice(ASIdentifierChoice **a,
+    const unsigned char **in, long len);
+int i2d_ASIdentifierChoice(ASIdentifierChoice *a, unsigned char **out);
+extern const ASN1_ITEM ASIdentifierChoice_it;
+
+ASIdentifiers *ASIdentifiers_new(void);
+void ASIdentifiers_free(ASIdentifiers *a);
+ASIdentifiers *d2i_ASIdentifiers(ASIdentifiers **a, const unsigned char **in,
+    long len);
+int i2d_ASIdentifiers(ASIdentifiers *a, unsigned char **out);
+extern const ASN1_ITEM ASIdentifiers_it;
+
 typedef struct IPAddressRange_st {
     ASN1_BIT_STRING *min, *max;
 } IPAddressRange;
@@ -917,10 +940,34 @@ typedef struct IPAddressFamily_st {
 
 typedef STACK_OF(IPAddressFamily) IPAddrBlocks;
 DECLARE_STACK_OF(IPAddressFamily)
-DECLARE_ASN1_FUNCTIONS(IPAddressRange)
-DECLARE_ASN1_FUNCTIONS(IPAddressOrRange)
-DECLARE_ASN1_FUNCTIONS(IPAddressChoice)
-DECLARE_ASN1_FUNCTIONS(IPAddressFamily)
+
+IPAddressRange *IPAddressRange_new(void);
+void IPAddressRange_free(IPAddressRange *a);
+IPAddressRange *d2i_IPAddressRange(IPAddressRange **a,
+    const unsigned char **in, long len);
+int i2d_IPAddressRange(IPAddressRange *a, unsigned char **out);
+extern const ASN1_ITEM IPAddressRange_it;
+
+IPAddressOrRange *IPAddressOrRange_new(void);
+void IPAddressOrRange_free(IPAddressOrRange *a);
+IPAddressOrRange *d2i_IPAddressOrRange(IPAddressOrRange **a,
+    const unsigned char **in, long len);
+int i2d_IPAddressOrRange(IPAddressOrRange *a, unsigned char **out);
+extern const ASN1_ITEM IPAddressOrRange_it;
+
+IPAddressChoice *IPAddressChoice_new(void);
+void IPAddressChoice_free(IPAddressChoice *a);
+IPAddressChoice *d2i_IPAddressChoice(IPAddressChoice **a,
+    const unsigned char **in, long len);
+int i2d_IPAddressChoice(IPAddressChoice *a, unsigned char **out);
+extern const ASN1_ITEM IPAddressChoice_it;
+
+IPAddressFamily *IPAddressFamily_new(void);
+void IPAddressFamily_free(IPAddressFamily *a);
+IPAddressFamily *d2i_IPAddressFamily(IPAddressFamily **a,
+    const unsigned char **in, long len);
+int i2d_IPAddressFamily(IPAddressFamily *a, unsigned char **out);
+extern const ASN1_ITEM IPAddressFamily_it;
 
 /*
  * API tag for elements of the ASIdentifer SEQUENCE.
