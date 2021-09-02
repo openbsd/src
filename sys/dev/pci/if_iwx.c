@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.100 2021/09/02 13:39:34 kevlo Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.101 2021/09/02 13:44:10 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -9363,7 +9363,7 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_integrated = 1;
 		sc->sc_ltr_delay = IWX_SOC_FLAGS_LTR_APPLY_DELAY_200;
 		sc->sc_low_latency_xtal = 0;
-		sc->sc_xtal_latency = 5000;
+		sc->sc_xtal_latency = 500;
 		sc->sc_tx_with_siso_diversity = 0;
 		sc->sc_uhb_supported = 0;
 		break;
@@ -9371,9 +9371,9 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_fwname = "iwx-Qu-c0-hr-b0-63";
 		sc->sc_device_family = IWX_DEVICE_FAMILY_22000;
 		sc->sc_integrated = 1;
-		sc->sc_ltr_delay = IWX_SOC_FLAGS_LTR_APPLY_DELAY_200;
+		sc->sc_ltr_delay = IWX_SOC_FLAGS_LTR_APPLY_DELAY_1820;
 		sc->sc_low_latency_xtal = 0;
-		sc->sc_xtal_latency = 5000;
+		sc->sc_xtal_latency = 1820;
 		sc->sc_tx_with_siso_diversity = 0;
 		sc->sc_uhb_supported = 0;
 		break;
