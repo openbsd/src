@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.143 2021/09/01 20:08:32 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.144 2021/09/02 18:07:45 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -613,7 +613,7 @@ ask_pid(const int dflt)
 		if (strlen(lbuf) == 0)
 			return dflt;
 		if (strcmp(lbuf, "?") == 0) {
-			PRT_printall();
+			PRT_print_mbrtypes();
 			continue;
 		}
 
@@ -659,7 +659,7 @@ ask_uuid(const struct uuid *olduuid)
 		string_from_line(lbuf, sizeof(lbuf), TRIMMED);
 
 		if (strcmp(lbuf, "?") == 0) {
-			PRT_printall();
+			PRT_print_gpttypes();
 			continue;
 		} else if (strlen(lbuf) == 0) {
 			uuid = *olduuid;
