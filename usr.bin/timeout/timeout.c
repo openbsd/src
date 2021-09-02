@@ -1,4 +1,4 @@
-/* $OpenBSD: timeout.c,v 1.16 2021/09/02 09:35:17 deraadt Exp $ */
+/* $OpenBSD: timeout.c,v 1.17 2021/09/02 11:26:54 semarie Exp $ */
 
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -164,7 +164,7 @@ main(int argc, char **argv)
 	int		ch;
 	unsigned long 	i;
 	int 		foreground = 0, preserve = 0;
-	int 		error, pstat, status;
+	int 		pstat, status;
 	int 		killsig = SIGTERM;
 	pid_t 		pgid = 0, pid, cpid = 0;
 	double 		first_kill;
@@ -250,9 +250,8 @@ main(int argc, char **argv)
 		signal(SIGTTIN, SIG_DFL);
 		signal(SIGTTOU, SIG_DFL);
 
-		error = execvp(argv[0], argv);
-		if (error == -1)
-			err(1, "execvp");
+		execvp(argv[0], argv);
+		err(1, "execvp");
 	}
 
 	/* parent continues here */
