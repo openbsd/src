@@ -1,5 +1,5 @@
 /*
- * $OpenBSD: login_ldap.c,v 1.2 2020/09/12 17:14:23 martijn Exp $
+ * $OpenBSD: login_ldap.c,v 1.3 2021/09/02 20:57:58 deraadt Exp $
  * Copyright (c) 2002 Institute for Open Systems Technology Australia (IFOST)
  * Copyright (c) 2007 Michael Erdely <merdely@openbsd.org>
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -29,7 +29,6 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <netinet/in.h>
@@ -40,6 +39,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
+#include <limits.h>
 #include <unistd.h>
 #include <login_cap.h>
 #include <stdarg.h>
@@ -119,7 +119,7 @@ main(int argc, char **argv)
 		usage();
 	}
 
-	if (strlen(username) >= MAXLOGNAME) {
+	if (strlen(username) >= LOGIN_NAME_MAX) {
 		dlog(0, "username too long");
 		return 1;
 	}

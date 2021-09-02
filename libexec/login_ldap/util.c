@@ -1,5 +1,5 @@
 /*
- * $OpenBSD: util.c,v 1.2 2020/09/14 08:00:57 martijn Exp $
+ * $OpenBSD: util.c,v 1.3 2021/09/02 20:57:58 deraadt Exp $
  * Copyright (c) 2002 Institute for Open Systems Technology Australia (IFOST)
  * Copyright (c) 2007 Michael Erdely <merdely@openbsd.org>
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -28,7 +28,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include <sys/param.h>
+
 #include <sys/socket.h>
 #include <limits.h>
 #include <sys/time.h>
@@ -462,7 +462,7 @@ char *
 parse_filter(struct auth_ctx *ctx, const char *str)
 {
 	char tmp[PATH_MAX];
-	char hostname[MAXHOSTNAMELEN];
+	char hostname[HOST_NAME_MAX+1];
 	const char *p;
 	char *q;
 
