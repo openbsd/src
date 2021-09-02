@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wprintf.3,v 1.8 2019/08/30 20:27:25 jmc Exp $
+.\"	$OpenBSD: wprintf.3,v 1.9 2021/09/02 09:50:38 deraadt Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)printf.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: August 30 2019 $
+.Dd $Mdocdate: September 2 2021 $
 .Dt WPRINTF 3
 .Os
 .Sh NAME
@@ -563,11 +563,13 @@ pointer argument is printed in hexadecimal (as if by
 or
 .Ql %#lx ) .
 .It Cm n
-The number of characters written so far is stored into the
-integer indicated by the
-.Vt "int *"
-(or variant) pointer argument.
-No argument is converted.
+This conversion specifier has serious security implications, so it was changed to
+no longer store the number of bytes written so far into the variable indicated
+by the pointer argument.
+Instead a
+.Xr syslog 3
+message will be generated, after which the program is aborted with
+.Dv SIGABRT .
 .It Cm %
 A
 .Ql %
