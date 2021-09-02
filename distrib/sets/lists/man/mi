@@ -1,3 +1,4 @@
+./usr/bin/timeout
 ./usr/share/doc/mg/tutorial
 ./usr/share/info/amdref.info
 ./usr/share/info/cvs.info
@@ -472,6 +473,7 @@
 ./usr/share/man/man1/tftp.1
 ./usr/share/man/man1/tic.1
 ./usr/share/man/man1/time.1
+./usr/share/man/man1/timeout.1
 ./usr/share/man/man1/tmux.1
 ./usr/share/man/man1/top.1
 ./usr/share/man/man1/touch.1
@@ -1224,6 +1226,7 @@
 ./usr/share/man/man4/andl.4
 ./usr/share/man/man4/aplgpio.4
 ./usr/share/man/man4/aps.4
+./usr/share/man/man4/aq.4
 ./usr/share/man/man4/arc.4
 ./usr/share/man/man4/arcofi.4
 ./usr/share/man/man4/arm64
@@ -1234,6 +1237,7 @@
 ./usr/share/man/man4/arm64/aplintc.4
 ./usr/share/man/man4/arm64/aplns.4
 ./usr/share/man/man4/arm64/aplpcie.4
+./usr/share/man/man4/arm64/aplpinctrl.4
 ./usr/share/man/man4/arm64/aplpmu.4
 ./usr/share/man/man4/arm64/aplspmi.4
 ./usr/share/man/man4/arm64/apm.4
