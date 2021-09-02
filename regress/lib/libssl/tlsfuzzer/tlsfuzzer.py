@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.40 2021/08/11 19:45:08 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.41 2021/09/02 19:46:44 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -772,7 +772,7 @@ def list_or_missing(missing=True):
     exit(0)
 
 def usage():
-    print("Usage: python3 tlsfuzzer.py [-lmnstv] [-p port] [script [test...]]")
+    print("Usage: python3 tlsfuzzer.py [-flmnstv] [-p port] [script [test...]]")
     print(" --help      help")
     print(" -f          run failing tests")
     print(" -l          list tests")
