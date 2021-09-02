@@ -1,4 +1,4 @@
-/* $OpenBSD: armreg.h,v 1.16 2021/03/27 20:03:15 kettenis Exp $ */
+/* $OpenBSD: armreg.h,v 1.17 2021/09/02 10:48:52 kettenis Exp $ */
 /*-
  * Copyright (c) 2013, 2014 Andrew Turner
  * Copyright (c) 2015 The FreeBSD Foundation
@@ -631,9 +631,9 @@
 #define	TCR_A1		(1UL << 22)
 
 #define	TCR_TG0_SHIFT	14
-#define	TCR_TG0_16K	(1UL << TCR_TG0_SHIFT)
-#define	TCR_TG0_4K	(2UL << TCR_TG0_SHIFT)
-#define	TCR_TG0_64K	(3UL << TCR_TG0_SHIFT)
+#define	TCR_TG0_4K	(0UL << TCR_TG0_SHIFT)
+#define	TCR_TG0_64K	(1UL << TCR_TG0_SHIFT)
+#define	TCR_TG0_16K	(2UL << TCR_TG0_SHIFT)
 
 #define	TCR_SH0_SHIFT	12
 #define	TCR_SH0_IS	(0x3UL << TCR_SH0_SHIFT)

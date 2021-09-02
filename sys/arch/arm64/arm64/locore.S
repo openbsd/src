@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.S,v 1.38 2021/06/28 15:45:15 deraadt Exp $ */
+/* $OpenBSD: locore.S,v 1.39 2021/09/02 10:48:52 kettenis Exp $ */
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
  * All rights reserved.
@@ -256,7 +256,7 @@ mair:
 		MAIR_ATTR(0x88, 4)
 tcr:
 	.quad (TCR_T1SZ(64 - VIRT_BITS) | TCR_T0SZ(64 - 48) | \
-	    TCR_AS | TCR_TG1_4K | TCR_CACHE_ATTRS | TCR_SMP_ATTRS)
+	    TCR_AS | TCR_TG1_4K | TCR_TG0_4K | TCR_CACHE_ATTRS | TCR_SMP_ATTRS)
 sctlr_set:
 	/* Bits to set */
 	.quad (SCTLR_UCI | SCTLR_nTWE | SCTLR_nTWI | SCTLR_UCT | SCTLR_DZE | \
