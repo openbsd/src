@@ -806,7 +806,7 @@ static void *v2i_ASIdentifiers(const struct v3_ext_method *method,
 const X509V3_EXT_METHOD v3_asid = {
     NID_sbgp_autonomousSysNum,  /* nid */
     0,                          /* flags */
-    ASN1_ITEM_ref(ASIdentifiers), /* template */
+    &ASIdentifiers_it,          /* template */
     0, 0, 0, 0,                 /* old functions, ignored */
     0,                          /* i2s */
     0,                          /* s2i */
