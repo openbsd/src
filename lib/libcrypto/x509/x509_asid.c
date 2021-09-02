@@ -304,11 +304,11 @@ static int ASIdOrRange_cmp(const ASIdOrRange *const *a_,
     const ASIdOrRange *a = *a_, *b = *b_;
 
     /* XXX: these asserts need to be replaced */
-    assert((a->type == ASIdOrRange_id && a->u.id != NULL) ||
+    OPENSSL_assert((a->type == ASIdOrRange_id && a->u.id != NULL) ||
            (a->type == ASIdOrRange_range && a->u.range != NULL &&
             a->u.range->min != NULL && a->u.range->max != NULL));
 
-    assert((b->type == ASIdOrRange_id && b->u.id != NULL) ||
+    OPENSSL_assert((b->type == ASIdOrRange_id && b->u.id != NULL) ||
            (b->type == ASIdOrRange_range && b->u.range != NULL &&
             b->u.range->min != NULL && b->u.range->max != NULL));
 
@@ -414,8 +414,8 @@ int X509v3_asid_add_id_or_range(ASIdentifiers *asid,
 static int extract_min_max(ASIdOrRange *aor,
                            ASN1_INTEGER **min, ASN1_INTEGER **max)
 {
-    if (!OPENSSL_assert(aor != NULL))
-        return 0;
+    OPENSSL_assert(aor != NULL);
+
     switch (aor->type) {
     case ASIdOrRange_id:
         *min = aor->u.id;
@@ -577,8 +577,7 @@ static int ASIdentifierChoice_canonize(ASIdentifierChoice *choice)
         /*
          * Make sure we're properly sorted (paranoia).
          */
-        if (!OPENSSL_assert(ASN1_INTEGER_cmp(a_min, b_min) <= 0))
-            goto done;
+        OPENSSL_assert(ASN1_INTEGER_cmp(a_min, b_min) <= 0);
 
         /*
          * Punt inverted ranges.
@@ -663,8 +662,7 @@ static int ASIdentifierChoice_canonize(ASIdentifierChoice *choice)
     }
 
     /* Paranoia */
-    if (!OPENSSL_assert(ASIdentifierChoice_is_canonical(choice)))
-        goto done;
+    OPENSSL_assert(ASIdentifierChoice_is_canonical(choice));
 
     ret = 1;
 
@@ -907,14 +905,9 @@ static int asid_validate_path_internal(X509_STORE_CTX *ctx,
     int i, ret = 1, inherit_as = 0, inherit_rdi = 0;
     X509 *x;
 
-    if (!OPENSSL_assert(chain != NULL && sk_X509_num(chain) > 0)
-            || !OPENSSL_assert(ctx != NULL || ext != NULL)
-            || !OPENSSL_assert(ctx == NULL || ctx->verify_cb != NULL)) {
-        if (ctx != NULL)
-            ctx->error = X509_V_ERR_UNSPECIFIED;
-        return 0;
-    }
-
+    OPENSSL_assert(chain != NULL && sk_X509_num(chain) > 0);
+    OPENSSL_assert(ctx != NULL || ext != NULL);
+    OPENSSL_assert(ctx == NULL || ctx->verify_cb != NULL);
 
     /*
      * Figure out where to start.  If we don't have an extension to
@@ -959,11 +952,8 @@ static int asid_validate_path_internal(X509_STORE_CTX *ctx,
      */
     for (i++; i < sk_X509_num(chain); i++) {
         x = sk_X509_value(chain, i);
-        if (!OPENSSL_assert(x != NULL)) {
-            if (ctx != NULL)
-                ctx->error = X509_V_ERR_UNSPECIFIED;
-            return 0;
-        }
+        OPENSSL_assert(x != NULL);
+
         if (x->rfc3779_asid == NULL) {
             if (child_as != NULL || child_rdi != NULL)
                 validation_err(X509_V_ERR_UNNESTED_RESOURCE);
@@ -1009,11 +999,8 @@ static int asid_validate_path_internal(X509_STORE_CTX *ctx,
     /*
      * Trust anchor can't inherit.
      */
-    if (!OPENSSL_assert(x != NULL)) {
-        if (ctx != NULL)
-            ctx->error = X509_V_ERR_UNSPECIFIED;
-        return 0;
-    }
+    OPENSSL_assert(x != NULL);
+
     if (x->rfc3779_asid != NULL) {
         if (x->rfc3779_asid->asnum != NULL &&
             x->rfc3779_asid->asnum->type == ASIdentifierChoice_inherit)
