@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.97 2021/06/29 19:31:16 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.98 2021/09/02 11:10:43 beck Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -2083,7 +2083,7 @@ tlsext_parse(SSL *s, int is_server, uint16_t msg_type, CBS *cbs, int *alert)
 			goto err;
 
 		if (s->internal->tlsext_debug_cb != NULL)
-			s->internal->tlsext_debug_cb(s, is_server, type,
+			s->internal->tlsext_debug_cb(s, !is_server, type,
 			    (unsigned char *)CBS_data(&extension_data),
 			    CBS_len(&extension_data),
 			    s->internal->tlsext_debug_arg);
