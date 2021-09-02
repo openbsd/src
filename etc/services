@@ -1,4 +1,4 @@
-# $OpenBSD: services,v 1.102 2021/05/12 06:50:33 jca Exp $
+# $OpenBSD: services,v 1.103 2021/09/02 10:46:22 deraadt Exp $
 #
 # Network services, Internet style
 # https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt
@@ -33,8 +33,8 @@ nameserver	42/tcp		name		# IEN 116
 whois		43/tcp		nicname
 tacacs		49/tcp		tacas+		# Login Host Protocol (TACACS)
 tacacs		49/udp		tacas+		# Login Host Protocol (TACACS)
-domain		53/tcp		nameserver	# name-domain server
-domain		53/udp		nameserver
+domain		53/tcp				# Domain Name Server
+domain		53/udp
 mtp		57/tcp				# deprecated
 bootps		67/tcp				# BOOTP server
 bootps		67/udp
