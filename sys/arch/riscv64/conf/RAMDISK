@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.25 2021/07/25 06:11:48 jsg Exp $
+#	$OpenBSD: RAMDISK,v 1.26 2021/09/02 10:49:26 mlarkin Exp $
 
 machine		riscv64
 maxusers	4
@@ -80,6 +80,7 @@ em*		at pci?		# Intel Pro/1000 Ethernet
 bge*		at pci?		# Broadcom BCM57xx (aka Tigon3)
 oce*		at pci?		# Emulex OneConnect 10Gb ethernet
 ix*		at pci?		# Intel 82598EB 10Gb ethernet
+aq*		at pci?		# Aquantia aQtion Ethernet
 
 # Wireless network cards
 iwm*		at pci?		# Intel WiFi Link 7xxx
