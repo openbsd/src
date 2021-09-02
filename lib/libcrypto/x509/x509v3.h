@@ -1,4 +1,4 @@
-/* $OpenBSD: x509v3.h,v 1.2 2020/09/13 15:06:17 beck Exp $ */
+/* $OpenBSD: x509v3.h,v 1.3 2021/09/02 12:41:44 job Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -842,6 +842,149 @@ int X509V3_NAME_from_section(X509_NAME *nm, STACK_OF(CONF_VALUE)*dn_sk,
 void X509_POLICY_NODE_print(BIO *out, X509_POLICY_NODE *node, int indent);
 DECLARE_STACK_OF(X509_POLICY_NODE)
 
+#if defined(LIBRESSL_INTERNAL)
+#ifndef OPENSSL_NO_RFC3779
+typedef struct ASRange_st {
+	ASN1_INTEGER *min, *max;
+} ASRange;
+
+# define ASIdOrRange_id          0
+# define ASIdOrRange_range       1
+
+typedef struct ASIdOrRange_st {
+    int type;
+    union {
+        ASN1_INTEGER *id;
+        ASRange *range;
+    } u;
+} ASIdOrRange;
+
+typedef STACK_OF(ASIdOrRange) ASIdOrRanges;
+DEFINE_STACK_OF(ASIdOrRange)
+
+# define ASIdentifierChoice_inherit              0
+# define ASIdentifierChoice_asIdsOrRanges        1
+
+typedef struct ASIdentifierChoice_st {
+    int type;
+    union {
+        ASN1_NULL *inherit;
+        ASIdOrRanges *asIdsOrRanges;
+    } u;
+} ASIdentifierChoice;
+
+typedef struct ASIdentifiers_st {
+    ASIdentifierChoice *asnum, *rdi;
+} ASIdentifiers;
+
+DECLARE_ASN1_FUNCTIONS(ASRange)
+DECLARE_ASN1_FUNCTIONS(ASIdOrRange)
+DECLARE_ASN1_FUNCTIONS(ASIdentifierChoice)
+DECLARE_ASN1_FUNCTIONS(ASIdentifiers)
+typedef struct IPAddressRange_st {
+    ASN1_BIT_STRING *min, *max;
+} IPAddressRange;
+
+# define IPAddressOrRange_addressPrefix  0
+# define IPAddressOrRange_addressRange   1
+
+typedef struct IPAddressOrRange_st {
+    int type;
+    union {
+        ASN1_BIT_STRING *addressPrefix;
+        IPAddressRange *addressRange;
+    } u;
+} IPAddressOrRange;
+
+typedef STACK_OF(IPAddressOrRange) IPAddressOrRanges;
+DEFINE_STACK_OF(IPAddressOrRange)
+
+# define IPAddressChoice_inherit                 0
+# define IPAddressChoice_addressesOrRanges       1
+
+typedef struct IPAddressChoice_st {
+    int type;
+    union {
+        ASN1_NULL *inherit;
+        IPAddressOrRanges *addressesOrRanges;
+    } u;
+} IPAddressChoice;
+
+typedef struct IPAddressFamily_st {
+    ASN1_OCTET_STRING *addressFamily;
+    IPAddressChoice *ipAddressChoice;
+} IPAddressFamily;
+
+typedef STACK_OF(IPAddressFamily) IPAddrBlocks;
+DEFINE_STACK_OF(IPAddressFamily)
+DECLARE_ASN1_FUNCTIONS(IPAddressRange)
+DECLARE_ASN1_FUNCTIONS(IPAddressOrRange)
+DECLARE_ASN1_FUNCTIONS(IPAddressChoice)
+DECLARE_ASN1_FUNCTIONS(IPAddressFamily)
+
+/*
+ * API tag for elements of the ASIdentifer SEQUENCE.
+ */
+# define V3_ASID_ASNUM   0
+# define V3_ASID_RDI     1
+
+/*
+ * AFI values, assigned by IANA.  It'd be nice to make the AFI
+ * handling code totally generic, but there are too many little things
+ * that would need to be defined for other address families for it to
+ * be worth the trouble.
+ */
+# define IANA_AFI_IPV4   1
+# define IANA_AFI_IPV6   2
+/*
+ * Utilities to construct and extract values from RFC3779 extensions,
+ * since some of the encodings (particularly for IP address prefixes
+ * and ranges) are a bit tedious to work with directly.
+ */
+int X509v3_asid_add_inherit(ASIdentifiers *asid, int which);
+int X509v3_asid_add_id_or_range(ASIdentifiers *asid, int which,
+                                ASN1_INTEGER *min, ASN1_INTEGER *max);
+int X509v3_addr_add_inherit(IPAddrBlocks *addr,
+                            const unsigned afi, const unsigned *safi);
+int X509v3_addr_add_prefix(IPAddrBlocks *addr,
+                           const unsigned afi, const unsigned *safi,
+                           unsigned char *a, const int prefixlen);
+int X509v3_addr_add_range(IPAddrBlocks *addr,
+                          const unsigned afi, const unsigned *safi,
+                          unsigned char *min, unsigned char *max);
+unsigned X509v3_addr_get_afi(const IPAddressFamily *f);
+int X509v3_addr_get_range(IPAddressOrRange *aor, const unsigned afi,
+                          unsigned char *min, unsigned char *max,
+                          const int length);
+/*
+ * Canonical forms.
+ */
+int X509v3_asid_is_canonical(ASIdentifiers *asid);
+int X509v3_addr_is_canonical(IPAddrBlocks *addr);
+int X509v3_asid_canonize(ASIdentifiers *asid);
+int X509v3_addr_canonize(IPAddrBlocks *addr);
+
+/*
+ * Tests for inheritance and containment.
+ */
+int X509v3_asid_inherits(ASIdentifiers *asid);
+int X509v3_addr_inherits(IPAddrBlocks *addr);
+int X509v3_asid_subset(ASIdentifiers *a, ASIdentifiers *b);
+int X509v3_addr_subset(IPAddrBlocks *a, IPAddrBlocks *b);
+
+/*
+ * Check whether RFC 3779 extensions nest properly in chains.
+ */
+int X509v3_asid_validate_path(X509_STORE_CTX *);
+int X509v3_addr_validate_path(X509_STORE_CTX *);
+int X509v3_asid_validate_resource_set(STACK_OF(X509) *chain,
+                                      ASIdentifiers *ext,
+                                      int allow_inheritance);
+int X509v3_addr_validate_resource_set(STACK_OF(X509) *chain,
+                                      IPAddrBlocks *ext, int allow_inheritance);
+
+#endif                         /* OPENSSL_NO_RFC3779 */
+#endif
 
 /* BEGIN ERROR CODES */
 /* The following lines are auto generated by the script mkerr.pl. Any changes
