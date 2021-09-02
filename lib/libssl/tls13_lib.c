@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.60 2021/08/30 19:25:43 jsing Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.61 2021/09/02 11:58:30 beck Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -195,8 +195,7 @@ tls13_legacy_ocsp_status_recv_cb(void *arg)
 	SSL *s = ctx->ssl;
 	int ret;
 
-	if (s->ctx->internal->tlsext_status_cb == NULL ||
-	    s->internal->tlsext_ocsp_resp == NULL)
+	if (s->ctx->internal->tlsext_status_cb == NULL)
 		return 1;
 
 	ret = s->ctx->internal->tlsext_status_cb(s,
