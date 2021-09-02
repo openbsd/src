@@ -1,4 +1,4 @@
-/*	$OpenBSD: dtvar.h,v 1.6 2021/09/02 17:21:39 jasper Exp $ */
+/*	$OpenBSD: dtvar.h,v 1.7 2021/09/02 19:41:48 jasper Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -59,10 +59,10 @@ struct dt_evt {
 			register_t		__retval[2];
 			int			__error;
 		} E_return;
-	} _sys;
-#define dtev_args	_sys.E_entry		/* function args. */
-#define dtev_retval	_sys.E_return.__retval	/* function retval */
-#define dtev_error	_sys.E_return.__error	/* function error */
+	} _args;
+#define dtev_args	_args.E_entry		/* function args. */
+#define dtev_retval	_args.E_return.__retval	/* function retval */
+#define dtev_error	_args.E_return.__error	/* function error */
 
 };
 
