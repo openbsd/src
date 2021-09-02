@@ -761,7 +761,7 @@ static void *v2i_ASIdentifiers(const struct v3_ext_method *method,
                 goto err;
             }
         } else {
-            char *s = OPENSSL_strdup(val->value);
+            char *s = strdup(val->value);
             if (s == NULL) {
                 X509V3error(ERR_R_MALLOC_FAILURE);
                 goto err;
