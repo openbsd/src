@@ -1,4 +1,4 @@
-.\"   $OpenBSD: slowcgi.8,v 1.15 2021/09/02 13:18:04 florian Exp $
+.\"   $OpenBSD: slowcgi.8,v 1.16 2021/09/02 14:14:44 jmc Exp $
 .\"
 .\" Copyright (c) 2013 Florian Obser <florian@openbsd.org>
 .\"
@@ -22,12 +22,11 @@
 .Nd a FastCGI to CGI wrapper server
 .Sh SYNOPSIS
 .Nm
-.Op Fl d
+.Op Fl dv
 .Op Fl p Ar path
 .Op Fl s Ar socket
 .Op Fl U Ar user
 .Op Fl u Ar user
-.Op Fl v
 .Sh DESCRIPTION
 .Nm
 is a server which implements the FastCGI Protocol to execute CGI scripts.
