@@ -1,4 +1,4 @@
-/* $OpenBSD: timeout.c,v 1.12 2021/09/01 21:45:10 job Exp $ */
+/* $OpenBSD: timeout.c,v 1.13 2021/09/02 06:23:32 deraadt Exp $ */
 /* $NetBSD: timeout.c,v 1.4 2014/08/05 08:20:02 christos Exp $ */
 
 /*
@@ -256,7 +256,7 @@ main(int argc, char **argv)
 			err(1, "execvp");
 	}
 
-	if (pledge("stdio", NULL) == -1)
+	if (pledge("stdio proc", NULL) == -1)
 		err(1, "pledge");
 
 	if (sigprocmask(SIG_BLOCK, &signals.sa_mask, NULL) == -1)
