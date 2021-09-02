@@ -1,4 +1,4 @@
-/* $OpenBSD: x509v3.h,v 1.3 2021/09/02 12:41:44 job Exp $ */
+/* $OpenBSD: x509v3.h,v 1.4 2021/09/02 13:26:51 job Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -860,7 +860,7 @@ typedef struct ASIdOrRange_st {
 } ASIdOrRange;
 
 typedef STACK_OF(ASIdOrRange) ASIdOrRanges;
-DEFINE_STACK_OF(ASIdOrRange)
+DECLARE_STACK_OF(ASIdOrRange)
 
 # define ASIdentifierChoice_inherit              0
 # define ASIdentifierChoice_asIdsOrRanges        1
@@ -897,7 +897,7 @@ typedef struct IPAddressOrRange_st {
 } IPAddressOrRange;
 
 typedef STACK_OF(IPAddressOrRange) IPAddressOrRanges;
-DEFINE_STACK_OF(IPAddressOrRange)
+DECLARE_STACK_OF(IPAddressOrRange)
 
 # define IPAddressChoice_inherit                 0
 # define IPAddressChoice_addressesOrRanges       1
@@ -916,7 +916,7 @@ typedef struct IPAddressFamily_st {
 } IPAddressFamily;
 
 typedef STACK_OF(IPAddressFamily) IPAddrBlocks;
-DEFINE_STACK_OF(IPAddressFamily)
+DECLARE_STACK_OF(IPAddressFamily)
 DECLARE_ASN1_FUNCTIONS(IPAddressRange)
 DECLARE_ASN1_FUNCTIONS(IPAddressOrRange)
 DECLARE_ASN1_FUNCTIONS(IPAddressChoice)
