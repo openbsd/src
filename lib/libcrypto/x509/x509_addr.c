@@ -147,6 +147,17 @@ static const ASN1_TEMPLATE IPAddrBlocks_item_tt = {
 	.item = &IPAddressFamily_it,
 };
 
+/* XXX: maybe special? */
+static const ASN1_ITEM IPAddrBlocks_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = -1,
+	.templates = &IPAddrBlocks_item_tt,
+	.tcount = 0,
+	.funcs = NULL,
+	.size = 0,
+	.sname = "IPAddrBlocks",
+};
+
 IPAddressRange *
 d2i_IPAddressRange(IPAddressRange **a, const unsigned char **in, long len)
 {
