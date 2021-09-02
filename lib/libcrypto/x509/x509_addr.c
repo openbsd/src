@@ -13,6 +13,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
@@ -1117,7 +1118,7 @@ static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
         length = length_from_afi(afi);
 
         /*
-         * Handle SAFI, if any, and OPENSSL_strdup() so we can null-terminate
+         * Handle SAFI, if any, and strdup() so we can null-terminate
          * the other input values.
          */
         if (safi != NULL) {
@@ -1129,9 +1130,9 @@ static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
                 goto err;
             }
             t += strspn(t, " \t");
-            s = OPENSSL_strdup(t);
+            s = strdup(t);
         } else {
-            s = OPENSSL_strdup(val->value);
+            s = strdup(val->value);
         }
         if (s == NULL) {
             X509V3error(ERR_R_MALLOC_FAILURE);
