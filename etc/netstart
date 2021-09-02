@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.215 2021/08/30 16:58:52 bluhm Exp $
+#	$OpenBSD: netstart,v 1.216 2021/09/02 19:38:20 bluhm Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -102,6 +102,9 @@ vifscreate() {
 		for _hn in /etc/hostname.${_vif}+([[:digit:]]); do
 			[[ -f $_hn ]] || continue
 			_if=${_hn#/etc/hostname.}
+
+			# loopback for routing domain is created by kernel
+			[[ -n ${_if##lo[1-9]*} ]] || continue
 
 			if ! ifcreate $_if; then
 				print -u2 "${0##*/}: create for '$_if' failed."
