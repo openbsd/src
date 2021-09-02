@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.28 2021/07/25 06:11:48 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.29 2021/09/02 10:11:21 mlarkin Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -94,6 +94,7 @@ wsdisplay*	at radeondrm?
 em*		at pci?		# Intel Pro/1000 Ethernet
 bge*		at pci?		# Broadcom BCM57xx (aka Tigon3)
 oce*		at pci?		# Emulex OneConnect 10Gb ethernet
+aq*		at pci?		# Aquantia aQtion Ethernet
 ix*		at pci?		# Intel 82598EB 10Gb ethernet
 
 # Wireless network cards

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.499 2021/08/20 05:23:18 anton Exp $
+#	$OpenBSD: GENERIC,v 1.500 2021/09/02 10:11:21 mlarkin Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -543,6 +543,7 @@ bnxt*	at pci?				# Broadcom BCM573xx, BCM574xx
 ixl*	at pci?				# Intel Ethernet 700 Series
 mcx*	at pci?				# Mellanox ConnectX-4
 iavf*	at pci?				# Intel Ethernet Adaptive VF
+aq*	at pci?				# Aquantia aQtion Ethernet
 
 # Wireless network cards
 acx*	at pci?				# TI ACX100/ACX111 (802.11b/g)

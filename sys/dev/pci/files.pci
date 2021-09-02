@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.354 2021/04/24 09:37:46 jmatthew Exp $
+#	$OpenBSD: files.pci,v 1.355 2021/09/02 10:11:21 mlarkin Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -229,6 +229,11 @@ file	dev/pci/mpii.c			mpii
 # Silicon Image 3124/3132/3531 SATALink
 attach	sili at pci with sili_pci
 file	dev/pci/sili_pci.c		sili_pci
+
+# Aquantia/Atlantic 10-Gigabit Ethernet
+device  aq: ether, ifnet, ifmedia, mii
+attach  aq at pci
+file    dev/pci/if_aq_pci.c                 aq
 
 # Ethernet driver for DC21040-based boards
 device	de: ether, ifnet, ifmedia
