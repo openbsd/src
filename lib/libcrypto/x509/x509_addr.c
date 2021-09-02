@@ -971,7 +971,7 @@ int X509v3_addr_canonize(IPAddrBlocks *addr)
     }
     (void)sk_IPAddressFamily_set_cmp_func(addr, IPAddressFamily_cmp);
     sk_IPAddressFamily_sort(addr);
-    if (!ossl_assert(X509v3_addr_is_canonical(addr)))
+    if (!OPENSSL_assert(X509v3_addr_is_canonical(addr)))
         return 0;
     return 1;
 }
@@ -1277,9 +1277,9 @@ static int addr_validate_path_internal(X509_STORE_CTX *ctx,
     int i, j, ret = 1;
     X509 *x;
 
-    if (!ossl_assert(chain != NULL && sk_X509_num(chain) > 0)
-            || !ossl_assert(ctx != NULL || ext != NULL)
-            || !ossl_assert(ctx == NULL || ctx->verify_cb != NULL)) {
+    if (!OPENSSL_assert(chain != NULL && sk_X509_num(chain) > 0)
+            || !OPENSSL_assert(ctx != NULL || ext != NULL)
+            || !OPENSSL_assert(ctx == NULL || ctx->verify_cb != NULL)) {
         if (ctx != NULL)
             ctx->error = X509_V_ERR_UNSPECIFIED;
         return 0;
