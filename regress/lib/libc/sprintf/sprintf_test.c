@@ -1,4 +1,4 @@
-/*	$OpenBSD: sprintf_test.c,v 1.4 2004/09/18 19:31:32 otto Exp $ */
+/*	$OpenBSD: sprintf_test.c,v 1.5 2021/09/02 09:46:21 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Theo de Raadt
@@ -85,18 +85,6 @@ main(int argc, char *argv[])
 	    );
 
 	if (strcmp(buf, correct) != 0)
-		exit(1);
-
-	sz1 = (size_t)1;
-	sz2 = (size_t)-1;
-	p1 = (ptrdiff_t)1;
-	p2 = (ptrdiff_t)-1;
-	snprintf(buf, sizeof buf,
-		"%zx %d %zd %d %zu %d %tx %d %td %d %tu %zn %tn\n"
-		"%1$zx %3$zd %5$zu %7$tx %9$td %11$tu %14$zn %15$tn\n",
-		sz1, 0, sz2, 1, sz1, 2, p1, 3, p2, 4, p1, &sz3, &p3, &sz4, &p4);
-	if (strcmp(buf, correct2) != 0 || sz3 != 24 || p3 != 25 ||
-	    sz4 != 40 || p4 != 41)
 		exit(1);
 	exit(0);
 }
