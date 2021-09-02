@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.288 2021/09/01 14:03:24 mpi Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.289 2021/09/02 07:19:53 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -384,7 +384,7 @@ vmm_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	SLIST_INIT(&sc->vm_list);
-	rw_init(&sc->vm_lock, "vmlistlock");
+	rw_init(&sc->vm_lock, "vm_list");
 
 	if (sc->nr_ept_cpus) {
 		printf(": VMX/EPT");
@@ -426,7 +426,7 @@ vmm_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	bzero(&sc->vpids, sizeof(sc->vpids));
-	rw_init(&sc->vpid_lock, "vpidlock");
+	rw_init(&sc->vpid_lock, "vpid");
 
 	pool_init(&vm_pool, sizeof(struct vm), 0, IPL_NONE, PR_WAITOK,
 	    "vmpool", NULL);
@@ -1496,7 +1496,7 @@ vm_create(struct vm_create_params *vcp, struct proc *p)
 
 	vm = pool_get(&vm_pool, PR_WAITOK | PR_ZERO);
 	SLIST_INIT(&vm->vm_vcpu_list);
-	rw_init(&vm->vm_vcpu_lock, "vcpulock");
+	rw_init(&vm->vm_vcpu_lock, "vcpu_list");
 
 	vm->vm_creator_pid = p->p_p->ps_pid;
 	vm->vm_nmemranges = vcp->vcp_nmemranges;
@@ -3659,7 +3659,7 @@ vcpu_init(struct vcpu *vcpu)
 	vcpu->vc_pvclock_system_gpa = 0;
 	vcpu->vc_last_pcpu = NULL;
 
-	rw_init(&vcpu->vc_lock, "vcpulock");
+	rw_init(&vcpu->vc_lock, "vcpu");
 
 	/* Shadow PAT MSR, starting with host's value. */
 	vcpu->vc_shadow_pat = rdmsr(MSR_CR_PAT);
