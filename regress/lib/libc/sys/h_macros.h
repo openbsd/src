@@ -1,3 +1,4 @@
+/*	$OpenBSD: h_macros.h,v 1.2 2021/09/02 12:40:44 mbuhl Exp $	*/
 /* $NetBSD: h_macros.h,v 1.13 2016/08/20 15:49:08 christos Exp $ */
 
 /*-

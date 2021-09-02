@@ -1,4 +1,4 @@
-/*	$OpenBSD: macros.h,v 1.2 2020/01/30 08:22:30 mpi Exp $	*/
+/*	$OpenBSD: macros.h,v 1.3 2021/09/02 12:40:44 mbuhl Exp $	*/
 /* Public domain - Moritz Buhl */
 
 #include <sys/param.h>
@@ -49,6 +49,14 @@ sysctlbyname(char* s, void *oldp, size_t *oldlenp, void *newp, size_t newlen)
         return sysctl(mib, miblen, oldp, oldlenp, newp, newlen);
 }
 
+/* t_connect.c */
+#define IPPORT_RESERVEDMAX	1023
+
+/* t_fork.c */
+#define kinfo_proc2	kinfo_proc
+#define KERN_PROC2	KERN_PROC
+#define reallocarr(pp, n, s)	((*pp = reallocarray(*pp, n, s)), *pp == NULL)
+
 /* t_mlock.c */
 #define MAP_WIRED	__MAP_NOREPLACE
 
@@ -63,3 +71,7 @@ sysctlbyname(char* s, void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 
 /* t_write.c */
 #define _PATH_DEVZERO	"/dev/zero"
+
+/* t_wait_noproc.c */
+#define ___STRING(x)	#x
+#define __BIT(n)	(1 << (n))
