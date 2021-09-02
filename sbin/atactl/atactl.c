@@ -1,4 +1,4 @@
-/*	$OpenBSD: atactl.c,v 1.46 2015/08/20 22:02:20 deraadt Exp $	*/
+/*	$OpenBSD: atactl.c,v 1.47 2021/09/02 11:36:47 semarie Exp $	*/
 /*	$NetBSD: atactl.c,v 1.4 1999/02/24 18:49:14 jwise Exp $	*/
 
 /*-
@@ -74,7 +74,7 @@ __dead void usage(void);
 void ata_command(struct atareq *);
 void print_bitinfo(const char *, u_int, struct bitinfo *);
 int  strtoval(const char *, struct valinfo *);
-const char *valtostr(int, struct valinfo *);
+const char *valtostr(int, struct valinfo *, const char *);
 
 int	fd;				/* file descriptor for device */
 
@@ -453,15 +453,15 @@ strtoval(const char *str, struct valinfo *vinfo)
 /*
  * valtostr():
  *    returns string associated with given value,
- *    if no string found NULL is returned.
+ *    if no string found def value is returned.
  */
 const char *
-valtostr(int val, struct valinfo *vinfo)
+valtostr(int val, struct valinfo *vinfo, const char *def)
 {
 	for (; vinfo->string != NULL; vinfo++)
 		if (val == vinfo->value)
 			return (vinfo->string);
-	return (NULL);
+	return (def);
 }
 
 /*
@@ -1338,14 +1338,14 @@ device_smart_read(int argc, char *argv[])
 
 	printf("Off-line data collection:\n");
 	printf("    status: %s\n",
-	    valtostr(data.offstat & 0x7f, smart_offstat));
+	    valtostr(data.offstat & 0x7f, smart_offstat, "?"));
 	printf("    activity completion time: %d seconds\n",
 	    letoh16(data.time));
 	printf("    capabilities:\n");
 	print_bitinfo("\t%s\n", data.offcap, smart_offcap);
 	printf("Self-test execution:\n");
 	printf("    status: %s\n", valtostr(SMART_SELFSTAT_STAT(data.selfstat),
-	    smart_selfstat));
+	    smart_selfstat, "?"));
 	if (SMART_SELFSTAT_STAT(data.selfstat) == SMART_SELFSTAT_PROGRESS)
 		printf("remains %d%% of total time\n",
 		    SMART_SELFSTAT_PCNT(data.selfstat));
@@ -1511,7 +1511,7 @@ device_smart_readlog(int argc, char *argv[])
 			printf("    status: %s\n",
 			    valtostr(SMART_SELFSTAT_STAT(
 			    data->desc[i].selfstat),
-			    smart_selfstat));
+			    smart_selfstat, "?"));
 			printf("    timestamp: %d\n",
 			    MAKEWORD(data->desc[i].time1,
 				     data->desc[i].time2));
@@ -1551,7 +1551,7 @@ smart_print_errdata(struct smart_log_errdata *data)
 	printf("    LBA High register: 0x%x\n", data->err.reg_lbahi);
 	printf("    device register: 0x%x\n", data->err.reg_dev);
 	printf("    status register: 0x%x\n", data->err.reg_stat);
-	printf("    state: %s\n", valtostr(data->err.state, smart_logstat));
+	printf("    state: %s\n", valtostr(data->err.state, smart_logstat, "?"));
 	printf("    timestamp: %d\n", MAKEWORD(data->err.time1,
 					       data->err.time2));
 	printf("    history:\n");
@@ -1643,9 +1643,8 @@ device_attr(int argc, char *argv[])
 	printf("ID\tAttribute name\t\t\tThreshold\tValue\tRaw\n");
 	for (i = 0; i < 30; i++) {
 		if (thr[i].id != 0 && thr[i].id == attr[i].id) {
-			attr_name = valtostr(thr[i].id, ibm_attr_names);
-			if (attr_name == NULL)
-				attr_name = "Unknown";
+			attr_name = valtostr(thr[i].id, ibm_attr_names,
+			    "Unknown");
 
 			for (k = 0; k < 6; k++) {
 				u_int8_t b;
