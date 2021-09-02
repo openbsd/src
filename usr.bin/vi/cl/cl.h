@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.h,v 1.11 2021/09/01 14:28:15 schwarze Exp $	*/
+/*	$OpenBSD: cl.h,v 1.12 2021/09/02 11:19:02 schwarze Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -11,7 +11,6 @@
  *	@(#)cl.h	10.19 (Berkeley) 9/24/96
  */
 
-extern	volatile sig_atomic_t cl_sighup;
 extern	volatile sig_atomic_t cl_sigint;
 extern	volatile sig_atomic_t cl_sigterm;
 extern	volatile sig_atomic_t cl_sigwinch;
@@ -31,7 +30,6 @@ typedef struct _cl_private {
 	char	*rmso, *smso;	/* Inverse video terminal strings. */
 	char	*smcup, *rmcup;	/* Terminal start/stop strings. */
 
-	int	 killersig;	/* Killer signal. */
 #define	INDX_HUP	0
 #define	INDX_INT	1
 #define	INDX_TERM	2

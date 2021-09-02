@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_read.c,v 1.22 2021/09/01 14:28:15 schwarze Exp $	*/
+/*	$OpenBSD: cl_read.c,v 1.23 2021/09/02 11:19:02 schwarze Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -62,13 +62,15 @@ retest:	if (LF_ISSET(EC_INTERRUPT) || cl_sigint) {
 			evp->e_event = E_TIMEOUT;
 		return (0);
 	}
-	if (cl_sighup) {
+	switch (cl_sigterm) {
+	case SIGHUP:
 		evp->e_event = E_SIGHUP;
 		return (0);
-	}
-	if (cl_sigterm) {
+	case SIGTERM:
 		evp->e_event = E_SIGTERM;
 		return (0);
+	default:
+		break;
 	}
 	if (cl_sigwinch) {
 		cl_sigwinch = 0;
