@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpd.conf.5,v 1.57 2021/08/11 18:35:02 sthen Exp $
+.\" $OpenBSD: snmpd.conf.5,v 1.58 2021/09/02 05:41:02 martijn Exp $
 .\"
 .\" Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 11 2021 $
+.Dd $Mdocdate: September 2 2021 $
 .Dt SNMPD.CONF 5
 .Os
 .Sh NAME
@@ -308,19 +308,48 @@ statement with a
 flag set.
 Traps over SNMPv3 are currently unsupported.
 .It Xo
-.Ic trap receiver Ar string
+.Ic trap receiver Ar address
 .Op Ic oid Ar oid-string
+.Ic snmpv2c
 .Op Ic community Ar string
 .Op Ic source-address Ar address
 .Xc
-Specify the address or FQDN of a remote trap receiver for outgoing traps
+Specify the
+.Ar address
+or FQDN of a remote trap receiver for outgoing traps
 sent by
 .Xr snmpd 8 .
 This option may be specified multiple times.
-The daemon will send outgoing traps using the revised SNMPv2 format and the
-configured trap community.
+The daemon will send outgoing traps in
+.Ic snmpv2c
+format.
 The default community is specified by the global
 .Ic trap community
+option.
+The IPv4 or IPv6 source address of the traps can be enforced using
+.It Xo
+.Ic trap receiver Ar address
+.Op Ic oid Ar oid-string
+.Op Ic snmpv3
+.Ic user Ar name Oo Ic seclevel Ar level Oc
+.Op Ic source-address Ar address
+.Xc
+Specify the
+.Ar address
+or FQDN of a remote trap receiver for outgoing traps
+sent by
+.Xr snmpd 8 .
+This option may be specified multiple times.
+The daemon will send outgoing traps in
+.Ic snmpv3
+format.
+.Ic user
+must point to an existing global
+.Ic user .
+If
+.Ic seclevel
+is not defined it defaults to the global
+.Ic seclevel
 option.
 The IPv4 or IPv6 source address of the traps can be enforced using
 .Ic source-address .

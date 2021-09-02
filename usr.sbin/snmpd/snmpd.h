@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.99 2021/08/09 18:14:53 martijn Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.100 2021/09/02 05:41:02 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -512,10 +512,18 @@ TAILQ_HEAD(addresslist, address);
     (ADDRESS_FLAG_SNMPV1 | ADDRESS_FLAG_SNMPV2 | ADDRESS_FLAG_SNMPV3)
 
 struct trap_address {
-	struct sockaddr_storage	 ss;
-	struct sockaddr_storage	 ss_local;
-	char			*sa_community;
-	struct ber_oid		*sa_oid;
+	struct sockaddr_storage	 ta_ss;
+	struct sockaddr_storage	 ta_sslocal;
+	int			 ta_version;
+	union {
+		char		 ta_community[SNMPD_MAXCOMMUNITYLEN];
+		struct {
+			char		*ta_usmusername;
+			struct usmuser	*ta_usmuser;
+			int		 ta_seclevel;
+		};
+	};
+	struct ber_oid		*ta_oid;
 
 	TAILQ_ENTRY(trap_address) entry;
 };
@@ -655,6 +663,7 @@ struct kif_arp	*karp_getaddr(struct sockaddr *, u_short, int);
 void		 snmpe(struct privsep *, struct privsep_proc *);
 void		 snmpe_shutdown(void);
 void		 snmpe_dispatchmsg(struct snmp_message *);
+void		 snmpe_response(struct snmp_message *);
 int		 snmp_messagecmp(struct snmp_message *, struct snmp_message *);
 RB_PROTOTYPE(snmp_messages, snmp_message, sm_entry, snmp_messagecmp)
 

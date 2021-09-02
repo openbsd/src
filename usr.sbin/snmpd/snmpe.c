@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.74 2021/08/09 18:14:53 martijn Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.75 2021/09/02 05:41:02 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -45,7 +45,6 @@ const char *snmpe_pdutype2string(enum snmp_pdutype);
 int	 snmpe_parse(struct snmp_message *);
 void	 snmpe_tryparse(int, struct snmp_message *);
 int	 snmpe_parsevarbinds(struct snmp_message *);
-void	 snmpe_response(struct snmp_message *);
 void	 snmpe_sig_handler(int sig, short, void *);
 int	 snmpe_bind(struct address *);
 void	 snmpe_recvmsg(int fd, short, void *);
@@ -98,7 +97,6 @@ snmpe_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 	struct address		*h;
 
 	kr_init();
-	trap_init();
 	timer_init();
 	usm_generate_keys();
 
@@ -124,6 +122,7 @@ snmpe_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 
 	log_info("snmpe %s: ready",
 	    tohexstr(env->sc_engineid, env->sc_engineid_len));
+	trap_init();
 }
 
 void

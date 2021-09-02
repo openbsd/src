@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.67 2021/08/10 16:14:00 martijn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.68 2021/09/02 05:41:02 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -134,11 +134,11 @@ typedef struct {
 %token	HANDLE DEFAULT SRCADDR TCP UDP PFADDRFILTER PORT
 %token	<v.string>	STRING
 %token	<v.number>	NUMBER
-%type	<v.string>	hostcmn
+%type	<v.string>	usmuser community optcommunity
 %type	<v.number>	listenproto listenflag listenflags
 %type	<v.string>	srcaddr port
 %type	<v.number>	optwrite yesno seclevel
-%type	<v.data>	objtype cmd
+%type	<v.data>	objtype cmd hostauth hostauthv3 usmauthopts usmauthopt
 %type	<v.oid>		oid hostoid trapoid
 %type	<v.auth>	auth
 %type	<v.enc>		enc
@@ -243,13 +243,13 @@ main		: LISTEN ON listen_udptcp
 			free($3);
 		}
 		| TRAP RECEIVER	host
-		| TRAP HANDLE hostcmn trapoid cmd {
-			struct trapcmd *cmd = $5.data;
+		| TRAP HANDLE trapoid cmd {
+			struct trapcmd *cmd = $4.data;
 
-			cmd->cmd_oid = $4;
+			cmd->cmd_oid = $3;
 
 			if (trapcmd_add(cmd) != 0) {
-				free($4);
+				free($3);
 				free(cmd);
 				yyerror("duplicate oid");
 				YYERROR;
@@ -268,8 +268,8 @@ main		: LISTEN ON listen_udptcp
 		| PFADDRFILTER yesno		{
 			conf->sc_pfaddrfilter = $2;
 		}
-		| SECLEVEL seclevel {
-			conf->sc_min_seclevel = $2;
+		| seclevel {
+			conf->sc_min_seclevel = $1;
 		}
 		| USER STRING			{
 			const char *errstr;
@@ -701,15 +701,93 @@ hostoid		: /* empty */				{ $$ = NULL; }
 		| OBJECTID oid				{ $$ = $2; }
 		;
 
-hostcmn		: /* empty */				{ $$ = NULL; }
-		| COMMUNITY STRING			{ $$ = $2; }
+usmuser		: USER STRING				{
+			if (strlen($2) > SNMPD_MAXUSERNAMELEN) {
+				yyerror("User name too long: %s", $2);
+				free($2);
+				YYERROR;
+			}
+			$$ = $2;
+		}
+		;
+
+community	: COMMUNITY STRING			{
+			if (strlen($2) > SNMPD_MAXCOMMUNITYLEN) {
+				yyerror("Community too long: %s", $2);
+				free($2);
+				YYERROR;
+			}
+			$$ = $2;
+		}
+		;
+
+optcommunity	: /* empty */				{ $$ = NULL; }
+		| community				{ $$ = $1; }
+		;
+
+usmauthopt	: usmuser				{
+			$$.data = $1;
+			$$.value = -1;
+		}
+		| seclevel				{
+			$$.data = 0;
+			$$.value = $1;
+		}
+		;
+
+usmauthopts	: /* empty */				{
+			$$.data = NULL;
+			$$.value = -1;
+		}
+		| usmauthopts usmauthopt		{
+			if ($2.data != NULL) {
+				if ($$.data != NULL) {
+					yyerror("user redefined");
+					free($2.data);
+					YYERROR;
+				}
+				$$.data = $2.data;
+			} else {
+				if ($$.value != -1) {
+					yyerror("seclevel redefined");
+					YYERROR;
+				}
+				$$.value = $2.value;
+			}
+		}
+		;
+
+hostauthv3	: usmauthopts				{
+			if ($1.data == NULL) {
+				yyerror("user missing");
+				YYERROR;
+			}
+			$$.data = $1.data;
+			$$.value = $1.value;
+		}
+		;
+
+hostauth	: hostauthv3				{
+			$$.type = SNMP_V3;
+			$$.data = $1.data;
+			$$.value = $1.value;
+		}
+		| SNMPV2 optcommunity			{
+			$$.type = SNMP_V2;
+			$$.data = $2;
+		}
+		| SNMPV3 hostauthv3			{
+			$$.type = SNMP_V3;
+			$$.data = $2.data;
+			$$.value = $2.value;
+		}
 		;
 
 srcaddr		: /* empty */				{ $$ = NULL; }
 		| SRCADDR STRING			{ $$ = $2; }
 		;
 
-hostdef		: STRING hostoid hostcmn srcaddr	{
+hostdef		: STRING hostoid hostauth srcaddr	{
 			struct sockaddr_storage ss;
 			struct trap_address *tr;
 
@@ -722,27 +800,35 @@ hostdef		: STRING hostoid hostcmn srcaddr	{
 				yyerror("invalid host: %s", $1);
 				free($1);
 				free($2);
-				free($3);
+				free($3.data);
 				free($4);
 				free(tr);
 				YYERROR;
 			}
 			free($1);
-			memcpy(&(tr->ss), &ss, sizeof(ss));
+			memcpy(&(tr->ta_ss), &ss, sizeof(ss));
 			if ($4 != NULL) {
 				if (host($1, "0", SOCK_DGRAM, &ss, 1) <= 0) {
 					yyerror("invalid host: %s", $1);
 					free($2);
-					free($3);
+					free($3.data);
 					free($4);
 					free(tr);
 					YYERROR;
 				}
 				free($4);
-				memcpy(&(tr->ss_local), &ss, sizeof(ss));
+				memcpy(&(tr->ta_sslocal), &ss, sizeof(ss));
 			}
-			tr->sa_oid = $2;
-			tr->sa_community = $3;
+			tr->ta_oid = $2;
+			tr->ta_version = $3.type;
+			if ($3.type == ADDRESS_FLAG_SNMPV2) {
+				(void)strlcpy(tr->ta_community, $3.data,
+				    sizeof(tr->ta_community));
+				free($3.data);
+			} else {
+				tr->ta_usmusername = $3.data;
+				tr->ta_seclevel = $3.value;
+			}
 			TAILQ_INSERT_TAIL(&(conf->sc_trapreceivers), tr, entry);
 		}
 		;
@@ -759,9 +845,9 @@ comma		: /* empty */
 		| ','
 		;
 
-seclevel	: NONE		{ $$ = 0; }
-		| AUTH		{ $$ = SNMP_MSGFLAG_AUTH; }
-		| ENC		{ $$ = SNMP_MSGFLAG_AUTH | SNMP_MSGFLAG_PRIV; }
+seclevel	: SECLEVEL NONE	{ $$ = 0; }
+		| SECLEVEL AUTH	{ $$ = SNMP_MSGFLAG_AUTH; }
+		| SECLEVEL ENC	{ $$ = SNMP_MSGFLAG_AUTH | SNMP_MSGFLAG_PRIV; }
 		;
 
 userspecs	: /* empty */
@@ -1393,10 +1479,19 @@ parse_config(const char *filename, u_int flags)
 		return (NULL);
 	}
 
-	if (conf->sc_trcommunity[0] == '\0') {
-		TAILQ_FOREACH(tr, &conf->sc_trapreceivers, entry) {
-			if (tr->sa_community == NULL) {
-				log_warnx("trap receiver: missing community");
+	TAILQ_FOREACH(tr, &conf->sc_trapreceivers, entry) {
+		if (tr->ta_version == SNMP_V2 &&
+		    tr->ta_community[0] == '\0' &&
+		    conf->sc_trcommunity[0] == '\0') {
+			log_warnx("trap receiver: missing community");
+			free(conf);
+			return (NULL);
+		}
+		if (tr->ta_version == SNMP_V3) {
+			tr->ta_usmuser = usm_finduser(tr->ta_usmusername);
+			if (tr->ta_usmuser == NULL) {
+				log_warnx("trap receiver: user not defined: %s",
+				    tr->ta_usmusername);
 				free(conf);
 				return (NULL);
 			}

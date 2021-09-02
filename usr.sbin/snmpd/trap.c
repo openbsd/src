@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.36 2020/09/06 15:51:28 martijn Exp $	*/
+/*	$OpenBSD: trap.c,v 1.37 2021/09/02 05:41:02 martijn Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
@@ -54,17 +54,13 @@ trap_init(void)
 int
 trap_send(struct ber_oid *oid, struct ber_element *elm)
 {
-	int			 ret = 0, s;
 	struct trap_address	*tr;
-	struct ber_element	*root, *b, *c, *trap;
-	struct ber		 ber;
-	char			*cmn;
-	ssize_t			 len;
-	u_int8_t		*ptr;
+	struct ber_element	*vblist, *trap;
 	struct			 ber_oid uptime = OID(MIB_sysUpTime);
 	struct			 ber_oid trapoid = OID(MIB_snmpTrapOID);
 	char			 ostr[SNMP_MAX_OID_STRLEN];
 	struct oid		 oa, ob;
+	struct snmp_message	*msg;
 
 	if (TAILQ_EMPTY(&snmpd_env->sc_trapreceivers))
 		return (0);
@@ -85,66 +81,72 @@ trap_send(struct ber_oid *oid, struct ber_element *elm)
 
 	/* Add mandatory varbind elements */
 	trap = ober_add_sequence(NULL);
-	c = ober_printf_elements(trap, "{Odt}{OO}",
+	vblist = ober_printf_elements(trap, "{Odt}{OO}",
 	    &uptime, smi_getticks(),
 	    BER_CLASS_APPLICATION, SNMP_T_TIMETICKS,
 	    &trapoid, oid);
 	if (elm != NULL)
-		ober_link_elements(c, elm);
-
-	bzero(&ber, sizeof(ber));
+		ober_link_elements(vblist, elm);
 
 	TAILQ_FOREACH(tr, &snmpd_env->sc_trapreceivers, entry) {
-		if (tr->sa_oid != NULL && tr->sa_oid->bo_n) {
+		if (tr->ta_oid != NULL && tr->ta_oid->bo_n) {
 			/* The trap receiver may want only a specified MIB */
-			bcopy(&tr->sa_oid->bo_id, &ob.o_oid,
+			bcopy(&tr->ta_oid->bo_id, &ob.o_oid,
 			    sizeof(ob.o_oid));
-			ob.o_oidlen = tr->sa_oid->bo_n;
+			ob.o_oidlen = tr->ta_oid->bo_n;
 			if (smi_oid_cmp(&oa, &ob) != 0)
 				continue;
 		}
 
-		if ((s = snmpd_socket_af(&tr->ss, SOCK_DGRAM)) == -1) {
-			ret = -1;
-			goto done;
+		if ((msg = calloc(1, sizeof(*msg))) == NULL)
+			fatal("malloc");
+		msg->sm_sock = snmpd_socket_af(&tr->ta_ss, SOCK_DGRAM);
+		if (msg->sm_sock == -1) {
+			log_warn("socket");
+			free(msg);
+			continue;
 		}
-		if (tr->ss_local.ss_family != 0) {
-			if (bind(s, (struct sockaddr *)&(tr->ss_local),
-			    tr->ss_local.ss_len) == -1) {
-				ret = -1;
-				goto done;
-			}
+		memcpy(&(msg->sm_ss), &(tr->ta_ss), sizeof(msg->sm_ss));
+		msg->sm_slen = tr->ta_ss.ss_len;
+		if (tr->ta_sslocal.ss_family != 0) {
+			memcpy(&(msg->sm_local_ss), &(tr->ta_sslocal),
+			    sizeof(msg->sm_local_ss));
+			msg->sm_local_slen = tr->ta_sslocal.ss_len;
+		}
+		msg->sm_version = tr->ta_version;
+		msg->sm_pdutype = SNMP_C_TRAPV2;
+		ober_set_application(&msg->sm_ber, smi_application);
+		msg->sm_request = arc4random();
+		if ((msg->sm_varbindresp = ober_dup(trap->be_sub)) == NULL)
+			fatal("malloc");
+
+		switch (msg->sm_version) {
+		case SNMP_V2:
+			(void)strlcpy(msg->sm_community, tr->ta_community,
+			    sizeof(msg->sm_community));
+			break;
+		case SNMP_V3:
+			msg->sm_msgid = msg->sm_request & INT32_MAX;
+			msg->sm_max_msg_size = READ_BUF_SIZE;
+			msg->sm_flags = tr->ta_seclevel != -1 ?
+			    tr->ta_seclevel : snmpd_env->sc_min_seclevel;
+			msg->sm_secmodel = SNMP_SEC_USM;
+			msg->sm_engine_time = snmpd_engine_time();
+			msg->sm_engine_boots = snmpd_env->sc_engine_boots;
+			memcpy(msg->sm_ctxengineid, snmpd_env->sc_engineid,
+			    snmpd_env->sc_engineid_len);
+			msg->sm_ctxengineid_len =
+			    snmpd_env->sc_engineid_len;
+			(void)strlcpy(msg->sm_username, tr->ta_usmusername,
+			    sizeof(msg->sm_username));
+			msg->sm_user = tr->ta_usmuser;
+			arc4random_buf(msg->sm_salt, sizeof(msg->sm_salt));
+			break;
 		}
 
-		cmn = tr->sa_community != NULL ?
-		    tr->sa_community : snmpd_env->sc_trcommunity;
-
-		/* SNMP header */
-		root = ober_add_sequence(NULL);
-		b = ober_printf_elements(root, "ds{tddd",
-		    SNMP_V2, cmn, BER_CLASS_CONTEXT, SNMP_C_TRAPV2,
-		    arc4random(), 0, 0);
-		ober_link_elements(b, trap);
-
-#ifdef DEBUG
-		smi_debug_elements(root);
-#endif
-		len = ober_write_elements(&ber, root);
-		if (ober_get_writebuf(&ber, (void *)&ptr) > 0 &&
-		    sendto(s, ptr, len, 0, (struct sockaddr *)&tr->ss,
-		    tr->ss.ss_len) != -1) {
-			snmpd_env->sc_stats.snmp_outpkts++;
-			ret++;
-		}
-
-		close(s);
-		ober_unlink_elements(b);
-		ober_free_elements(root);
+		snmpe_response(msg);
 	}
-
- done:
 	ober_free_elements(trap);
-	ober_free(&ber);
 
-	return (ret);
+	return 0;
 }
