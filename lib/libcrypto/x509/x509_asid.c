@@ -26,29 +26,113 @@
 
 #ifndef OPENSSL_NO_RFC3779
 
-/*
- * OpenSSL ASN.1 template translation of RFC 3779 3.2.3.
- */
+static const ASN1_TEMPLATE ASRange_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(ASRange, min),
+		.field_name = "min",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(ASRange, max),
+		.field_name = "max",
+		.item = &ASN1_INTEGER_it,
+	},
+};
 
-ASN1_SEQUENCE(ASRange) = {
-  ASN1_SIMPLE(ASRange, min, ASN1_INTEGER),
-  ASN1_SIMPLE(ASRange, max, ASN1_INTEGER)
-} ASN1_SEQUENCE_END(ASRange)
+const ASN1_ITEM ASRange_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = ASRange_seq_tt,
+	.tcount = sizeof(ASRange_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(ASRange),
+	.sname = "ASRange",
+};
 
-ASN1_CHOICE(ASIdOrRange) = {
-  ASN1_SIMPLE(ASIdOrRange, u.id,    ASN1_INTEGER),
-  ASN1_SIMPLE(ASIdOrRange, u.range, ASRange)
-} ASN1_CHOICE_END(ASIdOrRange)
+static const ASN1_TEMPLATE ASIdOrRange_ch_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(ASIdOrRange, u.id),
+		.field_name = "u.id",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(ASIdOrRange, u.range),
+		.field_name = "u.range",
+		.item = &ASRange_it,
+	},
+};
 
-ASN1_CHOICE(ASIdentifierChoice) = {
-  ASN1_SIMPLE(ASIdentifierChoice,      u.inherit,       ASN1_NULL),
-  ASN1_SEQUENCE_OF(ASIdentifierChoice, u.asIdsOrRanges, ASIdOrRange)
-} ASN1_CHOICE_END(ASIdentifierChoice)
+const ASN1_ITEM ASIdOrRange_it = {
+	.itype = ASN1_ITYPE_CHOICE,
+	.utype = offsetof(ASIdOrRange, type),
+	.templates = ASIdOrRange_ch_tt,
+	.tcount = sizeof(ASIdOrRange_ch_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(ASIdOrRange),
+	.sname = "ASIdOrRange",
+};
 
-ASN1_SEQUENCE(ASIdentifiers) = {
-  ASN1_EXP_OPT(ASIdentifiers, asnum, ASIdentifierChoice, 0),
-  ASN1_EXP_OPT(ASIdentifiers, rdi,   ASIdentifierChoice, 1)
-} ASN1_SEQUENCE_END(ASIdentifiers)
+static const ASN1_TEMPLATE ASIdentifierChoice_ch_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(ASIdentifierChoice, u.inherit),
+		.field_name = "u.inherit",
+		.item = &ASN1_NULL_it,
+	},
+	{
+		.flags = ASN1_TFLG_SEQUENCE_OF,
+		.tag = 0,
+		.offset = offsetof(ASIdentifierChoice, u.asIdsOrRanges),
+		.field_name = "u.asIdsOrRanges",
+		.item = &ASIdOrRange_it,
+	},
+};
+
+const ASN1_ITEM ASIdentifierChoice_it = {
+	.itype = ASN1_ITYPE_CHOICE,
+	.utype = offsetof(ASIdentifierChoice, type),
+	.templates = ASIdentifierChoice_ch_tt,
+	.tcount = sizeof(ASIdentifierChoice_ch_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(ASIdentifierChoice),
+	.sname = "ASIdentifierChoice",
+};
+
+static const ASN1_TEMPLATE ASIdentifiers_seq_tt[] = {
+	{
+		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(ASIdentifiers, asnum),
+		.field_name = "asnum",
+		.item = &ASIdentifierChoice_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_OPTIONAL,
+		.tag = 1,
+		.offset = offsetof(ASIdentifiers, rdi),
+		.field_name = "rdi",
+		.item = &ASIdentifierChoice_it,
+	},
+};
+
+const ASN1_ITEM ASIdentifiers_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = ASIdentifiers_seq_tt,
+	.tcount = sizeof(ASIdentifiers_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(ASIdentifiers),
+	.sname = "ASIdentifiers",
+};
 
 ASRange *
 d2i_ASRange(ASRange **a, const unsigned char **in, long len)

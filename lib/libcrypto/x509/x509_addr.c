@@ -29,29 +29,117 @@
  * OpenSSL ASN.1 template translation of RFC 3779 2.2.3.
  */
 
-ASN1_SEQUENCE(IPAddressRange) = {
-  ASN1_SIMPLE(IPAddressRange, min, ASN1_BIT_STRING),
-  ASN1_SIMPLE(IPAddressRange, max, ASN1_BIT_STRING)
-} ASN1_SEQUENCE_END(IPAddressRange)
+static const ASN1_TEMPLATE IPAddressRange_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(IPAddressRange, min),
+		.field_name = "min",
+		.item = &ASN1_BIT_STRING_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(IPAddressRange, max),
+		.field_name = "max",
+		.item = &ASN1_BIT_STRING_it,
+	},
+};
 
-ASN1_CHOICE(IPAddressOrRange) = {
-  ASN1_SIMPLE(IPAddressOrRange, u.addressPrefix, ASN1_BIT_STRING),
-  ASN1_SIMPLE(IPAddressOrRange, u.addressRange,  IPAddressRange)
-} ASN1_CHOICE_END(IPAddressOrRange)
+const ASN1_ITEM IPAddressRange_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = IPAddressRange_seq_tt,
+	.tcount = sizeof(IPAddressRange_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(IPAddressRange),
+	.sname = "IPAddressRange",
+};
 
-ASN1_CHOICE(IPAddressChoice) = {
-  ASN1_SIMPLE(IPAddressChoice,      u.inherit,           ASN1_NULL),
-  ASN1_SEQUENCE_OF(IPAddressChoice, u.addressesOrRanges, IPAddressOrRange)
-} ASN1_CHOICE_END(IPAddressChoice)
+static const ASN1_TEMPLATE IPAddressOrRange_ch_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(IPAddressOrRange, u.addressPrefix),
+		.field_name = "u.addressPrefix",
+		.item = &ASN1_BIT_STRING_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(IPAddressOrRange, u.addressRange),
+		.field_name = "u.addressRange",
+		.item = &IPAddressRange_it,
+	},
+};
 
-ASN1_SEQUENCE(IPAddressFamily) = {
-  ASN1_SIMPLE(IPAddressFamily, addressFamily,   ASN1_OCTET_STRING),
-  ASN1_SIMPLE(IPAddressFamily, ipAddressChoice, IPAddressChoice)
-} ASN1_SEQUENCE_END(IPAddressFamily)
+const ASN1_ITEM IPAddressOrRange_it = {
+	.itype = ASN1_ITYPE_CHOICE,
+	.utype = offsetof(IPAddressOrRange, type),
+	.templates = IPAddressOrRange_ch_tt,
+	.tcount = sizeof(IPAddressOrRange_ch_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(IPAddressOrRange),
+	.sname = "IPAddressOrRange",
+};
 
-ASN1_ITEM_TEMPLATE(IPAddrBlocks) =
-  ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0,
-                        IPAddrBlocks, IPAddressFamily)
+static const ASN1_TEMPLATE IPAddressChoice_ch_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(IPAddressChoice, u.inherit),
+		.field_name = "u.inherit",
+		.item = &ASN1_NULL_it,
+	},
+	{
+		.flags = ASN1_TFLG_SEQUENCE_OF,
+		.tag = 0,
+		.offset = offsetof(IPAddressChoice, u.addressesOrRanges),
+		.field_name = "u.addressesOrRanges",
+		.item = &IPAddressOrRange_it,
+	},
+};
+
+const ASN1_ITEM IPAddressChoice_it = {
+	.itype = ASN1_ITYPE_CHOICE,
+	.utype = offsetof(IPAddressChoice, type),
+	.templates = IPAddressChoice_ch_tt,
+	.tcount = sizeof(IPAddressChoice_ch_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(IPAddressChoice),
+	.sname = "IPAddressChoice",
+};
+
+static const ASN1_TEMPLATE IPAddressFamily_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(IPAddressFamily, addressFamily),
+		.field_name = "addressFamily",
+		.item = &ASN1_OCTET_STRING_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(IPAddressFamily, ipAddressChoice),
+		.field_name = "ipAddressChoice",
+		.item = &IPAddressChoice_it,
+	},
+};
+
+const ASN1_ITEM IPAddressFamily_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = IPAddressFamily_seq_tt,
+	.tcount = sizeof(IPAddressFamily_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(IPAddressFamily),
+	.sname = "IPAddressFamily",
+};
+
+static const ASN1_TEMPLATE IPAddrBlocks_item_tt =
+    ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, IPAddrBlocks,
+    IPAddressFamily)
 static_ASN1_ITEM_TEMPLATE_END(IPAddrBlocks)
 
 IPAddressRange *
@@ -1154,7 +1242,7 @@ static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
 const X509V3_EXT_METHOD v3_addr = {
     NID_sbgp_ipAddrBlock,       /* nid */
     0,                          /* flags */
-    ASN1_ITEM_ref(IPAddrBlocks), /* template */
+    &IPAddrBlocks_it,
     0, 0, 0, 0,                 /* old functions, ignored */
     0,                          /* i2s */
     0,                          /* s2i */
