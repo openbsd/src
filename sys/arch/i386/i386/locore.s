@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.191 2020/05/17 13:48:31 deraadt Exp $	*/
+/*	$OpenBSD: locore.s,v 1.192 2021/09/02 12:32:22 jasper Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -443,7 +443,7 @@ ENTRY(kcopy)
 	leave
 #endif
 	ret
-	
+
 /*****************************************************************************/
 
 /*
@@ -462,8 +462,8 @@ ENTRY(copyout)
 #endif
 	pushl	%esi
 	pushl	%edi
-	pushl	$0	
-	
+	pushl	$0
+
 	movl	16+FPADD(%esp),%esi
 	movl	20+FPADD(%esp),%edi
 	movl	24+FPADD(%esp),%eax
@@ -520,7 +520,7 @@ ENTRY(copyin)
 	pushl	$0
 	movl	$_C_LABEL(copy_fault),PCB_ONFAULT(%eax)
 	SMAP_STAC
-	
+
 	movl	16+FPADD(%esp),%esi
 	movl	20+FPADD(%esp),%edi
 	movl	24+FPADD(%esp),%eax
@@ -809,7 +809,7 @@ ENTRY(longjmp)
 #endif /* DDB */
 
 /*****************************************************************************/
-		
+
 /*
  * cpu_switchto(struct proc *old, struct proc *new)
  * Switch from the "old" proc to the "new" proc. If "old" is NULL, we
@@ -876,8 +876,8 @@ switch_exited:
 	cmpl	PCB_FPCPU(%ebx), %esi
 	jz	1f
 	orl	$CR0_TS,%ecx
-1:	
-#endif	
+1:
+#endif
 	movl	%ecx,%cr0
 
 	/* Interrupts are okay again. */
