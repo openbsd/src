@@ -13,6 +13,7 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <openssl/asn1.h>
@@ -619,7 +620,7 @@ static int ASIdentifierChoice_canonize(ASIdentifierChoice *choice)
             ASRange *r;
             switch (a->type) {
             case ASIdOrRange_id:
-                if ((r = OPENSSL_malloc(sizeof(*r))) == NULL) {
+                if ((r = calloc(1, sizeof(*r))) == NULL) {
                     X509V3error(ERR_R_MALLOC_FAILURE);
                     goto done;
                 }
