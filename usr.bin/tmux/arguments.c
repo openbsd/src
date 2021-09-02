@@ -1,4 +1,4 @@
-/* $OpenBSD: arguments.c,v 1.48 2021/08/27 17:25:55 nicm Exp $ */
+/* $OpenBSD: arguments.c,v 1.49 2021/09/02 07:11:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -302,10 +302,13 @@ args_copy(struct args *args, int argc, char **argv)
 	struct args_value	*value, *new_value;
 	u_int			 i;
 
+	cmd_log_argv(argc, argv, "%s", __func__);
+
 	new_args = args_create();
 	RB_FOREACH(entry, args_tree, &args->tree) {
-		if (entry->count == 1) {
-			args_set(new_args, entry->flag, NULL);
+		if (TAILQ_EMPTY(&entry->values)) {
+			for (i = 0; i < entry->count; i++)
+				args_set(new_args, entry->flag, NULL);
 			continue;
 		}
 		TAILQ_FOREACH(value, &entry->values, entry) {
@@ -314,6 +317,8 @@ args_copy(struct args *args, int argc, char **argv)
 			args_set(new_args, entry->flag, new_value);
 		}
 	}
+	if (args->count == 0)
+		return (new_args);
 	new_args->count = args->count;
 	new_args->values = xcalloc(args->count, sizeof *new_args->values);
 	for (i = 0; i < args->count; i++) {
