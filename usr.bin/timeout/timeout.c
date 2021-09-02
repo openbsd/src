@@ -1,4 +1,4 @@
-/* $OpenBSD: timeout.c,v 1.14 2021/09/02 08:52:10 job Exp $ */
+/* $OpenBSD: timeout.c,v 1.15 2021/09/02 09:08:08 deraadt Exp $ */
 
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -67,15 +67,15 @@ parse_duration(const char *duration)
 
 	ret = strtod(duration, &suffix);
 	if (ret == 0 && suffix == duration)
-		err(1, "invalid duration");
+		errx(1, "invalid duration");
 	if (ret < 0 || ret >= 100000000UL)
-		err(1, "invalid duration");
+		errx(1, "invalid duration");
 
 	if (suffix == NULL || *suffix == '\0')
 		return (ret);
 
 	if (suffix != NULL && *(suffix + 1) != '\0')
-		err(1, "invalid duration");
+		errx(1, "invalid duration");
 
 	switch (*suffix) {
 	case 's':
@@ -90,7 +90,7 @@ parse_duration(const char *duration)
 		ret *= 60 * 60 * 24;
 		break;
 	default:
-		err(1, "invalid duration");
+		errx(1, "invalid duration");
 	}
 
 	return (ret);
@@ -110,12 +110,12 @@ parse_signal(const char *str)
 			if (strcasecmp(str, sys_signame[i]) == 0)
 				return (i);
 		}
-		err(1, "invalid signal name");
+		errx(1, "invalid signal name");
 	}
 
 	sig = strtonum(str, 1, NSIG, &errstr);
 	if (errstr != NULL)
-		err(1, "signal %s %s", str, errstr);
+		errx(1, "signal %s %s", str, errstr);
 
 	return (int)sig;
 }
