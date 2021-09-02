@@ -1,4 +1,4 @@
-.\"   $OpenBSD: slowcgi.8,v 1.14 2018/08/13 16:54:50 florian Exp $
+.\"   $OpenBSD: slowcgi.8,v 1.15 2021/09/02 13:18:04 florian Exp $
 .\"
 .\" Copyright (c) 2013 Florian Obser <florian@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 13 2018 $
+.Dd $Mdocdate: September 2 2021 $
 .Dt SLOWCGI 8
 .Os
 .Sh NAME
@@ -27,6 +27,7 @@
 .Op Fl s Ar socket
 .Op Fl U Ar user
 .Op Fl u Ar user
+.Op Fl v
 .Sh DESCRIPTION
 .Nm
 is a server which implements the FastCGI Protocol to execute CGI scripts.
@@ -90,6 +91,8 @@ instead of default user www and
 to
 the home directory of
 .Ar user .
+.It Fl v
+Enable more verbose (debug) logging.
 .El
 .Sh SEE ALSO
 .Xr httpd 8

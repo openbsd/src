@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.60 2021/04/20 07:35:42 claudio Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.61 2021/09/02 13:18:04 florian Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -260,6 +260,7 @@ usage(void)
 struct timeval		timeout = { TIMEOUT_DEFAULT, 0 };
 struct slowcgi_proc	slowcgi_proc;
 int			debug = 0;
+int			verbose = 0;
 int			on = 1;
 char			*fcgi_socket = "/var/www/run/slowcgi.sock";
 
@@ -292,7 +293,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	while ((c = getopt(argc, argv, "dp:s:U:u:")) != -1) {
+	while ((c = getopt(argc, argv, "dp:s:U:u:v")) != -1) {
 		switch (c) {
 		case 'd':
 			debug++;
@@ -308,6 +309,9 @@ main(int argc, char *argv[])
 			break;
 		case 'u':
 			slowcgi_user = optarg;
+			break;
+		case 'v':
+			verbose++;
 			break;
 		default:
 			usage();
@@ -1261,9 +1265,10 @@ syslog_info(const char *fmt, ...)
 void
 syslog_debug(const char *fmt, ...)
 {
-	va_list ap;
-
-	va_start(ap, fmt);
-	vsyslog(LOG_DEBUG, fmt, ap);
-	va_end(ap);
+	if (verbose > 0) {
+		va_list ap;
+		va_start(ap, fmt);
+		vsyslog(LOG_DEBUG, fmt, ap);
+		va_end(ap);
+	}
 }
