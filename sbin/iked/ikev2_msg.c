@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.78 2021/09/01 15:30:06 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.79 2021/09/02 19:28:35 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -46,9 +46,9 @@
 void	 ikev1_recv(struct iked *, struct iked_message *);
 void	 ikev2_msg_response_timeout(struct iked *, void *);
 void	 ikev2_msg_retransmit_timeout(struct iked *, void *);
-int	 ikev2_check_frag_oversize(struct iked_sa *sa, struct ibuf *buf);
-int	 ikev2_send_encrypted_fragments(struct iked *env, struct iked_sa *sa,
-	    struct ibuf *in,uint8_t exchange, uint8_t firstpayload, int response);
+int	 ikev2_check_frag_oversize(struct iked_sa *, struct ibuf *);
+int	 ikev2_send_encrypted_fragments(struct iked *, struct iked_sa *,
+	    struct ibuf *, uint8_t, uint8_t, int);
 int	 ikev2_msg_encrypt_prepare(struct iked_sa *, struct ikev2_payload *,
 	    struct ibuf*, struct ibuf *, struct ike_header *, uint8_t, int);
 
