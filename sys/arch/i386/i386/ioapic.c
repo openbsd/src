@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioapic.c,v 1.41 2018/08/25 16:09:29 kettenis Exp $	*/
+/*	$OpenBSD: ioapic.c,v 1.42 2021/09/02 08:48:22 mpi Exp $	*/
 /* 	$NetBSD: ioapic.c,v 1.7 2003/07/14 22:32:40 lukem Exp $	*/
 
 /*-
@@ -308,6 +308,10 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 	}
 	sc->sc_reg = (volatile u_int32_t *)(bh + IOAPIC_REG);
 	sc->sc_data = (volatile u_int32_t *)(bh + IOAPIC_DATA);
+
+#ifdef MULTIPROCESSOR
+	mtx_init(&sc->sc_pic.pic_mutex, IPL_NONE);
+#endif
 
 	ver_sz = ioapic_read(sc, IOAPIC_VER);
 	sc->sc_apic_vers = (ver_sz & IOAPIC_VER_MASK) >> IOAPIC_VER_SHIFT;
