@@ -1,4 +1,4 @@
-/* $OpenBSD: timeout.c,v 1.15 2021/09/02 09:08:08 deraadt Exp $ */
+/* $OpenBSD: timeout.c,v 1.16 2021/09/02 09:35:17 deraadt Exp $ */
 
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -255,13 +255,14 @@ main(int argc, char **argv)
 			err(1, "execvp");
 	}
 
+	/* parent continues here */
+
 	if (pledge("stdio proc", NULL) == -1)
 		err(1, "pledge");
 
 	if (sigprocmask(SIG_BLOCK, &signals.sa_mask, NULL) == -1)
 		err(1, "sigprocmask");
 
-	/* parent continues here */
 	set_interval(first_kill);
 
 	for (;;) {
