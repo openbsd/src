@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.79 2021/05/21 14:41:57 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.80 2021/09/02 12:09:26 patrick Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -1700,7 +1700,7 @@ pmap_proc_iflush(struct process *pr, vaddr_t va, vsize_t len)
 	vsize_t off;
 
 	/*
-	 * If we're caled for the current processes, we can simply
+	 * If we're called for the current process, we can simply
 	 * flush the data cache to the point of unification and
 	 * invalidate the instruction cache.
 	 */
