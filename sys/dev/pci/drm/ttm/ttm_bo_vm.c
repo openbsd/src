@@ -971,8 +971,7 @@ ttm_bo_mmap(struct file *filp, voff_t off, vsize_t size,
 	if (unlikely(ret != 0))
 		goto out_unref;
 
-	bo->base.uobj.pgops = &ttm_bo_vm_ops;
-	bo->base.uobj.uo_refs++;
+	uvm_obj_init(&bo->base.uobj, &ttm_bo_vm_ops, 1);
 	return &bo->base.uobj;
 out_unref:
 	ttm_bo_put(bo);
