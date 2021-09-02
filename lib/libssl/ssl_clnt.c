@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.108 2021/08/30 19:25:43 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.109 2021/09/02 08:51:56 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1839,10 +1839,44 @@ ssl3_get_cert_status(SSL *s)
 	uint8_t			 status_type;
 
 	n = ssl3_get_message(s, SSL3_ST_CR_CERT_STATUS_A,
-	    SSL3_ST_CR_CERT_STATUS_B, SSL3_MT_CERTIFICATE_STATUS,
-	    16384, &ok);
+	    SSL3_ST_CR_CERT_STATUS_B, -1, 16384, &ok);
 	if (!ok)
 		return ((int)n);
+
+	if (S3I(s)->hs.tls12.message_type == SSL3_MT_SERVER_KEY_EXCHANGE) {
+		/*
+		 * Tell the callback the server did not send us an OSCP
+		 * response, and has decided to head directly to key exchange.
+		 */
+		if (s->ctx->internal->tlsext_status_cb) {
+			int ret;
+
+			free(s->internal->tlsext_ocsp_resp);
+			s->internal->tlsext_ocsp_resp = NULL;
+			s->internal->tlsext_ocsp_resp_len = 0;
+
+			ret = s->ctx->internal->tlsext_status_cb(s,
+			    s->ctx->internal->tlsext_status_arg);
+			if (ret == 0) {
+				al = SSL_AD_BAD_CERTIFICATE_STATUS_RESPONSE;
+				SSLerror(s, SSL_R_INVALID_STATUS_RESPONSE);
+				goto fatal_err;
+			}
+			if (ret < 0) {
+				al = SSL_AD_INTERNAL_ERROR;
+				SSLerror(s, ERR_R_MALLOC_FAILURE);
+				goto fatal_err;
+			}
+		}
+		S3I(s)->hs.tls12.reuse_message = 1;
+		return (1);
+	}
+
+	if (S3I(s)->hs.tls12.message_type != SSL3_MT_CERTIFICATE) {
+		al = SSL_AD_UNEXPECTED_MESSAGE;
+		SSLerror(s, SSL_R_BAD_MESSAGE_TYPE);
+		goto fatal_err;
+	}
 
 	if (n < 0) {
 		/* need at least status type + length */
