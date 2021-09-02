@@ -1,4 +1,4 @@
-/*	$OpenBSD: symlinks.c,v 1.6 2021/06/30 13:10:04 claudio Exp $ */
+/*	$OpenBSD: symlinks.c,v 1.7 2021/09/02 21:06:06 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -14,11 +14,11 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#include <sys/param.h>
 
 #include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <unistd.h>
 
 #include "extern.h"
@@ -36,7 +36,7 @@ symlink_read(const char *path)
 	ssize_t	 nsz = 0;
 	void	*pp;
 
-	for (sz = MAXPATHLEN; ; sz *= 2) {
+	for (sz = PATH_MAX; ; sz *= 2) {
 		if ((pp = realloc(buf, sz + 1)) == NULL) {
 			ERR("realloc");
 			free(buf);
@@ -75,7 +75,7 @@ symlinkat_read(int fd, const char *path)
 	ssize_t	 nsz = 0;
 	void	*pp;
 
-	for (sz = MAXPATHLEN; ; sz *= 2) {
+	for (sz = PATH_MAX; ; sz *= 2) {
 		if ((pp = realloc(buf, sz + 1)) == NULL) {
 			ERR("realloc");
 			free(buf);

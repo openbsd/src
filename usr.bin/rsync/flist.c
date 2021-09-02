@@ -1,4 +1,4 @@
-/*	$OpenBSD: flist.c,v 1.33 2021/08/29 13:43:46 claudio Exp $ */
+/*	$OpenBSD: flist.c,v 1.34 2021/09/02 21:06:06 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2019 Florian Obser <florian@openbsd.org>
@@ -15,13 +15,13 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#include <sys/param.h>
 #include <sys/stat.h>
 
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <fts.h>
+#include <limits.h>
 #include <inttypes.h>
 #include <search.h>
 #include <stdio.h>
@@ -428,7 +428,7 @@ out:
  */
 static int
 flist_recv_name(struct sess *sess, int fd, struct flist *f, uint8_t flags,
-    char last[MAXPATHLEN])
+    char last[PATH_MAX])
 {
 	uint8_t		 bval;
 	size_t		 partial = 0;
@@ -504,7 +504,7 @@ flist_recv_name(struct sess *sess, int fd, struct flist *f, uint8_t flags,
 
 	/* Record our last path and construct our filename. */
 
-	strlcpy(last, f->path, MAXPATHLEN);
+	strlcpy(last, f->path, PATH_MAX);
 	f->wpath = f->path;
 	return 1;
 }
@@ -593,7 +593,7 @@ flist_recv(struct sess *sess, int fd, struct flist **flp, size_t *sz)
 	const struct flist *fflast = NULL;
 	size_t		 flsz = 0, flmax = 0, lsz, gidsz = 0, uidsz = 0;
 	uint8_t		 flag;
-	char		 last[MAXPATHLEN];
+	char		 last[PATH_MAX];
 	int64_t		 lval; /* temporary values... */
 	int32_t		 ival;
 	uint32_t	 uival;

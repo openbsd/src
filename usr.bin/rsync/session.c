@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.8 2021/06/30 13:10:04 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.9 2021/09/02 21:06:06 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -14,7 +14,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#include <sys/param.h>
 
 #include <assert.h>
 #include <stdint.h>
