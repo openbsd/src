@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.h,v 1.27 2021/03/31 17:13:54 tb Exp $ */
+/* $OpenBSD: apps.h,v 1.28 2021/09/02 11:30:15 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -207,6 +207,7 @@ int unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold,
 #define DB_TYPE_REV	'R'
 #define DB_TYPE_EXP	'E'
 #define DB_TYPE_VAL	'V'
+#define DB_TYPE_SUSP	'S'
 
 typedef struct db_attr_st {
 	int unique_subject;
