@@ -1,4 +1,4 @@
-/* $OpenBSD: timeout.c,v 1.17 2021/09/02 11:26:54 semarie Exp $ */
+/* $OpenBSD: timeout.c,v 1.18 2021/09/02 21:50:24 jmc Exp $ */
 
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -53,8 +53,10 @@ static sig_atomic_t sig_ign = 0;
 static void __dead
 usage(void)
 {
-	fprintf(stderr, "usage: timeout [-s sig] [-k time] [--preserve-status]"
-	    " [--foreground] duration command\n");
+	fprintf(stderr,
+	    "usage: timeout [-k time] [-s sig] [--foreground]"
+	    " [--preserve-status] duration\n"
+	    "               command [args]\n");
 
 	exit(1);
 }

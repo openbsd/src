@@ -1,3 +1,4 @@
+.\"	$OpenBSD: timeout.1,v 1.2 2021/09/02 21:50:24 jmc Exp $
 .\"	$NetBSD: timeout.1,v 1.4 2016/10/13 06:22:26 dholland Exp $
 .\"
 .\" Copyright (c) 2014 Baptiste Daroussin <bapt@FreeBSD.org>
@@ -26,7 +27,7 @@
 .\"
 .\" $FreeBSD: head/usr.bin/timeout/timeout.1 268861 2014-07-18 22:56:59Z bapt $
 .\"
-.Dd July 19, 2014
+.Dd $Mdocdate: September 2 2021 $
 .Dt TIMEOUT 1
 .Os
 .Sh NAME
@@ -34,57 +35,53 @@
 .Nd run a command with a time limit
 .Sh SYNOPSIS
 .Nm
-.Op Fl Fl signal Ar sig | Fl s Ar sig
-.Op Fl Fl preserve-status
-.Op Fl Fl kill-after Ar time | Fl k Ar time
-.Op Fl Fl foreground
-.Ao Ar duration Ac
-.Ao Ar command Ac
-.Ao Ar args ... Ac
+.Op Fl k Ar time
+.Op Fl s Ar sig
+.Op Fl -foreground
+.Op Fl -preserve-status
+.Ar duration
+.Ar command
+.Op Ar args
 .Sh DESCRIPTION
+The
 .Nm
-starts the
-.Ar command
-with its
-.Ar args .
+utility executes
+.Ar command ,
+with any
+.Ar args ,
+and kills it if it is still running after the
+specified
+.Ar duration .
 If
-.Ar command
-is still running after
-.Ar duration ,
-it is killed.
-By default,
-.Dv SIGTERM
-is sent.
-.Bl -tag -width "-k time, --kill-after time"
-.It Fl Fl preserve-status
-Always exits with the same status as
-.Ar command
-even if it times out.
-.It Fl Fl foreground
-Do not propagate timeout to the
-.Ar command
-children.
-.It Fl s Ar sig , Fl Fl signal Ar sig
-Specify the signal to send on timeout.
-By default,
-.Dv SIGTERM
-is sent.
-.It Fl k Ar time , Fl Fl kill-after Ar time
-Send a second kill signal if
-.Ar command
-is still running after
+.Ar duration
+is 0, the timeout is disabled.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl k Ar time , Fl -kill-after Ns = Ns Ar time
+Send a second kill signal if the command is still running
 .Ar time
 after the first signal was sent.
+.It Fl s Ar sig , Fl -signal Ns = Ns Ar sig
+Specify the signal to send on timeout, instead of the default
+.Dv SIGTERM .
+.It Fl -foreground
+Do not propagate the timeout signal to children processes.
+.It Fl -preserve-status
+Always exit with the same status as
+.Ar command ,
+even if the timeout was reached.
 .El
 .Sh DURATION FORMAT
 .Ar duration
 and
 .Ar time
-can be integer or decimal numbers.
-Values without unit symbols are interpreted as seconds.
+may contain a decimal fraction.
+The value defaults to seconds unless a unit suffix is given.
 .Pp
-Supported unit symbols are:
-.Bl -tag -width indent -compact
+The supported unit suffixes are:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
 .It s
 seconds
 .It m
@@ -100,17 +97,18 @@ If the timeout was not reached, the exit status of
 is returned.
 .Pp
 If the timeout was reached and
-.Fl Fl preserve-status
-is set, the exit status of
+.Fl -preserve-status
+was set, the exit status of
 .Ar command
 is returned.
 If
-.Fl Fl preserve-status
-is not set, an exit status of 124 is returned.
+.Fl -preserve-status
+was not set, an exit status of 124 is returned.
 .Pp
 If
 .Ar command
-exits after receiving a signal, the exit status returned is the signal number plus 128.
+exited after receiving a signal, the exit status returned is the signal number
+plus 128.
 .Sh SEE ALSO
 .Xr kill 1 ,
 .Xr signal 3
