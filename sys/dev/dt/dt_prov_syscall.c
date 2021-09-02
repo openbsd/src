@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_prov_syscall.c,v 1.4 2020/07/04 10:19:09 mpi Exp $ */
+/*	$OpenBSD: dt_prov_syscall.c,v 1.5 2021/09/02 17:21:39 jasper Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -136,7 +136,7 @@ dt_prov_syscall_entry(struct dt_provider *dtpv, ...)
 	args = va_arg(ap, register_t*);
 	va_end(ap);
 
-	KASSERT((argsize / sizeof(register_t)) <= DTMAXSYSARGS);
+	KASSERT((argsize / sizeof(register_t)) <= DTMAXFUNCARGS);
 
 	if (sysnum < 0 || sysnum >= dtps_nsysent)
 		return;
@@ -154,7 +154,7 @@ dt_prov_syscall_entry(struct dt_provider *dtpv, ...)
 			continue;
 
 		if (ISSET(dp->dp_evtflags, DTEVT_FUNCARGS))
-			memcpy(dtev->dtev_sysargs, args, argsize);
+			memcpy(dtev->dtev_args, args, argsize);
 
 		dt_pcb_ring_consume(dp, dtev);
 	}
@@ -196,13 +196,13 @@ dt_prov_syscall_return(struct dt_provider *dtpv, ...)
 			continue;
 
 		if (error) {
-			dtev->dtev_sysretval[0] = -1;
-			dtev->dtev_sysretval[1] = 0;
-			dtev->dtev_syserror = error;
+			dtev->dtev_retval[0] = -1;
+			dtev->dtev_retval[1] = 0;
+			dtev->dtev_error = error;
 		} else {
-			dtev->dtev_sysretval[0] = retval[0];
-			dtev->dtev_sysretval[1] = retval[1];
-			dtev->dtev_syserror = 0;
+			dtev->dtev_retval[0] = retval[0];
+			dtev->dtev_retval[1] = retval[1];
+			dtev->dtev_error = 0;
 		}
 
 		dt_pcb_ring_consume(dp, dtev);

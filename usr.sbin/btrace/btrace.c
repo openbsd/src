@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.45 2021/09/01 13:21:24 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.46 2021/09/02 17:21:39 jasper Exp $ */
 
 /*
  * Copyright (c) 2019 - 2021 Martin Pieuchot <mpi@openbsd.org>
@@ -653,7 +653,7 @@ builtin_arg(struct dt_evt *dtev, enum bt_argtype dat)
 	static char buf[sizeof("18446744073709551615")]; /* UINT64_MAX */
 
 	snprintf(buf, sizeof(buf), "%lu",
-	    dtev->dtev_sysargs[dat - B_AT_BI_ARG0]);
+	    dtev->dtev_args[dat - B_AT_BI_ARG0]);
 
 	return buf;
 }
@@ -882,7 +882,7 @@ stmt_store(struct bt_stmt *bs, struct dt_evt *dtev)
 		xabort("store not implemented for type %d", ba->ba_type);
 	}
 
-	debug("bv=%p var '%s' store (%p) \n", bv, bv_name(bv), bv->bv_value);
+	debug("bv=%p var '%s' store (%p)\n", bv, bv_name(bv), bv->bv_value);
 }
 
 /*
@@ -1268,10 +1268,10 @@ ba2long(struct bt_arg *ba, struct dt_evt *dtev)
 		val = builtin_nsecs(dtev);
 		break;
 	case B_AT_BI_ARG0 ... B_AT_BI_ARG9:
-	    	val = dtev->dtev_sysargs[ba->ba_type - B_AT_BI_ARG0];
+		val = dtev->dtev_args[ba->ba_type - B_AT_BI_ARG0];
 		break;
 	case B_AT_BI_RETVAL:
-		val = dtev->dtev_sysretval[0];
+		val = dtev->dtev_retval[0];
 		break;
 	case B_AT_OP_PLUS ... B_AT_OP_LOR:
 		val = baexpr2long(ba, dtev);
@@ -1331,7 +1331,7 @@ ba2str(struct bt_arg *ba, struct dt_evt *dtev)
 		str = builtin_arg(dtev, ba->ba_type);
 		break;
 	case B_AT_BI_RETVAL:
-		snprintf(buf, sizeof(buf), "%ld", (long)dtev->dtev_sysretval[0]);
+		snprintf(buf, sizeof(buf), "%ld", (long)dtev->dtev_retval[0]);
 		str = buf;
 		break;
 	case B_AT_MAP:

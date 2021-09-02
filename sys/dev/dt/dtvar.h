@@ -1,4 +1,4 @@
-/*	$OpenBSD: dtvar.h,v 1.5 2020/07/04 10:19:09 mpi Exp $ */
+/*	$OpenBSD: dtvar.h,v 1.6 2021/09/02 17:21:39 jasper Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -34,9 +34,9 @@
 #define DTMAXCOMLEN	16
 
 /*
- * Maximum number of arguments passed to a syscall.
+ * Maximum number of arguments passed to a function.
  */
-#define DTMAXSYSARGS	10
+#define DTMAXFUNCARGS	10
 
 /*
  * Event state: where to store information when a probe fires.
@@ -54,15 +54,15 @@ struct dt_evt {
 	struct stacktrace 	dtev_kstack;	/* kernel stack frame */
 	char			dtev_comm[DTMAXCOMLEN+1]; /* current pr. name */
 	union {
-		register_t		E_entry[DTMAXSYSARGS];
+		register_t		E_entry[DTMAXFUNCARGS];
 		struct {
 			register_t		__retval[2];
 			int			__error;
 		} E_return;
 	} _sys;
-#define dtev_sysargs	_sys.E_entry		/* syscall args. */
-#define dtev_sysretval	_sys.E_return.__retval	/* syscall retval */
-#define dtev_syserror	_sys.E_return.__error	/* syscall error */
+#define dtev_args	_sys.E_entry		/* function args. */
+#define dtev_retval	_sys.E_return.__retval	/* function retval */
+#define dtev_error	_sys.E_return.__error	/* function error */
 
 };
 
