@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2017/08/12 22:20:28 bluhm Exp $
+# $OpenBSD: Makefile,v 1.7 2021/09/02 07:14:15 jasper Exp $
 
 # initial SUID handling bits taken from regress/sys/kern/setuid/
 
@@ -114,8 +114,7 @@ ${t}:
 	    /bin/echo $$tdir/bin/echo; \
 	${SUDO} install -o ${BINOWN} -g ${BINGRP} -m 4555 \
 	    /usr/bin/doas $$tdir/usr/bin/doas; \
-	${SUDO} env MALLOC_OPTIONS=S chroot -u nobody $$tdir \
-	    /usr/bin/doas echo okay
+	${SUDO} chroot -u nobody $$tdir /usr/bin/doas echo okay
 . endif
 .endfor
 

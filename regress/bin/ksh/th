@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: th,v 1.2 2017/10/23 17:11:07 anton Exp $
+#	$OpenBSD: th,v 1.3 2021/09/02 07:14:15 jasper Exp $
 
 
 #
@@ -56,8 +56,7 @@
 #					missing, NAME is removed from the
 #					environment.  Programs are run with
 #					the following minimal environment:
-#					    USER, LOGNAME, HOME, PATH, SHELL,
-#					    MALLOC_OPTIONS=S
+#					    USER, LOGNAME, HOME, PATH, SHELL
 #					(values from the current environment
 #					takes higher precedence).
 #	file-setup		    mps Used to create files, directories
@@ -233,10 +232,8 @@ grep($do_test{$_} = 1, @ARGV);
 $all_tests = @ARGV == 0;
 
 # Set up a very minimal environment
-%new_env = (
-    MALLOC_OPTIONS => 'S',
-);
-foreach $env (('USER', 'LOGNAME', 'HOME', 'PATH', 'SHELL', 'MALLOC_OPTIONS')) {
+%new_env = ();
+foreach $env (('USER', 'LOGNAME', 'HOME', 'PATH', 'SHELL')) {
     $new_env{$env} = $ENV{$env} if defined $ENV{$env};
 }
 if (defined $opt_e) {

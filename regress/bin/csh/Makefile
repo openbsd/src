@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2020/12/17 00:51:11 bluhm Exp $
+# $OpenBSD: Makefile,v 1.7 2021/09/02 07:14:15 jasper Exp $
 
 CSH=	/bin/csh
 
@@ -20,7 +20,6 @@ REGRESS_TARGETS+=	env
 .SUFFIXES: .in
 
 .in:
-	env -i MALLOC_OPTIONS=S ${CSH} <${.CURDIR}/${@}.in 2>&1 | \
-		diff -u ${.CURDIR}/${@}.ok -
+	${CSH} <${.CURDIR}/${@}.in 2>&1 | diff -u ${.CURDIR}/${@}.ok -
 
 .include <bsd.regress.mk>
