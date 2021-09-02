@@ -19,6 +19,7 @@
 #include <openssl/asn1t.h>
 #include <openssl/bn.h>
 #include <openssl/conf.h>
+#include <openssl/err.h>
 #include <openssl/x509.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
