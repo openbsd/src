@@ -1,4 +1,4 @@
-/*	$OpenBSD: macros.h,v 1.3 2021/09/02 12:40:44 mbuhl Exp $	*/
+/*	$OpenBSD: macros.h,v 1.4 2021/09/02 15:28:41 mbuhl Exp $	*/
 /* Public domain - Moritz Buhl */
 
 #include <sys/param.h>
@@ -56,6 +56,7 @@ sysctlbyname(char* s, void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 #define kinfo_proc2	kinfo_proc
 #define KERN_PROC2	KERN_PROC
 #define reallocarr(pp, n, s)	((*pp = reallocarray(*pp, n, s)), *pp == NULL)
+#define LSSTOP		SSTOP
 
 /* t_mlock.c */
 #define MAP_WIRED	__MAP_NOREPLACE

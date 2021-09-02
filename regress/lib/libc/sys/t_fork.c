@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_fork.c,v 1.1 2021/09/02 12:40:44 mbuhl Exp $	*/
+/*	$OpenBSD: t_fork.c,v 1.2 2021/09/02 15:28:41 mbuhl Exp $	*/
 /*	$NetBSD: t_fork.c,v 1.4 2019/04/06 15:41:54 kamil Exp $	*/
 
 /*-
@@ -34,6 +34,9 @@ __COPYRIGHT("@(#) Copyright (c) 2018, 2019\
 __RCSID("$NetBSD: t_fork.c,v 1.4 2019/04/06 15:41:54 kamil Exp $");
 
 #include <sys/param.h>
+#ifdef __OpenBSD__
+#include <sys/proc.h>
+#endif
 #include <sys/types.h>
 #include <sys/sysctl.h>
 #include <sys/wait.h>
@@ -118,10 +121,8 @@ await_stopped_child(pid_t process)
 				continue;
 			if (p[i].p_ppid != process)
 				continue;
-#ifndef __OpenBSD__
 			if (p[i].p_stat != LSSTOP)
 				continue;
-#endif
 			child = p[i].p_pid;
 			break;
 		}

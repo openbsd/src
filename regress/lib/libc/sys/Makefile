@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2021/09/02 12:40:44 mbuhl Exp $
+#	$OpenBSD: Makefile,v 1.12 2021/09/02 15:28:41 mbuhl Exp $
 
 # Copyright (c) 2019 Moritz Buhl <openbsd@moritzbuhl.de>
 # Copyright (c) 2019 Alexander Bluhm <bluhm@openbsd.org>
@@ -66,6 +66,7 @@ PROGS +=	t_stat
 PROGS +=	t_syscall
 PROGS +=	t_truncate
 PROGS +=	t_umask t_unlink
+PROGS +=	t_vfork
 PROGS +=	t_wait_noproc
 PROGS +=	t_wait_noproc_wnohang
 PROGS +=	t_write
@@ -77,6 +78,11 @@ REGRESS_EXPECTED_FAILURES +=	run-t_msgrcv-3
 REGRESS_EXPECTED_FAILURES +=	run-t_pipe2-2
 REGRESS_EXPECTED_FAILURES +=	run-t_stat-5
 REGRESS_EXPECTED_FAILURES +=	run-t_unlink-2
+
+run-t_vfork-2:
+	# SIGSTOP with vfork is masked before exec(3)/exit(3)
+	# see NetBSD: kern_sig.c,v 1.345
+	@echo DISABLED
 
 . for p in ${PROGS}
 SRCS_$p =		$p.c atf-c.c

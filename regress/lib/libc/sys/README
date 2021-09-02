@@ -28,6 +28,7 @@ t_revoke 		- remove basic tests, revoke only on ttys supported
 t_select 		- remove sigset_t struct as it is int on OpenBSD
 t_setrlimit		- remove unsupported resource parameters and lwp
 t_syscall		- add __syscall prototype
+t_vfork			- SIGSTOP is masked before exec(3)/exit(3)
 t_wait_noproc		- waitid and wait6 are not implemented
 t_wait_noproc_wnohang	- waitid and wait6 are not implemented
 
@@ -38,7 +39,6 @@ t_msgrcv	- msgrcv(id, &r, 3 - 1, 0x41, 004000) != -1
 t_pipe2 	- closefrom(4) == -1, remove F_GETNOSIGPIPE and nosigpipe test
 t_stat 		- invalid GID with doas
 t_unlink	- wrong errno according to POSIX
-t_vfork		- !(((status) & 0177) == 0) evaluated to false, SIGSTOP wrong
 
 Excluded tests:
 t_clock_nanosleep	- not available
