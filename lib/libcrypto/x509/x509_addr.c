@@ -138,10 +138,13 @@ const ASN1_ITEM IPAddressFamily_it = {
 	.sname = "IPAddressFamily",
 };
 
-static const ASN1_TEMPLATE IPAddrBlocks_item_tt =
-    ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, IPAddrBlocks,
-    IPAddressFamily)
-static_ASN1_ITEM_TEMPLATE_END(IPAddrBlocks)
+static const ASN1_TEMPLATE IPAddrBlocks_item_tt = {
+	.flags = ASN1_TFLG_SEQUENCE_OF,
+	.tag = 0,
+	.offset = 0,
+	.field_name = "IPAddrBlocks",
+	.item = &IPAddressFamily_it,
+};
 
 IPAddressRange *
 d2i_IPAddressRange(IPAddressRange **a, const unsigned char **in, long len)
