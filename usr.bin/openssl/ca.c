@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.44 2021/09/02 11:07:56 inoguchi Exp $ */
+/* $OpenBSD: ca.c,v 1.45 2021/09/02 11:37:44 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2152,16 +2152,16 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 	if (rrow != NULL) {
 		BIO_printf(bio_err,
 		    "The matching entry has the following details\n");
-		if (rrow[DB_type][0] == 'E')
+		if (rrow[DB_type][0] == DB_TYPE_EXP)
 			p = "Expired";
-		else if (rrow[DB_type][0] == 'R')
+		else if (rrow[DB_type][0] == DB_TYPE_REV)
 			p = "Revoked";
-		else if (rrow[DB_type][0] == 'V')
+		else if (rrow[DB_type][0] == DB_TYPE_VAL)
 			p = "Valid";
 		else
 			p = "\ninvalid type, Data base error\n";
 		BIO_printf(bio_err, "Type	  :%s\n", p);
-		if (rrow[DB_type][0] == 'R') {
+		if (rrow[DB_type][0] == DB_TYPE_REV) {
 			p = rrow[DB_exp_date];
 			if (p == NULL)
 				p = "undef";
@@ -2260,7 +2260,7 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 		goto err;
 	}
 	(void) strlcpy(row[DB_file], "unknown", 8);
-	row[DB_type][0] = 'V';
+	row[DB_type][0] = DB_TYPE_VAL;
 	row[DB_type][1] = '\0';
 
 	if ((irow = reallocarray(NULL, DB_NUMBER + 1, sizeof(char *))) ==
@@ -2511,7 +2511,7 @@ do_revoke(X509 *x509, CA_DB *db, int type, char *value)
 			goto err;
 		}
 		(void) strlcpy(row[DB_file], "unknown", 8);
-		row[DB_type][0] = 'V';
+		row[DB_type][0] = DB_TYPE_VAL;
 		row[DB_type][1] = '\0';
 
 		if ((irow = reallocarray(NULL, sizeof(char *),
@@ -2540,7 +2540,7 @@ do_revoke(X509 *x509, CA_DB *db, int type, char *value)
 		BIO_printf(bio_err, "ERROR:name does not match %s\n",
 		    row[DB_name]);
 		goto err;
-	} else if (rrow[DB_type][0] == 'R') {
+	} else if (rrow[DB_type][0] == DB_TYPE_REV) {
 		BIO_printf(bio_err, "ERROR:Already revoked, serial number %s\n",
 		    row[DB_serial]);
 		goto err;
@@ -2552,7 +2552,7 @@ do_revoke(X509 *x509, CA_DB *db, int type, char *value)
 			BIO_printf(bio_err, "Error in revocation arguments\n");
 			goto err;
 		}
-		rrow[DB_type][0] = 'R';
+		rrow[DB_type][0] = DB_TYPE_REV;
 		rrow[DB_type][1] = '\0';
 		rrow[DB_rev_date] = rev_str;
 	}
@@ -2608,19 +2608,19 @@ get_certificate_status(const char *serial, CA_DB *db)
 		    row[DB_serial]);
 		ok = -1;
 		goto err;
-	} else if (rrow[DB_type][0] == 'V') {
+	} else if (rrow[DB_type][0] == DB_TYPE_VAL) {
 		BIO_printf(bio_err, "%s=Valid (%c)\n",
 		    row[DB_serial], rrow[DB_type][0]);
 		goto err;
-	} else if (rrow[DB_type][0] == 'R') {
+	} else if (rrow[DB_type][0] == DB_TYPE_REV) {
 		BIO_printf(bio_err, "%s=Revoked (%c)\n",
 		    row[DB_serial], rrow[DB_type][0]);
 		goto err;
-	} else if (rrow[DB_type][0] == 'E') {
+	} else if (rrow[DB_type][0] == DB_TYPE_EXP) {
 		BIO_printf(bio_err, "%s=Expired (%c)\n",
 		    row[DB_serial], rrow[DB_type][0]);
 		goto err;
-	} else if (rrow[DB_type][0] == 'S') {
+	} else if (rrow[DB_type][0] == DB_TYPE_SUSP) {
 		BIO_printf(bio_err, "%s=Suspended (%c)\n",
 		    row[DB_serial], rrow[DB_type][0]);
 		goto err;
@@ -2671,7 +2671,7 @@ do_updatedb(CA_DB *db)
 	for (i = 0; i < sk_OPENSSL_PSTRING_num(db->db->data); i++) {
 		rrow = sk_OPENSSL_PSTRING_value(db->db->data, i);
 
-		if (rrow[DB_type][0] == 'V') {
+		if (rrow[DB_type][0] == DB_TYPE_VAL) {
 			/* ignore entries that are not valid */
 			if (strncmp(rrow[DB_exp_date], "49", 2) <= 0)
 				db_y2k = 1;
@@ -2681,7 +2681,7 @@ do_updatedb(CA_DB *db)
 			if (db_y2k == a_y2k) {
 				/* all on the same y2k side */
 				if (strcmp(rrow[DB_exp_date], a_tm_s) <= 0) {
-					rrow[DB_type][0] = 'E';
+					rrow[DB_type][0] = DB_TYPE_EXP;
 					rrow[DB_type][1] = '\0';
 					cnt++;
 
@@ -2689,7 +2689,7 @@ do_updatedb(CA_DB *db)
 					    rrow[DB_serial]);
 				}
 			} else if (db_y2k < a_y2k) {
-				rrow[DB_type][0] = 'E';
+				rrow[DB_type][0] = DB_TYPE_EXP;
 				rrow[DB_type][1] = '\0';
 				cnt++;
 
