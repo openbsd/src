@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_unveil.c,v 1.49 2021/08/30 09:05:44 claudio Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.50 2021/09/02 12:35:23 claudio Exp $	*/
 
 /*
  * Copyright (c) 2017-2019 Bob Beck <beck@openbsd.org>
@@ -558,8 +558,6 @@ unveil_flagmatch(struct nameidata *ni, u_char flags)
 #ifdef DEBUG_UNVEIL
 			printf("unveil lacks UNVEIL_READ\n");
 #endif
-			if (flags & UNVEIL_USERSET)
-				ni->ni_unveil_eacces = 1;
 			return 0;
 		}
 	}
@@ -568,8 +566,6 @@ unveil_flagmatch(struct nameidata *ni, u_char flags)
 #ifdef DEBUG_UNVEIL
 			printf("unveil lacks UNVEIL_WRITE\n");
 #endif
-			if (flags & UNVEIL_USERSET)
-				ni->ni_unveil_eacces = 1;
 			return 0;
 		}
 	}
@@ -578,8 +574,6 @@ unveil_flagmatch(struct nameidata *ni, u_char flags)
 #ifdef DEBUG_UNVEIL
 			printf("unveil lacks UNVEIL_EXEC\n");
 #endif
-			if (flags & UNVEIL_USERSET)
-				ni->ni_unveil_eacces = 1;
 			return 0;
 		}
 	}
@@ -588,8 +582,6 @@ unveil_flagmatch(struct nameidata *ni, u_char flags)
 #ifdef DEBUG_UNVEIL
 			printf("unveil lacks UNVEIL_CREATE\n");
 #endif
-			if (flags & UNVEIL_USERSET)
-				ni->ni_unveil_eacces = 1;
 			return 0;
 		}
 	}
@@ -644,13 +636,11 @@ unveil_start_relative(struct proc *p, struct nameidata *ni, struct vnode *dp)
 	}
 
 	/*
-	 * If the flags don't match, we have no match from our
-	 * starting point. If we do not find a matching unveil later
-	 * on a later component of this lookup, we'll be out of luck
+	 * Store this match for later use. Flags are checked at the end.
 	 */
-	if (uv && (unveil_flagmatch(ni, uv->uv_flags))) {
+	if (uv) {
 #ifdef DEBUG_UNVEIL
-		printf("unveil: %s(%d): cwd unveil at %p matches",
+		printf("unveil: %s(%d): relative unveil at %p matches",
 		    pr->ps_comm, pr->ps_pid, uv);
 #endif
 		ni->ni_unveil_match = uv;
@@ -678,26 +668,18 @@ unveil_check_component(struct proc *p, struct nameidata *ni, struct vnode *dp)
 		uv = unveil_covered(ni->ni_unveil_match, dp, p);
 
 		/* clear the match when we DOTDOT above it */
-		if (ni->ni_unveil_match &&
-		    ni->ni_unveil_match->uv_vp == dp) {
+		if (ni->ni_unveil_match && ni->ni_unveil_match->uv_vp == dp)
 			ni->ni_unveil_match = NULL;
-			ni->ni_unveil_eacces = 0;
-		}
 	} else
 		uv = unveil_lookup(dp, pr, NULL);
 
 	if (uv != NULL) {
-		/* if directory flags match, it's a match */
-		if (unveil_flagmatch(ni, uv->uv_flags)) {
-			if (uv->uv_flags & UNVEIL_USERSET) {
-				ni->ni_unveil_match = uv;
+		/* update match */
+		ni->ni_unveil_match = uv;
 #ifdef DEBUG_UNVEIL
-				printf("unveil: %s(%d): component "
-				    "directory match for vnode %p\n",
-				    pr->ps_comm, pr->ps_pid, dp);
+		printf("unveil: %s(%d): component directory match for "
+		    "vnode %p\n", pr->ps_comm, pr->ps_pid, dp);
 #endif
-			}
-		}
 	}
 }
 
@@ -709,7 +691,7 @@ int
 unveil_check_final(struct proc *p, struct nameidata *ni)
 {
 	struct process *pr = p->p_p;
-	struct unveil *uv = NULL;
+	struct unveil *uv = NULL, *nuv = NULL;
 	struct unvname *tname = NULL;
 
 	if (ni->ni_pledge == PLEDGE_UNVEIL || pr->ps_uvpaths == NULL)
@@ -722,6 +704,7 @@ unveil_check_final(struct proc *p, struct nameidata *ni)
 #endif
 		return (0);
 	}
+
 	if (ni->ni_vp != NULL && ni->ni_vp->v_type == VDIR) {
 		/* We are matching a directory terminal component */
 		uv = unveil_lookup(ni->ni_vp, pr, NULL);
@@ -745,22 +728,25 @@ unveil_check_final(struct proc *p, struct nameidata *ni)
 				return ENOENT;
 
 		}
-		/* directory and flags match, update match */
-		ni->ni_unveil_match = uv;
-		goto done;
+		/* directory and flags match, success */
+#ifdef DEBUG_UNVEIL
+		printf("unveil: %s(%d): matched directory \"%s\" at vnode %p\n",
+		    pr->ps_comm, pr->ps_pid, ni->ni_cnd.cn_nameptr,
+		    uv->uv_vp);
+#endif
+		return (0);
 	}
+
 	/* Otherwise, we are matching a non-terminal component */
 	uv = unveil_lookup(ni->ni_dvp, pr, NULL);
 	if (uv == NULL) {
 #ifdef DEBUG_UNVEIL
-		printf("unveil: %s(%d) no match for directory"
-		    " vnode %p\n",
+		printf("unveil: %s(%d) no match for directory vnode %p\n",
 		    pr->ps_comm, pr->ps_pid, ni->ni_dvp);
 #endif
 		goto done;
 	}
-	if ((tname = unveil_namelookup(uv, ni->ni_cnd.cn_nameptr))
-	    == NULL) {
+	if ((tname = unveil_namelookup(uv, ni->ni_cnd.cn_nameptr)) == NULL) {
 #ifdef DEBUG_UNVEIL
 		printf("unveil: %s(%d) no match for terminal '%s' in "
 		    "directory vnode %p\n",
@@ -785,12 +771,17 @@ unveil_check_final(struct proc *p, struct nameidata *ni)
 				pr->ps_acflag |= AUNVEIL;
 				return EACCES;
 			}
+			/* start backtrack from this node */
+			ni->ni_unveil_match = uv;
 			goto done;
 		}
-		/* directory flags match, update match */
-		if (uv->uv_flags & UNVEIL_USERSET)
-			ni->ni_unveil_match = uv;
-		goto done;
+		/* directory flags match, success */
+#ifdef DEBUG_UNVEIL
+		printf("unveil: %s(%d): matched \"%s\" underneath vnode %p\n",
+		    pr->ps_comm, pr->ps_pid, ni->ni_cnd.cn_nameptr,
+		    uv->uv_vp);
+#endif
+		return (0);
 	}
 	if (!unveil_flagmatch(ni, tname->un_flags)) {
 		/* do flags match for matched name */
@@ -801,28 +792,43 @@ unveil_check_final(struct proc *p, struct nameidata *ni)
 		pr->ps_acflag |= AUNVEIL;
 		return EACCES;
 	}
-	/* name and flags match in this dir. update match*/
-	ni->ni_unveil_match = uv;
+	/* name and flags match. success */
+#ifdef DEBUG_UNVEIL
+	printf("unveil: %s(%d) matched terminal '%s'\n",
+	    pr->ps_comm, pr->ps_pid, tname->un_name);
+#endif
+	return (0);
 
 done:
-	if (ni->ni_unveil_match) {
+	/*
+	 * last component did not match, check previous matches if
+	 * access is allowed or not.
+	 */
+	for (uv = ni->ni_unveil_match; uv != NULL; uv = nuv) {
+		if (unveil_flagmatch(ni, uv->uv_flags)) {
 #ifdef DEBUG_UNVEIL
-		printf("unveil: %s(%d): matched \"%s\" underneath/at "
-		    "vnode %p\n",
-		    pr->ps_comm, pr->ps_pid, ni->ni_cnd.cn_nameptr,
-		    ni->ni_unveil_match->uv_vp);
+			printf("unveil: %s(%d): matched \"%s\" underneath/at "
+			    "vnode %p\n", pr->ps_comm, pr->ps_pid,
+			    ni->ni_cnd.cn_nameptr, uv->uv_vp);
 #endif
-		return (0);
-	}
-	if (ni->ni_unveil_eacces) {
+			return (0);
+		}
+		/* if node has any flags set then this is an access violation */
+		if (uv->uv_flags & UNVEIL_USERSET) {
 #ifdef DEBUG_UNVEIL
-		printf("unveil: %s(%d): \"%s\" flag mismatch above/at "
-		    "vnode %p\n",
-		    pr->ps_comm, pr->ps_pid, ni->ni_cnd.cn_nameptr,
-		    ni->ni_unveil_match->uv_vp);
+			printf("unveil: %s(%d) flag mismatch for vnode %p\n",
+			    pr->ps_comm, pr->ps_pid, uv->uv_vp);
 #endif
-		pr->ps_acflag |= AUNVEIL;
-		return EACCES;
+			pr->ps_acflag |= AUNVEIL;
+			return EACCES;
+		}
+#ifdef DEBUG_UNVEIL
+		printf("unveil: %s(%d) check cover for vnode %p, uv_cover %zd\n",
+		    pr->ps_comm, pr->ps_pid, uv->uv_vp, uv->uv_cover);
+#endif
+		nuv = unveil_covered(uv, uv->uv_vp, p);
+		if (nuv == uv)
+			break;
 	}
 	pr->ps_acflag |= AUNVEIL;
 	return ENOENT;

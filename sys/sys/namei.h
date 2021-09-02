@@ -1,4 +1,4 @@
-/*	$OpenBSD: namei.h,v 1.47 2021/07/15 06:57:02 claudio Exp $	*/
+/*	$OpenBSD: namei.h,v 1.48 2021/09/02 12:35:23 claudio Exp $	*/
 /*	$NetBSD: namei.h,v 1.11 1996/02/09 18:25:20 christos Exp $	*/
 
 /*
@@ -75,7 +75,6 @@ struct nameidata {
 	char	*ni_next;		/* next location in pathname */
 	u_long	ni_loopcnt;		/* count of symlinks encountered */
 	struct unveil *ni_unveil_match; /* last matching unveil component */
-	int ni_unveil_eacces;		/* indicates unveil flag mismatch */
 
 	/*
 	 * Lookup parameters: this structure describes the subset of
