@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.109 2021/09/02 08:51:56 beck Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.110 2021/09/02 14:41:03 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1872,7 +1872,8 @@ ssl3_get_cert_status(SSL *s)
 		return (1);
 	}
 
-	if (S3I(s)->hs.tls12.message_type != SSL3_MT_CERTIFICATE) {
+	if (S3I(s)->hs.tls12.message_type != SSL3_MT_CERTIFICATE &&
+	    S3I(s)->hs.tls12.message_type != SSL3_MT_CERTIFICATE_STATUS) {
 		al = SSL_AD_UNEXPECTED_MESSAGE;
 		SSLerror(s, SSL_R_BAD_MESSAGE_TYPE);
 		goto fatal_err;
