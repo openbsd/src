@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.156 2021/08/31 15:20:06 kettenis Exp $
+# $OpenBSD: RAMDISK,v 1.157 2021/09/03 14:53:09 patrick Exp $
 
 machine		arm64
 maxusers	4
@@ -38,7 +38,7 @@ acpi0		at mainbus?
 acpiec*		at acpi?
 acpimcfg*	at acpi?
 acpiiort*	at acpi?
-#smmu*		at acpiiort?
+smmu*		at acpiiort?
 acpipci*	at acpi?
 pci*		at acpipci?
 ahci*		at acpi?
@@ -72,7 +72,7 @@ pci*		at pciecam?
 sdhc*		at fdt?
 sdmmc*		at sdhc?
 bwfm*		at sdmmc?	# Broadcom FullMAC
-#smmu*		at fdt?
+smmu*		at fdt?
 xhci*		at fdt?
 ccp*		at fdt?		# AMD Cryptographic Co-processor
 

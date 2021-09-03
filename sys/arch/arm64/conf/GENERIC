@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.205 2021/08/31 15:20:06 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.206 2021/09/03 14:53:09 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -43,7 +43,7 @@ acpiec*		at acpi?
 acpige*		at acpi?
 acpimcfg*	at acpi?
 acpiiort*	at acpi?
-#smmu*		at acpiiort?
+smmu*		at acpiiort?
 acpipci*	at acpi?
 pci*		at acpipci?
 acpipwrres*	at acpi?
@@ -83,7 +83,7 @@ pci*		at pciecam?
 sdhc*		at fdt?
 sdmmc*		at sdhc?
 bwfm*		at sdmmc?	# Broadcom FullMAC
-#smmu*		at fdt?
+smmu*		at fdt?
 xhci*		at fdt?
 ccp*		at fdt?		# AMD Cryptographic Co-processor
 ipmi*		at fdt?
