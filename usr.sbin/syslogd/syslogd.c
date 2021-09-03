@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.266 2021/07/14 13:33:57 kn Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.267 2021/09/03 16:28:33 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2014-2017 Alexander Bluhm <bluhm@genua.de>
@@ -1895,8 +1895,7 @@ logline(int pri, int flags, char *from, char *msg)
 void
 fprintlog(struct filed *f, int flags, char *msg)
 {
-	struct iovec iov[6];
-	struct iovec *v;
+	struct iovec iov[IOVCNT], *v;
 	int l, retryonce;
 	char line[LOG_MAXLINE + 1], repbuf[80], greetings[500];
 	char ebuf[ERRBUFSIZE];
@@ -2072,7 +2071,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 		}
 		retryonce = 0;
 	again:
-		if (writev(f->f_file, iov, 6) == -1) {
+		if (writev(f->f_file, iov, IOVCNT) == -1) {
 			int e = errno;
 
 			/* allow to recover from file system full */
@@ -2201,7 +2200,7 @@ wallmsg(struct filed *f, struct iovec *iov)
 		strncpy(utline, ut.ut_line, sizeof(utline) - 1);
 		utline[sizeof(utline) - 1] = '\0';
 		if (f->f_type == F_WALL) {
-			ttymsg(iov, 6, utline);
+			ttymsg(utline, iov);
 			continue;
 		}
 		/* should we send the message to this user? */
@@ -2210,7 +2209,7 @@ wallmsg(struct filed *f, struct iovec *iov)
 				break;
 			if (!strncmp(f->f_un.f_uname[i], ut.ut_name,
 			    UT_NAMESIZE)) {
-				ttymsg(iov, 6, utline);
+				ttymsg(utline, iov);
 				break;
 			}
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttymsg.c,v 1.18 2019/06/28 13:32:51 deraadt Exp $	*/
+/*	$OpenBSD: ttymsg.c,v 1.19 2021/09/03 16:28:33 bluhm Exp $	*/
 /*	$NetBSD: ttymsg.c,v 1.3 1994/11/17 07:17:55 jtc Exp $	*/
 
 /*
@@ -62,10 +62,6 @@
 #include "log.h"
 #include "syslogd.h"
 
-#ifndef nitems
-#define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
-#endif
-
 struct tty_delay {
 	struct event	 td_event;
 	size_t		 td_length;
@@ -80,18 +76,14 @@ void ttycb(int, short, void *);
  * seconds.
  */
 void
-ttymsg(struct iovec *iov, int iovcnt, char *utline)
+ttymsg(char *utline, struct iovec *iov)
 {
 	static char device[MAXNAMLEN] = _PATH_DEV;
+	struct iovec localiov[IOVCNT];
+	int iovcnt = IOVCNT;
 	int cnt, fd;
 	size_t left;
 	ssize_t wret;
-	struct iovec localiov[6];
-
-	if (iovcnt < 0 || (size_t)iovcnt > nitems(localiov)) {
-		log_warnx("too many iov's (change code in syslogd/ttymsg.c)");
-		return;
-	}
 
 	/*
 	 * Ignore lines that start with "ftp" or "uucp".
