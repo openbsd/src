@@ -1,4 +1,4 @@
-.\" $OpenBSD: getsubopt.3,v 1.14 2014/11/15 14:41:02 bentley Exp $
+.\" $OpenBSD: getsubopt.3,v 1.15 2021/09/03 16:51:47 schwarze Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)getsubopt.3	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: November 15 2014 $
+.Dd $Mdocdate: September 3 2021 $
 .Dt GETSUBOPT 3
 .Os
 .Sh NAME
@@ -55,7 +55,9 @@ The argument
 is a pointer to a pointer to the string.
 The argument
 .Fa tokens
-is a pointer to a null-terminated array of pointers to strings.
+is a pointer to a
+.Dv NULL Ns -terminated
+array of pointers to strings.
 .Pp
 The
 .Fn getsubopt
@@ -79,6 +81,11 @@ On return from
 .Fa optionp
 will be set to point to the start of the next token in the string,
 or the NUL at the end of the string if no more tokens are present.
+The comma, space, or tab character ending the token just parsed,
+and the equal sign separating name and value if any, are replaced
+with NUL bytes in the original
+.Pf * Fa optionp
+input string.
 The external variable
 .Fa suboptarg
 will be set to point to the start of the current token, or
@@ -138,6 +145,16 @@ while ((ch = getopt(argc, argv, "ab:")) != -1) {
 .Sh SEE ALSO
 .Xr getopt 3 ,
 .Xr strsep 3
+.Sh STANDARDS
+The
+.Fn getsubopt
+function conforms to
+.St -p1003.1-2008 .
+.Pp
+Allowing space and tab characters to separate tokens
+and the external variable
+.Va suboptarg
+are extensions to that standard.
 .Sh HISTORY
 The
 .Fn getsubopt
