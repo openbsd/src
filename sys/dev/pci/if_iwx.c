@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.102 2021/09/03 11:41:41 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.103 2021/09/03 11:55:31 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -2328,7 +2328,6 @@ int
 iwx_start_hw(struct iwx_softc *sc)
 {
 	int err;
-	int t = 0;
 
 	err = iwx_prepare_card_hw(sc);
 	if (err)
@@ -2368,16 +2367,6 @@ iwx_start_hw(struct iwx_softc *sc)
 		return err;
 
 	iwx_init_msix_hw(sc);
-
-	while (t < 150000 && !iwx_set_hw_ready(sc)) {
-		DELAY(200);
-		t += 200;
-		if (iwx_set_hw_ready(sc)) {
-			break;
-		}
-	}
-	if (t >= 150000)
-		return ETIMEDOUT;
 
 	iwx_enable_rfkill_int(sc);
 	iwx_check_rfkill(sc);
@@ -9575,13 +9564,19 @@ iwx_resume(struct iwx_softc *sc)
 	reg = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
 	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, reg & ~0xff00);
 
-	/* reconfigure the MSI-X mapping to get the correct IRQ for rfkill */
-	iwx_conf_msix_hw(sc, 0);
+	if (!sc->sc_msix) {
+		/* Hardware bug workaround. */
+		reg = pci_conf_read(sc->sc_pct, sc->sc_pcitag,
+		    PCI_COMMAND_STATUS_REG);
+		if (reg & PCI_COMMAND_INTERRUPT_DISABLE)
+			reg &= ~PCI_COMMAND_INTERRUPT_DISABLE;
+		pci_conf_write(sc->sc_pct, sc->sc_pcitag,
+		    PCI_COMMAND_STATUS_REG, reg);
+	}
 
-	iwx_enable_rfkill_int(sc);
-	iwx_check_rfkill(sc);
+	iwx_disable_interrupts(sc);
 
-	return iwx_prepare_card_hw(sc);
+	return iwx_start_hw(sc);
 }
 
 int
