@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.45 2020/09/13 15:06:16 beck Exp $
+# $OpenBSD: Makefile,v 1.46 2021/09/03 23:30:42 job Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -267,6 +267,7 @@ SRCS+= ui_err.c ui_lib.c ui_openssl.c ui_util.c
 SRCS+= wp_dgst.c
 
 # x509/
+SRCS+= x509_addr.c x509_asid.c
 SRCS+= x509_def.c x509_d2.c x509_r2x.c x509_cmp.c
 SRCS+= x509_obj.c x509_req.c x509spki.c x509_vfy.c
 SRCS+= x509_set.c x509cset.c x509rset.c x509_err.c
