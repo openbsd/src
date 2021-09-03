@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.47 2021/08/30 08:59:33 beck Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.48 2021/09/03 08:58:53 beck Exp $ */
 /*
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
  *
@@ -383,6 +383,7 @@ x509_verify_ctx_validate_legacy_chain(struct x509_verify_ctx *ctx,
 			return 0;
 		chain->cert_errors[ctx->xsc->error_depth] =
 		    ctx->xsc->error;
+		ctx->error_depth = ctx->xsc->error_depth;
 	}
 
 	return ret;
@@ -537,10 +538,11 @@ x509_verify_consider_candidate(struct x509_verify_ctx *ctx, X509 *cert,
 			x509_verify_chain_free(new_chain);
 			return 0;
 		}
-		if (x509_verify_cert_error(ctx, candidate, depth, X509_V_OK, 1)) {
-			(void) x509_verify_ctx_add_chain(ctx, new_chain);
-			goto done;
+		if (!x509_verify_ctx_add_chain(ctx, new_chain)) {
+			x509_verify_chain_free(new_chain);
+			return 0;
 		}
+		goto done;
 	}
 
 	x509_verify_build_chains(ctx, candidate, new_chain, full_chain);
@@ -596,8 +598,15 @@ x509_verify_build_chains(struct x509_verify_ctx *ctx, X509 *cert,
 		return;
 
 	count = ctx->chains_count;
+
 	ctx->error = X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY;
 	ctx->error_depth = depth;
+
+	if (ctx->saved_error != 0)
+		ctx->error = ctx->saved_error;
+	if (ctx->saved_error_depth != 0)
+		ctx->error_depth = ctx->saved_error_depth;
+
 	if (ctx->xsc != NULL) {
 		/*
 		 * Long ago experiments at Muppet labs resulted in a
@@ -663,8 +672,6 @@ x509_verify_build_chains(struct x509_verify_ctx *ctx, X509 *cert,
 	} else if (ctx->error_depth == depth) {
 		if (!x509_verify_ctx_set_xsc_chain(ctx, current_chain, 0, 0))
 			return;
-		(void) x509_verify_cert_error(ctx, cert, depth,
-		    ctx->error, 0);
 	}
 }
 
@@ -1131,9 +1138,12 @@ x509_verify(struct x509_verify_ctx *ctx, X509 *leaf, char *name)
 	}
 	do {
 		retry_chain_build = 0;
-		if (x509_verify_ctx_cert_is_root(ctx, leaf, full_chain))
-			x509_verify_ctx_add_chain(ctx, current_chain);
-		else {
+		if (x509_verify_ctx_cert_is_root(ctx, leaf, full_chain)) {
+			if (!x509_verify_ctx_add_chain(ctx, current_chain)) {
+				x509_verify_chain_free(current_chain);
+				goto err;
+			}
+		} else {
 			x509_verify_build_chains(ctx, leaf, current_chain,
 			    full_chain);
 			if (full_chain && ctx->chains_count == 0) {
@@ -1189,8 +1199,24 @@ x509_verify(struct x509_verify_ctx *ctx, X509 *leaf, char *name)
 			if (!x509_verify_ctx_set_xsc_chain(ctx, ctx->chains[0],
 			    1, 1))
 				goto err;
+			ctx->xsc->error = X509_V_OK;
+			/*
+			 * Call the callback indicating success up our already
+			 * verified chain. The callback could still tell us to
+			 * fail.
+			 */
+			if(!x509_vfy_callback_indicate_success(ctx->xsc))
+				goto err;
+		} else {
+			/*
+			 * We had a failure, indicate the failure, but
+			 * allow the callback to override at depth 0
+			 */
+			if (ctx->xsc->verify_cb(0, ctx->xsc)) {
+				ctx->xsc->error = X509_V_OK;
+				return 1;
+			}
 		}
-		return ctx->xsc->verify_cb(ctx->chains_count > 0, ctx->xsc);
 	}
 	return (ctx->chains_count);
 

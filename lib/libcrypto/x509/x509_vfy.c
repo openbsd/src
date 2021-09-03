@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.88 2021/08/28 15:22:42 beck Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.89 2021/09/03 08:58:53 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1879,7 +1879,7 @@ x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth)
 }
 
 static int
-internal_verify(X509_STORE_CTX *ctx)
+x509_vfy_internal_verify(X509_STORE_CTX *ctx, int chain_verified)
 {
 	int n = sk_X509_num(ctx->chain) - 1;
 	X509 *xi = sk_X509_value(ctx->chain, n);
@@ -1915,8 +1915,8 @@ internal_verify(X509_STORE_CTX *ctx)
 		 * certificate and its depth (rather than the depth of
 		 * the subject).
 		 */
-		if (xs != xi ||
-		    (ctx->param->flags & X509_V_FLAG_CHECK_SS_SIGNATURE)) {
+		if (!chain_verified && ( xs != xi ||
+		    (ctx->param->flags & X509_V_FLAG_CHECK_SS_SIGNATURE))) {
 			EVP_PKEY *pkey;
 			if ((pkey = X509_get_pubkey(xi)) == NULL) {
 				if (!verify_cb_cert(ctx, xi, xi != xs ? n+1 : n,
@@ -1933,7 +1933,7 @@ internal_verify(X509_STORE_CTX *ctx)
 		}
 check_cert:
 		/* Calls verify callback as needed */
-		if (!x509_check_cert_time(ctx, xs, n))
+		if (!chain_verified && !x509_check_cert_time(ctx, xs, n))
 			return 0;
 
 		/*
@@ -1952,6 +1952,18 @@ check_cert:
 		}
 	}
 	return 1;
+}
+
+static int
+internal_verify(X509_STORE_CTX *ctx)
+{
+	return x509_vfy_internal_verify(ctx, 0);
+}
+
+int
+x509_vfy_callback_indicate_success(X509_STORE_CTX *ctx)
+{
+	return x509_vfy_internal_verify(ctx, 1);
 }
 
 int
