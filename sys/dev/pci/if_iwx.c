@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.101 2021/09/02 13:44:10 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.102 2021/09/03 11:41:41 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -8204,6 +8204,8 @@ iwx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
 			if (!(ifp->if_flags & IFF_RUNNING)) {
+				/* Force reload of firmware image from disk. */
+				sc->sc_fw.fw_status = IWX_FW_STATUS_NONE;
 				err = iwx_init(ifp);
 			}
 		} else {

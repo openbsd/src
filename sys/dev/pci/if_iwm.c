@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.363 2021/08/29 20:31:18 gnezdo Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.364 2021/09/03 11:41:41 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -254,7 +254,7 @@ int	iwm_firmware_store_section(struct iwm_softc *, enum iwm_ucode_type,
 int	iwm_set_default_calib(struct iwm_softc *, const void *);
 void	iwm_fw_info_free(struct iwm_fw_info *);
 void	iwm_fw_version_str(char *, size_t, uint32_t, uint32_t, uint32_t);
-int	iwm_read_firmware(struct iwm_softc *, enum iwm_ucode_type);
+int	iwm_read_firmware(struct iwm_softc *);
 uint32_t iwm_read_prph_unlocked(struct iwm_softc *, uint32_t);
 uint32_t iwm_read_prph(struct iwm_softc *, uint32_t);
 void	iwm_write_prph_unlocked(struct iwm_softc *, uint32_t, uint32_t);
@@ -681,7 +681,7 @@ iwm_fw_version_str(char *buf, size_t bufsize,
 }
 
 int
-iwm_read_firmware(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
+iwm_read_firmware(struct iwm_softc *sc)
 {
 	struct iwm_fw_info *fw = &sc->sc_fw;
 	struct iwm_tlv_ucode_header *uhdr;
@@ -693,8 +693,7 @@ iwm_read_firmware(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 	int err;
 	size_t len;
 
-	if (fw->fw_status == IWM_FW_STATUS_DONE &&
-	    ucode_type != IWM_UCODE_TYPE_INIT)
+	if (fw->fw_status == IWM_FW_STATUS_DONE)
 		return 0;
 
 	while (fw->fw_status == IWM_FW_STATUS_INPROGRESS)
@@ -4245,7 +4244,7 @@ iwm_load_ucode_wait_alive(struct iwm_softc *sc,
 	struct iwm_fw_sects *fw = &sc->sc_fw.fw_sects[ucode_type];
 	int err;
 
-	err = iwm_read_firmware(sc, ucode_type);
+	err = iwm_read_firmware(sc);
 	if (err)
 		return err;
 
@@ -9991,6 +9990,8 @@ iwm_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
 			if (!(ifp->if_flags & IFF_RUNNING)) {
+				/* Force reload of firmware image from disk. */
+				sc->sc_fw.fw_status = IWM_FW_STATUS_NONE;
 				err = iwm_init(ifp);
 			}
 		} else {
