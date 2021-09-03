@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.289 2021/09/02 07:19:53 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.290 2021/09/03 11:47:05 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1685,14 +1685,20 @@ vm_impl_init_svm(struct vm *vm, struct proc *p)
 int
 vm_impl_init(struct vm *vm, struct proc *p)
 {
+	int ret;
+
+	KERNEL_LOCK();
 	if (vmm_softc->mode == VMM_MODE_VMX ||
 	    vmm_softc->mode == VMM_MODE_EPT)
-		return vm_impl_init_vmx(vm, p);
+		ret = vm_impl_init_vmx(vm, p);
 	else if	(vmm_softc->mode == VMM_MODE_SVM ||
 		 vmm_softc->mode == VMM_MODE_RVI)
-		return vm_impl_init_svm(vm, p);
+		ret = vm_impl_init_svm(vm, p);
 	else
 		panic("%s: unknown vmm mode: %d", __func__, vmm_softc->mode);
+	KERNEL_UNLOCK();
+
+	return (ret);
 }
 
 /*
