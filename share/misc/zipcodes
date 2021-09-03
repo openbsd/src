@@ -1,4 +1,4 @@
-#	$OpenBSD: zipcodes,v 1.12 2003/08/08 16:36:26 jose Exp $
+#	$OpenBSD: zipcodes,v 1.13 2021/09/03 08:22:25 bentley Exp $
 
 # Zip Code : Location
 #	@(#)zipcodes	5.1 (Berkeley) 2/8/91
@@ -37440,7 +37440,6 @@
 87027:La Jara, NM
 87028:Lajoya, NM
 87029:Lindrith, NM
-87030:Albuquerque, NM
 87031:Los Lunas, NM
 87032:Mc Intosh, NM
 87034:Grants, NM
@@ -37473,7 +37472,6 @@
 87064:Youngsville, NM
 87068:Peralta, NM
 87070:Moriarty, NM
-87100:Albuquerque, NM
 87101:Albuquerque, NM
 87102:Albuquerque, NM
 87103:Albuquerque, NM
@@ -37491,34 +37489,34 @@
 87115:Albuquerque, NM
 87116:Albuquerque, NM
 87117:Albuquerque, NM
-87118:Albuquerque, NM
 87119:Albuquerque, NM
 87120:Albuquerque, NM
-87121:Five Points, NM
+87121:Albuquerque, NM
 87122:Albuquerque, NM
 87123:Albuquerque, NM
 87124:Albuquerque, NM
 87125:Albuquerque, NM
 87131:Albuquerque, NM
-87140:Albuquerque, NM
+87151:Albuquerque, NM
 87153:Albuquerque, NM
 87154:Albuquerque, NM
 87158:Albuquerque, NM
 87174:Albuquerque, NM
 87176:Albuquerque, NM
-87180:Albuquerque, NM
+87181:Albuquerque, NM
 87184:Albuquerque, NM
 87185:Albuquerque, NM
+87187:Albuquerque, NM
 87190:Albuquerque, NM
 87191:Albuquerque, NM
 87192:Albuquerque, NM
+87193:Albuquerque, NM
 87194:Albuquerque, NM
 87195:Albuquerque, NM
 87196:Albuquerque, NM
 87197:Albuquerque, NM
 87198:Albuquerque, NM
 87199:Albuquerque, NM
-87201:Albuquerque, NM
 87301:Gallup, NM
 87302:Gallup, NM
 87305:Gallup, NM
@@ -37594,7 +37592,6 @@
 87539:La Madera, NM
 87540:Santa Fe, NM
 87541:Las Tablas, NM
-87542:Albuquerque, NM
 87543:Penasco, NM
 87544:Los Alamos, NM
 87545:Los Alamos, NM
