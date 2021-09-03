@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2020/12/17 00:51:11 bluhm Exp $
+# $OpenBSD: Makefile,v 1.7 2021/09/03 11:58:24 bluhm Exp $
 
 # Connect a client to a server.  Both can be current libressl, or
 # openssl 1.0.2, or openssl 1.1.  Create client and server certificates
@@ -75,6 +75,10 @@ run-cert-client-${clib}-${cca}-${ccert}-${cv}-server-${slib}-${sca}-${scert}-${s
 .endfor
 .endfor
 .endfor
+
+REGRESS_TARGETS +=	run-bob
+run-bob:
+	@echo Bob, be happy!  Tests finished.
 
 # argument list too long for a single rm *
 
