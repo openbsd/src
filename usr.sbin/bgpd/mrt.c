@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.104 2021/06/24 10:04:05 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.105 2021/09/03 07:48:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -91,23 +91,138 @@ int mrt_open(struct mrt *, time_t);
 			    x == MRT_TABLE_DUMP_V2) ? RDEIDX : SEIDX	\
 			)
 
-void
-mrt_dump_bgp_msg(struct mrt *mrt, void *pkg, u_int16_t pkglen,
-    struct peer *peer)
+static u_int8_t
+mrt_update_msg_guess_aid(u_int8_t *pkg, u_int16_t pkglen)
 {
-	struct ibuf	*buf;
-	int		 incoming = 0;
+	u_int16_t wlen, alen, len, afi;
+	u_int8_t type, aid;
+
+	pkg += MSGSIZE_HEADER;
+	pkglen -= MSGSIZE_HEADER;
+
+	if (pkglen < 4)
+		goto bad;
+
+	memcpy(&wlen, pkg, 2);
+	wlen = ntohs(wlen);
+	pkg += 2;
+	pkglen -= 2;
+
+	if (wlen > 0) {
+		/* UPDATE has withdraw routes, therefor IPv4 */
+		return AID_INET;
+	}
+
+	memcpy(&alen, pkg, 2);
+	alen = ntohs(alen);
+	pkg += 2;
+	pkglen -= 2;
+
+	if (alen < pkglen) {
+		/* UPDATE has NLRI prefixes, therefor IPv4 */
+		return AID_INET;
+	}
+
+	if (wlen == 0 && alen == 0) {
+		/* UPDATE is an IPv4 EoR marker */
+		return AID_INET;
+	}
+
+	/* bad attribute length */
+	if (alen > pkglen)
+		goto bad;
+
+	/* try to extract AFI/SAFI from the MP attributes */
+	while (alen > 0) {
+		if (alen < 3)
+			goto bad;
+		type = pkg[1];
+		if (pkg[0] & ATTR_EXTLEN) {
+			if (alen < 4)
+				goto bad;
+			memcpy(&len, pkg + 2, 2);
+			len = ntohs(len);
+			pkg += 4;
+			alen -= 4;
+		} else {
+			len = pkg[2];
+			pkg += 3;
+			alen -= 3;
+		}
+		if (len > alen)
+			goto bad;
+
+		if (type == ATTR_MP_REACH_NLRI ||
+		    type == ATTR_MP_UNREACH_NLRI) {
+			if (alen < 3)
+				goto bad;
+			memcpy(&afi, pkg, 2);
+			afi = ntohs(afi);
+			if (afi2aid(afi, pkg[2], &aid) == -1)
+				goto bad;
+			return aid;
+		}
+
+		pkg += len;
+		alen -= len;
+	}
+
+bad:
+	return AID_UNSPEC;
+}
+
+static u_int16_t
+mrt_bgp_msg_subtype(struct mrt *mrt, void *pkg, u_int16_t pkglen,
+    struct peer *peer, enum msg_type msgtype, int in)
+{
 	u_int16_t	 subtype = BGP4MP_MESSAGE;
+	u_int8_t	 aid, mask;
 
 	if (peer->capa.neg.as4byte)
 		subtype = BGP4MP_MESSAGE_AS4;
 
+	if (msgtype != UPDATE)
+		return subtype;
+
+	/*
+	 * RFC8050 adjust types for add-path enabled sessions.
+	 * It is necessary to extract the AID from UPDATES to decide
+	 * if the add-path types are needed or not. The ADDPATH
+	 * subtypes only matter for BGP UPDATES.
+	 */
+
+	mask = in ? CAPA_AP_RECV : CAPA_AP_SEND;
+	/* only guess if add-path could be active */
+	if (peer->capa.neg.add_path[0] & mask) {
+		aid = mrt_update_msg_guess_aid(pkg, pkglen);
+		if (aid != AID_UNSPEC &&
+		    (peer->capa.neg.add_path[aid] & mask)) {
+			if (peer->capa.neg.as4byte)
+				subtype = BGP4MP_MESSAGE_AS4_ADDPATH;
+			else
+				subtype = BGP4MP_MESSAGE_ADDPATH;
+		}
+	}
+
+	return subtype;
+}
+
+void
+mrt_dump_bgp_msg(struct mrt *mrt, void *pkg, u_int16_t pkglen,
+    struct peer *peer, enum msg_type msgtype)
+{
+	struct ibuf	*buf;
+	int		 in = 0;
+	u_int16_t	 subtype = BGP4MP_MESSAGE;
+
 	/* get the direction of the message to swap address and AS fields */
 	if (mrt->type == MRT_ALL_IN || mrt->type == MRT_UPDATE_IN)
-		incoming = 1;
+		in = 1;
+
+	subtype = mrt_bgp_msg_subtype(mrt, pkg, pkglen, peer, msgtype, in);
 
 	if (mrt_dump_hdr_se(&buf, peer, MSG_PROTOCOL_BGP4MP_ET, subtype,
-	    pkglen, incoming) == -1)
+	    pkglen, in) == -1)
 		return;
 
 	if (ibuf_add(buf, pkg, pkglen) == -1) {
@@ -492,57 +607,41 @@ fail:
 	return (-1);
 }
 
-int
-mrt_dump_entry_v2(struct mrt *mrt, struct rib_entry *re, u_int32_t snum)
+static int
+mrt_dump_entry_v2_rib(struct rib_entry *re, struct ibuf **nb, struct ibuf **apb,
+    uint16_t *np, uint16_t *app)
 {
-	struct ibuf	*buf, *hbuf = NULL;
-	struct prefix	*p;
 	struct bgpd_addr addr;
-	size_t		 len, off;
-	u_int16_t	 subtype, nump;
+	struct ibuf *buf, **bp;
+	struct prefix *p;
+	size_t len;
+	int addpath;
 
-	switch (re->prefix->aid) {
-	case AID_INET:
-		subtype = MRT_DUMP_V2_RIB_IPV4_UNICAST;
-		break;
-	case AID_INET6:
-		subtype = MRT_DUMP_V2_RIB_IPV6_UNICAST;
-		break;
-	default:
-		subtype = MRT_DUMP_V2_RIB_GENERIC;
-		break;
-	}
+	*np = 0;
+	*app = 0;
 
-	if ((buf = ibuf_dynamic(0, UINT_MAX)) == NULL) {
-		log_warn("%s: ibuf_dynamic", __func__);
-		return (-1);
-	}
-
-	DUMP_LONG(buf, snum);
-	pt_getaddr(re->prefix, &addr);
-	if (subtype == MRT_DUMP_V2_RIB_GENERIC) {
-		u_int16_t afi;
-		u_int8_t safi;
-
-		aid2afi(re->prefix->aid, &afi, &safi);
-		DUMP_SHORT(buf, afi);
-		DUMP_BYTE(buf, safi);
-	}
-	if (prefix_writebuf(buf, &addr, re->prefix->prefixlen) == -1) {
-		log_warnx("%s: prefix_writebuf error", __func__);
-		goto fail;
-	}
-
-	off = ibuf_size(buf);
-	if (ibuf_reserve(buf, sizeof(nump)) == NULL) {
-		log_warn("%s: ibuf_reserve error", __func__);
-		goto fail;
-	}
-	nump = 0;
 	LIST_FOREACH(p, &re->prefix_h, entry.list.rib) {
 		struct nexthop		*nexthop;
 		struct bgpd_addr	*nh;
 		struct ibuf		*tbuf;
+
+		addpath = peer_has_add_path(prefix_peer(p), re->prefix->aid,
+		    CAPA_AP_RECV);
+
+		if (addpath) {
+			bp = apb;
+			*app += 1;
+		} else {
+			bp = nb;
+			*np += 1;
+		}
+		if ((buf = *bp) == NULL) {
+			if ((buf = ibuf_dynamic(0, UINT_MAX)) == NULL) {
+				log_warn("%s: ibuf_dynamic", __func__);
+				goto fail;
+			}
+			*bp = buf;
+		}
 
 		nexthop = prefix_nexthop(p);
 		if (nexthop == NULL) {
@@ -555,6 +654,10 @@ mrt_dump_entry_v2(struct mrt *mrt, struct rib_entry *re, u_int32_t snum)
 		DUMP_SHORT(buf, prefix_peer(p)->mrt_idx);
 		/* originated timestamp */
 		DUMP_LONG(buf, time(NULL) - (getmonotime() - p->lastchange));
+
+		/* RFC8050: path-id if add-path is used */
+		if (addpath)
+			DUMP_LONG(buf, p->path_id);
 
 		if ((tbuf = ibuf_dynamic(0, MAX_PKTSIZE)) == NULL) {
 			log_warn("%s: ibuf_dynamic", __func__);
@@ -574,24 +677,109 @@ mrt_dump_entry_v2(struct mrt *mrt, struct rib_entry *re, u_int32_t snum)
 			goto fail;
 		}
 		ibuf_free(tbuf);
-		nump++;
-	}
-	nump = htons(nump);
-	memcpy(ibuf_seek(buf, off, sizeof(nump)), &nump, sizeof(nump));
-
-	len = ibuf_size(buf);
-	if (mrt_dump_hdr_rde(&hbuf, MSG_TABLE_DUMP_V2, subtype, len) == -1) {
-		ibuf_free(buf);
-		return (-1);
 	}
 
-	ibuf_close(&mrt->wbuf, hbuf);
-	ibuf_close(&mrt->wbuf, buf);
+	return 0;
+
+fail:
+	return -1;
+}
+
+int
+mrt_dump_entry_v2(struct mrt *mrt, struct rib_entry *re, u_int32_t snum)
+{
+	char		 pbuf[260];
+	struct ibuf	*hbuf = NULL, *nbuf = NULL, *apbuf = NULL;
+	struct bgpd_addr addr;
+	size_t		 hlen, len;
+	u_int16_t	 subtype, apsubtype, nump, apnump, afi;
+	u_int8_t	 safi;
+	int		 plen;
+
+	pt_getaddr(re->prefix, &addr);
+	plen = prefix_write(pbuf, sizeof(pbuf), &addr, re->prefix->prefixlen,
+	    0);
+	if (plen == -1) {
+		log_warnx("%s: prefix_write error", __func__);
+		return -1;
+	}
+
+	switch (re->prefix->aid) {
+	case AID_INET:
+		subtype = MRT_DUMP_V2_RIB_IPV4_UNICAST;
+		apsubtype = MRT_DUMP_V2_RIB_IPV4_UNICAST_ADDPATH;
+		break;
+	case AID_INET6:
+		subtype = MRT_DUMP_V2_RIB_IPV6_UNICAST;
+		apsubtype = MRT_DUMP_V2_RIB_IPV6_UNICAST_ADDPATH;
+		break;
+	default:
+		/*
+		 * XXX The RFC defined the format for this type differently
+		 * and it is prohibitly expensive to implement that format.
+		 * Instead do what gobgp does and encode it like the other
+		 * types.
+		 */
+		subtype = MRT_DUMP_V2_RIB_GENERIC;
+		apsubtype = MRT_DUMP_V2_RIB_GENERIC_ADDPATH;
+		aid2afi(re->prefix->aid, &afi, &safi);
+
+		/* prepend 3-bytes AFI/SAFI */
+		memmove(pbuf + 3, pbuf, plen);
+		plen += 3;
+		afi = ntohs(afi);
+		memcpy(pbuf, &afi, sizeof(afi));
+		pbuf[2] = safi;
+		break;
+	}
+	hlen = sizeof(snum) + sizeof(nump) + plen;
+
+	if (mrt_dump_entry_v2_rib(re, &nbuf, &apbuf, &nump, &apnump))
+		goto fail;
+
+	if (nump > 0) {
+		len = ibuf_size(nbuf) + hlen;
+		if (mrt_dump_hdr_rde(&hbuf, MSG_TABLE_DUMP_V2, subtype,
+		    len) == -1)
+			goto fail;
+
+		DUMP_LONG(hbuf, snum);
+		if (ibuf_add(hbuf, pbuf, plen) == -1) {
+			log_warn("%s: ibuf_add error", __func__);
+			goto fail;
+		}
+		DUMP_SHORT(hbuf, nump);
+
+		ibuf_close(&mrt->wbuf, hbuf);
+		ibuf_close(&mrt->wbuf, nbuf);
+		hbuf = NULL;
+		nbuf = NULL;
+	}
+
+	if (apnump > 0) {
+		len = ibuf_size(apbuf) + hlen;
+		if (mrt_dump_hdr_rde(&hbuf, MSG_TABLE_DUMP_V2, apsubtype,
+		    len) == -1)
+			goto fail;
+
+		DUMP_LONG(hbuf, snum);
+		if (ibuf_add(hbuf, pbuf, plen) == -1) {
+			log_warn("%s: ibuf_add error", __func__);
+			goto fail;
+		}
+		DUMP_SHORT(hbuf, apnump);
+
+		ibuf_close(&mrt->wbuf, hbuf);
+		ibuf_close(&mrt->wbuf, apbuf);
+		hbuf = NULL;
+		apbuf = NULL;
+	}
 
 	return (0);
 fail:
+	ibuf_free(apbuf);
+	ibuf_free(nbuf);
 	ibuf_free(hbuf);
-	ibuf_free(buf);
 	return (-1);
 }
 
@@ -744,14 +932,16 @@ mrt_dump_hdr_se(struct ibuf ** bp, struct peer *peer, u_int16_t type,
 	switch (peer->local.aid) {
 	case AID_INET:
 		if (subtype == BGP4MP_STATE_CHANGE_AS4 ||
-		    subtype == BGP4MP_MESSAGE_AS4)
+		    subtype == BGP4MP_MESSAGE_AS4 ||
+		    subtype == BGP4MP_MESSAGE_AS4_ADDPATH)
 			len += MRT_BGP4MP_ET_AS4_IPv4_HEADER_SIZE;
 		else
 			len += MRT_BGP4MP_ET_IPv4_HEADER_SIZE;
 		break;
 	case AID_INET6:
 		if (subtype == BGP4MP_STATE_CHANGE_AS4 ||
-		    subtype == BGP4MP_MESSAGE_AS4)
+		    subtype == BGP4MP_MESSAGE_AS4 ||
+		    subtype == BGP4MP_MESSAGE_AS4_ADDPATH)
 			len += MRT_BGP4MP_ET_AS4_IPv6_HEADER_SIZE;
 		else
 			len += MRT_BGP4MP_ET_IPv6_HEADER_SIZE;
@@ -768,7 +958,8 @@ mrt_dump_hdr_se(struct ibuf ** bp, struct peer *peer, u_int16_t type,
 	DUMP_LONG(*bp, time.tv_nsec / 1000);
 
 	if (subtype == BGP4MP_STATE_CHANGE_AS4 ||
-	    subtype == BGP4MP_MESSAGE_AS4) {
+	    subtype == BGP4MP_MESSAGE_AS4 ||
+	    subtype == BGP4MP_MESSAGE_AS4_ADDPATH) {
 		if (!swap)
 			DUMP_LONG(*bp, peer->conf.local_as);
 		DUMP_LONG(*bp, peer->conf.remote_as);

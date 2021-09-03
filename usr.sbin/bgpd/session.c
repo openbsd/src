@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.423 2021/07/27 07:14:31 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.424 2021/09/03 07:48:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1392,7 +1392,8 @@ session_sendmsg(struct bgp_msg *msg, struct peer *p)
 		if ((mrt->peer_id == 0 && mrt->group_id == 0) ||
 		    mrt->peer_id == p->conf.id || (mrt->group_id != 0 &&
 		    mrt->group_id == p->conf.groupid))
-			mrt_dump_bgp_msg(mrt, msg->buf->buf, msg->len, p);
+			mrt_dump_bgp_msg(mrt, msg->buf->buf, msg->len, p,
+			    msg->type);
 	}
 
 	ibuf_close(&p->wbuf, msg->buf);
@@ -1915,7 +1916,8 @@ session_process_msg(struct peer *p)
 			if ((mrt->peer_id == 0 && mrt->group_id == 0) ||
 			    mrt->peer_id == p->conf.id || (mrt->group_id != 0 &&
 			    mrt->group_id == p->conf.groupid))
-				mrt_dump_bgp_msg(mrt, p->rbuf->rptr, msglen, p);
+				mrt_dump_bgp_msg(mrt, p->rbuf->rptr, msglen, p,
+				    msgtype);
 		}
 
 		switch (msgtype) {
@@ -2794,11 +2796,15 @@ capa_neg_calc(struct peer *p)
 	if (p->capa.ann.add_path[0]) {
 		for (i = AID_MIN; i < AID_MAX; i++) {
 			if ((p->capa.ann.add_path[i] & CAPA_AP_RECV) &&
-			    (p->capa.peer.add_path[i] & CAPA_AP_SEND))
+			    (p->capa.peer.add_path[i] & CAPA_AP_SEND)) {
 				p->capa.neg.add_path[i] |= CAPA_AP_RECV;
+				p->capa.neg.add_path[0] |= CAPA_AP_RECV;
+			}
 			if ((p->capa.ann.add_path[i] & CAPA_AP_SEND) &&
-			    (p->capa.peer.add_path[i] & CAPA_AP_RECV))
+			    (p->capa.peer.add_path[i] & CAPA_AP_RECV)) {
 				p->capa.neg.add_path[i] |= CAPA_AP_SEND;
+				p->capa.neg.add_path[0] |= CAPA_AP_SEND;
+			}
 		}
 	}
 
