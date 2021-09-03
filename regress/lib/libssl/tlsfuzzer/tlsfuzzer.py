@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.42 2021/09/03 13:26:20 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.43 2021/09/03 14:50:36 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -593,13 +593,14 @@ class TestRunner:
     """ Runs the given tests troups against a server and displays stats. """
 
     def __init__(
-        self, timing=False, verbose=False, port=4433, use_tls1_3=True,
-        dry_run=False, tests=[], scriptdir=tlsfuzzer_scriptdir,
+        self, timing=False, verbose=False, host="localhost", port=4433,
+        use_tls1_3=True, dry_run=False, tests=[], scriptdir=tlsfuzzer_scriptdir,
     ):
         self.tests = []
 
         self.dryrun = dry_run
         self.use_tls1_3 = use_tls1_3
+        self.host = host
         self.port = str(port)
         self.scriptdir = scriptdir
 
@@ -619,7 +620,7 @@ class TestRunner:
 
     def run_script(self, test):
         script = test.name
-        args = ["-p"] + [self.port] + test.args(self.use_tls1_3)
+        args = ["-h"] + [self.host] + ["-p"] + [self.port] + test.args(self.use_tls1_3)
 
         if self.dryrun:
             if not self.verbose:
@@ -685,11 +686,11 @@ class TestRunner:
 class TlsServer:
     """ Spawns an s_server listening on localhost:port if necessary. """
 
-    def __init__(self, port=4433):
+    def __init__(self, host="localhost", port=4433):
         self.spawn = True
         # Check whether a server is already listening on localhost:port
         self.spawn = subprocess.run(
-            ["nc", "-c", "-z", "-T", "noverify", "localhost", str(port)],
+            ["nc", "-c", "-z", "-T", "noverify", host, str(port)],
             stderr=subprocess.DEVNULL,
         ).returncode != 0
 
@@ -785,18 +786,21 @@ def main():
     list = False
     missing = False
     dryrun = False
+    host = "localhost"
     port = 4433
     slow = False
     timing = False
     verbose = False
 
     argv = sys.argv[1:]
-    opts, args = getopt.getopt(argv, "flmnp:stv", ["help"])
+    opts, args = getopt.getopt(argv, "fh:lmnp:stv", ["help"])
     for opt, arg in opts:
         if opt == '--help':
             usage()
         elif opt == '-f':
             failing = True
+        elif opt == '-h':
+            host = arg
         elif opt == '-l':
             list = True
         elif opt == '-m':
@@ -827,9 +831,9 @@ def main():
     if list or missing:
         list_or_missing(missing)
 
-    tls_server = TlsServer(port)
+    tls_server = TlsServer(host, port)
 
-    tests = TestRunner(timing, verbose, port, tls_server.has_tls1_3, dryrun)
+    tests = TestRunner(timing, verbose, host, port, tls_server.has_tls1_3, dryrun)
 
     if args:
         (dir, script) = os.path.split(args[0])
