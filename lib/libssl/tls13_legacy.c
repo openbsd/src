@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_legacy.c,v 1.27 2021/08/30 16:50:23 tb Exp $ */
+/*	$OpenBSD: tls13_legacy.c,v 1.28 2021/09/03 13:16:54 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -340,7 +340,7 @@ tls13_use_legacy_stack(struct tls13_ctx *ctx)
 
 	S3I(s)->hs.tls12.reuse_message = 1;
 	S3I(s)->hs.tls12.message_type = tls13_handshake_msg_type(ctx->hs_msg);
-	S3I(s)->hs.tls12.message_size = CBS_len(&cbs);
+	S3I(s)->hs.tls12.message_size = CBS_len(&cbs) - SSL3_HM_HEADER_LENGTH;
 
 	return 1;
 
