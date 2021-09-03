@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_pci.c,v 1.29 2021/06/12 13:08:30 kettenis Exp $	*/
+/*	$OpenBSD: virtio_pci.c,v 1.30 2021/09/03 14:04:35 patrick Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -508,7 +508,10 @@ int
 virtio_pci_attach_09(struct virtio_pci_softc *sc, struct pci_attach_args *pa)
 {
 	struct virtio_softc *vsc = &sc->sc_sc;
-	if (pci_mapreg_map(pa, PCI_MAPREG_START, PCI_MAPREG_TYPE_IO, 0,
+	pcireg_t type;
+
+	type = pci_mapreg_type(pa->pa_pc, pa->pa_tag, PCI_MAPREG_START);
+	if (pci_mapreg_map(pa, PCI_MAPREG_START, type, 0,
 	    &sc->sc_iot, &sc->sc_ioh, NULL, &sc->sc_iosize, 0)) {
 		printf("%s: can't map i/o space\n", vsc->sc_dev.dv_xname);
 		return EIO;
