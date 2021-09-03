@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_both.c,v 1.34 2021/08/30 19:25:43 jsing Exp $ */
+/* $OpenBSD: ssl_both.c,v 1.35 2021/09/03 13:19:12 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -418,22 +418,22 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 			goto fatal_err;
 		}
 		*ok = 1;
-		s->internal->init_msg = s->internal->init_buf->data + 4;
+		s->internal->init_msg = s->internal->init_buf->data +
+		    SSL3_HM_HEADER_LENGTH;
 		s->internal->init_num = (int)S3I(s)->hs.tls12.message_size;
 		return s->internal->init_num;
 	}
 
 	p = (unsigned char *)s->internal->init_buf->data;
 
-	/* s->internal->init_num < 4 */
 	if (S3I(s)->hs.state == st1) {
 		int skip_message;
 
 		do {
-			while (s->internal->init_num < 4) {
+			while (s->internal->init_num < SSL3_HM_HEADER_LENGTH) {
 				i = s->method->ssl_read_bytes(s,
 				    SSL3_RT_HANDSHAKE, &p[s->internal->init_num],
-				    4 - s->internal->init_num, 0);
+				    SSL3_HM_HEADER_LENGTH - s->internal->init_num, 0);
 				if (i <= 0) {
 					s->internal->rwstate = SSL_READING;
 					*ok = 0;
@@ -455,12 +455,11 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 					skip_message = 1;
 
 					ssl_msg_callback(s, 0,
-					    SSL3_RT_HANDSHAKE, p, 4);
+					    SSL3_RT_HANDSHAKE, p,
+					    SSL3_HM_HEADER_LENGTH);
 				}
 			}
 		} while (skip_message);
-
-		/* s->internal->init_num == 4 */
 
 		if ((mt >= 0) && (*p != mt)) {
 			al = SSL_AD_UNEXPECTED_MESSAGE;
@@ -468,7 +467,7 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 			goto fatal_err;
 		}
 
-		CBS_init(&cbs, p, 4);
+		CBS_init(&cbs, p, SSL3_HM_HEADER_LENGTH);
 		if (!CBS_get_u8(&cbs, &u8) ||
 		    !CBS_get_u24(&cbs, &l)) {
 			SSLerror(s, ERR_R_BUF_LIB);
@@ -481,14 +480,16 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 			SSLerror(s, SSL_R_EXCESSIVE_MESSAGE_SIZE);
 			goto fatal_err;
 		}
-		if (l && !BUF_MEM_grow_clean(s->internal->init_buf, l + 4)) {
+		if (l && !BUF_MEM_grow_clean(s->internal->init_buf,
+		    l + SSL3_HM_HEADER_LENGTH)) {
 			SSLerror(s, ERR_R_BUF_LIB);
 			goto err;
 		}
 		S3I(s)->hs.tls12.message_size = l;
 		S3I(s)->hs.state = stn;
 
-		s->internal->init_msg = s->internal->init_buf->data + 4;
+		s->internal->init_msg = s->internal->init_buf->data +
+		    SSL3_HM_HEADER_LENGTH;
 		s->internal->init_num = 0;
 	}
 
@@ -510,11 +511,11 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 	/* Feed this message into MAC computation. */
 	if (s->internal->mac_packet) {
 		tls1_transcript_record(s, (unsigned char *)s->internal->init_buf->data,
-		    s->internal->init_num + 4);
+		    s->internal->init_num + SSL3_HM_HEADER_LENGTH);
 
 		ssl_msg_callback(s, 0, SSL3_RT_HANDSHAKE,
 		    s->internal->init_buf->data,
-		    (size_t)s->internal->init_num + 4);
+		    (size_t)s->internal->init_num + SSL3_HM_HEADER_LENGTH);
 	}
 
 	*ok = 1;
