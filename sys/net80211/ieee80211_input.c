@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.237 2021/05/18 08:10:45 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.238 2021/09/03 12:39:43 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -3017,6 +3017,8 @@ ieee80211_addba_resp_accept(struct ieee80211com *ic,
 
 	/* Reset ADDBA request interval. */
 	ni->ni_addba_req_intval[tid] = 1;
+
+	ni->ni_qos_txseqs[tid] = ba->ba_winstart;
 
 	/* start Block Ack inactivity timeout */
 	if (ba->ba_timeout_val != 0)
