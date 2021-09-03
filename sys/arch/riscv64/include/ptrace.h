@@ -1,4 +1,4 @@
-/*	$OpenBSD: ptrace.h,v 1.3 2021/09/03 14:09:26 jca Exp $	*/
+/*	$OpenBSD: ptrace.h,v 1.4 2021/09/03 14:13:06 jca Exp $	*/
 
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -16,7 +16,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#if 0
 #define	PT_STEP		(PT_FIRSTMACH + 0)
+#endif
 #define	PT_GETREGS	(PT_FIRSTMACH + 1)
 #define	PT_SETREGS	(PT_FIRSTMACH + 2)
 #define	PT_GETFPREGS	(PT_FIRSTMACH + 3)
