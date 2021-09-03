@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.41 2021/09/02 19:46:44 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.42 2021/09/03 13:26:20 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -337,6 +337,7 @@ tls12_tests = TestGroup("TLSv1.2 tests", [
     Test("test-dhe-rsa-key-exchange-with-bad-messages.py"),
     Test("test-early-application-data.py"),
     Test("test-empty-extensions.py"),
+    Test("test-extensions.py"),
     Test("test-fuzzed-MAC.py"),
     Test("test-fuzzed-ciphertext.py"),
     Test("test-fuzzed-finished.py"),
@@ -449,11 +450,6 @@ tls12_failing_tests = TestGroup("failing TLSv1.2 tests", [
 
     # no shared cipher
     Test("test-ecdsa-sig-flexibility.py"),
-
-    # 29 succeed, 263 fail:
-    #   'n extensions', 'n extensions last empty' n in 4086, 4096, 8192, 16383
-    #   'fuzz ext length to n' n in [0..255] with the exception of 41...
-    Test("test-extensions.py"),
 
     # Tests expect SH but we send unexpected_message or handshake_failure
     #   'Application data inside Client Hello'
