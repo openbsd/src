@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_dev.c,v 1.14 2021/05/22 21:25:38 bluhm Exp $ */
+/*	$OpenBSD: dt_dev.c,v 1.15 2021/09/03 16:45:45 jasper Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -124,7 +124,7 @@ int	dt_ioctl_get_stats(struct dt_softc *, struct dtioc_stat *);
 int	dt_ioctl_record_start(struct dt_softc *);
 void	dt_ioctl_record_stop(struct dt_softc *);
 int	dt_ioctl_probe_enable(struct dt_softc *, struct dtioc_req *);
-void	dt_ioctl_probe_disable(struct dt_softc *, struct dtioc_req *);
+int	dt_ioctl_probe_disable(struct dt_softc *, struct dtioc_req *);
 
 int	dt_pcb_ring_copy(struct dt_pcb *, struct dt_evt *, size_t, uint64_t *);
 
@@ -138,6 +138,9 @@ dtattach(struct device *parent, struct device *self, void *aux)
 	dt_nprobes += dt_prov_profile_init();
 	dt_nprobes += dt_prov_syscall_init();
 	dt_nprobes += dt_prov_static_init();
+#ifdef DDBPROF
+	dt_nprobes += dt_prov_kprobe_init();
+#endif
 
 	printf("dt: %u probes\n", dt_nprobes);
 }
@@ -275,6 +278,7 @@ dtioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		return dt_ioctl_get_stats(sc, (struct dtioc_stat *)addr);
 	case DTIOCRECORD:
 	case DTIOCPRBENABLE:
+	case DTIOCPRBDISABLE:
 		/* root only ioctl(2) */
 		break;
 	default:
@@ -294,6 +298,9 @@ dtioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		break;
 	case DTIOCPRBENABLE:
 		error = dt_ioctl_probe_enable(sc, (struct dtioc_req *)addr);
+		break;
+	case DTIOCPRBDISABLE:
+		error = dt_ioctl_probe_disable(sc, (struct dtioc_req *)addr);
 		break;
 	default:
 		KASSERT(0);
@@ -478,6 +485,35 @@ dt_ioctl_probe_enable(struct dt_softc *sc, struct dtioc_req *dtrq)
 	return 0;
 }
 
+int
+dt_ioctl_probe_disable(struct dt_softc *sc, struct dtioc_req *dtrq)
+{
+	struct dt_probe *dtp;
+	int error;
+
+	KASSERT(suser(curproc) == 0);
+	if (!dtioc_req_isvalid(dtrq))
+		return EINVAL;
+
+	SIMPLEQ_FOREACH(dtp, &dt_probe_list, dtp_next) {
+		if (dtp->dtp_pbn == dtrq->dtrq_pbn)
+			break;
+	}
+	if (dtp == NULL)
+		return ENOENT;
+
+	if (dtp->dtp_prov->dtpv_dealloc) {
+		error = dtp->dtp_prov->dtpv_dealloc(dtp, sc, dtrq);
+		if (error)
+			return error;
+	}
+
+	DPRINTF("dt%d: pid %d dealloc\n", sc->ds_unit, sc->ds_pid,
+	    dtrq->dtrq_pbn);
+
+	return 0;
+}
+
 struct dt_probe *
 dt_dev_alloc_probe(const char *func, const char *name, struct dt_provider *dtpv)
 {
@@ -492,6 +528,9 @@ dt_dev_alloc_probe(const char *func, const char *name, struct dt_provider *dtpv)
 	dtp->dtp_func = func;
 	dtp->dtp_name = name;
 	dtp->dtp_sysnum = -1;
+	dtp->dtp_ref = 0;
+
+	mtx_init(&dtp->dtp_mtx, IPL_HIGH);
 
 	return dtp;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_prov_profile.c,v 1.3 2020/06/26 13:11:23 mpi Exp $ */
+/*	$OpenBSD: dt_prov_profile.c,v 1.4 2021/09/03 16:45:45 jasper Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -31,14 +31,15 @@ struct dt_probe	*dtpp_interval;		/* global periodic probe */
 
 int	dt_prov_profile_alloc(struct dt_probe *, struct dt_softc *,
 	    struct dt_pcb_list *, struct dtioc_req *);
-void	dt_prov_profile_enter(struct dt_provider *, ...);
-void	dt_prov_interval_enter(struct dt_provider *, ...);
+int	dt_prov_profile_enter(struct dt_provider *, ...);
+int	dt_prov_interval_enter(struct dt_provider *, ...);
 
 struct dt_provider dt_prov_profile = {
 	.dtpv_name	= "profile",
 	.dtpv_alloc	= dt_prov_profile_alloc,
 	.dtpv_enter	= dt_prov_profile_enter,
 	.dtpv_leave	= NULL,
+	.dtpv_dealloc	= NULL,
 };
 
 struct dt_provider dt_prov_interval = {
@@ -46,6 +47,7 @@ struct dt_provider dt_prov_interval = {
 	.dtpv_alloc	= dt_prov_profile_alloc,
 	.dtpv_enter	= dt_prov_interval_enter,
 	.dtpv_leave	= NULL,
+	.dtpv_dealloc	= NULL,
 };
 
 int
@@ -114,7 +116,7 @@ dt_prov_profile_fire(struct dt_pcb *dp)
 	dp->dp_nticks = 0;
 }
 
-void
+int
 dt_prov_profile_enter(struct dt_provider *dtpv, ...)
 {
 	struct cpu_info *ci = curcpu();
@@ -130,9 +132,10 @@ dt_prov_profile_enter(struct dt_provider *dtpv, ...)
 		dt_prov_profile_fire(dp);
 	}
 	smr_read_leave();
+	return 0;
 }
 
-void
+int
 dt_prov_interval_enter(struct dt_provider *dtpv, ...)
 {
 	struct dt_pcb *dp;
@@ -144,4 +147,5 @@ dt_prov_interval_enter(struct dt_provider *dtpv, ...)
 		dt_prov_profile_fire(dp);
 	}
 	smr_read_leave();
+	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.192 2021/09/02 12:32:22 jasper Exp $	*/
+/*	$OpenBSD: locore.s,v 1.193 2021/09/03 16:45:44 jasper Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -205,7 +205,8 @@ INTRENTRY_LABEL(label):	/* from kernel */	; \
 #define	INTRFASTEXIT \
 	jmp	intr_fast_exit
 
-#define	INTR_FAKE_TRAP	0xbadabada
+#define	INTR_FAKE_TRAP_PUSH_RPB	0xbadabada
+#define	INTR_FAKE_TRAP_POP_RBP	0xbcbcbcbc
 
 /*
  * PTmap is recursive pagemap at top of virtual address space.
@@ -1259,17 +1260,32 @@ calltrap:
 	jne	.Lreal_trap
 
 	pushl	%esp
-	call	_C_LABEL(db_prof_hook)
-	addl	$4,%esp
-	cmpl	$1,%eax
-	jne	.Lreal_trap
+	subl	$4, %esp
+	pushl	%eax
+	leal	_C_LABEL(dt_prov_kprobe), %eax
+	movl	%eax, 4(%esp)
+	popl	%eax
+	call	_C_LABEL(dt_prov_kprobe_hook)
+	addl	$8, %esp
+	cmpl	$0, %eax
+	je	.Lreal_trap
 
 	/*
 	 * Abuse the error field to indicate that INTRFASTEXIT needs
 	 * to emulate the patched instruction.
 	 */
-	movl	$INTR_FAKE_TRAP, TF_ERR(%esp)
-	jz	.Lalltraps_check_asts
+	cmpl	$1, %eax
+	je	.Lset_emulate_push_rbp
+
+	cmpl	$2, %eax
+	je	.Lset_emulate_ret
+
+.Lset_emulate_push_rbp:
+	movl	$INTR_FAKE_TRAP_PUSH_RPB, TF_ERR(%esp)
+	jmp	.Lalltraps_check_asts
+.Lset_emulate_ret:
+	movl	$INTR_FAKE_TRAP_POP_RBP, TF_ERR(%esp)
+	jmp	.Lalltraps_check_asts
 .Lreal_trap:
 #endif /* !defined(GPROF) && defined(DDBPROF) */
 	pushl	%esp
@@ -1298,8 +1314,10 @@ calltrap:
 	 * The code below does that by trashing %eax, so it MUST be
 	 * restored afterward.
 	 */
-	cmpl	$INTR_FAKE_TRAP, TF_ERR(%esp)
-	je	.Lprobe_fixup
+	cmpl	$INTR_FAKE_TRAP_PUSH_RPB, TF_ERR(%esp)
+	je	.Lprobe_fixup_push_rbp
+	cmpl	$INTR_FAKE_TRAP_POP_RBP, TF_ERR(%esp)
+	je	.Lprobe_fixup_pop_rbp
 #endif /* !defined(GPROF) && defined(DDBPROF) */
 #ifndef DIAGNOSTIC
 	INTRFASTEXIT
@@ -1327,7 +1345,7 @@ spl_lowered:
 
 	.text
 #if !defined(GPROF) && defined(DDBPROF)
-.Lprobe_fixup:
+.Lprobe_fixup_push_rbp:
 	/* Restore all register unwinding the stack. */
 	INTR_RESTORE_ALL
 
@@ -1351,6 +1369,26 @@ spl_lowered:
 	movl	%ebp,16(%esp)
 
 	popl	%eax
+	iret
+.Lprobe_fixup_pop_rbp:
+	/* Restore all register unwinding the stack. */
+	INTR_RESTORE_ALL
+
+	movl	%eax, 0(%esp)
+
+	/* pop %ebp */
+	movl	20(%esp), %ebp
+	/* Shift hardware-saved registers: eflags, cs, eip */
+	movl	16(%esp), %eax
+	movl	%eax, 20(%esp)
+	movl	12(%esp), %eax
+	movl	%eax, 16(%esp)
+	movl	8(%esp), %eax
+	movl	%eax, 12(%esp)
+
+	/* Pop eax and restore the stack pointer */
+	popl	%eax
+	addl	$8, %esp
 	iret
 #endif /* !defined(GPROF) && defined(DDBPROF) */
 

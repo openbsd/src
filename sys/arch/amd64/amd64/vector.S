@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.84 2020/11/13 05:32:08 guenther Exp $	*/
+/*	$OpenBSD: vector.S,v 1.85 2021/09/03 16:45:44 jasper Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -188,10 +188,11 @@ INTRENTRY_LABEL(trap03):
 	sti
 	cld
 	SMAP_CLAC
-	movq	%rsp, %rdi
-	call	_C_LABEL(db_prof_hook)
-	cmpl	$1, %eax
-	jne	.Lreal_kern_trap
+	leaq	_C_LABEL(dt_prov_kprobe), %rdi
+	movq	%rsp, %rsi
+	call	_C_LABEL(dt_prov_kprobe_hook)
+	cmpl    $0, %eax
+	je     .Lreal_kern_trap
 
 	cli
 	movq	TF_RDI(%rsp),%rdi
@@ -210,12 +211,20 @@ INTRENTRY_LABEL(trap03):
 	movq	TF_R11(%rsp),%r11
 	/* %rax restored below, after being used to shift the stack */
 
+	cmpl    $2, %eax
+	je      .Lemulate_ret
+
+.Lemulate_push_rbp:
+
 	/*
 	 * We are returning from a probe trap so we need to fix the
 	 * stack layout and emulate the patched instruction.
 	 * Reserve enough room to emulate "pushq %rbp".
 	 */
 	subq	$16, %rsp
+
+	movq	(TF_RAX + 16)(%rsp), %rax
+	movq	%rax, TF_RAX(%rsp)
 
 	/* Shift hardware-saved registers. */
 	movq	(TF_RIP + 16)(%rsp), %rax
@@ -237,7 +246,20 @@ INTRENTRY_LABEL(trap03):
 
 	/* Finally restore %rax */
 	movq	(TF_RAX + 16)(%rsp),%rax
+	jmp .ret_int3
 
+.Lemulate_ret:
+
+	/* Store a new return address in %rip */
+	movq    TF_RSP(%rsp), %rax
+	movq    (%rax), %rax
+	movq    %rax, TF_RIP(%rsp)
+	addq    $8, TF_RSP(%rsp)
+
+	/* Finally restore %rax */
+	movq	(TF_RAX)(%rsp),%rax
+
+.ret_int3:
 	addq	$TF_RIP,%rsp
 	iretq
 #endif /* !defined(GPROF) && defined(DDBPROF) */

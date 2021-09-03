@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_prov_static.c,v 1.9 2021/09/02 17:21:39 jasper Exp $ */
+/*	$OpenBSD: dt_prov_static.c,v 1.10 2021/09/03 16:45:45 jasper Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -25,12 +25,13 @@
 
 int	dt_prov_static_alloc(struct dt_probe *, struct dt_softc *,
 	    struct dt_pcb_list *, struct dtioc_req *);
-void	dt_prov_static_hook(struct dt_provider *, ...);
+int	dt_prov_static_hook(struct dt_provider *, ...);
 
 struct dt_provider dt_prov_static = {
-	.dtpv_name = "tracepoint",
-	.dtpv_alloc = dt_prov_static_alloc,
-	.dtpv_enter = dt_prov_static_hook,
+	.dtpv_name	= "tracepoint",
+	.dtpv_alloc	= dt_prov_static_alloc,
+	.dtpv_enter	= dt_prov_static_hook,
+	.dtpv_dealloc	= NULL,
 };
 
 /*
@@ -137,7 +138,7 @@ dt_prov_static_alloc(struct dt_probe *dtp, struct dt_softc *sc,
 	return 0;
 }
 
-void
+int
 dt_prov_static_hook(struct dt_provider *dtpv, ...)
 {
 	struct dt_probe *dtp;
@@ -172,4 +173,5 @@ dt_prov_static_hook(struct dt_provider *dtpv, ...)
 		dt_pcb_ring_consume(dp, dtev);
 	}
 	smr_read_leave();
+	return 1;
 }

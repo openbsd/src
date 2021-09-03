@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.703 2021/06/29 01:42:14 jsg Exp $
+#	$OpenBSD: files,v 1.704 2021/09/03 16:45:45 jasper Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -632,6 +632,7 @@ file	dev/dt/dt_dev.c			dt	needs-flag
 file	dev/dt/dt_prov_profile.c	dt
 file	dev/dt/dt_prov_syscall.c	dt
 file	dev/dt/dt_prov_static.c		dt
+file	dev/dt/dt_prov_kprobe.c		dt
 
 # XXX machine-independent SCSI files should live somewhere here, maybe
 

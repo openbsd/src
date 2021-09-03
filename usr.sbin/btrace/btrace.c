@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.46 2021/09/02 17:21:39 jasper Exp $ */
+/*	$OpenBSD: btrace.c,v 1.47 2021/09/03 16:45:44 jasper Exp $ */
 
 /*
  * Copyright (c) 2019 - 2021 Martin Pieuchot <mpi@openbsd.org>
@@ -503,15 +503,18 @@ rules_teardown(int fd)
 	}
 
 	TAILQ_FOREACH(r, &g_rules, br_next) {
+		dtrq = r->br_cookie;
 		if (r->br_type != B_RT_PROBE) {
 			if (r->br_type == B_RT_END)
 				rend = r;
 			continue;
-		}
+        } else {
+            if (ioctl(fd, DTIOCPRBDISABLE, dtrq))
+                err(1, "DTIOCPRBDISABLE");
+        }
 
-		dtrq = r->br_cookie;
-		if (dtrq->dtrq_evtflags & DTEVT_KSTACK)
-			dokstack = 1;
+	if (dtrq->dtrq_evtflags & DTEVT_KSTACK)
+		dokstack = 1;
 	}
 
 	if (dokstack)

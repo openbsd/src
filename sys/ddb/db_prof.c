@@ -1,20 +1,5 @@
-/*	$OpenBSD: db_prof.c,v 1.4 2017/08/11 15:14:23 nayden Exp $	*/
+/*	$OpenBSD: db_prof.c,v 1.5 2021/09/03 16:45:45 jasper Exp $	*/
 
-/*
- * Copyright (c) 2016 Martin Pieuchot
- *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
- * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
- * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- */
 /*-
  * Copyright (c) 1983, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -43,7 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -54,173 +38,58 @@
 
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
-#include <ddb/db_access.h> /* for db_write_bytes() */
 #include <ddb/db_sym.h>
 
-extern char etext[];
+#include "dt.h" /* for NDT */
 
-struct prof_probe {
-	const char		*pp_name;
-	Elf_Sym			*pp_symb;
-	SLIST_ENTRY(prof_probe)	 pp_next;
-	vaddr_t			 pp_inst;
-	int			 pp_on;
-};
-
-#define PPTSIZE		PAGE_SIZE
-#define	PPTMASK		((PPTSIZE / sizeof(struct prof_probe)) - 1)
-#define INSTTOIDX(inst)	((((unsigned long)(inst)) >> 4) & PPTMASK)
-SLIST_HEAD(, prof_probe) *pp_table;
+#if NDT > 0
+#include <dev/dt/dtvar.h>
+#endif
 
 extern int db_profile;			/* Allow dynamic profiling */
 int db_prof_on;				/* Profiling state On/Off */
 
-vaddr_t db_get_pc(struct trapframe *);
+void dt_prov_kprobe_patch_all_entry(void);
+void dt_prov_kprobe_depatch_all_entry(void);
+
 vaddr_t db_get_probe_addr(struct trapframe *);
-
-void db_prof_forall(Elf_Sym *, char *, char *, int, void *);
-void db_prof_count(unsigned long, unsigned long);
-
-void
-db_prof_init(void)
-{
-	unsigned long nentries;
-
-	pp_table = malloc(PPTSIZE, M_TEMP, M_NOWAIT|M_ZERO);
-	if (pp_table == NULL)
-		return;
-
-	db_elf_sym_forall(db_prof_forall, &nentries);
-	printf("ddb probe table references %lu entry points\n", nentries);
-}
-
-void
-db_prof_forall(Elf_Sym *sym, char *name, char *suff, int pre, void *xarg)
-{
-	Elf_Sym *symb = sym;
-	unsigned long *nentries = xarg;
-	struct prof_probe *pp;
-	vaddr_t inst;
-
-	if (ELF_ST_TYPE(symb->st_info) != STT_FUNC)
-		return;
-
-	inst = symb->st_value;
-	if (inst < KERNBASE || inst >= (vaddr_t)&etext)
-		return;
-
-	if (*((uint8_t *)inst) != SSF_INST)
-		return;
-
-	if (strncmp(name, "db_", 3) == 0 || strncmp(name, "trap", 4) == 0)
-		return;
-
-#ifdef __i386__
-	/* Avoid a recursion in db_write_text(). */
-	if (strncmp(name, "pmap_pte", 8) == 0)
-		return;
-#endif
-
-	pp = malloc(sizeof(struct prof_probe), M_TEMP, M_NOWAIT|M_ZERO);
-	if (pp == NULL)
-		return;
-
-	pp->pp_name = name;
-	pp->pp_inst = inst;
-	pp->pp_symb = symb;
-
-	SLIST_INSERT_HEAD(&pp_table[INSTTOIDX(pp->pp_inst)], pp, pp_next);
-
-	(*nentries)++;
-}
+vaddr_t db_get_pc(struct trapframe *);
 
 int
 db_prof_enable(void)
 {
-#if defined(__amd64__) || defined(__i386__)
-	struct prof_probe *pp;
-	uint8_t patch = BKPT_INST;
-	unsigned long s;
-	int i;
-
+#if NDT > 0
 	if (!db_profile)
 		return EPERM;
 
-	if (pp_table == NULL)
-		return ENOENT;
-
-	KASSERT(BKPT_SIZE == SSF_SIZE);
-
-	s = intr_disable();
-	for (i = 0; i < (PPTSIZE / sizeof(*pp)); i++) {
-		SLIST_FOREACH(pp, &pp_table[i], pp_next) {
-			pp->pp_on = 1;
-			db_write_bytes(pp->pp_inst, BKPT_SIZE, &patch);
-		}
-	}
-	intr_restore(s);
-
+	dt_prov_kprobe_patch_all_entry();
 	db_prof_on = 1;
-
 	return 0;
 #else
 	return ENOENT;
-#endif
+#endif /* NDT > 0 */
 }
 
 void
 db_prof_disable(void)
 {
-	struct prof_probe *pp;
-	uint8_t patch = SSF_INST;
-	unsigned long s;
-	int i;
-
+#if NDT > 0
 	db_prof_on = 0;
-
-	s = intr_disable();
-	for (i = 0; i < (PPTSIZE / sizeof(*pp)); i++) {
-		SLIST_FOREACH(pp, &pp_table[i], pp_next) {
-			db_write_bytes(pp->pp_inst, SSF_SIZE, &patch);
-			pp->pp_on = 0;
-		}
-	}
-	intr_restore(s);
-}
-
-int
-db_prof_hook(struct trapframe *frame)
-{
-	struct prof_probe *pp;
-	vaddr_t pc, inst;
-
-	if (pp_table == NULL)
-		return 0;
-
-	pc = db_get_pc(frame);
-	inst = db_get_probe_addr(frame);
-
-	SLIST_FOREACH(pp, &pp_table[INSTTOIDX(inst)], pp_next) {
-		if (pp->pp_on && pp->pp_inst == inst) {
-			if (db_prof_on)
-				db_prof_count(pc, inst);
-			return 1;
-		}
-	}
-
-	return 0;
+	dt_prov_kprobe_depatch_all_entry();
+#endif /* NDT > 0 */
 }
 
 /*
  * Equivalent to mcount(), must be called with interrupt disabled.
  */
 void
-db_prof_count(unsigned long frompc, unsigned long selfpc)
+db_prof_count(struct trapframe *frame)
 {
 	unsigned short *frompcindex;
 	struct tostruct *top, *prevtop;
 	struct gmonparam *p;
 	long toindex;
+	unsigned long frompc, selfpc;
 
 	if ((p = curcpu()->ci_gmon) == NULL)
 		return;
@@ -231,6 +100,9 @@ db_prof_count(unsigned long frompc, unsigned long selfpc)
 	 */
 	if (p->state != GMON_PROF_ON)
 		return;
+
+	frompc = db_get_pc(frame);
+	selfpc = db_get_probe_addr(frame);
 
 	/*
 	 * check that frompcindex is a reasonable pc value.
