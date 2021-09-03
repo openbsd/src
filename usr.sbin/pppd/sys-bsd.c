@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys-bsd.c,v 1.30 2020/12/29 19:45:28 benno Exp $	*/
+/*	$OpenBSD: sys-bsd.c,v 1.31 2021/09/03 08:18:31 deraadt Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -78,6 +78,12 @@
  * TODO:
  */
 
+#include <sys/types.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/stat.h>
+
 #include <stdio.h>
 #include <syslog.h>
 #include <string.h>
@@ -89,11 +95,6 @@
 #include <termios.h>
 #include <signal.h>
 #include <util.h>
-#include <sys/ioctl.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/time.h>
-#include <sys/stat.h>
 #include <ifaddrs.h>
 
 #ifdef PPP_FILTER
@@ -105,19 +106,7 @@
 #include <net/route.h>
 #include <net/if_dl.h>
 #include <netinet/in.h>
-
-#if RTM_VERSION >= 3
-#include <sys/param.h>
-#if defined(NetBSD) && (NetBSD >= 199703)
-#include <netinet/if_inarp.h>
-#else	/* NetBSD 1.2D or later */
-#if defined(__FreeBSD__) || defined(__OpenBSD__)
 #include <netinet/if_ether.h>
-#else
-#include <net/if_ether.h>
-#endif
-#endif
-#endif
 
 #include "pppd.h"
 #include "fsm.h"
