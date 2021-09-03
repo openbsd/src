@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.h,v 1.6 2021/08/31 18:12:47 florian Exp $	*/
+/*	$OpenBSD: traceroute.h,v 1.7 2021/09/03 09:13:00 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -67,6 +67,8 @@
 #include <netinet/ip_var.h>
 #include <netmpls/mpls.h>
 
+#define ICMP_CODE 0;
+
 #define DUMMY_PORT 10010
 
 #define MAX_LSRR		((MAX_IPOPTLEN - 4) / 4)
@@ -86,7 +88,6 @@ struct packetdata {
 } __packed;
 
 struct tr_conf {
-	int		 incflag;	/* Do not inc the dest. port num */
 	int		 first_ttl;	/* Set the first TTL or hop limit */
 	u_char		 proto;		/* IP payload protocol to use */
 	u_int8_t	 max_ttl;	/* Set the maximum TTL / hop limit */
@@ -106,46 +107,55 @@ struct tr_conf {
 	int		 sump;
 	int		 tos;
 	int		 tflag;		/* tos value was set */
+	int		 xflag;		/* show ICMP extension header */
 	int		 verbose;
 	u_int		 rtableid;	/* Set the routing table */
 	u_short		 ident;
+	int		 expected_responses;
 };
 
+struct tr_result {
+	int		 seq;
+	int		 row;
+	int		 dup;
+	int		 timeout;
+	uint8_t		 ttl;
+	uint8_t		 resp_ttl;
+	char		 hbuf[NI_MAXHOST];
+	char		 inetname[NI_MAXHOST];
+	char		*asn;
+	char		*exthdr;
+	char		 to[NI_MAXHOST];
+	int		 cc;
+	struct timeval	 t1;
+	struct timeval	 t2;
+	char		 icmp_code[sizeof("!<255>")];
+	char		 tos[sizeof(" (TOS=255!)")];
+	int		 got_there;
+	int		 unreachable;
+	int		 inetname_done;
+	int		 asn_done;
+};
+
+extern int		*waiting_ttls;
 extern int32_t		 sec_perturb;
 extern int32_t		 usec_perturb;
 
 extern u_char		 packet[512];
 extern u_char		*outpacket;	/* last inbound (icmp) packet */
 
-int		 wait_for_reply(int, struct msghdr *, int);
-void		 dump_packet(void);
-void		 build_probe4(struct tr_conf *, int, u_int8_t, int);
-void		 build_probe6(struct tr_conf *, int, u_int8_t, int,
-			struct sockaddr *);
-void		 send_probe(struct tr_conf *, int, u_int8_t, int,
-			struct sockaddr *);
-struct udphdr	*get_udphdr(struct tr_conf *, struct ip6_hdr *, u_char *);
-int		 packet_ok(struct tr_conf *, int, struct msghdr *, int, int,
-			int);
-int		 packet_ok4(struct tr_conf *, struct msghdr *, int, int, int);
-int		 packet_ok6(struct tr_conf *, struct msghdr *, int, int, int);
-void		 icmp_code(int, int, int *, int *);
-void		 icmp4_code(int, int *, int *);
-void		 icmp6_code(int, int *, int *);
-void		 dump_packet(void);
-void		 print_exthdr(u_char *, int);
-void		 check_tos(struct ip*, int *);
-void		 print(struct tr_conf *, struct sockaddr *, int, const char *);
-const char	*inetname(struct sockaddr*);
-void		 print_asn(struct sockaddr_storage *);
-u_short		 in_cksum(u_short *, int);
-char		*pr_type(u_int8_t);
+void		 send_probe(struct tr_conf *, int, u_int8_t, struct sockaddr *);
+int		 packet_ok(struct tr_conf *, int, struct msghdr *, int, int *);
+void		 icmp_code(int, int, int *, int *, struct tr_result *);
+void		 check_tos(struct ip*, int *, struct tr_result *);
 int		 map_tos(char *, int *);
-double		 deltaT(struct timeval *, struct timeval *);
-
+void		 print(struct tr_conf *, struct sockaddr *, int, const char *,
+		     struct tr_result *);
+void		 print_exthdr(u_char *, int, struct tr_result *);
 void		 gettime(struct timeval *);
 
-extern int		 rcvsock;  /* receive (icmp) socket file descriptor */
+void		 catchup_result_rows(struct tr_result *, struct tr_conf *);
+
 extern int		 sndsock;  /* send (udp) socket file descriptor */
 
 extern int		 rcvhlim;
@@ -156,8 +166,6 @@ extern int		 datalen;  /* How much data */
 extern char		*hostname;
 
 extern u_int16_t	 srcport;
-
-#define ICMP_CODE 0;
 
 extern int verbose;
 extern int dump;

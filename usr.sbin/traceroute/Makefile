@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2016/09/03 22:00:06 benno Exp $
+#	$OpenBSD: Makefile,v 1.11 2021/09/03 09:13:00 florian Exp $
 
 PROG=	traceroute
 
@@ -8,6 +8,8 @@ CFLAGS+= -Wall -I${.CURDIR}
 CFLAGS+= -Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+= -Wmissing-declarations
 CFLAGS+= -Wshadow -Wpointer-arith -Wcast-qual
+LDADD=	-levent
+DPADD=	${LIBEVENT}
 
 MAN=	traceroute.8
 

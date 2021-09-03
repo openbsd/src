@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.167 2021/08/31 18:12:47 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.168 2021/09/03 09:13:00 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -249,6 +249,7 @@
 
 #include <err.h>
 #include <errno.h>
+#include <event.h>
 #include <limits.h>
 #include <netdb.h>
 #include <pwd.h>
@@ -271,15 +272,29 @@ int	sndsock;	/* send (udp) socket file descriptor */
 int	rcvhlim;
 struct in6_pktinfo *rcvpktinfo;
 
-	int	datalen;	/* How much data */
+int	datalen;	/* How much data */
 
 char	*hostname;
 
 u_int16_t	srcport;
 
-void	usage(int);
+void	usage(void);
 
 #define	TRACEROUTE_USER	"_traceroute"
+
+void	sock_read(int, short, void *);
+void	send_timer(int, short, void *);
+
+struct tr_conf		*conf;	/* configuration defaults */
+struct tr_result	*tr_results;
+struct sockaddr_in	 from4, to4;
+struct sockaddr_in6	 from6, to6;
+struct sockaddr		*from, *to;
+struct msghdr		 rcvmhdr;
+struct event		 timer_ev;
+int			 v6flag;
+int			*waiting_ttls;
+int			 last_tos = 0;
 
 int
 main(int argc, char *argv[])
@@ -287,17 +302,14 @@ main(int argc, char *argv[])
 	int	mib[4] = { CTL_NET, PF_INET, IPPROTO_IP, IPCTL_DEFTTL };
 	char	hbuf[NI_MAXHOST];
 
-	struct tr_conf		*conf;	/* configuration defaults */
-	struct sockaddr_in	 from4, to4;
-	struct sockaddr_in6	 from6, to6;
-	struct sockaddr		*from, *to;
 	struct addrinfo		 hints, *res;
 	struct hostent		*hp;
 	struct ip		*ip = NULL;
 	struct iovec		 rcviov[2];
-	struct msghdr		 rcvmhdr;
 	static u_char		*rcvcmsgbuf;
 	struct passwd		*pw;
+	struct event		 sock_ev;
+	struct timeval		tv = {0, 0};
 
 	long		 l;
 	socklen_t	 len;
@@ -305,25 +317,18 @@ main(int argc, char *argv[])
 
 	int		 ch;
 	int		 on = 1;
-	int		 seq = 0;
 	int		 error;
-	int		 curwaittime;
 	int		 headerlen;	/* How long packet's header is */
 	int		 i;
-	int		 last_tos = 0;
 	int		 packetlen;
-	int		 probe;
 	int		 rcvcmsglen;
 	int		 rcvsock4, rcvsock6;
 	int		 sndsock4, sndsock6;
 	u_int32_t	 tmprnd;
 	int		 v4sock_errno, v6sock_errno;
-	int		 v6flag = 0;
-	int		 xflag = 0;	/* show ICMP extension header */
 
 	char		*dest;
 	const char	*errstr;
-	u_int8_t	 ttl;
 
 	uid_t		 ouid, uid;
 	gid_t		 gid;
@@ -337,11 +342,11 @@ main(int argc, char *argv[])
 	if ((conf = calloc(1, sizeof(*conf))) == NULL)
 		err(1,NULL);
 
-	conf->incflag = 1;
 	conf->first_ttl = 1;
 	conf->proto = IPPROTO_UDP;
 	conf->max_ttl = IPDEFTTL;
 	conf->nprobes = 3;
+	conf->expected_responses = 2; /* icmp + DNS */
 
 	/* start udp dest port # for probe packets */
 	conf->port = 32768+666;
@@ -421,14 +426,12 @@ main(int argc, char *argv[])
 		err(1, "sysctl");
 	conf->max_ttl = i;
 
-	while ((ch = getopt(argc, argv, v6flag ? "AcDdf:Ilm:np:q:Ss:t:w:vV:" :
-	    "AcDdf:g:Ilm:nP:p:q:Ss:t:V:vw:x")) != -1)
+	while ((ch = getopt(argc, argv, v6flag ? "ADdf:Ilm:np:q:Ss:t:w:vV:" :
+	    "ADdf:g:Ilm:nP:p:q:Ss:t:V:vw:x")) != -1)
 		switch (ch) {
 		case 'A':
 			conf->Aflag = 1;
-			break;
-		case 'c':
-			conf->incflag = 0;
+			conf->expected_responses++;
 			break;
 		case 'd':
 			conf->dflag = 1;
@@ -476,6 +479,7 @@ main(int argc, char *argv[])
 			break;
 		case 'n':
 			conf->nflag = 1;
+			conf->expected_responses--;
 			break;
 		case 'p':
 			conf->port = strtonum(optarg, 1, 65535, &errstr);
@@ -500,7 +504,7 @@ main(int argc, char *argv[])
 			}
 			break;
 		case 'q':
-			conf->nprobes = strtonum(optarg, 1, INT_MAX, &errstr);
+			conf->nprobes = strtonum(optarg, 1, 1024, &errstr);
 			if (errstr)
 				errx(1, "nprobes must be >0.");
 			break;
@@ -561,10 +565,10 @@ main(int argc, char *argv[])
 			conf->waittime *= 1000;
 			break;
 		case 'x':
-			xflag = 1;
+			conf->xflag = 1;
 			break;
 		default:
-			usage(v6flag);
+			usage();
 		}
 
 	if (ouid == 0 && (setgroups(1, &gid) ||
@@ -576,7 +580,16 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	if (argc < 1 || argc > 2)
-		usage(v6flag);
+		usage();
+
+	tr_results = calloc(sizeof(struct tr_result), conf->max_ttl *
+	    conf->nprobes);
+	if (tr_results == NULL)
+		err(1, NULL);
+
+	waiting_ttls = calloc(sizeof(int), conf->max_ttl);
+	for (i = 0; i < conf->max_ttl; i++)
+		waiting_ttls[i] = conf->nprobes * conf->expected_responses;
 
 	setvbuf(stdout, NULL, _IOLBF, 0);
 
@@ -862,112 +875,26 @@ main(int argc, char *argv[])
 	if (conf->first_ttl > 1)
 		printf("Skipping %u intermediate hops\n", conf->first_ttl - 1);
 
-	for (ttl = conf->first_ttl; ttl && ttl <= conf->max_ttl; ++ttl) {
-		int got_there = 0, unreachable = 0, timeout = 0, loss;
-		in_addr_t lastaddr = 0;
-		struct in6_addr lastaddr6;
+	event_init();
 
-		printf("%2u ", ttl);
-		memset(&lastaddr6, 0, sizeof(lastaddr6));
-		for (probe = 0, loss = 0; probe < conf->nprobes; ++probe) {
-			int cc;
-			struct timeval t1, t2;
-
-			gettime(&t1);
-			send_probe(conf, ++seq, ttl, conf->incflag, to);
-			curwaittime = conf->waittime;
-			while ((cc = wait_for_reply(rcvsock, &rcvmhdr,
-			    curwaittime))) {
-				gettime(&t2);
-				i = packet_ok(conf, to->sa_family, &rcvmhdr,
-				    cc, seq, conf->incflag);
-				/* Skip wrong packet */
-				if (i == 0) {
-					curwaittime = conf->waittime -
-					    ((t2.tv_sec - t1.tv_sec) * 1000 +
-					    (t2.tv_usec - t1.tv_usec) / 1000);
-					if (curwaittime < 0)
-						curwaittime = 0;
-					continue;
-				}
-				if (to->sa_family == AF_INET) {
-					ip = (struct ip *)packet;
-					if (from4.sin_addr.s_addr != lastaddr) {
-						print(conf, from,
-						    cc - (ip->ip_hl << 2),
-						    inet_ntop(AF_INET,
-						    &ip->ip_dst, hbuf,
-						    sizeof(hbuf)));
-						lastaddr =
-						    from4.sin_addr.s_addr;
-					}
-				} else if (to->sa_family == AF_INET6) {
-					if (!IN6_ARE_ADDR_EQUAL(
-					    &from6.sin6_addr, &lastaddr6)) {
-						print(conf, from, cc,
-						    rcvpktinfo ?
-						    inet_ntop( AF_INET6,
-						    &rcvpktinfo->ipi6_addr,
-						    hbuf, sizeof(hbuf)) : "?");
-						lastaddr6 = from6.sin6_addr;
-					}
-				} else
-					errx(1, "unsupported AF: %d",
-					    to->sa_family);
-
-				printf("  %g ms", deltaT(&t1, &t2));
-				if (conf->ttl_flag)
-					printf(" (%u)", v6flag ? rcvhlim :
-					    ip->ip_ttl);
-				if (to->sa_family == AF_INET) {
-					if (i == -2) {
-						if (ip->ip_ttl <= 1)
-							printf(" !");
-						++got_there;
-						break;
-					}
-
-					if (conf->tflag)
-						check_tos(ip, &last_tos);
-				}
-
-				/* time exceeded in transit */
-				if (i == -1)
-					break;
-				icmp_code(to->sa_family, i - 1, &got_there,
-				    &unreachable);
-				break;
-			}
-			if (cc == 0) {
-				printf(" *");
-				timeout++;
-				loss++;
-			} else if (cc && probe == conf->nprobes - 1 &&
-			    (xflag || conf->verbose))
-				print_exthdr(packet, cc);
-			(void) fflush(stdout);
-		}
-		if (conf->sump)
-			printf(" (%d%% loss)", (loss * 100) / conf->nprobes);
-		putchar('\n');
-		if (got_there ||
-		    (unreachable && (unreachable + timeout) >= conf->nprobes))
-			break;
-	}
-	exit(0);
+	event_set(&sock_ev, rcvsock, EV_READ | EV_PERSIST, sock_read, NULL);
+	event_add(&sock_ev, NULL);
+	evtimer_set(&timer_ev, send_timer, &timer_ev);
+	evtimer_add(&timer_ev, &tv);
+	event_dispatch();
 }
 
 void
-usage(int v6flag)
+usage(void)
 {
 	if (v6flag) {
 		fprintf(stderr, "usage: %s "
-		    "[-AcDdIlnSv] [-f first_hop] [-m max_hop] [-p port]\n"
+		    "[-ADdIlnSv] [-f first_hop] [-m max_hop] [-p port]\n"
 		    "\t[-q nqueries] [-s sourceaddr] [-t toskeyword] [-V rtable] "
 		    "[-w waittime]\n\thost [datalen]\n", __progname);
 	} else {
 		fprintf(stderr,
-		    "usage: %s [-AcDdIlnSvx] [-f first_ttl] [-g gateway_addr] "
+		    "usage: %s [-ADdIlnSvx] [-f first_ttl] [-g gateway_addr] "
 		    "[-m max_ttl]\n"
 		    "\t[-P proto] [-p port] [-q nqueries] [-s sourceaddr]\n"
 		    "\t[-t toskeyword] "
@@ -975,4 +902,107 @@ usage(int v6flag)
 		    __progname);
 	}
 	exit(1);
+}
+
+void
+sock_read(int fd, short events, void *arg)
+{
+	struct ip	*ip;
+	struct timeval	 t2, tv = {0, 0};
+	int		 pkg_ok, cc, recv_seq, recv_seq_row;
+	char		 hbuf[NI_MAXHOST];
+
+	cc = recvmsg(rcvsock, &rcvmhdr, 0);
+
+	if (cc == 0)
+		return;
+
+	evtimer_add(&timer_ev, &tv);
+
+	gettime(&t2);
+
+	pkg_ok = packet_ok(conf, to->sa_family, &rcvmhdr, cc, &recv_seq);
+
+	/* Skip wrong packet */
+	if (pkg_ok == 0)
+		goto out;
+
+	/* skip corrupt sequence number */
+	if (recv_seq < 0 || recv_seq >= conf->max_ttl * conf->nprobes)
+		goto out;
+
+	recv_seq_row = recv_seq / conf->nprobes;
+
+	/* skipping dup */
+	if (tr_results[recv_seq].dup++)
+		goto out;
+
+	switch (to->sa_family) {
+	case AF_INET:
+		ip = (struct ip *)packet;
+
+		print(conf, from, cc - (ip->ip_hl << 2), inet_ntop(AF_INET,
+		    &ip->ip_dst, hbuf, sizeof(hbuf)), &tr_results[recv_seq]);
+		break;
+	case AF_INET6:
+		print(conf, from, cc, rcvpktinfo ? inet_ntop(AF_INET6,
+		    &rcvpktinfo->ipi6_addr, hbuf, sizeof(hbuf)) : "?",
+		    &tr_results[recv_seq]);
+		break;
+	default:
+		errx(1, "unsupported AF: %d", to->sa_family);
+	}
+
+	tr_results[recv_seq].t2 = t2;
+	tr_results[recv_seq].resp_ttl = v6flag ? rcvhlim : ip->ip_ttl;
+
+	waiting_ttls[recv_seq_row]--;
+
+	if (pkg_ok == -2) {
+		if ((v6flag && rcvhlim <= 1) ||
+		    (!v6flag && ip->ip_ttl <=1))
+			snprintf(tr_results[recv_seq].icmp_code,
+			    sizeof(tr_results[recv_seq].icmp_code), "%s", " !");
+		tr_results[recv_seq].got_there++;
+	} else {
+		if (to->sa_family == AF_INET && conf->tflag)
+			check_tos(ip, &last_tos, &tr_results[recv_seq]);
+		if (pkg_ok != -1) {
+			icmp_code(to->sa_family, pkg_ok - 1,
+			    &tr_results[recv_seq].got_there,
+			    &tr_results[recv_seq].unreachable,
+			    &tr_results[recv_seq]);
+		}
+	}
+
+	if (cc && ((recv_seq + 1) % conf->nprobes) == 0 &&
+	    (conf->xflag || conf->verbose))
+		print_exthdr(packet, cc, &tr_results[recv_seq]);
+ out:
+	catchup_result_rows(tr_results, conf);
+}
+
+void
+send_timer(int fd, short events, void *arg)
+{
+	static int	 seq;
+	struct timeval	 tv = {0, 30000}, t1;
+	struct event	*ev = arg;
+	int		 ttl;
+
+	evtimer_add(ev, &tv);
+
+	ttl = conf->first_ttl + seq / conf->nprobes;
+	if (ttl <= conf->max_ttl) {
+		gettime(&t1);
+		tr_results[seq].seq = seq;
+		tr_results[seq].row = seq / conf->nprobes;
+		tr_results[seq].ttl = ttl;
+		tr_results[seq].t1 = t1;
+		send_probe(conf, seq, ttl, to);
+		seq++;
+	}
+
+	catchup_result_rows(tr_results, conf);
+
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: worker.c,v 1.7 2021/08/31 18:12:47 florian Exp $	*/
+/*	$OpenBSD: worker.c,v 1.8 2021/09/03 09:13:00 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -77,30 +77,50 @@
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
 
+#include <asr.h>
 #include <err.h>
+#include <event.h>
 #include <limits.h>
 #include <netdb.h>
-#include <poll.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
 
 #include "traceroute.h"
 
-static u_int8_t	icmp_type = ICMP_ECHO; /* default ICMP code/type */
+void		 build_probe4(struct tr_conf *, int, u_int8_t);
+void		 build_probe6(struct tr_conf *, int, u_int8_t,
+		     struct sockaddr *);
+int		 packet_ok4(struct tr_conf *, struct msghdr *, int, int *);
+int		 packet_ok6(struct tr_conf *, struct msghdr *, int, int *);
+void		 icmp4_code(int, int *, int *, struct tr_result *);
+void		 icmp6_code(int, int *, int *, struct tr_result *);
+struct udphdr	*get_udphdr(struct tr_conf *, struct ip6_hdr *, u_char *);
+void		 dump_packet(void);
+void		 print_asn(struct sockaddr_storage *, struct tr_result *);
+u_short		 in_cksum(u_short *, int);
+char		*pr_type(u_int8_t);
+double		 deltaT(struct timeval *, struct timeval *);
+void		 check_timeout(struct tr_result *, struct tr_conf *);
+void		 print_result_row(struct tr_result *, struct tr_conf *);
+void		 getnameinfo_async_done(struct asr_result *, void *);
+void		 getrrsetbyname_async_done(struct asr_result *, void *);
 
 void
-print_exthdr(u_char *buf, int cc)
+print_exthdr(u_char *buf, int cc, struct tr_result *tr_res)
 {
 	struct icmp_ext_hdr exthdr;
 	struct icmp_ext_obj_hdr objhdr;
 	struct ip *ip;
 	struct icmp *icp;
+	size_t exthdr_size, len;
 	int hlen, first;
 	u_int32_t label;
 	u_int16_t off, olen;
 	u_int8_t type;
+	char *exthdr_str;
 
 	ip = (struct ip *)buf;
 	hlen = ip->ip_hl << 2;
@@ -148,6 +168,13 @@ print_exthdr(u_char *buf, int cc)
 	buf += sizeof(exthdr);
 	cc -= sizeof(exthdr);
 
+	/* rough estimate of needed space */
+	exthdr_size = sizeof("[MPLS Label 1048576 (Exp 3)]") *
+	    (cc / sizeof(u_int32_t));
+	if ((tr_res->exthdr = calloc(1, exthdr_size)) == NULL)
+		err(1, NULL);
+	exthdr_str = tr_res->exthdr;
+
 	while (cc > sizeof(objhdr)) {
 		memcpy(&objhdr, buf, sizeof(objhdr));
 		olen = ntohs(objhdr.ieo_length);
@@ -175,21 +202,62 @@ print_exthdr(u_char *buf, int cc)
 					olen -= sizeof(u_int32_t);
 
 					if (first == 0) {
-						printf(" [MPLS Label ");
+						len = snprintf(exthdr_str,
+						    exthdr_size, "%s",
+						    " [MPLS Label ");
+						if (len != -1 && len <
+						    exthdr_size) {
+							exthdr_str += len;
+							exthdr_size -= len;
+						}
 						first++;
-					} else
-						printf(", ");
-					printf("%d", MPLS_LABEL(label));
-					if (MPLS_EXP(label))
-						printf(" (Exp %x)",
+					} else {
+						len = snprintf(exthdr_str,
+						    exthdr_size, "%s",
+						    ", ");
+						if (len != -1 && len <
+						    exthdr_size) {
+							exthdr_str += len;
+							exthdr_size -= len;
+						}
+					}
+					len = snprintf(exthdr_str,
+					    exthdr_size,
+					    "%d", MPLS_LABEL(label));
+					if (len != -1 && len <  exthdr_size) {
+						exthdr_str += len;
+						exthdr_size -= len;
+					}
+					if (MPLS_EXP(label)) {
+						len = snprintf(exthdr_str,
+						    exthdr_size, " (Exp %x)",
 						    MPLS_EXP(label));
+						if (len != -1 && len <
+						    exthdr_size) {
+							exthdr_str += len;
+							exthdr_size -= len;
+						}
+					}
 				}
 				if (olen > 0) {
-					printf("|]");
+					len = snprintf(exthdr_str,
+					    exthdr_size, "%s", "|]");
+					if (len != -1 && len <
+					    exthdr_size) {
+						exthdr_str += len;
+						exthdr_size -= len;
+					}
 					return;
 				}
-				if (first != 0)
-					printf("]");
+				if (first != 0) {
+					len = snprintf(exthdr_str,
+					    exthdr_size, "%s", "]");
+					if (len != -1 && len <
+					    exthdr_size) {
+						exthdr_str += len;
+						exthdr_size -= len;
+					}
+				}
 				break;
 			default:
 				buf += olen;
@@ -205,7 +273,7 @@ print_exthdr(u_char *buf, int cc)
 }
 
 void
-check_tos(struct ip *ip, int *last_tos)
+check_tos(struct ip *ip, int *last_tos, struct tr_result *tr_res)
 {
 	struct icmp *icp;
 	struct ip *inner_ip;
@@ -214,25 +282,10 @@ check_tos(struct ip *ip, int *last_tos)
 	inner_ip = (struct ip *) (((u_char *)icp)+8);
 
 	if (inner_ip->ip_tos != *last_tos)
-		printf (" (TOS=%d!)", inner_ip->ip_tos);
+		snprintf(tr_res->tos, sizeof(tr_res->tos),
+		    " (TOS=%d!)", inner_ip->ip_tos);
 
 	*last_tos = inner_ip->ip_tos;
-}
-
-int
-wait_for_reply(int sock, struct msghdr *mhdr, int curwaittime)
-{
-	struct pollfd pfd[1];
-	int cc = 0;
-
-	pfd[0].fd = sock;
-	pfd[0].events = POLLIN;
-	pfd[0].revents = 0;
-
-	if (poll(pfd, 1, curwaittime) > 0)
-		cc = recvmsg(rcvsock, mhdr, 0);
-
-	return (cc);
 }
 
 void
@@ -251,7 +304,7 @@ dump_packet(void)
 }
 
 void
-build_probe4(struct tr_conf *conf, int seq, u_int8_t ttl, int iflag)
+build_probe4(struct tr_conf *conf, int seq, u_int8_t ttl)
 {
 	struct ip *ip = (struct ip *)outpacket;
 	u_char *p = (u_char *)(ip + 1);
@@ -266,7 +319,7 @@ build_probe4(struct tr_conf *conf, int seq, u_int8_t ttl, int iflag)
 
 	switch (conf->proto) {
 	case IPPROTO_ICMP:
-		icmpp->icmp_type = icmp_type;
+		icmpp->icmp_type = ICMP_ECHO;
 		icmpp->icmp_code = ICMP_CODE;
 		icmpp->icmp_seq = htons(seq);
 		icmpp->icmp_id = htons(conf->ident);
@@ -274,10 +327,7 @@ build_probe4(struct tr_conf *conf, int seq, u_int8_t ttl, int iflag)
 		break;
 	case IPPROTO_UDP:
 		up->uh_sport = htons(conf->ident);
-		if (iflag)
-			up->uh_dport = htons(conf->port+seq);
-		else
-			up->uh_dport = htons(conf->port);
+		up->uh_dport = htons(conf->port+seq);
 		up->uh_ulen = htons((u_short)(datalen - sizeof(struct ip) -
 		    conf->lsrrlen));
 		up->uh_sum = 0;
@@ -307,7 +357,7 @@ build_probe4(struct tr_conf *conf, int seq, u_int8_t ttl, int iflag)
 	op->sec = htonl(tv.tv_sec + sec_perturb);
 	op->usec = htonl((tv.tv_usec + usec_perturb) % 1000000);
 
-	if (conf->proto == IPPROTO_ICMP && icmp_type == ICMP_ECHO) {
+	if (conf->proto == IPPROTO_ICMP) {
 		icmpp->icmp_cksum = 0;
 		icmpp->icmp_cksum = in_cksum((u_short *)icmpp,
 		    datalen - sizeof(struct ip) - conf->lsrrlen);
@@ -317,7 +367,7 @@ build_probe4(struct tr_conf *conf, int seq, u_int8_t ttl, int iflag)
 }
 
 void
-build_probe6(struct tr_conf *conf, int seq, u_int8_t hops, int iflag,
+build_probe6(struct tr_conf *conf, int seq, u_int8_t hops,
     struct sockaddr *to)
 {
 	struct timeval tv;
@@ -329,10 +379,9 @@ build_probe6(struct tr_conf *conf, int seq, u_int8_t hops, int iflag,
 	    (char *)&i, sizeof(i)) == -1)
 		warn("setsockopt IPV6_UNICAST_HOPS");
 
-	if (iflag)
-		((struct sockaddr_in6*)to)->sin6_port = htons(conf->port + seq);
-	else
-		((struct sockaddr_in6*)to)->sin6_port = htons(conf->port);
+
+	((struct sockaddr_in6*)to)->sin6_port = htons(conf->port + seq);
+
 	gettime(&tv);
 
 	if (conf->proto == IPPROTO_ICMP) {
@@ -354,17 +403,16 @@ build_probe6(struct tr_conf *conf, int seq, u_int8_t hops, int iflag,
 }
 
 void
-send_probe(struct tr_conf *conf, int seq, u_int8_t ttl, int iflag,
-	struct sockaddr *to)
+send_probe(struct tr_conf *conf, int seq, u_int8_t ttl, struct sockaddr *to)
 {
 	int i;
 
 	switch (to->sa_family) {
 	case AF_INET:
-		build_probe4(conf, seq, ttl, iflag);
+		build_probe4(conf, seq, ttl);
 		break;
 	case AF_INET6:
-		build_probe6(conf, seq, ttl, iflag, to);
+		build_probe6(conf, seq, ttl, to);
 		break;
 	default:
 		errx(1, "unsupported AF: %d", to->sa_family);
@@ -428,15 +476,14 @@ pr_type(u_int8_t t)
 }
 
 int
-packet_ok(struct tr_conf *conf, int af, struct msghdr *mhdr, int cc, int seq,
-    int iflag)
+packet_ok(struct tr_conf *conf, int af, struct msghdr *mhdr, int cc, int *seq)
 {
 	switch (af) {
 	case AF_INET:
-		return packet_ok4(conf, mhdr, cc, seq, iflag);
+		return packet_ok4(conf, mhdr, cc, seq);
 		break;
 	case AF_INET6:
-		return packet_ok6(conf, mhdr, cc, seq, iflag);
+		return packet_ok6(conf, mhdr, cc, seq);
 		break;
 	default:
 		errx(1, "unsupported AF: %d", af);
@@ -445,7 +492,7 @@ packet_ok(struct tr_conf *conf, int af, struct msghdr *mhdr, int cc, int seq,
 }
 
 int
-packet_ok4(struct tr_conf *conf, struct msghdr *mhdr, int cc,int seq, int iflag)
+packet_ok4(struct tr_conf *conf, struct msghdr *mhdr, int cc, int *seq)
 {
 	struct sockaddr_in *from = (struct sockaddr_in *)mhdr->msg_name;
 	struct icmp *icp;
@@ -478,27 +525,26 @@ packet_ok4(struct tr_conf *conf, struct msghdr *mhdr, int cc,int seq, int iflag)
 
 		switch (conf->proto) {
 		case IPPROTO_ICMP:
-			if (icmp_type == ICMP_ECHO &&
-			    type == ICMP_ECHOREPLY &&
-			    icp->icmp_id == htons(conf->ident) &&
-			    icp->icmp_seq == htons(seq))
+			if (type == ICMP_ECHOREPLY &&
+			    icp->icmp_id == htons(conf->ident)) {
+				*seq = ntohs(icp->icmp_seq);
 				return (-2); /* we got there */
-
+			}
 			icmpp = (struct icmp *)((u_char *)hip + hlen);
 			if (hlen + 8 <= cc && hip->ip_p == IPPROTO_ICMP &&
-			    icmpp->icmp_id == htons(conf->ident) &&
-			    icmpp->icmp_seq == htons(seq))
+			    icmpp->icmp_id == htons(conf->ident)) {
+				*seq = ntohs(icmpp->icmp_seq);
 				return (type == ICMP_TIMXCEED? -1 : code + 1);
+			}
 			break;
 
 		case IPPROTO_UDP:
 			up = (struct udphdr *)((u_char *)hip + hlen);
 			if (hlen + 12 <= cc && hip->ip_p == conf->proto &&
-			    up->uh_sport == htons(conf->ident) &&
-			    ((iflag && up->uh_dport == htons(conf->port +
-			    seq)) ||
-			    (!iflag && up->uh_dport == htons(conf->port))))
+			    up->uh_sport == htons(conf->ident)) {
+				*seq = ntohs(up->uh_dport) - conf->port;
 				return (type == ICMP_TIMXCEED? -1 : code + 1);
+			}
 			break;
 		default:
 			/* this is some odd, user specified proto,
@@ -523,8 +569,7 @@ packet_ok4(struct tr_conf *conf, struct msghdr *mhdr, int cc,int seq, int iflag)
 }
 
 int
-packet_ok6(struct tr_conf *conf, struct msghdr *mhdr, int cc, int seq,
-    int iflag)
+packet_ok6(struct tr_conf *conf, struct msghdr *mhdr, int cc, int *seq)
 {
 	struct icmp6_hdr *icp;
 	struct sockaddr_in6 *from = (struct sockaddr_in6 *)mhdr->msg_name;
@@ -540,7 +585,8 @@ packet_ok6(struct tr_conf *conf, struct msghdr *mhdr, int cc, int seq,
 			if (getnameinfo((struct sockaddr *)from, from->sin6_len,
 			    hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST) != 0)
 				strlcpy(hbuf, "invalid", sizeof(hbuf));
-			printf("data too short (%d bytes) from %s\n", cc, hbuf);
+			printf("packet too short (%d bytes) from %s\n", cc,
+			    hbuf);
 		}
 		return(0);
 	}
@@ -582,18 +628,19 @@ packet_ok6(struct tr_conf *conf, struct msghdr *mhdr, int cc, int seq,
 			return(0);
 		}
 		if (useicmp &&
-		    ((struct icmp6_hdr *)up)->icmp6_id == conf->ident &&
-		    ((struct icmp6_hdr *)up)->icmp6_seq == htons(seq))
+		    ((struct icmp6_hdr *)up)->icmp6_id == conf->ident) {
+			*seq = ntohs(((struct icmp6_hdr *)up)->icmp6_seq);
 			return (type == ICMP6_TIME_EXCEEDED ? -1 : code + 1);
-		else if (!useicmp &&
-		    up->uh_sport == htons(srcport) &&
-		    ((iflag && up->uh_dport == htons(conf->port + seq)) ||
-		    (!iflag && up->uh_dport == htons(conf->port))))
+		} else if (!useicmp &&
+		    up->uh_sport == htons(srcport)) {
+			*seq = ntohs(up->uh_dport) - conf->port;
 			return (type == ICMP6_TIME_EXCEEDED ? -1 : code + 1);
+		}
 	} else if (useicmp && type == ICMP6_ECHO_REPLY) {
-		if (icp->icmp6_id == conf->ident &&
-		    icp->icmp6_seq == htons(seq))
-			return (ICMP6_DST_UNREACH_NOPORT + 1);
+		if (icp->icmp6_id == conf->ident) {
+			*seq = ntohs(icp->icmp6_seq);
+			return (-2);
+		}
 	}
 	if (conf->verbose) {
 		char sbuf[NI_MAXHOST], dbuf[INET6_ADDRSTRLEN];
@@ -626,22 +673,32 @@ packet_ok6(struct tr_conf *conf, struct msghdr *mhdr, int cc, int seq,
 }
 
 void
-print(struct tr_conf *conf, struct sockaddr *from, int cc, const char *to)
+print(struct tr_conf *conf, struct sockaddr *from, int cc, const char *to,
+    struct tr_result *tr_res)
 {
-	char hbuf[NI_MAXHOST];
+	struct asr_query	*aq;
+	char			 hbuf[NI_MAXHOST];
+
 	if (getnameinfo(from, from->sa_len,
-	    hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST) != 0)
-		strlcpy(hbuf, "invalid", sizeof(hbuf));
-	if (conf->nflag)
-		printf(" %s", hbuf);
-	else
-		printf(" %s (%s)", inetname(from), hbuf);
+	    tr_res->hbuf, sizeof(tr_res->hbuf), NULL, 0, NI_NUMERICHOST) != 0)
+		strlcpy(tr_res->hbuf, "invalid", sizeof(hbuf));
+
+	if (!conf->nflag) {
+		aq = getnameinfo_async(from, from->sa_len, tr_res->inetname,
+		    sizeof(tr_res->inetname), NULL, 0, NI_NAMEREQD, NULL);
+		if (aq != NULL)
+			event_asr_run(aq, getnameinfo_async_done, tr_res);
+		else {
+			waiting_ttls[tr_res->row]--;
+			tr_res->inetname_done = 1; /* use hbuf */
+		}
+	}
 
 	if (conf->Aflag)
-		print_asn((struct sockaddr_storage *)from);
+		print_asn((struct sockaddr_storage *)from, tr_res);
 
-	if (conf->verbose)
-		printf(" %d bytes to %s", cc, to);
+	strlcpy(tr_res->to, to, sizeof(tr_res->to));
+	tr_res->cc = cc;
 }
 
 /*
@@ -690,14 +747,15 @@ get_udphdr(struct tr_conf *conf, struct ip6_hdr *ip6, u_char *lim)
 }
 
 void
-icmp_code(int af, int code, int *got_there, int *unreachable)
+icmp_code(int af, int code, int *got_there, int *unreachable,
+    struct tr_result *tr_res)
 {
 	switch (af) {
 	case AF_INET:
-		icmp4_code(code, got_there, unreachable);
+		icmp4_code(code, got_there, unreachable, tr_res);
 		break;
 	case AF_INET6:
-		icmp6_code(code, got_there, unreachable);
+		icmp6_code(code, got_there, unreachable, tr_res);
 		break;
 	default:
 		errx(1, "unsupported AF: %d", af);
@@ -706,97 +764,116 @@ icmp_code(int af, int code, int *got_there, int *unreachable)
 }
 
 void
-icmp4_code(int code, int *got_there, int *unreachable)
+icmp4_code(int code, int *got_there, int *unreachable, struct tr_result *tr_res)
 {
 	struct ip *ip = (struct ip *)packet;
 
 	switch (code) {
 	case ICMP_UNREACH_PORT:
 		if (ip->ip_ttl <= 1)
-			printf(" !");
+			snprintf(tr_res->icmp_code, sizeof(tr_res->icmp_code),
+			    "%s", " !");
 		++(*got_there);
 		break;
 	case ICMP_UNREACH_NET:
 		++(*unreachable);
-		printf(" !N");
+		snprintf(tr_res->icmp_code, sizeof(tr_res->icmp_code), "%s",
+		    " !N");
 		break;
 	case ICMP_UNREACH_HOST:
 		++(*unreachable);
-		printf(" !H");
+		snprintf(tr_res->icmp_code, sizeof(tr_res->icmp_code), "%s",
+		    " !H");
 		break;
 	case ICMP_UNREACH_PROTOCOL:
 		++(*got_there);
-		printf(" !P");
+		snprintf(tr_res->icmp_code, sizeof(tr_res->icmp_code), "%s",
+		    " !P");
 		break;
 	case ICMP_UNREACH_NEEDFRAG:
 		++(*unreachable);
-		printf(" !F");
+		snprintf(tr_res->icmp_code, sizeof(tr_res->icmp_code), "%s",
+		    " !F");
 		break;
 	case ICMP_UNREACH_SRCFAIL:
 		++(*unreachable);
-		printf(" !S");
+		snprintf(tr_res->icmp_code, sizeof(tr_res->icmp_code), "%s",
+		    " !S");
 		break;
 	case ICMP_UNREACH_FILTER_PROHIB:
 		++(*unreachable);
-		printf(" !X");
+		snprintf(tr_res->icmp_code, sizeof(tr_res->icmp_code), "%s",
+		    " !X");
 		break;
 	case ICMP_UNREACH_NET_PROHIB: /*misuse*/
 		++(*unreachable);
-		printf(" !A");
+		snprintf(tr_res->icmp_code, sizeof(tr_res->icmp_code), "%s",
+		    " !A");
 		break;
 	case ICMP_UNREACH_HOST_PROHIB:
 		++(*unreachable);
-		printf(" !C");
+		snprintf(tr_res->icmp_code, sizeof(tr_res->icmp_code), "%s",
+		    " !C");
 		break;
 	case ICMP_UNREACH_NET_UNKNOWN:
 	case ICMP_UNREACH_HOST_UNKNOWN:
 		++(*unreachable);
-		printf(" !U");
+		snprintf(tr_res->icmp_code, sizeof(tr_res->icmp_code), "%s",
+		    " !U");
 		break;
 	case ICMP_UNREACH_ISOLATED:
 		++(*unreachable);
-		printf(" !I");
+		snprintf(tr_res->icmp_code, sizeof(tr_res->icmp_code), "%s",
+		    " !I");
 		break;
 	case ICMP_UNREACH_TOSNET:
 	case ICMP_UNREACH_TOSHOST:
 		++(*unreachable);
-		printf(" !T");
+		snprintf(tr_res->icmp_code, sizeof(tr_res->icmp_code), "%s",
+		    " !T");
 		break;
 	default:
 		++(*unreachable);
-		printf(" !<%d>", code);
+		snprintf(tr_res->icmp_code, sizeof(tr_res->icmp_code), " !<%d>",
+		    code & 0xff);
 		break;
 	}
 }
 
 void
-icmp6_code(int code, int *got_there, int *unreachable)
+icmp6_code(int code, int *got_there, int *unreachable, struct tr_result *tr_res)
 {
 	switch (code) {
 	case ICMP6_DST_UNREACH_NOROUTE:
 		++(*unreachable);
-		printf(" !N");
+		snprintf(tr_res->icmp_code, sizeof(tr_res->icmp_code), "%s",
+		    " !N");
 		break;
 	case ICMP6_DST_UNREACH_ADMIN:
 		++(*unreachable);
-		printf(" !P");
+		snprintf(tr_res->icmp_code, sizeof(tr_res->icmp_code), "%s",
+		    " !P");
 		break;
 	case ICMP6_DST_UNREACH_BEYONDSCOPE:
 		++(*unreachable);
-		printf(" !S");
+		snprintf(tr_res->icmp_code, sizeof(tr_res->icmp_code), "%s",
+		    " !S");
 		break;
 	case ICMP6_DST_UNREACH_ADDR:
 		++(*unreachable);
-		printf(" !A");
+		snprintf(tr_res->icmp_code, sizeof(tr_res->icmp_code), "%s",
+		    " !A");
 		break;
 	case ICMP6_DST_UNREACH_NOPORT:
-		if (rcvhlim >= 0 && rcvhlim <= 1)
-			printf(" !");
+		if (rcvhlim <= 1)
+			snprintf(tr_res->icmp_code, sizeof(tr_res->icmp_code),
+			    "%s", " !");
 		++(*got_there);
 		break;
 	default:
 		++(*unreachable);
-		printf(" !<%d>", code);
+		snprintf(tr_res->icmp_code, sizeof(tr_res->icmp_code), " !<%d>",
+		    code & 0xff);
 		break;
 	}
 }
@@ -834,45 +911,12 @@ in_cksum(u_short *addr, int len)
 	return (answer);
 }
 
-/*
- * Construct an Internet address representation.
- */
-const char *
-inetname(struct sockaddr *sa)
-{
-	static char line[NI_MAXHOST], domain[HOST_NAME_MAX + 1];
-	static int first = 1;
-	char *cp;
-
-	if (first) {
-		first = 0;
-		if (gethostname(domain, sizeof(domain)) == 0 &&
-		    (cp = strchr(domain, '.')) != NULL)
-			memmove(domain, cp + 1, strlen(cp + 1) + 1);
-		else
-			domain[0] = 0;
-	}
-	if (getnameinfo(sa, sa->sa_len, line, sizeof(line), NULL, 0,
-	    NI_NAMEREQD) == 0) {
-		if ((cp = strchr(line, '.')) != NULL && strcmp(cp + 1,
-		    domain) == 0)
-			*cp = '\0';
-		return (line);
-	}
-
-	if (getnameinfo(sa, sa->sa_len, line, sizeof(line), NULL, 0,
-	    NI_NUMERICHOST) != 0)
-		return ("invalid");
-	return (line);
-}
-
 void
-print_asn(struct sockaddr_storage *ss)
+print_asn(struct sockaddr_storage *ss, struct tr_result *tr_res)
 {
-	struct rrsetinfo *answers = NULL;
-	int counter;
-	const u_char *uaddr;
-	char qbuf[MAXDNAME];
+	struct asr_query	*aq;
+	const u_char		*uaddr;
+	char			 qbuf[MAXDNAME];
 
 	switch (ss->ss_family) {
 	case AF_INET:
@@ -911,21 +955,12 @@ print_asn(struct sockaddr_storage *ss)
 		return;
 	}
 
-	if (getrrsetbyname(qbuf, C_IN, T_TXT, 0, &answers) != 0)
-		return;
-	for (counter = 0; counter < answers->rri_nrdatas; counter++) {
-		char *p, *as = answers->rri_rdatas[counter].rdi_data;
-		as++; /* skip first byte, it contains length */
-		if ((p = strchr(as,'|'))) {
-			printf(counter ? ", " : " [");
-			p[-1] = 0;
-			printf("AS%s", as);
-		}
+	if ((aq = getrrsetbyname_async(qbuf, C_IN, T_TXT, 0, NULL)) != NULL)
+		event_asr_run(aq, getrrsetbyname_async_done, tr_res);
+	else {
+		waiting_ttls[tr_res->row]--;
+		tr_res->asn_done = 1;
 	}
-	if (counter)
-		printf("]");
-
-	freerrset(answers);
 }
 
 int
@@ -985,4 +1020,202 @@ gettime(struct timeval *tv)
 		err(1, "clock_gettime(CLOCK_MONOTONIC)");
 
 	TIMESPEC_TO_TIMEVAL(tv, &ts);
+}
+
+void
+check_timeout(struct tr_result *tr_row, struct tr_conf *conf)
+{
+	struct timeval	 t2;
+	int		 i;
+
+	gettime(&t2);
+
+	for (i = 0; i < conf->nprobes; i++) {
+		/* we didn't send the probe yet */
+		if (tr_row[i].ttl == 0)
+			return;
+		/* we got a result, it can no longer timeout */
+		if (tr_row[i].dup)
+			continue;
+
+		if (deltaT(&tr_row[i].t1, &t2) > conf->waittime) {
+			tr_row[i].timeout = 1;
+			tr_row[i].dup++; /* we "saw" the result */
+			waiting_ttls[tr_row[i].row] -=
+			    conf->expected_responses;
+		}
+	}
+}
+
+void
+catchup_result_rows(struct tr_result *tr_results, struct tr_conf *conf)
+{
+	static int	 timeout_row = 0;
+	static int	 print_row = 0;
+	int		 i, j, all_timeout = 1;
+
+	for (; timeout_row < conf->max_ttl; timeout_row++) {
+		struct tr_result *tr_row = tr_results +
+		    timeout_row * conf->nprobes;
+		check_timeout(tr_row, conf);
+		if (waiting_ttls[timeout_row] > 0)
+			break;
+	}
+
+	for (i = print_row; i < timeout_row; i++) {
+		struct tr_result *tr_row = tr_results + i * conf->nprobes;
+
+		if (waiting_ttls[i] > 0)
+			break;
+
+		for (j = 0; j < conf->nprobes; j++) {
+			if (!tr_row[j].timeout) {
+				all_timeout = 0;
+				break;
+			}
+		}
+		if (!all_timeout)
+			break;
+	}
+
+	if (all_timeout && i != conf->max_ttl)
+		return;
+
+	if (i == conf->max_ttl)
+		print_row = i - 1; /* jump ahead, skip long trail of * * * */
+
+	for (; print_row <= i; print_row++) {
+		struct tr_result *tr_row = tr_results +
+		    print_row * conf->nprobes;
+		if (waiting_ttls[print_row] > 0)
+			break;
+		print_result_row(tr_row, conf);
+	}
+}
+
+void
+print_result_row(struct tr_result *tr_results, struct tr_conf *conf)
+{
+	int	 i, loss = 0, got_there = 0, unreachable = 0;
+	char	*lastaddr = NULL;
+
+	printf("%2u ", tr_results[0].ttl);
+	for (i = 0; i < conf->nprobes; i++) {
+		got_there += tr_results[i].got_there;
+		unreachable += tr_results[i].unreachable;
+
+		if (tr_results[i].timeout) {
+			printf(" %s%s", "*", tr_results[i].icmp_code);
+			loss++;
+			continue;
+		}
+
+		if (lastaddr == NULL || strcmp(lastaddr, tr_results[i].hbuf)
+		    != 0) {
+			if (*tr_results[i].hbuf != '\0') {
+				if (conf->nflag)
+					printf(" %s", tr_results[i].hbuf);
+				else
+					printf(" %s (%s)",
+					    tr_results[i].inetname[0] == '\0' ?
+					    tr_results[i].hbuf :
+					    tr_results[i].inetname,
+					    tr_results[i].hbuf);
+				if (conf->Aflag && tr_results[i].asn != NULL)
+					printf(" %s", tr_results[i].asn);
+				if (conf->verbose)
+					printf(" %d bytes to %s",
+					    tr_results[i].cc,
+					    tr_results[i].to);
+			}
+		}
+		lastaddr = tr_results[i].hbuf;
+		printf("  %g ms%s%s",
+		    deltaT(&tr_results[i].t1,
+		    &tr_results[i].t2),
+		    tr_results[i].tos,
+		    tr_results[i].icmp_code);
+		if (conf->ttl_flag)
+			printf(" (%u)", tr_results[i].resp_ttl);
+
+		if (tr_results[i].exthdr)
+			printf("%s", tr_results[i].exthdr);
+	}
+	if (conf->sump)
+		printf(" (%d%% loss)", (loss * 100) / conf->nprobes);
+	putchar('\n');
+	fflush(stdout);
+	if (got_there || unreachable || tr_results[0].ttl == conf->max_ttl)
+		exit(0);
+}
+
+void
+getnameinfo_async_done(struct asr_result *ar, void *arg)
+{
+	static char		 domain[HOST_NAME_MAX + 1];
+	static int		 first = 1;
+	struct tr_result	*tr_res = arg;
+	char			*cp;
+
+	if (first) {
+		first = 0;
+		if (gethostname(domain, sizeof(domain)) == 0 &&
+		    (cp = strchr(domain, '.')) != NULL)
+			memmove(domain, cp + 1, strlen(cp + 1) + 1);
+		else
+			domain[0] = 0;
+	}
+
+	tr_res->inetname_done = 1;
+	waiting_ttls[tr_res->row]--;
+
+	if (ar->ar_gai_errno == 0) {
+		if ((cp = strchr(tr_res->inetname, '.')) != NULL &&
+		    strcmp(cp + 1, domain) == 0)
+			*cp = '\0';
+	} else
+		tr_res->inetname[0]='\0';
+}
+
+void
+getrrsetbyname_async_done(struct asr_result *ar, void *arg)
+{
+	struct tr_result	*tr_res = arg;
+	struct rrsetinfo	*answers;
+	size_t			 asn_size = 0, len;
+	int			 counter;
+	char			*asn;
+
+	tr_res->asn_done = 1;
+	waiting_ttls[tr_res->row]--;
+	if (ar->ar_rrset_errno != 0)
+		return;
+
+	answers = ar->ar_rrsetinfo;
+
+	if (answers->rri_nrdatas > 0) {
+		asn_size = answers->rri_nrdatas * sizeof("AS2147483647, ") + 3;
+		if ((tr_res->asn = calloc(1, asn_size)) == NULL)
+			err(1, NULL);
+		asn = tr_res->asn;
+	}
+
+	for (counter = 0; counter < answers->rri_nrdatas; counter++) {
+		char *p, *as = answers->rri_rdatas[counter].rdi_data;
+		as++; /* skip first byte, it contains length */
+		if ((p = strchr(as,'|'))) {
+			p[-1] = 0;
+			len = snprintf(asn, asn_size, "%sAS%s",
+			    counter ? ", " : "[", as);
+			if (len != -1 && len < asn_size) {
+				asn += len;
+				asn_size -= len;
+			} else
+				asn_size = 0;
+		}
+	}
+	if (counter && asn_size > 0)
+		*asn=']';
+
+	freerrset(answers);
 }

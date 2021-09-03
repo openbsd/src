@@ -1,4 +1,4 @@
-.\"	$OpenBSD: traceroute.8,v 1.71 2021/08/29 06:50:29 jmc Exp $
+.\"	$OpenBSD: traceroute.8,v 1.72 2021/09/03 09:13:00 florian Exp $
 .\"	$NetBSD: traceroute.8,v 1.6 1995/10/12 03:05:50 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)traceroute.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: August 29 2021 $
+.Dd $Mdocdate: September 3 2021 $
 .Dt TRACEROUTE 8
 .Os
 .Sh NAME
@@ -42,7 +42,7 @@
 .Nd print the route packets take to network host
 .Sh SYNOPSIS
 .Nm traceroute\ \&
-.Op Fl AcDdIlnSvx
+.Op Fl ADdIlnSvx
 .Op Fl f Ar first_ttl
 .Op Fl g Ar gateway_addr
 .Op Fl m Ar max_ttl
@@ -56,7 +56,7 @@
 .Ar host
 .Op Ar datalen
 .Nm traceroute6
-.Op Fl AcDdIlnSv
+.Op Fl ADdIlnSv
 .Op Fl f Ar first_hop
 .Op Fl m Ar max_hop
 .Op Fl p Ar port
@@ -91,11 +91,6 @@ The options are as follows:
 Look up the AS number for each hop address.
 Uses the DNS service described at
 .Lk https://www.team-cymru.com/IP-ASN-mapping.html#dns
-.It Fl c
-Do not increment the destination port number in successive UDP packets.
-Rather, all UDP packets will have the same destination port, as set via the
-.Fl p
-flag (or 33434 if none is specified).
 .It Fl D
 Dump the packet data to standard error before transmitting it.
 .It Fl d
