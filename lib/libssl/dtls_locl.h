@@ -1,4 +1,4 @@
-/* $OpenBSD: dtls_locl.h,v 1.6 2021/08/31 13:34:55 jsing Exp $ */
+/* $OpenBSD: dtls_locl.h,v 1.7 2021/09/04 14:24:28 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -206,8 +206,7 @@ int dtls1_retransmit_message(SSL *s, unsigned short seq,
 int dtls1_get_queue_priority(unsigned short seq, int is_ccs);
 int dtls1_retransmit_buffered_messages(SSL *s);
 void dtls1_clear_record_buffer(SSL *s);
-int dtls1_get_message_header(unsigned char *data,
-    struct hm_header_st *msg_hdr);
+int dtls1_get_message_header(CBS *header, struct hm_header_st *msg_hdr);
 void dtls1_reset_read_seq_numbers(SSL *s);
 struct timeval* dtls1_get_timeout(SSL *s, struct timeval* timeleft);
 int dtls1_check_timeout_num(SSL *s);

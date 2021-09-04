@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_both.c,v 1.77 2021/07/19 08:42:24 jsing Exp $ */
+/* $OpenBSD: d1_both.c,v 1.78 2021/09/04 14:24:28 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -744,8 +744,9 @@ dtls1_get_message_fragment(SSL *s, int st1, int stn, long max, int *ok)
 {
 	unsigned char wire[DTLS1_HM_HEADER_LENGTH];
 	unsigned long len, frag_off, frag_len;
-	int i, al;
 	struct hm_header_st msg_hdr;
+	int i, al;
+	CBS cbs;
 
  again:
 	/* see if we have the required fragment already */
@@ -758,16 +759,16 @@ dtls1_get_message_fragment(SSL *s, int st1, int stn, long max, int *ok)
 	/* read handshake message header */
 	i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE, wire,
 	    DTLS1_HM_HEADER_LENGTH, 0);
-	if (i <= 0) 	/* nbio, or an error */
-	{
+	if (i <= 0) {
+	 	/* nbio, or an error */
 		s->internal->rwstate = SSL_READING;
 		*ok = 0;
 		return i;
 	}
-	/* Handshake fails if message header is incomplete */
-	if (i != DTLS1_HM_HEADER_LENGTH ||
-	    /* parse the message fragment header */
-	    dtls1_get_message_header(wire, &msg_hdr) == 0) {
+
+	CBS_init(&cbs, wire, i);
+	if (!dtls1_get_message_header(&cbs, &msg_hdr)) {
+		/* Handshake fails if message header is incomplete. */
 		al = SSL_AD_UNEXPECTED_MESSAGE;
 		SSLerror(s, SSL_R_UNEXPECTED_MESSAGE);
 		goto fatal_err;
@@ -1172,26 +1173,23 @@ dtls1_guess_mtu(unsigned int curr_mtu)
 }
 
 int
-dtls1_get_message_header(unsigned char *data, struct hm_header_st *msg_hdr)
+dtls1_get_message_header(CBS *header, struct hm_header_st *msg_hdr)
 {
-	CBS header;
 	uint32_t msg_len, frag_off, frag_len;
 	uint16_t seq;
 	uint8_t type;
 
-	CBS_init(&header, data, sizeof(*msg_hdr));
-
 	memset(msg_hdr, 0, sizeof(*msg_hdr));
 
-	if (!CBS_get_u8(&header, &type))
+	if (!CBS_get_u8(header, &type))
 		return 0;
-	if (!CBS_get_u24(&header, &msg_len))
+	if (!CBS_get_u24(header, &msg_len))
 		return 0;
-	if (!CBS_get_u16(&header, &seq))
+	if (!CBS_get_u16(header, &seq))
 		return 0;
-	if (!CBS_get_u24(&header, &frag_off))
+	if (!CBS_get_u24(header, &frag_off))
 		return 0;
-	if (!CBS_get_u24(&header, &frag_len))
+	if (!CBS_get_u24(header, &frag_len))
 		return 0;
 
 	msg_hdr->type = type;

@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.110 2021/09/04 14:15:52 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.111 2021/09/04 14:24:28 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -807,9 +807,11 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 	    rr->length >= DTLS1_HM_HEADER_LENGTH && rr->off == 0 &&
 	    !s->internal->in_handshake) {
 		struct hm_header_st msg_hdr;
+		CBS cbs;
 
 		/* this may just be a stale retransmit */
-		if (!dtls1_get_message_header(rr->data, &msg_hdr))
+		CBS_init(&cbs, rr->data, rr->length);
+		if (!dtls1_get_message_header(&cbs, &msg_hdr))
 			return -1;
 		if (rr->epoch != tls12_record_layer_read_epoch(s->internal->rl)) {
 			rr->length = 0;
