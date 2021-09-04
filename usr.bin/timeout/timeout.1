@@ -1,4 +1,4 @@
-.\"	$OpenBSD: timeout.1,v 1.2 2021/09/02 21:50:24 jmc Exp $
+.\"	$OpenBSD: timeout.1,v 1.3 2021/09/04 11:58:31 schwarze Exp $
 .\"	$NetBSD: timeout.1,v 1.4 2016/10/13 06:22:26 dholland Exp $
 .\"
 .\" Copyright (c) 2014 Baptiste Daroussin <bapt@FreeBSD.org>
@@ -27,7 +27,7 @@
 .\"
 .\" $FreeBSD: head/usr.bin/timeout/timeout.1 268861 2014-07-18 22:56:59Z bapt $
 .\"
-.Dd $Mdocdate: September 2 2021 $
+.Dd $Mdocdate: September 4 2021 $
 .Dt TIMEOUT 1
 .Os
 .Sh NAME
@@ -59,7 +59,9 @@ is 0, the timeout is disabled.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl k Ar time , Fl -kill-after Ns = Ns Ar time
-Send a second kill signal if the command is still running
+Send a second signal,
+.Dv SIGKILL ,
+if the command is still running
 .Ar time
 after the first signal was sent.
 .It Fl s Ar sig , Fl -signal Ns = Ns Ar sig
@@ -92,16 +94,13 @@ hours
 days
 .El
 .Sh EXIT STATUS
-If the timeout was not reached, the exit status of
-.Ar command
-is returned.
-.Pp
-If the timeout was reached and
+If the timeout was not reached or
 .Fl -preserve-status
 was set, the exit status of
 .Ar command
 is returned.
-If
+.Pp
+If the timeout was reached and
 .Fl -preserve-status
 was not set, an exit status of 124 is returned.
 .Pp
@@ -113,19 +112,7 @@ plus 128.
 .Xr kill 1 ,
 .Xr signal 3
 .Sh HISTORY
-A
-.Nm
-utility appeared in a development branch of
-.Fx 11
-and was imported into
-.Nx 7 .
-The
-.Fx
-work is compatible with GNU
-.Nm
-by
-.An Padraig Brady ,
-from GNU Coreutils 8.21.
 The
 .Nm
-utility first appeared in GNU Coreutils 7.0.
+utility first appeared in GNU Coreutils 7.0 and has been available since
+.Ox 7.0 .
