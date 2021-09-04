@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.125 2021/06/18 06:17:28 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.126 2021/09/04 22:15:33 bluhm Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -292,6 +292,7 @@ ENTRY(setjmp)
 	xorl	%eax,%eax
 	RETGUARD_CHECK(setjmp, r11)
 	ret
+	lfence
 END(setjmp)
 
 ENTRY(longjmp)
@@ -310,6 +311,7 @@ ENTRY(longjmp)
 	incl	%eax
 	RETGUARD_CHECK(longjmp, r11)
 	ret
+	lfence
 END(longjmp)
 #endif /* DDB */
 
@@ -508,6 +510,7 @@ switch_restored:
 	popq	%rbx
 	RETGUARD_CHECK(cpu_switchto, r11)
 	ret
+	lfence
 
 #ifdef DIAGNOSTIC
 	.globl	_C_LABEL(panic)
@@ -524,10 +527,12 @@ END(cpu_switchto)
 
 ENTRY(cpu_idle_enter)
 	ret
+	lfence
 END(cpu_idle_enter)
 
 ENTRY(cpu_idle_leave)
 	ret
+	lfence
 END(cpu_idle_leave)
 
 /* placed here for correct static branch prediction in cpu_idle_* */
@@ -543,6 +548,7 @@ ENTRY(cpu_idle_cycle)
 	hlt
 	RETGUARD_CHECK(cpu_idle_cycle, r11)
 	ret
+	lfence
 END(cpu_idle_cycle)
 
 /*
@@ -556,6 +562,7 @@ ENTRY(savectx)
 	movq	%rbp,PCB_RBP(%rdi)
 	RETGUARD_CHECK(savectx, r11)
 	ret
+	lfence
 END(savectx)
 
 IDTVEC(syscall32)
@@ -1055,10 +1062,12 @@ xrstor_fault:
 	xorl	%eax, %eax
 	RETGUARD_CHECK(xrstor_user, r11)
 	ret
+	lfence
 NENTRY(xrstor_resume)
 	movl	$1, %eax
 	RETGUARD_CHECK(xrstor_user, r11)
 	ret
+	lfence
 END(xrstor_user)
 
 ENTRY(fpusave)
@@ -1071,6 +1080,7 @@ ENTRY(fpusave)
 	CODEPATCH_END(CPTAG_XSAVE)
 	RETGUARD_CHECK(fpusave, r11)
 	ret
+	lfence
 END(fpusave)
 
 ENTRY(fpusavereset)
@@ -1090,6 +1100,7 @@ ENTRY(fpusavereset)
 	CODEPATCH_END(CPTAG_XRSTOR)
 	RETGUARD_CHECK(fpusavereset, r11)
 	ret
+	lfence
 END(fpusavereset)
 
 ENTRY(xsetbv_user)
@@ -1104,10 +1115,12 @@ xsetbv_fault:
 	xorl	%eax, %eax
 	RETGUARD_CHECK(xsetbv_user, r11)
 	ret
+	lfence
 NENTRY(xsetbv_resume)
 	movl	$1, %eax
 	RETGUARD_CHECK(xsetbv_user, r11)
 	ret
+	lfence
 END(xsetbv_user)
 
 	.section .rodata
@@ -1142,6 +1155,7 @@ ENTRY(pagezero)
 	sfence
 	RETGUARD_CHECK(pagezero, r11)
 	ret
+	lfence
 END(pagezero)
 
 /* int rdmsr_safe(u_int msr, uint64_t *data) */
@@ -1160,11 +1174,13 @@ rdmsr_safe_fault:
 
 	RETGUARD_CHECK(rdmsr_safe, r10)
 	ret
+	lfence
 
 NENTRY(rdmsr_resume)
 	movl	$0x1, %eax
 	RETGUARD_CHECK(rdmsr_safe, r10)
 	ret
+	lfence
 END(rdmsr_safe)
 
 #if NXEN > 0

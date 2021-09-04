@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm_support.S,v 1.17 2021/02/13 07:47:37 mlarkin Exp $	*/
+/*	$OpenBSD: vmm_support.S,v 1.18 2021/09/04 22:15:33 bluhm Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -58,6 +58,7 @@ _C_LABEL(vmm_dispatch_intr):
 	cli
 	callq	*%rdi
 	ret
+	lfence
 
 _C_LABEL(vmxon):
 	RETGUARD_SETUP(vmxon, r11)
@@ -67,10 +68,12 @@ _C_LABEL(vmxon):
 	xorq	%rax, %rax
 	RETGUARD_CHECK(vmxon, r11)
 	ret
+	lfence
 failed_on:
 	movq	$0x01, %rax
 	RETGUARD_CHECK(vmxon, r11)
 	ret
+	lfence
 
 _C_LABEL(vmxoff):
 	RETGUARD_SETUP(vmxoff, r11)
@@ -80,10 +83,12 @@ _C_LABEL(vmxoff):
 	xorq	%rax, %rax
 	RETGUARD_CHECK(vmxoff, r11)
 	ret
+	lfence
 failed_off:
 	movq	$0x01, %rax
 	RETGUARD_CHECK(vmxoff, r11)
 	ret
+	lfence
 
 _C_LABEL(vmclear):
 	RETGUARD_SETUP(vmclear, r11)
@@ -93,10 +98,12 @@ _C_LABEL(vmclear):
 	xorq	%rax, %rax
 	RETGUARD_CHECK(vmclear, r11)
 	ret
+	lfence
 failed_clear:
 	movq	$0x01, %rax
 	RETGUARD_CHECK(vmclear, r11)
 	ret
+	lfence
 
 _C_LABEL(vmptrld):
 	RETGUARD_SETUP(vmptrld, r11)
@@ -106,10 +113,12 @@ _C_LABEL(vmptrld):
 	xorq	%rax, %rax
 	RETGUARD_CHECK(vmptrld, r11)
 	ret
+	lfence
 failed_ptrld:
 	movq	$0x01, %rax
 	RETGUARD_CHECK(vmptrld, r11)
 	ret
+	lfence
 
 _C_LABEL(vmptrst):
 	RETGUARD_SETUP(vmptrst, r11)
@@ -119,10 +128,12 @@ _C_LABEL(vmptrst):
 	xorq	%rax, %rax
 	RETGUARD_CHECK(vmptrst, r11)
 	ret
+	lfence
 failed_ptrst:
 	movq	$0x01, %rax
 	RETGUARD_CHECK(vmptrst, r11)
 	ret
+	lfence
 
 _C_LABEL(vmwrite):
 	RETGUARD_SETUP(vmwrite, r11)
@@ -132,10 +143,12 @@ _C_LABEL(vmwrite):
 	xorq	%rax, %rax
 	RETGUARD_CHECK(vmwrite, r11)
 	ret
+	lfence
 failed_write:
 	movq	$0x01, %rax
 	RETGUARD_CHECK(vmwrite, r11)
 	ret
+	lfence
 
 _C_LABEL(vmread):
 	RETGUARD_SETUP(vmread, r11)
@@ -145,22 +158,26 @@ _C_LABEL(vmread):
 	xorq	%rax, %rax
 	RETGUARD_CHECK(vmread, r11)
 	ret
+	lfence
 failed_read:
 	movq	$0x01, %rax
 	RETGUARD_CHECK(vmread, r11)
 	ret
+	lfence
 
 _C_LABEL(invvpid):
 	RETGUARD_SETUP(invvpid, r11)
 	invvpid (%rsi), %rdi
 	RETGUARD_CHECK(invvpid, r11)
 	ret
+	lfence
 
 _C_LABEL(invept):
 	RETGUARD_SETUP(invept, r11)
 	invept (%rsi), %rdi
 	RETGUARD_CHECK(invept, r11)
 	ret
+	lfence
 
 _C_LABEL(vmx_enter_guest):
 	RETGUARD_SETUP(vmx_enter_guest, r11)
@@ -534,6 +551,7 @@ restore_host:
 	movq	%rdi, %rax
 	RETGUARD_CHECK(vmx_enter_guest, r11)
 	ret
+	lfence
 
 _C_LABEL(svm_enter_guest):
 	RETGUARD_SETUP(svm_enter_guest, r11)
@@ -761,3 +779,4 @@ restore_host_svm:
 
 	RETGUARD_CHECK(svm_enter_guest, r11)
 	ret
+	lfence

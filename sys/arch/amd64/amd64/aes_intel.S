@@ -1,4 +1,4 @@
-/*	$OpenBSD: aes_intel.S,v 1.13 2018/07/09 08:39:28 mortimer Exp $	*/
+/*	$OpenBSD: aes_intel.S,v 1.14 2021/09/04 22:15:33 bluhm Exp $	*/
 
 /*
  * Implement AES algorithm in Intel AES-NI instructions.
@@ -117,6 +117,7 @@ _key_expansion_256a:
 	add	$0x10,%rcx
 	RETGUARD_CHECK(_key_expansion_128, rax)
 	ret
+	lfence
 
 _key_expansion_192a:
 	RETGUARD_SETUP(_key_expansion_192a, rax)
@@ -142,6 +143,7 @@ _key_expansion_192a:
 	add	$0x20,%rcx
 	RETGUARD_CHECK(_key_expansion_192a, rax)
 	ret
+	lfence
 
 _key_expansion_192b:
 	RETGUARD_SETUP(_key_expansion_192b, rax)
@@ -162,6 +164,7 @@ _key_expansion_192b:
 	add	$0x10,%rcx
 	RETGUARD_CHECK(_key_expansion_192b, rax)
 	ret
+	lfence
 
 _key_expansion_256b:
 	RETGUARD_SETUP(_key_expansion_256b, rax)
@@ -175,6 +178,7 @@ _key_expansion_256b:
 	add	$0x10,%rcx
 	RETGUARD_CHECK(_key_expansion_256b, rax)
 	ret
+	lfence
 
 /*
  * void aesni_set_key(struct aesni_session *ses, uint8_t *key, size_t len)
@@ -278,6 +282,7 @@ ENTRY(aesni_set_key)
 	jb	4b
 	RETGUARD_CHECK(aesni_set_key, r11)
 	ret
+	lfence
 
 /*
  * void aesni_enc(struct aesni_session *ses, uint8_t *dst, uint8_t *src)
@@ -290,6 +295,7 @@ ENTRY(aesni_enc)
 	movups	STATE,(OUTP)		# output
 	RETGUARD_CHECK(aesni_enc, r11)
 	ret
+	lfence
 
 /*
  * _aesni_enc1:		internal ABI
@@ -348,6 +354,7 @@ _aesni_enc1:
 	aesenclast KEY,STATE
 	RETGUARD_CHECK(_aesni_enc1, rax)
 	ret
+	lfence
 
 /*
  * _aesni_enc4:	internal ABI
@@ -457,6 +464,7 @@ _aesni_enc4:
 	aesenclast KEY,STATE4
 	RETGUARD_CHECK(_aesni_enc4, rax)
 	ret
+	lfence
 
 /*
  * void aesni_dec(struct aesni_session *ses, uint8_t *dst, uint8_t *src)
@@ -470,6 +478,7 @@ ENTRY(aesni_dec)
 	movups	STATE,(OUTP)		# output
 	RETGUARD_CHECK(aesni_dec, r11)
 	ret
+	lfence
 
 /*
  * _aesni_dec1:		internal ABI
@@ -528,6 +537,7 @@ _aesni_dec1:
 	aesdeclast KEY,STATE
 	RETGUARD_CHECK(_aesni_dec1, rax)
 	ret
+	lfence
 
 /*
  * _aesni_dec4:	internal ABI
@@ -637,6 +647,7 @@ _aesni_dec4:
 	aesdeclast KEY,STATE4
 	RETGUARD_CHECK(_aesni_dec4, rax)
 	ret
+	lfence
 
 #if 0
 /*
@@ -683,6 +694,7 @@ ENTRY(aesni_ecb_enc)
 3:
 	RETGUARD_CHECK(aesni_ecb_enc, r11)
 	ret
+	lfence
 
 /*
  * void aesni_ecb_dec(struct aesni_session *ses, uint8_t *dst, uint8_t *src,
@@ -729,6 +741,7 @@ ENTRY(aesni_ecb_dec)
 3:
 	RETGUARD_CHECK(aesni_ecb_dec, r11)
 	ret
+	lfence
 #endif
 
 /*
@@ -756,6 +769,7 @@ ENTRY(aesni_cbc_enc)
 2:
 	RETGUARD_CHECK(aesni_cbc_enc, r11)
 	ret
+	lfence
 
 /*
  * void aesni_cbc_dec(struct aesni_session *ses, uint8_t *dst, uint8_t *src,
@@ -815,6 +829,7 @@ ENTRY(aesni_cbc_dec)
 4:
 	RETGUARD_CHECK(aesni_cbc_dec, r11)
 	ret
+	lfence
 
 /*
  * _aesni_inc_init:	internal ABI
@@ -839,6 +854,7 @@ _aesni_inc_init:
 	movd	CTR,TCTR_LOW
 	RETGUARD_CHECK(_aesni_inc_init, rax)
 	ret
+	lfence
 
 /*
  * _aesni_inc:		internal ABI
@@ -868,6 +884,7 @@ _aesni_inc:
 	pshufb	BSWAP_MASK,IV
 	RETGUARD_CHECK(_aesni_inc, rax)
 	ret
+	lfence
 
 /*
  * void aesni_ctr_enc(struct aesni_session *ses, uint8_t *dst, uint8_t *src,
@@ -932,6 +949,7 @@ ENTRY(aesni_ctr_enc)
 	RETGUARD_POP(r11)
 	RETGUARD_CHECK(aesni_ctr_enc, r11)
 	ret
+	lfence
 
 _aesni_gmac_gfmul:
 	RETGUARD_SETUP(_aesni_gmac_gfmul, rax)
@@ -1000,6 +1018,7 @@ _aesni_gmac_gfmul:
 	pxor	%xmm3,%xmm6		# the result is in xmm6
 	RETGUARD_CHECK(_aesni_gmac_gfmul, rax)
 	ret
+	lfence
 
 /*
  * void aesni_gmac_update(GHASH_CTX *ghash, uint8_t *src, size_t len)
@@ -1033,6 +1052,7 @@ ENTRY(aesni_gmac_update)
 2:
 	RETGUARD_CHECK(aesni_gmac_update, r11)
 	ret
+	lfence
 
 /*
  * void aesni_gmac_final(struct aesni_sess *ses, uint8_t *tag,
@@ -1048,6 +1068,7 @@ ENTRY(aesni_gmac_final)
 	movdqu	STATE,(OUTP)		# output
 	RETGUARD_CHECK(aesni_gmac_final, r11)
 	ret
+	lfence
 
 /*
  * void aesni_xts_enc(struct aesni_xts_ctx *xts, uint8_t *dst, uint8_t *src,
@@ -1080,6 +1101,7 @@ ENTRY(aesni_xts_enc)
 	RETGUARD_POP(r11)
 	RETGUARD_CHECK(aesni_xts_enc, r11)
 	ret
+	lfence
 
 /*
  * void aesni_xts_dec(struct aesni_xts_ctx *xts, uint8_t *dst, uint8_t *src,
@@ -1113,6 +1135,7 @@ ENTRY(aesni_xts_dec)
 	RETGUARD_POP(r11)
 	RETGUARD_CHECK(aesni_xts_dec, r11)
 	ret
+	lfence
 
 /*
  * Prepare tweak as E_k2(IV). IV is specified as LE representation of a
@@ -1135,6 +1158,7 @@ _aesni_xts_tweak:
 	RETGUARD_POP(rax)
 	RETGUARD_CHECK(_aesni_xts_tweak, rax)
 	ret
+	lfence
 
 /*
  * Exponentiate AES XTS tweak (in %xmm3).
@@ -1160,3 +1184,4 @@ _aesni_xts_tweak_exp:
 2:
 	RETGUARD_CHECK(_aesni_xts_tweak_exp, rax)
 	ret
+	lfence
