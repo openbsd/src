@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.53 2020/05/14 06:58:54 mpi Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.54 2021/09/04 07:13:14 jasper Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /*
@@ -164,8 +164,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 			}
 		}
 
-		narg = db_ctf_func_numargs(sym);
-		if (narg < 0 || narg > 6)
+		if ((narg = db_ctf_func_numargs(sym)) < 0)
 			narg = 6;
 
 		if (name == NULL)
