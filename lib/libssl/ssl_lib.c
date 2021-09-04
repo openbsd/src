@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.263 2021/08/30 19:25:43 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.264 2021/09/04 15:21:45 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2242,35 +2242,119 @@ ssl_get_auto_dh(SSL *s)
 	return (dhp);
 }
 
+static int
+ssl_should_update_external_cache(SSL *s, int mode)
+{
+	int cache_mode;
+
+	cache_mode = s->session_ctx->internal->session_cache_mode;
+
+	/* Don't cache if mode says not to */
+	if ((cache_mode & mode) == 0)
+		return 0;
+
+	/* if it is not already cached, cache it */
+	if (!s->internal->hit)
+		return 1;
+
+	/* If it's TLS 1.3, do it to match OpenSSL */
+	if (S3I(s)->hs.negotiated_tls_version >= TLS1_3_VERSION)
+		return 1;
+
+	return 0;
+}
+
+static int
+ssl_should_update_internal_cache(SSL *s, int mode)
+{
+	int cache_mode;
+
+	cache_mode = s->session_ctx->internal->session_cache_mode;
+
+	/* Don't cache if mode says not to */
+	if ((cache_mode & mode) == 0)
+		return 0;
+
+	/* If it is already cached, don't cache it again */
+	if (s->internal->hit)
+		return 0;
+
+	if ((cache_mode & SSL_SESS_CACHE_NO_INTERNAL_STORE) != 0)
+		return 0;
+
+	/* If we are lesser than TLS 1.3, Cache it. */
+	if (S3I(s)->hs.negotiated_tls_version < TLS1_3_VERSION)
+		return 1;
+
+	/* Below this we consider TLS 1.3 or later */
+
+	/* If it's not a server, add it? OpenSSL does this. */
+	if (!s->server)
+		return 1;
+
+	/* XXX if we support early data / PSK need to add */
+
+	/*
+	 * If we have the remove session callback, we will want
+	 * to know about this even if it's a stateless ticket
+	 * from 1.3 so we can know when it is removed.
+	 */
+	if (s->session_ctx->internal->remove_session_cb != NULL)
+		return 1;
+
+	/* If we have set OP_NO_TICKET, cache it. */
+	if ((s->internal->options & SSL_OP_NO_TICKET) != 0)
+		return 1;
+
+	/* Otherwise do not cache */
+	return 0;
+}
+
 void
 ssl_update_cache(SSL *s, int mode)
 {
-	int	i;
+	int cache_mode, do_callback;
 
-	/*
-	 * If the session_id_length is 0, we are not supposed to cache it,
-	 * and it would be rather hard to do anyway :-)
-	 */
 	if (s->session->session_id_length == 0)
 		return;
 
-	i = s->session_ctx->internal->session_cache_mode;
-	if ((i & mode) && (!s->internal->hit) && ((i & SSL_SESS_CACHE_NO_INTERNAL_STORE)
-	    || SSL_CTX_add_session(s->session_ctx, s->session))
-	    && (s->session_ctx->internal->new_session_cb != NULL)) {
-		CRYPTO_add(&s->session->references, 1, CRYPTO_LOCK_SSL_SESSION);
-		if (!s->session_ctx->internal->new_session_cb(s, s->session))
-			SSL_SESSION_free(s->session);
+	cache_mode = s->session_ctx->internal->session_cache_mode;
+	do_callback = ssl_should_update_external_cache(s, mode);
+
+	if (ssl_should_update_internal_cache(s, mode)) {
+		/*
+		 * XXX should we fail if the add to the internal cache
+		 * fails? OpenSSL doesn't care..
+		 */
+		(void) SSL_CTX_add_session(s->session_ctx, s->session);
 	}
 
-	/* auto flush every 255 connections */
-	if ((!(i & SSL_SESS_CACHE_NO_AUTO_CLEAR)) &&
-	    ((i & mode) == mode)) {
-		if ((((mode & SSL_SESS_CACHE_CLIENT) ?
-		    s->session_ctx->internal->stats.sess_connect_good :
-		    s->session_ctx->internal->stats.sess_accept_good) & 0xff) == 0xff) {
+	/*
+	 * Update the "external cache" by calling the new session
+	 * callback if present, even with TLS 1.3 without early data
+	 * "because some application just want to know about the
+	 * creation of a session and aren't doing a full cache".
+	 * Apparently, if they are doing a full cache, they'll have
+	 * some fun, but we endeavour to give application writers the
+	 * same glorious experience they expect from OpenSSL which
+	 * does it this way.
+	 */
+	if (do_callback && s->session_ctx->internal->new_session_cb != NULL) {
+		    CRYPTO_add(&s->session->references, 1, CRYPTO_LOCK_SSL_SESSION);
+		    if (!s->session_ctx->internal->new_session_cb(s, s->session))
+			    SSL_SESSION_free(s->session);
+	}
+
+	/* Auto flush every 255 connections. */
+	if (!(cache_mode & SSL_SESS_CACHE_NO_AUTO_CLEAR) &&
+	    (cache_mode & mode) != 0) {
+		int connections;
+		if (mode & SSL_SESS_CACHE_CLIENT)
+			connections = s->session_ctx->internal->stats.sess_connect_good;
+		else
+			connections = s->session_ctx->internal->stats.sess_accept_good;
+		if ((connections & 0xff) == 0xff)
 			SSL_CTX_flush_sessions(s->session_ctx, time(NULL));
-		}
 	}
 }
 
