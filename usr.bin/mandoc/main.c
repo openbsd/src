@@ -1,4 +1,4 @@
-/* $OpenBSD: main.c,v 1.258 2021/08/14 13:51:46 schwarze Exp $ */
+/* $OpenBSD: main.c,v 1.259 2021/09/04 12:47:04 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2012, 2014-2021 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -93,9 +93,11 @@ struct	outstate {
 int			  mandocdb(int, char *[]);
 
 static	void		  check_xr(struct manpaths *);
-static	int		  fs_lookup(const struct manpaths *,
-				size_t ipath, const char *,
-				const char *, const char *,
+static	void		  fs_append(char **, size_t, int,
+				size_t, const char *, enum form,
+				struct manpage **, size_t *);
+static	int		  fs_lookup(const struct manpaths *, size_t,
+				const char *, const char *, const char *,
 				struct manpage **, size_t *);
 static	int		  fs_search(const struct mansearch *,
 				const struct manpaths *, const char *,
@@ -678,6 +680,30 @@ glob_esc(char **dst, const char *src, const char *suffix)
 		*(*dst)++ = *suffix++;
 }
 
+static void
+fs_append(char **file, size_t filesz, int copy, size_t ipath,
+    const char *sec, enum form form, struct manpage **res, size_t *ressz)
+{
+	struct manpage	*page;
+
+	*res = mandoc_reallocarray(*res, *ressz + filesz, sizeof(**res));
+	page = *res + *ressz;
+	*ressz += filesz;
+	for (;;) {
+		page->file = copy ? mandoc_strdup(*file) : *file;
+		page->names = NULL;
+		page->output = NULL;
+		page->bits = NAME_FILE & NAME_MASK;
+		page->ipath = ipath;
+		page->sec = (*sec >= '1' && *sec <= '9') ? *sec - '1' + 1 : 10;
+		page->form = form;
+		if (--filesz == 0)
+			break;
+		file++;
+		page++;
+	}
+}
+
 static int
 fs_lookup(const struct manpaths *paths, size_t ipath,
 	const char *sec, const char *arch, const char *name,
@@ -685,16 +711,19 @@ fs_lookup(const struct manpaths *paths, size_t ipath,
 {
 	struct stat	 sb;
 	glob_t		 globinfo;
-	struct manpage	*page;
-	char		*file, *cp;
+	char		*file, *cp, secnum[2];
 	int		 globres;
 	enum form	 form;
 
 	const char *const slman = "/man";
 	const char *const slash = "/";
 	const char *const sglob = ".[01-9]*";
+	const char *const dot   = ".";
+	const char *const aster = "*";
 
+	memset(&globinfo, 0, sizeof(globinfo));
 	form = FORM_SRC;
+
 	mandoc_asprintf(&file, "%s/man%s/%s.%s",
 	    paths->paths[ipath], sec, name, sec);
 	if (stat(file, &sb) != -1)
@@ -729,14 +758,34 @@ fs_lookup(const struct manpaths *paths, size_t ipath,
 		mandoc_msg(MANDOCERR_GLOB, 0, 0,
 		    "%s: %s", file, strerror(errno));
 	free(file);
+	file = NULL;
 	if (globres == 0)
-		file = mandoc_strdup(*globinfo.gl_pathv);
+		goto found;
 	globfree(&globinfo);
-	if (globres == 0) {
-		if (stat(file, &sb) != -1)
-			goto found;
+
+	if (sec[1] != '\0' && *ressz == 0) {
+		secnum[0] = sec[0];
+		secnum[1] = '\0';
+		cp = file = mandoc_malloc(strlen(paths->paths[ipath]) * 2 +
+		    strlen(slman) + strlen(secnum) * 2 + strlen(slash) +
+		    strlen(name) * 2 + strlen(dot) +
+		    strlen(sec) * 2 + strlen(aster) + 1);
+		glob_esc(&cp, paths->paths[ipath], slman);
+		glob_esc(&cp, secnum, slash);
+		glob_esc(&cp, name, dot);
+		glob_esc(&cp, sec, aster);
+		*cp = '\0';
+		globres = glob(file, 0, NULL, &globinfo);
+		if (globres != 0 && globres != GLOB_NOMATCH)
+			mandoc_msg(MANDOCERR_GLOB, 0, 0,
+			    "%s: %s", file, strerror(errno));
 		free(file);
+		file = NULL;
+		if (globres == 0)
+			goto found;
+		globfree(&globinfo);
 	}
+
 	if (res != NULL || ipath + 1 != paths->sz)
 		return -1;
 
@@ -748,19 +797,14 @@ fs_lookup(const struct manpaths *paths, size_t ipath,
 found:
 	warnx("outdated mandoc.db lacks %s(%s) entry, run %s %s",
 	    name, sec, BINM_MAKEWHATIS, paths->paths[ipath]);
-	if (res == NULL) {
+	if (res == NULL)
 		free(file);
-		return 0;
-	}
-	*res = mandoc_reallocarray(*res, ++*ressz, sizeof(**res));
-	page = *res + (*ressz - 1);
-	page->file = file;
-	page->names = NULL;
-	page->output = NULL;
-	page->bits = NAME_FILE & NAME_MASK;
-	page->ipath = ipath;
-	page->sec = (*sec >= '1' && *sec <= '9') ? *sec - '1' + 1 : 10;
-	page->form = form;
+	else if (file == NULL)
+		fs_append(globinfo.gl_pathv, globinfo.gl_pathc, 1,
+		    ipath, sec, form, res, ressz);
+	else
+		fs_append(&file, 1, 0, ipath, sec, form, res, ressz);
+	globfree(&globinfo);
 	return 0;
 }
 
