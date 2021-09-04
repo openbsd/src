@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.111 2021/09/04 14:24:28 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.112 2021/09/04 14:31:54 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -681,7 +681,13 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 	    rr->length >= DTLS1_HM_HEADER_LENGTH && rr->off == 0 &&
 	    rr->data[0] == SSL3_MT_HELLO_REQUEST &&
 	    s->session != NULL && s->session->cipher != NULL) {
-		if (rr->data[1] != 0 || rr->data[2] != 0 || rr->data[3] != 0) {
+		struct hm_header_st msg_hdr;
+		CBS cbs;
+
+		CBS_init(&cbs, rr->data, rr->length);
+		if (!dtls1_get_message_header(&cbs, &msg_hdr))
+			return -1;
+		if (msg_hdr.msg_len != 0) {
 			al = SSL_AD_DECODE_ERROR;
 			SSLerror(s, SSL_R_BAD_HELLO_REQUEST);
 			goto fatal_err;
