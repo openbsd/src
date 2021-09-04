@@ -1,4 +1,4 @@
-/* $OpenBSD: timeout.c,v 1.18 2021/09/02 21:50:24 jmc Exp $ */
+/* $OpenBSD: timeout.c,v 1.19 2021/09/04 11:49:11 schwarze Exp $ */
 
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -69,15 +69,15 @@ parse_duration(const char *duration)
 
 	ret = strtod(duration, &suffix);
 	if (ret == 0 && suffix == duration)
-		errx(1, "invalid duration");
+		errx(1, "duration is not a number");
 	if (ret < 0 || ret >= 100000000UL)
-		errx(1, "invalid duration");
+		errx(1, "duration out of range");
 
 	if (suffix == NULL || *suffix == '\0')
 		return (ret);
 
-	if (suffix != NULL && *(suffix + 1) != '\0')
-		errx(1, "invalid duration");
+	if (suffix[1] != '\0')
+		errx(1, "duration unit suffix too long");
 
 	switch (*suffix) {
 	case 's':
@@ -92,7 +92,7 @@ parse_duration(const char *duration)
 		ret *= 60 * 60 * 24;
 		break;
 	default:
-		errx(1, "invalid duration");
+		errx(1, "duration unit suffix is invalid");
 	}
 
 	return (ret);
@@ -253,7 +253,7 @@ main(int argc, char **argv)
 		signal(SIGTTOU, SIG_DFL);
 
 		execvp(argv[0], argv);
-		err(1, "execvp");
+		err(1, "%s", argv[0]);
 	}
 
 	/* parent continues here */
