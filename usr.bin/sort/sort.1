@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sort.1,v 1.63 2020/01/16 16:46:47 schwarze Exp $
+.\"	$OpenBSD: sort.1,v 1.64 2021/09/04 19:21:39 schwarze Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)sort.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: January 16 2020 $
+.Dd $Mdocdate: September 4 2021 $
 .Dt SORT 1
 .Os
 .Sh NAME
@@ -361,7 +361,7 @@ For random sort, the contents of
 are used as the source of the
 .Sq seed
 data for the hash function.
-Two invocations of random sort with the same seed data will use
+Two invocations of random sort with the same seed data
 produce the same result if the input is also identical.
 By default, the
 .Xr arc4random_buf 3
