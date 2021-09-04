@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.90 2021/06/28 15:35:14 tb Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.91 2021/09/04 16:26:12 jsing Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -209,7 +209,7 @@ struct tls13_record_layer *tls13_record_layer_new(
 void tls13_record_layer_free(struct tls13_record_layer *rl);
 void tls13_record_layer_allow_ccs(struct tls13_record_layer *rl, int allow);
 void tls13_record_layer_allow_legacy_alerts(struct tls13_record_layer *rl, int allow);
-void tls13_record_layer_rbuf(struct tls13_record_layer *rl, CBS *cbs);
+void tls13_record_layer_rcontent(struct tls13_record_layer *rl, CBS *cbs);
 void tls13_record_layer_set_aead(struct tls13_record_layer *rl,
     const EVP_AEAD *aead);
 void tls13_record_layer_set_hash(struct tls13_record_layer *rl,
