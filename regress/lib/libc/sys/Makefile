@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2021/09/02 15:28:41 mbuhl Exp $
+#	$OpenBSD: Makefile,v 1.13 2021/09/04 07:06:58 mbuhl Exp $
 
 # Copyright (c) 2019 Moritz Buhl <openbsd@moritzbuhl.de>
 # Copyright (c) 2019 Alexander Bluhm <bluhm@openbsd.org>
@@ -78,6 +78,12 @@ REGRESS_EXPECTED_FAILURES +=	run-t_msgrcv-3
 REGRESS_EXPECTED_FAILURES +=	run-t_pipe2-2
 REGRESS_EXPECTED_FAILURES +=	run-t_stat-5
 REGRESS_EXPECTED_FAILURES +=	run-t_unlink-2
+
+. for t in run-t_fork-{3,4,5}
+${t}:
+	# Only works with a controlling tty
+	@echo DISABLED
+. endfor
 
 run-t_vfork-2:
 	# SIGSTOP with vfork is masked before exec(3)/exit(3)
