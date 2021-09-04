@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.109 2021/08/31 13:34:55 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.110 2021/09/04 14:15:52 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -393,16 +393,16 @@ dtls1_get_record(SSL *s)
 		if (!CBS_get_u16(&header, &ssl_version))
 			goto again;
 
-		/* sequence number is 64 bits, with top 2 bytes = epoch */
-		if (!CBS_get_u16(&header, &epoch) ||
-		    !CBS_get_bytes(&header, &seq_no, 6))
+		/* Sequence number is 64 bits, with top 2 bytes = epoch. */
+		if (!CBS_get_bytes(&header, &seq_no, SSL3_SEQUENCE_SIZE))
+			goto again;
+		if (!CBS_get_u16(&seq_no, &epoch))
+			goto again;
+		if (!CBS_write_bytes(&seq_no, &rr->seq_num[2],
+		    sizeof(rr->seq_num) - 2, NULL))
 			goto again;
 
 		if (!CBS_get_u16(&header, &len))
-			goto again;
-
-		if (!CBS_write_bytes(&seq_no, &rr->seq_num[2],
-		    sizeof(rr->seq_num) - 2, NULL))
 			goto again;
 
 		rr->type = type;
