@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_hcd.c,v 1.24 2021/07/27 13:36:59 mglocker Exp $	*/
+/*	$OpenBSD: dwc2_hcd.c,v 1.25 2021/09/04 10:19:28 mglocker Exp $	*/
 /*	$NetBSD: dwc2_hcd.c,v 1.15 2014/11/24 10:14:14 skrll Exp $	*/
 
 /*
@@ -932,8 +932,7 @@ enum dwc2_transaction_type dwc2_hcd_select_transactions(
 		 * periodic assigned schedule
 		 */
 		qh_ptr = qh_ptr->next;
-		list_move_tail(&qh->qh_list_entry,
-			       &hsotg->periodic_sched_assigned);
+		list_move(&qh->qh_list_entry, &hsotg->periodic_sched_assigned);
 		ret_val = DWC2_TRANSACTION_PERIODIC;
 	}
 
@@ -982,7 +981,7 @@ enum dwc2_transaction_type dwc2_hcd_select_transactions(
 		 * non-periodic active schedule
 		 */
 		qh_ptr = qh_ptr->next;
-		list_move_tail(&qh->qh_list_entry,
+		list_move(&qh->qh_list_entry,
 			  &hsotg->non_periodic_sched_active);
 
 		if (ret_val == DWC2_TRANSACTION_NONE)
@@ -1026,8 +1025,7 @@ STATIC int dwc2_queue_transaction(struct dwc2_hsotg *hsotg,
 
 	if (chan->do_split)
 		/* Put ourselves on the list to keep order straight */
-		list_move_tail(&chan->split_order_list_entry,
-			       &hsotg->split_order);
+		list_move(&chan->split_order_list_entry, &hsotg->split_order);
 
 	if (hsotg->core_params->dma_enable > 0 && chan->qh) {
 		if (hsotg->core_params->dma_desc_enable > 0) {
@@ -1161,7 +1159,7 @@ STATIC void dwc2_process_periodic_channels(struct dwc2_hsotg *hsotg)
 			 * Move the QH from the periodic assigned schedule to
 			 * the periodic queued schedule
 			 */
-			list_move_tail(&qh->qh_list_entry,
+			list_move(&qh->qh_list_entry,
 				  &hsotg->periodic_sched_queued);
 
 			/* done queuing high bandwidth */

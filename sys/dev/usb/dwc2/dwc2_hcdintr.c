@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_hcdintr.c,v 1.12 2021/07/27 13:36:59 mglocker Exp $	*/
+/*	$OpenBSD: dwc2_hcdintr.c,v 1.13 2021/09/04 10:19:28 mglocker Exp $	*/
 /*	$NetBSD: dwc2_hcdintr.c,v 1.11 2014/11/24 10:14:14 skrll Exp $	*/
 
 /*
@@ -154,8 +154,8 @@ STATIC void dwc2_sof_intr(struct dwc2_hsotg *hsotg)
 			 * Move QH to the ready list to be executed next
 			 * (micro)frame
 			 */
-			list_move_tail(&qh->qh_list_entry,
-				       &hsotg->periodic_sched_ready);
+			list_move(&qh->qh_list_entry,
+				  &hsotg->periodic_sched_ready);
 	}
 	tr_type = dwc2_hcd_select_transactions(hsotg);
 	if (tr_type != DWC2_TRANSACTION_NONE)
@@ -865,8 +865,8 @@ STATIC void dwc2_halt_channel(struct dwc2_hsotg *hsotg,
 			 * halt to be queued when the periodic schedule is
 			 * processed.
 			 */
-			list_move_tail(&chan->qh->qh_list_entry,
-				       &hsotg->periodic_sched_assigned);
+			list_move(&chan->qh->qh_list_entry,
+				  &hsotg->periodic_sched_assigned);
 
 			/*
 			 * Make sure the Periodic Tx FIFO Empty interrupt is

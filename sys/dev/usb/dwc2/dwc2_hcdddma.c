@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_hcdddma.c,v 1.18 2021/07/27 13:36:59 mglocker Exp $	*/
+/*	$OpenBSD: dwc2_hcdddma.c,v 1.19 2021/09/04 10:19:28 mglocker Exp $	*/
 /*	$NetBSD: dwc2_hcdddma.c,v 1.6 2014/04/03 06:34:58 skrll Exp $	*/
 
 /*
@@ -1317,7 +1317,7 @@ void dwc2_hcd_complete_xfer_ddma(struct dwc2_hsotg *hsotg,
 			dwc2_hcd_qh_unlink(hsotg, qh);
 		} else {
 			/* Keep in assigned schedule to continue transfer */
-			list_move_tail(&qh->qh_list_entry,
+			list_move(&qh->qh_list_entry,
 				       &hsotg->periodic_sched_assigned);
 			/*
 			 * If channel has been halted during giveback of urb
