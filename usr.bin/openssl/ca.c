@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.46 2021/09/05 01:33:18 inoguchi Exp $ */
+/* $OpenBSD: ca.c,v 1.47 2021/09/05 01:49:42 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1746,6 +1746,7 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 	OPENSSL_STRING row[DB_NUMBER];
 	OPENSSL_STRING *irow = NULL;
 	OPENSSL_STRING *rrow = NULL;
+	const STACK_OF(X509_EXTENSION) *exts;
 
 	*xret = NULL;
 
@@ -2015,9 +2016,6 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 	if (ext_sect != NULL) {
 		X509V3_CTX ctx;
 
-		if (!X509_set_version(ret, 2))
-			goto err;
-
 		/* Initialize the context structure */
 		if (selfsign)
 			X509V3_set_ctx(&ctx, ret, ret, req, NULL, 0);
@@ -2063,12 +2061,19 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 				    "Successfully added extensions from config\n");
 		}
 	}
-	/* Copy extensions from request (if any) */
 
+	/* Copy extensions from request (if any) */
 	if (!copy_extensions(ret, req, ext_copy)) {
 		BIO_printf(bio_err, "ERROR: adding extensions from request\n");
 		ERR_print_errors(bio_err);
 		goto err;
+	}
+
+	exts = X509_get0_extensions(ret);
+	if (exts != NULL && sk_X509_EXTENSION_num(exts) > 0) {
+		/* Make it an X509 v3 certificate. */
+		if (!X509_set_version(ret, 2))
+			goto err;
 	}
 
 	if (verbose)
