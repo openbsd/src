@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.127 2021/01/29 16:59:41 sthen Exp $	*/
+/*	$OpenBSD: usb.c,v 1.128 2021/09/05 16:16:13 mglocker Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -882,6 +882,10 @@ void
 usb_schedsoftintr(struct usbd_bus *bus)
 {
 	DPRINTFN(10,("%s: polling=%d\n", __func__, bus->use_polling));
+
+	/* In case usb(4) is disabled */
+	if (bus->soft == NULL)
+		return;
 
 	if (bus->use_polling) {
 		bus->methods->soft_intr(bus);
