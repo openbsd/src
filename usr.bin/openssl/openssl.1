@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.131 2021/09/05 01:55:54 inoguchi Exp $
+.\" $OpenBSD: openssl.1,v 1.132 2021/09/05 06:16:30 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -845,7 +845,8 @@ The default value is
 .Cm yes .
 .Pp
 Note that it is valid in some circumstances for certificates to be created
-without any subject. In the case where there are multiple certificates without
+without any subject.
+In cases where there are multiple certificates without
 subjects this does not count as a duplicate.
 .It Cm x509_extensions
 The same as
