@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.45 2021/09/02 11:37:44 inoguchi Exp $ */
+/* $OpenBSD: ca.c,v 1.46 2021/09/05 01:33:18 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1318,6 +1318,7 @@ ca_main(int argc, char **argv)
 		if (ca_config.verbose)
 			BIO_printf(bio_err, "writing new certificates\n");
 		for (i = 0; i < sk_X509_num(cert_sk); i++) {
+			ASN1_INTEGER *serialNumber;
 			int k;
 			char *serialstr;
 			unsigned char *data;
@@ -1325,8 +1326,10 @@ ca_main(int argc, char **argv)
 
 			x = sk_X509_value(cert_sk, i);
 
-			j = x->cert_info->serialNumber->length;
-			data = (unsigned char *)x->cert_info->serialNumber->data;
+			serialNumber = X509_get_serialNumber(x);
+			j = ASN1_STRING_length(serialNumber);
+			data = ASN1_STRING_data(serialNumber);
+
 			if (j > 0)
 				serialstr = bin2hex(data, j);
 			else
@@ -1734,7 +1737,6 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 	ASN1_STRING *str, *str2;
 	ASN1_OBJECT *obj;
 	X509 *ret = NULL;
-	X509_CINF *ci;
 	X509_NAME_ENTRY *ne;
 	X509_NAME_ENTRY *tne, *push;
 	EVP_PKEY *pktmp;
@@ -1838,7 +1840,7 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 	if (selfsign)
 		CAname = X509_NAME_dup(name);
 	else
-		CAname = X509_NAME_dup(x509->cert_info->subject);
+		CAname = X509_NAME_dup(X509_get_subject_name(x509));
 	if (CAname == NULL)
 		goto err;
 	str = str2 = NULL;
@@ -1962,16 +1964,15 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 
 	if ((ret = X509_new()) == NULL)
 		goto err;
-	ci = ret->cert_info;
 
 #ifdef X509_V3
 	/* Make it an X509 v3 certificate. */
 	if (!X509_set_version(ret, 2))
 		goto err;
 #endif
-	if (ci->serialNumber == NULL)
+	if (X509_get_serialNumber(ret) == NULL)
 		goto err;
-	if (BN_to_ASN1_INTEGER(serial, ci->serialNumber) == NULL)
+	if (BN_to_ASN1_INTEGER(serial, X509_get_serialNumber(ret)) == NULL)
 		goto err;
 	if (selfsign) {
 		if (!X509_set_issuer_name(ret, subject))
@@ -2013,20 +2014,9 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 	/* Lets add the extensions, if there are any */
 	if (ext_sect != NULL) {
 		X509V3_CTX ctx;
-		if (ci->version == NULL)
-			if ((ci->version = ASN1_INTEGER_new()) == NULL)
-				goto err;
 
-		/* version 3 certificate */
-		if (!ASN1_INTEGER_set(ci->version, 2))
+		if (!X509_set_version(ret, 2))
 			goto err;
-
-		/*
-		 * Free the current entries if any, there should not be any I
-		 * believe
-		 */
-		sk_X509_EXTENSION_pop_free(ci->extensions, X509_EXTENSION_free);
-		ci->extensions = NULL;
 
 		/* Initialize the context structure */
 		if (selfsign)
