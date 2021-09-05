@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.48 2021/09/05 01:55:54 inoguchi Exp $ */
+/* $OpenBSD: ca.c,v 1.49 2021/09/05 04:05:14 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1733,7 +1733,7 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 {
 	X509_NAME *name = NULL, *CAname = NULL;
 	X509_NAME *subject = NULL, *dn_subject = NULL;
-	ASN1_UTCTIME *tm, *tmptm;
+	ASN1_UTCTIME *tm;
 	ASN1_STRING *str, *str2;
 	ASN1_OBJECT *obj;
 	X509 *ret = NULL;
@@ -1750,11 +1750,6 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 
 	*xret = NULL;
 
-	tmptm = ASN1_UTCTIME_new();
-	if (tmptm == NULL) {
-		BIO_printf(bio_err, "malloc error\n");
-		return (0);
-	}
 	for (i = 0; i < DB_NUMBER; i++)
 		row[i] = NULL;
 
@@ -2301,7 +2296,6 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 	X509_NAME_free(CAname);
 	X509_NAME_free(subject);
 	X509_NAME_free(dn_subject);
-	ASN1_UTCTIME_free(tmptm);
 	X509_free(ret);
 
 	return (ok);
