@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.290 2021/09/03 11:47:05 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.291 2021/09/05 13:13:31 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -786,7 +786,7 @@ vm_rwregs(struct vm_rwregs_params *vrwp, int dir)
 	struct vm *vm;
 	struct vcpu *vcpu;
 	struct vcpu_reg_state *vrs = &vrwp->vrwp_regs;
-	int error;
+	int error, ret;
 
 	/* Find the desired VM */
 	rw_enter_read(&vmm_softc->vm_lock);
@@ -804,20 +804,24 @@ vm_rwregs(struct vm_rwregs_params *vrwp, int dir)
 	if (vcpu == NULL)
 		return (ENOENT);
 
+	rw_enter_write(&vcpu->vc_lock);
 	if (vmm_softc->mode == VMM_MODE_VMX ||
 	    vmm_softc->mode == VMM_MODE_EPT)
-		return (dir == 0) ?
+		ret = (dir == 0) ?
 		    vcpu_readregs_vmx(vcpu, vrwp->vrwp_mask, vrs) :
 		    vcpu_writeregs_vmx(vcpu, vrwp->vrwp_mask, 1, vrs);
 	else if (vmm_softc->mode == VMM_MODE_SVM ||
 	    vmm_softc->mode == VMM_MODE_RVI)
-		return (dir == 0) ?
+		ret = (dir == 0) ?
 		    vcpu_readregs_svm(vcpu, vrwp->vrwp_mask, vrs) :
 		    vcpu_writeregs_svm(vcpu, vrwp->vrwp_mask, vrs);
 	else {
 		DPRINTF("%s: unknown vmm mode", __func__);
-		return (EINVAL);
+		ret = EINVAL;
 	}
+	rw_exit_write(&vcpu->vc_lock);
+
+	return (ret);
 }
 
 /*
@@ -4229,9 +4233,10 @@ vm_run(struct vm_run_params *vrp)
 
 			if (atomic_cas_uint(&vcpu->vc_state, old, next) != old)
 				ret = EBUSY;
-			else
+			else {
 				atomic_inc_int(&vm->vm_vcpus_running);
-			rw_enter_write(&vcpu->vc_lock);
+				rw_enter_write(&vcpu->vc_lock);
+			}
 		} else
 			ret = ENOENT;
 
