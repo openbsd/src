@@ -10,4 +10,5 @@ END
 	@[7, "test"] = count();
 	printf("=> Print all map:\n");
 	print(@);
+	clear(@);
 }
