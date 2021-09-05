@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.214 2021/06/16 09:02:21 mpi Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.215 2021/09/05 11:44:46 mpi Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -963,7 +963,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	kpm = pmap_kernel();
 	mtx_init(&kpm->pm_mtx, -1); /* must not be used */
 	mtx_init(&kpm->pm_apte_mtx, IPL_VM);
-	uvm_obj_init(&kpm->pm_obj, NULL, 1);
+	uvm_obj_init(&kpm->pm_obj, &pmap_pager, 1);
 	bzero(&kpm->pm_list, sizeof(kpm->pm_list));  /* pm_list not used */
 	kpm->pm_pdir = (vaddr_t)(proc0.p_addr->u_pcb.pcb_cr3 + KERNBASE);
 	kpm->pm_pdirpa = proc0.p_addr->u_pcb.pcb_cr3;
@@ -1348,7 +1348,7 @@ pmap_create(void)
 	mtx_init(&pmap->pm_apte_mtx, IPL_VM);
 
 	/* init uvm_object */
-	uvm_obj_init(&pmap->pm_obj, NULL, 1);
+	uvm_obj_init(&pmap->pm_obj, &pmap_pager, 1);
 	pmap->pm_stats.wired_count = 0;
 	pmap->pm_stats.resident_count = 1;	/* count the PDP allocd below */
 	pmap->pm_ptphint = NULL;

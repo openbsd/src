@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_object.c,v 1.19 2021/06/16 09:02:21 mpi Exp $	*/
+/*	$OpenBSD: uvm_object.c,v 1.20 2021/09/05 11:44:46 mpi Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -40,6 +40,16 @@
 #include <sys/atomic.h>
 
 #include <uvm/uvm.h>
+
+/* Dummy object used by some pmaps for sanity checks. */
+const struct uvm_pagerops pmap_pager = {
+	/* nothing */
+};
+
+/* Dummy object used by the buffer cache for sanity checks. */
+const struct uvm_pagerops bufcache_pager = {
+	/* nothing */
+};
 
 /* We will fetch this page count per step */
 #define	FETCH_PAGECOUNT	16
@@ -159,6 +169,9 @@ uvm_obj_free(struct uvm_object *uobj)
 {
 	struct vm_page *pg;
 	struct pglist pgl;
+
+	KASSERT(UVM_OBJ_IS_BUFCACHE(uobj));
+	KERNEL_ASSERT_LOCKED();
 
 	TAILQ_INIT(&pgl);
  	/*

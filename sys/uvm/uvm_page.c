@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.157 2021/04/21 10:02:05 mpi Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.158 2021/09/05 11:44:46 mpi Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -791,6 +791,8 @@ uvm_pagealloc_multi(struct uvm_object *obj, voff_t off, vsize_t size,
 	struct vm_page  *pg;
 	int              i, r;
 
+	KASSERT(UVM_OBJ_IS_BUFCACHE(obj));
+	KERNEL_ASSERT_LOCKED();
 
 	TAILQ_INIT(&plist);
 	r = uvm_pglistalloc(size, dma_constraint.ucr_low,
@@ -823,6 +825,8 @@ uvm_pagerealloc_multi(struct uvm_object *obj, voff_t off, vsize_t size,
 	int              i, r;
 	voff_t		offset;
 
+	KASSERT(UVM_OBJ_IS_BUFCACHE(obj));
+	KERNEL_ASSERT_LOCKED();
 
 	TAILQ_INIT(&plist);
 	if (size == 0)
