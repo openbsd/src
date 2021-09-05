@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.47 2021/09/05 01:49:42 inoguchi Exp $ */
+/* $OpenBSD: ca.c,v 1.48 2021/09/05 01:55:54 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2124,6 +2124,21 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 		BIO_printf(bio_err, "Memory allocation failure\n");
 		goto err;
 	}
+
+	if (row[DB_name][0] == '\0') {
+		/*
+		 * An empty subject! We'll use the serial number instead. If
+		 * unique_subject is in use then we don't want different
+		 * entries with empty subjects matching each other.
+		 */
+		free(row[DB_name]);
+		row[DB_name] = strdup(row[DB_serial]);
+		if (row[DB_name] == NULL) {
+			BIO_printf(bio_err, "Memory allocation failure\n");
+			goto err;
+		}
+	}
+
 	if (db->attributes.unique_subject) {
 		OPENSSL_STRING *crow = row;
 
@@ -2469,6 +2484,20 @@ do_revoke(X509 *x509, CA_DB *db, int type, char *value)
 	else
 		row[DB_serial] = BN_bn2hex(bn);
 	BN_free(bn);
+
+	if (row[DB_name] != NULL && row[DB_name][0] == '\0') {
+		/*
+		 * Entries with empty Subjects actually use the serial number
+		 * instead
+		 */
+		free(row[DB_name]);
+		row[DB_name] = strdup(row[DB_serial]);
+		if (row[DB_name] == NULL) {
+			BIO_printf(bio_err, "Memory allocation failure\n");
+			goto err;
+		}
+	}
+
 	if ((row[DB_name] == NULL) || (row[DB_serial] == NULL)) {
 		BIO_printf(bio_err, "Memory allocation failure\n");
 		goto err;

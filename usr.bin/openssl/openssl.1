@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.130 2021/08/29 12:33:15 tb Exp $
+.\" $OpenBSD: openssl.1,v 1.131 2021/09/05 01:55:54 inoguchi Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: August 29 2021 $
+.Dd $Mdocdate: September 5 2021 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -843,6 +843,10 @@ is given,
 several valid certificate entries may have the exact same subject.
 The default value is
 .Cm yes .
+.Pp
+Note that it is valid in some circumstances for certificates to be created
+without any subject. In the case where there are multiple certificates without
+subjects this does not count as a duplicate.
 .It Cm x509_extensions
 The same as
 .Fl extensions .
