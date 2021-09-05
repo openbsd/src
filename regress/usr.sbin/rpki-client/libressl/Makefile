@@ -1,6 +1,6 @@
 PROGS += test-http
 
-SRCS_test-http=   test-http.c http.c io.c
+SRCS_test-http=   test-http.c http.c io.c encoding.c
 LDADD_test-http+= -ltls -lssl -lcrypto -lutil
 DPADD_test-http+= ${LIBTLS} ${LIBSSL} ${LIBCRYPTO} ${LIBUTIL}
 
