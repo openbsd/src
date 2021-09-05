@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.291 2021/09/05 13:13:31 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.292 2021/09/05 16:36:34 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -428,7 +428,7 @@ vmm_attach(struct device *parent, struct device *self, void *aux)
 	bzero(&sc->vpids, sizeof(sc->vpids));
 	rw_init(&sc->vpid_lock, "vpid");
 
-	pool_init(&vm_pool, sizeof(struct vm), 0, IPL_NONE, PR_WAITOK,
+	pool_init(&vm_pool, sizeof(struct vm), 0, IPL_MPFLOOR, PR_WAITOK,
 	    "vmpool", NULL);
 	pool_init(&vcpu_pool, sizeof(struct vcpu), 64, IPL_MPFLOOR, PR_WAITOK,
 	    "vcpupl", NULL);
