@@ -1,4 +1,4 @@
-.\" $OpenBSD: unveil.2,v 1.21 2020/04/25 13:23:01 beck Exp $
+.\" $OpenBSD: unveil.2,v 1.22 2021/09/06 08:03:08 deraadt Exp $
 .\"
 .\" Copyright (c) 2018 Bob Beck <beck@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 25 2020 $
+.Dd $Mdocdate: September 6 2021 $
 .Dt UNVEIL 2
 .Os
 .Sh NAME
@@ -145,19 +145,24 @@ application makes use of files.
 .Rv -std
 .Sh ERRORS
 .Bl -tag -width Er
-.It Er E2BIG
+.It Bq Er E2BIG
 The addition of
 .Fa path
 would exceed the per-process limit for unveiled paths.
-.It Er ENOENT
+.It Bq Er EFAULT
+.Fa path
+or
+.Fa permissions
+points outside the process's allocated address space.
+.It Bq Er ENOENT
 A directory in
 .Fa path
 did not exist.
-.It Er EINVAL
+.It Bq Er EINVAL
 An invalid value of
 .Fa permissions
 was used.
-.It Er EPERM
+.It Bq Er EPERM
 An attempt to increase permissions was made, or the
 .Fa path
 was not accessible, or
