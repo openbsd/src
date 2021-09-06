@@ -1,4 +1,4 @@
-/*	$OpenBSD: vroute.c,v 1.13 2021/09/01 15:30:06 tobhe Exp $	*/
+/*	$OpenBSD: vroute.c,v 1.14 2021/09/06 13:29:17 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2021 Tobias Heider <tobhe@openbsd.org>
@@ -401,9 +401,9 @@ vroute_removeroute(struct iked *env, int rdomain, struct sockaddr *dest,
     struct sockaddr *mask)
 {
 	struct iked_vroute_sc	*ivr = env->sc_vroute;
-	struct vroute_route	*route;
+	struct vroute_route	*route, *troute;
 
-	TAILQ_FOREACH(route, &ivr->ivr_routes, vr_entry) {
+	TAILQ_FOREACH_SAFE(route, &ivr->ivr_routes, vr_entry, troute) {
 		if (sockaddr_cmp(dest, (struct sockaddr *)&route->vr_dest, -1))
 			continue;
 		if (mask && !(route->vr_flags & RTA_NETMASK))
@@ -414,6 +414,7 @@ vroute_removeroute(struct iked *env, int rdomain, struct sockaddr *dest,
 		if (rdomain != route->vr_rdomain)
 			continue;
 		TAILQ_REMOVE(&ivr->ivr_routes, route, vr_entry);
+		free(route);
 	}
 }
 
@@ -469,9 +470,9 @@ vroute_removeaddr(struct iked *env, int ifidx, struct sockaddr *addr,
     struct sockaddr *mask)
 {
 	struct iked_vroute_sc	*ivr = env->sc_vroute;
-	struct vroute_addr	*vaddr;
+	struct vroute_addr	*vaddr, *tvaddr;
 
-	TAILQ_FOREACH(vaddr, &ivr->ivr_addrs, va_entry) {
+	TAILQ_FOREACH_SAFE(vaddr, &ivr->ivr_addrs, va_entry, tvaddr) {
 		if (sockaddr_cmp(addr, (struct sockaddr *)&vaddr->va_addr, -1))
 			continue;
 		if (sockaddr_cmp(mask, (struct sockaddr *)&vaddr->va_mask, -1))
@@ -479,6 +480,7 @@ vroute_removeaddr(struct iked *env, int ifidx, struct sockaddr *addr,
 		if (ifidx != vaddr->va_ifidx)
 			continue;
 		TAILQ_REMOVE(&ivr->ivr_addrs, vaddr, va_entry);
+		free(vaddr);
 	}
 }
 
