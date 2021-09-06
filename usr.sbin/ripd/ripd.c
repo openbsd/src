@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.c,v 1.35 2021/01/19 10:20:47 claudio Exp $ */
+/*	$OpenBSD: ripd.c,v 1.36 2021/09/06 13:32:18 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -212,7 +212,7 @@ main(int argc, char *argv[])
 
 	/* no filesystem visibility */
 	if (unveil("/", "") == -1)
-		fatal("unveil");
+		fatal("unveil /");
 	if (unveil(NULL, NULL) == -1)
 		fatal("unveil");
 

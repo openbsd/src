@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.c,v 1.50 2021/01/19 09:54:08 claudio Exp $ */
+/*	$OpenBSD: ospf6d.c,v 1.51 2021/09/06 13:32:18 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -277,7 +277,7 @@ main(int argc, char *argv[])
 
 	/* no filesystem visibility */
 	if (unveil("/", "") == -1)
-		fatal("unveil");
+		fatal("unveil /");
 	if (unveil(NULL, NULL) == -1)
 		fatal("unveil");
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.115 2021/01/19 09:37:53 claudio Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.116 2021/09/06 13:32:18 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -282,7 +282,7 @@ main(int argc, char *argv[])
 	main_imsg_compose_ospfe_fd(IMSG_CONTROLFD, 0, control_fd);
 
 	if (unveil("/", "r") == -1)
-		fatal("unveil");
+		fatal("unveil /");
 	if (unveil(NULL, NULL) == -1)
 		fatal("unveil");
 
