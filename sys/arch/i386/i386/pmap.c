@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.215 2021/09/05 11:44:46 mpi Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.216 2021/09/06 12:59:59 mpi Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -441,6 +441,7 @@ static vaddr_t virtual_end;	/* VA of last free KVA */
  */
 
 struct pmap_head pmaps;
+struct mutex pmaps_lock = MUTEX_INITIALIZER(IPL_VM);
 
 /*
  * pool that pmap structures are allocated from
@@ -1420,7 +1421,9 @@ pmap_pinit_pd_86(struct pmap *pmap)
 		pmap->pm_pdirpa_intel = 0;
 	}
 
+	mtx_enter(&pmaps_lock);
 	LIST_INSERT_HEAD(&pmaps, pmap, pm_list);
+	mtx_leave(&pmaps_lock);
 }
 
 /*
@@ -1442,7 +1445,9 @@ pmap_destroy(struct pmap *pmap)
 	pmap_tlb_droppmap(pmap);	
 #endif
 
+	mtx_enter(&pmaps_lock);
 	LIST_REMOVE(pmap, pm_list);
+	mtx_leave(&pmaps_lock);
 
 	/* Free any remaining PTPs. */
 	while ((pg = RBT_ROOT(uvm_objtree, &pmap->pm_obj.memt)) != NULL) {
@@ -2659,10 +2664,12 @@ pmap_growkernel_86(vaddr_t maxkvaddr)
 			uvm_wait("pmap_growkernel");
 
 		/* distribute new kernel PTP to all active pmaps */
+		mtx_enter(&pmaps_lock);
 		LIST_FOREACH(pm, &pmaps, pm_list) {
 			PDE(pm, PDSLOT_KERN + nkpde) =
 				PDE(kpm, PDSLOT_KERN + nkpde);
 		}
+		mtx_leave(&pmaps_lock);
 	}
 
 	splx(s);

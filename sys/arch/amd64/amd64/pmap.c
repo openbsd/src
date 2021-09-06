@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.146 2021/09/05 11:44:46 mpi Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.147 2021/09/06 12:59:59 mpi Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -266,6 +266,7 @@ struct pool pmap_pv_pool;
  */
 
 struct pmap_head pmaps;
+struct mutex pmaps_lock = MUTEX_INITIALIZER(IPL_VM);
 
 /*
  * pool that pmap structures are allocated from
@@ -1344,7 +1345,9 @@ pmap_create(void)
 		pmap->pm_pdirpa_intel = 0;
 	}
 
+	mtx_enter(&pmaps_lock);
 	LIST_INSERT_HEAD(&pmaps, pmap, pm_list);
+	mtx_leave(&pmaps_lock);
 	return (pmap);
 }
 
@@ -1372,7 +1375,9 @@ pmap_destroy(struct pmap *pmap)
 	/*
 	 * remove it from global list of pmaps
 	 */
+	mtx_enter(&pmaps_lock);
 	LIST_REMOVE(pmap, pm_list);
+	mtx_leave(&pmaps_lock);
 
 	/*
 	 * free any remaining PTPs
@@ -2974,11 +2979,13 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	 */
 	if (needed_kptp[PTP_LEVELS - 1] != 0) {
 		newpdes = nkptp[PTP_LEVELS - 1] - old;
+		mtx_enter(&pmaps_lock);
 		LIST_FOREACH(pm, &pmaps, pm_list) {
 			memcpy(&pm->pm_pdir[PDIR_SLOT_KERN + old],
 			       &kpm->pm_pdir[PDIR_SLOT_KERN + old],
 			       newpdes * sizeof (pd_entry_t));
 		}
+		mtx_leave(&pmaps_lock);
 	}
 	pmap_maxkvaddr = maxkvaddr;
 	splx(s);
