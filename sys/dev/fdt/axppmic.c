@@ -1,4 +1,4 @@
-/*	$OpenBSD: axppmic.c,v 1.9 2020/01/23 10:01:41 kettenis Exp $	*/
+/*	$OpenBSD: axppmic.c,v 1.10 2021/09/06 19:55:27 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -327,13 +327,13 @@ struct axppmic_softc {
 	uint8_t		sc_crit;
 };
 
-inline uint8_t
+static inline uint8_t
 axppmic_read_reg(struct axppmic_softc *sc, uint8_t reg)
 {
 	return sc->sc_read(sc, reg);
 }
 
-inline void
+static inline void
 axppmic_write_reg(struct axppmic_softc *sc, uint8_t reg, uint8_t value)
 {
 	sc->sc_write(sc, reg, value);

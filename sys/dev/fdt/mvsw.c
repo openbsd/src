@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvsw.c,v 1.3 2021/04/05 12:13:07 dtucker Exp $	*/
+/*	$OpenBSD: mvsw.c,v 1.4 2021/09/06 19:55:27 patrick Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -160,14 +160,14 @@ mvsw_attach(struct device *parent, struct device *self, void *aux)
 	}
 }
 
-inline int
+static inline int
 mvsw_read(struct mvsw_softc *sc, int reg)
 {
 	struct mii_bus *md = sc->sc_mdio;
 	return md->md_readreg(md->md_cookie, sc->sc_reg, reg);
 }
 
-inline void
+static inline void
 mvsw_write(struct mvsw_softc *sc, int reg, int val)
 {
 	struct mii_bus *md = sc->sc_mdio;
