@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.90 2021/07/12 15:09:19 beck Exp $ */
+/* $OpenBSD: doas.c,v 1.91 2021/09/07 13:46:07 jcs Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -199,7 +199,7 @@ checkconfig(const char *confpath, int argc, char **argv,
 	}
 }
 
-static void
+static int
 authuser(char *myname, char *login_style, int persist)
 {
 	char *challenge = NULL, *response, rbuf[1024], cbuf[128];
@@ -214,8 +214,10 @@ authuser(char *myname, char *login_style, int persist)
 	}
 
 	if (!(as = auth_userchallenge(myname, login_style, "auth-doas",
-	    &challenge)))
-		errx(1, "Authentication failed");
+	    &challenge))) {
+		warnx("Authentication failed");
+		return AUTH_FAILED;
+	}
 	if (!challenge) {
 		char host[HOST_NAME_MAX + 1];
 		if (gethostname(host, sizeof(host)))
@@ -235,7 +237,8 @@ authuser(char *myname, char *login_style, int persist)
 		explicit_bzero(rbuf, sizeof(rbuf));
 		syslog(LOG_AUTHPRIV | LOG_NOTICE,
 		    "failed auth for %s", myname);
-		errx(1, "Authentication failed");
+		warnx("Authentication failed");
+		return AUTH_FAILED;
 	}
 	explicit_bzero(rbuf, sizeof(rbuf));
 good:
@@ -244,6 +247,8 @@ good:
 		ioctl(fd, TIOCSETVERAUTH, &secs);
 		close(fd);
 	}
+
+	return AUTH_OK;
 }
 
 int
@@ -306,6 +311,7 @@ main(int argc, char **argv)
 	int i, ch, rv;
 	int sflag = 0;
 	int nflag = 0;
+	int authed = AUTH_FAILED;
 	char cwdpath[PATH_MAX];
 	const char *cwd;
 	char *login_style = NULL;
@@ -408,7 +414,15 @@ main(int argc, char **argv)
 		if (nflag)
 			errx(1, "Authentication required");
 
-		authuser(mypw->pw_name, login_style, rule->options & PERSIST);
+		for (i = 0; i < AUTH_RETRIES; i++) {
+			authed = authuser(mypw->pw_name, login_style,
+			    rule->options & PERSIST);
+			if (authed == AUTH_OK)
+				break;
+		}
+
+		if (authed != AUTH_OK)
+			exit(1);
 	}
 
 	if ((p = getenv("PATH")) != NULL)
