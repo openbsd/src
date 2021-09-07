@@ -1,0 +1,3 @@
+/usr/src/regress/usr.sbin/btrace/syntaxerror.bt:3:4: syntax error:
+	foo;
+          ^
