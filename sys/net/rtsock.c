@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.320 2021/09/07 09:56:00 mvs Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.321 2021/09/07 16:07:46 mvs Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -1032,14 +1032,6 @@ rtm_output(struct rt_msghdr *rtm, struct rtentry **prt,
 			rt = NULL;
 		}
 
-		ifp = if_get(rt->rt_ifidx);
-		if (ifp == NULL) {
-			rtfree(rt);
-			rt = NULL;
-			error = ESRCH;
-			break;
-		}
-
 		/*
 		 * If RTAX_GATEWAY is the argument we're trying to
 		 * change, try to find a compatible route.
@@ -1065,6 +1057,14 @@ rtm_output(struct rt_msghdr *rtm, struct rtentry **prt,
 		 */
 		if (ISSET(rt->rt_flags, RTF_LOCAL|RTF_BROADCAST)) {
 			error = EINVAL;
+			break;
+		}
+
+		ifp = if_get(rt->rt_ifidx);
+		if (ifp == NULL) {
+			rtfree(rt);
+			rt = NULL;
+			error = ESRCH;
 			break;
 		}
 
