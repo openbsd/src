@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parse.y,v 1.38 2021/09/07 19:18:08 mpi Exp $	*/
+/*	$OpenBSD: bt_parse.y,v 1.39 2021/09/07 19:29:12 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019-2021 Martin Pieuchot <mpi@openbsd.org>
@@ -117,7 +117,8 @@ static int pflag;
 /* Builtins */
 %token	<v.i>		BUILTIN BEGIN END HZ IF
 /* Functions and Map operators */
-%token  <v.i>		F_DELETE F_PRINT FUNC0 FUNC1 FUNCN OP1 OP4 MOP0 MOP1
+%token  <v.i>		F_DELETE F_PRINT
+%token	<v.i>		MFUNC FUNC0 FUNC1 FUNCN OP1 OP4 MOP0 MOP1
 %token	<v.string>	STRING CSTRING
 %token	<v.number>	NUMBER
 
@@ -128,7 +129,7 @@ static int pflag;
 %type	<v.filter>	filter
 %type	<v.stmt>	action stmt stmtblck stmtlist block
 %type	<v.arg>		pat vargs mentry mpat pargs
-%type	<v.arg>		expr term fterm factor
+%type	<v.arg>		expr term fterm variable factor
 %%
 
 grammar	: /* empty */
@@ -206,11 +207,14 @@ fterm	: fterm '*' factor	{ $$ = ba_op(B_AT_OP_MULT, $1, $3); }
 	| factor
 	;
 
+variable: lvar			{ $$ = bl_find($1); }
+	| gvar			{ $$ = bg_find($1); }
+	;
+
 factor : '(' expr ')'		{ $$ = $2; }
 	| staticv		{ $$ = ba_new($1, B_AT_LONG); }
 	| BUILTIN		{ $$ = ba_new(NULL, $1); }
-	| lvar			{ $$ = bl_find($1); }
-	| gvar			{ $$ = bg_find($1); }
+	| variable
 	| mentry
 	;
 
@@ -232,6 +236,7 @@ stmt	: ';' NL			{ $$ = NULL; }
 	| gvar '[' vargs ']' '=' mpat	{ $$ = bm_insert($1, $3, $6); }
 	| FUNCN '(' vargs ')'		{ $$ = bs_new($1, $3, NULL); }
 	| FUNC1 '(' pat ')'		{ $$ = bs_new($1, $3, NULL); }
+	| MFUNC '(' variable ')'	{ $$ = bs_new($1, $3, NULL); }
 	| FUNC0 '(' ')'			{ $$ = bs_new($1, NULL, NULL); }
 	| F_DELETE '(' mentry ')'	{ $$ = bm_op($1, $3, NULL); }
 	| F_PRINT '(' pargs ')'		{ $$ = bs_new($1, $3, NULL); }
@@ -246,6 +251,7 @@ stmtlist: stmtlist stmtblck		{ $$ = bs_append($1, $2); }
 	| stmtlist stmt			{ $$ = bs_append($1, $2); }
 	| stmtblck
 	| stmt
+	| /* empty */
 	;
 
 block	: '{' stmt ';' '}'			{ $$ = $2; }
@@ -650,7 +656,7 @@ lookup(char *s)
 		{ "arg7",	BUILTIN,	B_AT_BI_ARG7 },
 		{ "arg8",	BUILTIN,	B_AT_BI_ARG8 },
 		{ "arg9",	BUILTIN,	B_AT_BI_ARG9 },
-		{ "clear",	FUNC1,		B_AC_CLEAR },
+		{ "clear",	MFUNC,		B_AC_CLEAR },
 		{ "comm",	BUILTIN,	B_AT_BI_COMM },
 		{ "count",	MOP0, 		B_AT_MF_COUNT },
 		{ "cpu",	BUILTIN,	B_AT_BI_CPU },
@@ -672,7 +678,7 @@ lookup(char *s)
 		{ "tid",	BUILTIN,	B_AT_BI_TID },
 		{ "time",	FUNC1,		B_AC_TIME },
 		{ "ustack",	BUILTIN,	B_AT_BI_USTACK },
-		{ "zero",	FUNC1,		B_AC_ZERO },
+		{ "zero",	MFUNC,		B_AC_ZERO },
 	};
 
 	return bsearch(s, kws, nitems(kws), sizeof(kws[0]), kw_cmp);
