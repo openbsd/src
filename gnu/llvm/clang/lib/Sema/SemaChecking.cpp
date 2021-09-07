@@ -8083,6 +8083,15 @@ CheckPrintfHandler::HandlePrintfSpecifier(const analyze_printf::PrintfSpecifier
     return true;
   }
 
+  // %n is not allowed anywhere
+  if (CS.getKind() == ConversionSpecifier::nArg) {
+    EmitFormatDiagnostic(S.PDiag(diag::warn_format_narg),
+                         getLocationOfByte(CS.getStart()),
+                         /*IsStringLocation*/ false,
+                         getSpecifierRange(startSpecifier, specifierLen));
+    return true;
+  }
+
   // Only scalars are allowed for os_trace.
   if (FSType == Sema::FST_OSTrace &&
       (CS.getKind() == ConversionSpecifier::PArg ||

@@ -1,4 +1,4 @@
-.\" $OpenBSD: clang-local.1,v 1.21 2020/10/12 16:41:03 deraadt Exp $
+.\" $OpenBSD: clang-local.1,v 1.22 2021/09/07 17:39:49 semarie Exp $
 .\"
 .\" Copyright (c) 2016 Pascal Stumpf <pascal@stumpf.co>
 .\"
@@ -15,7 +15,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: October 12 2020 $
+.Dd $Mdocdate: September 7 2021 $
 .Dt CLANG-LOCAL 1
 .Os
 .Sh NAME
@@ -127,6 +127,12 @@ has
 enabled by default on amd64 to protect against branch target injection attacks.
 It can be disabled with
 .Fl mno-retpoline .
+.It
+A new warning for
+.Cm %n
+format specifier usage in
+.Xr printf 3
+family functions has been added.
 .El
 .Sh SEE ALSO
 .Xr clang 1
