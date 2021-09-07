@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.79 2021/09/02 19:28:35 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.80 2021/09/07 14:06:23 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -165,12 +165,16 @@ ikev2_msg_copy(struct iked *env, struct iked_message *msg)
 		return (NULL);
 	len = ibuf_size(msg->msg_data) - msg->msg_offset;
 
+	if ((m = malloc(sizeof(*m))) == NULL)
+		return (NULL);
+
 	if ((ptr = ibuf_seek(msg->msg_data, msg->msg_offset, len)) == NULL ||
-	    (m = malloc(sizeof(*m))) == NULL ||
 	    (buf = ikev2_msg_init(env, m, &msg->msg_peer, msg->msg_peerlen,
 	     &msg->msg_local, msg->msg_locallen, msg->msg_response)) == NULL ||
-	    ibuf_add(buf, ptr, len))
+	    ibuf_add(buf, ptr, len)) {
+		free(m);
 		return (NULL);
+	}
 
 	m->msg_fd = msg->msg_fd;
 	m->msg_msgid = msg->msg_msgid;
