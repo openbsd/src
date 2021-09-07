@@ -162,100 +162,100 @@ IPAddressRange *
 d2i_IPAddressRange(IPAddressRange **a, const unsigned char **in, long len)
 {
 	return (IPAddressRange *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
-	    (&(IPAddressRange_it)));
+	    &IPAddressRange_it);
 }
 
 int
 i2d_IPAddressRange(IPAddressRange *a, unsigned char **out)
 {
-	return ASN1_item_i2d((ASN1_VALUE *)a, out, (&(IPAddressRange_it)));
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &IPAddressRange_it);
 }
 
 IPAddressRange *
 IPAddressRange_new(void)
 {
-	return (IPAddressRange *)ASN1_item_new((&(IPAddressRange_it)));
+	return (IPAddressRange *)ASN1_item_new(&IPAddressRange_it);
 }
 
 void
 IPAddressRange_free(IPAddressRange *a)
 {
-	ASN1_item_free((ASN1_VALUE *)a, (&(IPAddressRange_it)));
+	ASN1_item_free((ASN1_VALUE *)a, &IPAddressRange_it);
 }
 
 IPAddressOrRange *
 d2i_IPAddressOrRange(IPAddressOrRange **a, const unsigned char **in, long len)
 {
 	return (IPAddressOrRange *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
-	    (&(IPAddressOrRange_it)));
+	    &IPAddressOrRange_it);
 }
 
 int
 i2d_IPAddressOrRange(IPAddressOrRange *a, unsigned char **out)
 {
-	return ASN1_item_i2d((ASN1_VALUE *)a, out, (&(IPAddressOrRange_it)));
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &IPAddressOrRange_it);
 }
 
 IPAddressOrRange *
 IPAddressOrRange_new(void)
 {
-	return (IPAddressOrRange *)ASN1_item_new((&(IPAddressOrRange_it)));
+	return (IPAddressOrRange *)ASN1_item_new(&IPAddressOrRange_it);
 }
 
 void
 IPAddressOrRange_free(IPAddressOrRange *a)
 {
-	ASN1_item_free((ASN1_VALUE *)a, (&(IPAddressOrRange_it)));
+	ASN1_item_free((ASN1_VALUE *)a, &IPAddressOrRange_it);
 }
 
 IPAddressChoice *
 d2i_IPAddressChoice(IPAddressChoice **a, const unsigned char **in, long len)
 {
 	return (IPAddressChoice *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
-	    (&(IPAddressChoice_it)));
+	    &IPAddressChoice_it);
 }
 
 int
 i2d_IPAddressChoice(IPAddressChoice *a, unsigned char **out)
 {
-	return ASN1_item_i2d((ASN1_VALUE *)a, out, (&(IPAddressChoice_it)));
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &IPAddressChoice_it);
 }
 
 IPAddressChoice *
 IPAddressChoice_new(void)
 {
-	return (IPAddressChoice *)ASN1_item_new((&(IPAddressChoice_it)));
+	return (IPAddressChoice *)ASN1_item_new(&IPAddressChoice_it);
 }
 
 void
 IPAddressChoice_free(IPAddressChoice *a)
 {
-	ASN1_item_free((ASN1_VALUE *)a, (&(IPAddressChoice_it)));
+	ASN1_item_free((ASN1_VALUE *)a, &IPAddressChoice_it);
 }
 
 IPAddressFamily *
 d2i_IPAddressFamily(IPAddressFamily **a, const unsigned char **in, long len)
 {
 	return (IPAddressFamily *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
-	    (&(IPAddressFamily_it)));
+	    &IPAddressFamily_it);
 }
 
 int
 i2d_IPAddressFamily(IPAddressFamily *a, unsigned char **out)
 {
-	return ASN1_item_i2d((ASN1_VALUE *)a, out, (&(IPAddressFamily_it)));
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &IPAddressFamily_it);
 }
 
 IPAddressFamily *
 IPAddressFamily_new(void)
 {
-	return (IPAddressFamily *)ASN1_item_new((&(IPAddressFamily_it)));
+	return (IPAddressFamily *)ASN1_item_new(&IPAddressFamily_it);
 }
 
 void
 IPAddressFamily_free(IPAddressFamily *a)
 {
-	ASN1_item_free((ASN1_VALUE *)a, (&(IPAddressFamily_it)));
+	ASN1_item_free((ASN1_VALUE *)a, &IPAddressFamily_it);
 }
 
 /*
