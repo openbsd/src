@@ -1,4 +1,4 @@
-/* $OpenBSD: tree.c,v 1.57 2021/08/10 12:36:42 schwarze Exp $ */
+/* $OpenBSD: tree.c,v 1.58 2021/09/07 10:58:44 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013-2015, 2017-2021 Ingo Schwarze <schwarze@openbsd.org>
@@ -470,6 +470,8 @@ print_span(const struct tbl_span *sp, int indent)
 				printf("%d", cp->col);
 				print_cellt(dp->layout->pos);
 				switch (cp->font) {
+				case ESCAPE_FONTROMAN:
+					break;
 				case ESCAPE_FONTBOLD:
 					putchar('b');
 					break;
