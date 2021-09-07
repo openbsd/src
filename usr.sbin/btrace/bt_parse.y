@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parse.y,v 1.37 2021/08/31 12:51:24 mpi Exp $	*/
+/*	$OpenBSD: bt_parse.y,v 1.38 2021/09/07 19:18:08 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019-2021 Martin Pieuchot <mpi@openbsd.org>
@@ -971,8 +971,10 @@ btparse(const char *str, size_t len, const char *filename, int debug)
 	yylval.lineno = 1;
 
 	yyparse();
+	if (perrors)
+		return perrors;
 
 	assert(SLIST_EMPTY(&l_variables));
 
-	return perrors;
+	return 0;
 }
