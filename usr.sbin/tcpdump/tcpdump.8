@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.111 2020/08/17 06:29:29 dlg Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.112 2021/09/07 06:48:42 denis Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: August 17 2020 $
+.Dd $Mdocdate: September 7 2021 $
 .Dt TCPDUMP 8
 .Os
 .Sh NAME
@@ -336,14 +336,13 @@ Otherwise, only packets satisfying
 .Ar expression
 will be dumped.
 .Pp
-The
-.Ar expression
-consists of one or more primitives.
+The filter expression consists of one or more
+.Em primitives .
 Primitives usually consist of an
 .Ar id
 .Pq name or number
 preceded by one or more qualifiers.
-There are three different kinds of qualifiers:
+There are three different kinds of qualifier:
 .Bl -tag -width "proto"
 .It Ar type
 Specify which kind of address component the
@@ -369,6 +368,8 @@ Possible directions are
 .Cm dst ,
 .Cm src or dst ,
 .Cm src and dst ,
+.Cm ra ,
+.Cm ta ,
 .Cm addr1 ,
 .Cm addr2 ,
 .Cm addr3 ,
@@ -384,6 +385,8 @@ qualifier,
 .Cm src or dst
 is assumed.
 The
+.Cm ra ,
+.Cm ta ,
 .Cm addr1 ,
 .Cm addr2 ,
 .Cm addr3 ,
@@ -430,7 +433,8 @@ E.g.,
 .Dq ether src foo ,
 .Dq arp net 128.3 ,
 .Dq tcp port 21 ,
-.Dq wlan addr1 0:2:3:4:5:6 .
+and
+.Dq wlan addr2 0:2:3:4:5:6 .
 If there is no protocol qualifier,
 all protocols consistent with the type are assumed.
 E.g.,
@@ -466,10 +470,22 @@ FDDI
 .Pq Fiber Distributed Data Interface
 headers contain Ethernet-like source and destination addresses,
 and often contain Ethernet-like packet types,
-so you can filter on these FDDI fields just as with the analogous
+so it's possible to filter these FDDI fields just as with the analogous
 Ethernet fields.
 FDDI headers also contain other fields,
-but you cannot name them explicitly in a filter expression.
+but they cannot be named explicitly in a filter expression.
+.Pp
+Similarly,
+.Cm tr
+and
+.Cm wlan
+are aliases for
+.Cm ether ;
+the previous paragraph's statements about FDDI headers also apply to Token Ring
+and 802.11 wireless LAN headers.
+For 802.11 headers, the destination address is the DA field
+and the source address is the SA field;
+the BSSID, RA, and TA fields aren't tested.
 .El
 .Pp
 In addition to the above, there are some special primitive
@@ -502,23 +518,22 @@ tcp dst port ftp or tcp dst port ftp-data or tcp dst port domain
 Allowable primitives are:
 .Bl -tag -width "ether proto proto"
 .It Cm dst host Ar host
-True if the IP destination field of the packet is
+True if the IPv4/v6 destination field of the packet is
 .Ar host ,
 which may be either an address or a name.
 .It Cm src host Ar host
-True if the IP source field of the packet is
+True if the IPv4/v6 source field of the packet is
 .Ar host .
 .It Cm host Ar host
-True if either the IP source or destination of the packet is
+True if either the IPv4/v6 source or destination of the packet is
 .Ar host .
 .Pp
 Any of the above
 .Ar host
 expressions can be prepended with the keywords,
-.Cm ip ,
-.Cm arp ,
+.Cm ip , arp , rarp ,
 or
-.Cm rarp
+.Cm ip6 ,
 as in:
 .Pp
 .D1 Cm ip host Ar host
@@ -557,11 +572,12 @@ as a gateway; i.e., the Ethernet source or destination address was
 but neither the IP source nor the IP destination was
 .Ar host .
 .Ar host
-must be a name and must be found in both
-.Pa /etc/hosts
-and
-.Pa /etc/ethers .
-An equivalent expression is
+must be a name and must be found both by the machine's
+host-name-to-IP-address resolution mechanisms (host name file, DNS, NIS,
+etc.) and by the machine's host-name-to-Ethernet-address resolution mechanism
+(such as
+.Pa /etc/ethers ) .
+An equivalent expression is:
 .Bd -ragged -offset indent
 .Cm ether host
 .Ar ehost
@@ -569,42 +585,74 @@ An equivalent expression is
 .Ar host
 .Ed
 .Pp
-which can be used with either names or numbers for
-.Ar host Ns / Ns Ar ehost .
+which can be used with either names or numbers for host/ehost.
+This syntax does not work in an IPv6-enabled configuration at this moment.
 .It Cm dst net Ar net
-True if the IP destination address of the packet has a network number of
-.Ar net .
-.Ar net
-may be either a name from
-.Pa /etc/hosts
-or a network number (see
-.Xr hosts 5
-for details).
+True if the IPv4/v6 destination address of the packet has a network
+number of
+.Ar net ,
+which may be either a name from the networks database
+(such as
+.Pa /etc/networks )
+or a network number.
+An IPv4 network number can be written as a dotted quad (e.g. 192.168.1.0),
+dotted triple (e.g. 192.168.1), dotted pair (e.g 172.16),
+or single number (e.g. 10);
+the netmask is 255.255.255.255 for a dotted quad
+(which means that it's really a host match),
+255.255.255.0 for a dotted triple, 255.255.0.0 for a dotted pair,
+or 255.0.0.0 for a single number.
+An IPv6 network number must be written out fully;
+the netmask is ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff,
+so IPv6 "network" matches are really always host matches,
+and a network match requires a netmask length.
 .It Cm src net Ar net
-True if the IP source address of the packet has a network number of
+True if the IPv4/v6 source address of the packet has a network number of
 .Ar net .
 .It Cm net Ar net
-True if either the IP source or destination address of the packet
+True if either the IPv4/v6 source or destination address of the packet
 has a network number of
 .Ar net .
+.It Cm net Ar net Cm mask Ar netmask
+True if the IPv4 address matches
+.Ar net
+with the specific
+.Ar netmask .
+May be qualified with
+.Cm src
+or
+.Cm dst .
+Note that this syntax is not valid for IPv6 networks.
+.It Cm net Ar net Ns / Ns Ar len
+True if the IPv4/v6 address matches
+.Ar net
+with a netmask
+.Ar len
+bits wide.
+May be qualified with
+.Cm src
+or
+.Cm dst .
 .It Cm dst port Ar port
-True if the packet is IP/TCP or IP/UDP and has a destination port value of
+True if the packet is IP/TCP, IP/UDP, IP6/TCP or IP6/UDP
+and has a destination port value of
 .Ar port .
 The
 .Ar port
-can be a number or name from
-.Xr services 5
+can be a number or a name used in
+.Pa /etc/services
 (see
 .Xr tcp 4
 and
 .Xr udp 4 ) .
 If a name is used, both the port number and protocol are checked.
-If a number or ambiguous name is used, only the port number is checked;
-e.g.,
-.Dq Cm dst port No 513
-will print both TCP/login traffic and UDP/who traffic, and
-.Dq Cm dst port No domain
-will print both TCP/domain and UDP/domain traffic.
+If a number or ambiguous name is used,
+only the port number is checked (e.g.\&
+.Dq dst port 513
+will print both
+TCP/login traffic and UDP/who traffic, and
+.Dq port domain
+will print both TCP/domain and UDP/domain traffic).
 .It Cm src port Ar port
 True if the packet has a source port value of
 .Ar port .
@@ -634,47 +682,72 @@ True if the packet has a length greater than or equal to
 This is equivalent to:
 .Pp
 .D1 Cm len >= Ar length
-.It Cm ip proto Ar proto
-True if the packet is an IP packet (see
+.It Cm sample Ar samplerate
+True if the packet has been randomly selected or sampled at a rate of 1 per
+.Ar samplerate .
+.It Cm ip proto Ar protocol
+True if the packet is an IPv4 packet (see
 .Xr ip 4 )
 of protocol type
-.Ar proto .
-.Ar proto
-can be a number or name from
+.Ar protocol .
+.Ar protocol
+can be a number, or one of the names from
 .Xr protocols 5 ,
 such as
 .Cm icmp ,
+.Cm icmp6 ,
+.Cm igmp ,
+.Cm igrp ,
+.Cm pim ,
+.Cm ah ,
+.Cm esp ,
+.Cm vrrp ,
 .Cm udp ,
 or
 .Cm tcp .
-These identifiers are also keywords and must be escaped
-using a backslash character
-.Pq Sq \e .
+Note that the identifiers
+.Cm tcp ,
+.Cm udp ,
+and
+.Cm icmp
+are also keywords and must be escaped using a backslash character
+.Pq \e .
+Note that this primitive does not chase the protocol header chain.
+.It Cm ip6 proto Ar protocol
+True if the packet is an IPv6 packet of protocol type
+.Ar protocol .
+Note that this primitive does not chase the protocol header chain.
 .It Cm ether broadcast
 True if the packet is an Ethernet broadcast packet.
 The
 .Cm ether
 keyword is optional.
 .It Cm ip broadcast
-True if the packet is an IP broadcast packet.
-It checks for both the all-zeroes and all-ones broadcast conventions
-and looks up the local subnet mask.
+True if the packet is an IPv4 broadcast packet.
+It checks for both the all-zeroes and all-ones broadcast conventions,
+and looks up the subnet mask on the interface on which the capture is
+being done.
+.Pp
+If the subnet mask of the interface on which the capture is being done
+is not known, a value of PCAP_NETMASK_UNKNOWN can be supplied;
+tests for IPv4 broadcast addresses will fail to compile,
+but all other tests in the filter program will be OK.
 .It Cm ether multicast
 True if the packet is an Ethernet multicast packet.
 The
 .Cm ether
 keyword is optional.
 This is shorthand for
-.Do
-.Cm ether Ns [0] & 1 != 0
-.Dc .
+.Dq ether[0] & 1 != 0 .
 .It Cm ip multicast
-True if the packet is an IP multicast packet.
-.It Cm ether proto Ar proto
+True if the packet is an IPv4 multicast packet.
+.It Cm ip6 multicast
+True if the packet is an IPv6 multicast packet.
+.It Cm ether proto Ar protocol
 True if the packet is of ether type
-.Ar proto .
-.Ar proto
-can be a number or one of the names
+.Ar protocol .
+.Ar protocol
+can be a number, or one of the names
 .Cm ip ,
 .Cm ip6 ,
 .Cm arp ,
@@ -699,14 +772,44 @@ or
 These identifiers are also keywords and must be escaped
 using a backslash character
 .Pq Sq \e .
+.Pp
 In the case of FDDI (e.g.,
-.Dq Cm fddi protocol arp ) ,
+.Dq fddi protocol arp ) ,
+and IEEE 802.11 wireless LANS (such as
+.Dq wlan protocol arp ) ,
+for most of those protocols
 the protocol identification comes from the 802.2 Logical Link Control
 .Pq LLC
-header, which is usually layered on top of the FDDI header.
-.Nm
-assumes, when filtering on the protocol identifier, that all FDDI packets
-include an LLC header, and that the LLC header is in so-called SNAP format.
+header, which is usually layered on top of the FDDI or 802.11 header.
+.Pp
+When filtering for most protocol identifiers on FDDI or 802.11,
+the filter checks only the protocol ID field of an LLC header
+in so-called SNAP format with an Organizational Unit Identifier (OUI) of
+0x000000, for encapsulated Ethernet; it doesn't check whether the packet
+is in SNAP format with an OUI of 0x000000.
+The exceptions are:
+.Bl -tag -width "atalk"
+.It iso
+The filter checks the DSAP (Destination Service Access Point) and
+SSAP (Source Service Access Point) fields of the LLC header.
+.It stp
+The filter checks the DSAP of the LLC header.
+.It atalk
+The filter checks for a SNAP-format packet with an OUI of 0x080007
+and the AppleTalk etype.
+.El
+.Pp
+In the case of Ethernet, the filter checks the Ethernet type field
+for most of those protocols.
+The exceptions are:
+.Bl -tag -width "iso and stp"
+.It iso and stp
+The filter checks for an 802.3 frame and then checks the LLC header as
+it does for FDDI and 802.11.
+.It atalk
+The filter checks both for the AppleTalk etype in an Ethernet frame and
+for a SNAP-format packet as it does for FDDI, Token Ring, and 802.11.
+.El
 .It Cm decnet src Ar host
 True if the DECNET source address is
 .Ar host ,
@@ -727,7 +830,7 @@ True if the packet was logged as coming from the specified interface
 .Xr pf 4 ) .
 .It Cm on Ar interface
 Synonymous with the
-.Ar ifname
+.Cm ifname
 modifier.
 .It Cm rnr Ar num
 True if the packet was logged as matching the specified PF rule number
@@ -735,27 +838,27 @@ in the main ruleset (applies only to packets logged by
 .Xr pf 4 ) .
 .It Cm rulenum Ar num
 Synonymous with the
-.Ar rnr
+.Cm rnr
 modifier.
 .It Cm reason Ar code
 True if the packet was logged with the specified PF reason code.
-The known codes are:
-.Ar match ,
-.Ar bad-offset ,
-.Ar fragment ,
-.Ar short ,
-.Ar normalize ,
-.Ar memory ,
-.Ar bad-timestamp ,
-.Ar congestion ,
-.Ar ip-option ,
-.Ar proto-cksum ,
-.Ar state-mismatch ,
-.Ar state-insert ,
-.Ar state-limit ,
-.Ar src-limit ,
+Known codes are:
+.Cm match ,
+.Cm bad-offset ,
+.Cm fragment ,
+.Cm short ,
+.Cm normalize ,
+.Cm memory ,
+.Cm bad-timestamp ,
+.Cm congestion ,
+.Cm ip-option ,
+.Cm proto-cksum ,
+.Cm state-mismatch ,
+.Cm state-insert ,
+.Cm state-limit ,
+.Cm src-limit ,
 and
-.Ar synproxy
+.Cm synproxy
 (applies only to packets logged by
 .Xr pf 4 ) .
 .It Cm rset Ar name
@@ -764,7 +867,7 @@ name of an anchored ruleset (applies only to packets logged by
 .Xr pf 4 ) .
 .It Cm ruleset Ar name
 Synonymous with the
-.Ar rset
+.Cm rset
 modifier.
 .It Cm srnr Ar num
 True if the packet was logged as matching the specified PF rule number
@@ -772,17 +875,54 @@ of an anchored ruleset (applies only to packets logged by
 .Xr pf 4 ) .
 .It Cm subrulenum Ar num
 Synonymous with the
-.Ar srnr
+.Cm srnr
 modifier.
 .It Cm action Ar act
 True if PF took the specified action when the packet was logged.
-Valid actions are:
-.Ar pass ,
-.Ar block ,
+Known actions are:
+.Cm pass
 and
-.Ar match
+.Cm block ,
+.Cm nat ,
+.Cm rdr ,
+.Cm binat ,
+.Cm match
+and
+.Cm scrub
 (applies only to packets logged by
 .Xr pf 4 ) .
+.It Cm ip , ip6 , arp , rarp , atalk , decnet , iso , stp
+Abbreviations for
+.Cm ether proto Ar p ,
+where
+.Ar p
+is one of the above protocols.
+.It Cm lat , moprc , mopdl
+Abbreviations for
+.Cm ether proto Ar p ,
+where
+.Ar p
+is one of the above protocols.
+.Cm tcpdump
+does not currently know how to parse these.
+.It Xo
+.Cm ah ,
+.Cm esp ,
+.Cm icmp ,
+.Cm icmp6 ,
+.Cm igmp ,
+.Cm igrp ,
+.Cm pim ,
+.Cm tcp ,
+.Cm udp
+.Xc
+Abbreviations for
+.Cm ip proto Ar p
+or
+.Cm ip6 proto Ar p ,
+where
+.Ar p
+is one of the above protocols.
 .It Cm wlan addr1 Ar ehost
 True if the first IEEE 802.11 address is
 .Ar ehost .
@@ -801,120 +941,204 @@ WDS (Wireless Distribution System) frames.
 True if either the first, second, third, or fourth
 IEEE 802.11 address is
 .Ar ehost .
-.It Cm type Ar type
+.It Cm type Ar wlan_type
 True if the IEEE 802.11 frame type matches the specified
-.Ar type .
+.Ar wlan_type .
 Valid types are:
-.Ar data ,
-.Ar mgt ,
-.Ar ctl ,
+.Cm mgt ,
+.Cm ctl ,
+.Cm data ,
 or a numeric value.
-.It Cm subtype Ar subtype
+.It Cm type Ar wlan_type Cm subtype Ar wlan_subtype
+True if the IEEE 802.11 frame type matches the specified
+.Ar wlan_type
+and frame subtype matches the specified
+.Ar wlan_subtype .
+.Pp
+If the specified
+.Ar wlan_type
+is
+.Cm mgtv ,
+then valid values for
+.Ar wlan_subtype
+are
+.Cm assoc-req ,
+.Cm assoc-resp ,
+.Cm reassoc-req ,
+.Cm reassoc-resp ,
+.Cm probe-req ,
+.Cm probe-resp ,
+.Cm beacon ,
+.Cm atim ,
+.Cm disassoc ,
+.Cm auth ,
+and
+.Cm deauth .
+.Pp
+If the specified
+.Ar wlan_type
+is
+.Cm ctl ,
+then valid values for
+.Ar wlan_subtype
+are
+.Cm ps-poll ,
+.Cm rts ,
+.Cm cts ,
+.Cm ack ,
+.Cm cf-end ,
+and
+.Cm cf-end-ack .
+.Pp
+If the specified
+.Ar wlan_type
+is
+.Cm data ,
+then valid values for
+.Ar wlan_subtype
+are
+.Cm data ,
+.Cm data-cf-ack ,
+.Cm data-cf-poll ,
+.Cm data-cf-ack-poll ,
+.Cm null ,
+.Cm cf-ack ,
+.Cm cf-poll ,
+.Cm cf-ack-poll ,
+.Cm qos-data ,
+.Cm qos-data-cf-ack ,
+.Cm qos-data-cf-poll ,
+.Cm qos-data-cf-ack-poll ,
+.Cm qos ,
+.Cm qos-cf-poll ,
+and
+.Cm qos-cf-ack-poll .
+.It Cm subtype Ar wlan_subtype
 True if the IEEE 802.11 frame subtype matches the specified
-.Ar subtype .
-Valid subtypes are:
-.Ar assocreq ,
-.Ar assocresp ,
-.Ar reassocreq ,
-.Ar reassocresp ,
-.Ar probereq ,
-.Ar proberesp ,
-.Ar beacon ,
-.Ar atim ,
-.Ar disassoc ,
-.Ar auth ,
-.Ar deauth ,
-.Ar data ,
-or a numeric value.
+.Ar wlan_subtype
+and frame has the type to which the specified
+.Ar wlan_subtype
+belongs.
 .It Cm dir Ar dir
 True if the IEEE 802.11 frame direction matches the specified
-.Ar dir .
+.Cm dir .
 Valid directions are:
-.Ar nods ,
-.Ar tods ,
-.Ar fromds ,
-.Ar dstods ,
+.Cm nods ,
+.Cm tods ,
+.Cm fromds ,
+.Cm dstods ,
 or a numeric value.
-.It Xo
-.Cm atalk ,
-.Cm ip ,
-.Cm ip6 ,
-.Cm arp ,
-.Cm decnet ,
-.Cm lat ,
-.Cm moprc ,
-.Cm mopdl ,
-.Cm rarp ,
-.Cm sca
-.Xc
-Abbreviations for:
-.Cm ether proto Ar p
-where
-.Ar p
-is one of the above protocols.
-.Nm
-does not currently know how to parse
-.Cm lat ,
-.Cm moprc ,
-or
-.Cm mopdl .
-.It Xo
-.Cm ah ,
-.Cm esp ,
-.Cm icmp ,
-.Cm icmp6 ,
-.Cm igmp ,
-.Cm igrp ,
-.Cm pim ,
-.Cm tcp ,
-.Cm udp
-.Xc
-Abbreviations for:
-.Cm ip proto Ar p
-where
-.Ar p
-is one of the above protocols.
+.It Cm vlan Op Ar vlan_id
+True if the packet is an IEEE 802.1Q VLAN packet.
+If
+.Ar vlan_id
+is specified, only true if the packet has the specified ID.
+Note that the first
+.Cm vlan
+keyword encountered in
+.Ar expression
+changes the decoding offsets for the remainder of
+.Ar expression
+on the assumption that the packet is a VLAN packet.
+This expression may be used more than once, to filter on VLAN hierarchies.
+Each use of that expression increments the filter offsets by 4.
+.Pp
+For example,
+to filter on VLAN 200 encapsulated within VLAN 100:
+.Pp
+.Dl vlan 100 && vlan 200
+.Pp
+To filter IPv4 protocols encapsulated in VLAN 300 encapsulated within any
+higher order VLAN:
+.Pp
+.Dl vlan && vlan 300 && ip
+.It Cm mpls Op Ar label
+True if the packet is an MPLS (Multi-Protocol Label Switching) packet.
+If
+.Ar label
+is specified, only true if the packet has the specified label.
+Note that the first
+.Cm mpls
+keyword encountered in
+.Ar expression
+changes the decoding offsets for the remainder of
+.Ar expression
+on the assumption that the packet is an MPLS packet.
+This expression may be used more than once, to filter on MPLS labels.
+Each use of that expression increments the filter offsets by 4.
+.Pp
+For example,
+to filter on MPLS label 42 first and requires the next label to be 12:
+.Pp
+.Dl mpls 42 && mpls 12
+.Pp
+To filter on network 192.0.2.0/24 transported inside packets with label 42:
+.Pp
+.Dl mpls 42 && net 192.0.2.0/24
 .It Ar expr relop expr
 True if the relation holds, where
 .Ar relop
 is one of
-.Ql > ,
-.Ql < ,
-.Ql >= ,
-.Ql <= ,
-.Ql = ,
-.Ql != ,
+.Sq > ,
+.Sq < ,
+.Sq >= ,
+.Sq <= ,
+.Sq = ,
+.Sq != ,
 and
 .Ar expr
 is an arithmetic expression composed of integer constants
-.Pq expressed in standard C syntax ,
-the normal binary operators
-.Ql ( + ,
-.Ql - ,
-.Ql * ,
-.Ql / ,
-.Ql & ,
-.Ql | ) ,
-a length operator, and special packet data accessors.
+(expressed in standard C syntax), the normal binary operators
+.Pf ( Sq + ,
+.Sq - ,
+.Sq * ,
+.Sq / ,
+.Sq & ,
+.Sq | ,
+.Sq << ,
+.Sq >> ) ,
+a length operator, a random operator, and special packet data accessors.
+Note that all comparisons are unsigned, so that, for example,
+0x80000000 and 0xffffffff are > 0.
 To access data inside the packet, use the following syntax:
-.Sm off
-.Bd -ragged -offset indent
-.Ar proto Op Ar expr : Ar size
-.Ed
-.Sm on
+.Pp
+.D1 Ar proto Ns Op Ar expr : Ns Ar size
 .Pp
 .Ar proto
 is one of
 .Cm ether ,
 .Cm fddi ,
+.Cm tr ,
+.Cm wlan ,
+.Cm ppp ,
+.Cm slip ,
+.Cm link ,
 .Cm ip ,
 .Cm arp ,
 .Cm rarp ,
 .Cm tcp ,
 .Cm udp ,
-or
 .Cm icmp ,
-and indicates the protocol layer for the index operation.
+.Cm ip6 ,
+or
+.Cm radio ,
+and indicates the protocol layer for the index operation
+.Pf ( Cm ether ,
+.Cm fddi ,
+.Cm wlan ,
+.Cm tr ,
+.Cm ppp ,
+.Cm slip ,
+and
+.Cm link
+all refer to the link layer;
+.Cm radio
+refers to the "radio header" added to some 802.11 captures).
+Note that
+.Cm tcp ,
+.Cm udp ,
+and other upper-layer protocol types only apply to IPv4, not IPv6
+(this will be fixed in the future).
 The byte offset, relative to the indicated protocol layer, is given by
 .Ar expr .
 .Ar size
@@ -923,29 +1147,69 @@ it can be either one, two, or four, and defaults to one.
 The length operator, indicated by the keyword
 .Cm len ,
 gives the length of the packet.
+The random operator, indicated by the keyword
+.Cm random ,
+generates a random number.
 .Pp
 For example,
-.Dq Cm ether Ns [0] & 1 != 0
+.Dq ether[0] & 1 != 0
 catches all multicast traffic.
 The expression
-.Dq Cm ip Ns [0] & 0xf != 5
-catches all IP packets with options.
+.Dq ip[0] & 0xf != 5
+catches all IPv4 packets with options.
 The expression
-.Dq Cm ip Ns [6:2] & 0x1fff = 0
-catches only unfragmented datagrams and frag zero of fragmented datagrams.
+.Dq ip[6:2] & 0x1fff = 0
+catches only unfragmented IPv4 datagrams and frag zero of fragmented
+IPv4 datagrams.
 This check is implicitly applied to the
 .Cm tcp
 and
 .Cm udp
 index operations.
 For instance,
-.Dq Cm tcp Ns [0]
+.Dq tcp[0]
 always means the first byte of the TCP header,
 and never means the first byte of an intervening fragment.
+.Pp
+Some offsets and field values may be expressed as names rather than
+as numeric values.
+The following protocol header field offsets are available:
+.Cm icmptype
+(ICMP type field),
+.Cm icmpcode
+(ICMP code field), and
+.Cm tcpflags
+(TCP flags field).
+.Pp
+The following ICMP type field values are available:
+.Cm icmp-echoreply ,
+.Cm icmp-unreach ,
+.Cm icmp-sourcequench ,
+.Cm icmp-redirect ,
+.Cm icmp-echo ,
+.Cm icmp-routeradvert ,
+.Cm icmp-routersolicit ,
+.Cm icmp-timxceed ,
+.Cm icmp-paramprob ,
+.Cm icmp-tstamp ,
+.Cm icmp-tstampreply ,
+.Cm icmp-ireq ,
+.Cm icmp-ireqreply ,
+.Cm icmp-maskreq ,
+.Cm and
+.Cm icmp-maskreply .
+.Pp
+The following TCP flags field values are available:
+.Cm tcp-fin ,
+.Cm tcp-syn ,
+.Cm tcp-rst ,
+.Cm tcp-push ,
+.Cm tcp-ack ,
+.Cm tcp-urg .
 .El
 .Pp
-Primitives may be combined using a parenthesized group of primitives and
-operators.
+Primitives may be combined using
+a parenthesized group of primitives and operators.
 Parentheses are special to the shell and must be escaped.
 Allowable primitives and operators are:
 .Bd -ragged -offset indent
@@ -972,13 +1236,16 @@ or
 .Ed
 .Pp
 Negation has highest precedence.
-Alternation and concatenation have equal precedence and associate left to right.
+Alternation and concatenation have equal precedence and associate
+left to right.
 Explicit
 .Cm and
 tokens, not juxtaposition,
 are now required for concatenation.
 .Pp
-If an identifier is given without a keyword, the most recent keyword is assumed.
+If an identifier is given without a keyword, the most recent keyword
+is assumed.
+For example,
 For example,
 .Bd -ragged -offset indent
 .Cm not host
@@ -1000,14 +1267,6 @@ which should not be confused with
 .Cm not
 .Pq Cm host No vs Cm or No ace
 .Ed
-.Pp
-Expression arguments can be passed to
-.Nm
-as either a single argument or as multiple arguments,
-whichever is more convenient.
-Generally, if the expression contains shell metacharacters,
-it is easier to pass it as a single, quoted argument.
-Multiple arguments are concatenated with spaces before being parsed.
 .Sh EXAMPLES
 To print all packets arriving at or departing from sundown:
 .Pp
