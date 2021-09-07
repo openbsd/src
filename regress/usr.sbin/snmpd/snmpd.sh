@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: snmpd.sh,v 1.14 2021/06/20 20:06:43 martijn Exp $
+# $OpenBSD: snmpd.sh,v 1.15 2021/09/07 10:09:28 martijn Exp $
 #/*
 # * Copyright (c) Rob Pierce <rob@openbsd.org>
 # *
@@ -68,9 +68,6 @@ listen on 127.0.0.1 snmpv1 snmpv2c snmpv3
 listen on 127.0.0.1 snmpv2c notify
 listen on ::1 snmpv1 snmpv2c snmpv3
 listen on ::1 snmpv2c notify
-
-# Specify a number of trap receivers
-trap receiver localhost
 
 # Specify communities
 read-only community public
