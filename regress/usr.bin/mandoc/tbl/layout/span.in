@@ -1,5 +1,5 @@
-.\" $OpenBSD: span.in,v 1.5 2017/07/04 14:53:27 schwarze Exp $
-.TH TBL-LAYOUT-SPAN 1 "June 17, 2017"
+.\" $OpenBSD: span.in,v 1.6 2021/09/07 14:50:56 schwarze Exp $
+.TH TBL-LAYOUT-SPAN 1 "September 7, 2021"
 .SH NAME
 tbl-layout-span \- alignment of spanned cells
 .SH DESCRIPTION
@@ -48,6 +48,15 @@ R R R R R.
 a:b:c:d:e
 s1:s2
 a:b:c:d:e
+.TE
+.sp
+.TS
+allbox tab(:);
+L S
+L N.
+x***nnnnn
+a:0.01
+b:10.0
 .TE
 .sp
 leaked tab settings:

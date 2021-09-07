@@ -1,7 +1,8 @@
-/*	$OpenBSD: out.c,v 1.52 2021/08/10 12:36:42 schwarze Exp $ */
+/*	$OpenBSD: out.c,v 1.53 2021/09/07 14:50:56 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2011,2014,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011, 2014, 2015, 2017, 2018, 2019, 2021
+ *               Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -352,8 +353,6 @@ tblcalc(struct rofftbl *tbl, const struct tbl_span *sp_first,
 		col = tbl->cols + icol;
 		if (col->width > col->nwidth)
 			col->decimal += (col->width - col->nwidth) / 2;
-		else
-			col->width = col->nwidth;
 		if (col->flags & TBL_CELL_EQUAL) {
 			necol++;
 			if (ewidth < col->width)
@@ -561,5 +560,7 @@ tblcalc_number(struct rofftbl *tbl, struct roffcol *col,
 
 	if (totsz > col->nwidth)
 		col->nwidth = totsz;
+	if (col->nwidth > col->width)
+		col->width = col->nwidth;
 	return totsz;
 }
