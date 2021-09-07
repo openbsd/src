@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.319 2021/06/23 16:10:45 cheloha Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.320 2021/09/07 09:56:00 mvs Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -934,8 +934,17 @@ rtm_output(struct rt_msghdr *rtm, struct rtentry **prt,
 		 * cached route because this can lead to races in the
 		 * receive path.  Instead we update the L2 cache.
 		 */
-		if ((rt != NULL) && ISSET(rt->rt_flags, RTF_CACHED))
+		if ((rt != NULL) && ISSET(rt->rt_flags, RTF_CACHED)) {
+			ifp = if_get(rt->rt_ifidx);
+			if (ifp == NULL) {
+				rtfree(rt);
+				rt = NULL;
+				error = ESRCH;
+				break;
+			}
+
 			goto change;
+		}
 
 		rtfree(rt);
 		rt = NULL;
@@ -970,9 +979,13 @@ rtm_output(struct rt_msghdr *rtm, struct rtentry **prt,
 			break;
 		}
 
-		/* Detaching an interface requires the KERNEL_LOCK(). */
 		ifp = if_get(rt->rt_ifidx);
-		KASSERT(ifp != NULL);
+		if (ifp == NULL) {
+			rtfree(rt);
+			rt = NULL;
+			error = ESRCH;
+			break;
+		}
 
 		/*
 		 * Invalidate the cache of automagically created and
@@ -986,7 +999,6 @@ rtm_output(struct rt_msghdr *rtm, struct rtentry **prt,
 			rtable_walk(tableid, rt_key(rt)->sa_family, NULL,
 			    route_cleargateway, rt);
 			NET_UNLOCK();
-			if_put(ifp);
 			break;
 		}
 
@@ -995,7 +1007,6 @@ rtm_output(struct rt_msghdr *rtm, struct rtentry **prt,
 		 * kernel.
 		 */
 		if (ISSET(rt->rt_flags, RTF_LOCAL|RTF_BROADCAST)) {
-			if_put(ifp);
 			error = EINVAL;
 			break;
 		}
@@ -1006,7 +1017,6 @@ rtm_output(struct rt_msghdr *rtm, struct rtentry **prt,
 		NET_LOCK();
 		error = rtrequest_delete(info, prio, ifp, &rt, tableid);
 		NET_UNLOCK();
-		if_put(ifp);
 		break;
 	case RTM_CHANGE:
 		rt = rtable_lookup(tableid, info->rti_info[RTAX_DST],
@@ -1021,6 +1031,15 @@ rtm_output(struct rt_msghdr *rtm, struct rtentry **prt,
 			rtfree(rt);
 			rt = NULL;
 		}
+
+		ifp = if_get(rt->rt_ifidx);
+		if (ifp == NULL) {
+			rtfree(rt);
+			rt = NULL;
+			error = ESRCH;
+			break;
+		}
+
 		/*
 		 * If RTAX_GATEWAY is the argument we're trying to
 		 * change, try to find a compatible route.
@@ -1083,11 +1102,8 @@ rtm_output(struct rt_msghdr *rtm, struct rtentry **prt,
 			}
 			ifa = info->rti_ifa;
 			if (rt->rt_ifa != ifa) {
-				ifp = if_get(rt->rt_ifidx);
-				KASSERT(ifp != NULL);
 				ifp->if_rtrequest(ifp, RTM_DELETE, rt);
 				ifafree(rt->rt_ifa);
-				if_put(ifp);
 
 				ifa->ifa_refcnt++;
 				rt->rt_ifa = ifa;
@@ -1152,10 +1168,7 @@ change:
 		}
 		rtm_setmetrics(rtm->rtm_inits, &rtm->rtm_rmx, &rt->rt_rmx);
 
-		ifp = if_get(rt->rt_ifidx);
-		KASSERT(ifp != NULL);
 		ifp->if_rtrequest(ifp, RTM_ADD, rt);
-		if_put(ifp);
 
 		if (info->rti_info[RTAX_LABEL] != NULL) {
 			char *rtlabel = ((struct sockaddr_rtlabel *)
@@ -1178,6 +1191,7 @@ change:
 		break;
 	}
 
+	if_put(ifp);
 	*prt = rt;
 	return (error);
 }
