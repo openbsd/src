@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.134 2021/05/11 08:39:32 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.135 2021/09/08 11:40:30 stsp Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -154,6 +154,18 @@ ieee80211_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	return (error);
 }
 
+const char *
+ieee80211_action_name(struct ieee80211_frame *wh)
+{
+	const u_int8_t *frm = (const uint8_t *)&wh[1];
+	const char *categ_ba_name[3] = { "addba_req", "addba_resp", "delba" };
+
+	if (frm[0] == IEEE80211_CATEG_BA && frm[1] < nitems(categ_ba_name))
+		return categ_ba_name[frm[1]];
+
+	return "action";
+}
+
 /*
  * Send a management frame to the specified node.  The node pointer
  * must have a reference as the pointer will be passed to the driver
@@ -223,15 +235,21 @@ ieee80211_mgmt_output(struct ifnet *ifp, struct ieee80211_node *ni,
 		    ieee80211_debug > 1 ||
 #endif
 		    (type & IEEE80211_FC0_SUBTYPE_MASK) !=
-		    IEEE80211_FC0_SUBTYPE_PROBE_RESP)
+		    IEEE80211_FC0_SUBTYPE_PROBE_RESP) {
+			const char *subtype_name;
+			if ((type & IEEE80211_FC0_SUBTYPE_MASK) ==
+			    IEEE80211_FC0_SUBTYPE_ACTION)
+				subtype_name = ieee80211_action_name(wh);
+			else
+				subtype_name = ieee80211_mgt_subtype_name[
+				    (type & IEEE80211_FC0_SUBTYPE_MASK) >>
+				    IEEE80211_FC0_SUBTYPE_SHIFT];
 			printf("%s: sending %s to %s on channel %u mode %s\n",
-			    ifp->if_xname,
-			    ieee80211_mgt_subtype_name[
-			    (type & IEEE80211_FC0_SUBTYPE_MASK)
-			    >> IEEE80211_FC0_SUBTYPE_SHIFT],
+			    ifp->if_xname, subtype_name,
 			    ether_sprintf(ni->ni_macaddr),
 			    ieee80211_chan2ieee(ic, ni->ni_chan),
 			    ieee80211_phymode_name[ic->ic_curmode]);
+		}
 	}
 
 #ifndef IEEE80211_STA_ONLY
