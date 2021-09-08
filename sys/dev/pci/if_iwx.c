@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.105 2021/09/08 13:06:23 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.106 2021/09/08 13:06:53 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -914,8 +914,10 @@ iwx_ctxt_info_init(struct iwx_softc *sc, const struct iwx_fw_sects *fws)
 	IWX_WRITE(sc, IWX_CSR_CTXT_INFO_BA + 4, paddr >> 32);
 
 	/* kick FW self load */
-	if (!iwx_nic_lock(sc))
+	if (!iwx_nic_lock(sc)) {
+		iwx_ctxt_info_free_fw_img(sc);
 		return EBUSY;
+	}
 	iwx_write_prph(sc, IWX_UREG_CPU_INIT_RUN, 1);
 	iwx_nic_unlock(sc);
 
@@ -3364,8 +3366,10 @@ iwx_load_firmware(struct iwx_softc *sc)
 
 	/* wait for the firmware to load */
 	err = tsleep_nsec(&sc->sc_uc, 0, "iwxuc", SEC_TO_NSEC(1));
-	if (err || !sc->sc_uc.uc_ok)
+	if (err || !sc->sc_uc.uc_ok) {
 		printf("%s: could not load firmware, %d\n", DEVNAME(sc), err);
+		iwx_ctxt_info_free_paging(sc);
+	}
 
 	iwx_ctxt_info_free_fw_img(sc);
 
