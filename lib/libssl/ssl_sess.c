@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.104 2021/05/16 08:24:21 jsing Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.105 2021/09/08 17:27:33 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -911,6 +911,12 @@ SSL_SESSION_set1_id_context(SSL_SESSION *s, const unsigned char *sid_ctx,
 	memcpy(s->sid_ctx, sid_ctx, sid_ctx_len);
 
 	return 1;
+}
+
+int
+SSL_SESSION_is_resumable(const SSL_SESSION *s)
+{
+	return 0;
 }
 
 long

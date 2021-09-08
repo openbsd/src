@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.266 2021/09/08 17:24:23 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.267 2021/09/08 17:27:33 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1722,6 +1722,12 @@ SSL_get0_alpn_selected(const SSL *ssl, const unsigned char **data,
 {
 	*data = ssl->s3->internal->alpn_selected;
 	*len = ssl->s3->internal->alpn_selected_len;
+}
+
+void
+SSL_set_psk_use_session_callback(SSL *s, SSL_psk_use_session_cb_func cb)
+{
+	return;
 }
 
 int
