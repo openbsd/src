@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.214 2021/07/26 03:17:38 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.215 2021/09/08 12:56:14 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1809,6 +1809,12 @@ _SSL_set_tlsext_debug_arg(SSL *s, void *arg)
 }
 
 static int
+_SSL_get_tlsext_status_type(SSL *s)
+{
+	return s->tlsext_status_type;
+}
+
+static int
 _SSL_set_tlsext_status_type(SSL *s, int type)
 {
 	s->tlsext_status_type = type;
@@ -2033,6 +2039,9 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 
 	case SSL_CTRL_SET_TLSEXT_DEBUG_ARG:
 		return _SSL_set_tlsext_debug_arg(s, parg);
+
+	case SSL_CTRL_GET_TLSEXT_STATUS_REQ_TYPE:
+		return _SSL_get_tlsext_status_type(s);
 
 	case SSL_CTRL_SET_TLSEXT_STATUS_REQ_TYPE:
 		return _SSL_set_tlsext_status_type(s, larg);
