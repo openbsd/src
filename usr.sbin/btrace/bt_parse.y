@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parse.y,v 1.39 2021/09/07 19:29:12 mpi Exp $	*/
+/*	$OpenBSD: bt_parse.y,v 1.40 2021/09/08 13:29:51 dv Exp $	*/
 
 /*
  * Copyright (c) 2019-2021 Martin Pieuchot <mpi@openbsd.org>
@@ -123,12 +123,11 @@ static int pflag;
 %token	<v.number>	NUMBER
 
 %type	<v.string>	gvar lvar
-%type	<v.number>	staticv
 %type	<v.i>		beginend
 %type	<v.probe>	probe pname
 %type	<v.filter>	filter
 %type	<v.stmt>	action stmt stmtblck stmtlist block
-%type	<v.arg>		pat vargs mentry mpat pargs
+%type	<v.arg>		pat vargs mentry mpat pargs staticv
 %type	<v.arg>		expr term fterm variable factor
 %%
 
@@ -150,8 +149,8 @@ pname	: STRING ':' STRING ':' STRING	{ $$ = bp_new($1, $3, $5, 0); }
 	| STRING ':' HZ ':' NUMBER	{ $$ = bp_new($1, "hz", NULL, $5); }
 	;
 
-staticv	: NUMBER
-	| '$' NUMBER			{ $$ = get_varg($2); }
+staticv	: '$' NUMBER			{ $$ = get_varg($2); }
+	| '$' '#'			{ $$ = get_nargs(); }
 	;
 
 gvar	: '@' STRING			{ $$ = $2; }
@@ -212,8 +211,9 @@ variable: lvar			{ $$ = bl_find($1); }
 	;
 
 factor : '(' expr ')'		{ $$ = $2; }
-	| staticv		{ $$ = ba_new($1, B_AT_LONG); }
+	| NUMBER		{ $$ = ba_new($1, B_AT_LONG); }
 	| BUILTIN		{ $$ = ba_new(NULL, $1); }
+	| staticv
 	| variable
 	| mentry
 	;
@@ -263,14 +263,31 @@ action	: '{' stmtlist '}'		{ $$ = $2; }
 
 %%
 
-int
+struct bt_arg*
 get_varg(int index)
 {
-	extern int vargs[];
+	extern int nargs;
+	extern char **vargs;
+	const char *errstr = NULL;
+	long val;
 
-	assert(index == 1);
+	if (0 < index && index <= nargs) {
+		val = (long)strtonum(vargs[index-1], LONG_MIN, LONG_MAX,
+		    &errstr);
+		if (errstr == NULL)
+			return ba_new(val, B_AT_LONG);
+		return ba_new(vargs[index-1], B_AT_STR);
+	}
 
-	return vargs[index - 1];
+	return ba_new(0L, B_AT_NIL);
+}
+
+struct bt_arg*
+get_nargs(void)
+{
+	extern int nargs;
+
+	return ba_new((long) nargs, B_AT_LONG);
 }
 
 /* Create a new rule, representing  "probe / filter / { action }" */

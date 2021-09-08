@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.48 2021/09/07 19:29:12 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.49 2021/09/08 13:29:51 dv Exp $ */
 
 /*
  * Copyright (c) 2019 - 2021 Martin Pieuchot <mpi@openbsd.org>
@@ -115,7 +115,8 @@ size_t			 dt_ndtpi;	/* # of elements in the array */
 struct dt_evt		 bt_devt;	/* fake event for BEGIN/END */
 uint64_t		 bt_filtered;	/* # of events filtered out */
 
-int			 vargs[1];
+char			**vargs;
+int			 nargs = 0;
 int			 verbose = 0;
 volatile sig_atomic_t	 quit_pending;
 
@@ -131,7 +132,6 @@ main(int argc, char *argv[])
 {
 	int fd = -1, ch, error = 0;
 	const char *filename = NULL, *btscript = NULL;
-	const char *errstr;
 	int showprobes = 0, noaction = 0;
 
 	setlocale(LC_ALL, "");
@@ -163,25 +163,17 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (argc > 0) {
-		if (btscript != NULL)
-			usage();
-
+	if (argc > 0 && btscript == NULL) {
 		filename = argv[0];
 		btscript = read_btfile(filename);
 		argc--;
 		argv++;
 	}
 
-	if (argc == 1) {
-		vargs[0] = strtonum(*argv, 1, INT_MAX, &errstr);
-		if (errstr != NULL)
-			errx(1, "invalid argument %s: %s", *argv, errstr);
-		argc--;
-		argv++;
-	}
+	nargs = argc;
+	vargs = argv;
 
-	if (argc != 0 || (btscript == NULL && !showprobes))
+	if (btscript == NULL && !showprobes)
 		usage();
 
 	if (btscript != NULL) {
@@ -216,7 +208,7 @@ main(int argc, char *argv[])
 __dead void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-lnv] [-e program | file]\n",
+	fprintf(stderr, "usage: %s [-lnv] [-e program | file] [argument ...]\n",
 	    getprogname());
 	exit(1);
 }
@@ -1264,6 +1256,9 @@ ba2long(struct bt_arg *ba, struct dt_evt *dtev)
 		val = ba2long(map_get((struct map *)bv->bv_value,
 		    ba2str(ba->ba_key, dtev)), dtev);
 		break;
+	case B_AT_NIL:
+		val = 0L;
+		break;
 	case B_AT_BI_PID:
 		val = dtev->dtev_pid;
 		break;
@@ -1310,6 +1305,9 @@ ba2str(struct bt_arg *ba, struct dt_evt *dtev)
 	case B_AT_LONG:
 		snprintf(buf, sizeof(buf), "%ld",(long)ba->ba_value);
 		str = buf;
+		break;
+	case B_AT_NIL:
+		str = "";
 		break;
 	case B_AT_BI_KSTACK:
 		str = builtin_stack(dtev, 1);

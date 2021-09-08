@@ -7,8 +7,6 @@ Missing language features:
 - if/else
 - `args', tracepoint arguments support (requires kernel work)
 - str(args->buf, args->count)
-- 'argv'
-- $2, $3, $n (with n > 1) support
 
 Improvements:
 

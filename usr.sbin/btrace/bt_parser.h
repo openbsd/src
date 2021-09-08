@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parser.h,v 1.18 2021/08/31 08:39:26 mpi Exp $	*/
+/*	$OpenBSD: bt_parser.h,v 1.19 2021/09/08 13:29:51 dv Exp $	*/
 
 /*
  * Copyright (c) 2019-2021 Martin Pieuchot <mpi@openbsd.org>
@@ -125,6 +125,7 @@ struct bt_arg {
 		B_AT_VAR,			/* global/local variable */
 		B_AT_MAP,			/* global map (@map[]) */
 		B_AT_HIST,			/* histogram */
+		B_AT_NIL,			/* empty value */
 
 		B_AT_BI_PID,
 		B_AT_BI_TID,
