@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_smpl.c,v 1.32 2021/04/20 17:38:02 tb Exp $ */
+/* $OpenBSD: ecp_smpl.c,v 1.33 2021/09/08 17:29:21 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -80,6 +80,7 @@ EC_GFp_simple_method(void)
 		.group_set_curve = ec_GFp_simple_group_set_curve,
 		.group_get_curve = ec_GFp_simple_group_get_curve,
 		.group_get_degree = ec_GFp_simple_group_get_degree,
+		.group_order_bits = ec_group_simple_order_bits,
 		.group_check_discriminant =
 		    ec_GFp_simple_group_check_discriminant,
 		.point_init = ec_GFp_simple_point_init,

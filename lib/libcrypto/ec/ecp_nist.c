@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_nist.c,v 1.17 2021/04/20 17:38:02 tb Exp $ */
+/* $OpenBSD: ecp_nist.c,v 1.18 2021/09/08 17:29:21 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -80,6 +80,7 @@ EC_GFp_nist_method(void)
 		.group_set_curve = ec_GFp_nist_group_set_curve,
 		.group_get_curve = ec_GFp_simple_group_get_curve,
 		.group_get_degree = ec_GFp_simple_group_get_degree,
+		.group_order_bits = ec_group_simple_order_bits,
 		.group_check_discriminant =
 		    ec_GFp_simple_group_check_discriminant,
 		.point_init = ec_GFp_simple_point_init,

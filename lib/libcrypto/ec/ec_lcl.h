@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lcl.h,v 1.17 2021/04/20 17:32:57 tb Exp $ */
+/* $OpenBSD: ec_lcl.h,v 1.18 2021/09/08 17:29:21 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -111,7 +111,8 @@ struct ec_method_st {
 
 	/* used by EC_GROUP_get_degree: */
 	int (*group_get_degree)(const EC_GROUP *);
-
+	/* used by EC_GROUP_order_bits: */
+	int (*group_order_bits)(const EC_GROUP *);
 	/* used by EC_GROUP_check: */
 	int (*group_check_discriminant)(const EC_GROUP *, BN_CTX *);
 
@@ -282,7 +283,7 @@ void EC_EX_DATA_clear_free_data(EC_EXTRA_DATA **,
 void EC_EX_DATA_free_all_data(EC_EXTRA_DATA **);
 void EC_EX_DATA_clear_free_all_data(EC_EXTRA_DATA **);
 
-
+int ec_group_simple_order_bits(const EC_GROUP *group);
 
 struct ec_point_st {
 	const EC_METHOD *meth;
@@ -296,8 +297,6 @@ struct ec_point_st {
 	           * (X, Y, Z)  represents  (X/Z^2, Y/Z^3)  if  Z != 0 */
 	int Z_is_one; /* enable optimized point arithmetics for special case */
 } /* EC_POINT */;
-
-
 
 /* method functions in ec_mult.c
  * (ec_lib.c uses these as defaults if group->method->mul is 0) */

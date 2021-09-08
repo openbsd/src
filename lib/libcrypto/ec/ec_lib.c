@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.39 2021/04/20 17:29:21 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.40 2021/09/08 17:29:21 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -401,6 +401,11 @@ EC_GROUP_get_order(const EC_GROUP *group, BIGNUM *order, BN_CTX *ctx)
 	return !BN_is_zero(order);
 }
 
+int
+EC_GROUP_order_bits(const EC_GROUP *group)
+{
+	return group->meth->group_order_bits(group);
+}
 
 int 
 EC_GROUP_get_cofactor(const EC_GROUP *group, BIGNUM *cofactor, BN_CTX *ctx)
@@ -1259,6 +1264,17 @@ EC_GROUP_have_precompute_mult(const EC_GROUP * group)
 	else
 		return 0;	/* cannot tell whether precomputation has
 				 * been performed */
+}
+
+int
+ec_group_simple_order_bits(const EC_GROUP *group)
+{
+	/* XXX change group->order to a pointer? */
+#if 0
+	if (group->order == NULL)
+		return 0;
+#endif
+	return BN_num_bits(&group->order);
 }
 
 EC_KEY *

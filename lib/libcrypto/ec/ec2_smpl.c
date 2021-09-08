@@ -1,4 +1,4 @@
-/* $OpenBSD: ec2_smpl.c,v 1.22 2021/04/20 17:16:37 tb Exp $ */
+/* $OpenBSD: ec2_smpl.c,v 1.23 2021/09/08 17:29:21 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -88,17 +88,18 @@ EC_GF2m_simple_method(void)
 		.group_set_curve = ec_GF2m_simple_group_set_curve,
 		.group_get_curve = ec_GF2m_simple_group_get_curve,
 		.group_get_degree = ec_GF2m_simple_group_get_degree,
+		.group_order_bits = ec_group_simple_order_bits,
 		.group_check_discriminant =
-		ec_GF2m_simple_group_check_discriminant,
+		    ec_GF2m_simple_group_check_discriminant,
 		.point_init = ec_GF2m_simple_point_init,
 		.point_finish = ec_GF2m_simple_point_finish,
 		.point_clear_finish = ec_GF2m_simple_point_clear_finish,
 		.point_copy = ec_GF2m_simple_point_copy,
 		.point_set_to_infinity = ec_GF2m_simple_point_set_to_infinity,
 		.point_set_affine_coordinates =
-		ec_GF2m_simple_point_set_affine_coordinates,
+		    ec_GF2m_simple_point_set_affine_coordinates,
 		.point_get_affine_coordinates =
-		ec_GF2m_simple_point_get_affine_coordinates,
+		    ec_GF2m_simple_point_get_affine_coordinates,
 		.add = ec_GF2m_simple_add,
 		.dbl = ec_GF2m_simple_dbl,
 		.invert = ec_GF2m_simple_invert,
