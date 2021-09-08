@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.36 2021/07/13 18:39:39 job Exp $ */
+/*	$OpenBSD: mft.c,v 1.37 2021/09/08 16:37:20 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -194,12 +194,6 @@ mft_parse_filehash(struct parse *p, const ASN1_OCTET_STRING *os)
 	}
 
 	/* Insert the filename and hash value. */
-
-	p->res->files = recallocarray(p->res->files, p->res->filesz,
-	    p->res->filesz + 1, sizeof(struct mftfile));
-	if (p->res->files == NULL)
-		err(1, NULL);
-
 	fent = &p->res->files[p->res->filesz++];
 
 	fent->file = fn;
@@ -231,6 +225,10 @@ mft_parse_flist(struct parse *p, const ASN1_OCTET_STRING *os)
 		    "failed ASN.1 sequence parse", p->fn);
 		goto out;
 	}
+
+	p->res->files = calloc(sk_ASN1_TYPE_num(seq), sizeof(struct mftfile));
+	if (p->res->files == NULL)
+		err(1, NULL);
 
 	for (i = 0; i < sk_ASN1_TYPE_num(seq); i++) {
 		t = sk_ASN1_TYPE_value(seq, i);

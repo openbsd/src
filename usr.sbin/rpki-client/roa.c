@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.23 2021/08/01 22:29:49 job Exp $ */
+/*	$OpenBSD: roa.c,v 1.24 2021/09/08 16:37:20 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -109,10 +109,6 @@ roa_parse_addr(const ASN1_OCTET_STRING *os, enum afi afi, struct parse *p)
 		}
 	}
 
-	p->res->ips = recallocarray(p->res->ips, p->res->ipsz, p->res->ipsz + 1,
-	    sizeof(struct roa_ip));
-	if (p->res->ips == NULL)
-		err(1, NULL);
 	res = &p->res->ips[p->res->ipsz++];
 
 	res->addr = addr;
@@ -180,6 +176,12 @@ roa_parse_ipfam(const ASN1_OCTET_STRING *os, struct parse *p)
 		    "failed ASN.1 sequence parse", p->fn);
 		goto out;
 	}
+
+	/* will be called multiple times so use recallocarray */
+	p->res->ips = recallocarray(p->res->ips, p->res->ipsz,
+	    p->res->ipsz + sk_ASN1_TYPE_num(sseq), sizeof(struct roa_ip));
+	if (p->res->ips == NULL)
+		err(1, NULL);
 
 	for (i = 0; i < sk_ASN1_TYPE_num(sseq); i++) {
 		t = sk_ASN1_TYPE_value(sseq, i);
