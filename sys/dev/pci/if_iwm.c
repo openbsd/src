@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.366 2021/09/08 11:35:08 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.367 2021/09/08 13:06:23 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -4147,6 +4147,8 @@ iwm_load_firmware(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 {
 	int err;
 
+	splassert(IPL_NET);
+
 	sc->sc_uc.uc_intr = 0;
 	sc->sc_uc.uc_ok = 0;
 
@@ -4292,7 +4294,7 @@ int
 iwm_run_init_mvm_ucode(struct iwm_softc *sc, int justnvm)
 {
 	const int wait_flags = (IWM_INIT_COMPLETE | IWM_CALIB_COMPLETE);
-	int err;
+	int err, s;
 
 	if ((sc->sc_flags & IWM_FLAG_RFKILL) && !justnvm) {
 		printf("%s: radio is disabled by hardware switch\n",
@@ -4300,10 +4302,12 @@ iwm_run_init_mvm_ucode(struct iwm_softc *sc, int justnvm)
 		return EPERM;
 	}
 
+	s = splnet();
 	sc->sc_init_complete = 0;
 	err = iwm_load_ucode_wait_alive(sc, IWM_UCODE_TYPE_INIT);
 	if (err) {
 		printf("%s: failed to load init firmware\n", DEVNAME(sc));
+		splx(s);
 		return err;
 	}
 
@@ -4312,6 +4316,7 @@ iwm_run_init_mvm_ucode(struct iwm_softc *sc, int justnvm)
 		if (err) {
 			printf("%s: could not init bt coex (error %d)\n",
 			    DEVNAME(sc), err);
+			splx(s);
 			return err;
 		}
 	}
@@ -4320,6 +4325,7 @@ iwm_run_init_mvm_ucode(struct iwm_softc *sc, int justnvm)
 		err = iwm_nvm_init(sc);
 		if (err) {
 			printf("%s: failed to read nvm\n", DEVNAME(sc));
+			splx(s);
 			return err;
 		}
 
@@ -4327,25 +4333,32 @@ iwm_run_init_mvm_ucode(struct iwm_softc *sc, int justnvm)
 			IEEE80211_ADDR_COPY(sc->sc_ic.ic_myaddr,
 			    sc->sc_nvm.hw_addr);
 
+		splx(s);
 		return 0;
 	}
 
 	err = iwm_sf_config(sc, IWM_SF_INIT_OFF);
-	if (err)
+	if (err) {
+		splx(s);
 		return err;
+	}
 
 	/* Send TX valid antennas before triggering calibrations */
 	err = iwm_send_tx_ant_cfg(sc, iwm_fw_valid_tx_ant(sc));
-	if (err)
+	if (err) {
+		splx(s);
 		return err;
+	}
 
 	/*
 	 * Send phy configurations command to init uCode
 	 * to start the 16.0 uCode init image internal calibrations.
 	 */
 	err = iwm_send_phy_cfg_cmd(sc);
-	if (err)
+	if (err) {
+		splx(s);
 		return err;
+	}
 
 	/*
 	 * Nothing to do but wait for the init complete and phy DB
@@ -4358,6 +4371,7 @@ iwm_run_init_mvm_ucode(struct iwm_softc *sc, int justnvm)
 			break;
 	}
 
+	splx(s);
 	return err;
 }
 

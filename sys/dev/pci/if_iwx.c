@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.104 2021/09/08 11:35:08 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.105 2021/09/08 13:06:23 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3350,6 +3350,8 @@ iwx_load_firmware(struct iwx_softc *sc)
 	struct iwx_fw_sects *fws;
 	int err;
 
+	splassert(IPL_NET);
+
 	sc->sc_uc.uc_intr = 0;
 	sc->sc_uc.uc_ok = 0;
 
@@ -3465,7 +3467,7 @@ iwx_run_init_mvm_ucode(struct iwx_softc *sc, int readnvm)
 	struct iwx_init_extended_cfg_cmd init_cfg = {
 		.init_flags = htole32(IWX_INIT_NVM),
 	};
-	int err;
+	int err, s;
 
 	if ((sc->sc_flags & IWX_FLAG_RFKILL) && !readnvm) {
 		printf("%s: radio is disabled by hardware switch\n",
@@ -3473,10 +3475,12 @@ iwx_run_init_mvm_ucode(struct iwx_softc *sc, int readnvm)
 		return EPERM;
 	}
 
+	s = splnet();
 	sc->sc_init_complete = 0;
 	err = iwx_load_ucode_wait_alive(sc);
 	if (err) {
 		printf("%s: failed to load init firmware\n", DEVNAME(sc));
+		splx(s);
 		return err;
 	}
 
@@ -3486,22 +3490,28 @@ iwx_run_init_mvm_ucode(struct iwx_softc *sc, int readnvm)
 	 */
 	err = iwx_send_cmd_pdu(sc, IWX_WIDE_ID(IWX_SYSTEM_GROUP,
 	    IWX_INIT_EXTENDED_CFG_CMD), 0, sizeof(init_cfg), &init_cfg);
-	if (err)
+	if (err) {
+		splx(s);
 		return err;
+	}
 
 	err = iwx_send_cmd_pdu(sc, IWX_WIDE_ID(IWX_REGULATORY_AND_NVM_GROUP,
 	    IWX_NVM_ACCESS_COMPLETE), 0, sizeof(nvm_complete), &nvm_complete);
-	if (err)
+	if (err) {
+		splx(s);
 		return err;
+	}
 
 	/* Wait for the init complete notification from the firmware. */
 	while ((sc->sc_init_complete & wait_flags) != wait_flags) {
 		err = tsleep_nsec(&sc->sc_init_complete, 0, "iwxinit",
 		    SEC_TO_NSEC(2));
-		if (err)
+		if (err) {
+			splx(s);
 			return err;
+		}
 	}
-
+	splx(s);
 	if (readnvm) {
 		err = iwx_nvm_get(sc);
 		if (err) {
