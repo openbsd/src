@@ -414,7 +414,7 @@ X509v3_asid_add_id_or_range(ASIdentifiers *asid, int which, ASN1_INTEGER *min,
 		goto err;
 	return 1;
 
-err:
+ err:
 	ASIdOrRange_free(aor);
 	return 0;
 }
@@ -452,22 +452,22 @@ ASIdentifierChoice_is_canonical(ASIdentifierChoice *choice)
 	BIGNUM *bn = NULL;
 	int i, ret = 0;
 
-    /*
-     * Empty element or inheritance is canonical.
-     */
+	/*
+	 * Empty element or inheritance is canonical.
+	 */
 	if (choice == NULL || choice->type == ASIdentifierChoice_inherit)
 		return 1;
 
-    /*
-     * If not a list, or if empty list, it's broken.
-     */
+	/*
+	 * If not a list, or if empty list, it's broken.
+	 */
 	if (choice->type != ASIdentifierChoice_asIdsOrRanges ||
 	    sk_ASIdOrRange_num(choice->u.asIdsOrRanges) == 0)
 		return 0;
 
-    /*
-     * It's a list, check it.
-     */
+	/*
+	 * It's a list, check it.
+	 */
 	for (i = 0; i < sk_ASIdOrRange_num(choice->u.asIdsOrRanges) - 1; i++) {
 		ASIdOrRange *a = sk_ASIdOrRange_value(choice->u.asIdsOrRanges,
 		    i);
@@ -483,17 +483,17 @@ ASIdentifierChoice_is_canonical(ASIdentifierChoice *choice)
 		    !extract_min_max(b, &b_min, &b_max))
 			goto done;
 
-        /*
-         * Punt misordered list, overlapping start, or inverted range.
-         */
+		/*
+		 * Punt misordered list, overlapping start, or inverted range.
+		 */
 		if (ASN1_INTEGER_cmp(a_min, b_min) >= 0 ||
 		    ASN1_INTEGER_cmp(a_min, a_max) > 0 ||
 		    ASN1_INTEGER_cmp(b_min, b_max) > 0)
 			goto done;
 
-        /*
-         * Calculate a_max + 1 to check for adjacency.
-         */
+		/*
+		 * Calculate a_max + 1 to check for adjacency.
+		 */
 		if ((bn == NULL && (bn = BN_new()) == NULL) ||
 		    ASN1_INTEGER_to_BN(a_max, bn) == NULL ||
 		    !BN_add_word(bn, 1)) {
@@ -508,16 +508,16 @@ ASIdentifierChoice_is_canonical(ASIdentifierChoice *choice)
 			goto done;
 		}
 
-        /*
-         * Punt if adjacent or overlapping.
-         */
+		/*
+		 * Punt if adjacent or overlapping.
+		 */
 		if (ASN1_INTEGER_cmp(a_max_plus_one, b_min) >= 0)
 			goto done;
 	}
 
-    /*
-     * Check for inverted range.
-     */
+	/*
+	* Check for inverted range.
+	*/
 	i = sk_ASIdOrRange_num(choice->u.asIdsOrRanges) - 1;
 	{
 		ASIdOrRange *a = sk_ASIdOrRange_value(choice->u.asIdsOrRanges,
@@ -532,7 +532,7 @@ ASIdentifierChoice_is_canonical(ASIdentifierChoice *choice)
 
 	ret = 1;
 
-done:
+ done:
 	ASN1_INTEGER_free(a_max_plus_one);
 	BN_free(bn);
 	return ret;
@@ -560,30 +560,30 @@ ASIdentifierChoice_canonize(ASIdentifierChoice *choice)
 	BIGNUM *bn = NULL;
 	int i, ret = 0;
 
-    /*
-     * Nothing to do for empty element or inheritance.
-     */
+	/*
+	 * Nothing to do for empty element or inheritance.
+	 */
 	if (choice == NULL || choice->type == ASIdentifierChoice_inherit)
 		return 1;
 
-    /*
-     * If not a list, or if empty list, it's broken.
-     */
+	/*
+	 * If not a list, or if empty list, it's broken.
+	 */
 	if (choice->type != ASIdentifierChoice_asIdsOrRanges ||
 	    sk_ASIdOrRange_num(choice->u.asIdsOrRanges) == 0) {
 		X509V3error(X509V3_R_EXTENSION_VALUE_ERROR);
 		return 0;
 	}
 
-    /*
-     * We have a non-empty list.  Sort it.
-     */
+	/*
+	 * We have a non-empty list.  Sort it.
+	 */
 	sk_ASIdOrRange_sort(choice->u.asIdsOrRanges);
 
-    /*
-     * Now check for errors and suboptimal encoding, rejecting the
-     * former and fixing the latter.
-     */
+	/*
+	 * Now check for errors and suboptimal encoding, rejecting the
+	 * former and fixing the latter.
+	 */
 	for (i = 0; i < sk_ASIdOrRange_num(choice->u.asIdsOrRanges) - 1; i++) {
 		ASIdOrRange *a = sk_ASIdOrRange_value(choice->u.asIdsOrRanges,
 		    i);
@@ -599,29 +599,29 @@ ASIdentifierChoice_canonize(ASIdentifierChoice *choice)
 		    !extract_min_max(b, &b_min, &b_max))
 			goto done;
 
-        /*
-         * Make sure we're properly sorted (paranoia).
-         */
+		/*
+		 * Make sure we're properly sorted (paranoia).
+		 */
 		OPENSSL_assert(ASN1_INTEGER_cmp(a_min, b_min) <= 0);
 
-        /*
-         * Punt inverted ranges.
-         */
+		/*
+		 * Punt inverted ranges.
+		 */
 		if (ASN1_INTEGER_cmp(a_min, a_max) > 0 ||
 		    ASN1_INTEGER_cmp(b_min, b_max) > 0)
 			goto done;
 
-        /*
-         * Check for overlaps.
-         */
+		/*
+		 * Check for overlaps.
+		 */
 		if (ASN1_INTEGER_cmp(a_max, b_min) >= 0) {
 			X509V3error(X509V3_R_EXTENSION_VALUE_ERROR);
 			goto done;
 		}
 
-        /*
-         * Calculate a_max + 1 to check for adjacency.
-         */
+		/*
+		 * Calculate a_max + 1 to check for adjacency.
+		 */
 		if ((bn == NULL && (bn = BN_new()) == NULL) ||
 		    ASN1_INTEGER_to_BN(a_max, bn) == NULL ||
 		    !BN_add_word(bn, 1)) {
@@ -636,9 +636,9 @@ ASIdentifierChoice_canonize(ASIdentifierChoice *choice)
 			goto done;
 		}
 
-        /*
-         * If a and b are adjacent, merge them.
-         */
+		/*
+		 * If a and b are adjacent, merge them.
+		 */
 		if (ASN1_INTEGER_cmp(a_max_plus_one, b_min) == 0) {
 			ASRange *r;
 			switch (a->type) {
@@ -673,9 +673,9 @@ ASIdentifierChoice_canonize(ASIdentifierChoice *choice)
 		}
 	}
 
-    /*
-     * Check for final inverted range.
-     */
+	/*
+	 * Check for final inverted range.
+	 */
 	i = sk_ASIdOrRange_num(choice->u.asIdsOrRanges) - 1;
 	{
 		ASIdOrRange *a = sk_ASIdOrRange_value(choice->u.asIdsOrRanges,
@@ -688,12 +688,12 @@ ASIdentifierChoice_canonize(ASIdentifierChoice *choice)
 		}
 	}
 
-    /* Paranoia */
+	/* Paranoia */
 	OPENSSL_assert(ASIdentifierChoice_is_canonical(choice));
 
 	ret = 1;
 
-done:
+ done:
 	ASN1_INTEGER_free(a_max_plus_one);
 	BN_free(bn);
 	return ret;
@@ -730,9 +730,9 @@ v2i_ASIdentifiers(const struct v3_ext_method *method, struct v3_ext_ctx *ctx,
 		CONF_VALUE *val = sk_CONF_VALUE_value(values, i);
 		int i1 = 0, i2 = 0, i3 = 0, is_range = 0, which = 0;
 
-        /*
-         * Figure out whether this is an AS or an RDI.
-         */
+		/*
+		 * Figure out whether this is an AS or an RDI.
+		 */
 		if (!name_cmp(val->name, "AS")) {
 			which = V3_ASID_ASNUM;
 		} else if (!name_cmp(val->name, "RDI")) {
@@ -743,9 +743,9 @@ v2i_ASIdentifiers(const struct v3_ext_method *method, struct v3_ext_ctx *ctx,
 			goto err;
 		}
 
-        /*
-         * Handle inheritance.
-         */
+		/*
+		 * Handle inheritance.
+		 */
 		if (strcmp(val->value, "inherit") == 0) {
 			if (X509v3_asid_add_inherit(asid, which))
 				continue;
@@ -754,9 +754,9 @@ v2i_ASIdentifiers(const struct v3_ext_method *method, struct v3_ext_ctx *ctx,
 			goto err;
 		}
 
-        /*
-         * Number, range, or mistake, pick it apart and figure out which.
-         */
+		/*
+		 * Number, range, or mistake, pick it apart and figure out which
+		 */
 		i1 = strspn(val->value, "0123456789");
 		if (val->value[i1] == '\0') {
 			is_range = 0;
@@ -778,9 +778,9 @@ v2i_ASIdentifiers(const struct v3_ext_method *method, struct v3_ext_ctx *ctx,
 			}
 		}
 
-        /*
-         * Syntax is ok, read and add it.
-         */
+		/*
+		 * Syntax is ok, read and add it.
+		 */
 		if (!is_range) {
 			if (!X509V3_get_value_int(val, &min)) {
 				X509V3error(ERR_R_MALLOC_FAILURE);
@@ -812,14 +812,14 @@ v2i_ASIdentifiers(const struct v3_ext_method *method, struct v3_ext_ctx *ctx,
 		min = max = NULL;
 	}
 
-    /*
-     * Canonize the result, then we're done.
-     */
+	/*
+	 * Canonize the result, then we're done.
+	 */
 	if (!X509v3_asid_canonize(asid))
 		goto err;
 	return asid;
 
-err:
+ err:
 	ASIdentifiers_free(asid);
 	ASN1_INTEGER_free(min);
 	ASN1_INTEGER_free(max);
@@ -941,11 +941,11 @@ asid_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509)*chain,
 	OPENSSL_assert(ctx != NULL || ext != NULL);
 	OPENSSL_assert(ctx == NULL || ctx->verify_cb != NULL);
 
-    /*
-     * Figure out where to start.  If we don't have an extension to
-     * check, we're done.  Otherwise, check canonical form and
-     * set up for walking up the chain.
-     */
+	/*
+	 * Figure out where to start.  If we don't have an extension to
+	 * check, we're done.  Otherwise, check canonical form and
+	 * set up for walking up the chain.
+	 */
 	if (ext != NULL) {
 		i = -1;
 		x = NULL;
@@ -978,10 +978,10 @@ asid_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509)*chain,
 		}
 	}
 
-    /*
-     * Now walk up the chain.  Extensions must be in canonical form, no
-     * cert may list resources that its parent doesn't list.
-     */
+	/*
+	 * Now walk up the chain.  Extensions must be in canonical form, no
+	 * cert may list resources that its parent doesn't list.
+	 */
 	for (i++; i < sk_X509_num(chain); i++) {
 		x = sk_X509_value(chain, i);
 		OPENSSL_assert(x != NULL);
@@ -1028,9 +1028,9 @@ asid_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509)*chain,
 		}
 	}
 
-    /*
-     * Trust anchor can't inherit.
-     */
+	/*
+	 * Trust anchor can't inherit.
+	 */
 	OPENSSL_assert(x != NULL);
 
 	if (x->rfc3779_asid != NULL) {
@@ -1042,7 +1042,7 @@ asid_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509)*chain,
 			validation_err(X509_V_ERR_UNNESTED_RESOURCE);
 	}
 
-done:
+ done:
 	return ret;
 }
 

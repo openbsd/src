@@ -623,7 +623,7 @@ make_addressPrefix(IPAddressOrRange **result, unsigned char *addr,
 	*result = aor;
 	return 1;
 
-err:
+ err:
 	IPAddressOrRange_free(aor);
 	return 0;
 }
@@ -686,7 +686,7 @@ make_addressRange(IPAddressOrRange **result, unsigned char *min,
 	*result = aor;
 	return 1;
 
-err:
+ err:
 	IPAddressOrRange_free(aor);
 	return 0;
 }
@@ -734,7 +734,7 @@ make_IPAddressFamily(IPAddrBlocks *addr, const unsigned afi,
 
 	return f;
 
-err:
+ err:
 	IPAddressFamily_free(f);
 	return NULL;
 }
@@ -906,15 +906,15 @@ X509v3_addr_is_canonical(IPAddrBlocks *addr)
 	IPAddressOrRanges *aors;
 	int i, j, k;
 
-    /*
-     * Empty extension is canonical.
-     */
+	/*
+	 * Empty extension is canonical.
+	 */
 	if (addr == NULL)
 		return 1;
 
-    /*
-     * Check whether the top-level list is in order.
-     */
+	/*
+	 * Check whether the top-level list is in order.
+	 */
 	for (i = 0; i < sk_IPAddressFamily_num(addr) - 1; i++) {
 		const IPAddressFamily *a = sk_IPAddressFamily_value(addr, i);
 		const IPAddressFamily *b = sk_IPAddressFamily_value(addr, i + 1);
@@ -922,17 +922,18 @@ X509v3_addr_is_canonical(IPAddrBlocks *addr)
 			return 0;
 	}
 
-    /*
-     * Top level's ok, now check each address family.
-     */
+	/*
+	 * Top level's ok, now check each address family.
+	 */
 	for (i = 0; i < sk_IPAddressFamily_num(addr); i++) {
 		IPAddressFamily *f = sk_IPAddressFamily_value(addr, i);
 		int length = length_from_afi(X509v3_addr_get_afi(f));
 
-        /*
-         * Inheritance is canonical.  Anything other than inheritance or
-         * a SEQUENCE OF IPAddressOrRange is an ASN.1 error or something.
-         */
+		/*
+		 * Inheritance is canonical.  Anything other than inheritance
+		 * or a SEQUENCE OF IPAddressOrRange is an ASN.1 error or
+		 * something.
+		 */
 		if (f == NULL || f->ipAddressChoice == NULL)
 			return 0;
 		switch (f->ipAddressChoice->type) {
@@ -944,9 +945,9 @@ X509v3_addr_is_canonical(IPAddrBlocks *addr)
 			return 0;
 		}
 
-        /*
-         * It's an IPAddressOrRanges sequence, check it.
-         */
+		/*
+		 * It's an IPAddressOrRanges sequence, check it.
+		 */
 		aors = f->ipAddressChoice->u.addressesOrRanges;
 		if (sk_IPAddressOrRange_num(aors) == 0)
 			return 0;
@@ -959,35 +960,36 @@ X509v3_addr_is_canonical(IPAddrBlocks *addr)
 			    !extract_min_max(b, b_min, b_max, length))
 				return 0;
 
-            /*
-             * Punt misordered list, overlapping start, or inverted range.
-             */
+			/*
+			 * Punt misordered list, overlapping start, or inverted
+			 * range.
+			 */
 			if (memcmp(a_min, b_min, length) >= 0 ||
 			    memcmp(a_min, a_max, length) > 0 ||
 			    memcmp(b_min, b_max, length) > 0)
 				return 0;
 
-            /*
-             * Punt if adjacent or overlapping.  Check for adjacency by
-             * subtracting one from b_min first.
-             */
+			/*
+			 * Punt if adjacent or overlapping.  Check for adjacency by
+			 * subtracting one from b_min first.
+			 */
 			for (k = length - 1; k >= 0 && b_min[k]-- == 0x00; k--)
 				;
 			if (memcmp(a_max, b_min, length) >= 0)
 				return 0;
 
-            /*
-             * Check for range that should be expressed as a prefix.
-             */
+			/*
+			 * Check for range that should be expressed as a prefix.
+			 */
 			if (a->type == IPAddressOrRange_addressRange &&
 			    range_should_be_prefix(a_min, a_max, length) >= 0)
 				return 0;
 		}
 
-        /*
-         * Check range to see if it's inverted or should be a
-         * prefix.
-         */
+		/*
+		 * Check range to see if it's inverted or should be a
+		 * prefix.
+		 */
 		j = sk_IPAddressOrRange_num(aors) - 1;
 		{
 			IPAddressOrRange *a = sk_IPAddressOrRange_value(aors, j);
@@ -1003,9 +1005,9 @@ X509v3_addr_is_canonical(IPAddrBlocks *addr)
 		}
 	}
 
-    /*
-     * If we made it through all that, we're happy.
-     */
+	/*
+	 * If we made it through all that, we're happy.
+	 */
 	return 1;
 }
 
@@ -1017,14 +1019,14 @@ IPAddressOrRanges_canonize(IPAddressOrRanges *aors, const unsigned afi)
 {
 	int i, j, length = length_from_afi(afi);
 
-    /*
-     * Sort the IPAddressOrRanges sequence.
-     */
+	/*
+	 * Sort the IPAddressOrRanges sequence.
+	 */
 	sk_IPAddressOrRange_sort(aors);
 
-    /*
-     * Clean up representation issues, punt on duplicates or overlaps.
-     */
+	/*
+	 * Clean up representation issues, punt on duplicates or overlaps.
+	 */
 	for (i = 0; i < sk_IPAddressOrRange_num(aors) - 1; i++) {
 		IPAddressOrRange *a = sk_IPAddressOrRange_value(aors, i);
 		IPAddressOrRange *b = sk_IPAddressOrRange_value(aors, i + 1);
@@ -1035,23 +1037,23 @@ IPAddressOrRanges_canonize(IPAddressOrRanges *aors, const unsigned afi)
 		    !extract_min_max(b, b_min, b_max, length))
 			return 0;
 
-        /*
-         * Punt inverted ranges.
-         */
+		/*
+		 * Punt inverted ranges.
+		 */
 		if (memcmp(a_min, a_max, length) > 0 ||
 		    memcmp(b_min, b_max, length) > 0)
 			return 0;
 
-        /*
-         * Punt overlaps.
-         */
+		/*
+		 * Punt overlaps.
+		 */
 		if (memcmp(a_max, b_min, length) >= 0)
 			return 0;
 
-        /*
-         * Merge if a and b are adjacent.  We check for
-         * adjacency by subtracting one from b_min first.
-         */
+		/*
+		 * Merge if a and b are adjacent.  We check for
+		 * adjacency by subtracting one from b_min first.
+		 */
 		for (j = length - 1; j >= 0 && b_min[j]-- == 0x00; j--)
 			;
 		if (memcmp(a_max, b_min, length) == 0) {
@@ -1067,9 +1069,9 @@ IPAddressOrRanges_canonize(IPAddressOrRanges *aors, const unsigned afi)
 		}
 	}
 
-    /*
-     * Check for inverted final range.
-     */
+	/*
+	 * Check for inverted final range.
+	 */
 	j = sk_IPAddressOrRange_num(aors) - 1;
 	{
 		IPAddressOrRange *a = sk_IPAddressOrRange_value(aors, j);
@@ -1159,10 +1161,10 @@ v2i_IPAddrBlocks(const struct v3_ext_method *method, struct v3_ext_ctx *ctx,
 
 		length = length_from_afi(afi);
 
-        /*
-         * Handle SAFI, if any, and strdup() so we can null-terminate
-         * the other input values.
-         */
+		/*
+		 * Handle SAFI, if any, and strdup() so we can null-terminate
+		 * the other input values.
+		 */
 		if (safi != NULL) {
 			*safi = strtoul(val->value, &t, 0);
 			t += strspn(t, " \t");
@@ -1181,10 +1183,10 @@ v2i_IPAddrBlocks(const struct v3_ext_method *method, struct v3_ext_ctx *ctx,
 			goto err;
 		}
 
-        /*
-         * Check for inheritance.  Not worth additional complexity to
-         * optimize this (seldom-used) case.
-         */
+		/*
+		 * Check for inheritance. Not worth additional complexity to
+		 * optimize this (seldom-used) case.
+		 */
 		if (strcmp(s, "inherit") == 0) {
 			if (!X509v3_addr_add_inherit(addr, afi, safi)) {
 				X509V3error(X509V3_R_INVALID_INHERITANCE);
@@ -1261,14 +1263,14 @@ v2i_IPAddrBlocks(const struct v3_ext_method *method, struct v3_ext_ctx *ctx,
 		s = NULL;
 	}
 
-    /*
-     * Canonize the result, then we're done.
-     */
+	/*
+	 * Canonize the result, then we're done.
+	 */
 	if (!X509v3_addr_canonize(addr))
 		goto err;
 	return addr;
 
-err:
+ err:
 	free(s);
 	sk_IPAddressFamily_pop_free(addr, IPAddressFamily_free);
 	return NULL;
@@ -1409,11 +1411,11 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509)*chain,
 	OPENSSL_assert(ctx != NULL || ext != NULL);
 	OPENSSL_assert(ctx == NULL || ctx->verify_cb != NULL);
 
-    /*
-     * Figure out where to start.  If we don't have an extension to
-     * check, we're done.  Otherwise, check canonical form and
-     * set up for walking up the chain.
-     */
+	/*
+	 * Figure out where to start. If we don't have an extension to check,
+	 * we're done.  Otherwise, check canonical form and set up for walking
+	 * up the chain.
+	 */
 	if (ext != NULL) {
 		i = -1;
 		x = NULL;
@@ -1434,10 +1436,10 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509)*chain,
 		goto done;
 	}
 
-    /*
-     * Now walk up the chain.  No cert may list resources that its
-     * parent doesn't list.
-     */
+	/*
+	 * Now walk up the chain. No cert may list resources that its parent
+	 * doesn't list.
+	 */
 	for (i++; i < sk_X509_num(chain); i++) {
 		x = sk_X509_value(chain, i);
 		if (!X509v3_addr_is_canonical(x->rfc3779_addr))
@@ -1483,9 +1485,9 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509)*chain,
 		}
 	}
 
-    /*
-     * Trust anchor can't inherit.
-     */
+	/*
+	 * Trust anchor can't inherit.
+	 */
 	if (x->rfc3779_addr != NULL) {
 		for (j = 0; j < sk_IPAddressFamily_num(x->rfc3779_addr); j++) {
 			IPAddressFamily *fp =
@@ -1497,7 +1499,7 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509)*chain,
 		}
 	}
 
-done:
+ done:
 	sk_IPAddressFamily_free(child);
 	return ret;
 }
