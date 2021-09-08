@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwindctl.c,v 1.27 2021/02/27 10:32:29 florian Exp $	*/
+/*	$OpenBSD: unwindctl.c,v 1.28 2021/09/08 11:38:39 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -49,10 +49,27 @@ int		 show_autoconf_msg(struct imsg *);
 int		 show_mem_msg(struct imsg *);
 void		 histogram_header(void);
 void		 print_histogram(const char *name, int64_t[], size_t);
+const char	*prio2str(int);
 
 struct imsgbuf		*ibuf;
 int		 	 info_cnt;
 struct ctl_resolver_info info[UW_RES_NONE];
+
+const char *
+prio2str(int prio)
+{
+	switch(prio) {
+	case RTP_PROPOSAL_DHCLIENT:
+		return "DHCP";
+	case RTP_PROPOSAL_SLAAC:
+		return "SLAAC";
+	case RTP_PROPOSAL_STATIC:
+		return "STATIC";
+	case RTP_PROPOSAL_UMB:
+		return "UMB";
+	}
+	return "OTHER";
+}
 
 __dead void
 usage(void)
@@ -274,8 +291,8 @@ show_autoconf_msg(struct imsg *imsg)
 				fwd_line[0] = '\0';
 			}
 			label_len = snprintf(fwd_line, sizeof(fwd_line),
-			    "%s[%s]:", cfi->src == RTP_PROPOSAL_DHCLIENT ?
-			    " DHCP" : "SLAAC", if_name ? if_name : "unknown");
+			    "%6s[%s]:", prio2str(cfi->src),
+			    if_name ? if_name : "unknown");
 			line_len = label_len;
 			last_if_index = cfi->if_index;
 			last_src = cfi->src;
