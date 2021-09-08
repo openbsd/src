@@ -346,7 +346,7 @@ i2r_address(BIO *out, const unsigned afi, const unsigned char fill,
 			return 0;
 		for (n = 16;
 		    n > 1 && addr[n - 1] == 0x00 && addr[n - 2] == 0x00; n -= 2)
-			;
+			continue;
 		for (i = 0; i < n; i += 2)
 			BIO_printf(out, "%x%s", (addr[i] << 8) | addr[i + 1],
 			    (i < 14 ? ":" : ""));
@@ -556,9 +556,9 @@ range_should_be_prefix(const unsigned char *min, const unsigned char *max,
 	if (memcmp(min, max, length) <= 0)
 		return -1;
 	for (i = 0; i < length && min[i] == max[i]; i++)
-		;
+		continue;
 	for (j = length - 1; j >= 0 && min[j] == 0x00 && max[j] == 0xFF; j--)
-		;
+		continue;
 	if (i < j)
 		return -1;
 	if (i > j)
@@ -656,7 +656,7 @@ make_addressRange(IPAddressOrRange **result, unsigned char *min,
 		goto err;
 
 	for (i = length; i > 0 && min[i - 1] == 0x00; --i)
-		;
+		continue;
 	if (!ASN1_BIT_STRING_set(aor->u.addressRange->min, min, i))
 		goto err;
 	aor->u.addressRange->min->flags &= ~7;
@@ -670,7 +670,7 @@ make_addressRange(IPAddressOrRange **result, unsigned char *min,
 	}
 
 	for (i = length; i > 0 && max[i - 1] == 0xFF; --i)
-		;
+		continue;
 	if (!ASN1_BIT_STRING_set(aor->u.addressRange->max, max, i))
 		goto err;
 	aor->u.addressRange->max->flags &= ~7;
@@ -974,7 +974,7 @@ X509v3_addr_is_canonical(IPAddrBlocks *addr)
 			 * subtracting one from b_min first.
 			 */
 			for (k = length - 1; k >= 0 && b_min[k]-- == 0x00; k--)
-				;
+				continue;
 			if (memcmp(a_max, b_min, length) >= 0)
 				return 0;
 
@@ -1055,7 +1055,7 @@ IPAddressOrRanges_canonize(IPAddressOrRanges *aors, const unsigned afi)
 		 * adjacency by subtracting one from b_min first.
 		 */
 		for (j = length - 1; j >= 0 && b_min[j]-- == 0x00; j--)
-			;
+			continue;
 		if (memcmp(a_max, b_min, length) == 0) {
 			IPAddressOrRange *merged;
 			if (!make_addressRange(&merged, a_min, b_max, length))
