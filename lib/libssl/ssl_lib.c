@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.265 2021/09/08 12:32:07 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.266 2021/09/08 17:24:23 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2964,6 +2964,24 @@ long
 SSL_get_verify_result(const SSL *ssl)
 {
 	return (ssl->verify_result);
+}
+
+int
+SSL_verify_client_post_handshake(SSL *ssl)
+{
+	return 0;
+}
+
+void
+SSL_CTX_set_post_handshake_auth(SSL_CTX *ctx, int val)
+{
+	return;
+}
+
+void
+SSL_set_post_handshake_auth(SSL *ssl, int val)
+{
+	return;
 }
 
 int

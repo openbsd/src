@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.198 2021/09/08 12:56:14 tb Exp $ */
+/* $OpenBSD: ssl.h,v 1.199 2021/09/08 17:24:23 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -853,6 +853,13 @@ size_t SSL_get_peer_finished(const SSL *s, void *buf, size_t count);
 #define SSL_VERIFY_PEER			0x01
 #define SSL_VERIFY_FAIL_IF_NO_PEER_CERT	0x02
 #define SSL_VERIFY_CLIENT_ONCE		0x04
+#if defined(LIBRESSL_HAS_TLS1_3) || defined(LIBRESSL_INTERNAL)
+#define SSL_VERIFY_POST_HANDSHAKE	0x08
+
+int SSL_verify_client_post_handshake(SSL *s);
+void SSL_CTX_set_post_handshake_auth(SSL_CTX *ctx, int val);
+void SSL_set_post_handshake_auth(SSL *s, int val);
+#endif
 
 #define OpenSSL_add_ssl_algorithms()	SSL_library_init()
 #define SSLeay_add_ssl_algorithms()	SSL_library_init()
