@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfwprintf.c,v 1.21 2021/08/30 11:16:49 deraadt Exp $ */
+/*	$OpenBSD: vfwprintf.c,v 1.22 2021/09/08 15:57:27 jca Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -788,12 +788,6 @@ fp_common:
 
 			/* <10> is LOG_CRIT */
 			strlcpy(buf, "<10>", sizeof buf);
-
-			/* XXX */
-			if ((p = getenv("_THIS_PORT")) != NULL) {
-				strlcat(buf, p, sizeof buf);
-				strlcat(buf, " ", sizeof buf);
-			}
 
 			/* Make sure progname does not fill the whole buffer */
 			strlcat(buf, __progname, sizeof(buf) - sizeof n_msg);
