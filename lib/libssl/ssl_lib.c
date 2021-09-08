@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.264 2021/09/04 15:21:45 beck Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.265 2021/09/08 12:32:07 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -612,6 +612,13 @@ BIO *
 SSL_get_rbio(const SSL *s)
 {
 	return (s->rbio);
+}
+
+void
+SSL_set0_rbio(SSL *s, BIO *rbio)
+{
+	BIO_free_all(s->rbio);
+	s->rbio = rbio;
 }
 
 BIO *
