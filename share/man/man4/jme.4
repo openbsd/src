@@ -1,4 +1,4 @@
-.\"	$OpenBSD: jme.4,v 1.7 2014/01/29 16:15:12 naddy Exp $
+.\"	$OpenBSD: jme.4,v 1.8 2021/09/08 20:29:21 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -14,12 +14,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 29 2014 $
+.Dd $Mdocdate: September 8 2021 $
 .Dt JME 4
 .Os
 .Sh NAME
 .Nm jme
-.Nd JMicron JMC25x/JMC26x 10/100/Gigabit Ethernet device
+.Nd JMicron JMC25x/JMC26x 10/100/1Gb Ethernet device
 .Sh SYNOPSIS
 .Cd "jme* at pci?"
 .Cd "jmphy* at mii?"
@@ -27,9 +27,9 @@
 The
 .Nm
 driver supports PCI Express Ethernet adapters based on the JMicron
-JMC260 10/100 and JMC250 10/100/Gigabit Ethernet chips.
+JMC260 10/100 and JMC250 10/100/1Gb Ethernet chips.
 The Ethernet portion of the JMC261 10/100 and
-JMC251 10/100/Gigabit chips,
+JMC251 10/100/1Gb chips,
 which incorporate a card reader,
 is also supported.
 .Pp
