@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.103 2021/09/03 11:55:31 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.104 2021/09/08 11:35:08 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3348,9 +3348,10 @@ int
 iwx_load_firmware(struct iwx_softc *sc)
 {
 	struct iwx_fw_sects *fws;
-	int err, w;
+	int err;
 
 	sc->sc_uc.uc_intr = 0;
+	sc->sc_uc.uc_ok = 0;
 
 	fws = &sc->sc_fw.fw_sects[IWX_UCODE_TYPE_REGULAR];
 	err = iwx_ctxt_info_init(sc, fws);
@@ -3360,9 +3361,7 @@ iwx_load_firmware(struct iwx_softc *sc)
 	}
 
 	/* wait for the firmware to load */
-	for (w = 0; !sc->sc_uc.uc_intr && w < 10; w++) {
-		err = tsleep_nsec(&sc->sc_uc, 0, "iwxuc", MSEC_TO_NSEC(100));
-	}
+	err = tsleep_nsec(&sc->sc_uc, 0, "iwxuc", SEC_TO_NSEC(1));
 	if (err || !sc->sc_uc.uc_ok)
 		printf("%s: could not load firmware, %d\n", DEVNAME(sc), err);
 
