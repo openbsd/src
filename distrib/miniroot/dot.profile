@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.48 2021/08/29 13:31:52 kn Exp $
+#	$OpenBSD: dot.profile,v 1.49 2021/09/08 13:16:53 kn Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 2009 Kenneth R. Westerback
@@ -43,27 +43,22 @@ umask 022
 # emacs-style command line editing.
 set -o emacs
 
-# Leave installer prompt without user interaction.
-TIMEOUT_ACTION='kill $$'
 TIMEOUT_PERIOD_SEC=5
 
+# Stop the background timer.
+stop_timeout() {
+	kill -KILL $WDPID 2>/dev/null
+}
+
+# Start a co-process to XXX.
 start_timeout() {
 	(
-		sleep $TIMEOUT_PERIOD_SEC && eval $TIMEOUT_ACTION
+		sleep $TIMEOUT_PERIOD_SEC && kill $$
 	) |&
 	WDPID=$!
 
 	# Close standard input of the co-process.
 	exec 3>&p; exec 3>&-
-}
-
-stop_timeout() {
-	kill -KILL $WDPID 2>/dev/null
-}
-
-reset_watchdog() {
-	stop_timeout
-	start_timeout
 }
 
 if [[ -z $DONEPROFILE ]]; then

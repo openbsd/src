@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1175 2021/08/29 13:31:52 kn Exp $
+#	$OpenBSD: install.sub,v 1.1176 2021/09/08 13:16:53 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1047,13 +1047,14 @@ v4_config() {
 	ifconfig $_if -group dhcp >/dev/null 2>&1
 
 	while :; do
-		ask_until "IPv4 address for $_if? (or 'dhcp' or 'none')" \
-			  "${_addr:-dhcp}"
+		ask_until "IPv4 address for $_if? (or 'autoconf' or 'none')" \
+			  "${_addr:-autoconf}"
 		case $resp in
 		none)	return
 			;;
-		dhcp)	dhcp_request $_if
-			echo "dhcp" >>$_hn
+		autoconf|dhcp)
+			dhcp_request $_if
+			echo "autoconf" >>$_hn
 			return
 			;;
 		esac
@@ -1629,7 +1630,7 @@ install_files() {
 
 		# Fetch and verify the set files.
 		for _f in $_get_sets; do
-			$UU && reset_timeout
+			$UU && reset_watchdog
 
 			rm -f /tmp/h /tmp/fail
 
@@ -1694,7 +1695,7 @@ install_files() {
 
 	# Install the set files.
 	for _f in $_get_sets; do
-		$UU && reset_timeout
+		$UU && reset_watchdog
 		_fsrc="$_src/$_f"
 
 		# Take the set file from the prefetch area if possible.
@@ -1743,7 +1744,7 @@ install_files() {
 		cp ${_src#file://}/SHA256 /mnt/var/db/installed.SHA256
 	fi
 
-	$UU && reset_timeout
+	$UU && reset_watchdog
 }
 
 # Fetch install sets from an HTTP server possibly using a proxy.
@@ -3283,9 +3284,25 @@ check_unattendedupgrade() {
 	) > /dev/null 2>&1
 }
 
-# Reboot out of a stalled non-interactive sysupgrade.
-TIMEOUT_ACTION=reboot
-TIMEOUT_PERIOD_SEC=$((30 * 60))
+WATCHDOG_PERIOD_SEC=$((30 * 60))
+
+# Restart the background timer.
+reset_watchdog() {
+	kill -KILL $WDPID 2>/dev/null
+	start_watchdog
+}
+
+# Start a co-process to reboot a stalled sysupgrade.
+# This mechanism is only used during non-interactive sysupgrade.
+start_watchdog() {
+	(
+		sleep $WATCHDOG_PERIOD_SEC && reboot
+	) |&
+	WDPID=$!
+
+	# Close standard input of the co-process.
+	exec 3>&p; exec 3>&-
+}
 
 # ------------------------------------------------------------------------------
 # Initial actions common to both installs and upgrades.
@@ -3436,7 +3453,7 @@ elif $UU; then
 	MODE=upgrade
 	check_unattendedupgrade || exit 1
 
-	start_timeout
+	start_watchdog
 
 	get_responsefile
 	do_autoinstall
