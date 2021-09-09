@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.20 2021/09/09 19:02:50 jasper Exp $
+# $OpenBSD: Makefile,v 1.21 2021/09/09 20:08:15 jasper Exp $
 
 BTRACE?=		 /usr/sbin/btrace
 ALLOWDT!=		sysctl -n kern.allowdt
@@ -8,7 +8,8 @@ BT_LANG_SCRIPTS=	arithm beginend boolean comments delete exit \
 			histempty if \
 			map mapclear mapempty mapsyntax mapzero map-unnamed \
 			maxoperand min+max+sum multismts nsecs+var \
-			precedence print read-map-after-clear syntaxerror
+			precedence print read-map-after-clear staticv-empty \
+			syntaxerror
 
 # scripts that use kernel probes
 BT_KERN_SCRIPTS=	multiprobe
