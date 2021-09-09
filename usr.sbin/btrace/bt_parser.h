@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parser.h,v 1.19 2021/09/08 13:29:51 dv Exp $	*/
+/*	$OpenBSD: bt_parser.h,v 1.20 2021/09/09 09:53:11 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019-2021 Martin Pieuchot <mpi@openbsd.org>
@@ -32,13 +32,23 @@
  *	"provider:function:name"
  * or
  *	"provider:time_unit:rate"
+ *
+ * Multiple probes can be associated to the same action.
  */
 struct bt_probe {
+	SLIST_ENTRY(bt_probe)	 bp_next;	/* next probe for this rule */
 	const char		*bp_prov;	/* provider */
 	const char		*bp_func;	/* function or time unit */
 	const char		*bp_name;
 	uint32_t		 bp_rate;
 #define bp_unit	bp_func
+	enum bt_ptype {
+		 B_PT_BEGIN = 1,
+		 B_PT_END,
+		 B_PT_PROBE,
+	}			 bp_type;	/* BEGIN, END or 'probe' */
+	void			*bp_cookie;	/* ioctl request */
+	uint32_t		 bp_pbn;	/* ID assigned by the kernel */
 };
 
 
@@ -77,19 +87,10 @@ TAILQ_HEAD(bt_ruleq, bt_rule);
  */
 struct bt_rule {
 	TAILQ_ENTRY(bt_rule)	 br_next;	/* linkage in global list */
-	struct bt_probe		*br_probe;
+	SLIST_HEAD(, bt_probe)	 br_probes;	/* list of probes */
 	struct bt_filter	*br_filter;
 	SLIST_HEAD(, bt_stmt)	 br_action;
 	SLIST_HEAD(, bt_var)	 br_variables;	/* local variables */
-
-	enum bt_rtype {
-		 B_RT_BEGIN = 1,
-		 B_RT_END,
-		 B_RT_PROBE,
-	}			 br_type;	/* BEGIN, END or 'probe' */
-
-	uint32_t		 br_pbn;	/* ID assigned by the kernel */
-	void			*br_cookie;
 };
 
 /*

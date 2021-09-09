@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.53 2021/09/09 09:43:49 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.54 2021/09/09 09:53:11 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2021 Martin Pieuchot <mpi@openbsd.org>
@@ -105,7 +105,7 @@ int			 ba2dtflags(struct bt_arg *);
 __dead void		 xabort(const char *, ...);
 void			 debug(const char *, ...);
 void			 debugx(const char *, ...);
-const char		*debug_rule_name(struct bt_rule *);
+const char		*debug_probe_name(struct bt_probe *);
 void			 debug_dump_term(struct bt_arg *);
 void			 debug_dump_expr(struct bt_arg *);
 void			 debug_dump_filter(struct bt_rule *);
@@ -398,54 +398,58 @@ rules_setup(int fd)
 	struct bt_probe *bp;
 	struct bt_stmt *bs;
 	int dokstack = 0, on = 1;
+	uint64_t evtflags;
 
 	TAILQ_FOREACH(r, &g_rules, br_next) {
-		debug("parsed probe '%s'", debug_rule_name(r));
-		debug_dump_filter(r);
-
-		if (r->br_type != B_RT_PROBE) {
-			if (r->br_type == B_RT_BEGIN)
-				rbegin = r;
-			continue;
-		}
-
-		bp = r->br_probe;
-		dtpi_cache(fd);
-		dtpi = dtpi_get_by_value(bp->bp_prov, bp->bp_func, bp->bp_name);
-		if (dtpi == NULL) {
-			errx(1, "probe '%s:%s:%s' not found", bp->bp_prov,
-			    bp->bp_func, bp->bp_name);
-		}
-
-		dtrq = calloc(1, sizeof(*dtrq));
-		if (dtrq == NULL)
-			err(1, "dtrq: 1alloc");
-
-		r->br_pbn = dtpi->dtpi_pbn;
-		dtrq->dtrq_pbn = dtpi->dtpi_pbn;
-		dtrq->dtrq_rate = r->br_probe->bp_rate;
-
+		evtflags = 0;
 		SLIST_FOREACH(bs, &r->br_action, bs_next) {
 			struct bt_arg *ba;
 
 			SLIST_FOREACH(ba, &bs->bs_args, ba_next)
-				dtrq->dtrq_evtflags |= ba2dtflags(ba);
+				evtflags |= ba2dtflags(ba);
 
 			/* Also check the value for map/hist insertion */
 			switch (bs->bs_act) {
 			case B_AC_BUCKETIZE:
 			case B_AC_INSERT:
 				ba = (struct bt_arg *)bs->bs_var;
-				dtrq->dtrq_evtflags |= ba2dtflags(ba);
+				evtflags |= ba2dtflags(ba);
 				break;
 			default:
 				break;
 			}
 		}
 
-		if (dtrq->dtrq_evtflags & DTEVT_KSTACK)
-			dokstack = 1;
-		r->br_cookie = dtrq;
+		SLIST_FOREACH(bp, &r->br_probes, bp_next) {
+			debug("parsed probe '%s'", debug_probe_name(bp));
+			debug_dump_filter(r);
+
+			if (bp->bp_type != B_PT_PROBE) {
+				if (bp->bp_type == B_PT_BEGIN)
+					rbegin = r;
+				continue;
+			}
+
+			dtpi_cache(fd);
+			dtpi = dtpi_get_by_value(bp->bp_prov, bp->bp_func,
+			    bp->bp_name);
+			if (dtpi == NULL) {
+				errx(1, "probe '%s:%s:%s' not found",
+				    bp->bp_prov, bp->bp_func, bp->bp_name);
+			}
+
+			dtrq = calloc(1, sizeof(*dtrq));
+			if (dtrq == NULL)
+				err(1, "dtrq: 1alloc");
+
+			bp->bp_pbn = dtpi->dtpi_pbn;
+			dtrq->dtrq_pbn = dtpi->dtpi_pbn;
+			dtrq->dtrq_rate = bp->bp_rate;
+			dtrq->dtrq_evtflags = evtflags;
+			if (dtrq->dtrq_evtflags & DTEVT_KSTACK)
+				dokstack = 1;
+			bp->bp_cookie = dtrq;
+		}
 	}
 
 	if (dokstack)
@@ -463,12 +467,14 @@ rules_setup(int fd)
 
 	/* Enable all probes */
 	TAILQ_FOREACH(r, &g_rules, br_next) {
-		if (r->br_type != B_RT_PROBE)
-			continue;
+		SLIST_FOREACH(bp, &r->br_probes, bp_next) {
+			if (bp->bp_type != B_PT_PROBE)
+				continue;
 
-		dtrq = r->br_cookie;
-		if (ioctl(fd, DTIOCPRBENABLE, dtrq))
-			err(1, "DTIOCPRBENABLE");
+			dtrq = bp->bp_cookie;
+			if (ioctl(fd, DTIOCPRBENABLE, dtrq))
+				err(1, "DTIOCPRBENABLE");
+		}
 	}
 
 	if (g_nprobes > 0) {
@@ -481,12 +487,16 @@ void
 rules_apply(struct dt_evt *dtev)
 {
 	struct bt_rule *r;
+	struct bt_probe *bp;
 
 	TAILQ_FOREACH(r, &g_rules, br_next) {
-		if (r->br_type != B_RT_PROBE || r->br_pbn != dtev->dtev_pbn)
-			continue;
+		SLIST_FOREACH(bp, &r->br_probes, bp_next) {
+			if (bp->bp_type != B_PT_PROBE ||
+			    bp->bp_pbn != dtev->dtev_pbn)
+				continue;
 
-		rule_eval(r, dtev);
+			rule_eval(r, dtev);
+		}
 	}
 }
 
@@ -494,6 +504,7 @@ void
 rules_teardown(int fd)
 {
 	struct dtioc_req *dtrq;
+	struct bt_probe *bp;
 	struct bt_rule *r, *rend = NULL;
 	int dokstack = 0, off = 0;
 
@@ -503,18 +514,19 @@ rules_teardown(int fd)
 	}
 
 	TAILQ_FOREACH(r, &g_rules, br_next) {
-		dtrq = r->br_cookie;
-		if (r->br_type != B_RT_PROBE) {
-			if (r->br_type == B_RT_END)
-				rend = r;
-			continue;
-        } else {
-            if (ioctl(fd, DTIOCPRBDISABLE, dtrq))
-                err(1, "DTIOCPRBDISABLE");
-        }
+		SLIST_FOREACH(bp, &r->br_probes, bp_next) {
+			if (bp->bp_type != B_PT_PROBE) {
+				if (bp->bp_type == B_PT_END)
+					rend = r;
+				continue;
+			}
 
-	if (dtrq->dtrq_evtflags & DTEVT_KSTACK)
-		dokstack = 1;
+			dtrq = bp->bp_cookie;
+			if (ioctl(fd, DTIOCPRBDISABLE, dtrq))
+				err(1, "DTIOCPRBDISABLE");
+			if (dtrq->dtrq_evtflags & DTEVT_KSTACK)
+				dokstack = 1;
+		}
 	}
 
 	if (dokstack)
@@ -535,9 +547,12 @@ void
 rule_eval(struct bt_rule *r, struct dt_evt *dtev)
 {
 	struct bt_stmt *bs;
+	struct bt_probe *bp;
 
-	debug("eval rule '%s'", debug_rule_name(r));
-	debug_dump_filter(r);
+	SLIST_FOREACH(bp, &r->br_probes, bp_next) {
+		debug("eval rule '%s'", debug_probe_name(bp));
+		debug_dump_filter(r);
+	}
 
 	if (r->br_filter != NULL && r->br_filter->bf_condition != NULL) {
 		if (stmt_test(r->br_filter->bf_condition, dtev) == false) {
@@ -1542,6 +1557,9 @@ debug_dump_filter(struct bt_rule *r)
 {
 	struct bt_stmt *bs;
 
+	if (verbose < 2)
+		return;
+
 	if (r->br_filter == NULL) {
 		debugx("\n");
 		return;
@@ -1555,20 +1573,22 @@ debug_dump_filter(struct bt_rule *r)
 }
 
 const char *
-debug_rule_name(struct bt_rule *r)
+debug_probe_name(struct bt_probe *bp)
 {
-	struct bt_probe *bp = r->br_probe;
 	static char buf[64];
 
-	if (r->br_type == B_RT_BEGIN)
+	if (verbose < 2)
+		return "";
+
+	if (bp->bp_type == B_PT_BEGIN)
 		return "BEGIN";
 
-	if (r->br_type == B_RT_END)
+	if (bp->bp_type == B_PT_END)
 		return "END";
 
-	assert(r->br_type == B_RT_PROBE);
+	assert(bp->bp_type == B_PT_PROBE);
 
-	if (r->br_probe->bp_rate) {
+	if (bp->bp_rate) {
 		snprintf(buf, sizeof(buf), "%s:%s:%u", bp->bp_prov,
 		    bp->bp_unit, bp->bp_rate);
 	} else {
