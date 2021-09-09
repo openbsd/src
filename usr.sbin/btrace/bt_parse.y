@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parse.y,v 1.42 2021/09/09 09:53:11 mpi Exp $	*/
+/*	$OpenBSD: bt_parse.y,v 1.43 2021/09/09 12:09:11 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019-2021 Martin Pieuchot <mpi@openbsd.org>
@@ -535,13 +535,7 @@ bg_get(const char *vname)
 struct bt_arg *
 bg_find(const char *vname)
 {
-	struct bt_var *bv;
-
-	bv = bg_lookup(vname);
-	if (bv == NULL)
-		yyerror("variable '%s' accessed before being set", vname);
-
-	return ba_new(bv, B_AT_VAR);
+	return ba_new(bg_get(vname), B_AT_VAR);
 }
 
 /* Create a 'store' statement to assign a value to a global variable. */
@@ -617,14 +611,9 @@ bm_insert(const char *mname, struct bt_arg *mkey, struct bt_arg *mval)
 struct bt_arg *
 bm_find(const char *vname, struct bt_arg *mkey)
 {
-	struct bt_var *bv;
 	struct bt_arg *ba;
 
-	bv = bg_lookup(vname);
-	if (bv == NULL)
-		yyerror("variable '%s' accessed before being set", vname);
-
-	ba = ba_new(bv, B_AT_MAP);
+	ba = ba_new(bg_get(vname), B_AT_MAP);
 	ba->ba_key = mkey;
 	return ba;
 }
