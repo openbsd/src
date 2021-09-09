@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.82 2021/08/28 11:55:17 krw Exp $	*/
+/*	$OpenBSD: misc.c,v 1.83 2021/09/09 12:36:45 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -37,26 +37,21 @@ struct unit_type	unit_types[] = {
 	{ "M"	, 1024LL * 1024			, "Megabytes"	},
 	{ "G"	, 1024LL * 1024 *1024		, "Gigabytes"	},
 	{ "T"	, 1024LL * 1024 * 1024 * 1024	, "Terabytes"	},
-	{ NULL	, 0				, NULL		},
 };
 
 int
 unit_lookup(const char *units)
 {
-	int			i = 0;
+	unsigned int		i;
 
-	if (units == NULL)
-		return SECTORS;
-
-	while (unit_types[i].ut_abbr != NULL) {
-		if (strncasecmp(unit_types[i].ut_abbr, units, 1) == 0)
-			break;
-		i++;
+	if (units != NULL) {
+		for (i = 0; i < nitems(unit_types); i++) {
+			if (strncasecmp(unit_types[i].ut_abbr, units, 1) == 0)
+				return i;
+		}
 	}
-	if (unit_types[i].ut_abbr == NULL)
-		return SECTORS;
 
-	return i;
+	return SECTORS;
 }
 
 void
