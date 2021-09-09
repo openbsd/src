@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.48 2021/09/03 08:58:53 beck Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.49 2021/09/09 15:09:43 beck Exp $ */
 /*
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
  *
@@ -1205,8 +1205,11 @@ x509_verify(struct x509_verify_ctx *ctx, X509 *leaf, char *name)
 			 * verified chain. The callback could still tell us to
 			 * fail.
 			 */
-			if(!x509_vfy_callback_indicate_success(ctx->xsc))
+			if(!x509_vfy_callback_indicate_success(ctx->xsc)) {
+				/* The callback can change the error code */
+				ctx->error = ctx->xsc->error;
 				goto err;
+			}
 		} else {
 			/*
 			 * We had a failure, indicate the failure, but
