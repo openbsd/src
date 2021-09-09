@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.50 2021/09/09 06:58:39 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.51 2021/09/09 07:03:10 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2021 Martin Pieuchot <mpi@openbsd.org>
@@ -18,6 +18,7 @@
 
 #include <sys/ioctl.h>
 #include <sys/exec_elf.h>
+#include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/queue.h>
 
@@ -53,7 +54,7 @@
 #define __PATH_DEVDT "/dev/dt"
 
 __dead void		 usage(void);
-char			*read_btfile(const char *);
+char			*read_btfile(const char *, size_t *);
 
 /*
  * Retrieve & parse probe information.
@@ -133,6 +134,7 @@ main(int argc, char *argv[])
 	int fd = -1, ch, error = 0;
 	const char *filename = NULL, *btscript = NULL;
 	int showprobes = 0, noaction = 0;
+	size_t btslen = 0;
 
 	setlocale(LC_ALL, "");
 
@@ -145,6 +147,7 @@ main(int argc, char *argv[])
 		switch (ch) {
 		case 'e':
 			btscript = optarg;
+			btslen = strlen(btscript);
 			break;
 		case 'l':
 			showprobes = 1;
@@ -165,7 +168,7 @@ main(int argc, char *argv[])
 
 	if (argc > 0 && btscript == NULL) {
 		filename = argv[0];
-		btscript = read_btfile(filename);
+		btscript = read_btfile(filename, &btslen);
 		argc--;
 		argv++;
 	}
@@ -177,7 +180,7 @@ main(int argc, char *argv[])
 		usage();
 
 	if (btscript != NULL) {
-		error = btparse(btscript, strlen(btscript), filename, 1);
+		error = btparse(btscript, btslen, filename, 1);
 		if (error)
 			return error;
 	}
@@ -214,25 +217,30 @@ usage(void)
 }
 
 char *
-read_btfile(const char *filename)
+read_btfile(const char *filename, size_t *len)
 {
-	static char fcontent[BUFSIZ];
-	long offset;
 	FILE *fp;
+	char *fcontent;
+	struct stat st;
+	size_t fsize;
+
+	if (stat(filename, &st))
+		err(1, "can't stat '%s'", filename);
+
+	fsize = st.st_size;
+	fcontent = malloc(fsize);
+	if (fcontent == NULL)
+		err(1, "malloc");
 
 	fp = fopen(filename, "r");
 	if (fp == NULL)
 		err(1, "can't open '%s'", filename);
 
-	if (fread(fcontent, sizeof(fcontent) - 1, 1, fp) == 0 && errno != 0)
+	if (fread(fcontent, 1, fsize, fp) != fsize)
 		err(1, "can't read '%s'", filename);
 
-	fseek(fp, 0, SEEK_END);
-	offset = ftell(fp);
-	if ((size_t)offset >= sizeof(fcontent))
-		errx(1, "couldn't read all of '%s'", filename);
-
 	fclose(fp);
+	*len = fsize;
 	return fcontent;
 }
 
