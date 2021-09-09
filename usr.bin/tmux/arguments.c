@@ -1,4 +1,4 @@
-/* $OpenBSD: arguments.c,v 1.50 2021/09/09 13:38:32 nicm Exp $ */
+/* $OpenBSD: arguments.c,v 1.51 2021/09/09 21:55:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -153,6 +153,10 @@ args_parse(const struct args_parse *parse, struct args_value *values,
 			flag = *string++;
 			if (flag == '\0')
 				break;
+			if (flag == '?') {
+				args_free(args);
+				return (NULL);
+			}
 			if (!isalnum(flag)) {
 				xasprintf(cause, "invalid flag -%c", flag);
 				args_free(args);

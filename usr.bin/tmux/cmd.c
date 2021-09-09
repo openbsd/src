@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.172 2021/08/27 17:25:55 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.173 2021/09/09 21:55:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -502,7 +502,7 @@ cmd_parse(struct args_value *values, u_int count, const char *file, u_int line,
 	const struct cmd_entry	*entry;
 	struct cmd		*cmd;
 	struct args		*args;
-	char			*error;
+	char			*error = NULL;
 
 	if (count == 0 || values[0].type != ARGS_STRING) {
 		xasprintf(cause, "no command");
