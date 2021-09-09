@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.72 2021/07/06 09:34:07 kettenis Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.73 2021/09/09 18:41:39 mpi Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -258,7 +258,8 @@ setrunqueue(struct cpu_info *ci, struct proc *p, uint8_t prio)
 
 	spc = &p->p_cpu->ci_schedstate;
 	spc->spc_nrun++;
-	TRACEPOINT(sched, enqueue, p->p_tid, p->p_p->ps_pid);
+	TRACEPOINT(sched, enqueue, p->p_tid + THREAD_PID_OFFSET,
+	    p->p_p->ps_pid);
 
 	TAILQ_INSERT_TAIL(&spc->spc_qs[queue], p, p_runq);
 	spc->spc_whichqs |= (1 << queue);
@@ -280,7 +281,8 @@ remrunqueue(struct proc *p)
 	SCHED_ASSERT_LOCKED();
 	spc = &p->p_cpu->ci_schedstate;
 	spc->spc_nrun--;
-	TRACEPOINT(sched, dequeue, p->p_tid, p->p_p->ps_pid);
+	TRACEPOINT(sched, dequeue, p->p_tid + THREAD_PID_OFFSET,
+	    p->p_p->ps_pid);
 
 	TAILQ_REMOVE(&spc->spc_qs[queue], p, p_runq);
 	if (TAILQ_EMPTY(&spc->spc_qs[queue])) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.68 2021/08/02 15:15:47 tb Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.69 2021/09/09 18:41:39 mpi Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -387,7 +387,7 @@ mi_switch(void)
 
 	if (p != nextproc) {
 		uvmexp.swtch++;
-		TRACEPOINT(sched, off__cpu, nextproc->p_tid,
+		TRACEPOINT(sched, off__cpu, nextproc->p_tid + THREAD_PID_OFFSET,
 		    nextproc->p_p->ps_pid);
 		cpu_switchto(p, nextproc);
 		TRACEPOINT(sched, on__cpu, NULL);
