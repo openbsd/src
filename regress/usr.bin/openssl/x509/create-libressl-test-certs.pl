@@ -21,10 +21,10 @@ my @leafcert = cert(
     issuer => \@ca,
     purpose => 'server',
     subject => { CN => 'server.local' },
-    subjectAltNames => [ 
+    subjectAltNames => [
 	[ DNS => 'bar.server.local' ],
-	[ DNS => 'www*.server.local'], 
-	[ DNS => '*.www.server.local'], 
+	[ DNS => 'www*.server.local'],
+	[ DNS => '*.www.server.local'],
 	[ DNS => 'foo.server.local' ],
 	[ DNS => 'server.local' ],
     ]
@@ -35,9 +35,9 @@ out('server-unusual-wildcard.pem', pem(@leafcert));
     issuer => \@ca,
     purpose => 'server',
     subject => { CN => 'server.local' },
-    subjectAltNames => [ 
+    subjectAltNames => [
 	[ DNS => 'bar.server.local' ],
-	[ DNS => '*.www.server.local'], 
+	[ DNS => '*.www.server.local'],
 	[ DNS => 'foo.server.local' ],
 	[ DNS => 'server.local' ],
     ]
@@ -76,7 +76,7 @@ out('chainSX.pem', pem($subcaR[0]), pem($caX[0]));
     issuer => \@subcaR,
     purpose => 'server',
     subject => { CN => 'server.subca.local' },
-    subjectAltNames => [ 
+    subjectAltNames => [
 	[ DNS => 'server.subca.local' ],
     ]
 );
@@ -103,7 +103,7 @@ sub pem {
     }
     return $result;
 }
-    
+
 sub out {
     my $file = shift;
     open(my $fh,'>',"$file") or die "failed to create $file: $!";
