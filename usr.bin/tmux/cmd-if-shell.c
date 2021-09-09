@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-if-shell.c,v 1.81 2021/08/25 08:51:55 nicm Exp $ */
+/* $OpenBSD: cmd-if-shell.c,v 1.82 2021/09/09 13:38:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -84,9 +84,9 @@ cmd_if_shell_exec(struct cmd *self, struct cmdq_item *item)
 	shellcmd = format_single_from_target(item, args_string(args, 0));
 	if (args_has(args, 'F')) {
 		if (*shellcmd != '0' && *shellcmd != '\0')
-			cmdlist = args_make_commands_now(self, item, 1);
+			cmdlist = args_make_commands_now(self, item, 1, 0);
 		else if (count == 3)
-			cmdlist = args_make_commands_now(self, item, 2);
+			cmdlist = args_make_commands_now(self, item, 2, 0);
 		else {
 			free(shellcmd);
 			return (CMD_RETURN_NORMAL);
@@ -101,11 +101,11 @@ cmd_if_shell_exec(struct cmd *self, struct cmdq_item *item)
 
 	cdata = xcalloc(1, sizeof *cdata);
 
-	cdata->cmd_if = args_make_commands_now(self, item, 1);
+	cdata->cmd_if = args_make_commands_now(self, item, 1, 0);
 	if (cdata->cmd_if == NULL)
 	    return (CMD_RETURN_ERROR);
 	if (count == 3) {
-		cdata->cmd_else = args_make_commands_now(self, item, 2);
+		cdata->cmd_else = args_make_commands_now(self, item, 2, 0);
 		if (cdata->cmd_else == NULL)
 		    return (CMD_RETURN_ERROR);
 	}

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-run-shell.c,v 1.78 2021/08/25 08:51:55 nicm Exp $ */
+/* $OpenBSD: cmd-run-shell.c,v 1.79 2021/09/09 13:38:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -132,7 +132,7 @@ cmd_run_shell_exec(struct cmd *self, struct cmdq_item *item)
 		if (cmd != NULL)
 			cdata->cmd = format_single_from_target(item, cmd);
 	} else {
-		cdata->cmdlist = args_make_commands_now(self, item, 0);
+		cdata->cmdlist = args_make_commands_now(self, item, 0, 1);
 		if (cdata->cmdlist == NULL)
 			return (CMD_RETURN_ERROR);
 	}
