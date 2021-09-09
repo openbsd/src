@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.51 2021/09/09 07:03:10 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.52 2021/09/09 07:17:31 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2021 Martin Pieuchot <mpi@openbsd.org>
@@ -749,12 +749,12 @@ stmt_clear(struct bt_stmt *bs)
 	assert(bs->bs_var == NULL);
 	assert(ba->ba_type == B_AT_VAR);
 
-	if (bv->bv_type != B_VT_MAP && bv->bv_type != B_VT_HIST)
-		errx(1, "invalid variable type for clear(%s)", ba_name(ba));
-
 	map = (struct map *)bv->bv_value;
 	if (map == NULL)
 		return;
+
+	if (bv->bv_type != B_VT_MAP && bv->bv_type != B_VT_HIST)
+		errx(1, "invalid variable type for clear(%s)", ba_name(ba));
 
 	map_clear(map);
 	bv->bv_value = NULL;
@@ -956,12 +956,12 @@ stmt_zero(struct bt_stmt *bs)
 	assert(bs->bs_var == NULL);
 	assert(ba->ba_type == B_AT_VAR);
 
-	if (bv->bv_type != B_VT_MAP && bv->bv_type != B_VT_HIST)
-		errx(1, "invalid variable type for zero(%s)", ba_name(ba));
-
 	map = (struct map *)bv->bv_value;
 	if (map == NULL)
 		return;
+
+	if (bv->bv_type != B_VT_MAP && bv->bv_type != B_VT_HIST)
+		errx(1, "invalid variable type for zero(%s)", ba_name(ba));
 
 	map_zero(map);
 
