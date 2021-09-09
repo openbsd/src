@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2021/09/06 20:52:59 tb Exp $
+#	$OpenBSD: Makefile,v 1.5 2021/09/09 15:02:33 tb Exp $
 
 OPENSSL_RUBY_TESTS =	/usr/local/share/openssl-ruby-tests
 RUBY_BINREV =		30
@@ -15,8 +15,8 @@ regress:
 	@echo SKIPPED
 .else
 
-REGRESS_TARGETS +=		openssl-ruby-test
-REGRESS_EXPECTED_FAILURES +=	openssl-ruby-test
+REGRESS_TARGETS +=		openssl-ruby-test client-ca-test
+REGRESS_EXPECTED_FAILURES +=	client-ca-test
 
 openssl-ruby-test:	retest
 
@@ -37,7 +37,8 @@ ${_BUILD_COOKIE}: ${_BUILDDIR_COOKIE}
 OPENSSL_RUBY_TESTSRC =	${OPENSSL_RUBY_TESTS}/test/openssl/test_*.rb
 ${_TEST_COOKIE}: ${_BUILD_COOKIE} ${_BUILDDIR_COOKIE}
 	cd ${BUILDDIR} && \
-	    ${RUBY} -I. -I${OPENSSL_RUBY_TESTS}/test/openssl \
+	    env SKIP_CLIENT_CA_TEST=true ${RUBY} -I. \
+		-I${OPENSSL_RUBY_TESTS}/test/openssl \
 		-I${OPENSSL_RUBY_TESTS}/lib \
 		-e 'Dir["${OPENSSL_RUBY_TESTSRC}"].each{|f| require f}' \
 		-- --no-use-color --no-show-detail-immediately
@@ -55,6 +56,13 @@ rebuild:
 retest:
 	rm -f ${_TEST_COOKIE}
 	${_MAKE} test
+
+client-ca-test: ${_BUILD_COOKIE}
+	cd ${BUILDDIR} && \
+	    ${RUBY} -I. -I${OPENSSL_RUBY_TESTS}/test/openssl \
+		-I${OPENSSL_RUBY_TESTS}/lib \
+		${OPENSSL_RUBY_TESTS}/test/openssl/test_ssl.rb \
+		-n test_client_ca
 
 CLEANFILES +=		${_BUILD_COOKIE} ${_TEST_COOKIE} ${_BUILDDIR_COOKIE}
 
