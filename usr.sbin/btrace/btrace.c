@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.52 2021/09/09 07:17:31 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.53 2021/09/09 09:43:49 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2021 Martin Pieuchot <mpi@openbsd.org>
@@ -1157,6 +1157,8 @@ const char *
 ba_name(struct bt_arg *ba)
 {
 	switch (ba->ba_type) {
+	case B_AT_NIL:
+		return "0";
 	case B_AT_VAR:
 	case B_AT_MAP:
 		break;
