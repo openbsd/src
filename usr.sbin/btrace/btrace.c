@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.49 2021/09/08 13:29:51 dv Exp $ */
+/*	$OpenBSD: btrace.c,v 1.50 2021/09/09 06:58:39 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2021 Martin Pieuchot <mpi@openbsd.org>
@@ -736,6 +736,7 @@ stmt_clear(struct bt_stmt *bs)
 {
 	struct bt_arg *ba = SLIST_FIRST(&bs->bs_args);
 	struct bt_var *bv = ba->ba_value;
+	struct map *map;
 
 	assert(bs->bs_var == NULL);
 	assert(ba->ba_type == B_AT_VAR);
@@ -743,10 +744,14 @@ stmt_clear(struct bt_stmt *bs)
 	if (bv->bv_type != B_VT_MAP && bv->bv_type != B_VT_HIST)
 		errx(1, "invalid variable type for clear(%s)", ba_name(ba));
 
-	map_clear((struct map *)bv->bv_value);
+	map = (struct map *)bv->bv_value;
+	if (map == NULL)
+		return;
+
+	map_clear(map);
 	bv->bv_value = NULL;
 
-	debug("map=%p '%s' clear\n", bv->bv_value, bv_name(bv));
+	debug("map=%p '%s' clear\n", map, bv_name(bv));
 }
 
 /*
@@ -759,17 +764,21 @@ stmt_delete(struct bt_stmt *bs, struct dt_evt *dtev)
 {
 	struct bt_arg *bkey, *bmap = SLIST_FIRST(&bs->bs_args);
 	struct bt_var *bv = bmap->ba_value;
+	struct map *map;
 	const char *hash;
 
 	assert(bmap->ba_type == B_AT_MAP);
 	assert(bs->bs_var == NULL);
 
+	map = (struct map *)bv->bv_value;
+	if (map == NULL)
+		return;
+
 	bkey = bmap->ba_key;
 	hash = ba2hash(bkey, dtev);
-	debug("map=%p '%s' delete key=%p '%s'\n", bv->bv_value, bv_name(bv),
-	    bkey, hash);
+	debug("map=%p '%s' delete key=%p '%s'\n", map, bv_name(bv), bkey, hash);
 
-	map_delete((struct map *)bv->bv_value, hash);
+	map_delete(map, hash);
 }
 
 /*
@@ -784,6 +793,7 @@ stmt_insert(struct bt_stmt *bs, struct dt_evt *dtev)
 	struct bt_arg *bkey, *bmap = SLIST_FIRST(&bs->bs_args);
 	struct bt_arg *bval = (struct bt_arg *)bs->bs_var;
 	struct bt_var *bv = bmap->ba_value;
+	struct map *map;
 	const char *hash;
 
 	assert(bmap->ba_type == B_AT_MAP);
@@ -791,11 +801,15 @@ stmt_insert(struct bt_stmt *bs, struct dt_evt *dtev)
 
 	bkey = bmap->ba_key;
 	hash = ba2hash(bkey, dtev);
-	debug("map=%p '%s' insert key=%p '%s' bval=%p\n", bv->bv_value,
+
+	/* map is NULL before first insert or after clear() */
+	map = (struct map *)bv->bv_value;
+	map = map_insert(map, hash, bval, dtev);
+
+	debug("map=%p '%s' insert key=%p '%s' bval=%p\n", map,
 	    bv_name(bv), bkey, hash, bval);
 
-	bv->bv_value = (struct bt_arg *)map_insert((struct map *)bv->bv_value,
-	    hash, bval, dtev);
+	bv->bv_value = (struct bt_arg *)map;
 	bv->bv_type = B_VT_MAP;
 }
 
@@ -810,6 +824,7 @@ stmt_print(struct bt_stmt *bs, struct dt_evt *dtev)
 {
 	struct bt_arg *btop, *ba = SLIST_FIRST(&bs->bs_args);
 	struct bt_var *bv = ba->ba_value;
+	struct map *map;
 	size_t top = SIZE_T_MAX;
 
 	assert(bs->bs_var == NULL);
@@ -828,16 +843,16 @@ stmt_print(struct bt_stmt *bs, struct dt_evt *dtev)
 		return;
 	}
 
-	debug("map=%p '%s' print (top=%d)\n", bv->bv_value, bv_name(bv), top);
-
-	/* Empty? */
-	if (bv->bv_value == NULL)
+	map = (struct map *)bv->bv_value;
+	if (map == NULL)
 		return;
 
+	debug("map=%p '%s' print (top=%d)\n", bv->bv_value, bv_name(bv), top);
+
 	if (bv->bv_type == B_VT_MAP)
-		map_print((struct map *)bv->bv_value, top, bv_name(bv));
+		map_print(map, top, bv_name(bv));
 	else if (bv->bv_type == B_VT_HIST)
-		hist_print((struct hist *)bv->bv_value, bv_name(bv));
+		hist_print((struct hist *)map, bv_name(bv));
 	else
 		printf("%s\n", ba2str(ba, dtev));
 }
@@ -928,6 +943,7 @@ stmt_zero(struct bt_stmt *bs)
 {
 	struct bt_arg *ba = SLIST_FIRST(&bs->bs_args);
 	struct bt_var *bv = ba->ba_value;
+	struct map *map;
 
 	assert(bs->bs_var == NULL);
 	assert(ba->ba_type == B_AT_VAR);
@@ -935,9 +951,13 @@ stmt_zero(struct bt_stmt *bs)
 	if (bv->bv_type != B_VT_MAP && bv->bv_type != B_VT_HIST)
 		errx(1, "invalid variable type for zero(%s)", ba_name(ba));
 
-	map_zero((struct map *)bv->bv_value);
+	map = (struct map *)bv->bv_value;
+	if (map == NULL)
+		return;
 
-	debug("map=%p '%s' zero\n", bv->bv_value, bv_name(bv));
+	map_zero(map);
+
+	debug("map=%p '%s' zero\n", map, bv_name(bv));
 }
 
 struct bt_arg *
