@@ -391,8 +391,10 @@ fail:
 
 	drm_notice(&i915->drm, "%s firmware %s: fetch failed with error %d\n",
 		   intel_uc_fw_type_repr(uc_fw->type), uc_fw->path, err);
+#ifdef __linux__
 	drm_info(&i915->drm, "%s firmware(s) can be downloaded from %s\n",
 		 intel_uc_fw_type_repr(uc_fw->type), INTEL_UC_FIRMWARE_URL);
+#endif
 
 	release_firmware(fw);		/* OK even if fw is NULL */
 	return err;
