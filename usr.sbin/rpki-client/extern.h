@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.66 2021/09/01 08:09:41 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.67 2021/09/09 14:15:49 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -410,9 +410,9 @@ int		 valid_uri(const char *, size_t, const char *);
 
 /* Working with CMS. */
 unsigned char	*cms_parse_validate(X509 **, const char *,
-			const char *, size_t *);
+		    const ASN1_OBJECT *, size_t *);
 int		 cms_econtent_version(const char *, const unsigned char **,
-			size_t, long *);
+		    size_t, long *);
 /* Helper for ASN1 parsing */
 int		 ASN1_frame(const char *, size_t,
 			const unsigned char **, long *, int *);

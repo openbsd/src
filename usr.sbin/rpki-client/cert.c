@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.31 2021/07/13 18:39:39 job Exp $ */
+/*	$OpenBSD: cert.c,v 1.32 2021/09/09 14:15:49 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -45,6 +45,21 @@ struct	parse {
 	struct cert	*res; /* result */
 	const char	*fn; /* currently-parsed file */
 };
+
+static ASN1_OBJECT	*carepo_oid;	/* 1.3.6.1.5.5.7.48.5 (caRepository) */
+static ASN1_OBJECT	*mft_oid;	/* 1.3.6.1.5.5.7.48.10 (rpkiManifest) */
+static ASN1_OBJECT	*notify_oid;	/* 1.3.6.1.5.5.7.48.13 (rpkiNotify) */
+
+static void
+cert_init_oid(void)
+{
+	if ((carepo_oid = OBJ_txt2obj("1.3.6.1.5.5.7.48.5", 1)) == NULL)
+		errx(1, "OBJ_txt2obj for %s failed", "1.3.6.1.5.5.7.48.5");
+	if ((mft_oid = OBJ_txt2obj("1.3.6.1.5.5.7.48.10", 1)) == NULL)
+		errx(1, "OBJ_txt2obj for %s failed", "1.3.6.1.5.5.7.48.10");
+	if ((notify_oid = OBJ_txt2obj("1.3.6.1.5.5.7.48.13", 1)) == NULL)
+		errx(1, "OBJ_txt2obj for %s failed", "1.3.6.1.5.5.7.48.13");
+}
 
 /*
  * Append an IP address structure to our list of results.
@@ -207,9 +222,9 @@ sbgp_sia_resource_entry(struct parse *p,
 	const unsigned char *d, size_t dsz)
 {
 	ASN1_SEQUENCE_ANY	*seq;
+	ASN1_OBJECT		*oid;
 	const ASN1_TYPE		*t;
 	int			 rc = 0, ptag;
-	char			 buf[128];
 	long			 plen;
 
 	if ((seq = d2i_ASN1_SEQUENCE_ANY(NULL, &d, dsz)) == NULL) {
@@ -233,7 +248,7 @@ sbgp_sia_resource_entry(struct parse *p,
 		    p->fn, ASN1_tag2str(t->type), t->type);
 		goto out;
 	}
-	OBJ_obj2txt(buf, sizeof(buf), t->value.object, 1);
+	oid = t->value.object;
 
 	t = sk_ASN1_TYPE_value(seq, 1);
 	if (t->type != V_ASN1_OTHER) {
@@ -250,18 +265,14 @@ sbgp_sia_resource_entry(struct parse *p,
 	if (!ASN1_frame(p->fn, dsz, &d, &plen, &ptag))
 		goto out;
 
-	/*
-	 * Ignore all but manifest and RRDP notify URL.
-	 * Things we may see:
-	 *  - 1.3.6.1.5.5.7.48.5 (caRepository)
-	 *  - 1.3.6.1.5.5.7.48.10 (rpkiManifest)
-	 *  - 1.3.6.1.5.5.7.48.13 (rpkiNotify)
-	 */
-	if (strcmp(buf, "1.3.6.1.5.5.7.48.5") == 0)
+	if (carepo_oid == NULL)
+		cert_init_oid();
+
+	if (OBJ_cmp(oid, carepo_oid) == 0)
 		rc = sbgp_sia_resource_carepo(p, d, plen);
-	else if (strcmp(buf, "1.3.6.1.5.5.7.48.10") == 0)
+	else if (OBJ_cmp(oid, mft_oid) == 0)
 		rc = sbgp_sia_resource_mft(p, d, plen);
-	else if (strcmp(buf, "1.3.6.1.5.5.7.48.13") == 0)
+	else if (OBJ_cmp(oid, notify_oid) == 0)
 		rc = sbgp_sia_resource_notify(p, d, plen);
 	else
 		rc = 1;	/* silently ignore */

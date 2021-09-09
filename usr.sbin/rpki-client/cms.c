@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.9 2021/07/13 18:39:39 job Exp $ */
+/*	$OpenBSD: cms.c,v 1.10 2021/09/09 14:15:49 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -35,16 +35,15 @@
  * Return the eContent as a string and set "rsz" to be its length.
  */
 unsigned char *
-cms_parse_validate(X509 **xp, const char *fn,
-    const char *oid, size_t *rsz)
+cms_parse_validate(X509 **xp, const char *fn, const ASN1_OBJECT *oid,
+    size_t *rsz)
 {
 	const ASN1_OBJECT	*obj;
 	ASN1_OCTET_STRING	**os = NULL;
 	BIO			*bio = NULL;
 	CMS_ContentInfo		*cms;
 	FILE			*f;
-	char			 buf[128];
-	int			 rc = 0, sz;
+	int			 rc = 0;
 	STACK_OF(X509)		*certs = NULL;
 	unsigned char		*res = NULL;
 
@@ -84,16 +83,18 @@ cms_parse_validate(X509 **xp, const char *fn,
 	/* RFC 6488 section 2.1.3.1: check the object's eContentType. */
 
 	obj = CMS_get0_eContentType(cms);
-	if ((sz = OBJ_obj2txt(buf, sizeof(buf), obj, 1)) < 0)
-		cryptoerrx("OBJ_obj2txt");
-
-	if ((size_t)sz >= sizeof(buf)) {
-		warnx("%s: RFC 6488 section 2.1.3.1: "
-		    "eContentType: OID too long", fn);
-		goto out;
-	} else if (strcmp(buf, oid)) {
+	if (obj == NULL) {
 		warnx("%s: RFC 6488 section 2.1.3.1: eContentType: "
-		    "unknown OID: %s, want %s", fn, buf, oid);
+		    "OID object is NULL", fn);
+		goto out;
+	}
+	if (OBJ_cmp(obj, oid) != 0) {
+		char buf[128], obuf[128];
+
+		OBJ_obj2txt(buf, sizeof(buf), obj, 1);
+		OBJ_obj2txt(obuf, sizeof(obuf), oid, 1);
+		warnx("%s: RFC 6488 section 2.1.3.1: eContentType: "
+		    "unknown OID: %s, want %s", fn, buf, obuf);
 		goto out;
 	}
 

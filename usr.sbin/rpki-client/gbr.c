@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbr.c,v 1.9 2021/03/29 06:50:44 tb Exp $ */
+/*	$OpenBSD: gbr.c,v 1.10 2021/09/09 14:15:49 claudio Exp $ */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  *
@@ -36,6 +36,8 @@ struct	parse {
 	struct gbr	 *res; /* results */
 };
 
+static ASN1_OBJECT	*gbr_oid;
+
 /*
  * Parse a full RFC 6493 file and signed by the certificate "cacert"
  * (the latter is optional and may be passed as NULL to disable).
@@ -52,9 +54,14 @@ gbr_parse(X509 **x509, const char *fn)
 	p.fn = fn;
 
 	/* OID from section 9.1, RFC 6493. */
+	if (gbr_oid == NULL) {
+		gbr_oid = OBJ_txt2obj("1.2.840.113549.1.9.16.1.35", 1);
+		if (gbr_oid == NULL)
+			errx(1, "OBJ_txt2obj for %s failed",
+			    "1.2.840.113549.1.9.16.1.35");
+	}
 
-	cms = cms_parse_validate(x509, fn,
-	    "1.2.840.113549.1.9.16.1.35", &cmsz);
+	cms = cms_parse_validate(x509, fn, gbr_oid, &cmsz);
 	if (cms == NULL)
 		return NULL;
 
