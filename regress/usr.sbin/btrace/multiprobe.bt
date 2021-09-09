@@ -1,0 +1,10 @@
+BEGIN,
+interval:hz:2
+{
+	printf("multi\n");
+}
+
+interval:hz:1
+{
+	exit();
+}
