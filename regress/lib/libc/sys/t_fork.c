@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_fork.c,v 1.2 2021/09/02 15:28:41 mbuhl Exp $	*/
+/*	$OpenBSD: t_fork.c,v 1.3 2021/09/09 17:36:34 anton Exp $	*/
 /*	$NetBSD: t_fork.c,v 1.4 2019/04/06 15:41:54 kamil Exp $	*/
 
 /*-
@@ -142,9 +142,20 @@ await_stopped_child(pid_t process)
 static void
 raise_raw(int sig)
 {
+	struct sigaction act, oact;
 	int rv, status;
 	pid_t child, parent, watcher, wpid;
 	int expect_core = (sig == SIGABRT) ? 1 : 0;
+
+	/* Ensure the signal is not ignored. */
+	if (sig != SIGKILL && sig != SIGSTOP) {
+		memset(&act, 0, sizeof(act));
+		act.sa_handler = SIG_DFL;
+		ATF_REQUIRE(sigaction(sig, &act, &oact) == 0);
+	} else {
+		ATF_REQUIRE(sigaction(sig, &act, &oact) != 0);
+		ATF_REQUIRE(errno == EINVAL);
+	}
 
 	/*
 	 * Spawn a dedicated thread to watch for a stopped child and emit
@@ -202,6 +213,9 @@ raise_raw(int sig)
 		_exit(0);
 	}
 	wpid = waitpid(child, &status, 0);
+
+	if (sig != SIGKILL && sig != SIGSTOP)
+		ATF_REQUIRE(sigaction(sig, &oact, NULL) == 0);
 
 	ATF_REQUIRE_EQ(wpid, child);
 
