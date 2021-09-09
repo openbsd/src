@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.h,v 1.24 2021/08/12 12:31:16 krw Exp $	*/
+/*	$OpenBSD: cmd.h,v 1.25 2021/09/09 15:21:39 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -20,7 +20,7 @@
 #define _CMD_H
 
 #define CMD_EXIT	0x0000
-#define CMD_SAVE	0x0001
+#define CMD_QUIT	0x0001
 #define CMD_CONT	0x0002
 #define CMD_CLEAN	0x0003
 #define CMD_DIRTY	0x0004

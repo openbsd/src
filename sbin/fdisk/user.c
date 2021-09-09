@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.76 2021/08/25 23:47:36 krw Exp $	*/
+/*	$OpenBSD: user.c,v 1.77 2021/09/09 15:21:39 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -56,7 +56,6 @@ const struct cmd		cmd_table[] = {
 	{"abort",  1, Xabort,  "Abort program without saving current changes"},
 };
 
-
 int			modified;
 
 int			ask_cmd(const int, char **);
@@ -69,20 +68,19 @@ USER_edit(const uint64_t lba_self, const uint64_t lba_firstembr)
 	int			 i, st;
 	static int		 editlevel;
 
-	editlevel += 1;
-
 	if (MBR_read(lba_self, lba_firstembr, &mbr))
-		goto done;
+		return;
+
+	editlevel += 1;
 
 	if (editlevel == 1)
 		GPT_read(ANYGPT);
 
 	printf("Enter 'help' for information\n");
 
-again:
-	do {
+	for (;;) {
 		if (letoh64(gh.gh_sig) == GPTSIGNATURE && editlevel > 1)
-			goto done;	/* 'reinit gpt'. Unwind recursion! */
+			break;	/* 'reinit gpt'. Unwind recursion! */
 
 		i = ask_cmd(editlevel, &args);
 		if (i == -1)
@@ -90,25 +88,22 @@ again:
 
 		st = cmd_table[i].cmd_fcn(args ? args : "", &mbr);
 
-		if (st == CMD_EXIT)
+		if (st == CMD_EXIT) {
+			if (modified)
+				printf("Aborting changes to current MBR\n");
 			break;
-		if (st == CMD_SAVE)
+		}
+		if (st == CMD_QUIT) {
+			if (modified && Xwrite(NULL, &mbr) == CMD_CONT)
+				continue;
 			break;
+		}
 		if (st == CMD_CLEAN)
 			modified = 0;
 		if (st == CMD_DIRTY)
 			modified = 1;
-	} while (1);
-
-	if (modified) {
-		if (st == CMD_SAVE) {
-			if (Xwrite(NULL, &mbr) == CMD_CONT)
-				goto again;
-		} else
-			printf("Aborting changes to current MBR.\n");
 	}
 
-done:
 	editlevel -= 1;
 }
 
