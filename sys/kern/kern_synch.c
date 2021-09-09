@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.177 2021/03/04 09:02:37 mpi Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.178 2021/09/09 18:23:31 mpi Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -556,7 +556,6 @@ wakeup_n(const volatile void *ident, int n)
 	qp = &slpque[LOOKUP(ident)];
 	for (p = TAILQ_FIRST(qp); p != NULL && n != 0; p = pnext) {
 		pnext = TAILQ_NEXT(p, p_runq);
-#ifdef DIAGNOSTIC
 		/*
 		 * If the rwlock passed to rwsleep() is contended, the
 		 * CPU will end up calling wakeup() between sleep_setup()
@@ -566,6 +565,7 @@ wakeup_n(const volatile void *ident, int n)
 			KASSERT(p->p_stat == SONPROC);
 			continue;
 		}
+#ifdef DIAGNOSTIC
 		if (p->p_stat != SSLEEP && p->p_stat != SSTOP)
 			panic("wakeup: p_stat is %d", (int)p->p_stat);
 #endif
