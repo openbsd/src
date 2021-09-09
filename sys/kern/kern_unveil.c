@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_unveil.c,v 1.50 2021/09/02 12:35:23 claudio Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.51 2021/09/09 13:02:36 claudio Exp $	*/
 
 /*
  * Copyright (c) 2017-2019 Bob Beck <beck@openbsd.org>
@@ -691,7 +691,7 @@ int
 unveil_check_final(struct proc *p, struct nameidata *ni)
 {
 	struct process *pr = p->p_p;
-	struct unveil *uv = NULL, *nuv = NULL;
+	struct unveil *uv = NULL, *nuv;
 	struct unvname *tname = NULL;
 
 	if (ni->ni_pledge == PLEDGE_UNVEIL || pr->ps_uvpaths == NULL)
