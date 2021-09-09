@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_html.c,v 1.31 2021/08/10 12:36:42 schwarze Exp $ */
+/*	$OpenBSD: tbl_html.c,v 1.32 2021/09/09 14:45:18 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014,2015,2017,2018,2021 Ingo Schwarze <schwarze@openbsd.org>
@@ -239,7 +239,12 @@ print_tbl(struct html *h, const struct tbl_span *sp)
 		    "vertical-align", valign,
 		    "text-align", halign,
 		    "border-right-style", rborder);
-		if (dp->string != NULL) {
+		if (dp->layout->pos == TBL_CELL_HORIZ ||
+		    dp->layout->pos == TBL_CELL_DHORIZ ||
+		    dp->pos == TBL_DATA_HORIZ ||
+		    dp->pos == TBL_DATA_DHORIZ)
+			print_otag(h, TAG_HR, "");
+		else if (dp->string != NULL) {
 			save_font = h->metac;
 			html_setfont(h, dp->layout->font);
 			if (dp->layout->pos == TBL_CELL_LONG)
