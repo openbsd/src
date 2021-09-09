@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.10 2021/07/18 11:25:48 schwarze Exp $
+# $OpenBSD: Makefile,v 1.11 2021/09/09 11:48:06 schwarze Exp $
 #
 # Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 #
@@ -74,11 +74,6 @@ diff.merr: all.merr
 	diff -u ${.CURDIR}/../out/all.merr all.merr
 
 .PHONY: ${REGRESS_TARGETS}
-
-cleandir: cleandir_local
-
-cleandir_local:
-	rm -rf ${MOB_TESTS:C/$/.dir/}
 
 
 # === RUNNING DBM_DUMP =================================================
@@ -476,3 +471,9 @@ binedit dbm_dump makeinodes:
 	ln -sf ${.OBJDIR}/../$@/$@ .
 
 .include <bsd.regress.mk>
+
+# must come after the .include: <bsd.prog.mk> contains .if !target(clean)
+clean: clean_local
+
+clean_local:
+	rm -rf ${MOB_TESTS:C/$/.dir/}
