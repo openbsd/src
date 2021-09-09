@@ -1,6 +1,7 @@
-# $OpenBSD: Makefile,v 1.16 2021/09/09 06:59:51 mpi Exp $
+# $OpenBSD: Makefile,v 1.17 2021/09/09 09:38:38 mpi Exp $
 
 BTRACE?=		 /usr/sbin/btrace
+ALLOWDT!=		sysctl -n kern.allowdt
 
 # scripts that don't need /dev/dt
 BT_LANG_SCRIPTS=	arithm beginend boolean comments delete exit if \
@@ -8,7 +9,7 @@ BT_LANG_SCRIPTS=	arithm beginend boolean comments delete exit if \
 			maxoperand min+max+sum multismts nsecs+var \
 			precedence print read-map-after-clear syntaxerror
 
-
+# scripts that use kernel probes
 BT_KERN_SCRIPTS=
 
 REGRESS_EXPECTED_FAILURES=	run-maxoperand
@@ -18,6 +19,18 @@ REGRESS_TARGETS+=		run-$b
 run-$b:
 	${BTRACE} ${.CURDIR}/$b.bt 2>&1 | \
 		diff -u ${.CURDIR}/$b.ok /dev/stdin
+.endfor
+
+.for b in ${BT_KERN_SCRIPTS}
+REGRESS_TARGETS+=		run-$b
+REGRESS_ROOT_TARGETS+=		run-$b
+run-$b:
+.if ${ALLOWDT}
+	${BTRACE} ${.CURDIR}/$b.bt 2>&1 | \
+		diff -u ${.CURDIR}/$b.ok /dev/stdin
+.else
+	@echo SKIPPED
+.endif
 .endfor
 
 .include <bsd.regress.mk>
