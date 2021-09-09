@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.54 2021/09/09 09:53:11 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.55 2021/09/09 11:20:40 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2021 Martin Pieuchot <mpi@openbsd.org>
@@ -1388,6 +1388,11 @@ ba2str(struct bt_arg *ba, struct dt_evt *dtev)
 		break;
 	case B_AT_MAP:
 		bv = ba->ba_value;
+		/* Unitialized map */
+		if (bv->bv_value == NULL) {
+			str = buf;
+			break;
+		}
 		str = ba2str(map_get((struct map *)bv->bv_value,
 		    ba2str(ba->ba_key, dtev)), dtev);
 		break;
