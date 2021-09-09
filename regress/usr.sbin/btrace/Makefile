@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.18 2021/09/09 09:56:32 mpi Exp $
+# $OpenBSD: Makefile,v 1.19 2021/09/09 10:00:04 mpi Exp $
 
 BTRACE?=		 /usr/sbin/btrace
 ALLOWDT!=		sysctl -n kern.allowdt
@@ -20,6 +20,12 @@ run-$b:
 	${BTRACE} ${.CURDIR}/$b.bt 2>&1 | \
 		diff -u ${.CURDIR}/$b.ok /dev/stdin
 .endfor
+
+b=staticv
+REGRESS_TARGETS+=		run-$b
+run-$b:
+	${BTRACE} ${.CURDIR}/$b.bt 42 1337 -2019 2>&1 | \
+		diff -u ${.CURDIR}/$b.ok /dev/stdin
 
 .for b in ${BT_KERN_SCRIPTS}
 REGRESS_TARGETS+=		run-$b
