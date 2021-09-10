@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.267 2021/09/08 17:27:33 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.268 2021/09/10 08:59:56 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -3056,6 +3056,15 @@ SSL_CTX_get0_certificate(const SSL_CTX *ctx)
 		return NULL;
 
 	return ctx->internal->cert->key->x509;
+}
+
+EVP_PKEY *
+SSL_CTX_get0_privatekey(const SSL_CTX *ctx)
+{
+	if (ctx->internal->cert == NULL)
+		return NULL;
+
+	return ctx->internal->cert->key->privatekey;
 }
 
 int
