@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.41 2021/09/10 09:08:03 tb Exp $ */
+/* $OpenBSD: bn.h,v 1.42 2021/09/10 14:32:05 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -231,7 +231,6 @@ extern "C" {
 #define BN_set_flags(b,n)	((b)->flags|=(n))
 #define BN_get_flags(b,n)	((b)->flags&(n))
 
-#if defined(LIBRESSL_INTERNAL)
 /* Values for |top| in BN_rand() */
 #define BN_RAND_TOP_ANY    -1
 #define BN_RAND_TOP_ONE     0
@@ -240,7 +239,6 @@ extern "C" {
 /* Values for |bottom| in BN_rand() */
 #define BN_RAND_BOTTOM_ANY  0
 #define BN_RAND_BOTTOM_ODD  1
-#endif
 
 /* get a clone of a BIGNUM with changed flags, for *temporary* use only
  * (the two BIGNUMs cannot not be used in parallel!) */
