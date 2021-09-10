@@ -425,6 +425,8 @@ BN_add_word
 BN_asc2bn
 BN_bin2bn
 BN_bn2bin
+BN_bn2binpad
+BN_bn2lebinpad
 BN_bn2dec
 BN_bn2hex
 BN_bn2mpi
@@ -468,6 +470,7 @@ BN_is_prime_ex
 BN_is_prime_fasttest
 BN_is_prime_fasttest_ex
 BN_kronecker
+BN_lebin2bn
 BN_lshift
 BN_lshift1
 BN_mask_bits
@@ -1063,6 +1066,7 @@ EC_GROUP_new
 EC_GROUP_new_by_curve_name
 EC_GROUP_new_curve_GF2m
 EC_GROUP_new_curve_GFp
+EC_GROUP_order_bits
 EC_GROUP_precompute_mult
 EC_GROUP_set_asn1_flag
 EC_GROUP_set_curve
