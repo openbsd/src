@@ -1,4 +1,4 @@
-/* $OpenBSD: tls1.h,v 1.48 2021/09/10 14:50:19 tb Exp $ */
+/* $OpenBSD: tls1.h,v 1.49 2021/09/10 14:57:31 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -318,10 +318,8 @@ SSL_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_DEBUG_CB,(void (*)(void))cb)
 #define SSL_set_tlsext_debug_arg(ssl, arg) \
 SSL_ctrl(ssl,SSL_CTRL_SET_TLSEXT_DEBUG_ARG,0, (void *)arg)
 
-#if defined(LIBRESSL_INTERNAL)
 #define SSL_get_tlsext_status_type(ssl) \
 SSL_ctrl(ssl, SSL_CTRL_GET_TLSEXT_STATUS_REQ_TYPE, 0, NULL)
-#endif
 
 #define SSL_set_tlsext_status_type(ssl, type) \
 SSL_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_REQ_TYPE,type, NULL)
