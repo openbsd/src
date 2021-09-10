@@ -1,4 +1,4 @@
-/*	$OpenBSD: uwacom.c,v 1.2 2020/08/23 11:08:02 mglocker Exp $	*/
+/*	$OpenBSD: uwacom.c,v 1.3 2021/09/10 05:47:38 anton Exp $	*/
 
 /*
  * Copyright (c) 2016 Frank Groeneveld <frank@frankgroeneveld.nl>
@@ -95,7 +95,7 @@ uwacom_attach(struct device *parent, struct device *self, void *aux)
 	struct hidms *ms = &sc->sc_ms;
 	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)aux;
 	struct usb_attach_arg *uaa = uha->uaa;
-	int size, repid;
+	int size;
 	void *desc;
 
 	sc->sc_hdev.sc_intr = uwacom_intr;
@@ -106,10 +106,9 @@ uwacom_attach(struct device *parent, struct device *self, void *aux)
 	usbd_set_idle(uha->parent->sc_udev, uha->parent->sc_ifaceno, 0, 0);
 
 	uhidev_get_report_desc(uha->parent, &desc, &size);
-	repid = uha->reportid;
-	sc->sc_hdev.sc_isize = hid_report_size(desc, size, hid_input, repid);
-	sc->sc_hdev.sc_osize = hid_report_size(desc, size, hid_output, repid);
-	sc->sc_hdev.sc_fsize = hid_report_size(desc, size, hid_feature, repid);
+	sc->sc_hdev.sc_isize = uha->isize;
+	sc->sc_hdev.sc_osize = uha->osize;
+	sc->sc_hdev.sc_fsize = uha->fsize;
 
 	ms->sc_device = self;
 	ms->sc_rawmode = 1;
