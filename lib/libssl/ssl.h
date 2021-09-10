@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.204 2021/09/10 14:46:31 tb Exp $ */
+/* $OpenBSD: ssl.h,v 1.205 2021/09/10 14:54:14 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1244,9 +1244,7 @@ long SSL_CTX_get_timeout(const SSL_CTX *ctx);
 X509_STORE *SSL_CTX_get_cert_store(const SSL_CTX *);
 void SSL_CTX_set_cert_store(SSL_CTX *, X509_STORE *);
 X509 *SSL_CTX_get0_certificate(const SSL_CTX *ctx);
-#if defined(LIBRESSL_INTERNAL)
 EVP_PKEY *SSL_CTX_get0_privatekey(const SSL_CTX *ctx);
-#endif
 int SSL_want(const SSL *s);
 int	SSL_clear(SSL *s);
 
