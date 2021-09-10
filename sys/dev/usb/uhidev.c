@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.92 2021/03/18 09:21:53 anton Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.93 2021/09/10 05:46:01 anton Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -142,7 +142,7 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 	usb_endpoint_descriptor_t *ed;
 	struct uhidev_attach_arg uha;
 	int size, nrepid, repid, repsz;
-	int i, repsizes[256];
+	int i;
 	void *desc = NULL;
 	struct device *dev;
 
@@ -241,7 +241,6 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 	for (repid = 0; repid < nrepid; repid++) {
 		repsz = hid_report_size(desc, size, hid_input, repid);
 		DPRINTF(("uhidev_match: repid=%d, repsz=%d\n", repid, repsz));
-		repsizes[repid] = repsz;
 		if (repsz > sc->sc_isize)
 			sc->sc_isize = repsz;
 	}
