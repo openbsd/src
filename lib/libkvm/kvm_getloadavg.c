@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_getloadavg.c,v 1.9 2009/10/27 23:59:28 deraadt Exp $ */
+/*	$OpenBSD: kvm_getloadavg.c,v 1.10 2021/09/10 00:02:43 deraadt Exp $ */
 /*	$NetBSD: kvm_getloadavg.c,v 1.2 1996/03/18 22:33:31 thorpej Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/signal.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/proc.h>
@@ -52,6 +52,8 @@ static struct nlist nl[] = {
 #define	X_FSCALE	1
 	{ "" },
 };
+
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 /*
  * kvm_getloadavg() -- Get system load averages, from live or dead kernels.
@@ -89,7 +91,7 @@ kvm_getloadavg(kvm_t *kd, double loadavg[], int nelem)
 	if (!KREAD(kd, nl[X_FSCALE].n_value, &fscale))
 		loadinfo.fscale = fscale;
 
-	nelem = MIN(nelem, sizeof(loadinfo.ldavg) / sizeof(fixpt_t));
+	nelem = MINIMUM(nelem, sizeof(loadinfo.ldavg) / sizeof(fixpt_t));
 	for (i = 0; i < nelem; i++)
 		loadavg[i] = (double) loadinfo.ldavg[i] / loadinfo.fscale;
 	return (nelem);

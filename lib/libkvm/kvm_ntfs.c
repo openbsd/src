@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_ntfs.c,v 1.5 2016/10/02 23:11:55 guenther Exp $	*/
+/*	$OpenBSD: kvm_ntfs.c,v 1.6 2021/09/10 00:02:43 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -29,7 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
+#include <sys/time.h>
 #include <sys/ucred.h>
 #define _KERNEL
 #include <sys/mount.h>

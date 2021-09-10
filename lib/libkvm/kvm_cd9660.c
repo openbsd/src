@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_cd9660.c,v 1.8 2019/01/25 00:19:25 millert Exp $	*/
+/*	$OpenBSD: kvm_cd9660.c,v 1.9 2021/09/10 00:02:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <millert@openbsd.org>
@@ -16,7 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
+#include <sys/time.h>
 #include <sys/ucred.h>
 #define _KERNEL
 #include <sys/mount.h>

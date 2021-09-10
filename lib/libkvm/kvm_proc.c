@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc.c,v 1.61 2020/10/12 22:08:33 deraadt Exp $	*/
+/*	$OpenBSD: kvm_proc.c,v 1.62 2021/09/10 00:02:43 deraadt Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,7 +70,9 @@
  */
 
 #define __need_process
-#include <sys/param.h>
+#include <sys/param.h>	/* MAXCOMLEN PAGE_SIZE */
+#include <sys/types.h>
+#include <sys/signal.h>
 #include <sys/proc.h>
 #include <sys/exec.h>
 #include <sys/stat.h>
@@ -97,6 +99,8 @@
 
 #include "kvm_private.h"
 
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
+#define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 
 static char	*_kvm_ureadm(kvm_t *, const struct kinfo_proc *, u_long, u_long *);
 static ssize_t	kvm_ureadm(kvm_t *, const struct kinfo_proc *, u_long, char *, size_t);
@@ -287,9 +291,9 @@ kvm_argv(kvm_t *kd, const struct kinfo_proc *p, u_long addr, int narg,
 	}
 
 	if (*pargv == 0)
-		argc = MAX(narg + 1, 32);
+		argc = MAXIMUM(narg + 1, 32);
 	else if (narg + 1 > *pargc)
-		argc = MAX(2 * (*pargc), narg + 1);
+		argc = MAXIMUM(2 * (*pargc), narg + 1);
 	else
 		goto argv_allocated;
 	argv = _kvm_reallocarray(kd, *pargv, argc, sizeof(**pargv));
@@ -552,7 +556,7 @@ kvm_ureadm(kvm_t *kd, const struct kinfo_proc *p, u_long uva, char *buf,
 			_kvm_err(kd, 0, "invalid address (%lx)", uva);
 			return (0);
 		}
-		cc = (size_t)MIN(cnt, len);
+		cc = (size_t)MINIMUM(cnt, len);
 		memcpy(cp, dp, cc);
 		cp += cc;
 		uva += cc;
