@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.h,v 1.34 2021/09/03 16:28:33 bluhm Exp $ */
+/*	$OpenBSD: syslogd.h,v 1.35 2021/09/10 15:18:36 bluhm Exp $ */
 
 /*
  * Copyright (c) 2014-2017 Alexander Bluhm <bluhm@genua.de>
@@ -35,7 +35,7 @@ int   priv_config_modified(void);
 int   priv_getaddrinfo(char *, char *, char *, struct sockaddr *, size_t);
 int   priv_getnameinfo(struct sockaddr *, socklen_t, char *, size_t);
 
-#define IOVCNT		6
+#define IOVCNT		7
 
 /* Terminal message */
 #define TTYMSGTIME	1		/* timeout used by ttymsg */

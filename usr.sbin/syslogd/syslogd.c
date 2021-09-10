@@ -1,7 +1,7 @@
-/*	$OpenBSD: syslogd.c,v 1.268 2021/09/03 23:57:30 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.269 2021/09/10 15:18:36 bluhm Exp $	*/
 
 /*
- * Copyright (c) 2014-2017 Alexander Bluhm <bluhm@genua.de>
+ * Copyright (c) 2014-2021 Alexander Bluhm <bluhm@genua.de>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -1898,11 +1898,23 @@ fprintlog(struct filed *f, int flags, char *msg)
 {
 	struct iovec iov[IOVCNT], *v;
 	int l, retryonce;
-	char line[LOG_MAXLINE + 1], repbuf[80], greetings[500];
+	char line[LOG_MAXLINE + 1], pribuf[13], greetings[500], repbuf[80];
 	char ebuf[ERRBUFSIZE];
 
 	v = iov;
-	if (f->f_type == F_WALL) {
+	switch (f->f_type) {
+	case F_FORWUDP:
+	case F_FORWTCP:
+	case F_FORWTLS:
+		l = snprintf(pribuf, sizeof(pribuf), "<%d>", f->f_prevpri);
+		if (l < 0)
+			l = strlcpy(pribuf, "<13>", sizeof(pribuf));
+		if (l >= sizeof(pribuf))
+			l = sizeof(pribuf) - 1;
+		v->iov_base = pribuf;
+		v->iov_len = l;
+		break;
+	case F_WALL:
 		l = snprintf(greetings, sizeof(greetings),
 		    "\r\n\7Message from syslogd@%s at %.24s ...\r\n",
 		    f->f_prevhost, ctime(&now.tv_sec));
@@ -1914,40 +1926,65 @@ fprintlog(struct filed *f, int flags, char *msg)
 			l = sizeof(greetings) - 1;
 		v->iov_base = greetings;
 		v->iov_len = l;
-		v++;
+		break;
+	default:
 		v->iov_base = "";
 		v->iov_len = 0;
-		v++;
-	} else if (f->f_lasttime[0] != '\0') {
+		break;
+	}
+	v++;
+
+	if (f->f_lasttime[0] != '\0') {
 		v->iov_base = f->f_lasttime;
 		v->iov_len = strlen(f->f_lasttime);
 		v++;
 		v->iov_base = " ";
 		v->iov_len = 1;
-		v++;
 	} else {
 		v->iov_base = "";
 		v->iov_len = 0;
 		v++;
 		v->iov_base = "";
 		v->iov_len = 0;
-		v++;
 	}
-	if (f->f_prevhost[0] != '\0') {
-		v->iov_base = f->f_prevhost;
-		v->iov_len = strlen(v->iov_base);
-		v++;
-		v->iov_base = " ";
-		v->iov_len = 1;
-		v++;
-	} else {
-		v->iov_base = "";
-		v->iov_len = 0;
-		v++;
-		v->iov_base = "";
-		v->iov_len = 0;
-		v++;
+	v++;
+
+	switch (f->f_type) {
+	case F_FORWUDP:
+	case F_FORWTCP:
+	case F_FORWTLS:
+		if (IncludeHostname) {
+			v->iov_base = LocalHostName;
+			v->iov_len = strlen(LocalHostName);
+			v++;
+			v->iov_base = " ";
+			v->iov_len = 1;
+		} else {
+			/* XXX RFC requires to include host name */
+			v->iov_base = "";
+			v->iov_len = 0;
+			v++;
+			v->iov_base = "";
+			v->iov_len = 0;
+		}
+		break;
+	default:
+		if (f->f_prevhost[0] != '\0') {
+			v->iov_base = f->f_prevhost;
+			v->iov_len = strlen(v->iov_base);
+			v++;
+			v->iov_base = " ";
+			v->iov_len = 1;
+		} else {
+			v->iov_base = "";
+			v->iov_len = 0;
+			v++;
+			v->iov_base = "";
+			v->iov_len = 0;
+		}
+		break;
 	}
+	v++;
 
 	if (msg) {
 		v->iov_base = msg;
@@ -1968,6 +2005,28 @@ fprintlog(struct filed *f, int flags, char *msg)
 	}
 	v++;
 
+	switch (f->f_type) {
+	case F_CONSOLE:
+	case F_TTY:
+	case F_USERS:
+	case F_WALL:
+		v->iov_base = "\r\n";
+		v->iov_len = 2;
+		break;
+	case F_FILE:
+	case F_PIPE:
+	case F_FORWTCP:
+	case F_FORWTLS:
+		v->iov_base = "\n";
+		v->iov_len = 1;
+		break;
+	default:
+		v->iov_base = "";
+		v->iov_len = 0;
+		break;
+	}
+	v = NULL;
+
 	log_debugadd("Logging to %s", TypeNames[f->f_type]);
 	f->f_time = now.tv_sec;
 
@@ -1979,12 +2038,12 @@ fprintlog(struct filed *f, int flags, char *msg)
 	case F_FORWUDP:
 		log_debug(" %s", f->f_un.f_forw.f_loghost);
 		l = snprintf(line, MINIMUM(MAX_UDPMSG + 1, sizeof(line)),
-		    "<%d>%.32s %s%s%s", f->f_prevpri, (char *)iov[0].iov_base,
-		    IncludeHostname ? LocalHostName : "",
-		    IncludeHostname ? " " : "",
-		    (char *)iov[4].iov_base);
+		    "%s%s%s%s%s%s%s", (char *)iov[0].iov_base,
+		    (char *)iov[1].iov_base, (char *)iov[2].iov_base,
+		    (char *)iov[3].iov_base, (char *)iov[4].iov_base,
+		    (char *)iov[5].iov_base, (char *)iov[6].iov_base);
 		if (l < 0)
-			l = strlcpy(line, iov[4].iov_base, sizeof(line));
+			l = strlcpy(line, iov[5].iov_base, sizeof(line));
 		if (l >= sizeof(line))
 			l = sizeof(line) - 1;
 		if (l >= MAX_UDPMSG + 1)
@@ -2027,22 +2086,15 @@ fprintlog(struct filed *f, int flags, char *msg)
 		 * buffer synchronisation, helps legacy implementations,
 		 * and makes line based testing easier.
 		 */
-		l = snprintf(line, sizeof(line), "<%d>%.32s %s%s\n",
-		    f->f_prevpri, (char *)iov[0].iov_base,
-		    IncludeHostname ? LocalHostName : "",
-		    IncludeHostname ? " " : "");
-		if (l < 0) {
-			log_debug(" (dropped snprintf)");
-			f->f_dropped++;
-			break;
-		}
 		l = evbuffer_add_printf(f->f_un.f_forw.f_bufev->output,
-		    "%zu <%d>%.32s %s%s%s\n",
-		    (size_t)l + strlen(iov[4].iov_base),
-		    f->f_prevpri, (char *)iov[0].iov_base,
-		    IncludeHostname ? LocalHostName : "",
-		    IncludeHostname ? " " : "",
-		    (char *)iov[4].iov_base);
+		    "%zu %s%s%s%s%s%s%s", iov[0].iov_len +
+		    iov[1].iov_len + iov[2].iov_len +
+		    iov[3].iov_len + iov[4].iov_len +
+		    iov[5].iov_len + iov[6].iov_len,
+		    (char *)iov[0].iov_base,
+		    (char *)iov[1].iov_base, (char *)iov[2].iov_base,
+		    (char *)iov[3].iov_base, (char *)iov[4].iov_base,
+		    (char *)iov[5].iov_base, (char *)iov[6].iov_base);
 		if (l < 0) {
 			log_debug(" (dropped evbuffer_add_printf)");
 			f->f_dropped++;
@@ -2058,18 +2110,10 @@ fprintlog(struct filed *f, int flags, char *msg)
 			break;
 		}
 		/* FALLTHROUGH */
-
 	case F_TTY:
 	case F_FILE:
 	case F_PIPE:
 		log_debug(" %s", f->f_un.f_fname);
-		if (f->f_type != F_FILE && f->f_type != F_PIPE) {
-			v->iov_base = "\r\n";
-			v->iov_len = 2;
-		} else {
-			v->iov_base = "\n";
-			v->iov_len = 1;
-		}
 		retryonce = 0;
 	again:
 		if (writev(f->f_file, iov, IOVCNT) == -1) {
@@ -2151,18 +2195,18 @@ fprintlog(struct filed *f, int flags, char *msg)
 	case F_USERS:
 	case F_WALL:
 		log_debug("%s", "");
-		v->iov_base = "\r\n";
-		v->iov_len = 2;
 		wallmsg(f, iov);
 		break;
 
 	case F_MEMBUF:
 		log_debug("%s", "");
-		l = snprintf(line, sizeof(line), "%.32s %s %s",
-		    (char *)iov[0].iov_base, (char *)iov[2].iov_base,
-		    (char *)iov[4].iov_base);
+		l = snprintf(line, sizeof(line),
+		    "%s%s%s%s%s%s%s", (char *)iov[0].iov_base,
+		    (char *)iov[1].iov_base, (char *)iov[2].iov_base,
+		    (char *)iov[3].iov_base, (char *)iov[4].iov_base,
+		    (char *)iov[5].iov_base, (char *)iov[6].iov_base);
 		if (l < 0)
-			l = strlcpy(line, iov[4].iov_base, sizeof(line));
+			l = strlcpy(line, iov[5].iov_base, sizeof(line));
 		if (ringbuf_append_line(f->f_un.f_mb.f_rb, line) == 1)
 			f->f_un.f_mb.f_overflow = 1;
 		if (f->f_un.f_mb.f_attached)
