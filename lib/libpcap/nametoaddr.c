@@ -1,4 +1,4 @@
-/*	$OpenBSD: nametoaddr.c,v 1.22 2019/07/19 04:51:31 dlg Exp $	*/
+/*	$OpenBSD: nametoaddr.c,v 1.23 2021/09/10 00:01:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -24,7 +24,6 @@
  * These functions are not time critical.
  */
 
-#include <sys/param.h>
 #include <sys/types.h>				/* concession to AIX */
 #include <sys/socket.h>
 #include <sys/time.h>
