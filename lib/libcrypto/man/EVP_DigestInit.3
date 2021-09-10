@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_DigestInit.3,v 1.20 2021/01/05 06:51:31 jmc Exp $
+.\" $OpenBSD: EVP_DigestInit.3,v 1.21 2021/09/10 18:58:43 millert Exp $
 .\" full merge up to: OpenSSL 7f572e95 Dec 2 13:57:04 2015 +0000
 .\" selective merge up to: OpenSSL a95d7574 Jul 2 12:16:38 2017 -0400
 .\"
@@ -68,7 +68,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 5 2021 $
+.Dd $Mdocdate: September 10 2021 $
 .Dt EVP_DIGESTINIT 3
 .Os
 .Sh NAME
@@ -506,9 +506,6 @@ return an
 .Vt EVP_MD
 structure when passed a digest name, a digest NID, or an ASN1_OBJECT
 structure respectively.
-The digest table must be initialized using, for example,
-.Xr OpenSSL_add_all_digests 3
-for these functions to work.
 .Pp
 .Fn EVP_MD_CTX_size ,
 .Fn EVP_MD_CTX_block_size ,
@@ -640,8 +637,6 @@ main(int argc, char *argv[])
 	const char mess2[] = "Hello World\en";
 	unsigned char md_value[EVP_MAX_MD_SIZE];
 	int md_len, i;
-
-	OpenSSL_add_all_digests();
 
 	if (argc <= 1) {
 		printf("Usage: mdtest digestname\en");
