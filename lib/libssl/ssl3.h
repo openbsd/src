@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl3.h,v 1.55 2021/06/30 18:04:06 jsing Exp $ */
+/* $OpenBSD: ssl3.h,v 1.56 2021/09/10 14:47:24 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -292,7 +292,6 @@ extern "C" {
 #define SSL3_RT_ALERT			21
 #define SSL3_RT_HANDSHAKE		22
 #define SSL3_RT_APPLICATION_DATA	23
-#define TLS1_RT_HEARTBEAT		24
 
 #define SSL3_AL_WARNING			1
 #define SSL3_AL_FATAL			2
