@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1141 2021/09/10 14:22:24 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1142 2021/09/10 15:03:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -92,20 +92,6 @@ struct winlink;
 /* Default pixel cell sizes. */
 #define DEFAULT_XPIXEL 16
 #define DEFAULT_YPIXEL 32
-
-/* Don't complain about format arguments. */
-#if __clang__ || __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)
-#define no_format_nonliteral(x) do { \
-	_Pragma ("GCC diagnostic push") \
-	_Pragma ("GCC diagnostic ignored \"-Wformat-nonliteral\"") \
-	 x; \
-	_Pragma ("GCC diagnostic pop") \
-} while (0)
-#else
-#define no_format_nonliteral(x) do { \
-	 x; \
-} while (0)
-#endif
 
 /* Attribute to make GCC check printf-like arguments. */
 #define printflike(a, b) __attribute__ ((format (printf, a, b)))
