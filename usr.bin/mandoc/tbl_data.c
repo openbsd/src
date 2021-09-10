@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_data.c,v 1.44 2021/09/07 11:47:42 schwarze Exp $ */
+/*	$OpenBSD: tbl_data.c,v 1.45 2021/09/10 12:06:29 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011,2015,2017-2019,2021 Ingo Schwarze <schwarze@openbsd.org>
@@ -198,6 +198,9 @@ tbl_cdata(struct tbl_node *tbl, int ln, const char *p, int pos)
 
 	if (p[pos] == 'T' && p[pos + 1] == '}') {
 		pos += 2;
+		if (tbl->opts.opts & TBL_OPT_NOSPACE)
+			while (p[pos] == ' ')
+				pos++;
 		if (p[pos] == tbl->opts.tab) {
 			tbl->part = TBL_PART_DATA;
 			pos++;
