@@ -1,4 +1,4 @@
-/* $OpenBSD: tls1.h,v 1.47 2021/09/10 14:44:25 tb Exp $ */
+/* $OpenBSD: tls1.h,v 1.48 2021/09/10 14:50:19 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -176,14 +176,6 @@ extern "C" {
 #define TLS1_VERSION			0x0301
 #define TLS1_VERSION_MAJOR		0x03
 #define TLS1_VERSION_MINOR		0x01
-
-#ifndef LIBRESSL_INTERNAL
-#define TLS1_get_version(s) \
-		((s->version >> 8) == TLS1_VERSION_MAJOR ? s->version : 0)
-
-#define TLS1_get_client_version(s) \
-		((s->client_version >> 8) == TLS1_VERSION_MAJOR ? s->client_version : 0)
-#endif
 
 #ifndef LIBRESSL_INTERNAL
 #define TLS1_AD_DECRYPTION_FAILED		21
