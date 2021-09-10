@@ -1,4 +1,4 @@
-/* $OpenBSD: ec.h,v 1.25 2021/09/08 17:29:21 tb Exp $ */
+/* $OpenBSD: ec.h,v 1.26 2021/09/10 14:35:36 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -250,9 +250,7 @@ const EC_POINT *EC_GROUP_get0_generator(const EC_GROUP *group);
  */
 int EC_GROUP_get_order(const EC_GROUP *group, BIGNUM *order, BN_CTX *ctx);
 
-#if defined(LIBRESSL_INTERNAL)
 int EC_GROUP_order_bits(const EC_GROUP *group);
-#endif
 
 /** Gets the cofactor of a EC_GROUP
  *  \param  group     EC_GROUP object
