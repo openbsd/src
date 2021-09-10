@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.201 2021/09/10 08:59:56 tb Exp $ */
+/* $OpenBSD: ssl.h,v 1.202 2021/09/10 09:25:29 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1995,6 +1995,9 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_MISSING_VERIFY_MESSAGE			 174
 #define SSL_R_MULTIPLE_SGC_RESTARTS			 346
 #define SSL_R_NON_SSLV2_INITIAL_PACKET			 175
+#if defined(LIBRESSL_INTERNAL)
+#define SSL_R_NO_APPLICATION_PROTOCOL			 235
+#endif
 #define SSL_R_NO_CERTIFICATES_RETURNED			 176
 #define SSL_R_NO_CERTIFICATE_ASSIGNED			 177
 #define SSL_R_NO_CERTIFICATE_RETURNED			 178

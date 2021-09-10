@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_CTX_set_alpn_select_cb.3,v 1.7 2018/03/23 14:28:16 schwarze Exp $
+.\"	$OpenBSD: SSL_CTX_set_alpn_select_cb.3,v 1.8 2021/09/10 09:25:29 tb Exp $
 .\"	OpenSSL 87b81496 Apr 19 12:38:27 2017 -0400
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 23 2018 $
+.Dd $Mdocdate: September 10 2021 $
 .Dt SSL_CTX_SET_ALPN_SELECT_CB 3
 .Os
 .Sh NAME
@@ -252,8 +252,12 @@ must return one of the following:
 .Bl -tag -width Ds
 .It SSL_TLSEXT_ERR_OK
 ALPN protocol selected.
+.It SSL_TLSEXT_ERR_ALERT_FATAL
+There was no overlap between the client's supplied list and the
+server configuration.
 .It SSL_TLSEXT_ERR_NOACK
-ALPN protocol not selected.
+ALPN protocol not selected, e.g., because no ALPN protocols are
+configured for this connection.
 .El
 .Sh SEE ALSO
 .Xr ssl 3 ,

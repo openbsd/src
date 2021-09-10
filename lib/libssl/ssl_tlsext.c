@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.98 2021/09/02 11:10:43 beck Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.99 2021/09/10 09:25:29 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -85,9 +85,16 @@ tlsext_alpn_server_parse(SSL *s, uint16_t msg_types, CBS *cbs, int *alert)
 	if (s->ctx->internal->alpn_select_cb == NULL)
 		return 1;
 
+	/*
+	 * XXX - A few things should be considered here:
+	 * 1. Ensure that the same protocol is selected on session resumption.
+	 * 2. Should the callback be called even if no ALPN extension was sent?
+	 * 3. TLSv1.2 and earlier: ensure that SNI has already been processed.
+	 */
 	r = s->ctx->internal->alpn_select_cb(s, &selected, &selected_len,
 	    CBS_data(&alpn), CBS_len(&alpn),
 	    s->ctx->internal->alpn_select_cb_arg);
+
 	if (r == SSL_TLSEXT_ERR_OK) {
 		free(S3I(s)->alpn_selected);
 		if ((S3I(s)->alpn_selected = malloc(selected_len)) == NULL) {
@@ -97,9 +104,18 @@ tlsext_alpn_server_parse(SSL *s, uint16_t msg_types, CBS *cbs, int *alert)
 		}
 		memcpy(S3I(s)->alpn_selected, selected, selected_len);
 		S3I(s)->alpn_selected_len = selected_len;
+
+		return 1;
 	}
 
-	return 1;
+	/* On SSL_TLSEXT_ERR_NOACK behave as if no callback was present. */
+	if (r == SSL_TLSEXT_ERR_NOACK)
+		return 1;
+
+	*alert = SSL_AD_NO_APPLICATION_PROTOCOL;
+	SSLerror(s, SSL_R_NO_APPLICATION_PROTOCOL);
+
+	return 0;
 
  err:
 	*alert = SSL_AD_DECODE_ERROR;
