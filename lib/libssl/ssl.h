@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.205 2021/09/10 14:54:14 tb Exp $ */
+/* $OpenBSD: ssl.h,v 1.206 2021/09/10 14:55:24 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1017,9 +1017,7 @@ int PEM_write_SSL_SESSION(FILE *fp, SSL_SESSION *x);
 #define SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB	63
 #define SSL_CTRL_GET_TLSEXT_STATUS_REQ_CB_ARG	129
 #define SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB_ARG	64
-#if defined(LIBRESSL_INTERNAL)
 #define SSL_CTRL_GET_TLSEXT_STATUS_REQ_TYPE	127
-#endif
 #define SSL_CTRL_SET_TLSEXT_STATUS_REQ_TYPE	65
 #define SSL_CTRL_GET_TLSEXT_STATUS_REQ_EXTS	66
 #define SSL_CTRL_SET_TLSEXT_STATUS_REQ_EXTS	67
