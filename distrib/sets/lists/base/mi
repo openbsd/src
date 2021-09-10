@@ -650,7 +650,7 @@
 ./usr/lib/libagentx.so.1.0
 ./usr/lib/libc.so.96.1
 ./usr/lib/libcbor.so.1.0
-./usr/lib/libcrypto.so.46.3
+./usr/lib/libcrypto.so.47.0
 ./usr/lib/libcurses.so.14.0
 ./usr/lib/libedit.so.5.2
 ./usr/lib/libelf.so.3.0
@@ -679,10 +679,10 @@
 ./usr/lib/librpcsvc.so.2.0
 ./usr/lib/libskey.so.6.0
 ./usr/lib/libsndio.so.7.1
-./usr/lib/libssl.so.49.0
+./usr/lib/libssl.so.50.0
 ./usr/lib/libtermcap.so.14.0
 ./usr/lib/libtermlib.so.14.0
-./usr/lib/libtls.so.21.0
+./usr/lib/libtls.so.22.0
 ./usr/lib/libusbhid.so.7.1
 ./usr/lib/libutil.so.15.1
 ./usr/lib/libz.so.6.0
@@ -2886,7 +2886,7 @@
 ./usr/share/relink/usr
 ./usr/share/relink/usr/lib
 ./usr/share/relink/usr/lib/libc.so.96.1.a
-./usr/share/relink/usr/lib/libcrypto.so.46.3.a
+./usr/share/relink/usr/lib/libcrypto.so.47.0.a
 ./usr/share/relink/usr/libexec
 ./usr/share/relink/usr/libexec/ld.so.a
 ./usr/share/snmp
