@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.207 2021/09/10 14:55:53 tb Exp $ */
+/* $OpenBSD: ssl.h,v 1.208 2021/09/10 14:58:44 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1275,9 +1275,7 @@ int	SSL_set_rfd(SSL *s, int fd);
 int	SSL_set_wfd(SSL *s, int fd);
 void	SSL_set_bio(SSL *s, BIO *rbio, BIO *wbio);
 BIO *	SSL_get_rbio(const SSL *s);
-#if defined(LIBRESSL_HAS_TLS1_3) || defined(LIBRESSL_INTERNAL)
 void	SSL_set0_rbio(SSL *s, BIO *rbio);
-#endif
 BIO *	SSL_get_wbio(const SSL *s);
 int	SSL_set_cipher_list(SSL *s, const char *str);
 #if defined(LIBRESSL_HAS_TLS1_3) || defined(LIBRESSL_INTERNAL)
