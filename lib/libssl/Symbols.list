@@ -74,6 +74,7 @@ SSL_CTX_free
 SSL_CTX_get0_certificate
 SSL_CTX_get0_chain_certs
 SSL_CTX_get0_param
+SSL_CTX_get0_privatekey
 SSL_CTX_get_cert_store
 SSL_CTX_get_ciphers
 SSL_CTX_get_client_CA_list
@@ -83,6 +84,7 @@ SSL_CTX_get_default_passwd_cb_userdata
 SSL_CTX_get_ex_data
 SSL_CTX_get_ex_new_index
 SSL_CTX_get_info_callback
+SSL_CTX_get_max_early_data
 SSL_CTX_get_max_proto_version
 SSL_CTX_get_min_proto_version
 SSL_CTX_get_quiet_shutdown
@@ -112,6 +114,7 @@ SSL_CTX_set_alpn_select_cb
 SSL_CTX_set_cert_store
 SSL_CTX_set_cert_verify_callback
 SSL_CTX_set_cipher_list
+SSL_CTX_set_ciphersuites
 SSL_CTX_set_client_CA_list
 SSL_CTX_set_client_cert_cb
 SSL_CTX_set_client_cert_engine
@@ -123,11 +126,13 @@ SSL_CTX_set_default_verify_paths
 SSL_CTX_set_ex_data
 SSL_CTX_set_generate_session_id
 SSL_CTX_set_info_callback
+SSL_CTX_set_max_early_data
 SSL_CTX_set_max_proto_version
 SSL_CTX_set_min_proto_version
 SSL_CTX_set_msg_callback
 SSL_CTX_set_next_proto_select_cb
 SSL_CTX_set_next_protos_advertised_cb
+SSL_CTX_set_post_handshake_auth
 SSL_CTX_set_purpose
 SSL_CTX_set_quiet_shutdown
 SSL_CTX_set_session_id_context
@@ -161,17 +166,20 @@ SSL_SESSION_get_ex_data
 SSL_SESSION_get_ex_new_index
 SSL_SESSION_get_id
 SSL_SESSION_get_master_key
+SSL_SESSION_get_max_early_data
 SSL_SESSION_get_protocol_version
 SSL_SESSION_get_ticket_lifetime_hint
 SSL_SESSION_get_time
 SSL_SESSION_get_timeout
 SSL_SESSION_has_ticket
+SSL_SESSION_is_resumable
 SSL_SESSION_new
 SSL_SESSION_print
 SSL_SESSION_print_fp
 SSL_SESSION_set1_id
 SSL_SESSION_set1_id_context
 SSL_SESSION_set_ex_data
+SSL_SESSION_set_max_early_data
 SSL_SESSION_set_time
 SSL_SESSION_set_timeout
 SSL_SESSION_up_ref
@@ -216,6 +224,7 @@ SSL_get_current_cipher
 SSL_get_current_compression
 SSL_get_current_expansion
 SSL_get_default_timeout
+SSL_get_early_data_status
 SSL_get_error
 SSL_get_ex_data
 SSL_get_ex_data_X509_STORE_CTX_idx
@@ -223,6 +232,7 @@ SSL_get_ex_new_index
 SSL_get_fd
 SSL_get_finished
 SSL_get_info_callback
+SSL_get_max_early_data
 SSL_get_max_proto_version
 SSL_get_min_proto_version
 SSL_get_peer_cert_chain
@@ -259,6 +269,7 @@ SSL_new
 SSL_peek
 SSL_pending
 SSL_read
+SSL_read_early_data
 SSL_renegotiate
 SSL_renegotiate_abbreviated
 SSL_renegotiate_pending
@@ -266,6 +277,7 @@ SSL_rstate_string
 SSL_rstate_string_long
 SSL_select_next_proto
 SSL_set0_chain
+SSL_set0_rbio
 SSL_set1_chain
 SSL_set1_groups
 SSL_set1_groups_list
@@ -276,6 +288,7 @@ SSL_set_accept_state
 SSL_set_alpn_protos
 SSL_set_bio
 SSL_set_cipher_list
+SSL_set_ciphersuites
 SSL_set_client_CA_list
 SSL_set_connect_state
 SSL_set_debug
@@ -284,9 +297,12 @@ SSL_set_fd
 SSL_set_generate_session_id
 SSL_set_hostflags
 SSL_set_info_callback
+SSL_set_max_early_data
 SSL_set_max_proto_version
 SSL_set_min_proto_version
 SSL_set_msg_callback
+SSL_set_post_handshake_auth
+SSL_set_psk_use_session_callback
 SSL_set_purpose
 SSL_set_quiet_shutdown
 SSL_set_read_ahead
@@ -323,10 +339,12 @@ SSL_use_certificate
 SSL_use_certificate_ASN1
 SSL_use_certificate_chain_file
 SSL_use_certificate_file
+SSL_verify_client_post_handshake
 SSL_version
 SSL_version_str
 SSL_want
 SSL_write
+SSL_write_early_data
 
 /* OpenSSL compatible init */
 OPENSSL_init_ssl
