@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_data.c,v 1.45 2021/09/10 12:06:29 schwarze Exp $ */
+/*	$OpenBSD: tbl_data.c,v 1.46 2021/09/10 13:23:44 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011,2015,2017-2019,2021 Ingo Schwarze <schwarze@openbsd.org>
@@ -145,17 +145,7 @@ getdata(struct tbl_node *tbl, struct tbl_span *dp,
 		dp->last->next = dat;
 	dp->last = dat;
 
-	/*
-	 * Check for a continued-data scope opening.  This consists of a
-	 * trailing `T{' at the end of the line.  Subsequent lines,
-	 * until a standalone `T}', are included in our cell.
-	 */
-
-	if (*pos - startpos == 2 &&
-	    p[startpos] == 'T' && p[startpos + 1] == '{') {
-		tbl->part = TBL_PART_CDATA;
-		return;
-	}
+	/* Strip leading and trailing spaces, if requested. */
 
 	endpos = *pos;
 	if (dp->opts->opts & TBL_OPT_NOSPACE) {
@@ -164,6 +154,19 @@ getdata(struct tbl_node *tbl, struct tbl_span *dp,
 		while (endpos > startpos && p[endpos - 1] == ' ')
 			endpos--;
 	}
+
+	/*
+	 * Check for a continued-data scope opening.  This consists of a
+	 * trailing `T{' at the end of the line.  Subsequent lines,
+	 * until a standalone `T}', are included in our cell.
+	 */
+
+	if (endpos - startpos == 2 &&
+	    p[startpos] == 'T' && p[startpos + 1] == '{') {
+		tbl->part = TBL_PART_CDATA;
+		return;
+	}
+
 	dat->string = mandoc_strndup(p + startpos, endpos - startpos);
 
 	if (p[*pos] != '\0')
