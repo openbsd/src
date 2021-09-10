@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.106 2021/09/08 13:06:53 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.107 2021/09/10 16:38:35 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -489,7 +489,8 @@ void	iwx_attach_hook(struct device *);
 void	iwx_attach(struct device *, struct device *, void *);
 void	iwx_init_task(void *);
 int	iwx_activate(struct device *, int);
-int	iwx_resume(struct iwx_softc *);
+void	iwx_resume(struct iwx_softc *);
+int	iwx_wakeup(struct iwx_softc *);
 
 #if NBPFILTER > 0
 void	iwx_radiotap_attach(struct iwx_softc *);
@@ -1913,10 +1914,7 @@ int
 iwx_check_rfkill(struct iwx_softc *sc)
 {
 	uint32_t v;
-	int s;
 	int rv;
-
-	s = splnet();
 
 	/*
 	 * "documentation" is not really helpful here:
@@ -1933,7 +1931,6 @@ iwx_check_rfkill(struct iwx_softc *sc)
 		sc->sc_flags &= ~IWX_FLAG_RFKILL;
 	}
 
-	splx(s);
 	return rv;
 }
 
@@ -1986,8 +1983,6 @@ iwx_restore_interrupts(struct iwx_softc *sc)
 void
 iwx_disable_interrupts(struct iwx_softc *sc)
 {
-	int s = splnet();
-
 	if (!sc->sc_msix) {
 		IWX_WRITE(sc, IWX_CSR_INT_MASK, 0);
 
@@ -2000,8 +1995,6 @@ iwx_disable_interrupts(struct iwx_softc *sc)
 		IWX_WRITE(sc, IWX_CSR_MSIX_HW_INT_MASK_AD,
 		    sc->sc_hw_init_mask);
 	}
-
-	splx(s);
 }
 
 void
@@ -7822,16 +7815,6 @@ iwx_init_hw(struct iwx_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	int err, i;
 
-	err = iwx_preinit(sc);
-	if (err)
-		return err;
-
-	err = iwx_start_hw(sc);
-	if (err) {
-		printf("%s: could not initialize hardware\n", DEVNAME(sc));
-		return err;
-	}
-
 	err = iwx_run_init_mvm_ucode(sc, 0);
 	if (err)
 		return err;
@@ -7983,6 +7966,16 @@ iwx_init(struct ifnet *ifp)
 
 	KASSERT(sc->task_refs.refs == 0);
 	refcnt_init(&sc->task_refs);
+
+	err = iwx_preinit(sc);
+	if (err)
+		return err;
+
+	err = iwx_start_hw(sc);
+	if (err) {
+		printf("%s: could not initialize hardware\n", DEVNAME(sc));
+		return err;
+	}
 
 	err = iwx_init_hw(sc);
 	if (err) {
@@ -9281,7 +9274,10 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	/* Clear device-specific "PCI retry timeout" register (41h). */
+	/*
+	 * We disable the RETRY_TIMEOUT register (0x41) to keep
+	 * PCI Tx retries from interfering with C3 CPU state.
+	 */
 	reg = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
 	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, reg & ~0xff00);
 
@@ -9568,12 +9564,15 @@ iwx_init_task(void *arg1)
 	splx(s);
 }
 
-int
+void
 iwx_resume(struct iwx_softc *sc)
 {
 	pcireg_t reg;
 
-	/* Clear device-specific "PCI retry timeout" register (41h). */
+	/*
+	 * We disable the RETRY_TIMEOUT register (0x41) to keep
+	 * PCI Tx retries from interfering with C3 CPU state.
+	 */
 	reg = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
 	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, reg & ~0xff00);
 
@@ -9588,8 +9587,34 @@ iwx_resume(struct iwx_softc *sc)
 	}
 
 	iwx_disable_interrupts(sc);
+}
 
-	return iwx_start_hw(sc);
+int
+iwx_wakeup(struct iwx_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
+	int err;
+
+	refcnt_init(&sc->task_refs);
+
+	err = iwx_start_hw(sc);
+	if (err)
+		return err;
+
+	err = iwx_init_hw(sc);
+	if (err)
+		return err;
+
+	ifq_clr_oactive(&ifp->if_snd);
+	ifp->if_flags |= IFF_RUNNING;
+
+	if (ic->ic_opmode == IEEE80211_M_MONITOR)
+		ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
+	else
+		ieee80211_begin_scan(ifp);
+
+	return 0;
 }
 
 int
@@ -9608,15 +9633,15 @@ iwx_activate(struct device *self, int act)
 		}
 		break;
 	case DVACT_RESUME:
-		err = iwx_resume(sc);
-		if (err)
-			printf("%s: could not initialize hardware\n",
-			    DEVNAME(sc));
+		iwx_resume(sc);
 		break;
 	case DVACT_WAKEUP:
-		/* Hardware should be up at this point. */
-		if (iwx_set_hw_ready(sc))
-			task_add(systq, &sc->init_task);
+		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == IFF_UP) {
+			err = iwx_wakeup(sc);
+			if (err)
+				printf("%s: could not initialize hardware\n",
+				    DEVNAME(sc));
+		}
 		break;
 	}
 
