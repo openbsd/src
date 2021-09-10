@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.38 2021/09/01 09:39:14 claudio Exp $  */
+/*	$OpenBSD: http.c,v 1.39 2021/09/10 13:20:03 claudio Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -1053,10 +1053,15 @@ http_request(struct http_connection *conn)
 static int
 http_parse_status(struct http_connection *conn, char *buf)
 {
+#define HTTP_11	"HTTP/1.1 "
 	const char *errstr;
 	char *cp, ststr[4];
 	char gerror[200];
 	int status;
+
+	/* Check if the protocol is 1.1 and enable keep-alive in that case */
+	if (strncmp(buf, HTTP_11, strlen(HTTP_11)) == 0)
+		conn->keep_alive = 1;
 
 	cp = strchr(buf, ' ');
 	if (cp == NULL) {
@@ -1226,7 +1231,9 @@ http_parse_header(struct http_connection *conn, char *buf)
 	} else if (strncasecmp(cp, CONNECTION, sizeof(CONNECTION) - 1) == 0) {
 		cp += sizeof(CONNECTION) - 1;
 		cp[strcspn(cp, " \t")] = '\0';
-		if (strcasecmp(cp, "keep-alive") == 0)
+		if (strcasecmp(cp, "close") == 0)
+			conn->keep_alive = 0;
+		else if (strcasecmp(cp, "keep-alive") == 0)
 			conn->keep_alive = 1;
 	} else if (strncasecmp(cp, LAST_MODIFIED,
 	    sizeof(LAST_MODIFIED) - 1) == 0) {
