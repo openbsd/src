@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.42 2021/09/10 14:32:05 tb Exp $ */
+/* $OpenBSD: bn.h,v 1.43 2021/09/10 14:33:44 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -437,11 +437,9 @@ BIGNUM *BN_copy(BIGNUM *a, const BIGNUM *b);
 void	BN_swap(BIGNUM *a, BIGNUM *b);
 BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret);
 int	BN_bn2bin(const BIGNUM *a, unsigned char *to);
-#if defined(LIBRESSL_INTERNAL)
 int	BN_bn2binpad(const BIGNUM *a, unsigned char *to, int tolen);
 BIGNUM *BN_lebin2bn(const unsigned char *s, int len, BIGNUM *ret);
 int	BN_bn2lebinpad(const BIGNUM *a, unsigned char *to, int tolen);
-#endif
 BIGNUM *BN_mpi2bn(const unsigned char *s, int len, BIGNUM *ret);
 int	BN_bn2mpi(const BIGNUM *a, unsigned char *to);
 int	BN_sub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b);
