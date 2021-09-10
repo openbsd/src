@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.202 2021/09/10 09:25:29 tb Exp $ */
+/* $OpenBSD: ssl.h,v 1.203 2021/09/10 14:44:25 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -357,7 +357,9 @@ extern "C" {
  * in SSL_CTX. */
 typedef struct ssl_st *ssl_crock_st;
 
+#if defined(LIBRESSL_INTERNAL)
 typedef struct tls_session_ticket_ext_st TLS_SESSION_TICKET_EXT;
+#endif
 typedef struct ssl_method_st SSL_METHOD;
 typedef struct ssl_cipher_st SSL_CIPHER;
 typedef struct ssl_session_st SSL_SESSION;

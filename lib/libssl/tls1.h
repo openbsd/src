@@ -1,4 +1,4 @@
-/* $OpenBSD: tls1.h,v 1.46 2021/09/08 12:56:14 tb Exp $ */
+/* $OpenBSD: tls1.h,v 1.47 2021/09/10 14:44:25 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -771,11 +771,13 @@ SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB,(void (*)(void))cb)
 #define TLS_MD_MASTER_SECRET_CONST		"master secret"
 #define TLS_MD_MASTER_SECRET_CONST_SIZE		13
 
+#if defined(LIBRESSL_INTERNAL)
 /* TLS Session Ticket extension struct. */
 struct tls_session_ticket_ext_st {
 	unsigned short length;
 	void *data;
 };
+#endif
 
 #ifdef  __cplusplus
 }
