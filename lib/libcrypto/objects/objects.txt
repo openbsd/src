@@ -505,6 +505,7 @@ id-kp 8			: timeStamping		: Time Stamping
 !Cname OCSP-sign
 id-kp 9			: OCSPSigning		: OCSP Signing
 id-kp 10		: DVCS			: dvcs
+id-kp 30		: id-kp-bgpsec-router	: BGPsec Router
 
 # CMP information types
 id-it 1			: id-it-caProtEncCert
