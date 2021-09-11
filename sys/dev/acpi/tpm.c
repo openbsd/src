@@ -1,4 +1,4 @@
-/* $OpenBSD: tpm.c,v 1.11 2021/01/28 17:19:40 cheloha Exp $ */
+/* $OpenBSD: tpm.c,v 1.12 2021/09/11 23:22:38 deraadt Exp $ */
 
 /*
  * Minimal interface to Trusted Platform Module chips implementing the
@@ -123,6 +123,7 @@ struct tpm_softc {
 
 	uint32_t		sc_devid;
 	uint32_t		sc_rev;
+	int			sc_tpm20;
 
 	int			sc_enabled;
 };
@@ -179,6 +180,7 @@ const char *tpm_hids[] = {
 	"BCM0102",
 	"NSC1200",
 	"ICO0102",
+	"MSFT0101",
 	NULL
 };
 
@@ -203,6 +205,10 @@ tpm_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_enabled = 0;
 
 	printf(" %s", sc->sc_devnode->name);
+
+	if (strcmp(aaa->aaa_dev, "MSFT0101") == 0 ||
+	    strcmp(aaa->aaa_cdev, "MSFT0101") == 0)
+		sc->sc_tpm20 = 1;
 
 	sta = acpi_getsta(sc->sc_acpi, sc->sc_devnode);
 	if ((sta & (STA_PRESENT | STA_ENABLED | STA_DEV_OK)) !=
@@ -270,21 +276,37 @@ tpm_activate(struct device *self, int act)
 int
 tpm_suspend(struct tpm_softc *sc)
 {
-	uint8_t command[] = {
+	uint8_t command1[] = {
 	    0, 0xc1,		/* TPM_TAG_RQU_COMMAND */
 	    0, 0, 0, 10,	/* Length in bytes */
 	    0, 0, 0, 0x98	/* TPM_ORD_SaveStates */
 	};
+	uint8_t command2[] = {
+	    0x80, 0x01,		/* TPM_ST_COMMAND_TAG */
+	    0, 0, 0, 12,	/* Length in bytes */
+	    0, 0, 0x01, 0x45,	/* TPM_CC_Shutdown */
+	    0x00, 0x01
+	};
+	uint8_t *command;
+	size_t commandlen;
 
 	DPRINTF(("%s: saving state preparing for suspend\n",
 	    sc->sc_dev.dv_xname));
+
+	if (sc->sc_tpm20) {
+		command = command2;
+		commandlen = sizeof(command2);
+	} else {
+		command = command1;
+		commandlen = sizeof(command1);
+	}
 
 	/*
 	 * Tell the chip to save its state so the BIOS can then restore it upon
 	 * resume.
 	 */
-	tpm_write(sc, &command, sizeof(command));
-	tpm_read(sc, &command, sizeof(command), NULL, TPM_HDRSIZE);
+	tpm_write(sc, command, commandlen);
+	tpm_read(sc, command, commandlen, NULL, TPM_HDRSIZE);
 
 	return 0;
 }
