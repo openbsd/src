@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.216 2021/09/06 12:59:59 mpi Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.217 2021/09/11 18:08:32 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -1545,8 +1545,8 @@ pmap_extract_86(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 {
 	pt_entry_t *ptes, pte;
 
+	ptes = pmap_map_ptes_86(pmap);
 	if (pmap_valid_entry(PDE(pmap, pdei(va)))) {
-		ptes = pmap_map_ptes_86(pmap);
 		pte = ptes[atop(va)];
 		pmap_unmap_ptes_86(pmap);
 		if (!pmap_valid_entry(pte))
@@ -1555,6 +1555,7 @@ pmap_extract_86(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 			*pap = (pte & PG_FRAME) | (va & ~PG_FRAME);
 		return 1;
 	}
+	pmap_unmap_ptes_86(pmap);
 	return 0;
 }
 
