@@ -1,6 +1,6 @@
-.\" $OpenBSD: SSL_CTX_set_tlsext_status_cb.3,v 1.7 2019/06/12 09:36:30 schwarze Exp $
+.\" $OpenBSD: SSL_CTX_set_tlsext_status_cb.3,v 1.8 2021/09/11 18:58:41 schwarze Exp $
 .\" full merge up to: OpenSSL 43c34894 Nov 30 16:04:51 2015 +0000
-.\" selective merge up to: OpenSSL e9b77246 Jan 20 19:58:49 2017 +0100
+.\" selective merge up to: OpenSSL df75c2bf Dec 9 01:02:36 2018 +0100
 .\"
 .\" This file was written by Matt Caswell <matt@openssl.org>.
 .\" Copyright (c) 2015, 2016 The OpenSSL Project.  All rights reserved.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 12 2019 $
+.Dd $Mdocdate: September 11 2021 $
 .Dt SSL_CTX_SET_TLSEXT_STATUS_CB 3
 .Os
 .Sh NAME
@@ -58,6 +58,7 @@
 .Nm SSL_CTX_set_tlsext_status_arg ,
 .Nm SSL_CTX_get_tlsext_status_arg ,
 .Nm SSL_set_tlsext_status_type ,
+.Nm SSL_get_tlsext_status_type ,
 .Nm SSL_get_tlsext_status_ocsp_resp ,
 .Nm SSL_set_tlsext_status_ocsp_resp
 .Nd OCSP Certificate Status Request functions
@@ -87,6 +88,10 @@
 .Fo SSL_set_tlsext_status_type
 .Fa "SSL *s"
 .Fa "int type"
+.Fc
+.Ft long
+.Fo SSL_get_tlsext_status_type
+.Fa "SSL *s"
 .Fc
 .Ft long
 .Fo SSL_get_tlsext_status_ocsp_resp
@@ -131,6 +136,20 @@ can be retrieved by calling
 .Fn SSL_CTX_get_tlsext_status_cb ,
 and the argument by calling
 .Fn SSL_CTX_get_tlsext_status_arg .
+.Pp
+On the client side,
+.Fn SSL_get_tlsext_status_type
+can be used to determine whether the client has previously called
+.Fn SSL_set_tlsext_status_type .
+It will return
+.Dv TLSEXT_STATUSTYPE_ocsp
+if it has been called or \-1 otherwise.
+On the server side,
+.Fn SSL_get_tlsext_status_type
+can be used to determine whether the client requested OCSP stapling.
+If the client requested it, then this function will return
+.Dv TLSEXT_STATUSTYPE_ocsp ,
+or \-1 otherwise.
 .Pp
 The response returned by the server can be obtained via a call to
 .Fn SSL_get_tlsext_status_ocsp_resp .
@@ -183,6 +202,15 @@ and
 .Fn SSL_set_tlsext_status_ocsp_resp
 always return 1, indicating success.
 .Pp
+.Fn SSL_get_tlsext_status_type
+returns
+.Dv TLSEXT_STATUSTYPE_ocsp
+on the client side if
+.Fn SSL_set_tlsext_status_type
+was previously called, or on the server side
+if the client requested OCSP stapling.
+Otherwise \-1 is returned.
+.Pp
 .Fn SSL_get_tlsext_status_ocsp_resp
 returns the length of the OCSP response data
 or \-1 if there is no OCSP response data.
@@ -204,3 +232,7 @@ and
 .Fn SSL_CTX_get_tlsext_status_arg
 first appeared in OpenSSL 1.1.0 and have been available since
 .Ox 6.3 .
+.Pp
+.Fn SSL_get_tlsext_status_type
+first appeared in OpenSSL 1.1.0 and has been available since
+.Ox 7.0 .
