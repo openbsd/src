@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhcvar.h,v 1.14 2020/05/22 10:23:14 patrick Exp $	*/
+/*	$OpenBSD: sdhcvar.h,v 1.15 2021/09/11 22:42:12 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -52,5 +52,6 @@ void	sdhc_needs_discover(struct sdhc_softc *);
 #define SDHC_F_NODDR50		(1 << 1)
 #define SDHC_F_NONREMOVABLE	(1 << 2)
 #define SDHC_F_32BIT_ACCESS	(1 << 3)
+#define SDHC_F_NO_HS_BIT	(1 << 4)
 
 #endif

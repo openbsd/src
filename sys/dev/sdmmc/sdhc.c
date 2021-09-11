@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.70 2021/06/13 06:57:51 jsg Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.71 2021/09/11 22:42:12 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -654,6 +654,7 @@ int
 sdhc_bus_clock(sdmmc_chipset_handle_t sch, int freq, int timing)
 {
 	struct sdhc_host *hp = sch;
+	struct sdhc_softc *sc = hp->sc;
 	int s;
 	int div;
 	int sdclk;
@@ -679,10 +680,12 @@ sdhc_bus_clock(sdmmc_chipset_handle_t sch, int freq, int timing)
 	if (freq == SDMMC_SDCLK_OFF)
 		goto ret;
 
-	if (timing == SDMMC_TIMING_LEGACY)
-		HCLR1(hp, SDHC_HOST_CTL, SDHC_HIGH_SPEED);
-	else
-		HSET1(hp, SDHC_HOST_CTL, SDHC_HIGH_SPEED);
+	if (!ISSET(sc->sc_flags, SDHC_F_NO_HS_BIT)) {
+		if (timing == SDMMC_TIMING_LEGACY)
+			HCLR1(hp, SDHC_HOST_CTL, SDHC_HIGH_SPEED);
+		else
+			HSET1(hp, SDHC_HOST_CTL, SDHC_HIGH_SPEED);
+	}
 
 	if (SDHC_SPEC_VERSION(hp->version) >= SDHC_SPEC_V3) {
 		switch (timing) {
