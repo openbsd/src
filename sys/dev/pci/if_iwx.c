@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.108 2021/09/11 17:28:04 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.109 2021/09/11 17:28:44 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -4385,6 +4385,25 @@ iwx_rx_tx_cmd_single(struct iwx_softc *sc, struct iwx_rx_packet *pkt,
 	if (txfail)
 		ifp->if_oerrors++;
 }
+ 
+void
+iwx_clear_tx_desc(struct iwx_softc *sc, struct iwx_tx_ring *ring, int idx)
+{
+	struct iwx_tfh_tfd *desc = &ring->desc[idx];
+	uint8_t num_tbs = le16toh(desc->num_tbs) & 0x1f;
+	int i;
+
+	/* First TB is never cleared - it is bidirectional DMA data. */
+	for (i = 1; i < num_tbs; i++) {
+		struct iwx_tfh_tb *tb = &desc->tbs[i];
+		memset(tb, 0, sizeof(*tb));
+	}
+	desc->num_tbs = 0;
+
+	bus_dmamap_sync(sc->sc_dmat, ring->desc_dma.map,
+	    (char *)(void *)desc - (char *)(void *)ring->desc_dma.vaddr,
+	    sizeof(*desc), BUS_DMASYNC_PREWRITE);
+}
 
 void
 iwx_txd_done(struct iwx_softc *sc, struct iwx_tx_data *txd)
@@ -4442,6 +4461,7 @@ iwx_rx_tx_cmd(struct iwx_softc *sc, struct iwx_rx_packet *pkt,
 		txd = &ring->data[ring->tail];
 		if (txd->m != NULL) {
 			iwx_txd_done(sc, txd);
+			iwx_clear_tx_desc(sc, ring, ring->tail);
 			iwx_tx_update_byte_tbl(ring, ring->tail, 0, 0);
 			ring->queued--;
 		}
