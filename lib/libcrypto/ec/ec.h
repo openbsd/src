@@ -1,4 +1,4 @@
-/* $OpenBSD: ec.h,v 1.26 2021/09/10 14:35:36 tb Exp $ */
+/* $OpenBSD: ec.h,v 1.27 2021/09/12 16:23:19 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -708,7 +708,8 @@ int EC_GROUP_get_pentanomial_basis(const EC_GROUP *, unsigned int *k1,
 	unsigned int *k2, unsigned int *k3);
 #endif
 
-#define OPENSSL_EC_NAMED_CURVE	0x001
+#define OPENSSL_EC_EXPLICIT_CURVE	0x000
+#define OPENSSL_EC_NAMED_CURVE		0x001
 
 typedef struct ecpk_parameters_st ECPKPARAMETERS;
 

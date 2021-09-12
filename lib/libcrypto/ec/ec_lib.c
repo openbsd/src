@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.40 2021/09/08 17:29:21 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.41 2021/09/12 16:23:19 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -100,7 +100,7 @@ EC_GROUP_new(const EC_METHOD * meth)
 	BN_init(&ret->cofactor);
 
 	ret->curve_name = 0;
-	ret->asn1_flag = 0;
+	ret->asn1_flag = OPENSSL_EC_NAMED_CURVE;
 	ret->asn1_form = POINT_CONVERSION_UNCOMPRESSED;
 
 	ret->seed = NULL;
