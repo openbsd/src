@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.83 2021/09/10 05:47:38 anton Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.84 2021/09/12 06:58:08 anton Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -231,9 +231,9 @@ ukbd_attach(struct device *parent, struct device *self, void *aux)
 
 	uhidev_get_report_desc(uha->parent, &desc, &dlen);
 	repid = uha->reportid;
-	sc->sc_hdev.sc_isize = uha->isize;
-	sc->sc_hdev.sc_osize = uha->osize;
-	sc->sc_hdev.sc_fsize = uha->fsize;
+	sc->sc_hdev.sc_isize = hid_report_size(desc, dlen, hid_input, repid);
+	sc->sc_hdev.sc_osize = hid_report_size(desc, dlen, hid_output, repid);
+	sc->sc_hdev.sc_fsize = hid_report_size(desc, dlen, hid_feature, repid);
 
 	 /*
 	  * Since the HID-Proxy is always detected before any

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.h,v 1.31 2021/09/10 05:48:43 anton Exp $	*/
+/*	$OpenBSD: uhidev.h,v 1.32 2021/09/12 06:58:08 anton Exp $	*/
 /*	$NetBSD: uhidev.h,v 1.3 2002/10/08 09:56:17 dan Exp $	*/
 
 /*
@@ -84,9 +84,6 @@ struct uhidev_attach_arg {
 #define	UHIDEV_CLAIM_MULTIPLE_REPORTID	255
 	uint8_t			 nreports;
 	uint8_t			*claimed;
-	int			 isize;
-	int			 osize;
-	int			 fsize;
 };
 
 int uhidev_report_type_conv(int);

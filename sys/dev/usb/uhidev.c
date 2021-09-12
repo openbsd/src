@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.94 2021/09/10 05:47:38 anton Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.95 2021/09/12 06:58:08 anton Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -252,7 +252,6 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 	uha.reportid = UHIDEV_CLAIM_MULTIPLE_REPORTID;
 	uha.nreports = nrepid;
 	uha.claimed = malloc(nrepid, M_TEMP, M_WAITOK|M_ZERO);
-	uha.isize = uha.osize = uha.fsize = 0;
 
 	/* Look for a driver claiming multiple report IDs first. */
 	dev = config_found_sm(self, &uha, NULL, uhidevsubmatch);
@@ -273,12 +272,10 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 	uha.claimed = NULL;
 
 	for (repid = 0; repid < nrepid; repid++) {
-		int isize, osize, fsize;
-
 		DPRINTF(("%s: try repid=%d\n", __func__, repid));
-		if ((isize = hid_report_size(desc, size, hid_input, repid)) == 0 &&
-		    (osize = hid_report_size(desc, size, hid_output, repid)) == 0 &&
-		    (fsize = hid_report_size(desc, size, hid_feature, repid)) == 0)
+		if (hid_report_size(desc, size, hid_input, repid) == 0 &&
+		    hid_report_size(desc, size, hid_output, repid) == 0 &&
+		    hid_report_size(desc, size, hid_feature, repid) == 0)
 			continue;
 
 		/* Could already be assigned by uhidev_set_report_dev(). */
@@ -286,9 +283,6 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 			continue;
 
 		uha.reportid = repid;
-		uha.isize = isize;
-		uha.osize = osize;
-		uha.fsize = fsize;
 		dev = config_found_sm(self, &uha, uhidevprint, uhidevsubmatch);
 		sc->sc_subdevs[repid] = (struct uhidev *)dev;
 	}

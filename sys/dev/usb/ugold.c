@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugold.c,v 1.18 2021/09/10 05:47:38 anton Exp $   */
+/*	$OpenBSD: ugold.c,v 1.19 2021/09/12 06:58:08 anton Exp $   */
 
 /*
  * Copyright (c) 2013 Takayoshi SASANO <uaa@openbsd.org>
@@ -139,7 +139,7 @@ ugold_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ugold_softc *sc = (struct ugold_softc *)self;
 	struct uhidev_attach_arg *uha = aux;
-	int size;
+	int size, repid;
 	void *desc;
 
 	sc->sc_udev = uha->parent->sc_udev;
@@ -159,9 +159,10 @@ ugold_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	uhidev_get_report_desc(uha->parent, &desc, &size);
-	sc->sc_hdev.sc_isize = uha->isize;
-	sc->sc_hdev.sc_osize = uha->osize;
-	sc->sc_hdev.sc_fsize = uha->fsize;
+	repid = uha->reportid;
+	sc->sc_hdev.sc_isize = hid_report_size(desc, size, hid_input, repid);
+	sc->sc_hdev.sc_osize = hid_report_size(desc, size, hid_output, repid);
+	sc->sc_hdev.sc_fsize = hid_report_size(desc, size, hid_feature, repid);
 
 	if (uhidev_open(&sc->sc_hdev)) {
 		printf(", unable to open interrupt pipe\n");

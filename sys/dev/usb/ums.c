@@ -1,4 +1,4 @@
-/*	$OpenBSD: ums.c,v 1.49 2021/09/10 05:47:38 anton Exp $ */
+/*	$OpenBSD: ums.c,v 1.50 2021/09/12 06:58:08 anton Exp $ */
 /*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -121,7 +121,7 @@ ums_attach(struct device *parent, struct device *self, void *aux)
 	struct hidms *ms = &sc->sc_ms;
 	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)aux;
 	struct usb_attach_arg *uaa = uha->uaa;
-	int size;
+	int size, repid;
 	void *desc;
 	u_int32_t qflags = 0;
 
@@ -138,9 +138,10 @@ ums_attach(struct device *parent, struct device *self, void *aux)
 	if (uaa->vendor == USB_VENDOR_ELECOM)
 		ums_fix_elecom_descriptor(sc, desc, size, uaa->product);
 
-	sc->sc_hdev.sc_isize = uha->isize;
-	sc->sc_hdev.sc_osize = uha->osize;
-	sc->sc_hdev.sc_fsize = uha->fsize;
+	repid = uha->reportid;
+	sc->sc_hdev.sc_isize = hid_report_size(desc, size, hid_input, repid);
+	sc->sc_hdev.sc_osize = hid_report_size(desc, size, hid_output, repid);
+	sc->sc_hdev.sc_fsize = hid_report_size(desc, size, hid_feature, repid);
 
 	if (sc->sc_quirks & UQ_MS_REVZ)
 		qflags |= HIDMS_REVZ;
