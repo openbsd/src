@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.84 2021/09/10 15:26:36 krw Exp $	*/
+/*	$OpenBSD: misc.c,v 1.85 2021/09/12 16:36:52 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -30,7 +30,7 @@
 #include "disk.h"
 #include "misc.h"
 
-struct unit_type	unit_types[] = {
+const struct unit_type	unit_types[] = {
 	{ "b"	, 1LL				, "Bytes"	},
 	{ " "	, 0LL				, "Sectors"	},
 	{ "K"	, 1024LL			, "Kilobytes"	},
@@ -38,6 +38,7 @@ struct unit_type	unit_types[] = {
 	{ "G"	, 1024LL * 1024 *1024		, "Gigabytes"	},
 	{ "T"	, 1024LL * 1024 * 1024 * 1024	, "Terabytes"	},
 };
+#define	SECTORS		1
 
 int
 unit_lookup(const char *units)
@@ -110,7 +111,7 @@ getuint64(const char *prompt, uint64_t oval, const uint64_t minval,
     const uint64_t maxval)
 {
 	char			buf[BUFSIZ], *endptr, *p, operator = '\0';
-	const int		secsize = unit_types[SECTORS].ut_conversion;
+	const int		secsize = dl.d_secsize;
 	size_t			n;
 	int64_t			mult = 1;
 	double			d, d2;

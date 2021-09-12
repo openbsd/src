@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.h,v 1.44 2021/08/28 11:55:17 krw Exp $	*/
+/*	$OpenBSD: misc.h,v 1.45 2021/09/12 16:36:52 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -24,8 +24,7 @@ struct unit_type {
 	int64_t		 ut_conversion;
 	char		*ut_lname;
 };
-extern struct unit_type		unit_types[];
-#define	SECTORS		1
+extern const struct unit_type		unit_types[];
 
 #ifndef nitems
 #define	nitems(_a)	(sizeof((_a)) / sizeof((_a)[0]))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.105 2021/09/02 18:07:45 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.106 2021/09/12 16:36:52 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -363,7 +363,7 @@ PRT_make(const struct prt *prt, const uint64_t lba_self, const uint64_t lba_firs
 void
 PRT_print(const int num, const struct prt *prt, const char *units)
 {
-	const int		secsize = unit_types[SECTORS].ut_conversion;
+	const int		secsize = dl.d_secsize;
 	double			size;
 	int			i;
 
@@ -377,7 +377,9 @@ PRT_print(const int num, const struct prt *prt, const char *units)
 		printf("---------------------------------------"
 		    "----------------------------------------\n");
 	} else {
-		size = ((double)prt->prt_ns * secsize) / unit_types[i].ut_conversion;
+		size = prt->prt_ns;
+		if (unit_types[i].ut_conversion != 0)
+			size = (size * secsize) / unit_types[i].ut_conversion;
 		printf("%c%1d: %.2X %6u %3u %3u - %6u %3u %3u "
 		    "[%12llu:%12.0f%s] %s\n",
 		    (prt->prt_flag == DOSACTIVE)?'*':' ',

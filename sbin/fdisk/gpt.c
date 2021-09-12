@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.51 2021/08/24 15:36:05 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.52 2021/09/12 16:36:52 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -296,7 +296,7 @@ GPT_read(const int which)
 void
 GPT_print(const char *units, const int verbosity)
 {
-	const int		 secsize = unit_types[SECTORS].ut_conversion;
+	const int		 secsize = dl.d_secsize;
 	struct uuid		 guid;
 	char			*guidstr = NULL;
 	double			 size;
@@ -339,11 +339,14 @@ GPT_print(const char *units, const int verbosity)
 #endif	/* DEBUG */
 
 	u = unit_lookup(units);
-	size = ((double)DL_GETDSIZE(&dl) * secsize) / unit_types[u].ut_conversion;
+	size = DL_GETDSIZE(&dl);
+	if (unit_types[u].ut_conversion != 0)
+	    size = (size * secsize) / unit_types[u].ut_conversion;
 	printf("Disk: %s       Usable LBA: %llu to %llu [%.0f ",
-	    disk.dk_name, letoh64(gh.gh_lba_start), letoh64(gh.gh_lba_end), size);
+	    disk.dk_name, letoh64(gh.gh_lba_start), letoh64(gh.gh_lba_end),
+	    size);
 
-	if (u == SECTORS && secsize != DEV_BSIZE)
+	if (unit_types[u].ut_conversion == 0 && secsize != DEV_BSIZE)
 		printf("%d-byte ", secsize);
 	printf("%s]\n", unit_types[u].ut_lname);
 
@@ -383,14 +386,15 @@ GPT_print_part(const int n, const char *units, const int verbosity)
 	struct uuid		 guid;
 	struct gpt_partition	*partn = &gp[n];
 	char			*guidstr = NULL;
-	const int		 secsize = unit_types[SECTORS].ut_conversion;
+	const int		 secsize = dl.d_secsize;
 	double			 size;
 	int			 u, status;
 
 	uuid_dec_le(&partn->gp_type, &guid);
 	u = unit_lookup(units);
 	size = letoh64(partn->gp_lba_end) - letoh64(partn->gp_lba_start) + 1;
-	size = (size * secsize) / unit_types[u].ut_conversion;
+	if (unit_types[u].ut_conversion != 0)
+		size = (size * secsize) / unit_types[u].ut_conversion;
 	printf("%c%3d: %-36s [%12lld: %12.0f%s]\n",
 	    (letoh64(partn->gp_attrs) & GPTDOSACTIVE)?'*':' ', n,
 	    PRT_uuid_to_typename(&guid), letoh64(partn->gp_lba_start),
@@ -474,7 +478,7 @@ init_gh(void)
 {
 	struct gpt_header	oldgh;
 	struct uuid		guid;
-	const int		secsize = unit_types[SECTORS].ut_conversion;
+	const int		secsize = dl.d_secsize;
 	int			needed;
 	uint32_t		status;
 
