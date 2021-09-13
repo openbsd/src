@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bsd.re-config.5,v 1.1 2021/09/13 11:49:21 robert Exp $
+.\"	$OpenBSD: bsd.re-config.5,v 1.2 2021/09/13 17:42:47 jmc Exp $
 .\"
 .\" Copyright (c) 2021 Paul de Weerd <weerd@weirdnet.nl>
 .\"
@@ -15,7 +15,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd $Mdocdate: September 13 2021 $
-.Dt KERNEL.CONF 5
+.Dt BSD.RE-CONFIG 5
 .Os
 .Sh NAME
 .Nm bsd.re-config
@@ -27,6 +27,11 @@ file contains configuration information for the kernel.
 If present, it is used during system startup to configure the kernel
 that will be running at the next boot.
 It can be used to enable or disable specific devices in the kernel.
+.Sh FILES
+.Bl -tag -width /etc/bsd.re-config -compact
+.It Pa /etc/bsd.re-config
+Kernel configuration file.
+.El
 .Sh EXAMPLES
 To enable the
 .Xr ipmi 4
@@ -35,12 +40,8 @@ driver, add the following line to
 .Pp
 .Dl enable ipmi
 .Pp
-See 
+See
 .Xr config 8
 for more details on how to configure the kernel.
-.Sh FILES
-.Bl -tag -width /etc/bsd.re-config -compact
-.It Pa /etc/bsd.re-config
-Kernel configuration file.
 .Sh SEE ALSO
 .Xr config 8
