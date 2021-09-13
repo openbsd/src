@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_config.8,v 1.32 2021/09/13 11:49:21 robert Exp $
+.\"	$OpenBSD: boot_config.8,v 1.33 2021/09/13 17:35:27 jmc Exp $
 .\"
 .\" Copyright (c) 1996 Mats O Jansson
 .\" All rights reserved.
@@ -60,10 +60,10 @@ UKC>
 .Pp
 Changes made can be saved for the next reboot, by using
 .Xr config 8 .
-However, those would not be persisted across system upgrades and would
+However, those changes would not persist across system upgrades and would
 prevent kernel relinking.
 To ensure these changes are carried over to upgraded kernels, they can
-be save to the
+be saved to the
 .Xr bsd.re-config 5
 configuration file.
 .Sh COMMANDS
@@ -195,7 +195,7 @@ Continuing...
 mainbus0 (root)
 .Ed
 .Sh SEE ALSO
-.Xr bsd.re-config 5
+.Xr bsd.re-config 5 ,
 .Xr config 8
 .Sh AUTHORS
 .An Mats O Jansson Aq Mt moj@stacken.kth.se
