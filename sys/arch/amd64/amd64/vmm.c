@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.292 2021/09/05 16:36:34 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.293 2021/09/13 22:16:27 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -98,6 +98,9 @@ struct vmm_softc {
 	struct vmlist_head	vm_list;
 
 	int			mode;
+
+	size_t			vcpu_ct;
+	size_t			vcpu_max;
 
 	struct rwlock		vm_lock;
 	size_t			vm_ct;		/* number of in-memory VMs */
@@ -368,6 +371,7 @@ vmm_attach(struct device *parent, struct device *self, void *aux)
 	sc->nr_svm_cpus = 0;
 	sc->nr_rvi_cpus = 0;
 	sc->nr_ept_cpus = 0;
+	sc->vcpu_ct = 0;
 	sc->vm_ct = 0;
 	sc->vm_idx = 0;
 
@@ -1498,6 +1502,15 @@ vm_create(struct vm_create_params *vcp, struct proc *p)
 	if (vcp->vcp_ncpus != 1)
 		return (EINVAL);
 
+	rw_enter_write(&vmm_softc->vm_lock);
+	if (vmm_softc->vcpu_ct + vcp->vcp_ncpus > VMM_MAX_VCPUS) {
+		DPRINTF("%s: maximum vcpus (%lu) reached\n", __func__,
+		    vmm_softc->vcpu_max);
+		rw_exit_write(&vmm_softc->vm_lock);
+		return (ENOMEM);
+	}
+	vmm_softc->vcpu_ct += vcp->vcp_ncpus;
+
 	vm = pool_get(&vm_pool, PR_WAITOK | PR_ZERO);
 	SLIST_INIT(&vm->vm_vcpu_list);
 	rw_init(&vm->vm_vcpu_lock, "vcpu_list");
@@ -1508,8 +1521,6 @@ vm_create(struct vm_create_params *vcp, struct proc *p)
 	    vm->vm_nmemranges * sizeof(vm->vm_memranges[0]));
 	vm->vm_memory_size = memsize;
 	strncpy(vm->vm_name, vcp->vcp_name, VMM_MAX_NAME_LEN - 1);
-
-	rw_enter_write(&vmm_softc->vm_lock);
 
 	if (vm_impl_init(vm, p)) {
 		printf("failed to init arch-specific features for vm %p\n", vm);
@@ -3784,6 +3795,7 @@ vm_teardown(struct vm *vm)
 		SLIST_REMOVE(&vm->vm_vcpu_list, vcpu, vcpu, vc_vcpu_link);
 		vcpu_deinit(vcpu);
 		pool_put(&vcpu_pool, vcpu);
+		vmm_softc->vcpu_ct--;
 	}
 
 	vm_impl_deinit(vm);
