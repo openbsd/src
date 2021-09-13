@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1176 2021/09/08 13:16:53 kn Exp $
+#	$OpenBSD: install.sub,v 1.1177 2021/09/13 05:17:04 robert Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1330,7 +1330,7 @@ v4_defroute() {
 	local _dr _dr_if
 
 	# Only configure a default route if an IPv4 address was configured.
-	[[ -n $(ifconfig | sed -n '/[ 	]inet .* broadcast /p') ]] || return
+	grep -q '^inet ' /tmp/i/hostname.* 2>/dev/null || return
 
 	# Check routing table to see if a default route ($1) already exists
 	# and what interface it is connected to ($2).
