@@ -2130,6 +2130,7 @@
 ./usr/share/man/man5/bootparams.5
 ./usr/share/man/man5/bsd.port.arch.mk.5
 ./usr/share/man/man5/bsd.port.mk.5
+./usr/share/man/man5/bsd.re-config.5
 ./usr/share/man/man5/bsd.regress.mk.5
 ./usr/share/man/man5/bt.5
 ./usr/share/man/man5/cabal-module.5
