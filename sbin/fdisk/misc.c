@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.85 2021/09/12 16:36:52 krw Exp $	*/
+/*	$OpenBSD: misc.c,v 1.86 2021/09/13 15:07:51 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -40,17 +40,25 @@ const struct unit_type	unit_types[] = {
 };
 #define	SECTORS		1
 
-int
-unit_lookup(const char *units)
+double
+units_size(const char *units, const uint64_t sectors,
+    const struct unit_type **ut)
 {
+	double			size;
 	unsigned int		i;
+
+	*ut = &unit_types[SECTORS];
+	size = sectors;
 
 	for (i = 0; i < nitems(unit_types); i++) {
 		if (strncasecmp(unit_types[i].ut_abbr, units, 1) == 0)
-			return i;
+			*ut = &unit_types[i];
 	}
 
-	return SECTORS;
+	if ((*ut)->ut_conversion == 0)
+		return size;
+	else
+		return (size * dl.d_secsize) / (*ut)->ut_conversion;
 }
 
 void

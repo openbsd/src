@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.72 2021/09/12 16:36:52 krw Exp $	*/
+/*	$OpenBSD: disk.c,v 1.73 2021/09/13 15:07:51 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -99,23 +99,16 @@ DISK_open(const char *name, const int oflags)
 void
 DISK_printgeometry(const char *units)
 {
-	const int		secsize = dl.d_secsize;
-	double			size;
-	int			i;
+	const struct unit_type	*ut;
+	const int		 secsize = dl.d_secsize;
+	double			 size;
 
-	i = unit_lookup(units);
-	size = disk.dk_size;
-	if (unit_types[i].ut_conversion != 0)
-		size = (size * secsize) / unit_types[i].ut_conversion;
-	printf("Disk: %s\t", disk.dk_name);
-	if (disk.dk_size) {
-		printf("geometry: %d/%d/%d [%.0f ", disk.dk_cylinders,
-		    disk.dk_heads, disk.dk_sectors, size);
-		if (unit_types[i].ut_conversion == 0 && secsize != DEV_BSIZE)
-			printf("%d-byte ", secsize);
-		printf("%s]\n", unit_types[i].ut_lname);
-	} else
-		printf("geometry: <none>\n");
+	size = units_size(units, disk.dk_size, &ut);
+	printf("Disk: %s\tgeometry: %d/%d/%d [%.0f ", disk.dk_name,
+	    disk.dk_cylinders, disk.dk_heads, disk.dk_sectors, size);
+	if (ut->ut_conversion == 0 && secsize != DEV_BSIZE)
+		printf("%d-byte ", secsize);
+	printf("%s]\n", ut->ut_lname);
 }
 
 /*

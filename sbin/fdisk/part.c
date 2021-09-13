@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.106 2021/09/12 16:36:52 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.107 2021/09/13 15:07:51 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -363,11 +363,8 @@ PRT_make(const struct prt *prt, const uint64_t lba_self, const uint64_t lba_firs
 void
 PRT_print(const int num, const struct prt *prt, const char *units)
 {
-	const int		secsize = dl.d_secsize;
-	double			size;
-	int			i;
-
-	i = unit_lookup(units);
+	const struct unit_type	*ut;
+	double			 size;
 
 	if (prt == NULL) {
 		printf("            Starting         Ending    "
@@ -377,18 +374,14 @@ PRT_print(const int num, const struct prt *prt, const char *units)
 		printf("---------------------------------------"
 		    "----------------------------------------\n");
 	} else {
-		size = prt->prt_ns;
-		if (unit_types[i].ut_conversion != 0)
-			size = (size * secsize) / unit_types[i].ut_conversion;
+		size = units_size(units, prt->prt_ns, &ut);
 		printf("%c%1d: %.2X %6u %3u %3u - %6u %3u %3u "
 		    "[%12llu:%12.0f%s] %s\n",
 		    (prt->prt_flag == DOSACTIVE)?'*':' ',
 		    num, prt->prt_id,
 		    prt->prt_scyl, prt->prt_shead, prt->prt_ssect,
 		    prt->prt_ecyl, prt->prt_ehead, prt->prt_esect,
-		    prt->prt_bs, size,
-		    unit_types[i].ut_abbr,
-		    ascii_id(prt->prt_id));
+		    prt->prt_bs, size, ut->ut_abbr, ascii_id(prt->prt_id));
 	}
 }
 
