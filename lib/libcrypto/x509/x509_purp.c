@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_purp.c,v 1.6 2021/09/02 12:41:44 job Exp $ */
+/* $OpenBSD: x509_purp.c,v 1.7 2021/09/13 15:26:53 claudio Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -871,10 +871,18 @@ X509_check_issued(X509 *issuer, X509 *subject)
 	if (X509_NAME_cmp(X509_get_subject_name(issuer),
 	    X509_get_issuer_name(subject)))
 		return X509_V_ERR_SUBJECT_ISSUER_MISMATCH;
-	x509v3_cache_extensions(issuer);
+	if (!(issuer->ex_flags & EXFLAG_SET)) {
+		CRYPTO_w_lock(CRYPTO_LOCK_X509);
+		x509v3_cache_extensions(issuer);
+		CRYPTO_w_unlock(CRYPTO_LOCK_X509);
+	}
 	if (issuer->ex_flags & EXFLAG_INVALID)
 		return X509_V_ERR_UNSPECIFIED;
-	x509v3_cache_extensions(subject);
+	if (!(subject->ex_flags & EXFLAG_SET)) {
+		CRYPTO_w_lock(CRYPTO_LOCK_X509);
+		x509v3_cache_extensions(subject);
+		CRYPTO_w_unlock(CRYPTO_LOCK_X509);
+	}
 	if (subject->ex_flags & EXFLAG_INVALID)
 		return X509_V_ERR_UNSPECIFIED;
 
