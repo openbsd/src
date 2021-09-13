@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1177 2021/09/13 05:17:04 robert Exp $
+#	$OpenBSD: install.sub,v 1.1178 2021/09/13 11:49:21 robert Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2858,7 +2858,10 @@ finish_up() {
 		tar -C $_kernel_dir -xzf $_kernel_dir.tgz $_kernel
 		rm -f $_kernel_dir.tgz
 		chroot /mnt /bin/ksh -e -c "cd ${_kernel_dir#/mnt}/$_kernel; \
-			make newbsd; make newinstall"
+			make newbsd; \
+			[ -f /etc/bsd.re-config ] && \
+			    config -e -c /etc/bsd.re-config -f bsd; \
+			make newinstall"
 		) >/dev/null 2>&1 && echo " done." || echo " failed."
 	fi
 

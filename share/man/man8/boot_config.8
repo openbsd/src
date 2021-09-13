@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_config.8,v 1.31 2019/09/06 21:30:32 cheloha Exp $
+.\"	$OpenBSD: boot_config.8,v 1.32 2021/09/13 11:49:21 robert Exp $
 .\"
 .\" Copyright (c) 1996 Mats O Jansson
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 6 2019 $
+.Dd $Mdocdate: September 13 2021 $
 .Dt BOOT_CONFIG 8
 .Os
 .Sh NAME
@@ -60,6 +60,12 @@ UKC>
 .Pp
 Changes made can be saved for the next reboot, by using
 .Xr config 8 .
+However, those would not be persisted across system upgrades and would
+prevent kernel relinking.
+To ensure these changes are carried over to upgraded kernels, they can
+be save to the
+.Xr bsd.re-config 5
+configuration file.
 .Sh COMMANDS
 .Bl -tag -width "disable devno | dev"
 .It Ic add Ar dev
@@ -189,6 +195,7 @@ Continuing...
 mainbus0 (root)
 .Ed
 .Sh SEE ALSO
+.Xr bsd.re-config 5
 .Xr config 8
 .Sh AUTHORS
 .An Mats O Jansson Aq Mt moj@stacken.kth.se

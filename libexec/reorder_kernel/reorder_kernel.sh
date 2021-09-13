@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: reorder_kernel.sh,v 1.9 2019/09/28 17:30:07 ajacoutot Exp $
+# $OpenBSD: reorder_kernel.sh,v 1.10 2021/09/13 11:49:21 robert Exp $
 #
 # Copyright (c) 2017 Robert Peichaer <rpe@openbsd.org>
 #
@@ -63,6 +63,7 @@ fi
 
 cd $KERNEL_DIR/$KERNEL
 make newbsd
+[ -f /etc/bsd.re-config ] && config -e -c /etc/bsd.re-config -f bsd
 make newinstall
 sync
 
