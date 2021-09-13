@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.120 2021/09/13 12:16:43 visa Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.121 2021/09/13 12:19:10 visa Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -1387,11 +1387,13 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 				found = 0;
 		}
 	} else {
+		pmap_lock(pmap);
 		pte = pmap_pte_lookup(pmap, va);
 		if (pte != NULL && (*pte & PG_V) != 0)
 			pa = pfn_to_pad(*pte) | (va & PAGE_MASK);
 		else
 			found = 0;
+		pmap_unlock(pmap);
 	}
 
 	if (found != 0)
