@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.21 2021/08/24 14:54:02 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.22 2021/09/14 07:51:51 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -95,7 +95,7 @@ ssize_t		 build_packet(uint8_t, char *, uint32_t, struct ether_addr *,
 void		 send_discover(struct iface *);
 void		 send_request(struct iface *);
 void		 bpf_send_packet(struct iface *, uint8_t *, ssize_t);
-void		 udp_send_packet(struct iface *, uint8_t *, ssize_t);
+int		 udp_send_packet(struct iface *, uint8_t *, ssize_t);
 #ifndef SMALL
 int		 iface_conf_cmp(struct iface_conf *, struct iface_conf *);
 #endif /* SMALL */
@@ -1021,13 +1021,14 @@ send_request(struct iface *iface)
 	pkt_len = build_packet(DHCPREQUEST, if_name, iface->xid,
 	    &iface->ifinfo.hw_address, &iface->requested_ip,
 	    &iface->server_identifier);
-	if (iface->dhcp_server.s_addr != INADDR_ANY)
-		udp_send_packet(iface, dhcp_packet, pkt_len);
-	else
+	if (iface->dhcp_server.s_addr != INADDR_ANY) {
+		if (udp_send_packet(iface, dhcp_packet, pkt_len) == -1)
+			bpf_send_packet(iface, dhcp_packet, pkt_len);
+	} else
 		bpf_send_packet(iface, dhcp_packet, pkt_len);
 }
 
-void
+int
 udp_send_packet(struct iface *iface, uint8_t *packet, ssize_t len)
 {
 	struct sockaddr_in	to;
@@ -1039,8 +1040,11 @@ udp_send_packet(struct iface *iface, uint8_t *packet, ssize_t len)
 	to.sin_port = ntohs(SERVER_PORT);
 
 	if (sendto(iface->udpsock, packet, len, 0, (struct sockaddr *)&to,
-	    sizeof(to)) == -1)
+	    sizeof(to)) == -1) {
 		log_warn("sendto");
+		return -1;
+	}
+	return 0;
 }
 void
 bpf_send_packet(struct iface *iface, uint8_t *packet, ssize_t len)
