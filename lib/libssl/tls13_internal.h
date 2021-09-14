@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.92 2021/09/14 14:31:21 tb Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.93 2021/09/14 14:35:09 tb Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -159,7 +159,7 @@ int tls13_hkdf_expand_label_with_length(struct tls13_secret *out,
     const uint8_t *label, size_t label_len, const struct tls13_secret *context);
 
 int tls13_derive_secret(struct tls13_secret *out, const EVP_MD *digest,
-    const struct tls13_secret *secret, const char *label,   
+    const struct tls13_secret *secret, const char *label,
     const struct tls13_secret *context);
 int tls13_derive_secret_with_label_length(struct tls13_secret *out,
     const EVP_MD *digest, const struct tls13_secret *secret,
