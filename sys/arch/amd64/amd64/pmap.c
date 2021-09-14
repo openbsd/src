@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.147 2021/09/06 12:59:59 mpi Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.148 2021/09/14 16:14:50 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -1504,7 +1504,7 @@ pmap_pdes_valid(vaddr_t va, pd_entry_t *lastpde)
 int
 pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 {
-	pt_entry_t *ptes;
+	pt_entry_t *ptes, pte;
 	int level, offs;
 
 	if (pmap == pmap_kernel() && va >= PMAP_DIRECT_BASE &&
@@ -1513,16 +1513,23 @@ pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 		return 1;
 	}
 
-	level = pmap_find_pte_direct(pmap, va, &ptes, &offs);
+	if (pmap != pmap_kernel())
+		mtx_enter(&pmap->pm_mtx);
 
-	if (__predict_true(level == 0 && pmap_valid_entry(ptes[offs]))) {
+	level = pmap_find_pte_direct(pmap, va, &ptes, &offs);
+	pte = ptes[offs];
+
+	if (pmap != pmap_kernel())
+		mtx_leave(&pmap->pm_mtx);
+
+	if (__predict_true(level == 0 && pmap_valid_entry(pte))) {
 		if (pap != NULL)
-			*pap = (ptes[offs] & PG_FRAME) | (va & PAGE_MASK);
+			*pap = (pte & PG_FRAME) | (va & PAGE_MASK);
 		return 1;
 	}
-	if (level == 1 && (ptes[offs] & (PG_PS|PG_V)) == (PG_PS|PG_V)) {
+	if (level == 1 && (pte & (PG_PS|PG_V)) == (PG_PS|PG_V)) {
 		if (pap != NULL)
-			*pap = (ptes[offs] & PG_LGFRAME) | (va & PAGE_MASK_L2);
+			*pap = (pte & PG_LGFRAME) | (va & PAGE_MASK_L2);
 		return 1;
 	}
 
