@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_legacy.c,v 1.29 2021/09/04 16:26:12 jsing Exp $ */
+/*	$OpenBSD: tls13_legacy.c,v 1.30 2021/09/14 14:31:21 tb Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -407,7 +407,12 @@ tls13_legacy_accept(SSL *ssl)
 	if (ret == TLS13_IO_USE_LEGACY)
 		return ssl->method->ssl_accept(ssl);
 
-	return tls13_legacy_return_code(ssl, ret);
+	ret = tls13_legacy_return_code(ssl, ret);
+
+	if (ctx->info_cb != NULL)
+		ctx->info_cb(ctx, TLS13_INFO_ACCEPT_EXIT, ret);
+
+	return ret;
 }
 
 int
@@ -446,7 +451,12 @@ tls13_legacy_connect(SSL *ssl)
 	if (ret == TLS13_IO_USE_LEGACY)
 		return ssl->method->ssl_connect(ssl);
 
-	return tls13_legacy_return_code(ssl, ret);
+	ret = tls13_legacy_return_code(ssl, ret);
+
+	if (ctx->info_cb != NULL)
+		ctx->info_cb(ctx, TLS13_INFO_CONNECT_EXIT, ret);
+
+	return ret;
 }
 
 int
