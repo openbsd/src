@@ -2070,6 +2070,7 @@
 ./usr/share/man/man3/SSL_SESSION_get_protocol_version.3
 ./usr/share/man/man3/SSL_SESSION_get_time.3
 ./usr/share/man/man3/SSL_SESSION_has_ticket.3
+./usr/share/man/man3/SSL_SESSION_is_resumable.3
 ./usr/share/man/man3/SSL_SESSION_new.3
 ./usr/share/man/man3/SSL_SESSION_print.3
 ./usr/share/man/man3/SSL_SESSION_set1_id_context.3
@@ -2120,6 +2121,7 @@
 ./usr/share/man/man3/SSL_set_connect_state.3
 ./usr/share/man/man3/SSL_set_fd.3
 ./usr/share/man/man3/SSL_set_max_send_fragment.3
+./usr/share/man/man3/SSL_set_psk_use_session_callback.3
 ./usr/share/man/man3/SSL_set_session.3
 ./usr/share/man/man3/SSL_set_shutdown.3
 ./usr/share/man/man3/SSL_set_tmp_ecdh.3
