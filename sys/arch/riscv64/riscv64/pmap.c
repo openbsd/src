@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.19 2021/08/02 19:07:29 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.20 2021/09/14 16:21:21 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Brian Bamsch <bbamsch@google.com>
@@ -18,20 +18,17 @@
  */
 
 #include <sys/param.h>
-#include <sys/proc.h>
 #include <sys/systm.h>
-#include <sys/pool.h>
 #include <sys/atomic.h>
+#include <sys/pool.h>
+#include <sys/proc.h>
 
 #include <uvm/uvm.h>
 
-#include "machine/vmparam.h"
-#include "machine/pmap.h"
-#include "machine/cpufunc.h"
-#include "machine/riscvreg.h"
-#include "machine/sbi.h"
-
-void pmap_set_satp(struct proc *);
+#include <machine/cpufunc.h>
+#include <machine/pmap.h>
+#include <machine/riscvreg.h>
+#include <machine/sbi.h>
 
 #ifdef MULTIPROCESSOR
 
@@ -141,30 +138,6 @@ struct pte_desc {
 	vaddr_t pted_va;
 };
 
-/* VP routines */
-int pmap_vp_enter(pmap_t pm, vaddr_t va, struct pte_desc *pted, int flags);
-struct pte_desc *pmap_vp_remove(pmap_t pm, vaddr_t va);
-void pmap_vp_destroy(pmap_t pm);
-void pmap_vp_destroy_l2_l3(pmap_t pm, struct pmapvp1 *vp1);
-struct pte_desc *pmap_vp_lookup(pmap_t pm, vaddr_t va, pt_entry_t **);
-
-/* PV routines */
-void pmap_enter_pv(struct pte_desc *pted, struct vm_page *);
-void pmap_remove_pv(struct pte_desc *pted);
-
-void _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags,
-    int cache);
-
-static __inline void pmap_set_mode(pmap_t);
-static __inline void pmap_set_ppn(pmap_t, paddr_t);
-
-# if 0	// XXX 4 Level Page Table
-struct pmapvp0 {
-	pt_entry_t l0[VP_IDX0_CNT];
-	struct pmapvp1 *vp[VP_IDX0_CNT];
-};
-#endif
-
 struct pmapvp1 {
 	pt_entry_t l1[VP_IDX1_CNT];
 	struct pmapvp2 *vp[VP_IDX1_CNT];
@@ -182,51 +155,40 @@ struct pmapvp3 {
 CTASSERT(sizeof(struct pmapvp1) == sizeof(struct pmapvp2));
 CTASSERT(sizeof(struct pmapvp1) == sizeof(struct pmapvp3));
 
+void	pmap_vp_destroy(pmap_t);
+
 /* Allocator for VP pool. */
-void *pmap_vp_page_alloc(struct pool *, int, int *);
-void pmap_vp_page_free(struct pool *, void *);
+void	*pmap_vp_page_alloc(struct pool *, int, int *);
+void	pmap_vp_page_free(struct pool *, void *);
 
 struct pool_allocator pmap_vp_allocator = {
 	pmap_vp_page_alloc, pmap_vp_page_free, sizeof(struct pmapvp1)
 };
 
+void	pmap_remove_pted(pmap_t, struct pte_desc *);
+void	pmap_kremove_pg(vaddr_t);
+void	pmap_set_l2(struct pmap *, uint64_t, struct pmapvp2 *, paddr_t);
+void	pmap_set_l3(struct pmap *, uint64_t, struct pmapvp3 *, paddr_t);
+void	pmap_set_satp(struct proc *);
 
-void pmap_remove_pted(pmap_t pm, struct pte_desc *pted);
-void pmap_kremove_pg(vaddr_t va);
-#if 0	// XXX Not necessary without 4-Level PT
-void pmap_set_l1(struct pmap *pm, uint64_t va, struct pmapvp1 *l1_va, paddr_t l1_pa);
-#endif
-void pmap_set_l2(struct pmap *pm, uint64_t va, struct pmapvp2 *l2_va, paddr_t l2_pa);
-void pmap_set_l3(struct pmap *pm, uint64_t va, struct pmapvp3 *l3_va, paddr_t l3_pa);
-
-
-/* XXX */
-void
-pmap_fill_pte(pmap_t pm, vaddr_t va, paddr_t pa, struct pte_desc *pted,
-    vm_prot_t prot, int flags, int cache);
-void pmap_pte_insert(struct pte_desc *pted);
-void pmap_pte_remove(struct pte_desc *pted, int);
-void pmap_pte_update(struct pte_desc *pted, pt_entry_t *pl3);
-void pmap_kenter_cache(vaddr_t va, paddr_t pa, vm_prot_t prot, int cacheable);
-void pmap_pinit(pmap_t pm);
-void pmap_release(pmap_t pm);
-paddr_t pmap_steal_avail(size_t size, int align, void **kva);
-void pmap_remove_avail(paddr_t base, paddr_t end);
-vaddr_t pmap_map_stolen(vaddr_t);
-void pmap_physload_avail(void);
-extern caddr_t msgbufaddr;
+void	pmap_fill_pte(pmap_t, vaddr_t, paddr_t, struct pte_desc *,
+	    vm_prot_t, int, int);
+void	pmap_pte_insert(struct pte_desc *);
+void	pmap_pte_remove(struct pte_desc *, int);
+void	pmap_pte_update(struct pte_desc *, pt_entry_t *);
+void	pmap_release(pmap_t);
+paddr_t	pmap_steal_avail(size_t, int, void **);
+void	pmap_remove_avail(paddr_t, paddr_t);
+vaddr_t	pmap_map_stolen(vaddr_t);
 
 vaddr_t vmmap;
 vaddr_t zero_page;
 vaddr_t copy_src_page;
 vaddr_t copy_dst_page;
 
-/* XXX - panic on pool get failures? */
 struct pool pmap_pmap_pool;
 struct pool pmap_pted_pool;
 struct pool pmap_vp_pool;
-
-/* list of L1 tables */
 
 int pmap_initialized = 0;
 
@@ -257,12 +219,6 @@ pmap_unlock(struct pmap *pmap)
 }
 
 /* virtual to physical helpers */
-static inline int
-VP_IDX0(vaddr_t va)
-{
-	return (va >> VP_IDX0_POS) & VP_IDX0_MASK;
-}
-
 static inline int
 VP_IDX1(vaddr_t va)
 {
@@ -870,22 +826,22 @@ pmap_pinit(pmap_t pm)
 	vp1 = pm->pm_vp.l1; /* top level is l1 */
 	l1va = (vaddr_t)vp1->l1;
 
-	// Fill Kernel Entries
+	/* Fill kernel PTEs. */
 	kvp1 = pmap_kernel()->pm_vp.l1;
 	memcpy(&vp1->l1[L1_KERN_BASE], &kvp1->l1[L1_KERN_BASE],
 			L1_KERN_ENTRIES * sizeof(pt_entry_t));
 	memcpy(&vp1->vp[L1_KERN_BASE], &kvp1->vp[L1_KERN_BASE],
 			L1_KERN_ENTRIES * sizeof(struct pmapvp2 *));
 
-	// Fill DMAP PTEs
+	/* Fill DMAP PTEs. */
 	memcpy(&vp1->l1[L1_DMAP_BASE], &kvp1->l1[L1_DMAP_BASE],
 			L1_DMAP_ENTRIES * sizeof(pt_entry_t));
 	memcpy(&vp1->vp[L1_DMAP_BASE], &kvp1->vp[L1_DMAP_BASE],
 			L1_DMAP_ENTRIES * sizeof(struct pmapvp2 *));
 
 	pmap_extract(pmap_kernel(), l1va, (paddr_t *)&l1pa);
-	pmap_set_ppn(pm, l1pa);
-	pmap_set_mode(pm);
+	pm->pm_satp |= SATP_FORMAT_PPN(PPN(l1pa));
+	pm->pm_satp |= SATP_MODE_SV39;
 	pmap_reference(pm);
 }
 
@@ -948,12 +904,6 @@ void
 pmap_release(pmap_t pm)
 {
 	pmap_vp_destroy(pm);
-}
-
-void
-pmap_vp_destroy_l2_l3(pmap_t pm, struct pmapvp1 *vp1)
-{
-
 }
 
 void
@@ -1103,7 +1053,6 @@ pmap_kpted_alloc(void)
 vaddr_t
 pmap_growkernel(vaddr_t maxkvaddr)
 {
-	// XXX pmap_growkernel must add kernel L1 pages to existing pmaps
 	struct pmapvp1 *vp1 = pmap_kernel()->pm_vp.l1;
 	struct pmapvp2 *vp2;
 	struct pmapvp3 *vp3;
@@ -1391,38 +1340,12 @@ pmap_bootstrap(long kvo, vaddr_t l1pt, vaddr_t kernelstart, vaddr_t kernelend,
 	return vstart;
 }
 
-#if 0	// XXX Not necessary without 4-Level PT
-void
-pmap_set_l1(struct pmap *pm, uint64_t va, struct pmapvp1 *l1_va, paddr_t l1_pa)
-{
-	pt_entry_t pg_entry;
-	int idx0;
-
-	if (l1_pa == 0) {
-		/*
-		 * if this is called from pmap_vp_enter, this is a
-		 * normally mapped page, call pmap_extract to get pa
-		 */
-		pmap_extract(pmap_kernel(), (vaddr_t)l1_va, &l1_pa);
-	}
-
-	if (l1_pa & (Lx_TABLE_ALIGN-1))
-		panic("misaligned L2 table");
-
-	pg_entry = VP_Lx(l1_pa);
-
-	idx0 = VP_IDX0(va);
-	pm->pm_vp.l0->vp[idx0] = l1_va;
-	pm->pm_vp.l0->l0[idx0] = pg_entry;
-}
-#endif
-
 void
 pmap_set_l2(struct pmap *pm, uint64_t va, struct pmapvp2 *l2_va, paddr_t l2_pa)
 {
 	pt_entry_t pg_entry;
 	struct pmapvp1 *vp1;
-	int idx0, idx1;
+	int idx1;
 
 	if (l2_pa == 0) {
 		/*
@@ -1437,7 +1360,6 @@ pmap_set_l2(struct pmap *pm, uint64_t va, struct pmapvp2 *l2_va, paddr_t l2_pa)
 
 	pg_entry = VP_Lx(l2_pa);
 
-	idx0 = VP_IDX0(va);
 	idx1 = VP_IDX1(va);
 	vp1 = pm->pm_vp.l1;
 	vp1->vp[idx1] = l2_va;
@@ -1660,33 +1582,6 @@ pmap_pte_update(struct pte_desc *pted, uint64_t *pl3)
 {
 	pt_entry_t pte, access_bits;
 	pmap_t pm = pted->pted_pmap;
-#if 0	// XXX Attributes specific to arm64? Does riscv64 have equivalent?
-	uint64_t attr = ATTR_nG;
-
-	/* see mair in locore.S */
-	switch (pted->pted_va & PMAP_CACHE_BITS) {
-	case PMAP_CACHE_WB:
-		/* inner and outer writeback */
-		attr |= ATTR_IDX(PTE_ATTR_WB);
-		attr |= ATTR_SH(SH_INNER);
-		break;
-	case PMAP_CACHE_WT:
-		 /* inner and outer writethrough */
-		attr |= ATTR_IDX(PTE_ATTR_WT);
-		attr |= ATTR_SH(SH_INNER);
-		break;
-	case PMAP_CACHE_CI:
-		attr |= ATTR_IDX(PTE_ATTR_CI);
-		attr |= ATTR_SH(SH_INNER);
-		break;
-	case PMAP_CACHE_DEV:
-		attr |= ATTR_IDX(PTE_ATTR_DEV);
-		attr |= ATTR_SH(SH_INNER);
-		break;
-	default:
-		panic("pmap_pte_insert: invalid cache mode");
-	}
-#endif
 
 	if (pm->pm_privileged)
 		access_bits = ap_bits_kern[pted->pted_pte & PROT_MASK];
@@ -1700,8 +1595,6 @@ pmap_pte_update(struct pte_desc *pted, uint64_t *pl3)
 void
 pmap_pte_remove(struct pte_desc *pted, int remove_pted)
 {
-	/* put entry into table */
-	/* need to deal with ref/change here */
 	struct pmapvp1 *vp1;
 	struct pmapvp2 *vp2;
 	struct pmapvp3 *vp3;
@@ -2227,18 +2120,6 @@ pmap_show_mapping(uint64_t va)
 	pted = vp3->vp[VP_IDX3(va)];
 	printf("  pted = %p lp3 = %llx idx3 off  %x\n",
 		pted, vp3->l3[VP_IDX3(va)], VP_IDX3(va)*8);
-}
-
-static __inline void
-pmap_set_ppn(pmap_t pm, paddr_t pa) {
-	((pm)->pm_satp |= SATP_FORMAT_PPN(PPN(pa)));
-}
-
-static __inline void
-pmap_set_mode(pmap_t pm) {
-	// Always using Sv39
-	// XXX Support 4-level PT
-	((pm)->pm_satp |= SATP_MODE_SV39);
 }
 
 void
