@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.176 2021/09/05 11:44:46 mpi Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.177 2021/09/14 16:16:51 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -1090,7 +1090,10 @@ pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 
 	DPRINTF(PDB_FOLLOW|PDB_EXTRACT, ("pmap_extract(%p, %lx)\n", pmap, va));
 
+	pmap_lock(pmap);
 	pte = pmap_vp_find(pmap, va);
+	pmap_unlock(pmap);
+
 	if (pte) {
 		if (pap)
 			*pap = (pte & ~PGOFSET) | (va & PGOFSET);
