@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.208 2021/09/10 14:58:44 tb Exp $ */
+/* $OpenBSD: ssl.h,v 1.209 2021/09/14 23:07:18 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -702,8 +702,6 @@ void SSL_set_psk_use_session_callback(SSL *s, SSL_psk_use_session_cb_func cb);
 
 #define SSL_MAC_FLAG_READ_MAC_STREAM 1
 #define SSL_MAC_FLAG_WRITE_MAC_STREAM 2
-
-typedef struct ssl_st SSL;
 
 #if defined(LIBRESSL_INTERNAL)
 struct ssl_internal_st;
