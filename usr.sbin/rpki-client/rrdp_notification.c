@@ -371,6 +371,10 @@ notification_done(struct notification_xml *nxml, char *last_mod)
 		return NOTIFICATION;
 	}
 
+	/* it makes no sense to process too many deltas */
+	if (nxml->serial - nxml->repository->serial > 300)
+		goto snapshot;
+
 	/* check that all needed deltas are available */
 	s = nxml->repository->serial + 1;
 	TAILQ_FOREACH(d, &nxml->delta_q, q) {
