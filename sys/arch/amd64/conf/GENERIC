@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.501 2021/09/13 09:57:48 jmatthew Exp $
+#	$OpenBSD: GENERIC,v 1.502 2021/09/14 08:19:58 jan Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -404,7 +404,7 @@ com*	at pcmcia?			# PCMCIA modems/serial ports
 com*	at puc?
 
 # options CY_HW_RTS
-#cy*	at pci?				# PCI cyclom serial card
+cy*	at pci?				# PCI cyclom serial card
 #cz*	at pci?				# Cyclades-Z multi-port serial boards
 
 lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
