@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.77 2019/06/02 13:22:36 deraadt Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.78 2021/09/14 09:15:55 mvs Exp $	*/
 
 /*
  * Copyright (c) 2016-2018 Peter Hessler <phessler@openbsd.org>
@@ -183,12 +183,15 @@ bfdset(struct rtentry *rt)
 	if (ISSET(rt->rt_flags, RTF_GATEWAY) || !ISSET(rt->rt_flags, RTF_HOST))
 		return (EINVAL);
 
-	/* make sure we don't already have this setup */
-	if (bfd_lookup(rt) != NULL)
-		return (EADDRINUSE);
-
 	/* Do our necessary memory allocations upfront */
 	bfd = pool_get(&bfd_pool, PR_WAITOK | PR_ZERO);
+
+	/* make sure we don't already have this setup */
+	if (bfd_lookup(rt) != NULL) {
+		pool_put(&bfd_pool, bfd);
+		return (EADDRINUSE);
+	}
+
 	bfd->bc_neighbor = pool_get(&bfd_pool_neigh, PR_WAITOK | PR_ZERO);
 	bfd->bc_time = pool_get(&bfd_pool_time, PR_WAITOK | PR_ZERO);
 
