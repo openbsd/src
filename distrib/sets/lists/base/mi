@@ -580,6 +580,7 @@
 ./usr/bin/tftp
 ./usr/bin/tic
 ./usr/bin/time
+./usr/bin/timeout
 ./usr/bin/tmux
 ./usr/bin/top
 ./usr/bin/touch
