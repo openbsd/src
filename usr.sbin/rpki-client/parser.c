@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.10 2021/05/11 11:32:51 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.11 2021/09/15 15:51:05 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -40,6 +40,10 @@
 static void	build_chain(const struct auth *, STACK_OF(X509) **);
 static void	build_crls(const struct auth *, struct crl_tree *,
 		    STACK_OF(X509_CRL) **);
+
+/* Limit how deep the RPKI tree can be. */
+#define	MAX_CERT_DEPTH	12
+
 /*
  * Parse and validate a ROA.
  * This is standard stuff.
@@ -73,6 +77,7 @@ proc_parser_roa(struct entity *entp,
 		cryptoerrx("X509_STORE_CTX_init");
 	X509_STORE_CTX_set_flags(ctx,
 	    X509_V_FLAG_IGNORE_CRITICAL | X509_V_FLAG_CRL_CHECK);
+	X509_STORE_CTX_set_depth(ctx, MAX_CERT_DEPTH);
 	X509_STORE_CTX_set0_crls(ctx, crls);
 
 	if (X509_verify_cert(ctx) <= 0) {
@@ -188,6 +193,7 @@ proc_parser_mft(struct entity *entp, X509_STORE *store, X509_STORE_CTX *ctx,
 
 	/* CRL checked disabled here because CRL is referenced from mft */
 	X509_STORE_CTX_set_flags(ctx, X509_V_FLAG_IGNORE_CRITICAL);
+	X509_STORE_CTX_set_depth(ctx, MAX_CERT_DEPTH);
 
 	if (X509_verify_cert(ctx) <= 0) {
 		c = X509_STORE_CTX_get_error(ctx);
@@ -251,9 +257,9 @@ proc_parser_cert(const struct entity *entp,
 	assert(x509 != NULL);
 	if (!X509_STORE_CTX_init(ctx, store, x509, chain))
 		cryptoerrx("X509_STORE_CTX_init");
-
 	X509_STORE_CTX_set_flags(ctx,
 	    X509_V_FLAG_IGNORE_CRITICAL | X509_V_FLAG_CRL_CHECK);
+	X509_STORE_CTX_set_depth(ctx, MAX_CERT_DEPTH);
 	X509_STORE_CTX_set0_crls(ctx, crls);
 
 	if (X509_verify_cert(ctx) <= 0) {
@@ -457,6 +463,7 @@ proc_parser_gbr(struct entity *entp, X509_STORE *store,
 		cryptoerrx("X509_STORE_CTX_init");
 	X509_STORE_CTX_set_flags(ctx,
 	    X509_V_FLAG_IGNORE_CRITICAL | X509_V_FLAG_CRL_CHECK);
+	X509_STORE_CTX_set_depth(ctx, MAX_CERT_DEPTH);
 	X509_STORE_CTX_set0_crls(ctx, crls);
 
 	if (X509_verify_cert(ctx) <= 0) {
