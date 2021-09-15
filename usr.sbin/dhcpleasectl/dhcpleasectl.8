@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpleasectl.8,v 1.2 2021/08/23 18:09:05 florian Exp $
+.\"	$OpenBSD: dhcpleasectl.8,v 1.3 2021/09/15 15:18:23 florian Exp $
 .\"
 .\" Copyright (c) 2021 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2016 Kenneth R Westerback <kwesterback@gmail.com>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 23 2021 $
+.Dd $Mdocdate: September 15 2021 $
 .Dt DHCPLEASECTL 8
 .Os
 .Sh NAME
@@ -24,18 +24,23 @@
 .Nd control the dhcpleased daemon
 .Sh SYNOPSIS
 .Nm
+.Op Fl l
 .Op Fl s Ar socket
-.Ar command
-.Op Ar argument ...
+.Op Fl w Ar maxwait
+.Ar interfacename
 .Sh DESCRIPTION
 The
 .Nm
-program controls the
+program instructs the
 .Xr dhcpleased 8
-daemon.
+daemon to request a new lease.
 .Pp
 The following options are available:
 .Bl -tag -width Ds
+.It Fl l
+List the configured lease on
+.Ar interfacename
+instead of requesting a new lease.
 .It Fl s Ar socket
 Use
 .Ar socket
@@ -43,27 +48,15 @@ instead of the default
 .Pa /dev/dhcpleased.sock
 to communicate with
 .Xr dhcpleased 8 .
+.It Fl w Ar maxwait
+Specify the maximum number of seconds to wait for
+.Ar interfacename
+to be configured.
+The default is to wait 10 seconds unless
+.Fl l
+is specified.
 .El
 .Pp
-The following commands are available:
-.Bl -tag -width Ds
-.It Cm log brief
-Disable verbose debug logging.
-.It Cm log verbose
-Enable verbose debug logging.
-.It Cm send request Ar interfacename
-Send a DHCP request on interface
-.Ar interfacename
-to force a renew of the lease.
-.It Cm show interface Op Ar interfacename
-Display status about network interfaces.
-If
-.Ar interfacename
-is specified, only information relative to
-.Ar interfacename
-is shown.
-Otherwise information on all interfaces is shown.
-.El
 .Sh FILES
 .Bl -tag -width "/dev/dhcpleased.sockXX" -compact
 .It Pa /dev/dhcpleased.sock

@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.1 2021/02/26 16:16:37 florian Exp $
+#	$OpenBSD: Makefile,v 1.2 2021/09/15 15:18:23 florian Exp $
 
 PROG=	dhcpleasectl
-SRCS=	dhcpleasectl.c parser.c
+SRCS=	dhcpleasectl.c
 
 MAN=	dhcpleasectl.8
 

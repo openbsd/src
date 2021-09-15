@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.26 2021/09/15 06:08:01 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.27 2021/09/15 15:18:23 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -591,16 +591,11 @@ engine_showinfo_ctl(struct imsg *imsg, uint32_t if_index)
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_INTERFACE_INFO:
-		if (if_index == 0) {
-			LIST_FOREACH (iface, &dhcpleased_interfaces, entries)
-				send_interface_info(iface, imsg->hdr.pid);
-		} else {
-			if ((iface = get_dhcpleased_iface_by_id(if_index)) !=
-			    NULL)
-				send_interface_info(iface, imsg->hdr.pid);
-		}
-		engine_imsg_compose_frontend(IMSG_CTL_END, imsg->hdr.pid, NULL,
-		    0);
+		if ((iface = get_dhcpleased_iface_by_id(if_index)) != NULL)
+			send_interface_info(iface, imsg->hdr.pid);
+		else
+			engine_imsg_compose_frontend(IMSG_CTL_END,
+			    imsg->hdr.pid, NULL, 0);
 		break;
 	default:
 		log_debug("%s: error handling imsg", __func__);
