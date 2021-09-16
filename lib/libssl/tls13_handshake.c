@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_handshake.c,v 1.69 2021/07/01 17:53:39 jsing Exp $	*/
+/*	$OpenBSD: tls13_handshake.c,v 1.70 2021/09/16 19:25:30 jsing Exp $	*/
 /*
  * Copyright (c) 2018-2021 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
@@ -331,6 +331,18 @@ tls13_handshake_advance_state_machine(struct tls13_ctx *ctx)
 	return 1;
 }
 
+static int
+tls13_handshake_end_of_flight(struct tls13_ctx *ctx,
+    const struct tls13_handshake_action *previous)
+{
+	const struct tls13_handshake_action *current;
+
+	if ((current = tls13_handshake_active_action(ctx)) == NULL)
+		return 1;
+
+	return current->sender != previous->sender;
+}
+
 int
 tls13_handshake_msg_record(struct tls13_ctx *ctx)
 {
@@ -344,6 +356,7 @@ int
 tls13_handshake_perform(struct tls13_ctx *ctx)
 {
 	const struct tls13_handshake_action *action;
+	int sending;
 	int ret;
 
 	if (!ctx->handshake_started) {
@@ -367,6 +380,13 @@ tls13_handshake_perform(struct tls13_ctx *ctx)
 		if ((action = tls13_handshake_active_action(ctx)) == NULL)
 			return TLS13_IO_FAILURE;
 
+		if (ctx->need_flush) {
+			if ((ret = tls13_record_layer_flush(ctx->rl)) !=
+			    TLS13_IO_SUCCESS)
+				return ret;
+			ctx->need_flush = 0;
+		}
+
 		if (action->handshake_complete) {
 			ctx->handshake_completed = 1;
 			tls13_record_layer_handshake_completed(ctx->rl);
@@ -379,14 +399,16 @@ tls13_handshake_perform(struct tls13_ctx *ctx)
 			return TLS13_IO_SUCCESS;
 		}
 
+		sending = action->sender == ctx->mode;
+
 		DEBUGF("%s %s %s\n", tls13_handshake_mode_name(ctx->mode),
-		    (action->sender == ctx->mode) ? "sending" : "receiving",
+		    sending ? "sending" : "receiving",
 		    tls13_handshake_message_name(action->handshake_type));
 
 		if (ctx->alert != 0)
 			return tls13_send_alert(ctx->rl, ctx->alert);
 
-		if (action->sender == ctx->mode)
+		if (sending)
 			ret = tls13_handshake_send_action(ctx, action);
 		else
 			ret = tls13_handshake_recv_action(ctx, action);
@@ -407,6 +429,10 @@ tls13_handshake_perform(struct tls13_ctx *ctx)
 
 		if (!tls13_handshake_advance_state_machine(ctx))
 			return TLS13_IO_FAILURE;
+
+		if (sending)
+			ctx->need_flush = tls13_handshake_end_of_flight(ctx,
+			    action);
 
 		if (!tls13_handshake_set_legacy_state(ctx))
 			return TLS13_IO_FAILURE;

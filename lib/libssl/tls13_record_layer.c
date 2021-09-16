@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.63 2021/09/04 16:26:12 jsing Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.64 2021/09/16 19:25:30 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -1094,6 +1094,12 @@ tls13_record_layer_write(struct tls13_record_layer *rl, uint8_t content_type,
 	} while (ret == TLS13_IO_WANT_RETRY);
 
 	return ret;
+}
+
+ssize_t
+tls13_record_layer_flush(struct tls13_record_layer *rl)
+{
+	return rl->cb.wire_flush(rl->cb_arg);
 }
 
 static const uint8_t tls13_dummy_ccs[] = { 0x01 };

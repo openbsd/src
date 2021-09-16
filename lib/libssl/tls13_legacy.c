@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_legacy.c,v 1.30 2021/09/14 14:31:21 tb Exp $ */
+/*	$OpenBSD: tls13_legacy.c,v 1.31 2021/09/16 19:25:30 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -94,6 +94,30 @@ tls13_legacy_wire_write_cb(const void *buf, size_t n, void *arg)
 	struct tls13_ctx *ctx = arg;
 
 	return tls13_legacy_wire_write(ctx->ssl, buf, n);
+}
+
+static ssize_t
+tls13_legacy_wire_flush(SSL *ssl)
+{
+	if (BIO_flush(ssl->wbio) <= 0) {
+		if (BIO_should_write(ssl->wbio))
+			return TLS13_IO_WANT_POLLOUT;
+
+		if (ERR_peek_error() == 0 && errno != 0)
+			SYSerror(errno);
+
+		return TLS13_IO_FAILURE;
+	}
+
+	return TLS13_IO_SUCCESS;
+}
+
+ssize_t
+tls13_legacy_wire_flush_cb(void *arg)
+{
+	struct tls13_ctx *ctx = arg;
+
+	return tls13_legacy_wire_flush(ctx->ssl);
 }
 
 static void

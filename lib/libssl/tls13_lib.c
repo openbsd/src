@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.61 2021/09/02 11:58:30 beck Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.62 2021/09/16 19:25:30 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -374,6 +374,7 @@ tls13_phh_received_cb(void *cb_arg, CBS *cbs)
 static const struct tls13_record_layer_callbacks rl_callbacks = {
 	.wire_read = tls13_legacy_wire_read_cb,
 	.wire_write = tls13_legacy_wire_write_cb,
+	.wire_flush = tls13_legacy_wire_flush_cb,
 	.alert_recv = tls13_alert_received_cb,
 	.alert_sent = tls13_alert_sent_cb,
 	.phh_recv = tls13_phh_received_cb,
