@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleased.c,v 1.20 2021/08/24 14:54:02 florian Exp $	*/
+/*	$OpenBSD: dhcpleased.c,v 1.21 2021/09/16 13:36:52 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -1098,8 +1098,10 @@ configure_route(uint8_t rtm_type, uint32_t if_index, int rdomain, struct
 		rtm.rtm_msglen += padlen;
 	}
 
-	if (writev(routesock, iov, iovcnt) == -1)
-		log_warn("failed to send route message");
+	if (writev(routesock, iov, iovcnt) == -1) {
+		if (errno != EEXIST)
+			log_warn("failed to send route message");
+	}
 }
 
 #ifndef	SMALL
@@ -1177,7 +1179,7 @@ propose_rdns(struct imsg_propose_rdns *rdns)
 	}
 
 	if (writev(routesock, iov, iovcnt) == -1)
-		log_warn("failed to send route message");
+		log_warn("failed to propose nameservers");
 }
 
 void
