@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.21 2021/09/09 20:08:15 jasper Exp $
+# $OpenBSD: Makefile,v 1.22 2021/09/16 10:54:35 anton Exp $
 
 BTRACE?=		 /usr/sbin/btrace
 ALLOWDT!=		sysctl -n kern.allowdt
@@ -19,8 +19,7 @@ REGRESS_EXPECTED_FAILURES=	run-maxoperand
 .for b in ${BT_LANG_SCRIPTS}
 REGRESS_TARGETS+=		run-$b
 run-$b:
-	${BTRACE} ${.CURDIR}/$b.bt 2>&1 | \
-		diff -u ${.CURDIR}/$b.ok /dev/stdin
+	cd ${.CURDIR} && ${BTRACE} $b.bt 2>&1 | diff -u $b.ok /dev/stdin
 .endfor
 
 b=staticv
@@ -34,7 +33,7 @@ REGRESS_TARGETS+=		run-$b
 REGRESS_ROOT_TARGETS+=		run-$b
 run-$b:
 .if ${ALLOWDT}
-	${BTRACE} ${.CURDIR}/$b.bt 2>&1 | \
+	${SUDO} ${BTRACE} ${.CURDIR}/$b.bt 2>&1 | \
 		diff -u ${.CURDIR}/$b.ok /dev/stdin
 .else
 	@echo SKIPPED
