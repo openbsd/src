@@ -1,4 +1,4 @@
-/* $OpenBSD: bwx.c,v 1.9 2018/04/26 15:55:14 guenther Exp $ */
+/* $OpenBSD: bwx.c,v 1.10 2021/09/17 15:19:52 deraadt Exp $ */
 /*-
  * Copyright (c) 1998 Doug Rabson
  * All rights reserved.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/sysctl.h>
 #include <machine/bwx.h>
@@ -39,8 +39,9 @@
 
 #include "io.h"
 
-#define	round_page(x)	(((x) + PAGE_MASK) & ~PAGE_MASK)
-#define	trunc_page(x)	((x) & ~PAGE_MASK)
+#define	round_page(x)	(((x) + page_mask) & ~page_mask)
+#define	trunc_page(x)	((x) & ~page_mask)
+static long		page_mask;
 
 #define PATH_APERTURE "/dev/xf86"
 
@@ -85,6 +86,8 @@ bwx_init(void)
 	int error;
 	int mib[3];
 	
+	page_mask = getpagesize() - 1;
+
 	mib[0] = CTL_MACHDEP;
 	mib[1] = CPU_CHIPSET;
 	mib[2] = CPU_CHIPSET_PORTS;
