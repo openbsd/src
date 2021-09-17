@@ -1,4 +1,4 @@
-/*	$OpenBSD: fenv.c,v 1.5 2016/09/12 19:47:02 guenther Exp $	*/
+/*	$OpenBSD: fenv.c,v 1.6 2021/09/17 15:11:57 deraadt Exp $	*/
 /*	$NetBSD: fenv.c,v 1.3 2010/08/01 06:34:38 taca Exp $	*/
 
 /*-
@@ -27,7 +27,8 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
+#include <sys/time.h>
 #include <sys/sysctl.h>
 #include <machine/cpu.h>
 #include <machine/npx.h>
