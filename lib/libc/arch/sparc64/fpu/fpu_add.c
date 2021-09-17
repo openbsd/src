@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_add.c,v 1.3 2019/03/15 05:42:38 kevlo Exp $	*/
+/*	$OpenBSD: fpu_add.c,v 1.4 2021/09/17 15:12:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,7 +51,7 @@
  * To subtract, negate y and call add.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 
 #include <machine/frame.h>
 #include <machine/fsr.h>
