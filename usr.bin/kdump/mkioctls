@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: mkioctls,v 1.42 2020/06/22 01:02:30 dlg Exp $
+#	$OpenBSD: mkioctls,v 1.43 2021/09/17 15:13:04 deraadt Exp $
 
 #
 # Copyright (c) 1994
@@ -33,7 +33,8 @@
 #
 ${CC:-cc} -E -dM ${1+"$@"} | awk '
 BEGIN {
-	print "#include <sys/param.h>"
+	print "#include <sys/types.h>"
+	print "#include <sys/signal.h>"
 	print "#include <sys/socket.h>"
 	print "#include <sys/socketvar.h>"
 	print "#include <miscfs/fuse/fusefs.h>"
