@@ -1,8 +1,8 @@
-/* $OpenBSD: rthread_stack.c,v 1.19 2018/02/11 04:12:22 deraadt Exp $ */
+/* $OpenBSD: rthread_stack.c,v 1.20 2021/09/17 15:20:21 deraadt Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/mman.h>
 
 #include <errno.h>

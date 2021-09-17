@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_np.c,v 1.22 2020/10/12 22:08:34 deraadt Exp $	*/
+/*	$OpenBSD: rthread_np.c,v 1.23 2021/09/17 15:20:21 deraadt Exp $	*/
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2005 Otto Moerbeek <otto@openbsd.org>
@@ -17,7 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/time.h>
 #include <sys/lock.h>
 #include <sys/resource.h>
