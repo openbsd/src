@@ -1,4 +1,4 @@
-/* $OpenBSD: lunafb.c,v 1.27 2020/05/25 09:55:48 jsg Exp $ */
+/* $OpenBSD: lunafb.c,v 1.28 2021/09/17 12:02:31 aoyama Exp $ */
 /* $NetBSD: lunafb.c,v 1.7.6.1 2002/08/07 01:48:34 lukem Exp $ */
 
 /*-
@@ -599,7 +599,27 @@ omfb_set_default_cmap(struct om_hwdevconfig *dc)
 {
 	int i;
 
-	if ((hwplanebits == 1) || (hwplanebits == 4)) {
+	if (hwplanebits == 1) {
+		struct bt454 *odac = (struct bt454 *)OMFB_RAMDAC;
+		/*
+		 * On 1bpp framebuffer, only plane P0 has framebuffer memory
+		 * and other planes seems pulled up, i.e. always 1.
+		 * Set white only for a palette (P0,P1,P2,P3) = (1,1,1,1).
+		 */
+		odac->bt_addr = 0;
+		for (i = 0; i < 15; i++) {
+			odac->bt_cmap = dc->dc_cmap.r[i] = 0;
+			odac->bt_cmap = dc->dc_cmap.g[i] = 0;
+			odac->bt_cmap = dc->dc_cmap.b[i] = 0;
+		}
+		/*
+		 * The B/W video connector is connected to IOG of Bt454,
+		 * and IOR and IOB are unused.
+		 */
+		odac->bt_cmap = dc->dc_cmap.r[15] = 0;
+		odac->bt_cmap = dc->dc_cmap.g[15] = 255;
+		odac->bt_cmap = dc->dc_cmap.b[15] = 0;
+	} else if (hwplanebits == 4) {
 		struct bt454 *odac = (struct bt454 *)OMFB_RAMDAC;
 
 		odac->bt_addr = 0;
