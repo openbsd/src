@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.131 2021/05/28 18:01:39 tobhe Exp $	*/
+/*	$OpenBSD: parse.y,v 1.132 2021/09/18 16:45:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -3071,6 +3071,7 @@ create_user(const char *user, const char *pass)
 	if (*pass == '\0' || (strlcpy(usr.usr_pass, pass,
 	    sizeof(usr.usr_pass)) >= sizeof(usr.usr_pass))) {
 		yyerror("invalid password");
+		explicit_bzero(&usr, sizeof usr);	/* zap partial password */
 		return (-1);
 	}
 
