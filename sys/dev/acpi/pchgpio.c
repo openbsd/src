@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchgpio.c,v 1.5 2021/08/30 18:40:19 kettenis Exp $	*/
+/*	$OpenBSD: pchgpio.c,v 1.6 2021/09/18 19:21:16 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis
  * Copyright (c) 2020 James Hastings
@@ -28,12 +28,13 @@
 
 #define PCHGPIO_MAXCOM		4
 
-#define PCHGPIO_CONF_TXSTATE	0x00000001
-#define PCHGPIO_CONF_RXSTATE	0x00000002
-#define PCHGPIO_CONF_RXINV	0x00800000
-#define PCHGPIO_CONF_RXEV_EDGE	0x02000000
-#define PCHGPIO_CONF_RXEV_ZERO	0x04000000
-#define PCHGPIO_CONF_RXEV_MASK	0x06000000
+#define PCHGPIO_CONF_TXSTATE		0x00000001
+#define PCHGPIO_CONF_RXSTATE		0x00000002
+#define PCHGPIO_CONF_RXINV		0x00800000
+#define PCHGPIO_CONF_RXEV_EDGE		0x02000000
+#define PCHGPIO_CONF_RXEV_ZERO		0x04000000
+#define PCHGPIO_CONF_RXEV_MASK		0x06000000
+#define PCHGPIO_CONF_PADRSTCFG_MASK	0xc0000000
 
 #define PCHGPIO_PADBAR		0x00c
 
@@ -59,6 +60,11 @@ struct pchgpio_match {
 	const struct pchgpio_device *device;
 };
 
+struct pchgpio_pincfg {
+	uint32_t	pad_cfg_dw0;
+	uint32_t	pad_cfg_dw1;
+};
+
 struct pchgpio_intrhand {
 	int (*ih_func)(void *);
 	void *ih_arg;
@@ -80,6 +86,7 @@ struct pchgpio_softc {
 	int sc_padsize;
 
 	int sc_npins;
+	struct pchgpio_pincfg *sc_pin_cfg;
 	struct pchgpio_intrhand *sc_pin_ih;
 
 	struct acpi_gpio sc_gpio;
@@ -87,9 +94,11 @@ struct pchgpio_softc {
 
 int	pchgpio_match(struct device *, void *, void *);
 void	pchgpio_attach(struct device *, struct device *, void *);
+int	pchgpio_activate(struct device *, int);
 
 struct cfattach pchgpio_ca = {
-	sizeof(struct pchgpio_softc), pchgpio_match, pchgpio_attach
+	sizeof(struct pchgpio_softc), pchgpio_match, pchgpio_attach,
+	NULL, pchgpio_activate
 };
 
 struct cfdriver pchgpio_cd = {
@@ -170,6 +179,8 @@ int	pchgpio_read_pin(void *, int);
 void	pchgpio_write_pin(void *, int, int);
 void	pchgpio_intr_establish(void *, int, int, int (*)(void *), void *);
 int	pchgpio_intr(void *);
+void	pchgpio_save(struct pchgpio_softc *);
+void	pchgpio_restore(struct pchgpio_softc *);
 
 int
 pchgpio_match(struct device *parent, void *match, void *aux)
@@ -240,6 +251,8 @@ pchgpio_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_padsize = sc->sc_device->pad_size;
 	sc->sc_npins = sc->sc_device->npins;
+	sc->sc_pin_cfg = mallocarray(sc->sc_npins, sizeof(*sc->sc_pin_cfg),
+	    M_DEVBUF, M_WAITOK);
 	sc->sc_pin_ih = mallocarray(sc->sc_npins, sizeof(*sc->sc_pin_ih),
 	    M_DEVBUF, M_WAITOK | M_ZERO);
 
@@ -263,9 +276,27 @@ pchgpio_attach(struct device *parent, struct device *self, void *aux)
 
 unmap:
 	free(sc->sc_pin_ih, M_DEVBUF, sc->sc_npins * sizeof(*sc->sc_pin_ih));
+	free(sc->sc_pin_cfg, M_DEVBUF, sc->sc_npins * sizeof(*sc->sc_pin_cfg));
 	for (i = 0; i < sc->sc_naddr; i++)
 		bus_space_unmap(sc->sc_memt[i], sc->sc_memh[i],
 		    aaa->aaa_size[i]);
+}
+
+int
+pchgpio_activate(struct device *self, int act)
+{
+	struct pchgpio_softc *sc = (struct pchgpio_softc *)self;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		pchgpio_save(sc);
+		break;
+	case DVACT_RESUME:
+		pchgpio_restore(sc);
+		break;
+	}
+
+	return 0;
 }
 
 const struct pchgpio_group *
@@ -403,4 +434,82 @@ pchgpio_intr(void *arg)
 	}
 
 	return handled;
+}
+
+void
+pchgpio_save_pin(struct pchgpio_softc *sc, int pin)
+{
+	const struct pchgpio_group *group;
+	uint16_t pad;
+	uint8_t bar;
+
+	group = pchgpio_find_group(sc, pin);
+	if (group == NULL)
+		return;
+
+	bar = group->bar;
+	pad = group->base + (pin - group->gpiobase) - sc->sc_padbase[bar];
+
+	sc->sc_pin_cfg[pin].pad_cfg_dw0 =
+	    bus_space_read_4(sc->sc_memt[bar], sc->sc_memh[bar],
+		sc->sc_padbar[bar] + pad * sc->sc_padsize);
+	sc->sc_pin_cfg[pin].pad_cfg_dw1 =
+	    bus_space_read_4(sc->sc_memt[bar], sc->sc_memh[bar],
+		sc->sc_padbar[bar] + pad * sc->sc_padsize + 4);
+}
+
+void
+pchgpio_save(struct pchgpio_softc *sc)
+{
+	int pin;
+
+	for (pin = 0; pin < sc->sc_npins; pin++)
+		pchgpio_save_pin(sc, pin);
+}
+
+void
+pchgpio_restore_pin(struct pchgpio_softc *sc, int pin)
+{
+	const struct pchgpio_group *group;
+	uint32_t pad_cfg_dw0;
+	uint16_t pad;
+	uint8_t bar;
+
+	group = pchgpio_find_group(sc, pin);
+	if (group == NULL)
+		return;
+
+	bar = group->bar;
+	pad = group->base + (pin - group->gpiobase) - sc->sc_padbase[bar];
+
+	pad_cfg_dw0 = bus_space_read_4(sc->sc_memt[bar], sc->sc_memh[bar],
+	    sc->sc_padbar[bar] + pad * sc->sc_padsize);
+
+	/*
+	 * The BIOS on Lenovo Thinkpads based on Intel's Tiger Lake
+	 * platform have a bug where the GPIO pin that is used for the
+	 * touchpad interrupt gets reset when entering S3 and isn't
+	 * properly restored upon resume.  We detect this issue by
+	 * comparing the bits in the PAD_CFG_DW0 register PADRSTCFG
+	 * field before suspend and after resume and restore the pin
+	 * configuration if the bits don't match.
+	 */
+	if ((sc->sc_pin_cfg[pin].pad_cfg_dw0 & PCHGPIO_CONF_PADRSTCFG_MASK) !=
+	    (pad_cfg_dw0 & PCHGPIO_CONF_PADRSTCFG_MASK)) {
+		bus_space_write_4(sc->sc_memt[bar], sc->sc_memh[bar],
+		    sc->sc_padbar[bar] + pad * sc->sc_padsize,
+		    sc->sc_pin_cfg[pin].pad_cfg_dw0);
+		bus_space_write_4(sc->sc_memt[bar], sc->sc_memh[bar],
+		    sc->sc_padbar[bar] + pad * sc->sc_padsize + 4,
+		    sc->sc_pin_cfg[pin].pad_cfg_dw1);
+	}
+}
+
+void
+pchgpio_restore(struct pchgpio_softc *sc)
+{
+	int pin;
+
+	for (pin = 0; pin < sc->sc_npins; pin++)
+		pchgpio_restore_pin(sc, pin);
 }
