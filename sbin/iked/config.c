@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.80 2021/09/01 15:30:06 tobhe Exp $	*/
+/*	$OpenBSD: config.c,v 1.81 2021/09/18 16:45:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -455,7 +455,7 @@ config_new_user(struct iked *env, struct iked_user *new)
 		memcpy(old->usr_pass, new->usr_pass, IKED_PASSWORD_SIZE);
 
 		log_debug("%s: updating user %s", __func__, usr->usr_name);
-		free(usr);
+		freezero(usr, sizeof *usr);
 
 		return (old);
 	}
