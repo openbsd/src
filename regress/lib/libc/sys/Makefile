@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2021/09/04 07:06:58 mbuhl Exp $
+#	$OpenBSD: Makefile,v 1.14 2021/09/19 08:20:04 claudio Exp $
 
 # Copyright (c) 2019 Moritz Buhl <openbsd@moritzbuhl.de>
 # Copyright (c) 2019 Alexander Bluhm <bluhm@openbsd.org>
@@ -112,6 +112,7 @@ CLEANFILES =	access dummy mmap truncate_test.root_owned
 
 .for p in ${PROGS}
 run-$p: $p
+	ulimit -c unlimited && \
 	ntests="`./$p -n`" && \
 	echo "1..$$ntests" && \
 	tnumbers="`jot -ns' ' - 1 $$ntests`" && \
