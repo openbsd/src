@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.269 2021/09/10 15:18:36 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.270 2021/09/19 10:17:36 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2014-2021 Alexander Bluhm <bluhm@genua.de>
@@ -218,7 +218,6 @@ struct	filed consfile;
 int	Debug;			/* debug flag */
 int	Foreground;		/* run in foreground, instead of daemonizing */
 char	LocalHostName[HOST_NAME_MAX+1];	/* our hostname */
-char	*LocalDomain;		/* our local domain name */
 int	Started = 0;		/* set after privsep */
 int	Initialized = 0;	/* set when we have initialized ourselves */
 
@@ -507,12 +506,11 @@ main(int argc, char *argv[])
 	if (consfile.f_file == -1)
 		log_warn("open %s", consfile.f_un.f_fname);
 
-	(void)gethostname(LocalHostName, sizeof(LocalHostName));
-	if ((p = strchr(LocalHostName, '.')) != NULL) {
-		*p++ = '\0';
-		LocalDomain = p;
-	} else
-		LocalDomain = "";
+	if (gethostname(LocalHostName, sizeof(LocalHostName)) == -1 ||
+	    LocalHostName[0] == '\0')
+		strlcpy(LocalHostName, "-", sizeof(LocalHostName));
+	else if ((p = strchr(LocalHostName, '.')) != NULL)
+		*p = '\0';
 
 	/* Reserve space for kernel message buffer plus buffer full message. */
 	linesize = getmsgbufsize() + 64;
