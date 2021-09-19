@@ -1,6 +1,6 @@
-From deraadt@do-not-reply.openbsd.org Mon Nov  1 07:00:00 MST 2021
+From deraadt@do-not-reply.openbsd.org Mon Oct 14 07:00:00 MST 2021
 Return-Path: root
-Date: Nov 1 07:00:00 MST 2021
+Date: Oct 14 07:00:00 MST 2021
 From: deraadt@do-not-reply.openbsd.org (Theo de Raadt)
 To: root
 Subject: Welcome to OpenBSD 7.0!
