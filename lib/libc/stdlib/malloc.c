@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.271 2021/07/23 18:04:28 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.272 2021/09/19 09:15:22 tb Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -741,7 +741,7 @@ unmap(struct dir_info *d, void *p, size_t sz, size_t clear)
 
 	/* fill slot */
 	if (clear > 0)
-		memset(p, 0, clear);
+		explicit_bzero(p, clear);
 	if (mopts.malloc_freeunmap)
 		mprotect(p, sz, PROT_NONE);
 	else
@@ -1432,7 +1432,7 @@ ofree(struct dir_info **argpool, void *p, int clear, int check, size_t argsz)
 			}
 		} else if (argsz > 0) {
 			r = find(pool, p);
-			memset(p, 0, argsz);
+			explicit_bzero(p, argsz);
 		}
 		if (p != NULL) {
 			if (r == NULL)
