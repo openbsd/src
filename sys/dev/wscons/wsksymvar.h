@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsksymvar.h,v 1.8 2014/01/26 17:48:08 miod Exp $	*/
+/*	$OpenBSD: wsksymvar.h,v 1.9 2021/09/20 17:32:39 anton Exp $	*/
 /*	$NetBSD: wsksymvar.h,v 1.8.4.1 2000/07/07 09:50:21 hannken Exp $ */
 
 /*-
@@ -60,7 +60,7 @@ struct wskbd_mapdata {
 };
 
 /* layout variant bits ignored by mapping code */
-#define KB_HANDLEDBYWSKBD	(KB_METAESC | KB_DEFAULT)
+#define KB_HANDLEDBYWSKBD	(KB_METAESC | KB_DEFAULT | KB_NOENCODING)
 
 /*
  * Utility functions.

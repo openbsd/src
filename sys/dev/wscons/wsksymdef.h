@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsksymdef.h,v 1.38 2019/05/11 14:19:16 abieber Exp $	*/
+/*	$OpenBSD: wsksymdef.h,v 1.39 2021/09/20 17:32:39 anton Exp $	*/
 /*	$NetBSD: wsksymdef.h,v 1.34.4.1 2000/07/07 09:49:54 hannken Exp $ */
 
 /*-
@@ -744,7 +744,7 @@
 #define KB_DVORAK		0x00000010 /* Dvorak layout */
 #define KB_METAESC		0x00000020 /* generate ESC prefix on ALT-key */
 #define KB_IOPENER		0x00000040 /* f1-f12 -> ESC,f1-f11 */
-#define KB_MACHDEP		0x00000080 /* machine dependent */
+#define KB_NOENCODING		0x00000080 /* no encodings available */
 #define KB_APPLE		0x00010000 /* Apple specific layout */
 #define KB_COLEMAK		0x02000000 /* Colemak layout */
 #define KB_DEFAULT		0x80000000 /* (attach-only) default layout */
@@ -788,7 +788,7 @@
 	{ KB_DVORAK,	"dvorak" }, \
 	{ KB_METAESC,	"metaesc" }, \
 	{ KB_IOPENER,	"iopener" }, \
-	{ KB_MACHDEP,	"machdep" }, \
+	{ KB_NOENCODING, "noencoding" }, \
 	{ KB_APPLE,	"apple" }, \
 	{ KB_COLEMAK,	"colemak" }
 

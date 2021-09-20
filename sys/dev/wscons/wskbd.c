@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.107 2020/11/02 19:45:18 tobhe Exp $ */
+/* $OpenBSD: wskbd.c,v 1.108 2021/09/20 17:32:39 anton Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -1146,6 +1146,8 @@ getkeyrepeat:
 			/* map variants make no sense */
 			if (KB_VARIANT(enc) & ~KB_HANDLEDBYWSKBD)
 				return (EINVAL);
+		} else if (sc->id->t_keymap.layout & KB_NOENCODING) {
+			return (0);
 		} else {
 			error = wskbd_load_keymap(&sc->id->t_keymap, enc,
 			    &sc->sc_map, &sc->sc_maplen);
