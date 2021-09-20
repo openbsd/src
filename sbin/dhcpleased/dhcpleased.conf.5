@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpleased.conf.5,v 1.5 2021/08/12 12:41:08 florian Exp $
+.\"	$OpenBSD: dhcpleased.conf.5,v 1.6 2021/09/20 11:46:22 florian Exp $
 .\"
 .\" Copyright (c) 2018, 2021 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 12 2021 $
+.Dd $Mdocdate: September 20 2021 $
 .Dt DHCPLEASED.CONF 5
 .Os
 .Sh NAME
@@ -82,7 +82,7 @@ send client id "01:00:53:FF:AA:BB:CC"
 .Pp
 Otherwise the string
 .Ar client-id
-is sent verbatim with type zero.
+is sent verbatim.
 The default is to send the interface's MAC address as client identifier.
 .It Ic send vendor class id Ar vendor-class-id
 Send the dhcp vendor class identifier option with a value of

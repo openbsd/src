@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.3 2021/08/12 12:41:08 florian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.4 2021/09/20 11:46:22 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -252,15 +252,14 @@ ifaceoptsl	: SEND VENDOR CLASS ID STRING {
 					yyerror("client-id too long");
 					YYERROR;
 				}
-				iface_conf->c_id_len = 3 + strlen(buf);
+				iface_conf->c_id_len = 2 + len;
 				iface_conf->c_id = malloc(iface_conf->c_id_len);
 				if (iface_conf->c_id == NULL) {
 					yyerror("malloc");
 					YYERROR;
 				}
-				iface_conf->c_id[2] = HTYPE_NONE;
-				memcpy(&iface_conf->c_id[3], buf,
-				    iface_conf->c_id_len - 3);
+				memcpy(&iface_conf->c_id[2], buf,
+				    iface_conf->c_id_len - 2);
 			} else {
 				free($4);
 				iface_conf->c_id_len = 2 + i;

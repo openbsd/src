@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.2 2021/08/12 12:41:08 florian Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.3 2021/09/20 11:46:22 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -45,7 +45,7 @@ print_dhcp_options(char *indent, uint8_t *p, int len)
 {
 	static char	 buf[4 * 1500 + 1];
 	int		 rem, i;
-	uint8_t		 dho, dho_len, type;
+	uint8_t		 dho, dho_len;
 
 	rem = len;
 
@@ -72,28 +72,22 @@ print_dhcp_options(char *indent, uint8_t *p, int len)
 		case DHO_DHCP_CLIENT_IDENTIFIER:
 			if (dho_len < 1)
 				fatal("dhcp option too short");
-			type = *p;
-			p += 1;
-			rem -= 1;
-			switch (type) {
-			case HTYPE_NONE:
-				strvisx(buf, p, dho_len - 1, VIS_DQ |
-				    VIS_CSTYLE);
+			switch (*p) {
+			case HTYPE_ETHER:
+				printf("%ssend client id \"", indent);
+				for (i = 0; i < dho_len; i++)
+					printf("%s%02x", i != 0? ":" : "",
+					    *(p + i));
+				printf("\"\n");
+				break;
+			default:
+				strvisx(buf, p, dho_len, VIS_DQ | VIS_CSTYLE);
 				printf("%ssend client id \"%s\"\n",
 				    indent, buf);
 				break;
-			default:
-				printf("%ssend client id \"%02x",
-				    indent, type);
-
-				for (i = 0; i < dho_len - 1; i++) {
-					printf(":%02x", *(p + i));
-				}
-				printf("\"\n");
-				break;
 			}
-			p += dho_len - 1;
-			rem -= dho_len - 1;
+			p += dho_len;
+			rem -= dho_len;
 			break;
 		default:
 			fatal("unknown dhcp option: %d [%d]", *p, rem);
