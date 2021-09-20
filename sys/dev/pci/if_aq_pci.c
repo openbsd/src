@@ -1,4 +1,4 @@
-/* $OpenBSD: if_aq_pci.c,v 1.2 2021/09/20 01:18:00 jmatthew Exp $ */
+/* $OpenBSD: if_aq_pci.c,v 1.3 2021/09/20 01:27:23 jmatthew Exp $ */
 /*	$NetBSD: if_aq.c,v 1.27 2021/06/16 00:21:18 riastradh Exp $	*/
 
 /*
@@ -78,6 +78,8 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include "bpfilter.h"
+
 #include <sys/types.h>
 #include <sys/device.h>
 #include <sys/param.h>
@@ -94,6 +96,10 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+
+#if NBPFILTER > 0
+#include <net/bpf.h>
+#endif
 
 /* #define AQ_DEBUG 1 */
 #ifdef AQ_DEBUG
@@ -2294,8 +2300,8 @@ aq_start(struct ifqueue *ifq)
 		as->as_m = m;
 
 #if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_OUT);
+		if (ifq->ifq_if->if_bpf)
+			bpf_mtap_ether(ifq->ifq_if->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 		bus_dmamap_sync(sc->sc_dmat, as->as_map, 0,
 		    as->as_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
