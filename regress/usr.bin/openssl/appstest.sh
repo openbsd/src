@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.51 2021/06/21 13:29:05 inoguchi Exp $
+# $OpenBSD: appstest.sh,v 1.52 2021/09/20 10:45:01 inoguchi Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -1510,7 +1510,7 @@ function test_sc_by_protocol_version {
 	fi
 
 	if [ $ver = "tls1_3" ] ; then
-		grep 'Server Temp Key: ECDH, P-384, 384 bits' $s_client_out \
+		grep 'Server Temp Key: ECDH, .*384.*, 384 bits' $s_client_out \
 			> /dev/null
 		check_exit_status $?
 	fi
@@ -1770,8 +1770,10 @@ function test_server_client {
 	sleep 1
 
 	# test by protocol version
+	if [ "$other_openssl_version" = "OpenSSL 1." ] ; then
 	test_sc_by_protocol_version $sc tls1   'Protocol  : TLSv1$'    $c_id
 	test_sc_by_protocol_version $sc tls1_1 'Protocol  : TLSv1\.1$' $c_id
+	fi
 	test_sc_by_protocol_version $sc tls1_2 'Protocol  : TLSv1\.2$' $c_id
 	test_sc_by_protocol_version $sc tls1_3 'Protocol  : TLSv1\.3$' $c_id
 
@@ -1973,6 +1975,7 @@ function test_version {
 
 openssl_bin=${OPENSSL:-/usr/bin/openssl}
 other_openssl_bin=${OTHER_OPENSSL:-/usr/local/bin/eopenssl11}
+other_openssl_version=`$other_openssl_bin version | cut -b 1-10`
 
 ecdsa_tests=0
 gost_tests=0
