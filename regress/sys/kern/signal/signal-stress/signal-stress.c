@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal-stress.c,v 1.1 2020/09/16 14:02:24 mpi Exp $	*/
+/*	$OpenBSD: signal-stress.c,v 1.2 2021/09/20 16:39:40 claudio Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> 2004 Public Domain.
  */
@@ -33,6 +33,7 @@ void
 do_child(void)
 {
 	int i;
+	sigset_t mask, oldmask;
 
 	/*
 	 * Step 1 - suspend and wait for SIGCONT so that all siblings have
@@ -57,11 +58,17 @@ do_child(void)
 	signal(SIGUSR1, sighand);
 	signal(SIGUSR2, sighand);
 
+	sigemptyset(&mask);
+	sigaddset(&mask, SIGUSR1);
+	sigaddset(&mask, SIGUSR2);
+
+	sigprocmask(SIG_BLOCK, &mask, &oldmask);
+
 	/* Step 2 - wait again until everyone is ready. */
 	raise(SIGSTOP);
 
 	while (usr1 < nsigs || usr2 < nsigs)
-		pause();
+		sigsuspend(&oldmask);
 
 	/* Step 3 - wait again until everyone is ready. */
 	raise(SIGSTOP);
