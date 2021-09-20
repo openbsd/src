@@ -1,4 +1,4 @@
-/* $OpenBSD: if_aq_pci.c,v 1.1 2021/09/02 10:11:21 mlarkin Exp $ */
+/* $OpenBSD: if_aq_pci.c,v 1.2 2021/09/20 01:18:00 jmatthew Exp $ */
 /*	$NetBSD: if_aq.c,v 1.27 2021/06/16 00:21:18 riastradh Exp $	*/
 
 /*
@@ -961,9 +961,8 @@ aq_attach(struct device *parent, struct device *self, void *aux)
 	aqp = aq_lookup(pa);
 
 	bar = pci_conf_read(pc, tag, AQ_BAR0);
-	if ((PCI_MAPREG_MEM_ADDR(bar) == 0) ||
-	    (PCI_MAPREG_TYPE(bar) != PCI_MAPREG_TYPE_MEM)) {
-		printf("%s: wrong BAR type\n", DEVNAME(sc));
+	if (PCI_MAPREG_TYPE(bar) != PCI_MAPREG_TYPE_MEM) {
+		printf(": wrong BAR type\n");
 		return;
 	}
 
