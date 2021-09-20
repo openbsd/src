@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpleased.conf.5,v 1.6 2021/09/20 11:46:22 florian Exp $
+.\"	$OpenBSD: dhcpleased.conf.5,v 1.7 2021/09/20 17:08:43 florian Exp $
 .\"
 .\" Copyright (c) 2018, 2021 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -84,6 +84,20 @@ Otherwise the string
 .Ar client-id
 is sent verbatim.
 The default is to send the interface's MAC address as client identifier.
+.Pp
+When
+.Ar client-id
+is not a hardware address it is supposed to be sent as hardware type 0 but
+the majority of dhcp clients and servers do not implement this and neither
+does
+.Nm .
+If a server is encountered that requires this, a 0 byte can be encoded as \e0.
+The client identifier
+.Dq foobar
+with hardware type 0 would be configured as
+.Bd -literal -offset indent
+send client id "\e0foobar"
+.Ed
 .It Ic send vendor class id Ar vendor-class-id
 Send the dhcp vendor class identifier option with a value of
 .Ar vendor-class-id .
