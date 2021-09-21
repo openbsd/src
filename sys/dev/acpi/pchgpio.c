@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchgpio.c,v 1.6 2021/09/18 19:21:16 kettenis Exp $	*/
+/*	$OpenBSD: pchgpio.c,v 1.7 2021/09/21 14:59:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis
  * Copyright (c) 2020 James Hastings
@@ -63,6 +63,7 @@ struct pchgpio_match {
 struct pchgpio_pincfg {
 	uint32_t	pad_cfg_dw0;
 	uint32_t	pad_cfg_dw1;
+	int		gpi_ie;
 };
 
 struct pchgpio_intrhand {
@@ -440,14 +441,16 @@ void
 pchgpio_save_pin(struct pchgpio_softc *sc, int pin)
 {
 	const struct pchgpio_group *group;
+	uint32_t gpi_ie;
 	uint16_t pad;
-	uint8_t bar;
+	uint8_t bank, bar;
 
 	group = pchgpio_find_group(sc, pin);
 	if (group == NULL)
 		return;
 
 	bar = group->bar;
+	bank = group->bank;
 	pad = group->base + (pin - group->gpiobase) - sc->sc_padbase[bar];
 
 	sc->sc_pin_cfg[pin].pad_cfg_dw0 =
@@ -456,6 +459,10 @@ pchgpio_save_pin(struct pchgpio_softc *sc, int pin)
 	sc->sc_pin_cfg[pin].pad_cfg_dw1 =
 	    bus_space_read_4(sc->sc_memt[bar], sc->sc_memh[bar],
 		sc->sc_padbar[bar] + pad * sc->sc_padsize + 4);
+
+	gpi_ie = bus_space_read_4(sc->sc_memt[bar], sc->sc_memh[bar],
+	    sc->sc_device->gpi_ie + bank * 4);
+	sc->sc_pin_cfg[pin].gpi_ie = (gpi_ie & (1 << (pin - group->gpiobase)));
 }
 
 void
@@ -471,19 +478,24 @@ void
 pchgpio_restore_pin(struct pchgpio_softc *sc, int pin)
 {
 	const struct pchgpio_group *group;
-	uint32_t pad_cfg_dw0;
+	int restore = 0;
+	uint32_t pad_cfg_dw0, gpi_ie;
 	uint16_t pad;
-	uint8_t bar;
+	uint8_t bank, bar;
 
 	group = pchgpio_find_group(sc, pin);
 	if (group == NULL)
 		return;
 
 	bar = group->bar;
+	bank = group->bank;
 	pad = group->base + (pin - group->gpiobase) - sc->sc_padbase[bar];
 
 	pad_cfg_dw0 = bus_space_read_4(sc->sc_memt[bar], sc->sc_memh[bar],
 	    sc->sc_padbar[bar] + pad * sc->sc_padsize);
+
+	if (sc->sc_pin_ih[pin].ih_func)
+		restore = 1;
 
 	/*
 	 * The BIOS on Lenovo Thinkpads based on Intel's Tiger Lake
@@ -495,13 +507,25 @@ pchgpio_restore_pin(struct pchgpio_softc *sc, int pin)
 	 * configuration if the bits don't match.
 	 */
 	if ((sc->sc_pin_cfg[pin].pad_cfg_dw0 & PCHGPIO_CONF_PADRSTCFG_MASK) !=
-	    (pad_cfg_dw0 & PCHGPIO_CONF_PADRSTCFG_MASK)) {
+	    (pad_cfg_dw0 & PCHGPIO_CONF_PADRSTCFG_MASK))
+		restore = 1;
+
+	if (restore) {
 		bus_space_write_4(sc->sc_memt[bar], sc->sc_memh[bar],
 		    sc->sc_padbar[bar] + pad * sc->sc_padsize,
 		    sc->sc_pin_cfg[pin].pad_cfg_dw0);
 		bus_space_write_4(sc->sc_memt[bar], sc->sc_memh[bar],
 		    sc->sc_padbar[bar] + pad * sc->sc_padsize + 4,
 		    sc->sc_pin_cfg[pin].pad_cfg_dw1);
+
+		gpi_ie = bus_space_read_4(sc->sc_memt[bar], sc->sc_memh[bar],
+		    sc->sc_device->gpi_ie + bank * 4);
+		if (sc->sc_pin_cfg[pin].gpi_ie)
+			gpi_ie |= (1 << (pin - group->gpiobase));
+		else
+			gpi_ie &= ~(1 << (pin - group->gpiobase));
+		bus_space_write_4(sc->sc_memt[bar], sc->sc_memh[bar],
+		    sc->sc_device->gpi_ie + bank * 4, gpi_ie);
 	}
 }
 
