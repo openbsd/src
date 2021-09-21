@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.56 2021/09/09 20:07:49 jasper Exp $ */
+/*	$OpenBSD: btrace.c,v 1.57 2021/09/21 21:33:35 bluhm Exp $ */
 
 /*
  * Copyright (c) 2019 - 2021 Martin Pieuchot <mpi@openbsd.org>
@@ -228,7 +228,7 @@ read_btfile(const char *filename, size_t *len)
 		err(1, "can't stat '%s'", filename);
 
 	fsize = st.st_size;
-	fcontent = malloc(fsize);
+	fcontent = malloc(fsize + 1);
 	if (fcontent == NULL)
 		err(1, "malloc");
 
@@ -238,6 +238,7 @@ read_btfile(const char *filename, size_t *len)
 
 	if (fread(fcontent, 1, fsize, fp) != fsize)
 		err(1, "can't read '%s'", filename);
+	fcontent[fsize] = '\0';
 
 	fclose(fp);
 	*len = fsize;
