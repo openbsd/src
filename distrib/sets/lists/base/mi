@@ -486,6 +486,7 @@
 ./usr/bin/nm
 ./usr/bin/nohup
 ./usr/bin/nslookup
+./usr/bin/objcopy
 ./usr/bin/od
 ./usr/bin/opencvs
 ./usr/bin/openrsync

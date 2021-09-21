@@ -186,6 +186,7 @@
 ./usr/share/man/man1/nm.1
 ./usr/share/man/man1/nohup.1
 ./usr/share/man/man1/nslookup.1
+./usr/share/man/man1/objcopy.1
 ./usr/share/man/man1/od.1
 ./usr/share/man/man1/openrsync.1
 ./usr/share/man/man1/openssl.1
