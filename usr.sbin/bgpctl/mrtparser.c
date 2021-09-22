@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrtparser.c,v 1.15 2021/07/27 07:42:37 claudio Exp $ */
+/*	$OpenBSD: mrtparser.c,v 1.16 2021/09/22 18:17:49 claudio Exp $ */
 /*
  * Copyright (c) 2011 Claudio Jeker <claudio@openbsd.org>
  *
@@ -103,10 +103,8 @@ mrt_parse(int fd, struct mrt_parser *p, int verbose)
 	struct mrt_bgp_state	*s;
 	struct mrt_bgp_msg	*m;
 	void			*msg;
-	int			 addpath;
 
 	while ((msg = mrt_read_msg(fd, &h))) {
-		addpath = 0;
 		switch (ntohs(h.type)) {
 		case MSG_NULL:
 		case MSG_START:
@@ -376,7 +374,7 @@ mrt_parse_v2_rib(struct mrt_hdr *hdr, void *msg, int verbose)
 	u_int32_t	snum, path_id = 0;
 	u_int16_t	cnt, i, afi;
 	u_int8_t	safi, aid;
-	int		ret, addpath = 0;
+	int		ret;
 
 	if (len < sizeof(snum) + 1)
 		return NULL;
@@ -417,6 +415,11 @@ mrt_parse_v2_rib(struct mrt_hdr *hdr, void *msg, int verbose)
 			goto fail;
 		break;
 	case MRT_DUMP_V2_RIB_GENERIC_ADDPATH:
+		/*
+		 * RFC8050 handling for add-path has special handling for
+		 * RIB_GENERIC_ADDPATH but nobody implements it that way.
+		 * So just use the same way as for the other _ADDPATH types.
+		 */
 		r->add_path = 1;
 		/* FALLTHROUGH */
 	case MRT_DUMP_V2_RIB_GENERIC:
@@ -434,16 +437,6 @@ mrt_parse_v2_rib(struct mrt_hdr *hdr, void *msg, int verbose)
 		if ((aid = mrt_afi2aid(afi, safi, verbose)) == AID_UNSPEC)
 			goto fail;
 		
-		/* RFC8050 handling for add-path */
-		if (r->add_path) {
-			if (len < sizeof(path_id))
-				goto fail;
-			memcpy(&path_id, b, sizeof(path_id));
-			b += sizeof(path_id);
-			len -= sizeof(path_id);
-			path_id = ntohl(path_id);
-		}
-
 		/* prefix */
 		ret = mrt_extract_prefix(b, len, aid, &r->prefix,
 		    &r->prefixlen, verbose);
@@ -487,12 +480,9 @@ mrt_parse_v2_rib(struct mrt_hdr *hdr, void *msg, int verbose)
 		len -= sizeof(otm);
 		entries[i].originated = ntohl(otm);
 
-		/* RFC8050 handling for add-path */
-		if (r->add_path &&
-		    ntohs(hdr->subtype) != MRT_DUMP_V2_RIB_GENERIC_ADDPATH) {
+		if (r->add_path) {
 			if (len < sizeof(path_id) + sizeof(alen))
 				goto fail;
-			addpath = 0;
 			memcpy(&path_id, b, sizeof(path_id));
 			b += sizeof(path_id);
 			len -= sizeof(path_id);
