@@ -66,7 +66,11 @@ checksum(unsigned char *buf, uint32_t nbytes, uint32_t sum)
 
 	/* Checksum all the pairs of bytes first. */
 	for (i = 0; i < (nbytes & ~1U); i += 2) {
-		sum += (uint16_t)ntohs(*((uint16_t *)(buf + i)));
+		// sum += (uint16_t)ntohs(*((uint16_t *)(buf + i)));
+		// Casting char* to uint16_t* is unsafe if buf is not 16-bit aligned, so deal
+		// with the bytes individually, coincidentally avoiding the ntohs() hack that
+		// is needed to reverse the damage done by the cast on little-endian machines.
+		sum += (buf[i] << 8) | buf[i+1];
 		if (sum > 0xFFFF)
 			sum -= 0xFFFF;
 	}
