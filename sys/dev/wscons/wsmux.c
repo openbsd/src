@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmux.c,v 1.54 2021/01/09 20:51:00 gnezdo Exp $	*/
+/*	$OpenBSD: wsmux.c,v 1.55 2021/09/22 15:44:12 anton Exp $	*/
 /*      $NetBSD: wsmux.c,v 1.37 2005/04/30 03:47:12 augustss Exp $      */
 
 /*
@@ -913,7 +913,7 @@ wsmux_get_layout(struct wsmux_softc *sc)
 void
 wsmux_set_layout(struct wsmux_softc *sc, uint32_t layout)
 {
-	if ((layout & KB_DEFAULT) == 0)
+	if ((layout & (KB_DEFAULT | KB_NOENCODING)) == 0)
 		sc->sc_kbd_layout = layout;
 }
 
