@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_db.c,v 1.24 2021/06/14 17:58:16 eric Exp $	*/
+/*	$OpenBSD: table_db.c,v 1.25 2021/09/22 17:09:07 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -42,7 +42,9 @@ static char *table_db_get_entry_match(void *, const char *, size_t *,
 
 struct table_backend table_backend_db = {
 	"db",
-	K_ALIAS|K_CREDENTIALS|K_DOMAIN|K_NETADDR|K_USERINFO|K_SOURCE|K_MAILADDR|K_ADDRNAME|K_MAILADDRMAP,
+	K_ALIAS|K_CREDENTIALS|K_DOMAIN|K_NETADDR|K_USERINFO|
+	K_SOURCE|K_MAILADDR|K_ADDRNAME|K_MAILADDRMAP|K_RELAYHOST|
+	K_STRING|K_REGEX,
 	table_db_config,
 	NULL,
 	NULL,
@@ -59,7 +61,8 @@ static struct keycmp {
 } keycmp[] = {
 	{ K_DOMAIN, table_domain_match },
 	{ K_NETADDR, table_netaddr_match },
-	{ K_MAILADDR, table_mailaddr_match }
+	{ K_MAILADDR, table_mailaddr_match },
+	{ K_REGEX, table_regex_match },
 };
 
 struct dbhandle {
