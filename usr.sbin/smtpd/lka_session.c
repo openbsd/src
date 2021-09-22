@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.95 2021/06/14 17:58:15 eric Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.96 2021/09/22 17:11:35 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -278,21 +278,22 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 			ep.flags |= EF_INTERNAL;
 
 		/* handle SRS */
-		if (env->sc_srs_key != NULL &&
-		    ep.sender.user[0] == '\0' &&
-		    (strncasecmp(ep.rcpt.user, "SRS0=", 5) == 0 ||
-			strncasecmp(ep.rcpt.user, "SRS1=", 5) == 0)) {
-			srs_decoded = srs_decode(mailaddr_to_text(&ep.rcpt));
+		if (env->sc_srs_key != NULL && printf("LKA 0\n") &&
+		    ep.sender.user[0] == '\0' && printf("LKA 1\n") &&
+		    (strncasecmp(ep.dest.user, "SRS0=", 5) == 0 ||
+			strncasecmp(ep.dest.user, "SRS1=", 5) == 0)) {
+			srs_decoded = srs_decode(mailaddr_to_text(&ep.dest));
+			printf("SRS DECODED: %s\n", srs_decoded);
 			if (srs_decoded &&
-			    text_to_mailaddr(&ep.rcpt, srs_decoded)) {
-				/* flag envelope internal and override rcpt */
+			    text_to_mailaddr(&ep.dest, srs_decoded)) {
+				/* flag envelope internal and override dest */
 				ep.flags |= EF_INTERNAL;
-				xn->u.mailaddr = ep.rcpt;
+				xn->u.mailaddr = ep.dest;
 				lks->envelope = ep;
 			}
 			else {
 				log_warn("SRS failed to decode: %s",
-				    mailaddr_to_text(&ep.rcpt));
+				    mailaddr_to_text(&ep.dest));
 			}
 		}
 
