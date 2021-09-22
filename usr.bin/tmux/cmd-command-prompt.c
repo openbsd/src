@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-command-prompt.c,v 1.63 2021/08/27 17:25:55 nicm Exp $ */
+/* $OpenBSD: cmd-command-prompt.c,v 1.64 2021/09/22 15:21:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -183,6 +183,7 @@ cmd_command_prompt_callback(struct client *c, void *data, const char *s,
 		if (cdata->flags & PROMPT_INCREMENTAL)
 			goto out;
 
+		cmd_append_argv(&cdata->argc, &cdata->argv, s);
 		if (++cdata->current != cdata->count) {
 			prompt = &cdata->prompts[cdata->current];
 			status_prompt_update(c, prompt->prompt, prompt->input);
