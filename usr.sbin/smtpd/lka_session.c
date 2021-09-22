@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.96 2021/09/22 17:11:35 eric Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.97 2021/09/22 17:19:58 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -278,12 +278,11 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 			ep.flags |= EF_INTERNAL;
 
 		/* handle SRS */
-		if (env->sc_srs_key != NULL && printf("LKA 0\n") &&
-		    ep.sender.user[0] == '\0' && printf("LKA 1\n") &&
+		if (env->sc_srs_key != NULL &&
+		    ep.sender.user[0] == '\0' &&
 		    (strncasecmp(ep.dest.user, "SRS0=", 5) == 0 ||
 			strncasecmp(ep.dest.user, "SRS1=", 5) == 0)) {
 			srs_decoded = srs_decode(mailaddr_to_text(&ep.dest));
-			printf("SRS DECODED: %s\n", srs_decoded);
 			if (srs_decoded &&
 			    text_to_mailaddr(&ep.dest, srs_decoded)) {
 				/* flag envelope internal and override dest */
