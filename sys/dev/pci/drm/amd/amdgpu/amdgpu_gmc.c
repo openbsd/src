@@ -499,6 +499,15 @@ void amdgpu_gmc_get_vbios_allocations(struct amdgpu_device *adev)
 	} else {
 		size = amdgpu_gmc_get_vbios_fb_size(adev);
 
+#ifdef __amd64__
+		/*
+		 * XXX Workaround for machines where the framebuffer
+		 * size reported by the hardware is incorrect.
+		 */
+		extern psize_t efifb_stolen();
+		size = max(size, efifb_stolen());
+#endif
+
 		if (adev->mman.keep_stolen_vga_memory)
 			size = max(size, (unsigned)AMDGPU_VBIOS_VGA_ALLOCATION);
 	}
