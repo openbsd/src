@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.49 2021/08/29 13:16:17 tb Exp $ */
+/* $OpenBSD: s_server.c,v 1.50 2021/09/23 13:28:50 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1072,7 +1072,6 @@ sv_usage(void)
 int
 s_server_main(int argc, char *argv[])
 {
-	int badop = 0;
 	int ret = 1;
 	char *pass = NULL;
 	char *dpass = NULL;
@@ -1114,11 +1113,6 @@ s_server_main(int argc, char *argv[])
 	verify_depth = 0;
 
 	if (options_parse(argc, argv, s_server_options, NULL, NULL) != 0) {
-		badop = 1;
-		goto bad;
-	}
-	if (badop) {
- bad:
 		if (s_server_config.errstr == NULL)
 			sv_usage();
 		goto end;
