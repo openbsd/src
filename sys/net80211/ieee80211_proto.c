@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.103 2021/09/23 15:13:47 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.104 2021/09/23 15:40:41 stsp Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -470,12 +470,6 @@ void
 ieee80211_setkeysdone(struct ieee80211com *ic)
 {
 	u_int8_t kid;
-
-	/*
-	 * Discard frames buffered for power-saving which were encrypted with
-	 * the old group key. Clients are no longer able to decrypt them.
-	 */
-	mq_purge(&ic->ic_bss->ni_savedq);
 
 	/* install GTK */
 	kid = (ic->ic_def_txkey == 1) ? 2 : 1;
