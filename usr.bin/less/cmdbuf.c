@@ -20,6 +20,7 @@
 #include "cmd.h"
 #include "less.h"
 
+extern int secure;
 extern int sc_width;
 extern int utf_mode;
 
@@ -1203,6 +1204,8 @@ init_cmdhist(void)
 	FILE *f;
 	char *p;
 
+	if (secure)
+		return;
 	filename = histfile_name();
 	if (filename == NULL)
 		return;
@@ -1274,6 +1277,8 @@ save_cmdhist(void)
 	struct stat statbuf;
 	int r;
 
+	if (secure)
+		return;
 	if (mlist_search.modified)
 		modified = 1;
 	if (mlist_shell.modified)

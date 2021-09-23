@@ -91,7 +91,7 @@ main(int argc, char *argv[])
 		secure = 1;
 
 	if (secure) {
-		if (pledge("stdio rpath wpath tty", NULL) == -1) {
+		if (pledge("stdio rpath tty", NULL) == -1) {
 			perror("pledge");
 			exit(1);
 		}
