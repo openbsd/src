@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.110 2021/09/23 15:34:00 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.111 2021/09/23 16:27:58 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -4678,6 +4678,7 @@ iwx_rx_compressed_ba(struct iwx_softc *sc, struct iwx_rx_packet *pkt,
 		idx = le16toh(ba_tfd->tfd_index);
 		if (idx >= IWX_TX_RING_COUNT)
 			continue;
+		sc->sc_tx_timer = 0;
 		iwx_txq_advance(sc, ring, idx);
 		iwx_clear_oactive(sc, ring);
 	}
