@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.39 2021/09/10 13:20:03 claudio Exp $  */
+/*	$OpenBSD: http.c,v 1.40 2021/09/23 13:26:51 tb Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -1352,8 +1352,11 @@ again:
 			if (buf == NULL)
 				goto read_more;
 			/* empty line, end of header */
-			if (*buf == '\0')
+			if (*buf == '\0') {
+				free(buf);
 				break;
+			}
+			free(buf);
 		}
 		/* proxy is ready to take connection */
 		if (conn->status == 200) {
@@ -1445,6 +1448,7 @@ again:
 			free(buf);
 			return http_failed(conn);
 		}
+		free(buf);
 
 		/*
 		 * check if transfer is done, in which case the last trailer
