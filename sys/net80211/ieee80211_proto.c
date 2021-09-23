@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.102 2021/04/25 15:32:21 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.103 2021/09/23 15:13:47 stsp Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -700,6 +700,18 @@ ieee80211_addba_request(struct ieee80211com *ic, struct ieee80211_node *ni,
 		/* immediate BA */
 		ba->ba_params |= IEEE80211_ADDBA_BA_POLICY;
 
+	if ((ic->ic_caps & IEEE80211_C_ADDBA_OFFLOAD) &&
+	    ic->ic_ampdu_tx_start != NULL) {
+		int err = ic->ic_ampdu_tx_start(ic, ni, tid);
+		if (err && err != EBUSY) {
+			/* driver failed to setup, rollback */
+			ieee80211_addba_resp_refuse(ic, ni, tid,
+			    IEEE80211_STATUS_UNSPECIFIED);
+		} else if (err == 0)
+			ieee80211_addba_resp_accept(ic, ni, tid);
+		return err; /* The device will send an ADDBA frame. */
+	}
+
 	timeout_add_sec(&ba->ba_to, 1);	/* dot11ADDBAResponseTimeout */
 	IEEE80211_SEND_ACTION(ic, ni, IEEE80211_CATEG_BA,
 	    IEEE80211_ACTION_ADDBA_REQ, tid);
@@ -948,6 +960,13 @@ ieee80211_stop_ampdu_tx(struct ieee80211com *ic, struct ieee80211_node *ni,
 		struct ieee80211_tx_ba *ba = &ni->ni_tx_ba[tid];
 		if (ba->ba_state != IEEE80211_BA_AGREED)
 			continue;
+
+		if (ic->ic_caps & IEEE80211_C_ADDBA_OFFLOAD) {
+			if (ic->ic_ampdu_tx_stop != NULL)
+				ic->ic_ampdu_tx_stop(ic, ni, tid);
+			continue; /* Don't change ba->ba_state! */
+		}
+
 		ieee80211_delba_request(ic, ni,
 		    mgt == -1 ? 0 : IEEE80211_REASON_AUTH_LEAVE, 1, tid);
 	}

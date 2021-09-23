@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.104 2021/05/17 11:44:22 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.105 2021/09/23 15:13:47 stsp Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -432,6 +432,7 @@ struct ieee80211_ess {
 #define IEEE80211_C_RAWCTL	0x00004000	/* CAPABILITY: raw ctl */
 #define IEEE80211_C_SCANALLBAND	0x00008000	/* CAPABILITY: scan all bands */
 #define IEEE80211_C_TX_AMPDU	0x00010000	/* CAPABILITY: send A-MPDU */
+#define IEEE80211_C_ADDBA_OFFLOAD 0x00020000	/* CAPABILITY: ADDBA offload */
 
 /* flags for ieee80211_fix_rate() */
 #define	IEEE80211_F_DOSORT	0x00000001	/* sort rate list */
