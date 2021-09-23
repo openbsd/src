@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.30 2021/08/16 14:54:50 kevlo Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.31 2021/09/23 15:34:00 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -1393,9 +1393,6 @@ struct iwx_gen3_bc_tbl {
 	uint16_t tfd_offset[IWX_TFD_QUEUE_BC_SIZE_GEN3];
 } __packed;
 
-/* Maximum number of Tx queues. */
-#define IWX_MAX_QUEUES	31
-
 /**
  * DQA - Dynamic Queue Allocation -introduction
  *
@@ -1410,26 +1407,26 @@ struct iwx_gen3_bc_tbl {
  * some queues that are statically allocated:
  *	TXQ #0 - command queue
  *	TXQ #1 - aux frames
- *	TXQ #2 - P2P device frames
- *	TXQ #3 - P2P GO/SoftAP GCAST/BCAST frames
- *	TXQ #4 - BSS DATA frames queue
- *	TXQ #5-8 - non-QoS data, QoS no-data, and MGMT frames queue pool
- *	TXQ #9 - P2P GO/SoftAP probe responses
- *	TXQ #10-31 - QoS DATA frames queue pool (for Tx aggregation)
  */
 
 /* static DQA Tx queue numbers */
 #define IWX_DQA_CMD_QUEUE		0
 #define IWX_DQA_AUX_QUEUE		1
-#define IWX_DQA_P2P_DEVICE_QUEUE	2
-#define IWX_DQA_INJECT_MONITOR_QUEUE	2
-#define IWX_DQA_GCAST_QUEUE		3
-#define IWX_DQA_BSS_CLIENT_QUEUE	4
-#define IWX_DQA_MIN_MGMT_QUEUE		5
-#define IWX_DQA_MAX_MGMT_QUEUE		8
-#define IWX_DQA_AP_PROBE_RESP_QUEUE	9
-#define IWX_DQA_MIN_DATA_QUEUE		10
-#define IWX_DQA_MAX_DATA_QUEUE		31
+
+#define IWX_DQA_INJECT_MONITOR_QUEUE	2 /* used in monitor mode only */
+#define IWX_DQA_MGMT_QUEUE		1 /* default queue other modes */
+
+/* Reserve 8 DQA Tx queues for QoS data frames. */
+#define IWX_MAX_TID_COUNT	8
+#define IWX_FIRST_AGG_TX_QUEUE	(IWX_DQA_MGMT_QUEUE + 1)
+#define IWX_LAST_AGG_TX_QUEUE	(IWX_FIRST_AGG_TX_QUEUE + IWX_MAX_TID_COUNT - 1)
+
+/**
+ * Max Tx window size is the max number of contiguous TFDs that the scheduler
+ * can keep track of at one time when creating block-ack chains of frames.
+ * Note that "64" matches the number of ack bits in a block-ack packet.
+ */
+#define IWX_FRAME_LIMIT	64
 
 #define IWX_TX_FIFO_BK	0
 #define IWX_TX_FIFO_BE	1
@@ -4952,7 +4949,6 @@ struct iwx_tlc_update_notif {
 /*
  * TID for non QoS frames - to be written in tid_tspec
  */
-#define IWX_MAX_TID_COUNT	8
 #define IWX_TID_NON_QOS	0
 
 /*
@@ -5290,34 +5286,95 @@ struct iwx_tx_resp {
 } __packed; /* TX_RSP_API_S_VER_6 */
 
 /**
- * struct iwx_ba_notif - notifies about reception of BA
- * ( IWX_BA_NOTIF = 0xc5 )
- * @sta_addr_lo32: lower 32 bits of the MAC address
- * @sta_addr_hi16: upper 16 bits of the MAC address
- * @sta_id: Index of recipient (BA-sending) station in fw's station table
- * @tid: tid of the session
- * @seq_ctl:
- * @bitmap: the bitmap of the BA notification as seen in the air
- * @scd_flow: the tx queue this BA relates to
- * @scd_ssn: the index of the last contiguously sent packet
- * @txed: number of Txed frames in this batch
- * @txed_2_done: number of Acked frames in this batch
+ * struct iwx_compressed_ba_tfd - progress of a TFD queue
+ * @q_num: TFD queue number
+ * @tfd_index: Index of first un-acked frame in the  TFD queue
+ * @scd_queue: For debug only - the physical queue the TFD queue is bound to
+ * @tid: TID of the queue (0-7)
+ * @reserved: reserved for alignment
  */
-struct iwx_ba_notif {
-	uint32_t sta_addr_lo32;
-	uint16_t sta_addr_hi16;
-	uint16_t reserved;
-
-	uint8_t sta_id;
+struct iwx_compressed_ba_tfd {
+	uint16_t q_num;
+	uint16_t tfd_index;
+	uint8_t scd_queue;
 	uint8_t tid;
-	uint16_t seq_ctl;
-	uint64_t bitmap;
-	uint16_t scd_flow;
-	uint16_t scd_ssn;
-	uint8_t txed;
-	uint8_t txed_2_done;
-	uint16_t reserved1;
-} __packed;
+	uint8_t reserved[2];
+} __packed; /* COMPRESSED_BA_TFD_API_S_VER_1 */
+
+/**
+ * struct iwx_compressed_ba_ratid - progress of a RA TID queue
+ * @q_num: RA TID queue number
+ * @tid: TID of the queue
+ * @ssn: BA window current SSN
+ */
+struct iwx_compressed_ba_ratid {
+	uint8_t q_num;
+	uint8_t tid;
+	uint16_t ssn;
+} __packed; /* COMPRESSED_BA_RATID_API_S_VER_1 */
+
+/*
+ * enum iwx_ba_resp_flags - TX aggregation status
+ * @IWX_MVM_BA_RESP_TX_AGG: generated due to BA
+ * @IWX_MVM_BA_RESP_TX_BAR: generated due to BA after BAR
+ * @IWX_MVM_BA_RESP_TX_AGG_FAIL: aggregation didn't receive BA
+ * @IWX_MVM_BA_RESP_TX_UNDERRUN: aggregation got underrun
+ * @IWX_MVM_BA_RESP_TX_BT_KILL: aggregation got BT-kill
+ * @IWX_MVM_BA_RESP_TX_DSP_TIMEOUT: aggregation didn't finish within the
+ *	expected time
+ */
+enum iwx_ba_resp_flags {
+	IWX_MVM_BA_RESP_TX_AGG,
+	IWX_MVM_BA_RESP_TX_BAR,
+	IWX_MVM_BA_RESP_TX_AGG_FAIL,
+	IWX_MVM_BA_RESP_TX_UNDERRUN,
+	IWX_MVM_BA_RESP_TX_BT_KILL,
+	IWX_MVM_BA_RESP_TX_DSP_TIMEOUT
+};
+
+/**
+ * struct iwx_compressed_ba_notif - notifies about reception of BA
+ * ( BA_NOTIF = 0xc5 )
+ * @flags: status flag, see the &iwx_ba_resp_flags
+ * @sta_id: Index of recipient (BA-sending) station in fw's station table
+ * @reduced_txp: power reduced according to TPC. This is the actual value and
+ *	not a copy from the LQ command. Thus, if not the first rate was used
+ *	for Tx-ing then this value will be set to 0 by FW.
+ * @tlc_rate_info: TLC rate info, initial rate index, TLC table color
+ * @retry_cnt: retry count
+ * @query_byte_cnt: SCD query byte count
+ * @query_frame_cnt: SCD query frame count
+ * @txed: number of frames sent in the aggregation (all-TIDs)
+ * @done: number of frames that were Acked by the BA (all-TIDs)
+ * @reserved: reserved (for alignment)
+ * @wireless_time: Wireless-media time
+ * @tx_rate: the rate the aggregation was sent at
+ * @tfd_cnt: number of TFD-Q elements
+ * @ra_tid_cnt: number of RATID-Q elements
+ * @tfd: array of TFD queue status updates. See &iwx_compressed_ba_tfd
+ *	for details. Length in @tfd_cnt.
+ * @ra_tid: array of RA-TID queue status updates. For debug purposes only. See
+ *	&iwx_compressed_ba_ratid for more details. Length in @ra_tid_cnt.
+ */
+struct iwx_compressed_ba_notif {
+	uint32_t flags;
+	uint8_t sta_id;
+	uint8_t reduced_txp;
+	uint8_t tlc_rate_info;
+	uint8_t retry_cnt;
+	uint32_t query_byte_cnt;
+	uint16_t query_frame_cnt;
+	uint16_t txed;
+	uint16_t done;
+	uint16_t reserved;
+	uint32_t wireless_time;
+	uint32_t tx_rate;
+	uint16_t tfd_cnt;
+	uint16_t ra_tid_cnt;
+	struct iwx_compressed_ba_ratid ra_tid[0];
+	struct iwx_compressed_ba_tfd tfd[];
+} __packed; /* COMPRESSED_BA_RES_API_S_VER_4 */
+
 
 struct iwx_beacon_notif {
 	struct iwx_tx_resp_v3 beacon_notify_hdr;
@@ -5355,6 +5412,33 @@ struct iwx_tx_path_flush_cmd {
 	uint16_t tid_mask;
 	uint16_t reserved;
 } __packed; /* TX_PATH_FLUSH_CMD_API_S_VER_2 */
+
+#define IWX_TX_FLUSH_QUEUE_RSP 16
+
+/**
+ * struct iwx_flush_queue_info - virtual flush queue info
+ * @queue_num: virtual queue id
+ * @read_before_flush: read pointer before flush
+ * @read_after_flush: read pointer after flush
+ */
+struct iwx_flush_queue_info {
+	uint16_t tid;
+	uint16_t queue_num;
+	uint16_t read_before_flush;
+	uint16_t read_after_flush;
+} __packed; /* TFDQ_FLUSH_INFO_API_S_VER_1 */
+
+/**
+ * struct iwx_tx_path_flush_cmd_rsp -- queue/FIFO flush command response
+ * @num_flushed_queues: number of queues in queues array
+ * @queues: all flushed queues
+ */
+struct iwx_tx_path_flush_cmd_rsp {
+	uint16_t sta_id;
+	uint16_t num_flushed_queues;
+	struct iwx_flush_queue_info queues[IWX_TX_FLUSH_QUEUE_RSP];
+} __packed; /* TX_PATH_FLUSH_CMD_RSP_API_S_VER_1 */
+
 
 /**
  * iwx_get_scd_ssn - returns the SSN of the SCD
