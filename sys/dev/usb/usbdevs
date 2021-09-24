@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.741 2021/08/31 22:55:56 jmatthew Exp $
+$OpenBSD: usbdevs,v 1.742 2021/09/24 05:25:37 kevlo Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -4123,6 +4123,7 @@ product SILICONPORTALS YAPPHONE	0x0201	YAP Phone
 
 /* Simcom products */
 product SIMCOM SIM7600E		0x9001	SIM7600E modem
+product SIMCOM SIM7600		0x9003	SIM7600 LTE
 
 /* Sirius Technologies products */
 product SIRIUS ROADSTER		0x0001	NetComm Roadster II 56
