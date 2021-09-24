@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.3 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.4 2021/09/24 14:37:56 aoyama Exp $	*/
 
 /*
  * Copyright (c) 2007, 2014, Miodrag Vallat.
@@ -233,11 +233,28 @@ done:
 	if (cc & CC_GE)
 		cc |= CC_UGE;
 
+#ifdef M88100
+	if (CPU_IS88100) {
+		cc &= ~(CC_UE | CC_LG | CC_UG | CC_ULE | CC_UL | CC_UGE);
+	}
+#endif
+
 	/*
 	 * Fill the interval bits.
-	 * s1 is compared to the interval [0, s2].
+	 * s1 is compared to the interval [0, s2] unless s2 is negative.
 	 */
 	if (!(cc & CC_UN)) {
+		switch (width) {
+		case FTYPE_SNG:
+			s2positive = s2->sng >> 31 == 0;
+			break;
+		case FTYPE_DBL:
+			s2positive = s2->dbl >> 63 == 0;
+			break;
+		}
+		if (!s2positive)
+			goto completed;
+
 		if (cc & CC_EQ) {
 			/* if s1 and s2 are equal, s1 is on boundary */
 			cc |= CC_IB | CC_OB;
@@ -259,47 +276,27 @@ done:
 			goto completed;
 		}
 
-		switch (width) {
-		case FTYPE_SNG:
-			s1positive = s1->sng >> 31 == 0;
-			s2positive = s2->sng >> 31 == 0;
-			break;
-		case FTYPE_DBL:
-			s1positive = s1->dbl >> 63 == 0;
-			s2positive = s2->dbl >> 63 == 0;
-			break;
-		}
-		if (s2positive) {
-			/* s2 is positive, the interval is [0, s2] */
-			if (cc & CC_GT) {
-				/* 0 <= s2 < s1 -> out of interval */
-				cc |= CC_OU | CC_OB;
-			} else if (s1positive) {
+		if (cc & CC_GT) {
+			/* 0 <= s2 < s1 -> out of interval */
+			cc |= CC_OU | CC_OB;
+		} else {
+			switch (width) {
+			case FTYPE_SNG:
+				s1positive = s1->sng >> 31 == 0;
+				break;
+			case FTYPE_DBL:
+				s1positive = s1->dbl >> 63 == 0;
+				break;
+			}
+			if (s1positive) {
 				/* 0 < s1 < s2 -> in interval */
 				cc |= CC_IB | CC_IN;
 			} else {
 				/* s1 < 0 <= s2 */
 				cc |= CC_OU | CC_OB;
 			}
-		} else {
-			/* s2 is negative, the interval is [s2, 0] */
-			if (cc & CC_LT) {
-				/* s1 < s2 <= 0 */
-				cc |= CC_OU | CC_OB;
-			} else if (!s1positive) {
-				/* s2 < s1 < 0 */
-				cc |= CC_IB | CC_IN;
-			} else {
-				/* s2 < 0 < s1 */
-				cc |= CC_OU | CC_OB;
-			}
 		}
 	}
-
-#ifdef M88100
-	if (CPU_IS88100)
-		cc &= ~(CC_UE | CC_LG | CC_UG | CC_ULE | CC_UL | CC_UGE);
-#endif
 
 completed:
 	if (rd != 0)
