@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.367 2021/09/08 13:06:23 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.368 2021/09/24 19:02:16 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5719,6 +5719,8 @@ iwm_rx_compressed_ba(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 	/* Protect against a firmware bug where the queue/TID are off. */
 	if (qid != IWM_FIRST_AGG_TX_QUEUE + ban->tid)
 		return;
+
+	sc->sc_tx_timer = 0;
 
 	ba = &ni->ni_tx_ba[ban->tid];
 	if (ba->ba_state != IEEE80211_BA_AGREED)
