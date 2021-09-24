@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.121 2021/04/03 13:34:45 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.122 2021/09/24 20:48:23 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018, 2019 Theo Buehler <tb@openbsd.org>
@@ -39,12 +39,6 @@ package main
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 #include <openssl/rsa.h>
-
-int
-evpDigestSignUpdate(EVP_MD_CTX *ctx, const void *d, size_t cnt)
-{
-	return EVP_DigestSignUpdate(ctx, d, cnt);
-}
 */
 import "C"
 
@@ -1033,19 +1027,12 @@ func runAesCmacTest(cipher *C.EVP_CIPHER, wt *wycheproofTestAesCmac) bool {
 		return false
 	}
 
-	ret = C.evpDigestSignUpdate(mdctx, unsafe.Pointer(&msg[0]), C.size_t(msgLen))
-	if ret != 1 {
-		fmt.Printf("FAIL: Test case %d (%q) %v - EVP_DigestSignUpdate() = %d, want %v\n",
-			wt.TCID, wt.Comment, wt.Flags, ret, wt.Result)
-		return false
-	}
-
 	var outLen C.size_t
 	outTag := make([]byte, 16)
 
-	ret = C.EVP_DigestSignFinal(mdctx, (*C.uchar)(unsafe.Pointer(&outTag[0])), &outLen)
+	ret = C.EVP_DigestSign(mdctx, (*C.uchar)(unsafe.Pointer(&outTag[0])), &outLen, (*C.uchar)(unsafe.Pointer(&msg[0])), C.size_t(msgLen))
 	if ret != 1 {
-		fmt.Printf("FAIL: Test case %d (%q) %v - EVP_DigestSignFinal() = %d, want %v\n",
+		fmt.Printf("FAIL: Test case %d (%q) %v - EVP_DigestSign() = %d, want %v\n",
 			wt.TCID, wt.Comment, wt.Flags, ret, wt.Result)
 		return false
 	}
