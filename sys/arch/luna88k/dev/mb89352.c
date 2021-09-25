@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352.c,v 1.31 2021/03/11 11:16:58 jsg Exp $	*/
+/*	$OpenBSD: mb89352.c,v 1.32 2021/09/25 23:53:35 aoyama Exp $	*/
 /*	$NetBSD: mb89352.c,v 1.5 2000/03/23 07:01:31 thorpej Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
@@ -834,6 +834,7 @@ nextbyte:
 	 * itself.
 	 */
 	for (;;) {
+		u_int8_t intstat;
 #if 0
 		for (;;) {
 			if ((bus_space_read_1(iot, ioh, PSNS) & PSNS_REQ) != 0)
@@ -868,13 +869,19 @@ nextbyte:
 #else
 		bus_space_write_1(iot, ioh, SCMD, SCMD_XFR | SCMD_PROG_XFR);	/* XXX */
 #endif
+		intstat = 0;
 		for (;;) {
 			/*if ((bus_space_read_1(iot, ioh, SSTS) & SSTS_BUSY) != 0
 				&& (bus_space_read_1(iot, ioh, SSTS) & SSTS_DREG_EMPTY) != 0)*/
 			if ((bus_space_read_1(iot, ioh, SSTS) & SSTS_DREG_EMPTY) == 0)
 				break;
-			if (bus_space_read_1(iot, ioh, INTS) != 0)
+			/*
+			 * We have to read INTS before checking SSTS to avoid
+			 * race between SSTS_DREG_EMPTY and INTS_CMD_DONE.
+			 */
+			if (intstat != 0)
 				goto out;
+			intstat = bus_space_read_1(iot, ioh, INTS);
 		}
 
 		/* Gather incoming message bytes if needed. */
