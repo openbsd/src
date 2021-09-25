@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.806 2021/09/04 12:11:45 jmatthew Exp $
+#	$OpenBSD: Makefile,v 1.807 2021/09/25 10:43:23 kn Exp $
 
 MAN=	aac.4 abcrtc.4 abl.4 ac97.4 acphy.4 acrtc.4 \
 	acpi.4 acpiac.4 acpials.4 acpiasus.4 acpibat.4 \
@@ -36,7 +36,7 @@ MAN=	aac.4 abcrtc.4 abl.4 ac97.4 acphy.4 acrtc.4 \
 	fanpwr.4 fd.4 fdc.4 fec.4 fido.4 fins.4 fintek.4 fms.4 fusbtc.4 \
 	fuse.4 fxp.4 \
 	gdt.4 gentbi.4 gem.4 gfrtc.4 gif.4 glenv.4 glkgpio.4 gpio.4 gpiodcf.4 \
-	gpioiic.4 gpioow.4 graphaudio.4 gre.4 gscsio.4 \
+	gpioiic.4 gpioleds.4 gpioow.4 graphaudio.4 gre.4 gscsio.4 \
 	hds.4 hiclock.4 hidwusb.4 hifn.4 hil.4 hilid.4 hilkbd.4 hilms.4 \
 	hireset.4 hitemp.4 hme.4 hotplug.4 hsq.4 \
 	hvn.4 hvs.4 hyperv.4 \
