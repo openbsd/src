@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.100 2021/09/26 12:24:53 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.101 2021/09/26 13:13:16 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -110,8 +110,6 @@ MBR_init(struct mbr *mbr)
 #else
 	if (disk.dk_bootprt.prt_ns > 0) {
 		mbr->mbr_prt[0] = disk.dk_bootprt;
-		if (mbr->mbr_prt[0].prt_flag == DOSACTIVE)
-			mbr->mbr_prt[3].prt_flag = 0;
 		PRT_fix_CHS(&mbr->mbr_prt[0]);
 		mbr->mbr_prt[3].prt_ns += mbr->mbr_prt[3].prt_bs;
 		mbr->mbr_prt[3].prt_bs = mbr->mbr_prt[0].prt_bs + mbr->mbr_prt[0].prt_ns;

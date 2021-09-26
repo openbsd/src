@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.136 2021/09/26 12:24:53 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.137 2021/09/26 13:13:16 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -86,7 +86,6 @@ main(int argc, char *argv[])
 			break;
 		case 'b':
 			parse_bootprt(optarg);
-			disk.dk_bootprt.prt_flag = DOSACTIVE;
 			break;
 		case 'c':
 			disk.dk_cylinders = strtonum(optarg, 1, 262144, &errstr);
