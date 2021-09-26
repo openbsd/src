@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.21 2021/07/20 15:25:48 kettenis Exp $
+#	$OpenBSD: install.md,v 1.22 2021/09/26 12:39:25 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@ md_prep_fdisk() {
 			if disk_has $_disk gpt apfsisc; then
 				fdisk -Ay ${bootpart} ${_disk} >/dev/null
 			elif disk_has $_disk gpt; then
-				fdisk -iy -g ${bootpart} ${_disk} >/dev/null
+				fdisk -gy ${bootpart} ${_disk} >/dev/null
 			else
 				fdisk -e ${_disk} <<__EOT >/dev/null
 reinit
