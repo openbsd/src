@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.386 2021/08/27 17:25:55 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.387 2021/09/27 19:12:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -321,11 +321,11 @@ server_client_set_session(struct client *c, struct session *s)
 		c->last_session = NULL;
 	c->session = s;
 	c->flags |= CLIENT_FOCUSED;
-	recalculate_sizes();
 
 	if (old != NULL && old->curw != NULL)
 		window_update_focus(old->curw->window);
 	if (s != NULL) {
+		recalculate_sizes();
 		window_update_focus(s->curw->window);
 		session_update_activity(s, NULL);
 		gettimeofday(&s->last_attached_time, NULL);
@@ -2057,6 +2057,7 @@ server_client_dispatch(struct imsg *imsg, void *arg)
 		if (datalen != 0)
 			fatalx("bad MSG_EXITING size");
 		server_client_set_session(c, NULL);
+		recalculate_sizes();
 		tty_close(&c->tty);
 		proc_send(c->peer, MSG_EXITED, -1, NULL, 0);
 		break;
