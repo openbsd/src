@@ -179,6 +179,7 @@ struct drm_file *drm_file_alloc(struct drm_minor *minor)
 	init_waitqueue_head(&file->event_wait);
 	file->event_space = 4096; /* set aside 4k for event buffer */
 
+	mtx_init(&file->master_lookup_lock, IPL_NONE);
 	rw_init(&file->event_read_lock, "evread");
 
 	if (drm_core_check_feature(dev, DRIVER_GEM))
