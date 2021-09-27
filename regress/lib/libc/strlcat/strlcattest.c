@@ -1,4 +1,4 @@
-/*	$OpenBSD: strlcattest.c,v 1.4 2021/09/01 09:26:32 jasper Exp $ */
+/*	$OpenBSD: strlcattest.c,v 1.5 2021/09/27 19:33:58 millert Exp $ */
 
 /*
  * Copyright (c) 2014 Todd C. Miller <millert@openbsd.org>
@@ -41,7 +41,7 @@ main(int argc, char *argv[])
 	char *buf, *cp, *ep;
 	struct sigaction sa;
 	size_t len, bufsize;
-	int failures = 0;
+	volatile int failures = 0;
 
 	bufsize = getpagesize(); /* trigger guard pages easily */
 	buf = malloc(bufsize);
