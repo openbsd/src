@@ -1,4 +1,4 @@
-/* $OpenBSD: descrip.c,v 1.1 2018/08/10 15:58:16 jsing Exp $ */
+/* $OpenBSD: descrip.c,v 1.2 2021/09/27 18:10:24 bluhm Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  *
@@ -28,7 +28,8 @@
 int
 main(int argc, char **argv)
 {
-	int fd, kq;
+	int fd, kq, status;
+	pid_t pf, pw;
 
 	kq = kqueue();
 	assert(kq == 3);
@@ -36,7 +37,8 @@ main(int argc, char **argv)
 	fd = open("/etc/hosts", O_RDONLY);
 	assert(fd == 4);
 
-	if (fork() == 0) {
+	pf = fork();
+	if (pf == 0) {
 		/*
 		 * The existing kq fd should have been closed across fork,
 		 * hence we expect fd 3 to be reallocated on this kqueue call.
@@ -51,7 +53,14 @@ main(int argc, char **argv)
 		 */
 		fd = open("/etc/hosts", O_RDONLY);
 		assert(fd == 5);
-	}
 
-	wait(NULL);
+		_exit(0);
+	}
+	assert(pf > 0);
+
+	pw = wait(&status);
+	assert(pf == pw);
+	assert(status == 0);
+
+	return 0;
 }
