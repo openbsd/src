@@ -1,48 +1,48 @@
+# $OpenBSD: Makefile,v 1.38 2021/09/27 18:27:14 bluhm Exp $
 
-# $OpenBSD: Makefile,v 1.37 2021/05/01 16:11:09 visa Exp $
+ARCHS =
+ARCHS +=	alpha amd64 arm64 armv7
+ARCHS +=	hppa
+ARCHS +=	i386
+ARCHS +=	landisk loongson luna88k
+ARCHS +=	macppc
+ARCHS +=	octeon
+ARCHS +=	powerpc64
+ARCHS +=	riscv64
+ARCHS +=	sparc64
 
-MAKEDEVARCHS+=alpha amd64 armv7 hppa i386 landisk
-MAKEDEVARCHS+=loongson luna88k macppc
-MAKEDEVARCHS+=sparc64
+DEVS =		all ramdisk
 
-MAKEDEVTARGS?=all ramdisk
+ETCSRCDIR ?=	${.CURDIR}/../../../etc
 
-ETCSRCDIR?=	/usr/src/etc
+REGRESS_TARGETS =
 
-REGRESS_SLOW_TARGETS=${REGRESS_TARGETS}
+.for a in ${ARCHS}
+.for d in ${DEVS}
 
-# test separate targets, all, ramdisk/raminst, std, etc
-# t1 = all
-# t2 = ramdisk
+REGRESS_TARGETS +=	run-$a-$d
+run-$a-$d:
+	${SUDO} rm -rf -- $a-$d.dir
+	mkdir -m 700 $a-$d.dir
+	cp ${ETCSRCDIR}/etc.$a/MAKEDEV $a-$d.dir/
+	${SUDO} chown root:wheel $a-$d.dir
+	${SUDO} time sh -c 'cd $a-$d.dir && sh ./MAKEDEV $d'
+	${SUDO} ls -ln $a-$d.dir/ | \
+	    awk '/^[bcps]/ {printf "%s %x.%x %x,%x%s\n",$$1,$$3,$$4,$$5,$$6,$$10} \
+		 /^l/      {printf "%s %s.%s%s>%s\n",$$1,$$3,$$4,$$9,$$11}' | \
+	    sort +5 -n | \
+	    sed -e 's/rwx/7/g;s/rw-/6/g;s/r-x/5/g;s/r--/4/g' \
+		-e 's/-wx/3/g;s/-w-/2/g;s/--x/1/g;s/---/0/g' \
+		-e 's/^\([bcpsl]\)\([0-9][0-9]*\) /\2\1/' \
+	    >$a-$d.out
 
-REGRESS_TARGETS+= ${MAKEDEVARCHS}
-REGRESS_ROOT_TARGETS=${REGRESS_TARGETS}
-
-${REGRESS_TARGETS}:
-. for _T in ${MAKEDEVTARGS}
-	@echo "====> ${_T}.${.TARGET}"
-	@exec ${SUDO} rm -rf test.${_T}.${.TARGET}
-	@exec mkdir -p -m 700 test.${_T}.${.TARGET}
-	@exec cp ${ETCSRCDIR}/etc.${.TARGET}/MAKEDEV test.${_T}.${.TARGET}
-	@exec ${SUDO} chown root:wheel test.${_T}.${.TARGET}
-	@cd test.${_T}.${.TARGET}; \
-	time ${SUDO} sh ./MAKEDEV ${_T} || true; \
-	time ${SUDO} sh ./MAKEDEV ${_T} || true; \
-	( ls -ln; ls -ln fd/ ) 2> /dev/null | \
-		awk '/^[bcps]/ {printf "%s %x.%x %x,%x%s\n",$$1,$$3,$$4,$$5,$$6,$$10} \
-		     /^l/      {printf "%s %s.%s%s>%s\n",$$1,$$3,$$4,$$9,$$11}' | \
-		sort +5 -n | \
-		sed -e 's/rwx/7/g;s/rw-/6/g;s/r-x/5/g;s/r--/4/g' \
-		    -e 's/-wx/3/g;s/-w-/2/g;s/--x/1/g;s/---/0/g' \
-		    -e 's/^\([bcpsl]\)\([0-9][0-9]*\) /\2\1/' \
-		> ../t1.${_T}.${.TARGET}.out
+.endfor
 .endfor
 
-clean:
-	for f in ${MAKEDEVARCHS}; do rm -rf test.$$f; done
-	rm -f ${CLEANFILES}
+REGRESS_ROOT_TARGETS=${REGRESS_TARGETS}
 
-.PHONY: ${MAKEDEVARCHS}
-CLEANFILES+=t1.*.out
+clean:
+	${SUDO} rm -rf -- *-*.dir/
+	${SUDO} rm -f -- *-*.out
 
 .include <bsd.regress.mk>
