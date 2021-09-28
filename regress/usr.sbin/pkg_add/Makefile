@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.76 2021/03/15 09:26:29 espie Exp $
+# $OpenBSD: Makefile,v 1.77 2021/09/28 14:46:54 espie Exp $
 
 REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames pkgcfl \
 	collision-check1 collision-check2 collision-check3 \
@@ -48,7 +48,7 @@ D$i ?= ${.OBJDIR}/dest$i
 DEST$i ?= ${D$i}/usr/local
 .endfor
 
-# current maxes (used): D45, SRC27, plist24, rep5
+# current maxes (used): D46, SRC28, plist27, rep7
 pkgnames:
 	${PERLSCRIPT}/check-name
 
@@ -728,6 +728,42 @@ cksum-error: rep5/a-0.tgz
 	@-rm -rf ${D44}
 	@ROOT=${D44} SILENT=1 ${ADD_PKG} rep5/a-0.tgz
 	@ROOT=${D44} SILENT=1 ${DELETE_PKG} a|fgrep 'Not deleting'
+
+# data for XXX-warning test
+
+plist25:
+	${MKPLIST} '@lib lib/libavahi.so.$${LIBavahi_VERSION}' >$@
+
+plist26:
+	${MKPLIST} '@conflict avahi-<1' '@conflict avahi-libs-<1' '@lib lib/libavahi.so.$${LIBavahi_VERSION}' >$@
+
+plist27:
+	${MKPLIST} '@conflict avahi-<1' >$@
+
+rep6/avahi-0.tgz: plist25
+	@${WITH} -B src28 -DLIBavahi_VERSION=0.0 -f plist25 $@ ${CPKG}
+
+rep6/cups-0.tgz:
+	@${CREATE_PKG} -DREGRESSION_TESTING -P't/avahi:avahi-*:avahi-0' -W avahi.0.0 ${EMPTY} $@
+
+rep7/avahi-1.tgz: 
+	@${CREATE_PKG} -DREGRESSION_TESTING -P't/avahi-libs:avahi-libs-*:avahi-libs-1' ${EMPTY} $@
+
+rep7/avahi-libs-1.tgz: plist27
+	@${WITH} -B src28 -f plist27 $@ ${CPKG}
+
+rep7/avahi-glib-1.tgz: plist26
+	@${WITH} -B src28 -DLIBavahi_VERSION=0.0 -f plist26 $@ ${CPKG}
+
+rep7/cups-1.tgz:
+	@${CREATE_PKG} -DREGRESSION_TESTING -P't/avahi-libs:avahi-libs-*:avahi-libs-0' -P't/avahi-glib:avahi-glib-*:avahi-glib-1' -W avahi.0.0 ${EMPTY} $@
+
+
+XXX-warning: rep6/avahi-0.tgz rep6/cups-0.tgz rep7/avahi-1.tgz rep7/avahi-libs-1.tgz rep7/avahi-glib-1.tgz rep7/cups-1.tgz
+	@-rm -rf ${D46}
+	@ROOT=${D46} SILENT=1 ${ADD_PKG} rep6/cups-0.tgz
+	@ROOT=${D46} PKG_PATH=${.OBJDIR}/rep7 ${ADD_PKG} -u 2>warning
+	@if fgrep XXX warning; then exit 1; fi
 
 clean:
 	-rm -rf rep* dest* plist* src* signatures.out *.ref *.out
