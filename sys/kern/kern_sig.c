@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.282 2021/07/14 22:09:24 bluhm Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.283 2021/09/28 10:00:18 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1799,8 +1799,8 @@ sys___thrsigdivert(struct proc *p, void *v, register_t *retval)
 		/* per-POSIX, delay this error until after the above */
 		if (timeinvalid)
 			error = EINVAL;
-
-		if (SCARG(uap, timeout) != NULL && nsecs == INFSLP)
+		/* per-POSIX, return immediatly if timeout is zero-valued */
+		if (nsecs == 0)
 			error = EAGAIN;
 
 		if (error != 0)
