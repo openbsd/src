@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2017/02/22 11:30:00 tb Exp $
+#	$OpenBSD: Makefile,v 1.2 2021/09/28 05:40:38 anton Exp $
 CFLAGS+=	-Wall -Werror
 
 testtype=	nopledge sendfd recvfd nosendfd norecvfd
@@ -45,21 +45,33 @@ FAIL_TARGETS=	test-sendfd-VDIR \
 		test-norecvfd-VSOCK \
 		test-norecvfd-VFIFO
 
+SUDO_TARGETS=	test-nopledge-VBLK \
+		test-sendfd-VBLK \
+		test-recvfd-VBLK \
+		test-nosendfd-VBLK \
+		test-norecvfd-VBLK
+
 CLEANFILES+=	sendrecvfd
 
 .for _test in ${testtype}
 . for _vnode in ${vnodetype}
 REGRESS_TARGETS+=	test-${_test}-${_vnode}
 
+.  if ${SUDO_TARGETS:Mtest-${_test}-${_vnode}}
+REGRESS_ROOT_TARGETS+=		test-${_test}-${_vnode}
+_sudo-${_test}-${_vnode}=	${SUDO}
+.  endif
+
 .  if ${PASS_TARGETS:Mtest-${_test}-${_vnode}} 
 test-${_test}-${_vnode}: sendrecvfd
 	@echo test-${_test}-${_vnode}: expected PASS
-	@./sendrecvfd ${_test} ${_vnode}
+	@${_sudo-${_test}-${_vnode}} ./sendrecvfd ${_test} ${_vnode}
 
 .  elif ${FAIL_TARGETS:Mtest-${_test}-${_vnode}}
 test-${_test}-${_vnode}: sendrecvfd
 	@echo test-${_test}-${_vnode}: expected FAIL
-	@if ./sendrecvfd ${_test} ${_vnode}; then false; else true; fi
+	@sudo="${SUDO_TARGETS:Mtest-${_test}-${_vnode}:C/.+/${SUDO}/}"; \
+	if ${_sudo-${_test}-${_vnode}} ./sendrecvfd ${_test} ${_vnode}; then false; else true; fi
 
 .  else
 test-${_test}-${_vnode}:
