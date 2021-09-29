@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1975 2021/07/18 05:02:08 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1976 2021/09/29 10:27:21 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -2996,6 +2996,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Kaveri Radeon R6",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_CYAN_SKILLFISH_1,
+	    "Cyan Skillfish",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_PPB_1,
 	    "PCIE",
 	},
@@ -3016,6 +3020,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon Vega HD Audio",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RENOIR_2,
+	    "Renoir",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RENOIR,
 	    "Renoir",
 	},
@@ -3034,6 +3042,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_LUCIENNE,
 	    "Lucienne",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_YELLOW_CARP_1,
+	    "Yellow Carp",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_YELLOW_CARP_2,
+	    "Yellow Carp",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6500D_HDA,
@@ -6108,6 +6124,26 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Navi 21",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SIENNA_CICHLID_9,
+	    "Navi 21",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SIENNA_CICHLID_10,
+	    "Navi 21",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SIENNA_CICHLID_11,
+	    "Navi 21",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SIENNA_CICHLID_12,
+	    "Navi 21",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SIENNA_CICHLID_13,
+	    "Navi 21",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_NAVY_FLOUNDER_1,
 	    "Navi 22",
 	},
@@ -6121,6 +6157,26 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_NAVY_FLOUNDER_4,
+	    "Navi 22",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_NAVY_FLOUNDER_5,
+	    "Navi 22",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_NAVY_FLOUNDER_6,
+	    "Navi 22",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_NAVY_FLOUNDER_7,
+	    "Navi 22",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_NAVY_FLOUNDER_8,
+	    "Navi 22",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_NAVY_FLOUNDER_9,
 	    "Navi 22",
 	},
 	{
@@ -6142,6 +6198,54 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_DIMGREY_CAVEFISH_5,
 	    "Navi 23",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_DIMGREY_CAVEFISH_6,
+	    "Navi 23",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_DIMGREY_CAVEFISH_7,
+	    "Navi 23",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_DIMGREY_CAVEFISH_8,
+	    "Navi 23",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_DIMGREY_CAVEFISH_9,
+	    "Navi 23",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_DIMGREY_CAVEFISH_10,
+	    "Navi 23",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_DIMGREY_CAVEFISH_11,
+	    "Navi 23",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_DIMGREY_CAVEFISH_12,
+	    "Navi 23",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_BEIGE_GOBY_1,
+	    "Navi 24",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_BEIGE_GOBY_2,
+	    "Navi 24",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_BEIGE_GOBY_3,
+	    "Navi 24",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_BEIGE_GOBY_4,
+	    "Navi 24",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_BEIGE_GOBY_5,
+	    "Navi 24",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9000IGP,
@@ -12128,6 +12232,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Bay Trail Low Power Audio",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_BAYTRAIL_IGD_4,
+	    "Bay Trail Video",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_BAYTRAIL_IGD_1,
 	    "Bay Trail Video",
 	},
@@ -13576,6 +13684,30 @@ static const struct pci_known_product pci_known_products[] = {
 	    "HD Graphics",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_BDW_RSVD_1,
+	    "HD Graphics",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_BDW_ULT_RSVD_1,
+	    "HD Graphics",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_BDW_RSVD_2,
+	    "HD Graphics",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_BDW_ULT_RSVD_2,
+	    "HD Graphics",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_BDW_RSVD_3,
+	    "HD Graphics",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_BDW_ULX_RSVD_1,
+	    "HD Graphics",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ADAPTIVE_VF,
 	    "Adaptive VF",
 	},
@@ -13644,8 +13776,20 @@ static const struct pci_known_product pci_known_products[] = {
 	    "HD Graphics 530",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SKL_ULT_GT,
+	    "HD Graphics",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SKL_ULX_GT,
+	    "HD Graphics",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE6G_U_GT2,
 	    "HD Graphics 520",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SKL_GT1,
+	    "HD Graphics",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONE3_1200V5_HB,
@@ -19098,6 +19242,70 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_TURBO_MEMORY,
 	    "Turbo Memory",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_GT_1,
+	    "UHD Graphics",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_GT_2,
+	    "UHD Graphics",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_GT_3,
+	    "UHD Graphics",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_GT_4,
+	    "UHD Graphics",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_GT_5,
+	    "UHD Graphics",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_RKL_GT_1,
+	    "UHD Graphics",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_RKL_GT_2,
+	    "UHD Graphics",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_RKL_GT_3,
+	    "UHD Graphics",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_RKL_GT_4,
+	    "UHD Graphics",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_RKL_GT_5,
+	    "UHD Graphics",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_RKL_GT_6,
+	    "UHD Graphics",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_JSL_GT_1,
+	    "UHD Graphics",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_JSL_GT_2,
+	    "UHD Graphics",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_JSL_GT_3,
+	    "UHD Graphics",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_JSL_GT_4,
+	    "UHD Graphics",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_JSL_GT_5,
+	    "UHD Graphics",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EP80579_HB,

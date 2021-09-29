@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1975 2021/07/18 05:02:08 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1976 2021/09/29 10:27:21 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1211,16 +1211,20 @@
 #define	PCI_PRODUCT_ATI_KAVERI_20	0x131b		/* Kaveri Radeon R4 */
 #define	PCI_PRODUCT_ATI_KAVERI_21	0x131c		/* Kaveri Radeon R7 */
 #define	PCI_PRODUCT_ATI_KAVERI_22	0x131d		/* Kaveri Radeon R6 */
+#define	PCI_PRODUCT_ATI_CYAN_SKILLFISH_1	0x13fe		/* Cyan Skillfish */
 #define	PCI_PRODUCT_ATI_PPB_1	0x1478		/* PCIE */
 #define	PCI_PRODUCT_ATI_PPB_2	0x1479		/* PCIE */
 #define	PCI_PRODUCT_ATI_PICASSO	0x15d8		/* Picasso */
 #define	PCI_PRODUCT_ATI_RAVEN_VEGA	0x15dd		/* Radeon Vega */
 #define	PCI_PRODUCT_ATI_RAVEN_VEGA_HDA	0x15de		/* Radeon Vega HD Audio */
+#define	PCI_PRODUCT_ATI_RENOIR_2	0x15e7		/* Renoir */
 #define	PCI_PRODUCT_ATI_RENOIR	0x1636		/* Renoir */
 #define	PCI_PRODUCT_ATI_RENOIR_HDA	0x1637		/* Renoir HD Audio */
 #define	PCI_PRODUCT_ATI_CEZANNE	0x1638		/* Cezanne */
 #define	PCI_PRODUCT_ATI_VANGOGH	0x163f		/* Van Gogh */
 #define	PCI_PRODUCT_ATI_LUCIENNE	0x164c		/* Lucienne */
+#define	PCI_PRODUCT_ATI_YELLOW_CARP_1	0x164d		/* Yellow Carp */
+#define	PCI_PRODUCT_ATI_YELLOW_CARP_2	0x1681		/* Yellow Carp */
 #define	PCI_PRODUCT_ATI_RADEON_HD6500D_HDA	0x1714		/* Radeon HD 6500D HD Audio */
 #define	PCI_PRODUCT_ATI_RADEON_M241P	0x3150		/* Mobility Radeon X600 */
 #define	PCI_PRODUCT_ATI_FIREMV_2400_1	0x3151		/* FireMV 2400 */
@@ -1985,19 +1989,41 @@
 #define	PCI_PRODUCT_ATI_SIENNA_CICHLID_2	0x73a1		/* Navi 21 */
 #define	PCI_PRODUCT_ATI_SIENNA_CICHLID_3	0x73a2		/* Navi 21 */
 #define	PCI_PRODUCT_ATI_SIENNA_CICHLID_4	0x73a3		/* Navi 21 */
-#define	PCI_PRODUCT_ATI_SIENNA_CICHLID_5	0x73ab		/* Navi 21 */
-#define	PCI_PRODUCT_ATI_SIENNA_CICHLID_6	0x73ae		/* Navi 21 */
-#define	PCI_PRODUCT_ATI_SIENNA_CICHLID_7	0x73af		/* Navi 21 */
-#define	PCI_PRODUCT_ATI_SIENNA_CICHLID_8	0x73bf		/* Navi 21 */
+#define	PCI_PRODUCT_ATI_SIENNA_CICHLID_5	0x73a5		/* Navi 21 */
+#define	PCI_PRODUCT_ATI_SIENNA_CICHLID_6	0x73a8		/* Navi 21 */
+#define	PCI_PRODUCT_ATI_SIENNA_CICHLID_7	0x73a9		/* Navi 21 */
+#define	PCI_PRODUCT_ATI_SIENNA_CICHLID_8	0x73ab		/* Navi 21 */
+#define	PCI_PRODUCT_ATI_SIENNA_CICHLID_9	0x73ac		/* Navi 21 */
+#define	PCI_PRODUCT_ATI_SIENNA_CICHLID_10	0x73ad		/* Navi 21 */
+#define	PCI_PRODUCT_ATI_SIENNA_CICHLID_11	0x73ae		/* Navi 21 */
+#define	PCI_PRODUCT_ATI_SIENNA_CICHLID_12	0x73af		/* Navi 21 */
+#define	PCI_PRODUCT_ATI_SIENNA_CICHLID_13	0x73bf		/* Navi 21 */
 #define	PCI_PRODUCT_ATI_NAVY_FLOUNDER_1	0x73c0		/* Navi 22 */
 #define	PCI_PRODUCT_ATI_NAVY_FLOUNDER_2	0x73c1		/* Navi 22 */
 #define	PCI_PRODUCT_ATI_NAVY_FLOUNDER_3	0x73c3		/* Navi 22 */
-#define	PCI_PRODUCT_ATI_NAVY_FLOUNDER_4	0x73df		/* Navi 22 */
+#define	PCI_PRODUCT_ATI_NAVY_FLOUNDER_4	0x73da		/* Navi 22 */
+#define	PCI_PRODUCT_ATI_NAVY_FLOUNDER_5	0x73db		/* Navi 22 */
+#define	PCI_PRODUCT_ATI_NAVY_FLOUNDER_6	0x73dc		/* Navi 22 */
+#define	PCI_PRODUCT_ATI_NAVY_FLOUNDER_7	0x73dd		/* Navi 22 */
+#define	PCI_PRODUCT_ATI_NAVY_FLOUNDER_8	0x73de		/* Navi 22 */
+#define	PCI_PRODUCT_ATI_NAVY_FLOUNDER_9	0x73df		/* Navi 22 */
 #define	PCI_PRODUCT_ATI_DIMGREY_CAVEFISH_1	0x73e0		/* Navi 23 */
 #define	PCI_PRODUCT_ATI_DIMGREY_CAVEFISH_2	0x73e1		/* Navi 23 */
 #define	PCI_PRODUCT_ATI_DIMGREY_CAVEFISH_3	0x73e2		/* Navi 23 */
 #define	PCI_PRODUCT_ATI_DIMGREY_CAVEFISH_4	0x73e3		/* Navi 23 */
-#define	PCI_PRODUCT_ATI_DIMGREY_CAVEFISH_5	0x73ff		/* Navi 23 */
+#define	PCI_PRODUCT_ATI_DIMGREY_CAVEFISH_5	0x73e8		/* Navi 23 */
+#define	PCI_PRODUCT_ATI_DIMGREY_CAVEFISH_6	0x73e9		/* Navi 23 */
+#define	PCI_PRODUCT_ATI_DIMGREY_CAVEFISH_7	0x73ea		/* Navi 23 */
+#define	PCI_PRODUCT_ATI_DIMGREY_CAVEFISH_8	0x73eb		/* Navi 23 */
+#define	PCI_PRODUCT_ATI_DIMGREY_CAVEFISH_9	0x73ec		/* Navi 23 */
+#define	PCI_PRODUCT_ATI_DIMGREY_CAVEFISH_10	0x73ed		/* Navi 23 */
+#define	PCI_PRODUCT_ATI_DIMGREY_CAVEFISH_11	0x73ef		/* Navi 23 */
+#define	PCI_PRODUCT_ATI_DIMGREY_CAVEFISH_12	0x73ff		/* Navi 23 */
+#define	PCI_PRODUCT_ATI_BEIGE_GOBY_1	0x7420		/* Navi 24 */
+#define	PCI_PRODUCT_ATI_BEIGE_GOBY_2	0x7421		/* Navi 24 */
+#define	PCI_PRODUCT_ATI_BEIGE_GOBY_3	0x7422		/* Navi 24 */
+#define	PCI_PRODUCT_ATI_BEIGE_GOBY_4	0x7423		/* Navi 24 */
+#define	PCI_PRODUCT_ATI_BEIGE_GOBY_5	0x743f		/* Navi 24 */
 #define	PCI_PRODUCT_ATI_RADEON_9000IGP	0x7834		/* Radeon 9000/9100 IGP */
 #define	PCI_PRODUCT_ATI_RADEON_RS350IGP	0x7835		/* Radeon RS350IGP */
 #define	PCI_PRODUCT_ATI_RS690_HB	0x7910		/* RS690 Host */
@@ -3685,6 +3711,7 @@
 #define	PCI_PRODUCT_INTEL_BAYTRAIL_SATA_2	0x0f21		/* Bay Trail SATA */
 #define	PCI_PRODUCT_INTEL_BAYTRAIL_AHCI	0x0f23		/* Bay Trail AHCI */
 #define	PCI_PRODUCT_INTEL_BAYTRAIL_LPA	0x0f28		/* Bay Trail Low Power Audio */
+#define	PCI_PRODUCT_INTEL_BAYTRAIL_IGD_4	0x0f30		/* Bay Trail Video */
 #define	PCI_PRODUCT_INTEL_BAYTRAIL_IGD_1	0x0f31		/* Bay Trail Video */
 #define	PCI_PRODUCT_INTEL_BAYTRAIL_IGD_2	0x0f32		/* Bay Trail Video */
 #define	PCI_PRODUCT_INTEL_BAYTRAIL_IGD_3	0x0f33		/* Bay Trail Video */
@@ -4047,6 +4074,12 @@
 #define	PCI_PRODUCT_INTEL_CORE5G_M_GT3_28W	0x162b		/* Iris 6100 */
 #define	PCI_PRODUCT_INTEL_CORE5G_D_GT3_2	0x162d		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_CORE5G_M_GT3_4	0x162e		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_BDW_RSVD_1	0x1632		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_BDW_ULT_RSVD_1	0x1636		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_BDW_RSVD_2	0x163a		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_BDW_ULT_RSVD_2	0x163b		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_BDW_RSVD_3	0x163d		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_BDW_ULX_RSVD_1	0x163e		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_ADAPTIVE_VF	0x1889		/* Adaptive VF */
 #define	PCI_PRODUCT_INTEL_CORE6G_H_HB_D	0x1900		/* Core 6G Host */
 #define	PCI_PRODUCT_INTEL_CORE6G_H_PCIE_X16	0x1901		/* Core 6G PCIE */
@@ -4064,7 +4097,10 @@
 #define	PCI_PRODUCT_INTEL_CORE6G_H_HB_Q	0x1910		/* Core 6G Host */
 #define	PCI_PRODUCT_INTEL_CORE_GMM_1	0x1911		/* Core GMM */
 #define	PCI_PRODUCT_INTEL_CORE6G_S_GT2_1	0x1912		/* HD Graphics 530 */
+#define	PCI_PRODUCT_INTEL_SKL_ULT_GT	0x1913		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_SKL_ULX_GT	0x1915		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_CORE6G_U_GT2	0x1916		/* HD Graphics 520 */
+#define	PCI_PRODUCT_INTEL_SKL_GT1	0x1917		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_XEONE3_1200V5_HB	0x1918		/* Xeon E3-1200 v5 Host */
 #define	PCI_PRODUCT_INTEL_CORE6G_S_GT2_2	0x191a		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_CORE6G_H_GT2	0x191b		/* HD Graphics 530 */
@@ -5428,6 +5464,22 @@
 #define	PCI_PRODUCT_INTEL_500SERIES_ISH	0x43fc		/* 500 Series ISH */
 #define	PCI_PRODUCT_INTEL_500SERIES_GSPI_3	0x43fd		/* 500 Series GSPI */
 #define	PCI_PRODUCT_INTEL_TURBO_MEMORY	0x444e		/* Turbo Memory */
+#define	PCI_PRODUCT_INTEL_EHL_GT_1	0x4541		/* UHD Graphics */
+#define	PCI_PRODUCT_INTEL_EHL_GT_2	0x4551		/* UHD Graphics */
+#define	PCI_PRODUCT_INTEL_EHL_GT_3	0x4555		/* UHD Graphics */
+#define	PCI_PRODUCT_INTEL_EHL_GT_4	0x4557		/* UHD Graphics */
+#define	PCI_PRODUCT_INTEL_EHL_GT_5	0x4571		/* UHD Graphics */
+#define	PCI_PRODUCT_INTEL_RKL_GT_1	0x4c80		/* UHD Graphics */
+#define	PCI_PRODUCT_INTEL_RKL_GT_2	0x4c8a		/* UHD Graphics */
+#define	PCI_PRODUCT_INTEL_RKL_GT_3	0x4c8b		/* UHD Graphics */
+#define	PCI_PRODUCT_INTEL_RKL_GT_4	0x4c8c		/* UHD Graphics */
+#define	PCI_PRODUCT_INTEL_RKL_GT_5	0x4c90		/* UHD Graphics */
+#define	PCI_PRODUCT_INTEL_RKL_GT_6	0x4c9a		/* UHD Graphics */
+#define	PCI_PRODUCT_INTEL_JSL_GT_1	0x4e51		/* UHD Graphics */
+#define	PCI_PRODUCT_INTEL_JSL_GT_2	0x4e55		/* UHD Graphics */
+#define	PCI_PRODUCT_INTEL_JSL_GT_3	0x4e57		/* UHD Graphics */
+#define	PCI_PRODUCT_INTEL_JSL_GT_4	0x4e61		/* UHD Graphics */
+#define	PCI_PRODUCT_INTEL_JSL_GT_5	0x4e71		/* UHD Graphics */
 #define	PCI_PRODUCT_INTEL_EP80579_HB	0x5020		/* EP80579 Host */
 #define	PCI_PRODUCT_INTEL_EP80579_MEM	0x5021		/* EP80579 Memory */
 #define	PCI_PRODUCT_INTEL_EP80579_EDMA	0x5023		/* EP80579 EDMA */
