@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1976 2021/09/29 10:27:21 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1977 2021/09/29 12:18:08 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -3725,7 +3725,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON9800,
-	    "RAdeon 9800",
+	    "Radeon 9800",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9800XT,
@@ -5681,7 +5681,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1550_64,
-	    "RADEON X1550 64-bit",
+	    "Radeon X1550 64-bit",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1300_M52,
@@ -5989,7 +5989,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RV560_3,
-	    "Rv560",
+	    "RV560",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RX1650_XT,
@@ -19448,7 +19448,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "QEMU NVM Express Controller",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE7G_D_GT1,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_KBL_D_GT1,
 	    "HD Graphics 610",
 	},
 	{
@@ -19456,19 +19456,19 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Core 7G Host",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE7G_U_GT1,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_KBL_U_GT1,
 	    "HD Graphics 610",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE7G_H_GT1_1,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_KBL_H_GT1_1,
 	    "HD Graphics",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE7G_S_GT1,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_KBL_S_GT1,
 	    "HD Graphics",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE7G_H_GT1_2,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_KBL_H_GT1_2,
 	    "HD Graphics",
 	},
 	{
@@ -19476,7 +19476,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Core 7G Host",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE7G_Y_GT1,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_KBL_Y_GT1,
 	    "HD Graphics",
 	},
 	{
@@ -19504,11 +19504,11 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Core 8G Host",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE7G_IMGU,
-	    "Core 7G Imaging Unit",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_KBL_U_GT15_2,
+	    "HD Graphics",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE7G_U_GT2_1,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_KBL_U_GT2_1,
 	    "HD Graphics 620",
 	},
 	{
@@ -19520,11 +19520,11 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Xeon E3-1200 v6/7 Host",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE7G_SRV_GT2,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_KBL_SRV_GT2,
 	    "HD Graphics P630",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE7G_H_GT2,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_KBL_H_GT2,
 	    "HD Graphics 630",
 	},
 	{
@@ -19532,11 +19532,11 @@ static const struct pci_known_product pci_known_products[] = {
 	    "UHD Graphics 615",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE7G_U_GT2_2,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_KBL_U_GT2_2,
 	    "HD Graphics P630",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE7G_Y_GT2,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_KBL_Y_GT2,
 	    "HD Graphics 615",
 	},
 	{
@@ -19552,11 +19552,11 @@ static const struct pci_known_product pci_known_products[] = {
 	    "HD Graphics 635",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE7G_U_GT3_15W,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_KBL_U_GT3_15W,
 	    "Iris Plus 640",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE7G_U_GT3_28W,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_KBL_U_GT3_28W,
 	    "Iris Plus 650",
 	},
 	{
