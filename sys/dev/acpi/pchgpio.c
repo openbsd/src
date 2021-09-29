@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchgpio.c,v 1.7 2021/09/21 14:59:13 kettenis Exp $	*/
+/*	$OpenBSD: pchgpio.c,v 1.8 2021/09/29 22:03:33 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis
  * Copyright (c) 2020 James Hastings
@@ -26,7 +26,7 @@
 #include <dev/acpi/amltypes.h>
 #include <dev/acpi/dsdt.h>
 
-#define PCHGPIO_MAXCOM		4
+#define PCHGPIO_MAXCOM		5
 
 #define PCHGPIO_CONF_TXSTATE		0x00000001
 #define PCHGPIO_CONF_RXSTATE		0x00000002
@@ -107,9 +107,43 @@ struct cfdriver pchgpio_cd = {
 };
 
 const char *pchgpio_hids[] = {
+	"INT3450",
 	"INT34BB",
 	"INT34C5",
+	"INT34C6",
 	NULL
+};
+
+const struct pchgpio_group cnl_h_groups[] =
+{
+	/* Community 0 */
+	{ 0, 0, 0, 24, 0 },		/* GPP_A */
+	{ 0, 1, 25, 50, 32 },		/* GPP_B */
+
+	/* Community 1 */
+	{ 1, 0, 51, 74, 64 },		/* GPP_C */
+	{ 1, 1, 75, 98, 96 },		/* GPP_D */
+	{ 1, 2, 99, 106, 128 },		/* GPP_G */
+
+	/* Community 3 */
+	{ 2, 0, 155, 178, 192 },	/* GPP_K */
+	{ 2, 1, 179, 202, 224 },	/* GPP_H */
+	{ 2, 2, 203, 215, 256 },	/* GPP_E */
+	{ 2, 3, 216, 239, 288 },	/* GPP_F */
+
+	/* Community 4 */
+	{ 3, 2, 269, 286, 320 },	/* GPP_I */
+	{ 3, 3, 287, 298, 352 },	/* GPP_J */
+};
+
+const struct pchgpio_device cnl_h_device =
+{
+	.pad_size = 16,
+	.gpi_is = 0x100,
+	.gpi_ie = 0x120,
+	.groups = cnl_h_groups,
+	.ngroups = nitems(cnl_h_groups),
+	.npins = 384,
 };
 
 const struct pchgpio_group cnl_lp_groups[] =
@@ -171,9 +205,47 @@ const struct pchgpio_device tgl_lp_device =
 	.npins = 360,
 };
 
+const struct pchgpio_group tgl_h_groups[] =
+{
+	/* Community 0 */
+	{ 0, 0, 0, 24, 0 },		/* GPP_A */
+	{ 0, 1, 25, 44, 32 },		/* GPP_R */
+	{ 0, 2, 45, 70, 64 },		/* GPP_B */
+
+	/* Community 1 */
+	{ 1, 0, 79, 104, 128 },		/* GPP_D */
+	{ 1, 1, 105, 128, 160 },	/* GPP_C */
+	{ 1, 2, 129, 136, 192 },	/* GPP_S */
+	{ 1, 3, 137, 153, 224 },	/* GPP_G */
+
+	/* Community 3 */
+	{ 2, 0, 181, 193, 288 },	/* GPP_E */
+	{ 2, 1, 194, 217, 320 },	/* GPP_F */
+
+	/* Community 4 */
+	{ 2, 0, 218, 241, 352 },	/* GPP_H */
+	{ 2, 1, 242, 251, 384 },	/* GPP_J */
+	{ 2, 2, 252, 266, 416 },	/* GPP_K */
+
+	/* Community 5 */
+	{ 3, 0, 267, 281, 448 },	/* GPP_I */
+};
+
+const struct pchgpio_device tgl_h_device =
+{
+	.pad_size = 16,
+	.gpi_is = 0x100,
+	.gpi_ie = 0x120,
+	.groups = tgl_lp_groups,
+	.ngroups = nitems(tgl_h_groups),
+	.npins = 480,
+};
+
 struct pchgpio_match pchgpio_devices[] = {
+	{ "INT3450", &cnl_h_device },
 	{ "INT34BB", &cnl_lp_device },
 	{ "INT34C5", &tgl_lp_device },
+	{ "INT34C6", &tgl_h_device },
 };
 
 int	pchgpio_read_pin(void *, int);
