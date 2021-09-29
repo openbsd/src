@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.244 2021/07/27 17:13:03 mvs Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.245 2021/09/29 22:08:13 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -193,6 +193,13 @@ static struct tdb **tdbdst = NULL;
 static struct tdb **tdbsrc = NULL;
 static u_int tdb_hashmask = TDB_HASHSIZE_INIT - 1;
 static int tdb_count;
+
+void
+ipsp_init(void)
+{
+	pool_init(&tdb_pool, sizeof(struct tdb), 0, IPL_SOFTNET, 0,
+	    "tdb", NULL);
+}
 
 /*
  * Our hashing function needs to stir things with a non-zero random multiplier
@@ -810,15 +817,9 @@ struct tdb *
 tdb_alloc(u_int rdomain)
 {
 	struct tdb *tdbp;
-	static int initialized = 0;
 
 	NET_ASSERT_LOCKED();
 
-	if (!initialized) {
-		pool_init(&tdb_pool, sizeof(struct tdb), 0, IPL_SOFTNET, 0,
-		    "tdb", NULL);
-		initialized = 1;
-	}
 	tdbp = pool_get(&tdb_pool, PR_WAITOK | PR_ZERO);
 
 	TAILQ_INIT(&tdbp->tdb_policy_head);
