@@ -1,4 +1,4 @@
-#	$OpenBSD: principals-command.sh,v 1.12 2021/09/30 04:22:50 dtucker Exp $
+#	$OpenBSD: principals-command.sh,v 1.13 2021/09/30 05:20:08 dtucker Exp $
 #	Placed in the Public Domain.
 
 tid="authorized principals command"
@@ -53,14 +53,10 @@ test $? -eq 0 || fatal "couldn't prepare principals command"
 $SUDO chmod 0755 "$PRINCIPALS_COMMAND"
 
 # Test explicitly-specified principals
-for privsep in yes ; do
-	_prefix="privsep $privsep"
-
 	# Setup for AuthorizedPrincipalsCommand
 	rm -f $OBJ/authorized_keys_$USER
 	(
 		cat $OBJ/sshd_proxy_bak
-		echo "UsePrivilegeSeparation $privsep"
 		echo "AuthorizedKeysFile none"
 		echo "AuthorizedPrincipalsCommand $PRINCIPALS_COMMAND" \
 		    "%u %t %T %i %s %F %f %k %K"
@@ -72,7 +68,7 @@ for privsep in yes ; do
 	# XXX test failing command
 
 	# Empty authorized_principals
-	verbose "$tid: ${_prefix} empty authorized_principals"
+	verbose "$tid: empty authorized_principals"
 	echo > $OBJ/authorized_principals_$USER
 	${SSH} -i $OBJ/cert_user_key \
 	    -F $OBJ/ssh_proxy somehost true >/dev/null 2>&1
@@ -81,7 +77,7 @@ for privsep in yes ; do
 	fi
 
 	# Wrong authorized_principals
-	verbose "$tid: ${_prefix} wrong authorized_principals"
+	verbose "$tid: wrong authorized_principals"
 	echo gregorsamsa > $OBJ/authorized_principals_$USER
 	${SSH} -i $OBJ/cert_user_key \
 	    -F $OBJ/ssh_proxy somehost true >/dev/null 2>&1
@@ -90,7 +86,7 @@ for privsep in yes ; do
 	fi
 
 	# Correct authorized_principals
-	verbose "$tid: ${_prefix} correct authorized_principals"
+	verbose "$tid: correct authorized_principals"
 	echo mekmitasdigoat > $OBJ/authorized_principals_$USER
 	${SSH} -i $OBJ/cert_user_key \
 	    -F $OBJ/ssh_proxy somehost true >/dev/null 2>&1
@@ -99,7 +95,7 @@ for privsep in yes ; do
 	fi
 
 	# authorized_principals with bad key option
-	verbose "$tid: ${_prefix} authorized_principals bad key opt"
+	verbose "$tid: authorized_principals bad key opt"
 	echo 'blah mekmitasdigoat' > $OBJ/authorized_principals_$USER
 	${SSH} -i $OBJ/cert_user_key \
 	    -F $OBJ/ssh_proxy somehost true >/dev/null 2>&1
@@ -108,7 +104,7 @@ for privsep in yes ; do
 	fi
 
 	# authorized_principals with command=false
-	verbose "$tid: ${_prefix} authorized_principals command=false"
+	verbose "$tid: authorized_principals command=false"
 	echo 'command="false" mekmitasdigoat' > \
 	    $OBJ/authorized_principals_$USER
 	${SSH} -i $OBJ/cert_user_key \
@@ -119,7 +115,7 @@ for privsep in yes ; do
 
 
 	# authorized_principals with command=true
-	verbose "$tid: ${_prefix} authorized_principals command=true"
+	verbose "$tid: authorized_principals command=true"
 	echo 'command="true" mekmitasdigoat' > \
 	    $OBJ/authorized_principals_$USER
 	${SSH} -i $OBJ/cert_user_key \
@@ -129,14 +125,14 @@ for privsep in yes ; do
 	fi
 
 	# Setup for principals= key option
+	# TODO: remove?
 	rm -f $OBJ/authorized_principals_$USER
 	(
 		cat $OBJ/sshd_proxy_bak
-		echo "UsePrivilegeSeparation $privsep"
 	) > $OBJ/sshd_proxy
 
 	# Wrong principals list
-	verbose "$tid: ${_prefix} wrong principals key option"
+	verbose "$tid: wrong principals key option"
 	(
 		printf 'cert-authority,principals="gregorsamsa" '
 		cat $OBJ/user_ca_key.pub
@@ -148,7 +144,7 @@ for privsep in yes ; do
 	fi
 
 	# Correct principals list
-	verbose "$tid: ${_prefix} correct principals key option"
+	verbose "$tid: correct principals key option"
 	(
 		printf 'cert-authority,principals="mekmitasdigoat" '
 		cat $OBJ/user_ca_key.pub
@@ -158,4 +154,3 @@ for privsep in yes ; do
 	if [ $? -ne 0 ]; then
 		fail "ssh cert connect failed"
 	fi
-done
