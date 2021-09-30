@@ -1,4 +1,4 @@
-/* $OpenBSD: verify.c,v 1.7 2021/08/28 15:13:50 beck Exp $ */
+/* $OpenBSD: verify.c,v 1.8 2021/09/30 18:28:38 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
@@ -396,6 +396,7 @@ struct verify_cert_test verify_cert_tests[] = {
 	{
 		.id = "13a",
 		.want_chains = 1,
+		.failing = 1,
 	},
 };
 
