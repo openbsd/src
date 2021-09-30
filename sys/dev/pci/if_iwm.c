@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.368 2021/09/24 19:02:16 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.369 2021/09/30 09:27:47 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -9003,6 +9003,14 @@ iwm_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	struct ifnet *ifp = IC2IFP(ic);
 	struct iwm_softc *sc = ifp->if_softc;
 	int i;
+
+	/*
+	 * Prevent attemps to transition towards the same state, unless
+	 * we are scanning in which case a SCAN -> SCAN transition
+	 * triggers another scan iteration.
+	 */
+	if (sc->ns_nstate == nstate && nstate != IEEE80211_S_SCAN)
+		return 0;
 
 	if (ic->ic_state == IEEE80211_S_RUN) {
 		timeout_del(&sc->sc_calib_to);

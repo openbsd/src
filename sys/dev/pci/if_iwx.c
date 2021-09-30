@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.111 2021/09/23 16:27:58 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.112 2021/09/30 09:27:47 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -7920,6 +7920,14 @@ iwx_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	struct ifnet *ifp = IC2IFP(ic);
 	struct iwx_softc *sc = ifp->if_softc;
 	int i;
+
+	/*
+	 * Prevent attemps to transition towards the same state, unless
+	 * we are scanning in which case a SCAN -> SCAN transition
+	 * triggers another scan iteration.
+	 */
+	if (sc->ns_nstate == nstate && nstate != IEEE80211_S_SCAN)
+		return 0;
 
 	if (ic->ic_state == IEEE80211_S_RUN) {
 		iwx_del_task(sc, systq, &sc->ba_task);
