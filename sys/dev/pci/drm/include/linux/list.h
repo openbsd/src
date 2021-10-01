@@ -1,4 +1,4 @@
-/*	$OpenBSD: list.h,v 1.3 2021/07/07 02:38:36 jsg Exp $	*/
+/*	$OpenBSD: list.h,v 1.4 2021/10/01 04:36:38 jsg Exp $	*/
 /* drm_linux_list.h -- linux list functions for the BSDs.
  * Created: Mon Apr 7 14:30:16 1999 by anholt@FreeBSD.org
  */
@@ -291,7 +291,7 @@ list_splice_tail_init(struct list_head *list, struct list_head *head)
 }
 
 void	list_sort(void *, struct list_head *,
-	    int (*)(void *, struct list_head *, struct list_head *));
+	    int (*)(void *, const struct list_head *, const struct list_head *));
 
 #define hlist_entry(ptr, type, member) \
 	((ptr) ? container_of(ptr, type, member) : NULL)
