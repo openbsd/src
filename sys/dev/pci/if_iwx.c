@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.113 2021/10/02 07:39:52 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.114 2021/10/02 07:48:20 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -438,8 +438,6 @@ int	iwx_phy_ctxt_update(struct iwx_softc *, struct iwx_phy_ctxt *,
 	    struct ieee80211_channel *, uint8_t, uint8_t, uint32_t);
 int	iwx_auth(struct iwx_softc *);
 int	iwx_deauth(struct iwx_softc *);
-int	iwx_assoc(struct iwx_softc *);
-int	iwx_disassoc(struct iwx_softc *);
 int	iwx_run(struct iwx_softc *);
 int	iwx_run_stop(struct iwx_softc *);
 struct ieee80211_node *iwx_node_alloc(struct ieee80211com *);
@@ -7428,48 +7426,6 @@ iwx_deauth(struct iwx_softc *sc)
 }
 
 int
-iwx_assoc(struct iwx_softc *sc)
-{
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct iwx_node *in = (void *)ic->ic_bss;
-	int update_sta = (sc->sc_flags & IWX_FLAG_STA_ACTIVE);
-	int err;
-
-	splassert(IPL_NET);
-
-	err = iwx_add_sta_cmd(sc, in, update_sta);
-	if (err) {
-		printf("%s: could not %s STA (error %d)\n",
-		    DEVNAME(sc), update_sta ? "update" : "add", err);
-		return err;
-	}
-
-	if (!update_sta)
-		err = iwx_enable_mgmt_queue(sc);
-
-	return err;
-}
-
-int
-iwx_disassoc(struct iwx_softc *sc)
-{
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct iwx_node *in = (void *)ic->ic_bss;
-	int err;
-
-	splassert(IPL_NET);
-
-	if (sc->sc_flags & IWX_FLAG_STA_ACTIVE) {
-		err = iwx_rm_sta(sc, in);
-		if (err)
-			return err;
-		sc->sc_flags &= ~IWX_FLAG_STA_ACTIVE;
-	}
-
-	return 0;
-}
-
-int
 iwx_run(struct iwx_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -7608,6 +7564,7 @@ iwx_run_stop(struct iwx_softc *sc)
 		}
 	}
 
+	/* Mark station as disassociated. */
 	err = iwx_mac_ctxt_cmd(sc, in, IWX_FW_CTXT_ACTION_MODIFY, 0);
 	if (err) {
 		printf("%s: failed to update MAC\n", DEVNAME(sc));
@@ -7851,12 +7808,6 @@ iwx_newstate_task(void *psc)
 				goto out;
 			/* FALLTHROUGH */
 		case IEEE80211_S_ASSOC:
-			if (nstate <= IEEE80211_S_ASSOC) {
-				err = iwx_disassoc(sc);
-				if (err)
-					goto out;
-			}
-			/* FALLTHROUGH */
 		case IEEE80211_S_AUTH:
 			if (nstate <= IEEE80211_S_AUTH) {
 				err = iwx_deauth(sc);
@@ -7895,7 +7846,6 @@ next_scan:
 		break;
 
 	case IEEE80211_S_ASSOC:
-		err = iwx_assoc(sc);
 		break;
 
 	case IEEE80211_S_RUN:
