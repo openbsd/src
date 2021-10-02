@@ -1808,6 +1808,8 @@
 ./usr/lib/clang/11.1.0/include/tgmath.h
 ./usr/lib/clang/11.1.0/include/unwind.h
 ./usr/lib/clang/11.1.0/include/varargs.h
+./usr/lib/clang/11.1.0/lib
+./usr/lib/clang/11.1.0/lib/libclang_rt.profile.a
 ./usr/lib/libc++.a
 ./usr/lib/libc++_p.a
 ./usr/lib/libc++abi.a
