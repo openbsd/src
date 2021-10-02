@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.63 2021/03/24 16:11:32 semarie Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.64 2021/10/02 17:29:28 semarie Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -25,6 +25,7 @@
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/poll.h>
+#include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/specdev.h>
 #include <sys/stat.h>
@@ -685,6 +686,7 @@ fusefs_link(void *v)
 	VN_KNOTE(dvp, NOTE_WRITE);
 
 out1:
+	pool_put(&namei_pool, cnp->cn_pnbuf);
 	if (dvp != vp)
 		VOP_UNLOCK(vp);
 out2:
@@ -751,6 +753,7 @@ fusefs_symlink(void *v)
 	fb_delete(fbuf);
 	vput(tdp);
 bad:
+	pool_put(&namei_pool, cnp->cn_pnbuf);
 	vput(dvp);
 	return (error);
 }
@@ -999,11 +1002,15 @@ fusefs_create(void *v)
 	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
 	mode = MAKEIMODE(vap->va_type, vap->va_mode);
 
-	if (!fmp->sess_init)
+	if (!fmp->sess_init) {
+		VOP_ABORTOP(dvp, cnp);
 		return (ENXIO);
+	}
 
-	if (fmp->undef_op & UNDEF_MKNOD)
+	if (fmp->undef_op & UNDEF_MKNOD) {
+		VOP_ABORTOP(dvp, cnp);
 		return (ENOSYS);
+	}
 
 	fbuf = fb_setup(cnp->cn_namelen + 1, ip->ufs_ino.i_number,
 	    FBT_MKNOD, p);
@@ -1030,6 +1037,7 @@ fusefs_create(void *v)
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
 out:
 	fb_delete(fbuf);
+	pool_put(&namei_pool, cnp->cn_pnbuf);
 	return (error);
 }
 
@@ -1051,11 +1059,15 @@ fusefs_mknod(void *v)
 	ip = VTOI(dvp);
 	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
 
-	if (!fmp->sess_init)
+	if (!fmp->sess_init) {
+		VOP_ABORTOP(dvp, cnp);
 		return (ENXIO);
+	}
 
-	if (fmp->undef_op & UNDEF_MKNOD)
+	if (fmp->undef_op & UNDEF_MKNOD) {
+		VOP_ABORTOP(dvp, cnp);
 		return (ENOSYS);
+	}
 
 	fbuf = fb_setup(cnp->cn_namelen + 1, ip->ufs_ino.i_number,
 	    FBT_MKNOD, p);
@@ -1093,6 +1105,7 @@ fusefs_mknod(void *v)
 	*vpp = NULL;
 out:
 	fb_delete(fbuf);
+	pool_put(&namei_pool, cnp->cn_pnbuf);
 	return (error);
 }
 
@@ -1412,6 +1425,7 @@ fusefs_mkdir(void *v)
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE | NOTE_LINK);
 	fb_delete(fbuf);
 out:
+	pool_put(&namei_pool, cnp->cn_pnbuf);
 	vput(dvp);
 	return (error);
 }
@@ -1470,6 +1484,7 @@ out:
 	if (dvp)
 		vput(dvp);
 	VN_KNOTE(vp, NOTE_DELETE);
+	pool_put(&namei_pool, cnp->cn_pnbuf);
 	vput(vp);
 	return (error);
 }
@@ -1520,6 +1535,7 @@ fusefs_remove(void *v)
 	VN_KNOTE(dvp, NOTE_WRITE);
 	fb_delete(fbuf);
 out:
+	pool_put(&namei_pool, cnp->cn_pnbuf);
 	if (dvp == vp)
 		vrele(vp);
 	else
