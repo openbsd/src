@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.369 2021/09/30 09:27:47 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.370 2021/10/02 07:47:54 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -481,8 +481,6 @@ int	iwm_phy_ctxt_update(struct iwm_softc *, struct iwm_phy_ctxt *,
 	    struct ieee80211_channel *, uint8_t, uint8_t, uint32_t);
 int	iwm_auth(struct iwm_softc *);
 int	iwm_deauth(struct iwm_softc *);
-int	iwm_assoc(struct iwm_softc *);
-int	iwm_disassoc(struct iwm_softc *);
 int	iwm_run(struct iwm_softc *);
 int	iwm_run_stop(struct iwm_softc *);
 struct ieee80211_node *iwm_node_alloc(struct ieee80211com *);
@@ -8389,60 +8387,6 @@ iwm_deauth(struct iwm_softc *sc)
 }
 
 int
-iwm_assoc(struct iwm_softc *sc)
-{
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct iwm_node *in = (void *)ic->ic_bss;
-	int update_sta = (sc->sc_flags & IWM_FLAG_STA_ACTIVE);
-	int err;
-
-	splassert(IPL_NET);
-
-	if (!update_sta)
-		in->tid_disable_ampdu = 0xffff;
-	err = iwm_add_sta_cmd(sc, in, update_sta);
-	if (err) {
-		printf("%s: could not %s STA (error %d)\n",
-		    DEVNAME(sc), update_sta ? "update" : "add", err);
-		return err;
-	}
-
-	return 0;
-}
-
-int
-iwm_disassoc(struct iwm_softc *sc)
-{
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct iwm_node *in = (void *)ic->ic_bss;
-	int err;
-
-	splassert(IPL_NET);
-
-	if (sc->sc_flags & IWM_FLAG_STA_ACTIVE) {
-		err = iwm_flush_sta(sc, in);
-		if (err)
-			return err;
-		err = iwm_rm_sta_cmd(sc, in);
-		if (err) {
-			printf("%s: could not remove STA (error %d)\n",
-			    DEVNAME(sc), err);
-			return err;
-		}
-		in->tid_disable_ampdu = 0xffff;
-		sc->sc_flags &= ~IWM_FLAG_STA_ACTIVE;
-		sc->sc_rx_ba_sessions = 0;
-		sc->ba_rx.start_tidmask = 0;
-		sc->ba_rx.stop_tidmask = 0;
-		sc->tx_ba_queue_mask = 0;
-		sc->ba_tx.start_tidmask = 0;
-		sc->ba_tx.stop_tidmask = 0;
-	}
-
-	return 0;
-}
-
-int
 iwm_run(struct iwm_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -8580,6 +8524,7 @@ iwm_run_stop(struct iwm_softc *sc)
 		}
 	}
 
+	/* Mark station as disassociated. */
 	err = iwm_mac_ctxt_cmd(sc, in, IWM_FW_CTXT_ACTION_MODIFY, 0);
 	if (err) {
 		printf("%s: failed to update MAC\n", DEVNAME(sc));
@@ -8934,12 +8879,6 @@ iwm_newstate_task(void *psc)
 				goto out;
 			/* FALLTHROUGH */
 		case IEEE80211_S_ASSOC:
-			if (nstate <= IEEE80211_S_ASSOC) {
-				err = iwm_disassoc(sc);
-				if (err)
-					goto out;
-			}
-			/* FALLTHROUGH */
 		case IEEE80211_S_AUTH:
 			if (nstate <= IEEE80211_S_AUTH) {
 				err = iwm_deauth(sc);
@@ -8978,7 +8917,6 @@ next_scan:
 		break;
 
 	case IEEE80211_S_ASSOC:
-		err = iwm_assoc(sc);
 		break;
 
 	case IEEE80211_S_RUN:
