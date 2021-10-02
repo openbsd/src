@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.112 2021/09/30 09:27:47 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.113 2021/10/02 07:39:52 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -8376,9 +8376,6 @@ iwx_init(struct ifnet *ifp)
 
 	generation = ++sc->sc_generation;
 
-	KASSERT(sc->task_refs.refs == 0);
-	refcnt_init(&sc->task_refs);
-
 	err = iwx_preinit(sc);
 	if (err)
 		return err;
@@ -8392,13 +8389,15 @@ iwx_init(struct ifnet *ifp)
 	err = iwx_init_hw(sc);
 	if (err) {
 		if (generation == sc->sc_generation)
-			iwx_stop(ifp);
+			iwx_stop_device(sc);
 		return err;
 	}
 
 	if (sc->sc_nvm.sku_cap_11n_enable)
 		iwx_setup_ht_rates(sc);
 
+	KASSERT(sc->task_refs.refs == 0);
+	refcnt_init(&sc->task_refs);
 	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_flags |= IFF_RUNNING;
 
@@ -10016,8 +10015,6 @@ iwx_wakeup(struct iwx_softc *sc)
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int err;
 
-	refcnt_init(&sc->task_refs);
-
 	err = iwx_start_hw(sc);
 	if (err)
 		return err;
@@ -10026,6 +10023,7 @@ iwx_wakeup(struct iwx_softc *sc)
 	if (err)
 		return err;
 
+	refcnt_init(&sc->task_refs);
 	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_flags |= IFF_RUNNING;
 
