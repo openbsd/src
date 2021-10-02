@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.352 2021/07/16 07:59:38 claudio Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.353 2021/10/02 14:05:10 semarie Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -862,7 +862,7 @@ sys___realpath(struct proc *p, void *v, register_t *retval)
 		syscallarg(const char *) pathname;
 		syscallarg(char *) resolved;
 	} */ *uap = v;
-	char *pathname, *c;
+	char *pathname;
 	char *rpbuf;
 	struct nameidata nd;
 	size_t pathlen;
@@ -916,11 +916,6 @@ sys___realpath(struct proc *p, void *v, register_t *retval)
 		free(cwdbuf, M_TEMP, cwdlen);
 	}
 
-	/* find root "/" or "//" */
-	for (c = pathname; *c != '\0'; c++) {
-		if (*c != '/')
-			break;
-	}
 	NDINIT(&nd, LOOKUP, FOLLOW | SAVENAME | REALPATH, UIO_SYSSPACE,
 	    pathname, p);
 
