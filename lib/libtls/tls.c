@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.89 2021/02/01 15:35:41 tb Exp $ */
+/* $OpenBSD: tls.c,v 1.90 2021/10/02 09:46:48 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -521,7 +521,7 @@ tls_configure_ssl(struct tls *ctx, SSL_CTX *ssl_ctx)
 	}
 
 	if (ctx->config->verify_time == 0) {
-		X509_VERIFY_PARAM_set_flags(ssl_ctx->param,
+		X509_VERIFY_PARAM_set_flags(SSL_CTX_get0_param(ssl_ctx),
 		    X509_V_FLAG_NO_CHECK_TIME);
 	}
 
