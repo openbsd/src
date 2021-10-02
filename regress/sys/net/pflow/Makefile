@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2020/01/08 21:28:01 bluhm Exp $
+# $OpenBSD: Makefile,v 1.9 2021/10/02 07:07:08 anton Exp $
 #
 #  template_v10
 #  ----------------
@@ -27,6 +27,7 @@
 # Destroy it in the end.
 
 REGRESS_TARGETS=template_v10 flow_10_4 flow_10_6 ifconfig
+REGRESS_ROOT_TARGETS=${REGRESS_TARGETS}
 
 PROG=	gen_traffic
 LDADD=	-levent
@@ -52,18 +53,18 @@ regress:
 .endif
 
 template_v10:
-	perl ${.CURDIR}/template.pl 10 \
+	${SUDO} perl ${.CURDIR}/template.pl 10 \
 	    | diff -up ${.CURDIR}/template.v10 /dev/stdin
 
 flow_10_4: gen_traffic
-	perl ${.CURDIR}/flow.pl 10 4 \
+	${SUDO} perl ${.CURDIR}/flow.pl 10 4 \
 	    | diff -up ${.CURDIR}/flow.10_4 /dev/stdin
 flow_10_6: gen_traffic
-	perl ${.CURDIR}/flow.pl 10 6 \
+	${SUDO} perl ${.CURDIR}/flow.pl 10 6 \
 	    | diff -up ${.CURDIR}/flow.10_6 /dev/stdin
 
 ifconfig:
-	sh ${.CURDIR}/ifconfig.sh 2>&1 \
+	${SUDO} sh ${.CURDIR}/ifconfig.sh 2>&1 \
 	    | diff -up ${.CURDIR}/ifconfig.ok /dev/stdin
 
 .PHONY: ${REGRESS_TARGETS}
