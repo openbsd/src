@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo.h,v 1.22 2010/12/21 20:14:43 thib Exp $	*/
+/*	$OpenBSD: fifo.h,v 1.23 2021/10/02 08:51:41 semarie Exp $	*/
 /*	$NetBSD: fifo.h,v 1.10 1996/02/09 22:40:15 christos Exp $	*/
 
 /*
@@ -36,7 +36,6 @@
 /*
  * Prototypes for fifo operations on vnodes.
  */
-int	fifo_badop(void *);
 int	fifo_ebadf(void *);
 
 int	fifo_open(void *);

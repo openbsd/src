@@ -1,4 +1,4 @@
-/*	$OpenBSD: dead_vnops.c,v 1.35 2021/04/28 09:53:53 claudio Exp $	*/
+/*	$OpenBSD: dead_vnops.c,v 1.36 2021/10/02 08:51:41 semarie Exp $	*/
 /*	$NetBSD: dead_vnops.c,v 1.16 1996/02/13 13:12:48 mycroft Exp $	*/
 
 /*
@@ -45,7 +45,6 @@
 /*
  * Prototypes for dead operations on vnodes.
  */
-int	dead_badop(void *);
 int	dead_ebadf(void *);
 
 int	dead_open(void *);
@@ -64,8 +63,8 @@ int	chkvnlock(struct vnode *);
 
 const struct vops dead_vops = {
 	.vop_lookup	= vop_generic_lookup,
-	.vop_create	= dead_badop,
-	.vop_mknod	= dead_badop,
+	.vop_create	= vop_generic_badop,
+	.vop_mknod	= vop_generic_badop,
 	.vop_open	= dead_open,
 	.vop_close	= nullop,
 	.vop_access	= dead_ebadf,
@@ -78,15 +77,15 @@ const struct vops dead_vops = {
 	.vop_kqfilter	= dead_kqfilter,
 	.vop_revoke	= NULL,
 	.vop_fsync	= nullop,
-	.vop_remove	= dead_badop,
-	.vop_link	= dead_badop,
-	.vop_rename	= dead_badop,
-	.vop_mkdir	= dead_badop,
-	.vop_rmdir	= dead_badop,
-	.vop_symlink	= dead_badop,
+	.vop_remove	= vop_generic_badop,
+	.vop_link	= vop_generic_badop,
+	.vop_rename	= vop_generic_badop,
+	.vop_mkdir	= vop_generic_badop,
+	.vop_rmdir	= vop_generic_badop,
+	.vop_symlink	= vop_generic_badop,
 	.vop_readdir	= dead_ebadf,
 	.vop_readlink	= dead_ebadf,
-	.vop_abortop	= dead_badop,
+	.vop_abortop	= vop_generic_badop,
 	.vop_inactive	= dead_inactive,
 	.vop_reclaim	= nullop,
 	.vop_lock	= dead_lock,
@@ -263,17 +262,6 @@ int
 dead_ebadf(void *v)
 {
 	return (EBADF);
-}
-
-/*
- * Empty vnode bad operation
- */
-/*ARGSUSED*/
-int
-dead_badop(void *v)
-{
-	panic("dead_badop called");
-	/* NOTREACHED */
 }
 
 /*

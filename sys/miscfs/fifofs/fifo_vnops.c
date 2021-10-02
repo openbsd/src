@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.80 2021/07/13 07:37:50 visa Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.81 2021/10/02 08:51:41 semarie Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -66,8 +66,8 @@ struct fifoinfo {
 
 const struct vops fifo_vops = {
 	.vop_lookup	= vop_generic_lookup,
-	.vop_create	= fifo_badop,
-	.vop_mknod	= fifo_badop,
+	.vop_create	= vop_generic_badop,
+	.vop_mknod	= vop_generic_badop,
 	.vop_open	= fifo_open,
 	.vop_close	= fifo_close,
 	.vop_access	= fifo_ebadf,
@@ -80,21 +80,21 @@ const struct vops fifo_vops = {
 	.vop_kqfilter	= fifo_kqfilter,
 	.vop_revoke	= vop_generic_revoke,
 	.vop_fsync	= nullop,
-	.vop_remove	= fifo_badop,
-	.vop_link	= fifo_badop,
-	.vop_rename	= fifo_badop,
-	.vop_mkdir	= fifo_badop,
-	.vop_rmdir	= fifo_badop,
-	.vop_symlink	= fifo_badop,
-	.vop_readdir	= fifo_badop,
-	.vop_readlink	= fifo_badop,
-	.vop_abortop	= fifo_badop,
+	.vop_remove	= vop_generic_badop,
+	.vop_link	= vop_generic_badop,
+	.vop_rename	= vop_generic_badop,
+	.vop_mkdir	= vop_generic_badop,
+	.vop_rmdir	= vop_generic_badop,
+	.vop_symlink	= vop_generic_badop,
+	.vop_readdir	= vop_generic_badop,
+	.vop_readlink	= vop_generic_badop,
+	.vop_abortop	= vop_generic_badop,
 	.vop_inactive	= fifo_inactive,
 	.vop_reclaim	= fifo_reclaim,
 	.vop_lock	= vop_generic_lock,
 	.vop_unlock	= vop_generic_unlock,
 	.vop_bmap	= vop_generic_bmap,
-	.vop_strategy	= fifo_badop,
+	.vop_strategy	= vop_generic_badop,
 	.vop_print	= fifo_print,
 	.vop_islocked	= vop_generic_islocked,
 	.vop_pathconf	= fifo_pathconf,
@@ -498,20 +498,6 @@ fifo_advlock(void *v)
 {
 	return (EOPNOTSUPP);
 }
-
-/*
- * Fifo bad operation
- */
-/*ARGSUSED*/
-int
-fifo_badop(void *v)
-{
-
-	panic("fifo_badop called");
-	/* NOTREACHED */
-	return(0);
-}
-
 
 int
 fifo_kqfilter(void *v)

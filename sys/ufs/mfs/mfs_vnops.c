@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vnops.c,v 1.55 2021/03/24 16:17:06 semarie Exp $	*/
+/*	$OpenBSD: mfs_vnops.c,v 1.56 2021/10/02 08:51:41 semarie Exp $	*/
 /*	$NetBSD: mfs_vnops.c,v 1.8 1996/03/17 02:16:32 christos Exp $	*/
 
 /*
@@ -48,30 +48,30 @@
 
 /* mfs vnode operations. */
 const struct vops mfs_vops = {
-        .vop_lookup     = mfs_badop,
-        .vop_create     = mfs_badop,
-        .vop_mknod      = mfs_badop,
+        .vop_lookup     = vop_generic_badop,
+        .vop_create     = vop_generic_badop,
+        .vop_mknod      = vop_generic_badop,
         .vop_open       = mfs_open,
         .vop_close      = mfs_close,
-        .vop_access     = mfs_badop,
-        .vop_getattr    = mfs_badop,
-        .vop_setattr    = mfs_badop,
-        .vop_read       = mfs_badop,
-        .vop_write      = mfs_badop,
+        .vop_access     = vop_generic_badop,
+        .vop_getattr    = vop_generic_badop,
+        .vop_setattr    = vop_generic_badop,
+        .vop_read       = vop_generic_badop,
+        .vop_write      = vop_generic_badop,
         .vop_ioctl      = mfs_ioctl,
-        .vop_poll       = mfs_badop,
-        .vop_kqfilter   = mfs_badop,
+        .vop_poll       = vop_generic_badop,
+        .vop_kqfilter   = vop_generic_badop,
         .vop_revoke     = vop_generic_revoke,
         .vop_fsync      = spec_fsync,
-        .vop_remove     = mfs_badop,
-        .vop_link       = mfs_badop,
-        .vop_rename     = mfs_badop,
-        .vop_mkdir      = mfs_badop,
-        .vop_rmdir      = mfs_badop,
-        .vop_symlink    = mfs_badop,
-        .vop_readdir    = mfs_badop,
-        .vop_readlink   = mfs_badop,
-        .vop_abortop    = mfs_badop,
+        .vop_remove     = vop_generic_badop,
+        .vop_link       = vop_generic_badop,
+        .vop_rename     = vop_generic_badop,
+        .vop_mkdir      = vop_generic_badop,
+        .vop_rmdir      = vop_generic_badop,
+        .vop_symlink    = vop_generic_badop,
+        .vop_readdir    = vop_generic_badop,
+        .vop_readlink   = vop_generic_badop,
+        .vop_abortop    = vop_generic_badop,
         .vop_inactive   = mfs_inactive,
         .vop_reclaim    = mfs_reclaim,
         .vop_lock       = vop_generic_lock,
@@ -80,8 +80,8 @@ const struct vops mfs_vops = {
         .vop_strategy   = mfs_strategy,
         .vop_print      = mfs_print,
         .vop_islocked   = vop_generic_islocked,
-        .vop_pathconf   = mfs_badop,
-        .vop_advlock    = mfs_badop,
+        .vop_pathconf   = vop_generic_badop,
+        .vop_advlock    = vop_generic_badop,
         .vop_bwrite     = vop_generic_bwrite
 };
 
@@ -257,13 +257,4 @@ mfs_print(void *v)
 	printf("tag VT_MFS, tid %d, base %p, size %ld\n", mfsp->mfs_tid,
 	    mfsp->mfs_baseoff, mfsp->mfs_size);
 	return (0);
-}
-
-/*
- * Block device bad operation
- */
-int
-mfs_badop(void *v)
-{
-	panic("mfs_badop called");
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_fifoops.c,v 1.5 2020/01/20 23:21:56 claudio Exp $	*/
+/*	$OpenBSD: tmpfs_fifoops.c,v 1.6 2021/10/02 08:51:41 semarie Exp $	*/
 /*	$NetBSD: tmpfs_fifoops.c,v 1.9 2011/05/24 20:17:49 rmind Exp $	*/
 
 /*
@@ -54,8 +54,8 @@ int	tmpfs_fifo_fsync	(void *);
 
 const struct vops tmpfs_fifovops = {
 	.vop_lookup	= vop_generic_lookup,
-	.vop_create	= fifo_badop,
-	.vop_mknod	= fifo_badop,
+	.vop_create	= vop_generic_badop,
+	.vop_mknod	= vop_generic_badop,
 	.vop_open	= fifo_open,
 	.vop_close	= fifo_close,
 	.vop_access	= tmpfs_access,
@@ -68,21 +68,21 @@ const struct vops tmpfs_fifovops = {
 	.vop_kqfilter	= fifo_kqfilter,
 	.vop_revoke	= vop_generic_revoke,
 	.vop_fsync	= tmpfs_fifo_fsync,
-	.vop_remove	= fifo_badop,
-	.vop_link	= fifo_badop,
-	.vop_rename	= fifo_badop,
-	.vop_mkdir	= fifo_badop,
-	.vop_rmdir	= fifo_badop,
-	.vop_symlink	= fifo_badop,
-	.vop_readdir	= fifo_badop,
-	.vop_readlink	= fifo_badop,
-	.vop_abortop	= fifo_badop,
+	.vop_remove	= vop_generic_badop,
+	.vop_link	= vop_generic_badop,
+	.vop_rename	= vop_generic_badop,
+	.vop_mkdir	= vop_generic_badop,
+	.vop_rmdir	= vop_generic_badop,
+	.vop_symlink	= vop_generic_badop,
+	.vop_readdir	= vop_generic_badop,
+	.vop_readlink	= vop_generic_badop,
+	.vop_abortop	= vop_generic_badop,
 	.vop_inactive	= tmpfs_inactive,
 	.vop_reclaim	= tmpfs_reclaim,
 	.vop_lock	= tmpfs_lock,
 	.vop_unlock	= tmpfs_unlock,
 	.vop_bmap	= vop_generic_bmap,
-	.vop_strategy	= fifo_badop,
+	.vop_strategy	= vop_generic_badop,
 	.vop_print	= tmpfs_print,
 	.vop_islocked	= tmpfs_islocked,
 	.vop_pathconf	= fifo_pathconf,

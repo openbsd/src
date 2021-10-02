@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_specops.c,v 1.7 2021/06/29 16:15:37 claudio Exp $	*/
+/*	$OpenBSD: tmpfs_specops.c,v 1.8 2021/10/02 08:51:41 semarie Exp $	*/
 /*	$NetBSD: tmpfs_specops.c,v 1.10 2011/05/24 20:17:49 rmind Exp $	*/
 
 /*
@@ -67,22 +67,22 @@ const struct vops tmpfs_specvops = {
 
 	/* keep in sync with spec_vops */
 	.vop_lookup	= vop_generic_lookup,
-	.vop_create	= spec_badop,
-	.vop_mknod	= spec_badop,
+	.vop_create	= vop_generic_badop,
+	.vop_mknod	= vop_generic_badop,
 	.vop_open	= spec_open,
 	.vop_ioctl	= spec_ioctl,
 	.vop_poll	= spec_poll,
 	.vop_kqfilter	= spec_kqfilter,
 	.vop_revoke	= vop_generic_revoke,
-	.vop_remove	= spec_badop,
-	.vop_link	= spec_badop,
-	.vop_rename	= spec_badop,
-	.vop_mkdir	= spec_badop,
-	.vop_rmdir	= spec_badop,
-	.vop_symlink	= spec_badop,
-	.vop_readdir	= spec_badop,
-	.vop_readlink	= spec_badop,
-	.vop_abortop	= spec_badop,
+	.vop_remove	= vop_generic_badop,
+	.vop_link	= vop_generic_badop,
+	.vop_rename	= vop_generic_badop,
+	.vop_mkdir	= vop_generic_badop,
+	.vop_rmdir	= vop_generic_badop,
+	.vop_symlink	= vop_generic_badop,
+	.vop_readdir	= vop_generic_badop,
+	.vop_readlink	= vop_generic_badop,
+	.vop_abortop	= vop_generic_badop,
 	.vop_bmap	= vop_generic_bmap,
 	.vop_strategy	= spec_strategy,
 	.vop_pathconf	= spec_pathconf,
