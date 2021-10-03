@@ -1,13 +1,8 @@
-# $OpenBSD: Makefile,v 1.8 2021/05/01 16:11:16 visa Exp $
+# $OpenBSD: Makefile,v 1.9 2021/10/03 00:48:46 deraadt Exp $
 
 NOPROG=
 NOMAN=
 CC=${HOSTCC}
-
-# PCI capable systems only
-.if (${MACHINE} == "i386") || (${MACHINE} == "amd64") || \
-    (${MACHINE} == "alpha") || (${MACHINE} == "sparc64") || \
-    (${MACHINE_ARCH} == "powerpc") || (${MACHINE} == "hppa")
 
 FIRM=	3c990
 
@@ -27,6 +22,5 @@ afterinstall:
 	    ${FIRM} ${DESTDIR}/etc/firmware
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 \
 	    ${.CURDIR}/3c990-license ${DESTDIR}/etc/firmware
-.endif
 
 .include <bsd.prog.mk>

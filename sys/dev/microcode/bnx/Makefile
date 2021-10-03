@@ -1,13 +1,8 @@
-# $OpenBSD: Makefile,v 1.6 2021/05/01 16:11:15 visa Exp $
+# $OpenBSD: Makefile,v 1.7 2021/10/03 00:48:45 deraadt Exp $
 
 NOPROG=
 NOMAN=
 CC=${HOSTCC}
-
-# PCI capable systems only
-.if (${MACHINE_ARCH} == "powerpc") || (${MACHINE} == "alpha") || \
-    (${MACHINE} == "amd64") || (${MACHINE} == "hppa") || \
-    (${MACHINE} == "i386") || (${MACHINE} == "sparc64")
 
 FIRM=	bnx-b06 bnx-b09 bnx-rv2p bnx-xi-rv2p bnx-xi90-rv2p
 
@@ -27,7 +22,5 @@ afterinstall:
 	    ${FIRM} ${DESTDIR}/etc/firmware
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 \
 	    ${.CURDIR}/bnx-license ${DESTDIR}/etc/firmware
-
-.endif
 
 .include <bsd.prog.mk>

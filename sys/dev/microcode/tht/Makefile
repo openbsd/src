@@ -1,13 +1,8 @@
-# $OpenBSD: Makefile,v 1.4 2021/05/01 16:11:16 visa Exp $
+# $OpenBSD: Makefile,v 1.5 2021/10/03 00:48:45 deraadt Exp $
 
 NOPROG=
 NOMAN=
 CC=${HOSTCC}
-
-# PCI capable systems only
-.if (${MACHINE_ARCH} == "powerpc") || (${MACHINE} == "alpha") || \
-    (${MACHINE} == "amd64") || (${MACHINE} == "hppa") || \
-    (${MACHINE} == "i386") || (${MACHINE} == "sparc64")
 
 FIRM=	tht
 
@@ -27,7 +22,5 @@ afterinstall:
 	    ${FIRM} ${DESTDIR}/etc/firmware
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 \
 	    ${.CURDIR}/tht-license ${DESTDIR}/etc/firmware
-
-.endif
 
 .include <bsd.prog.mk>

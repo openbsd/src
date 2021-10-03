@@ -1,11 +1,8 @@
-# $OpenBSD: Makefile,v 1.4 2007/04/05 23:41:20 drahn Exp $
+# $OpenBSD: Makefile,v 1.5 2021/10/03 00:48:45 deraadt Exp $
 
 NOPROG=
 NOMAN=
 CC=${HOSTCC}
-
-# PCI capable systems only
-.if (${MACHINE} == "i386") || (${MACHINE} == "amd64")
 
 FIRM=	cs4280
 
@@ -25,6 +22,5 @@ afterinstall:
 	    ${FIRM} ${DESTDIR}/etc/firmware
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 \
 	    ${.CURDIR}/cs4280-license ${DESTDIR}/etc/firmware
-.endif
 
 .include <bsd.prog.mk>

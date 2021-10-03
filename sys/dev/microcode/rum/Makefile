@@ -1,16 +1,8 @@
-# $OpenBSD: Makefile,v 1.18 2021/05/01 16:11:15 visa Exp $
+# $OpenBSD: Makefile,v 1.19 2021/10/03 00:48:45 deraadt Exp $
 
 NOPROG=
 NOMAN=
 CC=${HOSTCC}
-
-# USB capable systems only
-.if (${MACHINE_ARCH} == "powerpc" || \
-    ${MACHINE} == "alpha" || ${MACHINE} == "amd64" || \
-    ${MACHINE} == "arm64" || ${MACHINE} == "armv7" || \
-    ${MACHINE} == "hppa" || ${MACHINE} == "i386" || \
-    ${MACHINE} == "landisk" || ${MACHINE} == "loongson" || \
-    ${MACHINE} == "octeon" || ${MACHINE} == "sparc64")
 
 FIRM=	rum-rt2573 run-rt2870 run-rt3071
 
@@ -32,7 +24,5 @@ afterinstall:
 	    ${.CURDIR}/rum-license ${DESTDIR}/etc/firmware
 	ln -f ${DESTDIR}/etc/firmware/rum-license \
 	    ${DESTDIR}/etc/firmware/run-license
-
-.endif
 
 .include <bsd.prog.mk>
