@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.67 2021/07/01 11:51:55 stsp Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.68 2021/10/03 20:19:55 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -918,6 +918,12 @@ ar5008_rx_process(struct athn_softc *sc, struct mbuf_list *ml)
 			michael_mic_failure = 1;
 		}
 		if (!michael_mic_failure) {
+			ifp->if_ierrors++;
+			goto skip;
+		}
+	} else {
+		if (ds->ds_status8 & (AR_RXS8_CRC_ERR | AR_RXS8_PHY_ERR |
+		    AR_RXS8_DECRYPT_CRC_ERR | AR_RXS8_MICHAEL_ERR)) {
 			ifp->if_ierrors++;
 			goto skip;
 		}
