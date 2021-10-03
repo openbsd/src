@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bt.5,v 1.11 2021/04/21 10:22:36 mpi Exp $
+.\"	$OpenBSD: bt.5,v 1.12 2021/10/03 22:01:48 dv Exp $
 .\"
 .\" Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 21 2021 $
+.Dd $Mdocdate: October 3 2021 $
 .Dt BT 5
 .Os
 .Sh NAME
@@ -154,11 +154,17 @@ entries in
 .It Fn printf "fmt" ...
 Print formatted string
 .Va fmt .
+.It Fn str "$N" "[index]"
+Return the string from argument
+.Va $N ,
+truncated to
+.Va index
+characters (up to 64, the default) including a guaranteed NUL-terminator.
 .It Fn sum
 Returns the sum of all recorded values.
 .It Fn time timefmt
 Print timestamps using
-.Xr strftime 3
+.Xr strftime 3 .
 .It Fn zero "@map"
 Set all values from
 .Va @map

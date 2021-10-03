@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.h,v 1.9 2021/02/08 09:46:45 mpi Exp $ */
+/*	$OpenBSD: btrace.h,v 1.10 2021/10/03 22:01:48 dv Exp $ */
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -53,6 +53,7 @@ struct hist		*hist_increment(struct hist *, const char *, long);
 void			 hist_print(struct hist *, const char *);
 
 #define KLEN	512	/* # of characters in map key, contain a stack trace */
+#define STRLEN	64	/* maximum # of bytes to output via str() function */
 
 /* printf.c */
 int			 stmt_printf(struct bt_stmt *, struct dt_evt *);

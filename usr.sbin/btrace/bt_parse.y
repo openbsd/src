@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parse.y,v 1.43 2021/09/09 12:09:11 mpi Exp $	*/
+/*	$OpenBSD: bt_parse.y,v 1.44 2021/10/03 22:01:48 dv Exp $	*/
 
 /*
  * Copyright (c) 2019-2021 Martin Pieuchot <mpi@openbsd.org>
@@ -118,7 +118,7 @@ static int pflag;
 %token	<v.i>		BUILTIN BEGIN END HZ IF
 /* Functions and Map operators */
 %token  <v.i>		F_DELETE F_PRINT
-%token	<v.i>		MFUNC FUNC0 FUNC1 FUNCN OP1 OP4 MOP0 MOP1
+%token	<v.i>		MFUNC FUNC0 FUNC1 FUNCN OP1 OP2 OP4 MOP0 MOP1
 %token	<v.string>	STRING CSTRING
 %token	<v.number>	NUMBER
 
@@ -128,7 +128,7 @@ static int pflag;
 %type	<v.filter>	filter
 %type	<v.stmt>	action stmt stmtblck stmtlist block
 %type	<v.arg>		pat vargs mentry mpat pargs staticv
-%type	<v.arg>		expr term fterm variable factor
+%type	<v.arg>		expr term fterm variable factor func
 %%
 
 grammar	: /* empty */
@@ -221,8 +221,12 @@ factor : '(' expr ')'		{ $$ = $2; }
 	| staticv
 	| variable
 	| mentry
+	| func
 	;
 
+func	: STR '(' staticv ')'		{ $$ = ba_new($3, B_AT_FN_STR); }
+	| STR '(' staticv ',' pat ')'	{ $$ = ba_op(B_AT_FN_STR, $3, $5); }
+	;
 
 vargs	: pat
 	| vargs ',' pat			{ $$ = ba_append($1, $3); }
@@ -714,6 +718,7 @@ lookup(char *s)
 		{ "print",	F_PRINT,	B_AC_PRINT },
 		{ "printf",	FUNCN,		B_AC_PRINTF },
 		{ "retval",	BUILTIN,	B_AT_BI_RETVAL },
+		{ "str",	STR,		B_AT_FN_STR },
 		{ "sum",	MOP1,		B_AT_MF_SUM },
 		{ "tid",	BUILTIN,	B_AT_BI_TID },
 		{ "time",	FUNC1,		B_AC_TIME },

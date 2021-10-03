@@ -1,7 +1,7 @@
 BEGIN {
-	$str = "string";
+	$s = "string";
 
 	print(890);
-	print($str);
+	print($s);
 	print(comm);
 }

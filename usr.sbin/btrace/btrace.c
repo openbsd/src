@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.57 2021/09/21 21:33:35 bluhm Exp $ */
+/*	$OpenBSD: btrace.c,v 1.58 2021/10/03 22:01:48 dv Exp $ */
 
 /*
  * Copyright (c) 2019 - 2021 Martin Pieuchot <mpi@openbsd.org>
@@ -82,6 +82,7 @@ void			 rule_printmaps(struct bt_rule *);
 uint64_t		 builtin_nsecs(struct dt_evt *);
 const char		*builtin_kstack(struct dt_evt *);
 const char		*builtin_arg(struct dt_evt *, enum bt_argtype);
+struct bt_arg		*fn_str(struct bt_arg *, struct dt_evt *, char *);
 void			 stmt_eval(struct bt_stmt *, struct dt_evt *);
 void			 stmt_bucketize(struct bt_stmt *, struct dt_evt *);
 void			 stmt_clear(struct bt_stmt *);
@@ -915,11 +916,47 @@ stmt_store(struct bt_stmt *bs, struct dt_evt *dtev)
 		bv->bv_value = ba_new(ba2long(ba, dtev), B_AT_LONG);
 		bv->bv_type = B_VT_LONG;
 		break;
+	case B_AT_FN_STR:
+		bv->bv_value = ba_new(ba2str(ba, dtev), B_AT_STR);
+		bv->bv_type = B_VT_STR;
+		break;
 	default:
 		xabort("store not implemented for type %d", ba->ba_type);
 	}
 
 	debug("bv=%p var '%s' store (%p)\n", bv, bv_name(bv), bv->bv_value);
+}
+
+/*
+ * String conversion	{ str($1); string($1, 3); }
+ *
+ * Since fn_str is currently only called in ba2str, *buf should be a pointer
+ * to the static buffer provided by ba2str.
+ */
+struct bt_arg *
+fn_str(struct bt_arg *ba, struct dt_evt *dtev, char *buf)
+{
+	struct bt_arg *arg, *index;
+	ssize_t len = STRLEN;
+
+	assert(ba->ba_type == B_AT_FN_STR);
+
+	arg = (struct bt_arg*)ba->ba_value;
+	assert(arg != NULL);
+
+	index = SLIST_NEXT(arg, ba_next);
+	if (index != NULL) {
+		/* Should have only 1 optional argument. */
+		assert(SLIST_NEXT(index, ba_next) == NULL);
+		len = MINIMUM(ba2long(index, dtev) + 1, STRLEN);
+	}
+
+	/* All negative lengths behave the same as a zero length. */
+	if (len < 1)
+		return ba_new("", B_AT_STR);
+
+	strlcpy(buf, ba2str(arg, dtev), len);
+	return ba_new(buf, B_AT_STR);
 }
 
 /*
@@ -1216,6 +1253,8 @@ ba_name(struct bt_arg *ba)
 		return "args";
 	case B_AT_BI_RETVAL:
 		return "retval";
+	case B_AT_FN_STR:
+		return "str";
 	case B_AT_OP_PLUS:
 		return "+";
 	case B_AT_OP_MINUS:
@@ -1339,7 +1378,7 @@ ba2long(struct bt_arg *ba, struct dt_evt *dtev)
 const char *
 ba2str(struct bt_arg *ba, struct dt_evt *dtev)
 {
-	static char buf[sizeof("18446744073709551615")]; /* UINT64_MAX */
+	static char buf[STRLEN];
 	struct bt_var *bv;
 	const char *str;
 
@@ -1399,6 +1438,9 @@ ba2str(struct bt_arg *ba, struct dt_evt *dtev)
 		break;
 	case B_AT_VAR:
 		str = ba2str(ba_read(ba), dtev);
+		break;
+	case B_AT_FN_STR:
+		str = (const char*)(fn_str(ba, dtev, buf))->ba_value;
 		break;
 	case B_AT_OP_PLUS ... B_AT_OP_LOR:
 		snprintf(buf, sizeof(buf), "%ld", ba2long(ba, dtev));
@@ -1463,6 +1505,7 @@ ba2dtflags(struct bt_arg *ba)
 		case B_AT_MF_MAX:
 		case B_AT_MF_MIN:
 		case B_AT_MF_SUM:
+		case B_AT_FN_STR:
 		case B_AT_OP_PLUS ... B_AT_OP_LOR:
 			break;
 		default:

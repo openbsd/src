@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.22 2021/09/16 10:54:35 anton Exp $
+# $OpenBSD: Makefile,v 1.23 2021/10/03 22:01:48 dv Exp $
 
 BTRACE?=		 /usr/sbin/btrace
 ALLOWDT!=		sysctl -n kern.allowdt
@@ -11,6 +11,8 @@ BT_LANG_SCRIPTS=	arithm beginend boolean comments delete exit \
 			precedence print read-map-after-clear staticv-empty \
 			syntaxerror
 
+BT_ARG_LANG_SCRIPTS=	staticv str
+
 # scripts that use kernel probes
 BT_KERN_SCRIPTS=	multiprobe
 
@@ -22,11 +24,12 @@ run-$b:
 	cd ${.CURDIR} && ${BTRACE} $b.bt 2>&1 | diff -u $b.ok /dev/stdin
 .endfor
 
-b=staticv
+.for b in ${BT_ARG_LANG_SCRIPTS}
 REGRESS_TARGETS+=		run-$b
 run-$b:
-	${BTRACE} ${.CURDIR}/$b.bt 42 1337 -2019 2>&1 | \
+	cat ${.CURDIR}/$b.args | xargs ${BTRACE} ${.CURDIR}/$b.bt 2>&1 | \
 		diff -u ${.CURDIR}/$b.ok /dev/stdin
+.endfor
 
 .for b in ${BT_KERN_SCRIPTS}
 REGRESS_TARGETS+=		run-$b
