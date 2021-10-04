@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.18 2021/08/29 09:10:57 deraadt Exp $
+#	$OpenBSD: list,v 1.19 2021/10/04 01:34:29 kevlo Exp $
 
 SRCDIRS distrib/special
 
@@ -93,6 +93,11 @@ COPY	${DESTDIR}/etc/firmware/atu-rfmd2958-ext etc/firmware/atu-rfmd2958-ext
 COPY	${DESTDIR}/etc/firmware/atu-rfmd2958-int etc/firmware/atu-rfmd2958-int
 COPY	${DESTDIR}/etc/firmware/atu-rfmd2958smc-ext etc/firmware/atu-rfmd2958smc-ext
 COPY	${DESTDIR}/etc/firmware/atu-rfmd2958smc-int etc/firmware/atu-rfmd2958smc-int
+COPY    ${DESTDIR}/etc/firmware/rsu-rtl8712	etc/firmware/rsu-rtl8712
+COPY    ${DESTDIR}/etc/firmware/urtwn-rtl8188eu	etc/firmware/urtwn-rtl8188eu
+COPY    ${DESTDIR}/etc/firmware/urtwn-rtl8192cT	etc/firmware/urtwn-rtl8192cT
+COPY    ${DESTDIR}/etc/firmware/urtwn-rtl8192cU	etc/firmware/urtwn-rtl8192cU
+COPY    ${DESTDIR}/etc/firmware/urtwn-rtl8192eu	etc/firmware/urtwn-rtl8192eu
 
 MKDIR	usr/mdec/rpi
 COPY	/usr/local/share/raspberrypi-firmware/boot/bcm2710-rpi-2-b.dtb usr/mdec/rpi/bcm2710-rpi-2-b.dtb
