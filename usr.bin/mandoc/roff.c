@@ -1,4 +1,4 @@
-/* $OpenBSD: roff.c,v 1.250 2021/08/10 12:36:42 schwarze Exp $ */
+/* $OpenBSD: roff.c,v 1.251 2021/10/04 10:11:54 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2015, 2017-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -3947,9 +3947,7 @@ roff_userdef(ROFF_ARGS)
 		r->mstacksz += 8;
 	}
 	ctx = r->mstack + r->mstackpos;
-	ctx->argsz = 0;
 	ctx->argc = 0;
-	ctx->argv = NULL;
 
 	/*
 	 * Collect pointers to macro argument strings,
