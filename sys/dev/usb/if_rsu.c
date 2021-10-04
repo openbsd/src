@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rsu.c,v 1.49 2021/02/25 02:48:20 dlg Exp $	*/
+/*	$OpenBSD: if_rsu.c,v 1.50 2021/10/04 01:33:42 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2021,9 +2021,9 @@ rsu_load_firmware(struct rsu_softc *sc)
 	int ntries, error;
 
 	/* Read firmware image from the filesystem. */
-	if ((error = loadfirmware("rsu-rtl8712fw", &fw, &size)) != 0) {
+	if ((error = loadfirmware("rsu-rtl8712", &fw, &size)) != 0) {
 		printf("%s: failed loadfirmware of file %s (error %d)\n",
-		    sc->sc_dev.dv_xname, "rsu-rtl8712fw", error);
+		    sc->sc_dev.dv_xname, "rsu-rtl8712", error);
 		return (error);
 	}
 	if (size < sizeof(*hdr)) {

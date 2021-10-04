@@ -1,4 +1,4 @@
-.\" $OpenBSD: urtwn.4,v 1.50 2021/04/25 15:59:56 stsp Exp $
+.\" $OpenBSD: urtwn.4,v 1.51 2021/10/04 01:33:42 kevlo Exp $
 .\"
 .\" Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 25 2021 $
+.Dd $Mdocdate: October 4 2021 $
 .Dt URTWN 4
 .Os
 .Sh NAME
@@ -84,19 +84,15 @@ driver can be configured at runtime with
 or on boot with
 .Xr hostname.if 5 .
 .Sh FILES
-The driver needs at least version 1.1p0 of the following firmware files,
-which are loaded when an interface is attached:
+The adapter needs firmware files to run, which are loaded on demand by
+the driver when the device is attached:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
-.It Pa /etc/firmware/urtwn-rtl8192cfwT
-.It Pa /etc/firmware/urtwn-rtl8192cfwU
-.It Pa /etc/firmware/urtwn-rtl8192eu_nic
-.It Pa /etc/firmware/urtwn-rtl8723fw
-.It Pa /etc/firmware/urtwn-rtl8188eufw
+.It Pa /etc/firmware/urtwn-rtl8192cT
+.It Pa /etc/firmware/urtwn-rtl8192cU
+.It Pa /etc/firmware/urtwn-rtl8192eu
+.It Pa /etc/firmware/urtwn-rtl8188eu
 .El
-.Pp
-A prepackaged version of the firmware can be installed using
-.Xr fw_update 1 .
 .Sh HARDWARE
 The following adapters should work:
 .Pp

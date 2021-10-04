@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.97 2021/04/25 15:59:19 stsp Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.98 2021/10/04 01:33:42 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2045,14 +2045,14 @@ urtwn_load_firmware(void *cookie, u_char **fw, size_t *len)
 	int error;
 
 	if (sc->sc_sc.chip & RTWN_CHIP_92E)
-		name = "urtwn-rtl8192eu_nic";
+		name = "urtwn-rtl8192eu";
 	else if (sc->sc_sc.chip & RTWN_CHIP_88E)
-		name = "urtwn-rtl8188eufw";
+		name = "urtwn-rtl8188eu";
 	else if ((sc->sc_sc.chip & (RTWN_CHIP_UMC_A_CUT | RTWN_CHIP_92C)) ==
 		    RTWN_CHIP_UMC_A_CUT)
-		name = "urtwn-rtl8192cfwU";
+		name = "urtwn-rtl8192cU";
 	else
-		name = "urtwn-rtl8192cfwT";
+		name = "urtwn-rtl8192cT";
 
 	error = loadfirmware(name, fw, len);
 	if (error)

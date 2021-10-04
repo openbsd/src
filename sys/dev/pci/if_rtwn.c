@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtwn.c,v 1.37 2020/12/12 11:48:53 jan Exp $	*/
+/*	$OpenBSD: if_rtwn.c,v 1.38 2021/10/04 01:33:42 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2131,17 +2131,17 @@ rtwn_pci_load_firmware(void *cookie, u_char **fw, size_t *len)
 	int error;
 
 	if (sc->sc_sc.chip & RTWN_CHIP_88E)
-		name = "rtwn-rtl8188efw";
+		name = "rtwn-rtl8188e";
 	else if (sc->sc_sc.chip & RTWN_CHIP_23A) {
 		if (sc->sc_sc.chip & RTWN_CHIP_UMC_A_CUT)
-			name = "rtwn-rtl8723fw";
+			name = "rtwn-rtl8723";
 		else
-			name = "rtwn-rtl8723fw_B";
+			name = "rtwn-rtl8723_B";
 	} else if ((sc->sc_sc.chip & (RTWN_CHIP_UMC_A_CUT | RTWN_CHIP_92C)) ==
 	    RTWN_CHIP_UMC_A_CUT)
-		name = "rtwn-rtl8192cfwU";
+		name = "rtwn-rtl8192cU";
 	else
-		name = "rtwn-rtl8192cfwU_B";
+		name = "rtwn-rtl8192cU_B";
 
 	error = loadfirmware(name, fw, len);
 	if (error)

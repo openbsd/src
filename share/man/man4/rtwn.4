@@ -1,4 +1,4 @@
-.\" $OpenBSD: rtwn.4,v 1.9 2019/11/10 14:10:41 sthen Exp $
+.\" $OpenBSD: rtwn.4,v 1.10 2021/10/04 01:33:42 kevlo Exp $
 .\"
 .\" Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
 .\" Copyright (c) 2015 Stefan Sperling <stsp@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 10 2019 $
+.Dd $Mdocdate: October 4 2021 $
 .Dt RTWN 4
 .Os
 .Sh NAME
@@ -82,19 +82,16 @@ driver can be configured at runtime with
 or on boot with
 .Xr hostname.if 5 .
 .Sh FILES
-The driver needs at least version 1.0 of the following firmware files,
-which are loaded when an interface is brought up:
+The adapter needs firmware files to run, which are loaded on demand by
+the driver when the device is attached:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
-.It Pa /etc/firmware/rtwn-rtl8188efw
-.It Pa /etc/firmware/rtwn-rtl8192cfwU
-.It Pa /etc/firmware/rtwn-rtl8192cfwU_B
-.It Pa /etc/firmware/rtwn-rtl8723fw
-.It Pa /etc/firmware/rtwn-rtl8723fw_B
+.It Pa /etc/firmware/rtwn-rtl8188e
+.It Pa /etc/firmware/rtwn-rtl8192cU
+.It Pa /etc/firmware/rtwn-rtl8192cU_B
+.It Pa /etc/firmware/rtwn-rtl8723
+.It Pa /etc/firmware/rtwn-rtl8723_B
 .El
-.Pp
-A prepackaged version of the firmware can be installed using
-.Xr fw_update 1 .
 .Sh EXAMPLES
 The following example scans for available networks:
 .Pp
