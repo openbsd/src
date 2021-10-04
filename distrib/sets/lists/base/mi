@@ -137,6 +137,14 @@
 ./etc/firmware/ral-rt2661
 ./etc/firmware/ral-rt2860
 ./etc/firmware/ral-rt3290
+./etc/firmware/rsu-license
+./etc/firmware/rsu-rtl8712
+./etc/firmware/rtwn-license
+./etc/firmware/rtwn-rtl8188e
+./etc/firmware/rtwn-rtl8192cU
+./etc/firmware/rtwn-rtl8192cU_B
+./etc/firmware/rtwn-rtl8723
+./etc/firmware/rtwn-rtl8723_B
 ./etc/firmware/rum-license
 ./etc/firmware/rum-rt2573
 ./etc/firmware/run-license
@@ -150,6 +158,11 @@
 ./etc/firmware/tusb3410
 ./etc/firmware/tusb3410-license
 ./etc/firmware/udl_huffman
+./etc/firmware/urtwn-license
+./etc/firmware/urtwn-rtl8188eu
+./etc/firmware/urtwn-rtl8192cT
+./etc/firmware/urtwn-rtl8192cU
+./etc/firmware/urtwn-rtl8192eu
 ./etc/firmware/yds
 ./etc/firmware/yds-license
 ./etc/firmware/zd1211
