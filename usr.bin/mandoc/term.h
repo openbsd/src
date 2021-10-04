@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.h,v 1.75 2019/01/04 03:20:44 schwarze Exp $ */
+/* $OpenBSD: term.h,v 1.76 2021/10/04 18:56:24 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017, 2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -150,6 +150,7 @@ size_t		  term_len(const struct termp *, size_t);
 void		  term_tab_set(const struct termp *, const char *);
 void		  term_tab_iset(size_t);
 size_t		  term_tab_next(size_t);
+void		  term_tab_free(void);
 
 void		  term_fontpush(struct termp *, enum termfont);
 void		  term_fontpop(struct termp *);
