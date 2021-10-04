@@ -1,4 +1,4 @@
-/* $OpenBSD: roff_int.h,v 1.17 2020/04/24 11:58:02 schwarze Exp $	*/
+/* $OpenBSD: roff_int.h,v 1.18 2021/10/04 14:18:42 schwarze Exp $	*/
 /*
  * Copyright (c) 2013-2015, 2017-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -35,6 +35,7 @@ struct	roff_man {
 	struct ohash	 *mdocmac; /* Mdoc macro lookup table. */
 	struct ohash	 *manmac;  /* Man macro lookup table. */
 	const char	 *os_s;    /* Default operating system. */
+	char	 	 *os_r;    /* Operating system name at run time. */
 	struct roff_node *last;    /* The last node parsed. */
 	struct roff_node *last_es; /* The most recent Es node. */
 	int		  quick;   /* Abort parse early. */
