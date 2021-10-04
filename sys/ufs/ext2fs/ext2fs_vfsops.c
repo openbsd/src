@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.115 2020/06/24 22:03:44 cheloha Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.116 2021/10/04 08:11:02 claudio Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -717,9 +717,6 @@ ext2fs_sync_vnode(struct vnode *vp, void *args)
 	if (vp->v_type == VNON)
 		return (0);
 
-	if (vp->v_inflight)
-		esa->inflight = MIN(esa->inflight+1, 65536);
-
 	ip = VTOI(vp);
 	
 	if (ip->i_e2fs_nlink == 0)
@@ -731,7 +728,7 @@ ext2fs_sync_vnode(struct vnode *vp, void *args)
 	}
 
 	if (vget(vp, LK_EXCLUSIVE | LK_NOWAIT)) {
-		nlink0 = 1;	/* potentially */
+		esa->inflight = MIN(esa->inflight+1, 65536);
 		goto end;
 	}
 
@@ -742,6 +739,7 @@ end:
 	esa->nlink0 = MIN(esa->nlink0 + nlink0, 65536);
 	return (0);
 }
+
 /*
  * Go through the disk queues to initiate sandbagged IO;
  * go through the inodes to write those that have been modified;

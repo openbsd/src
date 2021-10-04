@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.158 2021/10/02 08:51:41 semarie Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.159 2021/10/04 08:11:02 claudio Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -107,7 +107,6 @@ struct vnode {
 	u_int   v_bioflag;
 	u_int   v_holdcnt;			/* buffer references */
 	u_int   v_id;				/* capability identifier */
-	u_int	v_inflight;
 	struct	mount *v_mount;			/* ptr to vfs we are in */
 	TAILQ_ENTRY(vnode) v_freelist;		/* vnode freelist */
 	TAILQ_ENTRY(vnode) v_mntvnodes;		/* vnodes for mount point */
