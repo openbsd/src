@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvkpcie.c,v 1.10 2021/05/17 17:25:13 kettenis Exp $	*/
+/*	$OpenBSD: mvkpcie.c,v 1.11 2021/10/04 19:04:12 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2020 Patrick Wildt <patrick@blueri.se>
@@ -113,6 +113,8 @@
 #define LMI_CFG				0x6000
 #define  LMI_CFG_LTSSM_VAL(x)			(((x) >> 24) & 0x3f)
 #define  LMI_CFG_LTSSM_L0			0x10
+#define LMI_DEBUG_CTRL			0x6208
+#define  LMI_DEBUG_CTRL_DIS_ORD_CHK		(1 << 30)
 #define CTRL_CORE_CONFIG		0x18000
 #define  CTRL_CORE_CONFIG_MODE_DIRECT		(0 << 0)
 #define  CTRL_CORE_CONFIG_MODE_COMMAND		(1 << 0)
@@ -391,6 +393,10 @@ mvkpcie_attach(struct device *parent, struct device *self, void *aux)
 	HWRITE4(sc, PCIE_CORE_CTRL2,
 	    PCIE_CORE_CTRL2_RESERVED |
 	    PCIE_CORE_CTRL2_TD_ENABLE);
+
+	reg = HREAD4(sc, LMI_DEBUG_CTRL);
+	reg |= LMI_DEBUG_CTRL_DIS_ORD_CHK;
+	HWRITE4(sc, LMI_DEBUG_CTRL, reg);
 
 	reg = HREAD4(sc, PCIE_CORE_CTRL0);
 	reg &= ~PCIE_CORE_CTRL0_GEN_MASK;
