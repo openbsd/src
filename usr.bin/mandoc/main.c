@@ -1,4 +1,4 @@
-/* $OpenBSD: main.c,v 1.260 2021/09/04 22:37:26 schwarze Exp $ */
+/* $OpenBSD: main.c,v 1.261 2021/10/04 20:24:00 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2012, 2014-2021 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -494,6 +494,9 @@ main(int argc, char *argv[])
 				memcpy(res + ressz, resn,
 				    sizeof(*resn) * resnsz);
 				ressz += resnsz;
+				free(resn);
+				resn = NULL;
+				resnsz = 0;
 				continue;
 			}
 
@@ -532,6 +535,10 @@ main(int argc, char *argv[])
 			res = mandoc_reallocarray(res, ressz + 1,
 			    sizeof(*res));
 			memcpy(res + ressz++, resn + ib, sizeof(*resn));
+			memset(resn + ib, 0, sizeof(*resn));
+			mansearch_free(resn, resnsz);
+			resn = NULL;
+			resnsz = 0;
 		}
 
 	/* apropos(1), whatis(1): Process the full search expression. */
