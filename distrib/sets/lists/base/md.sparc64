@@ -1,6 +1,9 @@
 ./etc/examples/wsconsctl.conf
 ./etc/firmware/afb
 ./etc/firmware/afb-license
+./etc/firmware/symbol-eprim
+./etc/firmware/symbol-esec
+./etc/firmware/symbol-license
 ./sbin/kbd
 ./sbin/wsconsctl
 ./usr/bin/clang
