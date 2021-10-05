@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.294 2021/08/20 20:08:30 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.295 2021/10/05 12:45:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3327,7 +3327,7 @@ format_find(struct format_tree *ft, const char *key, int modifiers,
 	fte = format_table_get(key);
 	if (fte != NULL) {
 		value = fte->cb(ft);
-		if (fte->type == FORMAT_TABLE_TIME)
+		if (fte->type == FORMAT_TABLE_TIME && value != NULL)
 			t = ((struct timeval *)value)->tv_sec;
 		else
 			found = value;
