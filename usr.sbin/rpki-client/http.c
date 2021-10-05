@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.40 2021/09/23 13:26:51 tb Exp $  */
+/*	$OpenBSD: http.c,v 1.41 2021/10/05 05:33:46 anton Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -1310,6 +1310,9 @@ http_read(struct http_connection *conn)
 	ssize_t s;
 	char *buf;
 	int done;
+
+	if (conn->bufpos > 0)
+		goto again;
 
 read_more:
 	s = tls_read(conn->tls, conn->buf + conn->bufpos,
