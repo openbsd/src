@@ -1,4 +1,4 @@
-/*	$OpenBSD: signalvar.h,v 1.48 2021/05/10 18:01:24 mpi Exp $	*/
+/*	$OpenBSD: signalvar.h,v 1.49 2021/10/05 08:38:19 claudio Exp $	*/
 /*	$NetBSD: signalvar.h,v 1.17 1996/04/22 01:23:31 christos Exp $	*/
 
 /*
@@ -70,15 +70,6 @@ struct	sigacts {
  */
 #define SIGPENDING(p)							\
 	(((p)->p_siglist | (p)->p_p->ps_siglist) & ~(p)->p_sigmask)
-
-/*
- * Clear a pending signal from a process.
- */
-#define CLRSIG(p, sig)	do {						\
-	int __mask = sigmask(sig);					\
-	atomic_clearbits_int(&(p)->p_siglist, __mask);			\
-	atomic_clearbits_int(&(p)->p_p->ps_siglist, __mask);		\
-} while (0)
 
 /*
  * Signal properties and actions.
