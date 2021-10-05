@@ -1,4 +1,4 @@
-#	$OpenBSD: Httpd.pm,v 1.3 2018/05/19 13:57:43 jsing Exp $
+#	$OpenBSD: Httpd.pm,v 1.4 2021/10/05 17:40:08 anton Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 # Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -84,7 +84,7 @@ sub new {
 
 sub child {
 	my $self = shift;
-	my @sudo = $ENV{SUDO} ? $ENV{SUDO} : ();
+	my @sudo = $ENV{SUDO} ? split(' ', $ENV{SUDO}) : ();
 	my @ktrace = $ENV{KTRACE} ? ($ENV{KTRACE}, "-i") : ();
 	my $httpd = $ENV{HTTPD} ? $ENV{HTTPD} : "httpd";
 	my @cmd = (@sudo, @ktrace, $httpd, "-dvv", "-f", $self->{conffile});
