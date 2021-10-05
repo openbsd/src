@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.370 2021/10/02 07:47:54 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.371 2021/10/05 10:34:36 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -307,6 +307,7 @@ int	iwm_nic_init(struct iwm_softc *);
 int	iwm_enable_ac_txq(struct iwm_softc *, int, int);
 int	iwm_enable_txq(struct iwm_softc *, int, int, int, int, uint8_t,
 	    uint16_t);
+int	iwm_disable_txq(struct iwm_softc *, int, int, uint8_t);
 int	iwm_post_alive(struct iwm_softc *);
 struct iwm_phy_db_entry *iwm_phy_db_get_section(struct iwm_softc *, uint16_t,
 	    uint16_t);
@@ -2462,6 +2463,26 @@ iwm_enable_txq(struct iwm_softc *sc, int sta_id, int qid, int fifo,
 }
 
 int
+iwm_disable_txq(struct iwm_softc *sc, int sta_id, int qid, uint8_t tid)
+{
+	struct iwm_scd_txq_cfg_cmd cmd;
+	int err;
+
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.tid = tid;
+	cmd.scd_queue = qid;
+	cmd.enable = 0;
+	cmd.sta_id = sta_id;
+
+	err = iwm_send_cmd_pdu(sc, IWM_SCD_QUEUE_CFG, 0, sizeof(cmd), &cmd);
+	if (err)
+		return err;
+
+	sc->qenablemsk &= ~(1 << qid);
+	return 0;
+}
+
+int
 iwm_post_alive(struct iwm_softc *sc)
 {
 	int nwords;
@@ -3397,7 +3418,6 @@ iwm_sta_tx_agg(struct iwm_softc *sc, struct ieee80211_node *ni, uint8_t tid,
 	struct iwm_node *in = (void *)ni;
 	int qid = IWM_FIRST_AGG_TX_QUEUE + tid;
 	struct iwm_tx_ring *ring;
-	struct ieee80211_tx_ba *ba;
 	enum ieee80211_edca_ac ac;
 	int fifo;
 	uint32_t status;
@@ -3417,7 +3437,6 @@ iwm_sta_tx_agg(struct iwm_softc *sc, struct ieee80211_node *ni, uint8_t tid,
 	}
 
 	ring = &sc->txq[qid];
-	ba = &ni->ni_tx_ba[tid];
 	ac = iwm_tid_to_ac[tid];
 	fifo = iwm_ac_to_tx_fifo[ac];
 
@@ -3434,7 +3453,10 @@ iwm_sta_tx_agg(struct iwm_softc *sc, struct ieee80211_node *ni, uint8_t tid,
 		in->tfd_queue_msk |= (1 << qid);
 	} else {
 		in->tid_disable_ampdu |= (1 << tid);
-		/* Queue remains enabled in the TFD queue mask. */
+		/*
+		 * Queue remains enabled in the TFD queue mask
+		 * until we leave RUN state.
+		 */
 		err = iwm_flush_sta(sc, in);
 		if (err)
 			return err;
@@ -3503,8 +3525,7 @@ iwm_sta_tx_agg(struct iwm_softc *sc, struct ieee80211_node *ni, uint8_t tid,
 		 * Clear pending frames but keep the queue enabled.
 		 * Firmware panics if we disable the queue here.
 		 */
-		iwm_txq_advance(sc, ring,
-		    IWM_AGG_SSN_TO_TXQ_IDX(ba->ba_winend));
+		iwm_txq_advance(sc, ring, ring->cur);
 		iwm_clear_oactive(sc, ring);
 	}
 
@@ -3519,6 +3540,13 @@ iwm_ba_task(void *arg)
 	struct ieee80211_node *ni = ic->ic_bss;
 	int s = splnet();
 	int tid, err = 0;
+
+	if ((sc->sc_flags & IWM_FLAG_SHUTDOWN) ||
+	    ic->ic_state != IEEE80211_S_RUN) {
+		refcnt_rele_wake(&sc->task_refs);
+		splx(s);
+		return;
+	}
 
 	for (tid = 0; tid < IWM_MAX_TID_COUNT && !err; tid++) {
 		if (sc->sc_flags & IWM_FLAG_SHUTDOWN)
@@ -8502,9 +8530,44 @@ iwm_run_stop(struct iwm_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct iwm_node *in = (void *)ic->ic_bss;
-	int err;
+	struct ieee80211_node *ni = &in->in_ni;
+	int err, i, tid;
 
 	splassert(IPL_NET);
+
+	/*
+	 * Stop Tx/Rx BA sessions now. We cannot rely on the BA task
+	 * for this when moving out of RUN state since it runs in a
+	 * separate thread.
+	 * Note that in->in_ni (struct ieee80211_node) already represents
+	 * our new access point in case we are roaming between APs.
+	 * This means we cannot rely on struct ieee802111_node to tell
+	 * us which BA sessions exist.
+	 */
+	for (i = 0; i < nitems(sc->sc_rxba_data); i++) {
+		struct iwm_rxba_data *rxba = &sc->sc_rxba_data[i];
+		if (rxba->baid == IWM_RX_REORDER_DATA_INVALID_BAID)
+			continue;
+		err = iwm_sta_rx_agg(sc, ni, rxba->tid, 0, 0, 0, 0);
+		if (err)
+			return err;
+		iwm_clear_reorder_buffer(sc, rxba);
+		if (sc->sc_rx_ba_sessions > 0)
+			sc->sc_rx_ba_sessions--;
+	}
+	for (tid = 0; tid < IWM_MAX_TID_COUNT; tid++) {
+		int qid = IWM_FIRST_AGG_TX_QUEUE + tid;
+		if ((sc->tx_ba_queue_mask & (1 << qid)) == 0)
+			continue;
+		err = iwm_sta_tx_agg(sc, ni, tid, 0, 0, 0);
+		if (err)
+			return err;
+		err = iwm_disable_txq(sc, IWM_STATION_ID, qid, tid);
+		if (err)
+			return err;
+		in->tfd_queue_msk &= ~(1 << qid);
+	}
+	ieee80211_ba_del(ni);
 
 	if (ic->ic_opmode == IEEE80211_M_MONITOR)
 		iwm_led_blink_stop(sc);
@@ -8940,7 +9003,6 @@ iwm_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct ifnet *ifp = IC2IFP(ic);
 	struct iwm_softc *sc = ifp->if_softc;
-	int i;
 
 	/*
 	 * Prevent attemps to transition towards the same state, unless
@@ -8954,10 +9016,6 @@ iwm_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		timeout_del(&sc->sc_calib_to);
 		iwm_del_task(sc, systq, &sc->ba_task);
 		iwm_del_task(sc, systq, &sc->mac_ctxt_task);
-		for (i = 0; i < nitems(sc->sc_rxba_data); i++) {
-			struct iwm_rxba_data *rxba = &sc->sc_rxba_data[i];
-			iwm_clear_reorder_buffer(sc, rxba);
-		}
 	}
 
 	sc->ns_nstate = nstate;
