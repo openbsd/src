@@ -1,12 +1,15 @@
-# $OpenBSD: Makefile,v 1.3 2018/02/05 18:28:15 anton Exp $
+# $OpenBSD: Makefile,v 1.4 2021/10/05 17:40:40 anton Exp $
 # Regress tests for ifstated
 
-REGRESS_TARGETS =	run-regress-statemachine run-regress-ifstated
+REGRESS_TARGETS+=	statemachine
 
-run-regress-statemachine:
-	${SUDO} env OBJDIR=${.OBJDIR} sh ${.CURDIR}/statemachine
+REGRESS_TARGETS+=	ifstated
+REGRESS_ROOT_TARGETS+=	ifstated
 
-run-regress-ifstated:
+statemachine:
+	env OBJDIR=${.OBJDIR} sh ${.CURDIR}/statemachine
+
+ifstated:
 	${SUDO} env OBJDIR=${.OBJDIR} sh ${.CURDIR}/ifstated
 
 .include <bsd.regress.mk>
