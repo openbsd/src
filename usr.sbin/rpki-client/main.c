@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.145 2021/08/30 16:05:55 job Exp $ */
+/*	$OpenBSD: main.c,v 1.146 2021/10/05 11:20:46 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -497,14 +497,22 @@ entity_process(int proc, struct stats *st, struct vrp_tree *tree)
 			break;
 		}
 		cert = cert_read(proc);
-		if (cert->valid) {
-			/*
-			 * Process the revocation list from the
-			 * certificate *first*, since it might mark that
-			 * we're revoked and then we don't want to
-			 * process the MFT.
-			 */
-			queue_add_from_cert(cert);
+		if (cert->purpose == CERT_PURPOSE_CA) {
+			if (cert->valid) {
+				/*
+				 * Process the revocation list from the
+				 * certificate *first*, since it might mark that
+				 * we're revoked and then we don't want to
+				 * process the MFT.
+				 */
+				queue_add_from_cert(cert);
+			} else
+				st->certs_invalid++;
+		} else if (cert->purpose == CERT_PURPOSE_BGPSEC_ROUTER) {
+			if (cert->valid)
+				st->bgpsec_routers++;
+			else
+				st->bgpsec_invalids++;
 		} else
 			st->certs_invalid++;
 		cert_free(cert);
@@ -1158,6 +1166,8 @@ main(int argc, char *argv[])
 	    stats.mfts, stats.mfts_fail, stats.mfts_stale);
 	logx("Certificate revocation lists: %zu", stats.crls);
 	logx("Ghostbuster records: %zu", stats.gbrs);
+	logx("BGPsec Router Certificates: %zu (%zu invalid)",
+	    stats.bgpsec_routers, stats.bgpsec_invalids);
 	logx("Repositories: %zu", stats.repos);
 	logx("Cleanup: removed %zu files, %zu directories",
 	    stats.del_files, stats.del_dirs);

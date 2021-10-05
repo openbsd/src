@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.32 2021/09/09 14:15:49 claudio Exp $ */
+/*	$OpenBSD: cert.c,v 1.33 2021/10/05 11:20:46 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1040,6 +1040,8 @@ cert_parse_inner(X509 **xp, const char *fn, int ta)
 			break;
 		case NID_subject_key_identifier:
 			break;
+		case NID_ext_key_usage:
+			break;
 		default:
 			/* {
 				char objn[64];
@@ -1059,12 +1061,12 @@ cert_parse_inner(X509 **xp, const char *fn, int ta)
 		p.res->aia = x509_get_aia(x, p.fn);
 		p.res->crl = x509_get_crl(x, p.fn);
 	}
+	p.res->purpose = x509_get_purpose(x, p.fn);
 
 	/* Validation on required fields. */
 
 	if (p.res->ski == NULL) {
-		warnx("%s: RFC 6487 section 8.4.2: "
-		    "missing SKI", p.fn);
+		warnx("%s: RFC 6487 section 8.4.2: missing SKI", p.fn);
 		goto out;
 	}
 
@@ -1106,11 +1108,22 @@ cert_parse_inner(X509 **xp, const char *fn, int ta)
 		goto out;
 	}
 
-	if (p.res->mft == NULL) {
-		warnx("%s: RFC 6487 section 4.8.8: "
-		    "missing SIA", p.fn);
+	if (p.res->ipsz > 0 &&
+	    p.res->purpose == CERT_PURPOSE_BGPSEC_ROUTER) {
+		warnx("%s: BGPsec Router Certificate must not have RFC 3779 IP "
+		    "Addresses", p.fn);
 		goto out;
 	}
+
+	if (p.res->purpose == CERT_PURPOSE_CA && p.res->mft == NULL) {
+		warnx("%s: RFC 6487 section 4.8.8: missing SIA", p.fn);
+		goto out;
+	}
+
+	/*
+	 * XXX: also add opposite check: is any SIA present?
+	 */
+
 	if (X509_up_ref(x) == 0)
 		errx(1, "king bula");
 
@@ -1232,6 +1245,7 @@ cert_buffer(struct ibuf *b, const struct cert *p)
 	size_t	 i;
 
 	io_simple_buffer(b, &p->valid, sizeof(int));
+	io_simple_buffer(b, &p->purpose, sizeof(enum cert_purpose));
 	io_simple_buffer(b, &p->ipsz, sizeof(size_t));
 	for (i = 0; i < p->ipsz; i++)
 		cert_ip_buffer(b, &p->ips[i]);
@@ -1239,7 +1253,6 @@ cert_buffer(struct ibuf *b, const struct cert *p)
 	io_simple_buffer(b, &p->asz, sizeof(size_t));
 	for (i = 0; i < p->asz; i++)
 		cert_as_buffer(b, &p->as[i]);
-
 	io_str_buffer(b, p->mft);
 	io_str_buffer(b, p->notify);
 	io_str_buffer(b, p->repo);
@@ -1294,6 +1307,7 @@ cert_read(int fd)
 		err(1, NULL);
 
 	io_simple_read(fd, &p->valid, sizeof(int));
+	io_simple_read(fd, &p->purpose, sizeof(enum cert_purpose));
 	io_simple_read(fd, &p->ipsz, sizeof(size_t));
 	p->ips = calloc(p->ipsz, sizeof(struct cert_ip));
 	if (p->ips == NULL)
@@ -1309,7 +1323,7 @@ cert_read(int fd)
 		cert_as_read(fd, &p->as[i]);
 
 	io_str_read(fd, &p->mft);
-	assert(p->mft);
+	assert(p->mft != NULL || p->purpose == CERT_PURPOSE_BGPSEC_ROUTER);
 	io_str_read(fd, &p->notify);
 	io_str_read(fd, &p->repo);
 	io_str_read(fd, &p->crl);

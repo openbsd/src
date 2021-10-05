@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.67 2021/09/09 14:15:49 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.68 2021/10/05 11:20:46 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -101,6 +101,11 @@ struct cert_ip {
 	};
 };
 
+enum cert_purpose {
+	CERT_PURPOSE_CA = 1,
+	CERT_PURPOSE_BGPSEC_ROUTER
+};
+
 /*
  * Parsed components of a validated X509 certificate stipulated by RFC
  * 6847 and further (within) by RFC 3779.
@@ -119,6 +124,7 @@ struct cert {
 	char		*aia; /* AIA (or NULL, for trust anchor) */
 	char		*aki; /* AKI (or NULL, for trust anchor) */
 	char		*ski; /* SKI */
+	enum cert_purpose	 purpose; /* Certificate Purpose (BGPSec or CA) */
 	int		 valid; /* validated resources */
 	X509		*x509; /* the cert */
 };
@@ -351,6 +357,8 @@ struct	stats {
 	size_t	 uniqs; /* number of unique vrps */
 	size_t	 del_files; /* number of files removed in cleanup */
 	size_t	 del_dirs; /* number of directories removed in cleanup */
+	size_t	 bgpsec_routers; /* number of BGPsec Router certs */
+	size_t	 bgpsec_invalids; /* invalid bgpsec router certs */
 	char	*talnames;
 	struct timeval	elapsed_time;
 	struct timeval	user_time;
@@ -521,6 +529,7 @@ char		*x509_get_aki(X509 *, int, const char *);
 char		*x509_get_ski(X509 *, const char *);
 char		*x509_get_crl(X509 *, const char *);
 char		*x509_crl_get_aki(X509_CRL *, const char *);
+enum cert_purpose	 x509_get_purpose(X509 *, const char *);
 
 /* Output! */
 

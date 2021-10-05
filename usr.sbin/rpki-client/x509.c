@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.21 2021/04/01 06:43:23 claudio Exp $ */
+/*	$OpenBSD: x509.c,v 1.22 2021/10/05 11:20:46 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -27,6 +27,15 @@
 #include <openssl/x509v3.h>
 
 #include "extern.h"
+
+static ASN1_OBJECT	*bgpsec_oid;	/* id-kp-bgpsec-router */
+
+static void
+init_oid(void)
+{
+	if ((bgpsec_oid = OBJ_txt2obj("1.3.6.1.5.5.7.3.30", 1)) == NULL)
+		errx(1, "OBJ_txt2obj for %s failed", "1.3.6.1.5.5.7.3.30");
+}
 
 /*
  * Parse X509v3 authority key identifier (AKI), RFC 6487 sec. 4.8.3.
@@ -123,6 +132,51 @@ out:
 	ASN1_OCTET_STRING_free(os);
 	return res;
 }
+
+/*
+ * Check the certificate's purpose: CA or BGPsec Router.
+ * Return a member of enum cert_purpose.
+ */
+enum cert_purpose
+x509_get_purpose(X509 *x, const char *fn)
+{
+	EXTENDED_KEY_USAGE		*eku = NULL;
+	int				 crit;
+	enum cert_purpose		 purpose = 0;
+
+	if (X509_check_ca(x) == 1) {
+		purpose = CERT_PURPOSE_CA;
+		goto out;
+	}
+
+	eku = X509_get_ext_d2i(x, NID_ext_key_usage, &crit, NULL);
+	if (eku == NULL) {
+		warnx("%s: EKU: extension missing", fn);
+		goto out;
+	}
+	if (crit != 0) {
+		warnx("%s: EKU: extension must not be marked critical", fn);
+		goto out;
+	}
+	if (sk_ASN1_OBJECT_num(eku) != 1) {
+		warnx("%s: EKU: expected 1 purpose, have %d", fn,
+		    sk_ASN1_OBJECT_num(eku));
+		goto out;
+	}
+
+	if (bgpsec_oid == NULL)
+		init_oid();
+
+	if (OBJ_cmp(bgpsec_oid, sk_ASN1_OBJECT_value(eku, 0)) == 0) {
+		purpose = CERT_PURPOSE_BGPSEC_ROUTER;
+		goto out;
+	}
+
+ out:
+	EXTENDED_KEY_USAGE_free(eku);
+	return purpose;
+}
+
 
 /*
  * Parse the Authority Information Access (AIA) extension
