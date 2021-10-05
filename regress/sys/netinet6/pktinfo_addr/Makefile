@@ -1,10 +1,11 @@
-# $OpenBSD: Makefile,v 1.3 2016/09/03 15:36:33 vgross Exp $
+# $OpenBSD: Makefile,v 1.4 2021/10/05 08:08:58 anton Exp $
 
-PROG	   = runtest
+PROG=	runtest
 
-REGRESS_TARGETS ?=	run-regress-runtest
+REGRESS_TARGETS+=	run-regress-runtest
+REGRESS_ROOT_TARGETS=	${REGRESS_TARGETS}
 
 run-regress-runtest: ${PROG}
-	${SETENV} PROG=${.OBJDIR}/${PROG} SUDO=${SUDO} /bin/ksh ${.CURDIR}/test_wrapper.sh
+	${SETENV} PROG=${.OBJDIR}/${PROG} SUDO="${SUDO}" /bin/ksh ${.CURDIR}/test_wrapper.sh
 
 .include <bsd.regress.mk>
