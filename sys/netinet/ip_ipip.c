@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.93 2021/07/08 21:07:19 bluhm Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.94 2021/10/05 11:45:26 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -343,6 +343,7 @@ ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int dummy,
 #ifdef ENCDEBUG
 	char buf[INET6_ADDRSTRLEN];
 #endif
+	int error;
 
 	/* XXX Deal with empty TDB source/destination addresses. */
 
@@ -361,17 +362,16 @@ ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int dummy,
 			    ntohl(tdb->tdb_spi));
 
 			ipipstat_inc(ipips_unspec);
-			m_freem(m);
-			*mp = NULL;
-			return EINVAL;
+			error = EINVAL;
+			goto drop;
 		}
 
 		M_PREPEND(m, sizeof(struct ip), M_DONTWAIT);
 		if (m == NULL) {
 			DPRINTF("M_PREPEND failed");
 			ipipstat_inc(ipips_hdrops);
-			*mp = NULL;
-			return ENOBUFS;
+			error = ENOBUFS;
+			goto drop;
 		}
 
 		ipo = mtod(m, struct ip *);
@@ -424,15 +424,18 @@ ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int dummy,
 		}
 #endif /* INET6 */
 		else {
-			m_freem(m);
-			*mp = NULL;
 			ipipstat_inc(ipips_family);
-			return EAFNOSUPPORT;
+			error = EAFNOSUPPORT;
+			goto drop;
 		}
 
 		otos = 0;
 		ip_ecn_ingress(ECN_ALLOWED, &otos, &itos);
 		ipo->ip_tos = otos;
+
+		obytes = m->m_pkthdr.len - sizeof(struct ip);
+		if (tdb->tdb_xform->xf_type == XF_IP4)
+			tdb->tdb_cur_bytes += obytes;
 		break;
 
 #ifdef INET6
@@ -447,9 +450,8 @@ ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int dummy,
 			    ntohl(tdb->tdb_spi));
 
 			ipipstat_inc(ipips_unspec);
-			m_freem(m);
-			*mp = NULL;
-			return ENOBUFS;
+			error = EINVAL;
+			goto drop;
 		}
 
 		/* If the inner protocol is IPv6, clear link local scope */
@@ -466,8 +468,8 @@ ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int dummy,
 		if (m == NULL) {
 			DPRINTF("M_PREPEND failed");
 			ipipstat_inc(ipips_hdrops);
-			*mp = NULL;
-			return ENOBUFS;
+			error = ENOBUFS;
+			goto drop;
 		}
 
 		/* Initialize IPv6 header */
@@ -501,49 +503,37 @@ ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int dummy,
 
 				ip6o->ip6_nxt = IPPROTO_IPV6;
 			} else {
-				m_freem(m);
-				*mp = NULL;
 				ipipstat_inc(ipips_family);
-				return EAFNOSUPPORT;
+				error = EAFNOSUPPORT;
+				goto drop;
 			}
 
 		otos = 0;
 		ip_ecn_ingress(ECN_ALLOWED, &otos, &itos);
 		ip6o->ip6_flow |= htonl((u_int32_t) otos << 20);
+
+		obytes = m->m_pkthdr.len - sizeof(struct ip6_hdr);
+		if (tdb->tdb_xform->xf_type == XF_IP4)
+			tdb->tdb_cur_bytes += obytes;
 		break;
 #endif /* INET6 */
 
 	default:
 		DPRINTF("unsupported protocol family %d",
 		    tdb->tdb_dst.sa.sa_family);
-		m_freem(m);
-		*mp = NULL;
 		ipipstat_inc(ipips_family);
-		return EAFNOSUPPORT;
+		error = EAFNOSUPPORT;
+		goto drop;
 	}
 
-	ipipstat_inc(ipips_opackets);
 	*mp = m;
-
-	if (tdb->tdb_dst.sa.sa_family == AF_INET) {
-		obytes = m->m_pkthdr.len - sizeof(struct ip);
-		if (tdb->tdb_xform->xf_type == XF_IP4)
-			tdb->tdb_cur_bytes += obytes;
-
-		ipipstat_add(ipips_obytes, obytes);
-	}
-
-#ifdef INET6
-	if (tdb->tdb_dst.sa.sa_family == AF_INET6) {
-		obytes = m->m_pkthdr.len - sizeof(struct ip6_hdr);
-		if (tdb->tdb_xform->xf_type == XF_IP4)
-			tdb->tdb_cur_bytes += obytes;
-
-		ipipstat_add(ipips_obytes, obytes);
-	}
-#endif /* INET6 */
-
+	ipipstat_pkt(ipips_opackets, ipips_obytes, obytes);
 	return 0;
+
+ drop:
+	m_freem(m);
+	*mp = NULL;
+	return error;
 }
 
 #ifdef IPSEC

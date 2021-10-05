@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.181 2021/10/05 11:34:35 bluhm Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.182 2021/10/05 11:45:26 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -200,8 +200,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 
 	NET_ASSERT_LOCKED();
 
-	ipsecstat_inc(ipsec_ipackets);
-	ipsecstat_add(ipsec_ibytes, m->m_pkthdr.len);
+	ipsecstat_pkt(ipsec_ipackets, ipsec_ibytes, m->m_pkthdr.len);
 	IPSEC_ISTAT(esps_input, ahs_input, ipcomps_input);
 
 	if (m == NULL) {

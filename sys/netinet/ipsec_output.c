@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.86 2021/07/27 17:13:03 mvs Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.87 2021/10/05 11:45:26 bluhm Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -583,8 +583,7 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 
 	m_tag_prepend(m, mtag);
 
-	ipsecstat_inc(ipsec_opackets);
-	ipsecstat_add(ipsec_obytes, m->m_pkthdr.len);
+	ipsecstat_pkt(ipsec_opackets, ipsec_obytes, m->m_pkthdr.len);
 	tdb->tdb_opackets++;
 	tdb->tdb_obytes += m->m_pkthdr.len;
 
