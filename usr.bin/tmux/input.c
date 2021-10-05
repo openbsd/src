@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.192 2021/08/14 16:26:29 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.193 2021/10/05 12:46:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1646,7 +1646,7 @@ input_csi_dispatch_rm(struct input_ctx *ictx)
 			screen_write_mode_clear(sctx, MODE_INSERT);
 			break;
 		case 34:
-			screen_write_mode_set(sctx, MODE_BLINKING);
+			screen_write_mode_set(sctx, MODE_CURSOR_VERY_VISIBLE);
 			break;
 		default:
 			log_debug("%s: unknown '%c'", __func__, ictx->ch);
@@ -1682,7 +1682,7 @@ input_csi_dispatch_rm_private(struct input_ctx *ictx)
 			screen_write_mode_clear(sctx, MODE_WRAP);
 			break;
 		case 12:
-			screen_write_mode_clear(sctx, MODE_BLINKING);
+			screen_write_mode_clear(sctx, MODE_CURSOR_BLINKING);
 			break;
 		case 25:	/* TCEM */
 			screen_write_mode_clear(sctx, MODE_CURSOR);
@@ -1734,7 +1734,7 @@ input_csi_dispatch_sm(struct input_ctx *ictx)
 			screen_write_mode_set(sctx, MODE_INSERT);
 			break;
 		case 34:
-			screen_write_mode_clear(sctx, MODE_BLINKING);
+			screen_write_mode_clear(sctx, MODE_CURSOR_VERY_VISIBLE);
 			break;
 		default:
 			log_debug("%s: unknown '%c'", __func__, ictx->ch);
@@ -1771,7 +1771,7 @@ input_csi_dispatch_sm_private(struct input_ctx *ictx)
 			screen_write_mode_set(sctx, MODE_WRAP);
 			break;
 		case 12:
-			screen_write_mode_set(sctx, MODE_BLINKING);
+			screen_write_mode_set(sctx, MODE_CURSOR_BLINKING);
 			break;
 		case 25:	/* TCEM */
 			screen_write_mode_set(sctx, MODE_CURSOR);
