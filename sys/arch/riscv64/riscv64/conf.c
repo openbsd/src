@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.10 2021/06/25 19:27:40 matthieu Exp $	*/
+/*	$OpenBSD: conf.c,v 1.11 2021/10/05 18:32:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -38,6 +38,8 @@
 
 #include <machine/conf.h>
 
+#include "wd.h"
+bdev_decl(wd);
 #include "sd.h"
 #include "cd.h"
 #include "uk.h"
@@ -46,7 +48,7 @@
 
 struct bdevsw	bdevsw[] =
 {
-	bdev_notdef(),			/* */
+	bdev_disk_init(NWD,wd),         /* 0: ST506/ESDI/IDE disk */
 	bdev_swap_init(1,sw),		/* 1: swap pseudo-device */
 	bdev_notdef(),			/* 2: was floppy diskette */
 	bdev_notdef(),			/* 3 */
@@ -71,6 +73,7 @@ int	nblkdev = nitems(bdevsw);
 #define	mmread	mmrw
 #define	mmwrite	mmrw
 cdev_decl(mm);
+cdev_decl(wd);
 #include "bio.h"
 #include "pty.h"
 #include "com.h"
@@ -114,7 +117,7 @@ struct cdevsw	cdevsw[] =
 	cdev_cn_init(1,cn),		/* 0: virtual console */
 	cdev_ctty_init(1,ctty),		/* 1: controlling terminal */
 	cdev_mm_init(1,mm),		/* 2: /dev/{null,mem,kmem,...} */
-	cdev_notdef(),			/* 3: */
+	cdev_disk_init(NWD,wd),		/* 3: ST506/ESDI/IDE disk */
 	cdev_notdef(),			/* 4 was /dev/drum */
 	cdev_tty_init(NPTY,pts),	/* 5: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),	/* 6: pseudo-tty master */
@@ -223,6 +226,8 @@ struct cdevsw	cdevsw[] =
 };
 int	nchrdev = nitems(cdevsw);
 
+int	mem_no = 2;	/* major device number of memory special file */
+
 /*
  * Swapdev is a fake device implemented
  * in sw.c used only internally to get to swstrategy.
@@ -232,7 +237,7 @@ int	nchrdev = nitems(cdevsw);
  * confuse, e.g. the hashing routines. Instead, /dev/drum is
  * provided as a character (raw) device.
  */
-dev_t	swapdev = makedev(BMAJ_SW, 0);
+dev_t	swapdev = makedev(1, 0);
 
 /*
  * Returns true if dev is /dev/mem or /dev/kmem.
@@ -241,7 +246,7 @@ int
 iskmemdev(dev_t dev)
 {
 
-	return (major(dev) == CMAJ_MM && (minor(dev) < 2 || minor(dev) == 14));
+	return (major(dev) == mem_no && (minor(dev) < 2 || minor(dev) == 14));
 }
 
 /*
@@ -251,13 +256,13 @@ int
 iszerodev(dev_t dev)
 {
 
-	return (major(dev) == CMAJ_MM && minor(dev) == 12);
+	return (major(dev) == mem_no && minor(dev) == 12);
 }
 
 dev_t
 getnulldev(void)
 {
-	return makedev(CMAJ_MM, 2);
+	return makedev(mem_no, 2);
 }
 
 int chrtoblktbl[] = {
@@ -265,7 +270,7 @@ int chrtoblktbl[] = {
 	/*  0 */	NODEV,
 	/*  1 */	NODEV,
 	/*  2 */	NODEV,
-	/*  3 */	NODEV,
+	/*  3 */	0,		/* wd */
 	/*  4 */	NODEV,
 	/*  5 */	NODEV,
 	/*  6 */	NODEV,
@@ -334,8 +339,8 @@ dev_rawpart(struct device *dv)
 
 	switch (majdev) {
 	/* add here any device you want to be checksummed on boot */
-	case BMAJ_WD:
-	case BMAJ_SD:
+	case 0:
+	case 4:
 		return (MAKEDISKDEV(majdev, dv->dv_unit, RAW_PART));
 		break;
 	default:
