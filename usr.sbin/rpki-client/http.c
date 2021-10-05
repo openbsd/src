@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.41 2021/10/05 05:33:46 anton Exp $  */
+/*	$OpenBSD: http.c,v 1.42 2021/10/05 07:22:21 claudio Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -1393,7 +1393,7 @@ again:
 
 			if (rv == -1)
 				return http_failed(conn);
-			if (rv ==  0)
+			if (rv == 0)
 				done = 1;
 		}
 
@@ -1425,10 +1425,10 @@ again:
 			 * After redirects all data needs to be discarded.
 			 */
 			if (conn->iosz < (off_t)conn->bufpos) {
-				conn->bufpos  -= conn->iosz;
+				conn->bufpos -= conn->iosz;
 				conn->iosz = 0;
 			} else {
-				conn->iosz  -= conn->bufpos;
+				conn->iosz -= conn->bufpos;
 				conn->bufpos = 0;
 			}
 			if (conn->chunked)
