@@ -34,6 +34,7 @@
 #	rd*	"rd" pseudo-disks
 #	sd*	SCSI disks, including flopticals
 #	vnd*	"file" pseudo-disk devices
+#	wd*	"winchester" disk drives (ST506, IDE, ESDI, RLL, ...)
 # Tapes:
 #	ch*	SCSI media changers
 # Terminal ports:
@@ -501,11 +502,12 @@ all)
 	R pci1 pci2 pci3 uall rmidi0 rmidi1 rmidi2 rmidi3 rmidi4
 	R rmidi5 rmidi6 rmidi7 radio0 video0 video1 uk0 random tty00
 	R tty01 tty02 tty03 tty04 tty05 tty06 tty07 tty08 tty09 tty0a
-	R tty0b apm pf std fd
+	R tty0b apm pf wd0 wd1 wd2 wd3 std fd
 	;;
 
-sd*)
+wd*|sd*)
 	case $i in
+	wd*) dodisk wd $U 0 3 $U 0;;
 	sd*) dodisk sd $U 4 13 $U 0;;
 	esac
 	;;
