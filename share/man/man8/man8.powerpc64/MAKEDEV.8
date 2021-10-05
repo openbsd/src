@@ -1,4 +1,4 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.6 2021/02/12 10:28:56 jsg Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.7 2021/10/05 04:56:18 deraadt Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 12 2021 $
+.Dd $Mdocdate: October 5 2021 $
 .Dt MAKEDEV 8 powerpc64
 .Os
 .Sh NAME
@@ -89,6 +89,10 @@ SCSI disks, including flopticals, see
 .It Ar cd*
 ATAPI and SCSI CD-ROM drives, see
 .Xr cd 4 .
+.It Ar wd*
+.Dq winchester
+disk drives (ST506, IDE, ESDI, RLL, ...), see
+.Xr wd 4 .
 .El
 .Pp
 .Sy Tapes

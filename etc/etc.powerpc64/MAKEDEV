@@ -34,6 +34,7 @@
 #	rd*	"rd" pseudo-disks
 #	sd*	SCSI disks, including flopticals
 #	cd*	ATAPI and SCSI CD-ROM drives
+#	wd*	"winchester" disk drives (ST506, IDE, ESDI, RLL, ...)
 # Tapes:
 #	ch*	SCSI media changers
 #	st*	SCSI tape drives
@@ -521,11 +522,12 @@ all)
 	R pci2 pci3 uall rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5
 	R rmidi6 rmidi7 radio0 uk0 random lpa0 lpa1 lpa2 lpt0 lpt1
 	R lpt2 tty00 tty01 tty02 tty03 tty04 tty05 tty06 tty07 tty08
-	R tty09 tty0a tty0b pf std st0 st1 fd
+	R tty09 tty0a tty0b pf wd0 wd1 wd2 wd3 std st0 st1 fd
 	;;
 
-sd*)
+wd*|sd*)
 	case $i in
+	wd*) dodisk wd $U 5 17 $U 0;;
 	sd*) dodisk sd $U 3 26 $U 0;;
 	esac
 	;;
