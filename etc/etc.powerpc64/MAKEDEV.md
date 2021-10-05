@@ -1,6 +1,6 @@
 define(MACHINE,powerpc64)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.8 2021/02/12 10:26:34 jsg Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.9 2021/10/05 04:55:51 deraadt Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -29,6 +29,7 @@ _DEV(vnd, 24, 1)
 _DEV(rd, 25, 2)
 _DEV(sd, 26, 3)
 _DEV(cd, 27, 4)
+_DEV(wd, 17, 5)
 _TITLE(tap)
 _DEV(ch, 68)
 _DEV(st, 69)
