@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: ifstated,v 1.8 2018/02/05 18:28:15 anton Exp $
+# $OpenBSD: ifstated,v 1.9 2021/10/05 17:41:03 anton Exp $
 #/*
 # * Copyright (c) Rob Pierce <rob@openbsd.org>
 # *
@@ -57,7 +57,7 @@ skip() {
 
 trap 'skip' INT
 
-ifconfig vether${VHIDB} create >/dev/null 2>&2
+ifconfig vether${VHIDB} create >/dev/null 2>&1
 if [ $? -ne 0 ]
 then
 	echo "Could not create temporary vether interface."
