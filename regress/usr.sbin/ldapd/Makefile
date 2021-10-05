@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.10 2020/01/11 11:40:46 espie Exp $
+# $OpenBSD: Makefile,v 1.11 2021/10/05 17:41:31 anton Exp $
 
 OUT=${.CURDIR}/out
 DIT=dc=example,dc=com
@@ -28,6 +28,7 @@ regress:
 .endif
 
 REGRESS_TARGETS = connect import perl purge #cpan
+REGRESS_ROOT_TARGETS = ${REGRESS_TARGETS}
 
 bootstrap:
 	@[ -z "${SUDO}" ] || ${SUDO} true
