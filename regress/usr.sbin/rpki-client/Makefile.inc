@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.11 2021/07/15 11:07:33 job Exp $
+# $OpenBSD: Makefile.inc,v 1.12 2021/10/05 11:23:16 job Exp $
 
 .PATH:		${.CURDIR}/../../../../usr.sbin/rpki-client
 
@@ -8,6 +8,7 @@ PROGS += test-gbr
 PROGS += test-mft
 PROGS += test-roa
 PROGS += test-tal
+PROGS += test-bgpsec
 
 .for p in ${PROGS}
 REGRESS_TARGETS += run-regress-$p
@@ -30,6 +31,11 @@ SRCS_test-cert=	test-cert.c cert.c cms.c x509.c ip.c as.c io.c log.c tal.c \
 run-regress-test-cert: test-cert
 	./test-cert -v ${.CURDIR}/../cer/*.cer
 	./test-cert -vt ${TALARGS:S,,${.CURDIR}/../&,}
+
+SRCS_test-bgpsec=	test-bgpsec.c cert.c cms.c x509.c ip.c as.c io.c \
+			log.c tal.c validate.c encoding.c
+run-regress-test-bgpsec: test-bgpsec
+	./test-bgpsec -v ${.CURDIR}/../bgpsec/*.cer
 
 # Provide missing prototypes for OpenSSL
 mft_gen.c: mft.c
