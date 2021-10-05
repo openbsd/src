@@ -55,7 +55,7 @@ http_result(enum http_result res)
 	}
 }
 
-static void
+static int
 http_response(int fd)
 {
 	size_t id;
@@ -70,13 +70,14 @@ http_response(int fd)
 	if (lastmod)
 		printf(", last-modified: %s" , lastmod);
 	printf("\n");
+	return res == HTTP_FAILED;
 }
 
 int
 main(int argc, char **argv)
 {
 	pid_t httppid;
-	int fd[2], outfd, http;
+	int error, fd[2], outfd, http;
 	int fl = SOCK_STREAM | SOCK_CLOEXEC;
 	char *uri, *file, *mod;
 	size_t req = 0;
@@ -120,7 +121,6 @@ main(int argc, char **argv)
 	case -1:
 		err(1, "write");
 	}
-	http_response(http);
-
-	return 0;
+	error = http_response(http);
+	return error;
 }
