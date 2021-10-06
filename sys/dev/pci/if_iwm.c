@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.371 2021/10/05 10:34:36 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.372 2021/10/06 13:35:55 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -6354,6 +6354,7 @@ iwm_tx_fill_cmd(struct iwm_softc *sc, struct iwm_node *in,
 	if (IWM_RIDX_IS_CCK(ridx))
 		rate_flags |= IWM_RATE_MCS_CCK_MSK;
 	if ((ni->ni_flags & IEEE80211_NODE_HT) &&
+	    type == IEEE80211_FC0_TYPE_DATA &&
 	    rinfo->ht_plcp != IWM_RATE_HT_SISO_MCS_INV_PLCP) {
 		rate_flags |= IWM_RATE_MCS_HT_MSK; 
 		if (ieee80211_node_supports_ht_sgi20(ni))
