@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.114 2021/10/02 07:48:20 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.115 2021/10/06 13:36:47 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -7874,9 +7874,11 @@ iwx_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	/*
 	 * Prevent attemps to transition towards the same state, unless
 	 * we are scanning in which case a SCAN -> SCAN transition
-	 * triggers another scan iteration.
+	 * triggers another scan iteration. And AUTH -> AUTH is needed
+	 * to support band-steering.
 	 */
-	if (sc->ns_nstate == nstate && nstate != IEEE80211_S_SCAN)
+	if (sc->ns_nstate == nstate && nstate != IEEE80211_S_SCAN &&
+	    nstate != IEEE80211_S_AUTH)
 		return 0;
 
 	if (ic->ic_state == IEEE80211_S_RUN) {
