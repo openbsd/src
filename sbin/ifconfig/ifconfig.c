@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.444 2021/07/12 15:09:18 beck Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.445 2021/10/06 06:14:08 florian Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -246,7 +246,6 @@ void	setgroupattribs(char *, int, char *[]);
 int	printgroup(char *, int);
 void	setautoconf(const char *, int);
 void	settemporary(const char *, int);
-void	setprivacy(const char *, int);
 void	settrunkport(const char *, int);
 void	unsettrunkport(const char *, int);
 void	settrunkproto(const char *, int);
@@ -466,8 +465,6 @@ const struct	cmd {
 	{ "pltime",	NEXTARG,	0,		setia6pltime },
 	{ "vltime",	NEXTARG,	0,		setia6vltime },
 	{ "eui64",	0,		0,		setia6eui64 },
-	{ "autoconfprivacy",	1,		0,	setprivacy },
-	{ "-autoconfprivacy",	-1,		0,	setprivacy },
 	{ "temporary",	1,		0,		settemporary },
 	{ "-temporary",	-1,		0,		settemporary },
 	{ "soii",	-IFXF_INET6_NOSOII,	0,	setifxflags },
@@ -1600,14 +1597,6 @@ settemporary(const char *cmd, int val)
 	default:
 		errx(1, "temporary not allowed for this address family");
 	}
-}
-
-/* XXX remove after 7.0 */
-void
-setprivacy(const char *cmd, int val)
-{
-	warnx("The 'autoconfprivacy' option is deprecated, use 'temporary'");
-	settemporary(cmd, val);
 }
 
 #ifndef SMALL
