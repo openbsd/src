@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.404 2021/10/05 12:46:02 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.405 2021/10/06 10:33:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -692,10 +692,12 @@ tty_update_cursor(struct tty *tty, int mode, int changed, struct screen *s)
 	tty_putcode(tty, TTYC_CNORM);
 	switch (cstyle) {
 	case SCREEN_CURSOR_DEFAULT:
-		if (tty_term_has(tty->term, TTYC_SE))
-			tty_putcode(tty, TTYC_SE);
-		else
-			tty_putcode1(tty, TTYC_SS, 0);
+		if (tty->cstyle != SCREEN_CURSOR_DEFAULT) {
+			if (tty_term_has(tty->term, TTYC_SE))
+				tty_putcode(tty, TTYC_SE);
+			else
+				tty_putcode1(tty, TTYC_SS, 0);
+		}
 		if (mode & (MODE_CURSOR_BLINKING|MODE_CURSOR_VERY_VISIBLE))
 			tty_putcode(tty, TTYC_CVVIS);
 		break;
