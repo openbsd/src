@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_sparc64.c,v 1.10 2013/11/01 15:57:56 deraadt Exp $	*/
+/*	$OpenBSD: kvm_sparc64.c,v 1.11 2021/10/06 00:42:47 deraadt Exp $	*/
 /*	$NetBSD: kvm_sparc64.c,v 1.7 2001/08/05 03:33:15 matt Exp $	*/
 
 /*-
@@ -39,7 +39,9 @@
  * vm code will one day obsolete this module.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* MAXCOMLEN PAGE_SIZE */
+#include <sys/types.h>
+#include <sys/signal.h>
 #include <sys/exec.h>
 #include <sys/proc.h>
 #include <sys/stat.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.68 2021/03/11 07:43:34 deraadt Exp $ */
+/*	$OpenBSD: kvm.c,v 1.69 2021/10/06 00:42:46 deraadt Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>	/* MAXCOMLEN MID_MACHINE */
+#include <sys/param.h>	/* MAXCOMLEN MID_MACHINE ALIGN */
 #include <sys/proc.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
