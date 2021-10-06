@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh_machdep.c,v 1.52 2020/11/08 20:37:23 mpi Exp $	*/
+/*	$OpenBSD: sh_machdep.c,v 1.53 2021/10/06 15:46:03 claudio Exp $	*/
 /*	$NetBSD: sh3_machdep.c,v 1.59 2006/03/04 01:13:36 uwe Exp $	*/
 
 /*
@@ -447,17 +447,17 @@ struct sigframe {
  * Send an interrupt to process.
  */
 int
-sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
+sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip,
+    int info, int onstack)
 {
 	struct proc *p = curproc;
 	struct sigframe *fp, frame;
 	struct trapframe *tf = p->p_md.md_regs;
-	struct sigacts *psp = p->p_p->ps_sigacts;
 	siginfo_t *sip;
 
 	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
 	    !sigonstack(p->p_md.md_regs->tf_r15) &&
-	    (psp->ps_sigonstack & sigmask(sig)))
+	    onstack)
 		fp = (struct sigframe *)
 		    trunc_page((vaddr_t)p->p_sigstk.ss_sp + p->p_sigstk.ss_size);
 	else
@@ -467,7 +467,7 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 
 	bzero(&frame, sizeof(frame));
 
-	if (psp->ps_siginfo & sigmask(sig)) {
+	if (info) {
 		frame.sf_si = *ksip;
 		sip = &fp->sf_si;
 	} else

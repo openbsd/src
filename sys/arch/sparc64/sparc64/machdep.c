@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.199 2020/11/08 20:37:24 mpi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.200 2021/10/06 15:46:03 claudio Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -403,10 +403,10 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
  * Send an interrupt to process.
  */
 int
-sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
+sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip,
+    int info, int onstack)
 {
 	struct proc *p = curproc;
-	struct sigacts *psp = p->p_p->ps_sigacts;
 	struct sigframe *fp;
 	struct trapframe64 *tf;
 	vaddr_t addr, oldsp, newsp;
@@ -420,7 +420,7 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 	 * one signal frame, and align.
 	 */
 	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
-	    !sigonstack(oldsp) && (psp->ps_sigonstack & sigmask(sig)))
+	    !sigonstack(oldsp) && onstack)
 		fp = (struct sigframe *)
 		    trunc_page((vaddr_t)p->p_sigstk.ss_sp + p->p_sigstk.ss_size);
 	else
@@ -449,7 +449,7 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 	sf.sf_sc.sc_g1 = tf->tf_global[1];
 	sf.sf_sc.sc_o0 = tf->tf_out[0];
 
-	if (psp->ps_siginfo & sigmask(sig)) {
+	if (info) {
 		sf.sf_sip = &fp->sf_si;
 		sf.sf_si = *ksip;
 	}

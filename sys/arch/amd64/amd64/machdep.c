@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.274 2021/05/01 16:18:28 gnezdo Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.275 2021/10/06 15:46:03 claudio Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -564,11 +564,11 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
  * user specified pc.
  */
 int
-sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
+sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip,
+    int info, int onstack)
 {
 	struct proc *p = curproc;
 	struct trapframe *tf = p->p_md.md_regs;
-	struct sigacts *psp = p->p_p->ps_sigacts;
 	struct sigcontext ksc;
 	struct savefpu *sfp = &p->p_addr->u_pcb.pcb_savefpu;
 	register_t sp, scp, sip;
@@ -599,7 +599,7 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 
 	/* Allocate space for the signal handler context. */
 	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
-	    !sigonstack(tf->tf_rsp) && (psp->ps_sigonstack & sigmask(sig)))
+	    !sigonstack(tf->tf_rsp) && onstack)
 		sp = trunc_page((vaddr_t)p->p_sigstk.ss_sp + p->p_sigstk.ss_size);
 	else
 		sp = tf->tf_rsp - 128;
@@ -622,7 +622,7 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 	    &proc0.p_addr->u_pcb.pcb_savefpu, fpu_save_len);
 
 	sip = 0;
-	if (psp->ps_siginfo & sigmask(sig)) {
+	if (info) {
 		sip = sp - ((sizeof(*ksip) + 15) & ~15);
 		sss += (sizeof(*ksip) + 15) & ~15;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.20 2021/03/25 04:12:00 jsg Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.21 2021/10/06 15:46:03 claudio Exp $	*/
 /*	$NetBSD: sig_machdep.c,v 1.22 2003/10/08 00:28:41 thorpej Exp $	*/
 
 /*
@@ -74,19 +74,19 @@ process_frame(struct proc *p)
  * user specified pc.
  */
 int
-sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
+sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip,
+    int info, int onstack)
 {
 	struct proc *p = curproc;
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	struct trapframe *tf;
 	struct sigframe *fp, frame;
-	struct sigacts *psp = p->p_p->ps_sigacts;
 
 	tf = process_frame(p);
 
 	/* Allocate space for the signal handler context. */
 	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
-	    !sigonstack(tf->tf_usr_sp) && (psp->ps_sigonstack & sigmask(sig)))
+	    !sigonstack(tf->tf_usr_sp) && onstack)
 		fp = (struct sigframe *)
 		    trunc_page((vaddr_t)p->p_sigstk.ss_sp + p->p_sigstk.ss_size);
 	else
@@ -138,7 +138,7 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 		pcb->pcb_fpcpu = NULL;
 	}
 
-	if (psp->ps_siginfo & sigmask(sig)) {
+	if (info) {
 		frame.sf_sip = &fp->sf_si;
 		frame.sf_si = *ksip;
 	}

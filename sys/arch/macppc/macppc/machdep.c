@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.193 2020/11/08 20:37:23 mpi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.194 2021/10/06 15:46:03 claudio Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -443,12 +443,12 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
  * Send a signal to process.
  */
 int
-sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
+sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip,
+    int info, int onstack)
 {
 	struct proc *p = curproc;
 	struct trapframe *tf;
 	struct sigframe *fp, frame;
-	struct sigacts *psp = p->p_p->ps_sigacts;
 
 	bzero(&frame, sizeof(frame));
 	frame.sf_signum = sig;
@@ -460,7 +460,7 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 	 */
 	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
 	    !sigonstack(tf->fixreg[1]) &&
-	    (psp->ps_sigonstack & sigmask(sig)))
+	    onstack)
 		fp = (struct sigframe *)
 		    trunc_page((vaddr_t)p->p_sigstk.ss_sp + p->p_sigstk.ss_size);
 	else
@@ -474,7 +474,7 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 	frame.sf_sc.sc_mask = mask;
 	frame.sf_sip = NULL;
 	bcopy(tf, &frame.sf_sc.sc_frame, sizeof *tf);
-	if (psp->ps_siginfo & sigmask(sig)) {
+	if (info) {
 		frame.sf_sip = &fp->sf_si;
 		frame.sf_si = *ksip;
 	}
@@ -485,7 +485,7 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 	tf->fixreg[1] = (int)fp;
 	tf->lr = (int)catcher;
 	tf->fixreg[3] = (int)sig;
-	tf->fixreg[4] = (psp->ps_siginfo & sigmask(sig)) ? (int)&fp->sf_si : 0;
+	tf->fixreg[4] = info ? (int)&fp->sf_si : 0;
 	tf->fixreg[5] = (int)&fp->sf_sc;
 	tf->srr0 = p->p_p->ps_sigcode;
 

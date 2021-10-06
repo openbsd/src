@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.645 2021/05/01 16:18:28 gnezdo Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.646 2021/10/06 15:46:03 claudio Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2444,12 +2444,12 @@ pentium_cpuspeed(int *freq)
  * specified pc, psl.
  */
 int
-sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
+sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip,
+    int info, int onstack)
 {
 	struct proc *p = curproc;
 	struct trapframe *tf = p->p_md.md_regs;
 	struct sigframe *fp, frame;
-	struct sigacts *psp = p->p_p->ps_sigacts;
 	register_t sp;
 
 	/*
@@ -2462,7 +2462,7 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 	 * Allocate space for the signal handler context.
 	 */
 	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
-	    !sigonstack(tf->tf_esp) && (psp->ps_sigonstack & sigmask(sig)))
+	    !sigonstack(tf->tf_esp) && onstack)
 		sp = trunc_page((vaddr_t)p->p_sigstk.ss_sp + p->p_sigstk.ss_size);
 	else
 		sp = tf->tf_esp;
@@ -2509,7 +2509,7 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 	frame.sf_sc.sc_esp = tf->tf_esp;
 	frame.sf_sc.sc_ss = tf->tf_ss;
 
-	if (psp->ps_siginfo & sigmask(sig)) {
+	if (info) {
 		frame.sf_sip = &fp->sf_si;
 		frame.sf_si = *ksip;
 	}

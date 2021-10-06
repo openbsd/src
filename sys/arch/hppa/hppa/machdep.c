@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.264 2021/03/11 11:16:56 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.265 2021/10/06 15:46:03 claudio Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -1206,12 +1206,12 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
  * Send an interrupt to process.
  */
 int
-sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
+sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip,
+    int info, int onstack)
 {
 	struct proc *p = curproc;
 	struct trapframe *tf = p->p_md.md_regs;
 	struct pcb *pcb = &p->p_addr->u_pcb;
-	struct sigacts *psp = p->p_p->ps_sigacts;
 	struct sigcontext ksc;
 	register_t scp, sip;
 	int sss;
@@ -1223,14 +1223,14 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 	 * Allocate space for the signal handler context.
 	 */
 	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
-	    !sigonstack(tf->tf_sp) && (psp->ps_sigonstack & sigmask(sig)))
+	    !sigonstack(tf->tf_sp) && onstack)
 		scp = round_page((vaddr_t)p->p_sigstk.ss_sp);
 	else
 		scp = (tf->tf_sp + 63) & ~63;
 
 	sss = (sizeof(ksc) + 63) & ~63;
 	sip = 0;
-	if (psp->ps_siginfo & sigmask(sig)) {
+	if (info) {
 		sip = scp + sizeof(ksc);
 		sss += (sizeof(*ksip) + 63) & ~63;
 	}

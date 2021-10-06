@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.8 2021/06/30 22:20:56 kettenis Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.9 2021/10/06 15:46:03 claudio Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -111,12 +111,12 @@ void dumpframe (char *msg, struct trapframe *tf, void *p)
  * user specified pc.
  */
 int
-sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
+sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip,
+    int info, int onstack)
 {
 	struct proc *p = curproc;
 	struct trapframe *tf;
 	struct sigframe *fp, frame;
-	struct sigacts *psp = p->p_p->ps_sigacts;
 	struct fpreg *fpreg;
 	siginfo_t *sip = NULL;
 	int i;
@@ -125,7 +125,7 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 
 	/* Allocate space for the signal handler context. */
 	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
-	    !sigonstack(tf->tf_sp) && (psp->ps_sigonstack & sigmask(sig)))
+	    !sigonstack(tf->tf_sp) && onstack)
 		fp = (struct sigframe *)
 		    trunc_page((vaddr_t)p->p_sigstk.ss_sp + p->p_sigstk.ss_size);
 	else
@@ -168,7 +168,7 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 		frame.sf_sc.sc_fcsr = fpreg->fp_fcsr;
 	}
 
-	if (psp->ps_siginfo & sigmask(sig)) {
+	if (info) {
 		sip = &fp->sf_si;
 		frame.sf_si = *ksip;
 	}

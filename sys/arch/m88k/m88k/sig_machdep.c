@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.30 2020/11/08 20:37:23 mpi Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.31 2021/10/06 15:46:03 claudio Exp $	*/
 /*
  * Copyright (c) 2014 Miodrag Vallat.
  *
@@ -104,11 +104,11 @@ pid_t sigpid = 0;
  * Send an interrupt to process.
  */
 int
-sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
+sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip,
+    int info, int onstack)
 {
 	struct proc *p = curproc;
 	struct trapframe *tf;
-	struct sigacts *psp = p->p_p->ps_sigacts;
 	struct sigframe *fp;
 	size_t fsize;
 	struct sigframe sf;
@@ -116,7 +116,7 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 
 	tf = p->p_md.md_tf;
 
-	if (psp->ps_siginfo & sigmask(sig))
+	if (info)
 		fsize = sizeof(struct sigframe);
 	else
 		fsize = offsetof(struct sigframe, sf_si);
@@ -125,7 +125,7 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 	 * Allocate space for the signal handler context.
 	 */
 	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
-	    !sigonstack(tf->tf_r[31]) && (psp->ps_sigonstack & sigmask(sig))) {
+	    !sigonstack(tf->tf_r[31]) && onstack) {
 		addr = local_stack_frame(tf,
 		    trunc_page((vaddr_t)p->p_sigstk.ss_sp + p->p_sigstk.ss_size),
 		    fsize);
@@ -142,7 +142,7 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 	sf.sf_sc.sc_mask = mask;
 	sf.sf_sc.sc_cookie = (long)sf.sf_scp ^ p->p_p->ps_sigcookie;
 
-	if (psp->ps_siginfo & sigmask(sig))
+	if (info)
 		sf.sf_si = *ksip;
 
 	/*
@@ -160,7 +160,7 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 	 */
 	tf->tf_r[1] = p->p_p->ps_sigcode;	/* return to sigcode */
 	tf->tf_r[2] = sig;			/* first arg is signo */
-	tf->tf_r[3] = psp->ps_siginfo & sigmask(sig) ? (vaddr_t)&fp->sf_si : 0;
+	tf->tf_r[3] = info ? (vaddr_t)&fp->sf_si : 0;
 	tf->tf_r[4] = (vaddr_t)&fp->sf_sc;
 	tf->tf_r[31] = (vaddr_t)fp;
 	addr = (vaddr_t)catcher;		/* and resume in the handler */

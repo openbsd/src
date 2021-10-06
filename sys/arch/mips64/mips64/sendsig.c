@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendsig.c,v 1.34 2020/11/08 20:37:23 mpi Exp $ */
+/*	$OpenBSD: sendsig.c,v 1.35 2021/10/06 15:46:03 claudio Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -92,13 +92,13 @@ struct sigframe {
  * Send an interrupt to process.
  */
 int
-sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
+sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip,
+    int info, int onstack)
 {
 	struct cpu_info *ci = curcpu();
 	struct proc *p = ci->ci_curproc;
 	struct sigframe *fp;
 	struct trapframe *regs;
-	struct sigacts *psp = p->p_p->ps_sigacts;
 	int fsize;
 	struct sigcontext ksc;
 
@@ -108,10 +108,10 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 	 * Allocate space for the signal handler context.
 	 */
 	fsize = sizeof(struct sigframe);
-	if (!(psp->ps_siginfo & sigmask(sig)))
+	if (!info)
 		fsize -= sizeof(siginfo_t);
 	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
-	    !sigonstack(regs->sp) && (psp->ps_sigonstack & sigmask(sig)))
+	    !sigonstack(regs->sp) && onstack)
 		fp = (struct sigframe *)
 		    (trunc_page((vaddr_t)p->p_sigstk.ss_sp + p->p_sigstk.ss_size)
 		    - fsize);
@@ -137,7 +137,7 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 			sizeof(ksc.sc_fpregs));
 	}
 
-	if (psp->ps_siginfo & sigmask(sig)) {
+	if (info) {
 		if (copyout(ksip, (caddr_t)&fp->sf_si, sizeof *ksip))
 			return 1;
 	}
@@ -150,7 +150,7 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 	 * Build the argument list for the signal handler.
 	 */
 	regs->a0 = sig;
-	regs->a1 = (psp->ps_siginfo & sigmask(sig)) ? (register_t)&fp->sf_si : 0;
+	regs->a1 = info ? (register_t)&fp->sf_si : 0;
 	regs->a2 = (register_t)&fp->sf_sc;
 	regs->a3 = (register_t)catcher;
 

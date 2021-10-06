@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.284 2021/10/04 08:48:12 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.285 2021/10/06 15:46:03 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -819,6 +819,9 @@ trapsignal(struct proc *p, int signum, u_long trapno, int code,
 	    (ps->ps_sigcatch & mask) != 0 &&
 	    (p->p_sigmask & mask) == 0) {
 		siginfo_t si;
+		int info = (ps->ps_siginfo & mask) != 0;
+		int onstack = (ps->ps_sigonstack & mask) != 0;
+
 		initsiginfo(&si, signum, trapno, code, sigval);
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_PSIG)) {
@@ -826,7 +829,8 @@ trapsignal(struct proc *p, int signum, u_long trapno, int code,
 			    p->p_sigmask, code, &si);
 		}
 #endif
-		if (sendsig(ps->ps_sigact[signum], signum, p->p_sigmask, &si)) {
+		if (sendsig(ps->ps_sigact[signum], signum, p->p_sigmask, &si,
+		    info, onstack)) {
 			sigexit(p, SIGILL);
 			/* NOTREACHED */
 		}
@@ -1396,7 +1400,7 @@ postsig(struct proc *p, int signum)
 	int mask, returnmask;
 	siginfo_t si;
 	union sigval sigval;
-	int s, code;
+	int s, code, info, onstack;
 
 	KASSERT(signum != 0);
 	KERNEL_ASSERT_LOCKED();
@@ -1404,6 +1408,8 @@ postsig(struct proc *p, int signum)
 	mask = sigmask(signum);
 	atomic_clearbits_int(&p->p_siglist, mask);
 	action = ps->ps_sigact[signum];
+	info = (ps->ps_siginfo & mask) != 0;
+	onstack = (ps->ps_sigonstack & mask) != 0;
 	sigval.sival_ptr = 0;
 
 	if (p->p_sisig != signum) {
@@ -1465,7 +1471,7 @@ postsig(struct proc *p, int signum)
 			p->p_sigval.sival_ptr = NULL;
 		}
 
-		if (sendsig(action, signum, returnmask, &si)) {
+		if (sendsig(action, signum, returnmask, &si, info, onstack)) {
 			sigexit(p, SIGILL);
 			/* NOTREACHED */
 		}

@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.195 2020/11/08 20:37:21 mpi Exp $ */
+/* $OpenBSD: machdep.c,v 1.196 2021/10/06 15:46:03 claudio Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -1384,13 +1384,13 @@ regdump(framep)
  * Send an interrupt to process.
  */
 int
-sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
+sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip,
+    int info, int onstack)
 {
 	struct proc *p = curproc;
 	struct sigcontext ksc, *scp;
 	struct fpreg *fpregs = (struct fpreg *)&ksc.sc_fpregs;
 	struct trapframe *frame;
-	struct sigacts *psp = p->p_p->ps_sigacts;
 	unsigned long oldsp;
 	int fsize, rndfsize, kscsize;
 	siginfo_t *sip;
@@ -1400,7 +1400,8 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 	fsize = sizeof ksc;
 	rndfsize = ((fsize + 15) / 16) * 16;
 	kscsize = rndfsize;
-	if (psp->ps_siginfo & sigmask(sig)) {
+
+	if (info) {
 		fsize += sizeof *ksip;
 		rndfsize = ((fsize + 15) / 16) * 16;
 	}
@@ -1409,7 +1410,7 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 	 * Allocate space for the signal handler context.
 	 */
 	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
-	    !sigonstack(oldsp) && (psp->ps_sigonstack & sigmask(sig)))
+	    !sigonstack(oldsp) && onstack)
 		scp = (struct sigcontext *)
 		    (trunc_page((vaddr_t)p->p_sigstk.ss_sp + p->p_sigstk.ss_size)
 		    - rndfsize);
@@ -1442,7 +1443,7 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 	memset(ksc.sc_reserved, 0, sizeof ksc.sc_reserved);	/* XXX */
 	memset(ksc.sc_xxx, 0, sizeof ksc.sc_xxx);		/* XXX */
 
-	if (psp->ps_siginfo & sigmask(sig)) {
+	if (info) {
 		sip = (void *)scp + kscsize;
 		if (copyout(ksip, (caddr_t)sip, fsize - kscsize) != 0)
 			return 1;
