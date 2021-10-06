@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.6 2016/12/17 16:26:46 krw Exp $	*/
+/*	$OpenBSD: buf.c,v 1.7 2021/10/06 00:40:41 deraadt Exp $	*/
 /*	$NetBSD: buf.c,v 1.24 2016/06/24 19:24:11 christos Exp $	*/
 
 /*
@@ -36,7 +36,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/time.h>
 
 #include <assert.h>

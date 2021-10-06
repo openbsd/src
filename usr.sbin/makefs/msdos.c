@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdos.c,v 1.12 2021/09/01 15:19:00 deraadt Exp $	*/
+/*	$OpenBSD: msdos.c,v 1.13 2021/10/06 00:40:39 deraadt Exp $	*/
 /*	$NetBSD: msdos.c,v 1.16 2016/01/30 09:59:27 mlelstv Exp $	*/
 
 /*-
@@ -30,10 +30,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/types.h>
 #include <assert.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <string.h>
 
 #include "ffs/buf.h"
@@ -121,7 +123,7 @@ msdos_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 	 * XXX: pick up other options from the msdos specific ones?
 	 * Is minsize right here?
 	 */
-	msdos_opt->create_size = MAX(msdos_opt->create_size,
+	msdos_opt->create_size = MAXIMUM(msdos_opt->create_size,
 		fsopts->minsize);
 	msdos_opt->offset = fsopts->offset;
 	if (msdos_opt->bytes_per_sector == 0) {
@@ -165,7 +167,7 @@ msdos_populate_dir(const char *path, struct denode *dir, fsnode *root,
     fsnode *parent, fsinfo_t *fsopts)
 {
 	fsnode *cur;
-	char pbuf[MAXPATHLEN];
+	char pbuf[PATH_MAX];
 
 	assert(dir != NULL);
 	assert(root != NULL);

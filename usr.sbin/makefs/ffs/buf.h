@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.4 2016/10/17 01:16:22 tedu Exp $	*/
+/*	$OpenBSD: buf.h,v 1.5 2021/10/06 00:40:41 deraadt Exp $	*/
 /*	$NetBSD: buf.h,v 1.10 2015/03/29 05:52:59 agc Exp $	*/
 
 /*
@@ -39,7 +39,6 @@
 #ifndef _FFS_BUF_H
 #define	_FFS_BUF_H
 
-#include <sys/param.h>
 #include <sys/queue.h>
 
 #include <stdio.h>
@@ -86,7 +85,6 @@ struct mkfsbuf *	getblk(struct mkfsvnode *, daddr_t, int, int, int);
 #define	B_MODIFY	0
 #define	BC_AGE		0
 
-#define min(a, b) MIN((a), (b))
 #define microtime(tv) gettimeofday((tv), NULL)
 #define KASSERT(a)
 #define IO_SYNC	1

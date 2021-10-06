@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.c,v 1.33 2021/09/01 15:19:00 deraadt Exp $	*/
+/*	$OpenBSD: ffs.c,v 1.34 2021/10/06 00:40:39 deraadt Exp $	*/
 /*	$NetBSD: ffs.c,v 1.66 2015/12/21 00:58:08 christos Exp $	*/
 
 /*
@@ -66,6 +66,7 @@
  *	@(#)ffs_alloc.c	8.19 (Berkeley) 7/13/95
  */
 
+#include <sys/param.h>	/* roundup DEV_BSIZE */
 #include <sys/types.h>
 #include <sys/disklabel.h>
 
@@ -75,6 +76,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -340,9 +342,9 @@ ffs_validate(const char *dir, fsnode *root, fsinfo_t *fsopts)
 	if (fsopts->sectorsize == -1)
 		fsopts->sectorsize = DFL_SECSIZE;
 	if (ffs_opts->fsize == -1)
-		ffs_opts->fsize = MAX(DFL_FRAGSIZE, fsopts->sectorsize);
+		ffs_opts->fsize = MAXIMUM(DFL_FRAGSIZE, fsopts->sectorsize);
 	if (ffs_opts->bsize == -1)
-		ffs_opts->bsize = MIN(DFL_BLKSIZE, 8 * ffs_opts->fsize);
+		ffs_opts->bsize = MINIMUM(DFL_BLKSIZE, 8 * ffs_opts->fsize);
 				/* fsopts->density is set below */
 	/* XXX ondisk32 */
 	if (ffs_opts->maxbpg == -1)
@@ -439,7 +441,7 @@ ffs_create_image(const char *image, fsinfo_t *fsopts)
 	if (bufrem > 0)
 		buf = ecalloc(1, bufsize);
 	while (bufrem > 0) {
-		i = write(fsopts->fd, buf, MIN(bufsize, bufrem));
+		i = write(fsopts->fd, buf, MINIMUM(bufsize, bufrem));
 		if (i == -1) {
 			warn("zeroing image, %lld bytes to go",
 			    (long long)bufrem);
@@ -619,7 +621,7 @@ ffs_populate_dir(const char *dir, fsnode *root, fsinfo_t *fsopts)
 	dirbuf_t	dirbuf;
 	union dinode	din;
 	void		*membuf;
-	char		path[MAXPATHLEN + 1];
+	char		path[PATH_MAX + 1];
 	ffs_opt_t	*ffs_opts = fsopts->fs_specific;
 
 	assert(dir != NULL);
@@ -759,7 +761,7 @@ ffs_write_file(union dinode *din, uint32_t ino, void *buf, fsinfo_t *fsopts)
 
 	chunk = 0;
 	for (bufleft = DIP(din, size); bufleft > 0; bufleft -= chunk) {
-		chunk = MIN(bufleft, ffs_opts->bsize);
+		chunk = MINIMUM(bufleft, ffs_opts->bsize);
 		if (!isfile)
 			;
 		else if ((nread = read(ffd, fbuf, chunk)) == -1)

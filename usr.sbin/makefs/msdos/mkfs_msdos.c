@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs_msdos.c,v 1.5 2017/11/02 11:06:54 jca Exp $	*/
+/*	$OpenBSD: mkfs_msdos.c,v 1.6 2021/10/06 00:40:41 deraadt Exp $	*/
 /*	$NetBSD: mkfs_msdos.c,v 1.10 2016/04/03 11:00:13 mlelstv Exp $	*/
 
 /*
@@ -28,7 +28,8 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* powerof2 */
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 
@@ -40,6 +41,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
@@ -224,7 +226,7 @@ static void infohandler(int sig);
 int
 mkfs_msdos(const char *fname, const char *dtype, const struct msdos_options *op)
 {
-    char buf[MAXPATHLEN];
+    char buf[PATH_MAX];
     struct stat sb;
     struct timeval tv;
     struct bpb bpb;
@@ -492,7 +494,7 @@ mkfs_msdos(const char *fname, const char *dtype, const struct msdos_options *op)
 	    x = bpb.bkbs + 1;
     }
     if (!bpb.res)
-	bpb.res = o.fat_type == 32 ? MAX(x, MAX(16384 / bpb.bps, 4)) : x;
+	bpb.res = o.fat_type == 32 ? MAXIMUM(x, MAXIMUM(16384 / bpb.bps, 4)) : x;
     else if (bpb.res < x) {
 	warnx("too few reserved sectors (need %d have %d)", x, bpb.res);
 	return -1;
@@ -522,7 +524,7 @@ mkfs_msdos(const char *fname, const char *dtype, const struct msdos_options *op)
     x1 += x * bpb.nft;
     x = (u_int64_t)(bpb.bsec - x1) * bpb.bps * NPB /
 	(bpb.spc * bpb.bps * NPB + o.fat_type / BPN * bpb.nft);
-    x2 = howmany((RESFTE + MIN(x, maxcls(o.fat_type))) * (o.fat_type / BPN),
+    x2 = howmany((RESFTE + MINIMUM(x, maxcls(o.fat_type))) * (o.fat_type / BPN),
 		 bpb.bps * NPB);
     if (!bpb.bspf) {
 	bpb.bspf = x2;

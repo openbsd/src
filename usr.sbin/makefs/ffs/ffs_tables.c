@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_tables.c,v 1.2 2016/10/22 16:51:52 natano Exp $	*/
+/*	$OpenBSD: ffs_tables.c,v 1.3 2021/10/06 00:40:41 deraadt Exp $	*/
 /*	$NetBSD: ffs_tables.c,v 1.2 1994/06/29 06:46:35 cgd Exp $	*/
 
 /*
@@ -32,8 +32,10 @@
  *	@(#)ffs_tables.c	8.1 (Berkeley) 6/11/93
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <ufs/ffs/fs.h>
+
+#include <stdlib.h>
 
 /*
  * Bit patterns for identifying fragments in the block map

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.13 2016/12/17 16:26:46 krw Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.14 2021/10/06 00:40:41 deraadt Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.29 2016/06/24 19:24:11 christos Exp $	*/
 /* From: NetBSD: ffs_alloc.c,v 1.50 2001/09/06 02:16:01 lukem Exp */
 
@@ -42,9 +42,8 @@
  *	@(#)ffs_alloc.c	8.19 (Berkeley) 7/13/95
  */
 
-#include <sys/param.h>
-
-#include <errno.h>
+#include <sys/param.h>	/* DEV_BSIZE setbit clrbit NBBY howmany */
+#include <sys/types.h>
 
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
@@ -53,6 +52,7 @@
 #include "ffs/ufs_inode.h"
 #include "ffs/ffs_extern.h"
 
+#include <errno.h>
 
 static int scanc(u_int, const u_char *, const u_char *, int);
 

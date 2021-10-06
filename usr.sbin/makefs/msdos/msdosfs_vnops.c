@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.8 2016/12/17 16:43:30 krw Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.9 2021/10/06 00:40:41 deraadt Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.17 2016/01/30 09:59:27 mlelstv Exp $ */
 
 /*-
@@ -48,7 +48,7 @@
  * October 1992
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -474,7 +474,7 @@ msdosfs_wfile(const char *path, struct denode *dep, fsnode *node)
 			DPRINTF(("bread %d\n", error));
 			goto out;
 		}
-		cpsize = MIN((nsize - offs), blsize - on);
+		cpsize = MINIMUM((nsize - offs), blsize - on);
 		memcpy((char *)bp->b_data + on, dat + offs, cpsize);
 		bwrite(bp);
 		offs += cpsize;

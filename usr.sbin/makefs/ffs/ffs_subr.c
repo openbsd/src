@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_subr.c,v 1.4 2016/10/22 19:43:50 natano Exp $	*/
+/*	$OpenBSD: ffs_subr.c,v 1.5 2021/10/06 00:40:41 deraadt Exp $	*/
 /*	$NetBSD: ffs_subr.c,v 1.49 2016/05/07 11:59:08 maxv Exp $	*/
 
 /*
@@ -32,11 +32,12 @@
  *	@(#)ffs_subr.c	8.5 (Berkeley) 3/21/95
  */
 
-#include <sys/param.h>
-
+#include <sys/param.h>	/* setbit clrbit NBBY */
+#include <sys/types.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
 
+#include <limits.h>
 #include <err.h>
 
 #include "ffs/ffs_extern.h"

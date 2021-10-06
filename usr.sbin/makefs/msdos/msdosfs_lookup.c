@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_lookup.c,v 1.3 2017/08/31 12:03:02 otto Exp $	*/
+/*	$OpenBSD: msdosfs_lookup.c,v 1.4 2021/10/06 00:40:41 deraadt Exp $	*/
 /*	$NetBSD: msdosfs_lookup.c,v 1.35 2016/01/30 09:59:27 mlelstv Exp $	*/
 
 /*-
@@ -48,7 +48,6 @@
  * October 1992
  */
 
-#include <sys/param.h>
 
 #include "ffs/buf.h"
 

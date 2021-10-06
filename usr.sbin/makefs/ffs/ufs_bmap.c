@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_bmap.c,v 1.6 2016/12/17 16:26:46 krw Exp $	*/
+/*	$OpenBSD: ufs_bmap.c,v 1.7 2021/10/06 00:40:41 deraadt Exp $	*/
 /*	$NetBSD: ufs_bmap.c,v 1.18 2013/06/19 17:51:27 dholland Exp $	*/
 /* From: NetBSD: ufs_bmap.c,v 1.14 2001/11/08 05:00:51 chs Exp */
 
@@ -38,7 +38,6 @@
  *	@(#)ufs_bmap.c	8.8 (Berkeley) 8/11/95
  */
 
-#include <sys/param.h>
 #include <sys/time.h>
 
 #include <assert.h>

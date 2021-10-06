@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_fat.c,v 1.5 2018/04/26 12:42:51 guenther Exp $	*/
+/*	$OpenBSD: msdosfs_fat.c,v 1.6 2021/10/06 00:40:41 deraadt Exp $	*/
 /*	$NetBSD: msdosfs_fat.c,v 1.31 2016/05/07 16:43:02 mlelstv Exp $	*/
 
 /*-
@@ -48,10 +48,12 @@
  * October 1992
  */
 
+#include <sys/types.h>
+#include <sys/time.h>
+
 /*
  * kernel include files.
  */
-#include <sys/param.h>
 
 #include "ffs/buf.h"
 
@@ -63,6 +65,7 @@
 #include "msdos/direntry.h"
 #include "msdos/denode.h"
 #include "msdos/fat.h"
+#include "makefs.h"
 
 /*
  * Fat cache stats.
@@ -101,7 +104,7 @@ fatblock(struct msdosfsmount *pmp, u_long ofs, u_long *bnp, u_long *sizep, u_lon
 	u_long bn, size;
 
 	bn = ofs / pmp->pm_fatblocksize * pmp->pm_fatblocksec;
-	size = min(pmp->pm_fatblocksec, pmp->pm_FATsecs - bn)
+	size = MINIMUM(pmp->pm_fatblocksec, pmp->pm_FATsecs - bn)
 	    * pmp->pm_BytesPerSec;
 	bn += pmp->pm_fatblk + pmp->pm_curfat * pmp->pm_FATsecs;
 
@@ -185,7 +188,7 @@ pcbmap(struct denode *dep, u_long findcn, daddr_t *bnp, u_long *cnp, int *sp)
 			if (cnp)
 				*cnp = MSDOSFSROOT;
 			if (sp)
-				*sp = min(pmp->pm_bpcluster,
+				*sp = MINIMUM(pmp->pm_bpcluster,
 				    dep->de_FileSize - de_cn2off(pmp, findcn));
 			DPRINTF(("%s(root, bn=%lu, cn=%u)\n", __func__,
 			    pmp->pm_rootdirblk + de_cn2bn(pmp, findcn),

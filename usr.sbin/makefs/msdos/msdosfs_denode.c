@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_denode.c,v 1.6 2016/10/22 22:20:24 natano Exp $	*/
+/*	$OpenBSD: msdosfs_denode.c,v 1.7 2021/10/06 00:40:41 deraadt Exp $	*/
 /*	$NetBSD: msdosfs_denode.c,v 1.7 2015/03/29 05:52:59 agc Exp $	*/
 
 /*-
@@ -48,7 +48,6 @@
  * October 1992
  */
 
-#include <sys/param.h>
 
 #include "ffs/buf.h"
 

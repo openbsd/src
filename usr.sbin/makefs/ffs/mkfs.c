@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.13 2016/11/11 09:54:07 natano Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.14 2021/10/06 00:40:41 deraadt Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.34 2016/06/24 19:24:11 christos Exp $	*/
 
 /*
@@ -39,12 +39,13 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* roundup howmany setbit */
 #include <sys/time.h>
 #include <sys/resource.h>
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
@@ -126,7 +127,7 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts, time_t tstamp)
 	minfree =       ffs_opts->minfree;
 	opt =           ffs_opts->optimization;
 	density =       ffs_opts->density;
-	maxcontig =	MAX(1, MIN(MAXBSIZE, FFS_MAXBSIZE) / bsize);
+	maxcontig =	MAXIMUM(1, MINIMUM(MAXBSIZE, FFS_MAXBSIZE) / bsize);
 	maxbpg =        ffs_opts->maxbpg;
 	avgfilesize =   ffs_opts->avgfilesize;
 	avgfpdir =      ffs_opts->avgfpdir;
@@ -215,7 +216,7 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts, time_t tstamp)
 	}
 
 	if (sblock.fs_maxcontig > 1)
-		sblock.fs_contigsumsize = MIN(sblock.fs_maxcontig,FS_MAXCONTIG);
+		sblock.fs_contigsumsize = MINIMUM(sblock.fs_maxcontig,FS_MAXCONTIG);
 
 	sblock.fs_bmask = ~(sblock.fs_bsize - 1);
 	sblock.fs_fmask = ~(sblock.fs_fsize - 1);
@@ -297,7 +298,7 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts, time_t tstamp)
 	 */
 	origdensity = density;
 	for (;;) {
-		fragsperinode = MAX(numfrags(&sblock, density), 1);
+		fragsperinode = MAXIMUM(numfrags(&sblock, density), 1);
 		minfpg = fragsperinode * INOPB(&sblock);
 		if (minfpg > sblock.fs_size)
 			minfpg = sblock.fs_size;
