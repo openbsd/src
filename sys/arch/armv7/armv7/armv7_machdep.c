@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.63 2021/03/25 04:12:01 jsg Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.64 2021/10/06 12:50:10 visa Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -453,6 +453,12 @@ initarm(void *arg0, void *arg1, void *arg2, paddr_t loadaddr)
 		len = fdt_node_property(node, "openbsd,uefi-mmap-desc-ver", &prop);
 		if (len == sizeof(mmap_desc_ver))
 			mmap_desc_ver = bemtoh32((uint32_t *)prop);
+
+		len = fdt_node_property(node, "openbsd,dma-constraint", &prop);
+		if (len == sizeof(uint64_t[2])) {
+			dma_constraint.ucr_low = bemtoh64((uint64_t *)prop);
+			dma_constraint.ucr_high = bemtoh64((uint64_t *)prop + 1);
+		}
 	}
 
 	process_kernel_args();
