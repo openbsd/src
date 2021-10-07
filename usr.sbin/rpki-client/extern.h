@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.68 2021/10/05 11:20:46 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.69 2021/10/07 08:30:39 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -127,6 +127,7 @@ struct cert {
 	enum cert_purpose	 purpose; /* Certificate Purpose (BGPSec or CA) */
 	int		 valid; /* validated resources */
 	X509		*x509; /* the cert */
+	time_t		 expires; /* do not use after */
 };
 
 /*
@@ -232,6 +233,7 @@ struct crl {
 	RB_ENTRY(crl)	 entry;
 	char		*aki;
 	X509_CRL	*x509_crl;
+	time_t		 expires; /* do not use after */
 };
 /*
  * Tree of CRLs sorted by uri
@@ -527,6 +529,7 @@ char		*hex_encode(const unsigned char *, size_t);
 char		*x509_get_aia(X509 *, const char *);
 char		*x509_get_aki(X509 *, int, const char *);
 char		*x509_get_ski(X509 *, const char *);
+time_t		 x509_get_expire(X509 *, const char *);
 char		*x509_get_crl(X509 *, const char *);
 char		*x509_crl_get_aki(X509_CRL *, const char *);
 enum cert_purpose	 x509_get_purpose(X509 *, const char *);

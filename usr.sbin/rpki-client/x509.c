@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.22 2021/10/05 11:20:46 job Exp $ */
+/*	$OpenBSD: x509.c,v 1.23 2021/10/07 08:30:39 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -230,6 +230,29 @@ x509_get_aia(X509 *x, const char *fn)
 out:
 	AUTHORITY_INFO_ACCESS_free(info);
 	return aia;
+}
+
+/*
+ * Extract the expire time (not-after) of a certificate.
+ */
+time_t
+x509_get_expire(X509 *x, const char *fn)
+{
+	const ASN1_TIME	*at;
+	struct tm	 expires_tm;
+	time_t		 expires;
+
+	at = X509_get0_notAfter(x);
+	if (at == NULL)
+		errx(1, "%s: X509_get0_notafter failed", fn);
+	memset(&expires_tm, 0, sizeof(expires_tm));
+	if (ASN1_time_parse(at->data, at->length, &expires_tm, 0) == -1)
+		errx(1, "%s: ASN1_time_parse failed", fn);
+
+	if ((expires = mktime(&expires_tm)) == -1)
+		errx(1, "%s: mktime failed", fn);
+
+	return expires;
 }
 
 /*
