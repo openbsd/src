@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.107 2021/06/02 07:29:03 semarie Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.108 2021/10/07 14:47:32 jcs Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -190,6 +190,7 @@ dlsym(void *handle, const char *name)
 
 	sr = _dl_find_symbol(name, flags|SYM_NOWARNNOTFOUND, NULL, object);
 	if (sr.sym == NULL) {
+		DL_DEB(("dlsym: failed to find symbol %s\n", name));
 		_dl_errno = DL_NO_SYMBOL;
 		return NULL;
 	}
