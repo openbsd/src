@@ -1,4 +1,4 @@
-/*	$Id: test-cert.c,v 1.10 2021/03/29 15:47:34 claudio Exp $ */
+/*	$Id: test-cert.c,v 1.11 2021/10/07 10:34:39 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -42,6 +42,7 @@ cert_print(const struct cert *p)
 	size_t	 i;
 	char	 buf1[64], buf2[64];
 	int	 sockt;
+	char	 tbuf[21];
 
 	assert(p != NULL);
 
@@ -56,6 +57,8 @@ cert_print(const struct cert *p)
 		printf("Authority key identifier: %s\n", pretty_key_id(p->aki));
 	if (p->aia != NULL)
 		printf("Authority info access: %s\n", p->aia);
+	strftime(tbuf, sizeof(tbuf), "%FT%TZ", gmtime(&p->expires));
+	printf("CA valid until: %s\n", tbuf);
 
 	for (i = 0; i < p->asz; i++)
 		switch (p->as[i].type) {

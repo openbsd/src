@@ -1,4 +1,4 @@
-/*	$Id: test-roa.c,v 1.11 2021/05/06 17:03:57 job Exp $ */
+/*	$Id: test-roa.c,v 1.12 2021/10/07 10:34:39 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -32,14 +32,6 @@
 
 #include "test-common.c"
 
-#ifndef ASN1error
-void
-ASN1error(int err)
-{
-	ASN1err(0, err);
-}
-#endif
-
 int verbose;
 
 static void
@@ -47,12 +39,16 @@ roa_print(const struct roa *p)
 {
 	char	 buf[128];
 	size_t	 i;
+	char	 tbuf[21];
 
 	assert(p != NULL);
 
 	printf("Subject key identifier: %s\n", pretty_key_id(p->ski));
 	printf("Authority key identifier: %s\n", pretty_key_id(p->aki));
 	printf("Authority info access: %s\n", p->aia);
+	strftime(tbuf, sizeof(tbuf), "%FT%TZ", gmtime(&p->expires));
+	printf("ROA valid until: %s\n", tbuf);
+	
 	printf("asID: %" PRIu32 "\n", p->asid);
 	for (i = 0; i < p->ipsz; i++) {
 		ip_addr_print(&p->ips[i].addr,
