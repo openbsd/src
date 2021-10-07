@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlbhandler.S,v 1.52 2021/05/05 15:29:19 visa Exp $ */
+/*	$OpenBSD: tlbhandler.S,v 1.53 2021/10/07 13:08:17 visa Exp $ */
 
 /*
  * Copyright (c) 1995-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -489,65 +489,6 @@ LEAF(tlb_update, 0)
 	j	ra
 	li	v0, 0
 END(tlb_update)
-
-/*
- * int64_t tlb_probe(vaddr_t a0);
- * Probe for a TLB entry covering the given address, and return its index
- * (< 0 if no match)
- */
-LEAF(tlb_probe, 0)
-	mfc0	v1, COP_0_STATUS_REG	# Save the status register.
-	ori	v0, v1, SR_INT_ENAB
-	xori	v0, v0, SR_INT_ENAB
-	mtc0	v0, COP_0_STATUS_REG	# Disable interrupts
-	MTC0_SR_IE_HAZARD
-	dli	v0, (PG_HVPN | PG_ASID_MASK)
-	and	a0, a0, v0
-	dmfc0	ta0, COP_0_TLB_HI	# Save current PID
-	dmtc0	a0, COP_0_TLB_HI	# Init high reg
-	TLB_HAZARD
-	tlbp				# Probe for the entry.
-	TLB_HAZARD			# necessary?
-	mfc0	v0, COP_0_TLB_INDEX	# Return index
-	dmtc0	ta0, COP_0_TLB_HI	# restore PID
-	mtc0	v1, COP_0_STATUS_REG	# Restore the status register
-	MTC0_SR_IE_HAZARD
-	j	ra
-	nop
-END(tlb_probe)
-
-/*
- * void tlb_update_indexed(vaddr_t a0, register_t a1, register_t a2, uint a3);
- * Update a TLB entry pair.
- */
-LEAF(tlb_update_indexed, 0)
-	mfc0	v1, COP_0_STATUS_REG	# Save the status register.
-	ori	v0, v1, SR_INT_ENAB
-	xori	v0, v0, SR_INT_ENAB
-	mtc0	v0, COP_0_STATUS_REG	# Disable interrupts
-	MTC0_SR_IE_HAZARD
-	dmfc0	ta0, COP_0_TLB_HI	# Save current PID
-	li	ta1, TLB_PAGE_MASK
-
-	mtc0	a3, COP_0_TLB_INDEX
-	mtc0	ta1, COP_0_TLB_PG_MASK	# init mask
-	dmtc0	a0, COP_0_TLB_HI	# init high reg.
-
-	PTE_CLEAR_SWBITS(a1)
-	dmtc0	a1, COP_0_TLB_LO0	# init low reg0.
-	PTE_CLEAR_SWBITS(a2)
-	dmtc0	a2, COP_0_TLB_LO1	# init low reg1.
-
-	TLB_HAZARD
-	tlbwi				# update slot
-	TLB_HAZARD
-
-	dmtc0	ta0, COP_0_TLB_HI	# restore PID
-	mtc0	v1, COP_0_STATUS_REG	# Restore the status register
-	MTC0_SR_IE_HAZARD
-	j	ra
-	nop
-END(tlb_update_indexed)
 
 /*---------------------------------------------------------------- tlb_read
  *	Read the TLB entry.

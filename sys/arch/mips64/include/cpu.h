@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.136 2021/07/24 08:21:13 visa Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.137 2021/10/07 13:08:17 visa Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -407,12 +407,10 @@ void	tlb_asid_wrap(struct cpu_info *);
 void	tlb_flush(int);
 void	tlb_flush_addr(vaddr_t);
 void	tlb_init(unsigned int);
-int64_t	tlb_probe(vaddr_t);
 void	tlb_set_page_mask(uint32_t);
 void	tlb_set_pid(u_int);
 void	tlb_set_wired(uint32_t);
 int	tlb_update(vaddr_t, register_t);
-void	tlb_update_indexed(vaddr_t, register_t, register_t, uint);
 
 void	build_trampoline(vaddr_t, vaddr_t);
 void	cpu_switchto_asm(struct proc *, struct proc *);
