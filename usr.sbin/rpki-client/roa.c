@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.25 2021/09/09 14:15:49 claudio Exp $ */
+/*	$OpenBSD: roa.c,v 1.26 2021/10/07 08:28:45 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -375,7 +375,7 @@ roa_parse(X509 **x509, const char *fn)
 		goto out;
 	}
 	if ((expires = mktime(&expires_tm)) == -1) {
-		err(1, "mktime failed");
+		errx(1, "mktime failed");
 		goto out;
 	}
 	p.res->expires = expires;
