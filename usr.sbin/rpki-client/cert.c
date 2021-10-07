@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.35 2021/10/07 11:18:54 job Exp $ */
+/*	$OpenBSD: cert.c,v 1.36 2021/10/07 12:59:29 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -978,6 +978,7 @@ static struct cert *
 cert_parse_inner(X509 **xp, const char *fn, int ta)
 {
 	int		 rc = 0, extsz, c;
+	int		 sia_present = 0;
 	size_t		 i;
 	X509		*x = NULL;
 	X509_EXTENSION	*ext = NULL;
@@ -1029,6 +1030,7 @@ cert_parse_inner(X509 **xp, const char *fn, int ta)
 			c = sbgp_assysnum(&p, ext);
 			break;
 		case NID_sinfo_access:
+			sia_present = 1;
 			c = sbgp_sia(&p, ext);
 			break;
 		case NID_crl_distribution_points:
@@ -1116,14 +1118,15 @@ cert_parse_inner(X509 **xp, const char *fn, int ta)
 		goto out;
 	}
 
+	if (p.res->purpose == CERT_PURPOSE_BGPSEC_ROUTER && sia_present) {
+		warnx("%s: BGPsec Router Certificate must not have SIA", p.fn);
+		goto out;
+	}
+
 	if (p.res->purpose == CERT_PURPOSE_CA && p.res->mft == NULL) {
 		warnx("%s: RFC 6487 section 4.8.8: missing SIA", p.fn);
 		goto out;
 	}
-
-	/*
-	 * XXX: also add opposite check: is any SIA present?
-	 */
 
 	if (X509_up_ref(x) == 0)
 		errx(1, "%s: X509_up_ref failed", __func__);
