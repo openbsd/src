@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.40 2021/05/02 14:39:05 martijn Exp $ */
+/*	$OpenBSD: parse.y,v 1.41 2021/10/07 11:32:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -207,7 +207,7 @@ conf_main	: LISTEN ON STRING port ssl certname	{
 			if (! interface($3, cert, &conf->listeners,
 			    $4, $5)) {
 				if (host($3, cert, &conf->listeners,
-				    $4, $5) <= 0) {
+				    $4, $5) != 1) {
 					yyerror("invalid virtual ip or interface: %s", $3);
 					free($6);
 					free($3);
