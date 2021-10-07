@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.373 2021/10/06 13:36:47 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.374 2021/10/07 08:15:04 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5718,9 +5718,9 @@ iwm_rx_compressed_ba(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 {
 	struct iwm_ba_notif *ban = (void *)pkt->data;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ieee80211_node *ni;
+	struct ieee80211_node *ni = ic->ic_bss;
+	struct iwm_node *in = (void *)ni;
 	struct ieee80211_tx_ba *ba;
-	struct iwm_node *in;
 	struct iwm_tx_ring *ring;
 	uint16_t seq, ssn;
 	int qid;
@@ -5732,11 +5732,8 @@ iwm_rx_compressed_ba(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 		return;
 
 	if (ban->sta_id != IWM_STATION_ID ||
-	    !IEEE80211_ADDR_EQ(ic->ic_bss->ni_macaddr, ban->sta_addr))
+	    !IEEE80211_ADDR_EQ(in->in_macaddr, ban->sta_addr))
 		return;
-
-	ni = ic->ic_bss;
-	in = (void *)ni;
 
 	qid = le16toh(ban->scd_flow);
 	if (qid < IWM_FIRST_AGG_TX_QUEUE || qid > IWM_LAST_AGG_TX_QUEUE)
@@ -6919,7 +6916,7 @@ iwm_add_sta_cmd(struct iwm_softc *sc, struct iwm_node *in, int update)
 			    etherbroadcastaddr);
 		else
 			IEEE80211_ADDR_COPY(&add_sta_cmd.addr,
-			    in->in_ni.ni_bssid);
+			    in->in_macaddr);
 	}
 	add_sta_cmd.add_modify = update ? 1 : 0;
 	add_sta_cmd.station_flags_msk
@@ -7899,7 +7896,7 @@ iwm_mac_ctxt_cmd_common(struct iwm_softc *sc, struct iwm_node *in,
 		return;
 	}
 
-	IEEE80211_ADDR_COPY(cmd->bssid_addr, ni->ni_bssid);
+	IEEE80211_ADDR_COPY(cmd->bssid_addr, in->in_macaddr);
 	iwm_ack_rates(sc, in, &cck_ack_rates, &ofdm_ack_rates);
 	cmd->cck_rates = htole32(cck_ack_rates);
 	cmd->ofdm_rates = htole32(ofdm_ack_rates);
@@ -8301,6 +8298,7 @@ iwm_auth(struct iwm_softc *sc)
 			return err;
 	}
 	in->in_phyctxt = &sc->sc_phyctxt[0];
+	IEEE80211_ADDR_COPY(in->in_macaddr, in->in_ni.ni_macaddr); 
 
 	err = iwm_mac_ctxt_cmd(sc, in, IWM_FW_CTXT_ACTION_ADD, 0);
 	if (err) {
@@ -9750,7 +9748,7 @@ int
 iwm_allow_mcast(struct iwm_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ieee80211_node *ni = ic->ic_bss;
+	struct iwm_node *in = (void *)ic->ic_bss;
 	struct iwm_mcast_filter_cmd *cmd;
 	size_t size;
 	int err;
@@ -9763,7 +9761,7 @@ iwm_allow_mcast(struct iwm_softc *sc)
 	cmd->port_id = 0;
 	cmd->count = 0;
 	cmd->pass_all = 1;
-	IEEE80211_ADDR_COPY(cmd->bssid, ni->ni_bssid);
+	IEEE80211_ADDR_COPY(cmd->bssid, in->in_macaddr);
 
 	err = iwm_send_cmd_pdu(sc, IWM_MCAST_FILTER_CMD,
 	    0, size, cmd);
@@ -9932,6 +9930,7 @@ iwm_stop(struct ifnet *ifp)
 	in->in_phyctxt = NULL;
 	in->tid_disable_ampdu = 0xffff;
 	in->tfd_queue_msk = 0;
+	IEEE80211_ADDR_COPY(in->in_macaddr, etheranyaddr);
 
 	sc->sc_flags &= ~(IWM_FLAG_SCANNING | IWM_FLAG_BGSCAN);
 	sc->sc_flags &= ~IWM_FLAG_MAC_ACTIVE;
