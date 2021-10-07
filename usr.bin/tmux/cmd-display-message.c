@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-message.c,v 1.60 2021/08/21 10:22:39 nicm Exp $ */
+/* $OpenBSD: cmd-display-message.c,v 1.61 2021/10/07 07:52:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -75,12 +75,16 @@ cmd_display_message_exec(struct cmd *self, struct cmdq_item *item)
 	if (args_has(args, 'I')) {
 		if (wp == NULL)
 			return (CMD_RETURN_NORMAL);
-		if (window_pane_start_input(wp, item, &cause) != 0) {
+		switch (window_pane_start_input(wp, item, &cause)) {
+		case -1:
 			cmdq_error(item, "%s", cause);
 			free(cause);
 			return (CMD_RETURN_ERROR);
+		case 1:
+			return (CMD_RETURN_NORMAL);
+		case 0:
+			return (CMD_RETURN_WAIT);
 		}
-		return (CMD_RETURN_WAIT);
 	}
 
 	if (args_has(args, 'F') && count != 0) {
