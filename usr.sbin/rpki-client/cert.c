@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.34 2021/10/07 08:30:39 claudio Exp $ */
+/*	$OpenBSD: cert.c,v 1.35 2021/10/07 11:18:54 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1126,7 +1126,7 @@ cert_parse_inner(X509 **xp, const char *fn, int ta)
 	 */
 
 	if (X509_up_ref(x) == 0)
-		errx(1, "king bula");
+		errx(1, "%s: X509_up_ref failed", __func__);
 
 	p.res->x509 = x;
 
