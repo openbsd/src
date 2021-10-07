@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplpcie.c,v 1.6 2021/09/09 22:46:03 kettenis Exp $	*/
+/*	$OpenBSD: aplpcie.c,v 1.7 2021/10/07 13:34:20 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -155,8 +155,8 @@ aplpcie_attach(struct device *parent, struct device *self, void *aux)
 
 	idx = OF_getindex(faa->fa_node, "config", "reg-names");
 	if (idx < 0 || idx >= faa->fa_nreg ||
-	    bus_space_map(sc->sc_iot, faa->fa_reg[i].addr,
-	    faa->fa_reg[i].size, 0, &sc->sc_ioh)) {
+	    bus_space_map(sc->sc_iot, faa->fa_reg[idx].addr,
+	    faa->fa_reg[idx].size, 0, &sc->sc_ioh)) {
 		printf(": can't map registers\n");
 		return;
 	}
