@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg.h,v 1.4 2021/10/07 12:31:03 visa Exp $	*/
+/*	$OpenBSD: reg.h,v 1.5 2021/10/07 12:32:10 visa Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,6 +49,6 @@
 #include <machine/regnum.h>
 
 struct reg {
-        register_t     r_regs[NREGS];	/* numbered as above */
+	register_t	r_regs[NREGS];	/* numbered as above */
 };
 #endif /* !_MIPS64_REG_H_ */
