@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.186 2021/06/11 15:50:43 jsg Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.187 2021/10/07 14:11:32 robert Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -299,7 +299,6 @@ azalia_codec_init_vtbl(codec_t *this)
 		break;
 	case 0x10ec0887:
 		this->name = "Realtek ALC887";
-		this->qrks |= AZ_QRK_WID_CDIN_1C | AZ_QRK_WID_BEEP_1D;
 		break;
 	case 0x10ec0888:
 		this->name = "Realtek ALC888";
