@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg.h,v 1.3 2011/03/23 16:54:36 pirofti Exp $	*/
+/*	$OpenBSD: reg.h,v 1.4 2021/10/07 12:31:03 visa Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,9 +48,6 @@
  */
 #include <machine/regnum.h>
 
-/*
- * Register set accessible via /proc/$pid/reg
- */
 struct reg {
         register_t     r_regs[NREGS];	/* numbered as above */
 };
