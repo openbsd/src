@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.185 2021/04/29 21:43:47 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.186 2021/10/07 12:26:09 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -1268,6 +1268,15 @@ ieee80211_node_join_bss(struct ieee80211com *ic, struct ieee80211_node *selbs)
 
 		/* 
 		 * After a background scan, we have now switched APs.
+		 * Send a probe request to our new AP to say "Hello!".
+		 * This is not strictly required but could help with
+		 * setting up state in our new AP.
+		 */
+		if (bgscan) {
+			IEEE80211_SEND_MGMT(ic, ni,
+			    IEEE80211_FC0_SUBTYPE_PROBE_REQ, 0);
+		}
+		/*
 		 * Pretend we were just de-authed, which makes
 		 * ieee80211_new_state() try to re-auth and thus send
 		 * an AUTH frame to our newly selected AP.
