@@ -1,13 +1,14 @@
 #!/bin/ksh
-#	$OpenBSD: network_statement.sh,v 1.3 2020/06/12 13:27:43 denis Exp $
+#	$OpenBSD: network_statement.sh,v 1.4 2021/10/07 15:20:35 anton Exp $
 set -e
 
 OSPF6D=$1
 OSPF6DCONFIGDIR=$2
-RDOMAIN1=$3
-RDOMAIN2=$4
-PAIR1=$5
-PAIR2=$6
+OBJDIR=$3
+RDOMAIN1=$4
+RDOMAIN2=$5
+PAIR1=$6
+PAIR2=$7
 
 RDOMAINS="${RDOMAIN1} ${RDOMAIN2}"
 PAIRS="${PAIR1} ${PAIR2}"
@@ -30,7 +31,7 @@ error_notify() {
 	route -qn -T ${RDOMAIN2} flush || true
 	ifconfig lo${RDOMAIN1} destroy || true
 	ifconfig lo${RDOMAIN2} destroy || true
-	rm ${OSPF6DCONFIGDIR}/ospf6d.1.conf ${OSPF6DCONFIGDIR}/ospf6d.2.conf
+	rm ${OBJDIR}/ospf6d.1.conf ${OBJDIR}/ospf6d.2.conf
 	if [ $1 -ne 0 ]; then
 		echo FAILED
 		exit 1
@@ -73,12 +74,12 @@ ifconfig vether${RDOMAIN2} inet6 rdomain ${RDOMAIN2} ${PAIR2PREFIX}/64 up
 ifconfig vether${RDOMAIN2} inet6 rdomain ${RDOMAIN2} ${PAIR2PREFIX2}/64 up
 sed "s/{RDOMAIN1}/${RDOMAIN1}/g;s/{PAIR1}/${PAIR1}/g" \
     ${OSPF6DCONFIGDIR}/ospf6d.network_statement.rdomain1.conf \
-    > ${OSPF6DCONFIGDIR}/ospf6d.1.conf
-chmod 0600 ${OSPF6DCONFIGDIR}/ospf6d.1.conf
+    > ${OBJDIR}/ospf6d.1.conf
+chmod 0600 ${OBJDIR}/ospf6d.1.conf
 sed "s/{RDOMAIN2}/${RDOMAIN2}/g;s/{PAIR2}/${PAIR2}/g" \
     ${OSPF6DCONFIGDIR}/ospf6d.network_statement.rdomain2.conf \
-    > ${OSPF6DCONFIGDIR}/ospf6d.2.conf
-chmod 0600 ${OSPF6DCONFIGDIR}/ospf6d.2.conf
+    > ${OBJDIR}/ospf6d.2.conf
+chmod 0600 ${OBJDIR}/ospf6d.2.conf
 
 echo add routes
 route -T ${RDOMAIN2} add -inet6 default ${PAIR2PREFIX}1
@@ -87,9 +88,9 @@ route -T ${RDOMAIN2} add 2001:db8:fffe::/64 ${PAIR2PREFIX}3 -label toOSPF
 
 echo start ospf6d
 route -T ${RDOMAIN1} exec ${OSPF6D} \
-    -v -f ${OSPF6DCONFIGDIR}/ospf6d.1.conf
+    -v -f ${OBJDIR}/ospf6d.1.conf
 route -T ${RDOMAIN2} exec ${OSPF6D} \
-    -v -f ${OSPF6DCONFIGDIR}/ospf6d.2.conf
+    -v -f ${OBJDIR}/ospf6d.2.conf
 
 sleep 50
 
