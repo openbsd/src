@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vnops.c,v 1.56 2021/10/02 08:51:41 semarie Exp $	*/
+/*	$OpenBSD: mfs_vnops.c,v 1.57 2021/10/08 08:34:09 claudio Exp $	*/
 /*	$NetBSD: mfs_vnops.c,v 1.8 1996/03/17 02:16:32 christos Exp $	*/
 
 /*
@@ -125,13 +125,12 @@ mfs_strategy(void *v)
 	struct buf *bp = ap->a_bp;
 	struct mfsnode *mfsp;
 	struct vnode *vp;
-	struct proc *p = curproc;
 
 	if (!vfinddev(bp->b_dev, VBLK, &vp) || vp->v_usecount == 0)
 		panic("mfs_strategy: bad dev");
 
 	mfsp = VTOMFS(vp);
-	if (p != NULL && mfsp->mfs_tid == p->p_tid) {
+	if (mfsp->mfs_tid == curproc->p_tid) {
 		mfs_doio(mfsp, bp);
 	} else {
 		bufq_queue(&mfsp->mfs_bufq, bp);
