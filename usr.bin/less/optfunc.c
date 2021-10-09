@@ -420,7 +420,7 @@ opt__V(int type, char *s)
 		putstr("to the extent permitted by law.\n");
 		putstr("For information about the terms of redistribution,\n");
 		putstr("see the file named README in the less distribution.\n");
-		putstr("Homepage: http://www.greenwoodsoftware.com/less\n");
+		putstr("Homepage: https://www.greenwoodsoftware.com/less\n");
 		putstr("\n");
 		quit(QUIT_OK);
 		break;
@@ -436,7 +436,7 @@ opt_x(int type, char *s)
 	extern int tabstops[];
 	extern int ntabstops;
 	extern int tabdefault;
-	char tabs[60+(4*TABSTOP_MAX)];
+	char tabs[60 + 11 * TABSTOP_MAX];
 	int i;
 	PARG p;
 

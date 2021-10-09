@@ -563,6 +563,7 @@ static int
 new_lesskey(char *buf, int len, int sysvar)
 {
 	char *p;
+	char *end;
 	int c;
 	int n;
 
@@ -575,21 +576,28 @@ new_lesskey(char *buf, int len, int sysvar)
 	    buf[len-1] != C2_END_LESSKEY_MAGIC)
 		return (-1);
 	p = buf + 4;
+	end = buf + len;
 	for (;;) {
 		c = *p++;
 		switch (c) {
 		case CMD_SECTION:
 			n = gint(&p);
+			if (n < 0 || p + n >= end)
+				return (-1);
 			add_fcmd_table(p, n);
 			p += n;
 			break;
 		case EDIT_SECTION:
 			n = gint(&p);
+			if (n < 0 || p + n >= end)
+				return (-1);
 			add_ecmd_table(p, n);
 			p += n;
 			break;
 		case VAR_SECTION:
 			n = gint(&p);
+			if (n < 0 || p + n >= end)
+				return (-1);
 			add_var_table((sysvar) ?
 			    &list_sysvar_tables : &list_var_tables, p, n);
 			p += n;
@@ -663,7 +671,8 @@ lesskey(char *filename, int sysvar)
 	 * Figure out if this is an old-style (before version 241)
 	 * or new-style lesskey file format.
 	 */
-	if (buf[0] != C0_LESSKEY_MAGIC || buf[1] != C1_LESSKEY_MAGIC ||
+	if (len < 4 ||
+	    buf[0] != C0_LESSKEY_MAGIC || buf[1] != C1_LESSKEY_MAGIC ||
 	    buf[2] != C2_LESSKEY_MAGIC || buf[3] != C3_LESSKEY_MAGIC)
 		return (old_lesskey(buf, (int)len));
 	return (new_lesskey(buf, (int)len, sysvar));

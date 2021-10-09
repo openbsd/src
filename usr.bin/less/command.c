@@ -264,6 +264,7 @@ is_erase_char(int c)
 static int
 mca_opt_first_char(int c)
 {
+	int no_prompt = (optflag & OPT_NO_PROMPT);
 	int flag = (optflag & ~OPT_NO_PROMPT);
 	if (flag == OPT_NO_TOGGLE) {
 		switch (c) {
@@ -277,12 +278,14 @@ mca_opt_first_char(int c)
 		switch (c) {
 		case '+':
 			/* "-+" = UNSET. */
-			optflag = (flag == OPT_UNSET) ? OPT_TOGGLE : OPT_UNSET;
+			optflag = no_prompt |
+			    ((flag == OPT_UNSET) ? OPT_TOGGLE : OPT_UNSET);
 			mca_opt_toggle();
 			return (MCA_MORE);
 		case '!':
 			/* "-!" = SET */
-			optflag = (flag == OPT_SET) ? OPT_TOGGLE : OPT_SET;
+			optflag = no_prompt |
+			    ((flag == OPT_SET) ? OPT_TOGGLE : OPT_SET);
 			mca_opt_toggle();
 			return (MCA_MORE);
 		case CONTROL('P'):

@@ -75,6 +75,8 @@ match_brac(int obrac, int cbrac, int forwdir, int n)
 	nest = 0;
 	while ((c = (*chget)()) != EOI) {
 		if (c == obrac) {
+			if (nest == INT_MAX)
+				break;
 			nest++;
 		} else if (c == cbrac && --nest < 0) {
 			/*

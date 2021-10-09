@@ -55,7 +55,7 @@ opt_desc(struct loption *o)
 char *
 propt(int c)
 {
-	static char buf[8];
+	static char buf[33];
 
 	(void) snprintf(buf, sizeof (buf), "-%s", prchar(c));
 	return (buf);
