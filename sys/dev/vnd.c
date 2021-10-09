@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.171 2019/11/27 16:12:13 beck Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.172 2021/10/09 14:47:02 deraadt Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -108,7 +108,8 @@ int numvnd = 0;
 void	vndattach(int);
 
 void	vndclear(struct vnd_softc *);
-int	vndsetcred(struct vnd_softc *, struct ucred *);
+int	vndsetcred(struct proc *p, struct vnode *, struct vnd_ioctl *,
+	    struct ucred **);
 int	vndgetdisklabel(dev_t, struct vnd_softc *, struct disklabel *, int);
 void	vndencrypt(struct vnd_softc *, caddr_t, size_t, daddr_t, int);
 void	vndencryptbuf(struct vnd_softc *, struct buf *, int);
@@ -401,7 +402,6 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	struct vnd_ioctl *vio;
 	struct vnd_user *vnu;
 	struct vattr vattr;
-	struct nameidata nd;
 	int error, part, pmask;
 
 	DNPRINTF(VDB_FOLLOW, "vndioctl(%x, %lx, %p, %x, %p): unit %d\n",
@@ -418,6 +418,13 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	switch (cmd) {
 
 	case VNDIOCSET:
+	    {
+		char name[VNDNLEN], key[BLF_MAXUTILIZED];
+		struct nameidata nd;
+		struct ucred *cred;
+		size_t size;
+		int rw;
+
 		if (sc->sc_flags & VNF_INITED)
 			return (EBUSY);
 
@@ -428,12 +435,62 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		    vio->vnd_nsectors > UINT_MAX)
 			return (EINVAL);
 
-		if ((error = disk_lock(&sc->sc_dk)) != 0)
+		if ((error = copyinstr(vio->vnd_file, name,
+		    sizeof(name), NULL)))
 			return (error);
 
-		if ((error = copyinstr(vio->vnd_file, sc->sc_file,
-		    sizeof(sc->sc_file), NULL))) {
-			disk_unlock(&sc->sc_dk);
+		if (vio->vnd_keylen > 0) {
+			if (vio->vnd_keylen > sizeof(key))
+				vio->vnd_keylen = sizeof(key);
+
+			if ((error = copyin(vio->vnd_key, key,
+			    vio->vnd_keylen)) != 0)
+				return (error);
+		}
+
+		/*
+		 * Open for read and write first. This lets vn_open() weed out
+		 * directories, sockets, etc. so we don't have to worry about
+		 * them.
+		 */
+		NDINIT(&nd, 0, 0, UIO_SYSSPACE, name, p);
+		rw = FREAD|FWRITE;
+		error = vn_open(&nd, FREAD|FWRITE, 0);
+		if (error == EROFS) {
+			NDINIT(&nd, 0, 0, UIO_SYSSPACE, name, p);
+			rw = FREAD;
+			error = vn_open(&nd, FREAD, 0);
+		}
+		if (error)
+			return (error);
+
+		error = VOP_GETATTR(nd.ni_vp, &vattr, p->p_ucred, p);
+		if (error) {
+fail:
+			VOP_UNLOCK(nd.ni_vp);
+			vn_close(nd.ni_vp, rw, p->p_ucred, p);
+			return (error);
+		}
+
+		/* Cannot put a vnd on top of a vnd */
+		if (major(vattr.va_rdev) == major(dev)) {
+			error = EINVAL;
+			goto fail;
+		}
+
+		if ((error = vndsetcred(p, nd.ni_vp, vio, &cred)) != 0)
+			goto fail;
+
+		VOP_UNLOCK(nd.ni_vp);
+
+		if (nd.ni_vp->v_type == VBLK) {
+			size = vndbdevsize(nd.ni_vp, p);
+			/* XXX is size 0 ok? */
+		} else
+			size = vattr.va_size / vio->vnd_secsize;
+
+		if ((error = disk_lock(&sc->sc_dk)) != 0) {
+			crfree(cred);
 			return (error);
 		}
 
@@ -441,59 +498,16 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		sc->sc_secsize = vio->vnd_secsize;
 		sc->sc_ntracks = vio->vnd_ntracks;
 		sc->sc_nsectors = vio->vnd_nsectors;
+		sc->sc_size = size;
 
-		/*
-		 * Open for read and write first. This lets vn_open() weed out
-		 * directories, sockets, etc. so we don't have to worry about
-		 * them.
-		 */
-		NDINIT(&nd, 0, 0, UIO_USERSPACE, vio->vnd_file, p);
-		sc->sc_flags &= ~VNF_READONLY;
-		error = vn_open(&nd, FREAD|FWRITE, 0);
-		if (error == EROFS) {
-			NDINIT(&nd, 0, 0, UIO_USERSPACE, vio->vnd_file, p);
+		if (rw == FREAD)
 			sc->sc_flags |= VNF_READONLY;
-			error = vn_open(&nd, FREAD, 0);
-		}
-		if (error) {
-			disk_unlock(&sc->sc_dk);
-			return (error);
-		}
+		else
+			sc->sc_flags &= ~VNF_READONLY;
 
-		if (nd.ni_vp->v_type == VBLK)
-			sc->sc_size = vndbdevsize(nd.ni_vp, p);
-		else {
-			error = VOP_GETATTR(nd.ni_vp, &vattr, p->p_ucred, p);
-			if (error) {
-				VOP_UNLOCK(nd.ni_vp);
-				vn_close(nd.ni_vp, VNDRW(sc), p->p_ucred, p);
-				disk_unlock(&sc->sc_dk);
-				return (error);
-			}
-			sc->sc_size = vattr.va_size / sc->sc_secsize;
-		}
-		VOP_UNLOCK(nd.ni_vp);
-		sc->sc_vp = nd.ni_vp;
-		if ((error = vndsetcred(sc, p->p_ucred)) != 0) {
-			(void) vn_close(nd.ni_vp, VNDRW(sc), p->p_ucred, p);
-			disk_unlock(&sc->sc_dk);
-			return (error);
-		}
+		memcpy(sc->sc_file, name, sizeof(sc->sc_file));
 
 		if (vio->vnd_keylen > 0) {
-			char key[BLF_MAXUTILIZED];
-
-			if (vio->vnd_keylen > sizeof(key))
-				vio->vnd_keylen = sizeof(key);
-
-			if ((error = copyin(vio->vnd_key, key,
-			    vio->vnd_keylen)) != 0) {
-				(void) vn_close(nd.ni_vp, VNDRW(sc),
-				    p->p_ucred, p);
-				disk_unlock(&sc->sc_dk);
-				return (error);
-			}
-
 			sc->sc_keyctx = malloc(sizeof(*sc->sc_keyctx), M_DEVBUF,
 			    M_WAITOK);
 			blf_key(sc->sc_keyctx, key, vio->vnd_keylen);
@@ -501,6 +515,8 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		} else
 			sc->sc_keyctx = NULL;
 
+		sc->sc_vp = nd.ni_vp;
+		sc->sc_cred = cred;
 		vio->vnd_size = sc->sc_size * sc->sc_secsize;
 		sc->sc_flags |= VNF_INITED;
 
@@ -514,7 +530,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		disk_unlock(&sc->sc_dk);
 
 		break;
-
+	    }
 	case VNDIOCCLR:
 		if ((sc->sc_flags & VNF_INITED) == 0)
 			return (ENXIO);
@@ -642,21 +658,25 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
  * if some other uid can write directly to the mapped file (NFS).
  */
 int
-vndsetcred(struct vnd_softc *sc, struct ucred *cred)
+vndsetcred(struct proc *p, struct vnode *vp, struct vnd_ioctl *vio,
+    struct ucred **newcredp)
 {
 	void *buf;
 	size_t size;
+	struct ucred *new;
 	int error;
 
-	sc->sc_cred = crdup(cred);
+	new = crdup(p->p_ucred);
 	buf = malloc(DEV_BSIZE, M_TEMP, M_WAITOK);
-	size = MIN(DEV_BSIZE, sc->sc_size * sc->sc_secsize);
+	size = DEV_BSIZE;
 
 	/* XXX: Horrible kludge to establish credentials for NFS */
-	error = vn_rdwr(UIO_READ, sc->sc_vp, buf, size, 0, UIO_SYSSPACE, 0,
-	    sc->sc_cred, NULL, curproc);
+	error = vn_rdwr(UIO_READ, vp, buf, size, 0, UIO_SYSSPACE, 0,
+	    new, NULL, curproc);
 
 	free(buf, M_TEMP, DEV_BSIZE);
+	if (error == 0)
+		*newcredp = new;
 	return (error);
 }
 
