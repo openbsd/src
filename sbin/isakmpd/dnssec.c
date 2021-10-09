@@ -1,4 +1,4 @@
-/* $OpenBSD: dnssec.c,v 1.27 2018/01/15 09:54:48 mpi Exp $	 */
+/* $OpenBSD: dnssec.c,v 1.28 2021/10/09 18:43:50 deraadt Exp $	 */
 
 /*
  * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
@@ -26,7 +26,6 @@
 
 #include <sys/types.h>
 #include <netinet/in.h>
-#include <arpa/nameser.h>
 #include <arpa/inet.h>
 #include <stdlib.h>
 

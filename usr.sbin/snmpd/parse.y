@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.68 2021/09/02 05:41:02 martijn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.69 2021/10/09 18:43:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -33,7 +33,6 @@
 #include <net/if.h>
 
 #include <arpa/inet.h>
-#include <arpa/nameser.h>
 
 #include <openssl/sha.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv_db.c,v 1.31 2019/07/03 03:24:03 deraadt Exp $ */
+/*	$OpenBSD: ypserv_db.c,v 1.32 2021/10/09 18:43:51 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -42,7 +42,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <netdb.h>
-#include <arpa/nameser.h>
 #include <resolv.h>
 #include <sys/types.h>
 #include <sys/socket.h>

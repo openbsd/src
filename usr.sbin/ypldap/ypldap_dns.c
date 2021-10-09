@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap_dns.c,v 1.13 2017/04/17 16:37:39 otto Exp $ */
+/*	$OpenBSD: ypldap_dns.c,v 1.14 2021/10/09 18:43:50 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003-2008 Henning Brauer <henning@openbsd.org>
@@ -24,7 +24,6 @@
 #include <sys/queue.h>
 
 #include <netinet/in.h>
-#include <arpa/nameser.h>
 
 #include <netdb.h>
 #include <pwd.h>
