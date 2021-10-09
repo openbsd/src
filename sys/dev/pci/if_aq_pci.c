@@ -1,4 +1,4 @@
-/* $OpenBSD: if_aq_pci.c,v 1.3 2021/09/20 01:27:23 jmatthew Exp $ */
+/* $OpenBSD: if_aq_pci.c,v 1.4 2021/10/09 08:38:13 jmatthew Exp $ */
 /*	$NetBSD: if_aq.c,v 1.27 2021/06/16 00:21:18 riastradh Exp $	*/
 
 /*
@@ -941,7 +941,7 @@ aq_attach(struct device *parent, struct device *self, void *aux)
 	struct aq_softc *sc = (struct aq_softc *)self;
 	struct pci_attach_args *pa = aux;
 	const struct aq_product *aqp;
-	pcireg_t command, bar, memtype;
+	pcireg_t bar, memtype;
 	pci_chipset_tag_t pc;
 	pci_intr_handle_t ih;
 	int (*isr)(void *);
@@ -956,10 +956,6 @@ aq_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = pa->pa_dmat;
 	sc->sc_pc = pc = pa->pa_pc;
 	sc->sc_pcitag = tag = pa->pa_tag;
-
-	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	command |= PCI_COMMAND_MASTER_ENABLE;
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
 
 	sc->sc_product = PCI_PRODUCT(pa->pa_id);
 	sc->sc_revision = PCI_REVISION(pa->pa_class);
