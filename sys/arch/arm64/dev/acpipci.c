@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpipci.c,v 1.30 2021/06/25 17:41:22 patrick Exp $	*/
+/*	$OpenBSD: acpipci.c,v 1.31 2021/10/10 16:23:17 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -531,23 +531,23 @@ acpipci_intr_establish(void *v, pci_intr_handle_t ih, int level,
     struct cpu_info *ci, int (*func)(void *), void *arg, char *name)
 {
 	struct acpipci_softc *sc = v;
-	struct interrupt_controller *ic;
 	struct acpipci_intr_handle *aih;
-	bus_dma_segment_t seg;
 	void *cookie;
-
-	extern LIST_HEAD(, interrupt_controller) interrupt_controllers;
-	LIST_FOREACH(ic, &interrupt_controllers, ic_list) {
-		if (ic->ic_establish_msi)
-			break;
-	}
-	if (ic == NULL)
-		return NULL;
 
 	KASSERT(ih.ih_type != PCI_NONE);
 
 	if (ih.ih_type != PCI_INTX) {
+		struct interrupt_controller *ic;
+		bus_dma_segment_t seg;
 		uint64_t addr, data;
+
+		extern LIST_HEAD(, interrupt_controller) interrupt_controllers;
+		LIST_FOREACH(ic, &interrupt_controllers, ic_list) {
+			if (ic->ic_establish_msi)
+				break;
+		}
+		if (ic == NULL)
+			return NULL;
 
 		/* Map Requester ID through IORT to get sideband data. */
 		data = acpipci_iort_map_msi(ih.ih_pc, ih.ih_tag);
