@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.107 2021/09/13 15:07:51 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.108 2021/10/10 15:34:21 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -437,16 +437,20 @@ PRT_fix_CHS(struct prt *prt)
 	size = prt->prt_ns;
 	end = (start + size) - 1;
 
-	cyl = (start / spc); start -= (cyl * spc);
-	head = (start / spt); start -= (head * spt);
+	cyl = (start / spc);
+	start -= (cyl * spc);
+	head = (start / spt);
+	start -= (head * spt);
 	sect = (start + 1);
 
 	prt->prt_scyl = cyl;
 	prt->prt_shead = head;
 	prt->prt_ssect = sect;
 
-	cyl = (end / spc); end -= (cyl * spc);
-	head = (end / spt); end -= (head * spt);
+	cyl = (end / spc);
+	end -= (cyl * spc);
+	head = (end / spt);
+	end -= (head * spt);
 	sect = (end + 1);
 
 	prt->prt_ecyl = cyl;

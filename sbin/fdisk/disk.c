@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.73 2021/09/13 15:07:51 krw Exp $	*/
+/*	$OpenBSD: disk.c,v 1.74 2021/10/10 15:34:21 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -71,7 +71,6 @@ DISK_open(const char *name, const int oflags)
 		disk.dk_size = DL_BLKTOSEC(&dl, sz);
 		disk.dk_sectors = DL_BLKTOSEC(&dl, disk.dk_sectors);
 	} else {
-		disk.dk_sectors = dl.d_nsectors;
 		disk.dk_cylinders = dl.d_ncylinders;
 		disk.dk_heads = dl.d_ntracks;
 		disk.dk_sectors = dl.d_nsectors;
