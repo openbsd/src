@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpipci.c,v 1.31 2021/10/10 16:23:17 kettenis Exp $	*/
+/*	$OpenBSD: acpipci.c,v 1.32 2021/10/10 21:54:50 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -77,6 +77,8 @@ struct acpipci_softc {
 	char		sc_memex_name[32];
 	int		sc_bus;
 	uint32_t	sc_seg;
+
+	struct interrupt_controller *sc_msi_ic;
 };
 
 struct acpipci_intr_handle {
@@ -138,6 +140,7 @@ acpipci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct acpi_attach_args *aaa = aux;
 	struct acpipci_softc *sc = (struct acpipci_softc *)self;
+	struct interrupt_controller *ic;
 	struct pcibus_attach_args pba;
 	struct aml_value res;
 	uint64_t bbn = 0;
@@ -187,6 +190,13 @@ acpipci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_bus_memt._space_map = acpipci_bs_map;
 	sc->sc_bus_memt._space_mmap = acpipci_bs_mmap;
 
+	extern LIST_HEAD(, interrupt_controller) interrupt_controllers;
+	LIST_FOREACH(ic, &interrupt_controllers, ic_list) {
+		if (ic->ic_establish_msi)
+			break;
+	}
+	sc->sc_msi_ic = ic;
+
 	sc->sc_pc = pci_lookup_segment(seg);
 	KASSERT(sc->sc_pc->pc_intr_v == NULL);
 
@@ -212,7 +222,8 @@ acpipci_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_pmemex = sc->sc_memex;
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = sc->sc_bus;
-	pba.pba_flags |= PCI_FLAGS_MSI_ENABLED;
+	if (sc->sc_msi_ic)
+		pba.pba_flags |= PCI_FLAGS_MSI_ENABLED;
 
 	config_found(self, &pba, NULL);
 }
@@ -537,17 +548,11 @@ acpipci_intr_establish(void *v, pci_intr_handle_t ih, int level,
 	KASSERT(ih.ih_type != PCI_NONE);
 
 	if (ih.ih_type != PCI_INTX) {
-		struct interrupt_controller *ic;
+		struct interrupt_controller *ic = sc->sc_msi_ic;
 		bus_dma_segment_t seg;
 		uint64_t addr, data;
 
-		extern LIST_HEAD(, interrupt_controller) interrupt_controllers;
-		LIST_FOREACH(ic, &interrupt_controllers, ic_list) {
-			if (ic->ic_establish_msi)
-				break;
-		}
-		if (ic == NULL)
-			return NULL;
+		KASSERT(ic);
 
 		/* Map Requester ID through IORT to get sideband data. */
 		data = acpipci_iort_map_msi(ih.ih_pc, ih.ih_tag);
