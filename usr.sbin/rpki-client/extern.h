@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.69 2021/10/07 08:30:39 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.70 2021/10/10 21:57:43 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -316,7 +316,7 @@ enum publish_type {
  * An entity (MFT, ROA, certificate, etc.) that needs to be downloaded
  * and parsed.
  */
-struct	entity {
+struct entity {
 	enum rtype	 type; /* type of entity (not RTYPE_EOF) */
 	char		*file; /* local path to file */
 	int		 has_pkey; /* whether pkey/sz is specified */
@@ -335,7 +335,7 @@ RB_HEAD(filepath_tree, filepath);
 /*
  * Statistics collected during run-time.
  */
-struct	stats {
+struct stats {
 	size_t	 tals; /* total number of locators */
 	size_t	 mfts; /* total number of manifests */
 	size_t	 mfts_fail; /* failing syntactic parse */

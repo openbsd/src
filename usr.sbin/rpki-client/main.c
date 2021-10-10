@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.146 2021/10/05 11:20:46 job Exp $ */
+/*	$OpenBSD: main.c,v 1.147 2021/10/10 21:57:43 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -627,7 +627,7 @@ main(int argc, char *argv[])
 {
 	int		 rc, c, st, proc, rsync, http, rrdp, ok,
 			 hangup = 0, fl = SOCK_STREAM | SOCK_CLOEXEC;
-	size_t		 i, id, outsz = 0, talsz = 0;
+	size_t		 i, id, talsz = 0;
 	pid_t		 pid, procpid, rsyncpid, httppid, rrdppid;
 	int		 fd[2];
 	struct pollfd	 pfd[NPFD];
@@ -1175,10 +1175,6 @@ main(int argc, char *argv[])
 
 	/* Memory cleanup. */
 	repo_free();
-
-	for (i = 0; i < outsz; i++)
-		roa_free(out[i]);
-	free(out);
 
 	return rc;
 
