@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.147 2021/10/10 21:57:43 job Exp $ */
+/*	$OpenBSD: main.c,v 1.148 2021/10/10 22:04:33 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -632,7 +632,6 @@ main(int argc, char *argv[])
 	int		 fd[2];
 	struct pollfd	 pfd[NPFD];
 	struct msgbuf	*queues[NPFD];
-	struct roa	**out = NULL;
 	char		*rsync_prog = "openrsync";
 	char		*bind_addr = NULL;
 	const char	*cachedir = NULL, *outputdir = NULL;
