@@ -1,4 +1,4 @@
-/*	$OpenBSD: psci.c,v 1.8 2018/05/23 09:12:34 kettenis Exp $	*/
+/*	$OpenBSD: psci.c,v 1.9 2021/10/10 16:20:37 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Jonathan Gray <jsg@openbsd.org>
@@ -208,11 +208,15 @@ int32_t
 smccc_version(void)
 {
 	struct psci_softc *sc = psci_sc;
+	int32_t version;
 
-	if (sc && sc->sc_callfn)
-		return (*sc->sc_callfn)(SMCCC_VERSION, 0, 0, 0);
+	KASSERT(sc && sc->sc_callfn);
+	version = (*sc->sc_callfn)(SMCCC_VERSION, 0, 0, 0);
+	if (version != PSCI_NOT_SUPPORTED)
+		return version;
 
-	return PSCI_NOT_SUPPORTED;
+	/* Treat NOT_SUPPORTED as 1.0 */
+	return 0x10000;
 }
 
 int32_t
@@ -220,10 +224,8 @@ smccc_arch_features(uint32_t arch_func_id)
 {
 	struct psci_softc *sc = psci_sc;
 
-	if (sc && sc->sc_callfn)
-		return (*sc->sc_callfn)(SMCCC_ARCH_FEATURES, arch_func_id, 0, 0);
-
-	return PSCI_NOT_SUPPORTED;
+	KASSERT(sc && sc->sc_callfn);
+	return (*sc->sc_callfn)(SMCCC_ARCH_FEATURES, arch_func_id, 0, 0);
 }
 
 uint32_t
