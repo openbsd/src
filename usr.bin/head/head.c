@@ -1,4 +1,4 @@
-/*	$OpenBSD: head.c,v 1.21 2016/03/20 17:14:51 tb Exp $	*/
+/*	$OpenBSD: head.c,v 1.22 2021/10/10 15:57:25 cheloha Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987 Regents of the University of California.
@@ -48,11 +48,11 @@ static void usage(void);
 int
 main(int argc, char *argv[])
 {
+	const char *errstr;
 	FILE	*fp;
 	long	cnt;
 	int	ch, firsttime;
 	long	linecnt = 10;
-	char	*p = NULL;
 	int	status = 0;
 
 	if (pledge("stdio rpath", NULL) == -1)
@@ -61,7 +61,9 @@ main(int argc, char *argv[])
 	/* handle obsolete -number syntax */
 	if (argc > 1 && argv[1][0] == '-' &&
 	    isdigit((unsigned char)argv[1][1])) {
-		p = argv[1] + 1;
+		linecnt = strtonum(argv[1] + 1, 1, LONG_MAX, &errstr);
+		if (errstr != NULL)
+			errx(1, "count is %s: %s", errstr, argv[1] + 1);
 		argc--;
 		argv++;
 	}
@@ -69,21 +71,15 @@ main(int argc, char *argv[])
 	while ((ch = getopt(argc, argv, "n:")) != -1) {
 		switch (ch) {
 		case 'n':
-			p = optarg;
+			linecnt = strtonum(optarg, 1, LONG_MAX, &errstr);
+			if (errstr != NULL)
+				errx(1, "count is %s: %s", errstr, optarg);
 			break;
 		default:
 			usage();
 		}
 	}
 	argc -= optind, argv += optind;
-
-	if (p) {
-		const char *errstr;
-
-		linecnt = strtonum(p, 1, LONG_MAX, &errstr);
-		if (errstr)
-			errx(1, "line count %s: %s", errstr, p);
-	}
 
 	for (firsttime = 1; ; firsttime = 0) {
 		if (!*argv) {
