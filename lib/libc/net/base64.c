@@ -1,4 +1,4 @@
-/*	$OpenBSD: base64.c,v 1.8 2015/01/16 16:48:51 deraadt Exp $	*/
+/*	$OpenBSD: base64.c,v 1.9 2021/10/11 14:32:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 by Internet Software Consortium.
@@ -46,7 +46,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <arpa/nameser.h>
 
 #include <ctype.h>
 #include <resolv.h>
