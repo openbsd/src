@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.106 2021/10/11 09:01:06 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.107 2021/10/11 09:02:01 stsp Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -246,6 +246,7 @@ struct ieee80211com {
 	void			(*ic_ampdu_rx_stop)(struct ieee80211com *,
 				    struct ieee80211_node *, u_int8_t);
 	void			(*ic_updateprot)(struct ieee80211com *);
+	void			(*ic_updatechan)(struct ieee80211com *);
 	int			(*ic_bgscan_start)(struct ieee80211com *);
 	struct timeout		ic_bgscan_timeout;
 	uint32_t		ic_bgscan_fail;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.238 2021/09/03 12:39:43 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.239 2021/10/11 09:02:01 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -1856,6 +1856,27 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 		}
 		if (updateprot && ic->ic_updateprot != NULL)
 			ic->ic_updateprot(ic);
+
+		/*
+		 * Check if 40MHz channel mode has changed since last beacon.
+		 */
+		if (htop && (ic->ic_bss->ni_flags & IEEE80211_NODE_HT) &&
+		    (ic->ic_htcaps & IEEE80211_HTCAP_CBW20_40)) {
+			uint8_t chw_last, chw, sco_last, sco;
+			chw_last = (ic->ic_bss->ni_htop0 & IEEE80211_HTOP0_CHW);
+			chw = (ni->ni_htop0 & IEEE80211_HTOP0_CHW);
+			sco_last =
+			    ((ic->ic_bss->ni_htop0 & IEEE80211_HTOP0_SCO_MASK)
+			    >> IEEE80211_HTOP0_SCO_SHIFT);
+			sco = ((ni->ni_htop0 & IEEE80211_HTOP0_SCO_MASK) >>
+			    IEEE80211_HTOP0_SCO_SHIFT);
+			ic->ic_bss->ni_htop0 = ni->ni_htop0;
+			if (chw_last != chw || sco_last != sco) {
+				if (ic->ic_updatechan != NULL)
+					ic->ic_updatechan(ic);
+			}
+		} else if (htop)
+			ic->ic_bss->ni_htop0 = ni->ni_htop0;
 
 		/*
 		 * Check if AP short slot time setting has changed
