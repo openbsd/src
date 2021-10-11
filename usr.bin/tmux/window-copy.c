@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.330 2021/08/20 20:04:22 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.331 2021/10/11 10:55:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -4531,8 +4531,8 @@ window_copy_pipe_run(struct window_mode_entry *wme, struct session *s,
 	if (cmd == NULL || *cmd == '\0')
 		cmd = options_get_string(global_options, "copy-command");
 	if (cmd != NULL && *cmd != '\0') {
-		job = job_run(cmd, 0, NULL, s, NULL, NULL, NULL, NULL, NULL,
-		    JOB_NOWAIT, -1, -1);
+		job = job_run(cmd, 0, NULL, NULL, s, NULL, NULL, NULL, NULL,
+		    NULL, JOB_NOWAIT, -1, -1);
 		bufferevent_write(job_get_event(job), buf, *len);
 	}
 	return (buf);

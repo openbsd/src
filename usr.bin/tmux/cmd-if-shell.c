@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-if-shell.c,v 1.83 2021/09/15 07:38:30 nicm Exp $ */
+/* $OpenBSD: cmd-if-shell.c,v 1.84 2021/10/11 10:55:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -118,7 +118,7 @@ cmd_if_shell_exec(struct cmd *self, struct cmdq_item *item)
 	if (cdata->client != NULL)
 		cdata->client->references++;
 
-	if (job_run(shellcmd, 0, NULL, s,
+	if (job_run(shellcmd, 0, NULL, NULL, s,
 	    server_client_get_cwd(cmdq_get_client(item), s), NULL,
 	    cmd_if_shell_callback, cmd_if_shell_free, cdata, 0, -1,
 	    -1) == NULL) {

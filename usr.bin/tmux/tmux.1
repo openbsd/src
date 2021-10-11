@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.859 2021/10/08 14:14:31 jmc Exp $
+.\" $OpenBSD: tmux.1,v 1.860 2021/10/11 10:55:30 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 8 2021 $
+.Dd $Mdocdate: October 11 2021 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -5753,6 +5753,7 @@ forwards any input read from stdin to the empty pane given by
 .Op Fl BCE
 .Op Fl c Ar target-client
 .Op Fl d Ar start-directory
+.Op Fl e Ar environment
 .Op Fl h Ar height
 .Op Fl t Ar target-pane
 .Op Fl w Ar width
@@ -5792,6 +5793,12 @@ give the width and height - both may be a percentage (followed by
 If omitted, half of the terminal size is used.
 .Fl B
 does not surround the popup by a border.
+.Pp
+.Fl e
+takes the form
+.Ql VARIABLE=value
+and sets an environment variable for the popup; it may be specified multiple
+times.
 .Pp
 The
 .Fl C
