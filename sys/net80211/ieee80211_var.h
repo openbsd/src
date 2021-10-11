@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.105 2021/09/23 15:13:47 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.106 2021/10/11 09:01:06 stsp Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -134,6 +134,7 @@ struct ieee80211_channel {
 #define IEEE80211_CHAN_XR	0x1000	/* Extended range OFDM channel */
 #define IEEE80211_CHAN_HT	0x2000	/* 11n/HT channel */
 #define IEEE80211_CHAN_VHT	0x4000	/* 11ac/VHT channel */
+#define IEEE80211_CHAN_40MHZ	0x8000	/* use of 40 MHz is allowed */
 
 /*
  * Useful combinations of channel characteristics.

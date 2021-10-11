@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.374 2021/10/07 08:15:04 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.375 2021/10/11 09:01:05 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5390,7 +5390,8 @@ iwm_ht_single_rate_control(struct iwm_softc *sc, struct ieee80211_node *ni,
 		int mcs = txmcs;
 		const struct ieee80211_ht_rateset *rs =
 		    ieee80211_ra_get_ht_rateset(txmcs,
-		    ieee80211_node_supports_ht_sgi20(ni));
+		        ieee80211_node_supports_ht_chan40(ni),
+			ieee80211_ra_use_ht_sgi(ni));
 		unsigned int retries = 0, i;
 
 		in->lq_rate_mismatch = 0;

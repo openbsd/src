@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.104 2021/09/23 15:40:41 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.105 2021/10/11 09:01:06 stsp Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -607,7 +607,12 @@ ieee80211_ht_negotiate(struct ieee80211com *ic, struct ieee80211_node *ni)
 
 	ni->ni_flags |= IEEE80211_NODE_HT;
 
-	/* Flags IEEE8021_NODE_HT_SGI20/40 are set by drivers if supported. */
+	if (ieee80211_node_supports_ht_sgi20(ni) &&
+	    (ic->ic_htcaps & IEEE80211_HTCAP_SGI20))
+		ni->ni_flags |= IEEE80211_NODE_HT_SGI20;
+	if (ieee80211_node_supports_ht_sgi40(ni) &&
+	    (ic->ic_htcaps & IEEE80211_HTCAP_SGI40))
+		ni->ni_flags |= IEEE80211_NODE_HT_SGI40;
 }
 
 void

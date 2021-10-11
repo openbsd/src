@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ra.h,v 1.1 2021/03/12 16:26:27 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_ra.h,v 1.2 2021/10/11 09:01:06 stsp Exp $	*/
 
 /*
  * Copyright (c) 2021 Christian Ehrhardt <ehrhardt@genua.de>
@@ -74,6 +74,9 @@ void	ieee80211_ra_add_stats_ht(struct ieee80211_ra_node *,
 void	ieee80211_ra_choose(struct ieee80211_ra_node *,
 	    struct ieee80211com *, struct ieee80211_node *);
 
-/* Get the HT rateset for a particular HT MCS with SGI20 on/off. */
+/* Get the HT rateset for a particular HT MCS with 40MHz and/or SGI on/off. */
 const struct ieee80211_ht_rateset * ieee80211_ra_get_ht_rateset(int mcs,
-	    int sgi20);
+	    int chan40, int sgi);
+
+/* Check whether SGI should be used. */
+int ieee80211_ra_use_ht_sgi(struct ieee80211_node *);

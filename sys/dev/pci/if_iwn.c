@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.249 2021/08/19 06:02:04 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.250 2021/10/11 09:01:05 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2283,8 +2283,8 @@ iwn_ht_single_rate_control(struct iwn_softc *sc, struct ieee80211_node *ni,
 	struct iwn_node *wn = (void *)ni;
 	int mcs = rate;
 	const struct ieee80211_ht_rateset *rs =
-	    ieee80211_ra_get_ht_rateset(rate,
-	    ieee80211_node_supports_ht_sgi20(ni));
+	    ieee80211_ra_get_ht_rateset(rate, 0 /* chan40 */,
+	    ieee80211_ra_use_ht_sgi(ni));
 	unsigned int retries = 0, i;
 
 	/*

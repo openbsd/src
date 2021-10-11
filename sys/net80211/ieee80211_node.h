@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.88 2021/04/25 15:32:21 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.89 2021/10/11 09:01:06 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -61,7 +61,15 @@ extern const struct ieee80211_rateset ieee80211_std_rateset_11g;
 #define IEEE80211_HT_RATESET_MIMO3_SGI	5
 #define IEEE80211_HT_RATESET_MIMO4	6
 #define IEEE80211_HT_RATESET_MIMO4_SGI	7
-#define IEEE80211_HT_NUM_RATESETS	8
+#define IEEE80211_HT_RATESET_SISO_40	8
+#define IEEE80211_HT_RATESET_SISO_SGI40 9
+#define IEEE80211_HT_RATESET_MIMO2_40	10
+#define IEEE80211_HT_RATESET_MIMO2_SGI40 11
+#define IEEE80211_HT_RATESET_MIMO3_40	12
+#define IEEE80211_HT_RATESET_MIMO3_SGI40 13
+#define IEEE80211_HT_RATESET_MIMO4_40	14
+#define IEEE80211_HT_RATESET_MIMO4_SGI40 15
+#define IEEE80211_HT_NUM_RATESETS	16
 
 /* Maximum number of rates in a HT rateset. */
 #define IEEE80211_HT_RATESET_MAX_NRATES	8
@@ -84,6 +92,7 @@ struct ieee80211_ht_rateset {
 	int min_mcs;
 	int max_mcs;
 
+	int chan40;
 	int sgi;
 };
 
@@ -480,6 +489,15 @@ ieee80211_node_supports_ht_sgi40(struct ieee80211_node *ni)
 {
 	return ieee80211_node_supports_ht(ni) &&
 	    (ni->ni_htcaps & IEEE80211_HTCAP_SGI40);
+}
+
+/* Check if the peer can receive frames sent on a 40 MHz channel. */
+static inline int
+ieee80211_node_supports_ht_chan40(struct ieee80211_node *ni)
+{
+	return (ieee80211_node_supports_ht(ni) &&
+	    (ni->ni_htcaps & IEEE80211_HTCAP_CBW20_40) &&
+	    (ni->ni_htop0 & IEEE80211_HTOP0_CHW));
 }
 
 struct ieee80211com;

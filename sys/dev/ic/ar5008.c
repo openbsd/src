@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.68 2021/10/03 20:19:55 kettenis Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.69 2021/10/11 09:01:05 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1150,7 +1150,7 @@ ar5008_tx_process(struct athn_softc *sc, int qid)
 	/* Update rate control statistics. */
 	if ((ni->ni_flags & IEEE80211_NODE_HT) && ic->ic_fixed_mcs == -1) {
 		const struct ieee80211_ht_rateset *rs =
-		    ieee80211_ra_get_ht_rateset(bf->bf_txmcs,
+		    ieee80211_ra_get_ht_rateset(bf->bf_txmcs, 0 /* chan40 */,
 		    ieee80211_node_supports_ht_sgi20(ni));
 		unsigned int retries = 0, i;
 		int mcs = bf->bf_txmcs;
