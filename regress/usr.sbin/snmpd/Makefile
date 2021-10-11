@@ -1,9 +1,9 @@
-# $OpenBSD: Makefile,v 1.2 2019/10/03 11:05:54 martijn Exp $
+# $OpenBSD: Makefile,v 1.3 2021/10/11 05:46:14 anton Exp $
 # Regress tests for snmpd
 
 REGRESS_TARGETS =	run-regress-snmpd
 
 run-regress-snmpd:
-	env OBJDIR=${.OBJDIR} ${SUDO} sh ${.CURDIR}/snmpd.sh
+	${SUDO} env OBJDIR=${.OBJDIR} sh ${.CURDIR}/snmpd.sh
 
 .include <bsd.regress.mk>
