@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.23 2021/10/07 08:30:39 claudio Exp $ */
+/*	$OpenBSD: x509.c,v 1.24 2021/10/11 16:50:04 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -24,6 +24,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <openssl/evp.h>
 #include <openssl/x509v3.h>
 
 #include "extern.h"
@@ -88,6 +89,7 @@ x509_get_aki(X509 *x, int ta, const char *fn)
 	}
 
 	res = hex_encode(d, dsz);
+
 out:
 	AUTHORITY_KEYID_free(akid);
 	return res;
@@ -177,6 +179,64 @@ x509_get_purpose(X509 *x, const char *fn)
 	return purpose;
 }
 
+/*
+ * Extract ECDSA key from a BGPsec Router Certificate.
+ * Returns NULL on failure, on success return public key,
+ */
+char *
+x509_get_bgpsec_pubkey(X509 *x, const char *fn)
+{
+	EVP_PKEY	*pubkey;
+	EC_KEY		*ec;
+	int		 nid;
+	const char	*cname;
+	int		 keylen;
+	uint8_t		*key = NULL;
+	char		*res = NULL;
+
+	pubkey = X509_get0_pubkey(x);
+	if (pubkey == NULL) {
+		warnx("%s: X509_get_pubkey failed in %s", fn, __func__);
+		goto out;
+	}
+	if (EVP_PKEY_base_id(pubkey) != EVP_PKEY_EC) {
+		warnx("%s: Expected EVP_PKEY_EC, got %d", fn,
+		    EVP_PKEY_base_id(pubkey));
+		goto out;
+	}
+
+	ec = EVP_PKEY_get0_EC_KEY(pubkey);
+	if (ec == NULL) {
+		warnx("%s: Incorrect key type", fn);
+		goto out;
+	}
+
+	nid = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
+	if (nid != NID_X9_62_prime256v1) {
+		if ((cname = EC_curve_nid2nist(nid)) == NULL)
+			cname = OBJ_nid2sn(nid);
+		warnx("%s: Expected P-256, got %s", fn, cname);
+		goto out;
+	}
+
+	if (!EC_KEY_check_key(ec)) {
+		warnx("%s: EC_KEY_check_key failed in %s", fn, __func__);
+		goto out;
+	}
+
+	keylen = i2o_ECPublicKey(ec, &key);
+	if (keylen <= 0) {
+		warnx("%s: i2o_ECPublicKey failed in %s", fn, __func__);
+		goto out;
+	}
+
+	if (base64_encode(key, keylen, &res) == -1)
+		errx(1, "base64_encode failed in %s", __func__);
+
+ out:
+	free(key);
+	return res;
+}
 
 /*
  * Parse the Authority Information Access (AIA) extension

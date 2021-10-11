@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.15 2021/08/16 10:38:57 jsg Exp $ */
+/*	$OpenBSD: validate.c,v 1.16 2021/10/11 16:50:03 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -163,8 +163,11 @@ valid_cert(const char *fn, struct auth_tree *auths, const struct cert *cert)
 		return 0;
 
 	for (i = 0; i < cert->asz; i++) {
-		if (cert->as[i].type == CERT_AS_INHERIT)
+		if (cert->as[i].type == CERT_AS_INHERIT) {
+			if (cert->purpose == CERT_PURPOSE_BGPSEC_ROUTER)
+				return 0; /* BGPsec doesn't permit inheriting */
 			continue;
+		}
 		min = cert->as[i].type == CERT_AS_ID ?
 		    cert->as[i].id : cert->as[i].range.min;
 		max = cert->as[i].type == CERT_AS_ID ?

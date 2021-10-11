@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.17 2021/05/06 17:03:57 job Exp $ */
+/*	$OpenBSD: output-json.c,v 1.18 2021/10/11 16:50:03 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -46,6 +46,8 @@ outputheader_json(FILE *out, struct stats *st)
 	    "\t\t\"roas\": %zu,\n"
 	    "\t\t\"failedroas\": %zu,\n"
 	    "\t\t\"invalidroas\": %zu,\n"
+	    "\t\t\"bgpsec_router_keys\": %zu,\n"
+	    "\t\t\"invalidbgpsec_router_keys\": %zu,\n"
 	    "\t\t\"certificates\": %zu,\n"
 	    "\t\t\"failcertificates\": %zu,\n"
 	    "\t\t\"invalidcertificates\": %zu,\n"
@@ -65,6 +67,7 @@ outputheader_json(FILE *out, struct stats *st)
 	    hn, tbuf, (long long)st->elapsed_time.tv_sec,
 	    (long long)st->user_time.tv_sec, (long long)st->system_time.tv_sec,
 	    st->roas, st->roas_fail, st->roas_invalid,
+	    st->brks, st->brks_invalids,
 	    st->certs, st->certs_fail, st->certs_invalid,
 	    st->tals, st->talnames,
 	    st->mfts, st->mfts_fail, st->mfts_stale,
@@ -78,10 +81,12 @@ outputheader_json(FILE *out, struct stats *st)
 }
 
 int
-output_json(FILE *out, struct vrp_tree *vrps, struct stats *st)
+output_json(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
+    struct stats *st)
 {
 	char		 buf[64];
 	struct vrp	*v;
+	struct brk	*b;
 	int		 first = 1;
 
 	if (outputheader_json(out, st) < 0)
@@ -91,12 +96,11 @@ output_json(FILE *out, struct vrp_tree *vrps, struct stats *st)
 		return -1;
 
 	RB_FOREACH(v, vrp_tree, vrps) {
-		if (first)
-			first = 0;
-		else {
+		if (!first) {
 			if (fprintf(out, ",\n") < 0)
 				return -1;
 		}
+		first = 0;
 
 		ip_addr_print(&v->addr, v->afi, buf, sizeof(buf));
 
@@ -104,6 +108,23 @@ output_json(FILE *out, struct vrp_tree *vrps, struct stats *st)
 		    "\"maxLength\": %u, \"ta\": \"%s\", \"expires\": %lld }",
 		    v->asid, buf, v->maxlength, v->tal, (long long)v->expires)
 		    < 0)
+			return -1;
+	}
+
+	if (fprintf(out, "\n\t],\n\n\t\"bgpsec_keys\": [\n") < 0)
+		return -1;
+
+	first = 1;
+	RB_FOREACH(b, brk_tree, brks) {
+		if (!first) {
+			if (fprintf(out, ",\n") < 0)
+				return -1;
+		}
+		first = 0;
+
+		if (fprintf(out, "\t\t{ \"asn\": %u, \"key\": \"%s\", \"ta\": "
+		    "\"%s\", \"expires\": %lld }", b->asid, b->key, b->tal,
+		    (long long)b->expires) < 0)
 			return -1;
 	}
 

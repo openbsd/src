@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.148 2021/10/10 22:04:33 job Exp $ */
+/*	$OpenBSD: main.c,v 1.149 2021/10/11 16:50:03 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -465,9 +465,10 @@ queue_add_from_cert(const struct cert *cert)
  * In all cases, we gather statistics.
  */
 static void
-entity_process(int proc, struct stats *st, struct vrp_tree *tree)
+entity_process(int proc, struct stats *st, struct vrp_tree *tree,
+    struct brk_tree *brktree)
 {
-	enum rtype	type;
+	enum rtype	 type;
 	struct tal	*tal;
 	struct cert	*cert;
 	struct mft	*mft;
@@ -509,10 +510,11 @@ entity_process(int proc, struct stats *st, struct vrp_tree *tree)
 			} else
 				st->certs_invalid++;
 		} else if (cert->purpose == CERT_PURPOSE_BGPSEC_ROUTER) {
-			if (cert->valid)
-				st->bgpsec_routers++;
-			else
-				st->bgpsec_invalids++;
+			if (cert->valid) {
+				cert_insert_brks(brktree, cert);
+				st->brks++;
+			} else
+				st->brks_invalids++;
 		} else
 			st->certs_invalid++;
 		cert_free(cert);
@@ -637,6 +639,7 @@ main(int argc, char *argv[])
 	const char	*cachedir = NULL, *outputdir = NULL;
 	const char	*tals[TALSZ_MAX], *errs, *name;
 	struct vrp_tree	 v = RB_INITIALIZER(&v);
+	struct brk_tree  b = RB_INITIALIZER(&b);
 	struct rusage	ru;
 	struct timeval	start_time, now_time;
 
@@ -1076,7 +1079,7 @@ main(int argc, char *argv[])
 		 */
 
 		if ((pfd[0].revents & POLLIN)) {
-			entity_process(proc, &stats, &v);
+			entity_process(proc, &stats, &v, &b);
 		}
 	}
 
@@ -1152,7 +1155,7 @@ main(int argc, char *argv[])
 	if (fchdir(outdirfd) == -1)
 		err(1, "fchdir output dir");
 
-	if (outputfiles(&v, &stats))
+	if (outputfiles(&v, &b, &stats))
 		rc = 1;
 
 
@@ -1166,7 +1169,7 @@ main(int argc, char *argv[])
 	logx("Certificate revocation lists: %zu", stats.crls);
 	logx("Ghostbuster records: %zu", stats.gbrs);
 	logx("BGPsec Router Certificates: %zu (%zu invalid)",
-	    stats.bgpsec_routers, stats.bgpsec_invalids);
+	    stats.brks, stats.brks_invalids);
 	logx("Repositories: %zu", stats.repos);
 	logx("Cleanup: removed %zu files, %zu directories",
 	    stats.del_files, stats.del_dirs);
