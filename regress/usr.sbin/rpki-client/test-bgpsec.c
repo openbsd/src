@@ -1,4 +1,4 @@
-/*	$Id: test-bgpsec.c,v 1.1 2021/10/05 11:23:16 job Exp $ */
+/*	$Id: test-bgpsec.c,v 1.2 2021/10/11 16:55:18 job Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@sobornost.net>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -43,16 +43,20 @@ cert_print(const struct cert *p)
 	size_t	 i;
 	char	 buf1[64], buf2[64];
 	int	 sockt;
+	BIO	*bio_out = NULL;
+	char	 tbuf[21];
 
 	assert(p != NULL);
 
-	if (p->crl != NULL)
-		printf("Revocation list: %s\n", p->crl);
+	if ((bio_out = BIO_new_fp(stdout, BIO_NOCLOSE)) == NULL)
+		errx(1, "BIO_new_fp");
+
 	printf("Subject key identifier: %s\n", pretty_key_id(p->ski));
-	if (p->aki != NULL)
-		printf("Authority key identifier: %s\n", pretty_key_id(p->aki));
-	if (p->aia != NULL)
-		printf("Authority info access: %s\n", p->aia);
+	printf("Authority key identifier: %s\n", pretty_key_id(p->aki));
+	printf("Authority info access: %s\n", p->aia);
+	printf("Revocation list: %s\n", p->crl);
+	strftime(tbuf, sizeof(tbuf), "%FT%TZ", gmtime(&p->expires));
+	printf("Key valid until: %s\n", tbuf);
 
 	for (i = 0; i < p->asz; i++)
 		switch (p->as[i].type) {
@@ -68,6 +72,8 @@ cert_print(const struct cert *p)
 		default:
 			printf("%5zu: AS: invalid element", i + 1);
 		}
+
+	printf("P-256 ECDSA key: %s", p->bgpsec_pubkey);
 }
 
 int
@@ -113,6 +119,6 @@ main(int argc, char *argv[])
 	if (i < argc)
 		errx(1, "test failed for %s", argv[i]);
 
-	printf("OK\n");
+	printf("\nOK\n");
 	return 0;
 }
