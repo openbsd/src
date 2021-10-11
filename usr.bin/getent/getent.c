@@ -1,4 +1,4 @@
-/*	$OpenBSD: getent.c,v 1.22 2021/07/12 15:09:19 beck Exp $	*/
+/*	$OpenBSD: getent.c,v 1.23 2021/10/11 14:28:26 deraadt Exp $	*/
 /*	$NetBSD: getent.c,v 1.7 2005/08/24 14:31:02 ginsbach Exp $	*/
 
 /*-
@@ -51,7 +51,6 @@
 #include <netinet/if_ether.h>
 
 #include <arpa/inet.h>
-#include <arpa/nameser.h>
 
 #include <rpc/rpc.h>
 
@@ -259,7 +258,8 @@ hostsaddrinfo(const char *name)
 static int
 hosts(int argc, char *argv[])
 {
-	char		addr[IN6ADDRSZ];
+	struct in6_addr	in6;
+	struct in_addr	in;
 	int		i, rv = RV_OK;
 	struct hostent	*he;
 
@@ -270,10 +270,10 @@ hosts(int argc, char *argv[])
 	} else {
 		for (i = 2; i < argc; i++) {
 			he = NULL;
-			if (inet_pton(AF_INET6, argv[i], (void *)addr) > 0)
-				he = gethostbyaddr(addr, IN6ADDRSZ, AF_INET6);
-			else if (inet_pton(AF_INET, argv[i], (void *)addr) > 0)
-				he = gethostbyaddr(addr, INADDRSZ, AF_INET);
+			if (inet_pton(AF_INET6, argv[i], (void *)&in6) > 0)
+				he = gethostbyaddr(&in6, sizeof(in6), AF_INET6);
+			else if (inet_pton(AF_INET, argv[i], (void *)&in) > 0)
+				he = gethostbyaddr(&in, sizeof(in), AF_INET);
 			if (he != NULL)
 				hostsprint(he);
 			else if ((rv = hostsaddrinfo(argv[i])) == RV_NOTFOUND)
