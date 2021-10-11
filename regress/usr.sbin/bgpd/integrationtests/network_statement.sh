@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: network_statement.sh,v 1.4 2019/08/06 07:31:53 claudio Exp $
+#	$OpenBSD: network_statement.sh,v 1.5 2021/10/11 05:45:43 anton Exp $
 
 set -e
 
@@ -34,6 +34,7 @@ error_notify() {
 	route -qn -T ${RDOMAIN2} flush || true
 	ifconfig lo${RDOMAIN1} destroy || true
 	ifconfig lo${RDOMAIN2} destroy || true
+	rm -f ${TMP}
 	if [ $1 -ne 0 ]; then
 		echo FAILED
 		exit 1
@@ -42,12 +43,27 @@ error_notify() {
 	fi
 }
 
+wait_until() {
+	local _i=0
+
+	cat >"$TMP"
+	while [ "$_i" -lt 4 ]; do
+		sh -x "$TMP" && return 0
+		sleep 0.5
+		_i="$((_i + 1))"
+	done
+	echo timeout
+	return 1
+}
+
 if [ "$(id -u)" -ne 0 ]; then 
 	echo need root privileges >&2
 	exit 1
 fi
 
 trap 'error_notify $?' EXIT
+
+TMP="$(mktemp -t bgpd.XXXXXX)"
 
 echo check if rdomains are busy
 for n in ${RDOMAINS}; do
@@ -84,7 +100,9 @@ route -T ${RDOMAIN1} exec ${BGPD} \
 route -T ${RDOMAIN2} exec ${BGPD} \
 	-v -f ${BGPDCONFIGDIR}/bgpd.network_statement.rdomain2.conf
 
-sleep 2
+wait_until <<EOF
+route -T ${RDOMAIN1} exec bgpctl sh rib ${PAIR2STATIC} | grep -q ${PAIR2STATIC}
+EOF
 
 echo test 1
 route -T ${RDOMAIN1} exec bgpctl sh rib ${PAIR2STATIC} | \
@@ -106,7 +124,9 @@ route -T ${RDOMAIN2} delete -label PAIR2RTABLE ${PAIR2RTABLE} \
 route -T ${RDOMAIN2} delete -priority 55 ${PAIR2PRIORITY} \
 	${PAIR1IP}
 
-sleep 1
+wait_until <<EOF
+route -T ${RDOMAIN1} exec bgpctl sh rib ${PAIR2STATIC} | ! grep -q ${PAIR2STATIC}
+EOF
 
 echo test 2
 route -T ${RDOMAIN1} exec bgpctl sh rib ${PAIR2STATIC} | \
@@ -128,7 +148,9 @@ route -T ${RDOMAIN2} add -label PAIR2RTABLE ${PAIR2RTABLE} \
 route -T ${RDOMAIN2} add -priority 55 ${PAIR2PRIORITY} \
 	${PAIR1IP}
 
-sleep 1
+wait_until <<EOF
+route -T ${RDOMAIN1} exec bgpctl sh rib ${PAIR2STATIC} | grep -q ${PAIR2STATIC}
+EOF
 
 echo test 3
 route -T ${RDOMAIN1} exec bgpctl sh rib ${PAIR2STATIC} | \
