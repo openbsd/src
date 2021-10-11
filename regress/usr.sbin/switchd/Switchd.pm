@@ -1,4 +1,4 @@
-#	$OpenBSD: Switchd.pm,v 1.1 2017/06/22 20:06:14 bluhm Exp $
+#	$OpenBSD: Switchd.pm,v 1.2 2021/10/11 05:46:42 anton Exp $
 
 # Copyright (c) 2010-2017 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -63,7 +63,7 @@ sub new {
 
 sub child {
 	my $self = shift;
-	my @sudo = $ENV{SUDO} ? $ENV{SUDO} : ();
+	my @sudo = $ENV{SUDO} ? split(' ', $ENV{SUDO}) : ();
 	my @ktrace = $ENV{KTRACE} ? ($ENV{KTRACE}, "-i") : ();
 	my $switchd = $ENV{SWITCHD} ? $ENV{SWITCHD} : "switchd";
 	my @cmd = (@sudo, @ktrace, $switchd, "-dvv", "-f", $self->{conffile});

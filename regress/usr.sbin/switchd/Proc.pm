@@ -1,4 +1,4 @@
-#	$OpenBSD: Proc.pm,v 1.1 2017/06/22 20:06:14 bluhm Exp $
+#	$OpenBSD: Proc.pm,v 1.2 2021/10/11 05:46:42 anton Exp $
 
 # Copyright (c) 2010-2017 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -35,9 +35,9 @@ sub kill_children {
 			push @perms, $pid;
 		}
 	}
-	if (my $sudo = $ENV{SUDO} and @perms) {
+	if (my @sudo = split(' ', $ENV{SUDO}) and @perms) {
 		local $?;  # do not modify during END block
-		my @cmd = ($sudo, '/bin/kill', '-TERM', @perms);
+		my @cmd = (@sudo, '/bin/kill', '-TERM', @perms);
 		system(@cmd);
 	}
 	delete @CHILDREN{@pids};
