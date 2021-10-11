@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmreg.h,v 1.64 2021/07/09 11:24:55 stsp Exp $	*/
+/*	$OpenBSD: if_iwmreg.h,v 1.65 2021/10/11 09:03:22 stsp Exp $	*/
 
 /******************************************************************************
  *
@@ -4519,6 +4519,9 @@ enum {
 #define IWM_RATE_MCS_VHT_POS 26
 #define IWM_RATE_MCS_VHT_MSK (1 << IWM_RATE_MCS_VHT_POS)
 
+/* Bit 31: (1) RTS (2) CTS */
+#define IWM_RATE_MCS_RTS_REQUIRED_POS 30
+#define IWM_RATE_MCS_RTS_REQUIRED_MSK (1 << IWM_RATE_MCS_RTS_REQUIRED_POS)
 
 /*
  * High-throughput (HT) rate format for bits 7:0
