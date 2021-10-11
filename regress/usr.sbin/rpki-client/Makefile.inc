@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.13 2021/10/07 10:34:39 claudio Exp $
+# $OpenBSD: Makefile.inc,v 1.14 2021/10/11 17:32:27 job Exp $
 
 .PATH:		${.CURDIR}/../../../../usr.sbin/rpki-client
 
@@ -8,7 +8,6 @@ PROGS += test-gbr
 PROGS += test-mft
 PROGS += test-roa
 PROGS += test-tal
-PROGS += test-bgpsec
 
 .for p in ${PROGS}
 REGRESS_TARGETS += run-regress-$p
@@ -31,11 +30,6 @@ SRCS_test-cert+=	test-cert.c cert.c cms.c x509.c ip.c as.c io.c \
 run-regress-test-cert: test-cert
 	./test-cert -v ${.CURDIR}/../cer/*.cer
 	./test-cert -vt ${TALARGS:S,,${.CURDIR}/../&,}
-
-SRCS_test-bgpsec+=	test-bgpsec.c cert.c cms.c x509.c ip.c as.c io.c \
-			log.c tal.c validate.c encoding.c
-run-regress-test-bgpsec: test-bgpsec
-	./test-bgpsec -v ${.CURDIR}/../bgpsec/*.cer
 
 SRCS_test-mft+=	test-mft.c mft.c cms.c x509.c io.c log.c validate.c \
 		encoding.c dummy.c

@@ -1,4 +1,4 @@
-/*	$Id: test-cert.c,v 1.11 2021/10/07 10:34:39 claudio Exp $ */
+/*	$Id: test-cert.c,v 1.12 2021/10/11 17:32:27 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -46,19 +46,23 @@ cert_print(const struct cert *p)
 
 	assert(p != NULL);
 
-	printf("Manifest: %s\n", p->mft);
-	printf("caRepository: %s\n", p->repo);
-	if (p->notify != NULL)
-		printf("Notify URL: %s\n", p->notify);
-	if (p->crl != NULL)
-		printf("Revocation list: %s\n", p->crl);
 	printf("Subject key identifier: %s\n", pretty_key_id(p->ski));
 	if (p->aki != NULL)
 		printf("Authority key identifier: %s\n", pretty_key_id(p->aki));
 	if (p->aia != NULL)
 		printf("Authority info access: %s\n", p->aia);
+	if (p->mft != NULL)
+		printf("Manifest: %s\n", p->mft);
+	if (p->repo != NULL)
+		printf("caRepository: %s\n", p->repo);
+	if (p->notify != NULL)
+		printf("Notify URL: %s\n", p->notify);
+	if (p->bgpsec_pubkey != NULL)
+		printf("BGPsec P-256 ECDSA public key: %s\n", p->bgpsec_pubkey);
 	strftime(tbuf, sizeof(tbuf), "%FT%TZ", gmtime(&p->expires));
-	printf("CA valid until: %s\n", tbuf);
+	printf("Valid until: %s\n", tbuf);
+
+	printf("Subordinate Resources:\n");
 
 	for (i = 0; i < p->asz; i++)
 		switch (p->as[i].type) {
@@ -94,6 +98,7 @@ cert_print(const struct cert *p)
 			printf("%5zu: IP: %s--%s\n", i + 1, buf1, buf2);
 			break;
 		}
+
 }
 
 int
