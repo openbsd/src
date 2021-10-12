@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.81 2021/09/18 16:45:07 deraadt Exp $	*/
+/*	$OpenBSD: config.c,v 1.82 2021/10/12 09:27:21 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -670,16 +670,18 @@ int
 config_getuser(struct iked *env, struct imsg *imsg)
 {
 	struct iked_user	 usr;
+	int			 ret = -1;
 
 	IMSG_SIZE_CHECK(imsg, &usr);
 	memcpy(&usr, imsg->data, sizeof(usr));
 
-	if (config_new_user(env, &usr) == NULL)
-		return (-1);
+	if (config_new_user(env, &usr) != NULL) {
+		print_user(&usr);
+		ret = 0;
+	}
 
-	print_user(&usr);
-
-	return (0);
+	explicit_bzero(&usr, sizeof(usr));
+	return (ret);
 }
 
 int

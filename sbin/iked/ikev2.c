@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.327 2021/09/07 14:09:04 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.328 2021/10/12 09:27:21 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -3611,7 +3611,7 @@ ikev2_resp_ike_eap_mschap(struct iked *env, struct iked_sa *sa,
 		    sizeof(ntresponse)) != 0) {
 			log_info("%s: '%s' authentication failed",
 			   SPI_SA(sa, __func__), usr->usr_name);
-			free(pass);
+			freezero(pass, passlen);
 
 			/* XXX should we send an EAP failure packet? */
 			return (-1);
@@ -3625,12 +3625,12 @@ ikev2_resp_ike_eap_mschap(struct iked *env, struct iked_sa *sa,
 		    successmsg);
 		if ((sa->sa_eapmsk = ibuf_new(NULL, MSCHAP_MSK_SZ)) == NULL) {
 			log_info("%s: failed to get MSK", SPI_SA(sa, __func__));
-			free(pass);
+			freezero(pass, passlen);
 			return (-1);
 		}
 		mschap_msk(pass, passlen, ntresponse,
 		    ibuf_data(sa->sa_eapmsk));
-		free(pass);
+		freezero(pass, passlen);
 
 		log_info("%s: '%s' authenticated", __func__, usr->usr_name);
 
