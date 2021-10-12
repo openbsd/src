@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_object.c,v 1.20 2021/09/05 11:44:46 mpi Exp $	*/
+/*	$OpenBSD: uvm_object.c,v 1.21 2021/10/12 18:16:51 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -64,6 +64,11 @@ uvm_obj_init(struct uvm_object *uobj, const struct uvm_pagerops *pgops, int refs
 	RBT_INIT(uvm_objtree, &uobj->memt);
 	uobj->uo_npages = 0;
 	uobj->uo_refs = refs;
+}
+
+void
+uvm_obj_destroy(struct uvm_object *uo)
+{
 }
 
 #ifndef SMALL_KERNEL

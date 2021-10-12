@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_object.h,v 1.27 2021/09/05 11:44:46 mpi Exp $	*/
+/*	$OpenBSD: uvm_object.h,v 1.28 2021/10/12 18:16:51 kettenis Exp $	*/
 /*	$NetBSD: uvm_object.h,v 1.11 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -101,6 +101,7 @@ RBT_PROTOTYPE(uvm_objtree, vm_page, objt, uvm_pagecmp)
 	((uobj)->pgops == &bufcache_pager)
 
 void	uvm_obj_init(struct uvm_object *, const struct uvm_pagerops *, int);
+void	uvm_obj_destroy(struct uvm_object *);
 int	uvm_obj_wire(struct uvm_object *, voff_t, voff_t, struct pglist *);
 void	uvm_obj_unwire(struct uvm_object *, voff_t, voff_t);
 void	uvm_obj_free(struct uvm_object *);
