@@ -343,6 +343,7 @@ void drm_gem_private_object_init(struct drm_device *dev,
 	obj->filp = NULL;
 #else
 	obj->uao = NULL;
+	obj->uobj.pgops = NULL;
 #endif
 
 	kref_init(&obj->refcount);
@@ -1166,6 +1167,8 @@ drm_gem_object_release(struct drm_gem_object *obj)
 #else
 	if (obj->uao)
 		uao_detach(obj->uao);
+	if (obj->uobj.pgops)
+		uvm_obj_destroy(&obj->uobj);
 #endif
 
 	dma_resv_fini(&obj->_resv);
