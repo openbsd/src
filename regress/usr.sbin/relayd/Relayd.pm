@@ -1,4 +1,4 @@
-#	$OpenBSD: Relayd.pm,v 1.18 2020/11/07 16:02:19 bluhm Exp $
+#	$OpenBSD: Relayd.pm,v 1.19 2021/10/12 05:42:39 anton Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -114,7 +114,7 @@ sub new {
 
 sub child {
 	my $self = shift;
-	my @sudo = $ENV{SUDO} ? $ENV{SUDO} : ();
+	my @sudo = $ENV{SUDO} ? split(' ', $ENV{SUDO}) : ();
 	my @ktrace = $ENV{KTRACE} ? ($ENV{KTRACE}, "-i") : ();
 	my $relayd = $ENV{RELAYD} ? $ENV{RELAYD} : "relayd";
 	my @cmd = (@sudo, @ktrace, $relayd, "-dvv", "-f", $self->{conffile});
