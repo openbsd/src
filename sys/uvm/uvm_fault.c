@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.120 2021/03/26 13:40:05 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.121 2021/10/12 07:38:22 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -1260,7 +1260,7 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 
 			if (result == VM_PAGER_AGAIN) {
 				tsleep_nsec(&nowake, PVM, "fltagain2",
-				    SEC_TO_NSEC(1));
+				    MSEC_TO_NSEC(5));
 				return ERESTART;
 			}
 
