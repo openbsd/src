@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.24 2021/10/11 16:50:04 job Exp $ */
+/*	$OpenBSD: x509.c,v 1.25 2021/10/12 15:16:45 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -180,32 +180,32 @@ x509_get_purpose(X509 *x, const char *fn)
 }
 
 /*
- * Extract ECDSA key from a BGPsec Router Certificate.
- * Returns NULL on failure, on success return public key,
+ * Extract Subject Public Key Info (SPKI) from BGPsec X.509 Certificate.
+ * Returns NULL on failure, on success return the SPKI as base64 encoded pubkey
  */
 char *
-x509_get_bgpsec_pubkey(X509 *x, const char *fn)
+x509_get_pubkey(X509 *x, const char *fn)
 {
-	EVP_PKEY	*pubkey;
+	EVP_PKEY	*evp;
 	EC_KEY		*ec;
 	int		 nid;
 	const char	*cname;
-	int		 keylen;
-	uint8_t		*key = NULL;
+	uint8_t		*pubkey = NULL;
 	char		*res = NULL;
+	int		 len;
 
-	pubkey = X509_get0_pubkey(x);
-	if (pubkey == NULL) {
+	evp = X509_get0_pubkey(x);
+	if (evp == NULL) {
 		warnx("%s: X509_get_pubkey failed in %s", fn, __func__);
 		goto out;
 	}
-	if (EVP_PKEY_base_id(pubkey) != EVP_PKEY_EC) {
+	if (EVP_PKEY_base_id(evp) != EVP_PKEY_EC) {
 		warnx("%s: Expected EVP_PKEY_EC, got %d", fn,
-		    EVP_PKEY_base_id(pubkey));
+		    EVP_PKEY_base_id(evp));
 		goto out;
 	}
 
-	ec = EVP_PKEY_get0_EC_KEY(pubkey);
+	ec = EVP_PKEY_get0_EC_KEY(evp);
 	if (ec == NULL) {
 		warnx("%s: Incorrect key type", fn);
 		goto out;
@@ -224,17 +224,17 @@ x509_get_bgpsec_pubkey(X509 *x, const char *fn)
 		goto out;
 	}
 
-	keylen = i2o_ECPublicKey(ec, &key);
-	if (keylen <= 0) {
-		warnx("%s: i2o_ECPublicKey failed in %s", fn, __func__);
+	len = i2d_PUBKEY(evp, &pubkey);
+	if (len <= 0) {
+		warnx("%s: i2d_PUBKEY failed in %s", fn, __func__);
 		goto out;
 	}
 
-	if (base64_encode(key, keylen, &res) == -1)
+	if (base64_encode(pubkey, len, &res) == -1)
 		errx(1, "base64_encode failed in %s", __func__);
 
  out:
-	free(key);
+	free(pubkey);
 	return res;
 }
 

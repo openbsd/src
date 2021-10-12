@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.71 2021/10/11 16:50:03 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.72 2021/10/12 15:16:45 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -127,7 +127,7 @@ struct cert {
 	char		*ski; /* SKI */
 	char		*tal; /* basename of TAL for this cert */
 	enum cert_purpose	 purpose; /* Certificate Purpose (BGPSec or CA) */
-	char		*bgpsec_pubkey; /* BGPsec Router Key */
+	char		*pubkey; /* Subject Public Key Info */
 	int		 valid; /* validated resources */
 	X509		*x509; /* the cert */
 	time_t		 expires; /* do not use after */
@@ -236,7 +236,8 @@ struct brk {
 	RB_ENTRY(brk)	 entry;
 	uint32_t	 asid;
 	char		*tal; /* basename of TAL for this key */
-	uint8_t		*key; /* raw P-256 ECDSA public key */
+	char		*ski; /* Subject Key Identifier */
+	char		*pubkey; /* Subject Public Key Info */
 	time_t		 expires; /* transitive expiry moment */
 };
 /*
@@ -551,7 +552,7 @@ char		*x509_get_ski(X509 *, const char *);
 time_t		 x509_get_expire(X509 *, const char *);
 char		*x509_get_crl(X509 *, const char *);
 char		*x509_crl_get_aki(X509_CRL *, const char *);
-char		*x509_get_bgpsec_pubkey(X509 *, const char *);
+char		*x509_get_pubkey(X509 *, const char *);
 enum cert_purpose	 x509_get_purpose(X509 *, const char *);
 
 /* Output! */

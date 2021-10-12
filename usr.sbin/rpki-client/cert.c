@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.37 2021/10/11 16:50:03 job Exp $ */
+/*	$OpenBSD: cert.c,v 1.38 2021/10/12 15:16:45 job Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1081,9 +1081,9 @@ cert_parse_inner(X509 **xp, const char *fn, int ta)
 		}
 		break;
 	case CERT_PURPOSE_BGPSEC_ROUTER:
-		p.res->bgpsec_pubkey = x509_get_bgpsec_pubkey(x, p.fn);
-		if (p.res->bgpsec_pubkey == NULL) {
-			warnx("%s: x509_get_bgpsec_pubkey failed", p.fn);
+		p.res->pubkey = x509_get_pubkey(x, p.fn);
+		if (p.res->pubkey == NULL) {
+			warnx("%s: x509_get_pubkey failed", p.fn);
 			goto out;
 		}
 		if (p.res->ipsz > 0) {
@@ -1217,7 +1217,7 @@ cert_free(struct cert *p)
 	free(p->aki);
 	free(p->ski);
 	free(p->tal);
-	free(p->bgpsec_pubkey);
+	free(p->pubkey);
 	X509_free(p->x509);
 	free(p);
 }
@@ -1277,7 +1277,7 @@ cert_buffer(struct ibuf *b, const struct cert *p)
 	io_str_buffer(b, p->aki);
 	io_str_buffer(b, p->ski);
 	io_str_buffer(b, p->tal);
-	io_str_buffer(b, p->bgpsec_pubkey);
+	io_str_buffer(b, p->pubkey);
 }
 
 static void
@@ -1351,7 +1351,7 @@ cert_read(int fd)
 	io_str_read(fd, &p->ski);
 	assert(p->ski);
 	io_str_read(fd, &p->tal);
-	io_str_read(fd, &p->bgpsec_pubkey);
+	io_str_read(fd, &p->pubkey);
 
 	return p;
 }
@@ -1390,9 +1390,11 @@ insert_brk(struct brk_tree *tree, struct cert *cert, int asid)
 
 	b->asid = asid;
 	b->expires = cert->expires;
-	if ((b->key = strdup(cert->bgpsec_pubkey)) == NULL)
-		err(1, NULL);
 	if ((b->tal = strdup(cert->tal)) == NULL)
+		err(1, NULL);
+	if ((b->ski = strdup(cert->ski)) == NULL)
+		err(1, NULL);
+	if ((b->pubkey = strdup(cert->pubkey)) == NULL)
 		err(1, NULL);
 
 	/*
@@ -1408,7 +1410,8 @@ insert_brk(struct brk_tree *tree, struct cert *cert, int asid)
 			found->tal = b->tal;
 			b->tal = NULL;
 		}
-		free(b->key);
+		free(b->ski);
+		free(b->pubkey);
 		free(b->tal);
 		free(b);
 	}
@@ -1442,12 +1445,20 @@ cert_insert_brks(struct brk_tree *tree, struct cert *cert)
 static inline int
 brkcmp(struct brk *a, struct brk *b)
 {
+	int rv;
+
 	if (a->asid > b->asid)
 		return 1;
 	if (a->asid < b->asid)
 		return -1;
 
-	return strcmp(a->key, b->key);
+	rv = strcmp(a->ski, b->ski);
+	if (rv > 0)
+		return 1;
+	if (rv < 0)
+		return -1;
+
+	return strcmp(a->pubkey, b->pubkey);
 }
 
 RB_GENERATE(brk_tree, brk, entry, brkcmp);

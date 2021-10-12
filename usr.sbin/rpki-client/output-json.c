@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.18 2021/10/11 16:50:03 job Exp $ */
+/*	$OpenBSD: output-json.c,v 1.19 2021/10/12 15:16:45 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -122,8 +122,9 @@ output_json(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
 		}
 		first = 0;
 
-		if (fprintf(out, "\t\t{ \"asn\": %u, \"key\": \"%s\", \"ta\": "
-		    "\"%s\", \"expires\": %lld }", b->asid, b->key, b->tal,
+		if (fprintf(out, "\t\t{ \"asn\": %u, \"ski\": \"%s\", "
+		    "\"pubkey\": \"%s\", \"ta\": \"%s\", \"expires\": %lld }",
+		    b->asid, b->ski, b->pubkey, b->tal,
 		    (long long)b->expires) < 0)
 			return -1;
 	}
