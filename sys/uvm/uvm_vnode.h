@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.h,v 1.17 2021/03/04 08:38:48 mpi Exp $	*/
+/*	$OpenBSD: uvm_vnode.h,v 1.18 2021/10/12 07:37:42 mpi Exp $	*/
 /*	$NetBSD: uvm_vnode.h,v 1.9 2000/03/26 20:54:48 kleink Exp $	*/
 
 /*
@@ -84,7 +84,6 @@ struct uvm_vnode {
 					   i/o sync to clear so it can do
 					   i/o */
 #define UVM_VNODE_WRITEABLE	0x200	/* uvn has pages that are writeable */
-#define UVM_VNODE_IOERROR	0x400	/* i/o error occurred in uvn_io() */
 
 /*
  * UVM_VNODE_BLOCKED: any condition that should new processes from
