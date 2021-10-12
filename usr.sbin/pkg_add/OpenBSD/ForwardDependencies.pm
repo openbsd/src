@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ForwardDependencies.pm,v 1.16 2020/02/19 10:53:53 espie Exp $
+# $OpenBSD: ForwardDependencies.pm,v 1.17 2021/10/12 09:06:37 espie Exp $
 #
 # Copyright (c) 2009 Marc Espie <espie@openbsd.org>
 #
@@ -36,6 +36,24 @@ sub find
 	bless { forward => $forward, set => $set}, $class;
 }
 
+sub find_belated_update
+{
+	my ($set, $state, $old) = @_;
+
+	for my $n ($set->newer) {
+		if ($n->conflict_list->conflicts_with($old->pkgname)) {
+			if (defined $old->{update_found}) {
+				$state->errsay("Ambiguous update #1 vs #2", 
+				    $n->pkgname, 
+				    $old->{update_found}->pkgname);
+			} else {
+				$old->{update_found} = $n;
+			}
+		}
+	}
+	return $old->{update_found};
+}
+
 sub adjust
 {
 	my ($self, $state) = @_;
@@ -47,6 +65,9 @@ sub adjust
 			my $h = $set->{older}{$check};
 			next unless defined $h;
 			my $r = $h->{update_found};
+			if (!defined $r) {
+				$r =find_belated_update($set, $state, $h);
+			}
 			if (!defined $r) {
 				$state->errsay("XXX #1", $check);
 				$deps_f->delete($check);

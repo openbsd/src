@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.121 2021/10/06 14:23:50 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.122 2021/10/12 09:06:37 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -463,23 +463,6 @@ LOOP:	for my $c (@conflicts) {
 	return 1;
 }
 
-sub find_belated_update
-{
-	my ($set, $state, $old) = @_;
-
-	for my $n ($set->newer) {
-		if ($n->conflict_list->conflicts_with($old->pkgname)) {
-			if (defined $old->{update_found}) {
-				$state->errsay("Ambiguous update #1 vs #2", 
-				    $n->pkgname, 
-				    $old->{update_found}->pkgname);
-			} else {
-				$old->{update_found} = $n;
-			}
-		}
-	}
-}
-
 sub install_issues
 {
 	my ($set, $state) = @_;
@@ -522,7 +505,6 @@ sub install_issues
 		} else {
 			my $h = OpenBSD::Handle->create_old($toreplace, $state);
 			$set->add_older($h);
-			find_belated_update($set, $state, $h);
 		}
 	}
 
