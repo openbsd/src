@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.117 2021/10/12 10:45:21 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.118 2021/10/12 10:46:57 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5660,7 +5660,7 @@ iwx_add_sta_cmd(struct iwx_softc *sc, struct iwx_node *in, int update)
 			    etheranyaddr);
 		else
 			IEEE80211_ADDR_COPY(&add_sta_cmd.addr,
-			    in->in_ni.ni_bssid);
+			    in->in_macaddr);
 	}
 	add_sta_cmd.add_modify = update ? 1 : 0;
 	add_sta_cmd.station_flags_msk
@@ -6286,7 +6286,7 @@ iwx_mac_ctxt_cmd_common(struct iwx_softc *sc, struct iwx_node *in,
 		return;
 	}
 
-	IEEE80211_ADDR_COPY(cmd->bssid_addr, ni->ni_bssid);
+	IEEE80211_ADDR_COPY(cmd->bssid_addr, in->in_macaddr);
 	iwx_ack_rates(sc, in, &cck_ack_rates, &ofdm_ack_rates);
 	cmd->cck_rates = htole32(cck_ack_rates);
 	cmd->ofdm_rates = htole32(ofdm_ack_rates);
@@ -6739,6 +6739,7 @@ iwx_auth(struct iwx_softc *sc)
 			return err;
 	}
 	in->in_phyctxt = &sc->sc_phyctxt[0];
+	IEEE80211_ADDR_COPY(in->in_macaddr, in->in_ni.ni_macaddr); 
 
 	err = iwx_mac_ctxt_cmd(sc, in, IWX_FW_CTXT_ACTION_ADD, 0);
 	if (err) {
@@ -7708,7 +7709,7 @@ int
 iwx_allow_mcast(struct iwx_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ieee80211_node *ni = ic->ic_bss;
+	struct iwx_node *in = (void *)ic->ic_bss;
 	struct iwx_mcast_filter_cmd *cmd;
 	size_t size;
 	int err;
@@ -7721,7 +7722,7 @@ iwx_allow_mcast(struct iwx_softc *sc)
 	cmd->port_id = 0;
 	cmd->count = 0;
 	cmd->pass_all = 1;
-	IEEE80211_ADDR_COPY(cmd->bssid, ni->ni_bssid);
+	IEEE80211_ADDR_COPY(cmd->bssid, in->in_macaddr);
 
 	err = iwx_send_cmd_pdu(sc, IWX_MCAST_FILTER_CMD,
 	    0, size, cmd);
@@ -7900,6 +7901,7 @@ iwx_stop(struct ifnet *ifp)
 
 	in->in_phyctxt = NULL;
 	in->in_flags = 0;
+	IEEE80211_ADDR_COPY(in->in_macaddr, etheranyaddr);
 
 	sc->sc_flags &= ~(IWX_FLAG_SCANNING | IWX_FLAG_BGSCAN);
 	sc->sc_flags &= ~IWX_FLAG_MAC_ACTIVE;

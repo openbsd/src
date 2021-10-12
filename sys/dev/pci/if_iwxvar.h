@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxvar.h,v 1.23 2021/09/23 15:34:00 stsp Exp $	*/
+/*	$OpenBSD: if_iwxvar.h,v 1.24 2021/10/12 10:46:57 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -621,6 +621,7 @@ struct iwx_softc {
 struct iwx_node {
 	struct ieee80211_node in_ni;
 	struct iwx_phy_ctxt *in_phyctxt;
+	uint8_t in_macaddr[ETHER_ADDR_LEN];
 
 	uint16_t in_id;
 	uint16_t in_color;
