@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.116 2021/10/12 10:44:33 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.117 2021/10/12 10:45:21 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -6950,17 +6950,32 @@ iwx_run_stop(struct iwx_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct iwx_node *in = (void *)ic->ic_bss;
-	int err;
+	struct ieee80211_node *ni = &in->in_ni;
+	int err, i;
 
 	splassert(IPL_NET);
 
-	if (sc->sc_flags & IWX_FLAG_STA_ACTIVE) {
-		err = iwx_flush_sta(sc, in);
-		if (err) {
-			printf("%s: could not flush Tx path (error %d)\n",
-			    DEVNAME(sc), err);
-			return err;
-		}
+	err = iwx_flush_sta(sc, in);
+	if (err) {
+		printf("%s: could not flush Tx path (error %d)\n",
+		    DEVNAME(sc), err);
+		return err;
+	}
+
+	/*
+	 * Stop Rx BA sessions now. We cannot rely on the BA task
+	 * for this when moving out of RUN state since it runs in a
+	 * separate thread.
+	 * Note that in->in_ni (struct ieee80211_node) already represents
+	 * our new access point in case we are roaming between APs.
+	 * This means we cannot rely on struct ieee802111_node to tell
+	 * us which BA sessions exist.
+	 */
+	for (i = 0; i < nitems(sc->sc_rxba_data); i++) {
+		struct iwx_rxba_data *rxba = &sc->sc_rxba_data[i];
+		if (rxba->baid == IWX_RX_REORDER_DATA_INVALID_BAID)
+			continue;
+		iwx_sta_rx_agg(sc, ni, rxba->tid, 0, 0, 0, 0);
 	}
 
 	err = iwx_sf_config(sc, IWX_SF_INIT_OFF);
@@ -7279,7 +7294,6 @@ iwx_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct ifnet *ifp = IC2IFP(ic);
 	struct iwx_softc *sc = ifp->if_softc;
-	int i;
 
 	/*
 	 * Prevent attemps to transition towards the same state, unless
@@ -7297,10 +7311,6 @@ iwx_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		memset(sc->setkey_arg, 0, sizeof(sc->setkey_arg));
 		sc->setkey_cur = sc->setkey_tail = sc->setkey_nkeys = 0;
 		iwx_del_task(sc, systq, &sc->mac_ctxt_task);
-		for (i = 0; i < nitems(sc->sc_rxba_data); i++) {
-			struct iwx_rxba_data *rxba = &sc->sc_rxba_data[i];
-			iwx_clear_reorder_buffer(sc, rxba);
-		}
 	}
 
 	sc->ns_nstate = nstate;
