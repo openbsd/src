@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.83 2021/09/01 15:30:06 tobhe Exp $	*/
+/*	$OpenBSD: policy.c,v 1.84 2021/10/12 10:01:59 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2020-2021 Tobias Heider <tobhe@openbsd.org>
@@ -53,7 +53,7 @@ static __inline int
 
 static int	policy_test_flows(struct iked_policy *, struct iked_policy *);
 static int	proposals_match(struct iked_proposal *, struct iked_proposal *,
-		    struct iked_transform **, int);
+		    struct iked_transform **, int, int);
 
 void
 policy_init(struct iked *env)
@@ -276,7 +276,7 @@ policy_test(struct iked *env, struct iked_policy *key)
 			/* Make sure the proposals are compatible */
 			if (TAILQ_FIRST(&key->pol_proposals) &&
 			    proposals_negotiate(NULL, &p->pol_proposals,
-			    &key->pol_proposals, 0) == -1) {
+			    &key->pol_proposals, 0, -1) == -1) {
 				p = TAILQ_NEXT(p, pol_entry);
 				continue;
 			}
@@ -971,7 +971,7 @@ user_cmp(struct iked_user *a, struct iked_user *b)
  */
 int
 proposals_negotiate(struct iked_proposals *result, struct iked_proposals *local,
-    struct iked_proposals *peer, int rekey)
+    struct iked_proposals *peer, int rekey, int groupid)
 {
 	struct iked_proposal	*ppeer = NULL, *plocal, *prop, vpeer, vlocal;
 	struct iked_transform	 chosen[IKEV2_XFORMTYPE_MAX];
@@ -996,7 +996,7 @@ proposals_negotiate(struct iked_proposals *result, struct iked_proposals *local,
 				continue;
 			bzero(match, sizeof(match));
 			score = proposals_match(plocal, ppeer, match,
-			    rekey);
+			    rekey, groupid);
 			log_debug("%s: score %d", __func__, score);
 			if (score && (!chosen_score || score < chosen_score)) {
 				chosen_score = score;
@@ -1051,10 +1051,11 @@ proposals_negotiate(struct iked_proposals *result, struct iked_proposals *local,
 
 static int
 proposals_match(struct iked_proposal *local, struct iked_proposal *peer,
-    struct iked_transform **xforms, int rekey)
+    struct iked_transform **xforms, int rekey, int dhgroup)
 {
 	struct iked_transform	*tpeer, *tlocal;
 	unsigned int		 i, j, type, score, requiredh = 0, nodh = 0, noauth = 0;
+	unsigned int		 dhforced = 0;
 	uint8_t			 protoid = peer->prop_protoid;
 	uint8_t			 peerxfs[IKEV2_XFORMTYPE_MAX];
 
@@ -1111,6 +1112,18 @@ proposals_match(struct iked_proposal *local, struct iked_proposal *peer,
 			    tpeer->xform_length != tlocal->xform_length)
 				continue;
 			type = tpeer->xform_type;
+
+			if (rekey && nodh == 0 && dhgroup >= 0 &&
+			    protoid == IKEV2_SAPROTO_ESP &&
+			    type == IKEV2_XFORMTYPE_DH) {
+				if (dhforced)
+					continue;
+				/* reset xform, so this xform w/matching group is enforced */
+				if (tlocal->xform_id == dhgroup) {
+					xforms[type] = NULL;
+					dhforced = 1;
+				}
+			}
 
 			if (xforms[type] == NULL || tlocal->xform_score <
 			    xforms[type]->xform_score) {

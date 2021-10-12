@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.193 2021/09/01 15:30:06 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.194 2021/10/12 10:01:59 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -916,7 +916,7 @@ struct iked_sa *
 	 sa_dstid_insert(struct iked *, struct iked_sa *);
 void	 sa_dstid_remove(struct iked *, struct iked_sa *);
 int	 proposals_negotiate(struct iked_proposals *, struct iked_proposals *,
-	    struct iked_proposals *, int);
+	    struct iked_proposals *, int, int);
 RB_PROTOTYPE(iked_sas, iked_sa, sa_entry, sa_cmp);
 RB_PROTOTYPE(iked_dstid_sas, iked_sa, sa_dstid_entry, sa_dstid_cmp);
 RB_PROTOTYPE(iked_addrpool, iked_sa, sa_addrpool_entry, sa_addrpool_cmp);

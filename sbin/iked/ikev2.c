@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.328 2021/10/12 09:27:21 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.329 2021/10/12 10:01:59 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -972,7 +972,7 @@ ikev2_ike_auth_recv(struct iked *env, struct iked_sa *sa,
 	if (!TAILQ_EMPTY(&msg->msg_proposals)) {
 		if (proposals_negotiate(&sa->sa_proposals,
 		    &sa->sa_policy->pol_proposals, &msg->msg_proposals,
-		    0) != 0) {
+		    0, -1) != 0) {
 			log_info("%s: no proposal chosen", __func__);
 			msg->msg_error = IKEV2_N_NO_PROPOSAL_CHOSEN;
 			return (-1);
@@ -4212,7 +4212,7 @@ ikev2_init_create_child_sa(struct iked *env, struct iked_message *msg)
 	}
 
 	if (proposals_negotiate(&sa->sa_proposals, &sa->sa_proposals,
-	    &msg->msg_proposals, 1) != 0) {
+	    &msg->msg_proposals, 1, -1) != 0) {
 		log_info("%s: no proposal chosen", SPI_SA(sa, __func__));
 		return (-1);
 	}
@@ -4715,7 +4715,7 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 
 		if (proposals_negotiate(&proposals,
 		    &sa->sa_policy->pol_proposals, &msg->msg_proposals,
-		    1) != 0) {
+		    1, msg->msg_dhgroup) != 0) {
 			log_info("%s: no proposal chosen", __func__);
 			msg->msg_error = IKEV2_N_NO_PROPOSAL_CHOSEN;
 			goto fail;
@@ -5228,7 +5228,7 @@ ikev2_sa_negotiate_common(struct iked *env, struct iked_sa *sa, struct iked_mess
 
 	/* XXX we need a better way to get this */
 	if (proposals_negotiate(&sa->sa_proposals,
-	    &msg->msg_policy->pol_proposals, &msg->msg_proposals, 0) != 0) {
+	    &msg->msg_policy->pol_proposals, &msg->msg_proposals, 0, -1) != 0) {
 		log_info("%s: proposals_negotiate", __func__);
 		return (-1);
 	}
