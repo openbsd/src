@@ -11,7 +11,7 @@ use warnings;
 use Socket;
 use Errno ':POSIX';
 
-my @errors = (ECONNRESET);
+my @errors = (ECONNRESET, EPIPE);
 my $errors = "(". join("|", map { $! = $_ } @errors). ")";
 
 our %args = (
@@ -43,7 +43,7 @@ our %args = (
     file => {
 	loggrep => {
 	    qr/syslogd\[\d+\]: loghost .* connection error: /.
-		qr/read failed: .*$errors/ => 1,
+		qr/(?:read|write) failed: .*$errors/ => 1,
 	},
     },
 );
