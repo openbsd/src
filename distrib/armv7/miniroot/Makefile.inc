@@ -1,14 +1,14 @@
-#	$OpenBSD: Makefile.inc,v 1.27 2020/05/18 06:20:43 otto Exp $
+#	$OpenBSD: Makefile.inc,v 1.28 2021/10/12 16:39:22 deraadt Exp $
 
 FS=		miniroot-${BOARD}-${OSrev}.img
-FSSIZE=		67584	# ffs+msdos, actually
+FSSIZE=		71424	# ffs+msdos, actually
 MOUNT_POINT=	/mnt
 
 MKUBOOT?=	mkuboot
 
 DISKTYPE=	miniroot
 MSDOSSTART=	32768
-MSDOSSIZE=	4096
+MSDOSSIZE=	8192
 FFSSTART!=	expr ${MSDOSSTART} + ${MSDOSSIZE}
 
 PDTB=		/usr/local/share/dtb/arm
@@ -47,6 +47,7 @@ ${FS}: bsd.rd
 
 	mkdir -p ${MOUNT_POINT}/efi/boot
 	cp /usr/mdec/BOOTARM.EFI ${MOUNT_POINT}/efi/boot/bootarm.efi
+	df ${MOUNT_POINT}
 	umount ${MOUNT_POINT}
 
 	newfs -O 1 -m 0 -o space -i 524288 -c ${FSSIZE} /dev/r`cat vnd`a
