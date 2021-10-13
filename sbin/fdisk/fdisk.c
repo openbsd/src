@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.138 2021/09/29 22:55:40 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.139 2021/10/13 13:18:57 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -43,14 +43,11 @@
 #define	INIT_MBRBOOTCODE	4
 
 #define	_PATH_MBR		_PATH_BOOTDIR "mbr"
-static unsigned char		builtin_mbr[] = {
-#include "mbrcode.h"
-};
 
 int			y_flag;
 
 void			parse_bootprt(const char *);
-void			get_default_dmbr(const char *, struct dos_mbr *);
+void			get_default_dmbr(const char *);
 
 static void
 usage(void)
@@ -68,11 +65,7 @@ int
 main(int argc, char *argv[])
 {
 	struct mbr		 mbr;
-#ifdef HAS_MBR
-	const char		*mbrfile = _PATH_MBR;
-#else
 	const char		*mbrfile = NULL;
-#endif
 	const char		*errstr;
 	int			 ch;
 	int			 e_flag = 0, init = 0;
@@ -163,7 +156,7 @@ main(int argc, char *argv[])
 	if (pledge("stdio rpath wpath disklabel proc exec", NULL) == -1)
 		err(1, "pledge");
 
-	get_default_dmbr(mbrfile, &default_dmbr);
+	get_default_dmbr(mbrfile);
 
 	switch (init) {
 	case INIT_GPT:
@@ -254,27 +247,29 @@ parse_bootprt(const char *arg)
 }
 
 void
-get_default_dmbr(const char *mbrfile, struct dos_mbr *dmbr)
+get_default_dmbr(const char *mbrfile)
 {
-	ssize_t			len;
-	int			fd;
+	struct dos_mbr		*dmbr = &default_dmbr;
+	ssize_t			 len, sz;
+	int			 fd;
 
-	if (mbrfile == NULL) {
-		memcpy(dmbr, builtin_mbr, sizeof(*dmbr));
-	} else {
-		fd = open(mbrfile, O_RDONLY);
-		if (fd == -1) {
-			warn("%s", mbrfile);
-			warnx("using builtin MBR");
-			memcpy(dmbr, builtin_mbr, sizeof(*dmbr));
-		} else {
-			len = read(fd, dmbr, sizeof(*dmbr));
-			close(fd);
-			if (len == -1)
-				err(1, "Unable to read MBR from '%s'", mbrfile);
-			else if (len != sizeof(*dmbr))
-				errx(1, "Unable to read complete MBR from '%s'",
-				    mbrfile);
-		}
-	}
+	if (mbrfile == NULL)
+#ifdef HAS_MBR
+		mbrfile = _PATH_MBR;
+#else
+		return;
+#endif
+
+	fd = open(mbrfile, O_RDONLY);
+	if (fd == -1)
+		err(1, "%s", mbrfile);
+
+	sz = sizeof(*dmbr);
+	len = read(fd, dmbr, sz);
+	close(fd);
+
+	if (len == -1)
+		err(1, "read('%s')", mbrfile);
+	else if (len != sz)
+		errx(1, "read('%s'): read %zd bytes of %zd", mbrfile, len, sz);
 }
