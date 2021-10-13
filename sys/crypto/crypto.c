@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.86 2021/10/13 13:08:58 bluhm Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.87 2021/10/13 22:43:44 bluhm Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -384,10 +384,10 @@ crypto_unregister(u_int32_t driverid, int alg)
 /*
  * Add crypto request to a queue, to be processed by a kernel thread.
  */
-int
+void
 crypto_dispatch(struct cryptop *crp)
 {
-	int error = 0, lock = 1, s;
+	int lock = 1, s;
 	u_int32_t hid;
 
 	s = splvm();
@@ -414,8 +414,6 @@ crypto_dispatch(struct cryptop *crp)
 		task_set(&crp->crp_task, (void (*))crypto_invoke, crp);
 		task_add(tq, &crp->crp_task);
 	}
-
-	return error;
 }
 
 /*

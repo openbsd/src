@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.155 2021/10/13 14:36:31 bluhm Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.156 2021/10/13 22:43:44 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -699,8 +699,8 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	memcpy(&tc->tc_dst, &tdb->tdb_dst, sizeof(union sockaddr_union));
 	tc->tc_rpl = tdb->tdb_rpl;
 
-	error = crypto_dispatch(crp);
-	return error;
+	crypto_dispatch(crp);
+	return 0;
 
  drop:
 	m_freem(m);
@@ -1145,8 +1145,8 @@ ah_output(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	tc->tc_rdomain = tdb->tdb_rdomain;
 	memcpy(&tc->tc_dst, &tdb->tdb_dst, sizeof(union sockaddr_union));
 
-	error = crypto_dispatch(crp);
-	return error;
+	crypto_dispatch(crp);
+	return 0;
 
  drop:
 	m_freem(m);

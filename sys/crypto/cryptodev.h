@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.h,v 1.75 2021/10/13 13:08:58 bluhm Exp $	*/
+/*	$OpenBSD: cryptodev.h,v 1.76 2021/10/13 22:43:44 bluhm Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -218,7 +218,7 @@ void	crypto_init(void);
 
 int	crypto_newsession(u_int64_t *, struct cryptoini *, int);
 int	crypto_freesession(u_int64_t);
-int	crypto_dispatch(struct cryptop *);
+void	crypto_dispatch(struct cryptop *);
 int	crypto_register(u_int32_t, int *,
 	    int (*)(u_int32_t *, struct cryptoini *), int (*)(u_int64_t),
 	    int (*)(struct cryptop *));

@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.141 2021/05/10 08:17:07 stsp Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.142 2021/10/13 22:43:44 bluhm Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -1157,7 +1157,7 @@ sr_crypto_rw(struct sr_workunit *wu)
 	struct sr_crypto_wu	*crwu;
 	struct sr_crypto	*mdd_crypto;
 	daddr_t			blkno;
-	int			rv = 0;
+	int			rv;
 
 	DNPRINTF(SR_D_DIS, "%s: sr_crypto_rw wu %p\n",
 	    DEVNAME(wu->swu_dis->sd_sc), wu);
@@ -1169,9 +1169,8 @@ sr_crypto_rw(struct sr_workunit *wu)
 		mdd_crypto = &wu->swu_dis->mds.mdd_crypto;
 		crwu = sr_crypto_prepare(wu, mdd_crypto, 1);
 		crwu->cr_crp->crp_callback = sr_crypto_write;
-		rv = crypto_dispatch(crwu->cr_crp);
-		if (rv == 0)
-			rv = crwu->cr_crp->crp_etype;
+		crypto_dispatch(crwu->cr_crp);
+		rv = crwu->cr_crp->crp_etype;
 	} else
 		rv = sr_crypto_dev_rw(wu, NULL);
 

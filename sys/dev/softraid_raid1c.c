@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid1c.c,v 1.3 2021/05/10 08:17:07 stsp Exp $ */
+/* $OpenBSD: softraid_raid1c.c,v 1.4 2021/10/13 22:43:44 bluhm Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -346,7 +346,7 @@ sr_raid1c_rw(struct sr_workunit *wu)
 	struct sr_crypto_wu	*crwu;
 	struct sr_raid1c	*mdd_raid1c;
 	daddr_t			blkno;
-	int			rv = 0;
+	int			rv;
 
 	DNPRINTF(SR_D_DIS, "%s: sr_raid1c_rw wu %p\n",
 	    DEVNAME(wu->swu_dis->sd_sc), wu);
@@ -359,9 +359,8 @@ sr_raid1c_rw(struct sr_workunit *wu)
 		mdd_raid1c = &wu->swu_dis->mds.mdd_raid1c;
 		crwu = sr_crypto_prepare(wu, &mdd_raid1c->sr1c_crypto, 1);
 		crwu->cr_crp->crp_callback = sr_raid1c_write;
-		rv = crypto_dispatch(crwu->cr_crp);
-		if (rv == 0)
-			rv = crwu->cr_crp->crp_etype;
+		crypto_dispatch(crwu->cr_crp);
+		rv = crwu->cr_crp->crp_etype;
 	} else
 		rv = sr_raid1c_dev_rw(wu, NULL);
 
