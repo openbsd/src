@@ -1,4 +1,4 @@
-/* $OpenBSD: key.c,v 1.26 2017/02/03 08:23:46 guenther Exp $	 */
+/* $OpenBSD: key.c,v 1.27 2021/10/13 16:57:43 tb Exp $	 */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -119,19 +119,12 @@ key_internalize(int type, int private, u_int8_t *data, size_t datalen)
 		return strdup((char *)data);
 	case ISAKMP_KEY_RSA:
 		switch (private) {
-#if OPENSSL_VERSION_NUMBER >= 0x00907000L
 		case ISAKMP_KEYTYPE_PUBLIC:
 			return d2i_RSAPublicKey(NULL,
 			    (const u_int8_t **)&data, datalen);
 		case ISAKMP_KEYTYPE_PRIVATE:
 			return d2i_RSAPrivateKey(NULL,
 			    (const u_int8_t **)&data, datalen);
-#else
-		case ISAKMP_KEYTYPE_PUBLIC:
-			return d2i_RSAPublicKey(NULL, &data, datalen);
-		case ISAKMP_KEYTYPE_PRIVATE:
-			return d2i_RSAPrivateKey(NULL, &data, datalen);
-#endif
 		default:
 			log_error("key_internalize: not public or private "
 			    "RSA key passed");

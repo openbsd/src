@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.119 2021/07/02 11:15:12 schwarze Exp $	 */
+/* $OpenBSD: x509.c,v 1.120 2021/10/13 16:57:43 tb Exp $	 */
 /* $EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	 */
 
 /*
@@ -658,7 +658,6 @@ x509_read_from_dir(X509_STORE *ctx, char *name, int hash, int *pcount)
 int
 x509_read_crls_from_dir(X509_STORE *ctx, char *name)
 {
-#if OPENSSL_VERSION_NUMBER >= 0x00907000L
 	FILE		*crlfp;
 	X509_CRL	*crl;
 	struct stat	sb;
@@ -729,8 +728,6 @@ x509_read_crls_from_dir(X509_STORE *ctx, char *name)
 		X509_STORE_set_flags(ctx, X509_V_FLAG_CRL_CHECK);
 	}
 
-#endif				/* OPENSSL_VERSION_NUMBER >= 0x00907000L */
-
 	return 1;
 }
 
@@ -791,7 +788,6 @@ x509_crl_init(void)
 	 * is valid for OpenSSL versions prior to 0.9.7. For now, simply do not
 	 * support it.
 	 */
-#if OPENSSL_VERSION_NUMBER >= 0x00907000L
 	char	*dirname;
 	dirname = conf_get_str("X509-certificates", "CRL-directory");
 	if (!dirname) {
@@ -803,10 +799,6 @@ x509_crl_init(void)
 		    "x509_crl_init: x509_read_crls_from_dir failed"));
 		return 0;
 	}
-#else
-	LOG_DBG((LOG_CRYPTO, 10, "x509_crl_init: CRL support only "
-	    "with OpenSSL v0.9.7 or later"));
-#endif
 
 	return 1;
 }
@@ -831,19 +823,11 @@ x509_cert_validate(void *scert)
 	 * we trust.
 	 */
 	X509_STORE_CTX_init(&csc, x509_cas, cert, NULL);
-#if OPENSSL_VERSION_NUMBER >= 0x00908000L
 	/* XXX See comment in x509_read_crls_from_dir.  */
 	if (x509_cas->param->flags & X509_V_FLAG_CRL_CHECK) {
 		X509_STORE_CTX_set_flags(&csc, X509_V_FLAG_CRL_CHECK);
 		X509_STORE_CTX_set_flags(&csc, X509_V_FLAG_CRL_CHECK_ALL);
 	}
-#elif OPENSSL_VERSION_NUMBER >= 0x00907000L
-	/* XXX See comment in x509_read_crls_from_dir.  */
-	if (x509_cas->flags & X509_V_FLAG_CRL_CHECK) {
-		X509_STORE_CTX_set_flags(&csc, X509_V_FLAG_CRL_CHECK);
-		X509_STORE_CTX_set_flags(&csc, X509_V_FLAG_CRL_CHECK_ALL);
-	}
-#endif
 	res = X509_verify_cert(&csc);
 	err = csc.error;
 	X509_STORE_CTX_cleanup(&csc);
