@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptox.c,v 1.2 2021/07/08 09:22:30 bluhm Exp $	*/
+/*	$OpenBSD: cryptox.c,v 1.3 2021/10/13 13:08:58 bluhm Exp $	*/
 /*
  * Copyright (c) 2003 Jason Wright
  * Copyright (c) 2003, 2004 Theo de Raadt
@@ -447,10 +447,7 @@ cryptox_process(struct cryptop *crp)
 	int err = 0;
 	int i;
 
-	if (crp == NULL || crp->crp_callback == NULL)
-		return (EINVAL);
-	if (crp->crp_ndesc < 1)
-		return (EINVAL);
+	KASSERT(crp->crp_ndesc >= 1);
 
 	smr_read_enter();
 	ses = cryptox_get(crp->crp_sid & 0xffffffff);

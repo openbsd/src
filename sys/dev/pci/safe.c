@@ -1,4 +1,4 @@
-/*	$OpenBSD: safe.c,v 1.45 2021/02/25 02:48:20 dlg Exp $	*/
+/*	$OpenBSD: safe.c,v 1.46 2021/10/13 13:08:58 bluhm Exp $	*/
 
 /*-
  * Copyright (c) 2003 Sam Leffler, Errno Consulting
@@ -310,11 +310,7 @@ safe_process(struct cryptop *crp)
 	u_int32_t cmd0, cmd1, staterec, iv[4];
 
 	s = splnet();
-	if (crp == NULL || crp->crp_callback == NULL) {
-		safestats.st_invalid++;
-		splx(s);
-		return (EINVAL);
-	}
+
 	card = SAFE_CARD(crp->crp_sid);
 	if (card >= safe_cd.cd_ndevs || safe_cd.cd_devs[card] == NULL) {
 		safestats.st_invalid++;

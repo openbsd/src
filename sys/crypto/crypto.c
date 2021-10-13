@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.85 2021/07/26 21:27:56 bluhm Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.86 2021/10/13 13:08:58 bluhm Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -404,7 +404,7 @@ crypto_dispatch(struct cryptop *crp)
 	if (crp->crp_flags & CRYPTO_F_NOQUEUE) {
 		if (lock)
 			KERNEL_LOCK();
-		error = crypto_invoke(crp);
+		crypto_invoke(crp);
 		if (lock)
 			KERNEL_UNLOCK();
 	} else {
@@ -421,7 +421,7 @@ crypto_dispatch(struct cryptop *crp)
 /*
  * Dispatch a crypto request to the appropriate crypto devices.
  */
-int
+void
 crypto_invoke(struct cryptop *crp)
 {
 	u_int64_t nid;
@@ -430,17 +430,15 @@ crypto_invoke(struct cryptop *crp)
 	int s, i;
 
 	/* Sanity checks. */
-	if (crp == NULL || crp->crp_callback == NULL)
-		return EINVAL;
+	KASSERT(crp != NULL);
+	KASSERT(crp->crp_callback != NULL);
 
 	KERNEL_ASSERT_LOCKED();
 
 	s = splvm();
 	if (crp->crp_ndesc < 1 || crypto_drivers == NULL) {
 		crp->crp_etype = EINVAL;
-		crypto_done(crp);
-		splx(s);
-		return 0;
+		goto done;
 	}
 
 	hid = (crp->crp_sid >> 32) & 0xffffffff;
@@ -470,7 +468,7 @@ crypto_invoke(struct cryptop *crp)
 	}
 
 	splx(s);
-	return 0;
+	return;
 
  migrate:
 	/* Migrate session. */
@@ -482,9 +480,9 @@ crypto_invoke(struct cryptop *crp)
 		crp->crp_sid = nid;
 
 	crp->crp_etype = EAGAIN;
+ done:
 	crypto_done(crp);
 	splx(s);
-	return 0;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: glxsb.c,v 1.37 2021/07/08 09:22:30 bluhm Exp $	*/
+/*	$OpenBSD: glxsb.c,v 1.38 2021/10/13 13:08:58 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2006 Tom Cosgrove <tom@openbsd.org>
@@ -780,14 +780,7 @@ glxsb_crypto_process(struct cryptop *crp)
 
 	s = splnet();
 
-	if (crp == NULL || crp->crp_callback == NULL) {
-		err = EINVAL;
-		goto out;
-	}
-	if (crp->crp_ndesc < 1) {
-		err = EINVAL;
-		goto out;
-	}
+	KASSERT(crp->crp_ndesc >= 1);
 
 	sesn = GLXSB_SESSION(crp->crp_sid);
 	if (sesn >= sc->sc_nsessions) {
