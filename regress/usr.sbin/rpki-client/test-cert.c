@@ -1,4 +1,4 @@
-/*	$Id: test-cert.c,v 1.12 2021/10/11 17:32:27 job Exp $ */
+/*	$Id: test-cert.c,v 1.13 2021/10/13 06:56:07 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -57,8 +57,8 @@ cert_print(const struct cert *p)
 		printf("caRepository: %s\n", p->repo);
 	if (p->notify != NULL)
 		printf("Notify URL: %s\n", p->notify);
-	if (p->bgpsec_pubkey != NULL)
-		printf("BGPsec P-256 ECDSA public key: %s\n", p->bgpsec_pubkey);
+	if (p->pubkey != NULL)
+		printf("BGPsec P-256 ECDSA public key: %s\n", p->pubkey);
 	strftime(tbuf, sizeof(tbuf), "%FT%TZ", gmtime(&p->expires));
 	printf("Valid until: %s\n", tbuf);
 
