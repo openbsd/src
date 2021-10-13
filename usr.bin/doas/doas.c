@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.91 2021/09/07 13:46:07 jcs Exp $ */
+/* $OpenBSD: doas.c,v 1.92 2021/10/13 17:41:14 millert Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -200,18 +200,10 @@ checkconfig(const char *confpath, int argc, char **argv,
 }
 
 static int
-authuser(char *myname, char *login_style, int persist)
+authuser_checkpass(char *myname, char *login_style)
 {
 	char *challenge = NULL, *response, rbuf[1024], cbuf[128];
 	auth_session_t *as;
-	int fd = -1;
-
-	if (persist)
-		fd = open("/dev/tty", O_RDWR);
-	if (fd != -1) {
-		if (ioctl(fd, TIOCCHKVERAUTH) == 0)
-			goto good;
-	}
 
 	if (!(as = auth_userchallenge(myname, login_style, "auth-doas",
 	    &challenge))) {
@@ -241,14 +233,31 @@ authuser(char *myname, char *login_style, int persist)
 		return AUTH_FAILED;
 	}
 	explicit_bzero(rbuf, sizeof(rbuf));
+	return AUTH_OK;
+}
+
+static void
+authuser(char *myname, char *login_style, int persist)
+{
+	int i, fd = -1;
+
+	if (persist)
+		fd = open("/dev/tty", O_RDWR);
+	if (fd != -1) {
+		if (ioctl(fd, TIOCCHKVERAUTH) == 0)
+			goto good;
+	}
+	for (i = 0; i < AUTH_RETRIES; i++) {
+		if (authuser_checkpass(myname, login_style) == AUTH_OK)
+			goto good;
+	}
+	exit(1);
 good:
 	if (fd != -1) {
 		int secs = 5 * 60;
 		ioctl(fd, TIOCSETVERAUTH, &secs);
 		close(fd);
 	}
-
-	return AUTH_OK;
 }
 
 int
@@ -311,7 +320,6 @@ main(int argc, char **argv)
 	int i, ch, rv;
 	int sflag = 0;
 	int nflag = 0;
-	int authed = AUTH_FAILED;
 	char cwdpath[PATH_MAX];
 	const char *cwd;
 	char *login_style = NULL;
@@ -414,15 +422,7 @@ main(int argc, char **argv)
 		if (nflag)
 			errx(1, "Authentication required");
 
-		for (i = 0; i < AUTH_RETRIES; i++) {
-			authed = authuser(mypw->pw_name, login_style,
-			    rule->options & PERSIST);
-			if (authed == AUTH_OK)
-				break;
-		}
-
-		if (authed != AUTH_OK)
-			exit(1);
+		authuser(mypw->pw_name, login_style, rule->options & PERSIST);
 	}
 
 	if ((p = getenv("PATH")) != NULL)
