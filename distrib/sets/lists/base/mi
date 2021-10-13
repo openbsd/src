@@ -602,6 +602,7 @@
 ./usr/bin/rdist
 ./usr/bin/rdistd
 ./usr/bin/readlink
+./usr/bin/realpath
 ./usr/bin/renice
 ./usr/bin/reset
 ./usr/bin/rev

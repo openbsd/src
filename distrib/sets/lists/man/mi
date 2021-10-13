@@ -416,6 +416,7 @@
 ./usr/share/man/man1/rdist.1
 ./usr/share/man/man1/rdistd.1
 ./usr/share/man/man1/readlink.1
+./usr/share/man/man1/realpath.1
 ./usr/share/man/man1/register-plist.1
 ./usr/share/man/man1/rev.1
 ./usr/share/man/man1/rlog.1
