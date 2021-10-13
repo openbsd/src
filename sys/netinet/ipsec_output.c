@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.87 2021/10/05 11:45:26 bluhm Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.88 2021/10/13 14:36:31 bluhm Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -73,7 +73,6 @@ int
 ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 {
 	int hlen, off, error;
-	struct mbuf *mp;
 #ifdef INET6
 	struct ip6_ext ip6e;
 	int nxt;
@@ -242,12 +241,10 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 			}
 #endif /* INET6 */
 
-			/* Encapsulate -- the last two arguments are unused. */
-			error = ipip_output(m, tdb, &mp, 0, 0);
-			if ((mp == NULL) && (!error))
+			/* Encapsulate -- m may be changed or set to NULL. */
+			error = ipip_output(&m, tdb);
+			if ((m == NULL) && (!error))
 				error = EFAULT;
-			m = mp;
-			mp = NULL;
 			if (error)
 				goto drop;
 
@@ -266,18 +263,14 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 			/* Remember that we appended a tunnel header. */
 			tdb->tdb_flags |= TDBF_USEDTUNNEL;
 		}
-
-		/* We may be done with this TDB */
-		if (tdb->tdb_xform->xf_type == XF_IP4)
-			return ipsp_process_done(m, tdb);
-	} else {
-		/*
-		 * If this is just an IP-IP TDB and we're told there's
-		 * already an encapsulation header, move on.
-		 */
-		if (tdb->tdb_xform->xf_type == XF_IP4)
-			return ipsp_process_done(m, tdb);
 	}
+
+	/*
+	 * If this is just an IP-IP TDB and we're told there's already an
+	 * encapsulation header or ipip_output() has encapsulted it, move on.
+	 */
+	if (tdb->tdb_xform->xf_type == XF_IP4)
+		return ipsp_process_done(m, tdb);
 
 	/* Extract some information off the headers. */
 	switch (tdb->tdb_dst.sa.sa_family) {
@@ -377,7 +370,7 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 	}
 
 	/* Invoke the IPsec transform. */
-	return (*(tdb->tdb_xform->xf_output))(m, tdb, NULL, hlen, off);
+	return (*(tdb->tdb_xform->xf_output))(m, tdb, hlen, off);
 
  drop:
 	m_freem(m);
