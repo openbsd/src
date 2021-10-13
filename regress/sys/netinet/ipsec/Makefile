@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.31 2021/02/01 18:11:46 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.32 2021/10/13 18:55:04 bluhm Exp $
 
 # This test needs a manual setup of four machines, the make
 # target create-setup can be used to distribute the configuration.
@@ -219,13 +219,13 @@ reflect:
 	ssh ${ECO_SSH} make -C ${.CURDIR} nonxt-reflect
 	ssh ${ECO_SSH} ${SUDO} rcctl start inetd nonxt_reflect
 
-DUMPCMD=	tcpdump -l -e -vvv -s 2048 -ni
+DUMPCMD=	tcpdump -s 2048 -ni
 
 stamp-bpf: Makefile stamp-drop
 	# Run tcpdump on enc device of IPS machine.
 	rm -f enc0.tcpdump
 	-ssh ${IPS_SSH} ${SUDO} pkill -f "'^${DUMPCMD} enc0'" || true
-	ssh ${IPS_SSH} ${SUDO} ${DUMPCMD} enc0 >enc0.tcpdump &
+	ssh -f ${IPS_SSH} ${SUDO} ${DUMPCMD} enc0 -w ${.OBJDIR}/enc0.pcap
 	sleep 5  # XXX
 	rm -f stamp-stop
 	@date >$@
@@ -234,7 +234,7 @@ stamp-pflog: stamp-pfctl stamp-drop
 	# Run tcpdump on pflog device of IPS machine.
 	rm -f pflog0.tcpdump
 	-ssh ${IPS_SSH} ${SUDO} pkill -f "'^${DUMPCMD} pflog0'" || true
-	ssh ${IPS_SSH} ${SUDO} ${DUMPCMD} pflog0 >pflog0.tcpdump &
+	ssh -f ${IPS_SSH} ${SUDO} ${DUMPCMD} pflog0 -w ${.OBJDIR}/pflog0.pcap
 	sleep 5  # XXX
 	rm -f stamp-stop
 	@date >$@
@@ -243,6 +243,9 @@ stamp-stop:
 	# Stop tcpdump on enc and pflog device of IPS machine.
 	sleep 5  # XXX
 	-ssh ${IPS_SSH} ${SUDO} pkill -f "'^${DUMPCMD}'"
+.for i in enc0 pflog0
+	ssh ${IPS_SSH} cat ${.OBJDIR}/$i.pcap | tcpdump -evvvnr - >$i.tcpdump
+.endfor
 	@date >$@
 
 # Old TCP connections send packets from time to time.  These confuse
@@ -362,24 +365,6 @@ run-send-tcp-${host}_${sec}_${mode}_${ipv}:
 	echo $$$$ | nc -n -N -w 3 ${${host}_${sec}_${mode}_${ipv}} 7 |\
 	    fgrep $$$$
 
-# Send large tcp stream, this should trigger path mtu discovery.
-# but it works only fo a few cases
-
-.if "${sec}" == ESP && ("${mode}" == TUNNEL4 || "${mode}" == TUNNEL6)
-TARGETS +=	tcp-pmtu-${host}_${sec}_${mode}_${ipv}
-tcp pmtu ${host:L} ${sec:L} ${mode:L} ${ipv:L}:\
-    run-send-tcp-pmtu-${host}_${sec}_${mode}_${ipv}
-run-send-tcp-pmtu-${host}_${sec}_${mode}_${ipv}:
-	${SUDO} route delete -host ${${host}_${sec}_${mode}_${ipv}} || true
-.if "${host}" == ECO
-	ssh ${IPS_SSH} ${SUDO}\
-	    route delete -host ${${host}_${sec}_${mode}_${ipv}} || true
-.endif
-	openssl rand -base64 10000 |\
-	    nc -n -N -w 8 ${${host}_${sec}_${mode}_${ipv}} 7 |\
-	    wc | fgrep '     209     209   13545'
-.endif
-
 # Send no next header protocol 59 packets through the IPsec test.
 # They consist solely of an IPv6 header chain and trigger edge cases.
 
@@ -406,6 +391,24 @@ run-send-nonxt-${host}_${sec}_${mode}_${ipv}: nonxt-sendrecv
 	netstat -s -p ${sec:L:S/ipip/ipencap/:S/bundle/esp/} |\
 	    awk '/output ${sec:S/BUNDLE/ESP/} /{print $$1-1}' |\
 	    diff pkt.out -
+.endif
+
+# Send large tcp stream, this should trigger path mtu discovery.
+# but it works only in a few cases
+
+.if "${sec}" == ESP && ("${mode}" == TUNNEL4 || "${mode}" == TUNNEL6)
+TARGETS +=	tcp-pmtu-${host}_${sec}_${mode}_${ipv}
+tcp pmtu ${host:L} ${sec:L} ${mode:L} ${ipv:L}:\
+    run-send-tcp-pmtu-${host}_${sec}_${mode}_${ipv}
+run-send-tcp-pmtu-${host}_${sec}_${mode}_${ipv}:
+	${SUDO} route delete -host ${${host}_${sec}_${mode}_${ipv}} || true
+.if "${host}" == ECO
+	ssh ${IPS_SSH} ${SUDO}\
+	    route delete -host ${${host}_${sec}_${mode}_${ipv}} || true
+.endif
+	openssl rand -base64 10000 |\
+	    nc -n -N -w 8 ${${host}_${sec}_${mode}_${ipv}} 7 |\
+	    wc | fgrep '     209     209   13545'
 .endif
 
 .endfor
