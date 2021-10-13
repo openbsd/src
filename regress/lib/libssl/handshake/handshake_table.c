@@ -1,4 +1,4 @@
-/*	$OpenBSD: handshake_table.c,v 1.15 2020/05/14 18:04:19 tb Exp $	*/
+/*	$OpenBSD: handshake_table.c,v 1.16 2021/10/13 17:00:35 tb Exp $	*/
 /*
  * Copyright (c) 2019 Theo Buehler <tb@openbsd.org>
  *
@@ -152,7 +152,7 @@ void		 fprint_entry(FILE *stream,
 		     uint8_t flags);
 void		 fprint_flags(FILE *stream, uint8_t flags);
 const char	*mt2str(enum tls13_message_type mt);
-__dead void	 usage(void);
+void		 usage(void);
 int		 verify_table(enum tls13_message_type
 		     table[MAX_FLAGS][TLS13_NUM_MESSAGE_TYPES], int print);
 
@@ -449,7 +449,7 @@ verify_table(enum tls13_message_type table[MAX_FLAGS][TLS13_NUM_MESSAGE_TYPES],
 	return success;
 }
 
-__dead void
+void
 usage(void)
 {
 	fprintf(stderr, "usage: handshake_table [-C | -g]\n");
