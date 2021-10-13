@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.150 2021/08/12 20:44:49 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.151 2021/10/13 09:28:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -980,6 +980,24 @@ const struct options_table_entry options_table[] = {
 	  .default_str = "",
 	  .flags = OPTIONS_TABLE_IS_ARRAY,
 	  .text = "The default colour palette for colours zero to 255."
+	},
+
+	{ .name = "popup-style",
+	  .type = OPTIONS_TABLE_STRING,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .default_str = "default",
+	  .flags = OPTIONS_TABLE_IS_STYLE,
+	  .separator = ",",
+	  .text = "Default style of popups."
+	},
+
+	{ .name = "popup-border-style",
+	  .type = OPTIONS_TABLE_STRING,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .default_str = "default",
+	  .flags = OPTIONS_TABLE_IS_STYLE,
+	  .separator = ",",
+	  .text = "Default style of popup borders."
 	},
 
 	{ .name = "remain-on-exit",

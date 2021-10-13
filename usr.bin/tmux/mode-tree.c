@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-tree.c,v 1.55 2021/08/20 17:50:42 nicm Exp $ */
+/* $OpenBSD: mode-tree.c,v 1.56 2021/10/13 09:28:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -747,7 +747,7 @@ mode_tree_draw(struct mode_tree_data *mtd)
 		mti = mti->parent;
 
 	screen_write_cursormove(&ctx, 0, h, 0);
-	screen_write_box(&ctx, w, sy - h);
+	screen_write_box(&ctx, w, sy - h, NULL);
 
 	if (mtd->sort_list != NULL) {
 		xasprintf(&text, " %s (sort: %s%s)", mti->name,
