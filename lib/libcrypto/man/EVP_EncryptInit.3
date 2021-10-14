@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_EncryptInit.3,v 1.41 2021/01/05 06:51:31 jmc Exp $
+.\" $OpenBSD: EVP_EncryptInit.3,v 1.42 2021/10/14 00:45:02 tb Exp $
 .\" full merge up to: OpenSSL 5211e094 Nov 11 14:39:11 2014 -0800
 .\"   EVP_bf_cbc.pod EVP_cast5_cbc.pod EVP_idea_cbc.pod EVP_rc2_cbc.pod
 .\"   7c6d372a Nov 20 13:20:01 2018 +0000
@@ -71,7 +71,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 5 2021 $
+.Dd $Mdocdate: October 14 2021 $
 .Dt EVP_ENCRYPTINIT 3
 .Os
 .Sh NAME
@@ -386,13 +386,13 @@
 .Ft int
 .Fo EVP_CIPHER_CTX_get_iv
 .Fa "const EVP_CIPHER_CTX *ctx"
-.Fa "u_char *iv"
+.Fa "unsigned char *iv"
 .Fa "size_t len"
 .Fc
 .Ft int
 .Fo EVP_CIPHER_CTX_set_iv
 .Fa "EVP_CIPHER_CTX *ctx"
-.Fa "const u_char *iv"
+.Fa "const unsigned char *iv"
 .Fa "size_t len"
 .Fc
 .Ft void *
