@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.148 2021/05/25 22:45:09 bluhm Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.149 2021/10/14 23:05:10 mvs Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -817,8 +817,6 @@ unp_externalize(struct mbuf *rights, socklen_t controllen, int flags)
 	struct file *fp;
 	int nfds, error = 0;
 
-	rw_assert_wrlock(&unp_lock);
-
 	/*
 	 * This code only works because SCM_RIGHTS is the only supported
 	 * control message type on unix sockets. Enforce this here.
@@ -834,7 +832,7 @@ unp_externalize(struct mbuf *rights, socklen_t controllen, int flags)
 		controllen -= CMSG_ALIGN(sizeof(struct cmsghdr));
 	if (nfds > controllen / sizeof(int)) {
 		error = EMSGSIZE;
-		goto restart;
+		goto out;
 	}
 
 	/* Make sure the recipient should be able to see the descriptors.. */
@@ -868,18 +866,13 @@ unp_externalize(struct mbuf *rights, socklen_t controllen, int flags)
 
 	KERNEL_UNLOCK();
 
+	if (error)
+		goto out;
+
 	fds = mallocarray(nfds, sizeof(int), M_TEMP, M_WAITOK);
 
-restart:
 	fdplock(fdp);
-	if (error != 0) {
-		if (nfds > 0) {
-			rp = ((struct fdpass *)CMSG_DATA(cm));
-			unp_discard(rp, nfds);
-		}
-		goto out;
-	}
-
+restart:
 	/*
 	 * First loop -- allocate file descriptor table slots for the
 	 * new descriptors.
@@ -895,17 +888,19 @@ restart:
 
 			if (error == ENOSPC) {
 				fdexpand(p);
-				error = 0;
-			} else {
-				/*
-				 * This is the error that has historically
-				 * been returned, and some callers may
-				 * expect it.
-				 */
-				error = EMSGSIZE;
+				goto restart;
 			}
+
 			fdpunlock(fdp);
-			goto restart;
+
+			/*
+			 * This is the error that has historically
+			 * been returned, and some callers may
+			 * expect it.
+			 */
+
+			error = EMSGSIZE;
+			goto out;
 		}
 
 		/*
@@ -924,12 +919,15 @@ restart:
 
 		rp++;
 	}
+	fdpunlock(fdp);
 
 	/*
 	 * Now that adding them has succeeded, update all of the
 	 * descriptor passing state.
 	 */
 	rp = (struct fdpass *)CMSG_DATA(cm);
+
+	rw_enter_write(&unp_lock);
 	for (i = 0; i < nfds; i++) {
 		struct unpcb *unp;
 
@@ -939,6 +937,7 @@ restart:
 			unp->unp_msgcount--;
 		unp_rights--;
 	}
+	rw_exit_write(&unp_lock);
 
 	/*
 	 * Copy temporary array to message and adjust length, in case of
@@ -948,9 +947,18 @@ restart:
 	cm->cmsg_len = CMSG_LEN(nfds * sizeof(int));
 	rights->m_len = CMSG_LEN(nfds * sizeof(int));
  out:
-	fdpunlock(fdp);
 	if (fds != NULL)
 		free(fds, M_TEMP, nfds * sizeof(int));
+
+	if (error) {
+		if (nfds > 0) {
+			rp = ((struct fdpass *)CMSG_DATA(cm));
+			rw_enter_write(&unp_lock);
+			unp_discard(rp, nfds);
+			rw_exit_write(&unp_lock);
+		}
+	}
+
 	return (error);
 }
 
