@@ -1,4 +1,4 @@
-/* $OpenBSD: window-tree.c,v 1.57 2021/10/13 09:28:36 nicm Exp $ */
+/* $OpenBSD: window-tree.c,v 1.58 2021/10/14 13:19:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -519,7 +519,7 @@ window_tree_draw_label(struct screen_write_ctx *ctx, u_int px, u_int py,
 
 	if (ox > 1 && ox + len < sx - 1 && sy >= 3) {
 		screen_write_cursormove(ctx, px + ox - 1, py + oy - 1, 0);
-		screen_write_box(ctx, len + 2, 3, NULL);
+		screen_write_box(ctx, len + 2, 3, BOX_LINES_DEFAULT, NULL);
 	}
 	screen_write_cursormove(ctx, px + ox, py + oy, 0);
 	screen_write_puts(ctx, gc, "%s", label);
