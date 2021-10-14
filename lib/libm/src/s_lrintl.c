@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_lrintl.c,v 1.3 2019/03/15 05:42:38 kevlo Exp $	*/
+/*	$OpenBSD: s_lrintl.c,v 1.4 2021/10/14 21:30:00 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2005 David Schultz <das@FreeBSD.ORG>
@@ -31,9 +31,9 @@
 
 #ifndef type
 #define type		long double
-#define	roundit		rintl
+#define roundit		rintl
 #define dtype		long
-#define	fn		lrintl
+#define fn		lrintl
 #endif
 
 /*

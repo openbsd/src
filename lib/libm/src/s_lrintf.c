@@ -1,9 +1,8 @@
-/*	$OpenBSD: s_lrintf.c,v 1.6 2016/09/12 19:47:02 guenther Exp $	*/
-/* $NetBSD: lrintf.c,v 1.3 2004/10/13 15:18:32 drochner Exp $ */
+/*	$OpenBSD: s_lrintf.c,v 1.7 2021/10/14 21:30:00 kettenis Exp $	*/
 
 /*-
- * Copyright (c) 2004
- *	Matthias Drochner. All rights reserved.
+ * Copyright (c) 2005 David Schultz <das@FreeBSD.ORG>
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,67 +26,34 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-#include <sys/limits.h>
+#include <fenv.h>
 #include <math.h>
-#include <ieeefp.h>
-#include <machine/ieee.h>
-#include "math_private.h"
 
-#ifndef LRINTNAME
-#define LRINTNAME lrintf
-#define RESTYPE long int
-#define RESTYPE_MIN LONG_MIN
-#define RESTYPE_MAX LONG_MAX
+#ifndef type
+#define type		float
+#define roundit		rintf
+#define dtype		long
+#define fn		lrintf
 #endif
 
-#define RESTYPE_BITS (sizeof(RESTYPE) * 8)
-
-static const float
-TWO23[2]={
-  8.3886080000e+06, /* 0x4b000000 */
- -8.3886080000e+06, /* 0xcb000000 */
-};
-
-RESTYPE
-LRINTNAME(float x)
+/*
+ * C99 says we should not raise a spurious inexact exception when an
+ * invalid exception is raised.  Unfortunately, the set of inputs
+ * that overflows depends on the rounding mode when 'dtype' has more
+ * significant bits than 'type'.  Hence, we bend over backwards for the
+ * sake of correctness; an MD implementation could be more efficient.
+ */
+dtype
+fn(type x)
 {
-	u_int32_t i0;
-	int e, s, shift;
-	RESTYPE res;
+	fenv_t env;
+	dtype d;
 
-	GET_FLOAT_WORD(i0, x);
-	e = i0 >> SNG_FRACBITS;
-	s = e >> SNG_EXPBITS;
-	e = (e & 0xff) - SNG_EXP_BIAS;
-
-	/* 1.0 x 2^31 (or 2^63) is already too large */
-	if (e >= (int)RESTYPE_BITS - 1)
-		return (s ? RESTYPE_MIN : RESTYPE_MAX); /* ??? unspecified */
-
-	/* >= 2^23 is already an exact integer */
-	if (e < SNG_FRACBITS) {
-		volatile float t = x;	/* clip extra precision */
-		/* round, using current direction */
-		t += TWO23[s];
-		t -= TWO23[s];
-		x = t;
-	}
-
-	GET_FLOAT_WORD(i0, x);
-	e = ((i0 >> SNG_FRACBITS) & 0xff) - SNG_EXP_BIAS;
-	i0 &= 0x7fffff;
-	i0 |= (1 << SNG_FRACBITS);
-
-	if (e < 0)
-		return (0);
-
-	shift = e - SNG_FRACBITS;
-	if (shift >=0)
-		res = (shift < RESTYPE_BITS ? (RESTYPE)i0 << shift : 0);
-	else
-		res = (shift > -RESTYPE_BITS ? (RESTYPE)i0 >> -shift : 0);
-
-	return (s ? -res : res);
+	feholdexcept(&env);
+	d = (dtype)roundit(x);
+	if (fetestexcept(FE_INVALID))
+		feclearexcept(FE_INEXACT);
+	feupdateenv(&env);
+	return (d);
 }
-DEF_STD(LRINTNAME);
+DEF_STD(fn);

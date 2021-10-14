@@ -1,14 +1,12 @@
-/*	$OpenBSD: s_llrint.c,v 1.6 2016/09/12 19:47:02 guenther Exp $	*/
-/* $NetBSD: llrint.c,v 1.2 2004/10/13 15:18:32 drochner Exp $ */
+/*	$OpenBSD: s_llrint.c,v 1.7 2021/10/14 21:30:00 kettenis Exp $	*/
 
 /*
- * Written by Matthias Drochner <drochner@NetBSD.org>.
- * Public domain.
+ * Written by Martynas Venckus.  Public domain
  */
 
-#define LRINTNAME llrint
-#define RESTYPE long long int
-#define RESTYPE_MIN LLONG_MIN
-#define RESTYPE_MAX LLONG_MAX
+#define type		double
+#define roundit		rint
+#define dtype		long long
+#define fn		llrint
 
 #include "s_lrint.c"

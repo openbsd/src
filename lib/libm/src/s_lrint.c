@@ -1,9 +1,8 @@
-/*	$OpenBSD: s_lrint.c,v 1.11 2016/09/12 19:47:02 guenther Exp $	*/
-/* $NetBSD: lrint.c,v 1.3 2004/10/13 15:18:32 drochner Exp $ */
+/*	$OpenBSD: s_lrint.c,v 1.12 2021/10/14 21:30:00 kettenis Exp $	*/
 
 /*-
- * Copyright (c) 2004
- *	Matthias Drochner. All rights reserved.
+ * Copyright (c) 2005 David Schultz <das@FreeBSD.ORG>
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,75 +26,35 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-#include <sys/limits.h>
-#include <float.h>
+#include <fenv.h>
 #include <math.h>
-#include <ieeefp.h>
-#include <machine/ieee.h>
 
-#include "math_private.h"
-
-#ifndef LRINTNAME
-#define LRINTNAME lrint
-#define RESTYPE long int
-#define RESTYPE_MIN LONG_MIN
-#define RESTYPE_MAX LONG_MAX
+#ifndef type
+#define type		double
+#define roundit		rint
+#define dtype		long
+#define fn		lrint
 #endif
 
-#define RESTYPE_BITS (sizeof(RESTYPE) * 8)
-
-static const double
-TWO52[2]={
-  4.50359962737049600000e+15, /* 0x43300000, 0x00000000 */
- -4.50359962737049600000e+15, /* 0xC3300000, 0x00000000 */
-};
-
-RESTYPE
-LRINTNAME(double x)
+/*
+ * C99 says we should not raise a spurious inexact exception when an
+ * invalid exception is raised.  Unfortunately, the set of inputs
+ * that overflows depends on the rounding mode when 'dtype' has more
+ * significant bits than 'type'.  Hence, we bend over backwards for the
+ * sake of correctness; an MD implementation could be more efficient.
+ */
+dtype
+fn(type x)
 {
-	u_int32_t i0, i1;
-	int e, s, shift;
-	RESTYPE res;
+	fenv_t env;
+	dtype d;
 
-	GET_HIGH_WORD(i0, x);
-	e = i0 >> DBL_FRACHBITS;
-	s = e >> DBL_EXPBITS;
-	e = (e & 0x7ff) - DBL_EXP_BIAS;
-
-	/* 1.0 x 2^31 (or 2^63) is already too large */
-	if (e >= (int)RESTYPE_BITS - 1)
-		return (s ? RESTYPE_MIN : RESTYPE_MAX); /* ??? unspecified */
-
-	/* >= 2^52 is already an exact integer */
-	if (e < DBL_FRACBITS) {
-		volatile double t = x;	/* clip extra precision */
-		/* round, using current direction */
-		t += TWO52[s];
-		t -= TWO52[s];
-		x = t;
-	}
-
-	EXTRACT_WORDS(i0, i1, x);
-	e = ((i0 >> DBL_FRACHBITS) & 0x7ff) - DBL_EXP_BIAS;
-	i0 &= 0xfffff;
-	i0 |= (1 << DBL_FRACHBITS);
-
-	if (e < 0)
-		return (0);
-
-	shift = e - DBL_FRACBITS;
-	if (shift >=0)
-		res = (shift < RESTYPE_BITS ? (RESTYPE)i1 << shift : 0);
-	else
-		res = (shift > -RESTYPE_BITS ? (RESTYPE)i1 >> -shift : 0);
-	shift += 32;
-	if (shift >=0)
-		res |= (shift < RESTYPE_BITS ? (RESTYPE)i0 << shift : 0);
-	else
-		res |= (shift > -RESTYPE_BITS ? (RESTYPE)i0 >> -shift : 0);
-
-	return (s ? -res : res);
+	feholdexcept(&env);
+	d = (dtype)roundit(x);
+	if (fetestexcept(FE_INVALID))
+		feclearexcept(FE_INEXACT);
+	feupdateenv(&env);
+	return (d);
 }
-DEF_STD(LRINTNAME);
-LDBL_MAYBE_CLONE(LRINTNAME);
+DEF_STD(fn);
+LDBL_MAYBE_CLONE(fn);
