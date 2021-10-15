@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-send-keys.c,v 1.69 2021/10/05 12:49:37 nicm Exp $ */
+/* $OpenBSD: cmd-send-keys.c,v 1.70 2021/10/15 10:39:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -203,6 +203,8 @@ cmd_send_keys_exec(struct cmd *self, struct cmdq_item *item)
 	}
 
 	if (count == 0) {
+		if (args_has(args, 'N'))
+			return (CMD_RETURN_NORMAL);
 		for (; np != 0; np--)
 			cmd_send_keys_inject_key(item, NULL, event->key);
 		return (CMD_RETURN_NORMAL);
