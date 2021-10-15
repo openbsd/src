@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.38 2021/10/12 15:16:45 job Exp $ */
+/*	$OpenBSD: cert.c,v 1.39 2021/10/15 22:30:33 job Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1377,9 +1377,6 @@ authcmp(struct auth *a, struct auth *b)
 
 RB_GENERATE(auth_tree, auth, entry, authcmp);
 
-/*
- * Extract
- */
 static void
 insert_brk(struct brk_tree *tree, struct cert *cert, int asid)
 {
@@ -1402,9 +1399,7 @@ insert_brk(struct brk_tree *tree, struct cert *cert, int asid)
 	 * expires sooner, update it to this BRK's later expiry moment.
 	 */
 	if ((found = RB_INSERT(brk_tree, tree, b)) != NULL) {
-		/* already exists */
 		if (found->expires < b->expires) {
-			/* update found with preferred data */
 			found->expires = b->expires;
 			free(found->tal);
 			found->tal = b->tal;
