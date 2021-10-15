@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.76 2021/06/24 18:40:59 ian Exp $
+#	$OpenBSD: airport,v 1.77 2021/10/15 20:47:11 jeremy Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -1473,6 +1473,7 @@ RWI:Wilson, Rocky Mount, North Carolina, USA
 RWN:Rivne International, Rivne, Ukraine
 RZE:Jasionka, Rzeszow, Poland
 SAB:Saba Island, Netherlands Antilles
+SAC:Sacramento Executive, California, USA
 SAF:Santa Fe, New Mexico, USA
 SAH:Sanaa International, Yemen
 SAL:San Salvador, El Salvador
@@ -1552,7 +1553,7 @@ SLS:Silistra, Bulgaria
 SLU:Vigie Field, Saint Lucia
 SLW:Saltillo, Coahuila, Mexico
 SLZ:Tirirical, Sao Luiz, Maranhao, Brazil
-SMF:Sacramento Metro, California, USA
+SMF:Sacramento International, California, USA
 SML:Stella Maris, Bahamas
 SMM:Semporna, Sabah, Malaysia
 SMS:St Marie, Madagascar
