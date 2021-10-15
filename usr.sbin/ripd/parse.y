@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.47 2019/05/10 01:29:31 guenther Exp $ */
+/*	$OpenBSD: parse.y,v 1.48 2021/10/15 15:01:28 naddy Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -456,9 +456,9 @@ lookup(char *s)
 
 #define MAXPUSHBACK	128
 
-u_char	*parsebuf;
+char	*parsebuf;
 int	 parseindex;
-u_char	 pushback_buffer[MAXPUSHBACK];
+char	 pushback_buffer[MAXPUSHBACK];
 int	 pushback_index = 0;
 
 int
@@ -469,7 +469,7 @@ lgetc(int quotec)
 	if (parsebuf) {
 		/* Read character from the parsebuffer instead of input. */
 		if (parseindex >= 0) {
-			c = parsebuf[parseindex++];
+			c = (unsigned char)parsebuf[parseindex++];
 			if (c != '\0')
 				return (c);
 			parsebuf = NULL;
@@ -478,7 +478,7 @@ lgetc(int quotec)
 	}
 
 	if (pushback_index)
-		return (pushback_buffer[--pushback_index]);
+		return ((unsigned char)pushback_buffer[--pushback_index]);
 
 	if (quotec) {
 		if ((c = getc(file->stream)) == EOF) {
@@ -519,10 +519,10 @@ lungetc(int c)
 		if (parseindex >= 0)
 			return (c);
 	}
-	if (pushback_index < MAXPUSHBACK-1)
-		return (pushback_buffer[pushback_index++] = c);
-	else
+	if (pushback_index + 1 >= MAXPUSHBACK)
 		return (EOF);
+	pushback_buffer[pushback_index++] = c;
+	return (c);
 }
 
 int
@@ -535,7 +535,7 @@ findeol(void)
 	/* skip to either EOF or the first real EOL */
 	while (1) {
 		if (pushback_index)
-			c = pushback_buffer[--pushback_index];
+			c = (unsigned char)pushback_buffer[--pushback_index];
 		else
 			c = lgetc(0);
 		if (c == '\n') {
@@ -551,8 +551,8 @@ findeol(void)
 int
 yylex(void)
 {
-	u_char	 buf[8096];
-	u_char	*p, *val;
+	char	 buf[8096];
+	char	*p, *val;
 	int	 quotec, next, c;
 	int	 token;
 
@@ -661,8 +661,8 @@ top:
 		} else {
 nodigits:
 			while (p > buf + 1)
-				lungetc(*--p);
-			c = *--p;
+				lungetc((unsigned char)*--p);
+			c = (unsigned char)*--p;
 			if (c == '-')
 				return (c);
 		}

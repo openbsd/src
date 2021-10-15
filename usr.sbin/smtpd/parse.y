@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.289 2021/06/14 17:58:15 eric Exp $	*/
+/*	$OpenBSD: parse.y,v 1.290 2021/10/15 15:01:29 naddy Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -2859,10 +2859,10 @@ findeol(void)
 int
 yylex(void)
 {
-	unsigned char	 buf[8096];
-	unsigned char	*p, *val;
-	int		 quotec, next, c;
-	int		 token;
+	char	 buf[8096];
+	char	*p, *val;
+	int	 quotec, next, c;
+	int	 token;
 
 top:
 	p = buf;
@@ -2898,7 +2898,7 @@ top:
 		p = val + strlen(val) - 1;
 		lungetc(DONE_EXPAND);
 		while (p >= val) {
-			lungetc(*p);
+			lungetc((unsigned char)*p);
 			p--;
 		}
 		lungetc(START_EXPAND);
@@ -2974,8 +2974,8 @@ top:
 		} else {
 nodigits:
 			while (p > buf + 1)
-				lungetc(*--p);
-			c = *--p;
+				lungetc((unsigned char)*--p);
+			c = (unsigned char)*--p;
 			if (c == '-')
 				return (c);
 		}
