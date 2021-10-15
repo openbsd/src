@@ -1,10 +1,11 @@
-#	$OpenBSD: Makefile,v 1.3 2014/07/08 15:53:53 jsing Exp $
+#	$OpenBSD: Makefile,v 1.4 2021/10/15 16:49:12 jsing Exp $
 
 PROG=	ssltest
 LDADD=	-lcrypto -lssl
 DPADD=	${LIBCRYPTO} ${LIBSSL}
 WARNINGS=	Yes
 CFLAGS+=	-DLIBRESSL_INTERNAL -Werror
+CFLAGS+=	-I${.CURDIR}/../../../../lib/libssl
 
 REGRESS_TARGETS=regress-ssltest
 

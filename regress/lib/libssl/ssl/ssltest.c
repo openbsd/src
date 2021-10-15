@@ -176,6 +176,8 @@
 #include <openssl/dh.h>
 #include <openssl/bn.h>
 
+#include "ssl_locl.h"
+
 #define TEST_SERVER_CERT "../apps/server.pem"
 #define TEST_CLIENT_CERT "../apps/client.pem"
 
