@@ -1,4 +1,4 @@
-.\" $OpenBSD: iwm.4,v 1.39 2021/10/11 09:39:29 stsp Exp $
+.\" $OpenBSD: iwm.4,v 1.40 2021/10/15 08:10:44 kn Exp $
 .\"
 .\" Copyright (c) 2007,2008
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 11 2021 $
+.Dd $Mdocdate: October 15 2021 $
 .Dt IWM 4
 .Os
 .Sh NAME
@@ -120,7 +120,7 @@ using WPA key
 obtaining an IP address using DHCP:
 .Bd -literal -offset indent
 nwid mynwid wpakey mywpakey
-dhcp
+inet autoconf
 .Ed
 .Sh DIAGNOSTICS
 .Bl -diag

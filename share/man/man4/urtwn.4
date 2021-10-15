@@ -1,4 +1,4 @@
-.\" $OpenBSD: urtwn.4,v 1.51 2021/10/04 01:33:42 kevlo Exp $
+.\" $OpenBSD: urtwn.4,v 1.52 2021/10/15 08:10:45 kn Exp $
 .\"
 .\" Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 4 2021 $
+.Dd $Mdocdate: October 15 2021 $
 .Dt URTWN 4
 .Os
 .Sh NAME
@@ -157,7 +157,7 @@ using WPA key
 obtaining an IP address using DHCP:
 .Bd -literal -offset indent
 nwid mynwid wpakey mywpakey
-dhcp
+inet autoconf
 .Ed
 .Sh DIAGNOSTICS
 .Bl -diag

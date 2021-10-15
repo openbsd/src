@@ -1,4 +1,4 @@
-.\" $OpenBSD: athn.4,v 1.41 2021/05/06 14:40:35 stsp Exp $
+.\" $OpenBSD: athn.4,v 1.42 2021/10/15 08:10:44 kn Exp $
 .\"
 .\" Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>.
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 6 2021 $
+.Dd $Mdocdate: October 15 2021 $
 .Dt ATHN 4
 .Os
 .Sh NAME
@@ -207,7 +207,7 @@ using WPA key
 obtaining an IP address using DHCP:
 .Bd -literal -offset indent
 nwid mynwid wpakey mywpakey
-dhcp
+inet autoconf
 .Ed
 .Pp
 The following

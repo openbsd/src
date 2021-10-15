@@ -1,4 +1,4 @@
-.\" $OpenBSD: ral.4,v 1.116 2020/05/16 18:28:23 jmc Exp $
+.\" $OpenBSD: ral.4,v 1.117 2021/10/15 08:10:44 kn Exp $
 .\"
 .\" Copyright (c) 2005-2010 Damien Bergamini <damien.bergamini@free.fr>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 16 2020 $
+.Dd $Mdocdate: October 15 2021 $
 .Dt RAL 4
 .Os
 .Sh NAME
@@ -301,7 +301,7 @@ using WPA key
 obtaining an IP address using DHCP:
 .Bd -literal -offset indent
 nwid mynwid wpakey mywpakey
-dhcp
+inet autoconf
 .Ed
 .Pp
 The following

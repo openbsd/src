@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ath.4,v 1.67 2019/11/10 14:10:41 sthen Exp $
+.\"	$OpenBSD: ath.4,v 1.68 2021/10/15 08:10:44 kn Exp $
 .\"     $NetBSD: ath.4,v 1.5 2004/07/03 16:58:18 mycroft Exp $
 .\"
 .\" Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -42,7 +42,7 @@
 .\" $FreeBSD: /repoman/r/ncvs/src/share/man/man4/ath.4,v 1.16 2004/02/18 08:30:08 maxim Exp $
 .\" parts from $FreeBSD: /repoman/r/ncvs/src/share/man/man4/ath_hal.4,v 1.7 2004/01/07 20:49:51 blackend Exp $
 .\"
-.Dd $Mdocdate: November 10 2019 $
+.Dd $Mdocdate: October 15 2021 $
 .Dt ATH 4
 .Os
 .Sh NAME
@@ -214,7 +214,7 @@ using WPA key
 obtaining an IP address using DHCP:
 .Bd -literal -offset indent
 nwid mynwid wpakey mywpakey
-dhcp
+inet autoconf
 .Ed
 .Pp
 The following
