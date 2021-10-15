@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxvar.h,v 1.24 2021/10/12 10:46:57 stsp Exp $	*/
+/*	$OpenBSD: if_iwxvar.h,v 1.25 2021/10/15 13:38:10 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -320,6 +320,7 @@ struct iwx_phy_ctxt {
 	uint16_t color;
 	uint32_t ref;
 	struct ieee80211_channel *channel;
+	uint8_t sco; /* 40 MHz secondary channel offset */
 };
 
 struct iwx_bf_data {
@@ -482,6 +483,9 @@ struct iwx_softc {
 
 	/* Task for ERP/HT prot/slot-time/EDCA updates. */
 	struct task		mac_ctxt_task;
+
+	/* Task for HT 20/40 MHz channel width updates. */
+	struct task		phy_ctxt_task;
 
 	bus_space_tag_t sc_st;
 	bus_space_handle_t sc_sh;
