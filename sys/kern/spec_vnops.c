@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.105 2021/10/02 08:51:41 semarie Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.106 2021/10/15 06:30:06 semarie Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -89,9 +89,9 @@ const struct vops spec_vops = {
 	.vop_abortop	= vop_generic_badop,
 	.vop_inactive	= spec_inactive,
 	.vop_reclaim	= nullop,
-	.vop_lock	= vop_generic_lock,
-	.vop_unlock	= vop_generic_unlock,
-	.vop_islocked	= vop_generic_islocked,
+	.vop_lock	= nullop,
+	.vop_unlock	= nullop,
+	.vop_islocked	= nullop,
 	.vop_bmap	= vop_generic_bmap,
 	.vop_strategy	= spec_strategy,
 	.vop_print	= spec_print,

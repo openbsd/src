@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vnops.c,v 1.46 2020/02/27 09:10:31 mpi Exp $	*/
+/*	$OpenBSD: ntfs_vnops.c,v 1.47 2021/10/15 06:30:06 semarie Exp $	*/
 /*	$NetBSD: ntfs_vnops.c,v 1.6 2003/04/10 21:57:26 jdolecek Exp $	*/
 
 /*
@@ -668,9 +668,9 @@ const struct vops ntfs_vops = {
 	.vop_reclaim	= ntfs_reclaim,
 	.vop_print	= ntfs_print,
 	.vop_pathconf	= ntfs_pathconf,
-	.vop_islocked	= vop_generic_islocked,
-	.vop_unlock	= vop_generic_unlock,
-	.vop_lock	= vop_generic_lock,
+	.vop_lock	= nullop,
+	.vop_unlock	= nullop,
+	.vop_islocked	= nullop,
 	.vop_lookup	= ntfs_lookup,
 	.vop_access	= ntfs_access,
 	.vop_close	= ntfs_close,

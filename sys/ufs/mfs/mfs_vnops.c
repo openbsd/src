@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vnops.c,v 1.57 2021/10/08 08:34:09 claudio Exp $	*/
+/*	$OpenBSD: mfs_vnops.c,v 1.58 2021/10/15 06:30:06 semarie Exp $	*/
 /*	$NetBSD: mfs_vnops.c,v 1.8 1996/03/17 02:16:32 christos Exp $	*/
 
 /*
@@ -74,12 +74,12 @@ const struct vops mfs_vops = {
         .vop_abortop    = vop_generic_badop,
         .vop_inactive   = mfs_inactive,
         .vop_reclaim    = mfs_reclaim,
-        .vop_lock       = vop_generic_lock,
-        .vop_unlock     = vop_generic_unlock,
+        .vop_lock       = nullop,
+        .vop_unlock     = nullop,
+        .vop_islocked   = nullop,
         .vop_bmap       = vop_generic_bmap,
         .vop_strategy   = mfs_strategy,
         .vop_print      = mfs_print,
-        .vop_islocked   = vop_generic_islocked,
         .vop_pathconf   = vop_generic_badop,
         .vop_advlock    = vop_generic_badop,
         .vop_bwrite     = vop_generic_bwrite

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.81 2021/10/02 08:51:41 semarie Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.82 2021/10/15 06:30:06 semarie Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -91,12 +91,12 @@ const struct vops fifo_vops = {
 	.vop_abortop	= vop_generic_badop,
 	.vop_inactive	= fifo_inactive,
 	.vop_reclaim	= fifo_reclaim,
-	.vop_lock	= vop_generic_lock,
-	.vop_unlock	= vop_generic_unlock,
+	.vop_lock	= nullop,
+	.vop_unlock	= nullop,
+	.vop_islocked	= nullop,
 	.vop_bmap	= vop_generic_bmap,
 	.vop_strategy	= vop_generic_badop,
 	.vop_print	= fifo_print,
-	.vop_islocked	= vop_generic_islocked,
 	.vop_pathconf	= fifo_pathconf,
 	.vop_advlock	= fifo_advlock,
 	.vop_bwrite	= nullop

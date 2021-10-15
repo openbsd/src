@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_sync.c,v 1.66 2021/06/15 05:24:47 dlg Exp $  */
+/*       $OpenBSD: vfs_sync.c,v 1.67 2021/10/15 06:30:06 semarie Exp $  */
 
 /*
  *  Portions of this code are:
@@ -267,9 +267,9 @@ const struct vops sync_vops = {
 	.vop_fsync	= sync_fsync,
 	.vop_inactive	= sync_inactive,
 	.vop_reclaim	= nullop,
-	.vop_lock	= vop_generic_lock,
-	.vop_unlock	= vop_generic_unlock,
-	.vop_islocked	= vop_generic_islocked,
+	.vop_lock	= nullop,
+	.vop_unlock	= nullop,
+	.vop_islocked	= nullop,
 	.vop_print	= sync_print
 };
 
