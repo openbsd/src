@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.209 2021/09/14 23:07:18 inoguchi Exp $ */
+/* $OpenBSD: ssl.h,v 1.210 2021/10/15 16:48:46 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -357,9 +357,6 @@ extern "C" {
  * in SSL_CTX. */
 typedef struct ssl_st *ssl_crock_st;
 
-#if defined(LIBRESSL_INTERNAL)
-typedef struct tls_session_ticket_ext_st TLS_SESSION_TICKET_EXT;
-#endif
 typedef struct ssl_method_st SSL_METHOD;
 typedef struct ssl_cipher_st SSL_CIPHER;
 typedef struct ssl_session_st SSL_SESSION;
@@ -537,57 +534,10 @@ typedef int (*GEN_SESSION_CB)(const SSL *ssl, unsigned char *id,
 typedef struct ssl_comp_st SSL_COMP;
 
 #ifdef LIBRESSL_INTERNAL
-
-struct ssl_comp_st {
-	int id;
-	const char *name;
-};
-
 DECLARE_STACK_OF(SSL_COMP)
 struct lhash_st_SSL_SESSION {
 	int dummy;
 };
-
-struct ssl_ctx_internal_st;
-
-struct ssl_ctx_st {
-	const SSL_METHOD *method;
-
-	STACK_OF(SSL_CIPHER) *cipher_list;
-
-	struct x509_store_st /* X509_STORE */ *cert_store;
-
-	/* If timeout is not 0, it is the default timeout value set
-	 * when SSL_new() is called.  This has been put in to make
-	 * life easier to set things up */
-	long session_timeout;
-
-	int references;
-
-	/* Default values to use in SSL structures follow (these are copied by SSL_new) */
-
-	STACK_OF(X509) *extra_certs;
-
-	int verify_mode;
-	unsigned int sid_ctx_length;
-	unsigned char sid_ctx[SSL_MAX_SID_CTX_LENGTH];
-
-	X509_VERIFY_PARAM *param;
-
-	/*
-	 * XXX
-	 * default_passwd_cb used by python and openvpn, need to keep it until we
-	 * add an accessor
-	 */
-	/* Default password callback. */
-	pem_password_cb *default_passwd_callback;
-
-	/* Default password callback user data. */
-	void *default_passwd_callback_userdata;
-
-	struct ssl_ctx_internal_st *internal;
-};
-
 #endif
 
 #define SSL_SESS_CACHE_OFF			0x0000
@@ -702,85 +652,6 @@ void SSL_set_psk_use_session_callback(SSL *s, SSL_psk_use_session_cb_func cb);
 
 #define SSL_MAC_FLAG_READ_MAC_STREAM 1
 #define SSL_MAC_FLAG_WRITE_MAC_STREAM 2
-
-#if defined(LIBRESSL_INTERNAL)
-struct ssl_internal_st;
-
-struct ssl_st {
-	/* protocol version
-	 * (one of SSL2_VERSION, SSL3_VERSION, TLS1_VERSION, DTLS1_VERSION)
-	 */
-	int version;
-
-	const SSL_METHOD *method; /* SSLv3 */
-
-	/* There are 2 BIO's even though they are normally both the
-	 * same.  This is so data can be read and written to different
-	 * handlers */
-
-	BIO *rbio; /* used by SSL_read */
-	BIO *wbio; /* used by SSL_write */
-	BIO *bbio; /* used during session-id reuse to concatenate
-		    * messages */
-	int server;	/* are we the server side? - mostly used by SSL_clear*/
-
-	struct ssl3_state_st *s3; /* SSLv3 variables */
-	struct dtls1_state_st *d1; /* DTLSv1 variables */
-
-	X509_VERIFY_PARAM *param;
-
-	/* crypto */
-	STACK_OF(SSL_CIPHER) *cipher_list;
-
-	/* This is used to hold the server certificate used */
-	struct cert_st /* CERT */ *cert;
-
-	/* the session_id_context is used to ensure sessions are only reused
-	 * in the appropriate context */
-	unsigned int sid_ctx_length;
-	unsigned char sid_ctx[SSL_MAX_SID_CTX_LENGTH];
-
-	/* This can also be in the session once a session is established */
-	SSL_SESSION *session;
-
-	/* Used in SSL2 and SSL3 */
-	int verify_mode;	/* 0 don't care about verify failure.
-				 * 1 fail if verify fails */
-	int error;		/* error bytes to be written */
-	int error_code;		/* actual code */
-
-	SSL_CTX *ctx;
-
-	long verify_result;
-
-	int references;
-
-	int client_version;	/* what was passed, used for
-				 * SSLv3/TLS rollback check */
-
-	unsigned int max_send_fragment;
-
-	char *tlsext_hostname;
-
-	/* certificate status request info */
-	/* Status type or -1 if no status type */
-	int tlsext_status_type;
-
-	SSL_CTX * initial_ctx; /* initial ctx, used to store sessions */
-#define session_ctx initial_ctx
-
-	/*
-	 * XXX really should be internal, but is
-	 * touched unnaturally by wpa-supplicant
-	 * and freeradius and other perversions
-	 */
-	EVP_CIPHER_CTX *enc_read_ctx;		/* cryptographic state */
-	EVP_MD_CTX *read_hash;			/* used for mac generation */
-
-	struct ssl_internal_st *internal;
-};
-
-#endif
 
 #ifdef __cplusplus
 }
