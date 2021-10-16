@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcm2711_pcie.c,v 1.6 2021/05/17 17:25:13 kettenis Exp $	*/
+/*	$OpenBSD: bcm2711_pcie.c,v 1.7 2021/10/16 17:14:41 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -40,6 +40,9 @@
 #define PCIE_MISC_CPU_2_PCIE_MEM_WIN0_LIMIT_HI		0x4084
 #define PCIE_EXT_CFG_DATA				0x8000
 #define PCIE_EXT_CFG_INDEX				0x9000
+#define PCIE_RGR1_SW_INIT_1				0x9210
+#define  PCIE_RGR1_SW_INIT_1_PERST_MASK			(1 << 0)
+#define  PCIE_RGR1_SW_INIT_1_INIT_MASK			(1 << 1)
 
 #define HREAD4(sc, reg)							\
 	(bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg)))
@@ -121,6 +124,7 @@ bcmpcie_attach(struct device *parent, struct device *self, void *aux)
 	struct pcibus_attach_args pba;
 	uint32_t *ranges;
 	int i, j, nranges, rangeslen;
+	uint32_t reg;
 
 	if (faa->fa_nreg < 1) {
 		printf(": no registers\n");
@@ -131,6 +135,12 @@ bcmpcie_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
 	    faa->fa_reg[0].size, 0, &sc->sc_ioh)) {
 		printf(": can't map registers\n");
+		return;
+	}
+
+	reg = HREAD4(sc, PCIE_RGR1_SW_INIT_1);
+	if (reg & PCIE_RGR1_SW_INIT_1_INIT_MASK) {
+		printf(": disabled\n");
 		return;
 	}
 
