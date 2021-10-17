@@ -1,4 +1,4 @@
-/*	$OpenBSD: out.c,v 1.56 2021/10/17 20:47:54 schwarze Exp $ */
+/*	$OpenBSD: out.c,v 1.57 2021/10/17 21:03:05 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2014, 2015, 2017, 2018, 2019, 2021
@@ -245,13 +245,13 @@ tblcalc(struct rofftbl *tbl, const struct tbl_span *sp_first,
 				done = 1;
 				break;
 			} else
-				(*gp)->wanted -= width;
+				g->wanted -= width;
 		}
 		if (done) {
 			*gp = g->next;
 			free(g);
 		} else
-			gp = &(*gp)->next;
+			gp = &g->next;
 	}
 
 	colwidth = mandoc_reallocarray(NULL, maxcol + 1, sizeof(*colwidth));
@@ -324,7 +324,7 @@ tblcalc(struct rofftbl *tbl, const struct tbl_span *sp_first,
 				*gp = g->next;
 				free(g);
 			} else
-				gp = &(*gp)->next;
+				gp = &g->next;
 		}
 	}
 	free(colwidth);
