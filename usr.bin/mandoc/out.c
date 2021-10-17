@@ -1,4 +1,4 @@
-/*	$OpenBSD: out.c,v 1.55 2021/09/28 17:06:17 schwarze Exp $ */
+/*	$OpenBSD: out.c,v 1.56 2021/10/17 20:47:54 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2014, 2015, 2017, 2018, 2019, 2021
@@ -147,7 +147,6 @@ tblcalc(struct rofftbl *tbl, const struct tbl_span *sp_first,
 		 * to data cells in the data section.
 		 */
 
-		gp = &first_group;
 		for (dp = sp->first; dp != NULL; dp = dp->next) {
 			icol = dp->layout->col;
 			while (maxcol < icol + dp->hspans)
@@ -188,16 +187,16 @@ tblcalc(struct rofftbl *tbl, const struct tbl_span *sp_first,
 				continue;
 
 			/*
-			 * Build an ordered, singly linked list
+			 * Build a singly linked list
 			 * of all groups of columns joined by spans,
 			 * recording the minimum width for each group.
 			 */
 
-			while (*gp != NULL && ((*gp)->startcol < icol ||
-			    (*gp)->endcol < icol + dp->hspans))
+			gp = &first_group;
+			while (*gp != NULL && ((*gp)->startcol != icol ||
+			    (*gp)->endcol != icol + dp->hspans))
 				gp = &(*gp)->next;
-			if (*gp == NULL || (*gp)->startcol > icol ||
-                            (*gp)->endcol > icol + dp->hspans) {
+			if (*gp == NULL) {
 				g = mandoc_malloc(sizeof(*g));
 				g->next = *gp;
 				g->wanted = width;
