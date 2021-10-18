@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.108 2021/10/10 15:34:21 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.109 2021/10/18 16:12:02 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -289,19 +289,12 @@ PRT_parse(const struct dos_partition *dp, const uint64_t lba_self,
 	else
 		off = lba_self;
 
-#if 0 /* XXX */
-	prt->prt_bs = letoh32(dp->dp_start) + off;
-	prt->prt_ns = letoh32(dp->dp_size);
-	if (prt->prt_id == DOSPTYP_EFI && partn == UINT32_MAX)
-		prt->prt_ns = DL_GETDSIZE(&dl) - prt->prt_bs;
-#else
 	memcpy(&t, &dp->dp_start, sizeof(uint32_t));
 	prt->prt_bs = letoh32(t) + off;
 	memcpy(&t, &dp->dp_size, sizeof(uint32_t));
 	prt->prt_ns = letoh32(t);
 	if (prt->prt_id == DOSPTYP_EFI && prt->prt_ns == UINT32_MAX)
 		prt->prt_ns = DL_GETDSIZE(&dl) - prt->prt_bs;
-#endif
 
 	PRT_fix_CHS(prt);
 }
