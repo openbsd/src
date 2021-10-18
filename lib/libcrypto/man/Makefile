@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.190 2021/08/06 21:50:54 schwarze Exp $
+# $OpenBSD: Makefile,v 1.191 2021/10/18 14:46:37 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -308,6 +308,7 @@ MAN=	\
 	X509_STORE_set_verify_cb_func.3 \
 	X509_STORE_set1_param.3 \
 	X509_TRUST_set.3 \
+	X509_VERIFY_PARAM_new.3 \
 	X509_VERIFY_PARAM_set_flags.3 \
 	X509_add1_trust_object.3 \
 	X509_check_ca.3 \

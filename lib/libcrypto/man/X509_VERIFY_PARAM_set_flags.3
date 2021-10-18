@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_VERIFY_PARAM_set_flags.3,v 1.17 2021/07/23 16:43:56 schwarze Exp $
+.\" $OpenBSD: X509_VERIFY_PARAM_set_flags.3,v 1.18 2021/10/18 14:46:37 schwarze Exp $
 .\" full merge up to: OpenSSL d33def66 Feb 9 14:17:13 2016 -0500
 .\" selective merge up to: OpenSSL 24a535ea Sep 22 13:14:20 2020 +0100
 .\"
@@ -68,12 +68,10 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 23 2021 $
+.Dd $Mdocdate: October 18 2021 $
 .Dt X509_VERIFY_PARAM_SET_FLAGS 3
 .Os
 .Sh NAME
-.Nm X509_VERIFY_PARAM_new ,
-.Nm X509_VERIFY_PARAM_free ,
 .Nm X509_VERIFY_PARAM_get0_name ,
 .Nm X509_VERIFY_PARAM_set1_name ,
 .Nm X509_VERIFY_PARAM_set_flags ,
@@ -92,23 +90,10 @@
 .Nm X509_VERIFY_PARAM_get0_peername ,
 .Nm X509_VERIFY_PARAM_set1_email ,
 .Nm X509_VERIFY_PARAM_set1_ip ,
-.Nm X509_VERIFY_PARAM_set1_ip_asc ,
-.Nm X509_VERIFY_PARAM_add0_table ,
-.Nm X509_VERIFY_PARAM_lookup ,
-.Nm X509_VERIFY_PARAM_get_count ,
-.Nm X509_VERIFY_PARAM_get0 ,
-.Nm X509_VERIFY_PARAM_table_cleanup
+.Nm X509_VERIFY_PARAM_set1_ip_asc
 .Nd X509 verification parameters
 .Sh SYNOPSIS
 .In openssl/x509_vfy.h
-.Ft X509_VERIFY_PARAM *
-.Fo X509_VERIFY_PARAM_new
-.Fa void
-.Fc
-.Ft void
-.Fo X509_VERIFY_PARAM_free
-.Fa "X509_VERIFY_PARAM *param"
-.Fc
 .Ft const char *
 .Fo X509_VERIFY_PARAM_get0_name
 .Fa "const X509_VERIFY_PARAM *param"
@@ -204,45 +189,10 @@
 .Fa "X509_VERIFY_PARAM *param"
 .Fa "const char *ipasc"
 .Fc
-.Ft int
-.Fo X509_VERIFY_PARAM_add0_table
-.Fa "X509_VERIFY_PARAM *param"
-.Fc
-.Ft const X509_VERIFY_PARAM *
-.Fo X509_VERIFY_PARAM_lookup
-.Fa "const char *name"
-.Fc
-.Ft int
-.Fo X509_VERIFY_PARAM_get_count
-.Fa void
-.Fc
-.Ft const X509_VERIFY_PARAM *
-.Fo X509_VERIFY_PARAM_get0
-.Fa "int id"
-.Fc
-.Ft void
-.Fo X509_VERIFY_PARAM_table_cleanup
-.Fa void
-.Fc
 .Sh DESCRIPTION
 These functions manipulate an
 .Vt X509_VERIFY_PARAM
 object associated with a certificate verification operation.
-.Pp
-.Fn X509_VERIFY_PARAM_new
-allocates and initializes an empty
-.Vt X509_VERIFY_PARAM
-object.
-.Pp
-.Fn X509_VERIFY_PARAM_free
-clears all data contained in
-.Fa param
-and releases all memory used by it.
-If
-.Fa param
-is a
-.Dv NULL
-pointer, no action occurs.
 .Pp
 .Fn X509_VERIFY_PARAM_get0_name
 returns the name of the given
@@ -458,62 +408,15 @@ The condensed "::" notation is supported for IPv6 addresses.
 will fail if
 .Fa ipasc
 is unparsable.
-.Pp
-.Fn X509_VERIFY_PARAM_add0_table
-adds
-.Fa param
-to a static list of
-.Vt X509_VERIFY_PARAM
-objects maintained by the library.
-This function is extremely dangerous because contrary to the name
-of the function, if the list already contains an object that happens
-to have the same name, that old object is not only silently removed
-from the list, but also silently freed, which may silently invalidate
-various pointers existing elsewhere in the program.
-.Pp
-.Fn X509_VERIFY_PARAM_lookup
-searches this list for an object of the given
-.Fa name .
-If no match is found, the predefined objects built-in to the library
-are also inspected.
-.Pp
-.Fn X509_VERIFY_PARAM_get_count
-returns the sum of the number of objects on this list and the number
-of predefined objects built-in to the library.
-Note that this is not necessarily the total number of
-.Vt X509_VERIFY_PARAM
-objects existing in the program because there may be additional such
-objects that were never added to the list.
-.Pp
-.Fn X509_VERIFY_PARAM_get0
-accesses predefined and user-defined objects using
-.Fa id
-as an index, useful for looping over objects without knowing their names.
-An argument less than the number of predefined objects selects
-one of the predefined objects; a higher argument selects an object
-from the list.
-.Pp
-.Fn X509_VERIFY_PARAM_table_cleanup
-deletes all objects from this list.
-It is extremely dangerous because it also invalidates all data that
-was contained in all objects that were on the list and because it
-frees all these objects, which may invalidate various pointers
-existing elsewhere in the program.
 .Sh RETURN VALUES
-.Fn X509_VERIFY_PARAM_new
-returns a pointer to the new object, or
-.Dv NULL
-on allocation failure.
-.Pp
 .Fn X509_VERIFY_PARAM_set1_name ,
 .Fn X509_VERIFY_PARAM_set_flags ,
 .Fn X509_VERIFY_PARAM_clear_flags ,
 .Fn X509_VERIFY_PARAM_set_purpose ,
 .Fn X509_VERIFY_PARAM_set_trust ,
 .Fn X509_VERIFY_PARAM_add0_policy ,
-.Fn X509_VERIFY_PARAM_set1_policies ,
 and
-.Fn X509_VERIFY_PARAM_add0_table
+.Fn X509_VERIFY_PARAM_set1_policies
 return 1 for success or 0 for failure.
 .Pp
 .Fn X509_VERIFY_PARAM_set1_host ,
@@ -521,7 +424,7 @@ return 1 for success or 0 for failure.
 .Fn X509_VERIFY_PARAM_set1_email ,
 .Fn X509_VERIFY_PARAM_set1_ip ,
 and
-.Fn X509_VERIFY_PARAM_set1_ip_asc ,
+.Fn X509_VERIFY_PARAM_set1_ip_asc
 return 1 for success or 0 for failure.
 A failure from these routines will poison
 the
@@ -543,21 +446,6 @@ return pointers to strings that are only valid
 during the lifetime of the given
 .Fa param
 object and that must not be freed by the application program.
-.Pp
-.Fn X509_VERIFY_PARAM_lookup
-and
-.Fn X509_VERIFY_PARAM_get0
-return a pointer to an existing built-in or user-defined object, or
-.Dv NULL
-if no object with the given
-.Fa name
-is found, or if
-.Fa id
-is at least
-.Fn X509_VERIFY_PARAM_get_count .
-.Pp
-.Fn X509_VERIFY_PARAM_get_count
-returns a number of objects.
 .Sh VERIFICATION FLAGS
 The verification flags consists of zero or more of the following
 flags OR'ed together.
@@ -702,12 +590,9 @@ X509_VERIFY_PARAM_free(param);
 .Xr SSL_set1_host 3 ,
 .Xr SSL_set1_param 3 ,
 .Xr X509_check_host 3 ,
-.Xr X509_STORE_CTX_set0_param 3 ,
-.Xr X509_STORE_set1_param 3 ,
-.Xr X509_verify_cert 3
+.Xr X509_verify_cert 3 ,
+.Xr X509_VERIFY_PARAM_new 3
 .Sh HISTORY
-.Fn X509_VERIFY_PARAM_new ,
-.Fn X509_VERIFY_PARAM_free ,
 .Fn X509_VERIFY_PARAM_set1_name ,
 .Fn X509_VERIFY_PARAM_set_flags ,
 .Fn X509_VERIFY_PARAM_set_purpose ,
@@ -716,11 +601,8 @@ X509_VERIFY_PARAM_free(param);
 .Fn X509_VERIFY_PARAM_add0_policy ,
 .Fn X509_VERIFY_PARAM_set1_policies ,
 .Fn X509_VERIFY_PARAM_set_depth ,
-.Fn X509_VERIFY_PARAM_get_depth ,
-.Fn X509_VERIFY_PARAM_add0_table ,
-.Fn X509_VERIFY_PARAM_lookup ,
 and
-.Fn X509_VERIFY_PARAM_table_cleanup
+.Fn X509_VERIFY_PARAM_get_depth
 first appeared in OpenSSL 0.9.8.
 .Fn X509_VERIFY_PARAM_clear_flags
 and
@@ -736,10 +618,8 @@ All these functions have been available since
 .Fn X509_VERIFY_PARAM_get0_peername ,
 .Fn X509_VERIFY_PARAM_set1_email ,
 .Fn X509_VERIFY_PARAM_set1_ip ,
-.Fn X509_VERIFY_PARAM_set1_ip_asc ,
-.Fn X509_VERIFY_PARAM_get_count ,
 and
-.Fn X509_VERIFY_PARAM_get0
+.Fn X509_VERIFY_PARAM_set1_ip_asc
 first appeared in OpenSSL 1.0.2 and have been available since
 .Ox 6.3 .
 .Sh BUGS
