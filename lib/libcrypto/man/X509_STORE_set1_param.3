@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_STORE_set1_param.3,v 1.18 2021/10/18 14:46:37 schwarze Exp $
+.\" $OpenBSD: X509_STORE_set1_param.3,v 1.19 2021/10/18 18:20:39 schwarze Exp $
 .\" content checked up to:
 .\" OpenSSL man3/X509_STORE_add_cert b0edda11 Mar 20 13:00:17 2018 +0000
 .\" OpenSSL man3/X509_STORE_get0_param e90fc053 Jul 15 09:39:45 2017 -0400
@@ -102,6 +102,8 @@
 .Fn X509_STORE_set1_param
 copies the verification parameters from
 .Fa pm
+using
+.Xr X509_VERIFY_PARAM_set1 3
 into the verification parameter object contained in the
 .Fa store .
 .Pp
