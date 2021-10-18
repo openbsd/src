@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.109 2021/10/18 16:12:02 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.110 2021/10/18 20:27:32 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -274,15 +274,7 @@ PRT_parse(const struct dos_partition *dp, const uint64_t lba_self,
 	uint32_t		t;
 
 	prt->prt_flag = dp->dp_flag;
-	prt->prt_shead = dp->dp_shd;
-
-	prt->prt_ssect = (dp->dp_ssect) & 0x3F;
-	prt->prt_scyl = ((dp->dp_ssect << 2) & 0xFF00) | dp->dp_scyl;
-
 	prt->prt_id = dp->dp_typ;
-	prt->prt_ehead = dp->dp_ehd;
-	prt->prt_esect = (dp->dp_esect) & 0x3F;
-	prt->prt_ecyl = ((dp->dp_esect << 2) & 0xFF00) | dp->dp_ecyl;
 
 	if ((prt->prt_id == DOSPTYP_EXTEND) || (prt->prt_id == DOSPTYP_EXTENDL))
 		off = lba_firstembr;
