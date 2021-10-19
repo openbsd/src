@@ -1,0 +1,92 @@
+.\" $OpenBSD: X509_PKEY_new.3,v 1.1 2021/10/19 10:39:33 schwarze Exp $
+.\"
+.\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: October 19 2021 $
+.Dt X509_PKEY_NEW 3
+.Os
+.Sh NAME
+.Nm X509_PKEY_new ,
+.Nm X509_PKEY_free
+.Nd X.509 private key wrapper object
+.Sh SYNOPSIS
+.In openssl/x509.h
+.Ft X509_PKEY *
+.Fn X509_PKEY_new void
+.Ft void
+.Fn X509_PKEY_free "X509_PKEY *wrapper"
+.Sh DESCRIPTION
+.Vt X509_PKEY
+is a reference-counted wrapper object that can store
+.Bl -bullet -width 1n
+.It
+a pointer to an encrypted and ASN.1-encoded private key
+.It
+a pointer to an
+.Vt EVP_PKEY
+object representing the same key in decrypted form
+.It
+a pointer to an
+.Vt X509_ALGOR
+object identifying the algorithm used by the key
+.El
+.Pp
+The object may contain only the encrypted key or only the decrypted
+key or both.
+.Pp
+.Vt X509_PKEY
+is used as a sub-object of the
+.Vt X509_INFO
+object created by
+.Xr PEM_X509_INFO_read_bio 3
+if the PEM file contains any RSA, DSA, or EC PRIVATE KEY object.
+.Pp
+.Fn X509_PKEY_new
+allocates and initializes an empty
+.Vt X509_PKEY
+object and sets its reference count to 1.
+.Pp
+.Fn X509_PKEY_free
+decrements the reference count of the
+.Fa wrapper
+object by 1.
+If the reference count reaches 0,
+it frees all internal objects allocated by the
+.Fa wrapper
+as well as the storage needed for the
+.Fa wrapper
+object itself.
+If
+.Fa wrapper
+is a
+.Dv NULL
+pointer, no action occurs.
+.Sh RETURN VALUES
+.Fn X509_PKEY_new
+returns a pointer to the new
+.Vt X509_PKEY
+object or
+.Dv NULL
+if memory allocation fails.
+.Sh SEE ALSO
+.Xr EVP_PKEY_new 3 ,
+.Xr PEM_X509_INFO_read 3 ,
+.Xr X509_INFO_new 3
+.Sh HISTORY
+.Fn X509_PKEY_new
+and
+.Fn X509_PKEY_free
+first appeared in SSLeay 0.6.0 and have been available since
+.Ox 2.4 .
