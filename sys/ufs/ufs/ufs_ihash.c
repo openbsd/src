@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_ihash.c,v 1.25 2021/03/11 13:31:36 jsg Exp $	*/
+/*	$OpenBSD: ufs_ihash.c,v 1.26 2021/10/19 06:11:45 semarie Exp $	*/
 /*	$NetBSD: ufs_ihash.c,v 1.3 1996/02/09 22:36:04 christos Exp $	*/
 
 /*
@@ -137,7 +137,7 @@ ufs_ihashins(struct inode *ip)
 	ufsino_t inum = ip->i_number;
 
 	/* lock the inode, then put it on the appropriate hash list */
-	rrw_enter(&ip->i_lock, RW_WRITE);
+	VOP_LOCK(ITOV(ip), LK_EXCLUSIVE);
 
 	/* XXXLOCKING lock hash list */
 
@@ -145,7 +145,7 @@ ufs_ihashins(struct inode *ip)
 	LIST_FOREACH(curip, ipp, i_hash) {
 		if (inum == curip->i_number && dev == curip->i_dev) {
 			/* XXXLOCKING unlock hash list? */
-			rrw_exit(&ip->i_lock);
+			VOP_UNLOCK(ITOV(ip));
 			return (EEXIST);
 		}
 	}

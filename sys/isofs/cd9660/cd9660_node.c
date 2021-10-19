@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_node.c,v 1.37 2021/03/05 07:10:06 jsg Exp $	*/
+/*	$OpenBSD: cd9660_node.c,v 1.38 2021/10/19 06:11:45 semarie Exp $	*/
 /*	$NetBSD: cd9660_node.c,v 1.17 1997/05/05 07:13:57 mycroft Exp $	*/
 
 /*-
@@ -140,7 +140,7 @@ cd9660_ihashins(struct iso_node *ip)
 	*ipp = ip;
 	/* XXX locking unlock hash list? */
 
-	rrw_enter(&ip->i_lock, RW_WRITE);
+	VOP_LOCK(ITOV(ip), LK_EXCLUSIVE);
 
 	return (0);
 }
