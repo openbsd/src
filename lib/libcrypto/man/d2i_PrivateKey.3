@@ -1,10 +1,10 @@
-.\"	$OpenBSD: d2i_PrivateKey.3,v 1.9 2019/06/06 01:06:59 schwarze Exp $
-.\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
+.\" $OpenBSD: d2i_PrivateKey.3,v 1.10 2021/10/19 12:03:46 schwarze Exp $
+.\" full merge up to: OpenSSL b0edda11 Mar 20 13:00:17 2018 +0000
 .\"
 .\" This file is a derived work.
 .\" The changes are covered by the following Copyright and license:
 .\"
-.\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2016, 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -65,15 +65,17 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 6 2019 $
+.Dd $Mdocdate: October 19 2021 $
 .Dt D2I_PRIVATEKEY 3
 .Os
 .Sh NAME
 .Nm d2i_PrivateKey ,
 .Nm d2i_AutoPrivateKey ,
-.Nm i2d_PrivateKey ,
 .Nm d2i_PrivateKey_bio ,
 .Nm d2i_PrivateKey_fp ,
+.Nm i2d_PrivateKey ,
+.Nm i2d_PrivateKey_bio ,
+.Nm i2d_PrivateKey_fp ,
 .Nm i2d_PKCS8PrivateKeyInfo_bio ,
 .Nm i2d_PKCS8PrivateKeyInfo_fp ,
 .Nm d2i_PublicKey ,
@@ -94,11 +96,6 @@
 .Fa "const unsigned char **des_in"
 .Fa "long length"
 .Fc
-.Ft int
-.Fo i2d_PrivateKey
-.Fa "EVP_PKEY *val_in"
-.Fa "unsigned char **des_out"
-.Fc
 .Ft EVP_PKEY *
 .Fo d2i_PrivateKey_bio
 .Fa "BIO *in_bio"
@@ -108,6 +105,21 @@
 .Fo d2i_PrivateKey_fp
 .Fa "FILE *in_fp"
 .Fa "EVP_PKEY **val_out"
+.Fc
+.Ft int
+.Fo i2d_PrivateKey
+.Fa "EVP_PKEY *val_in"
+.Fa "unsigned char **des_out"
+.Fc
+.Ft int
+.Fo i2d_PrivateKey_bio
+.Fa "BIO *out_bio"
+.Fa "EVP_PKEY *val_in"
+.Fc
+.Ft int
+.Fo i2d_PrivateKey_fp
+.Fa "FILE *out_fp"
+.Fa "EVP_PKEY *val_in"
 .Fc
 .Ft int
 .Fo i2d_PKCS8PrivateKeyInfo_bio
@@ -173,6 +185,17 @@ It uses an algorithm specific format or, if none is defined for
 that key type, the PKCS#8 unencrypted
 .Vt PrivateKeyInfo
 format.
+.Pp
+.Fn i2d_PrivateKey_bio
+and
+.Fn i2d_PrivateKey_fp
+are similar to
+.Fn i2d_PrivateKey
+except that they write to a
+.Vt BIO
+or
+.Vt FILE
+pointer and use a different convention for their return values.
 .Pp
 .Fn i2d_PKCS8PrivateKeyInfo_bio
 and
@@ -249,7 +272,9 @@ and
 return the number of bytes successfully encoded or a negative value if
 an error occurs.
 .Pp
-.Fn i2d_PKCS8PrivateKeyInfo_bio
+.Fn i2d_PrivateKey_bio ,
+.Fn i2d_PrivateKey_fp ,
+.Fn i2d_PKCS8PrivateKeyInfo_bio ,
 and
 .Fn i2d_PKCS8PrivateKeyInfo_fp
 return 1 for success or 0 if an error occurs.
@@ -277,8 +302,8 @@ first appeared in SSLeay 0.6.0 and have been available since
 .Pp
 .Fn d2i_AutoPrivateKey ,
 .Fn d2i_PrivateKey_bio ,
-.Fn i2d_PrivateKey_bio ,
 .Fn d2i_PrivateKey_fp ,
+.Fn i2d_PrivateKey_bio ,
 .Fn i2d_PrivateKey_fp ,
 .Fn i2d_PKCS8PrivateKeyInfo_bio ,
 and
