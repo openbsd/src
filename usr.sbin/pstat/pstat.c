@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.124 2021/07/12 15:09:21 beck Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.125 2021/10/19 14:50:05 semarie Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -499,8 +499,6 @@ vnode_print(struct vnode *avnode, struct vnode *vp)
 		*fp++ = 'A';
 	if (vp->v_bioflag & VBIOONFREELIST)
 		*fp++ = 'F';
-	if (flag & VLOCKSWORK)
-		*fp++ = 'l';
 	if (vp->v_bioflag & VBIOONSYNCLIST)
 		*fp++ = 's';
 	if (fp == flags)
