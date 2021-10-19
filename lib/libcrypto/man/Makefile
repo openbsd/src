@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.191 2021/10/18 14:46:37 schwarze Exp $
+# $OpenBSD: Makefile,v 1.192 2021/10/19 10:55:57 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -292,6 +292,7 @@ MAN=	\
 	X509_NAME_new.3 \
 	X509_NAME_print_ex.3 \
 	X509_OBJECT_get0_X509.3 \
+	X509_PKEY_new.3 \
 	X509_PUBKEY_new.3 \
 	X509_PURPOSE_set.3 \
 	X509_REQ_new.3 \
