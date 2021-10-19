@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_PKEY_cmp.3,v 1.11 2021/10/19 16:27:47 schwarze Exp $
+.\" $OpenBSD: EVP_PKEY_cmp.3,v 1.12 2021/10/19 17:42:49 schwarze Exp $
 .\" full merge up to: OpenSSL 05ea606a May 20 20:52:46 2016 -0400
 .\" selective merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
@@ -159,7 +159,8 @@ are different and -2 if the operation is not supported.
 .Xr EVP_PKEY_asn1_set_public 3 ,
 .Xr EVP_PKEY_CTX_new 3 ,
 .Xr EVP_PKEY_keygen 3 ,
-.Xr EVP_PKEY_new 3
+.Xr EVP_PKEY_new 3 ,
+.Xr X509_get_pubkey_parameters 3
 .Sh HISTORY
 .Fn EVP_PKEY_missing_parameters
 and
