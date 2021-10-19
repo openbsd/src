@@ -1,4 +1,4 @@
-/*	$OpenBSD: dead_vnops.c,v 1.37 2021/10/15 06:30:06 semarie Exp $	*/
+/*	$OpenBSD: dead_vnops.c,v 1.38 2021/10/19 06:09:39 semarie Exp $	*/
 /*	$NetBSD: dead_vnops.c,v 1.16 1996/02/13 13:12:48 mycroft Exp $	*/
 
 /*
@@ -227,7 +227,7 @@ dead_lock(void *v)
 	if (ap->a_flags & LK_DRAIN || !chkvnlock(vp))
 		return (0);
 
-	return ((vp->v_op->vop_lock)(ap));
+	return VOP_LOCK(vp, ap->a_flags);
 }
 
 /*
