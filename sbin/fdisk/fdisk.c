@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.139 2021/10/13 13:18:57 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.140 2021/10/19 19:38:10 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -144,6 +144,8 @@ main(int argc, char *argv[])
 	if (init || e_flag)
 		oflags = O_RDWR;
 
+	get_default_dmbr(mbrfile);
+
 	DISK_open(argv[0], oflags);
 	if (oflags == O_RDONLY) {
 		if (pledge("stdio", NULL) == -1)
@@ -152,11 +154,13 @@ main(int argc, char *argv[])
 		goto done;
 	}
 
-	/* "proc exec" for man page display */
-	if (pledge("stdio rpath wpath disklabel proc exec", NULL) == -1)
+	/*
+	 * "stdio" to talk to the outside world.
+	 * "proc exec" for man page display.
+	 * "disklabel" for DIOCRLDINFO.
+	 */
+	if (pledge("stdio disklabel proc exec", NULL) == -1)
 		err(1, "pledge");
-
-	get_default_dmbr(mbrfile);
 
 	switch (init) {
 	case INIT_GPT:
