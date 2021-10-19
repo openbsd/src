@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_subr.c,v 1.35 2016/08/10 07:53:02 natano Exp $	*/
+/*	$OpenBSD: ext2fs_subr.c,v 1.36 2021/10/19 06:26:09 semarie Exp $	*/
 /*	$NetBSD: ext2fs_subr.c,v 1.1 1997/06/11 09:34:03 bouyer Exp $	*/
 
 /*
@@ -170,9 +170,6 @@ ext2fs_vinit(struct mount *mp, struct vnode **vpp)
 			nvp->v_data = vp->v_data;
 			vp->v_data = NULL;
 			vp->v_op = &spec_vops;
-#ifdef VFSLCKDEBUG
-			vp->v_flag &= ~VLOCKSWORK;
-#endif
 			vrele(vp);
 			vgone(vp);
 			/* Reinitialize aliased vnode. */

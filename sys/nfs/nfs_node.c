@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.72 2021/10/19 06:11:45 semarie Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.73 2021/10/19 06:26:09 semarie Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -133,9 +133,6 @@ loop:
 	}
 
 	vp = nvp;
-#ifdef VFSLCKDEBUG
-	vp->v_flag |= VLOCKSWORK;
-#endif
 	rrw_init_flags(&np->n_lock, "nfsnode", RWL_DUPOK | RWL_IS_VNODE);
 	vp->v_data = np;
 	/* we now have an nfsnode on this vnode */

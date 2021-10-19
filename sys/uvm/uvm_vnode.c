@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.116 2021/10/12 07:38:22 mpi Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.117 2021/10/19 06:26:09 semarie Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -1328,7 +1328,7 @@ uvm_vnp_uncache(struct vnode *vp)
 	 * carry over sanity check from old vnode pager: the vnode should
 	 * be VOP_LOCK'd, and we confirm it here.
 	 */
-	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
+	if ((vp->v_op->vop_islocked != nullop) && !VOP_ISLOCKED(vp))
 		panic("uvm_vnp_uncache: vnode not locked!");
 #endif
 

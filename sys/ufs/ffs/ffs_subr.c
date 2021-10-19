@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_subr.c,v 1.32 2016/08/10 11:33:01 natano Exp $	*/
+/*	$OpenBSD: ffs_subr.c,v 1.33 2021/10/19 06:26:09 semarie Exp $	*/
 /*	$NetBSD: ffs_subr.c,v 1.6 1996/03/17 02:16:23 christos Exp $	*/
 
 /*
@@ -272,9 +272,6 @@ ffs_vinit(struct mount *mntp, struct vnode **vpp)
 			nvp->v_data = vp->v_data;
 			vp->v_data = NULL;
 			vp->v_op = &spec_vops;
-#ifdef VFSLCKDEBUG
-			vp->v_flag &= ~VLOCKSWORK;
-#endif
 			vrele(vp);
 			vgone(vp);
 			/*

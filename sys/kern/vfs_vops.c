@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vops.c,v 1.31 2021/10/04 08:11:02 claudio Exp $	*/
+/*	$OpenBSD: vfs_vops.c,v 1.32 2021/10/19 06:26:09 semarie Exp $	*/
 /*
  * Copyright (c) 2010 Thordur I. Bjornsson <thib@openbsd.org> 
  *
@@ -48,11 +48,15 @@
 #include <sys/systm.h>
 
 #ifdef VFSLCKDEBUG
-#define ASSERT_VP_ISLOCKED(vp) do {				\
-	if (((vp)->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) {	\
-		VOP_PRINT(vp);					\
-		panic("vp not locked");				\
-	}							\
+#define ASSERT_VP_ISLOCKED(vp) do {					\
+	struct vnode *_vp = (vp);					\
+	int r;								\
+	if (_vp->v_op->vop_islocked == nullop)				\
+		break;							\
+	if ((r = VOP_ISLOCKED(_vp)) != LK_EXCLUSIVE) {			\
+		VOP_PRINT(_vp);						\
+		panic("%s: vp not locked, vp %p, %d", __func__, _vp, r);\
+	}								\
 } while (0)
 #else
 #define ASSERT_VP_ISLOCKED(vp)  /* nothing */
