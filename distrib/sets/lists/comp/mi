@@ -2157,6 +2157,7 @@
 ./usr/share/man/man3/X509_NAME_new.3
 ./usr/share/man/man3/X509_NAME_print_ex.3
 ./usr/share/man/man3/X509_OBJECT_get0_X509.3
+./usr/share/man/man3/X509_PKEY_new.3
 ./usr/share/man/man3/X509_PUBKEY_new.3
 ./usr/share/man/man3/X509_PURPOSE_set.3
 ./usr/share/man/man3/X509_REQ_new.3
@@ -2173,6 +2174,7 @@
 ./usr/share/man/man3/X509_STORE_set1_param.3
 ./usr/share/man/man3/X509_STORE_set_verify_cb_func.3
 ./usr/share/man/man3/X509_TRUST_set.3
+./usr/share/man/man3/X509_VERIFY_PARAM_new.3
 ./usr/share/man/man3/X509_VERIFY_PARAM_set_flags.3
 ./usr/share/man/man3/X509_add1_trust_object.3
 ./usr/share/man/man3/X509_check_ca.3
@@ -2189,6 +2191,7 @@
 ./usr/share/man/man3/X509_get0_signature.3
 ./usr/share/man/man3/X509_get1_email.3
 ./usr/share/man/man3/X509_get_pubkey.3
+./usr/share/man/man3/X509_get_pubkey_parameters.3
 ./usr/share/man/man3/X509_get_serialNumber.3
 ./usr/share/man/man3/X509_get_subject_name.3
 ./usr/share/man/man3/X509_get_version.3
