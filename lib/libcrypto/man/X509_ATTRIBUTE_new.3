@@ -1,6 +1,6 @@
-.\" $OpenBSD: X509_ATTRIBUTE_new.3,v 1.8 2020/06/04 10:24:27 schwarze Exp $
+.\" $OpenBSD: X509_ATTRIBUTE_new.3,v 1.9 2021/10/20 03:31:20 schwarze Exp $
 .\"
-.\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2016, 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,20 +14,26 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 4 2020 $
+.Dd $Mdocdate: October 20 2021 $
 .Dt X509_ATTRIBUTE_NEW 3
 .Os
 .Sh NAME
 .Nm X509_ATTRIBUTE_new ,
+.Nm X509_ATTRIBUTE_create ,
+.Nm X509_ATTRIBUTE_dup ,
 .Nm X509_ATTRIBUTE_free
 .\" In the following line, "X.501" and "Attribute" are not typos.
 .\" The "Attribute" type is defined in X.501, not in X.509.
-.\" The type in called "Attribute" with capital "A", not "attribute".
+.\" The type is called "Attribute" with capital "A", not "attribute".
 .Nd generic X.501 Attribute
 .Sh SYNOPSIS
 .In openssl/x509.h
 .Ft X509_ATTRIBUTE *
 .Fn X509_ATTRIBUTE_new void
+.Ft X509_ATTRIBUTE *
+.Fn X509_ATTRIBUTE_create "int nid" "int type" "void *value"
+.Ft X509_ATTRIBUTE *
+.Fn X509_ATTRIBUTE_dup "X509_ATTRIBUTE *attr"
 .Ft void
 .Fn X509_ATTRIBUTE_free "X509_ATTRIBUTE *attr"
 .Sh DESCRIPTION
@@ -52,18 +58,60 @@ container object described in
 allocates and initializes an empty
 .Vt X509_ATTRIBUTE
 object.
+.Pp
+.Fn X509_ATTRIBUTE_create
+allocates a new multi-valued
+.Vt X509_ATTRIBUTE
+object of the type
+.Fa nid
+and initializes its set of values
+to contain one new ASN.1 ANY object with the given
+.Fa value
+and
+.Fa type .
+The
+.Fa type
+usually is one of the
+.Dv V_ASN1_*
+constants defined in
+.In openssl/asn1.h ;
+it is stored without validating it.
+If the function succeeds, ownership of the
+.Fa value
+is transferred to the new
+.Vt X509_ATTRIBUTE
+object.
+.Pp
+Be careful to not confuse the type of the attribute
+and the type of the value.
+.Pp
+.Fn X509_ATTRIBUTE_dup
+creates a deep copy of
+.Fa attr .
+.Pp
 .Fn X509_ATTRIBUTE_free
 frees
 .Fa attr .
 .Sh RETURN VALUES
-.Fn X509_ATTRIBUTE_new
-returns the new
+.Fn X509_ATTRIBUTE_new ,
+.Fn X509_ATTRIBUTE_create ,
+and
+.Fn X509_ATTRIBUTE_dup
+return the new
 .Vt X509_ATTRIBUTE
 object or
 .Dv NULL
 if an error occurs.
+.Pp
+In particular, these functions fail if memory allocation fails.
+.Fn X509_ATTRIBUTE_create
+also fails if
+.Xr OBJ_nid2obj 3
+fails on
+.Fa nid .
 .Sh SEE ALSO
 .Xr d2i_X509_ATTRIBUTE 3 ,
+.Xr OBJ_nid2obj 3 ,
 .Xr PKCS12_SAFEBAG_new 3 ,
 .Xr PKCS7_add_attribute 3 ,
 .Xr PKCS8_PRIV_KEY_INFO_new 3 ,
@@ -96,6 +144,12 @@ and
 .Fn X509_ATTRIBUTE_free
 first appeared in SSLeay 0.5.1 and have been available since
 .Ox 2.4 .
+.Pp
+.Fn X509_ATTRIBUTE_create
+and
+.Fn X509_ATTRIBUTE_dup
+first appeared in SSLeay 0.9.1 and have been available since
+.Ox 2.6 .
 .Sh BUGS
 A data type designed to hold arbitrary data is an oxymoron.
 .Pp
