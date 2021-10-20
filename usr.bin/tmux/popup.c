@@ -1,4 +1,4 @@
-/* $OpenBSD: popup.c,v 1.39 2021/10/20 09:50:40 nicm Exp $ */
+/* $OpenBSD: popup.c,v 1.40 2021/10/20 09:52:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -780,7 +780,6 @@ popup_editor(struct client *c, const char *buf, size_t len,
 
 	xasprintf(&cmd, "%s %s", editor, path);
 	if (popup_display(POPUP_INTERNAL|POPUP_CLOSEEXIT, BOX_LINES_DEFAULT,
-	    // TODO: Helpful to use path as a title?
 	    NULL, px, py, sx, sy, NULL, cmd, 0, NULL, _PATH_TMP, NULL, c, NULL,
 	    popup_editor_close_cb, pe) != 0) {
 		popup_editor_free(pe);
