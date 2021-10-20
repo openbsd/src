@@ -1,4 +1,4 @@
-.\" $OpenBSD: ASN1_mbstring_copy.3,v 1.1 2021/10/20 13:14:00 schwarze Exp $
+.\" $OpenBSD: ASN1_mbstring_copy.3,v 1.2 2021/10/20 15:54:21 schwarze Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -19,7 +19,11 @@
 .Os
 .Sh NAME
 .Nm ASN1_mbstring_copy ,
-.Nm ASN1_mbstring_ncopy
+.Nm ASN1_mbstring_ncopy ,
+.Nm ASN1_STRING_set_by_NID ,
+.Nm ASN1_STRING_set_default_mask ,
+.Nm ASN1_STRING_set_default_mask_asc ,
+.Nm ASN1_STRING_get_default_mask
 .Nd copy a mutibyte string into an ASN.1 string object
 .Sh SYNOPSIS
 .In openssl/asn1.h
@@ -41,6 +45,24 @@
 .Fa "long minchars"
 .Fa "long maxchars"
 .Fc
+.Ft ASN1_STRING *
+.Fo ASN1_STRING_set_by_NID
+.Fa "ASN1_STRING **out"
+.Fa "const unsigned char *in"
+.Fa "int inbytes"
+.Fa "int inform"
+.Fa "int nid"
+.Fc
+.Ft void
+.Fo ASN1_STRING_set_default_mask
+.Fa "unsigned long mask"
+.Fc
+.Ft int
+.Fo ASN1_STRING_set_default_mask_asc
+.Fa "const char *maskname"
+.Fc
+.Ft unsigned long
+.Fn ASN1_STRING_get_default_mask void
 .Sh DESCRIPTION
 .Fn ASN1_mbstring_copy
 interprets
@@ -137,6 +159,72 @@ inclusive.
 If
 .Fa maxchars
 is 0, no upper limit is enforced on the number of characters.
+.Pp
+.Fn ASN1_STRING_set_by_NID
+is similar with the following differences:
+.Bl -bullet -width 1n
+.It
+If
+.Fa out
+is
+.Dv NULL ,
+a new output object is allocated and returned
+instead of skipping the copying.
+.It
+If
+.Fa nid
+has a global string table entry that can be retrieved with
+.Xr ASN1_STRING_TABLE_get 3 ,
+.Fa mask ,
+.Fa minchars ,
+and
+.Fa maxchars
+are taken from that string table entry.
+For some values of
+.Fa nid ,
+an additional global mask is AND'ed into the mask before using it.
+The default value of the global mask is
+.Dv B_ASN1_UTF8STRING .
+.It
+If
+.Fa nid
+has no global string table entry,
+.Dv B_ASN1_PRINTABLESTRING | B_ASN1_T61STRING |
+.Dv B_ASN1_BMPSTRING | B_ASN1_UTF8STRING
+is used instead of the mask taken from the table,
+and the global mask is also AND'ed into it.
+.It
+Even though success and failure happen in the same situations,
+the return value is different.
+.Xr ASN1_STRING_type 3
+can be used to determine the type of the return value.
+.El
+.Pp
+.Fn ASN1_STRING_set_default_mask
+sets the global mask used by
+.Fn ASN1_STRING_set_by_NID
+to the
+.Fa mask
+argument.
+.Pp
+.Fn ASN1_STRING_set_default_mask_asc
+sets the global mask as follows:
+.Bl -column utf8only
+.It Ar maskname    Ta Ar mask
+.It Qo default  Qc Ta anything
+.It Qo nombstr  Qc Ta anything except Dv B_ASN1_BMPSTRING | B_ASN1_UTF8STRING
+.It Qo pkix     Qc Ta anything except Dv B_ASN1_T61STRING
+.It Qo utf8only Qc Ta Dv B_ASN1_UTF8STRING
+.El
+.Pp
+If the
+.Fa maskname
+argument starts with the substring
+.Qq MASK:\& ,
+the rest of it is interpreted as an
+.Vt unsigned long
+value using
+.Xr strtoul 3 .
 .Sh RETURN VALUES
 .Fn ASN1_mbstring_copy
 and
@@ -165,10 +253,45 @@ contains fewer than
 or more than
 .Fa maxchars
 characters.
+.Pp
+.Fn ASN1_STRING_set_by_NID
+returns the new or changed ASN.1 string object or
+.Dv NULL
+on failure.
+.Pp
+.Fn ASN1_STRING_set_default_mask_asc
+returns 1 if successful or 0 if
+.Qq MASK:\&
+is not followed by a number, if the number is followed by a non-numeric
+character, or if the
+.Fa maskname
+is invalid.
+.Pp
+.Fn ASN1_STRING_get_default_mask
+returns the global mask.
 .Sh SEE ALSO
 .Xr ASN1_STRING_new 3 ,
-.Xr ASN1_STRING_set 3
+.Xr ASN1_STRING_set 3 ,
+.Xr ASN1_STRING_TABLE_get 3
 .Sh HISTORY
 These functions first appeared in OpenSSL 0.9.5
 and have been available since
 .Ox 2.7 .
+.Sh BUGS
+If integer overflow occurs in
+.Fn ASN1_STRING_set_default_mask_asc
+while parsing a number following
+.Qq MASK:\& ,
+the function succeeds, essentially behaving in the same way as for
+.Qq default .
+.Pp
+Passing
+.Qq default
+to
+.Fn ASN1_STRING_set_default_mask_asc
+does
+.Em not
+restore the default mask.
+Instead, passing
+.Qq utf8only
+does that.
