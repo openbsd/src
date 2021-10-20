@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.863 2021/10/18 09:09:46 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.864 2021/10/20 09:50:40 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 18 2021 $
+.Dd $Mdocdate: October 20 2021 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -5801,6 +5801,7 @@ forwards any input read from stdin to the empty pane given by
 .Op Fl e Ar environment
 .Op Fl h Ar height
 .Op Fl t Ar target-pane
+.Op Fl T Ar title
 .Op Fl w Ar width
 .Op Fl x Ar position
 .Op Fl y Ar position
@@ -5857,6 +5858,10 @@ takes the form
 .Ql VARIABLE=value
 and sets an environment variable for the popup; it may be specified multiple
 times.
+.Pp
+.Fl T
+is a format for the popup title (see
+.Sx FORMATS ) .
 .Pp
 The
 .Fl C
