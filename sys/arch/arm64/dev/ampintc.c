@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.23 2021/07/03 10:21:38 kettenis Exp $ */
+/* $OpenBSD: ampintc.c,v 1.24 2021/10/21 18:30:57 patrick Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -860,6 +860,7 @@ struct ampintc_msi_softc {
 	struct device			 sc_dev;
 	bus_space_tag_t			 sc_iot;
 	bus_space_handle_t		 sc_ioh;
+	int				 sc_node;
 	paddr_t				 sc_addr;
 	int				 sc_bspi;
 	int				 sc_nspi;
@@ -890,6 +891,7 @@ ampintc_msi_attach(struct device *parent, struct device *self, void *aux)
 	struct fdt_attach_args *faa = aux;
 	uint32_t typer;
 
+	sc->sc_node = faa->fa_node;
 	sc->sc_iot = faa->fa_iot;
 	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
 	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
@@ -928,21 +930,40 @@ ampintc_intr_establish_msi(void *self, uint64_t *addr, uint64_t *data,
     int level, struct cpu_info *ci, int (*func)(void *), void *arg, char *name)
 {
 	struct ampintc_msi_softc *sc = (struct ampintc_msi_softc *)self;
+	extern LIST_HEAD(, interrupt_controller) interrupt_controllers;
+	struct interrupt_controller *ic;
+	struct machine_intr_handle *ih;
 	void *cookie;
+	int cells[3];
 	int i;
+
+	LIST_FOREACH(ic, &interrupt_controllers, ic_list) {
+		if (ic->ic_node == OF_parent(sc->sc_node))
+			break;
+	}
+	if (ic == NULL)
+		return NULL;
+
+	cells[0] = 0; /* SPI */
+	cells[2] = 1; /* Edge-Rising */
 
 	for (i = 0; i < sc->sc_nspi; i++) {
 		if (sc->sc_spi[i] != NULL)
 			continue;
 
-		cookie = ampintc_intr_establish(sc->sc_bspi + i,
-		    IST_EDGE_RISING, level, ci, func, arg, name);
+		cells[1] = sc->sc_bspi + i - 32;
+		cookie = ic->ic_establish(ic->ic_cookie, cells,
+		    level, ci, func, arg, name);
 		if (cookie == NULL)
 			return NULL;
 
+		ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
+		ih->ih_ic = ic;
+		ih->ih_ih = cookie;
+
 		*addr = sc->sc_addr + GICV2M_SETSPI_NS;
 		*data = sc->sc_bspi + i;
-		sc->sc_spi[i] = cookie;
+		sc->sc_spi[i] = ih;
 		return &sc->sc_spi[i];
 	}
 
@@ -952,7 +973,7 @@ ampintc_intr_establish_msi(void *self, uint64_t *addr, uint64_t *data,
 void
 ampintc_intr_disestablish_msi(void *cookie)
 {
-	ampintc_intr_disestablish(*(void **)cookie);
+	fdt_intr_disestablish(*(void **)cookie);
 	*(void **)cookie = NULL;
 }
 
