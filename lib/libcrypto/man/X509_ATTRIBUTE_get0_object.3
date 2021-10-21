@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_ATTRIBUTE_get0_object.3,v 1.1 2021/10/20 05:06:36 schwarze Exp $
+.\" $OpenBSD: X509_ATTRIBUTE_get0_object.3,v 1.2 2021/10/21 16:26:34 schwarze Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 20 2021 $
+.Dd $Mdocdate: October 21 2021 $
 .Dt X509_ATTRIBUTE_GET0_OBJECT 3
 .Os
 .Sh NAME
@@ -128,7 +128,8 @@ is not of the requested
 .Xr ASN1_OBJECT_new 3 ,
 .Xr ASN1_TYPE_new 3 ,
 .Xr OPENSSL_sk_new 3 ,
-.Xr X509_ATTRIBUTE_new 3
+.Xr X509_ATTRIBUTE_new 3 ,
+.Xr X509_ATTRIBUTE_set1_object 3
 .Sh HISTORY
 These functions first appeared in OpenSSL 0.9.5
 and have been available since

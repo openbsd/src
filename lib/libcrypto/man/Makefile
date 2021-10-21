@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.195 2021/10/20 13:14:00 schwarze Exp $
+# $OpenBSD: Makefile,v 1.196 2021/10/21 16:26:34 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -279,6 +279,7 @@ MAN=	\
 	X509_ALGOR_dup.3 \
 	X509_ATTRIBUTE_get0_object.3 \
 	X509_ATTRIBUTE_new.3 \
+	X509_ATTRIBUTE_set1_object.3 \
 	X509_CINF_new.3 \
 	X509_CRL_get0_by_serial.3 \
 	X509_CRL_new.3 \
