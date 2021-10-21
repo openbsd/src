@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.121 2021/10/21 13:58:02 tb Exp $	 */
+/* $OpenBSD: x509.c,v 1.122 2021/10/21 14:01:00 tb Exp $	 */
 /* $EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	 */
 
 /*
@@ -109,7 +109,7 @@ x509_generate_kn(int id, X509 *cert)
 		    "Conditions: %s >= \"%s\" && %s <= \"%s\";\n";
 	X509_NAME *issuer, *subject;
 	struct keynote_deckey dc;
-	X509_STORE_CTX csc;
+	X509_STORE_CTX *csc = NULL;
 	X509_OBJECT obj;
 	X509	*icert;
 	RSA	*key = NULL;
@@ -154,24 +154,32 @@ x509_generate_kn(int id, X509 *cert)
 	RSA_free(key);
 	key = NULL;
 
+	csc = X509_STORE_CTX_new();
+	if (csc == NULL) {
+		log_print("x509_generate_kn: failed to get memory for "
+		    "certificate store");
+		goto fail;
+	}
+
 	/* Now find issuer's certificate so we can get the public key.  */
-	X509_STORE_CTX_init(&csc, x509_cas, cert, NULL);
-	if (X509_STORE_get_by_subject(&csc, X509_LU_X509, issuer, &obj) !=
+	X509_STORE_CTX_init(csc, x509_cas, cert, NULL);
+	if (X509_STORE_get_by_subject(csc, X509_LU_X509, issuer, &obj) !=
 	    X509_LU_X509) {
-		X509_STORE_CTX_cleanup(&csc);
-		X509_STORE_CTX_init(&csc, x509_certs, cert, NULL);
-		if (X509_STORE_get_by_subject(&csc, X509_LU_X509, issuer, &obj)
+		X509_STORE_CTX_cleanup(csc);
+		X509_STORE_CTX_init(csc, x509_certs, cert, NULL);
+		if (X509_STORE_get_by_subject(csc, X509_LU_X509, issuer, &obj)
 		    != X509_LU_X509) {
-			X509_STORE_CTX_cleanup(&csc);
+			X509_STORE_CTX_cleanup(csc);
 			LOG_DBG((LOG_POLICY, 30,
 			    "x509_generate_kn: no certificate found for "
 			    "issuer"));
 			goto fail;
 		}
 	}
-	X509_STORE_CTX_cleanup(&csc);
-	icert = obj.data.x509;
+	X509_STORE_CTX_free(csc);
+	csc = NULL;
 
+	icert = X509_OBJECT_get0_X509(&obj);
 	if (icert == NULL) {
 		LOG_DBG((LOG_POLICY, 30, "x509_generate_kn: "
 		    "missing certificates, cannot construct X509 chain"));
@@ -435,6 +443,7 @@ x509_generate_kn(int id, X509 *cert)
 	return 1;
 
 fail:
+	X509_STORE_CTX_free(csc);
 	free(buf);
 	free(skey);
 	free(ikey);
@@ -812,25 +821,32 @@ x509_cert_get(u_int8_t *asn, u_int32_t len)
 int
 x509_cert_validate(void *scert)
 {
-	X509_STORE_CTX	csc;
+	X509_STORE_CTX	*csc;
 	X509_NAME	*issuer, *subject;
 	X509		*cert = (X509 *) scert;
 	EVP_PKEY	*key;
-	int		res, err;
+	int		res, err, flags;
 
 	/*
 	 * Validate the peer certificate by checking with the CA certificates
 	 * we trust.
 	 */
-	X509_STORE_CTX_init(&csc, x509_cas, cert, NULL);
-	/* XXX See comment in x509_read_crls_from_dir.  */
-	if (x509_cas->param->flags & X509_V_FLAG_CRL_CHECK) {
-		X509_STORE_CTX_set_flags(&csc, X509_V_FLAG_CRL_CHECK);
-		X509_STORE_CTX_set_flags(&csc, X509_V_FLAG_CRL_CHECK_ALL);
+	csc = X509_STORE_CTX_new();
+	if (csc == NULL) {
+		log_print("x509_cert_validate: failed to get memory for "
+		    "certificate store");
+		return 0;
 	}
-	res = X509_verify_cert(&csc);
-	err = csc.error;
-	X509_STORE_CTX_cleanup(&csc);
+	X509_STORE_CTX_init(csc, x509_cas, cert, NULL);
+	/* XXX See comment in x509_read_crls_from_dir.  */
+	flags = X509_VERIFY_PARAM_get_flags(X509_STORE_get0_param(x509_cas));
+	if (flags & X509_V_FLAG_CRL_CHECK) {
+		X509_STORE_CTX_set_flags(csc, X509_V_FLAG_CRL_CHECK);
+		X509_STORE_CTX_set_flags(csc, X509_V_FLAG_CRL_CHECK_ALL);
+	}
+	res = X509_verify_cert(csc);
+	err = X509_STORE_CTX_get_error(csc);
+	X509_STORE_CTX_free(csc);
 
 	/*
 	 * Return if validation succeeded or self-signed certs are not
