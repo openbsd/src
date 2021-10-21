@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmp.h,v 1.17 2021/05/20 08:53:12 martijn Exp $	*/
+/*	$OpenBSD: snmp.h,v 1.18 2021/10/21 14:33:13 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -80,7 +80,7 @@ enum snmp_version {
 enum snmp_pdutype {
 	SNMP_C_GETREQ		= 0,
 	SNMP_C_GETNEXTREQ	= 1,
-	SNMP_C_GETRESP		= 2,
+	SNMP_C_RESPONSE		= 2,
 	SNMP_C_SETREQ		= 3,
 	SNMP_C_TRAP		= 4,
 

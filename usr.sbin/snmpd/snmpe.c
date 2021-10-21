@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.77 2021/10/21 08:21:43 martijn Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.78 2021/10/21 14:33:13 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -207,7 +207,7 @@ snmpe_pdutype2string(enum snmp_pdutype pdutype)
 		return "GetRequest";
 	case SNMP_C_GETNEXTREQ:
 		return "GetNextRequest";
-	case SNMP_C_GETRESP:
+	case SNMP_C_RESPONSE:
 		return "Response";
 	case SNMP_C_SETREQ:
 		return "SetRequest";
@@ -373,7 +373,7 @@ badversion:
 		}
 		break;
 
-	case SNMP_C_GETRESP:
+	case SNMP_C_RESPONSE:
 		stats->snmp_ingetresponses++;
 		msg->sm_errstr = "response without request";
 		goto parsefail;
@@ -812,7 +812,7 @@ snmpe_dispatchmsg(struct snmp_message *msg)
 	(void) snmpe_parsevarbinds(msg);
 
 	/* respond directly */
-	msg->sm_pdutype = SNMP_C_GETRESP;
+	msg->sm_pdutype = SNMP_C_RESPONSE;
 	snmpe_response(msg);
 }
 
