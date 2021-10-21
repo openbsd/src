@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.91 2021/10/21 08:31:51 tb Exp $ */
+/* $OpenBSD: tls.c,v 1.92 2021/10/21 14:31:21 tb Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -631,7 +631,7 @@ tls_configure_ssl_verify(struct tls *ctx, SSL_CTX *ssl_ctx, int verify)
 			}
 			xi->crl = NULL;
 		}
-		X509_VERIFY_PARAM_set_flags(store->param,
+		X509_STORE_set_flags(store,
 		    X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL);
 	}
 
