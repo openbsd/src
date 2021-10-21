@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.87 2021/10/13 22:43:44 bluhm Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.88 2021/10/21 22:59:08 tobhe Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -401,19 +401,11 @@ crypto_dispatch(struct cryptop *crp)
 	/* XXXSMP crypto_invoke() is not MP safe */
 	lock = 1;
 
-	if (crp->crp_flags & CRYPTO_F_NOQUEUE) {
-		if (lock)
-			KERNEL_LOCK();
-		crypto_invoke(crp);
-		if (lock)
-			KERNEL_UNLOCK();
-	} else {
-		struct taskq *tq;
-
-		tq = lock ? crypto_taskq : crypto_taskq_mpsafe;
-		task_set(&crp->crp_task, (void (*))crypto_invoke, crp);
-		task_add(tq, &crp->crp_task);
-	}
+	if (lock)
+		KERNEL_LOCK();
+	crypto_invoke(crp);
+	if (lock)
+		KERNEL_UNLOCK();
 }
 
 /*
@@ -543,15 +535,5 @@ crypto_done(struct cryptop *crp)
 {
 	crp->crp_flags |= CRYPTO_F_DONE;
 
-	if (crp->crp_flags & CRYPTO_F_NOQUEUE) {
-		/* not from the crypto queue, wakeup the userland process */
-		crp->crp_callback(crp);
-	} else {
-		struct taskq *tq;
-
-		tq = (crp->crp_flags & CRYPTO_F_MPSAFE) ?
-		    crypto_taskq_mpsafe : crypto_taskq;
-		task_set(&crp->crp_task, (void (*))crp->crp_callback, crp);
-		task_add(tq, &crp->crp_task);
-	}
+	crp->crp_callback(crp);
 }
