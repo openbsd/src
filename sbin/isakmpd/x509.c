@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.120 2021/10/13 16:57:43 tb Exp $	 */
+/* $OpenBSD: x509.c,v 1.121 2021/10/21 13:58:02 tb Exp $	 */
 /* $EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	 */
 
 /*
@@ -1064,9 +1064,10 @@ x509_cert_obtain(u_int8_t *id, size_t id_len, void *data, u_int8_t **cert,
 int
 x509_cert_subjectaltname(X509 *scert, u_int8_t **altname, u_int32_t *len)
 {
-	X509_EXTENSION	*subjectaltname;
-	u_int8_t	*sandata;
-	int		extpos, santype, sanlen;
+	X509_EXTENSION		*subjectaltname;
+	ASN1_OCTET_STRING	*sanasn1data;
+	u_int8_t		*sandata;
+	int			 extpos, santype, sanlen;
 
 	extpos = X509_get_ext_by_NID(scert, NID_subject_alt_name, -1);
 	if (extpos == -1) {
@@ -1075,16 +1076,16 @@ x509_cert_subjectaltname(X509 *scert, u_int8_t **altname, u_int32_t *len)
 		return 0;
 	}
 	subjectaltname = X509_get_ext(scert, extpos);
+	sanasn1data = X509_EXTENSION_get_data(subjectaltname);
 
-	if (!subjectaltname || !subjectaltname->value ||
-	    !subjectaltname->value->data ||
-	    subjectaltname->value->length < 4) {
+	if (!subjectaltname || !sanasn1data || !sanasn1data->data ||
+	    sanasn1data->length < 4) {
 		log_print("x509_cert_subjectaltname: invalid "
 		    "subjectaltname extension");
 		return 0;
 	}
 	/* SSL does not handle unknown ASN stuff well, do it by hand.  */
-	sandata = subjectaltname->value->data;
+	sandata = sanasn1data->data;
 	santype = sandata[2] & 0x3f;
 	sanlen = sandata[3];
 	sandata += 4;
@@ -1094,7 +1095,7 @@ x509_cert_subjectaltname(X509 *scert, u_int8_t **altname, u_int32_t *len)
 	 * extra stuff in subjectAltName, so we will just take the first
 	 * salen bytes, and not worry about what follows.
 	 */
-	if (sanlen + 4 > subjectaltname->value->length) {
+	if (sanlen + 4 > sanasn1data->length) {
 		log_print("x509_cert_subjectaltname: subjectaltname invalid "
 		    "length");
 		return 0;
