@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.33 2021/05/21 18:53:12 kettenis Exp $ */
+/* $OpenBSD: agintc.c,v 1.34 2021/10/21 22:25:03 patrick Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -73,6 +73,7 @@
 #define  GICD_TYPER_LPIS		(1 << 17)
 #define  GICD_TYPER_ITLINE_M		0x1f
 #define GICD_IIDR		0x0008
+#define GICD_IGROUPR(i)		(0x0080 + (IRQ_TO_REG32(i) * 4))
 #define GICD_ISENABLER(i)	(0x0100 + (IRQ_TO_REG32(i) * 4))
 #define GICD_ICENABLER(i)	(0x0180 + (IRQ_TO_REG32(i) * 4))
 #define GICD_ISPENDR(i)		(0x0200 + (IRQ_TO_REG32(i) * 4))
@@ -84,6 +85,7 @@
 #define  GICD_ICFGR_TRIG_LEVEL(i)	(0x0 << (IRQ_TO_REG16BIT(i) * 2))
 #define  GICD_ICFGR_TRIG_EDGE(i)	(0x2 << (IRQ_TO_REG16BIT(i) * 2))
 #define  GICD_ICFGR_TRIG_MASK(i)	(0x2 << (IRQ_TO_REG16BIT(i) * 2))
+#define GICD_IGRPMODR(i)	(0x0d00 + (IRQ_TO_REG32(i) * 4))
 #define GICD_NSACR(i)		(0x0e00 + (IRQ_TO_REG16(i) * 4))
 #define GICD_IROUTER(i)		(0x6000 + ((i) * 8))
 
@@ -107,7 +109,7 @@
 #define  GICR_PENDBASER_PTZ		(1ULL << 62)
 #define  GICR_PENDBASER_ISH		(1ULL << 10)
 #define  GICR_PENDBASER_IC_NORM_NC	(1ULL << 7)
-#define GICR_IGROUP0		0x10080
+#define GICR_IGROUPR0		0x10080
 #define GICR_ISENABLE0		0x10100
 #define GICR_ICENABLE0		0x10180
 #define GICR_ISPENDR0		0x10200
@@ -117,6 +119,7 @@
 #define GICR_IPRIORITYR(i)	(0x10400 + (i))
 #define GICR_ICFGR0		0x10c00
 #define GICR_ICFGR1		0x10c04
+#define GICR_IGRPMODR0		0x10d00
 
 #define GICR_PROP_SIZE		(64 * 1024)
 #define  GICR_PROP_GROUP1	(1 << 1)
@@ -492,6 +495,14 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 		    GICD_IPRIORITYR(i), 0xffffffff);
 	}
 
+	/* Set all interrupts to G1NS */
+	for (i = 1; i < nintr / 32; i++) {
+		bus_space_write_4(sc->sc_iot, sc->sc_d_ioh,
+		    GICD_IGROUPR(i * 32), ~0);
+		bus_space_write_4(sc->sc_iot, sc->sc_d_ioh,
+		    GICD_IGRPMODR(i * 32), 0);
+	}
+
 	for (i = 2; i < nintr / 16; i++) {
 		/* irq 32 - N */
 		bus_space_write_4(sc->sc_iot, sc->sc_d_ioh,
@@ -664,7 +675,11 @@ agintc_cpuinit(void)
 		bus_space_write_4(sc->sc_iot, sc->sc_r_ioh[hwcpu],
 		    GICR_IPRIORITYR(i), ~0);
 	}
-	
+	bus_space_write_4(sc->sc_iot, sc->sc_r_ioh[hwcpu],
+	    GICR_IGROUPR0, ~0);
+	bus_space_write_4(sc->sc_iot, sc->sc_r_ioh[hwcpu],
+	    GICR_IGRPMODR0, 0);
+
 	if (sc->sc_ipi_irq[0] != NULL)
 		agintc_route_irq(sc->sc_ipi_irq[0], IRQ_ENABLE, curcpu());
 	if (sc->sc_ipi_irq[1] != NULL)
