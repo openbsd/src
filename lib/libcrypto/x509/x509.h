@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.77 2021/10/21 13:02:00 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.78 2021/10/21 15:52:02 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -265,8 +265,10 @@ typedef struct x509_cert_aux_st
 	STACK_OF(X509_ALGOR) *other;		/* other unspecified info */
 	} X509_CERT_AUX;
 
-struct x509_st
-	{
+struct x509_st;
+
+#if defined(LIBRESSL_INTERNAL) || !defined(LIBRESSL_OPAQUE_X509)
+struct x509_st {
 	X509_CINF *cert_info;
 	X509_ALGOR *sig_alg;
 	ASN1_BIT_STRING *signature;
@@ -295,7 +297,8 @@ struct x509_st
 	unsigned char sha1_hash[SHA_DIGEST_LENGTH];
 #endif
 	X509_CERT_AUX *aux;
-	} /* X509 */;
+} /* X509 */;
+#endif
 
 DECLARE_STACK_OF(X509)
 
