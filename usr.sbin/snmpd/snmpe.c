@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.76 2021/09/06 13:32:18 deraadt Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.77 2021/10/21 08:21:43 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -237,7 +237,7 @@ snmpe_parse(struct snmp_message *msg)
 	long long		 errval, erridx;
 	u_int			 class;
 	char			*comn;
-	char			*flagstr, *ctxname;
+	char			*flagstr, *ctxname, *engineid;
 	size_t			 len;
 	struct sockaddr_storage *ss = &msg->sm_ss;
 	struct ber_element	*root = msg->sm_req;
@@ -300,9 +300,12 @@ snmpe_parse(struct snmp_message *msg)
 		}
 
 		if (ober_scanf_elements(a, "{xxeS$}$",
-		    &msg->sm_ctxengineid, &msg->sm_ctxengineid_len,
-		    &ctxname, &len, &msg->sm_pdu) != 0)
+		    &engineid, &msg->sm_ctxengineid_len, &ctxname, &len,
+		    &msg->sm_pdu) != 0)
 			goto parsefail;
+		if (msg->sm_ctxengineid_len > sizeof(msg->sm_ctxengineid))
+			goto parsefail;
+		memcpy(msg->sm_ctxengineid, engineid, msg->sm_ctxengineid_len);
 		if (len > SNMPD_MAXCONTEXNAMELEN)
 			goto parsefail;
 		memcpy(msg->sm_ctxname, ctxname, len);
