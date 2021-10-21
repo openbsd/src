@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.149 2021/10/14 23:05:10 mvs Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.150 2021/10/21 22:11:07 mvs Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -219,8 +219,13 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		break;
 
 	case PRU_SEND:
-		if (control && (error = unp_internalize(control, p)))
-			break;
+		if (control) {
+			sounlock(so, SL_LOCKED);
+			error = unp_internalize(control, p);
+			solock(so);
+			if (error)
+				break;
+		}
 		switch (so->so_type) {
 
 		case SOCK_DGRAM: {
@@ -973,8 +978,6 @@ unp_internalize(struct mbuf *control, struct proc *p)
 	int i, error;
 	int nfds, *ip, fd, neededspace;
 
-	rw_assert_wrlock(&unp_lock);
-
 	/*
 	 * Check for two potential msg_controllen values because
 	 * IETF stuck their nose in a place it does not belong.
@@ -987,8 +990,13 @@ unp_internalize(struct mbuf *control, struct proc *p)
 		return (EINVAL);
 	nfds = (cm->cmsg_len - CMSG_ALIGN(sizeof(*cm))) / sizeof (int);
 
-	if (unp_rights + nfds > maxfiles / 10)
+	rw_enter_write(&unp_lock);
+	if (unp_rights + nfds > maxfiles / 10) {
+		rw_exit_write(&unp_lock);
 		return (EMFILE);
+	}
+	unp_rights += nfds;
+	rw_exit_write(&unp_lock);
 
 	/* Make sure we have room for the struct file pointers */
 morespace:
@@ -997,8 +1005,10 @@ morespace:
 	if (neededspace > m_trailingspace(control)) {
 		char *tmp;
 		/* if we already have a cluster, the message is just too big */
-		if (control->m_flags & M_EXT)
-			return (E2BIG);
+		if (control->m_flags & M_EXT) {
+			error = E2BIG;
+			goto nospace;
+		}
 
 		/* copy cmsg data temporarily out of the mbuf */
 		tmp = malloc(control->m_len, M_TEMP, M_WAITOK);
@@ -1008,7 +1018,8 @@ morespace:
 		MCLGET(control, M_WAIT);
 		if ((control->m_flags & M_EXT) == 0) {
 			free(tmp, M_TEMP, control->m_len);
-			return (ENOBUFS);       /* allocation failed */
+			error = ENOBUFS;       /* allocation failed */
+			goto nospace;
 		}
 
 		/* copy the data back into the cluster */
@@ -1025,6 +1036,7 @@ morespace:
 	ip = ((int *)CMSG_DATA(cm)) + nfds - 1;
 	rp = ((struct fdpass *)CMSG_DATA(cm)) + nfds - 1;
 	fdplock(fdp);
+	rw_enter_write(&unp_lock);
 	for (i = 0; i < nfds; i++) {
 		memcpy(&fd, ip, sizeof fd);
 		ip--;
@@ -1052,11 +1064,12 @@ morespace:
 			unp->unp_file = fp;
 			unp->unp_msgcount++;
 		}
-		unp_rights++;
 	}
+	rw_exit_write(&unp_lock);
 	fdpunlock(fdp);
 	return (0);
 fail:
+	rw_exit_write(&unp_lock);
 	fdpunlock(fdp);
 	if (fp != NULL)
 		FRELE(fp, p);
@@ -1064,11 +1077,17 @@ fail:
 	for ( ; i > 0; i--) {
 		rp++;
 		fp = rp->fp;
+		rw_enter_write(&unp_lock);
 		if ((unp = fptounp(fp)) != NULL)
 			unp->unp_msgcount--;
+		rw_exit_write(&unp_lock);
 		FRELE(fp, p);
-		unp_rights--;
 	}
+
+nospace:
+	rw_enter_write(&unp_lock);
+	unp_rights -= nfds;
+	rw_exit_write(&unp_lock);
 
 	return (error);
 }
