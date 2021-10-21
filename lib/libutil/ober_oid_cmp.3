@@ -1,4 +1,4 @@
-.\" $OpenBSD: ober_oid_cmp.3,v 1.4 2021/03/12 07:24:49 jsg Exp $
+.\" $OpenBSD: ober_oid_cmp.3,v 1.5 2021/10/21 08:17:34 martijn Exp $
 .\"
 .\" Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 12 2021 $
+.Dd $Mdocdate: October 21 2021 $
 .Dt OBER_OID_CMP 3
 .Os
 .Sh NAME
@@ -66,26 +66,17 @@ returns the number of bytes written or 0 on failure.
 returns 0 on success or -1 on failure.
 .Pp
 .Fn ober_oid_cmp
-returns 0 when oids
+returns an integer greater than, equal to, or less than 0, according to whether
+the oid
+.Fa a
+is greater than, equal to, or less than the oid
+.Fa b .
+If the shortest length from
 .Fa a
 and
 .Fa b
-are identical.
-If
-.Fa b
-is a successor of
-.Fa a ,
-1 is returned.
-If
-.Fa b
-is a predecessor of
-.Fa a ,
--1 is returned.
-If
-.Fa b
-is larger, but a child of
-.Fa a ,
-2 is returned.
+matches
+the weight of the integer is 2, else it is 1.
 .Sh SEE ALSO
 .Xr ober_add_string 3 ,
 .Xr ober_get_string 3 ,

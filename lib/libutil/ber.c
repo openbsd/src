@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.22 2021/08/29 13:27:11 martijn Exp $ */
+/*	$OpenBSD: ber.c,v 1.23 2021/10/21 08:17:33 martijn Exp $ */
 
 /*
  * Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -473,26 +473,21 @@ ober_string2oid(const char *oidstr, struct ber_oid *o)
 int
 ober_oid_cmp(struct ber_oid *a, struct ber_oid *b)
 {
-	size_t	 i;
-	for (i = 0; i < a->bo_n && i < b->bo_n; i++) {
-		if (a->bo_id[i] == b->bo_id[i])
-			continue;
-		else if (a->bo_id[i] < b->bo_id[i]) {
-			/* b is a successor of a */
-			return (1);
-		} else {
-			/* b is a predecessor of a */
-			return (-1);
-		}
-	}
-	/* b is larger, but a child of a */
-	if (a->bo_n < b->bo_n)
-		return (2);
-	/* b is a predecessor of a */
-	if (a->bo_n > b->bo_n)
-		return -1;
+	size_t	 i, min;
 
-	/* b and a are identical */
+	min = a->bo_n < b->bo_n ? a->bo_n : b->bo_n;
+	for (i = 0; i < min; i++) {
+		if (a->bo_id[i] < b->bo_id[i])
+			return (-1);
+		if (a->bo_id[i] > b->bo_id[i])
+			return (1);
+	}
+	/* a is parent of b */
+	if (a->bo_n < b->bo_n)
+		return (-2);
+	/* a is child of b */
+	if (a->bo_n > b->bo_n)
+		return 2;
 	return (0);
 }
 

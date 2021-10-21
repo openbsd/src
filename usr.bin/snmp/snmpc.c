@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpc.c,v 1.37 2021/08/11 18:53:45 martijn Exp $	*/
+/*	$OpenBSD: snmpc.c,v 1.38 2021/10/21 08:17:34 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -640,7 +640,7 @@ snmpc_walk(int argc, char *argv[])
 	}
 	while (1) {
 		for (i = 0; i < walk_skip_len; i++) {
-			skip_cmp = ober_oid_cmp(&(walk_skip[i]), &noid);
+			skip_cmp = ober_oid_cmp(&noid, &(walk_skip[i]));
 			if (skip_cmp == 0 || skip_cmp == 2) {
 				bcopy(&(walk_skip[i]), &noid, sizeof(noid));
 				noid.bo_id[noid.bo_n -1]++;
@@ -673,19 +673,19 @@ snmpc_walk(int argc, char *argv[])
 			    value->be_type == BER_TYPE_EOC)
 				break;
 			for (i = 0; i < walk_skip_len; i++) {
-				skip_cmp = ober_oid_cmp(&(walk_skip[i]), &noid);
+				skip_cmp = ober_oid_cmp(&noid, &(walk_skip[i]));
 				if (skip_cmp == 0 || skip_cmp == 2)
 					break;
 			}
 			if (i < walk_skip_len)
 				continue;
-			prev_cmp = ober_oid_cmp(&loid, &noid);
+			prev_cmp = ober_oid_cmp(&noid, &loid);
 			if (walk_check_increase && prev_cmp == -1)
 				errx(1, "OID not increasing");
-			if (prev_cmp == 0 || ober_oid_cmp(&oid, &noid) != 2)
+			if (prev_cmp == 0 || ober_oid_cmp(&noid, &oid) != 2)
 				break;
 			if (walk_end.bo_n != 0 &&
-			    ober_oid_cmp(&walk_end, &noid) != -1)
+			    ober_oid_cmp(&noid, &walk_end) != -1)
 				break;
 
 			if (!snmpc_print(varbind))
@@ -899,7 +899,7 @@ snmpc_df(int argc, char *argv[])
 		for (; varbind != NULL; varbind = varbind->be_next) {
 			if (ober_scanf_elements(varbind, "{os", &oid,
 			    &string) == -1 ||
-			    ober_oid_cmp(&descroid, &oid) != 2)
+			    ober_oid_cmp(&oid, &descroid) != 2)
 				break;
 			rows++;
 		} 
@@ -913,7 +913,7 @@ snmpc_df(int argc, char *argv[])
 				rows--;
 				continue;
 			}
-			if (ober_oid_cmp(&descroid, &oid) != 2)
+			if (ober_oid_cmp(&oid, &descroid) != 2)
 				break;
 			df[i].index = oid.bo_id[oid.bo_n - 1];
 			if ((df[i].descr = smi_print_element(&oid, elm, 0,

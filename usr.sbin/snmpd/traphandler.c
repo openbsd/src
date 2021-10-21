@@ -1,4 +1,4 @@
-/*	$OpenBSD: traphandler.c,v 1.21 2021/02/22 11:31:09 martijn Exp $	*/
+/*	$OpenBSD: traphandler.c,v 1.22 2021/10/21 08:17:34 martijn Exp $	*/
 
 /*
  * Copyright (c) 2014 Bret Stephen Lambert <blambert@openbsd.org>
@@ -440,7 +440,7 @@ trapcmd_cmp(struct trapcmd *cmd1, struct trapcmd *cmd2)
 {
 	int ret;
 
-	ret = ober_oid_cmp(cmd2->cmd_oid, cmd1->cmd_oid);
+	ret = ober_oid_cmp(cmd1->cmd_oid, cmd2->cmd_oid);
 	switch (ret) {
 	case 2:
 		/* cmd1 is a child of cmd2 */
