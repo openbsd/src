@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.h,v 1.77 2021/10/21 22:59:08 tobhe Exp $	*/
+/*	$OpenBSD: cryptodev.h,v 1.78 2021/10/21 23:03:48 tobhe Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -150,8 +150,6 @@ struct cryptodesc {
 
 /* Structure describing complete operation */
 struct cryptop {
-	struct task	crp_task;
-
 	u_int64_t	crp_sid;	/* Session ID */
 	int		crp_ilen;	/* Input data total length */
 	int		crp_olen;	/* Result total length */

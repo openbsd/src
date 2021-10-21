@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.88 2021/10/21 22:59:08 tobhe Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.89 2021/10/21 23:03:48 tobhe Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -39,11 +39,6 @@ struct cryptocap *crypto_drivers;	/* [A] array allocated by driver
 int crypto_drivers_num = 0;		/* [A] attached drivers array size */
 
 struct pool cryptop_pool;		/* [I] set of crypto descriptors */
-
-struct taskq *crypto_taskq;		/* [I] run crypto_invoke() and callback
-					       with kernel lock */
-struct taskq *crypto_taskq_mpsafe;	/* [I] run crypto_invoke()
-					       without kernel lock */
 
 /*
  * Create a new session.
@@ -520,9 +515,6 @@ crypto_getreq(int num)
 void
 crypto_init(void)
 {
-	crypto_taskq = taskq_create("crypto", 1, IPL_VM, 0);
-	crypto_taskq_mpsafe = taskq_create("crynlk", 1, IPL_VM, TASKQ_MPSAFE);
-
 	pool_init(&cryptop_pool, sizeof(struct cryptop), 0, IPL_VM, 0,
 	    "cryptop", NULL);
 }
