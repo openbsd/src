@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_purp.c,v 1.7 2021/09/13 15:26:53 claudio Exp $ */
+/* $OpenBSD: x509_purp.c,v 1.8 2021/10/21 13:51:52 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -548,6 +548,10 @@ x509v3_cache_extensions(X509 *x)
 
 			case NID_dvcs:
 				x->ex_xkusage |= XKU_DVCS;
+				break;
+
+			case NID_anyExtendedKeyUsage:
+				x->ex_xkusage |= XKU_ANYEKU;
 				break;
 			}
 		}

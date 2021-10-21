@@ -1,4 +1,4 @@
-/* $OpenBSD: x509v3.h,v 1.5 2021/09/02 13:48:39 job Exp $ */
+/* $OpenBSD: x509v3.h,v 1.6 2021/10/21 13:51:52 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -446,7 +446,7 @@ struct ISSUING_DIST_POINT_st
 #define NS_OBJSIGN_CA		0x01
 #define NS_ANY_CA		(NS_SSL_CA|NS_SMIME_CA|NS_OBJSIGN_CA)
 
-#define XKU_SSL_SERVER		0x1	
+#define XKU_SSL_SERVER		0x1
 #define XKU_SSL_CLIENT		0x2
 #define XKU_SMIME		0x4
 #define XKU_CODE_SIGN		0x8
@@ -454,6 +454,7 @@ struct ISSUING_DIST_POINT_st
 #define XKU_OCSP_SIGN		0x20
 #define XKU_TIMESTAMP		0x40
 #define XKU_DVCS		0x80
+#define XKU_ANYEKU		0x100
 
 #define X509_PURPOSE_DYNAMIC	0x1
 #define X509_PURPOSE_DYNAMIC_NAME	0x2
