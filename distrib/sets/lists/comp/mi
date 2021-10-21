@@ -1755,6 +1755,7 @@
 ./usr/share/man/man3/ASN1_get_object.3
 ./usr/share/man/man3/ASN1_item_d2i.3
 ./usr/share/man/man3/ASN1_item_new.3
+./usr/share/man/man3/ASN1_mbstring_copy.3
 ./usr/share/man/man3/ASN1_parse_dump.3
 ./usr/share/man/man3/ASN1_put_object.3
 ./usr/share/man/man3/ASN1_time_parse.3
@@ -2141,6 +2142,7 @@
 ./usr/share/man/man3/X509V3_extensions_print.3
 ./usr/share/man/man3/X509V3_get_d2i.3
 ./usr/share/man/man3/X509_ALGOR_dup.3
+./usr/share/man/man3/X509_ATTRIBUTE_get0_object.3
 ./usr/share/man/man3/X509_ATTRIBUTE_new.3
 ./usr/share/man/man3/X509_CINF_new.3
 ./usr/share/man/man3/X509_CRL_get0_by_serial.3
