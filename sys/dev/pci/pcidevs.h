@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1977 2021/09/29 12:18:08 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1978 2021/10/21 21:47:41 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -4974,6 +4974,7 @@
 #define	PCI_PRODUCT_INTEL_GLK_GNA	0x3190		/* Gemini Lake GNA */
 #define	PCI_PRODUCT_INTEL_GLK_PMC	0x3194		/* Gemini Lake PMC */
 #define	PCI_PRODUCT_INTEL_GLK_HDA	0x3198		/* Gemini Lake HD Audio */
+#define	PCI_PRODUCT_INTEL_GLK_MEI	0x319a		/* Gemini Lake MEI */
 #define	PCI_PRODUCT_INTEL_GLK_XHCI	0x31a8		/* Gemini Lake xHCI */
 #define	PCI_PRODUCT_INTEL_GLK_I2C_1	0x31ac		/* Gemini Lake I2C */
 #define	PCI_PRODUCT_INTEL_GLK_I2C_2	0x31ae		/* Gemini Lake I2C */
