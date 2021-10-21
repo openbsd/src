@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_config.c,v 1.63 2021/01/21 22:03:25 eric Exp $ */
+/* $OpenBSD: tls_config.c,v 1.64 2021/10/21 08:33:07 tb Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -722,7 +722,7 @@ tls_config_set_session_fd(struct tls_config *config, int session_fd)
 
 	if (sb.st_uid != getuid()) {
 		tls_config_set_errorx(config, "session file has incorrect "
-		    "owner (uid %i != %i)", sb.st_uid, getuid());
+		    "owner (uid %u != %u)", sb.st_uid, getuid());
 		return (-1);
 	}
 	mugo = sb.st_mode & (S_IRWXU|S_IRWXG|S_IRWXO);
