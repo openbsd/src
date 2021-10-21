@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)info_passwd.c	8.1 (Berkeley) 6/6/93
- *	$Id: info_passwd.c,v 1.10 2015/12/05 21:15:01 mmcc Exp $
+ *	$Id: info_passwd.c,v 1.11 2021/10/21 10:55:56 deraadt Exp $
  */
 
 /*
@@ -86,7 +86,7 @@ passwd_search(mnt_map *m, char *map, char *key, char **pval, time_t *tp)
 		 * This allows cross-domain entries in your passwd file.
 		 * ... but forget about security!
 		 */
-		char val[MAXPATHLEN], rhost[MAXHOSTNAMELEN];
+		char val[PATH_MAX], rhost[HOST_NAME_MAX+1];
 		char *user, *p, *q;
 
 		dir = strdup(pw->pw_dir);

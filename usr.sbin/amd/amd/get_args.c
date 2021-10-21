@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)get_args.c	8.1 (Berkeley) 6/6/93
- *	$Id: get_args.c,v 1.14 2014/10/20 02:33:42 guenther Exp $
+ *	$Id: get_args.c,v 1.15 2021/10/21 10:55:56 deraadt Exp $
  */
 
 /*
@@ -245,8 +245,8 @@ get_args(int c, char *v[])
 			hostdomain = sub_domain;
 		if (*hostdomain == '.')
 			hostdomain++;
-		strlcat(hostd,  ".", 2 * MAXHOSTNAMELEN);
-		strlcat(hostd, hostdomain, 2 * MAXHOSTNAMELEN);
+		strlcat(hostd,  ".", 2 * (HOST_NAME_MAX+1));
+		strlcat(hostd, hostdomain, 2 * (HOST_NAME_MAX+1));
 
 #ifdef DEBUG
 		{ if (debug_flags & D_MTAB) {

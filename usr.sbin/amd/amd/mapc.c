@@ -1,4 +1,4 @@
-/*	$OpenBSD: mapc.c,v 1.23 2015/12/05 21:15:01 mmcc Exp $	*/
+/*	$OpenBSD: mapc.c,v 1.24 2021/10/21 10:55:56 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1989 Jan-Simon Pendry
@@ -246,7 +246,7 @@ mapc_add_kv(mnt_map *m, char *key, char *val)
 #endif
 
 	if (MAPC_ISRE(m)) {
-		char keyb[MAXPATHLEN];
+		char keyb[PATH_MAX];
 		regex_t *re;
 		int err;
 
@@ -621,7 +621,7 @@ mapc_meta_search(mnt_map *m, char *key, char **pval, int recurse)
 	 */
 	if (error > 0) {
 		if (recurse == MREC_FULL && !MAPC_ISRE(m)) {
-			char wildname[MAXPATHLEN];
+			char wildname[PATH_MAX];
 			char *subp;
 			if (*key == '/')
 				return error;
@@ -721,7 +721,7 @@ root_init(char *map, time_t *tp)
 void
 root_newmap(char *dir, char *opts, char *map)
 {
-	char str[MAXPATHLEN];
+	char str[PATH_MAX];
 
 	/*
 	 * First make sure we have a root map to talk about...

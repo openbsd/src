@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_ops.c,v 1.26 2014/10/26 03:28:41 guenther Exp $	*/
+/*	$OpenBSD: nfs_ops.c,v 1.27 2021/10/21 10:55:56 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -453,7 +453,7 @@ mount_nfs_fh(fhstatus *fhp, char *dir, char *fs_name, char *opts,
 	int retry;
 	char *colon;
 	/*char *path;*/
-	char host[MAXHOSTNAMELEN + MAXPATHLEN + 2];
+	char host[HOST_NAME_MAX+1 + PATH_MAX+2];
 	fserver *fs = mf->mf_server;
 	int flags;
 	char *xopts;

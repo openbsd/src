@@ -375,10 +375,10 @@ expand_op(opt_apply *p, int sel_p)
  * give up completely.  This is done to avoid crashing the
  * automounter itself (which would be a bad thing to do).
  */
-#define BUFSPACE(ep, len) (((ep) + (len)) < expbuf+MAXPATHLEN)
+#define BUFSPACE(ep, len) (((ep) + (len)) < expbuf+PATH_MAX)
 static char expand_error[] = "No space to expand \"%s\"";
 
-	char expbuf[MAXPATHLEN+1];
+	char expbuf[PATH_MAX+1];
 	char nbuf[NLEN+1];
 	char *ep = expbuf;
 	char *cp = *p->opt;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: am.h,v 1.19 2015/09/11 19:03:31 millert Exp $	*/
+/*	$OpenBSD: am.h,v 1.20 2021/10/21 10:55:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -41,7 +41,7 @@
 /*
  * Global declarations
  */
-#include <sys/param.h>
+#include <sys/signal.h>
 #include <sys/socket.h>
 #include <rpc/rpc.h>
 #include <sys/mount.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: afs_ops.c,v 1.19 2014/10/26 03:28:41 guenther Exp $	*/
+/*	$OpenBSD: afs_ops.c,v 1.20 2021/10/21 10:55:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -103,7 +103,7 @@ mount_toplvl(char *dir, char *opts)
 	unsigned short port;
 	int flags;
 	nfs_fh *fhp;
-	char fs_hostname[MAXHOSTNAMELEN+MAXPATHLEN+1];
+	char fs_hostname[HOST_NAME_MAX+1 + PATH_MAX+1];
 
 	const char *type = MOUNT_NFS;
 
@@ -1128,7 +1128,7 @@ afs_lookuppn(am_node *mp, char *fname, int *error_return, int op)
 	char **ivec, **xivec;		/* Split version of info */
 	char *auto_opts;		/* Automount options */
 	int error = 0;			/* Error so far */
-	char path_name[MAXPATHLEN];	/* General path name buffer */
+	char path_name[PATH_MAX];	/* General path name buffer */
 	char *pfname;			/* Path for database lookup */
 	struct continuation *cp;	/* Continuation structure if we need to mount */
 	int in_progress = 0;		/* # of (un)mount in progress */

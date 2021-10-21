@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amd.c	8.1 (Berkeley) 6/6/93
- *	$Id: amd.c,v 1.23 2019/06/28 13:32:46 deraadt Exp $
+ *	$Id: amd.c,v 1.24 2021/10/21 10:55:56 deraadt Exp $
  */
 
 /*
@@ -60,7 +60,7 @@
 #error "unknown endian"
 #endif
 
-char pid_fsname[16 + MAXHOSTNAMELEN];	/* "kiska.southseas.nz:(pid%d)" */
+char pid_fsname[16 + HOST_NAME_MAX+1];	/* "kiska.southseas.nz:(pid%d)" */
 #ifdef HAS_HOST
 #ifdef HOST_EXEC
 char *host_helper;
@@ -68,8 +68,8 @@ char *host_helper;
 #endif /* HAS_HOST */
 char *auto_dir = "/tmp_mnt";
 char *hostdomain = "unknown.domain";
-char hostname[MAXHOSTNAMELEN] = "localhost"; /* Hostname */
-char hostd[2*MAXHOSTNAMELEN];		/* Host+domain */
+char hostname[HOST_NAME_MAX+1] = "localhost"; /* Hostname */
+char hostd[2*(HOST_NAME_MAX+1)];	/* Host+domain */
 char *op_sys = "bsd44";			/* Name of current op_sys */
 char *arch = ARCH_REP;			/* Name of current architecture */
 char *endian = ARCH_ENDIAN;		/* Big or Little endian */

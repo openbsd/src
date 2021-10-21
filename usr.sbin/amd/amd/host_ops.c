@@ -1,4 +1,4 @@
-/*	$OpenBSD: host_ops.c,v 1.19 2015/12/05 21:15:01 mmcc Exp $	*/
+/*	$OpenBSD: host_ops.c,v 1.20 2021/10/21 10:55:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -226,8 +226,8 @@ host_fmount(mntfs *mf)
 	int sock = RPC_ANYSOCK;
 	int ok = FALSE;
 	mntlist *mlist;
-	char fs_name[MAXPATHLEN], *rfs_dir;
-	char mntpt[MAXPATHLEN];
+	char fs_name[PATH_MAX], *rfs_dir;
+	char mntpt[PATH_MAX];
 	struct timeval tv;
 	tv.tv_sec = 10; tv.tv_usec = 0;
 
