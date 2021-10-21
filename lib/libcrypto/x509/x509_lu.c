@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lu.c,v 1.31 2021/10/06 08:29:41 claudio Exp $ */
+/* $OpenBSD: x509_lu.c,v 1.32 2021/10/21 16:03:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -310,35 +310,29 @@ X509_STORE_get_by_subject(X509_STORE_CTX *vs, int type, X509_NAME *name,
 	X509_STORE *ctx = vs->ctx;
 	X509_LOOKUP *lu;
 	X509_OBJECT stmp, *tmp;
-	int i, j;
+	int i;
 
 	if (ctx == NULL)
 		return 0;
+
+	stmp.type = 0;
+	stmp.data.ptr = NULL;
 
 	CRYPTO_w_lock(CRYPTO_LOCK_X509_STORE);
 	tmp = X509_OBJECT_retrieve_by_subject(ctx->objs, type, name);
 	CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
 
 	if (tmp == NULL || type == X509_LU_CRL) {
-		for (i = vs->current_method;
-		    i < sk_X509_LOOKUP_num(ctx->get_cert_methods); i++) {
+		for (i = 0; i < sk_X509_LOOKUP_num(ctx->get_cert_methods); i++) {
 			lu = sk_X509_LOOKUP_value(ctx->get_cert_methods, i);
-			j = X509_LOOKUP_by_subject(lu, type, name, &stmp);
-			if (j < 0) {
-				vs->current_method = j;
-				return j;
-			} else if (j) {
+			if (X509_LOOKUP_by_subject(lu, type, name, &stmp) != 0) {
 				tmp = &stmp;
 				break;
 			}
 		}
-		vs->current_method = 0;
 		if (tmp == NULL)
 			return 0;
 	}
-
-/*	if (ret->data.ptr != NULL)
-		X509_OBJECT_free_contents(ret); */
 
 	ret->type = tmp->type;
 	ret->data.ptr = tmp->data.ptr;
