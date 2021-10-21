@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_LOOKUP_new.3,v 1.4 2021/08/06 19:09:56 schwarze Exp $
+.\" $OpenBSD: X509_LOOKUP_new.3,v 1.5 2021/10/21 22:36:16 schwarze Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 6 2021 $
+.Dd $Mdocdate: October 21 2021 $
 .Dt X509_LOOKUP_NEW 3
 .Os
 .Sh NAME
@@ -370,11 +370,7 @@ uses a user-defined
 object, it might also return \-1 for internal errors.
 .Pp
 .Fn X509_LOOKUP_by_subject
-returns
-.Dv X509_LU_X509
-for success or
-.Dv X509_LU_FAIL
-for failure.
+returns 1 for success or 0 for failure.
 In particular, it fails if
 .Fa lookup
 uses
@@ -410,9 +406,7 @@ objects, they always return 1.
 .Fn X509_LOOKUP_by_fingerprint ,
 and
 .Fn X509_LOOKUP_by_alias
-always return
-.Dv X509_LU_FAIL
-when using the built-in
+always return 0 when using the built-in
 .Vt X509_LOOKUP_METHOD
 objects.
 .Pp
