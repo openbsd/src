@@ -1,4 +1,4 @@
-/* $OpenBSD: x509rset.c,v 1.7 2018/08/24 19:55:58 tb Exp $ */
+/* $OpenBSD: x509rset.c,v 1.8 2021/10/21 16:47:01 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -68,6 +68,7 @@ X509_REQ_set_version(X509_REQ *x, long version)
 {
 	if (x == NULL)
 		return (0);
+	x->req_info->enc.modified = 1;
 	return (ASN1_INTEGER_set(x->req_info->version, version));
 }
 
@@ -82,6 +83,7 @@ X509_REQ_set_subject_name(X509_REQ *x, X509_NAME *name)
 {
 	if ((x == NULL) || (x->req_info == NULL))
 		return (0);
+	x->req_info->enc.modified = 1;
 	return (X509_NAME_set(&x->req_info->subject, name));
 }
 
@@ -96,5 +98,6 @@ X509_REQ_set_pubkey(X509_REQ *x, EVP_PKEY *pkey)
 {
 	if ((x == NULL) || (x->req_info == NULL))
 		return (0);
+	x->req_info->enc.modified = 1;
 	return (X509_PUBKEY_set(&x->req_info->pubkey, pkey));
 }
