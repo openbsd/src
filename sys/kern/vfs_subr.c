@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.308 2021/10/20 06:35:39 semarie Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.309 2021/10/21 09:59:14 claudio Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1701,8 +1701,10 @@ void
 vfs_stall_barrier(void)
 {
 	if (__predict_false(vfs_stalling)) {
-		rw_enter_read(&vfs_stall_lock);
-		rw_exit_read(&vfs_stall_lock);
+		if (curproc != RWLOCK_OWNER(&vfs_stall_lock)) {
+			rw_enter_read(&vfs_stall_lock);
+			rw_exit_read(&vfs_stall_lock);
+		}
 	}
 }
 
