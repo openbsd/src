@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.269 2021/08/20 05:23:18 anton Exp $
+#	$OpenBSD: GENERIC,v 1.270 2021/10/21 18:36:41 bluhm Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -420,11 +420,6 @@ wsdisplay*	at	vga?
 wsdisplay*	at	tga?
 wskbd*		at	pckbd? mux 1
 wsmouse*	at	pms? mux 0
-
-# crypto support
-hifn*	at pci?				# Hi/fn 7751 crypto card
-ubsec*	at pci?				# Bluesteel Networks 5xxx crypto card
-safe*	at pci?				# SafeNet SafeXcel 1141/1741
 
 # 1-Wire devices
 option ONEWIREVERBOSE

@@ -542,8 +542,6 @@
 ./usr/include/dev/pci/gcu_var.h
 ./usr/include/dev/pci/glxreg.h
 ./usr/include/dev/pci/glxvar.h
-./usr/include/dev/pci/hifn7751reg.h
-./usr/include/dev/pci/hifn7751var.h
 ./usr/include/dev/pci/i82365_pcivar.h
 ./usr/include/dev/pci/ichreg.h
 ./usr/include/dev/pci/if_agereg.h
@@ -645,13 +643,9 @@
 ./usr/include/dev/pci/ppbreg.h
 ./usr/include/dev/pci/pucvar.h
 ./usr/include/dev/pci/qlereg.h
-./usr/include/dev/pci/safereg.h
-./usr/include/dev/pci/safevar.h
 ./usr/include/dev/pci/siop_pci_common.h
 ./usr/include/dev/pci/tgareg.h
 ./usr/include/dev/pci/tgavar.h
-./usr/include/dev/pci/ubsecreg.h
-./usr/include/dev/pci/ubsecvar.h
 ./usr/include/dev/pci/vga_pcivar.h
 ./usr/include/dev/pci/virtio_pcireg.h
 ./usr/include/dev/pci/ydsreg.h

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.319 2021/08/20 05:23:19 anton Exp $
+#	$OpenBSD: GENERIC,v 1.320 2021/10/21 18:36:42 bluhm Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -129,10 +129,6 @@ ahci*	at pci? flags 0x0000	# AHCI SATA controllers
 				# flags 0x0001 to force SATA 1 (1.5Gb/s)
 sili*	at pci?			# Silicon Image 3124/3132/3531 SATA controllers
 nvme*	at pci?			# NVMe controllers
-
-# PCI crypto
-hifn*	at pci?			# Hifn 7751/7811/7951
-ubsec*	at pci?			# Broadcom 580[125]/582[012]
 
 # PCI sound
 auacer*	at pci?			# Acer Labs M5455

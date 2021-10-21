@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.274 2021/08/20 05:23:18 anton Exp $g
+#	$OpenBSD: GENERIC,v 1.275 2021/10/21 18:36:42 bluhm Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -127,10 +127,6 @@ ciphy*		at mii?		# Cicada CS8201 10/100/1000 copper PHY
 ipgphy*		at mii?		# IC Plus IP1000A PHYs
 ukphy*		at mii?		# generic unknown PHYs
 
-# crypto
-hifn*		at pci?		# Hifn7751/7811/7951
-ubsec*		at pci?		# Broadcom 58xx
-safe*		at pci?		# SafeNet SafeXcel 1141/1741
 pwdog0		at pci?		# Quancom PWDOG1 watchdog timer
 
 macintr0	at macobio?	# old interrupt controller

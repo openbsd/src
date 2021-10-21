@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.502 2021/09/14 08:19:58 jan Exp $
+#	$OpenBSD: GENERIC,v 1.503 2021/10/21 18:36:42 bluhm Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -671,11 +671,6 @@ bktr0	at pci?
 radio*	at bktr?
 
 #wdt0	at pci?			# Ind Computer Source PCI-WDT50x driver
-
-# crypto support
-hifn*	at pci?			# Hi/fn 7751 crypto card
-ubsec*	at pci?			# Bluesteel Networks 5xxx crypto card
-safe*	at pci?			# SafeNet SafeXcel 1141/1741
 
 xspd0	at pci?			# XenSource Platform Device
 

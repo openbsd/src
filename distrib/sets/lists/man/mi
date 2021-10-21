@@ -1429,7 +1429,6 @@
 ./usr/share/man/man4/hds.4
 ./usr/share/man/man4/hiclock.4
 ./usr/share/man/man4/hidwusb.4
-./usr/share/man/man4/hifn.4
 ./usr/share/man/man4/hil.4
 ./usr/share/man/man4/hilid.4
 ./usr/share/man/man4/hilkbd.4
@@ -1840,7 +1839,6 @@
 ./usr/share/man/man4/rtwn.4
 ./usr/share/man/man4/rum.4
 ./usr/share/man/man4/run.4
-./usr/share/man/man4/safe.4
 ./usr/share/man/man4/safte.4
 ./usr/share/man/man4/sbus.4
 ./usr/share/man/man4/schsio.4
@@ -1995,7 +1993,6 @@
 ./usr/share/man/man4/ubcmtp.4
 ./usr/share/man/man4/uberry.4
 ./usr/share/man/man4/ubsa.4
-./usr/share/man/man4/ubsec.4
 ./usr/share/man/man4/ucc.4
 ./usr/share/man/man4/uchcom.4
 ./usr/share/man/man4/ucom.4

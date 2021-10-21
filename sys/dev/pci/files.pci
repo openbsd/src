@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.355 2021/09/02 10:11:21 mlarkin Exp $
+#	$OpenBSD: files.pci,v 1.356 2021/10/21 18:36:42 bluhm Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -419,21 +419,6 @@ file	dev/pci/if_cas.c		cas
 device	nep: ether, ifnet, ifmedia, mii
 attach	nep at pci
 file	dev/pci/if_nep.c		nep
-
-# Hi/fn 7751/7811/7951
-device	hifn: crypto
-attach	hifn at pci
-file	dev/pci/hifn7751.c		hifn
-
-# Bluesteelnet (Broadcom) 5501/5601
-device	ubsec: crypto
-attach	ubsec at pci
-file	dev/pci/ubsec.c			ubsec
-
-# Safenet SafeXcel 1141
-device	safe: crypto
-attach	safe at pci
-file	dev/pci/safe.c			safe
 
 # Winbond W89C840F ethernet
 device	wb: ether, ifnet, mii, ifmedia, mii_phy
