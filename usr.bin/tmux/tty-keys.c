@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.150 2021/08/13 07:37:58 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.151 2021/10/21 08:36:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1203,6 +1203,9 @@ tty_keys_clipboard(__unused struct tty *tty, const char *buf, size_t len,
 	/* Skip the initial part. */
 	buf += 5;
 	end -= 5;
+
+	/* Adjust end so that it points to the start of the terminator. */
+	end -= terminator - 1;
 
 	/* Get the second argument. */
 	while (end != 0 && *buf != ';') {
