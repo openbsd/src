@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.143 2021/01/05 19:56:11 tb Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.144 2021/10/21 11:48:30 benno Exp $	*/
 
 /*
  * Copyright (c) 2020 Matthias Pressfreund <mpfr@fn.de>
@@ -268,8 +268,14 @@ server_read_http(struct bufferevent *bev, void *arg)
 		else if (*key == ' ' || *key == '\t')
 			/* Multiline headers wrap with a space or tab */
 			value = NULL;
-		else
+		else {
+			/* Not a multiline header, should have a : */
 			value = strchr(key, ':');
+			if (value == NULL) {
+				server_abort_http(clt, 400, "malformed");
+				goto abort;
+			}
+		}
 		if (value == NULL) {
 			if (clt->clt_line == 1) {
 				server_abort_http(clt, 400, "malformed");
