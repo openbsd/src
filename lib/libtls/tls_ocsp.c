@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls_ocsp.c,v 1.20 2021/03/23 20:04:29 tb Exp $ */
+/*	$OpenBSD: tls_ocsp.c,v 1.21 2021/10/21 14:57:55 tb Exp $ */
 /*
  * Copyright (c) 2015 Marko Kreen <markokr@gmail.com>
  * Copyright (c) 2016 Bob Beck <beck@openbsd.org>
@@ -128,30 +128,38 @@ tls_ocsp_get_certid(X509 *main_cert, STACK_OF(X509) *extra_certs,
 {
 	X509_NAME *issuer_name;
 	X509 *issuer;
-	X509_STORE_CTX storectx;
+	X509_STORE_CTX *storectx = NULL;
 	X509_OBJECT tmpobj;
 	OCSP_CERTID *cid = NULL;
 	X509_STORE *store;
 
 	if ((issuer_name = X509_get_issuer_name(main_cert)) == NULL)
-		return NULL;
+		goto out;
 
 	if (extra_certs != NULL) {
 		issuer = X509_find_by_subject(extra_certs, issuer_name);
-		if (issuer != NULL)
-			return OCSP_cert_to_id(NULL, main_cert, issuer);
+		if (issuer != NULL) {
+			cid = OCSP_cert_to_id(NULL, main_cert, issuer);
+			goto out;
+		}
 	}
 
 	if ((store = SSL_CTX_get_cert_store(ssl_ctx)) == NULL)
-		return NULL;
-	if (X509_STORE_CTX_init(&storectx, store, main_cert, extra_certs) != 1)
-		return NULL;
-	if (X509_STORE_get_by_subject(&storectx, X509_LU_X509, issuer_name,
-		&tmpobj) == 1) {
-		cid = OCSP_cert_to_id(NULL, main_cert, tmpobj.data.x509);
+		goto out;
+	if ((storectx = X509_STORE_CTX_new()) == NULL)
+		goto out;
+	if (X509_STORE_CTX_init(storectx, store, main_cert, extra_certs) != 1)
+		goto out;
+	if (X509_STORE_get_by_subject(storectx, X509_LU_X509, issuer_name,
+	    &tmpobj) == 1) {
+		cid = OCSP_cert_to_id(NULL, main_cert,
+		    X509_OBJECT_get0_X509(&tmpobj));
 		X509_OBJECT_free_contents(&tmpobj);
 	}
-	X509_STORE_CTX_cleanup(&storectx);
+
+ out:
+	X509_STORE_CTX_free(storectx);
+
 	return cid;
 }
 
