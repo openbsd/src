@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.78 2021/09/10 15:26:36 krw Exp $	*/
+/*	$OpenBSD: user.c,v 1.79 2021/10/21 13:16:49 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -43,7 +43,6 @@ const struct cmd		cmd_table[] = {
 	{"manual", 1, Xmanual, "Show entire OpenBSD man page for fdisk"},
 	{"reinit", 1, Xreinit, "Re-initialize loaded MBR (to defaults)"},
 	{"setpid", 1, Xsetpid, "Set the identifier of a given table entry"},
-	{"disk",   0, Xdisk,   "Edit current drive stats"},
 	{"edit",   1, Xedit,   "Edit given table entry"},
 	{"flag",   1, Xflag,   "Flag given table entry as bootable"},
 	{"update", 0, Xupdate, "Update machine code in loaded MBR"},

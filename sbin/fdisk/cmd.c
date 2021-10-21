@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.146 2021/09/10 15:26:36 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.147 2021/10/21 13:16:49 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -76,35 +76,6 @@ Xreinit(char *args, struct mbr *mbr)
 	printf("Use 'write' to update disk.\n");
 
 	return CMD_DIRTY;
-}
-
-int
-Xdisk(char *args, struct mbr *mbr)
-{
-	int			maxcyl  = 1024;
-	int			maxhead = 256;
-	int			maxsec  = 63;
-
-	DISK_printgeometry(args);
-
-#if defined (__powerpc__) || defined (__mips__)
-	maxcyl  = 9999999;
-	maxhead = 9999999;
-	maxsec  = 9999999;
-#endif
-
-	if (ask_yn("Change disk geometry?")) {
-		disk.dk_cylinders = ask_num("BIOS Cylinders",
-		    disk.dk_cylinders, 1, maxcyl);
-		disk.dk_heads = ask_num("BIOS Heads",
-		    disk.dk_heads, 1, maxhead);
-		disk.dk_sectors = ask_num("BIOS Sectors",
-		    disk.dk_sectors, 1, maxsec);
-
-		disk.dk_size = disk.dk_cylinders * disk.dk_heads * disk.dk_sectors;
-	}
-
-	return CMD_CONT;
 }
 
 int

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.106 2021/09/13 11:44:40 krw Exp $
+.\"	$OpenBSD: fdisk.8,v 1.107 2021/10/21 13:16:49 krw Exp $
 .\"
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 13 2021 $
+.Dd $Mdocdate: October 21 2021 $
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -374,24 +374,6 @@ By default an MBR is initialized.
 If
 .Cm gpt
 is specified a protective MBR and a GPT are initialized.
-.It Cm disk Op Ar unit
-Display the current drive geometry that
-.Nm
-probed using kernel provided information and various heuristics.
-A
-.Ar unit
-.Sq b ,
-.Sq k ,
-.Sq m ,
-.Sq g ,
-or
-.Sq t
-may be appended to request that the size of
-.Ar disk
-be shown as bytes, kilobytes, megabytes, gigabytes,
-or terabytes instead of sectors.
-The disk geometry may be changed at this point.
-Not available when editing a GPT.
 .It Cm edit Ar #
 Edit a given table entry in the memory copy of
 the current boot block.
