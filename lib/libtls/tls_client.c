@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_client.c,v 1.47 2021/06/01 20:26:11 tb Exp $ */
+/* $OpenBSD: tls_client.c,v 1.48 2021/10/21 08:38:11 tb Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -74,11 +74,8 @@ tls_connect_servername(struct tls *ctx, const char *host, const char *port,
 		goto err;
 	}
 
-	/*
-	 * If port is NULL try to extract a port from the specified host,
-	 * otherwise use the default.
-	 */
-	if ((p = (char *)port) == NULL) {
+	/* If port is NULL, try to extract a port from the specified host. */
+	if (port == NULL) {
 		ret = tls_host_port(host, &hs, &ps);
 		if (ret == -1) {
 			tls_set_errorx(ctx, "memory allocation failure");
