@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lu.c,v 1.32 2021/10/21 16:03:17 tb Exp $ */
+/* $OpenBSD: x509_lu.c,v 1.33 2021/10/21 16:55:25 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -136,7 +136,7 @@ X509_LOOKUP_by_subject(X509_LOOKUP *ctx, int type, X509_NAME *name,
     X509_OBJECT *ret)
 {
 	if ((ctx->method == NULL) || (ctx->method->get_by_subject == NULL))
-		return X509_LU_FAIL;
+		return 0;
 	if (ctx->skip)
 		return 0;
 	return ctx->method->get_by_subject(ctx, type, name, ret);
@@ -148,7 +148,7 @@ X509_LOOKUP_by_issuer_serial(X509_LOOKUP *ctx, int type, X509_NAME *name,
 {
 	if ((ctx->method == NULL) ||
 	    (ctx->method->get_by_issuer_serial == NULL))
-		return X509_LU_FAIL;
+		return 0;
 	return ctx->method->get_by_issuer_serial(ctx, type, name, serial, ret);
 }
 
@@ -157,7 +157,7 @@ X509_LOOKUP_by_fingerprint(X509_LOOKUP *ctx, int type,
     const unsigned char *bytes, int len, X509_OBJECT *ret)
 {
 	if ((ctx->method == NULL) || (ctx->method->get_by_fingerprint == NULL))
-		return X509_LU_FAIL;
+		return 0;
 	return ctx->method->get_by_fingerprint(ctx, type, bytes, len, ret);
 }
 
@@ -166,7 +166,7 @@ X509_LOOKUP_by_alias(X509_LOOKUP *ctx, int type, const char *str, int len,
     X509_OBJECT *ret)
 {
 	if ((ctx->method == NULL) || (ctx->method->get_by_alias == NULL))
-		return X509_LU_FAIL;
+		return 0;
 	return ctx->method->get_by_alias(ctx, type, str, len, ret);
 }
 
@@ -693,23 +693,12 @@ X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
 {
 	X509_NAME *xn;
 	X509_OBJECT obj, *pobj;
-	int i, ok, idx, ret;
+	int i, idx, ret;
 
 	*issuer = NULL;
 	xn = X509_get_issuer_name(x);
-	ok = X509_STORE_get_by_subject(ctx, X509_LU_X509, xn, &obj);
-	if (ok != X509_LU_X509) {
-		if (ok == X509_LU_RETRY) {
-			X509_OBJECT_free_contents(&obj);
-			X509error(X509_R_SHOULD_RETRY);
-			return -1;
-		} else if (ok != X509_LU_FAIL) {
-			X509_OBJECT_free_contents(&obj);
-			/* not good :-(, break anyway */
-			return -1;
-		}
+	if (!X509_STORE_get_by_subject(ctx, X509_LU_X509, xn, &obj))
 		return 0;
-	}
 	/* If certificate matches all OK */
 	if (ctx->check_issued(ctx, x, obj.data.x509)) {
 		if (x509_check_cert_time(ctx, obj.data.x509, 1)) {
