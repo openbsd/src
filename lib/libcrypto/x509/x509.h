@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.76 2021/09/02 12:41:44 job Exp $ */
+/* $OpenBSD: x509.h,v 1.77 2021/10/21 13:02:00 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -621,9 +621,11 @@ void X509_CRL_METHOD_free(X509_CRL_METHOD *m);
 void X509_CRL_set_meth_data(X509_CRL *crl, void *dat);
 void *X509_CRL_get_meth_data(X509_CRL *crl);
 
-/* This one is only used so that a binary form can output, as in
- * i2d_X509_NAME(X509_get_X509_PUBKEY(x),&buf) */
-#define 	X509_get_X509_PUBKEY(x) ((x)->cert_info->key)
+#if defined(LIBRESSL_NEW_API)
+X509_PUBKEY	*X509_get_X509_PUBKEY(const X509 *x);
+#else
+#define		 X509_get_X509_PUBKEY(x)	(x)->cert_info->key
+#endif
 
 
 const char *X509_verify_cert_error_string(long n);
