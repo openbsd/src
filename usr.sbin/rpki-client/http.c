@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.42 2021/10/05 07:22:21 claudio Exp $  */
+/*	$OpenBSD: http.c,v 1.43 2021/10/22 11:13:06 claudio Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -569,12 +569,11 @@ http_req_done(size_t id, enum http_result res, const char *last_modified)
 {
 	struct ibuf *b;
 
-	if ((b = ibuf_dynamic(64, UINT_MAX)) == NULL)
-		err(1, NULL);
+	b = io_buf_new();
 	io_simple_buffer(b, &id, sizeof(id));
 	io_simple_buffer(b, &res, sizeof(res));
 	io_str_buffer(b, last_modified);
-	ibuf_close(&msgq, b);
+	io_buf_close(&msgq, b);
 }
 
 /*
@@ -586,12 +585,11 @@ http_req_fail(size_t id)
 	struct ibuf *b;
 	enum http_result res = HTTP_FAILED;
 
-	if ((b = ibuf_dynamic(8, UINT_MAX)) == NULL)
-		err(1, NULL);
+	b = io_buf_new();
 	io_simple_buffer(b, &id, sizeof(id));
 	io_simple_buffer(b, &res, sizeof(res));
 	io_str_buffer(b, NULL);
-	ibuf_close(&msgq, b);
+	io_buf_close(&msgq, b);
 }
 
 /*
@@ -1861,12 +1859,13 @@ proc_http(char *bind_addr, int fd)
 			}
 		}
 		if (pfds[0].revents & POLLIN) {
-			size_t id;
+			size_t id, size;
 			int outfd;
 			char *uri;
 			char *mod;
 
-			outfd = io_recvfd(fd, &id, sizeof(id));
+			outfd = io_recvfd(fd, &size, sizeof(size));
+			io_simple_read(fd, &id, sizeof(id));
 			io_str_read(fd, &uri);
 			io_str_read(fd, &mod);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsync.c,v 1.25 2021/09/01 12:26:26 claudio Exp $ */
+/*	$OpenBSD: rsync.c,v 1.26 2021/10/22 11:13:06 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -178,8 +178,7 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 
 	for (;;) {
 		char *uri = NULL, *dst = NULL;
-		ssize_t ssz;
-		size_t id;
+		size_t id, size;
 		pid_t pid;
 		int st;
 
@@ -217,12 +216,10 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 					ok = 0;
 				}
 
-				b = ibuf_open(sizeof(size_t) + sizeof(ok));
-				if (b == NULL)
-					err(1, NULL);
+				b = io_buf_new();
 				io_simple_buffer(b, &ids[i].id, sizeof(size_t));
 				io_simple_buffer(b, &ok, sizeof(ok));
-				ibuf_close(&msgq, b);
+				io_buf_close(&msgq, b);
 
 				free(ids[i].uri);
 				ids[i].uri = NULL;
@@ -243,21 +240,16 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 			}
 		}
 
+		/* connection closed */
+		if (pfd.revents & POLLHUP)
+			break;
+
 		if (!(pfd.revents & POLLIN))
 			continue;
 
-		/*
-		 * Read til the parent exits.
-		 * That will mean that we can safely exit.
-		 */
-
-		if ((ssz = read(fd, &id, sizeof(size_t))) == -1)
-			err(1, "read");
-		if (ssz == 0)
-			break;
-
 		/* Read host and module. */
-
+		io_simple_read(fd, &size, sizeof(size));
+		io_simple_read(fd, &id, sizeof(id));
 		io_str_read(fd, &dst);
 		io_str_read(fd, &uri);
 		assert(dst);

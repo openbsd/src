@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.72 2021/10/12 15:16:45 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.73 2021/10/22 11:13:06 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -388,6 +388,7 @@ struct stats {
 };
 
 struct ibuf;
+struct msgbuf;
 
 /* global variables */
 extern int verbose;
@@ -536,9 +537,11 @@ char		*hex_encode(const unsigned char *, size_t);
 
 void		 io_socket_blocking(int);
 void		 io_socket_nonblocking(int);
+struct ibuf	*io_buf_new(void);
 void		 io_simple_buffer(struct ibuf *, const void *, size_t);
 void		 io_buf_buffer(struct ibuf *, const void *, size_t);
 void		 io_str_buffer(struct ibuf *, const char *);
+void		 io_buf_close(struct msgbuf *, struct ibuf *);
 void		 io_simple_read(int, void *, size_t);
 void		 io_buf_read_alloc(int, void **, size_t *);
 void		 io_str_read(int, char **);

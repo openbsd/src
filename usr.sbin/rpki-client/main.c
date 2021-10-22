@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.149 2021/10/11 16:50:03 job Exp $ */
+/*	$OpenBSD: main.c,v 1.150 2021/10/22 11:13:06 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -84,7 +84,6 @@ logx(const char *fmt, ...)
 void
 entity_free(struct entity *ent)
 {
-
 	if (ent == NULL)
 		return;
 
@@ -102,7 +101,9 @@ entity_free(struct entity *ent)
 void
 entity_read_req(int fd, struct entity *ent)
 {
+	size_t size;
 
+	io_simple_read(fd, &size, sizeof(size));
 	io_simple_read(fd, &ent->type, sizeof(enum rtype));
 	io_str_read(fd, &ent->file);
 	io_simple_read(fd, &ent->has_pkey, sizeof(int));
@@ -126,15 +127,14 @@ entity_write_req(const struct entity *ent)
 		return;
 	}
 
-	if ((b = ibuf_dynamic(sizeof(*ent), UINT_MAX)) == NULL)
-		err(1, NULL);
+	b = io_buf_new();
 	io_simple_buffer(b, &ent->type, sizeof(ent->type));
 	io_str_buffer(b, ent->file);
 	io_simple_buffer(b, &ent->has_pkey, sizeof(int));
 	if (ent->has_pkey)
 		io_buf_buffer(b, ent->pkey, ent->pkeysz);
 	io_str_buffer(b, ent->descr);
-	ibuf_close(&procq, b);
+	io_buf_close(&procq, b);
 }
 
 /*
@@ -224,12 +224,11 @@ rrdp_file_resp(size_t id, int ok)
 	enum rrdp_msg type = RRDP_FILE;
 	struct ibuf *b;
 
-	if ((b = ibuf_open(sizeof(type) + sizeof(id) + sizeof(ok))) == NULL)
-		err(1, NULL);
+	b = io_buf_new();
 	io_simple_buffer(b, &type, sizeof(type));
 	io_simple_buffer(b, &id, sizeof(id));
 	io_simple_buffer(b, &ok, sizeof(ok));
-	ibuf_close(&rrdpq, b);
+	io_buf_close(&rrdpq, b);
 }
 
 void
@@ -239,8 +238,7 @@ rrdp_fetch(size_t id, const char *uri, const char *local,
 	enum rrdp_msg type = RRDP_START;
 	struct ibuf *b;
 
-	if ((b = ibuf_dynamic(256, UINT_MAX)) == NULL)
-		err(1, NULL);
+	b = io_buf_new();
 	io_simple_buffer(b, &type, sizeof(type));
 	io_simple_buffer(b, &id, sizeof(id));
 	io_str_buffer(b, local);
@@ -248,7 +246,7 @@ rrdp_fetch(size_t id, const char *uri, const char *local,
 	io_str_buffer(b, s->session_id);
 	io_simple_buffer(b, &s->serial, sizeof(s->serial));
 	io_str_buffer(b, s->last_mod);
-	ibuf_close(&rrdpq, b);
+	io_buf_close(&rrdpq, b);
 }
 
 /*
@@ -259,12 +257,11 @@ rsync_fetch(size_t id, const char *uri, const char *local)
 {
 	struct ibuf	*b;
 
-	if ((b = ibuf_dynamic(256, UINT_MAX)) == NULL)
-		err(1, NULL);
+	b = io_buf_new();
 	io_simple_buffer(b, &id, sizeof(id));
 	io_str_buffer(b, local);
 	io_str_buffer(b, uri);
-	ibuf_close(&rsyncq, b);
+	io_buf_close(&rsyncq, b);
 }
 
 /*
@@ -275,14 +272,13 @@ http_fetch(size_t id, const char *uri, const char *last_mod, int fd)
 {
 	struct ibuf	*b;
 
-	if ((b = ibuf_dynamic(256, UINT_MAX)) == NULL)
-		err(1, NULL);
+	b = io_buf_new();
 	io_simple_buffer(b, &id, sizeof(id));
 	io_str_buffer(b, uri);
 	io_str_buffer(b, last_mod);
 	/* pass file as fd */
 	b->fd = fd;
-	ibuf_close(&httpq, b);
+	io_buf_close(&httpq, b);
 }
 
 /*
@@ -299,12 +295,11 @@ rrdp_http_fetch(size_t id, const char *uri, const char *last_mod)
 	if (pipe2(pi, O_CLOEXEC | O_NONBLOCK) == -1)
 		err(1, "pipe");
 
-	if ((b = ibuf_open(sizeof(type) + sizeof(id))) == NULL)
-		err(1, NULL);
+	b = io_buf_new();
 	io_simple_buffer(b, &type, sizeof(type));
 	io_simple_buffer(b, &id, sizeof(id));
 	b->fd = pi[0];
-	ibuf_close(&rrdpq, b);
+	io_buf_close(&rrdpq, b);
 
 	http_fetch(id, uri, last_mod, pi[1]);
 }
@@ -316,13 +311,12 @@ rrdp_http_done(size_t id, enum http_result res, const char *last_mod)
 	struct ibuf *b;
 
 	/* RRDP request, relay response over to the rrdp process */
-	if ((b = ibuf_dynamic(256, UINT_MAX)) == NULL)
-		err(1, NULL);
+	b = io_buf_new();
 	io_simple_buffer(b, &type, sizeof(type));
 	io_simple_buffer(b, &id, sizeof(id));
 	io_simple_buffer(b, &res, sizeof(res));
 	io_str_buffer(b, last_mod);
-	ibuf_close(&rrdpq, b);
+	io_buf_close(&rrdpq, b);
 }
 
 /*
@@ -473,6 +467,7 @@ entity_process(int proc, struct stats *st, struct vrp_tree *tree,
 	struct cert	*cert;
 	struct mft	*mft;
 	struct roa	*roa;
+	size_t		 size;
 	int		 c;
 
 	/*
@@ -481,6 +476,7 @@ entity_process(int proc, struct stats *st, struct vrp_tree *tree,
 	 * certificate, for example).
 	 * We follow that up with whether the resources didn't parse.
 	 */
+	io_simple_read(proc, &size, sizeof(size));
 	io_simple_read(proc, &type, sizeof(type));
 
 	switch (type) {
@@ -553,7 +549,7 @@ entity_process(int proc, struct stats *st, struct vrp_tree *tree,
 		st->gbrs++;
 		break;
 	default:
-		errx(1, "unknown entity type");
+		errx(1, "unknown entity type %d", type);
 	}
 
 	entity_queue--;
@@ -629,7 +625,7 @@ main(int argc, char *argv[])
 {
 	int		 rc, c, st, proc, rsync, http, rrdp, ok,
 			 hangup = 0, fl = SOCK_STREAM | SOCK_CLOEXEC;
-	size_t		 i, id, talsz = 0;
+	size_t		 i, id, talsz = 0, size;
 	pid_t		 pid, procpid, rsyncpid, httppid, rrdppid;
 	int		 fd[2];
 	struct pollfd	 pfd[NPFD];
@@ -1004,6 +1000,7 @@ main(int argc, char *argv[])
 		 */
 
 		if ((pfd[1].revents & POLLIN)) {
+			io_simple_read(rsync, &size, sizeof(size));
 			io_simple_read(rsync, &id, sizeof(id));
 			io_simple_read(rsync, &ok, sizeof(ok));
 			rsync_finish(id, ok);
@@ -1013,6 +1010,7 @@ main(int argc, char *argv[])
 			enum http_result res;
 			char *last_mod;
 
+			io_simple_read(http, &size, sizeof(size));
 			io_simple_read(http, &id, sizeof(id));
 			io_simple_read(http, &res, sizeof(res));
 			io_str_read(http, &last_mod);
@@ -1031,6 +1029,7 @@ main(int argc, char *argv[])
 			char hash[SHA256_DIGEST_LENGTH];
 			size_t dsz;
 
+			io_simple_read(rrdp, &size, sizeof(size));
 			io_simple_read(rrdp, &type, sizeof(type));
 			io_simple_read(rrdp, &id, sizeof(id));
 

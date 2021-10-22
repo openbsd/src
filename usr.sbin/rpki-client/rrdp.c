@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp.c,v 1.11 2021/08/31 15:18:53 claudio Exp $ */
+/*	$OpenBSD: rrdp.c,v 1.12 2021/10/22 11:13:06 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -140,12 +140,11 @@ rrdp_done(size_t id, int ok)
 	enum rrdp_msg type = RRDP_END;
 	struct ibuf *b;
 
-	if ((b = ibuf_open(sizeof(type) + sizeof(id) + sizeof(ok))) == NULL)
-		err(1, NULL);
+	b = io_buf_new();
 	io_simple_buffer(b, &type, sizeof(type));
 	io_simple_buffer(b, &id, sizeof(id));
 	io_simple_buffer(b, &ok, sizeof(ok));
-	ibuf_close(&msgq, b);
+	io_buf_close(&msgq, b);
 }
 
 /*
@@ -162,13 +161,12 @@ rrdp_http_req(size_t id, const char *uri, const char *last_mod)
 	enum rrdp_msg type = RRDP_HTTP_REQ;
 	struct ibuf *b;
 
-	if ((b = ibuf_dynamic(256, UINT_MAX)) == NULL)
-		err(1, NULL);
+	b = io_buf_new();
 	io_simple_buffer(b, &type, sizeof(type));
 	io_simple_buffer(b, &id, sizeof(id));
 	io_str_buffer(b, uri);
 	io_str_buffer(b, last_mod);
-	ibuf_close(&msgq, b);
+	io_buf_close(&msgq, b);
 }
 
 /*
@@ -180,14 +178,13 @@ rrdp_state_send(struct rrdp *s)
 	enum rrdp_msg type = RRDP_SESSION;
 	struct ibuf *b;
 
-	if ((b = ibuf_dynamic(256, UINT_MAX)) == NULL)
-		err(1, NULL);
+	b = io_buf_new();
 	io_simple_buffer(b, &type, sizeof(type));
 	io_simple_buffer(b, &s->id, sizeof(s->id));
 	io_str_buffer(b, s->current.session_id);
 	io_simple_buffer(b, &s->current.serial, sizeof(s->current.serial));
 	io_str_buffer(b, s->current.last_mod);
-	ibuf_close(&msgq, b);
+	io_buf_close(&msgq, b);
 }
 
 static struct rrdp *
@@ -386,10 +383,11 @@ rrdp_input_handler(int fd)
 	enum rrdp_msg type;
 	enum http_result res;
 	long long serial;
-	size_t id;
+	size_t id, size;
 	int infd, ok;
 
-	infd = io_recvfd(fd, &type, sizeof(type));
+	infd = io_recvfd(fd, &size, sizeof(size));
+	io_simple_read(fd, &type, sizeof(type));
 	io_simple_read(fd, &id, sizeof(id));
 
 	switch (type) {
@@ -665,8 +663,7 @@ publish_done(struct rrdp *s, struct publish_xml *pxml)
 
 	/* only send files if the fetch did not fail already */
 	if (s->file_failed == 0) {
-		if ((b = ibuf_dynamic(256, UINT_MAX)) == NULL)
-			err(1, NULL);
+		b = io_buf_new();
 		io_simple_buffer(b, &type, sizeof(type));
 		io_simple_buffer(b, &s->id, sizeof(s->id));
 		io_simple_buffer(b, &pxml->type, sizeof(pxml->type));
@@ -674,7 +671,7 @@ publish_done(struct rrdp *s, struct publish_xml *pxml)
 			io_simple_buffer(b, &pxml->hash, sizeof(pxml->hash));
 		io_str_buffer(b, pxml->uri);
 		io_buf_buffer(b, data, datasz);
-		ibuf_close(&msgq, b);
+		io_buf_close(&msgq, b);
 		s->file_pending++;
 	}
 

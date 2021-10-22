@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.13 2021/10/11 16:50:03 job Exp $ */
+/*	$OpenBSD: parser.c,v 1.14 2021/10/22 11:13:06 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -523,13 +523,13 @@ proc_parser(int fd)
 	struct roa	*roa;
 	struct entity	*entp;
 	struct entityq	 q;
-	int		 c, rc = 1;
 	struct msgbuf	 msgq;
 	struct pollfd	 pfd;
 	struct ibuf	*b;
 	X509_STORE_CTX	*ctx;
 	struct auth_tree auths = RB_INITIALIZER(&auths);
 	struct crl_tree	 crlt = RB_INITIALIZER(&crlt);
+	int		 c, rc = 1;
 
 	ERR_load_crypto_strings();
 	OpenSSL_add_all_ciphers();
@@ -602,8 +602,7 @@ proc_parser(int fd)
 		entp = TAILQ_FIRST(&q);
 		assert(entp != NULL);
 
-		if ((b = ibuf_dynamic(256, UINT_MAX)) == NULL)
-			err(1, NULL);
+		b = io_buf_new();
 		io_simple_buffer(b, &entp->type, sizeof(entp->type));
 
 		switch (entp->type) {
@@ -656,7 +655,7 @@ proc_parser(int fd)
 			abort();
 		}
 
-		ibuf_close(&msgq, b);
+		io_buf_close(&msgq, b);
 		TAILQ_REMOVE(&q, entp, entries);
 		entity_free(entp);
 	}

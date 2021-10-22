@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.13 2021/03/04 13:01:41 claudio Exp $ */
+/*	$OpenBSD: io.c,v 1.14 2021/10/22 11:13:06 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -53,7 +53,22 @@ io_socket_nonblocking(int fd)
 }
 
 /*
- * Like io_simple_write() but into a buffer.
+ * Create new io buffer, call io_close() when done with it.
+ * Function always returns a new buffer.
+ */
+struct ibuf *
+io_buf_new(void)
+{
+	struct ibuf *b;
+
+	if ((b = ibuf_dynamic(64, INT32_MAX)) == NULL)
+		err(1, NULL);
+	ibuf_reserve(b, sizeof(size_t));	/* can not fail */
+	return b;
+}
+
+/*
+ * Add a simple object of static size to the io buffer.
  */
 void
 io_simple_buffer(struct ibuf *b, const void *res, size_t sz)
@@ -84,6 +99,19 @@ io_str_buffer(struct ibuf *b, const char *p)
 	size_t sz = (p == NULL) ? 0 : strlen(p);
 
 	io_buf_buffer(b, p, sz);
+}
+
+/*
+ * Finish and enqueue a io buffer.
+ */
+void
+io_buf_close(struct msgbuf *msgbuf, struct ibuf *b)
+{
+	size_t len;
+
+	len = ibuf_size(b);
+	memcpy(ibuf_seek(b, 0, sizeof(len)), &len, sizeof(len));
+	ibuf_close(msgbuf, b);
 }
 
 /*
