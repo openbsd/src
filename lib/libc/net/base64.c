@@ -1,4 +1,4 @@
-/*	$OpenBSD: base64.c,v 1.9 2021/10/11 14:32:26 deraadt Exp $	*/
+/*	$OpenBSD: base64.c,v 1.10 2021/10/22 09:49:26 tb Exp $	*/
 
 /*
  * Copyright (c) 1996 by Internet Software Consortium.
@@ -42,14 +42,11 @@
  * IF IBM IS APPRISED OF THE POSSIBILITY OF SUCH DAMAGES.
  */
 
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
 #include <ctype.h>
 #include <resolv.h>
-#include <stdio.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -123,14 +120,14 @@ static const char Pad64 = '=';
 
 int
 b64_ntop(src, srclength, target, targsize)
-	u_char const *src;
+	unsigned char const *src;
 	size_t srclength;
 	char *target;
 	size_t targsize;
 {
 	size_t datalength = 0;
-	u_char input[3];
-	u_char output[4];
+	unsigned char input[3];
+	unsigned char output[4];
 	int i;
 
 	while (2 < srclength) {
@@ -188,11 +185,11 @@ b64_ntop(src, srclength, target, targsize)
 int
 b64_pton(src, target, targsize)
 	char const *src;
-	u_char *target;
+	unsigned char *target;
 	size_t targsize;
 {
 	int tarindex, state, ch;
-	u_char nextbyte;
+	unsigned char nextbyte;
 	char *pos;
 
 	state = 0;
