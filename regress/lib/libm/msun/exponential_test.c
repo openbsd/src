@@ -1,4 +1,4 @@
-/*	$OpenBSD: exponential_test.c,v 1.1 2021/10/22 18:00:22 mbuhl Exp $	*/
+/*	$OpenBSD: exponential_test.c,v 1.2 2021/10/22 18:07:01 mbuhl Exp $	*/
 /*-
  * Copyright (c) 2008 David Schultz <das@FreeBSD.org>
  * All rights reserved.
@@ -145,7 +145,7 @@ ATF_TC_BODY(exp2f, tc)
 ATF_TC_WITHOUT_HEAD(exp2);
 ATF_TC_BODY(exp2, tc)
 {
-	int i
+	int i;
 	ATF_REQUIRE_EQ(0, feclearexcept(FE_ALL_EXCEPT));
 	for (i = DBL_MIN_EXP - DBL_MANT_DIG; i < DBL_MAX_EXP; i++) {
 		ATF_CHECK_EQ(exp2(i), ldexp(1.0, i));
