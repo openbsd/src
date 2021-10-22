@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.127 2021/10/22 05:00:26 anton Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.128 2021/10/22 15:16:50 mpi Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -890,27 +890,16 @@ pipe_kqfilter(struct file *fp, struct knote *kn)
 		kn->kn_hook = rpipe;
 		klist_insert_locked(&rpipe->pipe_sel.si_note, kn);
 		break;
-	case EVFILT_WRITE: {
-		struct pipe *kpipe = wpipe;
-
+	case EVFILT_WRITE:
 		if (wpipe == NULL) {
 			/* other end of pipe has been closed */
-			if (kn->kn_flags & __EV_POLL) {
-				/*
-				 * select(2) semantics requires the pipe to
-				 * become ready only to deliver EPIPE.
-				 */
-				kpipe = rpipe;
-			} else {
-				error = EPIPE;
-				break;
-			}
+			error = EPIPE;
+			break;
 		}
 		kn->kn_fop = &pipe_wfiltops;
-		kn->kn_hook = kpipe;
-		klist_insert_locked(&kpipe->pipe_sel.si_note, kn);
+		kn->kn_hook = wpipe;
+		klist_insert_locked(&wpipe->pipe_sel.si_note, kn);
 		break;
-	}
 	default:
 		error = EINVAL;
 	}
