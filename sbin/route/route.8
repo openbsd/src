@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.100 2021/08/30 15:46:07 kn Exp $
+.\"	$OpenBSD: route.8,v 1.101 2021/10/22 18:31:12 kn Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)route.8	8.3 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: August 30 2021 $
+.Dd $Mdocdate: October 22 2021 $
 .Dt ROUTE 8
 .Os
 .Sh NAME
@@ -287,6 +287,7 @@ have the syntax:
 .Nm route
 .Op Fl dnqtv
 .Op Fl T Ar rtable
+.Tg delete
 .Tg
 .Cm del Ns Op Cm ete
 .Op Ar modifiers
