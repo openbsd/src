@@ -1,4 +1,4 @@
-/*	$OpenBSD: test-kqueue.c,v 1.3 2021/05/08 06:53:19 anton Exp $	*/
+/*	$OpenBSD: test-kqueue.c,v 1.4 2021/10/22 05:03:57 anton Exp $	*/
 
 /*
  * Copyright (c) 2019 Anton Lindqvist <anton@openbsd.org>
@@ -204,7 +204,6 @@ ctx_teardown(struct context *ctx)
 	close(ctx->c_pipe[0]);
 	close(ctx->c_pipe[1]);
 	close(ctx->c_kq);
-
 }
 
 static int
@@ -238,7 +237,8 @@ ctx_lock(struct context *ctx)
 		errc(1, error, "pthread_mutex_lock");
 }
 
-static void ctx_unlock(struct context *ctx)
+static void
+ctx_unlock(struct context *ctx)
 {
 	int error;
 

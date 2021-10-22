@@ -1,4 +1,4 @@
-/*	$OpenBSD: test-run-down.c,v 1.2 2019/11/14 21:17:00 anton Exp $	*/
+/*	$OpenBSD: test-run-down.c,v 1.3 2021/10/22 05:03:57 anton Exp $	*/
 
 /*
  * Copyright (c) 2019 Anton Lindqvist <anton@openbsd.org>
@@ -132,7 +132,8 @@ ctx_lock(struct context *ctx)
 		errc(1, error, "pthread_mutex_lock");
 }
 
-static void ctx_unlock(struct context *ctx)
+static void
+ctx_unlock(struct context *ctx)
 {
 	int error;
 
