@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.h,v 1.31 2021/07/08 09:22:30 bluhm Exp $	*/
+/*	$OpenBSD: xform.h,v 1.32 2021/10/22 12:30:53 bluhm Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -107,6 +107,5 @@ extern const struct auth_hash auth_hash_gmac_aes_256;
 extern const struct auth_hash auth_hash_chacha20_poly1305;
 
 extern const struct comp_algo comp_algo_deflate;
-extern const struct comp_algo comp_algo_lzs;
 
 #endif /* _CRYPTO_XFORM_H_ */

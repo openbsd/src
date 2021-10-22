@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.c,v 1.60 2021/07/08 09:22:30 bluhm Exp $	*/
+/*	$OpenBSD: xform.c,v 1.61 2021/10/22 12:30:53 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -106,7 +106,6 @@ int SHA512Update_int(void *, const u_int8_t *, u_int16_t);
 
 u_int32_t deflate_compress(u_int8_t *, u_int32_t, u_int8_t **);
 u_int32_t deflate_decompress(u_int8_t *, u_int32_t, u_int8_t **);
-u_int32_t lzs_dummy(u_int8_t *, u_int32_t, u_int8_t **);
 
 struct aes_ctr_ctx {
 	AES_CTX		ac_key;
@@ -304,12 +303,6 @@ const struct comp_algo comp_algo_deflate = {
 	CRYPTO_DEFLATE_COMP, "Deflate",
 	90, deflate_compress,
 	deflate_decompress
-};
-
-const struct comp_algo comp_algo_lzs = {
-	CRYPTO_LZS_COMP, "LZS",
-	90, lzs_dummy,
-	lzs_dummy
 };
 
 /*
@@ -617,11 +610,4 @@ u_int32_t
 deflate_decompress(u_int8_t *data, u_int32_t size, u_int8_t **out)
 {
 	return deflate_global(data, size, 1, out);
-}
-
-u_int32_t
-lzs_dummy(u_int8_t *data, u_int32_t size, u_int8_t **out)
-{
-	*out = NULL;
-	return (0);
 }

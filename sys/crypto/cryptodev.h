@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.h,v 1.78 2021/10/21 23:03:48 tobhe Exp $	*/
+/*	$OpenBSD: cryptodev.h,v 1.79 2021/10/22 12:30:53 bluhm Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -91,7 +91,6 @@
 #define CRYPTO_AES_CBC		7  /* 128 bit blocksize -- the same as above */
 #define CRYPTO_DEFLATE_COMP	8  /* Deflate compression algorithm */
 #define CRYPTO_NULL		9
-#define CRYPTO_LZS_COMP		10 /* LZS compression algorithm */
 #define CRYPTO_SHA2_256_HMAC	11
 #define CRYPTO_SHA2_384_HMAC	12
 #define CRYPTO_SHA2_512_HMAC	13

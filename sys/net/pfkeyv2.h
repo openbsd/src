@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.h,v 1.90 2021/07/14 22:39:26 tobhe Exp $ */
+/* $OpenBSD: pfkeyv2.h,v 1.91 2021/10/22 12:30:53 bluhm Exp $ */
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) January 1998
  *
@@ -351,8 +351,7 @@ struct sadb_x_mtu {
 #define SADB_X_CALG_NONE	0
 #define SADB_X_CALG_OUI		1
 #define SADB_X_CALG_DEFLATE	2
-#define SADB_X_CALG_LZS		3
-#define SADB_X_CALG_MAX		3
+#define SADB_X_CALG_MAX		2
 
 #define SADB_SAFLAGS_PFS		0x001	/* perfect forward secrecy */
 #define SADB_X_SAFLAGS_TUNNEL		0x004	/* Force tunneling */

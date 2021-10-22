@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.62 2020/02/07 13:01:34 bluhm Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.63 2021/10/22 12:30:54 bluhm Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -526,9 +526,6 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, u_int32_t spi,
 		switch (xfs->compxf->id) {
 		case COMPXF_DEFLATE:
 			sa.sadb_sa_encrypt = SADB_X_CALG_DEFLATE;
-			break;
-		case COMPXF_LZS:
-			sa.sadb_sa_encrypt = SADB_X_CALG_LZS;
 			break;
 		default:
 			warnx("unsupported compression algorithm %d",

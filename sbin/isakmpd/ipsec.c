@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.150 2018/01/15 09:54:48 mpi Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.151 2021/10/22 12:30:53 bluhm Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -1019,7 +1019,7 @@ ipsec_validate_transform_id(u_int8_t proto, u_int8_t transform_id)
 		    transform_id > IPSEC_ESP_AES_TWOFISH ? -1 : 0;
 	case IPSEC_PROTO_IPCOMP:
 		return transform_id < IPSEC_IPCOMP_OUI ||
-		    transform_id > IPSEC_IPCOMP_V42BIS ? -1 : 0;
+		    transform_id > IPSEC_IPCOMP_DEFLATE ? -1 : 0;
 	}
 }
 

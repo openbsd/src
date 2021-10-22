@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.54 2021/07/14 22:39:26 tobhe Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.55 2021/10/22 12:30:54 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -184,7 +184,6 @@ struct idname comp_types[] = {
 	{ SADB_X_CALG_NONE,		"none",			NULL },
 	{ SADB_X_CALG_OUI,		"oui",			NULL },
 	{ SADB_X_CALG_DEFLATE,		"deflate",		NULL },
-	{ SADB_X_CALG_LZS,		"lzs",			NULL },
 	{ 0,				NULL,			NULL }
 };
 
@@ -755,9 +754,6 @@ pfkey_print_sa(struct sadb_msg *msg, int opts)
 			switch (sa->sadb_sa_encrypt) {
 			case SADB_X_CALG_DEFLATE:
 				xfs.compxf = &compxfs[COMPXF_DEFLATE];
-				break;
-			case SADB_X_CALG_LZS:
-				xfs.compxf = &compxfs[COMPXF_LZS];
 				break;
 			}
 		}

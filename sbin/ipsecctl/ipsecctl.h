@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.74 2020/02/07 13:01:34 bluhm Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.75 2021/10/22 12:30:54 bluhm Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -71,7 +71,7 @@ enum {
 	ENCXF_BLOWFISH, ENCXF_CAST128, ENCXF_CHACHA20_POLY1305, ENCXF_NULL
 };
 enum {
-	COMPXF_UNKNOWN, COMPXF_DEFLATE, COMPXF_LZS
+	COMPXF_UNKNOWN, COMPXF_DEFLATE
 };
 enum {
 	GROUPXF_UNKNOWN, GROUPXF_NONE, GROUPXF_1, GROUPXF_2, GROUPXF_5,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.2,v 1.44 2021/05/18 05:26:26 claudio Exp $
+.\"	$OpenBSD: sysctl.2,v 1.45 2021/10/22 12:30:53 bluhm Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 18 2021 $
+.Dd $Mdocdate: October 22 2021 $
 .Dt SYSCTL 2
 .Os
 .Sh NAME
@@ -1520,15 +1520,8 @@ The default value is 0.
 .It Li ip.ipsec-comp-alg Pq Va net.inet.ip.ipsec-comp-alg
 The compression algorithm to use with an IP Compression Association
 .Pq IPCA .
-Possible values are
-.Dq deflate
-and
-.Dq lzs .
-Note that lzs is only available with
-.Xr hifn 4 .
-See
-.Xr ipsecctl 8
-for more information.
+Currently the only possible value is
+.Dq deflate .
 .It Li ip.ipsec-enc-alg Pq Va net.inet.ip.ipsec-enc-alg
 This is the default encryption algorithm the kernel will instruct key
 management daemons to negotiate when establishing security

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.180 2021/10/15 15:01:27 naddy Exp $	*/
+/*	$OpenBSD: parse.y,v 1.181 2021/10/22 12:30:54 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -129,7 +129,6 @@ const struct ipsec_xf encxfs[] = {
 const struct ipsec_xf compxfs[] = {
 	{ "unknown",		COMPXF_UNKNOWN,		0,	0 },
 	{ "deflate",		COMPXF_DEFLATE,		0,	0 },
-	{ "lzs",		COMPXF_LZS,		0,	0 },
 	{ NULL,			0,			0,	0 },
 };
 

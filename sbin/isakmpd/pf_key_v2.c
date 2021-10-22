@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.201 2019/11/29 22:06:19 tobhe Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.202 2021/10/22 12:30:54 bluhm Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -1030,10 +1030,6 @@ pf_key_v2_set_spi(struct sa *sa, struct proto *proto, int incoming,
 
 		case IPSEC_IPCOMP_DEFLATE:
 			ssa.sadb_sa_encrypt = SADB_X_CALG_DEFLATE;
-			break;
-
-		case IPSEC_IPCOMP_LZS:
-			ssa.sadb_sa_encrypt = SADB_X_CALG_LZS;
 			break;
 
 		default:

@@ -1,4 +1,4 @@
-#	$OpenBSD: ipsec_num.cst,v 1.20 2017/10/27 08:29:32 mpi Exp $
+#	$OpenBSD: ipsec_num.cst,v 1.21 2021/10/22 12:30:54 bluhm Exp $
 #	$EOM: ipsec_num.cst,v 1.5 2000/10/13 17:56:52 angelos Exp $
 
 #
@@ -257,8 +257,6 @@ IPSEC_ESP
 IPSEC_IPCOMP
   OUI					1
   DEFLATE				2
-  LZS					3
-  V42BIS				4
 .
 
 # IPSEC notify message types.

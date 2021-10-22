@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.policy.5,v 1.48 2016/01/11 09:52:03 jmc Exp $
+.\" $OpenBSD: isakmpd.policy.5,v 1.49 2021/10/22 12:30:54 bluhm Exp $
 .\" $EOM: isakmpd.policy.5,v 1.24 2000/11/23 12:55:25 niklas Exp $
 .\"
 .\" Copyright (c) 1999-2001, Angelos D. Keromytis.  All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: January 11 2016 $
+.Dd $Mdocdate: October 22 2021 $
 .Dt ISAKMPD.POLICY 5
 .Os
 .Sh NAME
@@ -356,10 +356,8 @@ Always set to
 .It comp_alg
 One of
 .Va oui ,
-.Va deflate ,
-.Va lzs ,
 or
-.Va v42bis ,
+.Va deflate ,
 based on the compression algorithm specified in the compression
 proposal.
 .It comp_dict_size

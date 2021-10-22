@@ -1,4 +1,4 @@
-/* $OpenBSD: policy.c,v 1.101 2019/07/03 03:24:02 deraadt Exp $	 */
+/* $OpenBSD: policy.c,v 1.102 2021/10/22 12:30:54 bluhm Exp $	 */
 /* $EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -345,14 +345,6 @@ policy_callback(char *name)
 
 				case IPSEC_IPCOMP_DEFLATE:
 					comp_alg = "deflate";
-					break;
-
-				case IPSEC_IPCOMP_LZS:
-					comp_alg = "lzs";
-					break;
-
-				case IPSEC_IPCOMP_V42BIS:
-					comp_alg = "v42bis";
 					break;
 				}
 
