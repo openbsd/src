@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.78 2021/10/21 15:52:02 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.79 2021/10/22 16:42:13 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1011,6 +1011,9 @@ int		X509_REQ_set_subject_name(X509_REQ *req, X509_NAME *name);
 X509_NAME	*X509_REQ_get_subject_name(const X509_REQ *x);
 int		X509_REQ_set_pubkey(X509_REQ *x, EVP_PKEY *pkey);
 EVP_PKEY *	X509_REQ_get_pubkey(X509_REQ *req);
+#if defined(LIBRESSL_NEW_API)
+EVP_PKEY *	X509_REQ_get0_pubkey(X509_REQ *req);
+#endif
 int		X509_REQ_extension_nid(int nid);
 int *		X509_REQ_get_extension_nids(void);
 void		X509_REQ_set_extension_nids(int *nids);

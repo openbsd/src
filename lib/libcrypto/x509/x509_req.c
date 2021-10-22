@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_req.c,v 1.21 2018/05/13 06:48:00 tb Exp $ */
+/* $OpenBSD: x509_req.c,v 1.22 2021/10/22 16:42:13 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -119,6 +119,14 @@ X509_REQ_get_pubkey(X509_REQ *req)
 	if ((req == NULL) || (req->req_info == NULL))
 		return (NULL);
 	return (X509_PUBKEY_get(req->req_info->pubkey));
+}
+
+EVP_PKEY *
+X509_REQ_get0_pubkey(X509_REQ *req)
+{
+	if (req == NULL || req->req_info == NULL)
+		return NULL;
+	return X509_PUBKEY_get0(req->req_info->pubkey);
 }
 
 int
