@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.65 2021/10/22 15:03:28 florian Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.66 2021/10/22 15:11:51 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -689,7 +689,6 @@ struct uw_conf *
 config_new_empty(void)
 {
 	struct uw_conf			*xconf;
-	int				 i;
 
 	xconf = calloc(1, sizeof(*xconf));
 	if (xconf == NULL)
