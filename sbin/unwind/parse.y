@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.28 2021/10/15 15:01:27 naddy Exp $	*/
+/*	$OpenBSD: parse.y,v 1.29 2021/10/22 15:03:28 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -788,9 +788,24 @@ popfile(void)
 struct uw_conf *
 parse_config(char *filename)
 {
-	struct sym	*sym, *next;
+	static enum uw_resolver_type	 default_res_pref[] = {
+	    UW_RES_DOT,
+	    UW_RES_ODOT_FORWARDER,
+	    UW_RES_FORWARDER,
+	    UW_RES_RECURSOR,
+	    UW_RES_ODOT_AUTOCONF,
+	    UW_RES_AUTOCONF,
+	    UW_RES_ASR};
+	struct sym			*sym, *next;
+	int				 i;
 
 	conf = config_new_empty();
+
+	memcpy(&conf->res_pref.types, &default_res_pref,
+	    sizeof(default_res_pref));
+	conf->res_pref.len = nitems(default_res_pref);
+	for (i = 0; i < conf->res_pref.len; i++)
+		conf->enabled_resolvers[conf->res_pref.types[i]] = 1;
 
 	file = pushfile(filename != NULL ? filename : _PATH_CONF_FILE, 0);
 	if (file == NULL) {

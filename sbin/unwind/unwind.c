@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.64 2021/10/22 13:38:07 kn Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.65 2021/10/22 15:03:28 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -688,26 +688,12 @@ merge_config(struct uw_conf *conf, struct uw_conf *xconf)
 struct uw_conf *
 config_new_empty(void)
 {
-	static enum uw_resolver_type	 default_res_pref[] = {
-	    UW_RES_DOT,
-	    UW_RES_ODOT_FORWARDER,
-	    UW_RES_FORWARDER,
-	    UW_RES_RECURSOR,
-	    UW_RES_ODOT_AUTOCONF,
-	    UW_RES_AUTOCONF,
-	    UW_RES_ASR};
 	struct uw_conf			*xconf;
 	int				 i;
 
 	xconf = calloc(1, sizeof(*xconf));
 	if (xconf == NULL)
 		fatal(NULL);
-
-	memcpy(&xconf->res_pref.types, &default_res_pref,
-	    sizeof(default_res_pref));
-	xconf->res_pref.len = nitems(default_res_pref);
-	for (i = 0; i < xconf->res_pref.len; i++)
-		xconf->enabled_resolvers[xconf->res_pref.types[i]] = 1;
 
 	TAILQ_INIT(&xconf->uw_forwarder_list);
 	TAILQ_INIT(&xconf->uw_dot_forwarder_list);
