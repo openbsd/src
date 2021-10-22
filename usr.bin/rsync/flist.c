@@ -1,4 +1,4 @@
-/*	$OpenBSD: flist.c,v 1.34 2021/09/02 21:06:06 deraadt Exp $ */
+/*	$OpenBSD: flist.c,v 1.35 2021/10/22 09:59:35 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2019 Florian Obser <florian@openbsd.org>
@@ -992,7 +992,7 @@ flist_gen_dirent(struct sess *sess, char *root, struct flist **fl, size_t *sz,
 		/* Optionally copy link information. */
 
 		if (S_ISLNK(ent->fts_statp->st_mode)) {
-			f->link = symlink_read(f->path);
+			f->link = symlink_read(ent->fts_accpath);
 			if (f->link == NULL) {
 				ERRX1("symlink_read");
 				goto out;
