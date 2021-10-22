@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.108 2021/09/20 17:32:39 anton Exp $ */
+/* $OpenBSD: wskbd.c,v 1.109 2021/10/22 04:59:31 anton Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -205,6 +205,8 @@ int	wskbd_detach(struct device *, int);
 int	wskbd_activate(struct device *, int);
 
 int	wskbd_displayioctl(struct device *, u_long, caddr_t, int, struct proc *);
+int	wskbd_displayioctl_sc(struct wskbd_softc *, u_long, caddr_t, int,
+    struct proc *, int);
 
 void	update_leds(struct wskbd_internal *);
 void	update_modifier(struct wskbd_internal *, u_int, int, int);
@@ -217,7 +219,7 @@ void	change_displayparam(struct wskbd_softc *, int, int, int);
 #endif
 
 int	wskbd_do_ioctl_sc(struct wskbd_softc *, u_long, caddr_t, int,
-	    struct proc *);
+    struct proc *, int);
 void	wskbd_deliver_event(struct wskbd_softc *sc, u_int type, int value);
 
 #if NWSMUX > 0
@@ -925,7 +927,14 @@ wskbdread(dev_t dev, struct uio *uio, int flags)
 int
 wskbdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
-	return (wskbd_do_ioctl(wskbd_cd.cd_devs[minor(dev)], cmd, data, flag,p));
+	struct wskbd_softc *sc = wskbd_cd.cd_devs[minor(dev)];
+	int error;
+
+	sc->sc_refcnt++;
+	error = wskbd_do_ioctl_sc(sc, cmd, data, flag, p, 0);
+	if (--sc->sc_refcnt < 0)
+		wakeup(sc);
+	return (error);
 }
 
 /* A wrapper around the ioctl() workhorse to make reference counting easy. */
@@ -937,7 +946,7 @@ wskbd_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 	int error;
 
 	sc->sc_refcnt++;
-	error = wskbd_do_ioctl_sc(sc, cmd, data, flag, p);
+	error = wskbd_do_ioctl_sc(sc, cmd, data, flag, p, 1);
 	if (--sc->sc_refcnt < 0)
 		wakeup(sc);
 	return (error);
@@ -945,7 +954,7 @@ wskbd_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 
 int
 wskbd_do_ioctl_sc(struct wskbd_softc *sc, u_long cmd, caddr_t data, int flag,
-     struct proc *p)
+    struct proc *p, int evsrc)
 {
 	struct wseventvar *evar;
 	int error;
@@ -983,7 +992,7 @@ wskbd_do_ioctl_sc(struct wskbd_softc *sc, u_long cmd, caddr_t data, int flag,
 	 * Try the keyboard driver for WSKBDIO ioctls.  It returns -1
 	 * if it didn't recognize the request.
 	 */
-	error = wskbd_displayioctl(&sc->sc_base.me_dv, cmd, data, flag, p);
+	error = wskbd_displayioctl_sc(sc, cmd, data, flag, p, evsrc);
 	return (error != -1 ? error : ENOTTY);
 }
 
@@ -992,10 +1001,18 @@ wskbd_do_ioctl_sc(struct wskbd_softc *sc, u_long cmd, caddr_t data, int flag,
  * Some of these have no real effect in raw mode, however.
  */
 int
-wskbd_displayioctl(struct device *dev, u_long cmd, caddr_t data, int flag,
+wskbd_displayioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
     struct proc *p)
 {
-	struct wskbd_softc *sc = (struct wskbd_softc *)dev;
+	struct wskbd_softc *sc = (struct wskbd_softc *)dv;
+
+	return (wskbd_displayioctl_sc(sc, cmd, data, flag, p, 1));
+}
+
+int
+wskbd_displayioctl_sc(struct wskbd_softc *sc, u_long cmd, caddr_t data,
+    int flag, struct proc *p, int evsrc)
+{
 	struct wskbd_bell_data *ubdp, *kbdp;
 	struct wskbd_keyrepeat_data *ukdp, *kkdp;
 	struct wskbd_map_data *umdp;
@@ -1134,6 +1151,9 @@ getkeyrepeat:
 		return(error);
 
 	case WSKBDIO_GETENCODING:
+		/* Do not advertise encoding to the parent mux. */
+		if (evsrc && (sc->id->t_keymap.layout & KB_NOENCODING))
+			return (ENOTTY);
 		*((kbd_t *)data) = sc->id->t_keymap.layout & ~KB_DEFAULT;
 		return(0);
 
