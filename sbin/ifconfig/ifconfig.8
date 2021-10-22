@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.375 2021/08/18 18:10:33 solene Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.376 2021/10/22 18:35:27 kn Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: August 18 2021 $
+.Dd $Mdocdate: October 22 2021 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -220,11 +220,12 @@ Disable driver-dependent debugging code.
 Remove the default inet address associated with the interface,
 including any netmask or destination address configured with it.
 An address and address family can be given to make the deletion more specific.
-.It Cm description Ar value
+.Tg description
+.It Cm descr Ns Oo Cm iption Oc Ar value
 Specify a description of the interface.
 This can be used to label interfaces in situations where they may
 otherwise be difficult to distinguish.
-.It Cm -description
+.It Cm -descr Ns Op Cm iption
 Clear the interface description.
 .It Cm destroy
 Destroy the specified network pseudo-device.
