@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.157 2021/10/21 22:59:07 tobhe Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.158 2021/10/22 15:44:20 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -1164,6 +1164,7 @@ ah_output_cb(struct tdb *tdb, struct tdb_crypto *tc, struct mbuf *m, int ilen,
 {
 	int skip = tc->tc_skip;
 	caddr_t ptr = (caddr_t) (tc + 1);
+	int error;
 
 	/*
 	 * Copy original headers (with the new protocol number) back
@@ -1175,10 +1176,8 @@ ah_output_cb(struct tdb *tdb, struct tdb_crypto *tc, struct mbuf *m, int ilen,
 	free(tc, M_XDATA, 0);
 
 	/* Call the IPsec input callback. */
-	if (ipsp_process_done(m, tdb)) {
+	error = ipsp_process_done(m, tdb);
+	if (error)
 		ahstat_inc(ahs_outfail);
-		return -1;
-	}
-
-	return 0;
+	return error;
 }

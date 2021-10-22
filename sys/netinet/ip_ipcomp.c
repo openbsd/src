@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.78 2021/10/22 12:30:53 bluhm Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.79 2021/10/22 15:44:20 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -505,6 +505,7 @@ ipcomp_output_cb(struct tdb *tdb, struct tdb_crypto *tc, struct mbuf *m,
 #ifdef ENCDEBUG
 	char buf[INET6_ADDRSTRLEN];
 #endif
+	int error;
 
 	skip = tc->tc_skip;
 	rlen = ilen - skip;
@@ -523,7 +524,8 @@ ipcomp_output_cb(struct tdb *tdb, struct tdb_crypto *tc, struct mbuf *m,
 		    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
 		    ntohl(tdb->tdb_spi));
 		ipcompstat_inc(ipcomps_wrap);
-		goto baddone;
+		error = ENOBUFS;
+		goto drop;
 	}
 
 	/* Initialize the IPCOMP header */
@@ -552,21 +554,21 @@ ipcomp_output_cb(struct tdb *tdb, struct tdb_crypto *tc, struct mbuf *m,
 		    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
 		    ntohl(tdb->tdb_spi));
 		ipcompstat_inc(ipcomps_nopf);
-		goto baddone;
+		error = EPFNOSUPPORT;
+		goto drop;
 	}
 
  skiphdr:
 	/* Release the crypto descriptor. */
 	free(tc, M_XDATA, 0);
 
-	if (ipsp_process_done(m, tdb)) {
+	error = ipsp_process_done(m, tdb);
+	if (error)
 		ipcompstat_inc(ipcomps_outfail);
-		return -1;
-	}
-	return 0;
+	return error;
 
- baddone:
+ drop:
 	m_freem(m);
 	free(tc, M_XDATA, 0);
-	return -1;
+	return error;
 }

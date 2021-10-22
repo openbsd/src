@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.95 2021/10/13 14:36:31 bluhm Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.96 2021/10/22 15:44:20 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -524,7 +524,7 @@ ipip_output(struct mbuf **mp, struct tdb *tdb)
 		DPRINTF("unsupported protocol family %d",
 		    tdb->tdb_dst.sa.sa_family);
 		ipipstat_inc(ipips_family);
-		error = EAFNOSUPPORT;
+		error = EPFNOSUPPORT;
 		goto drop;
 	}
 

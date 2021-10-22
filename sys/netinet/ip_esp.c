@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.176 2021/10/21 22:59:07 tobhe Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.177 2021/10/22 15:44:20 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -1024,16 +1024,16 @@ int
 esp_output_cb(struct tdb *tdb, struct tdb_crypto *tc, struct mbuf *m, int ilen,
     int olen)
 {
+	int error;
+
 	/* Release crypto descriptors. */
 	free(tc, M_XDATA, 0);
 
 	/* Call the IPsec input callback. */
-	if (ipsp_process_done(m, tdb)) {
+	error = ipsp_process_done(m, tdb);
+	if (error)
 		espstat_inc(esps_outfail);
-		return -1;
-	}
-
-	return 0;
+	return error;
 }
 
 #define SEEN_SIZE	howmany(TDB_REPLAYMAX, 32)
