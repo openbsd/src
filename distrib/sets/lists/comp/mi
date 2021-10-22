@@ -2138,6 +2138,7 @@
 ./usr/share/man/man3/X509_ALGOR_dup.3
 ./usr/share/man/man3/X509_ATTRIBUTE_get0_object.3
 ./usr/share/man/man3/X509_ATTRIBUTE_new.3
+./usr/share/man/man3/X509_ATTRIBUTE_set1_object.3
 ./usr/share/man/man3/X509_CINF_new.3
 ./usr/share/man/man3/X509_CRL_get0_by_serial.3
 ./usr/share/man/man3/X509_CRL_new.3
