@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.144 2021/10/21 11:48:30 benno Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.145 2021/10/22 08:51:50 benno Exp $	*/
 
 /*
  * Copyright (c) 2020 Matthias Pressfreund <mpfr@fn.de>
@@ -51,6 +51,7 @@ int		 server_http_authenticate(struct server_config *,
 		    struct client *);
 char		*server_expand_http(struct client *, const char *,
 		    char *, size_t);
+int		 http_version_num(char *);
 
 static struct http_method	 http_methods[] = HTTP_METHODS;
 static struct http_error	 http_errors[] = HTTP_ERRORS;
@@ -198,6 +199,20 @@ done:
 	return (ret);
 }
 
+int
+http_version_num(char *version)
+{
+	if (strcmp(version, "HTTP/0.9") == 0)
+		return (9);
+	if (strcmp(version, "HTTP/1.0") == 0)
+		return (10);
+	/* any other version 1.x gets downgraded to 1.1 */
+	if (strncmp(version, "HTTP/1", 6) == 0)
+		return (11);
+
+	return (0);
+}
+
 void
 server_read_http(struct bufferevent *bev, void *arg)
 {
@@ -206,7 +221,9 @@ server_read_http(struct bufferevent *bev, void *arg)
 	struct evbuffer		*src = EVBUFFER_INPUT(bev);
 	char			*line = NULL, *key, *value;
 	const char		*errstr;
+	char			*http_version;
 	size_t			 size, linelen;
+	int			 version;
 	struct kv		*hdr = NULL;
 
 	getmonotime(&clt->clt_tv_last);
@@ -317,24 +334,39 @@ server_read_http(struct bufferevent *bev, void *arg)
 			if (desc->http_path == NULL)
 				goto fail;
 
-			desc->http_version = strchr(desc->http_path, ' ');
-			if (desc->http_version == NULL) {
+			http_version = strchr(desc->http_path, ' ');
+			if (http_version == NULL) {
 				server_abort_http(clt, 400, "malformed");
 				goto abort;
 			}
 
-			*desc->http_version++ = '\0';
+			*http_version++ = '\0';
 			desc->http_query = strchr(desc->http_path, '?');
 			if (desc->http_query != NULL)
 				*desc->http_query++ = '\0';
 
 			/*
-			 * Have to allocate the strings because they could
+			 * We have to allocate the strings because they could
 			 * be changed independently by the filters later.
+			 * Allow HTTP version 0.9 to 1.1.
+			 * Downgrade http version > 1.1 <= 1.9 to version 1.1.
+			 * Return HTTP Version Not Supported for anything else.
 			 */
-			if ((desc->http_version =
-			    strdup(desc->http_version)) == NULL)
-				goto fail;
+
+			version = http_version_num(http_version);
+
+			if (version == 0) {
+				server_abort_http(clt, 505, "bad http version");
+				goto abort;
+			} else if (version == 11) {
+				if ((desc->http_version =
+				    strdup("HTTP/1.1")) == NULL)
+					goto fail;
+			} else {
+				if ((desc->http_version =
+				    strdup(http_version)) == NULL)
+					goto fail;
+			}
 
 			if (desc->http_query != NULL &&
 			    (desc->http_query =
