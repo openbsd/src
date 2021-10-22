@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.265 2021/10/14 23:05:10 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.266 2021/10/22 15:11:32 mpi Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -78,6 +78,10 @@ int	filt_sowrite(struct knote *kn, long hint);
 int	filt_sowritemodify(struct kevent *kev, struct knote *kn);
 int	filt_sowriteprocess(struct knote *kn, struct kevent *kev);
 int	filt_sowrite_common(struct knote *kn, struct socket *so);
+int	filt_soexcept(struct knote *kn, long hint);
+int	filt_soexceptmodify(struct kevent *kev, struct knote *kn);
+int	filt_soexceptprocess(struct knote *kn, struct kevent *kev);
+int	filt_soexcept_common(struct knote *kn, struct socket *so);
 int	filt_solisten(struct knote *kn, long hint);
 int	filt_solistenmodify(struct kevent *kev, struct knote *kn);
 int	filt_solistenprocess(struct knote *kn, struct kevent *kev);
@@ -114,9 +118,9 @@ const struct filterops soexcept_filtops = {
 	.f_flags	= FILTEROP_ISFD,
 	.f_attach	= NULL,
 	.f_detach	= filt_sordetach,
-	.f_event	= filt_soread,
-	.f_modify	= filt_soreadmodify,
-	.f_process	= filt_soreadprocess,
+	.f_event	= filt_soexcept,
+	.f_modify	= filt_soexceptmodify,
+	.f_process	= filt_soexceptprocess,
 };
 
 #ifndef SOMINCONN
@@ -2089,13 +2093,7 @@ filt_soread_common(struct knote *kn, struct socket *so)
 		rv = 0;
 	} else
 #endif /* SOCKET_SPLICE */
-	if (kn->kn_sfflags & NOTE_OOB) {
-		if (so->so_oobmark || (so->so_state & SS_RCVATMARK)) {
-			kn->kn_fflags |= NOTE_OOB;
-			kn->kn_data -= so->so_oobmark;
-			rv = 1;
-		}
-	} else if (so->so_state & SS_CANTRCVMORE) {
+	if (so->so_state & SS_CANTRCVMORE) {
 		kn->kn_flags |= EV_EOF;
 		if (kn->kn_flags & __EV_POLL) {
 			if (so->so_state & SS_ISDISCONNECTED)
@@ -2227,6 +2225,77 @@ filt_sowriteprocess(struct knote *kn, struct kevent *kev)
 		rv = 1;
 	else
 		rv = filt_sowrite_common(kn, so);
+	if (rv != 0)
+		knote_submit(kn, kev);
+	sounlock(so, s);
+
+	return (rv);
+}
+
+int
+filt_soexcept_common(struct knote *kn, struct socket *so)
+{
+	int rv = 0;
+
+	soassertlocked(so);
+
+#ifdef SOCKET_SPLICE
+	if (isspliced(so)) {
+		rv = 0;
+	} else
+#endif /* SOCKET_SPLICE */
+	if (kn->kn_sfflags & NOTE_OOB) {
+		if (so->so_oobmark || (so->so_state & SS_RCVATMARK)) {
+			kn->kn_fflags |= NOTE_OOB;
+			kn->kn_data -= so->so_oobmark;
+			rv = 1;
+		}
+	} else if (so->so_state & SS_CANTRCVMORE) {
+		kn->kn_flags |= EV_EOF;
+		if (kn->kn_flags & __EV_POLL) {
+			if (so->so_state & SS_ISDISCONNECTED)
+				kn->kn_flags |= __EV_HUP;
+		}
+		kn->kn_fflags = so->so_error;
+		rv = 1;
+	}
+
+	return rv;
+}
+
+int
+filt_soexcept(struct knote *kn, long hint)
+{
+	struct socket *so = kn->kn_fp->f_data;
+
+	return (filt_soexcept_common(kn, so));
+}
+
+int
+filt_soexceptmodify(struct kevent *kev, struct knote *kn)
+{
+	struct socket *so = kn->kn_fp->f_data;
+	int rv, s;
+
+	s = solock(so);
+	knote_modify(kev, kn);
+	rv = filt_soexcept_common(kn, so);
+	sounlock(so, s);
+
+	return (rv);
+}
+
+int
+filt_soexceptprocess(struct knote *kn, struct kevent *kev)
+{
+	struct socket *so = kn->kn_fp->f_data;
+	int rv, s;
+
+	s = solock(so);
+	if (kev != NULL && (kn->kn_flags & EV_ONESHOT))
+		rv = 1;
+	else
+		rv = filt_soexcept_common(kn, so);
 	if (rv != 0)
 		knote_submit(kn, kev);
 	sounlock(so, s);

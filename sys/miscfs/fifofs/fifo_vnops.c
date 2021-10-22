@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.82 2021/10/15 06:30:06 semarie Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.83 2021/10/22 15:11:32 mpi Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -112,6 +112,10 @@ int	filt_fifowrite(struct knote *kn, long hint);
 int	filt_fifowritemodify(struct kevent *kev, struct knote *kn);
 int	filt_fifowriteprocess(struct knote *kn, struct kevent *kev);
 int	filt_fifowrite_common(struct knote *kn, struct socket *so);
+int	filt_fifoexcept(struct knote *kn, long hint);
+int	filt_fifoexceptmodify(struct kevent *kev, struct knote *kn);
+int	filt_fifoexceptprocess(struct knote *kn, struct kevent *kev);
+int	filt_fifoexcept_common(struct knote *kn, struct socket *so);
 
 const struct filterops fiforead_filtops = {
 	.f_flags	= FILTEROP_ISFD,
@@ -129,6 +133,15 @@ const struct filterops fifowrite_filtops = {
 	.f_event	= filt_fifowrite,
 	.f_modify	= filt_fifowritemodify,
 	.f_process	= filt_fifowriteprocess,
+};
+
+const struct filterops fifoexcept_filtops = {
+	.f_flags	= FILTEROP_ISFD,
+	.f_attach	= NULL,
+	.f_detach	= filt_fifordetach,
+	.f_event	= filt_fifoexcept,
+	.f_modify	= filt_fifoexceptmodify,
+	.f_process	= filt_fifoexceptprocess,
 };
 
 /*
@@ -522,6 +535,11 @@ fifo_kqfilter(void *v)
 		so = fip->fi_writesock;
 		sb = &so->so_snd;
 		break;
+	case EVFILT_EXCEPT:
+		ap->a_kn->kn_fop = &fifoexcept_filtops;
+		so = fip->fi_readsock;
+		sb = &so->so_rcv;
+		break;
 	default:
 		return (EINVAL);
 	}
@@ -664,6 +682,65 @@ filt_fifowriteprocess(struct knote *kn, struct kevent *kev)
 		rv = 1;
 	else
 		rv = filt_fifowrite_common(kn, so);
+	if (rv != 0)
+		knote_submit(kn, kev);
+	sounlock(so, s);
+
+	return (rv);
+}
+
+int
+filt_fifoexcept_common(struct knote *kn, struct socket *so)
+{
+	int rv = 0;
+
+	soassertlocked(so);
+
+	if (so->so_state & SS_CANTRCVMORE) {
+		kn->kn_flags |= EV_EOF;
+		if (kn->kn_flags & __EV_POLL) {
+			if (so->so_state & SS_ISDISCONNECTED)
+				kn->kn_flags |= __EV_HUP;
+		}
+		rv = 1;
+	}
+
+	return (rv);
+}
+
+int
+filt_fifoexcept(struct knote *kn, long hint)
+{
+	struct socket *so = kn->kn_hook;
+
+	return (filt_fifoexcept_common(kn, so));
+}
+
+int
+filt_fifoexceptmodify(struct kevent *kev, struct knote *kn)
+{
+	struct socket *so = kn->kn_hook;
+	int rv, s;
+
+	s = solock(so);
+	knote_modify(kev, kn);
+	rv = filt_fifoexcept_common(kn, so);
+	sounlock(so, s);
+
+	return (rv);
+}
+
+int
+filt_fifoexceptprocess(struct knote *kn, struct kevent *kev)
+{
+	struct socket *so = kn->kn_hook;
+	int rv, s;
+
+	s = solock(so);
+	if (kev != NULL && (kn->kn_flags & EV_ONESHOT))
+		rv = 1;
+	else
+		rv = filt_fifoexcept_common(kn, so);
 	if (rv != 0)
 		knote_submit(kn, kev);
 	sounlock(so, s);
