@@ -1,4 +1,4 @@
-/* $OpenBSD: req.c,v 1.19 2020/08/09 16:38:24 jsing Exp $ */
+/* $OpenBSD: req.c,v 1.20 2021/10/22 09:44:30 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1000,7 +1000,6 @@ req_main(int argc, char **argv)
 			ex = 1;
 			goto end;
 		}
-		req->req_info->enc.modified = 1;
 
 		if (req_config.verbose) {
 			print_name(bio_err, "new subject=", X509_REQ_get_subject_name(req), req_config.nmflag);
