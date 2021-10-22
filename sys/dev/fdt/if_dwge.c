@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwge.c,v 1.10 2021/07/28 13:43:11 patrick Exp $	*/
+/*	$OpenBSD: if_dwge.c,v 1.11 2021/10/22 14:28:54 kettenis Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -92,6 +92,7 @@
 #define GMAC_VERSION		0x0020
 #define  GMAC_VERSION_SNPS_MASK		0xff
 #define GMAC_INT_MASK		0x003c
+#define  GMAC_INT_MASK_LPIIM		(1 << 10)
 #define  GMAC_INT_MASK_PIM		(1 << 3)
 #define  GMAC_INT_MASK_RIM		(1 << 0)
 #define GMAC_MAC_ADDR0_HI	0x0040
@@ -528,7 +529,8 @@ dwge_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Disable interrupts. */
 	dwge_write(sc, GMAC_INT_ENA, 0);
-	dwge_write(sc, GMAC_INT_MASK, GMAC_INT_MASK_PIM | GMAC_INT_MASK_RIM);
+	dwge_write(sc, GMAC_INT_MASK,
+	    GMAC_INT_MASK_LPIIM | GMAC_INT_MASK_PIM | GMAC_INT_MASK_RIM);
 	dwge_write(sc, GMAC_MMC_RX_INT_MSK, 0xffffffff);
 	dwge_write(sc, GMAC_MMC_TX_INT_MSK, 0xffffffff);
 	dwge_write(sc, GMAC_MMC_IPC_INT_MSK, 0xffffffff);
