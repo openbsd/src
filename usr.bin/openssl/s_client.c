@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.54 2021/03/17 18:11:01 jsing Exp $ */
+/* $OpenBSD: s_client.c,v 1.55 2021/10/22 09:44:58 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -894,7 +894,7 @@ s_client_main(int argc, char **argv)
 	char *cbuf = NULL, *sbuf = NULL, *mbuf = NULL, *pbuf = NULL;
 	int cbuf_len, cbuf_off;
 	int sbuf_len, sbuf_off;
-	int pbuf_len, pbuf_off;
+	int pbuf_len;
 	int full_log = 1;
 	char *pass = NULL;
 	X509 *cert = NULL;
@@ -1196,7 +1196,6 @@ s_client_main(int argc, char **argv)
 	sbuf_len = 0;
 	sbuf_off = 0;
 	pbuf_len = 0;
-	pbuf_off = 0;
 
 	/* This is an ugly hack that does a lot of assumptions */
 	/*
@@ -1503,7 +1502,6 @@ s_client_main(int argc, char **argv)
 				if (SSL_get_error(con, p) == SSL_ERROR_NONE) {
 					if (p <= 0)
 						goto end;
-					pbuf_off = 0;
 					pbuf_len = p;
 
 					k = SSL_read(con, sbuf, p);
