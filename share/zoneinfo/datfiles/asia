@@ -1,4 +1,4 @@
-# $OpenBSD: asia,v 1.95 2021/09/24 15:02:07 millert Exp $
+# $OpenBSD: asia,v 1.96 2021/10/22 14:40:49 millert Exp $
 # tzdb data for Asia and environs
 
 # This file is in the public domain, so clarified as of
@@ -34,9 +34,6 @@
 # For Russian data circa 1919, a source is:
 # Byalokoz EL. New Counting of Time in Russia since July 1, 1919.
 # (See the 'europe' file for a fuller citation.)
-#
-# A reliable and entertaining source about time zones is
-# Derek Howse, Greenwich time and longitude, Philip Wilson Publishers (1997).
 #
 # The following alphabetic abbreviations appear in these tables
 # (corrections are welcome):
@@ -2750,7 +2747,8 @@ Rule	NBorneo	1935	1941	-	Dec	14	0:00	0	-
 #
 # peninsular Malaysia
 # taken from Mok Ly Yng (2003-10-30)
-# http://www.math.nus.edu.sg/aslaksen/teaching/timezone.html
+# https://web.archive.org/web/20190822231045/http://www.math.nus.edu.sg/~mathelmr/teaching/timezone.html
+# This agrees with Singapore since 1905-06-01.
 # Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
 Zone Asia/Kuala_Lumpur	6:46:46 -	LMT	1901 Jan  1
 			6:55:25	-	SMT	1905 Jun  1 # Singapore M.T.
@@ -3389,11 +3387,6 @@ Zone	Asia/Karachi	4:28:12 -	LMT	1907
 # shall [end] on Oct 24th 2020 at 01:00AM by delaying the clock by 60 minutes.
 # http://www.palestinecabinet.gov.ps/portal/Meeting/Details/51584
 
-# From Tim Parenti (2020-10-20):
-# Predict future fall transitions at 01:00 on the Saturday preceding October's
-# last Sunday (i.e., Sat>=24).  This is consistent with our predictions since
-# 2016, although the time of the change differed slightly in 2019.
-
 # From Pierre Cashon (2020-10-20):
 # The summer time this year started on March 28 at 00:00.
 # https://wafa.ps/ar_page.aspx?id=GveQNZa872839351758aGveQNZ
@@ -3405,6 +3398,17 @@ Zone	Asia/Karachi	4:28:12 -	LMT	1907
 # From Paul Eggert (2019-04-10):
 # For now, guess spring-ahead transitions are at 00:00 on the Saturday
 # preceding March's last Sunday (i.e., Sat>=24).
+
+# From P Chan (2021-10-18):
+# http://wafa.ps/Pages/Details/34701
+# Palestine winter time will start from midnight 2021-10-29 (Thursday-Friday).
+#
+# From Heba Hemad, Palestine Ministry of Telecom & IT (2021-10-20):
+# ... winter time will begin in Palestine from Friday 10-29, 01:00 AM
+# by 60 minutes backwards.
+#
+# From Paul Eggert (2021-10-20):
+# Guess future fall transitions on October's last Friday at 01:00.
 
 # Rule	NAME	FROM	TO	-	IN	ON	AT	SAVE	LETTER/S
 Rule EgyptAsia	1957	only	-	May	10	0:00	1:00	S
@@ -3441,7 +3445,8 @@ Rule Palestine	2016	2018	-	Oct	Sat>=24	1:00	0	-
 Rule Palestine	2019	only	-	Mar	29	0:00	1:00	S
 Rule Palestine	2019	only	-	Oct	Sat>=24	0:00	0	-
 Rule Palestine	2020	max	-	Mar	Sat>=24	0:00	1:00	S
-Rule Palestine	2020	max	-	Oct	Sat>=24	1:00	0	-
+Rule Palestine	2020	only	-	Oct	24	1:00	0	-
+Rule Palestine	2021	max	-	Oct	lastFri	1:00	0	-
 
 # Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
 Zone	Asia/Gaza	2:17:52	-	LMT	1900 Oct
@@ -3510,6 +3515,12 @@ Zone	Asia/Hebron	2:20:23	-	LMT	1900 Oct
 # influence of the sources.  There is no current abbreviation for DST,
 # so use "PDT", the usual American style.
 
+# From P Chan (2021-05-10):
+# Here's a fairly comprehensive article in Japanese:
+# https://wiki.suikawiki.org/n/Philippine%20Time
+# From Paul Eggert (2021-05-10):
+# The info in the Japanese table has not been absorbed (yet) below.
+
 # Rule	NAME	FROM	TO	-	IN	ON	AT	SAVE	LETTER/S
 Rule	Phil	1936	only	-	Nov	1	0:00	1:00	D
 Rule	Phil	1937	only	-	Feb	1	0:00	0	S
@@ -3576,12 +3587,13 @@ Link Asia/Qatar Asia/Bahrain
 # Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
 Zone	Asia/Riyadh	3:06:52 -	LMT	1947 Mar 14
 			3:00	-	+03
+Link Asia/Riyadh Antarctica/Syowa
 Link Asia/Riyadh Asia/Aden	# Yemen
 Link Asia/Riyadh Asia/Kuwait
 
 # Singapore
 # taken from Mok Ly Yng (2003-10-30)
-# http://www.math.nus.edu.sg/aslaksen/teaching/timezone.html
+# https://web.archive.org/web/20190822231045/http://www.math.nus.edu.sg/~mathelmr/teaching/timezone.html
 # Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
 Zone	Asia/Singapore	6:55:25 -	LMT	1901 Jan  1
 			6:55:25	-	SMT	1905 Jun  1 # Singapore M.T.
