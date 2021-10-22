@@ -1,4 +1,4 @@
-/*	$OpenBSD: conj_test.c,v 1.2 2019/02/21 17:36:41 bluhm Exp $	*/
+/*	$OpenBSD: conj_test.c,v 1.3 2021/10/22 18:00:22 mbuhl Exp $	*/
 /*-
  * Copyright (c) 2008 David Schultz <das@FreeBSD.org>
  * All rights reserved.
@@ -32,7 +32,6 @@
 #include <sys/cdefs.h>
 /* $FreeBSD: head/lib/msun/tests/conj_test.c 314650 2017-03-04 10:07:46Z ngie $ */
 
-#include <assert.h>
 #include <complex.h>
 #include <fenv.h>
 #include <math.h>
@@ -42,24 +41,6 @@
 
 #pragma	STDC CX_LIMITED_RANGE	OFF
 
-/*
- * Test that a function returns the correct value and sets the
- * exception flags correctly. The exceptmask specifies which
- * exceptions we should check. We need to be lenient for several
- * reasons, but mainly because on some architectures it's impossible
- * to raise FE_OVERFLOW without raising FE_INEXACT. In some cases,
- * whether cexp() raises an invalid exception is unspecified.
- *
- * These are macros instead of functions so that assert provides more
- * meaningful error messages.
- */
-#define	test(func, z, result, exceptmask, excepts)		do {	\
-	assert(feclearexcept(FE_ALL_EXCEPT) == 0);			\
-	assert(cfpequal((func)(z), (result)));				\
-	assert(((void)(func), fetestexcept(exceptmask) == (excepts)));	\
-} while (0)
-
-/* Make sure gcc doesn't use builtin versions of these or honor __pure2. */
 static float complex (*libconjf)(float complex) = conjf;
 static double complex (*libconj)(double complex) = conj;
 static long double complex (*libconjl)(long double complex) = conjl;
@@ -88,40 +69,54 @@ static const double tests[] = {
 	-INFINITY, INFINITY,
 };
 
-int
-main(void)
+ATF_TC_WITHOUT_HEAD(main);
+ATF_TC_BODY(main, tc)
 {
 	static const int ntests = sizeof(tests) / sizeof(tests[0]) / 2;
 	complex float in;
 	complex long double expected;
 	int i;
 
-	printf("1..%d\n", ntests * 3);
-
 	for (i = 0; i < ntests; i++) {
 		__real__ expected = __real__ in = tests[2 * i];
 		__imag__ in = tests[2 * i + 1];
 		__imag__ expected = -cimag(in);
 
-		assert(fpequal(libcrealf(in), __real__ in));
-		assert(fpequal(libcreal(in), __real__ in));
-		assert(fpequal(libcreall(in), __real__ in));
-		assert(fpequal(libcimagf(in), __imag__ in));
-		assert(fpequal(libcimag(in), __imag__ in));
-		assert(fpequal(libcimagl(in), __imag__ in));
+		ATF_REQUIRE(fpequal_cs(libcrealf(in), __real__ in, true));
+		ATF_REQUIRE(fpequal_cs(libcreal(in), __real__ in, true));
+		ATF_REQUIRE(fpequal_cs(libcreall(in), __real__ in, true));
+		ATF_REQUIRE(fpequal_cs(libcimagf(in), __imag__ in, true));
+		ATF_REQUIRE(fpequal_cs(libcimag(in), __imag__ in, true));
+		ATF_REQUIRE(fpequal_cs(libcimagl(in), __imag__ in, true));
+ 
+		ATF_REQUIRE_EQ(0, feclearexcept(FE_ALL_EXCEPT));
+		ATF_REQUIRE_MSG(
+		    cfpequal(libconjf(in), expected),
+		    "conjf(%#.2g + %#.2gI): wrong value", creal(in), cimag(in)
+		);
+		ATF_REQUIRE_EQ_MSG(0, fetestexcept(FE_ALL_EXCEPT),
+		    "conj(%#.2g + %#.2gI): threw an exception: %#x", creal(in),
+		    cimag(in), fetestexcept(FE_ALL_EXCEPT));
+ 
+		ATF_REQUIRE_EQ(0, feclearexcept(FE_ALL_EXCEPT));
+		ATF_REQUIRE_MSG(cfpequal(libconj(in), expected),
+		    "conj(%#.2g + %#.2gI): wrong value", creal(in), cimag(in));
+		ATF_REQUIRE_EQ_MSG(0, fetestexcept(FE_ALL_EXCEPT),
+		    "conj(%#.2g + %#.2gI): threw an exception: %#x", creal(in),
+		    cimag(in), fetestexcept(FE_ALL_EXCEPT));
+ 
+		ATF_REQUIRE_EQ(0, feclearexcept(FE_ALL_EXCEPT));
+		ATF_REQUIRE_MSG(cfpequal(libconjl(in), expected),
+		    "conjl(%#.2g + %#.2gI): wrong value", creal(in), cimag(in));
+		ATF_REQUIRE_EQ_MSG(0, fetestexcept(FE_ALL_EXCEPT),
+		    "conjl(%#.2g + %#.2gI): threw an exception: %#x", creal(in),
+		    cimag(in), fetestexcept(FE_ALL_EXCEPT));
+ 	}
+}
 
-		test(libconjf, in, expected, FE_ALL_EXCEPT, 0);
-		printf("ok %d\t\t# conjf(%#.2g + %#.2gI)\n",
-		    3 * i + 1, creal(in), cimag(in));
-
-		test(libconj, in, expected, FE_ALL_EXCEPT, 0);
-		printf("ok %d\t\t# conj(%#.2g + %#.2gI)\n",
-		    3 * i + 2, creal(in), cimag(in));
-
-		test(libconjl, in, expected, FE_ALL_EXCEPT, 0);
-		printf("ok %d\t\t# conjl(%#.2g + %#.2gI)\n",
-		    3 * i + 3, creal(in), cimag(in));
-	}
-
-	return (0);
+ATF_TP_ADD_TCS(tp)
+{
+	ATF_TP_ADD_TC(tp, main);
+ 
+	return (atf_no_error());
 }
