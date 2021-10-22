@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.41 2021/09/01 09:48:08 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.42 2021/10/22 11:10:34 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -32,6 +32,15 @@
  * the remainder block.
  */
 #define	BLOCK_SIZE_MIN  (700)
+
+/*
+ * Maximum number of base directories that can be used.
+ */
+#define MAX_BASEDIR	20
+
+#define BASE_MODE_COMPARE	1
+#define BASE_MODE_COPY		2
+#define BASE_MODE_LINK		3
 
 /*
  * The sender and receiver use a two-phase synchronisation process.
@@ -131,10 +140,12 @@ struct	opts {
 	int		 no_motd;		/* --no-motd */
 	int		 numeric_ids;		/* --numeric-ids */
 	int		 one_file_system;	/* -x */
+	int		 alt_base_mode;
 	char		*rsync_path;		/* --rsync-path */
 	char		*ssh_prog;		/* --rsh or -e */
 	char		*port;			/* --port */
 	char		*address;		/* --address */
+	char		*basedir[MAX_BASEDIR];
 };
 
 enum rule_type {
@@ -298,7 +309,8 @@ int	flist_send(struct sess *, int, int, const struct flist *, size_t);
 int	flist_gen_dels(struct sess *, const char *, struct flist **, size_t *,
 	    const struct flist *, size_t);
 
-char	**fargs_cmdline(struct sess *, const struct fargs *, size_t *);
+const char	 *alt_base_mode(int);
+char		**fargs_cmdline(struct sess *, const struct fargs *, size_t *);
 
 int	io_read_buf(struct sess *, int, void *, size_t);
 int	io_read_byte(struct sess *, int, uint8_t *);
@@ -367,6 +379,8 @@ void		 hash_slow(const void *, size_t, unsigned char *,
 		    const struct sess *);
 void		 hash_file(const void *, size_t, unsigned char *,
 		    const struct sess *);
+
+void		 copy_file(int, const char *, const struct flist *);
 
 int		 mkpath(char *);
 

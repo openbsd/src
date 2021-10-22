@@ -1,4 +1,4 @@
-/*	$OpenBSD: fargs.c,v 1.19 2021/06/30 13:10:04 claudio Exp $ */
+/*	$OpenBSD: fargs.c,v 1.20 2021/10/22 11:10:34 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -25,6 +25,21 @@
 #include "extern.h"
 
 #define	RSYNC_PATH	"rsync"
+
+const char *
+alt_base_mode(int mode)
+{
+	switch(mode) {
+	case BASE_MODE_COMPARE:
+		return "--compare-dest";
+	case BASE_MODE_COPY:
+		return "--copy-dest";
+	case BASE_MODE_LINK:
+		return "--link-dest";
+	default:
+		errx(1, "unknown base mode %d", mode);
+	}
+}
 
 char **
 fargs_cmdline(struct sess *sess, const struct fargs *f, size_t *skip)
@@ -116,6 +131,18 @@ fargs_cmdline(struct sess *sess, const struct fargs *f, size_t *skip)
 	if (!sess->opts->specials && sess->opts->devices)
 		/* --devices is sent as -D --no-specials */
 		addargs(&args, "--no-specials");
+
+	/* only add --compare-dest, etc if this is the sender */
+	if (sess->opts->alt_base_mode != 0 && 
+	    f->mode == FARGS_SENDER) {
+		for (j = 0; j < MAX_BASEDIR; j++) {
+			if (sess->opts->basedir[j] == NULL)
+				break;
+			addargs(&args, "%s=%s",
+			    alt_base_mode(sess->opts->alt_base_mode),
+			    sess->opts->basedir[j]);
+		}
+	}
 
 	/* Terminate with a full-stop for reasons unknown. */
 

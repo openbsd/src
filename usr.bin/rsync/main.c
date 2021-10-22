@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.59 2021/09/01 09:48:08 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.60 2021/10/22 11:10:34 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -280,10 +280,18 @@ static struct opts	 opts;
 #define OP_INCLUDE	1006
 #define OP_EXCLUDE_FROM	1007
 #define OP_INCLUDE_FROM	1008
+#define OP_COMP_DEST	1009
+#define OP_COPY_DEST	1010
+#define OP_LINK_DEST	1011
 
 const struct option	 lopts[] = {
     { "address",	required_argument, NULL,		OP_ADDRESS },
     { "archive",	no_argument,	NULL,			'a' },
+    { "compare-dest",	required_argument, NULL,		OP_COMP_DEST },
+#if 0
+    { "copy-dest",	required_argument, NULL,		OP_COPY_DEST },
+    { "link-dest",	required_argument, NULL,		OP_LINK_DEST },
+#endif
     { "compress",	no_argument,	NULL,			'z' },
     { "del",		no_argument,	&opts.del,		1 },
     { "delete",		no_argument,	&opts.del,		1 },
@@ -327,7 +335,8 @@ int
 main(int argc, char *argv[])
 {
 	pid_t		 child;
-	int		 fds[2], sd = -1, rc, c, st, i;
+	int		 fds[2], sd = -1, rc, c, st, i, lidx;
+	size_t		 basedir_cnt = 0;
 	struct sess	  sess;
 	struct fargs	*fargs;
 	char		**args;
@@ -339,7 +348,7 @@ main(int argc, char *argv[])
 	    NULL) == -1)
 		err(ERR_IPC, "pledge");
 
-	while ((c = getopt_long(argc, argv, "Dae:ghlnoprtvxz", lopts, NULL))
+	while ((c = getopt_long(argc, argv, "Dae:ghlnoprtvxz", lopts, &lidx))
 	    != -1) {
 		switch (c) {
 		case 'D':
@@ -422,6 +431,41 @@ main(int argc, char *argv[])
 			break;
 		case OP_INCLUDE_FROM:
 			parse_file(optarg, RULE_INCLUDE);
+			break;
+		case OP_COMP_DEST:
+			if (opts.alt_base_mode !=0 &&
+			    opts.alt_base_mode != BASE_MODE_COMPARE) {
+				errx(1, "option --%s conflicts with %s",
+				    lopts[lidx].name,
+				    alt_base_mode(opts.alt_base_mode));
+			}
+			opts.alt_base_mode = BASE_MODE_COMPARE;
+#if 0
+			goto basedir;
+		case OP_COPY_DEST:
+			if (opts.alt_base_mode !=0 &&
+			    opts.alt_base_mode != BASE_MODE_COPY) {
+				errx(1, "option --%s conflicts with %s",
+				    lopts[lidx].name,
+				    alt_base_mode(opts.alt_base_mode));
+			}
+			opts.alt_base_mode = BASE_MODE_COPY;
+			goto basedir;
+		case OP_LINK_DEST:
+			if (opts.alt_base_mode !=0 &&
+			    opts.alt_base_mode != BASE_MODE_LINK) {
+				errx(1, "option --%s conflicts with %s",
+				    lopts[lidx].name,
+				    alt_base_mode(opts.alt_base_mode));
+			}
+			opts.alt_base_mode = BASE_MODE_LINK;
+
+basedir:
+#endif
+			if (basedir_cnt >= MAX_BASEDIR)
+				errx(1, "too many --%s directories specified",
+				    lopts[lidx].name);
+			opts.basedir[basedir_cnt++] = optarg;
 			break;
 		case OP_VERSION:
 			fprintf(stderr, "openrsync: protocol version %u\n",
@@ -554,12 +598,11 @@ main(int argc, char *argv[])
 	exit(rc);
 usage:
 	fprintf(stderr, "usage: %s"
-	    " [-aDglnoprtvx] [-e program] [--address=sourceaddr] [--del]\n"
-	    "\t[--exclude] [--exclude-from=file] [--include] "
-	    "[--include-from=file]\n"
-	    "\t[--no-motd] [--numeric-ids] [--port=portnumber] "
-	    "[--rsync-path=program]\n\t[--timeout=seconds] [--version] "
-            "source ... directory\n",
+	    " [-aDglnoprtvx] [-e program] [--address=sourceaddr]\n"
+	    "\t[--compare-dest=dir] [--del] [--exclude] [--exclude-from=file]\n"
+	    "\t[--include] [--include-from=file] [--no-motd] [--numeric-ids]\n"
+	    "\t[--port=portnumber] [--rsync-path=program] [--timeout=seconds]\n"
+	    "\t[--version] source ... directory\n",
 	    getprogname());
 	exit(ERR_SYNTAX);
 }

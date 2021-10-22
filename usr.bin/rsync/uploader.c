@@ -1,4 +1,4 @@
-/*	$OpenBSD: uploader.c,v 1.29 2021/06/30 13:10:04 claudio Exp $ */
+/*	$OpenBSD: uploader.c,v 1.30 2021/10/22 11:10:34 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2019 Florian Obser <florian@openbsd.org>
@@ -19,6 +19,7 @@
 #include <sys/stat.h>
 
 #include <assert.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <inttypes.h>
@@ -166,7 +167,7 @@ init_blk(struct blk *p, const struct blkset *set, off_t offs,
  * Return <0 on failure 0 on success.
  */
 static int
-pre_link(struct upload *p, struct sess *sess)
+pre_symlink(struct upload *p, struct sess *sess)
 {
 	struct stat		 st;
 	const struct flist	*f;
@@ -266,7 +267,7 @@ pre_link(struct upload *p, struct sess *sess)
 }
 
 /*
- * See pre_link(), but for devices.
+ * See pre_symlink(), but for devices.
  * FIXME: this is very similar to the other pre_xxx() functions.
  * Return <0 on failure 0 on success.
  */
@@ -355,7 +356,7 @@ pre_dev(struct upload *p, struct sess *sess)
 }
 
 /*
- * See pre_link(), but for FIFOs.
+ * See pre_symlink(), but for FIFOs.
  * FIXME: this is very similar to the other pre_xxx() functions.
  * Return <0 on failure 0 on success.
  */
@@ -432,7 +433,7 @@ pre_fifo(struct upload *p, struct sess *sess)
 }
 
 /*
- * See pre_link(), but for socket files.
+ * See pre_symlink(), but for socket files.
  * FIXME: this is very similar to the other pre_xxx() functions.
  * Return <0 on failure 0 on success.
  */
@@ -641,17 +642,55 @@ post_dir(struct sess *sess, const struct upload *u, size_t idx)
 }
 
 /*
+ * Check if file exists in the specified root directory.
+ * Returns:
+ *    -1 on error
+ *     0 if file is considered the same
+ *     1 if file exists and is possible match
+ *     2 if file exists but quick check failed
+ *     3 if file does not exist
+ * The stat pointer st is only valid for 0, 1, and 2 returns.
+ */
+static int
+check_file(int rootfd, const struct flist *f, struct stat *st)
+{ 
+	if (fstatat(rootfd, f->path, st, AT_SYMLINK_NOFOLLOW) == -1) {
+		if (errno == ENOENT)
+			return 3;
+
+		ERR("%s: fstatat", f->path);
+		return -1;
+	}
+
+	/* non-regular file needs attention */
+	if (!S_ISREG(st->st_mode))
+		return 2;
+
+	/* quick check if file is the same */
+	/* TODO: add support for --checksum, --size-only and --ignore-times */
+	if (st->st_size == f->st.size) {
+		if (st->st_mtime == f->st.mtime)
+			return 0;
+		return 1;
+	}
+
+	/* file needs attention */
+	return 2;
+}
+
+/*
  * Try to open the file at the current index.
  * If the file does not exist, returns with >0.
  * Return <0 on failure, 0 on success w/nothing to be done, >0 on
  * success and the file needs attention.
  */
 static int
-pre_file(const struct upload *p, int *filefd, struct stat *st,
+pre_file(const struct upload *p, int *filefd, off_t *size,
     struct sess *sess)
 {
 	const struct flist *f;
-	int rc;
+	struct stat st;
+	int i, rc, match = -1;
 
 	f = &p->fl[p->idx];
 	assert(S_ISREG(f->st.mode));
@@ -670,36 +709,68 @@ pre_file(const struct upload *p, int *filefd, struct stat *st,
 	 * in the rsync_uploader() function.
 	 */
 
+	*size = 0;
 	*filefd = -1;
-	rc = fstatat(p->rootfd, f->path, st, AT_SYMLINK_NOFOLLOW);
 
-	if (rc == -1) {
-		if (errno == ENOENT)
-			return 1;
-
-		ERR("%s: fstatat", f->path);
+	rc = check_file(p->rootfd, f, &st);
+	if (rc == -1)
 		return -1;
-	}
-	if (!S_ISREG(st->st_mode)) {
-		if (S_ISDIR(st->st_mode) &&
+	if (rc == 2 && !S_ISREG(st.st_mode)) {
+		if (S_ISDIR(st.st_mode) &&
 		    unlinkat(p->rootfd, f->path, AT_REMOVEDIR) == -1) {
 			ERR("%s: unlinkat", f->path);
 			return -1;
 		}
-		return 1;
 	}
-
-	/* quick check if file is the same */
-	if (st->st_size == f->st.size &&
-	    st->st_mtime == f->st.mtime) {
-		LOG3("%s: skipping: up to date", f->path);
+	if (rc == 0) {
 		if (!rsync_set_metadata_at(sess, 0, p->rootfd, f, f->path)) {
 			ERRX1("rsync_set_metadata");
 			return -1;
 		}
+		LOG3("%s: skipping: up to date", f->path);
 		return 0;
 	}
 
+	/* check alternative locations for better match */
+	for (i = 0; sess->opts->basedir[i] != NULL; i++) {
+		const char *root = sess->opts->basedir[i];
+		int dfd, x;
+
+		dfd = openat(p->rootfd, root, O_RDONLY | O_DIRECTORY, 0);
+		if (dfd == -1)
+			err(ERR_FILE_IO, "%s: openat", root);
+		x = check_file(dfd, f, &st);
+		/* found a match */
+		if (x == 0) {
+			if (rc >= 0) {
+				/* found better match, delete file in rootfd */
+				if (unlinkat(p->rootfd, f->path, 0) == -1 &&
+				    errno != ENOENT) {
+					ERR("%s: unlinkat", f->path);
+					return -1;
+				}
+			}
+			LOG3("%s: skipping: up to date in %s", f->path, root);
+			/* TODO: depending on mode link or copy file */
+			close(dfd);
+			return 0;
+		} else if (x == 1 && match == -1) {
+			/* found a local file that is a close match */
+			match = i;
+		}
+		close(dfd);
+	}
+	if (match != -1) {
+		/* copy match from basedir into root as a start point */
+		copy_file(p->rootfd, sess->opts->basedir[match], f);
+		if (fstatat(p->rootfd, f->path, &st, AT_SYMLINK_NOFOLLOW) ==
+		    -1) {
+			ERR("%s: fstatat", f->path);
+			return -1;
+		}
+	}
+
+	*size = st.st_size;
 	*filefd = openat(p->rootfd, f->path, O_RDONLY | O_NOFOLLOW, 0);
 	if (*filefd == -1 && errno != ENOENT) {
 		ERR("%s: openat", f->path);
@@ -778,11 +849,10 @@ rsync_uploader(struct upload *u, int *fileinfd,
 	struct sess *sess, int *fileoutfd)
 {
 	struct blkset	    blk;
-	struct stat	    st;
 	void		   *mbuf, *bufp;
 	ssize_t		    msz;
 	size_t		    i, pos, sz;
-	off_t		    offs;
+	off_t		    offs, filesize;
 	int		    c;
 
 	/* Once finished this should never get called again. */
@@ -849,9 +919,9 @@ rsync_uploader(struct upload *u, int *fileinfd,
 			if (S_ISDIR(u->fl[u->idx].st.mode))
 				c = pre_dir(u, sess);
 			else if (S_ISLNK(u->fl[u->idx].st.mode))
-				c = pre_link(u, sess);
+				c = pre_symlink(u, sess);
 			else if (S_ISREG(u->fl[u->idx].st.mode))
-				c = pre_file(u, fileinfd, &st, sess);
+				c = pre_file(u, fileinfd, &filesize, sess);
 			else if (S_ISBLK(u->fl[u->idx].st.mode) ||
 			    S_ISCHR(u->fl[u->idx].st.mode))
 				c = pre_dev(u, sess);
@@ -896,8 +966,8 @@ rsync_uploader(struct upload *u, int *fileinfd,
 	memset(&blk, 0, sizeof(struct blkset));
 	blk.csum = u->csumlen;
 
-	if (*fileinfd != -1 && st.st_size > 0) {
-		init_blkset(&blk, st.st_size);
+	if (*fileinfd != -1 && filesize > 0) {
+		init_blkset(&blk, filesize);
 		assert(blk.blksz);
 
 		blk.blks = calloc(blk.blksz, sizeof(struct blk));

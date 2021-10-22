@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rsync.1,v 1.25 2021/08/30 20:25:24 job Exp $
+.\"	$OpenBSD: rsync.1,v 1.26 2021/10/22 11:10:34 claudio Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 30 2021 $
+.Dd $Mdocdate: October 22 2021 $
 .Dt OPENRSYNC 1
 .Os
 .Sh NAME
@@ -25,6 +25,7 @@
 .Op Fl aDglnoprtvx
 .Op Fl e Ar program
 .Op Fl -address Ns = Ns Ar sourceaddr
+.Op Fl -compare-dest Ns = Ns Ar directory
 .Op Fl -del
 .Op Fl -exclude Ar pattern
 .Op Fl -exclude-from Ns = Ns Ar file
@@ -62,6 +63,18 @@ When connecting to an rsync daemon, use
 .Ar sourceaddr
 as the source address for connections, which is useful on machines with
 multiple interfaces.
+.It Fl -compare-dest Ns = Ns Ar directory
+Use directory as an alternate base directory to compare files against on the
+destination machine.
+If file in
+.Ar directory
+is found and identical to the senders file the file will not be transferred.
+Multiple
+.Fl -compare-dest
+directories may be provided.
+If
+.Ar directory
+is a relative path, it is relative to the destination directory.
 .It Fl D
 Also transfer device and special files.
 Shorthand for

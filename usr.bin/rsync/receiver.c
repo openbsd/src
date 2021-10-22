@@ -1,4 +1,4 @@
-/*	$OpenBSD: receiver.c,v 1.29 2021/08/29 13:43:46 claudio Exp $ */
+/*	$OpenBSD: receiver.c,v 1.30 2021/10/22 11:10:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -184,6 +184,44 @@ rsync_receiver(struct sess *sess, int fdin, int fdout, const char *root)
 	if (pledge("stdio unix rpath wpath cpath dpath fattr chown getpw unveil", NULL) == -1)
 		err(ERR_IPC, "pledge");
 
+	/*
+	 * Create the path for our destination directory, if we're not
+	 * in dry-run mode (which would otherwise crash w/the pledge).
+	 * This uses our current umask: we might set the permissions on
+	 * this directory in post_dir().
+	 */
+
+	if (!sess->opts->dry_run) {
+		if ((tofree = strdup(root)) == NULL)
+			err(ERR_NOMEM, NULL);
+		if (mkpath(tofree) < 0)
+			err(ERR_FILE_IO, "%s: mkpath", tofree);
+		free(tofree);
+	}
+
+	/*
+	 * Make our entire view of the file-system be limited to what's
+	 * in the root directory.
+	 * This prevents us from accidentally (or "under the influence")
+	 * writing into other parts of the file-system.
+	 */
+	if (sess->opts->basedir[0]) {
+		/*
+		 * XXX just unveil everything for read
+		 * Could unveil each basedir or maybe a common path
+		 * also the fact that relative path are relative to the
+		 * root does not help.
+		 */
+		if (unveil("/", "r") == -1)
+			err(ERR_IPC, "%s: unveil", root);
+	}
+
+	if (unveil(root, "rwc") == -1)
+		err(ERR_IPC, "%s: unveil", root);
+
+	if (unveil(NULL, NULL) == -1)
+		err(ERR_IPC, "unveil");
+
 	/* Client sends exclusions. */
 	if (!sess->opts->server)
 		send_rules(sess, fdout);
@@ -222,21 +260,6 @@ rsync_receiver(struct sess *sess, int fdin, int fdout, const char *root)
 	LOG2("%s: receiver destination", root);
 
 	/*
-	 * Create the path for our destination directory, if we're not
-	 * in dry-run mode (which would otherwise crash w/the pledge).
-	 * This uses our current umask: we might set the permissions on
-	 * this directory in post_dir().
-	 */
-
-	if (!sess->opts->dry_run) {
-		if ((tofree = strdup(root)) == NULL)
-			err(ERR_NOMEM, NULL);
-		if (mkpath(tofree) < 0)
-			err(ERR_FILE_IO, "%s: mkpath", tofree);
-		free(tofree);
-	}
-
-	/*
 	 * Disable umask() so we can set permissions fully.
 	 * Then open the directory iff we're not in dry_run.
 	 */
@@ -260,18 +283,6 @@ rsync_receiver(struct sess *sess, int fdin, int fdout, const char *root)
 		ERRX1("flist_gen_local");
 		goto out;
 	}
-
-	/*
-	 * Make our entire view of the file-system be limited to what's
-	 * in the root directory.
-	 * This prevents us from accidentally (or "under the influence")
-	 * writing into other parts of the file-system.
-	 */
-
-	if (unveil(root, "rwc") == -1)
-		err(ERR_IPC, "%s: unveil", root);
-	if (unveil(NULL, NULL) == -1)
-		err(ERR_IPC, "unveil");
 
 	/* If we have a local set, go for the deletion. */
 
