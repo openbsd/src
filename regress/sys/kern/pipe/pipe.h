@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipe.h,v 1.3 2020/06/29 18:25:37 anton Exp $	*/
+/*	$OpenBSD: pipe.h,v 1.4 2021/10/22 05:03:04 anton Exp $	*/
 
 /*
  * Copyright (c) 2019 Anton Lindqvist <anton@openbsd.org>
@@ -28,6 +28,7 @@ int test_kqueue_write_eof(void);
 int test_ping_pong(void);
 int test_run_down_write_big(void);
 int test_run_down_write_small(void);
+int test_select_hup(void);
 int test_thundering_herd_read_signal(void);
 int test_thundering_herd_read_wakeup(void);
 int test_thundering_herd_write_signal(void);
