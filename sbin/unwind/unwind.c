@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.63 2021/08/31 20:18:03 kn Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.64 2021/10/22 13:38:07 kn Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -660,6 +660,9 @@ merge_config(struct uw_conf *conf, struct uw_conf *xconf)
 		RB_REMOVE(force_tree, &conf->force, n);
 		free(n);
 	}
+
+	memcpy(&conf->enabled_resolvers, &xconf->enabled_resolvers,
+	    sizeof(conf->enabled_resolvers));
 
 	memcpy(&conf->res_pref, &xconf->res_pref,
 	    sizeof(conf->res_pref));
