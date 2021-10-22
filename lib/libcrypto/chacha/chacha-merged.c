@@ -1,40 +1,37 @@
-/* $OpenBSD: chacha-merged.c,v 1.9 2019/01/22 00:59:21 dlg Exp $ */
+/* $OpenBSD: chacha-merged.c,v 1.10 2021/10/22 17:43:00 tb Exp $ */
 /*
 chacha-merged.c version 20080118
 D. J. Bernstein
 Public domain.
 */
 
-#include <sys/types.h>
-
 #include <stdint.h>
 
-#define CHACHA_MINKEYLEN 	16
+#define CHACHA_MINKEYLEN	16
 #define CHACHA_NONCELEN		8
 #define CHACHA_CTRLEN		8
 #define CHACHA_STATELEN		(CHACHA_NONCELEN+CHACHA_CTRLEN)
 #define CHACHA_BLOCKLEN		64
 
+typedef uint8_t u8;
+typedef uint32_t u32;
+
 struct chacha_ctx {
-	u_int input[16];
-	uint8_t ks[CHACHA_BLOCKLEN];
-	uint8_t unused;
+	u32 input[16];
+	u8 ks[CHACHA_BLOCKLEN];
+	u8 unused;
 };
 
-static inline void chacha_keysetup(struct chacha_ctx *x, const u_char *k,
-    u_int kbits)
+static inline void chacha_keysetup(struct chacha_ctx *x, const u8 *k, u32 kbits)
     __attribute__((__bounded__(__minbytes__, 2, CHACHA_MINKEYLEN)));
-static inline void chacha_ivsetup(struct chacha_ctx *x, const u_char *iv,
-    const u_char *ctr)
+static inline void chacha_ivsetup(struct chacha_ctx *x, const u8 *iv,
+    const u8 *ctr)
     __attribute__((__bounded__(__minbytes__, 2, CHACHA_NONCELEN)))
     __attribute__((__bounded__(__minbytes__, 3, CHACHA_CTRLEN)));
-static inline void chacha_encrypt_bytes(struct chacha_ctx *x, const u_char *m,
-    u_char *c, u_int bytes)
+static inline void chacha_encrypt_bytes(struct chacha_ctx *x, const u8 *m,
+    u8 *c, u32 bytes)
     __attribute__((__bounded__(__buffer__, 2, 4)))
     __attribute__((__bounded__(__buffer__, 3, 4)));
-
-typedef unsigned char u8;
-typedef unsigned int u32;
 
 typedef struct chacha_ctx chacha_ctx;
 
@@ -127,7 +124,7 @@ chacha_encrypt_bytes(chacha_ctx *x, const u8 *m, u8 *c, u32 bytes)
 	u32 j8, j9, j10, j11, j12, j13, j14, j15;
 	u8 *ctarget = NULL;
 	u8 tmp[64];
-	u_int i;
+	u32 i;
 
 	if (!bytes)
 		return;
