@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.149 2021/08/31 20:18:03 kn Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.150 2021/10/23 07:25:20 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -772,6 +772,7 @@ try_next_resolver(struct running_query *rq)
 	struct timespec		 tp, elapsed;
 	struct timeval		 tv = {0, 0};
 	int64_t			 ms;
+	int			 i;
 
 	while(rq->next_resolver < rq->res_pref.len &&
 	    ((res = resolvers[rq->res_pref.types[rq->next_resolver]]) == NULL ||
@@ -804,7 +805,12 @@ try_next_resolver(struct running_query *rq)
 	ms = res->median;
 	if (ms > NEXT_RES_MAX)
 		ms = NEXT_RES_MAX;
-	if (res->type == resolver_conf->res_pref.types[0])
+
+	/* skip over unavailable resolvers in preferences */
+	for (i = 0; i < resolver_conf->res_pref.len &&
+		 resolvers[resolver_conf->res_pref.types[i]] == NULL; i++)
+		;
+	if (res->type == resolver_conf->res_pref.types[i])
 		tv.tv_usec = 1000 * (PREF_RESOLVER_MEDIAN_SKEW + ms);
 	else
 		tv.tv_usec = 1000 * ms;
