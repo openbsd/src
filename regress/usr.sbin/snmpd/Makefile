@@ -1,9 +1,17 @@
-# $OpenBSD: Makefile,v 1.3 2021/10/11 05:46:14 anton Exp $
+# $OpenBSD: Makefile,v 1.4 2021/10/23 17:56:31 bluhm Exp $
 # Regress tests for snmpd
 
-REGRESS_TARGETS =	run-regress-snmpd
+REGRESS_SETUP_ONCE =	setup
+REGRESS_CLEANUP =	cleanup
+REGRESS_TARGETS =	run-snmpd
 
-run-regress-snmpd:
+setup:
+	${SUDO} /etc/rc.d/snmpd stop
+
+cleanup:
+	-${SUDO} /etc/rc.d/snmpd restart || true
+
+run-snmpd:
 	${SUDO} env OBJDIR=${.OBJDIR} sh ${.CURDIR}/snmpd.sh
 
 .include <bsd.regress.mk>
