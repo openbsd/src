@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.80 2021/10/23 11:41:50 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.81 2021/10/23 11:56:10 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -596,6 +596,10 @@ extern "C" {
 int X509_CRL_up_ref(X509_CRL *x);
 int X509_CRL_get_signature_nid(const X509_CRL *crl);
 
+#if defined(LIBRESSL_NEW_API)
+int i2d_re_X509_CRL_tbs(X509_CRL *req, unsigned char **pp);
+#endif
+
 const STACK_OF(X509_EXTENSION) *X509_CRL_get0_extensions(const X509_CRL *crl);
 long X509_CRL_get_version(const X509_CRL *crl);
 const ASN1_TIME *X509_CRL_get0_lastUpdate(const X509_CRL *crl);
@@ -906,6 +910,11 @@ int X509_set_ex_data(X509 *r, int idx, void *arg);
 void *X509_get_ex_data(X509 *r, int idx);
 int		i2d_X509_AUX(X509 *a,unsigned char **pp);
 X509 *		d2i_X509_AUX(X509 **a,const unsigned char **pp,long length);
+
+#if defined(LIBRESSL_NEW_API)
+int i2d_re_X509_tbs(X509 *x, unsigned char **pp);
+#endif
+
 void X509_get0_signature(const ASN1_BIT_STRING **psig,
     const X509_ALGOR **palg, const X509 *x);
 int X509_get_signature_nid(const X509 *x);
@@ -1019,6 +1028,7 @@ X509_NAME	*X509_REQ_get_subject_name(const X509_REQ *x);
 int		X509_REQ_set_pubkey(X509_REQ *x, EVP_PKEY *pkey);
 EVP_PKEY *	X509_REQ_get_pubkey(X509_REQ *req);
 #if defined(LIBRESSL_NEW_API)
+int		i2d_re_X509_REQ_tbs(X509_REQ *req, unsigned char **pp);
 EVP_PKEY *	X509_REQ_get0_pubkey(X509_REQ *req);
 #endif
 int		X509_REQ_extension_nid(int nid);

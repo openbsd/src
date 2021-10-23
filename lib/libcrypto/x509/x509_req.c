@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_req.c,v 1.22 2021/10/22 16:42:13 tb Exp $ */
+/* $OpenBSD: x509_req.c,v 1.23 2021/10/23 11:56:10 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -348,4 +348,11 @@ X509_REQ_add1_attr_by_txt(X509_REQ *req, const char *attrname, int type,
 	    type, bytes, len))
 		return 1;
 	return 0;
+}
+
+int
+i2d_re_X509_REQ_tbs(X509_REQ *req, unsigned char **pp)
+{
+	req->req_info->enc.modified = 1;
+	return i2d_X509_REQ_INFO(req->req_info, pp);
 }

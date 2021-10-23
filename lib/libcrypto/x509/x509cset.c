@@ -1,4 +1,4 @@
-/* $OpenBSD: x509cset.c,v 1.14 2018/02/22 17:01:44 jsing Exp $ */
+/* $OpenBSD: x509cset.c,v 1.15 2021/10/23 11:56:10 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -207,4 +207,11 @@ X509_REVOKED_set_serialNumber(X509_REVOKED *x, ASN1_INTEGER *serial)
 		}
 	}
 	return (in != NULL);
+}
+
+int
+i2d_re_X509_CRL_tbs(X509_CRL *crl, unsigned char **pp)
+{
+	crl->crl->enc.modified = 1;
+	return i2d_X509_CRL_INFO(crl->crl, pp);
 }
