@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-snmp.c,v 1.26 2021/10/23 09:42:14 martijn Exp $	*/
+/*	$OpenBSD: print-snmp.c,v 1.27 2021/10/23 10:45:20 martijn Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -341,11 +341,6 @@ struct snmp3_sm {
 	{0, NULL, NULL}
 };
 	
-/*
- * Defaults for SNMP PDU components
- */
-#define DEF_COMMUNITY "public"
-
 /*
  * constants for ASN.1 decoding
  */
@@ -1059,11 +1054,7 @@ snmp12_print(const u_char *np, u_int length)
 		asn1_print(&elem);
 		return;
 	}
-	/* default community */
-	if (strncmp((char *)elem.data.str, DEF_COMMUNITY,
-	    sizeof(DEF_COMMUNITY) - 1))
-		/* ! "public" */
-		printf("C=%.*s ", (int)elem.asnlen, elem.data.str);
+	printf("C=%.*s ", (int)elem.asnlen, elem.data.str);
 	length -= count;
 	np += count;
 
