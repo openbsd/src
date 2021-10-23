@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-snmp.c,v 1.27 2021/10/23 10:45:20 martijn Exp $	*/
+/*	$OpenBSD: print-snmp.c,v 1.28 2021/10/23 10:47:50 martijn Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -134,6 +134,15 @@ char *Context[] = {
 #define REPORT 8
 };
 
+char *ContextVarbind[] = {
+	"noSuchObject",
+#define NOSUCHOBJECT 0
+	"noSuchInstance",
+#define NOSUCHINSTANCE 1
+	"endOfMibView"
+#define ENDOFMIBVIEW 2
+};
+
 /*
  * Private ASN.1 types
  * The Internet SMI does not specify any
@@ -196,7 +205,7 @@ char *GenericTrap[] = {
 struct {
 	char	*name;
 	char	**Id;
-	    int	numIDs;
+	int	numIDs;
     } Class[] = {
 	defineCLASS(Universal),
 #define	UNIVERSAL	0
@@ -315,6 +324,7 @@ struct be {
 #define BE_INETADDR	8
 #define BE_PDU		9
 #define BE_UNS64	10
+#define BE_VB		11
 };
 
 
@@ -571,6 +581,22 @@ asn1_parse(const u_char *p, u_int len, struct be *elem)
 			}
 			break;
 
+		case CONTEXT:
+			switch (id) {
+			case NOSUCHOBJECT:
+			case NOSUCHINSTANCE:
+			case ENDOFMIBVIEW:
+				elem->type = BE_VB;
+				elem->data.raw = NULL;
+				break;
+			default:
+				elem->type = BE_OCTET;
+				elem->data.raw = (caddr_t)p;
+				printf("[P/C/%d]", id);
+				break;
+			}
+			break;
+
 		default:
 			elem->type = BE_OCTET;
 			elem->data.raw = (caddr_t)p;
@@ -718,6 +744,11 @@ asn1_print(struct be *elem)
 	case BE_PDU:
 		printf("%s(%u)",
 			Class[CONTEXT].Id[elem->id], elem->asnlen);
+		break;
+	case BE_VB:
+		if (elem->id > sizeof(ContextVarbind)/sizeof(ContextVarbind[0]))
+			break;
+		printf("%s", ContextVarbind[elem->id]);
 		break;
 	case BE_ANY:
 		printf("[BE_ANY!?]");
