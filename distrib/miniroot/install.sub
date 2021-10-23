@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1180 2021/10/17 13:20:46 kn Exp $
+#	$OpenBSD: install.sub,v 1.1181 2021/10/23 14:49:06 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2072,8 +2072,8 @@ donetconfig() {
 	fi
 
 	# Get & apply fqdn to hostname. Don't ask if there's only one configured
-	# interface and if it's managed by dhclient and if the domain name is
-	# configured via dhclient too.
+	# interface and if it's managed by dhcp and if the domain name is
+	# configured via dhcp too.
 	resp="${_dn:-$(get_fqdn)}"
 	if ifconfig dhcp >/dev/null 2>&1 && [[ $NIFS == 1 && -z $_dn ]]; then
 		# If we have a 'domain-name' option in the lease file use that.
