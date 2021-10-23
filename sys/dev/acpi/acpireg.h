@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.55 2021/03/23 09:41:12 patrick Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.56 2021/10/23 16:39:03 dv Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -464,6 +464,14 @@ struct acpi_facs {
 	uint64_t	x_wakeup_vector;
 	uint8_t		version;
 	uint8_t		reserved[31];
+} __packed;
+
+struct acpi_tpm2 {
+	struct acpi_table_header	hdr;
+#define TPM2_SIG	"TPM2"
+	uint32_t	reserved;
+	uint64_t	control_addr;
+	uint32_t	start_method;
 } __packed;
 
 /*
