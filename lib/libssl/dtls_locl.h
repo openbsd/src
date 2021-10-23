@@ -1,4 +1,4 @@
-/* $OpenBSD: dtls_locl.h,v 1.9 2021/10/23 13:36:03 jsing Exp $ */
+/* $OpenBSD: dtls_locl.h,v 1.10 2021/10/23 13:45:44 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -77,8 +77,6 @@ typedef struct dtls1_bitmap_st {
 } DTLS1_BITMAP;
 
 struct dtls1_retransmit_state {
-	EVP_CIPHER_CTX *enc_write_ctx;	/* cryptographic state */
-	EVP_MD_CTX *write_hash;		/* used for mac generation */
 	SSL_SESSION *session;
 	unsigned short epoch;
 };
