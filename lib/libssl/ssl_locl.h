@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.363 2021/10/23 14:40:54 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.364 2021/10/23 15:02:27 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -670,8 +670,6 @@ void tls12_record_layer_write_epoch_done(struct tls12_record_layer *rl,
 void tls12_record_layer_clear_read_state(struct tls12_record_layer *rl);
 void tls12_record_layer_clear_write_state(struct tls12_record_layer *rl);
 void tls12_record_layer_reflect_seq_num(struct tls12_record_layer *rl);
-void tls12_record_layer_read_cipher_hash(struct tls12_record_layer *rl,
-    EVP_CIPHER_CTX **cipher, EVP_MD_CTX **hash);
 int tls12_record_layer_change_read_cipher_state(struct tls12_record_layer *rl,
     CBS *mac_key, CBS *key, CBS *iv);
 int tls12_record_layer_change_write_cipher_state(struct tls12_record_layer *rl,
@@ -1095,14 +1093,6 @@ struct ssl_st {
 	SSL_CTX * initial_ctx; /* initial ctx, used to store sessions */
 #define session_ctx initial_ctx
 
-	/*
-	 * XXX really should be internal, but is
-	 * touched unnaturally by wpa-supplicant
-	 * and freeradius and other perversions
-	 */
-	EVP_CIPHER_CTX *enc_read_ctx;		/* cryptographic state */
-	EVP_MD_CTX *read_hash;			/* used for mac generation */
-
 	struct ssl_internal_st *internal;
 };
 
@@ -1310,8 +1300,6 @@ const SSL_METHOD *tls_legacy_method(void);
 const SSL_METHOD *ssl_get_method(uint16_t version);
 
 void ssl_clear_cipher_state(SSL *s);
-void ssl_clear_cipher_read_state(SSL *s);
-void ssl_clear_cipher_write_state(SSL *s);
 int ssl_clear_bad_session(SSL *s);
 
 void ssl_info_callback(const SSL *s, int type, int value);

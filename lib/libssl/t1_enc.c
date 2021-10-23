@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.151 2021/07/01 17:53:39 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.152 2021/10/23 15:02:27 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -315,8 +315,6 @@ tls1_change_cipher_state(SSL *s, int is_write)
 			goto err;
 		if (SSL_is_dtls(s))
 			dtls1_reset_read_seq_numbers(s);
-		tls12_record_layer_read_cipher_hash(s->internal->rl,
-		    &s->enc_read_ctx, &s->read_hash);
 	} else {
 		if (!tls12_record_layer_change_write_cipher_state(s->internal->rl,
 		    &mac_key, &key, &iv))

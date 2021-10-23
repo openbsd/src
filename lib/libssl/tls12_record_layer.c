@@ -1,4 +1,4 @@
-/* $OpenBSD: tls12_record_layer.c,v 1.34 2021/08/30 19:12:25 jsing Exp $ */
+/* $OpenBSD: tls12_record_layer.c,v 1.35 2021/10/23 15:02:27 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -353,14 +353,6 @@ tls12_record_layer_clear_write_state(struct tls12_record_layer *rl)
 
 	tls12_record_protection_free(rl->write_previous);
 	rl->write_previous = NULL;
-}
-
-void
-tls12_record_layer_read_cipher_hash(struct tls12_record_layer *rl,
-    EVP_CIPHER_CTX **cipher, EVP_MD_CTX **hash)
-{
-	*cipher = rl->read->cipher_ctx;
-	*hash = rl->read->hash_ctx;
 }
 
 void

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.270 2021/10/23 13:36:03 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.271 2021/10/23 15:02:27 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2709,21 +2709,7 @@ SSL_dup(SSL *s)
 void
 ssl_clear_cipher_state(SSL *s)
 {
-	ssl_clear_cipher_read_state(s);
-	ssl_clear_cipher_write_state(s);
-}
-
-void
-ssl_clear_cipher_read_state(SSL *s)
-{
 	tls12_record_layer_clear_read_state(s->internal->rl);
-	tls12_record_layer_read_cipher_hash(s->internal->rl,
-	    &s->enc_read_ctx, &s->read_hash);
-}
-
-void
-ssl_clear_cipher_write_state(SSL *s)
-{
 	tls12_record_layer_clear_write_state(s->internal->rl);
 }
 
