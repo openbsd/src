@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.50 2021/09/23 13:28:50 tb Exp $ */
+/* $OpenBSD: s_server.c,v 1.51 2021/10/23 14:50:10 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2336,7 +2336,7 @@ cert_status_cb(SSL *s, void *arg)
 	int rspderlen;
 	STACK_OF(OPENSSL_STRING) *aia = NULL;
 	X509 *x = NULL;
-	X509_STORE_CTX inctx;
+	X509_STORE_CTX *inctx = NULL;
 	X509_OBJECT obj;
 	OCSP_REQUEST *req = NULL;
 	OCSP_RESPONSE *resp = NULL;
@@ -2371,23 +2371,27 @@ cert_status_cb(SSL *s, void *arg)
 		use_ssl = srctx->use_ssl;
 	}
 
-	if (!X509_STORE_CTX_init(&inctx,
+	if ((inctx = X509_STORE_CTX_new()) == NULL)
+		goto err;
+
+	if (!X509_STORE_CTX_init(inctx,
 		SSL_CTX_get_cert_store(SSL_get_SSL_CTX(s)),
 		NULL, NULL))
 		goto err;
-	if (X509_STORE_get_by_subject(&inctx, X509_LU_X509,
+	if (X509_STORE_get_by_subject(inctx, X509_LU_X509,
 		X509_get_issuer_name(x), &obj) <= 0) {
 		BIO_puts(err,
 		    "cert_status: Can't retrieve issuer certificate.\n");
-		X509_STORE_CTX_cleanup(&inctx);
+		X509_STORE_CTX_cleanup(inctx);
 		goto done;
 	}
 	req = OCSP_REQUEST_new();
 	if (!req)
 		goto err;
-	id = OCSP_cert_to_id(NULL, x, obj.data.x509);
-	X509_free(obj.data.x509);
-	X509_STORE_CTX_cleanup(&inctx);
+	id = OCSP_cert_to_id(NULL, x, X509_OBJECT_get0_X509(&obj));
+	X509_OBJECT_free_contents(&obj);
+	X509_STORE_CTX_free(inctx);
+	inctx = NULL;
 	if (!id)
 		goto err;
 	if (!OCSP_request_add0_id(req, id))
@@ -2416,6 +2420,7 @@ cert_status_cb(SSL *s, void *arg)
 	}
 	ret = SSL_TLSEXT_ERR_OK;
  done:
+	X509_STORE_CTX_free(inctx);
 	if (ret != SSL_TLSEXT_ERR_OK)
 		ERR_print_errors(err);
 	if (aia) {
