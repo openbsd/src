@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.285 2021/10/06 15:46:03 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.286 2021/10/23 14:56:55 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1080,7 +1080,7 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 		 * cause the process to run.
 		 */
 		goto runfast;
-		/*NOTREACHED*/
+		/* NOTREACHED */
 
 	case SSTOP:
 		/*
@@ -1152,7 +1152,7 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 		 */
 		goto out;
 	}
-	/*NOTREACHED*/
+	/* NOTREACHED */
 
 runfast:
 	/*
@@ -1311,7 +1311,7 @@ cursig(struct proc *p)
 				break;		/* == ignore */
 			} else
 				goto keep;
-			/*NOTREACHED*/
+			/* NOTREACHED */
 		case (long)SIG_IGN:
 			/*
 			 * Masking above should prevent us ever trying
