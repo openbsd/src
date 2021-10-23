@@ -15,9 +15,11 @@
  */
 
 #include <err.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-#include "tls13_internal.h"
+#include "tls_internal.h"
 
 uint8_t testdata[] = {
 	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
@@ -37,13 +39,13 @@ read_cb(void *buf, size_t buflen, void *cb_arg)
 	ssize_t n;
 
 	if (rs->offset > rs->len)
-		return TLS13_IO_EOF;
+		return TLS_IO_EOF;
 
 	if ((size_t)(n = buflen) > (rs->len - rs->offset))
 		n = rs->len - rs->offset;
 
 	if (n == 0)
-		return TLS13_IO_WANT_POLLIN;
+		return TLS_IO_WANT_POLLIN;
 
 	memcpy(buf, &rs->buf[rs->offset], n);
 	rs->offset += n;
@@ -61,7 +63,7 @@ struct extend_test extend_tests[] = {
 	{
 		.extend_len = 4,
 		.read_len = 0,
-		.want_ret = TLS13_IO_WANT_POLLIN,
+		.want_ret = TLS_IO_WANT_POLLIN,
 	},
 	{
 		.extend_len = 4,
@@ -71,12 +73,12 @@ struct extend_test extend_tests[] = {
 	{
 		.extend_len = 12,
 		.read_len = 8,
-		.want_ret = TLS13_IO_WANT_POLLIN,
+		.want_ret = TLS_IO_WANT_POLLIN,
 	},
 	{
 		.extend_len = 12,
 		.read_len = 10,
-		.want_ret = TLS13_IO_WANT_POLLIN,
+		.want_ret = TLS_IO_WANT_POLLIN,
 	},
 	{
 		.extend_len = 12,
@@ -91,7 +93,7 @@ struct extend_test extend_tests[] = {
 	{
 		.extend_len = 20,
 		.read_len = 1,
-		.want_ret = TLS13_IO_EOF,
+		.want_ret = TLS_IO_EOF,
 	},
 };
 
@@ -100,7 +102,7 @@ struct extend_test extend_tests[] = {
 int
 main(int argc, char **argv)
 {
-	struct tls13_buffer *buf;
+	struct tls_buffer *buf;
 	struct extend_test *et;
 	struct read_state rs;
 	uint8_t *data;
@@ -111,21 +113,21 @@ main(int argc, char **argv)
 	rs.buf = testdata;
 	rs.offset = 0;
 
-	if ((buf = tls13_buffer_new(0)) == NULL)
-		errx(1, "tls13_buffer_new");
+	if ((buf = tls_buffer_new(0)) == NULL)
+		errx(1, "tls_buffer_new");
 
 	for (i = 0; i < N_EXTEND_TESTS; i++) {
 		et = &extend_tests[i];
 		rs.len = et->read_len;
 
-		ret = tls13_buffer_extend(buf, et->extend_len, read_cb, &rs);
+		ret = tls_buffer_extend(buf, et->extend_len, read_cb, &rs);
 		if (ret != extend_tests[i].want_ret) {
 			fprintf(stderr, "FAIL: Test %zi - extend returned %zi, "
 			    "want %zi\n", i, ret, et->want_ret);
 			return 1;
 		}
 
-		tls13_buffer_cbs(buf, &cbs);
+		tls_buffer_cbs(buf, &cbs);
 
 		if (!CBS_mem_equal(&cbs, testdata, CBS_len(&cbs))) {
 			fprintf(stderr, "FAIL: Test %zi - extend buffer "
@@ -134,12 +136,12 @@ main(int argc, char **argv)
 		}
 	}
 
-	if (!tls13_buffer_finish(buf, &data, &data_len)) {
+	if (!tls_buffer_finish(buf, &data, &data_len)) {
 		fprintf(stderr, "FAIL: failed to finish\n");
 		return 1;
 	}
 
-	tls13_buffer_free(buf);
+	tls_buffer_free(buf);
 
 	if (data_len != sizeof(testdata)) {
 		fprintf(stderr, "FAIL: got data length %zu, want %zu\n",
