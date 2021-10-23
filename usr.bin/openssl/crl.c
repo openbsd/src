@@ -1,4 +1,4 @@
-/* $OpenBSD: crl.c,v 1.13 2019/07/14 03:30:45 guenther Exp $ */
+/* $OpenBSD: crl.c,v 1.14 2021/10/23 14:49:39 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -223,7 +223,7 @@ crl_main(int argc, char **argv)
 	int ret = 1, i;
 	BIO *out = NULL;
 	X509_STORE *store = NULL;
-	X509_STORE_CTX ctx;
+	X509_STORE_CTX *ctx = NULL;
 	X509_LOOKUP *lookup = NULL;
 	X509_OBJECT xobj;
 	EVP_PKEY *pkey;
@@ -281,6 +281,8 @@ crl_main(int argc, char **argv)
 
 	if (crl_config.verify) {
 		store = X509_STORE_new();
+		if (store == NULL)
+			goto end;
 		lookup = X509_STORE_add_lookup(store, X509_LOOKUP_file());
 		if (lookup == NULL)
 			goto end;
@@ -298,19 +300,22 @@ crl_main(int argc, char **argv)
 			    X509_FILETYPE_DEFAULT);
 		ERR_clear_error();
 
-		if (!X509_STORE_CTX_init(&ctx, store, NULL, NULL)) {
+		if ((ctx = X509_STORE_CTX_new()) == NULL)
+			goto end;
+
+		if (!X509_STORE_CTX_init(ctx, store, NULL, NULL)) {
 			BIO_printf(bio_err,
 			    "Error initialising X509 store\n");
 			goto end;
 		}
-		i = X509_STORE_get_by_subject(&ctx, X509_LU_X509,
+		i = X509_STORE_get_by_subject(ctx, X509_LU_X509,
 		    X509_CRL_get_issuer(x), &xobj);
 		if (i <= 0) {
 			BIO_printf(bio_err,
 			    "Error getting CRL issuer certificate\n");
 			goto end;
 		}
-		pkey = X509_get_pubkey(xobj.data.x509);
+		pkey = X509_get_pubkey(X509_OBJECT_get0_X509(&xobj));
 		X509_OBJECT_free_contents(&xobj);
 		if (!pkey) {
 			BIO_printf(bio_err,
@@ -429,10 +434,8 @@ crl_main(int argc, char **argv)
 	BIO_free_all(bio_out);
 	bio_out = NULL;
 	X509_CRL_free(x);
-	if (store) {
-		X509_STORE_CTX_cleanup(&ctx);
-		X509_STORE_free(store);
-	}
+	X509_STORE_CTX_free(ctx);
+	X509_STORE_free(store);
 
 	return (ret);
 }
