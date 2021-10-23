@@ -1,4 +1,4 @@
-/*	$OpenBSD: certhash.c,v 1.18 2021/08/28 08:16:39 tb Exp $ */
+/*	$OpenBSD: certhash.c,v 1.19 2021/10/23 08:13:48 tb Exp $ */
 /*
  * Copyright (c) 2014, 2015 Joel Sing <jsing@openbsd.org>
  *
@@ -488,6 +488,10 @@ certhash_link(struct dirent *dep, struct hashinfo **links)
 	n = readlink(dep->d_name, target, sizeof(target) - 1);
 	if (n == -1) {
 		fprintf(stderr, "failed to readlink %s\n", dep->d_name);
+		return (-1);
+	}
+	if (n >= sizeof(target) - 1) {
+		fprintf(stderr, "symbolic link is too long %s\n", dep->d_name);
 		return (-1);
 	}
 	target[n] = '\0';
