@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.112 2021/09/04 14:31:54 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.113 2021/10/23 13:36:03 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -271,19 +271,19 @@ static int
 dtls1_process_buffered_record(SSL *s)
 {
 	/* Check if epoch is current. */
-	if (D1I(s)->unprocessed_rcds.epoch !=
+	if (s->d1->unprocessed_rcds.epoch !=
 	    tls12_record_layer_read_epoch(s->internal->rl))
 		return (0);
 
 	/* Update epoch once all unprocessed records have been processed. */
-	if (pqueue_peek(D1I(s)->unprocessed_rcds.q) == NULL) {
-		D1I(s)->unprocessed_rcds.epoch =
+	if (pqueue_peek(s->d1->unprocessed_rcds.q) == NULL) {
+		s->d1->unprocessed_rcds.epoch =
 		    tls12_record_layer_read_epoch(s->internal->rl) + 1;
 		return (0);
 	}
 
 	/* Process one of the records. */
-	if (!dtls1_retrieve_buffered_record(s, &D1I(s)->unprocessed_rcds))
+	if (!dtls1_retrieve_buffered_record(s, &s->d1->unprocessed_rcds))
 		return (-1);
 	if (!dtls1_process_record(s))
 		return (-1);
@@ -449,7 +449,7 @@ dtls1_get_record(SSL *s)
 	 * since they arrive from different connections and
 	 * would be dropped unnecessarily.
 	 */
-	if (!(D1I(s)->listen && rr->type == SSL3_RT_HANDSHAKE &&
+	if (!(s->d1->listen && rr->type == SSL3_RT_HANDSHAKE &&
 	    p != NULL && *p == SSL3_MT_CLIENT_HELLO) &&
 	    !dtls1_record_replay_check(s, bitmap, rr->seq_num))
 		goto again;
@@ -464,8 +464,8 @@ dtls1_get_record(SSL *s)
 	 * anything while listening.
 	 */
 	if (is_next_epoch) {
-		if ((SSL_in_init(s) || s->internal->in_handshake) && !D1I(s)->listen) {
-			if (dtls1_buffer_record(s, &(D1I(s)->unprocessed_rcds),
+		if ((SSL_in_init(s) || s->internal->in_handshake) && !s->d1->listen) {
+			if (dtls1_buffer_record(s, &(s->d1->unprocessed_rcds),
 			    rr->seq_num) < 0)
 				return (-1);
 			/* Mark receipt of record. */
@@ -552,7 +552,7 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 	 * in advance, if any.
 	 */
 	if (S3I(s)->hs.state == SSL_ST_OK && rr->length == 0)
-		dtls1_retrieve_buffered_record(s, &(D1I(s)->buffered_app_data));
+		dtls1_retrieve_buffered_record(s, &(s->d1->buffered_app_data));
 
 	/* Check for timeout */
 	if (dtls1_handle_timeout(s) > 0)
@@ -571,7 +571,7 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 		}
 	}
 
-	if (D1I(s)->listen && rr->type != SSL3_RT_HANDSHAKE) {
+	if (s->d1->listen && rr->type != SSL3_RT_HANDSHAKE) {
 		rr->length = 0;
 		goto start;
 	}
@@ -586,7 +586,7 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 		 * buffer the application data for later processing rather
 		 * than dropping the connection.
 		 */
-		if (dtls1_buffer_record(s, &(D1I(s)->buffered_app_data),
+		if (dtls1_buffer_record(s, &(s->d1->buffered_app_data),
 		    rr->seq_num) < 0) {
 			SSLerror(s, ERR_R_INTERNAL_ERROR);
 			return (-1);
@@ -701,7 +701,7 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 		if (SSL_is_init_finished(s) &&
 		    !(s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS) &&
 		    !S3I(s)->renegotiate) {
-			D1I(s)->handshake_read_seq++;
+			s->d1->handshake_read_seq++;
 			s->internal->new_session = 1;
 			ssl3_renegotiate(s);
 			if (ssl3_renegotiate_check(s)) {
@@ -793,12 +793,12 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 		/* We can't process a CCS now, because previous handshake
 		 * messages are still missing, so just drop it.
 		 */
-		if (!D1I(s)->change_cipher_spec_ok) {
+		if (!s->d1->change_cipher_spec_ok) {
 			rr->length = 0;
 			goto start;
 		}
 
-		D1I(s)->change_cipher_spec_ok = 0;
+		s->d1->change_cipher_spec_ok = 0;
 
 		S3I(s)->change_cipher_spec = 1;
 		if (!ssl3_do_change_cipher_spec(s))
@@ -1069,13 +1069,13 @@ dtls1_get_bitmap(SSL *s, SSL3_RECORD_INTERNAL *rr, unsigned int *is_next_epoch)
 
 	/* In current epoch, accept HM, CCS, DATA, & ALERT */
 	if (rr->epoch == read_epoch)
-		return &D1I(s)->bitmap;
+		return &s->d1->bitmap;
 
 	/* Only HM and ALERT messages can be from the next epoch */
 	if (rr->epoch == read_epoch_next &&
 	    (rr->type == SSL3_RT_HANDSHAKE || rr->type == SSL3_RT_ALERT)) {
 		*is_next_epoch = 1;
-		return &D1I(s)->next_bitmap;
+		return &s->d1->next_bitmap;
 	}
 
 	return NULL;
@@ -1084,6 +1084,6 @@ dtls1_get_bitmap(SSL *s, SSL3_RECORD_INTERNAL *rr, unsigned int *is_next_epoch)
 void
 dtls1_reset_read_seq_numbers(SSL *s)
 {
-	memcpy(&(D1I(s)->bitmap), &(D1I(s)->next_bitmap), sizeof(DTLS1_BITMAP));
-	memset(&(D1I(s)->next_bitmap), 0, sizeof(DTLS1_BITMAP));
+	memcpy(&(s->d1->bitmap), &(s->d1->next_bitmap), sizeof(DTLS1_BITMAP));
+	memset(&(s->d1->next_bitmap), 0, sizeof(DTLS1_BITMAP));
 }

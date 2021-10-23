@@ -1,4 +1,4 @@
-/* $OpenBSD: dtls_locl.h,v 1.8 2021/10/23 08:34:36 jsing Exp $ */
+/* $OpenBSD: dtls_locl.h,v 1.9 2021/10/23 13:36:03 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -124,9 +124,16 @@ typedef struct dtls1_record_data_internal_st {
 	SSL3_RECORD_INTERNAL rrec;
 } DTLS1_RECORD_DATA_INTERNAL;
 
-struct dtls1_state_internal_st;
+struct dtls1_state_st {
+	/* Buffered (sent) handshake records */
+	struct _pqueue *sent_messages;
 
-typedef struct dtls1_state_internal_st {
+	/* Indicates when the last handshake msg or heartbeat sent will timeout */
+	struct timeval next_timeout;
+
+	/* Timeout duration */
+	unsigned short timeout_duration;
+
 	unsigned int send_cookie;
 	unsigned char cookie[DTLS1_COOKIE_LENGTH];
 	unsigned char rcvd_cookie[DTLS1_COOKIE_LENGTH];
@@ -169,21 +176,7 @@ typedef struct dtls1_state_internal_st {
 
 	unsigned int retransmitting;
 	unsigned int change_cipher_spec_ok;
-} DTLS1_STATE_INTERNAL;
-#define D1I(s) (s->d1->internal)
-
-typedef struct dtls1_state_st {
-	/* Buffered (sent) handshake records */
-	struct _pqueue *sent_messages;
-
-	/* Indicates when the last handshake msg or heartbeat sent will timeout */
-	struct timeval next_timeout;
-
-	/* Timeout duration */
-	unsigned short timeout_duration;
-
-	struct dtls1_state_internal_st *internal;
-} DTLS1_STATE;
+};
 
 int dtls1_do_write(SSL *s, int type);
 int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek);

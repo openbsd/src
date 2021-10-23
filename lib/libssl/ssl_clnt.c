@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.113 2021/10/23 08:34:36 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.114 2021/10/23 13:36:03 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -249,7 +249,7 @@ ssl3_connect(SSL *s)
 				/* mark client_random uninitialized */
 				memset(s->s3->client_random, 0,
 				    sizeof(s->s3->client_random));
-				D1I(s)->send_cookie = 0;
+				s->d1->send_cookie = 0;
 				s->internal->hit = 0;
 			}
 			break;
@@ -269,7 +269,7 @@ ssl3_connect(SSL *s)
 			if (ret <= 0)
 				goto end;
 
-			if (SSL_is_dtls(s) && D1I(s)->send_cookie) {
+			if (SSL_is_dtls(s) && s->d1->send_cookie) {
 				S3I(s)->hs.state = SSL3_ST_CW_FLUSH;
 				S3I(s)->hs.tls12.next_state = SSL3_ST_CR_SRVR_HELLO_A;
 			} else
@@ -314,7 +314,7 @@ ssl3_connect(SSL *s)
 			if (ret <= 0)
 				goto end;
 			dtls1_stop_timer(s);
-			if (D1I(s)->send_cookie) /* start again, with a cookie */
+			if (s->d1->send_cookie) /* start again, with a cookie */
 				S3I(s)->hs.state = SSL3_ST_CW_CLNT_HELLO_A;
 			else
 				S3I(s)->hs.state = SSL3_ST_CR_CERT_A;
@@ -529,7 +529,7 @@ ssl3_connect(SSL *s)
 		case SSL3_ST_CR_FINISHED_A:
 		case SSL3_ST_CR_FINISHED_B:
 			if (SSL_is_dtls(s))
-				D1I(s)->change_cipher_spec_ok = 1;
+				s->d1->change_cipher_spec_ok = 1;
 			else
 				s->s3->flags |= SSL3_FLAGS_CCS_OK;
 			ret = ssl3_get_finished(s, SSL3_ST_CR_FINISHED_A,
@@ -595,8 +595,8 @@ ssl3_connect(SSL *s)
 
 			if (SSL_is_dtls(s)) {
 				/* done with handshaking */
-				D1I(s)->handshake_read_seq = 0;
-				D1I(s)->next_handshake_write_seq = 0;
+				s->d1->handshake_read_seq = 0;
+				s->d1->next_handshake_write_seq = 0;
 			}
 
 			goto end;
@@ -666,7 +666,7 @@ ssl3_send_client_hello(SSL *s)
 		 * HelloVerifyRequest, we must retain the original client
 		 * random value.
 		 */
-		if (!SSL_is_dtls(s) || D1I(s)->send_cookie == 0)
+		if (!SSL_is_dtls(s) || s->d1->send_cookie == 0)
 			arc4random_buf(s->s3->client_random, SSL3_RANDOM_SIZE);
 
 		if (!ssl3_handshake_msg_start(s, &cbb, &client_hello,
@@ -728,14 +728,14 @@ ssl3_send_client_hello(SSL *s)
 
 		/* DTLS Cookie. */
 		if (SSL_is_dtls(s)) {
-			if (D1I(s)->cookie_len > sizeof(D1I(s)->cookie)) {
+			if (s->d1->cookie_len > sizeof(s->d1->cookie)) {
 				SSLerror(s, ERR_R_INTERNAL_ERROR);
 				goto err;
 			}
 			if (!CBB_add_u8_length_prefixed(&client_hello, &cookie))
 				goto err;
-			if (!CBB_add_bytes(&cookie, D1I(s)->cookie,
-			    D1I(s)->cookie_len))
+			if (!CBB_add_bytes(&cookie, s->d1->cookie,
+			    s->d1->cookie_len))
 				goto err;
 		}
 
@@ -789,7 +789,7 @@ ssl3_get_dtls_hello_verify(SSL *s)
 		return ret;
 
 	if (S3I(s)->hs.tls12.message_type != DTLS1_MT_HELLO_VERIFY_REQUEST) {
-		D1I(s)->send_cookie = 0;
+		s->d1->send_cookie = 0;
 		S3I(s)->hs.tls12.reuse_message = 1;
 		return (1);
 	}
@@ -819,14 +819,14 @@ ssl3_get_dtls_hello_verify(SSL *s)
 		goto fatal_err;
 	}
 
-	if (!CBS_write_bytes(&cookie, D1I(s)->cookie,
-	    sizeof(D1I(s)->cookie), &cookie_len)) {
-		D1I(s)->cookie_len = 0;
+	if (!CBS_write_bytes(&cookie, s->d1->cookie,
+	    sizeof(s->d1->cookie), &cookie_len)) {
+		s->d1->cookie_len = 0;
 		al = SSL_AD_ILLEGAL_PARAMETER;
 		goto fatal_err;
 	}
-	D1I(s)->cookie_len = cookie_len;
-	D1I(s)->send_cookie = 1;
+	s->d1->cookie_len = cookie_len;
+	s->d1->send_cookie = 1;
 
 	return 1;
 
@@ -862,7 +862,7 @@ ssl3_get_server_hello(SSL *s)
 
 	if (SSL_is_dtls(s)) {
 		if (S3I(s)->hs.tls12.message_type == DTLS1_MT_HELLO_VERIFY_REQUEST) {
-			if (D1I(s)->send_cookie == 0) {
+			if (s->d1->send_cookie == 0) {
 				S3I(s)->hs.tls12.reuse_message = 1;
 				return (1);
 			} else {
