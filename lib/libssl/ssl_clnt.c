@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.115 2021/10/23 14:40:54 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.116 2021/10/23 16:11:30 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1187,7 +1187,7 @@ ssl3_get_server_certificate(SSL *s)
 	}
 
 	sc->peer_cert_type = i;
-	CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509);
+	X509_up_ref(x);
 	/*
 	 * Why would the following ever happen?
 	 * We just created sc a couple of lines ago.
@@ -1197,7 +1197,7 @@ ssl3_get_server_certificate(SSL *s)
 	sc->peer_key = &(sc->peer_pkeys[i]);
 
 	X509_free(s->session->peer);
-	CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509);
+	X509_up_ref(x);
 	s->session->peer = x;
 	s->session->verify_result = s->verify_result;
 

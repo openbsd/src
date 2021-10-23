@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.272 2021/10/23 15:30:44 beck Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.273 2021/10/23 16:11:30 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -847,7 +847,7 @@ SSL_get_peer_certificate(const SSL *s)
 	if (r == NULL)
 		return (r);
 
-	CRYPTO_add(&r->references, 1, CRYPTO_LOCK_X509);
+	X509_up_ref(r);
 
 	return (r);
 }
