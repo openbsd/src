@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.309 2021/10/21 09:59:14 claudio Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.310 2021/10/23 14:08:46 mpi Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -689,6 +689,8 @@ vget(struct vnode *vp, int flags)
 void
 vref(struct vnode *vp)
 {
+	KERNEL_ASSERT_LOCKED();
+
 #ifdef DIAGNOSTIC
 	if (vp->v_usecount == 0)
 		panic("vref used where vget required");
