@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.24 2021/08/29 19:56:40 schwarze Exp $ */
+/* $OpenBSD: x509.c,v 1.25 2021/10/23 15:44:39 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -846,16 +846,6 @@ x509_main(int argc, char **argv)
 			ERR_print_errors(bio_err);
 			goto end;
 		}
-		if ((req->req_info == NULL) ||
-		    (req->req_info->pubkey == NULL) ||
-		    (req->req_info->pubkey->public_key == NULL) ||
-		    (req->req_info->pubkey->public_key->data == NULL)) {
-			BIO_printf(bio_err,
-			    "The certificate request appears to corrupted\n");
-			BIO_printf(bio_err,
-			    "It does not contain a public key\n");
-			goto end;
-		}
 		if ((pkey = X509_REQ_get_pubkey(req)) == NULL) {
 			BIO_printf(bio_err, "error unpacking public key\n");
 			goto end;
@@ -892,9 +882,9 @@ x509_main(int argc, char **argv)
 		} else if (!X509_set_serialNumber(x, x509_config.sno))
 			goto end;
 
-		if (!X509_set_issuer_name(x, req->req_info->subject))
+		if (!X509_set_issuer_name(x, X509_REQ_get_subject_name(req)))
 			goto end;
-		if (!X509_set_subject_name(x, req->req_info->subject))
+		if (!X509_set_subject_name(x, X509_REQ_get_subject_name(req)))
 			goto end;
 
 		if (X509_gmtime_adj(X509_get_notBefore(x), 0) == NULL)
@@ -1403,7 +1393,7 @@ x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest, X509 *x,
 {
 	int ret = 0;
 	ASN1_INTEGER *bs = NULL;
-	X509_STORE_CTX xsc;
+	X509_STORE_CTX *xsc = NULL;
 	EVP_PKEY *upkey;
 
 	upkey = X509_get_pubkey(xca);
@@ -1412,7 +1402,9 @@ x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest, X509 *x,
 	EVP_PKEY_copy_parameters(upkey, pkey);
 	EVP_PKEY_free(upkey);
 
-	if (!X509_STORE_CTX_init(&xsc, ctx, x, NULL)) {
+	if ((xsc = X509_STORE_CTX_new()) == NULL)
+		goto end;
+	if (!X509_STORE_CTX_init(xsc, ctx, x, NULL)) {
 		BIO_printf(bio_err, "Error initialising X509 store\n");
 		goto end;
 	}
@@ -1427,9 +1419,9 @@ x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest, X509 *x,
 	 * NOTE: this certificate can/should be self signed, unless it was a
 	 * certificate request in which case it is not.
 	 */
-	X509_STORE_CTX_set_cert(&xsc, x);
-	X509_STORE_CTX_set_flags(&xsc, X509_V_FLAG_CHECK_SS_SIGNATURE);
-	if (!x509_config.reqfile && X509_verify_cert(&xsc) <= 0)
+	X509_STORE_CTX_set_cert(xsc, x);
+	X509_STORE_CTX_set_flags(xsc, X509_V_FLAG_CHECK_SS_SIGNATURE);
+	if (!x509_config.reqfile && X509_verify_cert(xsc) <= 0)
 		goto end;
 
 	if (!X509_check_private_key(xca, pkey)) {
@@ -1469,7 +1461,7 @@ x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest, X509 *x,
 
 	ret = 1;
  end:
-	X509_STORE_CTX_cleanup(&xsc);
+	X509_STORE_CTX_free(xsc);
 	if (!ret)
 		ERR_print_errors(bio_err);
 	if (sno == NULL)
