@@ -1,4 +1,5 @@
-/* Written by Stephen henson (steve@@openssl.org) for the OpenSSL
+/* $OpenBSD: o_fips.c,v 1.6 2021/10/23 13:57:00 schwarze Exp $ */
+/* Written by Stephen Henson (steve@openssl.org) for the OpenSSL
  * project 2011.
  */
 /* ====================================================================
@@ -24,7 +25,7 @@
  * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
  *    endorse or promote products derived from this software without
  *    prior written permission. For written permission, please contact
- *    openssl-core@@openssl.org.
+ *    openssl-core@openssl.org.
  *
  * 5. Products derived from this software may not be called "OpenSSL"
  *    nor may "OpenSSL" appear in their names without prior written
@@ -50,8 +51,8 @@
  * ====================================================================
  *
  * This product includes cryptographic software written by Eric Young
- * (eay@@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@@cryptsoft.com).
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
  *
  */
 
