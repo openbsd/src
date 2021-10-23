@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.274 2021/10/23 16:29:15 beck Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.275 2021/10/23 20:42:50 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -898,6 +898,12 @@ SSL_get_peer_cert_chain(const SSL *s)
 	 * if we are a server, it does not.
 	 */
 	return (r);
+}
+
+STACK_OF(X509) *
+SSL_get0_verified_chain(const SSL *s)
+{
+	return s->internal->verified_chain;
 }
 
 /*

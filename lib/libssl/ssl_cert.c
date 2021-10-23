@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.85 2021/10/23 16:11:30 tb Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.86 2021/10/23 20:42:50 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -447,6 +447,15 @@ ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
 		ret = X509_verify_cert(ctx);
 
 	s->verify_result = X509_STORE_CTX_get_error(ctx);
+	sk_X509_pop_free(s->internal->verified_chain, X509_free);
+	s->internal->verified_chain = NULL;
+	if (X509_STORE_CTX_get0_chain(ctx) != NULL) {
+		s->internal->verified_chain = X509_STORE_CTX_get1_chain(ctx);
+		if (s->internal->verified_chain == NULL) {
+			SSLerrorx(ERR_R_MALLOC_FAILURE);
+			ret = 0;
+		}
+	}
 
  err:
 	X509_STORE_CTX_free(ctx);

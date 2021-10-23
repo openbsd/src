@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.213 2021/10/23 16:29:15 beck Exp $ */
+/* $OpenBSD: ssl.h,v 1.214 2021/10/23 20:42:50 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -513,6 +513,7 @@ int SSL_set_num_tickets(SSL *s, size_t num_tickets);
 size_t SSL_get_num_tickets(const SSL *s);
 int SSL_CTX_set_num_tickets(SSL_CTX *ctx, size_t num_tickets);
 size_t SSL_CTX_get_num_tickets(const SSL_CTX *ctx);
+STACK_OF(X509) *SSL_get0_verified_chain(const SSL *s);
 #endif
 
 #ifndef LIBRESSL_INTERNAL
