@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.83 2021/06/11 11:13:53 jsing Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.84 2021/10/23 13:14:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -408,46 +408,49 @@ ssl_sess_cert_free(SESS_CERT *sc)
 int
 ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
 {
-	X509_STORE_CTX ctx;
+	X509_STORE_CTX *ctx = NULL;
 	X509 *x;
-	int ret;
+	int ret = 0;
 
 	if ((sk == NULL) || (sk_X509_num(sk) == 0))
-		return (0);
+		goto err;
+
+	if ((ctx = X509_STORE_CTX_new()) == NULL)
+		goto err;
 
 	x = sk_X509_value(sk, 0);
-	if (!X509_STORE_CTX_init(&ctx, s->ctx->cert_store, x, sk)) {
+	if (!X509_STORE_CTX_init(ctx, s->ctx->cert_store, x, sk)) {
 		SSLerror(s, ERR_R_X509_LIB);
-		return (0);
+		goto err;
 	}
-	X509_STORE_CTX_set_ex_data(&ctx,
-	    SSL_get_ex_data_X509_STORE_CTX_idx(), s);
+	X509_STORE_CTX_set_ex_data(ctx, SSL_get_ex_data_X509_STORE_CTX_idx(), s);
 
 	/*
 	 * We need to inherit the verify parameters. These can be
 	 * determined by the context: if its a server it will verify
 	 * SSL client certificates or vice versa.
 	 */
-	X509_STORE_CTX_set_default(&ctx,
-	    s->server ? "ssl_client" : "ssl_server");
+	X509_STORE_CTX_set_default(ctx, s->server ? "ssl_client" : "ssl_server");
 
 	/*
 	 * Anything non-default in "param" should overwrite anything
 	 * in the ctx.
 	 */
-	X509_VERIFY_PARAM_set1(X509_STORE_CTX_get0_param(&ctx), s->param);
+	X509_VERIFY_PARAM_set1(X509_STORE_CTX_get0_param(ctx), s->param);
 
 	if (s->internal->verify_callback)
-		X509_STORE_CTX_set_verify_cb(&ctx, s->internal->verify_callback);
+		X509_STORE_CTX_set_verify_cb(ctx, s->internal->verify_callback);
 
 	if (s->ctx->internal->app_verify_callback != NULL)
-		ret = s->ctx->internal->app_verify_callback(&ctx,
+		ret = s->ctx->internal->app_verify_callback(ctx,
 		    s->ctx->internal->app_verify_arg);
 	else
-		ret = X509_verify_cert(&ctx);
+		ret = X509_verify_cert(ctx);
 
-	s->verify_result = ctx.error;
-	X509_STORE_CTX_cleanup(&ctx);
+	s->verify_result = X509_STORE_CTX_get_error(ctx);
+
+ err:
+	X509_STORE_CTX_free(ctx);
 
 	return (ret);
 }
