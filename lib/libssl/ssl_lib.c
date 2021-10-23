@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.271 2021/10/23 15:02:27 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.272 2021/10/23 15:30:44 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -141,6 +141,7 @@
  */
 
 #include <arpa/inet.h>
+#include <sys/limits.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 
@@ -995,6 +996,11 @@ SSL_get_default_timeout(const SSL *s)
 int
 SSL_read(SSL *s, void *buf, int num)
 {
+	if (num < 0) {
+		SSLerror(s, SSL_R_BAD_LENGTH);
+		return -1;
+	}
+
 	if (s->internal->handshake_func == NULL) {
 		SSLerror(s, SSL_R_UNINITIALIZED);
 		return (-1);
@@ -1008,8 +1014,32 @@ SSL_read(SSL *s, void *buf, int num)
 }
 
 int
+SSL_read_ex(SSL *s, void *buf, size_t num, size_t *bytes_read)
+{
+	int ret;
+
+	/* We simply don't bother supporting enormous reads */
+	if (num > INT_MAX) {
+		SSLerror(s, SSL_R_BAD_LENGTH);
+		return 0;
+	}
+
+	ret = SSL_read(s, buf, (int)num);
+	if (ret < 0)
+		ret = 0;
+	*bytes_read = ret;
+
+	return ret > 0;
+}
+
+int
 SSL_peek(SSL *s, void *buf, int num)
 {
+	if (num < 0) {
+		SSLerror(s, SSL_R_BAD_LENGTH);
+		return -1;
+	}
+
 	if (s->internal->handshake_func == NULL) {
 		SSLerror(s, SSL_R_UNINITIALIZED);
 		return (-1);
@@ -1022,8 +1052,32 @@ SSL_peek(SSL *s, void *buf, int num)
 }
 
 int
+SSL_peek_ex(SSL *s, void *buf, size_t num, size_t *bytes_peeked)
+{
+	int ret;
+
+	/* We simply don't bother supporting enormous peeks */
+	if (num > INT_MAX) {
+		SSLerror(s, SSL_R_BAD_LENGTH);
+		return 0;
+	}
+
+	ret = SSL_peek(s, buf, (int)num);
+	if (ret < 0)
+		ret = 0;
+	*bytes_peeked = ret;
+
+	return ret > 0;
+}
+
+int
 SSL_write(SSL *s, const void *buf, int num)
 {
+	if (num < 0) {
+		SSLerror(s, SSL_R_BAD_LENGTH);
+		return -1;
+	}
+
 	if (s->internal->handshake_func == NULL) {
 		SSLerror(s, SSL_R_UNINITIALIZED);
 		return (-1);
@@ -1035,6 +1089,31 @@ SSL_write(SSL *s, const void *buf, int num)
 		return (-1);
 	}
 	return ssl3_write(s, buf, num);
+}
+
+int
+SSL_write_ex(SSL *s, const void *buf, size_t num, size_t *bytes_written)
+{
+	int ret;
+
+	/* We simply don't bother supporting enormous writes */
+	if (num > INT_MAX) {
+		SSLerror(s, SSL_R_BAD_LENGTH);
+		return 0;
+	}
+
+	if (num == 0) {
+		/* This API is special */
+		bytes_written = 0;
+		return 1;
+	}
+
+	ret = SSL_write(s, buf, (int)num);
+	if (ret < 0)
+		ret = 0;
+	*bytes_written = ret;
+
+	return ret > 0;
 }
 
 uint32_t

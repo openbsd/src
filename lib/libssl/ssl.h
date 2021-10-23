@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.211 2021/10/23 11:41:51 beck Exp $ */
+/* $OpenBSD: ssl.h,v 1.212 2021/10/23 15:30:44 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1289,6 +1289,11 @@ int	SSL_is_server(const SSL *s);
 int 	SSL_read(SSL *ssl, void *buf, int num);
 int 	SSL_peek(SSL *ssl, void *buf, int num);
 int 	SSL_write(SSL *ssl, const void *buf, int num);
+#if defined(LIBRESSL_NEW_API)
+int 	SSL_read_ex(SSL *ssl, void *buf, size_t num, size_t *bytes_read);
+int 	SSL_peek_ex(SSL *ssl, void *buf, size_t num, size_t *bytes_peeked);
+int 	SSL_write_ex(SSL *ssl, const void *buf, size_t num, size_t *bytes_written);
+#endif
 
 #if defined(LIBRESSL_HAS_TLS1_3) || defined(LIBRESSL_INTERNAL)
 uint32_t SSL_CTX_get_max_early_data(const SSL_CTX *ctx);
