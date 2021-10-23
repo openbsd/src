@@ -30,14 +30,13 @@ http_request(size_t id, const char *uri, const char *last_mod, int fd)
 {
 	struct ibuf     *b;
 
-	if ((b = ibuf_dynamic(256, UINT_MAX)) == NULL)
-		err(1, NULL);
+	b = io_buf_new();
 	io_simple_buffer(b, &id, sizeof(id));
 	io_str_buffer(b, uri);
 	io_str_buffer(b, last_mod);
 	/* pass file as fd */
 	b->fd = fd;
-	ibuf_close(&httpq, b);
+	io_buf_close(&httpq, b);
 }
 
 static const char *
@@ -58,10 +57,11 @@ http_result(enum http_result res)
 static int
 http_response(int fd)
 {
-	size_t id;
+	size_t id, sz;
 	enum http_result res;
 	char *lastmod;
 
+	io_simple_read(fd, &sz, sizeof(sz));
 	io_simple_read(fd, &id, sizeof(id));
 	io_simple_read(fd, &res, sizeof(res));
 	io_str_read(fd, &lastmod);
