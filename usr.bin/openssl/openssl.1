@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.132 2021/09/05 06:16:30 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.133 2021/10/23 11:36:44 tb Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: September 5 2021 $
+.Dd $Mdocdate: October 23 2021 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -3649,7 +3649,6 @@ or standard output if not specified.
 .It Nm openssl req
 .Bk -words
 .Op Fl addext Ar ext
-.Op Fl asn1-kludge
 .Op Fl batch
 .Op Fl config Ar file
 .Op Fl days Ar n
@@ -3666,7 +3665,6 @@ or standard output if not specified.
 .Op Fl new
 .Op Fl newhdr
 .Op Fl newkey Ar arg
-.Op Fl no-asn1-kludge
 .Op Fl nodes
 .Op Fl noout
 .Op Fl out Ar file
@@ -3705,9 +3703,6 @@ option is present) or certificate request.
 The argument must have the form of a key=value pair as it would appear in a
 config file.
 This option can be given multiple times.
-.It Fl asn1-kludge
-Produce requests in an invalid format for certain picky CAs.
-Very few CAs still require the use of this option.
 .It Fl batch
 Non-interactive mode.
 .It Fl config Ar file
@@ -3819,9 +3814,6 @@ can be omitted,
 in which case any parameters can be specified via the
 .Fl pkeyopt
 option.
-.It Fl no-asn1-kludge
-Reverse the effect of
-.Fl asn1-kludge .
 .It Fl nodes
 Do not encrypt the private key.
 .It Fl noout

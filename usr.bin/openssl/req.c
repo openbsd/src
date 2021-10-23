@@ -1,4 +1,4 @@
-/* $OpenBSD: req.c,v 1.20 2021/10/22 09:44:30 tb Exp $ */
+/* $OpenBSD: req.c,v 1.21 2021/10/23 11:36:44 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -143,7 +143,6 @@ struct {
 	char *keyfile;
 	int keyform;
 	char *keyout;
-	int kludge;
 	int modulus;
 	int multirdn;
 	int newhdr;
@@ -296,12 +295,6 @@ static const struct option req_options[] = {
 		.opt.argfunc = req_opt_addext,
 	},
 	{
-		.name = "asn1-kludge",
-		.type = OPTION_VALUE,
-		.opt.value = &req_config.kludge,
-		.value = 1,
-	},
-	{
 		.name = "batch",
 		.desc = "Operate in batch mode",
 		.type = OPTION_FLAG,
@@ -400,12 +393,6 @@ static const struct option req_options[] = {
 		.desc = "Generate a new key using given parameters",
 		.type = OPTION_ARG_FUNC,
 		.opt.argfunc = req_opt_newkey,
-	},
-	{
-		.name = "no-asn1-kludge",
-		.type = OPTION_VALUE,
-		.opt.value = &req_config.kludge,
-		.value = 0,
 	},
 	{
 		.name = "nodes",
@@ -544,12 +531,12 @@ static void
 req_usage(void)
 {
 	fprintf(stderr,
-	    "usage: req [-addext ext] [-asn1-kludge] [-batch] [-config file]\n"
+	    "usage: req [-addext ext] [-batch] [-config file]\n"
 	    "    [-days n] [-extensions section] [-in file]\n"
 	    "    [-inform der | pem] [-key keyfile] [-keyform der | pem]\n"
 	    "    [-keyout file] [-md4 | -md5 | -sha1] [-modulus]\n"
 	    "    [-multivalue-rdn] [-nameopt option] [-new] [-newhdr]\n"
-	    "    [-newkey arg] [-no-asn1-kludge] [-nodes] [-noout]\n"
+	    "    [-newkey arg] [-nodes] [-noout]\n"
 	    "    [-out file] [-outform der | pem] [-passin arg]\n"
 	    "    [-passout arg] [-pkeyopt opt:value] [-pubkey]\n"
 	    "    [-reqexts section] [-reqopt option] [-set_serial n]\n"
@@ -851,11 +838,6 @@ req_main(int argc, char **argv)
 		BIO_printf(bio_err, "-----\n");
 	}
 	if (!req_config.newreq) {
-		/*
-		 * Since we are using a pre-existing certificate request, the
-		 * kludge 'format' info should not be changed.
-		 */
-		req_config.kludge = -1;
 		if (req_config.infile == NULL)
 			BIO_set_fp(in, stdin, BIO_NOCLOSE);
 		else {
@@ -890,10 +872,6 @@ req_main(int argc, char **argv)
 			}
 			i = make_REQ(req, pkey, req_config.subj, req_config.multirdn, !req_config.x509, req_config.chtype);
 			req_config.subj = NULL;	/* done processing '-subj' option */
-			if ((req_config.kludge > 0) && !sk_X509_ATTRIBUTE_num(req->req_info->attributes)) {
-				sk_X509_ATTRIBUTE_free(req->req_info->attributes);
-				req->req_info->attributes = NULL;
-			}
 			if (!i) {
 				BIO_printf(bio_err, "problems making Certificate Request\n");
 				goto end;
