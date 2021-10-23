@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: rcctl.sh,v 1.110 2021/02/27 09:28:04 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.111 2021/10/23 08:19:27 sthen Exp $
 #
 # Copyright (c) 2014, 2015-2021 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -35,7 +35,7 @@ usage()
 	"usage:	rcctl get|getdef|set service | daemon [variable [arguments]]
 	rcctl [-df] ${_a} daemon ...
 	rcctl disable|enable|order [daemon ...]
-	rcctl ls all|failed|off|on|started|stopped"
+	rcctl ls all|failed|off|on|rogue|started|stopped"
 }
 
 needs_root()
@@ -226,6 +226,13 @@ svc_ls()
 						[ "${_lsarg}" = "off" -a -z "${_on}" ] && \
 					echo ${_svc}
 				unset _on
+			done
+			;;
+		rogue)
+			for _svc in $(svc_ls off); do
+				! svc_is_special ${_svc} && \
+					/etc/rc.d/${_svc} check >/dev/null && \
+					echo ${_svc} && _ret=1
 			done
 			;;
 		started|stopped)
@@ -502,7 +509,7 @@ ret=0
 case ${action} in
 	ls)
 		lsarg=$2
-		[[ ${lsarg} == @(all|failed|off|on|started|stopped) ]] || usage
+		[[ ${lsarg} == @(all|failed|off|on|rogue|started|stopped) ]] || usage
 		;;
 	order)
 		shift 1
