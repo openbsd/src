@@ -1,4 +1,4 @@
-/*	$OpenBSD: teach.c,v 1.19 2021/02/06 21:42:30 mestre Exp $	*/
+/*	$OpenBSD: teach.c,v 1.20 2021/10/23 15:08:26 mestre Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -53,11 +53,12 @@ main(int argc, char *argv[])
 {
 	int     i;
 
+	signal(SIGINT, getout);
+	initcurses();
+
 	if (pledge("stdio rpath wpath cpath tty exec", NULL) == -1)
 		err(1, "pledge");
 
-	signal(SIGINT, getout);
-	initcurses();
 	text(hello);
 	text(list);
 	i = text(contin);
