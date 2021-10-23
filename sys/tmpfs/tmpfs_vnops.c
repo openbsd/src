@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vnops.c,v 1.46 2021/03/11 13:31:35 jsg Exp $	*/
+/*	$OpenBSD: tmpfs_vnops.c,v 1.47 2021/10/23 17:38:00 patrick Exp $	*/
 /*	$NetBSD: tmpfs_vnops.c,v 1.100 2012/11/05 17:27:39 dholland Exp $	*/
 
 /*
@@ -289,12 +289,12 @@ done:
 	}
 out:
 	/*
-	 * If (1) we succeeded, (2) found a distinct vnode to return and (3)
+	 * If (1) we succeeded, (2) found a distinct vnode != .. to return and (3)
 	 * were either explicitly told to keep the parent locked or are in the
 	 * middle of a lookup, unlock the parent vnode.
 	 */
 	if ((error == 0 || error == EJUSTRETURN) && /* (1) */
-	    *vpp != dvp &&			    /* (2) */
+	    (*vpp != dvp || (cnp->cn_flags & ISDOTDOT))  && /* (2) */
 	    (!lockparent || !lastcn)) {		    /* (3) */
 		VOP_UNLOCK(dvp);
 		cnp->cn_flags |= PDIRUNLOCK;
