@@ -57,14 +57,18 @@ http_result(enum http_result res)
 static int
 http_response(int fd)
 {
-	size_t id, sz;
+	struct ibuf *b, *httpbuf = NULL;
+	size_t id;
 	enum http_result res;
 	char *lastmod;
 
-	io_simple_read(fd, &sz, sizeof(sz));
-	io_simple_read(fd, &id, sizeof(id));
-	io_simple_read(fd, &res, sizeof(res));
-	io_str_read(fd, &lastmod);
+	while ((b = io_buf_read(fd, &httpbuf)) == NULL)
+		/* nothing */ ;
+
+	io_read_buf(b, &id, sizeof(id));
+	io_read_buf(b, &res, sizeof(res));
+	io_read_str(b, &lastmod);
+	ibuf_free(b);
 
 	printf("transfer %s", http_result(res));
 	if (lastmod)
