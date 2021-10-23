@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.32 2016/01/08 21:38:33 mestre Exp $	*/
+/*	$OpenBSD: main.c,v 1.33 2021/10/23 11:22:48 mestre Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -80,9 +80,6 @@ main(int argc, char **argv)
 	};
 	char *tmpname;
 
-	if (pledge("stdio rpath wpath cpath tty", NULL) == -1)
-		err(1, "pledge");
-
 	if ((tmpname = getlogin()) != NULL)
 		strlcpy(you, tmpname, sizeof(you));
 	else
@@ -123,6 +120,10 @@ main(int argc, char **argv)
 
 	if (interactive)
 		cursinit();		/* initialize curses */
+
+	if (pledge("stdio rpath wpath cpath tty", NULL) == -1)
+		err(1, "pledge");
+
 again:
 	bdinit(board);			/* initialize board contents */
 

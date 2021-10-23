@@ -1,4 +1,4 @@
-/*	$OpenBSD: battlestar.c,v 1.22 2018/02/07 20:22:23 tedu Exp $	*/
+/*	$OpenBSD: battlestar.c,v 1.23 2021/10/23 11:22:48 mestre Exp $	*/
 /*	$NetBSD: battlestar.c,v 1.3 1995/03/21 15:06:47 cgd Exp $	*/
 
 /*
@@ -50,9 +50,6 @@ main(int argc, char *argv[])
 	char    mainbuf[LINELENGTH];
 	char   *next;
 
-	if (pledge("stdio rpath wpath cpath tty", NULL) == -1)
-		err(1, "pledge");
-
 	open_score_file();
 
 	if (argc < 2)
@@ -63,6 +60,10 @@ main(int argc, char *argv[])
 		initialize(argv[1]);
 
 	newlocation();
+
+	if (pledge("stdio rpath wpath cpath tty", NULL) == -1)
+		err(1, "pledge");
+
 	for (;;) {
 		stop_cypher = 0;
 		next = getcom(mainbuf, sizeof mainbuf, ">-: ",

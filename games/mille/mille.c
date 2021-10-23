@@ -1,4 +1,4 @@
-/*	$OpenBSD: mille.c,v 1.25 2016/01/08 18:09:59 mestre Exp $	*/
+/*	$OpenBSD: mille.c,v 1.26 2021/10/23 11:22:49 mestre Exp $	*/
 /*	$NetBSD: mille.c,v 1.4 1995/03/24 05:01:48 cgd Exp $	*/
 
 /*
@@ -50,9 +50,6 @@ main(int ac, char *av[])
 	bool	restore;
 	extern char *__progname;
 
-	if (pledge("stdio rpath wpath cpath tty", NULL) == -1)
-		err(1, "pledge");
-
 #ifdef DEBUG
 	if (strcmp(av[0], "a.out") == 0) {
 		outf = fopen("q", "w");
@@ -73,6 +70,10 @@ main(int ac, char *av[])
 	}
 	Play = PLAYER;
 	initscr();
+
+	if (pledge("stdio rpath wpath cpath tty", NULL) == -1)
+		err(1, "pledge");
+
 	if ((LINES < 24) || (COLS < 80)) {
 		endwin();
 		fprintf(stderr, "Screen must be at least 24x80\n");

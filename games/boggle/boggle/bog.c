@@ -1,4 +1,4 @@
-/*	$OpenBSD: bog.c,v 1.33 2016/09/12 20:11:10 tb Exp $	*/
+/*	$OpenBSD: bog.c,v 1.34 2021/10/23 11:22:48 mestre Exp $	*/
 /*	$NetBSD: bog.c,v 1.5 1995/04/24 12:22:32 cgd Exp $	*/
 
 /*-
@@ -90,9 +90,6 @@ main(int argc, char *argv[])
 	int ch, done;
 	char *bspec, *p;
 
-	if (pledge("stdio rpath tty", NULL) == -1)
-		err(1, "pledge");
-
 	batch = debug = reuse = selfuse;
 	bspec = NULL;
 	minlength = -1;
@@ -164,6 +161,10 @@ main(int argc, char *argv[])
 		return 0;
 	}
 	setup();
+
+	if (pledge("stdio rpath tty", NULL) == -1)
+		err(1, "pledge");
+
 	prompt("Loading the dictionary...");
 	if ((dictfp = opendict(DICT)) == NULL) {
 		warn("%s", DICT);

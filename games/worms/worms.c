@@ -1,4 +1,4 @@
-/*	$OpenBSD: worms.c,v 1.29 2018/08/06 06:27:32 mestre Exp $	*/
+/*	$OpenBSD: worms.c,v 1.30 2021/10/23 11:22:49 mestre Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -179,9 +179,6 @@ main(int argc, char *argv[])
 	struct termios term;
 	speed_t speed;
 	time_t delay = 0;
-
-	if (pledge("stdio rpath tty", NULL) == -1)
-		err(1, "pledge");
 
 	/* set default delay based on terminal baud rate */
 	if (tcgetattr(STDOUT_FILENO, &term) == 0 &&

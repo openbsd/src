@@ -1,4 +1,4 @@
-/*	$OpenBSD: grdc.c,v 1.33 2020/06/06 17:03:16 cheloha Exp $	*/
+/*	$OpenBSD: grdc.c,v 1.34 2021/10/23 11:22:49 mestre Exp $	*/
 /*
  *
  * Copyright 2002 Amos Shapir.  Public domain.
@@ -78,9 +78,6 @@ main(int argc, char *argv[])
 	int xbase;
 	int ybase;
 	int wintoosmall;
-
-	if (pledge("stdio rpath tty", NULL) == -1)
-		err(1, "pledge");
 
 	scrol = wintoosmall = 0;
 	while ((i = getopt(argc, argv, "sh")) != -1) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs.c,v 1.41 2018/08/24 11:14:49 mestre Exp $	*/
+/*	$OpenBSD: bs.c,v 1.42 2021/10/23 11:22:48 mestre Exp $	*/
 /*
  * Copyright (c) 1986, Bruce Holloway
  * All rights reserved.
@@ -1335,9 +1335,6 @@ scount(int who)
 int
 main(int argc, char *argv[])
 {
-    if (pledge("stdio rpath tty", NULL) == -1)
-        err(1, "pledge");
-
     do_options(argc, argv);
 
     intro();

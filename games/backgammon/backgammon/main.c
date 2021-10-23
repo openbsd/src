@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.24 2017/07/11 14:32:16 fcambus Exp $	*/
+/*	$OpenBSD: main.c,v 1.25 2021/10/23 11:22:48 mestre Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -85,9 +85,6 @@ main (int argc, char **argv)
 	int     i,l;		/* non-descript indices */
 	char    c;		/* non-descript character storage */
 
-	if (pledge("stdio rpath wpath cpath tty exec", NULL) == -1)
-		err(1, "pledge");
-
 	signal(SIGINT, getout);	/* trap interrupts */
 
 	/* use whole screen for text */
@@ -107,6 +104,9 @@ main (int argc, char **argv)
 		if (cturn == 0)
 			rflag = 0;
 	} else {
+		if (pledge("stdio rpath wpath cpath tty exec", NULL) == -1)
+			err(1, "pledge");
+
 		rscore = wscore = 0;	/* zero score */
 
 		if (aflag) {	/* print rules */

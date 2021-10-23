@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.30 2016/09/11 14:21:17 tb Exp $	*/
+/*	$OpenBSD: main.c,v 1.31 2021/10/23 11:22:48 mestre Exp $	*/
 /*	$NetBSD: main.c,v 1.4 1995/04/27 21:22:25 mycroft Exp $	*/
 
 /*-
@@ -64,8 +64,6 @@ main(int argc, char *argv[])
 	struct sigaction	sa;
 	struct itimerval	itv;
 
-	if (pledge("stdio rpath wpath cpath flock tty", NULL) == -1)
-		err(1, "pledge");
 	open_score_file();
 
 	start_time = time(0);
@@ -140,6 +138,9 @@ main(int argc, char *argv[])
 		return 1;
 
 	setup_screen(sp);
+
+	if (pledge("stdio rpath wpath cpath flock tty", NULL) == -1)
+		err(1, "pledge");
 
 	addplane();
 
