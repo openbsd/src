@@ -1,4 +1,4 @@
-/*	$OpenBSD: asn1test.c,v 1.8 2021/06/30 18:09:46 jsing Exp $	*/
+/*	$OpenBSD: asn1test.c,v 1.9 2021/10/23 08:13:52 jsing Exp $	*/
 /*
  * Copyright (c) 2014, 2016 Joel Sing <jsing@openbsd.org>
  *
@@ -350,7 +350,7 @@ session_cmp(SSL_SESSION *s1, SSL_SESSION *s2)
 	}
 	if (s1->tlsext_tick_lifetime_hint != s2->tlsext_tick_lifetime_hint) {
 		fprintf(stderr, "tlsext_tick_lifetime_hint differs: "
-		    "%li != %li\n", s1->tlsext_tick_lifetime_hint,
+		    "%u != %u\n", s1->tlsext_tick_lifetime_hint,
 		    s2->tlsext_tick_lifetime_hint);
 		return (1);
 	}
