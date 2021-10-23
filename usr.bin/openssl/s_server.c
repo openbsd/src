@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.51 2021/10/23 14:50:10 tb Exp $ */
+/* $OpenBSD: s_server.c,v 1.52 2021/10/23 14:52:51 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2352,7 +2352,7 @@ cert_status_cb(SSL *s, void *arg)
 	aia = X509_get1_ocsp(x);
 	if (aia) {
 		if (!OCSP_parse_url(sk_OPENSSL_STRING_value(aia, 0),
-			&host, &port, &path, &use_ssl)) {
+		    &host, &port, &path, &use_ssl)) {
 			BIO_puts(err, "cert_status: can't parse AIA URL\n");
 			goto err;
 		}
@@ -2375,11 +2375,11 @@ cert_status_cb(SSL *s, void *arg)
 		goto err;
 
 	if (!X509_STORE_CTX_init(inctx,
-		SSL_CTX_get_cert_store(SSL_get_SSL_CTX(s)),
+	    SSL_CTX_get_cert_store(SSL_get_SSL_CTX(s)),
 		NULL, NULL))
 		goto err;
 	if (X509_STORE_get_by_subject(inctx, X509_LU_X509,
-		X509_get_issuer_name(x), &obj) <= 0) {
+	    X509_get_issuer_name(x), &obj) <= 0) {
 		BIO_puts(err,
 		    "cert_status: Can't retrieve issuer certificate.\n");
 		X509_STORE_CTX_cleanup(inctx);
