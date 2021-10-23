@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.364 2021/10/23 15:02:27 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.365 2021/10/23 16:29:15 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -849,6 +849,7 @@ typedef struct ssl_ctx_internal_st {
 	size_t tlsext_supportedgroups_length;
 	uint16_t *tlsext_supportedgroups; /* our list */
 	SSL_CTX_keylog_cb_func keylog_callback; /* Unused. For OpenSSL compatibility. */
+	size_t num_tickets; /* Unused, for OpenSSL compatibility */
 } SSL_CTX_INTERNAL;
 
 struct ssl_ctx_st {
@@ -1028,6 +1029,8 @@ typedef struct ssl_internal_st {
 	int mac_packet;
 
 	int empty_record_count;
+
+	size_t num_tickets; /* Unused, for OpenSSL compatibility */
 } SSL_INTERNAL;
 
 struct ssl_st {

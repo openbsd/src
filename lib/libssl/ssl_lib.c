@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.273 2021/10/23 16:11:30 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.274 2021/10/23 16:29:15 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -265,6 +265,7 @@ SSL_new(SSL_CTX *ctx)
 	s->internal->options = ctx->internal->options;
 	s->internal->mode = ctx->internal->mode;
 	s->internal->max_cert_list = ctx->internal->max_cert_list;
+	s->internal->num_tickets = ctx->internal->num_tickets;
 
 	if ((s->cert = ssl_cert_dup(ctx->internal->cert)) == NULL)
 		goto err;
@@ -781,6 +782,34 @@ SSL_CTX_keylog_cb_func
 SSL_CTX_get_keylog_callback(const SSL_CTX *ctx)
 {
 	return (ctx->internal->keylog_callback);
+}
+
+int
+SSL_set_num_tickets(SSL *s, size_t num_tickets)
+{
+	s->internal->num_tickets = num_tickets;
+
+	return 1;
+}
+
+size_t
+SSL_get_num_tickets(const SSL *s)
+{
+	return s->internal->num_tickets;
+}
+
+int
+SSL_CTX_set_num_tickets(SSL_CTX *ctx, size_t num_tickets)
+{
+	ctx->internal->num_tickets = num_tickets;
+
+	return 1;
+}
+
+size_t
+SSL_CTX_get_num_tickets(const SSL_CTX *ctx)
+{
+	return ctx->internal->num_tickets;
 }
 
 int

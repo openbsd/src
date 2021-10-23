@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.212 2021/10/23 15:30:44 beck Exp $ */
+/* $OpenBSD: ssl.h,v 1.213 2021/10/23 16:29:15 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -509,6 +509,10 @@ typedef void (*SSL_CTX_keylog_cb_func)(const SSL *ssl, const char *line);
 #if defined(LIBRESSL_NEW_API)
 void SSL_CTX_set_keylog_callback(SSL_CTX *ctx, SSL_CTX_keylog_cb_func cb);
 SSL_CTX_keylog_cb_func SSL_CTX_get_keylog_callback(const SSL_CTX *ctx);
+int SSL_set_num_tickets(SSL *s, size_t num_tickets);
+size_t SSL_get_num_tickets(const SSL *s);
+int SSL_CTX_set_num_tickets(SSL_CTX *ctx, size_t num_tickets);
+size_t SSL_CTX_get_num_tickets(const SSL_CTX *ctx);
 #endif
 
 #ifndef LIBRESSL_INTERNAL
