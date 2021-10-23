@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.185 2021/10/22 15:44:20 bluhm Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.186 2021/10/23 15:42:35 tobhe Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -364,78 +364,6 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 	if (tdbp != NULL)
 		tdbp->tdb_idrops++;
 	return error;
-}
-
-void
-ipsec_input_cb(struct cryptop *crp)
-{
-	struct tdb_crypto *tc = (struct tdb_crypto *) crp->crp_opaque;
-	struct mbuf *m = (struct mbuf *) crp->crp_buf;
-	struct tdb *tdb = NULL;
-	int clen, error;
-
-	NET_ASSERT_LOCKED();
-
-	if (m == NULL) {
-		DPRINTF("bogus returned buffer from crypto");
-		ipsecstat_inc(ipsec_crypto);
-		goto drop;
-	}
-
-	tdb = gettdb(tc->tc_rdomain, tc->tc_spi, &tc->tc_dst, tc->tc_proto);
-	if (tdb == NULL) {
-		DPRINTF("TDB is expired while in crypto");
-		ipsecstat_inc(ipsec_notdb);
-		goto drop;
-	}
-
-	/* Check for crypto errors */
-	if (crp->crp_etype) {
-		if (crp->crp_etype == EAGAIN) {
-			/* Reset the session ID */
-			if (tdb->tdb_cryptoid != 0)
-				tdb->tdb_cryptoid = crp->crp_sid;
-			crypto_dispatch(crp);
-			return;
-		}
-		DPRINTF("crypto error %d", crp->crp_etype);
-		ipsecstat_inc(ipsec_noxform);
-		goto drop;
-	}
-
-	/* Length of data after processing */
-	clen = crp->crp_olen;
-
-	/* Release the crypto descriptors */
-	crypto_freereq(crp);
-
-	switch (tdb->tdb_sproto) {
-	case IPPROTO_ESP:
-		error = esp_input_cb(tdb, tc, m, clen);
-		break;
-	case IPPROTO_AH:
-		error = ah_input_cb(tdb, tc, m, clen);
-		break;
-	case IPPROTO_IPCOMP:
-		error = ipcomp_input_cb(tdb, tc, m, clen);
-		break;
-	default:
-		panic("%s: unknown/unsupported security protocol %d",
-		    __func__, tdb->tdb_sproto);
-	}
-	if (error) {
-		ipsecstat_inc(ipsec_idrops);
-		tdb->tdb_idrops++;
-	}
-	return;
-
- drop:
-	m_freem(m);
-	free(tc, M_XDATA, 0);
-	crypto_freereq(crp);
-	ipsecstat_inc(ipsec_idrops);
-	if (tdb != NULL)
-		tdb->tdb_idrops++;
 }
 
 /*

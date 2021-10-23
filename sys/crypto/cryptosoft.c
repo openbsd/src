@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.89 2021/10/13 13:08:58 bluhm Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.90 2021/10/23 15:42:35 tobhe Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -1129,7 +1129,6 @@ swcr_process(struct cryptop *crp)
 	}
 
 done:
-	crypto_done(crp);
 	return 0;
 }
 

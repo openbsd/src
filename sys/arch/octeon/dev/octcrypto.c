@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcrypto.c,v 1.6 2021/10/13 13:08:58 bluhm Exp $	*/
+/*	$OpenBSD: octcrypto.c,v 1.7 2021/10/23 15:42:35 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2018 Visa Hankala
@@ -658,7 +658,6 @@ out:
 	smr_read_leave();
 
 	crp->crp_etype = error;
-	crypto_done(crp);
 	return error;
 }
 

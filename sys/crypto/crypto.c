@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.89 2021/10/21 23:03:48 tobhe Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.90 2021/10/23 15:42:35 tobhe Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -377,33 +377,6 @@ crypto_unregister(u_int32_t driverid, int alg)
 }
 
 /*
- * Add crypto request to a queue, to be processed by a kernel thread.
- */
-void
-crypto_dispatch(struct cryptop *crp)
-{
-	int lock = 1, s;
-	u_int32_t hid;
-
-	s = splvm();
-	hid = (crp->crp_sid >> 32) & 0xffffffff;
-	if (hid < crypto_drivers_num) {
-		if (crypto_drivers[hid].cc_flags & CRYPTOCAP_F_MPSAFE)
-			lock = 0;
-	}
-	splx(s);
-
-	/* XXXSMP crypto_invoke() is not MP safe */
-	lock = 1;
-
-	if (lock)
-		KERNEL_LOCK();
-	crypto_invoke(crp);
-	if (lock)
-		KERNEL_UNLOCK();
-}
-
-/*
  * Dispatch a crypto request to the appropriate crypto devices.
  */
 void
@@ -416,7 +389,6 @@ crypto_invoke(struct cryptop *crp)
 
 	/* Sanity checks. */
 	KASSERT(crp != NULL);
-	KASSERT(crp->crp_callback != NULL);
 
 	KERNEL_ASSERT_LOCKED();
 
@@ -466,7 +438,6 @@ crypto_invoke(struct cryptop *crp)
 
 	crp->crp_etype = EAGAIN;
  done:
-	crypto_done(crp);
 	splx(s);
 }
 
@@ -517,15 +488,4 @@ crypto_init(void)
 {
 	pool_init(&cryptop_pool, sizeof(struct cryptop), 0, IPL_VM, 0,
 	    "cryptop", NULL);
-}
-
-/*
- * Invoke the callback on behalf of the driver.
- */
-void
-crypto_done(struct cryptop *crp)
-{
-	crp->crp_flags |= CRYPTO_F_DONE;
-
-	crp->crp_callback(crp);
 }

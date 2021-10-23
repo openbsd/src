@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.h,v 1.79 2021/10/22 12:30:53 bluhm Exp $	*/
+/*	$OpenBSD: cryptodev.h,v 1.80 2021/10/23 15:42:35 tobhe Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -169,17 +169,13 @@ struct cryptop {
 #define CRYPTO_F_IMBUF	0x0001	/* Input/output are mbuf chains, otherwise contig */
 #define CRYPTO_F_IOV	0x0002	/* Input/output are uio */
 #define CRYPTO_F_MPSAFE	0x0004	/* Do not use kernel lock for callback */
-#define CRYPTO_F_DONE	0x0010	/* request completed */
 
 	void 		*crp_buf;	/* Data to be processed */
-	void 		*crp_opaque;	/* Opaque pointer, passed along */
 
 	struct cryptodesc *crp_desc;	/* List of processing descriptors */
 	struct cryptodesc crp_sdesc[2];	/* Static array for small ops */
 	int		 crp_ndesc;	/* Amount of descriptors to use */
 	int		 crp_ndescalloc;/* Amount of descriptors allocated */
-
-	void (*crp_callback)(struct cryptop *); /* Callback function */
 
 	caddr_t		crp_mac;
 };
@@ -214,14 +210,12 @@ void	crypto_init(void);
 
 int	crypto_newsession(u_int64_t *, struct cryptoini *, int);
 int	crypto_freesession(u_int64_t);
-void	crypto_dispatch(struct cryptop *);
 int	crypto_register(u_int32_t, int *,
 	    int (*)(u_int32_t *, struct cryptoini *), int (*)(u_int64_t),
 	    int (*)(struct cryptop *));
 int	crypto_unregister(u_int32_t, int);
 int32_t	crypto_get_driverid(u_int8_t);
 void	crypto_invoke(struct cryptop *);
-void	crypto_done(struct cryptop *);
 
 void	cuio_copydata(struct uio *, int, int, caddr_t);
 void	cuio_copyback(struct uio *, int, int, const void *);

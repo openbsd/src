@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid1c.c,v 1.4 2021/10/13 22:43:44 bluhm Exp $ */
+/* $OpenBSD: softraid_raid1c.c,v 1.5 2021/10/23 15:42:35 tobhe Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -58,7 +58,7 @@ void	sr_raid1c_free_resources(struct sr_discipline *sd);
 int	sr_raid1c_ioctl(struct sr_discipline *sd, struct bioc_discipline *bd);
 int	sr_raid1c_meta_opt_handler(struct sr_discipline *,
 	    struct sr_meta_opt_hdr *);
-void	sr_raid1c_write(struct cryptop *);
+void	sr_raid1c_write(struct sr_crypto_wu *);
 int	sr_raid1c_rw(struct sr_workunit *);
 int	sr_raid1c_dev_rw(struct sr_workunit *, struct sr_crypto_wu *);
 void	sr_raid1c_done(struct sr_workunit *wu);
@@ -312,16 +312,15 @@ bad:
 }
 
 void
-sr_raid1c_write(struct cryptop *crp)
+sr_raid1c_write(struct sr_crypto_wu *crwu)
 {
-	struct sr_crypto_wu	*crwu = crp->crp_opaque;
 	struct sr_workunit	*wu = &crwu->cr_wu;
 	int			s;
 
 	DNPRINTF(SR_D_INTR, "%s: sr_raid1c_write: wu %p xs: %p\n",
 	    DEVNAME(wu->swu_dis->sd_sc), wu, wu->swu_xs);
 
-	if (crp->crp_etype) {
+	if (crwu->cr_crp->crp_etype) {
 		/* fail io */
 		wu->swu_xs->error = XS_DRIVER_STUFFUP;
 		s = splbio();
@@ -358,8 +357,8 @@ sr_raid1c_rw(struct sr_workunit *wu)
 	    !ISSET(wu->swu_flags, SR_WUF_REBUILD)) {
 		mdd_raid1c = &wu->swu_dis->mds.mdd_raid1c;
 		crwu = sr_crypto_prepare(wu, &mdd_raid1c->sr1c_crypto, 1);
-		crwu->cr_crp->crp_callback = sr_raid1c_write;
-		crypto_dispatch(crwu->cr_crp);
+		crypto_invoke(crwu->cr_crp);
+		sr_raid1c_write(crwu);
 		rv = crwu->cr_crp->crp_etype;
 	} else
 		rv = sr_raid1c_dev_rw(wu, NULL);
