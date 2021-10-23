@@ -1,4 +1,4 @@
-/*	$OpenBSD: agentx.c,v 1.11 2021/10/23 14:39:35 martijn Exp $ */
+/*	$OpenBSD: agentx.c,v 1.12 2021/10/23 17:10:34 martijn Exp $ */
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
  *
@@ -27,6 +27,20 @@
 
 #include "agentx_internal.h"
 #include <agentx.h>
+
+/*
+ * ax:		struct agentx
+ * axs:		struct agentx_session
+ * axc:		struct agentx_context
+ * axr:		struct agentx_region
+ * axi:		struct agentx_index
+ * axo:		struct agentx_object
+ * axg:		struct agentx_get
+ * axv:		struct agentx_varbind
+ * axr:		struct agentx_request
+ * cstate:	current state
+ * dstate:	desired state
+ */
 
 enum agentx_index_type {
 	AXI_TYPE_NEW,
