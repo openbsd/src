@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.84 2021/07/01 17:53:39 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.85 2021/10/23 13:12:55 tb Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -649,7 +649,7 @@ tls13_server_certificate_send(struct tls13_ctx *ctx, CBB *cbb)
 		    X509_V_FLAG_LEGACY_VERIFY);
 		X509_verify_cert(xsc);
 		ERR_clear_error();
-		chain = xsc->chain;
+		chain = X509_STORE_CTX_get0_chain(xsc);
 	}
 
 	if (!CBB_add_u8_length_prefixed(cbb, &cert_request_context))

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_both.c,v 1.36 2021/10/23 08:34:36 jsing Exp $ */
+/* $OpenBSD: ssl_both.c,v 1.37 2021/10/23 13:12:55 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -368,7 +368,7 @@ ssl3_output_cert_chain(SSL *s, CBB *cbb, CERT_PKEY *cpk)
 		    X509_V_FLAG_LEGACY_VERIFY);
 		X509_verify_cert(xs_ctx);
 		ERR_clear_error();
-		chain = xs_ctx->chain;
+		chain = X509_STORE_CTX_get0_chain(xs_ctx);
 	}
 
 	for (i = 0; i < sk_X509_num(chain); i++) {
