@@ -1,4 +1,5 @@
-.\" $OpenBSD: SSL_CTX_set_num_tickets.3,v 1.1 2021/10/23 16:29:15 beck Exp $
+.\" $OpenBSD: SSL_CTX_set_num_tickets.3,v 1.2 2021/10/23 17:20:50 schwarze Exp $
+.\" OpenSSL pod checked up to: 5402f96a Sep 11 09:58:52 2021 +0100
 .\"
 .\" Copyright (c) 2021 Bob Beck <beck@openbsd.org>
 .\"
@@ -22,20 +23,27 @@
 .Nm SSL_CTX_get_num_tickets ,
 .Nm SSL_set_num_tickets ,
 .Nm SSL_get_num_tickets
-.Nd Set and get the number of TLS 1.3 session tickets to be sent
+.Nd set and get the number of TLS 1.3 session tickets to be sent
 .Sh SYNOPSIS
 .In openssl/ssl.h
-.Ft void
+.Ft int
 .Fn SSL_CTX_set_num_tickets "SSL_CTX *ctx" "size_t num_tickets"
-.Ft SSL_CTX_get_num_tickets "const SSL_CTX *ctx"
+.Ft size_t
+.Fn SSL_CTX_get_num_tickets "const SSL_CTX *ctx"
+.Ft int
 .Fn SSL_set_num_tickets "SSL *ssl" "size_t num_tickets"
-.Ft SSL_get_num_tickets "const SSL *ssl"
+.Ft size_t
+.Fn SSL_get_num_tickets "const SSL *ssl"
 .Sh DESCRIPTION
-These functions set, and retrieve, the configured number of session
-tickets from the respective objects.
+These functions set and retrieve
+the configured number of session tickets for
+.Fa ctx
+and
+.Fa ssl ,
+respectively.
 .Pp
-These functions are provided only for compatibility with OpenSSL.
-They have no effect in LibreSSL.
+They are provided only for compatibility with OpenSSL
+and have no effect in LibreSSL.
 .Sh RETURN VALUES
 .Fn SSL_CTX_set_num_tickets
 and
@@ -45,7 +53,7 @@ always return 1.
 .Fn SSL_CTX_get_num_tickets
 and
 .Fn SSL_get_num_tickets
-return the previously set number of tickets, or 0 if they have not been set.
+return the previously set number of tickets, or 0 if it has not been set.
 .Sh SEE ALSO
 .Xr ssl 3 ,
 .Xr SSL_CTX_new 3
