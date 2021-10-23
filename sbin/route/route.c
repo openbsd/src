@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.258 2021/08/30 18:49:19 kn Exp $	*/
+/*	$OpenBSD: route.c,v 1.259 2021/10/23 09:28:48 kn Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -134,7 +134,11 @@ usage(char *cp)
 	if (cp)
 		warnx("botched keyword: %s", cp);
 	fprintf(stderr,
+#ifndef SMALL
 	    "usage: %s [-dnqtv] [-T rtable] command [[modifiers] args]\n",
+#else
+	    "usage: %s [-dnqtv] command [[modifiers] args]\n",
+#endif
 	    __progname);
 	exit(1);
 }
@@ -150,14 +154,18 @@ main(int argc, char **argv)
 	int ch;
 	int rval = 0;
 	int kw;
-	int Terr = 0;
 	int af = AF_UNSPEC;
+#ifndef SMALL
+	int Terr = 0;
 	u_int rtable_any = RTABLE_ANY;
+#endif
 
 	if (argc < 2)
 		usage(NULL);
 
+#ifndef SMALL
 	tableid = getrtable();
+#endif
 	while ((ch = getopt(argc, argv, "dnqtT:v")) != -1)
 		switch (ch) {
 		case 'n':
@@ -172,10 +180,12 @@ main(int argc, char **argv)
 		case 't':
 			tflag = 1;
 			break;
+#ifndef SMALL
 		case 'T':
 			Terr = gettable(optarg);
 			Tflag = 1;
 			break;
+#endif
 		case 'd':
 			debugonly = 1;
 			break;
@@ -192,12 +202,14 @@ main(int argc, char **argv)
 		usage(NULL);
 
 	kw = keyword(*argv);
+#ifndef SMALL
 	if (Tflag && Terr != 0 && kw != K_ADD) {
 		errno = Terr;
 		err(1, "routing table %u", tableid);
 	}
 	if (kw == K_EXEC)
 		exit(rdomain(argc - 1, argv + 1));
+#endif
 
 	if (kw == K_MONITOR) {
 		while (--argc > 0) {
@@ -237,6 +249,7 @@ main(int argc, char **argv)
 			err(1, "setsockopt(ROUTE_MSGFILTER)");
 	}
 
+#ifndef SMALL
 	if (!tflag) {
 		/* force socket onto table user requested */
 		if (Tflag == 1 && Terr == 0) {
@@ -249,6 +262,7 @@ main(int argc, char **argv)
 				err(1, "setsockopt(ROUTE_TABLEFILTER)");
 		}
 	}
+#endif
 
 	if (pledge("stdio dns route", NULL) == -1)
 		err(1, "pledge");
@@ -2104,6 +2118,7 @@ getlabel(char *name)
 	rtm_addrs |= RTA_LABEL;
 }
 
+#ifndef SMALL
 int
 gettable(const char *s)
 {
@@ -2141,6 +2156,7 @@ rdomain(int argc, char **argv)
 	warn("%s", argv[0]);
 	return (errno == ENOENT ? 127 : 126);
 }
+#endif	/* SMALL */
 
 /*
  * Print RTM_PROPOSAL DNS server addresses.
