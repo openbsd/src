@@ -1,4 +1,4 @@
-/* $OpenBSD: x509v3.h,v 1.8 2021/10/23 11:53:24 tb Exp $ */
+/* $OpenBSD: x509v3.h,v 1.9 2021/10/23 17:43:06 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -206,8 +206,6 @@ union {
 } d;
 } GENERAL_NAME;
 
-typedef STACK_OF(GENERAL_NAME) GENERAL_NAMES;
-
 typedef struct ACCESS_DESCRIPTION_st {
 	ASN1_OBJECT *method;
 	GENERAL_NAME *location;
@@ -218,6 +216,9 @@ typedef STACK_OF(ACCESS_DESCRIPTION) AUTHORITY_INFO_ACCESS;
 typedef STACK_OF(ASN1_OBJECT) EXTENDED_KEY_USAGE;
 
 DECLARE_STACK_OF(GENERAL_NAME)
+
+typedef STACK_OF(GENERAL_NAME) GENERAL_NAMES;
+DECLARE_STACK_OF(GENERAL_NAMES)
 
 DECLARE_STACK_OF(ACCESS_DESCRIPTION)
 
