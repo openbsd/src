@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.82 2021/07/25 20:31:41 benno Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.83 2021/10/23 20:46:18 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -177,6 +177,8 @@ relay_read_http(struct bufferevent *bev, void *arg)
 	size_t			 size, linelen;
 	struct kv		*hdr = NULL;
 	struct kv		*upgrade = NULL, *upgrade_ws = NULL;
+	struct kv		*connection_close = NULL;
+	int			 ws_response = 0;
 	struct http_method_node	*hmn;
 	struct http_session	*hs;
 	enum httpmethod		 request_method;
@@ -489,10 +491,12 @@ relay_read_http(struct bufferevent *bev, void *arg)
 		/*
 		 * HTTP 101 Switching Protocols
 		 */
+
 		upgrade = kv_find_value(&desc->http_headers,
 		    "Connection", "upgrade", ",");
 		upgrade_ws = kv_find_value(&desc->http_headers,
 		    "Upgrade", "websocket", ",");
+		ws_response = 0;
 		if (cre->dir == RELAY_DIR_REQUEST && upgrade_ws != NULL) {
 			if ((proto->httpflags & HTTPFLAG_WEBSOCKETS) == 0) {
 				relay_abort_http(con, 403,
@@ -511,6 +515,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 		    desc->http_status == 101) {
 			if (upgrade_ws != NULL && upgrade != NULL &&
 			    (proto->httpflags & HTTPFLAG_WEBSOCKETS)) {
+				ws_response = 1;
 				cre->dst->toread = TOREAD_UNLIMITED;
 				cre->dst->bev->readcb = relay_read;
 			} else {
@@ -519,6 +524,9 @@ relay_read_http(struct bufferevent *bev, void *arg)
 				return;
 			}
 		}
+
+		connection_close = kv_find_value(&desc->http_headers,
+		    "Connection", "close", ",");
 
 		switch (desc->http_method) {
 		case HTTP_METHOD_CONNECT:
@@ -586,9 +594,12 @@ relay_read_http(struct bufferevent *bev, void *arg)
 
 		/*
 		 * Ask the server to close the connection after this request
-		 * since we don't read any further request headers.
+		 * since we don't read any further request headers. Only add
+		 * this header if it does not already exist or if this is a
+		 * outbound websocket upgrade response.
 		 */
-		if (cre->toread == TOREAD_UNLIMITED)
+		if (cre->toread == TOREAD_UNLIMITED &&
+			connection_close == NULL && !ws_response)
 			if (kv_add(&desc->http_headers, "Connection",
 			    "close", 0) == NULL)
 				goto fail;
