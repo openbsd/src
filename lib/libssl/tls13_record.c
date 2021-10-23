@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record.c,v 1.8 2021/05/16 14:19:04 jsing Exp $ */
+/* $OpenBSD: tls13_record.c,v 1.9 2021/10/23 13:12:14 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -26,7 +26,7 @@ struct tls13_record {
 	size_t data_len;
 	CBS cbs;
 
-	struct tls13_buffer *buf;
+	struct tls_buffer *buf;
 };
 
 struct tls13_record *
@@ -36,7 +36,7 @@ tls13_record_new(void)
 
 	if ((rec = calloc(1, sizeof(struct tls13_record))) == NULL)
 		goto err;
-	if ((rec->buf = tls13_buffer_new(TLS13_RECORD_MAX_LEN)) == NULL)
+	if ((rec->buf = tls_buffer_new(TLS13_RECORD_MAX_LEN)) == NULL)
 		goto err;
 
 	return rec;
@@ -53,7 +53,7 @@ tls13_record_free(struct tls13_record *rec)
 	if (rec == NULL)
 		return;
 
-	tls13_buffer_free(rec->buf);
+	tls_buffer_free(rec->buf);
 
 	freezero(rec->data, rec->data_len);
 	freezero(rec, sizeof(struct tls13_record));
@@ -118,7 +118,7 @@ tls13_record_set_data(struct tls13_record *rec, uint8_t *data, size_t data_len)
 }
 
 ssize_t
-tls13_record_recv(struct tls13_record *rec, tls13_read_cb wire_read,
+tls13_record_recv(struct tls13_record *rec, tls_read_cb wire_read,
     void *wire_arg)
 {
 	uint16_t rec_len, rec_version;
@@ -130,11 +130,11 @@ tls13_record_recv(struct tls13_record *rec, tls13_read_cb wire_read,
 		return TLS13_IO_FAILURE;
 
 	if (rec->content_type == 0) {
-		if ((ret = tls13_buffer_extend(rec->buf,
+		if ((ret = tls_buffer_extend(rec->buf,
 		    TLS13_RECORD_HEADER_LEN, wire_read, wire_arg)) <= 0)
 			return ret;
 
-		tls13_buffer_cbs(rec->buf, &cbs);
+		tls_buffer_cbs(rec->buf, &cbs);
 
 		if (!CBS_get_u8(&cbs, &content_type))
 			return TLS13_IO_FAILURE;
@@ -153,18 +153,18 @@ tls13_record_recv(struct tls13_record *rec, tls13_read_cb wire_read,
 		rec->rec_len = rec_len;
 	}
 
-	if ((ret = tls13_buffer_extend(rec->buf,
+	if ((ret = tls_buffer_extend(rec->buf,
 	    TLS13_RECORD_HEADER_LEN + rec->rec_len, wire_read, wire_arg)) <= 0)
 		return ret;
 
-	if (!tls13_buffer_finish(rec->buf, &rec->data, &rec->data_len))
+	if (!tls_buffer_finish(rec->buf, &rec->data, &rec->data_len))
 		return TLS13_IO_FAILURE;
 
 	return rec->data_len;
 }
 
 ssize_t
-tls13_record_send(struct tls13_record *rec, tls13_write_cb wire_write,
+tls13_record_send(struct tls13_record *rec, tls_write_cb wire_write,
     void *wire_arg)
 {
 	ssize_t ret;

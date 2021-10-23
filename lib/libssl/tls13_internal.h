@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.94 2021/09/16 19:25:30 jsing Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.95 2021/10/23 13:12:14 jsing Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -24,6 +24,7 @@
 #include <openssl/ssl.h>
 
 #include "bytestring.h"
+#include "tls_internal.h"
 
 __BEGIN_HIDDEN_DECLS
 
@@ -89,27 +90,9 @@ __BEGIN_HIDDEN_DECLS
 typedef void (*tls13_alert_cb)(uint8_t _alert_desc, void *_cb_arg);
 typedef ssize_t (*tls13_phh_recv_cb)(void *_cb_arg, CBS *_cbs);
 typedef void (*tls13_phh_sent_cb)(void *_cb_arg);
-typedef ssize_t (*tls13_read_cb)(void *_buf, size_t _buflen, void *_cb_arg);
-typedef ssize_t (*tls13_write_cb)(const void *_buf, size_t _buflen,
-    void *_cb_arg);
-typedef ssize_t (*tls13_flush_cb)(void *_cb_arg);
 typedef void (*tls13_handshake_message_cb)(void *_cb_arg);
 typedef void (*tls13_info_cb)(void *_cb_arg, int _state, int _ret);
 typedef int (*tls13_ocsp_status_cb)(void *_cb_arg);
-
-/*
- * Buffers.
- */
-struct tls13_buffer;
-
-struct tls13_buffer *tls13_buffer_new(size_t init_size);
-int tls13_buffer_set_data(struct tls13_buffer *buf, CBS *data);
-void tls13_buffer_free(struct tls13_buffer *buf);
-ssize_t tls13_buffer_extend(struct tls13_buffer *buf, size_t len,
-    tls13_read_cb read_cb, void *cb_arg);
-void tls13_buffer_cbs(struct tls13_buffer *buf, CBS *cbs);
-int tls13_buffer_finish(struct tls13_buffer *buf, uint8_t **out,
-    size_t *out_len);
 
 /*
  * Secrets.
@@ -199,9 +182,9 @@ int tls13_key_share_derive(struct tls13_key_share *ks, uint8_t **shared_key,
 struct tls13_record_layer;
 
 struct tls13_record_layer_callbacks {
-	tls13_read_cb wire_read;
-	tls13_write_cb wire_write;
-	tls13_flush_cb wire_flush;
+	tls_read_cb wire_read;
+	tls_write_cb wire_write;
+	tls_flush_cb wire_flush;
 	tls13_alert_cb alert_recv;
 	tls13_alert_cb alert_sent;
 	tls13_phh_recv_cb phh_recv;

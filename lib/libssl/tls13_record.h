@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record.h,v 1.4 2021/05/16 14:20:29 jsing Exp $ */
+/* $OpenBSD: tls13_record.h,v 1.5 2021/10/23 13:12:14 jsing Exp $ */
 /*
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -56,9 +56,9 @@ int tls13_record_content(struct tls13_record *_rec, CBS *_cbs);
 void tls13_record_data(struct tls13_record *_rec, CBS *_cbs);
 int tls13_record_set_data(struct tls13_record *_rec, uint8_t *_data,
     size_t _data_len);
-ssize_t tls13_record_recv(struct tls13_record *_rec, tls13_read_cb _wire_read,
+ssize_t tls13_record_recv(struct tls13_record *_rec, tls_read_cb _wire_read,
     void *_wire_arg);
-ssize_t tls13_record_send(struct tls13_record *_rec, tls13_write_cb _wire_write,
+ssize_t tls13_record_send(struct tls13_record *_rec, tls_write_cb _wire_write,
     void *_wire_arg);
 
 __END_HIDDEN_DECLS

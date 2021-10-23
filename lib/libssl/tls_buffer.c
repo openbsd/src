@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_buffer.c,v 1.5 2021/05/16 14:19:04 jsing Exp $ */
+/* $OpenBSD: tls_buffer.c,v 1.1 2021/10/23 13:12:14 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -15,49 +15,52 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "bytestring.h"
-#include "tls13_internal.h"
+#include <stdlib.h>
+#include <string.h>
 
-struct tls13_buffer {
+#include "bytestring.h"
+#include "tls_internal.h"
+
+struct tls_buffer {
 	size_t capacity;
 	uint8_t *data;
 	size_t len;
 	size_t offset;
 };
 
-static int tls13_buffer_resize(struct tls13_buffer *buf, size_t capacity);
+static int tls_buffer_resize(struct tls_buffer *buf, size_t capacity);
 
-struct tls13_buffer *
-tls13_buffer_new(size_t init_size)
+struct tls_buffer *
+tls_buffer_new(size_t init_size)
 {
-	struct tls13_buffer *buf = NULL;
+	struct tls_buffer *buf = NULL;
 
-	if ((buf = calloc(1, sizeof(struct tls13_buffer))) == NULL)
+	if ((buf = calloc(1, sizeof(struct tls_buffer))) == NULL)
 		goto err;
 
-	if (!tls13_buffer_resize(buf, init_size))
+	if (!tls_buffer_resize(buf, init_size))
 		goto err;
 
 	return buf;
 
  err:
-	tls13_buffer_free(buf);
+	tls_buffer_free(buf);
 
 	return NULL;
 }
 
 void
-tls13_buffer_free(struct tls13_buffer *buf)
+tls_buffer_free(struct tls_buffer *buf)
 {
 	if (buf == NULL)
 		return;
 
 	freezero(buf->data, buf->capacity);
-	freezero(buf, sizeof(struct tls13_buffer));
+	freezero(buf, sizeof(struct tls_buffer));
 }
 
 static int
-tls13_buffer_resize(struct tls13_buffer *buf, size_t capacity)
+tls_buffer_resize(struct tls_buffer *buf, size_t capacity)
 {
 	uint8_t *data;
 
@@ -74,17 +77,17 @@ tls13_buffer_resize(struct tls13_buffer *buf, size_t capacity)
 }
 
 int
-tls13_buffer_set_data(struct tls13_buffer *buf, CBS *data)
+tls_buffer_set_data(struct tls_buffer *buf, CBS *data)
 {
-	if (!tls13_buffer_resize(buf, CBS_len(data)))
+	if (!tls_buffer_resize(buf, CBS_len(data)))
 		return 0;
 	memcpy(buf->data, CBS_data(data), CBS_len(data));
 	return 1;
 }
 
 ssize_t
-tls13_buffer_extend(struct tls13_buffer *buf, size_t len,
-    tls13_read_cb read_cb, void *cb_arg)
+tls_buffer_extend(struct tls_buffer *buf, size_t len,
+    tls_read_cb read_cb, void *cb_arg)
 {
 	ssize_t ret;
 
@@ -92,10 +95,10 @@ tls13_buffer_extend(struct tls13_buffer *buf, size_t len,
 		return buf->len;
 
 	if (len < buf->len)
-		return TLS13_IO_FAILURE;
+		return TLS_IO_FAILURE;
 
-	if (!tls13_buffer_resize(buf, len))
-		return TLS13_IO_FAILURE;
+	if (!tls_buffer_resize(buf, len))
+		return TLS_IO_FAILURE;
 
 	for (;;) {
 		if ((ret = read_cb(&buf->data[buf->len],
@@ -103,7 +106,7 @@ tls13_buffer_extend(struct tls13_buffer *buf, size_t len,
 			return ret;
 
 		if (ret > buf->capacity - buf->len)
-			return TLS13_IO_FAILURE;
+			return TLS_IO_FAILURE;
 
 		buf->len += ret;
 
@@ -113,13 +116,13 @@ tls13_buffer_extend(struct tls13_buffer *buf, size_t len,
 }
 
 void
-tls13_buffer_cbs(struct tls13_buffer *buf, CBS *cbs)
+tls_buffer_cbs(struct tls_buffer *buf, CBS *cbs)
 {
 	CBS_init(cbs, buf->data, buf->len);
 }
 
 int
-tls13_buffer_finish(struct tls13_buffer *buf, uint8_t **out, size_t *out_len)
+tls_buffer_finish(struct tls_buffer *buf, uint8_t **out, size_t *out_len)
 {
 	if (out == NULL || out_len == NULL)
 		return 0;
