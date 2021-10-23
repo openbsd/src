@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.80 2021/10/23 15:42:35 tobhe Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.81 2021/10/23 22:00:51 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -526,7 +526,7 @@ ipcomp_output(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	/* Release the crypto descriptors */
 	crypto_freereq(crp);
 
-	error = ipcomp_output_cb(tdb, tc, m, crp->crp_ilen, crp->crp_olen);
+	error = ipcomp_output_cb(tdb, tc, m, ilen, olen);
 	if (error) {
 		ipsecstat_inc(ipsec_odrops);
 		tdb->tdb_odrops++;
