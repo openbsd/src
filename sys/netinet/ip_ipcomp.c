@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.81 2021/10/23 22:00:51 bluhm Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.82 2021/10/23 22:19:37 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -131,10 +131,11 @@ ipcomp_zeroize(struct tdb *tdbp)
  * ipcomp_input() gets called to uncompress an input packet
  */
 int
-ipcomp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
+ipcomp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 {
 	const struct comp_algo *ipcompx = tdb->tdb_compalgxform;
-	struct tdb_crypto *tc;
+	struct mbuf *m = *mp;
+	struct tdb_crypto *tc = NULL;
 	int hlen, error, clen;
 
 	struct cryptodesc *crdc = NULL;
@@ -145,19 +146,18 @@ ipcomp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	/* Get crypto descriptors */
 	crp = crypto_getreq(1);
 	if (crp == NULL) {
-		m_freem(m);
 		DPRINTF("failed to acquire crypto descriptors");
 		ipcompstat_inc(ipcomps_crypto);
-		return ENOBUFS;
+		error = ENOBUFS;
+		goto drop;
 	}
 	/* Get IPsec-specific opaque pointer */
 	tc = malloc(sizeof(*tc), M_XDATA, M_NOWAIT | M_ZERO);
 	if (tc == NULL) {
-		m_freem(m);
-		crypto_freereq(crp);
 		DPRINTF("failed to allocate tdb_crypto");
 		ipcompstat_inc(ipcomps_crypto);
-		return ENOBUFS;
+		error = ENOBUFS;
+		goto drop;
 	}
 	crdc = &crp->crp_desc[0];
 
@@ -194,10 +194,8 @@ ipcomp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	if (crp->crp_etype) {
 		DPRINTF("crypto error %d", crp->crp_etype);
 		ipsecstat_inc(ipsec_noxform);
-		free(tc, M_XDATA, 0);
-		m_freem(m);
-		crypto_freereq(crp);
-		return crp->crp_etype;
+		error = crp->crp_etype;
+		goto drop;
 	}
 
 	clen = crp->crp_olen;
@@ -212,6 +210,12 @@ ipcomp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	}
 
 	return 0;
+
+ drop:
+	m_freemp(mp);
+	crypto_freereq(crp);
+	free(tc, M_XDATA, 0);
+	return error;
 }
 
 int

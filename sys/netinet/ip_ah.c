@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.159 2021/10/23 15:42:35 tobhe Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.160 2021/10/23 22:19:37 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -197,9 +197,9 @@ ah_zeroize(struct tdb *tdbp)
  * Massage IPv4/IPv6 headers for AH processing.
  */
 int
-ah_massage_headers(struct mbuf **m0, int af, int skip, int alg, int out)
+ah_massage_headers(struct mbuf **mp, int af, int skip, int alg, int out)
 {
-	struct mbuf *m = *m0;
+	struct mbuf *m = *mp;
 	unsigned char *ptr;
 	int off, count;
 	struct ip *ip;
@@ -216,11 +216,12 @@ ah_massage_headers(struct mbuf **m0, int af, int skip, int alg, int out)
 		 * and option processing -- just make sure they're in
 		 * contiguous memory.
 		 */
-		*m0 = m = m_pullup(m, skip);
+		m = *mp = m_pullup(m, skip);
 		if (m == NULL) {
 			DPRINTF("m_pullup() failed");
 			ahstat_inc(ahs_hdrops);
-			return ENOBUFS;
+			error = ENOBUFS;
+			goto drop;
 		}
 
 		/* Fix the IP header */
@@ -240,8 +241,8 @@ ah_massage_headers(struct mbuf **m0, int af, int skip, int alg, int out)
 				    "for option %d",
 				    ptr[off]);
 				ahstat_inc(ahs_hdrops);
-				m_freem(m);
-				return EINVAL;
+				error = EINVAL;
+				goto drop;
 			}
 
 			switch (ptr[off]) {
@@ -264,8 +265,8 @@ ah_massage_headers(struct mbuf **m0, int af, int skip, int alg, int out)
 					    "for option %d",
 					    ptr[off]);
 					ahstat_inc(ahs_hdrops);
-					m_freem(m);
-					return EINVAL;
+					error = EINVAL;
+					goto drop;
 				}
 
 				off += ptr[off + 1];
@@ -279,8 +280,8 @@ ah_massage_headers(struct mbuf **m0, int af, int skip, int alg, int out)
 					    "for option %d",
 					    ptr[off]);
 					ahstat_inc(ahs_hdrops);
-					m_freem(m);
-					return EINVAL;
+					error = EINVAL;
+					goto drop;
 				}
 
 				/*
@@ -307,8 +308,8 @@ ah_massage_headers(struct mbuf **m0, int af, int skip, int alg, int out)
 					    "for option %d",
 					    ptr[off]);
 					ahstat_inc(ahs_hdrops);
-					m_freem(m);
-					return EINVAL;
+					error = EINVAL;
+					goto drop;
 				}
 
 				/* Zeroize all other options. */
@@ -322,8 +323,8 @@ ah_massage_headers(struct mbuf **m0, int af, int skip, int alg, int out)
 			if (off > skip)	{
 				DPRINTF("malformed IPv4 options header");
 				ahstat_inc(ahs_hdrops);
-				m_freem(m);
-				return EINVAL;
+				error = EINVAL;
+				goto drop;
 			}
 		}
 
@@ -338,8 +339,8 @@ ah_massage_headers(struct mbuf **m0, int af, int skip, int alg, int out)
 		if (ip6.ip6_plen == 0) {
 			DPRINTF("unsupported IPv6 jumbogram");
 			ahstat_inc(ahs_hdrops);
-			m_freem(m);
-			return EMSGSIZE;
+			error = EMSGSIZE;
+			goto drop;
 		}
 
 		ip6.ip6_flow = 0;
@@ -359,8 +360,7 @@ ah_massage_headers(struct mbuf **m0, int af, int skip, int alg, int out)
 		if (error) {
 			DPRINTF("m_copyback no memory");
 			ahstat_inc(ahs_hdrops);
-			m_freem(m);
-			return error;
+			goto drop;
 		}
 
 		/* Let's deal with the remaining headers (if any). */
@@ -372,8 +372,8 @@ ah_massage_headers(struct mbuf **m0, int af, int skip, int alg, int out)
 					DPRINTF("failed to allocate "
 					    "memory for IPv6 headers");
 					ahstat_inc(ahs_hdrops);
-					m_freem(m);
-					return ENOBUFS;
+					error = ENOBUFS;
+					goto drop;
 				}
 
 				/*
@@ -478,8 +478,7 @@ ah_massage_headers(struct mbuf **m0, int af, int skip, int alg, int out)
 						if (alloc)
 							free(ptr, M_XDATA, 0);
 						ahstat_inc(ahs_hdrops);
-						m_freem(m);
-						return error;
+						goto drop;
 					}
 					rh0->ip6r0_segleft = 0;
 				}
@@ -492,8 +491,8 @@ error6:
 				if (alloc)
 					free(ptr, M_XDATA, 0);
 				ahstat_inc(ahs_hdrops);
-				m_freem(m);
-				return EINVAL;
+				error = EINVAL;
+				goto drop;
 			}
 
 			/* Advance. */
@@ -508,8 +507,7 @@ error6:
 			free(ptr, M_XDATA, 0);
 			if (error) {
 				ahstat_inc(ahs_hdrops);
-				m_freem(m);
-				return error;
+				goto drop;
 			}
 		}
 
@@ -518,6 +516,10 @@ error6:
 	}
 
 	return 0;
+
+ drop:
+	m_freemp(mp);
+	return error;
 }
 
 /*
@@ -525,9 +527,10 @@ error6:
  * passes authentication.
  */
 int
-ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
+ah_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 {
 	const struct auth_hash *ahx = tdb->tdb_authalgxform;
+	struct mbuf *m = *mp;
 	struct tdb_crypto *tc = NULL;
 	u_int32_t btsx, esn;
 	u_int8_t hl;
@@ -674,13 +677,12 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	m_copyback(m, skip + rplen, ahx->authsize, ipseczeroes, M_NOWAIT);
 
 	/* "Massage" the packet headers for crypto processing. */
-	error = ah_massage_headers(&m, tdb->tdb_dst.sa.sa_family, skip,
+	error = ah_massage_headers(mp, tdb->tdb_dst.sa.sa_family, skip,
 	    ahx->type, 0);
-	if (error) {
-		/* mbuf was freed by callee. */
-		m = NULL;
+	/* callee may change or free mbuf */
+	m = *mp;
+	if (error)
 		goto drop;
-	}
 
 	/* Crypto operation descriptor. */
 	crp->crp_ilen = m->m_pkthdr.len; /* Total input length. */
@@ -728,7 +730,7 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	return 0;
 
  drop:
-	m_freem(m);
+	m_freemp(mp);
 	crypto_freereq(crp);
 	free(tc, M_XDATA, 0);
 	return error;

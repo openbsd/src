@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.262 2020/08/22 17:54:57 gnezdo Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.263 2021/10/23 22:19:37 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -305,7 +305,7 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 			espstat_inc(esps_udpencin);
 			protoff = af == AF_INET ? offsetof(struct ip, ip_p) :
 			    offsetof(struct ip6_hdr, ip6_nxt);
-			ipsec_common_input(m, skip, protoff,
+			ipsec_common_input(mp, skip, protoff,
 			    af, IPPROTO_ESP, 1);
 			return IPPROTO_DONE;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.96 2021/10/22 15:44:20 bluhm Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.97 2021/10/23 22:19:37 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -557,11 +557,11 @@ ipe4_zeroize(struct tdb *tdbp)
 }
 
 int
-ipe4_input(struct mbuf *m, struct tdb *tdb, int hlen, int proto)
+ipe4_input(struct mbuf **mp, struct tdb *tdb, int hlen, int proto)
 {
 	/* This is a rather serious mistake, so no conditional printing. */
 	printf("%s: should never be called\n", __func__);
-	m_freem(m);
+	m_freemp(mp);
 	return EINVAL;
 }
 #endif	/* IPSEC */

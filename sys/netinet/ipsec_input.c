@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.186 2021/10/23 15:42:35 tobhe Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.187 2021/10/23 22:19:37 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -176,7 +176,7 @@ ipsec_init(void)
  * filtering).
  */
 int
-ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
+ipsec_common_input(struct mbuf **mp, int skip, int protoff, int af, int sproto,
     int udpencap)
 {
 #define IPSEC_ISTAT(x,y,z) do {			\
@@ -188,6 +188,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 		ipcompstat_inc(z);		\
 } while (0)
 
+	struct mbuf *m = *mp;
 	union sockaddr_union dst_address;
 	struct tdb *tdbp = NULL;
 	struct ifnet *encif;
@@ -351,7 +352,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 	 * Call appropriate transform and return -- callback takes care of
 	 * everything else.
 	 */
-	error = (*(tdbp->tdb_xform->xf_input))(m, tdbp, skip, protoff);
+	error = (*(tdbp->tdb_xform->xf_input))(mp, tdbp, skip, protoff);
 	if (error) {
 		ipsecstat_inc(ipsec_idrops);
 		tdbp->tdb_idrops++;
@@ -359,7 +360,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 	return error;
 
  drop:
-	m_freem(m);
+	m_freemp(mp);
 	ipsecstat_inc(ipsec_idrops);
 	if (tdbp != NULL)
 		tdbp->tdb_idrops++;
@@ -801,7 +802,7 @@ ah4_input(struct mbuf **mp, int *offp, int proto, int af)
 	    !ah_enable)
 		return rip_input(mp, offp, proto, af);
 
-	ipsec_common_input(*mp, *offp, offsetof(struct ip, ip_p), AF_INET,
+	ipsec_common_input(mp, *offp, offsetof(struct ip, ip_p), AF_INET,
 	    proto, 0);
 	return IPPROTO_DONE;
 }
@@ -827,7 +828,7 @@ esp4_input(struct mbuf **mp, int *offp, int proto, int af)
 	    !esp_enable)
 		return rip_input(mp, offp, proto, af);
 
-	ipsec_common_input(*mp, *offp, offsetof(struct ip, ip_p), AF_INET,
+	ipsec_common_input(mp, *offp, offsetof(struct ip, ip_p), AF_INET,
 	    proto, 0);
 	return IPPROTO_DONE;
 }
@@ -843,7 +844,7 @@ ipcomp4_input(struct mbuf **mp, int *offp, int proto, int af)
 	    !ipcomp_enable)
 		return rip_input(mp, offp, proto, af);
 
-	ipsec_common_input(*mp, *offp, offsetof(struct ip, ip_p), AF_INET,
+	ipsec_common_input(mp, *offp, offsetof(struct ip, ip_p), AF_INET,
 	    proto, 0);
 	return IPPROTO_DONE;
 }
@@ -1020,7 +1021,7 @@ ah6_input(struct mbuf **mp, int *offp, int proto, int af)
 		}
 		protoff += offsetof(struct ip6_ext, ip6e_nxt);
 	}
-	ipsec_common_input(*mp, *offp, protoff, AF_INET6, proto, 0);
+	ipsec_common_input(mp, *offp, protoff, AF_INET6, proto, 0);
 	return IPPROTO_DONE;
 }
 
@@ -1077,7 +1078,7 @@ esp6_input(struct mbuf **mp, int *offp, int proto, int af)
 		}
 		protoff += offsetof(struct ip6_ext, ip6e_nxt);
 	}
-	ipsec_common_input(*mp, *offp, protoff, AF_INET6, proto, 0);
+	ipsec_common_input(mp, *offp, protoff, AF_INET6, proto, 0);
 	return IPPROTO_DONE;
 
 }
@@ -1135,7 +1136,7 @@ ipcomp6_input(struct mbuf **mp, int *offp, int proto, int af)
 
 		protoff += offsetof(struct ip6_ext, ip6e_nxt);
 	}
-	ipsec_common_input(*mp, *offp, protoff, AF_INET6, proto, 0);
+	ipsec_common_input(mp, *offp, protoff, AF_INET6, proto, 0);
 	return IPPROTO_DONE;
 }
 #endif /* INET6 */
