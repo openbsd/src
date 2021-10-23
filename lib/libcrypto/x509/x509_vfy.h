@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.h,v 1.33 2021/10/23 16:17:44 tb Exp $ */
+/* $OpenBSD: x509_vfy.h,v 1.34 2021/10/23 16:18:20 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -85,23 +85,22 @@ typedef struct x509_file_st
 	int *path_type;
 	} X509_CERT_FILE_CTX;
 
-/*******************************/
 /*
-SSL_CTX -> X509_STORE
-		-> X509_LOOKUP
-			->X509_LOOKUP_METHOD
-		-> X509_LOOKUP
-			->X509_LOOKUP_METHOD
-
-SSL	-> X509_STORE_CTX
-		->X509_STORE
-
-The X509_STORE holds the tables etc for verification stuff.
-A X509_STORE_CTX is used while validating a single certificate.
-The X509_STORE has X509_LOOKUPs for looking up certs.
-The X509_STORE then calls a function to actually verify the
-certificate chain.
-*/
+ * SSL_CTX -> X509_STORE
+ *		-> X509_LOOKUP
+ *			->X509_LOOKUP_METHOD
+ *		-> X509_LOOKUP
+ *			->X509_LOOKUP_METHOD
+ *
+ * SSL	-> X509_STORE_CTX
+ *		->X509_STORE
+ *
+ * The X509_STORE holds the tables etc for verification stuff.
+ * A X509_STORE_CTX is used while validating a single certificate.
+ * The X509_STORE has X509_LOOKUPs for looking up certs.
+ * The X509_STORE then calls a function to actually verify the
+ * certificate chain.
+ */
 
 #define X509_LU_RETRY		-1
 #define X509_LU_FAIL		0
