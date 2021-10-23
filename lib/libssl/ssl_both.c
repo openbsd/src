@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_both.c,v 1.35 2021/09/03 13:19:12 jsing Exp $ */
+/* $OpenBSD: ssl_both.c,v 1.36 2021/10/23 08:34:36 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -208,14 +208,12 @@ ssl3_send_finished(SSL *s, int state_a, int state_b)
 int
 ssl3_get_finished(SSL *s, int a, int b)
 {
-	int al, ok, md_len;
-	long n;
+	int al, md_len, ret;
 	CBS cbs;
 
 	/* should actually be 36+4 :-) */
-	n = ssl3_get_message(s, a, b, SSL3_MT_FINISHED, 64, &ok);
-	if (!ok)
-		return ((int)n);
+	if ((ret = ssl3_get_message(s, a, b, SSL3_MT_FINISHED, 64)) <= 0)
+		return ret;
 
 	/* If this occurs, we have missed a message */
 	if (!S3I(s)->change_cipher_spec) {
@@ -227,13 +225,13 @@ ssl3_get_finished(SSL *s, int a, int b)
 
 	md_len = TLS1_FINISH_MAC_LENGTH;
 
-	if (n < 0) {
+	if (s->internal->init_num < 0) {
 		al = SSL_AD_DECODE_ERROR;
 		SSLerror(s, SSL_R_BAD_DIGEST_LENGTH);
 		goto fatal_err;
 	}
 
-	CBS_init(&cbs, s->internal->init_msg, n);
+	CBS_init(&cbs, s->internal->init_msg, s->internal->init_num);
 
 	if (S3I(s)->hs.peer_finished_len != md_len ||
 	    CBS_len(&cbs) != md_len) {
@@ -397,8 +395,8 @@ ssl3_output_cert_chain(SSL *s, CBB *cbb, CERT_PKEY *cpk)
  * The first four bytes (msg_type and length) are read in state 'st1',
  * the body is read in state 'stn'.
  */
-long
-ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
+int
+ssl3_get_message(SSL *s, int st1, int stn, int mt, long max)
 {
 	unsigned char *p;
 	uint32_t l;
@@ -408,7 +406,7 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 	uint8_t u8;
 
 	if (SSL_is_dtls(s))
-		return (dtls1_get_message(s, st1, stn, mt, max, ok));
+		return dtls1_get_message(s, st1, stn, mt, max);
 
 	if (S3I(s)->hs.tls12.reuse_message) {
 		S3I(s)->hs.tls12.reuse_message = 0;
@@ -417,11 +415,10 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 			SSLerror(s, SSL_R_UNEXPECTED_MESSAGE);
 			goto fatal_err;
 		}
-		*ok = 1;
 		s->internal->init_msg = s->internal->init_buf->data +
 		    SSL3_HM_HEADER_LENGTH;
 		s->internal->init_num = (int)S3I(s)->hs.tls12.message_size;
-		return s->internal->init_num;
+		return 1;
 	}
 
 	p = (unsigned char *)s->internal->init_buf->data;
@@ -436,7 +433,6 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 				    SSL3_HM_HEADER_LENGTH - s->internal->init_num, 0);
 				if (i <= 0) {
 					s->internal->rwstate = SSL_READING;
-					*ok = 0;
 					return i;
 				}
 				s->internal->init_num += i;
@@ -501,7 +497,6 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 		    &p[s->internal->init_num], n, 0);
 		if (i <= 0) {
 			s->internal->rwstate = SSL_READING;
-			*ok = 0;
 			return i;
 		}
 		s->internal->init_num += i;
@@ -518,14 +513,12 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 		    (size_t)s->internal->init_num + SSL3_HM_HEADER_LENGTH);
 	}
 
-	*ok = 1;
-	return (s->internal->init_num);
+	return 1;
 
  fatal_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
  err:
-	*ok = 0;
-	return (-1);
+	return -1;
 }
 
 int

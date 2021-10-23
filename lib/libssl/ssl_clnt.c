@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.112 2021/10/23 08:13:02 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.113 2021/10/23 08:34:36 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -779,16 +779,14 @@ ssl3_send_client_hello(SSL *s)
 int
 ssl3_get_dtls_hello_verify(SSL *s)
 {
-	long n;
-	int al, ok = 0;
+	CBS hello_verify_request, cookie;
 	size_t cookie_len;
 	uint16_t ssl_version;
-	CBS hello_verify_request, cookie;
+	int al, ret;
 
-	n = ssl3_get_message(s, DTLS1_ST_CR_HELLO_VERIFY_REQUEST_A,
-	    DTLS1_ST_CR_HELLO_VERIFY_REQUEST_B, -1, s->internal->max_cert_list, &ok);
-	if (!ok)
-		return ((int)n);
+	if ((ret = ssl3_get_message(s, DTLS1_ST_CR_HELLO_VERIFY_REQUEST_A,
+	    DTLS1_ST_CR_HELLO_VERIFY_REQUEST_B, -1, s->internal->max_cert_list)) <= 0)
+		return ret;
 
 	if (S3I(s)->hs.tls12.message_type != DTLS1_MT_HELLO_VERIFY_REQUEST) {
 		D1I(s)->send_cookie = 0;
@@ -796,10 +794,11 @@ ssl3_get_dtls_hello_verify(SSL *s)
 		return (1);
 	}
 
-	if (n < 0)
+	if (s->internal->init_num < 0)
 		goto decode_err;
 
-	CBS_init(&hello_verify_request, s->internal->init_msg, n);
+	CBS_init(&hello_verify_request, s->internal->init_msg,
+	    s->internal->init_num);
 
 	if (!CBS_get_u16(&hello_verify_request, &ssl_version))
 		goto decode_err;
@@ -848,20 +847,18 @@ ssl3_get_server_hello(SSL *s)
 	const SSL_METHOD *method;
 	unsigned long alg_k;
 	size_t outlen;
-	int al, ok;
-	long n;
+	int al, ret;
 
 	s->internal->first_packet = 1;
-	n = ssl3_get_message(s, SSL3_ST_CR_SRVR_HELLO_A,
-	    SSL3_ST_CR_SRVR_HELLO_B, -1, 20000, /* ?? */ &ok);
-	if (!ok)
-		return ((int)n);
+	if ((ret = ssl3_get_message(s, SSL3_ST_CR_SRVR_HELLO_A,
+	    SSL3_ST_CR_SRVR_HELLO_B, -1, 20000 /* ?? */)) <= 0)
+		return ret;
 	s->internal->first_packet = 0;
 
-	if (n < 0)
+	if (s->internal->init_num < 0)
 		goto decode_err;
 
-	CBS_init(&cbs, s->internal->init_msg, n);
+	CBS_init(&cbs, s->internal->init_msg, s->internal->init_num);
 
 	if (SSL_is_dtls(s)) {
 		if (S3I(s)->hs.tls12.message_type == DTLS1_MT_HELLO_VERIFY_REQUEST) {
@@ -1103,19 +1100,19 @@ ssl3_get_server_hello(SSL *s)
 int
 ssl3_get_server_certificate(SSL *s)
 {
-	int			 al, i, ok, ret = -1;
-	long			 n;
-	CBS			 cbs, cert_list;
-	X509			*x = NULL;
-	const unsigned char	*q;
-	STACK_OF(X509)		*sk = NULL;
-	SESS_CERT		*sc;
-	EVP_PKEY		*pkey = NULL;
+	int al, i, ret;
+	CBS cbs, cert_list;
+	X509 *x = NULL;
+	const unsigned char *q;
+	STACK_OF(X509) *sk = NULL;
+	SESS_CERT *sc;
+	EVP_PKEY *pkey = NULL;
 
-	n = ssl3_get_message(s, SSL3_ST_CR_CERT_A,
-	    SSL3_ST_CR_CERT_B, -1, s->internal->max_cert_list, &ok);
-	if (!ok)
-		return ((int)n);
+	if ((ret = ssl3_get_message(s, SSL3_ST_CR_CERT_A,
+	    SSL3_ST_CR_CERT_B, -1, s->internal->max_cert_list)) <= 0)
+		return ret;
+
+	ret = -1;
 
 	if (S3I(s)->hs.tls12.message_type == SSL3_MT_SERVER_KEY_EXCHANGE) {
 		S3I(s)->hs.tls12.reuse_message = 1;
@@ -1128,16 +1125,15 @@ ssl3_get_server_certificate(SSL *s)
 		goto fatal_err;
 	}
 
-
 	if ((sk = sk_X509_new_null()) == NULL) {
 		SSLerror(s, ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
-	if (n < 0)
+	if (s->internal->init_num < 0)
 		goto decode_err;
 
-	CBS_init(&cbs, s->internal->init_msg, n);
+	CBS_init(&cbs, s->internal->init_msg, s->internal->init_num);
 	if (CBS_len(&cbs) < 3)
 		goto decode_err;
 
@@ -1463,9 +1459,9 @@ ssl3_get_server_key_exchange(SSL *s)
 	EVP_PKEY *pkey = NULL;
 	EVP_MD_CTX md_ctx;
 	const unsigned char *param;
-	long n, alg_k, alg_a;
-	int al, ok;
 	size_t param_len;
+	long alg_k, alg_a;
+	int al, ret;
 
 	EVP_MD_CTX_init(&md_ctx);
 
@@ -1476,15 +1472,14 @@ ssl3_get_server_key_exchange(SSL *s)
 	 * Use same message size as in ssl3_get_certificate_request()
 	 * as ServerKeyExchange message may be skipped.
 	 */
-	n = ssl3_get_message(s, SSL3_ST_CR_KEY_EXCH_A,
-	    SSL3_ST_CR_KEY_EXCH_B, -1, s->internal->max_cert_list, &ok);
-	if (!ok)
-		return ((int)n);
+	if ((ret = ssl3_get_message(s, SSL3_ST_CR_KEY_EXCH_A,
+	    SSL3_ST_CR_KEY_EXCH_B, -1, s->internal->max_cert_list)) <= 0)
+		return ret;
 
-	if (n < 0)
+	if (s->internal->init_num < 0)
 		goto err;
 
-	CBS_init(&cbs, s->internal->init_msg, n);
+	CBS_init(&cbs, s->internal->init_msg, s->internal->init_num);
 
 	if (S3I(s)->hs.tls12.message_type != SSL3_MT_SERVER_KEY_EXCHANGE) {
 		/*
@@ -1617,17 +1612,17 @@ ssl3_get_server_key_exchange(SSL *s)
 int
 ssl3_get_certificate_request(SSL *s)
 {
-	int			 ok, ret = 0;
-	long			 n;
-	CBS			 cert_request, cert_types, rdn_list;
-	X509_NAME		*xn = NULL;
-	const unsigned char	*q;
-	STACK_OF(X509_NAME)	*ca_sk = NULL;
+	CBS cert_request, cert_types, rdn_list;
+	X509_NAME *xn = NULL;
+	const unsigned char *q;
+	STACK_OF(X509_NAME) *ca_sk = NULL;
+	int ret;
 
-	n = ssl3_get_message(s, SSL3_ST_CR_CERT_REQ_A,
-	    SSL3_ST_CR_CERT_REQ_B, -1, s->internal->max_cert_list, &ok);
-	if (!ok)
-		return ((int)n);
+	if ((ret = ssl3_get_message(s, SSL3_ST_CR_CERT_REQ_A,
+	    SSL3_ST_CR_CERT_REQ_B, -1, s->internal->max_cert_list)) <= 0)
+		return ret;
+
+	ret = 0;
 
 	S3I(s)->hs.tls12.cert_request = 0;
 
@@ -1654,9 +1649,9 @@ ssl3_get_certificate_request(SSL *s)
 		goto err;
 	}
 
-	if (n < 0)
+	if (s->internal->init_num < 0)
 		goto decode_err;
-	CBS_init(&cert_request, s->internal->init_msg, n);
+	CBS_init(&cert_request, s->internal->init_msg, s->internal->init_num);
 
 	if ((ca_sk = sk_X509_NAME_new(ca_dn_cmp)) == NULL) {
 		SSLerror(s, ERR_R_MALLOC_FAILURE);
@@ -1761,15 +1756,15 @@ ca_dn_cmp(const X509_NAME * const *a, const X509_NAME * const *b)
 int
 ssl3_get_new_session_ticket(SSL *s)
 {
-	int			 ok, al, ret = 0;
-	uint32_t		 lifetime_hint;
-	long			 n;
-	CBS			 cbs, session_ticket;
+	uint32_t lifetime_hint;
+	CBS cbs, session_ticket;
+	int al, ret;
 
-	n = ssl3_get_message(s, SSL3_ST_CR_SESSION_TICKET_A,
-	    SSL3_ST_CR_SESSION_TICKET_B, -1, 16384, &ok);
-	if (!ok)
-		return ((int)n);
+	if ((ret = ssl3_get_message(s, SSL3_ST_CR_SESSION_TICKET_A,
+	    SSL3_ST_CR_SESSION_TICKET_B, -1, 16384)) <= 0)
+		return ret;
+
+	ret = 0;
 
 	if (S3I(s)->hs.tls12.message_type == SSL3_MT_FINISHED) {
 		S3I(s)->hs.tls12.reuse_message = 1;
@@ -1781,13 +1776,13 @@ ssl3_get_new_session_ticket(SSL *s)
 		goto fatal_err;
 	}
 
-	if (n < 0) {
+	if (s->internal->init_num < 0) {
 		al = SSL_AD_DECODE_ERROR;
 		SSLerror(s, SSL_R_LENGTH_MISMATCH);
 		goto fatal_err;
 	}
 
-	CBS_init(&cbs, s->internal->init_msg, n);
+	CBS_init(&cbs, s->internal->init_msg, s->internal->init_num);
 	if (!CBS_get_u32(&cbs, &lifetime_hint) ||
 	    !CBS_get_u16_length_prefixed(&cbs, &session_ticket) ||
 	    CBS_len(&cbs) != 0) {
@@ -1833,15 +1828,13 @@ ssl3_get_new_session_ticket(SSL *s)
 int
 ssl3_get_cert_status(SSL *s)
 {
-	CBS			 cert_status, response;
-	int			 ok, al;
-	long			 n;
-	uint8_t			 status_type;
+	CBS cert_status, response;
+	uint8_t	status_type;
+	int al, ret;
 
-	n = ssl3_get_message(s, SSL3_ST_CR_CERT_STATUS_A,
-	    SSL3_ST_CR_CERT_STATUS_B, -1, 16384, &ok);
-	if (!ok)
-		return ((int)n);
+	if ((ret = ssl3_get_message(s, SSL3_ST_CR_CERT_STATUS_A,
+	    SSL3_ST_CR_CERT_STATUS_B, -1, 16384)) <= 0)
+		return ret;
 
 	if (S3I(s)->hs.tls12.message_type == SSL3_MT_SERVER_KEY_EXCHANGE) {
 		/*
@@ -1849,8 +1842,6 @@ ssl3_get_cert_status(SSL *s)
 		 * response, and has decided to head directly to key exchange.
 		 */
 		if (s->ctx->internal->tlsext_status_cb) {
-			int ret;
-
 			free(s->internal->tlsext_ocsp_resp);
 			s->internal->tlsext_ocsp_resp = NULL;
 			s->internal->tlsext_ocsp_resp_len = 0;
@@ -1879,14 +1870,14 @@ ssl3_get_cert_status(SSL *s)
 		goto fatal_err;
 	}
 
-	if (n < 0) {
+	if (s->internal->init_num < 0) {
 		/* need at least status type + length */
 		al = SSL_AD_DECODE_ERROR;
 		SSLerror(s, SSL_R_LENGTH_MISMATCH);
 		goto fatal_err;
 	}
 
-	CBS_init(&cert_status, s->internal->init_msg, n);
+	CBS_init(&cert_status, s->internal->init_msg, s->internal->init_num);
 	if (!CBS_get_u8(&cert_status, &status_type) ||
 	    CBS_len(&cert_status) < 3) {
 		/* need at least status type + length */
@@ -1939,23 +1930,21 @@ ssl3_get_cert_status(SSL *s)
 int
 ssl3_get_server_done(SSL *s)
 {
-	int	ok, ret = 0;
-	long	n;
+	int ret;
 
-	n = ssl3_get_message(s, SSL3_ST_CR_SRVR_DONE_A,
-	    SSL3_ST_CR_SRVR_DONE_B, SSL3_MT_SERVER_DONE,
-	    30, /* should be very small, like 0 :-) */ &ok);
-	if (!ok)
-		return ((int)n);
+	if ((ret = ssl3_get_message(s, SSL3_ST_CR_SRVR_DONE_A,
+	    SSL3_ST_CR_SRVR_DONE_B, SSL3_MT_SERVER_DONE, 
+	    30 /* should be very small, like 0 :-) */)) <= 0)
+		return ret;
 
-	if (n > 0) {
+	if (s->internal->init_num != 0) {
 		/* should contain no data */
 		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
 		SSLerror(s, SSL_R_LENGTH_MISMATCH);
-		return (-1);
+		return -1;
 	}
-	ret = 1;
-	return (ret);
+
+	return 1;
 }
 
 static int
@@ -2756,18 +2745,16 @@ ssl3_check_cert_and_algorithm(SSL *s)
 int
 ssl3_check_finished(SSL *s)
 {
-	int	ok;
-	long	n;
+	int ret;
 
 	/* If we have no ticket it cannot be a resumed session. */
 	if (!s->session->tlsext_tick)
 		return (1);
 	/* this function is called when we really expect a Certificate
 	 * message, so permit appropriate message length */
-	n = ssl3_get_message(s, SSL3_ST_CR_CERT_A,
-	    SSL3_ST_CR_CERT_B, -1, s->internal->max_cert_list, &ok);
-	if (!ok)
-		return ((int)n);
+	if ((ret = ssl3_get_message(s, SSL3_ST_CR_CERT_A,
+	    SSL3_ST_CR_CERT_B, -1, s->internal->max_cert_list)) <= 0)
+		return ret;
 
 	S3I(s)->hs.tls12.reuse_message = 1;
 	if ((S3I(s)->hs.tls12.message_type == SSL3_MT_FINISHED) ||

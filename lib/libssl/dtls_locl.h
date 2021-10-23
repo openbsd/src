@@ -1,4 +1,4 @@
-/* $OpenBSD: dtls_locl.h,v 1.7 2021/09/04 14:24:28 jsing Exp $ */
+/* $OpenBSD: dtls_locl.h,v 1.8 2021/10/23 08:34:36 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -223,7 +223,7 @@ void dtls1_free(SSL *s);
 void dtls1_clear(SSL *s);
 long dtls1_ctrl(SSL *s, int cmd, long larg, void *parg);
 
-long dtls1_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok);
+int dtls1_get_message(SSL *s, int st1, int stn, int mt, long max);
 int dtls1_get_record(SSL *s);
 
 __END_HIDDEN_DECLS

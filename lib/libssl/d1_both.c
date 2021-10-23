@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_both.c,v 1.78 2021/09/04 14:24:28 jsing Exp $ */
+/* $OpenBSD: d1_both.c,v 1.79 2021/10/23 08:34:36 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -368,13 +368,13 @@ dtls1_do_write(SSL *s, int type)
  * Read an entire handshake message.  Handshake messages arrive in
  * fragments.
  */
-long
-dtls1_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
+int
+dtls1_get_message(SSL *s, int st1, int stn, int mt, long max)
 {
-	int i, al;
 	struct hm_header_st *msg_hdr;
 	unsigned char *p;
 	unsigned long msg_len;
+	int i, al, ok;
 
 	/*
 	 * s3->internal->tmp is used to store messages that are unexpected, caused
@@ -387,21 +387,20 @@ dtls1_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 			SSLerror(s, SSL_R_UNEXPECTED_MESSAGE);
 			goto fatal_err;
 		}
-		*ok = 1;
 		s->internal->init_msg = s->internal->init_buf->data + DTLS1_HM_HEADER_LENGTH;
 		s->internal->init_num = (int)S3I(s)->hs.tls12.message_size;
-		return s->internal->init_num;
+		return 1;
 	}
 
 	msg_hdr = &D1I(s)->r_msg_hdr;
 	memset(msg_hdr, 0, sizeof(struct hm_header_st));
 
  again:
-	i = dtls1_get_message_fragment(s, st1, stn, max, ok);
+	i = dtls1_get_message_fragment(s, st1, stn, max, &ok);
 	if (i == DTLS1_HM_BAD_FRAGMENT ||
 	    i == DTLS1_HM_FRAGMENT_RETRY)  /* bad fragment received */
 		goto again;
-	else if (i <= 0 && !*ok)
+	else if (i <= 0 && !ok)
 		return i;
 
 	p = (unsigned char *)s->internal->init_buf->data;
@@ -425,14 +424,12 @@ dtls1_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 		D1I(s)->handshake_read_seq++;
 
 	s->internal->init_msg = s->internal->init_buf->data + DTLS1_HM_HEADER_LENGTH;
-	return s->internal->init_num;
+	return 1;
 
  fatal_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
-	*ok = 0;
 	return -1;
 }
-
 
 static int
 dtls1_preprocess_fragment(SSL *s, struct hm_header_st *msg_hdr, int max)
@@ -847,8 +844,6 @@ dtls1_get_message_fragment(SSL *s, int st1, int stn, long max, int *ok)
 		goto fatal_err;
 	}
 
-	*ok = 1;
-
 	/*
 	 * Note that s->internal->init_num is *not* used as current offset in
 	 * s->internal->init_buf->data, but as a counter summing up fragments'
@@ -856,6 +851,7 @@ dtls1_get_message_fragment(SSL *s, int st1, int stn, long max, int *ok)
 	 * length, we assume we have got all the fragments.
 	 */
 	s->internal->init_num = frag_len;
+	*ok = 1;
 	return frag_len;
 
  fatal_err:

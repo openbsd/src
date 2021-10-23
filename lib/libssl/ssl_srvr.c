@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.119 2021/09/03 13:18:01 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.120 2021/10/23 08:34:36 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -779,8 +779,7 @@ ssl3_get_client_hello(SSL *s)
 	uint16_t client_version;
 	uint8_t comp_method;
 	int comp_null;
-	int i, j, ok, al, ret = -1, cookie_valid = 0;
-	long n;
+	int i, j, al, ret, cookie_valid = 0;
 	unsigned long id;
 	SSL_CIPHER *c;
 	STACK_OF(SSL_CIPHER) *ciphers = NULL;
@@ -795,22 +794,22 @@ ssl3_get_client_hello(SSL *s)
 	 * If we are SSLv3, we will respond with SSLv3, even if prompted with
 	 * TLSv1.
 	 */
-	if (S3I(s)->hs.state == SSL3_ST_SR_CLNT_HELLO_A) {
+	if (S3I(s)->hs.state == SSL3_ST_SR_CLNT_HELLO_A)
 		S3I(s)->hs.state = SSL3_ST_SR_CLNT_HELLO_B;
-	}
 
 	s->internal->first_packet = 1;
-	n = ssl3_get_message(s, SSL3_ST_SR_CLNT_HELLO_B,
+	if ((ret = ssl3_get_message(s, SSL3_ST_SR_CLNT_HELLO_B,
 	    SSL3_ST_SR_CLNT_HELLO_C, SSL3_MT_CLIENT_HELLO,
-	    SSL3_RT_MAX_PLAIN_LENGTH, &ok);
-	if (!ok)
-		return ((int)n);
+	    SSL3_RT_MAX_PLAIN_LENGTH)) <= 0)
+		return ret;
 	s->internal->first_packet = 0;
 
-	if (n < 0)
+	ret = -1;
+
+	if (s->internal->init_num < 0)
 		goto err;
 
-	CBS_init(&cbs, s->internal->init_msg, n);
+	CBS_init(&cbs, s->internal->init_msg, s->internal->init_num);
 
 	/* Parse client hello up until the extensions (if any). */
 	if (!CBS_get_u16(&cbs, &client_version))
@@ -2055,20 +2054,18 @@ int
 ssl3_get_client_key_exchange(SSL *s)
 {
 	unsigned long alg_k;
-	int al, ok;
+	int al, ret;
 	CBS cbs;
-	long n;
 
 	/* 2048 maxlen is a guess.  How long a key does that permit? */
-	n = ssl3_get_message(s, SSL3_ST_SR_KEY_EXCH_A,
-	    SSL3_ST_SR_KEY_EXCH_B, SSL3_MT_CLIENT_KEY_EXCHANGE, 2048, &ok);
-	if (!ok)
-		return ((int)n);
+	if ((ret = ssl3_get_message(s, SSL3_ST_SR_KEY_EXCH_A,
+	    SSL3_ST_SR_KEY_EXCH_B, SSL3_MT_CLIENT_KEY_EXCHANGE, 2048)) <= 0)
+		return ret;
 
-	if (n < 0)
+	if (s->internal->init_num < 0)
 		goto err;
 
-	CBS_init(&cbs, s->internal->init_msg, n);
+	CBS_init(&cbs, s->internal->init_msg, s->internal->init_num);
 
 	alg_k = S3I(s)->hs.cipher->algorithm_mkey;
 
@@ -2113,24 +2110,24 @@ ssl3_get_cert_verify(SSL *s)
 	EVP_PKEY *pkey = NULL;
 	X509 *peer = NULL;
 	EVP_MD_CTX mctx;
-	int al, ok, verify;
+	int al, verify;
 	const unsigned char *hdata;
 	size_t hdatalen;
 	int type = 0;
-	int ret = 0;
-	long n;
+	int ret;
 
 	EVP_MD_CTX_init(&mctx);
 
-	n = ssl3_get_message(s, SSL3_ST_SR_CERT_VRFY_A,
-	    SSL3_ST_SR_CERT_VRFY_B, -1, SSL3_RT_MAX_PLAIN_LENGTH, &ok);
-	if (!ok)
-		return ((int)n);
+	if ((ret = ssl3_get_message(s, SSL3_ST_SR_CERT_VRFY_A,
+	    SSL3_ST_SR_CERT_VRFY_B, -1, SSL3_RT_MAX_PLAIN_LENGTH)) <= 0)
+		return ret;
 
-	if (n < 0)
+	ret = 0;
+
+	if (s->internal->init_num < 0)
 		goto err;
 
-	CBS_init(&cbs, s->internal->init_msg, n);
+	CBS_init(&cbs, s->internal->init_msg, s->internal->init_num);
 
 	if (s->session->peer != NULL) {
 		peer = s->session->peer;
@@ -2329,16 +2326,16 @@ int
 ssl3_get_client_certificate(SSL *s)
 {
 	CBS cbs, client_certs;
-	int i, ok, al, ret = -1;
 	X509 *x = NULL;
-	long n;
 	const unsigned char *q;
 	STACK_OF(X509) *sk = NULL;
+	int i, al, ret;
 
-	n = ssl3_get_message(s, SSL3_ST_SR_CERT_A, SSL3_ST_SR_CERT_B,
-	    -1, s->internal->max_cert_list, &ok);
-	if (!ok)
-		return ((int)n);
+	if ((ret = ssl3_get_message(s, SSL3_ST_SR_CERT_A, SSL3_ST_SR_CERT_B,
+	    -1, s->internal->max_cert_list)) <= 0)
+		return ret;
+
+	ret = -1;
 
 	if (S3I(s)->hs.tls12.message_type == SSL3_MT_CLIENT_KEY_EXCHANGE) {
 		if ((s->verify_mode & SSL_VERIFY_PEER) &&
@@ -2367,10 +2364,10 @@ ssl3_get_client_certificate(SSL *s)
 		goto fatal_err;
 	}
 
-	if (n < 0)
+	if (s->internal->init_num < 0)
 		goto decode_err;
 
-	CBS_init(&cbs, s->internal->init_msg, n);
+	CBS_init(&cbs, s->internal->init_msg, s->internal->init_num);
 
 	if ((sk = sk_X509_new_null()) == NULL) {
 		SSLerror(s, ERR_R_MALLOC_FAILURE);
