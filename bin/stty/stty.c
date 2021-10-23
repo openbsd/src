@@ -1,4 +1,4 @@
-/*	$OpenBSD: stty.c,v 1.21 2019/06/28 13:35:00 deraadt Exp $	*/
+/*	$OpenBSD: stty.c,v 1.22 2021/10/23 16:45:32 mestre Exp $	*/
 /*	$NetBSD: stty.c,v 1.11 1995/03/21 09:11:30 cgd Exp $	*/
 
 /*-
@@ -81,6 +81,11 @@ main(int argc, char *argv[])
 
 args:	argc -= optind;
 	argv += optind;
+
+	if (unveil("/", "") == -1)
+		err(1, "unveil /");
+	if (unveil(NULL, NULL) == -1)
+		err(1, "unveil");
 
 	if (ioctl(i.fd, TIOCGETD, &i.ldisc) == -1)
 		err(1, "TIOCGETD");
