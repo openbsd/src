@@ -1,4 +1,4 @@
-/*	$OpenBSD: agentx.c,v 1.10 2021/06/02 08:40:09 martijn Exp $ */
+/*	$OpenBSD: agentx.c,v 1.11 2021/10/23 14:39:35 martijn Exp $ */
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
  *
@@ -270,10 +270,12 @@ agentx_reset(struct agentx *ax)
 	struct agentx_session *axs, *tsas;
 	struct agentx_request *axr;
 	struct agentx_get *axg;
+	int axfree = ax->ax_free;
 
 	ax_free(ax->ax_ax);
 	ax->ax_ax = NULL;
 	ax->ax_fd = -1;
+	ax->ax_free = 1;
 
 	ax->ax_cstate = AX_CSTATE_CLOSE;
 
@@ -289,52 +291,52 @@ agentx_reset(struct agentx *ax)
 		TAILQ_REMOVE(&(ax->ax_getreqs), axg, axg_ax_getreqs);
 	}
 
-	if (ax->ax_dstate == AX_DSTATE_CLOSE) {
-		agentx_free_finalize(ax);
-		return;
-	}
+	if (ax->ax_dstate == AX_DSTATE_OPEN)
+		agentx_start(ax);
 
-	agentx_start(ax);
+	if (!axfree)
+		agentx_free_finalize(ax);
 }
 
 void
 agentx_free(struct agentx *ax)
 {
 	struct agentx_session *axs, *tsas;
+	int axfree;
 
 	if (ax == NULL)
 		return;
 
-	if (ax->ax_dstate == AX_DSTATE_CLOSE) {
-/* Malloc throws abort on invalid pointers as well */
+	axfree = ax->ax_free;
+	ax->ax_free = 1;
+
+	/* Malloc throws abort on invalid pointers as well */
+	if (ax->ax_dstate == AX_DSTATE_CLOSE)
 		agentx_log_ax_fatalx(ax, "%s: double free", __func__);
-	}
 	ax->ax_dstate = AX_DSTATE_CLOSE;
 
-	if (!TAILQ_EMPTY(&(ax->ax_sessions))) {
-		TAILQ_FOREACH_SAFE(axs, &(ax->ax_sessions), axs_ax_sessions,
-		    tsas) {
-			if (axs->axs_dstate != AX_DSTATE_CLOSE)
-				agentx_session_free(axs);
-		}
-	} else
+	TAILQ_FOREACH_SAFE(axs, &(ax->ax_sessions), axs_ax_sessions, tsas) {
+		if (axs->axs_dstate != AX_DSTATE_CLOSE)
+			agentx_session_free(axs);
+	}
+	if (!axfree)
 		agentx_free_finalize(ax);
 }
 
 static void
 agentx_free_finalize(struct agentx *ax)
 {
-#ifdef AX_DEBUG
-	if (ax->ax_dstate != AX_DSTATE_CLOSE)
-		agentx_log_ax_fatalx(ax, "%s: agentx not closing",
-		    __func__);
-	if (!TAILQ_EMPTY(&(ax->ax_sessions)))
-		agentx_log_ax_fatalx(ax, "%s: agentx still has sessions",
-		    __func__);
-	if (!RB_EMPTY(&(ax->ax_requests)))
-		agentx_log_ax_fatalx(ax,
-		    "%s: agentx still has pending requests", __func__);
-#endif
+	struct agentx_session *axs, *taxs;
+
+	ax->ax_free = 0;
+
+	TAILQ_FOREACH_SAFE(axs, &(ax->ax_sessions), axs_ax_sessions, taxs)
+		agentx_session_free_finalize(axs);
+
+	if (!TAILQ_EMPTY(&(ax->ax_sessions)) ||
+	    !RB_EMPTY(&(ax->ax_requests)) ||
+	    ax->ax_dstate != AX_DSTATE_CLOSE)
+		return;
 
 	ax_free(ax->ax_ax);
 	ax->ax_nofd(ax, ax->ax_cookie, 1);
@@ -477,6 +479,7 @@ agentx_session_close_finalize(struct ax_pdu *pdu, void *cookie)
 	struct agentx_session *axs = cookie;
 	struct agentx *ax = axs->axs_ax;
 	struct agentx_context *axc, *tsac;
+	int axfree = ax->ax_free;
 
 #ifdef AX_DEBUG
 	if (axs->axs_cstate != AX_CSTATE_WAITCLOSE)
@@ -492,19 +495,19 @@ agentx_session_close_finalize(struct ax_pdu *pdu, void *cookie)
 	}
 
 	axs->axs_cstate = AX_CSTATE_CLOSE;
+	ax->ax_free = 1;
 
 	agentx_log_axs_info(axs, "closed");
 
 	TAILQ_FOREACH_SAFE(axc, &(axs->axs_contexts), axc_axs_contexts, tsac)
 		agentx_context_reset(axc);
 
-	if (axs->axs_dstate == AX_DSTATE_CLOSE)
-		agentx_session_free_finalize(axs);
-	else {
-		if (ax->ax_cstate == AX_CSTATE_OPEN)
-			if (agentx_session_start(axs) == -1)
-				return -1;
-	}
+	if (ax->ax_cstate == AX_CSTATE_OPEN &&
+	    axs->axs_dstate == AX_DSTATE_OPEN)
+		agentx_session_start(axs);
+	if (!axfree)
+		agentx_free_finalize(ax);
+		
 	return 0;
 }
 
@@ -512,9 +515,15 @@ void
 agentx_session_free(struct agentx_session *axs)
 {
 	struct agentx_context *axc, *tsac;
+	struct agentx *ax;
+	int axfree;
 
 	if (axs == NULL)
 		return;
+
+	ax = axs->axs_ax;
+	axfree = ax->ax_free;
+	ax->ax_free = 1;
 
 	if (axs->axs_dstate == AX_DSTATE_CLOSE)
 		agentx_log_axs_fatalx(axs, "%s: double free", __func__);
@@ -529,44 +538,45 @@ agentx_session_free(struct agentx_session *axs)
 			agentx_context_free(axc);
 	}
 
-	if (axs->axs_cstate == AX_CSTATE_CLOSE)
-		agentx_session_free_finalize(axs);
+	if (!axfree)
+		agentx_free_finalize(ax);
 }
 
 static void
 agentx_session_free_finalize(struct agentx_session *axs)
 {
 	struct agentx *ax = axs->axs_ax;
+	struct agentx_context *axc, *taxc;
 
-#ifdef AX_DEBUG
-	if (axs->axs_cstate != AX_CSTATE_CLOSE)
-		agentx_log_axs_fatalx(axs, "%s: free without closing",
-		    __func__);
-	if (!TAILQ_EMPTY(&(axs->axs_contexts)))
-		agentx_log_axs_fatalx(axs,
-		    "%s: agentx still has contexts", __func__);
-#endif
+	TAILQ_FOREACH_SAFE(axc, &(axs->axs_contexts), axc_axs_contexts, taxc)
+		agentx_context_free_finalize(axc);
+
+	if (!TAILQ_EMPTY(&(axs->axs_contexts)) ||
+	    axs->axs_cstate != AX_CSTATE_CLOSE ||
+	    axs->axs_dstate != AX_DSTATE_CLOSE)
+		return;
 
 	TAILQ_REMOVE(&(ax->ax_sessions), axs, axs_ax_sessions);
 	free(axs->axs_descr.aos_string);
 	free(axs);
-
-	if (TAILQ_EMPTY(&(ax->ax_sessions)) && ax->ax_dstate == AX_DSTATE_CLOSE)
-		agentx_free_finalize(ax);
 }
 
 static void
 agentx_session_reset(struct agentx_session *axs)
 {
 	struct agentx_context *axc, *tsac;
+	struct agentx *ax = axs->axs_ax;
+	int axfree = ax->ax_free;
+
+	ax->ax_free = 1;
 
 	axs->axs_cstate = AX_CSTATE_CLOSE;
 
 	TAILQ_FOREACH_SAFE(axc, &(axs->axs_contexts), axc_axs_contexts, tsac)
 		agentx_context_reset(axc);
 
-	if (axs->axs_dstate == AX_DSTATE_CLOSE)
-		agentx_session_free_finalize(axs);
+	if (!axfree)
+		agentx_free_finalize(ax);
 }
 
 struct agentx_context *
@@ -714,15 +724,20 @@ static void
 agentx_context_free_finalize(struct agentx_context *axc)
 {
 	struct agentx_session *axs = axc->axc_axs;
+	struct agentx_region *axr, *taxr;
+	struct agentx_agentcaps *axa, *taxa;
 
-#ifdef AX_DEBUG
-	if (axc->axc_dstate != AX_DSTATE_CLOSE)
-		agentx_log_axc_fatalx(axc, "%s: unexpected context free",
-		    __func__);
-#endif
+	TAILQ_FOREACH_SAFE(axa, &(axc->axc_agentcaps), axa_axc_agentcaps, taxa)
+		agentx_agentcaps_free_finalize(axa);
+	TAILQ_FOREACH_SAFE(axr, &(axc->axc_regions), axr_axc_regions, taxr)
+		agentx_region_free_finalize(axr);
+
 	if (!TAILQ_EMPTY(&(axc->axc_regions)) ||
-	    !TAILQ_EMPTY(&(axc->axc_agentcaps)))
+	    !TAILQ_EMPTY(&(axc->axc_agentcaps)) ||
+	    axc->axc_cstate != AX_CSTATE_CLOSE ||
+	    axc->axc_dstate != AX_DSTATE_CLOSE)
 		return;
+
 	TAILQ_REMOVE(&(axs->axs_contexts), axc, axc_axs_contexts);
 	free(axc->axc_name.aos_string);
 	free(axc);
@@ -733,6 +748,10 @@ agentx_context_reset(struct agentx_context *axc)
 {
 	struct agentx_agentcaps *axa, *tsaa;
 	struct agentx_region *axr, *tsar;
+	struct agentx *ax = axc->axc_axs->axs_ax;
+	int axfree = ax->ax_free;
+
+	ax->ax_free = 1;
 
 	axc->axc_cstate = AX_CSTATE_CLOSE;
 	axc->axc_sysuptimespec.tv_sec = 0;
@@ -743,8 +762,8 @@ agentx_context_reset(struct agentx_context *axc)
 	TAILQ_FOREACH_SAFE(axr, &(axc->axc_regions), axr_axc_regions, tsar)
 		agentx_region_reset(axr);
 
-	if (axc->axc_dstate == AX_DSTATE_CLOSE)
-		agentx_context_free_finalize(axc);
+	if (!axfree)
+		agentx_free_finalize(ax);
 }
 
 struct agentx_agentcaps *
@@ -883,6 +902,7 @@ agentx_agentcaps_close_finalize(struct ax_pdu *pdu, void *cookie)
 	struct agentx_context *axc = axa->axa_axc;
 	struct agentx_session *axs = axc->axc_axs;
 	struct agentx *ax = axs->axs_ax;
+	int axfree = ax->ax_free;
 
 #ifdef AX_DEBUG
 	if (axa->axa_cstate != AX_CSTATE_WAITCLOSE)
@@ -899,27 +919,31 @@ agentx_agentcaps_close_finalize(struct ax_pdu *pdu, void *cookie)
 	}
 
 	axa->axa_cstate = AX_CSTATE_CLOSE;
+	ax->ax_free = 1;
 
 	agentx_log_axc_info(axc, "agentcaps %s: closed",
 	    ax_oid2string(&(axa->axa_oid)));
 
-	if (axa->axa_dstate == AX_DSTATE_CLOSE) {
-		agentx_agentcaps_free_finalize(axa);
-		return 0;
-	} else {
-		if (axc->axc_cstate == AX_CSTATE_OPEN) {
-			if (agentx_agentcaps_start(axa) == -1)
-				return -1;
-		}
-	}
+	if (axc->axc_cstate == AX_CSTATE_OPEN &&
+	    axa->axa_dstate == AX_DSTATE_OPEN)
+		agentx_agentcaps_start(axa);
+
+	if (!axfree)
+		agentx_free_finalize(ax);
 	return 0;
 }
 
 void
 agentx_agentcaps_free(struct agentx_agentcaps *axa)
 {
+	struct agentx *ax = axa->axa_axc->axc_axs->axs_ax;
+	int axfree;
+
 	if (axa == NULL)
 		return;
+
+	axfree = ax->ax_free;
+	ax->ax_free = 1;
 
 	if (axa->axa_dstate == AX_DSTATE_CLOSE)
 		agentx_log_axc_fatalx(axa->axa_axc, "%s: double free",
@@ -927,13 +951,11 @@ agentx_agentcaps_free(struct agentx_agentcaps *axa)
 
 	axa->axa_dstate = AX_DSTATE_CLOSE;
 
-	if (axa->axa_cstate == AX_CSTATE_OPEN) {
-		if (agentx_agentcaps_close(axa) == -1)
-			return;
-	}
+	if (axa->axa_cstate == AX_CSTATE_OPEN)
+		agentx_agentcaps_close(axa);
 
-	if (axa->axa_cstate == AX_CSTATE_CLOSE)
-		agentx_agentcaps_free_finalize(axa);
+	if (!axfree)
+		agentx_free_finalize(ax);
 }
 
 static void
@@ -941,27 +963,24 @@ agentx_agentcaps_free_finalize(struct agentx_agentcaps *axa)
 {
 	struct agentx_context *axc = axa->axa_axc;
 
-#ifdef AX_DEBUG
 	if (axa->axa_dstate != AX_DSTATE_CLOSE ||
 	    axa->axa_cstate != AX_CSTATE_CLOSE)
-		agentx_log_axc_fatalx(axc, "%s: unexpected free", __func__);
-#endif
+		return;
 
 	TAILQ_REMOVE(&(axc->axc_agentcaps), axa, axa_axc_agentcaps);
 	free(axa->axa_descr.aos_string);
 	free(axa);
-
-	if (axc->axc_dstate == AX_DSTATE_CLOSE)
-		agentx_context_free_finalize(axc);
 }
 
 static void
 agentx_agentcaps_reset(struct agentx_agentcaps *axa)
 {
+	struct agentx *ax = axa->axa_axc->axc_axs->axs_ax;
+
 	axa->axa_cstate = AX_CSTATE_CLOSE;
 
-	if (axa->axa_dstate == AX_DSTATE_CLOSE)
-		agentx_agentcaps_free_finalize(axa);
+	if (!ax->ax_free)
+		agentx_free_finalize(ax);
 }
 
 struct agentx_region *
@@ -1166,6 +1185,7 @@ agentx_region_close_finalize(struct ax_pdu *pdu, void *cookie)
 	struct agentx_context *axc = axr->axr_axc;
 	struct agentx_session *axs = axc->axc_axs;
 	struct agentx *ax = axs->axs_ax;
+	int axfree = ax->ax_free;
 
 #ifdef AX_DEBUG
 	if (axr->axr_cstate != AX_CSTATE_WAITCLOSE)
@@ -1181,21 +1201,19 @@ agentx_region_close_finalize(struct ax_pdu *pdu, void *cookie)
 		return -1;
 	}
 
+	ax->ax_free = 1;
 	axr->axr_priority = AX_PRIORITY_DEFAULT;
 	axr->axr_cstate = AX_CSTATE_CLOSE;
 
 	agentx_log_axc_info(axc, "region %s: closed",
 	    ax_oid2string(&(axr->axr_oid)));
 
-	if (axr->axr_dstate == AX_DSTATE_CLOSE) {
-		agentx_region_free_finalize(axr);
-		return 0;
-	} else {
-		if (axc->axc_cstate == AX_CSTATE_OPEN) {
-			if (agentx_region_start(axr) == -1)
-				return -1;
-		}
-	}
+	if (axc->axc_cstate == AX_CSTATE_OPEN &&
+	    axr->axr_dstate == AX_DSTATE_OPEN)
+		agentx_region_start(axr);
+
+	if (!axfree)
+		agentx_free_finalize(ax);
 	return 0;
 }
 
@@ -1204,9 +1222,15 @@ agentx_region_free(struct agentx_region *axr)
 {
 	struct agentx_index *axi, *tsai;
 	struct agentx_object *axo, *tsao;
+	struct agentx *ax;
+	int axfree;
 
 	if (axr == NULL)
 		return;
+
+	ax = axr->axr_axc->axc_axs->axs_ax;
+	axfree = ax->ax_free;
+	ax->ax_free = 1;
 
 	if (axr->axr_dstate == AX_DSTATE_CLOSE)
 		agentx_log_axc_fatalx(axr->axr_axc, "%s: double free",
@@ -1224,37 +1248,33 @@ agentx_region_free(struct agentx_region *axr)
 			agentx_object_free(axo);
 	}
 
-	if (axr->axr_cstate == AX_CSTATE_OPEN) {
-		if (agentx_region_close(axr) == -1)
-			return;
-	}
+	if (axr->axr_cstate == AX_CSTATE_OPEN)
+		agentx_region_close(axr);
 
-	if (axr->axr_cstate == AX_CSTATE_CLOSE)
-		agentx_region_free_finalize(axr);
+	if (!axfree)
+		agentx_free_finalize(ax);
 }
 
 static void
 agentx_region_free_finalize(struct agentx_region *axr)
 {
 	struct agentx_context *axc = axr->axr_axc;
+	struct agentx_index *axi, *taxi;
+	struct agentx_object *axo, *taxo;
 
-#ifdef AX_DEBUG
-	if (axr->axr_dstate != AX_DSTATE_CLOSE)
-		agentx_log_axc_fatalx(axc, "%s: unexpected free", __func__);
-#endif
+	TAILQ_FOREACH_SAFE(axo, &(axr->axr_objects), axo_axr_objects, taxo)
+		agentx_object_free_finalize(axo);
+	TAILQ_FOREACH_SAFE(axi, &(axr->axr_indices), axi_axr_indices, taxi)
+		agentx_index_free_finalize(axi);
 
 	if (!TAILQ_EMPTY(&(axr->axr_indices)) ||
-	    !TAILQ_EMPTY(&(axr->axr_objects)))
-		return;
-
-	if (axr->axr_cstate != AX_CSTATE_CLOSE)
+	    !TAILQ_EMPTY(&(axr->axr_objects)) ||
+	    axr->axr_cstate != AX_CSTATE_CLOSE ||
+	    axr->axr_dstate != AX_DSTATE_CLOSE)
 		return;
 
 	TAILQ_REMOVE(&(axc->axc_regions), axr, axr_axc_regions);
 	free(axr);
-
-	if (axc->axc_dstate == AX_DSTATE_CLOSE)
-		agentx_context_free_finalize(axc);
 }
 
 static void
@@ -1262,17 +1282,20 @@ agentx_region_reset(struct agentx_region *axr)
 {
 	struct agentx_index *axi, *tsai;
 	struct agentx_object *axo, *tsao;
+	struct agentx *ax = axr->axr_axc->axc_axs->axs_ax;
+	int axfree = ax->ax_free;
 
 	axr->axr_cstate = AX_CSTATE_CLOSE;
 	axr->axr_priority = AX_PRIORITY_DEFAULT;
+	ax->ax_free = 1;
 
 	TAILQ_FOREACH_SAFE(axi, &(axr->axr_indices), axi_axr_indices, tsai)
 		agentx_index_reset(axi);
 	TAILQ_FOREACH_SAFE(axo, &(axr->axr_objects), axo_axr_objects, tsao)
 		agentx_object_reset(axo);
 
-	if (axr->axr_dstate == AX_DSTATE_CLOSE)
-		agentx_region_free_finalize(axr);
+	if (!axfree)
+		agentx_free_finalize(ax);
 }
 
 struct agentx_index *
@@ -1739,9 +1762,15 @@ agentx_index_free(struct agentx_index *axi)
 {
 	size_t i;
 	struct agentx_object *axo;
+	struct agentx *ax;
+	int axfree;
 
 	if (axi == NULL)
 		return;
+
+	ax = axi->axi_axr->axr_axc->axc_axs->axs_ax;
+	axfree = ax->ax_free;
+	ax->ax_free = 1;
 
 	if (axi->axi_dstate == AX_DSTATE_CLOSE)
 		agentx_log_axc_fatalx(axi->axi_axr->axr_axc,
@@ -1761,8 +1790,8 @@ agentx_index_free(struct agentx_index *axi)
 
 	if (axi->axi_cstate == AX_CSTATE_OPEN)
 		(void) agentx_index_close(axi);
-	else if (axi->axi_cstate == AX_CSTATE_CLOSE)
-		agentx_index_free_finalize(axi);
+	if (!axfree)
+		agentx_free_finalize(ax);
 }
 
 static void
@@ -1770,33 +1799,26 @@ agentx_index_free_finalize(struct agentx_index *axi)
 {
 	struct agentx_region *axr = axi->axi_axr;
 
-#ifdef AX_DEBUG
-	if (axi->axi_dstate != AX_DSTATE_CLOSE)
-		agentx_log_axc_fatalx(axr->axr_axc, "%s: unexpected free",
-		    __func__);
-	if (axi->axi_cstate != AX_CSTATE_CLOSE)
-		agentx_log_axc_fatalx(axr->axr_axc,
-		    "%s: free without deallocating", __func__);
-#endif
-
-	if (axi->axi_objectlen != 0)
+	if (axi->axi_cstate != AX_CSTATE_CLOSE ||
+	    axi->axi_dstate != AX_DSTATE_CLOSE ||
+	    axi->axi_objectlen != 0)
 		return;
 
 	TAILQ_REMOVE(&(axr->axr_indices), axi, axi_axr_indices);
 	ax_varbind_free(&(axi->axi_vb));
 	free(axi->axi_object);
 	free(axi);
-	if (axr->axr_dstate == AX_DSTATE_CLOSE)
-		agentx_region_free_finalize(axr);
 }
 
 static void
 agentx_index_reset(struct agentx_index *axi)
 {
+	struct agentx *ax = axi->axi_axr->axr_axc->axc_axs->axs_ax;
+
 	axi->axi_cstate = AX_CSTATE_CLOSE;
 
-	if (axi->axi_dstate == AX_DSTATE_CLOSE)
-		agentx_index_free_finalize(axi);
+	if (!ax->ax_free)
+		agentx_free_finalize(ax);
 }
 
 static int
@@ -1842,6 +1864,7 @@ agentx_index_close_finalize(struct ax_pdu *pdu, void *cookie)
 	struct agentx_session *axs = axc->axc_axs;
 	struct agentx *ax = axs->axs_ax;
 	struct ax_pdu_response *resp = &(pdu->ap_payload.ap_response);
+	int axfree = ax->ax_free;
 
 #ifdef AX_DEBUG
 	if (axi->axi_cstate != AX_CSTATE_WAITCLOSE)
@@ -1895,16 +1918,17 @@ agentx_index_close_finalize(struct ax_pdu *pdu, void *cookie)
 	}
 
 	axi->axi_cstate = AX_CSTATE_CLOSE;
+	ax->ax_free = 1;
 
 	agentx_log_axc_info(axc, "index %s: deallocated",
 	    ax_oid2string(&(axi->axi_vb.avb_oid)));
 
-	if (axi->axi_dstate == AX_DSTATE_CLOSE) {
-		agentx_index_free_finalize(axi);
-	} else if (axr->axr_cstate == AX_CSTATE_OPEN) {
-		if (agentx_index_start(axi) == -1)
-			return -1;
-	}
+	if (axr->axr_cstate == AX_CSTATE_OPEN &&
+	    axi->axi_dstate == AX_DSTATE_OPEN)
+		agentx_index_start(axi);
+
+	if (!axfree)
+		agentx_free_finalize(ax);
 	return 0;
 }
 
@@ -2198,8 +2222,6 @@ agentx_object_finalize(struct ax_pdu *pdu, void *cookie)
 		agentx_log_axc_info(axc, "object %s (%s %s): %s",
 		    oids, flags ? "instance" : "region", ax_oid2string(&oid),
 		    ax_error2string(pdu->ap_payload.ap_response.ap_error));
-		if (axo->axo_dstate == AX_DSTATE_CLOSE)
-			return agentx_object_close_finalize(NULL, axo);
 		return 0;
 	}
 	axo->axo_cstate = AX_CSTATE_OPEN;
@@ -2227,15 +2249,18 @@ agentx_object_lock(struct agentx_object *axo)
 static void
 agentx_object_unlock(struct agentx_object *axo)
 {
+	struct agentx *ax = axo->axo_axr->axr_axc->axc_axs->axs_ax;
+
 #ifdef AX_DEBUG
 	if (axo->axo_lock == 0)
 		agentx_log_axc_fatalx(axo->axo_axr->axr_axc,
 		    "%s: axo_lock == 0", __func__);
 #endif
 	axo->axo_lock--;
-	if (axo->axo_lock == 0 && axo->axo_dstate == AX_DSTATE_CLOSE &&
-	    axo->axo_cstate == AX_CSTATE_CLOSE)
-		agentx_object_free_finalize(axo);
+	if (axo->axo_lock == 0) {
+		if (!ax->ax_free)
+			agentx_free_finalize(ax);
+	}
 }
 
 static int
@@ -2316,6 +2341,7 @@ agentx_object_close_finalize(struct ax_pdu *pdu, void *cookie)
 	char oids[1024];
 	uint8_t flags = 1;
 	size_t i;
+	int axfree = ax->ax_free;
 
 #ifdef AX_DEBUG
 	if (axo->axo_cstate != AX_CSTATE_WAITCLOSE)
@@ -2355,13 +2381,13 @@ agentx_object_close_finalize(struct ax_pdu *pdu, void *cookie)
 		    flags ? "instance" : "region", ax_oid2string(&oid));
 	}
 
-	if (axo->axo_dstate == AX_DSTATE_CLOSE)
-		agentx_object_free_finalize(axo);
-	else {
-		if (axr->axr_cstate == AX_CSTATE_OPEN)
-			if (agentx_object_start(axo) == -1)
-				return -1;
-	}
+	ax->ax_free = 1;
+	if (axr->axr_cstate == AX_CSTATE_OPEN &&
+	    axo->axo_dstate == AX_DSTATE_OPEN)
+		agentx_object_start(axo);
+
+	if (!axfree)
+		agentx_free_finalize(ax);
 
 	return 0;
 }
@@ -2369,8 +2395,15 @@ agentx_object_close_finalize(struct ax_pdu *pdu, void *cookie)
 void
 agentx_object_free(struct agentx_object *axo)
 {
+	struct agentx *ax;
+	int axfree;
+
 	if (axo == NULL)
 		return;
+
+	ax = axo->axo_axr->axr_axc->axc_axs->axs_ax;
+	axfree = ax->ax_free;
+	ax->ax_free = 1;
 
 	if (axo->axo_dstate == AX_DSTATE_CLOSE)
 		agentx_log_axc_fatalx(axo->axo_axr->axr_axc,
@@ -2378,12 +2411,10 @@ agentx_object_free(struct agentx_object *axo)
 
 	axo->axo_dstate = AX_DSTATE_CLOSE;
 
-	if (axo->axo_cstate == AX_CSTATE_OPEN) {
-		if (agentx_object_close(axo) == -1)
-			return;
-	}
-	if (axo->axo_cstate == AX_CSTATE_CLOSE)
-		agentx_object_free_finalize(axo);
+	if (axo->axo_cstate == AX_CSTATE_OPEN)
+		agentx_object_close(axo);
+	if (!axfree)
+		agentx_free_finalize(ax);
 }
 
 static void
@@ -2395,21 +2426,10 @@ agentx_object_free_finalize(struct agentx_object *axo)
 	size_t i, j;
 	int found;
 
-#ifdef AX_DEBUG
-	if (axo->axo_dstate != AX_DSTATE_CLOSE)
-		agentx_log_axc_fatalx(axo->axo_axr->axr_axc,
-		    "%s: unexpected free", __func__);
-#endif
-
-	if (axo->axo_lock != 0) {
-#ifdef AX_DEBUG
-		if (TAILQ_EMPTY(&(ax->ax_getreqs)))
-			agentx_log_axc_fatalx(axo->axo_axr->axr_axc,
-			    "%s: %s axo_lock == %u", __func__,
-			    ax_oid2string(&(axo->axo_oid)), axo->axo_lock);
-#endif
+	if (axo->axo_dstate != AX_DSTATE_CLOSE ||
+	    axo->axo_cstate != AX_CSTATE_CLOSE ||
+	    axo->axo_lock != 0)
 		return;
-	}
 
 	RB_REMOVE(axc_objects, &(axo->axo_axr->axr_axc->axc_objects), axo);
 	TAILQ_REMOVE(&(axo->axo_axr->axr_objects), axo, axo_axr_objects);
@@ -2429,9 +2449,6 @@ agentx_object_free_finalize(struct agentx_object *axo)
 			    "%s: object not found in index", __func__);
 #endif
 		axo->axo_index[i]->axi_objectlen--;
-		if (axo->axo_index[i]->axi_dstate == AX_DSTATE_CLOSE &&
-		    axo->axo_index[i]->axi_cstate == AX_CSTATE_CLOSE)
-			agentx_index_free_finalize(axo->axo_index[i]);
 	}
 
 	free(axo);
@@ -2440,10 +2457,12 @@ agentx_object_free_finalize(struct agentx_object *axo)
 static void
 agentx_object_reset(struct agentx_object *axo)
 {
+	struct agentx *ax = axo->axo_axr->axr_axc->axc_axs->axs_ax;
+
 	axo->axo_cstate = AX_CSTATE_CLOSE;
 
-	if (axo->axo_dstate == AX_DSTATE_CLOSE)
-		agentx_object_free_finalize(axo);
+	if (!ax->ax_free)
+		agentx_free_finalize(ax);
 }
 
 static int
