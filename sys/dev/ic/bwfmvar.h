@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfmvar.h,v 1.24 2021/08/31 23:05:11 patrick Exp $ */
+/* $OpenBSD: bwfmvar.h,v 1.25 2021/10/23 12:48:17 kettenis Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -158,6 +158,7 @@ struct bwfm_softc {
 #define		BWFM_IO_TYPE_D11N		1
 #define		BWFM_IO_TYPE_D11AC		2
 
+	int			 sc_node;
 	int			 sc_initialized;
 	int			 sc_tx_timer;
 
@@ -191,6 +192,6 @@ struct bwfm_core *bwfm_chip_get_pmu(struct bwfm_softc *);
 void bwfm_rx(struct bwfm_softc *, struct mbuf *, struct mbuf_list *);
 void bwfm_do_async(struct bwfm_softc *, void (*)(struct bwfm_softc *, void *),
     void *, int);
-int bwfm_nvram_convert(u_char *, size_t, size_t *);
+int bwfm_nvram_convert(int, u_char **, size_t *, size_t *);
 int bwfm_loadfirmware(struct bwfm_softc *, const char *, const char *,
     u_char **, size_t *, u_char **, size_t *, size_t *);

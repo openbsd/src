@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.56 2021/08/31 23:05:11 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.57 2021/10/23 12:48:17 kettenis Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -395,6 +395,10 @@ bwfm_pci_attach(struct device *parent, struct device *self, void *aux)
 		goto bar1;
 	}
 	printf(": %s\n", intrstr);
+
+#if defined(__HAVE_FDT)
+	sc->sc_sc.sc_node = PCITAG_NODE(pa->pa_tag);
+#endif
 
 	sc->sc_sc.sc_bus_ops = &bwfm_pci_bus_ops;
 	sc->sc_sc.sc_proto_ops = &bwfm_pci_msgbuf_ops;

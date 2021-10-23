@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_sdio.c,v 1.40 2021/06/06 10:48:30 aoyama Exp $ */
+/* $OpenBSD: if_bwfm_sdio.c,v 1.41 2021/10/23 12:48:17 kettenis Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -84,7 +84,6 @@ struct bwfm_sdio_softc {
 	struct sdmmc_function	**sc_sf;
 	struct rwlock		 *sc_lock;
 	void			 *sc_ih;
-	int			  sc_node;
 	int			  sc_oob;
 
 	int			  sc_initialized;
@@ -258,7 +257,7 @@ bwfm_sdio_attach(struct device *parent, struct device *self, void *aux)
 
 #if defined(__HAVE_FDT)
 	if (sf->cookie)
-		sc->sc_node = *(int *)sf->cookie;
+		sc->sc_sc.sc_node = *(int *)sf->cookie;
 #endif
 
 	task_set(&sc->sc_task, bwfm_sdio_task, sc);
@@ -462,8 +461,8 @@ bwfm_sdio_preinit(struct bwfm_softc *bwfm)
 	}
 
 #if defined(__HAVE_FDT)
-	if (sc->sc_node) {
-		sc->sc_ih = fdt_intr_establish(sc->sc_node,
+	if (sc->sc_sc.sc_node) {
+		sc->sc_ih = fdt_intr_establish(sc->sc_sc.sc_node,
 		    IPL_NET, bwfm_sdio_oob_intr, sc, DEVNAME(sc));
 		if (sc->sc_ih != NULL) {
 			bwfm_sdio_write_1(sc, BWFM_SDIO_CCCR_SEPINT,

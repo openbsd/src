@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.90 2021/08/31 23:05:11 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.91 2021/10/23 12:48:17 kettenis Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -2859,14 +2859,23 @@ bwfm_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 }
 
 int
-bwfm_nvram_convert(u_char *buf, size_t len, size_t *newlenp)
+bwfm_nvram_convert(int node, u_char **bufp, size_t *sizep, size_t *newlenp)
 {
-	u_char *src, *dst, *end = buf + len;
-	size_t count = 0, pad;
+	u_char *src, *dst, *end = *bufp + *sizep, *newbuf;
+	size_t count = 0, newsize, pad;
 	uint32_t token;
 	int skip = 0;
 
-	for (src = buf, dst = buf; src != end; ++src) {
+	/*
+	 * Allocate a new buffer with enough space for the MAC
+	 * address, padding and final token.
+	 */
+	newsize = *sizep + 64;
+	newbuf = malloc(newsize, M_DEVBUF, M_NOWAIT);
+	if (newbuf == NULL)
+		return 1;
+
+	for (src = *bufp, dst = newbuf; src != end; ++src) {
 		if (*src == '\n') {
 			if (count > 0)
 				*dst++ = '\0';
@@ -2886,11 +2895,31 @@ bwfm_nvram_convert(u_char *buf, size_t len, size_t *newlenp)
 		++count;
 	}
 
-	count = dst - buf;
-	pad = roundup(count + 1, 4) - count;
+#if defined(__HAVE_FDT)
+	/*
+	 * Append MAC address if one is provided in the device tree.
+	 * This is needed on Apple Silicon Macs.
+	 */
+	if (node) {
+		u_char enaddr[ETHER_ADDR_LEN];
+		char macaddr[32];
 
-	if (count + pad + sizeof(token) > len)
-		return 1;
+		if (OF_getprop(node, "local-mac-address",
+		    enaddr, sizeof(enaddr))) {
+			snprintf(macaddr, sizeof(macaddr),
+			    "macaddr=%02x:%02x:%02x:%02x:%02x:%02x",
+			    enaddr[0], enaddr[1], enaddr[2], enaddr[3],
+			    enaddr[4], enaddr[5]);
+			if (*dst)
+				*dst++ = '\0';
+			memcpy(dst, macaddr, strlen(macaddr));
+			dst += strlen(macaddr);
+		}
+	}
+#endif
+
+	count = dst - newbuf;
+	pad = roundup(count + 1, 4) - count;
 
 	memset(dst, 0, pad);
 	count += pad;
@@ -2903,6 +2932,9 @@ bwfm_nvram_convert(u_char *buf, size_t len, size_t *newlenp)
 	memcpy(dst, &token, sizeof(token));
 	count += sizeof(token);
 
+	free(*bufp, M_DEVBUF, *sizep);
+	*bufp = newbuf;
+	*sizep = newsize;
 	*newlenp = count;
 	return 0;
 }
@@ -3010,28 +3042,22 @@ bwfm_loadfirmware(struct bwfm_softc *sc, const char *chip, const char *bus,
 	if (sysname != NULL) {
 		r = snprintf(name, sizeof(name), "brcmfmac%s%s.%s.txt", chip,
 		    bus, sysname);
-		if ((r > 0 && r < sizeof(name)) &&
-		    loadfirmware(name, nvram, nvsize) == 0) {
-			if (bwfm_nvram_convert(*nvram, *nvsize, nvlen) != 0) {
-				printf("%s: failed to process file %s\n",
-				    DEVNAME(sc), name);
-				free(*ucode, M_DEVBUF, *size);
-				free(*nvram, M_DEVBUF, *nvsize);
-				return 1;
-			}
-		}
+		if (r > 0 && r < sizeof(name))
+			loadfirmware(name, nvram, nvsize);
 	}
 
-	if (*nvlen == 0) {
+	if (*nvsize == 0) {
 		snprintf(name, sizeof(name), "brcmfmac%s%s.txt", chip, bus);
-		if (loadfirmware(name, nvram, nvsize) == 0) {
-			if (bwfm_nvram_convert(*nvram, *nvsize, nvlen) != 0) {
-				printf("%s: failed to process file %s\n",
-				    DEVNAME(sc), name);
-				free(*ucode, M_DEVBUF, *size);
-				free(*nvram, M_DEVBUF, *nvsize);
-				return 1;
-			}
+		loadfirmware(name, nvram, nvsize);
+	}
+
+	if (*nvsize != 0) {
+		if (bwfm_nvram_convert(sc->sc_node, nvram, nvsize, nvlen)) {
+			printf("%s: failed to process file %s\n",
+			    DEVNAME(sc), name);
+			free(*ucode, M_DEVBUF, *size);
+			free(*nvram, M_DEVBUF, *nvsize);
+			return 1;
 		}
 	}
 
