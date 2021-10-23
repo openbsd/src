@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.150 2021/10/21 22:11:07 mvs Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.151 2021/10/23 20:44:42 mvs Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -660,7 +660,7 @@ unp_connect(struct socket *so, struct mbuf *nam, struct proc *p)
 	}
 	if (so->so_proto->pr_flags & PR_CONNREQUIRED) {
 		if ((so2->so_options & SO_ACCEPTCONN) == 0 ||
-		    (so3 = sonewconn(so2, 0)) == 0) {
+		    (so3 = sonewconn(so2, 0)) == NULL) {
 			error = ECONNREFUSED;
 			goto put_locked;
 		}
