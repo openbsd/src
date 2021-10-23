@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.79 2021/10/22 16:42:13 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.80 2021/10/23 11:41:50 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -829,6 +829,13 @@ void X509_SIG_free(X509_SIG *a);
 X509_SIG *d2i_X509_SIG(X509_SIG **a, const unsigned char **in, long len);
 int i2d_X509_SIG(X509_SIG *a, unsigned char **out);
 extern const ASN1_ITEM X509_SIG_it;
+#if defined(LIBRESSL_NEW_API)
+void X509_SIG_get0(const X509_SIG *sig, const X509_ALGOR **palg,
+    const ASN1_OCTET_STRING **pdigest);
+void X509_SIG_getm(X509_SIG *sig, X509_ALGOR **palg,
+    ASN1_OCTET_STRING **pdigest);
+#endif
+
 X509_REQ_INFO *X509_REQ_INFO_new(void);
 void X509_REQ_INFO_free(X509_REQ_INFO *a);
 X509_REQ_INFO *d2i_X509_REQ_INFO(X509_REQ_INFO **a, const unsigned char **in, long len);
