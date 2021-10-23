@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs12.c,v 1.14 2019/07/26 12:35:59 inoguchi Exp $ */
+/* $OpenBSD: pkcs12.c,v 1.15 2021/10/23 14:48:33 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -84,10 +84,10 @@ int dump_certs_pkeys_bags(BIO *out, STACK_OF(PKCS12_SAFEBAG) *bags, char *pass,
     int passlen, int options, char *pempass);
 int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bags, char *pass,
     int passlen, int options, char *pempass);
-int print_attribs(BIO *out, STACK_OF(X509_ATTRIBUTE) *attrlst,
+int print_attribs(BIO *out, const STACK_OF(X509_ATTRIBUTE) *attrlst,
     const char *name);
 void hex_prin(BIO *out, unsigned char *buf, int len);
-int alg_print(BIO *x, X509_ALGOR *alg);
+int alg_print(BIO *x, const X509_ALGOR *alg);
 int cert_load(BIO *in, STACK_OF(X509) *sk);
 static int set_pbe(BIO *err, int *ppbe, const char *str);
 
@@ -692,7 +692,7 @@ pkcs12_main(int argc, char **argv)
 			vret = get_cert_chain(ucert, store, &chain2);
 			X509_STORE_free(store);
 
-			if (!vret) {
+			if (vret == X509_V_OK) {
 				/* Exclude verified certificate */
 				for (i = 1; i < sk_X509_num(chain2); i++)
 					sk_X509_push(certs, sk_X509_value(
@@ -701,7 +701,7 @@ pkcs12_main(int argc, char **argv)
 				X509_free(sk_X509_value(chain2, 0));
 				sk_X509_free(chain2);
 			} else {
-				if (vret >= 0)
+				if (vret != X509_V_ERR_UNSPECIFIED)
 					BIO_printf(bio_err,
 					    "Error %s getting chain.\n",
 					    X509_verify_cert_error_string(
@@ -895,9 +895,9 @@ dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bag, char *pass,
 			return 1;
 		print_attribs(out, bag->attrib, "Bag Attributes");
 		p8 = bag->value.keybag;
-		if (!(pkey = EVP_PKCS82PKEY(p8)))
+		if ((pkey = EVP_PKCS82PKEY(p8)) == NULL)
 			return 0;
-		print_attribs(out, p8->attributes, "Key Attributes");
+		print_attribs(out, PKCS8_pkey_get0_attrs(p8), "Key Attributes");
 		PEM_write_bio_PrivateKey(out, pkey, pkcs12_config.enc, NULL, 0,
 		    NULL, pempass);
 		EVP_PKEY_free(pkey);
@@ -917,7 +917,7 @@ dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bag, char *pass,
 			PKCS8_PRIV_KEY_INFO_free(p8);
 			return 0;
 		}
-		print_attribs(out, p8->attributes, "Key Attributes");
+		print_attribs(out, PKCS8_pkey_get0_attrs(p8), "Key Attributes");
 		PKCS8_PRIV_KEY_INFO_free(p8);
 		PEM_write_bio_PrivateKey(out, pkey, pkcs12_config.enc, NULL, 0,
 		    NULL, pempass);
@@ -962,43 +962,33 @@ dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bag, char *pass,
 }
 
 /* Given a single certificate return a verified chain or NULL if error */
-
-/* Hope this is OK .... */
-
 int
-get_cert_chain(X509 *cert, X509_STORE *store, STACK_OF(X509) **chain)
+get_cert_chain(X509 *cert, X509_STORE *store, STACK_OF(X509) **out_chain)
 {
-	X509_STORE_CTX store_ctx;
-	STACK_OF(X509) *chn;
-	int i = 0;
+	X509_STORE_CTX *store_ctx = NULL;
+	STACK_OF(X509) *chain = NULL;
+	int ret = X509_V_ERR_UNSPECIFIED;
 
-	/*
-	 * FIXME: Should really check the return status of
-	 * X509_STORE_CTX_init for an error, but how that fits into the
-	 * return value of this function is less obvious.
-	 */
-	X509_STORE_CTX_init(&store_ctx, store, cert, NULL);
-	if (X509_verify_cert(&store_ctx) <= 0) {
-		i = X509_STORE_CTX_get_error(&store_ctx);
-		if (i == 0)
-			/*
-			 * avoid returning 0 if X509_verify_cert() did not
-			 * set an appropriate error value in the context
-			 */
-			i = -1;
-		chn = NULL;
+	if ((store_ctx = X509_STORE_CTX_new()) == NULL)
 		goto err;
-	} else
-		chn = X509_STORE_CTX_get1_chain(&store_ctx);
- err:
-	X509_STORE_CTX_cleanup(&store_ctx);
-	*chain = chn;
+	if (!X509_STORE_CTX_init(store_ctx, store, cert, NULL))
+		goto err;
 
-	return i;
+	if (X509_verify_cert(store_ctx) > 0) {
+		if ((chain = X509_STORE_CTX_get1_chain(store_ctx)) == NULL)
+			goto err;
+	}
+	ret = X509_STORE_CTX_get_error(store_ctx);
+
+ err:
+	X509_STORE_CTX_free(store_ctx);
+	*out_chain = chain;
+
+	return ret;
 }
 
 int
-alg_print(BIO *x, X509_ALGOR *alg)
+alg_print(BIO *x, const X509_ALGOR *alg)
 {
 	PBEPARAM *pbe;
 	const unsigned char *p;
@@ -1031,14 +1021,45 @@ cert_load(BIO *in, STACK_OF(X509) *sk)
 }
 
 /* Generalised attribute print: handle PKCS#8 and bag attributes */
+void
+print_attribute(BIO *out, const ASN1_TYPE *av)
+{
+	char *value;
+
+	switch (av->type) {
+	case V_ASN1_BMPSTRING:
+		value = OPENSSL_uni2asc(
+		    av->value.bmpstring->data,
+		    av->value.bmpstring->length);
+		BIO_printf(out, "%s\n", value);
+		free(value);
+		break;
+
+	case V_ASN1_OCTET_STRING:
+		hex_prin(out, av->value.octet_string->data,
+		    av->value.octet_string->length);
+		BIO_printf(out, "\n");
+		break;
+
+	case V_ASN1_BIT_STRING:
+		hex_prin(out, av->value.bit_string->data,
+		    av->value.bit_string->length);
+		BIO_printf(out, "\n");
+		break;
+
+	default:
+		BIO_printf(out, "<Unsupported tag %d>\n",
+		    av->type);
+		break;
+	}
+}
 
 int
-print_attribs(BIO *out, STACK_OF(X509_ATTRIBUTE) *attrlst, const char *name)
+print_attribs(BIO *out, const STACK_OF(X509_ATTRIBUTE) *attrlst, const char *name)
 {
 	X509_ATTRIBUTE *attr;
 	ASN1_TYPE *av;
-	char *value;
-	int i, attr_nid;
+	int i, j, attr_nid;
 	if (!attrlst) {
 		BIO_printf(out, "%s: <No Attributes>\n", name);
 		return 1;
@@ -1049,42 +1070,22 @@ print_attribs(BIO *out, STACK_OF(X509_ATTRIBUTE) *attrlst, const char *name)
 	}
 	BIO_printf(out, "%s\n", name);
 	for (i = 0; i < sk_X509_ATTRIBUTE_num(attrlst); i++) {
+		ASN1_OBJECT *obj;
+
 		attr = sk_X509_ATTRIBUTE_value(attrlst, i);
-		attr_nid = OBJ_obj2nid(attr->object);
+		obj = X509_ATTRIBUTE_get0_object(attr);
+		attr_nid = OBJ_obj2nid(X509_ATTRIBUTE_get0_object(attr));
 		BIO_printf(out, "    ");
 		if (attr_nid == NID_undef) {
-			i2a_ASN1_OBJECT(out, attr->object);
+			i2a_ASN1_OBJECT(out, obj);
 			BIO_printf(out, ": ");
 		} else
 			BIO_printf(out, "%s: ", OBJ_nid2ln(attr_nid));
 
-		if (sk_ASN1_TYPE_num(attr->value.set)) {
-			av = sk_ASN1_TYPE_value(attr->value.set, 0);
-			switch (av->type) {
-			case V_ASN1_BMPSTRING:
-				value = OPENSSL_uni2asc(
-				    av->value.bmpstring->data,
-				    av->value.bmpstring->length);
-				BIO_printf(out, "%s\n", value);
-				free(value);
-				break;
-
-			case V_ASN1_OCTET_STRING:
-				hex_prin(out, av->value.octet_string->data,
-				    av->value.octet_string->length);
-				BIO_printf(out, "\n");
-				break;
-
-			case V_ASN1_BIT_STRING:
-				hex_prin(out, av->value.bit_string->data,
-				    av->value.bit_string->length);
-				BIO_printf(out, "\n");
-				break;
-
-			default:
-				BIO_printf(out, "<Unsupported tag %d>\n",
-				    av->type);
-				break;
+		if (X509_ATTRIBUTE_count(attr)) {
+			for (j = 0; j < X509_ATTRIBUTE_count(attr); j++) {
+				av = X509_ATTRIBUTE_get0_type(attr, j);
+				print_attribute(out, av);
 			}
 		} else
 			BIO_printf(out, "<No Values>\n");
