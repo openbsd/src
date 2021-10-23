@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.145 2021/10/22 08:51:50 benno Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.146 2021/10/23 15:30:28 benno Exp $	*/
 
 /*
  * Copyright (c) 2020 Matthias Pressfreund <mpfr@fn.de>
@@ -1406,7 +1406,7 @@ server_response(struct httpd *httpd, struct client *clt)
 
 	if (clt->clt_toread > 0 && (size_t)clt->clt_toread >
 	    srv_conf->maxrequestbody) {
-		server_abort_http(clt, 413, NULL);
+		server_abort_http(clt, 413, "request body too large");
 		return (-1);
 	}
 
