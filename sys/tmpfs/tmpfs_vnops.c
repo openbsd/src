@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vnops.c,v 1.47 2021/10/23 17:38:00 patrick Exp $	*/
+/*	$OpenBSD: tmpfs_vnops.c,v 1.48 2021/10/23 17:39:08 patrick Exp $	*/
 /*	$NetBSD: tmpfs_vnops.c,v 1.100 2012/11/05 17:27:39 dholland Exp $	*/
 
 /*
@@ -625,7 +625,7 @@ tmpfs_write(void *v)
 	error = 0;
 	while (error == 0 && uio->uio_resid > 0) {
 		vsize_t len;
-
+		uvm_vnp_uncache(vp);
 		len = MIN(node->tn_size - uio->uio_offset, uio->uio_resid);
 		if (len == 0) {
 			break;
