@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.88 2021/05/20 15:12:10 florian Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.89 2021/10/23 15:52:44 benno Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -559,6 +559,12 @@ server_fcgi_read(struct bufferevent *bev, void *arg)
 						return;
 					}
 				}
+				/* Don't send content for HEAD requests */
+				if (clt->clt_fcgi.headerssent &&
+				    ((struct http_descriptor *)
+				    clt->clt_descreq)->http_method
+				    == HTTP_METHOD_HEAD)
+					return;
 				if (server_fcgi_writechunk(clt) == -1) {
 					server_abort_http(clt, 500,
 					    "encoding error");
@@ -621,29 +627,33 @@ server_fcgi_header(struct client *clt, unsigned int code)
 		/* Can't chunk encode an empty body. */
 		clt->clt_fcgi.chunked = 0;
 
-		/* But then we need a Content-Length... */
-		key.kv_key = "Content-Length";
-		if ((kv = kv_find(&resp->http_headers, &key)) == NULL) {
-			if (kv_add(&resp->http_headers,
-			    "Content-Length", "0") == NULL)
-				return (-1);
+		/* But then we need a Content-Length unless method is HEAD... */
+		if (desc->http_method != HTTP_METHOD_HEAD) {
+			key.kv_key = "Content-Length";
+			if ((kv = kv_find(&resp->http_headers, &key)) == NULL) {
+				if (kv_add(&resp->http_headers,
+				    "Content-Length", "0") == NULL)
+					return (-1);
+			}
 		}
 	}
 
-	/* Set chunked encoding */
+	/* Send chunked encoding header */
 	if (clt->clt_fcgi.chunked) {
-		/* XXX Should we keep and handle Content-Length instead? */
+		/* but only if no Content-Length header is supplied */
 		key.kv_key = "Content-Length";
-		if ((kv = kv_find(&resp->http_headers, &key)) != NULL)
-			kv_delete(&resp->http_headers, kv);
-
-		/*
-		 * XXX What if the FastCGI added some kind of Transfer-Encoding?
-		 * XXX like gzip, deflate or even "chunked"?
-		 */
-		if (kv_add(&resp->http_headers,
-		    "Transfer-Encoding", "chunked") == NULL)
-			return (-1);
+		if ((kv = kv_find(&resp->http_headers, &key)) != NULL) {
+			clt->clt_fcgi.chunked = 0;
+		} else {
+			/*
+			 * XXX What if the FastCGI added some kind of
+			 * Transfer-Encoding, like gzip, deflate or even
+			 * "chunked"?
+			 */
+			if (kv_add(&resp->http_headers,
+			    "Transfer-Encoding", "chunked") == NULL)
+				return (-1);
+		}
 	}
 
 	/* Is it a persistent connection? */
