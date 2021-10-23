@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.14 2021/10/22 11:13:06 claudio Exp $ */
+/*	$OpenBSD: io.c,v 1.15 2021/10/23 16:06:04 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -29,28 +29,6 @@
 #include <imsg.h>
 
 #include "extern.h"
-
-void
-io_socket_blocking(int fd)
-{
-	int	 fl;
-
-	if ((fl = fcntl(fd, F_GETFL, 0)) == -1)
-		err(1, "fcntl");
-	if (fcntl(fd, F_SETFL, fl & ~O_NONBLOCK) == -1)
-		err(1, "fcntl");
-}
-
-void
-io_socket_nonblocking(int fd)
-{
-	int	 fl;
-
-	if ((fl = fcntl(fd, F_GETFL, 0)) == -1)
-		err(1, "fcntl");
-	if (fcntl(fd, F_SETFL, fl | O_NONBLOCK) == -1)
-		err(1, "fcntl");
-}
 
 /*
  * Create new io buffer, call io_close() when done with it.
@@ -109,80 +87,148 @@ io_buf_close(struct msgbuf *msgbuf, struct ibuf *b)
 {
 	size_t len;
 
-	len = ibuf_size(b);
+	len = ibuf_size(b) - sizeof(len);
 	memcpy(ibuf_seek(b, 0, sizeof(len)), &len, sizeof(len));
 	ibuf_close(msgbuf, b);
 }
 
 /*
- * Read of a binary buffer that must be on a blocking descriptor.
+ * Read of an ibuf and extract sz byte from there.
  * Does nothing if "sz" is zero.
- * This will fail and exit on EOF.
+ * Return 1 on success or 0 if there was not enough data.
  */
 void
-io_simple_read(int fd, void *res, size_t sz)
+io_read_buf(struct ibuf *b, void *res, size_t sz)
 {
-	ssize_t	 ssz;
 	char	*tmp;
 
-	tmp = res; /* arithmetic on a pointer to void is a GNU extension */
-again:
 	if (sz == 0)
 		return;
-	if ((ssz = read(fd, tmp, sz)) == -1)
-		err(1, "read");
-	else if (ssz == 0)
-		errx(1, "read: unexpected end of file");
-	else if ((size_t)ssz == sz)
-		return;
-	sz -= ssz;
-	tmp += ssz;
-	goto again;
-}
-
-/*
- * Read a binary buffer, allocating space for it.
- * If the buffer is zero-sized, this won't allocate "res", but
- * will still initialise it to NULL.
- */
-void
-io_buf_read_alloc(int fd, void **res, size_t *sz)
-{
-
-	*res = NULL;
-	io_simple_read(fd, sz, sizeof(size_t));
-	if (*sz == 0)
-		return;
-	if ((*res = malloc(*sz)) == NULL)
-		err(1, NULL);
-	io_simple_read(fd, *res, *sz);
+	tmp = ibuf_seek(b, b->rpos, sz);
+	if (tmp == NULL)
+		errx(1, "bad internal framing, buffer too short");
+	b->rpos += sz;
+	memcpy(res, tmp, sz);
 }
 
 /*
  * Read a string (returns NULL for zero-length strings), allocating
  * space for it.
+ * Return 1 on success or 0 if there was not enough data.
  */
 void
-io_str_read(int fd, char **res)
+io_read_str(struct ibuf *b, char **res)
 {
 	size_t	 sz;
 
-	io_simple_read(fd, &sz, sizeof(size_t));
+	io_read_buf(b, &sz, sizeof(sz));
 	if (sz == 0) {
 		*res = NULL;
 		return;
 	}
 	if ((*res = calloc(sz + 1, 1)) == NULL)
 		err(1, NULL);
-	io_simple_read(fd, *res, sz);
+	io_read_buf(b, *res, sz);
 }
+
+/*
+ * Read a binary buffer, allocating space for it.
+ * If the buffer is zero-sized, this won't allocate "res", but
+ * will still initialise it to NULL.
+ * Return 1 on success or 0 if there was not enough data.
+ */
+void
+io_read_buf_alloc(struct ibuf *b, void **res, size_t *sz)
+{
+	*res = NULL;
+	io_read_buf(b, sz, sizeof(sz));
+	if (*sz == 0)
+		return;
+	if ((*res = malloc(*sz)) == NULL)
+		err(1, NULL);
+	io_read_buf(b, *res, *sz);
+}
+
+/* XXX copy from imsg-buffer.c */
+static int
+ibuf_realloc(struct ibuf *buf, size_t len)
+{
+	unsigned char	*b;
+
+	/* on static buffers max is eq size and so the following fails */
+	if (buf->wpos + len > buf->max) {
+		errno = ERANGE;
+		return (-1);
+	}
+
+	b = recallocarray(buf->buf, buf->size, buf->wpos + len, 1);
+	if (b == NULL)
+		return (-1);
+	buf->buf = b;
+	buf->size = buf->wpos + len;
+
+	return (0);
+}
+
+/*
+ * Read once and fill a ibuf until it is finished.
+ * Returns NULL if more data is needed, returns a full ibuf once
+ * all data is received.
+ */
+struct ibuf *
+io_buf_read(int fd, struct ibuf **ib)
+{
+	struct ibuf *b = *ib;
+	ssize_t n;
+	size_t sz;
+
+	/* if ibuf == NULL allocate a new buffer */
+	if (b == NULL) {
+		if ((b = ibuf_dynamic(sizeof(sz), INT32_MAX)) == NULL)
+			err(1, NULL);
+		*ib = b;
+	}
+
+	/* read some data */
+	while ((n = read(fd, b->buf + b->wpos, b->size - b->wpos)) == -1) {
+		if (errno == EINTR)
+			continue;
+		err(1, "read");
+	}
+
+	if (n == 0)
+		errx(1, "read: unexpected end of file");
+	b->wpos += n;
+
+	/* got full message */
+	if (b->wpos == b->size) {
+		/* only header received */
+		if (b->wpos == sizeof(sz)) {
+			memcpy(&sz, b->buf, sizeof(sz));
+			if (sz == 0 || sz > INT32_MAX)
+				errx(1, "bad internal framing, bad size");
+			if (ibuf_realloc(b, sz) == -1)
+				err(1, "ibuf_realloc");
+			return NULL;
+		}
+
+		/* skip over initial size header */
+		b->rpos += sizeof(sz);
+		*ib = NULL;
+		return b;
+	}
+
+	return NULL;
+}
+
 
 /*
  * Read data from socket but receive a file descriptor at the same time.
  */
-int
-io_recvfd(int fd, void *res, size_t sz)
+struct ibuf *
+io_buf_recvfd(int fd, struct ibuf **ib)
 {
+	struct ibuf *b = *ib;
 	struct iovec iov;
 	struct msghdr msg;
 	struct cmsghdr *cmsg;
@@ -190,15 +236,22 @@ io_recvfd(int fd, void *res, size_t sz)
 		struct cmsghdr	hdr;
 		char		buf[CMSG_SPACE(sizeof(int))];
 	} cmsgbuf;
-	int outfd = -1;
-	char *b = res;
 	ssize_t n;
+	size_t sz;
 
+	/* fd are only passed on the head, just use regular read afterwards */
+	if (b != NULL)
+		return io_buf_read(fd, ib);
+
+	if ((b = ibuf_dynamic(sizeof(sz), INT32_MAX)) == NULL)
+		err(1, NULL);
+	*ib = b;
+	
 	memset(&msg, 0, sizeof(msg));
 	memset(&cmsgbuf, 0, sizeof(cmsgbuf));
 
-	iov.iov_base = res;
-	iov.iov_len = sz;
+	iov.iov_base = b->buf;
+	iov.iov_len = b->size;
 
 	msg.msg_iov = &iov;
 	msg.msg_iovlen = 1;
@@ -225,29 +278,32 @@ io_recvfd(int fd, void *res, size_t sz)
 			for (i = 0; i < j; i++) {
 				f = ((int *)CMSG_DATA(cmsg))[i];
 				if (i == 0)
-					outfd = f;
+					b->fd = f;
 				else
 					close(f);
 			}
 		}
 	}
 
-	b += n;
-	sz -= n;
-	while (sz > 0) {
-		/* short receive */
-		n = recv(fd, b, sz, 0);
-		if (n == -1) {
-			if (errno == EINTR)
-				continue;
-			err(1, "recv");
-		}
-		if (n == 0)
-			errx(1, "recv: unexpected end of file");
+	b->wpos += n;
 
-		b += n;
-		sz -= n;
+	/* got full message */
+	if (b->wpos == b->size) {
+		/* only header received */
+		if (b->wpos == sizeof(sz)) {
+			memcpy(&sz, b->buf, sizeof(sz));
+			if (sz == 0 || sz > INT32_MAX)
+				errx(1, "read: bad internal framing, %zu", sz);
+			if (ibuf_realloc(b, sz) == -1)
+				err(1, "ibuf_realloc");
+			return NULL;
+		}
+
+		/* skip over initial size header */
+		b->rpos += sizeof(sz);
+		*ib = NULL;
+		return b;
 	}
 
-	return outfd;
+	return NULL;
 }

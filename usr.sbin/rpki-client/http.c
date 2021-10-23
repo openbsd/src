@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.43 2021/10/22 11:13:06 claudio Exp $  */
+/*	$OpenBSD: http.c,v 1.44 2021/10/23 16:06:04 claudio Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -1769,6 +1769,7 @@ proc_http(char *bind_addr, int fd)
 	struct pollfd pfds[NPFDS];
 	struct http_connection *conn, *nc;
 	struct http_request *req, *nr;
+	struct ibuf *b, *inbuf = NULL;
 
 	if (bind_addr != NULL) {
 		struct addrinfo hints, *res;
@@ -1859,18 +1860,20 @@ proc_http(char *bind_addr, int fd)
 			}
 		}
 		if (pfds[0].revents & POLLIN) {
-			size_t id, size;
-			int outfd;
-			char *uri;
-			char *mod;
+			b = io_buf_recvfd(fd, &inbuf);
+			if (b != NULL) {
+				size_t id;
+				char *uri;
+				char *mod;
 
-			outfd = io_recvfd(fd, &size, sizeof(size));
-			io_simple_read(fd, &id, sizeof(id));
-			io_str_read(fd, &uri);
-			io_str_read(fd, &mod);
+				io_read_buf(b, &id, sizeof(id));
+				io_read_str(b, &uri);
+				io_read_str(b, &mod);
 
-			/* queue up new requests */
-			http_req_new(id, uri, mod, outfd);
+				/* queue up new requests */
+				http_req_new(id, uri, mod, b->fd);
+				ibuf_free(b);
+			}
 		}
 
 		now = getmonotime();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp.c,v 1.12 2021/10/22 11:13:06 claudio Exp $ */
+/*	$OpenBSD: rrdp.c,v 1.13 2021/10/23 16:06:04 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -378,32 +378,37 @@ rrdp_finished(struct rrdp *s)
 static void
 rrdp_input_handler(int fd)
 {
+	static struct ibuf *inbuf;
 	char *local, *notify, *session_id, *last_mod;
+	struct ibuf *b;
 	struct rrdp *s;
 	enum rrdp_msg type;
 	enum http_result res;
 	long long serial;
-	size_t id, size;
-	int infd, ok;
+	size_t id;
+	int ok;
 
-	infd = io_recvfd(fd, &size, sizeof(size));
-	io_simple_read(fd, &type, sizeof(type));
-	io_simple_read(fd, &id, sizeof(id));
+	b = io_buf_recvfd(fd, &inbuf);
+	if (b == NULL)
+		return;
+
+	io_read_buf(b, &type, sizeof(type));
+	io_read_buf(b, &id, sizeof(id));
 
 	switch (type) {
 	case RRDP_START:
-		io_str_read(fd, &local);
-		io_str_read(fd, &notify);
-		io_str_read(fd, &session_id);
-		io_simple_read(fd, &serial, sizeof(serial));
-		io_str_read(fd, &last_mod);
-		if (infd != -1)
-			errx(1, "received unexpected fd %d", infd);
+		io_read_str(b, &local);
+		io_read_str(b, &notify);
+		io_read_str(b, &session_id);
+		io_read_buf(b, &serial, sizeof(serial));
+		io_read_str(b, &last_mod);
+		if (b->fd != -1)
+			errx(1, "received unexpected fd");
 
 		s = rrdp_new(id, local, notify, session_id, serial, last_mod);
 		break;
 	case RRDP_HTTP_INI:
-		if (infd == -1)
+		if (b->fd == -1)
 			errx(1, "expected fd not received");
 		s = rrdp_get(id);
 		if (s == NULL)
@@ -411,13 +416,13 @@ rrdp_input_handler(int fd)
 		if (s->state != RRDP_STATE_WAIT)
 			errx(1, "%s: bad internal state", s->local);
 
-		s->infd = infd;
+		s->infd = b->fd;
 		s->state = RRDP_STATE_PARSE;
 		break;
 	case RRDP_HTTP_FIN:
-		io_simple_read(fd, &res, sizeof(res));
-		io_str_read(fd, &last_mod);
-		if (infd != -1)
+		io_read_buf(b, &res, sizeof(res));
+		io_read_str(b, &last_mod);
+		if (b->fd != -1)
 			errx(1, "received unexpected fd");
 
 		s = rrdp_get(id);
@@ -435,12 +440,11 @@ rrdp_input_handler(int fd)
 		s = rrdp_get(id);
 		if (s == NULL)
 			errx(1, "rrdp session %zu does not exist", id);
-		if (infd != -1)
-			errx(1, "received unexpected fd %d", infd);
-		io_simple_read(fd, &ok, sizeof(ok));
-		if (ok != 1) {
+		if (b->fd != -1)
+			errx(1, "received unexpected fd");
+		io_read_buf(b, &ok, sizeof(ok));
+		if (ok != 1)
 			s->file_failed++;
-		}
 		s->file_pending--;
 		if (s->file_pending == 0)
 			rrdp_finished(s);
@@ -448,6 +452,7 @@ rrdp_input_handler(int fd)
 	default:
 		errx(1, "unexpected message %d", type);
 	}
+	ibuf_free(b);
 }
 
 static void
@@ -558,14 +563,12 @@ proc_rrdp(int fd)
 		if (pfds[0].revents & POLLHUP)
 			break;
 		if (pfds[0].revents & POLLOUT) {
-			io_socket_nonblocking(fd);
 			switch (msgbuf_write(&msgq)) {
 			case 0:
 				errx(1, "write: connection closed");
 			case -1:
 				err(1, "write");
 			}
-			io_socket_blocking(fd);
 		}
 		if (pfds[0].revents & POLLIN)
 			rrdp_input_handler(fd);

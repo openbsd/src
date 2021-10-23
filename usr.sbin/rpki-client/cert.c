@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.39 2021/10/15 22:30:33 job Exp $ */
+/*	$OpenBSD: cert.c,v 1.40 2021/10/23 16:06:04 claudio Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1281,33 +1281,31 @@ cert_buffer(struct ibuf *b, const struct cert *p)
 }
 
 static void
-cert_ip_read(int fd, struct cert_ip *p)
+cert_ip_read(struct ibuf *b, struct cert_ip *p)
 {
-
-	io_simple_read(fd, &p->afi, sizeof(enum afi));
-	io_simple_read(fd, &p->type, sizeof(enum cert_ip_type));
+	io_read_buf(b, &p->afi, sizeof(enum afi));
+	io_read_buf(b, &p->type, sizeof(enum cert_ip_type));
 
 	if (p->type != CERT_IP_INHERIT) {
-		io_simple_read(fd, &p->min, sizeof(p->min));
-		io_simple_read(fd, &p->max, sizeof(p->max));
+		io_read_buf(b, &p->min, sizeof(p->min));
+		io_read_buf(b, &p->max, sizeof(p->max));
 	}
 
 	if (p->type == CERT_IP_RANGE)
-		ip_addr_range_read(fd, &p->range);
+		ip_addr_range_read(b, &p->range);
 	else if (p->type == CERT_IP_ADDR)
-		ip_addr_read(fd, &p->ip);
+		ip_addr_read(b, &p->ip);
 }
 
 static void
-cert_as_read(int fd, struct cert_as *p)
+cert_as_read(struct ibuf *b, struct cert_as *p)
 {
-
-	io_simple_read(fd, &p->type, sizeof(enum cert_as_type));
+	io_read_buf(b, &p->type, sizeof(enum cert_as_type));
 	if (p->type == CERT_AS_RANGE) {
-		io_simple_read(fd, &p->range.min, sizeof(uint32_t));
-		io_simple_read(fd, &p->range.max, sizeof(uint32_t));
+		io_read_buf(b, &p->range.min, sizeof(uint32_t));
+		io_read_buf(b, &p->range.max, sizeof(uint32_t));
 	} else if (p->type == CERT_AS_ID)
-		io_simple_read(fd, &p->id, sizeof(uint32_t));
+		io_read_buf(b, &p->id, sizeof(uint32_t));
 }
 
 /*
@@ -1316,7 +1314,7 @@ cert_as_read(int fd, struct cert_as *p)
  * Always returns a valid pointer.
  */
 struct cert *
-cert_read(int fd)
+cert_read(struct ibuf *b)
 {
 	struct cert	*p;
 	size_t		 i;
@@ -1324,35 +1322,36 @@ cert_read(int fd)
 	if ((p = calloc(1, sizeof(struct cert))) == NULL)
 		err(1, NULL);
 
-	io_simple_read(fd, &p->valid, sizeof(int));
-	io_simple_read(fd, &p->expires, sizeof(time_t));
-	io_simple_read(fd, &p->purpose, sizeof(enum cert_purpose));
-	io_simple_read(fd, &p->ipsz, sizeof(size_t));
+	io_read_buf(b, &p->valid, sizeof(int));
+	io_read_buf(b, &p->expires, sizeof(time_t));
+	io_read_buf(b, &p->purpose, sizeof(enum cert_purpose));
+	io_read_buf(b, &p->ipsz, sizeof(size_t));
+
 	p->ips = calloc(p->ipsz, sizeof(struct cert_ip));
 	if (p->ips == NULL)
 		err(1, NULL);
 	for (i = 0; i < p->ipsz; i++)
-		cert_ip_read(fd, &p->ips[i]);
+		cert_ip_read(b, &p->ips[i]);
 
-	io_simple_read(fd, &p->asz, sizeof(size_t));
+	io_read_buf(b, &p->asz, sizeof(size_t));
 	p->as = calloc(p->asz, sizeof(struct cert_as));
 	if (p->as == NULL)
 		err(1, NULL);
 	for (i = 0; i < p->asz; i++)
-		cert_as_read(fd, &p->as[i]);
+		cert_as_read(b, &p->as[i]);
 
-	io_str_read(fd, &p->mft);
+	io_read_str(b, &p->mft);
+	io_read_str(b, &p->notify);
+	io_read_str(b, &p->repo);
+	io_read_str(b, &p->crl);
+	io_read_str(b, &p->aia);
+	io_read_str(b, &p->aki);
+	io_read_str(b, &p->ski);
+	io_read_str(b, &p->tal);
+	io_read_str(b, &p->pubkey);
+
 	assert(p->mft != NULL || p->purpose == CERT_PURPOSE_BGPSEC_ROUTER);
-	io_str_read(fd, &p->notify);
-	io_str_read(fd, &p->repo);
-	io_str_read(fd, &p->crl);
-	io_str_read(fd, &p->aia);
-	io_str_read(fd, &p->aki);
-	io_str_read(fd, &p->ski);
 	assert(p->ski);
-	io_str_read(fd, &p->tal);
-	io_str_read(fd, &p->pubkey);
-
 	return p;
 }
 

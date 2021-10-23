@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsync.c,v 1.26 2021/10/22 11:13:06 claudio Exp $ */
+/*	$OpenBSD: rsync.c,v 1.27 2021/10/23 16:06:04 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -120,6 +120,7 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 	int			 rc = 0;
 	struct pollfd		 pfd;
 	struct msgbuf		 msgq;
+	struct ibuf		*b, *inbuf = NULL;
 	sigset_t		 mask, oldmask;
 	struct rsyncproc	*ids = NULL;
 
@@ -178,7 +179,7 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 
 	for (;;) {
 		char *uri = NULL, *dst = NULL;
-		size_t id, size;
+		size_t id;
 		pid_t pid;
 		int st;
 
@@ -198,7 +199,6 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 			 */
 
 			while ((pid = waitpid(WAIT_ANY, &st, WNOHANG)) > 0) {
-				struct ibuf *b;
 				int ok = 1;
 
 				for (i = 0; i < idsz; i++)
@@ -247,11 +247,17 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 		if (!(pfd.revents & POLLIN))
 			continue;
 
+		b = io_buf_read(fd, &inbuf);
+		if (b == NULL)
+			continue;
+
 		/* Read host and module. */
-		io_simple_read(fd, &size, sizeof(size));
-		io_simple_read(fd, &id, sizeof(id));
-		io_str_read(fd, &dst);
-		io_str_read(fd, &uri);
+		io_read_buf(b, &id, sizeof(id));
+		io_read_str(b, &dst);
+		io_read_str(b, &uri);
+
+		ibuf_free(b);
+
 		assert(dst);
 		assert(uri);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.38 2021/09/09 14:15:49 claudio Exp $ */
+/*	$OpenBSD: mft.c,v 1.39 2021/10/23 16:06:04 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -564,7 +564,7 @@ mft_buffer(struct ibuf *b, const struct mft *p)
  * Result must be passed to mft_free().
  */
 struct mft *
-mft_read(int fd)
+mft_read(struct ibuf *b)
 {
 	struct mft	*p = NULL;
 	size_t		 i;
@@ -572,22 +572,22 @@ mft_read(int fd)
 	if ((p = calloc(1, sizeof(struct mft))) == NULL)
 		err(1, NULL);
 
-	io_simple_read(fd, &p->stale, sizeof(int));
-	io_str_read(fd, &p->file);
-	assert(p->file);
-	io_simple_read(fd, &p->filesz, sizeof(size_t));
+	io_read_buf(b, &p->stale, sizeof(int));
+	io_read_str(b, &p->file);
+	io_read_buf(b, &p->filesz, sizeof(size_t));
 
+	assert(p->file);
 	if ((p->files = calloc(p->filesz, sizeof(struct mftfile))) == NULL)
 		err(1, NULL);
 
 	for (i = 0; i < p->filesz; i++) {
-		io_str_read(fd, &p->files[i].file);
-		io_simple_read(fd, p->files[i].hash, SHA256_DIGEST_LENGTH);
+		io_read_str(b, &p->files[i].file);
+		io_read_buf(b, p->files[i].hash, SHA256_DIGEST_LENGTH);
 	}
 
-	io_str_read(fd, &p->aia);
-	io_str_read(fd, &p->aki);
-	io_str_read(fd, &p->ski);
+	io_read_str(b, &p->aia);
+	io_read_str(b, &p->aki);
+	io_read_str(b, &p->ski);
 	assert(p->aia && p->aki && p->ski);
 
 	return p;

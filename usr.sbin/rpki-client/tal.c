@@ -1,4 +1,4 @@
-/*	$OpenBSD: tal.c,v 1.30 2021/04/01 06:43:23 claudio Exp $ */
+/*	$OpenBSD: tal.c,v 1.31 2021/10/23 16:06:04 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -284,7 +284,7 @@ tal_buffer(struct ibuf *b, const struct tal *p)
  * A returned pointer must be freed with tal_free().
  */
 struct tal *
-tal_read(int fd)
+tal_read(struct ibuf *b)
 {
 	size_t		 i;
 	struct tal	*p;
@@ -292,18 +292,18 @@ tal_read(int fd)
 	if ((p = calloc(1, sizeof(struct tal))) == NULL)
 		err(1, NULL);
 
-	io_buf_read_alloc(fd, (void **)&p->pkey, &p->pkeysz);
+	io_read_buf_alloc(b, (void **)&p->pkey, &p->pkeysz);
+	io_read_str(b, &p->descr);
+	io_read_buf(b, &p->urisz, sizeof(size_t));
 	assert(p->pkeysz > 0);
-	io_str_read(fd, &p->descr);
 	assert(p->descr);
-	io_simple_read(fd, &p->urisz, sizeof(size_t));
 	assert(p->urisz > 0);
 
 	if ((p->uri = calloc(p->urisz, sizeof(char *))) == NULL)
 		err(1, NULL);
 
 	for (i = 0; i < p->urisz; i++) {
-		io_str_read(fd, &p->uri[i]);
+		io_read_str(b, &p->uri[i]);
 		assert(p->uri[i]);
 	}
 

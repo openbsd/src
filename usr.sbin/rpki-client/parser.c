@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.14 2021/10/22 11:13:06 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.15 2021/10/23 16:06:04 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -525,7 +525,7 @@ proc_parser(int fd)
 	struct entityq	 q;
 	struct msgbuf	 msgq;
 	struct pollfd	 pfd;
-	struct ibuf	*b;
+	struct ibuf	*b, *inbuf = NULL;
 	X509_STORE_CTX	*ctx;
 	struct auth_tree auths = RB_INITIALIZER(&auths);
 	struct crl_tree	 crlt = RB_INITIALIZER(&crlt);
@@ -544,8 +544,6 @@ proc_parser(int fd)
 	msgq.fd = fd;
 
 	pfd.fd = fd;
-
-	io_socket_nonblocking(pfd.fd);
 
 	for (;;) {
 		pfd.events = POLLIN;
@@ -571,13 +569,16 @@ proc_parser(int fd)
 		 */
 
 		if ((pfd.revents & POLLIN)) {
-			io_socket_blocking(fd);
-			entp = calloc(1, sizeof(struct entity));
-			if (entp == NULL)
-				err(1, NULL);
-			entity_read_req(fd, entp);
-			TAILQ_INSERT_TAIL(&q, entp, entries);
-			io_socket_nonblocking(fd);
+			b = io_buf_read(fd, &inbuf);
+			
+			if (b != NULL) {
+				entp = calloc(1, sizeof(struct entity));
+				if (entp == NULL)
+					err(1, NULL);
+				entity_read_req(b, entp);
+				TAILQ_INSERT_TAIL(&q, entp, entries);
+				ibuf_free(b);
+			}
 		}
 
 		if (pfd.revents & POLLOUT) {

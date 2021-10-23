@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.150 2021/10/22 11:13:06 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.151 2021/10/23 16:06:04 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -99,17 +99,14 @@ entity_free(struct entity *ent)
  * The pointer must be passed entity_free().
  */
 void
-entity_read_req(int fd, struct entity *ent)
+entity_read_req(struct ibuf *b, struct entity *ent)
 {
-	size_t size;
-
-	io_simple_read(fd, &size, sizeof(size));
-	io_simple_read(fd, &ent->type, sizeof(enum rtype));
-	io_str_read(fd, &ent->file);
-	io_simple_read(fd, &ent->has_pkey, sizeof(int));
+	io_read_buf(b, &ent->type, sizeof(ent->type));
+	io_read_str(b, &ent->file);
+	io_read_buf(b, &ent->has_pkey, sizeof(ent->has_pkey));
 	if (ent->has_pkey)
-		io_buf_read_alloc(fd, (void **)&ent->pkey, &ent->pkeysz);
-	io_str_read(fd, &ent->descr);
+		io_read_buf_alloc(b, (void **)&ent->pkey, &ent->pkeysz);
+	io_read_str(b, &ent->descr);
 }
 
 /*
@@ -459,7 +456,7 @@ queue_add_from_cert(const struct cert *cert)
  * In all cases, we gather statistics.
  */
 static void
-entity_process(int proc, struct stats *st, struct vrp_tree *tree,
+entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
     struct brk_tree *brktree)
 {
 	enum rtype	 type;
@@ -467,7 +464,6 @@ entity_process(int proc, struct stats *st, struct vrp_tree *tree,
 	struct cert	*cert;
 	struct mft	*mft;
 	struct roa	*roa;
-	size_t		 size;
 	int		 c;
 
 	/*
@@ -476,24 +472,23 @@ entity_process(int proc, struct stats *st, struct vrp_tree *tree,
 	 * certificate, for example).
 	 * We follow that up with whether the resources didn't parse.
 	 */
-	io_simple_read(proc, &size, sizeof(size));
-	io_simple_read(proc, &type, sizeof(type));
+	io_read_buf(b, &type, sizeof(type));
 
 	switch (type) {
 	case RTYPE_TAL:
 		st->tals++;
-		tal = tal_read(proc);
+		tal = tal_read(b);
 		queue_add_from_tal(tal);
 		tal_free(tal);
 		break;
 	case RTYPE_CER:
 		st->certs++;
-		io_simple_read(proc, &c, sizeof(int));
+		io_read_buf(b, &c, sizeof(c));
 		if (c == 0) {
 			st->certs_fail++;
 			break;
 		}
-		cert = cert_read(proc);
+		cert = cert_read(b);
 		if (cert->purpose == CERT_PURPOSE_CA) {
 			if (cert->valid) {
 				/*
@@ -517,12 +512,12 @@ entity_process(int proc, struct stats *st, struct vrp_tree *tree,
 		break;
 	case RTYPE_MFT:
 		st->mfts++;
-		io_simple_read(proc, &c, sizeof(int));
+		io_read_buf(b, &c, sizeof(c));
 		if (c == 0) {
 			st->mfts_fail++;
 			break;
 		}
-		mft = mft_read(proc);
+		mft = mft_read(b);
 		if (mft->stale)
 			st->mfts_stale++;
 		queue_add_from_mft_set(mft);
@@ -533,12 +528,12 @@ entity_process(int proc, struct stats *st, struct vrp_tree *tree,
 		break;
 	case RTYPE_ROA:
 		st->roas++;
-		io_simple_read(proc, &c, sizeof(int));
+		io_read_buf(b, &c, sizeof(c));
 		if (c == 0) {
 			st->roas_fail++;
 			break;
 		}
-		roa = roa_read(proc);
+		roa = roa_read(b);
 		if (roa->valid)
 			roa_insert_vrps(tree, roa, &st->vrps, &st->uniqs);
 		else
@@ -553,6 +548,57 @@ entity_process(int proc, struct stats *st, struct vrp_tree *tree,
 	}
 
 	entity_queue--;
+}
+
+static void
+rrdp_process(struct ibuf *b)
+{
+	enum rrdp_msg type;
+	enum publish_type pt;
+	struct rrdp_session s;
+	char *uri, *last_mod, *data;
+	char hash[SHA256_DIGEST_LENGTH];
+	size_t dsz, id;
+	int ok;
+
+	io_read_buf(b, &type, sizeof(type));
+	io_read_buf(b, &id, sizeof(id));
+
+	switch (type) {
+	case RRDP_END:
+		io_read_buf(b, &ok, sizeof(ok));
+		rrdp_finish(id, ok);
+		break;
+	case RRDP_HTTP_REQ:
+		io_read_str(b, &uri);
+		io_read_str(b, &last_mod);
+		rrdp_http_fetch(id, uri, last_mod);
+		break;
+	case RRDP_SESSION:
+		io_read_str(b, &s.session_id);
+		io_read_buf(b, &s.serial, sizeof(s.serial));
+		io_read_str(b, &s.last_mod);
+		rrdp_save_state(id, &s);
+		free(s.session_id);
+		free(s.last_mod);
+		break;
+	case RRDP_FILE:
+		io_read_buf(b, &pt, sizeof(pt));
+		if (pt != PUB_ADD)
+			io_read_buf(b, &hash, sizeof(hash));
+		io_read_str(b, &uri);
+		io_read_buf_alloc(b, (void **)&data, &dsz);
+
+		ok = rrdp_handle_file(id, pt, uri, hash, sizeof(hash),
+		    data, dsz);
+		rrdp_file_resp(id, ok);
+
+		free(uri);
+		free(data);
+		break;
+	default:
+		errx(1, "unexpected rrdp response");
+	}
 }
 
 /*
@@ -623,19 +669,21 @@ suicide(int sig __attribute__((unused)))
 int
 main(int argc, char *argv[])
 {
-	int		 rc, c, st, proc, rsync, http, rrdp, ok,
-			 hangup = 0, fl = SOCK_STREAM | SOCK_CLOEXEC;
-	size_t		 i, id, talsz = 0, size;
+	int		 rc, c, st, proc, rsync, http, rrdp, ok, hangup = 0;
+	int		 fl = SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK;
+	size_t		 i, id, talsz = 0;
 	pid_t		 pid, procpid, rsyncpid, httppid, rrdppid;
 	int		 fd[2];
 	struct pollfd	 pfd[NPFD];
 	struct msgbuf	*queues[NPFD];
+	struct ibuf	*b, *httpbuf = NULL, *procbuf = NULL;
+	struct ibuf	*rrdpbuf = NULL, *rsyncbuf = NULL;
 	char		*rsync_prog = "openrsync";
 	char		*bind_addr = NULL;
 	const char	*cachedir = NULL, *outputdir = NULL;
 	const char	*tals[TALSZ_MAX], *errs, *name;
-	struct vrp_tree	 v = RB_INITIALIZER(&v);
-	struct brk_tree  b = RB_INITIALIZER(&b);
+	struct vrp_tree	 vrps = RB_INITIALIZER(&vrps);
+	struct brk_tree  brks = RB_INITIALIZER(&brks);
 	struct rusage	ru;
 	struct timeval	start_time, now_time;
 
@@ -972,12 +1020,6 @@ main(int argc, char *argv[])
 				hangup = 1;
 			}
 			if (pfd[i].revents & POLLOUT) {
-				/*
-				 * XXX work around deadlocks because of
-				 * blocking read vs non-blocking writes.
-				 */
-				if (i > 1)
-					io_socket_nonblocking(pfd[i].fd);
 				switch (msgbuf_write(queues[i])) {
 				case 0:
 					errx(1, "write[%zu]: "
@@ -985,8 +1027,6 @@ main(int argc, char *argv[])
 				case -1:
 					err(1, "write[%zu]", i);
 				}
-				if (i > 1)
-					io_socket_blocking(pfd[i].fd);
 			}
 		}
 		if (hangup)
@@ -1000,75 +1040,38 @@ main(int argc, char *argv[])
 		 */
 
 		if ((pfd[1].revents & POLLIN)) {
-			io_simple_read(rsync, &size, sizeof(size));
-			io_simple_read(rsync, &id, sizeof(id));
-			io_simple_read(rsync, &ok, sizeof(ok));
-			rsync_finish(id, ok);
+			b = io_buf_read(rsync, &rsyncbuf);
+			if (b != NULL) {
+				io_read_buf(b, &id, sizeof(id));
+				io_read_buf(b, &ok, sizeof(ok));
+				rsync_finish(id, ok);
+				ibuf_free(b);
+			}
 		}
 
 		if ((pfd[2].revents & POLLIN)) {
-			enum http_result res;
-			char *last_mod;
+			b = io_buf_read(http, &httpbuf);
+			if (b != NULL) {
+				enum http_result res;
+				char *last_mod;
 
-			io_simple_read(http, &size, sizeof(size));
-			io_simple_read(http, &id, sizeof(id));
-			io_simple_read(http, &res, sizeof(res));
-			io_str_read(http, &last_mod);
-			http_finish(id, res, last_mod);
-			free(last_mod);
+				io_read_buf(b, &id, sizeof(id));
+				io_read_buf(b, &res, sizeof(res));
+				io_read_str(b, &last_mod);
+				http_finish(id, res, last_mod);
+				free(last_mod);
+				ibuf_free(b);
+			}
 		}
 
 		/*
 		 * Handle RRDP requests here.
 		 */
 		if ((pfd[3].revents & POLLIN)) {
-			enum rrdp_msg type;
-			enum publish_type pt;
-			struct rrdp_session s;
-			char *uri, *last_mod, *data;
-			char hash[SHA256_DIGEST_LENGTH];
-			size_t dsz;
-
-			io_simple_read(rrdp, &size, sizeof(size));
-			io_simple_read(rrdp, &type, sizeof(type));
-			io_simple_read(rrdp, &id, sizeof(id));
-
-			switch (type) {
-			case RRDP_END:
-				io_simple_read(rrdp, &ok, sizeof(ok));
-				rrdp_finish(id, ok);
-				break;
-			case RRDP_HTTP_REQ:
-				io_str_read(rrdp, &uri);
-				io_str_read(rrdp, &last_mod);
-				rrdp_http_fetch(id, uri, last_mod);
-				break;
-			case RRDP_SESSION:
-				io_str_read(rrdp, &s.session_id);
-				io_simple_read(rrdp, &s.serial,
-				    sizeof(s.serial));
-				io_str_read(rrdp, &s.last_mod);
-				rrdp_save_state(id, &s);
-				free(s.session_id);
-				free(s.last_mod);
-				break;
-			case RRDP_FILE:
-				io_simple_read(rrdp, &pt, sizeof(pt));
-				if (pt != PUB_ADD)
-					io_simple_read(rrdp, &hash,
-					    sizeof(hash));
-				io_str_read(rrdp, &uri);
-				io_buf_read_alloc(rrdp, (void **)&data, &dsz);
-
-				ok = rrdp_handle_file(id, pt, uri,
-				    hash, sizeof(hash), data, dsz);
-				rrdp_file_resp(id, ok);
-
-				free(uri);
-				free(data);
-				break;
-			default:
-				errx(1, "unexpected rrdp response");
+			b = io_buf_read(rrdp, &rrdpbuf);
+			if (b != NULL) {
+				rrdp_process(b);
+				ibuf_free(b);
 			}
 		}
 
@@ -1078,7 +1081,11 @@ main(int argc, char *argv[])
 		 */
 
 		if ((pfd[0].revents & POLLIN)) {
-			entity_process(proc, &stats, &v, &b);
+			b = io_buf_read(proc, &procbuf);
+			if (b != NULL) {
+				entity_process(b, &stats, &vrps, &brks);
+				ibuf_free(b);
+			}
 		}
 	}
 
@@ -1154,7 +1161,7 @@ main(int argc, char *argv[])
 	if (fchdir(outdirfd) == -1)
 		err(1, "fchdir output dir");
 
-	if (outputfiles(&v, &b, &stats))
+	if (outputfiles(&vrps, &brks, &stats))
 		rc = 1;
 
 

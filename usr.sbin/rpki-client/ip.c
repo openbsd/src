@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip.c,v 1.17 2021/04/19 17:04:35 deraadt Exp $ */
+/*	$OpenBSD: ip.c,v 1.18 2021/10/23 16:06:04 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -314,14 +314,14 @@ ip_addr_range_buffer(struct ibuf *b, const struct ip_addr_range *p)
  * Matched with ip_addr_buffer().
  */
 void
-ip_addr_read(int fd, struct ip_addr *p)
+ip_addr_read(struct ibuf *b, struct ip_addr *p)
 {
 	size_t sz;
 
-	io_simple_read(fd, &p->prefixlen, sizeof(unsigned char));
+	io_read_buf(b, &p->prefixlen, sizeof(unsigned char));
 	sz = PREFIX_SIZE(p->prefixlen);
 	assert(sz <= 16);
-	io_simple_read(fd, p->addr, sz);
+	io_read_buf(b, p->addr, sz);
 }
 
 /*
@@ -329,11 +329,10 @@ ip_addr_read(int fd, struct ip_addr *p)
  * Matched with ip_addr_range_buffer().
  */
 void
-ip_addr_range_read(int fd, struct ip_addr_range *p)
+ip_addr_range_read(struct ibuf *b, struct ip_addr_range *p)
 {
-
-	ip_addr_read(fd, &p->min);
-	ip_addr_read(fd, &p->max);
+	ip_addr_read(b, &p->min);
+	ip_addr_read(b, &p->max);
 }
 
 /*

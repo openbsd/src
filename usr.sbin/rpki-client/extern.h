@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.73 2021/10/22 11:13:06 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.74 2021/10/23 16:06:04 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -399,25 +399,25 @@ void		 tal_buffer(struct ibuf *, const struct tal *);
 void		 tal_free(struct tal *);
 struct tal	*tal_parse(const char *, char *);
 char		*tal_read_file(const char *);
-struct tal	*tal_read(int);
+struct tal	*tal_read(struct ibuf *);
 
 void		 cert_buffer(struct ibuf *, const struct cert *);
 void		 cert_free(struct cert *);
 struct cert	*cert_parse(X509 **, const char *);
 struct cert	*ta_parse(X509 **, const char *, const unsigned char *, size_t);
-struct cert	*cert_read(int);
+struct cert	*cert_read(struct ibuf *);
 void		 cert_insert_brks(struct brk_tree *, struct cert *);
 
 void		 mft_buffer(struct ibuf *, const struct mft *);
 void		 mft_free(struct mft *);
 struct mft	*mft_parse(X509 **, const char *);
 int		 mft_check(const char *, struct mft *);
-struct mft	*mft_read(int);
+struct mft	*mft_read(struct ibuf *);
 
 void		 roa_buffer(struct ibuf *, const struct roa *);
 void		 roa_free(struct roa *);
 struct roa	*roa_parse(X509 **, const char *);
-struct roa	*roa_read(int);
+struct roa	*roa_read(struct ibuf *);
 void		 roa_insert_vrps(struct vrp_tree *, struct roa *, size_t *,
 		    size_t *);
 
@@ -460,8 +460,8 @@ void		 ip_addr_print(const struct ip_addr *, enum afi, char *,
 void		 ip_addr_buffer(struct ibuf *, const struct ip_addr *);
 void		 ip_addr_range_buffer(struct ibuf *,
 			const struct ip_addr_range *);
-void		 ip_addr_read(int, struct ip_addr *);
-void		 ip_addr_range_read(int, struct ip_addr_range *);
+void		 ip_addr_read(struct ibuf *, struct ip_addr *);
+void		 ip_addr_range_read(struct ibuf *, struct ip_addr_range *);
 int		 ip_addr_cmp(const struct ip_addr *, const struct ip_addr *);
 int		 ip_addr_check_overlap(const struct cert_ip *,
 			const char *, const struct cert_ip *, size_t);
@@ -480,7 +480,7 @@ int		 as_check_covered(uint32_t, uint32_t,
 
 /* Parser-specific */
 void		 entity_free(struct entity *);
-void		 entity_read_req(int fd, struct entity *);
+void		 entity_read_req(struct ibuf *, struct entity *);
 void		 entityq_flush(struct entityq *, struct repo *);
 void		 proc_parser(int) __attribute__((noreturn));
 
@@ -535,8 +535,6 @@ char		*hex_encode(const unsigned char *, size_t);
 
 /* Functions for moving data between processes. */
 
-void		 io_socket_blocking(int);
-void		 io_socket_nonblocking(int);
 struct ibuf	*io_buf_new(void);
 void		 io_simple_buffer(struct ibuf *, const void *, size_t);
 void		 io_buf_buffer(struct ibuf *, const void *, size_t);
@@ -545,7 +543,11 @@ void		 io_buf_close(struct msgbuf *, struct ibuf *);
 void		 io_simple_read(int, void *, size_t);
 void		 io_buf_read_alloc(int, void **, size_t *);
 void		 io_str_read(int, char **);
-int		 io_recvfd(int, void *, size_t);
+void		 io_read_buf(struct ibuf *, void *, size_t);
+void		 io_read_str(struct ibuf *, char **);
+void		 io_read_buf_alloc(struct ibuf *, void **, size_t *);
+struct ibuf	*io_buf_read(int, struct ibuf **);
+struct ibuf	*io_buf_recvfd(int, struct ibuf **);
 
 /* X509 helpers. */
 
