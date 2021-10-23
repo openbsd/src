@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.210 2021/10/15 16:48:46 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.211 2021/10/23 11:41:51 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -505,6 +505,11 @@ void SSL_set_msg_callback(SSL *ssl, void (*cb)(int write_p, int version,
     int content_type, const void *buf, size_t len, SSL *ssl, void *arg));
 #define SSL_CTX_set_msg_callback_arg(ctx, arg) SSL_CTX_ctrl((ctx), SSL_CTRL_SET_MSG_CALLBACK_ARG, 0, (arg))
 #define SSL_set_msg_callback_arg(ssl, arg) SSL_ctrl((ssl), SSL_CTRL_SET_MSG_CALLBACK_ARG, 0, (arg))
+typedef void (*SSL_CTX_keylog_cb_func)(const SSL *ssl, const char *line);
+#if defined(LIBRESSL_NEW_API)
+void SSL_CTX_set_keylog_callback(SSL_CTX *ctx, SSL_CTX_keylog_cb_func cb);
+SSL_CTX_keylog_cb_func SSL_CTX_get_keylog_callback(const SSL_CTX *ctx);
+#endif
 
 #ifndef LIBRESSL_INTERNAL
 struct ssl_aead_ctx_st;

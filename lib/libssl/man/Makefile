@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.73 2021/09/14 14:30:57 schwarze Exp $
+# $OpenBSD: Makefile,v 1.74 2021/10/23 11:41:52 beck Exp $
 
 .include <bsd.own.mk>
 
@@ -32,6 +32,7 @@ MAN =	BIO_f_ssl.3 \
 	SSL_CTX_set_default_passwd_cb.3 \
 	SSL_CTX_set_generate_session_id.3 \
 	SSL_CTX_set_info_callback.3 \
+	SSL_CTX_set_keylog_callback.3 \
 	SSL_CTX_set_max_cert_list.3 \
 	SSL_CTX_set_min_proto_version.3 \
 	SSL_CTX_set_mode.3 \

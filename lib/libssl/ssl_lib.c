@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.268 2021/09/10 08:59:56 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.269 2021/10/23 11:41:52 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -768,6 +768,18 @@ int
 (*SSL_get_verify_callback(const SSL *s))(int, X509_STORE_CTX *)
 {
 	return (s->internal->verify_callback);
+}
+
+void
+SSL_CTX_set_keylog_callback(SSL_CTX *ctx, SSL_CTX_keylog_cb_func cb)
+{
+	ctx->internal->keylog_callback = cb;
+}
+
+SSL_CTX_keylog_cb_func
+SSL_CTX_get_keylog_callback(const SSL_CTX *ctx)
+{
+	return (ctx->internal->keylog_callback);
 }
 
 int
