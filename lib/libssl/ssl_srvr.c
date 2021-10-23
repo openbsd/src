@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.121 2021/10/23 13:36:03 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.122 2021/10/23 14:40:54 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -837,19 +837,19 @@ ssl3_get_client_hello(SSL *s)
 	 * (may differ: see RFC 2246, Appendix E, second paragraph)
 	 */
 	if (!ssl_max_shared_version(s, client_version, &shared_version)) {
-		if ((s->client_version >> 8) == SSL3_VERSION_MAJOR &&
+		if ((client_version >> 8) == SSL3_VERSION_MAJOR &&
 		    !tls12_record_layer_write_protected(s->internal->rl)) {
 			/*
 			 * Similar to ssl3_get_record, send alert using remote
 			 * version number.
 			 */
-			s->version = s->client_version;
+			s->version = client_version;
 		}
 		SSLerror(s, SSL_R_WRONG_VERSION_NUMBER);
 		al = SSL_AD_PROTOCOL_VERSION;
 		goto fatal_err;
 	}
-	s->client_version = client_version;
+	S3I(s)->hs.peer_legacy_version = client_version;
 	s->version = shared_version;
 
 	S3I(s)->hs.negotiated_tls_version = ssl_tls_version(shared_version);
@@ -1723,9 +1723,8 @@ ssl3_get_client_kex_rsa(SSL *s, CBS *cbs)
 
 	arc4random_buf(fakekey, sizeof(fakekey));
 
-	/* XXX - peer max protocol version. */
-	fakekey[0] = s->client_version >> 8;
-	fakekey[1] = s->client_version & 0xff;
+	fakekey[0] = S3I(s)->hs.peer_legacy_version >> 8;
+	fakekey[1] = S3I(s)->hs.peer_legacy_version & 0xff;
 
 	pkey = s->cert->pkeys[SSL_PKEY_RSA].privatekey;
 	if ((pkey == NULL) || (pkey->type != EVP_PKEY_RSA) ||
@@ -1760,9 +1759,8 @@ ssl3_get_client_kex_rsa(SSL *s, CBS *cbs)
 		/* SSLerror(s, SSL_R_BAD_RSA_DECRYPT); */
 	}
 
-	/* XXX - peer max version. */
-	if ((al == -1) && !((pms[0] == (s->client_version >> 8)) &&
-	    (pms[1] == (s->client_version & 0xff)))) {
+	if ((al == -1) && !((pms[0] == (S3I(s)->hs.peer_legacy_version >> 8)) &&
+	    (pms[1] == (S3I(s)->hs.peer_legacy_version & 0xff)))) {
 		/*
 		 * The premaster secret must contain the same version number
 		 * as the ClientHello to detect version rollback attacks

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_versions.c,v 1.20 2021/07/01 17:53:39 jsing Exp $ */
+/* $OpenBSD: ssl_versions.c,v 1.21 2021/10/23 14:40:54 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -239,6 +239,24 @@ ssl_max_supported_version(SSL *s, uint16_t *max_ver)
 
 	if (!ssl_supported_tls_version_range(s, NULL, &max_version))
 		return 0;
+
+	if (SSL_is_dtls(s)) {
+		if ((max_version = ssl_tls_to_dtls_version(max_version)) == 0)
+			return 0;
+	}
+
+	*max_ver = max_version;
+
+	return 1;
+}
+
+int
+ssl_max_legacy_version(SSL *s, uint16_t *max_ver)
+{
+	uint16_t max_version;
+
+	if ((max_version = S3I(s)->hs.our_max_tls_version) > TLS1_2_VERSION)
+		max_version = TLS1_2_VERSION;
 
 	if (SSL_is_dtls(s)) {
 		if ((max_version = ssl_tls_to_dtls_version(max_version)) == 0)

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.114 2021/10/23 13:36:03 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.115 2021/10/23 14:40:54 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -650,7 +650,7 @@ ssl3_send_client_hello(SSL *s)
 			SSLerror(s, SSL_R_NO_PROTOCOLS_AVAILABLE);
 			return (-1);
 		}
-		s->client_version = s->version = max_version;
+		s->version = max_version;
 
 		if (sess == NULL ||
 		    sess->ssl_version != s->version ||
@@ -673,37 +673,7 @@ ssl3_send_client_hello(SSL *s)
 		    SSL3_MT_CLIENT_HELLO))
 			goto err;
 
-		/*
-		 * Version indicates the negotiated version: for example from
-		 * an SSLv2/v3 compatible client hello). The client_version
-		 * field is the maximum version we permit and it is also
-		 * used in RSA encrypted premaster secrets. Some servers can
-		 * choke if we initially report a higher version then
-		 * renegotiate to a lower one in the premaster secret. This
-		 * didn't happen with TLS 1.0 as most servers supported it
-		 * but it can with TLS 1.1 or later if the server only supports
-		 * 1.0.
-		 *
-		 * Possible scenario with previous logic:
-		 *	1. Client hello indicates TLS 1.2
-		 *	2. Server hello says TLS 1.0
-		 *	3. RSA encrypted premaster secret uses 1.2.
-		 *	4. Handhaked proceeds using TLS 1.0.
-		 *	5. Server sends hello request to renegotiate.
-		 *	6. Client hello indicates TLS v1.0 as we now
-		 *	   know that is maximum server supports.
-		 *	7. Server chokes on RSA encrypted premaster secret
-		 *	   containing version 1.0.
-		 *
-		 * For interoperability it should be OK to always use the
-		 * maximum version we support in client hello and then rely
-		 * on the checking of version to ensure the servers isn't
-		 * being inconsistent: for example initially negotiating with
-		 * TLS 1.0 and renegotiating with TLS 1.2. We do this by using
-		 * client_version in client hello and not resetting it to
-		 * the negotiated version.
-		 */
-		if (!CBB_add_u16(&client_hello, s->client_version))
+		if (!CBB_add_u16(&client_hello, s->version))
 			goto err;
 
 		/* Random stuff */
@@ -889,6 +859,7 @@ ssl3_get_server_hello(SSL *s)
 		al = SSL_AD_PROTOCOL_VERSION;
 		goto fatal_err;
 	}
+	S3I(s)->hs.peer_legacy_version = server_version;
 	s->version = server_version;
 
 	S3I(s)->hs.negotiated_tls_version = ssl_tls_version(server_version);
@@ -1952,6 +1923,7 @@ ssl3_send_client_kex_rsa(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
 {
 	unsigned char pms[SSL_MAX_MASTER_KEY_LENGTH];
 	unsigned char *enc_pms = NULL;
+	uint16_t max_legacy_version;
 	EVP_PKEY *pkey = NULL;
 	int ret = -1;
 	int enc_len;
@@ -1968,9 +1940,17 @@ ssl3_send_client_kex_rsa(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
 		goto err;
 	}
 
-	/* XXX - our max protocol version. */
-	pms[0] = s->client_version >> 8;
-	pms[1] = s->client_version & 0xff;
+	/*
+	 * Our maximum legacy protocol version - while RFC 5246 section 7.4.7.1
+	 * says "The latest (newest) version supported by the client", if we're
+	 * doing RSA key exchange then we have to presume that we're talking to
+	 * a server that does not understand the supported versions extension
+	 * and therefore our maximum version is that sent in the ClientHello.
+	 */
+	if (!ssl_max_legacy_version(s, &max_legacy_version))
+		goto err;
+	pms[0] = max_legacy_version >> 8;
+	pms[1] = max_legacy_version & 0xff;
 	arc4random_buf(&pms[2], sizeof(pms) - 2);
 
 	if ((enc_pms = malloc(RSA_size(pkey->pkey.rsa))) == NULL) {

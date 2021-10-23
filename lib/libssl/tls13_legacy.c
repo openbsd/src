@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_legacy.c,v 1.31 2021/09/16 19:25:30 jsing Exp $ */
+/*	$OpenBSD: tls13_legacy.c,v 1.32 2021/10/23 14:40:54 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -383,7 +383,7 @@ tls13_use_legacy_client(struct tls13_ctx *ctx)
 		return 0;
 
 	s->internal->handshake_func = s->method->ssl_connect;
-	s->client_version = s->version = s->method->max_tls_version;
+	s->version = s->method->max_tls_version;
 
 	return 1;
 }
@@ -397,7 +397,7 @@ tls13_use_legacy_server(struct tls13_ctx *ctx)
 		return 0;
 
 	s->internal->handshake_func = s->method->ssl_accept;
-	s->client_version = s->version = s->method->max_tls_version;
+	s->version = s->method->max_tls_version;
 	s->server = 1;
 
 	return 1;

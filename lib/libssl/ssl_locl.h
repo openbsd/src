@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.362 2021/10/23 11:41:52 beck Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.363 2021/10/23 14:40:54 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -581,6 +581,13 @@ typedef struct ssl_handshake_st {
 	 * client.
 	 */
 	uint16_t negotiated_tls_version;
+
+	/*
+	 * Legacy version advertised by our peer. For a server this is the
+	 * version specified by the client in the ClientHello message. For a
+	 * client, this is the version provided in the ServerHello message.
+	 */
+	uint16_t peer_legacy_version;
 
 	/*
 	 * Current handshake state - contains one of the SSL3_ST_* values and
@@ -1291,6 +1298,7 @@ int ssl_supported_tls_version_range(SSL *s, uint16_t *min_ver, uint16_t *max_ver
 uint16_t ssl_tls_version(uint16_t version);
 uint16_t ssl_effective_tls_version(SSL *s);
 int ssl_max_supported_version(SSL *s, uint16_t *max_ver);
+int ssl_max_legacy_version(SSL *s, uint16_t *max_ver);
 int ssl_max_shared_version(SSL *s, uint16_t peer_ver, uint16_t *max_ver);
 int ssl_check_version_from_server(SSL *s, uint16_t server_version);
 int ssl_legacy_stack_version(SSL *s, uint16_t version);
