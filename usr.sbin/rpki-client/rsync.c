@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsync.c,v 1.27 2021/10/23 16:06:04 claudio Exp $ */
+/*	$OpenBSD: rsync.c,v 1.28 2021/10/23 20:01:16 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -216,10 +216,10 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 					ok = 0;
 				}
 
-				b = io_buf_new();
+				b = io_new_buffer();
 				io_simple_buffer(b, &ids[i].id, sizeof(size_t));
 				io_simple_buffer(b, &ok, sizeof(ok));
-				io_buf_close(&msgq, b);
+				io_close_buffer(&msgq, b);
 
 				free(ids[i].uri);
 				ids[i].uri = NULL;

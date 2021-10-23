@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.74 2021/10/23 16:06:04 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.75 2021/10/23 20:01:16 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -535,14 +535,11 @@ char		*hex_encode(const unsigned char *, size_t);
 
 /* Functions for moving data between processes. */
 
-struct ibuf	*io_buf_new(void);
+struct ibuf	*io_new_buffer(void);
 void		 io_simple_buffer(struct ibuf *, const void *, size_t);
 void		 io_buf_buffer(struct ibuf *, const void *, size_t);
 void		 io_str_buffer(struct ibuf *, const char *);
-void		 io_buf_close(struct msgbuf *, struct ibuf *);
-void		 io_simple_read(int, void *, size_t);
-void		 io_buf_read_alloc(int, void **, size_t *);
-void		 io_str_read(int, char **);
+void		 io_close_buffer(struct msgbuf *, struct ibuf *);
 void		 io_read_buf(struct ibuf *, void *, size_t);
 void		 io_read_str(struct ibuf *, char **);
 void		 io_read_buf_alloc(struct ibuf *, void **, size_t *);

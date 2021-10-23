@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp.c,v 1.13 2021/10/23 16:06:04 claudio Exp $ */
+/*	$OpenBSD: rrdp.c,v 1.14 2021/10/23 20:01:16 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -140,11 +140,11 @@ rrdp_done(size_t id, int ok)
 	enum rrdp_msg type = RRDP_END;
 	struct ibuf *b;
 
-	b = io_buf_new();
+	b = io_new_buffer();
 	io_simple_buffer(b, &type, sizeof(type));
 	io_simple_buffer(b, &id, sizeof(id));
 	io_simple_buffer(b, &ok, sizeof(ok));
-	io_buf_close(&msgq, b);
+	io_close_buffer(&msgq, b);
 }
 
 /*
@@ -161,12 +161,12 @@ rrdp_http_req(size_t id, const char *uri, const char *last_mod)
 	enum rrdp_msg type = RRDP_HTTP_REQ;
 	struct ibuf *b;
 
-	b = io_buf_new();
+	b = io_new_buffer();
 	io_simple_buffer(b, &type, sizeof(type));
 	io_simple_buffer(b, &id, sizeof(id));
 	io_str_buffer(b, uri);
 	io_str_buffer(b, last_mod);
-	io_buf_close(&msgq, b);
+	io_close_buffer(&msgq, b);
 }
 
 /*
@@ -178,13 +178,13 @@ rrdp_state_send(struct rrdp *s)
 	enum rrdp_msg type = RRDP_SESSION;
 	struct ibuf *b;
 
-	b = io_buf_new();
+	b = io_new_buffer();
 	io_simple_buffer(b, &type, sizeof(type));
 	io_simple_buffer(b, &s->id, sizeof(s->id));
 	io_str_buffer(b, s->current.session_id);
 	io_simple_buffer(b, &s->current.serial, sizeof(s->current.serial));
 	io_str_buffer(b, s->current.last_mod);
-	io_buf_close(&msgq, b);
+	io_close_buffer(&msgq, b);
 }
 
 static struct rrdp *
@@ -666,7 +666,7 @@ publish_done(struct rrdp *s, struct publish_xml *pxml)
 
 	/* only send files if the fetch did not fail already */
 	if (s->file_failed == 0) {
-		b = io_buf_new();
+		b = io_new_buffer();
 		io_simple_buffer(b, &type, sizeof(type));
 		io_simple_buffer(b, &s->id, sizeof(s->id));
 		io_simple_buffer(b, &pxml->type, sizeof(pxml->type));
@@ -674,7 +674,7 @@ publish_done(struct rrdp *s, struct publish_xml *pxml)
 			io_simple_buffer(b, &pxml->hash, sizeof(pxml->hash));
 		io_str_buffer(b, pxml->uri);
 		io_buf_buffer(b, data, datasz);
-		io_buf_close(&msgq, b);
+		io_close_buffer(&msgq, b);
 		s->file_pending++;
 	}
 

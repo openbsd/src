@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.44 2021/10/23 16:06:04 claudio Exp $  */
+/*	$OpenBSD: http.c,v 1.45 2021/10/23 20:01:16 claudio Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -569,11 +569,11 @@ http_req_done(size_t id, enum http_result res, const char *last_modified)
 {
 	struct ibuf *b;
 
-	b = io_buf_new();
+	b = io_new_buffer();
 	io_simple_buffer(b, &id, sizeof(id));
 	io_simple_buffer(b, &res, sizeof(res));
 	io_str_buffer(b, last_modified);
-	io_buf_close(&msgq, b);
+	io_close_buffer(&msgq, b);
 }
 
 /*
@@ -585,11 +585,11 @@ http_req_fail(size_t id)
 	struct ibuf *b;
 	enum http_result res = HTTP_FAILED;
 
-	b = io_buf_new();
+	b = io_new_buffer();
 	io_simple_buffer(b, &id, sizeof(id));
 	io_simple_buffer(b, &res, sizeof(res));
 	io_str_buffer(b, NULL);
-	io_buf_close(&msgq, b);
+	io_close_buffer(&msgq, b);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.15 2021/10/23 16:06:04 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.16 2021/10/23 20:01:16 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -603,7 +603,7 @@ proc_parser(int fd)
 		entp = TAILQ_FIRST(&q);
 		assert(entp != NULL);
 
-		b = io_buf_new();
+		b = io_new_buffer();
 		io_simple_buffer(b, &entp->type, sizeof(entp->type));
 
 		switch (entp->type) {
@@ -656,7 +656,7 @@ proc_parser(int fd)
 			abort();
 		}
 
-		io_buf_close(&msgq, b);
+		io_close_buffer(&msgq, b);
 		TAILQ_REMOVE(&q, entp, entries);
 		entity_free(entp);
 	}

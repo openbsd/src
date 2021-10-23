@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.15 2021/10/23 16:06:04 claudio Exp $ */
+/*	$OpenBSD: io.c,v 1.16 2021/10/23 20:01:16 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -35,7 +35,7 @@
  * Function always returns a new buffer.
  */
 struct ibuf *
-io_buf_new(void)
+io_new_buffer(void)
 {
 	struct ibuf *b;
 
@@ -83,7 +83,7 @@ io_str_buffer(struct ibuf *b, const char *p)
  * Finish and enqueue a io buffer.
  */
 void
-io_buf_close(struct msgbuf *msgbuf, struct ibuf *b)
+io_close_buffer(struct msgbuf *msgbuf, struct ibuf *b)
 {
 	size_t len;
 
