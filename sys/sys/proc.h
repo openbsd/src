@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.314 2021/07/16 07:59:38 claudio Exp $	*/
+/*	$OpenBSD: proc.h,v 1.315 2021/10/23 14:53:02 claudio Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -149,6 +149,7 @@ struct unveil;
 
 /*
  * Locks used to protect struct members in this file:
+ *	I	immutable after creation
  *	a	atomic operations
  *	K	kernel lock
  *	m	this process' `ps_mtx'
@@ -246,9 +247,9 @@ struct process {
 
 	vaddr_t	ps_strings;		/* User pointers to argv/env */
 	vaddr_t ps_timekeep; 		/* User pointer to timekeep */
-	vaddr_t	ps_sigcode;		/* User pointer to the signal code */
-	vaddr_t ps_sigcoderet;		/* User pointer to sigreturn retPC */
-	u_long	ps_sigcookie;
+	vaddr_t	ps_sigcode;		/* [I] User pointer to signal code */
+	vaddr_t ps_sigcoderet;		/* [I] User ptr to sigreturn retPC */
+	u_long	ps_sigcookie;		/* [I] */
 	u_int	ps_rtableid;		/* [a] Process routing table/domain. */
 	char	ps_nice;		/* Process "nice" value. */
 
