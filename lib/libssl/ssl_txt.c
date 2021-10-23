@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_txt.c,v 1.29 2021/06/11 11:13:53 jsing Exp $ */
+/* $OpenBSD: ssl_txt.c,v 1.30 2021/10/23 08:13:02 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -151,7 +151,7 @@ SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
 	}
 	if (x->tlsext_tick_lifetime_hint) {
 		if (BIO_printf(bp,
-		    "\n    TLS session ticket lifetime hint: %ld (seconds)",
+		    "\n    TLS session ticket lifetime hint: %u (seconds)",
 		    x->tlsext_tick_lifetime_hint) <= 0)
 			goto err;
 	}

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.111 2021/09/03 13:18:17 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.112 2021/10/23 08:13:02 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1789,16 +1789,13 @@ ssl3_get_new_session_ticket(SSL *s)
 
 	CBS_init(&cbs, s->internal->init_msg, n);
 	if (!CBS_get_u32(&cbs, &lifetime_hint) ||
-#if UINT32_MAX > LONG_MAX
-	    lifetime_hint > LONG_MAX ||
-#endif
 	    !CBS_get_u16_length_prefixed(&cbs, &session_ticket) ||
 	    CBS_len(&cbs) != 0) {
 		al = SSL_AD_DECODE_ERROR;
 		SSLerror(s, SSL_R_LENGTH_MISMATCH);
 		goto fatal_err;
 	}
-	s->session->tlsext_tick_lifetime_hint = (long)lifetime_hint;
+	s->session->tlsext_tick_lifetime_hint = lifetime_hint;
 
 	if (!CBS_stow(&session_ticket, &s->session->tlsext_tick,
 	    &s->session->tlsext_ticklen)) {

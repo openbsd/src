@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_asn1.c,v 1.59 2021/05/16 14:10:43 jsing Exp $ */
+/* $OpenBSD: ssl_asn1.c,v 1.60 2021/10/23 08:13:02 jsing Exp $ */
 /*
  * Copyright (c) 2016 Joel Sing <jsing@openbsd.org>
  *
@@ -388,16 +388,13 @@ d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp, long length)
 
 	/* Ticket lifetime [9]. */
 	s->tlsext_tick_lifetime_hint = 0;
-	/* XXX - tlsext_ticklen is not yet set... */
-	if (s->tlsext_ticklen > 0 && s->session_id_length > 0)
-		s->tlsext_tick_lifetime_hint = -1;
 	if (!CBS_get_optional_asn1_uint64(&session, &lifetime,
 	    SSLASN1_LIFETIME_TAG, 0))
 		goto err;
-	if (lifetime > LONG_MAX)
+	if (lifetime > UINT32_MAX)
 		goto err;
 	if (lifetime > 0)
-		s->tlsext_tick_lifetime_hint = (long)lifetime;
+		s->tlsext_tick_lifetime_hint = (uint32_t)lifetime;
 
 	/* Ticket [10]. */
 	free(s->tlsext_tick);

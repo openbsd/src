@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.359 2021/10/15 16:48:47 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.360 2021/10/23 08:13:02 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -496,9 +496,9 @@ struct ssl_session_st {
 	char *tlsext_hostname;
 
 	/* RFC4507 info */
-	unsigned char *tlsext_tick;	/* Session ticket */
-	size_t tlsext_ticklen;		/* Session ticket length */
-	long tlsext_tick_lifetime_hint;	/* Session lifetime hint in seconds */
+	unsigned char *tlsext_tick;		/* Session ticket */
+	size_t tlsext_ticklen;			/* Session ticket length */
+	uint32_t tlsext_tick_lifetime_hint;	/* Session lifetime hint in seconds */
 
 	struct ssl_session_internal_st *internal;
 };
