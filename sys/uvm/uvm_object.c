@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_object.c,v 1.21 2021/10/12 18:16:51 kettenis Exp $	*/
+/*	$OpenBSD: uvm_object.c,v 1.22 2021/10/23 14:42:08 mpi Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -66,9 +66,13 @@ uvm_obj_init(struct uvm_object *uobj, const struct uvm_pagerops *pgops, int refs
 	uobj->uo_refs = refs;
 }
 
+/*
+ * uvm_obj_destroy: destroy UVM memory object.
+ */
 void
 uvm_obj_destroy(struct uvm_object *uo)
 {
+	KASSERT(RBT_EMPTY(uvm_objtree, &uo->memt));
 }
 
 #ifndef SMALL_KERNEL

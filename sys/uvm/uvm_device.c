@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_device.c,v 1.64 2021/06/29 01:46:35 jsg Exp $	*/
+/*	$OpenBSD: uvm_device.c,v 1.65 2021/10/23 14:42:08 mpi Exp $	*/
 /*	$NetBSD: uvm_device.c,v 1.30 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -182,6 +182,7 @@ udv_attach(dev_t device, vm_prot_t accessprot, voff_t off, vsize_t size)
 		mtx_leave(&udv_lock);
 		/* NOTE: we could sleep in the following malloc() */
 		udv = malloc(sizeof(*udv), M_TEMP, M_WAITOK);
+		uvm_obj_init(&udv->u_obj, &uvm_deviceops, 1);
 		mtx_enter(&udv_lock);
 
 		/*
@@ -199,6 +200,7 @@ udv_attach(dev_t device, vm_prot_t accessprot, voff_t off, vsize_t size)
 		 */
 		if (lcv) {
 			mtx_leave(&udv_lock);
+			uvm_obj_destroy(&udv->u_obj);
 			free(udv, M_TEMP, sizeof(*udv));
 			continue;
 		}
@@ -207,7 +209,6 @@ udv_attach(dev_t device, vm_prot_t accessprot, voff_t off, vsize_t size)
 		 * we have it!   init the data structures, add to list
 		 * and return.
 		 */
-		uvm_obj_init(&udv->u_obj, &uvm_deviceops, 1);
 		udv->u_flags = 0;
 		udv->u_device = device;
 		LIST_INSERT_HEAD(&udv_list, udv, u_list);
@@ -275,6 +276,8 @@ again:
 	if (udv->u_flags & UVM_DEVICE_WANTED)
 		wakeup(udv);
 	mtx_leave(&udv_lock);
+
+	uvm_obj_destroy(uobj);
 	free(udv, M_TEMP, sizeof(*udv));
 }
 
