@@ -1,5 +1,7 @@
-.\" $OpenBSD: SSL_CTX_set_keylog_callback.3,v 1.1 2021/10/23 11:41:52 beck Exp $
-.\" Copyright (c) 2021, Bob Beck <beck@openbsd.org>
+.\" $OpenBSD: SSL_CTX_set_keylog_callback.3,v 1.2 2021/10/23 13:17:03 schwarze Exp $
+.\" OpenSSL pod checked up to: 61f805c1 Jan 16 01:01:46 2018 +0800
+.\"
+.\" Copyright (c) 2021 Bob Beck <beck@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -22,9 +24,11 @@
 .Nd set and get the unused key logging callback
 .Sh SYNOPSIS
 .In openssl/ssl.h
-.Bd -literal
-typedef void (*SSL_CTX_keylog_cb_func)(const SSL *ssl, const char *line)
-.Ed
+.Ft typedef void
+.Fo (*SSL_CTX_keylog_cb_func)
+.Fa "const SSL *ssl"
+.Fa "const char *line"
+.Fc
 .Ft void
 .Fn SSL_CTX_set_keylog_callback "SSL_CTX *ctx" "SSL_CTX_keylog_cb_func cb"
 .Ft SSL_CTX_keylog_cb_func
@@ -40,5 +44,13 @@ retrieves the previously set TLS key logging callback.
 These functions are provided only for compatibility with OpenSSL.
 .Sh RETURN VALUES
 .Fn SSL_CTX_get_keylog_callback
-returns the previously set TLS key logging callback, or NULL
+returns the previously set TLS key logging callback, or
+.Dv NULL
 if no callback has been set.
+.Sh SEE ALSO
+.Xr ssl 3 ,
+.Xr SSL_CTX_new 3
+.Sh HISTORY
+These function first appeared in OpenSSL 1.1.1
+and have been available since
+.Ox 7.1 .
