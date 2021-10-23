@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_reject.c,v 1.17 2018/04/26 12:42:51 guenther Exp $	*/
+/*	$OpenBSD: login_reject.c,v 1.18 2021/10/23 19:08:48 mestre Exp $	*/
 
 /*-
  * Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
@@ -119,6 +119,7 @@ main(int argc, char *argv[])
 		readpassphrase("Password:", passbuf, sizeof(passbuf), 0);
 
 	crypt_checkpass("password", NULL);
+	explicit_bzero(passbuf, sizeof(passbuf));
 
 	fprintf(back, BI_REJECT "\n");
 	exit(1);
