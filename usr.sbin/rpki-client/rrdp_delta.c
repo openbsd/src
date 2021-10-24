@@ -1,3 +1,4 @@
+/*	$OpenBSD: rrdp_delta.c,v 1.3 2021/10/24 17:16:09 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
