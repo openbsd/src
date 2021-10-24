@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.214 2021/10/24 17:08:27 bluhm Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.215 2021/10/24 18:15:58 tobhe Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -607,10 +607,7 @@ int	ipcomp_attach(void);
 int	ipcomp_init(struct tdb *, const struct xformsw *, struct ipsecinit *);
 int	ipcomp_zeroize(struct tdb *);
 int	ipcomp_input(struct mbuf **, struct tdb *, int, int);
-int	ipcomp_input_cb(struct tdb *, struct tdb_crypto *, struct mbuf **, int);
 int	ipcomp_output(struct mbuf *, struct tdb *, int, int);
-int	ipcomp_output_cb(struct tdb *, struct tdb_crypto *, struct mbuf *, int,
-	    int);
 int	ipcomp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 int	ipcomp4_input(struct mbuf **, int *, int, int);
 #ifdef INET6
