@@ -2788,6 +2788,7 @@
 ./usr/sbin/zdump
 ./usr/sbin/zic
 ./usr/share
+./usr/share/btrace
 ./usr/share/calendar
 ./usr/share/calendar/calendar.all
 ./usr/share/calendar/calendar.birthday
