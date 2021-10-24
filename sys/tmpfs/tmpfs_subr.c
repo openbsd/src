@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_subr.c,v 1.24 2021/10/24 16:02:44 patrick Exp $	*/
+/*	$OpenBSD: tmpfs_subr.c,v 1.25 2021/10/24 17:20:06 patrick Exp $	*/
 /*	$NetBSD: tmpfs_subr.c,v 1.79 2012/03/13 18:40:50 elad Exp $	*/
 
 /*
@@ -461,7 +461,6 @@ tmpfs_alloc_dirent(tmpfs_mount_t *tmp, const char *name, uint16_t len,
 void
 tmpfs_free_dirent(tmpfs_mount_t *tmp, tmpfs_dirent_t *de)
 {
-
 	KASSERT(de->td_node == NULL);
 	KASSERT(de->td_seq == TMPFS_DIRSEQ_NONE);
 	tmpfs_strname_free(tmp, de->td_name, de->td_namelen);
@@ -693,7 +692,6 @@ tmpfs_dir_lookupbyseq(tmpfs_node_t *node, off_t seq)
 		KASSERT(de->td_seq != TMPFS_DIRSEQ_NONE);
 		return de;
 	}
-
 	TAILQ_FOREACH(de, &node->tn_spec.tn_dir.tn_dir, td_entries) {
 		KASSERT(de->td_seq >= TMPFS_DIRSEQ_START);
 		KASSERT(de->td_seq != TMPFS_DIRSEQ_NONE);
@@ -715,19 +713,19 @@ tmpfs_dir_getdotents(tmpfs_node_t *node, struct dirent *dp, struct uio *uio)
 	int error;
 
 	switch (uio->uio_offset) {
-		case TMPFS_DIRSEQ_DOT:
-			dp->d_fileno = node->tn_id;
-			strlcpy(dp->d_name, ".", sizeof(dp->d_name));
-			next = TMPFS_DIRSEQ_DOTDOT;
-			break;
-		case TMPFS_DIRSEQ_DOTDOT:
-			dp->d_fileno = node->tn_spec.tn_dir.tn_parent->tn_id;
-			strlcpy(dp->d_name, "..", sizeof(dp->d_name));
-			de = TAILQ_FIRST(&node->tn_spec.tn_dir.tn_dir);
-			next = de ? tmpfs_dir_getseq(node, de) : TMPFS_DIRSEQ_EOF;
-			break;
-		default:
-			KASSERT(false);
+	case TMPFS_DIRSEQ_DOT:
+		dp->d_fileno = node->tn_id;
+		strlcpy(dp->d_name, ".", sizeof(dp->d_name));
+		next = TMPFS_DIRSEQ_DOTDOT;
+		break;
+	case TMPFS_DIRSEQ_DOTDOT:
+		dp->d_fileno = node->tn_spec.tn_dir.tn_parent->tn_id;
+		strlcpy(dp->d_name, "..", sizeof(dp->d_name));
+		de = TAILQ_FIRST(&node->tn_spec.tn_dir.tn_dir);
+		next = de ? tmpfs_dir_getseq(node, de) : TMPFS_DIRSEQ_EOF;
+		break;
+	default:
+		KASSERT(false);
 	}
 	dp->d_type = DT_DIR;
 	dp->d_namlen = strlen(dp->d_name);
@@ -1136,13 +1134,13 @@ tmpfs_update(tmpfs_node_t *node, int flags)
 
 	if (flags & TMPFS_NODE_ACCESSED) {
 		node->tn_atime = nowtm;
- 	}
+	}
 	if (flags & TMPFS_NODE_MODIFIED) {
 		node->tn_mtime = nowtm;
- 	}
+	}
 	if (flags & TMPFS_NODE_CHANGED) {
- 		node->tn_ctime = nowtm;
- 	}
+		node->tn_ctime = nowtm;
+	}
 }
 
 int
@@ -1279,4 +1277,3 @@ tmpfs_zeropg(tmpfs_node_t *node, voff_t pgnum, vaddr_t pgoff)
 
 	return 0;
 }
-
