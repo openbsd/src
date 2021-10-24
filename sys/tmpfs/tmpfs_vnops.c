@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vnops.c,v 1.48 2021/10/23 17:39:08 patrick Exp $	*/
+/*	$OpenBSD: tmpfs_vnops.c,v 1.49 2021/10/24 09:59:52 patrick Exp $	*/
 /*	$NetBSD: tmpfs_vnops.c,v 1.100 2012/11/05 17:27:39 dholland Exp $	*/
 
 /*
@@ -1328,8 +1328,10 @@ tmpfs_rename(void *v)
 
 	/*
 	 * Check for cross-device rename.
+	 * Also don't allow renames of mount points.
 	 */
 	if (fvp->v_mount != tdvp->v_mount ||
+	    fdvp->v_mount != fvp->v_mount ||
 	    (tvp != NULL && (fvp->v_mount != tvp->v_mount))) {
 	    	tmpfs_rename_abort(v);
 		return EXDEV;
