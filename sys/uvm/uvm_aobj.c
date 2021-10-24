@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.100 2021/10/23 14:42:07 mpi Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.101 2021/10/24 13:46:14 mpi Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -673,25 +673,22 @@ uao_create(vsize_t size, int flags)
 	static struct uvm_aobj kernel_object_store;
 	static int kobj_alloced = 0;
 	int pages = round_page(size) >> PAGE_SHIFT;
-	int refs = UVM_OBJ_KERN;
-	int mflags;
 	struct uvm_aobj *aobj;
+	int refs;
 
 	/*
 	 * Allocate a new aobj, unless kernel object is requested.
 	 */
 	if (flags & UAO_FLAG_KERNOBJ) {
-		if (kobj_alloced)
-			panic("uao_create: kernel object already allocated");
-
+		KASSERT(!kobj_alloced);
 		aobj = &kernel_object_store;
 		aobj->u_pages = pages;
 		aobj->u_flags = UAO_FLAG_NOSWAP;
+		refs = UVM_OBJ_KERN;
 		kobj_alloced = UAO_FLAG_KERNOBJ;
 	} else if (flags & UAO_FLAG_KERNSWAP) {
+		KASSERT(kobj_alloced == UAO_FLAG_KERNOBJ);
 		aobj = &kernel_object_store;
-		if (kobj_alloced != UAO_FLAG_KERNOBJ)
-		    panic("uao_create: asked to enable swap on kernel object");
 		kobj_alloced = UAO_FLAG_KERNSWAP;
 	} else {
 		aobj = pool_get(&uvm_aobj_pool, PR_WAITOK);
@@ -704,6 +701,8 @@ uao_create(vsize_t size, int flags)
 	 * allocate hash/array if necessary
 	 */
  	if (flags == 0 || (flags & (UAO_FLAG_KERNSWAP | UAO_FLAG_CANFAIL))) {
+		int mflags;
+
 		if (flags)
 			mflags = M_NOWAIT;
 		else
@@ -884,8 +883,9 @@ uao_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 	 * Don't need to do any work here if we're not freeing
 	 * or deactivating pages.
 	 */
-	if ((flags & (PGO_DEACTIVATE|PGO_FREE)) == 0)
+	if ((flags & (PGO_DEACTIVATE|PGO_FREE)) == 0) {
 		return TRUE;
+	}
 
 	curoff = start;
 	for (;;) {
