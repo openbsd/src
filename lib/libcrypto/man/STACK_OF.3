@@ -1,4 +1,4 @@
-.\" $OpenBSD: STACK_OF.3,v 1.4 2019/06/10 09:49:48 schwarze Exp $
+.\" $OpenBSD: STACK_OF.3,v 1.5 2021/10/24 13:10:46 schwarze Exp $
 .\"
 .\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 10 2019 $
+.Dd $Mdocdate: October 24 2021 $
 .Dt STACK_OF 3
 .Os
 .Sh NAME
@@ -98,32 +98,49 @@ all the types listed below.
 Using the above may make sense for the following types because
 public API functions exist that take stacks of these types as
 arguments or return them:
-.Vt ACCESS_DESCRIPTION ,
 .Vt ASN1_INTEGER ,
 .Vt ASN1_OBJECT ,
-.Vt ASN1_TYPE ,
 .Vt ASN1_UTF8STRING ,
+.Vt CMS_RecipientInfo ,
+.Vt CMS_SignerInfo ,
 .Vt CONF_VALUE ,
-.Vt DIST_POINT ,
-.Vt GENERAL_NAME ,
+.Vt GENERAL_NAMES ,
 .Vt GENERAL_SUBTREE ,
+.Vt OPENSSL_STRING Pq which is just Vt char * ,
 .Vt PKCS12_SAFEBAG ,
 .Vt PKCS7 ,
 .Vt PKCS7_RECIP_INFO ,
 .Vt PKCS7_SIGNER_INFO ,
-.Vt POLICY_MAPPING ,
-.Vt POLICYINFO ,
 .Vt POLICYQUALINFO ,
+.Vt SRTP_PROTECTION_PROFILE ,
+.Vt SSL_CIPHER ,
+.Vt SSL_COMP ,
 .Vt X509 ,
 .Vt X509_ALGOR ,
 .Vt X509_ATTRIBUTE ,
 .Vt X509_CRL ,
 .Vt X509_EXTENSION ,
 .Vt X509_INFO ,
+.Vt X509_NAME ,
 .Vt X509_OBJECT ,
 .Vt X509_POLICY_NODE ,
-.Vt X509_PURPOSE ,
 .Vt X509_REVOKED .
+.Pp
+Additionally, some public API functions use the following types
+which are declared with
+.Sy typedef :
+.Bl -column STACK_OF(ACCESS_DESCRIPTION) AUTHORITY_INFO_ACCESS
+.It Vt STACK_OF(ACCESS_DESCRIPTION) Ta Vt AUTHORITY_INFO_ACCESS
+.It Vt STACK_OF(ASN1_OBJECT)        Ta Vt EXTENDED_KEY_USAGE
+.It Vt STACK_OF(ASN1_TYPE)          Ta Vt ASN1_SEQUENCE_ANY
+.It Vt STACK_OF(DIST_POINT)         Ta Vt CRL_DIST_POINTS
+.It Vt STACK_OF(GENERAL_NAME)       Ta Vt GENERAL_NAMES
+.It Vt STACK_OF(IPAddressFamily)    Ta Vt IPAddrBlocks
+.It Vt STACK_OF(POLICY_MAPPING)     Ta Vt POLICY_MAPPINGS
+.It Vt STACK_OF(POLICYINFO)         Ta Vt CERTIFICATEPOLICIES
+.It Vt STACK_OF(X509_ALGOR)         Ta Vt X509_ALGORS
+.It Vt STACK_OF(X509_EXTENSION)     Ta Vt X509_EXTENSIONS
+.El
 .Pp
 Even though the OpenSSL headers declare wrapper functions for many
 more types and even though the OpenSSL documentation says that users
