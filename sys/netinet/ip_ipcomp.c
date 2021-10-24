@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.84 2021/10/24 14:50:42 tobhe Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.85 2021/10/24 17:08:27 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -200,7 +200,7 @@ ipcomp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 	/* Release the crypto descriptors */
 	crypto_freereq(crp);
 
-	return ipcomp_input_cb(tdb, tc, m, clen);
+	return ipcomp_input_cb(tdb, tc, mp, clen);
 
  drop:
 	m_freemp(mp);
@@ -210,8 +210,10 @@ ipcomp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 }
 
 int
-ipcomp_input_cb(struct tdb *tdb, struct tdb_crypto *tc, struct mbuf *m, int clen)
+ipcomp_input_cb(struct tdb *tdb, struct tdb_crypto *tc, struct mbuf **mp,
+    int clen)
 {
+	struct mbuf *m = *mp;
 	int skip, protoff, roff, hlen = IPCOMP_HLENGTH;
 	u_int8_t nproto;
 	u_int64_t ibytes;
@@ -250,7 +252,8 @@ ipcomp_input_cb(struct tdb *tdb, struct tdb_crypto *tc, struct mbuf *m, int clen
 	/* In case it's not done already, adjust the size of the mbuf chain */
 	m->m_pkthdr.len = clen + hlen + skip;
 
-	if ((m->m_len < skip + hlen) && (m = m_pullup(m, skip + hlen)) == 0) {
+	if (m->m_len < skip + hlen &&
+	    (m = *mp = m_pullup(m, skip + hlen)) == NULL) {
 		ipcompstat_inc(ipcomps_hdrops);
 		goto baddone;
 	}
@@ -325,10 +328,10 @@ ipcomp_input_cb(struct tdb *tdb, struct tdb_crypto *tc, struct mbuf *m, int clen
 	m_copyback(m, protoff, sizeof(u_int8_t), &nproto, M_NOWAIT);
 
 	/* Back to generic IPsec input processing */
-	return ipsec_common_input_cb(m, tdb, skip, protoff);
+	return ipsec_common_input_cb(mp, tdb, skip, protoff);
 
  baddone:
-	m_freem(m);
+	m_freemp(mp);
 	free(tc, M_XDATA, 0);
 	return -1;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.162 2021/10/24 14:50:42 tobhe Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.163 2021/10/24 17:08:27 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -718,7 +718,7 @@ ah_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 	/* Release the crypto descriptors */
 	crypto_freereq(crp);
 
-	return ah_input_cb(tdb, tc, m, clen);
+	return ah_input_cb(tdb, tc, mp, clen);
 
  drop:
 	m_freemp(mp);
@@ -728,9 +728,10 @@ ah_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 }
 
 int
-ah_input_cb(struct tdb *tdb, struct tdb_crypto *tc, struct mbuf *m, int clen)
+ah_input_cb(struct tdb *tdb, struct tdb_crypto *tc, struct mbuf **mp, int clen)
 {
 	const struct auth_hash *ahx = tdb->tdb_authalgxform;
+	struct mbuf *m = *mp;
 	int roff, rplen, skip, protoff;
 	u_int64_t rpl;
 	u_int32_t btsx, esn;
@@ -890,10 +891,10 @@ ah_input_cb(struct tdb *tdb, struct tdb_crypto *tc, struct mbuf *m, int clen)
 
 	free(tc, M_XDATA, 0);
 
-	return ipsec_common_input_cb(m, tdb, skip, protoff);
+	return ipsec_common_input_cb(mp, tdb, skip, protoff);
 
  baddone:
-	m_freem(m);
+	m_freemp(mp);
 	free(tc, M_XDATA, 0);
 	return -1;
 }

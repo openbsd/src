@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.187 2021/10/23 22:19:37 bluhm Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.188 2021/10/24 17:08:27 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -372,8 +372,9 @@ ipsec_common_input(struct mbuf **mp, int skip, int protoff, int af, int sproto,
  * filtering and other sanity checks on the processed packet.
  */
 int
-ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
+ipsec_common_input_cb(struct mbuf **mp, struct tdb *tdbp, int skip, int protoff)
 {
+	struct mbuf *m = *mp;
 	int af, sproto;
 	u_int8_t prot;
 #if NBPFILTER > 0
@@ -396,7 +397,8 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 
 	/* Fix IPv4 header */
 	if (af == AF_INET) {
-		if ((m->m_len < skip) && ((m = m_pullup(m, skip)) == NULL)) {
+		if (m->m_len < skip &&
+		    (m = *mp = m_pullup(m, skip)) == NULL) {
 			DPRINTF("processing failed for SA %s/%08x",
 			    ipsp_address(&tdbp->tdb_dst, buf, sizeof(buf)),
 			    ntohl(tdbp->tdb_spi));
@@ -441,7 +443,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 	/* Fix IPv6 header */
 	if (af == AF_INET6) {
 		if (m->m_len < sizeof(struct ip6_hdr) &&
-		    (m = m_pullup(m, sizeof(struct ip6_hdr))) == NULL) {
+		    (m = *mp = m_pullup(m, sizeof(struct ip6_hdr))) == NULL) {
 
 			DPRINTF("processing failed for SA %s/%08x",
 			    ipsp_address(&tdbp->tdb_dst, buf, sizeof(buf)),
@@ -631,11 +633,11 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 	}
 #endif
 	/* Call the appropriate IPsec transform callback. */
-	ip_deliver(&m, &skip, prot, af);
+	ip_deliver(mp, &skip, prot, af);
 	return 0;
 
  baddone:
-	m_freem(m);
+	m_freemp(mp);
 	return -1;
 #undef IPSEC_ISTAT
 }

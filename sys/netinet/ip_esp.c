@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.182 2021/10/24 15:47:39 tobhe Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.183 2021/10/24 17:08:27 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -522,7 +522,7 @@ esp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 	/* Release the crypto descriptors */
 	crypto_freereq(crp);
 
-	return esp_input_cb(tdb, abuf, skip, protoff, tdb->tdb_rpl, m, clen);
+	return esp_input_cb(tdb, abuf, skip, protoff, tdb->tdb_rpl, mp, clen);
 
  drop:
 	m_freemp(mp);
@@ -534,10 +534,11 @@ esp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
  * ESP input callback, called directly by the crypto driver.
  */
 int
-esp_input_cb(struct tdb *tdb, uint8_t *abuf, int skip, int protoff, uint64_t rpl,
-    struct mbuf *m, int clen)
+esp_input_cb(struct tdb *tdb, uint8_t *abuf, int skip, int protoff,
+    uint64_t rpl, struct mbuf **mp, int clen)
 {
 	u_int8_t lastthree[3], aalg[AH_HMAC_MAX_HASHLEN];
+	struct mbuf *m = *mp;
 	int hlen, roff;
 	struct mbuf *m1, *mo;
 	const struct auth_hash *esph;
@@ -710,10 +711,10 @@ esp_input_cb(struct tdb *tdb, uint8_t *abuf, int skip, int protoff, uint64_t rpl
 	m_copyback(m, protoff, sizeof(u_int8_t), lastthree + 2, M_NOWAIT);
 
 	/* Back to generic IPsec input processing */
-	return ipsec_common_input_cb(m, tdb, skip, protoff);
+	return ipsec_common_input_cb(mp, tdb, skip, protoff);
 
  baddone:
-	m_freem(m);
+	m_freemp(mp);
 	return -1;
 }
 
