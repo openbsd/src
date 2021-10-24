@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vnops.c,v 1.49 2021/10/24 09:59:52 patrick Exp $	*/
+/*	$OpenBSD: tmpfs_vnops.c,v 1.50 2021/10/24 16:02:44 patrick Exp $	*/
 /*	$NetBSD: tmpfs_vnops.c,v 1.100 2012/11/05 17:27:39 dholland Exp $	*/
 
 /*
@@ -888,7 +888,7 @@ tmpfs_rmdir(void *v)
 	KASSERT(node->tn_spec.tn_dir.tn_parent == dnode);
 
 	/*
-	 * Directories with more than two entries ('.' and '..') cannot be 
+	 * Directories with more than two entries ('.' and '..') cannot be
 	 * removed.
 	 */
 	if (node->tn_size > 0) {
@@ -2656,7 +2656,7 @@ filt_tmpfsread(struct knote *kn, long hint)
 	tmpfs_node_t *node = VP_TO_TMPFS_NODE(vp);
 
 	/*
-	 * filesystem is gone, so set the EOF flag and schedule 
+	 * filesystem is gone, so set the EOF flag and schedule
 	 * the knote for deletion.
 	 */
 	if (hint == NOTE_REVOKE) {
@@ -2680,7 +2680,7 @@ int
 filt_tmpfswrite(struct knote *kn, long hint)
 {
 	/*
-	 * filesystem is gone, so set the EOF flag and schedule 
+	 * filesystem is gone, so set the EOF flag and schedule
 	 * the knote for deletion.
 	 */
 	if (hint == NOTE_REVOKE) {
