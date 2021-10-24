@@ -17,18 +17,3 @@ as_check_covered(uint32_t min, uint32_t max,
 {
 	return -1;
 }
-
-int
-ip_addr_check_covered(enum afi afi,
-    const unsigned char *min, const unsigned char *max,
-    const struct cert_ip *ips, size_t ipsz)
-{
-	return -1;
-}
-
-void
-ip_addr_print(const struct ip_addr *addr,
-    enum afi afi, char *buf, size_t bufsz)
-{
-}
-

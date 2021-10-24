@@ -1,4 +1,4 @@
-/*	$Id: test-tal.c,v 1.6 2020/11/09 16:13:02 tb Exp $ */
+/*	$Id: test-tal.c,v 1.7 2021/10/24 17:54:28 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -30,17 +30,6 @@
 #include "extern.h"
 
 int verbose;
-
-static void
-tal_print(const struct tal *p)
-{
-	size_t	 i;
-
-	assert(p != NULL);
-
-	for (i = 0; i < p->urisz; i++)
-		printf("%5zu: URI: %s\n", i + 1, p->uri[i]);
-}
 
 int
 main(int argc, char *argv[])

@@ -1,4 +1,4 @@
-/*	$Id: test-gbr.c,v 1.3 2021/03/29 15:47:34 claudio Exp $ */
+/*	$Id: test-gbr.c,v 1.4 2021/10/24 17:54:28 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -30,23 +30,7 @@
 
 #include "extern.h"
 
-#include "test-common.c"
-
 int verbose;
-
-static void
-gbr_print(const struct gbr *p)
-{
-	char	 buf[128];
-	size_t	 i;
-
-	assert(p != NULL);
-
-	printf("Subject key identifier: %s\n", pretty_key_id(p->ski));
-	printf("Authority key identifier: %s\n", pretty_key_id(p->aki));
-	printf("Authority info access: %s\n", p->aia);
-	printf("vcard:\n%s", p->vcard);
-}
 
 int
 main(int argc, char *argv[])
