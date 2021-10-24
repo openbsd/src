@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.58 2021/10/03 22:01:48 dv Exp $ */
+/*	$OpenBSD: btrace.c,v 1.59 2021/10/24 14:18:58 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2021 Martin Pieuchot <mpi@openbsd.org>
@@ -28,6 +28,7 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <locale.h>
+#include <paths.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdbool.h>
@@ -139,11 +140,6 @@ main(int argc, char *argv[])
 
 	setlocale(LC_ALL, "");
 
-#if notyet
-	if (pledge("stdio rpath", NULL) == -1)
-		err(1, "pledge");
-#endif
-
 	while ((ch = getopt(argc, argv, "e:lnp:v")) != -1) {
 		switch (ch) {
 		case 'e':
@@ -167,8 +163,22 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (argc > 0 && btscript == NULL) {
+	if (argc > 0 && btscript == NULL)
 		filename = argv[0];
+
+	 /* Cannot pledge due to special ioctl()s */
+	if (unveil(__PATH_DEVDT, "r") == -1)
+		err(1, "unveil %s", __PATH_DEVDT);
+	if (unveil(_PATH_KSYMS, "r") == -1)
+		err(1, "unveil %s", _PATH_KSYMS);
+	if (filename != NULL) {
+		if (unveil(filename, "r") == -1)
+			err(1, "unveil %s", filename);
+	}
+	if (unveil(NULL, NULL) == -1)
+		err(1, "unveil");
+
+	if (filename != NULL) {
 		btscript = read_btfile(filename, &btslen);
 		argc--;
 		argv++;
