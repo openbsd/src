@@ -1,4 +1,4 @@
-/* $OpenBSD: mvahci.c,v 1.1 2017/03/24 20:31:58 patrick Exp $ */
+/* $OpenBSD: mvahci.c,v 1.2 2021/10/24 17:52:27 mpi Exp $ */
 /*
  * Copyright (c) 2013,2017 Patrick Wildt <patrick@blueri.se>
  *
@@ -57,7 +57,7 @@ int	mvahci_activate(struct device *, int);
 
 extern int ahci_intr(void *);
 
-struct cfattach mvahci_ca = {
+const struct cfattach mvahci_ca = {
 	sizeof(struct ahci_softc),
 	mvahci_match,
 	mvahci_attach,

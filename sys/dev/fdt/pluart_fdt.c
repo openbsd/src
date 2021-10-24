@@ -1,4 +1,4 @@
-/*	$OpenBSD: pluart_fdt.c,v 1.3 2019/04/22 10:18:20 kettenis Exp $	*/
+/*	$OpenBSD: pluart_fdt.c,v 1.4 2021/10/24 17:52:26 mpi Exp $	*/
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2005 Dale Rahn <drahn@dalerahn.com>
@@ -32,7 +32,7 @@
 int	pluart_fdt_match(struct device *, void *, void *);
 void	pluart_fdt_attach(struct device *, struct device *, void *);
 
-struct cfattach pluart_fdt_ca = {
+const struct cfattach pluart_fdt_ca = {
 	sizeof(struct pluart_softc), pluart_fdt_match, pluart_fdt_attach
 };
 

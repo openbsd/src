@@ -1,4 +1,4 @@
-/*	$OpenBSD: amliic.c,v 1.4 2021/06/14 12:06:06 kettenis Exp $	*/
+/*	$OpenBSD: amliic.c,v 1.5 2021/10/24 17:52:26 mpi Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -76,7 +76,7 @@ struct amliic_softc {
 int amliic_match(struct device *, void *, void *);
 void amliic_attach(struct device *, struct device *, void *);
 
-struct cfattach	amliic_ca = {
+const struct cfattach	amliic_ca = {
 	sizeof (struct amliic_softc), amliic_match, amliic_attach
 };
 

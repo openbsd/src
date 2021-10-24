@@ -1,4 +1,4 @@
-/* $OpenBSD: mvxhci.c,v 1.3 2021/03/25 04:12:01 jsg Exp $ */
+/* $OpenBSD: mvxhci.c,v 1.4 2021/10/24 17:52:27 mpi Exp $ */
 /*
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
  *
@@ -62,7 +62,7 @@ void	mvxhci_wininit(struct mvxhci_softc *);
 int	mvxhci_match(struct device *, void *, void *);
 void	mvxhci_attach(struct device *, struct device *, void *);
 
-struct cfattach mvxhci_ca = {
+const struct cfattach mvxhci_ca = {
 	sizeof (struct mvxhci_softc), mvxhci_match, mvxhci_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xhci_fdt.c,v 1.17 2021/06/29 12:46:36 patrick Exp $	*/
+/*	$OpenBSD: xhci_fdt.c,v 1.18 2021/10/24 17:52:27 mpi Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -48,7 +48,7 @@ struct xhci_fdt_softc {
 int	xhci_fdt_match(struct device *, void *, void *);
 void	xhci_fdt_attach(struct device *, struct device *, void *);
 
-struct cfattach xhci_fdt_ca = {
+const struct cfattach xhci_fdt_ca = {
 	sizeof(struct xhci_fdt_softc), xhci_fdt_match, xhci_fdt_attach
 };
 

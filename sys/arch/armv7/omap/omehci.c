@@ -1,4 +1,4 @@
-/*	$OpenBSD: omehci.c,v 1.8 2021/03/25 04:12:01 jsg Exp $ */
+/*	$OpenBSD: omehci.c,v 1.9 2021/10/24 17:52:27 mpi Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -91,7 +91,7 @@ void omehci_utmi_init(struct omehci_softc *sc, unsigned int en_mask);
 void misc_setup(struct omehci_softc *sc);
 void omehci_uhh_init(struct omehci_softc *sc);
 
-struct cfattach omehci_ca = {
+const struct cfattach omehci_ca = {
 	sizeof (struct omehci_softc), omehci_match, omehci_attach,
 	omehci_detach, omehci_activate
 };

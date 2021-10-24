@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_fdt.c,v 1.17 2021/09/11 22:42:12 mglocker Exp $	*/
+/*	$OpenBSD: sdhc_fdt.c,v 1.18 2021/10/24 17:52:27 mpi Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -110,7 +110,7 @@ struct sdhc_fdt_softc {
 int	sdhc_fdt_match(struct device *, void *, void *);
 void	sdhc_fdt_attach(struct device *, struct device *, void *);
 
-struct cfattach sdhc_fdt_ca = {
+const struct cfattach sdhc_fdt_ca = {
 	sizeof(struct sdhc_fdt_softc), sdhc_fdt_match, sdhc_fdt_attach
 };
 

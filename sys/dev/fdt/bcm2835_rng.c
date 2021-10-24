@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcm2835_rng.c,v 1.3 2020/05/29 04:42:25 deraadt Exp $	*/
+/*	$OpenBSD: bcm2835_rng.c,v 1.4 2021/10/24 17:52:26 mpi Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -49,7 +49,7 @@ struct bcmrng_softc {
 int	bcmrng_match(struct device *, void *, void *);
 void	bcmrng_attach(struct device *, struct device *, void *);
 
-struct cfattach	bcmrng_ca = {
+const struct cfattach	bcmrng_ca = {
 	sizeof (struct bcmrng_softc), bcmrng_match, bcmrng_attach
 };
 

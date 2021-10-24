@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwmfan.c,v 1.1 2019/12/03 09:12:45 patrick Exp $	*/
+/*	$OpenBSD: pwmfan.c,v 1.2 2021/10/24 17:52:26 mpi Exp $	*/
 /*
  * Copyright (c) 2019 Krystian Lewandowski
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
@@ -44,7 +44,7 @@ struct pwmfan_softc {
 int	pwmfan_match(struct device *, void *, void *);
 void	pwmfan_attach(struct device *, struct device *, void *);
 
-struct cfattach pwmfan_ca = {
+const struct cfattach pwmfan_ca = {
 	sizeof(struct pwmfan_softc), pwmfan_match, pwmfan_attach
 };
 

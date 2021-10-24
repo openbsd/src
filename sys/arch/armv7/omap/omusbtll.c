@@ -1,4 +1,4 @@
-/* $OpenBSD: omusbtll.c,v 1.4 2021/03/25 04:12:01 jsg Exp $ */
+/* $OpenBSD: omusbtll.c,v 1.5 2021/10/24 17:52:28 mpi Exp $ */
 /*
  * Copyright (c) 2010 Dale Rahn <drahn@openbsd.org>
  *
@@ -89,7 +89,7 @@ struct omusbtll_softc {
 void omusbtll_attach(struct device *parent, struct device *self, void *args);
 void omusbtll_init(uint32_t channel_mask);
 
-struct cfattach	omusbtll_ca = {
+const struct cfattach	omusbtll_ca = {
 	sizeof (struct omusbtll_softc), NULL, omusbtll_attach
 };
 

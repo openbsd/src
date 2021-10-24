@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlmmc.c,v 1.10 2021/04/20 19:33:03 kettenis Exp $	*/
+/*	$OpenBSD: amlmmc.c,v 1.11 2021/10/24 17:52:26 mpi Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -156,7 +156,7 @@ struct amlmmc_softc {
 int amlmmc_match(struct device *, void *, void *);
 void amlmmc_attach(struct device *, struct device *, void *);
 
-struct cfattach	amlmmc_ca = {
+const struct cfattach	amlmmc_ca = {
 	sizeof (struct amlmmc_softc), amlmmc_match, amlmmc_attach
 };
 

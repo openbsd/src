@@ -1,4 +1,4 @@
-/*	$OpenBSD: smbios.c,v 1.6 2020/08/26 03:29:05 visa Exp $	*/
+/*	$OpenBSD: smbios.c,v 1.7 2021/10/24 17:52:28 mpi Exp $	*/
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gklok@cogeco.ca>
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
@@ -52,7 +52,7 @@ struct smbios_softc {
 int	smbios_match(struct device *, void *, void *);
 void	smbios_attach(struct device *, struct device *, void *);
 
-struct cfattach smbios_ca = {
+const struct cfattach smbios_ca = {
 	sizeof(struct device), smbios_match, smbios_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: acrtc.c,v 1.4 2020/03/28 11:40:29 kettenis Exp $	*/
+/*	$OpenBSD: acrtc.c,v 1.5 2021/10/24 17:52:26 mpi Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -72,7 +72,7 @@ struct acrtc_softc {
 int	acrtc_match(struct device *, void *, void *);
 void	acrtc_attach(struct device *, struct device *, void *);
 
-struct cfattach acrtc_ca = {
+const struct cfattach acrtc_ca = {
 	sizeof(struct acrtc_softc), acrtc_match, acrtc_attach
 };
 

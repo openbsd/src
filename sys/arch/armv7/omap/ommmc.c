@@ -1,4 +1,4 @@
-/*	$OpenBSD: ommmc.c,v 1.39 2021/03/25 04:12:01 jsg Exp $	*/
+/*	$OpenBSD: ommmc.c,v 1.40 2021/10/24 17:52:27 mpi Exp $	*/
 
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
@@ -279,7 +279,7 @@ struct cfdriver ommmc_cd = {
 	NULL, "ommmc", DV_DULL
 };
 
-struct cfattach ommmc_ca = {
+const struct cfattach ommmc_ca = {
 	sizeof(struct ommmc_softc), ommmc_match, ommmc_attach
 };
 

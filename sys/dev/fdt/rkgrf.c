@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkgrf.c,v 1.4 2020/09/04 01:10:29 jmatthew Exp $	*/
+/*	$OpenBSD: rkgrf.c,v 1.5 2021/10/24 17:52:26 mpi Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -42,7 +42,7 @@ struct rkgrf_softc {
 int rkgrf_match(struct device *, void *, void *);
 void rkgrf_attach(struct device *, struct device *, void *);
 
-struct cfattach	rkgrf_ca = {
+const struct cfattach	rkgrf_ca = {
 	sizeof (struct rkgrf_softc), rkgrf_match, rkgrf_attach
 };
 

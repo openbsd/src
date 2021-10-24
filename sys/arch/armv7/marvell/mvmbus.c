@@ -1,4 +1,4 @@
-/* $OpenBSD: mvmbus.c,v 1.3 2018/07/09 09:24:22 patrick Exp $ */
+/* $OpenBSD: mvmbus.c,v 1.4 2021/10/24 17:52:27 mpi Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -91,7 +91,7 @@ struct mbus_dram_info *mvmbus_dram_info;
 uint32_t mvmbus_pcie_mem_aperture[2];
 uint32_t mvmbus_pcie_io_aperture[2];
 
-struct cfattach mvmbus_ca = {
+const struct cfattach mvmbus_ca = {
 	sizeof (struct mvmbus_softc), mvmbus_match, mvmbus_attach
 };
 

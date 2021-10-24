@@ -1,4 +1,4 @@
-/* $OpenBSD: moxtet.c,v 1.1 2019/10/07 19:35:07 patrick Exp $ */
+/* $OpenBSD: moxtet.c,v 1.2 2021/10/24 17:52:26 mpi Exp $ */
 /*
  * Copyright (c) 2019 Patrick Wildt <patrick@blueri.se>
  *
@@ -56,7 +56,7 @@ int	 moxtet_detach(struct device *, int);
 int	 moxtet_read(struct moxtet_softc *, char *, size_t);
 int	 moxtet_write(struct moxtet_softc *, char *, size_t);
 
-struct cfattach moxtet_ca = {
+const struct cfattach moxtet_ca = {
 	sizeof(struct moxtet_softc), moxtet_match, moxtet_attach, moxtet_detach
 };
 

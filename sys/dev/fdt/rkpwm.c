@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkpwm.c,v 1.3 2021/08/02 18:22:41 patrick Exp $	*/
+/*	$OpenBSD: rkpwm.c,v 1.4 2021/10/24 17:52:27 mpi Exp $	*/
 /*
  * Copyright (c) 2019 Krystian Lewandowski
  * Copyright (c) 2019 Patrick Wildt <patrick@blueri.se>
@@ -62,7 +62,7 @@ struct rkpwm_softc {
 int	rkpwm_match(struct device *, void *, void *);
 void	rkpwm_attach(struct device *, struct device *, void *);
 
-struct cfattach rkpwm_ca = {
+const struct cfattach rkpwm_ca = {
 	sizeof(struct rkpwm_softc), rkpwm_match, rkpwm_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwdog.c,v 1.2 2019/08/29 11:51:48 kettenis Exp $	*/
+/*	$OpenBSD: dwdog.c,v 1.3 2021/10/24 17:52:26 mpi Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -56,7 +56,7 @@ struct dwdog_softc {
 int	dwdog_match(struct device *, void *, void *);
 void	dwdog_attach(struct device *, struct device *, void *);
 
-struct cfattach dwdog_ca = {
+const struct cfattach dwdog_ca = {
 	sizeof(struct dwdog_softc), dwdog_match, dwdog_attach
 };
 

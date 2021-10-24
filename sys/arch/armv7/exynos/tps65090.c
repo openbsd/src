@@ -1,4 +1,4 @@
-/* $OpenBSD: tps65090.c,v 1.5 2021/05/16 03:39:28 jsg Exp $ */
+/* $OpenBSD: tps65090.c,v 1.6 2021/10/24 17:52:27 mpi Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -82,7 +82,7 @@ void	tps65090_fet_disable(int);
 int	tps65090_get_charging(void);
 void	tps65090_set_charging(int);
 
-struct cfattach tpspmic_ca = {
+const struct cfattach tpspmic_ca = {
 	sizeof(struct tps65090_softc), tps65090_match, tps65090_attach
 };
 

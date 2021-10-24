@@ -1,4 +1,4 @@
-/* $OpenBSD: ahci_fdt.c,v 1.5 2018/12/04 11:25:48 kettenis Exp $ */
+/* $OpenBSD: ahci_fdt.c,v 1.6 2021/10/24 17:52:26 mpi Exp $ */
 /*
  * Copyright (c) 2013,2017 Patrick Wildt <patrick@blueri.se>
  *
@@ -39,7 +39,7 @@ int	ahci_fdt_activate(struct device *, int);
 
 extern int ahci_intr(void *);
 
-struct cfattach ahci_fdt_ca = {
+const struct cfattach ahci_fdt_ca = {
 	sizeof(struct ahci_softc),
 	ahci_fdt_match,
 	ahci_fdt_attach,

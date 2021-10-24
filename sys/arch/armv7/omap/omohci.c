@@ -1,4 +1,4 @@
-/*	$OpenBSD: omohci.c,v 1.3 2014/05/19 13:11:31 mpi Exp $ */
+/*	$OpenBSD: omohci.c,v 1.4 2021/10/24 17:52:28 mpi Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -109,7 +109,7 @@ struct omohci_softc {
 void	omohci_enable(struct omohci_softc *);
 void	omohci_disable(struct omohci_softc *);
 
-struct cfattach omohci_ca = {
+const struct cfattach omohci_ca = {
         sizeof (struct omohci_softc), omohci_match, omohci_attach,
 	omohci_detach, omohci_detach
 };

@@ -1,4 +1,4 @@
-/* $OpenBSD: imxsrc.c,v 1.4 2019/10/27 19:19:10 kettenis Exp $ */
+/* $OpenBSD: imxsrc.c,v 1.5 2021/10/24 17:52:26 mpi Exp $ */
 /*
  * Copyright (c) 2019 Patrick Wildt <patrick@blueri.se>
  *
@@ -111,7 +111,7 @@ int imxsrc_match(struct device *, void *, void *);
 void imxsrc_attach(struct device *, struct device *, void *);
 void imxsrc_reset(void *, uint32_t *, int);
 
-struct cfattach	imxsrc_ca = {
+const struct cfattach	imxsrc_ca = {
 	sizeof (struct imxsrc_softc), imxsrc_match, imxsrc_attach
 };
 

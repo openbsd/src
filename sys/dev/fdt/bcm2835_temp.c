@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcm2835_temp.c,v 1.1 2018/02/24 11:06:59 kettenis Exp $	*/
+/*	$OpenBSD: bcm2835_temp.c,v 1.2 2021/10/24 17:52:26 mpi Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -52,7 +52,7 @@ struct bcmtemp_softc {
 int	bcmtemp_match(struct device *, void *, void *);
 void	bcmtemp_attach(struct device *, struct device *, void *);
 
-struct cfattach	bcmtemp_ca = {
+const struct cfattach	bcmtemp_ca = {
 	sizeof (struct bcmtemp_softc), bcmtemp_match, bcmtemp_attach
 };
 

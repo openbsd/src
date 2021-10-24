@@ -1,4 +1,4 @@
-/* $OpenBSD: sxidog.c,v 1.2 2019/10/17 22:26:32 kettenis Exp $ */
+/* $OpenBSD: sxidog.c,v 1.3 2021/10/24 17:52:27 mpi Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -65,7 +65,7 @@ int sxidog_activate(struct device *, int);
 int sxidog_callback(void *, int);
 void sxidog_reset(void);
 
-struct cfattach	sxidog_ca = {
+const struct cfattach	sxidog_ca = {
 	sizeof (struct sxidog_softc), sxidog_match, sxidog_attach,
 	NULL, sxidog_activate
 };

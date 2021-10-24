@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwpcie.c,v 1.35 2021/06/25 18:55:26 kettenis Exp $	*/
+/*	$OpenBSD: dwpcie.c,v 1.36 2021/10/24 17:52:26 mpi Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -236,7 +236,7 @@ struct dwpcie_intr_handle {
 int dwpcie_match(struct device *, void *, void *);
 void dwpcie_attach(struct device *, struct device *, void *);
 
-struct cfattach	dwpcie_ca = {
+const struct cfattach	dwpcie_ca = {
 	sizeof (struct dwpcie_softc), dwpcie_match, dwpcie_attach
 };
 

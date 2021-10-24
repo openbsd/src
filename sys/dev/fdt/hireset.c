@@ -1,4 +1,4 @@
-/*	$OpenBSD: hireset.c,v 1.1 2018/08/27 14:12:59 kettenis Exp $	*/
+/*	$OpenBSD: hireset.c,v 1.2 2021/10/24 17:52:26 mpi Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -38,7 +38,7 @@ struct hireset_softc {
 int hireset_match(struct device *, void *, void *);
 void hireset_attach(struct device *, struct device *, void *);
 
-struct cfattach	hireset_ca = {
+const struct cfattach	hireset_ca = {
 	sizeof (struct hireset_softc), hireset_match, hireset_attach
 };
 

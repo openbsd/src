@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwmbl.c,v 1.5 2020/06/10 23:36:26 patrick Exp $	*/
+/*	$OpenBSD: pwmbl.c,v 1.6 2021/10/24 17:52:26 mpi Exp $	*/
 /*
  * Copyright (c) 2019 Krystian Lewandowski
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
@@ -46,7 +46,7 @@ struct pwmbl_softc *sc_pwmbl;
 int	pwmbl_match(struct device *, void *, void *);
 void	pwmbl_attach(struct device *, struct device *, void *);
 
-struct cfattach pwmbl_ca = {
+const struct cfattach pwmbl_ca = {
 	sizeof(struct pwmbl_softc), pwmbl_match, pwmbl_attach
 };
 

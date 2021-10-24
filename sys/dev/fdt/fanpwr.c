@@ -1,4 +1,4 @@
-/*	$OpenBSD: fanpwr.c,v 1.4 2020/11/12 10:47:07 patrick Exp $	*/
+/*	$OpenBSD: fanpwr.c,v 1.5 2021/10/24 17:52:26 mpi Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -60,7 +60,7 @@ struct fanpwr_softc {
 int	fanpwr_match(struct device *, void *, void *);
 void	fanpwr_attach(struct device *, struct device *, void *);
 
-struct cfattach fanpwr_ca = {
+const struct cfattach fanpwr_ca = {
 	sizeof(struct fanpwr_softc), fanpwr_match, fanpwr_attach
 };
 

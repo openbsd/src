@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcm2835_dog.c,v 1.2 2019/09/05 16:58:36 patrick Exp $	*/
+/*	$OpenBSD: bcm2835_dog.c,v 1.3 2021/10/24 17:52:26 mpi Exp $	*/
 /*
  * Copyright (c) 2015 Patrick Wildt <patrick@blueri.se>
  *
@@ -64,7 +64,7 @@ int	 bcmdog_activate(struct device *, int);
 int	 bcmdog_wdog_cb(void *, int);
 void	 bcmdog_wdog_reset(void);
 
-struct cfattach	bcmdog_ca = {
+const struct cfattach	bcmdog_ca = {
 	sizeof (struct bcmdog_softc), bcmdog_match, bcmdog_attach, NULL,
 	bcmdog_activate
 };

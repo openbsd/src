@@ -1,4 +1,4 @@
-/* $OpenBSD: imxccm.c,v 1.26 2020/12/19 01:18:11 patrick Exp $ */
+/* $OpenBSD: imxccm.c,v 1.27 2021/10/24 17:52:26 mpi Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -227,7 +227,7 @@ struct imxccm_softc {
 int	imxccm_match(struct device *, void *, void *);
 void	imxccm_attach(struct device *parent, struct device *self, void *args);
 
-struct cfattach	imxccm_ca = {
+const struct cfattach	imxccm_ca = {
 	sizeof (struct imxccm_softc), imxccm_match, imxccm_attach
 };
 

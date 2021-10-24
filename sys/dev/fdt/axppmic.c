@@ -1,4 +1,4 @@
-/*	$OpenBSD: axppmic.c,v 1.10 2021/09/06 19:55:27 patrick Exp $	*/
+/*	$OpenBSD: axppmic.c,v 1.11 2021/10/24 17:52:26 mpi Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -346,7 +346,7 @@ void	axppmic_attach_common(struct axppmic_softc *, const char *, int);
 int	axppmic_i2c_match(struct device *, void *, void *);
 void	axppmic_i2c_attach(struct device *, struct device *, void *);
 
-struct cfattach axppmic_ca = {
+const struct cfattach axppmic_ca = {
 	sizeof(struct axppmic_softc), axppmic_i2c_match, axppmic_i2c_attach
 };
 
@@ -422,7 +422,7 @@ axppmic_i2c_write(struct axppmic_softc *sc, uint8_t reg, uint8_t value)
 int	axppmic_rsb_match(struct device *, void *, void *);
 void	axppmic_rsb_attach(struct device *, struct device *, void *);
 
-struct cfattach axppmic_rsb_ca = {
+const struct cfattach axppmic_rsb_ca = {
 	sizeof(struct axppmic_softc), axppmic_rsb_match, axppmic_rsb_attach
 };
 

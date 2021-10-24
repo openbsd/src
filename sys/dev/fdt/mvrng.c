@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvrng.c,v 1.3 2020/05/29 04:42:25 deraadt Exp $	*/
+/*	$OpenBSD: mvrng.c,v 1.4 2021/10/24 17:52:26 mpi Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -65,7 +65,7 @@ struct mvrng_softc {
 int	mvrng_match(struct device *, void *, void *);
 void	mvrng_attach(struct device *, struct device *, void *);
 
-struct cfattach	mvrng_ca = {
+const struct cfattach	mvrng_ca = {
 	sizeof (struct mvrng_softc), mvrng_match, mvrng_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxie.c,v 1.32 2021/03/25 04:12:01 jsg Exp $	*/
+/*	$OpenBSD: sxie.c,v 1.33 2021/10/24 17:52:28 mpi Exp $	*/
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2013 Artturi Alm
@@ -185,7 +185,7 @@ void	sxie_miibus_statchg(struct device *);
 int	sxie_ifm_change(struct ifnet *);
 void	sxie_ifm_status(struct ifnet *, struct ifmediareq *);
 
-struct cfattach sxie_ca = {
+const struct cfattach sxie_ca = {
 	sizeof (struct sxie_softc), sxie_match, sxie_attach
 };
 

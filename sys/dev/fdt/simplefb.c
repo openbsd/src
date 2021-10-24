@@ -1,4 +1,4 @@
-/*	$OpenBSD: simplefb.c,v 1.13 2021/03/13 14:02:02 kettenis Exp $	*/
+/*	$OpenBSD: simplefb.c,v 1.14 2021/10/24 17:52:27 mpi Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -81,7 +81,7 @@ struct wsdisplay_charcell simplefb_bs[SIMPLEFB_WIDTH * SIMPLEFB_HEIGHT];
 int	simplefb_match(struct device *, void *, void *);
 void	simplefb_attach(struct device *, struct device *, void *);
 
-struct cfattach simplefb_ca = {
+const struct cfattach simplefb_ca = {
 	sizeof(struct simplefb_softc), simplefb_match, simplefb_attach
 };
 

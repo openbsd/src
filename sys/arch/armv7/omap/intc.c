@@ -1,4 +1,4 @@
-/* $OpenBSD: intc.c,v 1.10 2020/07/14 15:34:15 patrick Exp $ */
+/* $OpenBSD: intc.c,v 1.11 2021/10/24 17:52:27 mpi Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -111,7 +111,7 @@ void	intc_calc_mask(void);
 void	*intc_intr_establish_fdt(void *, int *, int, struct cpu_info *,
 	    int (*)(void *), void *, char *);
 
-struct cfattach	intc_ca = {
+const struct cfattach	intc_ca = {
 	sizeof (struct device), intc_match, intc_attach
 };
 

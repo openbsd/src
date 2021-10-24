@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxirtc.c,v 1.5 2021/04/24 10:15:15 mpi Exp $	*/
+/*	$OpenBSD: sxirtc.c,v 1.6 2021/10/24 17:52:27 mpi Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  * Copyright (c) 2013 Artturi Alm
@@ -66,7 +66,7 @@ struct sxirtc_softc {
 int	sxirtc_match(struct device *, void *, void *);
 void	sxirtc_attach(struct device *, struct device *, void *);
 
-struct cfattach sxirtc_ca = {
+const struct cfattach sxirtc_ca = {
 	sizeof(struct sxirtc_softc), sxirtc_match, sxirtc_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvmdio.c,v 1.3 2020/11/28 20:06:05 kettenis Exp $	*/
+/*	$OpenBSD: mvmdio.c,v 1.4 2021/10/24 17:52:26 mpi Exp $	*/
 /*	$NetBSD: if_mvneta.c,v 1.41 2015/04/15 10:15:40 hsuenaga Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
@@ -77,7 +77,7 @@ struct cfdriver mvmdio_cd = {
 	NULL, "mvmdio", DV_DULL
 };
 
-struct cfattach mvmdio_ca = {
+const struct cfattach mvmdio_ca = {
 	sizeof (struct mvmdio_softc), mvmdio_match, mvmdio_attach,
 };
 

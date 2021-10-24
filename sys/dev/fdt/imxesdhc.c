@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxesdhc.c,v 1.16 2020/04/28 17:22:53 patrick Exp $	*/
+/*	$OpenBSD: imxesdhc.c,v 1.17 2021/10/24 17:52:26 mpi Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -275,7 +275,7 @@ struct cfdriver imxesdhc_cd = {
 	NULL, "imxesdhc", DV_DULL
 };
 
-struct cfattach imxesdhc_ca = {
+const struct cfattach imxesdhc_ca = {
 	sizeof(struct imxesdhc_softc), imxesdhc_match, imxesdhc_attach
 };
 

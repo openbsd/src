@@ -1,4 +1,4 @@
-/* $OpenBSD: crosec.c,v 1.4 2021/03/25 04:12:01 jsg Exp $ */
+/* $OpenBSD: crosec.c,v 1.5 2021/10/24 17:52:27 mpi Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -40,7 +40,7 @@ int	cros_ec_i2c_command(struct cros_ec_softc *, uint8_t,
 		int, const uint8_t *, int, uint8_t **, int);
 int	cros_ec_calc_checksum(const uint8_t *, int);
 
-struct cfattach crosec_ca = {
+const struct cfattach crosec_ca = {
 	sizeof(struct cros_ec_softc), cros_ec_match, cros_ec_attach
 };
 

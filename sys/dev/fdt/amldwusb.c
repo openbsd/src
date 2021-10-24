@@ -1,4 +1,4 @@
-/*	$OpenBSD: amldwusb.c,v 1.3 2020/12/17 22:39:45 kettenis Exp $	*/
+/*	$OpenBSD: amldwusb.c,v 1.4 2021/10/24 17:52:26 mpi Exp $	*/
 /*
  * Copyright (c) 2019 Mark kettenis <kettenis@openbsd.org>
  *
@@ -121,7 +121,7 @@ struct amldwusb_softc {
 int	amldwusb_match(struct device *, void *, void *);
 void	amldwusb_attach(struct device *, struct device *, void *);
 
-struct cfattach amldwusb_ca = {
+const struct cfattach amldwusb_ca = {
 	sizeof(struct amldwusb_softc), amldwusb_match, amldwusb_attach
 };
 

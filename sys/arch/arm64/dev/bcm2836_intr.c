@@ -1,4 +1,4 @@
-/* $OpenBSD: bcm2836_intr.c,v 1.12 2021/07/02 19:55:00 kettenis Exp $ */
+/* $OpenBSD: bcm2836_intr.c,v 1.13 2021/10/24 17:52:28 mpi Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2015 Patrick Wildt <patrick@blueri.se>
@@ -126,7 +126,7 @@ void	 bcm_intc_intr_route(void *, int , struct cpu_info *);
 void	 bcm_intc_handle_ipi(void);
 void	 bcm_intc_send_ipi(struct cpu_info *, int);
 
-struct cfattach	bcmintc_ca = {
+const struct cfattach	bcmintc_ca = {
 	sizeof (struct bcm_intc_softc), bcm_intc_match, bcm_intc_attach
 };
 

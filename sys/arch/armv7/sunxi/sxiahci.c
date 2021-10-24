@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiahci.c,v 1.16 2021/03/25 04:12:01 jsg Exp $	*/
+/*	$OpenBSD: sxiahci.c,v 1.17 2021/10/24 17:52:28 mpi Exp $	*/
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2013,2014 Artturi Alm
@@ -66,7 +66,7 @@ struct sxiahci_softc {
 
 };
 
-struct cfattach sxiahci_ca = {
+const struct cfattach sxiahci_ca = {
 	sizeof(struct sxiahci_softc),
 	sxiahci_match,
 	sxiahci_attach,

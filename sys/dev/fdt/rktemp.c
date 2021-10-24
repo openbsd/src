@@ -1,4 +1,4 @@
-/*	$OpenBSD: rktemp.c,v 1.6 2020/09/08 01:29:58 jmatthew Exp $	*/
+/*	$OpenBSD: rktemp.c,v 1.7 2021/10/24 17:52:27 mpi Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -214,7 +214,7 @@ struct rktemp_softc {
 int	rktemp_match(struct device *, void *, void *);
 void	rktemp_attach(struct device *, struct device *, void *);
 
-struct cfattach	rktemp_ca = {
+const struct cfattach	rktemp_ca = {
 	sizeof (struct rktemp_softc), rktemp_match, rktemp_attach
 };
 

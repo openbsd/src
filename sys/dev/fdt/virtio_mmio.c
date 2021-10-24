@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_mmio.c,v 1.9 2021/04/15 17:06:59 patrick Exp $	*/
+/*	$OpenBSD: virtio_mmio.c,v 1.10 2021/10/24 17:52:27 mpi Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -116,7 +116,7 @@ struct virtio_mmio_softc {
 	uint32_t		sc_version;
 };
 
-struct cfattach virtio_mmio_ca = {
+const struct cfattach virtio_mmio_ca = {
 	sizeof(struct virtio_mmio_softc),
 	virtio_mmio_match,
 	virtio_mmio_attach,
@@ -124,7 +124,7 @@ struct cfattach virtio_mmio_ca = {
 	NULL
 };
 
-struct cfattach virtio_mmio_fdt_ca = {
+const struct cfattach virtio_mmio_fdt_ca = {
 	sizeof(struct virtio_mmio_softc),
 	NULL,
 	virtio_mmio_attach,

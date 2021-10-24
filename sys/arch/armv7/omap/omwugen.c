@@ -1,4 +1,4 @@
-/*	$OpenBSD: omwugen.c,v 1.1 2016/09/15 21:55:51 jsg Exp $	*/
+/*	$OpenBSD: omwugen.c,v 1.2 2021/10/24 17:52:28 mpi Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -31,7 +31,7 @@ struct omwugen_softc {
 int	omwugen_match(struct device *, void *, void *);
 void	omwugen_attach(struct device *, struct device *, void *);
 
-struct cfattach omwugen_ca = {
+const struct cfattach omwugen_ca = {
 	sizeof(struct omwugen_softc), omwugen_match, omwugen_attach
 };
 

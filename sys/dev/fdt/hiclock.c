@@ -1,4 +1,4 @@
-/*	$OpenBSD: hiclock.c,v 1.2 2019/04/22 12:43:13 kettenis Exp $	*/
+/*	$OpenBSD: hiclock.c,v 1.3 2021/10/24 17:52:26 mpi Exp $	*/
 /*
  * Copyright (c) 2018, 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -52,7 +52,7 @@ struct hiclock_softc {
 int hiclock_match(struct device *, void *, void *);
 void hiclock_attach(struct device *, struct device *, void *);
 
-struct cfattach	hiclock_ca = {
+const struct cfattach	hiclock_ca = {
 	sizeof (struct hiclock_softc), hiclock_match, hiclock_attach
 };
 

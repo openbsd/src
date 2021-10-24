@@ -1,4 +1,4 @@
-/*	$OpenBSD: plrtc.c,v 1.1 2017/01/25 10:14:40 jsg Exp $	*/
+/*	$OpenBSD: plrtc.c,v 1.2 2021/10/24 17:52:26 mpi Exp $	*/
 
 /*
  * Copyright (c) 2015 Jonathan Gray <jsg@openbsd.org>
@@ -53,7 +53,7 @@ int	plrtc_gettime(struct todr_chip_handle *, struct timeval *);
 int	plrtc_settime(struct todr_chip_handle *, struct timeval *);
 
 
-struct cfattach plrtc_ca = {
+const struct cfattach plrtc_ca = {
 	sizeof(struct plrtc_softc), plrtc_match, plrtc_attach
 };
 

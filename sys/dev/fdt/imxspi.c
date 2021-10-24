@@ -1,4 +1,4 @@
-/* $OpenBSD: imxspi.c,v 1.1 2018/07/26 10:59:07 patrick Exp $ */
+/* $OpenBSD: imxspi.c,v 1.2 2021/10/24 17:52:26 mpi Exp $ */
 /*
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
  *
@@ -127,7 +127,7 @@ void	 imxspi_scan(struct imxspi_softc *);
 #define HCLR4(sc, reg, bits)						\
 	HWRITE4((sc), (reg), HREAD4((sc), (reg)) & ~(bits))
 
-struct cfattach imxspi_ca = {
+const struct cfattach imxspi_ca = {
 	sizeof(struct imxspi_softc), imxspi_match, imxspi_attach,
 	imxspi_detach
 };

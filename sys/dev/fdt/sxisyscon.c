@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxisyscon.c,v 1.1 2019/08/11 11:19:41 kettenis Exp $	*/
+/*	$OpenBSD: sxisyscon.c,v 1.2 2021/10/24 17:52:27 mpi Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -35,7 +35,7 @@ struct sxisyscon_softc {
 int	sxisyscon_match(struct device *, void *, void *);
 void	sxisyscon_attach(struct device *, struct device *, void *);
 
-struct cfattach sxisyscon_ca = {
+const struct cfattach sxisyscon_ca = {
 	sizeof(struct sxisyscon_softc), sxisyscon_match, sxisyscon_attach
 };
 

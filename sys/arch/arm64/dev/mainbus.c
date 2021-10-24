@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.21 2021/05/05 14:13:57 kettenis Exp $ */
+/* $OpenBSD: mainbus.c,v 1.22 2021/10/24 17:52:28 mpi Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -57,7 +57,7 @@ struct mainbus_softc {
 	int			 sc_early_nodes[64];
 };
 
-struct cfattach mainbus_ca = {
+const struct cfattach mainbus_ca = {
 	sizeof(struct mainbus_softc), mainbus_match, mainbus_attach, NULL,
 	config_activate_children
 };

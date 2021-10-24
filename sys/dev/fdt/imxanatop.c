@@ -1,4 +1,4 @@
-/* $OpenBSD: imxanatop.c,v 1.5 2018/08/30 12:14:30 jsg Exp $ */
+/* $OpenBSD: imxanatop.c,v 1.6 2021/10/24 17:52:26 mpi Exp $ */
 /*
  * Copyright (c) 2016 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -125,7 +125,7 @@ struct imxanatop_regulator {
 int	imxanatop_match(struct device *, void *, void *);
 void	imxanatop_attach(struct device *, struct device *, void *);
 
-struct cfattach imxanatop_ca = {
+const struct cfattach imxanatop_ca = {
 	sizeof(struct imxanatop_softc), imxanatop_match, imxanatop_attach
 };
 

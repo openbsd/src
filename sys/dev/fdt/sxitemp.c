@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxitemp.c,v 1.8 2020/07/15 11:33:12 dtucker Exp $	*/
+/*	$OpenBSD: sxitemp.c,v 1.9 2021/10/24 17:52:27 mpi Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -82,7 +82,7 @@ struct sxitemp_softc {
 int	sxitemp_match(struct device *, void *, void *);
 void	sxitemp_attach(struct device *, struct device *, void *);
 
-struct cfattach	sxitemp_ca = {
+const struct cfattach	sxitemp_ca = {
 	sizeof (struct sxitemp_softc), sxitemp_match, sxitemp_attach
 };
 

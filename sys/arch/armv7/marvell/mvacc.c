@@ -1,4 +1,4 @@
-/* $OpenBSD: mvacc.c,v 1.3 2017/03/24 15:22:45 patrick Exp $ */
+/* $OpenBSD: mvacc.c,v 1.4 2021/10/24 17:52:27 mpi Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -82,7 +82,7 @@ void	 mvacc_attach(struct device *, struct device *, void *);
 
 uint32_t mvacc_get_frequency(void *, uint32_t *);
 
-struct cfattach	mvacc_ca = {
+const struct cfattach	mvacc_ca = {
 	sizeof (struct mvacc_softc), mvacc_match, mvacc_attach
 };
 

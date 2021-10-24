@@ -1,4 +1,4 @@
-/* $OpenBSD: fusbtc.c,v 1.1 2019/05/11 14:43:27 patrick Exp $ */
+/* $OpenBSD: fusbtc.c,v 1.2 2021/10/24 17:52:26 mpi Exp $ */
 /*
  * Copyright (c) 2019 Patrick Wildt <patrick@blueri.se>
  *
@@ -234,7 +234,7 @@ void	 fusbtc_clr_reg(struct fusbtc_softc *, uint8_t, uint8_t);
 void	 fusbtc_write_reg(struct fusbtc_softc *, uint8_t, uint8_t);
 uint8_t	 fusbtc_read_reg(struct fusbtc_softc *, uint8_t);
 
-struct cfattach fusbtc_ca = {
+const struct cfattach fusbtc_ca = {
 	sizeof(struct fusbtc_softc),
 	fusbtc_match,
 	fusbtc_attach,

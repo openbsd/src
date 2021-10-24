@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.25 2021/10/24 14:54:52 patrick Exp $ */
+/* $OpenBSD: ampintc.c,v 1.26 2021/10/24 17:52:28 mpi Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -199,7 +199,7 @@ int		 ampintc_ipi_nop(void *);
 int		 ampintc_ipi_ddb(void *);
 void		 ampintc_send_ipi(struct cpu_info *, int);
 
-struct cfattach	ampintc_ca = {
+const struct cfattach	ampintc_ca = {
 	sizeof (struct ampintc_softc), ampintc_match, ampintc_attach
 };
 
@@ -868,7 +868,7 @@ struct ampintc_msi_softc {
 	struct interrupt_controller	 sc_ic;
 };
 
-struct cfattach	ampintcmsi_ca = {
+const struct cfattach	ampintcmsi_ca = {
 	sizeof (struct ampintc_msi_softc), ampintc_msi_match, ampintc_msi_attach
 };
 

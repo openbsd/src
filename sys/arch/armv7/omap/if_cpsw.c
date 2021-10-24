@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpsw.c,v 1.51 2021/03/25 04:12:01 jsg Exp $ */
+/* $OpenBSD: if_cpsw.c,v 1.52 2021/10/24 17:52:27 mpi Exp $ */
 /*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
@@ -191,7 +191,7 @@ int	cpsw_miscintr(void *);
 
 void	cpsw_get_port_config(struct cpsw_port_config *, int);
 
-struct cfattach cpsw_ca = {
+const struct cfattach cpsw_ca = {
 	sizeof(struct cpsw_softc),
 	cpsw_match,
 	cpsw_attach

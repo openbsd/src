@@ -1,4 +1,4 @@
-/* $OpenBSD: mvuart.c,v 1.3 2021/08/31 12:24:15 jan Exp $ */
+/* $OpenBSD: mvuart.c,v 1.4 2021/10/24 17:52:26 mpi Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
@@ -117,7 +117,7 @@ struct cfdriver mvuart_cd = {
 	NULL, "mvuart", DV_TTY
 };
 
-struct cfattach mvuart_ca = {
+const struct cfattach mvuart_ca = {
 	sizeof(struct mvuart_softc), mvuart_match, mvuart_attach
 };
 

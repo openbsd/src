@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.34 2021/10/21 22:25:03 patrick Exp $ */
+/* $OpenBSD: agintc.c,v 1.35 2021/10/24 17:52:28 mpi Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -238,7 +238,7 @@ int		agintc_ipi_nop(void *v);
 int		agintc_ipi_combined(void *);
 void		agintc_send_ipi(struct cpu_info *, int);
 
-struct cfattach	agintc_ca = {
+const struct cfattach	agintc_ca = {
 	sizeof (struct agintc_softc), agintc_match, agintc_attach
 };
 
@@ -1311,7 +1311,7 @@ struct agintc_msi_softc {
 	struct interrupt_controller	sc_ic;
 };
 
-struct cfattach	agintcmsi_ca = {
+const struct cfattach	agintcmsi_ca = {
 	sizeof (struct agintc_msi_softc), agintc_msi_match, agintc_msi_attach
 };
 

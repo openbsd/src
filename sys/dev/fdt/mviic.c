@@ -1,4 +1,4 @@
-/* $OpenBSD: mviic.c,v 1.3 2021/03/11 09:15:25 patrick Exp $ */
+/* $OpenBSD: mviic.c,v 1.4 2021/10/24 17:52:26 mpi Exp $ */
 /*
  * Copyright (c) 2019 Patrick Wildt <patrick@blueri.se>
  *
@@ -90,7 +90,7 @@ void mviic_bus_scan(struct device *, struct i2cbus_attach_args *, void *);
 #define HCLR4(sc, reg, bits)						\
 	HWRITE4((sc), (reg), HREAD4((sc), (reg)) & ~(bits))
 
-struct cfattach mviic_ca = {
+const struct cfattach mviic_ca = {
 	sizeof(struct mviic_softc), mviic_match, mviic_attach, mviic_detach
 };
 

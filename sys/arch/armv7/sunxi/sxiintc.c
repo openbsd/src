@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiintc.c,v 1.9 2021/05/16 15:10:19 deraadt Exp $	*/
+/*	$OpenBSD: sxiintc.c,v 1.10 2021/10/24 17:52:28 mpi Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -151,7 +151,7 @@ void	sxiintc_calc_masks(void);
 void	*sxiintc_intr_establish_fdt(void *, int *, int, struct cpu_info *,
 	    int (*)(void *), void *, char *);
 
-struct cfattach	sxiintc_ca = {
+const struct cfattach	sxiintc_ca = {
 	sizeof (struct device), sxiintc_match, sxiintc_attach
 };
 

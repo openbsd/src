@@ -1,4 +1,4 @@
-/* $OpenBSD: mvmpic.c,v 1.4 2020/07/14 15:34:15 patrick Exp $ */
+/* $OpenBSD: mvmpic.c,v 1.5 2021/10/24 17:52:27 mpi Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2015 Patrick Wildt <patrick@blueri.se>
@@ -81,7 +81,7 @@ void		 mpic_set_priority(struct mpic_softc *, int, int);
 void		 mpic_intr_enable(struct mpic_softc *, int);
 void		 mpic_intr_disable(struct mpic_softc *, int);
 
-struct cfattach	mvmpic_ca = {
+const struct cfattach	mvmpic_ca = {
 	sizeof (struct mpic_softc), mpic_match, mpic_attach
 };
 

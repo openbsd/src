@@ -1,4 +1,4 @@
-/*	$OpenBSD: plgpio.c,v 1.2 2021/05/07 01:54:17 jsg Exp $	*/
+/*	$OpenBSD: plgpio.c,v 1.3 2021/10/24 17:52:26 mpi Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -51,7 +51,7 @@ struct plgpio_softc {
 int plgpio_match(struct device *, void *, void *);
 void plgpio_attach(struct device *, struct device *, void *);
 
-struct cfattach	plgpio_ca = {
+const struct cfattach	plgpio_ca = {
 	sizeof (struct plgpio_softc), plgpio_match, plgpio_attach
 };
 

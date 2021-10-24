@@ -1,4 +1,4 @@
-/*	$OpenBSD: dmtimer.c,v 1.13 2021/05/16 15:10:19 deraadt Exp $	*/
+/*	$OpenBSD: dmtimer.c,v 1.14 2021/10/24 17:52:27 mpi Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Raphael Graf <r@undefined.ch>
@@ -135,7 +135,7 @@ struct dmtimer_softc {
 	u_int32_t		sc_nextstatevent;
 };
 
-struct cfattach	dmtimer_ca = {
+const struct cfattach	dmtimer_ca = {
 	sizeof (struct dmtimer_softc), NULL, dmtimer_attach
 };
 

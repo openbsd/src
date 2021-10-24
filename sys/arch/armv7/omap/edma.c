@@ -1,4 +1,4 @@
-/*	$OpenBSD: edma.c,v 1.7 2017/09/08 05:36:51 deraadt Exp $	*/
+/*	$OpenBSD: edma.c,v 1.8 2021/10/24 17:52:27 mpi Exp $	*/
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -84,7 +84,7 @@ int	edma_match(struct device *, void *, void *);
 void	edma_attach(struct device *, struct device *, void *);
 int	edma_comp_intr(void *);
 
-struct cfattach edma_ca = {
+const struct cfattach edma_ca = {
 	sizeof(struct edma_softc), edma_match, edma_attach
 };
 

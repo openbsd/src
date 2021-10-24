@@ -1,4 +1,4 @@
-/* $OpenBSD: mvdog.c,v 1.1 2019/09/05 18:38:30 patrick Exp $ */
+/* $OpenBSD: mvdog.c,v 1.2 2021/10/24 17:52:26 mpi Exp $ */
 /*
  * Copyright (c) 2019 Patrick Wildt <patrick@blueri.se>
  *
@@ -52,7 +52,7 @@ struct mvdog_softc {
 int	 mvdog_match(struct device *, void *, void *);
 void	 mvdog_attach(struct device *, struct device *, void *);
 
-struct cfattach mvdog_ca = {
+const struct cfattach mvdog_ca = {
 	sizeof (struct mvdog_softc), mvdog_match, mvdog_attach
 };
 

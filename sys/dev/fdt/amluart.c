@@ -1,4 +1,4 @@
-/*	$OpenBSD: amluart.c,v 1.2 2021/08/31 12:24:15 jan Exp $	*/
+/*	$OpenBSD: amluart.c,v 1.3 2021/10/24 17:52:26 mpi Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -95,7 +95,7 @@ struct cfdriver amluart_cd = {
 	NULL, "amluart", DV_TTY
 };
 
-struct cfattach amluart_ca = {
+const struct cfattach amluart_ca = {
 	sizeof(struct amluart_softc), amluart_match, amluart_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exdwusb.c,v 1.4 2021/03/25 04:12:01 jsg Exp $	*/
+/*	$OpenBSD: exdwusb.c,v 1.5 2021/10/24 17:52:27 mpi Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -33,7 +33,7 @@ struct exdwusb_softc {
 int	exdwusb_match(struct device *, void *, void *);
 void	exdwusb_attach(struct device *, struct device *, void *);
 
-struct cfattach exdwusb_ca = {
+const struct cfattach exdwusb_ca = {
 	sizeof(struct exdwusb_softc), exdwusb_match, exdwusb_attach
 };
 

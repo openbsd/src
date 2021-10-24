@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysreg.c,v 1.5 2021/03/25 04:12:01 jsg Exp $	*/
+/*	$OpenBSD: sysreg.c,v 1.6 2021/10/24 17:52:28 mpi Exp $	*/
 
 /*
  * Copyright (c) 2015 Jonathan Gray <jsg@openbsd.org>
@@ -58,7 +58,7 @@ void sysconf_function(struct sysreg_softc *, int);
 void sysconf_reboot(void);
 void sysconf_shutdown(void);
 
-struct cfattach sysreg_ca = {
+const struct cfattach sysreg_ca = {
 	sizeof (struct sysreg_softc), sysreg_match, sysreg_attach
 };
 

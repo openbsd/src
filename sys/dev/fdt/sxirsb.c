@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxirsb.c,v 1.3 2019/08/29 11:51:48 kettenis Exp $	*/
+/*	$OpenBSD: sxirsb.c,v 1.4 2021/10/24 17:52:27 mpi Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -77,7 +77,7 @@ struct sxirsb_softc {
 int	sxirsb_match(struct device *, void *, void *);
 void	sxirsb_attach(struct device *, struct device *, void *);
 
-struct cfattach sxirsb_ca = {
+const struct cfattach sxirsb_ca = {
 	sizeof(struct sxirsb_softc), sxirsb_match, sxirsb_attach
 };
 

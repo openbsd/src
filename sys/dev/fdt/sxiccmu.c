@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.28 2020/08/30 05:23:49 uaa Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.29 2021/10/24 17:52:27 mpi Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -75,7 +75,7 @@ struct sxiccmu_softc {
 int	sxiccmu_match(struct device *, void *, void *);
 void	sxiccmu_attach(struct device *, struct device *, void *);
 
-struct cfattach	sxiccmu_ca = {
+const struct cfattach	sxiccmu_ca = {
 	sizeof (struct sxiccmu_softc), sxiccmu_match, sxiccmu_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkdwusb.c,v 1.3 2019/08/29 11:51:48 kettenis Exp $	*/
+/*	$OpenBSD: rkdwusb.c,v 1.4 2021/10/24 17:52:26 mpi Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -35,7 +35,7 @@ struct rkdwusb_softc {
 int	rkdwusb_match(struct device *, void *, void *);
 void	rkdwusb_attach(struct device *, struct device *, void *);
 
-struct cfattach rkdwusb_ca = {
+const struct cfattach rkdwusb_ca = {
 	sizeof(struct rkdwusb_softc), rkdwusb_match, rkdwusb_attach
 };
 

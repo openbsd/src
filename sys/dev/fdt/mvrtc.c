@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvrtc.c,v 1.1 2018/03/29 18:20:52 kettenis Exp $	*/
+/*	$OpenBSD: mvrtc.c,v 1.2 2021/10/24 17:52:26 mpi Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -60,7 +60,7 @@ struct mvrtc_softc {
 int mvrtc_match(struct device *, void *, void *);
 void mvrtc_attach(struct device *, struct device *, void *);
 
-struct cfattach	mvrtc_ca = {
+const struct cfattach	mvrtc_ca = {
 	sizeof (struct mvrtc_softc), mvrtc_match, mvrtc_attach
 };
 

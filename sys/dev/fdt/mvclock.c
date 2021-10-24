@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvclock.c,v 1.8 2020/11/06 13:29:45 patrick Exp $	*/
+/*	$OpenBSD: mvclock.c,v 1.9 2021/10/24 17:52:26 mpi Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -48,7 +48,7 @@ struct mvclock_softc {
 int mvclock_match(struct device *, void *, void *);
 void mvclock_attach(struct device *, struct device *, void *);
 
-struct cfattach	mvclock_ca = {
+const struct cfattach	mvclock_ca = {
 	sizeof (struct mvclock_softc), mvclock_match, mvclock_attach
 };
 

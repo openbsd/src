@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkgpio.c,v 1.6 2020/07/17 08:07:34 patrick Exp $	*/
+/*	$OpenBSD: rkgpio.c,v 1.7 2021/10/24 17:52:26 mpi Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2019 Patrick Wildt <patrick@blueri.se>
@@ -83,7 +83,7 @@ struct rkgpio_softc {
 int rkgpio_match(struct device *, void *, void *);
 void rkgpio_attach(struct device *, struct device *, void *);
 
-struct cfattach	rkgpio_ca = {
+const struct cfattach	rkgpio_ca = {
 	sizeof (struct rkgpio_softc), rkgpio_match, rkgpio_attach
 };
 

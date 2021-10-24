@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccp_fdt.c,v 1.1 2018/04/20 04:37:21 dlg Exp $	*/
+/*	$OpenBSD: ccp_fdt.c,v 1.2 2021/10/24 17:52:26 mpi Exp $	*/
 /*
  * Copyright (c) 2018 David Gwynne <dlg@openbsd.org>
  *
@@ -33,7 +33,7 @@
 static int	ccp_fdt_match(struct device *, void *, void *);
 static void	ccp_fdt_attach(struct device *, struct device *, void *);
 
-struct cfattach ccp_fdt_ca = {
+const struct cfattach ccp_fdt_ca = {
 	sizeof(struct ccp_softc),
 	ccp_fdt_match,
 	ccp_fdt_attach

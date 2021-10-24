@@ -1,4 +1,4 @@
-/* $OpenBSD: if_fec.c,v 1.11 2020/12/12 11:48:52 jan Exp $ */
+/* $OpenBSD: if_fec.c,v 1.12 2021/10/24 17:52:26 mpi Exp $ */
 /*
  * Copyright (c) 2012-2013,2019 Patrick Wildt <patrick@blueri.se>
  *
@@ -269,7 +269,7 @@ void fec_dmamem_free(struct fec_softc *, struct fec_dmamem *);
 struct mbuf *fec_alloc_mbuf(struct fec_softc *, bus_dmamap_t);
 void fec_fill_rx_ring(struct fec_softc *);
 
-struct cfattach fec_ca = {
+const struct cfattach fec_ca = {
 	sizeof (struct fec_softc), fec_match, fec_attach
 };
 

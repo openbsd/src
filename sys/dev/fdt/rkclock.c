@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.58 2021/07/28 13:39:39 patrick Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.59 2021/10/24 17:52:26 mpi Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -212,7 +212,7 @@ struct rkclock_softc {
 int rkclock_match(struct device *, void *, void *);
 void rkclock_attach(struct device *, struct device *, void *);
 
-struct cfattach	rkclock_ca = {
+const struct cfattach	rkclock_ca = {
 	sizeof (struct rkclock_softc), rkclock_match, rkclock_attach
 };
 

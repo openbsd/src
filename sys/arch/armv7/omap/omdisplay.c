@@ -1,4 +1,4 @@
-/* $OpenBSD: omdisplay.c,v 1.8 2020/05/25 09:55:48 jsg Exp $ */
+/* $OpenBSD: omdisplay.c,v 1.9 2021/10/24 17:52:27 mpi Exp $ */
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
  *
@@ -455,7 +455,7 @@ void omdisplay_stop(struct omdisplay_softc *sc);
 int omdisplay_intr(void *v);
 void omdisplay_dumpreg(struct omdisplay_softc *sc);
 
-struct cfattach	omdisplay_ca = {
+const struct cfattach	omdisplay_ca = {
 	sizeof (struct omdisplay_softc), omdisplay_match, omdisplay_attach,
 	NULL, omdisplay_activate
 };

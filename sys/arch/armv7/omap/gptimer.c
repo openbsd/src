@@ -1,4 +1,4 @@
-/* $OpenBSD: gptimer.c,v 1.14 2021/05/16 03:39:28 jsg Exp $ */
+/* $OpenBSD: gptimer.c,v 1.15 2021/10/24 17:52:27 mpi Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -128,7 +128,7 @@ u_int32_t	ticks_err_cnt;
 u_int32_t	ticks_err_sum;
 u_int32_t	statvar, statmin;
 
-struct cfattach	gptimer_ca = {
+const struct cfattach	gptimer_ca = {
 	sizeof (struct device), NULL, gptimer_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_fdt.c,v 1.2 2019/01/07 03:41:06 dlg Exp $ */
+/*	$OpenBSD: ohci_fdt.c,v 1.3 2021/10/24 17:52:26 mpi Exp $ */
 
 /*
  * Copyright (c) 2005, 2019 David Gwynne <dlg@openbsd.org>
@@ -50,7 +50,7 @@ int	ohci_fdt_match(struct device *, void *, void *);
 void	ohci_fdt_attach(struct device *, struct device *, void *);
 int	ohci_fdt_detach(struct device *, int);
 
-struct cfattach ohci_fdt_ca = {
+const struct cfattach ohci_fdt_ca = {
 	sizeof(struct ohci_fdt_softc),
 	ohci_fdt_match,
 	ohci_fdt_attach,

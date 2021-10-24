@@ -1,4 +1,4 @@
-/* $OpenBSD: imxgpio.c,v 1.5 2020/07/17 08:07:34 patrick Exp $ */
+/* $OpenBSD: imxgpio.c,v 1.6 2021/10/24 17:52:26 mpi Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -87,7 +87,7 @@ void imxgpio_intr_disable(void *);
 void imxgpio_intr_barrier(void *);
 
 
-struct cfattach	imxgpio_ca = {
+const struct cfattach	imxgpio_ca = {
 	sizeof (struct imxgpio_softc), imxgpio_match, imxgpio_attach
 };
 

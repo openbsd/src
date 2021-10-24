@@ -1,4 +1,4 @@
-/*	$OpenBSD: amltemp.c,v 1.1 2020/01/14 16:56:32 kettenis Exp $	*/
+/*	$OpenBSD: amltemp.c,v 1.2 2021/10/24 17:52:26 mpi Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -71,7 +71,7 @@ struct amltemp_softc {
 int	amltemp_match(struct device *, void *, void *);
 void	amltemp_attach(struct device *, struct device *, void *);
 
-struct cfattach	amltemp_ca = {
+const struct cfattach	amltemp_ca = {
 	sizeof (struct amltemp_softc), amltemp_match, amltemp_attach
 };
 

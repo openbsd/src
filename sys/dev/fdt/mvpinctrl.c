@@ -1,4 +1,4 @@
-/* $OpenBSD: mvpinctrl.c,v 1.8 2021/05/07 01:54:17 jsg Exp $ */
+/* $OpenBSD: mvpinctrl.c,v 1.9 2021/10/24 17:52:26 mpi Exp $ */
 /*
  * Copyright (c) 2013,2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -74,7 +74,7 @@ void	mvpinctrl_set_pin(void *, uint32_t *, int);
 
 uint32_t a3700_xtal_get_frequency(void *, uint32_t *);
 
-struct cfattach mvpinctrl_ca = {
+const struct cfattach mvpinctrl_ca = {
 	sizeof (struct mvpinctrl_softc), mvpinctrl_match, mvpinctrl_attach
 };
 

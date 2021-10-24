@@ -1,4 +1,4 @@
-/* $OpenBSD: exclock.c,v 1.9 2021/03/25 04:12:01 jsg Exp $ */
+/* $OpenBSD: exclock.c,v 1.10 2021/10/24 17:52:27 mpi Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -95,7 +95,7 @@ uint32_t exclock_get_armclk(struct exclock_softc *);
 uint32_t exclock_get_kfcclk(struct exclock_softc *);
 unsigned int exclock_get_i2cclk(void);
 
-struct cfattach	exclock_ca = {
+const struct cfattach	exclock_ca = {
 	sizeof (struct exclock_softc), exclock_match, exclock_attach
 };
 

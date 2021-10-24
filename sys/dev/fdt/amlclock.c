@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlclock.c,v 1.12 2020/12/22 15:23:51 kettenis Exp $	*/
+/*	$OpenBSD: amlclock.c,v 1.13 2021/10/24 17:52:26 mpi Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -149,7 +149,7 @@ struct amlclock_softc {
 int amlclock_match(struct device *, void *, void *);
 void amlclock_attach(struct device *, struct device *, void *);
 
-struct cfattach	amlclock_ca = {
+const struct cfattach	amlclock_ca = {
 	sizeof (struct amlclock_softc), amlclock_match, amlclock_attach
 };
 

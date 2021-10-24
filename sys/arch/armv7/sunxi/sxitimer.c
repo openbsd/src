@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxitimer.c,v 1.17 2021/03/25 04:12:01 jsg Exp $	*/
+/*	$OpenBSD: sxitimer.c,v 1.18 2021/10/24 17:52:28 mpi Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Raphael Graf <r@undefined.ch>
@@ -120,7 +120,7 @@ struct sxitimer_softc {
 	struct device		sc_dev;
 };
 
-struct cfattach sxitimer_ca = {
+const struct cfattach sxitimer_ca = {
 	sizeof (struct sxitimer_softc), sxitimer_match, sxitimer_attach
 };
 

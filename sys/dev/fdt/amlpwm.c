@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlpwm.c,v 1.2 2020/12/29 16:04:27 kettenis Exp $	*/
+/*	$OpenBSD: amlpwm.c,v 1.3 2021/10/24 17:52:26 mpi Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -69,7 +69,7 @@ struct amlpwm_softc {
 int amlpwm_match(struct device *, void *, void *);
 void amlpwm_attach(struct device *, struct device *, void *);
 
-struct cfattach	amlpwm_ca = {
+const struct cfattach	amlpwm_ca = {
 	sizeof (struct amlpwm_softc), amlpwm_match, amlpwm_attach
 };
 

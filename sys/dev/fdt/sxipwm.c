@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxipwm.c,v 1.1 2019/10/21 20:52:33 kettenis Exp $	*/
+/*	$OpenBSD: sxipwm.c,v 1.2 2021/10/24 17:52:27 mpi Exp $	*/
 /*
  * Copyright (c) 2019 Krystian Lewandowski
  *
@@ -79,7 +79,7 @@ struct sxipwm_softc {
 int	sxipwm_match(struct device *, void *, void *);
 void	sxipwm_attach(struct device *, struct device *, void *);
 
-struct cfattach sxipwm_ca = {
+const struct cfattach sxipwm_ca = {
 	sizeof(struct sxipwm_softc), sxipwm_match, sxipwm_attach
 };
 

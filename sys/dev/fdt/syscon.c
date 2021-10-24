@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscon.c,v 1.6 2021/04/23 12:49:53 jsg Exp $	*/
+/*	$OpenBSD: syscon.c,v 1.7 2021/10/24 17:52:27 mpi Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -53,7 +53,7 @@ struct syscon_softc *syscon_poweroff_sc;
 int	syscon_match(struct device *, void *, void *);
 void	syscon_attach(struct device *, struct device *, void *);
 
-struct cfattach syscon_ca = {
+const struct cfattach syscon_ca = {
 	sizeof(struct syscon_softc), syscon_match, syscon_attach
 };
 

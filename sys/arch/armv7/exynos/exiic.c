@@ -101,7 +101,7 @@ int exiic_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *, size_t,
 	HWRITE4((sc), (reg), HREAD4((sc), (reg)) & ~(bits))
 
 
-struct cfattach exiic_ca = {
+const struct cfattach exiic_ca = {
 	sizeof(struct exiic_softc), exiic_match, exiic_attach, exiic_detach
 };
 

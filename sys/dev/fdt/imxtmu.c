@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxtmu.c,v 1.2 2020/03/20 09:13:03 patrick Exp $	*/
+/*	$OpenBSD: imxtmu.c,v 1.3 2021/10/24 17:52:26 mpi Exp $	*/
 /*
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
  *
@@ -77,7 +77,7 @@ void	imxtmu_attach(struct device *, struct device *, void *);
 void	imxtmu_mm_refresh_sensors(void *);
 void	imxtmu_mq_refresh_sensors(void *);
 
-struct cfattach imxtmu_ca = {
+const struct cfattach imxtmu_ca = {
 	sizeof(struct imxtmu_softc), imxtmu_match, imxtmu_attach
 };
 

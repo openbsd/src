@@ -1,4 +1,4 @@
-/* $OpenBSD: expower.c,v 1.9 2021/03/25 04:12:01 jsg Exp $ */
+/* $OpenBSD: expower.c,v 1.10 2021/10/24 17:52:27 mpi Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -46,7 +46,7 @@ struct expower_softc {
 int expower_match(struct device *, void *, void *);
 void expower_attach(struct device *, struct device *, void *);
 
-struct cfattach	expower_ca = {
+const struct cfattach	expower_ca = {
 	sizeof (struct expower_softc), expower_match, expower_attach
 };
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: exdisplay.c,v 1.6 2020/05/25 09:55:48 jsg Exp $ */
+/* $OpenBSD: exdisplay.c,v 1.7 2021/10/24 17:52:27 mpi Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -52,10 +52,10 @@ void exdisplay_attach(struct device *parent, struct device *self, void *args);
 int exdisplay_cnattach(bus_space_tag_t iot, bus_addr_t iobase, size_t size);
 void exdisplay_setup_rasops(struct rasops_info *rinfo, struct wsscreen_descr *descr);
 
-struct cfattach	exdisplay_ca = {
+const struct cfattach	exdisplay_ca = {
 	sizeof (struct exdisplay_softc), NULL, exdisplay_attach
 };
-struct cfattach	exdisplay_fdt_ca = {
+const struct cfattach	exdisplay_fdt_ca = {
 	sizeof (struct exdisplay_softc), exdisplay_match, exdisplay_attach
 };
 

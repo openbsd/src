@@ -1,4 +1,4 @@
-/* $OpenBSD: omap.c,v 1.23 2021/05/16 03:39:28 jsg Exp $ */
+/* $OpenBSD: omap.c,v 1.24 2021/10/24 17:52:27 mpi Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.org>
  *
@@ -30,7 +30,7 @@ void	omap3_init(void);
 void	omap4_init(void);
 void	am335x_init(void);
 
-struct cfattach omap_ca = {
+const struct cfattach omap_ca = {
 	sizeof(struct armv7_softc), omap_match, armv7_attach
 };
 

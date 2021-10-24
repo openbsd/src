@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlusbphy.c,v 1.1 2019/08/29 17:20:03 kettenis Exp $	*/
+/*	$OpenBSD: amlusbphy.c,v 1.2 2021/10/24 17:52:26 mpi Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -100,7 +100,7 @@ struct amlusbphy_softc {
 int amlusbphy_match(struct device *, void *, void *);
 void amlusbphy_attach(struct device *, struct device *, void *);
 
-struct cfattach	amlusbphy_ca = {
+const struct cfattach	amlusbphy_ca = {
 	sizeof (struct amlusbphy_softc), amlusbphy_match, amlusbphy_attach
 };
 

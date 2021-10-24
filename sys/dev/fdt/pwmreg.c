@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwmreg.c,v 1.1 2019/09/30 20:44:13 kettenis Exp $	*/
+/*	$OpenBSD: pwmreg.c,v 1.2 2021/10/24 17:52:26 mpi Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -41,7 +41,7 @@ struct pwmreg_softc {
 int pwmreg_match(struct device *, void *, void *);
 void pwmreg_attach(struct device *, struct device *, void *);
 
-struct cfattach	pwmreg_ca = {
+const struct cfattach	pwmreg_ca = {
 	sizeof (struct pwmreg_softc), pwmreg_match, pwmreg_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwmmc.c,v 1.24 2021/05/05 09:17:19 jsg Exp $	*/
+/*	$OpenBSD: dwmmc.c,v 1.25 2021/10/24 17:52:26 mpi Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -221,7 +221,7 @@ struct dwmmc_softc {
 int	dwmmc_match(struct device *, void *, void *);
 void	dwmmc_attach(struct device *, struct device *, void *);
 
-struct cfattach dwmmc_ca = {
+const struct cfattach dwmmc_ca = {
 	sizeof(struct dwmmc_softc), dwmmc_match, dwmmc_attach
 };
 

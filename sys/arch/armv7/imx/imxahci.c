@@ -1,4 +1,4 @@
-/* $OpenBSD: imxahci.c,v 1.12 2021/03/25 04:12:01 jsg Exp $ */
+/* $OpenBSD: imxahci.c,v 1.13 2021/10/24 17:52:27 mpi Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -95,7 +95,7 @@ struct imxahci_softc {
 	struct ahci_softc	sc;
 };
 
-struct cfattach imxahci_ca = {
+const struct cfattach imxahci_ca = {
 	sizeof(struct imxahci_softc),
 	imxahci_match,
 	imxahci_attach,

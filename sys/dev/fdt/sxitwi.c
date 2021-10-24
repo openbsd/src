@@ -1,4 +1,4 @@
-/* $OpenBSD: sxitwi.c,v 1.13 2021/03/11 09:15:25 patrick Exp $ */
+/* $OpenBSD: sxitwi.c,v 1.14 2021/10/24 17:52:27 mpi Exp $ */
 /*	$NetBSD: gttwsi_core.c,v 1.2 2014/11/23 13:37:27 jmcneill Exp $	*/
 /*
  * Copyright (c) 2008 Eiji Kawauchi.
@@ -161,7 +161,7 @@ struct cfdriver sxitwi_cd = {
 	NULL, "sxitwi", DV_DULL
 };
 
-struct cfattach sxitwi_ca = {
+const struct cfattach sxitwi_ca = {
 	sizeof(struct sxitwi_softc), sxitwi_match, sxitwi_attach
 };
 

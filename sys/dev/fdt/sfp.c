@@ -1,4 +1,4 @@
-/* $OpenBSD: sfp.c,v 1.4 2020/11/10 19:08:43 kettenis Exp $ */
+/* $OpenBSD: sfp.c,v 1.5 2021/10/24 17:52:27 mpi Exp $ */
 /*
  * Copyright (c) 2019 Patrick Wildt <patrick@blueri.se>
  *
@@ -52,7 +52,7 @@ int	 sfp_get_gpio(struct sfp_softc *, const char *, uint32_t **);
 int	 sfp_gpio_enable(void *, int);
 int	 sfp_i2c_get_sffpage(void *, struct if_sffpage *);
 
-struct cfattach sfp_ca = {
+const struct cfattach sfp_ca = {
 	sizeof(struct sfp_softc), sfp_match, sfp_attach, sfp_detach,
 };
 

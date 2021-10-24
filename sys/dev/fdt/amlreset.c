@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlreset.c,v 1.1 2019/08/26 09:42:31 kettenis Exp $	*/
+/*	$OpenBSD: amlreset.c,v 1.2 2021/10/24 17:52:26 mpi Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -52,7 +52,7 @@ struct amlreset_softc {
 int amlreset_match(struct device *, void *, void *);
 void amlreset_attach(struct device *, struct device *, void *);
 
-struct cfattach	amlreset_ca = {
+const struct cfattach	amlreset_ca = {
 	sizeof (struct amlreset_softc), amlreset_match, amlreset_attach
 };
 
