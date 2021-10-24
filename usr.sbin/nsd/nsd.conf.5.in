@@ -494,7 +494,7 @@ With the value 0 the rate is unlimited.
 .TP
 .B answer\-cookie:\fR <yes or no>
 Enable to answer to requests containig DNS Cookies as specified in RFC7873.
-Default is no.
+Default is yes.
 .TP
 .B cookie\-secret:\fR <128 bit hex string>
 Servers in an anycast deployment need to be able to  verify  each other's DNS
