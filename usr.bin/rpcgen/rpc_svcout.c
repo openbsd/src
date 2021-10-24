@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_svcout.c,v 1.28 2019/06/28 13:35:03 deraadt Exp $	*/
+/*	$OpenBSD: rpc_svcout.c,v 1.29 2021/10/24 21:27:07 deraadt Exp $	*/
 /*	$NetBSD: rpc_svcout.c,v 1.7 1995/06/24 14:59:59 pk Exp $	*/
 
 /*
@@ -829,14 +829,14 @@ write_rpc_svc_fg(infile, sp)
 	fprintf(fout, "%sfor (i = 0; i < size; i++)\n", sp);
 	fprintf(fout, "%s\t(void) close(i);\n", sp);
 	/* Redirect stderr and stdout to console */
-	fprintf(fout, "%si = open(\"/dev/console\", 2);\n", sp);
+	fprintf(fout, "%si = open(\"/dev/console\", O_RDWR);\n", sp);
 	fprintf(fout, "%s(void) dup2(i, 1);\n", sp);
 	fprintf(fout, "%s(void) dup2(i, 2);\n", sp);
 	/* This removes control of the controlling terminal */
 	if (tirpcflag)
 		fprintf(fout, "%ssetsid();\n", sp);
 	else {
-		fprintf(fout, "%si = open(\"/dev/tty\", 2);\n", sp);
+		fprintf(fout, "%si = open(\"/dev/tty\", O_RDWR);\n", sp);
 		fprintf(fout, "%sif (i != -1) {\n", sp);
 		fprintf(fout, "%s\t(void) ioctl(i, TIOCNOTTY, (char *)NULL);\n", sp);
 		fprintf(fout, "%s\t(void) close(i);\n", sp);
