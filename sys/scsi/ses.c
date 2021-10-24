@@ -1,4 +1,4 @@
-/*	$OpenBSD: ses.c,v 1.63 2020/09/22 19:32:53 krw Exp $ */
+/*	$OpenBSD: ses.c,v 1.64 2021/10/24 16:57:30 mpi Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -87,7 +87,7 @@ struct ses_softc {
 	struct sensor_task	*sc_sensortask;
 };
 
-struct cfattach ses_ca = {
+const struct cfattach ses_ca = {
 	sizeof(struct ses_softc), ses_match, ses_attach, ses_detach
 };
 

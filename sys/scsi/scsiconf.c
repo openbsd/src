@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.237 2020/11/19 13:45:15 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.238 2021/10/24 16:57:30 mpi Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -95,7 +95,7 @@ int	scsi_activate_lun(struct scsibus_softc *, int, int, int);
 
 int	scsi_autoconf = SCSI_AUTOCONF;
 
-struct cfattach scsibus_ca = {
+const struct cfattach scsibus_ca = {
 	sizeof(struct scsibus_softc), scsibusmatch, scsibusattach,
 	scsibusdetach, scsibusactivate
 };

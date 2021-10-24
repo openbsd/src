@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.263 2021/03/12 10:22:46 jsg Exp $	*/
+/*	$OpenBSD: cd.c,v 1.264 2021/10/24 16:57:30 mpi Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -146,7 +146,7 @@ int	dvd_read_struct(struct cd_softc *, union dvd_struct *);
 int	cd_eject(void);
 #endif /* __macppc__ */
 
-struct cfattach cd_ca = {
+const struct cfattach cd_ca = {
 	sizeof(struct cd_softc), cdmatch, cdattach,
 	cddetach, cdactivate
 };

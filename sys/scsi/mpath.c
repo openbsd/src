@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath.c,v 1.54 2020/09/22 19:32:53 krw Exp $ */
+/*	$OpenBSD: mpath.c,v 1.55 2021/10/24 16:57:30 mpi Exp $ */
 
 /*
  * Copyright (c) 2009 David Gwynne <dlg@openbsd.org>
@@ -73,7 +73,7 @@ struct mpath_softc {
 
 struct mpath_softc	*mpath;
 
-struct cfattach mpath_ca = {
+const struct cfattach mpath_ca = {
 	sizeof(struct mpath_softc),
 	mpath_match,
 	mpath_attach

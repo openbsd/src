@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_sym.c,v 1.26 2021/03/12 10:22:46 jsg Exp $ */
+/*	$OpenBSD: mpath_sym.c,v 1.27 2021/10/24 16:57:30 mpi Exp $ */
 
 /*
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -44,7 +44,7 @@ void		sym_attach(struct device *, struct device *, void *);
 int		sym_detach(struct device *, int);
 int		sym_activate(struct device *, int);
 
-struct cfattach sym_ca = {
+const struct cfattach sym_ca = {
 	sizeof(struct sym_softc),
 	sym_match,
 	sym_attach,

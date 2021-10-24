@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.69 2021/08/31 05:29:55 robert Exp $	*/
+/*	$OpenBSD: ch.c,v 1.70 2021/10/24 16:57:30 mpi Exp $	*/
 /*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ struct ch_softc {
 int	chmatch(struct device *, void *, void *);
 void	chattach(struct device *, struct device *, void *);
 
-struct cfattach ch_ca = {
+const struct cfattach ch_ca = {
 	sizeof(struct ch_softc), chmatch, chattach
 };
 

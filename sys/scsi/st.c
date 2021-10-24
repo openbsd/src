@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.186 2021/03/12 10:22:46 jsg Exp $	*/
+/*	$OpenBSD: st.c,v 1.187 2021/10/24 16:57:30 mpi Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -223,7 +223,7 @@ int	st_interpret_sense(struct scsi_xfer *);
 int	st_touch_tape(struct st_softc *);
 int	st_erase(struct st_softc *, int, int);
 
-struct cfattach st_ca = {
+const struct cfattach st_ca = {
 	sizeof(struct st_softc), stmatch, stattach,
 	stdetach, stactivate
 };

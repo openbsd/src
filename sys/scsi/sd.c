@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.329 2020/09/22 19:32:53 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.330 2021/10/24 16:57:30 mpi Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -110,7 +110,7 @@ int	sd_cmd_rw16(struct scsi_generic *, int, u_int64_t, u_int32_t);
 
 void	sd_buf_done(struct scsi_xfer *);
 
-struct cfattach sd_ca = {
+const struct cfattach sd_ca = {
 	sizeof(struct sd_softc), sdmatch, sdattach,
 	sddetach, sdactivate
 };
