@@ -1,4 +1,4 @@
-/*	$OpenBSD: cyzfirm2h.c,v 1.3 2014/12/19 17:44:29 tedu Exp $	*/
+/*	$OpenBSD: cyzfirm2h.c,v 1.4 2021/10/24 21:37:49 deraadt Exp $	*/
 /*	$NetBSD: cyzfirm2h.c,v 1.1 2000/05/17 17:58:10 thorpej Exp $	*/
 
 /*-
@@ -64,7 +64,7 @@ main(int argc, char *argv[])
 	if (argc != 3)
 		usage();
 
-	i = open(argv[1], O_RDONLY, 0644);
+	i = open(argv[1], O_RDONLY);
 	if (i < 0)
 		err(1, "unable to open %s", argv[1]);
 
