@@ -1,4 +1,4 @@
-/*	$OpenBSD: agentx.c,v 1.13 2021/10/23 17:13:50 martijn Exp $ */
+/*	$OpenBSD: agentx.c,v 1.14 2021/10/24 18:03:27 martijn Exp $ */
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
  *
@@ -189,6 +189,8 @@ static int agentx_request(struct agentx *, uint32_t,
 static int agentx_request_cmp(struct agentx_request *,
     struct agentx_request *);
 static int agentx_strcat(char **, const char *);
+static int agentx_oidfill(struct ax_oid *, const uint32_t[], size_t,
+    const char **);
 
 RB_PROTOTYPE_STATIC(ax_requests, agentx_request, axr_ax_requests,
     agentx_request_cmp)
@@ -362,25 +364,26 @@ agentx_session(struct agentx *ax, uint32_t oid[],
     size_t oidlen, const char *descr, uint8_t timeout)
 {
 	struct agentx_session *axs;
-	size_t i;
+	const char *errstr;
 
-	if (oidlen > AGENTX_OID_MAX_LEN) {
-#ifdef AX_DEBUG
-		agentx_log_ax_fatalx(ax, "%s: oidlen > %d", __func__,
-		    AGENTX_OID_MAX_LEN);
-#else
-		errno = EINVAL;
-		return NULL;
-#endif
-	}
 	if ((axs = calloc(1, sizeof(*axs))) == NULL)
 		return NULL;
 
 	axs->axs_ax = ax;
 	axs->axs_timeout = timeout;
-	for (i = 0; i < oidlen; i++)
-		axs->axs_oid.aoi_id[i] = oid[i];
-	axs->axs_oid.aoi_idlen = oidlen;
+	/* RFC 2741 section 6.2.1: may send a null Object Identifier */
+	if (oidlen == 0)
+		axs->axs_oid.aoi_idlen = oidlen;
+	else {
+		if (agentx_oidfill((&axs->axs_oid), oid, oidlen,
+		    &errstr) == -1) {
+#ifdef AX_DEBUG
+			agentx_log_ax_fatalx(ax, "%s: %s", __func__, errstr);
+#else
+			return NULL;
+#endif
+		}
+	}
 	axs->axs_descr.aos_string = (unsigned char *)strdup(descr);
 	if (axs->axs_descr.aos_string == NULL) {
 		free(axs);
@@ -670,11 +673,21 @@ agentx_context_object_find(struct agentx_context *axc,
     const uint32_t oid[], size_t oidlen, int active, int instance)
 {
 	struct agentx_object *axo, axo_search;
-	size_t i;
+	const char *errstr;
 
-	for (i = 0; i < oidlen; i++)
-		axo_search.axo_oid.aoi_id[i] = oid[i];
-	axo_search.axo_oid.aoi_idlen = oidlen;
+	if (agentx_oidfill(&(axo_search.axo_oid), oid, oidlen, &errstr) == -1) {
+		if (oidlen > AGENTX_OID_MIN_LEN) {
+#ifdef AX_DEBUG
+			agentx_log_axc_fatalx(axc, "%s: %s", __func__, errstr);
+#else
+			agentx_log_axc_warnx(axc, "%s: %s", __func__, errstr);
+			return NULL;
+		}
+#endif
+		if (oidlen == 1)
+			axo_search.axo_oid.aoi_id[0] = oid[0];
+		axo_search.axo_oid.aoi_idlen = oidlen;
+	}
 
 	axo = RB_FIND(axc_objects, &(axc->axc_objects), &axo_search);
 	while (axo == NULL && !instance && axo_search.axo_oid.aoi_idlen > 0) {
@@ -691,11 +704,21 @@ agentx_context_object_nfind(struct agentx_context *axc,
     const uint32_t oid[], size_t oidlen, int active, int inclusive)
 {
 	struct agentx_object *axo, axo_search;
-	size_t i;
+	const char *errstr;
 
-	for (i = 0; i < oidlen; i++)
-		axo_search.axo_oid.aoi_id[i] = oid[i];
-	axo_search.axo_oid.aoi_idlen = oidlen;
+	if (agentx_oidfill(&(axo_search.axo_oid), oid, oidlen, &errstr) == -1) {
+		if (oidlen > AGENTX_OID_MIN_LEN) {
+#ifdef AX_DEBUG
+			agentx_log_axc_fatalx(axc, "%s: %s", __func__, errstr);
+#else
+			agentx_log_axc_warnx(axc, "%s: %s", __func__, errstr);
+			return NULL;
+#endif
+		}
+		if (oidlen == 1)
+			axo_search.axo_oid.aoi_id[0] = oid[0];
+		axo_search.axo_oid.aoi_idlen = oidlen;
+	}
 
 	axo = RB_NFIND(axc_objects, &(axc->axc_objects), &axo_search);
 	if (!inclusive && axo != NULL &&
@@ -785,7 +808,7 @@ agentx_agentcaps(struct agentx_context *axc, uint32_t oid[],
     size_t oidlen, const char *descr)
 {
 	struct agentx_agentcaps *axa;
-	size_t i;
+	const char *errstr;
 
 	if (axc->axc_dstate == AX_DSTATE_CLOSE)
 		agentx_log_axc_fatalx(axc, "%s: use after free", __func__);
@@ -794,9 +817,14 @@ agentx_agentcaps(struct agentx_context *axc, uint32_t oid[],
 		return NULL;
 
 	axa->axa_axc = axc;
-	for (i = 0; i < oidlen; i++)
-		axa->axa_oid.aoi_id[i] = oid[i];
-	axa->axa_oid.aoi_idlen = oidlen;
+	if (agentx_oidfill(&(axa->axa_oid), oid, oidlen, &errstr) == -1) {
+#ifdef AX_DEBUG
+		agentx_log_axc_fatalx(axc, "%s: %s", __func__, errstr);
+#else
+		agentx_log_axc_warnx(axc, "%s: %s", __func__, errstr);
+		return NULL;
+#endif
+	}
 	axa->axa_descr.aos_string = (unsigned char *)strdup(descr);
 	if (axa->axa_descr.aos_string == NULL) {
 		free(axa);
@@ -1003,31 +1031,19 @@ agentx_region(struct agentx_context *axc, uint32_t oid[],
 {
 	struct agentx_region *axr;
 	struct ax_oid tmpoid;
-	size_t i;
+	const char *errstr;
 
 	if (axc->axc_dstate == AX_DSTATE_CLOSE)
 		agentx_log_axc_fatalx(axc, "%s: use after free", __func__);
-	if (oidlen < 1) {
-#ifdef AX_DEBUG
-		agentx_log_axc_fatalx(axc, "%s: oidlen == 0", __func__);
-#else
-		errno = EINVAL;
-		return NULL;
-#endif
-	}
-	if (oidlen > AGENTX_OID_MAX_LEN) {
-#ifdef AX_DEBUG
-		agentx_log_axc_fatalx(axc, "%s: oidlen > %d", __func__,
-		    AGENTX_OID_MAX_LEN);
-#else
-		errno = EINVAL;
-		return NULL;
-#endif
-	}
 
-	for (i = 0; i < oidlen; i++)
-		tmpoid.aoi_id[i] = oid[i];
-	tmpoid.aoi_idlen = oidlen;
+	if (agentx_oidfill(&tmpoid, oid, oidlen, &errstr) == -1) {
+#ifdef AX_DEBUG
+		agentx_log_axc_fatalx(axc, "%s: %s", __func__, errstr);
+#else
+		return NULL;
+#endif
+		
+	}
 	TAILQ_FOREACH(axr, &(axc->axc_regions), axr_axc_regions) {
 		if (ax_oid_cmp(&(axr->axr_oid), &tmpoid) == 0) {
 #ifdef AX_DEBUG
@@ -1317,24 +1333,17 @@ agentx_index_integer_new(struct agentx_region *axr, uint32_t oid[],
     size_t oidlen)
 {
 	struct ax_varbind vb;
-	size_t i;
+	const char *errstr;
 
-	if (oidlen > AGENTX_OID_MAX_LEN) {
+	vb.avb_type = AX_DATA_TYPE_INTEGER;
+	if (agentx_oidfill(&(vb.avb_oid), oid, oidlen, &errstr) == -1) {
 #ifdef AX_DEBUG
-		agentx_log_axc_fatalx(axr->axr_axc, "%s: oidlen > %d",
-		    __func__, AGENTX_OID_MAX_LEN);
+		agentx_log_axc_fatalx(axr->axr_axc, "%s: %s", __func__, errstr);
 #else
-		agentx_log_axc_warnx(axr->axr_axc, "%s: oidlen > %d",
-		    __func__, AGENTX_OID_MAX_LEN);
-		errno = EINVAL;
+		agentx_log_axc_warnx(axr->axr_axc, "%s: %s", __func__, errstr);
 		return NULL;
 #endif
 	}
-
-	vb.avb_type = AX_DATA_TYPE_INTEGER;
-	for (i = 0; i < oidlen; i++)
-		vb.avb_oid.aoi_id[i] = oid[i];
-	vb.avb_oid.aoi_idlen = oidlen;
 	vb.avb_data.avb_int32 = 0;
 
 	return agentx_index(axr, &vb, AXI_TYPE_NEW);
@@ -1345,24 +1354,17 @@ agentx_index_integer_any(struct agentx_region *axr, uint32_t oid[],
     size_t oidlen)
 {
 	struct ax_varbind vb;
-	size_t i;
+	const char *errstr;
 
-	if (oidlen > AGENTX_OID_MAX_LEN) {
+	vb.avb_type = AX_DATA_TYPE_INTEGER;
+	if (agentx_oidfill(&(vb.avb_oid), oid, oidlen, &errstr) == -1) {
 #ifdef AX_DEBUG
-		agentx_log_axc_fatalx(axr->axr_axc, "%s: oidlen > %d",
-		    __func__, AGENTX_OID_MAX_LEN);
+		agentx_log_axc_fatalx(axr->axr_axc, "%s: %s", __func__, errstr);
 #else
-		agentx_log_axc_warnx(axr->axr_axc, "%s: oidlen > %d",
-		    __func__, AGENTX_OID_MAX_LEN);
-		errno = EINVAL;
+		agentx_log_axc_warnx(axr->axr_axc, "%s: %s", __func__, errstr);
 		return NULL;
 #endif
 	}
-
-	vb.avb_type = AX_DATA_TYPE_INTEGER;
-	for (i = 0; i < oidlen; i++)
-		vb.avb_oid.aoi_id[i] = oid[i];
-	vb.avb_oid.aoi_idlen = oidlen;
 	vb.avb_data.avb_int32 = 0;
 
 	return agentx_index(axr, &vb, AXI_TYPE_ANY);
@@ -1373,19 +1375,8 @@ agentx_index_integer_value(struct agentx_region *axr, uint32_t oid[],
     size_t oidlen, int32_t value)
 {
 	struct ax_varbind vb;
-	size_t i;
+	const char *errstr;
 
-	if (oidlen > AGENTX_OID_MAX_LEN) {
-#ifdef AX_DEBUG
-		agentx_log_axc_fatalx(axr->axr_axc, "%s: oidlen > %d",
-		    __func__, AGENTX_OID_MAX_LEN);
-#else
-		agentx_log_axc_warnx(axr->axr_axc, "%s: oidlen > %d",
-		    __func__, AGENTX_OID_MAX_LEN);
-		errno = EINVAL;
-		return NULL;
-#endif
-	}
 	if (value < 0) {
 #ifdef AX_DEBUG
 		agentx_log_axc_fatalx(axr->axr_axc, "%s: value < 0", __func__);
@@ -1397,9 +1388,14 @@ agentx_index_integer_value(struct agentx_region *axr, uint32_t oid[],
 	}
 
 	vb.avb_type = AX_DATA_TYPE_INTEGER;
-	for (i = 0; i < oidlen; i++)
-		vb.avb_oid.aoi_id[i] = oid[i];
-	vb.avb_oid.aoi_idlen = oidlen;
+	if (agentx_oidfill(&(vb.avb_oid), oid, oidlen, &errstr) == -1) {
+#ifdef AX_DEBUG
+		agentx_log_axc_fatalx(axr->axr_axc, "%s: %s", __func__, errstr);
+#else
+		agentx_log_axc_warnx(axr->axr_axc, "%s: %s", __func__, errstr);
+		return NULL;
+#endif
+	}
 	vb.avb_data.avb_int32 = value;
 
 	return agentx_index(axr, &vb, AXI_TYPE_VALUE);
@@ -1410,24 +1406,17 @@ agentx_index_integer_dynamic(struct agentx_region *axr, uint32_t oid[],
     size_t oidlen)
 {
 	struct ax_varbind vb;
-	size_t i;
+	const char *errstr;
 
-	if (oidlen > AGENTX_OID_MAX_LEN) {
+	vb.avb_type = AX_DATA_TYPE_INTEGER;
+	if (agentx_oidfill(&(vb.avb_oid), oid, oidlen, &errstr) == -1) {
 #ifdef AX_DEBUG
-		agentx_log_axc_fatalx(axr->axr_axc, "%s: oidlen > %d",
-		    __func__, AGENTX_OID_MAX_LEN);
+		agentx_log_axc_fatalx(axr->axr_axc, "%s: %s", __func__, errstr);
 #else
-		agentx_log_axc_warnx(axr->axr_axc, "%s: oidlen > %d",
-		    __func__, AGENTX_OID_MAX_LEN);
-		errno = EINVAL;
+		agentx_log_axc_warnx(axr->axr_axc, "%s: %s", __func__, errstr);
 		return NULL;
 #endif
 	}
-
-	vb.avb_type = AX_DATA_TYPE_INTEGER;
-	for (i = 0; i < oidlen; i++)
-		vb.avb_oid.aoi_id[i] = oid[i];
-	vb.avb_oid.aoi_idlen = oidlen;
 
 	return agentx_index(axr, &vb, AXI_TYPE_DYNAMIC);
 }
@@ -1437,24 +1426,17 @@ agentx_index_string_dynamic(struct agentx_region *axr, uint32_t oid[],
     size_t oidlen)
 {
 	struct ax_varbind vb;
-	size_t i;
+	const char *errstr;
 
-	if (oidlen > AGENTX_OID_MAX_LEN) {
+	vb.avb_type = AX_DATA_TYPE_OCTETSTRING;
+	if (agentx_oidfill(&(vb.avb_oid), oid, oidlen, &errstr) == -1) {
 #ifdef AX_DEBUG
-		agentx_log_axc_fatalx(axr->axr_axc, "%s: oidlen > %d",
-		    __func__, AGENTX_OID_MAX_LEN);
+		agentx_log_axc_fatalx(axr->axr_axc, "%s: %s", __func__, errstr);
 #else
-		agentx_log_axc_warnx(axr->axr_axc, "%s: oidlen > %d",
-		    __func__, AGENTX_OID_MAX_LEN);
-		errno = EINVAL;
+		agentx_log_axc_warnx(axr->axr_axc, "%s: %s", __func__, errstr);
 		return NULL;
 #endif
 	}
-
-	vb.avb_type = AX_DATA_TYPE_OCTETSTRING;
-	for (i = 0; i < oidlen; i++)
-		vb.avb_oid.aoi_id[i] = oid[i];
-	vb.avb_oid.aoi_idlen = oidlen;
 	vb.avb_data.avb_ostring.aos_slen = 0;
 	vb.avb_data.avb_ostring.aos_string = NULL;
 
@@ -1466,19 +1448,8 @@ agentx_index_nstring_dynamic(struct agentx_region *axr, uint32_t oid[],
     size_t oidlen, size_t vlen)
 {
 	struct ax_varbind vb;
-	size_t i;
+	const char *errstr;
 
-	if (oidlen > AGENTX_OID_MAX_LEN) {
-#ifdef AX_DEBUG
-		agentx_log_axc_fatalx(axr->axr_axc, "%s: oidlen > %d",
-		    __func__, AGENTX_OID_MAX_LEN);
-#else
-		agentx_log_axc_warnx(axr->axr_axc, "%s: oidlen > %d",
-		    __func__, AGENTX_OID_MAX_LEN);
-		errno = EINVAL;
-		return NULL;
-#endif
-	}
 	if (vlen == 0 || vlen > AGENTX_OID_MAX_LEN) {
 #ifdef AX_DEBUG
 		agentx_log_axc_fatalx(axr->axr_axc, "%s: invalid string "
@@ -1492,9 +1463,14 @@ agentx_index_nstring_dynamic(struct agentx_region *axr, uint32_t oid[],
 	}
 
 	vb.avb_type = AX_DATA_TYPE_OCTETSTRING;
-	for (i = 0; i < oidlen; i++)
-		vb.avb_oid.aoi_id[i] = oid[i];
-	vb.avb_oid.aoi_idlen = oidlen;
+	if (agentx_oidfill(&(vb.avb_oid), oid, oidlen, &errstr) == -1) {
+#ifdef AX_DEBUG
+		agentx_log_axc_fatalx(axr->axr_axc, "%s: %s", __func__, errstr);
+#else
+		agentx_log_axc_warnx(axr->axr_axc, "%s: %s", __func__, errstr);
+		return NULL;
+#endif
+	}
 	vb.avb_data.avb_ostring.aos_slen = vlen;
 	vb.avb_data.avb_ostring.aos_string = NULL;
 
@@ -1506,24 +1482,17 @@ agentx_index_oid_dynamic(struct agentx_region *axr, uint32_t oid[],
     size_t oidlen)
 {
 	struct ax_varbind vb;
-	size_t i;
+	const char *errstr;
 
-	if (oidlen > AGENTX_OID_MAX_LEN) {
+	vb.avb_type = AX_DATA_TYPE_OID;
+	if (agentx_oidfill(&(vb.avb_oid), oid, oidlen, &errstr) == -1) {
 #ifdef AX_DEBUG
-		agentx_log_axc_fatalx(axr->axr_axc, "%s: oidlen > %d",
-		    __func__, AGENTX_OID_MAX_LEN);
+		agentx_log_axc_fatalx(axr->axr_axc, "%s: %s", __func__, errstr);
 #else
-		agentx_log_axc_warnx(axr->axr_axc, "%s: oidlen > %d",
-		    __func__, AGENTX_OID_MAX_LEN);
-		errno = EINVAL;
+		agentx_log_axc_warnx(axr->axr_axc, "%s: %s", __func__, errstr);
 		return NULL;
 #endif
 	}
-
-	vb.avb_type = AX_DATA_TYPE_OID;
-	for (i = 0; i < oidlen; i++)
-		vb.avb_oid.aoi_id[i] = oid[i];
-	vb.avb_oid.aoi_idlen = oidlen;
 	vb.avb_data.avb_oid.aoi_idlen = 0;
 
 	return agentx_index(axr, &vb, AXI_TYPE_DYNAMIC);
@@ -1534,20 +1503,9 @@ agentx_index_noid_dynamic(struct agentx_region *axr, uint32_t oid[],
     size_t oidlen, size_t vlen)
 {
 	struct ax_varbind vb;
-	size_t i;
+	const char *errstr;
 
-	if (oidlen > AGENTX_OID_MAX_LEN) {
-#ifdef AX_DEBUG
-		agentx_log_axc_fatalx(axr->axr_axc, "%s: oidlen > %d",
-		    __func__, AGENTX_OID_MAX_LEN);
-#else
-		agentx_log_axc_warnx(axr->axr_axc, "%s: oidlen > %d",
-		    __func__, AGENTX_OID_MAX_LEN);
-		errno = EINVAL;
-		return NULL;
-#endif
-	}
-	if (vlen == 0 || vlen > AGENTX_OID_MAX_LEN) {
+	if (vlen < AGENTX_OID_MIN_LEN || vlen > AGENTX_OID_MAX_LEN) {
 #ifdef AX_DEBUG
 		agentx_log_axc_fatalx(axr->axr_axc, "%s: invalid string "
 		    "length: %zu\n", __func__, vlen);
@@ -1560,9 +1518,14 @@ agentx_index_noid_dynamic(struct agentx_region *axr, uint32_t oid[],
 	}
 
 	vb.avb_type = AX_DATA_TYPE_OID;
-	for (i = 0; i < oidlen; i++)
-		vb.avb_oid.aoi_id[i] = oid[i];
-	vb.avb_oid.aoi_idlen = oidlen;
+	if (agentx_oidfill(&(vb.avb_oid), oid, oidlen, &errstr) == -1) {
+#ifdef AX_DEBUG
+		agentx_log_axc_fatalx(axr->axr_axc, "%s: %s", __func__, errstr);
+#else
+		agentx_log_axc_warnx(axr->axr_axc, "%s: %s", __func__, errstr);
+		return NULL;
+#endif
+	}
 	vb.avb_data.avb_oid.aoi_idlen = vlen;
 
 	return agentx_index(axr, &vb, AXI_TYPE_DYNAMIC);
@@ -1573,25 +1536,18 @@ agentx_index_ipaddress_dynamic(struct agentx_region *axr, uint32_t oid[],
     size_t oidlen)
 {
 	struct ax_varbind vb;
-	size_t i;
+	const char *errstr;
 
-	if (oidlen > AGENTX_OID_MAX_LEN) {
+	vb.avb_type = AX_DATA_TYPE_IPADDRESS;
+	if (agentx_oidfill(&(vb.avb_oid), oid, oidlen, &errstr) == -1) {
 #ifdef AX_DEBUG
-		agentx_log_axc_fatalx(axr->axr_axc, "%s: oidlen > %d",
-		    __func__, AGENTX_OID_MAX_LEN);
+		agentx_log_axc_fatalx(axr->axr_axc, "%s: %s", __func__, errstr);
 #else
-		agentx_log_axc_warnx(axr->axr_axc, "%s: oidlen > %d",
-		    __func__, AGENTX_OID_MAX_LEN);
-		errno = EINVAL;
+		agentx_log_axc_warnx(axr->axr_axc, "%s: %s", __func__, errstr);
 		return NULL;
 #endif
 	}
-
-	vb.avb_type = AX_DATA_TYPE_IPADDRESS;
-	for (i = 0; i < oidlen; i++)
-		vb.avb_oid.aoi_id[i] = oid[i];
 	vb.avb_data.avb_ostring.aos_string = NULL;
-	vb.avb_oid.aoi_idlen = oidlen;
 
 	return agentx_index(axr, &vb, AXI_TYPE_DYNAMIC);
 }
@@ -1953,34 +1909,13 @@ agentx_object(struct agentx_region *axr, uint32_t oid[], size_t oidlen,
 {
 	struct agentx_object *axo, **taxo, axo_search;
 	struct agentx_index *laxi;
+	const char *errstr;
 	int ready = 1;
 	size_t i, j;
 
 	if (axr->axr_dstate == AX_DSTATE_CLOSE)
 		agentx_log_axc_fatalx(axr->axr_axc, "%s: use after free",
 		    __func__);
-	if (oidlen < 1) {
-#ifdef AX_DEBUG
-		agentx_log_axc_fatalx(axr->axr_axc, "%s: oidlen == 0",
-		    __func__);
-#else
-		agentx_log_axc_warnx(axr->axr_axc, "%s: oidlen == 0",
-		    __func__);
-		errno = EINVAL;
-		return NULL;
-#endif
-	}
-	if (oidlen > AGENTX_OID_MAX_LEN) {
-#ifdef AX_DEBUG
-		agentx_log_axc_fatalx(axr->axr_axc, "%s: oidlen > %d",
-		    __func__, AGENTX_OID_MAX_LEN);
-#else
-		agentx_log_axc_warnx(axr->axr_axc, "%s: oidlen > %d",
-		    __func__, AGENTX_OID_MAX_LEN);
-		errno = EINVAL;
-		return NULL;
-#endif
-	}
 	if (axilen > AGENTX_OID_INDEX_MAX_LEN) {
 #ifdef AX_DEBUG
 		agentx_log_axc_fatalx(axr->axr_axc, "%s: indexlen > %d",
@@ -1993,9 +1928,14 @@ agentx_object(struct agentx_region *axr, uint32_t oid[], size_t oidlen,
 #endif
 	}
 
-	for (i = 0; i < oidlen; i++)
-		axo_search.axo_oid.aoi_id[i] = oid[i];
-	axo_search.axo_oid.aoi_idlen = oidlen;
+	if (agentx_oidfill(&(axo_search.axo_oid), oid, oidlen, &errstr) == -1) {
+#ifdef AX_DEBUG
+		agentx_log_axc_fatalx(axr->axr_axc, "%s: %s", __func__, errstr);
+#else
+		agentx_log_axc_warnx(axr->axr_axc, "%s: %s", __func__, errstr);
+		return NULL;
+#endif
+	}
 
 	do {
 		if (RB_FIND(axc_objects, &(axr->axr_axc->axc_objects),
@@ -3061,8 +3001,7 @@ agentx_varbind_printf(struct agentx_varbind *axv, const char *fmt, ...)
 	if (r == -1) {
 		axv->axv_vb.avb_data.avb_ostring.aos_string = NULL;
 		agentx_log_axg_warn(axv->axv_axg, "Couldn't bind string");
-		agentx_varbind_error_type(axv,
-		    AX_PDU_ERROR_PROCESSINGERROR, 1);
+		agentx_varbind_error_type(axv, AX_PDU_ERROR_PROCESSINGERROR, 1);
 		return;
 	}
 	axv->axv_vb.avb_data.avb_ostring.aos_slen = r;
@@ -3082,13 +3021,20 @@ void
 agentx_varbind_oid(struct agentx_varbind *axv, const uint32_t oid[],
     size_t oidlen)
 {
-	size_t i;
+	const char *errstr;
 
 	axv->axv_vb.avb_type = AX_DATA_TYPE_OID;
 
-	for (i = 0; i < oidlen; i++)
-		axv->axv_vb.avb_data.avb_oid.aoi_id[i] = oid[i];
-	axv->axv_vb.avb_data.avb_oid.aoi_idlen = oidlen;
+	if (agentx_oidfill(&(axv->axv_vb.avb_data.avb_oid),
+	    oid, oidlen, &errstr) == -1) {
+#ifdef AX_DEBUG
+		agentx_log_axg_fatalx(axv->axv_axg, "%s: %s", __func__, errstr);
+#else
+		agentx_log_axg_warnx(axv->axv_axg, "%s: %s", __func__, errstr);
+		agentx_varbind_error_type(axv, AX_PDU_ERROR_PROCESSINGERROR, 1);
+		return;
+#endif
+	}
 
 	agentx_varbind_finalize(axv);
 }
@@ -3689,6 +3635,7 @@ agentx_varbind_set_index_oid(struct agentx_varbind *axv,
     struct agentx_index *axi, const uint32_t *value, size_t oidlen)
 {
 	struct ax_oid *curvalue, oid;
+	const char *errstr;
 	size_t i;
 
 	if (axi->axi_vb.avb_type != AX_DATA_TYPE_OID) {
@@ -3719,9 +3666,20 @@ agentx_varbind_set_index_oid(struct agentx_varbind *axv,
 #endif
 			}
 			curvalue = &(axv->axv_index[i].axv_idata.avb_oid);
-			for (i = 0; i < oidlen; i++)
-				oid.aoi_id[i] = value[i];
-			oid.aoi_idlen = oidlen;
+			if (agentx_oidfill(&oid, value,
+			    oidlen, &errstr) == -1) {
+#ifdef AX_DEBUG
+				agentx_log_axg_fatalx(axv->axv_axg, "%s: %s",
+				    __func__, errstr);
+#else
+				agentx_log_axg_warnx(axv->axv_axg, "%s: %s",
+				     __func__, errstr);
+				agentx_varbind_error_type(axv,
+				     AX_PDU_ERROR_PROCESSINGERROR, 1);
+				return;
+#endif
+			}
+
 			if (axv->axv_axg->axg_type == AX_PDU_TYPE_GET &&
 			    ax_oid_cmp(&oid, curvalue) != 0) {
 #ifdef AX_DEBUG
@@ -3735,9 +3693,8 @@ agentx_varbind_set_index_oid(struct agentx_varbind *axv,
 				return;
 #endif
 			}
-			for (i = 0; i < oidlen; i++)
-				curvalue->aoi_id[i] = value[i];
-			curvalue->aoi_idlen = oidlen;
+			
+			*curvalue = oid;
 			return;
 		}
 	}
@@ -3878,6 +3835,29 @@ agentx_strcat(char **dst, const char *src)
 	}
 
 	(void)strlcat(*dst, src, buflen);
+	return 0;
+}
+
+static int
+agentx_oidfill(struct ax_oid *oid, const uint32_t oidval[], size_t oidlen,
+    const char **errstr)
+{
+	size_t i;
+
+	if (oidlen < AGENTX_OID_MIN_LEN) {
+		*errstr = "oidlen < 2";
+		errno = EINVAL;
+		return -1;
+	}
+	if (oidlen > AGENTX_OID_MAX_LEN) {
+		*errstr = "oidlen > 128";
+		errno = EINVAL;
+		return -1;
+	}
+
+	for (i = 0; i < oidlen; i++)
+		oid->aoi_id[i] = oidval[i];
+	oid->aoi_idlen = oidlen;
 	return 0;
 }
 

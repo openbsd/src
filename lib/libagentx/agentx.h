@@ -1,4 +1,4 @@
-/*	$OpenBSD: agentx.h,v 1.5 2020/10/27 18:24:01 martijn Exp $ */
+/*	$OpenBSD: agentx.h,v 1.6 2021/10/24 18:03:27 martijn Exp $ */
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
  *
@@ -36,6 +36,7 @@ enum agentx_request_type {
 };
 
 #define AGENTX_MASTER_PATH "/var/agentx/master"
+#define AGENTX_OID_MIN_LEN 2
 #define AGENTX_OID_MAX_LEN 128
 #define AGENTX_OID_INDEX_MAX_LEN 10
 #define AGENTX_MIB2 1, 3, 6, 1, 2, 1
