@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.h,v 1.36 2021/10/24 13:48:15 tb Exp $ */
+/* $OpenBSD: x509_vfy.h,v 1.37 2021/10/24 13:52:13 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -518,7 +518,13 @@ void *	X509_STORE_CTX_get_ex_data(X509_STORE_CTX *ctx,int idx);
 int	X509_STORE_CTX_get_error(X509_STORE_CTX *ctx);
 void	X509_STORE_CTX_set_error(X509_STORE_CTX *ctx,int s);
 int	X509_STORE_CTX_get_error_depth(X509_STORE_CTX *ctx);
+#if defined(LIBRESSL_NEW_API)
+void	X509_STORE_CTX_set_error_depth(X509_STORE_CTX *ctx, int depth);
+#endif
 X509 *	X509_STORE_CTX_get_current_cert(X509_STORE_CTX *ctx);
+#if defined(LIBRESSL_NEW_API)
+void	X509_STORE_CTX_set_current_cert(X509_STORE_CTX *ctx, X509 *x);
+#endif
 X509 *X509_STORE_CTX_get0_current_issuer(X509_STORE_CTX *ctx);
 X509_CRL *X509_STORE_CTX_get0_current_crl(X509_STORE_CTX *ctx);
 X509_STORE_CTX *X509_STORE_CTX_get0_parent_ctx(X509_STORE_CTX *ctx);
@@ -534,6 +540,13 @@ int X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
 void X509_STORE_CTX_set_flags(X509_STORE_CTX *ctx, unsigned long flags);
 void X509_STORE_CTX_set_time(X509_STORE_CTX *ctx, unsigned long flags,
 								time_t t);
+#if defined(LIBRESSL_NEW_API)
+void X509_STORE_CTX_set0_verified_chain(X509_STORE_CTX *ctx, STACK_OF(X509) *sk);
+int (*X509_STORE_CTX_get_verify(X509_STORE_CTX *ctx))(X509_STORE_CTX *);
+void X509_STORE_CTX_set_verify(X509_STORE_CTX *ctx,
+    int (*verify)(X509_STORE_CTX *));
+int (*X509_STORE_CTX_get_verify_cb(X509_STORE_CTX *ctx))(int, X509_STORE_CTX *);
+#endif
 void X509_STORE_CTX_set_verify_cb(X509_STORE_CTX *ctx,
 				  int (*verify_cb)(int, X509_STORE_CTX *));
 

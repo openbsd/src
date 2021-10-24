@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.90 2021/10/24 13:48:15 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.91 2021/10/24 13:52:13 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2123,10 +2123,22 @@ X509_STORE_CTX_get_error_depth(X509_STORE_CTX *ctx)
 	return ctx->error_depth;
 }
 
+void
+X509_STORE_CTX_set_error_depth(X509_STORE_CTX *ctx, int depth)
+{
+	ctx->error_depth = depth;
+}
+
 X509 *
 X509_STORE_CTX_get_current_cert(X509_STORE_CTX *ctx)
 {
 	return ctx->current_cert;
+}
+
+void
+X509_STORE_CTX_set_current_cert(X509_STORE_CTX *ctx, X509 *x)
+{
+	ctx->current_cert = x;
 }
 
 STACK_OF(X509) *
@@ -2468,11 +2480,29 @@ X509_STORE_CTX_set_time(X509_STORE_CTX *ctx, unsigned long flags, time_t t)
 	X509_VERIFY_PARAM_set_time(ctx->param, t);
 }
 
+int
+(*X509_STORE_CTX_get_verify_cb(X509_STORE_CTX *ctx))(int, X509_STORE_CTX *)
+{
+	return ctx->verify_cb;
+}
+
 void
 X509_STORE_CTX_set_verify_cb(X509_STORE_CTX *ctx,
     int (*verify_cb)(int, X509_STORE_CTX *))
 {
 	ctx->verify_cb = verify_cb;
+}
+
+int
+(*X509_STORE_CTX_get_verify(X509_STORE_CTX *ctx))(X509_STORE_CTX *)
+{
+	return ctx->verify;
+}
+
+void
+X509_STORE_CTX_set_verify(X509_STORE_CTX *ctx, int (*verify)(X509_STORE_CTX *))
+{
+	ctx->verify = verify;
 }
 
 X509 *
@@ -2491,6 +2521,13 @@ void
 X509_STORE_CTX_set0_untrusted(X509_STORE_CTX *ctx, STACK_OF(X509) *sk)
 {
 	ctx->untrusted = sk;
+}
+
+void
+X509_STORE_CTX_set0_verified_chain(X509_STORE_CTX *ctx, STACK_OF(X509) *sk)
+{
+	sk_X509_pop_free(ctx->chain, X509_free);
+	ctx->chain = sk;
 }
 
 X509_POLICY_TREE *
