@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp.h,v 1.16 2018/08/24 20:03:21 tb Exp $ */
+/* $OpenBSD: ocsp.h,v 1.17 2021/10/24 13:50:14 tb Exp $ */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */
 
@@ -414,8 +414,23 @@ int	OCSP_request_sign(OCSP_REQUEST *req, X509 *signer, EVP_PKEY *key,
 int	OCSP_response_status(OCSP_RESPONSE *resp);
 OCSP_BASICRESP *OCSP_response_get1_basic(OCSP_RESPONSE *resp);
 
+#if defined(LIBRESSL_NEW_API)
+const ASN1_OCTET_STRING *OCSP_resp_get0_signature(const OCSP_BASICRESP *bs);
+const X509_ALGOR *OCSP_resp_get0_tbs_sigalg(const OCSP_BASICRESP *bs);
+const OCSP_RESPDATA *OCSP_resp_get0_respdata(const OCSP_BASICRESP *bs);
+int	OCSP_resp_get0_signer(OCSP_BASICRESP *bs, X509 **signer,
+	    STACK_OF(X509) *extra_certs);
+#endif
+
 int	OCSP_resp_count(OCSP_BASICRESP *bs);
 OCSP_SINGLERESP *OCSP_resp_get0(OCSP_BASICRESP *bs, int idx);
+#if defined(LIBRESSL_NEW_API)
+const ASN1_GENERALIZEDTIME *OCSP_resp_get0_produced_at(const OCSP_BASICRESP *bs);
+const STACK_OF(X509) *OCSP_resp_get0_certs(const OCSP_BASICRESP *bs);
+int	OCSP_resp_get0_id(const OCSP_BASICRESP *bs,
+	    const ASN1_OCTET_STRING **pid, const X509_NAME **pname);
+#endif
+
 int	OCSP_resp_find(OCSP_BASICRESP *bs, OCSP_CERTID *id, int last);
 int	OCSP_single_get0_status(OCSP_SINGLERESP *single, int *reason,
 	    ASN1_GENERALIZEDTIME **revtime, ASN1_GENERALIZEDTIME **thisupd,

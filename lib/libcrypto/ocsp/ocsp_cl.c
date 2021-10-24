@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_cl.c,v 1.17 2020/10/09 17:19:35 tb Exp $ */
+/* $OpenBSD: ocsp_cl.c,v 1.18 2021/10/24 13:50:14 tb Exp $ */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */
 
@@ -231,6 +231,55 @@ OCSP_resp_get0(OCSP_BASICRESP *bs, int idx)
 	if (!bs)
 		return NULL;
 	return sk_OCSP_SINGLERESP_value(bs->tbsResponseData->responses, idx);
+}
+
+const ASN1_GENERALIZEDTIME *
+OCSP_resp_get0_produced_at(const OCSP_BASICRESP *bs)
+{
+	return bs->tbsResponseData->producedAt;
+}
+
+const STACK_OF(X509) *
+OCSP_resp_get0_certs(const OCSP_BASICRESP *bs)
+{
+	return bs->certs;
+}
+
+int
+OCSP_resp_get0_id(const OCSP_BASICRESP *bs, const ASN1_OCTET_STRING **pid,
+    const X509_NAME **pname)
+{
+	const OCSP_RESPID *rid = bs->tbsResponseData->responderId;
+
+	if (rid->type == V_OCSP_RESPID_NAME) {
+		*pname = rid->value.byName;
+		*pid = NULL;
+	} else if (rid->type == V_OCSP_RESPID_KEY) {
+		*pid = rid->value.byKey;
+		*pname = NULL;
+	} else {
+		return 0;
+	}
+
+	return 1;
+}
+
+const ASN1_OCTET_STRING *
+OCSP_resp_get0_signature(const OCSP_BASICRESP *bs)
+{
+	return bs->signature;
+}
+
+const X509_ALGOR *
+OCSP_resp_get0_tbs_sigalg(const OCSP_BASICRESP *bs)
+{
+	return bs->signatureAlgorithm;
+}
+
+const OCSP_RESPDATA *
+OCSP_resp_get0_respdata(const OCSP_BASICRESP *bs)
+{
+	return bs->tbsResponseData;
 }
 
 /* Look single response matching a given certificate ID */
