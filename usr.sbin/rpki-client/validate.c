@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.16 2021/10/11 16:50:03 job Exp $ */
+/*	$OpenBSD: validate.c,v 1.17 2021/10/24 12:06:16 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -243,6 +243,40 @@ valid_roa(const char *fn, struct auth_tree *auths, struct roa *roa)
 	}
 
 	return 1;
+}
+
+/*
+ * Validate a filename listed on a Manifest.
+ * draft-ietf-sidrops-6486bis section 4.2.2
+ * Returns 1 if filename is valid, otherwise 0.
+ */
+int
+valid_filename(const char *fn)
+{
+	size_t			 sz;
+	const unsigned char	*c;
+
+	sz = strlen(fn);
+	if (sz < 5)
+		return 0;
+
+	for (c = fn; *c != '\0'; ++c)
+		if (!isalnum(*c) && *c != '-' && *c != '_' && *c != '.')
+			return 0;
+
+	if (strchr(fn, '.') != strrchr(fn, '.'))
+		return 0;
+
+	if (strcasecmp(fn + sz - 4, ".cer") == 0)
+		return 1;
+	if (strcasecmp(fn + sz - 4, ".crl") == 0)
+		return 1;
+	if (strcasecmp(fn + sz - 4, ".gbr") == 0)
+		return 1;
+	if (strcasecmp(fn + sz - 4, ".roa") == 0)
+		return 1;
+
+	return 0;
 }
 
 /*

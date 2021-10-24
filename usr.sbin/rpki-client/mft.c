@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.39 2021/10/23 16:06:04 claudio Exp $ */
+/*	$OpenBSD: mft.c,v 1.40 2021/10/24 12:06:16 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -489,7 +489,7 @@ mft_check(const char *fn, struct mft *p)
 {
 	size_t	i;
 	int	rc = 1;
-	char	*cp, *path = NULL;
+	char	*cp, *h, *path = NULL;
 
 	/* Check hash of file now, but first build path for it */
 	cp = strrchr(fn, '/');
@@ -498,6 +498,13 @@ mft_check(const char *fn, struct mft *p)
 
 	for (i = 0; i < p->filesz; i++) {
 		const struct mftfile *m = &p->files[i];
+		if (!valid_filename(m->file)) {
+			if (base64_encode(m->hash, sizeof(m->hash), &h) == -1)
+				errx(1, "base64_encode failed in %s", __func__);
+			warnx("%s: unsupported filename for %s", fn, h);
+			free(h);
+			continue;
+		}
 		if (asprintf(&path, "%.*s/%s", (int)(cp - fn), fn,
 		    m->file) == -1)
 			err(1, NULL);
