@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.83 2021/10/22 15:11:32 mpi Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.84 2021/10/24 07:02:47 visa Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -118,7 +118,7 @@ int	filt_fifoexceptprocess(struct knote *kn, struct kevent *kev);
 int	filt_fifoexcept_common(struct knote *kn, struct socket *so);
 
 const struct filterops fiforead_filtops = {
-	.f_flags	= FILTEROP_ISFD,
+	.f_flags	= FILTEROP_ISFD | FILTEROP_MPSAFE,
 	.f_attach	= NULL,
 	.f_detach	= filt_fifordetach,
 	.f_event	= filt_fiforead,
@@ -127,7 +127,7 @@ const struct filterops fiforead_filtops = {
 };
 
 const struct filterops fifowrite_filtops = {
-	.f_flags	= FILTEROP_ISFD,
+	.f_flags	= FILTEROP_ISFD | FILTEROP_MPSAFE,
 	.f_attach	= NULL,
 	.f_detach	= filt_fifowdetach,
 	.f_event	= filt_fifowrite,
@@ -546,7 +546,7 @@ fifo_kqfilter(void *v)
 
 	ap->a_kn->kn_hook = so;
 
-	klist_insert_locked(&sb->sb_sel.si_note, ap->a_kn);
+	klist_insert(&sb->sb_sel.si_note, ap->a_kn);
 
 	return (0);
 }
@@ -556,7 +556,7 @@ filt_fifordetach(struct knote *kn)
 {
 	struct socket *so = (struct socket *)kn->kn_hook;
 
-	klist_remove_locked(&so->so_rcv.sb_sel.si_note, kn);
+	klist_remove(&so->so_rcv.sb_sel.si_note, kn);
 }
 
 int
@@ -627,7 +627,7 @@ filt_fifowdetach(struct knote *kn)
 {
 	struct socket *so = (struct socket *)kn->kn_hook;
 
-	klist_remove_locked(&so->so_snd.sb_sel.si_note, kn);
+	klist_remove(&so->so_snd.sb_sel.si_note, kn);
 }
 
 int

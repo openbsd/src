@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.113 2021/07/26 05:51:13 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.114 2021/10/24 07:02:47 visa Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -189,6 +189,8 @@ sonewconn(struct socket *head, int connstatus)
 	so->so_rcv.sb_lowat = head->so_rcv.sb_lowat;
 	so->so_rcv.sb_timeo_nsecs = head->so_rcv.sb_timeo_nsecs;
 
+	klist_init(&so->so_rcv.sb_sel.si_note, &socket_klistops, so);
+	klist_init(&so->so_snd.sb_sel.si_note, &socket_klistops, so);
 	sigio_init(&so->so_sigio);
 	sigio_copy(&so->so_sigio, &head->so_sigio);
 
@@ -196,6 +198,8 @@ sonewconn(struct socket *head, int connstatus)
 	if ((*so->so_proto->pr_attach)(so, 0)) {
 		(void) soqremque(so, soqueue);
 		sigio_free(&so->so_sigio);
+		klist_free(&so->so_rcv.sb_sel.si_note);
+		klist_free(&so->so_snd.sb_sel.si_note);
 		pool_put(&socket_pool, so);
 		return (NULL);
 	}

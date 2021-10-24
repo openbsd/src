@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.56 2021/06/16 14:26:30 visa Exp $	*/
+/*	$OpenBSD: event.h,v 1.57 2021/10/24 07:02:47 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -285,6 +285,7 @@ struct timespec;
 
 extern const struct filterops sig_filtops;
 extern const struct filterops dead_filtops;
+extern const struct klistops socket_klistops;
 
 extern void	kqpoll_init(void);
 extern void	kqpoll_exit(void);
