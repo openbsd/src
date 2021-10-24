@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.181 2021/10/24 14:50:42 tobhe Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.182 2021/10/24 15:47:39 tobhe Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -342,12 +342,12 @@ esp_zeroize(struct tdb *tdbp)
 int
 esp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 {
+	uint8_t abuf[AH_HMAC_MAX_HASHLEN];
 	const struct auth_hash *esph = tdb->tdb_authalgxform;
 	const struct enc_xform *espx = tdb->tdb_encalgxform;
 	struct mbuf *m = *mp;
 	struct cryptodesc *crde = NULL, *crda = NULL;
 	struct cryptop *crp = NULL;
-	struct tdb_crypto *tc = NULL;
 	int plen, alen, hlen, error, clen;
 	u_int32_t btsx, esn;
 #ifdef ENCDEBUG
@@ -453,18 +453,6 @@ esp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 		goto drop;
 	}
 
-	/* Get IPsec-specific opaque pointer */
-	if (esph == NULL)
-		tc = malloc(sizeof(*tc), M_XDATA, M_NOWAIT | M_ZERO);
-	else
-		tc = malloc(sizeof(*tc) + alen, M_XDATA, M_NOWAIT | M_ZERO);
-	if (tc == NULL)	{
-		DPRINTF("failed to allocate tdb_crypto");
-		espstat_inc(esps_crypto);
-		error = ENOBUFS;
-		goto drop;
-	}
-
 	if (esph) {
 		crda = &crp->crp_desc[0];
 		crde = &crp->crp_desc[1];
@@ -491,7 +479,7 @@ esp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 			crda->crd_len = m->m_pkthdr.len - (skip + alen);
 
 		/* Copy the authenticator */
-		m_copydata(m, m->m_pkthdr.len - alen, alen, tc + 1);
+		m_copydata(m, m->m_pkthdr.len - alen, alen, abuf);
 	} else
 		crde = &crp->crp_desc[0];
 
@@ -500,15 +488,6 @@ esp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 	crp->crp_flags = CRYPTO_F_IMBUF | CRYPTO_F_MPSAFE;
 	crp->crp_buf = (caddr_t)m;
 	crp->crp_sid = tdb->tdb_cryptoid;
-
-	/* These are passed as-is to the callback */
-	tc->tc_skip = skip;
-	tc->tc_protoff = protoff;
-	tc->tc_spi = tdb->tdb_spi;
-	tc->tc_proto = tdb->tdb_sproto;
-	tc->tc_rdomain = tdb->tdb_rdomain;
-	tc->tc_dst = tdb->tdb_dst;
-	tc->tc_rpl = tdb->tdb_rpl;
 
 	/* Decryption descriptor */
 	if (espx) {
@@ -543,12 +522,11 @@ esp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 	/* Release the crypto descriptors */
 	crypto_freereq(crp);
 
-	return esp_input_cb(tdb, tc, m, clen);
+	return esp_input_cb(tdb, abuf, skip, protoff, tdb->tdb_rpl, m, clen);
 
  drop:
 	m_freemp(mp);
 	crypto_freereq(crp);
-	free(tc, M_XDATA, 0);
 	return error;
 }
 
@@ -556,22 +534,17 @@ esp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
  * ESP input callback, called directly by the crypto driver.
  */
 int
-esp_input_cb(struct tdb *tdb, struct tdb_crypto *tc, struct mbuf *m, int clen)
+esp_input_cb(struct tdb *tdb, uint8_t *abuf, int skip, int protoff, uint64_t rpl,
+    struct mbuf *m, int clen)
 {
 	u_int8_t lastthree[3], aalg[AH_HMAC_MAX_HASHLEN];
-	int hlen, roff, skip, protoff;
+	int hlen, roff;
 	struct mbuf *m1, *mo;
 	const struct auth_hash *esph;
-	u_int64_t rpl;
 	u_int32_t btsx, esn;
-	caddr_t ptr;
 #ifdef ENCDEBUG
 	char buf[INET6_ADDRSTRLEN];
 #endif
-
-	skip = tc->tc_skip;
-	protoff = tc->tc_protoff;
-	rpl = tc->tc_rpl;
 
 	NET_ASSERT_LOCKED();
 
@@ -583,10 +556,8 @@ esp_input_cb(struct tdb *tdb, struct tdb_crypto *tc, struct mbuf *m, int clen)
 		m_copydata(m, m->m_pkthdr.len - esph->authsize,
 		    esph->authsize, aalg);
 
-		ptr = (caddr_t) (tc + 1);
-
 		/* Verify authenticator */
-		if (timingsafe_bcmp(ptr, aalg, esph->authsize)) {
+		if (timingsafe_bcmp(abuf, aalg, esph->authsize)) {
 			DPRINTF("authentication failed for packet "
 			    "in SA %s/%08x",
 			    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
@@ -738,15 +709,11 @@ esp_input_cb(struct tdb *tdb, struct tdb_crypto *tc, struct mbuf *m, int clen)
 	/* Restore the Next Protocol field */
 	m_copyback(m, protoff, sizeof(u_int8_t), lastthree + 2, M_NOWAIT);
 
-	/* Release the crypto descriptors */
-	free(tc, M_XDATA, 0);
-
 	/* Back to generic IPsec input processing */
 	return ipsec_common_input_cb(m, tdb, skip, protoff);
 
  baddone:
 	m_freem(m);
-	free(tc, M_XDATA, 0);
 	return -1;
 }
 
@@ -762,7 +729,6 @@ esp_output(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	u_int64_t replay64;
 	u_int32_t replay;
 	struct mbuf *mi, *mo = (struct mbuf *) NULL;
-	struct tdb_crypto *tc = NULL;
 	unsigned char *pad;
 	u_int8_t prot;
 #ifdef ENCDEBUG
@@ -978,20 +944,6 @@ esp_output(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	} else
 		crda = &crp->crp_desc[0];
 
-	/* IPsec-specific opaque crypto info. */
-	tc = malloc(sizeof(*tc), M_XDATA, M_NOWAIT | M_ZERO);
-	if (tc == NULL) {
-		DPRINTF("failed to allocate tdb_crypto");
-		espstat_inc(esps_crypto);
-		error = ENOBUFS;
-		goto drop;
-	}
-
-	tc->tc_spi = tdb->tdb_spi;
-	tc->tc_proto = tdb->tdb_sproto;
-	tc->tc_rdomain = tdb->tdb_rdomain;
-	tc->tc_dst = tdb->tdb_dst;
-
 	/* Crypto operation descriptor. */
 	crp->crp_ilen = m->m_pkthdr.len; /* Total input length. */
 	crp->crp_flags = CRYPTO_F_IMBUF | CRYPTO_F_MPSAFE;
@@ -1043,28 +995,15 @@ esp_output(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	/* Release the crypto descriptors */
 	crypto_freereq(crp);
 
-	return esp_output_cb(tdb, tc, m, ilen, olen);
-
- drop:
-	m_freem(m);
-	crypto_freereq(crp);
-	free(tc, M_XDATA, 0);
-	return error;
-}
-
-int
-esp_output_cb(struct tdb *tdb, struct tdb_crypto *tc, struct mbuf *m, int ilen,
-    int olen)
-{
-	int error;
-
-	/* Release crypto descriptors. */
-	free(tc, M_XDATA, 0);
-
 	/* Call the IPsec input callback. */
 	error = ipsp_process_done(m, tdb);
 	if (error)
 		espstat_inc(esps_outfail);
+	return (error);
+
+ drop:
+	m_freem(m);
+	crypto_freereq(crp);
 	return error;
 }
 
