@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lu.c,v 1.33 2021/10/21 16:55:25 tb Exp $ */
+/* $OpenBSD: x509_lu.c,v 1.34 2021/10/24 09:27:48 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -232,9 +232,27 @@ err:
 	return NULL;
 }
 
-static void
+X509_OBJECT *
+X509_OBJECT_new(void)
+{
+	X509_OBJECT *ret;
+
+	if ((ret = calloc(1, sizeof(*ret))) == NULL) {
+		X509error(ERR_R_MALLOC_FAILURE);
+		return NULL;
+	}
+
+	ret->type = 0;
+
+	return ret;
+}
+
+void
 X509_OBJECT_free(X509_OBJECT *a)
 {
+	if (a == NULL)
+		return;
+
 	X509_OBJECT_free_contents(a);
 	free(a);
 }

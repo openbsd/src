@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.h,v 1.34 2021/10/23 16:18:20 tb Exp $ */
+/* $OpenBSD: x509_vfy.h,v 1.35 2021/10/24 09:27:48 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -421,6 +421,10 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 				| X509_V_FLAG_INHIBIT_ANY \
 				| X509_V_FLAG_INHIBIT_MAP)
 
+#if defined(LIBRESSL_NEW_API)
+X509_OBJECT *X509_OBJECT_new(void);
+void X509_OBJECT_free(X509_OBJECT *a);
+#endif
 int X509_OBJECT_idx_by_subject(STACK_OF(X509_OBJECT) *h, int type,
 	     X509_NAME *name);
 X509_OBJECT *X509_OBJECT_retrieve_by_subject(STACK_OF(X509_OBJECT) *h,int type,X509_NAME *name);
