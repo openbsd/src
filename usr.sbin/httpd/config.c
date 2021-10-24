@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.61 2020/09/21 09:42:07 tobhe Exp $	*/
+/*	$OpenBSD: config.c,v 1.62 2021/10/24 16:01:04 ian Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -50,6 +50,9 @@ config_init(struct httpd *env)
 	ps->ps_what[PROC_SERVER] =
 	    CONFIG_SERVERS|CONFIG_MEDIA|CONFIG_AUTH;
 	ps->ps_what[PROC_LOGGER] = CONFIG_SERVERS;
+
+	(void)strlcpy(env->sc_errdocroot, "",
+	    sizeof(env->sc_errdocroot));
 
 	/* Other configuration */
 	what = ps->ps_what[privsep_process];
@@ -584,6 +587,10 @@ config_getserver_config(struct httpd *env, struct server *srv,
 		    sizeof(srv_conf->timeout));
 		srv_conf->maxrequests = parent->maxrequests;
 		srv_conf->maxrequestbody = parent->maxrequestbody;
+
+		srv_conf->flags |= parent->flags & SRVFLAG_ERRDOCS;
+		(void)strlcpy(srv_conf->errdocroot, parent->errdocroot,
+		    sizeof(srv_conf->errdocroot));
 
 		DPRINTF("%s: %s %d location \"%s\", "
 		    "parent \"%s[%u]\", flags: %s",

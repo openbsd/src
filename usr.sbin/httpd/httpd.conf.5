@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.118 2021/06/07 10:53:59 tb Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.119 2021/10/24 16:01:04 ian Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 7 2021 $
+.Dd $Mdocdate: October 24 2021 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -121,6 +121,44 @@ see the
 section below.
 If not specified, the default type is set to
 .Ar application/octet-stream .
+.It Ic errdocs Ar directory
+Let
+.Xr httpd 8
+return custom error documents instead of the built-in ones.
+.Pp
+.Ar directory
+is relative to the
+.Ic chroot .
+.Pp
+Custom error documents are standalone
+.Dq .html
+files provided in one of the following ways:
+.Bl -bullet -offset indent -compact
+.It
+As HTML files named after the 3-digit HTTP response code they are used
+for, e.g.,
+.Pa 404.html .
+.It
+As a generic template file named
+.Pa err.html
+which is used for response codes no dedicated file is provided for.
+.El
+.Pp
+In case the latter does not exist and there is no dedicated file available for
+a certain response code, the built-in error document will be used as fallback.
+.Pp
+A custom error document may contain the following macros that will be expanded
+at runtime:
+.Pp
+.Bl -tag -width $RESPONSE_CODE -offset indent -compact
+.It Ic $HTTP_ERROR
+The error message text.
+.It Ic $RESPONSE_CODE
+The 3-digit HTTP response code sent to the client.
+.It Ic $SERVER_SOFTWARE
+The server software name of
+.Xr httpd 8 .
+.El
 .It Ic logdir Ar directory
 Specifies the full path of the directory in which log files will be written.
 If not specified, it defaults to
@@ -279,6 +317,12 @@ Disable the directory index.
 .Xr httpd 8
 will neither display nor generate a directory index.
 .El
+.It Oo Ic no Oc Ic errdocs Ar directory
+Overrides or, if the
+.Ic no
+keyword is given, disables globally defined custom error documents for the
+current
+.Ic server .
 .It Oo Ic no Oc Ic fastcgi Oo Ar option Oc
 Enable FastCGI instead of serving files.
 Multiple options may be specified within curly braces.
@@ -418,6 +462,7 @@ A location section may include most of the server configuration rules
 except
 .Ic alias ,
 .Ic connection ,
+.Ic errdocs ,
 .Ic hsts ,
 .Ic listen on ,
 .Ic location ,
