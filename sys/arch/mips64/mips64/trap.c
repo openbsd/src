@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.154 2021/05/01 16:11:11 visa Exp $	*/
+/*	$OpenBSD: trap.c,v 1.155 2021/10/24 15:29:10 visa Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -283,9 +283,7 @@ itsa(struct trapframe *trapframe, struct cpu_info *ci, struct proc *p,
 			va = trunc_page((vaddr_t)trapframe->badvaddr);
 			onfault = pcb->pcb_onfault;
 			pcb->pcb_onfault = 0;
-			KERNEL_LOCK();
 			rv = uvm_fault(kernel_map, va, 0, access_type);
-			KERNEL_UNLOCK();
 			pcb->pcb_onfault = onfault;
 			if (rv == 0)
 				return;
@@ -350,9 +348,7 @@ fault_common_no_miss:
 
 		onfault = pcb->pcb_onfault;
 		pcb->pcb_onfault = 0;
-		KERNEL_LOCK();
 		rv = uvm_fault(map, va, 0, access_type);
-		KERNEL_UNLOCK();
 		pcb->pcb_onfault = onfault;
 
 		/*
