@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.216 2021/10/24 22:34:19 tobhe Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.217 2021/10/24 22:59:47 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -574,13 +574,9 @@ int	ah_input(struct mbuf **, struct tdb *, int, int);
 int	ah_output(struct mbuf *, struct tdb *, int, int);
 int	ah_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 
-int	ah4_input(struct mbuf **, int *, int, int);
+int	ah46_input(struct mbuf **, int *, int, int);
 void	ah4_ctlinput(int, struct sockaddr *, u_int, void *);
 void	udpencap_ctlinput(int, struct sockaddr *, u_int, void *);
-
-#ifdef INET6
-int	ah6_input(struct mbuf **, int *, int, int);
-#endif /* INET6 */
 
 /* XF_ESP */
 int	esp_attach(void);
@@ -592,12 +588,8 @@ int	esp_input_cb(struct tdb *, uint8_t *, int, int, uint64_t,
 int	esp_output(struct mbuf *, struct tdb *, int, int);
 int	esp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 
-int	esp4_input(struct mbuf **, int *, int, int);
+int	esp46_input(struct mbuf **, int *, int, int);
 void	esp4_ctlinput(int, struct sockaddr *, u_int, void *);
-
-#ifdef INET6
-int	esp6_input(struct mbuf **, int *, int, int);
-#endif /* INET6 */
 
 /* XF_IPCOMP */
 int	ipcomp_attach(void);
@@ -606,10 +598,7 @@ int	ipcomp_zeroize(struct tdb *);
 int	ipcomp_input(struct mbuf **, struct tdb *, int, int);
 int	ipcomp_output(struct mbuf *, struct tdb *, int, int);
 int	ipcomp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
-int	ipcomp4_input(struct mbuf **, int *, int, int);
-#ifdef INET6
-int	ipcomp6_input(struct mbuf **, int *, int, int);
-#endif /* INET6 */
+int	ipcomp46_input(struct mbuf **, int *, int, int);
 
 /* XF_TCPSIGNATURE */
 int	tcp_signature_tdb_attach(void);
@@ -642,6 +631,8 @@ void	ipsec_init(void);
 int	ipsec_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 int	ipsec_common_input(struct mbuf **, int, int, int, int, int);
 int	ipsec_common_input_cb(struct mbuf **, struct tdb *, int, int);
+int	ipsec_input_disabled(struct mbuf **, int *, int, int);
+int	ipsec_protoff(struct mbuf *, int, int);
 int	ipsec_delete_policy(struct ipsec_policy *);
 ssize_t	ipsec_hdrsz(struct tdb *);
 void	ipsec_adjust_mtu(struct mbuf *, u_int32_t);

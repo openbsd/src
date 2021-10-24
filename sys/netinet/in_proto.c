@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.95 2021/05/25 22:45:09 bluhm Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.96 2021/10/24 22:59:47 bluhm Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -301,7 +301,7 @@ const struct protosw inetsw[] = {
   .pr_domain	= &inetdomain,
   .pr_protocol	= IPPROTO_AH,
   .pr_flags	= PR_ATOMIC|PR_ADDR,
-  .pr_input	= ah4_input,
+  .pr_input	= ah46_input,
   .pr_ctlinput	= ah4_ctlinput,
   .pr_ctloutput	= rip_ctloutput,
   .pr_usrreq	= rip_usrreq,
@@ -314,7 +314,7 @@ const struct protosw inetsw[] = {
   .pr_domain	= &inetdomain,
   .pr_protocol	= IPPROTO_ESP,
   .pr_flags	= PR_ATOMIC|PR_ADDR,
-  .pr_input	= esp4_input,
+  .pr_input	= esp46_input,
   .pr_ctlinput	= esp4_ctlinput,
   .pr_ctloutput	= rip_ctloutput,
   .pr_usrreq	= rip_usrreq,
@@ -327,7 +327,7 @@ const struct protosw inetsw[] = {
   .pr_domain	= &inetdomain,
   .pr_protocol	= IPPROTO_IPCOMP,
   .pr_flags	= PR_ATOMIC|PR_ADDR,
-  .pr_input	= ipcomp4_input,
+  .pr_input	= ipcomp46_input,
   .pr_ctloutput	= rip_ctloutput,
   .pr_usrreq	= rip_usrreq,
   .pr_attach	= rip_attach,
