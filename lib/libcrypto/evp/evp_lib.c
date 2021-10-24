@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_lib.c,v 1.17 2018/09/12 06:35:38 djm Exp $ */
+/* $OpenBSD: evp_lib.c,v 1.18 2021/10/24 13:51:07 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -351,6 +351,12 @@ EVP_MD_CTX_md(const EVP_MD_CTX *ctx)
 	if (!ctx)
 		return NULL;
 	return ctx->digest;
+}
+
+void *
+EVP_MD_CTX_md_data(const EVP_MD_CTX *ctx)
+{
+	return ctx->md_data;
 }
 
 void
